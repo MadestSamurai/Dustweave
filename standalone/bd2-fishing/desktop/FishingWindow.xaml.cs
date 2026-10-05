@@ -129,7 +129,7 @@ public partial class FishingWindow:Window
   GaugeBar.Value=Math.Clamp(s.Gauge*100,0,100);GaugeText.Text=$"{s.Gauge*100:0}% · 当前档位 {s.CastGrade}";
   NetworkText.Text="网络："+s.Network+(s.NetworkPending?$"（等待 {s.NetworkWaitSeconds:0.0} 秒）":"");
   ActionText.Text=$"阶段：{StateName(s.State)}　操作：{ActionName(s.LastAction)}　共 {s.ActionCount} 次";
-  StartButton.IsEnabled=!link.Enabled&&!connecting&&!starting&&s.Ready&&!s.NetworkPending&&s.State!="Auto";StopButton.IsEnabled=link.Enabled;
+  StartButton.IsEnabled=!link.Enabled&&!connecting&&!starting&&s.Ready&&s.State!="Auto";StopButton.IsEnabled=link.Enabled||starting||s.Enabled;
  }
  private static string StateName(string s)=>s switch{"None"=>"准备抛竿","Casting"=>"蓄力抛竿","WaitingForBite"=>"等待咬钩","BiteDetected"=>"提竿","Fighting"=>"收线","Pause"=>"波次间隔","Caught"=>"收获结算","Auto"=>"游戏内自动钓鱼",_=>"未就绪"};
  private static string ActionName(string s)=>s switch{"CastPress"=>"开始蓄力","CastRelease"=>"释放抛竿","Hook"=>"提竿","FightClick"=>"收线点击","HoldPress"=>"按住收线","HoldRelease"=>"松开收线","ClosePopup"=>"确认弹窗","SellFish"=>"按保留规则出售鱼","ApproachWater"=>"走向可钓区域","UseBait"=>"使用一份鱼饵","TravelLobby"=>"前往钓鱼大厅","TravelReturn"=>"返回原钓场",_=>"尚未操作"};

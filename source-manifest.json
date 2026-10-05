@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-05T19:24:09.1379469Z",
+  "generatedUtc": "2026-10-05T20:54:56.0854525Z",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/BD2Daily.Desktop.csproj",
   "projects": [
@@ -287,7 +287,7 @@
     },
     {
       "path": "standalone/bd2-apostle-defense/Directory.Build.props",
-      "sha256": "999cfe8caa2bdd7ec8048c6003ec38507132f8126932643ee9b85266b3462ab0",
+      "sha256": "516908047671e3499f1f9667c28202b9a0c5d193311576e7afabaedfc3871e0e",
       "bytes": 205,
       "reasons": [
         "build input"
@@ -471,7 +471,7 @@
     },
     {
       "path": "standalone/bd2-apostle-defense/README.en.md",
-      "sha256": "a3827ccc72026af0618349f1f1ead5c7f732828bd31530c65b807efe981dba59",
+      "sha256": "88e070d0bcd7c93c346898008e2608fc881499e48f6f25bb7db5734fe4a9dc20",
       "bytes": 8864,
       "reasons": [
         "build input"
@@ -479,7 +479,7 @@
     },
     {
       "path": "standalone/bd2-apostle-defense/README.md",
-      "sha256": "cafd0b1572306f8e9b613959f85e83d2150d6286d59727079ab99a6ffd2180f2",
+      "sha256": "75eb0703eeaa09da113417c38b8fb995d4b8cabe7798008e7bb9a469fd60e771",
       "bytes": 7912,
       "reasons": [
         "build input"
@@ -895,7 +895,7 @@
     },
     {
       "path": "standalone/bd2-equipment-assistant/Directory.Build.props",
-      "sha256": "2a6d2eb69d9b34284e85fec68758c92c437a12f106ce88dec9ef84244a1803bb",
+      "sha256": "2599b809efd8901eb55f8c26265c38233b27a139f2caf00ff79e59056afa577d",
       "bytes": 248,
       "reasons": [
         "build input"
@@ -919,7 +919,7 @@
     },
     {
       "path": "standalone/bd2-equipment-assistant/hook/Bridge.cs",
-      "sha256": "0cd2ad58ddfc5e387c543a9cefe361ac2b6be111484c530a89ec2d941bdf857d",
+      "sha256": "c2d7d88e9fb48352ffa5b02fa8680600e5f2ee96e29917d249137705b500e831",
       "bytes": 16764,
       "reasons": [
         "build input"
@@ -935,7 +935,7 @@
     },
     {
       "path": "standalone/bd2-equipment-assistant/hook/Evidence.cs",
-      "sha256": "61acfbb58f90b524f8c23319e780d2257cf81ae8db4dbc31a1594327256aec79",
+      "sha256": "cd719da7b06f7c4a74debe24c75ef1da38d248b259d561372e7f2ed9b8029552",
       "bytes": 13478,
       "reasons": [
         "build input"
@@ -1063,7 +1063,7 @@
     },
     {
       "path": "standalone/bd2-equipment-assistant/README.en.md",
-      "sha256": "c2b6c589628680887a5f675c2e9bb94c15ff605784c26c2e1e4a0263462a4fee",
+      "sha256": "147e499f6da9e78761c4695b3aae797c52dc51e936948aba4c93b6648acf424f",
       "bytes": 7960,
       "reasons": [
         "build input"
@@ -1071,7 +1071,7 @@
     },
     {
       "path": "standalone/bd2-equipment-assistant/README.md",
-      "sha256": "3d8ee7a0591c1af3a021f5d4e548ddec03e81fe815442ac0e6aa713d0abb7722",
+      "sha256": "f08efc6d427a8d80a31ad341d3cc19083e4fe8f72f79911d6c68918642efa0ca",
       "bytes": 6997,
       "reasons": [
         "build input"
@@ -1343,7 +1343,7 @@
     },
     {
       "path": "standalone/bd2-fiend-hunter/Directory.Build.props",
-      "sha256": "a1f447faadcf65a0a8b6ef853911eb74d9a8a7c9f2ab6f50cc52b05c7e2ecc2c",
+      "sha256": "6f43235afe2753a4df916f7d70994b7a1e0617132485cb67b22515679a1bc2c2",
       "bytes": 271,
       "reasons": [
         "build input"
@@ -1479,7 +1479,7 @@
     },
     {
       "path": "standalone/bd2-fiend-hunter/README.en.md",
-      "sha256": "836b417caf7272e8ec06a15aaaf5da48e2cd857a83cde5fe6e33bb4fd842b7ab",
+      "sha256": "c5c14484d506fd2467f603625cf6cb1e377805ab398d7a6cc3d9a4669de7ea27",
       "bytes": 5022,
       "reasons": [
         "build input"
@@ -1487,7 +1487,7 @@
     },
     {
       "path": "standalone/bd2-fiend-hunter/README.md",
-      "sha256": "c35eb242df71e0368c42d4da9f756dfb1c04f723746e8c77a045f62844fdec31",
+      "sha256": "6a6e9d96e2aa547fb8b5dbbbc9ad09ffaf2477d83bba35b42471ef752f7405d2",
       "bytes": 4454,
       "reasons": [
         "build input"
@@ -1655,7 +1655,7 @@
     },
     {
       "path": "standalone/bd2-fishing/compatibility/HookCompiler.cs",
-      "sha256": "38cd6985190cf91c811b9ac2f055cad1104f0e26cf008909158fb4d5ab016d16",
+      "sha256": "d01b88f4dee27ce9cf36bca0bfedb4c449a13295e570e22db532a40aecdc890c",
       "bytes": 9350,
       "reasons": [
         "build input"
@@ -1783,7 +1783,7 @@
     },
     {
       "path": "standalone/bd2-fishing/desktop/FishingWindow.xaml.cs",
-      "sha256": "4b70a9463e8b09285c2bc76a45bf6fd5cd5c847e8acb92e7d82322c9057f99dd",
+      "sha256": "5828493674d4923ef9f123e2fbb215e40f0c7ef31f843889ed95b0b0c7f1c451",
       "bytes": 10289,
       "reasons": [
         "build input"
@@ -1799,7 +1799,7 @@
     },
     {
       "path": "standalone/bd2-fishing/desktop/Smoke.cs",
-      "sha256": "46dac08fa53f76f25035d5d8e8b8b96baca8fccc7adb7b555fbb3fe982fcd6b8",
+      "sha256": "43a4eebd5c3304051f550410b15e0dac77242c654a011af60a180b484e1dfa2d",
       "bytes": 12606,
       "reasons": [
         "build input"
@@ -1815,7 +1815,7 @@
     },
     {
       "path": "standalone/bd2-fishing/Directory.Build.props",
-      "sha256": "7ccfd657297eeccdd14ebd8a13bc862ad426260c89fef3fceeac3ab49cc90fc1",
+      "sha256": "5b9c506ebe6065df500bce2c517ec20765e2dc39bdee56fd1a2ba23bbfa441fc",
       "bytes": 239,
       "reasons": [
         "build input"
@@ -1831,7 +1831,7 @@
     },
     {
       "path": "standalone/bd2-fishing/hook/FishingBait.cs",
-      "sha256": "32e593d95f84f879c05504968db50f6af6ffd05e21ab739e10da1bb24e641d04",
+      "sha256": "cc7c1751aa94d61230b804a479a27490b3f88b7049924216c5f37a5696d83e54",
       "bytes": 5723,
       "reasons": [
         "build input"
@@ -1855,7 +1855,7 @@
     },
     {
       "path": "standalone/bd2-fishing/hook/FishingInventory.cs",
-      "sha256": "0ca7b8375e28fbe53a19652b794742c8a56ab758e723f56162a28b1e86b3edea",
+      "sha256": "26cc302c85996a43883c4e8623d64e2f20847bf752cc2ce7d6655b13ca34a8cb",
       "bytes": 10771,
       "reasons": [
         "build input"
@@ -1879,7 +1879,7 @@
     },
     {
       "path": "standalone/bd2-fishing/hook/FishingNetwork.cs",
-      "sha256": "fef5f2cd9079823777656834a0c1c636c8b1692b47648f7ba440ac4be52e6bbb",
+      "sha256": "9512332e9fb47c26080ad20baba5426527f0d45487252569bc5bc9939d8b2053",
       "bytes": 6762,
       "reasons": [
         "build input"
@@ -1911,7 +1911,7 @@
     },
     {
       "path": "standalone/bd2-fishing/hook/RuntimeEngine.cs",
-      "sha256": "27bec6a104478971349a4bcf7331d2e32371bd444de7a98b0eddcabb881480a6",
+      "sha256": "2bfcd5cb16ccee8ee86764d3c22b60147d85aef20bf1e616003931f9823a968d",
       "bytes": 18462,
       "reasons": [
         "build input"
@@ -2007,7 +2007,7 @@
     },
     {
       "path": "standalone/bd2-fishing/localization/en-US.json",
-      "sha256": "a6f2e567e7c898c7fbeb51d465d51bc6f8f3e6a9f6e92c320600f07e2fac3b31",
+      "sha256": "3b72968dd3c39f9e20a9d99ca15d6bd014592b4cd756d1dfa4f3fcabc5ebc547",
       "bytes": 24975,
       "reasons": [
         "build input"
@@ -2023,7 +2023,7 @@
     },
     {
       "path": "standalone/bd2-fishing/localization/zh-CN.json",
-      "sha256": "dc65b5346264cd8e61ee44ed91819995ae79b470249d93467609c24dfe998cdf",
+      "sha256": "c4f2ad98c8f21b68f51c2e4ce763bf1f0f6f08df51ffe9e9399c5caffdbba039",
       "bytes": 24239,
       "reasons": [
         "build input"
@@ -2031,7 +2031,7 @@
     },
     {
       "path": "standalone/bd2-fishing/README.en.md",
-      "sha256": "cb2648f279644032c53dbaaf17a23ae7cc9b9c3fe66801c1cc5170e2f90d9431",
+      "sha256": "4072d4fd4fe1b435439222e2ffc0290dc7d56d387968fc92792192d6970fae56",
       "bytes": 7912,
       "reasons": [
         "build input"
@@ -2039,7 +2039,7 @@
     },
     {
       "path": "standalone/bd2-fishing/README.md",
-      "sha256": "07a080096ba17688b13fb1977767a4bfaa86e378d4e095b1db434e570bf2577b",
+      "sha256": "d1bb325d62b1e6df4d697e6b40686b3514c59aecc2da7f76c00ee1828b3617df",
       "bytes": 7973,
       "reasons": [
         "build input"
@@ -2055,7 +2055,7 @@
     },
     {
       "path": "standalone/bd2-fishing/shared/FishingBaitProgress.cs",
-      "sha256": "65ac2155468b51e91e6451e6f23e6ea80de617f3253d9df2ab74bf232706ebf6",
+      "sha256": "e8ff25a4b3863afb3c6fcca16bfe311170a61a77037555da14e6f7e12e2dbba1",
       "bytes": 1806,
       "reasons": [
         "build input"
@@ -2063,7 +2063,7 @@
     },
     {
       "path": "standalone/bd2-fishing/shared/FishingIdentity.cs",
-      "sha256": "dd00b5839de3476ddd87a35851b4992d68c38c9ec792c562f4e1652151de30f9",
+      "sha256": "691856615cf0c700d92f9ce718e32fa72ebb367cf54ee2f6c1f5d9c5b19e87af",
       "bytes": 6541,
       "reasons": [
         "build input"
@@ -2071,7 +2071,7 @@
     },
     {
       "path": "standalone/bd2-fishing/shared/FishingMapRenewal.cs",
-      "sha256": "28c47557ea7979f4ca07dcd51daacaa7bd157d4a712442837d2fe6310108eb50",
+      "sha256": "5aa5d3f5634511e7e1242470a49185077f9be38cf3e448d2012629b81f8f2bb1",
       "bytes": 4238,
       "reasons": [
         "build input"
@@ -2079,7 +2079,7 @@
     },
     {
       "path": "standalone/bd2-fishing/shared/FishingPolicy.cs",
-      "sha256": "5330ddae48d91e454c3f3738e4e2037658e83de7815eed559b8bb238503b787f",
+      "sha256": "23dff76b27eed6d44d7e694d5b84f977d3ad85eed5ce0ee5852c5e9ec8ec223f",
       "bytes": 8991,
       "reasons": [
         "build input"
@@ -2095,7 +2095,7 @@
     },
     {
       "path": "standalone/bd2-fishing/shared/FishingSale.cs",
-      "sha256": "e5fbc9ff7c3d33742c2530fb24d43102c42d2c5b782b6bbb550f10a035269af2",
+      "sha256": "eaf295300d0239eb36cf660d23c187b2141425c1f525876ba1741ecdedf56e65",
       "bytes": 7881,
       "reasons": [
         "build input"
@@ -2119,7 +2119,7 @@
     },
     {
       "path": "standalone/bd2-fishing/shared/FishingUnlockProgress.cs",
-      "sha256": "f885a4e9fc0af618f8a01ca6b9cf15f5b62433953545190d14cd883137e82946",
+      "sha256": "efa9c3db2258b3147d6aa23d2b99be452fedfa345bc47b01ee678e67a3965de1",
       "bytes": 1575,
       "reasons": [
         "build input"
@@ -2231,7 +2231,7 @@
     },
     {
       "path": "standalone/bd2-infinite-gacha/compatibility/HookCompiler.cs",
-      "sha256": "1c97ef8e52c5b713d15285fed0ac174e36d36523c3362b8478eaee027e6ca633",
+      "sha256": "7a5a753b22094e47b6bd75c80248315edb9e8f40c2fba8dc8fc606c38cda1c41",
       "bytes": 7330,
       "reasons": [
         "build input"
@@ -2423,7 +2423,7 @@
     },
     {
       "path": "standalone/bd2-infinite-gacha/Directory.Build.props",
-      "sha256": "6466774163165e6ad41c7f795419644e99a9999dd969d171f68f14157bea6905",
+      "sha256": "56a3a2b434f93f632ee9b010fc00299ff1300d9ee220f25d566f45523f6bce37",
       "bytes": 205,
       "reasons": [
         "build input"
@@ -2447,7 +2447,7 @@
     },
     {
       "path": "standalone/bd2-infinite-gacha/hook/RuntimeEngine.cs",
-      "sha256": "373338a29dab547bb1c8ddb2962ae9fbd58bdaa1255c8e3d006143eec5adaaa1",
+      "sha256": "78cb3c495a7603800ef993182cba5935ed1c5e71ad3cf83b1efea769ad5ef836",
       "bytes": 13527,
       "reasons": [
         "build input"
@@ -2543,7 +2543,7 @@
     },
     {
       "path": "standalone/bd2-infinite-gacha/localization/en-US.json",
-      "sha256": "2259dde5c0074634d39e1f240148940f0626fc7fb183a5286451d3ea2107f2ec",
+      "sha256": "abe5e39166f2320a693b6046b57fbb3705b941a64d3f3c2d5754f1e320a08ef9",
       "bytes": 16232,
       "reasons": [
         "build input"
@@ -2559,7 +2559,7 @@
     },
     {
       "path": "standalone/bd2-infinite-gacha/localization/zh-CN.json",
-      "sha256": "16bf401298c13d5a717aceb4b11f7c1d3185b072569279f841bc4e37fd75f0cb",
+      "sha256": "bab45dd388e98cb1eff54cee513e44afb8c44f9a61a5115d4410bd599c739751",
       "bytes": 15812,
       "reasons": [
         "build input"
@@ -2567,7 +2567,7 @@
     },
     {
       "path": "standalone/bd2-infinite-gacha/README.en.md",
-      "sha256": "c6d4b5f2a986b7ccec2b5fee59f206a5d4d0acf0375cb03bb054e227c99d587b",
+      "sha256": "2b808d77120d21c63efe7f46676a0a36bc6300c11616bc42d19b8aa27690f8ec",
       "bytes": 8903,
       "reasons": [
         "build input"
@@ -2575,7 +2575,7 @@
     },
     {
       "path": "standalone/bd2-infinite-gacha/README.md",
-      "sha256": "3cef3caccfda1a10cd0e9194058209da2b8524dc6b9399f568c757913d21f8d7",
+      "sha256": "2fa2162a52e2b587f92d10e4266677e7c28762ea46663babf6b14f348943e2ae",
       "bytes": 7993,
       "reasons": [
         "build input"
@@ -2583,7 +2583,7 @@
     },
     {
       "path": "standalone/bd2-infinite-gacha/shared/AutomationMachine.cs",
-      "sha256": "89ddffa8708d4ede925fc5eaf0cd501d0ba32848f4e0a2aa48ab69e585b7830c",
+      "sha256": "8b665c318aefc28cc7295a39c0c52d1e07defb5f2b4f92f61dd80ca6add8da67",
       "bytes": 4270,
       "reasons": [
         "build input"
@@ -2591,7 +2591,7 @@
     },
     {
       "path": "standalone/bd2-infinite-gacha/shared/Contracts.cs",
-      "sha256": "0cbfd68d9e18b2e0361b53eb9a66033717a2d09f120a186b2b42aa936c5b31cb",
+      "sha256": "df1d8bafe76c92e3942fda791e88c11ca9475e4096b751322ac03eedcdf45d63",
       "bytes": 7503,
       "reasons": [
         "build input"
@@ -2823,7 +2823,7 @@
     },
     {
       "path": "standalone/bd2-rhythm/Directory.Build.props",
-      "sha256": "40d39b4631590c55e8e4f775627a6c55c1a076cd61aa1e9ac69421084cef5d6c",
+      "sha256": "55f11f1ed1c458919e1b77f338107d30cd0b9a60683f4b59f792201f2a556c71",
       "bytes": 205,
       "reasons": [
         "build input"
@@ -2975,7 +2975,7 @@
     },
     {
       "path": "standalone/bd2-rhythm/README.en.md",
-      "sha256": "0cc9115ca8872ed044837d2265f042f7ee80fea6dd246cc79f927cf3350d18ff",
+      "sha256": "536ab6b38364148b8682718de2fcc748a6ce0b844eeab3dd8d7c93393a1497a3",
       "bytes": 6346,
       "reasons": [
         "build input"
@@ -2983,7 +2983,7 @@
     },
     {
       "path": "standalone/bd2-rhythm/README.md",
-      "sha256": "df8be02d9d37189e070ddaf2d30735fdcb1aa8519ed186908b85c7147c127de6",
+      "sha256": "01d2ccc84bddd422e101cef744e06eed146d596ed6b8a41e8edcfacfe2a4ada4",
       "bytes": 5698,
       "reasons": [
         "build input"
@@ -3167,8 +3167,8 @@
     },
     {
       "path": "standalone/bd2-secret-vision/core/Files.cs",
-      "sha256": "19c801778c29249e064df884f7f86258c704eccbe38d4754adc233f8d88ef03c",
-      "bytes": 5681,
+      "sha256": "5d626bf9b7dc5c610b21ee6387c789055554db284a71b6d5bcc10d1ca96084a5",
+      "bytes": 5710,
       "reasons": [
         "build input"
       ]
@@ -3295,7 +3295,7 @@
     },
     {
       "path": "standalone/bd2-secret-vision/Directory.Build.props",
-      "sha256": "dc45243ce35d6808f1c0f74561f135a9f5e26693b851483cc41c85c971526a81",
+      "sha256": "a73cae923da8ea6e8e69936a6c009949e860c78df94641b479cea9ec1d8410e5",
       "bytes": 271,
       "reasons": [
         "build input"
@@ -3335,7 +3335,7 @@
     },
     {
       "path": "standalone/bd2-secret-vision/hook/Runtime.cs",
-      "sha256": "c7b84611a3f27286224aca4e4ce104799a6b26016ea0cd9e1739aaf4de1e4004",
+      "sha256": "e654bdd2fa000f6190006ed6320f620ca7cf98ec61b4f8a484a25b38d64658ba",
       "bytes": 45369,
       "reasons": [
         "build input"
@@ -3447,7 +3447,7 @@
     },
     {
       "path": "standalone/bd2-secret-vision/README.en.md",
-      "sha256": "ccca1aff5e1b639fec4a39a82a7aa214eb003bed852026b0261e93ef29c91b25",
+      "sha256": "7c3aca0aec839d38254de7570582202c26be45a77852fda74007ecc8826f8838",
       "bytes": 6756,
       "reasons": [
         "build input"
@@ -3455,7 +3455,7 @@
     },
     {
       "path": "standalone/bd2-secret-vision/README.md",
-      "sha256": "775505fdd4713b30e36164267bb524171a26e7d8da74055eb92af703ad554a81",
+      "sha256": "c5d9c3503b30649b8d65084b79bc274c90311cfe829379d4c9e06d257c640491",
       "bytes": 6064,
       "reasons": [
         "build input"
@@ -3735,7 +3735,7 @@
     },
     {
       "path": "standalone/bd2-sichuan/Directory.Build.props",
-      "sha256": "eea007e4a024412c14dae53d1787585c4b5f6072f0a2fcb8b657015467fb98af",
+      "sha256": "58e95768c726a38b76c110a52923f53e38a88ab144acc53e4a95f266d856b807",
       "bytes": 239,
       "reasons": [
         "build input"
@@ -3767,7 +3767,7 @@
     },
     {
       "path": "standalone/bd2-sichuan/hook/RuntimeEngine.cs",
-      "sha256": "63a2aadaa48c960f90e279e51a40cc2132d329b09aed325431ef280cc9007568",
+      "sha256": "0bb1dd2fdd449568ba0a4cd8f9608cfd4ea67d374219ac7c26ab253705d5c8ff",
       "bytes": 1611,
       "reasons": [
         "build input"
@@ -3783,7 +3783,7 @@
     },
     {
       "path": "standalone/bd2-sichuan/hook/SichuanCapture.cs",
-      "sha256": "638489560c74336a85b46a1c2645d56655969aa9dc1bbe3a44c58d83255e91e9",
+      "sha256": "e104e13681ba47734eabb0272251037f1251d836a0c3d8b6ec9ae0a09abdcc0b",
       "bytes": 15715,
       "reasons": [
         "build input"
@@ -3799,7 +3799,7 @@
     },
     {
       "path": "standalone/bd2-sichuan/hook/SichuanNetworkTrace.cs",
-      "sha256": "4b5f4fa8905934ef9521e144f07995a865d9e238007c49f7d5349b7cbeb8c6c6",
+      "sha256": "559d596b3ce86507748d35f7b9b49fc2e7c4b7568958bb7f4179f1321c52ae42",
       "bytes": 7026,
       "reasons": [
         "build input"
@@ -3895,7 +3895,7 @@
     },
     {
       "path": "standalone/bd2-sichuan/localization/en-US.json",
-      "sha256": "8e28c4794b14a5f1e904058fca166b92aab5b8db97376915d624988c658976d6",
+      "sha256": "abfb1647936d074ef3c5a851121f01a371aa7ca43f39b653061f427d61f5dcb1",
       "bytes": 14236,
       "reasons": [
         "build input"
@@ -3911,7 +3911,7 @@
     },
     {
       "path": "standalone/bd2-sichuan/localization/zh-CN.json",
-      "sha256": "4130df349f0c0dd15c951bd0beab58b35399ab32ead9d950be7619d859afa95b",
+      "sha256": "85359cec6141d0163d7c6cad6c8ee55b0426814b9addb97e284b0d96df2f012c",
       "bytes": 13755,
       "reasons": [
         "build input"
@@ -3919,7 +3919,7 @@
     },
     {
       "path": "standalone/bd2-sichuan/README.en.md",
-      "sha256": "ea20670d987f37a8196e91c14dce0f7782b161f549bcce5e0946c82fc1da9b4e",
+      "sha256": "cc5e0d363d9ddc11c1842594d7f6000a7f926d1721c7a9132bbc22e530a3f2ba",
       "bytes": 6048,
       "reasons": [
         "build input"
@@ -3927,7 +3927,7 @@
     },
     {
       "path": "standalone/bd2-sichuan/README.md",
-      "sha256": "c2cd9cd41f22caa02ce6ac0d414a3672c10417c4de97007667701eeb1b1553c1",
+      "sha256": "c841351b477c1edc33fac5589794bcbdce0ec50002174ea5fe25804bcc137376",
       "bytes": 5331,
       "reasons": [
         "build input"
@@ -4271,7 +4271,7 @@
     },
     {
       "path": "standalone/bd2-territory/Directory.Build.props",
-      "sha256": "4c8cc0a3d5f15879ed68cfdd014c3ac4037863ca88b5adb4e86c3b5a627f3728",
+      "sha256": "4f5a67f207533e64c3c4c2d7bd3202beb07d8006793299fa54c01e2edd9b6a6c",
       "bytes": 281,
       "reasons": [
         "build input"
@@ -4311,7 +4311,7 @@
     },
     {
       "path": "standalone/bd2-territory/hook/RuntimeCooking.cs",
-      "sha256": "2e80a2f538f12cffea555dbcd47fc5a8f94366e18751475a05171b7c49690a03",
+      "sha256": "696bf7ab439b0c47a0a2758d8c70cd017bf7ff51c4da23bc8106044e96b80982",
       "bytes": 4192,
       "reasons": [
         "build input"
@@ -4319,7 +4319,7 @@
     },
     {
       "path": "standalone/bd2-territory/hook/RuntimeEngine.cs",
-      "sha256": "72fb5b77b8d803eda3093f33c4bfa879159b691cd9cfed6bf8a2e1a21f8afcac",
+      "sha256": "2ecbe272a32ff08ac9abd37ed00055da9f9796db3edea382ea7e527d566eb305",
       "bytes": 51793,
       "reasons": [
         "build input"
@@ -4439,7 +4439,7 @@
     },
     {
       "path": "standalone/bd2-territory/hook/TerritoryNetwork.cs",
-      "sha256": "056fa4a8b4d24235cab260166f204e50fdaa29e0ab02110c92df8cfca0269008",
+      "sha256": "15460c2418d0ef179bb083820cbc097971b10aa2a0ff6f76175b95daa4fb58c2",
       "bytes": 14568,
       "reasons": [
         "build input"
@@ -4535,7 +4535,7 @@
     },
     {
       "path": "standalone/bd2-territory/localization/en-US.json",
-      "sha256": "244c13542486e8dfdfdea3c1648bb388078e5139416a1d37e8af5686f3849c91",
+      "sha256": "1880e769ead005409b146d01960411978f3d7cd716e93a4c5b22b77d605fca98",
       "bytes": 28933,
       "reasons": [
         "build input"
@@ -4551,7 +4551,7 @@
     },
     {
       "path": "standalone/bd2-territory/localization/zh-CN.json",
-      "sha256": "f80ec1db9190eda50fd0011879b334fcf6ae40c4e45f51561796dc3e764bc713",
+      "sha256": "60d6eef84ecf05c88ed496a94d8b7088f9f1435703ad68f61e73571c4b0b4f7c",
       "bytes": 27337,
       "reasons": [
         "build input"
@@ -4559,7 +4559,7 @@
     },
     {
       "path": "standalone/bd2-territory/README.en.md",
-      "sha256": "034c34fa159a55710688c1d429d9aeef6c495cb417de88c610cfd5622325b0ff",
+      "sha256": "08508e58f26ebea840b6870099157fdd7b3be2c3821466677810d18e2d6a177d",
       "bytes": 12188,
       "reasons": [
         "build input"
@@ -4567,7 +4567,7 @@
     },
     {
       "path": "standalone/bd2-territory/README.md",
-      "sha256": "382e4e6cceddecf408083a1fe2e6f35eaffd3deab1f5c96cb3edddd425e6c2c5",
+      "sha256": "413e6affccbb5aaca8ddd913e0f2475338beefb9bf1c3b15e763e31506741660",
       "bytes": 10250,
       "reasons": [
         "build input"
@@ -4647,7 +4647,7 @@
     },
     {
       "path": "standalone/bd2-territory/shared/PlantingTransaction.cs",
-      "sha256": "0e3f3725b33f05e4657a8288a2f5aba7929b5bd3945170e1ffa03f069027b590",
+      "sha256": "7c87b39499e5ea3c91d1db2adf4d6fa7baadb5dc64c24b9dcf862bb59f1a282b",
       "bytes": 4280,
       "reasons": [
         "build input"
@@ -4663,7 +4663,7 @@
     },
     {
       "path": "standalone/bd2-territory/shared/RecipeBatchPlanner.cs",
-      "sha256": "725202e032cdfc9b0712cdf255a32e08a9de32ba53e5fdbab9bd132bdc6829f7",
+      "sha256": "948958b235d9bc2d0a202d7544cca7fc16cf127da7ce4c5868ec9b7b8aadd484",
       "bytes": 4765,
       "reasons": [
         "build input"
@@ -6215,7 +6215,7 @@
     },
     {
       "path": "Directory.Build.props",
-      "sha256": "868a317b839ba373b888d182342e7eaae6bf50401373ba5c1c43690baa1edf46",
+      "sha256": "4edb906b5830012d7a52700da66b104111c68f5a38875f63da27c26040d36b35",
       "bytes": 575,
       "reasons": [
         "build input"
@@ -7612,6 +7612,94 @@
       "reasons": [
         "build input"
       ]
+    },
+    {
+      "path": "standalone/bd2-fishing/compatibility/RecoveryBindings.cs",
+      "sha256": "55fd395344f82824a7c51a2ce85ec532e18ad2e0c1d0a10c1c64c65483c7ccf1"
+    },
+    {
+      "path": "standalone/bd2-territory/hook/RuntimeRecovery.cs",
+      "sha256": "a5be0eb073434d099666819ddbf204a0c9bb6968bd146fcad292a03fd7626741"
+    },
+    {
+      "path": "standalone/bd2-fishing/ipc/common/RequestObservation.cs",
+      "sha256": "1da48a63ae6868716b1830251a949a53f6182373facdd93eb8f7be17b49803f7"
+    },
+    {
+      "path": "standalone/bd2-fishing/ipc/runtime/NativeNetworkWatch.cs",
+      "sha256": "4a36fa7d0fbcf21e74d4b261a8f304e69ae6818a04d4d35b3612931a2940e7f6"
+    },
+    {
+      "path": "standalone/bd2-territory/ipc/common/RequestObservation.cs",
+      "sha256": "1da48a63ae6868716b1830251a949a53f6182373facdd93eb8f7be17b49803f7"
+    },
+    {
+      "path": "standalone/bd2-territory/ipc/runtime/NativeNetworkWatch.cs",
+      "sha256": "4a36fa7d0fbcf21e74d4b261a8f304e69ae6818a04d4d35b3612931a2940e7f6"
+    },
+    {
+      "path": "standalone/bd2-apostle-defense/ipc/common/RequestObservation.cs",
+      "sha256": "1da48a63ae6868716b1830251a949a53f6182373facdd93eb8f7be17b49803f7"
+    },
+    {
+      "path": "standalone/bd2-apostle-defense/ipc/runtime/NativeNetworkWatch.cs",
+      "sha256": "4a36fa7d0fbcf21e74d4b261a8f304e69ae6818a04d4d35b3612931a2940e7f6"
+    },
+    {
+      "path": "standalone/bd2-equipment-assistant/ipc/common/RequestObservation.cs",
+      "sha256": "1da48a63ae6868716b1830251a949a53f6182373facdd93eb8f7be17b49803f7"
+    },
+    {
+      "path": "standalone/bd2-equipment-assistant/ipc/runtime/NativeNetworkWatch.cs",
+      "sha256": "4a36fa7d0fbcf21e74d4b261a8f304e69ae6818a04d4d35b3612931a2940e7f6"
+    },
+    {
+      "path": "standalone/bd2-fiend-hunter/ipc/common/RequestObservation.cs",
+      "sha256": "1da48a63ae6868716b1830251a949a53f6182373facdd93eb8f7be17b49803f7"
+    },
+    {
+      "path": "standalone/bd2-fiend-hunter/ipc/runtime/NativeNetworkWatch.cs",
+      "sha256": "4a36fa7d0fbcf21e74d4b261a8f304e69ae6818a04d4d35b3612931a2940e7f6"
+    },
+    {
+      "path": "standalone/bd2-infinite-gacha/ipc/common/RequestObservation.cs",
+      "sha256": "1da48a63ae6868716b1830251a949a53f6182373facdd93eb8f7be17b49803f7"
+    },
+    {
+      "path": "standalone/bd2-infinite-gacha/ipc/runtime/NativeNetworkWatch.cs",
+      "sha256": "4a36fa7d0fbcf21e74d4b261a8f304e69ae6818a04d4d35b3612931a2940e7f6"
+    },
+    {
+      "path": "standalone/bd2-rhythm/ipc/common/RequestObservation.cs",
+      "sha256": "1da48a63ae6868716b1830251a949a53f6182373facdd93eb8f7be17b49803f7"
+    },
+    {
+      "path": "standalone/bd2-rhythm/ipc/runtime/NativeNetworkWatch.cs",
+      "sha256": "4a36fa7d0fbcf21e74d4b261a8f304e69ae6818a04d4d35b3612931a2940e7f6"
+    },
+    {
+      "path": "standalone/bd2-secret-vision/ipc/common/RequestObservation.cs",
+      "sha256": "1da48a63ae6868716b1830251a949a53f6182373facdd93eb8f7be17b49803f7"
+    },
+    {
+      "path": "standalone/bd2-secret-vision/ipc/runtime/NativeNetworkWatch.cs",
+      "sha256": "4a36fa7d0fbcf21e74d4b261a8f304e69ae6818a04d4d35b3612931a2940e7f6"
+    },
+    {
+      "path": "standalone/bd2-sichuan/ipc/common/RequestObservation.cs",
+      "sha256": "1da48a63ae6868716b1830251a949a53f6182373facdd93eb8f7be17b49803f7"
+    },
+    {
+      "path": "standalone/bd2-sichuan/ipc/runtime/NativeNetworkWatch.cs",
+      "sha256": "4a36fa7d0fbcf21e74d4b261a8f304e69ae6818a04d4d35b3612931a2940e7f6"
+    },
+    {
+      "path": "src/Shared/Ipc/common/RequestObservation.cs",
+      "sha256": "1da48a63ae6868716b1830251a949a53f6182373facdd93eb8f7be17b49803f7"
+    },
+    {
+      "path": "src/Shared/Ipc/runtime/NativeNetworkWatch.cs",
+      "sha256": "4a36fa7d0fbcf21e74d4b261a8f304e69ae6818a04d4d35b3612931a2940e7f6"
     }
   ],
   "publicReleaseApproved": false,

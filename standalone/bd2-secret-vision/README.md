@@ -12,14 +12,14 @@
 
 ## 下载
 
-源码版本 **0.1.7**，采用单个 EXE、程序内简体中文／English 切换。
+当前版本 **0.1.8**，采用单个 EXE、程序内简体中文／English 切换。
 
 | 版本 | 运行环境 | 建议 |
 | --- | --- | --- |
 | **Portable** | 内置 .NET 运行时 | 首次使用，下载即用 |
 | **Lite** | 需要 [.NET Desktop Runtime 8 x64](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) | 已安装运行时，下载更小 |
 
-从 [v0.1.6 发布页](https://github.com/MadestSamurai/bd2-secret-vision/releases/tag/v0.1.6) 下载独立 EXE，或附中英文说明及许可证的 ZIP。使用 `SHA256SUMS.txt` 校验文件。仅支持 Windows x64；运行不依赖 Python、开发 SDK、工作台或其他 BD2 工具。Lite 需要 **Desktop Runtime**，普通 .NET Runtime 不够。
+从 [v0.1.8 发布页](https://github.com/MadestSamurai/bd2-secret-vision/releases/tag/v0.1.8) 下载独立 EXE，或附中英文说明及许可证的 ZIP。使用 `SHA256SUMS.txt` 校验文件。仅支持 Windows x64；运行不依赖 Python、开发 SDK、工作台或其他 BD2 工具。Lite 需要 **Desktop Runtime**，普通 .NET Runtime 不够。
 
 ## 快速开始
 

@@ -12,7 +12,7 @@ A standalone fishing assistant for the BrownDust II Windows client. Uses the gam
 
 ## Download
 
-Current version: **0.4.4**. Both editions have the same features and include Simplified Chinese / English.
+Current version: **0.4.5**. Both editions have the same features and include Simplified Chinese / English.
 
 | Edition | Runtime requirement | Recommended for |
 | --- | --- | --- |

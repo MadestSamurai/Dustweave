@@ -12,7 +12,7 @@ namespace BD2Sichuan.Runtime
     // Observes the existing client requests and handlers without replacing callbacks or responses.
     internal sealed class SichuanNetworkTrace:IDisposable
     {
-        private static SichuanNetworkTrace current;
+        private static SichuanNetworkTrace current;private readonly BD2.LocalIpc.NativeNetworkWatch network=new BD2.LocalIpc.NativeNetworkWatch();private bool nativeIdle,observedSend;
         private readonly Harmony harmony=new Harmony("bd2.standalone.sichuan.network-trace");
         private readonly object sync=new object();
         private readonly Queue<SichuanNetworkEvent> events=new Queue<SichuanNetworkEvent>();
@@ -20,11 +20,12 @@ namespace BD2Sichuan.Runtime
         private readonly Dictionary<string,DateTime> awaiting=new Dictionary<string,DateTime>();
         private Timer writer;private int writing;private bool disposed;
         private string error="";
-        internal bool Waiting {get{lock(sync)return awaiting.Count>0;}}
+        internal bool Waiting {get{lock(sync)return awaiting.Count>0||observedSend&&!nativeIdle;}} internal void Reconcile(){bool idle=network.Idle;lock(sync)nativeIdle=idle;}
         internal string LastState {get;private set;}="尚未观察到连连看请求";
+        internal static void ReconcileCurrent(){current?.Reconcile();}
         internal void Start(MethodInfo send)
         {
-            current=this;
+            current=this;network.Start(typeof(BDNetwork.NetworkManager),"bd2.sichuan.network-watch");
             try
             {
                 foreach(var pair in ResolveResponseHandlers())
@@ -60,7 +61,7 @@ namespace BD2Sichuan.Runtime
                 string kind=start!=null?"MiniGameSichuanStart":"MiniGameSichuanEnd";
                 lock(c.sync)
                 {
-                    c.awaiting[kind]=DateTime.UtcNow;c.LastState=kind+" 已发送，等待服务器";
+                    c.observedSend=true;c.nativeIdle=false;c.awaiting[kind]=DateTime.UtcNow;c.LastState=kind+" 已发送，等待服务器";
                     c.events.Enqueue(new SichuanNetworkEvent{AtUtc=DateTime.UtcNow.ToString("O"),Kind="request",Message=kind,
                         Count=start!=null?start.BlockInfo.Count:end.TurnInfo.Count,ForceEnd=end!=null&&end.IsForceEnd});
                 }
@@ -86,7 +87,7 @@ namespace BD2Sichuan.Runtime
                 if(disposed)return;SichuanNetworkEvent[] list;
                 lock(sync)
                 {
-                    foreach(var pair in awaiting.ToArray())if(DateTime.UtcNow-pair.Value>TimeSpan.FromSeconds(30))
+                    foreach(var pair in awaiting.ToArray())if(nativeIdle&&DateTime.UtcNow-pair.Value>TimeSpan.FromSeconds(BD2.LocalIpc.RequestObservation.TimeoutSeconds))
                     {awaiting.Remove(pair.Key);LastState=pair.Key+" 超过 30 秒未观察到响应";events.Enqueue(new SichuanNetworkEvent{AtUtc=DateTime.UtcNow.ToString("O"),Kind="response_timeout",Message=pair.Key});}
                     list=events.ToArray();events.Clear();
                 }
@@ -103,7 +104,7 @@ namespace BD2Sichuan.Runtime
             catch(Exception e){LocalStorage.Log("Sichuan network trace write: "+e.Message);}
             finally{Interlocked.Exchange(ref writing,0);}
         }
-        public void Dispose(){disposed=true;current=null;writer?.Dispose();harmony.UnpatchAll("bd2.standalone.sichuan.network-trace");}
+        public void Dispose(){disposed=true;current=null;network.Dispose();writer?.Dispose();harmony.UnpatchAll("bd2.standalone.sichuan.network-trace");}
     }
     public sealed class SichuanNetworkEvent
     {

@@ -1,1 +1,1 @@
-<Project><PropertyGroup><Version>0.3.6</Version><RestorePackagesWithLockFile>true</RestorePackagesWithLockFile><Deterministic>true</Deterministic><DebugType>embedded</DebugType></PropertyGroup></Project>
+<Project><PropertyGroup><Version>0.3.7</Version><RestorePackagesWithLockFile>true</RestorePackagesWithLockFile><Deterministic>true</Deterministic><DebugType>embedded</DebugType></PropertyGroup></Project>

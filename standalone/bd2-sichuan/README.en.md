@@ -12,7 +12,7 @@ A standalone tile-matching assistant for the BrownDust II Windows client. Reads 
 
 ## Download
 
-Source version: **0.3.2**. Both editions have the same features and include Simplified Chinese / English.
+Current version: **0.3.3**. Both editions have the same features and include Simplified Chinese / English.
 
 | Edition | Runtime requirement | Recommended for |
 | --- | --- | --- |

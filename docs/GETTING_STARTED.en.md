@@ -6,7 +6,7 @@
 
 - Windows x64 with a working native BrownDust II PC client and a normal game login.
 - A complete Dustweave package. Portable includes the runtime; Lite requires .NET 8 Desktop Runtime x64.
-- This is still a private preview with no GitHub Release assets. Use a maintainer-provided preview package. GitHub's Source code archive is not an application package.
+- The repository remains private. Users with access can download complete packages from Releases. GitHub's Source code archive is not an application package.
 
 Run `BD2DailyAssistant.exe`. Keep the accompanying `data`, `flows`, `connection` and other package directories. A source-build output folder is for development and is not a complete distribution.
 

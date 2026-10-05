@@ -9,7 +9,7 @@ namespace BD2Territory.Runtime
  // Observe the original Send and callbacks; no packet replacement, forged requests, or reward mutation.
  internal sealed class TerritoryNetwork:IDisposable
  {
-  private sealed class Pending {public LifeInfoRequest Info;public SalesProgress InfoIntent;public LifeShopSellRequest Sale;public SalesProgress SaleIntent;public LifeCookingRequest Cook;public CookingProgress CookIntent;internal MethodInfo Method;internal object Target;internal DateTime At;internal string Kind;internal LifeWorldObjectPositionSaveRequest Position;internal LifeWorldObjectPlaceSaveRequest Place;internal LifeSeedingRequest Seed;internal LifeWorldObjectGatheringRequest Gather;internal int Sequence;internal RecipeBatchProgress Intent;}
+  private sealed class Pending {public string RecoveryAccount;public LifeInfoRequest Info;public SalesProgress InfoIntent;public LifeShopSellRequest Sale;public SalesProgress SaleIntent;public LifeCookingRequest Cook;public CookingProgress CookIntent;internal MethodInfo Method;internal object Target;internal DateTime At;internal string Kind;internal LifeWorldObjectPositionSaveRequest Position;internal LifeWorldObjectPlaceSaveRequest Place;internal LifeSeedingRequest Seed;internal LifeWorldObjectGatheringRequest Gather;internal int Sequence;internal RecipeBatchProgress Intent;}
   private static TerritoryNetwork current;
   private readonly Harmony patch=new Harmony("bd2.territory.network");private readonly object sync=new object();
   private readonly HashSet<string> harvested=new HashSet<string>();
@@ -18,6 +18,9 @@ namespace BD2Territory.Runtime
   private Dictionary<MethodBase,string> handlers;private readonly List<Pending> pending=new List<Pending>();
   internal volatile string LayoutRejectedKey="";
   internal volatile string Error="",Last="尚无领地请求";internal int GatherReplies,ReceivedItems;internal volatile PlantingReply LastPlantReply;private RecipeBatchProgress armed;
+  private string recoveryArm="";private long lastRecoveryRequest;
+  internal sealed class RecoveryEvidence {public long RequestedTicks;public string Account;public LifeInfoResponse Snapshot;} internal volatile RecoveryEvidence Recovery;
+  internal volatile bool RecoveryNeeded;
   private SalesProgress infoArm;internal volatile SalesSnapshot LastSalesSnapshot;
   internal bool NativeBusy{get{var manager=(BDNetwork.NetworkManager)TerritoryBindings.Invoke("Sales.Network");return manager==null||(bool)TerritoryBindings.InvokeOn("Sales.NetworkBusy",manager)||(int)TerritoryBindings.InvokeOn("Sales.NetworkBatchCount",manager)>0;}}
   internal bool NonSalesWaiting{get{lock(sync)return pending.Any(p=>p.SaleIntent==null&&p.InfoIntent==null);}}
@@ -44,20 +47,24 @@ namespace BD2Territory.Runtime
    foreach(var t in new[]{typeof(LifeSeedingResponse),typeof(LifeWorldObjectGatheringResponse),typeof(LifeWorldObjectPlaceSaveResponse),typeof(LifeWorldObjectPositionSaveResponse),typeof(LifeCookingResponse),typeof(LifeShopSellResponse),typeof(LifeInfoResponse)})
    {var matched=methods.Where(m=>TerritoryIl.CallsParser(m,t)).ToArray();if(matched.Length==0)throw new InvalidOperationException("缺少领地回执 "+t.Name);foreach(var m in matched)handlers.Add(m,t.Name.Replace("Response",""));}
    var send=typeof(BDNetwork.NetworkManager).GetMethods(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance).Single(m=>m.Name=="Send"&&m.GetParameters().Length==6&&m.GetParameters()[0].ParameterType==typeof(Google.Protobuf.IMessage));
-   try{foreach(var m in handlers.Keys)patch.Patch(m,postfix:new HarmonyMethod(typeof(TerritoryNetwork),nameof(Response)));patch.Patch(send,prefix:new HarmonyMethod(typeof(TerritoryNetwork),nameof(Sent)));}catch{Dispose();throw;}
+   try{foreach(var m in handlers.Keys)patch.Patch(m,postfix:new HarmonyMethod(typeof(TerritoryNetwork),m.IsStatic?nameof(StaticResponse):nameof(Response)));patch.Patch(send,prefix:new HarmonyMethod(typeof(TerritoryNetwork),nameof(Sent)));}catch{Dispose();throw;}
   }
   private static void Sent(object __0,object __1)
   {
    var n=current;if(n==null)return;
-   try{var seed=__0 as LifeSeedingRequest;var gather=__0 as LifeWorldObjectGatheringRequest;var place=__0 as LifeWorldObjectPlaceSaveRequest;var position=__0 as LifeWorldObjectPositionSaveRequest;var cook=__0 as LifeCookingRequest;var sale=__0 as LifeShopSellRequest;var info=__0 as LifeInfoRequest;if(seed==null&&gather==null&&place==null&&position==null&&cook==null&&sale==null&&(info==null||n.infoArm==null))return;var cb=__1 as Delegate;if(cb==null)throw new InvalidOperationException("领地请求缺少原生回调");
-    lock(n.sync){if(n.pending.Count>=32)throw new InvalidOperationException("领地待确认请求过多");n.pending.Add(new Pending{Info=info==null?null:info.Clone(),InfoIntent=info==null?null:n.infoArm,Sale=sale==null?null:sale.Clone(),SaleIntent=sale==null?null:n.saleArm,Cook=cook==null?null:cook.Clone(),CookIntent=cook==null?null:n.cookArm,Method=cb.Method,Target=cb.Target,At=DateTime.UtcNow,Kind=info!=null?"LifeInfo":sale!=null?"LifeShopSell":cook!=null?"LifeCooking":seed!=null?"LifeSeeding":place!=null?"LifeWorldObjectPlaceSave":position!=null?"LifeWorldObjectPositionSave":"LifeWorldObjectGathering",Position=position==null?null:position.Clone(),Place=place==null?null:place.Clone(),Seed=seed==null?null:seed.Clone(),Gather=gather==null?null:gather.Clone(),Sequence=info!=null?info.Seq:sale!=null?sale.Seq:cook!=null?cook.Seq:seed!=null?seed.Seq:place!=null?place.Seq:position!=null?position.Seq:gather.Seq,Intent=seed!=null?n.armed:null});if(seed!=null)n.armed=null;if(cook!=null)n.cookArm=null;if(sale!=null){n.saleArm=null;LocalStorage.Log("Territory sale dispatched token="+n.pending.Last().SaleIntent?.Token+" seq="+sale.Seq);}if(info!=null)n.infoArm=null;n.Last="等待领地服务器响应";}
+   try{var seed=__0 as LifeSeedingRequest;var gather=__0 as LifeWorldObjectGatheringRequest;var place=__0 as LifeWorldObjectPlaceSaveRequest;var position=__0 as LifeWorldObjectPositionSaveRequest;var cook=__0 as LifeCookingRequest;var sale=__0 as LifeShopSellRequest;var info=__0 as LifeInfoRequest;if(seed==null&&gather==null&&place==null&&position==null&&cook==null&&sale==null&&(info==null||(n.infoArm==null&&n.recoveryArm.Length==0)))return;var cb=__1 as Delegate;if(cb==null)throw new InvalidOperationException("领地请求缺少原生回调");
+    lock(n.sync){if(n.pending.Count>=128){n.pending.RemoveAt(0);n.RecoveryNeeded=true;LocalStorage.Log("network observer capacity reached; preserving transaction journals");}n.pending.Add(new Pending{RecoveryAccount=info==null?"":n.recoveryArm,Info=info==null?null:info.Clone(),InfoIntent=info==null?null:n.infoArm,Sale=sale==null?null:sale.Clone(),SaleIntent=sale==null?null:n.saleArm,Cook=cook==null?null:cook.Clone(),CookIntent=cook==null?null:n.cookArm,Method=cb.Method,Target=cb.Target,At=DateTime.UtcNow,Kind=info!=null?"LifeInfo":sale!=null?"LifeShopSell":cook!=null?"LifeCooking":seed!=null?"LifeSeeding":place!=null?"LifeWorldObjectPlaceSave":position!=null?"LifeWorldObjectPositionSave":"LifeWorldObjectGathering",Position=position==null?null:position.Clone(),Place=place==null?null:place.Clone(),Seed=seed==null?null:seed.Clone(),Gather=gather==null?null:gather.Clone(),Sequence=info!=null?info.Seq:sale!=null?sale.Seq:cook!=null?cook.Seq:seed!=null?seed.Seq:place!=null?place.Seq:position!=null?position.Seq:gather.Seq,Intent=seed!=null?n.armed:null});if(seed!=null)n.armed=null;if(cook!=null)n.cookArm=null;if(sale!=null){n.saleArm=null;LocalStorage.Log("Territory sale dispatched token="+n.pending.Last().SaleIntent?.Token+" seq="+sale.Seq);}if(info!=null){n.infoArm=null;n.recoveryArm="";}n.Last="等待领地服务器响应";}
    }catch(Exception e){if((__0 is LifeShopSellRequest&&n.saleArm!=null)||(__0 is LifeInfoRequest&&n.infoArm!=null))LocalStorage.Log("Territory sale send observation failed: "+e.GetBaseException().Message);else n.Error=e.GetBaseException().Message;}
   }
-  private static void Response(object __instance,byte[] __0,int __2,bool __result,MethodBase __originalMethod)
+  private static void StaticResponse(byte[] __0,int __2,bool __result,MethodBase __originalMethod){Response(null,__0,__2,__result,__originalMethod);} private static void Response(object __instance,byte[] __0,int __2,bool __result,MethodBase __originalMethod)
   {
    var n=current;if(n==null)return;
    Pending observed=null;
-   try{lock(n.sync){var p=n.pending.FirstOrDefault(x=>x.Method==__originalMethod&&ReferenceEquals(x.Target,__instance));if(p==null)return;observed=p;n.pending.Remove(p);n.Last=p.Kind+" error="+__2+" accepted="+__result;LocalStorage.Log(n.Last);
+   try{lock(n.sync){var matches=n.pending.Where(x=>x.Method==__originalMethod&&ReferenceEquals(x.Target,__instance)).ToArray();if(matches.Length!=1)return;var p=matches[0];observed=p;n.pending.Remove(p);n.Last=p.Kind+" error="+__2+" accepted="+__result;LocalStorage.Log(n.Last);
+    if(!string.IsNullOrEmpty(p.RecoveryAccount)){
+      if(__2==0&&__result){var refreshed=LifeInfoResponse.Parser.ParseFrom(__0);if(refreshed.LifeUserInfo!=null){n.Recovery=new RecoveryEvidence{Snapshot=refreshed,Account=p.RecoveryAccount,RequestedTicks=p.At.Ticks};}}
+      return;
+    }
     if(p.InfoIntent!=null)
     {
      var snapshot=new SalesSnapshot{Token=p.InfoIntent.Token,Account=p.InfoIntent.Account,RequestedTicks=p.At.Ticks,CapturedTicks=DateTime.UtcNow.Ticks,Error=n.Last};
@@ -135,7 +142,23 @@ namespace BD2Territory.Runtime
    }
   }
   internal static string Key(int chunk,LifeWorldObjectDBInfo o)=>chunk+":"+o.ObjectId+":"+o.X+":"+o.Y;
-  internal bool Waiting {get{lock(sync){if(pending.Any(p=>p.SaleIntent==null&&p.InfoIntent==null&&(DateTime.UtcNow-p.At).TotalSeconds>30))Error="领地响应超过 30 秒，结果未知；请检查游戏网络";return pending.Count>0;}}}
+  internal void Reconcile(long now){
+   if(NativeBusy)return;
+   lock(sync){
+    var retired=pending.Where(p=>now-p.At.Ticks>=TimeSpan.FromSeconds(BD2.LocalIpc.RequestObservation.TimeoutSeconds).Ticks).ToArray();
+    foreach(var p in retired)pending.Remove(p);
+    if(retired.Length>0){RecoveryNeeded=true;Last="网络已恢复，正在同步领地状态；不会重复旧操作";LocalStorage.Log("network observer retired="+retired.Length+"; native queues idle; journals retained");}
+   }
+  }
+  internal bool RequestRecovery(long now,string account){
+   if(NativeBusy)return false;
+   lock(sync){
+    if(pending.Count>0||armed!=null||cookArm!=null||saleArm!=null||infoArm!=null||now-lastRecoveryRequest<TimeSpan.FromSeconds(30).Ticks)return false;
+    lastRecoveryRequest=now;recoveryArm=account;Last="正在同步领地库存与农田，恢复后继续";
+   }
+   TerritoryBindings.Invoke("Sales.Refresh",new object[]{null});return true;
+  }
+  internal bool Waiting {get{lock(sync){return pending.Count>0;}}}
   internal void ClearError(){lock(sync){if(pending.Count==0){Error="";LayoutRejectedKey="";}}}
   public void Dispose(){current=null;patch.UnpatchAll("bd2.territory.network");}
  }

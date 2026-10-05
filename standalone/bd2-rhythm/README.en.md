@@ -12,7 +12,7 @@ A standalone rhythm-game assistant for BrownDust II on Windows. It reads the cur
 
 ## Download
 
-Source version: **0.2.2**. Both Simplified Chinese and English are built into the same app; switch in the upper-right corner.
+Current version: **0.2.3**. Both Simplified Chinese and English are built into the same app; switch in the upper-right corner.
 
 | Edition | Runtime requirement | Recommended for |
 | --- | --- | --- |
@@ -72,7 +72,7 @@ Requires Windows, PowerShell and the .NET 8 SDK. From the repository root:
 .\package.ps1 -Locked
 ```
 
-Building and running synthetic-chart tests do not require a game installation, game account or private repository data. Release assets appear in `dist/v0.2.2/`. Optional local-client checks are described in [Development](docs/DEVELOPMENT.md).
+Building and running synthetic-chart tests do not require a game installation, game account or private repository data. Release assets appear in `dist/v0.2.3/`. Optional local-client checks are described in [Development](docs/DEVELOPMENT.md).
 
 [Localization](docs/LOCALIZATION.md) · [Publication style](docs/PUBLICATION_STYLE.md) · [Release notes](docs/RELEASE_NOTES.md)
 

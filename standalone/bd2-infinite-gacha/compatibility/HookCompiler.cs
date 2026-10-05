@@ -51,9 +51,13 @@ public static class HookCompiler
         var preview=(MethodDefinition)BindingResolver.Api(resolved,contract.Apis.Single(a=>a.Role=="Preview"));
         var creates=preview.Body.Instructions.Select(i=>i.Operand).OfType<MethodReference>().Where(m=>m.Name==".ctor").Select(m=>m.DeclaringType.FullName).ToArray();
         if(!creates.Contains("Proto.Net.GachaBuyPreviewRequest")||creates.Any(n=>n.Contains("Request")&&n!="Proto.Net.GachaBuyPreviewRequest"))throw new InvalidOperationException("重复预览接口已改变，拒绝将其用于自动刷新");
+        var helper=preview.DeclaringType;
+        var refresh=helper.Methods.Single(m=>m.IsStatic&&m.ReturnType.FullName=="System.Void"&&m.Parameters.Select(p=>p.ParameterType.FullName).SequenceEqual(new[]{"System.Action"})&&m.HasBody&&m.Body.Instructions.Any(i=>i.Operand is MethodReference call&&call.Name==".ctor"&&call.DeclaringType.FullName=="Proto.Net.GachaInfoRequest"));
+        var refreshed=helper.Methods.Single(m=>m.IsStatic&&m.ReturnType.FullName=="System.Boolean"&&m.Parameters.Select(p=>p.ParameterType.FullName).SequenceEqual(new[]{"System.Byte[]","System.Int32","System.Int32"})&&m.HasBody&&m.Body.Instructions.Any(i=>i.Operand is MethodReference call&&call.Name=="get_Parser"&&call.DeclaringType.FullName=="Proto.Net.GachaInfoResponse"));
+        var recoveryDeclarations=new[]{("Refresh",refresh),("RefreshResponse",refreshed)}.Select(x=>"internal const string "+x.Item1+"Type="+JsonSerializer.Serialize(x.Item2.DeclaringType.FullName)+", "+x.Item1+"Name="+JsonSerializer.Serialize(x.Item2.Name)+";");
         var declarations=contract.Apis.Select(a=>{var m=BindingResolver.Api(resolved,a);return "internal const string "+a.Role+"Type="+JsonSerializer.Serialize(m.DeclaringType.FullName)+", "+a.Role+"Name="+JsonSerializer.Serialize(m.Name)+";";});
         var sources=typeof(HookCompiler).Assembly.GetManifestResourceNames().Where(n=>n.StartsWith("Hook.")).Select(n=>CSharpSyntaxTree.ParseText(Encoding.UTF8.GetString(Resource(n)),path:n)).ToList();
-        sources.Add(CSharpSyntaxTree.ParseText("namespace BD2InfiniteGacha.Runtime { internal static class Names {"+string.Join("\n",declarations)+"} }"));
+        sources.Add(CSharpSyntaxTree.ParseText("namespace BD2InfiniteGacha.Runtime { internal static class Names {"+string.Join("\n",declarations.Concat(recoveryDeclarations))+"} }"));
         sources.Add(CSharpSyntaxTree.ParseText("namespace BD2.LocalIpc { public static class Build { public const string Fingerprint = " + JsonSerializer.Serialize(Fingerprint) + "; } }"));
         var refs=new List<MetadataReference>();foreach(var file in Directory.EnumerateFiles(managed,"*.dll"))try{refs.Add(MetadataReference.CreateFromFile(file));}catch(BadImageFormatException){}
         refs.Add(MetadataReference.CreateFromImage(Resource("BD2InfiniteGacha.Harmony.dll")));

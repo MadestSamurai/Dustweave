@@ -118,6 +118,7 @@ namespace BD2InfiniteGacha
     }
     [DataContract] public class Snapshot
     {
+        public bool NetworkPending{get;set;}public bool ResultReconciled{get;set;}
         [DataMember] public string Runtime=Identity.Runtime,Instance="",Account="",Player="",State="waiting_game",Message="",Owner="",ResultKey="";
         [DataMember] public int ProcessId,PoolId,Rolls,A,B,InventoryCount,SkipCount;
         [DataMember] public long ProcessStart,At,Sequence;

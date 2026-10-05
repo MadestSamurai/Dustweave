@@ -1,1 +1,1 @@
-<Project><PropertyGroup><Version>0.1.7</Version><Deterministic>true</Deterministic><RestorePackagesWithLockFile>true</RestorePackagesWithLockFile><DebugType>embedded</DebugType><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup></Project>
+<Project><PropertyGroup><Version>0.1.8</Version><Deterministic>true</Deterministic><RestorePackagesWithLockFile>true</RestorePackagesWithLockFile><DebugType>embedded</DebugType><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup></Project>

@@ -19,7 +19,7 @@ public static class Files
     public static readonly JsonSerializerOptions Options = new(){WriteIndented=true, PropertyNameCaseInsensitive=true};
     private static readonly object noteLock = new();
     public static bool IsFileError(Exception error) => error is IOException or UnauthorizedAccessException;
-    private static bool Retryable(Exception error) => IsFileError(error) && (error.HResult & 0xffff) is 5 or 32 or 33 or 80 or 183;
+    private static bool Retryable(Exception error) => IsFileError(error) && (error.HResult & 0xffff) is 5 or 32 or 33 or 80 or 183 or 1175;
     public static T? Read<T>(string path)
     {
         try {
@@ -51,7 +51,7 @@ public static class Files
                     break;
                 } catch(FileNotFoundException) when(File.Exists(temp) && !File.Exists(path) && elapsed.ElapsedMilliseconds<600) {
                     // Destination disappeared between Exists and Replace.
-                } catch(Exception error) when(Retryable(error) && elapsed.ElapsedMilliseconds<600) {
+                } catch(Exception error) when(Retryable(error) && File.Exists(temp) && elapsed.ElapsedMilliseconds<600) {
                     Thread.Sleep(20);
                 }
             }

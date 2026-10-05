@@ -14,7 +14,11 @@ namespace BD2InfiniteGacha.Runtime
 {
     internal sealed class RuntimeEngine
     {
-        private bool networkInFlight;
+        private bool networkInFlight,needsRecovery;
+        private long sentTicks,refreshSent;private string sentAccount;private int sentPool;
+        private GachaResultUI ownedBusyUi;
+        private volatile int[] reconciledResult;private bool reconciledLocked;
+        private readonly BD2.LocalIpc.NativeNetworkWatch network=new BD2.LocalIpc.NativeNetworkWatch();
         private static RuntimeEngine active;private Harmony harmony;private Timer heartbeat;
         private readonly Dictionary<string,MemberInfo> members=new Dictionary<string,MemberInfo>();
         private readonly AutomationMachine machine=new AutomationMachine();
@@ -31,7 +35,7 @@ namespace BD2InfiniteGacha.Runtime
             var typeName=(string)typeof(Names).GetField(role+"Type",BindingFlags.NonPublic|BindingFlags.Static).GetValue(null);
             var name=(string)typeof(Names).GetField(role+"Name",BindingFlags.NonPublic|BindingFlags.Static).GetValue(null);
             var type=typeof(UserDBInfo).Assembly.GetType(typeName,true);
-            int count=role=="Expand"?2:role=="Preview"?6:role=="Response"||role=="SetResult"?3:role=="Frame"||role=="Product"||role=="SavedPreview"?0:1;
+            int count=role=="Expand"?2:role=="Preview"?6:role=="Response"||role=="RefreshResponse"||role=="SetResult"?3:role=="Frame"||role=="Product"||role=="SavedPreview"?0:1;
             m=(MemberInfo)type.GetProperty(name,flags)??type.GetField(name,flags)??(MemberInfo)type.GetMethods(flags).Single(x=>x.Name==name&&x.GetParameters().Length==count);
             members[role]=m;return m;
         }
@@ -42,7 +46,7 @@ namespace BD2InfiniteGacha.Runtime
         {
             if(harmony!=null)return;using(var p=Process.GetCurrentProcess()){pid=p.Id;start=p.StartTime.ToUniversalTime().Ticks;}
             active=this;harmony=new Harmony("bd2.infinite-gacha.v1");
-            Patch("Frame","AfterFrame");Patch("Response","AfterResponse");Patch("SetResult","AfterResult");
+            network.Start(typeof(BDNetwork.NetworkManager),"bd2.gacha.network-watch");Patch("Frame","AfterFrame");Patch("Response","AfterResponse");Patch("SetResult","AfterResult");Patch("RefreshResponse","AfterRefresh");
             heartbeat=new Timer(_=>Loader.Status("active",""),null,0,1000);
         }
         internal void StartProbe()
@@ -59,6 +63,31 @@ namespace BD2InfiniteGacha.Runtime
         private void Patch(string role,string name){harmony.Patch((MethodInfo)Member(role),postfix:new HarmonyMethod(typeof(RuntimeEngine).GetMethod(name,BindingFlags.NonPublic|BindingFlags.Static)));}
         private static void AfterFrame(){if(active!=null)active.Tick();}
         private static void AfterResponse(bool __result,int __2){var a=active;if(a!=null){a.networkInFlight=false;a.responseError=__result&&__2==0?0:__2==0?-1:__2;Interlocked.Increment(ref a.response);}}
+        private static void AfterRefresh(byte[] __0,int __2,bool __result){
+            var a=active;if(a==null||!a.needsRecovery||__2!=0||!__result||a.refreshSent<a.sentTicks)return;
+            try{var info=GachaInfoResponse.Parser.ParseFrom(__0);
+                if(info.ResemaraPreviewItemInfo.Count!=1)return;
+                var saved=info.ResemaraPreviewItemInfo[0];var cards=saved.ResemaraPreviewItemInfo;
+                if(cards==null||cards.CostumeInfo.Count!=10)return;
+                a.reconciledLocked=saved.IsLock;a.reconciledResult=cards.CostumeInfo.Select(c=>c.Id).ToArray();
+            }catch(Exception e){Storage.Event("recovery_read_retry",e.GetBaseException().Message);}
+        }
+        private void ReconcileNetwork(Snapshot s,Control command,long now){
+            if(networkInFlight&&now-sentTicks>=TimeSpan.FromSeconds(BD2.LocalIpc.RequestObservation.TimeoutSeconds).Ticks&&network.Idle){
+                networkInFlight=false;needsRecovery=true;
+                // Only clear the UI guard set by this tool, after the native queue has drained.
+                if(ownedBusyUi!=null)((FieldInfo)Member("BusyPreview")).SetValue(ownedBusyUi,false);
+                ownedBusyUi=null;Storage.Event("network_recovering","等待同步服务器抽取结果，恢复后自动继续");
+            }
+            if(needsRecovery&&s.Account==sentAccount&&s.PoolId==sentPool){
+                var cards=reconciledResult;
+                if(cards!=null&&network.Idle){s.Result=cards;s.Locked=reconciledLocked;s.ResultReady=!s.PopupOpen;s.ResultReconciled=true;}
+                else if(command!=null&&command.Enabled&&command.Expires>now&&command.Account==s.Account&&command.PoolId==s.PoolId&&network.Idle&&now-refreshSent>=TimeSpan.FromSeconds(30).Ticks){
+                    refreshSent=now;Call("Refresh",new object[]{null});
+                }
+            }
+            s.NetworkPending=networkInFlight||(needsRecovery&&!s.ResultReconciled);
+        }
         private static void AfterResult(){var a=active;if(a!=null)Interlocked.Increment(ref a.result);}
         private void RefreshCatalog(string identity)
         {
@@ -116,7 +145,7 @@ namespace BD2InfiniteGacha.Runtime
             if(group==null||group.GachaSubType!=(int)Define_GachaSubType.GstResemara||group.TenTimeGachaId!=pool.DrawId)throw new InvalidOperationException("卡池发生变化，已停止");
             var source=((MethodInfo)Member("Preview")).GetParameters()[0].ParameterType;
             var capturedUi=ui;((FieldInfo)Member("BusyPreview")).SetValue(capturedUi,true);
-            networkInFlight=true;
+            networkInFlight=true;needsRecovery=false;reconciledResult=null;sentTicks=DateTime.UtcNow.Ticks;sentAccount=account;sentPool=pool.Id;ownedBusyUi=capturedUi;
             try{Call("Preview",Enum.Parse(source,"SourceFromSpecialGacha"),product.GroupId,product.Id,product.SaleGroup,pool.DrawId,(Action)(()=>{if(capturedUi!=null)((FieldInfo)Member("BusyPreview")).SetValue(capturedUi,false);}));}
             catch{networkInFlight=false;if(capturedUi!=null)((FieldInfo)Member("BusyPreview")).SetValue(capturedUi,false);throw;}
         }
@@ -129,7 +158,7 @@ namespace BD2InfiniteGacha.Runtime
             try{snapshot=Read(now);readFailedAt=0;}
             catch(Exception e){if(readFailedAt==0){readFailedAt=now;Storage.Event("read_retry",e.GetBaseException().Message);}if(now-readFailedAt<TimeSpan.FromSeconds(15).Ticks)return;machine.Halt("error","读取游戏状态连续失败："+e.GetBaseException().Message);snapshot=new Snapshot{ProcessId=pid,ProcessStart=start,At=now,State="error",Message=machine.Message,Owner=machine.Owner};Publish(snapshot);return;}
             try{var command=Storage.Read<Control>("control.json")??lastControl;lastControl=command;
-                bool draw=machine.Step(command,snapshot,Interlocked.Read(ref response),Interlocked.Read(ref result),responseError,now);
+                ReconcileNetwork(snapshot,command,now);bool draw=machine.Step(command,snapshot,Interlocked.Read(ref response),Interlocked.Read(ref result),responseError,now);
                 if(draw)Draw(snapshot.Pools.Single(p=>p.Id==snapshot.PoolId));
                 else if(machine.SkipAnimation&&now>=nextSkip){var skip=Get("SkipButton",ui) as GameObject;if(skip!=null&&skip.activeInHierarchy){ui.OnClickUI(skip);skipCount++;nextSkip=now+TimeSpan.FromMilliseconds(200).Ticks;snapshot.SkipCount=skipCount;}}
                 if(machine.Owner!=""){snapshot.State=machine.State;snapshot.Message=machine.Message;}
@@ -145,8 +174,8 @@ namespace BD2InfiniteGacha.Runtime
             if(!publication.Publish(snapshot,s=>Storage.Write("snapshot.json",s)))Storage.Event("publication_retry",publication.Error);
         }
         internal void PrepareHandoff(){lastControl=new Control();machine.Halt("stopped","component-handoff");}
-        internal string HandoffBusy()=>networkInFlight?"gacha request awaiting reply":"";
-        internal void Stop(){active=null;machine.Halt("stopped","组件已停止");heartbeat?.Dispose();heartbeat=null;if(harmony!=null){foreach(string role in new[]{"Frame","Response","SetResult"})harmony.Unpatch((MethodInfo)Member(role),HarmonyPatchType.All,harmony.Id);harmony=null;}}
+        internal string HandoffBusy(){if(networkInFlight&&DateTime.UtcNow.Ticks-sentTicks>=TimeSpan.FromSeconds(30).Ticks&&network.Idle){networkInFlight=false;needsRecovery=true;if(ownedBusyUi!=null)((FieldInfo)Member("BusyPreview")).SetValue(ownedBusyUi,false);ownedBusyUi=null;}return networkInFlight||refreshSent>0&&!network.Idle?"gacha native request awaiting completion":"";}
+        internal void Stop(){active=null;network.Dispose();machine.Halt("stopped","组件已停止");heartbeat?.Dispose();heartbeat=null;if(harmony!=null){foreach(string role in new[]{"Frame","Response","SetResult","RefreshResponse"})harmony.Unpatch((MethodInfo)Member(role),HarmonyPatchType.All,harmony.Id);harmony=null;}}
     }
 }
 

@@ -325,6 +325,12 @@
   "等待游戏网络请求结束后核对售卖": "Waiting for game requests to finish before reconciling the sale",
   "正在从服务器重新核对领地库存；不会重复旧售卖": "Refreshing territory stock from the server; the old sale will not be replayed",
   "已同步库存，继续自动化；旧售卖未重复执行": "Stock synchronized. Resuming automation without replaying the old sale",
-  "GitHub: MadestSamurai · B站: MadSamurai": "GitHub: MadestSamurai · Bilibili: MadSamurai"
+  "GitHub: MadestSamurai · B站: MadSamurai": "GitHub: MadestSamurai · Bilibili: MadSamurai",
+  "等待同步领地状态，恢复后自动继续；不会重复旧操作": "Refreshing territory state; automation will resume without repeating the previous operation",
+  "等待播种确认，必要时自动同步农田状态": "Waiting for planting confirmation; farm state will be refreshed if needed",
+  "已同步当前领地状态，继续自动化": "Territory state refreshed; continuing automation",
+  "网络已恢复，正在同步领地状态；不会重复旧操作": "Network recovered; refreshing territory state without repeating previous operations",
+  "正在同步领地库存与农田，恢复后继续": "Refreshing territory inventory and farmland; automation will resume",
+  "正在同步料理库存，恢复后自动继续": "Refreshing cooking inventory; automation will resume",
+  "缺少可核对的播种状态": "Planting state is unavailable for reconciliation"
 }
-

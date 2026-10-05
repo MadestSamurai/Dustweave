@@ -12,14 +12,14 @@ An automated territory-claiming assistant for the SECRET VISION minigame in the 
 
 ## Download
 
-Source version **0.1.7**: a single EXE with built-in Simplified Chinese and English.
+Current version **0.1.8**: a single EXE with built-in Simplified Chinese and English.
 
 | Edition | Runtime | Recommended for |
 | --- | --- | --- |
 | **Portable** | Includes the .NET runtime | First-time users |
 | **Lite** | Requires [.NET Desktop Runtime 8 x64](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) | Users with the runtime installed |
 
-Download standalone EXEs or ZIPs with both READMEs and licenses from the [v0.1.6 release page](https://github.com/MadestSamurai/bd2-secret-vision/releases/tag/v0.1.6). Verify files with `SHA256SUMS.txt`. Windows x64 only. Running the tool does not require Python, a development SDK, the workbench or another BD2 tool. Lite needs **Desktop Runtime**, not just the regular .NET Runtime.
+Download standalone EXEs or ZIPs with both READMEs and licenses from the [v0.1.8 release page](https://github.com/MadestSamurai/bd2-secret-vision/releases/tag/v0.1.8). Verify files with `SHA256SUMS.txt`. Windows x64 only. Running the tool does not require Python, a development SDK, the workbench or another BD2 tool. Lite needs **Desktop Runtime**, not just the regular .NET Runtime.
 
 ## Quick start
 

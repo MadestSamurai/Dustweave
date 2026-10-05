@@ -166,6 +166,6 @@
   "组件交接尚未完成，请等待游戏界面恢复或当前操作结算后重新连接；游戏可以保持运行。": "Component handoff is still pending. Wait for the game UI or pending action to finish, then reconnect. You can keep the game running.",
   "请重新连接本工具内置的连连看组件，游戏可以保持运行。": "Reconnect the built-in Sichuan component. You can keep the game running.",
   "请先连接游戏。": "Connect to the game first.",
-  "GitHub: MadestSamurai · B站: MadSamurai": "GitHub: MadestSamurai · Bilibili: MadSamurai"
+  "GitHub: MadestSamurai · B站: MadSamurai": "GitHub: MadestSamurai · Bilibili: MadSamurai",
+  "已使用日常助手的统一连接": "Using the shared Daily Assistant connection"
 }
-

@@ -14,7 +14,7 @@ namespace BD2Territory.Runtime
   private void LoadCooking(string key)
   {
    cookingPath=Path.Combine(LocalStorage.DataRoot,"cooking-"+key+".json");cooking=ReadLayoutFile<CookingProgress>(cookingPath)??new CookingProgress{Account=key};
-   if(cooking.Schema!=1||cooking.Account!=key||cooking.ConfirmedTotal<0||!new[]{"idle","pending","confirmed","rejected"}.Contains(cooking.State)||(cooking.Pending&&(cooking.Count<1||cooking.Count>1000||cooking.Recipe<1||cooking.ResultItem<1||string.IsNullOrEmpty(cooking.Token)||cooking.SubmittedTicks<=0)))throw new InvalidOperationException("Cooking journal identity mismatch");
+   if(cooking.Schema!=1||cooking.Account!=key||cooking.ConfirmedTotal<0||!new[]{"idle","pending","confirmed","rejected","reconciled"}.Contains(cooking.State)||(cooking.Pending&&(cooking.Count<1||cooking.Count>1000||cooking.Recipe<1||cooking.ResultItem<1||string.IsNullOrEmpty(cooking.Token)||cooking.SubmittedTicks<=0)))throw new InvalidOperationException("Cooking journal identity mismatch");
   }
   private void SettleCooking()
   {
@@ -34,7 +34,7 @@ namespace BD2Territory.Runtime
   private bool CookingTick(TerritorySnapshot s,TerritoryControl c,long now)
   {
    if(cooking==null)return false;s.Cooked=cooking.ConfirmedTotal;s.CookingState=cooking.State;
-   if(cooking.Pending){StopMotion();s.Reason="等待料理制作确认";if(now-cooking.SubmittedTicks>TimeSpan.FromSeconds(30).Ticks)throw new InvalidOperationException("料理结果未知，已保留记录；请核对游戏库存，不会重复制作");return true;}
+   if(cooking.Pending){StopMotion();s.Reason="等待料理制作确认";if(now-cooking.SubmittedTicks>TimeSpan.FromSeconds(30).Ticks)s.Reason="正在同步料理库存，恢复后自动继续";return true;}
    if(!c.Cooking||now-lastCookAttempt<TimeSpan.FromSeconds(5).Ticks)return false;lastCookAttempt=now;
    int count=CookingCount(c.RecipeId,c.CookingBatch);s.Cookable=count;if(count<=0)return false;
    var r=(LifeCookTable)B.Invoke("Tables.Cook",c.RecipeId);var selected=new List<ItemDBInfo>();

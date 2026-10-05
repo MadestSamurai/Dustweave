@@ -6,7 +6,7 @@
 
 - Windows x64，已正常安装并登录的 BrownDust II 原生 PC 客户端。
 - 完整解压的 Dustweave 包：Portable 包含运行时；Lite 需要 .NET 8 Desktop Runtime x64。
-- 当前仓库仍是私有预览，没有 GitHub Release 附件。使用维护者提供的预览包，不把 GitHub 的 Source code 压缩包当成安装包。
+- 仓库保持私有，有访问权限的用户可在 Releases 下载完整分发包。GitHub 的 Source code 压缩包不是安装包。
 
 启动 `BD2DailyAssistant.exe`。程序文件夹中的 `data`、`flows`、`connection` 等目录是分发内容，需一同保留。源代码构建输出仅供开发，不等于完整用户包。
 

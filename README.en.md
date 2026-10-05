@@ -14,7 +14,7 @@ A multi-account daily assistant for BrownDust II on Windows
 
 </div>
 
-> **Preview**: this repository is being prepared for open-source publication. It remains private and has no GitHub Release yet. Invited testers should use the complete preview package supplied by the maintainer. Published downloads will be available from this repository's Releases page.
+> **Invite-only access**: this repository remains private. Users with access can download complete packages from its Releases page. The application uses stable version numbers; public availability will be announced separately.
 >
 > Provided free by **MadSamurai** on Bilibili ([MadestSamurai](https://github.com/MadestSamurai) on GitHub). This is an unofficial project. Automation may affect your account or game operation; understand the applicable rules before deciding to use it.
 
@@ -65,14 +65,14 @@ For **Windows x64 and the native BrownDust II PC client**. Python is not require
 | **Portable** | You want an extract-and-run package | Includes the .NET 8 desktop runtime |
 | **Lite** | You already have the runtime and prefer a smaller download | [.NET 8 Desktop Runtime x64](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) |
 
-Both packages have the same features. There are no public download assets yet. Once you have a preview package:
+Both packages have the same features. Download a complete package from [Releases](https://github.com/MadestSamurai/Dustweave/releases), then:
 
 1. **Extract the entire folder** and run `BD2DailyAssistant.exe`. Keep its data, flow and component directories alongside the executable.
 2. Log in to the game normally, save the current account in account management, and verify its identity.
 3. Configure the desired stages in daily settings, then select this run's plan on the task page.
 4. Start the selected stages or the multi-account queue. Follow progress and any items needing attention on the timeline.
 
-Start with a few familiar stages. The [getting-started guide](docs/GETTING_STARTED.en.md) covers updates, local data and troubleshooting. An online updater is not included yet. After releases are published, use GitHub **Watch → Custom → Releases** to subscribe.
+Start with a few familiar stages. The [getting-started guide](docs/GETTING_STARTED.en.md) covers updates, local data and troubleshooting. An online updater is not included yet. Use GitHub **Watch → Custom → Releases** to subscribe.
 
 ## Get help
 

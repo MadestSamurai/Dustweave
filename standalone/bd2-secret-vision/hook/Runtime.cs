@@ -33,11 +33,11 @@ public static class Loader {
 public sealed class Engine:MonoBehaviour {
  internal static readonly string Root=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BD2SecretVisionAssistant");
  const BindingFlags All=BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance|BindingFlags.Static;
- static Engine current;bool retired;bool handingOff;bool settlementPending;
+ static Engine current;bool retired;bool handingOff;bool settlementPending;long settlementSent;readonly BD2.LocalIpc.NativeNetworkWatch network=new BD2.LocalIpc.NativeNetworkWatch();
  public static object Create(){var go=new GameObject("BD2 Secret Vision");UnityEngine.Object.DontDestroyOnLoad(go);return go.AddComponent<Engine>();}
  public void PrepareHandoff(){if(handingOff)return;handingOff=true;controlled=false;Stop("component-handoff",running&&Playing);}
- public string HandoffBusy(){return settlementPending?"等待小游戏结算回读":"";}
- public void StopHook(){PrepareHandoff();retired=true;enabled=false;new Harmony("bd2.secretvision.public4").UnpatchAll("bd2.secretvision.public4");if(current==this)current=null;UnityEngine.Object.Destroy(gameObject);}
+ public string HandoffBusy(){return settlementPending||settlementSent>0&&!network.Idle?"等待小游戏结算回读":"";}
+ public void StopHook(){PrepareHandoff();retired=true;enabled=false;network.Dispose();new Harmony("bd2.secretvision.public4").UnpatchAll("bd2.secretvision.public4");if(current==this)current=null;UnityEngine.Object.Destroy(gameObject);}
 
  readonly Dictionary<string,FieldInfo> fields=new Dictionary<string,FieldInfo>();
  readonly Dictionary<int,Component> uiTargets=new Dictionary<int,Component>();
@@ -53,7 +53,7 @@ public sealed class Engine:MonoBehaviour {
  void Event(string kind,object data){try{var ep=Path.Combine(Root,"events.jsonl");if(File.Exists(ep)&&new FileInfo(ep).Length>4000000){var old=ep+".previous";if(File.Exists(old))File.Delete(old);File.Move(ep,old);}File.AppendAllText(Path.Combine(Root,"events.jsonl"),JsonConvert.SerializeObject(new{AtUtc=DateTime.UtcNow.ToString("O"),Session=session,Frame=Time.frameCount,Kind=kind,Data=data})+"\n");}catch(IOException){}}
  object Field(object o,string name){var k=o.GetType().FullName+name;FieldInfo f;if(!fields.TryGetValue(k,out f)){for(var t=o.GetType();t!=null&&f==null;t=t.BaseType)f=t.GetField(name,All|BindingFlags.DeclaredOnly);if(f==null)throw new MissingFieldException(o.GetType().Name,name);fields[k]=f;}return f.GetValue(o);}
  T Read<T>(object o,string name){return (T)Field(o,name);}
- void Awake(){current=this;Directory.CreateDirectory(Root);var h=new Harmony("bd2.secretvision.public4");h.Patch(typeof(HopscotchPlayerController).GetMethod("ὧὭὦὫὪὬὭὭὮὥὧ",All),postfix:new HarmonyMethod(typeof(Engine),nameof(Arrived)));
+ void Awake(){current=this;network.Start(typeof(BDNetwork.NetworkManager),"bd2.secretvision.network-watch");Directory.CreateDirectory(Root);var h=new Harmony("bd2.secretvision.public4");h.Patch(typeof(HopscotchPlayerController).GetMethod("ὧὭὦὫὪὬὭὭὮὥὧ",All),postfix:new HarmonyMethod(typeof(Engine),nameof(Arrived)));
  // Observe the game's successful stage-record update, without altering the request or response.
  var type=typeof(HopscotchManager).Assembly.GetType("ὥὯὯὤὫὠὢὯὠὤὤ");
  var records=type.GetMethods(All).Where(m=>m.GetParameters().Length==1&&m.GetParameters()[0].ParameterType.FullName=="Proto.Net.MiniGameHopscotchStageDBInfo").ToArray();
@@ -62,14 +62,14 @@ public sealed class Engine:MonoBehaviour {
  h.Patch(typeof(HopscotchManager).GetMethod("RequestGameEnd",All),prefix:new HarmonyMethod(typeof(Engine),nameof(Ending)));
  Event("connected",new{Pid=System.Diagnostics.Process.GetCurrentProcess().Id,StageObservers=records.Select(x=>x.Name).ToArray()});}
  public static void Failing(object[] __args){try{if(current!=null)current.Event("trail-failed",new{Args=__args,Stack=Environment.StackTrace,Cursor=current.cursor,Player=XY(current.Position),PlayerRadius=current.Radius(current.player),Projectiles=current.Projectiles()});}catch{}}
- public static void Ending(object[] __args){try{if(current!=null){current.settlementPending=true;var data=new{AtUtc=DateTime.UtcNow.ToString("O"),Session=current.session,Round=current.round,Stage=current.stage,Percent=(int)__args[0],GridPercent=current.grid.GetClaimedPercentExcludeWall()*100,Remaining=current.Field(current.manager,"ὩὪὭὬὢὭὫὢὮὢὮ"),Continued=current.Field(current.manager,"ὩὡὭὤὡὭὪὣὯὩὣ")};Write("end.json",data);current.Event("game-end",data);}}catch{}}
+ public static void Ending(object[] __args){try{if(current!=null){current.settlementPending=true;current.settlementSent=DateTime.UtcNow.Ticks;var data=new{AtUtc=DateTime.UtcNow.ToString("O"),Session=current.session,Round=current.round,Stage=current.stage,Percent=(int)__args[0],GridPercent=current.grid.GetClaimedPercentExcludeWall()*100,Remaining=current.Field(current.manager,"ὩὪὭὬὢὭὫὢὮὢὮ"),Continued=current.Field(current.manager,"ὩὡὭὤὡὭὪὣὯὩὣ")};Write("end.json",data);current.Event("game-end",data);}}catch{}}
  public static void StageRecord(object[] __args){try{if(current!=null)current.settlementPending=false;Write("server-stage.json",new{AtUtc=DateTime.UtcNow.ToString("O"),Session=current==null?"":current.session,Round=current==null?"":current.round,Data=__args[0].ToString()});}catch{}}
  public static void Arrived(HopscotchPlayerController __instance){if(current!=null&&current.running&&current.player==__instance){try{current.Drive(true);}catch(Exception e){current.Stop("arrival-error",true);Write("error.json",new{Error=e.ToString()});}}}
  bool Playing {get{return manager!=null&&!manager.ὩὩὮὣὤὦὮὩὢὣὠ;}}
  Vector2Int Vertex {get{return player.ὭὧὢὢὡὠὨὫὧὨὬ;}}
  Vector2 Position {get{return player.ὡὢὥὧὮὪὪὪὪὧὠ;}}
  void Acquire(){manager=HopscotchManager.ὪὫὢὨὯὭὦὪὦὨὣ;if(manager==null){grid=null;player=null;enemy=null;return;}if(lastManager!=manager.GetInstanceID()){lastManager=manager.GetInstanceID();bodies.Clear();lastControl=0;wallOrigins.Clear();wallGridId=0;lastCarve="";}grid=manager.ὦὢὬὢὬὣὭὪὠὦὭ;player=manager.ὠὣὡὬὯὠὣὠὭὯὪ;enemy=manager.ὦὠὪὩὥὡὯὩὣὨὩ;}
- void Update(){if(retired)return;try{
+ void Update(){if(retired)return;try{if(settlementPending&&DateTime.UtcNow.Ticks-settlementSent>=TimeSpan.FromSeconds(BD2.LocalIpc.RequestObservation.TimeoutSeconds).Ticks&&network.Idle){settlementPending=false;Event("settlement_observation_reconciled",new{Outcome="unknown",NativeIdle=true});}
  if(DateTime.UtcNow>=nextRead){nextRead=DateTime.UtcNow.AddMilliseconds(100);Acquire();if(!handingOff){ReadControl();ReadCommand();}}
  if(Playing&&Time.time>=nextBodies){nextBodies=Time.time+.1f;TrackBodies();var control=ControlRemaining;if((control>0)!=(lastControl>0)||control>lastControl+.2f)Event("control-state",new{Remaining=control,TimeStop=TimeStopRemaining,Power=PowerRemaining,State=Field(enemy,"ὭὥὨὤὠὥὡὪὩὯὨ").ToString()});lastControl=control;var carve=CarveState+":"+CarveReadyInterrupted;if(carve!=lastCarve){lastCarve=carve;Event("attack-opportunity",new{EnemyState=EnemyState,CarveState=CarveState,CarveReadyInterrupted=CarveReadyInterrupted,CarveBlockedRemaining=CarveBlockedRemaining,ControlRemaining=control});}}
  if(running)Drive(false);

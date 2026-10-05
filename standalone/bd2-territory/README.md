@@ -20,7 +20,7 @@
 
 ## 下载
 
-当前正式版本：**0.4.2**。一个程序内置简体中文与 English，可在右上角切换。
+当前正式版本：**0.4.3**。一个程序内置简体中文与 English，可在右上角切换。
 
 连接卡死修复：状态和诊断读取在后台执行，连接时暂停轮询；暂停与关闭不再等待管道锁。启动阶段也会生成 `connection.log`。
 
@@ -111,7 +111,7 @@
 .\package.ps1 -Locked
 ```
 
-成品输出 `dist/v0.3.14-beta.1/`。[开发说明](docs/DEVELOPMENT.md) · [本地化](docs/LOCALIZATION.md) · [发布格式](docs/PUBLICATION_STYLE.md) · [版本说明](docs/RELEASE_NOTES.md)
+成品输出 `dist/v0.4.3/`。[开发说明](docs/DEVELOPMENT.md) · [本地化](docs/LOCALIZATION.md) · [发布格式](docs/PUBLICATION_STYLE.md) · [版本说明](docs/RELEASE_NOTES.md)
 
 ## 许可
 

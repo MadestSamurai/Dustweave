@@ -12,7 +12,7 @@ A standalone Fiend Hunter assistant for the BrownDust II Windows client, using B
 
 ## Download
 
-Current version: **0.1.2**. Both editions have the same features and built-in Chinese/English switching.
+Current version: **0.1.3**. Both editions have the same features and built-in Chinese/English switching.
 
 | Edition | Runtime requirement | Recommended for |
 | --- | --- | --- |

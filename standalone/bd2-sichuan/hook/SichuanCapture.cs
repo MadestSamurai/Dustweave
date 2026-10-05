@@ -68,7 +68,7 @@ namespace BD2Sichuan.Runtime
         {
             try{var c=current;if(c!=null && ReferenceEquals(c.model,__instance)){c.generation++;c.lastHash="";c.next=DateTime.MinValue;}}catch{}
         }
-        private static void Pump(){try{current?.Capture();}catch(Exception e){current?.Fault(e);}}
+        private static void Pump(){try{SichuanNetworkTrace.ReconcileCurrent();current?.Capture();}catch(Exception e){current?.Fault(e);}}
         private void Fault(Exception e)
         {
             executor.Stop("capture_exception:"+e.GetType().Name);JournalRun(DateTime.UtcNow);

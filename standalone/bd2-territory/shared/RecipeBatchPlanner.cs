@@ -9,6 +9,7 @@ namespace BD2Territory
   public int FixedSeedId{get;set;}
   public int SeedId{get;set;}public int PlannedCount{get;set;}public int Planted{get;set;}public int Batches{get;set;}
   public string[] PendingKeys{get;set;}=new string[0];public int PendingSeed{get;set;}
+  public long PendingSubmittedTicks{get;set;}
   public string PendingToken{get;set;}="";public int PendingCost{get;set;}public string PendingOwner{get;set;}="";
   public string BudgetOwner{get;set;}="";public long Spent{get;set;}
   public RecipeBatchProgress Copy(){var next=(RecipeBatchProgress)MemberwiseClone();next.PendingKeys=(string[])PendingKeys.Clone();return next;}

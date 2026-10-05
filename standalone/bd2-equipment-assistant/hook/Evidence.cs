@@ -62,8 +62,8 @@ namespace BD2Equipment.Live {
   private static readonly Dictionary<Type,DataContractJsonSerializer> serializers=new Dictionary<Type,DataContractJsonSerializer>();
   private static DataContractJsonSerializer Serializer(Type type){DataContractJsonSerializer s;if(!serializers.TryGetValue(type,out s))serializers[type]=s=new DataContractJsonSerializer(type);return s;}
   private static ObservationRequest Request(){var bytes=BD2.LocalIpc.RuntimeFiles.Read(Path.Combine(root,"observation-request.json"));if(bytes==null)return null;using(var memory=new MemoryStream(bytes))return(ObservationRequest)new DataContractJsonSerializer(typeof(ObservationRequest)).ReadObject(memory);}
-  private static readonly Dictionary<string,int> inFlight=new Dictionary<string,int>();
-  internal static bool Waiting{get{lock(queue)return inFlight.Values.Any(v=>v>0);}}
+  private static readonly BD2.LocalIpc.NativeNetworkWatch network=new BD2.LocalIpc.NativeNetworkWatch();private static readonly Dictionary<string,long> inFlightSince=new Dictionary<string,long>(); private static readonly Dictionary<string,int> inFlight=new Dictionary<string,int>();
+  internal static bool Waiting{get{lock(queue)return inFlight.Values.Any(v=>v>0)||inFlightSince.Count>0&&!network.Idle;}}
   [DataContract] private sealed class EventBatch{[DataMember]public EvidenceEvent[] Events;}
   private static readonly Queue<EvidenceEvent> recent=new Queue<EvidenceEvent>();
 
@@ -71,8 +71,8 @@ namespace BD2Equipment.Live {
   private static Frame frame;private static Harmony harmony;private static EvidenceConfig config;
   private static readonly Dictionary<MethodBase,TapRule> requests=new Dictionary<MethodBase,TapRule>(),responses=new Dictionary<MethodBase,TapRule>();
   private static readonly Queue<EvidenceEvent> queue=new Queue<EvidenceEvent>();
-  internal static void Start(string path){root=path;harmony=new Harmony("bd2.equipment.live.evidence.v1");Directory.CreateDirectory(Path.Combine(root,"events"));}
-  internal static void Stop(){if(harmony!=null){foreach(var m in requests.Keys.Concat(responses.Keys))harmony.Unpatch(m,HarmonyPatchType.All,harmony.Id);}requests.Clear();responses.Clear();harmony=null;}
+  internal static void Start(string path){root=path;network.Start(typeof(BDNetwork.NetworkManager),"bd2.equipment.network-watch");harmony=new Harmony("bd2.equipment.live.evidence.v1");Directory.CreateDirectory(Path.Combine(root,"events"));}
+  internal static void Shutdown(){Stop();network.Dispose();lock(queue){inFlight.Clear();inFlightSince.Clear();}} internal static void Stop(){if(harmony!=null){foreach(var m in requests.Keys.Concat(responses.Keys))harmony.Unpatch(m,HarmonyPatchType.All,harmony.Id);}requests.Clear();responses.Clear();harmony=null;}
   private static string Scalar(object value){
    if(value==null)return "null";
    var msg=value as IMessage;if(msg!=null)return JsonFormatter.Default.Format(msg);
@@ -137,7 +137,7 @@ namespace BD2Equipment.Live {
   }
   private static void Before(MethodBase __originalMethod){
    try{TapRule rule;if(!requests.TryGetValue(__originalMethod,out rule))return;
-    lock(queue){int n;inFlight.TryGetValue(rule.Role,out n);inFlight[rule.Role]=n+1;queue.Enqueue(new EvidenceEvent{AtUtcTicks=DateTime.UtcNow.Ticks,Role=rule.Role,Kind="request",Frame=frame,Sequence=++seq});}
+    lock(queue){int n;inFlight.TryGetValue(rule.Role,out n);if(n==0)inFlightSince[rule.Role]=DateTime.UtcNow.Ticks;inFlight[rule.Role]=Math.Min(128,n+1);queue.Enqueue(new EvidenceEvent{AtUtcTicks=DateTime.UtcNow.Ticks,Role=rule.Role,Kind="request",Frame=frame,Sequence=++seq});}
    }catch{}
   }
   private static void After(MethodBase __originalMethod,byte[] __0,int __2,bool __result){
@@ -147,8 +147,15 @@ namespace BD2Equipment.Live {
     lock(queue){int n;inFlight.TryGetValue(rule.Role,out n);inFlight[rule.Role]=Math.Max(0,n-1);queue.Enqueue(e);}
    }catch{}
   }
+    private static void ReconcileMissingResponses(){
+   if(!network.Idle)return;long now=DateTime.UtcNow.Ticks;
+   lock(queue){foreach(var role in inFlightSince.Where(p=>now-p.Value>=TimeSpan.FromSeconds(BD2.LocalIpc.RequestObservation.TimeoutSeconds).Ticks).Select(p=>p.Key).ToArray()){
+    int count;inFlight.TryGetValue(role,out count);inFlight.Remove(role);inFlightSince.Remove(role);
+    if(count>0)queue.Enqueue(new EvidenceEvent{AtUtcTicks=now,Role=role,Kind="observation_reconciled",Frame=frame,Sequence=++seq,Error="Native requests ended without a callback; outcome remains unknown"});
+   }}
+  }
   internal static void Tick(Frame current){
-   frame=current;
+   frame=current;ReconcileMissingResponses();
    try{
     NativeCatalog.Tick(root,current);
     var bytes=BD2.LocalIpc.RuntimeFiles.Read(Path.Combine(root,"evidence-config.json"));if(bytes!=null){string text=Encoding.UTF8.GetString(bytes);if(text!=last&&!Waiting)Configure(text);}

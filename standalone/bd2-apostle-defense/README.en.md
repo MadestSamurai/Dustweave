@@ -12,7 +12,7 @@ A standalone Apostle Defense assistant for the BrownDust II Windows client. Work
 
 ## Download
 
-Current version: **0.3.6**. Both editions have the same features and include Simplified Chinese / English.
+Current version: **0.3.7**. Both editions have the same features and include Simplified Chinese / English.
 
 | Edition | Runtime requirement | Recommended for |
 | --- | --- | --- |

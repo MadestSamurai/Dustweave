@@ -12,7 +12,7 @@ A standalone Infinite Gacha assistant for the BrownDust II Windows client. Reads
 
 ## Download
 
-Source version: **0.2.6**. Both editions have the same features and include Simplified Chinese / English.
+Current version: **0.2.7**. Both editions have the same features and include Simplified Chinese / English.
 
 | Edition | Runtime requirement | Recommended for |
 | --- | --- | --- |

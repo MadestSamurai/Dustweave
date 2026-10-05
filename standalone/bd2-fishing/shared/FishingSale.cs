@@ -106,7 +106,7 @@ namespace BD2Fishing
             if(!Pending)return;
             if(!responseArrived)
             {
-                if(now-sentAt>TimeSpan.FromSeconds(30).Ticks){Error="出售响应超过 30 秒，未重发；请检查游戏网络提示";Status=Error;}
+                if(now-sentAt>TimeSpan.FromSeconds(30).Ticks){Status="等待同步鱼背包，恢复后自动继续";}
                 return;
             }
             Pending=false;
@@ -115,6 +115,13 @@ namespace BD2Fishing
             if(soldIds.Any(current.Contains) || keepIds.Any(id=>!current.Contains(id)))
             {Error="出售回执与背包回读不一致，已暂停；请检查诊断";Status=Error;return;}
             Error="";SoldCount+=soldIds.Length;Status="已确认出售 "+soldIds.Length+" 条，保留鱼回读一致";
+        }
+        public bool NeedsRefresh(long now)=>Pending&&now-sentAt>=TimeSpan.FromSeconds(30).Ticks;
+        public bool Reconcile(long snapshotTicks,bool nativeIdle)
+        {
+            if(!Pending||!nativeIdle||snapshotTicks<=sentAt)return false;
+            Pending=false;Error="";Status="已同步当前鱼背包；旧出售结果保留为未知，按新库存重新计划";
+            return true;
         }
         public void AcknowledgeError(){if(!Pending)Error="";}
     }

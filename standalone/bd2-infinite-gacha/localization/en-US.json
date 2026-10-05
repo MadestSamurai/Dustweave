@@ -193,6 +193,9 @@
   "这是一条测试提醒，不会开始抽卡或改变当前任务。": "This is a test alert. It does not start draws or change your current run.",
   "部分提醒未能发送：": "Some alerts could not be sent: ",
   "组件交接尚未完成，请等待当前操作结算后重新连接，游戏可以保持运行。": "Component handoff is pending. Wait for the current action to finish, then reconnect. You can keep the game running.",
-  "GitHub: MadestSamurai · B站: MadSamurai": "GitHub: MadestSamurai · Bilibili: MadSamurai"
+  "GitHub: MadestSamurai · B站: MadSamurai": "GitHub: MadestSamurai · Bilibili: MadSamurai",
+  "等待同步服务器抽取结果，恢复后自动继续": "Refreshing the server draw result; automation will resume",
+  "等待游戏网络与服务器结果同步，恢复后自动继续": "Waiting for the game network and server result; automation will resume",
+  "已同步服务器最新结果，继续核对停止条件": "Server result refreshed; checking stop conditions",
+  "等待登录组件初始化": "Waiting for the login service to initialize"
 }
-

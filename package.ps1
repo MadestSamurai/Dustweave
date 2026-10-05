@@ -1,5 +1,5 @@
 param(
- [Parameter(Mandatory)][ValidatePattern('^\d+\.\d+\.\d+-preview\.\d+$')][string]$Version,
+ [Parameter(Mandatory)][ValidatePattern('^\d+\.\d+\.\d+$')][string]$Version,
  [Parameter(Mandatory)][string]$GameManagedDir,
  [ValidateSet('Portable','Lite')][string[]]$Flavors=@('Portable','Lite'),
  [string]$PreparedCacheDirectory=''
@@ -17,7 +17,7 @@ $managed=[IO.Path]::GetFullPath($GameManagedDir)
 if(!(Test-Path -LiteralPath (Join-Path $managed 'Assembly-CSharp.dll'))){throw 'Provide the installed game Managed directory; the game does not need to run.'}
 $game=Split-Path -Parent (Split-Path -Parent $managed)
 $output=Join-Path $root ('artifacts/releases/'+$Version)
-if(Test-Path -LiteralPath $output){throw 'Output already exists. Preserve it and use a new candidate version.'}
+if(Test-Path -LiteralPath $output){throw 'Output already exists. Preserve it and use a new release version.'}
 $work=Join-Path $root ('artifacts/package-'+$Version+'-'+[Guid]::NewGuid().ToString('N'))
 [IO.Directory]::CreateDirectory($work)|Out-Null
 [IO.Directory]::CreateDirectory($output)|Out-Null
@@ -100,7 +100,7 @@ foreach($flavor in $Flavors){
  }
  foreach($name in @('README.md','README.en.md')){Copy-Item -LiteralPath (Join-Path $root 'docs/package' $name) -Destination $bundle}
  Run $exe @('--identity',(Join-Path $checks 'identity.txt')) ($flavor+'-identity')
- if((Get-Content -LiteralPath (Join-Path $checks 'identity.txt') -First 1) -ne ('Dustweave '+$Version)){throw 'Candidate label differs from executable.'}
+ if((Get-Content -LiteralPath (Join-Path $checks 'identity.txt') -First 1) -ne ('Dustweave '+$Version)){throw 'Release label differs from executable.'}
  foreach($mode in @('smoke','check-tool-languages','check-tool-language-ui','check-stage-host','check-tool-session','check-suite-host')){
   $check=Join-Path $checks $mode;[IO.Directory]::CreateDirectory($check)|Out-Null
   Run $exe @(('--'+$mode),$check) ($flavor+'-'+$mode)
@@ -137,7 +137,7 @@ foreach($flavor in $Flavors){
  }
  $files=@(Get-ChildItem -LiteralPath $bundle -File -Recurse)
  if(@($files|Where-Object Extension -eq '.exe').Count -ne 1){throw 'Expected one application executable.'}
- if($files|Where-Object {$_.Name -match 'Assembly-CSharp|GameAssembly|python.*\.(exe|dll)' -or $_.Extension -in @('.py','.pyd','.pyc','.pfx','.key') -or $_.FullName -match '[\\/]plugins[\\/]'}){throw 'Forbidden private/legacy payload in candidate.'}
+ if($files|Where-Object {$_.Name -match 'Assembly-CSharp|GameAssembly|python.*\.(exe|dll)' -or $_.Extension -in @('.py','.pyd','.pyc','.pfx','.key') -or $_.FullName -match '[\\/]plugins[\\/]'}){throw 'Forbidden private/legacy payload in release.'}
  $archive=Join-Path $output ('Dustweave-'+$Version+'-'+$flavor+'-win-x64.zip')
  [IO.Compression.ZipFile]::CreateFromDirectory($bundle,$archive,[IO.Compression.CompressionLevel]::Optimal,$false)
  $zip=[IO.Compression.ZipFile]::OpenRead($archive)
@@ -158,8 +158,8 @@ if($after -ne $before){throw 'Source or development dependency locks changed whi
 Copy-Item -LiteralPath (Join-Path $tables 'manifest.json') -Destination (Join-Path $output 'client-data-inputs.json')
 $before|Set-Content -LiteralPath (Join-Path $output 'build-inputs.json') -Encoding utf8
 Get-ChildItem -LiteralPath $output -Recurse -File|Where-Object Extension -in @('.exe','.zip')|ForEach-Object {"$((Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant())  $([IO.Path]::GetRelativePath($output,$_.FullName))"}|Set-Content -LiteralPath (Join-Path $output 'SHA256SUMS.txt') -Encoding ascii
-[ordered]@{version=$Version;product='Dustweave';channel='private-preview';flavors=$flavorReports;privatePluginIncluded=$false;pythonIncluded=$false;gameAssembliesIncluded=$false;realGameTouched=$false;runtimeVerification='source_implemented_pending_runtime';publicReleaseApproved=$false;buildDirectory=$work}|ConvertTo-Json -Depth 7|Set-Content -LiteralPath (Join-Path $output 'release.json') -Encoding utf8
-Write-Host "Private candidate ready: $output"
+[ordered]@{version=$Version;product='Dustweave';channel='private-release';flavors=$flavorReports;privatePluginIncluded=$false;pythonIncluded=$false;gameAssembliesIncluded=$false;realGameTouched=$false;runtimeVerification='source_implemented_pending_runtime';publicReleaseApproved=$false;buildDirectory=$work}|ConvertTo-Json -Depth 7|Set-Content -LiteralPath (Join-Path $output 'release.json') -Encoding utf8
+Write-Host "Private release package ready: $output"
 
 
 

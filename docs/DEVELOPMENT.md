@@ -14,7 +14,7 @@ Run root scripts from this repository, or invoke them by full path while retaini
 | `scripts/check-layout.ps1` | Validate solution coverage and project/source/resource paths |
 | `check-source.ps1 -AfterBuild` | Validate allowed source inputs and restored/compiled boundaries |
 | `build.ps1 -Mode Smoke` | UI checks using isolated demonstration data |
-| `package.ps1` | Complete private preview; requires locally installed client data |
+| `package.ps1` | Complete private release package; requires locally installed client data |
 
 `Dustweave.slnx` lists every project for IDE navigation. RID-specific command-line builds use project entry points because MSBuild does not accept `-r` at solution scope. Production namespaces/assembly names retain their existing identities.
 
@@ -37,6 +37,11 @@ The nine source inputs retain their versions, locks and notices. Import reviewed
 
 ## Packaging / 打包
 
-`package.ps1` 从 `assets/flows`、`assets/specs`、本机客户端规则和许可目录组装完整包。Portable/Lite 共享同一应用入口。产品候选号与 0.7.27 连接基线分离；打包使用隔离依赖锁，验证不会倒写旧候选。
+`package.ps1` 从 `assets/flows`、`assets/specs`、本机客户端规则和许可目录组装完整包。Portable/Lite 共享同一应用入口。产品版本号与 0.7.27 连接基线分离；打包使用隔离依赖锁，验证不会倒写旧候选。
 
 旧版 `source-staging` 是初次建立仓库的过程，不再是日常开发入口。现有发行包留在原交付位置；源码搬迁本身不需要用户重启游戏或迁移账号数据。
+## 版本策略 / Version policy
+
+默认使用正式 X.Y.Z 版本号，不使用 preview 后缀；版本号与仓库公开权限独立。Dustweave 保持私有，包不包含外部插件实现。
+
+Use stable X.Y.Z version numbers by default. Version labels do not change repository visibility; Dustweave remains private and excludes external plugin implementations.

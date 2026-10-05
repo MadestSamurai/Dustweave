@@ -14,6 +14,18 @@ namespace BD2Territory
  }
  public static class PlantingTransaction
  {
+  public static RecipeBatchProgress ReconcileSnapshot(RecipeBatchProgress state,string[] plantedKeys)
+  {
+   if(state==null||!ValidKeys(state.PendingKeys)||plantedKeys==null)throw new InvalidOperationException("缺少可核对的播种状态");
+   var next=state.Copy();
+   // Reserve the quote for an uncertain payment; never replay the recorded submission.
+   if(next.BudgetOwner==next.PendingOwner)next.Spent=checked(next.Spent+next.PendingCost);
+   bool all=next.PendingKeys.All(k=>plantedKeys.Count(x=>x==k)==1);
+   next.Planted=all?next.PlannedCount:0;if(!all){next.SeedId=0;next.PlannedCount=0;}
+   next.LastReceipt="snapshot:"+next.PendingToken;
+   next.PendingKeys=new string[0];next.PendingSeed=0;next.PendingToken="";next.PendingCost=0;next.PendingOwner="";next.PendingSubmittedTicks=0;
+   return next;
+  }
   public static bool ValidKeys(string[] keys)=>keys!=null&&keys.Length>0&&keys.All(k=>!string.IsNullOrEmpty(k))&&keys.Distinct(StringComparer.Ordinal).Count()==keys.Length;
   public static bool SameKeys(string[] left,string[] right)=>ValidKeys(left)&&ValidKeys(right)&&left.OrderBy(k=>k,StringComparer.Ordinal).SequenceEqual(right.OrderBy(k=>k,StringComparer.Ordinal));
   // Persist every preview field and its actual total charge before native confirmation.
@@ -52,7 +64,7 @@ namespace BD2Territory
     RecipeBatchPlanner.Confirm(next,reply.Seed,reply.Keys.Length,reply.Token);
     if(next.BudgetOwner==next.PendingOwner)next.Spent=checked(next.Spent+next.PendingCost);
    }
-   next.PendingKeys=new string[0];next.PendingSeed=0;next.PendingToken="";next.PendingCost=0;next.PendingOwner="";return next;
+   next.PendingKeys=new string[0];next.PendingSeed=0;next.PendingToken="";next.PendingCost=0;next.PendingOwner="";next.PendingSubmittedTicks=0;return next;
   }
  }
 }

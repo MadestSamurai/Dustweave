@@ -14,7 +14,7 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 
 </div>
 
-> **预览阶段**：仓库正在为开源整理，目前保持私有，尚未创建 GitHub Release。受邀测试请使用维护者提供的完整预览包；开放下载后以本仓库 Releases 为准。
+> **受邀使用**：仓库目前保持私有。已获访问权限的用户可从本仓库 Releases 下载完整分发包；软件使用正式版本号，公开计划另行公布。
 >
 > 本项目由 B 站 **MadSamurai**（GitHub：[MadestSamurai](https://github.com/MadestSamurai)）免费提供，不隶属于游戏官方。辅助工具可能带来账号或游戏运行风险，请了解相关规则并自行决定是否使用。
 
@@ -65,7 +65,7 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 | **Portable** | 希望解压即用，或不确定是否安装了运行时 | 已包含 .NET 8 桌面运行时 |
 | **Lite** | 已安装运行时，希望下载更小 | [.NET 8 Desktop Runtime x64](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) |
 
-两种包功能一致。当前尚无公开下载附件；收到预览包后：
+两种包功能一致。从 [Releases](https://github.com/MadestSamurai/Dustweave/releases) 下载完整分发包后：
 
 1. **完整解压**到自己的文件夹，运行 `BD2DailyAssistant.exe`。不要只复制 EXE，旁边的数据、流程与组件目录也需要保留。
 2. 正常登录游戏，在**账号管理**中保存当前账号并核对身份。

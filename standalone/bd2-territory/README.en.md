@@ -20,7 +20,7 @@ If a sale confirmation is missing, the tool waits for game requests to finish, r
 
 ## Download
 
-Current stable version: **0.4.2**. One application includes Simplified Chinese and English, switchable from the top-right corner.
+Current stable version: **0.4.3**. One application includes Simplified Chinese and English, switchable from the top-right corner.
 
 Connection freeze fix: state and diagnostic reads run in the background, polling pauses while connecting, and pause/close no longer wait on the pipe lock. `connection.log` is available from the start of each attempt.
 
@@ -116,7 +116,7 @@ Requires Windows, PowerShell and .NET 8 SDK. From this repository root:
 .\package.ps1 -Locked
 ```
 
-Packages go to `dist/v0.3.14-beta.1/`. [Development](docs/DEVELOPMENT.md) · [Localization](docs/LOCALIZATION.md) · [Publication style](docs/PUBLICATION_STYLE.md) · [Release notes](docs/RELEASE_NOTES.md)
+Packages go to `dist/v0.4.3/`. [Development](docs/DEVELOPMENT.md) · [Localization](docs/LOCALIZATION.md) · [Publication style](docs/PUBLICATION_STYLE.md) · [Release notes](docs/RELEASE_NOTES.md)
 
 ## License
 
