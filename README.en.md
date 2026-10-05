@@ -22,7 +22,7 @@ Dustweave brings account switching, daily and weekly tasks, resource management 
 
 ## Preview
 
-<img src="docs/images/timeline-light.png" alt="Dustweave task timeline showing the current account, selected stages and progress" width="1040">
+<img src="docs/images/timeline-light.png" alt="Dustweave task timeline showing the current account, circular progress and stage completion times" width="1040">
 
 <details>
 <summary>Show the dark theme</summary>

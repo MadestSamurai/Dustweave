@@ -57,6 +57,27 @@ static class QueueSessionCases
         await session.RunAsync(account, selection: new(account, ["weekly_steal", "weekly_npc"]));
         Check(fake.Tasks!.SequenceEqual(new[] { "weekly_npc", "weekly_steal" }) && savedPreferences == File.ReadAllText(prefsStore.PathFor(account)), "weekly selection keeps independent choices and dependency order");
         Check(DailyStageCatalog.All.Any(s => s.Id == "weekly_steal") && !DailyStageCatalog.Enabled("weekly_steal", new DailyPreferences()) && DailyStageCatalog.Name("weekly_steal") == "每周偷窃", "theft is a normal opt-in stage");
+        var stampRoot = NewRoot();
+        var stampSession = new DailyQueueSession(stampRoot, new FakeWorker());
+        var stampPath = Path.Combine(stampRoot, "live", "queues", new string('d', 32), "result.json");
+        var finished = new DateTimeOffset(2026, 10, 6, 11, 2, 37, TimeSpan.Zero);
+        DailyJson.Write(stampPath, new { state = "completed", items = new object[] {
+            new { task = "guild", state = "completed", finished = finished.Ticks, carried_forward = true },
+            new { task = "mail", state = "completed" },
+            new { task = "mirror", state = "skipped", finished = (object?)null },
+            new { task = "hunting", state = "completed", finished = "not-a-time" },
+            new { task = "equipment", state = "completed", finished = long.MaxValue },
+            new { task = "trade", state = "completed", finished = -1L },
+            new { task = "free_draws", state = "completed", finished = 1.5 }
+        }});
+        DailyJson.Write(stampSession.LastOutput, new { account, record = stampPath });
+        var stampView = stampSession.ReadView();
+        Check(stampView.Stages[0].FinishedAt == finished && stampView.Stages[0].FinishedAt!.Value.Offset == TimeSpan.Zero,
+            "queue exposes durable per-stage completion time as UTC");
+        Check(stampView.Stages[0].Carried && new DailyQueueSession(stampRoot, new FakeWorker()).ReadView().Stages[0].FinishedAt == finished,
+            "carried completion time survives a fresh viewer without using refresh time");
+        Check(stampView.Stages.Skip(1).All(s => s.FinishedAt == null),
+            "missing null malformed and out-of-range completion times do not break the queue or fabricate a date");
         var source = Path.Combine(root, "live", "queues", new string('c', 32), "result.json");
         DailyJson.Write(source, new
         {

@@ -44,6 +44,46 @@ public sealed partial class DailyRunPanel
             throw new Exception("Timeline tasks have missing vector symbols");
         return 8;
     }
+    internal void CheckProgressRingForSmoke()
+    {
+        double previousValue = progress.Value, previousMaximum = progress.Maximum;
+        try
+        {
+            foreach (var (value, maximum, label) in new[] { (0d, 3d, "0%"), (1d, 3d, "33%"), (999d, 1000d, "99%"), (3d, 3d, "100%") })
+            {
+                progress.Maximum = maximum;
+                progress.Value = value;
+                UpdateLayout();
+                if (progress.Template.FindName("Percentage", progress) is not TextBlock text || text.Text != label)
+                    throw new Exception("Circular progress does not reflect completed stages");
+                var peer = new ProgressBarAutomationPeer(progress);
+                var range = (IRangeValueProvider)peer.GetPattern(PatternInterface.RangeValue);
+                if (range.Value != value || range.Maximum != maximum || string.IsNullOrEmpty(peer.GetName()))
+                    throw new Exception("Circular progress lost native range accessibility");
+            }
+            var converter = new ProgressRingConverter();
+            Geometry Shape(double value) => (Geometry)converter.Convert([value, 0d, 1d], typeof(Geometry), "", System.Globalization.CultureInfo.InvariantCulture);
+            if (!Shape(0).IsEmpty() || Shape(1) is not EllipseGeometry || Shape(.5).IsEmpty())
+                throw new Exception("Progress ring cannot render empty partial and complete states");
+            var finished = new DateTimeOffset(2026, 10, 6, 11, 2, 37, TimeSpan.Zero);
+            var row = new StageRow(new("guild", "completed", "", Carried: true, FinishedAt: finished));
+            string clock = finished.ToLocalTime().ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+            if (!row.HasFinishedTime || row.FinishedTime != clock || !row.FinishedTimeHelp.Contains("37") || !row.AccessibleName.Contains(clock))
+                throw new Exception("Completion time lost its local clock, full tooltip or accessible description");
+            row.Update(new("guild", "running", "", FinishedAt: finished));
+            if (row.HasFinishedTime || row.FinishedTime.Length != 0)
+                throw new Exception("An active retry still shows the previous completion time");
+            row.Update(new("guild", "completed", ""));
+            if (row.HasFinishedTime || row.FinishedTimeHelp.Length != 0)
+                throw new Exception("Missing completion evidence fabricated a timestamp");
+        }
+        finally
+        {
+            progress.Maximum = previousMaximum;
+            progress.Value = previousValue;
+            UpdateLayout();
+        }
+    }
     internal void CheckLongMessageForSmoke()
     {
         UpdateLayout();
@@ -125,12 +165,63 @@ public partial class MainWindow
         return checks;
     }
 
+    private async Task<int> CheckWindowChromeForSmoke()
+    {
+        var chrome = System.Windows.Shell.WindowChrome.GetWindowChrome(this);
+        if (chrome == null || chrome.UseAeroCaptionButtons || chrome.GlassFrameThickness != new Thickness(0))
+            throw new Exception("Native title bar was not replaced");
+        var handle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+        static nint Packed(Point point) => (nint)((((int)point.Y & 0xffff) << 16) | ((int)point.X & 0xffff));
+        int Hit(Point point) => (int)ChromeSendMessage(handle, 0x0084, 0, Packed(point));
+        Point Center(FrameworkElement element) => element.PointToScreen(new Point(element.ActualWidth / 2, element.ActualHeight / 2));
+        if (Hit(Center(PageTitle)) != 2) throw new Exception("Page heading cannot drag the window");
+        foreach (var button in new[] { ConnectButton, MinimizeButton, MaximizeButton, CloseButton })
+        {
+            if (Hit(Center(button)) != 1) throw new Exception("Caption swallowed a button click: " + button.Name);
+            var peer = new ButtonAutomationPeer(button);
+            if (peer.GetPattern(PatternInterface.Invoke) is not IInvokeProvider)
+                throw new Exception("Window control is not accessible: " + button.Name);
+        }
+        var oldBounds = new Rect(Left, Top, Width, Height);
+        var content = (FrameworkElement)Content;
+        if (Hit(content.PointToScreen(new Point(1, ActualHeight / 2))) != 10)
+            throw new Exception("Window resize edge is missing");
+        MaximizeButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        if (WindowState != WindowState.Maximized || (string?)MaximizeButton.ToolTip != L.Get("window.restore"))
+            throw new Exception("Maximize did not update state and restore label");
+        var info = new ChromeMonitorInfo { Size = System.Runtime.InteropServices.Marshal.SizeOf<ChromeMonitorInfo>() };
+        if (!ChromeGetMonitorInfo(ChromeMonitorFromWindow(handle, 2), ref info))
+            throw new Exception("Could not verify maximized work area");
+        var topLeft = content.PointToScreen(new Point());
+        var bottomRight = content.PointToScreen(new Point(content.ActualWidth, content.ActualHeight));
+        if (topLeft.X < info.Work.Left - 1 || topLeft.Y < info.Work.Top - 1 ||
+            bottomRight.X > info.Work.Right + 1 || bottomRight.Y > info.Work.Bottom + 1)
+            throw new Exception($"Maximized content extends beyond the monitor work area: content {topLeft} to {bottomRight}; work {info.Work.Left},{info.Work.Top} to {info.Work.Right},{info.Work.Bottom}; dpi {VisualTreeHelper.GetDpi(this)}");
+        Capture("chrome-maximized");
+        MinimizeButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        if (WindowState != WindowState.Minimized) throw new Exception("Minimize button failed");
+        SystemCommands.RestoreWindow(this);
+        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        if (WindowState == WindowState.Maximized) MaximizeButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        if (WindowState != WindowState.Normal || Math.Abs(Width - oldBounds.Width) > 1 ||
+            Math.Abs(Height - oldBounds.Height) > 1 || (string?)MaximizeButton.ToolTip != L.Get("window.maximize"))
+            throw new Exception("Restore did not recover the normal window");
+        return 13;
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "SendMessageW")]
+    private static extern nint ChromeSendMessage(nint window, uint message, nint wParam, nint lParam);
+
     private async Task CheckPresentationForSmoke()
     {
         int checks=0;
         try
         {
             WorkspaceTabs.SelectedItem=RunTab;
+            checks += await CheckWindowChromeForSmoke();
             foreach(int language in new[]{0,1,2})
             {
                 LanguageSelector.SelectedIndex=language;
@@ -147,11 +238,26 @@ public partial class MainWindow
                 {
                     WorkspaceTabs.SelectedItem=tab;
                     await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    foreach (var control in new[] { MinimizeButton, MaximizeButton, CloseButton })
+                        if (string.IsNullOrWhiteSpace(new ButtonAutomationPeer(control).GetName()) ||
+                            control.TransformToAncestor(this).TransformBounds(new Rect(control.RenderSize)).Right > ActualWidth)
+                            throw new Exception("Window control label or compact placement is invalid");
+                    if (WindowControls.TransformToAncestor(PageHeader).TransformBounds(new Rect(WindowControls.RenderSize)).Left <
+                        ConnectButton.TransformToAncestor(PageHeader).TransformBounds(new Rect(ConnectButton.RenderSize)).Right)
+                        throw new Exception("Connection action overlaps the window controls");
                     // Every navigation destination must remain visible above appearance settings.
                     Rect Bounds(FrameworkElement e) => e.TransformToAncestor(this).TransformBounds(new Rect(e.RenderSize));
                     foreach (var nav in new[]{RunTab,SettingsTab,ToolsTab,AccountsTab,DiagnosticsTab})
                         if(Bounds(nav).Bottom>Bounds(ThemeSelector).Top-16)
                             throw new Exception("Compact navigation overlaps appearance controls");
+                    if (PageTitle.Text != tab.Header as string || PageTitle.ActualWidth < 80)
+                        throw new Exception("Page heading lost its translated navigation context");
+                    if (tab.Template.FindName("NavIcon", tab) is not System.Windows.Shapes.Path navIcon || navIcon.Data?.IsEmpty() != false)
+                        throw new Exception("Navigation destination has no vector icon");
+                    // Selection color belongs to navigation, never to the page's inherited text.
+                    if (tab.Foreground != FindResource("Ink"))
+                        throw new Exception("Navigation selection changed page text color");
+                    checks += 3;
                     if(tab==AccountsTab)
                     {
                         if(Math.Abs(Search.ActualHeight-RefreshButton.ActualHeight)>1)
@@ -211,6 +317,7 @@ public partial class MainWindow
             dailyPanel.Busy(true);
             await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
             dailyPanel.CheckLongMessageForSmoke();checks+=3;
+            dailyPanel.CheckProgressRingForSmoke();checks+=12;
             Capture("long-message-compact");
             DailyJson.Write(Path.Combine(smoke!,"presentation.json"),new{
                 status="passed",checks,localizedAccessibleNames=true,toggleProviderPreservesPlan=true,

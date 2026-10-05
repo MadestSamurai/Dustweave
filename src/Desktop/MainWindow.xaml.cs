@@ -61,6 +61,7 @@ public partial class MainWindow : Window
         designPreview = !automatedSmoke;
         theme = new DailyTheme(root);
         InitializeComponent();
+        InitializeWindowChrome();
         ThemeSelector.SelectedIndex = (int)theme.Preference;
         LanguageSelector.SelectedIndex = Array.IndexOf(DailyLanguage.Codes, DailyLanguage.Current.Code);
         appearanceReady = true;
@@ -224,7 +225,7 @@ public partial class MainWindow : Window
                 row.PropertyChanged += RowChanged;
                 rows.Add(row);
             }
-            L.Bind(CurrentText, TextBlock.TextProperty, () => catalog.CurrentKey.Length == 0 ? L.Get("account.not_signed_in") : L.Get("account.current", catalog.Accounts.FirstOrDefault(a => a.AccountKey == catalog.CurrentKey)?.Name ?? L.Get("account.unsaved")));
+            L.Bind(dailyPanel.CurrentAccountText, TextBlock.TextProperty, () => catalog.CurrentKey.Length == 0 ? L.Get("account.not_signed_in") : L.Get("account.current", catalog.Accounts.FirstOrDefault(a => a.AccountKey == catalog.CurrentKey)?.Name ?? L.Get("account.unsaved")));
             CountText.Text = $"{rows.Count} / 100";
             EmptyText.Visibility = rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             AccountsGrid.SelectedItem = rows.FirstOrDefault(r => r.Account.AccountKey == old) ?? rows.FirstOrDefault();
@@ -591,7 +592,7 @@ public partial class MainWindow : Window
         Capture("timeline-plan-dark");
 
         var view = new QueueView("running", "正在领取到期派遣，完成后继续下一环节。", "fixture/theme-running.json",
-            [new("guild", "completed", "公会签到已完成"), new("management", "completed", "餐厅、鱼笼与领地收益已领取"),
+            [new("guild", "completed", "公会签到已完成", FinishedAt: new DateTimeOffset(DateTime.Today.AddHours(19).AddMinutes(2))), new("management", "completed", "餐厅、鱼笼与领地收益已领取", FinishedAt: new DateTimeOffset(DateTime.Today.AddHours(19).AddMinutes(3))),
              new("daily_dispatch", "running", "核对派遣结果"), new("mirror", "pending", "使用剩余免费次数"),
              new("trade", "pending", "购买、料理与售卖"), new("mail", "pending", "最后收取本次奖励")], planKey);
         dailyPanel.Show(view);
@@ -894,7 +895,7 @@ public partial class MainWindow : Window
             fixture.CurrentKey = fixture.Accounts[1].AccountKey;
             nextAccountRefresh = DateTime.MinValue;
             await RefreshAccountIdentityAsync();
-            if (catalog?.CurrentKey != fixture.CurrentKey || !CurrentText.Text.Contains(fixture.Accounts[1].Name))
+            if (catalog?.CurrentKey != fixture.CurrentKey || !dailyPanel.CurrentAccountText.Text.Contains(fixture.Accounts[1].Name))
                 throw new Exception("Idle account change did not refresh the visible catalog");
             if (fixture.Calls.Any()) throw new Exception("Account identity refresh triggered gameplay or account writes");
         }

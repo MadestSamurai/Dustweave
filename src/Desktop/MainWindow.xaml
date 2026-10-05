@@ -1,6 +1,34 @@
-<Window x:Class="BD2Daily.Desktop.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:l="clr-namespace:BD2Daily.Desktop"
+<Window x:Class="BD2Daily.Desktop.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:l="clr-namespace:BD2Daily.Desktop" xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
  Style="{StaticResource {x:Type Window}}" Title="{l:Tr app.window_title}" Width="1180" Height="800" MinWidth="920" MinHeight="650" Background="{DynamicResource AppBackground}" WindowStartupLocation="CenterScreen">
+ <shell:WindowChrome.WindowChrome>
+  <shell:WindowChrome CaptionHeight="80" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="8" UseAeroCaptionButtons="False"/>
+ </shell:WindowChrome.WindowChrome>
  <Window.Resources>
+  <Style x:Key="CaptionButton" TargetType="Button">
+   <Setter Property="Width" Value="42"/><Setter Property="Height" Value="36"/><Setter Property="MinWidth" Value="42"/><Setter Property="MinHeight" Value="36"/>
+   <Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="2,0"/><Setter Property="Background" Value="Transparent"/>
+   <Setter Property="Foreground" Value="{DynamicResource MutedInk}"/><Setter Property="BorderBrush" Value="Transparent"/>
+   <Setter Property="FocusVisualStyle" Value="{x:Null}"/><Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+   <Setter Property="AutomationProperties.Name" Value="{Binding ToolTip,RelativeSource={RelativeSource Self}}"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
+    <Border x:Name="Face" CornerRadius="8" BorderThickness="1" BorderBrush="{TemplateBinding BorderBrush}" Background="{TemplateBinding Background}">
+     <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    </Border>
+    <ControlTemplate.Triggers>
+     <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Face" Property="BorderBrush" Value="{DynamicResource Focus}"/></Trigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+   <Style.Triggers>
+    <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource SurfaceMuted}"/><Setter Property="Foreground" Value="{DynamicResource Ink}"/></Trigger>
+    <Trigger Property="IsPressed" Value="True"><Setter Property="Background" Value="{DynamicResource Line}"/></Trigger>
+   </Style.Triggers>
+  </Style>
+  <Style x:Key="CloseCaptionButton" TargetType="Button" BasedOn="{StaticResource CaptionButton}">
+   <Style.Triggers>
+    <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource ErrorSoft}"/><Setter Property="Foreground" Value="{DynamicResource Error}"/></Trigger>
+    <Trigger Property="IsPressed" Value="True"><Setter Property="Background" Value="{DynamicResource ErrorSoft}"/><Setter Property="Foreground" Value="{DynamicResource Error}"/></Trigger>
+   </Style.Triggers>
+  </Style>
   <Style x:Key="AccountCellText" TargetType="TextBlock">
    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
    <Setter Property="VerticalAlignment" Value="Center"/>
@@ -10,18 +38,18 @@
    <Setter Property="Foreground" Value="{DynamicResource MutedInk}"/><Setter Property="FontSize" Value="14"/>
    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabItem">
-    <Border x:Name="Row" CornerRadius="8" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" Padding="16,12" Margin="12,3">
-     <ContentPresenter x:Name="NavHeader" ContentSource="Header" VerticalAlignment="Center"/>
+    <Border x:Name="Row" CornerRadius="8" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" Padding="12,12" Margin="12,3">
+     <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="26"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Path x:Name="NavIcon" Style="{StaticResource LineIcon}" Data="{TemplateBinding Tag}" Stroke="{TemplateBinding Foreground}" HorizontalAlignment="Left"/><ContentPresenter x:Name="NavHeader" Grid.Column="1" ContentSource="Header" VerticalAlignment="Center"/></Grid>
     </Border>
     <ControlTemplate.Triggers>
      <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Row" Property="Background" Value="{DynamicResource SurfaceMuted}"/></Trigger>
-     <Trigger Property="IsSelected" Value="True"><Setter TargetName="Row" Property="Background" Value="{DynamicResource Surface}"/><Setter Property="Foreground" Value="{DynamicResource Ink}"/><Setter TargetName="NavHeader" Property="TextElement.FontWeight" Value="SemiBold"/></Trigger>
+     <Trigger Property="IsSelected" Value="True"><Setter TargetName="Row" Property="Background" Value="{DynamicResource PrimarySoft}"/><Setter Property="Foreground" Value="{DynamicResource Ink}"/><Setter TargetName="NavIcon" Property="Stroke" Value="{DynamicResource Primary}"/><Setter TargetName="NavHeader" Property="TextElement.Foreground" Value="{DynamicResource Primary}"/><Setter TargetName="NavHeader" Property="TextElement.FontWeight" Value="SemiBold"/></Trigger>
      <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource Focus}"/></Trigger>
     </ControlTemplate.Triggers>
    </ControlTemplate></Setter.Value></Setter>
   </Style>
  </Window.Resources>
- <Grid Background="{DynamicResource AppBackground}">
+ <Grid x:Name="WindowRoot" Background="{DynamicResource AppBackground}">
   <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <Border Grid.RowSpan="3" Background="{DynamicResource Sidebar}" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,1,0"/>
@@ -29,13 +57,31 @@
    <TextBlock Text="Dustweave" FontSize="22" FontWeight="SemiBold"/>
    <TextBlock Text="{l:Tr app.subtitle}" FontSize="12" Foreground="{DynamicResource MutedInk}" Margin="0,5,0,0" TextWrapping="Wrap"/>
   </StackPanel>
-  <Grid Grid.Column="1" Margin="24,24,24,20">
-   <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+  <Grid x:Name="PageHeader" Grid.Column="1" Margin="24,24,24,20">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
    <StackPanel Margin="0,0,16,0">
-    <TextBlock x:Name="CurrentText" FontSize="18" FontWeight="SemiBold" Text="{l:Tr account.reading}" TextTrimming="CharacterEllipsis"/>
+    <TextBlock x:Name="PageTitle" Text="{Binding SelectedItem.Header,ElementName=WorkspaceTabs}" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text,RelativeSource={RelativeSource Self}}"/>
     <TextBlock x:Name="ConnectionText" FontSize="12" Text="{l:Tr connection.none}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" Margin="0,6,0,0"/>
    </StackPanel>
-   <Button Grid.Column="1" x:Name="ConnectButton" Content="{l:Tr connection.connect}" Click="Connect_Click" VerticalAlignment="Center"/>
+   <Button Grid.Column="1" x:Name="ConnectButton" Content="{l:Tr connection.connect}" Click="Connect_Click" VerticalAlignment="Center" Margin="0,0,16,0" shell:WindowChrome.IsHitTestVisibleInChrome="True"/>
+   <StackPanel x:Name="WindowControls" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+    <Button x:Name="MinimizeButton" Style="{StaticResource CaptionButton}" ToolTip="{l:Tr window.minimize}" Click="Minimize_Click">
+     <Path Style="{StaticResource LineIcon}" Data="{StaticResource Icon.WindowMinimize}" Stroke="{Binding Foreground,RelativeSource={RelativeSource AncestorType=Button}}"/>
+    </Button>
+    <Button x:Name="MaximizeButton" Click="Maximize_Click">
+     <Button.Style><Style TargetType="Button" BasedOn="{StaticResource CaptionButton}"><Setter Property="ToolTip" Value="{l:Tr window.maximize}"/><Style.Triggers>
+      <DataTrigger Binding="{Binding WindowState,RelativeSource={RelativeSource AncestorType=Window}}" Value="Maximized"><Setter Property="ToolTip" Value="{l:Tr window.restore}"/></DataTrigger>
+     </Style.Triggers></Style></Button.Style>
+     <Path Stroke="{Binding Foreground,RelativeSource={RelativeSource AncestorType=Button}}">
+      <Path.Style><Style TargetType="Path" BasedOn="{StaticResource LineIcon}"><Setter Property="Data" Value="{StaticResource Icon.WindowMaximize}"/><Style.Triggers>
+       <DataTrigger Binding="{Binding WindowState,RelativeSource={RelativeSource AncestorType=Window}}" Value="Maximized"><Setter Property="Data" Value="{StaticResource Icon.WindowRestore}"/></DataTrigger>
+      </Style.Triggers></Style></Path.Style>
+     </Path>
+    </Button>
+    <Button x:Name="CloseButton" Style="{StaticResource CloseCaptionButton}" ToolTip="{l:Tr window.close}" Click="Close_Click">
+     <Path Style="{StaticResource LineIcon}" Data="{StaticResource Icon.WindowClose}" Stroke="{Binding Foreground,RelativeSource={RelativeSource AncestorType=Button}}"/>
+    </Button>
+   </StackPanel>
   </Grid>
   <TabControl x:Name="WorkspaceTabs" Grid.Row="1" Grid.ColumnSpan="2" SelectionChanged="WorkspaceTab_Changed" Background="Transparent" BorderThickness="0" SelectedIndex="0" TabStripPlacement="Left" ItemContainerStyle="{StaticResource NavigationTab}">
    <TabControl.Template><ControlTemplate TargetType="TabControl">
@@ -46,15 +92,15 @@
      </ScrollViewer>
      <ContentPresenter Grid.Column="1" Margin="24,0,24,20" ContentSource="SelectedContent" KeyboardNavigation.TabIndex="2"/>
     </Grid>
-   </ControlTemplate></TabControl.Template>   <TabItem x:Name="RunTab" Header="{l:Tr nav.daily}"/>
-   <TabItem x:Name="SettingsTab" Header="{l:Tr nav.settings}"/>
-   <TabItem x:Name="ToolsTab" Header="{l:Tr nav.tools}"/>
-   <TabItem x:Name="AccountsTab" Header="{l:Tr nav.accounts}">
+   </ControlTemplate></TabControl.Template>   <TabItem x:Name="RunTab" Tag="{StaticResource Icon.Tasks}" Header="{l:Tr nav.daily}"/>
+   <TabItem x:Name="SettingsTab" Tag="{StaticResource Icon.Settings}" Header="{l:Tr nav.settings}"/>
+   <TabItem x:Name="ToolsTab" Tag="{StaticResource Icon.Tool}" Header="{l:Tr nav.tools}"/>
+   <TabItem x:Name="AccountsTab" Tag="{StaticResource Icon.Account}" Header="{l:Tr nav.accounts}">
   <Border Style="{StaticResource Panel}" Padding="20,12">
    <Grid>
     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <Grid Margin="0,0,0,12"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="220"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-     <WrapPanel VerticalAlignment="Center" Margin="0,0,12,0"><TextBlock Text="{l:Tr account.list}" FontWeight="SemiBold" FontSize="20"/><TextBlock x:Name="CountText" Foreground="{StaticResource MutedInk}" Margin="12,5,0,0" FontSize="13" ToolTip="{l:Tr account.local_data}"/></WrapPanel>
+     <WrapPanel VerticalAlignment="Center" Margin="0,0,12,0"><TextBlock Text="{l:Tr account.list}" FontWeight="SemiBold" FontSize="14"/><TextBlock x:Name="CountText" Foreground="{StaticResource MutedInk}" Margin="12,1,0,0" FontSize="13" ToolTip="{l:Tr account.local_data}"/></WrapPanel>
      <Grid Grid.Column="1"><TextBox x:Name="Search" TextChanged="Search_Changed" ToolTip="{l:Tr account.search_help}" AutomationProperties.Name="{l:Tr account.search_accessible}"/><TextBlock Text="{l:Tr account.search}" IsHitTestVisible="False" Foreground="{StaticResource MutedInk}" Margin="12,0" VerticalAlignment="Center"><TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Text,ElementName=Search}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock></Grid>
      <Button Grid.Column="2" x:Name="RefreshButton" Content="{l:Tr common.refresh}" Margin="8,0,0,0" Click="Refresh_Click"/>
     </Grid>
@@ -80,20 +126,20 @@
    </Grid>
   </Border>
    </TabItem>
-   <TabItem x:Name="DiagnosticsTab" Header="{l:Tr nav.diagnostics}">
-    <Border Style="{StaticResource Panel}" Padding="20">
+   <TabItem x:Name="DiagnosticsTab" Tag="{StaticResource Icon.Diagnostics}" Header="{l:Tr nav.diagnostics}">
+    <Border Background="{DynamicResource AppBackground}">
      <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
       <Grid Margin="0,0,0,20"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-       <StackPanel Margin="0,0,16,0"><TextBlock Text="{l:Tr diagnostics.title}" FontSize="20" FontWeight="SemiBold"/>
-        <TextBlock Text="{l:Tr diagnostics.intro}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" FontSize="12" Margin="0,6,0,0"/>
+       <StackPanel Margin="0,0,16,0" VerticalAlignment="Center">
+        <TextBlock Text="{l:Tr diagnostics.intro}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" FontSize="13"/>
        </StackPanel>
        <Button Grid.Column="1" Content="{l:Tr diagnostics.refresh}" Click="RefreshDiagnostics_Click" VerticalAlignment="Top"/>
       </Grid>
       <ScrollViewer x:Name="DiagnosticsScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
        <StackPanel Margin="0,0,8,0">
-        <Border Background="{DynamicResource SurfaceMuted}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="10" Padding="16">
+        <Border Style="{StaticResource Panel}" Padding="18">
          <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="36"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-          <Border Width="28" Height="28" CornerRadius="14" Background="{DynamicResource Surface}" VerticalAlignment="Top"><Path x:Name="DiagnosticIcon" Style="{StaticResource LineIcon}" Data="{StaticResource Icon.Link}"/></Border>
+          <Border Width="28" Height="28" CornerRadius="14" Background="{DynamicResource PrimarySoft}" VerticalAlignment="Top"><Path x:Name="DiagnosticIcon" Style="{StaticResource LineIcon}" Data="{StaticResource Icon.Link}"/></Border>
           <StackPanel Grid.Column="1" Margin="8,0,0,0">
            <TextBlock x:Name="DiagnosticStatus" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"/>
            <TextBlock x:Name="DiagnosticAdvice" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" Margin="0,6,0,0" FontSize="13"/>
@@ -123,7 +169,7 @@
          <StackPanel Margin="0,14,0,0">
           <TextBlock x:Name="GuildIdentityText" Text="{l:Tr diagnostics.guild_wait}" FontWeight="SemiBold" TextWrapping="Wrap"/>
           <TextBlock x:Name="GuildStateText" Text="{l:Tr diagnostics.guild_connect}" TextWrapping="Wrap" FontSize="13" Margin="0,8,0,0"/>
-          <TextBlock x:Name="GuildResultText" Text="{l:Tr diagnostics.guild_empty}" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" FontSize="12" Margin="0,6,0,0"/>
+          <TextBlock x:Name="GuildResultText" Text="{l:Tr diagnostics.guild_empty}" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" FontSize="13"/>
           <TextBlock Text="{l:Tr diagnostics.guild_notice}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" FontSize="12" Margin="0,12,0,0"/>
           <WrapPanel Margin="0,12,0,0">
            <Button x:Name="ObserveButton" Content="{l:Tr diagnostics.observe}" Click="Observe_Click" Margin="0,0,8,4"/>

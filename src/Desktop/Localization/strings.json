@@ -1,4 +1,18 @@
 {
+  "window.minimize": { "zh-CN": "最小化", "zh-TW": "最小化", "en-US": "Minimize" },
+  "window.maximize": { "zh-CN": "最大化", "zh-TW": "最大化", "en-US": "Maximize" },
+  "window.restore": { "zh-CN": "还原窗口", "zh-TW": "還原視窗", "en-US": "Restore" },
+  "window.close": { "zh-CN": "关闭", "zh-TW": "關閉", "en-US": "Close" },
+  "run.progress": {
+    "zh-CN": "本次任务进度",
+    "zh-TW": "本次任務進度",
+    "en-US": "Run progress"
+  },
+  "run.finished_at": {
+    "zh-CN": "结束于 {0}",
+    "zh-TW": "結束於 {0}",
+    "en-US": "Finished at {0}"
+  },
   "app.title": {
     "zh-CN": "Dustweave",
     "zh-TW": "Dustweave",
@@ -10,9 +24,9 @@
     "en-US": "Design preview · Demo data"
   },
   "app.version": {
-    "zh-CN": "{0} · 预览版",
-    "zh-TW": "{0} · 預覽版",
-    "en-US": "{0} · Preview"
+    "zh-CN": "{0}",
+    "zh-TW": "{0}",
+    "en-US": "{0}"
   },
   "nav.daily": {
     "zh-CN": "今日任务",

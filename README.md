@@ -22,7 +22,7 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 
 ## 界面预览
 
-<img src="docs/images/timeline-light.png" alt="织尘任务时间线：选择本次环节，查看账号与执行进度" width="1040">
+<img src="docs/images/timeline-light.png" alt="织尘任务时间线：查看账号、圆环进度与环节完成时刻" width="1040">
 
 <details>
 <summary>查看深色界面</summary>

@@ -28,9 +28,11 @@ public sealed partial class DailyRunPanel : UserControl
     private readonly TextBlock status = new() { Text = "未运行", FontSize = 18, FontWeight = FontWeights.SemiBold }, detail = new() { TextWrapping = TextWrapping.Wrap, Margin = new(0, 4, 0, 8) };
     private readonly ListBox stages = new() { BorderThickness = new(0), MinHeight = 120, HorizontalContentAlignment = HorizontalAlignment.Stretch, Padding = new(0) };
     private readonly TextBlock counts = new() { VerticalAlignment = VerticalAlignment.Center, Foreground = (Brush)Application.Current.FindResource("MutedInk") };
-    private readonly ProgressBar progress = new() { Height = 3, Margin = new(0, 10, 0, 12), Maximum = 1, Foreground = (Brush)Application.Current.FindResource("Primary"), Background = (Brush)Application.Current.FindResource("Line") };
-    private readonly WrapPanel views = new() { Margin = new(0, 0, 0, 2) };
-    private readonly WrapPanel choices = new() { Margin = new(0, 0, 0, 10), Visibility = Visibility.Collapsed };
+    private readonly ProgressBar progress = new() { Maximum = 1, Style = (Style)Application.Current.FindResource("CircularProgress") };
+    private readonly Border planIcon = new();
+    internal TextBlock CurrentAccountText { get; } = new() { FontSize = 13, Margin = new(14, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis };
+    private readonly WrapPanel views = new() { Margin = new(0, 14, 0, 6) };
+    private readonly WrapPanel choices = new() { Margin = new(0), Visibility = Visibility.Collapsed };
     private readonly Button settings = new() { Content = "调整日常设置" }, accounts = new() { Content = "管理账号" };
     public DailyRunPanel(string root)
     {
@@ -44,34 +46,67 @@ public sealed partial class DailyRunPanel : UserControl
         L.Bind(accounts, ContentControl.ContentProperty, "nav.accounts");
         L.Bind(selected, ContentControl.ContentProperty, "run.multi", 0);
         WeakEventManager<DailyLanguage, EventArgs>.AddHandler(L, nameof(DailyLanguage.Changed), LanguageChanged);
-        stages.SetResourceReference(Control.BackgroundProperty, "Surface");
+        stages.SetResourceReference(Control.BackgroundProperty, "AppBackground");
         stages.ItemTemplate = (DataTemplate)Application.Current.FindResource("DailyTimelineItem");
         stages.ItemContainerStyle = (Style)Application.Current.FindResource("TimelineContainer");
         stages.ItemsSource = rows;
+        Grid.SetIsSharedSizeScope(stages, true);
+        L.Bind(progress, System.Windows.Automation.AutomationProperties.NameProperty, "run.progress");
         L.Bind(stages, System.Windows.Automation.AutomationProperties.NameProperty, "run.timeline_accessible");
         ScrollViewer.SetHorizontalScrollBarVisibility(stages, ScrollBarVisibility.Disabled);
         ScrollViewer.SetVerticalScrollBarVisibility(stages, ScrollBarVisibility.Auto);
         VirtualizingPanel.SetIsVirtualizing(stages, true);
         VirtualizingPanel.SetVirtualizationMode(stages, VirtualizationMode.Recycling);
 
-        var layout = new DockPanel { Margin = new(20) };
-        var top = new StackPanel();
+        var layout = new DockPanel();
+        var top = new StackPanel { Margin = new(0, 0, 0, 12) };
         DockPanel.SetDock(top, Dock.Top);
         layout.Children.Add(top);
-        var heading = new WrapPanel();
-        status.FontSize = 24;
-        heading.Children.Add(status);
-        counts.Margin = new(16, 6, 0, 0);
-        counts.FontSize = 13;
+        var summary = new Grid();
+        summary.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
+        summary.ColumnDefinitions.Add(new() { Width = new(1, GridUnitType.Star) });
+        var summaryIcon = new System.Windows.Shapes.Path {
+            Style = (Style)Application.Current.FindResource("LineIcon"),
+            Data = (Geometry)Application.Current.FindResource("Icon.Tasks"),
+            Stroke = (Brush)Application.Current.FindResource("Primary")
+        };
+        planIcon.Width = planIcon.Height = 34;
+        planIcon.CornerRadius = new(10);
+        planIcon.SetResourceReference(Border.BackgroundProperty, "PrimarySoft");
+        planIcon.Child = summaryIcon;
+        var indicator = new Grid { Margin = new(0, 0, 16, 0), VerticalAlignment = VerticalAlignment.Center };
+        indicator.Children.Add(planIcon);
+        indicator.Children.Add(progress);
+        summary.Children.Add(indicator);
+        var summaryText = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        Grid.SetColumn(summaryText, 1);
+        summary.Children.Add(summaryText);
+        var heading = new DockPanel { LastChildFill = true };
+        status.FontSize = 20;
+        counts.Margin = new(16, 0, 0, 0);
+        counts.FontSize = 12;
+        DockPanel.SetDock(counts, Dock.Right);
         heading.Children.Add(counts);
-        top.Children.Add(heading);
+        var identity = new Grid();
+        identity.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
+        identity.ColumnDefinitions.Add(new() { Width = new(1, GridUnitType.Star) });
+        identity.Children.Add(status);
+        CurrentAccountText.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk");
+        L.Bind(CurrentAccountText, TextBlock.TextProperty, "account.reading");
+        CurrentAccountText.SetBinding(FrameworkElement.ToolTipProperty, new Binding(nameof(TextBlock.Text)) { Source = CurrentAccountText });
+        Grid.SetColumn(CurrentAccountText, 1);
+        identity.Children.Add(CurrentAccountText);
+        heading.Children.Add(identity);
+        summaryText.Children.Add(heading);
         detail.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk");
         detail.FontSize = 13;
-        detail.Margin = new(0, 8, 0, 12);
-        top.Children.Add(new ScrollViewer { Content = detail, MaxHeight = 96,
+        detail.Margin = new(0, 6, 0, 0);
+        summaryText.Children.Add(new ScrollViewer { Content = detail, MaxHeight = 96,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
-
+        progress.SetBinding(FrameworkElement.ToolTipProperty, new Binding(nameof(TextBlock.Text)) { Source = counts });
+        top.Children.Add(new Border { Style = (Style)Application.Current.FindResource("Panel"),
+            Padding = new(18, 16, 18, 16), Child = summary });
 
         var viewSwitch = new StackPanel { Orientation = Orientation.Horizontal };
         foreach (var b in new[] { planButton, reportButton })
@@ -87,19 +122,22 @@ public sealed partial class DailyRunPanel : UserControl
         top.Children.Add(views);
         planButton.Click += (_, _) => ShowCurrentPlan();
         reportButton.Click += (_, _) => ShowHistory();
-        top.Children.Add(progress);
+
         selectUnfinished.Style = clearSelection.Style = (Style)Application.Current.FindResource("QuietButton");
         foreach (var b in new[] { selectUnfinished, clearSelection, retry, resume })
         {
             b.Margin = new(0, 0, 8, 4);
             choices.Children.Add(b);
         }
-        top.Children.Add(choices);
+        choices.VerticalAlignment = VerticalAlignment.Center;
+        choices.SetBinding(FrameworkElement.MaxWidthProperty, new Binding(nameof(ActualWidth)) { Source = views });
+        views.Children.Add(choices);
         L.Bind(retry, FrameworkElement.ToolTipProperty, "run.retry_help");
         L.Bind(resume, FrameworkElement.ToolTipProperty, "run.resume_help");
         var foot = new StackPanel { Margin = new(0, 12, 0, 0) };
         DockPanel.SetDock(foot, Dock.Bottom);
         layout.Children.Add(foot);
+        foot.Children.Add(new Border { Height = 1, Background = (Brush)Application.Current.FindResource("Line"), Margin = new(0, 0, 0, 12) });
         var actions = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Right };
         current.Style = (Style)Application.Current.FindResource("PrimaryButton");
         foreach (var b in new[] { selected, stop, current })
@@ -123,7 +161,7 @@ public sealed partial class DailyRunPanel : UserControl
         clearSelection.Click += (_, _) => { foreach (var r in rows) r.Selected = false; };
         retry.Click += (_, _) => { if (!isBusy && SelectedTasks.Count > 0) RetryRequested?.Invoke(new(currentView.Account, currentView.Record, SelectedTasks)); };
         layout.Children.Add(stages);
-        Content = new Border { Style = (Style)Application.Current.FindResource("Panel"), Child = layout };
+        Content = layout;
         syncCollection.Click += (_, _) => SyncCollectionRequested?.Invoke();
         current.Click += (_, _) => StartCurrentSelection();
         selected.Click += (_, _) => StartRequested?.Invoke(true, false);
@@ -392,6 +430,7 @@ public sealed partial class DailyRunPanel : UserControl
         planButton.Tag = showingReport ? null : "selected";
         reportButton.Tag = showingReport ? "selected" : null;
         progress.Visibility = showingReport || isBusy ? Visibility.Visible : Visibility.Collapsed;
+        planIcon.Visibility = progress.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
         L.Bind(reportButton, ContentControl.ContentProperty, currentView.Expired ? "run.expired_report" : "run.report");
         bool available = !isBusy && DailyProfiles.ValidKey(currentView.Account) && currentView.Account == activeAccount && hasReport && !currentView.Expired;
         bool planAvailable = !isBusy && !showingReport && DailyProfiles.ValidKey(activeAccount);
@@ -428,7 +467,10 @@ public sealed partial class DailyRunPanel : UserControl
         private QueueStage snapshot = new("", "pending", "");
         public string Name => L.Stage(Task);
         public string State => L.State(snapshot.State);
-        public string AccessibleName => Name + " · " + State;
+        public string AccessibleName => Name + " · " + State + (HasFinishedTime ? " · " + FinishedTimeHelp : "");
+        public bool HasFinishedTime => !IsPlan && snapshot.State is ("completed" or "skipped") && snapshot.FinishedAt.HasValue;
+        public string FinishedTime => HasFinishedTime ? snapshot.FinishedAt!.Value.ToLocalTime().ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture) : "";
+        public string FinishedTimeHelp => HasFinishedTime ? L.Get("run.finished_at", snapshot.FinishedAt!.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss zzz", System.Globalization.CultureInfo.InvariantCulture)) : "";
         public string Detail
         {
             get
@@ -441,6 +483,7 @@ public sealed partial class DailyRunPanel : UserControl
         public string DiagnosticDetail => L.Diagnostic(snapshot.Detail, Detail);
         public bool IsPlan { get; init; }
         public void RefreshLanguage() => Changed("");
+        public bool Completed => snapshot.State == "completed";
         public bool Compact { get; private set; }
         public bool Active { get; private set; }
         public bool NeedsAttention { get; private set; }

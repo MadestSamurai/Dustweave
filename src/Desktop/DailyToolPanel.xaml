@@ -4,7 +4,7 @@
    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
    <DockPanel Margin="0,0,0,14">
     <TextBlock Text="{l:Tr tools.count}" DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource MutedInk}"/>
-    <StackPanel><TextBlock Text="{l:Tr nav.tools}" FontSize="20" FontWeight="SemiBold"/><TextBlock Text="{l:Tr tools.hint}" TextWrapping="Wrap" Foreground="{StaticResource MutedInk}" FontSize="12" Margin="0,5,12,0"/></StackPanel>
+    <TextBlock Text="{l:Tr tools.hint}" TextWrapping="Wrap" Foreground="{StaticResource MutedInk}" FontSize="12" Margin="0,0,12,0" VerticalAlignment="Center"/>
    </DockPanel>
    <WrapPanel Grid.Row="1" Margin="0,0,0,12">
     <Grid Width="245"><TextBox x:Name="SearchBox" TextChanged="FilterChanged" AutomationProperties.Name="{l:Tr tools.search_accessible}"/><TextBlock x:Name="Placeholder" Text="{l:Tr tools.search}" Foreground="{StaticResource MutedInk}" FontSize="12" IsHitTestVisible="False" VerticalAlignment="Center" Margin="11,0,0,0"/></Grid>
