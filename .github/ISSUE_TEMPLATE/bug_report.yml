@@ -1,0 +1,58 @@
+name: 错误报告 / Bug report
+description: 连接、任务、界面或内置工具异常 / Connection, task, UI or integrated-tool failure
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请勿上传完整账号目录、登录凭据、库存或回放。日志与截图先去除私人信息。
+        Do not upload account directories, credentials, inventories or replays. Review logs and screenshots for personal information.
+  - type: input
+    id: version
+    attributes:
+      label: 工具版本与包类型 / Version and package
+      placeholder: "例如 / Example: 0.8.0-preview.5 · Portable"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 环境 / Environment
+      description: Windows版本、游戏客户端版本（如果知道）、是否刚更新 / Windows, game client version if known, recent updates
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: 出错位置 / Affected area
+      options:
+        - 启动或连接 / Startup or connection
+        - 账号切换 / Account switching
+        - 日常环节 / Daily stage
+        - 周常环节 / Weekly stage
+        - 跑商与料理 / Trading or cooking
+        - 内置工具 / Integrated tool
+        - 界面与语言 / UI or language
+        - 其他 / Other
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤 / Steps to reproduce
+      description: 当时在哪个画面、做了什么、发生在哪个环节？ / Where were you, what did you do, and which stage was running?
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: 预期与实际结果 / Expected and actual behavior
+      description: 包含最后一条提示或错误原文 / Include the exact last message or error
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 可选诊断 / Optional diagnostics
+      description: 相关时段的脱敏日志、截图、发生时间；附日志不是提交问题的前提 / Relevant redacted logs, screenshots and time; attachments are optional

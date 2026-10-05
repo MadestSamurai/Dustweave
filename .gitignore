@@ -1,0 +1,17 @@
+**/bin/
+**/obj/
+artifacts/
+.vs/
+.vscode/
+*.user
+*.suo
+.env
+.env.*
+secrets/
+private-data/
+plugins/
+*.pfx
+*.key
+*.db
+*.sqlite*
+

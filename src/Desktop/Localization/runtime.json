@@ -1,0 +1,4407 @@
+{
+  "message.idle": {
+    "zh-CN": "未运行",
+    "zh-TW": "未運行",
+    "en-US": "Not running"
+  },
+  "message.preparing": {
+    "zh-CN": "正在准备",
+    "zh-TW": "正在準備",
+    "en-US": "Preparing"
+  },
+  "message.pending": {
+    "zh-CN": "等待执行",
+    "zh-TW": "等待執行",
+    "en-US": "Pending"
+  },
+  "message.running": {
+    "zh-CN": "执行中",
+    "zh-TW": "執行中",
+    "en-US": "Running"
+  },
+  "message.completed": {
+    "zh-CN": "完成",
+    "zh-TW": "完成",
+    "en-US": "Completed"
+  },
+  "message.skipped": {
+    "zh-CN": "已跳过",
+    "zh-TW": "已跳過",
+    "en-US": "Skipped"
+  },
+  "message.partial": {
+    "zh-CN": "部分完成",
+    "zh-TW": "部分完成",
+    "en-US": "Partially completed"
+  },
+  "message.paused": {
+    "zh-CN": "已暂停",
+    "zh-TW": "已暫停",
+    "en-US": "Paused"
+  },
+  "message.blocked": {
+    "zh-CN": "需处理",
+    "zh-TW": "需處理",
+    "en-US": "Needs attention"
+  },
+  "message.recovery_required": {
+    "zh-CN": "需核对上次结算",
+    "zh-TW": "需核對上次結算",
+    "en-US": "Check the previous result"
+  },
+  "message.failed": {
+    "zh-CN": "未完成",
+    "zh-TW": "未完成",
+    "en-US": "Incomplete"
+  },
+  "message.error": {
+    "zh-CN": "出现错误",
+    "zh-TW": "出現錯誤",
+    "en-US": "Error"
+  },
+  "message.stopped": {
+    "zh-CN": "已停止",
+    "zh-TW": "已停止",
+    "en-US": "Stopped"
+  },
+  "message.ready": {
+    "zh-CN": "已就绪",
+    "zh-TW": "已就緒",
+    "en-US": "Ready"
+  },
+  "message.identified": {
+    "zh-CN": "身份已确认",
+    "zh-TW": "身份已確認",
+    "en-US": "Identity confirmed"
+  },
+  "message.waiting_login": {
+    "zh-CN": "等待登录",
+    "zh-TW": "等待登錄",
+    "en-US": "Waiting for login"
+  },
+  "message.unknown": {
+    "zh-CN": "状态未确认",
+    "zh-TW": "狀態未確認",
+    "en-US": "Status not confirmed"
+  },
+  "message.prepared": {
+    "zh-CN": "已准备",
+    "zh-TW": "已準備",
+    "en-US": "Prepared"
+  },
+  "message.dispatching": {
+    "zh-CN": "正在提交",
+    "zh-TW": "正在提交",
+    "en-US": "Submitting"
+  },
+  "message.confirmed": {
+    "zh-CN": "已确认",
+    "zh-TW": "已確認",
+    "en-US": "Confirmed"
+  },
+  "message.rejected": {
+    "zh-CN": "操作未被接受",
+    "zh-TW": "操作未被接受",
+    "en-US": "Operation rejected"
+  },
+  "message.deferred": {
+    "zh-CN": "暂缓执行",
+    "zh-TW": "暫緩執行",
+    "en-US": "Deferred"
+  },
+  "message.unavailable": {
+    "zh-CN": "暂不可用",
+    "zh-TW": "暫不可用",
+    "en-US": "Unavailable"
+  },
+  "message.unsupported": {
+    "zh-CN": "暂不支持",
+    "zh-TW": "暫不支持",
+    "en-US": "Not supported yet"
+  },
+  "message.disabled": {
+    "zh-CN": "已在偏好中关闭",
+    "zh-TW": "已在偏好中關閉",
+    "en-US": "Disabled in settings"
+  },
+  "message.operator_stop": {
+    "zh-CN": "已按要求停止",
+    "zh-TW": "已按要求停止",
+    "en-US": "Stopped by request"
+  },
+  "message.connection_timeout": {
+    "zh-CN": "连接超时，请检查游戏是否已完成加载。",
+    "zh-TW": "連接超時，請檢查游戲是否已完成加載。",
+    "en-US": "Connection timed out. Check that the game has finished loading."
+  },
+  "message.waiting_daily_reset": {
+    "zh-CN": "今日次数已用完，次日接续。",
+    "zh-TW": "今日次數已用完，次日接續。",
+    "en-US": "Daily attempts used up. Continue after the next reset."
+  },
+  "message.weekly_steal_verified": {
+    "zh-CN": "所选地图的每周偷窃已核对完成",
+    "zh-TW": "所選地圖的每周偷竊已核對完成",
+    "en-US": "Weekly theft checked for all selected maps."
+  },
+  "message.free_attempts_exhausted": {
+    "zh-CN": "活动免费次数已用完，下次从最新解锁关接续。",
+    "zh-TW": "活動免費次數已用完，下次從最新解鎖關接續。",
+    "en-US": "Free event attempts used up. Continue from the latest unlocked stage next time."
+  },
+  "message.all_unlocked_stages_completed": {
+    "zh-CN": "已完成全部已解锁活动关卡",
+    "zh-TW": "已完成全部已解鎖活動關卡",
+    "en-US": "All unlocked event stages completed."
+  },
+  "message.server_collection_synchronized": {
+    "zh-CN": "所选地图已同步，可直接开始日常。",
+    "zh-TW": "所選地圖已同步，可直接開始日常。",
+    "en-US": "Selected maps synchronized. Daily tasks can start."
+  },
+  "message.server_collection_verified": {
+    "zh-CN": "所选地图已收齐，无需重新遍历。",
+    "zh-TW": "所選地圖已收齊，無需重新遍歷。",
+    "en-US": "Selected maps are fully collected. No repeat traversal is needed."
+  },
+  "message.weekly_route_verified": {
+    "zh-CN": "本周所选地图已收集完成",
+    "zh-TW": "本周所選地圖已收集完成",
+    "en-US": "Weekly collection completed for the selected maps."
+  },
+  "message.weekly_npc_verified": {
+    "zh-CN": "本周NPC任务已核对完成",
+    "zh-TW": "本周NPC任務已核對完成",
+    "en-US": "Weekly NPC missions checked."
+  },
+  "message.weekly_fishing_complete": {
+    "zh-CN": "本周钓鱼任务已完成",
+    "zh-TW": "本周釣魚任務已完成",
+    "en-US": "This week's fishing mission is complete."
+  },
+  "message.weekly_minigame_complete": {
+    "zh-CN": "本周游玩小游戏任务已完成",
+    "zh-TW": "本周游玩小游戲任務已完成",
+    "en-US": "This week's minigame mission is complete."
+  },
+  "message.weekly_likes_complete": {
+    "zh-CN": "本周小屋点赞任务已完成",
+    "zh-TW": "本周小屋點贊任務已完成",
+    "en-US": "This week's home-like mission is complete."
+  },
+  "message.daily_record_already_applied": {
+    "zh-CN": "今日最高记录已应用",
+    "zh-TW": "今日最高記錄已應用",
+    "en-US": "Today's highest record has already been applied."
+  },
+  "message.outside_monster_hunt_play_period": {
+    "zh-CN": "当前不在魔兽战斗期",
+    "zh-TW": "當前不在魔獸戰斗期",
+    "en-US": "Fiend Hunt battles are not open now."
+  },
+  "message.Absorption daily quota exhausted": {
+    "zh-CN": "吸收次数已用完，次日接续。",
+    "zh-TW": "吸收次數已用完，次日接續。",
+    "en-US": "Absorption daily quota exhausted"
+  },
+  "message.server_complete": {
+    "zh-CN": "服务器确认本项已完成",
+    "zh-TW": "服務器確認本項已完成",
+    "en-US": "The server confirms this task is complete."
+  },
+  "message.mailbox_collected": {
+    "zh-CN": "邮箱奖励已领取",
+    "zh-TW": "郵箱獎勵已領取",
+    "en-US": "Mail rewards collected."
+  },
+  "message.mailbox_empty": {
+    "zh-CN": "邮箱没有可领取的奖励",
+    "zh-TW": "郵箱沒有可領取的獎勵",
+    "en-US": "No mail rewards to collect."
+  },
+  "message.no_accrued_rewards": {
+    "zh-CN": "当前没有可领取的经营收益",
+    "zh-TW": "當前沒有可領取的經營收益",
+    "en-US": "No business income to collect now."
+  },
+  "message.not_unlocked": {
+    "zh-CN": "当前账号尚未解锁",
+    "zh-TW": "當前帳號尚未解鎖",
+    "en-US": "Not unlocked on this account."
+  },
+  "message.friendship_unavailable": {
+    "zh-CN": "当前无法读取亲密度咨询状态",
+    "zh-TW": "當前無法讀取親密度咨詢狀態",
+    "en-US": "Affinity consultation status is unavailable."
+  },
+  "message.daily_three_completed": {
+    "zh-CN": "今日3次亲密度咨询已完成",
+    "zh-TW": "今日3次親密度咨詢已完成",
+    "en-US": "Today's three affinity consultations are complete."
+  },
+  "message.no_nonmax_counseling_target": {
+    "zh-CN": "没有可咨询且亲密度未满的角色",
+    "zh-TW": "沒有可咨詢且親密度未滿的角色",
+    "en-US": "No eligible character below maximum affinity."
+  },
+  "message.plugin_unavailable": {
+    "zh-CN": "插件未就绪，本环节暂不可用。",
+    "zh-TW": "外掛未就緒，本環節暫不可用。",
+    "en-US": "The plugin is not ready. This task is unavailable."
+  },
+  "message.extension_in_progress": {
+    "zh-CN": "插件正在处理任务",
+    "zh-TW": "外掛正在處理任務",
+    "en-US": "The plugin is handling a task."
+  },
+  "message.no_fully_cleared_sweep_stage": {
+    "zh-CN": "尚无满足全部通关条件的关卡，暂不能扫荡。",
+    "zh-TW": "尚無滿足全部通關條件的關卡，暫不能掃蕩。",
+    "en-US": "No stage meets all requirements for sweeping yet."
+  },
+  "message.challenge15_not_sweepable": {
+    "zh-CN": "挑战15尚不满足扫荡条件",
+    "zh-TW": "挑戰15尚不滿足掃蕩條件",
+    "en-US": "Challenge 15 is not eligible for sweeping."
+  },
+  "message.daily_limit_reached": {
+    "zh-CN": "今日次数已用完",
+    "zh-TW": "今日次數已用完",
+    "en-US": "Today's attempts are used up."
+  },
+  "message.square_not_available_in_native_travel": {
+    "zh-CN": "当前传送列表中没有可前往的广场",
+    "zh-TW": "當前傳送列表中沒有可前往的廣場",
+    "en-US": "The plaza is not available in the current travel list."
+  },
+  "message.no_suppressible_monsters": {
+    "zh-CN": "当前地图没有可压制的怪物",
+    "zh-TW": "當前地圖沒有可壓制的怪物",
+    "en-US": "No monsters on this map can be suppressed."
+  },
+  "message.native_duration_active": {
+    "zh-CN": "天赋效果仍在持续，无需重复使用。",
+    "zh-TW": "天賦效果仍在持續，無需重復使用。",
+    "en-US": "The talent is still active. No repeat use is needed."
+  },
+  "message.research_active": {
+    "zh-CN": "探查效果仍在持续",
+    "zh-TW": "探查效果仍在持續",
+    "en-US": "Search is still active."
+  },
+  "message.native_research_active": {
+    "zh-CN": "游戏确认探查效果仍在持续",
+    "zh-TW": "游戲確認探查效果仍在持續",
+    "en-US": "The game confirms Search is still active."
+  },
+  "message.daily_limit": {
+    "zh-CN": "今日天赋次数已用完",
+    "zh-TW": "今日天賦次數已用完",
+    "en-US": "Today's talent uses are exhausted."
+  },
+  "message.native_disabled": {
+    "zh-CN": "游戏当前未允许使用此天赋",
+    "zh-TW": "游戲當前未允許使用此天賦",
+    "en-US": "The game does not currently allow this talent."
+  },
+  "message.collection_characters_pack_restricted": {
+    "zh-CN": "当前卡带限制相关角色使用天赋，请切换到可用场景。",
+    "zh-TW": "當前卡帶限制相關角色使用天賦，請切換到可用場景。",
+    "en-US": "This cartridge restricts the required characters' talents. Change to a supported scene."
+  },
+  "message.free_claim_still_pending": {
+    "zh-CN": "免费领取的结果尚未确认，稍后可重新核对。",
+    "zh-TW": "免費領取的結果尚未確認，稍后可重新核對。",
+    "en-US": "The free claim is not confirmed yet. Check again later."
+  },
+  "message.product_missing": {
+    "zh-CN": "商品已不在当前供货列表中",
+    "zh-TW": "商品已不在當前供貨列表中",
+    "en-US": "This product is no longer in the current shop supply."
+  },
+  "message.input_not_ready": {
+    "zh-CN": "操作入口尚未就绪",
+    "zh-TW": "操作入口尚未就緒",
+    "en-US": "The action is not ready yet."
+  },
+  "message.ui_not_ready": {
+    "zh-CN": "游戏界面尚未就绪",
+    "zh-TW": "游戲界面尚未就緒",
+    "en-US": "The game interface is not ready yet."
+  },
+  "message.screen_changed": {
+    "zh-CN": "游戏页面已变化，请重新确认当前界面。",
+    "zh-TW": "游戲頁面已變化，請重新確認當前界面。",
+    "en-US": "The game page changed. Check the current screen."
+  },
+  "message.target_unavailable": {
+    "zh-CN": "操作目标暂不可用",
+    "zh-TW": "操作目標暫不可用",
+    "en-US": "The target is temporarily unavailable."
+  },
+  "message.target_missing": {
+    "zh-CN": "未找到当前操作目标",
+    "zh-TW": "未找到當前操作目標",
+    "en-US": "The action target could not be found."
+  },
+  "message.foreground_popup": {
+    "zh-CN": "前方有弹窗遮挡，请先处理弹窗。",
+    "zh-TW": "前方有彈窗遮擋，請先處理彈窗。",
+    "en-US": "A popup is blocking the screen. Handle it first."
+  },
+  "message.navigation_changed": {
+    "zh-CN": "移动途中场景已变化",
+    "zh-TW": "移動途中場景已變化",
+    "en-US": "The scene changed during movement."
+  },
+  "message.navigation_deadline": {
+    "zh-CN": "移动等待超时，请检查角色当前所在位置。",
+    "zh-TW": "移動等待超時，請檢查角色當前所在位置。",
+    "en-US": "Movement timed out. Check the character's position."
+  },
+  "message.navigation_no_progress": {
+    "zh-CN": "移动没有取得进展，请检查游戏中的阻挡或弹窗。",
+    "zh-TW": "移動沒有取得進展，請檢查游戲中的阻擋或彈窗。",
+    "en-US": "Movement made no progress. Check for obstacles or open prompts."
+  },
+  "message.recovery_timeout": {
+    "zh-CN": "未能在等待时间内恢复流程，请检查当前游戏界面。",
+    "zh-TW": "未能在等待時間內恢復流程，請檢查當前游戲界面。",
+    "en-US": "Recovery timed out. Check the current game screen."
+  },
+  "message.safe_menu": {
+    "zh-CN": "已进入可继续操作的主菜单",
+    "zh-TW": "已進入可繼續操作的主菜單",
+    "en-US": "The main menu is ready for further actions."
+  },
+  "message.Game not running": {
+    "zh-CN": "游戏未运行，请先启动游戏。",
+    "zh-TW": "游戲未運行，請先啟動游戲。",
+    "en-US": "Game not running"
+  },
+  "message.Cannot start preparation helper": {
+    "zh-CN": "连接准备程序未能启动，请检查工具文件是否完整。",
+    "zh-TW": "連接準備程序未能啟動，請檢查工具文件是否完整。",
+    "en-US": "Cannot start preparation helper"
+  },
+  "message.Another operation is in flight": {
+    "zh-CN": "另一个操作尚未结束，请等待当前操作完成。",
+    "zh-TW": "另一個操作尚未結束，請等待當前操作完成。",
+    "en-US": "Another operation is in flight"
+  },
+  "message.Current account must already be saved before launch verification": {
+    "zh-CN": "请先保存当前账号，再进行登录检查。",
+    "zh-TW": "請先儲存當前帳號，再進行登錄檢查。",
+    "en-US": "Current account must already be saved before launch verification"
+  },
+  "message.Connect the daily observer first": {
+    "zh-CN": "请先连接当前游戏。",
+    "zh-TW": "請先連接當前游戲。",
+    "en-US": "Connect the daily observer first"
+  },
+  "message.Daily observer is stale": {
+    "zh-CN": "游戏状态已停止更新，请检查连接和加载状态。",
+    "zh-TW": "游戲狀態已停止更新，請檢查連接和加載狀態。",
+    "en-US": "Daily observer is stale"
+  },
+  "message.Payload hash mismatch": {
+    "zh-CN": "连接组件校验失败，请重新准备组件。",
+    "zh-TW": "連接組件校驗失敗，請重新準備組件。",
+    "en-US": "Payload hash mismatch"
+  },
+  "message.Current host cannot prepare extension rule data": {
+    "zh-CN": "当前执行组件无法准备扩展规则，请检查工具版本。",
+    "zh-TW": "當前執行組件無法準備擴展規則，請檢查工具版本。",
+    "en-US": "Current host cannot prepare extension rule data"
+  },
+  "message.Invalid account identity": {
+    "zh-CN": "账号身份无效，请重新连接并核对账号。",
+    "zh-TW": "帳號身份無效，請重新連接并核對帳號。",
+    "en-US": "Invalid account identity"
+  },
+  "message.Invalid queue history identity/path": {
+    "zh-CN": "执行记录的账号或路径不匹配，请重新选择当前账号的记录。",
+    "zh-TW": "執行記錄的帳號或路徑不匹配，請重新選擇當前帳號的記錄。",
+    "en-US": "Invalid queue history identity/path"
+  },
+  "message.Invalid task ledger scope": {
+    "zh-CN": "任务记录的账号或周期不匹配",
+    "zh-TW": "任務記錄的帳號或周期不匹配",
+    "en-US": "Invalid task ledger scope"
+  },
+  "message.Invalid asset name": {
+    "zh-CN": "数据文件名称无效",
+    "zh-TW": "數據文件名稱無效",
+    "en-US": "Invalid asset name"
+  },
+  "message.Invalid result name": {
+    "zh-CN": "结果文件名称无效",
+    "zh-TW": "結果文件名稱無效",
+    "en-US": "Invalid result name"
+  },
+  "message.Waiting for post-response cache": {
+    "zh-CN": "服务器已返回，正在等待游戏状态更新。",
+    "zh-TW": "服務器已返回，正在等待游戲狀態更新。",
+    "en-US": "Waiting for post-response cache"
+  },
+  "message.Null native row": {
+    "zh-CN": "游戏返回了空数据项",
+    "zh-TW": "游戲返回了空數據項",
+    "en-US": "Null native row"
+  },
+  "message.Missing native rows": {
+    "zh-CN": "游戏尚未提供所需数据列表",
+    "zh-TW": "游戲尚未提供所需數據列表",
+    "en-US": "Missing native rows"
+  },
+  "message.Invalid DTO": {
+    "zh-CN": "游戏返回的数据格式不完整",
+    "zh-TW": "游戲返回的數據格式不完整",
+    "en-US": "Invalid DTO"
+  },
+  "message.Evidence client MVID mismatch": {
+    "zh-CN": "采集组件与当前游戏版本不一致，请重新准备组件。",
+    "zh-TW": "采集組件與當前游戲版本不一致，請重新準備組件。",
+    "en-US": "Evidence client MVID mismatch"
+  },
+  "message.Plugin is unavailable": {
+    "zh-CN": "战斗决策组件未就绪",
+    "zh-TW": "戰斗決策組件未就緒",
+    "en-US": "Plugin is unavailable"
+  },
+  "message.Plugin bridge API mismatch": {
+    "zh-CN": "战斗决策组件版本不匹配，请使用配套版本。",
+    "zh-TW": "戰斗決策組件版本不匹配，請使用配套版本。",
+    "en-US": "Plugin bridge API mismatch"
+  },
+  "message.Invalid plugin path": {
+    "zh-CN": "战斗组件路径无效",
+    "zh-TW": "戰斗組件路徑無效",
+    "en-US": "Invalid plugin path"
+  },
+  "message.Plugin path outside root": {
+    "zh-CN": "战斗组件不在指定目录内",
+    "zh-TW": "戰斗組件不在指定目錄內",
+    "en-US": "Plugin path outside root"
+  },
+  "message.Plugin link outside inventory": {
+    "zh-CN": "战斗组件文件链接不在许可目录内",
+    "zh-TW": "戰斗組件文件鏈接不在許可目錄內",
+    "en-US": "Plugin link outside inventory"
+  },
+  "message.Unsupported collection cartridge": {
+    "zh-CN": "暂不支持此卡带的收集流程",
+    "zh-TW": "暫不支持此卡帶的收集流程",
+    "en-US": "Unsupported collection cartridge"
+  },
+  "message.Target cartridge required": {
+    "zh-CN": "请先进入目标卡带。",
+    "zh-TW": "請先進入目標卡帶。",
+    "en-US": "Target cartridge required"
+  },
+  "message.Owned story cartridge required": {
+    "zh-CN": "请先进入当前账号已拥有的主线卡带。",
+    "zh-TW": "請先進入當前帳號已擁有的主線卡帶。",
+    "en-US": "Owned story cartridge required"
+  },
+  "message.Mainline field required": {
+    "zh-CN": "当前操作需要在主线地图中进行",
+    "zh-TW": "當前操作需要在主線地圖中進行",
+    "en-US": "Mainline field required"
+  },
+  "message.Current field map is unavailable": {
+    "zh-CN": "当前地图信息尚未就绪",
+    "zh-TW": "當前地圖信息尚未就緒",
+    "en-US": "Current field map is unavailable"
+  },
+  "message.Field idle required": {
+    "zh-CN": "请等待地图中的战斗或交互结束。",
+    "zh-TW": "請等待地圖中的戰斗或交互結束。",
+    "en-US": "Field idle required"
+  },
+  "message.No active UI event system": {
+    "zh-CN": "游戏界面尚未完成初始化",
+    "zh-TW": "游戲界面尚未完成初始化",
+    "en-US": "No active UI event system"
+  },
+  "message.Collection menu identity or configuration changed": {
+    "zh-CN": "收集菜单的账号或设置已变化，请重新核对。",
+    "zh-TW": "收集菜單的帳號或設置已變化，請重新核對。",
+    "en-US": "Collection menu identity or configuration changed"
+  },
+  "message.Collection menu is no longer observed": {
+    "zh-CN": "收集菜单已关闭或未能读取",
+    "zh-TW": "收集菜單已關閉或未能讀取",
+    "en-US": "Collection menu is no longer observed"
+  },
+  "message.Collection map or week changed": {
+    "zh-CN": "收集地图或每周周期已变化",
+    "zh-TW": "收集地圖或每周周期已變化",
+    "en-US": "Collection map or week changed"
+  },
+  "message.Native collection restriction evidence is missing; reconnect the current version": {
+    "zh-CN": "未读到当前卡带的天赋限制，请使用当前版本重新连接。",
+    "zh-TW": "未讀到當前卡帶的天賦限制，請使用當前版本重新連接。",
+    "en-US": "Native collection restriction evidence is missing; reconnect the current version"
+  },
+  "message.Collection field identity is missing": {
+    "zh-CN": "未读到当前收集地图的身份信息",
+    "zh-TW": "未讀到當前收集地圖的身份信息",
+    "en-US": "Collection field identity is missing"
+  },
+  "message.Native talent menu did not settle; no talent activated": {
+    "zh-CN": "天赋菜单未稳定，尚未使用天赋。",
+    "zh-TW": "天賦菜單未穩定，尚未使用天賦。",
+    "en-US": "Native talent menu did not settle; no talent activated"
+  },
+  "message.Collection query requires current idle cartridge": {
+    "zh-CN": "读取收集进度需要先结束当前交互或战斗",
+    "zh-TW": "讀取收集進度需要先結束當前交互或戰斗",
+    "en-US": "Collection query requires current idle cartridge"
+  },
+  "message.Collection read is already pending": {
+    "zh-CN": "正在读取收集进度，请等待返回。",
+    "zh-TW": "正在讀取收集進度，請等待返回。",
+    "en-US": "Collection read is already pending"
+  },
+  "message.Collection map is outside requested cartridge": {
+    "zh-CN": "读取到的地图不属于目标卡带",
+    "zh-TW": "讀取到的地圖不屬于目標卡帶",
+    "en-US": "Collection map is outside requested cartridge"
+  },
+  "message.Waypoint page cycle": {
+    "zh-CN": "传送点列表重复翻页，尚未找到目标地图。",
+    "zh-TW": "傳送點列表重復翻頁，尚未找到目標地圖。",
+    "en-US": "Waypoint page cycle"
+  },
+  "message.Waypoint map not available": {
+    "zh-CN": "目标地图当前不在传送列表中",
+    "zh-TW": "目標地圖當前不在傳送列表中",
+    "en-US": "Waypoint map not available"
+  },
+  "message.No unlocked waypoint on selected map": {
+    "zh-CN": "所选地图没有已解锁的传送点",
+    "zh-TW": "所選地圖沒有已解鎖的傳送點",
+    "en-US": "No unlocked waypoint on selected map"
+  },
+  "message.Requested waypoint is not unlocked": {
+    "zh-CN": "目标传送点尚未解锁",
+    "zh-TW": "目標傳送點尚未解鎖",
+    "en-US": "Requested waypoint is not unlocked"
+  },
+  "message.Waypoint not in interaction range": {
+    "zh-CN": "尚未进入传送点的可交互范围",
+    "zh-TW": "尚未進入傳送點的可交互范圍",
+    "en-US": "Waypoint not in interaction range"
+  },
+  "message.Current map does not allow waypoint creation": {
+    "zh-CN": "当前地图不允许召唤传送阵",
+    "zh-TW": "當前地圖不允許召喚傳送陣",
+    "en-US": "Current map does not allow waypoint creation"
+  },
+  "message.Waypoint approach did not start": {
+    "zh-CN": "未能开始向传送点移动",
+    "zh-TW": "未能開始向傳送點移動",
+    "en-US": "Waypoint approach did not start"
+  },
+  "message.Native navigation did not start": {
+    "zh-CN": "游戏未开始移动，请检查角色是否被交互状态阻挡。",
+    "zh-TW": "游戲未開始移動，請檢查角色是否被交互狀態阻擋。",
+    "en-US": "Native navigation did not start"
+  },
+  "message.Field entrance approach requires idle field": {
+    "zh-CN": "接近地图入口前需要先结束交互或战斗",
+    "zh-TW": "接近地圖入口前需要先結束交互或戰斗",
+    "en-US": "Field entrance approach requires idle field"
+  },
+  "message.Protected transit requires active stealth": {
+    "zh-CN": "这段路线需要先开启隐身",
+    "zh-TW": "這段路線需要先開啟隱身",
+    "en-US": "Protected transit requires active stealth"
+  },
+  "message.Gate leaves current chapter": {
+    "zh-CN": "这个入口会离开当前章节",
+    "zh-TW": "這個入口會離開當前章節",
+    "en-US": "Gate leaves current chapter"
+  },
+  "message.Gathering target required": {
+    "zh-CN": "未找到本次收集的目标",
+    "zh-TW": "未找到本次收集的目標",
+    "en-US": "Gathering target required"
+  },
+  "message.travel_unreachable:not_near_entrance": {
+    "zh-CN": "尚未到达地图入口附近",
+    "zh-TW": "尚未到達地圖入口附近",
+    "en-US": "The character has not reached the entrance."
+  },
+  "message.travel_unreachable:gate_not_available": {
+    "zh-CN": "地图入口当前不可用",
+    "zh-TW": "地圖入口當前不可用",
+    "en-US": "The map entrance is unavailable."
+  },
+  "message.travel_unreachable:entrance_contact_not_triggered": {
+    "zh-CN": "已接近入口，但尚未触发地图切换",
+    "zh-TW": "已接近入口，但尚未觸發地圖切換",
+    "en-US": "Near the entrance, but the map transition has not started."
+  },
+  "message.travel_unreachable:navigation_initialization_failed": {
+    "zh-CN": "游戏移动组件尚未就绪",
+    "zh-TW": "游戲移動組件尚未就緒",
+    "en-US": "Game movement is not ready."
+  },
+  "message.travel_unreachable:no_legal_waypoint_ground": {
+    "zh-CN": "没有找到可放置传送阵的地面",
+    "zh-TW": "沒有找到可放置傳送陣的地面",
+    "en-US": "No valid ground was found for a teleport circle."
+  },
+  "message.travel_unreachable:native_check": {
+    "zh-CN": "游戏判定当前位置无法到达目标",
+    "zh-TW": "游戲判定當前位置無法到達目標",
+    "en-US": "The game reports that the destination cannot be reached from here."
+  },
+  "message.travel_unreachable:probe_native_check": {
+    "zh-CN": "游戏判定这条测试路线无法通行",
+    "zh-TW": "游戲判定這條測試路線無法通行",
+    "en-US": "The game reports that this test route is blocked."
+  },
+  "message.travel_unreachable:probe_start": {
+    "zh-CN": "测试移动未能开始",
+    "zh-TW": "測試移動未能開始",
+    "en-US": "Test movement did not start."
+  },
+  "message.Scene changed": {
+    "zh-CN": "地图已变化",
+    "zh-TW": "地圖已變化",
+    "en-US": "Scene changed"
+  },
+  "message.NPC quest query already pending": {
+    "zh-CN": "正在读取周NPC任务，请等待返回。",
+    "zh-TW": "正在讀取周NPC任務，請等待返回。",
+    "en-US": "NPC quest query already pending"
+  },
+  "message.NPC progress query requires the owned current field cartridge": {
+    "zh-CN": "请在当前账号已拥有的卡带地图中读取周NPC进度。",
+    "zh-TW": "請在當前帳號已擁有的卡帶地圖中讀取周NPC進度。",
+    "en-US": "NPC progress query requires the owned current field cartridge"
+  },
+  "message.NPC target monster response incomplete": {
+    "zh-CN": "周NPC任务的目标怪物信息不完整",
+    "zh-TW": "周NPC任務的目標怪物信息不完整",
+    "en-US": "NPC target monster response incomplete"
+  },
+  "message.NPC actions require an owned story cartridge": {
+    "zh-CN": "周NPC操作需要在已拥有的主线卡带中进行",
+    "zh-TW": "周NPC操作需要在已擁有的主線卡帶中進行",
+    "en-US": "NPC actions require an owned story cartridge"
+  },
+  "message.Fresh NPC quest observation required": {
+    "zh-CN": "周NPC任务状态已过期，需要重新读取。",
+    "zh-TW": "周NPC任務狀態已過期，需要重新讀取。",
+    "en-US": "Fresh NPC quest observation required"
+  },
+  "message.NPC quest belongs to another cartridge": {
+    "zh-CN": "该周NPC任务属于另一张卡带",
+    "zh-TW": "該周NPC任務屬于另一張卡帶",
+    "en-US": "NPC quest belongs to another cartridge"
+  },
+  "message.NPC quest no longer offered or weekly quota exhausted": {
+    "zh-CN": "该任务已不可接取，或本周次数已用完。",
+    "zh-TW": "該任務已不可接取，或本周次數已用完。",
+    "en-US": "NPC quest no longer offered or weekly quota exhausted"
+  },
+  "message.Finish the current cartridge quest first": {
+    "zh-CN": "请先完成当前卡带已接取的任务。",
+    "zh-TW": "請先完成當前卡帶已接取的任務。",
+    "en-US": "Finish the current cartridge quest first"
+  },
+  "message.NPC quest chain not supported": {
+    "zh-CN": "暂不支持这条周NPC任务链",
+    "zh-TW": "暫不支持這條周NPC任務鏈",
+    "en-US": "NPC quest chain not supported"
+  },
+  "message.Hunting-only NPC quest is disabled": {
+    "zh-CN": "已关闭接取仅能在狩猎场完成的周NPC任务",
+    "zh-TW": "已關閉接取僅能在狩獵場完成的周NPC任務",
+    "en-US": "Hunting-only NPC quest is disabled"
+  },
+  "message.No active NPC quest dialogue lease": {
+    "zh-CN": "当前NPC任务对话已失效，请重新进入对话。",
+    "zh-TW": "當前NPC任務對話已失效，請重新進入對話。",
+    "en-US": "No active NPC quest dialogue lease"
+  },
+  "message.NPC dialogue target or choice changed": {
+    "zh-CN": "NPC对话对象或选项已变化",
+    "zh-TW": "NPC對話對象或選項已變化",
+    "en-US": "NPC dialogue target or choice changed"
+  },
+  "message.NPC quest step no longer active": {
+    "zh-CN": "当前NPC任务步骤已变化",
+    "zh-TW": "當前NPC任務步驟已變化",
+    "en-US": "NPC quest step no longer active"
+  },
+  "message.Not an empty-handed carry quest": {
+    "zh-CN": "当前并非空手可开始的搬运任务",
+    "zh-TW": "當前并非空手可開始的搬運任務",
+    "en-US": "Not an empty-handed carry quest"
+  },
+  "message.Carry source does not belong to active quest": {
+    "zh-CN": "搬运物不属于当前任务",
+    "zh-TW": "搬運物不屬于當前任務",
+    "en-US": "Carry source does not belong to active quest"
+  },
+  "message.Carry source changed or is not reachable": {
+    "zh-CN": "搬运物已变化或当前无法到达",
+    "zh-TW": "搬運物已變化或當前無法到達",
+    "en-US": "Carry source changed or is not reachable"
+  },
+  "message.No active NPC quest object lease": {
+    "zh-CN": "当前任务物品的操作状态已失效",
+    "zh-TW": "當前任務物品的操作狀態已失效",
+    "en-US": "No active NPC quest object lease"
+  },
+  "message.NPC quest object changed, busy or out of range": {
+    "zh-CN": "任务物品已变化、正在交互或超出可操作范围",
+    "zh-TW": "任務物品已變化、正在交互或超出可操作范圍",
+    "en-US": "NPC quest object changed, busy or out of range"
+  },
+  "message.Carry quest requires its own held object": {
+    "zh-CN": "请携带当前搬运任务指定的物品。",
+    "zh-TW": "請攜帶當前搬運任務指定的物品。",
+    "en-US": "Carry quest requires its own held object"
+  },
+  "message.Not the current NPC hunt target battle": {
+    "zh-CN": "当前战斗不是周NPC任务要求的目标",
+    "zh-TW": "當前戰斗不是周NPC任務要求的目標",
+    "en-US": "Not the current NPC hunt target battle"
+  },
+  "message.Hunting travel not allowed": {
+    "zh-CN": "当前设置不允许前往狩猎场",
+    "zh-TW": "當前設置不允許前往狩獵場",
+    "en-US": "Hunting travel not allowed"
+  },
+  "message.Unsupported NPC quest action": {
+    "zh-CN": "暂不支持此周NPC任务操作",
+    "zh-TW": "暫不支持此周NPC任務操作",
+    "en-US": "Unsupported NPC quest action"
+  },
+  "message.NPC progress query observer changed": {
+    "zh-CN": "读取周NPC进度期间连接已变化",
+    "zh-TW": "讀取周NPC進度期間連接已變化",
+    "en-US": "NPC progress query observer changed"
+  },
+  "message.NPC progress query is pending or belongs to a different request, cartridge or reset": {
+    "zh-CN": "周NPC进度尚未返回，或属于其他卡带与周期",
+    "zh-TW": "周NPC進度尚未返回，或屬于其他卡帶與周期",
+    "en-US": "NPC progress query is pending or belongs to a different request, cartridge or reset"
+  },
+  "message.Incomplete NPC progress query result": {
+    "zh-CN": "周NPC进度数据不完整",
+    "zh-TW": "周NPC進度數據不完整",
+    "en-US": "Incomplete NPC progress query result"
+  },
+  "message.NPC progress query requires the observed current field": {
+    "zh-CN": "请在当前地图读取周NPC任务进度。",
+    "zh-TW": "請在當前地圖讀取周NPC任務進度。",
+    "en-US": "NPC progress query requires the observed current field"
+  },
+  "message.Weekly NPC is not in interaction range": {
+    "zh-CN": "尚未进入NPC的可交互范围",
+    "zh-TW": "尚未進入NPC的可交互范圍",
+    "en-US": "Weekly NPC is not in interaction range"
+  },
+  "message.Weekly steal talent does not match NPC": {
+    "zh-CN": "偷窃天赋与当前NPC不匹配",
+    "zh-TW": "偷竊天賦與當前NPC不匹配",
+    "en-US": "Weekly steal talent does not match NPC"
+  },
+  "message.Not the requested steal result dialogue": {
+    "zh-CN": "当前不是本次偷窃的结果对话",
+    "zh-TW": "當前不是本次偷竊的結果對話",
+    "en-US": "Not the requested steal result dialogue"
+  },
+  "message.Steal dialogue not ready for advance": {
+    "zh-CN": "偷窃结果对话尚未就绪",
+    "zh-TW": "偷竊結果對話尚未就緒",
+    "en-US": "Steal dialogue not ready for advance"
+  },
+  "message.Weekly steal context changed": {
+    "zh-CN": "偷窃期间账号、地图或周期已变化",
+    "zh-TW": "偷竊期間帳號、地圖或周期已變化",
+    "en-US": "Weekly steal context changed"
+  },
+  "message.Weekly steal already completed": {
+    "zh-CN": "本周已完成该目标的偷窃",
+    "zh-TW": "本周已完成該目標的偷竊",
+    "en-US": "Weekly steal already completed"
+  },
+  "message.Weekly steal catalyst insufficient": {
+    "zh-CN": "偷窃所需天赋药不足",
+    "zh-TW": "偷竊所需天賦藥不足",
+    "en-US": "Weekly steal catalyst insufficient"
+  },
+  "message.Missing native talent gate": {
+    "zh-CN": "未读到游戏的天赋可用状态",
+    "zh-TW": "未讀到游戲的天賦可用狀態",
+    "en-US": "Missing native talent gate"
+  },
+  "message.Unsupported field talent proof": {
+    "zh-CN": "暂不能核对这项地图天赋的结果",
+    "zh-TW": "暫不能核對這項地圖天賦的結果",
+    "en-US": "Unsupported field talent proof"
+  },
+  "message.Talent observer or actor changed": {
+    "zh-CN": "天赋组件或使用角色已变化",
+    "zh-TW": "天賦組件或使用角色已變化",
+    "en-US": "Talent observer or actor changed"
+  },
+  "message.Expected exactly one talent request and response": {
+    "zh-CN": "天赋使用记录与服务器返回数量不一致",
+    "zh-TW": "天賦使用記錄與服務器返回數量不一致",
+    "en-US": "Expected exactly one talent request and response"
+  },
+  "message.Talent response identity, order or status mismatch": {
+    "zh-CN": "天赋返回的账号、顺序或状态不匹配",
+    "zh-TW": "天賦返回的帳號、順序或狀態不匹配",
+    "en-US": "Talent response identity, order or status mismatch"
+  },
+  "message.Talent response belongs to a failed or different skill": {
+    "zh-CN": "天赋返回失败，或返回内容不属于本次技能",
+    "zh-TW": "天賦返回失敗，或返回內容不屬于本次技能",
+    "en-US": "Talent response belongs to a failed or different skill"
+  },
+  "message.Talent usage did not advance exactly once": {
+    "zh-CN": "天赋剩余次数与本次使用不一致",
+    "zh-TW": "天賦剩余次數與本次使用不一致",
+    "en-US": "Talent usage did not advance exactly once"
+  },
+  "message.Talent row belongs to another menu": {
+    "zh-CN": "天赋按钮属于另一个菜单",
+    "zh-TW": "天賦按鈕屬于另一個菜單",
+    "en-US": "Talent row belongs to another menu"
+  },
+  "message.Only mainline gathering talents allowed": {
+    "zh-CN": "当前只允许使用主线收集相关天赋",
+    "zh-TW": "當前只允許使用主線收集相關天賦",
+    "en-US": "Only mainline gathering talents allowed"
+  },
+  "message.Native talent row disabled": {
+    "zh-CN": "游戏当前禁用了这项天赋",
+    "zh-TW": "游戲當前禁用了這項天賦",
+    "en-US": "Native talent row disabled"
+  },
+  "message.Talent error popup changed": {
+    "zh-CN": "天赋提示弹窗已变化",
+    "zh-TW": "天賦提示彈窗已變化",
+    "en-US": "Talent error popup changed"
+  },
+  "message.Talent error confirmation is not ready": {
+    "zh-CN": "天赋提示的确认按钮尚未就绪",
+    "zh-TW": "天賦提示的確認按鈕尚未就緒",
+    "en-US": "Talent error confirmation is not ready"
+  },
+  "message.Dispatch collection requires field idle": {
+    "zh-CN": "请等待地图交互结束后再领取派遣奖励。",
+    "zh-TW": "請等待地圖交互結束后再領取派遣獎勵。",
+    "en-US": "Dispatch collection requires field idle"
+  },
+  "message.Dispatch navigation requires field idle": {
+    "zh-CN": "请等待地图交互结束后再前往派遣角色。",
+    "zh-TW": "請等待地圖交互結束后再前往派遣角色。",
+    "en-US": "Dispatch navigation requires field idle"
+  },
+  "message.Native dispatch chain is active": {
+    "zh-CN": "游戏正在继续派遣流程，请等待完成。",
+    "zh-TW": "游戲正在繼續派遣流程，請等待完成。",
+    "en-US": "Native dispatch chain is active"
+  },
+  "message.Reward messenger is no longer interactable": {
+    "zh-CN": "派遣奖励角色当前无法交互",
+    "zh-TW": "派遣獎勵角色當前無法交互",
+    "en-US": "Reward messenger is no longer interactable"
+  },
+  "message.Merchant requires square": {
+    "zh-CN": "请先进入广场商人所在地图。",
+    "zh-TW": "請先進入廣場商人所在地圖。",
+    "en-US": "Merchant requires square"
+  },
+  "message.Merchant requires idle field": {
+    "zh-CN": "请等待地图交互结束后再打开商店。",
+    "zh-TW": "請等待地圖交互結束后再打開商店。",
+    "en-US": "Merchant requires idle field"
+  },
+  "message.Merchant not in interaction range": {
+    "zh-CN": "尚未进入商人的可交互范围",
+    "zh-TW": "尚未進入商人的可交互范圍",
+    "en-US": "Merchant not in interaction range"
+  },
+  "message.Merchant native movement did not start": {
+    "zh-CN": "游戏未开始向商人移动",
+    "zh-TW": "游戲未開始向商人移動",
+    "en-US": "Merchant native movement did not start"
+  },
+  "message.Active shop discount is unknown": {
+    "zh-CN": "尚未读到当前商店折扣，请等待商店刷新。",
+    "zh-TW": "尚未讀到當前商店折扣，請等待商店刷新。",
+    "en-US": "Active shop discount is unknown"
+  },
+  "message.Negative remaining stock": {
+    "zh-CN": "商店剩余数量异常，请刷新后核对。",
+    "zh-TW": "商店剩余數量異常，請刷新后核對。",
+    "en-US": "Negative remaining stock"
+  },
+  "message.Unexpected trade supply size": {
+    "zh-CN": "商店供货数据不完整",
+    "zh-TW": "商店供貨數據不完整",
+    "en-US": "Unexpected trade supply size"
+  },
+  "message.Unsupported trade command": {
+    "zh-CN": "暂不支持此交易操作",
+    "zh-TW": "暫不支持此交易操作",
+    "en-US": "Unsupported trade command"
+  },
+  "message.Only cooking/bargain native previews belong to trade": {
+    "zh-CN": "跑商只能使用料理与砍价预览",
+    "zh-TW": "跑商只能使用料理與砍價預覽",
+    "en-US": "Only cooking/bargain native previews belong to trade"
+  },
+  "message.Native trade preview unexpectedly changed the bargain state": {
+    "zh-CN": "交易预览期间砍价状态意外变化，请重新核对。",
+    "zh-TW": "交易預覽期間砍價狀態意外變化，請重新核對。",
+    "en-US": "Native trade preview unexpectedly changed the bargain state"
+  },
+  "message.Unknown talent tier": {
+    "zh-CN": "未识别到天赋等级",
+    "zh-TW": "未識別到天賦等級",
+    "en-US": "Unknown talent tier"
+  },
+  "message.Unknown trade proof kind": {
+    "zh-CN": "暂不能核对这类交易结果",
+    "zh-TW": "暫不能核對這類交易結果",
+    "en-US": "Unknown trade proof kind"
+  },
+  "message.No premium date": {
+    "zh-CN": "未找到该物品的高价售卖日期",
+    "zh-TW": "未找到該物品的高價售賣日期",
+    "en-US": "No premium date"
+  },
+  "message.Invalid trade close identity": {
+    "zh-CN": "交易结束记录的身份无效",
+    "zh-TW": "交易結束記錄的身份無效",
+    "en-US": "Invalid trade close identity"
+  },
+  "message.Trade close identity changed": {
+    "zh-CN": "交易结束期间账号已变化",
+    "zh-TW": "交易結束期間帳號已變化",
+    "en-US": "Trade close identity changed"
+  },
+  "message.Bargain skill definition unavailable": {
+    "zh-CN": "未读到砍价技能资料",
+    "zh-TW": "未讀到砍價技能資料",
+    "en-US": "Bargain skill definition unavailable"
+  },
+  "message.Bargain growth definition unavailable": {
+    "zh-CN": "未读到砍价天赋成长资料",
+    "zh-TW": "未讀到砍價天賦成長資料",
+    "en-US": "Bargain growth definition unavailable"
+  },
+  "message.Goddess not in interaction range": {
+    "zh-CN": "尚未进入女神像的可交互范围",
+    "zh-TW": "尚未進入女神像的可交互范圍",
+    "en-US": "Goddess not in interaction range"
+  },
+  "message.Goddess reward already received": {
+    "zh-CN": "女神像奖励已领取",
+    "zh-TW": "女神像獎勵已領取",
+    "en-US": "Goddess reward already received"
+  },
+  "message.Ranking reward already received": {
+    "zh-CN": "排行榜周期奖励已领取",
+    "zh-TW": "排行榜周期獎勵已領取",
+    "en-US": "Ranking reward already received"
+  },
+  "message.Ranking reward collider unavailable": {
+    "zh-CN": "排行榜奖励入口尚未就绪",
+    "zh-TW": "排行榜獎勵入口尚未就緒",
+    "en-US": "Ranking reward collider unavailable"
+  },
+  "message.Ranking reward has no reachable collider approach": {
+    "zh-CN": "暂时找不到可接近排行榜奖励的路线",
+    "zh-TW": "暫時找不到可接近排行榜獎勵的路線",
+    "en-US": "Ranking reward has no reachable collider approach"
+  },
+  "message.Ranking navigation endpoint misses reward trigger": {
+    "zh-CN": "角色尚未进入排行榜奖励的领取范围",
+    "zh-TW": "角色尚未進入排行榜獎勵的領取范圍",
+    "en-US": "Ranking navigation endpoint misses reward trigger"
+  },
+  "message.Ranking native movement did not start": {
+    "zh-CN": "游戏未开始向排行榜奖励移动",
+    "zh-TW": "游戲未開始向排行榜獎勵移動",
+    "en-US": "Ranking native movement did not start"
+  },
+  "message.Equipment no longer exists": {
+    "zh-CN": "所选装备已不在库存中，请重新读取库存。",
+    "zh-TW": "所選裝備已不在庫存中，請重新讀取庫存。",
+    "en-US": "Equipment no longer exists"
+  },
+  "message.Refinement requires +9": {
+    "zh-CN": "装备需要先强化到+9才能精炼",
+    "zh-TW": "裝備需要先強化到+9才能精煉",
+    "en-US": "Refinement requires +9"
+  },
+  "message.Protected equipment": {
+    "zh-CN": "这件装备受到保护，未执行处理。",
+    "zh-TW": "這件裝備受到保護，未執行處理。",
+    "en-US": "Protected equipment"
+  },
+  "message.Missing equipment ranks": {
+    "zh-CN": "未读到装备品质资料",
+    "zh-TW": "未讀到裝備品質資料",
+    "en-US": "Missing equipment ranks"
+  },
+  "message.Invalid optimization model": {
+    "zh-CN": "计算计划所需的数据无效",
+    "zh-TW": "計算計劃所需的數據無效",
+    "en-US": "Invalid optimization model"
+  },
+  "message.Unknown hunt category": {
+    "zh-CN": "未识别到这类狩猎",
+    "zh-TW": "未識別到這類狩獵",
+    "en-US": "Unknown hunt category"
+  },
+  "message.Total War is not unlocked": {
+    "zh-CN": "公会战尚未解锁",
+    "zh-TW": "公會戰尚未解鎖",
+    "en-US": "Total War is not unlocked"
+  },
+  "message.Weekly Total War mission changed": {
+    "zh-CN": "每周公会战任务已变化",
+    "zh-TW": "每周公會戰任務已變化",
+    "en-US": "Weekly Total War mission changed"
+  },
+  "message.Mirror gate encounter is ambiguous": {
+    "zh-CN": "未能确定唯一的镜中入口",
+    "zh-TW": "未能確定唯一的鏡中入口",
+    "en-US": "Mirror gate encounter is ambiguous"
+  },
+  "message.Missing Monster Hunt settlement": {
+    "zh-CN": "尚未读到魔兽结算结果",
+    "zh-TW": "尚未讀到魔獸結算結果",
+    "en-US": "Missing Monster Hunt settlement"
+  },
+  "message.Unknown mission tab": {
+    "zh-CN": "未识别到这个任务分类",
+    "zh-TW": "未識別到這個任務分類",
+    "en-US": "Unknown mission tab"
+  },
+  "message.Multiplier already selected": {
+    "zh-CN": "已选择该倍率",
+    "zh-TW": "已選擇該倍率",
+    "en-US": "Multiplier already selected"
+  },
+  "message.Unknown managed settlement stage": {
+    "zh-CN": "暂不支持此结算环节",
+    "zh-TW": "暫不支持此結算環節",
+    "en-US": "Unknown managed settlement stage"
+  },
+  "message.Negative settlement timestamp": {
+    "zh-CN": "收益结算时间异常",
+    "zh-TW": "收益結算時間異常",
+    "en-US": "Negative settlement timestamp"
+  },
+  "message.Incomplete helper cache": {
+    "zh-CN": "工人收益数据不完整",
+    "zh-TW": "工人收益數據不完整",
+    "en-US": "Incomplete helper cache"
+  },
+  "message.Invalid or duplicate helper slot": {
+    "zh-CN": "工人位置数据无效或重复",
+    "zh-TW": "工人位置數據無效或重復",
+    "en-US": "Invalid or duplicate helper slot"
+  },
+  "message.Helper rewards were not claimable": {
+    "zh-CN": "工人收益当前不可领取",
+    "zh-TW": "工人收益當前不可領取",
+    "en-US": "Helper rewards were not claimable"
+  },
+  "message.Helper pending rewards did not clear": {
+    "zh-CN": "工人待领取收益尚未清空",
+    "zh-TW": "工人待領取收益尚未清空",
+    "en-US": "Helper pending rewards did not clear"
+  },
+  "message.Unexpected helper response slot": {
+    "zh-CN": "服务器返回了非本次领取的工人位置",
+    "zh-TW": "服務器返回了非本次領取的工人位置",
+    "en-US": "Unexpected helper response slot"
+  },
+  "message.Helper response or cache lost slots": {
+    "zh-CN": "工人结算返回的数据缺少位置",
+    "zh-TW": "工人結算返回的數據缺少位置",
+    "en-US": "Helper response or cache lost slots"
+  },
+  "message.Helper response/cache mismatch": {
+    "zh-CN": "工人收益返回与库存更新不一致",
+    "zh-TW": "工人收益返回與庫存更新不一致",
+    "en-US": "Helper response/cache mismatch"
+  },
+  "message.Helper assignment changed during settlement": {
+    "zh-CN": "结算期间工人分配已变化",
+    "zh-TW": "結算期間工人分配已變化",
+    "en-US": "Helper assignment changed during settlement"
+  },
+  "message.Helper accrual timestamp moved backwards": {
+    "zh-CN": "工人收益时间异常回退",
+    "zh-TW": "工人收益時間異常回退",
+    "en-US": "Helper accrual timestamp moved backwards"
+  },
+  "message.Unsettled helper changed during settlement": {
+    "zh-CN": "未结算工人的状态发生变化",
+    "zh-TW": "未結算工人的狀態發生變化",
+    "en-US": "Unsettled helper changed during settlement"
+  },
+  "message.Unreturned helper assignment changed": {
+    "zh-CN": "尚未返回结算结果的工人分配发生变化",
+    "zh-TW": "尚未返回結算結果的工人分配發生變化",
+    "en-US": "Unreturned helper assignment changed"
+  },
+  "message.No helper accrual timestamp advanced": {
+    "zh-CN": "尚未确认工人收益已结算",
+    "zh-TW": "尚未確認工人收益已結算",
+    "en-US": "No helper accrual timestamp advanced"
+  },
+  "message.Empty helper reward bundle": {
+    "zh-CN": "服务器返回的工人奖励为空",
+    "zh-TW": "服務器返回的工人獎勵為空",
+    "en-US": "Empty helper reward bundle"
+  },
+  "message.Cafeteria settlement timestamp/cache mismatch": {
+    "zh-CN": "餐厅结算时间与游戏数据不一致",
+    "zh-TW": "餐廳結算時間與游戲數據不一致",
+    "en-US": "Cafeteria settlement timestamp/cache mismatch"
+  },
+  "message.Missing cafeteria reward": {
+    "zh-CN": "未读到餐厅奖励",
+    "zh-TW": "未讀到餐廳獎勵",
+    "en-US": "Missing cafeteria reward"
+  },
+  "message.Fishing settlement timestamp did not advance": {
+    "zh-CN": "尚未确认钓鱼收益已结算",
+    "zh-TW": "尚未確認釣魚收益已結算",
+    "en-US": "Fishing settlement timestamp did not advance"
+  },
+  "message.Fishing response/cache mismatch": {
+    "zh-CN": "钓鱼结算返回与游戏数据不一致",
+    "zh-TW": "釣魚結算返回與游戲數據不一致",
+    "en-US": "Fishing response/cache mismatch"
+  },
+  "message.Fishing trap settlement remains pending": {
+    "zh-CN": "钓鱼陷阱收益仍待结算",
+    "zh-TW": "釣魚陷阱收益仍待結算",
+    "en-US": "Fishing trap settlement remains pending"
+  },
+  "message.Nothing was eligible before management settlement": {
+    "zh-CN": "当前没有可领取的经营收益",
+    "zh-TW": "當前沒有可領取的經營收益",
+    "en-US": "Nothing was eligible before management settlement"
+  },
+  "message.Unexpected settlement in an ineligible category": {
+    "zh-CN": "返回了本次领取范围之外的收益",
+    "zh-TW": "返回了本次領取范圍之外的收益",
+    "en-US": "Unexpected settlement in an ineligible category"
+  },
+  "message.Unknown management category": {
+    "zh-CN": "暂不支持这类经营收益",
+    "zh-TW": "暫不支持這類經營收益",
+    "en-US": "Unknown management category"
+  },
+  "message.Mailbox truncated": {
+    "zh-CN": "邮箱数据未完整返回",
+    "zh-TW": "郵箱數據未完整返回",
+    "en-US": "Mailbox truncated"
+  },
+  "message.Invalid mailbox tab": {
+    "zh-CN": "邮箱分类无效",
+    "zh-TW": "郵箱分類無效",
+    "en-US": "Invalid mailbox tab"
+  },
+  "message.Native response is still pending": {
+    "zh-CN": "仍在等待游戏服务器返回",
+    "zh-TW": "仍在等待游戲服務器返回",
+    "en-US": "Native response is still pending"
+  },
+  "message.Observer or account changed": {
+    "zh-CN": "连接组件或账号已变化",
+    "zh-TW": "連接組件或帳號已變化",
+    "en-US": "Observer or account changed"
+  },
+  "message.Mixed operation identity": {
+    "zh-CN": "操作记录的账号信息不一致",
+    "zh-TW": "操作記錄的帳號信息不一致",
+    "en-US": "Mixed operation identity"
+  },
+  "message.Native operation rejected": {
+    "zh-CN": "游戏未接受本次操作",
+    "zh-TW": "游戲未接受本次操作",
+    "en-US": "Native operation rejected"
+  },
+  "message.Missing native request": {
+    "zh-CN": "未找到本次操作的发送记录",
+    "zh-TW": "未找到本次操作的發送記錄",
+    "en-US": "Missing native request"
+  },
+  "message.Claimed mail still in cache": {
+    "zh-CN": "已领邮件的游戏状态尚未更新",
+    "zh-TW": "已領郵件的游戲狀態尚未更新",
+    "en-US": "Claimed mail still in cache"
+  },
+  "message.Mail responses incomplete": {
+    "zh-CN": "邮件领取结果尚未完整返回",
+    "zh-TW": "郵件領取結果尚未完整返回",
+    "en-US": "Mail responses incomplete"
+  },
+  "message.Native mailbox tab did not settle": {
+    "zh-CN": "邮箱分类尚未稳定",
+    "zh-TW": "郵箱分類尚未穩定",
+    "en-US": "Native mailbox tab did not settle"
+  },
+  "message.Required mail response observer unavailable": {
+    "zh-CN": "邮件结果读取组件尚未就绪",
+    "zh-TW": "郵件結果讀取組件尚未就緒",
+    "en-US": "Required mail response observer unavailable"
+  },
+  "message.Paused during reward cleanup": {
+    "zh-CN": "已在收起奖励界面时暂停",
+    "zh-TW": "已在收起獎勵界面時暫停",
+    "en-US": "Paused during reward cleanup"
+  },
+  "message.Reward result is covered by another popup": {
+    "zh-CN": "奖励结果被其他弹窗遮挡",
+    "zh-TW": "獎勵結果被其他彈窗遮擋",
+    "en-US": "Reward result is covered by another popup"
+  },
+  "message.Invalid or duplicate counseling candidate": {
+    "zh-CN": "咨询角色数据无效或重复",
+    "zh-TW": "咨詢角色數據無效或重復",
+    "en-US": "Invalid or duplicate counseling candidate"
+  },
+  "message.Invalid native counseling free quota": {
+    "zh-CN": "免费咨询次数数据无效",
+    "zh-TW": "免費咨詢次數數據無效",
+    "en-US": "Invalid native counseling free quota"
+  },
+  "message.Counseling free quota did not decrease exactly once": {
+    "zh-CN": "本次咨询后的免费次数与预期不一致",
+    "zh-TW": "本次咨詢后的免費次數與預期不一致",
+    "en-US": "Counseling free quota did not decrease exactly once"
+  },
+  "message.Counseling target/progress mismatch": {
+    "zh-CN": "咨询角色或亲密度进度不匹配",
+    "zh-TW": "咨詢角色或親密度進度不匹配",
+    "en-US": "Counseling target/progress mismatch"
+  },
+  "message.Counseling target is no longer eligible": {
+    "zh-CN": "该角色已不满足咨询条件",
+    "zh-TW": "該角色已不滿足咨詢條件",
+    "en-US": "Counseling target is no longer eligible"
+  },
+  "message.Ordinary counseling eligibility changed": {
+    "zh-CN": "普通咨询的可用条件已变化",
+    "zh-TW": "普通咨詢的可用條件已變化",
+    "en-US": "Ordinary counseling eligibility changed"
+  },
+  "message.Counseling sessions unavailable": {
+    "zh-CN": "咨询对话列表尚未就绪",
+    "zh-TW": "咨詢對話列表尚未就緒",
+    "en-US": "Counseling sessions unavailable"
+  },
+  "message.Counseling session table unavailable": {
+    "zh-CN": "咨询对话资料未就绪",
+    "zh-TW": "咨詢對話資料未就緒",
+    "en-US": "Counseling session table unavailable"
+  },
+  "message.Unsupported free draw rules": {
+    "zh-CN": "当前免费抽取规则尚未适配",
+    "zh-TW": "當前免費抽取規則尚未適配",
+    "en-US": "Unsupported free draw rules"
+  },
+  "message.Invalid or duplicate daily free draw definition": {
+    "zh-CN": "每日免费抽取规则无效或重复",
+    "zh-TW": "每日免費抽取規則無效或重復",
+    "en-US": "Invalid or duplicate daily free draw definition"
+  },
+  "message.Empty daily free draw rules": {
+    "zh-CN": "没有读取到每日免费抽取规则",
+    "zh-TW": "沒有讀取到每日免費抽取規則",
+    "en-US": "Empty daily free draw rules"
+  },
+  "message.Missing free draw rules": {
+    "zh-CN": "缺少每日免费抽取规则",
+    "zh-TW": "缺少每日免費抽取規則",
+    "en-US": "Missing free draw rules"
+  },
+  "message.Ambiguous free draw group": {
+    "zh-CN": "无法确定本次免费抽取所属卡池",
+    "zh-TW": "無法確定本次免費抽取所屬卡池",
+    "en-US": "Ambiguous free draw group"
+  },
+  "message.Response includes unsupported or paid draw": {
+    "zh-CN": "返回内容包含未支持的抽取或付费抽取，请核对游戏。",
+    "zh-TW": "返回內容包含未支持的抽取或付費抽取，請核對游戲。",
+    "en-US": "Response includes unsupported or paid draw"
+  },
+  "message.Incomplete gacha cache": {
+    "zh-CN": "抽取数据不完整",
+    "zh-TW": "抽取數據不完整",
+    "en-US": "Incomplete gacha cache"
+  },
+  "message.Invalid or duplicate gacha cache group": {
+    "zh-CN": "卡池数据无效或重复",
+    "zh-TW": "卡池數據無效或重復",
+    "en-US": "Invalid or duplicate gacha cache group"
+  },
+  "message.Negative gacha counter": {
+    "zh-CN": "抽取次数数据异常",
+    "zh-TW": "抽取次數數據異常",
+    "en-US": "Negative gacha counter"
+  },
+  "message.Empty free draw response": {
+    "zh-CN": "免费抽取返回为空",
+    "zh-TW": "免費抽取返回為空",
+    "en-US": "Empty free draw response"
+  },
+  "message.Missing free draw reward": {
+    "zh-CN": "未读到免费抽取奖励",
+    "zh-TW": "未讀到免費抽取獎勵",
+    "en-US": "Missing free draw reward"
+  },
+  "message.Free draw response exceeds daily definition": {
+    "zh-CN": "免费抽取结果超出每日规则范围",
+    "zh-TW": "免費抽取結果超出每日規則范圍",
+    "en-US": "Free draw response exceeds daily definition"
+  },
+  "message.Gacha cache lost an original group": {
+    "zh-CN": "刷新后缺少原有卡池数据",
+    "zh-TW": "刷新后缺少原有卡池數據",
+    "en-US": "Gacha cache lost an original group"
+  },
+  "message.Free draw counter mismatch": {
+    "zh-CN": "免费抽取次数与返回结果不一致",
+    "zh-TW": "免費抽取次數與返回結果不一致",
+    "en-US": "Free draw counter mismatch"
+  },
+  "message.Unexpected paid or ten-draw counter change": {
+    "zh-CN": "付费或十连抽取次数意外变化，请核对游戏。",
+    "zh-TW": "付費或十連抽取次數意外變化，請核對游戲。",
+    "en-US": "Unexpected paid or ten-draw counter change"
+  },
+  "message.Free draw export provenance mismatch": {
+    "zh-CN": "抽取规则与当前游戏来源不一致",
+    "zh-TW": "抽取規則與當前游戲來源不一致",
+    "en-US": "Free draw export provenance mismatch"
+  },
+  "message.Unsupported event variant": {
+    "zh-CN": "这类活动尚未适配",
+    "zh-TW": "這類活動尚未適配",
+    "en-US": "Unsupported event variant"
+  },
+  "message.Event stage list not ready": {
+    "zh-CN": "活动关卡列表尚未就绪",
+    "zh-TW": "活動關卡列表尚未就緒",
+    "en-US": "Event stage list not ready"
+  },
+  "message.Story dialogue not ready": {
+    "zh-CN": "剧情对话尚未就绪",
+    "zh-TW": "劇情對話尚未就緒",
+    "en-US": "Story dialogue not ready"
+  },
+  "message.Story skip not ready": {
+    "zh-CN": "剧情跳过按钮尚未就绪",
+    "zh-TW": "劇情跳過按鈕尚未就緒",
+    "en-US": "Story skip not ready"
+  },
+  "message.Mission schedule missing": {
+    "zh-CN": "任务时间信息缺失",
+    "zh-TW": "任務時間信息缺失",
+    "en-US": "Mission schedule missing"
+  },
+  "message.Event no longer active": {
+    "zh-CN": "该活动已结束或不再开放",
+    "zh-TW": "該活動已結束或不再開放",
+    "en-US": "Event no longer active"
+  },
+  "message.Unsupported reward category": {
+    "zh-CN": "暂不支持这类奖励",
+    "zh-TW": "暫不支持這類獎勵",
+    "en-US": "Unsupported reward category"
+  },
+  "message.Previous event busy": {
+    "zh-CN": "上一个活动操作尚未结束",
+    "zh-TW": "上一個活動操作尚未結束",
+    "en-US": "Previous event busy"
+  },
+  "message.Reward selection changed or busy": {
+    "zh-CN": "奖励选择已变化，或正在处理中",
+    "zh-TW": "獎勵選擇已變化，或正在處理中",
+    "en-US": "Reward selection changed or busy"
+  },
+  "message.Mission tab locked": {
+    "zh-CN": "任务分类尚未解锁",
+    "zh-TW": "任務分類尚未解鎖",
+    "en-US": "Mission tab locked"
+  },
+  "message.Dice no longer eligible": {
+    "zh-CN": "当前不满足掷骰子条件",
+    "zh-TW": "當前不滿足擲骰子條件",
+    "en-US": "Dice no longer eligible"
+  },
+  "message.Reward action no longer eligible": {
+    "zh-CN": "当前不满足领取条件",
+    "zh-TW": "當前不滿足領取條件",
+    "en-US": "Reward action no longer eligible"
+  },
+  "message.Dice already running": {
+    "zh-CN": "骰子活动正在运行",
+    "zh-TW": "骰子活動正在運行",
+    "en-US": "Dice already running"
+  },
+  "message.Dice must be idle for server query": {
+    "zh-CN": "请等待掷骰子结束后再读取进度。",
+    "zh-TW": "請等待擲骰子結束后再讀取進度。",
+    "en-US": "Dice must be idle for server query"
+  },
+  "message.Requested pass is not active for this account": {
+    "zh-CN": "当前账号没有开放这张通行证",
+    "zh-TW": "當前帳號沒有開放這張通行證",
+    "en-US": "Requested pass is not active for this account"
+  },
+  "message.Pass already initialized": {
+    "zh-CN": "通行证信息已载入",
+    "zh-TW": "通行證信息已載入",
+    "en-US": "Pass already initialized"
+  },
+  "message.Quiz observation unavailable": {
+    "zh-CN": "答题状态尚未就绪",
+    "zh-TW": "答題狀態尚未就緒",
+    "en-US": "Quiz observation unavailable"
+  },
+  "message.Quiz choice is not ready": {
+    "zh-CN": "答题选项尚未就绪",
+    "zh-TW": "答題選項尚未就緒",
+    "en-US": "Quiz choice is not ready"
+  },
+  "message.Duplicate dialogue identity": {
+    "zh-CN": "对话记录重复",
+    "zh-TW": "對話記錄重復",
+    "en-US": "Duplicate dialogue identity"
+  },
+  "message.Duplicate choice identity": {
+    "zh-CN": "选项记录重复",
+    "zh-TW": "選項記錄重復",
+    "en-US": "Duplicate choice identity"
+  },
+  "message.Missing choice table": {
+    "zh-CN": "缺少答题选项资料",
+    "zh-TW": "缺少答題選項資料",
+    "en-US": "Missing choice table"
+  },
+  "message.Missing dialogue branch target": {
+    "zh-CN": "缺少对话分支资料",
+    "zh-TW": "缺少對話分支資料",
+    "en-US": "Missing dialogue branch target"
+  },
+  "message.Dialogue is not a choice": {
+    "zh-CN": "当前对话不包含选择项",
+    "zh-TW": "當前對話不包含選擇項",
+    "en-US": "Dialogue is not a choice"
+  },
+  "message.Displayed choices differ from current table": {
+    "zh-CN": "显示的选项与当前资料不一致",
+    "zh-TW": "顯示的選項與當前資料不一致",
+    "en-US": "Displayed choices differ from current table"
+  },
+  "message.Unsupported dialogue branch": {
+    "zh-CN": "暂不支持此对话分支",
+    "zh-TW": "暫不支持此對話分支",
+    "en-US": "Unsupported dialogue branch"
+  },
+  "message.Quiz has no unique success branch": {
+    "zh-CN": "无法确定唯一的正确答案",
+    "zh-TW": "無法確定唯一的正確答案",
+    "en-US": "Quiz has no unique success branch"
+  },
+  "message.Quiz event or evidence configuration changed": {
+    "zh-CN": "答题活动或采集规则已变化",
+    "zh-TW": "答題活動或采集規則已變化",
+    "en-US": "Quiz event or evidence configuration changed"
+  },
+  "message.Quiz completion response identity or ordering mismatch": {
+    "zh-CN": "答题完成返回的身份或顺序不匹配",
+    "zh-TW": "答題完成返回的身份或順序不匹配",
+    "en-US": "Quiz completion response identity or ordering mismatch"
+  },
+  "message.Quiz completion response failed": {
+    "zh-CN": "服务器未确认答题完成",
+    "zh-TW": "服務器未確認答題完成",
+    "en-US": "Quiz completion response failed"
+  },
+  "message.Quiz completion proof missing": {
+    "zh-CN": "未读到答题完成记录",
+    "zh-TW": "未讀到答題完成記錄",
+    "en-US": "Quiz completion proof missing"
+  },
+  "message.Different quiz was completed": {
+    "zh-CN": "收到的完成记录属于另一道题",
+    "zh-TW": "收到的完成記錄屬于另一道題",
+    "en-US": "Different quiz was completed"
+  },
+  "message.Quiz completion cache not settled": {
+    "zh-CN": "答题完成后的游戏状态尚未更新",
+    "zh-TW": "答題完成后的游戲狀態尚未更新",
+    "en-US": "Quiz completion cache not settled"
+  },
+  "message.Quiz cursor invalid": {
+    "zh-CN": "当前答题步骤无效",
+    "zh-TW": "當前答題步驟無效",
+    "en-US": "Quiz cursor invalid"
+  },
+  "message.Quiz choice changed": {
+    "zh-CN": "答题选项已变化",
+    "zh-TW": "答題選項已變化",
+    "en-US": "Quiz choice changed"
+  },
+  "message.Quiz event closed or changed": {
+    "zh-CN": "答题活动已关闭或发生变化",
+    "zh-TW": "答題活動已關閉或發生變化",
+    "en-US": "Quiz event closed or changed"
+  },
+  "message.Quiz hub changed": {
+    "zh-CN": "答题入口已变化",
+    "zh-TW": "答題入口已變化",
+    "en-US": "Quiz hub changed"
+  },
+  "message.Quiz identity changed": {
+    "zh-CN": "答题所属账号或活动已变化",
+    "zh-TW": "答題所屬帳號或活動已變化",
+    "en-US": "Quiz identity changed"
+  },
+  "message.Quiz already complete or locked": {
+    "zh-CN": "本题已完成或尚未解锁",
+    "zh-TW": "本題已完成或尚未解鎖",
+    "en-US": "Quiz already complete or locked"
+  },
+  "message.Another quiz running": {
+    "zh-CN": "另一道题正在进行中",
+    "zh-TW": "另一道題正在進行中",
+    "en-US": "Another quiz running"
+  },
+  "message.Quiz dialogue changed": {
+    "zh-CN": "答题对话已变化",
+    "zh-TW": "答題對話已變化",
+    "en-US": "Quiz dialogue changed"
+  },
+  "message.Quiz dialogue not ready": {
+    "zh-CN": "答题对话尚未就绪",
+    "zh-TW": "答題對話尚未就緒",
+    "en-US": "Quiz dialogue not ready"
+  },
+  "message.Quiz option unavailable": {
+    "zh-CN": "该答题选项不可用",
+    "zh-TW": "該答題選項不可用",
+    "en-US": "Quiz option unavailable"
+  },
+  "message.Quiz option not ready": {
+    "zh-CN": "答题选项尚未就绪",
+    "zh-TW": "答題選項尚未就緒",
+    "en-US": "Quiz option not ready"
+  },
+  "message.Invalid regular Sichuan levels": {
+    "zh-CN": "连连看常规关卡数据异常",
+    "zh-TW": "連連看常規關卡數據異常",
+    "en-US": "Invalid regular Sichuan levels"
+  },
+  "message.Regular Sichuan stage unavailable": {
+    "zh-CN": "连连看常规关卡当前不可用",
+    "zh-TW": "連連看常規關卡當前不可用",
+    "en-US": "Regular Sichuan stage unavailable"
+  },
+  "message.Unknown Sichuan operation": {
+    "zh-CN": "暂不支持此连连看操作",
+    "zh-TW": "暫不支持此連連看操作",
+    "en-US": "Unknown Sichuan operation"
+  },
+  "message.Unknown notice checkbox state": {
+    "zh-CN": "未读到活动弹窗的“不再提示”状态",
+    "zh-TW": "未讀到活動彈窗的“不再提示”狀態",
+    "en-US": "Unknown notice checkbox state"
+  },
+  "message.Seven-day notice checkbox is not ready": {
+    "zh-CN": "“7天内不再提示”选项尚未就绪",
+    "zh-TW": "“7天內不再提示”選項尚未就緒",
+    "en-US": "Seven-day notice checkbox is not ready"
+  },
+  "message.Native notice click unavailable": {
+    "zh-CN": "弹窗操作按钮暂不可用",
+    "zh-TW": "彈窗操作按鈕暫不可用",
+    "en-US": "Native notice click unavailable"
+  },
+  "message.Native notice checkbox did not become checked": {
+    "zh-CN": "尚未确认“不再提示”选项已勾选",
+    "zh-TW": "尚未確認“不再提示”選項已勾選",
+    "en-US": "Native notice checkbox did not become checked"
+  },
+  "message.Quick menu has a foreground popup": {
+    "zh-CN": "快捷菜单被弹窗遮挡，请先处理弹窗。",
+    "zh-TW": "快捷菜單被彈窗遮擋，請先處理彈窗。",
+    "en-US": "Quick menu has a foreground popup"
+  },
+  "message.Cartridge selector has a foreground popup": {
+    "zh-CN": "卡带选择页面被弹窗遮挡",
+    "zh-TW": "卡帶選擇頁面被彈窗遮擋",
+    "en-US": "Cartridge selector has a foreground popup"
+  },
+  "message.Tactics season notice has an unrelated foreground popup": {
+    "zh-CN": "战术教材赛季提示被其他弹窗遮挡",
+    "zh-TW": "戰術教材賽季提示被其他彈窗遮擋",
+    "en-US": "Tactics season notice has an unrelated foreground popup"
+  },
+  "message.Tactics season notice is not ready": {
+    "zh-CN": "战术教材赛季提示尚未就绪",
+    "zh-TW": "戰術教材賽季提示尚未就緒",
+    "en-US": "Tactics season notice is not ready"
+  },
+  "message.Rank notice has an unrelated foreground popup": {
+    "zh-CN": "段位提示被其他弹窗遮挡",
+    "zh-TW": "段位提示被其他彈窗遮擋",
+    "en-US": "Rank notice has an unrelated foreground popup"
+  },
+  "message.Update slideshow has an unrelated foreground popup": {
+    "zh-CN": "更新介绍被其他弹窗遮挡",
+    "zh-TW": "更新介紹被其他彈窗遮擋",
+    "en-US": "Update slideshow has an unrelated foreground popup"
+  },
+  "message.Update slideshow is not ready": {
+    "zh-CN": "更新介绍尚未就绪",
+    "zh-TW": "更新介紹尚未就緒",
+    "en-US": "Update slideshow is not ready"
+  },
+  "message.Event popup is outside the login menu; leave it for its owning task": {
+    "zh-CN": "当前活动弹窗由其他环节处理，请先完成该环节。",
+    "zh-TW": "當前活動彈窗由其他環節處理，請先完成該環節。",
+    "en-US": "Event popup is outside the login menu; leave it for its owning task"
+  },
+  "message.Tactics battle still active; preserve its progress": {
+    "zh-CN": "战术教材战斗仍在进行，已保留进度。",
+    "zh-TW": "戰術教材戰斗仍在進行，已保留進度。",
+    "en-US": "Tactics battle still active; preserve its progress"
+  },
+  "message.Tactics lobby back button is not ready": {
+    "zh-CN": "战术教材大厅的返回按钮尚未就绪",
+    "zh-TW": "戰術教材大廳的返回按鈕尚未就緒",
+    "en-US": "Tactics lobby back button is not ready"
+  },
+  "message.No unambiguous observed field menu; no input sent": {
+    "zh-CN": "未能确定当前地图菜单，尚未发送操作。",
+    "zh-TW": "未能確定當前地圖菜單，尚未發送操作。",
+    "en-US": "No unambiguous observed field menu; no input sent"
+  },
+  "message.Native menu button is not ready": {
+    "zh-CN": "游戏菜单按钮尚未就绪",
+    "zh-TW": "游戲菜單按鈕尚未就緒",
+    "en-US": "Native menu button is not ready"
+  },
+  "message.Evidence configuration changed": {
+    "zh-CN": "采集规则已变化，请重新准备连接。",
+    "zh-TW": "采集規則已變化，請重新準備連接。",
+    "en-US": "Evidence configuration changed"
+  },
+  "message.Native request/response count mismatch": {
+    "zh-CN": "操作请求与服务器返回数量不一致",
+    "zh-TW": "操作請求與服務器返回數量不一致",
+    "en-US": "Native request/response count mismatch"
+  },
+  "message.Native response rejected": {
+    "zh-CN": "游戏服务器未接受本次操作",
+    "zh-TW": "游戲服務器未接受本次操作",
+    "en-US": "Native response rejected"
+  },
+  "message.Native response ordering or identity mismatch": {
+    "zh-CN": "服务器返回的顺序或账号不匹配",
+    "zh-TW": "服務器返回的順序或帳號不匹配",
+    "en-US": "Native response ordering or identity mismatch"
+  },
+  "message.Unreadable or duplicate response evidence": {
+    "zh-CN": "操作返回记录不可读或重复",
+    "zh-TW": "操作返回記錄不可讀或重復",
+    "en-US": "Unreadable or duplicate response evidence"
+  },
+  "message.Evidence configuration changed during task": {
+    "zh-CN": "执行期间采集规则已变化",
+    "zh-TW": "執行期間采集規則已變化",
+    "en-US": "Evidence configuration changed during task"
+  },
+  "message.Expected one request and one response": {
+    "zh-CN": "本次操作的发送与返回记录不匹配",
+    "zh-TW": "本次操作的發送與返回記錄不匹配",
+    "en-US": "Expected one request and one response"
+  },
+  "message.Native response failed": {
+    "zh-CN": "服务器返回操作失败",
+    "zh-TW": "服務器返回操作失敗",
+    "en-US": "Native response failed"
+  },
+  "message.Response identity or ordering mismatch": {
+    "zh-CN": "返回记录的账号或顺序不匹配",
+    "zh-TW": "返回記錄的帳號或順序不匹配",
+    "en-US": "Response identity or ordering mismatch"
+  },
+  "message.Room owner or native cache mismatch": {
+    "zh-CN": "小屋所属账号或游戏数据不匹配",
+    "zh-TW": "小屋所屬帳號或游戲數據不匹配",
+    "en-US": "Room owner or native cache mismatch"
+  },
+  "message.Invalid evidence scope": {
+    "zh-CN": "读取范围无效",
+    "zh-TW": "讀取范圍無效",
+    "en-US": "Invalid evidence scope"
+  },
+  "message.Evidence frame is missing": {
+    "zh-CN": "未读到游戏状态",
+    "zh-TW": "未讀到游戲狀態",
+    "en-US": "Evidence frame is missing"
+  },
+  "message.Evidence observation time is invalid": {
+    "zh-CN": "游戏状态的采集时间无效",
+    "zh-TW": "游戲狀態的采集時間無效",
+    "en-US": "Evidence observation time is invalid"
+  },
+  "message.Invalid native event journal name": {
+    "zh-CN": "操作记录名称无效",
+    "zh-TW": "操作記錄名稱無效",
+    "en-US": "Invalid native event journal name"
+  },
+  "message.Unreadable native event journal": {
+    "zh-CN": "操作记录不可读",
+    "zh-TW": "操作記錄不可讀",
+    "en-US": "Unreadable native event journal"
+  },
+  "message.Daily mailbox is not ready": {
+    "zh-CN": "游戏通信通道尚未就绪",
+    "zh-TW": "游戲通信通道尚未就緒",
+    "en-US": "Daily mailbox is not ready"
+  },
+  "message.Account, connection or reset changed; no replay": {
+    "zh-CN": "账号、连接或重置周期已变化，未重发原操作。",
+    "zh-TW": "帳號、連接或重置周期已變化，未重發原操作。",
+    "en-US": "Account, connection or reset changed; no replay"
+  },
+  "message.Paused by operator; no command sent": {
+    "zh-CN": "已暂停，未发送后续操作。",
+    "zh-TW": "已暫停，未發送后續操作。",
+    "en-US": "Paused by operator; no command sent"
+  },
+  "message.Identity or scene changed before dispatch": {
+    "zh-CN": "发送操作前账号或场景已变化",
+    "zh-TW": "發送操作前帳號或場景已變化",
+    "en-US": "Identity or scene changed before dispatch"
+  },
+  "message.Another command is pending": {
+    "zh-CN": "上一条操作仍待完成",
+    "zh-TW": "上一條操作仍待完成",
+    "en-US": "Another command is pending"
+  },
+  "message.Receipt does not belong to the submitted command": {
+    "zh-CN": "返回结果不属于本次提交的操作",
+    "zh-TW": "返回結果不屬于本次提交的操作",
+    "en-US": "Receipt does not belong to the submitted command"
+  },
+  "message.Observed receipt lacks dispatch evidence": {
+    "zh-CN": "返回记录缺少对应的操作发送记录",
+    "zh-TW": "返回記錄缺少對應的操作發送記錄",
+    "en-US": "Observed receipt lacks dispatch evidence"
+  },
+  "message.Guild observer frame is stale": {
+    "zh-CN": "公会状态已过期，请重新连接。",
+    "zh-TW": "公會狀態已過期，請重新連接。",
+    "en-US": "Guild observer frame is stale"
+  },
+  "message.Guild state unavailable or not a member": {
+    "zh-CN": "未读到公会状态，或当前账号尚未加入公会",
+    "zh-TW": "未讀到公會狀態，或當前帳號尚未加入公會",
+    "en-US": "Guild state unavailable or not a member"
+  },
+  "message.Guild server or cycle differs from the observed context": {
+    "zh-CN": "公会记录的服务器或周期不匹配",
+    "zh-TW": "公會記錄的服務器或周期不匹配",
+    "en-US": "Guild server or cycle differs from the observed context"
+  },
+  "message.Guild observer identity is stale or changed": {
+    "zh-CN": "公会记录的账号身份已过期或变化",
+    "zh-TW": "公會記錄的帳號身份已過期或變化",
+    "en-US": "Guild observer identity is stale or changed"
+  },
+  "message.Daily guild observation unavailable": {
+    "zh-CN": "公会状态暂不可用",
+    "zh-TW": "公會狀態暫不可用",
+    "en-US": "Daily guild observation unavailable"
+  },
+  "message.Daily guild observation changed": {
+    "zh-CN": "公会状态已变化",
+    "zh-TW": "公會狀態已變化",
+    "en-US": "Daily guild observation changed"
+  },
+  "message.Previous live guild dispatch exists; inspect before retry": {
+    "zh-CN": "存在上次未核对的公会操作，请先核对结果再重试。",
+    "zh-TW": "存在上次未核對的公會操作，請先核對結果再重試。",
+    "en-US": "Previous live guild dispatch exists; inspect before retry"
+  },
+  "message.Recovery context changed or paused": {
+    "zh-CN": "恢复期间账号已变化或操作已暂停",
+    "zh-TW": "恢復期間帳號已變化或操作已暫停",
+    "en-US": "Recovery context changed or paused"
+  },
+  "message.Recovery field is covered": {
+    "zh-CN": "恢复操作的地图被弹窗遮挡",
+    "zh-TW": "恢復操作的地圖被彈窗遮擋",
+    "en-US": "Recovery field is covered"
+  },
+  "message.Recovery requires a stationary outdoor field": {
+    "zh-CN": "请先让角色停在可操作的地图中再恢复。",
+    "zh-TW": "請先讓角色停在可操作的地圖中再恢復。",
+    "en-US": "Recovery requires a stationary outdoor field"
+  },
+  "message.Native work is in progress": {
+    "zh-CN": "游戏仍在处理当前操作",
+    "zh-TW": "游戲仍在處理當前操作",
+    "en-US": "Native work is in progress"
+  },
+  "message.Recovery already observing": {
+    "zh-CN": "正在观察恢复结果，请等待。",
+    "zh-TW": "正在觀察恢復結果，請等待。",
+    "en-US": "Recovery already observing"
+  },
+  "message.No proven stale messenger load markers": {
+    "zh-CN": "未确认派遣角色存在可恢复的加载异常",
+    "zh-TW": "未確認派遣角色存在可恢復的加載異常",
+    "en-US": "No proven stale messenger load markers"
+  },
+  "message.Field manager changed": {
+    "zh-CN": "当前地图已切换",
+    "zh-TW": "當前地圖已切換",
+    "en-US": "Field manager changed"
+  },
+  "message.Messenger loading state changed during recovery": {
+    "zh-CN": "恢复期间派遣角色的加载状态已变化",
+    "zh-TW": "恢復期間派遣角色的加載狀態已變化",
+    "en-US": "Messenger loading state changed during recovery"
+  },
+  "message.Recovery observation did not stabilize": {
+    "zh-CN": "恢复后游戏状态仍不稳定",
+    "zh-TW": "恢復后游戲狀態仍不穩定",
+    "en-US": "Recovery observation did not stabilize"
+  },
+  "message.Recovery already consumed": {
+    "zh-CN": "本次恢复已尝试，请核对当前状态。",
+    "zh-TW": "本次恢復已嘗試，請核對當前狀態。",
+    "en-US": "Recovery already consumed"
+  },
+  "message.Paused after managed UI dispatch": {
+    "zh-CN": "已在发送界面操作后暂停，需先核对结果。",
+    "zh-TW": "已在發送界面操作后暫停，需先核對結果。",
+    "en-US": "Paused after managed UI dispatch"
+  },
+  "message.Preview scene changed while opening": {
+    "zh-CN": "打开预览时场景已变化",
+    "zh-TW": "打開預覽時場景已變化",
+    "en-US": "Preview scene changed while opening"
+  },
+  "message.Ambiguous preview surface": {
+    "zh-CN": "无法确定唯一的预览界面",
+    "zh-TW": "無法確定唯一的預覽界面",
+    "en-US": "Ambiguous preview surface"
+  },
+  "message.Preview closed or replaced while opening": {
+    "zh-CN": "预览已关闭或被其他界面替换",
+    "zh-TW": "預覽已關閉或被其他界面替換",
+    "en-US": "Preview closed or replaced while opening"
+  },
+  "message.Paused while confirming notice checkbox": {
+    "zh-CN": "已在确认“不再提示”选项时暂停",
+    "zh-TW": "已在確認“不再提示”選項時暫停",
+    "en-US": "Paused while confirming notice checkbox"
+  },
+  "message.Not in square": {
+    "zh-CN": "当前不在广场",
+    "zh-TW": "當前不在廣場",
+    "en-US": "Not in square"
+  },
+  "message.Unsupported NPC cartridge must not expose accept permission": {
+    "zh-CN": "当前卡带不支持接取周NPC任务",
+    "zh-TW": "當前卡帶不支持接取周NPC任務",
+    "en-US": "Unsupported NPC cartridge must not expose accept permission"
+  },
+  "message.Missing NPC name row": {
+    "zh-CN": "缺少NPC名称资料",
+    "zh-TW": "缺少NPC名稱資料",
+    "en-US": "Missing NPC name row"
+  },
+  "message.NPC talent list missing": {
+    "zh-CN": "未读到NPC可用天赋列表",
+    "zh-TW": "未讀到NPC可用天賦列表",
+    "en-US": "NPC talent list missing"
+  },
+  "message.Missing navigation action": {
+    "zh-CN": "缺少地图移动指令",
+    "zh-TW": "缺少地圖移動指令",
+    "en-US": "Missing navigation action"
+  },
+  "message.Missing guild action": {
+    "zh-CN": "缺少公会操作指令",
+    "zh-TW": "缺少公會操作指令",
+    "en-US": "Missing guild action"
+  },
+  "message.Invalid native distance": {
+    "zh-CN": "游戏返回的移动距离无效",
+    "zh-TW": "游戲返回的移動距離無效",
+    "en-US": "Invalid native distance"
+  },
+  "message.Unreadable business record": {
+    "zh-CN": "操作记录无法读取，请检查诊断文件。",
+    "zh-TW": "操作記錄無法讀取，請檢查診斷文件。",
+    "en-US": "Unreadable business record"
+  },
+  "message.Invalid room business ID": {
+    "zh-CN": "小屋领取记录标识无效",
+    "zh-TW": "小屋領取記錄標識無效",
+    "en-US": "Invalid room business ID"
+  },
+  "message.Required room observer is not active": {
+    "zh-CN": "小屋状态读取组件尚未启用",
+    "zh-TW": "小屋狀態讀取組件尚未啟用",
+    "en-US": "Required room observer is not active"
+  },
+  "message.Unsupported managed recovery role": {
+    "zh-CN": "暂不支持恢复这类操作",
+    "zh-TW": "暫不支持恢復這類操作",
+    "en-US": "Unsupported managed recovery role"
+  },
+  "message.Incomplete or invalid managed business record": {
+    "zh-CN": "操作记录不完整或无效",
+    "zh-TW": "操作記錄不完整或無效",
+    "en-US": "Incomplete or invalid managed business record"
+  },
+  "message.Unsupported managed proof": {
+    "zh-CN": "暂不能核对这类操作结果",
+    "zh-TW": "暫不能核對這類操作結果",
+    "en-US": "Unsupported managed proof"
+  },
+  "message.Recovery queue identity changed": {
+    "zh-CN": "恢复期间队列所属账号已变化",
+    "zh-TW": "恢復期間隊列所屬帳號已變化",
+    "en-US": "Recovery queue identity changed"
+  },
+  "message.Missing managed navigation action": {
+    "zh-CN": "缺少界面切换指令",
+    "zh-TW": "缺少界面切換指令",
+    "en-US": "Missing managed navigation action"
+  },
+  "message.Unsupported managed navigation action field": {
+    "zh-CN": "界面切换指令包含未支持的内容",
+    "zh-TW": "界面切換指令包含未支持的內容",
+    "en-US": "Unsupported managed navigation action field"
+  },
+  "message.Invalid expected guild identity": {
+    "zh-CN": "待核对的公会身份无效",
+    "zh-TW": "待核對的公會身份無效",
+    "en-US": "Invalid expected guild identity"
+  },
+  "message.Guild observation unavailable": {
+    "zh-CN": "公会状态尚未就绪",
+    "zh-TW": "公會狀態尚未就緒",
+    "en-US": "Guild observation unavailable"
+  },
+  "message.Unknown managed business role": {
+    "zh-CN": "未识别到这类日常操作",
+    "zh-TW": "未識別到這類日常操作",
+    "en-US": "Unknown managed business role"
+  },
+  "message.Conflicting native event sequence": {
+    "zh-CN": "游戏操作记录的先后顺序冲突",
+    "zh-TW": "游戲操作記錄的先后順序沖突",
+    "en-US": "Conflicting native event sequence"
+  },
+  "message.Unreadable legacy business record": {
+    "zh-CN": "旧版操作记录无法读取",
+    "zh-TW": "舊版操作記錄無法讀取",
+    "en-US": "Unreadable legacy business record"
+  },
+  "message.Invalid managed guild record ID": {
+    "zh-CN": "公会操作记录标识无效",
+    "zh-TW": "公會操作記錄標識無效",
+    "en-US": "Invalid managed guild record ID"
+  },
+  "message.Managed guild record disappeared": {
+    "zh-CN": "公会操作记录已不存在",
+    "zh-TW": "公會操作記錄已不存在",
+    "en-US": "Managed guild record disappeared"
+  },
+  "message.Invalid managed guild record": {
+    "zh-CN": "公会操作记录无效",
+    "zh-TW": "公會操作記錄無效",
+    "en-US": "Invalid managed guild record"
+  },
+  "message.Invalid managed guild entry state": {
+    "zh-CN": "公会入口的操作状态无效",
+    "zh-TW": "公會入口的操作狀態無效",
+    "en-US": "Invalid managed guild entry state"
+  },
+  "message.Invalid talent operation ID": {
+    "zh-CN": "天赋操作标识无效",
+    "zh-TW": "天賦操作標識無效",
+    "en-US": "Invalid talent operation ID"
+  },
+  "message.Missing talent business intent": {
+    "zh-CN": "缺少本次天赋使用计划",
+    "zh-TW": "缺少本次天賦使用計劃",
+    "en-US": "Missing talent business intent"
+  },
+  "message.Talent intent does not match the owned queue": {
+    "zh-CN": "天赋使用计划与当前队列不一致",
+    "zh-TW": "天賦使用計劃與當前隊列不一致",
+    "en-US": "Talent intent does not match the owned queue"
+  },
+  "message.Missing evidence integer": {
+    "zh-CN": "游戏返回中缺少所需数值",
+    "zh-TW": "游戲返回中缺少所需數值",
+    "en-US": "Missing evidence integer"
+  },
+  "message.Invalid evidence integer": {
+    "zh-CN": "游戏返回的数值无效",
+    "zh-TW": "游戲返回的數值無效",
+    "en-US": "Invalid evidence integer"
+  },
+  "message.Unknown daily mailbox channel": {
+    "zh-CN": "未识别到日常通信通道",
+    "zh-TW": "未識別到日常通信通道",
+    "en-US": "Unknown daily mailbox channel"
+  },
+  "message.Invalid or repeated managed driver context": {
+    "zh-CN": "执行连接信息无效或重复",
+    "zh-TW": "執行連接信息無效或重復",
+    "en-US": "Invalid or repeated managed driver context"
+  },
+  "message.Managed driver is already bound to another queue identity": {
+    "zh-CN": "执行连接已被另一个账号队列占用",
+    "zh-TW": "執行連接已被另一個帳號隊列占用",
+    "en-US": "Managed driver is already bound to another queue identity"
+  },
+  "message.Managed driver is not bound to a queue": {
+    "zh-CN": "尚未建立本次队列的执行连接",
+    "zh-TW": "尚未建立本次隊列的執行連接",
+    "en-US": "Managed driver is not bound to a queue"
+  },
+  "message.Unknown managed mailbox channel": {
+    "zh-CN": "未识别到执行通信通道",
+    "zh-TW": "未識別到執行通信通道",
+    "en-US": "Unknown managed mailbox channel"
+  },
+  "message.Invalid managed mailbox entry": {
+    "zh-CN": "通信入口无效",
+    "zh-TW": "通信入口無效",
+    "en-US": "Invalid managed mailbox entry"
+  },
+  "message.Unregistered managed mailbox entry": {
+    "zh-CN": "通信入口尚未注册",
+    "zh-TW": "通信入口尚未注冊",
+    "en-US": "Unregistered managed mailbox entry"
+  },
+  "message.Missing managed step": {
+    "zh-CN": "缺少本次操作步骤",
+    "zh-TW": "缺少本次操作步驟",
+    "en-US": "Missing managed step"
+  },
+  "message.Missing managed observation prefixes": {
+    "zh-CN": "缺少本次需要读取的游戏状态范围",
+    "zh-TW": "缺少本次需要讀取的游戲狀態范圍",
+    "en-US": "Missing managed observation prefixes"
+  },
+  "message.Managed mailbox write without queue control": {
+    "zh-CN": "当前队列尚未取得操作权",
+    "zh-TW": "當前隊列尚未取得操作權",
+    "en-US": "Managed mailbox write without queue control"
+  },
+  "message.Native input must use the managed submit operation": {
+    "zh-CN": "该操作必须通过日常队列提交",
+    "zh-TW": "該操作必須通過日常隊列提交",
+    "en-US": "Native input must use the managed submit operation"
+  },
+  "message.Managed mailbox payload is too large": {
+    "zh-CN": "本次通信数据过大",
+    "zh-TW": "本次通信數據過大",
+    "en-US": "Managed mailbox payload is too large"
+  },
+  "message.Unknown managed driver operation": {
+    "zh-CN": "未识别到执行指令",
+    "zh-TW": "未識別到執行指令",
+    "en-US": "Unknown managed driver operation"
+  },
+  "message.Invalid step deadline": {
+    "zh-CN": "操作等待时间无效",
+    "zh-TW": "操作等待時間無效",
+    "en-US": "Invalid step deadline"
+  },
+  "message.Invalid managed step action": {
+    "zh-CN": "操作步骤无效",
+    "zh-TW": "操作步驟無效",
+    "en-US": "Invalid managed step action"
+  },
+  "message.Invalid managed step string": {
+    "zh-CN": "操作步骤中的文本参数无效",
+    "zh-TW": "操作步驟中的文本參數無效",
+    "en-US": "Invalid managed step string"
+  },
+  "message.Invalid managed step flag": {
+    "zh-CN": "操作步骤中的选项参数无效",
+    "zh-TW": "操作步驟中的選項參數無效",
+    "en-US": "Invalid managed step flag"
+  },
+  "message.Invalid managed step deadline": {
+    "zh-CN": "操作步骤的等待时间无效",
+    "zh-TW": "操作步驟的等待時間無效",
+    "en-US": "Invalid managed step deadline"
+  },
+  "message.Guild entry requires explicit attendance authorization": {
+    "zh-CN": "请先启用公会签到，再执行进入公会的操作。",
+    "zh-TW": "請先啟用公會簽到，再執行進入公會的操作。",
+    "en-US": "Guild entry requires explicit attendance authorization"
+  },
+  "message.Startup control is outside the identified queue driver": {
+    "zh-CN": "启动操作不属于当前已确认身份的队列",
+    "zh-TW": "啟動操作不屬于當前已確認身份的隊列",
+    "en-US": "Startup control is outside the identified queue driver"
+  },
+  "message.Only vetted read-only predicates allowed": {
+    "zh-CN": "该读取方式尚未经过适配",
+    "zh-TW": "該讀取方式尚未經過適配",
+    "en-US": "Only vetted read-only predicates allowed"
+  },
+  "message.Duplicate evidence role": {
+    "zh-CN": "操作结果读取配置重复",
+    "zh-TW": "操作結果讀取配置重復",
+    "en-US": "Duplicate evidence role"
+  },
+  "message.Request has conflicting roles": {
+    "zh-CN": "操作请求存在相互冲突的用途",
+    "zh-TW": "操作請求存在相互沖突的用途",
+    "en-US": "Request has conflicting roles"
+  },
+  "message.Unknown sweep operation": {
+    "zh-CN": "未识别到这类扫荡操作",
+    "zh-TW": "未識別到這類掃蕩操作",
+    "en-US": "Unknown sweep operation"
+  },
+  "message.Evidence spec inheritance cycle": {
+    "zh-CN": "操作结果读取配置存在循环依赖",
+    "zh-TW": "操作結果讀取配置存在循環依賴",
+    "en-US": "Evidence spec inheritance cycle"
+  },
+  "message.Evidence parent must be a sibling JSON file": {
+    "zh-CN": "操作结果读取配置的引用位置无效",
+    "zh-TW": "操作結果讀取配置的引用位置無效",
+    "en-US": "Evidence parent must be a sibling JSON file"
+  },
+  "message.Collection is not enumerable": {
+    "zh-CN": "游戏返回的列表格式无效",
+    "zh-TW": "游戲返回的列表格式無效",
+    "en-US": "Collection is not enumerable"
+  },
+  "message.Projection limit must be 1..10000": {
+    "zh-CN": "读取数量应在1到10000之间",
+    "zh-TW": "讀取數量應在1到10000之間",
+    "en-US": "Projection limit must be 1..10000"
+  },
+  "message.Invalid projection fields": {
+    "zh-CN": "读取字段配置无效",
+    "zh-TW": "讀取字段配置無效",
+    "en-US": "Invalid projection fields"
+  },
+  "message.Expected observed collection": {
+    "zh-CN": "未读到预期的游戏列表",
+    "zh-TW": "未讀到預期的游戲列表",
+    "en-US": "Expected observed collection"
+  },
+  "message.Null observation row": {
+    "zh-CN": "游戏列表包含空数据项",
+    "zh-TW": "游戲列表包含空數據項",
+    "en-US": "Null observation row"
+  },
+  "message.Ambiguous daily Runtime3": {
+    "zh-CN": "检测到多个日常连接组件，无法确定当前使用的组件。",
+    "zh-TW": "檢測到多個日常連接組件，無法確定當前使用的組件。",
+    "en-US": "Ambiguous daily Runtime3"
+  },
+  "message.Legacy guild observation contract changed": {
+    "zh-CN": "公会数据格式已变化，需要更新连接组件。",
+    "zh-TW": "公會數據格式已變化，需要更新連接組件。",
+    "en-US": "Legacy guild observation contract changed"
+  },
+  "message.Observation type must be a scene component": {
+    "zh-CN": "连接组件类型不兼容当前场景",
+    "zh-TW": "連接組件類型不兼容當前場景",
+    "en-US": "Observation type must be a scene component"
+  },
+  "message.Invalid command ID": {
+    "zh-CN": "操作指令标识无效",
+    "zh-TW": "操作指令標識無效",
+    "en-US": "Invalid command ID"
+  },
+  "message.Probe belongs to another map": {
+    "zh-CN": "测试路线属于另一张地图",
+    "zh-TW": "測試路線屬于另一張地圖",
+    "en-US": "Probe belongs to another map"
+  },
+  "message.Probe requires non-event idle field": {
+    "zh-CN": "测试移动需要处于空闲的普通地图",
+    "zh-TW": "測試移動需要處于空閑的普通地圖",
+    "en-US": "Probe requires non-event idle field"
+  },
+  "message.Probe in battle field requires active stealth": {
+    "zh-CN": "在战斗地图测试移动需要先开启隐身",
+    "zh-TW": "在戰斗地圖測試移動需要先開啟隱身",
+    "en-US": "Probe in battle field requires active stealth"
+  },
+  "message.Close idle quiz list without starting another quiz": {
+    "zh-CN": "正在关闭空闲的答题列表",
+    "zh-TW": "正在關閉空閑的答題列表",
+    "en-US": "Close idle quiz list without starting another quiz"
+  },
+  "message.Leave idle mini event before daily queue": {
+    "zh-CN": "正在退出空闲的小游戏页面",
+    "zh-TW": "正在退出空閑的小游戲頁面",
+    "en-US": "Leave idle mini event before daily queue"
+  },
+  "message.Continue original owned quiz; never restart entry": {
+    "zh-CN": "正在继续尚未完成的答题",
+    "zh-TW": "正在繼續尚未完成的答題",
+    "en-US": "Continue original owned quiz; never restart entry"
+  },
+  "message.Confirmed operation UI cleanup": {
+    "zh-CN": "正在收起已确认结果的界面",
+    "zh-TW": "正在收起已確認結果的界面",
+    "en-US": "Confirmed operation UI cleanup"
+  },
+  "message.Close confirmed reward after native animation": {
+    "zh-CN": "奖励动画结束后收起界面",
+    "zh-TW": "獎勵動畫結束后收起界面",
+    "en-US": "Close confirmed reward after native animation"
+  },
+  "message.Close existing reward after native animation; no business replay": {
+    "zh-CN": "奖励动画结束后收起当前界面，不重复领取。",
+    "zh-TW": "獎勵動畫結束后收起當前界面，不重復領取。",
+    "en-US": "Close existing reward after native animation; no business replay"
+  },
+  "message.Close a collection menu whose characters are restricted by the current cartridge": {
+    "zh-CN": "正在关闭当前卡带限制角色使用的天赋菜单",
+    "zh-TW": "正在關閉當前卡帶限制角色使用的天賦菜單",
+    "en-US": "Close a collection menu whose characters are restricted by the current cartridge"
+  },
+  "message.End only the owned, fully confirmed trade purchase session": {
+    "zh-CN": "正在结束已核对完成的采购流程",
+    "zh-TW": "正在結束已核對完成的采購流程",
+    "en-US": "End only the owned, fully confirmed trade purchase session"
+  },
+  "message.active_or_unsettled_battle": {
+    "zh-CN": "战斗仍在进行或结算尚未结束",
+    "zh-TW": "戰斗仍在進行或結算尚未結束",
+    "en-US": "A battle or its result is still in progress."
+  },
+  "message.execution-owned-by-another-activity": {
+    "zh-CN": "其他自动化正在运行，请先停止该功能。",
+    "zh-TW": "其他自動化正在運行，請先停止該功能。",
+    "en-US": "Another automation is running. Stop it first."
+  },
+  "message.The operation was canceled.": {
+    "zh-CN": "操作已取消",
+    "zh-TW": "操作已取消",
+    "en-US": "The operation was canceled."
+  },
+  "message.A task was canceled.": {
+    "zh-CN": "操作已取消",
+    "zh-TW": "操作已取消",
+    "en-US": "A task was canceled."
+  },
+  "message.The operation has timed out.": {
+    "zh-CN": "操作等待超时",
+    "zh-TW": "操作等待超時",
+    "en-US": "The operation has timed out."
+  },
+  "message.Access is denied.": {
+    "zh-CN": "访问被拒绝，请检查工具与游戏的权限。",
+    "zh-TW": "訪問被拒絕，請檢查工具與游戲的權限。",
+    "en-US": "Access is denied."
+  },
+  "message.The pipe is being closed.": {
+    "zh-CN": "游戏连接正在关闭，请重新核对连接。",
+    "zh-TW": "游戲連接正在關閉，請重新核對連接。",
+    "en-US": "The pipe is being closed."
+  },
+  "message.The pipe has been ended.": {
+    "zh-CN": "游戏连接已断开，请重新连接。",
+    "zh-TW": "游戲連接已斷開，請重新連接。",
+    "en-US": "The pipe has been ended."
+  },
+  "message.The system cannot find the file specified.": {
+    "zh-CN": "未找到所需文件，请检查工具文件和选择的路径。",
+    "zh-TW": "未找到所需文件，請檢查工具文件和選擇的路徑。",
+    "en-US": "The system cannot find the file specified."
+  },
+  "message.all_dispatched": {
+    "zh-CN": "已完成全部可用派遣",
+    "zh-TW": "已完成全部可用派遣",
+    "en-US": "All available dispatches are complete."
+  },
+  "message.friendship_complete": {
+    "zh-CN": "亲密度咨询已完成",
+    "zh-TW": "親密度咨詢已完成",
+    "en-US": "Affinity consultations completed."
+  },
+  "message.insufficient_catalyst": {
+    "zh-CN": "天赋药不足",
+    "zh-TW": "天賦藥不足",
+    "en-US": "Not enough Ability Pills."
+  },
+  "message.native_monster_state_invalid": {
+    "zh-CN": "魔兽状态数据异常，请重新读取。",
+    "zh-TW": "魔獸狀態數據異常，請重新讀取。",
+    "en-US": "Fiend Hunt state is invalid. Read it again."
+  },
+  "message.native_monster_state_missing": {
+    "zh-CN": "尚未读到完整的魔兽状态",
+    "zh-TW": "尚未讀到完整的魔獸狀態",
+    "en-US": "Complete Fiend Hunt state is not available yet."
+  },
+  "message.native_quick_button_unavailable": {
+    "zh-CN": "魔兽快速战斗按钮当前不可用",
+    "zh-TW": "魔獸快速戰斗按鈕當前不可用",
+    "en-US": "Fiend Hunt quick battle is unavailable."
+  },
+  "message.no_eligible_quests": {
+    "zh-CN": "所选范围内暂无符合设置的可执行周NPC任务",
+    "zh-TW": "所選范圍內暫無符合設置的可執行周NPC任務",
+    "en-US": "No weekly NPC missions in the selected range match the settings."
+  },
+  "message.no_native_quick_battle_record": {
+    "zh-CN": "尚无可用于快速战斗的魔兽成绩",
+    "zh-TW": "尚無可用于快速戰斗的魔獸成績",
+    "en-US": "No Fiend Hunt record is available for quick battle."
+  },
+  "message.no_npc_observation": {
+    "zh-CN": "周NPC任务状态尚未就绪",
+    "zh-TW": "周NPC任務狀態尚未就緒",
+    "en-US": "Weekly NPC mission status is not ready."
+  },
+  "message.practice_is_not_daily_reward": {
+    "zh-CN": "当前是练习模式，不能用于领取每日奖励。",
+    "zh-TW": "當前是練習模式，不能用于領取每日獎勵。",
+    "en-US": "Practice mode does not grant daily rewards."
+  },
+  "message.protected_npc_targets": {
+    "zh-CN": "已保留周NPC任务需要的目标",
+    "zh-TW": "已保留周NPC任務需要的目標",
+    "en-US": "Targets needed by NPC missions have been preserved."
+  },
+  "message.resumed_settlement": {
+    "zh-CN": "已接续并核对上次结算",
+    "zh-TW": "已接續并核對上次結算",
+    "en-US": "The previous result has been resumed and checked."
+  },
+  "message.same_game_active_quiz_after_observer_update": {
+    "zh-CN": "连接更新后继续原有答题进度",
+    "zh-TW": "連接更新后繼續原有答題進度",
+    "en-US": "Continuing the existing quiz after the connection update."
+  },
+  "message.server_event_progress_unchanged": {
+    "zh-CN": "服务器活动进度尚未变化",
+    "zh-TW": "服務器活動進度尚未變化",
+    "en-US": "Server event progress has not changed yet."
+  },
+  "message.square_rewards_checked": {
+    "zh-CN": "广场奖励已检查",
+    "zh-TW": "廣場獎勵已檢查",
+    "en-US": "Plaza rewards checked."
+  },
+  "message.talent_unavailable": {
+    "zh-CN": "当前天赋不可用",
+    "zh-TW": "當前天賦不可用",
+    "en-US": "This talent is unavailable now."
+  },
+  "message.waiting_cartridge_access": {
+    "zh-CN": "等待目标卡带可以进入",
+    "zh-TW": "等待目標卡帶可以進入",
+    "en-US": "Waiting for the target cartridge to become accessible."
+  },
+  "message.weekly_route_deferred": {
+    "zh-CN": "本次周收集暂缓，未完成地图可稍后接续。",
+    "zh-TW": "本次周收集暫緩，未完成地圖可稍后接續。",
+    "en-US": "Weekly collection deferred. Unfinished maps can be resumed later."
+  },
+  "message.confirmed_long_term_bottleneck": {
+    "zh-CN": "已确认是长期紧缺原料，保留备用。",
+    "zh-TW": "已確認是長期緊缺原料，保留備用。",
+    "en-US": "Kept in reserve as a confirmed long-term bottleneck ingredient."
+  },
+  "message.future_recipe_bottleneck": {
+    "zh-CN": "后续料理需要的紧缺原料，保留备用。",
+    "zh-TW": "后續料理需要的緊缺原料，保留備用。",
+    "en-US": "Kept in reserve for future recipes."
+  },
+  "message.preferred_recipe": {
+    "zh-CN": "优先用于所选料理",
+    "zh-TW": "優先用于所選料理",
+    "en-US": "Prioritized for the selected recipe."
+  },
+  "message.closing": {
+    "zh-CN": "正在关闭游戏",
+    "zh-TW": "正在關閉游戲",
+    "en-US": "Closing the game"
+  },
+  "message.launching": {
+    "zh-CN": "正在启动游戏",
+    "zh-TW": "正在啟動游戲",
+    "en-US": "Starting the game"
+  },
+  "message.connecting": {
+    "zh-CN": "正在连接",
+    "zh-TW": "正在連接",
+    "en-US": "Connecting"
+  },
+  "message.verified": {
+    "zh-CN": "核对通过",
+    "zh-TW": "核對通過",
+    "en-US": "Verified"
+  },
+  "message.waiting_sdk": {
+    "zh-CN": "等待登录组件就绪",
+    "zh-TW": "等待登錄組件就緒",
+    "en-US": "Waiting for login services"
+  },
+  "message.waiting_start": {
+    "zh-CN": "等待进入游戏",
+    "zh-TW": "等待進入游戲",
+    "en-US": "Waiting to enter the game"
+  },
+  "message.recovering_start": {
+    "zh-CN": "正在恢复启动流程",
+    "zh-TW": "正在恢復啟動流程",
+    "en-US": "Recovering startup"
+  },
+  "message.starting": {
+    "zh-CN": "正在开始",
+    "zh-TW": "正在開始",
+    "en-US": "Starting"
+  },
+  "message.Active Mirror battle has no owned journal": {
+    "zh-CN": "镜中战斗仍在进行，但没有对应的本次执行记录，请先核对游戏。",
+    "zh-TW": "鏡中戰斗仍在進行，但沒有對應的本次執行記錄，請先核對游戲。",
+    "en-US": "Active Mirror battle has no owned journal"
+  },
+  "message.Active pass list changed": {
+    "zh-CN": "当前开放的通行证列表已变化",
+    "zh-TW": "當前開放的通行證列表已變化",
+    "en-US": "Active pass list changed"
+  },
+  "message.Active pass list incomplete": {
+    "zh-CN": "当前通行证列表不完整",
+    "zh-TW": "當前通行證列表不完整",
+    "en-US": "Active pass list incomplete"
+  },
+  "message.Ambiguous bargain cancel popup; preserved": {
+    "zh-CN": "无法确定结束砍价弹窗的归属，已保留现场。",
+    "zh-TW": "無法確定結束砍價彈窗的歸屬，已保留現場。",
+    "en-US": "Ambiguous bargain cancel popup; preserved"
+  },
+  "message.Ambiguous square ranking objects": {
+    "zh-CN": "无法确定唯一的广场排行榜奖励入口",
+    "zh-TW": "無法確定唯一的廣場排行榜獎勵入口",
+    "en-US": "Ambiguous square ranking objects"
+  },
+  "message.Another quiz active": {
+    "zh-CN": "另一道题仍在进行中",
+    "zh-TW": "另一道題仍在進行中",
+    "en-US": "Another quiz active"
+  },
+  "message.Bargain did not activate": {
+    "zh-CN": "尚未确认砍价效果已生效",
+    "zh-TW": "尚未確認砍價效果已生效",
+    "en-US": "Bargain did not activate"
+  },
+  "message.Bubble currency reward differs": {
+    "zh-CN": "顾客气泡奖励的货币变化与预期不一致",
+    "zh-TW": "顧客氣泡獎勵的貨幣變化與預期不一致",
+    "en-US": "Bubble currency reward differs"
+  },
+  "message.Bubble reward count did not advance": {
+    "zh-CN": "尚未确认顾客气泡奖励已领取",
+    "zh-TW": "尚未確認顧客氣泡獎勵已領取",
+    "en-US": "Bubble reward count did not advance"
+  },
+  "message.Business account/process changed": {
+    "zh-CN": "操作期间账号或游戏进程已变化",
+    "zh-TW": "操作期間帳號或游戲進程已變化",
+    "en-US": "Business account/process changed"
+  },
+  "message.Cafeteria changed during observation": {
+    "zh-CN": "读取期间餐厅状态已变化",
+    "zh-TW": "讀取期間餐廳狀態已變化",
+    "en-US": "Cafeteria changed during observation"
+  },
+  "message.Cannot skip an unfinished weekly mission": {
+    "zh-CN": "周常任务尚未完成，不能标记为已跳过。",
+    "zh-TW": "周常任務尚未完成，不能標記為已跳過。",
+    "en-US": "Cannot skip an unfinished weekly mission"
+  },
+  "message.Cartridge changed during insertion": {
+    "zh-CN": "进入卡带期间目标卡带已变化",
+    "zh-TW": "進入卡帶期間目標卡帶已變化",
+    "en-US": "Cartridge changed during insertion"
+  },
+  "message.Cartridge selection is ambiguous": {
+    "zh-CN": "无法确定唯一的目标卡带",
+    "zh-TW": "無法確定唯一的目標卡帶",
+    "en-US": "Cartridge selection is ambiguous"
+  },
+  "message.Cash tie-break changed profit": {
+    "zh-CN": "资金分配优化改变了已确认收益，计算结果需要核对。",
+    "zh-TW": "資金分配優化改變了已確認收益，計算結果需要核對。",
+    "en-US": "Cash tie-break changed profit"
+  },
+  "message.Claimed mission cache did not advance": {
+    "zh-CN": "领取后任务完成状态尚未更新",
+    "zh-TW": "領取后任務完成狀態尚未更新",
+    "en-US": "Claimed mission cache did not advance"
+  },
+  "message.Collection cache identity/cycle mismatch": {
+    "zh-CN": "收集进度所属账号或周期不匹配",
+    "zh-TW": "收集進度所屬帳號或周期不匹配",
+    "en-US": "Collection cache identity/cycle mismatch"
+  },
+  "message.Collection response incomplete or for another cartridge": {
+    "zh-CN": "收集进度返回不完整，或属于另一张卡带",
+    "zh-TW": "收集進度返回不完整，或屬于另一張卡帶",
+    "en-US": "Collection response incomplete or for another cartridge"
+  },
+  "message.Collection server clock missing": {
+    "zh-CN": "收集进度缺少服务器时间",
+    "zh-TW": "收集進度缺少服務器時間",
+    "en-US": "Collection server clock missing"
+  },
+  "message.Collection target outside map graph": {
+    "zh-CN": "收集目标不在已知地图连接范围内",
+    "zh-TW": "收集目標不在已知地圖連接范圍內",
+    "en-US": "Collection target outside map graph"
+  },
+  "message.Configured ordinary chapter pin unavailable": {
+    "zh-CN": "设置的章节狩猎入口当前不可用",
+    "zh-TW": "設置的章節狩獵入口當前不可用",
+    "en-US": "Configured ordinary chapter pin unavailable"
+  },
+  "message.Confirmed result blocked by unknown popup": {
+    "zh-CN": "已确认的操作结果被未知弹窗遮挡",
+    "zh-TW": "已確認的操作結果被未知彈窗遮擋",
+    "en-US": "Confirmed result blocked by unknown popup"
+  },
+  "message.Cooking actor mismatch": {
+    "zh-CN": "料理操作的角色不匹配",
+    "zh-TW": "料理操作的角色不匹配",
+    "en-US": "Cooking actor mismatch"
+  },
+  "message.Cooking batch still running": {
+    "zh-CN": "这批料理仍在制作中",
+    "zh-TW": "這批料理仍在制作中",
+    "en-US": "Cooking batch still running"
+  },
+  "message.Cooking output differs": {
+    "zh-CN": "料理产出与预期不一致",
+    "zh-TW": "料理產出與預期不一致",
+    "en-US": "Cooking output differs"
+  },
+  "message.Cooking response rejected or out of order": {
+    "zh-CN": "料理操作被拒绝，或返回顺序不一致",
+    "zh-TW": "料理操作被拒絕，或返回順序不一致",
+    "en-US": "Cooking response rejected or out of order"
+  },
+  "message.Craft inventory delta differs": {
+    "zh-CN": "制作装备后的库存变化与预期不一致",
+    "zh-TW": "制作裝備后的庫存變化與預期不一致",
+    "en-US": "Craft inventory delta differs"
+  },
+  "message.Crafted item is not an N sword": {
+    "zh-CN": "本次制作结果不是预期的N级剑",
+    "zh-TW": "本次制作結果不是預期的N級劍",
+    "en-US": "Crafted item is not an N sword"
+  },
+  "message.Currency delta not settled or differs": {
+    "zh-CN": "货币变化尚未结算或与预期不一致",
+    "zh-TW": "貨幣變化尚未結算或與預期不一致",
+    "en-US": "Currency delta not settled or differs"
+  },
+  "message.Current cartridge identity unavailable": {
+    "zh-CN": "当前卡带信息尚未就绪",
+    "zh-TW": "當前卡帶信息尚未就緒",
+    "en-US": "Current cartridge identity unavailable"
+  },
+  "message.Current map missing from native graph": {
+    "zh-CN": "当前地图不在游戏返回的地图连接资料中",
+    "zh-TW": "當前地圖不在游戲返回的地圖連接資料中",
+    "en-US": "Current map missing from native graph"
+  },
+  "message.Daily challenge budget changed": {
+    "zh-CN": "每日活动挑战次数已变化",
+    "zh-TW": "每日活動挑戰次數已變化",
+    "en-US": "Daily challenge budget changed"
+  },
+  "message.Daily sweep budget exceeded": {
+    "zh-CN": "扫荡数量超出今日允许次数",
+    "zh-TW": "掃蕩數量超出今日允許次數",
+    "en-US": "Daily sweep budget exceeded"
+  },
+  "message.Daily table provenance differs from installed client": {
+    "zh-CN": "日常规则资料与当前游戏版本不一致",
+    "zh-TW": "日常規則資料與當前游戲版本不一致",
+    "en-US": "Daily table provenance differs from installed client"
+  },
+  "message.Dice activity changed": {
+    "zh-CN": "骰子活动已变化",
+    "zh-TW": "骰子活動已變化",
+    "en-US": "Dice activity changed"
+  },
+  "message.Dice balance differs": {
+    "zh-CN": "骰子活动资源余额与预期不一致",
+    "zh-TW": "骰子活動資源余額與預期不一致",
+    "en-US": "Dice balance differs"
+  },
+  "message.Dice request rejected; confirmed progress retained": {
+    "zh-CN": "掷骰子操作被拒绝，已保留确认完成的进度。",
+    "zh-TW": "擲骰子操作被拒絕，已保留確認完成的進度。",
+    "en-US": "Dice request rejected; confirmed progress retained"
+  },
+  "message.Dice response chain incomplete": {
+    "zh-CN": "骰子活动的连续返回尚未完整",
+    "zh-TW": "骰子活動的連續返回尚未完整",
+    "en-US": "Dice response chain incomplete"
+  },
+  "message.Dice response unreadable": {
+    "zh-CN": "骰子活动返回无法读取",
+    "zh-TW": "骰子活動返回無法讀取",
+    "en-US": "Dice response unreadable"
+  },
+  "message.Dice result scope differs": {
+    "zh-CN": "骰子结果不属于当前活动范围",
+    "zh-TW": "骰子結果不屬于當前活動范圍",
+    "en-US": "Dice result scope differs"
+  },
+  "message.Dice still active or scope changed": {
+    "zh-CN": "骰子活动仍在进行，或活动范围已变化",
+    "zh-TW": "骰子活動仍在進行，或活動范圍已變化",
+    "en-US": "Dice still active or scope changed"
+  },
+  "message.Dispatch catalyst debit mismatch": {
+    "zh-CN": "派遣消耗的天赋药与预期不一致",
+    "zh-TW": "派遣消耗的天賦藥與預期不一致",
+    "en-US": "Dispatch catalyst debit mismatch"
+  },
+  "message.Dispatch claim IDs truncated": {
+    "zh-CN": "派遣领取目标列表不完整",
+    "zh-TW": "派遣領取目標列表不完整",
+    "en-US": "Dispatch claim IDs truncated"
+  },
+  "message.Dispatch claimed IDs differ": {
+    "zh-CN": "派遣已领取目标与本次提交不一致",
+    "zh-TW": "派遣已領取目標與本次提交不一致",
+    "en-US": "Dispatch claimed IDs differ"
+  },
+  "message.Dispatch talent list incomplete": {
+    "zh-CN": "派遣天赋列表不完整",
+    "zh-TW": "派遣天賦列表不完整",
+    "en-US": "Dispatch talent list incomplete"
+  },
+  "message.Displayed pricing not verified": {
+    "zh-CN": "尚未确认游戏中显示的商品价格",
+    "zh-TW": "尚未確認游戲中顯示的商品價格",
+    "en-US": "Displayed pricing not verified"
+  },
+  "message.Displayed shop truncated": {
+    "zh-CN": "商店展示的商品列表不完整",
+    "zh-TW": "商店展示的商品列表不完整",
+    "en-US": "Displayed shop truncated"
+  },
+  "message.Duplicate active event identity": {
+    "zh-CN": "活动列表中存在重复标识",
+    "zh-TW": "活動列表中存在重復標識",
+    "en-US": "Duplicate active event identity"
+  },
+  "message.Duplicate active passes": {
+    "zh-CN": "当前通行证列表存在重复项",
+    "zh-TW": "當前通行證列表存在重復項",
+    "en-US": "Duplicate active passes"
+  },
+  "message.Duplicate cartridge identity": {
+    "zh-CN": "卡带列表存在重复标识",
+    "zh-TW": "卡帶列表存在重復標識",
+    "en-US": "Duplicate cartridge identity"
+  },
+  "message.Duplicate dispatch slots": {
+    "zh-CN": "派遣列表存在重复位置",
+    "zh-TW": "派遣列表存在重復位置",
+    "en-US": "Duplicate dispatch slots"
+  },
+  "message.Duplicate equipment source receipt": {
+    "zh-CN": "装备来源记录重复",
+    "zh-TW": "裝備來源記錄重復",
+    "en-US": "Duplicate equipment source receipt"
+  },
+  "message.Duplicate event stages": {
+    "zh-CN": "活动关卡列表存在重复项",
+    "zh-TW": "活動關卡列表存在重復項",
+    "en-US": "Duplicate event stages"
+  },
+  "message.Duplicate mission IDs": {
+    "zh-CN": "任务列表存在重复标识",
+    "zh-TW": "任務列表存在重復標識",
+    "en-US": "Duplicate mission IDs"
+  },
+  "message.Duplicate or unknown offer": {
+    "zh-CN": "商店报价重复或未识别",
+    "zh-TW": "商店報價重復或未識別",
+    "en-US": "Duplicate or unknown offer"
+  },
+  "message.Duplicate pass mission identity": {
+    "zh-CN": "通行证任务标识重复",
+    "zh-TW": "通行證任務標識重復",
+    "en-US": "Duplicate pass mission identity"
+  },
+  "message.Duplicate product": {
+    "zh-CN": "商品列表存在重复项",
+    "zh-TW": "商品列表存在重復項",
+    "en-US": "Duplicate product"
+  },
+  "message.Duplicate recipe/output": {
+    "zh-CN": "料理配方或产出定义重复",
+    "zh-TW": "料理配方或產出定義重復",
+    "en-US": "Duplicate recipe/output"
+  },
+  "message.Duplicate redispatch slot": {
+    "zh-CN": "续派列表存在重复位置",
+    "zh-TW": "續派列表存在重復位置",
+    "en-US": "Duplicate redispatch slot"
+  },
+  "message.Duplicate sale quote": {
+    "zh-CN": "售卖报价重复",
+    "zh-TW": "售賣報價重復",
+    "en-US": "Duplicate sale quote"
+  },
+  "message.Duplicate source equipment": {
+    "zh-CN": "待处理装备列表存在重复项",
+    "zh-TW": "待處理裝備列表存在重復項",
+    "en-US": "Duplicate source equipment"
+  },
+  "message.Duplicate trade item": {
+    "zh-CN": "交易物品列表存在重复项",
+    "zh-TW": "交易物品列表存在重復項",
+    "en-US": "Duplicate trade item"
+  },
+  "message.Duplicate weekly cache": {
+    "zh-CN": "周常进度数据重复",
+    "zh-TW": "周常進度數據重復",
+    "en-US": "Duplicate weekly cache"
+  },
+  "message.Empty or duplicate recycle selection": {
+    "zh-CN": "分解装备列表为空或包含重复项",
+    "zh-TW": "分解裝備列表為空或包含重復項",
+    "en-US": "Empty or duplicate recycle selection"
+  },
+  "message.Equipment catalog account differs": {
+    "zh-CN": "装备库存所属账号与当前账号不一致",
+    "zh-TW": "裝備庫存所屬帳號與當前帳號不一致",
+    "en-US": "Equipment catalog account differs"
+  },
+  "message.Equipment definition missing": {
+    "zh-CN": "缺少所选装备的资料",
+    "zh-TW": "缺少所選裝備的資料",
+    "en-US": "Equipment definition missing"
+  },
+  "message.Equipment inventory incomplete or duplicated": {
+    "zh-CN": "装备库存不完整或包含重复项",
+    "zh-TW": "裝備庫存不完整或包含重復項",
+    "en-US": "Equipment inventory incomplete or duplicated"
+  },
+  "message.Equipment removal differs from exact selection": {
+    "zh-CN": "实际移除的装备与所选列表不一致",
+    "zh-TW": "實際移除的裝備與所選列表不一致",
+    "en-US": "Equipment removal differs from exact selection"
+  },
+  "message.Event action budget exceeded": {
+    "zh-CN": "活动操作次数达到本轮上限",
+    "zh-TW": "活動操作次數達到本輪上限",
+    "en-US": "Event action budget exceeded"
+  },
+  "message.Event claim chain incomplete": {
+    "zh-CN": "活动奖励的连续领取尚未完成",
+    "zh-TW": "活動獎勵的連續領取尚未完成",
+    "en-US": "Event claim chain incomplete"
+  },
+  "message.Event currency unsupported; balance retained": {
+    "zh-CN": "暂不支持该活动代币，余额已保留。",
+    "zh-TW": "暫不支持該活動代幣，余額已保留。",
+    "en-US": "Event currency unsupported; balance retained"
+  },
+  "message.Event identity changed": {
+    "zh-CN": "活动身份已变化",
+    "zh-TW": "活動身份已變化",
+    "en-US": "Event identity changed"
+  },
+  "message.Event mission group changed": {
+    "zh-CN": "活动任务组已变化",
+    "zh-TW": "活動任務組已變化",
+    "en-US": "Event mission group changed"
+  },
+  "message.Event progress belongs to another stage": {
+    "zh-CN": "活动进度属于另一关卡",
+    "zh-TW": "活動進度屬于另一關卡",
+    "en-US": "Event progress belongs to another stage"
+  },
+  "message.Event rewards still changing after four sweeps; progress retained": {
+    "zh-CN": "检查4轮后活动奖励仍在变化，已保留当前进度。",
+    "zh-TW": "檢查4輪后活動獎勵仍在變化，已保留當前進度。",
+    "en-US": "Event rewards still changing after four sweeps; progress retained"
+  },
+  "message.Event tab changed": {
+    "zh-CN": "活动分类已切换",
+    "zh-TW": "活動分類已切換",
+    "en-US": "Event tab changed"
+  },
+  "message.Event table identity differs": {
+    "zh-CN": "活动资料与当前活动不一致",
+    "zh-TW": "活動資料與當前活動不一致",
+    "en-US": "Event table identity differs"
+  },
+  "message.Exchange debit or rewards differ": {
+    "zh-CN": "兑换消耗或奖励与预期不一致",
+    "zh-TW": "兌換消耗或獎勵與預期不一致",
+    "en-US": "Exchange debit or rewards differ"
+  },
+  "message.Exchange page did not advance": {
+    "zh-CN": "兑换页面尚未更新",
+    "zh-TW": "兌換頁面尚未更新",
+    "en-US": "Exchange page did not advance"
+  },
+  "message.Exchange preview changed; no confirmation sent": {
+    "zh-CN": "兑换预览已变化，未提交确认。",
+    "zh-TW": "兌換預覽已變化，未提交確認。",
+    "en-US": "Exchange preview changed; no confirmation sent"
+  },
+  "message.Exclusive character grade missing": {
+    "zh-CN": "缺少专属装备对应角色的星级资料",
+    "zh-TW": "缺少專屬裝備對應角色的星級資料",
+    "en-US": "Exclusive character grade missing"
+  },
+  "message.Expected exactly one crafted item": {
+    "zh-CN": "本次装备制作数量与预期不一致",
+    "zh-TW": "本次裝備制作數量與預期不一致",
+    "en-US": "Expected exactly one crafted item"
+  },
+  "message.Food delta not settled or differs": {
+    "zh-CN": "食材库存变化尚未结算或与预期不一致",
+    "zh-TW": "食材庫存變化尚未結算或與預期不一致",
+    "en-US": "Food delta not settled or differs"
+  },
+  "message.Food inventory truncated": {
+    "zh-CN": "食材库存列表不完整",
+    "zh-TW": "食材庫存列表不完整",
+    "en-US": "Food inventory truncated"
+  },
+  "message.Food quote differs from rules": {
+    "zh-CN": "食材报价与当前规则不一致",
+    "zh-TW": "食材報價與當前規則不一致",
+    "en-US": "Food quote differs from rules"
+  },
+  "message.Global claim did not cover all due slots": {
+    "zh-CN": "一键领取未覆盖全部已到期派遣",
+    "zh-TW": "一鍵領取未覆蓋全部已到期派遣",
+    "en-US": "Global claim did not cover all due slots"
+  },
+  "message.Global redispatch response/cache differs": {
+    "zh-CN": "一键续派返回与游戏状态不一致",
+    "zh-TW": "一鍵續派返回與游戲狀態不一致",
+    "en-US": "Global redispatch response/cache differs"
+  },
+  "message.Goddess availability did not clear": {
+    "zh-CN": "女神像领取状态尚未更新",
+    "zh-TW": "女神像領取狀態尚未更新",
+    "en-US": "Goddess availability did not clear"
+  },
+  "message.Guest cache incomplete": {
+    "zh-CN": "餐厅顾客资料不完整",
+    "zh-TW": "餐廳顧客資料不完整",
+    "en-US": "Guest cache incomplete"
+  },
+  "message.Guest cache missing daily visitor": {
+    "zh-CN": "缺少今日特殊顾客资料",
+    "zh-TW": "缺少今日特殊顧客資料",
+    "en-US": "Guest cache missing daily visitor"
+  },
+  "message.Guest claimed state did not advance": {
+    "zh-CN": "顾客奖励领取状态尚未更新",
+    "zh-TW": "顧客獎勵領取狀態尚未更新",
+    "en-US": "Guest claimed state did not advance"
+  },
+  "message.Guest response/cache differs": {
+    "zh-CN": "顾客奖励返回与游戏状态不一致",
+    "zh-TW": "顧客獎勵返回與游戲狀態不一致",
+    "en-US": "Guest response/cache differs"
+  },
+  "message.Guild changed before submission; no input sent": {
+    "zh-CN": "提交前公会已变化，未发送操作。",
+    "zh-TW": "提交前公會已變化，未發送操作。",
+    "en-US": "Guild changed before submission; no input sent"
+  },
+  "message.Guild page or receipt changed before dispatch; no input submitted": {
+    "zh-CN": "提交前公会页面或操作记录已变化，未发送操作。",
+    "zh-TW": "提交前公會頁面或操作記錄已變化，未發送操作。",
+    "en-US": "Guild page or receipt changed before dispatch; no input submitted"
+  },
+  "message.Highest record changed during selection": {
+    "zh-CN": "选择期间最高成绩已变化",
+    "zh-TW": "選擇期間最高成績已變化",
+    "en-US": "Highest record changed during selection"
+  },
+  "message.Highest record was not applied": {
+    "zh-CN": "尚未确认最高成绩已应用",
+    "zh-TW": "尚未確認最高成績已應用",
+    "en-US": "Highest record was not applied"
+  },
+  "message.Hunt bonus unobserved": {
+    "zh-CN": "尚未读到狩猎奖励加成",
+    "zh-TW": "尚未讀到狩獵獎勵加成",
+    "en-US": "Hunt bonus unobserved"
+  },
+  "message.Hunt free budget exceeded": {
+    "zh-CN": "狩猎数量超出免费资源范围",
+    "zh-TW": "狩獵數量超出免費資源范圍",
+    "en-US": "Hunt free budget exceeded"
+  },
+  "message.Hunt free-only flag changed": {
+    "zh-CN": "狩猎的“仅使用免费次数”设置已变化",
+    "zh-TW": "狩獵的“僅使用免費次數”設置已變化",
+    "en-US": "Hunt free-only flag changed"
+  },
+  "message.Hunt route/count changed": {
+    "zh-CN": "狩猎目标或数量已变化",
+    "zh-TW": "狩獵目標或數量已變化",
+    "en-US": "Hunt route/count changed"
+  },
+  "message.Incomplete dispatch cache": {
+    "zh-CN": "派遣状态不完整",
+    "zh-TW": "派遣狀態不完整",
+    "en-US": "Incomplete dispatch cache"
+  },
+  "message.Incomplete event inventory": {
+    "zh-CN": "活动库存不完整",
+    "zh-TW": "活動庫存不完整",
+    "en-US": "Incomplete event inventory"
+  },
+  "message.Incomplete event mission cache": {
+    "zh-CN": "活动任务进度不完整",
+    "zh-TW": "活動任務進度不完整",
+    "en-US": "Incomplete event mission cache"
+  },
+  "message.Incomplete event token group": {
+    "zh-CN": "活动代币组资料不完整",
+    "zh-TW": "活動代幣組資料不完整",
+    "en-US": "Incomplete event token group"
+  },
+  "message.Incomplete food supply": {
+    "zh-CN": "食材供货资料不完整",
+    "zh-TW": "食材供貨資料不完整",
+    "en-US": "Incomplete food supply"
+  },
+  "message.Incomplete room recommendations": {
+    "zh-CN": "随机小屋推荐列表不完整",
+    "zh-TW": "隨機小屋推薦列表不完整",
+    "en-US": "Incomplete room recommendations"
+  },
+  "message.Incomplete steal catalog": {
+    "zh-CN": "偷窃目标资料不完整",
+    "zh-TW": "偷竊目標資料不完整",
+    "en-US": "Incomplete steal catalog"
+  },
+  "message.Interleaved native requests": {
+    "zh-CN": "检测到其他操作穿插在本次请求中",
+    "zh-TW": "檢測到其他操作穿插在本次請求中",
+    "en-US": "Interleaved native requests"
+  },
+  "message.Invalid completed sweep count": {
+    "zh-CN": "已完成扫荡次数无效",
+    "zh-TW": "已完成掃蕩次數無效",
+    "en-US": "Invalid completed sweep count"
+  },
+  "message.Invalid cooking portion": {
+    "zh-CN": "料理制作份数无效",
+    "zh-TW": "料理制作份數無效",
+    "en-US": "Invalid cooking portion"
+  },
+  "message.Invalid daily challenge plan": {
+    "zh-CN": "每日活动挑战计划无效",
+    "zh-TW": "每日活動挑戰計劃無效",
+    "en-US": "Invalid daily challenge plan"
+  },
+  "message.Invalid dispatch catalyst cost": {
+    "zh-CN": "派遣天赋药消耗数据无效",
+    "zh-TW": "派遣天賦藥消耗數據無效",
+    "en-US": "Invalid dispatch catalyst cost"
+  },
+  "message.Invalid dispatch timestamp": {
+    "zh-CN": "派遣时间数据无效",
+    "zh-TW": "派遣時間數據無效",
+    "en-US": "Invalid dispatch timestamp"
+  },
+  "message.Invalid drop projection": {
+    "zh-CN": "地图掉落物读取配置无效",
+    "zh-TW": "地圖掉落物讀取配置無效",
+    "en-US": "Invalid drop projection"
+  },
+  "message.Invalid enhancement target": {
+    "zh-CN": "装备强化目标无效",
+    "zh-TW": "裝備強化目標無效",
+    "en-US": "Invalid enhancement target"
+  },
+  "message.Invalid food stack": {
+    "zh-CN": "食材库存数量无效",
+    "zh-TW": "食材庫存數量無效",
+    "en-US": "Invalid food stack"
+  },
+  "message.Invalid hunt AP cost": {
+    "zh-CN": "狩猎消耗次数无效",
+    "zh-TW": "狩獵消耗次數無效",
+    "en-US": "Invalid hunt AP cost"
+  },
+  "message.Invalid inventory id": {
+    "zh-CN": "库存物品标识无效",
+    "zh-TW": "庫存物品標識無效",
+    "en-US": "Invalid inventory id"
+  },
+  "message.Invalid Mirror free budget": {
+    "zh-CN": "镜中免费次数数据无效",
+    "zh-TW": "鏡中免費次數數據無效",
+    "en-US": "Invalid Mirror free budget"
+  },
+  "message.Invalid mission tab": {
+    "zh-CN": "任务分类无效",
+    "zh-TW": "任務分類無效",
+    "en-US": "Invalid mission tab"
+  },
+  "message.Invalid monster projection": {
+    "zh-CN": "怪物读取配置无效",
+    "zh-TW": "怪物讀取配置無效",
+    "en-US": "Invalid monster projection"
+  },
+  "message.Invalid native cooking packet limit": {
+    "zh-CN": "游戏料理单批数量限制无效",
+    "zh-TW": "游戲料理單批數量限制無效",
+    "en-US": "Invalid native cooking packet limit"
+  },
+  "message.Invalid NPC/map identity": {
+    "zh-CN": "NPC或地图标识无效",
+    "zh-TW": "NPC或地圖標識無效",
+    "en-US": "Invalid NPC/map identity"
+  },
+  "message.Invalid redispatch slot or timestamp": {
+    "zh-CN": "续派位置或时间无效",
+    "zh-TW": "續派位置或時間無效",
+    "en-US": "Invalid redispatch slot or timestamp"
+  },
+  "message.Invalid refinement ranks": {
+    "zh-CN": "装备精炼等级无效",
+    "zh-TW": "裝備精煉等級無效",
+    "en-US": "Invalid refinement ranks"
+  },
+  "message.Invalid reserve item": {
+    "zh-CN": "需保留的物品无效",
+    "zh-TW": "需保留的物品無效",
+    "en-US": "Invalid reserve item"
+  },
+  "message.Invalid rules namespace": {
+    "zh-CN": "规则资料分类无效",
+    "zh-TW": "規則資料分類無效",
+    "en-US": "Invalid rules namespace"
+  },
+  "message.Invalid sale day": {
+    "zh-CN": "售卖日期无效",
+    "zh-TW": "售賣日期無效",
+    "en-US": "Invalid sale day"
+  },
+  "message.Invalid shop availability": {
+    "zh-CN": "商店可用状态无效",
+    "zh-TW": "商店可用狀態無效",
+    "en-US": "Invalid shop availability"
+  },
+  "message.Invalid steal projection": {
+    "zh-CN": "偷窃目标读取配置无效",
+    "zh-TW": "偷竊目標讀取配置無效",
+    "en-US": "Invalid steal projection"
+  },
+  "message.Invalid time limit": {
+    "zh-CN": "等待时限无效",
+    "zh-TW": "等待時限無效",
+    "en-US": "Invalid time limit"
+  },
+  "message.Invalid torch cost": {
+    "zh-CN": "火炬消耗数量无效",
+    "zh-TW": "火炬消耗數量無效",
+    "en-US": "Invalid torch cost"
+  },
+  "message.Invalid trade account/cycle": {
+    "zh-CN": "交易所属账号或周期无效",
+    "zh-TW": "交易所屬帳號或周期無效",
+    "en-US": "Invalid trade account/cycle"
+  },
+  "message.Invalid trade cycle": {
+    "zh-CN": "交易周期无效",
+    "zh-TW": "交易周期無效",
+    "en-US": "Invalid trade cycle"
+  },
+  "message.Invalid trade switch": {
+    "zh-CN": "交易设置无效",
+    "zh-TW": "交易設置無效",
+    "en-US": "Invalid trade switch"
+  },
+  "message.Invalid weekly progress": {
+    "zh-CN": "周常进度无效",
+    "zh-TW": "周常進度無效",
+    "en-US": "Invalid weekly progress"
+  },
+  "message.Invalid weekly scope": {
+    "zh-CN": "周常执行范围无效",
+    "zh-TW": "周常執行范圍無效",
+    "en-US": "Invalid weekly scope"
+  },
+  "message.Liked room owner disappeared": {
+    "zh-CN": "点赞目标小屋的主人信息已不存在",
+    "zh-TW": "點贊目標小屋的主人信息已不存在",
+    "en-US": "Liked room owner disappeared"
+  },
+  "message.Mailbox batch limit reached; confirmed claims preserved": {
+    "zh-CN": "已达到本轮邮件领取上限，已确认的领取结果已保留。",
+    "zh-TW": "已達到本輪郵件領取上限，已確認的領取結果已保留。",
+    "en-US": "Mailbox batch limit reached; confirmed claims preserved"
+  },
+  "message.Messenger repair already attempted in this game/day": {
+    "zh-CN": "本次游戏会话今日已尝试过派遣恢复，请检查当前状态。",
+    "zh-TW": "本次游戲會話今日已嘗試過派遣恢復，請檢查當前狀態。",
+    "en-US": "Messenger repair already attempted in this game/day"
+  },
+  "message.Messenger repair completion unknown; no repeat": {
+    "zh-CN": "派遣恢复结果尚未确认，未重复操作。",
+    "zh-TW": "派遣恢復結果尚未確認，未重復操作。",
+    "en-US": "Messenger repair completion unknown; no repeat"
+  },
+  "message.Mirror free budget unexpectedly increased": {
+    "zh-CN": "镜中免费次数意外增加，请重新核对当前周期。",
+    "zh-TW": "鏡中免費次數意外增加，請重新核對當前周期。",
+    "en-US": "Mirror free budget unexpectedly increased"
+  },
+  "message.Mirror multiplier did not converge": {
+    "zh-CN": "镜中倍率未能调整到目标值",
+    "zh-TW": "鏡中倍率未能調整到目標值",
+    "en-US": "Mirror multiplier did not converge"
+  },
+  "message.Mirror multiplier/repetitions/free-only changed": {
+    "zh-CN": "镜中倍率、场数或“仅使用免费次数”设置已变化",
+    "zh-TW": "鏡中倍率、場數或“僅使用免費次數”設置已變化",
+    "en-US": "Mirror multiplier/repetitions/free-only changed"
+  },
+  "message.Mirror result lacks a confirmed settlement": {
+    "zh-CN": "镜中结果尚未取得已确认的结算记录",
+    "zh-TW": "鏡中結果尚未取得已確認的結算記錄",
+    "en-US": "Mirror result lacks a confirmed settlement"
+  },
+  "message.Mirror target is ambiguous": {
+    "zh-CN": "无法确定唯一的镜中操作目标",
+    "zh-TW": "無法確定唯一的鏡中操作目標",
+    "en-US": "Mirror target is ambiguous"
+  },
+  "message.Mirror ticket debit differs; paid tickets must not change": {
+    "zh-CN": "镜中次数消耗与预期不一致，需要核对付费票券是否变化。",
+    "zh-TW": "鏡中次數消耗與預期不一致，需要核對付費票券是否變化。",
+    "en-US": "Mirror ticket debit differs; paid tickets must not change"
+  },
+  "message.Mirror tickets incomplete": {
+    "zh-CN": "镜中票券数据不完整",
+    "zh-TW": "鏡中票券數據不完整",
+    "en-US": "Mirror tickets incomplete"
+  },
+  "message.Missing character talents": {
+    "zh-CN": "缺少角色天赋资料",
+    "zh-TW": "缺少角色天賦資料",
+    "en-US": "Missing character talents"
+  },
+  "message.Missing dispatch rewards": {
+    "zh-CN": "未读到派遣奖励",
+    "zh-TW": "未讀到派遣獎勵",
+    "en-US": "Missing dispatch rewards"
+  },
+  "message.Missing hunt reward": {
+    "zh-CN": "未读到狩猎奖励",
+    "zh-TW": "未讀到狩獵獎勵",
+    "en-US": "Missing hunt reward"
+  },
+  "message.Missing or chained recipe input": {
+    "zh-CN": "配方原料缺失，或需要尚未支持的连续制作流程",
+    "zh-TW": "配方原料缺失，或需要尚未支持的連續制作流程",
+    "en-US": "Missing or chained recipe input"
+  },
+  "message.Mission button/eligibility disagrees": {
+    "zh-CN": "任务按钮与可领取状态不一致",
+    "zh-TW": "任務按鈕與可領取狀態不一致",
+    "en-US": "Mission button/eligibility disagrees"
+  },
+  "message.Mission observation failed": {
+    "zh-CN": "任务状态读取失败",
+    "zh-TW": "任務狀態讀取失敗",
+    "en-US": "Mission observation failed"
+  },
+  "message.Mission section cache/response differs": {
+    "zh-CN": "任务分类的游戏状态与返回记录不一致",
+    "zh-TW": "任務分類的游戲狀態與返回記錄不一致",
+    "en-US": "Mission section cache/response differs"
+  },
+  "message.Mission table/tab differs": {
+    "zh-CN": "任务资料与当前分类不一致",
+    "zh-TW": "任務資料與當前分類不一致",
+    "en-US": "Mission table/tab differs"
+  },
+  "message.Mixed client assemblies in NPC export": {
+    "zh-CN": "NPC资料混用了不同版本的游戏文件",
+    "zh-TW": "NPC資料混用了不同版本的游戲文件",
+    "en-US": "Mixed client assemblies in NPC export"
+  },
+  "message.Mixed native response actor": {
+    "zh-CN": "服务器返回涉及不同的操作角色",
+    "zh-TW": "服務器返回涉及不同的操作角色",
+    "en-US": "Mixed native response actor"
+  },
+  "message.Monster eligibility changed before confirmation": {
+    "zh-CN": "确认前魔兽快速战斗条件已变化",
+    "zh-TW": "確認前魔獸快速戰斗條件已變化",
+    "en-US": "Monster eligibility changed before confirmation"
+  },
+  "message.Monster Hunt cache belongs to another season": {
+    "zh-CN": "魔兽数据属于另一个赛季",
+    "zh-TW": "魔獸數據屬于另一個賽季",
+    "en-US": "Monster Hunt cache belongs to another season"
+  },
+  "message.Monster Hunt season changed": {
+    "zh-CN": "魔兽赛季已变化",
+    "zh-TW": "魔獸賽季已變化",
+    "en-US": "Monster Hunt season changed"
+  },
+  "message.Monster schedule changed": {
+    "zh-CN": "魔兽活动时间已变化",
+    "zh-TW": "魔獸活動時間已變化",
+    "en-US": "Monster schedule changed"
+  },
+  "message.Native catalyst budget differs": {
+    "zh-CN": "游戏天赋药余额与预期不一致",
+    "zh-TW": "游戲天賦藥余額與預期不一致",
+    "en-US": "Native catalyst budget differs"
+  },
+  "message.Native dismantle preview differs": {
+    "zh-CN": "游戏分解预览与计划不一致",
+    "zh-TW": "游戲分解預覽與計劃不一致",
+    "en-US": "Native dismantle preview differs"
+  },
+  "message.Native dispatch chain already active": {
+    "zh-CN": "游戏正在继续派遣流程",
+    "zh-TW": "游戲正在繼續派遣流程",
+    "en-US": "Native dispatch chain already active"
+  },
+  "message.Native dispatch chain was already active": {
+    "zh-CN": "此前的游戏派遣流程仍在进行",
+    "zh-TW": "此前的游戲派遣流程仍在進行",
+    "en-US": "Native dispatch chain was already active"
+  },
+  "message.Native dispatch eligibility differs": {
+    "zh-CN": "游戏可派遣状态与计划不一致",
+    "zh-TW": "游戲可派遣狀態與計劃不一致",
+    "en-US": "Native dispatch eligibility differs"
+  },
+  "message.Native global dispatch chain is incomplete": {
+    "zh-CN": "游戏的一键派遣流程尚未完整结束",
+    "zh-TW": "游戲的一鍵派遣流程尚未完整結束",
+    "en-US": "Native global dispatch chain is incomplete"
+  },
+  "message.Native hunt route unavailable": {
+    "zh-CN": "游戏狩猎路线当前不可用",
+    "zh-TW": "游戲狩獵路線當前不可用",
+    "en-US": "Native hunt route unavailable"
+  },
+  "message.Native mission All chain is unfinished": {
+    "zh-CN": "游戏任务的一键领取尚未结束",
+    "zh-TW": "游戲任務的一鍵領取尚未結束",
+    "en-US": "Native mission All chain is unfinished"
+  },
+  "message.Native pass definition mismatch": {
+    "zh-CN": "游戏通行证资料不匹配",
+    "zh-TW": "游戲通行證資料不匹配",
+    "en-US": "Native pass definition mismatch"
+  },
+  "message.Native pass groups incomplete": {
+    "zh-CN": "游戏通行证任务组不完整",
+    "zh-TW": "游戲通行證任務組不完整",
+    "en-US": "Native pass groups incomplete"
+  },
+  "message.Native recycle preview differs": {
+    "zh-CN": "游戏装备分解预览与计划不一致",
+    "zh-TW": "游戲裝備分解預覽與計劃不一致",
+    "en-US": "Native recycle preview differs"
+  },
+  "message.Native request not yet observed": {
+    "zh-CN": "尚未读到游戏发出的操作请求",
+    "zh-TW": "尚未讀到游戲發出的操作請求",
+    "en-US": "Native request not yet observed"
+  },
+  "message.Native request/response order differs": {
+    "zh-CN": "操作请求与返回的顺序不一致",
+    "zh-TW": "操作請求與返回的順序不一致",
+    "en-US": "Native request/response order differs"
+  },
+  "message.Native response actor differs": {
+    "zh-CN": "服务器返回的操作角色不一致",
+    "zh-TW": "服務器返回的操作角色不一致",
+    "en-US": "Native response actor differs"
+  },
+  "message.Native response not confirmed; no retry": {
+    "zh-CN": "服务器返回尚未确认，未重复提交。",
+    "zh-TW": "服務器返回尚未確認，未重復提交。",
+    "en-US": "Native response not confirmed; no retry"
+  },
+  "message.Native response precedes request": {
+    "zh-CN": "返回记录早于本次请求，不能作为完成依据。",
+    "zh-TW": "返回記錄早于本次請求，不能作為完成依據。",
+    "en-US": "Native response precedes request"
+  },
+  "message.Native talent preflight unavailable; reconnect the current version": {
+    "zh-CN": "未读到游戏的天赋使用条件，请使用当前版本重新连接。",
+    "zh-TW": "未讀到游戲的天賦使用條件，請使用當前版本重新連接。",
+    "en-US": "Native talent preflight unavailable; reconnect the current version"
+  },
+  "message.Navigation changed before dispatch; no input submitted": {
+    "zh-CN": "提交前移动状态已变化，未发送操作。",
+    "zh-TW": "提交前移動狀態已變化，未發送操作。",
+    "en-US": "Navigation changed before dispatch; no input submitted"
+  },
+  "message.No command receipt; evidence saved, no automatic replay": {
+    "zh-CN": "尚未取得操作回执，已保存记录，未自动重发。",
+    "zh-TW": "尚未取得操作回執，已儲存記錄，未自動重發。",
+    "en-US": "No command receipt; evidence saved, no automatic replay"
+  },
+  "message.No eligible missions/sections before claim": {
+    "zh-CN": "当前没有符合领取条件的任务",
+    "zh-TW": "當前沒有符合領取條件的任務",
+    "en-US": "No eligible missions/sections before claim"
+  },
+  "message.No equipment response": {
+    "zh-CN": "尚未收到装备操作结果",
+    "zh-TW": "尚未收到裝備操作結果",
+    "en-US": "No equipment response"
+  },
+  "message.No expected UI; original command is preserved without replay": {
+    "zh-CN": "预期界面未出现，原操作已保留，未重复提交。",
+    "zh-TW": "預期界面未出現，原操作已保留，未重復提交。",
+    "en-US": "No expected UI; original command is preserved without replay"
+  },
+  "message.No feasible trade plan": {
+    "zh-CN": "当前资源和设置下没有可执行的交易计划",
+    "zh-TW": "當前資源和設置下沒有可執行的交易計劃",
+    "en-US": "No feasible trade plan"
+  },
+  "message.No matching post-operation observation": {
+    "zh-CN": "未读到与本次操作匹配的更新状态",
+    "zh-TW": "未讀到與本次操作匹配的更新狀態",
+    "en-US": "No matching post-operation observation"
+  },
+  "message.No native response": {
+    "zh-CN": "尚未收到游戏服务器返回",
+    "zh-TW": "尚未收到游戲服務器返回",
+    "en-US": "No native response"
+  },
+  "message.No native room response; no retry": {
+    "zh-CN": "尚未收到小屋操作结果，未重复提交。",
+    "zh-TW": "尚未收到小屋操作結果，未重復提交。",
+    "en-US": "No native room response; no retry"
+  },
+  "message.No pass reward change confirmed": {
+    "zh-CN": "尚未确认通行证奖励已领取",
+    "zh-TW": "尚未確認通行證獎勵已領取",
+    "en-US": "No pass reward change confirmed"
+  },
+  "message.No response": {
+    "zh-CN": "尚未收到操作结果",
+    "zh-TW": "尚未收到操作結果",
+    "en-US": "No response"
+  },
+  "message.No unlocked waypoint": {
+    "zh-CN": "没有已解锁的传送点",
+    "zh-TW": "沒有已解鎖的傳送點",
+    "en-US": "No unlocked waypoint"
+  },
+  "message.No valid event action": {
+    "zh-CN": "当前没有可执行的活动操作",
+    "zh-TW": "當前沒有可執行的活動操作",
+    "en-US": "No valid event action"
+  },
+  "message.No weekly stealing talent in export": {
+    "zh-CN": "资料中没有可用于每周偷窃的天赋",
+    "zh-TW": "資料中沒有可用于每周偷竊的天賦",
+    "en-US": "No weekly stealing talent in export"
+  },
+  "message.Non-food or protected inventory changed": {
+    "zh-CN": "非食材或受保护物品的库存发生变化，请核对游戏。",
+    "zh-TW": "非食材或受保護物品的庫存發生變化，請核對游戲。",
+    "en-US": "Non-food or protected inventory changed"
+  },
+  "message.Non-food sale rejected": {
+    "zh-CN": "不允许售卖非食材物品",
+    "zh-TW": "不允許售賣非食材物品",
+    "en-US": "Non-food sale rejected"
+  },
+  "message.Not native event sweep mode": {
+    "zh-CN": "当前不是游戏活动扫荡模式",
+    "zh-TW": "當前不是游戲活動掃蕩模式",
+    "en-US": "Not native event sweep mode"
+  },
+  "message.Not on cafeteria field": {
+    "zh-CN": "当前不在餐厅地图",
+    "zh-TW": "當前不在餐廳地圖",
+    "en-US": "Not on cafeteria field"
+  },
+  "message.Not random recommendations": {
+    "zh-CN": "当前不是随机推荐的小屋列表",
+    "zh-TW": "當前不是隨機推薦的小屋列表",
+    "en-US": "Not random recommendations"
+  },
+  "message.NPC server cooldown not read": {
+    "zh-CN": "尚未读到NPC偷窃的服务器冷却状态",
+    "zh-TW": "尚未讀到NPC偷竊的服務器冷卻狀態",
+    "en-US": "NPC server cooldown not read"
+  },
+  "message.Observation configuration changed": {
+    "zh-CN": "游戏状态读取配置已变化",
+    "zh-TW": "游戲狀態讀取配置已變化",
+    "en-US": "Observation configuration changed"
+  },
+  "message.Observer error": {
+    "zh-CN": "游戏状态读取异常",
+    "zh-TW": "游戲狀態讀取異常",
+    "en-US": "Observer error"
+  },
+  "message.Offer item missing": {
+    "zh-CN": "报价对应的物品不存在",
+    "zh-TW": "報價對應的物品不存在",
+    "en-US": "Offer item missing"
+  },
+  "message.Original business proof unavailable": {
+    "zh-CN": "原操作的结果依据不可用，请先核对游戏。",
+    "zh-TW": "原操作的結果依據不可用，請先核對游戲。",
+    "en-US": "Original business proof unavailable"
+  },
+  "message.Owned confirmation changed before dispatch; no command sent": {
+    "zh-CN": "提交前确认弹窗已变化，未发送操作。",
+    "zh-TW": "提交前確認彈窗已變化，未發送操作。",
+    "en-US": "Owned confirmation changed before dispatch; no command sent"
+  },
+  "message.Owned confirmation changed during final preflight; no command sent": {
+    "zh-CN": "最终检查时确认弹窗已变化，未发送操作。",
+    "zh-TW": "最終檢查時確認彈窗已變化，未發送操作。",
+    "en-US": "Owned confirmation changed during final preflight; no command sent"
+  },
+  "message.Owned confirmation changed while waiting for input; no command sent": {
+    "zh-CN": "等待期间确认弹窗已变化，未发送操作。",
+    "zh-TW": "等待期間確認彈窗已變化，未發送操作。",
+    "en-US": "Owned confirmation changed while waiting for input; no command sent"
+  },
+  "message.Pass cache group differs": {
+    "zh-CN": "通行证任务组与预期不一致",
+    "zh-TW": "通行證任務組與預期不一致",
+    "en-US": "Pass cache group differs"
+  },
+  "message.Pass cache incomplete": {
+    "zh-CN": "通行证数据不完整",
+    "zh-TW": "通行證數據不完整",
+    "en-US": "Pass cache incomplete"
+  },
+  "message.Pass mission set changed": {
+    "zh-CN": "通行证任务列表已变化",
+    "zh-TW": "通行證任務列表已變化",
+    "en-US": "Pass mission set changed"
+  },
+  "message.Pass native All chain incomplete": {
+    "zh-CN": "通行证一键领取尚未完整结束",
+    "zh-TW": "通行證一鍵領取尚未完整結束",
+    "en-US": "Pass native All chain incomplete"
+  },
+  "message.Pass native button/eligibility differs": {
+    "zh-CN": "通行证按钮与可领取状态不一致",
+    "zh-TW": "通行證按鈕與可領取狀態不一致",
+    "en-US": "Pass native button/eligibility differs"
+  },
+  "message.Pass observation failed": {
+    "zh-CN": "通行证状态读取失败",
+    "zh-TW": "通行證狀態讀取失敗",
+    "en-US": "Pass observation failed"
+  },
+  "message.Pass page disappeared during cleanup": {
+    "zh-CN": "收起奖励时通行证页面已关闭",
+    "zh-TW": "收起獎勵時通行證頁面已關閉",
+    "en-US": "Pass page disappeared during cleanup"
+  },
+  "message.Pass reward cache regressed": {
+    "zh-CN": "通行证奖励进度发生回退",
+    "zh-TW": "通行證獎勵進度發生回退",
+    "en-US": "Pass reward cache regressed"
+  },
+  "message.Pass reward identity mismatch": {
+    "zh-CN": "通行证奖励身份不匹配",
+    "zh-TW": "通行證獎勵身份不匹配",
+    "en-US": "Pass reward identity mismatch"
+  },
+  "message.Pass rewards cache incomplete": {
+    "zh-CN": "通行证奖励资料不完整",
+    "zh-TW": "通行證獎勵資料不完整",
+    "en-US": "Pass rewards cache incomplete"
+  },
+  "message.Pass selection has not settled": {
+    "zh-CN": "通行证选择尚未稳定",
+    "zh-TW": "通行證選擇尚未穩定",
+    "en-US": "Pass selection has not settled"
+  },
+  "message.Pass tasks differ from dated native definitions": {
+    "zh-CN": "通行证任务与当前活动日期的规则不一致",
+    "zh-TW": "通行證任務與當前活動日期的規則不一致",
+    "en-US": "Pass tasks differ from dated native definitions"
+  },
+  "message.Pass/reset changed during claim": {
+    "zh-CN": "领取期间通行证或重置周期已变化",
+    "zh-TW": "領取期間通行證或重置周期已變化",
+    "en-US": "Pass/reset changed during claim"
+  },
+  "message.Physical region outside map graph": {
+    "zh-CN": "角色所在区域不在已知地图连接范围内",
+    "zh-TW": "角色所在區域不在已知地圖連接范圍內",
+    "en-US": "Physical region outside map graph"
+  },
+  "message.Planned food balance negative": {
+    "zh-CN": "计划中的食材用量超出库存",
+    "zh-TW": "計劃中的食材用量超出庫存",
+    "en-US": "Planned food balance negative"
+  },
+  "message.Positive hunt count required": {
+    "zh-CN": "狩猎次数必须大于0",
+    "zh-TW": "狩獵次數必須大于0",
+    "en-US": "Positive hunt count required"
+  },
+  "message.Premium stores inaccessible; valuation requires reduced catalog": {
+    "zh-CN": "部分高价商店尚未解锁，需要按当前可访问商店重新估值。",
+    "zh-TW": "部分高價商店尚未解鎖，需要按當前可訪問商店重新估值。",
+    "en-US": "Premium stores inaccessible; valuation requires reduced catalog"
+  },
+  "message.Protected quantity exceeds inventory": {
+    "zh-CN": "设置的保留数量大于现有库存",
+    "zh-TW": "設置的保留數量大于現有庫存",
+    "en-US": "Protected quantity exceeds inventory"
+  },
+  "message.Purchase plan became stale": {
+    "zh-CN": "采购期间供货或库存已变化，请重新计算计划。",
+    "zh-TW": "采購期間供貨或庫存已變化，請重新計算計劃。",
+    "en-US": "Purchase plan became stale"
+  },
+  "message.Quick battle produced no progress": {
+    "zh-CN": "尚未确认快速战斗的成绩变化",
+    "zh-TW": "尚未確認快速戰斗的成績變化",
+    "en-US": "Quick battle produced no progress"
+  },
+  "message.Quiz budget exceeded": {
+    "zh-CN": "已达到本轮答题操作上限",
+    "zh-TW": "已達到本輪答題操作上限",
+    "en-US": "Quiz budget exceeded"
+  },
+  "message.Quiz did not progress; original operation retained": {
+    "zh-CN": "答题未取得进展，原操作已保留。",
+    "zh-TW": "答題未取得進展，原操作已保留。",
+    "en-US": "Quiz did not progress; original operation retained"
+  },
+  "message.Quiz event changed": {
+    "zh-CN": "答题活动已变化",
+    "zh-TW": "答題活動已變化",
+    "en-US": "Quiz event changed"
+  },
+  "message.Quiz step budget exceeded": {
+    "zh-CN": "已达到本题的步骤上限",
+    "zh-TW": "已達到本題的步驟上限",
+    "en-US": "Quiz step budget exceeded"
+  },
+  "message.Ranking reward cache differs": {
+    "zh-CN": "排行榜奖励状态与预期不一致",
+    "zh-TW": "排行榜獎勵狀態與預期不一致",
+    "en-US": "Ranking reward cache differs"
+  },
+  "message.Recipe item missing": {
+    "zh-CN": "配方所需物品资料缺失",
+    "zh-TW": "配方所需物品資料缺失",
+    "en-US": "Recipe item missing"
+  },
+  "message.Recommendation list changed": {
+    "zh-CN": "推荐小屋列表已变化",
+    "zh-TW": "推薦小屋列表已變化",
+    "en-US": "Recommendation list changed"
+  },
+  "message.Redispatch slot set differs": {
+    "zh-CN": "续派角色位置与预期不一致",
+    "zh-TW": "續派角色位置與預期不一致",
+    "en-US": "Redispatch slot set differs"
+  },
+  "message.Redispatch timers/cache differ": {
+    "zh-CN": "续派计时与游戏数据不一致",
+    "zh-TW": "續派計時與游戲數據不一致",
+    "en-US": "Redispatch timers/cache differ"
+  },
+  "message.Refinement cache differs": {
+    "zh-CN": "精炼结果与游戏库存不一致",
+    "zh-TW": "精煉結果與游戲庫存不一致",
+    "en-US": "Refinement cache differs"
+  },
+  "message.Refinement instance differs": {
+    "zh-CN": "精炼结果不属于所选装备",
+    "zh-TW": "精煉結果不屬于所選裝備",
+    "en-US": "Refinement instance differs"
+  },
+  "message.Reposition changed map": {
+    "zh-CN": "调整位置期间地图已变化",
+    "zh-TW": "調整位置期間地圖已變化",
+    "en-US": "Reposition changed map"
+  },
+  "message.Requested hunt exceeds native free maximum": {
+    "zh-CN": "请求的狩猎次数超出游戏显示的免费上限",
+    "zh-TW": "請求的狩獵次數超出游戲顯示的免費上限",
+    "en-US": "Requested hunt exceeds native free maximum"
+  },
+  "message.Reward presentation did not close; business receipt preserved": {
+    "zh-CN": "奖励界面未能关闭，已保留结算记录。",
+    "zh-TW": "獎勵界面未能關閉，已保留結算記錄。",
+    "en-US": "Reward presentation did not close; business receipt preserved"
+  },
+  "message.Room like cache differs": {
+    "zh-CN": "小屋点赞结果与游戏状态不一致",
+    "zh-TW": "小屋點贊結果與游戲狀態不一致",
+    "en-US": "Room like cache differs"
+  },
+  "message.Roulette count differs": {
+    "zh-CN": "转盘抽取次数与预期不一致",
+    "zh-TW": "轉盤抽取次數與預期不一致",
+    "en-US": "Roulette count differs"
+  },
+  "message.Roulette server cache differs": {
+    "zh-CN": "转盘服务器进度与游戏状态不一致",
+    "zh-TW": "轉盤服務器進度與游戲狀態不一致",
+    "en-US": "Roulette server cache differs"
+  },
+  "message.Roulette token debit differs": {
+    "zh-CN": "转盘代币消耗与预期不一致",
+    "zh-TW": "轉盤代幣消耗與預期不一致",
+    "en-US": "Roulette token debit differs"
+  },
+  "message.Route needs current region and at most twelve destinations": {
+    "zh-CN": "路线需要当前区域信息，且一次最多安排12个目标。",
+    "zh-TW": "路線需要當前區域信息，且一次最多安排12個目標。",
+    "en-US": "Route needs current region and at most twelve destinations"
+  },
+  "message.Saved Total War deck changed": {
+    "zh-CN": "已保存的公会战阵容已变化",
+    "zh-TW": "已儲存的公會戰陣容已變化",
+    "en-US": "Saved Total War deck changed"
+  },
+  "message.Saved Total War deck incomplete": {
+    "zh-CN": "已保存的公会战阵容不完整",
+    "zh-TW": "已儲存的公會戰陣容不完整",
+    "en-US": "Saved Total War deck incomplete"
+  },
+  "message.Scene changed during preflight; no command sent": {
+    "zh-CN": "提交前场景已变化，未发送操作。",
+    "zh-TW": "提交前場景已變化，未發送操作。",
+    "en-US": "Scene changed during preflight; no command sent"
+  },
+  "message.Scoped observation did not become ready": {
+    "zh-CN": "所需范围的游戏状态未能准备就绪",
+    "zh-TW": "所需范圍的游戲狀態未能準備就緒",
+    "en-US": "Scoped observation did not become ready"
+  },
+  "message.Selected pass is not active": {
+    "zh-CN": "所选通行证当前未开放",
+    "zh-TW": "所選通行證當前未開放",
+    "en-US": "Selected pass is not active"
+  },
+  "message.Selected talent is not dispatch": {
+    "zh-CN": "所选天赋不是派遣天赋",
+    "zh-TW": "所選天賦不是派遣天賦",
+    "en-US": "Selected talent is not dispatch"
+  },
+  "message.Server monster target missing": {
+    "zh-CN": "服务器未返回任务目标怪物",
+    "zh-TW": "服務器未返回任務目標怪物",
+    "en-US": "Server monster target missing"
+  },
+  "message.Shop availability truncated": {
+    "zh-CN": "商店可用状态列表不完整",
+    "zh-TW": "商店可用狀態列表不完整",
+    "en-US": "Shop availability truncated"
+  },
+  "message.Shop supply delta differs": {
+    "zh-CN": "商店供货数量变化与预期不一致",
+    "zh-TW": "商店供貨數量變化與預期不一致",
+    "en-US": "Shop supply delta differs"
+  },
+  "message.Single refinement not ready": {
+    "zh-CN": "单次精炼入口尚未就绪",
+    "zh-TW": "單次精煉入口尚未就緒",
+    "en-US": "Single refinement not ready"
+  },
+  "message.Snapshot timezone required": {
+    "zh-CN": "数据快照缺少时区",
+    "zh-TW": "數據快照缺少時區",
+    "en-US": "Snapshot timezone required"
+  },
+  "message.Square ranking observer failed": {
+    "zh-CN": "广场排行榜状态读取失败",
+    "zh-TW": "廣場排行榜狀態讀取失敗",
+    "en-US": "Square ranking observer failed"
+  },
+  "message.Steal-only requires server cooldown": {
+    "zh-CN": "补偷窃需要先读取服务器冷却状态",
+    "zh-TW": "補偷竊需要先讀取服務器冷卻狀態",
+    "en-US": "Steal-only requires server cooldown"
+  },
+  "message.Stone inventory incomplete": {
+    "zh-CN": "圣石库存数据不完整",
+    "zh-TW": "圣石庫存數據不完整",
+    "en-US": "Stone inventory incomplete"
+  },
+  "message.Stored AP was changed": {
+    "zh-CN": "储存的行动次数发生变化",
+    "zh-TW": "儲存的行動次數發生變化",
+    "en-US": "Stored AP was changed"
+  },
+  "message.Sweep confirmation plan differs": {
+    "zh-CN": "扫荡确认内容与计划不一致",
+    "zh-TW": "掃蕩確認內容與計劃不一致",
+    "en-US": "Sweep confirmation plan differs"
+  },
+  "message.Sweep exceeds free AP": {
+    "zh-CN": "扫荡数量超出免费行动次数",
+    "zh-TW": "掃蕩數量超出免費行動次數",
+    "en-US": "Sweep exceeds free AP"
+  },
+  "message.Sweep free AP debit differs": {
+    "zh-CN": "扫荡消耗的免费行动次数与预期不一致",
+    "zh-TW": "掃蕩消耗的免費行動次數與預期不一致",
+    "en-US": "Sweep free AP debit differs"
+  },
+  "message.Sweep must use only free AP": {
+    "zh-CN": "本次扫荡只能使用免费行动次数",
+    "zh-TW": "本次掃蕩只能使用免費行動次數",
+    "en-US": "Sweep must use only free AP"
+  },
+  "message.Sweep rewards missing": {
+    "zh-CN": "尚未读到扫荡奖励",
+    "zh-TW": "尚未讀到掃蕩獎勵",
+    "en-US": "Sweep rewards missing"
+  },
+  "message.Sweep target changed": {
+    "zh-CN": "扫荡目标已变化",
+    "zh-TW": "掃蕩目標已變化",
+    "en-US": "Sweep target changed"
+  },
+  "message.Talent field changed before native input; no dispatch": {
+    "zh-CN": "使用天赋前地图已变化，未发送操作。",
+    "zh-TW": "使用天賦前地圖已變化，未發送操作。",
+    "en-US": "Talent field changed before native input; no dispatch"
+  },
+  "message.Talent map changed; no dispatch": {
+    "zh-CN": "使用天赋前地图已变化，未发送操作。",
+    "zh-TW": "使用天賦前地圖已變化，未發送操作。",
+    "en-US": "Talent map changed; no dispatch"
+  },
+  "message.Talent menu changed; no dispatch": {
+    "zh-CN": "天赋菜单已变化，未发送操作。",
+    "zh-TW": "天賦菜單已變化，未發送操作。",
+    "en-US": "Talent menu changed; no dispatch"
+  },
+  "message.Talent native gate did not clear within the bounded wait; no successful dispatch": {
+    "zh-CN": "等待后天赋仍不可用，尚未成功使用。",
+    "zh-TW": "等待后天賦仍不可用，尚未成功使用。",
+    "en-US": "Talent native gate did not clear within the bounded wait; no successful dispatch"
+  },
+  "message.Talent selection changed; no replay": {
+    "zh-CN": "天赋选择已变化，未重复使用。",
+    "zh-TW": "天賦選擇已變化，未重復使用。",
+    "en-US": "Talent selection changed; no replay"
+  },
+  "message.Target room not reached": {
+    "zh-CN": "尚未进入目标小屋",
+    "zh-TW": "尚未進入目標小屋",
+    "en-US": "Target room not reached"
+  },
+  "message.Total War battle does not match original operation": {
+    "zh-CN": "公会战战斗与原操作不一致",
+    "zh-TW": "公會戰戰斗與原操作不一致",
+    "en-US": "Total War battle does not match original operation"
+  },
+  "message.Total War cartridge not reached": {
+    "zh-CN": "尚未进入公会战卡带",
+    "zh-TW": "尚未進入公會戰卡帶",
+    "en-US": "Total War cartridge not reached"
+  },
+  "message.Total War lobby not ready": {
+    "zh-CN": "公会战大厅尚未就绪",
+    "zh-TW": "公會戰大廳尚未就緒",
+    "en-US": "Total War lobby not ready"
+  },
+  "message.Total War score missing": {
+    "zh-CN": "尚未读到公会战成绩",
+    "zh-TW": "尚未讀到公會戰成績",
+    "en-US": "Total War score missing"
+  },
+  "message.Trade account/process changed": {
+    "zh-CN": "交易期间账号或游戏进程已变化",
+    "zh-TW": "交易期間帳號或游戲進程已變化",
+    "en-US": "Trade account/process changed"
+  },
+  "message.Trade client mismatch": {
+    "zh-CN": "交易资料与当前游戏版本不匹配",
+    "zh-TW": "交易資料與當前游戲版本不匹配",
+    "en-US": "Trade client mismatch"
+  },
+  "message.Trade clock mismatch": {
+    "zh-CN": "交易资料中的服务器时间不匹配",
+    "zh-TW": "交易資料中的服務器時間不匹配",
+    "en-US": "Trade clock mismatch"
+  },
+  "message.Trade close stopped; no replay": {
+    "zh-CN": "结束交易时已停止，未重复操作。",
+    "zh-TW": "結束交易時已停止，未重復操作。",
+    "en-US": "Trade close stopped; no replay"
+  },
+  "message.Trade date mismatch": {
+    "zh-CN": "交易日期不一致",
+    "zh-TW": "交易日期不一致",
+    "en-US": "Trade date mismatch"
+  },
+  "message.Trade economic ledger failed": {
+    "zh-CN": "交易金币与收益核对未通过",
+    "zh-TW": "交易金幣與收益核對未通過",
+    "en-US": "Trade economic ledger failed"
+  },
+  "message.Trade feasibility failed": {
+    "zh-CN": "交易计划当前不可执行",
+    "zh-TW": "交易計劃當前不可執行",
+    "en-US": "Trade feasibility failed"
+  },
+  "message.Trade identity incomplete": {
+    "zh-CN": "交易账号信息不完整",
+    "zh-TW": "交易帳號信息不完整",
+    "en-US": "Trade identity incomplete"
+  },
+  "message.Trade integer bounds failed": {
+    "zh-CN": "交易数量超出允许范围",
+    "zh-TW": "交易數量超出允許范圍",
+    "en-US": "Trade integer bounds failed"
+  },
+  "message.Trade material audit failed": {
+    "zh-CN": "交易材料数量核对未通过",
+    "zh-TW": "交易材料數量核對未通過",
+    "en-US": "Trade material audit failed"
+  },
+  "message.Trade observation is stale": {
+    "zh-CN": "交易状态已过期，请重新读取。",
+    "zh-TW": "交易狀態已過期，請重新讀取。",
+    "en-US": "Trade observation is stale"
+  },
+  "message.Trade observer unsupported": {
+    "zh-CN": "当前游戏的交易读取组件尚未适配",
+    "zh-TW": "當前游戲的交易讀取組件尚未適配",
+    "en-US": "Trade observer unsupported"
+  },
+  "message.Trade preview stopped; no replay": {
+    "zh-CN": "交易预览已停止，未重复操作。",
+    "zh-TW": "交易預覽已停止，未重復操作。",
+    "en-US": "Trade preview stopped; no replay"
+  },
+  "message.Trade tables differ from client/database": {
+    "zh-CN": "交易规则与当前游戏数据不一致",
+    "zh-TW": "交易規則與當前游戲數據不一致",
+    "en-US": "Trade tables differ from client/database"
+  },
+  "message.Travel rules belong to another map": {
+    "zh-CN": "移动规则属于另一张地图",
+    "zh-TW": "移動規則屬于另一張地圖",
+    "en-US": "Travel rules belong to another map"
+  },
+  "message.UI did not become ready; no command sent": {
+    "zh-CN": "界面尚未就绪，未发送操作。",
+    "zh-TW": "界面尚未就緒，未發送操作。",
+    "en-US": "UI did not become ready; no command sent"
+  },
+  "message.Unexpected bargain cancel popup; preserved": {
+    "zh-CN": "出现非本次操作的结束砍价弹窗，已保留现场。",
+    "zh-TW": "出現非本次操作的結束砍價彈窗，已保留現場。",
+    "en-US": "Unexpected bargain cancel popup; preserved"
+  },
+  "message.Unexpected cooking chain": {
+    "zh-CN": "料理连续制作流程与预期不一致",
+    "zh-TW": "料理連續制作流程與預期不一致",
+    "en-US": "Unexpected cooking chain"
+  },
+  "message.Unexpected cooking output": {
+    "zh-CN": "料理产出类型与预期不一致",
+    "zh-TW": "料理產出類型與預期不一致",
+    "en-US": "Unexpected cooking output"
+  },
+  "message.Unexpected dispatch claim": {
+    "zh-CN": "收到非本次操作的派遣领取结果",
+    "zh-TW": "收到非本次操作的派遣領取結果",
+    "en-US": "Unexpected dispatch claim"
+  },
+  "message.Unexpected dispatch reward branch": {
+    "zh-CN": "派遣奖励返回类型与预期不一致",
+    "zh-TW": "派遣獎勵返回類型與預期不一致",
+    "en-US": "Unexpected dispatch reward branch"
+  },
+  "message.Unexpected dispatch without catalyst": {
+    "zh-CN": "派遣结果未包含预期的天赋药消耗",
+    "zh-TW": "派遣結果未包含預期的天賦藥消耗",
+    "en-US": "Unexpected dispatch without catalyst"
+  },
+  "message.Unexpected guest rewards": {
+    "zh-CN": "餐厅顾客奖励与预期不一致",
+    "zh-TW": "餐廳顧客獎勵與預期不一致",
+    "en-US": "Unexpected guest rewards"
+  },
+  "message.Unexpected Monster Hunt level range": {
+    "zh-CN": "魔兽等级范围与预期不一致",
+    "zh-TW": "魔獸等級范圍與預期不一致",
+    "en-US": "Unexpected Monster Hunt level range"
+  },
+  "message.Unexpected native quote": {
+    "zh-CN": "游戏报价与预期不一致",
+    "zh-TW": "游戲報價與預期不一致",
+    "en-US": "Unexpected native quote"
+  },
+  "message.Unexpected potion quote": {
+    "zh-CN": "天赋药报价与预期不一致",
+    "zh-TW": "天賦藥報價與預期不一致",
+    "en-US": "Unexpected potion quote"
+  },
+  "message.Unexplained global dispatch cache change": {
+    "zh-CN": "一键派遣出现无法核对的状态变化",
+    "zh-TW": "一鍵派遣出現無法核對的狀態變化",
+    "en-US": "Unexplained global dispatch cache change"
+  },
+  "message.Unknown bargain state": {
+    "zh-CN": "未识别到当前砍价状态",
+    "zh-TW": "未識別到當前砍價狀態",
+    "en-US": "Unknown bargain state"
+  },
+  "message.Unknown event AP cost": {
+    "zh-CN": "未读到活动行动次数消耗",
+    "zh-TW": "未讀到活動行動次數消耗",
+    "en-US": "Unknown event AP cost"
+  },
+  "message.Unknown food offer": {
+    "zh-CN": "未识别到食材报价",
+    "zh-TW": "未識別到食材報價",
+    "en-US": "Unknown food offer"
+  },
+  "message.Unknown native shop offer/currency": {
+    "zh-CN": "未识别到商店报价或交易货币",
+    "zh-TW": "未識別到商店報價或交易貨幣",
+    "en-US": "Unknown native shop offer/currency"
+  },
+  "message.Unknown or duplicate recipe": {
+    "zh-CN": "料理配方未识别或存在重复",
+    "zh-TW": "料理配方未識別或存在重復",
+    "en-US": "Unknown or duplicate recipe"
+  },
+  "message.Unknown popup on cafeteria field": {
+    "zh-CN": "餐厅地图出现未识别弹窗",
+    "zh-TW": "餐廳地圖出現未識別彈窗",
+    "en-US": "Unknown popup on cafeteria field"
+  },
+  "message.Unknown reserved item": {
+    "zh-CN": "未识别到需要保留的物品",
+    "zh-TW": "未識別到需要保留的物品",
+    "en-US": "Unknown reserved item"
+  },
+  "message.Unknown Total War deck format": {
+    "zh-CN": "公会战阵容格式尚未适配",
+    "zh-TW": "公會戰陣容格式尚未適配",
+    "en-US": "Unknown Total War deck format"
+  },
+  "message.Unknown trade setting": {
+    "zh-CN": "未识别到交易设置",
+    "zh-TW": "未識別到交易設置",
+    "en-US": "Unknown trade setting"
+  },
+  "message.Unrelated dispatch changed": {
+    "zh-CN": "非本次操作的派遣发生变化",
+    "zh-TW": "非本次操作的派遣發生變化",
+    "en-US": "Unrelated dispatch changed"
+  },
+  "message.Unrelated popup appeared during trade close; preserved": {
+    "zh-CN": "结束交易时出现其他弹窗，已保留现场。",
+    "zh-TW": "結束交易時出現其他彈窗，已保留現場。",
+    "en-US": "Unrelated popup appeared during trade close; preserved"
+  },
+  "message.Unresolved craft receipt": {
+    "zh-CN": "装备制作结果尚未确认",
+    "zh-TW": "裝備制作結果尚未確認",
+    "en-US": "Unresolved craft receipt"
+  },
+  "message.Unresolved free draw receipt": {
+    "zh-CN": "免费抽取结果尚未确认",
+    "zh-TW": "免費抽取結果尚未確認",
+    "en-US": "Unresolved free draw receipt"
+  },
+  "message.Unresolved recycle receipt": {
+    "zh-CN": "装备分解结果尚未确认",
+    "zh-TW": "裝備分解結果尚未確認",
+    "en-US": "Unresolved recycle receipt"
+  },
+  "message.Unsupported active bargain": {
+    "zh-CN": "当前砍价状态尚未适配",
+    "zh-TW": "當前砍價狀態尚未適配",
+    "en-US": "Unsupported active bargain"
+  },
+  "message.Unsupported trade schema": {
+    "zh-CN": "交易数据格式尚未适配",
+    "zh-TW": "交易數據格式尚未適配",
+    "en-US": "Unsupported trade schema"
+  },
+  "message.Waiting for fresh account identity": {
+    "zh-CN": "等待当前账号的最新身份信息",
+    "zh-TW": "等待當前帳號的最新身份信息",
+    "en-US": "Waiting for fresh account identity"
+  },
+  "message.Waiting for native guild response": {
+    "zh-CN": "等待游戏公会操作结果",
+    "zh-TW": "等待游戲公會操作結果",
+    "en-US": "Waiting for native guild response"
+  },
+  "message.Waiting for native NPC progress response": {
+    "zh-CN": "等待服务器返回周NPC任务进度",
+    "zh-TW": "等待服務器返回周NPC任務進度",
+    "en-US": "Waiting for native NPC progress response"
+  },
+  "message.Waypoint map not available: page did not change": {
+    "zh-CN": "传送列表未翻页，尚未找到目标地图。",
+    "zh-TW": "傳送列表未翻頁，尚未找到目標地圖。",
+    "en-US": "Waypoint map not available: page did not change"
+  },
+  "message.Weekly craft progress did not advance": {
+    "zh-CN": "每周制作装备任务进度尚未更新",
+    "zh-TW": "每周制作裝備任務進度尚未更新",
+    "en-US": "Weekly craft progress did not advance"
+  },
+  "message.Weekly Total War progress not confirmed": {
+    "zh-CN": "每周公会战任务进度尚未确认",
+    "zh-TW": "每周公會戰任務進度尚未確認",
+    "en-US": "Weekly Total War progress not confirmed"
+  },
+  "message.Workflow time budget reached; no automatic restart": {
+    "zh-CN": "本环节达到运行时限，已保留进度，未自动重开。",
+    "zh-TW": "本環節達到運行時限，已保留進度，未自動重開。",
+    "en-US": "Workflow time budget reached; no automatic restart"
+  },
+  "prefix..NET queue: ": {
+    "zh-CN": "日常队列：",
+    "zh-TW": "日常隊列：",
+    "en-US": "Daily queue: "
+  },
+  "prefix.Progress read: ": {
+    "zh-CN": "读取运行进度：",
+    "zh-TW": "讀取運行進度：",
+    "en-US": "Progress read: "
+  },
+  "prefix.Command outcome is uncertain; no replay: ": {
+    "zh-CN": "操作结果尚未确认，未重复提交：",
+    "zh-TW": "操作結果尚未確認，未重復提交：",
+    "en-US": "Command outcome is uncertain; no replay: "
+  },
+  "prefix.UI observation interrupted after dispatch; no replay: ": {
+    "zh-CN": "提交后游戏状态读取中断，未重复操作：",
+    "zh-TW": "提交后游戲狀態讀取中斷，未重復操作：",
+    "en-US": "UI observation interrupted after dispatch; no replay: "
+  },
+  "prefix.Talent result requires reconciliation; original command preserved: ": {
+    "zh-CN": "天赋使用结果需先核对，原操作已保留：",
+    "zh-TW": "天賦使用結果需先核對，原操作已保留：",
+    "en-US": "Talent result requires reconciliation; original command preserved: "
+  },
+  "prefix.Native request rejected: ": {
+    "zh-CN": "游戏拒绝了操作：",
+    "zh-TW": "游戲拒絕了操作：",
+    "en-US": "Native request rejected: "
+  },
+  "prefix.Native rejection: ": {
+    "zh-CN": "游戏拒绝了操作：",
+    "zh-TW": "游戲拒絕了操作：",
+    "en-US": "Native rejection: "
+  },
+  "prefix.Native chain incomplete: ": {
+    "zh-CN": "游戏连续操作尚未完整结束：",
+    "zh-TW": "游戲連續操作尚未完整結束：",
+    "en-US": "Native chain incomplete: "
+  },
+  "prefix.Native response count differs: ": {
+    "zh-CN": "服务器返回数量与预期不一致：",
+    "zh-TW": "服務器返回數量與預期不一致：",
+    "en-US": "Native response count differs: "
+  },
+  "prefix.Monster Hunt response/cache differs: ": {
+    "zh-CN": "魔兽结算与游戏状态不一致：",
+    "zh-TW": "魔獸結算與游戲狀態不一致：",
+    "en-US": "Monster Hunt response/cache differs: "
+  },
+  "prefix.Hunt debit differs: ": {
+    "zh-CN": "狩猎资源消耗与预期不一致：",
+    "zh-TW": "狩獵資源消耗與預期不一致：",
+    "en-US": "Hunt debit differs: "
+  },
+  "prefix.Sweep popup changed: ": {
+    "zh-CN": "扫荡确认弹窗已变化：",
+    "zh-TW": "掃蕩確認彈窗已變化：",
+    "en-US": "Sweep popup changed: "
+  },
+  "prefix.Messenger repair aborted: ": {
+    "zh-CN": "派遣恢复已中止：",
+    "zh-TW": "派遣恢復已中止：",
+    "en-US": "Messenger repair aborted: "
+  },
+  "prefix.Equipment protected/unavailable: ": {
+    "zh-CN": "所选装备受到保护或当前不可用：",
+    "zh-TW": "所選裝備受到保護或當前不可用：",
+    "en-US": "Equipment protected/unavailable: "
+  },
+  "prefix.No verified transition for: ": {
+    "zh-CN": "尚未适配这条界面切换路径：",
+    "zh-TW": "尚未適配這條界面切換路徑：",
+    "en-US": "No verified transition for: "
+  },
+  "prefix.NPC progress query could not be verified; no NPC mutation submitted: ": {
+    "zh-CN": "周NPC进度无法确认，未执行任务操作：",
+    "zh-TW": "周NPC進度無法確認，未執行任務操作：",
+    "en-US": "NPC progress query could not be verified; no NPC mutation submitted: "
+  },
+  "prefix.Unknown weekly mission condition: ": {
+    "zh-CN": "暂未适配这类周常任务条件：",
+    "zh-TW": "暫未適配這類周常任務條件：",
+    "en-US": "Unknown weekly mission condition: "
+  },
+  "prefix.Weekly mission definition missing: ": {
+    "zh-CN": "缺少周常任务规则：",
+    "zh-TW": "缺少周常任務規則：",
+    "en-US": "Weekly mission definition missing: "
+  },
+  "prefix.Weekly mission identity differs: ": {
+    "zh-CN": "周常任务标识不匹配：",
+    "zh-TW": "周常任務標識不匹配：",
+    "en-US": "Weekly mission identity differs: "
+  },
+  "prefix.Unresolved guild operation: ": {
+    "zh-CN": "上次公会操作的结果尚未确认：",
+    "zh-TW": "上次公會操作的結果尚未確認：",
+    "en-US": "Unresolved guild operation: "
+  },
+  "prefix.Missing observation: ": {
+    "zh-CN": "未读到所需游戏状态：",
+    "zh-TW": "未讀到所需游戲狀態：",
+    "en-US": "Missing observation: "
+  },
+  "prefix.Mirror surface unavailable: ": {
+    "zh-CN": "镜中页面尚未就绪：",
+    "zh-TW": "鏡中頁面尚未就緒：",
+    "en-US": "Mirror surface unavailable: "
+  },
+  "prefix.Missing trade collection ": {
+    "zh-CN": "缺少交易数据列表：",
+    "zh-TW": "缺少交易數據列表：",
+    "en-US": "Missing trade collection "
+  },
+  "prefix.Truncated trade collection ": {
+    "zh-CN": "交易数据列表不完整：",
+    "zh-TW": "交易數據列表不完整：",
+    "en-US": "Truncated trade collection "
+  },
+  "prefix.Incomplete daily export: ": {
+    "zh-CN": "日常规则导出不完整：",
+    "zh-TW": "日常規則導出不完整：",
+    "en-US": "Incomplete daily export: "
+  },
+  "prefix.Duplicate daily row key: ": {
+    "zh-CN": "日常规则存在重复项：",
+    "zh-TW": "日常規則存在重復項：",
+    "en-US": "Duplicate daily row key: "
+  },
+  "prefix.Need one enabled observed field ": {
+    "zh-CN": "需要一个可用的操作入口：",
+    "zh-TW": "需要一個可用的操作入口：",
+    "en-US": "Need one enabled observed field "
+  },
+  "prefix.Business scope must be an object for role: ": {
+    "zh-CN": "操作范围格式无效：",
+    "zh-TW": "操作范圍格式無效：",
+    "en-US": "Business scope must be an object for role: "
+  },
+  "prefix.Empty trace line ": {
+    "zh-CN": "执行轨迹中有空记录：",
+    "zh-TW": "執行軌跡中有空記錄：",
+    "en-US": "Empty trace line "
+  },
+  "prefix.Incomplete decision line ": {
+    "zh-CN": "决策记录不完整：",
+    "zh-TW": "決策記錄不完整：",
+    "en-US": "Incomplete decision line "
+  },
+  "prefix.Invalid integer: ": {
+    "zh-CN": "数值参数无效：",
+    "zh-TW": "數值參數無效：",
+    "en-US": "Invalid integer: "
+  },
+  "prefix.rejected: ": {
+    "zh-CN": "操作未被接受：",
+    "zh-TW": "操作未被接受：",
+    "en-US": "rejected: "
+  },
+  "prefix.Foreground popup needs handling: ": {
+    "zh-CN": "请先处理游戏弹窗：",
+    "zh-TW": "請先處理游戲彈窗：",
+    "en-US": "Foreground popup needs handling: "
+  },
+  "prefix.Unrecognized popup while preparing menu: ": {
+    "zh-CN": "准备主菜单时遇到未识别弹窗：",
+    "zh-TW": "準備主菜單時遇到未識別彈窗：",
+    "en-US": "Unrecognized popup while preparing menu: "
+  },
+  "prefix.Reading unavailable: ": {
+    "zh-CN": "暂时无法读取游戏数据：",
+    "zh-TW": "暫時無法讀取游戲數據：",
+    "en-US": "Reading unavailable: "
+  },
+  "prefix.Evidence observer is not ready: ": {
+    "zh-CN": "游戏状态读取组件尚未就绪：",
+    "zh-TW": "游戲狀態讀取組件尚未就緒：",
+    "en-US": "Evidence observer is not ready: "
+  },
+  "prefix.Missing native state: ": {
+    "zh-CN": "未读到游戏状态：",
+    "zh-TW": "未讀到游戲狀態：",
+    "en-US": "Missing native state: "
+  },
+  "prefix.Missing cache: ": {
+    "zh-CN": "缺少游戏数据：",
+    "zh-TW": "缺少游戲數據：",
+    "en-US": "Missing cache: "
+  },
+  "prefix.Incomplete native cache: ": {
+    "zh-CN": "游戏数据不完整：",
+    "zh-TW": "游戲數據不完整：",
+    "en-US": "Incomplete native cache: "
+  },
+  "prefix.Required native response observer unavailable: ": {
+    "zh-CN": "操作结果读取组件未就绪：",
+    "zh-TW": "操作結果讀取組件未就緒：",
+    "en-US": "Required native response observer unavailable: "
+  },
+  "prefix.Connection preparation timed out: ": {
+    "zh-CN": "连接准备超时：",
+    "zh-TW": "連接準備超時：",
+    "en-US": "Connection preparation timed out: "
+  },
+  "prefix.Connection preparation failed: ": {
+    "zh-CN": "连接准备失败：",
+    "zh-TW": "連接準備失敗：",
+    "en-US": "Connection preparation failed: "
+  },
+  "prefix.Shop supply is missing or expired: ": {
+    "zh-CN": "商店供货数据缺失或已过期：",
+    "zh-TW": "商店供貨數據缺失或已過期：",
+    "en-US": "Shop supply is missing or expired: "
+  },
+  "prefix.Merchant has no reachable interaction approach: ": {
+    "zh-CN": "暂未找到可接近商人的路线：",
+    "zh-TW": "暫未找到可接近商人的路線：",
+    "en-US": "Merchant has no reachable interaction approach: "
+  },
+  "prefix.travel_unreachable:": {
+    "zh-CN": "暂时无法到达目标：",
+    "zh-TW": "暫時無法到達目標：",
+    "en-US": "travel_unreachable:"
+  },
+  "prefix.Free draw table export incomplete: ": {
+    "zh-CN": "免费抽取资料导出不完整：",
+    "zh-TW": "免費抽取資料導出不完整：",
+    "en-US": "Free draw table export incomplete: "
+  },
+  "prefix.Incomplete free draw table export: ": {
+    "zh-CN": "免费抽取资料导出不完整：",
+    "zh-TW": "免費抽取資料導出不完整：",
+    "en-US": "Incomplete free draw table export: "
+  },
+  "prefix.Unsupported response shape: ": {
+    "zh-CN": "当前游戏返回格式尚未适配：",
+    "zh-TW": "當前游戲返回格式尚未適配：",
+    "en-US": "Unsupported response shape: "
+  },
+  "prefix.Missing read member: ": {
+    "zh-CN": "当前游戏缺少所需的数据字段：",
+    "zh-TW": "當前游戲缺少所需的數據字段：",
+    "en-US": "Missing read member: "
+  },
+  "prefix.Missing declared response variant: ": {
+    "zh-CN": "缺少游戏返回类型：",
+    "zh-TW": "缺少游戲返回類型：",
+    "en-US": "Missing declared response variant: "
+  },
+  "prefix.Unknown weekly goal: ": {
+    "zh-CN": "未识别的周常目标：",
+    "zh-TW": "未識別的周常目標：",
+    "en-US": "Unknown weekly goal: "
+  },
+  "prefix.Unknown daily rules: ": {
+    "zh-CN": "未识别的日常规则：",
+    "zh-TW": "未識別的日常規則：",
+    "en-US": "Unknown daily rules: "
+  },
+  "prefix.Unknown daily utility: ": {
+    "zh-CN": "未识别的日常功能：",
+    "zh-TW": "未識別的日常功能：",
+    "en-US": "Unknown daily utility: "
+  },
+  "prefix.Missing module loader: ": {
+    "zh-CN": "工具连接组件缺失：",
+    "zh-TW": "工具連接組件缺失：",
+    "en-US": "Missing module loader: "
+  },
+  "prefix.Missing module load: ": {
+    "zh-CN": "工具连接组件缺少启动入口：",
+    "zh-TW": "工具連接組件缺少啟動入口：",
+    "en-US": "Missing module load: "
+  }
+}

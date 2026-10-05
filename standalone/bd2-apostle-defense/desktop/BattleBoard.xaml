@@ -1,0 +1,27 @@
+<UserControl x:Class="BD2ApostleDefense.Desktop.BattleBoard" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ <UserControl.Resources>
+  <Style x:Key="BoardTile" TargetType="Button">
+   <Setter Property="Padding" Value="0"/><Setter Property="MinHeight" Value="0"/><Setter Property="Cursor" Value="Hand"/><Setter Property="BorderThickness" Value="1"/><Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Grid><Border x:Name="Tile" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4"/><ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/><Border x:Name="FocusRing" BorderBrush="{StaticResource Ink}" BorderThickness="2" CornerRadius="4" Visibility="Collapsed" IsHitTestVisible="False"/></Grid><ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Tile" Property="BorderBrush" Value="{StaticResource Ink}"/></Trigger><Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="FocusRing" Property="Visibility" Value="Visible"/></Trigger><Trigger Property="IsPressed" Value="True"><Setter TargetName="Tile" Property="Opacity" Value="0.7"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
+  </Style>
+ </UserControl.Resources>
+ <Grid>
+  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <WrapPanel Margin="0,0,0,8"><TextBlock x:Name="CountText" Text="等待盘面" FontWeight="SemiBold" Margin="0,0,18,0"/><CheckBox x:Name="RangeToggle" Content="显示所选射程" IsChecked="True" Checked="OptionsChanged" Unchecked="OptionsChanged" VerticalAlignment="Center" Margin="0,0,16,0"/><CheckBox x:Name="GapToggle" Content="标记无路线覆盖" IsChecked="True" Checked="OptionsChanged" Unchecked="OptionsChanged" VerticalAlignment="Center"/></WrapPanel>
+  <Grid x:Name="Viewport" Grid.Row="1" Background="#FAFBFC" ClipToBounds="True" SizeChanged="ViewportChanged">
+   <Canvas x:Name="RouteLayer" IsHitTestVisible="False"/><Canvas x:Name="RangeLayer" IsHitTestVisible="False"/><Canvas x:Name="TileLayer"/><Canvas x:Name="LiveLayer" IsHitTestVisible="False"/>
+   <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="300"><TextBlock x:Name="EmptyTitle" Text="等待游戏盘面" FontSize="18" FontWeight="SemiBold" TextAlignment="Center"/><TextBlock x:Name="EmptyHint" Text="连接游戏并进入对局后，这里会显示每个使徒的位置、属性与阶数。" TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource MutedInk}" Margin="0,10,0,0"/></StackPanel>
+   <Border x:Name="StaleBanner" Visibility="Collapsed" VerticalAlignment="Top" HorizontalAlignment="Center" Background="{StaticResource WarningSoft}" Padding="12,5"><TextBlock Text="盘面同步暂停 · 显示最后一次状态" Foreground="{StaticResource Warning}" FontSize="12"/></Border>
+  </Grid>
+  <StackPanel Grid.Row="2" Margin="0,9,0,10">
+   <WrapPanel><TextBlock Text="格内：属性 · 阶数" Style="{StaticResource MetaText}" Margin="0,0,16,0"/><TextBlock Text="● 敌人" Foreground="#963B47" FontSize="12" Margin="0,0,16,0"/><TextBlock Text="! 无路线覆盖" Foreground="{StaticResource Warning}" FontSize="12" Margin="0,0,16,0"/><TextBlock Text="点击查看 · 方向键选格" Style="{StaticResource MetaText}"/></WrapPanel>
+   <TextBlock x:Name="ActionText" Text="" MinHeight="17" FontSize="12" Foreground="{StaticResource Primary}" Margin="0,6,0,0" TextWrapping="Wrap" Visibility="Hidden"/>
+  </StackPanel>
+  <Border Grid.Row="3" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="0,12,0,0"><StackPanel>
+   <WrapPanel><TextBlock x:Name="SelectionTitle" Text="点选一个使徒" FontSize="16" FontWeight="SemiBold"/><TextBlock x:Name="SelectionIdentity" Style="{StaticResource MetaText}" VerticalAlignment="Center" Margin="12,0,0,0"/></WrapPanel>
+   <TextBlock x:Name="SelectionStats" Text="在盘面上查看射程，了解它能攻击哪段路线。" Margin="0,7,0,0" TextWrapping="Wrap"/>
+   <TextBlock x:Name="CoverageText" Text="射程与覆盖为位置示意；覆盖比例不是伤害占比。" Style="{StaticResource MetaText}" Margin="0,5,0,0" TextWrapping="Wrap"/>
+   <TextBlock x:Name="Levels" Text="元素升级：等待读取" Style="{StaticResource MetaText}" Margin="0,10,0,0" TextWrapping="Wrap"/>
+  </StackPanel></Border>
+ </Grid>
+</UserControl>

@@ -1,0 +1,20 @@
+<Window x:Class="BD2Sichuan.Desktop.SichuanWindow"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ Title="BD2 连连看 · 独立自动化" Width="1080" Height="800" MinWidth="720" MinHeight="640"
+ WindowStartupLocation="CenterScreen" Background="{StaticResource BackgroundBrush}" Foreground="{StaticResource TextBrush}" FontFamily="Microsoft YaHei UI" FontSize="13">
+ <Grid Margin="24"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <StackPanel Margin="0,0,0,12"><DockPanel Margin="0,0,0,8"><WrapPanel DockPanel.Dock="Right"><TextBlock Text="语言 / Language" VerticalAlignment="Center" Margin="0,0,12,0"/><ComboBox x:Name="LanguageBox" Width="150" Padding="8,4" SelectionChanged="LanguageChanged" AutomationProperties.Name="语言 / Language"><ComboBoxItem Content="简体中文" Tag="zh-CN"/><ComboBoxItem Content="English" Tag="en-US"/></ComboBox></WrapPanel><TextBlock Text="连连看" FontSize="22" FontWeight="SemiBold"/></DockPanel>
+   <StackPanel><TextBlock x:Name="ConnectionText" Text="尚未连接 · 独立连连看组件" Margin="0,5,12,0" TextWrapping="Wrap" Foreground="#526071"/><TextBlock x:Name="StatusText" Text="连接游戏后自动显示盘面，再选择提示或自动本局。" Margin="0,6,12,0" TextWrapping="Wrap"/></StackPanel>
+   <WrapPanel Margin="0,12,0,0"><Button x:Name="ConnectButton" Content="连接游戏" Click="Connect_Click" Margin="0,0,8,0"/><CheckBox Content="窗口置顶" Margin="0,8,16,0" Checked="Topmost_Changed" Unchecked="Topmost_Changed"/><Button x:Name="ToggleButton" Content="开始提示" Style="{StaticResource PrimaryButton}" Click="Toggle_Click"/></WrapPanel>
+  </StackPanel>
+  <Border Grid.Row="1" Background="White" BorderBrush="#DDE1E8" BorderThickness="1" CornerRadius="8" Padding="16,12" Margin="0,0,0,14"><StackPanel><TextBlock x:Name="HintText" Text="下一对会在盘面上以 ①、② 标记，并显示连线路径。" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock x:Name="DetailText" Text="在游戏中手动消除；提示会跟随实际盘面更新。" Margin="0,6,0,0" Foreground="#526071" TextWrapping="Wrap"/><WrapPanel Margin="0,12,0,0">
+    <Button x:Name="StepButton" Content="执行下一对" Click="Step_Click" Margin="0,0,8,6" Padding="12,6"/>
+    <Button x:Name="AutoButton" Content="自动本局" Click="Auto_Click" Margin="0,0,8,6" Padding="12,6"/>
+    <Button x:Name="StopButton" Content="立即停止" Click="Stop_Click" IsEnabled="False" Margin="0,0,0,6" Padding="12,6"/>
+   </WrapPanel><WrapPanel Margin="0,4,0,4"><TextBlock Text="配对间隔" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox x:Name="IntervalBox" Text="1000" Width="82" Padding="7,5" VerticalContentAlignment="Center" KeyDown="Interval_KeyDown" AutomationProperties.Name="配对间隔，毫秒"/><TextBlock Text="ms" VerticalAlignment="Center" Margin="6,0,10,0"/><Button Content="应用间隔" Click="Interval_Click" Padding="10,5"/><TextBlock x:Name="IntervalText" Text="50–60000 ms · 默认 1000 ms" Foreground="#526071" VerticalAlignment="Center" TextWrapping="Wrap"/></WrapPanel><TextBlock x:Name="AutomationText" Text="自动执行默认关闭" TextWrapping="Wrap" Foreground="#526071" Margin="0,4,0,0"/></StackPanel></Border>
+  <Border Grid.Row="2" Background="White" BorderBrush="#DDE1E8" BorderThickness="1" CornerRadius="8" Padding="12">
+   <Grid><Viewbox Stretch="Uniform" StretchDirection="Both"><Canvas x:Name="BoardCanvas" Width="600" Height="400"/></Viewbox><TextBlock x:Name="EmptyText" Text="等待连连看盘面&#10;进入小游戏后自动识别，无需先消除一对。" TextAlignment="Center" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#526071" FontSize="16"/></Grid>
+  </Border>
+  <StackPanel Grid.Row="3" Margin="0,14,0,0"><TextBlock x:Name="RouteText" TextWrapping="Wrap"/><TextBlock x:Name="MetaText" Foreground="#526071" Margin="0,6,0,0" TextWrapping="Wrap" Text="仅处理当前一局 · 关闭窗口会停止自动操作。"/></StackPanel>
+ </Grid>
+</Window>

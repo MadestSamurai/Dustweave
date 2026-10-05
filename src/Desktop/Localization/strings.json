@@ -1,0 +1,2467 @@
+{
+  "app.title": {
+    "zh-CN": "Dustweave",
+    "zh-TW": "Dustweave",
+    "en-US": "Dustweave"
+  },
+  "app.preview": {
+    "zh-CN": "设计预览 · 演示数据",
+    "zh-TW": "設計預覽 · 示範資料",
+    "en-US": "Design preview · Demo data"
+  },
+  "app.version": {
+    "zh-CN": "{0} · 预览版",
+    "zh-TW": "{0} · 預覽版",
+    "en-US": "{0} · Preview"
+  },
+  "nav.daily": {
+    "zh-CN": "今日任务",
+    "zh-TW": "今日任務",
+    "en-US": "Today"
+  },
+  "nav.settings": {
+    "zh-CN": "日常设置",
+    "zh-TW": "日常設定",
+    "en-US": "Daily settings"
+  },
+  "nav.tools": {
+    "zh-CN": "工具",
+    "zh-TW": "工具",
+    "en-US": "Tools"
+  },
+  "nav.accounts": {
+    "zh-CN": "账号管理",
+    "zh-TW": "帳號管理",
+    "en-US": "Accounts"
+  },
+  "nav.diagnostics": {
+    "zh-CN": "诊断",
+    "zh-TW": "診斷",
+    "en-US": "Diagnostics"
+  },
+  "appearance.label": {
+    "zh-CN": "外观",
+    "zh-TW": "外觀",
+    "en-US": "Appearance"
+  },
+  "appearance.system": {
+    "zh-CN": "跟随系统",
+    "zh-TW": "跟隨系統",
+    "en-US": "System"
+  },
+  "appearance.light": {
+    "zh-CN": "浅色",
+    "zh-TW": "淺色",
+    "en-US": "Light"
+  },
+  "appearance.dark": {
+    "zh-CN": "深色",
+    "zh-TW": "深色",
+    "en-US": "Dark"
+  },
+  "appearance.tooltip": {
+    "zh-CN": "切换外观不会影响正在运行的任务",
+    "zh-TW": "切換外觀不會影響正在執行的任務",
+    "en-US": "Changing appearance keeps your tasks running."
+  },
+  "language.label": {
+    "zh-CN": "语言",
+    "zh-TW": "語言",
+    "en-US": "Language"
+  },
+  "language.error": {
+    "zh-CN": "无法保存语言设置：{0}",
+    "zh-TW": "無法儲存語言設定：{0}",
+    "en-US": "Could not save language: {0}"
+  },
+  "account.reading": {
+    "zh-CN": "读取当前账号…",
+    "zh-TW": "讀取目前帳號…",
+    "en-US": "Reading account…"
+  },
+  "account.not_signed_in": {
+    "zh-CN": "当前账号 · 尚未登录",
+    "zh-TW": "目前帳號 · 尚未登入",
+    "en-US": "Current account · Not signed in"
+  },
+  "account.current": {
+    "zh-CN": "当前账号 · {0}",
+    "zh-TW": "目前帳號 · {0}",
+    "en-US": "Current account · {0}"
+  },
+  "account.unsaved": {
+    "zh-CN": "未保存账号",
+    "zh-TW": "未儲存帳號",
+    "en-US": "Unsaved account"
+  },
+  "account.current_game": {
+    "zh-CN": "当前游戏账号",
+    "zh-TW": "目前遊戲帳號",
+    "en-US": "Current game account"
+  },
+  "account.slot": {
+    "zh-CN": "槽位 {0:00} · {1}",
+    "zh-TW": "欄位 {0:00} · {1}",
+    "en-US": "Slot {0:00} · {1}"
+  },
+  "account.not_verified": {
+    "zh-CN": "尚未核对",
+    "zh-TW": "尚未核對",
+    "en-US": "Not verified"
+  },
+  "account.wait_game": {
+    "zh-CN": "待游戏核对",
+    "zh-TW": "待遊戲核對",
+    "en-US": "Awaiting game check"
+  },
+  "account.invalid": {
+    "zh-CN": "会话不可用",
+    "zh-TW": "工作階段不可用",
+    "en-US": "Session unavailable"
+  },
+  "account.signed_in": {
+    "zh-CN": "当前登录",
+    "zh-TW": "目前登入",
+    "en-US": "Signed in"
+  },
+  "account.saved": {
+    "zh-CN": "已保存",
+    "zh-TW": "已儲存",
+    "en-US": "Saved"
+  },
+  "account.list": {
+    "zh-CN": "账号列表",
+    "zh-TW": "帳號列表",
+    "en-US": "Accounts"
+  },
+  "account.search": {
+    "zh-CN": "搜索账号／角色…",
+    "zh-TW": "搜尋帳號／角色…",
+    "en-US": "Search accounts or characters…"
+  },
+  "account.search_help": {
+    "zh-CN": "搜索账号别名、角色名称或成员尾号",
+    "zh-TW": "搜尋帳號別名、角色名稱或成員尾碼",
+    "en-US": "Search by alias, character name or member ID suffix."
+  },
+  "account.search_accessible": {
+    "zh-CN": "搜索账号",
+    "zh-TW": "搜尋帳號",
+    "en-US": "Search accounts"
+  },
+  "account.select_all": {
+    "zh-CN": "勾选或取消全部可用账号",
+    "zh-TW": "勾選或取消全部可用帳號",
+    "en-US": "Select or clear all available accounts."
+  },
+  "account.add_queue": {
+    "zh-CN": "加入多账号日常",
+    "zh-TW": "加入多帳號日常",
+    "en-US": "Include in the account queue"
+  },
+  "account.order": {
+    "zh-CN": "顺序",
+    "zh-TW": "順序",
+    "en-US": "Order"
+  },
+  "account.name": {
+    "zh-CN": "账号",
+    "zh-TW": "帳號",
+    "en-US": "Account"
+  },
+  "account.character": {
+    "zh-CN": "游戏角色",
+    "zh-TW": "遊戲角色",
+    "en-US": "Character"
+  },
+  "account.verified": {
+    "zh-CN": "最近核对",
+    "zh-TW": "最近核對",
+    "en-US": "Last verified"
+  },
+  "account.status": {
+    "zh-CN": "状态",
+    "zh-TW": "狀態",
+    "en-US": "Status"
+  },
+  "account.empty": {
+    "zh-CN": "还没有保存账号。登录游戏后正常退出，再点击下方“保存当前账号”。",
+    "zh-TW": "尚未儲存帳號。登入遊戲後正常退出，再按下方「儲存目前帳號」。",
+    "en-US": "No saved accounts. Sign in, exit the game normally, then choose Save current account."
+  },
+  "account.save": {
+    "zh-CN": "保存当前账号",
+    "zh-TW": "儲存目前帳號",
+    "en-US": "Save current account"
+  },
+  "account.login_new": {
+    "zh-CN": "登录新账号",
+    "zh-TW": "登入新帳號",
+    "en-US": "Add account"
+  },
+  "account.rename": {
+    "zh-CN": "重命名",
+    "zh-TW": "重新命名",
+    "en-US": "Rename"
+  },
+  "account.move_up": {
+    "zh-CN": "上移",
+    "zh-TW": "上移",
+    "en-US": "Move up"
+  },
+  "account.move_down": {
+    "zh-CN": "下移",
+    "zh-TW": "下移",
+    "en-US": "Move down"
+  },
+  "account.remove": {
+    "zh-CN": "移除",
+    "zh-TW": "移除",
+    "en-US": "Remove"
+  },
+  "account.recover": {
+    "zh-CN": "恢复切换前会话",
+    "zh-TW": "還原切換前工作階段",
+    "en-US": "Restore previous session"
+  },
+  "account.switch": {
+    "zh-CN": "切换并启动选中账号",
+    "zh-TW": "切換並啟動選取帳號",
+    "en-US": "Launch selected account"
+  },
+  "account.check": {
+    "zh-CN": "检查勾选账号",
+    "zh-TW": "檢查勾選帳號",
+    "en-US": "Check selected accounts"
+  },
+  "account.selected": {
+    "zh-CN": "已勾选 {0} 个账号 · 日常按列表顺序执行",
+    "zh-TW": "已勾選 {0} 個帳號 · 日常依列表順序執行",
+    "en-US": "{0} accounts selected · Runs in list order"
+  },
+  "account.select_hint": {
+    "zh-CN": "勾选账号后开始登录检查",
+    "zh-TW": "勾選帳號後開始登入檢查",
+    "en-US": "Select accounts to check their sign-in."
+  },
+  "account.local_data": {
+    "zh-CN": "设置、执行记录与账号别名保存在本机；打开工具不会自动启动任务。",
+    "zh-TW": "設定、執行紀錄與帳號別名儲存於本機；開啟工具不會自動啟動任務。",
+    "en-US": "Settings, activity and account aliases stay on this PC. Opening the app does not start tasks."
+  },
+  "connection.none": {
+    "zh-CN": "尚未连接游戏",
+    "zh-TW": "尚未連接遊戲",
+    "en-US": "Not connected"
+  },
+  "connection.connect": {
+    "zh-CN": "连接当前游戏",
+    "zh-TW": "連接目前遊戲",
+    "en-US": "Connect to game"
+  },
+  "connection.preview": {
+    "zh-CN": "隔离界面预览 · 使用演示账号，不连接游戏",
+    "zh-TW": "隔離介面預覽 · 使用示範帳號，不連接遊戲",
+    "en-US": "Isolated preview · Demo accounts, no game connection"
+  },
+  "connection.closed": {
+    "zh-CN": "游戏未运行 · 选择账号后可启动",
+    "zh-TW": "遊戲未執行 · 選擇帳號後可啟動",
+    "en-US": "Game is closed · Select an account to launch"
+  },
+  "connection.ready": {
+    "zh-CN": "游戏已连接 · {0} · {1}",
+    "zh-TW": "遊戲已連接 · {0} · {1}",
+    "en-US": "Connected · {0} · {1}"
+  },
+  "connection.loading": {
+    "zh-CN": "游戏运行中 · 尚未连接，或正在加载登录画面",
+    "zh-TW": "遊戲執行中 · 尚未連接，或正在載入登入畫面",
+    "en-US": "Game is running · Connecting or loading sign-in"
+  },
+  "connection.login": {
+    "zh-CN": "等待登录",
+    "zh-TW": "等待登入",
+    "en-US": "Waiting for sign-in"
+  },
+  "connection.tool": {
+    "zh-CN": "{0}正在运行或等待结算 · 停止后即可继续日常",
+    "zh-TW": "{0}正在執行或等待結算 · 停止後即可繼續日常",
+    "en-US": "{0} is running or settling · Stop it to resume daily tasks"
+  },
+  "connection.scene_raw": {
+    "zh-CN": "原始场景（诊断用）：",
+    "zh-TW": "原始場景（診斷用）：",
+    "en-US": "Raw scene (diagnostics):"
+  },
+  "common.refresh": {
+    "zh-CN": "刷新",
+    "zh-TW": "重新整理",
+    "en-US": "Refresh"
+  },
+  "common.cancel": {
+    "zh-CN": "取消",
+    "zh-TW": "取消",
+    "en-US": "Cancel"
+  },
+  "common.save": {
+    "zh-CN": "保存",
+    "zh-TW": "儲存",
+    "en-US": "Save"
+  },
+  "common.stop": {
+    "zh-CN": "停止",
+    "zh-TW": "停止",
+    "en-US": "Stop"
+  },
+  "common.stop_operation": {
+    "zh-CN": "停止当前操作",
+    "zh-TW": "停止目前操作",
+    "en-US": "Stop operation"
+  },
+  "common.ready": {
+    "zh-CN": "准备就绪。打开工具不会自动连接、切换或恢复上次队列。",
+    "zh-TW": "準備就緒。開啟工具不會自動連接、切換或恢復上次佇列。",
+    "en-US": "Ready. Opening the app does not connect, switch accounts or resume a queue."
+  },
+  "diagnostics.original": {
+    "zh-CN": "原始信息（诊断用）：",
+    "zh-TW": "原始資訊（診斷用）：",
+    "en-US": "Original details (diagnostics):"
+  },
+  "diagnostics.optional": {
+    "zh-CN": "仅在异常时使用",
+    "zh-TW": "僅在異常時使用",
+    "en-US": "For troubleshooting"
+  },
+  "diagnostics.title": {
+    "zh-CN": "诊断与帮助",
+    "zh-TW": "診斷與說明",
+    "en-US": "Diagnostics & help"
+  },
+  "diagnostics.intro": {
+    "zh-CN": "查看连接状态，找到下一步。",
+    "zh-TW": "查看連線狀態，找到下一步。",
+    "en-US": "Understand the connection and what to do next."
+  },
+  "diagnostics.guild_wait": {
+    "zh-CN": "等待当前账号的公会状态",
+    "zh-TW": "等待目前帳號的公會狀態",
+    "en-US": "Waiting for this account's guild"
+  },
+  "diagnostics.guild_connect": {
+    "zh-CN": "先连接当前游戏，核对账号身份。",
+    "zh-TW": "先連接目前遊戲，核對帳號身分。",
+    "en-US": "Connect to the game and verify the account first."
+  },
+  "diagnostics.guild_empty": {
+    "zh-CN": "尚无本机操作记录",
+    "zh-TW": "尚無本機操作紀錄",
+    "en-US": "No local activity yet"
+  },
+  "diagnostics.guild_check": {
+    "zh-CN": "公会单项检查",
+    "zh-TW": "公會單項檢查",
+    "en-US": "Guild check"
+  },
+  "diagnostics.guild_flow": {
+    "zh-CN": "记录进入前状态 → 提交一次 → 核对正常响应 → 关闭签到结果 → 返回主菜单。",
+    "zh-TW": "記錄進入前狀態 → 提交一次 → 核對正常回應 → 關閉簽到結果 → 返回主選單。",
+    "en-US": "Record the initial state, submit once, verify the response, close the result and return to the menu."
+  },
+  "diagnostics.guild_notice": {
+    "zh-CN": "只观察不会点击游戏。单步签到可能领取奖励；未确认的请求会保留待核账记录。",
+    "zh-TW": "僅觀察不會點擊遊戲。單步簽到可能領取獎勵；未確認的請求會保留待核對紀錄。",
+    "en-US": "Observe does not interact with the game. Check-in can claim rewards. Unconfirmed requests remain available for reconciliation."
+  },
+  "diagnostics.observe": {
+    "zh-CN": "只观察",
+    "zh-TW": "僅觀察",
+    "en-US": "Observe"
+  },
+  "diagnostics.guild_run": {
+    "zh-CN": "单步签到",
+    "zh-TW": "單步簽到",
+    "en-US": "Run check-in"
+  },
+  "diagnostics.records": {
+    "zh-CN": "打开操作记录",
+    "zh-TW": "開啟操作紀錄",
+    "en-US": "Open activity records"
+  },
+  "diagnostics.scope": {
+    "zh-CN": "只操作当前账号 · 停止保留已有记录",
+    "zh-TW": "僅操作目前帳號 · 停止會保留已有紀錄",
+    "en-US": "Current account only · Stopping preserves records"
+  },
+  "run.sync": {
+    "zh-CN": "手动检查收集进度",
+    "zh-TW": "手動檢查收集進度",
+    "en-US": "Check collection progress"
+  },
+  "run.sync_help": {
+    "zh-CN": "按已保存的地图范围读取游戏服务器；会切换卡带，可能需要数分钟，只同步、不采集。",
+    "zh-TW": "依已儲存的地圖範圍讀取遊戲伺服器；會切換卡帶，可能需要數分鐘，僅同步、不採集。",
+    "en-US": "Reads saved map ranges from the game server. Switches packs and may take several minutes. Checks progress without collecting."
+  },
+  "run.start": {
+    "zh-CN": "开始日常",
+    "zh-TW": "開始日常",
+    "en-US": "Start daily tasks"
+  },
+  "run.multi": {
+    "zh-CN": "多账号运行（{0}）",
+    "zh-TW": "多帳號執行（{0}）",
+    "en-US": "Run accounts ({0})"
+  },
+  "run.resume": {
+    "zh-CN": "接续原队列",
+    "zh-TW": "接續原佇列",
+    "en-US": "Resume queue"
+  },
+  "run.select_unfinished": {
+    "zh-CN": "勾选未完成",
+    "zh-TW": "勾選未完成",
+    "en-US": "Select unfinished"
+  },
+  "run.clear": {
+    "zh-CN": "清空勾选",
+    "zh-TW": "清空勾選",
+    "en-US": "Clear selection"
+  },
+  "run.plan": {
+    "zh-CN": "当前计划",
+    "zh-TW": "目前計畫",
+    "en-US": "Current plan"
+  },
+  "run.report": {
+    "zh-CN": "上次记录",
+    "zh-TW": "上次紀錄",
+    "en-US": "Last run"
+  },
+  "run.expired_report": {
+    "zh-CN": "历史记录（已过期）",
+    "zh-TW": "歷史紀錄（已過期）",
+    "en-US": "Expired record"
+  },
+  "run.settings": {
+    "zh-CN": "环节设置",
+    "zh-TW": "環節設定",
+    "en-US": "Task settings"
+  },
+  "run.records": {
+    "zh-CN": "执行记录",
+    "zh-TW": "執行紀錄",
+    "en-US": "Activity records"
+  },
+  "run.records_more": {
+    "zh-CN": "记录与进度检查",
+    "zh-TW": "紀錄與進度檢查",
+    "en-US": "Records and progress checks"
+  },
+  "run.resume_help": {
+    "zh-CN": "使用原账号、进程及重置周期继续原队列。重启游戏后，请勾选未完成环节补跑。",
+    "zh-TW": "使用原帳號、程序及重置週期繼續原佇列。重啟遊戲後，請勾選未完成環節補跑。",
+    "en-US": "Resume with the same account, game session and reset period. After restarting the game, select unfinished tasks to retry."
+  },
+  "run.retry_help": {
+    "zh-CN": "先核对上次结果，再按当前游戏进度继续；不会重复提交尚未确认的操作。",
+    "zh-TW": "先核對上次結果，再依目前遊戲進度繼續；不會重複提交尚未確認的操作。",
+    "en-US": "Reconcile the previous result, then continue from game progress. Unconfirmed operations are not submitted again."
+  },
+  "run.multi_help": {
+    "zh-CN": "依次运行所选账号，使用各自保存的日常设置；不采用本次临时勾选。",
+    "zh-TW": "依序執行所選帳號，使用各自儲存的日常設定；不採用本次臨時勾選。",
+    "en-US": "Runs selected accounts with their saved settings, rather than this run's temporary task selection."
+  },
+  "run.account_help": {
+    "zh-CN": "执行当前账号：{0}",
+    "zh-TW": "執行目前帳號：{0}",
+    "en-US": "Run for: {0}"
+  },
+  "run.choose": {
+    "zh-CN": "选择本次环节",
+    "zh-TW": "選擇本次環節",
+    "en-US": "Choose tasks"
+  },
+  "run.start_selected": {
+    "zh-CN": "运行勾选环节（{0}）",
+    "zh-TW": "執行勾選環節（{0}）",
+    "en-US": "Run selected ({0})"
+  },
+  "run.selected_count": {
+    "zh-CN": "已选 {0} / {1} 个环节",
+    "zh-TW": "已選 {0} / {1} 個環節",
+    "en-US": "{0} of {1} tasks selected"
+  },
+  "run.complete_count": {
+    "zh-CN": "{0} / {1} 环节完成",
+    "zh-TW": "{0} / {1} 環節完成",
+    "en-US": "{0} of {1} tasks complete"
+  },
+  "run.other_count": {
+    "zh-CN": "{0} / {1} 环节完成 · 其他账号记录",
+    "zh-TW": "{0} / {1} 環節完成 · 其他帳號紀錄",
+    "en-US": "{0} of {1} tasks complete · Another account"
+  },
+  "run.select_all": {
+    "zh-CN": "全选",
+    "zh-TW": "全選",
+    "en-US": "Select all"
+  },
+  "run.retry": {
+    "zh-CN": "补跑勾选环节（{0}）",
+    "zh-TW": "補跑勾選環節（{0}）",
+    "en-US": "Retry selected ({0})"
+  },
+  "run.reconcile": {
+    "zh-CN": "核对并补跑（{0}）",
+    "zh-TW": "核對並補跑（{0}）",
+    "en-US": "Reconcile and retry ({0})"
+  },
+  "run.title": {
+    "zh-CN": "本次运行",
+    "zh-TW": "本次執行",
+    "en-US": "This run"
+  },
+  "run.plan_hint": {
+    "zh-CN": "勾选本次要跑的环节，不改变账号设置。未列出的项目可在日常设置中开启。",
+    "zh-TW": "勾選本次要執行的環節，不變更帳號設定。未列出的項目可在日常設定中開啟。",
+    "en-US": "Choose tasks for this run. Saved account settings stay unchanged. Enable other tasks in Daily settings."
+  },
+  "run.new_day": {
+    "zh-CN": "已进入新一天。 {0}",
+    "zh-TW": "已進入新一天。 {0}",
+    "en-US": "A new day has started. {0}"
+  },
+  "run.start_failed": {
+    "zh-CN": "未能启动或继续",
+    "zh-TW": "無法啟動或繼續",
+    "en-US": "Could not start or continue"
+  },
+  "run.history_title": {
+    "zh-CN": "上次执行记录",
+    "zh-TW": "上次執行紀錄",
+    "en-US": "Previous run"
+  },
+  "run.history_expired": {
+    "zh-CN": "历史记录 · 已过期",
+    "zh-TW": "歷史紀錄 · 已過期",
+    "en-US": "History · Expired"
+  },
+  "run.history_expired_hint": {
+    "zh-CN": "该记录已跨过游戏每日重置，仅供查看。当前计划已重置，请开始新一天的日常。",
+    "zh-TW": "此紀錄已跨過遊戲每日重置，僅供查看。目前計畫已重置，請開始新一天的日常。",
+    "en-US": "This record predates the daily reset and is read-only. Start a new daily plan."
+  },
+  "run.history_other": {
+    "zh-CN": "这是其他账号的记录，仅供查看。当前账号请使用当前计划。",
+    "zh-TW": "這是其他帳號的紀錄，僅供查看。目前帳號請使用目前計畫。",
+    "en-US": "This is another account's read-only record. Use the current plan for this account."
+  },
+  "run.history_hint": {
+    "zh-CN": "此处保留原队列；新增环节请在当前计划查看。",
+    "zh-TW": "此處保留原佇列；新增環節請在目前計畫查看。",
+    "en-US": "This view preserves the previous queue. Newly enabled tasks are in the current plan."
+  },
+  "run.initial_hint": {
+    "zh-CN": "开始前可调整各环节设置；已完成的日常会按游戏进度跳过。",
+    "zh-TW": "開始前可調整各環節設定；已完成的日常會依遊戲進度跳過。",
+    "en-US": "Adjust task settings before starting. Tasks already completed in the game will be skipped."
+  },
+  "run.plan_stage": {
+    "zh-CN": "按游戏进度执行，已完成则跳过",
+    "zh-TW": "依遊戲進度執行，已完成則跳過",
+    "en-US": "Checks game progress and skips completed work."
+  },
+  "run.save_failed": {
+    "zh-CN": "执行进度文件保存失败。可在下方勾选未完成环节补跑；完整错误见执行记录。",
+    "zh-TW": "執行進度檔案儲存失敗。可在下方勾選未完成環節補跑；完整錯誤見執行紀錄。",
+    "en-US": "Could not save progress. Select unfinished tasks to retry; see activity records for details."
+  },
+  "run.finished": {
+    "zh-CN": "所选环节已完成。",
+    "zh-TW": "所選環節已完成。",
+    "en-US": "Selected tasks are complete."
+  },
+  "run.partial": {
+    "zh-CN": "已完成可执行环节；请查看下方未完成原因。",
+    "zh-TW": "已完成可執行環節；請查看下方未完成原因。",
+    "en-US": "Available tasks are complete. See unfinished tasks below for details."
+  },
+  "run.stop_hint": {
+    "zh-CN": "停止会阻止后续操作；已发送的请求会先记录结算。",
+    "zh-TW": "停止會阻止後續操作；已傳送的請求會先記錄結算。",
+    "en-US": "Stopping prevents further actions. Results of submitted requests are recorded first."
+  },
+  "run.carried": {
+    "zh-CN": "上次记录 · {0}",
+    "zh-TW": "上次紀錄 · {0}",
+    "en-US": "Previous run · {0}"
+  },
+  "run.needs_check": {
+    "zh-CN": "可勾选，先核对再继续。 {0}",
+    "zh-TW": "可勾選，先核對再繼續。 {0}",
+    "en-US": "Select to reconcile before continuing. {0}"
+  },
+  "state.idle": {
+    "zh-CN": "未运行",
+    "zh-TW": "未執行",
+    "en-US": "Idle"
+  },
+  "state.pending": {
+    "zh-CN": "等待执行",
+    "zh-TW": "等待執行",
+    "en-US": "Pending"
+  },
+  "state.preparing": {
+    "zh-CN": "准备中",
+    "zh-TW": "準備中",
+    "en-US": "Preparing"
+  },
+  "state.running": {
+    "zh-CN": "执行中",
+    "zh-TW": "執行中",
+    "en-US": "Running"
+  },
+  "state.completed": {
+    "zh-CN": "完成",
+    "zh-TW": "完成",
+    "en-US": "Complete"
+  },
+  "state.skipped": {
+    "zh-CN": "已跳过",
+    "zh-TW": "已跳過",
+    "en-US": "Skipped"
+  },
+  "state.partial": {
+    "zh-CN": "部分完成",
+    "zh-TW": "部分完成",
+    "en-US": "Partly complete"
+  },
+  "state.blocked": {
+    "zh-CN": "需要处理",
+    "zh-TW": "需要處理",
+    "en-US": "Needs attention"
+  },
+  "state.recovery_required": {
+    "zh-CN": "需要核对",
+    "zh-TW": "需要核對",
+    "en-US": "Needs reconciliation"
+  },
+  "state.paused": {
+    "zh-CN": "已暂停",
+    "zh-TW": "已暫停",
+    "en-US": "Paused"
+  },
+  "state.stopped": {
+    "zh-CN": "已停止",
+    "zh-TW": "已停止",
+    "en-US": "Stopped"
+  },
+  "state.failed": {
+    "zh-CN": "失败",
+    "zh-TW": "失敗",
+    "en-US": "Failed"
+  },
+  "stage.unknown": {
+    "zh-CN": "未识别环节（{0}）",
+    "zh-TW": "未識別環節（{0}）",
+    "en-US": "Unknown task ({0})"
+  },
+  "stage.guild": {
+    "zh-CN": "公会签到",
+    "zh-TW": "公會簽到",
+    "en-US": "Guild check-in"
+  },
+  "stage.room": {
+    "zh-CN": "小屋奖励",
+    "zh-TW": "小屋獎勵",
+    "en-US": "Home rewards"
+  },
+  "stage.management": {
+    "zh-CN": "经营与餐厅",
+    "zh-TW": "經營與餐廳",
+    "en-US": "Business and restaurant"
+  },
+  "stage.free_draws": {
+    "zh-CN": "每日免费抽取",
+    "zh-TW": "每日免費抽取",
+    "en-US": "Daily free draws"
+  },
+  "stage.equipment": {
+    "zh-CN": "装备分解与精炼",
+    "zh-TW": "裝備分解與精煉",
+    "en-US": "Gear recycling and refinement"
+  },
+  "stage.weekly_equipment": {
+    "zh-CN": "周常制作装备",
+    "zh-TW": "每週製作裝備",
+    "en-US": "Weekly gear crafting"
+  },
+  "stage.weekly_mainline": {
+    "zh-CN": "周收集",
+    "zh-TW": "每週採集",
+    "en-US": "Weekly collection"
+  },
+  "stage.weekly_npc": {
+    "zh-CN": "周NPC任务",
+    "zh-TW": "每週 NPC 任務",
+    "en-US": "Weekly NPC quests"
+  },
+  "stage.weekly_steal": {
+    "zh-CN": "每周偷窃",
+    "zh-TW": "每週偷竊",
+    "en-US": "Weekly steal"
+  },
+  "stage.hunting": {
+    "zh-CN": "普通与圣石狩猎",
+    "zh-TW": "普通與聖石狩獵",
+    "en-US": "Hunting and ability stones"
+  },
+  "stage.mirror": {
+    "zh-CN": "镜中免费战斗",
+    "zh-TW": "鏡中免費戰鬥",
+    "en-US": "Free Mirror Wars battles"
+  },
+  "stage.daily_dispatch": {
+    "zh-CN": "每日派遣",
+    "zh-TW": "每日派遣",
+    "en-US": "Daily dispatch"
+  },
+  "stage.square": {
+    "zh-CN": "广场奖励",
+    "zh-TW": "廣場獎勵",
+    "en-US": "Plaza rewards"
+  },
+  "stage.weekly_book": {
+    "zh-CN": "周常末日之书",
+    "zh-TW": "每週末日之書",
+    "en-US": "Weekly Last Night"
+  },
+  "stage.friendship": {
+    "zh-CN": "亲密度咨询",
+    "zh-TW": "親密度諮詢",
+    "en-US": "Affinity consultations"
+  },
+  "stage.tactics": {
+    "zh-CN": "战术教材",
+    "zh-TW": "戰術教材",
+    "en-US": "Tactics training"
+  },
+  "stage.event_battle": {
+    "zh-CN": "活动每日挑战15",
+    "zh-TW": "活動每日挑戰 15",
+    "en-US": "Daily event challenge 15"
+  },
+  "stage.monster_hunt": {
+    "zh-CN": "魔兽最高档快速战斗",
+    "zh-TW": "魔獸最高階快速戰鬥",
+    "en-US": "Highest-level Fiend Hunt quick battle"
+  },
+  "stage.weekly_room_likes": {
+    "zh-CN": "周常小屋点赞",
+    "zh-TW": "每週小屋按讚",
+    "en-US": "Weekly home likes"
+  },
+  "stage.weekly_fishing": {
+    "zh-CN": "周常钓鱼",
+    "zh-TW": "每週釣魚",
+    "en-US": "Weekly fishing"
+  },
+  "stage.weekly_sichuan": {
+    "zh-CN": "周常连连看",
+    "zh-TW": "每週連連看",
+    "en-US": "Weekly tile matching"
+  },
+  "stage.trade": {
+    "zh-CN": "跑商／料理／高价售卖",
+    "zh-TW": "交易／料理／高價販售",
+    "en-US": "Trading, cooking and premium sales"
+  },
+  "stage.event_rewards": {
+    "zh-CN": "活动任务／转盘／代币兑换",
+    "zh-TW": "活動任務／轉盤／代幣兌換",
+    "en-US": "Event quests, roulette and exchange"
+  },
+  "stage.rewards": {
+    "zh-CN": "日常／周常／通行证奖励",
+    "zh-TW": "每日／每週／通行證獎勵",
+    "en-US": "Daily, weekly and pass rewards"
+  },
+  "stage.mail": {
+    "zh-CN": "邮箱收尾",
+    "zh-TW": "信箱收尾",
+    "en-US": "Claim mail"
+  },
+  "stage.collection_sync": {
+    "zh-CN": "手动检查收集进度",
+    "zh-TW": "手動檢查採集進度",
+    "en-US": "Check collection progress"
+  },
+  "stage.life_helpers": {
+    "zh-CN": "经营收益领取",
+    "zh-TW": "經營收益領取",
+    "en-US": "Claim business income"
+  },
+  "stage.cafeteria_income": {
+    "zh-CN": "餐厅收益",
+    "zh-TW": "餐廳收益",
+    "en-US": "Restaurant income"
+  },
+  "stage.cafeteria_guests": {
+    "zh-CN": "餐厅顾客奖励",
+    "zh-TW": "餐廳顧客獎勵",
+    "en-US": "Restaurant guest rewards"
+  },
+  "stage.equipment_recycle": {
+    "zh-CN": "装备分解",
+    "zh-TW": "裝備分解",
+    "en-US": "Recycle gear"
+  },
+  "stage.equipment_refine": {
+    "zh-CN": "装备精炼",
+    "zh-TW": "裝備精煉",
+    "en-US": "Refine gear"
+  },
+  "stage.daily_hunt": {
+    "zh-CN": "章节狩猎",
+    "zh-TW": "章節狩獵",
+    "en-US": "Chapter hunting"
+  },
+  "stage.daily_hunt_minimal": {
+    "zh-CN": "每日章节狩猎",
+    "zh-TW": "每日章節狩獵",
+    "en-US": "Daily chapter hunt"
+  },
+  "stage.stones": {
+    "zh-CN": "圣石狩猎",
+    "zh-TW": "聖石狩獵",
+    "en-US": "Ability stone hunting"
+  },
+  "stage.goddess": {
+    "zh-CN": "女神像奖励",
+    "zh-TW": "女神像獎勵",
+    "en-US": "Goddess statue rewards"
+  },
+  "stage.square_ranking": {
+    "zh-CN": "广场排行榜奖励",
+    "zh-TW": "廣場排行榜獎勵",
+    "en-US": "Plaza ranking rewards"
+  },
+  "stage.daily_rewards": {
+    "zh-CN": "日常任务奖励",
+    "zh-TW": "每日任務獎勵",
+    "en-US": "Daily mission rewards"
+  },
+  "stage.weekly_rewards": {
+    "zh-CN": "周常任务奖励",
+    "zh-TW": "每週任務獎勵",
+    "en-US": "Weekly mission rewards"
+  },
+  "stage.pass_rewards": {
+    "zh-CN": "通行证奖励",
+    "zh-TW": "通行證獎勵",
+    "en-US": "Pass rewards"
+  },
+  "stage.mission_rewards": {
+    "zh-CN": "日常与周常任务奖励",
+    "zh-TW": "每日與每週任務獎勵",
+    "en-US": "Daily and weekly mission rewards"
+  },
+  "tools.count": {
+    "zh-CN": "9 个开源工具",
+    "zh-TW": "9 個開源工具",
+    "en-US": "9 open-source tools"
+  },
+  "tools.hint": {
+    "zh-CN": "共用游戏连接、统一语言设置。已打开的工具会同步切换语言；单独启动工具时仍保留原有偏好。",
+    "zh-TW": "共用遊戲連線、統一語言設定。已開啟的工具會同步切換語言；單獨啟動工具時仍保留原有偏好。",
+    "en-US": "One shared connection and language setting. Open tool windows follow language changes; standalone tools keep their own preferences."
+  },
+  "tools.search": {
+    "zh-CN": "搜索工具名称或用途…",
+    "zh-TW": "搜尋工具名稱或用途…",
+    "en-US": "Search tools or features…"
+  },
+  "tools.search_accessible": {
+    "zh-CN": "搜索工具名称或用途",
+    "zh-TW": "搜尋工具名稱或用途",
+    "en-US": "Search tools or features"
+  },
+  "tools.category_accessible": {
+    "zh-CN": "工具分类",
+    "zh-TW": "工具分類",
+    "en-US": "Tool category"
+  },
+  "tools.all": {
+    "zh-CN": "全部工具",
+    "zh-TW": "全部工具",
+    "en-US": "All tools"
+  },
+  "tools.category_games": {
+    "zh-CN": "小游戏",
+    "zh-TW": "小遊戲",
+    "en-US": "Minigames"
+  },
+  "tools.category_business": {
+    "zh-CN": "经营与装备",
+    "zh-TW": "經營與裝備",
+    "en-US": "Business and gear"
+  },
+  "tools.category_draws": {
+    "zh-CN": "抽取",
+    "zh-TW": "抽取",
+    "en-US": "Draws"
+  },
+  "tools.empty": {
+    "zh-CN": "没有匹配的工具，请尝试其他名称或清空筛选。",
+    "zh-TW": "沒有符合的工具，請嘗試其他名稱或清空篩選。",
+    "en-US": "No matching tools. Try another name or clear the filters."
+  },
+  "tools.open": {
+    "zh-CN": "打开工具",
+    "zh-TW": "開啟工具",
+    "en-US": "Open tool"
+  },
+  "tools.show": {
+    "zh-CN": "显示窗口",
+    "zh-TW": "顯示視窗",
+    "en-US": "Show window"
+  },
+  "tools.switch": {
+    "zh-CN": "切换工具",
+    "zh-TW": "切換工具",
+    "en-US": "Switch tool"
+  },
+  "tools.close": {
+    "zh-CN": "关闭工具，返回日常",
+    "zh-TW": "關閉工具，返回日常",
+    "en-US": "Close tool and return"
+  },
+  "tools.idle": {
+    "zh-CN": "工具共用日常助手的连接，不会自动开始操作。仅在自动化启用或等待结算时占用控制权。",
+    "zh-TW": "工具共用日常助手的連線，不會自動開始操作。僅在自動化啟用或等待結算時占用控制權。",
+    "en-US": "Tools share the assistant's connection. Control is held only while automation is active or awaiting a result."
+  },
+  "tool.fishing": {
+    "zh-CN": "自动钓鱼",
+    "zh-TW": "自動釣魚",
+    "en-US": "Fishing"
+  },
+  "tool.territory": {
+    "zh-CN": "领地自动化",
+    "zh-TW": "領地自動化",
+    "en-US": "Territory"
+  },
+  "tool.equipment": {
+    "zh-CN": "装备助手",
+    "zh-TW": "裝備助手",
+    "en-US": "Equipment assistant"
+  },
+  "tool.sichuan": {
+    "zh-CN": "连连看",
+    "zh-TW": "連連看",
+    "en-US": "Tile matching"
+  },
+  "tool.rhythm": {
+    "zh-CN": "音游",
+    "zh-TW": "音遊",
+    "en-US": "Rhythm"
+  },
+  "tool.apostle-defense": {
+    "zh-CN": "使徒运气防守",
+    "zh-TW": "使徒運氣防守",
+    "en-US": "Apostle defense"
+  },
+  "tool.secret-vision": {
+    "zh-CN": "SECRET VISION",
+    "zh-TW": "SECRET VISION",
+    "en-US": "SECRET VISION"
+  },
+  "tool.fiend-hunter": {
+    "zh-CN": "恶魔猎人",
+    "zh-TW": "惡魔獵人",
+    "en-US": "Fiend hunter"
+  },
+  "tool.infinite-gacha": {
+    "zh-CN": "无限抽抽乐",
+    "zh-TW": "無限抽抽樂",
+    "en-US": "Infinite draws"
+  },
+  "tool.fishing.description": {
+    "zh-CN": "钓鱼、鱼饵、背包出售和地图往返。",
+    "zh-TW": "釣魚、魚餌、背包販售與地圖往返。",
+    "en-US": "Fishing, bait, inventory sales and map return trips."
+  },
+  "tool.territory.description": {
+    "zh-CN": "种植、采集、料理、库存出售和布局。",
+    "zh-TW": "種植、採集、料理、庫存販售與布局。",
+    "en-US": "Planting, gathering, cooking, surplus sales and layouts."
+  },
+  "tool.equipment.description": {
+    "zh-CN": "规划搓粉与批量精炼，确认预算后执行。",
+    "zh-TW": "規劃製粉與批量精煉，確認預算後執行。",
+    "en-US": "Plan powder production and batch refinement. Runs after budget confirmation."
+  },
+  "tool.sichuan.description": {
+    "zh-CN": "自动识别盘面、求解和续局，可调操作间隔。",
+    "zh-TW": "自動識別盤面、求解與續局，可調整操作間隔。",
+    "en-US": "Read boards, solve and continue, with adjustable action intervals."
+  },
+  "tool.rhythm.description": {
+    "zh-CN": "读取当前谱面并操作，保留随机偏移设置。",
+    "zh-TW": "讀取目前譜面並操作，保留隨機偏移設定。",
+    "en-US": "Play the current chart with configurable random timing offsets."
+  },
+  "tool.apostle-defense.description": {
+    "zh-CN": "自动召唤、合成、布局与结算续局。",
+    "zh-TW": "自動召喚、合成、布局與結算續局。",
+    "en-US": "Summon, merge, arrange units and continue after results."
+  },
+  "tool.secret-vision.description": {
+    "zh-CN": "自动圈地、避让与失败重试。",
+    "zh-TW": "自動圈地、避讓與失敗重試。",
+    "en-US": "Capture territory, avoid attacks and retry failed stages."
+  },
+  "tool.fiend-hunter.description": {
+    "zh-CN": "自动移动、攻击决策和关卡重试。",
+    "zh-TW": "自動移動、攻擊決策與關卡重試。",
+    "en-US": "Movement, attack decisions and stage retries."
+  },
+  "tool.infinite-gacha.description": {
+    "zh-CN": "A／B 双列表、停止条件和命中提醒。",
+    "zh-TW": "A／B 雙列表、停止條件與命中提醒。",
+    "en-US": "Priority lists, stop conditions and target notifications."
+  },
+  "prefs.account": {
+    "zh-CN": "偏好账号",
+    "zh-TW": "偏好帳號",
+    "en-US": "Settings for"
+  },
+  "prefs.save": {
+    "zh-CN": "保存本账号偏好",
+    "zh-TW": "儲存本帳號偏好",
+    "en-US": "Save settings"
+  },
+  "prefs.search": {
+    "zh-CN": "查找环节",
+    "zh-TW": "尋找環節",
+    "en-US": "Find tasks"
+  },
+  "prefs.search_help": {
+    "zh-CN": "按环节名称或说明筛选",
+    "zh-TW": "依環節名稱或說明篩選",
+    "en-US": "Filter by task name or description"
+  },
+  "prefs.search_accessible": {
+    "zh-CN": "查找日常环节",
+    "zh-TW": "尋找日常環節",
+    "en-US": "Find daily tasks"
+  },
+  "prefs.intro": {
+    "zh-CN": "勾选要做的环节，展开调整参数。设置只影响所选账号。",
+    "zh-TW": "勾選要執行的環節，展開調整參數。設定僅影響所選帳號。",
+    "en-US": "Choose tasks and expand their settings. Changes apply only to this account."
+  },
+  "prefs.none": {
+    "zh-CN": "没有匹配环节",
+    "zh-TW": "沒有符合的環節",
+    "en-US": "No matching tasks"
+  },
+  "prefs.count": {
+    "zh-CN": "{0} 个环节",
+    "zh-TW": "{0} 個環節",
+    "en-US": "Tasks: {0}"
+  },
+  "prefs.dirty": {
+    "zh-CN": "有未保存的修改",
+    "zh-TW": "有未儲存的修改",
+    "en-US": "Unsaved changes"
+  },
+  "prefs.no_account": {
+    "zh-CN": "请先在账号列表保存一个有效账号。",
+    "zh-TW": "請先在帳號列表儲存一個有效帳號。",
+    "en-US": "Save a valid account in Accounts first."
+  },
+  "prefs.loaded": {
+    "zh-CN": "已读取本账号偏好。",
+    "zh-TW": "已讀取本帳號偏好。",
+    "en-US": "Account settings loaded."
+  },
+  "prefs.saved": {
+    "zh-CN": "已保存；队列进入下一环节时读取新设置，当前已开始的操作会先结算。",
+    "zh-TW": "已儲存；佇列進入下一環節時讀取新設定，目前已開始的操作會先結算。",
+    "en-US": "Saved. New settings apply at the next task; active operations finish first."
+  },
+  "prefs.guild_hint": {
+    "zh-CN": "签到与领取可用奖励",
+    "zh-TW": "簽到與領取可用獎勵",
+    "en-US": "Check in and claim available rewards."
+  },
+  "prefs.room_hint": {
+    "zh-CN": "领取可用的小屋奖励",
+    "zh-TW": "領取可用的小屋獎勵",
+    "en-US": "Claim available home rewards."
+  },
+  "prefs.business": {
+    "zh-CN": "经营一键领取",
+    "zh-TW": "經營一鍵領取",
+    "en-US": "Claim business income"
+  },
+  "prefs.business_hint": {
+    "zh-CN": "一起领取餐厅、鱼笼和领地工人收益；鱼笼沿用游戏中的自动出售设置",
+    "zh-TW": "一起領取餐廳、魚籠與領地工人收益；魚籠沿用遊戲中的自動販售設定",
+    "en-US": "Claim restaurant, fish-trap and territory-worker income together. Fish traps use the game's sale settings."
+  },
+  "prefs.guests": {
+    "zh-CN": "餐厅特殊顾客与气泡",
+    "zh-TW": "餐廳特殊顧客與氣泡",
+    "en-US": "Restaurant guests and bubbles"
+  },
+  "prefs.guests_hint": {
+    "zh-CN": "领取属性圣石和限时装饰币",
+    "zh-TW": "領取屬性聖石與限時裝飾幣",
+    "en-US": "Claim ability stones and limited-time decoration coins."
+  },
+  "prefs.draws_hint": {
+    "zh-CN": "只使用当日免费抽取，不消耗付费抽券",
+    "zh-TW": "僅使用當日免費抽取，不消耗付費抽券",
+    "en-US": "Use daily free draws only, without paid tickets."
+  },
+  "prefs.recycle_hint": {
+    "zh-CN": "只处理本日免费抽取的可分解装备",
+    "zh-TW": "僅處理本日免費抽取的可分解裝備",
+    "en-US": "Recycle eligible gear from today's free draws only."
+  },
+  "prefs.keep_sr": {
+    "zh-CN": "保留五星角色的 SR 专武",
+    "zh-TW": "保留五星角色的 SR 專武",
+    "en-US": "Keep five-star characters' exclusive SR gear"
+  },
+  "prefs.enhance": {
+    "zh-CN": "分解前强化等级",
+    "zh-TW": "分解前強化等級",
+    "en-US": "Enhance before recycling"
+  },
+  "prefs.enhance_note": {
+    "zh-CN": "默认强化 +7 后分解，0 为直接分解。排除锁定、保留和装备中的物品；关闭免费抽取不会自动替你开启抽取。",
+    "zh-TW": "預設強化 +7 後分解，0 為直接分解。排除鎖定、保留與裝備中的物品；關閉免費抽取不會自動替你開啟抽取。",
+    "en-US": "Default: enhance to +7 before recycling; 0 skips enhancement. Locked, retained and equipped gear is excluded. Free draws must be enabled separately."
+  },
+  "prefs.craft_fallback": {
+    "zh-CN": "分解任务未完成且无可分解装备时，制作一把 N 剑",
+    "zh-TW": "分解任務未完成且無可分解裝備時，製作一把 N 劍",
+    "en-US": "Craft an N sword if the recycling mission is unfinished and no eligible gear is available"
+  },
+  "prefs.craft_hint": {
+    "zh-CN": "本周任务未完成时制作一件N剑；材料不足时保留待办，不购买材料",
+    "zh-TW": "本週任務未完成時製作一件 N 劍；材料不足時保留待辦，不購買材料",
+    "en-US": "Craft an N sword for the unfinished weekly mission. Leave pending if materials are insufficient; do not buy them."
+  },
+  "prefs.craft_note": {
+    "zh-CN": "沿用装备分解设置：开启分解时，仅将本次新制作的装备强化后分解；关闭分解则保留。已手动完成或本日兜底制作过会自动跳过。",
+    "zh-TW": "沿用裝備分解設定：開啟分解時，僅將本次新製作的裝備強化後分解；關閉分解則保留。已手動完成或本日已補做製作時會自動跳過。",
+    "en-US": "Uses recycling settings for newly crafted gear only. Keeps gear if recycling is disabled. Skips if completed manually or already covered by today's fallback craft."
+  },
+  "prefs.refine_hint": {
+    "zh-CN": "有未完成任务时精炼一次，完成后不重复",
+    "zh-TW": "有未完成任務時精煉一次，完成後不重複",
+    "en-US": "Refine once for an unfinished mission; do not repeat after completion."
+  },
+  "prefs.refresh_gear": {
+    "zh-CN": "刷新可选装备",
+    "zh-TW": "重新整理可選裝備",
+    "en-US": "Refresh gear choices"
+  },
+  "prefs.refine_note": {
+    "zh-CN": "未指定时，选择已强化 +9 的五星专武：精炼未满 24，且同种同稀有度没有 24 级成品。此环节可独立开启，不受装备分解开关影响。",
+    "zh-TW": "未指定時，選擇已強化 +9 的五星專武：精煉未滿 24，且同種同稀有度沒有 24 級成品。此環節可獨立開啟，不受裝備分解開關影響。",
+    "en-US": "By default, choose +9 five-star exclusive gear below refinement 24, with no level-24 copy of the same type and rarity. This task is independent of recycling."
+  },
+  "prefs.refine_auto": {
+    "zh-CN": "自动选择：未满 24 且无同种满精炼装备",
+    "zh-TW": "自動選擇：未滿 24 且無同種滿精煉裝備",
+    "en-US": "Auto: below 24, with no matching max-refined copy"
+  },
+  "prefs.inventory_missing": {
+    "zh-CN": "尚未读取本账号完整装备库；目前可以使用自动选择。",
+    "zh-TW": "尚未讀取本帳號完整裝備庫；目前可使用自動選擇。",
+    "en-US": "Complete gear inventory is not available. Automatic selection is available."
+  },
+  "prefs.inventory_time": {
+    "zh-CN": "库存读取于 {0}，执行前会再次核对。",
+    "zh-TW": "庫存讀取於 {0}，執行前會再次核對。",
+    "en-US": "Inventory read at {0}; verified again before execution."
+  },
+  "prefs.hunt": {
+    "zh-CN": "普通狩猎与奖励日",
+    "zh-TW": "普通狩獵與獎勵日",
+    "en-US": "Hunting and bonus days"
+  },
+  "prefs.hunt_hint": {
+    "zh-CN": "默认第 9 章、刷金币、不刷史莱姆",
+    "zh-TW": "預設第 9 章、刷金幣、不刷史萊姆",
+    "en-US": "Default: chapter 9, gold enabled, slimes disabled."
+  },
+  "prefs.hunt_chapter": {
+    "zh-CN": "普通狩猎关卡",
+    "zh-TW": "普通狩獵關卡",
+    "en-US": "Hunting chapter"
+  },
+  "prefs.hunt_note": {
+    "zh-CN": "每天先刷一次普通狩猎，剩余免费米饭按优先级使用。",
+    "zh-TW": "每天先刷一次普通狩獵，剩餘免費白飯依優先順序使用。",
+    "en-US": "Complete a chapter hunt each day, then spend remaining free rice by priority."
+  },
+  "prefs.gold": {
+    "zh-CN": "金币加成日刷金币",
+    "zh-TW": "金幣加成日刷金幣",
+    "en-US": "Farm gold on bonus days"
+  },
+  "prefs.slime": {
+    "zh-CN": "史莱姆加成日刷史莱姆",
+    "zh-TW": "史萊姆加成日刷史萊姆",
+    "en-US": "Farm slimes on bonus days"
+  },
+  "prefs.priority_note": {
+    "zh-CN": "金币和史莱姆只在勾选且当天有加成时参与；从上往下选择第一个可用去向。",
+    "zh-TW": "金幣與史萊姆僅在勾選且當天有加成時參與；由上往下選擇第一個可用去向。",
+    "en-US": "Gold and slimes are eligible only when enabled and boosted that day. Use the first available destination from the top."
+  },
+  "prefs.priority_gold": {
+    "zh-CN": "金币加成",
+    "zh-TW": "金幣加成",
+    "en-US": "Gold bonus"
+  },
+  "prefs.priority_slime": {
+    "zh-CN": "史莱姆加成",
+    "zh-TW": "史萊姆加成",
+    "en-US": "Slime bonus"
+  },
+  "prefs.priority_chapter": {
+    "zh-CN": "普通狩猎",
+    "zh-TW": "普通狩獵",
+    "en-US": "Chapter hunt"
+  },
+  "prefs.stones_hint": {
+    "zh-CN": "按所选属性用完剩余免费火炬",
+    "zh-TW": "依所選屬性用完剩餘免費火炬",
+    "en-US": "Use remaining free torches for the selected element."
+  },
+  "prefs.stones_element": {
+    "zh-CN": "圣石属性",
+    "zh-TW": "聖石屬性",
+    "en-US": "Stone element"
+  },
+  "prefs.stones_note": {
+    "zh-CN": "选择库存最少时，开始前比较五种属性。关闭普通狩猎不影响圣石环节。",
+    "zh-TW": "選擇庫存最少時，開始前比較五種屬性。關閉普通狩獵不影響聖石環節。",
+    "en-US": "Lowest stock compares all five elements before starting. Stone hunting is independent of chapter hunting."
+  },
+  "prefs.least": {
+    "zh-CN": "库存数量最少",
+    "zh-TW": "庫存數量最少",
+    "en-US": "Lowest stock"
+  },
+  "element.fire": {
+    "zh-CN": "火",
+    "zh-TW": "火",
+    "en-US": "Fire"
+  },
+  "element.water": {
+    "zh-CN": "水",
+    "zh-TW": "水",
+    "en-US": "Water"
+  },
+  "element.wind": {
+    "zh-CN": "风",
+    "zh-TW": "風",
+    "en-US": "Wind"
+  },
+  "element.light": {
+    "zh-CN": "光",
+    "zh-TW": "光",
+    "en-US": "Light"
+  },
+  "element.dark": {
+    "zh-CN": "暗",
+    "zh-TW": "暗",
+    "en-US": "Dark"
+  },
+  "prefs.mirror": {
+    "zh-CN": "镜中之战",
+    "zh-TW": "鏡中之戰",
+    "en-US": "Mirror Wars"
+  },
+  "prefs.mirror_hint": {
+    "zh-CN": "用完实际剩余免费次数",
+    "zh-TW": "用完實際剩餘免費次數",
+    "en-US": "Use all remaining free attempts."
+  },
+  "prefs.multiplier": {
+    "zh-CN": "每轮倍率",
+    "zh-TW": "每輪倍率",
+    "en-US": "Battle multiplier"
+  },
+  "prefs.multiplier_note": {
+    "zh-CN": "每轮结算后重新读取剩余次数，最后一轮自动缩小倍率。例如剩余 40 次、设置 15 倍，会执行 15 + 15 + 10。只用免费次数，不自动购买。",
+    "zh-TW": "每輪結算後重新讀取剩餘次數，最後一輪自動縮小倍率。例如剩餘 40 次、設定 15 倍，會執行 15 + 15 + 10。僅用免費次數，不自動購買。",
+    "en-US": "Recheck attempts after each result and reduce the final multiplier as needed. For 40 attempts at 15×, run 15 + 15 + 10. Never buy extra attempts."
+  },
+  "prefs.dispatch_hint": {
+    "zh-CN": "原生一键领取派遣、会战和恶魔城奖励，等待游戏自动续派",
+    "zh-TW": "使用遊戲一鍵領取派遣、會戰與惡魔城獎勵，等待遊戲自動續派",
+    "en-US": "Use the game's claim-all for dispatch, guild-raid and castle rewards, then wait for automatic redispatch."
+  },
+  "prefs.goddess_hint": {
+    "zh-CN": "进入广场领取当日可用奖励",
+    "zh-TW": "進入廣場領取當日可用獎勵",
+    "en-US": "Visit the plaza and claim today's available rewards."
+  },
+  "prefs.ranking_hint": {
+    "zh-CN": "与女神像共用一次广场访问，领取可用周期奖励",
+    "zh-TW": "與女神像共用一次廣場訪問，領取可用週期獎勵",
+    "en-US": "Claim available periodic rewards during the same plaza visit."
+  },
+  "prefs.search_seconds": {
+    "zh-CN": "每关搜索秒数",
+    "zh-TW": "每關搜尋秒數",
+    "en-US": "Search seconds per stage"
+  },
+  "prefs.event_battle": {
+    "zh-CN": "活动战斗",
+    "zh-TW": "活動戰鬥",
+    "en-US": "Event battles"
+  },
+  "prefs.event_sweep_hint": {
+    "zh-CN": "已通关挑战15时，仅使用原生扫荡完成当天剩余免费次数，最多5次；不能扫荡就跳过",
+    "zh-TW": "已通關挑戰 15 時，僅使用遊戲掃蕩完成當天剩餘免費次數，最多 5 次；無法掃蕩即跳過",
+    "en-US": "If challenge 15 is cleared, sweep up to five remaining daily free attempts. Skip if unavailable."
+  },
+  "prefs.event_challenge": {
+    "zh-CN": "普通全部通关后继续挑战战斗",
+    "zh-TW": "普通全部通關後繼續挑戰戰鬥",
+    "en-US": "Continue to challenge stages after clearing normal"
+  },
+  "prefs.book_hint": {
+    "zh-CN": "沿用游戏中已保存的编队挑战一次，完成周任务即停止；使用原生跳过",
+    "zh-TW": "沿用遊戲中已儲存的編隊挑戰一次，完成週任務即停止；使用遊戲跳過功能",
+    "en-US": "Run the saved formation once and stop when the weekly mission completes. Use the game's skip."
+  },
+  "prefs.friendship_hint": {
+    "zh-CN": "每天补足三次免费咨询，优先好感度未满的角色；不消耗额外咨询次数",
+    "zh-TW": "每天補足三次免費諮詢，優先好感度未滿的角色；不消耗額外諮詢次數",
+    "en-US": "Complete three free daily consultations, prioritizing characters below maximum affinity. No extra attempts."
+  },
+  "prefs.friendship_quick": {
+    "zh-CN": "使用快速咨询（默认关闭）",
+    "zh-TW": "使用快速諮詢（預設關閉）",
+    "en-US": "Use quick consultation (off by default)"
+  },
+  "prefs.monster": {
+    "zh-CN": "魔兽快速战斗",
+    "zh-TW": "魔獸快速戰鬥",
+    "en-US": "Fiend Hunt quick battle"
+  },
+  "prefs.monster_hint": {
+    "zh-CN": "使用本账号当期及复刻魔兽各自最高可快速战斗等级；不降档、不进入练习",
+    "zh-TW": "使用本帳號當期與復刻魔獸各自最高可快速戰鬥等級；不降階、不進入練習",
+    "en-US": "Use this account's highest quick-battle level for both current and rerun hunts. Do not lower the level or enter practice."
+  },
+  "prefs.collection_hint": {
+    "zh-CN": "与周NPC任务、偷窃共用一次跑图；展开设置三项共用的地图范围",
+    "zh-TW": "與每週 NPC 任務、偷竊共用一次跑圖；展開設定三項共用的地圖範圍",
+    "en-US": "Shares a route with NPC quests and stealing. Expand to set the map range for all three."
+  },
+  "prefs.first_chapter": {
+    "zh-CN": "起始章节",
+    "zh-TW": "起始章節",
+    "en-US": "First chapter"
+  },
+  "prefs.last_chapter": {
+    "zh-CN": "结束章节",
+    "zh-TW": "結束章節",
+    "en-US": "Last chapter"
+  },
+  "prefs.characters": {
+    "zh-CN": "随后角色卡带（0 为不做）",
+    "zh-TW": "接續角色卡帶（0 為略過）",
+    "en-US": "Then character packs (0 to skip)"
+  },
+  "prefs.events_maps": {
+    "zh-CN": "继续收集已开放活动地图（仅有采集物）",
+    "zh-TW": "繼續採集已開放活動地圖（僅有採集物）",
+    "en-US": "Continue into unlocked event maps with collectibles"
+  },
+  "prefs.walk": {
+    "zh-CN": "步行收集（不使用吸收）",
+    "zh-TW": "步行採集（不使用吸收）",
+    "en-US": "Collect on foot without Absorb"
+  },
+  "prefs.collection_note": {
+    "zh-CN": "默认吸收；次数耗尽时只停止周收集，其余勾选项目继续。三项共用地图范围，可单独补跑任意一项；按游戏进度接续。第六章只到 7／8 层。",
+    "zh-TW": "預設吸收；次數耗盡時僅停止每週採集，其餘勾選項目繼續。三項共用地圖範圍，可獨立補跑任意一項；依遊戲進度接續。第六章僅到 7／8 層。",
+    "en-US": "Absorb by default. When uses run out, only collection stops; other enabled tasks continue. Each route task can be retried independently from game progress. Chapter 6 ends at floors 7/8."
+  },
+  "prefs.npc_hint": {
+    "zh-CN": "按本周剩余名额最多完成三条；先推进任务，再压制相关目标",
+    "zh-TW": "依本週剩餘名額最多完成三條；先推進任務，再壓制相關目標",
+    "en-US": "Complete up to three quests within the weekly limit. Progress quests before suppressing their targets."
+  },
+  "prefs.npc_hunt": {
+    "zh-CN": "允许接取必须去狩猎场的任务",
+    "zh-TW": "允許接取必須前往狩獵場的任務",
+    "en-US": "Accept quests that require a hunting ground"
+  },
+  "prefs.npc_note": {
+    "zh-CN": "默认跳过只能去狩猎场的新任务，包括野外目标已被击杀的情况。已接任务保留，不自动放弃；完成情况以游戏回执为准。",
+    "zh-TW": "預設略過僅能前往狩獵場的新任務，包括野外目標已被擊殺的情況。保留已接任務，不自動放棄；完成情況以遊戲回應為準。",
+    "en-US": "By default, skip new hunting-ground-only quests, including when field targets are already defeated. Keep accepted quests; never abandon automatically. Confirm completion from game responses."
+  },
+  "prefs.steal_hint": {
+    "zh-CN": "按NPC的服务器冷却补足；与已勾选的周收集、周NPC任务合并路线",
+    "zh-TW": "依 NPC 的伺服器冷卻補足；與已勾選的每週採集、NPC 任務合併路線",
+    "en-US": "Follow server cooldowns and share a route with enabled collection and NPC quests."
+  },
+  "prefs.likes_hint": {
+    "zh-CN": "随机推荐中优先选择赞数最少的三个，按本周任务进度补足",
+    "zh-TW": "在隨機推薦中優先選擇讚數最少的三個，依本週任務進度補足",
+    "en-US": "Like the three least-liked random recommendations as needed for the weekly mission."
+  },
+  "prefs.fishing_hint": {
+    "zh-CN": "使用独立钓鱼组件，完成周任务即停止；不出售、不使用鱼饵",
+    "zh-TW": "使用獨立釣魚元件，完成週任務即停止；不販售、不使用魚餌",
+    "en-US": "Fish until the weekly mission completes, without selling or using bait."
+  },
+  "prefs.tiles_hint": {
+    "zh-CN": "完成一把常规未通关关卡；全部通关时重玩第1关，本周任务已完成则跳过",
+    "zh-TW": "完成一場一般未通關關卡；全部通關時重玩第 1 關，本週任務已完成則略過",
+    "en-US": "Clear an unfinished normal stage, or replay stage 1 if all are cleared. Skip if the weekly mission is complete."
+  },
+  "prefs.trade": {
+    "zh-CN": "跑商、料理与高价售卖",
+    "zh-TW": "交易、料理與高價販售",
+    "en-US": "Trading, cooking and premium sales"
+  },
+  "prefs.trade_hint": {
+    "zh-CN": "采集后统一分配库存；先采购，再烹饪，最后仅按120%报价售卖",
+    "zh-TW": "採集後統一分配庫存；先採購，再烹飪，最後僅依 120% 報價販售",
+    "en-US": "Allocate inventory after collection: buy, cook, then sell only at a 120% quote."
+  },
+  "prefs.trade_note": {
+    "zh-CN": "保留金币、垫资上限及原料保留量沿用本账号跑商计划设置。低于1000万会提示30天周转；不会出售装备、制作材料或属性石。完成当天交易后重复运行不再花费。",
+    "zh-TW": "保留金幣、墊資上限及原料保留量沿用本帳號交易計畫設定。低於 1000 萬會提示 30 天週轉；不販售裝備、製作材料或屬性石。當日交易完成後重跑不再花費。",
+    "en-US": "Uses this account's cash reserve, funding limit and ingredient reserves. Warns below 10 million for the 30-day cycle. Never sells gear, crafting materials or ability stones. Completed daily trades are not repeated."
+  },
+  "prefs.trade_open": {
+    "zh-CN": "预览计划与资金设置",
+    "zh-TW": "預覽計畫與資金設定",
+    "en-US": "Preview plan and budget"
+  },
+  "prefs.trade_title": {
+    "zh-CN": "跑商计划",
+    "zh-TW": "交易計畫",
+    "en-US": "Trading plan"
+  },
+  "prefs.events": {
+    "zh-CN": "活动答题、骰子与领奖",
+    "zh-TW": "活動答題、骰子與領獎",
+    "en-US": "Event quiz, dice and rewards"
+  },
+  "prefs.events_hint": {
+    "zh-CN": "自动检查当前活动；批量兑换，整页完成后继续下一页",
+    "zh-TW": "自動檢查目前活動；批量兌換，整頁完成後繼續下一頁",
+    "en-US": "Check current events, exchange in batches and finish each page before continuing."
+  },
+  "prefs.events_missions": {
+    "zh-CN": "领取活动任务与活动代币",
+    "zh-TW": "領取活動任務與活動代幣",
+    "en-US": "Claim event missions and tokens"
+  },
+  "prefs.events_quiz": {
+    "zh-CN": "自动完成已开放答题",
+    "zh-TW": "自動完成已開放答題",
+    "en-US": "Complete available quizzes"
+  },
+  "prefs.events_dice": {
+    "zh-CN": "自动使用现有活动骰子",
+    "zh-TW": "自動使用現有活動骰子",
+    "en-US": "Use existing event dice"
+  },
+  "prefs.events_roulette": {
+    "zh-CN": "使用免费次数和已有转盘券",
+    "zh-TW": "使用免費次數與現有轉盤券",
+    "en-US": "Use free spins and existing roulette tickets"
+  },
+  "prefs.events_exchange": {
+    "zh-CN": "活动代币最大批量兑换",
+    "zh-TW": "活動代幣最大批量兌換",
+    "en-US": "Exchange event tokens in maximum batches"
+  },
+  "prefs.events_note": {
+    "zh-CN": "使用现有活动代币，不购买付费钻石或礼包。领奖后复查新完成的活动任务。",
+    "zh-TW": "使用現有活動代幣，不購買付費鑽石或禮包。領獎後複查新完成的活動任務。",
+    "en-US": "Use existing event tokens. Never buy premium diamonds or bundles. Recheck completed missions after claiming rewards."
+  },
+  "prefs.daily_hint": {
+    "zh-CN": "在行动结束后领取新完成的日常任务",
+    "zh-TW": "於行動結束後領取新完成的每日任務",
+    "en-US": "Claim newly completed daily missions after activities."
+  },
+  "prefs.weekly_hint": {
+    "zh-CN": "在行动结束后领取新完成的周常任务",
+    "zh-TW": "於行動結束後領取新完成的每週任務",
+    "en-US": "Claim newly completed weekly missions after activities."
+  },
+  "prefs.pass_hint": {
+    "zh-CN": "检查各通行证的任务与等级奖励",
+    "zh-TW": "檢查各通行證的任務與等級獎勵",
+    "en-US": "Check mission and level rewards for each pass."
+  },
+  "prefs.mail": {
+    "zh-CN": "邮箱物品",
+    "zh-TW": "信箱物品",
+    "en-US": "Mail items"
+  },
+  "prefs.mail_hint": {
+    "zh-CN": "所有日常和通行证领奖结束后，一键收取邮箱物品",
+    "zh-TW": "所有日常與通行證領獎結束後，一鍵收取信箱物品",
+    "en-US": "Claim all mail after daily and pass rewards."
+  },
+  "prefs.gear_unavailable": {
+    "en-US": "Selected gear unavailable in inventory ({0})",
+    "zh-CN": "已指定装备 · 当前库存不可用（{0}）",
+    "zh-TW": "已指定裝備 · 目前庫存無法使用（{0}）"
+  },
+  "appearance.error": {
+    "zh-CN": "无法保存外观设置：{0}",
+    "zh-TW": "無法儲存外觀設定：{0}",
+    "en-US": "Could not save appearance: {0}"
+  },
+  "prefs.read_error": {
+    "zh-CN": "无法读取偏好：",
+    "zh-TW": "無法讀取偏好：",
+    "en-US": "Could not load settings: "
+  },
+  "common.save_error": {
+    "zh-CN": "保存失败：",
+    "zh-TW": "儲存失敗：",
+    "en-US": "Could not save: "
+  },
+  "account.inspect_confirm": {
+    "zh-CN": "将依次核对 {0} 个账号的登录身份。切换账号时会正常关闭并重新启动游戏，最后停留在最后一个账号。\n\n请先结束当前战斗、结算或未保存的操作。点击“停止”可结束队列。",
+    "zh-TW": "將依序核對 {0} 個帳號的登入身分。切換帳號時會正常關閉並重新啟動遊戲，最後停留在最後一個帳號。\n\n請先結束目前戰鬥、結算或未儲存的操作。點擊「停止」可結束佇列。",
+    "en-US": "Check the login identity of {0} accounts in order. Switching closes and restarts the game, leaving the final account signed in.\n\nFinish any battle, pending result or unsaved action first. Use Stop to end the queue."
+  },
+  "account.slot_update": {
+    "zh-CN": "更新原槽位 {0:00}",
+    "zh-TW": "更新原欄位 {0:00}",
+    "en-US": "Update saved slot {0:00}"
+  },
+  "account.slot_save": {
+    "zh-CN": "保存到空槽位 {0:00}",
+    "zh-TW": "儲存至空欄位 {0:00}",
+    "en-US": "Save to empty slot {0:00}"
+  },
+  "account.update_hint": {
+    "zh-CN": "已识别为保存过的账号。更新登录凭据，保留原位置、日常设置和进度。",
+    "zh-TW": "已識別為儲存過的帳號。更新登入憑證，保留原位置、日常設定與進度。",
+    "en-US": "This account is already saved. Update its login credentials while keeping its slot, settings and progress."
+  },
+  "account.new_hint": {
+    "zh-CN": "为这个账号取一个容易区分的名字。",
+    "zh-TW": "為這個帳號取一個容易區分的名字。",
+    "en-US": "Choose a recognizable name for this account."
+  },
+  "account.updated": {
+    "zh-CN": "已更新 {0} 的原槽位，设置与进度保持。",
+    "zh-TW": "已更新 {0} 的原欄位，設定與進度保留。",
+    "en-US": "Updated {0} in its existing slot. Settings and progress are unchanged."
+  },
+  "account.new_saved": {
+    "zh-CN": "已保存 {0}，沿用原账号工具的加密存储。",
+    "zh-TW": "已儲存 {0}，沿用原帳號工具的加密儲存。",
+    "en-US": "Saved {0} using the existing encrypted account storage."
+  },
+  "account.rename_title": {
+    "zh-CN": "重命名账号",
+    "zh-TW": "重新命名帳號",
+    "en-US": "Rename account"
+  },
+  "account.rename_hint": {
+    "zh-CN": "别名只保存在本机，不会修改游戏角色名称。",
+    "zh-TW": "別名僅儲存在本機，不會修改遊戲角色名稱。",
+    "en-US": "This local alias does not change your character's name."
+  },
+  "account.delete_confirm": {
+    "zh-CN": "从本机账号库移除“{0}”？\n\n这会删除该槽位保存的登录会话；不会删除游戏账号。",
+    "zh-TW": "從本機帳號庫移除「{0}」？\n\n這會刪除該欄位儲存的登入工作階段，不會刪除遊戲帳號。",
+    "en-US": "Remove “{0}” from local accounts?\n\nThis deletes the slot's saved login session. Your game account will remain."
+  },
+  "account.login_confirm": {
+    "zh-CN": "登录新账号前，请正常退出游戏和启动器。当前登录账号必须已经保存。\n\n接下来会备份当前登录会话，并启动游戏供你登录新账号；登录完成后退出游戏，再保存到空槽位。",
+    "zh-TW": "登入新帳號前，請正常退出遊戲與啟動器。目前登入帳號必須已經儲存。\n\n接著會備份目前登入工作階段，並啟動遊戲供你登入新帳號；登入完成後退出遊戲，再儲存至空欄位。",
+    "en-US": "Close the game and launcher first, and make sure the current account is saved.\n\nThe current login session will be backed up and the game opened for a new login. Afterwards, exit the game and save the new account to an empty slot."
+  },
+  "account.recover_confirm": {
+    "zh-CN": "游戏和启动器关闭后，可恢复上一次切换前备份的本机会话。\n\n这不会启动游戏，也不会删除已保存账号。",
+    "zh-TW": "遊戲與啟動器關閉後，可還原上次切換前備份的本機工作階段。\n\n這不會啟動遊戲，也不會刪除已儲存帳號。",
+    "en-US": "After closing the game and launcher, restore the local session backed up before the last switch.\n\nThis will not start the game or delete saved accounts."
+  },
+  "run.multi_confirm": {
+    "zh-CN": "将依次执行 {0} 个账号已开启的日常环节。切换账号时会正常关闭并重启游戏。请先结束正在进行的战斗。",
+    "zh-TW": "將依序執行 {0} 個帳號已開啟的日常環節。切換帳號時會正常關閉並重新啟動遊戲。請先結束進行中的戰鬥。",
+    "en-US": "Run enabled daily tasks for {0} accounts in order. The game will close and restart between accounts. Finish any ongoing battle first."
+  },
+  "run.stop_requested": {
+    "zh-CN": "已请求停止，等待当前请求结算。",
+    "zh-TW": "已請求停止，等待目前請求結算。",
+    "en-US": "Stop requested. Waiting for the pending operation to finish."
+  },
+  "run.stop_clicks": {
+    "zh-CN": "已停止后续点击。若请求已发出，组件继续记录响应。",
+    "zh-TW": "已停止後續點擊。若請求已送出，元件會繼續記錄回應。",
+    "en-US": "Further clicks stopped. Responses to submitted requests will still be recorded."
+  },
+  "run.stop_connect": {
+    "zh-CN": "正在停止，等待当前组件连接返回；不会再切换下一个账号。",
+    "zh-TW": "正在停止，等待目前元件連線返回；不會切換至下一個帳號。",
+    "en-US": "Stopping after the current connection attempt. No further account switches."
+  },
+  "diagnostics.no_guild": {
+    "zh-CN": "未加入公会",
+    "zh-TW": "未加入公會",
+    "en-US": "No guild"
+  },
+  "preview.notice": {
+    "zh-CN": "这是隔离界面预览，不会操作游戏。可查看设置、调整勾选和切换外观。",
+    "zh-TW": "這是隔離介面預覽，不會操作遊戲。可查看設定、調整勾選與切換外觀。",
+    "en-US": "Isolated UI preview. Explore settings, select tasks and switch appearance without operating the game."
+  },
+  "preview.no_game": {
+    "zh-CN": "这是隔离界面预览，不会操作游戏。",
+    "zh-TW": "這是隔離介面預覽，不會操作遊戲。",
+    "en-US": "This isolated preview does not operate the game."
+  },
+  "preview.no_read": {
+    "zh-CN": "界面预览不会读取游戏或切换地图。",
+    "zh-TW": "介面預覽不會讀取遊戲或切換地圖。",
+    "en-US": "The UI preview does not read the game or switch maps."
+  },
+  "trade.intro": {
+    "zh-CN": "在游戏广场商店的购买页读取当前账号，或导入已保存的快照。",
+    "zh-TW": "在遊戲廣場商店購買頁讀取目前帳號，或匯入已儲存的快照。",
+    "en-US": "Read the current account from the plaza shop's purchase page, or import a saved snapshot."
+  },
+  "trade.preview_only": {
+    "zh-CN": "仅预览计划，不执行采购、料理或出售。",
+    "zh-TW": "僅預覽計畫，不執行採購、料理或販售。",
+    "en-US": "Preview only. No purchasing, cooking or selling."
+  },
+  "trade.empty": {
+    "zh-CN": "导入后可查看预计增益、垫资和回款日期。",
+    "zh-TW": "匯入後可查看預計收益、墊資與回款日期。",
+    "en-US": "Import a snapshot to see estimated profit, upfront costs and sale dates."
+  },
+  "trade.read": {
+    "zh-CN": "读取当前游戏",
+    "zh-TW": "讀取目前遊戲",
+    "en-US": "Read game"
+  },
+  "trade.import": {
+    "zh-CN": "导入离线快照",
+    "zh-TW": "匯入離線快照",
+    "en-US": "Import snapshot"
+  },
+  "trade.compute": {
+    "zh-CN": "计算计划",
+    "zh-TW": "計算計畫",
+    "en-US": "Calculate plan"
+  },
+  "trade.export": {
+    "zh-CN": "导出明细",
+    "zh-TW": "匯出明細",
+    "en-US": "Export details"
+  },
+  "trade.save": {
+    "zh-CN": "保存资金设置",
+    "zh-TW": "儲存資金設定",
+    "en-US": "Save budget"
+  },
+  "trade.cycle": {
+    "zh-CN": "按当前供货统一分配原料和料理。回款约需30天；尚未售出的收入不会计入采购预算。",
+    "zh-TW": "依目前供貨統一分配原料與料理。回款約需 30 天；尚未售出的收入不計入採購預算。",
+    "en-US": "Allocate ingredients and cooking from current stock. Returns take about 30 days; unsold goods do not fund purchases."
+  },
+  "trade.reserve": {
+    "zh-CN": "保留金币",
+    "zh-TW": "保留金幣",
+    "en-US": "Reserve gold"
+  },
+  "trade.budget": {
+    "zh-CN": "本轮最多垫资",
+    "zh-TW": "本輪最多墊資",
+    "en-US": "Maximum spending"
+  },
+  "trade.unlimited": {
+    "zh-CN": "留空表示不限额",
+    "zh-TW": "留空表示不限額",
+    "en-US": "Leave blank for no limit"
+  },
+  "trade.buy_tab": {
+    "zh-CN": "采购",
+    "zh-TW": "採購",
+    "en-US": "Purchases"
+  },
+  "trade.cook_tab": {
+    "zh-CN": "料理分配",
+    "zh-TW": "料理分配",
+    "en-US": "Cooking"
+  },
+  "trade.today_tab": {
+    "zh-CN": "今日待售",
+    "zh-TW": "今日待售",
+    "en-US": "Sell today"
+  },
+  "trade.future_tab": {
+    "zh-CN": "后续售卖",
+    "zh-TW": "後續販售",
+    "en-US": "Future sales"
+  },
+  "trade.saved": {
+    "zh-CN": "本账号资金设置已保存，下次开始跑商时生效；没有执行交易。",
+    "zh-TW": "已儲存本帳號資金設定，下次開始跑商時生效；沒有執行交易。",
+    "en-US": "Budget saved for this account's next trade run. No trades were made."
+  },
+  "trade.select_account": {
+    "zh-CN": "请先选择账号。",
+    "zh-TW": "請先選擇帳號。",
+    "en-US": "Select an account first."
+  },
+  "trade.changed": {
+    "zh-CN": "设置已变更，请重新计算。",
+    "zh-TW": "設定已變更，請重新計算。",
+    "en-US": "Settings changed. Recalculate the plan."
+  },
+  "trade.not_computed": {
+    "zh-CN": "尚未计算。",
+    "zh-TW": "尚未計算。",
+    "en-US": "No calculation yet."
+  },
+  "trade.import_title": {
+    "zh-CN": "选择账号跑商快照",
+    "zh-TW": "選擇帳號跑商快照",
+    "en-US": "Select a trade snapshot"
+  },
+  "trade.import_error": {
+    "zh-CN": "无法导入：",
+    "zh-TW": "無法匯入：",
+    "en-US": "Could not import: "
+  },
+  "trade.schema": {
+    "zh-CN": "快照版本不支持。",
+    "zh-TW": "不支援此快照版本。",
+    "en-US": "This snapshot version is not supported."
+  },
+  "trade.account_mismatch": {
+    "zh-CN": "快照与所选账号不一致。",
+    "zh-TW": "快照與所選帳號不一致。",
+    "en-US": "The snapshot belongs to a different account."
+  },
+  "trade.incomplete": {
+    "zh-CN": "快照尚未完整采集。",
+    "zh-TW": "快照尚未完整採集。",
+    "en-US": "The snapshot is incomplete."
+  },
+  "trade.identity": {
+    "zh-CN": "{0} · 游戏日期 {1} · 快照 {2}",
+    "zh-TW": "{0} · 遊戲日期 {1} · 快照 {2}",
+    "en-US": "{0} · Game date {1} · Captured {2}"
+  },
+  "trade.low_gold": {
+    "zh-CN": "当前金币少于1000万。跑商周转约30天，请保留其他玩法所需资金；计算会按实际余额缩减采购。",
+    "zh-TW": "目前金幣少於 1000 萬。跑商週轉約 30 天，請保留其他玩法所需資金；計算會依實際餘額縮減採購。",
+    "en-US": "Gold is below 10 million. Trade returns take about 30 days. Reserve funds for other activities; purchases scale to the available balance."
+  },
+  "trade.loaded": {
+    "zh-CN": "已载入，当前金币 {0:N0}。计算只使用这份快照；游戏库存变化后需重新导入。",
+    "zh-TW": "已載入，目前金幣 {0:N0}。計算僅使用此快照；遊戲庫存變更後需重新匯入。",
+    "en-US": "Loaded with {0:N0} gold. Calculations use this snapshot; import again after inventory changes."
+  },
+  "trade.reading": {
+    "zh-CN": "正在读取已连接游戏的库存和商店；不会购买、制作或出售。",
+    "zh-TW": "正在讀取已連線遊戲的庫存與商店；不會購買、製作或販售。",
+    "en-US": "Reading inventory and shops from the connected game. No buying, crafting or selling."
+  },
+  "trade.read_error": {
+    "zh-CN": "无法读取：",
+    "zh-TW": "無法讀取：",
+    "en-US": "Could not read: "
+  },
+  "trade.invalid_gold": {
+    "zh-CN": "金币设置须为0至一万亿之间的整数；原输入已保留。",
+    "zh-TW": "金幣設定須為 0 至一兆之間的整數；原輸入已保留。",
+    "en-US": "Enter a whole number from 0 to 1 trillion gold. Your input is preserved."
+  },
+  "trade.computing": {
+    "zh-CN": "正在计算原料、料理与资金的共同最优分配……",
+    "zh-TW": "正在計算原料、料理與資金的最佳共同分配……",
+    "en-US": "Optimizing ingredients, cooking and budget…"
+  },
+  "trade.compute_error": {
+    "zh-CN": "未生成新计划：",
+    "zh-TW": "未產生新計畫：",
+    "en-US": "No new plan generated: "
+  },
+  "trade.plan_mismatch": {
+    "zh-CN": "计划账号不匹配。",
+    "zh-TW": "計畫帳號不符。",
+    "en-US": "The plan belongs to a different account."
+  },
+  "trade.totals": {
+    "zh-CN": "预计增益 {0:N0} 金币   ·   本轮垫资 {1:N0}   ·   未来回款 {2:N0}\n垫资后余额 {3:N0}   ·   消耗天赋药 {4:N0}（需补买 {5:N0}）",
+    "zh-TW": "預計收益 {0:N0} 金幣   ·   本輪墊資 {1:N0}   ·   未來回款 {2:N0}\n墊資後餘額 {3:N0}   ·   消耗天賦藥 {4:N0}（需補買 {5:N0}）",
+    "en-US": "Estimated profit {0:N0} gold · Upfront {1:N0} · Future sales {2:N0}\nRemaining balance {3:N0} · Ability pills {4:N0} ({5:N0} to buy)"
+  },
+  "trade.optimal": {
+    "zh-CN": "已证明当前供货与预付预算范围内最优。",
+    "zh-TW": "已證明目前供貨與預付預算範圍內最佳。",
+    "en-US": "Optimal within current supply and upfront budget."
+  },
+  "trade.best": {
+    "zh-CN": "已得到当前最好方案，尚未证明最优。",
+    "zh-TW": "已得到目前最佳方案，尚未證明最優。",
+    "en-US": "Best plan found so far; optimality is unproven."
+  },
+  "trade.quantity_note": {
+    "zh-CN": "表中含尚未买入／制作的计划数量，不能直接按待售数量卖掉现有原料。",
+    "zh-TW": "表中含尚未買入／製作的計畫數量，不能直接依待售數量賣掉現有原料。",
+    "en-US": "Planned quantities include goods not yet bought or cooked. Do not sell current ingredients using these sale quantities."
+  },
+  "trade.export_title": {
+    "zh-CN": "导出跑商明细",
+    "zh-TW": "匯出跑商明細",
+    "en-US": "Export trade details"
+  },
+  "trade.exported": {
+    "zh-CN": "已导出完整采购、料理和售卖日期明细。",
+    "zh-TW": "已匯出完整採購、料理與販售日期明細。",
+    "en-US": "Exported purchase, cooking and sale-date details."
+  },
+  "trade.export_error": {
+    "zh-CN": "导出失败：",
+    "zh-TW": "匯出失敗：",
+    "en-US": "Export failed: "
+  },
+  "trade.item": {
+    "zh-CN": "物品",
+    "zh-TW": "物品",
+    "en-US": "Item"
+  },
+  "trade.food": {
+    "zh-CN": "料理",
+    "zh-TW": "料理",
+    "en-US": "Dish"
+  },
+  "trade.count": {
+    "zh-CN": "数量",
+    "zh-TW": "數量",
+    "en-US": "Quantity"
+  },
+  "trade.portions": {
+    "zh-CN": "份数",
+    "zh-TW": "份數",
+    "en-US": "Portions"
+  },
+  "trade.price": {
+    "zh-CN": "单价",
+    "zh-TW": "單價",
+    "en-US": "Unit price"
+  },
+  "trade.cost": {
+    "zh-CN": "金额",
+    "zh-TW": "金額",
+    "en-US": "Cost"
+  },
+  "trade.shop": {
+    "zh-CN": "商店",
+    "zh-TW": "商店",
+    "en-US": "Shop"
+  },
+  "trade.pills": {
+    "zh-CN": "天赋药",
+    "zh-TW": "天賦藥",
+    "en-US": "Ability pills"
+  },
+  "trade.date": {
+    "zh-CN": "预计售日",
+    "zh-TW": "預計售日",
+    "en-US": "Sale date"
+  },
+  "tools.idle_notice": {
+    "zh-CN": "连接一次即可切换工具；打开工具后不会自动开始操作。",
+    "zh-TW": "連線一次即可切換工具；開啟工具後不會自動開始操作。",
+    "en-US": "Connect once to switch tools. Opening a tool does not start automation."
+  },
+  "tools.active_notice": {
+    "zh-CN": "工具自动化正在运行或等待结算；停止后即可使用其他自动化，无需关闭窗口。",
+    "zh-TW": "工具自動化正在執行或等待結算；停止後即可使用其他自動化，無需關閉視窗。",
+    "en-US": "A tool is running or awaiting a result. Stop it to use other automation; its window can stay open."
+  },
+  "tools.active_release": {
+    "zh-CN": "工具自动化正在运行或等待结算；停止后释放，无需关闭窗口。",
+    "zh-TW": "工具自動化正在執行或等待結算；停止後釋放，無需關閉視窗。",
+    "en-US": "A tool is running or awaiting a result. Stop it to release control; its window can stay open."
+  },
+  "tools.daily_notice": {
+    "zh-CN": "日常正在执行；工具设置窗口可以保留。",
+    "zh-TW": "日常正在執行；工具設定視窗可以保留。",
+    "en-US": "Daily tasks are running. Tool settings windows can stay open."
+  },
+  "scene.menu": {
+    "zh-CN": "主菜单",
+    "zh-TW": "主選單",
+    "en-US": "Main menu"
+  },
+  "scene.prompt": {
+    "zh-CN": "游戏提示框",
+    "zh-TW": "遊戲提示框",
+    "en-US": "Game prompt"
+  },
+  "scene.event_popup": {
+    "zh-CN": "活动弹窗",
+    "zh-TW": "活動彈窗",
+    "en-US": "Event popup"
+  },
+  "scene.cartridges": {
+    "zh-CN": "卡带选择",
+    "zh-TW": "卡帶選擇",
+    "en-US": "Cartridge selection"
+  },
+  "scene.quick": {
+    "zh-CN": "快捷菜单",
+    "zh-TW": "快捷選單",
+    "en-US": "Quick menu"
+  },
+  "scene.currency": {
+    "zh-CN": "货币界面",
+    "zh-TW": "貨幣介面",
+    "en-US": "Currencies"
+  },
+  "scene.sichuan": {
+    "zh-CN": "连连看盘面",
+    "zh-TW": "連連看盤面",
+    "en-US": "Tile board"
+  },
+  "scene.reward_claim": {
+    "zh-CN": "奖励领取弹窗",
+    "zh-TW": "獎勵領取彈窗",
+    "en-US": "Reward claim"
+  },
+  "scene.rewards": {
+    "zh-CN": "奖励界面",
+    "zh-TW": "獎勵介面",
+    "en-US": "Rewards"
+  },
+  "scene.reward_popup": {
+    "zh-CN": "奖励弹窗",
+    "zh-TW": "獎勵彈窗",
+    "en-US": "Reward popup"
+  },
+  "scene.mirror_rank": {
+    "zh-CN": "镜中段位提示",
+    "zh-TW": "鏡中段位提示",
+    "en-US": "Mirror rank summary"
+  },
+  "scene.update": {
+    "zh-CN": "更新介绍",
+    "zh-TW": "更新介紹",
+    "en-US": "Update information"
+  },
+  "scene.dice": {
+    "zh-CN": "骰子活动",
+    "zh-TW": "骰子活動",
+    "en-US": "Dice event"
+  },
+  "scene.events": {
+    "zh-CN": "活动大厅",
+    "zh-TW": "活動大廳",
+    "en-US": "Event lobby"
+  },
+  "scene.tactics": {
+    "zh-CN": "战术教材大厅",
+    "zh-TW": "戰術教材大廳",
+    "en-US": "Tactical training lobby"
+  },
+  "scene.tactics_season": {
+    "zh-CN": "战术教材赛季提示",
+    "zh-TW": "戰術教材賽季提示",
+    "en-US": "Tactical training season summary"
+  },
+  "scene.guild": {
+    "zh-CN": "公会战大厅",
+    "zh-TW": "公會戰大廳",
+    "en-US": "Guild raid lobby"
+  },
+  "scene.friendship": {
+    "zh-CN": "亲密度管理",
+    "zh-TW": "親密度管理",
+    "en-US": "Affinity management"
+  },
+  "scene.title": {
+    "zh-CN": "标题页",
+    "zh-TW": "標題頁",
+    "en-US": "Title screen"
+  },
+  "scene.lobby": {
+    "zh-CN": "大厅",
+    "zh-TW": "大廳",
+    "en-US": "Lobby"
+  },
+  "scene.field": {
+    "zh-CN": "地图",
+    "zh-TW": "地圖",
+    "en-US": "Field"
+  },
+  "scene.battle": {
+    "zh-CN": "战斗",
+    "zh-TW": "戰鬥",
+    "en-US": "Battle"
+  },
+  "scene.login": {
+    "zh-CN": "登录页",
+    "zh-TW": "登入頁",
+    "en-US": "Login"
+  },
+  "scene.loading": {
+    "zh-CN": "加载中",
+    "zh-TW": "載入中",
+    "en-US": "Loading"
+  },
+  "scene.loading_field": {
+    "zh-CN": "场景加载中",
+    "zh-TW": "場景載入中",
+    "en-US": "Loading scene"
+  },
+  "scene.loaded": {
+    "zh-CN": "游戏场景已载入",
+    "zh-TW": "遊戲場景已載入",
+    "en-US": "Game scene loaded"
+  },
+  "error.canceled": {
+    "zh-CN": "操作已停止。",
+    "zh-TW": "操作已停止。",
+    "en-US": "Operation stopped."
+  },
+  "error.timeout": {
+    "zh-CN": "等待超时，请检查游戏加载、网络或弹窗状态。",
+    "zh-TW": "等待逾時，請檢查遊戲載入、網路或彈窗狀態。",
+    "en-US": "Timed out. Check game loading, network and any open prompts."
+  },
+  "error.unknown": {
+    "zh-CN": "未能完成操作，请查看原始信息确认原因。",
+    "zh-TW": "未能完成操作，請查看原始資訊確認原因。",
+    "en-US": "Operation could not complete. See the original details for the cause."
+  },
+  "app.window_title": {
+    "zh-CN": "Dustweave · BD2 日常助手",
+    "zh-TW": "Dustweave · BD2 日常助手",
+    "en-US": "Dustweave · BD2 Daily Assistant"
+  },
+  "error.untranslated": {
+    "zh-CN": "此提示暂未收录中文说明，请查看原始信息。",
+    "zh-TW": "此提示尚未收錄說明，請查看原始資訊。",
+    "en-US": "No explanation is available for this message yet. See the original details."
+  },
+  "error.user_cancel": {
+    "zh-CN": "操作已取消，已完成的进度会保留。",
+    "zh-TW": "操作已取消，已完成的進度會保留。",
+    "en-US": "Operation canceled. Completed progress is preserved."
+  },
+  "error.access": {
+    "zh-CN": "访问被拒绝，请检查文件权限或当前游戏连接权限。",
+    "zh-TW": "存取遭拒，請檢查檔案權限或目前遊戲連線權限。",
+    "en-US": "Access denied. Check file permissions and the current game connection."
+  },
+  "error.files": {
+    "zh-CN": "所需文件不存在，请检查工具文件和选择的路径。",
+    "zh-TW": "所需檔案不存在，請檢查工具檔案與選擇的路徑。",
+    "en-US": "A required file is missing. Check the tool files and selected path."
+  },
+  "error.json": {
+    "zh-CN": "数据文件无法读取，请检查文件是否完整、格式是否正确。",
+    "zh-TW": "資料檔無法讀取，請檢查檔案是否完整、格式是否正確。",
+    "en-US": "Cannot read the data file. Check its format and completeness."
+  },
+  "error.io": {
+    "zh-CN": "文件或连接暂不可用，请检查文件占用和游戏连接。",
+    "zh-TW": "檔案或連線暫時無法使用，請檢查檔案占用與遊戲連線。",
+    "en-US": "A file or connection is unavailable. Check open files and the game connection."
+  },
+  "error.assembly_load": {
+    "zh-CN": "无法加载所需组件，请检查工具文件是否完整。",
+    "zh-TW": "無法載入所需元件，請檢查工具檔案是否完整。",
+    "en-US": "Cannot load a required component. Check that the tool files are complete."
+  },
+  "error.assembly_resolve": {
+    "zh-CN": "无法解析游戏组件，请重新准备与当前游戏配套的连接组件。",
+    "zh-TW": "無法解析遊戲元件，請重新準備與目前遊戲相容的連線元件。",
+    "en-US": "Cannot resolve a game component. Prepare a connection component for the current game version."
+  },
+  "error.path": {
+    "zh-CN": "无法访问所需文件，请检查文件权限或是否被其他程序占用。",
+    "zh-TW": "無法存取所需檔案，請檢查權限或是否被其他程式占用。",
+    "en-US": "Cannot access a required file. Check permissions and whether another program is using it."
+  },
+  "error.file_busy": {
+    "zh-CN": "文件被其他程序占用，请等待占用结束后重试。",
+    "zh-TW": "檔案被其他程式占用，請等候占用結束後重試。",
+    "en-US": "Another program is using the file. Retry after it releases the file."
+  },
+  "error.missing_file": {
+    "zh-CN": "所需文件不存在，请检查工具文件是否完整。",
+    "zh-TW": "所需檔案不存在，請檢查工具檔案是否完整。",
+    "en-US": "A required file is missing. Check that the tool files are complete."
+  },
+  "error.stop_preserve": {
+    "zh-CN": "已停止后续操作，请核对当前游戏状态后继续。",
+    "zh-TW": "已停止後續操作，請核對目前遊戲狀態後繼續。",
+    "en-US": "Further actions stopped. Check the current game state before continuing."
+  },
+  "diagnostics.operation_prefix": {
+    "zh-CN": "操作记录不可读：",
+    "zh-TW": "操作記錄無法讀取：",
+    "en-US": "Cannot read operation history: "
+  },
+  "runtime.navigation_error_prefix": {
+    "zh-CN": "导航未能安全恢复：",
+    "zh-TW": "導航未能安全恢復：",
+    "en-US": "Navigation could not recover safely: "
+  },
+  "runtime.daily_error_prefix": {
+    "zh-CN": "日常未继续：",
+    "zh-TW": "日常未繼續：",
+    "en-US": "Daily tasks could not continue: "
+  },
+  "app.preview_title": {
+    "zh-CN": "Dustweave · 隔离界面预览",
+    "zh-TW": "Dustweave · 隔離介面預覽",
+    "en-US": "Dustweave · Isolated preview"
+  },
+  "startup.already_open": {
+    "zh-CN": "Dustweave 已经打开，请检查任务栏。",
+    "zh-TW": "Dustweave 已經開啟，請檢查工作列。",
+    "en-US": "Dustweave is already open. Check your taskbar."
+  },
+  "startup.failed": {
+    "zh-CN": "Dustweave 启动失败",
+    "zh-TW": "Dustweave 啟動失敗",
+    "en-US": "Dustweave could not start"
+  },
+  "startup.diagnostic": {
+    "zh-CN": "原始错误保存在诊断目录的 startup-error.json 中。",
+    "zh-TW": "原始錯誤儲存於診斷目錄的 startup-error.json。",
+    "en-US": "The original error is saved in startup-error.json in the diagnostics folder."
+  },
+  "trade.offline_title": {
+    "zh-CN": "跑商计划 · 离线",
+    "zh-TW": "跑商計畫 · 離線",
+    "en-US": "Trading plan · Offline"
+  },
+  "history.previous": {
+    "zh-CN": "上次记录 · {0:MM-dd HH:mm} · {1}（当前未运行）",
+    "zh-TW": "上次紀錄 · {0:MM-dd HH:mm} · {1}（目前未執行）",
+    "en-US": "Previous run · {0:MM-dd HH:mm} · {1} (not running)"
+  },
+  "history.local": {
+    "zh-CN": "本机记录 · {0:MM-dd HH:mm:ss} · {1}",
+    "zh-TW": "本機紀錄 · {0:MM-dd HH:mm:ss} · {1}",
+    "en-US": "Local record · {0:MM-dd HH:mm:ss} · {1}"
+  },
+  "history.read_error": {
+    "zh-CN": "读取历史记录失败：",
+    "zh-TW": "讀取歷史紀錄失敗：",
+    "en-US": "Cannot read run history: "
+  },
+  "account.refresh_error": {
+    "zh-CN": "账号目录暂时无法刷新：",
+    "zh-TW": "帳號目錄暫時無法重新整理：",
+    "en-US": "Cannot refresh accounts right now: "
+  },
+  "tools.shared_ready": {
+    "zh-CN": "已共用游戏连接 · {0}。请在工具窗口确认设置后开始。",
+    "zh-TW": "已共用遊戲連線 · {0}。請在工具視窗確認設定後開始。",
+    "en-US": "Connection shared with {0}. Review the tool settings before starting."
+  },
+  "tools.existing_window": {
+    "zh-CN": "{0}的独立窗口已经打开，请先使用或关闭原窗口。",
+    "zh-TW": "{0}的獨立視窗已開啟，請先使用或關閉原視窗。",
+    "en-US": "The standalone {0} window is already open. Use or close that window first."
+  },
+  "tools.start_failed": {
+    "zh-CN": "{0}未能启动，请查看工具诊断记录。",
+    "zh-TW": "{0}未能啟動，請查看工具診斷紀錄。",
+    "en-US": "{0} could not start. Check the tool diagnostics."
+  },
+  "tools.window_ready": {
+    "zh-CN": "{0}窗口已打开。未启用自动化时，可以直接运行日常或切换工具。",
+    "zh-TW": "{0}視窗已開啟。未啟用自動化時，可以直接執行日常或切換工具。",
+    "en-US": "{0} is open. While its automation is off, you can run daily tasks or switch tools."
+  },
+  "suite.reuse": {
+    "zh-CN": "复用已准备组件 · {0}",
+    "zh-TW": "重用已準備元件 · {0}",
+    "en-US": "Reusing prepared component · {0}"
+  },
+  "suite.prepare": {
+    "zh-CN": "首次准备 · {0}",
+    "zh-TW": "首次準備 · {0}",
+    "en-US": "Preparing for first use · {0}"
+  },
+  "suite.daily": {
+    "zh-CN": "日常执行",
+    "zh-TW": "日常執行",
+    "en-US": "Daily tasks"
+  },
+  "suite.common": {
+    "zh-CN": "准备公共连接组件",
+    "zh-TW": "準備共用連線元件",
+    "en-US": "Preparing the shared connection component"
+  },
+  "suite.compile_failed": {
+    "zh-CN": "日常执行组件编译失败，尚未启用。",
+    "zh-TW": "日常執行元件編譯失敗，尚未啟用。",
+    "en-US": "The daily task component could not be built and has not been enabled."
+  },
+  "suite.invalid_size": {
+    "zh-CN": "功能组件大小异常，未发送。",
+    "zh-TW": "功能元件大小異常，未傳送。",
+    "en-US": "The component size is invalid. It was not sent to the game."
+  },
+  "suite.not_ready": {
+    "zh-CN": "统一会话未就绪。",
+    "zh-TW": "統一工作階段尚未就緒。",
+    "en-US": "The shared session is not ready."
+  },
+  "tools.close_wait": {
+    "zh-CN": "正在等待工具正常停止和关闭…",
+    "zh-TW": "正在等候工具正常停止並關閉…",
+    "en-US": "Waiting for the tool to stop and close…"
+  },
+  "tools.close_pending": {
+    "zh-CN": "工具正在准备或处理操作，请到原窗口停止并关闭；不会强制中断。",
+    "zh-TW": "工具正在準備或處理操作，請到原視窗停止並關閉；不會強制中斷。",
+    "en-US": "The tool is preparing or processing an action. Stop and close it in its own window; it will not be forced to quit."
+  },
+  "tools.close_timeout": {
+    "zh-CN": "工具仍在处理操作，请在原窗口停止并关闭后再试。",
+    "zh-TW": "工具仍在處理操作，請在原視窗停止並關閉後再試。",
+    "en-US": "The tool is still processing an action. Stop and close it in its window, then retry."
+  },
+  "tools.closed": {
+    "zh-CN": "工具已关闭，可以继续日常。",
+    "zh-TW": "工具已關閉，可以繼續日常。",
+    "en-US": "The tool is closed. You can continue daily tasks."
+  },
+  "tools.open_wait": {
+    "zh-CN": "工具正在打开窗口，请稍候。",
+    "zh-TW": "工具正在開啟視窗，請稍候。",
+    "en-US": "Opening the tool window…"
+  },
+  "tools.open_failed": {
+    "zh-CN": "无法打开工具。",
+    "zh-TW": "無法開啟工具。",
+    "en-US": "The tool could not be opened."
+  },
+  "tools.host_required": {
+    "zh-CN": "请从日常助手的工具菜单打开，以共用游戏连接。",
+    "zh-TW": "請從日常助手的工具選單開啟，以共用遊戲連線。",
+    "en-US": "Open this tool from Dustweave to share the game connection."
+  },
+  "tools.entry_missing": {
+    "zh-CN": "工具缺少统一启动入口，请使用完整版本。",
+    "zh-TW": "工具缺少統一啟動入口，請使用完整版本。",
+    "en-US": "The shared launch entry is missing. Use a complete package."
+  },
+  "tools.start_error_title": {
+    "zh-CN": "工具启动失败",
+    "zh-TW": "工具啟動失敗",
+    "en-US": "Tool could not start"
+  },
+  "tools.refresh_inventory": {
+    "zh-CN": "刷新库存",
+    "zh-TW": "重新整理庫存",
+    "en-US": "Refresh inventory"
+  },
+  "app.subtitle": {
+    "zh-CN": "BD2 日常助手",
+    "zh-TW": "BD2 日常助手",
+    "en-US": "BD2 Daily Assistant"
+  },
+  "run.timeline_accessible": {
+    "zh-CN": "任务时间线",
+    "zh-TW": "任務時間線",
+    "en-US": "Task timeline"
+  },
+  "appearance.system_short": {
+    "zh-CN": "系统",
+    "zh-TW": "系統",
+    "en-US": "Auto"
+  },
+  "diagnostics.refresh": {
+    "zh-CN": "刷新状态",
+    "zh-TW": "重新整理狀態",
+    "en-US": "Refresh status"
+  },
+  "diagnostics.activity": {
+    "zh-CN": "最近一次操作",
+    "zh-TW": "最近一次操作",
+    "en-US": "Latest operation"
+  },
+  "diagnostics.timeline": {
+    "zh-CN": "查看任务时间线",
+    "zh-TW": "查看任務時間軸",
+    "en-US": "View task timeline"
+  },
+  "diagnostics.help": {
+    "zh-CN": "需要进一步排查？",
+    "zh-TW": "需要進一步排查？",
+    "en-US": "Need more help?"
+  },
+  "diagnostics.help_body": {
+    "zh-CN": "先复制状态摘要，并说明卡住的步骤。需要日志时，打开诊断文件夹，选择对应时间的记录；记录可能包含角色信息，请勿公开上传。",
+    "zh-TW": "先複製狀態摘要，並說明卡住的步驟。需要日誌時，開啟診斷資料夾，選擇對應時間的紀錄；紀錄可能包含角色資訊，請勿公開上傳。",
+    "en-US": "Copy the status summary and describe where you got stuck. If logs are needed, choose records from that time in the diagnostics folder. Logs may contain character details; do not post them publicly."
+  },
+  "diagnostics.copy": {
+    "zh-CN": "复制状态摘要",
+    "zh-TW": "複製狀態摘要",
+    "en-US": "Copy status summary"
+  },
+  "diagnostics.folder": {
+    "zh-CN": "打开诊断文件夹",
+    "zh-TW": "開啟診斷資料夾",
+    "en-US": "Open diagnostics folder"
+  },
+  "diagnostics.advanced": {
+    "zh-CN": "高级检查 · 公会",
+    "zh-TW": "進階檢查 · 公會",
+    "en-US": "Advanced · Guild check"
+  },
+  "diagnostics.refreshed": {
+    "zh-CN": "已刷新本机连接状态。",
+    "zh-TW": "已重新整理本機連線狀態。",
+    "en-US": "Local connection status refreshed."
+  },
+  "diagnostics.copied": {
+    "zh-CN": "已复制，可粘贴到反馈中。摘要不含账号标识或登录信息。",
+    "zh-TW": "已複製，可貼到問題回報中。摘要不含帳號識別碼或登入資訊。",
+    "en-US": "Copied. Paste it into your report. The summary excludes account identifiers and sign-in data."
+  },
+  "diagnostics.copy_failed": {
+    "zh-CN": "剪贴板暂时不可用，请再试一次。",
+    "zh-TW": "剪貼簿暫時無法使用，請再試一次。",
+    "en-US": "The clipboard is busy. Please try again."
+  },
+  "diagnostics.version": {
+    "zh-CN": "Dustweave {0}",
+    "zh-TW": "Dustweave {0}",
+    "en-US": "Dustweave {0}"
+  },
+  "diagnostics.scene_version": {
+    "zh-CN": "{0} · Dustweave {1}",
+    "zh-TW": "{0} · Dustweave {1}",
+    "en-US": "{0} · Dustweave {1}"
+  },
+  "diagnostics.status.ready": {
+    "zh-CN": "连接正常",
+    "zh-TW": "連線正常",
+    "en-US": "Connected"
+  },
+  "diagnostics.advice.ready": {
+    "zh-CN": "正在接收当前游戏的信息。可以返回时间线，选择需要执行的任务。",
+    "zh-TW": "正在接收目前遊戲的資訊。可以返回時間軸，選擇需要執行的任務。",
+    "en-US": "Receiving updates from the current game. Return to the timeline to select your tasks."
+  },
+  "diagnostics.status.closed": {
+    "zh-CN": "游戏尚未运行",
+    "zh-TW": "遊戲尚未執行",
+    "en-US": "Game is not running"
+  },
+  "diagnostics.advice.closed": {
+    "zh-CN": "请先正常启动游戏，再点击右上方「连接当前游戏」。",
+    "zh-TW": "請先正常啟動遊戲，再點擊右上方「連接目前遊戲」。",
+    "en-US": "Start the game normally, then use the Connect button at the top right."
+  },
+  "diagnostics.status.unconnected": {
+    "zh-CN": "等待连接游戏",
+    "zh-TW": "等待連接遊戲",
+    "en-US": "Waiting for a connection"
+  },
+  "diagnostics.advice.unconnected": {
+    "zh-CN": "已找到游戏，尚未收到当前连接的信息。点击连接以准备日常组件；如果正在加载，请稍候。",
+    "zh-TW": "已找到遊戲，尚未收到目前連線的資訊。點擊連接以準備日常元件；若正在載入，請稍候。",
+    "en-US": "The game is running, but no current connection data is available. Connect to prepare the daily component, or wait if it is still loading."
+  },
+  "diagnostics.status.stale": {
+    "zh-CN": "连接信息已过期",
+    "zh-TW": "連線資訊已過期",
+    "en-US": "Connection needs refreshing"
+  },
+  "diagnostics.advice.stale": {
+    "zh-CN": "现有信息不属于当前连接，或已停止更新。游戏加载完成后请重新连接；若其他工具正在运行，请先停止它的自动化。",
+    "zh-TW": "現有資訊不屬於目前連線，或已停止更新。遊戲載入完成後請重新連接；若其他工具正在執行，請先停止它的自動化。",
+    "en-US": "The connection data is outdated or no longer updating. Reconnect once the game finishes loading. Stop automation in another tool first, if one is running."
+  },
+  "diagnostics.status.login": {
+    "zh-CN": "等待进入游戏",
+    "zh-TW": "等待進入遊戲",
+    "en-US": "Waiting for sign-in"
+  },
+  "diagnostics.advice.login": {
+    "zh-CN": "组件已连接，但角色身份尚未就绪。请完成游戏登录或等待加载结束。",
+    "zh-TW": "元件已連接，但角色身分尚未就緒。請完成遊戲登入或等待載入結束。",
+    "en-US": "The component is connected, but the character is not ready. Finish signing in or wait for loading to complete."
+  },
+  "diagnostics.status.tool": {
+    "zh-CN": "工具正在使用连接",
+    "zh-TW": "工具正在使用連線",
+    "en-US": "Connection in use by a tool"
+  },
+  "diagnostics.advice.tool": {
+    "zh-CN": "这是正常的占用状态。停止工具的自动化后，即可继续日常任务，无需关闭工具窗口。",
+    "zh-TW": "這是正常的占用狀態。停止工具的自動化後，即可繼續日常任務，無須關閉工具視窗。",
+    "en-US": "This is expected while a tool is active. Stop its automation to continue daily tasks; its window can stay open."
+  },
+  "diagnostics.status.unreadable": {
+    "zh-CN": "暂时无法读取连接",
+    "zh-TW": "暫時無法讀取連線",
+    "en-US": "Unable to read the connection"
+  },
+  "diagnostics.advice.unreadable": {
+    "zh-CN": "请先确认游戏仍在运行，并查看上方的具体提示。刷新后仍有问题时，复制摘要并附上提示文字。",
+    "zh-TW": "請先確認遊戲仍在執行，並查看上方的詳細提示。重新整理後仍有問題時，複製摘要並附上提示文字。",
+    "en-US": "Check that the game is still running and read the message above. If refreshing does not help, copy the summary and include that message."
+  },
+  "diagnostics.status.preview": {
+    "zh-CN": "界面预览",
+    "zh-TW": "介面預覽",
+    "en-US": "Interface preview"
+  },
+  "diagnostics.advice.preview": {
+    "zh-CN": "这里使用演示数据，可浏览界面和切换外观，不会连接或操作游戏。",
+    "zh-TW": "這裡使用示範資料，可瀏覽介面和切換外觀，不會連接或操作遊戲。",
+    "en-US": "This preview uses demo data. Explore the interface and appearance without connecting to or controlling the game."
+  },
+  "prefs.extension_hint": {
+    "zh-CN": "按当前配置执行",
+    "zh-TW": "按目前設定執行",
+    "en-US": "Run with the current settings"
+  },
+  "prefs.attempts_note": {
+    "zh-CN": "仅使用免费次数，完成后保留游戏进度。",
+    "zh-TW": "僅使用免費次數，完成後保留遊戲進度。",
+    "en-US": "Use free attempts only and preserve game progress."
+  }
+}

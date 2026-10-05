@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net8.0-windows</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Mono.Cecil" Version="0.11.6" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
+    <PackageReference Include="Lib.Harmony" Version="2.4.2" GeneratePathProperty="true" PrivateAssets="all" ExcludeAssets="compile;runtime" />
+    <EmbeddedResource Include="$(PkgLib_Harmony)/lib/net472/0Harmony.dll" LogicalName="BD2Daily.Harmony.dll" />
+    <EmbeddedResource Include="../Runtime/*.cs" LogicalName="Hook.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../Shared/*.cs" LogicalName="Hook.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="startup-contract.json" Condition="Exists('startup-contract.json')" LogicalName="BD2Daily.StartupContract.json" />
+    <EmbeddedResource Include="guild-contract.json" Condition="Exists('guild-contract.json')" LogicalName="BD2Daily.GuildContract.json" />
+    <EmbeddedResource Include="contract.json" Condition="Exists('contract.json')" LogicalName="BD2Daily.Contract.json" />
+  </ItemGroup>
+<ItemGroup><EmbeddedResource Include="../Shared/Ipc/common/*.cs;../Shared/Ipc/runtime/*.cs" LogicalName="Hook.Ipc.%(Filename)%(Extension)"/></ItemGroup></Project>

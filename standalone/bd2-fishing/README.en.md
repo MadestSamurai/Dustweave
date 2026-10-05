@@ -1,0 +1,100 @@
+# BD2 Fishing
+
+> **Free & open source:** Official releases are provided free by GitHub **MadestSamurai** · Bilibili **MadSamurai**. [Official downloads](https://github.com/MadestSamurai/bd2-fishing/releases) · [Source and risk notice](DISTRIBUTION.md#english). Third-party fees do not imply the author’s involvement, endorsement or support.
+>
+> **Risk notice:** This is an unofficial community tool. Use may result in account penalties, bans, game errors or data loss. Follow the game rules and accept responsibility for the risks of use. The MIT license remains unchanged.
+
+English · [简体中文](README.md)
+
+[Download latest release](https://github.com/MadestSamurai/bd2-fishing/releases/latest) · [Report an issue](https://github.com/MadestSamurai/bd2-fishing/issues)
+
+A standalone fishing assistant for the BrownDust II Windows client. Uses the game’s normal manual-fishing flow for repeated catches, bait, fish-bag management and map renewal.
+
+## Download
+
+Current version: **0.4.4**. Both editions have the same features and include Simplified Chinese / English.
+
+| Edition | Runtime requirement | Recommended for |
+| --- | --- | --- |
+| **Portable** | .NET included | Most users; download and run |
+| **Lite** | [.NET Desktop Runtime 8 x64](https://dotnet.microsoft.com/download/dotnet/8.0) | Smaller download if the runtime is installed |
+
+Download one edition: the EXE runs on its own; ZIPs include both READMEs and licenses. No Python, development SDK or other BD2 tools are required. Lite needs the **Desktop Runtime**, not just .NET Runtime or ASP.NET Runtime. Verify downloads against `SHA256SUMS.txt`.
+
+## Quick start
+
+**Before upgrading:** pause and close the old assistant, then connect with the new version. Upgrading from 0.4.1 or earlier requires one normal game restart. When upgrading from 0.4.2 or later, the game can stay open.
+
+1. Enter an unlocked fishing map and turn off the game’s built-in automatic fishing.
+2. Open the assistant, click **Connect game**, and wait for the fishing area to be recognized.
+3. Review bait and retention settings, then click **Start fishing**. Automatic approach is enabled by default if you land away from water.
+4. Click **Stop fishing** or close the window to stop. A cast already in progress may complete through the normal release callback.
+
+## Features and settings
+
+| Setting | Behavior |
+| --- | --- |
+| Next cast delay | Default 1000 ms; accepts 0–60000 ms. Reeling and holds use game frames independently. |
+| Cast charge | Default 90%; accepts 5–95%. |
+| Prefer weak points | Uses a normal hit if the weak point cannot be reached in time. |
+| Sell when full | On by default; clears all eligible fish in verified batches of up to 100, then resumes fishing. |
+| Keep all Legendary / locked / unknown fish | Three independent protections, on by default. |
+| Size records by species | Keep no extra fish, MAX only, MIN only, or MAX and MIN across the whole species. Optional category settings additionally protect Legendary and locked records. |
+| Automatic bait | On by default; uses one existing bait when the buff expires. Continues without bait when depleted. |
+| Automatic approach | On by default; uses native navigation or character movement to reach a casting area. |
+| Map renewal | On by default; with 5 minutes left, finishes the catch, visits the lobby, then returns to the same map. |
+
+### MAX / MIN retention
+
+Protections are combined. **Keep all Legendary fish** still protects every Legendary fish even when MAX is selected. To retain only records, turn off the matching **Keep all** option, choose a species, and select MAX, MIN or both. Sizes are compared across every fish in a species. The two category options add Legendary or locked records; they never restrict the baseline size rule. Ties retain one fish, preferring a locked fish and then the lowest inventory ID; identical MIN and MAX retain one fish. Missing size data protects the affected species.
+
+Turning off **Keep all locked fish** allows the tool to unlock only fish selected for sale. It waits for the game's reply and checks inventory before replanning and selling. Still-locked fish are never sent in a sale request. Stopping, disabling sales or changing retention cancels subsequent actions; already unlocked fish are not automatically relocked. A failed or unconfirmed request pauses instead of being blindly resent.
+
+The 0.3.2 “keep locked fish only” preference migrates to Legendary retention off and locked/unknown retention on. New independent rules take precedence.
+
+Day/night transitions resume after the current catch and results. Moving stops when fishing, scene changes or popups take over. If approach remains blocked after three routes, the tool pauses with a reason.
+
+## Language
+
+Use **语言 / Language** in the top bar to switch between Simplified Chinese and English. The first launch uses Chinese on Chinese systems and English otherwise, then remembers your choice. Switching does not restart automation or change settings. Game-provided names and images keep their game language; raw diagnostics remain unchanged.
+
+See [translation maintenance](docs/LOCALIZATION.md).
+
+## Compatibility and limits
+
+Supports the official Windows x64 PC client, one game process at a time, with the same privilege level as the game. Mobile and Android emulator clients are not supported. First connection resolves local interfaces and builds the component, which may take a few seconds. Uncertain interface matches stop connection with a diagnostic; adaptation does not guarantee every future update will work without maintenance.
+
+Tools that support component handoff can update or switch within the same game process after pending actions finish, retaining settings and records. Live communication uses local named pipes. The daily scheduler manages its cooperating modules separately. Old components without handoff support require one game restart.
+
+Releases contain no game DLLs, resources, account inventories or private captures. Does not use built-in automatic fishing, buy supplies or unlock maps.
+
+## Diagnostics and feedback
+
+Settings and diagnostics are under `%LOCALAPPDATA%\BD2Fishing`; click **Open diagnostics** to open the folder.
+
+| File | Purpose |
+| --- | --- |
+| `compatibility.json` | Local interface matching and failures |
+| `connection.log` | Connection progress, waiting phases and failures, including before the component starts |
+| `runtime.log` | Actions, replies, inventory checks and map transitions |
+
+These files stay on your computer. The window remains responsive during connection; check `connection.log` if it takes too long. If the diagnostics directory is not writable, connection logging falls back to `%TEMP%\BD2Fishing`. An unconfirmed sale or bait request pauses rather than being blindly resent.
+
+When reporting an issue, include the version, visible message and relevant log excerpts. Remove account information and personal paths first. Do not upload game DLLs, complete inventories or connection credentials.
+
+## Development and contributions
+
+Requires Windows x64, PowerShell and the .NET 8 SDK. Normal builds and regression tests do not need or connect to the game.
+
+```powershell
+.\build.ps1 -Locked
+.\package.ps1 -Locked
+```
+
+Assets are written to `dist/v<version>/`. Packaging checks both runtime configurations, runs UI checks and verifies connection responsiveness while the component is unavailable.
+
+[Development and release workflow](docs/RELEASING.md) · [Documentation and release format](docs/PUBLICATION_STYLE.md) · [Current release notes](docs/RELEASE_NOTES.md)
+
+## License
+
+Project code is [MIT licensed](LICENSE). Dependencies retain their own licenses; see [third-party notices](THIRD_PARTY_NOTICES.md). This project is not affiliated with the game developer or publisher.

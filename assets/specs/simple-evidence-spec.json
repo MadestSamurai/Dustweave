@@ -1,0 +1,352 @@
+{
+  "Taps": [
+    {
+      "Role": "room.info",
+      "ResponseType": "Proto.Net.MyRoomUserInfoResponse",
+      "Paths": [
+        "SyncUseCount",
+        "RoomInfo.OwnerIndex",
+        "RoomInfo.MyRoomLikeCount"
+      ]
+    },
+    {
+      "Role": "cafeteria.collect",
+      "ResponseType": "Proto.Net.CafeteriaCumulativeRewardResponse",
+      "Paths": [
+        "CumulativeRewardInfo",
+        "RewardReceiptTime"
+      ]
+    },
+    {
+      "Role": "cafeteria.regular",
+      "ResponseType": "Proto.Net.CafeteriaRegularCostumeInteractionRewardResponse",
+      "Paths": [
+        "RewardInfo",
+        "RegularCostumeInfo"
+      ]
+    },
+    {
+      "Role": "cafeteria.regular_all",
+      "ResponseType": "Proto.Net.CafeteriaRegularCostumeInteractionAllRewardResponse",
+      "Paths": [
+        "RewardInfo",
+        "RegularCostumeInfo",
+        "RewardedCostumeId"
+      ]
+    },
+    {
+      "Role": "cafeteria.event",
+      "ResponseType": "Proto.Net.CafeteriaEventNpcInteractionRewardResponse",
+      "Paths": [
+        "RewardInfo",
+        "DailyNpcRewardCurrencyCount"
+      ]
+    },
+    {
+      "Role": "cafeteria.rare",
+      "ResponseType": "Proto.Net.CafeteriaRareNpcInteractionRewardResponse",
+      "Paths": [
+        "RewardInfo"
+      ]
+    },
+    {
+      "Role": "missions.clear",
+      "ResponseType": "Proto.Net.MissionClearResponse",
+      "Paths": [
+        "RewardInfoBundle"
+      ]
+    },
+    {
+      "Role": "missions.section",
+      "ResponseType": "Proto.Net.MissionSectionRewardResponse",
+      "Paths": [
+        "ItemInfo",
+        "RewardCharInfo",
+        "CostumeInfo",
+        "EquipInfo"
+      ]
+    },
+    {
+      "Role": "gacha.free_all",
+      "ResponseType": "Proto.Net.GachaMultiBuyResponse",
+      "Paths": [
+        "Results"
+      ]
+    },
+    {
+      "Role": "hunt.dispatch",
+      "ResponseType": "Proto.Net.HuntDispatchResponse",
+      "Paths": [
+        "RewardInfoBundle"
+      ],
+      "RequestSite": "constructor"
+    },
+    {
+      "Role": "square.info",
+      "ResponseType": "Proto.Net.SquareRewardInfoResponse",
+      "Paths": [
+        "IsObtainableDailyReward"
+      ]
+    },
+    {
+      "Role": "square.reward",
+      "ResponseType": "Proto.Net.SquareRewardResponse",
+      "ResponseViaParserHelper": true,
+      "Paths": [
+        "RewardInfoBundle"
+      ]
+    },
+    {
+      "Role": "life.helpers",
+      "ResponseType": "Proto.Net.LifeHelperRewardResponse",
+      "Paths": [
+        "RewardBundle",
+        "HelperInfo"
+      ]
+    }
+  ],
+  "Reads": [
+    {
+      "Id": "room.cache",
+      "Type": "ὤὮὯὡὦὠὭὦὬὦὡ",
+      "StaticMember": "ὮὨὭὥὯὦὣὣὩὥὥ",
+      "Paths": [
+        "OwnerIndex",
+        "MyRoomLikeCount"
+      ]
+    },
+    {
+      "Id": "cafeteria.cache",
+      "Type": "ὭὯὢὣὬὤὯὬὭὯὢ",
+      "StaticMember": "ὭὧὨὣὭὣὮὬὡὫὡ",
+      "Paths": [
+        "RewardReceiptTime",
+        "Level",
+        "DailyNpcRewardCurrencyCount",
+        "DailyRegularCostumeId"
+      ]
+    },
+    {
+      "Id": "cafeteria.ui",
+      "Type": "ManagementRewardPopupUI_CafeteriaSettlementInfoItem",
+      "Paths": [
+        "IsCanSettlement()",
+        "IsDisable()"
+      ]
+    },
+    {
+      "Id": "missions.tab",
+      "Type": "MissionTabPage",
+      "Paths": [
+        "_missionGroupType",
+        "ὣὥὧὣὠὫὠὨὣὦὤ"
+      ]
+    },
+    {
+      "Id": "missions.row",
+      "Type": "MissionLoopScrollItem",
+      "Paths": [
+        "ὫὫὩὭὣὡὤὮὤὭὥ",
+        "_textTitle.text",
+        "_textDescription.text",
+        "_textMissionCount.text",
+        "_objReceivedReward.activeInHierarchy",
+        "_objPossiableReceive.activeInHierarchy",
+        "_objLockCondition.activeInHierarchy"
+      ]
+    },
+    {
+      "Id": "missions.cache",
+      "Type": "ὨὩὤὣὡὣὦὭὭὤὪ",
+      "StaticMember": "ὫὪὥὤὭὧὪὪὩὮὪ",
+      "Paths": [
+        "Count",
+        "_items"
+      ]
+    },
+    {
+      "Id": "cafeteria.regular_cache",
+      "Type": "ὭὯὢὣὬὤὯὬὭὯὢ",
+      "StaticMember": "ὠὨὩὭὡὧὪὤὢὢὩ",
+      "Paths": [
+        "Count",
+        "Values"
+      ]
+    },
+    {
+      "Id": "cafeteria.bubble",
+      "Type": "OverheadCafeteria",
+      "Paths": [
+        "gameObject.name",
+        "ὯὨὣὤὮὧὧὦὧὮὬ",
+        "ὦὪὪὤὪὯὪὨὤὮὣ",
+        "_goRegularButton.activeInHierarchy",
+        "_goEventButton.activeInHierarchy"
+      ]
+    },
+    {
+      "Id": "cafeteria.regular_done",
+      "Type": "ὭὯὢὣὬὤὯὬὭὯὢ",
+      "StaticMember": "ὦὩὣὤὮὪὪὢὡὠὠ",
+      "Paths": [
+        "Keys",
+        "Values"
+      ]
+    },
+    {
+      "Id": "cafeteria.rules",
+      "Type": "ὨὠὪὡὤὧὢὦὮὥὨ",
+      "StaticMember": "ὧὩὡὨὠὥὪὭὢὪὡ",
+      "Paths": [
+        "DailyShopCurrencyLimit",
+        "EventRewardType",
+        "InteractionIgonoreTime"
+      ]
+    },
+    {
+      "Id": "missions.sections",
+      "Type": "ὨὩὤὣὡὣὦὭὭὤὪ",
+      "StaticMember": "ὠὨὭὭὠὣὦὠὪὮὩ",
+      "Paths": [
+        "Count",
+        "_items"
+      ]
+    },
+    {
+      "Id": "missions.ui",
+      "Type": "MissionUI",
+      "Paths": [
+        "ὪὮὦὭὭὯὢὮὡὭὧ",
+        "_tabAllRecvButton._objDisable.activeInHierarchy"
+      ]
+    },
+    {
+      "Id": "gacha.users",
+      "Type": "ὠὭὣὠὯὬὣὤὪὮὬ",
+      "StaticMember": "ὣὬὩὧὢὫὬὨὬὠὤ",
+      "Paths": [
+        "Count",
+        "Keys",
+        "Values"
+      ]
+    },
+    {
+      "Id": "gacha.ui",
+      "Type": "GachaMainUI",
+      "Paths": [
+        "_goFreeGachaMacro.activeInHierarchy"
+      ]
+    },
+    {
+      "Id": "hunt.popup",
+      "Type": "HuntDispatchPopupUI",
+      "Paths": [
+        "ὡὤὪὧὣὠὥὢὬὯὫ",
+        "ὫὠὡὥὣὠὪὥὧὮὣ",
+        "_buttonFreeOnly.IsEnable",
+        "_sliderAutoCount.ὧὬὩὬὢὦὩὥὥὩὢ",
+        "_sliderAutoCount.ὮὢὥὯὥὧὤὭὨὨὪ",
+        "_sliderAutoCount.ὩὧὩὦὫὮὨὢὦὠὯ"
+      ]
+    },
+    {
+      "Id": "daily.currency",
+      "Type": "ὣὡὧὡὦὣὣὬὨὪὫ",
+      "StaticMember": "ὬὯὧὣὪὢὡὬὬὯὦ",
+      "Paths": [
+        "FreeHuntingAp",
+        "BonusHuntingAp",
+        "FreeTorchLightAp",
+        "TorchLightAp"
+      ]
+    },
+    {
+      "Id": "hunt.selection",
+      "Type": "HuntOrAirwayUI",
+      "Paths": [
+        "ὫὠὡὥὣὠὪὥὧὮὣ"
+      ]
+    },
+    {
+      "Id": "pack.row",
+      "Type": "PackListLoopScrollItem",
+      "Paths": [
+        "gameObject.name",
+        "transform.parent.parent.parent.parent.gameObject.name",
+        "ὭὣὭὣὭὩὩὣὩὢὭ.Id",
+        "ὭὣὭὣὭὩὩὣὩὢὭ.PackType"
+      ]
+    },
+    {
+      "Id": "life.helpers_ui",
+      "Type": "ManagementRewardPopupUI_AvatarLifeSettlementInfoItem",
+      "Paths": [
+        "IsCanSettlement()",
+        "IsDisable()"
+      ]
+    },
+    {
+      "Id": "life.helpers_cache",
+      "Type": "ὥὫὯὡὣὢὭὩὪὩὣ",
+      "StaticMember": "ὩὬὨὢὢὦὨὢὪὨὫ",
+      "Paths": [
+        "Count",
+        "Keys",
+        "Values"
+      ]
+    },
+    {
+      "Id": "life.helpers_pending",
+      "Type": "ὥὫὯὡὣὢὭὩὪὩὣ",
+      "StaticMember": "ὧὠὠὫὩὥὬὦὡὩὤ",
+      "Paths": [
+        "Count"
+      ]
+    },
+    {
+      "Id": "navigation.pack",
+      "Type": "PackManager",
+      "StaticMember": "ὪὫὢὨὯὭὦὪὦὨὣ",
+      "Paths": [
+        "ὪὩὣὪὭὩὪὬὣὦὣ.Id",
+        "ὪὩὣὪὭὩὪὬὣὦὣ.PackType"
+      ]
+    },
+    {
+      "Id": "navigation.pack.entry",
+      "Type": "PackInfoUI",
+      "Paths": [
+        "ὦὡὪὦὥὫὦὡὬὠὢ.Id",
+        "ὦὡὪὦὥὫὦὡὬὠὢ.PackType",
+        "ὬὤὤὥὠὯὠὥὣὯὦ.Count",
+        "ὠὡὠὥὬὪὡὩὬὠὢ",
+        "_objPackTouchRewardButton.activeInHierarchy"
+      ]
+    },
+    {
+      "Id": "route.story",
+      "Type": "StorySkipUI",
+      "Paths": [
+        "_objUIRoot.activeInHierarchy",
+        "_objBackgroundButton.activeInHierarchy",
+        "_objSkipButton.activeInHierarchy",
+        "ὦὢὠὪὮὮὣὩὡὤὮ",
+        "ὫὯὨὢὯὬὪὥὨὨὧ",
+        "ὪὭὢὣὢὫὤὡὢὪὮ"
+      ]
+    },
+    {
+      "Id": "route.script",
+      "Type": "ScriptUI",
+      "Paths": [
+        "_type1._buttonStart.activeInHierarchy",
+        "_objButtonTouch.activeInHierarchy",
+        "_scriptObject.IsActive",
+        "_scriptObject.IsTouch",
+        "_type4.IsActive",
+        "_type4.IsTouch",
+        "ὧὡὥὢὣὫὪὮὮὦὢ"
+      ]
+    }
+  ]
+}

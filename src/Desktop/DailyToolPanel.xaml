@@ -1,0 +1,37 @@
+<UserControl x:Class="BD2Daily.Desktop.DailyToolPanel" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:l="clr-namespace:BD2Daily.Desktop">
+ <Border Style="{StaticResource Panel}" Padding="20">
+  <Grid>
+   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+   <DockPanel Margin="0,0,0,14">
+    <TextBlock Text="{l:Tr tools.count}" DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource MutedInk}"/>
+    <StackPanel><TextBlock Text="{l:Tr nav.tools}" FontSize="20" FontWeight="SemiBold"/><TextBlock Text="{l:Tr tools.hint}" TextWrapping="Wrap" Foreground="{StaticResource MutedInk}" FontSize="12" Margin="0,5,12,0"/></StackPanel>
+   </DockPanel>
+   <WrapPanel Grid.Row="1" Margin="0,0,0,12">
+    <Grid Width="245"><TextBox x:Name="SearchBox" TextChanged="FilterChanged" AutomationProperties.Name="{l:Tr tools.search_accessible}"/><TextBlock x:Name="Placeholder" Text="{l:Tr tools.search}" Foreground="{StaticResource MutedInk}" FontSize="12" IsHitTestVisible="False" VerticalAlignment="Center" Margin="11,0,0,0"/></Grid>
+    <ComboBox x:Name="Category" Width="135" Margin="8,0,0,0" VerticalContentAlignment="Center" SelectionChanged="FilterChanged" AutomationProperties.Name="{l:Tr tools.category_accessible}"/>
+   </WrapPanel>
+   <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <StackPanel>
+     <ItemsControl x:Name="ToolsList">
+      <ItemsControl.ItemTemplate><DataTemplate>
+       <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,14">
+        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+         <StackPanel Margin="0,0,16,0">
+          <WrapPanel><TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold"/><TextBlock Text="{Binding Detail}" FontSize="12" Margin="10,2,0,0" Foreground="{StaticResource MutedInk}"/></WrapPanel>
+          <TextBlock Text="{Binding Description}" TextWrapping="Wrap" FontSize="12" Margin="0,4,0,0" Foreground="{StaticResource MutedInk}"/>
+         </StackPanel>
+         <Button Grid.Column="1" Content="{Binding Action}" IsEnabled="{Binding Enabled}" Tag="{Binding Id}" Click="OpenClicked" MinWidth="98" VerticalAlignment="Center" AutomationProperties.Name="{Binding AccessibleName}"/>
+        </Grid>
+       </Border>
+      </DataTemplate></ItemsControl.ItemTemplate>
+     </ItemsControl>
+     <TextBlock x:Name="EmptyText" Visibility="Collapsed" Text="{l:Tr tools.empty}" Foreground="{StaticResource MutedInk}" Margin="0,20,0,0"/>
+    </StackPanel>
+   </ScrollViewer>
+   <Grid Grid.Row="3" Margin="0,14,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+    <TextBlock x:Name="Status" TextWrapping="Wrap" VerticalAlignment="Center"/>
+    <Button Grid.Column="1" x:Name="CloseToolButton" Content="{l:Tr tools.close}" Click="CloseClicked" Margin="12,0,0,0"/>
+   </Grid>
+  </Grid>
+ </Border>
+</UserControl>

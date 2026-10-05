@@ -1,0 +1,91 @@
+using System.IO;
+using System.Text.Json;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Threading;
+namespace BD2Territory.Desktop;
+public partial class TerritoryWindow {
+ internal async Task SmokeAsync(string output)
+ {
+  TestTransport.Start(root,TerritoryIdentity.LiveEntries);
+  smoke=true;timer.Stop();await controlQueue;LanguageBox.SelectedIndex=0;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);ui.Language.Select("zh-CN");ui.Apply();ShowActivated=false;ShowInTaskbar=false;Show();await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  var checks=new List<string>();void Check(bool ok,string label){if(!ok)throw new InvalidOperationException(label);checks.Add(label);}
+  Check(!link.Enabled&&!StartButton.IsEnabled&&TerritoryJson.Read<TerritoryControl>(Path.Combine(root,"control.json"))?.Enabled!=true,"启动不自动操作游戏");
+  Check(LoggingBox.IsChecked==true&&MiningBox.IsChecked==true&&FarmingBox.IsChecked==true,"默认三个项目可见并选中");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  Check(IntervalBox.Text=="500"&&BudgetBox.Text=="1400","默认间隔与预算");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  Check(VehicleBox.IsChecked==true&&DashBox.IsChecked==true,"默认开启载具赶路与冲刺脱困");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  Check(NavMeshBox.IsChecked==false,"默认不启用 NavMesh，使用 A* 寻路");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  await StartAsync();Check(!link.Enabled&&ErrorText.Visibility==Visibility.Visible,"无心跳不能开始");ShowError("");
+  var s=new TerritorySnapshot{WorkPhase="Gathering",WorkRemaining=25,Ready=true,ProcessId=424242,CapturedUtcTicks=DateTime.UtcNow.Ticks,Scene="Fantasia Territory",Fields=100,EmptyFields=38,Trees=8,Ores=5,Mature=12,BatchSeedId=2,BatchPlanted=37,BatchTotal=37,CompletedBatches=3,Spent=100,GatherReplies=27,ReceivedItems=64,Crops=new[]{new CropStock{SeedId=2,Name="弯弯土豆",Required=5,Inventory=300,Growing=62,GrowthSeconds=60},new CropStock{SeedId=1,Name="黏糯小麦",Required=3,Inventory=200,Growing=0,GrowthSeconds=300},new CropStock{SeedId=4,Name="活力蘑菇",Required=2,Inventory=100,Growing=0,GrowthSeconds=900}}};
+  async Task Feed(){s.CapturedUtcTicks=DateTime.UtcNow.Ticks;TestTransport.Publish(Path.Combine(root,"latest.json"),s);await RefreshAsync();}
+  await Feed();Check(StartButton.IsEnabled&&CropsGrid.Items.Count==3,"识别领地后展示配方并允许开始");
+  IntervalBox.Text="50";await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);await StartAsync();Check(!link.Enabled,"非法间隔不启动");IntervalBox.Text="500";await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  LoggingBox.IsChecked=false;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);MiningBox.IsChecked=false;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);FarmingBox.IsChecked=false;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);await StartAsync();Check(link.Enabled,"关闭采集种植后仍可单独运行容量保护");await StopAsync();
+  LoggingBox.IsChecked=true;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);MiningBox.IsChecked=true;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);FarmingBox.IsChecked=true;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);await StartAsync();
+  var command=TerritoryJson.Read<TerritoryControl>(Path.Combine(root,"control.json"));Check(link.Enabled&&command!=null&&command.Valid(DateTime.UtcNow.Ticks,424242),"开始写入有效短租约");
+  s.OwnerId=link.OwnerId;s.Enabled=true;s.Reason="使用当前工具正常采集";s.Target="收获作物";await Feed();
+  Check(StopButton.IsEnabled&&!StartButton.IsEnabled&&!ConnectButton.IsEnabled,"运行中可暂停且禁止重复连接");
+  Check(TargetText.Text.Contains("采矿／砍树")&&TargetText.Text.Contains("25"),"运行时显示工作阶段和本轮剩余目标");
+  s.WorkPhase="Planting";s.WorkRemaining=38;await Feed();Check(TargetText.Text.Contains("集中播种")&&TargetText.Text.Contains("38"),"切到种植阶段更新显示");
+  s.WorkPhase="Gathering";s.WorkRemaining=25;await Feed();
+  Check(BatchBar.Value==37&&BatchBar.Maximum==37&&BatchText.Text.Contains("37 / 37"),"批次显示实际确认进度");
+  s.BatchTotal=9;s.BatchPlanted=0;await Feed();Check(BatchBar.Maximum==9&&BatchBar.Value==0&&BatchText.Text.Contains("0 / 9"),"下一片小田重新显示实际待确认数量");
+  s.BatchTotal=0;await Feed();Check(BatchText.Text.Contains("等待读取本片农田")&&!BatchText.Text.Contains("/ 100"),"未取得预览时不显示虚构百格进度");
+  s.BatchTotal=37;s.BatchPlanted=37;await Feed();
+  MiningBox.IsChecked=false;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);command=TerritoryJson.Read<TerritoryControl>(Path.Combine(root,"control.json"));Check(command?.Mining==false,"运行开关同步保存");MiningBox.IsChecked=true;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  VehicleBox.IsChecked=false;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);DashBox.IsChecked=false;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);command=TerritoryJson.Read<TerritoryControl>(Path.Combine(root,"control.json"));Check(command!=null&&!command.UseVehicle&&!command.DashRecovery,"运行时关闭移动辅助同步到组件");
+  var saved=TerritoryJson.Read<TerritorySettings>(Path.Combine(root,"settings.json"));Check(saved!=null&&!saved.UseVehicle&&!saved.DashRecovery,"移动辅助偏好持久保存");VehicleBox.IsChecked=true;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);DashBox.IsChecked=true;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  command=TerritoryJson.Read<TerritoryControl>(Path.Combine(root,"control.json"));Check(command!=null&&command.UseVehicle&&command.DashRecovery,"运行时重新开启移动辅助");
+  NavMeshBox.IsChecked=true;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);command=TerritoryJson.Read<TerritoryControl>(Path.Combine(root,"control.json"));saved=TerritoryJson.Read<TerritorySettings>(Path.Combine(root,"settings.json"));Check(command?.UseNavMesh==true&&saved?.UseNavMesh==true,"显式启用 NavMesh 同步并持久保存");
+  NavMeshBox.IsChecked=false;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);command=TerritoryJson.Read<TerritoryControl>(Path.Combine(root,"control.json"));saved=TerritoryJson.Read<TerritorySettings>(Path.Combine(root,"settings.json"));Check(command?.UseNavMesh==false&&saved?.UseNavMesh==false&&link.Enabled,"运行中关闭 NavMesh 不停止自动化");
+  s.OwnerId="previous-run";s.Error="old error";await Feed();Check(link.Enabled,"旧会话错误不停止当前任务");s.OwnerId=link.OwnerId;s.Error="播种货币不足";await Feed();Check(!link.Enabled&&ErrorText.Text==s.Error,"当前会话错误明确暂停");
+  s.Error="";await Feed();ShowError("");await StartAsync();await StopAsync();command=TerritoryJson.Read<TerritoryControl>(Path.Combine(root,"control.json"));Check(command?.Enabled==false&&command.UntilUtcTicks==0,"暂停立即撤销租约");
+  s.CapturedUtcTicks=DateTime.UtcNow.AddSeconds(-20).Ticks;TestTransport.Publish(Path.Combine(root,"latest.json"),s);await RefreshAsync();Check(!StartButton.IsEnabled,"过期心跳不能开始");
+  await Feed();DiagnosticsPanel.IsExpanded=true;await UpdateDiagnosticsAsync();while(diagnosticsBusy)await Task.Delay(10);Check(DataPathBox.Text==root&&DiagnosticsBox.Text.Contains("组件"),"诊断在界面内展示");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);DiagnosticsPanel.IsExpanded=false;
+  s.Recipes=new[]{new RecipeOption{Id=3,Name="活力面疙瘩",Available=true,Ratio="土豆 5 : 小麦 3 : 蘑菇 2"},new RecipeOption{Id=7,Name="双原料料理",Available=true,Ratio="土豆 40 : 胡萝卜 20"}};await Feed();
+  RecipeBox.SelectedValue=7;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);command=TerritoryJson.Read<TerritoryControl>(Path.Combine(root,"control.json"));Check(command?.RecipeId==7&&!command.Enabled,"暂停时也保存并同步所选配方");Check(RecipeHint.Text.Contains("40"),"配方显示动态比例");RecipeBox.SelectedValue=3;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  s.Seeds=new[]{new RecipeOption{Id=4,Name="活力蘑菇",Available=true},new RecipeOption{Id=9,Name="未解锁作物",Available=false,Reason="当前账号尚未解锁配方作物"}};await Feed();
+  Check(PlantingModeBox.SelectedIndex==0&&FixedCropPanel.Visibility==Visibility.Collapsed,"旧设置默认按料理配比种植");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  PlantingModeBox.SelectedIndex=1;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);await StartAsync();Check(!link.Enabled,"固定模式未选作物不能启动");ShowError("");
+  FixedSeedBox.SelectedValue=4;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);command=TerritoryJson.Read<TerritoryControl>(Path.Combine(root,"control.json"));Check(command?.FixedCrop==true&&command.FixedSeedId==4&&RecipePanel.Visibility==Visibility.Collapsed,"固定作物独立保存，隐藏无关的料理配比");
+  CookingBox.IsChecked=true;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Check(RecipePanel.Visibility==Visibility.Visible,"固定种植同时自动料理时保留料理选择");CookingBox.IsChecked=false;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  await StartAsync();Check(link.Enabled,"已解锁固定作物可以启动");await StopAsync();
+  FixedSeedBox.SelectedValue=9;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);await StartAsync();Check(!link.Enabled,"未解锁作物不能启动");ShowError("");FixedSeedBox.SelectedValue=4;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  saved=TerritoryJson.Read<TerritorySettings>(Path.Combine(root,"settings.json"));Check(saved?.FixedCrop==true&&saved.FixedSeedId==4,"固定作物持久保存");
+  Check(new TerritorySettings{AutoSell=false}.AutoSell&&SellThresholdBox.Text=="9900","容量保护始终开启，保留9900");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  SellThresholdBox.Text="100";await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);SettingsChanged(this,new());await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);saved=TerritoryJson.Read<TerritorySettings>(Path.Combine(root,"settings.json"));Check(saved?.AutoSell==true&&saved.SellThreshold==100,"售卖下限保存");
+  SellThresholdBox.Text="99";await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);SettingsChanged(this,new());await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);await StartAsync();Check(!link.Enabled&&SellThresholdBox.Text=="99","非法下限不启动且不重置输入");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  SellThresholdBox.Text="9901";await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);SettingsChanged(this,new());await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);await StartAsync();Check(!link.Enabled&&SellThresholdBox.Text=="9901","非法上限不启动且不重置输入");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  SellThresholdBox.Text="9900";await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);SettingsChanged(this,new());await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);LoggingBox.IsChecked=false;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);MiningBox.IsChecked=false;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);FarmingBox.IsChecked=false;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);ShowError("");await StartAsync();command=TerritoryJson.Read<TerritoryControl>(Path.Combine(root,"control.json"));Check(link.Enabled&&command?.AutoSell==true&&command.SellThreshold==9900,"可单独运行售卖且上限传递正确");await StopAsync();
+  LoggingBox.IsChecked=true;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);MiningBox.IsChecked=true;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);FarmingBox.IsChecked=true;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  var layoutWorld=new LayoutWorld{Account="test",WorldId=3,ProcessId=424242,CapturedUtcTicks=DateTime.UtcNow.Ticks,Chunks=new[]{new LayoutChunk{Id=1}},Catalog=new[]{new LayoutItem{Id=30008,Name="农田",Unlocked=true,Function=3,MaxCount=100,Layer=3,Costs=new[]{new LayoutCost{Id=1011,Type=66,Name="木材",Count=5,Owned=700}}}}};
+  TestTransport.Publish(Path.Combine(root,"layout-world.json"),layoutWorld);
+  using(var layoutLink=new TerritoryControlLink(root))
+  {
+   var layout=new LayoutWindow(root,layoutLink){ShowActivated=false,ShowInTaskbar=false};layout.SmokeSetup(layoutWorld,LayoutPlanner.Template(layoutWorld,1,3));layout.Show();await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);layout.UpdateLayout();
+   Check(layout.Board.Children.Count==100,"布局区域以百格棋盘展示");Check(layout.CostGrid.Items.Count==1&&!layout.ApplyButton.IsEnabled,"费用可见，未预检不可购买");Check(layout.SummaryText.Text.Contains("100"),"布局显示新增数量");
+   var lb=new RenderTargetBitmap((int)layout.ActualWidth,(int)layout.ActualHeight,96,96,PixelFormats.Pbgra32);lb.Render(layout);var le=new PngBitmapEncoder();le.Frames.Add(BitmapFrame.Create(lb));using(var f=File.Create(Path.Combine(output,"layout.png")))le.Save(f);
+   await layout.SmokeFlowAsync(Check);layout.Width=780;layout.Height=640;layout.UpdateLayout();Check(layout.PreviewButton.IsVisible&&layout.PauseButton.IsVisible,"布局小窗口保留操作按钮");layout.Close();await layout.WaitForCloseAsync();Check(!layoutLink.Enabled,"关闭布局窗口只停止布局控制");
+  }
+  await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);UpdateLayout();
+  var bitmap=new RenderTargetBitmap((int)ActualWidth,(int)ActualHeight,96,96,PixelFormats.Pbgra32);bitmap.Render(this);var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(bitmap));using(var f=File.Create(Path.Combine(output,"territory.png")))encoder.Save(f);
+  var settingsBefore=File.ReadAllText(Path.Combine(root,"settings.json"));
+  LanguageBox.SelectedIndex=1;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);UpdateLayout();
+  Check(!link.Enabled&&File.ReadAllText(Path.Combine(root,"settings.json"))==settingsBefore,"切换英语不会改变运行设置或启动自动化");
+  Check((string)Resources["Ui62"]=="Start automation"&&RecipeBox.SelectedValue is int,"英语主操作与配方选择保留");
+  Check(!CookingBox.IsChecked.GetValueOrDefault()&&CookingBatchBox.Text=="100","料理默认关闭且批次限制可见");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  Check(new[]{"同种作物 × 37 · 一次提交","等待 37 格整批播种回执","当前 37 格播种费用超出余额或剩余预算；继续处理其他农田、采集和收获","批量预览 37 格，等待空田核对：缓存 2，数据未载入 0，请求未结算 0","等待读取本片农田","本轮采集 · 本轮剩余 25","集中播种","料理／售卖","等待下一轮","本轮采集尚未结束，继续处理成熟资源"}.All(v=>!System.Text.RegularExpressions.Regex.IsMatch(ui.Language.Text(v),"[\u4e00-\u9fff]")),"动态农田数量与状态可完整显示英文");
+  Check(UiLabels.All.Values.All(v=>ui.Language.Text(v)!=v||!System.Text.RegularExpressions.Regex.IsMatch(v,"[\u4e00-\u9fff]")),"全部静态界面文本覆盖英文");
+  var enBitmap=new RenderTargetBitmap((int)ActualWidth,(int)ActualHeight,96,96,PixelFormats.Pbgra32);enBitmap.Render(this);var enEncoder=new PngBitmapEncoder();enEncoder.Frames.Add(BitmapFrame.Create(enBitmap));using(var f=File.Create(Path.Combine(output,"territory-en.png")))enEncoder.Save(f);
+  SellThresholdBox.BringIntoView();await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);UpdateLayout();
+  var saleBitmap=new RenderTargetBitmap((int)ActualWidth,(int)ActualHeight,96,96,PixelFormats.Pbgra32);saleBitmap.Render(this);var saleEncoder=new PngBitmapEncoder();saleEncoder.Frames.Add(BitmapFrame.Create(saleBitmap));using(var f=File.Create(Path.Combine(output,"surplus-sales-en.png")))saleEncoder.Save(f);
+  Check((string)Resources["SalesEnabled"]=="Capacity protection always on"&&SellThresholdBox.Text=="9900","售卖设置英文可见且保留阈值");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  LanguageBox.SelectedIndex=0;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  Width=720;Height=610;UpdateLayout();Check(StartButton.IsVisible&&StopButton.IsVisible&&ConnectButton.IsVisible,"最小窗口保留操作栏");
+  await StartAsync();Close();await shutdownTask;command=TerritoryJson.Read<TerritoryControl>(Path.Combine(root,"control.json"));Check(command?.Enabled==false,"关闭窗口停止控制租约");
+  var restored=new TerritoryWindow(root);Check(restored.PlantingModeBox.SelectedIndex==1&&restored.FixedSeedBox.SelectedValue is int restoredSeed&&restoredSeed==4,"重新打开保留固定作物");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Check(restored.NavMeshBox.IsChecked==false,"重新打开仍默认 A*");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);restored.NavMeshBox.IsChecked=true;await restored.controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);restored.Close();await restored.shutdownTask;
+  restored=new TerritoryWindow(root);Check(restored.NavMeshBox.IsChecked==true,"重新打开保留主动选择的 NavMesh");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);restored.NavMeshBox.IsChecked=false;await restored.controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);restored.Close();await restored.shutdownTask;
+  File.WriteAllText(Path.Combine(output,"results.json"),JsonSerializer.Serialize(new{status="pass",assertions=checks,isolatedRoot=root}));
+ }
+}

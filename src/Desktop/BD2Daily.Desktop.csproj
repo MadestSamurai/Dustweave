@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType><StartupObject>BD2Daily.Desktop.Program</StartupObject><TargetFramework>net8.0-windows</TargetFramework><UseWPF>true</UseWPF>
+    <PlatformTarget>x64</PlatformTarget><RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained><PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract><EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <!-- Tool EXE assemblies are loaded as WPF applications inside this shared host, not launched by their apphosts. -->
+    <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
+    <PublishTrimmed>false</PublishTrimmed><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
+    <AssemblyName>BD2DailyAssistant</AssemblyName><RootNamespace>BD2Daily.Desktop</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest><Product>Dustweave</Product>
+    <Version Condition="'$(DustweaveVersion)' != ''">$(DustweaveVersion)</Version><Company>MadSamurai</Company><Description>多账号登录与日常任务工作台</Description>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="../Core/BD2Daily.Core.csproj" /></ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Connection/BD2Daily.Live.csproj" Aliases="liveUtility" />
+    <ProjectReference Include="../ToolHost/BD2Daily.Fishing.csproj" Aliases="minigameUtility" />
+    <ProjectReference Include="../../tools/RuntimeCheck/BD2Daily.RuntimeCheck.csproj" Aliases="diagnosticUtility" />
+    <ProjectReference Include="../../tools/TableExporter/BD2TableExporter.csproj" Aliases="exportUtility" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../standalone/bd2-fishing/desktop/BD2Fishing.Desktop.csproj" Aliases="toolBD2Fishing" />
+    <ProjectReference Include="../../standalone/bd2-sichuan/desktop/BD2Sichuan.Desktop.csproj" Aliases="toolBD2Sichuan" />
+    <ProjectReference Include="../../standalone/bd2-rhythm/desktop/BD2Rhythm.Desktop.csproj" Aliases="toolBD2Rhythm" />
+    <ProjectReference Include="../../standalone/bd2-territory/desktop/BD2Territory.Desktop.csproj" Aliases="toolBD2Territory" />
+    <ProjectReference Include="../../standalone/bd2-equipment-assistant/desktop/BD2EquipmentAssistant.csproj" Aliases="toolBD2EquipmentAssistant" />
+    <ProjectReference Include="../../standalone/bd2-apostle-defense/desktop/BD2ApostleDefense.Desktop.csproj" Aliases="toolBD2ApostleDefense" />
+    <ProjectReference Include="../../standalone/bd2-infinite-gacha/desktop/BD2InfiniteGacha.Desktop.csproj" Aliases="toolBD2InfiniteGacha" />
+    <ProjectReference Include="../../standalone/bd2-secret-vision/desktop/BD2SecretVision.Desktop.csproj" Aliases="toolBD2SecretVision" />
+    <ProjectReference Include="../../standalone/bd2-fiend-hunter/desktop/BD2FiendHunter.Desktop.csproj" Aliases="toolBD2FiendHunter" />
+  </ItemGroup>
+  <ItemGroup><EmbeddedResource Include="Localization/strings.json" LogicalName="BD2Daily.UI.strings.json" /><EmbeddedResource Include="Localization/runtime.json" LogicalName="BD2Daily.UI.runtime.json" /></ItemGroup>
+</Project>

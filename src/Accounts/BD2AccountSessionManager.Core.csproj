@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>BD2AccountSessionManager.Core</AssemblyName>
+    <RootNamespace>BD2AccountSessionManager</RootNamespace>
+  </PropertyGroup>
+</Project>

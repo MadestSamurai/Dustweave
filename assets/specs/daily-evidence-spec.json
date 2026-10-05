@@ -1,0 +1,309 @@
+{
+  "Extends": "weekly-evidence-spec.json",
+  "Taps": [
+    {
+      "Role": "monster.quick",
+      "ResponseType": "Proto.Net.MonsterHuntQuickBattleResponse",
+      "RequestSite": "constructor",
+      "ResponseOwner": "ὠὥὯὧὤὢὣὦὯὮὨ",
+      "Paths": [
+        "MonsterHuntUserInfo",
+        "MonsterHuntRewardBundle",
+        "MonsterHuntDailyRewardBundle"
+      ],
+      "ResponseOwnerIncludesNested": true
+    },
+    {
+      "Role": "event.enter",
+      "ResponseType": "Proto.Net.BattleEnterResponse",
+      "RequestSite": "constructor",
+      "ResponseOwner": "ὢὯὯὣὧὦὯὠὢὪὬ",
+      "Paths": [
+        "BattleDeck",
+        "EngineType"
+      ]
+    },
+    {
+      "Role": "event.end",
+      "ResponseType": "Proto.Net.BattleEndResponse",
+      "RequestSite": "constructor",
+      "ResponseOwner": "ὭὣὮὤὥὦὤὢὥὭὭ",
+      "Paths": [
+        "PackEventBattleInfo",
+        "TacticsBingoClearStage"
+      ],
+      "ResponseViaParserHelper": true,
+      "ResponseOwnerIncludesNested": true
+    },
+    {
+      "Role": "rewards.roulette",
+      "ResponseType": "Proto.Net.MiniGameRouletteDrawResponse",
+      "RequestSite": "constructor",
+      "Paths": [
+        "RouletteInfo",
+        "RouletteReward",
+        "RouletteAccumulatedReward",
+        "RouletteRewardInfo"
+      ],
+      "ResponseViaParserHelper": true,
+      "ResponseOwner": "ὧὪὩὡὯὪὨὤὢὢὣ",
+      "ResponseOwnerIncludesNested": true
+    },
+    {
+      "Role": "rewards.exchange",
+      "ResponseType": "Proto.Net.EventExchangeRewardResponse",
+      "RequestSite": "constructor",
+      "Paths": [
+        "ChangeExchangeRewardInfo",
+        "EventExchangeInfo",
+        "RewardInfoBundle"
+      ],
+      "ResponseViaParserHelper": true,
+      "ResponseOwner": "ὧὫὫὠὪὫὯὢὩὮὤ",
+      "ResponseOwnerIncludesNested": true,
+      "ResponseMethods": [
+        "ὯὤὬὢὣὩὧὠὡὩὪ",
+        "ὤὯὧὮὦὩὯὢὫὦὡ"
+      ]
+    },
+    {
+      "Role": "rewards.exchange_page",
+      "ResponseType": "Proto.Net.EventExchangeNextPageOpenResponse",
+      "RequestSite": "constructor",
+      "Paths": [],
+      "ResponseViaParserHelper": true,
+      "ResponseOwner": "ὧὫὫὠὪὫὯὢὩὮὤ",
+      "ResponseOwnerIncludesNested": true
+    },
+    {
+      "Role": "minigames.quiz_clear",
+      "ResponseType": "Proto.Net.NpcQuizClearResponse",
+      "RequestSite": "constructor",
+      "Paths": [
+        "ClearInfo",
+        "RewardInfoBundle"
+      ],
+      "ResponseOwner": "ὨὢὠὥὧὡὦὤὬὨὦ",
+      "ResponseViaParserHelper": true,
+      "ResponseOwnerIncludesNested": true
+    },
+    {
+      "Role": "rewards.dice",
+      "ResponseType": "Proto.Net.MiniGameBoardPlayResponse",
+      "RequestSite": "constructor",
+      "Paths": [
+        "MiniGameBoardInfo",
+        "MiniGameControllerInfo",
+        "ScaffoldReward",
+        "CompleteReward"
+      ]
+    },
+    {
+      "Role": "tactics.info",
+      "ResponseType": "Proto.Net.TacticsBingoInfoResponse",
+      "Paths": [
+        "EventScheduleId",
+        "GroupId",
+        "ClearStage"
+      ]
+    },
+    {
+      "Role": "friendship.counsel",
+      "ResponseType": "Proto.Net.FriendshipCounselingResponse",
+      "RequestSite": "constructor",
+      "ResponseOwner": "ὩὯὯὥὧὤὬὠὩὬὭ",
+      "ResponseOwnerIncludesNested": true,
+      "Paths": [
+        "FriendshipInfo",
+        "RewardInfoBundle",
+        "IsCorrect",
+        "GainedExp"
+      ],
+      "ResponseViaParserHelper": true,
+      "ResponseMethods": [
+        "ὣὯὣὤὪὧὫὨὮὦὮ",
+        "ὮὣὪὫὧὣὧὪὩὭὮ"
+      ]
+    },
+    {
+      "Role": "missions.event_query",
+      "ResponseType": "Proto.Net.EventMissionInfoResponse",
+      "RequestSite": "constructor",
+      "ResponseOwner": "ὢὮὥὡὩὥὧὨὥὢὢ",
+      "Paths": [
+        "MissionInfo"
+      ],
+      "ResponseViaParserHelper": true,
+      "ResponseOwnerIncludesNested": false
+    },
+    {
+      "Role": "missions.query",
+      "ResponseType": "Proto.Net.MissionInfoResponse",
+      "RequestSite": "constructor",
+      "ResponseOwner": "ὨὩὤὣὡὣὦὭὭὤὪ",
+      "Paths": [
+        "MissionInfo",
+        "DailyMissionResetTime",
+        "WeeklyMissionResetTime"
+      ],
+      "ResponseViaParserHelper": true,
+      "ResponseOwnerIncludesNested": false
+    },
+    {
+      "Role": "rewards.dice_query",
+      "ResponseType": "Proto.Net.MiniGameBoardInfoResponse",
+      "RequestSite": "constructor",
+      "ResponseOwner": "ὤὦὣὡὠὤὪὩὦὤὤ",
+      "Paths": [
+        "MiniGameBoardInfo"
+      ],
+      "ResponseViaParserHelper": false,
+      "ResponseOwnerIncludesNested": false
+    },
+    {
+      "Role": "event.sweep",
+      "ResponseType": "Proto.Net.QuickBattleResponse",
+      "RequestSite": "constructor",
+      "ResponseOwner": "ὭὣὮὤὥὦὤὢὥὭὭ",
+      "ResponseOwnerIncludesNested": true,
+      "Paths": [
+        "RewardBundle"
+      ]
+    }
+  ],
+  "Reads": [
+    {
+      "Id": "monster.cache",
+      "Type": "ὠὥὯὧὤὢὣὦὯὮὨ",
+      "StaticMember": "ὯὩὡὬὤὭὩὦὧὧὣ",
+      "Paths": [
+        "Season",
+        "MonsterHuntId",
+        "Level",
+        "CurrentLevelHighestDamage",
+        "DailyHighestDamage",
+        "DailyRewardLevel",
+        "DailyRewardDate"
+      ],
+      "ValidatePaths": true
+    },
+    {
+      "Id": "monster.ui",
+      "Type": "MonsterHuntUI",
+      "Paths": [
+        "ὢὧὮὣὤὬὯὭὢὯὡ",
+        "ὠὡὤὯὮὭὡὦὡὡὤ",
+        "ὤὢὯὤὦὥὥὤὥὧὤ",
+        "ὥὭὮὬὮὫὭὯὠὠὦ.SeasonInfo.Season",
+        "ὥὭὮὬὮὫὭὯὠὠὦ.MonsterHuntId",
+        "ὣὪὧὨὤὡὭὫὡὮὫ",
+        "_buttonQuickBattle._goEnable.activeSelf"
+      ],
+      "ValidatePaths": true
+    },
+    {
+      "Id": "event.lobby",
+      "Type": "EventBattleUI",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "event.battle",
+      "Type": "BattlePlayManager",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "event.result",
+      "Type": "BattleResultUI",
+      "Paths": [
+        "ὣὤὥὦὯὦὩὤὨὠὪ",
+        "ὪὯὣὥὬὫὬὩὠὮὠ",
+        "ὫὥὧὬὭὫὡὠὠὪὠ",
+        "ὦὡὮὫὧὠὮὡὭὭὬ"
+      ]
+    },
+    {
+      "Id": "event.bench",
+      "Type": "BattleUI_EventBattle",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "rewards.native",
+      "Type": "RewardNative",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "minigames.quiz",
+      "Type": "MiniGamesNative",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "tactics.lobby",
+      "Type": "TarosTacticsBingoUI",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "tactics.battle",
+      "Type": "BattlePlayManager",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "tactics.missions",
+      "Type": "TarosTacticsMissionPopupUI",
+      "Paths": [
+        "_btnRecvAll.ὢὪὯὧὠὥὬὪὪὮὤ",
+        "ὮὦὤὥὤὪὮὧὬὮὮ"
+      ]
+    },
+    {
+      "Id": "friendship.native",
+      "Type": "",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "monster.schedules",
+      "Type": "",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "event.sweep.popup",
+      "Type": "BattleSkipPopupUI",
+      "Paths": [
+        "_buttonFreeOnly.IsEnable",
+        "_sliderAutoCount.ὮὢὥὯὥὧὤὭὨὨὪ",
+        "ὩὥὭὬὬὥὡὠὥὧὭ",
+        "ὠὬὦὫὩὨὣὫὤὢὨ",
+        "ὦὠὠὧὩὩὮὥὫὧὡ",
+        "ὪὪὥὧὡὪὥὡὡὣὡ",
+        "ὩὤὦὯὯὨὫὧὥὡὯ",
+        "ὥὩὢὦὫὩὭὬὬὦὥ"
+      ]
+    },
+    {
+      "Id": "event.currency",
+      "Type": "ὣὡὧὡὦὣὣὬὨὪὫ",
+      "StaticMember": "ὬὯὧὣὪὢὡὬὬὯὦ",
+      "Paths": [
+        "EventApFree",
+        "EventApStack"
+      ]
+    }
+  ]
+}

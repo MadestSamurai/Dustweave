@@ -1,0 +1,147 @@
+{
+  "Extends": "policy-evidence-spec.json",
+  "Taps": [
+    {
+      "Role": "mirror.matching",
+      "ResponseType": "Proto.Net.PvpBattleMatchingResponse",
+      "Paths": []
+    },
+    {
+      "Role": "mirror.end",
+      "ResponseType": "Proto.Net.PvpBattleEndResponse",
+      "Paths": []
+    }
+  ],
+  "Reads": [
+    {
+      "Id": "mirror.currency",
+      "Type": "ὣὡὧὡὦὣὣὬὨὪὫ",
+      "Paths": [
+        "PvpTicket",
+        "PvpTicketStack"
+      ],
+      "StaticMember": "ὬὯὧὣὪὢὡὬὬὯὦ"
+    },
+    {
+      "Id": "mirror.auto",
+      "Type": "BattleAutoSettingPopupUI",
+      "Paths": [
+        "_buttonFreeOnly.IsEnable",
+        "_buttonSkip.IsEnable",
+        "ὣὤὥὪὥὡὥὢὧὮὠ",
+        "ὯὠὭὣὮὠὯὬὤὯὠ"
+      ]
+    },
+    {
+      "Id": "mirror.boost",
+      "Type": "BattleAutoCurrencyAccelSettingPopupUI",
+      "Paths": [
+        "_sliderCount.ὮὢὥὯὥὧὤὭὨὨὪ",
+        "_sliderCount._objMinusButton.name",
+        "_sliderCount._objPlusButton.name",
+        "_sliderCount._objMinusMaxButton.name",
+        "_sliderCount._objPlusMaxButton.name",
+        "_sliderCount._objMinus10Button.name",
+        "_sliderCount._objPlus10Button.name"
+      ]
+    },
+    {
+      "Id": "mirror.pack",
+      "Type": "PackListLoopScrollItem",
+      "Paths": [
+        "gameObject.name",
+        "ὦὡὪὦὥὫὦὡὬὠὢ.Id"
+      ]
+    },
+    {
+      "Id": "mirror.ready",
+      "Type": "BattleUI_PVP",
+      "Paths": [
+        "_pvpInfoUI.gameObject.activeInHierarchy",
+        "ὣὤὥὦὯὦὩὤὨὠὪ",
+        "ὪὯὣὥὬὫὬὩὠὮὠ"
+      ]
+    },
+    {
+      "Id": "mirror.presentation.PVPAutoHistoryPopupUI",
+      "Type": "PVPAutoHistoryPopupUI",
+      "Paths": [
+        "ὣὤὥὦὯὦὩὤὨὠὪ",
+        "ὪὯὣὥὬὫὬὩὠὮὠ",
+        "ὮὬὧὦὣὠὠὤὮὦὧ",
+        "ὫὥὧὬὭὫὡὠὠὪὠ",
+        "ὦὡὮὫὧὠὮὡὭὭὬ"
+      ]
+    },
+    {
+      "Id": "mirror.presentation.PVPClassUpUI",
+      "Type": "PVPClassUpUI",
+      "Paths": [
+        "ὣὤὥὦὯὦὩὤὨὠὪ",
+        "ὪὯὣὥὬὫὬὩὠὮὠ",
+        "ὮὬὧὦὣὠὠὤὮὦὧ",
+        "ὫὥὧὬὭὫὡὠὠὪὠ",
+        "ὦὡὮὫὧὠὮὡὭὭὬ"
+      ]
+    },
+    {
+      "Id": "mirror.presentation.PVPHistoryUI",
+      "Type": "PVPHistoryUI",
+      "Paths": [
+        "ὣὤὥὦὯὦὩὤὨὠὪ",
+        "ὪὯὣὥὬὫὬὩὠὮὠ",
+        "ὮὬὧὦὣὠὠὤὮὦὧ",
+        "ὫὥὧὬὭὫὡὠὠὪὠ",
+        "ὦὡὮὫὧὠὮὡὭὭὬ"
+      ]
+    },
+    {
+      "Id": "mirror.presentation.BattleResultUI",
+      "Type": "BattleResultUI",
+      "Paths": [
+        "ὣὤὥὦὯὦὩὤὨὠὪ",
+        "ὪὯὣὥὬὫὬὩὠὮὠ",
+        "ὮὬὧὦὣὠὠὤὮὦὧ",
+        "ὫὥὧὬὭὫὡὠὠὪὠ",
+        "ὦὡὮὫὧὠὮὡὭὭὬ"
+      ]
+    },
+    {
+      "Id": "mirror.input",
+      "Type": "BattlePlayManager",
+      "StaticMember": "ὪὫὢὨὯὭὦὪὦὨὣ",
+      "Paths": [
+        "ὨὬὬὯὫὨὦὧὨὩὭ",
+        "ὣὩὫὪὫὨὣὣὦὯὭ",
+        "ὯὩὮὪὦὡὠὤὬὯὭ",
+        "ὨὠὪὠὪὠὠὬὨὪὩ",
+        "ὧὡὭὫὯὫὨὮὡὬὨ",
+        "ὤὬὮὠὨὮὣὯὩὩὡ",
+        "ὢὩὫὪὪὦὤὨὠὬὢ",
+        "ὡὥὩὮὢὧὢὫὡὯὢ",
+        "ὨὢὤὪὪὢὩὢὬὠὦ"
+      ]
+    },
+    {
+      "Id": "mirror.field",
+      "Type": "GameFieldDefaultUI",
+      "Paths": [
+        "_hideObjectCanvasGroup.alpha",
+        "_buttonMenu.interactable",
+        "ὣὤὥὦὯὦὩὤὨὠὪ",
+        "ὪὯὣὥὬὫὬὩὠὮὠ"
+      ]
+    },
+    {
+      "Id": "mirror.presentation.PVPSeasonRewardPopupUI",
+      "Type": "PVPSeasonRewardPopupUI",
+      "Paths": [
+        "ὣὤὥὦὯὦὩὤὨὠὪ",
+        "ὪὯὣὥὬὫὬὩὠὮὠ",
+        "ὮὬὧὦὣὠὠὤὮὦὧ",
+        "ὫὥὧὬὭὫὡὠὠὪὠ",
+        "ὦὡὮὫὧὠὮὡὭὭὬ"
+      ]
+    }
+  ]
+}

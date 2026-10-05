@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net8.0-windows</TargetFramework><PlatformTarget>x64</PlatformTarget><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><AssemblyName>BD2Daily.Core</AssemblyName></PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Localization/Messages.zh-CN.txt" LogicalName="BD2Daily.Messages.zh-CN.txt" WithCulture="false" />
+    <EmbeddedResource Include="../../assets/flows/room-flow.json" LogicalName="BD2Daily.room-flow.json" />
+    <Compile Include="../Shared/*.cs" Link="Shared/%(Filename)%(Extension)" />
+    <Compile Include="../../third-party/SharpMonoInjector/*.cs" Link="Injector/%(Filename)%(Extension)" />
+    <ProjectReference Include="../Compatibility/BD2Daily.Compatibility.csproj" />
+    <ProjectReference Include="../Accounts/BD2AccountSessionManager.Core.csproj" />
+  </ItemGroup>
+<ItemGroup><Compile Include="../Shared/Ipc/common/*.cs;../Shared/Ipc/desktop/*.cs"/></ItemGroup>  <ItemGroup><EmbeddedResource Include="../../assets/flows/ui-policy.json" LogicalName="BD2Daily.ui-policy.json" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="../../assets/flows/guild-flow.json" LogicalName="BD2Daily.guild-flow.json" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="../../assets/rules/daily/gacha/GachaTable.json" LogicalName="BD2Daily.GachaTable.json" /><EmbeddedResource Include="../../assets/rules/daily/gacha/GachaGroupTable.json" LogicalName="BD2Daily.GachaGroupTable.json" /></ItemGroup>
+<ItemGroup><EmbeddedResource Include="../../third-party/highs/highs.dll" LogicalName="BD2Daily.highs.dll"/><EmbeddedResource Include="../../third-party/highs/LICENSE.txt" LogicalName="BD2Daily.Highs.LICENSE.txt"/></ItemGroup></Project>

@@ -1,0 +1,48 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ <!-- All symbols share a 16-unit canvas and rounded 1.5-unit strokes. -->
+ <Geometry x:Key="Icon.System">M2,2.5 H14 V11.5 H2 Z M8,11.5 V14 M5,14 H11</Geometry>
+ <Geometry x:Key="Icon.Sun">M11,8 A3,3 0 1 1 5,8 A3,3 0 1 1 11,8 M8,1 V2 M8,14 V15 M1,8 H2 M14,8 H15 M3,3 L4,4 M12,12 L13,13 M3,13 L4,12 M12,4 L13,3</Geometry>
+ <Geometry x:Key="Icon.Moon">M13.8,9.5 A6,6 0 1 1 6.5,2.2 A5,5 0 0 0 13.8,9.5 Z</Geometry>
+ <Geometry x:Key="Icon.Check">M3,8 L6.5,11.5 L13,4.5</Geometry>
+ <Geometry x:Key="Icon.Play">M5,3 L12,8 L5,13 Z</Geometry>
+ <Geometry x:Key="Icon.Skip">M3,4 L8,8 L3,12 M8,8 H13 M13,4 V12</Geometry>
+ <Geometry x:Key="Icon.Pause">M5,3 V13 M11,3 V13</Geometry>
+ <Geometry x:Key="Icon.Warning">M8,1.5 L15,14 H1 Z M8,6 V9 M8,11.5 V11.6</Geometry>
+ <Geometry x:Key="Icon.Partial">M8,2 A6,6 0 1 1 2,8 M8,2 V8 H2 M3,4 L4,3</Geometry>
+ <Geometry x:Key="Icon.Tasks">M6,4 H14 M6,8 H14 M6,12 H14 M2,3.5 L3,4.5 L4.5,2.5 M2,8 H3 M2,12 H3</Geometry>
+ <Geometry x:Key="Icon.Flag">M3,14 V2 H8 L9,4 H14 V10 H9 L8,8 H3</Geometry>
+ <Geometry x:Key="Icon.Home">M1.5,7 L8,1.5 L14.5,7 M3,6 V14 H13 V6 M6,14 V9 H10 V14</Geometry>
+ <Geometry x:Key="Icon.Shop">M2,6 L3,2 H13 L14,6 M2,6 Q4,9 6,6 Q8,9 10,6 Q12,9 14,6 M3,8 V14 H13 V8 M6,14 V10 H10 V14</Geometry>
+ <Geometry x:Key="Icon.Sparkle">M8,1 L10,6 L15,8 L10,10 L8,15 L6,10 L1,8 L6,6 Z</Geometry>
+ <Geometry x:Key="Icon.Tool">M9,2 A4,4 0 0 0 5,7 L2,12 A1.5,1.5 0 0 0 4,14 L9,10 A4,4 0 0 0 14,5 L11,7 L9,5 Z</Geometry>
+ <Geometry x:Key="Icon.Map">M1.5,3 L6,1.5 L10,3 L14.5,1.5 V13 L10,14.5 L6,13 L1.5,14.5 Z M6,1.5 V13 M10,3 V14.5</Geometry>
+ <Geometry x:Key="Icon.Battle">M3,2 L8,7 M8,9 L13,14 M2,10 L6,14 M3,13 L13,3 L14,2 V5 M10,2 H14</Geometry>
+ <Geometry x:Key="Icon.Send">M1.5,7 L14.5,1.5 L9,14.5 L7,9 Z M7,9 L14.5,1.5</Geometry>
+ <Geometry x:Key="Icon.Gift">M2,7 V14 H14 V7 M1,5 H15 V8 H1 Z M8,5 V14 M8,5 C1,5 3,0 6,2 Z M8,5 C15,5 13,0 10,2 Z</Geometry>
+ <Geometry x:Key="Icon.Book">M8,3 Q4,1 1.5,2 V13 Q5,12 8,14 Q11,12 14.5,13 V2 Q12,1 8,3 V14</Geometry>
+ <Geometry x:Key="Icon.Chat">M2,2 H14 V11 H7 L3,14 V11 H2 Z M5,5 H11 M5,8 H9</Geometry>
+ <Geometry x:Key="Icon.Fish">M2,8 Q7,0 12,8 Q7,16 2,8 Z M12,8 L15,5 V11 Z M5,7 V7.1</Geometry>
+ <Geometry x:Key="Icon.Game">M5,4 H11 Q14,4 14.5,12 Q14,15 10,11 H6 Q2,15 1.5,12 Q2,4 5,4 Z M4,7 V10 M2.5,8.5 H5.5 M10,7 V7.1 M12,9 V9.1</Geometry>
+ <Geometry x:Key="Icon.Mail">M1.5,3 H14.5 V13 H1.5 Z M2,4 L8,9 L14,4</Geometry>
+ <Geometry x:Key="Icon.Link">M6,10 L10,6 M5,9 L3,11 A2,2 0 0 0 6,14 L9,11 A2,2 0 0 0 9,8 M7,8 A2,2 0 0 1 7,5 L10,2 A2,2 0 0 1 13,5 L11,7</Geometry>
+ <Style x:Key="LineIcon" TargetType="Path">
+  <Setter Property="Width" Value="16"/><Setter Property="Height" Value="16"/><Setter Property="Stretch" Value="None"/>
+  <Setter Property="Stroke" Value="{DynamicResource MutedInk}"/><Setter Property="StrokeThickness" Value="1.5"/>
+  <Setter Property="StrokeStartLineCap" Value="Round"/><Setter Property="StrokeEndLineCap" Value="Round"/><Setter Property="StrokeLineJoin" Value="Round"/>
+  <Setter Property="HorizontalAlignment" Value="Center"/><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="IsHitTestVisible" Value="False"/>
+ </Style>
+ <Style x:Key="AppearanceChoice" TargetType="ListBoxItem">
+  <Setter Property="Foreground" Value="{DynamicResource MutedInk}"/><Setter Property="HorizontalContentAlignment" Value="Center"/>
+  <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
+   <Border x:Name="Tile" CornerRadius="6" Background="Transparent" BorderThickness="1" BorderBrush="Transparent" Padding="1,8" Margin="1">
+    <ContentPresenter HorizontalAlignment="Center"/>
+   </Border>
+   <ControlTemplate.Triggers>
+    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Tile" Property="Background" Value="{DynamicResource Surface}"/></Trigger>
+    <Trigger Property="IsSelected" Value="True"><Setter TargetName="Tile" Property="Background" Value="{DynamicResource Surface}"/><Setter TargetName="Tile" Property="BorderBrush" Value="{DynamicResource Line}"/><Setter Property="Foreground" Value="{DynamicResource Primary}"/></Trigger>
+    <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Tile" Property="BorderBrush" Value="{DynamicResource Focus}"/></Trigger>
+   </ControlTemplate.Triggers>
+  </ControlTemplate></Setter.Value></Setter>
+ </Style>
+</ResourceDictionary>

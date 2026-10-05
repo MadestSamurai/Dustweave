@@ -1,0 +1,258 @@
+{
+  "Extends": "mainline-evidence-spec.json",
+  "Taps": [
+    {
+      "Role": "trade.info",
+      "ResponseType": "Proto.Net.ShopInfoResponse",
+      "RequestSite": "constructor",
+      "Paths": [
+        "ShopRandSeed",
+        "ShopInfo"
+      ],
+      "ResponseOwner": "ὨὭὨὨὯὬὣὠὪὦὬ/ὡὧὩὨὫὭὡὤὥὪὢ"
+    },
+    {
+      "Role": "trade.open",
+      "ResponseType": "Proto.Net.ShopOpenResponse",
+      "RequestSite": "constructor",
+      "Paths": [
+        "IsTalentSkillDiscount",
+        "PackReputationInfo"
+      ],
+      "ResponseOwner": "ὨὭὨὨὯὬὣὠὪὦὬ/ὡὧὩὨὫὭὡὤὥὪὢ"
+    },
+    {
+      "Role": "trade.buy",
+      "ResponseType": "Proto.Net.ShopBuyResponse",
+      "RequestSite": "constructor",
+      "Paths": [
+        "RewardInfoBundle",
+        "ShopInfo"
+      ],
+      "ResponseOwner": "ὨὭὨὨὯὬὣὠὪὦὬ/ὪὬὮὪὫὩὪὪὪὭὢ"
+    },
+    {
+      "Role": "trade.sell",
+      "ResponseType": "Proto.Net.ShopSellResponse",
+      "RequestSite": "constructor",
+      "Paths": [
+        "RewardInfoBundle"
+      ],
+      "ResponseOwner": "ὨὭὨὨὯὬὣὠὪὦὬ"
+    },
+    {
+      "Role": "trade.cook",
+      "ResponseType": "Proto.Net.CookingResponse",
+      "RequestSite": "constructor",
+      "Paths": [
+        "ItemInfo",
+        "AddTalentExp"
+      ],
+      "ResponseOwner": "ὤὫὦὥὭὧὢὠὧὥὥ",
+      "ResponseOwnerIncludesNested": true,
+      "ResponseMethods": [
+        "ὣὨὦὭὮὣὪὠὠὯὧ",
+        "ὤὢὩὩὥὧὭὣὠὡὨ"
+      ]
+    }
+  ],
+  "Reads": [
+    {
+      "Id": "trade.currency",
+      "Type": "ὣὡὧὡὦὣὣὬὨὪὫ",
+      "StaticMember": "ὬὯὧὣὪὢὡὬὬὯὦ",
+      "Paths": [
+        "Gold",
+        "Catalyst"
+      ]
+    },
+    {
+      "Id": "trade.inventory",
+      "Type": "ὣὡὧὡὦὣὣὬὨὪὫ",
+      "StaticMember": "ὧὥὤὯὩὤὬὯὦὤὮ",
+      "Paths": [
+        "Count"
+      ],
+      "CollectionPath": "$self",
+      "ItemPaths": [
+        "Key",
+        "Value.Count",
+        "Value.Values"
+      ],
+      "MaxItems": 80
+    },
+    {
+      "Id": "trade.characters",
+      "Type": "ὣὡὧὡὦὣὣὬὨὪὫ",
+      "StaticMember": "ὩὬὮὭὦὮὢὥὣὦὪ",
+      "Paths": [
+        "Count"
+      ],
+      "CollectionPath": "Values",
+      "ItemPaths": [
+        "Id",
+        "InvenIndex",
+        "TalentLevel",
+        "Temporary"
+      ],
+      "MaxItems": 1500
+    },
+    {
+      "Id": "trade.recipes",
+      "Type": "ὤὫὦὥὭὧὢὠὧὥὥ",
+      "StaticMember": "ὠὩὢὩὥὢὣὡὬὧὤ",
+      "Paths": [
+        "Count",
+        "$self"
+      ]
+    },
+    {
+      "Id": "trade.shops",
+      "Type": "ὨὭὨὨὯὬὣὠὪὦὬ",
+      "StaticMember": "ὨὢὦὦὪὧὠὢὨὣὬ",
+      "Paths": [
+        "Count"
+      ],
+      "CollectionPath": "Values",
+      "ItemPaths": [
+        "ShopId",
+        "ShopRemainTick",
+        "ProductInfo.Count",
+        "ProductInfo"
+      ],
+      "MaxItems": 100
+    },
+    {
+      "Id": "trade.bargain",
+      "Type": "ὨὭὨὨὯὬὣὠὪὦὬ",
+      "StaticMember": "ὣὮὥὨὣὯὥὣὧὭὢ",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "trade.seed",
+      "Type": "ὨὭὨὨὯὬὣὠὪὦὬ",
+      "StaticMember": "ὡὡὣὩὪὭὯὭὦὯὥ",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "trade.clock",
+      "Type": "ὫὨὪὠὢὨὮὤὩὤὮ",
+      "StaticMember": "ὠὥὬὪὮὬὢὨὬὮὫ",
+      "Paths": [
+        "UnixTimeStamp()"
+      ]
+    },
+    {
+      "Id": "trade.shop_ui",
+      "Type": "ShopUI",
+      "Paths": [
+        "ὬὥὫὥὮὤὭὥὪὥὣ",
+        "ὯὣὡὫὨὫὡὧὩὬὠ",
+        "ὫὭὥὤὫὫὯὪὠὣὤ",
+        "ὤὦὣὥὭὣὫὨὡὢὮ.Count",
+        "ὩὤὬὪὤὦὧὭὣὥὠ.ὯὫὪὡὭὤὪὮὫὬὣ"
+      ],
+      "CollectionPath": "ὤὦὣὥὭὣὫὨὡὢὮ",
+      "ItemPaths": [
+        "ὠὩὯὭὡὩὤὩὨὩὢ",
+        "ὯὫὪὡὭὤὪὮὫὬὣ",
+        "ὢὭὩὠὪὯὮὧὩὣὧ",
+        "ὣὬὭὧὨὨὧὬὮὪὢ",
+        "ὣὡὢὩὥὥὨὯὩὥὯ",
+        "ὤὧὤὬὧὫὡὥὮὫὩ",
+        "ὠὥὬὠὨὧὡὩὨὤὯ",
+        "ὭὣὢὣὢὯὥὠὥὦὭ"
+      ],
+      "MaxItems": 300
+    },
+    {
+      "Id": "trade.available_shops",
+      "Type": "ShopUI",
+      "Paths": [
+        "ὫὨὧὫὯὭὨὢὦὬὪ.Count"
+      ],
+      "CollectionPath": "ὫὨὧὫὯὭὨὢὦὬὪ",
+      "ItemPaths": [
+        "Id",
+        "PackId"
+      ],
+      "MaxItems": 100
+    },
+    {
+      "Id": "trade.native",
+      "Type": "BD2Daily.Live.TradeObservation",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "trade.discount_popup",
+      "Type": "DiscountPopupUI",
+      "Paths": [
+        "ὤὣὤὥὨὧὮὨὣὤὤ",
+        "ὣὮὡὮὣὥὫὬὨὣὬ",
+        "ὣὡὪὭὤὨὭὣὪὧὩ"
+      ]
+    },
+    {
+      "Id": "trade.cooking_ui",
+      "Type": "CookingUI",
+      "Paths": [
+        "ὤὬὣὢὫὫὧὭὭὫὪ",
+        "_craftMaterial.craftCount",
+        "_craftMaterial.MaxCraftCount",
+        "ὫὫὮὪὠὥὧὤὮὠὬ.ὣὭὧὢὦὨὩὯὢὦὨ"
+      ]
+    },
+    {
+      "Id": "trade.cook_limit",
+      "Type": "ὨὭὭὯὧὢὣὢὤὫὥ",
+      "StaticMember": "ὤὭὮὬὦὣὫὪὩὧὧ",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "trade.merchant_menu",
+      "Type": "QuickMenuAroundMenu",
+      "Paths": [
+        "gameObject.name",
+        "_textMenu.text",
+        "ὭὦὣὠὣὮὡὪὢὨὪ.ὫὠὫὯὠὢὥὧὢὥὥ"
+      ]
+    },
+    {
+      "Id": "trade.quickmenu",
+      "Type": "QuickMenuUI",
+      "Paths": [
+        "ὬὣὨὤὯὪὪὮὠὥὨ.ὠὫὥὧὭὭὥὠὭὤὣ.ὯὫὪὡὭὤὪὮὫὬὣ"
+      ]
+    },
+    {
+      "Id": "trade.merchant",
+      "Type": "NPCController",
+      "Paths": [
+        "gameObject.name",
+        "ὠὫὥὧὭὭὥὠὭὤὣ.ὯὫὪὡὭὤὪὮὫὬὣ",
+        "ὩὤὨὮὥὦὫὭὫὭὨ"
+      ],
+      "CollectionPath": "ὩὥὬὩὩὠὠὤὪὡὡ",
+      "ItemPaths": [
+        "ὫὠὫὯὠὢὥὧὢὥὥ",
+        "ὭὩὪὯὯὬὧὠὠὬὠ"
+      ],
+      "MaxItems": 30
+    },
+    {
+      "Id": "trade.navigation",
+      "Type": "GameFieldDefaultUI",
+      "Paths": [
+        "$self"
+      ]
+    }
+  ]
+}

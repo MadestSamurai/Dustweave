@@ -1,0 +1,38 @@
+{
+  "role": "cafeteria.collect",
+  "action": {
+    "ui": "ManagementRewardPopupUI",
+    "field": "$pointer/Button - background/Parent/Image - Backgrond/CafeteriaSettlementInfo/EnableRoot/Reward/Button - Settlement",
+    "timeout": 25,
+    "reason": "领取已核对可结算的餐厅单项收益并核对原生响应",
+    "expect": "RewardReceivePopupUI"
+  },
+  "prepare": [
+    {
+      "ui": "MenuUI",
+      "field_prefix": "$pointer/UIRoot/Mask/Object- Left/ButtonLayout/Management/",
+      "if_absent": "ManagementRewardPopupUI",
+      "expect": "ManagementRewardPopupUI",
+      "reason": "打开经营管理，核对餐厅单项领取资格"
+    }
+  ],
+  "cleanup": [
+    {
+      "ui": "RewardReceivePopupUI",
+      "if_present": "RewardReceivePopupUI",
+      "field": "_objBackButton",
+      "absent": "RewardReceivePopupUI",
+      "expect": "ManagementRewardPopupUI",
+      "reason": "服务器已确认餐厅结果，关闭奖励展示",
+      "wait_ready": true
+    },
+    {
+      "ui": "ManagementRewardPopupUI",
+      "if_present": "ManagementRewardPopupUI",
+      "field": "_cancelButton",
+      "absent": "ManagementRewardPopupUI",
+      "expect": "MenuUI",
+      "reason": "餐厅单项结束，正常返回菜单"
+    }
+  ]
+}

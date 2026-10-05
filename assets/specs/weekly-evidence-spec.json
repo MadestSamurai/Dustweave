@@ -1,0 +1,149 @@
+{
+  "Extends": "trade-evidence-spec.json",
+  "Taps": [
+    {
+      "Role": "room.like",
+      "ResponseType": "Proto.Net.MyRoomLikeResponse",
+      "ResponseViaParserHelper": true,
+      "Paths": [
+        "TotalCount",
+        "Date"
+      ]
+    },
+    {
+      "Role": "weekly.book.start",
+      "ResponseType": "Proto.Net.TotalWarBattleStartResponse",
+      "RequestSite": "constructor",
+      "ResponseViaParserHelper": true,
+      "Paths": [
+        "BlueCharInfo"
+      ]
+    },
+    {
+      "Role": "weekly.book.end",
+      "ResponseType": "Proto.Net.TotalWarBattleEndResponse",
+      "RequestSite": "constructor",
+      "ResponseViaParserHelper": true,
+      "Paths": [
+        "ScoreInfo"
+      ]
+    },
+    {
+      "Role": "weekly.sichuan.start",
+      "ResponseType": "Proto.Net.MiniGameSichuanStartResponse",
+      "Paths": [],
+      "RequestSite": "constructor",
+      "ResponseOwner": "ὥὯὯὤὫὠὢὯὠὤὤ",
+      "ResponseOwnerIncludesNested": true
+    },
+    {
+      "Role": "weekly.sichuan.end",
+      "ResponseType": "Proto.Net.MiniGameSichuanEndResponse",
+      "Paths": [],
+      "RequestSite": "constructor",
+      "ResponseOwner": "ὥὯὯὤὫὠὢὯὠὤὤ",
+      "ResponseOwnerIncludesNested": true
+    }
+  ],
+  "Reads": [
+    {
+      "Id": "weekly.room.list",
+      "Type": "ὤὮὯὡὦὠὭὦὬὦὡ",
+      "StaticMember": "ὮὠὨὢὧὩὩὢὡὤὧ",
+      "Paths": [
+        "Count",
+        "Values"
+      ]
+    },
+    {
+      "Id": "weekly.room.controller",
+      "Type": "MyRoomController",
+      "Paths": [
+        "ὡὧὧὬὨὬὥὨὦὠὤ",
+        "ὣὭὣὧὠὤὣὪὭὫὨ"
+      ]
+    },
+    {
+      "Id": "weekly.room.ui",
+      "Type": "MyRoomUI",
+      "Paths": [
+        "ὥὨὪὯὢὮὯὡὫὬὧ",
+        "_btnLike.ὢὪὯὧὠὥὬὪὪὮὤ",
+        "_myRoomVisitUI.ὦὬὠὪὫὡὣὤὠὮὨ"
+      ]
+    },
+    {
+      "Id": "weekly.arcade",
+      "Type": "MiniGameHubScrollItem",
+      "Paths": [
+        "gameObject.name",
+        "_textTitle.text"
+      ]
+    },
+    {
+      "Id": "weekly.event.popup",
+      "Type": "BattleSkipPopupUI",
+      "Paths": [
+        "_buttonFreeOnly.IsEnable",
+        "_sliderAutoCount.ὮὢὥὯὥὧὤὭὨὨὪ",
+        "ὩὥὭὬὬὥὡὠὥὧὭ",
+        "ὠὬὦὫὩὨὣὫὤὢὨ",
+        "ὦὠὠὧὩὩὮὥὫὧὡ"
+      ]
+    },
+    {
+      "Id": "weekly.event.currency",
+      "Type": "ὣὡὧὡὦὣὣὬὨὪὫ",
+      "StaticMember": "ὬὯὧὣὪὢὡὬὬὯὦ",
+      "Paths": [
+        "EventApFree",
+        "EventApStack"
+      ]
+    },
+    {
+      "Id": "weekly.book.ui",
+      "Type": "TotalWarUI",
+      "Paths": [
+        "_buttonBattleEnter._goEnable.gameObject.activeInHierarchy"
+      ]
+    },
+    {
+      "Id": "weekly.book.deck",
+      "Type": "ὧὯὫὪὨὢὬὮὮὠὦ",
+      "StaticMember": "ὩὪὠὩὤὤὫὪὩὬὪ",
+      "Paths": [
+        "Count",
+        "$self"
+      ]
+    },
+    {
+      "Id": "weekly.book.result",
+      "Type": "BattleResultUITotalWar",
+      "Paths": [
+        "_objRoot.activeInHierarchy",
+        "_textTotalDamage.text"
+      ]
+    },
+    {
+      "Id": "weekly.book.gate",
+      "Type": "TotalWarLobbyGateController",
+      "Paths": [
+        "gameObject.activeInHierarchy"
+      ]
+    },
+    {
+      "Id": "weekly.book.hud",
+      "Type": "BattleUIHUD",
+      "Paths": [
+        "_objSkipBtn.ὢὪὯὧὠὥὬὪὪὮὤ"
+      ]
+    },
+    {
+      "Id": "weekly.sichuan",
+      "Type": "SichuanMainUI",
+      "Paths": [
+        "$self"
+      ]
+    }
+  ]
+}

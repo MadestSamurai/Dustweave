@@ -1,0 +1,48 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Accounts/BD2AccountSessionManager.Core.csproj" />
+    <Project Path="src/Compatibility/BD2Daily.Compatibility.csproj" />
+    <Project Path="src/Connection/BD2Daily.Live.csproj" />
+    <Project Path="src/Core/BD2Daily.Core.csproj" />
+    <Project Path="src/Desktop/BD2Daily.Desktop.csproj" />
+    <Project Path="src/ToolHost/BD2Daily.Fishing.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/CompatibilityCli/BD2Daily.Compatibility.Cli.csproj" />
+    <Project Path="tools/RuntimeCheck/BD2Daily.RuntimeCheck.csproj" />
+    <Project Path="tools/TableExporter/BD2TableExporter.csproj" />
+    <Project Path="tools/TradeData/BD2Daily.TradeData.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Dustweave.Tests/Dustweave.Tests.csproj" />
+  </Folder>
+  <Folder Name="/standalone/">
+    <Project Path="standalone/bd2-apostle-defense/compatibility/BD2ApostleDefense.Compatibility.csproj" />
+    <Project Path="standalone/bd2-apostle-defense/core/BD2ApostleDefense.Core.csproj" />
+    <Project Path="standalone/bd2-apostle-defense/desktop/BD2ApostleDefense.Desktop.csproj" />
+    <Project Path="standalone/bd2-equipment-assistant/connection/BD2Equipment.Connection.csproj" />
+    <Project Path="standalone/bd2-equipment-assistant/core/BD2Equipment.Core.csproj" />
+    <Project Path="standalone/bd2-equipment-assistant/desktop/BD2EquipmentAssistant.csproj" />
+    <Project Path="standalone/bd2-fiend-hunter/compatibility/BD2FiendHunter.Compatibility.csproj" />
+    <Project Path="standalone/bd2-fiend-hunter/core/BD2FiendHunter.Core.csproj" />
+    <Project Path="standalone/bd2-fiend-hunter/desktop/BD2FiendHunter.Desktop.csproj" />
+    <Project Path="standalone/bd2-fishing/compatibility/BD2Fishing.Compatibility.csproj" />
+    <Project Path="standalone/bd2-fishing/core/BD2Fishing.Core.csproj" />
+    <Project Path="standalone/bd2-fishing/desktop/BD2Fishing.Desktop.csproj" />
+    <Project Path="standalone/bd2-infinite-gacha/compatibility/BD2InfiniteGacha.Compatibility.csproj" />
+    <Project Path="standalone/bd2-infinite-gacha/core/BD2InfiniteGacha.Core.csproj" />
+    <Project Path="standalone/bd2-infinite-gacha/desktop/BD2InfiniteGacha.Desktop.csproj" />
+    <Project Path="standalone/bd2-rhythm/compatibility/BD2Rhythm.Compatibility.csproj" />
+    <Project Path="standalone/bd2-rhythm/core/BD2Rhythm.Core.csproj" />
+    <Project Path="standalone/bd2-rhythm/desktop/BD2Rhythm.Desktop.csproj" />
+    <Project Path="standalone/bd2-secret-vision/compatibility/BD2SecretVision.Compatibility.csproj" />
+    <Project Path="standalone/bd2-secret-vision/core/BD2SecretVision.Core.csproj" />
+    <Project Path="standalone/bd2-secret-vision/desktop/BD2SecretVision.Desktop.csproj" />
+    <Project Path="standalone/bd2-sichuan/compatibility/BD2Sichuan.Compatibility.csproj" />
+    <Project Path="standalone/bd2-sichuan/core/BD2Sichuan.Core.csproj" />
+    <Project Path="standalone/bd2-sichuan/desktop/BD2Sichuan.Desktop.csproj" />
+    <Project Path="standalone/bd2-territory/compatibility/BD2Territory.Compatibility.csproj" />
+    <Project Path="standalone/bd2-territory/core/BD2Territory.Core.csproj" />
+    <Project Path="standalone/bd2-territory/desktop/BD2Territory.Desktop.csproj" />
+  </Folder>
+</Solution>

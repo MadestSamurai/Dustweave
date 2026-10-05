@@ -1,0 +1,55 @@
+<Window x:Class="BD2SecretVision.Desktop.MainWindow"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:local="clr-namespace:BD2SecretVision.Desktop"
+ Title="BD2 Secret Vision" Width="1100" Height="860" MinWidth="920" MinHeight="720"
+ WindowStartupLocation="CenterScreen" Background="{StaticResource AppBackground}">
+ <Grid Margin="22">
+  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <DockPanel Margin="0,0,0,18">
+   <ComboBox x:Name="LanguageChoice" DockPanel.Dock="Right" Width="116" VerticalAlignment="Center" Margin="12,0,0,0" SelectionChanged="LanguageChanged" AutomationProperties.Name="Language"><ComboBoxItem Content="简体中文"/><ComboBoxItem Content="English"/></ComboBox>
+   <Button x:Name="ConnectButton" DockPanel.Dock="Right" Click="ConnectClick" VerticalAlignment="Center" Margin="12,0,0,0"/>
+   <StackPanel><TextBlock Text="SECRET VISION" FontWeight="SemiBold" FontSize="24"/><TextBlock x:Name="Subtitle" Foreground="{StaticResource MutedInk}" Margin="0,5,0,0" TextWrapping="Wrap"/></StackPanel>
+  </DockPanel>
+  <Grid Grid.Row="1">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="16"/><ColumnDefinition Width="300"/></Grid.ColumnDefinitions>
+   <Border Style="{StaticResource Panel}" Padding="16"><Grid>
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+    <DockPanel><TextBlock x:Name="BoardTitle" FontSize="16" FontWeight="SemiBold"/><TextBlock x:Name="LiveState" Foreground="{StaticResource MutedInk}" HorizontalAlignment="Right"/></DockPanel>
+    <TextBlock x:Name="BoardStats" Grid.Row="1" Margin="0,10,0,14" FontSize="16"/>
+    <Grid Grid.Row="2"><local:BoardView x:Name="Board"/><TextBlock x:Name="EmptyBoard" TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource MutedInk}" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="350" Margin="20"/></Grid>
+    <WrapPanel Grid.Row="3" Margin="0,12,0,0">
+     <TextBlock x:Name="ClaimedLegend" Foreground="#176B57" Margin="0,0,16,4"/>
+     <TextBlock x:Name="PlayerLegend" Foreground="#275FAB" Margin="0,0,16,4"/>
+     <TextBlock x:Name="EnemyLegend" Foreground="#A23737" Margin="0,0,16,4"/>
+     <TextBlock x:Name="ItemLegend" Foreground="#8B5600" Margin="0,0,0,4"/>
+    </WrapPanel>
+   </Grid></Border>
+   <Border Grid.Column="2" Style="{StaticResource Panel}" Padding="16"><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel x:Name="SettingsPanel">
+    <TextBlock x:Name="StagesTitle" FontWeight="SemiBold" FontSize="16"/>
+    <TextBlock x:Name="StagesHelp" Foreground="{StaticResource MutedInk}" FontSize="12" Margin="0,6,0,12" TextWrapping="Wrap"/>
+    <WrapPanel x:Name="StageChoices"><CheckBox x:Name="Stage1" Content="1" Margin="0,0,16,8" Click="SettingsChanged"/><CheckBox x:Name="Stage2" Content="2" Margin="0,0,16,8" Click="SettingsChanged"/><CheckBox x:Name="Stage3" Content="3" Margin="0,0,16,8" Click="SettingsChanged"/><CheckBox x:Name="Stage4" Content="4" Margin="0,0,16,8" Click="SettingsChanged"/><CheckBox x:Name="Stage5" Content="5" Margin="0,0,0,8" Click="SettingsChanged"/></WrapPanel>
+    <TextBlock x:Name="TargetTitle" FontWeight="SemiBold" Margin="0,14,0,8"/>
+    <ComboBox x:Name="Target" SelectionChanged="SettingsChanged" MinHeight="36" VerticalContentAlignment="Center"><ComboBoxItem x:Name="Target100"/><ComboBoxItem x:Name="Target80"/></ComboBox>
+    <CheckBox x:Name="Retry" Margin="0,18,0,0" Click="SettingsChanged"/>
+    <TextBlock x:Name="AttemptsTitle" Margin="0,14,0,6"/>
+    <TextBox x:Name="MaxAttempts" TextChanged="SettingsChanged"/>
+    <TextBlock x:Name="AttemptsHelp" Foreground="{StaticResource MutedInk}" FontSize="12" Margin="0,5,0,0" TextWrapping="Wrap"/>
+    <TextBlock x:Name="SettingsError" Foreground="{StaticResource Error}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+    <Separator Margin="0,18,0,14"/>
+    <TextBlock x:Name="OperationTitle" FontWeight="SemiBold"/>
+    <TextBlock x:Name="OperationHelp" Foreground="{StaticResource MutedInk}" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap"/>
+   </StackPanel></ScrollViewer></Border>
+  </Grid>
+  <Grid Grid.Row="2" Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <StackPanel Margin="0,0,14,0"><TextBlock x:Name="RunStatus" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock x:Name="RunDetail" Foreground="{StaticResource MutedInk}" TextWrapping="Wrap" FontSize="12" Margin="0,5,0,0"/></StackPanel>
+   <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"><Button x:Name="StartButton" Style="{StaticResource PrimaryButton}" Click="StartClick"/><Button x:Name="StopButton" Click="StopClick" IsEnabled="False" Margin="8,0,0,0"/></StackPanel>
+  </Grid>
+  <Expander Grid.Row="3" x:Name="Diagnostics" Margin="0,16,0,0"><StackPanel Margin="0,10,0,0">
+   <TextBlock x:Name="DiagnosticHelp" Foreground="{StaticResource MutedInk}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+   <TextBox x:Name="DataPath" IsReadOnly="True"/>
+   <TextBox x:Name="DiagnosticText" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" MaxHeight="100" Margin="0,6,0,0"/>
+  </StackPanel></Expander>
+  <DockPanel Grid.Row="4" Margin="0,16,0,0"><Button x:Name="AboutButton" DockPanel.Dock="Right" Click="AboutClick" Padding="10,4"/><TextBlock x:Name="Attribution" Foreground="{StaticResource MutedInk}" FontSize="11" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0"/></DockPanel>
+ </Grid>
+</Window>

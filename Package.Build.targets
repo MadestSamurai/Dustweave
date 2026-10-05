@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup Condition="'$(DustweavePackageLockRoot)' != ''">
+    <NuGetLockFilePath>$(DustweavePackageLockRoot)/$(MSBuildProjectName).lock.json</NuGetLockFilePath>
+    <RestoreLockedMode>false</RestoreLockedMode>
+  </PropertyGroup>
+</Project>

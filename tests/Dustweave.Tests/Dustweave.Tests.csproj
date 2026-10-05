@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <!-- Reuse the existing internal test-access identity; this is a separate output directory. -->
+    <AssemblyName>BD2Daily.Tests</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Core/BD2Daily.Core.csproj" />
+    <Compile Include="../../src/Desktop/DemoEnvironment.cs" Link="DemoEnvironment.cs" />
+    <Compile Include="../../src/Runtime/SuiteRuntime.cs" Link="Unified/SuiteRuntime.cs" />
+    <Compile Include="../../src/Shared/Ipc/runtime/Handoff.cs" Link="Unified/Handoff.cs" />
+    <Compile Include="../../src/Runtime/SdkIdentity.cs" Link="SdkIdentity.cs" />
+    <Compile Include="../../src/Connection/WeeklyNpcProgressGuard.cs" Link="WeeklyNpcProgressGuard.cs" />
+  </ItemGroup>
+</Project>

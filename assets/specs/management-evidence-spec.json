@@ -1,0 +1,84 @@
+{
+  "Extends": "dispatch-evidence-spec.json",
+  "Taps": [
+    {
+      "Role": "fishing.trap",
+      "ResponseType": "Proto.Net.FishingTrapCumulativeRewardResponse",
+      "Paths": [
+        "RewardInfo",
+        "TrapRewardReceiptTime",
+        "Level",
+        "Exp"
+      ]
+    }
+  ],
+  "Reads": [
+    {
+      "Id": "fishing.ui",
+      "Type": "ManagementRewardPopupUI_FishingTrapSettlementInfoItem",
+      "Paths": [
+        "IsCanSettlement()",
+        "IsDisable()"
+      ]
+    },
+    {
+      "Id": "fishing.player",
+      "Type": "ὠὠὣὡὪὡὩὧὬὢὡ",
+      "StaticMember": "ὨὬὢὩὬὫὩὫὧὡὢ",
+      "Paths": [
+        "Level",
+        "Exp"
+      ]
+    },
+    {
+      "Id": "fishing.trap",
+      "Type": "ὠὠὣὡὪὡὩὧὬὢὡ",
+      "StaticMember": "ὩὫὭὬὤὣὨὬὩὡὮ",
+      "Paths": [
+        "TrapRewardReceiptTime"
+      ]
+    },
+    {
+      "Id": "management.ui",
+      "Type": "ManagementRewardPopupUI",
+      "Paths": [
+        "_settlementAllButtonEnableRoot.activeInHierarchy",
+        "_settlementAllButtonDisableRoot.activeInHierarchy"
+      ]
+    },
+    {
+      "Id": "hunt.native",
+      "Type": "HuntOrAirwayUI",
+      "Paths": [
+        "_tabButtonGoblin._goBonus.activeInHierarchy",
+        "_tabButtonSlime._goBonus.activeInHierarchy",
+        "ὤὫὣὡὫὤὦὯὢὡὬ"
+      ]
+    },
+    {
+      "Id": "hunt.pins",
+      "Type": "WorldMapPin",
+      "Paths": [
+        "gameObject.name",
+        "transform.parent.gameObject.name",
+        "ὯὯὬὥὭὫὯὭὩὫὦ.HuntPackId",
+        "ὯὯὬὥὭὫὯὭὩὫὦ.HuntTypeGroupId"
+      ]
+    },
+    {
+      "Id": "hunt.owned",
+      "Type": "HuntOrAirwayOwnedItem",
+      "Paths": [
+        "ὬὩὨὮὥὫὧὪὥὥὨ.ὯὫὪὡὭὤὪὮὫὬὣ",
+        "ὬὩὨὮὥὫὧὪὥὥὨ.ὮὢὥὯὥὧὤὭὨὨὪ"
+      ]
+    },
+    {
+      "Id": "hunt.popup_busy",
+      "Type": "HuntDispatchPopupUI",
+      "Paths": [
+        "ὣὭὠὤὧὠὡὮὣὢὦ"
+      ]
+    }
+  ]
+}

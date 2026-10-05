@@ -1,0 +1,19 @@
+{
+  "role": "room.info",
+  "action": {
+    "ui": "MenuUI",
+    "field": "_buttonMyRoom",
+    "expect": "MyRoomUI",
+    "timeout": 40,
+    "reason": "访问自己的小屋并核对原生响应与缓存"
+  },
+  "return_action": {
+    "ui": "MyRoomUI",
+    "field": "_objBackButton",
+    "absent": "MyRoomUI",
+    "expect": "MenuUI",
+    "timeout": 40,
+    "reason": "小屋访问已确认，正常返回主菜单",
+    "if_present": "MyRoomUI"
+  }
+}

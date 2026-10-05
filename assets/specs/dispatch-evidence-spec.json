@@ -1,0 +1,336 @@
+{
+  "Extends": "mirror-evidence-spec.json",
+  "Taps": [
+    {
+      "Role": "dispatch.reward",
+      "ResponseType": "Proto.Net.DispatchRewardResponse",
+      "Paths": [
+        "ItemInfo"
+      ],
+      "RequestSite": "constructor"
+    },
+    {
+      "Role": "dispatch.start",
+      "ResponseType": "Proto.Net.TalentSkillUseResponse",
+      "Paths": [
+        "DispatchInfo",
+        "TalentSkillInfo",
+        "ItemInfo",
+        "IsSuccess",
+        "AddTalentExp",
+        "TalentNpcInfo"
+      ],
+      "RequestSite": "constructor",
+      "ResponseOwner": "ὧὥὩὣὭὯὧὫὫὥὠ/ὮὦὧὭὭὢὨὥὪὪὦ"
+    },
+    {
+      "Role": "dispatch.totalwar",
+      "ResponseType": "Proto.Net.TotalWarRewardResponse",
+      "Paths": [
+        "RewardInfoBundle"
+      ],
+      "RequestSite": "constructor"
+    },
+    {
+      "Role": "dispatch.evilcastle",
+      "ResponseType": "Proto.Net.EvilCastleDailyRewardResponse",
+      "Paths": [
+        "RewardInfoBundle"
+      ],
+      "RequestSite": "constructor"
+    }
+  ],
+  "Reads": [
+    {
+      "Id": "dispatch.cache",
+      "Type": "ὣὡὧὡὦὣὣὬὨὪὫ",
+      "Paths": [
+        "Count"
+      ],
+      "StaticMember": "ὨὬὯὢὪὥὮὬὠὢὠ",
+      "CollectionPath": "$self",
+      "ItemPaths": [
+        "Id",
+        "ServerNowTime",
+        "EndTime"
+      ],
+      "MaxItems": 1000
+    },
+    {
+      "Id": "dispatch.currency",
+      "Type": "ὣὡὧὡὦὣὣὬὨὪὫ",
+      "Paths": [
+        "Catalyst"
+      ],
+      "StaticMember": "ὬὯὧὣὪὢὡὬὬὯὦ"
+    },
+    {
+      "Id": "dispatch.talent",
+      "Type": "QuickMenuTalentSkillLoopScrollItem",
+      "Paths": [
+        "gameObject.name",
+        "ὯὠὭὬὭὢὣὨὠὬὢ",
+        "ὬὩὬὡὯὮὨὣὩὦὡ",
+        "ὣὡὪὭὤὨὭὣὪὧὩ",
+        "_objDisableImage.activeSelf"
+      ]
+    },
+    {
+      "Id": "dispatch.ui",
+      "Type": "DispatchSelectUI",
+      "Paths": [
+        "ὬὩὠὡὬὯὨὪὡὩὮ",
+        "ὢὧὭὧὡὯὦὧὥὩὮ.InvenIndex",
+        "ὢὧὭὧὡὯὦὧὥὩὮ.Id",
+        "ὦὢὧὧὥὥὫὡὧὣὪ",
+        "ὤὨὯὥὦὫὤὯὬὨὣ",
+        "ὡὯὫὤὯὡὪὨὪὪὨ",
+        "ὦὤὯὪὧὩὬὨὪὦὠ",
+        "_goMaskRoot.activeSelf",
+        "_currencyUseButton.ὪὤὪὥὪὭὨὨὪὡὨ"
+      ]
+    },
+    {
+      "Id": "dispatch.presentation.QuickMenuUI",
+      "Type": "QuickMenuUI",
+      "Paths": [
+        "ὣὤὥὦὯὦὩὤὨὠὪ",
+        "ὪὯὣὥὬὫὬὩὠὮὠ",
+        "ὮὬὧὦὣὠὠὤὮὦὧ",
+        "ὦὡὮὫὧὠὮὡὭὭὬ"
+      ]
+    },
+    {
+      "Id": "dispatch.presentation.DispatchSelectUI",
+      "Type": "DispatchSelectUI",
+      "Paths": [
+        "ὣὤὥὦὯὦὩὤὨὠὪ",
+        "ὪὯὣὥὬὫὬὩὠὮὠ",
+        "ὮὬὧὦὣὠὠὤὮὦὧ",
+        "ὦὡὮὫὧὠὮὡὭὭὬ"
+      ]
+    },
+    {
+      "Id": "dispatch.claim_ids",
+      "Type": "ὣὡὧὡὦὣὣὬὨὪὫ",
+      "StaticMember": "ὮὭὣὤὡὠὠὧὧὢὠ",
+      "Paths": [
+        "Count",
+        "_items"
+      ]
+    },
+    {
+      "Id": "dispatch.clock",
+      "Type": "ὫὨὪὠὢὨὮὤὩὤὮ",
+      "StaticMember": "ὠὥὬὪὮὬὢὨὬὮὫ",
+      "Paths": [
+        "UnixTimeStamp()"
+      ]
+    },
+    {
+      "Id": "dispatch.quick",
+      "Type": "QuickMenuUI",
+      "Paths": [
+        "TalentSkills.Count",
+        "ὦὣὩὣὧὯὧὠὢὣὢ",
+        "ὠὩὠὩὫὪὥὧὢὫὭ",
+        "ὧὭὨὢὥὩὫὯὠὫὭ"
+      ]
+    },
+    {
+      "Id": "dispatch.motion",
+      "Type": "GameFieldManager",
+      "StaticMember": "ὪὫὢὨὯὭὦὪὦὨὣ",
+      "Paths": [
+        "ὪὨὯὢὫὮὨὩὮὡὬ.ὯὧὨὨὡὭὡὭὧὥὧ.ὦὡὮὫὧὠὮὡὭὭὬ",
+        "ὪὨὯὢὫὮὨὩὮὡὬ.ὯὧὨὨὡὭὡὭὧὥὧ.ὯὨὤὪὤὢὠὨὨὤὣ"
+      ]
+    },
+    {
+      "Id": "dispatch.global.totalwar",
+      "Type": "ὧὯὫὪὨὢὬὮὮὠὦ",
+      "StaticMember": "ὪὯὬὥὡὧὨὬὪὬὭ",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "dispatch.global.evilcastle",
+      "Type": "ὠὮὤὧὠὣὯὯὯὪὤ",
+      "StaticMember": "ὣὤὯὢὫὢὢὢὩὢὫ",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "dispatch.global.auto",
+      "Type": "ὬὦὬὪὢὥὣὤὧὬὮ",
+      "StaticMember": "ὥὪὧὣὬὢὫὩὩὪὮ",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "dispatch.global.chain",
+      "Type": "ὫὧὧὦὬὦὠὩὯὦὦ",
+      "StaticMember": "ὢὫὤὡὬὩὬὭὨὮὫ",
+      "Paths": [
+        "Count"
+      ]
+    },
+    {
+      "Id": "dispatch.global.field",
+      "Type": "FieldDispatchObjectController",
+      "Paths": [
+        "gameObject.name",
+        "gameObject.activeInHierarchy",
+        "ὪὬὣὧὥὨὦὯὨὮὬ",
+        "ὦὮὠὩὣὣὮὤὩὥὫ",
+        "ὩὤὨὮὥὦὫὭὫὭὨ"
+      ]
+    },
+    {
+      "Id": "dispatch.global.wait",
+      "Type": "PackManager",
+      "StaticMember": "ὪὫὢὨὯὭὦὪὦὨὣ",
+      "Paths": [
+        "waitResetPackKeyWordSet"
+      ]
+    },
+    {
+      "Id": "dispatch.global.collecting",
+      "Type": "ὣὡὧὡὦὣὣὬὨὪὫ",
+      "StaticMember": "ὡὩὧὩὡὤὤὭὠὫὣ",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "dispatch.global.totalwar_field",
+      "Type": "FieldTotalWarRewardObjectController",
+      "Paths": [
+        "gameObject.name",
+        "gameObject.activeInHierarchy",
+        "ὪὬὣὧὥὨὦὯὨὮὬ",
+        "ὦὮὠὩὣὣὮὤὩὥὫ",
+        "ὩὤὨὮὥὦὫὭὫὭὨ"
+      ]
+    },
+    {
+      "Id": "dispatch.spawn.field",
+      "Type": "GameFieldManager",
+      "StaticMember": "ὪὫὢὨὯὭὦὪὦὨὣ",
+      "Paths": [
+        "CanSpawnAnyObject()",
+        "ὢὩὠὢὫὧὠὣὤὩὫ",
+        "ὮὬὬὮὠὮὪὠὧὩὪ.MapGroupId",
+        "ὮὬὬὮὠὮὪὠὧὩὪ.IsInsideMap",
+        "ὪὨὯὢὫὮὨὩὮὡὬ.ὠὭὬὪὫὣὠὡὡὠὫ",
+        "ὮὩὡὢὦὥὪὧὭὩὢ.Count"
+      ]
+    },
+    {
+      "Id": "dispatch.spawn.pack",
+      "Type": "PackManager",
+      "StaticMember": "ὪὫὢὨὯὭὦὪὦὨὣ",
+      "Paths": [
+        "IsNoneFieldPack()",
+        "HasNotCheckedDispatchObject()"
+      ]
+    },
+    {
+      "Id": "dispatch.spawn.camera",
+      "Type": "GameCameraManager",
+      "StaticMember": "ὪὫὢὨὯὭὦὪὦὨὣ",
+      "Paths": [
+        "ὥὦὥὨὫὡὦὮὧὦὢ.name"
+      ]
+    },
+    {
+      "Id": "dispatch.spawn.network",
+      "Type": "ὫὨὪὠὢὨὮὤὩὤὮ",
+      "StaticMember": "ὩὮὠὠὩὭὭὠὥὬὪ",
+      "Paths": [
+        "ὭὬὠὫὯὭὮὭὥὦὭ"
+      ]
+    },
+    {
+      "Id": "dispatch.spawn.ui",
+      "Type": "ὫὨὪὠὢὨὮὤὩὤὮ",
+      "StaticMember": "ὥὮὯὪὡὢὭὠὣὩὣ",
+      "Paths": [
+        "ὧὩὤὩὤὦὯὢὪὢὩ"
+      ]
+    },
+    {
+      "Id": "dispatch.spawn.timeline",
+      "Type": "TimelineSignalManager",
+      "StaticMember": "ὪὫὢὨὯὭὦὪὦὨὣ",
+      "Paths": [
+        "name"
+      ]
+    },
+    {
+      "Id": "dispatch.spawn.quiz",
+      "Type": "ὤὯὯὬὧὬὯὣὢὯὨ",
+      "StaticMember": "ὮὩὩὦὨὪὫὦὩὯὧ",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "dispatch.spawn.minigame",
+      "Type": "ὥὭὪὩὢὭὨὢὧὮὢ",
+      "StaticMember": "ὢὡὥὫὥὯὫὦὦὨὤ",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "dispatch.spawn.pending",
+      "Type": "GameFieldManager",
+      "StaticMember": "ὪὫὢὨὯὭὦὪὦὨὣ",
+      "Paths": [
+        "ὯὤὥὫὨὡὢὯὧὦὢ.Count",
+        "ὮὫὮὤὡὭὦὩὢὩὫ.Count",
+        "ὠὮὡὥὢὨὣὬὧὠὦ.Count"
+      ],
+      "CollectionPath": "ὮὩὡὢὦὥὪὧὭὩὢ",
+      "ItemPaths": [
+        "Item1",
+        "Item2"
+      ],
+      "MaxItems": 100
+    },
+    {
+      "Id": "dispatch.spawn.assets",
+      "Type": "FieldObjectBase",
+      "StaticMember": "ὣὬὬὩὫὢὤὡὠὪὮ",
+      "Paths": [
+        "Count"
+      ],
+      "CollectionPath": "$self",
+      "ItemPaths": [
+        "Key",
+        "Value.IsDone",
+        "Value.Status",
+        "Value.PercentComplete"
+      ],
+      "MaxItems": 300
+    },
+    {
+      "Id": "dispatch.spawn.prefabs",
+      "Type": "FieldObjectBase",
+      "StaticMember": "ὥὠὬὦὤὫὮὩὮὪὠ",
+      "Paths": [
+        "Count"
+      ],
+      "CollectionPath": "$self",
+      "ItemPaths": [
+        "Key",
+        "Value.ὣὭὢὬὯὭὩὮὤὩὣ.name"
+      ],
+      "MaxItems": 300
+    }
+  ]
+}

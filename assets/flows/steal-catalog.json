@@ -1,0 +1,1242 @@
+{
+  "schema": 1,
+  "source": "PackTable + FieldNpcTable + TalentSkillTable + MapTable",
+  "assembly_sha256": "57674AA138FDC5B7A7F9B733200A4EF9C02BE2F6BACB4807C72BA35DD20E531D",
+  "common_sha256": "D00F3115FE3DB2B6DF8C86C889A498BF8EDD07CB939987E5F2F3D08FC0BDB183",
+  "exported_at": "2026-09-29T12:56:29.8199241Z",
+  "weekly_groups": [
+    101,
+    102,
+    103,
+    104,
+    105,
+    111,
+    112,
+    113,
+    114,
+    115,
+    121,
+    122,
+    123,
+    124,
+    125
+  ],
+  "packs": [
+    {
+      "id": 1,
+      "name": "血骑士",
+      "type": 0,
+      "hidden": false,
+      "status": "targets",
+      "maps": [
+        1,
+        10
+      ],
+      "targets": [
+        {
+          "npc": 4,
+          "map": 10,
+          "name": "无聊收集狂大叔",
+          "map_name": "卢戈商店",
+          "groups": [
+            101,
+            102,
+            103,
+            104,
+            105,
+            111,
+            112,
+            113,
+            114,
+            115,
+            121,
+            122,
+            123,
+            124,
+            125
+          ]
+        },
+        {
+          "npc": 5,
+          "map": 1,
+          "name": "好奇青年",
+          "map_name": "卢戈镇",
+          "groups": [
+            101,
+            102,
+            103,
+            104,
+            105,
+            111,
+            112,
+            113,
+            114,
+            115,
+            121,
+            122,
+            123,
+            124,
+            125
+          ]
+        }
+      ],
+      "database": "B34FE08C55AA139A191A348CC9F1F0BB1121C7B4",
+      "sha256": "A29E07E9A34CBB6E240F68E4FB4F966FAAF5560F705D4BB632FC16023A528260"
+    },
+    {
+      "id": 2,
+      "name": "苍蓝魔女",
+      "type": 0,
+      "hidden": false,
+      "status": "targets",
+      "maps": [
+        21
+      ],
+      "targets": [
+        {
+          "npc": 8,
+          "map": 21,
+          "name": "达雷普高利贷业主",
+          "map_name": "达雷普镇",
+          "groups": [
+            101,
+            102,
+            103,
+            104,
+            105,
+            111,
+            112,
+            113,
+            114,
+            115,
+            121,
+            122,
+            123,
+            124,
+            125
+          ]
+        }
+      ],
+      "database": "9DAFD4A0D0BDE25CCBB59A28DDDF595B032EC0F9",
+      "sha256": "C585BB69E9B7453B26971B4D73A4300C4A3CA3C7655E9596FA0DA4568B122EDB"
+    },
+    {
+      "id": 3,
+      "name": "迷雾神射手",
+      "type": 0,
+      "hidden": false,
+      "status": "targets",
+      "maps": [
+        34,
+        35
+      ],
+      "targets": [
+        {
+          "npc": 2,
+          "map": 34,
+          "name": "布伦商店主人",
+          "map_name": "布伦商店",
+          "groups": [
+            101,
+            102,
+            103,
+            104,
+            105,
+            111,
+            112,
+            113,
+            114,
+            115,
+            121,
+            122,
+            123,
+            124,
+            125
+          ]
+        },
+        {
+          "npc": 11,
+          "map": 35,
+          "name": "从容自若的佣兵",
+          "map_name": "布伦佣兵公会",
+          "groups": [
+            101,
+            102,
+            103,
+            104,
+            105,
+            111,
+            112,
+            113,
+            114,
+            115,
+            121,
+            122,
+            123,
+            124,
+            125
+          ]
+        }
+      ],
+      "database": "784A109A8C97E737F2F9232425A66885D65A55AB",
+      "sha256": "B0E388C78CE8CD758ABDB816960F144DECE6610B9EE4F2E796B649DAAAB60B9D"
+    },
+    {
+      "id": 4,
+      "name": "眼镜与猫",
+      "type": 0,
+      "hidden": false,
+      "status": "targets",
+      "maps": [
+        41,
+        46
+      ],
+      "targets": [
+        {
+          "npc": 6,
+          "map": 41,
+          "name": "吹风的青年",
+          "map_name": "凯洛镇",
+          "groups": [
+            101,
+            102,
+            103,
+            104,
+            105,
+            111,
+            112,
+            113,
+            114,
+            115,
+            121,
+            122,
+            123,
+            124,
+            125
+          ]
+        },
+        {
+          "npc": 10,
+          "map": 46,
+          "name": "客栈客人",
+          "map_name": "凯洛客栈",
+          "groups": [
+            101,
+            102,
+            103,
+            104,
+            105,
+            111,
+            112,
+            113,
+            114,
+            115,
+            121,
+            122,
+            123,
+            124,
+            125
+          ]
+        }
+      ],
+      "database": "2F69B59FFABDBC88F938F911C94646B0216F5254",
+      "sha256": "10FA335794CA36747D569F8CE9C083E04D3F80B3BB2421DC18010CB8A4D5C513"
+    },
+    {
+      "id": 5,
+      "name": "沙漠之花",
+      "type": 0,
+      "hidden": false,
+      "status": "targets",
+      "maps": [
+        51
+      ],
+      "targets": [
+        {
+          "npc": 3,
+          "map": 51,
+          "name": "丝路商团商人",
+          "map_name": "亚拉里克城",
+          "groups": [
+            101,
+            102,
+            103,
+            104,
+            105,
+            111,
+            112,
+            113,
+            114,
+            115,
+            121,
+            122,
+            123,
+            124,
+            125
+          ]
+        },
+        {
+          "npc": 9,
+          "map": 51,
+          "name": "坠入爱河的青年",
+          "map_name": "亚拉里克城",
+          "groups": [
+            101,
+            102,
+            103,
+            104,
+            105,
+            111,
+            112,
+            113,
+            114,
+            115,
+            121,
+            122,
+            123,
+            124,
+            125
+          ]
+        }
+      ],
+      "database": "A77608113EBBD1CB4862DD84E0A63FAA289E7DC0",
+      "sha256": "A99A955D30BB9A573582A3B1FDAEAB5A57095DA12CD5113D36F6ED43D6E29E66"
+    },
+    {
+      "id": 6,
+      "name": "异教塔",
+      "type": 0,
+      "hidden": false,
+      "status": "targets",
+      "maps": [
+        601,
+        614
+      ],
+      "targets": [
+        {
+          "npc": 1,
+          "map": 601,
+          "name": "魔塔见习魔法师",
+          "map_name": "施塔因之塔第1层",
+          "groups": [
+            101,
+            102,
+            103,
+            104,
+            105,
+            111,
+            112,
+            113,
+            114,
+            115,
+            121,
+            122,
+            123,
+            124,
+            125
+          ]
+        },
+        {
+          "npc": 3,
+          "map": 614,
+          "name": "仓库管理石怪",
+          "map_name": "施塔因之塔仓库",
+          "groups": [
+            101,
+            102,
+            103,
+            104,
+            105,
+            111,
+            112,
+            113,
+            114,
+            115,
+            121,
+            122,
+            123,
+            124,
+            125
+          ]
+        }
+      ],
+      "database": "A34C9D14BA6B37415EE2E55ED24F4EA591197FB7",
+      "sha256": "3E05CBCECDB91B7369559DDA3AA4EB865783CA0A1395AAA3CF1E4F1B02F97EB2"
+    },
+    {
+      "id": 7,
+      "name": "愤怒天使",
+      "type": 0,
+      "hidden": false,
+      "status": "targets",
+      "maps": [
+        71
+      ],
+      "targets": [
+        {
+          "npc": 5,
+          "map": 71,
+          "name": "悠闲的渡船船夫",
+          "map_name": "拉勒凯镇",
+          "groups": [
+            101,
+            102,
+            103,
+            104,
+            105,
+            111,
+            112,
+            113,
+            114,
+            115,
+            121,
+            122,
+            123,
+            124,
+            125
+          ]
+        }
+      ],
+      "database": "0F93B9DB09BBEAE8E4DD8D68A8BCACA7F8D2826C",
+      "sha256": "63BB62DB4109827FDCDB22F6CBB64DEFF94ACB6907961F977048EDA576CD0932"
+    },
+    {
+      "id": 8,
+      "name": "血之狂想曲",
+      "type": 0,
+      "hidden": false,
+      "status": "targets",
+      "maps": [
+        81
+      ],
+      "targets": [
+        {
+          "npc": 10,
+          "map": 81,
+          "name": "罗戴夫征税官",
+          "map_name": "罗戴夫镇",
+          "groups": [
+            101,
+            102,
+            103,
+            104,
+            105,
+            111,
+            112,
+            113,
+            114,
+            115,
+            121,
+            122,
+            123,
+            124,
+            125
+          ]
+        }
+      ],
+      "database": "7D6E4D7AA59E8E55D579A27353DDD0FA311BEC39",
+      "sha256": "8091BE6D4EF5646572B60F54B3AADB44CAAC1B87B6AB776C6AF9B0AB9BA5C074"
+    },
+    {
+      "id": 9,
+      "name": "铁假面",
+      "type": 0,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "046A91FC675C015FA400A5F2EFC46E6A1F2F612C",
+      "sha256": "BA9FD2D7BD2E2A1BF4F64CC3CF7D85A811FC3036B803E665AC8198B873F0F394"
+    },
+    {
+      "id": 10,
+      "name": "霍尔蒙克斯",
+      "type": 0,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "B719778BF0A4ACEDEBE4ACFF973392D51991453D",
+      "sha256": "9DD0D358CE0BC2C8952037BAF6369970DC7E32F445F48B906BCED22FEA47B92B"
+    },
+    {
+      "id": 11,
+      "name": "虚假游戏",
+      "type": 0,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "58BCFF2C5B75C5346301CECE76A554D2ED548FAA",
+      "sha256": "772DB98B0FBE9DF9B3D276283C2F0689A79FC9859E41B8A206069689B3161E83"
+    },
+    {
+      "id": 12,
+      "name": "黑羽毛",
+      "type": 0,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "5D4EA2CCC92B15A23EF9802E2A45511B41D06A1D",
+      "sha256": "BC0FFC17B933E58C9A56E1A50F772FDB70AF8FEB84801E53DB94707E425F03E0"
+    },
+    {
+      "id": 13,
+      "name": "雪之歌",
+      "type": 0,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "4DC5C9561462E26D46F0411C7098A77445842B1B",
+      "sha256": "D00F34906381F32EE7BDBA9D6BE567FF27FE96307B03DA10429DC0090FFBD658"
+    },
+    {
+      "id": 14,
+      "name": "神圣审判",
+      "type": 0,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "B72AD308BF70F28D666EDAAD2061861F029CBEF8",
+      "sha256": "59E06E0BD0102B6C05BA5EF04E4FB8AC81B7A2B7712EF492638DA2CD6AEEAA93"
+    },
+    {
+      "id": 15,
+      "name": "复仇的誓言",
+      "type": 0,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "5D08D80F821735DF4526AF2F2DDDF1D286143EB1",
+      "sha256": "FF4E05E672F7404605F662136C2C1C2B1AE38B2EEF49359B8F45A178AA3C1C7B"
+    },
+    {
+      "id": 16,
+      "name": "三国同盟",
+      "type": 0,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "A8C03B2042FB9E8646E09DD81E7AE160F019B047",
+      "sha256": "05D50C41ED11D1526919B398F776FF33C89C3086A3A83F80C1A28FF85086EA7F"
+    },
+    {
+      "id": 17,
+      "name": "试炼之路",
+      "type": 0,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "44E2D74CD5DABCFE153BD5C94784CE5A8A49C717",
+      "sha256": "019A1260A317F5B9E87EB6F3A4BCAB0A07ED001540985D32C497327E97D4BB5B"
+    },
+    {
+      "id": 18,
+      "name": "救赎",
+      "type": 0,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "62062E972616766BCF49105991B38AE804A09291",
+      "sha256": "9E9FAEEBC7F5AF87F9F4CC5167DD18C658F68F539BAC4E82F9AC19BAE15CE509"
+    },
+    {
+      "id": 19,
+      "name": "被遗忘的战争",
+      "type": 0,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "744484617E19E1847063A6B62AF810257C7BDDFB",
+      "sha256": "7724580145C945E633E482712BEB3948B3A5F6DBE594729DDF8DF9F38548A937"
+    },
+    {
+      "id": 20,
+      "name": "坠入深渊",
+      "type": 0,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "2BB908E698A1DE5E05EB29A58CD504590DE9DAC9",
+      "sha256": "123241F14B080BA5B49E1E16BC4B3C79803A19E08DAFA0FDFFA8B87CB75B7D51"
+    },
+    {
+      "id": 21,
+      "name": "次元边界",
+      "type": 1000,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "8BFBA334FC96CE3C2D3FE72740E651438044E6A7",
+      "sha256": "9BCC05ADB4B9F93DEDD9202DA8A48DCAF8C7B4BBF5CDF2E35F33B479E78C2EDC"
+    },
+    {
+      "id": 22,
+      "name": "恶魔的傲骨",
+      "type": 1000,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "A1026EF5C6593F5BEC1AC71EC74411C7A4C8DD7A",
+      "sha256": "A06ECB8F45BBF63AED09E54741CB78A743DB7FED7C9E64667A797506507B2882"
+    },
+    {
+      "id": 1001,
+      "name": "杰登之门",
+      "type": 1,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "784498D9C08BE5A276F569306A8C4EF5FE97A08F",
+      "sha256": "417CB448B8F1D1C4CCA54500767D50E75CBDB11DAEE62208C1A4AF9705C44574"
+    },
+    {
+      "id": 1002,
+      "name": "火晶片",
+      "type": 1,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "849FB4CEF88C1D53ABB4DAFEAD04075D9E6BE7D5",
+      "sha256": "4B10D5A31AFF893A84C1AF95FDB632E529B815D406972A27C93974CDC1BC7E1C"
+    },
+    {
+      "id": 1003,
+      "name": "美丽无望",
+      "type": 1,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "A82261ACABFE92EC43F274725A06D25DC6C0DB4F",
+      "sha256": "9980684A268C449FE76B14C1000A29CBC8A9D7B77B5AE659C796891ABF344F73"
+    },
+    {
+      "id": 1004,
+      "name": "大逃脱",
+      "type": 1,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "4190263878BC88C1A1E9DF41E1E09F8C7A8C6C35",
+      "sha256": "D89E3A4E424F9456CF3A2C012C9B1FD31D801A38EC46A0D088DFDC70B63A3DB3"
+    },
+    {
+      "id": 1005,
+      "name": "鲁的迷宫",
+      "type": 1,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "9D371F463F63910922AA730DDD5C6C415A24D408",
+      "sha256": "96F5346240985A40038BFA2BEBD807E326FAF2B432B52DF287C2F6FB8B39AB8C"
+    },
+    {
+      "id": 1006,
+      "name": "御剑传",
+      "type": 1,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "40EB458074B44ADE9A8133123B95E8CBB8E6E255",
+      "sha256": "5B9363451FD74FE1EA35889C902AAB9E58B258661ED6020D8EB100C7A76844B3"
+    },
+    {
+      "id": 1007,
+      "name": "合约之战",
+      "type": 1,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "2A022CDA644BD2A7EC29574456172B430516C8EE",
+      "sha256": "890E4BD7BFED759B9D3140BA1D0441CA82D002262A6248E87BAE81CD3AAF9348"
+    },
+    {
+      "id": 1008,
+      "name": "妖魔讨伐团",
+      "type": 1,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "3B3D527B197A304BD6B0B190FDA31BDA7996171D",
+      "sha256": "4F85644F9283610E9110FB8DBB72ED34A878B0B800192138EDBF9BEE8FA9A05E"
+    },
+    {
+      "id": 1009,
+      "name": "奇迹★闪耀",
+      "type": 1,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "35905B6DF05F010EB6D902993C206D71637BBF38",
+      "sha256": "D3E71E62DE636F9F908572981F1BC3254EAD6CF0547777FD4E2F1A8C16B6BE4E"
+    },
+    {
+      "id": 1010,
+      "name": "合龙传",
+      "type": 1,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "09193006BFB17D921105464298E37DC7BAFE1388",
+      "sha256": "97F8992B7BAF523782A5B502F8049BE972F449F544AF458B40E6548AF43B6F6A"
+    },
+    {
+      "id": 2001,
+      "name": "夏日骑士",
+      "type": 6,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "A94F512B623ABE2B19CD5B4BBB1EF86A6BFC46E9",
+      "sha256": "68A5E6ABA31FE0AACD287DD35981C7E2E647342F2A74A97BB665A3B9E72A11A4"
+    },
+    {
+      "id": 2002,
+      "name": "恶梦之冬",
+      "type": 6,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "B22FA7BAB1CD3D6AB7F414C4AD2603875D485D35",
+      "sha256": "EE71D9EBE935960CA2CEFFAA91D0102146F360B19B50C6B7370B40232020C793"
+    },
+    {
+      "id": 2003,
+      "name": "海滨天使",
+      "type": 6,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "16F4C9AE9BDA4B9DE4AF8460F36A7A76D4E4152C",
+      "sha256": "F48317FC7630AFA994071BF90A544BAC3851BFCE9220FA83F5344B9D67CE52ED"
+    },
+    {
+      "id": 2004,
+      "name": "闪乱神乐",
+      "type": 6,
+      "hidden": true,
+      "status": "hidden",
+      "maps": [],
+      "targets": [],
+      "database": "D765DDFB174F7A9D1053EE175388C003ED22849D",
+      "sha256": "EED3EBD0745E919223909E1F1B325B9D604874B64378C52ABF8CE27D0932EC79"
+    },
+    {
+      "id": 2005,
+      "name": "记忆边缘",
+      "type": 6,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "5306285F1D51EC2F5171581BCAA5EC70DCEBF7C0",
+      "sha256": "020808C149EBEA402616C27B02B02F23997FF82A5FE7D15A7722784CC391535A"
+    },
+    {
+      "id": 2006,
+      "name": "哥布林杀手",
+      "type": 6,
+      "hidden": true,
+      "status": "hidden",
+      "maps": [],
+      "targets": [],
+      "database": "B52D0C6B50D5E8F3F6156D716C117AE9540E79F6",
+      "sha256": "F452A14C9722E953E8694A76BFC6E6B7242A64AF17A2E100DE3BC3DF589E88D6"
+    },
+    {
+      "id": 2007,
+      "name": "戏水女王",
+      "type": 6,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "1295451B8C6BFFA02509E1B7C4E4A8C7B99FF8B7",
+      "sha256": "84E617A37265C25D106D21C83713A4E2F47FC1C60C536FD0305D58F0EA6F327D"
+    },
+    {
+      "id": 2008,
+      "name": "流融萌兔",
+      "type": 6,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "29DED10023283A13B987F4CA08CAE2551E88C2BB",
+      "sha256": "443847C66AAC8104AC4E6E1AC70A4ADC67B31A2C7C52AB25D84CD8D7E2C706BD"
+    },
+    {
+      "id": 2009,
+      "name": "游轮协议",
+      "type": 6,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "49442D5946C2A96F6E6DCE75084C228075E394DB",
+      "sha256": "90E07BBBCDCFCB9E6F7E056AF9E60C0996CC53068C703544B5375AEC807CE2DD"
+    },
+    {
+      "id": 2010,
+      "name": "Chained Soldier2",
+      "type": 6,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "7F004706E36B813288A4C3AE8B9D8A6854B7D039",
+      "sha256": "4CE13574A1AF6111A06A50CEA851927E4C136C512E59892113A248E6B68A3FD7"
+    },
+    {
+      "id": 3001,
+      "name": "镜中之战",
+      "type": 3,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "24E69F28F0D1088B9A4A01552CFECB8B90E135EB",
+      "sha256": "F7C1DBC76B4CFFDD51F47934DF0104FBEF5002603EAEBAEB132136D8FDDE5AB3"
+    },
+    {
+      "id": 3002,
+      "name": "嗨，艾琳！",
+      "type": 2,
+      "hidden": true,
+      "status": "hidden",
+      "maps": [
+        30013
+      ],
+      "targets": [
+        {
+          "npc": 1,
+          "map": 30013,
+          "name": "罗珊娜",
+          "map_name": "黑夜女神酒馆",
+          "groups": [
+            103,
+            104,
+            105,
+            113,
+            114,
+            115,
+            123,
+            124,
+            125
+          ]
+        }
+      ],
+      "database": "56251DFAD436C524A5E06E650F69D2CF90776ECF",
+      "sha256": "003081F3B3D74C6A6EE6E28B7849F479702B787A44AB31D58D650159176A7ECD"
+    },
+    {
+      "id": 3003,
+      "name": "恶魔城",
+      "type": 4,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "C19EB0C391B51FE25CEDD81BDF8E87E3BC301E16",
+      "sha256": "881D7A229B2F6A004794246F4AAD5BA32CAC9100262FD4F4B24160CE1D649B16"
+    },
+    {
+      "id": 3004,
+      "name": "冒险航线",
+      "type": 5,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "CF5723431346B764043FD073153A7F9BA02F896B",
+      "sha256": "FC7D5F6BFF335565E9C40D130F3975600BEFBA09E154232314ABD64BAB209EBB"
+    },
+    {
+      "id": 3005,
+      "name": "末日之书",
+      "type": 7,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "6D5714AD3B8C0932CD3EE5001EFCABEC4E90A3DE",
+      "sha256": "CC907BFFE4971EBFB4FB43C27C6DF249407A7EA7B33B40E921954580CFF9B536"
+    },
+    {
+      "id": 3006,
+      "name": "公会联合战",
+      "type": 8,
+      "hidden": true,
+      "status": "hidden",
+      "maps": [],
+      "targets": [],
+      "database": "62DA9EBC063EBC9399F5FE74372655C8630C6C89",
+      "sha256": "65937CA621CB54065B3729B47D47C5D344D2C1E98FDB61E2E2FBF32FF419A1EE"
+    },
+    {
+      "id": 3007,
+      "name": "格鲁菲餐厅",
+      "type": 9,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "F094F07B0734A30582879BAA21FC6CDD2EC3B697",
+      "sha256": "788D7C9592A8D6F10BEA86AA452A0C6025CDF94FF5A49DB48990E62CDBD8BAF8"
+    },
+    {
+      "id": 3008,
+      "name": "黄金竞技场",
+      "type": 10,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "5CC8C345F128620EA561871D3ABE76BD2603EAF5",
+      "sha256": "F12E734FA3D5D75558F4E85ECE08F4EE09E3B0261E0BA7D14C9742C07572EB9A"
+    },
+    {
+      "id": 3009,
+      "name": "奇幻广场",
+      "type": 11,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "F70669FA68A204EF6E598D41C06213B22631F986",
+      "sha256": "C2B76E99CAC083FA98C95BB6FB30265ECFF6A6F3C9E35C65BDB4790F3054C9E5"
+    },
+    {
+      "id": 3010,
+      "name": "钓鱼",
+      "type": 12,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "8A68B834771D44BD3E117F2EC945D067C5B1E912",
+      "sha256": "5784366818C5A088561FD2181FF35137EFF505E9028F1616BD6CD5D70DF4AE0A"
+    },
+    {
+      "id": 3011,
+      "name": "领地",
+      "type": 13,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "E4DBDFE5F214CAACB961DD9F711950FBF9889C1A",
+      "sha256": "844E6D09441F92B56E17C2D8138DD31ACD6782872FCCD28F4EB1CEE644C37729"
+    },
+    {
+      "id": 3012,
+      "name": "魂之盘",
+      "type": 14,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "189391DB9AFAE6EA90AD96B208433DB4558A2D80",
+      "sha256": "ADBCE08838AD54567443835C24DC6DE1CDE2F8FC53DF9AE418ED613821BFCC4F"
+    },
+    {
+      "id": 10001,
+      "name": "御剑传",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "06E32CC312D1870C098B3E9ACC003BCF072BCE79",
+      "sha256": "9E181F0F5D6C6E6B7916A0C3C216A73F7E5384821A38911776DB3D6D5F99BE9E"
+    },
+    {
+      "id": 10004,
+      "name": "眼镜与猫",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "9AEA8D7EC73B9F28F76DE8B87DE29235058EC4EA",
+      "sha256": "A21C78733B53D670AB4A3B28AA173DCFE688FB1E8425FCA0AEC11593ABEA6E66"
+    },
+    {
+      "id": 10006,
+      "name": "异教塔",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "930E00C39E5B9984F4BE86A3786BA7B87FBD3679",
+      "sha256": "5F67A5A946E9BC4AB57D7337D85F77F3720F47C65441F6A8587E01144497248F"
+    },
+    {
+      "id": 11001,
+      "name": "杰登之门",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "449A9B643ED3ED83C0F7831AAF990D2EB6C40D3C",
+      "sha256": "90543DC03B44AFAD0BBFDBC21F9568DDD246CD13CDC3FCBBEF2668F804A10101"
+    },
+    {
+      "id": 11002,
+      "name": "火晶片",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "5CABDF57A368732FBC3523DFE732F709BFA685DB",
+      "sha256": "0FBF88F5BA33FF8A954B447473022602D661732F25BCAC577050B4A04BD38251"
+    },
+    {
+      "id": 11003,
+      "name": "美丽无望",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "718D6B66811A3F792D50AA8B640A0A2ECE80B398",
+      "sha256": "3DE40F19531D65130E5D710DD50E60CD6E2C1C76C9E313CFBB5466A706AEE66C"
+    },
+    {
+      "id": 11004,
+      "name": "大逃脱",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "8FF63C4B433BF84C4696CA5A8E7E2379BCAC6B28",
+      "sha256": "BB6ACB30E29F9834F01B95669A262F85FE713F932BD79D3C01E40193A74B225F"
+    },
+    {
+      "id": 11005,
+      "name": "鲁的迷宫",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "0945C6B2149F0664EE0801F6D4C88B4C695CDF29",
+      "sha256": "AB645D848E2A7A3C43A7B309BDFFF2EE24611B72E39B45AB6582AACFE16D06C5"
+    },
+    {
+      "id": 11006,
+      "name": "眼镜与猫",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "6BAF72FAAE7301A93F967F55CC0B65F0B82FAACC",
+      "sha256": "32EFC628AC01789BEE33BFF8CE182BF9AC180C9E468214B9F996EFACAC7561BE"
+    },
+    {
+      "id": 11007,
+      "name": "合约之战",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "708463F53B5B859CE315E0CEEA01373E28C3CBE9",
+      "sha256": "E3DFC75F9AAB0931CD45012F46F0B0DA9C3D9F5EF7CACBFBA0425D7C9A757EC1"
+    },
+    {
+      "id": 11008,
+      "name": "合约之战",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "5D0484B09C0D19268266035BC2F6ED7BB6778C38",
+      "sha256": "01DB323E876D142CD898AAEEFBA1E8B4C2C31CBE065D5E5B3B44964A7F93F9EE"
+    },
+    {
+      "id": 11009,
+      "name": "合约之战",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "54FBBD82B6CA1AA24EAFB59EDB7E7E32E141646F",
+      "sha256": "FBD68BD166FD0CF89A80FBE911455C16DCEDEEBD70B2DFE37D452262E0EB904C"
+    },
+    {
+      "id": 11010,
+      "name": "合约之战",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "E628947055936886872545078A43E84E3385386A",
+      "sha256": "EFDE7CCE38F2268F6465037DD4A77914E88BF77244820A1096C5E866D591A48A"
+    },
+    {
+      "id": 12001,
+      "name": "夏日骑士",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "EACFBEA03BFE57750969E4FFD7F01D2AE165B359",
+      "sha256": "B3B93A3E78794C59A3ED5E85E0F7DB17FBCC598DEEFDFF3824CEEF6B1E262CFF"
+    },
+    {
+      "id": 12002,
+      "name": "恶梦之冬",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "45C13DE4F43A988DED81CA0A9F165A995C37F2E9",
+      "sha256": "93E53AC983CC0E7FB1549B13A10E2D8016DA1ACBE2BB49AC3CF1A9C60302685D"
+    },
+    {
+      "id": 12003,
+      "name": "海滨天使",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "44A24094351AF80F9843C8A893A53B8790A0200E",
+      "sha256": "B24ACEB3DC28606879960C2F0543CA4E6B87ACDF8E22DC1373EF0C03B2D960FA"
+    },
+    {
+      "id": 12004,
+      "name": "闪乱神乐",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "FF5CA5A58D8654574FB74D846C76A06446A190A8",
+      "sha256": "01DE80A3340DA363B8CAE66C2CF31AE407D30C2B04F11ED1FD4E78CB53BA80E6"
+    },
+    {
+      "id": 12005,
+      "name": "闪乱神乐",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "253FDF61C25ACF8D07E230631572A5AD226C7A7C",
+      "sha256": "497D892B160962C8F3B0E5E9F7C1DE26C947A6413E244AB2ADDD2EC23F7CA0D3"
+    },
+    {
+      "id": 12006,
+      "name": "闪乱神乐",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "9D61E4CCE984CFC3B91E81CA0D4D1128F4DB5E44",
+      "sha256": "BD85035B71F6733D4B5A5FCC5A60ADDE4202AE9935650F41675920AE04C4B6C1"
+    },
+    {
+      "id": 12007,
+      "name": "闪乱神乐",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "29712D11FA048879B40853703BE1AF4A1D4ACEC1",
+      "sha256": "2FFE69EBF5FFFB3A3C8D347DA38FE14F8FC4773CE1BCC0980E39020C92718839"
+    },
+    {
+      "id": 12008,
+      "name": "闪乱神乐",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "539E51DC3A395EDE41F6CA2083B4603152195659",
+      "sha256": "7CC8BDA42EF584E90B744DEEBDB6F3087A0C62431A2E97E347CB8CEFE4BF37E9"
+    },
+    {
+      "id": 12009,
+      "name": "闪乱神乐",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "DEA279527AF0921D4942372A863D2D9CFAACEA4C",
+      "sha256": "44A067EAC6FA1F098D6F5D58DF91F2B3A57F1D938A858088B754B38245721C23"
+    },
+    {
+      "id": 12010,
+      "name": "闪乱神乐",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "8640C6584563EFDD5441357136A80968546178E4",
+      "sha256": "09DE2519F42B46883456E66898701EBF6977DDC9B2D4636A2CB84AD23B8BBA39"
+    },
+    {
+      "id": 13007,
+      "name": "闪乱神乐",
+      "type": 100,
+      "hidden": false,
+      "status": "empty",
+      "maps": [],
+      "targets": [],
+      "database": "D1A0BB61345794EED2B872B9FC6A3517F55D104F",
+      "sha256": "D0C3F16CDCDC8CEE14C5F476DE2F1543AD26328B47021F6E4B9A79EF80699D44"
+    },
+    {
+      "id": 20000,
+      "name": "塔洛斯战术教材",
+      "type": 100,
+      "hidden": true,
+      "status": "hidden",
+      "maps": [],
+      "targets": [],
+      "database": "B2E587639AD50746A6995DF9EBE8DBA9A798B828",
+      "sha256": "393FC89F083DE478753E2592B724DCCAECBD1D437D77913CACB3ACB891434121"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+<PropertyGroup><TargetFramework>net8.0-windows</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><PlatformTarget>x64</PlatformTarget></PropertyGroup>
+<ItemGroup><EmbeddedResource Include="../catalog.json;../display-catalog.json;../evidence-spec.json" LogicalName="Equipment.%(Filename)%(Extension)"/><EmbeddedResource Include="../ui-policy.json" LogicalName="Equipment.ui-policy.json"/><EmbeddedResource Include="../vendor/highs/highs.dll" LogicalName="Equipment.highs.dll"/><EmbeddedResource Include="../vendor/highs/LICENSE.txt" LogicalName="Equipment.Highs.LICENSE.txt"/></ItemGroup>
+<ItemGroup><ProjectReference Include="../connection/BD2Equipment.Connection.csproj"/></ItemGroup></Project>

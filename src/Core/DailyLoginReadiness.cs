@@ -1,0 +1,14 @@
+namespace BD2Daily;
+
+public static class DailyLoginReadiness
+{
+    public static void Check(DailySnapshot? snapshot, GameInstance game, long now)
+    {
+        if (snapshot == null || snapshot.ProcessId != game.ProcessId || snapshot.ProcessStartTicks != game.StartTicks
+            || !StartupPolicy.Fresh(snapshot, now)) return;
+        if (snapshot.State == "read_error" && snapshot.ErrorCode == "NeonInitException")
+            throw new InvalidOperationException("游戏登录 SDK 已缓存初始化失败。请更新日常工具后重新启动一次游戏；更改权限或反复连接无法清除此状态。");
+    }
+    public static bool CanRecover(DailySnapshot snapshot, string targetAccount) =>
+        snapshot.State != "waiting_sdk" && snapshot.State != "read_error" && snapshot.AccountKey == targetAccount;
+}

@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "background_surfaces": [
+    "NoticeUI",
+    "CharNoticeUI",
+    "DetailNoticeUI",
+    "CurrencyManageUI",
+    "OverheadManageUI"
+  ],
+  "safe_dismiss": [
+    "NewsPopupUI",
+    "EventPopupUI",
+    "PVPColosseumSeasonRewardPopupUI",
+    "PVPSeasonRewardPopupUI",
+    "PVPColosseumRuleUI",
+    "MonsterHuntSeasonRewardPopupUI",
+    "NewsPopupEventUI",
+    "AttendanceSpecialPackageUI",
+    "BundlePackageUI",
+    "BundleGroupPackageUI",
+    "BundleGroupRelayPackageUI",
+    "BonusBundleGroupPackageUI",
+    "ClearPackageUI",
+    "LoginPassPackageUI",
+    "SkinPackageUI",
+    "PackagePopupUI",
+    "ContentOpenNoticePopupUI"
+  ],
+  "field_menu": {
+    "AvatarLifeGameFieldDefaultUI": "_buttonMenu.button",
+    "GameFieldDefaultUI": "_buttonMenu",
+    "CafeteriaFieldDefaultUI": "_buttonMenu.button",
+    "PVPColosseumLobbyUI": "_btnMenu"
+  },
+  "settle_seconds": 2,
+  "request_timeout_seconds": 25,
+  "total_timeout_seconds": 120
+}

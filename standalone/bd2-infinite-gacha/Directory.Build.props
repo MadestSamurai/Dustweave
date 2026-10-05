@@ -1,0 +1,1 @@
+<Project><PropertyGroup><Version>0.2.6</Version><Deterministic>true</Deterministic><RestorePackagesWithLockFile>true</RestorePackagesWithLockFile><DebugType>embedded</DebugType></PropertyGroup></Project>

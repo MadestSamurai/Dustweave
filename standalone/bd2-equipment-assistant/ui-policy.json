@@ -1,0 +1,9 @@
+{
+  "background_surfaces": [
+    "NoticeUI",
+    "CharNoticeUI",
+    "DetailNoticeUI",
+    "CurrencyManageUI",
+    "OverheadManageUI"
+  ]
+}

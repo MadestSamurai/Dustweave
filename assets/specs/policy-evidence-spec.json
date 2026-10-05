@@ -1,0 +1,122 @@
+{
+  "Extends": "simple-evidence-spec.json",
+  "Taps": [
+    {
+      "Role": "pass.reward",
+      "ResponseType": "Proto.Net.PassRewardResponse",
+      "Paths": [
+        "RewardInfoBundle",
+        "NewbiePassStep"
+      ]
+    }
+  ],
+  "Reads": [
+    {
+      "Id": "pass.active",
+      "Type": "PassUI",
+      "Paths": [
+        "ὠὤὭὯὯὪὯὧὮὪὬ.Count",
+        "ὠὤὭὯὯὪὯὧὮὪὬ._items",
+        "ὦὩὪὣὣὤὣὯὩὠὢ"
+      ]
+    },
+    {
+      "Id": "pass.scope",
+      "Type": "PassRootUI",
+      "Paths": [
+        "ὢὡὧὮὫὫὬὥὪὪὢ",
+        "ὣὡὣὯὥὫὧὨὬὤὫ",
+        "ὨὤὭὯὣὥὡὯὯὭὬ.Count",
+        "ὨὤὭὯὣὥὡὯὯὭὬ.Keys",
+        "ὨὤὭὯὣὥὡὯὯὭὬ.Values",
+        "ὥὠὣὪὮὭὧὣὩὩὧ",
+        "ὨὩὯὫὬὯὧὪὮὢὧ",
+        "_btnAllRecvButton.ὢὪὯὧὠὥὬὪὪὮὤ"
+      ]
+    },
+    {
+      "Id": "pass.cache",
+      "Type": "ὢὮὥὡὩὥὧὨὥὢὢ",
+      "StaticMember": "ὤὠὠὪὧὡὤὧὦὠὣ",
+      "Paths": [
+        "Count"
+      ],
+      "CollectionPath": "$self",
+      "ItemPaths": [
+        "EventId",
+        "GroupId",
+        "Id",
+        "Value",
+        "IsComplete"
+      ],
+      "MaxItems": 10000
+    },
+    {
+      "Id": "policy.equipment",
+      "Type": "ὡὩὩὤὡὯὩὡὧὥὦ",
+      "StaticMember": "ὡὧὤὠὥὤὥὫὦὬὬ",
+      "Paths": [
+        "Count"
+      ],
+      "CollectionPath": "Values",
+      "ItemPaths": [
+        "InvenIndex",
+        "UseChar",
+        "LockFlag",
+        "KeepFlag",
+        "BaseInfo.Id",
+        "BaseInfo.Level",
+        "BaseInfo.Rank"
+      ],
+      "MaxItems": 10000
+    },
+    {
+      "Id": "pass.banner",
+      "Type": "PassUIBannerLoopScrollItem",
+      "Paths": [
+        "gameObject.name",
+        "ὩὬὠὠὤὧὩὡὪὥὩ.ὥὬὭὪὪὦὬὩὦὧὠ"
+      ]
+    },
+    {
+      "Id": "pass.rewards",
+      "Type": "ὨὩὤὣὡὣὦὭὭὤὪ",
+      "StaticMember": "ὭὠὭὧὧὪὧὫὢὥὥ",
+      "Paths": [
+        "Count"
+      ],
+      "CollectionPath": "$self",
+      "ItemPaths": [
+        "Key",
+        "Value.Count",
+        "Value"
+      ],
+      "MaxItems": 10000
+    },
+    {
+      "Id": "reward.presentation",
+      "Type": "RewardReceivePopupUI",
+      "Paths": [
+        "ὣὤὥὦὯὦὩὤὨὠὪ",
+        "ὪὯὣὥὬὫὬὩὠὮὠ",
+        "ὦὡὮὫὧὠὮὡὭὭὬ",
+        "ὫὢὬὨὪὨὫὨὭὨὭ",
+        "ὮὬὧὦὣὠὠὤὮὦὧ"
+      ]
+    },
+    {
+      "Id": "pass.presentation",
+      "Type": "PassUI",
+      "Paths": [
+        "ὦὡὮὫὧὠὮὡὭὭὬ"
+      ]
+    },
+    {
+      "Id": "pass.definition",
+      "Type": "PassRootUI",
+      "Paths": [
+        "$self"
+      ]
+    }
+  ]
+}

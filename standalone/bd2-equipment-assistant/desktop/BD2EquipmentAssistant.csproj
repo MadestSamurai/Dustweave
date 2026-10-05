@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup>
+<OutputType>WinExe</OutputType><TargetFramework>net8.0-windows</TargetFramework><UseWPF>true</UseWPF><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
+<PlatformTarget>x64</PlatformTarget><RuntimeIdentifier>win-x64</RuntimeIdentifier><SelfContained>true</SelfContained><PublishSingleFile>true</PublishSingleFile><IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract><EnableCompressionInSingleFile>true</EnableCompressionInSingleFile><PublishTrimmed>false</PublishTrimmed><SatelliteResourceLanguages>en;zh-Hans;zh-Hant</SatelliteResourceLanguages>
+<AssemblyName>BD2EquipmentAssistant</AssemblyName><RootNamespace>BD2Equipment</RootNamespace><ApplicationManifest>app.manifest</ApplicationManifest><Product>BD2 Equipment Assistant</Product><Company>MadSamurai</Company>
+</PropertyGroup>
+<ItemGroup><ProjectReference Include="../core/BD2Equipment.Core.csproj"/><ProjectReference Include="../connection/BD2Equipment.Connection.csproj"/></ItemGroup>
+<ItemGroup><EmbeddedResource Include="../localization/*.json" LogicalName="Localization.%(Filename)%(Extension)"/></ItemGroup></Project>

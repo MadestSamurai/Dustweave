@@ -1,0 +1,163 @@
+{
+  "Taps": [
+    {
+      "Role": "powder.make_break",
+      "ResponseType": "Proto.Net.EquipMakingToBreakAutoResponse",
+      "RequestSite": "constructor",
+      "ResponseViaParserHelper": true,
+      "ResponseOwner": "ὤὫὦὥὭὧὢὠὧὥὥ",
+      "Paths": [
+        "ConsumeItemInfo",
+        "UpgradeUsedGold",
+        "TryCount",
+        "ResultType",
+        "LackItemInfo",
+        "RewardInfoBundle"
+      ],
+      "ResponseOwnerIncludesNested": true
+    },
+    {
+      "Role": "equipment.refine",
+      "ResponseType": "Proto.Net.EquipSmeltingResponse",
+      "Paths": [
+        "EquipInfo",
+        "RewardInfoBundle"
+      ],
+      "RequestSite": "constructor",
+      "ResponseViaParserHelper": true
+    },
+    {
+      "Role": "equipment.refine_batch",
+      "ResponseType": "Proto.Net.EquipSequenceSmeltingResponse",
+      "RequestSite": "constructor",
+      "ResponseViaParserHelper": true,
+      "Paths": [
+        "EquipInfo",
+        "ConsumeItemInfo",
+        "TryCount",
+        "ResultType",
+        "LackItemInfo",
+        "RewardInfoBundle",
+        "SuccessCount"
+      ]
+    }
+  ],
+  "Reads": [
+    {
+      "Id": "powder.options",
+      "Type": "EquipmentUpgradePopupUI",
+      "Paths": [
+        "ὬὠὬὡὫὤὮὨὦὤὥ",
+        "ὬὭὪὣὣὨὭὭὩὯὨ",
+        "ὧὤὯὭὨὨὦὥὡὦὫ",
+        "ὩὥὦὦὭὨὢὩὧὫὦ",
+        "ὣὦὣὤὨὣὧὣὦὥὯ",
+        "_goldSlider_auto.maxValue"
+      ]
+    },
+    {
+      "Id": "powder.craft",
+      "Type": "EquipmentMakingUI",
+      "Paths": [
+        "ὤὭὠὥὤὠὡὣὣὠὣ.ὫὮὩὬὤὫὮὨὢὯὬ.Id",
+        "_craftButton.UseResourceCount",
+        "_craftMaterial.craftCount"
+      ]
+    },
+    {
+      "Id": "equipment.refine_ui",
+      "Type": "EquipmentUpgradeUI",
+      "Paths": [
+        "ὢὠὡὡὫὤὮὫὢὢὪ.InvenIndex",
+        "ὯὢὪὬὠὧὥὠὤὩὦ",
+        "ὠὠὡὭὧὫὫὭὥὣὯ",
+        "ὢὮὫὪὩὨὥὥὬὪὪ"
+      ]
+    },
+    {
+      "Id": "equipment.craft_ui",
+      "Type": "EquipmentMakingUI",
+      "Paths": [
+        "_craftMaterial.craftCount",
+        "ὤὭὠὥὤὠὡὣὣὠὣ.ὫὮὩὬὤὫὮὨὢὯὬ.Id",
+        "_craftButton.objDisableButton.activeSelf"
+      ]
+    },
+    {
+      "Id": "trade.currency",
+      "Type": "ὣὡὧὡὦὣὣὬὨὪὫ",
+      "StaticMember": "ὬὯὧὣὪὢὡὬὬὯὦ",
+      "Paths": [
+        "Gold",
+        "Catalyst"
+      ]
+    },
+    {
+      "Id": "trade.inventory",
+      "Type": "ὣὡὧὡὦὣὣὬὨὪὫ",
+      "StaticMember": "ὧὥὤὯὩὤὬὯὦὤὮ",
+      "Paths": [
+        "Count"
+      ],
+      "CollectionPath": "$self",
+      "ItemPaths": [
+        "Key",
+        "Value.Count",
+        "Value.Values"
+      ],
+      "MaxItems": 80
+    },
+    {
+      "Id": "trade.characters",
+      "Type": "ὣὡὧὡὦὣὣὬὨὪὫ",
+      "StaticMember": "ὩὬὮὭὦὮὢὥὣὦὪ",
+      "Paths": [
+        "Count"
+      ],
+      "CollectionPath": "Values",
+      "ItemPaths": [
+        "Id",
+        "InvenIndex",
+        "TalentLevel",
+        "Temporary"
+      ],
+      "MaxItems": 1500
+    },
+    {
+      "Id": "policy.equipment",
+      "Type": "ὡὩὩὤὡὯὩὡὧὥὦ",
+      "StaticMember": "ὡὧὤὠὥὤὥὫὦὬὬ",
+      "Paths": [
+        "Count"
+      ],
+      "CollectionPath": "Values",
+      "ItemPaths": [
+        "InvenIndex",
+        "UseChar",
+        "LockFlag",
+        "KeepFlag",
+        "BaseInfo.Id",
+        "BaseInfo.Level",
+        "BaseInfo.Rank"
+      ],
+      "MaxItems": 10000
+    },
+    {
+      "Id": "equipment.details",
+      "Type": "ὡὩὩὤὡὯὩὡὧὥὦ",
+      "StaticMember": "ὡὧὤὠὥὤὥὫὦὬὬ",
+      "Paths": [
+        "Count"
+      ],
+      "CollectionPath": "Values",
+      "ItemPaths": [
+        "InvenIndex",
+        "UseChar",
+        "LockFlag",
+        "KeepFlag",
+        "BaseInfo"
+      ],
+      "MaxItems": 10000
+    }
+  ]
+}

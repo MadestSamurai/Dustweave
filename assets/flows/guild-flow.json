@@ -1,0 +1,120 @@
+{
+  "schema": 1,
+  "name": "guild.single",
+  "rules": [
+    {
+      "id": "dismiss-news",
+      "has": [
+        "NewsPopupUI"
+      ],
+      "action": {
+        "ui": "NewsPopupUI",
+        "back": true,
+        "absent": "NewsPopupUI",
+        "reason": "关闭主菜单公告"
+      }
+    },
+    {
+      "id": "confirm-attendance",
+      "has": [
+        "GuildJoinAttendancePopupUI"
+      ],
+      "outcome": [
+        "completed"
+      ],
+      "attendance_popup": true,
+      "action": {
+        "ui": "GuildJoinAttendancePopupUI",
+        "field": "_buttonBackground",
+        "reason": "确认服务器已授予的签到奖励"
+      }
+    },
+    {
+      "id": "return-home",
+      "has": [
+        "GuildUI"
+      ],
+      "lacks": [
+        "GuildJoinAttendancePopupUI"
+      ],
+      "outcome": [
+        "completed",
+        "checked_no_grant"
+      ],
+      "action": {
+        "ui": "GuildUI",
+        "field": "_objBackButton",
+        "reason": "返回主菜单完成公会单项"
+      }
+    },
+    {
+      "id": "done",
+      "has": [
+        "MenuUI"
+      ],
+      "lacks": [
+        "GuildUI",
+        "GuildJoinAttendancePopupUI"
+      ],
+      "outcome": [
+        "completed",
+        "checked_no_grant"
+      ],
+      "finish": true
+    },
+    {
+      "id": "open-territory-menu",
+      "has": [
+        "AvatarLifeGameFieldDefaultUI"
+      ],
+      "outcome": [
+        "none",
+        "completed",
+        "checked_no_grant"
+      ],
+      "action": {
+        "ui": "AvatarLifeGameFieldDefaultUI",
+        "field": "_buttonMenu.button",
+        "expect": "MenuUI",
+        "reason": "从领地进入主菜单"
+      }
+    },
+    {
+      "id": "open-field-menu",
+      "has": [
+        "GameFieldDefaultUI"
+      ],
+      "outcome": [
+        "none",
+        "completed",
+        "checked_no_grant"
+      ],
+      "action": {
+        "ui": "GameFieldDefaultUI",
+        "field": "_buttonMenu",
+        "expect": "MenuUI",
+        "reason": "从场域进入主菜单"
+      }
+    },
+    {
+      "id": "enter-guild-once",
+      "has": [
+        "MenuUI"
+      ],
+      "lacks": [
+        "GuildUI",
+        "GuildJoinAttendancePopupUI"
+      ],
+      "outcome": [
+        "none"
+      ],
+      "action": {
+        "ui": "MenuUI",
+        "field": "_buttonGuild",
+        "expect": "GuildUI",
+        "allow_guild": true,
+        "reason": "单项公会签到，核对原生回执"
+      }
+    }
+  ]
+}

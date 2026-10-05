@@ -1,0 +1,22 @@
+{
+  "version": "1.15.1",
+  "source": "https://github.com/ERGO-Code/HiGHS/archive/refs/tags/v1.15.1.zip",
+  "sourceSha256": "9d949248d9ed281baea45d61d2d1b7d88707c26d2e79508d0d887942df94eb7f",
+  "dllSha256": "92f06d06681d6c797899b2ac8dca63eacaa05b6d6a06ae448a11992509c0b39a",
+  "dllBytes": 7206400,
+  "compiler": "MSVC 19.38.33139 x64",
+  "runtime": "statically linked /MT",
+  "dependencies": [
+    "KERNEL32.dll"
+  ],
+  "cmakeFlags": [
+    "-DBUILD_SHARED_LIBS=ON",
+    "-DBUILD_SHARED_EXTRAS_LIB=OFF",
+    "-DBUILD_CXX_EXE=OFF",
+    "-DBUILD_TESTING=OFF",
+    "-DBUILD_EXAMPLES=OFF",
+    "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded",
+    "-DZLIB=OFF",
+    "-DHIGHSINT64=OFF"
+  ]
+}

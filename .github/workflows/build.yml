@@ -1,0 +1,42 @@
+name: Build
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+          global-json-file: global.json
+      - name: Check repository layout
+        shell: pwsh
+        run: ./scripts/check-layout.ps1
+
+      - name: Build host and integrated tools
+        shell: pwsh
+        run: ./build.ps1
+
+      - name: Run synthetic regression suite
+        shell: pwsh
+        run: ./test.ps1 -NoBuild
+
+      - name: Check source and output boundaries
+        shell: pwsh
+        run: ./check-source.ps1 -AfterBuild
+
+      - name: Keep synthetic test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-test-results
+          path: |
+            artifacts/tests-*/results.json
+            artifacts/tests-*/run.log
+          if-no-files-found: ignore

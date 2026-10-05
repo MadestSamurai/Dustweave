@@ -1,0 +1,339 @@
+{
+  "Extends": "completion-evidence-spec.json",
+  "Taps": [
+    {
+      "Role": "mainline.waypoint_use",
+      "ResponseType": "Proto.Net.WaypointUseResponse",
+      "Paths": [],
+      "RequestSite": "constructor",
+      "ResponseOwner": "ὣὡὧὡὦὣὣὬὨὪὫ"
+    },
+    {
+      "Role": "mainline.pickup",
+      "ResponseType": "Proto.Net.FieldObjectRewardResponse",
+      "Paths": [
+        "RewardInfoBundle"
+      ],
+      "RequestSite": "constructor",
+      "ResponseOwner": "ὢὯὯὣὧὦὯὠὢὪὬ"
+    },
+    {
+      "Role": "mainline.pickup_list",
+      "ResponseType": "Proto.Net.FieldObjectRewardListResponse",
+      "Paths": [
+        "RewardInfoBundle"
+      ],
+      "RequestSite": "constructor",
+      "ResponseOwner": "ὢὯὯὣὧὦὯὠὢὪὬ"
+    }
+  ],
+  "Reads": [
+    {
+      "Id": "mainline.talent_counts",
+      "Type": "ὧὥὩὣὭὯὧὫὫὥὠ",
+      "Paths": [
+        "Values"
+      ],
+      "StaticMember": "ὩὥὢὦὬὫὥὨὬὣὢ"
+    },
+    {
+      "Id": "mainline.map",
+      "Type": "GameFieldManager",
+      "Paths": [
+        "ὮὬὬὮὠὮὪὠὧὩὪ",
+        "HasCanOverwhelmMonster()",
+        "ὪὨὯὢὫὮὨὩὮὡὬ.transform.position.x",
+        "ὪὨὯὢὫὮὨὩὮὡὬ.transform.position.y",
+        "ὪὨὯὢὫὮὨὩὮὡὬ.transform.position.z"
+      ],
+      "StaticMember": "ὪὫὢὨὯὭὦὪὦὨὣ"
+    },
+    {
+      "Id": "mainline.talent_state",
+      "Type": "TalentSkillManager",
+      "Paths": [
+        "IsOverwhelmActive()",
+        "ὧὪὯὮὬὧὪὤὩὩὦ"
+      ],
+      "StaticMember": "ὪὫὢὨὯὭὦὪὦὨὣ"
+    },
+    {
+      "Id": "mainline.reward",
+      "Type": "FieldRewardObjectController",
+      "Paths": [
+        "gameObject.name",
+        "ὪὬὣὧὥὨὦὯὨὮὬ",
+        "ὦὫὧὯὥὫὦὪὣὦὪ",
+        "ὯὩὮὩὮὣὯὫὮὡὧ",
+        "transform.position.x",
+        "transform.position.y",
+        "transform.position.z"
+      ]
+    },
+    {
+      "Id": "mainline.monster",
+      "Type": "FieldMonsterController",
+      "Paths": [
+        "gameObject.name",
+        "ὯὪὧὫὢὣὢὩὠὢὭ",
+        "IsCanOverwhelm()",
+        "ὭὫὠὯὯὭὧὬὣὨὨ.ὫὣὬὥὪὫὪὤὫὮὧ",
+        "IsAliveWithRespawnCheck()"
+      ]
+    },
+    {
+      "Id": "mainline.waypoint_ui",
+      "Type": "WayPointUI",
+      "Paths": [
+        "_fieldMiniMap.CurrentMap",
+        "_fieldMiniMap.MaxMapCount",
+        "_fieldMiniMap.CurrentMapPageIndex",
+        "ὭὡὢὬὯὦὪὯὮὤὤ",
+        "ὯὧὨὮὢὧὧὤὬὦὭ"
+      ]
+    },
+    {
+      "Id": "mainline.map_ui",
+      "Type": "MapUI",
+      "Paths": [
+        "_fieldMiniMap.CurrentMap",
+        "_fieldMiniMap.MaxMapCount",
+        "_fieldMiniMap.CurrentMapPageIndex"
+      ]
+    },
+    {
+      "Id": "mainline.packs",
+      "Type": "ὤὫὬὭὯὪὢὬὬὩὣ",
+      "StaticMember": "ὯὩὥὮὩὯὨὡὢὧὣ",
+      "Paths": [
+        "Count"
+      ],
+      "CollectionPath": "$self",
+      "ItemPaths": [
+        "Id",
+        "PackType",
+        "PackNameTextId"
+      ],
+      "MaxItems": 500
+    },
+    {
+      "Id": "mainline.gate",
+      "Type": "GateSpotData",
+      "Paths": [
+        "gameObject.name",
+        "ὪὬὣὧὥὨὦὯὨὮὬ",
+        "ὤὦὨὨὭὮὯὡὧὤὯ",
+        "transform.position.x",
+        "transform.position.y",
+        "transform.position.z",
+        "gameObject.activeInHierarchy",
+        "ὧὪὤὫὧὦὪὪὬὠὠ.ὫὣὬὥὪὫὪὤὫὮὧ",
+        "ὧὪὤὫὧὦὪὪὬὠὠ.ὪὩὩὣὥὧὫὠὮὮὫ",
+        "ὣὥὥὮὣὧὢὠὡὨὬ.enabled",
+        "ὣὥὥὮὣὧὢὠὡὨὬ.isTrigger",
+        "ὣὥὥὮὣὧὢὠὡὨὬ.tag",
+        "ὣὥὥὮὣὧὢὠὡὨὬ.bounds.center.x",
+        "ὣὥὥὮὣὧὢὠὡὨὬ.bounds.center.y",
+        "ὣὥὥὮὣὧὢὠὡὨὬ.bounds.center.z",
+        "ὣὥὥὮὣὧὢὠὡὨὬ.bounds.size.x",
+        "ὣὥὥὮὣὧὢὠὡὨὬ.bounds.size.y",
+        "ὣὥὥὮὣὧὢὠὡὨὬ.bounds.size.z",
+        "ὩὬὧὢὧὬὠὡὦὥὧ.x",
+        "ὩὬὧὢὧὬὠὡὦὥὧ.y",
+        "ὩὬὧὢὧὬὠὡὦὥὧ.z"
+      ]
+    },
+    {
+      "Id": "mainline.waypoint",
+      "Type": "WayPointController",
+      "Paths": [
+        "gameObject.name",
+        "ὪὬὣὧὥὨὦὯὨὮὬ",
+        "ὩὤὨὮὥὦὫὭὫὭὨ",
+        "transform.position.x",
+        "transform.position.y",
+        "transform.position.z",
+        "ὡὩὫὦὧὢὡὬὡὥὥ"
+      ]
+    },
+    {
+      "Id": "mainline.waypoint_icon",
+      "Type": "FieldMinimapInteractableWayPointIcon",
+      "Paths": [
+        "gameObject.GetInstanceID()",
+        "ὦὠὣὧὥὯὤὮὧὫὬ",
+        "_objWayPointClickable.activeSelf",
+        "_objWayPointEnable.activeSelf"
+      ]
+    },
+    {
+      "Id": "mainline.skill_status",
+      "Type": "QuickMenuTalentSkillLoopScrollItem",
+      "Paths": [
+        "gameObject.name",
+        "_goBlock.activeSelf",
+        "ὯὦὥὮὣὩὩὥὥὭὮ",
+        "ὪὮὣὤὩὯὦὭὧὬὬ.ὫὢὢὬὫὫὡὩὪὩὮ"
+      ]
+    },
+    {
+      "Id": "mainline.action",
+      "Type": "GameFieldManager",
+      "StaticMember": "ὪὫὢὨὯὭὦὪὦὨὣ",
+      "Paths": [
+        "ὪὨὯὢὫὮὨὩὮὡὬ.ὯὧὨὨὡὭὡὭὧὥὧ.ὥὦὧὪὠὡὧὯὫὢὩ"
+      ]
+    },
+    {
+      "Id": "mainline.durations",
+      "Type": "TalentSkillManager",
+      "StaticMember": "ὪὫὢὨὯὭὦὪὦὨὣ",
+      "Paths": [],
+      "CollectionPath": "ὠὦὣὪὡὤὧὢὣὢὦ",
+      "ItemPaths": [
+        "Key",
+        "Value.ὫὢὢὬὫὫὡὩὪὩὮ",
+        "Value.ὠὨὠὭὬὤὪὢὫὨὮ"
+      ],
+      "MaxItems": 50
+    },
+    {
+      "Id": "mainline.reset",
+      "Type": "ὫὨὪὠὢὨὮὤὩὤὮ",
+      "StaticMember": "ὠὥὬὪὮὬὢὨὬὮὫ",
+      "Paths": [
+        "Now().Ticks",
+        "GetDailyResetTime().Ticks",
+        "GetWeeklyResetTime().Ticks"
+      ]
+    },
+    {
+      "Id": "mainline.network",
+      "Type": "GameFieldManager",
+      "Paths": []
+    },
+    {
+      "Id": "mainline.travel",
+      "Type": "GameFieldManager",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "route.exploration",
+      "Type": "GameFieldManager",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "mainline.talent_lifecycle",
+      "Type": "TalentSkillManager",
+      "StaticMember": "ὪὫὢὨὯὭὦὪὦὨὣ",
+      "Paths": [
+        "ὦὣὤὯὤὦὮὬὪὥὩ.Keys"
+      ]
+    },
+    {
+      "Id": "route.navigation",
+      "Type": "GameFieldManager",
+      "StaticMember": "ὪὫὢὨὯὭὦὪὦὨὣ",
+      "Paths": [
+        "ὪὨὯὢὫὮὨὩὮὡὬ.ὭὦὫὤὮὧὦὡὨὤὢ.ὢὮὡὭὢὥὠὧὧὯὬ.enabled",
+        "ὪὨὯὢὫὮὨὩὮὡὬ.ὭὦὫὤὮὧὦὡὨὤὢ.ὢὮὡὭὢὥὠὧὧὯὬ.isOnNavMesh",
+        "ὪὨὯὢὫὮὨὩὮὡὬ.ὭὦὫὤὮὧὦὡὨὤὢ.ὢὮὡὭὢὥὠὧὧὯὬ.hasPath",
+        "ὪὨὯὢὫὮὨὩὮὡὬ.ὭὦὫὤὮὧὦὡὨὤὢ.ὢὮὡὭὢὥὠὧὧὯὬ.pathPending",
+        "ὪὨὯὢὫὮὨὩὮὡὬ.ὭὦὫὤὮὧὦὡὨὤὢ.ὢὮὡὭὢὥὠὧὧὯὬ.remainingDistance",
+        "ὪὨὯὢὫὮὨὩὮὡὬ.ὭὦὫὤὮὧὦὡὨὤὢ.ὢὮὡὭὢὥὠὧὧὯὬ.stoppingDistance",
+        "ὪὨὯὢὫὮὨὩὮὡὬ.ὭὦὫὤὮὧὦὡὨὤὢ.ὢὮὡὭὢὥὠὧὧὯὬ.isStopped",
+        "ὪὨὯὢὫὮὨὩὮὡὬ.ὭὦὫὤὮὧὦὡὨὤὢ.ὢὮὡὭὢὥὠὧὧὯὬ.velocity.x",
+        "ὪὨὯὢὫὮὨὩὮὡὬ.ὭὦὫὤὮὧὦὡὨὤὢ.ὢὮὡὭὢὥὠὧὧὯὬ.velocity.z",
+        "ὪὨὯὢὫὮὨὩὮὡὬ.ὭὦὫὤὮὧὦὡὨὤὢ.ὢὮὡὭὢὥὠὧὧὯὬ.steeringTarget.x",
+        "ὪὨὯὢὫὮὨὩὮὡὬ.ὭὦὫὤὮὧὦὡὨὤὢ.ὢὮὡὭὢὥὠὧὧὯὬ.steeringTarget.y",
+        "ὪὨὯὢὫὮὨὩὮὡὬ.ὭὦὫὤὮὧὦὡὨὤὢ.ὢὮὡὭὢὥὠὧὧὯὬ.steeringTarget.z",
+        "ὪὨὯὢὫὮὨὩὮὡὬ.ὭὦὫὤὮὧὦὡὨὤὢ.ὢὮὡὭὢὥὠὧὧὯὬ.destination.x",
+        "ὪὨὯὢὫὮὨὩὮὡὬ.ὭὦὫὤὮὧὦὡὨὤὢ.ὢὮὡὭὢὥὠὧὧὯὬ.destination.y",
+        "ὪὨὯὢὫὮὨὩὮὡὬ.ὭὦὫὤὮὧὦὡὨὤὢ.ὢὮὡὭὢὥὠὧὧὯὬ.destination.z"
+      ],
+      "CollectionPath": "ὪὨὯὢὫὮὨὩὮὡὬ.ὭὦὫὤὮὧὦὡὨὤὢ.ὢὮὡὭὢὥὠὧὧὯὬ.path.corners",
+      "ItemPaths": [
+        "x",
+        "y",
+        "z"
+      ],
+      "MaxItems": 150
+    },
+    {
+      "Id": "mainline.talent_rows",
+      "Type": "QuickMenuUI",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "mainline.owned_packs",
+      "Type": "ὣὡὧὡὦὣὣὬὨὪὫ",
+      "StaticMember": "ὯὡὮὫὭὥὬὤὣὪὩ",
+      "Paths": [
+        "Count"
+      ],
+      "CollectionPath": "$self",
+      "ItemPaths": [
+        "Key",
+        "Value.Id"
+      ],
+      "MaxItems": 500
+    },
+    {
+      "Id": "route.gates",
+      "Type": "GameFieldManager",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "route.context",
+      "Type": "GameFieldManager",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "mainline.steal_npcs",
+      "Type": "GameFieldManager",
+      "Paths": []
+    },
+    {
+      "Id": "mainline.steal_popup",
+      "Type": "StealInfoPopupUI",
+      "Paths": [
+        "ὣὮὡὮὣὥὫὬὨὣὬ",
+        "ὣὡὪὭὤὨὭὣὪὧὩ",
+        "ὤὣὤὥὨὧὮὨὣὤὤ"
+      ]
+    },
+    {
+      "Id": "mainline.steal_dialogue",
+      "Type": "BalloonScriptUI",
+      "Paths": [
+        "ὠὩὭὦὧὣὬὫὩὧὣ",
+        "ὥὦὥὮὧὥὢὫὯὣὤ",
+        "ὠὩὤὮὯὪὡὪὦὯὢ.ὪὬὣὧὥὨὦὯὨὮὬ",
+        "_objTouchButton.activeInHierarchy",
+        "_selectUI.gameObject.activeInHierarchy"
+      ]
+    },
+    {
+      "Id": "weekly_npc.native",
+      "Type": "GameFieldManager",
+      "Paths": []
+    },
+    {
+      "Id": "mainline.research",
+      "Type": "TalentSkillManager",
+      "Paths": [
+        "$self"
+      ]
+    }
+  ]
+}

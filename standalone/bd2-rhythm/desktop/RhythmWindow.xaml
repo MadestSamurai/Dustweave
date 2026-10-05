@@ -1,0 +1,17 @@
+<Window x:Class="BD2Rhythm.Desktop.RhythmWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="BD2 Rhythm 0.2.1" Width="730" Height="660" MinWidth="600" MinHeight="460" Background="{StaticResource BackgroundBrush}" Foreground="{StaticResource TextBrush}" FontFamily="Microsoft YaHei UI" FontSize="14" Closing="OnClosing">
+<ScrollViewer x:Name="Scroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="24">
+<DockPanel Margin="0,0,0,4"><ComboBox x:Name="LanguageBox" DockPanel.Dock="Right" Width="126" VerticalAlignment="Center" SelectedIndex="0" SelectionChanged="LanguageChanged" AutomationProperties.Name="Language / 语言"><ComboBoxItem Content="简体中文" Tag="zh-CN"/><ComboBoxItem Content="English" Tag="en-US"/></ComboBox><TextBlock Text="{DynamicResource Label1}" FontSize="24" FontWeight="SemiBold"/></DockPanel><TextBlock Text="{DynamicResource Label2}" Margin="0,8,0,20" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"/>
+<WrapPanel Margin="0,0,0,20"><Button x:Name="ConnectButton" Content="{DynamicResource Label3}" Click="ConnectClick"/><Button x:Name="StartButton" Content="{DynamicResource Label4}" Style="{StaticResource PrimaryButton}" Click="StartClick" IsEnabled="False"/><Button x:Name="StopButton" Content="{DynamicResource Label5}" Click="StopClick" IsEnabled="False"/></WrapPanel>
+<Border Background="White" Padding="18" CornerRadius="8"><StackPanel>
+<TextBlock x:Name="StateText" Text="{DynamicResource Label6}" FontSize="19" FontWeight="SemiBold"/><TextBlock x:Name="ReasonText" Text="{DynamicResource Label7}" TextWrapping="Wrap" Margin="0,8,0,18"/>
+<TextBlock x:Name="SongText" Text="{DynamicResource Label8}" FontWeight="SemiBold" TextWrapping="Wrap"/><ProgressBar x:Name="Progress" Minimum="0" Maximum="100" Height="6" Margin="0,12,0,8" Foreground="{StaticResource PrimaryBrush}"/>
+<TextBlock x:Name="ProgressText" Text="{DynamicResource Label9}" Foreground="{StaticResource MutedBrush}"/><TextBlock x:Name="MetricsText" Text="{DynamicResource Label10}" Foreground="{StaticResource MutedBrush}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+</StackPanel></Border>
+<TextBlock Text="{DynamicResource Label11}" FontWeight="SemiBold" Margin="0,22,0,12"/><WrapPanel>
+<StackPanel Margin="0,0,28,12"><Label Target="{Binding ElementName=JitterBox}" Padding="0" Content="{DynamicResource Label12}"/><TextBox x:Name="JitterBox" Text="50" Width="190" HorizontalAlignment="Left" Margin="0,6,0,0" Padding="8" LostFocus="SettingsChanged"/></StackPanel>
+<StackPanel Margin="0,0,0,12"><Label Target="{Binding ElementName=OffsetBox}" Padding="0" Content="{DynamicResource Label13}"/><TextBox x:Name="OffsetBox" Text="0" Width="190" HorizontalAlignment="Left" Margin="0,6,0,0" Padding="8" LostFocus="SettingsChanged"/></StackPanel>
+</WrapPanel>
+<TextBlock x:Name="SettingsHint" Text="{DynamicResource Label14}" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"/>
+<TextBlock Text="{DynamicResource Label15}" Margin="0,12,0,0" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"/>
+<Separator Margin="0,20,0,14"/><DockPanel LastChildFill="True"><Button Content="{DynamicResource Label16}" Click="FolderClick" DockPanel.Dock="Right" Margin="12,0,0,0"/><StackPanel><TextBlock Text="{DynamicResource Label17}"/><TextBlock Text="{DynamicResource Label18}" Foreground="{StaticResource MutedBrush}" Margin="0,5,0,0"/></StackPanel></DockPanel>
+</StackPanel></ScrollViewer></Window>

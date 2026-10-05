@@ -1,0 +1,252 @@
+{
+  "schema": 1,
+  "source": {
+    "exportedAtUtc": "2026-09-24T00:35:39.8332929Z",
+    "databaseFile": "9F251C63BC72551C681EE75D328FA090D56E444B",
+    "databaseSha256": "829BCCE89430D18F01E015928722C65171CD97FD017925BCBB450DF9A416DFED",
+    "assemblyFile": "Assembly-CSharp.dll",
+    "assemblySha256": "57674AA138FDC5B7A7F9B733200A4EF9C02BE2F6BACB4807C72BA35DD20E531D",
+    "simulatorCompatible": true,
+    "buffGroupHierarchyIndex": 3,
+    "buffGroupHierarchyPreserved": true,
+    "tables": {
+      "MapTable": 524,
+      "MapRewardTable": 426,
+      "PackTable": 79,
+      "WorldMapPinTable": 27
+    }
+  },
+  "cartridges": [
+    {
+      "id": 1001,
+      "name": "杰登之门",
+      "kind": "character",
+      "maps": [
+        10011,
+        10014,
+        10015
+      ],
+      "transitMaps": [
+        10011,
+        10012,
+        10013,
+        10014,
+        10015,
+        10016,
+        10017
+      ],
+      "travel": "teleport"
+    },
+    {
+      "id": 1002,
+      "name": "火晶片",
+      "kind": "character",
+      "maps": [
+        10021,
+        10022,
+        10023
+      ],
+      "transitMaps": [
+        10021,
+        10022,
+        10023
+      ],
+      "travel": "teleport"
+    },
+    {
+      "id": 1003,
+      "name": "美丽无望",
+      "kind": "character",
+      "maps": [
+        10031,
+        10032,
+        10033
+      ],
+      "transitMaps": [
+        10031,
+        10032,
+        10033,
+        10034
+      ],
+      "travel": "teleport"
+    },
+    {
+      "id": 1004,
+      "name": "大逃脱",
+      "kind": "character",
+      "maps": [
+        10041,
+        10042,
+        10043
+      ],
+      "transitMaps": [
+        10041,
+        10042,
+        10043,
+        10044,
+        10045
+      ],
+      "travel": "teleport"
+    },
+    {
+      "id": 1005,
+      "name": "鲁的迷宫",
+      "kind": "character",
+      "maps": [
+        10051,
+        10052
+      ],
+      "transitMaps": [
+        10051,
+        10052,
+        10053
+      ],
+      "travel": "walk"
+    },
+    {
+      "id": 1006,
+      "name": "御剑传",
+      "kind": "character",
+      "maps": [
+        10061,
+        10062,
+        10063
+      ],
+      "transitMaps": [
+        10061,
+        10062,
+        10063,
+        10064,
+        10069
+      ],
+      "travel": "teleport"
+    },
+    {
+      "id": 1007,
+      "name": "合约之战",
+      "kind": "character",
+      "maps": [
+        10071,
+        10073
+      ],
+      "transitMaps": [
+        10071,
+        10072,
+        10073,
+        10076,
+        10077,
+        100710
+      ],
+      "travel": "walk"
+    },
+    {
+      "id": 2001,
+      "name": "夏日骑士",
+      "kind": "event",
+      "maps": [
+        20011,
+        20012
+      ],
+      "transitMaps": [
+        20011,
+        20012
+      ],
+      "travel": "walk"
+    },
+    {
+      "id": 2002,
+      "name": "恶梦之冬",
+      "kind": "event",
+      "maps": [
+        20021,
+        20022,
+        20023
+      ],
+      "transitMaps": [
+        20021,
+        20022,
+        20023,
+        20025,
+        20026,
+        20027
+      ],
+      "travel": "teleport"
+    },
+    {
+      "id": 2005,
+      "name": "记忆边缘",
+      "kind": "event",
+      "maps": [
+        20051
+      ],
+      "transitMaps": [
+        20051,
+        20052,
+        20053
+      ],
+      "travel": "walk"
+    },
+    {
+      "id": 2007,
+      "name": "戏水女王",
+      "kind": "event",
+      "maps": [
+        20071
+      ],
+      "transitMaps": [
+        20071,
+        20072,
+        20073,
+        20074
+      ],
+      "travel": "walk"
+    }
+  ],
+  "excluded": [
+    {
+      "id": 1008,
+      "name": "妖魔讨伐团",
+      "reason": "no_repeatable_collection"
+    },
+    {
+      "id": 1009,
+      "name": "奇迹★闪耀",
+      "reason": "no_repeatable_collection"
+    },
+    {
+      "id": 1010,
+      "name": "合龙传",
+      "reason": "no_repeatable_collection"
+    },
+    {
+      "id": 2003,
+      "name": "海滨天使",
+      "reason": "no_repeatable_collection"
+    },
+    {
+      "id": 2004,
+      "name": "闪乱神乐",
+      "reason": "hidden"
+    },
+    {
+      "id": 2006,
+      "name": "哥布林杀手",
+      "reason": "hidden"
+    },
+    {
+      "id": 2008,
+      "name": "流融萌兔",
+      "reason": "no_repeatable_collection"
+    },
+    {
+      "id": 2009,
+      "name": "游轮协议",
+      "reason": "no_repeatable_collection"
+    },
+    {
+      "id": 2010,
+      "name": "Chained Soldier2",
+      "reason": "no_repeatable_collection"
+    }
+  ]
+}

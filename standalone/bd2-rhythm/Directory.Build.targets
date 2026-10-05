@@ -1,0 +1,8 @@
+﻿<Project>
+  <!-- Single-file tooling must be identical for Portable and Lite, even on a newer SDK. -->
+  <Target Name="PinRhythmLinkerPack" BeforeTargets="ProcessFrameworkReferences">
+    <ItemGroup>
+      <KnownILLinkPack Update="Microsoft.NET.ILLink.Tasks" ILLinkPackVersion="8.0.30" />
+    </ItemGroup>
+  </Target>
+</Project>

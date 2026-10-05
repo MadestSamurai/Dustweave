@@ -1,0 +1,222 @@
+{
+  "Extends": "management-evidence-spec.json",
+  "Taps": [
+    {
+      "Role": "mail.collect",
+      "ResponseType": "Proto.Net.MailOpenResponse",
+      "RequestMethod": "ὫὬὩὯὨὨὮὮὯὫὠ",
+      "ResponseMethod": "ὢὮὤὧὯὥὡὢὥὤὦ",
+      "Paths": [
+        "RewardInfoBundle"
+      ]
+    },
+    {
+      "Role": "mail.info",
+      "ResponseType": "Proto.Net.MailInfoResponse",
+      "Paths": [
+        "TotalCount"
+      ]
+    },
+    {
+      "Role": "mail.cash_info",
+      "ResponseType": "Proto.Net.CashMailInfoResponse",
+      "Paths": [
+        "TotalCount"
+      ]
+    },
+    {
+      "Role": "equipment.break",
+      "ResponseType": "Proto.Net.EquipBreakResponse",
+      "Paths": [],
+      "RequestSite": "constructor",
+      "ResponseOwner": "ὡὩὩὤὡὯὩὡὧὥὦ",
+      "ResponseViaParserHelper": true
+    },
+    {
+      "Role": "equipment.recycle",
+      "ResponseType": "Proto.Net.EquipUpgradeToBreakAutoResponse",
+      "Paths": [
+        "EquipInfo",
+        "RewardInfoBundle"
+      ],
+      "RequestSite": "constructor",
+      "ResponseViaParserHelper": true
+    },
+    {
+      "Role": "equipment.recycle.single",
+      "ResponseType": "Proto.Net.EquipFromUpgradeToBreakResponse",
+      "Paths": [
+        "EquipInfo",
+        "RewardInfoBundle"
+      ],
+      "RequestSite": "constructor",
+      "ResponseViaParserHelper": true
+    },
+    {
+      "Role": "equipment.refine",
+      "ResponseType": "Proto.Net.EquipSmeltingResponse",
+      "Paths": [
+        "EquipInfo",
+        "RewardInfoBundle"
+      ],
+      "RequestSite": "constructor",
+      "ResponseViaParserHelper": true
+    },
+    {
+      "Role": "equipment.craft",
+      "ResponseType": "Proto.Net.EquipMakingResponse",
+      "Paths": [
+        "EquipInfo"
+      ],
+      "RequestSite": "constructor",
+      "ResponseViaParserHelper": true,
+      "ResponseOwner": "ὤὫὦὥὭὧὢὠὧὥὥ/ὬὢὯὪὤὠὣὬὤὮὤ"
+    },
+    {
+      "Role": "square.ranking_reward",
+      "ResponseType": "Proto.Net.StatueObjectRewardResponse",
+      "RequestSite": "constructor",
+      "Paths": [
+        "RewardInfoBundle"
+      ]
+    }
+  ],
+  "Reads": [
+    {
+      "Id": "mail.ui",
+      "Type": "MailUI",
+      "Paths": [
+        "ὭὯὫὫὮὡὠὮὤὬὨ",
+        "ὪὧὩὦὠὩὯὡὫὣὫ",
+        "_objAllReceiveRoot.activeInHierarchy",
+        "_objEmptyRoot.activeInHierarchy"
+      ]
+    },
+    {
+      "Id": "mail.normal",
+      "Type": "ὪὨὣὠὦὣὥὤὭὢὤ",
+      "StaticMember": "ὢὢὧὧὦὮὬὢὯὯὧ",
+      "Paths": [
+        "Count"
+      ],
+      "CollectionPath": "$self",
+      "ItemPaths": [
+        "InvenIndex",
+        "RewardExpireTime"
+      ],
+      "MaxItems": 1000
+    },
+    {
+      "Id": "mail.cash",
+      "Type": "ὪὨὣὠὦὣὥὤὭὢὤ",
+      "StaticMember": "ὯὦὩὪὮὩὨὣὢὮὪ",
+      "Paths": [
+        "Count"
+      ],
+      "CollectionPath": "$self",
+      "ItemPaths": [
+        "InvenIndex",
+        "RewardExpireTime"
+      ],
+      "MaxItems": 1000
+    },
+    {
+      "Id": "mail.cash_total",
+      "Type": "ὪὨὣὠὦὣὥὤὭὢὤ",
+      "StaticMember": "ὠὭὬὢὬὯὪὡὣὢὫ",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "equipment.upgrade_ui",
+      "Type": "EquipmentUpgradePopupUI",
+      "Paths": [
+        "ὬὠὬὡὫὤὮὨὦὤὥ",
+        "ὬὭὪὣὣὨὭὭὩὯὨ",
+        "ὢὧὣὨὨὦὠὭὬὠὫ",
+        "ὫὥὫὡὮὣὩὭὭὥὥ",
+        "ὯὤὭὦὠὭὬὨὪὣὧ"
+      ]
+    },
+    {
+      "Id": "equipment.refine_ui",
+      "Type": "EquipmentUpgradeUI",
+      "Paths": [
+        "ὢὠὡὡὫὤὮὫὢὢὪ.InvenIndex",
+        "ὯὢὪὬὠὧὥὠὤὩὦ",
+        "ὠὠὡὭὧὫὫὭὥὣὯ",
+        "ὢὮὫὪὩὨὥὥὬὪὪ",
+        "ὡὩὮὤὬὪὧὭὭὪὢ"
+      ]
+    },
+    {
+      "Id": "equipment.break_ui",
+      "Type": "EquipmentBreakPopupUI",
+      "Paths": [
+        "ὫὮὪὪὬὩὤὯὦὠὬ"
+      ]
+    },
+    {
+      "Id": "square.pack",
+      "Type": "PackListLoopScrollItem",
+      "Paths": [
+        "gameObject.name",
+        "ὦὡὪὦὥὫὦὡὬὠὢ.Id",
+        "ὦὡὪὦὥὫὦὡὬὠὢ.PackType"
+      ]
+    },
+    {
+      "Id": "equipment.craft_ui",
+      "Type": "EquipmentMakingUI",
+      "Paths": [
+        "_craftMaterial.craftCount",
+        "ὤὭὠὥὤὠὡὣὣὠὣ.ὫὮὩὬὤὫὮὨὢὯὬ.Id",
+        "_craftButton.objDisableButton.activeSelf"
+      ]
+    },
+    {
+      "Id": "square.goddess",
+      "Type": "ὮὨὬὣὪὩὨὫὨὦὫ",
+      "StaticMember": "ὮὫὪὢὥὨὢὠὡὪὥ",
+      "Paths": [
+        "$self"
+      ]
+    },
+    {
+      "Id": "square.statue",
+      "Type": "Field.SquareStatueObject",
+      "Paths": [
+        "ὪὬὣὧὥὨὦὯὨὮὬ",
+        "ὩὤὨὮὥὦὫὭὫὭὨ"
+      ]
+    },
+    {
+      "Id": "square.ranking",
+      "Type": "FieldStatueObjectController",
+      "Paths": [
+        "ὪὬὣὧὥὨὦὯὨὮὬ",
+        "_objStatueReward.activeInHierarchy",
+        "_statueType",
+        "ὡὯὧὯὨὢὭὤὡὮὭ"
+      ]
+    },
+    {
+      "Id": "square.guild_ranking",
+      "Type": "FieldGuildRaidStatueObjectController",
+      "Paths": [
+        "ὪὬὣὧὥὨὦὯὨὮὬ",
+        "_objStatueReward.activeInHierarchy",
+        "ὡὯὧὯὨὢὭὤὡὮὭ"
+      ]
+    },
+    {
+      "Id": "square.ranking_claimed",
+      "Type": "ὢὯὯὣὧὦὯὠὢὪὬ",
+      "StaticMember": "ὢὪὪὡὡὪὮὨὧὫὯ",
+      "Paths": [
+        "$self"
+      ]
+    }
+  ]
+}

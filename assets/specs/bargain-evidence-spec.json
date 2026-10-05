@@ -1,0 +1,5 @@
+{
+  "Extends": "daily-evidence-spec.json",
+  "Taps": [],
+  "Reads": [{ "Id": "mainline.bargain_training", "Type": "QuickMenuUI", "Paths": ["$self"] }]
+}

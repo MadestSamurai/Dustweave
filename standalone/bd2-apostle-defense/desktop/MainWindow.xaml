@@ -1,0 +1,43 @@
+<Window x:Class="BD2ApostleDefense.Desktop.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:BD2ApostleDefense.Desktop" Title="BD2 使徒防守助手 · 0.3.2" Width="1220" Height="900" MinWidth="1000" MinHeight="760" Background="{StaticResource AppBackground}" WindowStartupLocation="CenterScreen">
+ <Grid Margin="12">
+  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+  <Grid Margin="0,0,0,10">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <StackPanel VerticalAlignment="Center" Margin="0,0,16,0"><TextBlock Text="使徒防守助手" FontSize="23" FontWeight="SemiBold"/><TextBlock x:Name="StatusText" Text="尚未连接" Foreground="{StaticResource Primary}" Margin="0,3,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/></StackPanel>
+   <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"><ComboBox x:Name="LanguageChoice" Width="116" VerticalContentAlignment="Center" Margin="0,0,12,0" SelectionChanged="LanguageChanged" AutomationProperties.Name="语言"><ComboBoxItem Content="简体中文"/><ComboBoxItem Content="English"/></ComboBox><Button x:Name="ConnectButton" Content="连接游戏" Click="Connect"/><Button x:Name="StartButton" Content="开启自动化" Style="{StaticResource PrimaryButton}" Click="Start" IsEnabled="False" Margin="8,0,0,0"/><Button x:Name="PauseButton" Content="暂停" Click="Pause" IsEnabled="False" Margin="8,0,0,0"/></StackPanel>
+  </Grid>
+  <Grid Grid.Row="1"><Grid.ColumnDefinitions><ColumnDefinition Width="264"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+   <Border Style="{StaticResource Panel}" Padding="16"><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel>
+    <TextBlock Text="本次目标" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,16"/>
+    <CheckBox x:Name="ClearGoal" Content="通关第 50 波" IsChecked="True" Checked="SettingsChanged" Unchecked="SettingsChanged" Padding="0,2"/>
+    <TextBlock x:Name="ClearProgress" Text="等待服务器进度" Style="{StaticResource MetaText}" Margin="22,5,0,16"/>
+    <CheckBox x:Name="RareGoal" Content="召唤最高级使徒" IsChecked="True" Checked="SettingsChanged" Unchecked="SettingsChanged" Padding="0,2"/>
+    <TextBlock x:Name="RareProgress" Text="等待服务器进度" Style="{StaticResource MetaText}" Margin="22,5,0,3"/>
+    <TextBlock x:Name="PendingProgress" Text="本局待结算：待同步" Style="{StaticResource MetaText}" Margin="22,0,0,0"/>
+    <TextBlock Text="先争取50波通关，完成后转向最高级使徒召唤。" TextWrapping="Wrap" Style="{StaticResource MetaText}" Margin="0,16,0,0"/>
+    <Separator Margin="0,18" Background="{StaticResource Line}"/>
+    <TextBlock x:Name="FocusText" Text="当前决策" FontWeight="SemiBold" Foreground="{StaticResource Primary}" TextWrapping="Wrap"/>
+    <TextBlock x:Name="DecisionText" Text="连接后先核对已完成成就，再决定下一步。" TextWrapping="Wrap" Margin="0,8,0,0" LineHeight="22"/>
+    <Separator Margin="0,18" Background="{StaticResource Line}"/>
+    <Expander Header="运行设置" IsExpanded="True"><StackPanel Margin="0,14,0,0">
+     <CheckBox x:Name="AutoNext" Content="结算后自动开始下一局" IsChecked="True" Checked="SettingsChanged" Unchecked="SettingsChanged" Margin="0,0,0,13"/>
+     <CheckBox x:Name="StopRound" Content="本局结算后停止" Checked="SettingsChanged" Unchecked="SettingsChanged" Margin="0,0,0,14"/>
+     <DockPanel><TextBlock Text="操作间隔" VerticalAlignment="Center"/><TextBlock Text="ms" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="6,0,0,0"/><TextBox x:Name="Interval" Text="500" LostFocus="SettingsChanged" Width="78" HorizontalAlignment="Right" AutomationProperties.Name="操作间隔，100至3000毫秒"/></DockPanel>
+     <TextBlock Text="100–3000；操作后等待游戏确认。" Style="{StaticResource MetaText}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+     <TextBlock x:Name="SettingsError" Foreground="{StaticResource Error}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+    </StackPanel></Expander>
+    <Expander Header="最近操作" Margin="0,18,0,0"><StackPanel Margin="0,10,0,0"><TextBlock Text="双击记录可复制" Style="{StaticResource MetaText}"/><ListBox x:Name="LogList" Height="150" BorderThickness="0" Background="Transparent" FontSize="12" Margin="0,5,0,0" HorizontalContentAlignment="Stretch" MouseDoubleClick="CopyLog" ScrollViewer.HorizontalScrollBarVisibility="Disabled"><ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Padding="0,3"/></DataTemplate></ListBox.ItemTemplate></ListBox></StackPanel></Expander>
+    <Separator Margin="0,18" Background="{StaticResource Line}"/>
+    <TextBlock x:Name="AccountText" Text="进入使徒运气防守后连接游戏。" Style="{StaticResource MetaText}" TextWrapping="Wrap" LineHeight="19"/>
+    <Button Content="打开诊断目录" Click="OpenLogs" Margin="0,12,0,0" HorizontalAlignment="Left"/>
+    <TextBlock Text="暂停仅停止工具操作，游戏计时仍会继续。" Style="{StaticResource MetaText}" Margin="0,12,0,0" TextWrapping="Wrap"/>
+   </StackPanel></ScrollViewer></Border>
+   <Border Grid.Column="2" Style="{StaticResource Panel}" Padding="12"><Grid>
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+    <DockPanel><TextBlock x:Name="WaveText" DockPanel.Dock="Right" Text="等待读取波次" Foreground="{StaticResource Primary}" FontSize="16" FontWeight="SemiBold"/><TextBlock Text="我的盘面" FontSize="18" FontWeight="SemiBold"/></DockPanel>
+    <TextBlock x:Name="Metrics" Grid.Row="1" Text="金币、敌人数量与波次倒计时将在连接后显示" Style="{StaticResource MetaText}" Margin="0,6,0,8"/>
+    <local:BattleBoard x:Name="BoardView" Grid.Row="2"/>
+   </Grid></Border>
+  </Grid>
+ </Grid>
+</Window>
