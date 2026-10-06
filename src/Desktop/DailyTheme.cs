@@ -5,7 +5,7 @@ using System.Windows.Data;
 using System.Windows.Media;
 using Microsoft.Win32;
 
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 public enum DailyAppearance { System, Light, Dark }
 

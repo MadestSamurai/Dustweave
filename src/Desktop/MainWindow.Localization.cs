@@ -3,7 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Windows.Threading;
 
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 // Exercises real WPF bindings with isolated accounts. No connection to the game.
 public partial class MainWindow
@@ -137,7 +137,7 @@ public partial class MainWindow
 
     private void CheckRuntimeLanguagesForSmoke()
     {
-        using var input = typeof(DailyUserText).Assembly.GetManifestResourceStream("BD2Daily.Messages.zh-CN.txt")!;
+        using var input = typeof(DailyUserText).Assembly.GetManifestResourceStream("Dustweave.Messages.zh-CN.txt")!;
         using var reader = new StreamReader(input);
         var rows = reader.ReadToEnd().Replace("\r","").Split('\n').Where(s => s.Length > 0 && !s.StartsWith('#'))
             .Select(s => { int i=s.IndexOf('='); return (Code:s[..i].Trim(),Chinese:s[(i+1)..].Trim()); }).ToArray();

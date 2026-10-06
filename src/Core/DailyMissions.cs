@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
-namespace BD2Daily;
+using static Dustweave.DailyData;
+namespace Dustweave;
 
 public sealed class DailyMissionResetException(JsonObject proof) : Exception("服务器已拒绝过期任务领取（112003），需要刷新任务进度。")
 {

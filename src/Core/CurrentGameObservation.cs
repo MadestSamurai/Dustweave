@@ -1,4 +1,4 @@
-namespace BD2Daily;
+namespace Dustweave;
 
 // Standalone read-only clients must not own account switching, revoke a daily lease,
 // perform startup UI actions, or write account profiles just to attach an observer.

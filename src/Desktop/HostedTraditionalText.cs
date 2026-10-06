@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 // Windows-only presentation conversion. Never used for IDs, payloads or persisted settings.
 internal sealed class HostedTraditionalText

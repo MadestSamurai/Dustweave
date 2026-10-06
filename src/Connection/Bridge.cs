@@ -164,8 +164,7 @@ namespace BD2Daily.Live {
    }
    surfaces.AddRange(StoryNative.Observe());surfaces.AddRange(StoryNative.ObserveScripts());
    f.Surfaces=surfaces.OrderBy(s=>s.Id).ToArray();f.SquareNavigation=SquareRoutePilot.Observe();
-   var key=f.Scene+"|"+string.Join("|",f.Surfaces.Select(s=>s.Id+":"+s.Order+":"+s.NoticeSuppression+":"+s.NativeContext+":"+string.Join(",",s.Targets.Select(t=>t.Id+":"+t.Enabled))).ToArray());
-   using(var sha=SHA256.Create())f.UiToken=BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(key))).Replace("-","");
+   f.UiToken=LivePolicy.BuildUiToken(f);
    return f;
   }
   private static void Save(Receipt r){r.AtUtcTicks=DateTime.UtcNow.Ticks;Write(Path.Combine(live,"receipts",r.Command.Id+".json"),r);}

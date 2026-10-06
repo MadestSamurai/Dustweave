@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
-namespace BD2Daily;
+using static Dustweave.DailyData;
+namespace Dustweave;
 
 /// <summary>One explicit login coordinator may retry known native resource-download errors at most three times.</summary>
 public static class DailyStartupRecovery
@@ -10,7 +10,7 @@ public static class DailyStartupRecovery
     {
         if (N(frame["BridgeVersion"]) < 31 || S(frame["Scene"]) is not ("Splash" or "ReGame"))
             return null;
-        var popups = DailyNavigationDecision.Rows(frame).Where(u => B(u["Popup"]) && S(u["Type"]) is not ("NoticeUI" or "CurrencyManageUI")).ToArray();
+        var popups = DailyNavigationDecision.Rows(frame).Where(u => B(u["Popup"]) && !DailyNavigationDecision.PassiveSurface(S(u["Type"]))).ToArray();
         if (popups.Length != 1 || S(popups[0]["Type"]) != "MessagePopupUI")
             return null;
         foreach (var text in popups[0]["Text"]?.AsArray() ?? new JsonArray())
@@ -124,7 +124,7 @@ public static class DailyStartupRecovery
                     Require(NetworkError(Live()) == null || !JsonNode.DeepEquals(Live()["UiToken"], current["UiToken"]), "资源错误窗口尚未推进，未重复点击");
                     continue;
                 }
-                Require(!DailyNavigationDecision.Rows(current).Any(u => B(u["Popup"]) && S(u["Type"]) is not ("DownloadPopupUI" or "NoticeUI" or "CurrencyManageUI")), "未知启动弹窗，保留现场");
+                Require(!DailyNavigationDecision.Rows(current).Any(u => B(u["Popup"]) && S(u["Type"]) != "DownloadPopupUI" && !DailyNavigationDecision.PassiveSurface(S(u["Type"]))), "未知启动弹窗，保留现场");
                 DailyJson.Write(permit, new StartupPermit { Owner = owner, AccountKey = account, InstanceId = daily.InstanceId, ProcessId = game.ProcessId, ProcessStartTicks = game.StartTicks, ExpiresUtcTicks = DateTime.UtcNow.AddSeconds(10).Ticks });
                 string nextMessage = daily.Scene + " · " + daily.Startup?.Stage + " · " + daily.Startup?.Action;
                 if (message != nextMessage)

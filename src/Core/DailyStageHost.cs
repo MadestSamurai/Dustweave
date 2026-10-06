@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
-namespace BD2Daily;
+using static Dustweave.DailyData;
+namespace Dustweave;
 
 /// <summary>One managed host owns navigation, transaction recovery, selected stages and private extensions.</summary>
 public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, IDailyWeeklyCompletionHost
@@ -111,10 +111,14 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
             {
                 if (!JsonNode.DeepEquals(context, arguments?["context"]))
                     throw new StageHostException("identity", "恢复现场与原队列不同。");
+                await business.CleanupRejectedPreviewsAsync(Bound());
                 return await navigation.RecoverAsync(stage, Bound(), S(arguments?["error"]), Relay);
             }
             if (operation == "navigate")
+            {
+                await business.CleanupRejectedPreviewsAsync(Bound());
                 return await navigation.EnterAsync(stage, Bound(), Relay, managed.TryGetValue(stage, out var owner) ? owner.CanResume : null);
+            }
             if (operation == "execute")
             {
                 await workflows.PrepareAsync(stage);

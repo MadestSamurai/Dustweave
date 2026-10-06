@@ -2,7 +2,7 @@ using System.Text;
 using System.Globalization;
 using System.Text.Json;
 
-namespace BD2AccountSessionManager;
+namespace Dustweave.Accounts;
 
 internal static class SessionIdentity
 {

@@ -1,9 +1,9 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-06T11:41:01.3805373Z",
+  "generatedUtc": "2026-10-06T16:29:26.9968395Z",
   "purpose": "Repository-local build input inventory",
-  "entryProject": "src/Desktop/BD2Daily.Desktop.csproj",
+  "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
     "standalone/bd2-apostle-defense/compatibility/BD2ApostleDefense.Compatibility.csproj",
     "standalone/bd2-apostle-defense/core/BD2ApostleDefense.Core.csproj",
@@ -32,17 +32,17 @@
     "standalone/bd2-territory/compatibility/BD2Territory.Compatibility.csproj",
     "standalone/bd2-territory/core/BD2Territory.Core.csproj",
     "standalone/bd2-territory/desktop/BD2Territory.Desktop.csproj",
-    "src/Accounts/BD2AccountSessionManager.Core.csproj",
-    "tools/CompatibilityCli/BD2Daily.Compatibility.Cli.csproj",
-    "src/Compatibility/BD2Daily.Compatibility.csproj",
-    "src/Core/BD2Daily.Core.csproj",
-    "src/Desktop/BD2Daily.Desktop.csproj",
-    "src/ToolHost/BD2Daily.Fishing.csproj",
-    "src/Connection/BD2Daily.Live.csproj",
+    "src/Accounts/Dustweave.Accounts.csproj",
+    "tools/CompatibilityCli/Dustweave.Compatibility.Cli.csproj",
+    "src/Compatibility/Dustweave.Compatibility.csproj",
+    "src/Core/Dustweave.Core.csproj",
+    "src/Desktop/Dustweave.Desktop.csproj",
+    "src/ToolHost/Dustweave.ToolHost.csproj",
+    "src/Connection/Dustweave.Connection.csproj",
     "tests/Dustweave.Tests/Dustweave.Tests.csproj",
-    "tools/RuntimeCheck/BD2Daily.RuntimeCheck.csproj",
-    "tools/TradeData/BD2Daily.TradeData.csproj",
-    "tools/TableExporter/BD2TableExporter.csproj"
+    "tools/RuntimeCheck/Dustweave.RuntimeCheck.csproj",
+    "tools/TradeData/Dustweave.TradeData.csproj",
+    "tools/TableExporter/Dustweave.TableExporter.csproj"
   ],
   "files": [
     {
@@ -879,11 +879,11 @@
     },
     {
       "path": "standalone/bd2-equipment-assistant/desktop/packages.lock.json",
-      "sha256": "e0748478f3dc8fab5501440dc4678e3e063b536bdba9f3342251eff59251be6f",
+      "sha256": "fa9175356430f97c849571463951cd16587348f62cc8a131388ed9f724b19727",
       "reasons": [
         "build input"
       ],
-      "bytes": 2633
+      "bytes": 2563
     },
     {
       "path": "standalone/bd2-equipment-assistant/desktop/WorkerClient.cs",
@@ -1335,11 +1335,11 @@
     },
     {
       "path": "standalone/bd2-fiend-hunter/desktop/packages.lock.json",
-      "sha256": "58467fe38b4bb948544826d0dd00feeb07c313fe4ba5a9a461899f92a6516bea",
+      "sha256": "9c49996c4316dd43a91e7edcc7fea7fc6573bc8f1a435549e31d0f407ea41745",
       "reasons": [
         "build input"
       ],
-      "bytes": 2645
+      "bytes": 2575
     },
     {
       "path": "standalone/bd2-fiend-hunter/Directory.Build.props",
@@ -1791,11 +1791,11 @@
     },
     {
       "path": "standalone/bd2-fishing/desktop/packages.lock.json",
-      "sha256": "aaa6d3d3b7a680567212cc7ce0e90534a85173fde1dfee1a4d5758b6ea02662d",
+      "sha256": "0e6b5dfc4410e459bc41a20f8fe592a7d43154a30567475403f067c801fc49cd",
       "reasons": [
         "build input"
       ],
-      "bytes": 2633
+      "bytes": 2563
     },
     {
       "path": "standalone/bd2-fishing/desktop/Smoke.cs",
@@ -2399,11 +2399,11 @@
     },
     {
       "path": "standalone/bd2-infinite-gacha/desktop/packages.lock.json",
-      "sha256": "b2ecde9bd648744336ed12a7826d22373bc52129c25d9209b4eabc70ed316c84",
+      "sha256": "0aad005f3c5694f5af6d00fb7dd23db74c2faf08c3c8f0e3ee89bf6436bd383b",
       "reasons": [
         "build input"
       ],
-      "bytes": 2651
+      "bytes": 2581
     },
     {
       "path": "standalone/bd2-infinite-gacha/desktop/Ui.cs",
@@ -2783,11 +2783,11 @@
     },
     {
       "path": "standalone/bd2-rhythm/desktop/packages.lock.json",
-      "sha256": "b97f7a937a70b20deab6255478ec11399a193f7a82e7217784df12a09f4e01c0",
+      "sha256": "addba215b5a66dcee996265ff333567bdba1a639285f86f0492c3f0cd1b120c9",
       "reasons": [
         "build input"
       ],
-      "bytes": 2630
+      "bytes": 2560
     },
     {
       "path": "standalone/bd2-rhythm/desktop/RhythmWindow.xaml",
@@ -3287,11 +3287,11 @@
     },
     {
       "path": "standalone/bd2-secret-vision/desktop/packages.lock.json",
-      "sha256": "a808f0338413c59d2d8c4026179366585afcbad1bd1524f617f80642b3013426",
+      "sha256": "16da5fa9dce4e7024b8d629dab89c7d83583752f0290c1c10466c9250e27bbb8",
       "reasons": [
         "build input"
       ],
-      "bytes": 2648
+      "bytes": 2578
     },
     {
       "path": "standalone/bd2-secret-vision/Directory.Build.props",
@@ -3703,11 +3703,11 @@
     },
     {
       "path": "standalone/bd2-sichuan/desktop/packages.lock.json",
-      "sha256": "970ac9fab32aa040cc28c893b93124019b8d8c5783a43c25277ab29a0e04da04",
+      "sha256": "11282ecd50eeb126198265fd1a50a0aebcc59714cdc3956deeb21eda2ea34d4f",
       "reasons": [
         "build input"
       ],
-      "bytes": 2633
+      "bytes": 2563
     },
     {
       "path": "standalone/bd2-sichuan/desktop/SichuanWindow.xaml",
@@ -4223,11 +4223,11 @@
     },
     {
       "path": "standalone/bd2-territory/desktop/packages.lock.json",
-      "sha256": "7b019f2003d37bf2406962ab9409b0f48cab62de560de949b5f1f341fa24b56b",
+      "sha256": "d34ecdfaf9976c84faeddccf0fa76671bdedfae66e3bc13e110a574bcf5c26f2",
       "reasons": [
         "build input"
       ],
-      "bytes": 2639
+      "bytes": 2569
     },
     {
       "path": "standalone/bd2-territory/desktop/TerritoryWindow.Smoke.cs",
@@ -4823,139 +4823,139 @@
     },
     {
       "path": "src/Accounts/AssemblyInfo.cs",
-      "sha256": "610fc0ce5d9a6f7de568f59595b5eacfa1571320b8b6700aa1e9710a594f1e6b",
+      "sha256": "a509637296cf4443beaeafb8a0f1dd2dcaf45cf1ca60bdfde860fb39d894367e",
       "reasons": [
         "build input"
       ],
-      "bytes": 327
+      "bytes": 143
     },
     {
-      "path": "src/Accounts/BD2AccountSessionManager.Core.csproj",
-      "sha256": "31f0ded015d0e3258fb9b1f67219e67039ba3842773a732787c9384af8b2ab11",
+      "path": "src/Accounts/Dustweave.Accounts.csproj",
+      "sha256": "74eca3f6c4158b577b2007c08404522902cea16bcb935757b45c1ff89a273646",
       "reasons": [
         "build input"
       ],
-      "bytes": 386
+      "bytes": 369
     },
     {
       "path": "src/Accounts/DesktopGameLaunch.cs",
-      "sha256": "a23801be99a0abbb17a45b40932234439a8e7a449c28b94d9ca10fd7f6a7045b",
+      "sha256": "36df2bb02dce52c5648fb5baceb1526724afe3b462c5b33dcf47830ff7c74014",
       "reasons": [
         "build input"
       ],
-      "bytes": 12977
+      "bytes": 12982
     },
     {
       "path": "src/Accounts/DirectPcChannel.cs",
-      "sha256": "07325a904de80821af1b7a61b841fb8e3b07741f723dda2df6fd904630e21c95",
+      "sha256": "1722d2564a2688f666b8e3538c0d81c45160f4979c8019d63acd1f28704ddfbe",
       "reasons": [
         "build input"
       ],
-      "bytes": 3826
+      "bytes": 3820
     },
     {
       "path": "src/Accounts/DpapiProtector.cs",
-      "sha256": "5e01022dfcf79a50676c2039f9531b11f823a07d706b6a293ae26ae991402e52",
+      "sha256": "6a00494bf8f3655f7cd1ec275949b71b52d2c5f7fdcba0e1e8053aa72e9f03fa",
       "reasons": [
         "build input"
       ],
-      "bytes": 4081
+      "bytes": 4212
     },
     {
       "path": "src/Accounts/GameLauncher.cs",
-      "sha256": "469e366ba61e3cb7c264cdc7e577de40de8ea03c7dbab8cf9200a3781f9bf889",
+      "sha256": "31957ef922bd276ce4001549f716cec8d39a5cac4a3bb143c58701b226314007",
       "reasons": [
         "build input"
       ],
-      "bytes": 1795
+      "bytes": 1789
     },
     {
       "path": "src/Accounts/SessionConstants.cs",
-      "sha256": "9f9644e5b93111a9e68febff832b408a7ca5d1bc90db99a8a5caefe07be46674",
+      "sha256": "4064eeb63eb0855756203ed1a4e78a0f7982c4b59eb947ca97a2b1281bba2825",
       "reasons": [
         "build input"
       ],
-      "bytes": 1498
+      "bytes": 1526
     },
     {
       "path": "src/Accounts/SessionIdentity.cs",
-      "sha256": "d0891f2dcd38439904144b3a491b7f5d6d57e38bb3d86ac7d68cd9edc9438e67",
+      "sha256": "f70da3d2b51c008cc7d40d7a53f96d7d79ef82f2050710e791df101bdc46aef1",
       "reasons": [
         "build input"
       ],
-      "bytes": 2027
+      "bytes": 2091
     },
     {
       "path": "src/Accounts/SessionManagerException.cs",
-      "sha256": "a92c519a663f6a1b15f3836e9e3bb60914126b347d1dbd826840831ec3b27085",
+      "sha256": "5339e3edb3c8f7b7e1b795ba5f3d00c80562f996508d99cedf80a5afc1bec88d",
       "reasons": [
         "build input"
       ],
-      "bytes": 188
+      "bytes": 191
     },
     {
       "path": "src/Accounts/SessionModel.cs",
-      "sha256": "e2097df5154e29db1b3c8b0e3d4429b5b542231c6ed29a4ae0fee0c6c6c22144",
+      "sha256": "0dcc53d57b90a47bbe2dc863106e494de80052efd519b959a384665d2c2bee72",
       "reasons": [
         "build input"
       ],
-      "bytes": 1716
+      "bytes": 1778
     },
     {
       "path": "src/Accounts/SessionRegistry.cs",
-      "sha256": "021d62dd4659698c8c26d18351328e0971161279d4d5eed3d3b96b7c16416511",
+      "sha256": "9c20c3ed9e800409d8d91940e36bf260c234c0ddd70abb19756ae528354c5ff7",
       "reasons": [
         "build input"
       ],
-      "bytes": 14593
+      "bytes": 14985
     },
     {
       "path": "src/Accounts/SessionService.cs",
-      "sha256": "0cd637b62547b02444fc92f1a2f85a493cb450d567e5adc15219a61fa0c6268d",
+      "sha256": "1f3227560d3b1e2c410ef937cd092e66f9d730576930e397d4458f9e3a7dc845",
       "reasons": [
         "build input"
       ],
-      "bytes": 12697
+      "bytes": 13031
     },
     {
       "path": "src/Accounts/SessionSwitcher.cs",
-      "sha256": "650b299020db82c477d408cdaa1f9d6941918d180306b18e516f3665e404044c",
+      "sha256": "585feb9caacfbf6ff556dc2f18fe52e56b001217c099caed40e3b977fe4d455a",
       "reasons": [
         "build input"
       ],
-      "bytes": 4908
+      "bytes": 5033
     },
     {
       "path": "src/Accounts/SessionVault.cs",
-      "sha256": "8740551ede18be9c53c1d278d0c6704a743e44bfff939b8ca0ceb9ca827a030b",
+      "sha256": "60525d583e874e0244db5814fc1496b48bc07e1023f1e941b0ffa7a0aa65f7b1",
       "reasons": [
         "build input"
       ],
-      "bytes": 16038
+      "bytes": 16508
     },
     {
-      "path": "tools/CompatibilityCli/BD2Daily.Compatibility.Cli.csproj",
-      "sha256": "147222338d1bb154c9e2d5da8d2286547ddb9a563a4e1ea0c15f909b8dce243e",
+      "path": "tools/CompatibilityCli/Dustweave.Compatibility.Cli.csproj",
+      "sha256": "d59ff49841e802a2f604dc1dfe3f137f7be793cca58e16f819f77d35b959bbe8",
       "reasons": [
         "build input"
       ],
-      "bytes": 324
+      "bytes": 326
     },
     {
       "path": "tools/CompatibilityCli/BootstrapChecks.cs",
-      "sha256": "fdbc6c15a95545932b209c532caf20bccd8fdbaa2f0fe82e18e199833c5f8ed4",
+      "sha256": "ce830d46b9b583c7f5929b8644c70461b04f2e22e481a0622829431e1d73f4e1",
       "reasons": [
         "build input"
       ],
-      "bytes": 7540
+      "bytes": 7626
     },
     {
       "path": "tools/CompatibilityCli/GuildBindingProbe.cs",
-      "sha256": "b3e8083618c999e46e9390d2b2f42e03b48ddfe22bb7b5ee604e713035992050",
+      "sha256": "f47f3a43465acd06b02db0cb4a2cf8a7456610f21b9a41c522f69af09f5111fb",
       "reasons": [
         "build input"
       ],
-      "bytes": 3198
+      "bytes": 3199
     },
     {
       "path": "tools/CompatibilityCli/MonoBootstrapHost.cs",
@@ -4967,22 +4967,22 @@
     },
     {
       "path": "tools/CompatibilityCli/packages.lock.json",
-      "sha256": "6bf2573fbb6d3d099798787e2ed0300992f5f0a58c5dbfeb08b107ce3d8fd7d0",
+      "sha256": "323d72261ed77662a956e7eb41dc54a23e509600858b3d26b7cf175fa0e66dc0",
       "reasons": [
         "build input"
       ],
-      "bytes": 2218
+      "bytes": 2161
     },
     {
       "path": "tools/CompatibilityCli/Program.cs",
-      "sha256": "0cafe785d2174586636dfedb6a566bd49217e9b14c459110fded29b0c976b9e7",
+      "sha256": "4ebecec4b31d2d6ea4793b8b16aeba7b0c9e3d9d2a8e89afa740718c36cbb957",
       "reasons": [
         "build input"
       ],
-      "bytes": 3993
+      "bytes": 3994
     },
     {
-      "path": "src/Compatibility/BD2Daily.Compatibility.csproj",
+      "path": "src/Compatibility/Dustweave.Compatibility.csproj",
       "sha256": "5ddb226eb85baf08d24b443f7af198a851193aebdaecf805c7fa1e795f0f7251",
       "reasons": [
         "build input"
@@ -4991,11 +4991,11 @@
     },
     {
       "path": "src/Compatibility/BindingResolver.cs",
-      "sha256": "d5c07c4d39a828f2e4420ffb5d9112a24f543d9fd4039a1f1cec19fccd4fd929",
+      "sha256": "0effb3262548d4a8cb94083a28d6e25888c8044af9bc877a8b48f435af7fd31c",
       "reasons": [
         "build input"
       ],
-      "bytes": 3671
+      "bytes": 3723
     },
     {
       "path": "src/Compatibility/contract.json",
@@ -5007,11 +5007,11 @@
     },
     {
       "path": "src/Compatibility/DailyHookCompiler.cs",
-      "sha256": "a24be9fb0d44c38329a36ae1c9b4f941c07e083cfe4372d286ea715eb1039032",
+      "sha256": "c480f92af2b646ade49e9031425ca5896add81ccff5ad4d6a12772ac0edc35f7",
       "reasons": [
         "build input"
       ],
-      "bytes": 6214
+      "bytes": 6215
     },
     {
       "path": "src/Compatibility/guild-contract.json",
@@ -5023,27 +5023,27 @@
     },
     {
       "path": "src/Compatibility/GuildHookContract.cs",
-      "sha256": "eb5f153d0ce1f475621c9fe9a5f38eee7c676d8d5ef1bd2c0f11ad891e2e546e",
+      "sha256": "09256299599712c89252751b3a26d3dc7a4c6126cb6136c4ddf6093bbff7d8d5",
       "reasons": [
         "build input"
       ],
-      "bytes": 3586
+      "bytes": 3587
     },
     {
       "path": "src/Compatibility/MetadataIndex.cs",
-      "sha256": "279245dac1e788b56b556a4fa82f86d7532ded53befd19ca905cee4fd9dabd0a",
+      "sha256": "8eb157a601bc5511f2516a63c34a7ef4fd5af8c493de062a8f1872c46be24ad8",
       "reasons": [
         "build input"
       ],
-      "bytes": 5966
+      "bytes": 6059
     },
     {
       "path": "src/Compatibility/packages.lock.json",
-      "sha256": "0af9d216e14fa427f2f8d468a5ff6f27b960bb9f33a92cde5348cb52a21a7b3c",
+      "sha256": "916311fa59822720f456f827a7236f54e67a516beed2411d6e7eb4b483d8a123",
       "reasons": [
         "build input"
       ],
-      "bytes": 2257
+      "bytes": 2316
     },
     {
       "path": "src/Compatibility/startup-contract.json",
@@ -5055,859 +5055,859 @@
     },
     {
       "path": "src/Compatibility/StartupHookContract.cs",
-      "sha256": "6ae354039db48957a6b82809b8de22a4efb7e9511fc84afa5dcf0b90488f6f1a",
+      "sha256": "123ee61ca40146c4ebab697f3b38264b571799ca090fc45000460d47d244849e",
       "reasons": [
         "build input"
       ],
-      "bytes": 2763
+      "bytes": 2764
     },
     {
       "path": "src/Core/AccountSessions.cs",
-      "sha256": "9a157905fb0a8f117589862cc21feeb0b064a88b56f2e4b13ea9602647337a9f",
+      "sha256": "8939da943bb220a262979d4a6d6fc970494ce6699a8a6d3b6836726c8bc2b824",
       "reasons": [
         "build input"
       ],
-      "bytes": 5073
+      "bytes": 5185
     },
     {
       "path": "src/Core/AssemblyInfo.cs",
-      "sha256": "1d30455f46dd47bff16b6f082b87264bac15067b92e7f18c99659ca7d40eb853",
+      "sha256": "8939ddb558e6d10988dc8770f87befd24cc7d6dc1bd99d2078b277cd1fcf76a7",
       "reasons": [
         "build input"
       ],
-      "bytes": 89
+      "bytes": 91
     },
     {
-      "path": "src/Core/BD2Daily.Core.csproj",
-      "sha256": "268fcf4218125f708b2d63f42a5a9a0c0da54c00353fd96a3cc7c457c2871f86",
+      "path": "src/Core/Dustweave.Core.csproj",
+      "sha256": "4d62cf6372f9b7599f1ff3e945a5fd3a6f98aed85b1f5696430c27f443b87cde",
       "reasons": [
         "build input"
       ],
-      "bytes": 1750
+      "bytes": 1804
     },
     {
       "path": "src/Core/CurrentGameObservation.cs",
-      "sha256": "26863de9ef046fbf0cfe318a575a2d3fdaefe1a851a2dfd9ef1f1225374a2961",
+      "sha256": "ec7ebc88bb320823aa088950e94e1ebbfa910dc886a3860a296af53a81a75b67",
       "reasons": [
         "build input"
       ],
-      "bytes": 2127
+      "bytes": 2164
     },
     {
       "path": "src/Core/DailyAccountIdentity.cs",
-      "sha256": "5e80e5d3abdf89845cf00e7051a2d29e158422696605fc33ad9792a4564f13a9",
+      "sha256": "68ee544a5e280a37ba11ac570e88f039e2ecd28e1f388067071417b5a92ad97c",
       "reasons": [
         "build input"
       ],
-      "bytes": 2732
+      "bytes": 2773
     },
     {
       "path": "src/Core/DailyAccountOrder.cs",
-      "sha256": "2ecd3abe46e2e890d6e246f194a52157ccfb3acc19e74d082800ce52433f1fe0",
+      "sha256": "91588213dba56761c1c4aed26d0b21f603c38c1c3b61244ea23551cc49b7eb77",
       "reasons": [
         "build input"
       ],
-      "bytes": 976
+      "bytes": 993
     },
     {
       "path": "src/Core/DailyActivityLease.cs",
-      "sha256": "2fa62b53db05c5128b122b8334ce6d0bf4b756f687d657120b3eb941dd289865",
+      "sha256": "9e9100729d8264cb32947ac248d4245ee68f9d59b2283aad92adc4de992d55d5",
       "reasons": [
         "build input"
       ],
-      "bytes": 2347
+      "bytes": 2395
     },
     {
       "path": "src/Core/DailyPlugin.cs",
-      "sha256": "cabee8fb87c2b50a0a2484061ee02976dbdad04c51f2ae1ff81cb5de9578b1e0",
+      "sha256": "496eaea0c5a11096045f76081b2638a50483df8e52a961e6af1692cccf92a772",
       "reasons": [
         "build input"
       ],
-      "bytes": 5517
+      "bytes": 5593
     },
     {
       "path": "src/Core/DailyCollectionNavigator.cs",
-      "sha256": "b79ff5e6774c0457bf2f54f630723a5b8043163498db8cec8b98dd12088570dc",
+      "sha256": "4994b92c2088281d806551873bcb72529e3b0c6e5c43b583254fee8d9cd6905f",
       "reasons": [
         "build input"
       ],
-      "bytes": 13569
+      "bytes": 13572
     },
     {
       "path": "src/Core/DailyCollectionProgress.cs",
-      "sha256": "32838f90c000a44d0ff8601704a60de30a8297b45e685493e1b5905259fa511d",
+      "sha256": "3ced66d963bfa7eed598a56ec8a723e853373b91756eb606b0f37d9d7413615b",
       "reasons": [
         "build input"
       ],
-      "bytes": 9279
+      "bytes": 9415
     },
     {
       "path": "src/Core/DailyCollectionReadiness.cs",
-      "sha256": "abfab699a8eb3b954eca98aaa3d667c0e3f92085dfb4142b322422a52602d898",
+      "sha256": "e93d1d3ef24929cfbe1ff27bf3b40d0e78b610fdd4897263f696e8bbcb3b650b",
       "reasons": [
         "build input"
       ],
-      "bytes": 6760
+      "bytes": 6875
     },
     {
       "path": "src/Core/DailyCommandDriver.cs",
-      "sha256": "3866472e2f122d46400507b82acd0f79d89d0552916b6ed2ed7b0126c18fd37e",
+      "sha256": "64c428e68c9d368bafa9b5bb6815833f3951b44ef0260f1824cd7ace67f8016d",
       "reasons": [
         "build input"
       ],
-      "bytes": 24970
+      "bytes": 25424
     },
     {
       "path": "src/Core/DailyCommandMailbox.cs",
-      "sha256": "ded96ffdbc08a415ebc1afa02356844e54365cfb4c9a625e3344ff169fa71553",
+      "sha256": "8c897523a50e9770ddc4301ed34d5343d5b2c1c8d55b9d8ca635a1a6c0dd2ddb",
       "reasons": [
         "build input"
       ],
-      "bytes": 3151
+      "bytes": 3234
     },
     {
       "path": "src/Core/DailyConnection.cs",
-      "sha256": "d52e5bbe194d5571fa63e07a83f126cd6d411ee91e24455768966b5553d0078e",
+      "sha256": "5d630bcfd58716d1edb1040d3a8fae6dda67780e3325146eab077d45c2dbd7a3",
       "reasons": [
         "build input"
       ],
-      "bytes": 9141
+      "bytes": 9335
     },
     {
       "path": "src/Core/DailyConnectionAccess.cs",
-      "sha256": "4d84fd10cabe8781d01dff68e4f39d44bd635dc95b5ea03084be7e673c84d137",
+      "sha256": "bbad8451b4d9d97a2896702014283604b087fcd816e9115cc8089163d219ca9d",
       "reasons": [
         "build input"
       ],
-      "bytes": 13591
+      "bytes": 13742
     },
     {
       "path": "src/Core/DailyCoordinator.cs",
-      "sha256": "002f3995ea38d6c42d73567375452eaef6c4014d6db15117c787250a597d4774",
+      "sha256": "84cb89f82289f6608b0c65cbbe3d7af7ae79d8ca1fc5226c5aef40961e067bf3",
       "reasons": [
         "build input"
       ],
-      "bytes": 16356
+      "bytes": 16627
     },
     {
       "path": "src/Core/DailyDesktopLaunch.cs",
-      "sha256": "52f21ec8c6848b164cf483549e76d59ffdbf5606775d9dd61601a52ca42f3178",
+      "sha256": "eafeb3e1b8a454fbf97c6df785261627f290a44d67b8a713d30523d306715400",
       "reasons": [
         "build input"
       ],
-      "bytes": 1667
+      "bytes": 1634
     },
     {
       "path": "src/Core/DailyDiagnosticTrail.cs",
-      "sha256": "234cf7d195b6ced1fc9e215a65c405c363e0360bdb29cc8cec2f69ef0f9229d5",
+      "sha256": "cd05034687524fb50efbf400b313785dd2a4183f4767e2d7f08df34aa1064146",
       "reasons": [
         "build input"
       ],
-      "bytes": 4385
+      "bytes": 4464
     },
     {
       "path": "src/Core/DailyDispatch.cs",
-      "sha256": "1df60c47f8d520a504782bc740e58b8bc1a51cf965565b5566ba896bca54d126",
+      "sha256": "8af0620c20eae0231cec2d15d5d670d0418934dfbda14cf346d1e5825b398041",
       "reasons": [
         "build input"
       ],
-      "bytes": 23163
+      "bytes": 23497
     },
     {
       "path": "src/Core/DailyEquipment.cs",
-      "sha256": "fbe48848fa026e7e93677e9ce8785d4c8a7a9692a0a6514461be85c1e49c2fb5",
+      "sha256": "40e398fe084211907322005714b0defd9a21e6909f1da7336b5acaa18a9327b8",
       "reasons": [
         "build input"
       ],
-      "bytes": 27767
+      "bytes": 27769
     },
     {
       "path": "src/Core/DailyEventRewards.cs",
-      "sha256": "f72e778c51e3f3204579d0918407c9ea0fb3be6dd616f5d6817f9e1c41464a6b",
+      "sha256": "961d2b88bcc48662c7f339f46196e3d90f4cadaa4fa824037b611b78fbec95cd",
       "reasons": [
         "build input"
       ],
-      "bytes": 27525
+      "bytes": 27527
     },
     {
       "path": "src/Core/DailyEventStageData.cs",
-      "sha256": "48b327feb05abe0056bff7149f75f6689cfbfb484ed27d5326cd12135c46d2fc",
+      "sha256": "06630387bf29b5cfe14de1306bf3c7a7a5b8407016b899e3e60940c2ea32ef75",
       "reasons": [
         "build input"
       ],
-      "bytes": 1983
+      "bytes": 2023
     },
     {
       "path": "src/Core/DailyEventSweep.cs",
-      "sha256": "146eda9b05b8d950b93700d8e7259d4639091fefb59332c266c70212cbc0cfec",
+      "sha256": "ddad0ea8eb652f6092adc422622bf4af68cb719e70feb77e6af37ddb37da69d8",
       "reasons": [
         "build input"
       ],
-      "bytes": 13750
+      "bytes": 13999
     },
     {
       "path": "src/Core/DailyEvidence.cs",
-      "sha256": "30ed266ee93a078ff8e2a0d2b4f53350d484d1956edeb6fb3c892a2d0bcc722e",
+      "sha256": "b8865af99d6b7f3ed37c3d8795358ce19fb19da866698cb3bec01811da789059",
       "reasons": [
         "build input"
       ],
-      "bytes": 12384
+      "bytes": 12607
     },
     {
       "path": "src/Core/DailyEvidenceReadiness.cs",
-      "sha256": "9591bebab580b2a5f686442cda3a706e4a6584127431762abc77cff4f7827bab",
+      "sha256": "c463b41d865491755f05f752a21910d2b208ac426c5a42a7d38445748627f96b",
       "reasons": [
         "build input"
       ],
-      "bytes": 2228
+      "bytes": 2267
     },
     {
       "path": "src/Core/DailyFieldRewards.cs",
-      "sha256": "4b691bd3dd04e2ea12ad7a2351c463137bd3d8dfc1f3933520df70425f6506f9",
+      "sha256": "eaef3a6c5fe0f695abc9a51bd6ec3ae7da9267df5544443c850399e7c65584c3",
       "reasons": [
         "build input"
       ],
-      "bytes": 14265
+      "bytes": 14471
     },
     {
       "path": "src/Core/DailyFieldRoute.cs",
-      "sha256": "284417fd475ba627aef344f299c108294b684dcffeae54ede144d2dca8353e2e",
+      "sha256": "71a9e69eda6c4fd928a1d152bc191dee3c4673b134becf01360a213281c86475",
       "reasons": [
         "build input"
       ],
-      "bytes": 22015
+      "bytes": 22392
     },
     {
       "path": "src/Core/DailyFieldTalents.cs",
-      "sha256": "108e1605f5ff0735c7f1e5556d7af299f00ee5733f52f1e0dcb26fa28e52cb75",
+      "sha256": "669e5b26bacd9dbbd2295654a87b7f9ee8d9cb3abd50857f37e726ffe86b2a60",
       "reasons": [
         "build input"
       ],
-      "bytes": 22799
+      "bytes": 23148
     },
     {
       "path": "src/Core/DailyFieldTravel.cs",
-      "sha256": "121dc16de776f6485c48f4e644cc69cf0d362d155e7a2b0839711427c6c66c4e",
+      "sha256": "9b3e78e3944766585230de4052700f78a41c3159a23bdc1181c7d8a33f3bd66f",
       "reasons": [
         "build input"
       ],
-      "bytes": 21276
+      "bytes": 21278
     },
     {
       "path": "src/Core/DailyFreeDrawData.cs",
-      "sha256": "a6a8cc19451e793e883c753d7b152edc85a804d1a7f435a3add7c58d688f3651",
+      "sha256": "52f189832b111efff1d8399bbef5c3ab32c2648110b17e05093ce8e5dd900789",
       "reasons": [
         "build input"
       ],
-      "bytes": 2778
+      "bytes": 2822
     },
     {
       "path": "src/Core/DailyFreeDrawProof.cs",
-      "sha256": "b5ea66c305d4783ab78d1b720a321c3036a989a7c24a2e82d152f5ad84fbb30f",
+      "sha256": "a529ce10d4cf18f40e30e6308df85d4d4d45debba0c28b9e52dc5db12d4123e8",
       "reasons": [
         "build input"
       ],
-      "bytes": 8064
+      "bytes": 8219
     },
     {
       "path": "src/Core/DailyFreeDrawStage.cs",
-      "sha256": "99eef216dc9aeec6bf47ce0a3270bf9d04e5777659c84d539ce387a37aff53e0",
+      "sha256": "121e01a17c116936692e9aae17e2ae4d7b73004d5acd79929770a51e4caf0588",
       "reasons": [
         "build input"
       ],
-      "bytes": 14723
+      "bytes": 14988
     },
     {
       "path": "src/Core/DailyFriendshipProof.cs",
-      "sha256": "33167b096f6f47db6cdb53b5aa9e9fe6f8fee86707223a7751c4a47c94fc43f0",
+      "sha256": "0511cdca019589dd55a29bfef7d2b4db91197807fdaa5a74f6543169faced1da",
       "reasons": [
         "build input"
       ],
-      "bytes": 5308
+      "bytes": 5388
     },
     {
       "path": "src/Core/DailyFriendshipStage.cs",
-      "sha256": "57512c74913f8892ee61cba60127a27b999caaf554eeab012f524a9570672f35",
+      "sha256": "7f08808404f32b1eb13e33ed99a3d991c061a769b302088e78e14f486e90f68a",
       "reasons": [
         "build input"
       ],
-      "bytes": 11687
+      "bytes": 11886
     },
     {
       "path": "src/Core/DailyGuildStage.cs",
-      "sha256": "4587c8ca7dff0a030c190b3d212a1944333aa0e8ec2036fb64a5b346e80017ff",
+      "sha256": "e8f7958d2816854b0392a98ce3b3c98a3a02164fb490572cb25a97ab1f1edfad",
       "reasons": [
         "build input"
       ],
-      "bytes": 17882
+      "bytes": 18195
     },
     {
       "path": "src/Core/DailyHelperLifetime.cs",
-      "sha256": "2adf081a5949204b7576903b5d2e1336e56e55a01eab35a9efa824d19a563abd",
+      "sha256": "bde9c885bb6266f3990382a0a6b6a858f1b8a175e81675c8b73a717965cd735e",
       "reasons": [
         "build input"
       ],
-      "bytes": 1454
+      "bytes": 1492
     },
     {
       "path": "src/Core/DailyHomeNavigation.cs",
-      "sha256": "ab998e4ac7a3305c4f42b71785d2418ad8fd8933d753c31bff6a745f10193cd5",
+      "sha256": "abd4bf5278043d47d9229b816427507a255ecb9bf37da1ee10043dc84e5d095d",
       "reasons": [
         "build input"
       ],
-      "bytes": 13597
+      "bytes": 13600
     },
     {
       "path": "src/Core/DailyHomeRecovery.cs",
-      "sha256": "0688e793d35319cf3b6eb8807c0bc6115f079f3794d9fb3ebc2be3c9dc064b35",
+      "sha256": "634d3e07bdf80992fccb15c6bc01967992ba750c5aaee70defbb1eb62887e99d",
       "reasons": [
         "build input"
       ],
-      "bytes": 10494
+      "bytes": 10683
     },
     {
       "path": "src/Core/DailyHunting.cs",
-      "sha256": "1825b9425bc365bec8c9edcbafd739d828b7a86210eeac1905f1c0ff2c2e9ba6",
+      "sha256": "62287f0b5f10b1dfddde967f790275fef0091375b64c7fa005c6b2b0ccc54135",
       "reasons": [
         "build input"
       ],
-      "bytes": 13853
+      "bytes": 14057
     },
     {
       "path": "src/Core/DailyLinearOptimizer.cs",
-      "sha256": "16372519b1434a042a21118e1e4a71253da47023eeb6c0e36a728580fb7536e2",
+      "sha256": "54af709887066136265cbc74332c513273bf3a9be8775686e42cfdad5690b4a3",
       "reasons": [
         "build input"
       ],
-      "bytes": 10879
+      "bytes": 11050
     },
     {
       "path": "src/Core/DailyLoginFailure.cs",
-      "sha256": "ccd9a832cf0c182e91a77289cd4df18df71f10d2cb346da223afc5d102d8f8a3",
+      "sha256": "b3f19aa115bbbcc00be6e1d0527e258575ea606dafae7da14dde832cec79dc1b",
       "reasons": [
         "build input"
       ],
-      "bytes": 2203
+      "bytes": 2234
     },
     {
       "path": "src/Core/DailyLoginReadiness.cs",
-      "sha256": "29a5beae30c1c5a142b8ad714f2f88d46e25b079b362668dae2f4f5667b80b35",
+      "sha256": "3f99a541a7d04ee8efbd10b2a0f9e82706db868799d1b05eb2aa18c95773bee4",
       "reasons": [
         "build input"
       ],
-      "bytes": 825
+      "bytes": 839
     },
     {
       "path": "src/Core/DailyMailStage.cs",
-      "sha256": "4b34338237271e9ebbac91b41ff45e6a4c8302578fd08fdabf5667e29c5466ea",
+      "sha256": "60df861fa07a734701f56404d23b248d1e4357084dc419d7df118f9b091f8416",
       "reasons": [
         "build input"
       ],
-      "bytes": 17183
+      "bytes": 17485
     },
     {
       "path": "src/Core/DailyManagedBootstrap.cs",
-      "sha256": "b151d5148cdec4ccd04842d55e2f578dc38455c1d1535ce2339698390e21245b",
+      "sha256": "3f1c9f15d5bd477c469eb6786bb8b66671095bf61e51d0cbf6087131aa6254d0",
       "reasons": [
         "build input"
       ],
-      "bytes": 5046
+      "bytes": 5152
     },
     {
       "path": "src/Core/DailyManagedBusiness.cs",
-      "sha256": "53692c63df92b6ed7c9529c2def26ff3bc0174c8cdfe2fa459bdf13bb4a0ca57",
+      "sha256": "14bc06e1ba657a91deb8a4e60eb9c1abe12385987e85f22d46cc85f18dc97fc3",
       "reasons": [
         "build input"
       ],
-      "bytes": 24418
+      "bytes": 24419
     },
     {
       "path": "src/Core/DailyManagedInputs.cs",
-      "sha256": "76135896404caeb499e6c7418d7f0644eb0f9497b8f4a57b3ed42a44dc38ec42",
+      "sha256": "ba29040537085ff70d6d2c1eba8f114fedaa9bf50601585fc03486c07e139977",
       "reasons": [
         "build input"
       ],
-      "bytes": 18299
+      "bytes": 18601
     },
     {
       "path": "src/Core/DailyManagedReconciliation.cs",
-      "sha256": "4efa8d81958292c9f2843f16c627518cb9a6998cca791ddd05091c4ca131fedc",
+      "sha256": "e1384a5482642c27d1d8077eb0d6620cdfc32197cd6fd05ea5198f946149b7a8",
       "reasons": [
         "build input"
       ],
-      "bytes": 7583
+      "bytes": 7720
     },
     {
       "path": "src/Core/DailyManagementEntry.cs",
-      "sha256": "15833c69c168caf0a0f7954935972a73e97aa7a07cf2744f88a3fa5090e07043",
+      "sha256": "f05747cccd787ff389b3d17c4b22a3d92725fe908026888d95ab55f463fe6513",
       "reasons": [
         "build input"
       ],
-      "bytes": 3788
+      "bytes": 3850
     },
     {
       "path": "src/Core/DailyManagementProof.cs",
-      "sha256": "54b4566e60bf2cb3981174bd9238fe02d06a296465c6388b63ac2fdaca6cf284",
+      "sha256": "df57c76caddbd20d48420b2722ec0e949571c347f88c1dec190c3df23fe6487a",
       "reasons": [
         "build input"
       ],
-      "bytes": 8915
+      "bytes": 9059
     },
     {
       "path": "src/Core/DailyManagementStage.cs",
-      "sha256": "fe3254b8876040cf7a445632828a234d107d28e10eb92e387ef58a63b85c8f1b",
+      "sha256": "e47aca1a81740e5da4d18127aad0e471420bcdbc7d060eabfe73cfd517596251",
       "reasons": [
         "build input"
       ],
-      "bytes": 13888
+      "bytes": 13889
     },
     {
       "path": "src/Core/DailyMenuNavigation.cs",
-      "sha256": "c64090514c7d9ec67a29f8474b92c94958c6e2f185a1158cacd44dcf19e3c185",
+      "sha256": "00a86c5c0f52afe2d221d15eaae87bc263c445c76dcbde9120635c0226e1b791",
       "reasons": [
         "build input"
       ],
-      "bytes": 647
+      "bytes": 666
     },
     {
       "path": "src/Core/DailyMiniGames.cs",
-      "sha256": "4589e622242e5b195df60906ae164386b19cb9a8b4ffe5c6f550d8bb5a8413e2",
+      "sha256": "9a59dd8e4f1c97986e8c01222165cd03b87d600b8518f6b1c75730720141620f",
       "reasons": [
         "build input"
       ],
-      "bytes": 12477
+      "bytes": 12666
     },
     {
       "path": "src/Core/DailyMirror.cs",
-      "sha256": "0f6adfa61cef73e2f35c01aa1a95ff5afbb4ab06a636a93f2e86ea1ba216e061",
+      "sha256": "6b77a49807262aa9883abfc0370e8c75741e8cb6628d3f77c5bc749ecf90af25",
       "reasons": [
         "build input"
       ],
-      "bytes": 17289
+      "bytes": 17597
     },
     {
       "path": "src/Core/DailyMissions.cs",
-      "sha256": "92661363d0cb7dc3080a28823c63b4b997a395bf7587e8e2439271ce9b63456b",
+      "sha256": "9d5b3d40b468b3639044ca4da09ee1394c63e70480f4960a729f0751c29b8b52",
       "reasons": [
         "build input"
       ],
-      "bytes": 23500
+      "bytes": 23832
     },
     {
       "path": "src/Core/DailyMonsterHunt.cs",
-      "sha256": "5be0daca0879fdc04365f4b6102a717275f496280a1d865dba6de2fbf8d7a71a",
+      "sha256": "25a77b416cddbf7b78f579a44b1027f5d68866885a940d61d1653aeeb7a38e2d",
       "reasons": [
         "build input"
       ],
-      "bytes": 8395
+      "bytes": 8515
     },
     {
       "path": "src/Core/DailyNavigationPolicy.cs",
-      "sha256": "7f6d904047af142f85947f325df0acf6224b43c4d42161faa699589916d5e36b",
+      "sha256": "8662f164723ffd9956cf6b5686600b5dd8e79c300e6410d5c9acfd15bb1e5bf9",
       "reasons": [
         "build input"
       ],
-      "bytes": 22531
+      "bytes": 22545
     },
     {
       "path": "src/Core/DailyPreferences.cs",
-      "sha256": "5c277c2bf2e51211bc7e7589054f466d01da617eefeb90df41c3fdc48e1d2689",
+      "sha256": "9f107aafb18da76da01ce0520bbf92cf5b6067fe6e3c1c7d8d2fbe27e53dc4dd",
       "reasons": [
         "build input"
       ],
-      "bytes": 15579
+      "bytes": 15955
     },
     {
       "path": "src/Core/DailyQueueEngine.cs",
-      "sha256": "3983c66fb20de9551ba7605a1e832f1fee57771abf5ebfe624458c13dd1a55ea",
+      "sha256": "d4cb3b988a169c23d1ef622ddc082eda3368dd47ffd3c682d30f2c231f4923bc",
       "reasons": [
         "build input"
       ],
-      "bytes": 21263
+      "bytes": 21264
     },
     {
       "path": "src/Core/DailyQueueHistory.cs",
-      "sha256": "d5c4a95d00a7b6dee0ac39ecb3d9bcd2629e06516de234530295babe169f00a9",
+      "sha256": "674387e74f373b779c4600d2878a364b8e8a0e2b7083a1d799d4bb2affa31896",
       "reasons": [
         "build input"
       ],
-      "bytes": 3230
+      "bytes": 3292
     },
     {
       "path": "src/Core/DailyQueuePeriod.cs",
-      "sha256": "93eea2c723ed6954d65f4964ac5ff7dc68fb84874efb733c31a8f8c11527aacb",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 4579
-    },
-    {
-      "path": "src/Core/DailyQueueSession.cs",
-      "sha256": "ce3ffa29656d6ce2bc35cbd5b91a3e7e795f39cc3865b41afdfbc78c8248bb95",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 20247
-    },
-    {
-      "path": "src/Core/DailyQuizRecovery.cs",
-      "sha256": "cfa012c5b407e9b7aa1d2933276620cc15dd02b9af5138a955a8d6a20da01e75",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 21566
-    },
-    {
-      "path": "src/Core/DailyRoomStage.cs",
-      "sha256": "07dde213ecfd12feef7ec96ed0225f964d23faedc963c72594b1523c313ba444",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 11101
-    },
-    {
-      "path": "src/Core/DailyRouteAtlas.cs",
-      "sha256": "5309b9e3149a85520e5b3ecd98a5f1df510c1311ba6fb6dce32b8d1e188c21c9",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 15334
-    },
-    {
-      "path": "src/Core/DailyRuleData.cs",
-      "sha256": "a00e9c50d4173045a1bc9a7391aff0b04569275066bfab179bfeb3dde3c1fd39",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 10187
-    },
-    {
-      "path": "src/Core/DailySquareNavigation.cs",
-      "sha256": "f06221f34ee98f605a8efa6f9ce8a048fd69482027d660b29e360615c8a7c1ce",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1821
-    },
-    {
-      "path": "src/Core/DailyStageCatalog.cs",
-      "sha256": "1f68a5feeacae908bd82dec8e6b62e4fd39dcd3a0e776e2fbc95d0b0a3bbcebd",
+      "sha256": "dfa275700f3bef692874680a36936a3918e7b167197fc59bfcf6e98d5cf35ee7",
       "reasons": [
         "build input"
       ],
       "bytes": 4657
     },
     {
-      "path": "src/Core/DailyStageHost.cs",
-      "sha256": "c412a90e4b2212d0912c05d161cf47df989fa09bf8b0bfedaea738e0380a973e",
+      "path": "src/Core/DailyQueueSession.cs",
+      "sha256": "72e8c65844984d3b50cc0646c8c1f7ba2a6226a308ef29640707e06eaaba16a6",
       "reasons": [
         "build input"
       ],
-      "bytes": 12690
+      "bytes": 20276
+    },
+    {
+      "path": "src/Core/DailyQuizRecovery.cs",
+      "sha256": "fab4409945ef41682481e6c82b52097f034bedcc455a0dba7a715724ed0a63ea",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 21914
+    },
+    {
+      "path": "src/Core/DailyRoomStage.cs",
+      "sha256": "2faff431c75eecadf44c55a01b34b210d6ed5881c37e3a5045783db15bf7f46d",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 11284
+    },
+    {
+      "path": "src/Core/DailyRouteAtlas.cs",
+      "sha256": "36876841036384da3f7ec9e8d0cb65ca68271b726c19a4069eae23c18f85bae3",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 15615
+    },
+    {
+      "path": "src/Core/DailyRuleData.cs",
+      "sha256": "1116bfc7900807bb9d211e57c167700f7b656dc67740612c0f999e8e7b1e92ca",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 10350
+    },
+    {
+      "path": "src/Core/DailySquareNavigation.cs",
+      "sha256": "ed8734f90f6a7521a169fa587457823a4398adbb47ce00c49e812092419d8f86",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1855
+    },
+    {
+      "path": "src/Core/DailyStageCatalog.cs",
+      "sha256": "a7f2e9a6f508bf72bfda8a2599baf331ec12f0ab4a3b4b90cb9fc106de94b309",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 4718
+    },
+    {
+      "path": "src/Core/DailyStageHost.cs",
+      "sha256": "3b9f6665c2878848733c93f21b3ae32b5a998990186faeea5f8cbdd904ee0b8b",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 12897
     },
     {
       "path": "src/Core/DailyStageNavigation.cs",
-      "sha256": "45e484f6c56fb648af9f4949712ac4929e0fc3a76e8b1dc3f9bc2fb2dec00c70",
+      "sha256": "1a4c94e2e6773e978a304675a5cdab365c4ee4285efe24ae6f143585658780a1",
       "reasons": [
         "build input"
       ],
-      "bytes": 15499
+      "bytes": 15817
     },
     {
       "path": "src/Core/DailyStageObservation.cs",
-      "sha256": "ed51d861a61e453e3e6f2235bcf21f2213cd8b7e96565e6044b4e20c02602ee7",
+      "sha256": "59dc1eea29e596b461892ffde4edb1caf2a16551da7199194a8c59b2b5c931e2",
       "reasons": [
         "build input"
       ],
-      "bytes": 10789
+      "bytes": 10967
     },
     {
       "path": "src/Core/DailyStartupRecovery.cs",
-      "sha256": "434e7c62a56b823fa2592f3024e9dca9ac7f53134c8fc17221c4040049fac4c4",
+      "sha256": "d20a81d100cb977a19b70cef07de9c538ecbcd67124b3228cf7b4f3c75605dcc",
       "reasons": [
         "build input"
       ],
-      "bytes": 9110
+      "bytes": 9257
     },
     {
       "path": "src/Core/DailyStealCatalog.cs",
-      "sha256": "0a04fb8210e70b436dfdff2f102d8f892232bb43b9ad0704f6155cf840dbe660",
+      "sha256": "8684d7d6768e4471ced86aabe738092d8670913749f655e92b0786f94f3d7a89",
       "reasons": [
         "build input"
       ],
-      "bytes": 3785
+      "bytes": 3836
     },
     {
       "path": "src/Core/DailyStorage.cs",
-      "sha256": "f8c2e8579b5241556e6f4417e089a1651367c72484213c03bc064ea7b8817765",
+      "sha256": "c81e5dbc15b1c94bcaaf8252ea68b9d2e14706d75a721feeb625c06e877454b0",
       "reasons": [
         "build input"
       ],
-      "bytes": 7099
+      "bytes": 7264
     },
     {
       "path": "src/Core/DailySuite.cs",
-      "sha256": "c8048536ec8be533c2b0aa5edd6659c78eb0b072c3d14f6ce1c5ad3ed9c51dc4",
+      "sha256": "0d536fbfe52a171b0654a62415edd97563f9f69090a7677dc1940fadf6e747cb",
       "reasons": [
         "build input"
       ],
-      "bytes": 4976
+      "bytes": 4979
     },
     {
       "path": "src/Core/DailyToolCatalog.cs",
-      "sha256": "3c4efdcb2a26e7805a57a6e6385e14dc367884f05008c70ad67d508dc1b74ecb",
+      "sha256": "13ed8369ab83cc7c852813b774c08155ccc0feb2929735a8863c105abb4aa5c9",
       "reasons": [
         "build input"
       ],
-      "bytes": 3458
+      "bytes": 3503
     },
     {
       "path": "src/Core/DailyTools.cs",
-      "sha256": "2cb16d8a8b13d7412e09027c274c59c7292813cfe7a2bd5c56152eb4be6e7243",
+      "sha256": "3b71c9dc451b939e9684258c6570b280cc10f600523bcd29e4844f0e4503078e",
       "reasons": [
         "build input"
       ],
-      "bytes": 3237
+      "bytes": 3340
     },
     {
       "path": "src/Core/DailyToolSession.cs",
-      "sha256": "4cde7bc4cc1910edb4346b4e180932f0c7ebecd8e8154e18c4053417b6f9b5d1",
+      "sha256": "1a683f9c6e4b089b33c4428bfdd8bd64cc73a8d74234a5a4a74483f885cb6e0e",
       "reasons": [
         "build input"
       ],
-      "bytes": 6015
+      "bytes": 6127
     },
     {
       "path": "src/Core/DailyTradeCatalog.cs",
-      "sha256": "5817c8d6a61d251d809e232c788753c85c5d03d71bcf8cb33dfe740c0ea80ac6",
+      "sha256": "0263ea82a47f3b4d4f0e5e424f7c0c5b52f0492c91915c5d8d5c65a0c0004afb",
       "reasons": [
         "build input"
       ],
-      "bytes": 10527
+      "bytes": 10724
     },
     {
       "path": "src/Core/DailyTradeClose.cs",
-      "sha256": "e69a59193252573ef230ed6f81b9ac51af8c3a52b240e7bce7d51e61e1f1436d",
+      "sha256": "75680c4932077dfcfd7c58e57e7407256fb8b9a12d93c0fc8beb5ba3cfb1481a",
       "reasons": [
         "build input"
       ],
-      "bytes": 9276
+      "bytes": 9420
     },
     {
       "path": "src/Core/DailyTradeData.cs",
-      "sha256": "abb395f84e9534bb0f007e2abc6a0687d7ea6aa8ad39ce1c1c564128412ff3bc",
+      "sha256": "f541e372ee6912b401fd3d94e3bf53c112bc7ff5016fa00453b0eaed1f962130",
       "reasons": [
         "build input"
       ],
-      "bytes": 12120
+      "bytes": 12297
     },
     {
       "path": "src/Core/DailyTradeExecution.cs",
-      "sha256": "74c25347fac0753c8ccf6b240958410d4a428d9f0fb583fb23197e9d4d5fa269",
+      "sha256": "299de0c6d0933dcb88b664b814b141b66b348cc4285f63cf0eb70c0d0a957119",
       "reasons": [
         "build input"
       ],
-      "bytes": 25161
+      "bytes": 25178
     },
     {
       "path": "src/Core/DailyTradeJournal.cs",
-      "sha256": "6d744322f638e87b2b42cff36d42945204c987de55499aabeafa8833d3d9eb55",
+      "sha256": "bb2f813dfca6bc1d3f1ed44c225cd539eb7070977b0b57ae135957378ef208b9",
       "reasons": [
         "build input"
       ],
-      "bytes": 1531
+      "bytes": 1560
     },
     {
       "path": "src/Core/DailyTradeOptimizer.cs",
-      "sha256": "9ada443b3b20404da59893075467df5a3984ef2b459168f2bc2d1e56fae4de4d",
+      "sha256": "d662f883e415948d8a8665ff716bbcb524cccb26114b7081385ee7f23710fd0e",
       "reasons": [
         "build input"
       ],
-      "bytes": 27224
+      "bytes": 27652
     },
     {
       "path": "src/Core/DailyTradePlan.cs",
-      "sha256": "3ca183bec81394114ae22e2cd737ae7c4334c274ded25faa50a78ae5d712d5e0",
+      "sha256": "8df4f58a35ef962b3305d2adcc49bf9dbba9ff4c60ff97cf8c00562795cd3cd6",
       "reasons": [
         "build input"
       ],
-      "bytes": 5239
+      "bytes": 5320
     },
     {
       "path": "src/Core/DailyTradePreview.cs",
-      "sha256": "1bbfba952c7a87e05bf1a93435137708aafdccd0d78e3add651f9d18ccd1463f",
+      "sha256": "503a6b33a5a7b54ac0f21f7d0b7ececeb823401ea9c282b5512cfb235f9b72fd",
       "reasons": [
         "build input"
       ],
-      "bytes": 3953
+      "bytes": 4017
     },
     {
       "path": "src/Core/DailyTradeProof.cs",
-      "sha256": "580a4f0e2b36cc74cdcdbe59f83a31ac0c8bb8a3b47a9c8509d22ec5fa4249e4",
+      "sha256": "9f157e5140722fee1832ccc0e31081d9c24cc45e39fd73bd11705177d110f1b1",
       "reasons": [
         "build input"
       ],
-      "bytes": 10361
+      "bytes": 10521
     },
     {
       "path": "src/Core/DailyTradeQuoteReadiness.cs",
-      "sha256": "47cb9eb0564c3aac72053f6fcddcac7244ab73c53a8af81b43d04aebabc7732e",
+      "sha256": "1f9e06e2d657ad92df013f35f0eb69654af8432e505c833ebba7cacfd82e6793",
       "reasons": [
         "build input"
       ],
-      "bytes": 4816
+      "bytes": 4818
     },
     {
       "path": "src/Core/DailyTradeResume.cs",
-      "sha256": "e45d267445ff6fa12fb9fb35bd88daa377c620585222d8812c648b7b5dc4c3ab",
+      "sha256": "99cd31ade8a0ee5a76888df734a4dac0ed575a36dca2cad22cb68b7b0064e351",
       "reasons": [
         "build input"
       ],
-      "bytes": 21456
+      "bytes": 21770
     },
     {
       "path": "src/Core/DailyTradeSnapshot.cs",
-      "sha256": "4fabbddff21d2df183a843adee6fc860ee965653326b8a5cae458d10f67059d2",
+      "sha256": "6d3470713dcbc4cf51bdf01815c5973f386a58575143c5afcfb98b4367087585",
       "reasons": [
         "build input"
       ],
-      "bytes": 10575
+      "bytes": 10577
     },
     {
       "path": "src/Core/DailyTradeTalent.cs",
-      "sha256": "df1da01c6b6d1d7da17c37388c702fd679ba2cebbf068220e6538b135ecfc71a",
+      "sha256": "1407a26dd3fc6f356e6630b60a25f381cf11fb8205307551a9291b59c3a931ee",
       "reasons": [
         "build input"
       ],
-      "bytes": 3105
+      "bytes": 3157
     },
     {
       "path": "src/Core/DailyTransport.cs",
-      "sha256": "76bcee91634f7b15220f5601da00c5db831e1a3c3c518d42df401c48b04a0093",
+      "sha256": "073cb01d1172224d25b8a2664580da38f66924bade77dfdfcb7c84e86ad5633a",
       "reasons": [
         "build input"
       ],
-      "bytes": 2213
+      "bytes": 2268
     },
     {
       "path": "src/Core/DailyTravel.cs",
-      "sha256": "0e2f22e3ccaedec3f4f83e4e6fe7b7bc186e15c49a8613f3dc112b2a565a8b7d",
+      "sha256": "e65d57c36cb97605b9af27695786d4910ead7dc2eeb0fbdc6890122273f87d27",
       "reasons": [
         "build input"
       ],
-      "bytes": 14500
+      "bytes": 14502
     },
     {
       "path": "src/Core/DailyUserText.cs",
-      "sha256": "edead0a39c212f3d0b6a06a027b7f3afff233aeabf36d3cbfadad26366b4bbae",
+      "sha256": "e9263bd9ef546162d507b20104aa5f8184125ecbe72f763b8f388a4bb35e5cf9",
       "reasons": [
         "build input"
       ],
-      "bytes": 12769
+      "bytes": 12948
     },
     {
       "path": "src/Core/DailyWeeklyActivities.cs",
-      "sha256": "a7a6dac46848c70d3e98667ab79755cf2417798c0b3d81e335a7efb945bb0717",
+      "sha256": "c9a911f905273dd3607f99b3c9a293c5bc7bc53045fe665b4b3775d3b241b841",
       "reasons": [
         "build input"
       ],
-      "bytes": 13907
+      "bytes": 13909
     },
     {
       "path": "src/Core/DailyWeeklyCompletion.cs",
-      "sha256": "df3a9f8501ff9e0a03f662f26acb4eaf18d8e4f3025f77d3246a2e176e4ab1b5",
+      "sha256": "3d493801041f49217c0a52f879921b200961b059fa52a38e8a5c6a7306908315",
       "reasons": [
         "build input"
       ],
-      "bytes": 1391
+      "bytes": 1415
     },
     {
       "path": "src/Core/DailyWeeklyMiniGames.cs",
-      "sha256": "662656932b130a42b9ebcdb84225c4d5a37daa23b52a730c6adf48a71318a1df",
+      "sha256": "639fda4418da16fc36679c025a5aa4e45cf851b0f427d1bdfa00521e65aaa66f",
       "reasons": [
         "build input"
       ],
-      "bytes": 19513
+      "bytes": 19515
     },
     {
       "path": "src/Core/DailyWeeklyMission.cs",
-      "sha256": "f7b86bd78358593d3820606a78a459d222c9e296cd0e66b2c1cf6f72f12292ed",
+      "sha256": "f03f12334d74454430a3f5904ce356d67fd4d37cac980a25f7a47221d8bde635",
       "reasons": [
         "build input"
       ],
-      "bytes": 5002
+      "bytes": 5004
     },
     {
       "path": "src/Core/DailyWeeklyNpc.cs",
-      "sha256": "f4d095cfc50773b4f2ae5f991e8e30080b44c593af59dbd8f3848b3b71faacc2",
+      "sha256": "f019b2e17f3c3fe903aaf98dd6add077754928576cae5f2a20d75dc446dfcb25",
       "reasons": [
         "build input"
       ],
-      "bytes": 20789
+      "bytes": 20805
     },
     {
       "path": "src/Core/DailyWeeklyNpcBoard.cs",
-      "sha256": "e392ec2d79a4f8a895860d030fcdabb19851a2e99eb723a3cbf6fb0a0059d648",
+      "sha256": "fb1f08b59949b917d4c5ec2ae55b19a27c7dfbfbeda3d6fb6fd8862f604db15b",
       "reasons": [
         "build input"
       ],
-      "bytes": 5204
+      "bytes": 5207
     },
     {
       "path": "src/Core/DailyWeeklyNpcQuery.cs",
-      "sha256": "cf8511c8260de505725e5724c99ae926fbf48123e6b102cf83aa06939b038907",
+      "sha256": "0438583b0ac711cd9c5a3aebbe530278a1bd7ad1c785c18a5def0d1aed4bc7a5",
       "reasons": [
         "build input"
       ],
-      "bytes": 4604
+      "bytes": 4678
     },
     {
       "path": "src/Core/DailyWeeklyRoute.cs",
-      "sha256": "6ae4fa99d3c38e3f6af4c31a499ab29d494e4136eacb77878389cf19a57ebaa1",
+      "sha256": "60d8357ef1b480a9ec93613ee60c00b0d711401c8e12b839252fcaa3d3ad57bc",
       "reasons": [
         "build input"
       ],
-      "bytes": 16570
+      "bytes": 16896
     },
     {
       "path": "src/Core/DailyWeeklySteal.cs",
-      "sha256": "546d5844a39451ba5b4dea616e4305edcf54f441f5567b894eb3cce85c2a8204",
+      "sha256": "2c5da7019e2a88d76d3169b656c858c5ff1212e5205f63e9cbe9ebbe0668654f",
       "reasons": [
         "build input"
       ],
-      "bytes": 10348
+      "bytes": 10523
     },
     {
       "path": "src/Core/DailyWorkflow.cs",
-      "sha256": "4fc0c5fe5391cf90391cfb05ce204c4c31a5891732c98d0af9543f3e31b68ba8",
+      "sha256": "64dffa1c6b6144a98302b4e07733856439bb5afd42441b309102dd016f78b37e",
       "reasons": [
         "build input"
       ],
-      "bytes": 19256
+      "bytes": 19601
     },
     {
       "path": "src/Core/DailyWorkflowRegistry.cs",
-      "sha256": "93fe2dcb92edb9d8616aa2930c29a523695f209e9b8582f2d3575a2035fcbf8f",
+      "sha256": "f6d96edff3fbe129b0c9f46d612e0822add3fe4d3be7f68e0611bff87bd259b0",
       "reasons": [
         "build input"
       ],
-      "bytes": 9496
+      "bytes": 9498
     },
     {
       "path": "src/Core/GuildSession.cs",
-      "sha256": "44a2ef82670b0bef0d5a884efca55174e66e08117bc3a777e1ddb6ab60059545",
+      "sha256": "8f250bff6c9b806cda94822c9359e045773606a754a4368364f25d4ba3d62b4b",
       "reasons": [
         "build input"
       ],
-      "bytes": 9593
+      "bytes": 9773
     },
     {
       "path": "src/Core/IDailyExtension.cs",
-      "sha256": "4644e5e8c1bde66419f2b34cc09eafcf01c787f7724fb1a2b8d989fcb3ea94e6",
+      "sha256": "8edc93e0e164003579b498a1e67915dcba857d4563c056071ff2d6f3e44aee26",
       "reasons": [
         "build input"
       ],
-      "bytes": 1480
+      "bytes": 1514
     },
     {
       "path": "src/Core/Localization/Messages.zh-CN.txt",
@@ -5919,187 +5919,187 @@
     },
     {
       "path": "src/Core/packages.lock.json",
-      "sha256": "2938db662dd06e7f2b01d05c2cc6514637063894063f66a77bf4b027315bbb7f",
+      "sha256": "8da53d693048546f0b7b2fbd8d6c7951d60a682cf0f6c204030cb56e5f241529",
       "reasons": [
         "build input"
       ],
-      "bytes": 2236
+      "bytes": 2226
     },
     {
       "path": "src/Core/RefinementChoices.cs",
-      "sha256": "66984f0c7cbf876740e6506786fa4e28c1e869557080fdc3bebb3f94c7139169",
+      "sha256": "044348d7c655770a81179c0689b05a793bac11f769477faa9ebe2a2817dd8fc4",
       "reasons": [
         "build input"
       ],
-      "bytes": 1499
+      "bytes": 1529
     },
     {
       "path": "src/Desktop/app.manifest",
-      "sha256": "0d51b3765f65a22dd4443fe6d6423ce4fcba036d5f5cdbe8ee7ad782edffda53",
+      "sha256": "625c4d5778a71be3f99856fd7b60194b7b8b22c34de5249c02b2cee87105e783",
       "reasons": [
         "build input"
       ],
-      "bytes": 705
+      "bytes": 706
     },
     {
       "path": "src/Desktop/App.xaml",
-      "sha256": "fb4fc0a4aaf39541ca2f18cb07f7b2b9c9c88e59318d4d9825529f780ca4ad6d",
+      "sha256": "5c1db68087e6cc874d27f54ac7ac18b941a2824c328c0efce45bfe16da13ded1",
       "reasons": [
         "build input"
       ],
-      "bytes": 25177
+      "bytes": 25363
     },
     {
       "path": "src/Desktop/App.xaml.cs",
-      "sha256": "46eda799151b960b7706a7cdaa7ce46bd9776cf19173b60cc346da1182a0b151",
+      "sha256": "cda6d2335084953e869c930271824f243d540591c3890a0fbdb89c261613010e",
       "reasons": [
         "build input"
       ],
-      "bytes": 12107
+      "bytes": 12110
     },
     {
-      "path": "src/Desktop/BD2Daily.Desktop.csproj",
-      "sha256": "fb8f32b1488d1ff3175f2a4ce8a2b0fa5bd072ca24dc1ec7cade3652d8e73774",
+      "path": "src/Desktop/Dustweave.Desktop.csproj",
+      "sha256": "954b86e2c932d70aa5ec097a99aba7374854a0ce8923b0ed0d8bf0ce216c994c",
       "reasons": [
         "build input"
       ],
-      "bytes": 3250
+      "bytes": 3350
     },
     {
       "path": "src/Desktop/DailyLanguage.cs",
-      "sha256": "b5a4bc9ab79be83db1a14058eae95b051f484f7f0dcd0162088f82d89428a1d1",
+      "sha256": "0dd933c1b1a5385f8c69a0064afea418a4fa634ede876a5946b5959a5cf50eac",
       "reasons": [
         "build input"
       ],
-      "bytes": 6391
+      "bytes": 6506
     },
     {
       "path": "src/Desktop/DailyLanguage.ToolMessages.cs",
-      "sha256": "80a5d55fc1f4d618ec54fbd0022e6f030e722dc7006fcc3269ca7a06e747a0b0",
+      "sha256": "5c3782213eb80ef45d45abf93e3426560f4c71623d5f9bf103fcae773d3f11d0",
       "reasons": [
         "build input"
       ],
-      "bytes": 1683
+      "bytes": 1709
     },
     {
       "path": "src/Desktop/DailyPreferencesPanel.cs",
-      "sha256": "09325db20e8cd95c10bc10f87e8f38d6c0870816e9b29d0d3a00338087134ef5",
+      "sha256": "eeff9347eebda9c8878f7d46c225f699fecd51d48e31eab05c230c8b5057c663",
       "reasons": [
         "build input"
       ],
-      "bytes": 40890
+      "bytes": 40891
     },
     {
       "path": "src/Desktop/DailyProductVersion.cs",
-      "sha256": "c4e13744742d7c7f2dd484aede74eb77741cd0fb7038bfb458dd006ab42654fd",
+      "sha256": "9944d632daccb1fb7dd9f9c97eab69633133aec94a0e25666afcf35a0c2283bf",
       "reasons": [
         "build input"
       ],
-      "bytes": 377
+      "bytes": 384
     },
     {
       "path": "src/Desktop/DailyRunPanel.cs",
-      "sha256": "1dcd935a9ddd39c38145992595fb474e55aa400d324e0b5b4190182d099f0b3d",
+      "sha256": "96adddad3fad3d7cbbc0011e14480468301c68b4878d1d82f8e7b6d0816dce11",
       "reasons": [
         "build input"
       ],
-      "bytes": 35102
+      "bytes": 35734
     },
     {
       "path": "src/Desktop/DailySuiteComposition.cs",
-      "sha256": "785781d9f2c53a15c45523c5ac0631ee5f30a6e58fce157a83d10ea2b89c6e6d",
+      "sha256": "89d2ce32f282a274a535db858f83d7461e4b5b8153a98cd187ff72fe4454bbea",
       "reasons": [
         "build input"
       ],
-      "bytes": 7769
+      "bytes": 7785
     },
     {
       "path": "src/Desktop/DailyTheme.cs",
-      "sha256": "134b42b47e69d55a8b47d0ec4796f371c18d8703d21399ffea14257b96a07094",
+      "sha256": "250a6a62bc16017dbc140643e93b601dcdf5a06439b408f0f0707926d8b29f23",
       "reasons": [
         "build input"
       ],
-      "bytes": 6194
+      "bytes": 6319
     },
     {
       "path": "src/Desktop/DailyToolPanel.xaml",
-      "sha256": "afafae926073d635d91cf6fd61f606cfb165fdf567a0a9266616407cde3a73b1",
+      "sha256": "6348254989f8b46ca9d0034629824db4bd75cafc894a33fd2bd207a25ec59592",
       "reasons": [
         "build input"
       ],
-      "bytes": 3123
+      "bytes": 3162
     },
     {
       "path": "src/Desktop/DailyToolPanel.xaml.cs",
-      "sha256": "2cf98c7cd7efee92630278b7c19537050c559452699b7080542fc5b9059263be",
+      "sha256": "9932484462c71df4a473b1d7010b91a9febb75436281fca5736c9415f7ce5a35",
       "reasons": [
         "build input"
       ],
-      "bytes": 6485
+      "bytes": 6582
     },
     {
       "path": "src/Desktop/DailyUiText.cs",
-      "sha256": "18c81e426df2f0d89ca9de75ace140239b8c8896d36d6970f9e83b25ed9902f7",
+      "sha256": "1fa67338e6e13283ecb0d1796b3478eec79a27762283e2bac5a660e99407a93b",
       "reasons": [
         "build input"
       ],
-      "bytes": 1302
+      "bytes": 1326
     },
     {
       "path": "src/Desktop/DemoEnvironment.cs",
-      "sha256": "86aad2a06f5876ad95321b1a7357652c273e084a24904411367f6a20b4a0b62c",
+      "sha256": "91fb40659c89d7c3186c895c5f1a5a5823f18208ba6ee496d0421895afc7a1ae",
       "reasons": [
         "build input"
       ],
-      "bytes": 6861
+      "bytes": 6984
     },
     {
       "path": "src/Desktop/HostedToolActivity.cs",
-      "sha256": "e7cb6cc5559aaa52280c18c9e2e0ffcb4b6a71209592a8cdd4cb7f4dad1097b5",
+      "sha256": "852300bf3f632fd7f2f313e609192598062d074604013e7474e729272035c815",
       "reasons": [
         "build input"
       ],
-      "bytes": 5795
+      "bytes": 5894
     },
     {
       "path": "src/Desktop/HostedToolLocale.cs",
-      "sha256": "3be79ffd913c834f931ab1e8d746ee76de40a85966c0aeaa64e946268610290f",
+      "sha256": "829fc3b101fe0736f9658ebc24d3691116b63edfa830bdaf00b753869a28d13f",
       "reasons": [
         "build input"
       ],
-      "bytes": 1245
+      "bytes": 1268
     },
     {
       "path": "src/Desktop/HostedToolLocaleBridge.cs",
-      "sha256": "58c50df125b2a0e51aaae863ee8b994d3bc653cb0c9370ab57f639dfbdb0ea7a",
+      "sha256": "fc58ea49f93a1f5e2c230ff524a2426be901afb58ac0ce230527739839970b94",
       "reasons": [
         "build input"
       ],
-      "bytes": 2975
+      "bytes": 3040
     },
     {
       "path": "src/Desktop/HostedToolLocaleProbe.cs",
-      "sha256": "38fc4dcd4c63037217b7777bd78065fca376741ff643e928dc26b10b0da260d0",
+      "sha256": "ef6396ecaeb1c61c81109cd74e6407d497294294e0cfdd119376e4681df5bf51",
       "reasons": [
         "build input"
       ],
-      "bytes": 8730
+      "bytes": 8862
     },
     {
       "path": "src/Desktop/HostedToolLocaleUiProbe.cs",
-      "sha256": "732374ef00e02c43c6c9137e724b3322288f7b7c5e4745ca1b774ac71749b65e",
+      "sha256": "824241c4c457d8d115380515585f10febbbe3171f84a42d628d6dc6ab0b0265b",
       "reasons": [
         "build input"
       ],
-      "bytes": 6558
+      "bytes": 6661
     },
     {
       "path": "src/Desktop/HostedTraditionalText.cs",
-      "sha256": "a5812c5ec58339945b34df3b4dd4c7b9057239efa93a901112f5713a4fa392db",
+      "sha256": "124e4ad47a563a42cac5a788666480351daa7d3be510e1ea2d5a2da2a24d49e0",
       "reasons": [
         "build input"
       ],
-      "bytes": 1731
+      "bytes": 1760
     },
     {
       "path": "src/Desktop/Localization/runtime.json",
@@ -6119,110 +6119,110 @@
     },
     {
       "path": "src/Desktop/MainWindow.DynamicLocalization.cs",
-      "sha256": "beb599659828701cc68a480a199c2b50802ace73d866810f7682b521a1f972d6",
+      "sha256": "44862f7b0d27970bfcfaeb2c93bc089b37ce73754b173ccad8bbf6793cb648d1",
       "reasons": [
         "build input"
       ],
-      "bytes": 4021
+      "bytes": 4089
     },
     {
       "path": "src/Desktop/MainWindow.Localization.cs",
-      "sha256": "ef907aa9fc5c826c182ae4913a3ac3b0bb25120d426e5f93a754ae470ecc4805",
+      "sha256": "c540191c8908f79c657b1b8e37b0e758dea5b1ab355a5f83ef3c9e170eadf050",
       "reasons": [
         "build input"
       ],
-      "bytes": 10530
+      "bytes": 10697
     },
     {
       "path": "src/Desktop/MainWindow.Presentation.cs",
-      "sha256": "0e460a717a3b665af8c02dcee00b2ea79139121364ff34d31f1ddb846b0dc071",
+      "sha256": "ad5647d805d78995f78e45f49e5cf1360f442d6fc59ab6629d3f862919d72114",
       "reasons": [
         "build input"
       ],
-      "bytes": 31779
+      "bytes": 31901
     },
     {
       "path": "src/Desktop/MainWindow.xaml",
-      "sha256": "8624be0dcc6d7b4268dfd9bcbe888a08606fa06286fe2e614bc656fd1209b77d",
+      "sha256": "287446b44f0d2577cc4e6824642e37afb89ff77a4bcfb9268909d9e846bfae2c",
       "reasons": [
         "build input"
       ],
-      "bytes": 28849
+      "bytes": 28934
     },
     {
       "path": "src/Desktop/MainWindow.xaml.cs",
-      "sha256": "14a299faef42bb1cfa61ad308c3e09ca42c0791d432497153873b4e816255c21",
+      "sha256": "0adfd247e41f327cef323dce5e47f4470182f3d117f0e81610b52d5b6243efcc",
       "reasons": [
         "build input"
       ],
-      "bytes": 62036
+      "bytes": 62037
     },
     {
       "path": "src/Desktop/packages.lock.json",
-      "sha256": "62019789dbea4aaecbefb6b02e4566fcd6053ef7a9145eada24d2a1489ae3623",
+      "sha256": "7dee9710d399ed75a03dc8b1645572e1f881128d6bf8535eeb4ee067cf2ebd4f",
       "reasons": [
         "build input"
       ],
-      "bytes": 8090
+      "bytes": 7822
     },
     {
       "path": "src/Desktop/Program.cs",
-      "sha256": "cfe9b4d32a98661ae626ff68d0a456ec598444329bd14bccc9d420220f1cb431",
+      "sha256": "f226d0eabca221b8fd52920e5d546ba70839a7a446eddaae56a7353904ce013e",
       "reasons": [
         "build input"
       ],
-      "bytes": 6511
+      "bytes": 6662
     },
     {
       "path": "src/Desktop/SuiteHostProbe.cs",
-      "sha256": "e7a89301b337f90bbf03105db19d8d69a0ba1aa7668f044eaa77bb8d8f80b632",
+      "sha256": "1ebf42c5cf8948ffbda1f1531115678d678374fcc6d05f7e7f72163f52493a5f",
       "reasons": [
         "build input"
       ],
-      "bytes": 3146
+      "bytes": 3192
     },
     {
       "path": "src/Desktop/Timeline.xaml",
-      "sha256": "047c5e8bede837e67f4c4a62c3b7b9197959318baa4735238fc08c30a28abe48",
+      "sha256": "7e470fba8cbf523fbb09095763b328ba69112383c5196327303fde52bc0e0d6a",
       "reasons": [
         "build input"
       ],
-      "bytes": 8719
+      "bytes": 8723
     },
     {
       "path": "src/Desktop/ToolApplicationHost.cs",
-      "sha256": "66b983ca866e8a52d06ad96013a5780c76798bac73732290da8d4b22c96c2c98",
+      "sha256": "fef1edaacc0d4b247744ddbaccf9dc269382cc4fdeccb6a4386a9423611cb62b",
       "reasons": [
         "build input"
       ],
-      "bytes": 4128
+      "bytes": 4191
     },
     {
       "path": "src/Desktop/ToolMenuProbe.cs",
-      "sha256": "12f0774a405ef05b54064b08e9c0aff8f5f43179a95ee34ca434eeb15a8c9420",
+      "sha256": "f4c9573f3e680fc489491b390aeec29e453a365cdc6f3fc78b18b8d610fba930",
       "reasons": [
         "build input"
       ],
-      "bytes": 6041
+      "bytes": 6128
     },
     {
       "path": "src/Desktop/TradePlanPanel.cs",
-      "sha256": "849185ec0ff717349e30b19396a5ad1096ca52c53680d8287d9ced54c873d020",
+      "sha256": "a32076790c096bfff08e7c3abed9fe6f5a4fcf7fa2c44698f53d90a22bc41080",
       "reasons": [
         "build input"
       ],
-      "bytes": 20247
+      "bytes": 20584
     },
     {
       "path": "Directory.Build.props",
-      "sha256": "c6490b0bd6e037a6e8b717dab0193fed127e8b72ad6b307d36af343754b08107",
+      "sha256": "bef63c06c34cec683207951e43885f88a00e23a234fd1b26179916e36a0af8fc",
       "reasons": [
         "build input"
       ],
-      "bytes": 566
+      "bytes": 531
     },
     {
-      "path": "src/ToolHost/BD2Daily.Fishing.csproj",
+      "path": "src/ToolHost/Dustweave.ToolHost.csproj",
       "sha256": "b8d704b5952e23b1635b91da8a1e9d9ea7c058fea6266d7b0e45e8c2b9632847",
       "reasons": [
         "build input"
@@ -6231,11 +6231,11 @@
     },
     {
       "path": "src/ToolHost/packages.lock.json",
-      "sha256": "595ce24ebbb9fe25bd36a3fdeb0843a364e6c3051740246aa34cdacf166aa332",
+      "sha256": "fe7555fbf27d4fb8b36aa26f8ef55de471dce1147e2c651dd57edd6dee7e65ed",
       "reasons": [
         "build input"
       ],
-      "bytes": 2739
+      "bytes": 2662
     },
     {
       "path": "src/ToolHost/Program.cs",
@@ -6462,16 +6462,16 @@
       "bytes": 1370
     },
     {
-      "path": "src/Connection/BD2Daily.Live.csproj",
-      "sha256": "25b25df462d5062ad1e6a3c7397ec49f85a14e385928db6f38687a30309fb7aa",
+      "path": "src/Connection/Dustweave.Connection.csproj",
+      "sha256": "bf80b7fd1f06f22fd371cb723fbf6edf13e9b69d9085224f3ed4ca1d6c204a67",
       "reasons": [
         "build input"
       ],
-      "bytes": 3794
+      "bytes": 3862
     },
     {
       "path": "src/Connection/Bridge.cs",
-      "sha256": "6a1ced09700dd9cc2e708e2a42ff0eb7e68cca65e5378f7974710de7e9328b3d",
+      "sha256": "c9672f17894be3faa2c95f0c798616741c285e8de775d7ee4a1268b60190448e",
       "reasons": [
         "build input"
       ],
@@ -6551,7 +6551,7 @@
     },
     {
       "path": "src/Connection/DispatchRecoveryNative.cs",
-      "sha256": "f4d8b8e78ae5ccce90e55ac08468105394ffb40f9c102a5d8093b548d9d58e8a",
+      "sha256": "afb52090a390d8077b539ab51746f9c0e162f2eda34a778f6c3fa66f3ee27b47",
       "reasons": [
         "build input"
       ],
@@ -6607,15 +6607,15 @@
     },
     {
       "path": "src/Connection/LegacyGuardTest.cs",
-      "sha256": "825eaafbd1b8b68c1e6c5f9f71623eb1e5053c3fd15aec50fff8bde376d69cd8",
+      "sha256": "f075bbf782fd1ac45fa5daab50a60055b0a939b4f9ae5501ad7c4613f904d5a4",
       "reasons": [
         "build input"
       ],
-      "bytes": 3741
+      "bytes": 3742
     },
     {
       "path": "src/Connection/LiveContracts.cs",
-      "sha256": "e6e72b28fab2d00ea19f715e7328ec4cb3e59a52d08cfadaef20e5f63d949e3e",
+      "sha256": "2843d9bd513ea3514846d994e4e458f412d787a23d6b4093785e47eef39f95fe",
       "reasons": [
         "build input"
       ],
@@ -6623,11 +6623,11 @@
     },
     {
       "path": "src/Connection/LiveEntry.cs",
-      "sha256": "e8ac2673a6722a52452f8bac05cc216af9ade8ad941b14dd55b277e536e3d0f8",
+      "sha256": "4a1c39f19ecb79a0eebc17f94c567c44a7869076906c0204fa0b1b9086f16b58",
       "reasons": [
         "build input"
       ],
-      "bytes": 12261
+      "bytes": 12270
     },
     {
       "path": "assets/specs/mainline-evidence-spec.json",
@@ -6687,11 +6687,11 @@
     },
     {
       "path": "src/Connection/packages.lock.json",
-      "sha256": "f2b707a0a361aa4cb67d48d32010dfcf4a5cb561ae05683b9e80c4970a2d93fd",
+      "sha256": "883b6990c6ccbd0bb0b9a33e8083bc2e92017018c2ca684e9361e7dc98b5c015",
       "reasons": [
         "build input"
       ],
-      "bytes": 2506
+      "bytes": 2420
     },
     {
       "path": "assets/specs/policy-evidence-spec.json",
@@ -6703,11 +6703,11 @@
     },
     {
       "path": "src/Connection/Program.cs",
-      "sha256": "b8cb0f9ee42c2e5ef542b8bfe15db5589337b2a034dca1736f08b032071b51a9",
+      "sha256": "bd7417b7cba538041cc7e94950015e562eee92e64f40e56c0b49acc0e01c439e",
       "reasons": [
         "build input"
       ],
-      "bytes": 47
+      "bytes": 54
     },
     {
       "path": "src/Connection/RewardNative.cs",
@@ -6783,11 +6783,11 @@
     },
     {
       "path": "src/Connection/TapManifest.cs",
-      "sha256": "a82d1af6445a1a0c38ec86073b027604d3252c705928583a9f9053171f2a6f9e",
+      "sha256": "f725f45a7d4d9f764fd4b6f25f695cf8cfdec6b18eee12d65b925839db58a645",
       "reasons": [
         "build input"
       ],
-      "bytes": 7946
+      "bytes": 7947
     },
     {
       "path": "assets/specs/trade-evidence-spec.json",
@@ -6863,67 +6863,67 @@
     },
     {
       "path": "tests/Dustweave.Tests/Dustweave.Tests.csproj",
-      "sha256": "331d06228fdde8390ab84f91746fc11eebdb937f2e06291819b5d4cfab5b6c14",
+      "sha256": "d145e19622b6f86e9723d20d84634e51b73aee78d8db1f3a140067608ec2a6be",
       "reasons": [
         "build input"
       ],
-      "bytes": 1436
+      "bytes": 1480
     },
     {
       "path": "tests/Dustweave.Tests/packages.lock.json",
-      "sha256": "f2b707a0a361aa4cb67d48d32010dfcf4a5cb561ae05683b9e80c4970a2d93fd",
+      "sha256": "883b6990c6ccbd0bb0b9a33e8083bc2e92017018c2ca684e9361e7dc98b5c015",
       "reasons": [
         "build input"
       ],
-      "bytes": 2506
+      "bytes": 2420
     },
     {
       "path": "tests/Dustweave.Tests/Program.cs",
-      "sha256": "2d6c100a2b8f324b5b633a0b5589a49e3feea85412b3fbc65d81ef527e18d994",
+      "sha256": "8a689ef725d9bc10292b0989d3467de56a7314ae7f366521b8a2b148b8d2d9df",
       "reasons": [
         "build input"
       ],
-      "bytes": 6028
+      "bytes": 6206
     },
     {
       "path": "tests/Dustweave.Tests/README.md",
-      "sha256": "6cb17aa594ca9e61115ce2f81a3bd0fee0cc0caf85922543f86e05e22df205a2",
+      "sha256": "067ef3ae51e623c81225414975a26edbf301abaaebd90a7501035593ab6fbecb",
       "reasons": [
         "build input"
       ],
-      "bytes": 2245
+      "bytes": 2244
     },
     {
-      "path": "tools/RuntimeCheck/BD2Daily.RuntimeCheck.csproj",
-      "sha256": "a0e020a84a606667e4cf0572fd29a7565ff95263b0c7dc80aeed591f3f0f3f3a",
+      "path": "tools/RuntimeCheck/Dustweave.RuntimeCheck.csproj",
+      "sha256": "70820b9ad7b1697c4432c8889d44ba23f788e9d5ccacd8e6b669ee0ff6a3f621",
       "reasons": [
         "build input"
       ],
-      "bytes": 400
+      "bytes": 461
     },
     {
       "path": "tools/RuntimeCheck/DailySquareCrossing.cs",
-      "sha256": "fb993ce1e5e2bf15c68524a243a83454b9ccf970885a46ebeca5b47e4d26aefc",
+      "sha256": "f8a1f46d19e5e8a946a80047bf3bfca32f447874a67a8e56796e17ccdcff7a7f",
       "reasons": [
         "build input"
       ],
-      "bytes": 6964
+      "bytes": 7049
     },
     {
       "path": "tools/RuntimeCheck/packages.lock.json",
-      "sha256": "f2b707a0a361aa4cb67d48d32010dfcf4a5cb561ae05683b9e80c4970a2d93fd",
+      "sha256": "883b6990c6ccbd0bb0b9a33e8083bc2e92017018c2ca684e9361e7dc98b5c015",
       "reasons": [
         "build input"
       ],
-      "bytes": 2506
+      "bytes": 2420
     },
     {
       "path": "tools/RuntimeCheck/Program.cs",
-      "sha256": "76b495f2964609c759caf9fc39d9840f3ea0e0d682995d7d5c6e697bf5ede517",
+      "sha256": "c6a02f34c7e0596b350250a53796a32e5dda1a36b760a2670b1449de1dea6ea2",
       "reasons": [
         "build input"
       ],
-      "bytes": 16867
+      "bytes": 17055
     },
     {
       "path": "src/Shared/DailyContracts.cs",
@@ -6975,451 +6975,451 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/AccountIdentityCases.cs",
-      "sha256": "9ed463117a0c9754185d000639394498afc238e2f606ea1edc026c279fad6337",
+      "sha256": "481a7d9f2379d616d43a4b438a45b7c84f4900abfd57b82bec0b531646194ea7",
       "reasons": [
         "build input"
       ],
-      "bytes": 6614
+      "bytes": 6672
     },
     {
       "path": "tests/Dustweave.Tests/Cases/AccountOrderCases.cs",
-      "sha256": "6e03285f2379a4aa6cc478d4b7596295e170fdbc39bca7a191f9f8e351f845fe",
+      "sha256": "839e1330ef559d2a0cf3f9e18159de80460bf92f12f8fba808cc7afb366804ed",
       "reasons": [
         "build input"
       ],
-      "bytes": 4952
+      "bytes": 5041
     },
     {
       "path": "tests/Dustweave.Tests/Cases/AccountRestartCases.cs",
-      "sha256": "593c2c5ff15a5b5d2299bb070803ea2504827c9770c514a2b5636e734c5bf25c",
+      "sha256": "5cf8fd1d64254fc3b7fe5348756279d9a92b45176776483fa1239cd31f25264d",
       "reasons": [
         "build input"
       ],
-      "bytes": 5757
+      "bytes": 5859
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ActivityLeaseCases.cs",
-      "sha256": "5a85311b0bed62e0917e0595f1bd92de384aa9bce12b58df2120d8a0ce391937",
+      "sha256": "fa8cd038ce4237fb59a4fa3ee798007042a5beae04ddffb2e18d046c1a208574",
       "reasons": [
         "build input"
       ],
-      "bytes": 3143
+      "bytes": 3178
     },
     {
       "path": "tests/Dustweave.Tests/Cases/PluginCases.cs",
-      "sha256": "ccb5daa7fcdb8b6777d19d2a1c172cf86b62bdb27ae74b0f43f78b0f628e4e88",
+      "sha256": "faac0f37e4e151d812ba2dfb71add02b16bc64e5eafb224881165cf79c63a720",
       "reasons": [
         "build input"
       ],
-      "bytes": 5186
+      "bytes": 5497
     },
     {
       "path": "tests/Dustweave.Tests/Cases/BusinessScopeCases.cs",
-      "sha256": "83b14a0f3bffb0965c231c170b5069a358085144ed6b60f205bdbeabc0c323b1",
+      "sha256": "0c4f1e006183c0b9a0b8d975adfcc51dcebf75664e445a65bdffee7d546006b9",
       "reasons": [
         "build input"
       ],
-      "bytes": 2076
+      "bytes": 2105
     },
     {
       "path": "tests/Dustweave.Tests/Cases/CafeteriaRecoveryCases.cs",
-      "sha256": "3d7c56ffaa431db52b4b1a4bbb79a84f4b2caeba660797056aa364540dacbb45",
+      "sha256": "813b8531c47d8eb63edb4356b7c72687757fd021f21bd85d16407f6a158c3b0f",
       "reasons": [
         "build input"
       ],
-      "bytes": 2643
+      "bytes": 2687
     },
     {
       "path": "tests/Dustweave.Tests/Cases/CollectionReadinessCases.cs",
-      "sha256": "4d72f9787c33892037fd031d35e17aeadc83604d1d894aa5ca9f52f83bb18f8a",
+      "sha256": "3bd3e19455375f64ba0948e9c73a7722318cd5337225b5b7d2ddec25a80b6c2d",
       "reasons": [
         "build input"
       ],
-      "bytes": 12194
+      "bytes": 12418
     },
     {
       "path": "tests/Dustweave.Tests/Cases/CommandDriverCases.cs",
-      "sha256": "2d8e18bd70959eb9a1f93f99d96dd8668ea257921695093ea71b5de407271b8e",
+      "sha256": "3b0138543c471f53a9fc76731f9dca87e18f00df2152bdf7a11536f9ca1c421a",
       "reasons": [
         "build input"
       ],
-      "bytes": 14591
+      "bytes": 14846
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ConnectionAccessCases.cs",
-      "sha256": "feb621328a499c929d83658943d0d6501cd6812eea9ed617678dbb8576bf81fb",
+      "sha256": "87b3a61357c1f6b2ea2d6d676f7a1d715ba226d2573dd4399a6217816cef0821",
       "reasons": [
         "build input"
       ],
-      "bytes": 6602
+      "bytes": 6689
     },
     {
       "path": "tests/Dustweave.Tests/Cases/DispatchRecoveryCases.cs",
-      "sha256": "5635479869dd1056c616ff3d03d35c11cd957157e873c10d67490a0f93e32dc9",
+      "sha256": "5e6f18cea474b899e4ad6d6552da678d662fbe7e3175618196ad60aaf055e2cc",
       "reasons": [
         "build input"
       ],
-      "bytes": 11173
+      "bytes": 11301
     },
     {
       "path": "tests/Dustweave.Tests/Cases/EmptySceneCases.cs",
-      "sha256": "e61e9ff00f546bc3202d66edaaddb2bc570a5af0b69bb2dd31aabfb986490517",
+      "sha256": "6ab3beec21f624073cd2ebad6c247a84ba1719b96f4eb844bbf7fd3373251c37",
       "reasons": [
         "build input"
       ],
-      "bytes": 8206
+      "bytes": 8308
     },
     {
       "path": "tests/Dustweave.Tests/Cases/EventTradeBoundaryCases.cs",
-      "sha256": "6af22bfc83c855bf1de59e67dc4e416da32e4b0e8df6793c75468309ffc4b316",
+      "sha256": "a62595e2a598cf38f509d1995b62bde6881bfaa5906422d0e983f223de6b084c",
       "reasons": [
         "build input"
       ],
-      "bytes": 4606
+      "bytes": 4672
     },
     {
       "path": "tests/Dustweave.Tests/Cases/EvidenceReadinessCases.cs",
-      "sha256": "e7dbd1b7c5e548dd798ea57cde5c25986569f28a6fbc4fba528777dd8087282b",
+      "sha256": "4326532eb387e5960780f6e2b425b861c2ea183997d523cb1ac502774e0566d7",
       "reasons": [
         "build input"
       ],
-      "bytes": 7933
+      "bytes": 8057
     },
     {
       "path": "tests/Dustweave.Tests/Cases/FieldRouteArrivalCases.cs",
-      "sha256": "85854937688f3e6457782c3d2cf3957b29ee0f41006a4d660babd6ac6e95b94b",
+      "sha256": "d5f6a507663767ecd829e6bbd3a9da60a24f0770d5568249f8d661481d924316",
       "reasons": [
         "build input"
       ],
-      "bytes": 10838
+      "bytes": 11023
     },
     {
       "path": "tests/Dustweave.Tests/Cases/FieldTalentCases.cs",
-      "sha256": "53ac7c62ee5014015a6e3b309fac9674b93a830f6ed2e296b033f7df0a025dd6",
+      "sha256": "174a3240d58197be21e7fa6c5914e06f0d2be46b313f7a93b3b8cd3e82d16f6e",
       "reasons": [
         "build input"
       ],
-      "bytes": 17538
+      "bytes": 17813
     },
     {
       "path": "tests/Dustweave.Tests/Cases/FreeDrawDataCases.cs",
-      "sha256": "ca5bdda602ea8e95c6a50c009bcaea28cadbe855cd82b2f46eef4e3ea37b9c0a",
+      "sha256": "3dd5ad74462f14fbc8ffdce3b61bf2bb7e25892648d2871cbd6047e7cad9175e",
       "reasons": [
         "build input"
       ],
-      "bytes": 6717
+      "bytes": 6835
     },
     {
       "path": "tests/Dustweave.Tests/Cases/FreeDrawStageCases.cs",
-      "sha256": "69d93dd1dabec4007a82b47c58886153ca6d354abe9a771459cb30ece12046cf",
+      "sha256": "cf083de57240088aa5508b115386b4373d286bc1caa2f7368ecb0dc7c7794ad4",
       "reasons": [
         "build input"
       ],
-      "bytes": 24035
+      "bytes": 24413
     },
     {
       "path": "tests/Dustweave.Tests/Cases/GuildCases.cs",
-      "sha256": "c9379323f1e9d8ab9efa342be665b0bb77b673e9eb8d5c00e0755a03cf5c9a14",
+      "sha256": "2f4a882429d947d9dcd4d8475518392e48741d51572df8837ae541839d3dc803",
       "reasons": [
         "build input"
       ],
-      "bytes": 13954
+      "bytes": 14134
     },
     {
       "path": "tests/Dustweave.Tests/Cases/HelperLifetimeCases.cs",
-      "sha256": "ef6305ac89b66c018df0366f39b0245dc1f008c7fe4fd8d1350cdcc56755bcd0",
+      "sha256": "535009c6c481e1731c982cb90bb8ff8743e2e76dd9dd3b15218f70d5acde94b1",
       "reasons": [
         "build input"
       ],
-      "bytes": 1786
+      "bytes": 1828
     },
     {
       "path": "tests/Dustweave.Tests/Cases/HomeNavigationCases.cs",
-      "sha256": "483795b685df560b285f507986c0724c0a74d82306838054e632f128d80a8f5f",
+      "sha256": "19e927a24c6a81088703ecde4e110c1ce81e4dac8515bf78296386ac5e56d312",
       "reasons": [
         "build input"
       ],
-      "bytes": 16623
+      "bytes": 16805
     },
     {
       "path": "tests/Dustweave.Tests/Cases/HomeRecoveryCases.cs",
-      "sha256": "3df3bfc474bf81a1c0a6dfe0e66f997d3ac7e97898d6773b1fac8ebcbaecef28",
+      "sha256": "86c9e93b585b8bf4577befc8bd97e95c2c240f48041a70d4828dce354390ca84",
       "reasons": [
         "build input"
       ],
-      "bytes": 27514
+      "bytes": 28052
     },
     {
       "path": "tests/Dustweave.Tests/Cases/LoginIdentityCases.cs",
-      "sha256": "67691dd7e5911824983d25885e1178aa8f4f71890adeff8c3c3772be69d4bcf8",
+      "sha256": "975a5fd76a65d63039757efdc1cdc68f036733af343021b03784cf95eff24d77",
       "reasons": [
         "build input"
       ],
-      "bytes": 3472
+      "bytes": 3511
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ManagedBootstrapCases.cs",
-      "sha256": "44628c6b1d902da5d2a1c1ba8c9220a0fb12cd8ee81bd76a1f8b8f00bd3f88e8",
+      "sha256": "1eb6cef666c8ae2d40a913cf5f6ad7a5d2829579608c881453bf6140d0dc1308",
       "reasons": [
         "build input"
       ],
-      "bytes": 7973
+      "bytes": 8092
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ManagedHostFixture.cs",
-      "sha256": "ac87740b5e6d1f556013607c8fa48dceaa20532686deab43ebf12542b635f4c5",
+      "sha256": "c8ceb96ba96d29d040ecfdb17a97cdba12c7c2e797e8ff0ec834a9cf9b24c227",
       "reasons": [
         "build input"
       ],
-      "bytes": 3115
+      "bytes": 3168
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ManagedInputsCases.cs",
-      "sha256": "ee33e29888ec5015203d11f11e0a367e02e3e1d8ea9a669bc86de96e90e67a04",
+      "sha256": "75365b089e3f3f884552058f8b1ecf10af977eacd687c291436be767752d814a",
       "reasons": [
         "build input"
       ],
-      "bytes": 9880
+      "bytes": 10044
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ManagementStageCases.cs",
-      "sha256": "fce205e493b1208384190a8aa901e59a9de9c5550a2abdd24602de141b5f601b",
+      "sha256": "56e3695352dd438428eb3b9cffe043ae54fd5451125a8311b61daf4608f93889",
       "reasons": [
         "build input"
       ],
-      "bytes": 29236
+      "bytes": 29652
     },
     {
       "path": "tests/Dustweave.Tests/Cases/MirrorArrivalCases.cs",
-      "sha256": "858d55172624dbd3b8cd3309ee5330e193c1224185307d0396a44cbea81af14c",
+      "sha256": "cfc947d1c5e26b4628f0ed003b7ffe7c506a8a8ffaa038a83dc4840c2774a164",
       "reasons": [
         "build input"
       ],
-      "bytes": 8422
+      "bytes": 8555
     },
     {
       "path": "tests/Dustweave.Tests/Cases/MirrorStageCases.cs",
-      "sha256": "563371209b9a368cf467e47ba40c4568f7bd4db2e75fa568a4c20701da8113ec",
+      "sha256": "adf50845ed488728aeb42aba674da114afd3187aeb52c467cae46cd98d78d93e",
       "reasons": [
         "build input"
       ],
-      "bytes": 8964
+      "bytes": 9093
     },
     {
       "path": "tests/Dustweave.Tests/Cases/NativeCancellationCases.cs",
-      "sha256": "f605489fa1dad7e3037058c720c7dc5613b1f07ecc411554e29461cbba38689a",
+      "sha256": "c4415379b2758e65521588d39efb14809a05db330ce7af108d794fd581223071",
       "reasons": [
         "build input"
       ],
-      "bytes": 1832
+      "bytes": 1871
     },
     {
       "path": "tests/Dustweave.Tests/Cases/PackagedUtilityCases.cs",
-      "sha256": "861010f2554bc64e6a8bd174afea9d3223f1285ee26cb7826920a9983bea4af5",
+      "sha256": "15ca25cb254cf48b303fce52918bb3cd3062cb6eeb130a1fb8a25203f7a99a26",
       "reasons": [
         "build input"
       ],
-      "bytes": 4053
+      "bytes": 4089
     },
     {
       "path": "tests/Dustweave.Tests/Cases/PreferenceCases.cs",
-      "sha256": "68c48454ba1a93cd5ec49cdd6b038b75b3fca42314bd16fac3441e0d22feb710",
+      "sha256": "3661fdf7961a41db9a435a01f2dec2b3347ab48878cfb6cc9b4848b16cd40cbc",
       "reasons": [
         "build input"
       ],
-      "bytes": 9277
+      "bytes": 9427
     },
     {
       "path": "tests/Dustweave.Tests/Cases/QueueEngineCases.cs",
-      "sha256": "15b8609247409d3c733d3877a6cc1dad91e45d8114ada08e43f8d60e8b1d2fab",
+      "sha256": "00da8e153e83ddec9751f08170e8ca0aca96940cbeeba716f6b15cea7e58ab83",
       "reasons": [
         "build input"
       ],
-      "bytes": 20707
+      "bytes": 21026
     },
     {
       "path": "tests/Dustweave.Tests/Cases/QueueExecutionThreadCases.cs",
-      "sha256": "40c70c7211c0db67660999b5a791ef000ac9e5e475a367a54d438687e4dedee2",
+      "sha256": "fbea3e9d7d5ce7b078f7fc0f83d0450deba73773adbfbe3d4433796baf29cc5e",
       "reasons": [
         "build input"
       ],
-      "bytes": 3881
+      "bytes": 3962
     },
     {
       "path": "tests/Dustweave.Tests/Cases/QueuePeriodCases.cs",
-      "sha256": "8fdc08990bb1f5bc84632bdacfbde48014147ca350bc8aa092ef6300f190a5c5",
+      "sha256": "d96c239dec422338f8f9d51604a1e4541cdfa4ddfa25b77ccc8296392b868aa1",
       "reasons": [
         "build input"
       ],
-      "bytes": 6928
+      "bytes": 7030
     },
     {
       "path": "tests/Dustweave.Tests/Cases/QueueSessionCases.cs",
-      "sha256": "59c70d3b7f4b8aa9014c5da10232b53220f6352f8d0d91c04dc8944013eebad2",
+      "sha256": "4c4548d098bcd7479cb7369e05069156a2aa95ba6254199e5107078436adc218",
       "reasons": [
         "build input"
       ],
-      "bytes": 17550
+      "bytes": 17836
     },
     {
       "path": "tests/Dustweave.Tests/Cases/RuleDataCases.cs",
-      "sha256": "df2e5d62a0b9dacb15b1e6a589847d077f968837f272a5e2da2ed4460f3f987c",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 7253
-    },
-    {
-      "path": "tests/Dustweave.Tests/Cases/StageProtocolCases.cs",
-      "sha256": "2f7aed8487083c7ad8f742be73a8c1bb5b70856f46f349e3117c5923795eba36",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 3039
-    },
-    {
-      "path": "tests/Dustweave.Tests/Cases/StartupCases.cs",
-      "sha256": "931961d3f353c2d58a9b6a636704075bd964d736e82c24d87923115d880340cd",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 11191
-    },
-    {
-      "path": "tests/Dustweave.Tests/Cases/StealCatalogCases.cs",
-      "sha256": "12b992439b6135c270e89b7d4b34360a6d0844bcd51fb99742b69b7e808f2f0a",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 4840
-    },
-    {
-      "path": "tests/Dustweave.Tests/Cases/StorageCases.cs",
-      "sha256": "e676f5e77646c4e151386da6f46a451a3747e48db58cb3c4b199c85ce4ae2616",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2978
-    },
-    {
-      "path": "tests/Dustweave.Tests/Cases/TestPaths.cs",
-      "sha256": "841a090387b9bb0983909cdffa786ce01a46a4bbf9a18d8692f3671e21d4da8c",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 545
-    },
-    {
-      "path": "tests/Dustweave.Tests/Cases/ToolMenuCases.cs",
-      "sha256": "0d97d7625f0e15aa6e20257d418cff8d508c93430df06ee11b071b1b3e076736",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 4101
-    },
-    {
-      "path": "tests/Dustweave.Tests/Cases/TradeDataCases.cs",
-      "sha256": "a676202cf46c0e2d018187becca2a63b494902ab6e471a69f451871ba1bac08d",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 15978
-    },
-    {
-      "path": "tests/Dustweave.Tests/Cases/TradeQuoteCases.cs",
-      "sha256": "fb535bed87ef2dd46c8307294813f8a7726531fe6fec756424e794c5ba36118b",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 12323
-    },
-    {
-      "path": "tests/Dustweave.Tests/Cases/TradeReplanCases.cs",
-      "sha256": "ecc1d1b55c79df8d8ded172bd865af9fbdc4137775ec34ee0c19b8a3f398e23f",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2669
-    },
-    {
-      "path": "tests/Dustweave.Tests/Cases/TradeResumeCases.cs",
-      "sha256": "745e9d4256b9a714c836d44c45f5a6433437ca4e924d046a91f21c0b339cd9c2",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 18740
-    },
-    {
-      "path": "tests/Dustweave.Tests/Cases/TradeShopExitCases.cs",
-      "sha256": "b076025fcd71b088c15fff4ebac7493b582373ff325eb1aea3d05642f99d5606",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 9039
-    },
-    {
-      "path": "tests/Dustweave.Tests/Cases/TravelTransitionCases.cs",
-      "sha256": "4a1148c6facaf1de37aceb9505902f8ec399a684e85c33a5f585fb9bfc1d89d5",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 9403
-    },
-    {
-      "path": "tests/Dustweave.Tests/Cases/UnifiedSuiteCases.cs",
-      "sha256": "4d273488fe16c38d16d20dabfed164606c7a19395ec7da10f8715632f76e4e61",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 13293
-    },
-    {
-      "path": "tests/Dustweave.Tests/Cases/UserTextCases.cs",
-      "sha256": "5ee62040057d049762a2c63789bfd6c5e848dab235f8d7772f975c22b883c9ca",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 8037
-    },
-    {
-      "path": "tests/Dustweave.Tests/Cases/WeeklyGoalCases.cs",
-      "sha256": "e72e126a06d9c55a57084b8143ed091f9ec05ea7385ce1908025597d40a84f07",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 5519
-    },
-    {
-      "path": "tests/Dustweave.Tests/Cases/WeeklyNpcBoardCases.cs",
-      "sha256": "3936805f81c97c6475efc0ac330dbe474f3e0b534980e3e0bb7e7d8498eeb8ea",
+      "sha256": "c34295ebf94f637a1cf1e28293fcafd8eb7802ded4fe173117544b38f99605c3",
       "reasons": [
         "build input"
       ],
       "bytes": 7363
     },
     {
-      "path": "tests/Dustweave.Tests/Cases/WeeklyNpcQueryCases.cs",
-      "sha256": "a2521ef290e094c94b23c3ec2fa94f27e46d955cdbdb8698f83d24c07923d14d",
+      "path": "tests/Dustweave.Tests/Cases/StageProtocolCases.cs",
+      "sha256": "000b0c284649d4f0d5a0d272816b3c30c2304082569bcb5680a6907ecd7895e0",
       "reasons": [
         "build input"
       ],
-      "bytes": 5941
+      "bytes": 3096
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/StartupCases.cs",
+      "sha256": "6ca7a653b1dbbb699e658e5fa687ba4b4d05431c800cdd029c15c5d0afec5319",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 11376
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/StealCatalogCases.cs",
+      "sha256": "68dc40d6849a8beff55584a60f8c91e4553e8a0e8daef82626df43ad0e89d23a",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 4922
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/StorageCases.cs",
+      "sha256": "d1cb16a7727ef954abffb2363a7e9eaecc7ad20ccfe0cdcd2c18caa5f7ddabb6",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3042
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/TestPaths.cs",
+      "sha256": "143e7d68c1a50c2d44fc95ceb58b557b42cec5c34f17d56a6c1d0009801770f0",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 559
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/ToolMenuCases.cs",
+      "sha256": "2ee228e3d3acaedae37ede91bd37c0a5ed7e2658dcd686d794d8a1252e6cf4a0",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 4155
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/TradeDataCases.cs",
+      "sha256": "ccce70565206a58cbcd774a40d4a5627242b22076a7bff8dfd0461205f8b3315",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 16197
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/TradeQuoteCases.cs",
+      "sha256": "def096d5d81884ebd8e8634fd3866d55ea263b1dbd0de1a364c8ea71104cebcf",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 12325
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/TradeReplanCases.cs",
+      "sha256": "478a105406a21b860e9c53340e13f886b30d5a2d178eac79713edbb1a3c6930f",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2706
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/TradeResumeCases.cs",
+      "sha256": "dcd622630383c4eb700863d0bc53769aa2af416cd0cecb1e4b67e28bdbc414a8",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 19026
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/TradeShopExitCases.cs",
+      "sha256": "62919a60b3b558f5598949b5ce6edd6a3b7fce5f5b4414858b8c4981b05d2f6b",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 9188
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/TravelTransitionCases.cs",
+      "sha256": "e8da367965aecfc4cec9cbc315301dee1c1a537e97b63b33da872f95946bf7a4",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 9407
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/UnifiedSuiteCases.cs",
+      "sha256": "2f65d32f8d42fe2d43e79eda4ff8b7f9532693c7b8c1f8730bfb0d89cd5fab40",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 13445
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/UserTextCases.cs",
+      "sha256": "d8c67fccff39f46ca9ba81e7a7f4311ec1059a8ec00a8db6b744890fc9c99c7b",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 8104
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/WeeklyGoalCases.cs",
+      "sha256": "805397a9a657aedaaf9cbe573d78214aa4add1c47982ae477b4de7baa2406c2e",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 5521
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/WeeklyNpcBoardCases.cs",
+      "sha256": "107724288876196b6a0e94d133717c850448ba172d769285b097acaca93ae636",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 7440
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/WeeklyNpcQueryCases.cs",
+      "sha256": "d1969359fc0ea03936672185d4154378f5678df64ecabf7ffc95cc3513b26735",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 6047
     },
     {
       "path": "tests/Dustweave.Tests/Cases/WorkflowCases.cs",
-      "sha256": "cd54fc8fc4bf8f541132f4af347534e279750119fb086a4b924b8448460f0f43",
+      "sha256": "bcf0bef0ba21e9026a0210dbb54c31b8a0e6231337848083f52ed66049deacc2",
       "reasons": [
         "build input"
       ],
-      "bytes": 13504
+      "bytes": 13682
     },
     {
       "path": "tests/Dustweave.Tests/Cases/WorkflowHarness.cs",
-      "sha256": "de9456922dd06f3c4ed59ce6a092a79624b7333930bca37f6cc428ad88ea294e",
+      "sha256": "9a5754a6b913e5eb7f75306035b0ae7b261cf484ab5bf7dd590a210cbdf82c13",
       "reasons": [
         "build input"
       ],
-      "bytes": 3821
+      "bytes": 3902
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
@@ -7430,28 +7430,28 @@
       "bytes": 2362
     },
     {
-      "path": "tools/TradeData/BD2Daily.TradeData.csproj",
-      "sha256": "1389a568b1423c629f16f8960f8ba2478085f79acc1505bd4b6d283d74c3ce1d",
+      "path": "tools/TradeData/Dustweave.TradeData.csproj",
+      "sha256": "16772bce84c5426dc3375ee474727fe741d557d432b06e9e194efead904f42a3",
       "reasons": [
         "build input"
       ],
-      "bytes": 307
+      "bytes": 364
     },
     {
       "path": "tools/TradeData/packages.lock.json",
-      "sha256": "f2b707a0a361aa4cb67d48d32010dfcf4a5cb561ae05683b9e80c4970a2d93fd",
+      "sha256": "883b6990c6ccbd0bb0b9a33e8083bc2e92017018c2ca684e9361e7dc98b5c015",
       "reasons": [
         "build input"
       ],
-      "bytes": 2506
+      "bytes": 2420
     },
     {
       "path": "tools/TradeData/Program.cs",
-      "sha256": "e7978a2cb30f88a662303ff7082a0fdf83989d15b5a3167b4f0f450e34ff75bc",
+      "sha256": "3a412fc82d0bd3c0112cf7cc3d3d7c9dc2e35b452235a536cb53f55bea33b8ca",
       "reasons": [
         "build input"
       ],
-      "bytes": 862
+      "bytes": 871
     },
     {
       "path": "third-party/highs/highs.dll",
@@ -7550,12 +7550,12 @@
       "bytes": 3766
     },
     {
-      "path": "tools/TableExporter/BD2TableExporter.csproj",
-      "sha256": "031da6a6f6d810b9f23ffe7818f3acefb7b0ff54b0eb8c6752735ad58d254904",
+      "path": "tools/TableExporter/Dustweave.TableExporter.csproj",
+      "sha256": "636e3a2050547c0ff26bd75cdfc83bee204b0011429d77c1adc783d1a0b8c436",
       "reasons": [
         "build input"
       ],
-      "bytes": 237
+      "bytes": 245
     },
     {
       "path": "tools/TableExporter/GameDatabaseApi.cs",
@@ -7583,11 +7583,11 @@
     },
     {
       "path": "src/Accounts/packages.lock.json",
-      "sha256": "60c1e9169fbf3fd58356d35d9d939d17c8df6b402e17bd417b515118e6b5db4b",
+      "sha256": "88375fdc71350548252f1e8ac425dc57334d58bb124a342f03e25ffe05774b9c",
       "reasons": [
         "build input"
       ],
-      "bytes": 108
+      "bytes": 114
     },
     {
       "path": "tools/TableExporter/packages.lock.json",
@@ -7607,11 +7607,11 @@
     },
     {
       "path": "src/Desktop/MainWindow.Diagnostics.cs",
-      "sha256": "49a45e3cab27f656926451b8d24aaafdb71def7012b8334475b3cce2e6de3e11",
+      "sha256": "49bc52cab8bba55a5afa1f15648e98e1332afd910e55ed4339fd52ee0748b449",
       "reasons": [
         "build input"
       ],
-      "bytes": 3739
+      "bytes": 3814
     },
     {
       "path": "standalone/bd2-fishing/compatibility/RecoveryBindings.cs",
@@ -7725,16 +7725,16 @@
     },
     {
       "path": "src/Desktop/MainWindow.Chrome.cs",
-      "sha256": "1390d1f20e961d737311d001055c3f647be8f1edc66862128231f6d1c72573fb",
+      "sha256": "4d94d5b19195053a5a6262d6bd33df9b2d9a012510781ff1d5b9d6ecc8b9e0a7",
       "reasons": [
         "build input"
       ],
-      "bytes": 3278
+      "bytes": 3279
     },
     {
       "path": "src/Desktop/ProgressRingConverter.cs",
-      "sha256": "7a9df8db40b5f9353c7d35708aac5019225498590a9f382bb6605ba8419a81ab",
-      "bytes": 1771
+      "sha256": "95d0f05264fb541a993262f9d370b9c370525cccd5b193d7e9b3e42ae68d5de7",
+      "bytes": 1812
     },
     {
       "path": "src/Connection/SquareApproach.cs",
@@ -7746,15 +7746,15 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/SquareApproachCases.cs",
-      "sha256": "1b72ba9ba43ea7173094bd5d49a10f689b6d82869f854bdf13996c9b3bb2d3f4",
+      "sha256": "92cecca4a91a638e3ce475bf0f610b882d59d038088252150b6a4558be8e9e58",
       "reasons": [
         "build input"
       ],
-      "bytes": 4429
+      "bytes": 4495
     },
     {
       "path": "src/Shared/DailyBridgeVersion.cs",
-      "sha256": "a9cc45f3a21b705c655ffd68af779f729c688f9fee2be8c154ac7739ed3ecb32",
+      "sha256": "a001f6cd81cc01215221fa7dfb960b5477cdbef1080a1f00652290612150b8e3",
       "reasons": [
         "build input"
       ],
@@ -7762,51 +7762,71 @@
     },
     {
       "path": "src/Core/DailyPendingTasks.cs",
-      "sha256": "7e0971aa4dedc06faf717d9e372271f1b3cbd328a270bc6fe86546f6573efd4b",
+      "sha256": "43bebe3127dffc117e089c9c9d06cae240cd8a60f2dfe5387a70cd4bdbd85fb9",
       "reasons": [
         "build input"
       ],
-      "bytes": 3058
+      "bytes": 3104
     },
     {
       "path": "src/Desktop/DailyTaskDetailsWindow.cs",
-      "sha256": "a14c74a86f08037fb7c210af460f49162b5a0bf3895d1509bab44b8bc6e64219",
+      "sha256": "bfda8ff24ccdcc8648bca65786aa554b210494cbfa7c7b888329a8443a9d0bd2",
       "reasons": [
         "build input"
       ],
-      "bytes": 5174
+      "bytes": 5257
     },
     {
       "path": "src/Core/DailyBusinessJournal.cs",
-      "sha256": "3a0c657578e13a14a00119c28967aca1174ed8f4fff490e7cfc4c9c3f3ea26f3",
+      "sha256": "a865044367c6b51b32aa18420a7007d70832db9eafeade6c2df28d126d38359d",
       "reasons": [
         "build input"
       ],
-      "bytes": 6286
+      "bytes": 6287
     },
     {
       "path": "tests/Dustweave.Tests/Cases/BusinessJournalCases.cs",
-      "sha256": "e30013ff093696ac8b6d76885630398ce3a71cf5a497d21f861e758d746764aa",
+      "sha256": "b64dd2fe96cf9ddb4905c124d16406f9de4290a92fb1221d7d76c84523f6bc97",
       "reasons": [
         "build input"
       ],
-      "bytes": 13768
+      "bytes": 13770
     },
     {
       "path": "src/Desktop/MainWindow.Accounts.cs",
-      "sha256": "258f84cbf1ab3ac3bfdfffe3ad4172c7c3e5e29116802187562278197731e209",
-      "bytes": 3045,
+      "sha256": "16f4f8e3cb854c21b5ba75b4aeccccd9b8126c4b62bd44b96e096893fe3d1c07",
+      "bytes": 3046,
       "reasons": [
         "build input"
       ]
     },
     {
       "path": "src/Desktop/MainWindow.Accounts.Smoke.cs",
-      "sha256": "a3a23f225565b232ae264da4ea1f86dfa4ca704929a7e1393bb713b729e45b71",
-      "bytes": 10125,
+      "sha256": "ffd14fa5080a136e73a235f1f43b65a85a559d651bee741b4b0c2fdfbf1b87fb",
+      "bytes": 10126,
       "reasons": [
         "build input"
       ]
+    },
+    {
+      "path": "src/Core/DailyApplication.cs",
+      "sha256": "f55bad60ea9426064ed7e4b70f8a1ad3efdf4f109230ec93d08768ea780b217d",
+      "reasons": [
+        "product naming and compatibility regression"
+      ],
+      "bytes": 691
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/ProductIdentityCases.cs",
+      "sha256": "aa02231c2d7913eb1cd27eb71f12ae2401fb0bbacbb95fa4ea95ac74f25ff054",
+      "reasons": [
+        "product naming and compatibility regression"
+      ],
+      "bytes": 2923
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/PassiveUiCases.cs",
+      "sha256": "9868270b9c51640420fcc25529dc71284318f277d9a68f4aa061bd7c1c559a73"
     }
   ],
   "publicReleaseApproved": false,

@@ -1,7 +1,7 @@
 using Mono.Cecil;
 using System.Text.Json.Nodes;
 using System.Text.Json;
-using BD2Daily;
+using Dustweave;
 static class TapManifest {
  static IEnumerable<TypeDefinition> All(IEnumerable<TypeDefinition> roots){foreach(var t in roots){yield return t;foreach(var child in All(t.NestedTypes))yield return child;}}
  static JsonNode LoadSpec(string path,HashSet<string>? seen=null){

@@ -10,7 +10,7 @@ $root=[IO.Path]::GetFullPath($PSScriptRoot)
 if(!$PreparedCacheDirectory){$PreparedCacheDirectory=Join-Path $root 'artifacts/prepared-modules'}
 $PreparedCacheDirectory=[IO.Path]::GetFullPath($PreparedCacheDirectory)
 if(!$PreparedCacheDirectory.StartsWith([IO.Path]::GetFullPath((Get-Location).Path)+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Prepared cache must remain below the current workspace.'}
-$entry=Join-Path $root 'src/Desktop/BD2Daily.Desktop.csproj'
+$entry=Join-Path $root 'src/Desktop/Dustweave.Desktop.csproj'
 if(!(Test-Path -LiteralPath (Join-Path $root 'source-manifest.json'))){throw 'Run this script from the Dustweave repository.'}
 if(!$Flavors.Count -or @($Flavors|Select-Object -Unique).Count -ne $Flavors.Count){throw 'Choose each flavor at most once.'}
 $managed=[IO.Path]::GetFullPath($GameManagedDir)
@@ -71,8 +71,8 @@ foreach($flavor in $Flavors){
  $self=if($flavor -eq 'Portable'){'true'}else{'false'}
  $bundle=Join-Path $output $flavor
  Run 'dotnet' @('publish',$entry,'-c','Release','-r','win-x64','--self-contained',$self,('-p:SelfContained='+$self),('-p:PublishSelfContained='+$self),'-p:PublishSingleFile=true','-p:IncludeNativeLibrariesForSelfExtract=true',('-p:EnableCompressionInSingleFile='+$self),'-p:DebugType=None','-p:DebugSymbols=false',('-p:DustweaveVersion='+$Version),$packageImport,('-p:DustweavePackageLockRoot='+ (Join-Path $work ('locks/'+$flavor))),'-o',$bundle,'--nologo') ($flavor+'-publish')
- foreach($extra in Get-ChildItem -LiteralPath $bundle -File -Filter '*.runtimeconfig.json'|Where-Object Name -ne 'BD2DailyAssistant.runtimeconfig.json'){Remove-Item -LiteralPath $extra.FullName}
- $exe=Join-Path $bundle 'BD2DailyAssistant.exe'
+ foreach($extra in Get-ChildItem -LiteralPath $bundle -File -Filter '*.runtimeconfig.json'|Where-Object Name -ne 'Dustweave.runtimeconfig.json'){Remove-Item -LiteralPath $extra.FullName}
+ $exe=Join-Path $bundle 'Dustweave.exe'
  $checks=Join-Path $work ($flavor+'-checks');[IO.Directory]::CreateDirectory($checks)|Out-Null
  [ordered]@{protocol=1;tools=@('live','minigame','exporter','diagnostics')}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $bundle 'utility-host.json') -Encoding utf8
  if($flavor -eq $Flavors[0]){
@@ -101,6 +101,13 @@ foreach($flavor in $Flavors){
  foreach($name in @('README.md','README.en.md')){Copy-Item -LiteralPath (Join-Path $root 'docs/package' $name) -Destination $bundle}
  Run $exe @('--identity',(Join-Path $checks 'identity.txt')) ($flavor+'-identity')
  if((Get-Content -LiteralPath (Join-Path $checks 'identity.txt') -First 1) -ne ('Dustweave '+$Version)){throw 'Release label differs from executable.'}
+ $utilityAssemblies=[ordered]@{live='Dustweave.Connection';minigame='Dustweave.ToolHost';exporter='Dustweave.TableExporter';diagnostics='Dustweave.RuntimeCheck'}
+ foreach($utility in $utilityAssemblies.GetEnumerator()){
+  $description=Join-Path $checks ('utility-'+$utility.Key+'.json')
+  Run $exe @('--utility',$utility.Key,'--describe',$description) ($flavor+'-utility-'+$utility.Key)
+  $identity=Get-Content -LiteralPath $description -Raw|ConvertFrom-Json
+  if($identity.assembly -ne $utility.Value -or $identity.tool -ne $utility.Key -or $identity.realGameTouched -ne $false){throw "Packaged utility identity differs: $($utility.Key)"}
+ }
  foreach($mode in @('smoke','check-tool-languages','check-tool-language-ui','check-stage-host','check-tool-session','check-suite-host')){
   $check=Join-Path $checks $mode;[IO.Directory]::CreateDirectory($check)|Out-Null
   Run $exe @(('--'+$mode),$check) ($flavor+'-'+$mode)

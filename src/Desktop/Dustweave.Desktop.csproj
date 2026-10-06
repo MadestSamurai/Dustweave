@@ -1,22 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>WinExe</OutputType><StartupObject>BD2Daily.Desktop.Program</StartupObject><TargetFramework>net8.0-windows</TargetFramework><UseWPF>true</UseWPF>
+    <OutputType>WinExe</OutputType><StartupObject>Dustweave.Desktop.Program</StartupObject><TargetFramework>net8.0-windows</TargetFramework><UseWPF>true</UseWPF>
     <PlatformTarget>x64</PlatformTarget><RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>false</SelfContained><PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract><EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <!-- Tool EXE assemblies are loaded as WPF applications inside this shared host, not launched by their apphosts. -->
     <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
     <PublishTrimmed>false</PublishTrimmed><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
-    <AssemblyName>BD2DailyAssistant</AssemblyName><RootNamespace>BD2Daily.Desktop</RootNamespace>
+    <AssemblyName>Dustweave</AssemblyName><RootNamespace>Dustweave.Desktop</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest><Product>Dustweave</Product>
     <Version Condition="'$(DustweaveVersion)' != ''">$(DustweaveVersion)</Version><Company>MadSamurai</Company><Description>多账号登录与日常任务工作台</Description>
   </PropertyGroup>
-  <ItemGroup><ProjectReference Include="../Core/BD2Daily.Core.csproj" /></ItemGroup>
+  <ItemGroup><ProjectReference Include="../Core/Dustweave.Core.csproj" /></ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../Connection/BD2Daily.Live.csproj" Aliases="liveUtility" />
-    <ProjectReference Include="../ToolHost/BD2Daily.Fishing.csproj" Aliases="minigameUtility" />
-    <ProjectReference Include="../../tools/RuntimeCheck/BD2Daily.RuntimeCheck.csproj" Aliases="diagnosticUtility" />
-    <ProjectReference Include="../../tools/TableExporter/BD2TableExporter.csproj" Aliases="exportUtility" />
+    <ProjectReference Include="../Connection/Dustweave.Connection.csproj" Aliases="liveUtility" />
+    <ProjectReference Include="../ToolHost/Dustweave.ToolHost.csproj" Aliases="minigameUtility" />
+    <ProjectReference Include="../../tools/RuntimeCheck/Dustweave.RuntimeCheck.csproj" Aliases="diagnosticUtility" />
+    <ProjectReference Include="../../tools/TableExporter/Dustweave.TableExporter.csproj" Aliases="exportUtility" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../standalone/bd2-fishing/desktop/BD2Fishing.Desktop.csproj" Aliases="toolBD2Fishing" />
@@ -29,5 +29,6 @@
     <ProjectReference Include="../../standalone/bd2-secret-vision/desktop/BD2SecretVision.Desktop.csproj" Aliases="toolBD2SecretVision" />
     <ProjectReference Include="../../standalone/bd2-fiend-hunter/desktop/BD2FiendHunter.Desktop.csproj" Aliases="toolBD2FiendHunter" />
   </ItemGroup>
-  <ItemGroup><EmbeddedResource Include="Localization/strings.json" LogicalName="BD2Daily.UI.strings.json" /><EmbeddedResource Include="Localization/runtime.json" LogicalName="BD2Daily.UI.runtime.json" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="Localization/strings.json" LogicalName="Dustweave.UI.strings.json" /><EmbeddedResource Include="Localization/runtime.json" LogicalName="Dustweave.UI.runtime.json" /></ItemGroup>
+  <ItemGroup><Using Include="BD2Daily" /></ItemGroup>
 </Project>

@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>Rebind only proven unchanged trade rules. Never edits the installed bundle or a transaction.</summary>
 public sealed class DailyTradeData

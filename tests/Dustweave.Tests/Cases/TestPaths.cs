@@ -6,7 +6,7 @@ internal static class TestPaths
         get
         {
             var root = Path.GetFullPath(Environment.GetEnvironmentVariable("DUSTWEAVE_TEST_SOURCE_ROOT") ?? Environment.CurrentDirectory);
-            if (!File.Exists(Path.Combine(root, "src/Core/BD2Daily.Core.csproj")))
+            if (!File.Exists(Path.Combine(root, "src/Core/Dustweave.Core.csproj")))
                 throw new InvalidDataException("The test source root is incomplete.");
             return root;
         }

@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>Rules are read and frozen before any free preview; a hot update cannot silently change a consuming plan.</summary>
 public sealed class DailyFreeDrawData

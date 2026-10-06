@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using BD2.LocalIpc;
-namespace BD2Daily;
+namespace Dustweave;
 
 public sealed class DailyStepException(string kind, string message, bool submitted = false) : Exception(message)
 {

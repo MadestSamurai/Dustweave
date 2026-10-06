@@ -1,4 +1,4 @@
-using BD2Daily;
+using Dustweave;
 using System.Security.Cryptography;
 using System.Text.Json.Nodes;
 static class PluginCases
@@ -36,6 +36,10 @@ static class PluginCases
         {
             var m = Manifest(); m[key] = 99; Write(m);
             Check(!DailyPlugin.Inspect(root).Available, key + " mismatch unavailable");
+        }
+        {
+            var m = Manifest(); m["apiVersion"] = 3; Write(m);
+            Check(!DailyPlugin.Inspect(root).Available, "pre-rename managed plugin is rejected before loading its old assembly references");
         }
         foreach (var pair in new[] { ("runtime", "unknown"), ("id", ""), ("entryAssembly", "../outside.dll"), ("entryAssembly", "managed/Missing.dll"), ("entryType", "") })
         {

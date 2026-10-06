@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 public static class DailyManagementProof
 {

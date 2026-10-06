@@ -16,7 +16,25 @@ Run root scripts from this repository, or invoke them by full path while retaini
 | `build.ps1 -Mode Smoke` | UI checks using isolated demonstration data |
 | `package.ps1` | Complete private release package; requires locally installed client data |
 
-`Dustweave.slnx` lists every project for IDE navigation. RID-specific command-line builds use project entry points because MSBuild does not accept `-r` at solution scope. Production namespaces/assembly names retain their existing identities.
+`Dustweave.slnx` lists every project for IDE navigation. RID-specific command-line builds use project entry points because MSBuild does not accept `-r` at solution scope. Owned projects and managed host assemblies use `Dustweave.*`; the desktop assembly and executable are `Dustweave` / `Dustweave.exe`.
+
+## Naming and compatibility / 命名与兼容
+
+| Layer | Name |
+| --- | --- |
+| Solution | `Dustweave.slnx` |
+| Desktop project / executable | `src/Desktop/Dustweave.Desktop.csproj` / `Dustweave.exe` |
+| Host projects | `Dustweave.Core`, `Dustweave.Accounts`, `Dustweave.Connection`, `Dustweave.Compatibility`, `Dustweave.ToolHost` |
+| Development utilities / tests | `Dustweave.Compatibility.Cli`, `Dustweave.RuntimeCheck`, `Dustweave.TableExporter`, `Dustweave.TradeData`, `Dustweave.Tests` |
+| Release archives | `Dustweave-<version>-Portable-win-x64.zip` / `Dustweave-<version>-Lite-win-x64.zip` |
+
+主体命名空间使用 `Dustweave`、`Dustweave.Desktop`、`Dustweave.Accounts`、`Dustweave.Connection` 和 `Dustweave.Compatibility`。现有游戏内入口、序列化通信类型、账号加密盐、存储目录、环境变量、互斥锁及内置工具宿主键保留原标识；这些是兼容协议，不是遗漏的品牌名。独立工具继续使用各自的名称与版本。不要对仓库执行无差别的 `BD2` 文本替换。
+
+Host namespaces follow the product name. Runtime entry points, serialized contracts, account encryption entropy, storage directories, environment variables, mutexes and integrated-tool host keys retain their existing identities. These are compatibility contracts. Independent tools retain their own names and versions.
+
+0.8.15 的托管插件接口为 API 4：插件需引用 `Dustweave.Core` 并按新命名空间重新构建；旧 API 3 在加载前标记为不兼容，不尝试加载旧程序集。游戏内扩展接口仍为 1。插件实现不包含在本仓库或默认发行包中。
+
+Managed extensions targeting 0.8.15 use API 4 and must be rebuilt against the renamed host. API 3 packages are rejected before assembly loading; the runtime extension interface stays at 1. Implementations remain outside this repository and default packages.
 
 ## Normal change / 常规修改
 
@@ -45,3 +63,11 @@ The nine source inputs retain their versions, locks and notices. Import reviewed
 默认使用正式 X.Y.Z 版本号，不使用 preview 后缀；版本号与仓库公开权限独立。Dustweave 保持私有，包不包含外部插件实现。
 
 Use stable X.Y.Z version numbers by default. Version labels do not change repository visibility; Dustweave remains private and excludes external plugin implementations.
+
+## Passive UI and preview recovery / 背景提示与预览收尾
+
+LivePolicy.BuildUiToken is the shared native input token source. Passive surfaces stay in observations and diagnostics, but do not participate in the token, input blockers or navigation stability. Keep its passive list aligned with ui-policy.json; the regression suite checks this contract. Do not add retry loops to compensate for HUD notices.
+
+MonsterHuntUI returns through its observed _objBackButton. A rejected business preview is cancellable only with explicit local non-submission proof, unchanged process/account/cycle and popup content, an enabled native Cancel button and no related transaction events. Cleanup has its own durable result and never marks the business complete. Unknown dispatches and unrelated dialogs are not cancelled.
+
+背景提示不进入操作校验，不能靠增加等待或重试处理。确认失败的收尾与业务成功分开记录；已有消费或结果不明不能通过取消弹窗来推定成功。本轮回归使用合成现场；真实每日免费抽取与魔兽返回仍需后续正常使用验收。

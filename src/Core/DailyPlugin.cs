@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 using System.Text.Json;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>Optional local extension, validated before any code is loaded.</summary>
 public sealed record DailyPluginInfo(bool Available, string State, string Root, string Version, string Fingerprint, string[] HookSources,
@@ -10,7 +10,7 @@ public sealed record DailyPluginInfo(bool Available, string State, string Root, 
 }
 public static class DailyPlugin
 {
-    public const int ApiVersion = 3;
+    public const int ApiVersion = 4;
     private static readonly Lazy<DailyPluginInfo> loaded = new(() => Inspect(ResolveRoot()));
     public static DailyPluginInfo Current => loaded.Value;
     public static string ResolveRoot()

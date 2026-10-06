@@ -1,7 +1,7 @@
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using BD2Daily.Compatibility;
+using Dustweave.Compatibility;
 static class LegacyGuardTest {
  internal static void Prepare(string managed,string output){
   Directory.CreateDirectory(output);

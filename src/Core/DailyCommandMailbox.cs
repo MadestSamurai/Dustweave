@@ -1,6 +1,6 @@
 using BD2.LocalIpc;
 using System.Text;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>The queue owns the writer; transitional adapters only borrow its mailbox API.</summary>
 public interface IDailyCommandMailbox

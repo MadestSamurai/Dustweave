@@ -5,19 +5,19 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using BD2AccountSessionManager;
-using BD2Daily.Compatibility;
+using Dustweave.Accounts;
+using Dustweave.Compatibility;
 using Microsoft.Win32.SafeHandles;
 using SharpMonoInjector;
 
-namespace BD2Daily;
+namespace Dustweave;
 
 // Only the initial observer injection can require elevation. The GUI, accounts,
 // cache and all subsequent module/command traffic stay with the original user.
 public static class DailyConnectionAccess
 {
     public const string HelperSwitch = "--daily-connect-elevated";
-    private const string PipePrefix = "BD2Daily.Connect.";
+    private const string PipePrefix = DailyApplication.ElevationPipePrefix;
     internal sealed record Request(string Nonce, GameInstance Game, string Fingerprint, string PayloadSha);
     internal sealed record Reply(string Nonce, string State, long Address = 0, string Error = "");
 
@@ -82,7 +82,7 @@ public static class DailyConnectionAccess
     private static async Task<long> ElevateAsync(GameInstance game, byte[] payload, CancellationToken token)
     {
         string executable = Environment.ProcessPath ?? throw new InvalidOperationException("无法定位连接组件");
-        if (!Path.GetFileName(executable).Equals("BD2DailyAssistant.exe", StringComparison.OrdinalIgnoreCase))
+        if (!DailyApplication.IsExecutable(executable))
             throw new InvalidOperationException("请使用正式日常工具连接管理员游戏。");
         string nonce = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)), pipeName = PipePrefix + Guid.NewGuid().ToString("N");
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);

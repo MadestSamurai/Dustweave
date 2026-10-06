@@ -1,6 +1,6 @@
-using BD2Daily;
+using Dustweave;
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
+using static Dustweave.DailyData;
 
 // The weekly reset chain appears inside cartridge arrival, before DailyMirror.Enter returns.
 static class MirrorArrivalCases

@@ -8,7 +8,7 @@
 - 完整解压的 Dustweave 包：Portable 包含运行时；Lite 需要 .NET 8 Desktop Runtime x64。
 - 仓库保持私有，有访问权限的用户可在 Releases 下载完整分发包。GitHub 的 Source code 压缩包不是安装包。
 
-启动 `BD2DailyAssistant.exe`。程序文件夹中的 `data`、`flows`、`connection` 等目录是分发内容，需一同保留。源代码构建输出仅供开发，不等于完整用户包。
+启动 `Dustweave.exe`。程序文件夹中的 `data`、`flows`、`connection` 等目录是分发内容，需一同保留。源代码构建输出仅供开发，不等于完整用户包。
 
 ## 第一次运行
 
@@ -52,3 +52,5 @@
 不要把“以管理员身份运行”或“重启游戏”当成所有错误的固定解决办法。若游戏以管理员身份运行，连接可能需要相应权限；按程序的具体提示判断。
 
 仍有问题请提交 [Issue](https://github.com/MadestSamurai/Dustweave/issues/new/choose)。提供版本、Windows版本、发生环节、预期与实际结果、复现步骤。日志只附相关时段，先检查账号标识、登录信息和其他私人数据；不要上传完整账号目录或用户采集库。安全问题见 [SECURITY.md](../SECURITY.md)。
+
+从旧版本升级：完整解压到新目录，启动 `Dustweave.exe`；已有账号、设置和历史会自动沿用，无需迁移数据。不要将新旧程序混放在同一目录。

@@ -1,4 +1,4 @@
-namespace BD2Daily;
+namespace Dustweave;
 
 public sealed record DailyToolDefinition(string Id, string Name, string Category, string Description, string Repository, string AssemblyName, string MutexName);
 

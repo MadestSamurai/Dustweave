@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 // Isolated UI fixtures exercise live window synchronization without constructing a game client.
 internal static class HostedToolLocaleUiProbe

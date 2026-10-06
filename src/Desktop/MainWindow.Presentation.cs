@@ -7,7 +7,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Threading;
 
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 public sealed partial class DailyRunPanel
 {

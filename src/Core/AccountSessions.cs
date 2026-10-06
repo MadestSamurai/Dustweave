@@ -1,5 +1,5 @@
-using BD2AccountSessionManager;
-namespace BD2Daily;
+using Dustweave.Accounts;
+namespace Dustweave;
 
 public sealed record DailyAccount(int SlotNumber, string Name, string AccountKey, string MaskedMemberId, bool Valid, bool IsCurrent, string Error);
 public sealed record DailyAccountCatalog(IReadOnlyList<DailyAccount> Accounts, string CurrentKey, int? CurrentSlot, bool SessionComplete, bool GameRunning, bool StarterRunning, bool HasRecovery) { public IReadOnlyList<int> OccupiedSlots { get; init; } = []; }
@@ -23,7 +23,7 @@ public sealed class AccountSessions : IAccountSessions, IDisposable
     {
         if (ownership != null)
             return true;
-        var candidate = new Mutex(true, @"Local\BD2AccountSessionManager-v1", out bool created);
+        var candidate = new Mutex(true, DailyApplication.AccountMutex, out bool created);
         if (!created)
         {
             candidate.Dispose();

@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
-using static BD2Daily.DailyFieldRoute;
-namespace BD2Daily;
+using static Dustweave.DailyData;
+using static Dustweave.DailyFieldRoute;
+namespace Dustweave;
 
 /// <summary>Routes are reusable geometry; completion always comes from the server projection.</summary>
 public sealed class DailyCollectionNavigator

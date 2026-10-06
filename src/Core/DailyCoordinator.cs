@@ -1,4 +1,4 @@
-namespace BD2Daily;
+namespace Dustweave;
 
 public sealed record DailyProgress(string State, string Message, int Completed = 0, int Total = 0);
 public sealed record DailyRunStatus(DateTimeOffset AtUtc, string RunId, DailyProgress Progress);

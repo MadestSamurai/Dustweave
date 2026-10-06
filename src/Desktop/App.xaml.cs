@@ -1,6 +1,6 @@
 using System.IO;
 using System.Windows;
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 public partial class App : Application
 {
@@ -86,7 +86,7 @@ public partial class App : Application
         {
             try
             {
-                var prepared = BD2Daily.Compatibility.DailyHookCompiler.Prepare(args[1]);
+                var prepared = Dustweave.Compatibility.DailyHookCompiler.Prepare(args[1]);
                 Directory.CreateDirectory(args[2]);
                 File.WriteAllBytes(Path.Combine(args[2], DailyIdentity.RuntimeName + ".dll"), prepared.Payload);
                 DailyJson.Write(Path.Combine(args[2], "compatibility.json"), prepared.Report);
@@ -178,7 +178,7 @@ public partial class App : Application
                 new MainWindow(fixture, fixture, smoke, smoke) { ShowActivated = false, ShowInTaskbar = false, WindowStartupLocation = WindowStartupLocation.Manual, Left = -12000, Top = 0 }.Show();
                 return;
             }
-            DailyLanguage.Current.Initialize(DailyIdentity.DataRoot); instance = new Mutex(true, @"Local\BD2DailyAssistant-v1", out bool first);
+            DailyLanguage.Current.Initialize(DailyIdentity.DataRoot); instance = new Mutex(true, DailyApplication.InstanceMutex, out bool first);
             if (!first)
             {
                 MessageBox.Show(DailyLanguage.Current.Get("startup.already_open"), "Dustweave");

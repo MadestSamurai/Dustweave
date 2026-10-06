@@ -54,12 +54,12 @@ if($AfterBuild){
  }
  $output=Join-Path $root 'src/Desktop/bin/Release/net8.0-windows/win-x64'
  Add-Type -Path (Join-Path $output 'Mono.Cecil.dll')
- foreach($file in Get-ChildItem -LiteralPath $output -Filter 'BD2*.dll'){
+ foreach($file in Get-ChildItem -LiteralPath $output -File | Where-Object {$_.Name -match '^(BD2|Dustweave).*\.dll$'}){
   if(!$ownedAssemblies.Contains($file.BaseName)){$errors.Add("Unregistered application assembly: $($file.Name)")}
   $module=[Mono.Cecil.ModuleDefinition]::ReadModule($file.FullName)
   try {
    foreach($reference in $module.AssemblyReferences){
-    if(($reference.Name -match '^BD2' -and !$ownedAssemblies.Contains($reference.Name)) -or $reference.Name -eq 'Assembly-CSharp'){$errors.Add("Unregistered assembly reference: $($file.Name) => $($reference.Name)")}
+    if(($reference.Name -match '^(BD2|Dustweave)' -and !$ownedAssemblies.Contains($reference.Name)) -or $reference.Name -eq 'Assembly-CSharp'){$errors.Add("Unregistered assembly reference: $($file.Name) => $($reference.Name)")}
    }
    foreach($resource in $module.Resources){
     if($resource.Name -match '(?i)(^|[./])plugins[./]'){$errors.Add("External plugin resource: $($file.Name) => $($resource.Name)")}

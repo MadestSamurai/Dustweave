@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 public sealed partial class DailyCommandDriver
 {

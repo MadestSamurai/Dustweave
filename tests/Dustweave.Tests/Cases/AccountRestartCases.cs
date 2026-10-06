@@ -1,5 +1,5 @@
-using BD2Daily;
-using BD2Daily.Desktop;
+using Dustweave;
+using Dustweave.Desktop;
 using BD2.LocalIpc;
 using System.Diagnostics;
 using System.Reflection;

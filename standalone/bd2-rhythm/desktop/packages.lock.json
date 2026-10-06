@@ -62,7 +62,7 @@
       "bd2rhythm.core": {
         "type": "Project",
         "dependencies": {
-          "BD2Rhythm.Compatibility": "[0.2.2, )"
+          "BD2Rhythm.Compatibility": "[0.2.3, )"
         }
       }
     },

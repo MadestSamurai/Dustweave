@@ -1,1 +1,1 @@
-await BD2Daily.Live.LiveEntry.RunAsync(args);
+await Dustweave.Connection.LiveEntry.RunAsync(args);

@@ -4,8 +4,8 @@
     <Deterministic>true</Deterministic>
   </PropertyGroup>
   <!-- Keep connection identities independent from the product label. Standalone tools use their own props. -->
-  <PropertyGroup Condition="$([System.String]::Copy('$(MSBuildProjectName)').StartsWith('BD2Daily.')) Or '$(MSBuildProjectName)' == 'Dustweave.Tests'">
+  <PropertyGroup Condition="$([System.String]::Copy('$(MSBuildProjectName)').StartsWith('Dustweave.'))">
     <Version>0.7.27</Version>
-    <DustweaveVersion Condition="'$(DustweaveVersion)' == ''">0.8.14</DustweaveVersion>
+    <DustweaveVersion Condition="'$(DustweaveVersion)' == ''">0.8.17</DustweaveVersion>
   </PropertyGroup>
 </Project>

@@ -7,7 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Microsoft.Win32;
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 /// <summary>File planning and opt-in read-only capture from an existing live connection.</summary>
 public sealed class TradePlanPanel : UserControl

@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>Shared .NET business vocabulary. Missing required evidence is never converted into success.</summary>
 public static class DailyData

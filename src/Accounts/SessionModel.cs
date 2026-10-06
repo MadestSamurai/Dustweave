@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace BD2AccountSessionManager;
+namespace Dustweave.Accounts;
 
 internal sealed record SessionSlot(
     int SchemaVersion,

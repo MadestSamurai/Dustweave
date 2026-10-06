@@ -1,4 +1,4 @@
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 public sealed partial class DailyLanguage
 {

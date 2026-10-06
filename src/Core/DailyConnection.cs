@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
-using BD2Daily.Compatibility;
+using Dustweave.Compatibility;
 using SharpMonoInjector;
-namespace BD2Daily;
+namespace Dustweave;
 
 public sealed record GameInstance(int ProcessId, long StartTicks, string Executable);
 public interface IGameHost
@@ -169,10 +169,10 @@ public sealed class DailyGameHost : IGameHost
     {
         // The GUI lives at package root; the CLI lives in its connection folder.
         var current = DailyTools.PackageDirectory(directory);
-        if (File.Exists(Path.Combine(current, "connection", "BD2Daily.Live.exe")))
+        if (File.Exists(Path.Combine(current, "connection", "Dustweave.Connection.exe")))
             return current;
         var parent = Directory.GetParent(Path.TrimEndingDirectorySeparator(current));
-        if (Path.GetFileName(Path.TrimEndingDirectorySeparator(current)).Equals("connection", StringComparison.OrdinalIgnoreCase) && parent != null && File.Exists(Path.Combine(parent.FullName, "BD2DailyAssistant.exe")))
+        if (Path.GetFileName(Path.TrimEndingDirectorySeparator(current)).Equals("connection", StringComparison.OrdinalIgnoreCase) && parent != null && File.Exists(Path.Combine(parent.FullName, DailyApplication.ExecutableName)))
             return parent.FullName;
         return current;
     }

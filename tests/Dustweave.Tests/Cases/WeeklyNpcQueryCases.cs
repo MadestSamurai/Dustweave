@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using BD2Daily;
+using Dustweave;
 static class WeeklyNpcQueryCases
 {
     static JsonObject Frame()

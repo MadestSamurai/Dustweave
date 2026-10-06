@@ -1,4 +1,4 @@
-namespace BD2AccountSessionManager;
+namespace Dustweave.Accounts;
 
 internal static class SessionSwitcher
 {

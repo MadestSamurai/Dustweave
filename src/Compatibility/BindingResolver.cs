@@ -1,6 +1,6 @@
 using Mono.Cecil;
 
-namespace BD2Daily.Compatibility;
+namespace Dustweave.Compatibility;
 
 public static class BindingResolver
 {

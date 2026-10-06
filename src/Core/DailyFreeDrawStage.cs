@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>Only the native daily free-all route; previews and consuming confirmations have separate durable states.</summary>
 public sealed class DailyFreeDrawStage : IDailyManagedStage

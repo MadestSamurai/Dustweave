@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net8.0-windows</TargetFramework><PlatformTarget>x64</PlatformTarget><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><AssemblyName>Dustweave.Core</AssemblyName></PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Localization/Messages.zh-CN.txt" LogicalName="Dustweave.Messages.zh-CN.txt" WithCulture="false" />
+    <EmbeddedResource Include="../../assets/flows/room-flow.json" LogicalName="Dustweave.room-flow.json" />
+    <Compile Include="../Shared/*.cs" Link="Shared/%(Filename)%(Extension)" />
+    <Compile Include="../../third-party/SharpMonoInjector/*.cs" Link="Injector/%(Filename)%(Extension)" />
+    <ProjectReference Include="../Compatibility/Dustweave.Compatibility.csproj" />
+    <ProjectReference Include="../Accounts/Dustweave.Accounts.csproj" />
+  </ItemGroup>
+<ItemGroup><Compile Include="../Shared/Ipc/common/*.cs;../Shared/Ipc/desktop/*.cs"/></ItemGroup>  <ItemGroup><EmbeddedResource Include="../../assets/flows/ui-policy.json" LogicalName="Dustweave.ui-policy.json" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="../../assets/flows/guild-flow.json" LogicalName="Dustweave.guild-flow.json" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="../../assets/rules/daily/gacha/GachaTable.json" LogicalName="Dustweave.GachaTable.json" /><EmbeddedResource Include="../../assets/rules/daily/gacha/GachaGroupTable.json" LogicalName="Dustweave.GachaGroupTable.json" /></ItemGroup>
+<ItemGroup><EmbeddedResource Include="../../third-party/highs/highs.dll" LogicalName="Dustweave.highs.dll"/><EmbeddedResource Include="../../third-party/highs/LICENSE.txt" LogicalName="Dustweave.Highs.LICENSE.txt"/></ItemGroup>  <ItemGroup><Using Include="BD2Daily" /></ItemGroup>
+</Project>

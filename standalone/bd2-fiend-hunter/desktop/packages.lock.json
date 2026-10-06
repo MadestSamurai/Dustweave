@@ -62,7 +62,7 @@
       "bd2fiendhunter.core": {
         "type": "Project",
         "dependencies": {
-          "BD2FiendHunter.Compatibility": "[0.1.2, )"
+          "BD2FiendHunter.Compatibility": "[0.1.3, )"
         }
       }
     },

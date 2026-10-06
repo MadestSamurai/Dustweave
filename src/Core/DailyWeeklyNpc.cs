@@ -1,8 +1,8 @@
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
-using static BD2Daily.DailyData;
-using static BD2Daily.DailyFieldRoute;
-namespace BD2Daily;
+using static Dustweave.DailyData;
+using static Dustweave.DailyFieldRoute;
+namespace Dustweave;
 
 public sealed class DailyNpcUnavailable(string message) : Exception(message);
 public sealed record DailyNpcData(JsonObject Native, Dictionary<long, JsonObject> Rows, JsonObject[] Active)

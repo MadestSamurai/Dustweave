@@ -4,7 +4,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyName>BD2AccountSessionManager.Core</AssemblyName>
-    <RootNamespace>BD2AccountSessionManager</RootNamespace>
+    <AssemblyName>Dustweave.Accounts</AssemblyName>
+    <RootNamespace>Dustweave.Accounts</RootNamespace>
   </PropertyGroup>
 </Project>

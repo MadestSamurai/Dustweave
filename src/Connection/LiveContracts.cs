@@ -75,6 +75,12 @@ namespace BD2Daily.Live {
   public static readonly string[] PassiveSurfaces={"NoticeUI","CharNoticeUI","DetailNoticeUI","CurrencyManageUI","OverheadManageUI"};
   public static bool HiddenPickupReady(bool active,double remaining){return active&&!double.IsNaN(remaining)&&!double.IsInfinity(remaining)&&remaining>1;}
   public static bool PassiveSurface(string type){return PassiveSurfaces.Contains(type);}
+  // Passive HUD/mission notices remain observable, but never invalidate an input.
+  // All managed stages and native dispatch gates consume this same token.
+  public static string BuildUiToken(Frame f){
+   var key=f.Scene+"|"+string.Join("|",f.Surfaces.Where(s=>!PassiveSurface(s.Type)).OrderBy(s=>s.Id).Select(s=>s.Id+":"+s.Order+":"+s.NoticeSuppression+":"+s.NativeContext+":"+string.Join(",",s.Targets.OrderBy(t=>t.Id).ThenBy(t=>t.Field,StringComparer.Ordinal).ThenBy(t=>t.Route,StringComparer.Ordinal).Select(t=>t.Id+":"+t.Enabled))).ToArray());
+   using(var sha=System.Security.Cryptography.SHA256.Create())return BitConverter.ToString(sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(key))).Replace("-","");
+  }
   public static bool PassDefinitionReady(int passId,System.Collections.Generic.IEnumerable<int> active){return passId>0&&active!=null&&active.Contains(passId);}
   public static bool SuppressibleNotice(string type){return new[]{"NewsPopupEventUI","PackagePopupUI","AttendanceSpecialPackageUI","BundlePackageUI","BundleGroupPackageUI","BundleGroupRelayPackageUI","BonusBundleGroupPackageUI","ClearPackageUI","LoginPassPackageUI","SkinPackageUI"}.Contains(type);}
   public static bool GameplayReady(Frame f){return f!=null&&string.IsNullOrEmpty(f.Error)&&!string.IsNullOrEmpty(f.AccountKey)&&!string.IsNullOrEmpty(f.PlayerKey)&&f.Scene!="ReGame"&&!f.Surfaces.Any(u=>u.Type=="DownloadPopupUI"||u.Type=="IntroUI");}
@@ -218,7 +224,7 @@ namespace BD2Daily.Live {
    }
    if(EventKind(c.Kind)){
     if(f.BridgeVersion<38||!GameplayReady(f)||ui.Type!="BattleUI_EventBattle"||c.TargetId!=0||c.Value<1||c.Value>99||c.Value%2!=1)return "event_context_rejected";
-    if(f.Surfaces.Any(x=>x.Type=="BattleResultUI"||(x.Popup&&x.Id!=ui.Id&&x.Type!="CurrencyManageUI"&&x.Type!="NoticeUI")))return "event_popup_blocked";
+    if(f.Surfaces.Any(x=>x.Type=="BattleResultUI"||(x.Popup&&x.Id!=ui.Id&&!PassiveSurface(x.Type))))return "event_popup_blocked";
     if(c.Items==null||c.Items.Length<3||c.Items[0]<=0)return "event_plan_missing";
     if(c.Kind=="event_start")return c.Items.Length>=5&&c.Items.Length<=21&&(c.Items.Length-1)%4==0?"":"event_plan_invalid";
     return c.Items.Length==3&&c.Items[1]>0&&c.Items[2]>=0?"":"event_selection_invalid";

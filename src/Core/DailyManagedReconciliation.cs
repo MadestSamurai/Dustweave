@@ -1,5 +1,5 @@
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>Read-only recovery of migrated business records; never submits an input.</summary>
 public sealed class DailyManagedReconciliation

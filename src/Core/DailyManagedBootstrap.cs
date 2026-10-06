@@ -1,5 +1,5 @@
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>Starts an identified managed queue and preserves unconfirmed receipts across upgrades.</summary>
 public sealed class DailyManagedBootstrap

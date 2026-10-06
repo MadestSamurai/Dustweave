@@ -1,6 +1,6 @@
 using System.Windows.Controls;
 
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 internal static class DailyUiText
 {

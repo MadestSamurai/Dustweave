@@ -1,8 +1,8 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
-namespace BD2Daily;
+using static Dustweave.DailyData;
+namespace Dustweave;
 
 // Desktop-only observation journal. No extra game reads, hooks or packet collection.
 // Bounded history complements the full before/receipt/final evidence in live/steps.

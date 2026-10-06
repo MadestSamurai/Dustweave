@@ -3,7 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 /// <summary>Offline integration fixture. Opens only a labelled test window, never a game connector.</summary>
 internal static class ToolMenuProbe

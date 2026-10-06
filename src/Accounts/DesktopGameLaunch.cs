@@ -6,7 +6,7 @@ using System.Security.Principal;
 using System.Text.Json;
 using Microsoft.Win32.SafeHandles;
 
-namespace BD2AccountSessionManager;
+namespace Dustweave.Accounts;
 
 // Ask the existing, unelevated desktop to perform the launch. Creating a new
 // Shell.Application in an elevated process is not sufficient to drop privileges.

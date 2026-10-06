@@ -1,17 +1,17 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/Accounts/BD2AccountSessionManager.Core.csproj" />
-    <Project Path="src/Compatibility/BD2Daily.Compatibility.csproj" />
-    <Project Path="src/Connection/BD2Daily.Live.csproj" />
-    <Project Path="src/Core/BD2Daily.Core.csproj" />
-    <Project Path="src/Desktop/BD2Daily.Desktop.csproj" />
-    <Project Path="src/ToolHost/BD2Daily.Fishing.csproj" />
+    <Project Path="src/Accounts/Dustweave.Accounts.csproj" />
+    <Project Path="src/Compatibility/Dustweave.Compatibility.csproj" />
+    <Project Path="src/Connection/Dustweave.Connection.csproj" />
+    <Project Path="src/Core/Dustweave.Core.csproj" />
+    <Project Path="src/Desktop/Dustweave.Desktop.csproj" />
+    <Project Path="src/ToolHost/Dustweave.ToolHost.csproj" />
   </Folder>
   <Folder Name="/tools/">
-    <Project Path="tools/CompatibilityCli/BD2Daily.Compatibility.Cli.csproj" />
-    <Project Path="tools/RuntimeCheck/BD2Daily.RuntimeCheck.csproj" />
-    <Project Path="tools/TableExporter/BD2TableExporter.csproj" />
-    <Project Path="tools/TradeData/BD2Daily.TradeData.csproj" />
+    <Project Path="tools/CompatibilityCli/Dustweave.Compatibility.Cli.csproj" />
+    <Project Path="tools/RuntimeCheck/Dustweave.RuntimeCheck.csproj" />
+    <Project Path="tools/TableExporter/Dustweave.TableExporter.csproj" />
+    <Project Path="tools/TradeData/Dustweave.TradeData.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Dustweave.Tests/Dustweave.Tests.csproj" />

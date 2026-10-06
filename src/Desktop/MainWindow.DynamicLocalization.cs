@@ -2,7 +2,7 @@ using System.IO;
 using System.Windows.Controls;
 using System.Windows.Threading;
 
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 public partial class MainWindow
 {

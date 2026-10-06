@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using BD2Daily;
+using Dustweave;
 using BD2.LocalIpc;
 
 if(args.Length!=2||args[0] is not ("observe" or "home" or "harbor-cycle" or "stages" or "resume-stages" or "weekly-retry" or "talent-audit" or "npc-query" or "trade-data-audit" or "trade-retry" or "trade-menu-audit" or "cafeteria-recover" or "roulette-single" or "square-crossing" or "square-inspect" or "square-merchant"))throw new ArgumentException("observe|home|harbor-cycle|stages|resume-stages|weekly-retry|talent-audit|npc-query|trade-data-audit|trade-retry|trade-menu-audit|cafeteria-recover <evidence-directory>");
@@ -17,7 +17,7 @@ JsonObject Capture(){
     if(host.Find()!=game)throw new InvalidOperationException("Game process changed.");
     var frame=Read(livePipe,"snapshot.json");var identity=Read(dailyPipe,"snapshot.json");
     return new(){["version"]=DailyIdentity.Version,["at"]=DateTimeOffset.UtcNow.ToString("O"),["game"]=JsonSerializer.SerializeToNode(game),
-        ["daily"]=identity,["fingerprint"]=dailyPipe.Fingerprint(),["expectedFingerprint"]=BD2Daily.Compatibility.DailyHookCompiler.Fingerprint,["suite"]=Read(new PipeClient(Path.Combine(root,"suite"),game.ProcessId,game.StartTicks),"status.json"),["frame"]=frame,["pending"]=Read(livePipe,"command.json"),["paused"]=livePipe.Read("pause")!=null,
+        ["daily"]=identity,["fingerprint"]=dailyPipe.Fingerprint(),["expectedFingerprint"]=Dustweave.Compatibility.DailyHookCompiler.Fingerprint,["suite"]=Read(new PipeClient(Path.Combine(root,"suite"),game.ProcessId,game.StartTicks),"status.json"),["frame"]=frame,["pending"]=Read(livePipe,"command.json"),["paused"]=livePipe.Read("pause")!=null,
         ["plan"]=frame==null?null:JsonSerializer.SerializeToNode(DailyHomeDecision.Inspect(frame,DailyNavigationPolicy.Load()))};
 }
 void Report(JsonObject capture){var frame=capture["frame"]?.AsObject();Console.WriteLine(JsonSerializer.Serialize(new{
@@ -53,7 +53,7 @@ try{
     }
     if(args[0] is "stages" or "resume-stages" or "weekly-retry" or "trade-retry"){
         string package=DailyTools.Unified(AppContext.BaseDirectory)?AppContext.BaseDirectory:Directory.GetParent(Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory))!.FullName;
-        if(!File.Exists(Path.Combine(package,"BD2DailyAssistant.exe"))||!DailyTools.Available(package,"live"))throw new InvalidOperationException("Stages verification requires a complete package's diagnostics directory.");
+        if(!File.Exists(Path.Combine(package,DailyApplication.ExecutableName))||!DailyTools.Available(package,"live"))throw new InvalidOperationException("Stages verification requires a complete package's diagnostics directory.");
         using var sessions=new AccountSessions();
         if(sessions.Read().CurrentKey!=account)throw new InvalidOperationException("Current saved account differs from the running game; no switch or input.");
         var preferences=new DailyPreferenceStore(root).Read(account);

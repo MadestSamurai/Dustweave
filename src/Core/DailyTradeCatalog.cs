@@ -3,7 +3,7 @@ using System.Reflection.PortableExecutable;
 using System.Security.Cryptography;
 using System.Text.Json.Nodes;
 using System.Text.Json;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>Static trade formulas, provenance and compatibility are owned by .NET.</summary>
 public static class DailyTradeCatalog

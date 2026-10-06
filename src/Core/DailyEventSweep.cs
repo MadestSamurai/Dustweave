@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
-namespace BD2Daily;
+using static Dustweave.DailyData;
+namespace Dustweave;
 
 /// <summary>Native free-AP sweep. Public policy is exactly cleared Challenge 15, at most five per server day.</summary>
 public static class DailyEventSweep

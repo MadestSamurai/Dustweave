@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
 
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 public partial class MainWindow
 {

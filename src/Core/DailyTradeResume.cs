@@ -1,5 +1,5 @@
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>Refresh only an unsubmitted transaction whose added trade resources are proven rewards.</summary>
 public static class DailyTradeResume

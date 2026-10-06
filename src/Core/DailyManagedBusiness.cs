@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 public sealed record DailyBusinessProof(string Role, string Stage, string[] Prefixes, Func<JsonObject, JsonArray, JsonObject, JsonObject> Verify, string[]? NativeRoles = null, string[]? AffectedStages = null, Func<JsonObject, DailyStageFrame, bool>? PreviewOwner = null, Func<JsonObject, DailyStageFrame, bool>? CanResume = null, Func<JsonObject, string[]>? ScopePrefixes = null, Func<JsonObject, string[]>? ScopeRoles = null, Func<JsonObject, string[]>? ScopeStages = null)
 {
@@ -232,10 +232,67 @@ public sealed partial class DailyManagedBusiness
             if (op["state"]?.GetValue<string>() is not ("completed" or "rejected" or "server_rejected"))
                 op["state"] = op["state"]?.GetValue<string>() == "preview_ready" ? "preview_ready" : op["state"]?.GetValue<string>() == "prepared" ? "rejected" : "unknown";
             op["error"] = error.Message;
+            if (error is DailyStepException { Kind: "rejected", Submitted: false, Command: null } && op["command_id"] == null)
+                op["confirmation_not_submitted"] = true;
             Save(op);
+            if (op["confirmation_not_submitted"]?.GetValue<bool>() == true && !DailyTradePreview.IsConfirmation(op["action"]!.AsObject()))
+                await CancelRejectedPreviewAsync(op, context);
             if (op["state"]?.GetValue<string>() == "unknown")
                 throw new StageHostException("pending", error.Message);
             throw;
+        }
+    }
+    // Close only a proven, unchanged, unsubmitted preview through its Cancel button.
+    // This is cleanup, never evidence that the business succeeded or may be replayed.
+    internal async Task CleanupRejectedPreviewsAsync(JsonObject context)
+    {
+        var frame = await driver.ObserveAsync();
+        if (!JsonNode.DeepEquals(frame.Context, context)) throw new StageHostException("identity", "弹窗收尾期间队列身份改变。");
+        if (!DailyNavigationDecision.Rows(frame.Frame).Any(r => r["Popup"]?.GetValue<bool>() == true && !DailyNavigationDecision.PassiveSurface(r["Type"]?.GetValue<string>() ?? ""))) return;
+        foreach (var op in MatchingRecords(context, h => h["state"]?.GetValue<string>() == "rejected" && h["confirmation_not_submitted"]?.GetValue<bool>() == true && h["preview_cleanup"] == null, includeLegacy: false))
+            if (await CancelRejectedPreviewAsync(op, context)) return;
+    }
+    private async Task<bool> CancelRejectedPreviewAsync(JsonObject op, JsonObject context)
+    {
+        if (stopped() || op["state"]?.GetValue<string>() != "rejected" || op["confirmation_not_submitted"]?.GetValue<bool>() != true
+            || op["command_id"] != null || op["preview_cleanup"] != null || op["preview_frame"] is not JsonObject saved
+            || !JsonNode.DeepEquals(op["cycle"], context["cycle"]) || !JsonNode.DeepEquals(op["server"], context["server"])) return false;
+        try
+        {
+            var current = await driver.ObserveAsync();
+            if (!JsonNode.DeepEquals(current.Context, context) || !DailyEvidence.SameActor(saved, current.Frame)
+                || !JsonNode.DeepEquals(saved["Scene"], current.Frame["Scene"]) || Events(op).Count != 0) return false;
+            string ui = op["action"]?["ui"]?.GetValue<string>() ?? "";
+            var before = DailyNavigationDecision.Rows(saved).Where(r => r["Type"]?.GetValue<string>() == ui).ToArray();
+            var after = DailyNavigationDecision.Rows(current.Frame).Where(r => r["Type"]?.GetValue<string>() == ui).ToArray();
+            if (before.Length != 1 || after.Length != 1 || before[0]["Popup"]?.GetValue<bool>() != true
+                || !JsonNode.DeepEquals(before[0], after[0]) || !DailyNavigationDecision.ReadyInput(after[0], false)
+                || DailyNavigationDecision.Blockers(current.Frame, ui, DailyNavigationPolicy.Load()).Length != 0) return false;
+            var cancel = (after[0]["Targets"] as JsonArray ?? []).OfType<JsonObject>()
+                .Where(t => t["Field"]?.GetValue<string>() == "_buttonCancel" && t["Enabled"]?.GetValue<bool>() == true && t["Route"]?.GetValue<string>() == "ui").ToArray();
+            if (cancel.Length != 1) return false;
+            var cleanup = new JsonObject { ["state"] = "prepared", ["at"] = driver.UtcTicks, ["business_replayed"] = false };
+            op["preview_cleanup"] = cleanup;
+            Save(op); // Durable, one-attempt cleanup; uncertain cancellation is never blindly repeated.
+            var result = await driver.SendObservedAsync(new() { ["ui"] = ui, ["field"] = "_buttonCancel", ["target_id"] = cancel[0]["Id"]!.DeepClone(),
+                ["absent"] = ui, ["reason"] = "取消本次未提交的确认，继续后续任务" }, current.Frame);
+            cleanup["state"] = "closed";
+            cleanup["command_id"] = result["id"]?.DeepClone();
+            Save(op);
+            driver.Diagnostics.Event("preview_cancelled", new JsonObject { ["id"] = op["id"]!.DeepClone(), ["role"] = op["role"]!.DeepClone(), ["business_replayed"] = false });
+            return true;
+        }
+        catch (Exception error)
+        {
+            if (op["preview_cleanup"] is JsonObject cleanup)
+            {
+                cleanup["state"] = error is DailyStepException { Kind: "rejected", Submitted: false, Command: null } ? "rejected" : "unknown";
+                cleanup["error"] = error.Message;
+                if (error is DailyStepException step) cleanup["command_id"] = step.Command?["Id"]?.DeepClone();
+                Save(op);
+            }
+            driver.Diagnostics.Event("preview_cleanup_blocked", new JsonObject { ["id"] = op["id"]!.DeepClone(), ["error"] = error.Message });
+            return false;
         }
     }
     private async Task<JsonObject> CommitFreeClaimAsync(JsonObject op, JsonObject context)

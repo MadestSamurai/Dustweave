@@ -1,5 +1,5 @@
-using BD2AccountSessionManager;
-namespace BD2Daily;
+using Dustweave.Accounts;
+namespace Dustweave;
 
 // Both account registry writes and the game must run in Explorer's desktop context.
 // A single relay prevents inherited development-host registry views from splitting them.
@@ -15,7 +15,7 @@ public static class DailyDesktopLaunch
     public static void Start(string executable, string[] args)
     {
         executable = Path.GetFullPath(executable);
-        if (!File.Exists(executable) || !Path.GetFileName(executable).Equals("BD2DailyAssistant.exe", StringComparison.OrdinalIgnoreCase))
+        if (!File.Exists(executable) || !DailyApplication.IsExecutable(executable))
             throw new InvalidOperationException("请使用正式日常助手的桌面启动入口。");
         DesktopGameLaunch.Launch(executable, string.Join(" ",ChildArguments(args).Select(Quote)), Directory.GetCurrentDirectory());
     }

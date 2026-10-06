@@ -1,5 +1,5 @@
 using System.Diagnostics;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>Bounds a helper we launched and keeps stop/account checks live while it works.</summary>
 public static class DailyHelperLifetime

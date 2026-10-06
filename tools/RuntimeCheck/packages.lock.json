@@ -46,21 +46,21 @@
           "System.Collections.Immutable": "9.0.0"
         }
       },
-      "bd2accountsessionmanager.core": {
+      "dustweave.accounts": {
         "type": "Project"
       },
-      "bd2daily.compatibility": {
+      "dustweave.compatibility": {
         "type": "Project",
         "dependencies": {
           "Microsoft.CodeAnalysis.CSharp": "[4.14.0, )",
           "Mono.Cecil": "[0.11.6, )"
         }
       },
-      "bd2daily.core": {
+      "dustweave.core": {
         "type": "Project",
         "dependencies": {
-          "BD2AccountSessionManager.Core": "[1.0.0, )",
-          "BD2Daily.Compatibility": "[0.7.27, )"
+          "Dustweave.Accounts": "[0.7.27, )",
+          "Dustweave.Compatibility": "[0.7.27, )"
         }
       }
     },

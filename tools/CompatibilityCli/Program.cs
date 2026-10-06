@@ -1,5 +1,5 @@
 using Mono.Cecil;
-using BD2Daily.Compatibility;
+using Dustweave.Compatibility;
 using System.Text.Json;
 
 if(args.Length==3&&args[0]=="binding-probe"){GuildBindingProbe.Prepare(args[1],args[2]);Console.WriteLine("Read-only Mono binding probe prepared.");return;}

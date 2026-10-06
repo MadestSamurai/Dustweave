@@ -1,4 +1,4 @@
-using BD2Daily.Compatibility;
+using Dustweave.Compatibility;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System.Text.Json;

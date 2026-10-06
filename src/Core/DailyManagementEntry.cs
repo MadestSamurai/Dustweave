@@ -1,5 +1,5 @@
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>The rotating native settlement banners all open the same management popup.</summary>
 public static class DailyManagementEntry

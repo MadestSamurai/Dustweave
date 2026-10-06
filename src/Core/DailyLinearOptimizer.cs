@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>.NET owns the model and audits. HiGHS only solves LP/MIP matrices.</summary>
 public static class DailyLinearOptimizer
@@ -11,7 +11,7 @@ public static class DailyLinearOptimizer
     static DailyLinearOptimizer() => NativeLibrary.SetDllImportResolver(typeof(DailyLinearOptimizer).Assembly, (name, _, _) => name == "daily-highs" ? library.Value : IntPtr.Zero);
     private static IntPtr Load()
     {
-        using var stream = typeof(DailyLinearOptimizer).Assembly.GetManifestResourceStream("BD2Daily.highs.dll") ?? throw new InvalidDataException("缺少内置跑商规划组件");
+        using var stream = typeof(DailyLinearOptimizer).Assembly.GetManifestResourceStream("Dustweave.highs.dll") ?? throw new InvalidDataException("缺少内置跑商规划组件");
         using var memory = new MemoryStream();
         stream.CopyTo(memory);
         byte[] bytes = memory.ToArray();

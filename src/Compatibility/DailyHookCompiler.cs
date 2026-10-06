@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Mono.Cecil;
 
-namespace BD2Daily.Compatibility;
+namespace Dustweave.Compatibility;
 public sealed record PreparedDailyHook(byte[] Payload,BindingReport Report,BindingReport GuildReport,BindingReport StartupReport);
 public static class DailyHookCompiler
 {

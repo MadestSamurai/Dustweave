@@ -1,5 +1,5 @@
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 public sealed partial class DailyCommandDriver
 {

@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
-namespace BD2Daily;
+using static Dustweave.DailyData;
+namespace Dustweave;
 
 /// <summary>Complete daily table set, bound once to the installed client and database; no game input.</summary>
 public sealed class DailyRuleData

@@ -1,7 +1,7 @@
-using BD2Daily;
+using Dustweave;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
+using static Dustweave.DailyData;
 static class WorkflowCases
 {
     public static JsonObject Frame() => O(("ProcessId", 1), ("ProcessStartTicks", 2L), ("Instance", "i"), ("AccountKey", "a"), ("PlayerKey", "p"));

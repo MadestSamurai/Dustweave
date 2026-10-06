@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 public partial class MainWindow
 {

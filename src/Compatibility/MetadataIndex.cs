@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
-namespace BD2Daily.Compatibility;
+namespace Dustweave.Compatibility;
 
 // Only interface shapes and one-way hashes leave the installed client. Never save game IL.
 public sealed class MetadataIndex : IDisposable

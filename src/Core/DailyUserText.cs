@@ -1,7 +1,7 @@
 using System.Collections.Frozen;
 using System.Text.RegularExpressions;
 
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>Presentation only. Never use localized text for protocol, recovery or persisted evidence.</summary>
 public static class DailyUserText
@@ -90,7 +90,7 @@ public static class DailyUserText
 
     private static FrozenDictionary<string, string> Load()
     {
-        using var source = typeof(DailyUserText).Assembly.GetManifestResourceStream("BD2Daily.Messages.zh-CN.txt")
+        using var source = typeof(DailyUserText).Assembly.GetManifestResourceStream("Dustweave.Messages.zh-CN.txt")
             ?? throw new InvalidDataException("缺少日常助手中文提示资源。");
         using var reader = new StreamReader(source);
         var messages = new Dictionary<string, string>(StringComparer.Ordinal);

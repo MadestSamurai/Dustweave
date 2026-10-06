@@ -1,4 +1,4 @@
-namespace BD2Daily;
+namespace Dustweave;
 
 public sealed record DailyAccountSavePlan(int SlotNumber, string AccountKey, string Name, bool Existing);
 

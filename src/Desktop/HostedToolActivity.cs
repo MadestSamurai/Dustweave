@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 /// <summary>Window-independent execution lease, shared by every tool's command transport.</summary>
 internal sealed class HostedToolActivity : IDisposable

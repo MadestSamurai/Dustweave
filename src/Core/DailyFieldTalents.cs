@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>Native field talent activation, evidence and read-only recovery.</summary>
 public static class DailyFieldTalentProof

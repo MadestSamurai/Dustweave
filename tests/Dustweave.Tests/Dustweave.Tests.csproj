@@ -2,14 +2,14 @@
   <PropertyGroup>
     <TargetFramework>net8.0-windows</TargetFramework>
     <OutputType>Exe</OutputType>
-    <!-- Reuse the existing internal test-access identity; this is a separate output directory. -->
-    <AssemblyName>BD2Daily.Tests</AssemblyName>
+    <!-- Internal access follows the test assembly identity. -->
+    <AssemblyName>Dustweave.Tests</AssemblyName>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../src/Core/BD2Daily.Core.csproj" />
+    <ProjectReference Include="../../src/Core/Dustweave.Core.csproj" />
     <Compile Include="../../src/Desktop/DemoEnvironment.cs" Link="DemoEnvironment.cs" />
     <Compile Include="../../src/Runtime/SuiteRuntime.cs" Link="Unified/SuiteRuntime.cs" />
     <Compile Include="../../src/Shared/Ipc/runtime/Handoff.cs" Link="Unified/Handoff.cs" />
@@ -20,4 +20,5 @@
     <Compile Include="../../src/Connection/LiveContracts.cs" Link="LiveContracts.cs"/><Compile Include="../../src/Connection/SquareApproach.cs" Link="SquareApproach.cs" />
     <Compile Include="../../standalone/bd2-territory/shared/LocalRoute.cs;../../standalone/bd2-territory/shared/LocalNavigationCache.cs;../../standalone/bd2-territory/shared/RouteGeometry.cs" Link="SquareGeometry/%(Filename)%(Extension)" />
   </ItemGroup>
+  <ItemGroup><Using Include="BD2Daily" /></ItemGroup>
 </Project>

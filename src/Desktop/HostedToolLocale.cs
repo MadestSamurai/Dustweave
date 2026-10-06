@@ -1,4 +1,4 @@
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 // Optional presentation-only contract. It is process-local and cannot alter connection or task settings.
 internal static class HostedToolLocale

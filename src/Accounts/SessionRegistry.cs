@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using Microsoft.Win32;
 
-namespace BD2AccountSessionManager;
+namespace Dustweave.Accounts;
 
 internal static class SessionRegistry
 {

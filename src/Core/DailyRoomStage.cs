@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>Visits the player's own room using original server response/cache proof and business journals.</summary>
 public sealed class DailyRoomStage : IDailyManagedStage
@@ -18,7 +18,7 @@ public sealed class DailyRoomStage : IDailyManagedStage
     }
     public static JsonObject LoadRecipe()
     {
-        using var s = typeof(DailyRoomStage).Assembly.GetManifestResourceStream("BD2Daily.room-flow.json") ?? throw new IOException("缺少小屋规则。");
+        using var s = typeof(DailyRoomStage).Assembly.GetManifestResourceStream("Dustweave.room-flow.json") ?? throw new IOException("缺少小屋规则。");
         return JsonNode.Parse(s)!.AsObject();
     }
     private IEnumerable<JsonObject> Prior(JsonObject context)

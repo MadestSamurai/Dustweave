@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json;
-using BD2AccountSessionManager;
-using BD2Daily;
+using Dustweave.Accounts;
+using Dustweave;
 
 internal static class AccountIdentityCases
 {

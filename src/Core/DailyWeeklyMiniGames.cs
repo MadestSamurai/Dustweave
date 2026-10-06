@@ -2,8 +2,8 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json.Nodes;
 using BD2.LocalIpc;
-using static BD2Daily.DailyData;
-namespace BD2Daily;
+using static Dustweave.DailyData;
+namespace Dustweave;
 
 /// <summary>The daily queue borrows maintained mini-game components with bounded, expiring ownership.</summary>
 public sealed class DailyMiniGameChannel

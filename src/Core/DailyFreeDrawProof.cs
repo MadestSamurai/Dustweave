@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 public static class DailyNativeProof
 {
@@ -47,7 +47,7 @@ public sealed class DailyFreeDrawRules
     {
         JsonArray Read(string name)
         {
-            using var stream = typeof(DailyFreeDrawRules).Assembly.GetManifestResourceStream("BD2Daily." + name) ?? throw new IOException("Missing free draw rules");
+            using var stream = typeof(DailyFreeDrawRules).Assembly.GetManifestResourceStream("Dustweave." + name) ?? throw new IOException("Missing free draw rules");
             return JsonNode.Parse(stream)!.AsArray();
         }
         return Build(Read("GachaTable.json"), Read("GachaGroupTable.json"));

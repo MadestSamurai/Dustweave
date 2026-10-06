@@ -30,7 +30,7 @@ namespace BD2Daily.Live {
   static GameFieldManager Context(Command c){
    var f=Bridge.CurrentFrame;
    if(f==null||f.ProcessId!=c.ProcessId||f.ProcessStartTicks!=c.ProcessStartTicks||f.Instance!=c.Instance||f.AccountKey!=c.AccountKey||f.PlayerKey!=c.PlayerKey||f.Scene!=c.Scene||!LivePolicy.GameplayReady(f)||DateTime.UtcNow.Ticks-f.AtUtcTicks>TimeSpan.FromSeconds(3).Ticks||(BD2.LocalIpc.RuntimeFiles.Read(Path.Combine(root,"pause"))!=null))throw new InvalidOperationException("Recovery context changed or paused");
-   if(f.Surfaces.Any(x=>x.Type!="GameFieldDefaultUI"&&x.Type!="NoticeUI"&&x.Type!="CurrencyManageUI"&&x.Type!="OverheadManageUI"))throw new InvalidOperationException("Recovery field is covered");
+   if(f.Surfaces.Any(x=>x.Type!="GameFieldDefaultUI"&&!LivePolicy.PassiveSurface(x.Type)))throw new InvalidOperationException("Recovery field is covered");
    var g=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ;var pack=Singleton<PackManager>.ὪὫὢὨὯὭὦὪὦὨὣ;var camera=GameCameraManager.ὪὫὢὨὯὭὦὪὦὨὣ;
    if(g==null||!g.CanSpawnAnyObject()||!g.ὢὩὠὢὫὧὠὣὤὩὫ||g.ὮὬὬὮὠὮὪὠὧὩὪ==null||g.ὮὬὬὮὠὮὪὠὧὩὪ.IsInsideMap!=0||g.ὪὨὯὢὫὮὨὩὮὡὬ==null||g.ὪὨὯὢὫὮὨὩὮὡὬ.ὠὭὬὪὫὣὠὡὡὠὫ.ToString()!="Stop"||camera==null||camera.ὥὦὥὨὫὡὦὮὧὦὢ==null||TimelineSignalManager.ὪὫὢὨὯὭὦὪὦὨὣ!=null||pack.IsNoneFieldPack()||pack.HasNotCheckedDispatchObject()||ὥὭὪὩὢὭὨὢὧὮὢ.ὢὡὥὫὥὯὫὦὦὨὤ||ὤὯὯὬὧὬὯὣὢὯὨ.ὮὩὩὦὨὪὫὦὩὯὧ)throw new InvalidOperationException("Recovery requires a stationary outdoor field");
    if(BattlePlayManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὨὢὤὪὪὢὩὢὬὠὦ.ToString()!="BMT_NONE"||ὫὨὪὠὢὨὮὤὩὤὮ.ὩὮὠὠὩὭὭὠὥὬὪ.ὭὬὠὫὯὭὮὭὥὦὭ||ὫὨὪὠὢὨὮὤὩὤὮ.ὥὮὯὪὡὢὭὠὣὩὣ.ὧὩὤὩὤὦὯὢὪὢὩ||pack.waitResetPackKeyWordSet.Contains("DispatchAutoSupport")||ὣὡὧὡὦὣὣὬὨὪὫ.ὡὩὧὩὡὤὤὭὠὫὣ)throw new InvalidOperationException("Native work is in progress");

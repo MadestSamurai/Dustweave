@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace BD2AccountSessionManager;
+namespace Dustweave.Accounts;
 
 // AppManager.TryLoadLauncherSetting supports bd2 (official PC) and bd2_gpg
 // (Google Play). A direct launch cannot supply Google's per-launch context.

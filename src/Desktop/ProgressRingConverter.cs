@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 // Keeps the native ProgressBar range/accessibility contract while drawing a circular track.
 public sealed class ProgressRingConverter : IMultiValueConverter

@@ -1,7 +1,7 @@
-using BD2Daily.Compatibility;
+using Dustweave.Compatibility;
 using BD2.LocalIpc;
 using System.Text.Json;
-namespace BD2Daily;
+namespace Dustweave;
 public static class DailySuite {
  public static Func<string,Action<string>,CancellationToken,Task<PreparedDailyHook>>? Prepare {get;set;}
  public static Func<string,string,Action<string>,CancellationToken,Task<byte[]>>? PrepareModule {get;set;}

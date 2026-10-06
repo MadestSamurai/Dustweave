@@ -67,7 +67,7 @@ For **Windows x64 and the native BrownDust II PC client**. Python is not require
 
 Both packages have the same features. Download a complete package from [Releases](https://github.com/MadestSamurai/Dustweave/releases), then:
 
-1. **Extract the entire folder** and run `BD2DailyAssistant.exe`. Keep its data, flow and component directories alongside the executable.
+1. **Extract the entire folder** and run `Dustweave.exe`. Keep its data, flow and component directories alongside the executable.
 2. Log in to the game normally, save the current account in account management, and verify its identity.
 3. Configure the desired stages in daily settings, then select this run's plan on the task page.
 4. Start the selected stages or the multi-account queue. Follow progress and any items needing attention on the timeline.
@@ -101,3 +101,5 @@ Access is required while the repository remains private. Normal builds and synth
 The main project's open-source license is still being finalized; this is not yet a completed public open-source release. Integrated tools and third-party components retain their own licenses. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and the [dependency inventory](docs/DEPENDENCIES.md). Game content remains the property of its respective rights holders.
 
 Thanks to the tool and dependency maintainers, testers, translators and users who provide reproducible reports. Dustweave is provided free and does not sell activation codes or paid licenses. Verify downloads through this repository and the author's own channels.
+
+Upgrading from an earlier version: extract the complete package into a new folder and launch `Dustweave.exe`. Existing accounts, settings and history are reused without data migration. Keep old and new program files in separate folders.

@@ -1,5 +1,5 @@
 using System.Text;
-using BD2Daily.Compatibility;
+using Dustweave.Compatibility;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Mono.Cecil;

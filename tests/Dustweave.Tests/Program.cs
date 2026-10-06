@@ -1,4 +1,4 @@
-using BD2Daily;
+using Dustweave;
 
 // Only the existing synthetic cases are linked. Captured account fixtures stay in the parent repo.
 if (args.Length == 2 && args[0] == "--control-lock-child")
@@ -35,6 +35,7 @@ async Task Group(string name, Func<Task> run)
     Console.WriteLine($"PASS {name}: {cases.Count - before}");
 }
 Task Sync(Action run) { run(); return Task.CompletedTask; }
+await Group("ProductIdentity", () => Sync(() => ProductIdentityCases.Run(cases)));
 await Group("AccountOrder", () => AccountOrderCases.Run(root, cases));
 await Group("Guild", () => GuildCases.Run(root, cases));
 await Group("Startup", () => StartupCases.Run(root, cases));
@@ -57,6 +58,7 @@ await Group("CollectionReadiness", () => CollectionReadinessCases.Run(root, case
 await Group("TradeData", () => TradeDataCases.Run(root, cases));
 await Group("TradeResume", () => TradeResumeCases.Run(root, cases));
 await Group("ManagedInputs", () => ManagedInputsCases.Run(root, cases));
+await Group("PassiveUi", () => PassiveUiCases.Run(root, cases));
 await Group("BusinessScope", () => BusinessScopeCases.Run(root, cases));
 await Group("BusinessJournal", () => BusinessJournalCases.Run(root, cases));
 await Group("FreeDrawStage", () => FreeDrawStageCases.Run(root, cases));

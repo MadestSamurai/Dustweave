@@ -62,7 +62,7 @@
       "bd2sichuan.core": {
         "type": "Project",
         "dependencies": {
-          "BD2Sichuan.Compatibility": "[0.3.2, )"
+          "BD2Sichuan.Compatibility": "[0.3.3, )"
         }
       }
     },

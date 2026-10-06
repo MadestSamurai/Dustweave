@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
-namespace BD2Daily;
+namespace Dustweave;
 
 public sealed record QueueStage(string Task, string State, string Detail, bool Carried = false, DateTimeOffset? FinishedAt = null, IReadOnlyList<QueueTaskDetail>? PendingTasks = null);
 public sealed record QueueView(string State, string Message, string Record, IReadOnlyList<QueueStage> Stages, string Account = "", QueuePeriod? Period = null, bool Expired = false);

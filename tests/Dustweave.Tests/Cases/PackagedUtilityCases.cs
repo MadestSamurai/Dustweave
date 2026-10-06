@@ -1,6 +1,6 @@
-using BD2Daily;
+using Dustweave;
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
+using static Dustweave.DailyData;
 
 static class PackagedUtilityCases
 {
@@ -17,13 +17,13 @@ static class PackagedUtilityCases
         }
         Check(!DailyTools.Available(package, "live"), "absent utility is detected before process start");
         Reject(() => DailyTools.StartInfo(package, "live"), "missing development helper cannot fall through to PATH");
-        File.WriteAllText(Path.Combine(package, "BD2DailyAssistant.exe"), "offline-not-executable");
+        File.WriteAllText(Path.Combine(package, "Dustweave.exe"), "offline-not-executable");
         DailyJson.Write(Path.Combine(package, DailyTools.Marker), O(("protocol", DailyTools.Protocol)));
         foreach (string name in new[] { "live", "minigame", "exporter", "diagnostics" })
         {
             var start = DailyTools.StartInfo(package, name);
             start.ArgumentList.Add("argument with spaces 中文");
-            Check(DailyTools.Available(package, name) && start.FileName == Path.Combine(package, "BD2DailyAssistant.exe") && start.WorkingDirectory == package && start.ArgumentList.SequenceEqual(new[] { "--utility", name, "argument with spaces 中文" }) && start.CreateNoWindow && !start.UseShellExecute && start.RedirectStandardError && start.RedirectStandardOutput,
+            Check(DailyTools.Available(package, name) && start.FileName == Path.Combine(package, "Dustweave.exe") && start.WorkingDirectory == package && start.ArgumentList.SequenceEqual(new[] { "--utility", name, "argument with spaces 中文" }) && start.CreateNoWindow && !start.UseShellExecute && start.RedirectStandardError && start.RedirectStandardOutput,
                 "unified utility keeps exact arguments and uses isolated hidden process: " + name);
         }
         Check(DailyTools.PackageDirectory(Path.Combine(package, "connection")) == package && DailyTools.EvidenceSpec(package, "test.json") == Path.Combine(package, "connection/specs", "test.json"), "nested connection utility resolves packaged evidence without developer paths");
@@ -31,7 +31,7 @@ static class PackagedUtilityCases
         DailyJson.Write(Path.Combine(package, DailyTools.Marker), O(("protocol", DailyTools.Protocol + 1)));
         Reject(() => DailyTools.Available(package, "live"), "incompatible unified layout fails before connecting");
         DailyJson.Write(Path.Combine(package, DailyTools.Marker), O(("protocol", DailyTools.Protocol)));
-        File.Delete(Path.Combine(package, "BD2DailyAssistant.exe"));
+        File.Delete(Path.Combine(package, "Dustweave.exe"));
         Reject(() => DailyTools.Available(package, "live"), "incomplete unified distribution cannot report available");
     }
 

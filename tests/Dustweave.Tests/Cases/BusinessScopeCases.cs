@@ -1,6 +1,6 @@
-using BD2Daily;
+using Dustweave;
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
+using static Dustweave.DailyData;
 static class BusinessScopeCases
 {
     public static async Task Run(string output, List<string> cases)

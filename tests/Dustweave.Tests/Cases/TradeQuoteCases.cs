@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
-using BD2Daily;
-using static BD2Daily.DailyData;
+using Dustweave;
+using static Dustweave.DailyData;
 
 internal static class TradeQuoteCases
 {

@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
-namespace BD2Daily;
+namespace Dustweave;
 
 // Cycle is the game's next daily reset in server-clock ticks, not local midnight.
 public sealed record QueuePeriod(string Server, string Cycle, string Player, long ResetUtcTicks = 0);

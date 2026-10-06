@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
-namespace BD2Daily;
+using static Dustweave.DailyData;
+namespace Dustweave;
 
 public sealed class DailyTravelBlocked(string message) : Exception(message);
 public sealed class DailyQuotaExhausted(string message) : Exception(message);

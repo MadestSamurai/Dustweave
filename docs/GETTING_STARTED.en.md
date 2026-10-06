@@ -8,7 +8,7 @@
 - A complete Dustweave package. Portable includes the runtime; Lite requires .NET 8 Desktop Runtime x64.
 - The repository remains private. Users with access can download complete packages from Releases. GitHub's Source code archive is not an application package.
 
-Run `BD2DailyAssistant.exe`. Keep the accompanying `data`, `flows`, `connection` and other package directories. A source-build output folder is for development and is not a complete distribution.
+Run `Dustweave.exe`. Keep the accompanying `data`, `flows`, `connection` and other package directories. A source-build output folder is for development and is not a complete distribution.
 
 ## First run
 
@@ -52,3 +52,5 @@ Account sessions are protected for the current Windows user. They are not ordina
 Do not treat administrator mode or restarting the game as universal fixes. A game running with elevated privileges may require corresponding connection privileges; follow the specific diagnostic message.
 
 If the issue persists, [open an issue](https://github.com/MadestSamurai/Dustweave/issues/new/choose) with your tool/Windows versions, stage, expected and actual results, and reproduction steps. Attach only relevant logs after checking for personal information. Never upload whole account directories or captured user libraries. See [SECURITY.md](../SECURITY.md) for security reports.
+
+Upgrading from an earlier version: extract the complete package into a new folder and launch `Dustweave.exe`. Existing accounts, settings and history are reused without data migration. Keep old and new program files in separate folders.

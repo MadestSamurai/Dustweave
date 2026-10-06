@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 public sealed partial class DailyRunPanel : UserControl
 {

@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
-namespace BD2Daily;
+using static Dustweave.DailyData;
+namespace Dustweave;
 
 /// <summary>Target-aware cartridge routing shared by stages; never re-enters a cartridge already loaded.</summary>
 public static class DailyTravel

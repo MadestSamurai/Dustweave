@@ -1,5 +1,5 @@
 using System.Text.Json;
-namespace BD2Daily;
+namespace Dustweave;
 
 public sealed record QueueTaskDetail(string Group, string Title, long? Progress, long? Required,
     string Status, string Reason = "", string Source = "");

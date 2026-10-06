@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 public interface IDailyManagedStage
 {
@@ -35,7 +35,7 @@ public sealed class DailyGuildStage : IDailyManagedStage
     }
     public static JsonObject LoadRecipe()
     {
-        using var s = typeof(DailyGuildStage).Assembly.GetManifestResourceStream("BD2Daily.guild-flow.json") ?? throw new IOException("缺少公会规则。");
+        using var s = typeof(DailyGuildStage).Assembly.GetManifestResourceStream("Dustweave.guild-flow.json") ?? throw new IOException("缺少公会规则。");
         return JsonNode.Parse(s)!.AsObject();
     }
     private static bool SameScope(GuildReceipt receipt, DailySnapshot daily) => receipt.AccountKey == daily.AccountKey && receipt.PlayerKey == daily.PlayerKey && receipt.ServerKey == daily.Guild.ServerKey && receipt.GuildKey == daily.Guild.GuildKey && receipt.CycleKey == daily.Guild.CycleKey;

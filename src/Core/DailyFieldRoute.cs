@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
-namespace BD2Daily;
+using static Dustweave.DailyData;
+namespace Dustweave;
 
 public sealed partial class DailyFieldRoute
 {
@@ -108,12 +108,12 @@ public sealed partial class DailyFieldRoute
                 continue;
             }
             storySeen = null;
-            if (types.Contains("QuickMenuUI") && types.All(t => t is "QuickMenuUI" or "GameFieldDefaultUI" or "OverheadManageUI" or "NoticeUI" or "CurrencyManageUI") && DailyNavigationDecision.Rows(frame).Any(r => S(r["Type"]) == "QuickMenuUI" && DailyNavigationDecision.ReadyInput(r)))
+            if (types.Contains("QuickMenuUI") && types.All(t => t is "QuickMenuUI" or "GameFieldDefaultUI" || DailyNavigationDecision.PassiveSurface(t)) && DailyNavigationDecision.Rows(frame).Any(r => S(r["Type"]) == "QuickMenuUI" && DailyNavigationDecision.ReadyInput(r)))
             {
                 await W.Step("QuickMenuUI", back: true, absent: "QuickMenuUI");
                 continue;
             }
-            bool ready = DailyNavigationDecision.Rows(frame).Any(r => S(r["Type"]) == "GameFieldDefaultUI" && DailyNavigationDecision.ReadyInput(r)) && types.All(t => t is "GameFieldDefaultUI" or "OverheadManageUI" or "NoticeUI" or "CurrencyManageUI");
+            bool ready = DailyNavigationDecision.Rows(frame).Any(r => S(r["Type"]) == "GameFieldDefaultUI" && DailyNavigationDecision.ReadyInput(r)) && types.All(t => t == "GameFieldDefaultUI" || DailyNavigationDecision.PassiveSurface(t));
             if (ready)
             {
                 stable ??= W.Time;

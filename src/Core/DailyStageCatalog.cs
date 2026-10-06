@@ -1,4 +1,4 @@
-namespace BD2Daily;
+namespace Dustweave;
 
 public sealed record DailyStageDefinition(string Id, string Name, Func<DailyPreferences, bool> Enabled);
 public static class DailyStageCatalog

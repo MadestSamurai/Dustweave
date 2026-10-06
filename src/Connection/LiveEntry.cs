@@ -5,13 +5,13 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using BD2Daily;
+using Dustweave;
 using BD2Daily.Live;
 using SharpMonoInjector;
-using BD2Daily.Compatibility;
+using Dustweave.Compatibility;
 
 
-namespace BD2Daily.Live;
+namespace Dustweave.Connection;
 public static class LiveEntry
 {
  public static string Fingerprint=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(typeof(LiveEntry).Module.ModuleVersionId.ToString()+"|plugin-v2|"+DailyPlugin.Current.Fingerprint)));

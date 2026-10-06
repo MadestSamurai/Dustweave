@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
-namespace BD2Daily;
+using static Dustweave.DailyData;
+namespace Dustweave;
 
 public sealed class DailyWorkflowStage(Func<JsonObject, Func<string, string?, JsonObject?, Task<JsonObject>>, DailyWorkflow> workflow, Func<DailyWorkflow, Task<JsonObject>> execute, Func<DailyStageFrame, bool>? resume = null) : IDailyManagedStage
 {

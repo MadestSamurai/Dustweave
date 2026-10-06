@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json.Nodes;
 using BD2.LocalIpc;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>Read-only queue observation. Never opens a writer lease or sends gameplay.</summary>
 public sealed class DailyStageObservation

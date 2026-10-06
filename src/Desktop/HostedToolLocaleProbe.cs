@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json;
 
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 // Uses the actual bundled preference adapters with isolated files. Does not construct a game connection or window.
 internal static class HostedToolLocaleProbe

@@ -62,7 +62,7 @@
       "bd2secretvision.core": {
         "type": "Project",
         "dependencies": {
-          "BD2SecretVision.Compatibility": "[0.1.7, )"
+          "BD2SecretVision.Compatibility": "[0.1.8, )"
         }
       }
     },

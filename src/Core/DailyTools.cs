@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>One shipped executable; helper modes still execute in separately bounded processes.</summary>
 public static class DailyTools
@@ -9,10 +9,10 @@ public static class DailyTools
     public const string Marker = "utility-host.json";
     private static readonly IReadOnlyDictionary<string, string> DevelopmentExecutables = new Dictionary<string, string>(StringComparer.Ordinal)
     {
-        ["live"] = "connection/BD2Daily.Live.exe",
-        ["minigame"] = "fishing-helper/BD2Daily.Fishing.exe",
-        ["exporter"] = "trade-data/BD2TableExporter.exe",
-        ["diagnostics"] = "diagnostics/BD2Daily.RuntimeCheck.exe"
+        ["live"] = "connection/Dustweave.Connection.exe",
+        ["minigame"] = "fishing-helper/Dustweave.ToolHost.exe",
+        ["exporter"] = "trade-data/Dustweave.TableExporter.exe",
+        ["diagnostics"] = "diagnostics/Dustweave.RuntimeCheck.exe"
     };
     public static bool Unified(string package)
     {
@@ -20,7 +20,7 @@ public static class DailyTools
         if (!File.Exists(marker))
             return false;
         var value = DailyJson.TryRead<JsonObject>(marker);
-        if (value?["protocol"]?.GetValue<int>() != Protocol || !File.Exists(Path.Combine(package, "BD2DailyAssistant.exe")))
+        if (value?["protocol"]?.GetValue<int>() != Protocol || !File.Exists(Path.Combine(package, DailyApplication.ExecutableName)))
             throw new InvalidDataException("日常组件目录不完整，请重新完整解压新版工具。");
         return true;
     }
@@ -47,7 +47,7 @@ public static class DailyTools
         var start = new ProcessStartInfo { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = package, RedirectStandardOutput = true, RedirectStandardError = true };
         if (Unified(package))
         {
-            start.FileName = Path.Combine(package, "BD2DailyAssistant.exe");
+            start.FileName = Path.Combine(package, DailyApplication.ExecutableName);
             start.ArgumentList.Add("--utility");
             start.ArgumentList.Add(tool);
         }

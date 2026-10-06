@@ -1,5 +1,5 @@
-using BD2Daily;
-using BD2Daily.Desktop;
+using Dustweave;
+using Dustweave.Desktop;
 using System.Text.Json;
 internal static class LoginIdentityCases
 {

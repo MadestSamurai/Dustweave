@@ -1,5 +1,5 @@
 using System.Reflection;
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 // Product build label is independent of the stable game protocol and integrated tool versions.
 internal static class DailyProductVersion
 {

@@ -52,12 +52,12 @@ static class SquareApproachCases
   var wideBody=SquareApproach.InteractionPoints(center,from,3,p=>Radius(p)<1.4?null:p,Circle,true);
   Check(wideBody.Length>0&&wideBody.All(p=>Radius(p)>=1.4),"large physical bodies move close stands outward safely");
   var status=new System.Text.Json.Nodes.JsonObject{["SquareNavigation"]=new System.Text.Json.Nodes.JsonObject{["Kind"]="square_shop_nav",["State"]="moving"}};
-  Check(!BD2Daily.DailySquareNavigation.MerchantArrived(status,true),"native near does not end close approach prematurely");
+  Check(!Dustweave.DailySquareNavigation.MerchantArrived(status,true),"native near does not end close approach prematurely");
   status["SquareNavigation"]!["State"]="arrived";
-  Check(BD2Daily.DailySquareNavigation.MerchantArrived(status,true),"close arrival and native proximity permit shop interaction");
-  Check(!BD2Daily.DailySquareNavigation.MerchantArrived(status,false),"close arrival still requires native proximity");
+  Check(Dustweave.DailySquareNavigation.MerchantArrived(status,true),"close arrival and native proximity permit shop interaction");
+  Check(!Dustweave.DailySquareNavigation.MerchantArrived(status,false),"close arrival still requires native proximity");
   status["SquareNavigation"]!["Kind"]="square_route_probe";
-  Check(!BD2Daily.DailySquareNavigation.MerchantArrived(status,true),"unrelated route arrival cannot satisfy merchant approach");
+  Check(!Dustweave.DailySquareNavigation.MerchantArrived(status,true),"unrelated route arrival cannot satisfy merchant approach");
   return Task.CompletedTask;
  }
 }

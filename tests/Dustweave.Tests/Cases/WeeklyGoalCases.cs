@@ -1,6 +1,6 @@
-using BD2Daily;
+using Dustweave;
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
+using static Dustweave.DailyData;
 static class WeeklyGoalCases
 {
     // The parent suite still validates the current game table; the independent suite uses explicit synthetic definitions.

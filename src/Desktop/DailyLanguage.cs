@@ -6,7 +6,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Markup;
 
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 // UI locale only. Never changes process culture, protocol values, account keys or receipts.
 public sealed partial class DailyLanguage : INotifyPropertyChanged
@@ -23,10 +23,10 @@ public sealed partial class DailyLanguage : INotifyPropertyChanged
     public static readonly string[] Codes = ["zh-CN", "zh-TW", "en-US"];
     private DailyLanguage()
     {
-        using var stream = typeof(DailyLanguage).Assembly.GetManifestResourceStream("BD2Daily.UI.strings.json")
+        using var stream = typeof(DailyLanguage).Assembly.GetManifestResourceStream("Dustweave.UI.strings.json")
             ?? throw new InvalidDataException("UI language resources are missing.");
         strings = JsonSerializer.Deserialize<Dictionary<string,Dictionary<string,string>>>(stream)!;
-        using var runtimeStream = typeof(DailyLanguage).Assembly.GetManifestResourceStream("BD2Daily.UI.runtime.json")
+        using var runtimeStream = typeof(DailyLanguage).Assembly.GetManifestResourceStream("Dustweave.UI.runtime.json")
             ?? throw new InvalidDataException("Runtime language resources are missing.");
         foreach (var pair in JsonSerializer.Deserialize<Dictionary<string,Dictionary<string,string>>>(runtimeStream)!)
             strings.Add(pair.Key, pair.Value);

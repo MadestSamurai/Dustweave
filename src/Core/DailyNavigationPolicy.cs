@@ -1,5 +1,5 @@
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>Shared read-only UI policy. The same source is embedded for the managed route.</summary>
 public sealed class DailyNavigationPolicy
@@ -51,7 +51,7 @@ public sealed class DailyNavigationPolicy
     }
     public static DailyNavigationPolicy Load()
     {
-        using var stream = typeof(DailyNavigationPolicy).Assembly.GetManifestResourceStream("BD2Daily.ui-policy.json") ?? throw new IOException("缺少共享导航策略。");
+        using var stream = typeof(DailyNavigationPolicy).Assembly.GetManifestResourceStream("Dustweave.ui-policy.json") ?? throw new IOException("缺少共享导航策略。");
         return new(JsonNode.Parse(stream)!.AsObject());
     }
 }
@@ -59,6 +59,8 @@ public sealed class DailyNavigationPolicy
 /// <summary>Native page decisions only. No command, journal or queue writes.</summary>
 public static class DailyNavigationDecision
 {
+    private static readonly HashSet<string> Passive = DailyNavigationPolicy.Load().Background;
+    public static bool PassiveSurface(string type) => Passive.Contains(type);
     public static readonly HashSet<string> Transitions = ["LoadingUI", "EntranceBackgroundCoverUI"];
     public static readonly HashSet<string> FieldPack = ["GameFieldDefaultUI", "CafeteriaFieldDefaultUI", "AvatarLifeGameFieldDefaultUI", "AvatarFishingHarborUI"];
     public static readonly HashSet<string> FieldStages = ["weekly_mainline", "weekly_npc", "weekly_steal", "collection_sync", "square", "goddess", "square_ranking", "trade", "weekly_fishing", "mirror", "weekly_book", "cafeteria_guests"];
@@ -84,6 +86,7 @@ public static class DailyNavigationDecision
         ["HuntOrAirwayUI"] = null,
         ["ManagementRewardPopupUI"] = null,
         ["TotalWarUI"] = null,
+        ["MonsterHuntUI"] = "_objBackButton",
         ["FriendshipUI"] = null,
         ["FriendshipManageUI"] = null
     };

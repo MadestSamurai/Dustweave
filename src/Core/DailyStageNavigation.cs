@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>Managed navigation and startup recovery share one bounded route and the original command driver.</summary>
 public sealed class DailyStageNavigation

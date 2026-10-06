@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
-namespace BD2Daily;
+namespace Dustweave;
 
 public sealed partial class DailyManagedBusiness
 {
@@ -35,7 +35,7 @@ public sealed partial class DailyManagedBusiness
     private static JsonObject Summary(JsonObject op)
     {
         var summary = new JsonObject();
-        foreach (string key in new[] { "id", "role", "account", "player", "server", "cycle", "state", "presentation", "presentation_closed" })
+        foreach (string key in new[] { "id", "role", "account", "player", "server", "cycle", "state", "presentation", "presentation_closed", "confirmation_not_submitted", "preview_cleanup" })
             summary[key] = op[key]?.DeepClone();
         // Only dispatch.start uses scope to distinguish a trade operation.
         summary["trade"] = DailyTradeJournal.IsTrade(op);

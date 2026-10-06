@@ -1,5 +1,5 @@
 using System.Text.Json;
-namespace BD2Daily;
+namespace Dustweave;
 
 public sealed record RefinementChoice(string Instance, string Label);
 public sealed class RefinementChoices

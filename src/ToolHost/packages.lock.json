@@ -56,7 +56,7 @@
       "bd2fishing.core": {
         "type": "Project",
         "dependencies": {
-          "BD2Fishing.Compatibility": "[0.4.4, )"
+          "BD2Fishing.Compatibility": "[0.4.5, )"
         }
       },
       "bd2sichuan.compatibility": {
@@ -69,7 +69,7 @@
       "bd2sichuan.core": {
         "type": "Project",
         "dependencies": {
-          "BD2Sichuan.Compatibility": "[0.3.2, )"
+          "BD2Sichuan.Compatibility": "[0.3.3, )"
         }
       }
     },

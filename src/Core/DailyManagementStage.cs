@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>Native all-settlement and helper-only settlement share managed transactions and the original assignment proof.</summary>
 public sealed class DailyManagementStage : IDailyManagedStage

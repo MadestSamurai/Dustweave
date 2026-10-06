@@ -1,4 +1,4 @@
-using BD2Daily;
+using Dustweave;
 if(args.Length==3&&args[0]=="--steal-catalog"){var index=DailyStealCatalog.Build(args[1]);DailyJson.Write(args[2],index);Console.WriteLine($"Indexed {index["packs"]!.AsArray().Count} cartridges; .NET, no game input.");return;}
 if(args.Length!=3)throw new ArgumentException("<exported-tables> <client-mvid> <catalog-output>");
 var catalog=DailyTradeCatalog.Build(args[0],File.Exists(args[1])?DailyTradeCatalog.Mvid(args[1]):args[1]);

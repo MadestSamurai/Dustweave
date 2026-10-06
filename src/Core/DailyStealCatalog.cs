@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
-namespace BD2Daily;
+using static Dustweave.DailyData;
+namespace Dustweave;
 
 /// <summary>Rebuilds the weekly NPC index from explicit client exports, without a live game.</summary>
 public static class DailyStealCatalog

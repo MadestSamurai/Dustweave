@@ -1,4 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><TargetFramework>net8.0-windows</TargetFramework><OutputType>Exe</OutputType><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><PlatformTarget>x64</PlatformTarget><AssemblyName>BD2Daily.RuntimeCheck</AssemblyName></PropertyGroup>
-  <ItemGroup><ProjectReference Include="../../src/Core/BD2Daily.Core.csproj" /></ItemGroup>
-</Project>

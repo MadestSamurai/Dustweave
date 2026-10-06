@@ -1,4 +1,4 @@
-using BD2Daily;
+using Dustweave;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 static class HomeNavigationCases
@@ -123,6 +123,24 @@ static class HomeNavigationCases
         });
         await Route("new menu instance restarts native settle", Menu(), f => { f.OnWait = () => { if (f.Time >= 1) f.Current["Surfaces"]![0]!["Id"] = 900; }; f.Inspect = () => Check(f.Time >= 3, "replacement menu requires its own stable readiness interval"); });
         await Route("fishing harbor home observed in the running client", Frame(harbor, Surface("NoticeUI")), f => { f.OnAction = _ => f.Current = Menu(); f.Inspect = () => Check(f.Actions.Count == 1 && f.Actions[0]["field"]?.GetValue<string>() == "_objHomeMenuButton", "startup exits fishing harbor once without starting fishing or claiming traps"); });
+        await Route("Monster Hunt lobby returns through observed back button", Frame(Surface("MonsterHuntUI", field: "_objBackButton")), f =>
+        {
+            f.OnAction = _ => f.Current = Menu();
+            f.Inspect = () => Check(f.Actions.Count == 1 && f.Actions[0]["field"]?.GetValue<string>() == "_objBackButton", "Monster Hunt exit never starts battle or quick battle");
+        });
+        await Route("background notices cannot starve page navigation", Frame(Surface("MailUI")), f =>
+        {
+            int reads = 0;
+            f.OnWait = () =>
+            {
+                var rows = f.Current["Surfaces"]!.AsArray();
+                foreach (var row in rows.OfType<JsonObject>().Where(r => DailyNavigationDecision.PassiveSurface(r["Type"]?.GetValue<string>() ?? "")).ToArray()) rows.Remove(row);
+                rows.Add(Surface("NoticeUI", true, "_toast", 2000 + ++reads));
+                f.Current["UiToken"] = "old-background-token-" + reads;
+            };
+            f.OnAction = _ => f.Current = Menu();
+            f.Inspect = () => Check(f.Actions.Count == 1 && f.Time < 4, "passive changes neither reset page stability nor repeat navigation");
+        });
         await Route("passive and loading states then disabled field button", Frame(Surface("NoticeUI")), f => { f.OnWait = () => { if (f.Time < .4) f.Current = Frame(Surface("LoadingUI")); else if (f.Time < 1) { f.Current = Field(); f.Current["Surfaces"]![0]!["Targets"]![0]!["Enabled"] = false; } else if (f.Actions.Count == 0) f.Current = Field(); }; f.OnAction = _ => f.Current = Menu(); f.Inspect = () => Check(f.Actions.Count == 1 && f.Time >= 3.4, "field button opens once after transient readiness"); });
         await Route("update slideshow pages retain the same surface identity", Frame(update, entrance), f => { int page = 0; f.OnAction = a => { if (++page == 3) f.Current = Field(); else { f.Current = Frame(update, entrance); f.Current["Surfaces"]![0]!["Text"] = new JsonArray("page" + page); } }; f.AfterMenu = true; f.Inspect = () => Check(f.Actions.Count == 4, "three update pages and one field-menu input remain distinct progress"); });
         var script = Surface("ScriptUI", false, "_objButtonTouch");

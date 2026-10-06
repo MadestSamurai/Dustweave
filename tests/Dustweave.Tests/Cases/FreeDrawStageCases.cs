@@ -1,4 +1,4 @@
-using BD2Daily;
+using Dustweave;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 static class FreeDrawStageCases
@@ -216,7 +216,7 @@ static class FreeDrawStageCases
     internal sealed class Fixture : IDisposable
     {
         public string Root; public CommandDriverCases.Mailbox Box = new(); public JsonObject Context = CommandDriverCases.Context(), Current = CommandDriverCases.Frame(); public DailyCommandDriver Driver; public DailyManagedBusiness Business; public DailyFreeDrawStage Stage;
-        public Dictionary<long, long> Counts = new() { [5] = 0, [6] = 0 }; public bool MissingResponse, ChangeIdentity, NoTap, FailAnimation, Stopped, EarlyBack; public int Previews, Confirmations, Skips, ResultBacks, PaidCommands;
+        public Dictionary<long, long> Counts = new() { [5] = 0, [6] = 0 }; public bool MissingResponse, ChangeIdentity, NoTap, FailAnimation, Stopped, EarlyBack; public int Previews, Confirmations, Skips, ResultBacks, PaidCommands, Cancellations; public Action? BeforeRead; public bool UseNativeTokens;
         public double ResultDelay; public bool NeverShowResult; private double resultAt = double.PositiveInfinity; private double time; private long sequence; private long category = 5; private bool foreign, ready;
         public long UtcTicks => Ticks; public double Seconds => time; public Task Advance(TimeSpan span)
         {
@@ -251,6 +251,11 @@ static class FreeDrawStageCases
                         Page("MenuUI");
                     else
                         PaidCommands++;
+                }
+                else if (surface == 5 && target == 52)
+                {
+                    Cancellations++;
+                    Page("GachaMainUI");
                 }
                 else if (surface == 5)
                 {
@@ -298,7 +303,7 @@ static class FreeDrawStageCases
                 time += .01;
                 Publish();
             };
-            Driver = new(root, Box, () => { Current["AtUtcTicks"] = Ticks; var context = Context.DeepClone().AsObject(); if (foreign) context["actor"]![3] = "other"; return Task.FromResult(new DailyStageFrame(Current.DeepClone().AsObject(), context)); }, () => Stopped, () => Ticks, () => time, t => { time += t.TotalSeconds; Publish(); return Task.CompletedTask; });
+            Driver = new(root, Box, () => { BeforeRead?.Invoke(); Rehash(); Current["AtUtcTicks"] = Ticks; var context = Context.DeepClone().AsObject(); if (foreign) context["actor"]![3] = "other"; return Task.FromResult(new DailyStageFrame(Current.DeepClone().AsObject(), context)); }, () => Stopped, () => Ticks, () => time, t => { time += t.TotalSeconds; Publish(); return Task.CompletedTask; });
             Driver.Bind(Context);
             Driver.Acquire("live");
             Business = new(root, Driver, [DailyFreeDrawProof.Definition()], () => Stopped, () => time, t => { time += t.TotalSeconds; Publish(); return Task.CompletedTask; });
@@ -330,8 +335,13 @@ static class FreeDrawStageCases
             Current["UiToken"] = "preview";
             Current["Surfaces"]!.AsArray().Add(new JsonObject { ["Type"] = "MessagePopupUI", ["Id"] = 5, ["Popup"] = true, ["Order"] = 10, ["InputReady"] = true, ["Targets"] = new JsonArray(new JsonObject { ["Id"] = 51, ["Field"] = "_buttonOK", ["Enabled"] = true, ["Route"] = "ui" }) });
         }
+        public void Rehash()
+        {
+            if (UseNativeTokens) Current["UiToken"] = PassiveUiCases.Token(Current);
+        }
         private void Publish()
         {
+            Rehash();
             if (time >= resultAt) { resultAt = double.PositiveInfinity; Page("GachaResultUI"); }
             var bytes = Box.Values.GetValueOrDefault("live:observation-request.json");
             if (bytes == null)

@@ -52,13 +52,10 @@
           "System.Collections.Immutable": "9.0.0"
         }
       },
-      "bd2accountsessionmanager.core": {
-        "type": "Project"
-      },
       "BD2ApostleDefense": {
         "type": "Project",
         "dependencies": {
-          "BD2ApostleDefense.Core": "[0.3.6, )"
+          "BD2ApostleDefense.Core": "[0.3.7, )"
         }
       },
       "bd2apostledefense.compatibility": {
@@ -74,40 +71,6 @@
           "BD2ApostleDefense.Compatibility": "[0.3.6, )"
         }
       },
-      "bd2daily.compatibility": {
-        "type": "Project",
-        "dependencies": {
-          "Microsoft.CodeAnalysis.CSharp": "[4.14.0, )",
-          "Mono.Cecil": "[0.11.6, )"
-        }
-      },
-      "bd2daily.core": {
-        "type": "Project",
-        "dependencies": {
-          "BD2AccountSessionManager.Core": "[1.0.0, )",
-          "BD2Daily.Compatibility": "[0.7.27, )"
-        }
-      },
-      "bd2daily.fishing": {
-        "type": "Project",
-        "dependencies": {
-          "BD2Fishing.Core": "[0.4.4, )",
-          "BD2Sichuan.Compatibility": "[0.3.2, )",
-          "BD2Sichuan.Core": "[0.3.2, )"
-        }
-      },
-      "bd2daily.live": {
-        "type": "Project",
-        "dependencies": {
-          "BD2Daily.Core": "[0.7.27, )"
-        }
-      },
-      "bd2daily.runtimecheck": {
-        "type": "Project",
-        "dependencies": {
-          "BD2Daily.Core": "[0.7.27, )"
-        }
-      },
       "bd2equipment.connection": {
         "type": "Project",
         "dependencies": {
@@ -118,20 +81,20 @@
       "bd2equipment.core": {
         "type": "Project",
         "dependencies": {
-          "BD2Equipment.Connection": "[0.3.5, )"
+          "BD2Equipment.Connection": "[0.3.6, )"
         }
       },
       "bd2equipmentassistant": {
         "type": "Project",
         "dependencies": {
-          "BD2Equipment.Connection": "[0.3.5, )",
-          "BD2Equipment.Core": "[0.3.5, )"
+          "BD2Equipment.Connection": "[0.3.6, )",
+          "BD2Equipment.Core": "[0.3.6, )"
         }
       },
       "BD2FiendHunter": {
         "type": "Project",
         "dependencies": {
-          "BD2FiendHunter.Core": "[0.1.2, )"
+          "BD2FiendHunter.Core": "[0.1.3, )"
         }
       },
       "bd2fiendhunter.compatibility": {
@@ -144,13 +107,13 @@
       "bd2fiendhunter.core": {
         "type": "Project",
         "dependencies": {
-          "BD2FiendHunter.Compatibility": "[0.1.2, )"
+          "BD2FiendHunter.Compatibility": "[0.1.3, )"
         }
       },
       "BD2Fishing": {
         "type": "Project",
         "dependencies": {
-          "BD2Fishing.Core": "[0.4.4, )"
+          "BD2Fishing.Core": "[0.4.5, )"
         }
       },
       "bd2fishing.compatibility": {
@@ -163,13 +126,13 @@
       "bd2fishing.core": {
         "type": "Project",
         "dependencies": {
-          "BD2Fishing.Compatibility": "[0.4.4, )"
+          "BD2Fishing.Compatibility": "[0.4.5, )"
         }
       },
       "BD2InfiniteGacha": {
         "type": "Project",
         "dependencies": {
-          "BD2InfiniteGacha.Core": "[0.2.6, )"
+          "BD2InfiniteGacha.Core": "[0.2.7, )"
         }
       },
       "bd2infinitegacha.compatibility": {
@@ -182,13 +145,13 @@
       "bd2infinitegacha.core": {
         "type": "Project",
         "dependencies": {
-          "BD2InfiniteGacha.Compatibility": "[0.2.6, )"
+          "BD2InfiniteGacha.Compatibility": "[0.2.7, )"
         }
       },
       "BD2Rhythm": {
         "type": "Project",
         "dependencies": {
-          "BD2Rhythm.Core": "[0.2.2, )"
+          "BD2Rhythm.Core": "[0.2.3, )"
         }
       },
       "bd2rhythm.compatibility": {
@@ -201,13 +164,13 @@
       "bd2rhythm.core": {
         "type": "Project",
         "dependencies": {
-          "BD2Rhythm.Compatibility": "[0.2.2, )"
+          "BD2Rhythm.Compatibility": "[0.2.3, )"
         }
       },
       "BD2SecretVision": {
         "type": "Project",
         "dependencies": {
-          "BD2SecretVision.Core": "[0.1.7, )"
+          "BD2SecretVision.Core": "[0.1.8, )"
         }
       },
       "bd2secretvision.compatibility": {
@@ -220,13 +183,13 @@
       "bd2secretvision.core": {
         "type": "Project",
         "dependencies": {
-          "BD2SecretVision.Compatibility": "[0.1.7, )"
+          "BD2SecretVision.Compatibility": "[0.1.8, )"
         }
       },
       "BD2Sichuan": {
         "type": "Project",
         "dependencies": {
-          "BD2Sichuan.Core": "[0.3.2, )"
+          "BD2Sichuan.Core": "[0.3.3, )"
         }
       },
       "bd2sichuan.compatibility": {
@@ -239,16 +202,13 @@
       "bd2sichuan.core": {
         "type": "Project",
         "dependencies": {
-          "BD2Sichuan.Compatibility": "[0.3.2, )"
+          "BD2Sichuan.Compatibility": "[0.3.3, )"
         }
-      },
-      "bd2tableexporter": {
-        "type": "Project"
       },
       "BD2Territory": {
         "type": "Project",
         "dependencies": {
-          "BD2Territory.Core": "[0.4.2, )"
+          "BD2Territory.Core": "[0.4.3, )"
         }
       },
       "bd2territory.compatibility": {
@@ -261,7 +221,47 @@
       "bd2territory.core": {
         "type": "Project",
         "dependencies": {
-          "BD2Territory.Compatibility": "[0.4.2, )"
+          "BD2Territory.Compatibility": "[0.4.3, )"
+        }
+      },
+      "dustweave.accounts": {
+        "type": "Project"
+      },
+      "dustweave.compatibility": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.CodeAnalysis.CSharp": "[4.14.0, )",
+          "Mono.Cecil": "[0.11.6, )"
+        }
+      },
+      "dustweave.connection": {
+        "type": "Project",
+        "dependencies": {
+          "Dustweave.Core": "[0.7.27, )"
+        }
+      },
+      "dustweave.core": {
+        "type": "Project",
+        "dependencies": {
+          "Dustweave.Accounts": "[0.7.27, )",
+          "Dustweave.Compatibility": "[0.7.27, )"
+        }
+      },
+      "dustweave.runtimecheck": {
+        "type": "Project",
+        "dependencies": {
+          "Dustweave.Core": "[0.7.27, )"
+        }
+      },
+      "dustweave.tableexporter": {
+        "type": "Project"
+      },
+      "dustweave.toolhost": {
+        "type": "Project",
+        "dependencies": {
+          "BD2Fishing.Core": "[0.4.5, )",
+          "BD2Sichuan.Compatibility": "[0.3.3, )",
+          "BD2Sichuan.Core": "[0.3.3, )"
         }
       }
     },

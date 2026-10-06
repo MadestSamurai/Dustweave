@@ -1,6 +1,6 @@
 using Mono.Cecil;
 using System.Text.Json;
-namespace BD2Daily.Compatibility;
+namespace Dustweave.Compatibility;
 public static class StartupHookContract {
  public static BindingContract Generate(string managed){
   using var i=new MetadataIndex(Path.Combine(managed,"Assembly-CSharp.dll"));

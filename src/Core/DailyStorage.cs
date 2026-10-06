@@ -1,5 +1,5 @@
 using System.Text.Json;
-namespace BD2Daily;
+namespace Dustweave;
 
 public static class DailyJson
 {

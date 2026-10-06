@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
-namespace BD2Daily;
+using static Dustweave.DailyData;
+namespace Dustweave;
 
 /// <summary>Business journals have role-specific scope shapes. Never inspect unrelated scopes as trade objects.</summary>
 public static class DailyTradeJournal

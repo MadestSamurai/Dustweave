@@ -9,7 +9,7 @@ if(!$NoBuild){
  & dotnet build $project -c Release -r win-x64 -p:SelfContained=false --no-restore --nologo
  if($LASTEXITCODE -ne 0){throw 'Test build failed.'}
 }
-$exe=Join-Path (Split-Path -Parent $project) 'bin/Release/net8.0-windows/win-x64/BD2Daily.Tests.exe'
+$exe=Join-Path (Split-Path -Parent $project) 'bin/Release/net8.0-windows/win-x64/Dustweave.Tests.exe'
 if(!(Test-Path -LiteralPath $exe)){throw 'Build the synthetic regression runner first.'}
 $output=Join-Path $root ('artifacts/tests-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss-ffff'))
 $start=[Diagnostics.ProcessStartInfo]::new($exe)

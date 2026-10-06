@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net8.0-windows</TargetFramework><OutputType>Exe</OutputType><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><PlatformTarget>x64</PlatformTarget><AssemblyName>Dustweave.RuntimeCheck</AssemblyName></PropertyGroup>
+  <ItemGroup><ProjectReference Include="../../src/Core/Dustweave.Core.csproj" /></ItemGroup>
+  <ItemGroup><Using Include="BD2Daily" /></ItemGroup>
+</Project>

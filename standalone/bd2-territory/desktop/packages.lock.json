@@ -62,7 +62,7 @@
       "bd2territory.core": {
         "type": "Project",
         "dependencies": {
-          "BD2Territory.Compatibility": "[0.4.2, )"
+          "BD2Territory.Compatibility": "[0.4.3, )"
         }
       }
     },

@@ -2,7 +2,7 @@ extern alias liveUtility;
 using System.IO;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 public static class Program
 {
@@ -54,14 +54,14 @@ public static class Program
             var squareGame = squareHost.Find() ?? throw new InvalidOperationException("游戏未运行，未启动或切换账号。");
             await squareHost.ConnectAsync(squareGame,Console.WriteLine,CancellationToken.None);
             await DailySuite.ActivateAsync(squareHost,DailyIdentity.DataRoot,"daily",Console.WriteLine,CancellationToken.None);
-            await liveUtility::BD2Daily.Live.LiveEntry.RunAsync(["ready"],false,av=>liveUtility::BD2Daily.Live.LiveEntry.RunAsync(av,false));
+            await liveUtility::Dustweave.Connection.LiveEntry.RunAsync(["ready"],false,av=>liveUtility::Dustweave.Connection.LiveEntry.RunAsync(av,false));
         }
         string assemblyName = args[0] switch
         {
-            "live" => "BD2Daily.Live",
-            "minigame" => "BD2Daily.Fishing",
-            "exporter" => "BD2TableExporter",
-            "diagnostics" => "BD2Daily.RuntimeCheck",
+            "live" => "Dustweave.Connection",
+            "minigame" => "Dustweave.ToolHost",
+            "exporter" => "Dustweave.TableExporter",
+            "diagnostics" => "Dustweave.RuntimeCheck",
             _ => throw new ArgumentException("Unknown daily utility: " + args[0])
         };
         if(args.Length>=2&&(args[0]=="live"&&args[1]=="ready"||args[0]=="minigame"&&(args[1]=="connect"||args[1]=="connect-sichuan"))){
@@ -76,7 +76,7 @@ public static class Program
         }
         var assembly = Assembly.Load(new AssemblyName(assemblyName));
         var entry = args[0] == "live"
-            ? assembly.GetType("BD2Daily.Live.LiveEntry")!.GetMethod("RunAsync")!
+            ? assembly.GetType("Dustweave.Connection.LiveEntry")!.GetMethod("RunAsync")!
             : assembly.EntryPoint ?? throw new MissingMethodException("Missing utility entry point: " + assemblyName);
         if (args.Length == 3 && args[1] == "--describe")
         {
@@ -93,7 +93,7 @@ public static class Program
         object? result;
         try
         {
-            result = args[0] == "live" ? liveUtility::BD2Daily.Live.LiveEntry.RunAsync(args.Skip(1).ToArray(), false) : entry.Invoke(null, [args.Skip(1).ToArray()]);
+            result = args[0] == "live" ? liveUtility::Dustweave.Connection.LiveEntry.RunAsync(args.Skip(1).ToArray(), false) : entry.Invoke(null, [args.Skip(1).ToArray()]);
         }
         catch (TargetInvocationException error) when (error.InnerException != null)
         {

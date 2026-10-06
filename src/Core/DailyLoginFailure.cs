@@ -1,4 +1,4 @@
-namespace BD2Daily;
+namespace Dustweave;
 
 public static class DailyLoginFailure
 {

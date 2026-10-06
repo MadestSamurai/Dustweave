@@ -1,6 +1,6 @@
 using BD2.LocalIpc;
 using System.Runtime.InteropServices;
-namespace BD2Daily;
+namespace Dustweave;
 
 public static class DailyTransport
 {

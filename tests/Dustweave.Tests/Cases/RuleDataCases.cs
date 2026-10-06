@@ -1,6 +1,6 @@
-using BD2Daily;
+using Dustweave;
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
+using static Dustweave.DailyData;
 
 static class RuleDataCases
 {
@@ -73,7 +73,7 @@ static class RuleDataCases
             var hashes = DailyRuleData.ValidateExport(tables, a, d, groups.Values.SelectMany(x => x));
             DailyJson.Write(Path.Combine(cache, "verified.json"), O(("directory", tables), ("hashes", hashes)));
             Directory.CreateDirectory(Path.Combine(package, "trade-data"));
-            File.WriteAllText(Path.Combine(package, "trade-data", "BD2TableExporter.exe"), "must-not-run");
+            File.WriteAllText(Path.Combine(package, "trade-data", "Dustweave.TableExporter.exe"), "must-not-run");
             var cached = await Prepare(Path.Combine(package, "not-installed"));
             Check(S(cached.Proof["state"]) == "cached_current" && cached.PathFor("rules/TwoTable.json") == Path.Combine(tables, "TwoTable.json"), "same-client verified cache reuses managed tables without export");
             string gacha = Path.Combine(package, "data", "daily", "gacha");

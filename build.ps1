@@ -2,7 +2,7 @@ param([ValidateSet('Build','Preview','Smoke')][string]$Mode='Build',[switch]$Ref
 $ErrorActionPreference='Stop'
 & dotnet --version
 if($LASTEXITCODE -ne 0){throw 'The pinned .NET SDK is required.'}
-$entry=Join-Path $PSScriptRoot 'src/Desktop/BD2Daily.Desktop.csproj'
+$entry=Join-Path $PSScriptRoot 'src/Desktop/Dustweave.Desktop.csproj'
 if(-not(Test-Path -LiteralPath $entry)){throw 'Dustweave source tree is incomplete.'}
 $restoreMode=if($RefreshDependencyLocks){'--force-evaluate'}else{'--locked-mode'}
 # RID-specific builds belong to project roots; MSBuild does not support -r on a solution.
@@ -14,7 +14,7 @@ foreach($project in $projects){
  if($LASTEXITCODE -ne 0){throw "Build failed: $project"}
 }
 if($Mode -eq 'Build'){return}
-$exe=Join-Path (Split-Path -Parent $entry) 'bin/Release/net8.0-windows/win-x64/BD2DailyAssistant.exe'
+$exe=Join-Path (Split-Path -Parent $entry) 'bin/Release/net8.0-windows/win-x64/Dustweave.exe'
 $runRoot=Join-Path $PSScriptRoot ('artifacts/'+$Mode.ToLowerInvariant()+'-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss-ffff'))
 [IO.Directory]::CreateDirectory($runRoot)|Out-Null
 $start=[Diagnostics.ProcessStartInfo]::new($exe)

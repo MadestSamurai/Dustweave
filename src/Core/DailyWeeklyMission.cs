@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
-namespace BD2Daily;
+using static Dustweave.DailyData;
+namespace Dustweave;
 
 /// <summary>Resolve business goals against the current game's definitions, never a menu visit or a local success flag.</summary>
 public static class DailyWeeklyMission

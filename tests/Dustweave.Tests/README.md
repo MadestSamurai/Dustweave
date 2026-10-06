@@ -6,7 +6,7 @@ The original complete parent test project remains intact. Its captured-screen or
 
 Tests cover account slot/identity preservation, launch readiness, current connection and leases, queue/cycle recovery, tasks and settings, native cancellation, helper lifecycle, rule provenance, page navigation, dialogue/weekly-board flows, free draws, management, dispatch, mirror entry, trade calculation/execution boundaries, plugin contract and tool control. Plugin contract tests create harmless text fixtures; they do not include the private plugin.
 
-The assembly keeps the existing BD2Daily.Tests internal-access identity so no production API is made public merely to test it. Cases and the runner now live together and build in one test directory. Source asset reads resolve DUSTWEAVE_TEST_SOURCE_ROOT for this independent repository; the caller's working directory is unchanged. Without that environment value, run from this repository root.
+The assembly keeps the existing Dustweave.Tests internal-access identity so no production API is made public merely to test it. Cases and the runner now live together and build in one test directory. Source asset reads resolve DUSTWEAVE_TEST_SOURCE_ROOT for this independent repository; the caller's working directory is unchanged. Without that environment value, run from this repository root.
 
 Run the independent repository's test.ps1. Evidence goes to a new artifacts/tests-* directory. CI uploads only the result summary and runner log. Test fixtures, build outputs and generated accounts are not source assets.
 

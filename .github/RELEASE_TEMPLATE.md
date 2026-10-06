@@ -15,8 +15,8 @@
 | Dustweave-{version}-Portable-win-x64.zip | 包含.NET 8桌面运行时，完整解压即可 / Includes the .NET 8 desktop runtime |
 | Dustweave-{version}-Lite-win-x64.zip | 需安装.NET 8 Desktop Runtime x64 / Requires .NET 8 Desktop Runtime x64 |
 
-两者功能相同。完整解压文件夹后运行`BD2DailyAssistant.exe`，不要只复制EXE。校验值见附件`SHA256SUMS.txt`。
-Both packages have the same features. Extract the entire folder and run `BD2DailyAssistant.exe`; do not copy the EXE alone. Checksums are in `SHA256SUMS.txt`.
+两者功能相同。完整解压文件夹后运行`Dustweave.exe`，不要只复制EXE。校验值见附件`SHA256SUMS.txt`。
+Both packages have the same features. Extract the entire folder and run `Dustweave.exe`; do not copy the EXE alone. Checksums are in `SHA256SUMS.txt`.
 
 ## 更新说明 / Updating
 

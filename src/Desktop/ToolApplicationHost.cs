@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Windows;
 
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 /// <summary>Runs each original WPF application in a separate process, sharing the bundled runtime.</summary>
 internal static class ToolApplicationHost

@@ -1,5 +1,5 @@
-using BD2Daily;
-using BD2Daily.Desktop;
+using Dustweave;
+using Dustweave.Desktop;
 internal static class StartupCases
 {
     public static async Task Run(string root, List<string> cases)
@@ -34,8 +34,8 @@ internal static class StartupCases
         {
             var dir = NewRoot();
             Directory.CreateDirectory(Path.Combine(dir, "connection"));
-            File.WriteAllText(Path.Combine(dir, "connection", "BD2Daily.Live.exe"), "");
-            File.WriteAllText(Path.Combine(dir, "BD2DailyAssistant.exe"), "");
+            File.WriteAllText(Path.Combine(dir, "connection", "Dustweave.Connection.exe"), "");
+            File.WriteAllText(Path.Combine(dir, "Dustweave.exe"), "");
             var method = typeof(DailyGameHost).GetMethod("ResolvePackageDirectory", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!;
             Check((string)method.Invoke(null, new object[] { Path.Combine(dir, "connection") })! == dir, "CLI root incorrect");
             Check((string)method.Invoke(null, new object[] { dir })! == dir, "GUI root incorrect");

@@ -1,7 +1,7 @@
 using System.IO;
 using System.Reflection;
 using System.Diagnostics;
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 internal static class SuiteHostProbe {
  public static void Run(string output){
   Directory.CreateDirectory(output);var checks=new List<string>();

@@ -1,5 +1,24 @@
 # Changelog / 更新记录
 
+## 0.8.17 · 2026-10-07
+
+- Increased the account-list checkbox inset and aligned the select-all header with each row. Game-entry actions now use a wider column, an accent outline and stronger text in both themes.
+- 增加账号列表勾选框的左侧留白并对齐全选表头；加宽进入游戏操作列，使用强调色描边和加粗文字，在深浅主题下都更容易辨认。
+
+## 0.8.16 · 2026-10-06
+
+- Passive mission notices, character notices and HUD updates no longer invalidate shared input tokens or navigation stability. Applied the same passive-surface policy to field travel, startup recovery and event/dispatch gates.
+- Added the observed return route from the Monster Hunt lobby. Locally rejected, unsubmitted previews can cancel their unchanged owned dialog so subsequent stages remain usable; uncertain or replaced dialogs remain guarded.
+- 任务完成提示、角色提示和资源栏刷新不再干扰日常各环节的操作校验与导航等待；同步跑图、启动、派遣和活动入口的背景提示判定。
+- 补齐魔兽页面返回路径；对确认未提交且内容未变的本次预览执行取消收尾，避免挡住后续任务。真实确认变化、身份变化和结果不明仍保留检查。
+
+## 0.8.15 · 2026-10-06
+
+- Unified owned project, assembly, host namespace and executable names under Dustweave. The application now starts from `Dustweave.exe`; both archive flavors retain their existing naming format.
+- Updated desktop relay, elevated connection helpers, utility entry points, embedded resources, dependency locks and build/package checks together. Existing accounts, encryption, settings, history and shared connection ownership keep their storage/protocol identities.
+- Managed extension API 4 requires rebuilding against the renamed host; incompatible packages are detected before loading. Independent tools retain their own names and versions.
+- 统一本体工程、程序集、命名空间与程序文件名，入口改为 `Dustweave.exe`；同步构建、打包、辅助进程和管理员连接入口。账号、加密、设置、历史及连接归属保持兼容，独立工具名称不变。
+
 ## 0.8.14 · 2026-10-06
 
 - Account management now separates the current sign-in card from the saved-account list. Each row opens its own account; daily-queue checkboxes and secondary batch sign-in verification have distinct scopes and explicit confirmations.
@@ -100,12 +119,12 @@
 - Fixed daily stages waiting indefinitely when the native home menu remains on the normal `Empty` scene.
 - Applied the same correction to cartridge navigation while keeping actual map arrival, loading overlays, unknown-dialog and command-ownership checks.
 - Added 35 scene regressions. The navigation suite passes 439 checks, and the independent synthetic suite passes 1,634 checks across 50 groups. Live-game verification remains pending.
-- Portable includes the .NET 8 desktop runtime. Lite requires .NET Desktop Runtime 8 x64. Extract the entire folder and start `BD2DailyAssistant.exe`.
+- Portable includes the .NET 8 desktop runtime. Lite requires .NET Desktop Runtime 8 x64. Extract the entire folder and start `Dustweave.exe`.
 
 - 修复主菜单正常停留在 `Empty` 场景时，日常环节一直等待加载、最终超时的问题。
 - 同步修复卡带导航；保留实际地图到达、加载遮罩、未知弹窗与操作归属检查。
 - 新增35项场景回归；导航专项439项、独立50组／1634条合成回归通过。实机验证待完成。
-- Portable自带.NET 8桌面运行时；Lite需要.NET Desktop Runtime 8 x64。完整解压文件夹后启动 `BD2DailyAssistant.exe`。
+- Portable自带.NET 8桌面运行时；Lite需要.NET Desktop Runtime 8 x64。完整解压文件夹后启动 `Dustweave.exe`。
 
 | Package / 包 | Runtime / 运行环境 |
 | --- | --- |

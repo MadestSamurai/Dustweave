@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>A process-lifetime file lease; release is thread independent and survives no crash.</summary>
 public static class DailyToolControl

@@ -1,5 +1,5 @@
 using System.Text.Json.Nodes;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>Resume an already owned quiz only; startup never opens or starts another question.</summary>
 public static class DailyQuizRecovery

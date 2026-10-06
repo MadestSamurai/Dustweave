@@ -1,2 +1,2 @@
 using System.Runtime.CompilerServices;
-[assembly: InternalsVisibleTo("BD2Daily.Tests")]
+[assembly: InternalsVisibleTo("Dustweave.Tests")]

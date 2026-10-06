@@ -62,7 +62,7 @@
       "bd2infinitegacha.core": {
         "type": "Project",
         "dependencies": {
-          "BD2InfiniteGacha.Compatibility": "[0.2.6, )"
+          "BD2InfiniteGacha.Compatibility": "[0.2.7, )"
         }
       }
     },

@@ -1,5 +1,5 @@
 using System.IO;
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 // Isolated fixtures for packaged UI smoke checks. Never constructs the real session service or injector.
 public sealed class DemoEnvironment : IAccountSessions, IGameHost
 {

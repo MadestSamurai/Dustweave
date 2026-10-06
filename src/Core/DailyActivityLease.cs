@@ -1,5 +1,5 @@
 using System.Text.Json;
-namespace BD2Daily;
+namespace Dustweave;
 
 /// <summary>Exclusive execution ownership, independent of a settings window's lifetime.</summary>
 public sealed class DailyActivityLease(string root, Func<DateTime>? clock = null) : IDisposable

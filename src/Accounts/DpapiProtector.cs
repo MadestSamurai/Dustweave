@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 
-namespace BD2AccountSessionManager;
+namespace Dustweave.Accounts;
 
 internal static class DpapiProtector
 {

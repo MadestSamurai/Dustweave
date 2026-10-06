@@ -2,9 +2,9 @@ extern alias liveUtility;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
-using BD2Daily.Compatibility;
+using Dustweave.Compatibility;
 using Mono.Cecil;
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 internal static class DailySuiteComposition {
  private static readonly SemaphoreSlim compiler=new(1,1);
@@ -46,7 +46,7 @@ internal static class DailySuiteComposition {
   try{
    cancel.ThrowIfCancellationRequested();
    string tool=id.EndsWith("-daily",StringComparison.Ordinal)?id[..^6]:id;
-   string assemblyName=id=="daily"?"BD2Daily.Live":tool=="equipment"?"BD2Equipment.Connection":prefixes[tool]+".Compatibility";
+   string assemblyName=id=="daily"?"Dustweave.Connection":tool=="equipment"?"BD2Equipment.Connection":prefixes[tool]+".Compatibility";
    var assembly=Assembly.Load(assemblyName);
    string key=DailyIdentity.Hash("module-v1|"+id+"|"+assembly.ManifestModule.ModuleVersionId+"|"+(id=="daily"?DailyPlugin.Current.Fingerprint:""));
    string directory=Path.Combine(DailyIdentity.DataRoot,"suite-cache","modules",id,key,ClientKey(managed));
@@ -61,7 +61,7 @@ internal static class DailySuiteComposition {
    if(id=="daily"){
     string target=Path.Combine(directory,"build-"+Guid.NewGuid().ToString("N"));
     // Adaptation and compilation are CPU-heavy even before RunAsync's first await.
-    await Task.Run(()=>liveUtility::BD2Daily.Live.LiveEntry.RunAsync(["prepare",managed,target],false),cancel);
+    await Task.Run(()=>liveUtility::Dustweave.Connection.LiveEntry.RunAsync(["prepare",managed,target],false),cancel);
     if(!File.Exists(Path.Combine(target,"bridge.dll")))throw new InvalidDataException("日常执行组件编译失败，尚未启用。");
     payload=await File.ReadAllBytesAsync(Path.Combine(target,"bridge.dll"),cancel);
    }else if(tool=="equipment"){

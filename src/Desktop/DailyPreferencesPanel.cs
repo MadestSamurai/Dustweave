@@ -2,7 +2,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-namespace BD2Daily.Desktop;
+namespace Dustweave.Desktop;
 
 /// <summary>Edits account-scoped policy only. Saving never starts game actions.</summary>
 public sealed class DailyPreferencesPanel : UserControl

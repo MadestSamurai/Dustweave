@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
-namespace BD2Daily;
+namespace Dustweave;
 
 public sealed record DailyHomePlan(string Kind, string Reason, JsonObject? Action = null);
 /// <summary>Startup recovery uses observed native controls only. Active business is handled separately with proof.</summary>
@@ -49,8 +49,8 @@ public static class DailyHomeDecision
     public static string Signature(JsonObject frame) => new JsonObject
     {
         ["Scene"] = frame["Scene"]?.DeepClone(),
-        ["UiToken"] = frame["UiToken"]?.DeepClone(),
-        ["Surfaces"] = new JsonArray(DailyNavigationDecision.Rows(frame).OrderBy(r => Text(r, "Type")).ThenBy(r => r["Id"]?.ToJsonString()).Select(r => (JsonNode)r.DeepClone()).ToArray())
+        ["Surfaces"] = new JsonArray(DailyNavigationDecision.Rows(frame).Where(r => !DailyNavigationDecision.PassiveSurface(Text(r, "Type")))
+            .OrderBy(r => Text(r, "Type")).ThenBy(r => r["Id"]?.ToJsonString()).Select(r => (JsonNode)r.DeepClone()).ToArray())
     }.ToJsonString();
     // Menu counters and rotating management/news links update every second. They
     // do not restart the same menu's native readiness gate. Actual input still

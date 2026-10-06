@@ -1,6 +1,6 @@
-using BD2Daily;
+using Dustweave;
 using System.Text.Json.Nodes;
-using static BD2Daily.DailyData;
+using static Dustweave.DailyData;
 
 /// <summary>Exercises the production managed host using deterministic native observations and mailboxes.</summary>
 sealed class ManagedHostFixture : IDisposable
