@@ -62,6 +62,9 @@
       <CheckBox x:Name="Choice" IsChecked="{Binding Selected,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.HelpText="{Binding Detail}" FontWeight="Normal" FontSize="14"><TextBlock Text="{Binding Name}" TextWrapping="Wrap"/></CheckBox>
       <TextBlock x:Name="Label" Text="{Binding Name}" FontWeight="Normal" TextWrapping="Wrap" Visibility="Collapsed"/>
       <TextBlock x:Name="Explanation" Text="{Binding Detail}" Foreground="{DynamicResource MutedInk}" Margin="0,6,0,0" FontSize="12" TextWrapping="Wrap"/>
+      <Button x:Name="TaskDetails" Content="{Binding TaskDetailsLabel}" Command="{x:Static local:DailyRunPanel.TaskDetailsCommand}" CommandParameter="{Binding}"
+              Visibility="Collapsed" HorizontalAlignment="Left" Margin="0,8,0,0"
+              MinHeight="30" Padding="10,4" FontSize="12" AutomationProperties.Name="{Binding TaskDetailsAccessibleName}"/>
      </StackPanel>
      <TextBlock x:Name="FinishedTime" Grid.Column="1" Text="{Binding FinishedTime}" ToolTip="{Binding FinishedTimeHelp}" AutomationProperties.Name="{Binding FinishedTimeHelp}" Foreground="{DynamicResource MutedInk}" FontSize="12" Typography.NumeralAlignment="Tabular" Margin="8,4,16,0" VerticalAlignment="Top" Visibility="Collapsed"/>
      <TextBlock x:Name="StateLabel" Grid.Column="2" VerticalAlignment="Top" Padding="8,4" MaxWidth="150" Text="{Binding State}" Foreground="{Binding StateBrush}" FontSize="12" TextWrapping="Wrap"/>
@@ -69,6 +72,7 @@
    </Border>
   </Grid>
   <DataTemplate.Triggers><DataTrigger Binding="{Binding Compact}" Value="True"><Setter TargetName="Explanation" Property="Visibility" Value="Collapsed"/></DataTrigger>
+   <DataTrigger Binding="{Binding HasTaskDetails}" Value="True"><Setter TargetName="TaskDetails" Property="Visibility" Value="Visible"/></DataTrigger>
    <DataTrigger Binding="{Binding HasFinishedTime}" Value="True"><Setter TargetName="FinishedTime" Property="Visibility" Value="Visible"/></DataTrigger>
    <DataTrigger Binding="{Binding IsPlan}" Value="True">
     <Setter TargetName="FinishedTime" Property="Visibility" Value="Collapsed"/>

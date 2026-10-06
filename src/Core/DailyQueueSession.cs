@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 namespace BD2Daily;
 
-public sealed record QueueStage(string Task, string State, string Detail, bool Carried = false, DateTimeOffset? FinishedAt = null);
+public sealed record QueueStage(string Task, string State, string Detail, bool Carried = false, DateTimeOffset? FinishedAt = null, IReadOnlyList<QueueTaskDetail>? PendingTasks = null);
 public sealed record QueueView(string State, string Message, string Record, IReadOnlyList<QueueStage> Stages, string Account = "", QueuePeriod? Period = null, bool Expired = false);
 public sealed record QueuePlanRequest(string Account, IReadOnlyList<string> Tasks)
 {
@@ -185,11 +185,31 @@ public sealed class DailyQueueSession(string root, IDailyQueueExecutor executor,
         value = JsonSerializer.SerializeToElement(normalized);
         string state = value.GetProperty("state").GetString() ?? "";
         var stages = value.GetProperty("items").EnumerateArray().Select(i => new QueueStage(i.GetProperty("task").GetString() ?? "", i.GetProperty("state").GetString() ?? "",
-          i.TryGetProperty("error", out var error) ? error.GetString() ?? "" : i.TryGetProperty("result", out var detailResult) && detailResult.TryGetProperty("detail", out var detail) ? detail.GetString() ?? "" : i.TryGetProperty("progress", out var progress) && progress.TryGetProperty("detail", out var progressDetail) ? progressDetail.GetString() ?? "" : i.TryGetProperty("result", out var r) && r.TryGetProperty("waiting_daily_reset", out var waiting) && waiting.ValueKind == JsonValueKind.True ? "吸收次数用完，次日接续未完成地图" : i.TryGetProperty("result", out r) && r.TryGetProperty("reason", out var reason) ? reason.GetString() ?? "" : "", i.TryGetProperty("carried_forward", out var carried) && carried.ValueKind == JsonValueKind.True, ReadFinishedAt(i))).ToArray();
+          ReadStageDetail(i), i.TryGetProperty("carried_forward", out var carried) && carried.ValueKind == JsonValueKind.True, ReadFinishedAt(i), DailyPendingTasks.Read(i))).ToArray();
         var period = DailyQueuePeriod.Read(value);
         long now = utcTicks?.Invoke() ?? DateTime.UtcNow.Ticks;
         bool expired = DailyQueuePeriod.IsExpired(period, DailyQueuePeriod.Snapshot(root, period?.Server ?? ""), now);
         return new(state, value.TryGetProperty("error", out var e) ? e.GetString() ?? "" : "", record, stages, account, period, expired);
+    }
+    private static string ReadStageDetail(JsonElement item)
+    {
+        static string Text(JsonElement element, string key) =>
+            element.ValueKind == JsonValueKind.Object && element.TryGetProperty(key, out var value)
+                && value.ValueKind == JsonValueKind.String ? value.GetString() ?? "" : "";
+        string error = Text(item, "error");
+        if (!string.IsNullOrWhiteSpace(error)) return error;
+        item.TryGetProperty("result", out var result);
+        item.TryGetProperty("progress", out var progress);
+        string state = Text(item, "state"), current = Text(progress, "detail");
+        if (state is ("running" or "pending") && !string.IsNullOrWhiteSpace(current)) return current;
+        string detail = Text(result, "detail");
+        if (!string.IsNullOrWhiteSpace(detail)) return detail;
+        if (result.ValueKind == JsonValueKind.Object && result.TryGetProperty("waiting_daily_reset", out var waiting)
+            && waiting.ValueKind == JsonValueKind.True) return "吸收次数用完，次日接续未完成地图";
+        string reason = Text(result, "reason");
+        if (!string.IsNullOrWhiteSpace(reason)) return reason;
+        // A final result must not display stale progress such as "preparing".
+        return state is "completed" or "skipped" ? "" : current;
     }
     private static DateTimeOffset? ReadFinishedAt(JsonElement item)
     {

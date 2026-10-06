@@ -10,6 +10,8 @@ namespace BD2Daily.Desktop;
 public sealed partial class DailyRunPanel : UserControl
 {
     private static DailyLanguage L => DailyLanguage.Current;
+    public static readonly System.Windows.Input.RoutedUICommand TaskDetailsCommand = new();
+    private DailyTaskDetailsWindow? taskDetailsWindow;
     public event Action<bool, bool>? StartRequested;
     public event Action<QueueRetryRequest>? RetryRequested;
     public event Action<QueuePlanRequest>? PlanRequested;
@@ -38,6 +40,13 @@ public sealed partial class DailyRunPanel : UserControl
     private readonly Button accounts = new() { Content = "管理账号" };
     public DailyRunPanel(string root)
     {
+        CommandBindings.Add(new System.Windows.Input.CommandBinding(TaskDetailsCommand, (_, e) => {
+            if(e.Parameter is StageRow row && row.HasTaskDetails) {
+                taskDetailsWindow?.Close();
+                taskDetailsWindow = new DailyTaskDetailsWindow(row.Task, row.PendingTasks, row.FinishedAt) { Owner=Window.GetWindow(this) };
+                taskDetailsWindow.Show();
+            }
+        }, (_, e) => { e.CanExecute=e.Parameter is StageRow {HasTaskDetails:true};e.Handled=true; }));
         L.Bind(syncCollection, ContentControl.ContentProperty, "run.sync");
         L.Bind(syncCollection, FrameworkElement.ToolTipProperty, "run.sync_help");
         L.Bind(stop, ContentControl.ContentProperty, "common.stop");
@@ -488,11 +497,17 @@ public sealed partial class DailyRunPanel : UserControl
         {
             get
             {
-                var text = Describe(snapshot.Detail);
+                var text = snapshot.State == "skipped" && string.IsNullOrWhiteSpace(snapshot.Detail)
+                    ? L.Get("run.skipped_unknown") : Describe(snapshot.Detail);
                 if (snapshot.State == "recovery_required") text = L.Get("run.needs_check", text);
                 return snapshot.Carried ? L.Get("run.carried", text) : text;
             }
         }
+        public IReadOnlyList<QueueTaskDetail> PendingTasks => snapshot.PendingTasks ?? [];
+        public DateTimeOffset? FinishedAt => snapshot.FinishedAt;
+        public bool HasTaskDetails => !IsPlan && (PendingTasks.Count>0 || snapshot.Detail.Contains("仍有未完成任务", StringComparison.Ordinal));
+        public string TaskDetailsLabel => PendingTasks.Count>0 ? L.Get("run.details_count",PendingTasks.Count) : L.Get("run.details");
+        public string TaskDetailsAccessibleName => L.Get("run.details_accessible",Name);
         public string DiagnosticDetail => L.Diagnostic(snapshot.Detail, Detail);
         public bool IsPlan { get; init; }
         public void RefreshLanguage() => Changed("");
@@ -536,7 +551,7 @@ public sealed partial class DailyRunPanel : UserControl
         public void Update(QueueStage stage)
         {
             snapshot = stage;
-            Compact = stage.State is "completed" or "skipped";
+            Compact = stage.State == "completed" && string.IsNullOrWhiteSpace(stage.Detail) && !stage.Carried && !HasTaskDetails;
             Active = stage.State == "running";
             NeedsAttention = stage.State is "blocked" or "recovery_required";
             string symbol = stage.State switch

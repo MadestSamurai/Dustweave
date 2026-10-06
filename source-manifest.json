@@ -7755,8 +7755,26 @@
     {
       "path": "src/Shared/DailyBridgeVersion.cs",
       "sha256": "967cc7ec980745c5965b90a9ee4b0c6167994bdf60fb4e05d433c68f1c18c2af",
-      "reasons": ["build input"],
+      "reasons": [
+        "build input"
+      ],
       "bytes": 200
+    },
+    {
+      "path": "src/Core/DailyPendingTasks.cs",
+      "sha256": "7e0971aa4dedc06faf717d9e372271f1b3cbd328a270bc6fe86546f6573efd4b",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3058
+    },
+    {
+      "path": "src/Desktop/DailyTaskDetailsWindow.cs",
+      "sha256": "a14c74a86f08037fb7c210af460f49162b5a0bf3895d1509bab44b8bc6e64219",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 5174
     }
   ],
   "publicReleaseApproved": false,

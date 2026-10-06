@@ -75,6 +75,63 @@ public sealed partial class DailyRunPanel
         panel.resume.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         if(panel.resume.IsEnabled||resumes!=1||!panel.retry.IsEnabled)throw new Exception("A terminal queue offers resume or prevents selected retry");
     }
+    internal void ShowOutcomeExplanationsForSmoke()
+    {
+        Show(new("completed", "", "fixture/outcome-details.json", [
+            new("weekly_fishing", "skipped", "weekly_fishing_complete"),
+            new("management", "skipped", "no_accrued_rewards"),
+            new("free_draws", "skipped", ""),
+            new("square", "completed", "square_rewards_checked"),
+            new("mail", "completed", "")], new string('a',64)));
+    }
+    internal void CheckOutcomeExplanationsForSmoke()
+    {
+        foreach(var row in rows)
+        {
+            stages.ScrollIntoView(row);UpdateLayout();
+            var item=(ListBoxItem)stages.ItemContainerGenerator.ContainerFromItem(row);
+            ContentPresenter? FindPresenter(DependencyObject node)
+            {
+                if(node is ContentPresenter p && p.Content==row)return p;
+                for(int i=0;i<VisualTreeHelper.GetChildrenCount(node);i++)
+                    if(FindPresenter(VisualTreeHelper.GetChild(node,i)) is {} child)return child;
+                return null;
+            }
+            var presenter=FindPresenter(item)??throw new Exception("Timeline result presenter is unavailable");
+            var explanation=(TextBlock)stages.ItemTemplate.FindName("Explanation",presenter);
+            bool expected=row.Task!="mail";
+            if(explanation.IsVisible!=expected || expected && (explanation.Text!=row.Detail || string.IsNullOrWhiteSpace(explanation.Text)))
+                throw new Exception("Terminal result explanation was hidden or lost: "+row.Task);
+            if(row.Task=="free_draws" && row.Detail!=L.Get("run.skipped_unknown"))
+                throw new Exception("Missing skip evidence was replaced by an invented reason");
+            if(row.Task=="weekly_fishing" && row.Detail!=L.Get("message.weekly_fishing_complete"))
+                throw new Exception("Skip explanation did not follow the software language");
+        }
+        stages.ScrollIntoView(rows[0]);UpdateLayout();
+        CheckViewportForSmoke();
+    }
+    internal DailyTaskDetailsWindow OpenTaskDetailsForSmoke(bool longList=false)
+    {
+        IReadOnlyList<QueueTaskDetail> tasks=[new("weekly","每日登录",2,5,"pending"),
+            new("weekly","向女神像许愿",2,3,"pending"),new("pass","累计完成任务",10,10,"claimable",Source:"回归通行证")];
+        if(longList)tasks=Enumerable.Range(0,60).Select(i=>new QueueTaskDetail("event", "活动任务 "+(i+1)+" · "+new string('长',40),i,80,"pending")).ToArray();
+        Show(new("completed","","fixture/pending-details.json",[
+            new("rewards","completed","奖励检查完成；仍有未完成任务",FinishedAt:new DateTimeOffset(2026,10,6,8,0,0,TimeSpan.Zero),PendingTasks:tasks)],new string('a',64)));
+        stages.ScrollIntoView(rows[0]);UpdateLayout();
+        Button? Find(DependencyObject node)
+        {
+            if(node is Button {Name:"TaskDetails"} button)return button;
+            for(int i=0;i<VisualTreeHelper.GetChildrenCount(node);i++)
+                if(Find(VisualTreeHelper.GetChild(node,i)) is {} child)return child;
+            return null;
+        }
+        var item=(ListBoxItem)stages.ItemContainerGenerator.ContainerFromIndex(0);
+        var action=Find(item)??throw new Exception("Pending-task details action is missing");
+        if(!action.IsVisible || !action.IsEnabled || action.Content?.ToString()!=L.Get("run.details_count",tasks.Count)
+            || !TaskDetailsCommand.CanExecute(rows[0],action))throw new Exception("Pending details cannot be opened from a completed reward check");
+        TaskDetailsCommand.Execute(rows[0],action);
+        return taskDetailsWindow??throw new Exception("The details action did not open the task window");
+    }
     internal int CheckAccessiblePlanForSmoke()
     {
         UpdateLayout();

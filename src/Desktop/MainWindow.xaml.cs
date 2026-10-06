@@ -750,6 +750,47 @@ public partial class MainWindow : Window
                 Capture("recovery-actions-empty");
                 dailyPanel.SelectUnfinished();
             } finally { LanguageSelector.SelectedIndex=recoveryLanguage;ThemeSelector.SelectedIndex=recoveryTheme;Width=recoveryWidth;Height=recoveryHeight; }
+            try {
+                dailyPanel.ShowOutcomeExplanationsForSmoke();
+                foreach(int language in new[]{0,1,2}) foreach(int appearance in new[]{1,2}) {
+                    LanguageSelector.SelectedIndex=language;ThemeSelector.SelectedIndex=appearance;
+                    Width=language==2?920:1180;Height=language==2?650:800;
+                    await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    dailyPanel.CheckOutcomeExplanationsForSmoke();
+                    Capture($"outcome-explanations-{language}-{appearance}");
+                }
+            } finally {
+                LanguageSelector.SelectedIndex=recoveryLanguage;ThemeSelector.SelectedIndex=recoveryTheme;
+                Width=recoveryWidth;Height=recoveryHeight;dailyPanel.Show(retryView);
+            }
+            try {
+                foreach(int language in new[]{0,1,2}) foreach(int appearance in new[]{1,2}) {
+                    LanguageSelector.SelectedIndex=language;ThemeSelector.SelectedIndex=appearance;
+                    var taskWindow=dailyPanel.OpenTaskDetailsForSmoke();
+                    try {
+                        if(language==2){taskWindow.Width=480;taskWindow.Height=420;}
+                        await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                        if(taskWindow.TaskCount!=3 || taskWindow.TaskTitles[0].Text!="每日登录" || taskWindow.TaskScroll.ActualHeight<120)
+                            throw new Exception("Saved task progress is missing from the details window");
+                        var closeBounds=taskWindow.CloseAction.TransformToAncestor(taskWindow).TransformBounds(new Rect(taskWindow.CloseAction.RenderSize));
+                        if(closeBounds.Bottom>taskWindow.ActualHeight || closeBounds.Right>taskWindow.ActualWidth)
+                            throw new Exception("The task details close action is clipped");
+                        Capture($"pending-task-details-{language}-{appearance}",(FrameworkElement)taskWindow.Content);
+                        Capture($"pending-task-button-{language}-{appearance}");
+                    } finally {taskWindow.Close();}
+                }
+                var many=dailyPanel.OpenTaskDetailsForSmoke(true);
+                try {
+                    many.Width=480;many.Height=420;
+                    await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    if(many.TaskScroll.ScrollableHeight<=0)throw new Exception("Long task details cannot scroll");
+                    many.TaskScroll.ScrollToBottom();
+                    await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    Capture("pending-task-details-scroll",(FrameworkElement)many.Content);
+                    many.CloseAction.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    if(many.IsVisible)throw new Exception("Task details close button does not close the window");
+                } finally {if(many.IsVisible)many.Close();}
+            } finally {LanguageSelector.SelectedIndex=recoveryLanguage;ThemeSelector.SelectedIndex=recoveryTheme;dailyPanel.Show(retryView);}
             dailyPanel.Show(new QueueView("running", "共享路线", "fixture/shared.json", new[] { new QueueStage("weekly_mainline", "running", "第2章 · 地图21 · 已核对3/24张地图"), new QueueStage("weekly_npc", "running", "第2章 · 地图21 · 本周完成1/3 · 追悼米莎的灵魂"), new QueueStage("weekly_steal", "running", "第2章 · 地图21 · 已核对2/12张地图") }, new string('a', 64)));
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             Capture("daily-weekly-progress");

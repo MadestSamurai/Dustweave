@@ -78,6 +78,54 @@ static class QueueSessionCases
             "carried completion time survives a fresh viewer without using refresh time");
         Check(stampView.Stages.Skip(1).All(s => s.FinishedAt == null),
             "missing null malformed and out-of-range completion times do not break the queue or fabricate a date");
+        var detailRoot = NewRoot();
+        var detailSession = new DailyQueueSession(detailRoot, new FakeWorker());
+        var detailPath = Path.Combine(detailRoot, "live", "queues", new string('e', 32), "result.json");
+        DailyJson.Write(detailPath, new { state = "partial", items = new object[] {
+            new { task = "weekly_fishing", state = "skipped", error = "", result = new { detail = "", reason = "weekly_fishing_complete" }, progress = new { detail = "准备中" } },
+            new { task = "weekly_book", state = "skipped", error = (string?)null, result = new { detail = (string?)null, reason = "本周末日之书任务已完成" } },
+            new { task = "trade", state = "completed", result = new { detail = "结果摘要", reason = "reason_code" }, progress = new { detail = "准备中" } },
+            new { task = "mail", state = "skipped", result = (object?)null, progress = new { detail = "准备中" } },
+            new { task = "hunting", state = "running", result = new { reason = "old_result" }, progress = new { detail = "正在狩猎" } },
+            new { task = "room", state = "blocked", error = "具体错误", result = new { detail = "旧结果" } },
+            new { task = "weekly_mainline", state = "partial", result = new { detail = "", waiting_daily_reset = true, reason = "limit_reached" }, progress = new { detail = "准备中" } }
+        }});
+        DailyJson.Write(detailSession.LastOutput, new { account, record = detailPath });
+        var details = detailSession.ReadView().Stages;
+        Check(details[0].Detail == "weekly_fishing_complete", "empty error/detail and stale progress do not hide the final skip reason");
+        Check(details[1].Detail == "本周末日之书任务已完成", "null optional fields do not hide the skip explanation");
+        Check(details[2].Detail == "结果摘要", "completed stage keeps its explicit result summary");
+        Check(details[3].Detail == "", "missing skip reason is not replaced by stale running progress");
+        Check(details[4].Detail == "正在狩猎", "active stage uses current progress instead of a previous result");
+        Check(details[5].Detail == "具体错误", "failure explanation retains the actual error");
+        Check(details[6].Detail == "吸收次数用完，次日接续未完成地图", "reset-wait explanation takes precedence over stale progress");
+        DailyJson.Write(detailPath, System.Text.Json.Nodes.JsonNode.Parse("""
+        {"state":"completed","items":[{"task":"rewards","state":"completed","result":{
+          "reason":"奖励检查完成；仍有未完成任务",
+          "pending_tasks":[
+            {"group":"weekly","id":201,"title":"每日登录","progress":2,"required":5,"status":"pending"},
+            {"key":"MG_WEEKLY:228","id":228,"title":"向女神像许愿","progress":2,"required":3,"status":"pending"},
+            {"pass_id":7,"event_id":91,"title":"通行证目标","progress":10,"required":10,"status":"claimable"},
+            {"group":"event","id":201,"title":"活动目标","progress":1,"required":4,"status":"pending"},
+            {"group":"daily","id":201,"title":"每日登录","progress":0,"required":1,"status":"pending"},
+            {"group":"daily","title":"已领取","status":"claimed"},
+            null,23,
+            {"title":null,"progress":"not-a-number","required":null,"status":"locked"}
+          ],"stages":{"passes":{"reports":[{"selected_pass_id":7,"pass_title":"回归通行证"}]}}
+        }},{"task":"event_rewards","state":"completed","result":{"pending_tasks":null}}]}
+        """));
+        string beforeDetails = File.ReadAllText(detailPath);
+        var pendingView=detailSession.ReadView();
+        var pendingTasks=pendingView.Stages[0].PendingTasks!;
+        Check(pendingTasks.Count==6 && pendingTasks[0].Title=="每日登录" && pendingTasks[0].Progress==2 && pendingTasks[0].Required==5,
+            "viewer exposes saved task names and actual progress while excluding claimed rows");
+        Check(pendingTasks[1].Group=="weekly" && pendingTasks[2].Group=="pass" && pendingTasks[2].Source=="回归通行证" && pendingTasks[2].Status=="claimable",
+            "viewer identifies weekly and pass tasks with source title and reward status");
+        Check(pendingTasks.Count(t=>t.Title=="每日登录")==2 && pendingTasks[3].Group=="event" && pendingTasks[4].Group=="daily",
+            "same task ID or title in different categories is not merged");
+        Check(pendingTasks[5].Progress==null && pendingTasks[5].Required==null && pendingTasks[5].Status=="locked"
+            && pendingView.Stages[1].PendingTasks!.Count==0, "missing or malformed details remain unknown without breaking the timeline");
+        Check(File.ReadAllText(detailPath)==beforeDetails,"opening task details does not mutate the saved execution record");
         var source = Path.Combine(root, "live", "queues", new string('c', 32), "result.json");
         DailyJson.Write(source, new
         {
