@@ -15,6 +15,6 @@ Windows x64 · 时间线日常助手 · 简体中文 / 繁體中文 / English
 
 沿用原来的账号与设置目录。首次试用前请关闭旧日常窗口，避免同时操作同一份配置；无需为界面更新重启游戏。未完成操作仍需按界面提示核对。本版本已做离线检查，真实游戏行为仍需正常使用时验证。
 
-免费提供；B站MadSamurai / GitHub MadestSamurai。当前版本为 0.8.1，仓库与发行页保持私有。集成工具的许可证和来源见 licenses、docs/tools 与 THIRD_PARTY_NOTICES.md。
+免费提供；B站MadSamurai / GitHub MadestSamurai。当前版本为 0.8.8，仓库与发行页保持私有。集成工具的许可证和来源见 licenses、docs/tools 与 THIRD_PARTY_NOTICES.md。
 
 项目与更新入口：https://github.com/MadestSamurai/Dustweave 。当前没有在线自动更新；请保留完整文件夹使用。项目不隶属于游戏官方，辅助工具可能带来账号及运行风险，请自行决定是否使用。

@@ -82,7 +82,6 @@ public partial class MainWindow : Window
         ToolsTab.Content = toolPanel;
         toolPanel.OpenRequested += async id => { toolMessage = null; await OpenTool(id); };
         toolPanel.CloseRequested += async () => await CloseTool();
-        dailyPanel.SettingsRequested += () => WorkspaceTabs.SelectedItem = SettingsTab;
         dailyPanel.AccountsRequested += () => WorkspaceTabs.SelectedItem = AccountsTab;
         dailyPanel.StartRequested += async (multi, resume) => await StartDaily(multi, resume);
         dailyPanel.RetryRequested += async request => await StartDaily(false, false, retry: request);
@@ -734,6 +733,23 @@ public partial class MainWindow : Window
             dailyPanel.SelectUnfinished();
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             Capture("daily-run");
+            DailyRunPanel.CheckRecoveryRoutingForSmoke(Path.Combine(root,"recovery-actions-probe"));
+            var recoveryTheme=ThemeSelector.SelectedIndex;var recoveryLanguage=LanguageSelector.SelectedIndex;
+            double recoveryWidth=Width,recoveryHeight=Height;
+            try {
+                foreach(int language in new[]{0,1,2}) foreach(int appearance in new[]{1,2}) {
+                    LanguageSelector.SelectedIndex=language;ThemeSelector.SelectedIndex=appearance;
+                    Width=language==2?920:1180;Height=language==2?650:800;
+                    await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    dailyPanel.CheckRecoveryActionsForSmoke();
+                    Capture($"recovery-actions-{language}-{appearance}");
+                }
+                dailyPanel.ClearSelection();
+                await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                dailyPanel.CheckRecoveryActionsForSmoke();
+                Capture("recovery-actions-empty");
+                dailyPanel.SelectUnfinished();
+            } finally { LanguageSelector.SelectedIndex=recoveryLanguage;ThemeSelector.SelectedIndex=recoveryTheme;Width=recoveryWidth;Height=recoveryHeight; }
             dailyPanel.Show(new QueueView("running", "共享路线", "fixture/shared.json", new[] { new QueueStage("weekly_mainline", "running", "第2章 · 地图21 · 已核对3/24张地图"), new QueueStage("weekly_npc", "running", "第2章 · 地图21 · 本周完成1/3 · 追悼米莎的灵魂"), new QueueStage("weekly_steal", "running", "第2章 · 地图21 · 已核对2/12张地图") }, new string('a', 64)));
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             Capture("daily-weekly-progress");

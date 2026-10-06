@@ -11,6 +11,70 @@ namespace BD2Daily.Desktop;
 
 public sealed partial class DailyRunPanel
 {
+    internal void CheckRecoveryActionsForSmoke()
+    {
+        UpdateLayout();
+        if(retry.Visibility!=Visibility.Visible || resume.Visibility!=Visibility.Visible || current.Visibility!=Visibility.Collapsed || selected.Visibility!=Visibility.Collapsed
+            || !ReferenceEquals(retry.Parent,actions) || !ReferenceEquals(resume.Parent,actions) || choices.Children.Contains(retry) || choices.Children.Contains(resume))
+            throw new Exception("Interrupted run actions are split between header and footer");
+        if(!ReferenceEquals(resume.Style,Application.Current.FindResource("PrimaryButton")) || resume.Content?.ToString()!=L.Get("run.resume")
+            || !ReferenceEquals(retry.Style,Application.Current.FindResource(typeof(Button))) || retry.Content?.ToString()!=L.Get("run.retry",SelectedTasks.Count))
+            throw new Exception("Original-queue resume is not the primary recovery action");
+        Rect Bounds(FrameworkElement element)=>element.TransformToAncestor(this).TransformBounds(new Rect(element.RenderSize));
+        var left=Bounds(planButton);var select=Bounds(selectUnfinished);var clear=Bounds(clearSelection);
+        if(Math.Abs((left.Top+left.Bottom-select.Top-select.Bottom)/2)>1 || Math.Abs(select.Top-clear.Top)>1 || Math.Abs(select.Height-clear.Height)>1)
+            throw new Exception("Task selection buttons are not aligned with the view switch");
+        if(selectUnfinished.BorderThickness!=new Thickness(1) || clearSelection.BorderThickness!=new Thickness(1))
+            throw new Exception("Task selection buttons lost their standard button affordance");
+        var controls=new FrameworkElement[]{chooseTasks,retry,resume};
+        foreach(var control in controls)
+        {
+            var bounds=Bounds(control);
+            if(bounds.Bottom>ActualHeight+1 || bounds.Top<Bounds(stages).Bottom || bounds.Right>ActualWidth+1
+                || controls.Any(other=>other!=control && Bounds(other).IntersectsWith(bounds)))
+                throw new Exception("Recovery actions are clipped or overlap");
+        }
+        if(!chooseTasks.IsVisible || !resume.IsVisible || !resume.IsEnabled || actionHint.Text!=L.Get("run.resume_footer"))
+            throw new Exception("Primary resume or recovery guidance is missing");
+        CheckViewportForSmoke();
+    }
+    internal static void CheckRecoveryRoutingForSmoke(string root)
+    {
+        var panel=new DailyRunPanel(root);
+        string account=new('a',64);
+        var view=new QueueView("paused","","fixture/recovery-actions.json",[
+            new QueueStage("mirror","completed",""),new QueueStage("trade","blocked",""),new QueueStage("mail","pending","")],account);
+        QueueRetryRequest? requested=null;int starts=0,resumes=0;
+        panel.RetryRequested+=value=>requested=value;
+        panel.StartRequested+=(multi,resume)=>{ if(!multi && resume)resumes++; else starts++; };
+        panel.PlanRequested+=_=>starts++;
+        panel.SetAccount("fixture",account);panel.ShowPlan(new DailyPreferences());panel.Show(view);
+        panel.retry.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        if(requested!=null||panel.retry.IsEnabled)throw new Exception("Empty recovery selection dispatched work");
+        panel.resume.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        if(resumes!=1 || starts!=0 || requested!=null || !panel.resume.IsEnabled)
+            throw new Exception("Resume requires checkboxes or dispatches a different action");
+        panel.SelectUnfinished();panel.retry.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        if(requested?.Account!=account || requested.Record!=view.Record || !requested.Tasks.SequenceEqual(new[]{"trade","mail"}) || starts!=0 || resumes!=1)
+            throw new Exception("Recovery button dispatched the wrong tasks or started a new plan");
+        panel.clearSelection.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        if(panel.retry.IsEnabled || !panel.resume.IsEnabled)throw new Exception("Clearing retry selection disabled original-queue resume");
+        requested=null;panel.Busy(true);panel.retry.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));panel.resume.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        if(requested!=null||resumes!=1||panel.retry.Visibility!=Visibility.Collapsed||panel.resume.Visibility!=Visibility.Collapsed)
+            throw new Exception("Busy recovery remains actionable");
+        panel.Busy(false);panel.chooseTasks.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        if(!panel.ShowingPlan||starts!=0||requested!=null||resumes!=1)throw new Exception("Choosing tasks unexpectedly ran automation");
+        panel.Show(view);panel.SelectUnfinished();panel.Show(view with{Expired=true});
+        panel.retry.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));panel.resume.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        if(requested!=null||resumes!=1||panel.retry.Visibility!=Visibility.Collapsed||panel.resume.Visibility!=Visibility.Collapsed)
+            throw new Exception("Expired history dispatched recovery");
+        panel.Show(view with{Account=new string('b',64)});panel.SelectUnfinished();
+        panel.retry.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));panel.resume.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        if(requested!=null||resumes!=1||panel.retry.IsEnabled||panel.resume.IsEnabled)throw new Exception("Another account history dispatched recovery");
+        panel.Show(view with{Stages=[new QueueStage("trade","blocked","")]});panel.SelectUnfinished();
+        panel.resume.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        if(panel.resume.IsEnabled||resumes!=1||!panel.retry.IsEnabled)throw new Exception("A terminal queue offers resume or prevents selected retry");
+    }
     internal int CheckAccessiblePlanForSmoke()
     {
         UpdateLayout();

@@ -1,5 +1,46 @@
 # Changelog / 更新记录
 
+## 0.8.8 · 2026-10-06
+
+- Original-queue resume is now the primary footer action after interruption. Selected retry remains beside it as a secondary button, with guidance explaining that checkboxes only affect retries.
+- 中断后将「接续原队列」提升为底部主按钮，「补跑已选环节」并列为次要操作。明确接续不受勾选影响，清空勾选仍可接续；保留账号、会话及每日重置校验。
+
+## 0.8.7 · 2026-10-06
+
+- Removed the duplicate task-settings shortcut from Today; daily settings remain in the sidebar. Select unfinished and Clear selection now use standard bordered buttons aligned with the view switch.
+- 今日任务页移除重复的环节设置入口；勾选未完成、清空勾选改为标准按钮，与当前计划／上次记录切换器居中对齐。保留底部补跑主按钮与独立的重新选择任务入口。
+
+## 0.8.6 · 2026-10-06
+
+- Interrupted runs now use the fixed footer primary action to retry selected unfinished tasks. Choosing other tasks is a separate secondary action; original-queue resume lives under More actions.
+- Added contextual footer guidance and stable retry labels in Simplified Chinese, Traditional Chinese and English. Empty, expired, other-account and busy selections remain non-actionable.
+- 中断后的补跑按钮统一放到底部主操作区，并明确显示勾选数量；「重新选择任务」独立为次要操作，「按原队列接续」收进更多操作。三语、深浅外观及窄窗口检查通过，补跑不会误启动新计划。
+
+## 0.8.5 · 2026-10-06
+
+- Merchant navigation now walks to a close, collision-clear stand before interaction, even if the character starts within the native interaction radius. NPC bodies cannot become standing ground.
+- 跑商改为先靠近商人，再打开商店；不再刚进入交互范围就停止。近距离站位按实体碰撞筛选，保留大体积障碍与商人方向判定。
+
+## 0.8.4 · 2026-10-06
+
+- Unified the desktop and injected daily bridge version contract, fixing the component mismatch exposed by live verification.
+- 统一主程序和游戏内日常组件的协议版本来源，修复实机验证发现的版本不匹配；新增只移动及开关商店、不买卖的实机诊断入口。
+
+## 0.8.3 · 2026-10-06
+
+- Fixed plaza merchant approach points: replans keep the original target instead of moving the anchor to the previous waypoint. Interaction stands use the game's sector, trigger or distance predicate independently of physical movement collision.
+- Preserved approach candidates around the target and allowed the native proximity state to refresh before replanning. Added separate interaction-domain and physical-contact diagnostics.
+- 修复跑商走到商人附近后反复绕行的问题：重规划不再移动商人目标，站位按原生交互区域筛选，实体碰撞单独处理。到达后等待一次原生交互状态刷新，避免连续重算耗尽预算。
+- 23 项新增合成检查覆盖目标漂移、交互方向、实体阻挡及远侧候选；1,719 项回归通过，当前客户端组件离线编译通过。真实游戏跑商路径仍待验证。
+
+## 0.8.2 · 2026-10-06
+
+- Separated native readiness waits from UI-result observation deadlines. Weekly collection now checks a fresh frame after delayed readiness or a resumed desktop instead of treating elapsed time alone as an unknown action result.
+- Management entry reselects a currently observed rotating banner after a proven non-dispatch. Zero-cost settlements may retry up to three times using fresh game eligibility and cooldown state. Recognized management reward windows can resume without a historical receipt; unrelated consuming operations retain their existing guards.
+- Added native readiness timing and wait-reason diagnostics. 45 additional synthetic checks cover delayed menus, time jumps, rotating targets, cancellation and identity changes; the complete suite passes 1,696 checks across 50 groups.
+- 修复周收集内层天赋等待与外层界面超时相互冲突的问题；恢复后先读取当前状态。经营入口轮播变化时重新选择有效按钮，不把未执行的点击直接当作环节失败。
+- 经营零成本结算失败后最多重试3次，每次重新读取可领取／冷却状态；可识别并收尾缺少历史回执的经营奖励窗口。保留账号、场景、用户停止及无关操作保护。源码与离线回归已验证；用户笔记本熄屏场景尚待实机验证。
+
 ## Unreleased · interface polish / 界面打磨
 
 - Added coherent vector task/status symbols and directly selectable system/light/dark appearance segments.

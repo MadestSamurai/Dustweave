@@ -14,7 +14,6 @@ public sealed partial class DailyRunPanel : UserControl
     public event Action<QueueRetryRequest>? RetryRequested;
     public event Action<QueuePlanRequest>? PlanRequested;
     public event Action? StopRequested;
-    public event Action? SettingsRequested;
     public event Action? AccountsRequested;
     public event Action? SyncCollectionRequested;
     private readonly Button syncCollection = new() { Content = "手动检查收集进度", ToolTip = "按已保存的地图范围读取游戏服务器；会切换卡带，可能需要数分钟，只同步、不采集。" };
@@ -23,6 +22,9 @@ public sealed partial class DailyRunPanel : UserControl
     private readonly ObservableCollection<StageRow> rows = new();
     private readonly Dictionary<string, bool> planChoices = new(StringComparer.Ordinal);
     private DailyPreferences plan = new(); private bool showingReport; private bool rowsAreReport; private bool chooseInitialView = true;
+    private readonly Button chooseTasks = new();
+    private readonly TextBlock actionHint = new() { TextWrapping = TextWrapping.Wrap, FontSize = 12, Margin = new(0, 0, 0, 10) };
+    private readonly WrapPanel actions = new() { HorizontalAlignment = HorizontalAlignment.Right };
     private readonly Button planButton = new() { Content = "当前计划" }, reportButton = new() { Content = "上次记录" };
     private QueueView currentView = new("idle", "", "", []); private bool isBusy; private int selectedAccounts; private string activeAccount = "";
     private readonly TextBlock status = new() { Text = "未运行", FontSize = 18, FontWeight = FontWeights.SemiBold }, detail = new() { TextWrapping = TextWrapping.Wrap, Margin = new(0, 4, 0, 8) };
@@ -33,16 +35,16 @@ public sealed partial class DailyRunPanel : UserControl
     internal TextBlock CurrentAccountText { get; } = new() { FontSize = 13, Margin = new(14, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly WrapPanel views = new() { Margin = new(0, 14, 0, 6) };
     private readonly WrapPanel choices = new() { Margin = new(0), Visibility = Visibility.Collapsed };
-    private readonly Button settings = new() { Content = "调整日常设置" }, accounts = new() { Content = "管理账号" };
+    private readonly Button accounts = new() { Content = "管理账号" };
     public DailyRunPanel(string root)
     {
         L.Bind(syncCollection, ContentControl.ContentProperty, "run.sync");
         L.Bind(syncCollection, FrameworkElement.ToolTipProperty, "run.sync_help");
         L.Bind(stop, ContentControl.ContentProperty, "common.stop");
         L.Bind(resume, ContentControl.ContentProperty, "run.resume");
+        L.Bind(chooseTasks, ContentControl.ContentProperty, "run.choose_other");
         L.Bind(clearSelection, ContentControl.ContentProperty, "run.clear");
         L.Bind(planButton, ContentControl.ContentProperty, "run.plan");
-        L.Bind(settings, ContentControl.ContentProperty, "run.settings");
         L.Bind(accounts, ContentControl.ContentProperty, "nav.accounts");
         L.Bind(selected, ContentControl.ContentProperty, "run.multi", 0);
         WeakEventManager<DailyLanguage, EventArgs>.AddHandler(L, nameof(DailyLanguage.Changed), LanguageChanged);
@@ -115,18 +117,15 @@ public sealed partial class DailyRunPanel : UserControl
             b.Margin = new(1);
             viewSwitch.Children.Add(b);
         }
-        views.Children.Add(new Border { Background = (Brush)Application.Current.FindResource("SurfaceMuted"), CornerRadius = new(10), Padding = new(2), Margin = new(0, 0, 8, 4), Child = viewSwitch });
-        settings.Style = (Style)Application.Current.FindResource("QuietButton");
-        settings.Margin = new(0, 3, 0, 4);
-        views.Children.Add(settings);
+        views.Children.Add(new Border { Background = (Brush)Application.Current.FindResource("SurfaceMuted"), CornerRadius = new(10), Padding = new(2), Margin = new(0, 0, 12, 0), VerticalAlignment = VerticalAlignment.Center, Child = viewSwitch });
         top.Children.Add(views);
         planButton.Click += (_, _) => ShowCurrentPlan();
         reportButton.Click += (_, _) => ShowHistory();
 
-        selectUnfinished.Style = clearSelection.Style = (Style)Application.Current.FindResource("QuietButton");
-        foreach (var b in new[] { selectUnfinished, clearSelection, retry, resume })
+        selectUnfinished.Style = clearSelection.Style = (Style)Application.Current.FindResource(typeof(Button));
+        foreach (var b in new[] { selectUnfinished, clearSelection })
         {
-            b.Margin = new(0, 0, 8, 4);
+            b.Margin = new(0, 0, 8, 0);
             choices.Children.Add(b);
         }
         choices.VerticalAlignment = VerticalAlignment.Center;
@@ -138,9 +137,13 @@ public sealed partial class DailyRunPanel : UserControl
         DockPanel.SetDock(foot, Dock.Bottom);
         layout.Children.Add(foot);
         foot.Children.Add(new Border { Height = 1, Background = (Brush)Application.Current.FindResource("Line"), Margin = new(0, 0, 0, 12) });
-        var actions = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Right };
+        actionHint.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk");
+        foot.Children.Add(actionHint);
+        chooseTasks.Style = (Style)Application.Current.FindResource("QuietButton");
+        retry.Style = (Style)Application.Current.FindResource(typeof(Button));
+        resume.Style = (Style)Application.Current.FindResource("PrimaryButton");
         current.Style = (Style)Application.Current.FindResource("PrimaryButton");
-        foreach (var b in new[] { selected, stop, current })
+        foreach (var b in new[] { selected, chooseTasks, stop, current, retry, resume })
         {
             b.Margin = new(8, 0, 0, 4);
             actions.Children.Add(b);
@@ -155,17 +158,17 @@ public sealed partial class DailyRunPanel : UserControl
         L.Bind(recordsExpander, HeaderedContentControl.HeaderProperty, "run.records_more");
         foot.Children.Add(recordsExpander);
         records.Click += (_, _) => { Directory.CreateDirectory(root); System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(root) { UseShellExecute = true }); };
-        settings.Click += (_, _) => SettingsRequested?.Invoke();
         accounts.Click += (_, _) => AccountsRequested?.Invoke();
         selectUnfinished.Click += (_, _) => { if (showingReport) SelectUnfinished(); else SelectPlanAll(); };
         clearSelection.Click += (_, _) => { foreach (var r in rows) r.Selected = false; };
-        retry.Click += (_, _) => { if (!isBusy && SelectedTasks.Count > 0) RetryRequested?.Invoke(new(currentView.Account, currentView.Record, SelectedTasks)); };
+        retry.Click += (_, _) => { if (retry.IsEnabled && !isBusy && SelectedTasks.Count > 0) RetryRequested?.Invoke(new(currentView.Account, currentView.Record, SelectedTasks)); };
+        chooseTasks.Click += (_, _) => ShowCurrentPlan();
         layout.Children.Add(stages);
         Content = layout;
         syncCollection.Click += (_, _) => SyncCollectionRequested?.Invoke();
         current.Click += (_, _) => StartCurrentSelection();
         selected.Click += (_, _) => StartRequested?.Invoke(true, false);
-        resume.Click += (_, _) => StartRequested?.Invoke(false, true);
+        resume.Click += (_, _) => { if (resume.IsEnabled && !isBusy) StartRequested?.Invoke(false, true); };
         stop.Click += (_, _) => StopRequested?.Invoke();
         Show(new("idle", "开始前可调整各环节设置；已完成的日常会按游戏进度跳过。", "", []));
     }
@@ -175,7 +178,7 @@ public sealed partial class DailyRunPanel : UserControl
         views.Visibility = busy ? Visibility.Collapsed : Visibility.Visible;
         current.Visibility = selected.Visibility = busy ? Visibility.Collapsed : Visibility.Visible;
         stop.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
-        current.IsEnabled = syncCollection.IsEnabled = settings.IsEnabled = !busy;
+        current.IsEnabled = syncCollection.IsEnabled = !busy;
         stop.IsEnabled = busy && canStop;
         selected.IsEnabled = !busy && selectedAccounts > 0;
         if (!busy && currentView.Expired)
@@ -440,7 +443,17 @@ public sealed partial class DailyRunPanel : UserControl
         if (!showingReport)
             L.Text(counts, "run.selected_count", SelectedPlanTasks.Count, rows.Count);
         L.Bind(selectUnfinished, ContentControl.ContentProperty, showingReport ? "run.select_unfinished" : "run.select_all");
-        retry.Visibility = resume.Visibility = hasReport ? Visibility.Visible : Visibility.Collapsed;
+        bool retryContext = available && rows.Any(r => r.Eligible);
+        bool canResume = available && currentView.Stages.Any(s => s.State is ("pending" or "recovery_required") && !s.Carried);
+        retry.Visibility = chooseTasks.Visibility = retryContext ? Visibility.Visible : Visibility.Collapsed;
+        current.Visibility = !isBusy && !retryContext ? Visibility.Visible : Visibility.Collapsed;
+        selected.Visibility = !isBusy && !showingReport ? Visibility.Visible : Visibility.Collapsed;
+        resume.Visibility = retryContext ? Visibility.Visible : Visibility.Collapsed;
+        chooseTasks.IsEnabled = !isBusy;
+        actionHint.Visibility = isBusy ? Visibility.Collapsed : Visibility.Visible;
+        L.Bind(actionHint, TextBlock.TextProperty, retryContext
+            ? (canResume ? "run.resume_footer" : SelectedTasks.Count > 0 ? "run.retry_footer" : "run.retry_empty")
+            : showingReport ? "run.choose_footer" : "run.plan_footer");
 
         if (hasReport)
         {
@@ -452,11 +465,11 @@ public sealed partial class DailyRunPanel : UserControl
             r.CanEdit = (available || planAvailable) && r.Eligible;
         selectUnfinished.IsEnabled = (available || planAvailable) && rows.Any(r => r.Eligible);
         clearSelection.IsEnabled = (available || planAvailable) && rows.Any(r => r.Selected);
-        bool needsCheck = currentView.Stages.Any(s => s.State == "recovery_required" && SelectedTasks.Contains(s.Task));
-        L.Bind(retry, ContentControl.ContentProperty, needsCheck ? "run.reconcile" : "run.retry", SelectedTasks.Count);
+        // Recovery checks are handled by the executor; keep the primary action label stable.
+        L.Bind(retry, ContentControl.ContentProperty, "run.retry", SelectedTasks.Count);
         L.Bind(retry, FrameworkElement.ToolTipProperty, "run.retry_help");
         retry.IsEnabled = available && SelectedTasks.Count > 0;
-        resume.IsEnabled = available && currentView.Stages.Any(s => s.State is "pending" or "recovery_required" && !s.Carried);
+        resume.IsEnabled = canResume;
     }
     private sealed class StageRow : INotifyPropertyChanged
     {

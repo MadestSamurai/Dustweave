@@ -1,4 +1,34 @@
 {
+  "run.resume_footer": {
+    "zh-CN": "接续按原记录继续待执行环节，不受勾选影响；补跑只执行勾选的环节。",
+    "zh-TW": "接續依原紀錄繼續待執行環節，不受勾選影響；補跑只執行勾選的環節。",
+    "en-US": "Resume continues pending tasks in the original queue, regardless of checkboxes. Retry runs only selected tasks."
+  },
+  "run.plan_footer": {
+  "zh-CN": "运行当前账号的勾选环节；多账号运行使用各账号保存的设置。",
+  "zh-TW": "執行目前帳號的勾選環節；多帳號執行使用各帳號儲存的設定。",
+  "en-US": "Run selected tasks for this account. Multi-account runs use saved account settings."
+},
+  "run.choose_footer": {
+  "zh-CN": "这份记录仅供查看。选择任务后，可以开始新一次运行。",
+  "zh-TW": "此紀錄僅供查看。選擇任務後，可以開始新一次執行。",
+  "en-US": "Choose tasks to start a new run. This record stays unchanged."
+},
+  "run.retry_empty": {
+  "zh-CN": "先勾选要补跑的环节，或点击上方「勾选未完成」。",
+  "zh-TW": "先勾選要補跑的環節，或點擊上方「勾選未完成」。",
+  "en-US": "Select tasks in the list, or use Select unfinished above."
+},
+  "run.retry_footer": {
+  "zh-CN": "仅补跑勾选的未完成环节，已完成的环节保留。",
+  "zh-TW": "僅補跑勾選的未完成環節，已完成的環節保留。",
+  "en-US": "Only selected unfinished tasks will run. Completed tasks are kept."
+},
+  "run.choose_other": {
+  "zh-CN": "重新选择任务",
+  "zh-TW": "重新選擇任務",
+  "en-US": "Choose other tasks"
+},
   "window.minimize": { "zh-CN": "最小化", "zh-TW": "最小化", "en-US": "Minimize" },
   "window.maximize": { "zh-CN": "最大化", "zh-TW": "最大化", "en-US": "Maximize" },
   "window.restore": { "zh-CN": "还原窗口", "zh-TW": "還原視窗", "en-US": "Restore" },
@@ -429,10 +459,10 @@
     "en-US": "Run accounts ({0})"
   },
   "run.resume": {
-    "zh-CN": "接续原队列",
-    "zh-TW": "接續原佇列",
-    "en-US": "Resume queue"
-  },
+  "zh-CN": "接续原队列",
+  "zh-TW": "接續原佇列",
+  "en-US": "Resume original queue"
+},
   "run.select_unfinished": {
     "zh-CN": "勾选未完成",
     "zh-TW": "勾選未完成",
@@ -469,10 +499,10 @@
     "en-US": "Activity records"
   },
   "run.records_more": {
-    "zh-CN": "记录与进度检查",
-    "zh-TW": "紀錄與進度檢查",
-    "en-US": "Records and progress checks"
-  },
+  "zh-CN": "记录与更多操作",
+  "zh-TW": "紀錄與更多操作",
+  "en-US": "Records and more actions"
+},
   "run.resume_help": {
     "zh-CN": "使用原账号、进程及重置周期继续原队列。重启游戏后，请勾选未完成环节补跑。",
     "zh-TW": "使用原帳號、程序及重置週期繼續原佇列。重啟遊戲後，請勾選未完成環節補跑。",
@@ -494,10 +524,10 @@
     "en-US": "Run for: {0}"
   },
   "run.choose": {
-    "zh-CN": "选择本次环节",
-    "zh-TW": "選擇本次環節",
-    "en-US": "Choose tasks"
-  },
+  "zh-CN": "选择要运行的任务",
+  "zh-TW": "選擇要執行的任務",
+  "en-US": "Choose tasks to run"
+},
   "run.start_selected": {
     "zh-CN": "运行勾选环节（{0}）",
     "zh-TW": "執行勾選環節（{0}）",
@@ -524,10 +554,10 @@
     "en-US": "Select all"
   },
   "run.retry": {
-    "zh-CN": "补跑勾选环节（{0}）",
-    "zh-TW": "補跑勾選環節（{0}）",
-    "en-US": "Retry selected ({0})"
-  },
+  "zh-CN": "补跑已选环节（{0}）",
+  "zh-TW": "補跑已選環節（{0}）",
+  "en-US": "Retry selected ({0})"
+},
   "run.reconcile": {
     "zh-CN": "核对并补跑（{0}）",
     "zh-TW": "核對並補跑（{0}）",
