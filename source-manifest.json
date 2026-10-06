@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-06T10:49:30.5537969Z",
+  "generatedUtc": "2026-10-06T11:41:01.3805373Z",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/BD2Daily.Desktop.csproj",
   "projects": [
@@ -5951,11 +5951,11 @@
     },
     {
       "path": "src/Desktop/App.xaml.cs",
-      "sha256": "8c60b47c88767279e5e529ed0895aaf5c87cbc3c0c82df30b117dcf1e0e82f9a",
+      "sha256": "46eda799151b960b7706a7cdaa7ce46bd9776cf19173b60cc346da1182a0b151",
       "reasons": [
         "build input"
       ],
-      "bytes": 11583
+      "bytes": 12107
     },
     {
       "path": "src/Desktop/BD2Daily.Desktop.csproj",
@@ -5983,11 +5983,11 @@
     },
     {
       "path": "src/Desktop/DailyPreferencesPanel.cs",
-      "sha256": "f35e087d25a76c4a1f799270734065de1ead59ad3e92e414fdfd88da7a49a656",
+      "sha256": "09325db20e8cd95c10bc10f87e8f38d6c0870816e9b29d0d3a00338087134ef5",
       "reasons": [
         "build input"
       ],
-      "bytes": 39858
+      "bytes": 40890
     },
     {
       "path": "src/Desktop/DailyProductVersion.cs",
@@ -6111,11 +6111,11 @@
     },
     {
       "path": "src/Desktop/Localization/strings.json",
-      "sha256": "3ff835eee98bb65b9f8dc83f40a1a5a349de69b365d88260292f1d59fb808c87",
+      "sha256": "0e7c0776cf821d9af34ca7ab21ebd9e6e60b8b06e629105d3e01a9d7719183d5",
       "reasons": [
         "build input"
       ],
-      "bytes": 102175
+      "bytes": 108718
     },
     {
       "path": "src/Desktop/MainWindow.DynamicLocalization.cs",
@@ -6143,19 +6143,19 @@
     },
     {
       "path": "src/Desktop/MainWindow.xaml",
-      "sha256": "bcf81ebe43c3cbe74e8d014651f34e3f386c4d1d1bd3af6c4d24785a25e5eacc",
+      "sha256": "8624be0dcc6d7b4268dfd9bcbe888a08606fa06286fe2e614bc656fd1209b77d",
       "reasons": [
         "build input"
       ],
-      "bytes": 24546
+      "bytes": 28849
     },
     {
       "path": "src/Desktop/MainWindow.xaml.cs",
-      "sha256": "10b5f0242fab050f42543fb4ff260049e81fbd9159c6ae5104eeda0d0725559c",
+      "sha256": "14a299faef42bb1cfa61ad308c3e09ca42c0791d432497153873b4e816255c21",
       "reasons": [
         "build input"
       ],
-      "bytes": 61487
+      "bytes": 62036
     },
     {
       "path": "src/Desktop/packages.lock.json",
@@ -6215,7 +6215,7 @@
     },
     {
       "path": "Directory.Build.props",
-      "sha256": "73f431f7672355ffd13e587f3e8cff1d6942b25db5a33e16f28064b7da2d34dc",
+      "sha256": "c6490b0bd6e037a6e8b717dab0193fed127e8b72ad6b307d36af343754b08107",
       "reasons": [
         "build input"
       ],
@@ -7791,6 +7791,22 @@
         "build input"
       ],
       "bytes": 13768
+    },
+    {
+      "path": "src/Desktop/MainWindow.Accounts.cs",
+      "sha256": "258f84cbf1ab3ac3bfdfffe3ad4172c7c3e5e29116802187562278197731e209",
+      "bytes": 3045,
+      "reasons": [
+        "build input"
+      ]
+    },
+    {
+      "path": "src/Desktop/MainWindow.Accounts.Smoke.cs",
+      "sha256": "a3a23f225565b232ae264da4ea1f86dfa4ca704929a7e1393bb713b729e45b71",
+      "bytes": 10125,
+      "reasons": [
+        "build input"
+      ]
     }
   ],
   "publicReleaseApproved": false,

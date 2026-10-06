@@ -200,9 +200,9 @@
     "en-US": "Saved"
   },
   "account.list": {
-    "zh-CN": "账号列表",
-    "zh-TW": "帳號列表",
-    "en-US": "Accounts"
+    "zh-CN": "已保存账号",
+    "zh-TW": "已儲存帳號",
+    "en-US": "Saved accounts"
   },
   "account.search": {
     "zh-CN": "搜索账号／角色…",
@@ -220,9 +220,9 @@
     "en-US": "Search accounts"
   },
   "account.select_all": {
-    "zh-CN": "勾选或取消全部可用账号",
-    "zh-TW": "勾選或取消全部可用帳號",
-    "en-US": "Select or clear all available accounts."
+    "zh-CN": "勾选或取消当前筛选结果中的可用账号",
+    "zh-TW": "勾選或取消目前篩選結果中的可用帳號",
+    "en-US": "Include or exclude all available accounts in the filtered list"
   },
   "account.add_queue": {
     "zh-CN": "加入多账号日常",
@@ -255,9 +255,9 @@
     "en-US": "Status"
   },
   "account.empty": {
-    "zh-CN": "还没有保存账号。登录游戏后正常退出，再点击下方“保存当前账号”。",
-    "zh-TW": "尚未儲存帳號。登入遊戲後正常退出，再按下方「儲存目前帳號」。",
-    "en-US": "No saved accounts. Sign in, exit the game normally, then choose Save current account."
+    "zh-CN": "还没有保存账号。登录游戏并正常退出后，在上方保存当前账号。",
+    "zh-TW": "尚未儲存帳號。登入遊戲並正常退出後，在上方儲存目前帳號。",
+    "en-US": "No saved accounts yet. Sign in to the game, exit normally, then save the account above."
   },
   "account.save": {
     "zh-CN": "保存当前账号",
@@ -267,7 +267,7 @@
   "account.login_new": {
     "zh-CN": "登录新账号",
     "zh-TW": "登入新帳號",
-    "en-US": "Add account"
+    "en-US": "Sign in to another"
   },
   "account.rename": {
     "zh-CN": "重命名",
@@ -290,9 +290,9 @@
     "en-US": "Remove"
   },
   "account.recover": {
-    "zh-CN": "恢复切换前会话",
-    "zh-TW": "還原切換前工作階段",
-    "en-US": "Restore previous session"
+    "zh-CN": "恢复上次登录…",
+    "zh-TW": "還原上次登入…",
+    "en-US": "Restore previous sign-in…"
   },
   "account.switch": {
     "zh-CN": "切换并启动选中账号",
@@ -300,14 +300,14 @@
     "en-US": "Launch selected account"
   },
   "account.check": {
-    "zh-CN": "检查勾选账号",
-    "zh-TW": "檢查勾選帳號",
-    "en-US": "Check selected accounts"
+    "zh-CN": "批量验证登录…",
+    "zh-TW": "批次驗證登入…",
+    "en-US": "Verify sign-ins…"
   },
   "account.selected": {
-    "zh-CN": "已勾选 {0} 个账号 · 日常按列表顺序执行",
-    "zh-TW": "已勾選 {0} 個帳號 · 日常依列表順序執行",
-    "en-US": "{0} accounts selected · Runs in list order"
+    "zh-CN": "日常队列：{0} 个 · 按列表顺序运行",
+    "zh-TW": "日常佇列：{0} 個 · 依列表順序執行",
+    "en-US": "Daily queue: {0} · Runs in list order"
   },
   "account.select_hint": {
     "zh-CN": "勾选账号后开始登录检查",
@@ -2533,5 +2533,115 @@
     "zh-CN": "仅使用免费次数，完成后保留游戏进度。",
     "zh-TW": "僅使用免費次數，完成後保留遊戲進度。",
     "en-US": "Use free attempts only and preserve game progress."
+  },
+  "account.local_login": {
+    "zh-CN": "本机登录",
+    "zh-TW": "本機登入",
+    "en-US": "Sign-in on this PC"
+  },
+  "account.queue_column": {
+    "zh-CN": "日常",
+    "zh-TW": "日常",
+    "en-US": "Daily"
+  },
+  "account.queue_help": {
+    "zh-CN": "勾选的账号会加入多账号日常队列；单击账号行只选择管理对象，不会登录或运行任务。",
+    "zh-TW": "勾選的帳號會加入多帳號日常佇列；按一下帳號列只選擇管理對象，不會登入或執行任務。",
+    "en-US": "Checked accounts join the daily queue. Selecting a row only chooses an account to manage; it never signs in or runs tasks."
+  },
+  "account.enter": {
+    "zh-CN": "进入游戏",
+    "zh-TW": "進入遊戲",
+    "en-US": "Play"
+  },
+  "account.enter_named": {
+    "zh-CN": "以「{0}」进入游戏",
+    "zh-TW": "以「{0}」進入遊戲",
+    "en-US": "Enter the game as {0}"
+  },
+  "account.queue_named": {
+    "zh-CN": "将「{0}」加入多账号日常",
+    "zh-TW": "將「{0}」加入多帳號日常",
+    "en-US": "Include {0} in the daily queue"
+  },
+  "account.manage_help": {
+    "zh-CN": "管理当前高亮的账号；上移和下移用于调整多账号日常的运行顺序。",
+    "zh-TW": "管理目前反白的帳號；上移和下移用於調整多帳號日常的執行順序。",
+    "en-US": "Manage the highlighted account. Move up or down to change the daily queue order."
+  },
+  "account.check_help": {
+    "zh-CN": "按列表顺序登录所有勾选账号并验证身份，包含筛选后隐藏的勾选项。结束后停留在最后一个账号，不执行日常。",
+    "zh-TW": "依列表順序登入所有勾選帳號並驗證身分，包含篩選後隱藏的勾選項。結束後停留在最後一個帳號，不執行日常。",
+    "en-US": "Sign in to every checked account in list order, including checked accounts hidden by the filter. Verify identity and leave the last account open. No daily tasks run."
+  },
+  "account.enter_confirm": {
+    "zh-CN": "以「{0}」进入游戏并核对角色身份。\n\n如需切换，会先正常关闭当前游戏。本次只登录，不执行日常任务。",
+    "zh-TW": "以「{0}」進入遊戲並核對角色身分。\n\n如需切換，會先正常關閉目前遊戲。本次只登入，不執行日常任務。",
+    "en-US": "Enter the game as {0} and verify the character identity.\n\nIf switching is needed, the current game will close normally first. No daily tasks will run."
+  },
+  "account.batch_confirm": {
+    "zh-CN": "将按顺序登录以下 {0} 个账号：\n{1}\n\n包含筛选后隐藏的勾选项。切换时会正常关闭当前游戏；结束后停留在最后一个账号，不执行日常任务。",
+    "zh-TW": "將依序登入以下 {0} 個帳號：\n{1}\n\n包含篩選後隱藏的勾選項。切換時會正常關閉目前遊戲；結束後停留在最後一個帳號，不執行日常任務。",
+    "en-US": "Sign in to these {0} accounts in order:\n{1}\n\nThis includes checked accounts hidden by the filter. The game will close normally between accounts and remain open on the last one. No daily tasks will run."
+  },
+  "account.login_running": {
+    "zh-CN": "游戏或启动器正在运行；退出后可保存账号或登录新账号。",
+    "zh-TW": "遊戲或啟動器正在執行；退出後可儲存帳號或登入新帳號。",
+    "en-US": "Exit the game and launcher to save this account or add another."
+  },
+  "account.login_needed": {
+    "zh-CN": "先登录游戏并正常退出，再保存到账号列表。",
+    "zh-TW": "先登入遊戲並正常退出，再儲存至帳號列表。",
+    "en-US": "Sign in to the game and exit normally, then save the account here."
+  },
+  "account.login_unsaved": {
+    "zh-CN": "此账号尚未保存。请先保存，再登录其他账号。",
+    "zh-TW": "此帳號尚未儲存。請先儲存，再登入其他帳號。",
+    "en-US": "Save this account before signing in to another."
+  },
+  "account.login_saved": {
+    "zh-CN": "已保存在账号列表。再次保存会更新登录信息，保留设置与进度。",
+    "zh-TW": "已儲存在帳號列表。再次儲存會更新登入資訊，保留設定與進度。",
+    "en-US": "Saved in the list. Updating sign-in details keeps settings and progress."
+  },
+  "account.update_saved": {
+    "zh-CN": "更新登录信息",
+    "zh-TW": "更新登入資訊",
+    "en-US": "Update sign-in"
+  },
+  "account.update_help": {
+    "zh-CN": "更新当前账号的登录信息，保留原位置、日常设置与进度。",
+    "zh-TW": "更新目前帳號的登入資訊，保留原位置、日常設定與進度。",
+    "en-US": "Update this account's sign-in details without changing its position, settings or progress."
+  },
+  "account.save_help": {
+    "zh-CN": "保存当前登录账号，自动选择空位，不覆盖其他账号。",
+    "zh-TW": "儲存目前登入帳號，自動選擇空位，不覆寫其他帳號。",
+    "en-US": "Save the current sign-in to a free slot without replacing another account."
+  },
+  "account.new_help": {
+    "zh-CN": "备份当前登录后启动游戏；登录另一个账号并退出游戏，再回到这里保存。",
+    "zh-TW": "備份目前登入後啟動遊戲；登入另一個帳號並退出遊戲，再回到這裡儲存。",
+    "en-US": "Back up the current sign-in and launch the game. Sign in to another account, exit, then return here to save it."
+  },
+  "account.restore_help": {
+    "zh-CN": "恢复上一次切换前备份的登录信息，不启动游戏。",
+    "zh-TW": "還原上一次切換前備份的登入資訊，不啟動遊戲。",
+    "en-US": "Restore the sign-in backed up before the last switch, without launching the game."
+  },
+  "account.no_recovery": {
+    "zh-CN": "目前没有可恢复的登录备份。",
+    "zh-TW": "目前沒有可還原的登入備份。",
+    "en-US": "There is no previous sign-in backup to restore."
+  },
+  "account.slots_full": {
+    "zh-CN": "已保存100个账号，请先移除不再使用的账号。",
+    "zh-TW": "已儲存100個帳號，請先移除不再使用的帳號。",
+    "en-US": "All 100 slots are occupied. Remove an unused account first."
+  },
+  "account.no_matches": {
+    "zh-CN": "没有匹配的账号。试试其他名称，或清空搜索。",
+    "zh-TW": "沒有符合的帳號。試試其他名稱，或清空搜尋。",
+    "en-US": "No matching accounts. Try another name or clear the search."
   }
 }

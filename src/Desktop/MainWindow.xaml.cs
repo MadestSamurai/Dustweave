@@ -20,6 +20,9 @@ public sealed class AccountRow : INotifyPropertyChanged
         get; init;
     }
     public string Name => Account.Name;
+    public string DetailsLabel => $"{Name}\n{PlayerLabel}\n{IdentityLabel}";
+    public string EnterLabel => DailyLanguage.Current.Get("account.enter_named", Name);
+    public string QueueLabel => DailyLanguage.Current.Get("account.queue_named", Name);
     public required int DisplayOrder
     {
         get; init;
@@ -252,14 +255,15 @@ public partial class MainWindow : Window
     }
     private void UpdateSelection()
     {
+        if (catalog == null || dailyPanel == null || ActionFooter == null) return;
         int count = rows.Where(r => r.Selected && r.Account.Valid).Select(r => r.Account.AccountKey).Distinct().Count();
         bool accounts = WorkspaceTabs.SelectedItem == AccountsTab;
         if (ActionFooter != null)
             ActionFooter.Visibility = accounts ? Visibility.Visible : Visibility.Collapsed;
-        L.Text(SelectionText, accounts ? "account.selected" : "diagnostics.scope", count);
-        RunButton.Visibility = SwitchButton.Visibility = accounts ? Visibility.Visible : Visibility.Collapsed;
+        L.Text(SelectionText, "account.selected", count);
+        UpdateAccountPresentation();
         RunButton.IsEnabled = !Unavailable && count > 0;
-        SwitchButton.IsEnabled = !Unavailable && AccountsGrid.SelectedItem is AccountRow { Account.Valid: true };
+
         dailyPanel?.SetSelection(count);
     }
     private void UpdateConnection()
@@ -349,17 +353,19 @@ public partial class MainWindow : Window
     }
     private AccountRow? Selected => AccountsGrid.SelectedItem as AccountRow;
     private bool Confirm(string message) => MessageBox.Show(this, L.Translate(message), L.Get("app.title"), MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK;
-    private bool ConfirmInspection(int count) => Confirm(L.Get("account.inspect_confirm", count));
     private async void Connect_Click(object sender, RoutedEventArgs e) => await OperateAsync(coordinator.ConnectCurrentAsync, connectsGame: true);
-    private async void Switch_Click(object sender, RoutedEventArgs e)
+    private async void EnterAccount_Click(object sender, RoutedEventArgs e)
     {
-        if (Selected is { } row && ConfirmInspection(1))
+        // The row button owns its target; highlighted rows and queue checkboxes are unrelated.
+        if (Unavailable || sender is not Button { DataContext: AccountRow { Account.Valid: true } row })
+            return;
+        if (Confirm(L.Get("account.enter_confirm", row.Name)))
             await OperateAsync(() => coordinator.InspectAsync([row.Account]), connectsGame: true);
     }
     private async void Run_Click(object sender, RoutedEventArgs e)
     {
         var selected = rows.Where(r => r.Selected && r.Account.Valid).Select(r => r.Account).ToArray();
-        if (selected.Length > 0 && ConfirmInspection(selected.Select(a => a.AccountKey).Distinct().Count()))
+        if (!Unavailable && selected.Length > 0 && Confirm(L.Get("account.batch_confirm", selected.Length, string.Join("、", selected.Select(a => a.Name)))))
             await OperateAsync(() => coordinator.InspectAsync(selected), connectsGame: true);
     }
     private void Stop_Click(object sender, RoutedEventArgs e)
@@ -407,7 +413,10 @@ public partial class MainWindow : Window
     private void Search_Changed(object sender, TextChangedEventArgs e)
     {
         if (AccountsGrid?.ItemsSource != null)
+        {
             CollectionViewSource.GetDefaultView(rows).Refresh();
+            UpdateSelection();
+        }
     }
     private void Selection_Changed(object sender, SelectionChangedEventArgs e)
     {
@@ -416,8 +425,10 @@ public partial class MainWindow : Window
     }
     private void SelectAll_Click(object sender, RoutedEventArgs e)
     {
-        foreach (var row in rows.Where(r => r.Account.Valid))
-            row.Selected = SelectAll.IsChecked == true;
+        bool value = SelectAll.IsChecked == true;
+        foreach (var row in rows.Where(r => r.Account.Valid && MatchesSearch(r)).ToArray())
+            row.Selected = value;
+        UpdateSelection();
     }
     private void Manage(Action action)
     {
@@ -637,6 +648,7 @@ public partial class MainWindow : Window
             await CheckThemesForSmoke();
             await CheckLanguagesForSmoke();
             await CheckPresentationForSmoke();
+            await CheckAccountsForSmoke();
             Capture("normal");
             WorkspaceTabs.SelectedItem = ToolsTab;
             toolPanel.VerifyFiltersForSmoke();

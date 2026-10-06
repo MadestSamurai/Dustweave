@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 0.8.14 · 2026-10-06
+
+- Account management now separates the current sign-in card from the saved-account list. Each row opens its own account; daily-queue checkboxes and secondary batch sign-in verification have distinct scopes and explicit confirmations.
+- The list shares its card surface with quiet headings, rounded row selection/hover and lighter game-entry actions. Filtered select-all preserves hidden selections, and unavailable session actions explain their requirements.
+- Restored settings editing when a temporarily empty account catalog returns without losing unsaved choices. Added three-language account-state, keyboard-focus and 100-account scrolling checks.
+- 账号页拆分为顶部本机登录卡片和已保存账号列表；每行直接进入对应游戏账号，勾选用于日常队列，批量登录验证明确列出操作范围。
+- 表头、列表与卡片统一背景，选中和悬停使用整行圆角高亮；完善空列表、筛选全选及按钮不可用提示，并修复账号目录恢复后设置仍变灰的问题。支持简中、繁中、英文及深浅主题。
 ## 0.8.13 · 2026-10-06
 
 - History metadata now includes the Windows file identity, so a rapid atomic replacement cannot reuse stale state when size and timestamps match. The check requests metadata access only and preserves shared readers/writers.

@@ -340,6 +340,13 @@ public sealed class DailyPreferencesPanel : UserControl
             form.IsEnabled = false;
             L.Text(status, "prefs.no_account");
         }
+        else if (loaded != null && accounts.SelectedValue as string == account && !form.IsEnabled)
+        {
+            // A temporarily empty catalog can return with the same account and no
+            // SelectionChanged event. Restore editing without discarding unsaved settings.
+            form.IsEnabled = true;
+            L.Text(status, dirty ? "prefs.dirty" : "prefs.loaded");
+        }
     }
     private void ChangedAccount(object sender, SelectionChangedEventArgs e)
     {

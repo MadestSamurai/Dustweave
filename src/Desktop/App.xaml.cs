@@ -196,7 +196,17 @@ public partial class App : Application
             }
             window.Show();
         }
-        catch (Exception ex) { try { DailyJson.Write(Path.Combine(DailyIdentity.DataRoot, "startup-error.json"), new { version = DailyIdentity.Version, utc = DateTimeOffset.UtcNow, error = ex.ToString() }); } catch { } ShowStartupFailure(ex); Shutdown(1); }
+        catch (Exception ex)
+        {
+            if (smoke != null)
+            {
+                DailyJson.Write(Path.Combine(smoke, "smoke.json"), new { status = "failed", error = ex.ToString(), realGameTouched = false });
+                Shutdown(1);
+                return;
+            }
+            try { DailyJson.Write(Path.Combine(DailyIdentity.DataRoot, "startup-error.json"), new { version = DailyIdentity.Version, utc = DateTimeOffset.UtcNow, error = ex.ToString() }); } catch { }
+            ShowStartupFailure(ex); Shutdown(1);
+        }
     }
     private static void ShowStartupFailure(Exception error)
     {
