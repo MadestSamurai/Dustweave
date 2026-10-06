@@ -1,5 +1,27 @@
 # Changelog / 更新记录
 
+## 0.8.12 · 2026-10-06
+
+- Shared history queries now filter compact routing, account and state metadata before opening capture details. Event recovery skips history reads on unrelated screens; free-draw, Mirror and management queries benefit from the same index.
+- 日常各环节复用增量历史索引，先筛选账号、操作和状态再读取详情；活动恢复先判断当前页面。保留冲突记录检查、未知操作拦截和停止后的只读诊断。
+
+## 0.8.11 · 2026-10-06
+
+- Pending-operation checks reuse compact record metadata instead of reopening every historical capture before each restaurant bubble click. New and changed files, unresolved claims, account isolation and conflicting copies remain checked.
+- Restaurant entry prepares the check before selecting short-lived bubbles. This updates the host only; game-component versions remain unchanged.
+- 修复餐厅气泡已出现却延迟点击的效率问题：保留历史记录，只增量检查操作状态，避免每次领取都读取大量旧采集。未知结果和冲突仍会拦截重复领取；实际领取时延待后续实机确认。
+## 0.8.10 · 2026-10-06
+
+- Reward checks with unfinished tasks now expose a Details button with the task count. The read-only window groups daily, weekly, pass and event tasks with their saved progress, remaining requirements or unclaimed reward status.
+- The view preserves distinct tasks across categories and does not start a game action. Missing details are reported explicitly; all controls support Simplified Chinese, Traditional Chinese and English.
+- 奖励检查中仍有未完成任务时，可点击「详细信息」查看任务名称、分类、进度与未完成原因；显示记录时间，不重新操作游戏。支持长列表滚动、三语与深浅外观。
+
+## 0.8.9 · 2026-10-06
+
+- Timeline rows now show skip reasons directly. Completed tasks retain explicit result summaries; records without a skip reason say so instead of inventing a cause.
+- Final result details and reasons take precedence over stale progress, including records with empty or null optional fields. Running tasks continue showing current progress.
+- 时间线直接显示跳过原因，已完成项也保留具体结果说明；缺少原因时明确提示。修复空字段或过期进度遮住最终说明的问题，三语同步。
+
 ## 0.8.8 · 2026-10-06
 
 - Original-queue resume is now the primary footer action after interruption. Selected retry remains beside it as a secondary button, with guidance explaining that checkboxes only affect retries.
