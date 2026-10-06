@@ -98,7 +98,7 @@ public sealed class DailyWorkflowRegistry
         foreach (string name in new[] { "rewards", "daily_rewards", "weekly_rewards", "mission_rewards" })
             Add(name, w => DailyMissions.Run(w, name));
         Add("pass_rewards", w => DailyPasses.Run(w));
-        Add("event_rewards", DailyEventRewards.Run, f => DiceOwner(f) || DailyEventRewards.HasPendingPresentation(business, f) || business.Records(f.Context).Any(op => S(op["role"]).StartsWith("event_rewards.", StringComparison.Ordinal) && S(op["state"]) == "preview_ready" && DailyEventRewards.OwnsPreview(op, f)));
+        Add("event_rewards", DailyEventRewards.Run, f => DiceOwner(f) || DailyEventRewards.HasPendingPresentation(business, f) || EventPreviewOwner(f));
         Add("weekly_book", DailyWeeklyBook.Run, BookOwner);
         Add("weekly_room_likes", DailyWeeklyRooms.Run);
         Add("weekly_fishing", DailyWeeklyFishing.Run);
@@ -112,7 +112,8 @@ public sealed class DailyWorkflowRegistry
     public static bool Owned(JsonObject op, DailyStageFrame frame) => JsonNode.DeepEquals(op["cycle"], frame.Context["cycle"]) && DailyEvidence.SameActor(op["before"]!["Frame"]!.AsObject(), frame.Frame);
     private bool MirrorOwner(DailyStageFrame f) => DailyNavigationDecision.Phase(f.Frame, "mirror").StartsWith("owned_", StringComparison.Ordinal) && business.Records(f.Context, "mirror.end").Any(op => Owned(op, f) && S(op["state"]) is "dispatching" or "unknown" or "completed");
     private bool BookOwner(DailyStageFrame f) => DailyNavigationDecision.Phase(f.Frame, "weekly_book").StartsWith("owned_", StringComparison.Ordinal) && business.Records(f.Context, "weekly.book.start").Any(op => Owned(op, f) && S(op["state"]) is "dispatching" or "unknown" or "completed");
-    private bool DiceOwner(DailyStageFrame f) => business.Records(f.Context, "rewards.dice").Any(op => Owned(op, f) && DailyManagedBusiness.Pending(op)) && DailyNavigationDecision.Types(f.Frame).Contains("EventUI");
+    private bool DiceOwner(DailyStageFrame f) => DailyNavigationDecision.Types(f.Frame).Contains("EventUI") && business.MatchingRecords(f.Context, op => S(op["role"]) == "rewards.dice" && DailyManagedBusiness.Pending(op) && JsonNode.DeepEquals(op["cycle"], f.Context["cycle"])).Any(op => Owned(op, f));
+    private bool EventPreviewOwner(DailyStageFrame f) => DailyNavigationDecision.Types(f.Frame).Contains("MessagePopupUI") && business.MatchingRecords(f.Context, op => S(op["role"]).StartsWith("event_rewards.", StringComparison.Ordinal) && S(op["state"]) == "preview_ready" && JsonNode.DeepEquals(op["cycle"], f.Context["cycle"])).Any(op => DailyEventRewards.OwnsPreview(op, f));
     private bool TradeOwner(DailyStageFrame f) => DailyNavigationDecision.Types(f.Frame).Overlaps(new[] { "ShopUI", "ShopPopupUI", "BuyFavoritePopupUI", "CookingUI", "CookingSelectUI", "DiscountPopupUI" });
 }
 

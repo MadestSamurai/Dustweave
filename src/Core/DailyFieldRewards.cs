@@ -131,6 +131,9 @@ public static class DailyCafeteria
     {
         if (!w.Settings.Stages.CafeteriaGuests)
             return DailyWorkflow.Skipped("disabled");
+        // Warm the compact pending-operation index before observing short-lived targets.
+        w.Business.RequireResolved(w.Context, "cafeteria.event");
+        w.Business.RequireResolved(w.Context, "cafeteria.regular_all");
         if (!await DailyTravel.Reuse(w, packType: 9, surfaces: ["CafeteriaFieldDefaultUI"], extra: ["ManagementRewardPopupUI"]))
         {
             if (!await w.Has("ManagementRewardPopupUI"))

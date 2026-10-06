@@ -19,7 +19,7 @@ public sealed record DailyBusinessProof(string Role, string Stage, string[] Pref
 }
 
 /// <summary>Managed transactions share one command driver and a durable, account-scoped operation journal.</summary>
-public sealed class DailyManagedBusiness
+public sealed partial class DailyManagedBusiness
 {
     private readonly Dictionary<string, string> recordPaths = new(StringComparer.Ordinal);
     private readonly string root; private readonly DailyCommandDriver driver; private readonly Func<bool> stopped;
@@ -35,38 +35,42 @@ public sealed class DailyManagedBusiness
         this.delay = delay ?? driver.DelayAsync;
     }
     public static bool Pending(JsonObject op) => PendingStates.Contains(op["state"]?.GetValue<string>() ?? "");
-    public IEnumerable<JsonObject> Records(JsonObject context, string? role = null, bool includeLegacy = true)
+    // Preserve the public record API used by extensions. Routing happens before loading evidence.
+    public IEnumerable<JsonObject> Records(JsonObject context, string? role = null, bool includeLegacy = true) => ReadRecords(context, role, includeLegacy, null);
+    // Predicates may use only fields retained by Summary; evidence checks still use the fresh full record.
+    internal IEnumerable<JsonObject> MatchingRecords(JsonObject context, Func<JsonObject, bool> metadata, bool includeLegacy = true) => ReadRecords(context, null, includeLegacy, metadata);
+    private IEnumerable<JsonObject> ReadRecords(JsonObject context, string? role, bool includeLegacy, Func<JsonObject, bool>? metadata)
     {
-        var seen = new Dictionary<string, JsonObject>(StringComparer.Ordinal);
+        var seen = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (string directory in includeLegacy ? new[] { "managed-business", "business" } : new[] { "managed-business" })
         {
             string path = Path.Combine(root, "live", directory);
-            if (!Directory.Exists(path))
-                continue;
+            if (!Directory.Exists(path)) continue;
             foreach (string file in Directory.EnumerateFiles(path, "*.json"))
             {
-                var op = DailyJson.TryRead<JsonObject>(file) ?? throw new InvalidDataException("Unreadable business record");
-                string name = op["role"]?.GetValue<string>() ?? "";
-                if (!proofs.ContainsKey(name) || role != null && name != role)
-                    continue;
-                DailyManagedReconciliation.ValidateRecord(file, op);
-                string id = op["id"]!.GetValue<string>();
+                var header = ReadHeader(file);
+                string name = header["role"]?.GetValue<string>() ?? "";
+                if (!proofs.ContainsKey(name) || role != null && name != role) continue;
+                DailyManagedReconciliation.ValidateRecord(file, header);
+                string id = header["id"]!.GetValue<string>();
                 if (seen.TryGetValue(id, out var prior))
                 {
-                    if (!JsonNode.DeepEquals(prior, op))
+                    // Compare full bodies even for excluded accounts or matching compact headers.
+                    if (!JsonNode.DeepEquals(ReadJournalRecord(prior), ReadJournalRecord(file)))
                         throw new StageHostException("pending", "发现同一操作的冲突记录，未覆盖或重复提交：" + id);
                     continue;
                 }
-                seen.Add(id, op);
+                seen.Add(id, file);
                 recordPaths[id] = file;
-                if (JsonNode.DeepEquals(op["account"], context["actor"]![3]) && JsonNode.DeepEquals(op["player"], context["actor"]![4]) && JsonNode.DeepEquals(op["server"], context["server"]))
-                    yield return op;
+                if (JsonNode.DeepEquals(header["account"], context["actor"]![3]) && JsonNode.DeepEquals(header["player"], context["actor"]![4]) && JsonNode.DeepEquals(header["server"], context["server"])
+                    && (metadata == null || metadata(header)))
+                    yield return ReadJournalRecord(file);
             }
         }
     }
     public void RequireResolved(JsonObject context, string role)
     {
-        if (!DailyManagementProof.IsFreeClaim(role) && Records(context, role).Any(op => Pending(op) && !DailyTradeJournal.IsTrade(op)))
+        if (!DailyManagementProof.IsFreeClaim(role) && HasUnresolvedRecord(context, role))
             throw new StageHostException("pending", "已有未确认的" + proofs[role].Stage + "操作；先核对原回执，不重复提交。");
     }
     public void Save(JsonObject op)
@@ -75,7 +79,9 @@ public sealed class DailyManagedBusiness
         DailyManagedReconciliation.ValidateRecord(path, op);
         if (!proofs.ContainsKey(op["role"]!.GetValue<string>()))
             throw new InvalidDataException("Unknown managed business role");
+        journalHeaders.Remove(path);
         DailyJson.Write(path, op);
+        RememberHeader(path, op);
     }
     public JsonObject Create(JsonObject context, string role, JsonObject before, JsonObject scope, JsonObject action)
     {
@@ -297,7 +303,7 @@ public sealed class DailyManagedBusiness
         var completed = new JsonArray();
         var unresolved = new JsonArray();
         var report = new JsonObject { ["completed"] = completed, ["unresolved"] = unresolved, ["actions"] = 0, ["engine"] = "dotnet-business-v1" };
-        foreach (var op in Records(context).Where(Pending))
+        foreach (var op in MatchingRecords(context, Pending))
         {
             Stop();
             string role = op["role"]!.GetValue<string>();

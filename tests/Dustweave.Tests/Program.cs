@@ -58,6 +58,7 @@ await Group("TradeData", () => TradeDataCases.Run(root, cases));
 await Group("TradeResume", () => TradeResumeCases.Run(root, cases));
 await Group("ManagedInputs", () => ManagedInputsCases.Run(root, cases));
 await Group("BusinessScope", () => BusinessScopeCases.Run(root, cases));
+await Group("BusinessJournal", () => BusinessJournalCases.Run(root, cases));
 await Group("FreeDrawStage", () => FreeDrawStageCases.Run(root, cases));
 await Group("ManagedBootstrap", () => ManagedBootstrapCases.Run(root, cases));
 await Group("ManagementStage", () => ManagementStageCases.Run(root, cases));

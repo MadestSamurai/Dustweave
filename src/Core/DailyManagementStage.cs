@@ -33,7 +33,7 @@ public sealed class DailyManagementStage : IDailyManagedStage
     }
     private JsonObject? OwnedReward(DailyStageFrame frame)
     {
-        foreach (var op in business.Records(frame.Context, includeLegacy: false).Where(op => op["role"]?.GetValue<string>() is DailyManagementProof.Role or DailyManagementProof.Helpers or DailyManagementProof.Cafeteria or DailyManagementProof.Fishing))
+        foreach (var op in business.MatchingRecords(frame.Context, op => (op["role"]?.GetValue<string>() is DailyManagementProof.Role or DailyManagementProof.Helpers or DailyManagementProof.Cafeteria or DailyManagementProof.Fishing) && op["state"]?.GetValue<string>() == "completed" && op["presentation_closed"]?.GetValue<bool>() != true && JsonNode.DeepEquals(op["cycle"], frame.Context["cycle"]), includeLegacy: false))
         {
             if (op["state"]?.GetValue<string>() != "completed" || op["presentation_closed"]?.GetValue<bool>() == true || !JsonNode.DeepEquals(op["cycle"], frame.Context["cycle"]) || !DailyEvidence.SameActor(op["before"]!["Frame"]!.AsObject(), frame.Frame))
                 continue;

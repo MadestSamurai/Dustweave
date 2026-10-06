@@ -254,14 +254,14 @@ public static class DailyEventRewards
         }
     }
     public static bool HasPendingPresentation(DailyManagedBusiness business, DailyStageFrame frame) =>
-        DailyNavigationDecision.Types(frame.Frame).Contains("EventUI") && business.Records(frame.Context).Any(op =>
-            S(op["role"]).StartsWith("event_rewards.", StringComparison.Ordinal) && S(op["state"]) == "completed" && S(op["presentation"]) == "pending" && DailyWorkflowRegistry.Owned(op, frame));
+        DailyNavigationDecision.Types(frame.Frame).Contains("EventUI") && business.MatchingRecords(frame.Context, op =>
+            S(op["role"]).StartsWith("event_rewards.", StringComparison.Ordinal) && S(op["state"]) == "completed" && S(op["presentation"]) == "pending" && JsonNode.DeepEquals(op["cycle"], frame.Context["cycle"])).Any(op => DailyWorkflowRegistry.Owned(op, frame));
     private static async Task ResumePresentation(DailyWorkflow w)
     {
         var frame = await w.Observe();
         if (!HasPendingPresentation(w.Business, frame)) return;
         var p = Page(await w.Evidence(Prefixes));
-        var pending = w.Business.Records(w.Context).Where(op => S(op["role"]).StartsWith("event_rewards.", StringComparison.Ordinal) && S(op["state"]) == "completed" && S(op["presentation"]) == "pending" && DailyWorkflowRegistry.Owned(op, frame))
+        var pending = w.Business.MatchingRecords(w.Context, op => S(op["role"]).StartsWith("event_rewards.", StringComparison.Ordinal) && S(op["state"]) == "completed" && S(op["presentation"]) == "pending" && JsonNode.DeepEquals(op["cycle"], frame.Context["cycle"])).Where(op => DailyWorkflowRegistry.Owned(op, frame))
             .Where(op => new[] { "TableId", "Kind", "Schedule" }.All(k => JsonNode.DeepEquals(Page(op["after"]!.AsObject())[k], p[k]))).OrderByDescending(op => N(op["confirmed_at"])).FirstOrDefault();
         if (pending == null) return;
         await FinishPresentation(w, p);
@@ -270,7 +270,7 @@ public static class DailyEventRewards
     }
     private static async Task ResumePreview(DailyWorkflow w)
     {
-        var pending = w.Business.Records(w.Context).Where(op => S(op["role"]).StartsWith("event_rewards.", StringComparison.Ordinal) && S(op["state"]) == "preview_ready").ToArray();
+        var pending = w.Business.MatchingRecords(w.Context, op => S(op["role"]).StartsWith("event_rewards.", StringComparison.Ordinal) && S(op["state"]) == "preview_ready").ToArray();
         if (pending.Length == 0)
             return;
         Require(pending.Length == 1, "多个活动预览尚未核对");

@@ -301,7 +301,7 @@ public static class DailyEquipment
     }
     private static string[]? Drawn(DailyWorkflow w)
     {
-        var ops = w.Business.Records(w.Context).Where(r => JsonNode.DeepEquals(r["cycle"], w.Context["cycle"])).ToArray();
+        var ops = w.Business.MatchingRecords(w.Context, r => (S(r["role"]) == "gacha.free_all" || S(r["role"]).StartsWith("equipment.", StringComparison.Ordinal)) && JsonNode.DeepEquals(r["cycle"], w.Context["cycle"])).ToArray();
         bool found = false;
         var ids = new List<string>();
         foreach (var op in ops.Where(r => S(r["role"]) == "gacha.free_all" && S(r["state"]) != "rejected"))
