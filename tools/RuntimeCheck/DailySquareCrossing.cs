@@ -5,6 +5,42 @@ using static BD2Daily.DailyData;
 internal static class DailySquareCrossing
 {
     static double Distance(JsonObject a,JsonObject b)=>Math.Sqrt(Math.Pow(a["X"]!.GetValue<double>()-b["X"]!.GetValue<double>(),2)+Math.Pow(a["Z"]!.GetValue<double>()-b["Z"]!.GetValue<double>(),2));
+    public static async Task Merchant(DailyWorkflow w,string output)
+    {
+        var frame=(await w.Observe()).Frame;
+        if(!S(frame["Scene"]).StartsWith("Map3009_"))throw new InvalidOperationException("商人导航验证要求已在广场，不切换卡带。");
+        var trade=new DailyTradeExecution(w,new JsonObject());
+        if(await w.Has("ShopPopupUI"))throw new InvalidOperationException("有待确认的商品弹窗，保留现场。");
+        await trade.Close();
+        var runs=new JsonArray();
+        for(int i=0;i<2;i++)
+        {
+            frame=(await w.Observe()).Frame;
+            if(i==1)
+            {
+                var start=frame["SquareNavigation"]!.AsObject();
+                var destination=Rows(start["Landmarks"]).Where(p=>S(p["Name"]).StartsWith("NPCController:")&&Distance(start,p)>30&&Distance(start,p)<180).OrderByDescending(p=>Distance(start,p)).FirstOrDefault()
+                    ??throw new InvalidOperationException("没有可用的广场远端测试点。");
+                DailyJson.Write(Path.Combine(output,"far-endpoint.json"),destination);
+                await w.Step(O(("ui","GameFieldDefaultUI"),("operation","square_route_probe"),("items",new JsonArray(new[]{"X","Y","Z"}.Select(k=>JsonValue.Create((long)Math.Round(destination[k]!.GetValue<double>()*1000))).ToArray())),("reason","从商人前往广场远端，验证远距离返回商人的 A* 路线")));
+                await DailySquareNavigation.Wait(w,"square_route_probe",async()=>S((await w.Observe()).Frame["SquareNavigation"]?["State"])=="arrived");
+                DailyJson.Write(Path.Combine(output,"far-arrived.json"),(await w.Observe()).Frame);
+                await DailySquareNavigation.Stop(w);
+            }
+            var before=(await w.Observe()).Frame;
+            DailyJson.Write(Path.Combine(output,$"merchant-{i+1}-before.json"),before);
+            double began=w.Time;
+            await trade.OpenShop();
+            var opened=(await w.Observe()).Frame;
+            if(!DailyNavigationDecision.Types(opened).Contains("ShopUI"))throw new InvalidOperationException("没有打开原生商店。");
+            DailyJson.Write(Path.Combine(output,$"merchant-{i+1}-opened.json"),opened);
+            DailyJson.Write(Path.Combine(output,$"merchant-{i+1}-evidence.json"),await w.Evidence("trade.navigation","trade.currency"));
+            runs.Add(O(("run",i+1),("seconds",w.Time-began),("shopOpened",true),("route",opened["SquareNavigation"]?.DeepClone())));
+            await trade.Close();
+            DailyJson.Write(Path.Combine(output,"result.json"),O(("state",i==1?"passed":"running"),("runs",runs.DeepClone()),("purchases",0),("sales",0),("navmesh",false)));
+            Console.WriteLine($"商人实机验证 {i+1}：已打开并关闭原生商店，耗时 {w.Time-began:F1} 秒");
+        }
+    }
     public static async Task Run(DailyWorkflow w,string output,bool inspectOnly)
     {
         var frame=(await w.Observe()).Frame;

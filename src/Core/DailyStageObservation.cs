@@ -6,7 +6,7 @@ namespace BD2Daily;
 /// <summary>Read-only queue observation. Never opens a writer lease or sends gameplay.</summary>
 public sealed class DailyStageObservation
 {
-    public const int BridgeVersion = 109;
+    public const int BridgeVersion = DailyBridgeVersion.Current;
     public const string LiveEntries = "runtime.json|snapshot.json|error.json|attached.json|performance.json|command.json|pause|legacy-observation|evidence-config.json|observation-request.json|evidence.json|dice-lease.json|dispatch-recovery.json|events~*|receipts~*";
     public static IReadOnlyDictionary<string, string> OwnedBattles
     {

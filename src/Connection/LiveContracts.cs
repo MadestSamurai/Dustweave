@@ -4,7 +4,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 namespace BD2Daily.Live {
  public static class LiveProtocol {
-  public const int BridgeVersion=109;
+  public const int BridgeVersion=DailyBridgeVersion.Current;
   public static bool IsSquareScene(string scene){return scene!=null&&scene.StartsWith("Map3009_",StringComparison.Ordinal);}
   public static readonly string[] MissionQuerySurfaces=new[]{"MenuUI","PassUI","MissionUI","EventUI","HuntOrAirwayUI","GameFieldDefaultUI","CafeteriaFieldDefaultUI","AvatarLifeGameFieldDefaultUI","AvatarFishingHarborUI","FishingGameFieldDefaultUI","AvatarFishingWorldMapUI","TotalWarUI","MyRoomUI","MiniGameHubUI","SichuanMainUI","SichuanStagePopupUI","SichuanBoardUI","SichuanStageClearPopupUI"};
   // StorySkipUI is an embedded toolbar, not a modal UIBase popup. Its native

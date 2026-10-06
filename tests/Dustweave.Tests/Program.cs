@@ -63,6 +63,7 @@ await Group("ManagedBootstrap", () => ManagedBootstrapCases.Run(root, cases));
 await Group("ManagementStage", () => ManagementStageCases.Run(root, cases));
 await Group("FreeDrawData", () => FreeDrawDataCases.Run(root, cases));
 await Group("EmptyScene", () => EmptySceneCases.Run(root, cases));
+await Group("SquareApproach", () => SquareApproachCases.Run(root, cases));
 await Group("HomeNavigation", () => HomeNavigationCases.Run(root, cases));
 await Group("HomeRecovery", () => HomeRecoveryCases.Run(root, cases));
 await Group("MirrorStage", () => MirrorStageCases.Run(root, cases));

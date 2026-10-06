@@ -7735,6 +7735,28 @@
       "path": "src/Desktop/ProgressRingConverter.cs",
       "sha256": "7a9df8db40b5f9353c7d35708aac5019225498590a9f382bb6605ba8419a81ab",
       "bytes": 1771
+    },
+    {
+      "path": "src/Connection/SquareApproach.cs",
+      "sha256": "aae643e0da755df5f1a0307e3ab0d6f59d457fe980243f90506f992657b0fc06",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1374
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/SquareApproachCases.cs",
+      "sha256": "fdca5076a55b88fee5717ad5e8319372a2c11c9d4925e92bbbe90008f4e1f458",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3077
+    },
+    {
+      "path": "src/Shared/DailyBridgeVersion.cs",
+      "sha256": "967cc7ec980745c5965b90a9ee4b0c6167994bdf60fb4e05d433c68f1c18c2af",
+      "reasons": ["build input"],
+      "bytes": 200
     }
   ],
   "publicReleaseApproved": false,

@@ -62,10 +62,54 @@ namespace BD2Daily.Live
    for(int i=1;i<=steps;i++)if(StandClear(p+Vector3.up*(StepHeight*i/steps)))return true;
    return false;
   }
+  private System.Collections.Generic.IEnumerable<RoutePoint> InteractionDestinations(Vector3 from)
+  {
+   var sector=target.GetComponent<CircleSectorCollider>();
+   var detector=target.GetComponent<PrimitiveCollideDetector>();
+   var center=target.transform.position;center.y=Vector(approach.Anchor).y;
+   double reach;Func<RoutePoint,bool> contains;
+   if(sector!=null)
+   {
+    // This is only the native interaction domain, never an obstacle radius.
+    center=sector.transform.position;center.y=Vector(approach.Anchor).y;
+    reach=sector.ὬὦὭὦὢὢὩὬὠὡὯ;
+    contains=p=>sector.IsDetectionInCollisionArea(Vector(p));
+   }
+   else if(detector!=null)
+   {
+    var triggers=detector.GetComponents<Collider>().Where(c=>c.enabled&&c.gameObject.activeInHierarchy&&c.isTrigger).ToArray();
+    if(triggers.Length==0)yield break;
+    var area=triggers[0].bounds;foreach(var trigger in triggers.Skip(1))area.Encapsulate(trigger.bounds);
+    center=area.center;center.y=Vector(approach.Anchor).y;
+    reach=Math.Sqrt(area.extents.x*area.extents.x+area.extents.z*area.extents.z)+BodyRadius;
+    contains=p=>{Vector3 low,high;float radius;BodyCapsule(Vector(p),out low,out high,out radius);return Physics.OverlapCapsule(low,high,radius,~0,QueryTriggerInteraction.Collide).Any(c=>triggers.Contains(c));};
+   }
+   else
+   {
+    // FieldObjectBase's fallback compares the 3D player position with squared distance 10.
+    reach=Math.Sqrt(10);contains=p=>(Vector(p)-target.transform.position).sqrMagnitude<10f;
+   }
+   foreach(var p in SquareApproach.InteractionPoints(Point(center),Point(from),reach,
+    p=>{Vector3 floor;return DestinationGround(Vector(p),out floor)?(RoutePoint?)Point(floor):null;},contains,kind=="square_shop_nav"))yield return p;
+  }
+  private string InteractionGeometry()
+  {
+   if(target==null)return "interaction=none anchor="+Vector(approach.Anchor);
+   var sector=target.GetComponent<CircleSectorCollider>();
+   return "target="+target.name+" anchor="+Vector(approach.Anchor)+" nativeNear="+target.ὩὤὨὮὥὦὫὭὫὭὨ+
+    (sector==null?" interaction="+(target.GetComponent<PrimitiveCollideDetector>()==null?"distance_squared<10":"trigger"):" interaction=sector reach="+sector.ὬὦὭὦὢὢὩὬὠὡὯ+" angle="+sector.ὫὩὥὧὦὫὯὫὩὨὥ);
+  }
+  private string ContactGeometry(Vector3 position)
+  {
+   Vector3 low,high;float radius;BodyCapsule(position,out low,out high,out radius);
+   return string.Join(";",Physics.OverlapCapsule(low,high,radius,~0,QueryTriggerInteraction.Collide)
+    .Where(c=>!c.transform.IsChildOf(player.transform)).Take(8)
+    .Select(c=>c.name+" type="+c.GetType().Name+" layer="+c.gameObject.layer+" trigger="+c.isTrigger+" movement="+MovementCollider(c)+" bounds="+c.bounds.size).ToArray());
+  }
   private bool DestinationGround(Vector3 v,out Vector3 p){
    // Interaction anchors are above the floor; route nodes themselves still obey step/slope limits.
    foreach(var hit in Physics.RaycastAll(v+Vector3.up*1f,Vector3.down,3f,~0,QueryTriggerInteraction.Ignore).OrderBy(h=>h.distance)){
-    if(!MovementCollider(hit.collider)||hit.collider is CharacterController||!TraversalRules.WalkableNormal(hit.normal.y,SlopeLimit))continue;
+    if(!MovementCollider(hit.collider)||hit.collider is CharacterController||hit.collider.GetComponentInParent<NPCController>()!=null||!TraversalRules.WalkableNormal(hit.normal.y,SlopeLimit))continue;
     p=hit.point+Vector3.up*RootLift;if(StandClear(p))return true;
    }p=v;return false;
   }

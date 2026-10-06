@@ -16,4 +16,8 @@
     <Compile Include="../../src/Runtime/SdkIdentity.cs" Link="SdkIdentity.cs" />
     <Compile Include="../../src/Connection/WeeklyNpcProgressGuard.cs" Link="WeeklyNpcProgressGuard.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../src/Connection/LiveContracts.cs" Link="LiveContracts.cs"/><Compile Include="../../src/Connection/SquareApproach.cs" Link="SquareApproach.cs" />
+    <Compile Include="../../standalone/bd2-territory/shared/LocalRoute.cs;../../standalone/bd2-territory/shared/LocalNavigationCache.cs;../../standalone/bd2-territory/shared/RouteGeometry.cs" Link="SquareGeometry/%(Filename)%(Extension)" />
+  </ItemGroup>
 </Project>

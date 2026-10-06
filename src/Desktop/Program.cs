@@ -46,7 +46,7 @@ public static class Program
     {
         if (args.Length == 0)
             throw new ArgumentException("Expected utility name");
-        bool squareCheck = args.Length == 3 && args[0] == "diagnostics" && args[1] is "square-crossing" or "square-inspect";
+        bool squareCheck = args.Length == 3 && args[0] == "diagnostics" && args[1] is "square-crossing" or "square-inspect" or "square-merchant";
         using var squareControl = squareCheck ? DailyToolControl.Acquire(DailyIdentity.DataRoot) : null;
         if (squareCheck)
         {

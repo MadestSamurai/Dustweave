@@ -3,6 +3,9 @@ using static BD2Daily.DailyData;
 namespace BD2Daily;
 public static class DailySquareNavigation
 {
+    public static bool MerchantArrived(JsonObject frame,bool nativeNear) => nativeNear
+        && S(frame["SquareNavigation"]?["Kind"])=="square_shop_nav"
+        && S(frame["SquareNavigation"]?["State"])=="arrived";
     public static void Inspect(JsonObject frame, string kind)
     {
         if (!S(frame["Scene"]).StartsWith("Map3009_", StringComparison.Ordinal)) throw new DailyTravelBlocked("广场移动期间场景改变");

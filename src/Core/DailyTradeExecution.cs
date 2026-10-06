@@ -36,11 +36,9 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         try
         {
             first = last = await Observe();
-            if (B(first["Near"]))
-                return;
             await w.Step("GameFieldDefaultUI", operation: "square_shop_nav", reason:"使用 A* 前往广场商人");
             attempts = 1;
-            await DailySquareNavigation.Wait(w,"square_shop_nav",async()=> { last=await Observe(); return B(last["Near"]); });
+            await DailySquareNavigation.Wait(w,"square_shop_nav",async()=> { last=await Observe(); return DailySquareNavigation.MerchantArrived((await w.Observe()).Frame,B(last["Near"])); });
         }
         catch (Exception e) { DailyJson.Write(Path.Combine(w.Root, "live", "travel-diagnostics", "trade-" + w.Driver.UtcTicks + ".json"), O(("reason", e.Message), ("npc", npc), ("initial", first), ("last", last), ("attempts", attempts))); throw; }
         finally { try { await Stop(); } catch (Exception e) { w.Save("trade-navigation-cleanup.json", O(("error", e.Message), ("at", w.Driver.UtcTicks))); } }

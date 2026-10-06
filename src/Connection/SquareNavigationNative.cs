@@ -11,7 +11,7 @@ namespace BD2Daily.Live {
  internal sealed partial class SquareRoutePilot {
   internal static SquareRoutePilot Current;
   private PlayerController player;private PlayerMoveController move;private string scene,account,owner,command,kind;
-  private FieldObjectBase target;private Collider reward;private Vector3 goal,origin,previous;
+  private FieldObjectBase target;private Collider reward;private SquareApproach approach;private Vector3 goal { get { return Vector(approach.Stand); } } private Vector3 origin,previous;private long arrivedAt;
   private AdaptiveLocalRoute search;private RoutePoint[] goals,path=new RoutePoint[0];private int index,plans,expanded;
   private bool active;private string state="idle",reason="",geometry="";private long started,planAt,expires,lastTick,blockedAt;private int tickFrame=-1;
   private double travelled,remaining,planMilliseconds,maxSliceMilliseconds;private readonly LocalMotionProgress progress=new LocalMotionProgress();
@@ -26,10 +26,10 @@ namespace BD2Daily.Live {
   internal static void Begin(Command c,FieldObjectBase fieldTarget,Collider rewardTarget,Vector3 destination){
    var field=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ;var actor=field.ὪὨὯὢὫὮὨὩὮὡὬ;
    if(actor==null||!LiveProtocol.IsSquareScene(c.Scene))throw new InvalidOperationException("广场角色或场景不可用");
-   Cancel("replaced_by_new_route");var pilot=new SquareRoutePilot{player=actor,move=actor.ὭὦὫὤὮὧὦὡὨὤὢ,scene=c.Scene,account=c.AccountKey,owner=c.PlayerKey,command=c.Id,kind=c.Kind,target=fieldTarget,reward=rewardTarget,goal=destination,origin=actor.transform.position,previous=actor.transform.position,started=DateTime.UtcNow.Ticks,active=true};
+   Cancel("replaced_by_new_route");var pilot=new SquareRoutePilot{player=actor,move=actor.ὭὦὫὤὮὧὦὡὨὤὢ,scene=c.Scene,account=c.AccountKey,owner=c.PlayerKey,command=c.Id,kind=c.Kind,target=fieldTarget,reward=rewardTarget,approach=new SquareApproach(Point(destination)),origin=actor.transform.position,previous=actor.transform.position,started=DateTime.UtcNow.Ticks,active=true};
    if(pilot.move==null||pilot.Body==null)throw new InvalidOperationException("广场角色碰撞控制器不可用");
    pilot.expires=pilot.started+TimeSpan.FromSeconds(Math.Min(240,Math.Max(75,FlatDistance(pilot.origin,destination)*2+30))).Ticks;
-   Current=pilot;pilot.StopMotion();pilot.move.ChangeMoveType(MoveController.ὧὮὧὠὢὢὦὪὭὢὨ.CharController);pilot.Plan("initial",false);
+   Current=pilot;pilot.StopMotion();pilot.move.ChangeMoveType(MoveController.ὧὮὧὠὢὢὦὪὭὢὨ.CharController);if(pilot.Arrived())pilot.Finish("arrived","已在原生交互范围");else pilot.Plan("initial",false);
   }
   internal static void Tick(Frame frame,bool permitted){
    var p=Current;if(p==null||!p.active)return;
@@ -63,27 +63,29 @@ namespace BD2Daily.Live {
    return cached?edgeCache.Get(new RouteEdgeKey(a,b),DateTime.UtcNow.Ticks,check):check();
   }
   private IEnumerable<RoutePoint> Destinations(){
-   var from=player.transform.position;var center=reward==null?goal:reward.bounds.center;center.y=goal.y;
+   var from=player.transform.position;var center=reward==null?Vector(approach.Anchor):reward.bounds.center;
+   if(target!=null&&reward==null){foreach(var point in InteractionDestinations(from))yield return point;yield break;}
    var choices=new List<Vector3>{center};
-   if(reward!=null){var box=reward.bounds;for(int x=-1;x<=1;x++)for(int z=-1;z<=1;z++)choices.Add(new Vector3(box.center.x+x*Math.Max(.1f,box.extents.x*.65f),goal.y,box.center.z+z*Math.Max(.1f,box.extents.z*.65f)));}
-   else foreach(var point in LocalStandPoints.Create(Point(center),Point(from),1.1))choices.Add(Vector(point));
+   if(reward!=null){var box=reward.bounds;for(int x=-1;x<=1;x++)for(int z=-1;z<=1;z++)choices.Add(new Vector3(box.center.x+x*Math.Max(.1f,box.extents.x*.65f),center.y,box.center.z+z*Math.Max(.1f,box.extents.z*.65f)));}
+
+   if(reward==null)foreach(var point in LocalStandPoints.Create(Point(center),Point(from),1.1))choices.Add(Vector(point));
    foreach(var v in choices.OrderBy(v=>FlatDistance(v,from))){Vector3 p;if(!DestinationGround(v,out p))continue;if(reward!=null&&FlatDistance(p,reward.ClosestPoint(p))>BodyRadius*.55f)continue;yield return Point(p);}
   }
   private string DescribeGround(Vector3 v){
-   return "body r="+BodyRadius+" h="+Body.height+" lift="+RootLift+" step="+StepHeight+" skin="+Skin+" layer="+Body.gameObject.layer+" origin="+player.transform.position+" goal="+v+" | "+string.Join(";",Physics.RaycastAll(v+Vector3.up,Vector3.down,4,~0,QueryTriggerInteraction.Ignore).OrderBy(h=>h.distance).Take(8).Select(h=>h.collider.name+" layer="+h.collider.gameObject.layer+" y="+h.point.y+" ny="+h.normal.y+" movement="+MovementCollider(h.collider)+" clear="+StandClear(h.point+Vector3.up*RootLift)).ToArray());
+   return InteractionGeometry()+" contacts=["+ContactGeometry(player.transform.position)+"] body r="+BodyRadius+" h="+Body.height+" lift="+RootLift+" step="+StepHeight+" skin="+Skin+" layer="+Body.gameObject.layer+" origin="+player.transform.position+" goal="+v+" | "+string.Join(";",Physics.RaycastAll(v+Vector3.up,Vector3.down,4,~0,QueryTriggerInteraction.Ignore).OrderBy(h=>h.distance).Take(8).Select(h=>h.collider.name+" layer="+h.collider.gameObject.layer+" y="+h.point.y+" ny="+h.normal.y+" movement="+MovementCollider(h.collider)+" clear="+StandClear(h.point+Vector3.up*RootLift)).ToArray());
   }
   private void Plan(string why,bool stalled){
    StopMotion();plans++;if(plans>6){Finish("failed","反复绕障仍无法到达，已保留目标和诊断");return;}
    var now=DateTime.UtcNow.Ticks;if(stalled){edgeCache.Clear();groundCache.Clear();corridors.Clear();}
-   geometry=DescribeGround(goal);goals=Destinations().Take(24).ToArray();if(goals.Length==0){Finish("failed","没有符合实际碰撞规则的目标站位");return;}
-   goal=Vector(goals[0]);state="planning";reason=why;planAt=now;blockedAt=0;index=0;path=new RoutePoint[0];
+   geometry=DescribeGround(Vector(approach.Anchor));goals=Destinations().ToArray();if(goals.Length==0){Finish("failed","没有符合实际碰撞规则的目标站位");return;}
+   approach.SelectStand(goals[0]);state="planning";reason=why;planAt=now;blockedAt=0;arrivedAt=0;index=0;path=new RoutePoint[0];
    var saved=corridors.ReuseCorridor(Point(player.transform.position),goals,(a,b)=>Edge(a,b,false));
    if(saved!=null){SetPath(saved);return;}
    search=new AdaptiveLocalRoute(Point(player.transform.position),goals,Sample,(a,b)=>Edge(a,b,true),false,plans>1?18:10);
   }
-  private void SetPath(RoutePoint[] points){path=points;index=1;search=null;state="moving";reason="A* 普通方向移动";goal=Vector(path.Last());progress.Begin(DateTime.UtcNow.Ticks,Point(player.transform.position));}
+  private void SetPath(RoutePoint[] points){path=points;index=1;search=null;state="moving";reason="A* 普通方向移动";approach.SelectStand(path.Last());progress.Begin(DateTime.UtcNow.Ticks,Point(player.transform.position));}
   private bool Arrived(){
-   if(target!=null&&reward==null)return target.ὩὤὨὮὥὦὫὭὫὭὨ;
+   if(target!=null&&reward==null)return target.ὩὤὨὮὥὦὫὭὫὭὨ&&(kind!="square_shop_nav"||(path.Length>0&&FlatDistance(player.transform.position,goal)<.13f&&Math.Abs(player.transform.position.y-goal.y)<.25f));
    if(reward!=null)return FlatDistance(player.transform.position,reward.ClosestPoint(player.transform.position))<BodyRadius*.7f;
    return FlatDistance(player.transform.position,goal)<.13f&&Math.Abs(player.transform.position.y-goal.y)<.25f;
   }
@@ -108,7 +110,13 @@ namespace BD2Daily.Live {
     var points=search.Path;corridors.Save(1,now,points);SetPath(points);
    }
    while(index<path.Length&&RoutePoint.Distance(Point(from),path[index])<.11)index++;
-   if(index>=path.Length){Plan("终点尚未进入交互范围",false);return;}
+   if(index>=path.Length){
+    // Native proximity is updated periodically. Do not spend the entire replan
+    // budget between reaching the stand and the next native interaction tick.
+    if(arrivedAt==0){arrivedAt=now;StopMotion();}
+    if(now-arrivedAt<TimeSpan.FromSeconds(1).Ticks)return;
+    Plan("等待原生交互后重新选择目标站位",false);return;
+   }
    // Amortize expensive physics while issuing normal steering every rendered frame.
    if(now-lastTick>TimeSpan.FromMilliseconds(120).Ticks){
     lastTick=now;

@@ -3,7 +3,7 @@ using System.Text.Json.Nodes;
 using BD2Daily;
 using BD2.LocalIpc;
 
-if(args.Length!=2||args[0] is not ("observe" or "home" or "harbor-cycle" or "stages" or "resume-stages" or "weekly-retry" or "talent-audit" or "npc-query" or "trade-data-audit" or "trade-retry" or "trade-menu-audit" or "cafeteria-recover" or "roulette-single" or "square-crossing" or "square-inspect"))throw new ArgumentException("observe|home|harbor-cycle|stages|resume-stages|weekly-retry|talent-audit|npc-query|trade-data-audit|trade-retry|trade-menu-audit|cafeteria-recover <evidence-directory>");
+if(args.Length!=2||args[0] is not ("observe" or "home" or "harbor-cycle" or "stages" or "resume-stages" or "weekly-retry" or "talent-audit" or "npc-query" or "trade-data-audit" or "trade-retry" or "trade-menu-audit" or "cafeteria-recover" or "roulette-single" or "square-crossing" or "square-inspect" or "square-merchant"))throw new ArgumentException("observe|home|harbor-cycle|stages|resume-stages|weekly-retry|talent-audit|npc-query|trade-data-audit|trade-retry|trade-menu-audit|cafeteria-recover <evidence-directory>");
 string output=Path.GetFullPath(args[1]);
 if(Directory.Exists(output)&&Directory.EnumerateFileSystemEntries(output).Any())throw new InvalidOperationException("Evidence directory must be new or empty; previous observations are preserved.");
 Directory.CreateDirectory(output);
@@ -107,12 +107,13 @@ try{
             ["operation"]=op,["arguments"]=values?.DeepClone(),["result"]=result.DeepClone()});
         return result;
     }
-    if(args[0] is "square-crossing" or "square-inspect"){
+    if(args[0] is "square-crossing" or "square-inspect" or "square-merchant"){
         if(!DailySuite.Enabled)throw new InvalidOperationException("广场诊断必须使用完整日常工具和统一控制锁。");
         var proofs=DailySquare.Proofs().ToArray();
         var business=new DailyManagedBusiness(root,driver,proofs,()=>stop);
         var workflow=new DailyWorkflow(root,AppContext.BaseDirectory,bound.Context,driver,business,navigation,proofs,()=>stop,Relay,Console.WriteLine);
-        await DailySquareCrossing.Run(workflow,output,args[0]=="square-inspect");return;
+        if(args[0]=="square-merchant")await DailySquareCrossing.Merchant(workflow,output);
+        else await DailySquareCrossing.Run(workflow,output,args[0]=="square-inspect");return;
     }
     if(args[0]=="cafeteria-recover"){
         var proofs=DailyCafeteria.Proofs().ToArray();
@@ -171,7 +172,7 @@ try{
     if(result["safe"]?.GetValue<bool>()!=true)Environment.ExitCode=2;
 }catch(Exception error){DailyJson.Write(Path.Combine(output,"error.json"),new{kind=error is StageHostException stage?stage.Kind:"runtime",error=error.ToString(),at=DateTimeOffset.UtcNow});Console.Error.WriteLine(error.Message);Environment.ExitCode=1;}
 finally{
-    if(args[0] is "square-crossing" or "square-inspect")try{livePipe.Write("pause",[]);}catch{}
+    if(args[0] is "square-crossing" or "square-inspect" or "square-merchant")try{livePipe.Write("pause",[]);}catch{}
     driver?.Dispose(); activity?.Dispose();
     try{var after=Capture();DailyJson.Write(Path.Combine(output,"after.json"),after);Report(after);}catch(Exception error){DailyJson.Write(Path.Combine(output,"after-error.json"),new{error=error.Message});}
 }
