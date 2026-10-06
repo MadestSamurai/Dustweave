@@ -23,7 +23,7 @@ public sealed class DailyManagementStage : IDailyManagedStage
     }
     private void Stop()
     {
-        if (stopped())
+        if (stopped() || driver.PauseRequested)
             throw new StageHostException("stopped", "经营收益领取已停止，原回执保留。");
     }
     private void RequireResolved(JsonObject context)
@@ -48,13 +48,53 @@ public sealed class DailyManagementStage : IDailyManagedStage
         }
         return null;
     }
+    private bool ManagementRewardVisible(JsonObject frame) =>
+        DailyNavigationDecision.Rows(frame).Count(r => DailyNavigationDecision.Text(r, "Type") == "ManagementRewardPopupUI") == 1 &&
+        DailyNavigationDecision.Rows(frame).Count(r => DailyNavigationDecision.Text(r, "Type") == "RewardReceivePopupUI") == 1 &&
+        DailyNavigationDecision.Blockers(frame, "RewardReceivePopupUI", policy).Length == 0;
+
+    // Accrued management income is a zero-cost claim. Retry by reading live
+    // eligibility, never by replaying the old intent or assuming a fixed cooldown.
+    private async Task<JsonObject> RetryFreeClaimAsync(JsonObject context, Func<Task<JsonObject>> run)
+    {
+        var origin = (await driver.ObserveAsync()).Frame;
+        const int maxRetries = 3;
+        for (int attempt = 0; ; attempt++)
+        {
+            Stop();
+            var current = await driver.ObserveAsync();
+            if (!JsonNode.DeepEquals(current.Context, context) || !DailyEvidence.SameActor(origin, current.Frame) ||
+                !JsonNode.DeepEquals(origin["Scene"], current.Frame["Scene"]))
+                throw new StageHostException("identity", "经营重试期间账号、场景或周期改变，已停止重试。");
+            string reason;
+            try
+            {
+                var result = await run();
+                result["retries"] = attempt;
+                if (result["reason"]?.GetValue<string>() != "free_claim_still_pending" || attempt == maxRetries)
+                    return result;
+                reason = "经营收益仍可领取，重新检查当前窗口与可领取状态";
+            }
+            catch (Exception error) when (error is StageHostException { Kind: "adapter" or "pending" } or
+                DailyStepException { Kind: "rejected" or "pending" })
+            {
+                Stop();
+                if (attempt == maxRetries) throw;
+                reason = error.Message;
+            }
+            driver.Diagnostics.Event("management_claim_retry", DailyData.O(
+                ("retry", attempt + 1), ("max_retries", maxRetries), ("reason", reason), ("cost", 0)));
+            await delay(TimeSpan.FromMilliseconds(500));
+        }
+    }
+
     public bool CanResume(DailyStageFrame frame)
     {
         var types = DailyNavigationDecision.Types(frame.Frame);
         if (!types.Contains("ManagementRewardPopupUI"))
             return false;
         if (types.Contains("RewardReceivePopupUI"))
-            return OwnedReward(frame) != null;
+            return ManagementRewardVisible(frame.Frame);
         return DailyNavigationDecision.Blockers(frame.Frame, "ManagementRewardPopupUI", policy).Length == 0;
     }
     private async Task OpenAsync(JsonObject context)
@@ -66,8 +106,17 @@ public sealed class DailyManagementStage : IDailyManagedStage
         {
             if (types.Contains("RewardReceivePopupUI"))
             {
-                var op = OwnedReward(current) ?? throw new StageHostException("adapter", "当前经营奖励展示没有本队列的已确认回执，保留现场。");
-                await FinishAsync(op, false);
+                if (!ManagementRewardVisible(current.Frame))
+                    throw new StageHostException("adapter", "经营奖励窗口被其他页面遮挡，等待可操作状态。");
+                var op = OwnedReward(current);
+                if (op != null) await FinishAsync(op, false);
+                else
+                {
+                    // A visible native management reward is sufficient to resume
+                    // presentation cleanup even when its network receipt was lost.
+                    driver.Diagnostics.Event("management_reward_resume", DailyData.O(("receipt_required", false), ("cost", 0)));
+                    await driver.DismissRewardAsync("ManagementRewardPopupUI", false);
+                }
             }
             return;
         }
@@ -168,14 +217,14 @@ public sealed class DailyManagementStage : IDailyManagedStage
         try
         {
             if (kind == "life_helpers")
-                return await HelpersAsync(context);
+                return await RetryFreeClaimAsync(context, () => HelpersAsync(context));
             if (kind == "cafeteria_income")
-                return await IncomeAsync(context, true);
+                return await RetryFreeClaimAsync(context, () => IncomeAsync(context, true));
             var settings = preferences(context);
             settings.Validate();
             var results = new JsonObject();
             if (settings.Stages.CafeteriaIncome)
-                results["income"] = await IncomeAsync(context, !settings.Stages.CafeteriaGuests);
+                results["income"] = await RetryFreeClaimAsync(context, () => IncomeAsync(context, !settings.Stages.CafeteriaGuests));
             // Guest interactions share the same native driver and business journal.
             if (settings.Stages.CafeteriaGuests)
                 results["guests"] = await relay("execute", "cafeteria_guests", null);

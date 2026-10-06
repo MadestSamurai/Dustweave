@@ -132,8 +132,11 @@ static class ManagementStageCases
             f.Page("ManagementRewardPopupUI");
             f.Reward = true;
             f.Page("ManagementRewardPopupUI");
-            await Reject(() => f.Stage.ExecuteAsync(f.Context, NoRelay), "adapter", "unowned management reward presentation remains untouched");
-            Check(f.Box.Commands.Count == 0, "unowned management reward sends zero cleanup or consuming inputs");
+            foreach (string role in f.Eligible.Keys.ToArray()) f.Eligible[role] = false;
+            Check(f.Stage.CanResume(new(f.Current, f.Context)), "known management reward can resume without a historical receipt");
+            var result = await f.Stage.ExecuteAsync(f.Context, NoRelay);
+            Check(result["state"]?.GetValue<string>() == "skipped" && f.RewardBacks == 1 && f.Claims == 0,
+                "management closes visible prior reward then skips native cooldown without claiming again");
         }
         using (var f = Create())
         {
@@ -148,6 +151,98 @@ static class ManagementStageCases
             DailyJson.Write(Path.Combine(f.Root, "live", "business", op["id"]!.GetValue<string>() + ".json"), op);
             await f.Stage.ExecuteAsync(f.Context, NoRelay);
             Check(f.Claims == 1 && File.Exists(Path.Combine(f.Root, "live", "business", op["id"]!.GetValue<string>() + ".json")), "old uncertain free claim does not prevent fresh native claim and remains preserved");
+        }
+        foreach (string scenario in new[] { "rotate", "permanent-rotation", "account-change", "scene-change", "scene-at-dispatch", "stop", "unknown" })
+        using (var f = Create())
+        {
+            const string prefix = "$pointer/UIRoot/Mask/Object- Left/ButtonLayout/Management/ScrollRect/Viewport/";
+            f.Current["Surfaces"]![0]!["Targets"]![0]!["Field"] = prefix + "Content1";
+            int selections = 0;
+            if (scenario == "unknown")
+            {
+                var normal = f.Box.AfterCommand;
+                f.Box.AfterCommand = command => { normal!(command); f.Box.State = "observed_after_dispatch"; };
+            }
+            f.Driver.SubmissionGuard = () =>
+            {
+                if (f.Current["Surfaces"]![0]!["Type"]?.GetValue<string>() != "MenuUI") return;
+                if (++selections > 1 && scenario != "permanent-rotation")
+                {
+                    if (scenario == "scene-at-dispatch") f.Current["Scene"] = "other";
+                    return;
+                }
+                var target = f.Current["Surfaces"]![0]!["Targets"]![0]!;
+                target["Field"] = prefix + (selections % 2 == 1 ? "Content2" : "Content1");
+                target["Id"] = 10 + selections;
+                if (scenario == "account-change") f.Context["actor"]![3] = new string('d', 64);
+                if (scenario == "scene-change") f.Current["Scene"] = "other";
+                if (scenario == "stop") f.Stopped = true;
+                if (scenario == "unknown") { f.Box.State = "unknown"; f.Box.Dispatched = true; }
+            };
+            Exception? failure = null;
+            JsonObject? result = null;
+            try { result = await f.Stage.ExecuteAsync(f.Context, NoRelay); }
+            catch (Exception e) when (e is StageHostException or DailyStepException) { failure = e; }
+            bool ok = scenario switch
+            {
+                "rotate" => failure == null && f.Claims == 1 && result?["state"]?.GetValue<string>() == "completed",
+                "permanent-rotation" => failure is StageHostException { Kind: "adapter" } && f.Driver.MonotonicTime >= 100 && f.Driver.MonotonicTime < 105 && f.Box.Commands.Count == 0,
+                "account-change" => failure is DailyStepException { Kind: "identity" } && f.Claims == 0,
+                "scene-change" or "scene-at-dispatch" => failure != null && f.Claims == 0 && f.Box.Commands.Count == 0,
+                "stop" => failure != null && f.Claims == 0 && f.Box.Commands.Count == 0,
+                _ => failure == null && result?["state"]?.GetValue<string>() == "completed" && f.Claims == 1
+            };
+            Check(ok, "management entry reselect handles " + scenario + " without duplicate claims: " + failure?.Message);
+        }
+        foreach (int ignored in new[] { 1, 3, 4 })
+        using (var f = Create())
+        {
+            f.IgnoredClaims = ignored;
+            var result = await f.Stage.ExecuteAsync(f.Context, NoRelay);
+            Check(result["state"]?.GetValue<string>() == (ignored < 4 ? "completed" : "partial") &&
+                f.Claims == Math.Min(ignored + 1, 4) && result["retries"]?.GetValue<int>() == Math.Min(ignored, 3),
+                "management retries a still-claimable free income at most three times: " + ignored);
+            Check(f.Records().Count == f.Claims && f.Records().Select(op => op["id"]!.GetValue<string>()).Distinct().Count() == f.Claims,
+                "each free-income retry uses a fresh game-state plan and preserves prior attempts: " + ignored);
+        }
+        using (var f = Create("life_helpers"))
+        {
+            f.IgnoredClaims = 2;
+            var result = await f.Stage.ExecuteAsync(f.Context, NoRelay);
+            Check(result["state"]?.GetValue<string>() == "completed" && f.Claims == 3 && result["retries"]?.GetValue<int>() == 2,
+                "helper-only zero-cost claims share bounded current-state retry");
+            Check(f.Eligible[DailyManagementProof.Cafeteria] && f.Eligible[DailyManagementProof.Fishing],
+                "helper-only retries never claim other management categories");
+        }
+        using (var f = Create())
+        {
+            f.HoldEligibilityUntilClose = true;
+            var result = await f.Stage.ExecuteAsync(f.Context, NoRelay);
+            Check(result["state"]?.GetValue<string>() == "skipped" && f.Claims == 1 && f.RewardBacks == 1 && result["retries"]?.GetValue<int>() == 1,
+                "visible management reward cleans up an unconfirmed attempt before live cooldown prevents a second claim");
+            Check(f.Records().Single()["state"]?.GetValue<string>() == "unconfirmed_free_claim",
+                "presentation recovery does not fabricate a missing server receipt");
+        }
+        using (var f = Create())
+        {
+            f.Page("ManagementRewardPopupUI"); f.Reward = true; f.Page("ManagementRewardPopupUI");
+            f.Current["Surfaces"]!.AsArray().Add(new JsonObject { ["Type"] = "UnknownPurchaseUI", ["Popup"] = true, ["Order"] = 999, ["Id"] = 9 });
+            Check(!f.Stage.CanResume(new(f.Current, f.Context)), "covered management reward is not treated as an ordinary result window");
+            await Reject(() => f.Stage.ExecuteAsync(f.Context, NoRelay), "adapter", "unknown foreground is never confirmed during management retries");
+            Check(f.Box.Commands.Count == 0, "management retries do not dismiss unrelated dialogs");
+        }
+        using (var f = Create())
+        {
+            var native = f.Box.AfterCommand;
+            f.Box.AfterCommand = command =>
+            {
+                native!(command);
+                if (command["TargetId"]?.GetValue<int>() == 31)
+                    f.Box.Values.Remove("live:receipts~" + command["Id"]!.GetValue<string>() + ".json");
+            };
+            var result = await f.Stage.ExecuteAsync(f.Context, NoRelay);
+            Check(result["state"]?.GetValue<string>() == "completed" && f.Claims == 1 && result["retries"]?.GetValue<int>() == 0,
+                "lost transport receipt with successful native claim and reward does not trigger a second claim");
         }
         foreach (bool reversed in new[] { false, true })
         using (var f = Create())
@@ -195,7 +290,7 @@ static class ManagementStageCases
     internal sealed class Fixture : IDisposable
     {
         public string Root; public CommandDriverCases.Mailbox Box = new(); public JsonObject Context = CommandDriverCases.Context(), Current = CommandDriverCases.Frame(); public DailyCommandDriver Driver; public DailyManagedBusiness Business; public DailyManagementStage Stage; public DailyPreferences Settings = new();
-        public Dictionary<string, bool> Eligible = DailyManagementProof.Categories.ToDictionary(c => c.Role, c => true); public string MissingResponse = ""; public bool NoTap, FailReward, Stopped, Reward, EarlyBack, DuplicateEntry; public int Claims, RewardBacks;
+        public Dictionary<string, bool> Eligible = DailyManagementProof.Categories.ToDictionary(c => c.Role, c => true); public string MissingResponse = ""; public bool NoTap, FailReward, Stopped, Reward, EarlyBack, DuplicateEntry; public int Claims, RewardBacks, IgnoredClaims; public bool HoldEligibilityUntilClose;
         private double time, readyAt; private long sequence; private bool helpersClaimed, cafeClaimed, fishClaimed;
         private long Ticks => 100000000 + (long)(time * TimeSpan.TicksPerSecond);
         public JsonObject OldHelper() => new() { ["helperSlotId"] = 1, ["helperIndex"] = 10, ["helperId"] = 20, ["workType"] = 2, ["workId"] = 4, ["assignDate"] = "100" };
@@ -228,6 +323,7 @@ static class ManagementStageCases
                 else
                 {
                     Claims++;
+                    if (Claims <= IgnoredClaims) { time += .01; Publish(); return; }
                     long at = Ticks;
                     string[] roles = target == 32 ? [DailyManagementProof.Helpers] : Eligible.Where(p => p.Value).Select(p => p.Key).ToArray();
                     foreach (string role in roles)
@@ -303,7 +399,7 @@ static class ManagementStageCases
             bool ready = !FailReward && time >= readyAt;
             var readings = new JsonArray();
             foreach (var (role, ui) in DailyManagementProof.Categories)
-                readings.Add(Reading(ui, ("IsCanSettlement()", Eligible[role]), ("IsDisable()", false)));
+                readings.Add(Reading(ui, ("IsCanSettlement()", Eligible[role] || (HoldEligibilityUntilClose && Reward)), ("IsDisable()", false)));
             readings.Add(Reading("cafeteria.cache", ("RewardReceiptTime", cafeClaimed ? "200" : "100")));
             readings.Add(Reading("fishing.trap", ("TrapRewardReceiptTime", fishClaimed ? "200" : "100")));
             readings.Add(Reading("fishing.player", ("Level", 10), ("Exp", fishClaimed ? 20 : 10)));

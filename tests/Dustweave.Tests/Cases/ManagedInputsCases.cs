@@ -86,6 +86,39 @@ static class ManagedInputsCases
             await Reject(() => driver.NavigationAsync(DailyNavigationDecision.TalentAction(current, policy)!), "adapter", "managed talent recovery retains original four-per-minute bound");
             Check(box.Commands.Count == 4, "repeated talent popup does not send a fifth acknowledgement");
         }
+        foreach (string scenario in new[] { "resume-in-delay", "resume-in-read", "still-missing", "changed-account", "stopped", "unknown-receipt" })
+        {
+            double elapsed = 0;
+            bool submitted = false, pause = false;
+            var frame = Page("MenuUI", "_buttonMail");
+            var actor = CommandDriverCases.Context();
+            var delayedBox = new CommandDriverCases.Mailbox { Error = "" };
+            if (scenario == "unknown-receipt") delayedBox.State = "unknown";
+            delayedBox.AfterCommand = _ => submitted = true;
+            using var delayed = new DailyCommandDriver(Path.Combine(output, "observed-resume-" + scenario), delayedBox,
+                () =>
+                {
+                    if (submitted && scenario == "resume-in-read") { elapsed = 120; frame = Page("MailUI"); }
+                    frame["AtUtcTicks"] = 100000000 + (long)(elapsed * TimeSpan.TicksPerSecond);
+                    return Task.FromResult(new DailyStageFrame(frame.DeepClone().AsObject(), actor.DeepClone().AsObject()));
+                }, () => pause, () => 100000000 + (long)(elapsed * TimeSpan.TicksPerSecond), () => elapsed, t =>
+                {
+                    elapsed += submitted ? 120 : t.TotalSeconds;
+                    if (submitted && scenario == "resume-in-delay") frame = Page("MailUI");
+                    if (scenario == "changed-account") actor["actor"]![3] = new string('d', 64);
+                    if (scenario == "stopped") pause = true;
+                    return Task.CompletedTask;
+                });
+            delayed.Bind(CommandDriverCases.Context());
+            JsonObject? result = null;
+            string failure = "";
+            try { result = await delayed.SendObservedAsync(CommandDriverCases.Action()); }
+            catch (DailyStepException e) { failure = e.Kind; }
+            Check(scenario.StartsWith("resume-", StringComparison.Ordinal)
+                ? result?["state"]?.GetValue<string>() == "observed_expected_ui"
+                : failure == "pending", "UI input reobserves after delay without masking " + scenario);
+            Check(delayedBox.Commands.Count == 1, "UI input " + scenario + " never replays dispatched command");
+        }
         current = Page("MenuUI", "_buttonGuild");
         time = 0;
         box = new();

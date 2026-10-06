@@ -267,7 +267,8 @@ public sealed partial class DailyCommandDriver : IDisposable
         command["RequireStealth"] = Flag(action, "require_stealth");
         return command;
     }
-    public async Task<JsonObject> SubmitAsync(JsonObject action)
+    public Task<JsonObject> SubmitAsync(JsonObject action) => SubmitBoundAsync(action, null);
+    private async Task<JsonObject> SubmitBoundAsync(JsonObject action, JsonObject? requiredFrame)
     {
         SubmissionGuard?.Invoke();
         if (TradeStageActive && Text(action, "operation") == "trade_talent")
@@ -281,7 +282,7 @@ public sealed partial class DailyCommandDriver : IDisposable
             return await FieldTalentAsync(action);
         if (Text(action, "operation") == "weekly_npc_query")
             return await WeeklyNpcQueryAsync(action);
-        return await SubmitRawAsync(action);
+        return await SubmitRawAsync(action, requiredFrame: requiredFrame);
     }
     internal async Task<JsonObject> RetryStartupAsync()
     {
@@ -314,7 +315,7 @@ public sealed partial class DailyCommandDriver : IDisposable
         if (ownedFrame != null && !DailyTradePreview.Matches(action, ownedFrame, before))
             throw new DailyStepException("rejected", "Owned confirmation changed before dispatch; no command sent");
         if (requiredFrame != null && (!DailyEvidence.SameActor(before, requiredFrame) || !JsonNode.DeepEquals(before["Scene"], requiredFrame["Scene"])))
-            throw new DailyStepException("rejected", "Talent field changed before native input; no dispatch");
+            throw new DailyStepException("rejected", "Input scene or identity changed before native input; no dispatch");
         var surfaces = DailyNavigationDecision.Rows(before).Where(s => Text(s, "Type") == ui).ToArray();
         if (surfaces.Length != 1)
             throw new DailyStepException("rejected", $"Need one observed {ui}; found {surfaces.Length}") { RejectionCode = surfaces.Length == 0 ? "surface_missing" : "surface_ambiguous" };

@@ -53,7 +53,7 @@ public sealed partial class DailyCommandDriver
             }
             try
             {
-                sent = ownedFrame == null ? await SubmitAsync(action) : await SubmitOwnedAsync(action, ownedFrame);
+                sent = ownedFrame == null ? await SubmitBoundAsync(action, bound) : await SubmitOwnedAsync(action, ownedFrame);
                 break;
             }
             catch (DailyStepException e) when (e.Kind == "rejected" && attempt < 5 && e.Message is "rejected: screen_changed" or "rejected: ui_not_ready" or "rejected: notice_checkbox_not_confirmed")
@@ -61,11 +61,14 @@ public sealed partial class DailyCommandDriver
                 await delay(TimeSpan.FromMilliseconds(600));
             }
         }
+        // Submission can include its own native readiness wait (for example a field
+        // talent menu). It must not consume the subsequent presentation deadline.
+        end = clock() + Seconds(action);
         string expect = Text(action, "expect"), absent = Text(action, "absent");
         JsonObject? lastObserved = null, openingFrame = null;
         try
         {
-            while (clock() < end)
+            while (true)
             {
                 if (stopped() || mailbox.Read("live", "pause") != null)
                     throw new StageHostException("stopped", "Paused after managed UI dispatch");
@@ -73,7 +76,10 @@ public sealed partial class DailyCommandDriver
                 lastObserved = after.DeepClone().AsObject();
                 Diagnostics.Observe(after, "await_result", DailyData.O(("command_id", sent["id"]), ("expect", expect), ("absent", absent)));
                 if ((expect.Length > 0 || absent.Length > 0) && await RecoverPresentationAsync(after, Text(action, "ui")))
+                {
+                    if (clock() >= end) break;
                     continue;
+                }
                 var types = DailyNavigationDecision.Types(after);
                 bool expected = (expect.Length == 0 || types.Contains(expect)) && (absent.Length == 0 || !types.Contains(absent));
                 if (requireReady)
@@ -97,10 +103,14 @@ public sealed partial class DailyCommandDriver
                 {
                     var result = new JsonObject { ["state"] = expect.Length > 0 || absent.Length > 0 ? "observed_expected_ui" : "dispatched_only", ["engine"] = "dotnet-driver-v1", ["id"] = sent["id"]!.DeepClone(), ["expect"] = action["expect"]?.DeepClone(), ["absent"] = action["absent"]?.DeepClone(), ["receipt"] = sent["receipt"]!.DeepClone(), ["after"] = after.DeepClone() };
                     result["completion"] = requireReady ? "input_ready" : expect.Length > 0 || absent.Length > 0 ? "visibility" : "dispatch";
+                    if (sent["native_readiness_seconds"] != null) result["native_readiness_seconds"] = sent["native_readiness_seconds"]!.DeepClone();
                     if (openingFrame != null) result["opening_frame"] = openingFrame.DeepClone();
                     DailyJson.Write(Path.Combine(root, "live", "steps", sent["id"]!.GetValue<string>(), "result.json"), result);
                     return result;
                 }
+                // Always inspect a fresh frame first, including after a suspended
+                // desktop resumes. Never infer failure solely from elapsed time.
+                if (clock() >= end) break;
                 await delay(TimeSpan.FromMilliseconds(200));
             }
         }

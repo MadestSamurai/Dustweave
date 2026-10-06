@@ -10,6 +10,7 @@ static class StageProtocolCases
                 throw new Exception(name);
             cases.Add(name);
         }
+        Check(new BD2Daily.Live.Frame().BridgeVersion == DailyStageObservation.BridgeVersion, "native frame version matches desktop acceptance contract");
         using var f = new FreeDrawStageCases.Fixture(Path.Combine(output, "managed-stage-boundary"));
         f.Current["BridgeVersion"] = DailyStageObservation.BridgeVersion;
         var calls = new List<int>();

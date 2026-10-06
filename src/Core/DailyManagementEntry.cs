@@ -27,16 +27,32 @@ public static class DailyManagementEntry
     public static async Task OpenAsync(DailyCommandDriver driver, Func<bool> stopped)
     {
         double end = driver.MonotonicTime + 25;
+        JsonObject? origin = null;
         while (driver.MonotonicTime < end)
         {
             if (stopped()) throw new StageHostException("stopped", "经营入口检查已停止。");
             var frame = (await driver.ObserveAsync()).Frame;
+            origin ??= frame;
+            if (!DailyEvidence.SameActor(origin, frame) || !JsonNode.DeepEquals(origin["Scene"], frame["Scene"]))
+                throw new StageHostException("identity", "经营入口等待期间账号或场景改变，未重试点击。");
             if (DailyNavigationDecision.Types(frame).Contains("ManagementRewardPopupUI")) return;
             var target = Select(frame);
             if (target != null)
             {
-                await driver.SendObservedAsync(new() { ["ui"] = "MenuUI", ["field"] = target["Field"]!.DeepClone(), ["target_id"] = target["Id"]!.DeepClone(), ["expect"] = "ManagementRewardPopupUI", ["reason"] = "检查已累积的经营收益" });
-                return;
+                try
+                {
+                    await driver.SendObservedAsync(new() { ["ui"] = "MenuUI", ["field"] = target["Field"]!.DeepClone(), ["target_id"] = target["Id"]!.DeepClone(), ["expect"] = "ManagementRewardPopupUI", ["reason"] = "检查已累积的经营收益" });
+                    return;
+                }
+                catch (DailyStepException e) when (e.Kind == "rejected" &&
+                    (e.RejectionCode is "target_missing" or "surface_missing" ||
+                     e.Message is "rejected: screen_changed" or "rejected: ui_not_ready"))
+                {
+                    // The rotating banner can disappear between selection and dispatch.
+                    // Only a proven non-dispatch may select another observed entry.
+                    driver.Diagnostics.Event("management_entry_reselect", DailyData.O(
+                        ("field", target["Field"]), ("target_id", target["Id"]), ("reason", e.Message)));
+                }
             }
             await driver.DelayAsync(TimeSpan.FromMilliseconds(200));
         }

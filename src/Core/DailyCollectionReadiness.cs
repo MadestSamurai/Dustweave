@@ -55,7 +55,10 @@ public sealed partial class DailyCommandDriver
         // the later cast, so a transient native gate cannot become a false skip.
         var before = await EvidenceAsync(["mainline.map", "mainline.reset"]);
         var sent = await SubmitRawAsync(action, before["Frame"]!.AsObject());
-        double end = clock() + 45;
+        double started = clock(), end = started + 45, lastReport = double.NegativeInfinity;
+        string lastGates = "";
+        using var diagnostic = Diagnostics.Scope("collection_menu_readiness", DailyData.O(
+            ("command_id", sent["id"]), ("kind", action["value"])));
         while (true)
         {
             var after = await EvidenceAsync(["mainline.map", "mainline.reset", "mainline.talent_rows"]);
@@ -79,7 +82,18 @@ public sealed partial class DailyCommandDriver
             var rows = DailyEvidence.Reading(after, "mainline.talent_rows", "$self")!.AsArray().Where(r => DailyEvidence.Integer(r!["Kind"]) == Number(action, "value")).ToArray();
             bool transient = rows.Length == 0 || rows.Any(r => r?["Gate"]?.GetValue<string>() is "talent_wait:timeline" or "talent_wait:field_skill" or "talent_wait:animation" or "talent_wait:attempt_latch");
             if (!transient)
+            {
+                sent["native_readiness_seconds"] = clock() - started;
+                Diagnostics.Event("collection_menu_ready", DailyData.O(("elapsed_seconds", clock() - started)));
                 return sent;
+            }
+            string gates = string.Join(",", rows.Select(r => r?["Gate"]?.GetValue<string>() ?? "missing"));
+            if (gates != lastGates || clock() - lastReport >= 5)
+            {
+                Diagnostics.Event("collection_menu_wait", DailyData.O(
+                    ("elapsed_seconds", clock() - started), ("gates", gates), ("rows", rows.Length)));
+                lastGates = gates; lastReport = clock();
+            }
             if (clock() >= end)
                 throw new DailyStepException("rejected", "Native talent menu did not settle; no talent activated");
             await delay(TimeSpan.FromMilliseconds(150));

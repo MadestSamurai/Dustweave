@@ -110,6 +110,7 @@ static class CollectionReadinessCases
             catch (Exception e) when (e is InvalidDataException or StageHostException) { rejected = true; }
             Check(invalid ? rejected : !rejected && proof == null, "cartridge restriction proof cannot hide " + condition);
         }
+        await DelayedMenuCases(output, cases);
         foreach (bool restricted in new[] { false, true })
         {
             string path = Path.Combine(output, "collection-readiness-" + restricted);
@@ -152,6 +153,70 @@ static class CollectionReadinessCases
                 var proof = await driver.TakeCollectionDeferralAsync();
                 Check(proof != null && Directory.EnumerateFiles(Path.Combine(path, "live", "collection-deferrals")).Count() == 1 && await driver.TakeCollectionDeferralAsync() == null, "managed cartridge deferral is durable and can only be consumed once");
             }
+        }
+    }
+    // Exercise the public observed-input path, not only SubmitAsync: the outer
+    // deadline used to expire while the inner native animation wait succeeded.
+    static async Task DelayedMenuCases(string output, List<string> cases)
+    {
+        foreach (string scenario in new[] { "slow", "resume", "never-ready", "stop", "account", "scene" })
+        {
+            string ui = "GameFieldDefaultUI";
+            double time = 0;
+            bool stopped = false;
+            var context = CommandDriverCases.Context();
+            JsonObject Current()
+            {
+                var frame = Frame(ui);
+                frame["AtUtcTicks"] = 100000000 + (long)(time * TimeSpan.TicksPerSecond);
+                if (scenario == "scene" && time >= 25) frame["Scene"] = "other";
+                if (scenario == "account" && time >= 25)
+                {
+                    frame["AccountKey"] = new string('d', 64);
+                    context["actor"]![3] = new string('d', 64);
+                }
+                return frame;
+            }
+            var box = new CommandDriverCases.Mailbox { Error = "" };
+            box.AfterCommand = _ => { ui = "QuickMenuUI"; box.Values.Remove("live:observation-request.json"); };
+            box.AfterWrite = (_, name, bytes) =>
+            {
+                if (name != "observation-request.json") return;
+                var row = Row(2005, false);
+                if (time < 36 || scenario == "never-ready") row["Gate"] = "talent_wait:animation";
+                var e = Evidence(ui, new(row), 100000000 + (long)(time * TimeSpan.TicksPerSecond));
+                e["Frame"] = Current();
+                e["ObservationRequest"] = JsonNode.Parse(bytes)!["Id"]!.DeepClone();
+                box.Values["live:evidence.json"] = JsonSerializer.SerializeToUtf8Bytes(e);
+            };
+            using var driver = new DailyCommandDriver(Path.Combine(output, "collection-observed-" + scenario), box,
+                () => Task.FromResult(new DailyStageFrame(Current(), context.DeepClone().AsObject())), () => stopped,
+                () => 100000000 + (long)(time * TimeSpan.TicksPerSecond), () => time, t =>
+                {
+                    time += t.TotalSeconds;
+                    if (scenario == "resume" && time < 1) time = 120;
+                    if (scenario == "stop" && time >= 25) stopped = true;
+                    box.Values.Remove("live:observation-request.json");
+                    return Task.CompletedTask;
+                });
+            driver.Bind(CommandDriverCases.Context());
+            JsonObject? result = null;
+            Exception? failure = null;
+            try { result = await driver.SendObservedAsync(new() { ["ui"] = "GameFieldDefaultUI", ["operation"] = "mainline_menu", ["value"] = 20, ["expect"] = "QuickMenuUI" }); }
+            catch (Exception e) when (e is DailyStepException or StageHostException or InvalidDataException) { failure = e; }
+            bool ok = scenario switch
+            {
+                "slow" or "resume" => failure == null && result?["state"]?.GetValue<string>() == "observed_expected_ui" && time >= 36,
+                "never-ready" => failure is DailyStepException { Kind: "rejected" } && time >= 45 && time < 50,
+                "stop" => failure is StageHostException { Kind: "stopped" },
+                "account" => failure is DailyStepException { Kind: "identity" } or StageHostException { Kind: "identity" },
+                _ => failure is InvalidDataException
+            };
+            if (!ok) throw new Exception("collection observed " + scenario + ": " + failure);
+            cases.Add("collection observed input handles " + scenario + " independently of presentation deadline");
+            if (box.Commands.Count != 1 || box.Commands[0]["Kind"]?.GetValue<string>() != "mainline_menu")
+                throw new Exception("collection repeated input: " + scenario);
+            cases.Add("collection " + scenario + " opens once and never activates a talent");
         }
     }
 }
