@@ -110,7 +110,14 @@ static class BusinessJournalCases
         eventOp["presentation"] = "settled"; f.Business.Save(eventOp);
         using (var locked = new FileStream(FileFor(eventOp), FileMode.Open, FileAccess.ReadWrite, FileShare.None))
             Check(!DailyEventRewards.HasPendingPresentation(f.Business, frame), "settled presentation is filtered without reopening evidence");
-        eventOp["presentation"] = "pending"; DailyJson.Write(FileFor(eventOp), eventOp);
+        string eventFile = FileFor(eventOp);
+        var beforeRewrite = new FileInfo(eventFile); long previousSize = beforeRewrite.Length;
+        var previousWritten = beforeRewrite.LastWriteTimeUtc; var previousCreated = beforeRewrite.CreationTimeUtc;
+        eventOp["presentation"] = "pending"; DailyJson.Write(eventFile, eventOp);
+        File.SetLastWriteTimeUtc(eventFile, previousWritten); File.SetCreationTimeUtc(eventFile, previousCreated);
+        var afterRewrite = new FileInfo(eventFile);
+        Check(afterRewrite.Length == previousSize && afterRewrite.LastWriteTimeUtc == previousWritten && afterRewrite.CreationTimeUtc == previousCreated,
+            "atomic replacement fixture retains identical size and timestamps");
         Check(DailyEventRewards.HasPendingPresentation(f.Business, frame), "external pending presentation becomes visible immediately");
         eventOp["cycle"] = "old-cycle"; f.Business.Save(eventOp);
         using (var locked = new FileStream(FileFor(eventOp), FileMode.Open, FileAccess.ReadWrite, FileShare.None))

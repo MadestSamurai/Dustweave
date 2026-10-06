@@ -1,4 +1,6 @@
 using System.Text.Json.Nodes;
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
 namespace BD2Daily;
 
 public sealed partial class DailyManagedBusiness
@@ -6,12 +8,29 @@ public sealed partial class DailyManagedBusiness
     // Retain only routing/state metadata, not the large captured frames in each record.
     // Every check enumerates the directory again; new files and changed files are not hidden.
     private readonly Dictionary<string, JournalHeader> journalHeaders = new(StringComparer.OrdinalIgnoreCase);
-    private sealed record JournalStamp(long Length, long Written, long Created);
+    private sealed record JournalStamp(long Length, long Written, long Created, uint Volume, ulong FileId);
     private sealed record JournalHeader(JournalStamp Stamp, JsonObject Summary);
+    [StructLayout(LayoutKind.Sequential)]
+    private struct JournalFileInfo
+    {
+        public uint Attributes;
+        public System.Runtime.InteropServices.ComTypes.FILETIME Created, Accessed, Written;
+        public uint Volume, SizeHigh, SizeLow, Links, IdHigh, IdLow;
+    }
+    [DllImport("kernel32.dll", EntryPoint = "CreateFileW", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern SafeFileHandle OpenJournalMetadata(string path, uint access, uint share, IntPtr security, uint creation, uint flags, IntPtr template);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetFileInformationByHandle(SafeFileHandle handle, out JournalFileInfo info);
     private static JournalStamp Stamp(string path)
     {
-        var info = new FileInfo(path);
-        return new(info.Length, info.LastWriteTimeUtc.Ticks, info.CreationTimeUtc.Ticks);
+        // Atomic replacement can preserve length and timestamps on a coarse Windows clock.
+        // Query file identity without requesting data access; existing readers/writers stay shared.
+        using var handle = OpenJournalMetadata(path, 0, 7, IntPtr.Zero, 3, 0x80, IntPtr.Zero);
+        if (handle.IsInvalid || !GetFileInformationByHandle(handle, out var info))
+            throw new IOException("无法读取业务记录的文件身份：" + Path.GetFileName(path), new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error()));
+        static long Ticks(System.Runtime.InteropServices.ComTypes.FILETIME time) => ((long)(uint)time.dwHighDateTime << 32) | (uint)time.dwLowDateTime;
+        return new(((long)info.SizeHigh << 32) | info.SizeLow, Ticks(info.Written), Ticks(info.Created), info.Volume, ((ulong)info.IdHigh << 32) | info.IdLow);
     }
     private static JsonObject Summary(JsonObject op)
     {

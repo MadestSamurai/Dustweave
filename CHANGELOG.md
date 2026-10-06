@@ -1,5 +1,10 @@
 # Changelog / 更新记录
 
+## 0.8.13 · 2026-10-06
+
+- History metadata now includes the Windows file identity, so a rapid atomic replacement cannot reuse stale state when size and timestamps match. The check requests metadata access only and preserves shared readers/writers.
+- 修复快速更新记录时大小、时间戳相同导致缓存未刷新的边界情况；新增固定复现回归。保留历史查询提速、任务详情和跳过说明。
+
 ## 0.8.12 · 2026-10-06
 
 - Shared history queries now filter compact routing, account and state metadata before opening capture details. Event recovery skips history reads on unrelated screens; free-draw, Mirror and management queries benefit from the same index.

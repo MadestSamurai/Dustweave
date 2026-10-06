@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-06T10:39:45.6254351Z",
+  "generatedUtc": "2026-10-06T10:49:30.5537969Z",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/BD2Daily.Desktop.csproj",
   "projects": [
@@ -6215,7 +6215,7 @@
     },
     {
       "path": "Directory.Build.props",
-      "sha256": "488aefdd7e1bcffac0beb6e27fada075f62763dd3d660f8e603ab60653cf7a6c",
+      "sha256": "73f431f7672355ffd13e587f3e8cff1d6942b25db5a33e16f28064b7da2d34dc",
       "reasons": [
         "build input"
       ],
@@ -7778,19 +7778,19 @@
     },
     {
       "path": "src/Core/DailyBusinessJournal.cs",
-      "sha256": "a225fdd63f4199ce4be815e6114d0af15e41c6dcda35a9201050497b3e977467",
+      "sha256": "3a0c657578e13a14a00119c28967aca1174ed8f4fff490e7cfc4c9c3f3ea26f3",
       "reasons": [
         "build input"
       ],
-      "bytes": 4680
+      "bytes": 6286
     },
     {
       "path": "tests/Dustweave.Tests/Cases/BusinessJournalCases.cs",
-      "sha256": "fcb3c4321be847bbcdbf59f15e1e5bbc57d3cb81916605ae9bb9b83d6de535cc",
+      "sha256": "e30013ff093696ac8b6d76885630398ce3a71cf5a497d21f861e758d746764aa",
       "reasons": [
         "build input"
       ],
-      "bytes": 13111
+      "bytes": 13768
     }
   ],
   "publicReleaseApproved": false,
