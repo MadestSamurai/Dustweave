@@ -14,7 +14,7 @@ A multi-account daily assistant for BrownDust II on Windows
 
 </div>
 
-> **Invite-only access**: this repository remains private. Users with access can download complete packages from its Releases page. The application uses stable version numbers; public availability will be announced separately.
+> **Invite-only access**: this repository remains private. Application packages are available from the domestic download links below; repository members can also use Releases. Source publication will be announced separately.
 >
 > Provided free by **MadSamurai** on Bilibili ([MadestSamurai](https://github.com/MadestSamurai) on GitHub). This is an unofficial project. Automation may affect your account or game operation; understand the applicable rules before deciding to use it.
 
@@ -42,6 +42,7 @@ Screenshots use fictional accounts in the application's isolated demo mode. The 
 | Maps and resource management | Enable weekly collection, NPC quests, stealing, trading, cooking and high-price sales as needed |
 | A visible execution plan | Select stages, follow progress, review records and rerun unfinished work |
 | One connection, integrated tools | Share the game connection and coordinate active automation so tasks do not compete for control |
+| Scheduled runs and updates | Fixed times, weekdays and account queues; signed background downloads with idle restart confirmation |
 | Consistent language and appearance | Simplified Chinese, Traditional Chinese and English across the host and integrated tools |
 
 Some stages require unlocked account content, an active event or a compatible game version. Optional plugins are supported; the interface shows available features.
@@ -65,14 +66,14 @@ For **Windows x64 and the native BrownDust II PC client**. Python is not require
 | **Portable** | You want an extract-and-run package | Includes the .NET 8 desktop runtime |
 | **Lite** | You already have the runtime and prefer a smaller download | [.NET 8 Desktop Runtime x64](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) |
 
-Both packages have the same features. Download a complete package from [Releases](https://github.com/MadestSamurai/Dustweave/releases), then:
+Both packages have the same features. Download [Portable](https://bd2.madsam.work/updates/dustweave/v0.9.0/Dustweave-0.9.0-Portable-win-x64.zip) or [Lite](https://bd2.madsam.work/updates/dustweave/v0.9.0/Dustweave-0.9.0-Lite-win-x64.zip) from the domestic site, or use the private [Releases](https://github.com/MadestSamurai/Dustweave/releases), then:
 
 1. **Extract the entire folder** and run `Dustweave.exe`. Keep its data, flow and component directories alongside the executable.
 2. Log in to the game normally, save the current account in account management, and verify its identity.
 3. Configure the desired stages in daily settings, then select this run's plan on the task page.
 4. Start the selected stages or the multi-account queue. Follow progress and any items needing attention on the timeline.
 
-Start with a few familiar stages. The [getting-started guide](docs/GETTING_STARTED.en.md) covers updates, local data and troubleshooting. An online updater is not included yet. Use GitHub **Watch → Custom → Releases** to subscribe.
+Start with a few familiar stages. The [getting-started guide](docs/GETTING_STARTED.en.md) covers updates, local data and troubleshooting. From 0.9.0, use Updates at the bottom left to check for signed updates. Downloads run in the background and restart only after confirmation while idle. Earlier versions need one manual upgrade.
 
 ## Get help
 

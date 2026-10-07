@@ -4,7 +4,7 @@
 
 The host uses its own small updater, without Velopack or binary deltas. The active source is
 https://bd2.madsam.work/updates/dustweave/updates.json.
-GitHub/Vultr publishing is deferred. The transport compares multiple signed sources and can fail over; production currently configures only the domestic source. There is no empty international selector or repeated probe of a private repository.
+A public GitHub/Vultr update mirror is deferred; the existing private GitHub release archives the same packages. The transport compares multiple signed sources and can fail over; production currently configures only the domestic source. There is no empty international selector or repeated probe of a private repository.
 
 目前只启用国内站点，下载完整包，允许跨过中间版本直接升级。定时执行、更新说明及空闲确认沿用主程序。
 源码、账号、连接凭据与插件实现不进入静态更新目录。第一次必须手动安装带 OTA 的版本；更早版本不会凭空获得更新能力。

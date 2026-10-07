@@ -6,7 +6,7 @@
 
 - Windows x64 with a working native BrownDust II PC client and a normal game login.
 - A complete Dustweave package. Portable includes the runtime; Lite requires .NET 8 Desktop Runtime x64.
-- The repository remains private. Users with access can download complete packages from Releases. GitHub's Source code archive is not an application package.
+- The source repository remains private. Download complete packages using the [domestic links on the home page](../README.en.md); repository members can also use Releases. GitHub's Source code archive is not an application package.
 
 Run `Dustweave.exe`. Keep the accompanying `data`, `flows`, `connection` and other package directories. A source-build output folder is for development and is not a complete distribution.
 
@@ -32,7 +32,7 @@ Use the application's stop control and check whether an already submitted operat
 
 ## Updates and local data
 
-An online updater is not included yet. Stop the queue, exit the old tool normally, extract the new complete package into a new folder and launch it. Ordinary UI updates do not require restarting the game; follow specific component instructions if shown.
+From 0.9.0, open Updates at the bottom left. Signed packages download in the background and require confirmation to restart while idle. Accounts, settings and plugins are preserved; failed updates restore the previous version. Upgrading from 0.8.x requires one manual installation into a new folder after exiting the old app. Ordinary UI updates do not require restarting the game; follow specific component instructions if shown.
 
 Daily data defaults to `%LOCALAPPDATA%\BD2DailyAssistant`; protected account sessions use `%LOCALAPPDATA%\BD2AccountSessionManager`. An explicit custom data directory overrides the default. Changing the application folder does not automatically erase this data.
 

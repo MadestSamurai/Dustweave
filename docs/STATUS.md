@@ -21,7 +21,7 @@ See [architecture](ARCHITECTURE.md), [development](DEVELOPMENT.md) and [design r
 
 Account queues now start from the Accounts page. An opt-in scheduler can launch the app through the current user's Windows Task Scheduler. Bundled release notes appear once per version; the OTA client downloads official packages in the background and asks before restarting while idle. See [scheduling and updates](SCHEDULING_AND_UPDATES.md).
 
-多账号队列的主入口已移至账号页。定时页面通过当前用户的 Windows 计划任务启动软件；版本说明每个版本只显示一次；OTA 后台下载官方包，空闲时确认重启。已通过 2,104 项合成检查（56 组）、隔离 WPF 界面验收和真实单文件成品的升级／回退测试。未发布新包、登记真实定时计划或执行游戏队列。完整签名与发布规则见 [OTA 发布流程](OTA_RELEASE.md)。
+多账号队列的主入口已移至账号页。定时页面通过当前用户的 Windows 计划任务启动软件；版本说明每个版本只显示一次；OTA 后台下载官方包，空闲时确认重启。已通过 2,104 项合成检查（56 组）、隔离 WPF 界面验收和真实单文件成品的升级／回退测试。0.9.0 正式双版本及国内 OTA 已发布；未登记真实定时计划或执行游戏队列。完整签名与发布规则见 [OTA 发布流程](OTA_RELEASE.md)。
 
 ### OTA acceptance · 2026-10-07
 
@@ -33,3 +33,6 @@ Account queues now start from the Accounts page. An opt-in scheduler can launch 
 - The independent installer now disposes its application mutex before restarting either version. Atomic replacements tolerate short file locks and skip identical content; failures retain exact-file diagnostics.
 
 以上是本机隔离成品测试，不代表生产 HTTPS 下载、真实断电或游戏日常队列已经验证。用户的实际 0.8.17 程序、账号和游戏未被升级测试修改。
+## Published 0.9.0 / 已发布 0.9.0
+
+2026-10-07：正式包、签名清单和国内下载已上线。最终 2,107 项检查及真实成品升级／回退通过，公网使用实际下载器完整验证两种包。详见 [发布验收记录](releases/0.9.0-deployment.md)；前述 acceptance 目录保留为发布前实验记录。

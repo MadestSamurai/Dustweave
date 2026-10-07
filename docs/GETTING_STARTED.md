@@ -6,7 +6,7 @@
 
 - Windows x64，已正常安装并登录的 BrownDust II 原生 PC 客户端。
 - 完整解压的 Dustweave 包：Portable 包含运行时；Lite 需要 .NET 8 Desktop Runtime x64。
-- 仓库保持私有，有访问权限的用户可在 Releases 下载完整分发包。GitHub 的 Source code 压缩包不是安装包。
+- 源码仓库保持私有，完整包可从 [首页的国内下载链接](../README.md) 获取，有访问权限的用户也可使用 Releases。GitHub 的 Source code 压缩包不是安装包。
 
 启动 `Dustweave.exe`。程序文件夹中的 `data`、`flows`、`connection` 等目录是分发内容，需一同保留。源代码构建输出仅供开发，不等于完整用户包。
 
@@ -32,7 +32,7 @@
 
 ## 更新与数据
 
-当前不包含在线自动更新。收到新包后，停止队列并正常退出旧工具，将新版完整解压到新文件夹再启动。普通界面更新不要求重启游戏；遇到明确的组件提示时按提示处理。
+0.9.0 起，在左下角「版本更新」管理 OTA。默认自动检查并后台下载，空闲时确认重启更新；账号、设置与插件保留，失败时恢复旧版。首次从 0.8.x 升级仍需手动完整解压到新文件夹，并退出旧工具后启动。普通界面更新不要求重启游戏；遇到明确的组件提示时按提示处理。
 
 日常数据默认位于 `%LOCALAPPDATA%\BD2DailyAssistant`，账号会话位于 `%LOCALAPPDATA%\BD2AccountSessionManager`；自定义数据目录的使用者以自己的设置为准。更换软件解压目录不会自动清空这些数据。
 

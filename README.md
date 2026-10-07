@@ -14,7 +14,7 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 
 </div>
 
-> **受邀使用**：仓库目前保持私有。已获访问权限的用户可从本仓库 Releases 下载完整分发包；软件使用正式版本号，公开计划另行公布。
+> **受邀使用**：仓库目前保持私有。完整分发包可从下方国内线路下载；有仓库权限的用户也可使用 Releases。源码公开计划另行公布。
 >
 > 本项目由 B 站 **MadSamurai**（GitHub：[MadestSamurai](https://github.com/MadestSamurai)）免费提供，不隶属于游戏官方。辅助工具可能带来账号或游戏运行风险，请了解相关规则并自行决定是否使用。
 
@@ -42,6 +42,7 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 | 地图与经营 | 按需启用周收集、周 NPC 任务、偷窃、跑商、料理和高价售卖 |
 | 清晰的执行计划 | 分环节显示进度，选择本次任务，查看记录，对未完成环节补跑 |
 | 一次连接，多个工具 | 日常与内置工具共用连接；按自动化启用状态协调使用，避免同时操作游戏 |
+| 定时执行与更新 | 固定时间、星期和账号队列；后台下载签名更新包，空闲时确认重启 |
 | 全局语言与外观 | 简体中文、繁體中文、English；主窗口和内置工具统一切换语言 |
 
 部分环节依赖账号已解锁的内容、当前活动或游戏版本。支持可选插件，界面按当前可用功能显示。
@@ -65,14 +66,14 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 | **Portable** | 希望解压即用，或不确定是否安装了运行时 | 已包含 .NET 8 桌面运行时 |
 | **Lite** | 已安装运行时，希望下载更小 | [.NET 8 Desktop Runtime x64](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) |
 
-两种包功能一致。从 [Releases](https://github.com/MadestSamurai/Dustweave/releases) 下载完整分发包后：
+两种包功能一致。国内下载：[Portable](https://bd2.madsam.work/updates/dustweave/v0.9.0/Dustweave-0.9.0-Portable-win-x64.zip) / [Lite](https://bd2.madsam.work/updates/dustweave/v0.9.0/Dustweave-0.9.0-Lite-win-x64.zip)；也可使用私有仓库 [Releases](https://github.com/MadestSamurai/Dustweave/releases)。下载完整包后：
 
 1. **完整解压**到自己的文件夹，运行 `Dustweave.exe`。不要只复制 EXE，旁边的数据、流程与组件目录也需要保留。
 2. 正常登录游戏，在**账号管理**中保存当前账号并核对身份。
 3. 在**日常设置**中选择需要的环节，再到**今日任务**勾选本次计划。
 4. 点击**运行勾选环节**；多账号需求使用**多账号运行**。进度与需要处理的事项会显示在时间线中。
 
-首次使用建议先选择少量熟悉的环节。[完整入门](docs/GETTING_STARTED.md)包含更新、数据位置和常见问题。当前版本没有在线自动更新；发布后可在 GitHub 的 **Watch → Custom → Releases** 中订阅新版本。
+首次使用建议先选择少量熟悉的环节。[完整入门](docs/GETTING_STARTED.md)包含更新、数据位置和常见问题。0.9.0 起可在左下角「版本更新」检查更新，默认后台下载并在空闲时确认重启；首次从更早版本升级仍需手动安装。
 
 ## 遇到问题
 
