@@ -11,6 +11,7 @@ namespace Dustweave.Desktop;
 // UI locale only. Never changes process culture, protocol values, account keys or receipts.
 public sealed partial class DailyLanguage : INotifyPropertyChanged
 {
+    public static readonly string[] Codes = ["zh-CN", "zh-TW", "en-US"];
     public static DailyLanguage Current { get; } = new();
     private readonly Dictionary<string, Dictionary<string,string>> strings;
     private readonly Dictionary<string,string> sourceKeys;
@@ -20,7 +21,6 @@ public sealed partial class DailyLanguage : INotifyPropertyChanged
     public string this[string key] => Get(key);
     public event PropertyChangedEventHandler? PropertyChanged;
     public event EventHandler? Changed;
-    public static readonly string[] Codes = ["zh-CN", "zh-TW", "en-US"];
     private DailyLanguage()
     {
         using var stream = typeof(DailyLanguage).Assembly.GetManifestResourceStream("Dustweave.UI.strings.json")
@@ -30,6 +30,7 @@ public sealed partial class DailyLanguage : INotifyPropertyChanged
             ?? throw new InvalidDataException("Runtime language resources are missing.");
         foreach (var pair in JsonSerializer.Deserialize<Dictionary<string,Dictionary<string,string>>>(runtimeStream)!)
             strings.Add(pair.Key, pair.Value);
+        LoadNotices();
         sourceKeys = strings.Where(p => !p.Value["zh-CN"].Contains('{'))
             .GroupBy(p => p.Value["zh-CN"], StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First().Key, StringComparer.Ordinal);
     }
@@ -64,7 +65,8 @@ public sealed partial class DailyLanguage : INotifyPropertyChanged
         var value = entry[Code];
         return args.Length == 0 ? value : string.Format(CultureInfo.GetCultureInfo(Code), value, args);
     }
-    public string Translate(string original) => sourceKeys.TryGetValue(original, out var key) ? Get(key) : TranslateToolMessage(original);
+    public string Translate(string original) => strings.ContainsKey(original) ? Get(original) : sourceKeys.TryGetValue(original, out var key) ? Get(key)
+        : TryFormatNotice(original, out var translated) ? translated : TranslateToolMessage(original);
     public string Stage(string id) => id == "event_battle" && DailyPlugin.Current.Supports(id) ? Get("prefs.event_battle")
         : strings.ContainsKey("stage." + id) ? Get("stage." + id) : Get("stage.unknown", id);
     public string State(string code) => strings.ContainsKey("state." + code) ? Get("state." + code) : Translate(DailyUserText.State(code));
@@ -111,4 +113,3 @@ public sealed class TrExtension(string key) : MarkupExtension
     public override object ProvideValue(IServiceProvider serviceProvider)
         => new Binding($"[{key}]") { Source = DailyLanguage.Current, Mode = BindingMode.OneWay }.ProvideValue(serviceProvider);
 }
-

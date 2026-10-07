@@ -14,7 +14,7 @@ public sealed partial class DailyRunPanel
     internal void CheckRecoveryActionsForSmoke()
     {
         UpdateLayout();
-        if(retry.Visibility!=Visibility.Visible || resume.Visibility!=Visibility.Visible || current.Visibility!=Visibility.Collapsed || selected.Visibility!=Visibility.Collapsed
+        if(retry.Visibility!=Visibility.Visible || resume.Visibility!=Visibility.Visible || current.Visibility!=Visibility.Collapsed
             || !ReferenceEquals(retry.Parent,actions) || !ReferenceEquals(resume.Parent,actions) || choices.Children.Contains(retry) || choices.Children.Contains(resume))
             throw new Exception("Interrupted run actions are split between header and footer");
         if(!ReferenceEquals(resume.Style,Application.Current.FindResource("PrimaryButton")) || resume.Content?.ToString()!=L.Get("run.resume")
@@ -355,7 +355,7 @@ public partial class MainWindow
             foreach (int theme in new[]{1,2})
             {
                 LanguageSelector.SelectedIndex=language;ThemeSelector.SelectedIndex=theme;
-                foreach (var tab in new[]{RunTab,SettingsTab,ToolsTab,AccountsTab,DiagnosticsTab})
+                foreach (var tab in new[]{RunTab,SettingsTab,ToolsTab,AccountsTab,ScheduleTab,DiagnosticsTab})
                 {
                     WorkspaceTabs.SelectedItem=tab;
                     await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
@@ -368,7 +368,7 @@ public partial class MainWindow
                         throw new Exception("Connection action overlaps the window controls");
                     // Every navigation destination must remain visible above appearance settings.
                     Rect Bounds(FrameworkElement e) => e.TransformToAncestor(this).TransformBounds(new Rect(e.RenderSize));
-                    foreach (var nav in new[]{RunTab,SettingsTab,ToolsTab,AccountsTab,DiagnosticsTab})
+                    foreach (var nav in new[]{RunTab,SettingsTab,ToolsTab,AccountsTab,ScheduleTab,DiagnosticsTab})
                         if(Bounds(nav).Bottom>Bounds(ThemeSelector).Top-16)
                             throw new Exception("Compact navigation overlaps appearance controls");
                     if (PageTitle.Text != tab.Header as string || PageTitle.ActualWidth < 80)

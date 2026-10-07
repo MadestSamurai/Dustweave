@@ -1,0 +1,1344 @@
+{
+  "notice.connect.engine": {
+    "zh-CN": "等待游戏引擎初始化",
+    "zh-TW": "等待遊戲引擎初始化",
+    "en-US": "Waiting for the game engine to initialize"
+  },
+  "notice.connect.identify": {
+    "zh-CN": "连接账户识别组件",
+    "zh-TW": "連接賬戶識別組件",
+    "en-US": "Connecting the account identification component"
+  },
+  "notice.connect.interface": {
+    "zh-CN": "检查本机接口并准备账户识别组件",
+    "zh-TW": "檢查本機接口并準備賬戶識別組件",
+    "en-US": "Checking the game interface and preparing account identification"
+  },
+  "notice.connect.attached": {
+    "zh-CN": "组件已连接，等待主线程与登录状态",
+    "zh-TW": "組件已連接，等待主線程與登錄狀態",
+    "en-US": "Connected; waiting for the game and sign-in state"
+  },
+  "notice.connect.download": {
+    "zh-CN": "检查资源下载错误并准备有限重试",
+    "zh-TW": "檢查資源下載錯誤并準備有限重試",
+    "en-US": "Checking the download error before retrying"
+  },
+  "notice.connect.elevation": {
+    "zh-CN": "游戏以管理员权限运行，请允许连接组件的 Windows 权限提示；主窗口保持普通权限",
+    "zh-TW": "遊戲以管理員權限運行，請允許連接組件的 Windows 權限提示；主窗口保持普通權限",
+    "en-US": "The game is running as administrator. Allow the Windows prompt for the connection helper; the main window stays unelevated."
+  },
+  "notice.connect.engine_wait": {
+    "zh-CN": "游戏引擎尚未就绪；请等待加载完成后重新连接。",
+    "zh-TW": "遊戲引擎尚未就緒；請等待加載完成后重新連接。",
+    "en-US": "The game engine is not ready. Wait for loading to finish, then reconnect."
+  },
+  "notice.connect.changed": {
+    "zh-CN": "游戏进程已退出或改变，请重新连接。",
+    "zh-TW": "遊戲進程已退出或改變，請重新連接。",
+    "en-US": "The game exited or restarted. Please reconnect."
+  },
+  "notice.connect.timeout": {
+    "zh-CN": "管理员连接等待超时，请处理 Windows 权限提示后重新连接；不会自动重复申请权限。",
+    "zh-TW": "管理員連接等待超時，請處理 Windows 權限提示后重新連接；不會自動重復申請權限。",
+    "en-US": "The administrator connection timed out. Handle the Windows prompt, then reconnect. Permission will not be requested again automatically."
+  },
+  "notice.connect.cancelled": {
+    "zh-CN": "已取消管理员连接授权；游戏与日常任务均未改动。",
+    "zh-TW": "已取消管理員連接授權；遊戲與日常任務均未改動。",
+    "en-US": "Administrator permission was cancelled. The game and daily tasks were not changed."
+  },
+  "notice.connect.helper_exit": {
+    "zh-CN": "管理员连接组件已退出，请使用当前 Windows 用户允许授权后重新连接。",
+    "zh-TW": "管理員連接組件已退出，請使用當前 Windows 用戶允許授權后重新連接。",
+    "en-US": "The connection helper exited. Approve permission as the current Windows user, then reconnect."
+  },
+  "notice.connect.same_user": {
+    "zh-CN": "游戏与工具不属于同一 Windows 用户或登录会话，已停止连接。",
+    "zh-TW": "遊戲與工具不屬于同一 Windows 用戶或登錄會話，已停止連接。",
+    "en-US": "The game and tool use different Windows users or sessions. Connection has stopped."
+  },
+  "notice.connect.handoff": {
+    "zh-CN": "等待日常组件交接超时，请完成待结算操作后重新连接。",
+    "zh-TW": "等待日常組件交接超時，請完成待結算操作后重新連接。",
+    "en-US": "Component handoff timed out. Let the pending game operation finish, then reconnect."
+  },
+  "notice.connect.multiple": {
+    "zh-CN": "检测到多个游戏进程，请只保留一个。",
+    "zh-TW": "檢測到多個遊戲進程，請只保留一個。",
+    "en-US": "Multiple game instances were found. Keep only one running."
+  },
+  "notice.connect.restarted": {
+    "zh-CN": "游戏进程已变化，请重试。",
+    "zh-TW": "遊戲進程已變化，請重試。",
+    "en-US": "The game process changed. Please try again."
+  },
+  "notice.connect.preparing_changed": {
+    "zh-CN": "准备组件期间游戏进程已变化。",
+    "zh-TW": "準備組件期間遊戲進程已變化。",
+    "en-US": "The game process changed while preparing the connection."
+  },
+  "notice.connect.helper_missing": {
+    "zh-CN": "连接组件未启动。",
+    "zh-TW": "連接組件未啟動。",
+    "en-US": "The connection helper did not start."
+  },
+  "notice.connect.hash": {
+    "zh-CN": "连接组件校验不一致，尚未连接游戏。",
+    "zh-TW": "連接組件校驗不一致，尚未連接遊戲。",
+    "en-US": "The connection component failed validation. The game has not been connected."
+  },
+  "notice.account.unsaved": {
+    "zh-CN": "当前未保存账号",
+    "zh-TW": "當前未保存賬號",
+    "en-US": "Unsaved account"
+  },
+  "notice.account.verified": {
+    "zh-CN": "当前账号身份已核对。可继续保存账号，或选择多个账号进行登录检查。",
+    "zh-TW": "當前賬號身份已核對。可繼續保存賬號，或選擇多個賬號進行登錄檢查。",
+    "en-US": "Account identity verified. You can save this account or select accounts to check their sign-in."
+  },
+  "notice.account.begin": {
+    "zh-CN": "开始本次账号检查",
+    "zh-TW": "開始本次賬號檢查",
+    "en-US": "Starting the account sign-in check"
+  },
+  "notice.account.session_missing": {
+    "zh-CN": "尚未找到完整登录会话，请先在游戏内登录。",
+    "zh-TW": "尚未找到完整登錄會話，請先在遊戲內登錄。",
+    "en-US": "No complete sign-in session was found. Sign in to the game first."
+  },
+  "notice.account.game_missing": {
+    "zh-CN": "游戏没有运行，请先启动并登录。",
+    "zh-TW": "遊戲沒有運行，請先啟動并登錄。",
+    "en-US": "The game is not running. Start it and sign in first."
+  },
+  "notice.account.select": {
+    "zh-CN": "请至少勾选一个账号。",
+    "zh-TW": "請至少勾選一個賬號。",
+    "en-US": "Select at least one account."
+  },
+  "notice.account.unreadable": {
+    "zh-CN": "所选账号中有无法读取的登录会话，请先处理该账号。",
+    "zh-TW": "所選賬號中有無法讀取的登錄會話，請先處理該賬號。",
+    "en-US": "A selected account has an unreadable sign-in session. Resolve it before continuing."
+  },
+  "notice.account.no_process": {
+    "zh-CN": "启动后没有检测到游戏进程。",
+    "zh-TW": "啟動后沒有檢測到遊戲進程。",
+    "en-US": "No game process was detected after launch."
+  },
+  "notice.account.launcher": {
+    "zh-CN": "请先关闭游戏启动器，再进行账号切换。",
+    "zh-TW": "請先關閉遊戲啟動器，再進行賬號切換。",
+    "en-US": "Close the game launcher before switching accounts."
+  },
+  "notice.account.incomplete": {
+    "zh-CN": "当前游戏的登录会话尚不完整，请先完成登录并保存账号，或手动关闭游戏。",
+    "zh-TW": "當前遊戲的登錄會話尚不完整，請先完成登錄并保存賬號，或手動關閉遊戲。",
+    "en-US": "The current sign-in session is incomplete. Finish signing in and save the account, or close the game manually."
+  },
+  "notice.account.slot_changed": {
+    "zh-CN": "所选槽位的账号已改变，请刷新后重新选择。",
+    "zh-TW": "所選槽位的賬號已改變，請刷新后重新選擇。",
+    "en-US": "The account in this slot changed. Refresh and select it again."
+  },
+  "notice.account.save_first": {
+    "zh-CN": "当前登录账号尚未保存。请先正常关闭游戏并保存当前账号，再开始切换。",
+    "zh-TW": "當前登錄賬號尚未保存。請先正常關閉遊戲并保存當前賬號，再開始切換。",
+    "en-US": "The signed-in account has not been saved. Close the game normally and save it before switching."
+  },
+  "notice.account.game_changed": {
+    "zh-CN": "游戏进程已退出或改变，本次检查停止。",
+    "zh-TW": "遊戲進程已退出或改變，本次檢查停止。",
+    "en-US": "The game exited or restarted. This check has stopped."
+  },
+  "notice.account.local_changed": {
+    "zh-CN": "本机登录会话发生变化，已停止自动进入。",
+    "zh-TW": "本機登錄會話發生變化，已停止自動進入。",
+    "en-US": "The local sign-in session changed. Automatic entry has stopped."
+  },
+  "notice.account.touch": {
+    "zh-CN": "检测到 TOUCH TO START，准备自动进入",
+    "zh-TW": "檢測到 TOUCH TO START，準備自動進入",
+    "en-US": "TOUCH TO START detected; preparing to enter"
+  },
+  "notice.account.timeout": {
+    "zh-CN": "未能确认游戏登录身份。请检查启动页、登录弹窗、网络连接或组件状态；已停止队列，不会跳到其他账号。",
+    "zh-TW": "未能確認遊戲登錄身份。請檢查啟動頁、登錄彈窗、網絡連接或組件狀態；已停止隊列，不會跳到其他賬號。",
+    "en-US": "Could not verify the signed-in account. Check the title screen, sign-in dialog, network and connection component. The queue stopped without switching to another account."
+  },
+  "notice.account.busy": {
+    "zh-CN": "已有账号操作正在进行，请先停止或等待完成。",
+    "zh-TW": "已有賬號操作正在進行，請先停止或等待完成。",
+    "en-US": "An account operation is already running. Stop it or wait for it to finish."
+  },
+  "notice.account.stopped": {
+    "zh-CN": "已停止。保留游戏当前账号和已完成的检查记录。",
+    "zh-TW": "已停止。保留遊戲當前賬號和已完成的檢查記錄。",
+    "en-US": "Stopped. The current game account and completed check records were preserved."
+  },
+  "notice.account.mismatch": {
+    "zh-CN": "游戏登录的账号与目标账号不一致，已停止；请检查登录状态后重新连接。",
+    "zh-TW": "遊戲登錄的賬號與目標賬號不一致，已停止；請檢查登錄狀態后重新連接。",
+    "en-US": "The signed-in account does not match the selected account. Check the sign-in, then reconnect."
+  },
+  "notice.account.character_changed": {
+    "zh-CN": "该账号的游戏角色身份发生变化，已停止；请先核对登录区服和角色。",
+    "zh-TW": "該賬號的遊戲角色身份發生變化，已停止；請先核對登錄區服和角色。",
+    "en-US": "The account's game character changed. Check the server and character before continuing."
+  },
+  "notice.account.save_changed": {
+    "zh-CN": "保存期间登录身份已改变，请重新保存。",
+    "zh-TW": "保存期間登錄身份已改變，請重新保存。",
+    "en-US": "The sign-in identity changed while saving. Please save again."
+  },
+  "notice.account.save_slot_changed": {
+    "zh-CN": "保存期间账号或槽位发生变化，请重新保存；未覆盖任何账号。",
+    "zh-TW": "保存期間賬號或槽位發生變化，請重新保存；未覆蓋任何賬號。",
+    "en-US": "The account or slot changed while saving. No account was overwritten. Please save again."
+  },
+  "notice.account.slot_invalid": {
+    "zh-CN": "槽位没有有效的成员身份",
+    "zh-TW": "槽位沒有有效的成員身份",
+    "en-US": "This slot has no valid member identity"
+  },
+  "notice.account.slot_unreadable": {
+    "zh-CN": "槽位暂时无法读取",
+    "zh-TW": "槽位暫時無法讀取",
+    "en-US": "This slot is temporarily unreadable"
+  },
+  "notice.account.slot_refresh": {
+    "zh-CN": "这个槽位的账号已改变，请刷新列表后重新选择。",
+    "zh-TW": "這個槽位的賬號已改變，請刷新列表后重新選擇。",
+    "en-US": "The account in this slot changed. Refresh the list and select it again."
+  },
+  "notice.account.slots_full": {
+    "zh-CN": "100 个账号槽位已满。",
+    "zh-TW": "100 個賬號槽位已滿。",
+    "en-US": "All 100 account slots are occupied."
+  },
+  "notice.account.no_identity": {
+    "zh-CN": "没有可保存的完整登录身份，请先完成登录。",
+    "zh-TW": "沒有可保存的完整登錄身份，請先完成登錄。",
+    "en-US": "No complete sign-in identity is available to save. Finish signing in first."
+  },
+  "notice.account.verified_only": {
+    "zh-CN": "游戏登录身份已核对；不表示日常任务完成",
+    "zh-TW": "遊戲登錄身份已核對；不表示日常任務完成",
+    "en-US": "Sign-in identity verified; daily tasks have not been marked complete"
+  },
+  "notice.queue.no_history": {
+    "zh-CN": "本账号尚无日常记录。",
+    "zh-TW": "本賬號尚無日常記錄。",
+    "en-US": "This account has no daily-run records yet."
+  },
+  "notice.queue.no_run": {
+    "zh-CN": "尚未运行日常。",
+    "zh-TW": "尚未運行日常。",
+    "en-US": "Daily tasks have not been run yet."
+  },
+  "notice.queue.preparing": {
+    "zh-CN": "正在准备连接与队列…",
+    "zh-TW": "正在準備連接與隊列…",
+    "en-US": "Preparing the connection and queue…"
+  },
+  "notice.queue.connection": {
+    "zh-CN": "正在准备日常连接…",
+    "zh-TW": "正在準備日常連接…",
+    "en-US": "Preparing the daily-task connection…"
+  },
+  "notice.queue.menu": {
+    "zh-CN": "正在进入日常菜单…",
+    "zh-TW": "正在進入日常菜單…",
+    "en-US": "Opening the daily-task menu…"
+  },
+  "notice.queue.verify": {
+    "zh-CN": "正在连接并核对当前账号…",
+    "zh-TW": "正在連接并核對當前賬號…",
+    "en-US": "Connecting and checking the current account…"
+  },
+  "notice.queue.selection_changed": {
+    "zh-CN": "本次勾选的账号已变化，请回到当前计划重新选择。",
+    "zh-TW": "本次勾選的賬號已變化，請回到當前計劃重新選擇。",
+    "en-US": "The selected account changed. Return to the current plan and select it again."
+  },
+  "notice.queue.choose_stage": {
+    "zh-CN": "请勾选至少一个已开启环节；设置若已变化，请重新确认当前计划。",
+    "zh-TW": "請勾選至少一個已開啟環節；設置若已變化，請重新確認當前計劃。",
+    "en-US": "Select at least one enabled task. If settings changed, review the current plan again."
+  },
+  "notice.queue.retry_changed": {
+    "zh-CN": "补跑记录与当前账号或队列不一致，请重新载入该账号的记录。",
+    "zh-TW": "補跑記錄與當前賬號或隊列不一致，請重新載入該賬號的記錄。",
+    "en-US": "The retry record does not match the current account or queue. Reload this account's record."
+  },
+  "notice.queue.new_day": {
+    "zh-CN": "上次记录已跨过游戏每日重置，请开始日常读取新一天的进度。",
+    "zh-TW": "上次記錄已跨過遊戲每日重置，請開始日常讀取新一天的進度。",
+    "en-US": "The game has reset since the last run. Start daily tasks to read today's progress."
+  },
+  "notice.queue.choose_unfinished": {
+    "zh-CN": "请勾选未完成环节；待核对的环节会先确认上次结果，再继续未完成部分。",
+    "zh-TW": "請勾選未完成環節；待核對的環節會先確認上次結果，再繼續未完成部分。",
+    "en-US": "Select unfinished tasks. Tasks awaiting verification will check the previous result before continuing."
+  },
+  "notice.queue.no_resume": {
+    "zh-CN": "没有本账号可接续的队列。",
+    "zh-TW": "沒有本賬號可接續的隊列。",
+    "en-US": "This account has no queue to resume."
+  },
+  "notice.queue.resume_invalid": {
+    "zh-CN": "接续记录无效。",
+    "zh-TW": "接續記錄無效。",
+    "en-US": "The saved queue cannot be resumed."
+  },
+  "notice.queue.separate": {
+    "zh-CN": "本次勾选、补跑、接续和检查须分别执行。",
+    "zh-TW": "本次勾選、補跑、接續和檢查須分別執行。",
+    "en-US": "Run selected tasks, retry, resume and progress checks separately."
+  },
+  "notice.queue.retry_only": {
+    "zh-CN": "补跑须单独执行。",
+    "zh-TW": "補跑須單獨執行。",
+    "en-US": "Run retries separately."
+  },
+  "notice.queue.sync_only": {
+    "zh-CN": "同步须独立执行。",
+    "zh-TW": "同步須獨立執行。",
+    "en-US": "Run progress synchronization separately."
+  },
+  "notice.queue.running": {
+    "zh-CN": "日常队列正在运行。",
+    "zh-TW": "日常隊列正在運行。",
+    "en-US": "The daily-task queue is running."
+  },
+  "notice.queue.confirm_account": {
+    "zh-CN": "请先确认当前账号。",
+    "zh-TW": "請先確認當前賬號。",
+    "en-US": "Confirm the current account first."
+  },
+  "notice.queue.not_connected": {
+    "zh-CN": "日常连接未就绪，请查看执行日志；未开始日常操作。",
+    "zh-TW": "日常連接未就緒，請查看執行日志；未開始日常操作。",
+    "en-US": "The daily-task connection is not ready. Check the activity log. No daily tasks were started."
+  },
+  "notice.queue.game_exited": {
+    "zh-CN": "游戏已退出，没有建立执行连接。",
+    "zh-TW": "遊戲已退出，沒有建立執行連接。",
+    "en-US": "The game exited before an execution connection was established."
+  },
+  "notice.queue.stopped_before": {
+    "zh-CN": "已停止，未开始日常操作。",
+    "zh-TW": "已停止，未開始日常操作。",
+    "en-US": "Stopped before any daily tasks began."
+  },
+  "notice.queue.stopped_receipt": {
+    "zh-CN": "已停止；下次启动先核对未完成操作。",
+    "zh-TW": "已停止；下次啟動先核對未完成操作。",
+    "en-US": "Stopped. Unfinished operations will be checked before the next run."
+  },
+  "notice.queue.executor_stopped": {
+    "zh-CN": "执行器已停止，需先核对原操作回执。",
+    "zh-TW": "執行器已停止，需先核對原操作回執。",
+    "en-US": "The executor stopped. The previous operation's result must be checked first."
+  },
+  "notice.queue.launch_failed": {
+    "zh-CN": "执行组件未启动。",
+    "zh-TW": "執行組件未啟動。",
+    "en-US": "The execution component did not start."
+  },
+  "notice.queue.failure": {
+    "zh-CN": "执行未能开始或需要处理异常，请查看执行日志。已完成的记录仍保留。",
+    "zh-TW": "執行未能開始或需要處理異常，請查看執行日志。已完成的記錄仍保留。",
+    "en-US": "Execution could not start or needs attention. Check the activity log. Completed progress was preserved."
+  },
+  "notice.queue.pipe": {
+    "zh-CN": "执行器输出管道未关闭，已保留现有日志。",
+    "zh-TW": "執行器輸出管道未關閉，已保留現有日志。",
+    "en-US": "The executor output channel did not close. Existing logs were preserved."
+  },
+  "notice.queue.interrupted": {
+    "zh-CN": "执行器上次中断，先核对原业务操作。",
+    "zh-TW": "執行器上次中斷，先核對原業務操作。",
+    "en-US": "The previous run was interrupted. Checking its pending operations first."
+  },
+  "notice.queue.pending": {
+    "zh-CN": "上次操作结果仍未确认，未重复执行；请查看核对记录。",
+    "zh-TW": "上次操作結果仍未確認，未重復執行；請查看核對記錄。",
+    "en-US": "The previous result is still unconfirmed. The operation was not repeated. Check the verification record."
+  },
+  "notice.queue.not_finished": {
+    "zh-CN": "环节尚未确认完成。",
+    "zh-TW": "環節尚未確認完成。",
+    "en-US": "This task has not been confirmed complete."
+  },
+  "notice.queue.same_game": {
+    "zh-CN": "执行账号与当前游戏不一致。",
+    "zh-TW": "執行賬號與當前遊戲不一致。",
+    "en-US": "The execution account does not match the current game account."
+  },
+  "notice.queue.account_invalid": {
+    "zh-CN": "当前账号无效。",
+    "zh-TW": "當前賬號無效。",
+    "en-US": "The current account is invalid."
+  },
+  "notice.queue.resume_identity": {
+    "zh-CN": "原队列的账号、进程或重置周期已变化，请开始新队列。",
+    "zh-TW": "原隊列的賬號、進程或重置周期已變化，請開始新隊列。",
+    "en-US": "The original queue's account, game process or reset period changed. Start a new queue."
+  },
+  "notice.queue.identity": {
+    "zh-CN": "账号、角色、进程或重置周期已变化，请开始新队列读取游戏进度。",
+    "zh-TW": "賬號、角色、進程或重置周期已變化，請開始新隊列讀取遊戲進度。",
+    "en-US": "The account, character, game process or reset period changed. Start a new queue to read game progress."
+  },
+  "notice.queue.retry_expired": {
+    "zh-CN": "补跑记录不是当前账号或已跨过日重置；请开始新队列读取游戏进度。",
+    "zh-TW": "補跑記錄不是當前賬號或已跨過日重置；請開始新隊列讀取遊戲進度。",
+    "en-US": "The retry record belongs to another account or an earlier day. Start a new queue to read game progress."
+  },
+  "notice.queue.retry_rules": {
+    "zh-CN": "补跑只能选择未完成环节；待核对的操作会先确认结果。",
+    "zh-TW": "補跑只能選擇未完成環節；待核對的操作會先確認結果。",
+    "en-US": "Only unfinished tasks can be retried. Pending results will be checked first."
+  },
+  "notice.queue.stop_pending": {
+    "zh-CN": "已停止，尚未派发后续环节。",
+    "zh-TW": "已停止，尚未派發后續環節。",
+    "en-US": "Stopped before starting subsequent tasks."
+  },
+  "notice.queue.stop_result": {
+    "zh-CN": "已停止后续操作；原请求结果已保留。",
+    "zh-TW": "已停止后續操作；原請求結果已保留。",
+    "en-US": "Further actions stopped. The original result was preserved."
+  },
+  "notice.queue.stop_weekly": {
+    "zh-CN": "已停止后续操作；周任务进度已保留。",
+    "zh-TW": "已停止后續操作；周任務進度已保留。",
+    "en-US": "Further actions stopped. Weekly-task progress was preserved."
+  },
+  "notice.queue.stopped": {
+    "zh-CN": "已停止后续操作。",
+    "zh-TW": "已停止后續操作。",
+    "en-US": "Further actions stopped."
+  },
+  "notice.queue.weekly_stopped": {
+    "zh-CN": "已停止周任务。",
+    "zh-TW": "已停止周任務。",
+    "en-US": "Weekly tasks stopped."
+  },
+  "notice.queue.before_task": {
+    "zh-CN": "已在环节开始前停止。",
+    "zh-TW": "已在環節開始前停止。",
+    "en-US": "Stopped before this task began."
+  },
+  "notice.queue.absorb_reset": {
+    "zh-CN": "吸收次数已用完，次日接续",
+    "zh-TW": "吸收次數已用完，次日接續",
+    "en-US": "Absorption uses are exhausted. Resume after the daily reset."
+  },
+  "notice.queue.absorb_maps": {
+    "zh-CN": "吸收次数用完，次日接续未完成地图",
+    "zh-TW": "吸收次數用完，次日接續未完成地圖",
+    "en-US": "Absorption uses are exhausted. Resume unfinished maps after the daily reset."
+  },
+  "notice.route.read_npc": {
+    "zh-CN": "等待读取周NPC任务",
+    "zh-TW": "等待讀取周NPC任務",
+    "en-US": "Waiting to read weekly NPC quests"
+  },
+  "notice.route.read_week": {
+    "zh-CN": "等待读取本周任务",
+    "zh-TW": "等待讀取本周任務",
+    "en-US": "Waiting to read this week's quests"
+  },
+  "notice.route.continue": {
+    "zh-CN": "继续其他已选项目",
+    "zh-TW": "繼續其他已選項目",
+    "en-US": "Continuing other selected tasks"
+  },
+  "notice.route.no_npc": {
+    "zh-CN": "所选范围没有可读取的周NPC任务",
+    "zh-TW": "所選范圍沒有可讀取的周NPC任務",
+    "en-US": "No readable weekly NPC quests were found in the selected area"
+  },
+  "notice.route.npc_prerequisite": {
+    "zh-CN": "NPC前置未完成，暂缓相关压制",
+    "zh-TW": "NPC前置未完成，暫緩相關壓制",
+    "en-US": "NPC prerequisites are incomplete; related suppression is deferred"
+  },
+  "notice.route.no_eligible": {
+    "zh-CN": "范围内暂无符合设置的可执行任务",
+    "zh-TW": "范圍內暫無符合設置的可執行任務",
+    "en-US": "No tasks in this area currently match the selected settings"
+  },
+  "notice.route.pending_saved": {
+    "zh-CN": "本次周路线已保留，接续时核对剩余进度",
+    "zh-TW": "本次周路線已保留，接續時核對剩余進度",
+    "en-US": "The weekly route was preserved. Remaining progress will be checked on resume."
+  },
+  "notice.route.not_ready": {
+    "zh-CN": "地图仍未就绪，未盲目发送移动或技能。",
+    "zh-TW": "地圖仍未就緒，未盲目發送移動或技能。",
+    "en-US": "The map is not ready. No movement or skill input was sent."
+  },
+  "notice.route.battle": {
+    "zh-CN": "地图途中进入战斗准备，保留现场；未擅自开始战斗。",
+    "zh-TW": "地圖途中進入戰斗準備，保留現場；未擅自開始戰斗。",
+    "en-US": "Battle preparation opened during travel. No battle was started."
+  },
+  "notice.route.changed": {
+    "zh-CN": "导航期间地图改变，未重发旧场景操作",
+    "zh-TW": "導航期間地圖改變，未重發舊場景操作",
+    "en-US": "The map changed during navigation. The old action was not repeated."
+  },
+  "notice.route.no_progress": {
+    "zh-CN": "导航没有净进展，停止后重新选择路线",
+    "zh-TW": "導航沒有凈進展，停止后重新選擇路線",
+    "en-US": "Navigation made no progress. Stopping movement before choosing another route."
+  },
+  "notice.route.timeout": {
+    "zh-CN": "导航到期仍未到达交互范围",
+    "zh-TW": "導航到期仍未到達交互范圍",
+    "en-US": "Navigation timed out before reaching interaction range"
+  },
+  "notice.route.portal_far": {
+    "zh-CN": "传送阵不在交互范围",
+    "zh-TW": "傳送陣不在交互范圍",
+    "en-US": "The waypoint is outside interaction range"
+  },
+  "notice.route.portal_changed": {
+    "zh-CN": "传送阵激活期间地图改变",
+    "zh-TW": "傳送陣激活期間地圖改變",
+    "en-US": "The map changed while activating the waypoint"
+  },
+  "notice.route.portal_unconfirmed": {
+    "zh-CN": "传送阵激活未确认，未重复发送请求",
+    "zh-TW": "傳送陣激活未確認，未重復發送請求",
+    "en-US": "Waypoint activation was not confirmed. The request was not repeated."
+  },
+  "notice.route.portal_unreachable": {
+    "zh-CN": "规划中的实体传送阵已不可达",
+    "zh-TW": "規劃中的實體傳送陣已不可達",
+    "en-US": "The planned waypoint is no longer reachable"
+  },
+  "notice.route.entry_unreachable": {
+    "zh-CN": "规划中的入口已经不可达",
+    "zh-TW": "規劃中的入口已經不可達",
+    "en-US": "The planned entrance is no longer reachable"
+  },
+  "notice.route.no_path": {
+    "zh-CN": "目的地图没有可用路线",
+    "zh-TW": "目的地圖沒有可用路線",
+    "en-US": "No route to the destination map is available"
+  },
+  "notice.route.no_return": {
+    "zh-CN": "周路线未能安全返回入口",
+    "zh-TW": "周路線未能安全返回入口",
+    "en-US": "The weekly route could not safely return to its entrance"
+  },
+  "notice.route.return_timeout": {
+    "zh-CN": "周路线返回入口超时",
+    "zh-TW": "周路線返回入口超時",
+    "en-US": "Returning to the weekly-route entrance timed out"
+  },
+  "notice.route.recovery_limit": {
+    "zh-CN": "共享周路线超过恢复次数，已保留分项进度",
+    "zh-TW": "共享周路線超過恢復次數，已保留分項進度",
+    "en-US": "The weekly route reached its recovery limit. Progress for each task was preserved."
+  },
+  "notice.route.no_actions": {
+    "zh-CN": "共享周路线没有可执行动作，保留未完成项目",
+    "zh-TW": "共享周路線沒有可執行動作，保留未完成項目",
+    "en-US": "The weekly route has no available action. Unfinished tasks were preserved."
+  },
+  "notice.route.selected_path": {
+    "zh-CN": "所选周任务没有可用地图路径",
+    "zh-TW": "所選周任務沒有可用地圖路徑",
+    "en-US": "No map route is available for the selected weekly tasks"
+  },
+  "notice.route.stealth": {
+    "zh-CN": "巡逻路线藏身不足，已停止移动",
+    "zh-TW": "巡邏路線藏身不足，已停止移動",
+    "en-US": "Stealth is insufficient for this patrol route. Movement stopped."
+  },
+  "notice.route.stealth_dash": {
+    "zh-CN": "巡逻路线藏身和飞奔未就绪",
+    "zh-TW": "巡邏路線藏身和飛奔未就緒",
+    "en-US": "Stealth and dash are not ready for this patrol route"
+  },
+  "notice.route.stealth_expired": {
+    "zh-CN": "藏身续用未生效",
+    "zh-TW": "藏身續用未生效",
+    "en-US": "Stealth renewal did not take effect"
+  },
+  "notice.route.talent_pending": {
+    "zh-CN": "移动天赋未确认生效",
+    "zh-TW": "移動天賦未確認生效",
+    "en-US": "The movement talent has not been confirmed active"
+  },
+  "notice.route.talent_menu": {
+    "zh-CN": "原生天赋列表尚未就绪",
+    "zh-TW": "原生天賦列表尚未就緒",
+    "en-US": "The game's talent list is not ready"
+  },
+  "notice.route.encounter": {
+    "zh-CN": "遇敌使天赋菜单反复失效",
+    "zh-TW": "遇敵使天賦菜單反復失效",
+    "en-US": "Enemy encounters repeatedly closed the talent menu"
+  },
+  "notice.route.no_steal_talent": {
+    "zh-CN": "没有可用的每周偷窃天赋，请检查冷却和天赋药；不购买或升级。",
+    "zh-TW": "沒有可用的每周偷竊天賦，請檢查冷卻和天賦藥；不購買或升級。",
+    "en-US": "No weekly steal talent is available. Check its cooldown and talent pills. Nothing will be purchased or upgraded."
+  },
+  "notice.route.steal_target": {
+    "zh-CN": "本图偷窃NPC尚未出现或不可达，保留服务器待办",
+    "zh-TW": "本圖偷竊NPC尚未出現或不可達，保留服務器待辦",
+    "en-US": "The steal target has not appeared or is unreachable. The pending task was preserved."
+  },
+  "notice.route.steal_pending": {
+    "zh-CN": "服务器仍显示刚才的偷窃未完成，停止而非重复消耗",
+    "zh-TW": "服務器仍顯示剛才的偷竊未完成，停止而非重復消耗",
+    "en-US": "The server still reports the steal as unfinished. Stopped without spending another use."
+  },
+  "notice.npc.no_state": {
+    "zh-CN": "周NPC任务尚无服务器状态",
+    "zh-TW": "周NPC任務尚無服務器狀態",
+    "en-US": "Weekly NPC quest data is not yet available from the server"
+  },
+  "notice.npc.data_missing": {
+    "zh-CN": "周NPC任务表、次数或周期缺失",
+    "zh-TW": "周NPC任務表、次數或周期缺失",
+    "en-US": "Weekly NPC quest rules, uses or reset period are missing"
+  },
+  "notice.npc.query_timeout": {
+    "zh-CN": "周NPC任务查询超时，未接取新任务",
+    "zh-TW": "周NPC任務查詢超時，未接取新任務",
+    "en-US": "Reading weekly NPC quests timed out. No new quest was accepted."
+  },
+  "notice.npc.accept_pending": {
+    "zh-CN": "接取未获服务器确认，不重复提交",
+    "zh-TW": "接取未獲服務器確認，不重復提交",
+    "en-US": "Quest acceptance was not confirmed by the server. The request was not repeated."
+  },
+  "notice.npc.interact_pending": {
+    "zh-CN": "交互后任务步骤尚未获得确认，保留游戏进度，不重复提交",
+    "zh-TW": "交互后任務步驟尚未獲得確認，保留遊戲進度，不重復提交",
+    "en-US": "The interaction has not advanced the quest yet. Progress was preserved without repeating it."
+  },
+  "notice.npc.no_progress": {
+    "zh-CN": "NPC任务步骤未推进，保留服务器进度",
+    "zh-TW": "NPC任務步驟未推進，保留服務器進度",
+    "en-US": "The NPC quest did not advance. Server progress was preserved."
+  },
+  "notice.npc.no_monster": {
+    "zh-CN": "服务器目标存在，但当前地图没有可压制对象",
+    "zh-TW": "服務器目標存在，但當前地圖沒有可壓制對象",
+    "en-US": "The server lists a target, but no suppressible target exists on this map"
+  },
+  "notice.npc.no_kill": {
+    "zh-CN": "压制后击杀进度未变化，保留任务",
+    "zh-TW": "壓制后擊殺進度未變化，保留任務",
+    "en-US": "Kill progress did not change after suppression. The quest was preserved."
+  },
+  "notice.npc.target_gone": {
+    "zh-CN": "已接任务的野外目标消失；未开启狩猎场执行",
+    "zh-TW": "已接任務的野外目標消失；未開啟狩獵場執行",
+    "en-US": "The accepted quest's field target disappeared. Hunting-ground quests are disabled."
+  },
+  "notice.npc.carry_missing": {
+    "zh-CN": "搬运任务没有可用物品来源",
+    "zh-TW": "搬運任務沒有可用物品來源",
+    "en-US": "No item source is available for the delivery quest"
+  },
+  "notice.npc.carry_changed": {
+    "zh-CN": "搬运物品发生变化，保留任务",
+    "zh-TW": "搬運物品發生變化，保留任務",
+    "en-US": "The carried item changed. The quest was preserved."
+  },
+  "notice.npc.hunt_timeout": {
+    "zh-CN": "NPC狩猎结算超时，保留现场，不重复挑战",
+    "zh-TW": "NPC狩獵結算超時，保留現場，不重復挑戰",
+    "en-US": "The NPC hunting result timed out. The current state was preserved without another challenge."
+  },
+  "notice.npc.wrong_battle": {
+    "zh-CN": "当前战斗不属于周NPC任务",
+    "zh-TW": "當前戰斗不屬于周NPC任務",
+    "en-US": "The current battle does not belong to a weekly NPC quest"
+  },
+  "notice.npc.no_board": {
+    "zh-CN": "当前卡带没有可用公告板，未通过接口接取任务",
+    "zh-TW": "當前卡帶沒有可用公告板，未通過接口接取任務",
+    "en-US": "This cartridge has no available quest board. No quest was accepted."
+  },
+  "notice.npc.board_target": {
+    "zh-CN": "公告板目标任务未显示，未接取任务",
+    "zh-TW": "公告板目標任務未顯示，未接取任務",
+    "en-US": "The selected quest is not shown on the board. No quest was accepted."
+  },
+  "notice.npc.board_mismatch": {
+    "zh-CN": "公告板确认页与选定任务不符，未接取任务",
+    "zh-TW": "公告板確認頁與選定任務不符，未接取任務",
+    "en-US": "The board confirmation does not match the selected quest. No quest was accepted."
+  },
+  "notice.npc.navigation": {
+    "zh-CN": "游戏原生导航已停止，尚未到达公告板交互范围；保留待办",
+    "zh-TW": "遊戲原生導航已停止，尚未到達公告板交互范圍；保留待辦",
+    "en-US": "Navigation stopped before reaching the quest board. The pending task was preserved."
+  },
+  "notice.weekly.book": {
+    "zh-CN": "本周末日之书任务已完成",
+    "zh-TW": "本周末日之書任務已完成",
+    "en-US": "This week's Last Night task is complete"
+  },
+  "notice.weekly.equipment": {
+    "zh-CN": "本周制作装备任务已完成",
+    "zh-TW": "本周制作裝備任務已完成",
+    "en-US": "This week's equipment crafting task is complete"
+  },
+  "notice.weekly.unconfirmed": {
+    "zh-CN": "操作已执行，服务器周任务尚未确认；不会重复执行。",
+    "zh-TW": "操作已執行，服務器周任務尚未確認；不會重復執行。",
+    "en-US": "The action ran, but the weekly quest is not yet confirmed by the server. It will not be repeated."
+  },
+  "notice.weekly.old_proof": {
+    "zh-CN": "旧版小游戏完成依据无效，可勾选补跑并重新读取游戏进度。",
+    "zh-TW": "舊版小遊戲完成依據無效，可勾選補跑并重新讀取遊戲進度。",
+    "en-US": "The old minigame completion record is invalid. Select the task to retry and read current game progress."
+  },
+  "notice.weekly.sichuan_wait": {
+    "zh-CN": "本局已清空，等待服务器通关和周任务确认；不会重复开局",
+    "zh-TW": "本局已清空，等待服務器通關和周任務確認；不會重復開局",
+    "en-US": "The board is clear. Waiting for the server to confirm the clear and weekly quest; no new round will be started."
+  },
+  "notice.weekly.sichuan_no_entry": {
+    "zh-CN": "当前没有开放的连连看入口",
+    "zh-TW": "當前沒有開放的連連看入口",
+    "en-US": "No Sichuan entry is currently available"
+  },
+  "notice.weekly.sichuan_challenge": {
+    "zh-CN": "当前为挑战关卡，请先结束后运行周常常规关卡",
+    "zh-TW": "當前為挑戰關卡，請先結束后運行周常常規關卡",
+    "en-US": "A challenge stage is active. Finish it before running the weekly normal stage."
+  },
+  "notice.weekly.sichuan_result": {
+    "zh-CN": "连连看结算尚未退出，不重复开局。",
+    "zh-TW": "連連看結算尚未退出，不重復開局。",
+    "en-US": "The Sichuan result screen is still open. No new round will be started."
+  },
+  "notice.weekly.sichuan_failed": {
+    "zh-CN": "连连看尚未通关，已停止输入并保留现场",
+    "zh-TW": "連連看尚未通關，已停止輸入并保留現場",
+    "en-US": "The Sichuan stage is not cleared. Input stopped and the current state was preserved."
+  },
+  "notice.weekly.fishing_locked": {
+    "zh-CN": "钓鱼卡带未开放",
+    "zh-TW": "釣魚卡帶未開放",
+    "en-US": "The fishing cartridge is unavailable"
+  },
+  "notice.weekly.fishing_full": {
+    "zh-CN": "鱼背包已满；周任务不会售卖已有鱼",
+    "zh-TW": "魚背包已滿；周任務不會售賣已有魚",
+    "en-US": "The fish inventory is full. Weekly tasks do not sell existing fish."
+  },
+  "notice.weekly.fishing_pending": {
+    "zh-CN": "钓鱼已结束但周任务未确认",
+    "zh-TW": "釣魚已結束但周任務未確認",
+    "en-US": "Fishing finished, but the weekly quest is not confirmed"
+  },
+  "notice.weekly.fishing_stop": {
+    "zh-CN": "周常钓鱼尚未结束，已停止后续抛竿",
+    "zh-TW": "周常釣魚尚未結束，已停止后續拋竿",
+    "en-US": "Weekly fishing is unfinished. Further casts stopped."
+  },
+  "notice.weekly.fishing_busy": {
+    "zh-CN": "另一钓鱼控制器正在运行，未接管",
+    "zh-TW": "另一釣魚控制器正在運行，未接管",
+    "en-US": "Another fishing controller is running. Control was not taken over."
+  },
+  "notice.ui.management": {
+    "zh-CN": "餐厅、鱼笼与领地收益已领取",
+    "zh-TW": "餐廳、魚籠與領地收益已領取",
+    "en-US": "Restaurant, fish trap and territory rewards collected"
+  },
+  "notice.ui.popup": {
+    "zh-CN": "当前存在未处理弹窗",
+    "zh-TW": "當前存在未處理彈窗",
+    "en-US": "A game dialog needs attention"
+  },
+  "notice.ui.dispatch": {
+    "zh-CN": "正在领取到期派遣，完成后继续下一环节。",
+    "zh-TW": "正在領取到期派遣，完成后繼續下一環節。",
+    "en-US": "Collecting completed dispatches before continuing to the next task."
+  },
+  "notice.ui.guild_complete": {
+    "zh-CN": "公会签到已完成",
+    "zh-TW": "公會簽到已完成",
+    "en-US": "Guild check-in complete"
+  },
+  "notice.ui.guild_wait": {
+    "zh-CN": "可单步进入公会；进入时可能直接完成签到。",
+    "zh-TW": "可單步進入公會；進入時可能直接完成簽到。",
+    "en-US": "You can enter the guild. Entering may complete check-in immediately."
+  },
+  "notice.ui.guild_not_signed_in": {
+    "zh-CN": "当前账号尚未登录。",
+    "zh-TW": "當前賬號尚未登錄。",
+    "en-US": "The current account is not signed in."
+  },
+  "notice.ui.guild_game": {
+    "zh-CN": "游戏尚未运行。",
+    "zh-TW": "遊戲尚未運行。",
+    "en-US": "The game is not running yet."
+  },
+  "notice.ui.guild_changed": {
+    "zh-CN": "当前账号或游戏进程发生变化。",
+    "zh-TW": "當前賬號或遊戲進程發生變化。",
+    "en-US": "The account or game process changed."
+  },
+  "notice.ui.guild_stopped": {
+    "zh-CN": "已停止，本次没有发出公会操作。",
+    "zh-TW": "已停止，本次沒有發出公會操作。",
+    "en-US": "Stopped. No guild action was sent."
+  },
+  "notice.ui.guild_observing": {
+    "zh-CN": "只观察中：记录已加载状态。你可以手动操作游戏；观察器不会进入公会或刷新请求。",
+    "zh-TW": "只觀察中：記錄已加載狀態。你可以手動操作遊戲；觀察器不會進入公會或刷新請求。",
+    "en-US": "Observing loaded game state. You can use the game manually; the observer will not enter the guild or send refresh requests."
+  },
+  "notice.ui.guild_observed": {
+    "zh-CN": "观察已停止，记录已保留。没有向游戏发送任务操作。",
+    "zh-TW": "觀察已停止，記錄已保留。沒有向遊戲發送任務操作。",
+    "en-US": "Observation stopped and records were preserved. No task actions were sent to the game."
+  },
+  "notice.ui.game_exited": {
+    "zh-CN": "游戏已退出。",
+    "zh-TW": "遊戲已退出。",
+    "en-US": "The game exited."
+  },
+  "notice.settings.draw_equipment": {
+    "zh-CN": "处理本次免费抽到的装备",
+    "zh-TW": "處理本次免費抽到的裝備",
+    "en-US": "Process equipment from this run's free draws"
+  },
+  "notice.settings.pass": {
+    "zh-CN": "检查并领取通行证任务与等级奖励",
+    "zh-TW": "檢查并領取通行證任務與等級獎勵",
+    "en-US": "Check and claim pass mission and level rewards"
+  },
+  "notice.settings.plaza": {
+    "zh-CN": "检查广场排行榜周期奖励",
+    "zh-TW": "檢查廣場排行榜周期獎勵",
+    "en-US": "Check periodic plaza ranking rewards"
+  },
+  "notice.settings.dispatch": {
+    "zh-CN": "领取到期派遣并继续派遣",
+    "zh-TW": "領取到期派遣并繼續派遣",
+    "en-US": "Collect completed dispatches and continue dispatching"
+  },
+  "notice.settings.goddess": {
+    "zh-CN": "领取女神像奖励",
+    "zh-TW": "領取女神像獎勵",
+    "en-US": "Collect goddess statue rewards"
+  },
+  "notice.settings.refine": {
+    "zh-CN": "有精炼任务时精炼一次",
+    "zh-TW": "有精煉任務時精煉一次",
+    "en-US": "Refine once when required by a quest"
+  },
+  "notice.settings.hunting": {
+    "zh-CN": "自动分配免费米饭",
+    "zh-TW": "自動分配免費米飯",
+    "en-US": "Allocate free rice automatically"
+  },
+  "notice.settings.trade": {
+    "zh-CN": "自动跑商、料理与120%售卖",
+    "zh-TW": "自動跑商、料理與120%售賣",
+    "en-US": "Automatically trade, cook and sell at 120% prices"
+  },
+  "notice.settings.enhance": {
+    "zh-CN": "分解前强化等级必须为 0 至 9。",
+    "zh-TW": "分解前強化等級必須為 0 至 9。",
+    "en-US": "The enhancement level before dismantling must be between 0 and 9."
+  },
+  "notice.settings.mirror": {
+    "zh-CN": "镜中倍率必须为 1 至 40。",
+    "zh-TW": "鏡中倍率必須為 1 至 40。",
+    "en-US": "The Mirror multiplier must be between 1 and 40."
+  },
+  "notice.settings.chapters": {
+    "zh-CN": "周收集章节范围必须为 1 至 19，起点不能大于终点。",
+    "zh-TW": "周收集章節范圍必須為 1 至 19，起點不能大于終點。",
+    "en-US": "Weekly collection chapters must be between 1 and 19, with the starting chapter no later than the ending chapter."
+  },
+  "notice.settings.priority": {
+    "zh-CN": "优先级必须包含金币、史莱姆和普通狩猎各一次。",
+    "zh-TW": "優先級必須包含金幣、史萊姆和普通狩獵各一次。",
+    "en-US": "The priority list must include gold, slimes and chapter hunting exactly once each."
+  },
+  "notice.trade.rules": {
+    "zh-CN": "正在用.NET只读核对热更新后的跑商规则；没有下单。",
+    "zh-TW": "正在用.NET只讀核對熱更新后的跑商規則；沒有下單。",
+    "en-US": "Checking updated trading rules. No purchases have been made."
+  },
+  "notice.trade.rules_ready": {
+    "zh-CN": "跑商规则一致，已启用绑定当前数据库的独立目录；原安装包和交易记录保留。",
+    "zh-TW": "跑商規則一致，已啟用綁定當前數據庫的獨立目錄；原安裝包和交易記錄保留。",
+    "en-US": "Trading rules match the current game data. Existing installation files and transaction records were preserved."
+  },
+  "notice.trade.complete": {
+    "zh-CN": "采购、烹饪及今日120%售卖已核账",
+    "zh-TW": "采購、烹飪及今日120%售賣已核賬",
+    "en-US": "Purchases, cooking and today's 120% sales verified"
+  },
+  "notice.trade.settling": {
+    "zh-CN": "成交已确认，等待原生弹窗结束",
+    "zh-TW": "成交已確認，等待原生彈窗結束",
+    "en-US": "Transaction confirmed; waiting for the game dialog to close"
+  },
+  "notice.trade.low_funds": {
+    "zh-CN": "当前金币少于1000万。跑商周转约30天，采购后需等待各物品120%收购日；请保留其他玩法所需金币。计划会按实际可用资金缩减采购。",
+    "zh-TW": "當前金幣少于1000萬。跑商周轉約30天，采購后需等待各物品120%收購日；請保留其他玩法所需金幣。計劃會按實際可用資金縮減采購。",
+    "en-US": "You have less than 10 million gold. Trading ties up funds for about 30 days while waiting for each item's 120% sale day. Reserve gold for other activities. Purchases will be reduced to fit available funds."
+  },
+  "notice.trade.no_guarantee": {
+    "zh-CN": "保留估值不是已到账金币，也不是未来实际收益保证。",
+    "zh-TW": "保留估值不是已到賬金幣，也不是未來實際收益保證。",
+    "en-US": "The estimated value of retained items is not received gold or a guarantee of future profit."
+  },
+  "notice.trade.unused": {
+    "zh-CN": "部分库存不在120%跑商范围，未用于采购或收益计算。",
+    "zh-TW": "部分庫存不在120%跑商范圍，未用于采購或收益計算。",
+    "en-US": "Some inventory falls outside 120% trading and was excluded from purchase and profit calculations."
+  },
+  "notice.trade.current": {
+    "zh-CN": "当前可行方案，尚未证明最优。",
+    "zh-TW": "當前可行方案，尚未證明最優。",
+    "en-US": "A feasible plan; optimality has not been proven."
+  },
+  "notice.trade.rows_note": {
+    "zh-CN": "表中包含尚未买入或制作的数量。执行前仍须重读库存并保留已分配食材。",
+    "zh-TW": "表中包含尚未買入或制作的數量。執行前仍須重讀庫存并保留已分配食材。",
+    "en-US": "The table includes items not yet purchased or cooked. Inventory must be reread and allocated ingredients reserved before execution."
+  },
+  "notice.rules.preparing": {
+    "zh-CN": "正在用.NET读取本机日常规则；同一版本只读取一次，不执行游戏操作。",
+    "zh-TW": "正在用.NET讀取本機日常規則；同一版本只讀取一次，不執行遊戲操作。",
+    "en-US": "Reading local daily-task rules once for this game version. No game actions are performed."
+  },
+  "notice.prefix.connection": {
+    "zh-CN": "组件启动失败：",
+    "zh-TW": "組件啟動失敗：",
+    "en-US": "Component startup failed: "
+  },
+  "notice.prefix.trade": {
+    "zh-CN": "跑商数据准备：",
+    "zh-TW": "跑商數據準備：",
+    "en-US": "Preparing trading data: "
+  },
+  "notice.prefix.queue": {
+    "zh-CN": "日常未继续：",
+    "zh-TW": "日常未繼續：",
+    "en-US": "Daily tasks could not continue: "
+  },
+  "notice.prefix.weekly": {
+    "zh-CN": "周任务现场未能安全恢复：",
+    "zh-TW": "周任務現場未能安全恢復：",
+    "en-US": "Weekly-task recovery could not continue safely: "
+  },
+  "notice.prefix.interrupted": {
+    "zh-CN": "执行中断，须先核对原业务操作：",
+    "zh-TW": "執行中斷，須先核對原業務操作：",
+    "en-US": "Execution interrupted. Check the previous operation first: "
+  },
+  "notice.prefix.guild": {
+    "zh-CN": "操作记录不可读，暂停提交：",
+    "zh-TW": "操作記錄不可讀，暫停提交：",
+    "en-US": "Operation records are unreadable; submission paused: "
+  },
+  "notice.prefix.board": {
+    "zh-CN": "暂时无法到达公告板所在地图，保留待办：",
+    "zh-TW": "暫時無法到達公告板所在地圖，保留待辦：",
+    "en-US": "The quest-board map is currently unreachable. The task was preserved: "
+  },
+  "notice.prefix.minigame": {
+    "zh-CN": "小游戏连接失败：",
+    "zh-TW": "小遊戲連接失敗：",
+    "en-US": "Minigame connection failed: "
+  },
+  "notice.prefix.sichuan": {
+    "zh-CN": "连连看执行停止：",
+    "zh-TW": "連連看執行停止：",
+    "en-US": "Sichuan execution stopped: "
+  },
+  "notice.pattern.account_closing": {
+    "zh-CN": "{0}/{1} · 正常关闭游戏，准备切换到 {2}",
+    "zh-TW": "{0}/{1} · 正常關閉遊戲，準備切換到 {2}",
+    "en-US": "{0}/{1} · Closing the game before switching to {2}",
+    "parameters": [
+      "number",
+      "number",
+      "value"
+    ]
+  },
+  "notice.pattern.account_launch": {
+    "zh-CN": "{0}/{1} · 切换并启动 {2}",
+    "zh-TW": "{0}/{1} · 切換并啟動 {2}",
+    "en-US": "{0}/{1} · Switching to and launching {2}",
+    "parameters": [
+      "number",
+      "number",
+      "value"
+    ]
+  },
+  "notice.pattern.account_verified": {
+    "zh-CN": "{0} · 登录检查通过",
+    "zh-TW": "{0} · 登錄檢查通過",
+    "en-US": "{0} · Sign-in verified",
+    "parameters": [
+      "value"
+    ]
+  },
+  "notice.pattern.account_wait": {
+    "zh-CN": "{0} · 等待游戏登录和实际角色身份（最长 {1} 秒）",
+    "zh-TW": "{0} · 等待遊戲登錄和實際角色身份（最長 {1} 秒）",
+    "en-US": "{0} · Waiting for sign-in and character identity (up to {1} seconds)",
+    "parameters": [
+      "value",
+      "number"
+    ]
+  },
+  "notice.pattern.account_sdk": {
+    "zh-CN": "{0} · 等待登录 SDK 初始化",
+    "zh-TW": "{0} · 等待登錄 SDK 初始化",
+    "en-US": "{0} · Waiting for the sign-in SDK to initialize",
+    "parameters": [
+      "value"
+    ]
+  },
+  "notice.pattern.account_done": {
+    "zh-CN": "{0} 个账号登录检查完成。游戏停留在最后一个账号。",
+    "zh-TW": "{0} 個賬號登錄檢查完成。遊戲停留在最后一個賬號。",
+    "en-US": "Sign-in checks completed for {0} accounts. The game remains on the last account.",
+    "parameters": [
+      "number"
+    ]
+  },
+  "notice.pattern.weekly_none": {
+    "zh-CN": "{0} · 范围内暂无符合设置的可执行任务",
+    "zh-TW": "{0} · 范圍內暫無符合設置的可執行任務",
+    "en-US": "{0} · No tasks in this area match the selected settings",
+    "parameters": [
+      "message"
+    ]
+  },
+  "notice.pattern.weekly_npc_wait": {
+    "zh-CN": "{0} · NPC前置未完成，暂缓相关压制",
+    "zh-TW": "{0} · NPC前置未完成，暫緩相關壓制",
+    "en-US": "{0} · NPC prerequisites are incomplete; related suppression is deferred",
+    "parameters": [
+      "message"
+    ]
+  },
+  "notice.pattern.route_active": {
+    "zh-CN": "卡带 {0} · 地图 {1} · 正在{2}",
+    "zh-TW": "卡帶 {0} · 地圖 {1} · 正在{2}",
+    "en-US": "Cartridge {0} · Map {1} · Running {2}",
+    "parameters": [
+      "number",
+      "number",
+      "stage"
+    ]
+  },
+  "notice.pattern.route_detail": {
+    "zh-CN": "卡带 {0} · 地图 {1} · {2}",
+    "zh-TW": "卡帶 {0} · 地圖 {1} · {2}",
+    "en-US": "Cartridge {0} · Map {1} · {2}",
+    "parameters": [
+      "number",
+      "number",
+      "message"
+    ]
+  },
+  "notice.pattern.route_location": {
+    "zh-CN": "卡带 {0} · 地图 {1}",
+    "zh-TW": "卡帶 {0} · 地圖 {1}",
+    "en-US": "Cartridge {0} · Map {1}",
+    "parameters": [
+      "number",
+      "number"
+    ]
+  },
+  "notice.pattern.chapter_detail": {
+    "zh-CN": "第{0}章 · 地图{1} · {2}",
+    "zh-TW": "第{0}章 · 地圖{1} · {2}",
+    "en-US": "Chapter {0} · Map {1} · {2}",
+    "parameters": [
+      "number",
+      "number",
+      "message"
+    ]
+  },
+  "notice.pattern.route_plan_detail": {
+    "zh-CN": "规划卡带 {0} · {1}",
+    "zh-TW": "規劃卡帶 {0} · {1}",
+    "en-US": "Planning cartridge {0} · {1}",
+    "parameters": [
+      "number",
+      "message"
+    ]
+  },
+  "notice.pattern.route_plan": {
+    "zh-CN": "规划卡带 {0}",
+    "zh-TW": "規劃卡帶 {0}",
+    "en-US": "Planning cartridge {0}",
+    "parameters": [
+      "number"
+    ]
+  },
+  "notice.pattern.route_pack_detail": {
+    "zh-CN": "卡带 {0} · {1}",
+    "zh-TW": "卡帶 {0} · {1}",
+    "en-US": "Cartridge {0} · {1}",
+    "parameters": [
+      "number",
+      "message"
+    ]
+  },
+  "notice.pattern.route_pack": {
+    "zh-CN": "卡带 {0}",
+    "zh-TW": "卡帶 {0}",
+    "en-US": "Cartridge {0}",
+    "parameters": [
+      "number"
+    ]
+  },
+  "notice.pattern.route_checked": {
+    "zh-CN": "{0}已核对 {1}/{2} 张地图",
+    "zh-TW": "{0}已核對 {1}/{2} 張地圖",
+    "en-US": "{0}: checked {1}/{2} maps",
+    "parameters": [
+      "stage",
+      "number",
+      "number"
+    ]
+  },
+  "notice.pattern.route_count": {
+    "zh-CN": "已核对{0}/{1}张地图",
+    "zh-TW": "已核對{0}/{1}張地圖",
+    "en-US": "Checked {0}/{1} maps",
+    "parameters": [
+      "number",
+      "number"
+    ]
+  },
+  "notice.pattern.weekly_named": {
+    "zh-CN": "本周完成 {0}/{1} · {2}",
+    "zh-TW": "本周完成 {0}/{1} · {2}",
+    "en-US": "Completed this week: {0}/{1} · {2}",
+    "parameters": [
+      "number",
+      "number",
+      "value"
+    ]
+  },
+  "notice.pattern.weekly_count": {
+    "zh-CN": "本周完成 {0}/{1}",
+    "zh-TW": "本周完成 {0}/{1}",
+    "en-US": "Completed this week: {0}/{1}",
+    "parameters": [
+      "number",
+      "number"
+    ]
+  },
+  "notice.pattern.weekly_compact_named": {
+    "zh-CN": "本周完成{0}/{1} · {2}",
+    "zh-TW": "本周完成{0}/{1} · {2}",
+    "en-US": "Completed this week: {0}/{1} · {2}",
+    "parameters": [
+      "number",
+      "number",
+      "value"
+    ]
+  },
+  "notice.pattern.weekly_compact": {
+    "zh-CN": "本周完成{0}/{1}",
+    "zh-TW": "本周完成{0}/{1}",
+    "en-US": "Completed this week: {0}/{1}",
+    "parameters": [
+      "number",
+      "number"
+    ]
+  },
+  "notice.pattern.weekly_npc_count": {
+    "zh-CN": "周NPC任务 {0}/{1}",
+    "zh-TW": "周NPC任務 {0}/{1}",
+    "en-US": "Weekly NPC quests: {0}/{1}",
+    "parameters": [
+      "number",
+      "number"
+    ]
+  },
+  "notice.pattern.route_reenter": {
+    "zh-CN": "地图 {0} 收集状态不一致，切换卡带重进核对",
+    "zh-TW": "地圖 {0} 收集狀態不一致，切換卡帶重進核對",
+    "en-US": "Collection progress on map {0} differs. Reentering the cartridge to check it.",
+    "parameters": [
+      "number"
+    ]
+  },
+  "notice.pattern.route_pending": {
+    "zh-CN": "卡带 {0} 地图 {1} 重进后仍有待办，保留服务器进度",
+    "zh-TW": "卡帶 {0} 地圖 {1} 重進后仍有待辦，保留服務器進度",
+    "en-US": "Cartridge {0}, map {1} still has pending tasks after reentry. Server progress was preserved.",
+    "parameters": [
+      "number",
+      "number"
+    ]
+  },
+  "notice.pattern.route_restricted": {
+    "zh-CN": "卡带 {0} 地图 {1} 限制此天赋的所有角色；保留未收集目标，解除卡带限制后接续",
+    "zh-TW": "卡帶 {0} 地圖 {1} 限制此天賦的所有角色；保留未收集目標，解除卡帶限制后接續",
+    "en-US": "All characters with this talent are restricted in cartridge {0}, map {1}. Collection targets were preserved; resume when cartridge restrictions are lifted.",
+    "parameters": [
+      "number",
+      "number"
+    ]
+  },
+  "notice.pattern.route_arrival": {
+    "zh-CN": "未到达预期地图：{0}",
+    "zh-TW": "未到達預期地圖：{0}",
+    "en-US": "Did not reach the expected map: {0}",
+    "parameters": [
+      "number"
+    ]
+  },
+  "notice.pattern.route_targets": {
+    "zh-CN": "服务器仍有待处理目标：{0}",
+    "zh-TW": "服務器仍有待處理目標：{0}",
+    "en-US": "The server still reports pending targets on map {0}",
+    "parameters": [
+      "number"
+    ]
+  },
+  "notice.pattern.npc_items": {
+    "zh-CN": "任务物件已确认 {0}/{1}，游戏尚未推进下一步；保留进度，不重复点击未确认物件",
+    "zh-TW": "任務物件已確認 {0}/{1}，遊戲尚未推進下一步；保留進度，不重復點擊未確認物件",
+    "en-US": "Quest items confirmed: {0}/{1}. The game has not advanced to the next step. Progress was preserved without repeating unconfirmed interactions.",
+    "parameters": [
+      "number",
+      "number"
+    ]
+  },
+  "notice.pattern.continue_detail": {
+    "zh-CN": "继续其他已选项目 · {0}",
+    "zh-TW": "繼續其他已選項目 · {0}",
+    "en-US": "Continuing other selected tasks · {0}",
+    "parameters": [
+      "message"
+    ]
+  },
+  "notice.pattern.startup_wait": {
+    "zh-CN": "等待启动页加载 · {0}",
+    "zh-TW": "等待啟動頁加載 · {0}",
+    "en-US": "Waiting for the title screen · {0}",
+    "parameters": [
+      "message"
+    ]
+  },
+  "notice.pattern.workflow": {
+    "zh-CN": "正在执行：{0}",
+    "zh-TW": "正在執行：{0}",
+    "en-US": "Running: {0}",
+    "parameters": [
+      "stage",
+      "value"
+    ],
+    "source": "执行：{0} / {1}"
+  },
+  "notice.pattern.pending_operation": {
+    "zh-CN": "已有未确认的{0}操作；先核对原回执，不重复提交。",
+    "zh-TW": "已有未確認的{0}操作；先核對原回執，不重復提交。",
+    "en-US": "An earlier {0} operation is unconfirmed. Check its result before submitting another.",
+    "parameters": [
+      "stage"
+    ]
+  },
+  "notice.pattern.queue_error": {
+    "zh-CN": "日常未继续：{0}",
+    "zh-TW": "日常未繼續：{0}",
+    "en-US": "Daily tasks could not continue: {0}",
+    "parameters": [
+      "message"
+    ]
+  },
+  "notice.pattern.queue_recovery": {
+    "zh-CN": "执行中断，须先核对原业务操作：{0}",
+    "zh-TW": "執行中斷，須先核對原業務操作：{0}",
+    "en-US": "Execution interrupted. Check the previous operation first: {0}",
+    "parameters": [
+      "message"
+    ]
+  },
+  "notice.pattern.connection_error": {
+    "zh-CN": "组件启动失败：{0}",
+    "zh-TW": "組件啟動失敗：{0}",
+    "en-US": "Component startup failed: {0}",
+    "parameters": [
+      "message"
+    ]
+  },
+  "notice.pattern.trade_error": {
+    "zh-CN": "跑商数据准备：{0}",
+    "zh-TW": "跑商數據準備：{0}",
+    "en-US": "Preparing trading data: {0}",
+    "parameters": [
+      "message"
+    ]
+  },
+  "notice.pattern.weekly_error": {
+    "zh-CN": "周任务现场未能安全恢复：{0}",
+    "zh-TW": "周任務現場未能安全恢復：{0}",
+    "en-US": "Weekly-task recovery could not continue safely: {0}",
+    "parameters": [
+      "message"
+    ]
+  },
+  "notice.pattern.guild_error": {
+    "zh-CN": "操作记录不可读，暂停提交：{0}",
+    "zh-TW": "操作記錄不可讀，暫停提交：{0}",
+    "en-US": "Operation records are unreadable; submission paused: {0}",
+    "parameters": [
+      "message"
+    ]
+  },
+  "notice.pattern.board_error": {
+    "zh-CN": "暂时无法到达公告板所在地图，保留待办：{0}",
+    "zh-TW": "暫時無法到達公告板所在地圖，保留待辦：{0}",
+    "en-US": "The quest-board map is currently unreachable. The task was preserved: {0}",
+    "parameters": [
+      "message"
+    ]
+  },
+  "notice.pattern.talent_cooldown": {
+    "zh-CN": "移动天赋冷却超过等待上限：{0}",
+    "zh-TW": "移動天賦冷卻超過等待上限：{0}",
+    "en-US": "The movement talent cooldown exceeds the wait limit: {0}",
+    "parameters": [
+      "value"
+    ]
+  },
+  "notice.settings.friendship": {
+    "zh-CN": "每日亲密度咨询",
+    "zh-TW": "每日親密度諮詢",
+    "en-US": "Daily friendship consultations"
+  },
+  "notice.settings.stones": {
+    "zh-CN": "每天刷圣石",
+    "zh-TW": "每天刷聖石",
+    "en-US": "Farm ability stones daily"
+  }
+}

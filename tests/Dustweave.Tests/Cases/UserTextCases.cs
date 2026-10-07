@@ -43,6 +43,7 @@ internal static class UserTextCases
         Check("rendering leaves queue and retry evidence unchanged", JsonSerializer.Serialize(raw) == before);
 
         string Translate(string text) => text switch {
+            "卡带 14 · 地图 141 · 本周完成 1/3" => "Cartridge 14 · Map 141 · Completed this week: 1/3",
             "操作未被接受：" => "Rejected: ",
             "游戏页面已变化，请重新确认当前界面。" => "The screen changed.",
             "未读到游戏状态：" => "Missing game state: ",
@@ -52,6 +53,7 @@ internal static class UserTextCases
             "等待超时，请检查游戏加载、网络或弹窗状态。" => "Timed out. Check the game.",
             _ => text
         };
+        Check("registered whole-message format is translated before separator splitting", DailyUserText.Describe("卡带 14 · 地图 141 · 本周完成 1/3", Translate) == "Cartridge 14 · Map 141 · Completed this week: 1/3");
         Check("locale callback translates nested status components", DailyUserText.Describe("rejected: screen_changed", Translate) == "Rejected: The screen changed.");
         Check("locale callback preserves protocol identifiers", DailyUserText.Describe("Missing native state: daily.dispatch.$self", Translate) == "Missing game state: daily.dispatch.$self");
         Check("locale callback handles nested Chinese wrapper", DailyUserText.Describe("导航未能安全恢复：Waypoint map not available", Translate) == "Navigation recovery failed: The destination is not listed.");
@@ -67,4 +69,3 @@ internal static class UserTextCases
             Check("workflow result has Chinese explanation: " + code, DailyUserText.Describe(code) != code && DailyUserText.Describe(code) != DailyUserText.Untranslated);
     }
 }
-

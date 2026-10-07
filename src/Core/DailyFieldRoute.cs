@@ -305,9 +305,9 @@ public sealed partial class DailyFieldRoute
             Require(Remaining(await Evidence(), kind) > 0, "移动天赋未确认生效");
         return O(("state", "completed"), ("id", op["id"]), ("result", op["result"]));
     }
-    private async Task RecoverExpired(JsonObject current)
+    internal async Task RecoverExpired(JsonObject current)
     {
-        foreach (var op in W.Business.Records(W.Context, "dispatch.start").Where(DailyManagedBusiness.Pending).Where(op => N(op["scope"]?["kind"]) is 2 or 17).ToArray())
+        foreach (var op in W.Business.MatchingRecords(W.Context, "dispatch.start", DailyManagedBusiness.Pending).Where(op => N(op["scope"]?["kind"]) is 2 or 17).ToArray())
         {
             if (!JsonNode.DeepEquals(op["cycle"], W.Context["cycle"]) || !DailyHomeProof.SameGameAccount(op["before"]!["Frame"]!.AsObject(), current["Frame"]!.AsObject()) || N(current["AtUtcTicks"]) - N(op["at"]) < 600_000_000 || W.Business.Events(op).Count > 0)
                 continue;
@@ -372,4 +372,3 @@ public sealed partial class DailyFieldRoute
     }
     public static JsonObject[] Drops(JsonObject e) => FieldRows(e, "reward").Where(r => B(r["ὦὫὧὯὥὫὦὪὣὦὪ"]) || B(r["ὯὩὮὩὮὣὯὫὮὡὧ"])).ToArray();
 }
-

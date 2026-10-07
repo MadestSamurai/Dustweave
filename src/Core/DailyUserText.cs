@@ -116,6 +116,9 @@ public static class DailyUserText
         if (depth > 8) return Untranslated;
         if (string.IsNullOrWhiteSpace(raw)) return raw;
         string text = raw.Trim();
+        // Match registered dynamic notices before splitting embedded account or map values.
+        string localized = translate(text);
+        if (localized != text) return localized;
         if (Messages.TryGetValue(text, out var chinese)) return translate(chinese);
         if (Surfaces.TryGetValue(text, out chinese)) return translate(chinese);
         var exception = ExceptionPrefix.Match(text);
@@ -175,4 +178,3 @@ public static class DailyUserText
         return string.IsNullOrEmpty(raw) || translated == raw ? translated : translated + "\n\n原始信息（诊断用）：\n" + raw;
     }
 }
-

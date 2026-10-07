@@ -12,10 +12,10 @@ static class FieldRouteArrivalCases
         public readonly DailyFieldRoute Route;
         public long MapId = 9, Destination = 1;
         public bool Near, PortNear, BlockExit, FailCommand;
-        public double GateDistance = 2;
+        public double GateDistance = 2; public double? FirstCommandAt;
         public Fixture(string root)
         {
-            H = new(root, []);
+            H = new(root, [new DailyBusinessProof("dispatch.start", "collection", [], (_, _, _) => new())]);
             var assets = Path.Combine(root, "assets");
             Directory.CreateDirectory(Path.Combine(assets, "flows"));
             foreach (string name in new[] { "collection-catalog.json", "steal-catalog.json", "route-atlas.json" })
@@ -26,6 +26,7 @@ static class FieldRouteArrivalCases
             H.Readings = Readings;
             H.OnCommand = c =>
             {
+                FirstCommandAt ??= H.Time;
                 if (FailCommand) throw new DailyStepException("uncertain", "submitted navigation lost its reply");
                 switch (S(c["Kind"]))
                 {
@@ -94,6 +95,58 @@ static class FieldRouteArrivalCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool yes, string message) { if (!yes) throw new Exception(message); checks.Add(message); }
+        using (var f = new Fixture(Path.Combine(root, "route-planning-no-settle")))
+        {
+            var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence());
+            var plan = await nav.Plan([1], teleports: false);
+            Check(f.H.Time == 0 && f.Steps.Length == 0, "ready-map route planning performs no fixed settle or movement");
+            Check(await nav.Step(Rows(plan["actions"])[0]) && f.MapId == 1
+                && f.FirstCommandAt >= 1 && f.FirstCommandAt < 1.3,
+                "planned walking keeps one full stable-field gate before movement");
+        }
+        using (var f = new Fixture(Path.Combine(root, "route-planning-stale-origin")))
+        {
+            var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence());
+            var plan = await nav.Plan([1], teleports: false);
+            f.MapId = 2; f.Scene();
+            Check(!await nav.Step(Rows(plan["actions"])[0]) && f.Steps.Length == 0,
+                "route decision is refreshed and discarded after map changes");
+        }
+        using (var f = new Fixture(Path.Combine(root, "route-planning-loading")))
+        {
+            f.H.Frame["Surfaces"]![0]!["InputReady"] = false;
+            f.H.OnDelay = () => { if (f.H.Time >= .6) f.Scene(); };
+            var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence());
+            var plan = await nav.Plan([1], teleports: false);
+            Check(f.H.Time >= .6 && f.H.Time < .9 && f.Steps.Length == 0,
+                "route planning still waits for actual field input readiness");
+            f.H.Stopped = true;
+            bool stopped = false;
+            try { await nav.Step(Rows(plan["actions"])[0]); }
+            catch (StageHostException ex) { stopped = ex.Kind == "stopped"; }
+            Check(stopped && f.Steps.Length == 0, "route execution cannot bypass cancellation after fast planning");
+        }
+        using (var f = new Fixture(Path.Combine(root, "route-native-teleport-stability")))
+        {
+            f.MapId = 1; f.Destination = 2; f.PortNear = true; f.Scene();
+            var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence());
+            Check(!await nav.Step(O(("kind", "teleport"), ("origin", Region(nav.Evidence)), ("destination", 2), ("mode", "native")))
+                && f.FirstCommandAt >= 1 && f.Steps.Contains("mainline_interact"),
+                "nearby native teleport retains stable-field gate before opening the portal");
+        }
+        using (var f = new Fixture(Path.Combine(root, "movement-talent-history")))
+        {
+            var op = f.H.Business.Create(f.H.Context, "dispatch.start", f.H.Evidence(), O(("kind", 2)), new());
+            op["state"] = "completed"; f.H.Business.Save(op);
+            string path = Path.Combine(f.H.Root, "live", "managed-business", S(op["id"]) + ".json");
+            using (var locked = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+                await f.Route.RecoverExpired(f.H.Evidence());
+            Check(f.Steps.Length == 0, "travel-talent recovery skips completed capture bodies before reading them");
+            op["state"] = "unknown"; DailyJson.Write(path, op);
+            await f.Route.RecoverExpired(f.H.Evidence());
+            Check(S(f.H.Business.Records(f.H.Context, "dispatch.start").Single()["state"]) == "unknown" && f.Steps.Length == 0,
+                "externally unresolved travel talent remains pending without enough recovery proof");
+        }
         using (var f = new Fixture(Path.Combine(root, "board-tavern-exit")))
         {
             await f.Board();

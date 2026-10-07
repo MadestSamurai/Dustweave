@@ -71,3 +71,11 @@ LivePolicy.BuildUiToken is the shared native input token source. Passive surface
 MonsterHuntUI returns through its observed _objBackButton. A rejected business preview is cancellable only with explicit local non-submission proof, unchanged process/account/cycle and popup content, an enabled native Cancel button and no related transaction events. Cleanup has its own durable result and never marks the business complete. Unknown dispatches and unrelated dialogs are not cancelled.
 
 背景提示不进入操作校验，不能靠增加等待或重试处理。确认失败的收尾与业务成功分开记录；已有消费或结果不明不能通过取消弹窗来推定成功。本轮回归使用合成现场；真实每日免费抽取与魔兽返回仍需后续正常使用验收。
+## User-visible notices
+
+Keep execution errors, queue records, action IDs and game-provided names unchanged. Translate at the desktop presentation boundary through `DailyUiText` / `DailyLanguage`; do not localize protocol or recovery values.
+
+Register notices in `src/Desktop/Localization/notices.json` with all three locales. Dynamic notices declare numbered placeholders and typed `parameters`: `number`, `value` (opaque account/item/path text), `stage`, or `message` (nested registered notice). An optional `source` holds an existing execution format when the display can omit an internal identifier; the original remains in diagnostics. Do not add unrestricted string replacement or translate arbitrary captured values.
+
+The desktop `--smoke` check exercises every registered notice in all three languages, refreshes existing WPF bindings, and verifies nested messages, account names, paths and original diagnostics. Inspect `notice-languages.json`, `localization.json` and the `locale-*-notice.png` captures. New backend progress formats need a corresponding notice and a rendered sample in this check; adding translations must not alter game actions.
+Scheduling, release notes and OTA packaging are documented in [SCHEDULING_AND_UPDATES.md](SCHEDULING_AND_UPDATES.md).

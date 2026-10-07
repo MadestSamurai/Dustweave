@@ -73,6 +73,8 @@ await Group("MirrorStage", () => MirrorStageCases.Run(root, cases));
 await Group("DispatchRecovery", () => DispatchRecoveryCases.Run(root, cases));
 await Group("TradeReplan", () => TradeReplanCases.Run(root, cases));
 await Group("TradeQuote", () => TradeQuoteCases.Run(root, cases));
+await Group("SchedulingUpdates", () => SchedulingUpdatesCases.Run(root, cases));
+await Group("UpdateSafety", () => UpdateSafetyCases.Run(root, cases));
 await Group("Storage", () => StorageCases.Run(root, cases));
 await Group("AccountIdentity", () => Sync(() => AccountIdentityCases.Run(root, cases)));
 await Group("Preference", () => Sync(() => PreferenceCases.Run(root, cases)));
@@ -96,4 +98,3 @@ DailyJson.Write(Path.Combine(root, "results.json"), new
     privatePluginIncluded = false, realGameTouched = false
 });
 Console.WriteLine($"PASS {cases.Count} synthetic checks. No captured account data or game connection.");
-

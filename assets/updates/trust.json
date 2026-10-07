@@ -1,0 +1,12 @@
+{
+  "Keys": {
+    "dustweave-20261007": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEJlp5Nb1gvp4oEY/gFdEAd4EkimlzmiPR5v7vA2LTY2JUlQTWRI/Eq97mNhn5JGFR1iZnSuk+EV6WFGGE6/NyoQ=="
+  },
+  "Sources": [
+    {
+      "Id": "cn",
+      "FeedUrl": "https://bd2.madsam.work/updates/dustweave/updates.json",
+      "PackageBaseUrl": "https://bd2.madsam.work/updates/dustweave"
+    }
+  ]
+}

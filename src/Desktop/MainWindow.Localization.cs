@@ -13,6 +13,7 @@ public partial class MainWindow
         L.Audit();
         CheckRuntimeLanguagesForSmoke();
         await CheckDynamicTextForSmoke();
+        await CheckNoticesForSmoke();
         DailyTheme.CheckContrastForSmoke();
         string initialCulture = CultureInfo.CurrentCulture.Name, initialUiCulture = CultureInfo.CurrentUICulture.Name;
         string accountFile = Path.Combine(root, "accounts.json");
@@ -169,4 +170,3 @@ public partial class MainWindow
         DailyJson.Write(Path.Combine(smoke!,"runtime-languages.json"), new {status="passed",registeredMessages=rows.Length,rawEvidencePreserved=true,realGameTouched=false});
     }
 }
-

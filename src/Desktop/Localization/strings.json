@@ -1,25 +1,109 @@
 {
-  "run.details": {"zh-CN":"详细信息","zh-TW":"詳細資訊","en-US":"Details"},
-  "run.details_count": {"zh-CN":"详细信息（{0}）","zh-TW":"詳細資訊（{0}）","en-US":"Details ({0})"},
-  "run.details_accessible": {"zh-CN":"查看{0}的未完成任务","zh-TW":"查看{0}的未完成任務","en-US":"View unfinished tasks for {0}"},
-  "run.details_title": {"zh-CN":"{0} · 任务详情","zh-TW":"{0} · 任務詳情","en-US":"{0} · Task details"},
-  "run.details_close": {"zh-CN":"关闭","zh-TW":"關閉","en-US":"Close"},
-  "run.pending_count": {"zh-CN":"{0} 项任务尚未完成或尚未领取奖励","zh-TW":"{0} 項任務尚未完成或尚未領取獎勵","en-US":"{0} tasks are unfinished or have unclaimed rewards"},
-  "run.pending_note": {"zh-CN":"以下为本次执行记录中的进度，查看详情不会重新操作游戏。","zh-TW":"以下為本次執行紀錄中的進度，查看詳情不會重新操作遊戲。","en-US":"Progress from this run. Viewing details does not perform game actions."},
-  "run.pending_recorded": {"zh-CN":"记录时间：{0}。查看详情不会重新操作游戏。","zh-TW":"紀錄時間：{0}。查看詳情不會重新操作遊戲。","en-US":"Recorded {0}. Viewing details does not perform game actions."},
-  "run.pending_missing": {"zh-CN":"这份记录没有附带具体任务明细。重新运行奖励检查后，可查看新的结果。","zh-TW":"此紀錄未附帶具體任務明細。重新執行獎勵檢查後，可查看新的結果。","en-US":"This record has no task breakdown. Run the reward check again to obtain an updated report."},
-  "run.pending_unnamed": {"zh-CN":"未记录名称的任务","zh-TW":"未記錄名稱的任務","en-US":"Task name not recorded"},
-  "run.pending_progress": {"zh-CN":"进度 {0} / {1}","zh-TW":"進度 {0} / {1}","en-US":"Progress {0} / {1}"},
-  "run.pending_progress_unknown": {"zh-CN":"进度未记录","zh-TW":"進度未記錄","en-US":"Progress not recorded"},
-  "run.pending_claimable": {"zh-CN":"已达到任务要求，奖励尚未领取。","zh-TW":"已達到任務要求，獎勵尚未領取。","en-US":"Requirements met; rewards have not been claimed."},
-  "run.pending_locked": {"zh-CN":"任务尚未解锁。","zh-TW":"任務尚未解鎖。","en-US":"This task is still locked."},
-  "run.pending_remaining": {"zh-CN":"距离任务要求还差 {0}。","zh-TW":"距離任務要求還差 {0}。","en-US":"{0} more needed to meet the requirement."},
-  "run.pending_unknown": {"zh-CN":"本次记录未提供更具体的原因。","zh-TW":"本次紀錄未提供更具體的原因。","en-US":"No more specific reason was recorded."},
-  "run.pending_group.daily": {"zh-CN":"日常任务","zh-TW":"日常任務","en-US":"Daily missions"},
-  "run.pending_group.weekly": {"zh-CN":"周常任务","zh-TW":"週常任務","en-US":"Weekly missions"},
-  "run.pending_group.pass": {"zh-CN":"通行证任务","zh-TW":"通行證任務","en-US":"Pass missions"},
-  "run.pending_group.event": {"zh-CN":"活动任务","zh-TW":"活動任務","en-US":"Event missions"},
-  "run.pending_group.other": {"zh-CN":"其他任务","zh-TW":"其他任務","en-US":"Other missions"},
+  "run.details": {
+    "zh-CN": "详细信息",
+    "zh-TW": "詳細資訊",
+    "en-US": "Details"
+  },
+  "run.details_count": {
+    "zh-CN": "详细信息（{0}）",
+    "zh-TW": "詳細資訊（{0}）",
+    "en-US": "Details ({0})"
+  },
+  "run.details_accessible": {
+    "zh-CN": "查看{0}的未完成任务",
+    "zh-TW": "查看{0}的未完成任務",
+    "en-US": "View unfinished tasks for {0}"
+  },
+  "run.details_title": {
+    "zh-CN": "{0} · 任务详情",
+    "zh-TW": "{0} · 任務詳情",
+    "en-US": "{0} · Task details"
+  },
+  "run.details_close": {
+    "zh-CN": "关闭",
+    "zh-TW": "關閉",
+    "en-US": "Close"
+  },
+  "run.pending_count": {
+    "zh-CN": "{0} 项任务尚未完成或尚未领取奖励",
+    "zh-TW": "{0} 項任務尚未完成或尚未領取獎勵",
+    "en-US": "{0} tasks are unfinished or have unclaimed rewards"
+  },
+  "run.pending_note": {
+    "zh-CN": "以下为本次执行记录中的进度，查看详情不会重新操作游戏。",
+    "zh-TW": "以下為本次執行紀錄中的進度，查看詳情不會重新操作遊戲。",
+    "en-US": "Progress from this run. Viewing details does not perform game actions."
+  },
+  "run.pending_recorded": {
+    "zh-CN": "记录时间：{0}。查看详情不会重新操作游戏。",
+    "zh-TW": "紀錄時間：{0}。查看詳情不會重新操作遊戲。",
+    "en-US": "Recorded {0}. Viewing details does not perform game actions."
+  },
+  "run.pending_missing": {
+    "zh-CN": "这份记录没有附带具体任务明细。重新运行奖励检查后，可查看新的结果。",
+    "zh-TW": "此紀錄未附帶具體任務明細。重新執行獎勵檢查後，可查看新的結果。",
+    "en-US": "This record has no task breakdown. Run the reward check again to obtain an updated report."
+  },
+  "run.pending_unnamed": {
+    "zh-CN": "未记录名称的任务",
+    "zh-TW": "未記錄名稱的任務",
+    "en-US": "Task name not recorded"
+  },
+  "run.pending_progress": {
+    "zh-CN": "进度 {0} / {1}",
+    "zh-TW": "進度 {0} / {1}",
+    "en-US": "Progress {0} / {1}"
+  },
+  "run.pending_progress_unknown": {
+    "zh-CN": "进度未记录",
+    "zh-TW": "進度未記錄",
+    "en-US": "Progress not recorded"
+  },
+  "run.pending_claimable": {
+    "zh-CN": "已达到任务要求，奖励尚未领取。",
+    "zh-TW": "已達到任務要求，獎勵尚未領取。",
+    "en-US": "Requirements met; rewards have not been claimed."
+  },
+  "run.pending_locked": {
+    "zh-CN": "任务尚未解锁。",
+    "zh-TW": "任務尚未解鎖。",
+    "en-US": "This task is still locked."
+  },
+  "run.pending_remaining": {
+    "zh-CN": "距离任务要求还差 {0}。",
+    "zh-TW": "距離任務要求還差 {0}。",
+    "en-US": "{0} more needed to meet the requirement."
+  },
+  "run.pending_unknown": {
+    "zh-CN": "本次记录未提供更具体的原因。",
+    "zh-TW": "本次紀錄未提供更具體的原因。",
+    "en-US": "No more specific reason was recorded."
+  },
+  "run.pending_group.daily": {
+    "zh-CN": "日常任务",
+    "zh-TW": "日常任務",
+    "en-US": "Daily missions"
+  },
+  "run.pending_group.weekly": {
+    "zh-CN": "周常任务",
+    "zh-TW": "週常任務",
+    "en-US": "Weekly missions"
+  },
+  "run.pending_group.pass": {
+    "zh-CN": "通行证任务",
+    "zh-TW": "通行證任務",
+    "en-US": "Pass missions"
+  },
+  "run.pending_group.event": {
+    "zh-CN": "活动任务",
+    "zh-TW": "活動任務",
+    "en-US": "Event missions"
+  },
+  "run.pending_group.other": {
+    "zh-CN": "其他任务",
+    "zh-TW": "其他任務",
+    "en-US": "Other missions"
+  },
   "run.skipped_unknown": {
     "zh-CN": "本次记录未提供具体跳过原因，可在执行记录中查看详情。",
     "zh-TW": "本次紀錄未提供具體跳過原因，可在執行紀錄中查看詳情。",
@@ -31,34 +115,50 @@
     "en-US": "Resume continues pending tasks in the original queue, regardless of checkboxes. Retry runs only selected tasks."
   },
   "run.plan_footer": {
-  "zh-CN": "运行当前账号的勾选环节；多账号运行使用各账号保存的设置。",
-  "zh-TW": "執行目前帳號的勾選環節；多帳號執行使用各帳號儲存的設定。",
-  "en-US": "Run selected tasks for this account. Multi-account runs use saved account settings."
-},
+    "zh-CN": "运行当前账号的勾选环节；多账号运行使用各账号保存的设置。",
+    "zh-TW": "執行目前帳號的勾選環節；多帳號執行使用各帳號儲存的設定。",
+    "en-US": "Run selected tasks for this account. Multi-account runs use saved account settings."
+  },
   "run.choose_footer": {
-  "zh-CN": "这份记录仅供查看。选择任务后，可以开始新一次运行。",
-  "zh-TW": "此紀錄僅供查看。選擇任務後，可以開始新一次執行。",
-  "en-US": "Choose tasks to start a new run. This record stays unchanged."
-},
+    "zh-CN": "这份记录仅供查看。选择任务后，可以开始新一次运行。",
+    "zh-TW": "此紀錄僅供查看。選擇任務後，可以開始新一次執行。",
+    "en-US": "Choose tasks to start a new run. This record stays unchanged."
+  },
   "run.retry_empty": {
-  "zh-CN": "先勾选要补跑的环节，或点击上方「勾选未完成」。",
-  "zh-TW": "先勾選要補跑的環節，或點擊上方「勾選未完成」。",
-  "en-US": "Select tasks in the list, or use Select unfinished above."
-},
+    "zh-CN": "先勾选要补跑的环节，或点击上方「勾选未完成」。",
+    "zh-TW": "先勾選要補跑的環節，或點擊上方「勾選未完成」。",
+    "en-US": "Select tasks in the list, or use Select unfinished above."
+  },
   "run.retry_footer": {
-  "zh-CN": "仅补跑勾选的未完成环节，已完成的环节保留。",
-  "zh-TW": "僅補跑勾選的未完成環節，已完成的環節保留。",
-  "en-US": "Only selected unfinished tasks will run. Completed tasks are kept."
-},
+    "zh-CN": "仅补跑勾选的未完成环节，已完成的环节保留。",
+    "zh-TW": "僅補跑勾選的未完成環節，已完成的環節保留。",
+    "en-US": "Only selected unfinished tasks will run. Completed tasks are kept."
+  },
   "run.choose_other": {
-  "zh-CN": "重新选择任务",
-  "zh-TW": "重新選擇任務",
-  "en-US": "Choose other tasks"
-},
-  "window.minimize": { "zh-CN": "最小化", "zh-TW": "最小化", "en-US": "Minimize" },
-  "window.maximize": { "zh-CN": "最大化", "zh-TW": "最大化", "en-US": "Maximize" },
-  "window.restore": { "zh-CN": "还原窗口", "zh-TW": "還原視窗", "en-US": "Restore" },
-  "window.close": { "zh-CN": "关闭", "zh-TW": "關閉", "en-US": "Close" },
+    "zh-CN": "重新选择任务",
+    "zh-TW": "重新選擇任務",
+    "en-US": "Choose other tasks"
+  },
+  "window.minimize": {
+    "zh-CN": "最小化",
+    "zh-TW": "最小化",
+    "en-US": "Minimize"
+  },
+  "window.maximize": {
+    "zh-CN": "最大化",
+    "zh-TW": "最大化",
+    "en-US": "Maximize"
+  },
+  "window.restore": {
+    "zh-CN": "还原窗口",
+    "zh-TW": "還原視窗",
+    "en-US": "Restore"
+  },
+  "window.close": {
+    "zh-CN": "关闭",
+    "zh-TW": "關閉",
+    "en-US": "Close"
+  },
   "run.progress": {
     "zh-CN": "本次任务进度",
     "zh-TW": "本次任務進度",
@@ -390,9 +490,9 @@
     "en-US": "Stop operation"
   },
   "common.ready": {
-    "zh-CN": "准备就绪。打开工具不会自动连接、切换或恢复上次队列。",
-    "zh-TW": "準備就緒。開啟工具不會自動連接、切換或恢復上次佇列。",
-    "en-US": "Ready. Opening the app does not connect, switch accounts or resume a queue."
+    "en-US": "Ready. Check your accounts and enabled tasks before running.",
+    "zh-TW": "準備就緒。執行前請確認帳號與已啟用的任務。",
+    "zh-CN": "准备就绪。执行前请确认账号和已启用的任务。"
   },
   "diagnostics.original": {
     "zh-CN": "原始信息（诊断用）：",
@@ -485,10 +585,10 @@
     "en-US": "Run accounts ({0})"
   },
   "run.resume": {
-  "zh-CN": "接续原队列",
-  "zh-TW": "接續原佇列",
-  "en-US": "Resume original queue"
-},
+    "zh-CN": "接续原队列",
+    "zh-TW": "接續原佇列",
+    "en-US": "Resume original queue"
+  },
   "run.select_unfinished": {
     "zh-CN": "勾选未完成",
     "zh-TW": "勾選未完成",
@@ -525,10 +625,10 @@
     "en-US": "Activity records"
   },
   "run.records_more": {
-  "zh-CN": "记录与更多操作",
-  "zh-TW": "紀錄與更多操作",
-  "en-US": "Records and more actions"
-},
+    "zh-CN": "记录与更多操作",
+    "zh-TW": "紀錄與更多操作",
+    "en-US": "Records and more actions"
+  },
   "run.resume_help": {
     "zh-CN": "使用原账号、进程及重置周期继续原队列。重启游戏后，请勾选未完成环节补跑。",
     "zh-TW": "使用原帳號、程序及重置週期繼續原佇列。重啟遊戲後，請勾選未完成環節補跑。",
@@ -550,10 +650,10 @@
     "en-US": "Run for: {0}"
   },
   "run.choose": {
-  "zh-CN": "选择要运行的任务",
-  "zh-TW": "選擇要執行的任務",
-  "en-US": "Choose tasks to run"
-},
+    "zh-CN": "选择要运行的任务",
+    "zh-TW": "選擇要執行的任務",
+    "en-US": "Choose tasks to run"
+  },
   "run.start_selected": {
     "zh-CN": "运行勾选环节（{0}）",
     "zh-TW": "執行勾選環節（{0}）",
@@ -580,10 +680,10 @@
     "en-US": "Select all"
   },
   "run.retry": {
-  "zh-CN": "补跑已选环节（{0}）",
-  "zh-TW": "補跑已選環節（{0}）",
-  "en-US": "Retry selected ({0})"
-},
+    "zh-CN": "补跑已选环节（{0}）",
+    "zh-TW": "補跑已選環節（{0}）",
+    "en-US": "Retry selected ({0})"
+  },
   "run.reconcile": {
     "zh-CN": "核对并补跑（{0}）",
     "zh-TW": "核對並補跑（{0}）",
@@ -2643,5 +2743,395 @@
     "zh-CN": "没有匹配的账号。试试其他名称，或清空搜索。",
     "zh-TW": "沒有符合的帳號。試試其他名稱，或清空搜尋。",
     "en-US": "No matching accounts. Try another name or clear the search."
+  },
+  "nav.schedule": {
+    "zh-TW": "定時執行",
+    "en-US": "Schedules",
+    "zh-CN": "定时执行"
+  },
+  "nav.updates": {
+    "zh-TW": "版本更新",
+    "en-US": "Updates",
+    "zh-CN": "版本更新"
+  },
+  "account.run_queue": {
+    "zh-TW": "執行勾選帳號",
+    "en-US": "Run selected accounts",
+    "zh-CN": "执行勾选账号"
+  },
+  "account.run_queue_count": {
+    "zh-TW": "執行勾選帳號（{0}）",
+    "en-US": "Run selected accounts ({0})",
+    "zh-CN": "执行勾选账号（{0}）"
+  },
+  "account.run_queue_help": {
+    "zh-TW": "依清單順序執行，每個帳號使用各自儲存的日常設定。",
+    "en-US": "Run in list order using each account’s saved daily settings.",
+    "zh-CN": "按列表顺序执行，每个账号使用各自保存的日常设置。"
+  },
+  "schedule.next": {
+    "zh-TW": "下一次執行",
+    "en-US": "Next run",
+    "zh-CN": "下一次执行"
+  },
+  "schedule.enabled": {
+    "zh-TW": "啟用定時執行",
+    "en-US": "Enable scheduled runs",
+    "zh-CN": "启用定时执行"
+  },
+  "schedule.time": {
+    "zh-TW": "開始時間",
+    "en-US": "Start time",
+    "zh-CN": "开始时间"
+  },
+  "schedule.day0": {
+    "zh-TW": "週日",
+    "en-US": "Sun",
+    "zh-CN": "周日"
+  },
+  "schedule.day1": {
+    "zh-TW": "週一",
+    "en-US": "Mon",
+    "zh-CN": "周一"
+  },
+  "schedule.day2": {
+    "zh-TW": "週二",
+    "en-US": "Tue",
+    "zh-CN": "周二"
+  },
+  "schedule.day3": {
+    "zh-TW": "週三",
+    "en-US": "Wed",
+    "zh-CN": "周三"
+  },
+  "schedule.day4": {
+    "zh-TW": "週四",
+    "en-US": "Thu",
+    "zh-CN": "周四"
+  },
+  "schedule.day5": {
+    "zh-TW": "週五",
+    "en-US": "Fri",
+    "zh-CN": "周五"
+  },
+  "schedule.day6": {
+    "zh-TW": "週六",
+    "en-US": "Sat",
+    "zh-CN": "周六"
+  },
+  "schedule.requirements": {
+    "zh-TW": "依本機時區執行。電腦須開機、保持喚醒且已登入 Windows；軟體關閉時會自動啟動。忙碌或短暫錯過時最多延後 15 分鐘，之後略過本次，等待下次計畫。不會喚醒關機的電腦，也不會自動重複中斷的佇列。",
+    "en-US": "Uses this computer’s time zone. Keep the computer awake and signed in to Windows. Dustweave starts if closed. A busy or missed run may wait up to 15 minutes; later runs are skipped until the next scheduled day. Interrupted queues are not automatically repeated.",
+    "zh-CN": "按本机时区执行。电脑需开机、保持唤醒且已登录 Windows；软件关闭时会自动启动。忙碌或短暂错过时最多延后 15 分钟，之后跳过本次，等待下次计划。不会唤醒关机的电脑，也不会自动重复中断的队列。"
+  },
+  "schedule.accounts": {
+    "zh-TW": "執行帳號",
+    "en-US": "Accounts to run",
+    "zh-CN": "执行账号"
+  },
+  "schedule.account_help": {
+    "zh-TW": "選擇固定的帳號清單；每次執行使用這些帳號最新儲存的環節設定。此處的選擇獨立於帳號頁的暫時勾選。",
+    "en-US": "Choose a fixed account list. Each run uses their latest saved task settings. This selection is separate from the Accounts page.",
+    "zh-CN": "选择固定的账号名单；每次执行使用这些账号最新保存的环节设置。这里的选择独立于账号页的临时勾选。"
+  },
+  "schedule.no_accounts": {
+    "zh-TW": "請先在帳號頁儲存至少一個帳號。",
+    "en-US": "Save an account on the Accounts page first.",
+    "zh-CN": "请先在账号页保存至少一个账号。"
+  },
+  "schedule.save": {
+    "zh-TW": "儲存定時計畫",
+    "en-US": "Save schedule",
+    "zh-CN": "保存定时计划"
+  },
+  "schedule.off": {
+    "zh-TW": "尚未啟用",
+    "en-US": "Not enabled",
+    "zh-CN": "尚未启用"
+  },
+  "schedule.no_result": {
+    "zh-TW": "尚無定時執行紀錄。",
+    "en-US": "No scheduled runs yet.",
+    "zh-CN": "还没有定时执行记录。"
+  },
+  "schedule.last": {
+    "zh-TW": "上次：{0} · {1}",
+    "en-US": "Last run: {0} · {1}",
+    "zh-CN": "上次：{0} · {1}"
+  },
+  "schedule.invalid_time": {
+    "zh-TW": "請輸入 00:00–23:59 的時間，並至少選擇一天。",
+    "en-US": "Enter a time from 00:00 to 23:59 and select at least one day.",
+    "zh-CN": "请输入 00:00–23:59 的时间，并至少选择一天。"
+  },
+  "schedule.invalid_accounts": {
+    "zh-TW": "請至少選擇一個有效帳號。",
+    "en-US": "Select at least one valid account.",
+    "zh-CN": "请至少选择一个有效账号。"
+  },
+  "schedule.unreadable": {
+    "zh-TW": "定時設定無法讀取，請重新儲存計畫。",
+    "en-US": "The schedule cannot be read. Save it again.",
+    "zh-CN": "定时设置无法读取，请重新保存计划。"
+  },
+  "schedule.executable_missing": {
+    "zh-TW": "找不到程式位置，請將軟體放到固定目錄後儲存計畫。",
+    "en-US": "The application was not found. Move it to a permanent folder and save the schedule.",
+    "zh-CN": "找不到程序位置，请将软件放到固定目录后保存计划。"
+  },
+  "schedule.preview": {
+    "zh-TW": "介面預覽不會登記計畫或啟動遊戲。",
+    "en-US": "Preview mode does not register schedules or start the game.",
+    "zh-CN": "界面预览不会登记计划或启动游戏。"
+  },
+  "schedule.saved": {
+    "zh-TW": "已儲存。將軟體移到其他目錄後，請再次儲存此計畫。",
+    "en-US": "Saved. Save the schedule again if you move the application.",
+    "zh-CN": "已保存。移动软件到其他目录后，请再次保存此计划。"
+  },
+  "schedule.register_failed": {
+    "zh-TW": "Windows 未能儲存定時工作；計畫已停用，請重新儲存。詳情請見診斷紀錄。",
+    "en-US": "Windows could not register the task. The schedule is disabled; try saving again. Details are in diagnostics.",
+    "zh-CN": "Windows 未能保存定时任务；计划已停用，请重新保存。详情见诊断记录。"
+  },
+  "schedule.account_missing": {
+    "zh-TW": "計畫中的帳號已刪除或失效，本次未啟動。請重新選擇帳號並儲存。",
+    "en-US": "A scheduled account is missing or invalid. Nothing was started. Select the accounts again and save.",
+    "zh-CN": "计划中的账号已删除或失效，本次未启动。请重新选择账号并保存。"
+  },
+  "schedule.unsaved_settings": {
+    "zh-TW": "日常設定尚未儲存，本次定時執行已停止。",
+    "en-US": "Daily settings could not be saved. This scheduled run was stopped.",
+    "zh-CN": "日常设置尚未保存，本次定时执行已停止。"
+  },
+  "schedule.failed": {
+    "zh-TW": "本次定時執行未完成，請至今日任務查看詳情。",
+    "en-US": "The scheduled run did not finish. See Today for details.",
+    "zh-CN": "本次定时执行未完成，请在今日任务中查看详情。"
+  },
+  "schedule.state.waiting": {
+    "zh-TW": "等待目前操作結束",
+    "en-US": "Waiting for the current operation",
+    "zh-CN": "等待当前操作结束"
+  },
+  "schedule.state.running": {
+    "zh-TW": "正在執行",
+    "en-US": "Running",
+    "zh-CN": "正在执行"
+  },
+  "schedule.state.completed": {
+    "zh-TW": "已完成",
+    "en-US": "Completed",
+    "zh-CN": "已完成"
+  },
+  "schedule.state.partial": {
+    "zh-TW": "部分完成",
+    "en-US": "Partially completed",
+    "zh-CN": "部分完成"
+  },
+  "schedule.state.paused": {
+    "zh-TW": "已停止，需要手動接續",
+    "en-US": "Stopped; resume manually",
+    "zh-CN": "已停止，需要手动接续"
+  },
+  "schedule.state.failed": {
+    "zh-TW": "執行失敗",
+    "en-US": "Failed",
+    "zh-CN": "执行失败"
+  },
+  "schedule.state.interrupted": {
+    "zh-TW": "上次執行已中斷，請手動檢查並接續",
+    "en-US": "Interrupted; review and resume manually",
+    "zh-CN": "上次执行已中断，请手动检查并接续"
+  },
+  "schedule.state.missed": {
+    "zh-TW": "已超過 15 分鐘，本次略過",
+    "en-US": "Skipped after the 15-minute window",
+    "zh-CN": "已超过 15 分钟，本次跳过"
+  },
+  "updates.help": {
+    "zh-CN": "通过 bd2.madsam.work 下载更新。后台下载完成后，仅在空闲时提示重启，保留账号、设置和插件。",
+    "zh-TW": "透過 bd2.madsam.work 下載更新。背景下載完成後，僅在閒置時提示重新啟動，保留帳號、設定與外掛。",
+    "en-US": "Updates download from bd2.madsam.work in the background. Restart is offered only when idle. Accounts, settings and plugins are preserved."
+  },
+  "updates.automatic": {
+    "zh-TW": "自動檢查並在背景下載更新",
+    "en-US": "Check and download updates automatically",
+    "zh-CN": "自动检查并在后台下载更新"
+  },
+  "updates.check": {
+    "zh-TW": "檢查更新",
+    "en-US": "Check for updates",
+    "zh-CN": "检查更新"
+  },
+  "updates.install": {
+    "zh-TW": "重新啟動並更新",
+    "en-US": "Restart and update",
+    "zh-CN": "重启并更新"
+  },
+  "updates.idle": {
+    "zh-TW": "尚未檢查更新。",
+    "en-US": "Updates have not been checked yet.",
+    "zh-CN": "尚未检查更新。"
+  },
+  "updates.checking": {
+    "zh-TW": "正在檢查新版本…",
+    "en-US": "Checking for updates…",
+    "zh-CN": "正在检查新版本…"
+  },
+  "updates.current": {
+    "zh-TW": "目前已是發布來源中的最新版本。",
+    "en-US": "You are up to date.",
+    "zh-CN": "当前已是发布源中的最新版本。"
+  },
+  "updates.unavailable": {
+    "zh-TW": "暫時無法存取更新來源。網路不通、儲存庫未公開或尚未發布更新清單時會出現此提示，不影響日常執行。",
+    "en-US": "The update feed is unavailable. The network may be offline, or the repository or update manifest may not yet be public. Daily tasks are unaffected.",
+    "zh-CN": "暂时无法访问更新源。网络不通、仓库未公开或尚未发布更新清单时会出现此提示，不影响日常执行。"
+  },
+  "updates.downloading": {
+    "zh-TW": "正在下載 {0} · {1}%",
+    "en-US": "Downloading {0} · {1}%",
+    "zh-CN": "正在下载 {0} · {1}%"
+  },
+  "updates.ready": {
+    "zh-TW": "{0} 已下載並通過驗證，閒置時可重新啟動更新。",
+    "en-US": "{0} is downloaded and verified. Restart when idle to update.",
+    "zh-CN": "{0} 已下载并通过校验，空闲时可重启更新。"
+  },
+  "updates.confirm": {
+    "zh-TW": "新版本 {0} 已下載並驗證。現在重新啟動 Dustweave 完成更新嗎？遊戲不會重新啟動，帳號與設定會保留。",
+    "en-US": "Version {0} is downloaded and verified. Restart Dustweave to update now? The game stays open; accounts and settings are preserved.",
+    "zh-CN": "新版本 {0} 已下载并校验。现在重启 Dustweave 完成更新吗？游戏不会被重启，账号和设置会保留。"
+  },
+  "updates.whats_new": {
+    "zh-TW": "{0} 有哪些更新",
+    "en-US": "What’s new in {0}",
+    "zh-CN": "{0} 有哪些更新"
+  },
+  "updates.notes": {
+    "zh-TW": "版本更新說明",
+    "en-US": "Release notes",
+    "zh-CN": "版本更新说明"
+  },
+  "updates.got_it": {
+    "zh-TW": "開始使用",
+    "en-US": "Continue",
+    "zh-CN": "开始使用"
+  },
+  "updates.invalid_feed": {
+    "zh-TW": "更新清單格式不正確，已停止更新。",
+    "en-US": "The update manifest is invalid. The update was stopped.",
+    "zh-CN": "更新清单格式不正确，已停止更新。"
+  },
+  "updates.broken_chain": {
+    "zh-TW": "更新版本鏈不完整，已停止更新。",
+    "en-US": "The release chain is incomplete. The update was stopped.",
+    "zh-CN": "更新版本链不完整，已停止更新。"
+  },
+  "updates.hash_failed": {
+    "zh-TW": "下載檔案驗證失敗，請重新檢查更新。",
+    "en-US": "Download verification failed. Check for updates again.",
+    "zh-CN": "下载文件校验失败，请重新检查更新。"
+  },
+  "updates.download_too_large": {
+    "zh-TW": "下載檔案大小異常，已停止更新。",
+    "en-US": "The download size is unexpected. The update was stopped.",
+    "zh-CN": "下载文件大小异常，已停止更新。"
+  },
+  "updates.invalid_package": {
+    "zh-TW": "更新包內容不符合要求，已停止更新。",
+    "en-US": "The update package is invalid. The update was stopped.",
+    "zh-CN": "更新包内容不符合要求，已停止更新。"
+  },
+  "updates.linked_folder": {
+    "zh-TW": "更新目錄包含連結，無法安全替換。請手動更新。",
+    "en-US": "The update folder contains links. Please update manually.",
+    "zh-CN": "更新目录包含链接，无法安全替换。请手动更新。"
+  },
+  "updates.flavor_missing": {
+    "zh-TW": "新版本尚未提供目前安裝類型的更新包。",
+    "en-US": "This release has no package for your installed edition.",
+    "zh-CN": "新版本尚未提供当前安装类型的更新包。"
+  },
+  "updates.packaged_only": {
+    "zh-TW": "開發目錄不支援自動替換，請使用正式分發包體驗 OTA。",
+    "en-US": "Automatic replacement is available in distribution packages, not development builds.",
+    "zh-CN": "开发目录不支持自动替换，请使用正式分发包体验 OTA。"
+  },
+  "updates.tool_open": {
+    "zh-TW": "請先結束工具視窗中的操作，再重新啟動更新。",
+    "en-US": "Finish the operation in the tool window before updating.",
+    "zh-CN": "请先结束工具窗口中的操作，再重启更新。"
+  },
+  "updates.permission": {
+    "zh-TW": "目前目錄無法寫入，請將軟體移到可寫目錄後重試。未要求系統管理員權限。",
+    "en-US": "The application folder is not writable. Move it to a writable folder and retry. No administrator access was requested.",
+    "zh-CN": "当前目录无法写入，请将软件移到可写目录后重试。未请求管理员权限。"
+  },
+  "updates.start_failed": {
+    "zh-TW": "無法啟動更新程式，目前軟體未被替換。請查看診斷紀錄。",
+    "en-US": "The updater could not start. The current application was not replaced. See diagnostics.",
+    "zh-CN": "无法启动更新程序，当前软件未被替换。请查看诊断记录。"
+  },
+  "updates.app_busy": {
+    "zh-TW": "軟體仍在執行，更新未替換任何檔案。",
+    "en-US": "The application is still running. No files were replaced.",
+    "zh-CN": "软件仍在运行，更新未替换任何文件。"
+  },
+  "updates.new_start_failed": {
+    "zh-TW": "新版本未正常啟動，已嘗試還原上一版本。請查看診斷紀錄。",
+    "en-US": "The new version did not start. Recovery to the previous version was attempted. See diagnostics.",
+    "zh-CN": "新版本未正常启动，已尝试恢复上一版本。请查看诊断记录。"
+  },
+  "updates.previous_failed": {
+    "zh-TW": "上次更新未完成，請查看診斷紀錄；可重新檢查更新或手動安裝。",
+    "en-US": "The previous update failed. See diagnostics, then check again or install manually.",
+    "zh-CN": "上次更新未完成，请查看诊断记录；可重新检查更新或手动安装。"
+  },
+  "updates.version_link": {
+    "en-US": "{0} · Updates",
+    "zh-TW": "{0} · 版本更新",
+    "zh-CN": "{0} · 版本更新"
+  },
+  "schedule.timezone": {
+    "zh-CN": "本机时区（{0}）",
+    "en-US": "Local time zone ({0})",
+    "zh-TW": "本機時區（{0}）"
+  },
+  "updates.signature_failed": {
+    "zh-CN": "更新签名校验失败，已停止更新；日常任务不受影响。",
+    "zh-TW": "更新簽章驗證失敗，已停止更新；日常任務不受影響。",
+    "en-US": "Update signature verification failed. Daily tasks are unaffected."
+  },
+  "updates.mirror_conflict": {
+    "zh-CN": "更新线路的文件信息不一致，暂不更新。",
+    "zh-TW": "更新線路的檔案資訊不一致，暫不更新。",
+    "en-US": "Update sources disagree about this release. No update was applied."
+  },
+  "updates.stale_feed": {
+    "zh-CN": "更新线路尚未同步到已发现的版本，请稍后重试。",
+    "zh-TW": "更新線路尚未同步到已發現的版本，請稍後重試。",
+    "en-US": "The update source is behind a previously discovered version. Try again later."
+  },
+  "updates.target_changed": {
+    "zh-CN": "程序文件已变化，请重新启动后检查更新。",
+    "zh-TW": "程式檔案已變更，請重新啟動後檢查更新。",
+    "en-US": "Application files changed. Restart and check for updates again."
+  },
+  "updates.recovery_required": {
+    "zh-CN": "上次更新中断，自动恢复暂未完成。请保留用户数据与 updates 目录，重新启动软件重试；仍失败时请重新解压完整包到程序目录。详情见 update-result.json。",
+    "zh-TW": "上次更新中斷，自動復原暫未完成。請保留使用者資料與 updates 目錄，重新啟動軟體重試；仍失敗時請重新解壓完整包至程式目錄。詳情見 update-result.json。",
+    "en-US": "An interrupted update could not be recovered yet. Keep your user data and updates folder, then restart to retry. If recovery still fails, extract a full package into the application folder. See update-result.json."
+  },
+  "updates.backup_damaged": {
+    "zh-CN": "更新备份校验失败，请保留诊断文件并手动安装完整包。",
+    "zh-TW": "更新備份驗證失敗，請保留診斷檔案並手動安裝完整包。",
+    "en-US": "The update backup failed verification. Keep diagnostics and install a full package manually."
+  },
+  "updates.backup_exists": {
+    "zh-CN": "本次更新备份已存在，请重新检查更新。",
+    "zh-TW": "本次更新備份已存在，請重新檢查更新。",
+    "en-US": "An update backup already exists. Check for updates again."
   }
 }

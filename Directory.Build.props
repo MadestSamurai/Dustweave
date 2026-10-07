@@ -6,6 +6,6 @@
   <!-- Keep connection identities independent from the product label. Standalone tools use their own props. -->
   <PropertyGroup Condition="$([System.String]::Copy('$(MSBuildProjectName)').StartsWith('Dustweave.'))">
     <Version>0.7.27</Version>
-    <DustweaveVersion Condition="'$(DustweaveVersion)' == ''">0.8.17</DustweaveVersion>
+    <DustweaveVersion Condition="'$(DustweaveVersion)' == ''">0.9.0</DustweaveVersion>
   </PropertyGroup>
 </Project>

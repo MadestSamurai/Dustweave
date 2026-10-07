@@ -1,0 +1,51 @@
+name: Prepare signed update feed
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Stable tag with both tested packages (v0.9.0)'
+        required: true
+permissions:
+  contents: read
+jobs:
+  ota:
+    runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+      - name: Download tested packages and current domestic manifest
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RELEASE_TAG -notmatch '^v\d+\.\d+\.\d+$'){throw 'Stable release tag required.'}
+          New-Item -ItemType Directory -Path ota | Out-Null
+          gh release download $env:RELEASE_TAG --pattern 'Dustweave-*-win-x64.zip' --dir ota
+          if($LASTEXITCODE -ne 0){throw 'Both tested release packages are required.'}
+          try {
+            Invoke-WebRequest 'https://bd2.madsam.work/updates/dustweave/updates.json' -OutFile ota/previous.json
+          } catch {
+            if([int]$_.Exception.Response.StatusCode -ne 404){throw}
+          }
+      - name: Sign the cumulative manifest
+        shell: pwsh
+        env:
+          DUSTWEAVE_UPDATE_SIGNING_KEY: ${{ secrets.DUSTWEAVE_UPDATE_SIGNING_KEY }}
+        run: |
+          if(!$env:DUSTWEAVE_UPDATE_SIGNING_KEY){throw 'Configure the signing secret before running this workflow.'}
+          $parameters=@{Version=$env:RELEASE_TAG.Substring(1);PackageDirectory='ota'}
+          if(Test-Path 'ota/previous.json'){$parameters.PreviousFeed='ota/previous.json'}
+          ./scripts/new-update-feed.ps1 @parameters
+      - uses: actions/upload-artifact@v4
+        with:
+          name: signed-domestic-update
+          path: |
+            ota/updates.json
+            ota/Dustweave-*-win-x64.zip
+          retention-days: 14
+# Publishing to the existing website remains a separate, explicitly authorized deployment.
+# No public repository or release is created by this workflow.

@@ -59,7 +59,7 @@
    <Setter Property="Foreground" Value="{DynamicResource MutedInk}"/><Setter Property="FontSize" Value="14"/>
    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabItem">
-    <Border x:Name="Row" CornerRadius="8" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" Padding="12,12" Margin="12,3">
+    <Border x:Name="Row" CornerRadius="8" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" Padding="12,8" Margin="12,2">
      <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="26"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Path x:Name="NavIcon" Style="{StaticResource LineIcon}" Data="{TemplateBinding Tag}" Stroke="{TemplateBinding Foreground}" HorizontalAlignment="Left"/><ContentPresenter x:Name="NavHeader" Grid.Column="1" ContentSource="Header" VerticalAlignment="Center"/></Grid>
     </Border>
     <ControlTemplate.Triggers>
@@ -170,6 +170,7 @@
         <TextBlock x:Name="EmptyText" Text="{l:Tr account.empty}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="440" Margin="20" Visibility="Collapsed"/>
        </Grid>
        <DockPanel Grid.Row="2" x:Name="ManageBar" Margin="0,12,0,0" LastChildFill="False">
+
         <Button DockPanel.Dock="Right" x:Name="RunButton" Content="{l:Tr account.check}" Click="Run_Click" ToolTip="{l:Tr account.check_help}" ToolTipService.ShowOnDisabled="True"/>
         <StackPanel Orientation="Horizontal" ToolTip="{l:Tr account.manage_help}">
          <Button x:Name="RenameAccountButton" Content="{l:Tr account.rename}" Click="Rename_Click" Margin="0,0,8,0"/>
@@ -182,6 +183,8 @@
      </Border>
     </Grid>
    </TabItem>
+   <TabItem x:Name="ScheduleTab" Tag="{StaticResource Icon.Clock}" Header="{l:Tr nav.schedule}"/>
+   <TabItem Visibility="Collapsed" x:Name="UpdatesTab" Tag="{StaticResource Icon.Link}" Header="{l:Tr nav.updates}"/>
    <TabItem x:Name="DiagnosticsTab" Tag="{StaticResource Icon.Diagnostics}" Header="{l:Tr nav.diagnostics}">
     <Border Background="{DynamicResource AppBackground}">
      <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
@@ -240,7 +243,7 @@
     </Border>
    </TabItem>
   </TabControl>
-  <StackPanel Grid.Row="1" Grid.RowSpan="2" VerticalAlignment="Bottom" Margin="20,0,20,24">
+  <StackPanel x:Name="SidebarPreferences" Grid.Row="1" Grid.RowSpan="2" VerticalAlignment="Bottom" Margin="20,0,20,24">
    <TextBlock Text="{l:Tr appearance.label}" FontSize="12" Foreground="{DynamicResource MutedInk}" Margin="0,0,0,8"/>
    <Border Background="{DynamicResource SurfaceMuted}" CornerRadius="8" Padding="2" BorderBrush="{DynamicResource Line}" BorderThickness="1">
     <ListBox x:Name="ThemeSelector" SelectedIndex="0" SelectionChanged="Theme_Changed" AutomationProperties.Name="{l:Tr appearance.label}" Background="Transparent" BorderThickness="0" Padding="0" ItemContainerStyle="{StaticResource AppearanceChoice}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled">
@@ -254,11 +257,12 @@
    <ComboBox x:Name="LanguageSelector" SelectedIndex="0" SelectionChanged="Language_Changed" AutomationProperties.Name="{l:Tr language.label}">
     <ComboBoxItem Content="简体中文"/><ComboBoxItem Content="繁體中文"/><ComboBoxItem Content="English"/>
    </ComboBox>
-   <TextBlock x:Name="VersionText" Foreground="{DynamicResource MutedInk}" FontSize="11" Margin="0,16,0,0"/>
+   <Button x:Name="VersionButton" Click="Updates_Click" Style="{StaticResource QuietButton}" HorizontalAlignment="Left" Margin="0,10,0,0" ToolTip="{l:Tr nav.updates}" AutomationProperties.Name="{l:Tr nav.updates}"><TextBlock x:Name="VersionText" Foreground="{DynamicResource MutedInk}" FontSize="11"/></Button>
   </StackPanel>
   <Grid x:Name="ActionFooter" Grid.Row="2" Grid.Column="1" Margin="24,0,24,16" MinHeight="36">
    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
    <TextBlock x:Name="ProgressText" Text="{l:Tr common.ready}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text,RelativeSource={RelativeSource Self}}" Margin="0,0,12,0"/>
+   <Button Grid.Column="1" x:Name="RunAccountsButton" Content="{l:Tr account.run_queue}" Click="RunAccounts_Click" Style="{StaticResource PrimaryButton}" ToolTip="{l:Tr account.run_queue_help}"/>
    <Button Grid.Column="1" x:Name="StopButton" Content="{l:Tr common.stop_operation}" Click="Stop_Click" IsEnabled="False" Visibility="{Binding IsEnabled,RelativeSource={RelativeSource Self},Converter={StaticResource BooleanToVisibility}}"/>
   </Grid>
  </Grid>

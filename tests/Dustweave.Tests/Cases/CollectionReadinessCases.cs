@@ -110,6 +110,7 @@ static class CollectionReadinessCases
             catch (Exception e) when (e is InvalidDataException or StageHostException) { rejected = true; }
             Check(invalid ? rejected : !rejected && proof == null, "cartridge restriction proof cannot hide " + condition);
         }
+        await ReusedScopeCase(output, cases);
         await DelayedMenuCases(output, cases);
         foreach (bool restricted in new[] { false, true })
         {
@@ -154,6 +155,48 @@ static class CollectionReadinessCases
                 Check(proof != null && Directory.EnumerateFiles(Path.Combine(path, "live", "collection-deferrals")).Count() == 1 && await driver.TakeCollectionDeferralAsync() == null, "managed cartridge deferral is durable and can only be consumed once");
             }
         }
+    }
+    static async Task ReusedScopeCase(string output, List<string> cases)
+    {
+        string ui = "GameFieldDefaultUI";
+        double time = 0;
+        var requests = new List<JsonObject>();
+        var box = new CommandDriverCases.Mailbox { Error = "" };
+        void Publish(JsonObject request)
+        {
+            var row = Row(605, false);
+            if (ui == "QuickMenuUI" && time < 1) row["Gate"] = "talent_wait:animation";
+            var evidence = Evidence(ui, new(row), 100000000 + (long)(time * TimeSpan.TicksPerSecond));
+            evidence["ObservationRequest"] = request["Id"]!.DeepClone();
+            box.Values["live:evidence.json"] = JsonSerializer.SerializeToUtf8Bytes(evidence);
+        }
+        box.AfterWrite = (_, name, bytes) =>
+        {
+            if (name != "observation-request.json") return;
+            var request = JsonNode.Parse(bytes)!.AsObject(); requests.Add(request);
+            if (ui == "GameFieldDefaultUI") Publish(request);
+            // Leave the pre-open evidence in the mailbox until the next native tick.
+        };
+        box.AfterCommand = _ => ui = "QuickMenuUI";
+        using var driver = new DailyCommandDriver(Path.Combine(output, "collection-reused-scope"), box,
+            () => Task.FromResult(new DailyStageFrame(Frame(ui), CommandDriverCases.Context())), () => false,
+            () => 100000000 + (long)(time * TimeSpan.TicksPerSecond), () => time, t =>
+            {
+                time += t.TotalSeconds;
+                if (time >= .5 && box.Values.TryGetValue("live:observation-request.json", out var bytes))
+                    Publish(JsonNode.Parse(bytes)!.AsObject());
+                return Task.CompletedTask;
+            });
+        driver.Bind(CommandDriverCases.Context());
+        await driver.SubmitAsync(new() { ["ui"] = "GameFieldDefaultUI", ["operation"] = "mainline_menu", ["value"] = 6, ["expect"] = "QuickMenuUI" });
+        var after = await driver.EvidenceAsync(["mainline", "dispatch.talent"]);
+        if (time < 1 || requests.Count != 2 || box.Commands.Count != 1
+            || JsonNode.DeepEquals(requests[0]["Id"], requests[1]["Id"])
+            || JsonNode.DeepEquals(requests[0]["Prefixes"], requests[1]["Prefixes"])
+            || !DailyNavigationDecision.Types(after["Frame"]!.AsObject()).Contains("QuickMenuUI"))
+            throw new Exception("Menu scope reused stale evidence or renewed again before row selection");
+        cases.Add("menu opening renews evidence once and rejects the cached pre-open frame");
+        cases.Add("menu animation and row selection reuse one scope without replaying the open command");
     }
     // Exercise the public observed-input path, not only SubmitAsync: the outer
     // deadline used to expire while the inner native animation wait succeeded.
@@ -220,4 +263,3 @@ static class CollectionReadinessCases
         }
     }
 }
-

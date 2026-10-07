@@ -12,4 +12,5 @@
   <ItemGroup><EmbeddedResource Include="../../assets/flows/guild-flow.json" LogicalName="Dustweave.guild-flow.json" /></ItemGroup>
   <ItemGroup><EmbeddedResource Include="../../assets/rules/daily/gacha/GachaTable.json" LogicalName="Dustweave.GachaTable.json" /><EmbeddedResource Include="../../assets/rules/daily/gacha/GachaGroupTable.json" LogicalName="Dustweave.GachaGroupTable.json" /></ItemGroup>
 <ItemGroup><EmbeddedResource Include="../../third-party/highs/highs.dll" LogicalName="Dustweave.highs.dll"/><EmbeddedResource Include="../../third-party/highs/LICENSE.txt" LogicalName="Dustweave.Highs.LICENSE.txt"/></ItemGroup>  <ItemGroup><Using Include="BD2Daily" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="../../assets/updates/trust.json" LogicalName="Dustweave.update-trust.json" /></ItemGroup>
 </Project>

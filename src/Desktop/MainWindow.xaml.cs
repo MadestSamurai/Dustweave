@@ -69,13 +69,14 @@ public partial class MainWindow : Window
         LanguageSelector.SelectedIndex = Array.IndexOf(DailyLanguage.Codes, DailyLanguage.Current.Code);
         appearanceReady = true;
         Closed += (_, _) => theme.Dispose();
-        DailyLanguage.Current.Text(VersionText, automatedSmoke ? "app.version" : "app.preview", DailyProductVersion.Current);
+        DailyLanguage.Current.Text(VersionText, automatedSmoke ? "updates.version_link" : "app.preview", DailyProductVersion.Current);
         this.sessions = sessions;
         this.host = host;
         this.root = root;
         this.smoke = smoke;
         preferencesPanel = new DailyPreferencesPanel(root, allowGame: smoke == null);
         SettingsTab.Content = preferencesPanel;
+        InitializeSchedules(); InitializeUpdates();
         dailyPanel = new DailyRunPanel(root);
         dailyQueue = new(root, new PackagedDailyQueueExecutor(AppContext.BaseDirectory));
         RunTab.Content = dailyPanel;
@@ -112,8 +113,8 @@ public partial class MainWindow : Window
         CollectionViewSource.GetDefaultView(rows).Filter = MatchesSearch;
         coordinator.Progress += p => Dispatcher.Invoke(() => { if (dailyQueue.IsRunning || WorkspaceTabs.SelectedItem == RunTab && busy) dailyPanel.Show(new("preparing", p.Message, "", [])); DailyUiText.Set(ProgressText, p.Message); ProgressText.Foreground = (Brush)FindResource(p.State == "error" ? "Error" : "Ink"); });
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        timer.Tick += (_, _) => { L.RefreshFromDisk(); RefreshTools(); UpdateConnection(); if (smoke == null && !busy) { _ = RefreshAccountIdentityAsync(); RefreshDailyHistory(); } };
-        Loaded += async (_, _) => { RefreshAccounts(); var last = DailyJson.TryRead<DailyRunStatus>(Path.Combine(root, "run.json")); if (last != null) { DailyUiText.History(ProgressText, "history.previous", last.AtUtc.LocalDateTime, last.Progress.Message); } if (smoke == null) { var previous = dailyQueue.ReadView(catalog?.CurrentKey ?? ""); dailyPanel.LoadHistory(previous); } timer.Start(); if (smoke != null && automatedSmoke) await SmokeAsync(); };
+        timer.Tick += (_, _) => { L.RefreshFromDisk(); RefreshTools(); UpdateConnection(); if (smoke == null && !busy) { _ = RefreshAccountIdentityAsync(); RefreshDailyHistory(); } if (smoke == null) { _ = CheckScheduleAsync(); _ = OfferUpdateAsync(); if (DateTime.UtcNow >= nextUpdateCheck) { nextUpdateCheck = DateTime.UtcNow.AddHours(6); _ = CheckUpdatesAsync(); } } };
+        Loaded += async (_, _) => { RefreshAccounts(); var last = DailyJson.TryRead<DailyRunStatus>(Path.Combine(root, "run.json")); if (last != null) { DailyUiText.History(ProgressText, "history.previous", last.AtUtc.LocalDateTime, last.Progress.Message); } if (smoke == null) { var previous = dailyQueue.ReadView(catalog?.CurrentKey ?? ""); dailyPanel.LoadHistory(previous); } timer.Start(); if (smoke != null && automatedSmoke) await SmokeAsync(); if (smoke == null) await InitializeStartupFeaturesAsync(); };
         WeakEventManager<DailyLanguage, EventArgs>.AddHandler(L, nameof(DailyLanguage.Changed), OnLanguageChanged);
         Closing += OnClosing;
         WorkspaceTabs.SelectedItem = RunTab;
@@ -124,20 +125,20 @@ public partial class MainWindow : Window
     {
         if (!appearanceReady || LanguageSelector.SelectedIndex < 0) return;
         try { DailyLanguage.Current.Select(DailyLanguage.Codes[LanguageSelector.SelectedIndex]); }
-        catch (Exception error) { MessageBox.Show(this, DailyLanguage.Current.Get("language.error", error.Message), DailyLanguage.Current.Get("app.title")); }
+        catch (Exception error) { MessageBox.Show(this, DailyLanguage.Current.Get("language.error", DailyUserText.Error(error, L.Translate)), DailyLanguage.Current.Get("app.title")); }
     }
     private void Theme_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (!appearanceReady || ThemeSelector.SelectedIndex < 0) return;
         try { theme.Select((DailyAppearance)ThemeSelector.SelectedIndex); }
-        catch (Exception error) { MessageBox.Show(this, L.Get("appearance.error", error.Message), L.Get("appearance.label")); }
+        catch (Exception error) { MessageBox.Show(this, L.Get("appearance.error", DailyUserText.Error(error, L.Translate)), L.Get("appearance.label")); }
     }
     private readonly DailyToolPanel toolPanel;
     private readonly DailyToolSession toolSession;
     private bool toolChanging;
     private bool ToolOpen => toolSession.Current != null;
     private bool ToolRunning => !busy && DailyToolControl.IsOccupied(root);
-    private bool Unavailable => busy || toolChanging || ToolRunning;
+    private bool Unavailable => busy || toolChanging || ToolRunning || updateInstalling;
     private async Task OpenTool(string id)
     {
         if (smoke != null || busy || toolChanging) return;
@@ -231,7 +232,7 @@ public partial class MainWindow : Window
             CountText.Text = $"{rows.Count} / 100";
             EmptyText.Visibility = rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             AccountsGrid.SelectedItem = rows.FirstOrDefault(r => r.Account.AccountKey == old) ?? rows.FirstOrDefault();
-            preferencesPanel.SetAccounts(catalog.Accounts);
+            preferencesPanel.SetAccounts(catalog.Accounts); schedulePanel.SetAccounts(catalog.Accounts);
             string accountName = catalog.Accounts.FirstOrDefault(a => a.AccountKey == catalog.CurrentKey)?.Name ?? "当前游戏账号";
             dailyPanel.SetAccount(accountName, catalog.CurrentKey);
             if (!busy)
@@ -262,9 +263,10 @@ public partial class MainWindow : Window
             ActionFooter.Visibility = accounts ? Visibility.Visible : Visibility.Collapsed;
         L.Text(SelectionText, "account.selected", count);
         UpdateAccountPresentation();
-        RunButton.IsEnabled = !Unavailable && count > 0;
+        RunButton.IsEnabled = RunAccountsButton.IsEnabled = !Unavailable && count > 0;
+        L.Bind(RunAccountsButton, ContentControl.ContentProperty, "account.run_queue_count", count);
 
-        dailyPanel?.SetSelection(count);
+        RunAccountsButton.Visibility = busy ? Visibility.Collapsed : Visibility.Visible;
     }
     private void UpdateConnection()
     {
@@ -305,6 +307,7 @@ public partial class MainWindow : Window
     private void SetBusy(bool value)
     {
         busy = value;
+        schedulePanel.Busy(value); UpdateUpdateControls();
         var unavailable = Unavailable;
         dailyPanel.Busy(unavailable, value);
         preferencesPanel.IsEnabled = !unavailable;
@@ -352,7 +355,12 @@ public partial class MainWindow : Window
         ProgressText.Foreground = (Brush)FindResource("Error");
     }
     private AccountRow? Selected => AccountsGrid.SelectedItem as AccountRow;
-    private bool Confirm(string message) => MessageBox.Show(this, L.Translate(message), L.Get("app.title"), MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK;
+    private bool Confirm(string message)
+    {
+        bool prior = releaseDialogOpen; releaseDialogOpen = true;
+        try { return MessageBox.Show(this, L.Translate(message), L.Get("app.title"), MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK; }
+        finally { releaseDialogOpen = prior; }
+    }
     private async void Connect_Click(object sender, RoutedEventArgs e) => await OperateAsync(coordinator.ConnectCurrentAsync, connectsGame: true);
     private async void EnterAccount_Click(object sender, RoutedEventArgs e)
     {
@@ -525,9 +533,7 @@ public partial class MainWindow : Window
     {
         if (smoke != null || Unavailable || !preferencesPanel.SavePending())
             return;
-        var targets = rows.Where(r => r.Selected && r.Account.Valid).Select(r => r.Account).ToArray();
-        if (multi && (targets.Length == 0 || !Confirm(L.Get("run.multi_confirm", targets.Length))))
-            return;
+        if (multi) { RunAccounts_Click(this, new RoutedEventArgs()); return; }
         if (retry != null)
         {
             try
@@ -548,30 +554,13 @@ public partial class MainWindow : Window
         dailyStopping = false;
         await OperateAsync(async () =>
         {
-            if (multi)
-            {
-                foreach (var account in targets)
-                {
-                    if (dailyStopping)
-                        break;
-                    await coordinator.InspectAsync([account]);
-                    RefreshAccounts();
-                    if (dailyStopping)
-                        break;
-                    var result = await dailyQueue.RunAsync(account.AccountKey);
-                    if (result.State == "paused" || result.Stages.Any(s => s.State == "recovery_required"))
-                        break;
-                }
-            }
-            else
-            {
                 await coordinator.ConnectCurrentAsync();
                 RefreshAccounts();
                 if (dailyStopping)
                     return;
                 var current = sessions.Read().CurrentKey;
                 await dailyQueue.RunAsync(current, resume, syncCollection, retry, selection);
-            }
+
         }, connectsGame: true);
     }
     private async Task CheckThemesForSmoke()
@@ -648,7 +637,7 @@ public partial class MainWindow : Window
             await CheckThemesForSmoke();
             await CheckLanguagesForSmoke();
             await CheckPresentationForSmoke();
-            await CheckAccountsForSmoke();
+            await CheckAccountsForSmoke(); await CheckSchedulingForSmoke();
             Capture("normal");
             WorkspaceTabs.SelectedItem = ToolsTab;
             toolPanel.VerifyFiltersForSmoke();
@@ -1025,4 +1014,3 @@ public partial class MainWindow : Window
         encoder.Save(file);
     }
 }
-

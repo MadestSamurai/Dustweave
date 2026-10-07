@@ -1,5 +1,20 @@
 # Changelog / 更新记录
 
+## 0.9.0 · 2026-10-07
+
+- Moved multi-account execution to the Accounts page as its primary action, and added opt-in Windows scheduled queues with fixed account identities and duplicate-run protection.
+- Added one-time, three-language release notes and an OTA client: background downloads, verified official packages, idle restart confirmation and rollback. Signed manifests, resumable downloads and durable rollback protect the update path. Domestic hosting is configured under bd2.madsam.work; the manual workflow prepares artifacts only, with deployment and real-game scheduled execution verified separately.
+- 多账号执行移至账号页主按钮；新增定时页面，支持固定账号名单、按星期执行、关闭软件后启动，以及避免重复执行。
+- 新增每版本一次的三语言更新说明和 OTA 链路：后台下载、签名校验、断点续传、空闲确认重启和中断恢复；国内线路位于 bd2.madsam.work，发布脚本生成签名清单与完整包，升级失败时恢复旧版。
+
+- Added Simplified Chinese, Traditional Chinese and English coverage for connection, account, queue, map, weekly NPC, trade and settings notices. Registered dynamic formats keep names, paths and diagnostics intact while existing messages update when the language changes.
+- 补齐连接、账号切换、队列、跑图、周NPC、跑商和设置说明的简中／繁中／英文提示；动态格式保留账号名、路径和原始诊断，已显示的提示随语言切换更新。
+
+- Reduced duplicate field-settle waits during route planning while retaining movement, arrival and teleport readiness checks. Travel talents filter unresolved history before loading capture details.
+- Talent menus now keep one observation scope through readiness, selection and casting, with a mandatory fresh observation after opening.
+- 减少跑图决策阶段的重复稳定等待，保留移动、到达和传送前的就绪检查；飞奔、藏身先筛选未完成记录，再读取相关详情。
+- 天赋菜单、技能选择与施放沿用同一组观察请求，打开菜单后仍必须获取新数据；保留动画、冷却、身份和消耗回执检查。
+
 ## 0.8.17 · 2026-10-07
 
 - Increased the account-list checkbox inset and aligned the select-all header with each row. Game-entry actions now use a wider column, an accent outline and stronger text in both themes.

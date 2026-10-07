@@ -1,0 +1,10 @@
+[
+  {
+    "Version": "0.9.0", "Date": "2026-10-07",
+    "Notes": {
+      "zh-CN": ["多账号执行移至账号管理页，按列表顺序执行勾选账号。", "新增定时执行页面，可选择时间、星期与账号；软件关闭后也可由 Windows 启动。", "新增版本更新说明和 OTA 更新入口，后台下载后在空闲时确认重启。", "补齐简体中文、繁体中文与英文的动态提示，并减少跑图与天赋菜单中的重复等待。"],
+      "zh-TW": ["多帳號執行移至帳號管理頁，依清單順序執行勾選帳號。", "新增定時執行頁面，可選擇時間、星期與帳號；軟體關閉後也可由 Windows 啟動。", "新增版本更新說明與 OTA 更新入口，背景下載後於閒置時確認重新啟動。", "補齊簡體中文、繁體中文與英文的動態提示，並減少跑圖與天賦選單中的重複等待。"],
+      "en-US": ["Run selected accounts from the Accounts page, in list order.", "Schedule a time, weekdays and accounts. Windows can start Dustweave when it is closed.", "View release notes and download updates in the background. Restart only after confirmation while idle.", "Improved dynamic messages in all three languages and reduced repeated waits during collection and ability selection."]
+    }
+  }
+]

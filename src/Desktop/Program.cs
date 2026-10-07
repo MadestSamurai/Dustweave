@@ -9,6 +9,8 @@ public static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--apply-update" or "--recover-update") return DailyUpdateInstaller.Run(args[1], args[0] == "--recover-update");
+        if (DailyUpdateInstaller.RecoverBeforeStartup(DailyDesktopLaunch.Normalize(args))) return 0;
         if (DailyDesktopLaunch.NeedsRelay(args)) { DailyDesktopLaunch.Start(Environment.ProcessPath ?? throw new InvalidOperationException("无法定位日常助手"), args); return 0; }
         args = DailyDesktopLaunch.Normalize(args);
         if (args.Length==2 && args[0] is "--check-tool-languages" or "--check-tool-language-ui")
@@ -107,6 +109,3 @@ public static class Program
         return result is int exit ? exit : Environment.ExitCode;
     }
 }
-
-
-

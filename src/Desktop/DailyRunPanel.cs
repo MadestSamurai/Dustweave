@@ -19,7 +19,7 @@ public sealed partial class DailyRunPanel : UserControl
     public event Action? AccountsRequested;
     public event Action? SyncCollectionRequested;
     private readonly Button syncCollection = new() { Content = "手动检查收集进度", ToolTip = "按已保存的地图范围读取游戏服务器；会切换卡带，可能需要数分钟，只同步、不采集。" };
-    private readonly Button current = new() { Content = "开始日常" }, selected = new() { Content = "多账号运行" }, resume = new() { Content = "接续原队列" }, stop = new() { Content = "停止", IsEnabled = false, Visibility = Visibility.Collapsed };
+    private readonly Button current = new() { Content = "开始日常" }, resume = new() { Content = "接续原队列" }, stop = new() { Content = "停止", IsEnabled = false, Visibility = Visibility.Collapsed };
     private readonly Button selectUnfinished = new() { Content = "勾选未完成" }, clearSelection = new() { Content = "清空勾选" }, retry = new() { Content = "补跑勾选环节（0）", IsEnabled = false };
     private readonly ObservableCollection<StageRow> rows = new();
     private readonly Dictionary<string, bool> planChoices = new(StringComparer.Ordinal);
@@ -28,7 +28,7 @@ public sealed partial class DailyRunPanel : UserControl
     private readonly TextBlock actionHint = new() { TextWrapping = TextWrapping.Wrap, FontSize = 12, Margin = new(0, 0, 0, 10) };
     private readonly WrapPanel actions = new() { HorizontalAlignment = HorizontalAlignment.Right };
     private readonly Button planButton = new() { Content = "当前计划" }, reportButton = new() { Content = "上次记录" };
-    private QueueView currentView = new("idle", "", "", []); private bool isBusy; private int selectedAccounts; private string activeAccount = "";
+    private QueueView currentView = new("idle", "", "", []); private bool isBusy; private string activeAccount = "";
     private readonly TextBlock status = new() { Text = "未运行", FontSize = 18, FontWeight = FontWeights.SemiBold }, detail = new() { TextWrapping = TextWrapping.Wrap, Margin = new(0, 4, 0, 8) };
     private readonly ListBox stages = new() { BorderThickness = new(0), MinHeight = 120, HorizontalContentAlignment = HorizontalAlignment.Stretch, Padding = new(0) };
     private readonly TextBlock counts = new() { VerticalAlignment = VerticalAlignment.Center, Foreground = (Brush)Application.Current.FindResource("MutedInk") };
@@ -55,7 +55,6 @@ public sealed partial class DailyRunPanel : UserControl
         L.Bind(clearSelection, ContentControl.ContentProperty, "run.clear");
         L.Bind(planButton, ContentControl.ContentProperty, "run.plan");
         L.Bind(accounts, ContentControl.ContentProperty, "nav.accounts");
-        L.Bind(selected, ContentControl.ContentProperty, "run.multi", 0);
         WeakEventManager<DailyLanguage, EventArgs>.AddHandler(L, nameof(DailyLanguage.Changed), LanguageChanged);
         stages.SetResourceReference(Control.BackgroundProperty, "AppBackground");
         stages.ItemTemplate = (DataTemplate)Application.Current.FindResource("DailyTimelineItem");
@@ -152,7 +151,7 @@ public sealed partial class DailyRunPanel : UserControl
         retry.Style = (Style)Application.Current.FindResource(typeof(Button));
         resume.Style = (Style)Application.Current.FindResource("PrimaryButton");
         current.Style = (Style)Application.Current.FindResource("PrimaryButton");
-        foreach (var b in new[] { selected, chooseTasks, stop, current, retry, resume })
+        foreach (var b in new[] { chooseTasks, stop, current, retry, resume })
         {
             b.Margin = new(8, 0, 0, 4);
             actions.Children.Add(b);
@@ -176,7 +175,6 @@ public sealed partial class DailyRunPanel : UserControl
         Content = layout;
         syncCollection.Click += (_, _) => SyncCollectionRequested?.Invoke();
         current.Click += (_, _) => StartCurrentSelection();
-        selected.Click += (_, _) => StartRequested?.Invoke(true, false);
         resume.Click += (_, _) => { if (resume.IsEnabled && !isBusy) StartRequested?.Invoke(false, true); };
         stop.Click += (_, _) => StopRequested?.Invoke();
         Show(new("idle", "开始前可调整各环节设置；已完成的日常会按游戏进度跳过。", "", []));
@@ -185,21 +183,14 @@ public sealed partial class DailyRunPanel : UserControl
     {
         isBusy = busy;
         views.Visibility = busy ? Visibility.Collapsed : Visibility.Visible;
-        current.Visibility = selected.Visibility = busy ? Visibility.Collapsed : Visibility.Visible;
+        current.Visibility = busy ? Visibility.Collapsed : Visibility.Visible;
         stop.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
         current.IsEnabled = syncCollection.IsEnabled = !busy;
         stop.IsEnabled = busy && canStop;
-        selected.IsEnabled = !busy && selectedAccounts > 0;
         if (!busy && currentView.Expired)
             ShowCurrentPlan();
         else
             UpdateChoices();
-    }
-    public void SetSelection(int count)
-    {
-        selectedAccounts = count;
-        L.Bind(selected, ContentControl.ContentProperty, "run.multi", count);
-        selected.IsEnabled = !isBusy && count > 0;
     }
     public void SetAccount(string name, string key)
     {
@@ -297,7 +288,7 @@ public sealed partial class DailyRunPanel : UserControl
         L.Text(status, "run.start_failed");
         var error = operationError;
         var translation = operationErrorTranslation;
-        L.Bind(detail, TextBlock.TextProperty, () => translation != null ? L.Translate(translation) : Describe(error));
+        L.Bind(detail, TextBlock.TextProperty, () => translation != null ? L.Describe(translation) : Describe(error));
         L.Bind(detail, FrameworkElement.ToolTipProperty, () => L.Diagnostic(error, detail.Text));
 
     }
@@ -448,7 +439,6 @@ public sealed partial class DailyRunPanel : UserControl
         bool planAvailable = !isBusy && !showingReport && DailyProfiles.ValidKey(activeAccount);
         L.Bind(current, ContentControl.ContentProperty, showingReport ? "run.choose" : "run.start_selected", SelectedPlanTasks.Count);
         current.IsEnabled = !isBusy && DailyProfiles.ValidKey(activeAccount) && (showingReport || SelectedPlanTasks.Count > 0);
-        L.Bind(selected, FrameworkElement.ToolTipProperty, "run.multi_help");
         if (!showingReport)
             L.Text(counts, "run.selected_count", SelectedPlanTasks.Count, rows.Count);
         L.Bind(selectUnfinished, ContentControl.ContentProperty, showingReport ? "run.select_unfinished" : "run.select_all");
@@ -456,7 +446,6 @@ public sealed partial class DailyRunPanel : UserControl
         bool canResume = available && currentView.Stages.Any(s => s.State is ("pending" or "recovery_required") && !s.Carried);
         retry.Visibility = chooseTasks.Visibility = retryContext ? Visibility.Visible : Visibility.Collapsed;
         current.Visibility = !isBusy && !retryContext ? Visibility.Visible : Visibility.Collapsed;
-        selected.Visibility = !isBusy && !showingReport ? Visibility.Visible : Visibility.Collapsed;
         resume.Visibility = retryContext ? Visibility.Visible : Visibility.Collapsed;
         chooseTasks.IsEnabled = !isBusy;
         actionHint.Visibility = isBusy ? Visibility.Collapsed : Visibility.Visible;

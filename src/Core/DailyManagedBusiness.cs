@@ -39,6 +39,7 @@ public sealed partial class DailyManagedBusiness
     public IEnumerable<JsonObject> Records(JsonObject context, string? role = null, bool includeLegacy = true) => ReadRecords(context, role, includeLegacy, null);
     // Predicates may use only fields retained by Summary; evidence checks still use the fresh full record.
     internal IEnumerable<JsonObject> MatchingRecords(JsonObject context, Func<JsonObject, bool> metadata, bool includeLegacy = true) => ReadRecords(context, null, includeLegacy, metadata);
+    internal IEnumerable<JsonObject> MatchingRecords(JsonObject context, string role, Func<JsonObject, bool> metadata, bool includeLegacy = true) => ReadRecords(context, role, includeLegacy, metadata);
     private IEnumerable<JsonObject> ReadRecords(JsonObject context, string? role, bool includeLegacy, Func<JsonObject, bool>? metadata)
     {
         var seen = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -440,12 +441,3 @@ public sealed partial class DailyManagedBusiness
         return report;
     }
 }
-
-
-
-
-
-
-
-
-

@@ -50,15 +50,18 @@ public sealed class DailyCollectionNavigator
         Atlas.Observe(node, exits, ports, B(travel["Ground"]));
         return N(map["id"]);
     }
-    public async Task<long> Observe()
+    public Task<long> Observe() => Observe(settle: 1);
+    private async Task<long> Observe(double settle)
     {
-        await route.FieldReady();
+        await route.FieldReady(settle: settle);
         return Observe(await route.Evidence());
     }
     public void Save() => DailyJson.Write(path, O(("schema", 1), ("account", route.W.Context["actor"]![3]), ("graph", Atlas.Export())));
     public async Task<JsonObject> Plan(IEnumerable<long> pending, long? returnMap = null, bool teleports = true, IEnumerable<long>? allowed = null)
     {
-        long current = await Observe();
+        // Planning does not move the character. Walk and teleport retain their
+        // own stable-field gate immediately before executing the route.
+        long current = await Observe(settle: 0);
         var forbidden = allowed == null ? new HashSet<long>() : Atlas.Maps.Keys.Except(allowed).ToHashSet();
         if (!Excluded.Contains(current))
             forbidden.UnionWith(Excluded);
@@ -73,7 +76,8 @@ public sealed class DailyCollectionNavigator
     }
     public async Task<bool> Step(JsonObject action)
     {
-        long current = await Observe();
+        // Refresh the planned origin now; the execution branch still waits for stability.
+        long current = await Observe(settle: 0);
         string origin = node;
         string planned = S(action["origin"]);
         if (DailyRouteAtlas.MapOf(planned) != current || !planned.StartsWith('?') && planned != origin)
@@ -94,6 +98,7 @@ public sealed class DailyCollectionNavigator
             else
             {
                 Require(kind == "teleport", "未知路线动作");
+                await route.FieldReady();
                 await route.Teleport(destination, recovery: true, nativeOnly: S(action["mode"]) == "native");
             }
         }

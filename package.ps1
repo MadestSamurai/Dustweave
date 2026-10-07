@@ -142,6 +142,8 @@ foreach($flavor in $Flavors){
    if(Get-ChildItem -LiteralPath $check -File -Recurse|Where-Object Name -in @('failure.txt','error.json','error.txt')){throw "Tool UI reported an error: $id"}
   }
  }
+ $inventory=@(Get-ChildItem -LiteralPath $bundle -File -Recurse|ForEach-Object {[IO.Path]::GetRelativePath($bundle,$_.FullName).Replace([IO.Path]::DirectorySeparatorChar,[char]47)})+@('update-package.json')
+ [ordered]@{Version=$Version;Flavor=$flavor;Files=@($inventory|Sort-Object -Unique)}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $bundle 'update-package.json') -Encoding utf8
  $files=@(Get-ChildItem -LiteralPath $bundle -File -Recurse)
  if(@($files|Where-Object Extension -eq '.exe').Count -ne 1){throw 'Expected one application executable.'}
  if($files|Where-Object {$_.Name -match 'Assembly-CSharp|GameAssembly|python.*\.(exe|dll)' -or $_.Extension -in @('.py','.pyd','.pyc','.pfx','.key') -or $_.FullName -match '[\\/]plugins[\\/]'}){throw 'Forbidden private/legacy payload in release.'}
@@ -167,6 +169,3 @@ $before|Set-Content -LiteralPath (Join-Path $output 'build-inputs.json') -Encodi
 Get-ChildItem -LiteralPath $output -Recurse -File|Where-Object Extension -in @('.exe','.zip')|ForEach-Object {"$((Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant())  $([IO.Path]::GetRelativePath($output,$_.FullName))"}|Set-Content -LiteralPath (Join-Path $output 'SHA256SUMS.txt') -Encoding ascii
 [ordered]@{version=$Version;product='Dustweave';channel='private-release';flavors=$flavorReports;privatePluginIncluded=$false;pythonIncluded=$false;gameAssembliesIncluded=$false;realGameTouched=$false;runtimeVerification='source_implemented_pending_runtime';publicReleaseApproved=$false;buildDirectory=$work}|ConvertTo-Json -Depth 7|Set-Content -LiteralPath (Join-Path $output 'release.json') -Encoding utf8
 Write-Host "Private release package ready: $output"
-
-
-

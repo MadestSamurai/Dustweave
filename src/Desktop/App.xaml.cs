@@ -162,10 +162,12 @@ public partial class App : Application
             DailyLanguage.Current.Bind(preview, Window.TitleProperty, "app.preview_title"); preview.Show();
             return;
         }
+        bool scheduled = args.Length == 1 && args[0] == "--scheduled";
+        bool updated = args.Length == 2 && args[0] == "--updated";
         string? smoke = args.Length == 2 && args[0] == "--smoke" ? Path.GetFullPath(args[1]) : null;
         string? runSelected = args.Length == 2 && args[0] == "--run-selected" ? Path.GetFullPath(args[1]) : null;
         string? inspectAccount = args.Length == 2 && args[0] == "--inspect-account" && DailyProfiles.ValidKey(args[1]) ? args[1] : null;
-        if (args.Length > 0 && smoke == null && runSelected == null && inspectAccount == null)
+        if (args.Length > 0 && smoke == null && runSelected == null && inspectAccount == null && !scheduled && !updated)
         {
             Shutdown(2);
             return;
@@ -181,12 +183,12 @@ public partial class App : Application
             DailyLanguage.Current.Initialize(DailyIdentity.DataRoot); instance = new Mutex(true, DailyApplication.InstanceMutex, out bool first);
             if (!first)
             {
-                MessageBox.Show(DailyLanguage.Current.Get("startup.already_open"), "Dustweave");
+                if (!scheduled) MessageBox.Show(DailyLanguage.Current.Get("startup.already_open"), "Dustweave");
                 Shutdown();
                 return;
             }
             sessions = new AccountSessions();
-            var window = new MainWindow(sessions, new DailyGameHost(), DailyIdentity.DataRoot, null);
+            var window = new MainWindow(sessions, new DailyGameHost(), DailyIdentity.DataRoot, null) { ScheduledStartup = scheduled, UpdatedStartup = updated, UpdateNonce = updated ? args[1] : "" };
             if (inspectAccount != null) window.Loaded += async (_, _) => await window.InspectAccountAsync(inspectAccount);
             if (runSelected != null)
             {
@@ -232,4 +234,3 @@ public partial class App : Application
         base.OnExit(e);
     }
 }
-

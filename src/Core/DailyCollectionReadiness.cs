@@ -55,13 +55,16 @@ public sealed partial class DailyCommandDriver
         // the later cast, so a transient native gate cannot become a false skip.
         var before = await EvidenceAsync(["mainline.map", "mainline.reset"]);
         var sent = await SubmitRawAsync(action, before["Frame"]!.AsObject());
+        // The broader talent scope renews the pre-open metadata request once,
+        // then stays unchanged through readiness, row selection and casting.
+        // Its new request ID prevents reuse of the cached pre-open frame.
         double started = clock(), end = started + 45, lastReport = double.NegativeInfinity;
         string lastGates = "";
         using var diagnostic = Diagnostics.Scope("collection_menu_readiness", DailyData.O(
             ("command_id", sent["id"]), ("kind", action["value"])));
         while (true)
         {
-            var after = await EvidenceAsync(["mainline.map", "mainline.reset", "mainline.talent_rows"]);
+            var after = await EvidenceAsync(TalentPrefixes);
             var proof = DailyCollectionReadiness.Inspect(before, after, checked((int)Number(action, "value")));
             if (proof != null)
             {
