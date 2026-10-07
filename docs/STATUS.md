@@ -37,12 +37,10 @@ Account queues now start from the Accounts page. An opt-in scheduler can launch 
 
 2026-10-07：正式包已发布到私有 GitHub Releases，签名清单和国内 OTA 已上线。首次安装及手动下载使用 GitHub Releases；国内只作为软件内 OTA 更新入口。最终 2,107 项检查及真实成品升级／回退通过，公网使用实际下载器完整验证两种包。详见 [发布验收记录](releases/0.9.0-deployment.md)；前述 acceptance 目录保留为发布前实验记录。
 
-## 0.9.1 local candidate / 本机候选版
+## 0.9.1 packaged / 已打包
 
-2026-10-07：完成启动后遮罩版本说明、深浅主题与应用弹窗标题统一，以及签名差分 OTA。2,130 项回归、双版本成品检查、差分升级、旧版完整升级、启动失败回退与模拟中断恢复均通过。实测差分减少 Portable 81.66%、Lite 95.62% 的下载量；0.9.0 仍需完整更新一次。候选包位于 `artifacts/releases/0.9.1/`，尚未提交、推送或上线。详见 [0.9.1 验收](releases/0.9.1-validation.md)。
+2026-10-08：完成启动后遮罩版本说明、深浅主题与应用弹窗标题统一、签名差分 OTA，以及定时执行账号卡片的添加、移除、搜索和拖动排序。插入提示支持跨行，Ctrl＋左右键支持键盘排序；保存与重载保留顺序。代码 e80161d 已推送私有 main，GitHub Build 全部通过。
 
-Startup notes now appear above a dimmed, already-rendered window; application dialogs follow the current theme and custom chrome. Signed differential updates and actual executable acceptance pass for both flavors. This is a local candidate; production remains 0.9.0.
+最终 Portable／Lite 双版本位于 `artifacts/releases/0.9.1/`，均已包含账号卡片与拖动排序。2,130 项回归、每种成品 77 项定时／更新界面检查、差分升级、旧版完整升级、启动失败回退和模拟中断恢复均通过。差分下载量减少 Portable 82.44%、Lite 95.54%；0.9.0 仍需完整更新一次。详见 [0.9.1 验收](releases/0.9.1-validation.md)。
 
-后续界面调整：定时执行账号已改为可移除卡片和虚线添加卡片，支持搜索、多选添加与固定顺序保留。编译及完整隔离 WPF 检查通过，相关检查共 60 项，见 `artifacts/smoke-20261007-155756-9684/`。**这一调整尚未重新打包，上一轮 0.9.1 ZIP 不含此变更；发布前需重新生成候选包。**
-
-2026-10-08：执行账号卡片追加拖动排序、插入位置提示、跨行落点和 Ctrl + 左右键排序。拖动期间不重绘账号列表，移除按钮不会触发拖动；保存及重载保留新顺序。完整隔离 WPF 检查通过，定时／更新相关共 77 项（`artifacts/smoke-20261007-160909-9182/`）。本次仍未重新打包或发布。
+Final packages include themed dialogs, signed differential updates and ordered account cards. Source is pushed and local acceptance is complete. No 0.9.1 GitHub Release or domestic OTA deployment has been performed; production remains 0.9.0. No game operation or real scheduled task was started.
