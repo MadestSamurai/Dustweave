@@ -52,8 +52,26 @@ foreach($flavor in @('Portable','Lite')){
  $file=Get-Item -LiteralPath $path
  $assets+=[ordered]@{Flavor=$flavor;FileName=$name;Bytes=$file.Length;Sha256=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()}
 }
+$deltas=@()
+foreach($sidecar in Get-ChildItem -LiteralPath $folder -Filter "Dustweave-$Version-*-win-x64.delta.zip.json" -File){
+ $delta=Get-Content -LiteralPath $sidecar.FullName -Raw|ConvertFrom-Json
+ $asset=$assets|Where-Object Flavor -eq $delta.Flavor
+ $expected="Dustweave-$Version-$($delta.Flavor)-from-$($delta.FromVersion)-win-x64.delta.zip"
+ if(!$asset -or $delta.Algorithm -ne 'dustweave-cdc-v1' -or $delta.FileName -ne $expected -or !@($prior|Where-Object Version -eq $delta.FromVersion).Count){throw 'Invalid delta descriptor.'}
+ $path=Join-Path $folder $expected
+ if((Get-Item -LiteralPath $path).Length -ne $delta.Bytes -or (Get-FileHash -LiteralPath $path).Hash -ne $delta.Sha256){throw 'Delta package hash mismatch.'}
+ $zip=[IO.Compression.ZipFile]::OpenRead($path)
+ try {
+  $reader=[IO.StreamReader]::new($zip.GetEntry('delta.json').Open())
+  try{$metadata=$reader.ReadToEnd()|ConvertFrom-Json}finally{$reader.Dispose()}
+  if($metadata.Schema -ne 1 -or $metadata.Version -ne $Version -or $metadata.FromVersion -ne $delta.FromVersion -or $metadata.Flavor -ne $delta.Flavor -or $metadata.TargetArchiveSha256 -ne $asset.Sha256){throw 'Delta targets a different full package.'}
+ }finally{$zip.Dispose()}
+ if($delta.Bytes -lt $asset.Bytes*0.8){$deltas+=$delta}
+}
+if($deltas.Count -gt 12 -or @($deltas|Group-Object Flavor,FromVersion|Where-Object Count -gt 1).Count){throw 'Duplicate or excessive delta baselines.'}
+
 $previous=if($prior.Count){$prior[0].Version}else{$null}
-$current=[ordered]@{Version=$Version;PreviousVersion=$previous;Layout=1;Notes=$note.Notes;Assets=$assets}
+$current=[ordered]@{Version=$Version;PreviousVersion=$previous;Layout=1;Notes=$note.Notes;Assets=$assets;Deltas=$deltas}
 $feed=[ordered]@{Schema=2;Product='Dustweave';Channel='stable';Releases=@($current)+$prior}
 $key=[Security.Cryptography.ECDsa]::Create()
 try {

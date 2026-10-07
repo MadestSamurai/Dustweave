@@ -18,6 +18,7 @@ public sealed class DailyTheme : INotifyPropertyChanged, IDisposable
     private static readonly Dictionary<string, (string Light, string Dark)> palette = new()
     {
         ["AppBackground"] = ("#F4F6F8", "#151C23"),
+        ["ModalShade"] = ("#66091117", "#9904080C"),
         ["Surface"] = ("#FFFFFF", "#1C252E"),
         ["SurfaceMuted"] = ("#EAF0F2", "#25313A"),
         ["Sidebar"] = ("#EDF1F3", "#172029"),

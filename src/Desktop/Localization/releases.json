@@ -1,10 +1,50 @@
 [
   {
-    "Version": "0.9.0", "Date": "2026-10-07",
+    "Version": "0.9.1",
+    "Date": "2026-10-08",
     "Notes": {
-      "zh-CN": ["多账号执行移至账号管理页，按列表顺序执行勾选账号。", "新增定时执行页面，可选择时间、星期与账号；软件关闭后也可由 Windows 启动。", "新增版本更新说明和 OTA 更新入口，后台下载后在空闲时确认重启。", "补齐简体中文、繁体中文与英文的动态提示，并减少跑图与天赋菜单中的重复等待。"],
-      "zh-TW": ["多帳號執行移至帳號管理頁，依清單順序執行勾選帳號。", "新增定時執行頁面，可選擇時間、星期與帳號；軟體關閉後也可由 Windows 啟動。", "新增版本更新說明與 OTA 更新入口，背景下載後於閒置時確認重新啟動。", "補齊簡體中文、繁體中文與英文的動態提示，並減少跑圖與天賦選單中的重複等待。"],
-      "en-US": ["Run selected accounts from the Accounts page, in list order.", "Schedule a time, weekdays and accounts. Windows can start Dustweave when it is closed.", "View release notes and download updates in the background. Restart only after confirmation while idle.", "Improved dynamic messages in all three languages and reduced repeated waits during collection and ability selection."]
+      "zh-CN": [
+        "版本说明在主窗口显示后弹出，背景变暗；弹窗适配深色主题。",
+        "统一确认、账号编辑与详情弹窗的标题区域，支持关闭按钮和 Esc。",
+        "支持签名差分更新，复用未变文件以减少下载；补丁不适用时自动回退完整包。",
+        "定时执行账号改为可添加、移除的卡片，支持搜索添加、拖动排序和 Ctrl＋左右键调整顺序。"
+      ],
+      "zh-TW": [
+        "版本說明於主視窗顯示後彈出，背景變暗；彈窗適配深色主題。",
+        "統一確認、帳號編輯與詳情彈窗的標題區域，支援關閉按鈕和 Esc。",
+        "支援簽名差分更新，重用未變檔案以減少下載；補丁不適用時自動改用完整包。",
+        "定時執行帳號改為可新增、移除的卡片，支援搜尋新增、拖曳排序及 Ctrl＋左右鍵調整順序。"
+      ],
+      "en-US": [
+        "Release notes open after the main window appears, with a dimmed background and dark-theme support.",
+        "Consistent title areas for confirmations, account editing and details, with a close button and Escape support.",
+        "Signed delta updates reuse unchanged files to reduce downloads, with automatic full-package fallback when needed.",
+        "Scheduled accounts use removable cards with searchable additions, drag-to-reorder and Ctrl+Left/Right keyboard ordering."
+      ]
+    }
+  },
+  {
+    "Version": "0.9.0",
+    "Date": "2026-10-07",
+    "Notes": {
+      "zh-CN": [
+        "多账号执行移至账号管理页，按列表顺序执行勾选账号。",
+        "新增定时执行页面，可选择时间、星期与账号；软件关闭后也可由 Windows 启动。",
+        "新增版本更新说明和 OTA 更新入口，后台下载后在空闲时确认重启。",
+        "补齐简体中文、繁体中文与英文的动态提示，并减少跑图与天赋菜单中的重复等待。"
+      ],
+      "zh-TW": [
+        "多帳號執行移至帳號管理頁，依清單順序執行勾選帳號。",
+        "新增定時執行頁面，可選擇時間、星期與帳號；軟體關閉後也可由 Windows 啟動。",
+        "新增版本更新說明與 OTA 更新入口，背景下載後於閒置時確認重新啟動。",
+        "補齊簡體中文、繁體中文與英文的動態提示，並減少跑圖與天賦選單中的重複等待。"
+      ],
+      "en-US": [
+        "Run selected accounts from the Accounts page, in list order.",
+        "Schedule a time, weekdays and accounts. Windows can start Dustweave when it is closed.",
+        "View release notes and download updates in the background. Restart only after confirmation while idle.",
+        "Improved dynamic messages in all three languages and reduced repeated waits during collection and ability selection."
+      ]
     }
   }
 ]

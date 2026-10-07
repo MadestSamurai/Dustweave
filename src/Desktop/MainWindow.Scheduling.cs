@@ -51,7 +51,7 @@ public partial class MainWindow
                 return;
             }
             if (scheduleStore.IsClaimed(due.Value)) return;
-            if (Unavailable || updateInstalling || releaseDialogOpen)
+            if (Unavailable || updateInstalling || releaseDialogOpen || DailyDialogs.ModalDepth > 0)
             {
                 scheduleStore.Record(new(due.Value.ToString("O"), "waiting", now)); return;
             }

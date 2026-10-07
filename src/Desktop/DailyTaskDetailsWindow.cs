@@ -60,7 +60,8 @@ internal sealed class DailyTaskDetailsWindow : Window
             HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled,Padding=new(0,0,8,0)};
         layout.Children.Add(TaskScroll);
         var frame=new Border{Padding=new(24),Child=layout};
-        frame.SetResourceReference(Border.BackgroundProperty,"AppBackground");Content=frame;
+        frame.SetResourceReference(Border.BackgroundProperty,"Surface");Content=frame;
+        DailyDialogs.Prepare(this);
     }
     private static TextBlock Label(Func<string> text,double size,bool bold=false,bool muted=false,Thickness? margin=null)
     {

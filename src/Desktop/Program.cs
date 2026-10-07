@@ -9,6 +9,15 @@ public static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        if (args.Length == 4 && args[0] == "--create-update-delta")
+        {
+            try {
+                var delta = DailyUpdateDeltaPackage.Create(args[1], args[2], args[3]);
+                DailyJson.Write(Path.Combine(args[3], delta.FileName + ".json"), delta);
+                return 0;
+            }
+            catch (Exception error) { Directory.CreateDirectory(args[3]); DailyJson.Write(Path.Combine(args[3], "delta-error.json"), new { error = error.ToString() }); return 1; }
+        }
         if (args.Length == 2 && args[0] is "--apply-update" or "--recover-update") return DailyUpdateInstaller.Run(args[1], args[0] == "--recover-update");
         if (DailyUpdateInstaller.RecoverBeforeStartup(DailyDesktopLaunch.Normalize(args))) return 0;
         if (DailyDesktopLaunch.NeedsRelay(args)) { DailyDesktopLaunch.Start(Environment.ProcessPath ?? throw new InvalidOperationException("无法定位日常助手"), args); return 0; }

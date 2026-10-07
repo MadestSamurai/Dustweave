@@ -2830,9 +2830,9 @@
     "zh-CN": "执行账号"
   },
   "schedule.account_help": {
-    "zh-TW": "選擇固定的帳號清單；每次執行使用這些帳號最新儲存的環節設定。此處的選擇獨立於帳號頁的暫時勾選。",
-    "en-US": "Choose a fixed account list. Each run uses their latest saved task settings. This selection is separate from the Accounts page.",
-    "zh-CN": "选择固定的账号名单；每次执行使用这些账号最新保存的环节设置。这里的选择独立于账号页的临时勾选。"
+    "zh-TW": "拖曳卡片調整執行順序，沿用各帳號的任務設定。修改後儲存，與帳號頁勾選互不影響。",
+    "en-US": "Drag cards to set the run order. Each account uses its saved tasks. Save changes here; Accounts page selections are separate.",
+    "zh-CN": "拖动卡片调整执行顺序，沿用各账号的任务设置。修改后保存，与账号页勾选互不影响。"
   },
   "schedule.no_accounts": {
     "zh-TW": "請先在帳號頁儲存至少一個帳號。",
@@ -3133,5 +3133,21 @@
     "zh-CN": "本次更新备份已存在，请重新检查更新。",
     "zh-TW": "本次更新備份已存在，請重新檢查更新。",
     "en-US": "An update backup already exists. Check for updates again."
-  }
+  },
+  "common.confirm": {
+    "zh-CN": "确认",
+    "zh-TW": "確認",
+    "en-US": "Confirm"
+  },
+  "schedule.add_account": { "zh-CN": "添加账号", "zh-TW": "新增帳號", "en-US": "Add accounts" },
+  "schedule.remove_account": { "zh-CN": "移除 {0}", "zh-TW": "移除 {0}", "en-US": "Remove {0}" },
+  "schedule.add_help": { "zh-CN": "添加要定时执行的账号。", "zh-TW": "新增要定時執行的帳號。", "en-US": "Add the accounts for this schedule." },
+  "schedule.all_added": { "zh-CN": "所有可用账号均已加入", "zh-TW": "所有可用帳號均已加入", "en-US": "All available accounts are added" },
+  "schedule.search_accounts": { "zh-CN": "搜索账号名称或 ID", "zh-TW": "搜尋帳號名稱或 ID", "en-US": "Search account names or IDs" },
+  "schedule.search_empty": { "zh-CN": "没有匹配的可添加账号。", "zh-TW": "沒有符合的可新增帳號。", "en-US": "No matching accounts to add." },
+  "schedule.add_selected": { "zh-CN": "添加所选（{0}）", "zh-TW": "新增所選（{0}）", "en-US": "Add selected ({0})" },
+  "schedule.account_unavailable": { "zh-CN": "账号不可用，请重新选择", "zh-TW": "帳號無法使用，請重新選擇", "en-US": "Account unavailable; select again" },
+  "schedule.account_slot": { "zh-CN": "账号位置 {0}", "zh-TW": "帳號位置 {0}", "en-US": "Account slot {0}" },
+  "schedule.reorder_help": { "zh-CN": "拖动更改执行顺序；也可聚焦卡片后按 Ctrl + ← / →。", "zh-TW": "拖曳變更執行順序；也可聚焦卡片後按 Ctrl + ← / →。", "en-US": "Drag to reorder, or focus this card and press Ctrl + Left / Right." },
+  "schedule.reorder_account": { "zh-CN": "{0}，可拖动排序", "zh-TW": "{0}，可拖曳排序", "en-US": "{0}, drag to reorder" }
 }

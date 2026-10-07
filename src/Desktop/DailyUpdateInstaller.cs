@@ -23,6 +23,8 @@ internal static class DailyUpdateInstaller
         var release = feed.Releases.SingleOrDefault(r => r.Version == job.Release.Version);
         var asset = release?.Assets.SingleOrDefault(a => a.Flavor == job.Asset.Flavor);
         if (asset != job.Asset || release?.Layout != job.Release.Layout) throw new InvalidDataException("updates.signature_failed");
+        if (job.DeltaFileName != null && !((release?.Deltas ?? []).Any(d => d.FileName == job.DeltaFileName && d.Flavor == job.Asset.Flavor)))
+            throw new InvalidDataException("updates.signature_failed");
     }
     // Called before normal UI/utility loading. No network and no game commands.
     internal static bool RecoverBeforeStartup(string[] args)
@@ -96,7 +98,7 @@ internal static class DailyUpdateInstaller
             if (!recovery)
             {
                 string staging = Path.Combine(attempt, "staging");
-                string[] names = DailyUpdates.Extract(Path.Combine(job.Directory, "package.zip"), staging, job.Release, job.Asset);
+
                 try
                 {
                     using var parent = Process.GetProcessById(job.ParentPid);
@@ -113,6 +115,7 @@ internal static class DailyUpdateInstaller
                     var installed = DailyJson.TryRead<DailyUpdatePackage>(Path.Combine(target, "update-package.json")) ?? throw new InvalidDataException("updates.flavor_missing");
                     if (installed.Flavor != job.Asset.Flavor || DailyUpdates.VersionOf(installed.Version) >= DailyUpdates.VersionOf(job.Release.Version))
                         throw new InvalidDataException("updates.target_changed");
+                    string[] names = ExtractPayload(job, target, ref staging);
                     journal = DailyUpdateTransaction.Prepare(staging, target, Path.Combine(attempt, "backup"), names);
                     var marker = new DailyUpdateMarker(Path.GetFullPath(jobPath), job.Nonce, DailyUpdateTransaction.Hash(Environment.ProcessPath!));
                     DailyJson.Write(markerPath, marker);
@@ -183,6 +186,29 @@ internal static class DailyUpdateInstaller
             if (ownInstance) instance!.ReleaseMutex(); instance?.Dispose();
             if (ownUpdate) updateMutex!.ReleaseMutex(); updateMutex?.Dispose();
         }
+    }
+    private static string[] ExtractPayload(DailyUpdateJob job, string target, ref string staging)
+    {
+        var signed = DailyJson.TryRead<DailySignedUpdate>(Path.Combine(job.Directory, "signed-feed.json"))!;
+        var verified = new DailyVerifiedUpdate(DailyUpdateSignatures.Verify(signed, DailyUpdateTrust.Production()), signed, "");
+        var release = verified.Feed.Releases.Single(r => r.Version == job.Release.Version);
+        var asset = release.Assets.Single(a => a.Flavor == job.Asset.Flavor);
+        var delta = release.Deltas?.SingleOrDefault(d => d.FileName == job.DeltaFileName);
+        if (delta != null)
+        {
+            try { return DailyUpdateDeltaPackage.Extract(Path.Combine(job.Directory, delta.FileName), target, staging, release, asset, delta); }
+            catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException or System.Text.Json.JsonException)
+            {
+                // The base can change after the download preflight. Fetch the full package
+                // before any target writes; the old app is restarted if this also fails.
+                DailyJson.Write(Path.Combine(Attempt(job), "delta-fallback.json"), new { error = error.ToString() });
+                staging += "-full";
+                using var client = DailyUpdates.Client();
+                DailyUpdateTransport.Production().DownloadAsync(client, verified, release.Version, asset.Flavor,
+                    DailyIdentity.DataRoot, null, default, allowDelta: false).GetAwaiter().GetResult();
+            }
+        }
+        return DailyUpdates.Extract(Path.Combine(job.Directory, "package.zip"), staging, release, asset);
     }
     private static Process Start(string path, params string[] args)
     {

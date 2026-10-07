@@ -26,8 +26,22 @@ Schedules are opt-in, use local wall-clock time and persist fixed account identi
 
 ## OTA / 版本更新
 
-The domestic static source is https://bd2.madsam.work/updates/dustweave/. Full packages are authenticated with an embedded ECDSA public key; interrupted downloads resume, and file replacement uses durable backups and a recovery journal. The public GitHub update mirror is deferred; existing private Releases provide first-install and manual-download packages. Domestic hosting is reserved for in-app OTA and is not promoted as a manual download site. Details and release steps are in [OTA_RELEASE.md](OTA_RELEASE.md).
+The domestic static source is https://bd2.madsam.work/updates/dustweave/. Full and differential packages are authenticated with an embedded ECDSA public key; interrupted downloads resume, and file replacement uses durable backups and a recovery journal. The public GitHub update mirror is deferred; existing private Releases provide first-install and manual-download packages. Domestic hosting is reserved for in-app OTA and is not promoted as a manual download site. Details and release steps are in [OTA_RELEASE.md](OTA_RELEASE.md).
 
-国内更新源使用现有网站。下载与安装均验证签名及文件哈希；中断下载可接续，失败或中断替换可从备份恢复。默认后台下载，空闲时确认重启；游戏不重启，账号、设置和插件保留。Portable 与 Lite 不互换。首次需从 GitHub Releases 手动安装支持 OTA 的版本；国内线路只作为软件内 OTA 更新入口，不提供手动下载入口。
+国内更新源使用现有网站。0.9.1 起优先差分更新，不适用时自动回退完整包；0.9.0 需完整更新一次才能获得差分能力。下载与安装均验证签名及文件哈希；中断下载可接续，失败或中断替换可从备份恢复。默认后台下载，空闲时确认重启；游戏不重启，账号、设置和插件保留。Portable 与 Lite 不互换。首次需从 GitHub Releases 手动安装支持 OTA 的版本；国内线路只作为软件内 OTA 更新入口，不提供手动下载入口。
 
 Source tests, packaged upgrade acceptance and production HTTPS deployment are tracked separately. Building does not publish the feed, register a real scheduled task or connect the game.
+
+## Scheduled account cards / 定时执行账号卡片
+
+The scheduled account set is displayed as ordered, removable cards. A dashed Add accounts card opens a searchable multi-select dialog containing only valid accounts that have not been added. Confirm appends to the current order; cancelling leaves the draft unchanged. Refreshing the account catalog never restores a removed selection, clears an empty draft or reorders existing cards. A missing identity stays visible as unavailable and prevents enabling the schedule until corrected. Saving a disabled schedule retains the edited account set.
+
+执行账号采用可移除的顺序卡片，虚线加号卡片用于搜索和批量添加。修改后仍需保存定时计划，不影响账号页的勾选或当前游戏身份。添加窗口沿用统一遮罩、主题和键盘操作，列表短时自动压缩窗口高度。
+
+### Drag ordering / 拖动排序 · 2026-10-08
+
+Drag an account card to insert it before or after another card, including across wrapped rows. A theme-aware insertion marker previews the position. Dropping over the Add accounts tile places it last. Escape or dropping outside cancels. Removal controls do not start a drag; focused cards also support Ctrl + Left / Right. The selector scrolls near the visible edges when needed. Changes remain a draft until Save schedule.
+
+The native drag payload is restricted to this selector and its unchanged identity set. Account catalog refresh is deferred visually while dragging, then reconciled without resetting the chosen order. Scheduled execution continues to use the persisted account-key sequence.
+
+Full isolated WPF smoke and 77 scheduling/update checks pass at `artifacts/smoke-20261007-160909-9182/`. Coverage includes wrapped hit testing, foreign/cancelled payload rejection, remove-button separation, refresh during drag, forward/backward insertion and saved-order reload. Light/dark insertion renders were inspected. No game commands or Windows tasks were issued; physical mouse/assistive-technology testing and a new package remain separate.

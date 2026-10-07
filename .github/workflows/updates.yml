@@ -31,6 +31,26 @@ jobs:
           } catch {
             if([int]$_.Exception.Response.StatusCode -ne 404){throw}
           }
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Prepare differential packages from recent releases
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          if(Test-Path 'ota/previous.json'){
+            $signed=Get-Content 'ota/previous.json' -Raw|ConvertFrom-Json
+            $prior=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($signed.Payload))|ConvertFrom-Json
+            New-Item -ItemType Directory -Path ota/bases | Out-Null
+            foreach($release in @($prior.Releases|Select-Object -First 3)){
+              if($release.Version -notmatch '^\d+\.\d+\.\d+$'){throw 'Invalid baseline version.'}
+              gh release download ("v"+$release.Version) --pattern 'Dustweave-*-win-x64.zip' --dir ota/bases
+              if($LASTEXITCODE -ne 0){throw 'Previous release packages could not be obtained.'}
+            }
+            Expand-Archive ("ota/Dustweave-"+$env:RELEASE_TAG.Substring(1)+"-Lite-win-x64.zip") ota/tool
+            ./scripts/new-update-deltas.ps1 -Version $env:RELEASE_TAG.Substring(1) -PackageDirectory ota -BasePackageDirectory ota/bases -PreviousFeed ota/previous.json -Tool ota/tool/Dustweave.exe
+          }
+
       - name: Sign the cumulative manifest
         shell: pwsh
         env:
@@ -46,6 +66,8 @@ jobs:
           path: |
             ota/updates.json
             ota/Dustweave-*-win-x64.zip
+            ota/Dustweave-*-win-x64.delta.zip
+            ota/delta-report.json
           retention-days: 14
 # Publishing to the existing website remains a separate, explicitly authorized deployment.
 # No public repository or release is created by this workflow.

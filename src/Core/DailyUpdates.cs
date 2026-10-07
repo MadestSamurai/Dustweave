@@ -7,10 +7,11 @@ namespace Dustweave;
 
 public sealed record DailyReleaseNote(string Version, string Date, Dictionary<string, string[]> Notes);
 public sealed record DailyUpdateAsset(string Flavor, string FileName, long Bytes, string Sha256);
-public sealed record DailyUpdateRelease(string Version, string? PreviousVersion, int Layout, Dictionary<string, string[]> Notes, DailyUpdateAsset[] Assets);
+public sealed record DailyUpdateDelta(string Flavor, string FromVersion, string FileName, long Bytes, string Sha256, string Algorithm);
+public sealed record DailyUpdateRelease(string Version, string? PreviousVersion, int Layout, Dictionary<string, string[]> Notes, DailyUpdateAsset[] Assets, DailyUpdateDelta[]? Deltas = null);
 public sealed record DailyUpdateFeed(int Schema, string Product, string Channel, DailyUpdateRelease[] Releases);
 public sealed record DailyUpdatePackage(string Version, string Flavor, string[]? Files = null);
-public sealed record DailyUpdateJob(string Directory, string Target, int ParentPid, long ParentStartTicks, DailyUpdateRelease Release, DailyUpdateAsset Asset, string Nonce = "", string OriginalSha256 = "");
+public sealed record DailyUpdateJob(string Directory, string Target, int ParentPid, long ParentStartTicks, DailyUpdateRelease Release, DailyUpdateAsset Asset, string Nonce = "", string OriginalSha256 = "", string? DeltaFileName = null);
 
 public static class DailyUpdates
 {
@@ -31,6 +32,15 @@ public static class DailyUpdates
             if (release.PreviousVersion != null && VersionOf(release.PreviousVersion) >= version) throw new InvalidDataException("updates.invalid_feed");
             if (new[] { "zh-CN", "zh-TW", "en-US" }.Any(c => !release.Notes.TryGetValue(c, out var notes) || notes.Length is < 1 or > 100 || notes.Any(n => string.IsNullOrWhiteSpace(n) || n.Length > 4000))) throw new InvalidDataException("updates.invalid_feed");
             if (release.Notes.Values.Select(n => n.Length).Distinct().Count() != 1) throw new InvalidDataException("updates.invalid_feed");
+            if ((release.Deltas?.Length ?? 0) > 12 ||
+                (release.Deltas ?? []).Select(d => (d.Flavor, d.FromVersion)).Distinct().Count() != (release.Deltas?.Length ?? 0))
+                throw new InvalidDataException("updates.invalid_feed");
+            foreach (var delta in release.Deltas ?? [])
+                if (!release.Assets.Any(a => a.Flavor == delta.Flavor) || VersionOf(delta.FromVersion) >= version ||
+                    delta.FileName != DailyUpdateDeltaPackage.Name(release.Version, delta.Flavor, delta.FromVersion) ||
+                    string.IsNullOrWhiteSpace(delta.Algorithm) || delta.Algorithm.Length > 64 || delta.Bytes <= 0 || delta.Bytes > MaxArchive ||
+                    delta.Sha256.Length != 64 || !delta.Sha256.All(Uri.IsHexDigit))
+                    throw new InvalidDataException("updates.invalid_feed");
             foreach (var asset in release.Assets)
             {
                 if (asset.Flavor is not ("Portable" or "Lite") || asset.Bytes <= 0 || asset.Bytes > MaxArchive || asset.Sha256.Length != 64 || !asset.Sha256.All(Uri.IsHexDigit))

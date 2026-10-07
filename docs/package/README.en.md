@@ -15,10 +15,12 @@ One language setting controls the host and its nine integrated tools. Standalone
 
 Existing account and settings locations are retained. Close the old daily assistant before trying this build to avoid simultaneous configuration changes. Updating the interface does not require restarting the game. Follow the interface instructions to review unfinished operations. Offline checks have passed; real gameplay still needs validation during normal use.
 
-Provided free by MadSamurai on Bilibili / MadestSamurai on GitHub. Version 0.9.0 uses a stable version number; the source repository remains private. Integrated tool licenses and sources are in licenses, docs/tools and THIRD_PARTY_NOTICES.md.
+Provided free by MadSamurai on Bilibili / MadestSamurai on GitHub. Version 0.9.1 uses a stable version number; the source repository remains private. Integrated tool licenses and sources are in licenses, docs/tools and THIRD_PARTY_NOTICES.md.
 
 Open Updates at the bottom left of the main window. Automatic checks and background downloads use bd2.madsam.work. Signed packages require your confirmation to restart while idle; updates do not interrupt a queue. Keep the complete extracted folder. This is an unofficial project; automation can carry account and operational risks, so decide whether to use it accordingly.
 
 Upgrading from an earlier version: extract the complete package into a new folder and launch `Dustweave.exe`. Existing accounts, settings and history are reused without data migration. Keep old and new program files in separate folders.
 
 New in 0.9.0: run selected accounts from Accounts; choose a time, weekdays and fixed accounts in Schedules; read release notes once per version. Scheduled runs require a powered-on, awake computer and a signed-in Windows session, and are disabled by default.
+
+0.9.1: add, remove and drag to reorder scheduled account cards; themed startup notes and dialogs; signed delta updates with automatic full-package fallback. Version 0.9.0 first needs a full update. Use GitHub Releases for initial installation; domestic hosting serves in-app OTA only.

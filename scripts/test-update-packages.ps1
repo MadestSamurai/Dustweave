@@ -1,9 +1,12 @@
 param(
  [Parameter(Mandatory)][string]$Packages,
  [Parameter(Mandatory)][string]$Baseline,
- [Parameter(Mandatory)][string]$Output
+ [Parameter(Mandatory)][string]$Output,
+ [switch]$UseDelta,
+ [switch]$UseBaselineHelper
 )
 $ErrorActionPreference='Stop'
+if($UseDelta -and $UseBaselineHelper){throw 'An older helper cannot install new delta packages.'}
 $repo=[IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $outputRoot=[IO.Path]::GetFullPath($Output)
 if(!$outputRoot.StartsWith((Join-Path $repo 'artifacts')+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Use an isolated artifacts directory.'}
@@ -38,12 +41,21 @@ function Setup($name,$flavor,$baselineFolder){
  Copy-Item -LiteralPath (Join-Path $Packages $asset.FileName) -Destination (Join-Path $cache 'package.zip')
  Copy-Item -LiteralPath (Join-Path $Packages 'updates.json') -Destination (Join-Path $cache 'signed-feed.json')
  $helper=Join-Path $attempt 'Dustweave.Updater.exe'
- Copy-Item -LiteralPath (Join-Path $Packages "$flavor/Dustweave.exe") -Destination $helper
+ $helperSource=if($UseBaselineHelper){Join-Path $baselineFolder 'Dustweave.exe'}else{Join-Path $Packages "$flavor/Dustweave.exe"}
+ Copy-Item -LiteralPath $helperSource -Destination $helper
  $target=Join-Path $targetFolder 'Dustweave.exe'
  $job=[ordered]@{Directory=$cache;Target=$target;ParentPid=[int]::MaxValue;ParentStartTicks=0;Release=$release;Asset=$asset;Nonce=$nonce;OriginalSha256=(Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash}
+ $baseDescriptor=Get-Content -LiteralPath (Join-Path $targetFolder 'update-package.json') -Raw -ErrorAction SilentlyContinue|ConvertFrom-Json
+ if($UseDelta -and $baseDescriptor){
+  $delta=$release.Deltas|Where-Object { $_.Flavor -eq $flavor -and $_.FromVersion -eq $baseDescriptor.Version }|Select-Object -First 1
+  if($delta){
+   Copy-Item -LiteralPath (Join-Path $Packages $delta.FileName) -Destination $cache
+   $job.DeltaFileName=$delta.FileName
+  }
+ }
  $jobPath=Join-Path $attempt 'job.json';WriteJson $jobPath $job
  WriteJson (Join-Path $data 'updates-preference.json') @{Automatic=$false}
- WriteJson (Join-Path $data 'seen-release.json') @{Version=$release.Version;SeenVersions=@($release.Version)}
+ WriteJson (Join-Path $data 'seen-release.json') @{Version=$release.Version;SeenVersions=@($release.Version,$baseDescriptor.Version)}
  WriteJson (Join-Path $data 'schedule.json') @{Enabled=$false}
  [IO.Directory]::CreateDirectory((Join-Path $targetFolder 'plugins'))|Out-Null
  [IO.File]::WriteAllText((Join-Path $targetFolder 'plugins/acceptance.keep'),'private plugin sentinel')
@@ -53,7 +65,15 @@ function Setup($name,$flavor,$baselineFolder){
 foreach($flavor in @('Lite','Portable')){
  $test=Setup ("upgrade-"+$flavor) $flavor (Join-Path $Baseline $flavor)
  # A prior release without an OTA descriptor is represented explicitly in this isolated bootstrap test.
- WriteJson (Join-Path $test.targetFolder 'update-package.json') @{Version='0.8.17';Flavor=$flavor}
+ if($UseDelta){
+  if(!$test.job.DeltaFileName){throw 'No applicable signed delta for this baseline.'}
+  # Leave only the patch in this isolated cache: a successful install must reconstruct it.
+  $cachedFull=[IO.Path]::GetFullPath((Join-Path $test.cache 'package.zip'))
+  if(!$cachedFull.StartsWith($outputRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Cache escaped test output.'}
+  Remove-Item -LiteralPath $cachedFull
+ } elseif(!(Test-Path -LiteralPath (Join-Path $test.targetFolder 'update-package.json'))){
+  WriteJson (Join-Path $test.targetFolder 'update-package.json') @{Version='0.8.17';Flavor=$flavor}
+ }
  $process=StartIsolated $test.helper @('--apply-update',$test.jobPath) $test.data
  WaitProcess $process
  $result=Get-Content -LiteralPath (Join-Path $test.data 'update-result.json') -Raw|ConvertFrom-Json
@@ -63,7 +83,7 @@ foreach($flavor in @('Lite','Portable')){
  if((Get-Content -LiteralPath (Join-Path $test.data 'account-preservation.keep') -Raw) -ne 'account sentinel'){throw 'Account sentinel changed'}
  if(Test-Path (Join-Path $test.targetFolder '.dustweave-update.json')){throw 'Completed transaction left a recovery marker'}
  CloseInstalled $test.target
- $reports.Add(@{case="upgrade-$flavor";status='passed';from='0.8.17';to=$release.Version;startupAcknowledged=$true})
+ $reports.Add(@{case="upgrade-$flavor";status='passed';delta=$UseDelta.IsPresent;baselineHelper=$UseBaselineHelper.IsPresent;to=$release.Version;startupAcknowledged=$true})
 }
 # A signed but unlaunchable new executable must restore the actual prior package.
 $test=Setup 'startup-failure' 'Lite' (Join-Path $Baseline 'Lite')

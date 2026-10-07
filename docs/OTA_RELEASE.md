@@ -1,21 +1,21 @@
-# Dustweave signed full-package updates / 签名完整包更新
+# Dustweave signed updates / 签名更新
 
 ## Scope / 当前范围
 
-The host uses its own small updater, without Velopack or binary deltas. The active source is
+The host uses its own updater, with signed differential packages from 0.9.1 and a full-package fallback. It does not use Velopack. The active source is
 https://bd2.madsam.work/updates/dustweave/updates.json.
 A public GitHub/Vultr update mirror is deferred; the existing private GitHub release archives the same packages. The transport compares multiple signed sources and can fail over; production currently configures only the domestic source. There is no empty international selector or repeated probe of a private repository.
 
-目前只启用国内站点，下载完整包，允许跨过中间版本直接升级。定时执行、更新说明及空闲确认沿用主程序。
+目前只启用国内更新站点。0.9.1 起优先使用适合当前版本和包类型的差分包，允许直接跨过中间版本；无合适差分时下载完整包。定时执行、更新说明及空闲确认沿用主程序。
 源码、账号、连接凭据与插件实现不进入静态更新目录。第一次必须手动安装带 OTA 的版本；更早版本不会凭空获得更新能力。
 
 ## Distribution policy / 分发约定
 
 首次安装和手动下载使用现有私有 GitHub Releases，需要仓库访问权限；国内服务器仅作为软件内 OTA 更新源，不在 README、入门文档或 Release 公告中提供国内完整包下载入口。后续发布继续遵循此约定。
 
-这是分发入口约定，不是 HTTP 访问限制：已发布的静态包地址保持可用，以兼容 0.9.0 更新器。OTA 当前仍下载完整包，没有差分节流收益；服务器出口仍需按更新流量预算。
+这是分发入口约定，不是 HTTP 访问限制：已发布的静态包地址保持可用，以兼容 0.9.0 更新器。0.9.0 客户端不认识差分字段，需完整更新一次；0.9.1 起才会使用差分。服务器仍需为完整包回退预留带宽。
 
-First installs and manual downloads use the existing private GitHub Releases. Do not promote domestic full-package links in README files, getting-started guides or release announcements. Domestic hosting serves in-app OTA. This is a distribution policy, not HTTP access control: existing package URLs remain reachable for updater compatibility. OTA still transfers full packages, not binary deltas.
+First installs and manual downloads use the existing private GitHub Releases. Do not promote domestic full-package links in README files, getting-started guides or release announcements. Domestic hosting serves in-app OTA. This is a distribution policy, not HTTP access control: existing package URLs remain reachable for updater compatibility. The 0.9.0 client still needs one full update to gain delta support; later clients prefer smaller differential packages. Budget for full-package fallback as well.
 
 ## Trust / 签名
 
@@ -42,6 +42,16 @@ Only the selected package is downloaded. Interrupted bytes remain in a partial f
 Requests have header, inactivity and total timeouts. Package length, SHA-256, product/flavor and archive paths are checked.
 Updates are independent from daily execution; failures become update status and diagnostics, never a queue failure.
 
+## Differential packages / 差分包
+
+Schema 2 stays backward-compatible: an optional Deltas array on each release binds Flavor, FromVersion, FileName, Bytes, Sha256 and Algorithm. Old clients ignore it and continue using Assets. Filenames are derived from signed version/flavor/base values; arbitrary URLs and cross-flavor patches are rejected.
+
+The dustweave-cdc-v1 package contains a signed-by-digest delta.json manifest and Brotli-compressed COPY/literal instruction streams. Content-defined 2–32 KiB chunks resynchronize after inserted bytes; SHA-256 confirms reusable chunks. Unchanged files are copied locally. The manifest binds the complete target file inventory and each file's length/hash to the corresponding full archive hash. Newly added and removed files follow the same allowlist and transaction rules as full updates.
+
+The downloader selects a direct patch from the installed version only when it is at least 20% smaller. It supports Range resume, verifies the patch hash, checks required base files and reconstructs every output in a temporary directory before offering a restart. The independent helper verifies the signature and reconstructs again after the old app exits. Changed base files, missing/corrupt patches or failed reconstruction automatically fall back to the full package, before any installation writes. Cancellation does not start a fallback download.
+
+差分不是只传改动文件：单文件 EXE 内部也按内容分块复用。所有输出都必须通过完整哈希校验。账号、设置和插件不参与差分；差分与完整包共用持久备份、原子替换及恢复日志。客户端无需保留首次安装 ZIP。发布侧默认为最近三个版本生成直接升级补丁，可配置提供至多六个基线；更老版本仍能完整升级。
+
 ## Replacement and recovery / 替换与恢复
 
 1. Wait for idle confirmation. Stop accepting automation starts and close idle tool windows.
@@ -59,12 +69,12 @@ This supports interrupted-process recovery; it cannot repair failing storage or 
 ## Publish / 发布步骤
 
 1. Build/test both flavors with package.ps1; update-package.json lists exactly the packaged application files.
-2. Run scripts/new-update-feed.ps1 -Version X.Y.Z -PackageDirectory <packages>, adding -PreviousFeed <downloaded-current-updates.json> after the first release. Previous manifests must verify with a trusted key.
+2. Run scripts/new-update-deltas.ps1 -Version X.Y.Z -PackageDirectory <packages> -BasePackageDirectory <previous-package-directories> -PreviousFeed <downloaded-current-updates.json>. The generator verifies baseline ZIPs against the signed feed and checks reconstructed bytes. Then run scripts/new-update-feed.ps1 -Version X.Y.Z -PackageDirectory <packages> -PreviousFeed <downloaded-current-updates.json>; only patches meeting the size threshold are included. The first release can omit the delta step and previous feed.
 3. Run scripts/prepare-update-site.ps1 -PackageDirectory <packages>. It verifies signatures/hashes and prepares only the public static payload.
 4. Upload immutable vX.Y.Z/ files to the existing web server, verify remote lengths/hashes, then atomically rename the new updates.json **last**. Never overwrite a published version's files. Publish a new higher version to repair a release.
 5. Download both flavors through the public HTTPS address and verify them; test upgrade from a prior packaged version before announcing availability.
 
-The manually dispatched Prepare signed update feed workflow only creates a signed artifact from existing tested release packages. It creates no public repository/release and performs no deployment.
+The manually dispatched Prepare signed update feed workflow generates deltas for the latest three available release baselines and creates a signed artifact from existing tested release packages. It creates no public repository/release and performs no deployment.
 Runtime endpoints are independent from whether the source repository is public.
 
 ### Server configuration / 服务端配置
@@ -89,3 +99,6 @@ See `artifacts/ota-package-check-20261007-r3/results.json` and [repository statu
 The helper must close its application-mutex handle before launching the application, even after releasing ownership: earlier application versions use mutex creation as their single-instance signal. Upgrade, rollback and recovery all follow this rule.
 
 The static payload preparation has also passed signature, size and digest checks. Public HTTPS range/cache behavior, operational key backup and an actual scheduled game queue remain deployment/runtime acceptance items. No production files or GitHub releases were changed by this validation.
+### Differential acceptance · 0.9.1
+
+See [0.9.1 acceptance](releases/0.9.1-validation.md). Both flavors pass patch-only installation with the new helper and full installation with the actual 0.9.0 helper. `scripts/test-update-packages.ps1 -UseDelta` exercises the first path; `-UseBaselineHelper` exercises the old client's full-update path. These switches are mutually exclusive. The same harness covers startup rollback and persisted-interruption recovery. Neither path changes the user's installation or connects to the game.

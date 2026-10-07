@@ -114,7 +114,12 @@ public partial class MainWindow : Window
         coordinator.Progress += p => Dispatcher.Invoke(() => { if (dailyQueue.IsRunning || WorkspaceTabs.SelectedItem == RunTab && busy) dailyPanel.Show(new("preparing", p.Message, "", [])); DailyUiText.Set(ProgressText, p.Message); ProgressText.Foreground = (Brush)FindResource(p.State == "error" ? "Error" : "Ink"); });
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         timer.Tick += (_, _) => { L.RefreshFromDisk(); RefreshTools(); UpdateConnection(); if (smoke == null && !busy) { _ = RefreshAccountIdentityAsync(); RefreshDailyHistory(); } if (smoke == null) { _ = CheckScheduleAsync(); _ = OfferUpdateAsync(); if (DateTime.UtcNow >= nextUpdateCheck) { nextUpdateCheck = DateTime.UtcNow.AddHours(6); _ = CheckUpdatesAsync(); } } };
-        Loaded += async (_, _) => { RefreshAccounts(); var last = DailyJson.TryRead<DailyRunStatus>(Path.Combine(root, "run.json")); if (last != null) { DailyUiText.History(ProgressText, "history.previous", last.AtUtc.LocalDateTime, last.Progress.Message); } if (smoke == null) { var previous = dailyQueue.ReadView(catalog?.CurrentKey ?? ""); dailyPanel.LoadHistory(previous); } timer.Start(); if (smoke != null && automatedSmoke) await SmokeAsync(); if (smoke == null) await InitializeStartupFeaturesAsync(); };
+        Loaded += async (_, _) => { RefreshAccounts(); var last = DailyJson.TryRead<DailyRunStatus>(Path.Combine(root, "run.json")); if (last != null) { DailyUiText.History(ProgressText, "history.previous", last.AtUtc.LocalDateTime, last.Progress.Message); } if (smoke == null) { var previous = dailyQueue.ReadView(catalog?.CurrentKey ?? ""); dailyPanel.LoadHistory(previous); } timer.Start(); if (smoke != null && automatedSmoke) await SmokeAsync();  };
+        bool startupShown = false;
+        ContentRendered += async (_, _) => { if (startupShown || smoke != null) return; startupShown = true;
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ContextIdle);
+            try { await InitializeStartupFeaturesAsync(); } catch (Exception error) { ShowError(error); }
+        };
         WeakEventManager<DailyLanguage, EventArgs>.AddHandler(L, nameof(DailyLanguage.Changed), OnLanguageChanged);
         Closing += OnClosing;
         WorkspaceTabs.SelectedItem = RunTab;
@@ -125,13 +130,13 @@ public partial class MainWindow : Window
     {
         if (!appearanceReady || LanguageSelector.SelectedIndex < 0) return;
         try { DailyLanguage.Current.Select(DailyLanguage.Codes[LanguageSelector.SelectedIndex]); }
-        catch (Exception error) { MessageBox.Show(this, DailyLanguage.Current.Get("language.error", DailyUserText.Error(error, L.Translate)), DailyLanguage.Current.Get("app.title")); }
+        catch (Exception error) { DailyDialogs.ShowModal(DailyDialogs.Message(this, L.Get("app.title"), L.Get("language.error", DailyUserText.Error(error, L.Translate)), false)); }
     }
     private void Theme_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (!appearanceReady || ThemeSelector.SelectedIndex < 0) return;
         try { theme.Select((DailyAppearance)ThemeSelector.SelectedIndex); }
-        catch (Exception error) { MessageBox.Show(this, L.Get("appearance.error", DailyUserText.Error(error, L.Translate)), L.Get("appearance.label")); }
+        catch (Exception error) { DailyDialogs.ShowModal(DailyDialogs.Message(this, L.Get("appearance.label"), L.Get("appearance.error", DailyUserText.Error(error, L.Translate)), false)); }
     }
     private readonly DailyToolPanel toolPanel;
     private readonly DailyToolSession toolSession;
@@ -358,7 +363,7 @@ public partial class MainWindow : Window
     private bool Confirm(string message)
     {
         bool prior = releaseDialogOpen; releaseDialogOpen = true;
-        try { return MessageBox.Show(this, L.Translate(message), L.Get("app.title"), MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK; }
+        try { return DailyDialogs.ShowModal(DailyDialogs.Message(this, L.Get("app.title"), L.Translate(message), true)) == true; }
         finally { releaseDialogOpen = prior; }
     }
     private async void Connect_Click(object sender, RoutedEventArgs e) => await OperateAsync(coordinator.ConnectCurrentAsync, connectsGame: true);
@@ -481,7 +486,7 @@ public partial class MainWindow : Window
         panel.Children.Add(buttons);
         window.Content = panel;
         window.Loaded += (_, _) => { text.Focus(); text.SelectAll(); };
-        return window.ShowDialog() == true ? text.Text.Trim() : null;
+        return DailyDialogs.ShowModal(window) == true ? text.Text.Trim() : null;
     }
     private async void OnClosing(object? sender, CancelEventArgs e)
     {

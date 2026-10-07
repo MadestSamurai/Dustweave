@@ -99,7 +99,7 @@ public partial class MainWindow
         releaseDialogOpen = true;
         try
         {
-            CreateReleaseNotesWindow().ShowDialog();
+            DailyDialogs.ShowModal(CreateReleaseNotesWindow());
         }
         finally { releaseDialogOpen = false; }
     }
@@ -118,6 +118,7 @@ public partial class MainWindow
             L.Bind(dialog, Window.TitleProperty, "updates.notes");
             button.Click += (_, _) => dialog.Close();
             dialog.ContentRendered += (_, _) => DailyReleaseHistory.MarkSeen(root, DailyProductVersion.Current);
+            DailyDialogs.Prepare(dialog);
             return dialog;
     }
     private async Task CheckUpdatesAsync(bool manual = false)
@@ -137,9 +138,9 @@ public partial class MainWindow
             string flavor = DailyJson.TryRead<DailyUpdatePackage>(Path.Combine(AppContext.BaseDirectory, "update-package.json"))?.Flavor ?? throw new InvalidDataException("updates.packaged_only");
             var asset = release.Assets.SingleOrDefault(a => a.Flavor == flavor) ?? throw new InvalidDataException("updates.flavor_missing");
             var progress = new Progress<int>(p => updatePanel.Status("updates.downloading", release.Version, p));
-            string directory = await transport.DownloadAsync(client, verified, release.Version, flavor, root, progress, updateLifetime.Token);
+            string directory = await transport.DownloadAsync(client, verified, release.Version, flavor, root, progress, updateLifetime.Token, AppContext.BaseDirectory);
             using var process = Process.GetCurrentProcess();
-            readyUpdate = new(directory, Environment.ProcessPath!, process.Id, process.StartTime.ToUniversalTime().Ticks, release, asset);
+            readyUpdate = new(directory, Environment.ProcessPath!, process.Id, process.StartTime.ToUniversalTime().Ticks, release, asset, DeltaFileName: DailyJson.TryRead<DailyUpdateDownload>(Path.Combine(directory, "download-choice.json"))?.DeltaFileName);
             updatePanel.Status("updates.ready", release.Version); updatePromptShown = false;
         }
         catch (OperationCanceledException) { if (!updateLifetime.IsCancellationRequested) updatePanel.Status("updates.unavailable"); }
@@ -153,7 +154,7 @@ public partial class MainWindow
     private void UpdateUpdateControls() => updatePanel.Busy(updateChecking, readyUpdate != null, Unavailable || updateInstalling || scheduleChecking);
     private async Task OfferUpdateAsync()
     {
-        if (smoke != null || readyUpdate == null || updateChecking || updatePromptShown || Unavailable || scheduleChecking || releaseDialogOpen || updateInstalling) return;
+        if (smoke != null || readyUpdate == null || updateChecking || updatePromptShown || Unavailable || scheduleChecking || releaseDialogOpen || DailyDialogs.ModalDepth > 0 || updateInstalling) return;
         updatePromptShown = true;
         if (Confirm(L.Get("updates.confirm", readyUpdate.Release.Version))) await InstallUpdateAsync();
     }
