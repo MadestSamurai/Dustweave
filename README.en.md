@@ -14,7 +14,7 @@ A multi-account daily assistant for BrownDust II on Windows
 
 </div>
 
-> **Invite-only access**: this repository remains private. Application packages are available from the domestic download links below; repository members can also use Releases. Source publication will be announced separately.
+> **Invite-only access**: this repository remains private. First installations and manual downloads use GitHub Releases and require repository access. The domestic route is reserved for in-app OTA updates. Source publication will be announced separately.
 >
 > Provided free by **MadSamurai** on Bilibili ([MadestSamurai](https://github.com/MadestSamurai) on GitHub). This is an unofficial project. Automation may affect your account or game operation; understand the applicable rules before deciding to use it.
 
@@ -66,7 +66,7 @@ For **Windows x64 and the native BrownDust II PC client**. Python is not require
 | **Portable** | You want an extract-and-run package | Includes the .NET 8 desktop runtime |
 | **Lite** | You already have the runtime and prefer a smaller download | [.NET 8 Desktop Runtime x64](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) |
 
-Both packages have the same features. Download [Portable](https://bd2.madsam.work/updates/dustweave/v0.9.0/Dustweave-0.9.0-Portable-win-x64.zip) or [Lite](https://bd2.madsam.work/updates/dustweave/v0.9.0/Dustweave-0.9.0-Lite-win-x64.zip) from the domestic site, or use the private [Releases](https://github.com/MadestSamurai/Dustweave/releases), then:
+Both packages have the same features. Download a complete package from [GitHub Releases](https://github.com/MadestSamurai/Dustweave/releases). The domestic route is reserved for in-app OTA rather than first-install downloads. Then:
 
 1. **Extract the entire folder** and run `Dustweave.exe`. Keep its data, flow and component directories alongside the executable.
 2. Log in to the game normally, save the current account in account management, and verify its identity.

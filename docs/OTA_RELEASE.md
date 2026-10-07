@@ -9,6 +9,14 @@ A public GitHub/Vultr update mirror is deferred; the existing private GitHub rel
 目前只启用国内站点，下载完整包，允许跨过中间版本直接升级。定时执行、更新说明及空闲确认沿用主程序。
 源码、账号、连接凭据与插件实现不进入静态更新目录。第一次必须手动安装带 OTA 的版本；更早版本不会凭空获得更新能力。
 
+## Distribution policy / 分发约定
+
+首次安装和手动下载使用现有私有 GitHub Releases，需要仓库访问权限；国内服务器仅作为软件内 OTA 更新源，不在 README、入门文档或 Release 公告中提供国内完整包下载入口。后续发布继续遵循此约定。
+
+这是分发入口约定，不是 HTTP 访问限制：已发布的静态包地址保持可用，以兼容 0.9.0 更新器。OTA 当前仍下载完整包，没有差分节流收益；服务器出口仍需按更新流量预算。
+
+First installs and manual downloads use the existing private GitHub Releases. Do not promote domestic full-package links in README files, getting-started guides or release announcements. Domestic hosting serves in-app OTA. This is a distribution policy, not HTTP access control: existing package URLs remain reachable for updater compatibility. OTA still transfers full packages, not binary deltas.
+
 ## Trust / 签名
 
 assets/updates/trust.json contains only public ECDSA P-256 keys and HTTPS source addresses, embedded in Dustweave.Core.
@@ -64,7 +72,7 @@ Runtime endpoints are independent from whether the source repository is public.
 Use the website's existing HTTPS host. Map only /updates/dustweave/ to a dedicated static directory, not the source repository.
 Disable directory listing. Serve updates.json with revalidation/no-cache and versioned packages with immutable caching; support HEAD and byte ranges.
 A plain Nginx static location normally handles ranges; do not proxy archive bytes through the simulator API.
-Set a suitable download bandwidth budget so updates do not crowd out the simulator. Keep older full packages as rollback/manual-download evidence until a separate retention decision.
+Set a suitable download bandwidth budget so updates do not crowd out the simulator. Keep older full packages as rollback/recovery evidence until a separate retention decision.
 No DNS, Nginx or production files are modified by the client build scripts.
 
 ## Acceptance / 验收边界

@@ -35,4 +35,4 @@ Account queues now start from the Accounts page. An opt-in scheduler can launch 
 以上是本机隔离成品测试，不代表生产 HTTPS 下载、真实断电或游戏日常队列已经验证。用户的实际 0.8.17 程序、账号和游戏未被升级测试修改。
 ## Published 0.9.0 / 已发布 0.9.0
 
-2026-10-07：正式包、签名清单和国内下载已上线。最终 2,107 项检查及真实成品升级／回退通过，公网使用实际下载器完整验证两种包。详见 [发布验收记录](releases/0.9.0-deployment.md)；前述 acceptance 目录保留为发布前实验记录。
+2026-10-07：正式包已发布到私有 GitHub Releases，签名清单和国内 OTA 已上线。首次安装及手动下载使用 GitHub Releases；国内只作为软件内 OTA 更新入口。最终 2,107 项检查及真实成品升级／回退通过，公网使用实际下载器完整验证两种包。详见 [发布验收记录](releases/0.9.0-deployment.md)；前述 acceptance 目录保留为发布前实验记录。

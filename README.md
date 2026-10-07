@@ -14,7 +14,7 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 
 </div>
 
-> **受邀使用**：仓库目前保持私有。完整分发包可从下方国内线路下载；有仓库权限的用户也可使用 Releases。源码公开计划另行公布。
+> **受邀使用**：仓库目前保持私有。首次安装与手动下载使用 GitHub Releases，需要仓库访问权限；国内线路仅作为软件内 OTA 更新入口。源码公开计划另行公布。
 >
 > 本项目由 B 站 **MadSamurai**（GitHub：[MadestSamurai](https://github.com/MadestSamurai)）免费提供，不隶属于游戏官方。辅助工具可能带来账号或游戏运行风险，请了解相关规则并自行决定是否使用。
 
@@ -66,7 +66,7 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 | **Portable** | 希望解压即用，或不确定是否安装了运行时 | 已包含 .NET 8 桌面运行时 |
 | **Lite** | 已安装运行时，希望下载更小 | [.NET 8 Desktop Runtime x64](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) |
 
-两种包功能一致。国内下载：[Portable](https://bd2.madsam.work/updates/dustweave/v0.9.0/Dustweave-0.9.0-Portable-win-x64.zip) / [Lite](https://bd2.madsam.work/updates/dustweave/v0.9.0/Dustweave-0.9.0-Lite-win-x64.zip)；也可使用私有仓库 [Releases](https://github.com/MadestSamurai/Dustweave/releases)。下载完整包后：
+两种包功能一致。请从 [GitHub Releases](https://github.com/MadestSamurai/Dustweave/releases) 下载完整包。国内线路用于软件内 OTA，不提供首次安装的下载入口。下载后：
 
 1. **完整解压**到自己的文件夹，运行 `Dustweave.exe`。不要只复制 EXE，旁边的数据、流程与组件目录也需要保留。
 2. 正常登录游戏，在**账号管理**中保存当前账号并核对身份。
