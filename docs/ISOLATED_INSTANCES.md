@@ -1,7 +1,7 @@
 # Isolated instances / 隔离实例
 
-Status: experimental local candidate; no public release or OTA deployment.
-状态：本地实验候选，尚未发布或上线 OTA。
+Status: experimental feature included in private release 0.9.13. Live acceptance limits below still apply.
+状态：实验性功能已纳入私有 0.9.13 发行版；下述实机验收范围仍然适用。
 
 ## Central queue in 0.9.4 / 0.9.4 集中队列
 
