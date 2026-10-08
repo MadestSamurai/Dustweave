@@ -6,6 +6,7 @@ public sealed class DemoEnvironment : IAccountSessions, IGameHost
     public readonly List<DailyAccount> Accounts = new(); public readonly List<string> Calls = new();
     public string CurrentKey; public GameInstance? Game; public string? ForcedKey; public string? FailConnectKey;
     public bool StartupRecoverySucceeds; public int StartupRecoveryCalls;
+    public int IncompleteCatalogReads;
     public Task<bool> RecoverStartupAsync(string account, Action<string> progress, CancellationToken cancellation)
     {
         cancellation.ThrowIfCancellationRequested();
@@ -24,7 +25,7 @@ public sealed class DemoEnvironment : IAccountSessions, IGameHost
         CurrentKey = Accounts[0].AccountKey;
         Game = new(100, DateTimeOffset.UtcNow.AddSeconds(-30).UtcTicks, "demo-game.exe");
     }
-    public DailyAccountCatalog Read() => new(Accounts.Select(a => a with { IsCurrent = a.AccountKey == CurrentKey }).ToArray(), CurrentKey, Accounts.FirstOrDefault(a => a.AccountKey == CurrentKey)?.SlotNumber, true, Game != null, false, true);
+    public DailyAccountCatalog Read() => new(Accounts.Select(a => a with { IsCurrent = a.AccountKey == CurrentKey }).ToArray(), CurrentKey, Accounts.FirstOrDefault(a => a.AccountKey == CurrentKey)?.SlotNumber, IncompleteCatalogReads-- <= 0, Game != null, false, true);
     public void EnsureControl()
     {
         Calls.Add("control");

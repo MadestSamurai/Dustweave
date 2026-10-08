@@ -7,7 +7,7 @@ namespace Dustweave;
 public sealed class DailyPreferences
 {
     [JsonRequired]
-    public int Schema { get; set; } = 14;
+    public int Schema { get; set; } = 15;
     [JsonRequired] public FriendshipPreferences Friendship { get; set; } = new();
     [JsonRequired]
     public HuntPreferences Hunt { get; set; } = new();
@@ -132,13 +132,19 @@ public sealed class DailyPreferences
             weekly["NpcHunting"] = false;
             node["Schema"] = 14;
         }
+        if (node["Schema"]?.GetValue<int>() == 14)
+        {
+            var events = node["Events"] as JsonObject ?? throw new InvalidDataException("活动设置缺失。");
+            if (!events.ContainsKey("Puzzle")) events["Puzzle"] = true;
+            node["Schema"] = 15;
+        }
         var value = node.Deserialize<DailyPreferences>(DailyJson.Options) ?? throw new InvalidDataException("日常设置不能为空。");
         value.Validate();
         return value;
     }
     public void Validate()
     {
-        if (Schema != 14 || Friendship == null || Tactics == null || Events == null || EventBattle == null || Trade == null || Weekly == null || MonsterHunt == null || Hunt == null || Equipment == null || Tasks == null || Stages == null || Mirror == null)
+        if (Schema != 15 || Friendship == null || Tactics == null || Events == null || EventBattle == null || Trade == null || Weekly == null || MonsterHunt == null || Hunt == null || Equipment == null || Tasks == null || Stages == null || Mirror == null)
             throw new InvalidDataException("日常偏好版本或字段不完整。");
         if (Tactics.SearchSeconds is < 1 or > 120)
             throw new InvalidDataException("战术教材搜索时间必须为 1 至 120 秒。");
@@ -359,6 +365,7 @@ public sealed class EventRewardPreferences
     [JsonRequired] public bool Missions { get; set; } = true;
     [JsonRequired] public bool Quiz { get; set; } = true;
     [JsonRequired] public bool Dice { get; set; } = true;
+    [JsonRequired] public bool Puzzle { get; set; } = true;
     [JsonRequired] public bool Roulette { get; set; } = true;
     [JsonRequired] public bool Exchange { get; set; } = true;
 }

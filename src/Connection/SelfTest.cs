@@ -5,6 +5,20 @@ static class SelfTest {
   Frame Frame()=>new(){ProcessId=7,ProcessStartTicks=8,Instance="i",AtUtcTicks=now,Scene="home",AccountKey="a",PlayerKey="p",UiToken="ui",PluginAvailable=true,Surfaces=[new(){Id=42,Targets=[new(){Id=43,Enabled=true}]}]};
   Command Command()=>new(){Id=Guid.NewGuid().ToString("N"),Kind="click",ProcessId=7,ProcessStartTicks=8,Instance="i",Scene="home",AccountKey="a",PlayerKey="p",UiToken="ui",ExpiresUtcTicks=now+TimeSpan.FromSeconds(10).Ticks,ObservedUtcTicks=now,SurfaceId=42,TargetId=43};
   void Check(bool ok,string reason){if(!ok)throw new Exception(reason);cases++;}
+  {
+   string error="Neo.Unity.Http.NeoNetworkException:/api/billing/mycard/check/mycard/nation, 0, ConnectionError, Request timeout";
+   Check(BackgroundErrorPolicy.RegionLookupTimeout(new[]{"付款失敗",error}),"region lookup identified independently of UI language");
+   Check(!BackgroundErrorPolicy.RegionLookupTimeout(new[]{"付款失敗",error.Replace("/check/mycard/nation","/purchase")}),"purchase network failures not acknowledged");
+   var f=Frame();var c=Command();var u=f.Surfaces[0];u.Type="MessagePopupUI";u.Popup=true;u.Order=10000;u.NativeContext=BackgroundErrorPolicy.Context;u.Text=new[]{error};u.Targets[0].Field="_buttonOK";c.Kind="background_error_ack";c.TargetId=0;
+   Check(LivePolicy.Gate(c,f,now,false)=="","callback-verified background notification accepted");
+   u.NativeContext="";Check(LivePolicy.Gate(c,f,now,false)!="","text alone cannot authorize acknowledgement");u.NativeContext=BackgroundErrorPolicy.Context;
+   u.Text=new[]{"Confirm purchase"};Check(LivePolicy.Gate(c,f,now,false)!="","same popup with changed text rejected");u.Text=new[]{error};
+   u.Targets=u.Targets.Concat(new[]{new Target{Field="_buttonCancel",Enabled=true}}).ToArray();Check(LivePolicy.Gate(c,f,now,false)!="","two-choice popup rejected");u.Targets=u.Targets.Take(1).ToArray();
+   f.Surfaces=f.Surfaces.Append(new Surface{Id=100,Type="PurchaseConfirmationUI",Popup=true,Order=10001}).ToArray();Check(LivePolicy.Gate(c,f,now,false)!="","higher popup blocks acknowledgement");f.Surfaces=f.Surfaces.Take(1).ToArray();
+   u.InputReady=false;Check(LivePolicy.Gate(c,f,now,false)!="","animation waits before acknowledgement");u.InputReady=true;
+   c.Items=new long[]{1};Check(LivePolicy.Gate(c,f,now,false)!="","unexpected payload rejected");c.Items=new long[0];
+   f.Surfaces=f.Surfaces.Append(new Surface{Id=100,Type="BattleUI_FieldBattle"}).ToArray();Check(LivePolicy.Gate(c,f,now,false)!="","battle retains ownership");
+  }
   Check(LiveProtocol.IsSquareScene("Map3009_001"),"plaza routes permit A*");
   foreach(var scene in new[]{"Map0001_001","Map0006_008","Map1003_001","Map30090_001","",null})
    Check(!LiveProtocol.IsSquareScene(scene),"A* never handles cartridge or unknown scene: "+scene);
@@ -371,6 +385,7 @@ static class SelfTest {
    qf.Surfaces=new[]{qf.Surfaces[0],toolbar,popup};Check(LivePolicy.Gate(qc,qf,now,false)=="story_popup_blocked","native story touch preserves confirmation");
    var df=Frame();df.Surfaces[0].Type="EventUI";var dc=Command();dc.Kind="reward_action";dc.TargetId=0;dc.Value=6;dc.Items=new long[]{560};
    dc.Value=8;Check(LivePolicy.Gate(dc,df,now,false)=="","roulette explicit single draw");df.BridgeVersion=104;Check(LivePolicy.Gate(dc,df,now,false)!="","old bridge refuses explicit single draw");df.BridgeVersion=LiveProtocol.BridgeVersion;dc.Value=6;
+   dc.Value=9;Check(LivePolicy.Gate(dc,df,now,false)=="","puzzle bulk open uses current scoped event");df.BridgeVersion=112;Check(LivePolicy.Gate(dc,df,now,false)!="","old bridge refuses puzzle batch");df.BridgeVersion=LiveProtocol.BridgeVersion;dc.Value=10;Check(LivePolicy.Gate(dc,df,now,false)!="","manual puzzle renewal is not exposed");dc.Value=6;
    Check(LivePolicy.Gate(dc,df,now,false)=="","dice scoped start");df.BridgeVersion=46;Check(LivePolicy.Gate(dc,df,now,false)!="","old bridge refuses dice command");
   }
   {

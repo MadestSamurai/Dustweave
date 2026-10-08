@@ -17,8 +17,9 @@ public partial class MainWindow
         catch (Exception e) { schedulePanel.Feedback(e.Message, true); }
         schedulePanel.SaveRequested += async plan =>
         {
+            if (IsSandboxWindow) return;
             if (smoke != null) { schedulePanel.Feedback("schedule.preview"); return; }
-            if (Unavailable) return;
+            if (Unavailable || scheduleChecking) return;
             schedulePanel.Busy(true);
             try
             {
@@ -36,12 +37,30 @@ public partial class MainWindow
     }
     private async Task CheckScheduleAsync()
     {
-        if (smoke != null || scheduleChecking || DateTime.UtcNow < nextScheduleCheck || finalClose) return;
+        if (IsSandboxWindow || smoke != null || scheduleChecking || DateTime.UtcNow < nextScheduleCheck || finalClose) return;
         nextScheduleCheck = DateTime.UtcNow.AddSeconds(10); scheduleChecking = true;
         DateTimeOffset? due = null;
         try
         {
             var plan = scheduleStore.Read(); var now = DateTimeOffset.UtcNow;
+            if (!plan.IsDaily)
+            {
+                schedulePanel.Busy(true);
+                try
+                {
+                    await scheduleStore.MigrateToDailyAsync(p => Task.Run(() => DailyWindowsSchedule.Register(p, Environment.ProcessPath!)), now);
+                    schedulePanel.Show(scheduleStore.Read(), scheduleStore.Last);
+                    schedulePanel.Feedback("schedule.migrated_daily");
+                }
+                catch (Exception error)
+                {
+                    schedulePanel.Show(scheduleStore.Read(), scheduleStore.Last);
+                    schedulePanel.Feedback("schedule.register_failed", true);
+                    DailyJson.Write(Path.Combine(root, "schedule-error.json"), new { operation = "migrate_daily", error = error.ToString() });
+                }
+                finally { schedulePanel.Busy(false); }
+                return;
+            }
             schedulePanel.RefreshStatus(plan, scheduleStore.Last);
             due = DailyScheduleClock.Due(plan, now, TimeZoneInfo.Local);
             if (due == null)
@@ -75,6 +94,12 @@ public partial class MainWindow
     }
     private async Task<string> ExecuteAccountQueue(DailyAccount[] targets)
     {
+        if (parallelOptions.Enabled && !IsSandboxWindow)
+        {
+            await StartParallelAsync(targets);
+            while (ParallelBusy) await Task.Delay(500);
+            return parallel!.Current!.Items.All(x => x.State == "completed") ? "completed" : "partial";
+        }
         string state = "failed";
         dailyStopping = false;
         await OperateAsync(async () =>
@@ -100,8 +125,9 @@ public partial class MainWindow
     {
         if (smoke != null || Unavailable || !preferencesPanel.SavePending()) return;
         var targets = rows.Where(r => r.Selected && r.Account.Valid).Select(r => r.Account).ToArray();
-        if (targets.Length == 0 || !Confirm(L.Get("run.multi_confirm", targets.Length))) return;
+        if (targets.Length == 0 || !Confirm(L.Get(parallelOptions.Enabled ? "parallel.confirm" : "run.multi_confirm", targets.Length))) return;
         WorkspaceTabs.SelectedItem = RunTab;
-        await ExecuteAccountQueue(targets);
+        try { if (parallelOptions.Enabled && !IsSandboxWindow) await StartParallelAsync(targets); else await ExecuteAccountQueue(targets); }
+        catch (Exception error) { ShowError(error); }
     }
 }

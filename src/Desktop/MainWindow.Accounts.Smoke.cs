@@ -50,6 +50,7 @@ public partial class MainWindow
                     LoginAccountText.Text == L.Get("account.not_signed_in"), "Missing sign-in or backup offers an invalid action.");
                 RefreshAccounts(before);
                 AccountsGrid.SelectedItem = rows[1];
+                Check(SandboxLaunchButton.IsEnabled && SandboxLaunchButton.Visibility == Visibility.Visible && (string)SandboxLaunchButton.Content == L.Get("sandbox.launch"), "Isolated launch must follow the highlighted saved account in every language.");
                 var selections = rows.Select(r => r.Selected).ToArray();
                 AccountsGrid.SelectedItem = rows[2];
                 Check(rows.Select(r => r.Selected).SequenceEqual(selections), "Highlighting an account changed its daily queue selection.");
@@ -128,7 +129,7 @@ public partial class MainWindow
             Width = 1180; Height = 800;
             RefreshAccounts(before with { Accounts = [], CurrentKey = "", CurrentSlot = null, SessionComplete = false, GameRunning = false, HasRecovery = false });
             Check(EmptyText.IsVisible && !RunButton.IsEnabled && !RenameAccountButton.IsEnabled &&
-                !DeleteAccountButton.IsEnabled && !MoveUpButton.IsEnabled && !MoveDownButton.IsEnabled,
+                !DeleteAccountButton.IsEnabled && !MoveUpButton.IsEnabled && !MoveDownButton.IsEnabled && !SandboxLaunchButton.IsEnabled,
                 "Empty account list exposes management actions.");
             Capture("accounts-empty");
             Check(fixture.Calls.Count == calls, "Account presentation issued a game or session command.");

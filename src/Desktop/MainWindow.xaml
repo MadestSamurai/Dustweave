@@ -137,7 +137,7 @@
      </Border>
      <Border Grid.Row="1" Style="{StaticResource Panel}" Padding="16,12">
       <Grid>
-       <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+       <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
        <Grid Margin="0,0,0,12"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="220"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
         <StackPanel Margin="0,0,12,0" VerticalAlignment="Center">
          <StackPanel Orientation="Horizontal"><TextBlock Text="{l:Tr account.list}" FontWeight="SemiBold" FontSize="16"/><TextBlock x:Name="CountText" Foreground="{DynamicResource MutedInk}" Margin="12,2,0,0" FontSize="12" ToolTip="{l:Tr account.local_data}"/></StackPanel>
@@ -171,6 +171,7 @@
        </Grid>
        <DockPanel Grid.Row="2" x:Name="ManageBar" Margin="0,12,0,0" LastChildFill="False">
 
+        <Button DockPanel.Dock="Right" x:Name="SandboxLaunchButton" Content="{l:Tr sandbox.launch}" Click="SandboxLaunch_Click" Margin="8,0,0,0" ToolTip="{l:Tr sandbox.launch_help}" ToolTipService.ShowOnDisabled="True"/>
         <Button DockPanel.Dock="Right" x:Name="RunButton" Content="{l:Tr account.check}" Click="Run_Click" ToolTip="{l:Tr account.check_help}" ToolTipService.ShowOnDisabled="True"/>
         <StackPanel Orientation="Horizontal" ToolTip="{l:Tr account.manage_help}">
          <Button x:Name="RenameAccountButton" Content="{l:Tr account.rename}" Click="Rename_Click" Margin="0,0,8,0"/>
@@ -179,11 +180,13 @@
          <Button x:Name="DeleteAccountButton" Content="{l:Tr account.remove}" Click="Delete_Click" Style="{StaticResource DangerButton}"/>
         </StackPanel>
        </DockPanel>
+       <TextBlock x:Name="SandboxHelpText" Grid.Row="3" Visibility="Collapsed" Text="{l:Tr sandbox.help}" FontSize="12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,12,0,0"/>
       </Grid>
      </Border>
     </Grid>
    </TabItem>
    <TabItem x:Name="ScheduleTab" Tag="{StaticResource Icon.Clock}" Header="{l:Tr nav.schedule}"/>
+   <TabItem x:Name="PluginsTab" Tag="{StaticResource Icon.Plugin}" Header="{l:Tr plugins.title}"/>
    <TabItem Visibility="Collapsed" x:Name="UpdatesTab" Tag="{StaticResource Icon.Link}" Header="{l:Tr nav.updates}"/>
    <TabItem x:Name="DiagnosticsTab" Tag="{StaticResource Icon.Diagnostics}" Header="{l:Tr nav.diagnostics}">
     <Border Background="{DynamicResource AppBackground}">
@@ -260,10 +263,10 @@
    <Button x:Name="VersionButton" Click="Updates_Click" Style="{StaticResource QuietButton}" HorizontalAlignment="Left" Margin="0,10,0,0" ToolTip="{l:Tr nav.updates}" AutomationProperties.Name="{l:Tr nav.updates}"><TextBlock x:Name="VersionText" Foreground="{DynamicResource MutedInk}" FontSize="11"/></Button>
   </StackPanel>
   <Grid x:Name="ActionFooter" Grid.Row="2" Grid.Column="1" Margin="24,0,24,16" MinHeight="36">
-   <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
    <TextBlock x:Name="ProgressText" Text="{l:Tr common.ready}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text,RelativeSource={RelativeSource Self}}" Margin="0,0,12,0"/>
-   <Button Grid.Column="1" x:Name="RunAccountsButton" Content="{l:Tr account.run_queue}" Click="RunAccounts_Click" Style="{StaticResource PrimaryButton}" ToolTip="{l:Tr account.run_queue_help}"/>
-   <Button Grid.Column="1" x:Name="StopButton" Content="{l:Tr common.stop_operation}" Click="Stop_Click" IsEnabled="False" Visibility="{Binding IsEnabled,RelativeSource={RelativeSource Self},Converter={StaticResource BooleanToVisibility}}"/>
+   <Button Grid.Column="1" x:Name="ExecutionModeButton" Content="{l:Tr parallel.mode_sequential}" Click="ExecutionMode_Click" Margin="0,0,8,0" ToolTip="{l:Tr parallel.settings}"/><Button Grid.Column="2" x:Name="RunAccountsButton" Content="{l:Tr account.run_queue}" Click="RunAccounts_Click" Style="{StaticResource PrimaryButton}" ToolTip="{l:Tr account.run_queue_help}"/>
+   <Button Grid.Column="2" x:Name="StopButton" Content="{l:Tr common.stop_operation}" Click="Stop_Click" IsEnabled="False" Visibility="{Binding IsEnabled,RelativeSource={RelativeSource Self},Converter={StaticResource BooleanToVisibility}}"/>
   </Grid>
  </Grid>
 </Window>

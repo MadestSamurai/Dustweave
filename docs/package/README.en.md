@@ -2,25 +2,35 @@
 
 Your daily routine, woven into one timeline.
 
-Windows x64 · A timeline for your daily tasks · 简体中文 / 繁體中文 / English
+**0.9.13 · Windows x64 · 简体中文 / 繁體中文 / English**
 
 | Package | Requirements |
 | --- | --- |
 | Portable | Includes the .NET 8 desktop runtime; extract and run |
 | Lite | Smaller download; requires .NET Desktop Runtime 8 x64 |
 
-Extract the entire folder and run Dustweave.exe. There is one application entry point. Keep the data, flows, connection, licenses and documentation alongside it; the EXE alone is not the complete distribution. The application does not start daily tasks automatically.
+## Get started
 
-One language setting controls the host and its nine integrated tools. Standalone tool language preferences remain unchanged. Light, dark and system appearance share the same layout.
+Extract the complete package into a new folder and run `Dustweave.exe`. Keep data, flows, connection, licenses and documentation alongside it. The EXE alone is not the complete distribution. Do not mix old and new program files. Tasks do not start automatically on first launch.
 
-Existing account and settings locations are retained. Close the old daily assistant before trying this build to avoid simultaneous configuration changes. Updating the interface does not require restarting the game. Follow the interface instructions to review unfinished operations. Offline checks have passed; real gameplay still needs validation during normal use.
+Close the previous Dustweave before upgrading. Saved accounts, settings, plugin registrations and history are reused without migration. Updating the host does not require restarting the game. Integrated tools follow the host language and appearance.
 
-Provided free by MadSamurai on Bilibili / MadestSamurai on GitHub. Version 0.9.1 uses a stable version number; the source repository remains private. Integrated tool licenses and sources are in licenses, docs/tools and THIRD_PARTY_NOTICES.md.
+## What's new
 
-Open Updates at the bottom left of the main window. Automatic checks and background downloads use bd2.madsam.work. Signed packages require your confirmation to restart while idle; updates do not interrupt a queue. Keep the complete extracted folder. This is an unofficial project; automation can carry account and operational risks, so decide whether to use it accordingly.
+- A Plugins page to import local ZIP packages, enable, disable, return to an earlier version and remove registered packages.
+- Integrity and compatibility checks before activation. Changes apply after restarting Dustweave; running tasks keep their current plugin version.
+- Three languages and light or dark appearance. One plugin package can be active at a time.
 
-Upgrading from an earlier version: extract the complete package into a new folder and launch `Dustweave.exe`. Existing accounts, settings and history are reused without data migration. Keep old and new program files in separate folders.
+Open Plugins, select Import plugin, choose the separately provided ZIP, review its source, import and enable it, then restart Dustweave when prompted. The host package does not include additional plugins. Install only trusted packages: integrity checks do not authenticate a publisher's signature.
 
-New in 0.9.0: run selected accounts from Accounts; choose a time, weekdays and fixed accounts in Schedules; read release notes once per version. Scheduled runs require a powered-on, awake computer and a signed-in Windows session, and are disabled by default.
+## Accounts, schedules and updates
 
-0.9.1: add, remove and drag to reorder scheduled account cards; themed startup notes and dialogs; signed delta updates with automatic full-package fallback. Version 0.9.0 first needs a full update. Use GitHub Releases for initial installation; domestic hosting serves in-app OTA only.
+Run multiple accounts from Accounts. Isolated execution requires the official Sandboxie-Plus installation. Avoid launching isolated instances during game updates. Scheduled tasks require a powered-on, awake computer and a signed-in Windows session, and are disabled by default.
+
+Updates at the bottom left offers checks and downloads. Domestic hosting serves in-app OTA only. Signed full or delta packages ask to restart while idle and never interrupt a queue. A locally delivered build may not yet be available through OTA.
+
+## Attribution and notes
+
+Provided free by **MadSamurai** on Bilibili / **MadestSamurai** on GitHub. The source repository remains private. Integrated tool licenses and sources are in `licenses`, `docs/tools` and `THIRD_PARTY_NOTICES.md`.
+
+This is an unofficial project. Automation can carry account and operational risks; decide whether to use it accordingly. Packaging includes offline verification. New plugin behavior in actual game tasks still needs validation during normal use.

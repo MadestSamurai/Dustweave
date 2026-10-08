@@ -95,6 +95,15 @@ static class HomeNavigationCases
         reset["Targets"]![0]!["Enabled"] = true;
         reset["Targets"]!.AsArray().Add(new JsonObject { ["Id"] = 9, ["Field"] = "_buttonCancel", ["Enabled"] = true });
         Check(DailyHomeDecision.Inspect(Frame(reset), policy).Kind == "blocked", "reset text with an enabled cancel never authorizes OK");
+        var background = Surface("MessagePopupUI", true, "_buttonOK", 200);
+        background["NativeContext"] = "billing_region_unavailable_ack_only";
+        Check(DailyHomeDecision.Inspect(Frame(background), policy).Action?["operation"]?.GetValue<string>() == "background_error_ack", "proven background timeout is acknowledged");
+        background["InputReady"] = false;
+        Check(DailyHomeDecision.Inspect(Frame(background), policy).Kind == "waiting", "background notification waits through animation");
+        background["InputReady"] = true;
+        background["NativeContext"] = "";
+        Check(DailyHomeDecision.Inspect(Frame(background), policy).Kind == "blocked", "unproven callback cannot authorize background acknowledgement");
+        background["NativeContext"] = "billing_region_unavailable_ack_only";
         int counter = 0;
         async Task Route(string name, JsonObject first, Action<Flow>? configure = null, bool expected = true, string? expectedKind = null)
         {
@@ -153,6 +162,8 @@ static class HomeNavigationCases
         await Route("multipage ad suppression and login notices", Frame(Surface("MenuUI"), ad), f => { int closed = 0; f.OnAction = a => { if (a["operation"]?.GetValue<string>() == "notice_suppress") f.Current["Surfaces"]![1]!["NoticeSuppression"] = "checked"; else if (++closed == 1) f.Current["Surfaces"]![1]!["Text"] = new JsonArray("second page"); else f.Current = Menu(); }; f.Inspect = () => Check(f.Actions.Count == 3, "one checkbox confirmation precedes two distinct notice pages"); });
         await Route("menu readiness regresses during settle", Menu(), f => { f.OnWait = () => { if (f.Time > .6 && f.Time < 1.2) f.Current = Frame(Surface("LoadingUI")); else if (f.Time >= 1.2) f.Current = Menu(); }; f.Inspect = () => Check(f.Time >= 3.2, "a startup loading interruption restarts menu settle"); });
         await Route("unknown confirmation receives no compatibility request", Frame(Surface("MessagePopupUI", true, "_buttonOK")), f => f.Inspect = () => Check(f.Actions.Count == 0 && f.Specials.Count == 0, "unknown startup confirm sends zero inputs"), false, "adapter");
+        await Route("background query failure clears then continues navigation", Frame(background), f => { f.OnAction = a => f.Current = a["operation"]?.GetValue<string>() == "background_error_ack" ? Field() : Menu(); f.Inspect = () => Check(f.Actions.Count == 2 && f.Actions[0]["operation"]?.GetValue<string>() == "background_error_ack", "one acknowledgement followed by normal menu entry"); });
+        await Route("unchanged background popup is never clicked twice", Frame(background), f => { f.OnAction = _ => { }; f.Inspect = () => Check(f.Actions.Count == 1, "no repeated acknowledgement for the same popup"); }, false, "adapter");
         await Route("issued page close with no progress is never retried", Frame(Surface("MailUI")), f => { f.OnAction = _ => { }; f.Inspect = () => Check(f.Actions.Count == 1, "no-progress startup close is a single command"); }, false, "adapter");
         await Route("uncertain native receipt is never replayed", Frame(Surface("MailUI")), f => { f.Pending = true; f.Inspect = () => Check(f.Actions.Count == 1, "pending startup input remains one submission"); }, false, "pending");
         await Route("reset during startup stops before new input", Field(), f => f.OnWait = () => f.Context["cycle"] = "tomorrow", false, "identity");

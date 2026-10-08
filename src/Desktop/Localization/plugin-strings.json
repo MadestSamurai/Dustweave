@@ -1,0 +1,227 @@
+{
+  "plugins.title": {
+    "zh-CN": "插件",
+    "zh-TW": "擴充套件",
+    "en-US": "Plugins"
+  },
+  "plugins.help": {
+    "zh-CN": "导入插件包即可扩展功能。与日常共用账号和连接；变更在重启 Dustweave 后生效，游戏可保持运行。",
+    "zh-TW": "匯入套件即可新增功能。與日常共用帳號和連線；變更在重新啟動 Dustweave 後生效，遊戲可保持執行。",
+    "en-US": "Import a package to add features. Plugins share accounts and connections. Restart Dustweave to apply changes; the game can stay open."
+  },
+  "plugins.import": {
+    "zh-CN": "导入插件…",
+    "zh-TW": "匯入擴充套件…",
+    "en-US": "Import plugin…"
+  },
+  "plugins.restart": {
+    "zh-CN": "重启 Dustweave 并应用",
+    "zh-TW": "重新啟動 Dustweave 並套用",
+    "en-US": "Restart Dustweave to apply"
+  },
+  "plugins.disable": {
+    "zh-CN": "停用插件",
+    "zh-TW": "停用擴充套件",
+    "en-US": "Disable plugin"
+  },
+  "plugins.empty": {
+    "zh-CN": "尚未安装插件。点击「导入插件」，或将 ZIP 插件包拖到这里。",
+    "zh-TW": "尚未安裝套件。點擊「匯入擴充套件」，或將 ZIP 檔拖到這裡。",
+    "en-US": "No plugins installed. Choose Import plugin or drop a plugin ZIP here."
+  },
+  "plugins.environment_override": {
+    "zh-CN": "本次由外部配置指定插件。请从正常入口重启以应用选择。",
+    "zh-TW": "本次由外部設定指定套件。請從正常入口重新啟動以套用選擇。",
+    "en-US": "An external configuration selects this session's plugin. Restart from the normal shortcut to apply your selection."
+  },
+  "plugins.pending": {
+    "zh-CN": "已保存变更。本次继续使用原版本，重启 Dustweave 后生效。",
+    "zh-TW": "已儲存變更。本次繼續使用原版本，重新啟動 Dustweave 後生效。",
+    "en-US": "Changes saved. This session keeps its current version until Dustweave restarts."
+  },
+  "plugins.stable": {
+    "zh-CN": "插件独立安装，不会被主程序更新覆盖。当前接口每次启用一个插件包。",
+    "zh-TW": "套件獨立安裝，不會被主程式更新覆蓋。目前介面每次啟用一個套件。",
+    "en-US": "Plugins survive app updates. The current interface supports one active package at a time."
+  },
+  "plugins.active": {
+    "zh-CN": "已启用",
+    "zh-TW": "已啟用",
+    "en-US": "Active"
+  },
+  "plugins.next_start": {
+    "zh-CN": "下次启动时启用",
+    "zh-TW": "下次啟動時啟用",
+    "en-US": "Active after restart"
+  },
+  "plugins.current_until_restart": {
+    "zh-CN": "本次仍在使用，重启后停用",
+    "zh-TW": "本次仍在使用，重新啟動後停用",
+    "en-US": "In use until restart"
+  },
+  "plugins.installed": {
+    "zh-CN": "已安装，未启用",
+    "zh-TW": "已安裝，未啟用",
+    "en-US": "Installed · inactive"
+  },
+  "plugins.unavailable": {
+    "zh-CN": "无法启用，请更新插件包",
+    "zh-TW": "無法啟用，請更新套件",
+    "en-US": "Unavailable · update this plugin"
+  },
+  "plugins.details": {
+    "zh-CN": "发布者（包内声明）：{0} · 适用主程序 {1} 至 {2}",
+    "zh-TW": "發行者（套件聲明）：{0} · 適用主程式 {1} 至 {2}",
+    "en-US": "Publisher (package claim): {0} · App versions {1} to {2}"
+  },
+  "plugins.rollback": {
+    "zh-CN": "回退到此版本",
+    "zh-TW": "還原至此版本",
+    "en-US": "Revert to this version"
+  },
+  "plugins.enable": {
+    "zh-CN": "启用此版本",
+    "zh-TW": "啟用此版本",
+    "en-US": "Enable this version"
+  },
+  "plugins.remove": {
+    "zh-CN": "移除",
+    "zh-TW": "移除",
+    "en-US": "Remove"
+  },
+  "plugins.local_active": {
+    "zh-CN": "本次从本地目录载入：{0} {1}。可导入新版插件包来接管管理。",
+    "zh-TW": "本次從本機目錄載入：{0} {1}。可匯入新版套件以納入管理。",
+    "en-US": "Loaded from a local folder: {0} {1}. Import a package to manage future versions here."
+  },
+  "plugins.checking": {
+    "zh-CN": "正在检查插件包…",
+    "zh-TW": "正在檢查擴充套件…",
+    "en-US": "Checking package…"
+  },
+  "plugins.trust": {
+    "zh-CN": "准备安装「{0}」{1}。\n发布者（包内声明）：{2}\n\n文件完整性已通过，但尚未验证发布者签名。插件可以执行本机代码，请仅安装可信来源。确认后将在独立进程试加载；通过后设为下次启动版本。",
+    "zh-TW": "準備安裝「{0}」{1}。\n發行者（套件聲明）：{2}\n\n檔案完整性已通過，但尚未驗證發行者簽章。套件可以執行本機程式碼，請僅安裝可信來源。確認後將在獨立處理程序試載入；通過後設為下次啟動版本。",
+    "en-US": "Install “{0}” {1}?\nPublisher (package claim): {2}\n\nFile integrity checks passed; publisher signatures are not verified yet. Plugins execute local code, so only install trusted packages. A separate process checks loading before activation on restart."
+  },
+  "plugins.activate_confirm": {
+    "zh-CN": "试加载所选版本，通过后在下次启动时替换当前插件。原版本保留，可随时回退。",
+    "zh-TW": "試載入選取版本，通過後在下次啟動時取代目前套件。原版本保留，可隨時還原。",
+    "en-US": "Check and activate this version on the next start? The previous version stays available for rollback."
+  },
+  "plugins.remove_confirm": {
+    "zh-CN": "从列表移除此版本？本次会话不受影响。文件暂时保留，避免影响仍在使用它的进程。",
+    "zh-TW": "從清單移除此版本？本次工作階段不受影響。檔案暫時保留，避免影響仍在使用它的處理程序。",
+    "en-US": "Remove this version from the list? This session is unchanged. Files are retained for processes still using them."
+  },
+  "plugins.probing": {
+    "zh-CN": "正在试加载并核对本机游戏接口，最多等待 90 秒，不连接游戏…",
+    "zh-TW": "正在試載入並核對本機遊戲介面，最多等待 90 秒，不連線遊戲…",
+    "en-US": "Checking loading and local game interfaces (up to 90 seconds). This does not connect to the game…"
+  },
+  "plugins.restart_confirm": {
+    "zh-CN": "重新打开 Dustweave 以应用插件变更？游戏无需重启，不会自动开始任务。",
+    "zh-TW": "重新開啟 Dustweave 以套用套件變更？遊戲無需重新啟動，不會自動開始任務。",
+    "en-US": "Restart Dustweave to apply changes? The game stays open. No tasks start automatically."
+  },
+  "plugins.failed": {
+    "zh-CN": "插件操作失败，原运行版本不变。详情已保存到诊断记录。",
+    "zh-TW": "套件操作失敗，原執行版本不變。詳情已儲存至診斷紀錄。",
+    "en-US": "Plugin operation failed. The running version is unchanged. Details were saved to diagnostics."
+  },
+  "plugins.invalid_state": {
+    "zh-CN": "插件安装记录无法读取，请检查诊断记录。",
+    "zh-TW": "無法讀取套件安裝紀錄，請檢查診斷紀錄。",
+    "en-US": "Cannot read the plugin registry. Check diagnostics."
+  },
+  "plugins.invalid_package": {
+    "zh-CN": "插件包格式不正确，请导入根目录包含 plugin.json 的完整 ZIP。",
+    "zh-TW": "套件格式不正確，請匯入根目錄包含 plugin.json 的完整 ZIP。",
+    "en-US": "Invalid package. Import a complete ZIP with plugin.json at its root."
+  },
+  "plugins.package_too_large": {
+    "zh-CN": "插件包超过大小或文件数量限制。",
+    "zh-TW": "套件超過大小或檔案數量限制。",
+    "en-US": "Package exceeds the size or file-count limit."
+  },
+  "plugins.unlisted_files": {
+    "zh-CN": "插件包含清单未登记的文件，请重新打包。",
+    "zh-TW": "套件包含清單未登記的檔案，請重新打包。",
+    "en-US": "Package contains files missing from its manifest. Rebuild it."
+  },
+  "plugins.missing": {
+    "zh-CN": "插件文件缺失，请重新导入。",
+    "zh-TW": "套件檔案遺失，請重新匯入。",
+    "en-US": "Plugin files are missing. Import the package again."
+  },
+  "plugins.invalid_manifest": {
+    "zh-CN": "插件清单无法读取，请重新打包。",
+    "zh-TW": "無法讀取套件清單，請重新打包。",
+    "en-US": "Cannot read the plugin manifest. Rebuild the package."
+  },
+  "plugins.invalid_hash": {
+    "zh-CN": "插件文件已改变或损坏，未启用。请重新导入完整包。",
+    "zh-TW": "套件檔案已變更或損毀，未啟用。請重新匯入完整套件。",
+    "en-US": "Plugin files changed or are damaged. Import an intact package."
+  },
+  "plugins.incompatible": {
+    "zh-CN": "插件接口不兼容，请使用匹配此版 Dustweave 的插件。",
+    "zh-TW": "套件介面不相容，請使用符合此版 Dustweave 的套件。",
+    "en-US": "Plugin API is incompatible. Use a package built for this Dustweave version."
+  },
+  "plugins.incompatible_runtime": {
+    "zh-CN": "插件运行环境不兼容。",
+    "zh-TW": "套件執行環境不相容。",
+    "en-US": "Plugin runtime is incompatible."
+  },
+  "plugins.incompatible_host": {
+    "zh-CN": "插件不支持此版 Dustweave，请更新插件或回退主程序。",
+    "zh-TW": "套件不支援此版 Dustweave，請更新套件或還原主程式。",
+    "en-US": "Plugin does not support this version. Update the plugin or revert the app."
+  },
+  "plugins.invalid_capabilities": {
+    "zh-CN": "插件功能清单无效，请重新打包。",
+    "zh-TW": "套件功能清單無效，請重新打包。",
+    "en-US": "Invalid plugin capability list. Rebuild the package."
+  },
+  "plugins.invalid_hook": {
+    "zh-CN": "插件连接组件清单无效，请重新打包。",
+    "zh-TW": "套件連線元件清單無效，請重新打包。",
+    "en-US": "Invalid connection component manifest. Rebuild the package."
+  },
+  "plugins.invalid_entrypoint": {
+    "zh-CN": "插件程序入口无效，请重新打包。",
+    "zh-TW": "套件程式入口無效，請重新打包。",
+    "en-US": "Invalid plugin entry point. Rebuild the package."
+  },
+  "plugins.changed": {
+    "zh-CN": "操作期间插件选择或文件已变化，请重新选择。",
+    "zh-TW": "操作期間套件選擇或檔案已變更，請重新選擇。",
+    "en-US": "Plugin selection or files changed during this operation. Select it again."
+  },
+  "plugins.probe_failed": {
+    "zh-CN": "插件试加载失败，未替换当前版本。详情在插件诊断记录中。",
+    "zh-TW": "套件試載入失敗，未取代目前版本。詳情在套件診斷紀錄中。",
+    "en-US": "Plugin load check failed. The selection is unchanged. See plugin diagnostics."
+  },
+  "plugins.probe_timeout": {
+    "zh-CN": "插件试加载超时，已结束检查进程；未替换当前版本。",
+    "zh-TW": "套件試載入逾時，已結束檢查處理程序；未取代目前版本。",
+    "en-US": "Plugin check timed out. The check process was stopped; the selection is unchanged."
+  },
+  "plugins.isolated_open": {
+    "zh-CN": "请先关闭独立账号窗口，再重启 Dustweave 应用变更。",
+    "zh-TW": "請先關閉獨立帳號視窗，再重新啟動 Dustweave 套用變更。",
+    "en-US": "Close isolated account windows before restarting Dustweave."
+  },
+  "plugins.tool_open": {
+    "zh-CN": "工具窗口尚未关闭，请先关闭它再重试。",
+    "zh-TW": "工具視窗尚未關閉，請先關閉它再重試。",
+    "en-US": "A tool window is still open. Close it and try again."
+  },
+  "plugins.client_missing": {
+    "zh-CN": "未找到本机游戏文件，无法检查插件连接组件。请先设置游戏路径。",
+    "zh-TW": "找不到本機遊戲檔案，無法檢查套件連線元件。請先設定遊戲路徑。",
+    "en-US": "Game files were not found. Set the game path before checking this plugin's connection component."
+  }
+}

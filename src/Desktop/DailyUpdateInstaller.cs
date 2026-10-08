@@ -10,6 +10,7 @@ internal static class DailyUpdateInstaller
     private static bool Acquire(Mutex mutex) { try { return mutex.WaitOne(0); } catch (AbandonedMutexException) { return true; } }
     internal static void ValidateJob(DailyUpdateJob job, string path)
     {
+        DailySandbox.RequireHost();
         if (job.Nonce.Length != 32 || !job.Nonce.All(Uri.IsHexDigit) || !Path.IsPathFullyQualified(job.Target) ||
             !Path.GetFileName(job.Target).Equals("Dustweave.exe", StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("updates.invalid_package");
@@ -111,6 +112,7 @@ internal static class DailyUpdateInstaller
                 mayRestart = true;
                 using (var activity = DailyToolControl.Acquire(DailyIdentity.DataRoot))
                 {
+                    if (DailySandbox.HasIsolatedWindows()) throw new IOException("updates.isolated_open");
                     if (DailyUpdateTransaction.Hash(job.Target) != job.OriginalSha256) throw new InvalidDataException("updates.target_changed");
                     var installed = DailyJson.TryRead<DailyUpdatePackage>(Path.Combine(target, "update-package.json")) ?? throw new InvalidDataException("updates.flavor_missing");
                     if (installed.Flavor != job.Asset.Flavor || DailyUpdates.VersionOf(installed.Version) >= DailyUpdates.VersionOf(job.Release.Version))
@@ -144,6 +146,7 @@ internal static class DailyUpdateInstaller
             if (!ownInstance) throw new IOException("updates.app_busy");
             using (var activity = DailyToolControl.Acquire(DailyIdentity.DataRoot))
             {
+                if (DailySandbox.HasIsolatedWindows()) throw new IOException("updates.isolated_open");
                 journal = DailyUpdateTransaction.Read(Path.Combine(attempt, "backup"), target);
                 if (journal.State != "completed") journal = DailyUpdateTransaction.Restore(journal);
                 File.Delete(markerPath);

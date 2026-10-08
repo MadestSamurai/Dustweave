@@ -65,10 +65,12 @@ public sealed class AccountSessions : IAccountSessions, IDisposable
                 current = DailyIdentity.MemberKey(SessionIdentity.GetMemberId(SessionRegistry.ReadCurrent("identity-read")) ?? "");
             }
             catch { }
+        if (DailySandbox.Current is {} binding) accounts = accounts.Where(a => a.AccountKey == binding.Account).ToList();
         return DailyAccountIdentity.Normalize(new(accounts, current, d.CurrentSlotNumber, d.CurrentSessionComplete, d.Status.GameRunning, d.Status.StarterRunning, d.HasRecovery));
     }
     private void RequireIdentity(int slot, string key)
     {
+        DailySandbox.RequireBoundAccount(key);
         var actual = DailyIdentity.MemberKey(SessionIdentity.GetMemberId(vault.LoadFixedSlot(slot)) ?? "");
         if (!DailyProfiles.ValidKey(key) || actual != key)
             throw new InvalidOperationException("这个槽位的账号已改变，请刷新列表后重新选择。");
@@ -77,10 +79,20 @@ public sealed class AccountSessions : IAccountSessions, IDisposable
     {
         Own();
         RequireIdentity(slot, expectedKey);
+        DailySandbox.RequireAccountAvailable(expectedKey);
+        var state = SessionRegistry.GetStatus();
+        if (state.GameRunning || state.StarterRunning)
+            throw new InvalidOperationException("请先关闭游戏和启动器，再切换登录账号。");
+        if (Dustweave.Accounts.SandboxProcessScope.CurrentBox.Length == 0)
+        {
+            service.SynchronizeCurrentSlot();
+            DailySandboxSessions.Collect(expectedKey, vault, Environment.ProcessPath!);
+        }
         service.UseSlotAndLaunch(slot);
     }
     public void Save(int slot, string name, string expectedKey)
     {
+        DailySandbox.RequireHost();
         Own();
         var plan = DailyAccountIdentity.SavePlan(Read());
         if (plan.SlotNumber != slot || plan.AccountKey != expectedKey)
@@ -92,18 +104,21 @@ public sealed class AccountSessions : IAccountSessions, IDisposable
     }
     public void Rename(int slot, string name, string expectedKey)
     {
+        DailySandbox.RequireHost();
         Own();
         RequireIdentity(slot, expectedKey);
         service.RenameSlot(slot, name);
     }
     public void Delete(int slot, string expectedKey)
     {
+        DailySandbox.RequireHost();
         Own();
         RequireIdentity(slot, expectedKey);
         service.DeleteSlot(slot);
     }
     public void LoginNew()
     {
+        DailySandbox.RequireHost();
         Own();
         var d = service.GetDashboard();
         if (d.CurrentSessionComplete)
@@ -113,6 +128,7 @@ public sealed class AccountSessions : IAccountSessions, IDisposable
     }
     public void Recover()
     {
+        DailySandbox.RequireHost();
         Own();
         service.RecoverPreviousSession(launch: false);
     }

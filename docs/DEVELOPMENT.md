@@ -79,3 +79,22 @@ Register notices in `src/Desktop/Localization/notices.json` with all three local
 
 The desktop `--smoke` check exercises every registered notice in all three languages, refreshes existing WPF bindings, and verifies nested messages, account names, paths and original diagnostics. Inspect `notice-languages.json`, `localization.json` and the `locale-*-notice.png` captures. New backend progress formats need a corresponding notice and a rendered sample in this check; adding translations must not alter game actions.
 Scheduling, release notes and OTA packaging are documented in [SCHEDULING_AND_UPDATES.md](SCHEDULING_AND_UPDATES.md).
+
+Game client updates follow [CLIENT_UPDATES.md](CLIENT_UPDATES.md). Recheck affected stages after a changed client/data release; do not add full compatibility scans to every launch.
+
+## Scoped verification / 按改动范围验证
+
+日常迭代先运行 `test.ps1 -Groups Startup,LoginIdentity` 等直接相关分组，不因修改一个组件而反复运行全套。`test.ps1` 不指定分组才运行全部回归；不存在的组名报错，不能出现零测试通过。
+
+`package.ps1` 默认 `-ValidationScope Auto`。账号、登录、隔离窗口范围的修改可复用最近一个完整验证包：比较完整源码输入、去除产品版本号后的构建设置、当前客户端代码指纹，以及已通过的组件验证记录。此时只运行账号相关回归和 Portable/Lite 成品启动、身份及边界检查，不重复准备和检查九个独立工具。`validation-scope.json` 明确记录本次范围、复用基线与改动文件，不冒充本次完整验证。
+
+连接、运行时、共享依赖、业务或未识别范围发生变化时，自动选择完整检查。可显式使用 `-ValidationScope Full`；强制 `Accounts` 但不满足复用条件时直接说明原因。更多组件后续可增加对应分组映射，不能用账号范围掩盖其他代码变更。
+
+Use targeted `test.ps1 -Groups ...` during iteration. Packaging defaults to automatic scope selection: account-only changes reuse unchanged component evidence from a completed full baseline, with targeted account regressions and both packaged host smoke checks. Unknown/shared changes require full validation. Recorded scope distinguishes newly executed checks from reused evidence.
+
+`Navigation` 范围覆盖本轮后台提示处理：运行相关导航、命令驱动、托管输入与背景界面回归，并重新编译当前客户端的日常执行组件，执行原生输入策略检查；未改动的观察配置与独立小游戏模块复用完整基线。范围匹配不足时仍回到完整验证。
+
+The Navigation scope rechecks navigation, command dispatch, managed inputs and passive UI, plus the current-client daily runtime compilation and native input policy. Unchanged independent tools reuse the recorded full baseline.
+
+`package.ps1 -ValidationScope Rewards` extends the navigation scope for pass/workflow and observation-schema changes. It runs affected workflow, binding, data, readiness and localization cases, recompiles the daily bridge and regenerates all daily evidence configurations. Independent tools reuse the unchanged full baseline. Unknown changes outside the declared boundary still require broader validation.
+The Rewards scope also covers event puzzle batches, hunting policy and per-account preferences. It rechecks preference migration and the desktop settings smoke in addition to workflow/command regressions; a changed binding contract is regenerated from the matching baseline client, then adapted and compiled against the current client. Independent tool payloads remain unchanged.

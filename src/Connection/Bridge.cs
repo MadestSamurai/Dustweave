@@ -148,7 +148,7 @@ namespace BD2Daily.Live {
      // Only click-like serialized references become targets; never arbitrary child objects.
      if(button==null&&link.Key.IndexOf("button",StringComparison.OrdinalIgnoreCase)<0&&!(u is BattlePauseUI&&link.Key=="_objectRun"))continue;
      bool enabled=button==null||(button.isActiveAndEnabled&&button.IsInteractable());
-     targets[go.GetInstanceID()]=go;choices.Add(new Target{Id=go.GetInstanceID(),Field=link.Key,Path=PathOf(go.transform),Enabled=enabled});
+     targets[go.GetInstanceID()]=go;choices.Add(new Target{Id=go.GetInstanceID(),Field=Evidence.Aliases.Original(link.Key),Path=PathOf(go.transform),Enabled=enabled});
     }
     foreach(var component in u.GetComponentsInChildren<MonoBehaviour>()){
      if(!(component is IPointerClickHandler)||!component.isActiveAndEnabled)continue;
@@ -159,7 +159,7 @@ namespace BD2Daily.Live {
     }
     sf.Targets=choices.ToArray();
     sf.Text=u.GetComponentsInChildren<TMPro.TMP_Text>().Where(t=>t!=null&&t.isActiveAndEnabled&&!string.IsNullOrWhiteSpace(t.text)).Select(t=>t.text).Concat(u.GetComponentsInChildren<Text>().Where(t=>t!=null&&t.isActiveAndEnabled&&!string.IsNullOrWhiteSpace(t.text)).Select(t=>t.text)).Take(80).Select(t=>t.Length>400?t.Substring(0,400):t).ToArray();
-    sf.NoticeSuppression=NoticeNative.Observe(u);sf.NativeContext=StoryNative.PopupContext(u);if(u is MessagePopupUI)sf.NativeContext=TalentSafetyNative.PopupContext(u);if(u is QuestBoardUI||u is QuestPopupUI)sf.NativeContext=WeeklyNpcNative.BoardContext(u);
+    sf.NoticeSuppression=NoticeNative.Observe(u);sf.NativeContext=StoryNative.PopupContext(u);if(u is MessagePopupUI){sf.NativeContext=TalentSafetyNative.PopupContext(u);if(sf.NativeContext.Length==0)sf.NativeContext=BackgroundErrorNative.Context(u);}if(u is QuestBoardUI||u is QuestPopupUI)sf.NativeContext=WeeklyNpcNative.BoardContext(u);
     surfaces.Add(sf);
    }
    surfaces.AddRange(StoryNative.Observe());surfaces.AddRange(StoryNative.ObserveScripts());
@@ -216,7 +216,7 @@ namespace BD2Daily.Live {
      var u=(c.Kind=="story_skip"||c.Kind=="story_advance")?null:uis[c.SurfaceId];
      if(c.Kind=="story_advance")StoryNative.Advance(c);
      else if(c.Kind=="story_skip")StoryNative.Skip(c);
-     else if(c.Kind=="talent_error_ack")TalentSafetyNative.Acknowledge(u);
+     else if(c.Kind=="talent_error_ack")TalentSafetyNative.Acknowledge(u);else if(c.Kind=="background_error_ack")BackgroundErrorNative.Acknowledge(u);
      else if(c.Kind=="notice_suppress")NoticeNative.Select(u);
      else if(LivePolicy.PowderKind(c.Kind)||c.Kind=="equipment_refine_batch")EquipmentToolsNative.Execute(c,u);
      else if(LivePolicy.ExtensionKind(c.Kind))PluginHost.Execute(c,u);
@@ -462,6 +462,41 @@ namespace BD2Daily.Live {
     }catch(Exception e){r.State="unknown";r.Error=e.GetBaseException().ToString();Save(r);}
    }catch(Exception e){Write(Path.Combine(live,"error.json"),new Frame{ProcessId=pid,ProcessStartTicks=start,Instance=instance,AtUtcTicks=DateTime.UtcNow.Ticks,Error=e.GetBaseException().ToString()});}
    finally{busy=false;}
+  }
+ }
+}
+namespace BD2Daily.Live {
+ internal static class BackgroundErrorNative {
+  const BindingFlags Flags=BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance|BindingFlags.DeclaredOnly;
+  // The platform wrapper only invokes its optional onClose delegate. Verify its IL,
+  // not an obfuscated method name, before treating a null callback as acknowledgement-only.
+  static bool EmptyClose(Delegate callback){
+   if(callback==null)return true;
+   foreach(var d in callback.GetInvocationList()){
+    if(d.Target==null||d.Method.DeclaringType.DeclaringType==null||d.Method.DeclaringType.DeclaringType.FullName!="gamfs.Platform.PlatformManager")return false;
+    var il=d.Method.GetMethodBody().GetILAsByteArray();
+    if(il.Length!=17||il[0]!=0x02||il[1]!=0x7b||il[6]!=0x25||il[7]!=0x2d||il[8]!=0x02||il[9]!=0x26||il[10]!=0x2a||il[11]!=0x6f||il[16]!=0x2a)return false;
+    var field=d.Method.Module.ResolveField(BitConverter.ToInt32(il,2));var invoke=d.Method.Module.ResolveMethod(BitConverter.ToInt32(il,12));
+    if(field.FieldType!=typeof(Action)||field.GetValue(d.Target)!=null||invoke.DeclaringType!=typeof(Action)||invoke.Name!="Invoke")return false;
+   }
+   return true;
+  }
+  internal static string Context(UIBase ui){
+   try{
+    if(!(ui is MessagePopupUI)||ui.gameObject.name!="ErrorMessagePopupUI(Clone)")return "";
+    var type=typeof(MessagePopupUI);var label=type.GetField("_textMessage",Flags).GetValue(ui) as TMPro.TMP_Text;
+    var cancel=type.GetField("_buttonCancel",Flags).GetValue(ui) as Button;
+    if(label==null||!BackgroundErrorPolicy.RegionLookupTimeout(new[]{label.text})||cancel!=null&&cancel.gameObject.activeInHierarchy)return "";
+    foreach(var field in type.GetFields(Flags).Where(f=>typeof(Delegate).IsAssignableFrom(f.FieldType)))
+     if(!EmptyClose(field.GetValue(ui) as Delegate))return "";
+    return BackgroundErrorPolicy.Context;
+   }catch{return "";}
+  }
+  internal static void Acknowledge(UIBase ui){
+   if(Context(ui)!=BackgroundErrorPolicy.Context)throw new InvalidOperationException("Background notification changed; no input sent");
+   var button=(Button)typeof(MessagePopupUI).GetField("_buttonOK",Flags).GetValue(ui);
+   if(button==null||!button.gameObject.activeInHierarchy||!button.interactable)throw new InvalidOperationException("Background notification is not ready");
+   ui.OnClickUI(button.gameObject);
   }
  }
 }

@@ -191,7 +191,25 @@ public sealed class DailyCoordinator
             {
                 if (snapshot.AccountKey.Length > 0 && snapshot.AccountKey != target.AccountKey)
                     throw DailyLoginFailure.Mismatch(Path.GetDirectoryName(runPath)!, runId, target, snapshot, sessions.Read(), startup: true);
-                if (sessions.Read().CurrentKey != target.AccountKey)
+                var startupCatalog = sessions.Read();
+                bool waitingCredentials = !startupCatalog.SessionComplete;
+                if (waitingCredentials)
+                {
+                    // Registry flags can be transient while the SDK refreshes its session.
+                    // Revoke input permission; keep observing within the existing deadline.
+                    Revoke();
+                    const string waitingMessage = "等待游戏完成登录或刷新凭据；恢复后会自动继续检查。";
+                    if (startupMessage != waitingMessage)
+                    {
+                        startupMessage = waitingMessage;
+                        Report("waiting_credentials", target.Name + " · " + waitingMessage);
+                    }
+                    if (now >= deadline)
+                        throw new TimeoutException("等待登录超时：本机登录信息仍不完整或自动登录未开启。请在游戏内完成登录后重试；已保存的账号未删除。此检查不能判定服务器令牌是否过期。");
+                    await Task.Delay(options.PollInterval, token);
+                    continue;
+                }
+                if (startupCatalog.CurrentKey != target.AccountKey)
                     throw new InvalidOperationException("本机登录会话发生变化，已停止自动进入。");
                 bool downloading = snapshot.Startup.DownloadVisible || snapshot.Startup.DownloadInProgress;
                 if (downloading && !waitingDownload)

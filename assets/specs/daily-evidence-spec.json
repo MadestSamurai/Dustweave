@@ -2,6 +2,15 @@
   "Extends": "weekly-evidence-spec.json",
   "Taps": [
     {
+      "Role": "rewards.puzzle",
+      "ResponseType": "Proto.Net.MiniPuzzleAllOpenResponse",
+      "RequestSite": "constructor",
+      "ResponseOwner": "ὡὥὨὥὩὡὠὤὠὧὬ",
+      "ResponseOwnerIncludesNested": true,
+      "ResponseViaParserHelper": true,
+      "Paths": ["BeforePuzzleInfo", "MiniPuzzleInfo", "MiniPuzzleWordReward", "OpenReward", "WordCompleteReward"]
+    },
+    {
       "Role": "monster.quick",
       "ResponseType": "Proto.Net.MonsterHuntQuickBattleResponse",
       "RequestSite": "constructor",
@@ -120,10 +129,8 @@
         "GainedExp"
       ],
       "ResponseViaParserHelper": true,
-      "ResponseMethods": [
-        "ὣὯὣὤὪὧὫὨὮὦὮ",
-        "ὮὣὪὫὧὣὧὪὩὭὮ"
-      ]
+      "ResponseNestedOnly": true,
+      "ResponseCount": 2
     },
     {
       "Role": "missions.event_query",
@@ -196,8 +203,7 @@
         "ὤὢὯὤὦὥὥὤὥὧὤ",
         "ὥὭὮὬὮὫὭὯὠὠὦ.SeasonInfo.Season",
         "ὥὭὮὬὮὫὭὯὠὠὦ.MonsterHuntId",
-        "ὣὪὧὨὤὡὭὫὡὮὫ",
-        "_buttonQuickBattle._goEnable.activeSelf"
+        "ὣὪὧὨὤὡὭὫὡὮὫ"
       ],
       "ValidatePaths": true
     },

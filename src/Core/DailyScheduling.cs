@@ -7,14 +7,17 @@ public sealed record DailySchedulePlan
     public bool Enabled { get; init; }
     public int Hour { get; init; } = 9;
     public int Minute { get; init; }
+    // Retained only to recognize and migrate schedules saved by 0.9.0/0.9.1.
     public int[] Days { get; init; } = [0, 1, 2, 3, 4, 5, 6];
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool IsDaily => Days is { Length: 7 } && Days.Order().SequenceEqual(Enumerable.Range(0, 7));
     public string[] Accounts { get; init; } = [];
     public DateTimeOffset SavedUtc { get; init; }
     public void Validate()
     {
-        if (Hour is < 0 or > 23 || Minute is < 0 or > 59 || Days.Length == 0 || Days.Any(d => d is < 0 or > 6) || Days.Distinct().Count() != Days.Length)
+        if (Hour is < 0 or > 23 || Minute is < 0 or > 59 || Days is null || Days.Length == 0 || Days.Any(d => d is < 0 or > 6) || Days.Distinct().Count() != Days.Length)
             throw new InvalidDataException("schedule.invalid_time");
-        if (Accounts.Length == 0 || Accounts.Any(k => !DailyProfiles.ValidKey(k)) || Accounts.Distinct().Count() != Accounts.Length)
+        if (Accounts is null || Accounts.Length == 0 || Accounts.Any(k => !DailyProfiles.ValidKey(k)) || Accounts.Distinct().Count() != Accounts.Length)
             throw new InvalidDataException("schedule.invalid_accounts");
     }
 }
@@ -30,6 +33,21 @@ public sealed class DailyScheduleStore(string root)
         return DailyJson.TryRead<DailySchedulePlan>(PlanPath) ?? throw new InvalidDataException("schedule.unreadable");
     }
     public void Save(DailySchedulePlan plan) => DailyJson.Write(PlanPath, plan);
+    public async Task<bool> MigrateToDailyAsync(Func<DailySchedulePlan, Task> register, DateTimeOffset now)
+    {
+        var previous = Read();
+        if (previous.IsDaily) return false;
+        var daily = previous with { Days = [0, 1, 2, 3, 4, 5, 6], SavedUtc = now };
+        // A crash or registration failure leaves the schedule disabled, without changing account order.
+        Save(daily with { Enabled = false });
+        if (daily.Enabled)
+        {
+            daily.Validate();
+            await register(daily);
+        }
+        Save(daily);
+        return true;
+    }
     public DailyScheduleRun? Last => DailyJson.TryRead<DailyScheduleRun>(Path.Combine(root, "schedule-run.json"));
     public void Record(DailyScheduleRun run) => DailyJson.Write(Path.Combine(root, "schedule-run.json"), run);
     public bool IsClaimed(DateTimeOffset occurrence) => File.Exists(ClaimPath(occurrence));

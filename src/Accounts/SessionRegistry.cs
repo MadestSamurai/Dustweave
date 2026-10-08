@@ -377,7 +377,7 @@ internal static class SessionRegistry
     {
         try
         {
-            Process[] processes = Process.GetProcessesByName(processName);
+            Process[] processes = SandboxProcessScope.Find(processName);
             try
             {
                 return processes.Length > 0;

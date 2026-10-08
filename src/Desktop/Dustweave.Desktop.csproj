@@ -29,6 +29,6 @@
     <ProjectReference Include="../../standalone/bd2-secret-vision/desktop/BD2SecretVision.Desktop.csproj" Aliases="toolBD2SecretVision" />
     <ProjectReference Include="../../standalone/bd2-fiend-hunter/desktop/BD2FiendHunter.Desktop.csproj" Aliases="toolBD2FiendHunter" />
   </ItemGroup>
-  <ItemGroup><EmbeddedResource Include="Localization/strings.json" LogicalName="Dustweave.UI.strings.json" /><EmbeddedResource Include="Localization/runtime.json" LogicalName="Dustweave.UI.runtime.json" /><EmbeddedResource Include="Localization/notices.json" LogicalName="Dustweave.UI.notices.json" /><EmbeddedResource Include="Localization/releases.json" LogicalName="Dustweave.UI.releases.json" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="Localization/plugin-strings.json" LogicalName="Dustweave.UI.plugin-strings.json" /><EmbeddedResource Include="Localization/strings.json" LogicalName="Dustweave.UI.strings.json" /><EmbeddedResource Include="Localization/runtime.json" LogicalName="Dustweave.UI.runtime.json" /><EmbeddedResource Include="Localization/notices.json" LogicalName="Dustweave.UI.notices.json" /><EmbeddedResource Include="Localization/releases.json" LogicalName="Dustweave.UI.releases.json" /></ItemGroup>
   <ItemGroup><Using Include="BD2Daily" /></ItemGroup>
 </Project>

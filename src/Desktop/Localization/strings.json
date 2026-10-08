@@ -1380,9 +1380,9 @@
     "en-US": "Hunting chapter"
   },
   "prefs.hunt_note": {
-    "zh-CN": "每天先刷一次普通狩猎，剩余免费米饭按优先级使用。",
-    "zh-TW": "每天先刷一次普通狩獵，剩餘免費白飯依優先順序使用。",
-    "en-US": "Complete a chapter hunt each day, then spend remaining free rice by priority."
+    "zh-CN": "免费米饭直接按优先级批量使用，不再先刷一次普通狩猎。",
+    "zh-TW": "免費白飯直接依優先順序批量使用，不再先刷一次普通狩獵。",
+    "en-US": "Spend free rice in one batch following your priorities, without a preliminary chapter hunt."
   },
   "prefs.gold": {
     "zh-CN": "金币加成日刷金币",
@@ -1635,9 +1635,9 @@
     "en-US": "Trading plan"
   },
   "prefs.events": {
-    "zh-CN": "活动答题、骰子与领奖",
-    "zh-TW": "活動答題、骰子與領獎",
-    "en-US": "Event quiz, dice and rewards"
+    "zh-CN": "活动游戏与领奖",
+    "zh-TW": "活動遊戲與領獎",
+    "en-US": "Event games and rewards"
   },
   "prefs.events_hint": {
     "zh-CN": "自动检查当前活动；批量兑换，整页完成后继续下一页",
@@ -2775,54 +2775,19 @@
     "zh-CN": "下一次执行"
   },
   "schedule.enabled": {
-    "zh-TW": "啟用定時執行",
-    "en-US": "Enable scheduled runs",
-    "zh-CN": "启用定时执行"
+    "zh-TW": "啟用每天定時執行",
+    "en-US": "Enable daily schedule",
+    "zh-CN": "启用每天定时执行"
   },
   "schedule.time": {
-    "zh-TW": "開始時間",
-    "en-US": "Start time",
-    "zh-CN": "开始时间"
-  },
-  "schedule.day0": {
-    "zh-TW": "週日",
-    "en-US": "Sun",
-    "zh-CN": "周日"
-  },
-  "schedule.day1": {
-    "zh-TW": "週一",
-    "en-US": "Mon",
-    "zh-CN": "周一"
-  },
-  "schedule.day2": {
-    "zh-TW": "週二",
-    "en-US": "Tue",
-    "zh-CN": "周二"
-  },
-  "schedule.day3": {
-    "zh-TW": "週三",
-    "en-US": "Wed",
-    "zh-CN": "周三"
-  },
-  "schedule.day4": {
-    "zh-TW": "週四",
-    "en-US": "Thu",
-    "zh-CN": "周四"
-  },
-  "schedule.day5": {
-    "zh-TW": "週五",
-    "en-US": "Fri",
-    "zh-CN": "周五"
-  },
-  "schedule.day6": {
-    "zh-TW": "週六",
-    "en-US": "Sat",
-    "zh-CN": "周六"
+    "zh-TW": "每天開始時間",
+    "en-US": "Daily start time",
+    "zh-CN": "每天开始时间"
   },
   "schedule.requirements": {
-    "zh-TW": "依本機時區執行。電腦須開機、保持喚醒且已登入 Windows；軟體關閉時會自動啟動。忙碌或短暫錯過時最多延後 15 分鐘，之後略過本次，等待下次計畫。不會喚醒關機的電腦，也不會自動重複中斷的佇列。",
-    "en-US": "Uses this computer’s time zone. Keep the computer awake and signed in to Windows. Dustweave starts if closed. A busy or missed run may wait up to 15 minutes; later runs are skipped until the next scheduled day. Interrupted queues are not automatically repeated.",
-    "zh-CN": "按本机时区执行。电脑需开机、保持唤醒且已登录 Windows；软件关闭时会自动启动。忙碌或短暂错过时最多延后 15 分钟，之后跳过本次，等待下次计划。不会唤醒关机的电脑，也不会自动重复中断的队列。"
+    "zh-TW": "每天依本機時區執行。電腦須開機、保持喚醒且已登入 Windows；軟體關閉時會自動啟動。忙碌或短暫錯過時最多延後 15 分鐘，超過後等到隔天。不會自動重複中斷的佇列。",
+    "en-US": "Runs every day in the local time zone. Keep the computer awake and signed in to Windows. Dustweave starts if closed. A busy or missed run may wait up to 15 minutes, then waits until tomorrow. Interrupted queues are not automatically repeated.",
+    "zh-CN": "每天按本机时区执行。电脑需开机、保持唤醒且已登录 Windows；软件关闭时会自动启动。忙碌或短暂错过时最多延后 15 分钟，超过后等到第二天。不会自动重复中断的队列。"
   },
   "schedule.accounts": {
     "zh-TW": "執行帳號",
@@ -2860,9 +2825,9 @@
     "zh-CN": "上次：{0} · {1}"
   },
   "schedule.invalid_time": {
-    "zh-TW": "請輸入 00:00–23:59 的時間，並至少選擇一天。",
-    "en-US": "Enter a time from 00:00 to 23:59 and select at least one day.",
-    "zh-CN": "请输入 00:00–23:59 的时间，并至少选择一天。"
+    "zh-TW": "請輸入 00:00–23:59 的時間。",
+    "en-US": "Enter a time from 00:00 to 23:59.",
+    "zh-CN": "请输入 00:00–23:59 的时间。"
   },
   "schedule.invalid_accounts": {
     "zh-TW": "請至少選擇一個有效帳號。",
@@ -3139,15 +3104,554 @@
     "zh-TW": "確認",
     "en-US": "Confirm"
   },
-  "schedule.add_account": { "zh-CN": "添加账号", "zh-TW": "新增帳號", "en-US": "Add accounts" },
-  "schedule.remove_account": { "zh-CN": "移除 {0}", "zh-TW": "移除 {0}", "en-US": "Remove {0}" },
-  "schedule.add_help": { "zh-CN": "添加要定时执行的账号。", "zh-TW": "新增要定時執行的帳號。", "en-US": "Add the accounts for this schedule." },
-  "schedule.all_added": { "zh-CN": "所有可用账号均已加入", "zh-TW": "所有可用帳號均已加入", "en-US": "All available accounts are added" },
-  "schedule.search_accounts": { "zh-CN": "搜索账号名称或 ID", "zh-TW": "搜尋帳號名稱或 ID", "en-US": "Search account names or IDs" },
-  "schedule.search_empty": { "zh-CN": "没有匹配的可添加账号。", "zh-TW": "沒有符合的可新增帳號。", "en-US": "No matching accounts to add." },
-  "schedule.add_selected": { "zh-CN": "添加所选（{0}）", "zh-TW": "新增所選（{0}）", "en-US": "Add selected ({0})" },
-  "schedule.account_unavailable": { "zh-CN": "账号不可用，请重新选择", "zh-TW": "帳號無法使用，請重新選擇", "en-US": "Account unavailable; select again" },
-  "schedule.account_slot": { "zh-CN": "账号位置 {0}", "zh-TW": "帳號位置 {0}", "en-US": "Account slot {0}" },
-  "schedule.reorder_help": { "zh-CN": "拖动更改执行顺序；也可聚焦卡片后按 Ctrl + ← / →。", "zh-TW": "拖曳變更執行順序；也可聚焦卡片後按 Ctrl + ← / →。", "en-US": "Drag to reorder, or focus this card and press Ctrl + Left / Right." },
-  "schedule.reorder_account": { "zh-CN": "{0}，可拖动排序", "zh-TW": "{0}，可拖曳排序", "en-US": "{0}, drag to reorder" }
+  "schedule.add_account": {
+    "zh-CN": "添加账号",
+    "zh-TW": "新增帳號",
+    "en-US": "Add accounts"
+  },
+  "schedule.remove_account": {
+    "zh-CN": "移除 {0}",
+    "zh-TW": "移除 {0}",
+    "en-US": "Remove {0}"
+  },
+  "schedule.add_help": {
+    "zh-CN": "添加要定时执行的账号。",
+    "zh-TW": "新增要定時執行的帳號。",
+    "en-US": "Add the accounts for this schedule."
+  },
+  "schedule.all_added": {
+    "zh-CN": "所有可用账号均已加入",
+    "zh-TW": "所有可用帳號均已加入",
+    "en-US": "All available accounts are added"
+  },
+  "schedule.search_accounts": {
+    "zh-CN": "搜索账号名称或 ID",
+    "zh-TW": "搜尋帳號名稱或 ID",
+    "en-US": "Search account names or IDs"
+  },
+  "schedule.search_empty": {
+    "zh-CN": "没有匹配的可添加账号。",
+    "zh-TW": "沒有符合的可新增帳號。",
+    "en-US": "No matching accounts to add."
+  },
+  "schedule.add_selected": {
+    "zh-CN": "添加所选（{0}）",
+    "zh-TW": "新增所選（{0}）",
+    "en-US": "Add selected ({0})"
+  },
+  "schedule.account_unavailable": {
+    "zh-CN": "账号不可用，请重新选择",
+    "zh-TW": "帳號無法使用，請重新選擇",
+    "en-US": "Account unavailable; select again"
+  },
+  "schedule.account_slot": {
+    "zh-CN": "账号位置 {0}",
+    "zh-TW": "帳號位置 {0}",
+    "en-US": "Account slot {0}"
+  },
+  "schedule.reorder_help": {
+    "zh-CN": "拖动更改执行顺序；也可聚焦卡片后按 Ctrl + ← / →。",
+    "zh-TW": "拖曳變更執行順序；也可聚焦卡片後按 Ctrl + ← / →。",
+    "en-US": "Drag to reorder, or focus this card and press Ctrl + Left / Right."
+  },
+  "schedule.reorder_account": {
+    "zh-CN": "{0}，可拖动排序",
+    "zh-TW": "{0}，可拖曳排序",
+    "en-US": "{0}, drag to reorder"
+  },
+  "schedule.migrated_daily": {
+    "zh-CN": "旧计划已改为每天执行，原时间和账号顺序保留。",
+    "zh-TW": "舊計畫已改為每天執行，保留原時間與帳號順序。",
+    "en-US": "The previous schedule now runs every day. Its time and account order are unchanged."
+  },
+  "sandbox.launch": {
+    "zh-CN": "隔离启动",
+    "zh-TW": "隔離啟動",
+    "en-US": "Open isolated"
+  },
+  "sandbox.launch_help": {
+    "zh-CN": "为当前选中账号打开独立的游戏和 Dustweave 窗口。需要已安装 Sandboxie-Plus。",
+    "zh-TW": "為目前選取帳號開啟獨立的遊戲和 Dustweave 視窗。需要已安裝 Sandboxie-Plus。",
+    "en-US": "Open a separate game and Dustweave window for the highlighted account. Requires Sandboxie-Plus."
+  },
+  "sandbox.help": {
+    "zh-CN": "多开实验功能：选中一个账号后隔离启动，每个窗口独立执行。请勿让同一账号同时登录多个实例。",
+    "zh-TW": "多開實驗功能：選取一個帳號後隔離啟動，每個視窗獨立執行。請勿讓同一帳號同時登入多個執行個體。",
+    "en-US": "Experimental multi-instance mode: highlight an account and open it in isolation. Each window runs independently. Use different accounts for simultaneous sessions."
+  },
+  "sandbox.bound_help": {
+    "zh-CN": "此窗口仅操作绑定账号。关闭或停止此窗口不会停止其他实例；账号管理、定时执行和软件更新请使用普通主窗口。",
+    "zh-TW": "此視窗僅操作綁定帳號。關閉或停止此視窗不會停止其他執行個體；帳號管理、排程與軟體更新請使用一般主視窗。",
+    "en-US": "This window controls its bound account only. Closing or stopping it does not stop other instances. Manage accounts, schedules and updates in the main window."
+  },
+  "sandbox.window_title": {
+    "zh-CN": "Dustweave · {0} · 隔离实例",
+    "zh-TW": "Dustweave · {0} · 隔離執行個體",
+    "en-US": "Dustweave · {0} · Isolated instance"
+  },
+  "sandbox.opened": {
+    "zh-CN": "已打开 {0} 的独立窗口；登录检查结果会显示在该窗口。",
+    "zh-TW": "已開啟 {0} 的獨立視窗；登入檢查結果會顯示在該視窗。",
+    "en-US": "Opened the separate window for {0}. Its login check result will appear there."
+  },
+  "sandbox.host_only": {
+    "zh-CN": "请在普通主窗口管理账号、定时执行和软件更新。",
+    "zh-TW": "請在一般主視窗管理帳號、排程與軟體更新。",
+    "en-US": "Manage accounts, schedules and updates in the main window."
+  },
+  "sandbox.missing": {
+    "zh-CN": "尚未安装 Sandboxie-Plus，请先完成它的服务和驱动安装。",
+    "zh-TW": "尚未安裝 Sandboxie-Plus，請先完成它的服務和驅動安裝。",
+    "en-US": "Sandboxie-Plus is not installed. Install its service and driver first."
+  },
+  "sandbox.preparing": {
+    "zh-CN": "准备独立账号空间…",
+    "zh-TW": "準備獨立帳號空間…",
+    "en-US": "Preparing the isolated account space…"
+  },
+  "sandbox.duplicate": {
+    "zh-CN": "这个账号正在普通游戏实例中运行，请先关闭该实例，避免同一账号重复登录。",
+    "zh-TW": "這個帳號正在一般遊戲執行個體中執行，請先關閉該執行個體，避免同一帳號重複登入。",
+    "en-US": "This account is already running outside isolation. Close that game first to avoid signing into the same account twice."
+  },
+  "sandbox.bound_only": {
+    "zh-CN": "此窗口只操作已绑定的隔离账号。",
+    "zh-TW": "此視窗只操作已綁定的隔離帳號。",
+    "en-US": "This window can only operate its bound account."
+  },
+  "sandbox.account_changed": {
+    "zh-CN": "所选账号已经改变，请刷新后重试。",
+    "zh-TW": "所選帳號已經改變，請重新整理後重試。",
+    "en-US": "The selected account has changed. Refresh the list and try again."
+  },
+  "sandbox.foreign": {
+    "zh-CN": "同名沙箱不是由此账号登记的，未修改它。",
+    "zh-TW": "同名沙箱不是由此帳號登記的，未修改它。",
+    "en-US": "A sandbox with this name belongs to a different registration. It was left unchanged."
+  },
+  "sandbox.moved": {
+    "zh-CN": "隔离目录已被修改，请先检查 Sandboxie 设置。",
+    "zh-TW": "隔離目錄已被修改，請先檢查 Sandboxie 設定。",
+    "en-US": "The isolation directory has changed. Check its Sandboxie settings first."
+  },
+  "sandbox.opening": {
+    "zh-CN": "正在打开独立窗口…",
+    "zh-TW": "正在開啟獨立視窗…",
+    "en-US": "Opening the isolated window…"
+  },
+  "sandbox.missing_binding": {
+    "zh-CN": "隔离窗口的账号绑定缺失，请从普通主窗口重新打开。",
+    "zh-TW": "隔離視窗的帳號綁定缺失，請從一般主視窗重新開啟。",
+    "en-US": "The isolated account binding is missing. Reopen it from the main window."
+  },
+  "sandbox.running_isolated": {
+    "zh-CN": "这个账号已在隔离窗口运行，请先关闭对应游戏，避免同一账号重复登录。",
+    "zh-TW": "這個帳號已在隔離視窗執行，請先關閉對應遊戲，避免同一帳號重複登入。",
+    "en-US": "This account is already running in isolation. Close that game before signing in elsewhere."
+  },
+  "sandbox.setup_incomplete": {
+    "zh-CN": "隔离空间尚未配置完整，但仍有程序运行，请先关闭该空间中的程序。",
+    "zh-TW": "隔離空間尚未設定完整，但仍有程式執行，請先關閉該空間中的程式。",
+    "en-US": "Setup is incomplete while programs are still running in this instance. Close those programs first."
+  },
+  "sandbox.request_invalid": {
+    "zh-CN": "隔离实例请求不完整。",
+    "zh-TW": "隔離執行個體請求不完整。",
+    "en-US": "The isolated launch request is incomplete."
+  },
+  "sandbox.path_invalid": {
+    "zh-CN": "游戏路径不符合预期。",
+    "zh-TW": "遊戲路徑不符合預期。",
+    "en-US": "The game path is not valid."
+  },
+  "sandbox.request_expired": {
+    "zh-CN": "隔离启动请求已过期，请从主窗口重新打开。",
+    "zh-TW": "隔離啟動請求已過期，請從主視窗重新開啟。",
+    "en-US": "The isolated launch request has expired. Reopen it from the main window."
+  },
+  "sandbox.request_unreadable": {
+    "zh-CN": "隔离启动请求无法读取。",
+    "zh-TW": "隔離啟動請求無法讀取。",
+    "en-US": "The isolated launch request could not be read."
+  },
+  "sandbox.bound_elsewhere": {
+    "zh-CN": "隔离空间已绑定其他账号。",
+    "zh-TW": "隔離空間已綁定其他帳號。",
+    "en-US": "This instance is bound to another account."
+  },
+  "sandbox.slot_changed": {
+    "zh-CN": "账号槽位已变化，未写入登录信息。",
+    "zh-TW": "帳號位置已變更，未寫入登入資訊。",
+    "en-US": "The saved account has changed. Sign-in information was not written."
+  },
+  "sandbox.multiple_games": {
+    "zh-CN": "同一隔离空间中存在多个游戏，请保留一个。",
+    "zh-TW": "同一隔離空間中存在多個遊戲，請保留一個。",
+    "en-US": "More than one game is running in this isolated instance. Keep one game open."
+  },
+  "sandbox.running_mismatch": {
+    "zh-CN": "运行中游戏的账号不一致，未改写会话。",
+    "zh-TW": "執行中遊戲的帳號不一致，未改寫登入狀態。",
+    "en-US": "The running game has a different account. Its session was not changed."
+  },
+  "sandbox.pending_launcher": {
+    "zh-CN": "仍有启动器登录请求，已停止隔离启动。",
+    "zh-TW": "仍有啟動器登入請求，已停止隔離啟動。",
+    "en-US": "A launcher sign-in request is pending. Isolated launch was stopped."
+  },
+  "sandbox.starting": {
+    "zh-CN": "此隔离实例正在启动，请稍候。",
+    "zh-TW": "此隔離執行個體正在啟動，請稍候。",
+    "en-US": "This isolated instance is already starting. Please wait."
+  },
+  "sandbox.scope_mismatch": {
+    "zh-CN": "当前进程不在指定的隔离实例内，未修改账号或启动游戏。",
+    "zh-TW": "目前程式不在指定的隔離執行個體內，未修改帳號或啟動遊戲。",
+    "en-US": "The process is outside the required instance. No account was changed and no game was launched."
+  },
+  "sandbox.driver_failed": {
+    "zh-CN": "已安装 Sandboxie，但无法读取隔离状态，请检查它的服务是否运行。",
+    "zh-TW": "已安裝 Sandboxie，但無法讀取隔離狀態，請檢查它的服務是否執行。",
+    "en-US": "Sandboxie is installed, but its isolation status cannot be read. Check that its service is running."
+  },
+  "sandbox.not_started": {
+    "zh-CN": "隔离实例未启动。",
+    "zh-TW": "隔離執行個體未啟動。",
+    "en-US": "The isolated instance did not start."
+  },
+  "sandbox.child_mismatch": {
+    "zh-CN": "启动后的进程不属于当前隔离实例，已停止后续操作。",
+    "zh-TW": "啟動後的程式不屬於目前隔離執行個體，已停止後續操作。",
+    "en-US": "The launched process is outside this instance. Further actions were stopped."
+  },
+  "sandbox.window_failed": {
+    "zh-CN": "隔离窗口未启动。",
+    "zh-TW": "隔離視窗未啟動。",
+    "en-US": "The isolated window did not start."
+  },
+  "sandbox.resume_mismatch": {
+    "zh-CN": "当前登录账号与接续队列不一致，未开始执行。",
+    "zh-TW": "目前登入帳號與接續佇列不一致，未開始執行。",
+    "en-US": "The signed-in account does not match the queue to resume. Nothing was started."
+  },
+  "updates.isolated_open": {
+    "zh-CN": "请先关闭其他隔离窗口，再安装更新；游戏可以保持运行。",
+    "zh-TW": "請先關閉其他隔離視窗，再安裝更新；遊戲可以保持執行。",
+    "en-US": "Close the other isolated Dustweave windows before installing the update. Games can stay open."
+  },
+  "parallel.mode_sequential": {
+    "zh-TW": "依次執行 ▾",
+    "en-US": "Sequential ▾",
+    "zh-CN": "依次运行 ▾"
+  },
+  "parallel.mode_parallel": {
+    "zh-TW": "同時執行 ▾",
+    "en-US": "Parallel ▾",
+    "zh-CN": "同时运行 ▾"
+  },
+  "parallel.settings": {
+    "zh-TW": "帳號執行方式",
+    "en-US": "Account execution",
+    "zh-CN": "账号执行方式"
+  },
+  "parallel.enabled": {
+    "zh-TW": "同時執行多個帳號（實驗功能）",
+    "en-US": "Run accounts in parallel (experimental)",
+    "zh-CN": "同时运行多个账号（实验功能）"
+  },
+  "parallel.maximum": {
+    "zh-TW": "最多同時執行",
+    "en-US": "Concurrent accounts",
+    "zh-CN": "最多同时执行"
+  },
+  "parallel.close_game": {
+    "zh-TW": "完成後關閉本次啟動的遊戲",
+    "en-US": "Close games started by this run on completion",
+    "zh-CN": "完成后关闭本次启动的游戏"
+  },
+  "parallel.setup_help": {
+    "zh-TW": "首次需要安裝官方 Sandboxie-Plus，無需手動設定。預設同時執行 2 個帳號；3–4 個尚未實機驗證。暫停會保留該帳號的執行位置，其他帳號繼續。維護期間請勿開始執行。",
+    "en-US": "Install official Sandboxie-Plus once; no manual sandbox setup is needed. Default: 2 concurrent accounts. 3–4 are not live-tested. Pausing holds that account's place while others continue. Do not start during game maintenance.",
+    "zh-CN": "首次需要安装官方 Sandboxie-Plus，无需手动配置。默认同时执行 2 个账号；3–4 个尚未实机验证。暂停会保留该账号的运行位置，其他账号继续。维护期间请勿开始执行。"
+  },
+  "parallel.overview_help": {
+    "zh-TW": "各帳號獨立執行。展開步驟查看目前環節；暫停會等待目前操作安全停止。",
+    "en-US": "Accounts run independently. Expand steps to see progress. Pause waits for the current operation to stop safely.",
+    "zh-CN": "各账号独立执行。展开步骤查看当前环节；暂停会等待当前操作安全停下。"
+  },
+  "parallel.summary": {
+    "zh-TW": "已結束 {0} / {1} 個帳號 · 最多同時執行 {2} 個",
+    "en-US": "{0} / {1} accounts finished · Up to {2} at once",
+    "zh-CN": "已结束 {0} / {1} 个账号 · 最多同时执行 {2} 个"
+  },
+  "parallel.pause_all": {
+    "zh-TW": "全部暫停",
+    "en-US": "Pause all",
+    "zh-CN": "全部暂停"
+  },
+  "parallel.resume_all": {
+    "zh-TW": "繼續佇列",
+    "en-US": "Continue queue",
+    "zh-CN": "继续队列"
+  },
+  "parallel.stop_all": {
+    "zh-TW": "停止佇列",
+    "en-US": "Stop queue",
+    "zh-CN": "停止队列"
+  },
+  "parallel.back": {
+    "zh-TW": "選擇帳號",
+    "en-US": "Choose accounts",
+    "zh-CN": "选择账号"
+  },
+  "parallel.pause": {
+    "zh-TW": "暫停",
+    "en-US": "Pause",
+    "zh-CN": "暂停"
+  },
+  "parallel.resume": {
+    "zh-TW": "繼續",
+    "en-US": "Continue",
+    "zh-CN": "继续"
+  },
+  "parallel.stop": {
+    "zh-TW": "停止",
+    "en-US": "Stop",
+    "zh-CN": "停止"
+  },
+  "parallel.game": {
+    "zh-TW": "查看遊戲",
+    "en-US": "Show game",
+    "zh-CN": "查看游戏"
+  },
+  "parallel.details": {
+    "zh-TW": "展開步驟",
+    "en-US": "Show steps",
+    "zh-CN": "展开步骤"
+  },
+  "parallel.hide_details": {
+    "zh-TW": "收起步驟",
+    "en-US": "Hide steps",
+    "zh-CN": "收起步骤"
+  },
+  "parallel.no_steps": {
+    "zh-TW": "尚未開始日常步驟。",
+    "en-US": "Daily steps have not started yet.",
+    "zh-CN": "尚未开始日常步骤。"
+  },
+  "parallel.connecting": {
+    "zh-TW": "正在連線並核對帳號…",
+    "en-US": "Connecting and checking account…",
+    "zh-CN": "正在连接并核对账号…"
+  },
+  "parallel.paused": {
+    "zh-TW": "已暫停，保留目前遊戲與原佇列。",
+    "en-US": "Paused. The game and original queue are retained.",
+    "zh-CN": "已暂停，保留当前游戏与原队列。"
+  },
+  "parallel.closing": {
+    "zh-TW": "任務完成，正在正常關閉本次啟動的遊戲。",
+    "en-US": "Tasks finished. Closing the game started by this run.",
+    "zh-CN": "任务完成，正在正常关闭本次启动的游戏。"
+  },
+  "parallel.install_required": {
+    "zh-TW": "請先安裝官方 Sandboxie-Plus，再啟用同時執行。",
+    "en-US": "Install official Sandboxie-Plus before running in parallel.",
+    "zh-CN": "请先安装官方 Sandboxie-Plus，再启用同时运行。"
+  },
+  "parallel.host_only": {
+    "zh-TW": "請從一般主視窗管理並行佇列。",
+    "en-US": "Manage parallel queues from the main window.",
+    "zh-CN": "请从普通主窗口管理并行队列。"
+  },
+  "parallel.window_open": {
+    "zh-TW": "這個帳號已有工具視窗，請先關閉該視窗；遊戲可以保留。",
+    "en-US": "This account already has a tool window. Close that window first; the game can stay open.",
+    "zh-CN": "这个账号已有工具窗口，请先关闭该窗口；游戏可以保留。"
+  },
+  "parallel.busy": {
+    "zh-TW": "請先停止目前的並行佇列。",
+    "en-US": "Stop the current parallel queue first.",
+    "zh-CN": "请先停止当前并行队列。"
+  },
+  "parallel.invalid_accounts": {
+    "zh-TW": "所選帳號無效或重複，請重新整理帳號清單。",
+    "en-US": "The selected accounts are invalid or duplicated. Refresh the account list.",
+    "zh-CN": "所选账号无效或重复，请刷新账号列表。"
+  },
+  "parallel.invalid_limit": {
+    "zh-TW": "同時執行數量須為 1–4。",
+    "en-US": "Concurrent accounts must be between 1 and 4.",
+    "zh-CN": "同时执行数量须为 1–4。"
+  },
+  "parallel.invalid_job": {
+    "zh-TW": "帳號執行要求不完整，未開始任務。",
+    "en-US": "The account job is invalid. No tasks were started.",
+    "zh-CN": "账号执行请求不完整，未开始任务。"
+  },
+  "parallel.invalid_action": {
+    "zh-TW": "不支援這項佇列操作。",
+    "en-US": "This queue action is not supported.",
+    "zh-CN": "不支持这项队列操作。"
+  },
+  "parallel.invalid_status": {
+    "zh-TW": "執行狀態不完整，已停止自動推進。",
+    "en-US": "Worker status is invalid. Automatic progression has stopped.",
+    "zh-CN": "执行状态不完整，已停止自动推进。"
+  },
+  "parallel.identity_changed": {
+    "zh-TW": "執行個體身分發生變更，已停止該帳號。",
+    "en-US": "The instance identity changed. This account has stopped.",
+    "zh-CN": "实例身份发生变化，已停止该账号。"
+  },
+  "parallel.account_missing": {
+    "zh-TW": "找不到已綁定帳號，請更新主視窗的帳號資訊。",
+    "en-US": "The bound account was not found. Update its saved sign-in in the main window.",
+    "zh-CN": "未找到已绑定账号，请更新主窗口的账号信息。"
+  },
+  "parallel.game_missing": {
+    "zh-TW": "尚無可顯示的遊戲視窗。",
+    "en-US": "No game window is available yet.",
+    "zh-CN": "尚无可显示的游戏窗口。"
+  },
+  "parallel.start_timeout": {
+    "zh-TW": "啟動未完成。請查看此帳號的連線記錄後重試。",
+    "en-US": "Startup did not finish. Check this account's connection log before retrying.",
+    "zh-CN": "启动未完成。请查看此账号的连接记录后重试。"
+  },
+  "parallel.no_heartbeat": {
+    "zh-TW": "執行器停止更新，正在要求安全停止；暫不重用其名額。",
+    "en-US": "The worker stopped reporting. Requesting a safe stop and retaining its capacity.",
+    "zh-CN": "执行器停止更新，正在请求安全停止；暂不复用它的名额。"
+  },
+  "parallel.worker_lost": {
+    "zh-TW": "執行器已退出，保留記錄，請核對後重新選擇帳號執行。",
+    "en-US": "The worker exited. Records are retained. Review them before starting this account again.",
+    "zh-CN": "执行器已退出，保留记录，请核对后重新选择账号执行。"
+  },
+  "parallel.parent_lost": {
+    "zh-TW": "主視窗已關閉或失去聯絡，已停止任務並保留遊戲。",
+    "en-US": "The main window closed or lost contact. Tasks stopped; the game was retained.",
+    "zh-CN": "主窗口已关闭或失去联系，已停止任务并保留游戏。"
+  },
+  "parallel.reopen": {
+    "zh-TW": "上次執行已中斷。不會自動重播操作，請核對後重新選擇帳號執行。",
+    "en-US": "The previous run was interrupted. No actions will replay automatically. Review it before starting again.",
+    "zh-CN": "上次运行已中断。不会自动重放操作，请核对后重新选择账号执行。"
+  },
+  "parallel.state.waiting": {
+    "zh-TW": "排隊中",
+    "en-US": "Queued",
+    "zh-CN": "排队中"
+  },
+  "parallel.state.held": {
+    "zh-TW": "佇列已暫停",
+    "en-US": "Queue paused",
+    "zh-CN": "队列已暂停"
+  },
+  "parallel.state.starting": {
+    "zh-TW": "正在啟動",
+    "en-US": "Starting",
+    "zh-CN": "正在启动"
+  },
+  "parallel.state.connecting": {
+    "zh-TW": "核對帳號",
+    "en-US": "Checking account",
+    "zh-CN": "核对账号"
+  },
+  "parallel.state.running": {
+    "zh-TW": "執行中",
+    "en-US": "Running",
+    "zh-CN": "执行中"
+  },
+  "parallel.state.pausing": {
+    "zh-TW": "正在暫停",
+    "en-US": "Pausing",
+    "zh-CN": "正在暂停"
+  },
+  "parallel.state.paused": {
+    "zh-TW": "已暫停",
+    "en-US": "Paused",
+    "zh-CN": "已暂停"
+  },
+  "parallel.state.stopping": {
+    "zh-TW": "正在停止",
+    "en-US": "Stopping",
+    "zh-CN": "正在停止"
+  },
+  "parallel.state.closing": {
+    "zh-TW": "正在關閉遊戲",
+    "en-US": "Closing game",
+    "zh-CN": "正在关闭游戏"
+  },
+  "parallel.state.completed": {
+    "zh-TW": "已完成",
+    "en-US": "Completed",
+    "zh-CN": "已完成"
+  },
+  "parallel.state.partial": {
+    "zh-TW": "有未完成項",
+    "en-US": "Needs attention",
+    "zh-CN": "有未完成项"
+  },
+  "parallel.state.failed": {
+    "zh-TW": "執行失敗",
+    "en-US": "Failed",
+    "zh-CN": "执行失败"
+  },
+  "parallel.state.stopped": {
+    "zh-TW": "已停止",
+    "en-US": "Stopped",
+    "zh-CN": "已停止"
+  },
+  "parallel.state.interrupted": {
+    "zh-TW": "需要核對",
+    "en-US": "Review needed",
+    "zh-CN": "需要核对"
+  },
+  "parallel.connection": {
+    "en-US": "Parallel run · Connection status is shown per account",
+    "zh-TW": "多帳號執行中 · 各帳號連線狀態見下方",
+    "zh-CN": "多账号执行中 · 各账号连接状态见下方"
+  },
+  "parallel.confirm": {
+    "en-US": "Run daily tasks for {0} accounts using their saved settings?",
+    "zh-TW": "將為 {0} 個帳號依各自儲存的設定執行日常。是否開始並行佇列？",
+    "zh-CN": "将为 {0} 个账号按各自保存的设置执行日常。是否开始并行队列？"
+  },
+  "parallel.install": {
+    "en-US": "Get official Sandboxie-Plus",
+    "zh-TW": "取得官方 Sandboxie-Plus",
+    "zh-CN": "获取官方 Sandboxie-Plus"
+  },
+  "parallel.save": {
+    "zh-CN": "保存执行方式",
+    "zh-TW": "儲存執行方式",
+    "en-US": "Save execution mode"
+  },
+  "client_update.incomplete": {
+    "zh-CN": "游戏文件尚未完整安装，请先在普通启动器完成更新，再连接或多开。",
+    "zh-TW": "遊戲檔案尚未完整安裝，請先在一般啟動器完成更新，再連線或多開。",
+    "en-US": "The game installation is incomplete. Finish updating through the normal launcher before connecting or launching isolated accounts."
+  },
+  "client_update.changing": {
+    "zh-CN": "准备组件期间游戏文件发生变化，已停止。请等更新完成后重试。",
+    "zh-TW": "準備元件期間遊戲檔案發生變化，已停止。請等更新完成後重試。",
+    "en-US": "Game files changed while preparing the component. Wait for the update to finish, then try again."
+  },
+  "client_update.isolated_mismatch": {
+    "zh-CN": "隔离实例看到的游戏文件与普通安装不一致，未启动游戏。请关闭实例，检查隔离目录里的旧游戏文件；保留账号、设置和记录。",
+    "zh-TW": "隔離實例看到的遊戲檔案與一般安裝不一致，未啟動遊戲。請關閉實例，檢查隔離目錄中的舊遊戲檔案；保留帳號、設定及紀錄。",
+    "en-US": "The isolated client differs from the normal installation. No game was started. Close this instance and inspect its old game-file overlay; retain accounts, settings and history."
+  },
+  "client_update.running_changed": {
+    "zh-CN": "磁盘上的游戏已经更新，但当前仍是更新前连接过的游戏进程。请正常退出并重新启动游戏，再连接。",
+    "zh-TW": "磁碟上的遊戲已更新，但目前仍是更新前連線過的遊戲程序。請正常退出並重新啟動遊戲，再連線。",
+    "en-US": "Installed game files have changed, but this is still the previously connected process. Close and relaunch the game before reconnecting."
+  },
+  "prefs.event_puzzle": {
+    "zh-CN": "拼图板使用现有代币批量翻开",
+    "zh-TW": "拼圖板使用現有代幣批量翻開",
+    "en-US": "Reveal puzzle tiles in bulk using existing tokens"
+  }
 }

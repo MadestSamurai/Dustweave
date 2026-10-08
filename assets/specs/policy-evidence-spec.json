@@ -16,9 +16,11 @@
       "Type": "PassUI",
       "Paths": [
         "ὠὤὭὯὯὪὯὧὮὪὬ.Count",
-        "ὠὤὭὯὯὪὯὧὮὪὬ._items",
         "ὦὩὪὣὣὤὣὯὩὠὢ"
-      ]
+      ],
+      "CollectionPath": "ὠὤὭὯὯὪὯὧὮὪὬ",
+      "ItemPaths": ["ὥὬὭὪὪὦὬὩὦὧὠ"],
+      "MaxItems": 1000
     },
     {
       "Id": "pass.scope",

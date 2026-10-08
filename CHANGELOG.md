@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 0.9.13 · 2026-10-09
+
+- Added local plugin management, optional Sandboxie account instances and central concurrent queues; corrected credential handoff and registration recovery.
+- Updated client compatibility, pass reading, acknowledgement-only background notifications, puzzle events and hunting priorities.
+- Daily fixed-time schedules, reorderable account cards, themed dialogs and signed differential OTA are included from the intervening local versions.
+- 新增插件管理、可选隔离多账号与集中队列，修复凭据交接和登记恢复；适配更新后客户端、通行证、提示、拼图活动及狩猎。
+- 汇总此前本地版本的每日定时、账号卡片排序、主题弹窗及签名差分更新。双版本与实机验证范围见 [完整发行说明](docs/releases/0.9.13.md)。
+
 ## 0.9.0 · 2026-10-07
 
 - Moved multi-account execution to the Accounts page as its primary action, and added opt-in Windows scheduled queues with fixed account identities and duplicate-run protection.

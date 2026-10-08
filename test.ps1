@@ -1,4 +1,4 @@
-param([switch]$NoBuild)
+param([switch]$NoBuild,[string[]]$Groups=@())
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath($PSScriptRoot)
 $project=Join-Path $root 'tests/Dustweave.Tests/Dustweave.Tests.csproj'
@@ -20,6 +20,7 @@ $start.Environment['DUSTWEAVE_TEST_SOURCE_ROOT']=$root
 $start.Environment['BD2_DAILY_DATA_ROOT']=Join-Path $output 'isolated-user'
 $start.Environment['DUSTWEAVE_PLUGIN']='none'
 $start.ArgumentList.Add($output)
+if($Groups.Count){$start.Environment['DUSTWEAVE_TEST_GROUPS']=$Groups -join ','}else{$start.Environment.Remove('DUSTWEAVE_TEST_GROUPS')|Out-Null}
 $proc=[Diagnostics.Process]::Start($start)
 $stdout=$proc.StandardOutput.ReadToEndAsync();$stderr=$proc.StandardError.ReadToEndAsync()
 $deadline=[DateTime]::UtcNow.AddMinutes(3)

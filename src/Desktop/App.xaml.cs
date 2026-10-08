@@ -1,3 +1,4 @@
+extern alias liveUtility;
 using System.IO;
 using System.Windows;
 namespace Dustweave.Desktop;
@@ -10,6 +11,34 @@ public partial class App : Application
     {
         base.OnStartup(e);
         var args = StartupArguments ?? e.Args;
+        if (args.Length == 3 && args[0] == "--restart-after")
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            try
+            {
+                System.Diagnostics.Process? owner = null;
+                try { owner = System.Diagnostics.Process.GetProcessById(int.Parse(args[1])); } catch (ArgumentException) { }
+                using (var parent = owner)
+                {
+                    if (parent != null && !parent.HasExited)
+                    {
+                        if (parent.StartTime.ToUniversalTime().Ticks != long.Parse(args[2]) || !string.Equals(parent.MainModule?.FileName, Environment.ProcessPath, StringComparison.OrdinalIgnoreCase))
+                            throw new InvalidDataException("Invalid restart owner");
+                        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+                        await parent.WaitForExitAsync(deadline.Token);
+                    }
+                }
+                // Let the previous app release its named single-instance mutex.
+                using var gate = new Mutex(false, DailyApplication.InstanceMutex);
+                bool acquired; try { acquired = gate.WaitOne(TimeSpan.FromSeconds(5)); } catch (AbandonedMutexException) { acquired = true; }
+                if (!acquired) throw new IOException("Restart owner still active");
+                gate.ReleaseMutex();
+                _ = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false, WorkingDirectory = Directory.GetCurrentDirectory() });
+                Shutdown();
+            }
+            catch { Shutdown(1); }
+            return;
+        }
         if (args.Length == 2 && args[0] == "--check-tool-session")
         {
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -30,6 +59,7 @@ public partial class App : Application
         }
         if (args.Length == 2 && args[0] == "--check-plugin")
         {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
             try
             {
                 var info = DailyPlugin.Current;
@@ -37,12 +67,20 @@ public partial class App : Application
                 if (extension?.ApiVersion != DailyPlugin.ApiVersion)
                     throw new InvalidDataException("Plugin did not load");
                 var proofs = DailyWorkflowRegistry.Proofs(extension);
+                bool connectionPrepared = false;
+                if (info.HookSources.Length != 0)
+                {
+                    string managed = DailyPluginProbe.InstalledGameManagedDirectory();
+                    await liveUtility::Dustweave.Connection.LiveEntry.RunAsync(["prepare", managed, Path.Combine(Path.GetDirectoryName(Path.GetFullPath(args[1]))!, "connection")], false);
+                    connectionPrepared = true;
+                }
                 DailyJson.Write(args[1], new
                 {
                     status = "passed",
-                    info,
+                    info = new { info.Available, info.State, info.Id, info.Version, info.Fingerprint },
                     api = extension.ApiVersion,
                     proofs = proofs.Length,
+                    connectionPrepared,
                     realGameTouched = false
                 });
                 Shutdown();
@@ -167,7 +205,8 @@ public partial class App : Application
         string? smoke = args.Length == 2 && args[0] == "--smoke" ? Path.GetFullPath(args[1]) : null;
         string? runSelected = args.Length == 2 && args[0] == "--run-selected" ? Path.GetFullPath(args[1]) : null;
         string? inspectAccount = args.Length == 2 && args[0] == "--inspect-account" && DailyProfiles.ValidKey(args[1]) ? args[1] : null;
-        if (args.Length > 0 && smoke == null && runSelected == null && inspectAccount == null && !scheduled && !updated)
+        string? resumeAccount = args.Length == 2 && args[0] == "--resume-account" && DailyProfiles.ValidKey(args[1]) ? args[1] : null;
+        if (args.Length > 0 && smoke == null && runSelected == null && inspectAccount == null && resumeAccount == null && !scheduled && !updated)
         {
             Shutdown(2);
             return;
@@ -190,6 +229,7 @@ public partial class App : Application
             sessions = new AccountSessions();
             var window = new MainWindow(sessions, new DailyGameHost(), DailyIdentity.DataRoot, null) { ScheduledStartup = scheduled, UpdatedStartup = updated, UpdateNonce = updated ? args[1] : "" };
             if (inspectAccount != null) window.Loaded += async (_, _) => await window.InspectAccountAsync(inspectAccount);
+            if (resumeAccount != null) window.Loaded += async (_, _) => await window.ResumeQueueAsync(resumeAccount);
             if (runSelected != null)
             {
                 var request = DailyJson.TryRead<QueuePlanRequest>(runSelected) ?? throw new InvalidDataException("无法读取本次勾选环节。");

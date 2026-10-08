@@ -161,6 +161,57 @@ internal static class StartupCases
                 Check(StartupPolicy.Decide(f.s, f.p, DateTime.UtcNow.Ticks) != "click_download", condition);
             });
         Case("a populated player DTO on title is not login completion", () => { var f = Input(); f.s.State = "identified"; var instance = new GameInstance(f.s.ProcessId, f.s.ProcessStartTicks, "fake"); var g = new DailyIdentityGuard(); Check(!g.Observe(f.s, instance, f.s.AccountKey, "", DateTimeOffset.UtcNow), "title accepted"); f.s.Sequence++; f.s.FrameUtcTicks++; Check(!g.Observe(f.s, instance, f.s.AccountKey, "", DateTimeOffset.UtcNow), "advancing title accepted"); });
+        await Async("transient login credentials recover without restarting or clicking early", async () =>
+        {
+            var f = Fixture(); bool observedWaiting = false;
+            f.run.Progress += p =>
+            {
+                if (p.State == "waiting_login") f.env.IncompleteCatalogReads = 3;
+                if (p.State == "waiting_credentials")
+                {
+                    observedWaiting = true;
+                    Check(f.env.TitleClicks == 0, "input granted before credentials recovered");
+                    Check(DailyJson.TryRead<StartupPermit>(Path.Combine(f.path, "startup-permit.json"))!.Owner == "", "old permit retained");
+                }
+            };
+            await f.run.ConnectCurrentAsync();
+            Check(observedWaiting && f.env.TitleClicks == 1, "did not resume the same check");
+            Check(new DailyProfiles(f.path).Read().Single().LastVerifiedUtc != null, "recovered identity not verified");
+            Check(!f.env.Calls.Any(c => c == "close" || c.StartsWith("launch:") || c.StartsWith("save:")), "recovery changed account or process");
+        });
+        await Async("persistent missing credentials time out without claiming expired tokens", async () =>
+        {
+            var f = Fixture(60);
+            f.run.Progress += p => { if (p.State == "waiting_login") f.env.IncompleteCatalogReads = int.MaxValue; };
+            string error = "";
+            try { await f.run.ConnectCurrentAsync(); } catch (TimeoutException ex) { error = ex.Message; }
+            Check(error.Contains("不能判定"), "missing local state was not reported precisely");
+            Check(f.env.TitleClicks == 0 && f.env.StartupRecoveryCalls == 0, "retried game input with unavailable credentials");
+            Check(new DailyProfiles(f.path).Read().Count == 0, "missing credentials marked as success");
+        });
+        await Async("cancel while waiting for credentials remains responsive", async () =>
+        {
+            var f = Fixture();
+            f.run.Progress += p =>
+            {
+                if (p.State == "waiting_login") f.env.IncompleteCatalogReads = int.MaxValue;
+                if (p.State == "waiting_credentials") f.run.Stop();
+            };
+            await f.run.ConnectCurrentAsync();
+            Check(f.env.TitleClicks == 0, "cancelled check clicked title");
+        });
+        await Async("credential recovery cannot switch into another account", async () =>
+        {
+            var f = Fixture();
+            f.run.Progress += p =>
+            {
+                if (p.State == "waiting_login") f.env.IncompleteCatalogReads = 1;
+                if (p.State == "waiting_credentials") f.env.ForcedKey = f.env.Accounts[1].AccountKey;
+            };
+            await Reject(f.run.ConnectCurrentAsync());
+            Check(f.env.TitleClicks == 0, "recovery entered a different account");
+            Check(new DailyProfiles(f.path).Read().Count == 0, "wrong account saved");
+        });
         await Async("download recovery hands ownership back before identity proof", async () => { var f = Fixture(); f.env.TitleBlock = "resource network error"; f.env.StartupRecoverySucceeds = true; await f.run.ConnectCurrentAsync(); Check(f.env.StartupRecoveryCalls == 1 && f.env.TitleClicks == 1, "recovery repeated or title not advanced"); Check(DailyJson.TryRead<StartupPermit>(Path.Combine(f.path, "startup-permit.json"))!.Owner == "", "recovery kept permit"); });
         await Async("unrecognized modal probes only once and never clicks", async () => { var f = Fixture(60); f.env.TitleBlock = "unknown"; await Reject(f.run.ConnectCurrentAsync()); Check(f.env.StartupRecoveryCalls == 1 && f.env.TitleClicks == 0, "unknown dialog retried"); });
         await Async("connect advances from title then validates player", async () => { var f = Fixture(); await f.run.ConnectCurrentAsync(); Check(f.env.TitleClicks == 1, "not exactly one click"); Check(new DailyProfiles(f.path).Read().Single().LastVerifiedUtc != null, "missing game identity proof"); Check(DailyJson.TryRead<StartupPermit>(Path.Combine(f.path, "startup-permit.json"))!.Owner == "", "kept startup permission"); });

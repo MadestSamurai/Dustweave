@@ -2,6 +2,15 @@ using Mono.Cecil;
 using Dustweave.Compatibility;
 using System.Text.Json;
 
+if(args.Length==3&&args[0]=="client-inputs")
+{
+    var clock=System.Diagnostics.Stopwatch.StartNew();
+    var inputs=ClientInputs.ReadManaged(args[1]);
+    string game=Path.Combine(Directory.GetParent(Path.GetFullPath(args[1]))!.Parent!.FullName,"BrownDust II.exe");
+    string gameKey=ClientInputs.ReadGame(game);
+    File.WriteAllText(args[2],JsonSerializer.Serialize(new{atUtc=DateTimeOffset.UtcNow,game,gameKey,inputs,milliseconds=clock.ElapsedMilliseconds,realGameTouched=false},new JsonSerializerOptions{WriteIndented=true}));
+    Console.WriteLine("Installed client baseline recorded without launching the game.");return;
+}
 if(args.Length==3&&args[0]=="binding-probe"){GuildBindingProbe.Prepare(args[1],args[2]);Console.WriteLine("Read-only Mono binding probe prepared.");return;}
 
 if(args.Length==3&&args[0]=="generate-startup"){File.WriteAllText(args[2],JsonSerializer.Serialize(StartupHookContract.Generate(args[1]),new JsonSerializerOptions{WriteIndented=true}));Console.WriteLine("Startup contract generated; no game operation.");return;}

@@ -1,4 +1,94 @@
 {
+  "message.pass_schema_incompatible": {
+    "zh-CN": "通行证列表读取格式不兼容，请更新连接组件；未将缺失字段视为无任务。",
+    "zh-TW": "通行證清單讀取格式不相容，請更新連線元件；未將缺少欄位視為沒有任務。",
+    "en-US": "The pass list format is incompatible. Update the connection component; missing fields were not treated as an empty task list."
+  },
+  "message.pass_identity_incompatible": {
+    "zh-CN": "通行证编号读取不兼容，请更新连接组件；未将缺失编号按零处理。",
+    "zh-TW": "通行證編號讀取不相容，請更新連線元件；未將缺少編號當成零。",
+    "en-US": "Pass identifiers could not be read. Update the connection component; missing identifiers were not replaced with zero."
+  },
+  "message.background_region_ack": {
+    "zh-CN": "关闭支付地区查询超时提示，继续日常；不发起付款或重试",
+    "zh-TW": "關閉付款地區查詢逾時提示，繼續日常；不發起付款或重試",
+    "en-US": "Dismiss the payment-region lookup timeout and continue daily tasks, without starting or retrying a payment."
+  },
+  "message.background_region_wait": {
+    "zh-CN": "等待后台查询提示的确认按钮",
+    "zh-TW": "等待背景查詢提示的確認按鈕",
+    "en-US": "Waiting for the background-query notification to become ready."
+  },
+  "message.credentials_refresh_wait": {
+    "zh-CN": "等待游戏完成登录或刷新凭据；恢复后会自动继续检查。",
+    "zh-TW": "等待遊戲完成登入或更新憑據；恢復後會自動繼續檢查。",
+    "en-US": "Waiting for the game to finish signing in or refresh its credentials. Checks will resume automatically."
+  },
+  "message.credentials_refresh_timeout": {
+    "zh-CN": "等待登录超时：本机登录信息仍不完整或自动登录未开启。请在游戏内完成登录后重试；已保存的账号未删除。此检查不能判定服务器令牌是否过期。",
+    "zh-TW": "等待登入逾時：本機登入資訊仍不完整或自動登入未開啟。請在遊戲內完成登入後重試；已儲存的帳號未刪除。此檢查無法判定伺服器權杖是否過期。",
+    "en-US": "Sign-in timed out: local credentials are still incomplete or automatic sign-in is disabled. Finish signing in within the game, then retry. Saved accounts are retained. This check cannot determine whether a server token has expired."
+  },
+  "message.sandbox_registration_0": {
+    "zh-CN": "无法找到 Sandboxie，尚未核对隔离空间。",
+    "zh-TW": "找不到 Sandboxie，尚未核對隔離空間。",
+    "en-US": "Sandboxie was not found; the isolated space has not been verified."
+  },
+  "message.sandbox_registration_1": {
+    "zh-CN": "隔离空间登记文件无法读取，已保留原文件；仅此账号暂未启动。",
+    "zh-TW": "隔離空間登記檔案無法讀取，已保留原檔；僅此帳號暫未啟動。",
+    "en-US": "The sandbox registration cannot be read. The original file is retained; only this account has not started."
+  },
+  "message.sandbox_registration_2": {
+    "zh-CN": "隔离空间登记属于其他账号，未修改；仅此账号暂未启动。",
+    "zh-TW": "隔離空間登記屬於其他帳號，未修改；僅此帳號暫未啟動。",
+    "en-US": "The sandbox is registered to another account and was not changed. Only this account has not started."
+  },
+  "message.sandbox_registration_3": {
+    "zh-CN": "隔离目录与登记位置不一致，未修改；仅此账号暂未启动。",
+    "zh-TW": "隔離目錄與登記位置不一致，未修改；僅此帳號暫未啟動。",
+    "en-US": "The sandbox directory differs from its registered location and was not changed. Only this account has not started."
+  },
+  "message.sandbox_registration_4": {
+    "zh-CN": "隔离账号绑定暂时无法读取，已保留原文件；仅此账号暂未启动。",
+    "zh-TW": "隔離帳號綁定暫時無法讀取，已保留原檔；僅此帳號暫未啟動。",
+    "en-US": "The isolated account binding cannot be read. The original file is retained; only this account has not started."
+  },
+  "message.sandbox_registration_5": {
+    "zh-CN": "隔离窗口绑定属于其他账号，未修改；仅此账号暂未启动。",
+    "zh-TW": "隔離視窗綁定屬於其他帳號，未修改；僅此帳號暫未啟動。",
+    "en-US": "The isolated window is bound to another account and was not changed. Only this account has not started."
+  },
+  "message.sandbox_registration_6": {
+    "zh-CN": "隔离空间缺少可核对的账号绑定，已保留数据；仅此账号暂未启动。",
+    "zh-TW": "隔離空間缺少可核對的帳號綁定，已保留資料；僅此帳號暫未啟動。",
+    "en-US": "No verifiable account binding was found for this sandbox. Its data is retained; only this account has not started."
+  },
+  "message.sandbox_registration_7": {
+    "zh-CN": "隔离空间的账号位置无效，未修改登记。",
+    "zh-TW": "隔離空間的帳號位置無效，未修改登記。",
+    "en-US": "The isolated account slot is invalid. The registration was not changed."
+  },
+  "message.sandbox_registration_8": {
+    "zh-CN": "隔离空间的加密账号记录与绑定不一致，未修改登记。",
+    "zh-TW": "隔離空間的加密帳號記錄與綁定不一致，未修改登記。",
+    "en-US": "The encrypted account record does not match the isolated binding. The registration was not changed."
+  },
+  "message.sandbox_registration_9": {
+    "zh-CN": "登记恢复期间账号发生变化，未覆盖任何记录。",
+    "zh-TW": "登記恢復期間帳號發生變化，未覆蓋任何記錄。",
+    "en-US": "The account changed during registration recovery. No records were overwritten."
+  },
+  "message.session_unavailable": {
+    "zh-CN": "账号仍已保存，但当前登录凭据不可用或自动登录已关闭。请重新登录该账号后保存；不会清空账号或反复重试。",
+    "zh-TW": "帳號仍已儲存，但目前登入憑據不可用或自動登入已關閉。請重新登入該帳號後儲存；不會清空帳號或反覆重試。",
+    "en-US": "Your saved account is still present, but its current sign-in credentials are unavailable or automatic sign-in is disabled. Sign in again and save the account. The app will not delete it or repeatedly retry."
+  },
+  "message.native_quick_entry_removed": {
+    "zh-CN": "当前游戏没有魔兽快速战斗入口；本环节未执行，请手动确认当前赛季规则。",
+    "zh-TW": "目前遊戲沒有魔獸快速戰鬥入口；本環節未執行，請手動確認當季規則。",
+    "en-US": "The current game has no Fiend Hunt quick-battle entry. This step was not run; please check the current season rules manually."
+  },
   "message.idle": {
     "zh-CN": "未运行",
     "zh-TW": "未運行",
@@ -4403,5 +4493,40 @@
     "zh-CN": "工具连接组件缺少启动入口：",
     "zh-TW": "工具連接組件缺少啟動入口：",
     "en-US": "Missing module load: "
+  },
+  "message.puzzle_plan": {
+    "zh-CN": "拼图批量请求与当前计划不一致",
+    "zh-TW": "拼圖批量請求與目前計畫不一致",
+    "en-US": "The puzzle batch request does not match the current plan."
+  },
+  "message.puzzle_cache": {
+    "zh-CN": "拼图服务器进度与当前盘面不一致",
+    "zh-TW": "拼圖伺服器進度與目前盤面不一致",
+    "en-US": "The puzzle server progress differs from the current board."
+  },
+  "message.puzzle_cycle": {
+    "zh-CN": "拼图活动周期已改变",
+    "zh-TW": "拼圖活動週期已改變",
+    "en-US": "The puzzle event schedule has changed."
+  },
+  "message.puzzle_open": {
+    "zh-CN": "拼图已翻开格数不一致",
+    "zh-TW": "拼圖已翻開格數不一致",
+    "en-US": "The number of revealed puzzle tiles is inconsistent."
+  },
+  "message.puzzle_budget": {
+    "zh-CN": "拼图批量次数超过剩余格数或代币",
+    "zh-TW": "拼圖批量次數超過剩餘格數或代幣",
+    "en-US": "The puzzle batch exceeds the remaining tiles or tokens."
+  },
+  "message.puzzle_transition": {
+    "zh-CN": "拼图批量结果未对应到翻格或整板自动刷新",
+    "zh-TW": "拼圖批量結果未對應到翻格或整板自動刷新",
+    "en-US": "The puzzle result does not match tile reveals or an automatic board refresh."
+  },
+  "message.puzzle_debit": {
+    "zh-CN": "拼图代币消耗或奖励不一致",
+    "zh-TW": "拼圖代幣消耗或獎勵不一致",
+    "en-US": "The puzzle token debit or rewards are inconsistent."
   }
 }

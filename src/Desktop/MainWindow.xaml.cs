@@ -76,14 +76,15 @@ public partial class MainWindow : Window
         this.smoke = smoke;
         preferencesPanel = new DailyPreferencesPanel(root, allowGame: smoke == null);
         SettingsTab.Content = preferencesPanel;
-        InitializeSchedules(); InitializeUpdates();
+        InitializeSchedules(); InitializeUpdates(); InitializeSandboxPresentation();
         dailyPanel = new DailyRunPanel(root);
         dailyQueue = new(root, new PackagedDailyQueueExecutor(AppContext.BaseDirectory));
-        RunTab.Content = dailyPanel;
+        RunTab.Content = dailyPanel; InitializeParallel();
         toolSession = new(root, Environment.ProcessPath!);
         if(smoke==null)toolSession.ConfigureLaunch=(start,id)=>{var game=host.Find()??throw new InvalidOperationException("游戏已退出。");DailySuite.SetToolEnvironment(start,DailySuite.Read(root,game)??throw new InvalidOperationException("统一会话未就绪。"),game,id);};
         toolPanel = new DailyToolPanel();
         ToolsTab.Content = toolPanel;
+        InitializePlugins();
         toolPanel.OpenRequested += async id => { toolMessage = null; await OpenTool(id); };
         toolPanel.CloseRequested += async () => await CloseTool();
         dailyPanel.AccountsRequested += () => WorkspaceTabs.SelectedItem = AccountsTab;
@@ -113,7 +114,7 @@ public partial class MainWindow : Window
         CollectionViewSource.GetDefaultView(rows).Filter = MatchesSearch;
         coordinator.Progress += p => Dispatcher.Invoke(() => { if (dailyQueue.IsRunning || WorkspaceTabs.SelectedItem == RunTab && busy) dailyPanel.Show(new("preparing", p.Message, "", [])); DailyUiText.Set(ProgressText, p.Message); ProgressText.Foreground = (Brush)FindResource(p.State == "error" ? "Error" : "Ink"); });
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        timer.Tick += (_, _) => { L.RefreshFromDisk(); RefreshTools(); UpdateConnection(); if (smoke == null && !busy) { _ = RefreshAccountIdentityAsync(); RefreshDailyHistory(); } if (smoke == null) { _ = CheckScheduleAsync(); _ = OfferUpdateAsync(); if (DateTime.UtcNow >= nextUpdateCheck) { nextUpdateCheck = DateTime.UtcNow.AddHours(6); _ = CheckUpdatesAsync(); } } };
+        timer.Tick += (_, _) => { _ = PollParallelAsync(); L.RefreshFromDisk(); RefreshTools(); UpdateConnection(); if (smoke == null && !busy) { _ = RefreshAccountIdentityAsync(); RefreshDailyHistory(); } if (smoke == null) { _ = CheckScheduleAsync(); _ = OfferUpdateAsync(); if (DateTime.UtcNow >= nextUpdateCheck) { nextUpdateCheck = DateTime.UtcNow.AddHours(6); _ = CheckUpdatesAsync(); } } };
         Loaded += async (_, _) => { RefreshAccounts(); var last = DailyJson.TryRead<DailyRunStatus>(Path.Combine(root, "run.json")); if (last != null) { DailyUiText.History(ProgressText, "history.previous", last.AtUtc.LocalDateTime, last.Progress.Message); } if (smoke == null) { var previous = dailyQueue.ReadView(catalog?.CurrentKey ?? ""); dailyPanel.LoadHistory(previous); } timer.Start(); if (smoke != null && automatedSmoke) await SmokeAsync();  };
         bool startupShown = false;
         ContentRendered += async (_, _) => { if (startupShown || smoke != null) return; startupShown = true;
@@ -142,11 +143,11 @@ public partial class MainWindow : Window
     private readonly DailyToolSession toolSession;
     private bool toolChanging;
     private bool ToolOpen => toolSession.Current != null;
-    private bool ToolRunning => !busy && DailyToolControl.IsOccupied(root);
-    private bool Unavailable => busy || toolChanging || ToolRunning || updateInstalling;
+    private bool ToolRunning => !busy && parallelControl == null && DailyToolControl.IsOccupied(root);
+    private bool Unavailable => busy || toolChanging || ToolRunning || updateInstalling || ParallelBusy || pluginChanging;
     private async Task OpenTool(string id)
     {
-        if (smoke != null || busy || toolChanging) return;
+        if (smoke != null || busy || toolChanging || ParallelBusy || pluginChanging) return;
         toolChanging = true; SetBusy(busy);
         try {
             if(toolSession.Current?.ToolId==id){toolSession.Show();return;}
@@ -163,7 +164,7 @@ public partial class MainWindow : Window
     }
     private async Task CloseTool()
     {
-        if (smoke != null || busy || toolChanging) return;
+        if (smoke != null || busy || toolChanging || ParallelBusy || pluginChanging) return;
         toolChanging = true; toolMessage = null; SetBusy(busy);
         try { if (await toolSession.CloseAsync()) { if(host.Find()!=null)await DailySuite.ActivateAsync(host,root,"daily",m=>toolMessage=m,CancellationToken.None);WorkspaceTabs.SelectedItem = RunTab; } }
         catch (Exception e) { toolMessage = e.Message; }
@@ -176,7 +177,7 @@ public partial class MainWindow : Window
     {
         var id = toolSession.Current?.ToolId;
         bool running=ToolRunning;
-        toolPanel.Refresh(busy || toolChanging, id, running ? "工具自动化正在运行或等待结算；停止后即可使用其他自动化，无需关闭窗口。" : toolMessage ?? (busy ? "日常正在执行；工具设置窗口可以保留。" : toolSession.Message),running);
+        toolPanel.Refresh(busy || toolChanging || ParallelBusy || pluginChanging, id, running ? "工具自动化正在运行或等待结算；停止后即可使用其他自动化，无需关闭窗口。" : toolMessage ?? (busy ? "日常正在执行；工具设置窗口可以保留。" : toolSession.Message),running);
         if(previousRunning!=running){previousRunning=running;SetBusy(busy);}
         if(previousTool!=id){bool returnToDaily=previousTool!=null&&id==null&&!toolChanging;previousTool=id;SetBusy(busy);if(returnToDaily)_=CloseTool();}
     }
@@ -271,10 +272,15 @@ public partial class MainWindow : Window
         RunButton.IsEnabled = RunAccountsButton.IsEnabled = !Unavailable && count > 0;
         L.Bind(RunAccountsButton, ContentControl.ContentProperty, "account.run_queue_count", count);
 
-        RunAccountsButton.Visibility = busy ? Visibility.Collapsed : Visibility.Visible;
+        RunAccountsButton.Visibility = busy || ParallelBusy ? Visibility.Collapsed : Visibility.Visible;
     }
     private void UpdateConnection()
     {
+        if (ParallelBusy)
+        {
+            L.Text(ConnectionText,"parallel.connection");ConnectionText.ToolTip=ConnectionText.Text;
+            return;
+        }
         if (designPreview)
         {
             L.Text(ConnectionText, "connection.preview");
@@ -312,16 +318,17 @@ public partial class MainWindow : Window
     private void SetBusy(bool value)
     {
         busy = value;
-        schedulePanel.Busy(value); UpdateUpdateControls();
+        schedulePanel.Busy(value || ParallelBusy); ExecutionModeButton.IsEnabled = !Unavailable; UpdateUpdateControls();
         var unavailable = Unavailable;
+        pluginPanel.Busy(unavailable || IsSandboxWindow);
         dailyPanel.Busy(unavailable, value);
         preferencesPanel.IsEnabled = !unavailable;
         AccountsGrid.IsEnabled = !unavailable;
         ManageBar.IsEnabled = !unavailable;
         RefreshButton.IsEnabled = !unavailable;
         ConnectButton.IsEnabled = !unavailable;
-        StopButton.IsEnabled = value;
-        toolPanel.Refresh(value || toolChanging, toolSession.Current?.ToolId, ToolRunning ? "工具自动化正在运行或等待结算；停止后释放，无需关闭窗口。" : toolMessage ?? (value ? "日常正在执行；工具设置窗口可以保留。" : toolSession.Message),ToolRunning);
+        StopButton.IsEnabled = value || ParallelBusy; L.Bind(StopButton,ContentControl.ContentProperty,ParallelBusy?"parallel.pause_all":"common.stop_operation");
+        toolPanel.Refresh(value || toolChanging || ParallelBusy || pluginChanging, toolSession.Current?.ToolId, ToolRunning ? "工具自动化正在运行或等待结算；停止后释放，无需关闭窗口。" : toolMessage ?? (value ? "日常正在执行；工具设置窗口可以保留。" : toolSession.Message),ToolRunning);
         SelectAll.IsEnabled = !unavailable;
         ObserveButton.IsEnabled = !unavailable;
         GuildRunButton.IsEnabled = !unavailable;
@@ -337,7 +344,7 @@ public partial class MainWindow : Window
     {
         if (Unavailable)
             return;
-        dailyPanel.ClearOperationError();
+        RunTab.Content = dailyPanel; dailyPanel.ClearOperationError();
         SetBusy(true);
         ReportPreparation("正在连接并核对当前账号…");
         try
@@ -353,6 +360,7 @@ public partial class MainWindow : Window
     }
     private void ShowError(Exception e)
     {
+        if (RunTab.Content == parallelPanel) parallelPanel.Feedback(e.Message);
         if (WorkspaceTabs.SelectedItem == RunTab)
             dailyPanel.ShowOperationError(e.Message, DailyUserText.Error(e));
         DailyJson.Write(Path.Combine(root, "ui-operation-error.json"), new { atUtc = DateTimeOffset.UtcNow, version = DailyIdentity.Version, error = e.ToString() });
@@ -383,6 +391,7 @@ public partial class MainWindow : Window
     }
     private void Stop_Click(object sender, RoutedEventArgs e)
     {
+        if (ParallelBusy) { parallel!.Control("", "pause"); _ = PollParallelAsync(); return; }
         dailyStopping = true;
         try
         {
@@ -492,7 +501,13 @@ public partial class MainWindow : Window
     {
         if (finalClose)
             return;
-        if(toolChanging){e.Cancel=true;return;}
+        if (ParallelBusy || parallelClosing)
+        {
+            e.Cancel=true;if(parallelClosing)return;parallelClosing=true;
+            try { await StopParallelForCloseAsync(); } finally { parallelClosing=false;finalClose=true;timer.Stop();Close(); }
+            return;
+        }
+        if(toolChanging || pluginChanging){e.Cancel=true;return;}
         if(ToolOpen){e.Cancel=true;toolChanging=true;try{if(await toolSession.CloseAsync()){finalClose=true;timer.Stop();Close();}}finally{toolChanging=false;}return;}
         if (!preferencesPanel.SavePending())
         {
@@ -533,6 +548,17 @@ public partial class MainWindow : Window
             ?? throw new InvalidOperationException("未找到指定账号，未启动游戏。");
         await coordinator.InspectAsync([target]);
     }, connectsGame: true);
+    public async Task ResumeQueueAsync(string accountKey)
+    {
+        try
+        {
+            DailySandbox.RequireBoundAccount(accountKey);
+            if (sessions.Read().CurrentKey != accountKey)
+                throw new InvalidOperationException("当前登录账号与接续队列不一致，未开始执行。");
+            await StartDaily(false, true);
+        }
+        catch (Exception error) { ShowError(error); }
+    }
     public Task RunSelectedAsync(QueuePlanRequest request) => StartDaily(false, false, selection: request);
     private async Task StartDaily(bool multi, bool resume, bool syncCollection = false, QueueRetryRequest? retry = null, QueuePlanRequest? selection = null)
     {
@@ -642,7 +668,7 @@ public partial class MainWindow : Window
             await CheckThemesForSmoke();
             await CheckLanguagesForSmoke();
             await CheckPresentationForSmoke();
-            await CheckAccountsForSmoke(); await CheckSchedulingForSmoke();
+            await CheckAccountsForSmoke(); await CheckSchedulingForSmoke(); await CheckParallelForSmoke();
             Capture("normal");
             WorkspaceTabs.SelectedItem = ToolsTab;
             toolPanel.VerifyFiltersForSmoke();
@@ -676,7 +702,7 @@ public partial class MainWindow : Window
             dailyPanel.ShowPlan(new DailyPreferences());
             if (dailyPanel.DisplayedMessage != DailyUserText.Describe("fixture: component fingerprint mismatch"))
                 throw new Exception("History refresh erased queue startup failure");
-            dailyPanel.ClearOperationError();
+            RunTab.Content = dailyPanel; dailyPanel.ClearOperationError();
             dailyPanel.ShowCurrentPlan();
             CheckPlanSelectionForSmoke(retryView);
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
@@ -824,6 +850,7 @@ public partial class MainWindow : Window
             WorkspaceTabs.SelectedItem = AccountsTab;
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             Capture("accounts");
+            await SmokePluginsAsync();
             WorkspaceTabs.SelectedItem = DiagnosticsTab;
             Width = 920;
             Height = 650;

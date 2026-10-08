@@ -42,7 +42,7 @@ Screenshots use fictional accounts in the application's isolated demo mode. The 
 | Maps and resource management | Enable weekly collection, NPC quests, stealing, trading, cooking and high-price sales as needed |
 | A visible execution plan | Select stages, follow progress, review records and rerun unfinished work |
 | One connection, integrated tools | Share the game connection and coordinate active automation so tasks do not compete for control |
-| Scheduled runs and updates | Fixed times, weekdays and account queues; signed background downloads with idle restart confirmation |
+| Scheduled runs and updates | Daily fixed times and account queues; signed background downloads with idle restart confirmation |
 | Consistent language and appearance | Simplified Chinese, Traditional Chinese and English across the host and integrated tools |
 
 Some stages require unlocked account content, an active event or a compatible game version. Optional plugins are supported; the interface shows available features.

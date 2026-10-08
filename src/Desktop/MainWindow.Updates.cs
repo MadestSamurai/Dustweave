@@ -81,7 +81,7 @@ public partial class MainWindow
     private bool updateChecking, updateInstalling, updatePromptShown, releaseDialogOpen;
     private DailyUpdateJob? readyUpdate;
     private DateTime nextUpdateCheck = DateTime.UtcNow.AddHours(6);
-    private void Updates_Click(object sender, RoutedEventArgs e) => WorkspaceTabs.SelectedItem = UpdatesTab;
+    private void Updates_Click(object sender, RoutedEventArgs e) { if (!IsSandboxWindow) WorkspaceTabs.SelectedItem = UpdatesTab; else L.Text(ProgressText, "sandbox.host_only"); }
     private void InitializeUpdates()
     {
         UpdatesTab.Content = updatePanel;
@@ -123,7 +123,7 @@ public partial class MainWindow
     }
     private async Task CheckUpdatesAsync(bool manual = false)
     {
-        if (smoke != null || updateChecking || updateInstalling || !manual && !updatePanel.Automatic) return;
+        if (IsSandboxWindow || smoke != null || updateChecking || updateInstalling || !manual && !updatePanel.Automatic) return;
         nextUpdateCheck = DateTime.UtcNow.AddHours(6);
         readyUpdate = null; updateChecking = true; updatePanel.Status("updates.checking"); UpdateUpdateControls();
         try
@@ -154,13 +154,13 @@ public partial class MainWindow
     private void UpdateUpdateControls() => updatePanel.Busy(updateChecking, readyUpdate != null, Unavailable || updateInstalling || scheduleChecking);
     private async Task OfferUpdateAsync()
     {
-        if (smoke != null || readyUpdate == null || updateChecking || updatePromptShown || Unavailable || scheduleChecking || releaseDialogOpen || DailyDialogs.ModalDepth > 0 || updateInstalling) return;
+        if (IsSandboxWindow || smoke != null || readyUpdate == null || updateChecking || updatePromptShown || Unavailable || scheduleChecking || releaseDialogOpen || DailyDialogs.ModalDepth > 0 || updateInstalling) return;
         updatePromptShown = true;
         if (Confirm(L.Get("updates.confirm", readyUpdate.Release.Version))) await InstallUpdateAsync();
     }
     private async Task InstallUpdateAsync()
     {
-        if (smoke != null || readyUpdate == null || Unavailable || scheduleChecking || updateInstalling || !preferencesPanel.SavePending()) return;
+        if (IsSandboxWindow || smoke != null || readyUpdate == null || Unavailable || scheduleChecking || updateInstalling || !preferencesPanel.SavePending()) return;
         // Development outputs are not standalone; never copy a loose apphost as an updater.
 #pragma warning disable IL3000 // Empty Location is the intentional single-file detection.
         if (!string.IsNullOrEmpty(typeof(App).Assembly.Location)) { updatePanel.Status("updates.packaged_only"); return; }
@@ -168,6 +168,10 @@ public partial class MainWindow
         updateInstalling = true; UpdateUpdateControls();
         try
         {
+            if (DailySandbox.HasIsolatedWindows()) { updatePanel.Status("updates.isolated_open"); return; }
+            string pluginRoot = DailyPluginStore.HasSelection(root) ? new DailyPluginStore(root).SelectedRoot() : DailyPlugin.Current.Root;
+            if (!string.IsNullOrEmpty(pluginRoot) && !await Task.Run(() => DailyPlugin.Inspect(pluginRoot, readyUpdate.Release.Version).Available))
+            { updatePanel.Status("plugins.incompatible_host"); return; }
             if (ToolOpen && !await toolSession.CloseAsync()) { updatePanel.Status("updates.tool_open"); return; }
             string probe = Path.Combine(Path.GetDirectoryName(readyUpdate.Target)!, ".dustweave-write-" + Guid.NewGuid().ToString("N"));
             using (File.Create(probe)) { } File.Delete(probe);

@@ -1,5 +1,30 @@
 # Repository status / 仓库状态
 
+## Local plugin lifecycle / 本地插件管理
+
+2026-10-08：新增三语言、深浅主题的插件管理页，支持 ZIP 导入、兼容性检查、独立进程试加载／连接组件编译、启停及版本回退。插件独立存储，运行队列固定原版本；变更在重启 Dustweave 后生效，无需重启游戏。主程序更新前核对插件版本范围。341 项相关检查、后续 79 项插件专项及隔离界面检查通过；没有发布或执行真实游戏任务。详见 [插件说明](PLUGINS.md)。当前每次启用一个本地插件包，签名与在线插件更新尚未接入。
+
+## 0.9.8 registration recovery / 登记恢复候选
+
+修复普通桌面看不到外层登记时误判账号冲突的问题。以配置目录、内部绑定和可解密账号记录自动恢复缺失登记，真正冲突仍拒绝接管。本机三份缺失登记已经恢复，实际桌面凭据交接通过；48 项针对性检查通过。完整包验证及真实登录仍按各自证据记录，不以元数据恢复代替登录成功。
+## 0.9.12 puzzle events and hunting / 拼图与狩猎
+
+每日活动新增可独立关闭的拼图板选项，按现有活动代币及当前剩余格数调用游戏批量翻开。使用服务器盘面进度核对翻格与扣款，整板由游戏自动刷新，有余币继续下一板；不触发手动刷新，也不购买代币。新活动按游戏当前目录、周期和规则读取，不固定本期活动编号。旧设置自动迁移，保留各账号已关闭的活动总开关。
+
+免费白饭直接按照金币／史莱姆加成日与章节狩猎优先级分配，移除每日首场普通狩猎及其任务进度前置门槛。圣石逻辑保持原有免费次数与预算。
+
+已通过 285 项相关合成检查、581 项原生命令边界检查，更新前后两套客户端连接组件编译及新版 11 套证据配置生成。实际拼图批量、自动整板刷新及狩猎执行仍待使用验证；未接管或中断正在运行的游戏队列。版本为本地交付，不代表 GitHub／OTA 发布。
+
+## 0.9.7 sign-in handoff / 登录交接候选
+
+普通与隔离窗口已补齐双向凭据交接、采集时刻保留及防止旧状态回写。2,263 项合成检查通过；真实 Sandboxie 导出传输已核对。此前 0.9.6 的标题页连接测试未覆盖登录认证，后续发现 SDK 返回无效令牌；旧验收不代表登录通过。新版本真实账号重新登录及切回普通窗口仍待验证。详见 [隔离窗口说明](ISOLATED_INSTANCES.md)。本地候选不代表已发布。
+
+## 0.9.6 updated client / 更新后兼容候选
+
+2026-10-08：本地安装的新客户端 MVID `132cda4f-d57f-4991-8b09-6310f09b7fe5` 已核对。日常执行及证据读取统一适配，407 类型／824 成员、完整日常 164 项读取规则通过；12 个按需模块均可针对新版编译，初始连接仍不预载小游戏。2,250 项合成回归（62 组）通过。
+
+普通实例已到 TOUCH TO START；两份 Sandboxie 实例同时启动并独立连接，均停在游戏协议弹窗，未进入游戏、未发送日常操作。主机 14 个账号槽位文件不变。集中队列调度、登录身份与实际日常结果仍待后续使用验证。新版移除了魔兽页快速战斗入口，该环节会说明原因并标记待处理，不替代为实际战斗，也不阻止其他环节。见 [更新适配清单](CLIENT_UPDATES.md)。本地候选不代表 GitHub／OTA 已发布。
+
 Dustweave is a private preview being prepared for open source. The .NET application, integrated tools, synthetic tests and packaging scripts are maintained in this repository. The main project license and public release are not finalized; integrated tools and third-party components retain their own licenses.
 
 Dustweave 目前为私有预览，正在整理开源。日常本体、内置工具、合成测试与打包脚本统一维护。主体许可证与公开发布尚未确定，内置工具和第三方组件保留各自许可。
@@ -44,3 +69,55 @@ Account queues now start from the Accounts page. An opt-in scheduler can launch 
 最终 Portable／Lite 双版本位于 `artifacts/releases/0.9.1/`，均已包含账号卡片与拖动排序。2,130 项回归、每种成品 77 项定时／更新界面检查、差分升级、旧版完整升级、启动失败回退和模拟中断恢复均通过。差分下载量减少 Portable 82.44%、Lite 95.54%；0.9.0 仍需完整更新一次。详见 [0.9.1 验收](releases/0.9.1-validation.md)。
 
 Final packages include themed dialogs, signed differential updates and ordered account cards. Source is pushed and local acceptance is complete. No 0.9.1 GitHub Release or domestic OTA deployment has been performed; production remains 0.9.0. No game operation or real scheduled task was started.
+
+## Next changes / 后续修改 · 2026-10-08
+
+定时执行简化为每天固定时间，移除星期勾选。新建或保存的 Windows 任务使用每日触发器。首次读到旧版指定星期计划时，先持久化停用，再更新 Windows 登记，成功后恢复原启用状态；保留时间、账号顺序，失败则保持停用并提示重新保存。转换不会补跑此前错过的时间，也不自动启用关闭的计划。
+
+用户告知 2026-10-09 游戏大更新。按 [游戏更新检查清单](CLIENT_UPDATES.md) 核对新程序集、规则表和实际流程；尚未取得新版运行证据，不把 0.9.1 的旧版通过记录作为新版兼容证明。以上修改尚未打包或发布。
+
+验证：2,154 项合成检查（57 组）通过，证据 artifacts/tests-20261007-175236-5522；完整 WPF 检查通过，定时／更新相关 82 项，证据 artifacts/smoke-20261007-175446-6671。已检查深浅主题和窄屏英文。未连接游戏，未登记真实 Windows 计划。
+
+## 0.9.3 local candidate / 本地候选
+
+2026-10-08：新增 Sandboxie-Plus 实验性隔离启动。已经实测两个不同账号同时在线、独立连接、各自完成经营领取和邮箱检查；关闭其中一个账号的游戏及工具后重新打开，另一个保持在线。运行中的队列能独立暂停，另一窗口继续执行。普通窗口拒绝重复启动已在隔离空间运行的同一账号。没有发布到 GitHub Releases 或 OTA。
+
+账号页的入口支持简中、繁中和英文及深浅主题。主窗口保存的新登录信息通过临时 DPAPI 加密快照送入实例；仅在该账号游戏关闭后更新。安全暂停的队列允许同游戏进程内重建观察连接后接续，账号／角色／进程／周期变化或未确认操作仍受限制。定时仍按顺序执行，未实现集中并行计划。详情见 [隔离实例](ISOLATED_INSTANCES.md)。最终成品与实机验收记录随本地候选保存在 `artifacts/releases/0.9.3/` 和本次研究证据目录中。
+
+This is a local candidate, not a published release. Two-account core operation is verified; all daily stages, every integrated tool, larger instance counts and compatibility with the announced game update remain outside the completed live coverage.
+
+0.9.2 保留为首轮成品实测候选；0.9.3 追加普通窗口与安装器双层更新保护，隔离工具窗口未关闭时不改动安装文件。游戏可以保持运行。
+
+## 0.9.4 software candidate / 软件候选
+
+2026-10-08：主窗口新增可选的集中并行队列，默认同时 2 个账号，支持自动补位、账号级暂停／继续／停止、圆环进度、结束时间和步骤详情。定时计划沿用执行模式。主窗口与各隔离执行器分别持有操作锁；独立心跳在主窗口失联后停止任务，不自动重放未确认操作。成功后仅可关闭本次启动创建的游戏。顺序模式继续保留。
+
+已完成 2,218 项合成回归（60 组），其中新增真实双测试进程的控制通道、独立暂停和失联停止验证；它们不连接游戏。WPF 覆盖三语言、双主题和窄窗口，进一步成品结果见候选包报告。此次游戏维护，没有启动游戏、连接 Hook、执行日常、提交或发布。集中调度真实队列仍为 `source_implemented_pending_runtime`。操作步骤与开服后检查清单见 [集中并行执行](PARALLEL_EXECUTION.md)。
+
+## 0.9.5 client update preparation / 游戏更新准备
+
+2026-10-08：组件缓存改用全部 Managed DLL 内容指纹；编译期间输入变化与已知旧游戏进程会拦截连接。隔离启动在账号写入和游戏启动之前比对主机与沙箱程序内容。保留三语言提示、账号数据与按需准备。2,234 项合成回归（61 组）通过，其中新增 16 项更新／旧覆盖文件检查。旧客户端输入基线保留在私有研究目录，不进入源码或分发包。新客户端连接与多开仍为 source_implemented_pending_runtime；本轮没有启动游戏或发布。见 [游戏更新清单](CLIENT_UPDATES.md)。
+
+### 0.9.9 — login refresh and scoped delivery (2026-10-08)
+
+The desktop client log contains an initial InvalidAccessTokenException followed by sign-in. Read-only live observation later confirms an identified player outside the title screen, with complete local credentials and both automatic-sign-in flags enabled. This establishes recovery, but not why the server rejected that earlier token.
+
+A transient incomplete registry snapshot no longer aborts an active login check. Input permission remains revoked while waiting; restoration resumes the same check, actual identity mismatch still stops, and persistent incompleteness uses the existing login deadline. Relevant synthetic regressions pass; no automated sign-in or daily actions were performed for this validation.
+
+The canonical test runner accepts named groups. Packaging selects a narrowly verified account scope against an unchanged full baseline instead of rechecking every independent tool. Source and package validation remain distinct from live evidence.
+
+### 0.9.10 — background payment-region timeout acknowledgement (2026-10-08)
+
+Observed the ErrorMessagePopupUI titled payment failed, carrying the MyCard nation-check request timeout. Both decision callbacks were null; the close wrapper's optional onClose was also null. The current client's OnClickUI and close-wrapper IL confirm acknowledgement only. A single native-handler call closed the observed popup; no payment or retry was dispatched and the daily queue was retained.
+
+The runtime now classifies this precise diagnostic only after checking its callbacks, including the no-op wrapper's IL rather than an obfuscated method name. The managed navigation uses a dedicated action; native dispatch checks the current context and text again. Unknown confirmations and active callbacks remain blocked. Existing navigation progress detection prevents repeating a click on an unchanged popup.
+
+The account verification timestamp request is deferred at the user's request. No account-timestamp changes were made in this iteration.
+
+### 0.9.11 — stable pass observation after client updates (2026-10-08)
+
+The current client has two valid, distinct passes. The old observer serialized the list's backing array with the new obfuscated item field names while the managed consumer expected the old names. Missing IDs became zero and were incorrectly diagnosed as duplicate active passes; both reward claims and equipment planning were affected.
+
+The pass list now uses the bounded, explicit collection projection with stable protocol column names and the existing per-client member mapping. The consumer requires valid counts and positive identifiers; missing fields are incompatible evidence, never an empty task set or a zero ID. Genuine duplicates and incomplete lists still fail validation.
+
+Update preparation also validates serialized output shapes: raw client objects exposing obfuscated fields must use explicit projections or stable native DTOs. This includes nested collections and inherited public data. The former pass specification is rejected by the new check; the corrected daily observation specifications pass. A private replay of the captured failure recognizes both passes and the selected pass's six missions (three claimable, three pending). No claims or daily actions were sent during this repair; real post-update pass collection remains pending use.

@@ -137,14 +137,30 @@ public static class DailyMissions
 public static class DailyPasses
 {
     public const string Enabled = "_btnAllRecvButton.ὢὪὯὧὠὥὬὪὪὮὤ";
+    // The projected columns belong to our protocol; raw client object member names do not.
+    public static long[] ActiveIds(JsonObject evidence)
+    {
+        if (R(evidence, "pass.active", "ὠὤὭὯὯὪὯὧὮὪὬ.Count") is not JsonValue size || !size.TryGetValue<int>(out var count) || count < 0)
+            throw new StageHostException("adapter", "通行证列表读取格式不兼容，请更新连接组件；未将缺失字段视为无任务。");
+        var rows = R(evidence, "pass.active", "$items") as JsonArray;
+        if (rows == null)
+            throw new StageHostException("adapter", "通行证列表读取格式不兼容，请更新连接组件；未将缺失字段视为无任务。");
+        Require(count >= 0 && rows.Count == count, "Active pass list incomplete");
+        var ids = new List<long>();
+        foreach (var row in rows)
+        {
+            if (row is not JsonObject item || item["ὥὬὭὪὪὦὬὩὦὧὠ"] is not JsonValue value
+                || !value.TryGetValue<long>(out var id) || id <= 0)
+                throw new StageHostException("adapter", "通行证编号读取不兼容，请更新连接组件；未将缺失编号按零处理。");
+            ids.Add(id);
+        }
+        Require(ids.Distinct().Count() == ids.Count, "Duplicate active passes");
+        return ids.ToArray();
+    }
     public static JsonObject Report(JsonObject e, JsonNode cycle, Dictionary<long, JsonObject>? texts = null)
     {
         Require(S(e["Error"]) == "", "Pass observation failed");
-        int count = I(R(e, "pass.active", "ὠὤὭὯὯὪὯὧὮὪὬ.Count"));
-        var active = R(e, "pass.active", "ὠὤὭὯὯὪὯὧὮὪὬ._items")!.AsArray();
-        Require(count >= 0 && active.Count >= count && active.Take(count).All(r => r is JsonObject), "Active pass list incomplete");
-        var activeIds = active.Take(count).Select(r => N(r!["ὥὬὭὪὪὦὬὩὦὧὠ"])).ToArray();
-        Require(activeIds.Distinct().Count() == count, "Duplicate active passes");
+        var activeIds = ActiveIds(e);
         long pid = N(R(e, "pass.scope", "ὢὡὧὮὫὫὬὥὪὪὢ"));
         Require(activeIds.Contains(pid), "Selected pass is not active");
         var native = State(e, "pass.definition", "$self");

@@ -15,6 +15,7 @@
     <Compile Include="../../src/Shared/Ipc/runtime/Handoff.cs" Link="Unified/Handoff.cs" />
     <Compile Include="../../src/Runtime/SdkIdentity.cs" Link="SdkIdentity.cs" />
     <Compile Include="../../src/Connection/WeeklyNpcProgressGuard.cs" Link="WeeklyNpcProgressGuard.cs" />
+    <Compile Include="../../src/Connection/LiveClientBindings.cs;../../src/Connection/EvidenceBindings.cs;../../src/Connection/EvidenceAliases.cs;../../src/Connection/ObservationProjection.cs" Link="LiveBindings/%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="../../src/Connection/LiveContracts.cs" Link="LiveContracts.cs"/><Compile Include="../../src/Connection/SquareApproach.cs" Link="SquareApproach.cs" />

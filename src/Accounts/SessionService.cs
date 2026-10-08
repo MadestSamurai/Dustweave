@@ -4,7 +4,8 @@ internal sealed class SessionService
 {
     internal const int SlotCount = SessionConstants.FixedSlotCount;
 
-    private readonly SessionVault _vault = new();
+    private readonly SessionVault _vault;
+    internal SessionService(SessionVault? vault = null) => _vault = vault ?? new();
 
     internal string VaultDirectory => _vault.RootDirectory;
 
@@ -109,8 +110,10 @@ internal sealed class SessionService
     internal SlotSummary SaveCurrentToSlot(int slotNumber, string displayName, string? expectedMemberId = null)
     {
         SessionSlot current = SessionRegistry.Capture(displayName);
-        return SaveCapturedToSlot(current, slotNumber, displayName, expectedMemberId,
+        var result = SaveCapturedToSlot(current, slotNumber, displayName, expectedMemberId,
             _vault.TryLoadFixedSlot, _vault.SaveFixedSlot);
+        _vault.RememberObserved(current);
+        return result;
     }
 
     // Tested with an isolated in-memory vault; the production path uses the same
@@ -168,6 +171,7 @@ internal sealed class SessionService
             _vault,
             target,
             allowIncompleteCurrent: !status.Complete);
+        _vault.RememberObserved(target);
         GameLauncher.LaunchDirect();
         return activation;
     }
@@ -234,6 +238,7 @@ internal sealed class SessionService
             _vault,
             recovery,
             allowIncompleteCurrent: true);
+        _vault.RememberObserved(recovery);
         if (launch)
         {
             GameLauncher.LaunchDirect();
@@ -280,44 +285,54 @@ internal sealed class SessionService
         }
 
         SessionSlot current = SessionRegistry.Capture("current-session");
-        string? currentMemberId = SessionIdentity.GetMemberId(current);
-        if (string.IsNullOrEmpty(currentMemberId))
-        {
-            return null;
-        }
-
-        for (int number = 1; number <= SlotCount; number++)
-        {
-            SessionSlot? existing;
-            try
-            {
-                existing = _vault.TryLoadFixedSlot(number);
-            }
-            catch
-            {
-                continue;
-            }
-
-            if (existing is null
-                || !string.Equals(
-                    currentMemberId,
-                    SessionIdentity.GetMemberId(existing),
-                    StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            if (!SessionRegistry.SessionsEqual(current, existing))
-            {
-                _vault.SaveFixedSlot(number, current, existing.Alias, replace: true);
-            }
-
-            return number;
-        }
-
-        return null;
+        return SynchronizeCaptured(current);
     }
 
+    // Observe the registry separately from the shared vault: after accepting a
+    // renewed sandbox session, unchanged host registry bytes must not win it back.
+    internal int? SynchronizeCaptured(SessionSlot current)
+    {
+        SessionRegistry.ValidateSlot(current);
+        string? member = SessionIdentity.GetMemberId(current);
+        if (string.IsNullOrEmpty(member)) return null;
+        var matching = new List<(int Number, SessionSlot Slot)>();
+        for (int n = 1; n <= SlotCount; n++)
+        {
+            SessionSlot? s;
+            try { s = _vault.TryLoadFixedSlot(n); } catch { continue; }
+            if (s != null && SessionIdentity.GetMemberId(s) == member) matching.Add((n,s));
+        }
+        if (matching.Count == 0) return null;
+        var observed = _vault.ReadObserved();
+        if (observed != null && SessionRegistry.SessionsEqual(current, observed)) return matching[0].Number;
+        // A known token read from another context retains its actual capture age.
+        var known = matching.Where(x => SessionRegistry.SessionsEqual(current,x.Slot))
+            .OrderByDescending(x => x.Slot.CapturedAtUtc).FirstOrDefault().Slot;
+        var captured = known ?? current;
+        AcceptTransferred(captured, member);
+        _vault.RememberObserved(captured);
+        return matching[0].Number;
+    }
+
+    internal void AcceptTransferred(SessionSlot incoming, string expectedMember)
+    {
+        SessionRegistry.ValidateSlot(incoming);
+        if (SessionIdentity.GetMemberId(incoming) != expectedMember)
+            throw new SessionManagerException("登录凭据与所选账号不一致，未覆盖已保存账号。");
+        for (int n = 1; n <= SlotCount; n++)
+        {
+            var saved = _vault.TryLoadFixedSlot(n);
+            if (saved == null || SessionIdentity.GetMemberId(saved) != expectedMember) continue;
+            var latest = LatestSameAccount(saved, _vault.TryLoadFixedSlot);
+            if (SessionRegistry.SessionsEqual(incoming,latest)) return;
+            if (incoming.CapturedAtUtc < latest.CapturedAtUtc) return;
+            if (incoming.CapturedAtUtc == latest.CapturedAtUtc)
+                throw new SessionManagerException("同一时刻存在不同的登录凭据，已保留原账号；请重新登录后保存。");
+            _vault.SaveFixedSlot(n,incoming,saved.Alias,true);
+            return;
+        }
+        throw new SessionManagerException("要同步的账号已不存在，未新建或覆盖其他槽位。");
+    }
     internal SlotSummary UpdateSlotFromRecovery(int slotNumber)
     {
         SessionSlot existing = _vault.LoadFixedSlot(slotNumber);

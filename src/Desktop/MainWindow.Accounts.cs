@@ -29,7 +29,10 @@ public partial class MainWindow
         L.Bind(RecoverButton, FrameworkElement.ToolTipProperty, !closed ? "account.login_running" :
             catalog.HasRecovery ? "account.restore_help" : "account.no_recovery");
 
+        idle &= !IsSandboxWindow;
+        if (IsSandboxWindow) SaveAccountButton.IsEnabled = LoginNewButton.IsEnabled = RecoverButton.IsEnabled = false;
         var row = Selected;
+        SandboxLaunchButton.IsEnabled = idle && row?.Account.Valid == true;
         // Editing actions only affect the highlighted row, never the checked queue.
         RenameAccountButton.IsEnabled = DeleteAccountButton.IsEnabled = idle && row?.Account.Valid == true;
         MoveUpButton.IsEnabled = idle && row != null && rows.IndexOf(row) > 0;

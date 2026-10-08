@@ -45,3 +45,12 @@ The host exposes a generic plugin interface. A manifest declares its entry assem
 
 源码清单仅记录本仓库内的路径和校验值。内置工具保留原作者、许可证与版本记录。
 The source manifest records repository-local paths and checksums. Integrated tools retain their authorship, licenses and version records.
+## Isolated instances / 隔离实例
+
+Optional Sandboxie-Plus instances keep one existing Dustweave pipeline per sandbox. The ordinary window remains the authority for account editing, schedules and OTA. Process selection and child launching verify the driver-reported sandbox, not a command-line hint. Game account preferences, connection ownership and application history stay inside that instance. See [isolated instances](ISOLATED_INSTANCES.md) for tested scope and limitations.
+
+可选的 Sandboxie-Plus 实例各自运行原有单游戏链路；普通窗口管理账号、计划和更新。进程查询及子进程启动均按驱动报告的沙箱归属检查。每个实例仍保持单一自动化所有者，不允许两个工具同时控制同一游戏。
+
+### Concurrent queues / 集中并行队列
+
+`DailyParallelSession` owns bounded dispatch and persists the host overview. `DailyParallelRuntime` launches account-bound Sandboxie workers; `DailyParallelWorker` reuses the normal coordinator and queue instead of duplicating daily logic. A per-account command lease stops orphan workers; process/start identity gates Show Game and optional successful-completion cleanup. Host and worker control ownership prevents conflicting tool execution. Setup, failure handling and pending runtime acceptance are documented in [parallel execution](PARALLEL_EXECUTION.md).

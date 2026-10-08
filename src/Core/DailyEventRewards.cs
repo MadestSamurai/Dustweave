@@ -8,15 +8,15 @@ namespace Dustweave;
 public static class DailyEventRewards
 {
     public static readonly string[] Prefixes = ["rewards", "pass.cache", "minigames", "trade.inventory"];
-    private static readonly Dictionary<int, string> Kinds = new() { { 4, "EventMissionUI" }, { 19, "MiniGameRouletteUI" }, { 7, "EventExchangeUI" }, { 12, "MiniGameDiceUI" } };
+    private static readonly Dictionary<int, string> Kinds = new() { { 4, "EventMissionUI" }, { 19, "MiniGameRouletteUI" }, { 7, "EventExchangeUI" }, { 12, "MiniGameDiceUI" }, { 17, "MiniGamePuzzleUI" } };
     public static JsonObject Parse(JsonNode? raw) => JsonNode.Parse(string.IsNullOrWhiteSpace(S(raw)) ? "{}" : S(raw))?.AsObject() ?? new();
     public static JsonObject Page(JsonObject state) => State(state, "rewards.native", "$self");
     public static JsonObject[] Select(JsonObject page, EventRewardPreferences settings)
     {
-        var enabled = new Dictionary<int, bool> { { 4, settings.Missions }, { 12, settings.Dice }, { 19, settings.Roulette }, { 7, settings.Exchange } };
+        var enabled = new Dictionary<int, bool> { { 4, settings.Missions }, { 12, settings.Dice }, { 19, settings.Roulette }, { 7, settings.Exchange }, { 17, settings.Puzzle } };
         var rows = page["Catalog"]!.AsArray().Select(Parse).ToArray();
         Require(rows.Select(r => N(r["id"])).Distinct().Count() == rows.Length, "Duplicate active event identity");
-        return rows.Where(r => enabled.GetValueOrDefault(I(r["eventType"])) && !(I(r["eventType"]) == 7 && N(r["eventSubType"]) != 0)).OrderBy(r => I(r["eventType"]) switch { 4 => 0, 12 => 1, 19 => 2, _ => 3 }).ThenBy(r => N(r["sortId"])).ThenBy(r => N(r["id"])).ToArray();
+        return rows.Where(r => enabled.GetValueOrDefault(I(r["eventType"])) && !(I(r["eventType"]) == 7 && N(r["eventSubType"]) != 0)).OrderBy(r => I(r["eventType"]) switch { 4 => 0, 12 => 1, 17 => 2, 19 => 3, _ => 4 }).ThenBy(r => N(r["sortId"])).ThenBy(r => N(r["id"])).ToArray();
     }
     public static async Task<JsonObject> WaitPage(DailyWorkflow w, long? tid = null, long? tab = null)
     {
@@ -91,19 +91,21 @@ public static class DailyEventRewards
             "MiniGameDiceUI" => !B(p["Auto"]) && B(p["AllowedCurrency"]) && B(p["Claim"]) && N(p["Cost"]) > 0 && N(p["Balance"]) >= N(p["Cost"]) ? 6 : 0,
             "EventMissionUI" => B(p["Claim"]) ? 1 : 0,
             "MiniGameRouletteUI" => B(p["Free"]) && N(Parse(p["Cache"])["freeApCount"]) > 0 ? 2 : enough ? 3 : 0,
+            "MiniGamePuzzleUI" => enough && N(p["Total"]) > N(p["Received"]) ? 9 : 0,
             "EventExchangeUI" => B(p["AllowedCurrency"]) && N(p["Total"]) > 0 && N(p["Received"]) >= N(p["Total"]) ? B(p["Renew"]) ? 5 : 0 : enough ? 4 : 0,
             _ => 0
         };
     }
     public static IEnumerable<DailyBusinessProof> Proofs()
     {
-        foreach (int i in new[] { 1, 2, 3, 4, 5, 8 })
+        foreach (int i in new[] { 1, 2, 3, 4, 5, 8, 9 })
         {
             int action = i;
-            string role = action == 1 ? "missions.clear" : action is 2 or 3 or 8 ? "rewards.roulette" : action == 4 ? "rewards.exchange" : "rewards.exchange_page";
+            string role = Role(action);
             yield return new("event_rewards." + action, "event_rewards", Prefixes, (op, es, after) => Verify(op["before"]!.AsObject(), es, after, action), [role], ["event_rewards", "rewards"], OwnsPreview);
         }
     }
+    private static string Role(int action) => action switch { 1 => "missions.clear", 2 or 3 or 8 => "rewards.roulette", 4 => "rewards.exchange", 5 => "rewards.exchange_page", 9 => "rewards.puzzle", _ => throw new ArgumentException("Unsupported event action") };
     public static bool OwnsPreview(JsonObject op, DailyStageFrame current)
     {
         var preview = op["preview_frame"] as JsonObject;
@@ -118,8 +120,10 @@ public static class DailyEventRewards
         var b = Page(before);
         var a = Page(after);
         Require(JsonNode.DeepEquals(b["TableId"], a["TableId"]) && JsonNode.DeepEquals(b["Schedule"], a["Schedule"]), "Event identity changed");
-        string role = action == 1 ? "missions.clear" : action is 2 or 3 or 8 ? "rewards.roulette" : action == 4 ? "rewards.exchange" : "rewards.exchange_page";
+        string role = Role(action);
         var responses = Responses(role, events, before, after, 1, 200);
+        if (action == 9)
+            return VerifyPuzzle(b, a, responses);
         if (action == 1)
         {
             Require(JsonNode.DeepEquals(b["Tab"], a["Tab"]), "Event tab changed");
@@ -147,6 +151,31 @@ public static class DailyEventRewards
         }
         Require(N(a["Page"]) > N(b["Page"]), "Exchange page did not advance");
         return O(("page", a["Page"]), ("responses", responses.Length));
+    }
+    private static JsonObject VerifyPuzzle(JsonObject before, JsonObject after, JsonObject[] replies)
+    {
+        Require(Action(before) == 9 && replies.Length == 1, "拼图批量请求与当前计划不一致");
+        var prior = Parse(before["Cache"]);
+        var current = Parse(after["Cache"]);
+        var reply = replies[0];
+        Require(JsonNode.DeepEquals(reply["BeforePuzzleInfo"], prior) && JsonNode.DeepEquals(reply["MiniPuzzleInfo"], current), "拼图服务器进度与当前盘面不一致");
+        long schedule = N(Parse(before["Schedule"])["id"]);
+        Require(schedule > 0 && N(prior["eventScheduleId"]) == schedule && N(current["eventScheduleId"]) == schedule, "拼图活动周期已改变");
+        long total = N(before["Total"]), count = N(before["Batch"]), cost = N(before["Cost"]);
+        long[] Open(JsonObject info) => (info["puzzleOpen"] as JsonArray ?? new()).Select(N).ToArray();
+        var oldOpen = Open(prior); var newOpen = Open(current);
+        Require(oldOpen.Distinct().Count() == oldOpen.Length && newOpen.Distinct().Count() == newOpen.Length && oldOpen.Length == N(before["Received"]), "拼图已翻开格数不一致");
+        Require(count == Math.Min(N(before["Balance"]) / cost, total - oldOpen.Length) && count > 0, "拼图批量次数超过剩余格数或代币");
+        long pageDelta = N(current["clearCount"]) - N(prior["clearCount"]);
+        // Completing a board advances and resets it in the same native response.
+        // Never click manual renewal, which could discard unopened cells.
+        Require(pageDelta == 0
+            ? newOpen.Length == oldOpen.Length + count && oldOpen.All(newOpen.Contains) && JsonNode.DeepEquals(prior["puzzle"], current["puzzle"])
+            : pageDelta == 1 && oldOpen.Length + count == total && newOpen.Length == 0,
+            "拼图批量结果未对应到翻格或整板自动刷新");
+        long spent = checked(count * cost);
+        Require(N(before["Balance"]) - N(after["Balance"]) == spent && reply["OpenReward"] is JsonObject, "拼图代币消耗或奖励不一致");
+        return O(("opened", count), ("spent", spent), ("boards_completed", pageDelta), ("page", current["clearCount"]), ("responses", 1), ("rewards", Array(replies)));
     }
     public static Task<JsonObject> Perform(DailyWorkflow w, JsonObject p) => PerformCore(w, p, Action(p));
     public static Task<JsonObject> SingleRoulette(DailyWorkflow w, JsonObject p)
@@ -212,11 +241,11 @@ public static class DailyEventRewards
     public static void RequireExhausted(JsonObject p)
     {
         string kind = S(p["Kind"]);
-        if (kind is not ("MiniGameRouletteUI" or "EventExchangeUI" or "MiniGameDiceUI")) return;
+        if (kind is not ("MiniGameRouletteUI" or "EventExchangeUI" or "MiniGameDiceUI" or "MiniGamePuzzleUI")) return;
         Require(B(p["Ready"]), "活动仍在动画或结算中，不能记为完成");
         if (kind == "MiniGameRouletteUI")
             Require(N(Parse(p["Cache"])["freeApCount"]) == 0, "转盘仍有免费次数，按钮未就绪，不能记为完成");
-        if (kind == "EventExchangeUI" && N(p["Total"]) > 0 && N(p["Received"]) >= N(p["Total"]) && !B(p["Renew"])) return;
+        if (kind is "EventExchangeUI" or "MiniGamePuzzleUI" && N(p["Total"]) > 0 && N(p["Received"]) >= N(p["Total"]) && !B(p["Renew"])) return;
         Require(N(p["Cost"]) > 0 && N(p["Balance"]) < N(p["Cost"]), "活动仍有可用代币，但原生按钮不可用；保留剩余次数，不能记为完成");
     }
     public static JsonArray Pending(IEnumerable<JsonObject> entries, Dictionary<(long Event, long Id), JsonObject>? cache = null)
@@ -381,7 +410,7 @@ public static class DailyEventRewards
                                         mission["title"] = S(text?["textCn"]).Length > 0 ? S(text!["textCn"]) : S(text?["textEn"]);
                                         entry["missions"]!.AsArray().Add(mission);
                                     }
-                                Require(!(S(p["Kind"]) is "MiniGameRouletteUI" or "EventExchangeUI" or "MiniGameDiceUI") || N(p["Cost"]) <= 0 || N(p["Balance"]) < N(p["Cost"]) || B(p["AllowedCurrency"]), "Event currency unsupported; balance retained");
+                                Require(!(S(p["Kind"]) is "MiniGameRouletteUI" or "EventExchangeUI" or "MiniGameDiceUI" or "MiniGamePuzzleUI") || N(p["Cost"]) <= 0 || N(p["Balance"]) < N(p["Cost"]) || B(p["AllowedCurrency"]), "Event currency unsupported; balance retained");
                                 RequireExhausted(p);
                                 tabDone = true;
                                 break;

@@ -18,7 +18,9 @@ public static class DailyMonsterHunt
     {
         var c = Cache(e);
         Require(B(R(e, "monster.ui", Matched)) && N(c["Season"]) == N(R(e, "monster.ui", Schedule + ".SeasonInfo.Season")) && N(c["MonsterHuntId"]) == N(R(e, "monster.ui", Schedule + ".MonsterHuntId")), "Monster Hunt cache belongs to another season");
-        return O(("highest_level", c["Level"]), ("selected_level", R(e, "monster.ui", Selected)), ("daily_damage", c["DailyHighestDamage"]), ("level_record", c["CurrentLevelHighestDamage"]), ("practice", R(e, "monster.ui", Practice)), ("quick_enabled", R(e, "monster.ui", "_buttonQuickBattle._goEnable.activeSelf")), ("season", c["Season"]), ("monster", c["MonsterHuntId"]));
+        var quick=Rows(e["Frame"]?["Surfaces"]).Where(s=>S(s["Type"])=="MonsterHuntUI").SelectMany(s=>Rows(s["Targets"]))
+            .Where(t=>S(t["Field"])=="_buttonQuickBattle._button").ToArray();
+        return O(("highest_level", c["Level"]), ("selected_level", R(e, "monster.ui", Selected)), ("daily_damage", c["DailyHighestDamage"]), ("level_record", c["CurrentLevelHighestDamage"]), ("practice", R(e, "monster.ui", Practice)), ("quick_available", quick.Length>0), ("quick_enabled", quick.Any(t=>B(t["Enabled"]))), ("season", c["Season"]), ("monster", c["MonsterHuntId"]));
     }
     public static JsonObject Plan(JsonObject s)
     {
@@ -33,6 +35,8 @@ public static class DailyMonsterHunt
             return O(("state", "blocked"), ("reason", "no_native_quick_battle_record"));
         if (N(s["daily_damage"]) >= N(s["level_record"]))
             return DailyWorkflow.Skipped("daily_record_already_applied");
+        if (s["quick_available"] != null && !B(s["quick_available"]))
+            return O(("state", "blocked"), ("reason", "native_quick_entry_removed"));
         if (N(s["selected_level"]) != N(s["highest_level"]))
             return O(("state", "select_highest"), ("level", s["highest_level"]));
         return O(("state", B(s["quick_enabled"]) ? "ready" : "blocked"), ("reason", B(s["quick_enabled"]) ? "" : "native_quick_button_unavailable"), ("level", s["highest_level"]));

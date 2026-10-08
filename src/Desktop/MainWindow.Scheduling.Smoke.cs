@@ -34,6 +34,7 @@ public partial class MainWindow
             schedulePanel.SetAccounts(rows.Select(r => r.Account));
             WorkspaceTabs.SelectedItem = ScheduleTab;
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            Check(Descendants<CheckBox>(schedulePanel).Count() == 1, "Schedule still exposes weekday selection");
             var cards = Descendants<DailyScheduleAccounts>(schedulePanel).Single();
             var catalog = rows.Select(r => r.Account).ToArray();
             var original = cards.SelectedKeys;
@@ -80,6 +81,7 @@ public partial class MainWindow
             Descendants<Button>(schedulePanel).Single(b => b.Content?.ToString() == L.Get("schedule.save")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             schedulePanel.SaveRequested -= ObserveOrder;
             Check(reorderedPlan != null && reorderedPlan.Accounts.SequenceEqual(reordered), "Save lost the reordered account sequence");
+            Check(reorderedPlan!.IsDaily, "Saving a legacy weekday plan did not produce a daily schedule");
             schedulePanel.Show(reorderedPlan!, null); cards.SetAccounts(catalog);
             Check(cards.SelectedKeys.SequenceEqual(reordered), "Reload lost saved account order");
             cards.Select(original);
@@ -119,7 +121,8 @@ public partial class MainWindow
             schedulePanel.SaveRequested += Observe;
             Descendants<Button>(schedulePanel).Single(b => b.Content?.ToString() == L.Get("schedule.save")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             schedulePanel.SaveRequested -= Observe;
-            Check(captured is { Enabled: false } && captured.Accounts.SequenceEqual(cards.SelectedKeys), "Disabled schedule failed to save edited accounts");
+            Check(captured is { Enabled: false, IsDaily: true } && captured.Accounts.SequenceEqual(cards.SelectedKeys), "Disabled schedule failed to save edited accounts");
+            plan = plan with { Days = [0, 1, 2, 3, 4, 5, 6] };
             schedulePanel.Show(plan, new("fixture", "completed", DateTimeOffset.UtcNow));
             foreach (var appearance in new[] { DailyAppearance.Light, DailyAppearance.Dark })
             foreach (string language in DailyLanguage.Codes)
@@ -137,6 +140,7 @@ public partial class MainWindow
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
                 Capture("schedule-" + language);
                 Check(Descendants<TextBlock>(schedulePanel).Any(t => t.Text == L.Get("schedule.accounts")), "Schedule locale stale");
+                Check(Descendants<TextBlock>(schedulePanel).Any(t => t.Text == L.Get("schedule.time")), "Daily time label locale stale");
                 WorkspaceTabs.SelectedItem = UpdatesTab;
                 updatePanel.Status("updates.ready", "99.0.0"); updatePanel.Busy(false, true, false);
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); Capture("updates-" + language);

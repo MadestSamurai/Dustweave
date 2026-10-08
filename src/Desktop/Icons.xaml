@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
  <!-- All symbols share a 16-unit canvas and rounded 1.5-unit strokes. -->
+ <Geometry x:Key="Icon.Plugin">M5,1 V5 M11,1 V5 M3,5 H13 V8 A5,5 0 0 1 3,8 Z M8,13 V15</Geometry>
  <Geometry x:Key="Icon.WindowMinimize">M3,8 H13</Geometry>
  <Geometry x:Key="Icon.WindowMaximize">M3,3 H13 V13 H3 Z</Geometry>
  <Geometry x:Key="Icon.WindowRestore">M3,5 H11 V13 H3 Z M5,3 H13 V11</Geometry>

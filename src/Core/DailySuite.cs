@@ -6,7 +6,8 @@ public static class DailySuite {
  public static Func<string,Action<string>,CancellationToken,Task<PreparedDailyHook>>? Prepare {get;set;}
  public static Func<string,string,Action<string>,CancellationToken,Task<byte[]>>? PrepareModule {get;set;}
  public static bool Enabled=>Prepare!=null;
- public static string ConnectionFingerprint(Guid hostModule, string pluginFingerprint) => DailyIdentity.Hash("on-demand-v2|"+hostModule+"|"+pluginFingerprint);
+ // Extensions belong to the on-demand daily module; the common observer contains none.
+ public static string ConnectionFingerprint(Guid hostModule, string pluginFingerprint) => DailyIdentity.Hash("on-demand-v3|"+hostModule);
  static readonly JsonSerializerOptions Json=new(){IncludeFields=true};
  public static string Owner=>Environment.GetEnvironmentVariable("BD2_DAILY_SUITE_OWNER")??throw new InvalidOperationException("统一会话缺少控制器身份。");
  public static async Task ActivateAsync(IGameHost host,string root,string id,Action<string> progress,CancellationToken cancel){

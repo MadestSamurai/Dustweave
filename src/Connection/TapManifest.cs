@@ -18,7 +18,9 @@ static class TapManifest {
   using var resolver=new DefaultAssemblyResolver();resolver.AddSearchDirectory(managed);
   using var module=ModuleDefinition.ReadModule(Path.Combine(managed,"Assembly-CSharp.dll"),new ReaderParameters{AssemblyResolver=resolver});
   var types=All(module.Types).ToArray();var methods=types.Where(t=>!t.FullName.StartsWith("Proto.")).SelectMany(t=>t.Methods).Where(m=>m.HasBody).ToArray();
-  var spec=LoadSpec(specPath);var taps=new JsonArray();
+  Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output))!);
+  var original=LoadSpec(specPath);
+  var spec=Dustweave.Connection.LiveClientBindings.AdaptSpec(managed,original,Path.ChangeExtension(output,"bindings.json"),out var names);var taps=new JsonArray();
   foreach(var rule in spec["Taps"]!.AsArray()){
    string dto=rule!["ResponseType"]!.GetValue<string>(),request=dto.Replace("Response","Request");
    bool Refers(MethodDefinition m,string type)=>m.Body.Instructions.Any(ins=>ins.Operand is MethodReference mr&&mr.DeclaringType.FullName==type);
@@ -36,7 +38,9 @@ static class TapManifest {
    if(rule["ResponseMethod"] is {} responseMethod)resp=resp.Where(m=>m.Name==responseMethod.GetValue<string>()).ToArray();
    var responseNames=rule["ResponseMethods"]?.AsArray().Select(x=>x!.GetValue<string>()).ToArray();
    if(responseNames!=null){resp=resp.Where(m=>responseNames.Contains(m.Name)).ToArray();if(resp.Length!=responseNames.Length)throw new Exception("Missing declared response variant: "+dto);}
-   if(req.Length!=1||resp.Length!=(responseNames?.Length??1))throw new Exception($"Ambiguous {dto}: requests={string.Join(",",req.Select(m=>m.FullName))}, responses={string.Join(",",resp.Select(m=>m.FullName))}");
+   if(rule["ResponseNestedOnly"]?.GetValue<bool>()==true)resp=resp.Where(m=>m.DeclaringType.IsNested).ToArray();
+   int expectedResponses=rule["ResponseCount"]?.GetValue<int>()??responseNames?.Length??1;
+   if(expectedResponses<1||expectedResponses>10||req.Length!=1||resp.Length!=expectedResponses)throw new Exception($"Ambiguous {dto}: requests={string.Join(",",req.Select(m=>m.FullName))}, responses={string.Join(",",resp.Select(m=>m.FullName))}");
    var record=rule.DeepClone()!.AsObject();record["RequestToken"]=req[0].MetadataToken.ToInt32();record["ResponseToken"]=resp[0].MetadataToken.ToInt32();record["ResponseTokens"]=new JsonArray(resp.Select(m=>(JsonNode?)JsonValue.Create(m.MetadataToken.ToInt32())).ToArray());taps.Add(record);
    Console.WriteLine($"{record["Role"]}: {req[0].MetadataToken} -> {resp[0].MetadataToken}, fields: {string.Join(",",types.Single(t=>t.FullName==dto).Properties.Where(p=>p.GetMethod?.IsStatic==false&&p.GetMethod.IsPublic).Select(p=>p.Name))}");
   }
@@ -67,14 +71,21 @@ static class TapManifest {
    try{
     TypeReference start=types.Single(t=>t.FullName==rule["Type"]!.GetValue<string>());
     if(rule["StaticMember"] is {} member)start=Member(start,member.GetValue<string>());
-    foreach(var path in rule["Paths"]!.AsArray())PathType(start,path!.GetValue<string>());
-    if(rule["CollectionPath"] is {} collection){var item=ItemType(PathType(start,collection.GetValue<string>()))??throw new Exception("Collection is not enumerable");foreach(var path in rule["ItemPaths"]!.AsArray())PathType(item,path!.GetValue<string>());}
+    foreach(var path in rule["Paths"]!.AsArray()){var key=path!.GetValue<string>();var outputType=PathType(start,key);if(key!="$self")Dustweave.Connection.ObservationSchema.RequireStable(outputType,rule["Id"]+":"+key);}
+    if(rule["CollectionPath"] is {} collection){var item=ItemType(PathType(start,collection.GetValue<string>()))??throw new Exception("Collection is not enumerable");foreach(var path in rule["ItemPaths"]!.AsArray()){var key=path!.GetValue<string>();Dustweave.Connection.ObservationSchema.RequireStable(PathType(item,key),rule["Id"]+":$items."+key);}}
     readCount++;
    }catch(Exception e){readErrors.Add(rule["Id"]+": "+e.Message);}
   }
   if(readErrors.Count>0)throw new Exception(string.Join("\n",readErrors));
   Console.WriteLine($"Validated all {readCount} native read paths and collection item paths");
-  var result=new JsonObject{["Mvid"]=module.Mvid.ToString(),["Taps"]=taps,["Reads"]=spec["Reads"]?.DeepClone()??new JsonArray()};
+  // The consumer uses baseline path names as protocol keys. Only reflection
+  // follows the new names; collection JSON columns retain their original keys.
+  foreach(var rule in spec["Reads"]!.AsArray()){
+   var baseline=original["Reads"]!.AsArray().Single(r=>r!["Id"]!.GetValue<string>()==rule!["Id"]!.GetValue<string>())!;
+   foreach(string field in new[]{"Paths","CollectionPath","ItemPaths"})if(baseline[field]!=null)rule![field]=baseline[field]!.DeepClone();
+  }
+  var aliases=new JsonArray(names.Select(p=>(JsonNode?)new JsonObject{["Original"]=p.Key,["Current"]=p.Value}).ToArray());
+  var result=new JsonObject{["Mvid"]=module.Mvid.ToString(),["Aliases"]=aliases,["Taps"]=taps,["Reads"]=spec["Reads"]?.DeepClone()??new JsonArray()};
   Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output))!);File.WriteAllText(output,result.ToJsonString(new JsonSerializerOptions{WriteIndented=true}));
  }
 }

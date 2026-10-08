@@ -44,6 +44,19 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
             && JsonNode.DeepEquals(a[3], b[3]) && JsonNode.DeepEquals(a[4], b[4])
             && JsonNode.DeepEquals(before["server"], now["server"]) && JsonNode.DeepEquals(before["cycle"], now["cycle"]);
     }
+    // A clean stop can reconnect to the same live game after the observer reloads.
+    // Never reinterpret a changed game/account/cycle or an unsettled transaction.
+    internal static bool CanReconnectPausedQueue(JsonObject record, JsonObject current)
+    {
+        if (Text(record["state"]) != "paused" || record["items"] is not JsonArray items ||
+            items.Any(i => Text(i?["state"]) is "running" or "recovery_required") ||
+            record["context"] is not JsonObject prior || prior["actor"] is not JsonArray a ||
+            current["actor"] is not JsonArray b || a.Count != 5 || b.Count != 5)
+            return false;
+        var compare = prior.DeepClone().AsObject();
+        compare["actor"]![2] = b[2]?.DeepClone();
+        return JsonNode.DeepEquals(compare, current);
+    }
     private static JsonArray RetryItems(JsonObject old, IReadOnlyList<string> names, JsonObject context)
     {
         ValidateRecord(old);
@@ -84,7 +97,14 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
             ValidateRecord(record);
             DailyWeeklyMission.RecheckLegacy(record, resume: true);
             if (!JsonNode.DeepEquals(context, record["context"]))
-                throw new StageHostException("identity", "原队列的账号、进程或重置周期已变化，请开始新队列。");
+            {
+                if (!CanReconnectPausedQueue(record, context))
+                    throw new StageHostException("identity", "原队列的账号、进程或重置周期已变化，请开始新队列。");
+                var history = record["connection_history"] as JsonArray ?? new JsonArray();
+                if (record["connection_history"] == null) record["connection_history"] = history;
+                history.Add(new JsonObject { ["previous"] = record["context"]!.DeepClone(), ["at"] = DateTime.UtcNow.Ticks });
+                record["context"] = context.DeepClone();
+            }
             foreach (var node in record["items"]!.AsArray())
                 if (Text(node!["state"]) == "running")
                 {

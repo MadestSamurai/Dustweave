@@ -26,6 +26,8 @@ public sealed partial class DailyLanguage : INotifyPropertyChanged
         using var stream = typeof(DailyLanguage).Assembly.GetManifestResourceStream("Dustweave.UI.strings.json")
             ?? throw new InvalidDataException("UI language resources are missing.");
         strings = JsonSerializer.Deserialize<Dictionary<string,Dictionary<string,string>>>(stream)!;
+        using var pluginStream = typeof(DailyLanguage).Assembly.GetManifestResourceStream("Dustweave.UI.plugin-strings.json")!;
+        foreach (var pair in JsonSerializer.Deserialize<Dictionary<string,Dictionary<string,string>>>(pluginStream)!) strings.Add(pair.Key, pair.Value);
         using var runtimeStream = typeof(DailyLanguage).Assembly.GetManifestResourceStream("Dustweave.UI.runtime.json")
             ?? throw new InvalidDataException("Runtime language resources are missing.");
         foreach (var pair in JsonSerializer.Deserialize<Dictionary<string,Dictionary<string,string>>>(runtimeStream)!)

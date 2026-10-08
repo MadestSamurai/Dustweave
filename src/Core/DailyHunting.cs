@@ -8,7 +8,8 @@ public static class DailyHunting
     public static readonly string[] Elements = ["fire", "water", "wind", "light", "dark"];
     public static readonly string[] Currencies = ["FreeHuntingAp", "BonusHuntingAp", "FreeTorchLightAp", "TorchLightAp"];
     public static DailyBusinessProof Proof() => new("hunt.dispatch", "hunting", ["hunt", "daily.currency", "missions.cache"], (op, events, after) => Verify(op["before"]!.AsObject(), events, after, op["scope"]!.AsObject()), AffectedStages: ["hunting", "daily_hunt", "stones", "daily_hunt_minimal"]);
-    public static bool Needed(JsonObject e) => Cached(e, "missions.cache").FirstOrDefault(r => N(r["id"]) == 109) is not JsonObject row || !B(row["isComplete"]) && N(row["value"]) < 1;
+    public static string Destination(HuntPreferences h, IReadOnlyDictionary<string, bool> bonuses) =>
+        h.Priority.First(k => k == "ordinary" || (k == "gold" ? h.FarmGold : h.FarmSlime) && bonuses.GetValueOrDefault(k));
     public static (string Field, int Target) CountStep(int current, int target, int middle = 10)
     {
         int next = current == 1 && middle > 1 ? middle : current + middle;
@@ -128,7 +129,6 @@ public static class DailyHunting
         {
             await w.Refresh(Ui);
             var e = await w.Evidence("hunt", "daily.currency", "missions.cache");
-            bool required = Needed(e);
             var bonuses = new Dictionary<string, bool>();
             foreach (var pair in new[] { ("gold", "_tabButtonGoblin._goBonus.activeInHierarchy"), ("slime", "_tabButtonSlime._goBonus.activeInHierarchy") })
             {
@@ -136,39 +136,17 @@ public static class DailyHunting
                 Require(value is JsonValue v && v.TryGetValue<bool>(out _), "Hunt bonus unobserved");
                 bonuses[pair.Item1] = B(value);
             }
-            string chosen = minimal ? "ordinary" : h.Priority.First(k => k == "ordinary" || (k == "gold" ? h.FarmGold : h.FarmSlime) && bonuses[k]);
-            if (required || chosen == "ordinary" && !minimal)
+            string chosen = minimal ? "ordinary" : Destination(h, bonuses);
+            var table = await Select(w, chosen, h.OrdinaryChapter);
+            long free = N(R(await w.Evidence("hunt", "daily.currency", "missions.cache"), "daily.currency", "FreeHuntingAp"));
+            int cost = I(table["apPerTime"]);
+            Require(cost > 0, "Invalid hunt AP cost");
+            int count = checked((int)(free / cost));
+            if (minimal)
+                count = Math.Min(count, 1); // Explicit legacy single-hunt command only; never a prerequisite.
+            if (count > 0)
             {
-                var table = await Select(w, "ordinary", h.OrdinaryChapter);
-                long free = N(R(await w.Evidence("hunt", "daily.currency", "missions.cache"), "daily.currency", "FreeHuntingAp"));
-                int cost = I(table["apPerTime"]);
-                Require(cost > 0, "Invalid hunt AP cost");
-                int count = chosen == "ordinary" && !minimal ? checked((int)(free / cost)) : free >= cost ? 1 : 0;
-                if (count > 0)
-                {
-                    operations.Add(await Batch(w, table, count, free, "FreeHuntingAp"));
-                    if (required)
-                    {
-                        await w.Refresh(Ui, true);
-                        if (Needed(await w.Evidence("hunt", "daily.currency", "missions.cache")))
-                            pending.Add("ordinary_daily_not_confirmed");
-                    }
-                }
-                else if (required)
-                    pending.Add("ordinary_daily_insufficient_free_rice");
-            }
-            if (chosen != "ordinary" && pending.Count == 0)
-            {
-                long free = N(R(await w.Evidence("hunt", "daily.currency", "missions.cache"), "daily.currency", "FreeHuntingAp"));
-                if (free > 0)
-                {
-                    var table = await Select(w, chosen, h.OrdinaryChapter);
-                    int cost = I(table["apPerTime"]);
-                    Require(cost > 0, "Invalid hunt AP cost");
-                    int count = checked((int)(free / cost));
-                    if (count > 0)
-                        operations.Add(await Batch(w, table, count, free, "FreeHuntingAp"));
-                }
+                operations.Add(await Batch(w, table, count, free, "FreeHuntingAp"));
             }
         }
         if (stones)
@@ -193,9 +171,7 @@ public static class DailyHunting
             }
         }
         await w.Step(Ui, "_objBackButton", expect: "MenuUI", reason: "免费狩猎已核账");
-        var result = O(("state", pending.Count > 0 ? "partial" : "completed"), ("engine", "dotnet-hunting-v1"), ("operations", operations), ("pending", pending));
-        if (pending.Count > 0)
-            result["reason"] = "章节狩猎任务未完成或服务器进度尚未确认，未继续消耗白饭";
+        var result = O(("state", "completed"), ("engine", "dotnet-hunting-v2"), ("operations", operations), ("pending", pending));
         w.Save("hunt-latest.json", result);
         return result;
     }

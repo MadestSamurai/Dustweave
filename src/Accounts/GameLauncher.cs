@@ -7,9 +7,9 @@ internal static class GameLauncher
     private const string InstallRegistrySubKey = @"Software\NEOWIZ\Browndust2Starter\10000001";
     private const string FallbackExecutable = @"C:\Neowiz\Browndust2\Browndust2_10000001\BrownDust II.exe";
 
-    internal static int LaunchDirect()
+    internal static int LaunchDirect(string? executable = null)
     {
-        string executable = ResolveExecutable();
+        executable ??= ResolveExecutable();
         DirectPcChannel.Prepare(executable, Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             SessionConstants.VaultDirectoryName, "launch-settings-backups"));

@@ -15,6 +15,7 @@ namespace BD2Daily.Live {
   [DataMember] public string Mvid="";
   [DataMember] public TapRule[] Taps=new TapRule[0];
   [DataMember] public ReadRule[] Reads=new ReadRule[0];
+  [DataMember] public ClientAlias[] Aliases=new ClientAlias[0];
  }
  [DataContract] public sealed class TapRule {
   [DataMember] public string Role="",ResponseType="";
@@ -58,6 +59,7 @@ namespace BD2Daily.Live {
   [DataMember] public Value[] Values=new Value[0];
  }
  internal static class Evidence {
+  internal static EvidenceAliases Aliases=new EvidenceAliases(new ClientAlias[0]);
   internal static string[] Costs=new string[0];
   private static readonly Dictionary<Type,DataContractJsonSerializer> serializers=new Dictionary<Type,DataContractJsonSerializer>();
   private static DataContractJsonSerializer Serializer(Type type){DataContractJsonSerializer s;if(!serializers.TryGetValue(type,out s))serializers[type]=s=new DataContractJsonSerializer(type);return s;}
@@ -85,6 +87,7 @@ namespace BD2Daily.Live {
    using(var ms=new MemoryStream()){(Bridge.LegacyObservation?new DataContractJsonSerializer(value.GetType()):Serializer(value.GetType())).WriteObject(ms,value);return Encoding.UTF8.GetString(ms.ToArray());}
   }
   private static object Member(object instance,Type type,string name,bool isStatic=false){
+   name=Aliases.Current(name);
    var flags=BindingFlags.Public|BindingFlags.NonPublic|(isStatic?BindingFlags.Static:BindingFlags.Instance);
    if(name.EndsWith("()",StringComparison.Ordinal)){
     bool clock=name=="UnixTimeStamp()"&&type.FullName=="gamfs.Thread.TimerManager";
@@ -138,7 +141,7 @@ namespace BD2Daily.Live {
     responses.Add(pair.Item3,pair.Item1);
     harmony.Patch(pair.Item3,postfix:new HarmonyMethod(typeof(Evidence).GetMethod("After",BindingFlags.NonPublic|BindingFlags.Static)));
    }
-   config=next;last=text;error="";
+   Aliases=new EvidenceAliases(next.Aliases??new ClientAlias[0]);config=next;last=text;error="";
   }
   private static void Before(MethodBase __originalMethod){
    try{TapRule rule;if(!requests.TryGetValue(__originalMethod,out rule))return;

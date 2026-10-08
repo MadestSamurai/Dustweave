@@ -24,6 +24,7 @@ public sealed class DailyConnectionState
     {
         get; set;
     }
+    public string ClientKey { get; set; } = "";
     public string Fingerprint { get; set; } = ""; public string PayloadSha { get; set; } = ""; public long Address
     {
         get; set;
@@ -39,7 +40,7 @@ public sealed class DailyGameHost : IGameHost
     }
     public GameInstance? Find()
     {
-        var games = Process.GetProcessesByName("BrownDust II");
+        var games = Dustweave.Accounts.SandboxProcessScope.Find("BrownDust II");
         try
         {
             if (games.Length > 1)
@@ -53,6 +54,7 @@ public sealed class DailyGameHost : IGameHost
     }
     public async Task CloseAsync(GameInstance instance, CancellationToken cancellation)
     {
+        DailyConnectionAccess.RequireGame(instance);
         using var p = Process.GetProcessById(instance.ProcessId);
         if (p.StartTime.ToUniversalTime().Ticks != instance.StartTicks)
             throw new InvalidOperationException("游戏进程已变化，请重试。");
@@ -77,6 +79,10 @@ public sealed class DailyGameHost : IGameHost
     public async Task ConnectAsync(GameInstance instance, Action<string> progress, CancellationToken cancellation)
     {
         var path = Path.Combine(root, "connection.json");
+        var managed = Path.Combine(Path.GetDirectoryName(instance.Executable)!, Path.GetFileNameWithoutExtension(instance.Executable) + "_Data", "Managed");
+        var inputs = await Task.Run(() => ClientInputs.ReadManaged(managed), cancellation);
+        var prior = DailyJson.TryRead<DailyConnectionState>(path);
+        if (prior != null) ClientInputs.RequireRunning(prior.ClientKey,prior.ProcessId,prior.StartTicks,inputs.Key,instance.ProcessId,instance.StartTicks);
         var pipe = DailyTransport.Bind(root, instance);
         try
         {
@@ -89,7 +95,6 @@ public sealed class DailyGameHost : IGameHost
         }
         catch (IOException) { }
         catch (TimeoutException) { }
-        var managed = Path.Combine(Path.GetDirectoryName(instance.Executable)!, Path.GetFileNameWithoutExtension(instance.Executable) + "_Data", "Managed");
         progress("检查本机接口并准备账户识别组件");
         var prepared = DailySuite.Prepare!=null ? await DailySuite.Prepare(managed,progress,cancellation) : await Task.Run(() => DailyHookCompiler.Prepare(managed), cancellation);
         DailyJson.Write(Path.Combine(root, "compatibility.json"), prepared.Report);
@@ -98,7 +103,8 @@ public sealed class DailyGameHost : IGameHost
         cancellation.ThrowIfCancellationRequested();
         if (Find() != instance)
             throw new InvalidOperationException("准备组件期间游戏进程已变化。");
-        var state = new DailyConnectionState { ProcessId = instance.ProcessId, StartTicks = instance.StartTicks, Fingerprint = DailyHookCompiler.Fingerprint, PayloadSha = Convert.ToHexString(SHA256.HashData(prepared.Payload)) };
+        await Task.Run(() => ClientInputs.RequireStable(managed, inputs.Key), cancellation);
+        var state = new DailyConnectionState { ClientKey = inputs.Key, ProcessId = instance.ProcessId, StartTicks = instance.StartTicks, Fingerprint = DailyHookCompiler.Fingerprint, PayloadSha = Convert.ToHexString(SHA256.HashData(prepared.Payload)) };
         DailyJson.Write(path, state);
         state.Address = await DailyConnectionAccess.InjectAsync(instance, prepared.Payload, progress, cancellation);
         DailyJson.Write(path, state);
@@ -177,4 +183,3 @@ public sealed class DailyGameHost : IGameHost
         return current;
     }
 }
-

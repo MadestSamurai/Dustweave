@@ -39,7 +39,7 @@ public static class DailyConnectionAccess
 
     internal static void RequireGame(GameInstance expected)
     {
-        if (Path.GetFileName(expected.Executable) != "BrownDust II.exe" || Describe(expected.ProcessId) != expected)
+        if (Path.GetFileName(expected.Executable) != "BrownDust II.exe" || Describe(expected.ProcessId) != expected || !SandboxProcessScope.Contains(expected.ProcessId))
             throw new InvalidOperationException("游戏进程已退出或改变，请重新连接。");
     }
 
@@ -192,5 +192,3 @@ public static class DailyConnectionAccess
     [DllImport("kernel32.dll", SetLastError = true)] private static extern bool GetNamedPipeClientProcessId(SafePipeHandle handle, out uint pid);
     [DllImport("kernel32.dll", SetLastError = true)] private static extern bool GetNamedPipeServerProcessId(SafePipeHandle handle, out uint pid);
 }
-
-

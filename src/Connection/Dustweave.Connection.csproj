@@ -8,4 +8,5 @@
 <EmbeddedResource Include="SquareTraversalNative.cs" LogicalName="Live.SquareTraversalNative.cs"/>
 <EmbeddedResource Include="../../standalone/bd2-territory/shared/LocalRoute.cs;../../standalone/bd2-territory/shared/LocalNavigationCache.cs;../../standalone/bd2-territory/shared/TraversalRules.cs;../../standalone/bd2-territory/shared/RouteGeometry.cs" LogicalName="Live.Territory.%(Filename)%(Extension)"/>
 </ItemGroup>  <ItemGroup><Using Include="BD2Daily" /></ItemGroup>
-</Project>
+<ItemGroup><EmbeddedResource Include="live-binding-contract.json" LogicalName="Live.BindingContract.json" /></ItemGroup><ItemGroup><EmbeddedResource Include="../../assets/specs/*-evidence-spec.json" LogicalName="Live.Spec.%(Filename)%(Extension)" /></ItemGroup><ItemGroup><EmbeddedResource Include="EvidenceAliases.cs" LogicalName="Live.EvidenceAliases.cs" /></ItemGroup></Project>
+

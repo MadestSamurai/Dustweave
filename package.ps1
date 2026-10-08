@@ -2,7 +2,9 @@ param(
  [Parameter(Mandatory)][ValidatePattern('^\d+\.\d+\.\d+$')][string]$Version,
  [Parameter(Mandatory)][string]$GameManagedDir,
  [ValidateSet('Portable','Lite')][string[]]$Flavors=@('Portable','Lite'),
- [string]$PreparedCacheDirectory=''
+ [string]$PreparedCacheDirectory='',
+ [ValidateSet('Auto','Accounts','Navigation','Rewards','Full')][string]$ValidationScope='Auto',
+ [string]$ValidationBaseline=''
 )
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath($PSScriptRoot)
@@ -50,6 +52,9 @@ function SourceState {
 }
 & (Join-Path $root 'check-source.ps1')
 $before=SourceState
+. (Join-Path $root 'scripts/validation-plan.ps1')
+$validation=Get-DustweaveValidationPlan $root $before $ValidationScope $ValidationBaseline
+Write-Host ("Validation scope: "+$validation.scope+" — "+$validation.reason)
 $before|Set-Content -LiteralPath (Join-Path $work 'source-before.json') -Encoding utf8
 $packageImport='-p:CustomAfterMicrosoftCommonTargets='+ (Join-Path $root 'Package.Build.targets')
 Run 'dotnet' @('build',$entry,'-c','Release','-r','win-x64','-p:SelfContained=false',$packageImport,('-p:DustweavePackageLockRoot='+ (Join-Path $work 'locks/build')),'--nologo') 'build'
@@ -57,15 +62,23 @@ foreach($component in @('tools/TradeData','tools/CompatibilityCli','tests/Dustwe
  Run 'dotnet' @('build',(Join-Path $root $component),'-c','Release','-r','win-x64','-p:SelfContained=false',$packageImport,('-p:DustweavePackageLockRoot='+ (Join-Path $work 'locks/build')),'--nologo') ('build-'+($component -replace '/','-'))
 }
 & (Join-Path $root 'check-source.ps1') -AfterBuild
-& (Join-Path $root 'test.ps1') -NoBuild
+& (Join-Path $root 'test.ps1') -NoBuild -Groups $validation.groups
+Run 'dotnet' @('run','--project',(Join-Path $root 'tools/CompatibilityCli'),'-c','Release','-r','win-x64','--no-build','--','client-inputs',$managed,(Join-Path $work 'client-before.json')) 'client-before'
 $tools=@('bd2-fishing','bd2-sichuan','bd2-rhythm','bd2-territory','bd2-equipment-assistant','bd2-apostle-defense','bd2-infinite-gacha','bd2-secret-vision','bd2-fiend-hunter')
 $tables=Join-Path $work 'tables'
 $tableNames='CookingTable,FoodTable,ProductTable,SellItemTable,ShopTable,TalentSkillTable,TalentTable,NameTextTable,CharTable,EventMissionGroupTable,GachaGroupTable,GachaTable,MissionSectionRewardTable,LocalTextTable,MissionTable,DispatchTable,EquipmentMakingTable,EquipmentTable,HuntDispatchTable,PassTable,SkyWayFieldTable,SquareRewardTable,StatueRewardTable'
 $groups=[ordered]@{extra=@('EventMissionGroupTable');gacha=@('GachaGroupTable','GachaTable','MissionSectionRewardTable');missions=@('LocalTextTable','MissionTable');names=@('NameTextTable');policy=@('CharTable','DispatchTable','EquipmentMakingTable','EquipmentTable','HuntDispatchTable','MissionTable','PassTable','SkyWayFieldTable','SquareRewardTable','StatueRewardTable')}
+if($validation.scope -ne 'Full'){
+ $currentClient=Get-Content -LiteralPath (Join-Path $work 'client-before.json') -Raw|ConvertFrom-Json
+ $baselineClient=Get-Content -LiteralPath (Join-Path $validation.baseline 'client-code-inputs.json') -Raw|ConvertFrom-Json
+ if($currentClient.gameKey -ne $baselineClient.gameKey){throw 'Game code changed; rerun with -ValidationScope Full.'}
+}
+if($validation.scope -eq 'Full'){
 $bootstrap=Join-Path $work 'cold-bootstrap'
 Run 'dotnet' @('run','--project',(Join-Path $root 'tools/CompatibilityCli'),'-c','Release','-r','win-x64','--no-build','--','bootstrap',$managed,$bootstrap) 'cold-bootstrap-prepare'
 Run 'dotnet' @('run','--project',(Join-Path $root 'tools/CompatibilityCli'),'-c','Release','-r','win-x64','--no-build','--','bootstrap-host',$managed,$bootstrap) 'cold-bootstrap-host'
 Pass (Join-Path $bootstrap 'validation.json')
+}
 $flavorReports=@()
 foreach($flavor in $Flavors){
  $self=if($flavor -eq 'Portable'){'true'}else{'false'}
@@ -108,16 +121,31 @@ foreach($flavor in $Flavors){
   $identity=Get-Content -LiteralPath $description -Raw|ConvertFrom-Json
   if($identity.assembly -ne $utility.Value -or $identity.tool -ne $utility.Key -or $identity.realGameTouched -ne $false){throw "Packaged utility identity differs: $($utility.Key)"}
  }
- foreach($mode in @('smoke','check-tool-languages','check-tool-language-ui','check-stage-host','check-tool-session','check-suite-host')){
+ $modes=if($validation.scope -eq 'Full'){@('smoke','check-tool-languages','check-tool-language-ui','check-stage-host','check-tool-session','check-suite-host')}else{@('smoke')}
+ foreach($mode in $modes){
   $check=Join-Path $checks $mode;[IO.Directory]::CreateDirectory($check)|Out-Null
   Run $exe @(('--'+$mode),$check) ($flavor+'-'+$mode)
  }
- Pass (Join-Path $checks 'smoke/smoke.json');Pass (Join-Path $checks 'check-tool-languages/result.json');Pass (Join-Path $checks 'check-tool-language-ui/result.json')
+ Pass (Join-Path $checks 'smoke/smoke.json')
+ if($validation.scope -eq 'Full'){Pass (Join-Path $checks 'check-tool-languages/result.json');Pass (Join-Path $checks 'check-tool-language-ui/result.json')}
  Run $exe @('--utility','live','self-test') ($flavor+'-live-self-test')
  Run $exe @('--tool-catalog',(Join-Path $bundle 'tools.json')) ($flavor+'-tool-catalog')
- if($flavor -eq $Flavors[0]){
+ if($flavor -eq $Flavors[0] -and $validation.scope -in @('Navigation','Rewards')){
+  Run $exe @('--utility','live','prepare',$managed,(Join-Path $checks 'live-client')) 'live-client'
+  if($validation.scope -eq 'Rewards'){
+   Run $exe @('--utility','live','taps-all',$managed,(Join-Path $root 'assets/specs'),(Join-Path $checks 'evidence')) 'evidence-configs'
+   Pass (Join-Path $checks 'evidence/result.json')
+  }
+ }
+ if($flavor -eq $Flavors[0] -and $validation.scope -eq 'Full'){
   Run $exe @('--check-client',$managed,(Join-Path $checks 'observer-client')) 'observer-client'
   Run $exe @('--utility','live','prepare',$managed,(Join-Path $checks 'live-client')) 'live-client'
+  if($validation.scope -eq 'Rewards'){
+   Run $exe @('--utility','live','taps-all',$managed,(Join-Path $root 'assets/specs'),(Join-Path $checks 'evidence')) 'evidence-configs'
+   Pass (Join-Path $checks 'evidence/result.json')
+  }
+  Run $exe @('--utility','live','taps-all',$managed,(Join-Path $bundle 'connection/specs'),(Join-Path $checks 'evidence')) 'evidence-configs'
+  Pass (Join-Path $checks 'evidence/result.json')
   $suiteCache=Join-Path $work 'unified-suite-daily/suite-cache'
   if(Test-Path -LiteralPath $PreparedCacheDirectory){
    [IO.Directory]::CreateDirectory($suiteCache)|Out-Null
@@ -127,7 +155,7 @@ foreach($flavor in $Flavors){
     Copy-Item -LiteralPath $file.FullName -Destination $target
    }
   }
-  # The normal compiler revalidates client MVID, component assembly identity and payload SHA.
+  # The normal compiler revalidates all managed inputs, component assembly identity and payload SHA.
   # Changed modules are rebuilt; reuse never substitutes a pass result for the actual check.
   Run $exe @('--check-suite',$managed,(Join-Path $checks 'suite')) 'unified-suite' 900
   Pass (Join-Path $checks 'suite/suite.json')
@@ -161,11 +189,17 @@ foreach($flavor in $Flavors){
  }finally{$zip.Dispose()}
  $flavorReports+= [ordered]@{flavor=$flavor;selfContained=($self -eq 'true');exeBytes=(Get-Item -LiteralPath $exe).Length;zipBytes=(Get-Item -LiteralPath $archive).Length;checks=$checks}
 }
+Run 'dotnet' @('run','--project',(Join-Path $root 'tools/CompatibilityCli'),'-c','Release','-r','win-x64','--no-build','--','client-inputs',$managed,(Join-Path $work 'client-after.json')) 'client-after'
+$clientBefore=Get-Content -LiteralPath (Join-Path $work 'client-before.json') -Raw|ConvertFrom-Json
+$clientAfter=Get-Content -LiteralPath (Join-Path $work 'client-after.json') -Raw|ConvertFrom-Json
+if($clientBefore.gameKey -ne $clientAfter.gameKey){throw 'Installed game code changed while packaging; do not distribute this candidate.'}
+Copy-Item -LiteralPath (Join-Path $work 'client-before.json') -Destination (Join-Path $output 'client-code-inputs.json')
 $after=SourceState
 $after|Set-Content -LiteralPath (Join-Path $work 'source-after.json') -Encoding utf8
 if($after -ne $before){throw 'Source or development dependency locks changed while packaging.'}
 Copy-Item -LiteralPath (Join-Path $tables 'manifest.json') -Destination (Join-Path $output 'client-data-inputs.json')
 $before|Set-Content -LiteralPath (Join-Path $output 'build-inputs.json') -Encoding utf8
 Get-ChildItem -LiteralPath $output -Recurse -File|Where-Object Extension -in @('.exe','.zip')|ForEach-Object {"$((Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant())  $([IO.Path]::GetRelativePath($output,$_.FullName))"}|Set-Content -LiteralPath (Join-Path $output 'SHA256SUMS.txt') -Encoding ascii
-[ordered]@{version=$Version;product='Dustweave';channel='private-release';flavors=$flavorReports;privatePluginIncluded=$false;pythonIncluded=$false;gameAssembliesIncluded=$false;realGameTouched=$false;runtimeVerification='source_implemented_pending_runtime';publicReleaseApproved=$false;buildDirectory=$work}|ConvertTo-Json -Depth 7|Set-Content -LiteralPath (Join-Path $output 'release.json') -Encoding utf8
+$validation|ConvertTo-Json -Depth 7|Set-Content -LiteralPath (Join-Path $output 'validation-scope.json') -Encoding utf8
+[ordered]@{validationScope=$validation.scope;validationBaseline=$validation.baseline;version=$Version;product='Dustweave';channel='private-release';flavors=$flavorReports;privatePluginIncluded=$false;pythonIncluded=$false;gameAssembliesIncluded=$false;realGameTouched=$false;runtimeVerification='source_implemented_pending_runtime';publicReleaseApproved=$false;buildDirectory=$work}|ConvertTo-Json -Depth 7|Set-Content -LiteralPath (Join-Path $output 'release.json') -Encoding utf8
 Write-Host "Private release package ready: $output"

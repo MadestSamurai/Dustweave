@@ -33,7 +33,7 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly CheckBox friendship = Check("每日亲密度咨询"), quickFriendship = Check("使用快速咨询（默认关闭）");
     private readonly CheckBox weeklyBook = Check("周常末日之书"), weeklyCraft = Check("周常制作装备"), weeklySichuan = Check("周常连连看");
     private readonly CheckBox mainline = Check("周收集"), weeklyNpc = Check("周NPC任务"), npcHunting = Check("允许接取必须去狩猎场的任务"), weeklySteal = Check("每周偷窃"), walkCollect = Check("步行收集（不使用吸收）"), monsterHunt = Check("魔兽最高档快速战斗"), fishing = Check("周常钓鱼"), roomLikes = Check("周常小屋点赞");
-    private readonly CheckBox events = Check("活动奖励"), eventMissions = Check("领取活动任务与活动代币"), roulette = Check("使用免费次数和已有转盘券"), exchange = Check("活动代币最大批量兑换"), quiz = Check("自动完成已开放答题"), dice = Check("自动使用现有活动骰子");
+    private readonly CheckBox events = Check("活动奖励"), eventMissions = Check("领取活动任务与活动代币"), roulette = Check("使用免费次数和已有转盘券"), exchange = Check("活动代币最大批量兑换"), quiz = Check("自动完成已开放答题"), dice = Check("自动使用现有活动骰子"), puzzle = Check("拼图板使用现有代币批量翻开");
     private readonly CheckBox trade = Check("自动跑商、料理与120%售卖");
     private readonly ComboBox firstChapter = new(), lastChapter = new();
     private StackPanel section = new();
@@ -140,7 +140,7 @@ public sealed class DailyPreferencesPanel : UserControl
         Note("未指定时，选择已强化 +9 的五星专武：精炼未满 24，且同种同稀有度没有 24 级成品。此环节可独立开启，不受装备分解开关影响。");
         Stage(hunt, "普通狩猎与奖励日", "默认第 9 章、刷金币、不刷史莱姆");
         Row("普通狩猎关卡", chapter);
-        Note("每天先刷一次普通狩猎，剩余免费米饭按优先级使用。");
+        Note("免费米饭直接按优先级批量使用，不再先刷一次普通狩猎。");
         section.Children.Add(gold);
         section.Children.Add(slime);
         Note("金币和史莱姆只在勾选且当天有加成时参与；从上往下选择第一个可用去向。");
@@ -206,10 +206,11 @@ public sealed class DailyPreferencesPanel : UserControl
         var tradeButton = LocalButton("预览计划与资金设置"); tradeButton.HorizontalAlignment = HorizontalAlignment.Left;
         tradeButton.Click += (_, _) => { if (account.Length == 0) return; var trade = new Window { Title = L.Translate("跑商计划"), Width = 1060, Height = 780, MinWidth = 760, MinHeight = 560, Owner = Window.GetWindow(this), Content = new TradePlanPanel(dataRoot, account, allowGame), WindowStartupLocation = WindowStartupLocation.CenterOwner }; DailyDialogs.Prepare(trade); trade.Show(); };
         section.Children.Add(tradeButton);
-        Stage(events, "活动答题、骰子与领奖", "自动检查当前活动；批量兑换，整页完成后继续下一页");
+        Stage(events, "活动游戏与领奖", "自动检查当前活动；批量兑换，整页完成后继续下一页");
         section.Children.Add(eventMissions);
         section.Children.Add(quiz);
         section.Children.Add(dice);
+        section.Children.Add(puzzle);
         section.Children.Add(roulette);
         section.Children.Add(exchange);
         Note("使用现有活动代币，不购买付费钻石或礼包。领奖后复查新完成的活动任务。");
@@ -228,7 +229,7 @@ public sealed class DailyPreferencesPanel : UserControl
         layout.Children.Add(new ScrollViewer { Content = form, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled });
         Content = new Border { Style = (Style)Application.Current.FindResource("Panel"), Child = layout };
         accounts.SelectionChanged += ChangedAccount;
-        foreach (var c in new[] { weeklyBook, weeklyCraft, weeklySichuan, quickFriendship, friendship, tactics, eventBattle, eventChallenge, hunt, gold, slime, stones, recycle, keepSr, fallback, refine, pass, dispatch, goddess, ranking, mirror, guild, room, income, guests, draws, dailyRewards, weeklyRewards, mail, mainline, weeklyNpc, npcHunting, weeklySteal, walkCollect, eventCartridges, monsterHunt, fishing, roomLikes, trade, events, eventMissions, quiz, dice, roulette, exchange })
+        foreach (var c in new[] { weeklyBook, weeklyCraft, weeklySichuan, quickFriendship, friendship, tactics, eventBattle, eventChallenge, hunt, gold, slime, stones, recycle, keepSr, fallback, refine, pass, dispatch, goddess, ranking, mirror, guild, room, income, guests, draws, dailyRewards, weeklyRewards, mail, mainline, weeklyNpc, npcHunting, weeklySteal, walkCollect, eventCartridges, monsterHunt, fishing, roomLikes, trade, events, eventMissions, quiz, dice, puzzle, roulette, exchange })
         {
             c.Checked += (_, _) => MarkDirty();
             c.Unchecked += (_, _) => MarkDirty();
@@ -418,6 +419,7 @@ public sealed class DailyPreferencesPanel : UserControl
             eventMissions.IsChecked = loaded.Events.Missions;
             quiz.IsChecked = loaded.Events.Quiz;
             dice.IsChecked = loaded.Events.Dice;
+            puzzle.IsChecked = loaded.Events.Puzzle;
             roulette.IsChecked = loaded.Events.Roulette;
             exchange.IsChecked = loaded.Events.Exchange;
             pass.IsChecked = loaded.Tasks.Pass;
@@ -533,6 +535,7 @@ public sealed class DailyPreferencesPanel : UserControl
             loaded.Events.Missions = eventMissions.IsChecked == true;
             loaded.Events.Quiz = quiz.IsChecked == true;
             loaded.Events.Dice = dice.IsChecked == true;
+            loaded.Events.Puzzle = puzzle.IsChecked == true;
             loaded.Events.Roulette = roulette.IsChecked == true;
             loaded.Events.Exchange = exchange.IsChecked == true;
             store.Save(account, loaded);
@@ -601,6 +604,7 @@ public sealed class DailyPreferencesPanel : UserControl
     {
         var exp = form.Children.OfType<Border>().Select(b => b.Child).OfType<Expander>()
             .Single(e => e.Content is StackPanel body && body.Children.Contains(dice));
+        if (puzzle.Parent == null || loaded == null || puzzle.IsChecked != loaded.Events.Puzzle) throw new Exception("Puzzle event option is inaccessible or not loaded");
         exp.IsExpanded = true;
         UpdateLayout();
         exp.BringIntoView();

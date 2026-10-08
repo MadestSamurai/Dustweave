@@ -71,6 +71,30 @@ static class QueueEngineCases
         root = Root();
         record = await Run(host, root, ["mail", "trade"], pause: () => true);
         Check(State(record) == "paused" && !host.Calls.Contains("begin:"), "stop before begin leaves worker paused");
+        host = new(); root = Root();
+        record = await Run(host, root, ["mail", "trade"], pause: () => true);
+        string reconnectId = TextForTest(record["id"]);
+        host.Context["actor"]![2] = "reloaded-observer";
+        Check(DailyQueueEngine.CanReconnectPausedQueue(record, host.Context), "clean paused queue permits only observer identity renewal");
+        var resumed = await Run(host, root, resume: reconnectId);
+        Check(State(resumed) == "completed" && TextForTest(resumed["id"]) == reconnectId && resumed["connection_history"] is JsonArray { Count: 1 }, "clean same-game reconnect keeps original queue and records previous connection");
+        Check(host.Calls.IndexOf("reconcile:") < host.Calls.IndexOf("execute:mail"), "observer reconnect still reconciles before gameplay");
+        foreach (int field in new[] { 0, 1, 3, 4 })
+        {
+            var changed = host.Context.DeepClone().AsObject(); changed["actor"]![field] = "different";
+            Check(!DailyQueueEngine.CanReconnectPausedQueue(record, changed), "reconnect rejects changed game or account field " + field);
+        }
+        foreach (string field in new[] { "server", "cycle" })
+        {
+            var changed = host.Context.DeepClone().AsObject(); changed[field] = "different";
+            Check(!DailyQueueEngine.CanReconnectPausedQueue(record, changed), "reconnect rejects changed " + field);
+        }
+        foreach (string state in new[] { "running", "recovery_required" })
+        {
+            var uncertain = record.DeepClone().AsObject(); uncertain["items"]![0]!["state"] = state;
+            Check(!DailyQueueEngine.CanReconnectPausedQueue(uncertain, host.Context), "reconnect cannot silently reuse " + state + " operation");
+        }
+        static string TextForTest(JsonNode? value) => value?.GetValue<string>() ?? "";
         // Import an old Python schema-1 interrupted record and scope recovery to its ledger.
         root = Root();
         string id = new('c', 32);

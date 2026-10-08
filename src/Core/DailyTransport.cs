@@ -43,7 +43,7 @@ public static class DailyTransport
     public static void Reader(string root)
     {
         Configure(root);
-        var games = System.Diagnostics.Process.GetProcessesByName("BrownDust II");
+        var games = Dustweave.Accounts.SandboxProcessScope.Find("BrownDust II");
         try
         {
             if (games.Length == 1)

@@ -8,7 +8,7 @@ The primary multi-account action lives on Accounts. Accounts run in list order u
 
 ## Scheduling / 定时执行
 
-- 默认关闭；在定时页面选择时间、星期和固定账号后保存才启用。
+- 默认关闭；在定时页面选择每天的固定时间和账号后保存才启用。
 - 按 Windows 本机时区执行，账号名单不随账号页临时勾选改变。
 - 当前 Windows 用户的 Task Scheduler 启动 `Dustweave.exe --scheduled`。使用 InteractiveToken / LeastPrivilege，不保存密码，不要求管理员，不唤醒关机电脑。电脑需已登录且保持唤醒。
 - 软件已开时由同一应用轮询处理；第二个启动进程静默退出，不弹“已打开”窗口。
@@ -16,7 +16,13 @@ The primary multi-account action lives on Accounts. Accounts run in list order u
 - 所有目标身份必须仍有效才开始；从不回退到当前登录账号。沿用现有账号切换校验和工具控制锁。
 - 计划、上次结果和领取记录位于既有用户数据目录；不是程序安装目录。迁移 EXE 到不同目录后须重新保存定时计划。
 
-Schedules are opt-in, use local wall-clock time and persist fixed account identities. They use the existing queue and control lease. A per-occurrence claim prevents repeat execution after a crash. Missed runs have a 15-minute grace period; there is no multi-day catch-up. Windows runs the task only in the signed-in user's session, with no elevation or stored password. Moving the executable requires saving the schedule again.
+Schedules run every day when enabled, use local wall-clock time and persist fixed account identities. They use the existing queue and control lease. A per-occurrence claim prevents repeat execution after a crash. Missed runs have a 15-minute grace period; there is no multi-day catch-up. Windows runs the task only in the signed-in user's session, with no elevation or stored password. Moving the executable requires saving the schedule again.
+
+### Earlier schedules / 旧计划迁移
+
+New and saved schedules use Windows' daily trigger with an interval of one day. Earlier weekday-only plans are converted once before scheduling: persist disabled, update Windows registration, then restore the previous enabled state. Time and fixed account order are retained. The conversion time becomes the cutoff for missed runs, so migration cannot catch up an earlier occurrence. On registration failure, the plan remains disabled and the user is asked to save again; it is not retried on every poll. Previously disabled drafts stay disabled and do not register a task. Earlier plans already containing all seven days are equivalent to daily schedules and remain valid.
+
+新版只提供每天固定时间。旧版指定星期计划会自动转换，保留时间、启用状态与账号顺序；登记失败则保持停用并提示重新保存。原本关闭的计划不会被自动开启。迁移不补跑之前错过的时间。Windows 每天启动软件，与软件已打开时的检查使用相同的每天执行规则。
 
 ## Release notes / 版本说明
 

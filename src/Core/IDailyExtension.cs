@@ -24,10 +24,24 @@ public static class DailyExtensionLoader
         var verified = DailyPlugin.Inspect(info.Root);
         if (!verified.Available || verified.Fingerprint != info.Fingerprint)
             throw new StageHostException("adapter", "插件文件在加载前发生变化，请重新启动工具。");
-        var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.Combine(verified.Root, verified.EntryAssembly));
+        var context = new ExtensionLoadContext(verified);
+        var assembly = context.LoadFromAssemblyPath(Path.Combine(verified.Root, verified.EntryAssembly));
         var type = assembly.GetType(verified.EntryType, throwOnError: true)!;
         if (Activator.CreateInstance(type, info.Root) is not IDailyExtension extension || extension.ApiVersion != DailyPlugin.ApiVersion)
             throw new StageHostException("adapter", "插件接口与主程序不一致。");
         return extension;
+    }
+    // The API currently uses host Core types. Share host contracts, isolate private dependencies.
+    // This is a dependency boundary, not a security sandbox or a native crash boundary.
+    private sealed class ExtensionLoadContext(DailyPluginInfo info) : AssemblyLoadContext("plugin-" + info.Fingerprint, isCollectible: false)
+    {
+        private readonly HashSet<string> shared = new(StringComparer.OrdinalIgnoreCase) { "Dustweave.Core", "Dustweave.Accounts", "Dustweave.Compatibility" };
+        protected override Assembly? Load(AssemblyName name)
+        {
+            if (shared.Contains(name.Name!)) return Default.LoadFromAssemblyName(name);
+            using var document = System.Text.Json.JsonDocument.Parse(File.ReadAllBytes(Path.Combine(info.Root, "plugin.json")));
+            var relative = document.RootElement.GetProperty("files").EnumerateArray().Select(x => x.GetProperty("path").GetString()!).FirstOrDefault(p => p.StartsWith("managed/", StringComparison.Ordinal) && Path.GetFileName(p).Equals(name.Name + ".dll", StringComparison.OrdinalIgnoreCase));
+            return relative == null ? null : LoadFromAssemblyPath(Path.Combine(info.Root, relative));
+        }
     }
 }

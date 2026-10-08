@@ -9,6 +9,7 @@ public static class DailyWindowsSchedule
     public static string TaskName => "Dustweave-" + WindowsIdentity.GetCurrent().User!.Value;
     public static string Register(DailySchedulePlan plan, string executable, bool validateOnly = false)
     {
+        DailySandbox.RequireHost();
         dynamic? service = null, folder = null, task = null, trigger = null, action = null, registered = null;
         try
         {
@@ -21,6 +22,7 @@ public static class DailyWindowsSchedule
                 return "";
             }
             plan.Validate();
+            if (!plan.IsDaily) throw new InvalidDataException("schedule.unreadable");
             if (!Path.IsPathFullyQualified(executable) || !File.Exists(executable)) throw new InvalidDataException("schedule.executable_missing");
             task = service.NewTask(0);
             task.RegistrationInfo.Description = "Dustweave scheduled account queue";
@@ -33,9 +35,8 @@ public static class DailyWindowsSchedule
             task.Settings.StopIfGoingOnBatteries = false;
             task.Settings.MultipleInstances = 2; // IgnoreNew
             task.Settings.ExecutionTimeLimit = "PT0S";
-            trigger = task.Triggers.Create(3); // weekly, including all seven days for daily schedules
-            trigger.DaysOfWeek = (short)plan.Days.Aggregate(0, (mask, d) => mask | (1 << d));
-            trigger.WeeksInterval = 1;
+            trigger = task.Triggers.Create(2); // TASK_TRIGGER_DAILY
+            trigger.DaysInterval = 1;
             trigger.StartBoundary = DateTime.Today.AddHours(plan.Hour).AddMinutes(plan.Minute).ToString("yyyy-MM-dd'T'HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
             trigger.Enabled = true;
             action = task.Actions.Create(0);

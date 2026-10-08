@@ -8,7 +8,7 @@ internal sealed class SessionVault
 {
     private readonly string _slotDirectory;
 
-    internal SessionVault()
+    internal SessionVault(string? rootDirectory = null)
     {
         string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         if (string.IsNullOrWhiteSpace(localAppData))
@@ -16,11 +16,15 @@ internal sealed class SessionVault
             throw new SessionManagerException("无法确定当前 Windows 用户的 LocalAppData 目录。");
         }
 
-        RootDirectory = Path.Combine(localAppData, SessionConstants.VaultDirectoryName);
+        RootDirectory = rootDirectory is null ? Path.Combine(localAppData, SessionConstants.VaultDirectoryName) : Path.GetFullPath(rootDirectory);
         _slotDirectory = Path.Combine(RootDirectory, SessionConstants.SlotDirectoryName);
     }
 
     internal string RootDirectory { get; }
+
+    private string ObservedPath => Path.Combine(RootDirectory, "observed-session.bd2slot");
+    internal SessionSlot? ReadObserved() => File.Exists(ObservedPath) ? LoadFromPath(ObservedPath) : null;
+    internal void RememberObserved(SessionSlot slot) => WriteAndVerify(slot, ObservedPath);
 
     internal bool HasRecovery => File.Exists(Path.Combine(
         RootDirectory,
@@ -83,7 +87,7 @@ internal sealed class SessionVault
         SessionSlot namedSession = session with
         {
             Alias = displayName.Trim(),
-            CapturedAtUtc = DateTimeOffset.UtcNow,
+            // Copying or renaming credentials does not renew them.
         };
         SessionRegistry.ValidateSlot(namedSession);
         string path = GetFixedSlotPath(slotNumber);
@@ -158,6 +162,11 @@ internal sealed class SessionVault
         File.Delete(legacyPath);
         return migrated;
     }
+
+    // Short-lived, DPAPI-protected transfer into an isolated instance. This uses
+    // the vault format and read-back verification, never plaintext session JSON.
+    internal void WriteLaunchSnapshot(SessionSlot slot, string path) => WriteAndVerify(slot, path);
+    internal SessionSlot ReadLaunchSnapshot(string path) => LoadFromPath(path);
 
     private SlotSummary WriteAndVerify(SessionSlot slot, string path)
     {

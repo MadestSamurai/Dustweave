@@ -89,6 +89,15 @@ public static class DailyHomeDecision
             action["absent"] = ui;
         return action;
     }
+    public static JsonObject? BackgroundErrorAction(JsonObject frame, DailyNavigationPolicy policy)
+    {
+        var rows = DailyNavigationDecision.Rows(frame).Where(r => Text(r, "Type") == "MessagePopupUI").ToArray();
+        if (rows.Length != 1 || Text(rows[0], "NativeContext") != "billing_region_unavailable_ack_only"
+            || !DailyNavigationDecision.ReadyInput(rows[0], false) || !Enabled(rows[0], "_buttonOK")
+            || DailyNavigationDecision.Blockers(frame, "MessagePopupUI", policy).Length != 0) return null;
+        return new JsonObject { ["ui"] = "MessagePopupUI", ["operation"] = "background_error_ack",
+            ["absent"] = "MessagePopupUI", ["reason"] = "关闭支付地区查询超时提示，继续日常；不发起付款或重试" };
+    }
     public static DailyHomePlan Inspect(JsonObject frame, DailyNavigationPolicy policy)
     {
         var rows = DailyNavigationDecision.Rows(frame).ToArray();
@@ -102,6 +111,8 @@ public static class DailyHomeDecision
         var duplicates = rows.Where(r => !policy.Background.Contains(Text(r, "Type"))).GroupBy(r => Text(r, "Type")).Where(g => g.Count() > 1).Select(g => g.Key).ToArray();
         if (duplicates.Length > 0)
             return Block("页面不唯一，保留现场：" + string.Join("、", duplicates));
+        var background = BackgroundErrorAction(frame, policy);
+        if (background != null) return Step(background);
         var talent = DailyNavigationDecision.TalentAction(frame, policy);
         if (talent != null)
             return Step(talent);
@@ -129,6 +140,8 @@ public static class DailyHomeDecision
         }
         if (types.Contains("MessagePopupUI"))
         {
+            if (rows.Any(r => Text(r, "NativeContext") == "billing_region_unavailable_ack_only"))
+                return Wait("等待后台查询提示的确认按钮");
             if (rows.Any(r => Text(r, "NativeContext") == "talent_inactive_ack_only"))
                 return Wait("等待探查失效提示的原生确认按钮");
             return ResetContext(frame, policy) ? ResetPopup(frame, policy) ? Special("mission_reset") : Wait("等待任务重置提示的原生确认按钮") : Block("未知确认框，未确认购买、领取或重试；保留现场。");

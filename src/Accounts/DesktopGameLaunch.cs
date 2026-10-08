@@ -23,6 +23,7 @@ internal static class DesktopGameLaunch
 
     internal static Context ValidateContext()
     {
+        if (SandboxProcessScope.CurrentBox.Length > 0) { var self = ReadToken(Environment.ProcessId); return new(Environment.ProcessId, self, self); }
         nint window = GetShellWindow();
         if (window == 0 || GetWindowThreadProcessId(window, out uint shellPid) == 0)
             throw new SessionManagerException("没有找到 Windows 桌面，请先启动资源管理器后重试。");
@@ -63,6 +64,17 @@ internal static class DesktopGameLaunch
         executable = Path.GetFullPath(executable);
         if (!File.Exists(executable)) throw new SessionManagerException("未找到要启动的程序。");
         workingDirectory ??= Path.GetDirectoryName(executable)!;
+        if (SandboxProcessScope.CurrentBox.Length > 0)
+        {
+            var caller = ReadToken(Environment.ProcessId);
+            using var child = Process.Start(new ProcessStartInfo(executable, arguments)
+            { UseShellExecute = false, WorkingDirectory = workingDirectory, WindowStyle = hidden ? ProcessWindowStyle.Hidden : ProcessWindowStyle.Normal, CreateNoWindow = hidden })
+                ?? throw new SessionManagerException("隔离实例未启动。");
+            var token = ReadToken(child.Id);
+            if (!SandboxProcessScope.Contains(child.Id) || token.User != caller.User || token.Session != caller.Session)
+                throw new SessionManagerException("启动后的进程不属于当前隔离实例，已停止后续操作。");
+            return child.Id;
+        }
         // COM desktop interfaces are apartment-bound. Keep lookup, dispatch and release on one STA.
         return InSta(() => LaunchInSta(executable, arguments, workingDirectory, hidden));
     }
@@ -197,4 +209,3 @@ internal static class DesktopGameLaunch
         void ShellExecute([MarshalAs(UnmanagedType.BStr)] string file, [MarshalAs(UnmanagedType.Struct)] object arguments, [MarshalAs(UnmanagedType.Struct)] object directory, [MarshalAs(UnmanagedType.Struct)] object verb, [MarshalAs(UnmanagedType.Struct)] object show);
     }
 }
-

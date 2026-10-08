@@ -1,5 +1,170 @@
 [
   {
+    "Version": "0.9.13",
+    "Date": "2026-10-08",
+    "Notes": {
+      "zh-CN": ["新增插件管理页，支持导入本地插件包、启用、停用和回退版本。", "插件启用前自动检查兼容性；变更在重启主程序后生效，运行中的任务保持原版本。", "插件页面统一支持简体中文、繁体中文、英文及深浅主题。"],
+      "zh-TW": ["新增外掛管理頁，支援匯入本機外掛套件、啟用、停用和回復版本。", "啟用外掛前自動檢查相容性；變更於重新啟動主程式後生效，執行中的任務保留原版本。", "外掛頁面統一支援簡體中文、繁體中文、英文及明暗主題。"],
+      "en-US": ["Manage local plugin packages: import, enable, disable and return to an earlier version.", "Check compatibility before enabling a plugin. Changes take effect after restarting the app, while running tasks retain their current version.", "The plugin page follows the app language and light or dark appearance."]
+    }
+  },
+  {
+    "Version": "0.9.12",
+    "Date": "2026-10-08",
+    "Notes": {
+      "zh-CN": ["活动环节加入拼图板批量翻开，使用现有代币；整板由游戏自动刷新，余下代币继续下一板。", "免费狩猎直接按设置的优先级批量执行，不再强制先刷一次普通狩猎。"],
+      "zh-TW": ["活動環節加入拼圖板批量翻開，使用現有代幣；整板由遊戲自動刷新，剩餘代幣繼續下一板。", "免費狩獵直接依設定的優先順序批量執行，不再強制先刷一次普通狩獵。"],
+      "en-US": ["Reveal event puzzle tiles in bulk using existing tokens. Let the game refresh completed boards and continue with remaining tokens.", "Spend free hunting rice in batches following your priorities, without a mandatory preliminary chapter hunt."]
+    }
+  },
+  {
+    "Version": "0.9.11",
+    "Date": "2026-10-08",
+    "Notes": {
+      "zh-CN": ["修复游戏更新后通行证误报重复，导致奖励领取和装备任务中断的问题。", "通行证改用稳定的字段投影，更新检查同时验证列表内容，减少字段改名造成的兼容问题。"],
+      "zh-TW": ["修正遊戲更新後通行證誤報重複，導致獎勵領取和裝備任務中斷的問題。", "通行證改用穩定的欄位投影，更新檢查同時驗證清單內容，減少欄位改名造成的相容問題。"],
+      "en-US": ["Fixed false duplicate passes after a game update, which blocked reward claims and equipment tasks.", "Use stable projected pass fields and validate collection outputs during client preparation to catch renamed-field incompatibilities earlier."]
+    }
+  },
+{
+    "Version": "0.9.10",
+    "Date": "2026-10-08",
+    "Notes": {
+      "zh-CN": ["自动关闭已确认无后续操作的支付地区查询超时提示，避免日常因后台查询错误中断。", "关闭前再次核对提示内容和回调；付款确认、重试和退出游戏提示不会被误点。"],
+      "zh-TW": ["自動關閉已確認無後續操作的付款地區查詢逾時提示，避免日常因背景查詢錯誤中斷。", "關閉前再次核對提示內容與回呼；付款確認、重試和退出遊戲提示不會被誤點。"],
+      "en-US": ["Dismiss verified acknowledgement-only payment-region lookup timeouts so background query errors do not block daily tasks.", "Recheck notification content and callbacks before dismissal; payment confirmations, retries and game-exit prompts remain protected."]
+    }
+  },
+  {
+    "Version": "0.9.9",
+    "Date": "2026-10-08",
+    "Notes": {
+      "zh-CN": ["登录凭据刷新期间保留检查，恢复后自动继续，不再因瞬时状态缺失直接退出。", "等待超时明确说明本机状态，保留账号；仍严格核对目标账号，不重复点击登录。", "包含隔离空间登记缺失的自动恢复修复。"],
+      "zh-TW": ["登入憑據更新期間保留檢查，恢復後自動繼續，不再因瞬間狀態缺失直接退出。", "等待逾時明確說明本機狀態並保留帳號；仍嚴格核對目標帳號，不重複點擊登入。", "包含隔離空間登記遺失的自動恢復修正。"],
+      "en-US": ["Keep sign-in checks active while credentials refresh, resuming automatically when ready instead of failing on a transient state.", "Explain local sign-in timeouts and retain saved accounts. Target identity checks remain strict, without repeated sign-in clicks.", "Includes automatic recovery of missing sandbox registrations."]
+    }
+  },
+  {
+    "Version": "0.9.8",
+    "Date": "2026-10-08",
+    "Notes": {
+      "zh-CN": ["修复隔离空间登记缺失被误报为账号归属不一致、阻止启动的问题。", "根据沙箱配置、内部绑定及加密账号记录自动恢复缺失登记，保留原账号和游戏数据。", "区分登记缺失、文件不可读和真正账号冲突；未使用的空目录不再阻断普通启动。"],
+      "zh-TW": ["修正隔離空間登記遺失被誤報為帳號歸屬不一致、阻止啟動的問題。", "依沙箱設定、內部綁定及加密帳號記錄自動恢復遺失登記，保留原帳號與遊戲資料。", "區分登記遺失、檔案無法讀取與真正帳號衝突；未使用的空目錄不再阻擋一般啟動。"],
+      "en-US": ["Fixed missing sandbox registration being reported as an account ownership conflict and blocking startup.", "Recover a missing registration from matching sandbox configuration, internal binding and encrypted account records, retaining account and game data.", "Distinguish missing records, unreadable files and genuine identity conflicts; unused empty folders no longer block ordinary startup."]
+    }
+  },
+  {
+    "Version": "0.9.7",
+    "Date": "2026-10-08",
+    "Notes": {
+      "zh-CN": [
+        "普通窗口与隔离窗口切换前双向同步更新后的登录凭据，保留原账号位置和名称。",
+        "修复旧登录凭据因复制或改名被误当成最新状态的问题，防止切换后覆盖新凭据。",
+        "登录状态不可用时明确说明原因，保留账号，不反复自动尝试登录。"
+      ],
+      "zh-TW": [
+        "一般視窗與隔離視窗切換前雙向同步更新後的登入憑據，保留原帳號位置與名稱。",
+        "修正舊登入憑據因複製或改名被誤認為最新狀態的問題，避免切換後覆蓋新憑據。",
+        "登入狀態不可用時明確說明原因，保留帳號，不反覆自動嘗試登入。"
+      ],
+      "en-US": [
+        "Synchronize renewed sign-in credentials in both directions before switching between ordinary and isolated windows, retaining account slots and names.",
+        "Copying or renaming an account no longer makes old credentials appear newer or overwrite renewed ones.",
+        "Explain unavailable sign-in state while retaining saved accounts and avoiding repeated login attempts."
+      ]
+    }
+  },
+  {
+    "Version": "0.9.6",
+    "Date": "2026-10-08",
+    "Notes": {
+      "zh-CN": [
+        "适配本次游戏更新的日常组件和回执读取，保留已有任务设置与进度。",
+        "隔离启动同步处理更新后的启动渠道；不自动跳过协议确认。",
+        "魔兽快速战斗入口发生变化时说明原因，仅暂停该环节，不阻止其他日常。"
+      ],
+      "zh-TW": [
+        "適配本次遊戲更新的日常元件與回執讀取，保留既有任務設定與進度。",
+        "隔離啟動同步處理更新後的啟動管道；不自動略過協議確認。",
+        "魔獸快速戰鬥入口變更時說明原因，僅暫停該環節，不阻止其他日常。"
+      ],
+      "en-US": [
+        "Updated daily component and observation bindings for the new game client, retaining task settings and progress.",
+        "Isolated startup now prepares the updated launch channel; agreements still require user confirmation.",
+        "A missing Fiend Hunt quick-battle entry is explained and isolated from other daily steps."
+      ]
+    }
+  },
+  {
+    "Version": "0.9.5",
+    "Date": "2026-10-08",
+    "Notes": {
+      "zh-CN": [
+        "连接组件按完整程序依赖识别游戏更新，避免登录 SDK 单独更新后复用旧组件。",
+        "隔离启动先核对游戏程序文件，发现旧文件覆盖时显示原因并保留账号设置。",
+        "加强更新中及旧进程连接保护；本版本是更新前准备包，新客户端兼容性仍待更新后验证。"
+      ],
+      "zh-TW": [
+        "連線元件依完整程式相依檔識別遊戲更新，避免登入 SDK 單獨更新後重用舊元件。",
+        "隔離啟動先核對遊戲程式檔案，發現舊檔案覆蓋時顯示原因並保留帳號設定。",
+        "加強更新中及舊程序連線保護；本版本為更新前準備包，新用戶端相容性仍待更新後驗證。"
+      ],
+      "en-US": [
+        "Connection caches track all managed dependencies, including SDK-only game updates.",
+        "Isolated launches check game code before importing sign-in state and explain stale-file conflicts while retaining account settings.",
+        "Added guards for changing inputs and known old running clients. Compatibility with the upcoming client still requires post-update verification."
+      ]
+    }
+  },
+  {
+    "Version": "0.9.4",
+    "Date": "2026-10-08",
+    "Notes": {
+      "zh-CN": [
+        "新增可选的多账号同时运行，默认 2 个账号，完成后自动开始后续排队账号。",
+        "主窗口集中展示每个账号的圆环进度、当前步骤和结束时间，支持单独或全部暂停、继续、停止。",
+        "定时执行沿用所选执行方式；可选择成功后关闭本次启动的游戏。",
+        "主窗口退出或失联时停止执行器，重开保留记录，不自动重放未确认操作。集中调度尚待游戏开服后实测。"
+      ],
+      "zh-TW": [
+        "新增可選的多帳號同時執行，預設 2 個帳號，完成後自動開始後續排隊帳號。",
+        "主視窗集中顯示每個帳號的圓環進度、目前步驟與結束時間，支援個別或全部暫停、繼續、停止。",
+        "排程沿用所選執行方式；可選擇成功後關閉本次啟動的遊戲。",
+        "主視窗退出或失聯時停止執行器，重新開啟保留紀錄，不自動重播未確認操作。集中排程尚待遊戲開服後實測。"
+      ],
+      "en-US": [
+        "Optional concurrent account queues default to two accounts and start the next queued account when a slot finishes.",
+        "One main window shows circular progress, current steps and finish times, with individual and global pause, resume and stop controls.",
+        "Schedules use the selected execution mode. Optionally close games created by a successful run.",
+        "Workers stop on host exit or lost heartbeat. Reopening retains records without replaying uncertain actions. Live acceptance is pending game maintenance."
+      ]
+    }
+  },
+  {
+    "Version": "0.9.3",
+    "Date": "2026-10-08",
+    "Notes": {
+      "zh-CN": [
+        "新增实验性隔离启动：安装 Sandboxie-Plus 后，可为不同账号打开各自的游戏和 Dustweave 窗口。",
+        "每个隔离窗口仅操作绑定账号；连接、停止、记录和恢复相互独立，同一账号重复登录会被拦截。",
+        "隔离窗口中的账号管理、定时执行和软件更新统一回到普通主窗口，避免产生重复计划或修改共享安装。",
+        "定时执行简化为每天固定时间，旧计划保留原时间与账号顺序。"
+      ],
+      "en-US": [
+        "Experimental isolated launch: install Sandboxie-Plus to open separate game and Dustweave windows for different accounts.",
+        "Each window controls its bound account. Connections, stopping, records and recovery are isolated; duplicate sign-ins are blocked.",
+        "Manage accounts, schedules and updates from the main window to avoid duplicate schedules or changes to the shared installation.",
+        "Schedules now run at a fixed time every day, preserving the time and account order from existing schedules."
+      ],
+      "zh-TW": [
+        "新增實驗性隔離啟動：安裝 Sandboxie-Plus 後，可為不同帳號開啟各自的遊戲與 Dustweave 視窗。",
+        "每個隔離視窗僅操作綁定帳號；連線、停止、紀錄與恢復相互獨立，同一帳號重複登入會被攔截。",
+        "隔離視窗中的帳號管理、排程與軟體更新統一回到一般主視窗，避免建立重複排程或修改共用安裝。",
+        "排程簡化為每天固定時間，舊排程保留原時間與帳號順序。"
+      ]
+    }
+  },
+  {
     "Version": "0.9.1",
     "Date": "2026-10-08",
     "Notes": {

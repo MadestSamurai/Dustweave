@@ -9,6 +9,11 @@ public static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        if (args.Length == 3 && args[0] == DailySandboxSessions.ExportSwitch)
+        {
+            try { DailySandboxSessions.Export(args[1],args[2]); return 0; }
+            catch { return 1; } // Never include credential payloads in a launch error.
+        }
         if (args.Length == 4 && args[0] == "--create-update-delta")
         {
             try {
@@ -19,7 +24,25 @@ public static class Program
             catch (Exception error) { Directory.CreateDirectory(args[3]); DailyJson.Write(Path.Combine(args[3], "delta-error.json"), new { error = error.ToString() }); return 1; }
         }
         if (args.Length == 2 && args[0] is "--apply-update" or "--recover-update") return DailyUpdateInstaller.Run(args[1], args[0] == "--recover-update");
-        if (DailyUpdateInstaller.RecoverBeforeStartup(DailyDesktopLaunch.Normalize(args))) return 0;
+        if (args.Length == 2 && args[0] == DailySandbox.LaunchSwitch)
+        {
+            try
+            {
+                var binding = DailySandbox.Bootstrap(args[1]);
+                var start = new System.Diagnostics.ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false, WorkingDirectory = Directory.GetCurrentDirectory() };
+                var request = DailyJson.TryRead<DailySandboxRequest>(args[1])!;
+                if (request.Worker is {} job)
+                {
+                    start.CreateNoWindow = true; start.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+                    start.ArgumentList.Add("--parallel-worker"); start.ArgumentList.Add(Path.Combine(DailyParallelRuntime.WorkerDirectory(DailyIdentity.DataRoot, job.Id), "job.json"));
+                }
+                else { start.ArgumentList.Add(DailyDesktopLaunch.ChildSwitch); start.ArgumentList.Add("--inspect-account"); start.ArgumentList.Add(binding.Account); }
+                using var child = System.Diagnostics.Process.Start(start) ?? throw new IOException("隔离窗口未启动。");
+                return 0;
+            }
+            catch (Exception error) { DailyJson.Write(Path.Combine(DailyIdentity.DataRoot, "sandbox-error.json"), new DailySandboxError(DateTimeOffset.UtcNow, Path.GetFileName(args[1]), error.Message, error.ToString())); return 1; }
+        }
+        if (Dustweave.Accounts.SandboxProcessScope.CurrentBox.Length == 0 && DailyUpdateInstaller.RecoverBeforeStartup(DailyDesktopLaunch.Normalize(args))) return 0;
         if (DailyDesktopLaunch.NeedsRelay(args)) { DailyDesktopLaunch.Start(Environment.ProcessPath ?? throw new InvalidOperationException("无法定位日常助手"), args); return 0; }
         args = DailyDesktopLaunch.Normalize(args);
         if (args.Length==2 && args[0] is "--check-tool-languages" or "--check-tool-language-ui")
@@ -28,6 +51,11 @@ public static class Program
             catch(Exception error) { DailyJson.Write(Path.Combine(args[1],"result.json"),new {status="failed",error=error.ToString(),realGameTouched=false}); return 1; }
         }
         DailySuiteComposition.Configure();
+        if (args.Length == 2 && args[0] == "--parallel-worker")
+        {
+            try { return DailyParallelWorker.RunAsync(args[1]).GetAwaiter().GetResult(); }
+            catch (Exception error) { DailyJson.Write(Path.Combine(DailyIdentity.DataRoot, "parallel-worker-error.json"), new { atUtc=DateTimeOffset.UtcNow, error=error.ToString() }); return 1; }
+        }
         if (args.Length > 0 && args[0] == DailyConnectionAccess.HelperSwitch) return DailyConnectionAccess.RunHelperAsync(args).GetAwaiter().GetResult();
         if(args.Length==2&&args[0]=="--check-suite-host"){try{SuiteHostProbe.Run(args[1]);return 0;}catch(Exception e){DailyJson.Write(Path.Combine(args[1],"error.json"),new{error=e.ToString()});return 1;}}if(args.Length==3&&args[0]=="--check-suite"){try{DailySuiteComposition.Check(args[1],args[2]).GetAwaiter().GetResult();return 0;}catch(Exception e){DailyJson.Write(Path.Combine(args[2],"error.json"),new{error=e.ToString()});return 1;}} if (args.Length == 3 && args[0] == "--tool-menu-probe")
             return ToolMenuProbe.Run(args[1], args[2]);

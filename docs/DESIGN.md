@@ -49,4 +49,10 @@ The account list shares the outer card's surface, with transparent column headin
 
 ### Schedule account selection
 
+Scheduling has one daily local start time and a separate enable control. Do not show weekday choices. Keep next-run status, ordered account cards and Save schedule. The desktop clock and Windows daily trigger must agree; legacy weekday schedules are migrated with the original enabled state and identities preserved.
+
 Show the selected schedule identities as compact cards directly on the page canvas, with execution order, alias, masked identity and a named remove action. Use a matching dashed Add accounts tile. Its searchable multi-select dialog excludes accounts already added, preserves checked choices across filtering, and changes the draft only on confirmation. Keep native buttons/checkboxes, visible keyboard focus, themed custom dialog chrome and all three languages. Preserve draft identity/order across catalog refresh; unavailable saved identities must stay explicit until removed. Empty selection teaches the add action, or directs users to save an account first.
+
+### Parallel account overview
+
+Reuse the timeline's circular percentage indicator. Account rows show the current state, completion time and explicit game/pause/continue/stop controls; detailed stages expand in place. Do not create one host GUI per automatically scheduled account. Execution mode sits beside the account queue action, with opt-in concurrent mode and a default capacity of two. State and error text use the same three-language dictionary; paused workers keep their occupied place.

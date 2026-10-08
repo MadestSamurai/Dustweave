@@ -94,12 +94,34 @@ try {
   }else await coordinator.ConnectCurrentAsync();return;
  }
  if(args.Length==4&&args[0]=="taps"){TapManifest.Generate(args[1],args[2],args[3]);return;}
+ if(args.Length==4&&args[0]=="taps-all"){
+  var specs=Directory.GetFiles(args[2],"*-evidence-spec.json").OrderBy(p=>p,StringComparer.Ordinal).ToArray();
+  if(specs.Length==0)throw new InvalidDataException("No evidence specifications found");
+  Directory.CreateDirectory(args[3]);
+  foreach(var spec in specs)TapManifest.Generate(args[1],spec,Path.Combine(args[3],Path.GetFileName(spec)));
+  File.WriteAllText(Path.Combine(args[3],"result.json"),JsonSerializer.Serialize(new{status="passed",count=specs.Length,realGameTouched=false}));return;
+ }
  if(args.Length==3&&args[0]=="legacy-test"){LegacyGuardTest.Prepare(args[1],args[2]);return;}
  if(args.Length==1&&args[0]=="self-test"){SelfTest.Run();return;}
- if(args.Length==3&&args[0]=="prepare"){
+ if(args.Length==3&&(args[0]=="prepare"||args[0]=="generate-live-contract"||args[0]=="generate-plugin-contract")){
   var managed=Path.GetFullPath(args[1]);var output=Path.GetFullPath(args[2]);Directory.CreateDirectory(output);
   var assembly=Assembly.GetExecutingAssembly();
   var sources=assembly.GetManifestResourceNames().Where(n=>n.StartsWith("Live.")&&n.EndsWith(".cs")).Select(n=>{using var stream=assembly.GetManifestResourceStream(n)!;using var reader=new StreamReader(stream);return CSharpSyntaxTree.ParseText(reader.ReadToEnd(),path:n);}).Concat(DailyPlugin.Current.HookSources.Select((text,index)=>CSharpSyntaxTree.ParseText(text,path:"Plugin."+index+".cs"))).Append(CSharpSyntaxTree.ParseText("namespace BD2.LocalIpc { public static class Build { public const string Fingerprint="+JsonSerializer.Serialize(Fingerprint)+"; public const string PluginFingerprint="+JsonSerializer.Serialize(DailyPlugin.Current.Fingerprint)+"; } }"));
+  if(args[0]=="generate-live-contract"||args[0]=="generate-plugin-contract"){
+   var specs=assembly.GetManifestResourceNames().Where(n=>n.StartsWith("Live.Spec.")).Select(n=>{using var stream=assembly.GetManifestResourceStream(n)!;using var reader=new StreamReader(stream);return reader.ReadToEnd();});
+   var contract=LiveClientBindings.Generate(managed,sources,args[0]=="generate-plugin-contract"?[]:specs,args[0]=="generate-plugin-contract"?"Plugin.":null);
+   File.WriteAllText(Path.Combine(output,"live-binding-contract.json"),JsonSerializer.Serialize(contract,new JsonSerializerOptions{WriteIndented=true}));
+   Console.WriteLine("Baseline contract generated; no game operation.");return;
+  }
+  var plugin=DailyPlugin.Current;
+  if(plugin.BindingContract.Length!=0){
+   var original=sources.ToArray();
+   using(var resource=assembly.GetManifestResourceStream("Live.BindingContract.json")!)
+    sources=LiveClientBindings.Adapt(managed,original.Where(t=>!t.FilePath.StartsWith("Plugin.",StringComparison.Ordinal)),JsonSerializer.Deserialize<LiveBindingContract>(resource)!,Path.Combine(output,"bindings.json"));
+   var contract=JsonSerializer.Deserialize<LiveBindingContract>(File.ReadAllBytes(Path.Combine(plugin.Root,plugin.BindingContract)))!;
+   sources=sources.Concat(LiveClientBindings.Adapt(managed,original.Where(t=>t.FilePath.StartsWith("Plugin.",StringComparison.Ordinal)),contract,Path.Combine(output,"plugin-bindings.json")));
+  }else using(var resource=assembly.GetManifestResourceStream("Live.BindingContract.json")!)
+   sources=LiveClientBindings.Adapt(managed,sources,JsonSerializer.Deserialize<LiveBindingContract>(resource)!,Path.Combine(output,"bindings.json"));
   var refs=new List<MetadataReference>();foreach(var file in Directory.EnumerateFiles(managed,"*.dll")){try{refs.Add(MetadataReference.CreateFromFile(file));}catch(BadImageFormatException){}}
   refs.Add(MetadataReference.CreateFromImage(DailyHookCompiler.Resource("BD2Daily.Harmony.dll")));
   var compilation=CSharpCompilation.Create("BD2Daily.LiveBridge"+LiveProtocol.BridgeVersion+".Hot."+Fingerprint.Substring(0,12),sources,refs,new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,optimizationLevel:OptimizationLevel.Release,platform:Platform.X64,deterministic:true));
@@ -130,7 +152,8 @@ try {
   throw new TimeoutException("Waiting for component handoff or login; inspect pending native operations, then reconnect.");
  }
  throw new ArgumentException("connect | connect-observer | check-current | self-test | prepare <Managed> <output> | taps <Managed> <spec.json> <output.json> | attach/upgrade <bridge.dll>");
-}catch(Exception e){Console.Error.WriteLine(e.GetBaseException());if(args.FirstOrDefault()=="attach"||args.FirstOrDefault()=="upgrade")DailyJson.Write(Path.Combine(root,"attach-error.json"),new{state="error",operation=args[0],error=e.GetBaseException().Message,at=DateTimeOffset.UtcNow});Environment.ExitCode=1;}
+}catch(Exception e){Console.Error.WriteLine(e.GetBaseException());if(args.FirstOrDefault()=="attach"||args.FirstOrDefault()=="upgrade")DailyJson.Write(Path.Combine(root,"attach-error.json"),new{state="error",operation=args[0],error=e.GetBaseException().Message,at=DateTimeOffset.UtcNow});if(!configureConsole)throw;Environment.ExitCode=1;}
 
  }
 }
+

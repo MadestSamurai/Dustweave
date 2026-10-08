@@ -20,11 +20,12 @@ internal static class DailySuiteComposition {
   DailySuite.Prepare=Prepare;
   DailySuite.PrepareModule=PrepareModule;
  }
- private static string ClientKey(string managed){using var client=ModuleDefinition.ReadModule(Path.Combine(managed,"Assembly-CSharp.dll"));return client.Mvid.ToString("N");}
+ private static Task<string> ClientKey(string managed,CancellationToken cancel)=>Task.Run(()=>ClientInputs.ReadManaged(managed).Key,cancel);
  public static async Task<PreparedDailyHook> Prepare(string managed,Action<string> progress,CancellationToken cancel){
   await compiler.WaitAsync(cancel);
   try{
-   string directory=Path.Combine(DailyIdentity.DataRoot,"suite-cache",DailyHookCompiler.Fingerprint,ClientKey(managed));
+   string clientKey=await ClientKey(managed,cancel);
+   string directory=Path.Combine(DailyIdentity.DataRoot,"suite-cache",DailyHookCompiler.Fingerprint,clientKey);
    Directory.CreateDirectory(directory);
    string cache=Path.Combine(directory,"observer.dll"), report=Path.Combine(directory,"observer.json");
    if(File.Exists(cache)&&DailyJson.TryRead<CacheInfo>(report) is {} info){
@@ -34,6 +35,7 @@ internal static class DailySuiteComposition {
    progress("准备公共连接组件");
    // An empty manifest enables the module host without compiling or loading any business tool.
    var result=await Task.Run(()=>DailyHookCompiler.Prepare(managed,suite:new Dictionary<string,byte[]>(),manifest:""),cancel);
+   await Task.Run(()=>ClientInputs.RequireStable(managed,clientKey),cancel);
    await File.WriteAllBytesAsync(cache,result.Payload,cancel);
    DailyJson.Write(report,new CacheInfo(Hash(result.Payload),result.Report,result.GuildReport,result.StartupReport));
    DailyJson.Write(Path.Combine(directory,"modules.json"),new{included=Array.Empty<string>(),onDemand=true,realGameTouched=false});
@@ -49,7 +51,8 @@ internal static class DailySuiteComposition {
    string assemblyName=id=="daily"?"Dustweave.Connection":tool=="equipment"?"BD2Equipment.Connection":prefixes[tool]+".Compatibility";
    var assembly=Assembly.Load(assemblyName);
    string key=DailyIdentity.Hash("module-v1|"+id+"|"+assembly.ManifestModule.ModuleVersionId+"|"+(id=="daily"?DailyPlugin.Current.Fingerprint:""));
-   string directory=Path.Combine(DailyIdentity.DataRoot,"suite-cache","modules",id,key,ClientKey(managed));
+   string clientKey=await ClientKey(managed,cancel);
+   string directory=Path.Combine(DailyIdentity.DataRoot,"suite-cache","modules",id,key,clientKey);
    Directory.CreateDirectory(directory);
    string cache=Path.Combine(directory,"module.dll"),report=Path.Combine(directory,"module.json");
    if(File.Exists(cache)&&DailyJson.TryRead<ModuleCache>(report) is {} info){
@@ -76,6 +79,7 @@ internal static class DailySuiteComposition {
    }
    cancel.ThrowIfCancellationRequested();
    if(payload.Length==0||payload.Length>8*1024*1024)throw new InvalidDataException("功能组件大小异常，未发送。");
+   await Task.Run(()=>ClientInputs.RequireStable(managed,clientKey),cancel);
    await File.WriteAllBytesAsync(cache,payload,cancel);
    DailyJson.Write(report,new ModuleCache(Hash(payload)));
    return payload;

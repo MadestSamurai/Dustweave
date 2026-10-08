@@ -23,8 +23,11 @@ internal static class SchedulingUpdatesCases
         Check("schedule never catches up hours of old work", DailyScheduleClock.Due(plan, now.AddMinutes(16), zone) == null);
         Check("schedule enabling after the time does not start old work", DailyScheduleClock.Due(plan with { SavedUtc = now.AddSeconds(1) }, now.AddMinutes(1), zone) == null);
         Check("disabled schedule never runs", DailyScheduleClock.Due(plan with { Enabled = false }, now, zone) == null);
-        Check("weekday schedule skips other days", DailyScheduleClock.Due(plan with { Days = [1] }, now, zone) == null);
-        Check("next weekday is computed in local time", DailyScheduleClock.Next(plan with { Days = [1] }, now, zone)?.Day == 12);
+        Check("legacy weekday schedule stays constrained before migration", DailyScheduleClock.Due(plan with { Days = [1] }, now, zone) == null);
+        Check("legacy next weekday is computed before migration", DailyScheduleClock.Next(plan with { Days = [1] }, now, zone)?.Day == 12);
+        foreach (int offset in Enumerable.Range(0, 7))
+            Check("daily schedule covers day " + offset, DailyScheduleClock.Due(plan, now.AddDays(offset), zone) == now.AddDays(offset));
+        Check("next daily run is tomorrow", DailyScheduleClock.Next(plan, now, zone) == now.AddDays(1));
         Check("midnight grace checks previous day", DailyScheduleClock.Due(plan with { Hour = 23, Minute = 55 }, now.AddHours(15).AddMinutes(5), zone) == now.AddHours(14).AddMinutes(55));
         var dst = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
         Check("spring missing local time is skipped", DailyScheduleClock.Occurrence(plan with { Hour = 2, Minute = 30 }, new(2026, 3, 8), dst) == null);
@@ -40,8 +43,42 @@ internal static class SchedulingUpdatesCases
         Check("duplicate launch cannot claim same occurrence", !new DailyScheduleStore(data).Claim(now, now));
         Check("claim survives process restart", new DailyScheduleStore(data).IsClaimed(now));
         Check("next scheduled day may claim", store.Claim(now.AddDays(1), now.AddDays(1)));
+        var migrationStore = new DailyScheduleStore(Path.Combine(data, "migration"));
+        var legacy = plan with { Days = [1, 3, 5] };
+        migrationStore.Save(legacy);
+        Check("legacy schedule requires daily migration", !migrationStore.Read().IsDaily);
+        int registrations = 0;
+        var migrationTime = now.AddMinutes(1);
+        Check("weekly schedule migration executes", await migrationStore.MigrateToDailyAsync(p =>
+        {
+            registrations++;
+            Check("migration disables execution before Windows registration", !migrationStore.Read().Enabled);
+            Check("Windows migration receives all days and original account order", p.IsDaily && p.Enabled && p.Accounts.SequenceEqual(legacy.Accounts));
+            return Task.CompletedTask;
+        }, migrationTime));
+        var migrated = migrationStore.Read();
+        Check("migration preserves time enabled state and account order", migrated.IsDaily && migrated.Enabled && migrated.Hour == legacy.Hour && migrated.Minute == legacy.Minute && migrated.Accounts.SequenceEqual(legacy.Accounts));
+        Check("migration does not catch up the earlier time", migrated.SavedUtc == migrationTime && DailyScheduleClock.Due(migrated, now.AddMinutes(2), zone) == null);
+        Check("migration runs tomorrow even if formerly excluded", DailyScheduleClock.Due(migrated, now.AddDays(1), zone) == now.AddDays(1));
+        Check("migration is idempotent", !await migrationStore.MigrateToDailyAsync(_ => { registrations++; return Task.CompletedTask; }, now.AddMinutes(2)) && registrations == 1);
+        var failedStore = new DailyScheduleStore(Path.Combine(data, "failed-migration"));
+        failedStore.Save(legacy);
+        bool failed = false;
+        try { await failedStore.MigrateToDailyAsync(_ => throw new IOException("synthetic registration failure"), migrationTime); }
+        catch (IOException) { failed = true; }
+        Check("failed registration retains disabled daily schedule", failed && !failedStore.Read().Enabled && failedStore.Read().IsDaily && failedStore.Read().Accounts.SequenceEqual(legacy.Accounts));
+        Check("failed migration cannot run the next day", DailyScheduleClock.Due(failedStore.Read(), now.AddDays(1), zone) == null);
+        Check("failed migration does not endlessly retry registration", !await failedStore.MigrateToDailyAsync(_ => throw new Exception("unexpected registration retry"), now.AddMinutes(2)));
+        var disabledStore = new DailyScheduleStore(Path.Combine(data, "disabled-migration"));
+        disabledStore.Save(legacy with { Enabled = false, Accounts = [] });
+        Check("disabled weekly draft migrates without registering Windows task", await disabledStore.MigrateToDailyAsync(_ => throw new Exception("disabled task registered"), migrationTime) && !disabledStore.Read().Enabled && disabledStore.Read().IsDaily);
+        var newStore = new DailyScheduleStore(Path.Combine(data, "fresh-schedule"));
+        Check("new installs stay disabled without writing a schedule", !await newStore.MigrateToDailyAsync(_ => throw new Exception("fresh task registered"), now) && !File.Exists(newStore.PlanPath));
+        Reject("Windows rejects unconverted legacy weekday plans", () => DailyWindowsSchedule.Register(legacy, Environment.ProcessPath!, validateOnly: true));
         var xml = XDocument.Parse(DailyWindowsSchedule.Register(plan, Environment.ProcessPath!, validateOnly: true));
         var ns = xml.Root!.Name.Namespace;
+        Check("Windows task repeats daily", xml.Descendants(ns + "ScheduleByDay").Single().Element(ns + "DaysInterval")?.Value == "1");
+        Check("Windows task contains no weekday mask", !xml.Descendants(ns + "ScheduleByWeek").Any() && !xml.Descendants(ns + "DaysOfWeek").Any());
         Check("Windows task uses interactive user only", xml.Descendants(ns + "LogonType").Single().Value == "InteractiveToken");
         Check("Windows task does not require admin", xml.Descendants(ns + "RunLevel").Single().Value == "LeastPrivilege");
         Check("Windows task has the scheduled entry point", xml.Descendants(ns + "Arguments").Single().Value == "--scheduled");
