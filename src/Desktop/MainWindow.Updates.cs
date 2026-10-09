@@ -169,9 +169,8 @@ public partial class MainWindow
         try
         {
             if (DailySandbox.HasIsolatedWindows()) { updatePanel.Status("updates.isolated_open"); return; }
-            string pluginRoot = DailyPluginStore.HasSelection(root) ? new DailyPluginStore(root).SelectedRoot() : DailyPlugin.Current.Root;
-            if (!string.IsNullOrEmpty(pluginRoot) && !await Task.Run(() => DailyPlugin.Inspect(pluginRoot, readyUpdate.Release.Version).Available))
-            { updatePanel.Status("plugins.incompatible_host"); return; }
+            string? pluginBlock = await Task.Run(() => DailyPlugin.HostUpdateBlockReason(root, readyUpdate.Release.Version));
+            if (pluginBlock != null) { updatePanel.Status(pluginBlock); return; }
             if (ToolOpen && !await toolSession.CloseAsync()) { updatePanel.Status("updates.tool_open"); return; }
             string probe = Path.Combine(Path.GetDirectoryName(readyUpdate.Target)!, ".dustweave-write-" + Guid.NewGuid().ToString("N"));
             using (File.Create(probe)) { } File.Delete(probe);

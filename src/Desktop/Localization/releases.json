@@ -1,5 +1,23 @@
 [
   {
+    "Version": "1.0.7-beta",
+    "Date": "2026-10-09",
+    "Notes": {
+      "zh-CN": [
+        "修复未安装插件时被错误阻止更新的问题；仅实际启用的插件参与兼容性检查。",
+        "兼容管理员权限的 Windows 桌面，按现有用户权限启动游戏，不要求修改系统设置。"
+      ],
+      "zh-TW": [
+        "修正未安裝套件時被錯誤阻止更新的問題；僅實際啟用的套件參與相容性檢查。",
+        "相容系統管理員權限的 Windows 桌面，依現有使用者權限啟動遊戲，不要求修改系統設定。"
+      ],
+      "en-US": [
+        "Fixes updates being blocked when no plugin is installed. Only enabled, usable plugins constrain host updates.",
+        "Supports elevated Windows desktops by launching with the current user token, without requiring changes to system settings."
+      ]
+    }
+  },
+  {
     "Version": "1.0.6-beta",
     "Date": "2026-10-09",
     "Notes": {

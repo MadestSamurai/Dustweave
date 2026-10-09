@@ -32,7 +32,22 @@ internal static class PluginStoreCases
             if (extra != null) { using var archive = ZipFile.Open(zip, ZipArchiveMode.Update); using var writer = new StreamWriter(archive.CreateEntry(extra).Open()); writer.Write("unlisted"); }
             return zip;
         }
+        string? UpdateBlock(string version, string? environment = null)
+        {
+            string? previous = Environment.GetEnvironmentVariable("DUSTWEAVE_PLUGIN");
+            try
+            {
+                Environment.SetEnvironmentVariable("DUSTWEAVE_PLUGIN", environment);
+                return DailyPlugin.HostUpdateBlockReason(Path.Combine(root, "user"), version);
+            }
+            finally { Environment.SetEnvironmentVariable("DUSTWEAVE_PLUGIN", previous); }
+        }
         Check(!DailyPluginStore.HasSelection(Path.Combine(root, "user")), "empty store preserves explicit local installation");
+        Check(typeof(DailyPlugin).GetMethod(nameof(DailyPlugin.ResolveRoot), Type.EmptyTypes) != null, "parameterless plugin API stays binary compatible");
+        Check(UpdateBlock("99.0.0") == null, "fresh no-plugin user can update with the environment override absent");
+        Check(UpdateBlock("99.0.0", Path.Combine(root, "missing-extension")) == null, "nonempty missing fallback directory cannot block a host update");
+        string empty = Path.Combine(root, "empty-extension"); Directory.CreateDirectory(empty);
+        Check(UpdateBlock("99.0.0", empty) == null, "empty plugin directory is not an active incompatible plugin");
         var firstZip = Package("1.0.0");
         using var prepared = store.Prepare(firstZip);
         DailyInstalledPlugin first;
@@ -74,6 +89,9 @@ internal static class PluginStoreCases
         }
         await store.ActivateAsync(first.Fingerprint, Probe);
         Check(store.Read().Active == first.Fingerprint && store.SelectedRoot() == store.PathFor(first.Fingerprint), "activation selects immutable payload");
+        Check(UpdateBlock(DailyPlugin.HostVersion) == null, "compatible active plugin permits host update");
+        Check(UpdateBlock(nextHost) == "plugins.incompatible_host", "actual enabled incompatible plugin still blocks host update");
+        Check(UpdateBlock(nextHost, "none") == null, "explicit no-plugin mode overrides installed plugin during host update");
         string pinned = store.SelectedRoot();
         using var preparedTwo = store.Prepare(Package("1.1.0")); var second = store.Install(preparedTwo);
         bool failed = false;
@@ -85,6 +103,7 @@ internal static class PluginStoreCases
         await store.ActivateAsync(store.Read().Previous!, Probe);
         Check(store.Read().Active == first.Fingerprint, "rollback performs validated activation");
         store.Disable(); Check(store.SelectedRoot() == "" && store.Read().OverrideLocal, "disable cannot fall back to local plugin");
+        Check(UpdateBlock(nextHost) == null, "disabled plugin permits host update even though its files remain installed");
         await store.ActivateAsync(first.Fingerprint, Probe);
         store.Remove(first.Fingerprint);
         Check(store.Read().Active == null && Directory.Exists(pinned), "removal disables next start without deleting in-use files");
@@ -114,6 +133,7 @@ internal static class PluginStoreCases
         var replacedManifest = JsonNode.Parse(File.ReadAllText(installedManifest))!; replacedManifest["publisher"] = "Changed after approval";
         File.WriteAllText(installedManifest, replacedManifest.ToJsonString());
         Check(store.SelectedRoot() == "", "changed manifest cannot bypass the approved fingerprint at startup");
+        Check(UpdateBlock(nextHost) == null, "unloadable altered extension does not hold the base app update hostage");
         string selectionFile = Path.Combine(root, "user", "extensions", "selection.json");
         var invalidState = JsonNode.Parse(File.ReadAllText(selectionFile))!; invalidState["Installed"]![0]!["Id"] = null;
         File.WriteAllText(selectionFile, invalidState.ToJsonString());

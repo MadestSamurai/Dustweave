@@ -35,6 +35,8 @@ Choose Simplified Chinese, Traditional Chinese or English in the main window; in
 
 Use the application's stop control and check whether an already submitted operation is still settling. To rerun, select the affected stages and verify the current account and game state. Do not repeatedly confirm an unknown resource-consuming action merely because an earlier record is incomplete.
 
+If the Windows desktop itself is elevated, Dustweave uses the caller's existing token within the same user and logon session without requiring system setting changes. A normal desktop is still preferred for unelevated launches; connection helpers request elevation separately when needed.
+
 ## Updates and local data
 
 Users of the first public release, 1.0.0-beta, and later versions can open Updates at the bottom left. Signed differential packages download in the background and require confirmation to restart while idle. Accounts, settings and plugins are preserved; failed updates restore the previous version. Earlier internal versions are no longer maintained for upgrade compatibility; extract a complete package into a new folder after exiting the old app. Ordinary UI updates do not require restarting the game; follow specific component instructions if shown.
@@ -42,6 +44,8 @@ Users of the first public release, 1.0.0-beta, and later versions can open Updat
 Daily data defaults to `%LOCALAPPDATA%\BD2DailyAssistant`; protected account sessions use `%LOCALAPPDATA%\BD2AccountSessionManager`. An explicit custom data directory overrides the default. Changing the application folder does not automatically erase this data.
 
 Account sessions are protected for the current Windows user. They are not ordinary portable configuration files: do not assume copying them to another computer will work, and never upload them with an issue.
+
+If an older updater reports an incompatible plugin when none is installed, manually download the full 1.0.7-beta or later package, close the old app and extract into a new folder. No plugin is required; existing accounts and settings are retained.
 
 ## Troubleshooting
 

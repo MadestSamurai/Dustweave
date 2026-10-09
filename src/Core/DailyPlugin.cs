@@ -22,17 +22,28 @@ public static class DailyPlugin
         .Cast<System.Reflection.AssemblyMetadataAttribute>().Single(x => x.Key == "DustweaveVersion").Value!;
     private static readonly Lazy<DailyPluginInfo> loaded = new(() => Inspect(ResolveRoot()));
     public static DailyPluginInfo Current => loaded.Value;
-    public static string ResolveRoot()
+    public static string ResolveRoot() => ResolveRoot(DailyIdentity.DataRoot);
+    internal static string ResolveRoot(string dataRoot)
     {
         var configured = Environment.GetEnvironmentVariable("DUSTWEAVE_PLUGIN");
         if (configured != null)
             return configured.Equals("none", StringComparison.OrdinalIgnoreCase) ? "" : configured;
-        if (DailyPluginStore.HasSelection(DailyIdentity.DataRoot))
-            return new DailyPluginStore(DailyIdentity.DataRoot).SelectedRoot();
+        if (DailyPluginStore.HasSelection(dataRoot))
+            return new DailyPluginStore(dataRoot).SelectedRoot();
         var current = Path.GetFullPath(AppContext.BaseDirectory);
         if (new[] { "connection", "diagnostics" }.Contains(Path.GetFileName(Path.TrimEndingDirectorySeparator(current)), StringComparer.OrdinalIgnoreCase))
             current = Directory.GetParent(current)!.FullName;
         return Path.Combine(current, "plugins", "extension");
+    }
+    // A fallback directory is not an installed plugin. Only a currently usable,
+    // selected extension can constrain the next host version. Resolve selection
+    // afresh so disabling an extension takes effect before the app restarts.
+    public static string? HostUpdateBlockReason(string dataRoot, string hostVersion)
+    {
+        var current = Inspect(ResolveRoot(dataRoot));
+        if (!current.Available) return null;
+        var next = Inspect(current.Root, hostVersion);
+        return next.Available ? null : "plugins." + next.State;
     }
     public static DailyPluginInfo Inspect(string directory, string? hostVersion = null)
     {

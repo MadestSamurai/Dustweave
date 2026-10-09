@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-09T11:57:12.7730602+00:00",
+  "generatedUtc": "2026-10-09T13:38:34.8470941+00:00",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -224,7 +224,7 @@
     },
     {
       "path": "Directory.Build.props",
-      "sha256": "f1e26ac9e816fee1f6807c82d44f748ec76b19b6a1a457b388ad8126e344c135",
+      "sha256": "e67fcdbb761d58a23a5b4e685992cdd7999cb3e4154079d3b74df51624458ee9",
       "reasons": [
         "build input"
       ],
@@ -320,7 +320,7 @@
     },
     {
       "path": "src/Accounts/DesktopGameLaunch.cs",
-      "sha256": "498d4d1baed4c0d9596883bdd631aee7c2f3499c78c82cb9ed087a4a352150c6",
+      "sha256": "ceec1cb601a543f6ab338b89067d301ab5bd7fc0a7fb4c3259df33525ec3b74d",
       "reasons": [
         "build input"
       ],
@@ -1312,7 +1312,7 @@
     },
     {
       "path": "src/Core/DailyPlugin.cs",
-      "sha256": "0f420367d625d3515de0029bc23f2fe5e90c31b6bb1a72c5be2fd3789732d77b",
+      "sha256": "480b2657586bf2557f6545f20b430f5f1ad5d4133d819a239f3a34ce481dd181",
       "reasons": [
         "build input"
       ],
@@ -2128,7 +2128,7 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "d062c19a5fb96352400790b70aebd44a438bec27ec75c955fa2bf91695824fc1",
+      "sha256": "db7970dc17f5e3eff29a07a3c907b639acd994e1168d98a0195cb5a37d9cc9df",
       "reasons": [
         "build input"
       ],
@@ -2272,7 +2272,7 @@
     },
     {
       "path": "src/Desktop/MainWindow.Updates.cs",
-      "sha256": "f96d8dd641fee6ee34c9b5158226f3b91b639fa6dab435b1e320f5c13509ab1b",
+      "sha256": "01d8446634dfc079ebaca66f9465e31812c948f064b24be208be78377a4c5c68",
       "reasons": [
         "build input"
       ],
@@ -7904,7 +7904,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/PluginStoreCases.cs",
-      "sha256": "6e28313718059760227b9d41e66e75897851b4b83e7a17b7117935c84131f02d",
+      "sha256": "1f00345a5b00bf5174385a633013a7f7b56e120ea41a382ba786d818860bfc71",
       "reasons": [
         "build input"
       ],
@@ -8176,7 +8176,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Program.cs",
-      "sha256": "569a5dc39b06ed19e6b5319579f456ca2e5102a6f027f12733b6ef3024a086f8",
+      "sha256": "3510f15ce7853fde2db41939fa1846b61b43736d1c6812292fd82c0be1ac79bf",
       "reasons": [
         "build input"
       ],
@@ -8589,6 +8589,10 @@
         "build input"
       ],
       "bytes": 4359
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/DesktopLaunchCases.cs",
+      "sha256": "43f9b3980e68f6f825f39d8ca3e4cca8a26ab0e576ab2ebaad89ddfcd88b647c"
     }
   ],
   "publicReleaseApproved": false,

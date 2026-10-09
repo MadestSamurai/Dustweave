@@ -1,6 +1,10 @@
 using Dustweave;
 
 // Only the existing synthetic cases are linked. Captured account fixtures stay in the parent repo.
+if (args.Length == 2 && args[0] == "--desktop-launch-child")
+{
+    await DesktopLaunchCases.Child(args[1]); return;
+}
 if (args.Length == 2 && args[0] == "--check-plugin")
 {
     if (Environment.GetEnvironmentVariable("DUSTWEAVE_TEST_PROBE") == "hang") { await Task.Delay(60000); return; }
@@ -118,6 +122,7 @@ await Group("UpdateDelta", () => UpdateDeltaCases.Run(root, cases));
 await Group("Storage", () => StorageCases.Run(root, cases));
 await Group("AccountIdentity", () => Sync(() => AccountIdentityCases.Run(root, cases)));
 await Group("GameInstallation", () => Sync(() => GameInstallationCases.Run(root, cases)));
+await Group("DesktopLaunch", () => DesktopLaunchCases.Run(root, cases));
 await Group("FirstRun", () => FirstRunCases.Run(root, cases));
 await Group("Preference", () => Sync(() => PreferenceCases.Run(root, cases)));
 await Group("PackagedUtility", () => Sync(() => PackagedUtilityCases.Run(root, cases)));

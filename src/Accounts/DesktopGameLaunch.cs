@@ -18,8 +18,31 @@ internal static class DesktopGameLaunch
 
     internal static string? Reject(TokenState caller, TokenState shell) =>
         caller.User != shell.User ? "账号工具与 Windows 桌面不属于同一用户，请以当前桌面用户打开工具后重试。" :
-        caller.Session != shell.Session ? "账号工具与 Windows 桌面不在同一登录会话，无法确认启动身份。" :
-        shell.Elevated ? "Windows 桌面本身正以管理员权限运行，无法从它启动普通权限游戏。请恢复普通权限桌面后重试。" : null;
+        caller.Session != shell.Session ? "账号工具与 Windows 桌面不在同一登录会话，无法确认启动身份。" : null;
+
+    // An elevated desktop can be normal for this Windows configuration (for
+    // example, UAC disabled). Do not require changing it or elevate a limited
+    // caller through Explorer. Inherit the caller's existing token in this case.
+    internal static bool UseCallerToken(Context context) => context.Shell.Elevated;
+    internal static void ValidateChild(TokenState expected, TokenState child)
+    {
+        if (child.User != expected.User || child.Session != expected.Session)
+            throw new SessionManagerException("程序启动后的 Windows 用户或登录会话不符合预期，已停止后续自动操作。");
+    }
+
+    internal static int LaunchInherited(Context context, string executable, string arguments, string workingDirectory, bool hidden)
+    {
+        string? error = Reject(context.Caller, context.Shell);
+        if (error != null) throw new SessionManagerException(error);
+        using var child = Process.Start(new ProcessStartInfo(executable, arguments)
+        { UseShellExecute = false, WorkingDirectory = workingDirectory, WindowStyle = hidden ? ProcessWindowStyle.Hidden : ProcessWindowStyle.Normal, CreateNoWindow = hidden })
+            ?? throw new SessionManagerException("未找到要启动的程序。");
+        var token = ReadToken(child.Id);
+        ValidateChild(context.Caller, token);
+        if (Path.GetFileNameWithoutExtension(executable).Equals("BrownDust II", StringComparison.OrdinalIgnoreCase))
+            WriteDiagnostic(context, child.Id, token, "inherited-current-token");
+        return child.Id;
+    }
 
     internal static Context ValidateContext()
     {
@@ -82,6 +105,7 @@ internal static class DesktopGameLaunch
     private static int LaunchInSta(string executable, string arguments, string workingDirectory, bool hidden)
     {
         Context context = ValidateContext();
+        if (UseCallerToken(context)) return LaunchInherited(context, executable, arguments, workingDirectory, hidden);
         string name = Path.GetFileNameWithoutExtension(executable);
         var existing = new HashSet<int>();
         foreach (var process in Process.GetProcessesByName(name))
@@ -116,8 +140,7 @@ internal static class DesktopGameLaunch
                         {
                             if (!string.Equals(ReadImagePath(process.Id), executable, StringComparison.OrdinalIgnoreCase)) continue;
                             TokenState child = ReadToken(process.Id);
-                            if (child.User != context.Shell.User || child.Session != context.Shell.Session)
-                                throw new SessionManagerException("程序启动后的 Windows 用户或登录会话不符合预期，已停止后续自动操作。");
+                            ValidateChild(context.Shell, child);
                             if (name.Equals("BrownDust II", StringComparison.OrdinalIgnoreCase)) WriteDiagnostic(context, process.Id, child);
                             return process.Id;
                         }
@@ -148,7 +171,7 @@ internal static class DesktopGameLaunch
         failure?.Throw(); return result;
     }
 
-    private static void WriteDiagnostic(Context context, int childId, TokenState child)
+    private static void WriteDiagnostic(Context context, int childId, TokenState child, string route = "desktop-shell")
     {
         // No account IDs, registry data or authentication material are included.
         try
@@ -158,7 +181,7 @@ internal static class DesktopGameLaunch
             string target = Path.Combine(directory, "last-launch.json"), temp = target + "." + Guid.NewGuid().ToString("N") + ".tmp";
             try
             {
-                File.WriteAllText(temp, JsonSerializer.Serialize(new { atUtc = DateTimeOffset.UtcNow, route = "desktop-shell", callerPid = Environment.ProcessId, callerElevated = context.Caller.Elevated, shellPid = context.ShellProcessId, shellElevated = context.Shell.Elevated, gamePid = childId, gameElevated = child.Elevated, sameWindowsUser = child.User == context.Caller.User }));
+                File.WriteAllText(temp, JsonSerializer.Serialize(new { atUtc = DateTimeOffset.UtcNow, route, callerPid = Environment.ProcessId, callerElevated = context.Caller.Elevated, shellPid = context.ShellProcessId, shellElevated = context.Shell.Elevated, gamePid = childId, gameElevated = child.Elevated, sameWindowsUser = child.User == context.Caller.User }));
                 File.Move(temp, target, true);
             }
             finally { if (File.Exists(temp)) File.Delete(temp); }
