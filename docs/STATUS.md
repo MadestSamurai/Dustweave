@@ -1,12 +1,12 @@
 # Repository status / 仓库状态
 
-## Public-version OTA preparation / 公开版 OTA 准备
+## Public-version OTA published / 公开版 OTA 已发布
 
-2026-10-09：升级基线按用户要求从首个公开版 `1.0.0-beta` 开始，不再维护更早内部版本的升级兼容。`1.0.1-beta` 的签名清单、双版本完整包与直接差分已准备；Portable 差分 20,065,694 字节，Lite 差分 1,345,171 字节。真实 `1.0.0-beta` 成品更新器完成两版仅差分缓存升级、启动失败回退与中断恢复，账号及插件哨兵文件保持不变。证据：`artifacts/ota-1.0.1-from-1.0.0-delta/results.json`。
+2026-10-09：升级基线按用户要求从首个公开版 `1.0.0-beta` 开始，不再维护更早内部版本的升级兼容。`1.0.1-beta` 的签名清单、双版本完整包与直接差分已上线；Portable 差分 20,065,694 字节，Lite 差分 1,345,171 字节。真实 `1.0.0-beta` 成品更新器完成两版仅差分缓存升级、启动失败回退与中断恢复，账号及插件哨兵文件保持不变。证据：`artifacts/ota-1.0.1-from-1.0.0-delta/results.json`。
 
-新增独立 .NET OTA 签名发布通道、受限 SSH 客户端与首次安装脚本。43 项针对性检查通过；服务端自包含 Linux x64 成品已生成。国内服务器安装和本次 OTA 上线仍等待临时管理密钥登记，不能视为已经发布。当前公网 OTA 仍是 `0.9.13`。步骤见 [签名发布通道](OTA_PUBLISH_CHANNEL.md)。
+独立 .NET OTA 签名发布通道已安装，使用专用低权限账号及受限 SSH 命令。43 项检查在 Windows 和服务器 Linux 均通过。15:53（香港时间）通过新通道完成 `1.0.1-beta` 发布；两版由正式下载器完成公网差分下载和重建校验，缓存与 Range 检查通过。临时管理密钥已撤销并验证拒绝认证，长期受限通道仍正常。见 [发布记录](releases/1.0.1-beta-deployment.md) 与 [通道使用说明](OTA_PUBLISH_CHANNEL.md)。
 
-The public-version update chain, direct patches and real baseline-helper acceptance are ready. The new .NET publishing channel passes 43 isolated checks; installation and public HTTPS acceptance are still pending server access. GitHub publication and domestic OTA availability are separate.
+The public-version update chain is live at 1.0.1-beta. The new constrained .NET channel passed 43 checks on Windows and Linux and performed the real deployment. Both public differential downloads and reconstructions passed using the production transport. The temporary administrator key was revoked; routine publishing retains only the constrained transport identity.
 
 ## 1.0.1-beta delivery / 反馈修复交付
 

@@ -49,7 +49,7 @@ $current=InvokeChannel 'dustweave-ota status'
 if($current.version -ne $ExpectedCurrent){throw "Current OTA is $($current.version), not $ExpectedCurrent"}
 $folder=[IO.Path]::GetFullPath($PackageDirectory)
 # This also verifies the signed feed and every immutable archive before opening an upload.
-& (Join-Path $PSScriptRoot 'prepare-update-site.ps1') -PackageDirectory $folder
+& (Join-Path $PSScriptRoot 'prepare-update-site.ps1') -PackageDirectory $folder -VerifyOnly
 $feedBytes=[IO.File]::ReadAllBytes((Join-Path $folder 'updates.json'))
 $feedEnvelope=[Text.Encoding]::UTF8.GetString($feedBytes)|ConvertFrom-Json
 $feed=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($feedEnvelope.Payload))|ConvertFrom-Json
