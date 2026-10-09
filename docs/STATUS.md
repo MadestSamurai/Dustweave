@@ -1,5 +1,11 @@
 # Repository status / 仓库状态
 
+## 1.1.0-beta published / 当前版本
+
+2026-10-10：`1.1.0-beta` 已由 GitHub Actions 发布为普通 Release，并通过受限签名通道上线国内 OTA。新增图标、明确的错误分类与下一步、诊断 ZIP 导出及联系方式、下载入口和更高默认窗口；包含按账号返回任务选择及准备流程改进。最终 2,624 项检查（68 组）、双版本成品、扩展兼容、实际旧更新器升级／回退／恢复及公网差分重建均通过。本次未操作真实游戏，受影响用户的具体故障仍需新日志确认。详见 [发布验收记录](releases/1.1.0-beta-deployment.md)。以下为历史阶段记录。
+
+The current release is **1.1.0-beta**, available as a normal GitHub Release and through domestic signed OTA. Package, extension, prior-updater recovery and public-download checks passed. See the linked receipt for validation boundaries; entries below describe earlier stages.
+
 ## Public-version OTA published / 公开版 OTA 已发布
 
 2026-10-09：升级基线按用户要求从首个公开版 `1.0.0-beta` 开始，不再维护更早内部版本的升级兼容。`1.0.1-beta` 的签名清单、双版本完整包与直接差分已上线；Portable 差分 20,065,694 字节，Lite 差分 1,345,171 字节。真实 `1.0.0-beta` 成品更新器完成两版仅差分缓存升级、启动失败回退与中断恢复，账号及插件哨兵文件保持不变。证据：`artifacts/ota-1.0.1-from-1.0.0-delta/results.json`。
