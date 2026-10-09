@@ -1,5 +1,11 @@
 # Changelog / 更新记录
 
+## 1.1.1-beta — 2026-10-10
+
+- 新增日志保留设置、清理预览和空闲自动清理，保护账号、任务进度与未结算操作。
+- 跑商与料理共同规划当前和后续供给，纳入已知周收集掉落期望，修复重复估值、长期推迟加工和无效囤积。
+- Adds guarded manual/automatic log maintenance and shared-resource trading/cooking optimization with expected weekly drops.
+- [完整说明 / Full notes](docs/releases/1.1.1-beta.md)
 ## 1.1.0-beta — 2026-10-10
 
 - 修复控制身份继承及登录阶段提前绑定，保留真实停止原因；新增错误分类、下一步指引和诊断 ZIP 导出。

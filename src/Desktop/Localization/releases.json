@@ -1,5 +1,26 @@
 [
   {
+    "Version": "1.1.1-beta",
+    "Date": "2026-10-10",
+    "Notes": {
+      "zh-CN": [
+        "诊断页新增日志手动清理与空闲自动清理，可调整保留天数及容量目标。保留近期记录、账号设置、待核对操作和补跑进度。",
+        "跑商与料理共同规划当前库存、后续供货和已知周收集掉落期望，优先总收益；修复有收益的料理长期不制作和过量保留食材。",
+        "如果自动更新失败，可能需要手动下载完整软件包。"
+      ],
+      "zh-TW": [
+        "診斷頁新增記錄手動清理與閒置自動清理，可調整保留天數及容量目標。保留近期記錄、帳號設定、待核對操作及補跑進度。",
+        "跑商與料理共同規劃目前庫存、後續供貨及已知每週收集掉落期望，優先總收益；修正有收益料理長期不製作及過量保留食材。",
+        "若自動更新失敗，可能需要手動下載完整軟體套件。"
+      ],
+      "en-US": [
+        "Manage log retention and storage targets in Diagnostics, with previewed manual cleanup and idle automatic maintenance. Recent records, account settings, pending operations and retry progress remain protected.",
+        "Trading and cooking now share one plan for current stock, future supplies and expected drops from known weekly routes. Prioritizes total profit and fixes indefinitely deferred cooking and excess ingredient retention.",
+        "If automatic updating fails, download the full package manually."
+      ]
+    }
+  },
+  {
     "Version": "1.1.0-beta",
     "Date": "2026-10-10",
     "Notes": {

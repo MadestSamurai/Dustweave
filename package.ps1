@@ -3,7 +3,7 @@ param(
  [Parameter(Mandatory)][string]$GameManagedDir,
  [ValidateSet('Portable','Lite')][string[]]$Flavors=@('Portable','Lite'),
  [string]$PreparedCacheDirectory='',
- [ValidateSet('Auto','Accounts','Navigation','Rewards','Full')][string]$ValidationScope='Auto',
+ [ValidateSet('Auto','Accounts','Navigation','Rewards','Trading','Full')][string]$ValidationScope='Auto',
  [string]$ValidationBaseline=''
 )
 $ErrorActionPreference='Stop'
@@ -66,7 +66,7 @@ foreach($component in @('tools/TradeData','tools/CompatibilityCli','tests/Dustwe
 Run 'dotnet' @('run','--project',(Join-Path $root 'tools/CompatibilityCli'),'-c','Release','-r','win-x64','--no-build','--','client-inputs',$managed,(Join-Path $work 'client-before.json')) 'client-before'
 $tools=@('bd2-fishing','bd2-sichuan','bd2-rhythm','bd2-territory','bd2-equipment-assistant','bd2-apostle-defense','bd2-infinite-gacha','bd2-secret-vision','bd2-fiend-hunter')
 $tables=Join-Path $work 'tables'
-$tableNames='CookingTable,FoodTable,ProductTable,SellItemTable,ShopTable,TalentSkillTable,TalentTable,NameTextTable,CharTable,EventMissionGroupTable,GachaGroupTable,GachaTable,MissionSectionRewardTable,LocalTextTable,MissionTable,DispatchTable,EquipmentMakingTable,EquipmentTable,HuntDispatchTable,PassTable,SkyWayFieldTable,SquareRewardTable,StatueRewardTable'
+$tableNames='CookingTable,FoodTable,ProductTable,SellItemTable,ShopTable,TalentSkillTable,TalentTable,NameTextTable,CharTable,EventMissionGroupTable,GachaGroupTable,GachaTable,MissionSectionRewardTable,LocalTextTable,MissionTable,DispatchTable,EquipmentMakingTable,EquipmentTable,HuntDispatchTable,PassTable,SkyWayFieldTable,SquareRewardTable,StatueRewardTable,RewardGroupTable,RandomBoxTable'
 $groups=[ordered]@{extra=@('EventMissionGroupTable');gacha=@('GachaGroupTable','GachaTable','MissionSectionRewardTable');missions=@('LocalTextTable','MissionTable');names=@('NameTextTable');policy=@('CharTable','DispatchTable','EquipmentMakingTable','EquipmentTable','HuntDispatchTable','MissionTable','PassTable','SkyWayFieldTable','SquareRewardTable','StatueRewardTable')}
 if($validation.scope -ne 'Full'){
  $currentClient=Get-Content -LiteralPath (Join-Path $work 'client-before.json') -Raw|ConvertFrom-Json
@@ -91,6 +91,12 @@ foreach($flavor in $Flavors){
  if($flavor -eq $Flavors[0]){
   Run $exe @('--utility','exporter','--game-root',$game,'--tables',$tableNames,'--simulator-compatible','--output',$tables) 'export-tables'
   Run 'dotnet' @('run','--project',(Join-Path $root 'tools/TradeData'),'-c','Release','-r','win-x64','--no-build','--',$tables,(Join-Path $managed 'Assembly-CSharp.dll'),(Join-Path $work 'trade-catalog.json')) 'trade-catalog'
+  $dropTables=Join-Path $work 'drop-tables';[IO.Directory]::CreateDirectory((Join-Path $dropTables 'common'))|Out-Null
+  foreach($name in @('RewardGroupTable.json','RandomBoxTable.json','manifest.json')){Copy-Item -LiteralPath (Join-Path $tables $name) -Destination (Join-Path $dropTables 'common')}
+  $collection=Get-Content -LiteralPath (Join-Path $root 'assets/flows/collection-catalog.json') -Raw|ConvertFrom-Json
+  $dropPacks=@((1..19)+@($collection.cartridges | ForEach-Object {$_.id}) | Sort-Object -Unique)
+  foreach($pack in $dropPacks){Run $exe @('--utility','exporter','--game-root',$game,'--pack',[string]$pack,'--tables','FieldRewardObjectTable,FieldRewardObjectGroupTable,FieldMonsterTable,FieldMonsterRegenTable,BattleDeckTable','--simulator-compatible','--output',(Join-Path $dropTables ([string]$pack))) ('drop-tables-'+$pack)}
+  Run 'dotnet' @('run','--project',(Join-Path $root 'tools/TradeData'),'-c','Release','-r','win-x64','--no-build','--','--drop-model',$dropTables,(Join-Path $work 'trade-catalog.json'),(Join-Path $work 'trade-drops.json')) 'trade-drops'
  }
  foreach($group in $groups.GetEnumerator()){
   $target=Join-Path $bundle ('data/daily/'+$group.Key);[IO.Directory]::CreateDirectory($target)|Out-Null
@@ -98,6 +104,7 @@ foreach($flavor in $Flavors){
   Copy-Item -LiteralPath (Join-Path $tables 'manifest.json') -Destination $target
  }
  Copy-Item -LiteralPath (Join-Path $work 'trade-catalog.json') -Destination (Join-Path $bundle 'data/trade-catalog.json')
+ Copy-Item -LiteralPath (Join-Path $work 'trade-drops.json') -Destination (Join-Path $bundle 'data/trade-drops.json')
  foreach($asset in @(@{source='assets/flows';target='flows'},@{source='assets/specs';target='connection/specs'})){
   $target=Join-Path $bundle $asset.target
   [IO.Directory]::CreateDirectory($target)|Out-Null

@@ -39,6 +39,25 @@ public partial class MainWindow
                     }
                     checks+=3;
                 }finally{dialog.Close();}
+                var cleanup=CreateLogCleanupWindow();cleanup.Show();
+                try {
+                    var rescan=Nodes<Button>(cleanup).Single(b=>b.Name=="LogCleanupScan");
+                    for(int i=0;i<200&&!rescan.IsEnabled;i++)await Task.Delay(20);
+                    var start=Nodes<Button>(cleanup).Single(b=>b.Name=="LogCleanupStart");
+                    var status=Nodes<TextBlock>(cleanup).Single(b=>b.Name=="LogCleanupStatus");
+                    if(!rescan.IsEnabled||status.Text.StartsWith("logs."))throw new Exception("Cleanup preview failed");
+                    await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    Capture($"support-cleanup-{language}-{appearance}",(FrameworkElement)cleanup.Content);
+                    if(start.TransformToAncestor(cleanup).TransformBounds(new Rect(start.RenderSize)).Bottom>cleanup.ActualHeight)throw new Exception("Cleanup action clipped");
+                    if(language==0&&appearance==1){
+                        string obsolete=Path.Combine(root,"connection-cleanup.log");File.WriteAllText(obsolete,"isolated old log");File.SetLastWriteTimeUtc(obsolete,DateTime.UtcNow.AddDays(-20));
+                        rescan.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));for(int i=0;i<200&&!rescan.IsEnabled;i++)await Task.Delay(20);
+                        if(!start.IsEnabled)throw new Exception("Manual cleanup could not be selected");
+                        start.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));for(int i=0;i<200&&!rescan.IsEnabled;i++)await Task.Delay(20);
+                        if(File.Exists(obsolete)||!rescan.IsEnabled)throw new Exception("Manual cleanup did not finish");
+                    }
+                    checks+=2;
+                }finally{cleanup.Close();}
                 WorkspaceTabs.SelectedItem=UpdatesTab;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
                 var destinations=Nodes<Button>(updatePanel).Select(b=>b.Tag as string).ToArray();
                 if(!destinations.Contains(DailyDownloadLinks.Release)||!destinations.Contains(DailyDownloadLinks.Mirror))throw new Exception("Download routes missing");
@@ -47,6 +66,14 @@ public partial class MainWindow
             Width=920;Height=650;WorkspaceTabs.SelectedItem=DiagnosticsTab;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
             if(!ExportDiagnosticButton.IsVisible)throw new Exception("Compact diagnostics lost export entry");
             Capture("support-compact");checks++;
+            string automaticLog=Path.Combine(root,"connection-cleanup.log");File.WriteAllText(automaticLog,"automatic cleanup fixture");File.SetLastWriteTimeUtc(automaticLog,DateTime.UtcNow.AddDays(-20));
+            logPolicy=new(false);nextLogCleanup=DateTime.UtcNow.AddMinutes(-1);
+            await CheckLogCleanupAsync();if(!File.Exists(automaticLog))throw new Exception("Disabled retention still ran");
+            logPolicy=new();busy=true;
+            await CheckLogCleanupAsync();if(!File.Exists(automaticLog))throw new Exception("Retention ran while automation was busy");
+            busy=false;await CheckLogCleanupAsync();
+            if(File.Exists(automaticLog)||nextLogCleanup<DateTime.UtcNow.AddHours(11))throw new Exception("Idle retention did not run or persist its schedule");
+            if(!File.Exists(Path.Combine(root,"log-cleanup-last.json")))throw new Exception("Cleanup schedule was not persisted");checks+=4;
             if(demo.Calls.Count!=calls)throw new Exception("Support workflow touched the game");
             DailyJson.Write(Path.Combine(smoke,"support-ui.json"),new{status="passed",checks,realGameTouched=false,exportUsesIsolatedData=true});
         }finally{Width=1180;Height=900;LanguageSelector.SelectedIndex=0;ThemeSelector.SelectedIndex=1;DiagnosticIssueCategory.Visibility=Visibility.Collapsed;timer.Start();}

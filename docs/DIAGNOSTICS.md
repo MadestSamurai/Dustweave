@@ -22,3 +22,19 @@ The connection card describes the current game connection. The operation section
 ## Developer checks
 
 Use `test.ps1 -Groups UnifiedSuite,DiagnosticExport` and the isolated desktop smoke scope `support`. The latter checks all three languages, both themes, the icon, download destinations and actual ZIP creation from synthetic data. These checks do not prove a particular user's game-side failure was reproduced.
+
+## Log retention / 日志清理
+
+在 **诊断 → 日志与空间管理** 中设置保留时间、容量目标，或统计后手动清理。
+
+- 默认开启自动清理：程序启动后等待空闲，每 12 小时执行一次；未运行程序时不会清理。开始任务或关闭窗口会取消后台扫描／清理。
+- 默认保留 7 天、目标 512 MB。容量超标时先清理较早的可清理记录，始终保留最近 48 小时。可选保留 2／7／14／30／90 天，容量目标 128／512／1024／4096 MB。
+- 清理当前运行空间中的普通日志、内置工具日志，以及已确认完成的界面步骤快照。涉及交易的步骤还需确认所属交易已结束；待核对、读取失败、占用、统计后发生变化的文件会保留。
+- 账号、设置、队列与补跑进度、业务核对记录、插件、缓存、已导出的 ZIP 都不清理。容量目标只针对可管理诊断文件，不是整个数据目录的硬上限；受保护数据可能使占用超出目标。
+- 手动清理先显示可释放容量和文件数，不会直接清空目录。只删除明确允许的文件；跳过符号链接和硬链接，不跟随链接删除其他目录。隔离账号的运行空间由对应实例独立管理。
+
+Open **Diagnostics → Logs and storage** to configure retention or preview and perform manual cleanup. Automatic cleanup is enabled by default and runs when idle, at most once every 12 hours while the app is open. Defaults are 7 days and a 512 MB target; the latest 48 hours always remain. Task startup cancels background maintenance.
+
+Only allowlisted logs and confirmed completed-step snapshots in this instance are eligible. Transaction-dependent steps require a terminal business record. Accounts, settings, queue/retry progress, transaction journals, plugins, caches and exported ZIPs are preserved. Busy, changed, malformed and unresolved records are skipped. The storage target is soft and applies to managed diagnostic files, not the whole data folder. Sandboxed account instances manage their own stores. Manual cleanup previews reclaimable space before deletion; closing its dialog cancels the operation.
+
+Focused verification: `test.ps1 -Groups LogCleanup,DiagnosticExport`, plus the desktop `support` smoke scope for manual cleanup, idle automatic cleanup, three languages and both themes. Tests delete only synthetic fixture files.

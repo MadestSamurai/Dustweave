@@ -233,6 +233,7 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
     {
         var copy = state.DeepClone().AsObject();
         copy.Remove("captured_utc");
+        copy.Remove("future_supply");
         return copy;
     }
     public async Task<JsonObject> Run()
@@ -265,6 +266,9 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         {
             string statePath = Path.Combine(directory, "planning-state.json");
             var state = await Capture(statePath);
+            var supply = DailyTradeDropForecast.ForAccount(w, catalog, state);
+            if (supply != null) state["future_supply"] = supply;
+            DailyJson.Write(statePath, state);
             var settings = DailyTradeOptimizer.Preferences(DailyJson.TryRead<JsonObject>(DailyTradePlan.SettingsPath(w.Root, account)));
             DailyJson.Write(Path.Combine(directory, "planning-catalog.json"), catalog);
             DailyJson.Write(Path.Combine(directory, "planning-settings.json"), settings);

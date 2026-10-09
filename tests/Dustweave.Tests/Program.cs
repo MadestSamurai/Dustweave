@@ -74,6 +74,7 @@ async Task Group(string name, Func<Task> run)
 }
 Task Sync(Action run) { run(); return Task.CompletedTask; }
 await Group("ProductIdentity", () => Sync(() => ProductIdentityCases.Run(cases)));
+await Group("LogCleanup", () => LogCleanupCases.Run(root,cases));
 await Group("DiagnosticExport", () => DiagnosticExportCases.Run(root,cases));
 await Group("ClientUpdate", () => Sync(() => ClientUpdateCases.Run(root,cases)));
 await Group("LiveBindings", () => Sync(() => LiveBindingCases.Run(root,cases)));
@@ -99,6 +100,7 @@ await Group("FieldTalent", () => FieldTalentCases.Run(root, cases));
 await Group("WeeklyNpcQuery", () => WeeklyNpcQueryCases.Run(root, cases));
 await Group("WeeklyNpcBoard", () => WeeklyNpcBoardCases.Run(root, cases));
 await Group("CollectionReadiness", () => CollectionReadinessCases.Run(root, cases));
+await Group("TradeOptimizer", () => TradeOptimizerCases.Run(root,cases));
 await Group("TradeData", () => TradeDataCases.Run(root, cases));
 await Group("TradeResume", () => TradeResumeCases.Run(root, cases));
 await Group("ManagedInputs", () => ManagedInputsCases.Run(root, cases));

@@ -1,4 +1,104 @@
 {
+  "logs.progress": {
+    "zh-CN": "已统计 {0} 个文件（{1} MB），已核对 {2} 项清理条件…",
+    "zh-TW": "已統計 {0} 個檔案（{1} MB），已核對 {2} 項清理條件…",
+    "en-US": "Counted {0} files ({1} MB), checked {2} cleanup candidates…"
+  },
+  "logs.title": {
+    "zh-CN": "日志与空间管理",
+    "zh-TW": "日誌與空間管理",
+    "en-US": "Logs and storage"
+  },
+  "logs.body": {
+    "zh-CN": "清理过期日志和已完成步骤的详细快照。扫描与清理在后台进行，关闭此窗口即可取消。",
+    "zh-TW": "清理過期日誌及已完成步驟的詳細快照。掃描與清理在背景進行，關閉此視窗即可取消。",
+    "en-US": "Remove old logs and detailed snapshots from completed steps. Scanning and cleanup run in the background; close this window to cancel."
+  },
+  "logs.automatic": {
+    "zh-CN": "空闲时自动清理（每 12 小时检查一次）",
+    "zh-TW": "閒置時自動清理（每 12 小時檢查一次）",
+    "en-US": "Clean up automatically when idle (every 12 hours)"
+  },
+  "logs.days": {
+    "zh-CN": "日志保留时间",
+    "zh-TW": "日誌保留時間",
+    "en-US": "Keep logs for"
+  },
+  "logs.days.value": {
+    "zh-CN": "{0} 天",
+    "zh-TW": "{0} 天",
+    "en-US": "{0} days"
+  },
+  "logs.size": {
+    "zh-CN": "空间目标",
+    "zh-TW": "空間目標",
+    "en-US": "Storage target"
+  },
+  "logs.size.value": {
+    "zh-CN": "{0} MB",
+    "zh-TW": "{0} MB",
+    "en-US": "{0} MB"
+  },
+  "logs.protection": {
+    "zh-CN": "默认保留 7 天，空间目标为 512 MB。超出目标时先清理较早记录，始终保留最近 48 小时。账号、设置、队列进度、交易核对记录及导出的压缩包不受影响；待核对或占用中的文件会跳过，因此容量可能暂时超出目标。",
+    "zh-TW": "預設保留 7 天，空間目標為 512 MB。超出目標時先清理較早記錄，始終保留最近 48 小時。帳號、設定、佇列進度、交易核對記錄及匯出的壓縮檔不受影響；待核對或使用中的檔案會略過，因此容量可能暫時超出目標。",
+    "en-US": "Defaults: 7 days and a 512 MB target. Older records are removed first when over target; the latest 48 hours are always kept. Accounts, settings, queue progress, transaction records and exported ZIPs are preserved. Pending or open files are skipped, so usage may remain above target."
+  },
+  "logs.scope": {
+    "zh-CN": "只管理当前运行空间的诊断日志与已完成步骤快照；不会清空整个数据目录。",
+    "zh-TW": "僅管理目前執行空間的診斷日誌與已完成步驟快照；不會清空整個資料目錄。",
+    "en-US": "Only diagnostic logs and completed-step snapshots in this instance are managed. The data folder itself is never cleared."
+  },
+  "logs.scanning": {
+    "zh-CN": "正在统计可清理的日志…",
+    "zh-TW": "正在統計可清理的日誌…",
+    "en-US": "Calculating reclaimable space…"
+  },
+  "logs.preview": {
+    "zh-CN": "可管理记录 {0} MB · 可释放 {1} MB（{2} 个文件）",
+    "zh-TW": "可管理記錄 {0} MB · 可釋放 {1} MB（{2} 個檔案）",
+    "en-US": "Managed records: {0} MB · Reclaimable: {1} MB ({2} files)"
+  },
+  "logs.skipped": {
+    "zh-CN": "已保留 {0} 项无法安全清理的记录。仅统计当前运行空间，不包含账号、缓存及其他持久数据。",
+    "zh-TW": "已保留 {0} 項無法安全清理的記錄。僅統計目前執行空間，不包含帳號、快取及其他持久資料。",
+    "en-US": "{0} records kept because safe cleanup could not be confirmed. Totals cover this instance only, excluding accounts, caches and other durable data."
+  },
+  "logs.scan": {
+    "zh-CN": "重新统计",
+    "zh-TW": "重新統計",
+    "en-US": "Recalculate"
+  },
+  "logs.clean": {
+    "zh-CN": "清理以上记录",
+    "zh-TW": "清理以上記錄",
+    "en-US": "Clean up listed records"
+  },
+  "logs.changed": {
+    "zh-CN": "设置已保存。请重新统计可释放空间。",
+    "zh-TW": "設定已儲存。請重新統計可釋放空間。",
+    "en-US": "Settings saved. Recalculate to preview cleanup."
+  },
+  "logs.busy": {
+    "zh-CN": "请在当前任务停止后清理日志。",
+    "zh-TW": "請在目前任務停止後清理日誌。",
+    "en-US": "Wait until the current task has stopped before cleaning up."
+  },
+  "logs.cleaning": {
+    "zh-CN": "正在清理，近期与待核对记录会保留…",
+    "zh-TW": "正在清理，近期及待核對記錄會保留…",
+    "en-US": "Cleaning up; recent and pending records are preserved…"
+  },
+  "logs.done": {
+    "zh-CN": "已清理 {0} 个文件，释放 {1} MB；跳过 {2} 项受保护或占用记录。",
+    "zh-TW": "已清理 {0} 個檔案，釋放 {1} MB；略過 {2} 項受保護或使用中的記錄。",
+    "en-US": "Removed {0} files, freeing {1} MB. Kept {2} protected or unavailable records."
+  },
+  "logs.rescan": {
+    "zh-CN": "统计已过期，请重新统计后清理。",
+    "zh-TW": "統計已過期，請重新統計後清理。",
+    "en-US": "This preview has expired. Recalculate before cleaning up."
+  },
   "onboarding.language": {
     "zh-CN": "语言 / Language",
     "zh-TW": "語言 / Language",

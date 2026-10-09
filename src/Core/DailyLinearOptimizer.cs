@@ -49,11 +49,13 @@ public static class DailyLinearOptimizer
         return NativeLibrary.Load(path);
     }
     public sealed record Result(double[] Values, double[] RowDual, double Objective, double? Bound, bool Optimal, int Status);
-    public static Result? Solve(double[] objective, double[] upper, IReadOnlyList<double[]> rows, IReadOnlyList<double> lower, IReadOnlyList<double> caps, bool integer, double seconds = 15, Action? check = null)
+    public static Result? Solve(double[] objective, double[] upper, IReadOnlyList<double[]> rows, IReadOnlyList<double> lower, IReadOnlyList<double> caps, bool integer, double seconds = 15, Action? check = null, int? integerColumns = null, int[]? extraIntegerColumns = null, double[]? initial = null)
     {
         if (objective.Length != upper.Length || rows.Count != lower.Count || rows.Count != caps.Count || rows.Any(r => r.Length != objective.Length) || !double.IsFinite(seconds) || seconds <= 0 || seconds > 300)
             throw new ArgumentException("Invalid optimization model");
+        if (integerColumns is < 0 || integerColumns > objective.Length || extraIntegerColumns?.Any(j => j < 0 || j >= objective.Length) == true) throw new ArgumentException("Invalid integer column count");
         check?.Invoke();
+        if (initial != null && (initial.Length != objective.Length || initial.Any(v => !double.IsFinite(v)))) throw new ArgumentException("Invalid initial solution");
         lock (gate)
         {
             IntPtr solver = Create();
@@ -90,7 +92,8 @@ public static class DailyLinearOptimizer
                 var hi = upper.Select(x => double.IsPositiveInfinity(x) ? Infinity : x).ToArray();
                 var lo = lower.Select(x => double.IsNegativeInfinity(x) ? -Infinity : x).ToArray();
                 var cap = caps.Select(x => double.IsPositiveInfinity(x) ? Infinity : x).ToArray();
-                Check(integer ? PassMip(solver, n, m, coefficients.Count, 2, 1, 0, objective, new double[n], hi, lo, cap, starts, indices.ToArray(), coefficients.ToArray(), Enumerable.Repeat(1, n).ToArray()) : PassLp(solver, n, m, coefficients.Count, 2, 1, 0, objective, new double[n], hi, lo, cap, starts, indices.ToArray(), coefficients.ToArray()));
+                Check(integer ? PassMip(solver, n, m, coefficients.Count, 2, 1, 0, objective, new double[n], hi, lo, cap, starts, indices.ToArray(), coefficients.ToArray(), Enumerable.Range(0, n).Select(j => j < (integerColumns ?? n) || extraIntegerColumns?.Contains(j) == true ? 1 : 0).ToArray()) : PassLp(solver, n, m, coefficients.Count, 2, 1, 0, objective, new double[n], hi, lo, cap, starts, indices.ToArray(), coefficients.ToArray()));
+                if (initial != null) Check(SetSolution(solver, initial, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero));
                 if (check != null)
                 {
                     callback = (_, _, _, input, _) =>
@@ -122,13 +125,14 @@ public static class DailyLinearOptimizer
                 if (status == 8)
                     return null;
                 Check(IntInfo(solver, "primal_solution_status", out int primal));
+                if (primal != 2 && status == 13) return null;
                 if (primal != 2)
                     throw new InvalidOperationException("跑商规划未取得可行解：" + status);
                 var x = new double[n];
                 var dual = new double[m];
                 Check(Solution(solver, x, IntPtr.Zero, IntPtr.Zero, dual));
                 if (integer)
-                    for (int i = 0; i < n; i++)
+                    foreach (int i in Enumerable.Range(0, n).Where(j => j < (integerColumns ?? n) || extraIntegerColumns?.Contains(j) == true))
                     {
                         if (Math.Abs(x[i] - Math.Round(x[i])) > 1e-5)
                             throw new InvalidDataException("规划整数校验失败");
@@ -139,8 +143,10 @@ public static class DailyLinearOptimizer
                 for (int i = 0; i < m; i++)
                 {
                     double v = rows[i].Select((a, j) => a * x[j]).Sum();
-                    if (v < lo[i] - 1e-5 || v > cap[i] + 1e-5)
-                        throw new InvalidDataException("独立资源约束核对失败");
+                    // Mixed forecasts can combine large gold coefficients with fractional expected supply.
+                    double tolerance = integerColumns < n ? Math.Max(1e-5, Math.Abs(v) * 1e-10) : 1e-5;
+                    if (v < lo[i] - tolerance || v > cap[i] + tolerance)
+                        throw new InvalidDataException($"独立资源约束核对失败：row={i}, value={v:R}, lower={lo[i]:R}, upper={cap[i]:R}");
                 }
                 double value = objective.Zip(x, (a, b) => a * b).Sum();
                 double? bound = status == 7 ? value : null;
@@ -165,5 +171,6 @@ public static class DailyLinearOptimizer
     [DllImport("daily-highs", EntryPoint = "Highs_getModelStatus", CallingConvention = CallingConvention.Cdecl)] private static extern int Status(IntPtr h);
     [DllImport("daily-highs", EntryPoint = "Highs_getIntInfoValue", CallingConvention = CallingConvention.Cdecl)] private static extern int IntInfo(IntPtr h, string name, out int value);
     [DllImport("daily-highs", EntryPoint = "Highs_getDoubleInfoValue", CallingConvention = CallingConvention.Cdecl)] private static extern int DoubleInfo(IntPtr h, string name, out double value);
+    [DllImport("daily-highs", EntryPoint = "Highs_setSolution", CallingConvention = CallingConvention.Cdecl)] private static extern int SetSolution(IntPtr h, double[] values, IntPtr row, IntPtr dual, IntPtr rowDual);
     [DllImport("daily-highs", EntryPoint = "Highs_getSolution", CallingConvention = CallingConvention.Cdecl)] private static extern int Solution(IntPtr h, [Out] double[] values, IntPtr dual, IntPtr row, [Out] double[] rowDual);
 }

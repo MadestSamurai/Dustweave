@@ -229,6 +229,7 @@
          <Button x:Name="ExportDiagnosticButton" Content="{l:Tr diagnostics.export}" Click="ExportDiagnostics_Click" Style="{StaticResource PrimaryButton}" Margin="0,0,8,4"/><Button x:Name="CopyDiagnosticButton" Content="{l:Tr diagnostics.copy}" Click="CopyDiagnostics_Click" Margin="0,0,8,4"/>
          <Button Content="{l:Tr diagnostics.folder}" Click="OpenDiagnosticsFolder_Click" Margin="0,0,0,4"/>
         </WrapPanel>
+        <Button x:Name="LogCleanupButton" Content="{l:Tr logs.title}" Click="CleanupDiagnostics_Click" HorizontalAlignment="Left" Margin="0,12,0,0"/>
         <TextBlock x:Name="DiagnosticCopyFeedback" Foreground="{DynamicResource Primary}" TextWrapping="Wrap" FontSize="12" Visibility="Collapsed" Margin="0,4,0,0"/>
         <Expander x:Name="GuildDiagnostics" Header="{l:Tr diagnostics.advanced}" Style="{StaticResource DisclosureExpander}" Margin="0,20,0,0">
          <StackPanel Margin="0,14,0,0">

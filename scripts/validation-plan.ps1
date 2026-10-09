@@ -45,6 +45,9 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     if($outside.Count -and $Scope -ne 'Accounts' -and !@($outside|Where-Object {$_ -notmatch $navigation}).Count){$selectedScope='Navigation';$outside=@()}
     $rewards='^assets/specs/(policy|daily)-evidence-spec\.json$|^src/Connection/(EvidenceBindings|TapManifest|RewardNative)\.cs$|^src/Connection/live-binding-contract\.json$|^src/Shared/DailyBridgeVersion\.cs$|^src/Core/(DailyMissions|DailyPreferences|DailyEventRewards|DailyHunting)\.cs$|^src/Desktop/DailyPreferencesPanel\.cs$|^tests/Dustweave.Tests/Cases/(LiveBinding|Workflow|Preference)Cases\.cs$'
     if($outside.Count -and $Scope -notin @('Accounts','Navigation') -and !@($outside|Where-Object {$_ -notmatch $navigation -and $_ -notmatch $rewards}).Count){$selectedScope='Rewards';$outside=@()}
+    # Trading-only changes reuse component/client gates; every modified runtime input is explicit.
+    $trading='^(source-manifest\.json|CHANGELOG\.md|package\.ps1|scripts/validation-plan\.ps1)$|^docs/|^src/Core/DailyTrade(Optimizer|Forecast|Plan|DropForecast|Drops|Execution)\.cs$|^tests/Dustweave.Tests/Cases/TradeOptimizerCases\.cs$'
+    if($Scope -in @('Auto','Trading') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $trading}).Count){$selectedScope='Trading';$outside=@()}
     $full.changed=$changed
     $reason='Changes outside the account validation boundary: '+($outside -join ', ')
     if(!$outside.Count){
@@ -57,6 +60,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
      $reason='Full baseline evidence is missing or failed.'
      if($evidenceValid){
       $groups=@('ProductIdentity','Startup','LoginIdentity','Sandbox','Parallel','ParallelProcess','AccountOrder','AccountIdentity','AccountRestart','QueueSession')
+      if($selectedScope -eq 'Trading'){$groups=@('ProductIdentity','TradeOptimizer','TradeData','TradeReplan','TradeQuote','TradeResume')}
       if($selectedScope -in @('Navigation','Rewards')){$groups+=@('HomeNavigation','HomeRecovery','CommandDriver','ManagedInputs','PassiveUi')}
       if($selectedScope -eq 'Rewards'){$groups+=@('LiveBindings','Workflow','Preference','RuleData','EvidenceReadiness','UserText')}
       return [ordered]@{schema=1;scope=$selectedScope;buildSettingsHash=$settings;baseline=$BaselineDirectory;baselineInputsHash=(Get-FileHash -LiteralPath $inputsPath).Hash;groups=$groups;changed=$changed;reason='Mapped host changes; unchanged tool validation reused from a completed full baseline.'}
@@ -65,7 +69,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
    }
   }
  }
- if($Scope -in @('Accounts','Navigation','Rewards')){throw "Account validation cannot reuse this baseline: $reason"}
+ if($Scope -in @('Accounts','Navigation','Rewards','Trading')){throw "Account validation cannot reuse this baseline: $reason"}
  $full.reason=$reason
  return $full
 }

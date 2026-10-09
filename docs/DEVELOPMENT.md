@@ -141,3 +141,9 @@ Use `DUSTWEAVE_UI_SMOKE_SCOPE=task-navigation` with the desktop `--smoke` entry 
 Normal desktop, updated and isolated-worker processes own a fresh control identity. Only explicit hosted tool/utility/connection-helper entry points inherit the parent owner. Module activation requires a fresh, identified, nonempty account and player. Runtime revocation keeps separate owner-exit, unreadable-owner, missing-identity, actual-account-change and handoff codes; pending receipts retain their original stop reason until drained.
 
 `DailyIssues` classifies failures without inventing a cause for legacy messages. The desktop localizes reason and next action, while raw errors remain in diagnostic records. See [DIAGNOSTICS.md](DIAGNOSTICS.md) for export boundaries and targeted checks. Regenerate the Windows icon with `scripts/build-app-icon.ps1` from the supplied branding mark; all sizes remain bundled in the executable.
+
+### Trading validation scope
+
+`-ValidationScope Trading` is a narrow follow-up scope for `DailyTradeOptimizer`, its forecast/drop model, plan/execution integration and the corresponding optimizer tests. It reuses a completed full baseline only when the actual source difference is wholly inside this allowlist, documentation and packaging metadata, and the installed client code fingerprint is unchanged. Changes to the shared linear solver, connection, dependencies or UI require full checks. Trading and product-identity regressions plus both packaged startup/identity/boundary gates still run; the recorded scope does not claim to rerun unchanged tool checks.
+
+跑商专项复用已完成的完整基线，当前源文件逐一比较；共享求解器、连接、界面或未知范围的改动会拒绝复用。年度分析见 [365天对照](TRADING_ANNUAL_2026-10-10.md)，日志维护见 [诊断说明](DIAGNOSTICS.md)。
