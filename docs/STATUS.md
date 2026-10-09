@@ -1,10 +1,16 @@
 # Repository status / 仓库状态
 
-## 1.1.0-beta published / 当前版本
+## 1.1.1-beta published / 当前版本
+
+2026-10-10：`1.1.1-beta` 已由 GitHub Actions 发布为普通 Release，并上线国内签名 OTA。新增日志预览／手动与空闲自动清理；跑商与料理共同分配材料，加入已知周收集路线的掉落期望并修复长期推迟加工／出售。365天均值对照增益提升2.20%，三组随机对照提升2.18%–2.24%；仍有到货时间近似，不宣称全年全局最优。最终源码2,697项合成检查（70组）、双版本成品、扩展兼容、真实旧更新器升级／回退／恢复及公网差分重建通过。详见[年度报告](TRADING_ANNUAL_2026-10-10.md)和[发布验收](releases/1.1.1-beta-deployment.md)。本次未操作真实游戏或清理实际用户日志。
+
+The current release is **1.1.1-beta**, published as a normal GitHub Release and through domestic signed OTA. It adds guarded log retention and joint trading/cooking forecasts. Annual comparisons, remaining model limitations and package/source validation boundaries are recorded in the linked reports. Entries below are historical.
+
+## 1.1.0-beta published / 历史版本
 
 2026-10-10：`1.1.0-beta` 已由 GitHub Actions 发布为普通 Release，并通过受限签名通道上线国内 OTA。新增图标、明确的错误分类与下一步、诊断 ZIP 导出及联系方式、下载入口和更高默认窗口；包含按账号返回任务选择及准备流程改进。最终 2,624 项检查（68 组）、双版本成品、扩展兼容、实际旧更新器升级／回退／恢复及公网差分重建均通过。本次未操作真实游戏，受影响用户的具体故障仍需新日志确认。详见 [发布验收记录](releases/1.1.0-beta-deployment.md)。以下为历史阶段记录。
 
-The current release is **1.1.0-beta**, available as a normal GitHub Release and through domestic signed OTA. Package, extension, prior-updater recovery and public-download checks passed. See the linked receipt for validation boundaries; entries below describe earlier stages.
+Release **1.1.0-beta** was published as a normal GitHub Release and through domestic signed OTA. Package, extension, prior-updater recovery and public-download checks passed. See the linked receipt for validation boundaries; entries below describe earlier stages.
 
 ## Public-version OTA published / 公开版 OTA 已发布
 
