@@ -1,5 +1,17 @@
 # Changelog / 更新记录
 
+## 1.0.1-beta — 2026-10-09
+
+- 新增首次连接教程与账号页常驻入口，支持三语言和深浅主题；明确退出游戏后保存账号，并从织尘启动的流程。
+- Added a three-language, themed first-use connection guide and an Accounts entry point; explains saving after normal game exit and future launches through Dustweave.
+
+- Weekly quests clear enabled collection work before interactions on shared maps. NPC-only routes also suppress ordinary monsters when safe, preserve later kill targets, and recover incidental encounters without starting unrelated battles.
+- Token activities collect mailbox rewards after mission claims before revisiting puzzles, dice, roulette and exchange pages; the mailbox is checked once per reward phase.
+- Equipment Assistant handles a missing first-connection broker, retries only transient reads, and preserves pending resource transactions without resubmission. The same fix is included in the embedded tool.
+- 周路线优先完成当前地图已启用的收集，再做任务；保护任务后续击杀目标，补齐单跑任务的压制与误触战斗恢复。
+- 活动任务领奖后先收邮箱，再处理拼图等代币活动，避免道具仍在邮件中导致漏做。
+- 同步装备助手首次连接及短暂读取超时修复；未知消费结果保留待核对，不自动重发。
+
 ## 1.0.0-beta · 2026-10-09
 
 - First public MIT release; refreshed Chinese/English documentation and real application screenshots in both themes. Normal GitHub Release with Portable and Lite packages.
@@ -125,7 +137,10 @@
 - 修复周收集内层天赋等待与外层界面超时相互冲突的问题；恢复后先读取当前状态。经营入口轮播变化时重新选择有效按钮，不把未执行的点击直接当作环节失败。
 - 经营零成本结算失败后最多重试3次，每次重新读取可领取／冷却状态；可识别并收尾缺少历史回执的经营奖励窗口。保留账号、场景、用户停止及无关操作保护。源码与离线回归已验证；用户笔记本熄屏场景尚待实机验证。
 
-## Unreleased · interface polish / 界面打磨
+## 1.0.1-beta — 2026-10-09
+
+- 新增首次连接教程与账号页常驻入口，支持三语言和深浅主题；明确退出游戏后保存账号，并从织尘启动的流程。
+- Added a three-language, themed first-use connection guide and an Accounts entry point; explains saving after normal game exit and future launches through Dustweave. · interface polish / 界面打磨
 
 - Added coherent vector task/status symbols and directly selectable system/light/dark appearance segments.
 - Reworked diagnostics around connection status, practical next steps, activity and feedback; guild checks are now an advanced disclosure. Diagnostic refresh does not send game commands, and copied summaries exclude account identifiers and sign-in data.
@@ -135,7 +150,10 @@
 - Improved compact account/settings layouts, long-value tooltips and sidebar navigation; idle stop actions no longer consume space.
 - 统一任务、设置、账号与工具页面的间距和控件状态；修复搜索框内边距重复与紧凑窗口导航被挤压的问题。三语双主题界面检查与现有回归通过，未改变游戏业务流程。
 
-## Unreleased · repository layout / 仓库结构
+## 1.0.1-beta — 2026-10-09
+
+- 新增首次连接教程与账号页常驻入口，支持三语言和深浅主题；明确退出游戏后保存账号，并从织尘启动的流程。
+- Added a three-language, themed first-use connection guide and an Accounts entry point; explains saving after normal game exit and future launches through Dustweave. · repository layout / 仓库结构
 
 - Reworked the Chinese and English homepages around the Dustweave · 织尘 identity, real demo screenshots and user-oriented setup instructions; added contribution and reporting templates.
 - 统一中英文首页、完整分发包说明、入门与协作规范；主体许可证及公开发布仍待确定。本次文档调整不改变程序行为。

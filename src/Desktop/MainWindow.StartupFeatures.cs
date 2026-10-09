@@ -14,7 +14,7 @@ public partial class MainWindow
         if (DailyJson.TryRead<DailyUpdateInstaller.Result>(Path.Combine(root, "update-result.json")) is { State: "failed" or "rolled_back" or "recovery_required" })
             updatePanel.Status("updates.previous_failed");
         if (ScheduledStartup) await CheckScheduleAsync();
-        ShowReleaseNotes();
+        if (!ShowInitialConnectionGuide()) ShowReleaseNotes();
         _ = CheckUpdatesAsync();
     }
 }

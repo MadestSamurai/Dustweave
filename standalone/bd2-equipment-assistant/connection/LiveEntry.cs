@@ -51,7 +51,7 @@ public static class LiveEntry {
     LiveJson.Write(attempt,new{state="attaching",processId=game.Id,startTicks=start});
     using var injector=new Injector(game.Id);long address=injector.Inject(bytes,"BD2Equipment.Live","Bridge","Load").ToInt64();
     LiveJson.Write(attempt,new{state="attached_waiting_frame",processId=game.Id,startTicks=start,address});
-    for(int i=0;i<70;i++){var f=LiveJson.Read<Frame>(Path.Combine(Root,"snapshot.json"));if(LiveProtocol.Ready(f!,game.Id,start,DateTime.UtcNow.Ticks)){LiveJson.Write(attempt,new{state="ready",processId=game.Id,startTicks=start,address,instance=f!.Instance});Console.WriteLine("Equipment connection ready; no resources consumed.");return;}await Task.Delay(500);}
+    for(int i=0;i<70;i++){Frame? f=null;try{f=LiveJson.Read<Frame>(Path.Combine(Root,"snapshot.json"));}catch(TimeoutException){}catch(IOException){}if(LiveProtocol.Ready(f!,game.Id,start,DateTime.UtcNow.Ticks)){LiveJson.Write(attempt,new{state="ready",processId=game.Id,startTicks=start,address,instance=f!.Instance});Console.WriteLine("Equipment connection ready; no resources consumed.");return;}await Task.Delay(500);}
     throw new TimeoutException("No fresh equipment frame yet. Check login or the pending component handoff, then reconnect.");
    }
    throw new ArgumentException("locate | self-test | prepare <Managed> <output> | taps <Managed> <spec> <output> | attach <bridge.dll>");

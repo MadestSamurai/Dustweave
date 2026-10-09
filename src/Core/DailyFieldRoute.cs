@@ -126,6 +126,19 @@ public sealed partial class DailyFieldRoute
         }
         throw new StageHostException("adapter", "地图仍未就绪，未盲目发送移动或技能。");
     }
+    public async Task PrepareNpcMap(long map)
+    {
+        await FieldReady(settle: 0);
+        var e = await Evidence();
+        Require(N(Map(e)["id"]) == map, "周任务准备期间地图已改变");
+        if (!B(R(e, "mainline.map", "HasCanOverwhelmMonster()")))
+            return;
+        bool suppress = CanSuppress(map);
+        var result = await Skill(suppress ? 3 : 17, 5);
+        if (suppress && S(result["reason"]) == "native_disabled")
+            result = await Skill(17, 5);
+        Require(S(result["reason"]) != "native_disabled", "当前地图无法压制或藏身，保留周任务，避免反复遇敌");
+    }
     public async Task<bool> Encounter(JsonObject frame)
     {
         if (!RecoverEncounters || recovering || NpcActing)
@@ -160,9 +173,11 @@ public sealed partial class DailyFieldRoute
             if (allowed && B(R(e, "mainline.map", "HasCanOverwhelmMonster()")))
             {
                 var result = await Skill(3);
-                Require(S(result["reason"]) != "native_disabled", "退出遇敌后压制不可用");
+                if (S(result["reason"]) == "native_disabled")
+                    result = await Skill(17, 5);
+                Require(S(result["reason"]) != "native_disabled", "退出遇敌后压制和藏身均不可用");
             }
-            else if (!allowed)
+            else
             {
                 var result = await Skill(17, 5);
                 Require(S(result["reason"]) != "native_disabled", "任务目标不可压制且藏身不可用");

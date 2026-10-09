@@ -146,11 +146,16 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
     public string Summary() => Data == null ? "等待读取本周任务" : $"本周完成 {N(Data.Native["Completed"])}/{N(Data.Native["Limit"])}" + (Data.Current(N(Data.Native["Pack"])) == null ? "" : " · " + Regex.Replace(S(Data.Native["CurrentName"]), "<[^>]+>", ""));
     public async Task<bool> AtMap(long pack, long map)
     {
-        var row = Data?.Current(pack);
+        // Travel recovery may already have suppressed monsters and advanced the server quest.
+        Data = await Query(pack);
+        var row = Data.Current(pack);
         if (row == null || !(await Targets(pack)).Contains(map))
             return false;
+        // Clear ordinary monsters before walking to an interaction; future kill objectives remain protected.
+        if (N(row["conditionType"]) != 1)
+            await route.PrepareNpcMap(map);
         bool prior = route.NpcActing;
-        route.NpcActing = true;
+        route.NpcActing = N(row["conditionType"]) == 1;
         try
         {
             if (N(row["conditionType"]) == 1 && Data!.Wild(row).Any(x => N(x["Map"]) == map))
@@ -198,6 +203,12 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
             var types = DailyNavigationDecision.Types(f);
             if (types.Any(t => t.StartsWith("BattleUI", StringComparison.Ordinal)))
             {
+                if (N(row["conditionType"]) != 1 && await route.Encounter(f))
+                {
+                    await Navigate(id);
+                    lastProgress = W.Time;
+                    continue;
+                }
                 await Battle(row);
                 lastProgress = W.Time;
                 continue;

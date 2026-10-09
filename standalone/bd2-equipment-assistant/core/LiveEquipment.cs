@@ -26,11 +26,16 @@ public sealed class LiveEquipment:IEquipmentGame
  public static void Prepare(Func<string[],string> invoke){
   Directory.CreateDirectory(Data);var location=JsonNode.Parse(invoke(["locate"]))!;string managed=S(location["managed"]);
   var pipe=BD2Equipment.Live.EquipmentTransport.Connect();string? fingerprint=null;try{fingerprint=pipe.Fingerprint();}catch(IOException){}catch(TimeoutException){}
-  JsonObject? frame=null;try{frame=Snapshot();if(!Equal(frame["ProcessId"],location["processId"])||!Equal(frame["ProcessStartTicks"],location["startTicks"]))frame=null;}catch(IOException){}catch(InvalidOperationException){}
+  JsonObject? frame=ExistingSnapshot(fingerprint,Snapshot,location);
   string prepared=Path.Combine(Data,"prepared");Directory.CreateDirectory(prepared);
   bool hosted=BD2.LocalIpc.HostedConnection.TryOpen(pipe,checked((int)N(location["processId"])),N(location["startTicks"]));if(!hosted&&(frame==null||N(frame["BridgeVersion"])!=64||fingerprint!=BD2Equipment.Live.LiveEntry.Fingerprint)){invoke(["prepare",managed,prepared]);invoke([frame==null?"attach":"upgrade",Path.Combine(prepared,"bridge.dll")]);}
   pipe.Open(BD2Equipment.Live.LiveEntry.Fingerprint);
   string spec=Path.Combine(prepared,"evidence-spec.json");Write(spec,Resource("evidence-spec.json"));invoke(["taps",managed,spec,Path.Combine(Data,"evidence-config.json")]);Snapshot();
+ }
+ public static JsonObject? ExistingSnapshot(string? fingerprint,Func<JsonObject> read,JsonNode location){
+  if(fingerprint==null)return null; // No broker yet: attach before asking it for a frame.
+  try{var frame=read();return Equal(frame["ProcessId"],location["processId"])&&Equal(frame["ProcessStartTicks"],location["startTicks"])?frame:null;}
+  catch(IOException){return null;}catch(TimeoutException){return null;}catch(InvalidOperationException){return null;}
  }
  public LiveEquipment(bool details=false){
   Directory.CreateDirectory(Root);
@@ -41,7 +46,7 @@ public sealed class LiveEquipment:IEquipmentGame
    original=BD2.LocalIpc.DesktopFiles.Exists(P("evidence-config.json"))?Read(P("evidence-config.json")):null;var config=Read(Path.Combine(Data,"evidence-config.json"));if(!details)config["Reads"]=Array(A(config["Reads"]).Where(r=>S(r["Id"])!="equipment.details"));Write(P("evidence-config.json"),config);configWritten=true;Evidence(Snapshot());
   }catch{Dispose();throw;}
  }
- public void Dispose(){try{Release();if(configWritten){if(original!=null)Write(P("evidence-config.json"),original);else BD2.LocalIpc.DesktopFiles.Remove(P("evidence-config.json"));}}catch(BD2.LocalIpc.LeaseRevokedException){}finally{controller?.Dispose();controller=null;}}
+ public void Dispose(){try{Release();if(configWritten){if(original!=null)Write(P("evidence-config.json"),original);else BD2.LocalIpc.DesktopFiles.Remove(P("evidence-config.json"));}}catch(Exception ex)when(ex is IOException or TimeoutException or ObjectDisposedException){try{File.WriteAllText(Path.Combine(Data,"connection-cleanup.log"),ex.ToString());}catch(IOException){}}finally{controller?.Dispose();controller=null;}}
  void Release(){if(request==null)return;try{if(BD2.LocalIpc.DesktopFiles.Exists(P("observation-request.json"))&&S(Read(P("observation-request.json"))["Id"])==S(request["Id"]))BD2.LocalIpc.DesktopFiles.Remove(P("observation-request.json"));}catch(IOException){}finally{request=null;}}
  string Ensure(){if(request==null||N(request["ExpiresUtcTicks"])-DateTime.UtcNow.Ticks<TimeSpan.FromSeconds(5).Ticks){request=new(){["Id"]=Guid.NewGuid().ToString("N"),["Prefixes"]=new JsonArray("equipment","policy.equipment","powder","reward.presentation","trade.characters","trade.currency","trade.inventory"),["ExpiresUtcTicks"]=DateTime.UtcNow.AddSeconds(15).Ticks};Write(P("observation-request.json"),request);}return S(request["Id"]);}
  public static JsonObject Snapshot(){var f=Read(P("snapshot.json"));long age=DateTime.UtcNow.Ticks-N(f["AtUtcTicks"]);if(S(f["Error"])!=""||age<0||age>TimeSpan.FromSeconds(3).Ticks)throw new InvalidOperationException("游戏观察连接未就绪："+S(f["Error"]));return f;}

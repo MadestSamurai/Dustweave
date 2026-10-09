@@ -1,5 +1,13 @@
 # Repository status / 仓库状态
 
+## 1.0.1-beta delivery / 反馈修复交付
+
+2026-10-09：新增三语言、深浅主题的首次连接教程与账号页入口，说明正常退出后保存账号，以及后续从织尘启动的顺序。修复合并周路线任务优先导致未压制地图反复遇敌；先执行已启用且不影响任务后续击杀的收集，NPC 单独运行也准备压制／藏身，并在意外撤退后重新读取任务步骤。活动代币消费者增加任务领奖到邮箱领取的依赖，保留每页访问缓存。独立与内置装备助手同步修复无通信组件时提前读快照的超时分支，有限重试只读通信，不重发消费命令。
+
+定向验证：392 项日常检查（6 组）通过；装备助手 283 项主用例及目录传输、连接恢复、结果接续等专项检查通过。Dustweave 与独立装备助手桌面构建通过。新增连接教程已通过三语言、深浅主题及账号页跳转的隔离界面检查。此轮没有连接游戏或消耗资源；完整发行由打包检查及 GitHub Actions 完成验收后发布。
+
+Focused synthetic regressions, desktop builds and the three-language themed connection guide passed. Publication is gated by complete packages and GitHub Actions; live validation remains separate. The reported equipment timeout has no user stack trace yet; the confirmed cold-connection defect is fixed, without claiming it explains every possible timeout.
+
 ## 1.0.0-beta publication / 首次公开版
 
 2026-10-09：主体采用 MIT 许可证，公开版使用 `v1.0.0-beta` 标签和普通 GitHub Release。Portable、Lite 均完成完整打包及三语言、深浅主题、连接和内置工具边界检查。全量 2,492 项合成检查（64 组）通过；源码历史与既有发行包完成凭据及载荷边界复查。README 使用该版本真实界面的隔离演示截图。

@@ -69,11 +69,11 @@ For **Windows x64 and the native BrownDust II PC client**. Python is not require
 Both packages have the same features. Download a complete package from [GitHub Releases](https://github.com/MadestSamurai/Dustweave/releases). The domestic route is reserved for in-app OTA rather than first-install downloads. Then:
 
 1. **Extract the entire folder** and run `Dustweave.exe`. Keep its data, flow and component directories alongside the executable.
-2. Log in to the game normally, save the current account in account management, and verify its identity.
-3. Configure the desired stages in daily settings, then select this run's plan on the task page.
-4. Start the selected stages or the multi-account queue. Follow progress and any items needing attention on the timeline.
+2. Open the game normally, sign in and confirm the intended account in town. Exit the game normally and wait for the launcher to close, then choose **Save current account** in Accounts.
+3. Use **Enter game** in the saved account row for future launches. Avoid the desktop game shortcut or an accelerator's launch button, which may start an elevated game; use only its acceleration service if needed.
+4. Configure stages in daily settings, then start the selected tasks or account queue. Reopen **Connection guide** from Accounts at any time.
 
-Start with a few familiar stages. The [getting-started guide](docs/GETTING_STARTED.en.md) covers updates, local data and troubleshooting. Install `1.0.0-beta` by extracting the complete download into a new folder; existing accounts and settings are reused. Older OTA clients cannot parse suffixed versions, so this release does not replace their feed. Subsequent compatible releases can use signed updates.
+Start with a few familiar stages. The [getting-started guide](docs/GETTING_STARTED.en.md) covers updates, local data and troubleshooting. Install `1.0.1-beta` by extracting the complete download into a new folder; existing accounts and settings are reused. Older OTA clients cannot parse suffixed versions, so this release does not replace their feed. Subsequent compatible releases can use signed updates.
 
 ## Get help
 

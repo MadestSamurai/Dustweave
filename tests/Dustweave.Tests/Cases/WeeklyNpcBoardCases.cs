@@ -7,6 +7,7 @@ static class WeeklyNpcBoardCases
     public static async Task Run(string root, List<string> checks)
     {
         await FieldRouteArrivalCases.Run(Path.Combine(root, "field-route-arrival"), checks);
+        await DailyFeedbackCases.Run(Path.Combine(root, "daily-feedback"), checks);
         string assets=Path.Combine(root,"assets");Directory.CreateDirectory(Path.Combine(assets,"flows"));
         foreach(string name in new[]{"collection-catalog.json","steal-catalog.json"})File.Copy(Path.Combine(TestPaths.SourceRoot,"assets","flows",name),Path.Combine(assets,"flows",name),true);
         void Check(bool yes,string name){if(!yes)throw new Exception(name);checks.Add(name);}

@@ -327,9 +327,10 @@ public static class DailyEventRewards
         var state = await w.Evidence(Prefixes);
         var data = Data(state);
         var rows = Select(Page(state), settings);
+        var mail = new DailyEventMailDependency(rows.Any(r => N(r["eventType"]) is 12 or 17 or 19 or 7));
         var pendingDice = w.Business.Records(w.Context, "rewards.dice").Where(DailyManagedBusiness.Pending).Select(op => N(op["scope"]?["event"])).ToHashSet();
         bool quiz = settings.Quiz && DailyMiniGames.Pending(DailyQuizRecovery.Page(state)).Length > 0;
-        if (pendingDice.Count == 0 && JsonNode.DeepEquals(visits["catalog"], Array(rows)) && S(visits["cycle"]) == cycle && S(visits["settings"]) == settingsKey && !quiz && rows.All(r => !Needed(entries[S(r["id"])] as JsonObject, cycle, data.Missions, data.Balances)))
+        if (!mail.Required && pendingDice.Count == 0 && JsonNode.DeepEquals(visits["catalog"], Array(rows)) && S(visits["cycle"]) == cycle && S(visits["settings"]) == settingsKey && !quiz && rows.All(r => !Needed(entries[S(r["id"])] as JsonObject, cycle, data.Missions, data.Balances)))
             return O(("state", "skipped"), ("reason", "server_event_progress_unchanged"), ("actions", 0), ("pending_tasks", Pending(rows.Select(r => entries[S(r["id"])]!.AsObject()), data.Missions)), ("engine", "dotnet"));
         if (!await w.Has("EventUI"))
         {
@@ -365,9 +366,22 @@ public static class DailyEventRewards
                             qs.Add(q);
                             output["actions"] = N(output["actions"]) + N(q["actions"]);
                             changed |= N(q["actions"]) > 0;
+                            if (N(q["actions"]) > 0) mail.RewardClaimed();
                             await w.Step("MenuUI", "_buttonEvent", expect: "EventUI");
                             await WaitPage(w);
                         }
+                    }
+                    if ((row == null || N(row["eventType"]) != 4) && mail.Required)
+                    {
+                        await mail.Collect(async () =>
+                        {
+                            await w.Home("mail");
+                            return await w.Relay("execute", "mail", null);
+                        });
+                        output["mail_dependencies"] = mail.Results.DeepClone();
+                        w.Save("event-rewards-latest.json", output);
+                        await w.Step("MenuUI", "_buttonEvent", expect: "EventUI");
+                        await WaitPage(w);
                     }
                     if (row == null)
                         continue;
@@ -416,6 +430,7 @@ public static class DailyEventRewards
                                 break;
                             }
                             entry["operations"]!.AsArray().Add(await Perform(w, p));
+                            if (S(p["Kind"]) == "EventMissionUI") mail.RewardClaimed();
                             output["actions"] = N(output["actions"]) + 1;
                             changed = true;
                             w.Save("event-rewards-latest.json", output);
@@ -452,4 +467,3 @@ public static class DailyEventRewards
         catch (Exception e) { output["state"] = "blocked"; output["error"] = e.Message; w.Save("event-rewards-latest.json", output); throw; }
     }
 }
-

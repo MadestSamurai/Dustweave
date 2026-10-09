@@ -189,5 +189,7 @@
   "铜矿石": "Copper Ore",
   "金矿石": "Gold Ore",
   "魔珍珠": "Magic Pearl",
-  "数值未读取": "Value unavailable"
+  "数值未读取": "Value unavailable",
+  "游戏连接暂时超时；已保留本批进度，不会重复消耗材料。请重新连接并读取库存后接续。": "Game connection timed out. This batch is saved and will not be submitted again. Reconnect and read inventory to reconcile and resume.",
+  "游戏连接暂时超时，尚未开始制作。请保持游戏已登录，再点击连接读取；诊断目录已记录失败步骤。": "Game connection timed out before crafting started. Keep the game logged in and reconnect. The failing step is recorded in diagnostics."
 }

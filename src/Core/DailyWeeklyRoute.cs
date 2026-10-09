@@ -24,7 +24,7 @@ public sealed class DailyWeeklyRoute
             RecoverEncounters = true
         };
         this.progress = progress ?? ((_, _) => { });
-        route.CanSuppress = map => active.Contains("weekly_mainline") && CanRun("weekly_mainline", map);
+        route.CanSuppress = map => (active.Contains("weekly_mainline") || active.Contains("weekly_npc")) && CanRun("weekly_mainline", map);
     }
     public static string[] Select(IEnumerable<string> stages, WeeklyPreferences settings)
     {
@@ -133,6 +133,7 @@ public sealed class DailyWeeklyRoute
         }
         return jobs;
     }
+    public static readonly string[] StageOrder = ["weekly_mainline", "weekly_npc", "weekly_steal"];
     private bool CanRun(string stage, long map) => stage != "weekly_mainline" || npc?.Data == null || !npc.Data.Protects(map);
     private async Task Perform(string stage, long map)
     {
@@ -275,7 +276,7 @@ public sealed class DailyWeeklyRoute
                     long map = await nav!.Observe();
                     EmitAll($"卡带 {pack} · 地图 {map}");
                     bool acted = false;
-                    foreach (string stage in new[] { "weekly_npc", "weekly_steal", "weekly_mainline" })
+                    foreach (string stage in StageOrder)
                     {
                         if (!active.Contains(stage) || !jobs.GetValueOrDefault(stage, []).Contains(map) || !CanRun(stage, map))
                             continue;
@@ -284,8 +285,8 @@ public sealed class DailyWeeklyRoute
                         await Perform(stage, map);
                         acted = true;
                         EmitAll($"卡带 {pack} · 地图 {map}");
-                        if (stage == "weekly_npc")
-                            break;
+                        // Collection/suppression can advance NPC objectives. Re-read jobs before the next category.
+                        break;
                     }
                     if (acted)
                         continue;

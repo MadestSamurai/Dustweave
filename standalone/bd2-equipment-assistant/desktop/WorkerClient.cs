@@ -14,7 +14,7 @@ internal sealed class WorkerClient
   Directory.CreateDirectory(Data);string path=Path.Combine(Data,"jobs",Guid.NewGuid().ToString("N")+".json");J.Write(path,job);
   var reports=new Progress<JsonObject>(p=>progress?.Invoke(p));
   try{return await Task.Run(()=>EquipmentService.Handle(job,OfflineChecks?null:Invoke,p=>((IProgress<JsonObject>)reports).Report(p)));}
-  catch(Exception ex){await File.WriteAllTextAsync(Path.ChangeExtension(path,"log"),ex.ToString(),Encoding.UTF8);throw;}
+  catch(Exception ex){await File.WriteAllTextAsync(Path.ChangeExtension(path,"log"),ex.ToString(),Encoding.UTF8);if(EquipmentReadRetry.Transient(ex))throw new InvalidOperationException(L.T(J.S(job["operation"])=="execute"?"游戏连接暂时超时；已保留本批进度，不会重复消耗材料。请重新连接并读取库存后接续。":"游戏连接暂时超时，尚未开始制作。请保持游戏已登录，再点击连接读取；诊断目录已记录失败步骤。"),ex);throw;}
  }
  internal static string Invoke(string[] args){
   var start=new ProcessStartInfo(Environment.ProcessPath!){UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true,StandardOutputEncoding=Encoding.UTF8,StandardErrorEncoding=Encoding.UTF8,WorkingDirectory=AppContext.BaseDirectory};start.ArgumentList.Add("--connection");foreach(var arg in args)start.ArgumentList.Add(arg);

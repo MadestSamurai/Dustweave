@@ -1,5 +1,29 @@
 [
   {
+    "Version": "1.0.1-beta",
+    "Date": "2026-10-09",
+    "Notes": {
+      "zh-CN": [
+        "新增首次连接三步教程，说明正常登录、退出后保存账号，再由织尘启动；账号页可随时重新打开。",
+        "合并周路线先做安全收集，再处理 NPC 任务；单独运行 NPC 任务也准备地图安全措施并恢复意外遇敌。",
+        "活动任务领奖后先收取邮箱，再处理拼图等依赖代币的活动。",
+        "更新内置装备助手：修复冷连接提前读取快照导致的超时，短暂只读通信错误有限重试，不重复执行资源消耗。"
+      ],
+      "zh-TW": [
+        "新增首次連接三步教學，說明正常登入、退出後儲存帳號，再由織塵啟動；帳號頁可隨時重新開啟。",
+        "合併週路線先做安全收集，再處理 NPC 任務；單獨執行 NPC 任務也準備地圖安全措施並恢復意外遇敵。",
+        "活動任務領獎後先收取信箱，再處理拼圖等依賴代幣的活動。",
+        "更新內建裝備助手：修正冷連接提前讀取快照導致的逾時，短暫唯讀通訊錯誤有限重試，不重複執行資源消耗。"
+      ],
+      "en-US": [
+        "A first-use guide explains signing in, exiting normally, saving the account and launching through Dustweave. Reopen it from Accounts.",
+        "Combined weekly routes collect safely before NPC quests. NPC-only runs also prepare map safety and recover from incidental encounters.",
+        "Claim event mission mail before entering token-dependent activities such as puzzle boards.",
+        "Updated Equipment Assistant: fixes premature snapshot reads on cold connections, with bounded retries for transient read errors and no repeated resource spending."
+      ]
+    }
+  },
+  {
     "Version": "1.0.0-beta",
     "Date": "2026-10-09",
     "Notes": {

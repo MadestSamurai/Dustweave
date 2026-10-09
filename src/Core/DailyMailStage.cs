@@ -120,7 +120,7 @@ public sealed class DailyMailStage : IDailyManagedStage
                     ["ui"] = "MenuUI",
                     ["field"] = "_buttonMail",
                     ["expect"] = "MailUI",
-                    ["reason"] = "日常最后收取邮箱物品"
+                    ["reason"] = "收取邮箱物品"
                 });
             for (int value = 0; value < 2; value++)
             {
@@ -296,7 +296,3 @@ public sealed partial class DailyCommandDriver
         throw new StageHostException("adapter", "Reward presentation did not close; business receipt preserved");
     }
 }
-
-
-
-

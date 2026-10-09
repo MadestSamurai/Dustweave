@@ -4563,5 +4563,30 @@
     "zh-CN": "最后收取本次奖励",
     "zh-TW": "最後收取本次獎勵",
     "en-US": "Collect the final rewards"
+  },
+  "message.weekly_map_changed": {
+    "zh-CN": "周任务准备期间地图已改变",
+    "en-US": "The map changed while preparing the weekly quest.",
+    "zh-TW": "週任務準備期間地圖已改變"
+  },
+  "message.weekly_map_unsafe": {
+    "zh-CN": "当前地图无法压制或藏身，保留周任务，避免反复遇敌",
+    "en-US": "Neither suppression nor stealth is available here. Quest progress is saved to avoid repeated encounters.",
+    "zh-TW": "目前地圖無法壓制或藏身，保留週任務，避免反覆遇敵"
+  },
+  "message.encounter_protection_unavailable": {
+    "zh-CN": "退出遇敌后压制和藏身均不可用",
+    "en-US": "Suppression and stealth are both unavailable after retreating.",
+    "zh-TW": "退出遇敵後壓制和藏身均不可用"
+  },
+  "message.event_mail_pending": {
+    "zh-CN": "活动所需邮箱奖励尚未领取完成",
+    "en-US": "Mailbox rewards needed for the event have not finished collecting.",
+    "zh-TW": "活動所需信箱獎勵尚未領取完成"
+  },
+  "message.collect_mail_items": {
+    "zh-CN": "收取邮箱物品",
+    "en-US": "Collect mailbox items",
+    "zh-TW": "收取信箱物品"
   }
 }
