@@ -27,6 +27,13 @@ jobs:
         shell: pwsh
         run: ./test.ps1 -NoBuild
 
+      - name: Verify isolated OTA publishing channel
+        shell: pwsh
+        run: |
+          dotnet restore tools/OtaChannel/Dustweave.OtaChannel.csproj --locked-mode
+          if($LASTEXITCODE -ne 0){throw 'OTA channel restore failed'}
+          dotnet run --project tools/OtaChannel/Dustweave.OtaChannel.csproj -c Release --no-restore -- self-test
+          if($LASTEXITCODE -ne 0){throw 'OTA channel verification failed'}
       - name: Check source and output boundaries
         shell: pwsh
         run: ./check-source.ps1 -AfterBuild
@@ -39,4 +46,5 @@ jobs:
           path: |
             artifacts/tests-*/results.json
             artifacts/tests-*/run.log
+            artifacts/ota-channel-tests/*/results.json
           if-no-files-found: ignore

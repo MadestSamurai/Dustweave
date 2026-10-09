@@ -36,7 +36,7 @@ Use the application's stop control and check whether an already submitted operat
 
 ## Updates and local data
 
-From 0.9.0, open Updates at the bottom left. Signed packages download in the background and require confirmation to restart while idle. Accounts, settings and plugins are preserved; failed updates restore the previous version. Upgrading from 0.8.x requires one manual installation into a new folder after exiting the old app. Ordinary UI updates do not require restarting the game; follow specific component instructions if shown.
+Users of the first public release, 1.0.0-beta, and later versions can open Updates at the bottom left. Signed differential packages download in the background and require confirmation to restart while idle. Accounts, settings and plugins are preserved; failed updates restore the previous version. Earlier internal versions are no longer maintained for upgrade compatibility; extract a complete package into a new folder after exiting the old app. Ordinary UI updates do not require restarting the game; follow specific component instructions if shown.
 
 Daily data defaults to `%LOCALAPPDATA%\BD2DailyAssistant`; protected account sessions use `%LOCALAPPDATA%\BD2AccountSessionManager`. An explicit custom data directory overrides the default. Changing the application folder does not automatically erase this data.
 

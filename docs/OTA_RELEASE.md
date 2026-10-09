@@ -2,20 +2,20 @@
 
 ## Scope / 当前范围
 
-The host uses its own updater, with signed differential packages from 0.9.1 and a full-package fallback. It does not use Velopack. The active source is
+The host uses its own updater, with signed differential packages and a full-package fallback. Supported upgrade baselines start at the first public release, 1.0.0-beta; earlier internal versions are no longer maintained for upgrade compatibility. It does not use Velopack. The active source is
 https://bd2.madsam.work/updates/dustweave/updates.json.
 A public GitHub/Vultr update mirror is deferred; the GitHub release archives the same packages. The transport compares multiple signed sources and can fail over; production currently configures only the domestic source. There is no empty international selector or repeated probe of a private repository.
 
-目前只启用国内更新站点。0.9.1 起优先使用适合当前版本和包类型的差分包，允许直接跨过中间版本；无合适差分时下载完整包。定时执行、更新说明及空闲确认沿用主程序。
+目前只启用国内更新站点。升级基线从首个公开版 1.0.0-beta 开始，不再维护 1.0.0 之前的内部版本兼容。优先使用适合当前版本和包类型的差分包，允许直接跨过中间版本；无合适差分时下载完整包。定时执行、更新说明及空闲确认沿用主程序。
 源码、账号、连接凭据与插件实现不进入静态更新目录。第一次必须手动安装带 OTA 的版本；更早版本不会凭空获得更新能力。
 
 ## Distribution policy / 分发约定
 
 首次安装和手动下载使用GitHub Releases；国内服务器仅作为软件内 OTA 更新源，不在 README、入门文档或 Release 公告中提供国内完整包下载入口。后续发布继续遵循此约定。
 
-这是分发入口约定，不是 HTTP 访问限制：已发布的静态包地址保持可用，以兼容 0.9.0 更新器。0.9.0 客户端不认识差分字段，需完整更新一次；0.9.1 起才会使用差分。服务器仍需为完整包回退预留带宽。
+这是分发入口约定，不是 HTTP 访问限制：服务器仍需为完整包回退预留带宽。当前签名清单从 1.0.0-beta 建立公开版链路；旧静态文件暂时保留作为历史证据，不代表继续维护其升级兼容。
 
-First installs and manual downloads use the GitHub Releases. Do not promote domestic full-package links in README files, getting-started guides or release announcements. Domestic hosting serves in-app OTA. This is a distribution policy, not HTTP access control: existing package URLs remain reachable for updater compatibility. The 0.9.0 client still needs one full update to gain delta support; later clients prefer smaller differential packages. Budget for full-package fallback as well.
+First installs and manual downloads use the GitHub Releases. Do not promote domestic full-package links in README files, getting-started guides or release announcements. Domestic hosting serves in-app OTA. This is a distribution policy, not HTTP access control: existing package URLs remain reachable for updater compatibility. The current signed feed starts at 1.0.0-beta. Older static files may be retained as historical evidence, without maintaining their upgrade compatibility. Budget for full-package fallback as well.
 
 ## Trust / 签名
 
@@ -66,6 +66,10 @@ Account/settings directories and local plugins are outside the replacement allow
 A backup failure prevents replacement. If recovery itself fails, preserve backups and report manual recovery instead of running a mixed installation.
 This supports interrupted-process recovery; it cannot repair failing storage or guarantee durability against every device's hardware cache behavior.
 
+## Signed publication channel / 签名发布通道
+
+常规 OTA 发布使用独立、受限的 .NET 通道；配置与步骤见 [OTA_PUBLISH_CHANNEL.md](OTA_PUBLISH_CHANNEL.md)。首次安装需要临时服务器管理权限，完成后日常发布使用长期受限传输身份与签名请求。通道是否已经上线以发布记录为准。
+
 ## Publish / 发布步骤
 
 1. Build/test both flavors with package.ps1; update-package.json lists exactly the packaged application files.
@@ -101,4 +105,4 @@ The helper must close its application-mutex handle before launching the applicat
 The static payload preparation has also passed signature, size and digest checks. Public HTTPS range/cache behavior, operational key backup and an actual scheduled game queue remain deployment/runtime acceptance items. No production files or GitHub releases were changed by this validation.
 ### Differential acceptance · 0.9.1
 
-See [0.9.1 acceptance](releases/0.9.1-validation.md). Both flavors pass patch-only installation with the new helper and full installation with the actual 0.9.0 helper. `scripts/test-update-packages.ps1 -UseDelta` exercises the first path; `-UseBaselineHelper` exercises the old client's full-update path. These switches are mutually exclusive. The same harness covers startup rollback and persisted-interruption recovery. Neither path changes the user's installation or connects to the game.
+See [0.9.1 acceptance](releases/0.9.1-validation.md). Both flavors pass patch-only installation with the new helper and full installation with the actual 0.9.0 helper. `scripts/test-update-packages.ps1 -UseDelta` exercises the first path; `-UseBaselineHelper` exercises the old client's full-update path. That historical 0.9.0 helper cannot install patches. For supported public baselines, combine both switches to test the real prior helper installing a patch-only upgrade. The same harness covers startup rollback and persisted-interruption recovery. Neither path changes the user's installation or connects to the game.

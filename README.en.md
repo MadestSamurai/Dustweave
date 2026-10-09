@@ -73,7 +73,7 @@ Both packages have the same features. Download a complete package from [GitHub R
 3. Use **Play** in the saved account row for future launches. Avoid the desktop game shortcut or an accelerator's launch button, which may start an elevated game; use only its acceleration service if needed.
 4. Configure stages in daily settings, then start the selected tasks or account queue. Reopen **Connection guide** from Accounts at any time.
 
-Start with a few familiar stages. The [getting-started guide](docs/GETTING_STARTED.en.md) covers updates, local data and troubleshooting. Install `1.0.1-beta` by extracting the complete download into a new folder; existing accounts and settings are reused. Older OTA clients cannot parse suffixed versions, so this release does not replace their feed. Subsequent compatible releases can use signed updates.
+Start with a few familiar stages. The [getting-started guide](docs/GETTING_STARTED.en.md) covers updates, local data and troubleshooting. Users of the first public release, `1.0.0-beta`, and later versions can check for updates in the app, which prefers differential packages. Upgrade compatibility for earlier internal versions is no longer maintained: extract a complete package into a new folder. Existing accounts and settings are reused.
 
 ## Get help
 

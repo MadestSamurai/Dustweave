@@ -1,12 +1,20 @@
 # Repository status / 仓库状态
 
+## Public-version OTA preparation / 公开版 OTA 准备
+
+2026-10-09：升级基线按用户要求从首个公开版 `1.0.0-beta` 开始，不再维护更早内部版本的升级兼容。`1.0.1-beta` 的签名清单、双版本完整包与直接差分已准备；Portable 差分 20,065,694 字节，Lite 差分 1,345,171 字节。真实 `1.0.0-beta` 成品更新器完成两版仅差分缓存升级、启动失败回退与中断恢复，账号及插件哨兵文件保持不变。证据：`artifacts/ota-1.0.1-from-1.0.0-delta/results.json`。
+
+新增独立 .NET OTA 签名发布通道、受限 SSH 客户端与首次安装脚本。43 项针对性检查通过；服务端自包含 Linux x64 成品已生成。国内服务器安装和本次 OTA 上线仍等待临时管理密钥登记，不能视为已经发布。当前公网 OTA 仍是 `0.9.13`。步骤见 [签名发布通道](OTA_PUBLISH_CHANNEL.md)。
+
+The public-version update chain, direct patches and real baseline-helper acceptance are ready. The new .NET publishing channel passes 43 isolated checks; installation and public HTTPS acceptance are still pending server access. GitHub publication and domestic OTA availability are separate.
+
 ## 1.0.1-beta delivery / 反馈修复交付
 
 2026-10-09：新增三语言、深浅主题的首次连接教程与账号页入口，说明正常退出后保存账号，以及后续从织尘启动的顺序。修复合并周路线任务优先导致未压制地图反复遇敌；先执行已启用且不影响任务后续击杀的收集，NPC 单独运行也准备压制／藏身，并在意外撤退后重新读取任务步骤。活动代币消费者增加任务领奖到邮箱领取的依赖，保留每页访问缓存。独立与内置装备助手同步修复无通信组件时提前读快照的超时分支，有限重试只读通信，不重发消费命令。
 
-定向验证：392 项日常检查（6 组）通过；装备助手 283 项主用例及目录传输、连接恢复、结果接续等专项检查通过。Dustweave 与独立装备助手桌面构建通过。新增连接教程已通过三语言、深浅主题及账号页跳转的隔离界面检查。此轮没有连接游戏或消耗资源；完整发行由打包检查及 GitHub Actions 完成验收后发布。
+定向验证：392 项日常检查（6 组）通过；装备助手 283 项主用例及目录传输、连接恢复、结果接续等专项检查通过。Dustweave 与独立装备助手桌面构建通过。新增连接教程已通过三语言、深浅主题及账号页跳转的隔离界面检查。此轮没有连接游戏或消耗资源；完整打包的 2,506 项检查（64 组）通过，双版本已经由 GitHub Actions 发布为普通 Release；标签 `v1.0.1-beta` 对应 `b439e3d2bdf1bfbd395844eddfd117008ea40e22`。
 
-Focused synthetic regressions, desktop builds and the three-language themed connection guide passed. Publication is gated by complete packages and GitHub Actions; live validation remains separate. The reported equipment timeout has no user stack trace yet; the confirmed cold-connection defect is fixed, without claiming it explains every possible timeout.
+Focused synthetic regressions, desktop builds and the three-language themed connection guide passed. Both flavors passed full packaging and GitHub Actions and were published as a normal Release; live validation remains separate. The reported equipment timeout has no user stack trace yet; the confirmed cold-connection defect is fixed, without claiming it explains every possible timeout.
 
 ## 1.0.0-beta publication / 首次公开版
 
@@ -14,7 +22,7 @@ Focused synthetic regressions, desktop builds and the three-language themed conn
 
 The first public MIT release uses a normal GitHub Release despite its beta label. Both flavors passed complete package gates, with 2,492 synthetic checks across 64 groups. Optional extension implementations, account captures and game assemblies remain excluded. This delivery did not operate the live game; historical live evidence and remaining limitations are recorded separately.
 
-当前说明与安装方式见 [1.0.0-beta](releases/1.0.0-beta.md)。本次手动安装，保留旧数字版本 OTA 清单；国内服务器继续仅用于 OTA。以下为历史发布和开发记录，不代表当前仓库可见性。
+当前说明与安装方式见 [1.0.0-beta](releases/1.0.0-beta.md)。该版本首次发布时采用手动安装并保留旧数字版本 OTA 清单；后续公开版升级链路见本文顶部状态。国内服务器继续仅用于 OTA。以下为历史发布和开发记录，不代表当前仓库可见性。
 
 ## 0.9.13 publication / 0.9.13 发布
 

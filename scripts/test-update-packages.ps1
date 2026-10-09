@@ -6,7 +6,12 @@ param(
  [switch]$UseBaselineHelper
 )
 $ErrorActionPreference='Stop'
-if($UseDelta -and $UseBaselineHelper){throw 'An older helper cannot install new delta packages.'}
+if($UseDelta -and $UseBaselineHelper){
+ foreach($flavor in @('Portable','Lite')){
+  $descriptor=Get-Content -LiteralPath (Join-Path $Baseline "$flavor/update-package.json") -Raw|ConvertFrom-Json
+  if([semver]$descriptor.Version -lt [semver]'0.9.1'){throw 'This baseline helper predates delta support.'}
+ }
+}
 $repo=[IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $outputRoot=[IO.Path]::GetFullPath($Output)
 if(!$outputRoot.StartsWith((Join-Path $repo 'artifacts')+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Use an isolated artifacts directory.'}
@@ -57,6 +62,7 @@ function Setup($name,$flavor,$baselineFolder){
  WriteJson (Join-Path $data 'updates-preference.json') @{Automatic=$false}
  WriteJson (Join-Path $data 'seen-release.json') @{Version=$release.Version;SeenVersions=@($release.Version,$baseDescriptor.Version)}
  WriteJson (Join-Path $data 'schedule.json') @{Enabled=$false}
+ WriteJson (Join-Path $data 'connection-guide.json') @{Revision=1}
  [IO.Directory]::CreateDirectory((Join-Path $targetFolder 'plugins'))|Out-Null
  [IO.File]::WriteAllText((Join-Path $targetFolder 'plugins/acceptance.keep'),'private plugin sentinel')
  [IO.File]::WriteAllText((Join-Path $data 'account-preservation.keep'),'account sentinel')
@@ -87,7 +93,6 @@ foreach($flavor in @('Lite','Portable')){
 }
 # A signed but unlaunchable new executable must restore the actual prior package.
 $test=Setup 'startup-failure' 'Lite' (Join-Path $Baseline 'Lite')
-WriteJson (Join-Path $test.targetFolder 'update-package.json') @{Version='0.8.17';Flavor='Lite'}
 $faultZip=Join-Path $test.folder 'fault.zip'
 $archive=[IO.Compression.ZipFile]::Open($faultZip,[IO.Compression.ZipArchiveMode]::Create)
 try{

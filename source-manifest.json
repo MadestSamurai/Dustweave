@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-09T06:38:38.6407779Z",
+  "generatedUtc": "2026-10-09T07:46:10.9415530Z",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -42,7 +42,8 @@
     "tests/Dustweave.Tests/Dustweave.Tests.csproj",
     "tools/RuntimeCheck/Dustweave.RuntimeCheck.csproj",
     "tools/TradeData/Dustweave.TradeData.csproj",
-    "tools/TableExporter/Dustweave.TableExporter.csproj"
+    "tools/TableExporter/Dustweave.TableExporter.csproj",
+    "tools/OtaChannel/Dustweave.OtaChannel.csproj"
   ],
   "files": [
     {
@@ -8468,6 +8469,46 @@
         "build input"
       ],
       "bytes": 4925
+    },
+    {
+      "path": "tools/OtaChannel/Dustweave.OtaChannel.csproj",
+      "sha256": "61b57cfc1ff93da3860ea6dfc3a45187739502e69cd506c145bed846a6407d99",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 633
+    },
+    {
+      "path": "tools/OtaChannel/packages.lock.json",
+      "sha256": "084968784740a37dbd0b1d7b5586972626844608e8395f5fba10cd428f0a3189",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 384
+    },
+    {
+      "path": "tools/OtaChannel/Program.cs",
+      "sha256": "a4c00c7f90f91c7b9febec3707f14aff362eaee8b9481c11b976fe664fa57d81",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 11797
+    },
+    {
+      "path": "tools/OtaChannel/Rules.cs",
+      "sha256": "fdf0e8f1822f20177be1071b35c14208b2ec252821366ade673e1a1cba2d3d89",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 8035
+    },
+    {
+      "path": "tools/OtaChannel/SelfTest.cs",
+      "sha256": "ab2d146c3ab788411896f3dc7f9b054b35307c464a07ae054c2413a34ba25ac2",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 10785
     }
   ],
   "publicReleaseApproved": false,

@@ -13,6 +13,12 @@ foreach($project in $projects){
  & dotnet build $project -c Release -r win-x64 -p:SelfContained=false --no-restore --nologo
  if($LASTEXITCODE -ne 0){throw "Build failed: $project"}
 }
+# The publishing service is cross-platform and keeps both RID targets in its dependency lock.
+$channel=Join-Path $PSScriptRoot 'tools/OtaChannel/Dustweave.OtaChannel.csproj'
+& dotnet restore $channel $restoreMode --nologo
+if($LASTEXITCODE -ne 0){throw 'OTA channel restore failed.'}
+& dotnet build $channel -c Release --no-restore --nologo
+if($LASTEXITCODE -ne 0){throw 'OTA channel build failed.'}
 if($Mode -eq 'Build'){return}
 $exe=Join-Path (Split-Path -Parent $entry) 'bin/Release/net8.0-windows/win-x64/Dustweave.exe'
 $runRoot=Join-Path $PSScriptRoot ('artifacts/'+$Mode.ToLowerInvariant()+'-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss-ffff'))
