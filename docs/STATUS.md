@@ -1,5 +1,13 @@
 # Repository status / 仓库状态
 
+## 1.0.0-beta publication / 首次公开版
+
+2026-10-09：主体采用 MIT 许可证，公开版使用 `v1.0.0-beta` 标签和普通 GitHub Release。Portable、Lite 均完成完整打包及三语言、深浅主题、连接和内置工具边界检查。全量 2,492 项合成检查（64 组）通过；源码历史与既有发行包完成凭据及载荷边界复查。README 使用该版本真实界面的隔离演示截图。
+
+The first public MIT release uses a normal GitHub Release despite its beta label. Both flavors passed complete package gates, with 2,492 synthetic checks across 64 groups. Optional extension implementations, account captures and game assemblies remain excluded. This delivery did not operate the live game; historical live evidence and remaining limitations are recorded separately.
+
+当前说明与安装方式见 [1.0.0-beta](releases/1.0.0-beta.md)。本次手动安装，保留旧数字版本 OTA 清单；国内服务器继续仅用于 OTA。以下为历史发布和开发记录，不代表当前仓库可见性。
+
 ## 0.9.13 publication / 0.9.13 发布
 
 2026-10-09：实现已提交到私有 main（`280bf834275dcdf5dbe1b495c9470e0ceee157e1`）。[GitHub Actions](https://github.com/MadestSamurai/Dustweave/actions/runs/37806015969) 的构建、2,371 项合成检查（63 组）及来源边界检查全部通过。Portable／Lite 沿用已验证成品；1,092 项构建输入中仅根目录 README 和 CHANGELOG 在发布整理时改变，不影响包内文件或程序。
