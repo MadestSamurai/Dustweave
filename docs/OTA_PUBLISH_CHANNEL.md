@@ -60,3 +60,5 @@ Local checks cover real ECDSA signatures, context separation, expiry, frame limi
 ## Production deployment · 2026-10-09
 
 The channel is installed and has published 1.0.1-beta. Production command/signature rejection and both public differential downloads passed; the one-time administrator key is revoked. See [the deployment receipt](releases/1.0.1-beta-deployment.md). The local protected client configuration is kept in the parent workspace under artifacts/deployments/dustweave-ota-channel/client.json; it is not distributed to end users.
+
+Routine publication of **1.0.4-beta** succeeded through the same constrained channel, without another administrator key. See [the 1.0.4-beta receipt](releases/1.0.4-beta-deployment.md) for package, differential upgrade and public download verification.
