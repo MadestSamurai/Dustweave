@@ -32,7 +32,10 @@ internal static class ToolMenuProbe
             foreach (var arg in new[] { "--tool-menu-probe", profile, tool.Id }) start.ArgumentList.Add(arg);
             return start;
         }
-        DailyToolSession Session() => new(profile, exe, Launch, TimeSpan.FromMilliseconds(400));
+        // Synthetic windows must not inspect or reserve a real user's standalone-tool mutex.
+        string fixtureId = Guid.NewGuid().ToString("N");
+        string FixtureMutex(DailyToolDefinition tool) => @"Local\Dustweave.ToolMenuProbe." + fixtureId + "." + tool.Id;
+        DailyToolSession Session() => new(profile, exe, Launch, TimeSpan.FromMilliseconds(400), FixtureMutex);
         var session = Session(); var cases = new List<string>();
         void Check(bool pass, string message) { if (!pass) throw new InvalidOperationException(message); cases.Add(message); }
         async Task Ready(string id)
@@ -43,6 +46,13 @@ internal static class ToolMenuProbe
         }
         try
         {
+            using (var held = new Mutex(false, FixtureMutex(DailyToolCatalog.Find("fishing"))))
+            {
+                bool duplicateBlocked = false;
+                try { await session.OpenAsync("fishing"); }
+                catch (InvalidOperationException) { duplicateBlocked = true; }
+                Check(duplicateBlocked && session.Current == null, "existing standalone window is rejected before launch");
+            }
             await session.OpenAsync("fishing"); await Ready("fishing");
             var original = session.Current!;
             Check(original.ToolId == "fishing", "tool process recorded");

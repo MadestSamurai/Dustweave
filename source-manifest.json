@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-09T06:29:24.4305669Z",
+  "generatedUtc": "2026-10-09T06:38:38.6407779Z",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -1527,11 +1527,11 @@
     },
     {
       "path": "src/Core/DailyToolSession.cs",
-      "sha256": "1a683f9c6e4b089b33c4428bfdd8bd64cc73a8d74234a5a4a74483f885cb6e0e",
+      "sha256": "983a1e146dc261e20f71d336cf74a8d8249d3d4038dacb4ba02e96ee585a0a5e",
       "reasons": [
         "build input"
       ],
-      "bytes": 6127
+      "bytes": 6207
     },
     {
       "path": "src/Core/DailyTradeCatalog.cs",
@@ -2375,11 +2375,11 @@
     },
     {
       "path": "src/Desktop/ToolMenuProbe.cs",
-      "sha256": "f4c9573f3e680fc489491b390aeec29e453a365cdc6f3fc78b18b8d610fba930",
+      "sha256": "a991e620071e815c39ca2805a17b2f7452dce30b5bd911ef0369c823c45edf97",
       "reasons": [
         "build input"
       ],
-      "bytes": 6128
+      "bytes": 6847
     },
     {
       "path": "src/Desktop/TradePlanPanel.cs",

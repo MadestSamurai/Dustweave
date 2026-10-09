@@ -19,7 +19,7 @@ public static class DailyToolControl
 public sealed record DailyToolProcessState(string ToolId, int ProcessId, long StartTicks, string Executable);
 
 /// <summary>Owns only windows started by this menu. Never kills the game or a hung tool.</summary>
-public sealed class DailyToolSession(string root, string executable, Func<DailyToolDefinition, ProcessStartInfo>? launcher = null, TimeSpan? closeTimeout = null)
+public sealed class DailyToolSession(string root, string executable, Func<DailyToolDefinition, ProcessStartInfo>? launcher = null, TimeSpan? closeTimeout = null, Func<DailyToolDefinition, string>? mutexName = null)
 {
     private readonly string path = Path.Combine(root, "tools", "window.json");
     private readonly string executable = Path.GetFullPath(executable);
@@ -59,7 +59,7 @@ public sealed class DailyToolSession(string root, string executable, Func<DailyT
             }
             // Verify idle before launch. The parent disables all other commands until the child is recorded.
             if(!controlReserved)using (DailyToolControl.Acquire(root)) { }
-            if (Mutex.TryOpenExisting(tool.MutexName, out var existing))
+            if (Mutex.TryOpenExisting(mutexName?.Invoke(tool) ?? tool.MutexName, out var existing))
             {
                 existing.Dispose();
                 throw new InvalidOperationException(tool.Name + "的独立窗口已经打开，请先使用或关闭原窗口。");
