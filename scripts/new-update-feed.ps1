@@ -1,5 +1,5 @@
 param(
- [Parameter(Mandatory)][ValidatePattern('^\d+\.\d+\.\d+$')][string]$Version,
+ [Parameter(Mandatory)][ValidatePattern('^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$')][string]$Version,
  [Parameter(Mandatory)][string]$PackageDirectory,
  [string]$PreviousFeed,
  [string]$Output,
@@ -30,8 +30,8 @@ $prior=@()
 if($PreviousFeed){
  $feed=VerifyEnvelope (Get-Content -LiteralPath $PreviousFeed -Raw|ConvertFrom-Json)
  if($feed.Schema -ne 2 -or $feed.Product -ne 'Dustweave' -or $feed.Channel -ne 'stable'){throw 'Invalid previous update feed.'}
- if(@($feed.Releases|Where-Object {[version]$_.Version -ge [version]$Version}).Count){throw 'Publishing must advance the version. Never silently replace a published version.'}
- $prior=@($feed.Releases|Sort-Object {[version]$_.Version} -Descending)
+ if(@($feed.Releases|Where-Object {[semver]$_.Version -ge [semver]$Version}).Count){throw 'Publishing must advance the version. Never silently replace a published version.'}
+ $prior=@($feed.Releases|Sort-Object {[semver]$_.Version} -Descending)
  if(@($prior|Group-Object Version|Where-Object Count -gt 1).Count){throw 'Duplicate historical versions.'}
  for($i=0;$i -lt $prior.Count-1;$i++){if($prior[$i].PreviousVersion -ne $prior[$i+1].Version){throw 'Broken historical release chain.'}}
 }

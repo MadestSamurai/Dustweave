@@ -174,6 +174,7 @@ public sealed class DailyCoordinator
         Report("waiting_login", $"{target.Name} · 等待游戏登录和实际角色身份（最长 {options.LoginTimeout.TotalSeconds:0} 秒）");
         string startupMessage = "";
         bool waitingDownload = false;
+        bool waitingAgreement = false;
         bool recoveryChecked = false;
         while (true)
         {
@@ -191,7 +192,21 @@ public sealed class DailyCoordinator
             {
                 if (snapshot.AccountKey.Length > 0 && snapshot.AccountKey != target.AccountKey)
                     throw DailyLoginFailure.Mismatch(Path.GetDirectoryName(runPath)!, runId, target, snapshot, sessions.Read(), startup: true);
-                var startupCatalog = sessions.Read();
+                if (DailyLoginReadiness.NeedsAgreement(snapshot))
+                {
+                    // A human decision has no authentication timeout. Do not
+                    // click terms, retry recovery, or reinterpret this as logout.
+                    Revoke();
+                    waitingAgreement = true;
+                    deadline = now + options.LoginTimeout;
+                    if (startupMessage != DailyLoginReadiness.AgreementMessage)
+                    {
+                        startupMessage = DailyLoginReadiness.AgreementMessage;
+                        Report("waiting_start", target.Name + " · " + startupMessage);
+                    }
+                    await Task.Delay(options.PollInterval, token);
+                    continue;
+                }                var startupCatalog = sessions.Read();
                 bool waitingCredentials = !startupCatalog.SessionComplete;
                 if (waitingCredentials)
                 {
@@ -243,7 +258,13 @@ public sealed class DailyCoordinator
                     Report("waiting_start", target.Name + " · " + message);
                 }
             }
-            bool verified;
+            if (waitingAgreement)
+            {
+                // Start a fresh bounded login wait only after the modal is gone.
+                deadline = now + options.LoginTimeout;
+                waitingAgreement = false;
+                startupMessage = "";
+            }            bool verified;
             try { verified = guard.Observe(snapshot, instance, target.AccountKey, profile.PlayerKey, now); }
             catch (InvalidOperationException) when (snapshot != null && snapshot.AccountKey != target.AccountKey)
             { throw DailyLoginFailure.Mismatch(Path.GetDirectoryName(runPath)!, runId, target, snapshot, sessions.Read(), startup: false); }
@@ -292,4 +313,3 @@ public sealed class DailyCoordinator
         finally { try { Revoke(); } finally { active.Dispose(); active = null; gate.Release(); } }
     }
 }
-

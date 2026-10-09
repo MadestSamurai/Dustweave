@@ -1,5 +1,5 @@
 param(
- [Parameter(Mandatory)][ValidatePattern('^\d+\.\d+\.\d+$')][string]$Version,
+ [Parameter(Mandatory)][ValidatePattern('^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$')][string]$Version,
  [Parameter(Mandatory)][string]$GameManagedDir,
  [ValidateSet('Portable','Lite')][string[]]$Flavors=@('Portable','Lite'),
  [string]$PreparedCacheDirectory='',
@@ -106,6 +106,7 @@ foreach($flavor in $Flavors){
  Copy-Item -LiteralPath (Join-Path $root 'licenses') -Destination $bundle -Recurse
  Copy-Item -LiteralPath (Join-Path $root 'third-party/highs/LICENSE.txt') -Destination (Join-Path $bundle 'licenses/HiGHS.txt')
  Copy-Item -LiteralPath (Join-Path $root 'THIRD_PARTY_NOTICES.md') -Destination $bundle
+ Copy-Item -LiteralPath (Join-Path $root 'LICENSE') -Destination $bundle
  foreach($repository in $tools){
   $module=Join-Path $root ('standalone/'+$repository);$guide=Join-Path $bundle ('docs/tools/'+$repository);[IO.Directory]::CreateDirectory($guide)|Out-Null
   foreach($name in @('README.md','README.en.md','README_EN.md','THIRD_PARTY_NOTICES.md')){if(Test-Path -LiteralPath (Join-Path $module $name)){Copy-Item -LiteralPath (Join-Path $module $name) -Destination $guide}}
@@ -163,7 +164,7 @@ foreach($flavor in $Flavors){
    $target=Join-Path $PreparedCacheDirectory ([IO.Path]::GetRelativePath($suiteCache,$file.FullName));[IO.Directory]::CreateDirectory((Split-Path -Parent $target))|Out-Null
    Copy-Item -LiteralPath $file.FullName -Destination $target -Force
   }
-  foreach($id in @('fishing','sichuan','rhythm','territory','equipment','apostle-defense','infinite-gacha','secret-vision','fiend-hunter')){
+  foreach($id in @('fishing','sichuan','rhythm','territory','equipment','apostle-defense','infinite-gacha','secret-vision','fiend-hunter','mansion-runaway')){
    $check=Join-Path $checks ('tools/'+$id);[IO.Directory]::CreateDirectory($check)|Out-Null
    Run $exe @('--tool',$id,'--smoke',$check) ('tool-'+$id)
    if(!(Get-ChildItem -LiteralPath $check -File -Recurse -Filter '*.png')){throw "Missing tool UI evidence: $id"}
@@ -201,5 +202,5 @@ Copy-Item -LiteralPath (Join-Path $tables 'manifest.json') -Destination (Join-Pa
 $before|Set-Content -LiteralPath (Join-Path $output 'build-inputs.json') -Encoding utf8
 Get-ChildItem -LiteralPath $output -Recurse -File|Where-Object Extension -in @('.exe','.zip')|ForEach-Object {"$((Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant())  $([IO.Path]::GetRelativePath($output,$_.FullName))"}|Set-Content -LiteralPath (Join-Path $output 'SHA256SUMS.txt') -Encoding ascii
 $validation|ConvertTo-Json -Depth 7|Set-Content -LiteralPath (Join-Path $output 'validation-scope.json') -Encoding utf8
-[ordered]@{validationScope=$validation.scope;validationBaseline=$validation.baseline;version=$Version;product='Dustweave';channel='private-release';flavors=$flavorReports;privatePluginIncluded=$false;pythonIncluded=$false;gameAssembliesIncluded=$false;realGameTouched=$false;runtimeVerification='source_implemented_pending_runtime';publicReleaseApproved=$false;buildDirectory=$work}|ConvertTo-Json -Depth 7|Set-Content -LiteralPath (Join-Path $output 'release.json') -Encoding utf8
-Write-Host "Private release package ready: $output"
+[ordered]@{validationScope=$validation.scope;validationBaseline=$validation.baseline;version=$Version;product='Dustweave';channel='release-candidate';flavors=$flavorReports;privatePluginIncluded=$false;pythonIncluded=$false;gameAssembliesIncluded=$false;realGameTouched=$false;runtimeVerification='source_implemented_pending_runtime';publicReleaseApproved=$false;buildDirectory=$work}|ConvertTo-Json -Depth 7|Set-Content -LiteralPath (Join-Path $output 'release.json') -Encoding utf8
+Write-Host "Release candidate package ready: $output"

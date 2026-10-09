@@ -6,7 +6,7 @@
 
 - Windows x64 with a working native BrownDust II PC client and a normal game login.
 - A complete Dustweave package. Portable includes the runtime; Lite requires .NET 8 Desktop Runtime x64.
-- The source repository remains private. First installations and manual upgrades use complete packages from [GitHub Releases](https://github.com/MadestSamurai/Dustweave/releases), which requires repository access. The domestic route is reserved for in-app OTA. GitHub's Source code archive is not an application package.
+- Source is MIT licensed: [Dustweave](https://github.com/MadestSamurai/Dustweave). First installations and manual upgrades use complete packages from [GitHub Releases](https://github.com/MadestSamurai/Dustweave/releases). The domestic route is reserved for in-app OTA. GitHub's Source code archive is not an application package.
 
 Run `Dustweave.exe`. Keep the accompanying `data`, `flows`, `connection` and other package directories. A source-build output folder is for development and is not a complete distribution.
 

@@ -86,7 +86,22 @@ static class SandboxCases
         new SessionService(new SessionVault(boxVault.RootDirectory)).SynchronizeCaptured(boxRefreshed with {CapturedAtUtc=DateTimeOffset.UtcNow});
         Check(SessionRegistry.SessionsEqual(boxVault.LoadFixedSlot(1),nextHost),"unchanged sandbox registry cannot roll back the next host renewal");
         Check(!System.Text.Encoding.UTF8.GetString(File.ReadAllBytes(handoff)).Contains("synthetic-box-renewed"),"return handoff keeps token bytes encrypted");
-        string registrationAccount=BD2Daily.DailyIdentity.MemberKey("1000001"), registrationBox=DailySandbox.BoxName(registrationAccount);
+        var metadataOnly = hostRefreshed with { CapturedAtUtc = DateTimeOffset.UtcNow, Entries = hostRefreshed.Entries.Select(e =>
+            e.Name.Contains("auth_member") ? e with { DataBase64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("{\"member_id\":\"1000001\",\"profile\":\"changed\"}")) } : e).ToArray() };
+        Check(SessionRegistry.SameAuthentication(metadataOnly,hostRefreshed),"profile metadata is not a renewed login token");
+        Check(hostService.PreserveCredentialAge(metadataOnly).CapturedAtUtc==hostRefreshed.CapturedAtUtc,"saving a known token cannot give it a new age");
+        Check(!SessionRegistry.SameAuthentication(hostRefreshed,boxRefreshed),"real token renewal changes the authentication stamp");
+        foreach(var disabled in new[] { hostRefreshed, hostRefreshed with {CapturedAtUtc=DateTimeOffset.UtcNow} })
+        {
+            bool refused=false;
+            try { DailySandboxSessions.RequireFreshReplacement(disabled,SessionRegistry.AuthenticationStamp(hostRefreshed),hostRefreshed.CapturedAtUtc); }
+            catch(InvalidOperationException){refused=true;}
+            Check(refused,"disabled token cannot be revived by import or a newer save date");
+        }
+        bool staleRejected=false;try{DailySandboxSessions.RequireFreshReplacement(original,SessionRegistry.AuthenticationStamp(hostRefreshed),hostRefreshed.CapturedAtUtc);}catch(InvalidOperationException){staleRejected=true;}
+        Check(staleRejected,"an older different token cannot repair an invalidated login");
+        DailySandboxSessions.RequireFreshReplacement(nextHost,SessionRegistry.AuthenticationStamp(boxRefreshed),boxRefreshed.CapturedAtUtc);
+        cases.Add("a genuinely new sign-in can replace disabled sandbox credentials");        string registrationAccount=BD2Daily.DailyIdentity.MemberKey("1000001"), registrationBox=DailySandbox.BoxName(registrationAccount);
         string registrationState=Path.Combine(output,"registration",registrationBox), registrationRoot=Path.Combine(registrationState,"root");
         Directory.CreateDirectory(registrationState);
         string GamePath()=>@"C:\Game\BrownDust II.exe";
@@ -118,6 +133,35 @@ static class SandboxCases
         DailyJson.Write(markerFile,restoredRegistration);
         DailyJson.Write(bindingFile,registrationBinding with {Account=b});
         Reject(()=>DailySandboxRegistration.Resolve(registrationAccount,registrationState,registrationRoot,GamePath),"valid host index cannot conceal conflicting inner binding");
+        // A human confirmation updates auxiliary state even if login stays the same.
+        string clientStamp = new('A',64);
+        var consent = new SessionAgreementSnapshot(clientStamp, Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("1791500000\0")));
+        var accepted = nextHost with { Agreement = consent, CapturedAtUtc = DateTimeOffset.UtcNow };
+        boxVault.RememberObserved(nextHost);
+        boxService.SynchronizeCaptured(accepted);
+        var capturedConsent = boxVault.LoadFixedSlot(1);
+        Check(capturedConsent.Agreement == consent, "agreement-only update is captured without token renewal");
+        Check(capturedConsent.CapturedAtUtc == nextHost.CapturedAtUtc, "agreement update never rejuvenates a token");
+        boxVault.WriteLaunchSnapshot(capturedConsent, handoff);
+        hostService.AcceptTransferred(hostVault.ReadLaunchSnapshot(handoff), "1000001");
+        Check(hostVault.LoadFixedSlot(1).Agreement == consent, "real agreement record survives encrypted sandbox return");
+        Check(SessionRegistry.ShouldRestoreAgreement(capturedConsent, false, clientStamp), "same-client saved consent may restore a missing local record");
+        Check(!SessionRegistry.ShouldRestoreAgreement(capturedConsent, true, clientStamp), "existing local consent record is never overwritten");
+        Check(!SessionRegistry.ShouldRestoreAgreement(capturedConsent, false, new string('B',64)), "game update does not replay an old agreement record");
+        Check(!SessionRegistry.ShouldRestoreAgreement(nextHost, false, clientStamp), "legacy snapshot cannot invent acceptance");
+        Check(SessionRegistry.SameAuthentication(capturedConsent, nextHost), "agreement metadata never becomes part of credential identity");
+        Check(!SessionRegistry.ValidAgreement(consent with {ClientStamp=null!}), "null agreement metadata does not break a saved login");
+        SessionRegistry.ValidateSlot(nextHost with {Agreement=consent with {DateBase64="bad"}});
+        Check(!SessionRegistry.ValidAgreement(consent with {DateBase64="bad"}), "malformed agreement date rejected");
+        Check(!SessionRegistry.ValidAgreement(consent with {DateBase64=Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("invalid"))}), "non-timestamp agreement date rejected");
+        hostService.AcceptTransferred(nextHost, "1000001");
+        Check(hostVault.LoadFixedSlot(1).Agreement == consent, "older credential-only snapshot does not discard captured consent");
+        Check(SessionService.LatestSameAccount(accepted, n => n == 1 ? nextHost with {CapturedAtUtc=accepted.CapturedAtUtc.AddMinutes(1)} : null).Agreement == consent,
+            "selecting equal-token legacy copy retains genuine consent");
+        Check(SessionService.LatestSameAccount(nextHost, n => n == 1 ? capturedConsent : null).Agreement == consent,
+            "explicit save from a credential-only host preserves same-age returned consent");
+        Check(SessionService.LatestSameAccount(nextHost, n => n == 1 ? capturedConsent with {Entries=original.Entries} : null).Agreement == null,
+            "consent from different credentials is not attached to another login");
         return Task.CompletedTask;
     }
 }

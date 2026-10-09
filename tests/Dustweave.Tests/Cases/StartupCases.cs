@@ -212,7 +212,28 @@ internal static class StartupCases
             Check(f.env.TitleClicks == 0, "recovery entered a different account");
             Check(new DailyProfiles(f.path).Read().Count == 0, "wrong account saved");
         });
-        await Async("download recovery hands ownership back before identity proof", async () => { var f = Fixture(); f.env.TitleBlock = "resource network error"; f.env.StartupRecoverySucceeds = true; await f.run.ConnectCurrentAsync(); Check(f.env.StartupRecoveryCalls == 1 && f.env.TitleClicks == 1, "recovery repeated or title not advanced"); Check(DailyJson.TryRead<StartupPermit>(Path.Combine(f.path, "startup-permit.json"))!.Owner == "", "recovery kept permit"); });
+        await Async("agreement wait survives login timeout then resumes without accepting terms", async () =>
+        {
+            var f = Fixture(200);
+            f.env.TitleBlock = "请先处理启动页弹窗：AgreementPopupUI";
+            var waiting = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            f.run.Progress += p => { if (p.Message.Contains(DailyLoginReadiness.AgreementMessage)) waiting.TrySetResult(); };
+            var pending = f.run.ConnectCurrentAsync();
+            await waiting.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            await Task.Delay(350);
+            Check(!pending.IsCompleted, "human decision consumed authentication timeout");
+            Check(f.env.StartupRecoveryCalls == 0 && f.env.TitleClicks == 0, "attempted to act on service agreement");
+            f.env.TitleBlock = "";
+            await pending;
+            Check(f.env.TitleClicks == 1 && new DailyProfiles(f.path).Read().Count == 1, "did not resume after user confirmation");
+        });
+        await Async("agreement wait remains cancellable", async () =>
+        {
+            var f = Fixture(); f.env.TitleBlock = "请先处理启动页弹窗：AgreementPopupUI";
+            f.run.Progress += p => { if (p.Message.Contains(DailyLoginReadiness.AgreementMessage)) f.run.Stop(); };
+            await f.run.ConnectCurrentAsync();
+            Check(f.env.TitleClicks == 0 && f.env.StartupRecoveryCalls == 0, "cancelled agreement caused input");
+        });        await Async("download recovery hands ownership back before identity proof", async () => { var f = Fixture(); f.env.TitleBlock = "resource network error"; f.env.StartupRecoverySucceeds = true; await f.run.ConnectCurrentAsync(); Check(f.env.StartupRecoveryCalls == 1 && f.env.TitleClicks == 1, "recovery repeated or title not advanced"); Check(DailyJson.TryRead<StartupPermit>(Path.Combine(f.path, "startup-permit.json"))!.Owner == "", "recovery kept permit"); });
         await Async("unrecognized modal probes only once and never clicks", async () => { var f = Fixture(60); f.env.TitleBlock = "unknown"; await Reject(f.run.ConnectCurrentAsync()); Check(f.env.StartupRecoveryCalls == 1 && f.env.TitleClicks == 0, "unknown dialog retried"); });
         await Async("connect advances from title then validates player", async () => { var f = Fixture(); await f.run.ConnectCurrentAsync(); Check(f.env.TitleClicks == 1, "not exactly one click"); Check(new DailyProfiles(f.path).Read().Single().LastVerifiedUtc != null, "missing game identity proof"); Check(DailyJson.TryRead<StartupPermit>(Path.Combine(f.path, "startup-permit.json"))!.Owner == "", "kept startup permission"); });
         await Async("title that never leaves times out without repeated clicks", async () =>

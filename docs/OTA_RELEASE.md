@@ -4,18 +4,18 @@
 
 The host uses its own updater, with signed differential packages from 0.9.1 and a full-package fallback. It does not use Velopack. The active source is
 https://bd2.madsam.work/updates/dustweave/updates.json.
-A public GitHub/Vultr update mirror is deferred; the existing private GitHub release archives the same packages. The transport compares multiple signed sources and can fail over; production currently configures only the domestic source. There is no empty international selector or repeated probe of a private repository.
+A public GitHub/Vultr update mirror is deferred; the GitHub release archives the same packages. The transport compares multiple signed sources and can fail over; production currently configures only the domestic source. There is no empty international selector or repeated probe of a private repository.
 
 目前只启用国内更新站点。0.9.1 起优先使用适合当前版本和包类型的差分包，允许直接跨过中间版本；无合适差分时下载完整包。定时执行、更新说明及空闲确认沿用主程序。
 源码、账号、连接凭据与插件实现不进入静态更新目录。第一次必须手动安装带 OTA 的版本；更早版本不会凭空获得更新能力。
 
 ## Distribution policy / 分发约定
 
-首次安装和手动下载使用现有私有 GitHub Releases，需要仓库访问权限；国内服务器仅作为软件内 OTA 更新源，不在 README、入门文档或 Release 公告中提供国内完整包下载入口。后续发布继续遵循此约定。
+首次安装和手动下载使用GitHub Releases；国内服务器仅作为软件内 OTA 更新源，不在 README、入门文档或 Release 公告中提供国内完整包下载入口。后续发布继续遵循此约定。
 
 这是分发入口约定，不是 HTTP 访问限制：已发布的静态包地址保持可用，以兼容 0.9.0 更新器。0.9.0 客户端不认识差分字段，需完整更新一次；0.9.1 起才会使用差分。服务器仍需为完整包回退预留带宽。
 
-First installs and manual downloads use the existing private GitHub Releases. Do not promote domestic full-package links in README files, getting-started guides or release announcements. Domestic hosting serves in-app OTA. This is a distribution policy, not HTTP access control: existing package URLs remain reachable for updater compatibility. The 0.9.0 client still needs one full update to gain delta support; later clients prefer smaller differential packages. Budget for full-package fallback as well.
+First installs and manual downloads use the GitHub Releases. Do not promote domestic full-package links in README files, getting-started guides or release announcements. Domestic hosting serves in-app OTA. This is a distribution policy, not HTTP access control: existing package URLs remain reachable for updater compatibility. The 0.9.0 client still needs one full update to gain delta support; later clients prefer smaller differential packages. Budget for full-package fallback as well.
 
 ## Trust / 签名
 

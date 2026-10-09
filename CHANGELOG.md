@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 1.0.0-beta · 2026-10-09
+
+- First public MIT release; refreshed Chinese/English documentation and real application screenshots in both themes. Normal GitHub Release with Portable and Lite packages.
+- Includes MANSION RUNAWAY, smooth turns, normal/challenge progression and the 80-chain goal.
+- Preserves game-written agreement records for matching isolated accounts/clients and pauses login timing while awaiting confirmation.
+- Adds semantic release-version ordering to updates and plugin checks. This release is installed manually; the legacy OTA feed is preserved.
+- 首次公开 MIT 发布，汇总 0.9.13 后的小游戏及隔离登录改进，更新双语文档与深浅主界面截图。完整说明见 [1.0.0-beta](docs/releases/1.0.0-beta.md)。
+
 ## 0.9.13 · 2026-10-09
 
 - Added local plugin management, optional Sandboxie account instances and central concurrent queues; corrected credential handoff and registration recovery.

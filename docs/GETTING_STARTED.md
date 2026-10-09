@@ -6,7 +6,7 @@
 
 - Windows x64，已正常安装并登录的 BrownDust II 原生 PC 客户端。
 - 完整解压的 Dustweave 包：Portable 包含运行时；Lite 需要 .NET 8 Desktop Runtime x64。
-- 源码仓库保持私有，首次安装或手动升级请从 [GitHub Releases](https://github.com/MadestSamurai/Dustweave/releases) 获取完整包，需要仓库访问权限。国内线路仅作为软件内 OTA 更新入口。GitHub 的 Source code 压缩包不是安装包。
+- 首次安装或手动升级请从 [GitHub Releases](https://github.com/MadestSamurai/Dustweave/releases) 获取完整包。国内线路仅作为软件内 OTA 更新入口。GitHub 的 Source code 压缩包不是安装包。
 
 启动 `Dustweave.exe`。程序文件夹中的 `data`、`flows`、`connection` 等目录是分发内容，需一同保留。源代码构建输出仅供开发，不等于完整用户包。
 

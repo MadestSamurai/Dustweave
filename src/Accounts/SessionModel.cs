@@ -7,7 +7,14 @@ internal sealed record SessionSlot(
     string Alias,
     DateTimeOffset CapturedAtUtc,
     string RegistrySubKey,
-    IReadOnlyList<RegistryEntrySnapshot> Entries);
+    IReadOnlyList<RegistryEntrySnapshot> Entries)
+{
+    public SessionAgreementSnapshot? Agreement { get; init; }
+}
+
+// An existing game-written record, bound to the client that produced it.
+// Never create an acceptance date or infer agreement from login success.
+internal sealed record SessionAgreementSnapshot(string ClientStamp, string DateBase64);
 
 internal sealed record RegistryEntrySnapshot(
     string Name,

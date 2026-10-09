@@ -79,3 +79,19 @@ Sign-in handoff now captures renewed credentials before changing contexts and re
 A missing host `instance.json` is distinguished from an explicit conflicting or unreadable record. Recovery requires the configured sandbox root, inner account binding and decryptable account snapshot to agree. The host marker is created atomically without replacing an existing record. Account credentials, game registry and game progress are untouched. Empty, unused directories do not imply an ownership conflict. Genuine conflicts remain visible on the affected account; queued peers can continue.
 
 缺失外层登记不再等同于账号冲突。仅当 Sandboxie 实际目录、内部绑定和可解密账号记录三者一致时，自动补建外层登记；存在但不可读、属于其他账号或目录变化时保留现场并说明。不会修改登录令牌、游戏注册表或进度。2026-10-08 已在实际桌面上下文恢复本机三份缺失登记，并用现有 0.9.7 成品验证回收流程不再被此错误阻断。完整登录与日常执行不在本次验证内。
+
+## 0.9.17 agreement and credential distinction / 协议等待与凭据区分
+
+2026-10-09：两份隔离游戏重开后显示 AgreementPopupUI，实际令牌与保存快照一致；用户确认协议后，两份日志均记录成功登录，没有本次令牌错误。旧日志中的错误 120 属于此前运行，不能用于解释这次协议等待。已修复主程序在等待协议确认期间仍消耗登录超时的问题：保留队列、明确提示，确认后继续，不代替用户接受协议。
+
+另外修复同令牌重新保存／资料变化造成采集年龄更新，以及状态不完整时重复导入相同旧凭据的缺口。尚未证明旧错误 120 的唯一根因；新保护的实机覆盖与合成回归须分别记录。新成品详见 [0.9.17](releases/0.9.17.md)。
+
+### 2026-10-09 协议记录持久化
+
+静态调用链：`NeonTerms.Agree` 读取 `NeonTermsService.Data.AgreeDate`，由 `NeoDataCacheManager` 经 PlayerPrefs 保存 `neon_terms_agree_date`（Windows 注册表键 `neon_terms_agree_date_h1551265581`）。写入调用 `PlayerPrefs.Save()`；SDK 的 `OnLogoutAsync` 和认证清理会删除记录。
+
+当前客户端的 `PlatformRuler` 中 `IsMobileService` 对应实现也读取 `NeonTerms.Agree`，不能仅按方法名称推断为 PC 每次强制弹窗。沿完整调用链检查，该记录有效时不会进入协议弹窗分支。
+
+10:40 两个隔离上下文的只读回查均看到了用户 10:19 手动确认时写入的日期，主机没有这条记录。旧账号快照只覆盖五项登录字段，协议记录不在交接范围；已修复为可选的加密快照附属记录。协议原值与客户端程序集摘要一起保存，同身份、同客户端且本地缺失时才恢复，不覆盖现有记录，不制造日期，不操作广告偏好。变更协议记录不提升令牌时间；未知可选记录不阻塞有效登录。
+
+实机边界：已确认本次两窗手动确认后登录成功、日期写入沙盒；未证明历史每一次弹窗均由同一原因引起，未替用户关闭当前游戏进行重启验证。后续交接诊断追加 `agreement` 状态（present / missing / present-unrecognized / unavailable），不记录凭据。

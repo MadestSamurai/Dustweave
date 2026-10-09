@@ -17,13 +17,12 @@ public static class DailyUpdates
 {
     public const string FeedUrl = "https://bd2.madsam.work/updates/dustweave/updates.json";
     public const long MaxArchive = 600L * 1024 * 1024;
-    public static Version VersionOf(string value) => Version.TryParse(value, out var version) && version.Build >= 0 && version.Revision < 0
-        ? version : throw new InvalidDataException("updates.invalid_feed");
+    public static DailyVersion VersionOf(string value) => DailyVersion.Parse(value);
     public static void Validate(DailyUpdateFeed feed)
     {
         if (feed.Schema != 2 || feed.Product != "Dustweave" || feed.Channel != "stable" || feed.Releases.Length is < 1 or > 300)
             throw new InvalidDataException("updates.invalid_feed");
-        var versions = new HashSet<Version>();
+        var versions = new HashSet<DailyVersion>();
         foreach (var release in feed.Releases)
         {
             var version = VersionOf(release.Version);
@@ -73,7 +72,7 @@ public static class DailyUpdates
     public static bool AllowedFile(string name)
     {
         if (string.IsNullOrWhiteSpace(name) || name.Contains('\\') || name.Contains(':') || name.StartsWith('/') || name.Split('/').Any(s => s is "" or "." or ".." || s.EndsWith('.') || s.EndsWith(' '))) return false;
-        return name is "Dustweave.exe" or "utility-host.json" or "tools.json" or "update-package.json" or "README.md" or "README.en.md" or "THIRD_PARTY_NOTICES.md"
+        return name is "Dustweave.exe" or "utility-host.json" or "tools.json" or "update-package.json" or "README.md" or "README.en.md" or "THIRD_PARTY_NOTICES.md" or "LICENSE"
             || name.StartsWith("data/", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal)
             || name.StartsWith("flows/", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal)
             || name.StartsWith("connection/specs/", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal)

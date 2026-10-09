@@ -2,6 +2,11 @@ namespace Dustweave;
 
 public static class DailyLoginReadiness
 {
+    public const string AgreementMessage = "等待你在游戏内确认服务协议；登录凭据仍保留，确认后会自动继续，无需重新保存账号。";
+    public static bool NeedsAgreement(DailySnapshot? snapshot) => snapshot?.Startup?.Visible == true
+        && snapshot.Startup.BlockReason.Split(new[] { '：', '、', ':' }, StringSplitOptions.RemoveEmptyEntries)
+            .Any(x => x.Trim() == "AgreementPopupUI");
+
     public static void Check(DailySnapshot? snapshot, GameInstance game, long now)
     {
         if (snapshot == null || snapshot.ProcessId != game.ProcessId || snapshot.ProcessStartTicks != game.StartTicks

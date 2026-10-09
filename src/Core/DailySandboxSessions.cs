@@ -7,7 +7,20 @@ namespace Dustweave;
 public static class DailySandboxSessions
 {
     public const string ExportSwitch = "--export-sandbox-session";
-    public sealed record ExportResult(string Account, string Nonce, bool Complete);
+    public sealed record ExportResult(string Account, string Nonce, bool Complete)
+    {
+        public string AuthenticationStamp { get; init; } = "";
+        public DateTimeOffset ObservedUtc { get; init; }
+        public int Schema { get; init; }
+    }
+    internal const string RenewLoginMessage = "这个隔离账号的自动登录已失效或关闭，未重新写入旧凭据。请在普通窗口重新登录并保存此账号，再打开隔离窗口。";
+
+    internal static void RequireFreshReplacement(SessionSlot replacement, string disabledStamp, DateTimeOffset observedUtc)
+    {
+        if (disabledStamp.Length == 0 || SessionRegistry.AuthenticationStamp(replacement) == disabledStamp
+            || replacement.CapturedAtUtc <= observedUtc)
+            throw new InvalidOperationException(RenewLoginMessage);
+    }
     private static string TransferDirectory => Path.Combine(new SessionVault().RootDirectory,"transfers");
 
     public static void Export(string account, string nonce)
@@ -30,7 +43,29 @@ public static class DailySandboxSessions
             vault.WriteLaunchSnapshot(newest,Path.Combine(TransferDirectory,nonce+".bd2slot"));
             complete = true;
         }
-        DailyJson.Write(Path.Combine(TransferDirectory,nonce+".json"),new ExportResult(account,nonce,complete));
+        var identity = SessionRegistry.ReadAuthenticationIdentity();
+        if (identity.Member.Length > 0 && DailyIdentity.MemberKey(identity.Member) != account)
+            throw new InvalidDataException("隔离窗口已登录其他账号，未导出凭据。");
+        var observed = vault.ReadObserved();
+        if (observed != null && DailyIdentity.MemberKey(SessionIdentity.GetMemberId(observed) ?? "") != account) observed = null;
+        DailyJson.Write(Path.Combine(TransferDirectory,nonce+".json"),new ExportResult(account,nonce,complete) {
+            Schema = 2,
+            AuthenticationStamp = identity.Stamp.Length > 0 ? identity.Stamp : observed == null ? "" : SessionRegistry.AuthenticationStamp(observed),
+            ObservedUtc = observed?.CapturedAtUtc ?? binding.ImportedSessionUtc
+        });
+    }
+
+    internal static void WriteAudit(string account, string action, string observed, string selected)
+    {
+        // Diagnostic failure cannot invalidate a successful credential handoff.
+        try
+        {
+            string path = Path.Combine(DailyIdentity.DataRoot, "session-handoff", account + ".json");
+            DailyJson.Write(path, new { atUtc = DateTimeOffset.UtcNow, account, action,
+                box = SandboxProcessScope.CurrentBox, observed, selected, agreement = SessionRegistry.AgreementDiagnostic() });
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
     }
 
     internal static void Collect(string account, SessionVault vault, string executable)
@@ -59,10 +94,26 @@ public static class DailySandboxSessions
             await DailySandbox.Run(installation,"Start.exe",["/box:"+box,"/silent","/wait",Path.GetFullPath(executable),ExportSwitch,account,nonce],token).ConfigureAwait(false);
             var result=DailyJson.TryRead<ExportResult>(resultPath);
             if(result?.Account!=account || result.Nonce!=nonce) throw new IOException("未收到隔离登录状态，已停止启动，避免使用旧凭据。");
-            if (!result.Complete) return; // Never revive credentials disabled by the game.
+            if (!result.Complete)
+            {
+                if (result.Schema != 2) throw new InvalidOperationException(RenewLoginMessage);
+                var replacement = vault.TryLoadFixedSlot(binding.Slot);
+                if (replacement == null || DailyIdentity.MemberKey(SessionIdentity.GetMemberId(replacement) ?? "") != account)
+                    throw new InvalidOperationException(RenewLoginMessage);
+                replacement = SessionService.LatestSameAccount(replacement, vault.TryLoadFixedSlot);
+                RequireFreshReplacement(replacement, result.AuthenticationStamp, result.ObservedUtc);
+                WriteAudit(account, "disabled-replaced-by-new-login", result.AuthenticationStamp, SessionRegistry.AuthenticationStamp(replacement));
+                return;
+            }
             var returned=vault.ReadLaunchSnapshot(sessionPath);
             if(DailyIdentity.MemberKey(SessionIdentity.GetMemberId(returned)??"")!=account) throw new InvalidDataException("返回的登录凭据不属于所选账号。");
             new SessionService(vault).AcceptTransferred(returned,SessionIdentity.GetMemberId(returned)!);
+            WriteAudit(account, "collected", result.AuthenticationStamp, SessionRegistry.AuthenticationStamp(returned));
+        }
+        catch (Exception e)
+        {
+            WriteAudit(account, "collection-failed", "", e.GetType().Name);
+            throw;
         }
         finally { File.Delete(sessionPath); File.Delete(resultPath); }
     }

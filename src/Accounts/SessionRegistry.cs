@@ -140,7 +140,7 @@ internal static class SessionRegistry
             alias,
             DateTimeOffset.UtcNow,
             SessionConstants.RegistrySubKey,
-            entries);
+            entries) { Agreement = ReadAgreement(key) };
         ValidateSlot(slot);
         return slot;
     }
@@ -182,6 +182,7 @@ internal static class SessionRegistry
 
         key.Flush();
         VerifyRegistryMatches(key, target);
+        RestoreAgreement(target);
     }
 
     internal static void ClearAndVerify()
@@ -209,6 +210,54 @@ internal static class SessionRegistry
         }
     }
 
+    // Login flags and member-profile metadata are not a token renewal. Keep a
+    // stable, one-way stamp so the handoff can reject a disabled token without
+    // placing credentials in diagnostics or transfer result JSON.
+    internal static string AuthenticationStamp(SessionSlot slot)
+    {
+        string? member = SessionIdentity.GetMemberId(slot);
+        if (string.IsNullOrEmpty(member)) return "";
+        var names = SessionConstants.RequiredRegistryValues.Where(x => !x.MustBeEnabled && !x.RegistryName.Contains("auth_member"));
+        var parts = new List<string> { member };
+        foreach (var definition in names)
+        {
+            var entry = slot.Entries.FirstOrDefault(x => x.Name == definition.RegistryName);
+            if (entry == null || entry.Kind != definition.ExpectedKind.ToString()) return "";
+            byte[] bytes;
+            try { bytes = Convert.FromBase64String(entry.DataBase64); } catch (FormatException) { return ""; }
+            try
+            {
+                if (bytes.Length == 0) return "";
+                parts.Add(Convert.ToBase64String(bytes));
+            }
+            finally { System.Security.Cryptography.CryptographicOperations.ZeroMemory(bytes); }
+        }
+        return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(string.Join("|", parts))));
+    }
+
+    internal static bool SameAuthentication(SessionSlot left, SessionSlot right)
+    {
+        string stamp = AuthenticationStamp(left);
+        return stamp.Length > 0 && stamp == AuthenticationStamp(right);
+    }
+
+    internal static (string Member, string Stamp) ReadAuthenticationIdentity()
+    {
+        using var key = Registry.CurrentUser.OpenSubKey(SessionConstants.RegistrySubKey);
+        if (key == null) return ("", "");
+        var entries = new List<RegistryEntrySnapshot>();
+        foreach (var definition in SessionConstants.RequiredRegistryValues.Where(x => !x.MustBeEnabled))
+        {
+            var value = key.GetValue(definition.RegistryName);
+            if (value == null || key.GetValueKind(definition.RegistryName) != definition.ExpectedKind) return ("", "");
+            byte[] bytes = EncodeRegistryValue(definition.ExpectedKind, value);
+            try { entries.Add(new(definition.RegistryName, definition.ExpectedKind.ToString(), Convert.ToBase64String(bytes))); }
+            finally { System.Security.Cryptography.CryptographicOperations.ZeroMemory(bytes); }
+        }
+        // Deliberately not a launchable slot: disabled login flags are not invented.
+        var identity = new SessionSlot(SessionConstants.SchemaVersion, "identity-only", default, SessionConstants.RegistrySubKey, entries);
+        return (SessionIdentity.GetMemberId(identity) ?? "", AuthenticationStamp(identity));
+    }
     internal static bool SessionsEqual(SessionSlot left, SessionSlot right)
     {
         ValidateSlot(left);
@@ -241,6 +290,78 @@ internal static class SessionRegistry
         }
 
         return true;
+    }
+
+    internal const string AgreementRegistryName = "neon_terms_agree_date_h1551265581";
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> AgreementClients = new();
+
+    private static string AgreementClientStamp()
+    {
+        try
+        {
+            string managed = Path.Combine(Path.GetDirectoryName(GameLauncher.ResolveExecutable())!, "BrownDust II_Data", "Managed");
+            var paths = new[] { "Assembly-CSharp.dll", "Neo.Unity.Neon.dll" }.Select(n => new FileInfo(Path.Combine(managed, n))).ToArray();
+            if (paths.Any(f => !f.Exists)) return "";
+            string key = string.Join("|", paths.Select(f => $"{f.FullName}:{f.Length}:{f.LastWriteTimeUtc.Ticks}"));
+            return AgreementClients.GetOrAdd(key, _ => {
+                using var hash = System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.SHA256);
+                foreach (var f in paths) { using var stream = f.OpenRead(); hash.AppendData(System.Security.Cryptography.SHA256.HashData(stream)); }
+                return Convert.ToHexString(hash.GetHashAndReset());
+            });
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SessionManagerException) { return ""; }
+    }
+
+    internal static bool ValidAgreement(SessionAgreementSnapshot? agreement)
+    {
+        if (agreement == null || agreement.ClientStamp == null || agreement.ClientStamp.Length != 64 || !agreement.ClientStamp.All(Uri.IsHexDigit) || agreement.DateBase64 == null) return false;
+        try
+        {
+            byte[] bytes = Convert.FromBase64String(agreement.DateBase64);
+            if (bytes.Length is < 1 or > 32) return false;
+            string text = Encoding.UTF8.GetString(bytes).TrimEnd('\0');
+            return long.TryParse(text, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out long seconds)
+                && seconds > 0 && seconds <= DateTimeOffset.UtcNow.AddMinutes(5).ToUnixTimeSeconds();
+        }
+        catch (FormatException) { return false; }
+    }
+
+    internal static string AgreementDiagnostic()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(SessionConstants.RegistrySubKey);
+            if (key?.GetValue(AgreementRegistryName) == null) return "missing";
+            return ReadAgreement(key) == null ? "present-unrecognized" : "present";
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return "unavailable"; }
+    }
+
+    private static SessionAgreementSnapshot? ReadAgreement(RegistryKey key)
+    {
+        if (key.GetValue(AgreementRegistryName) is not byte[] bytes) return null;
+        var record = new SessionAgreementSnapshot(AgreementClientStamp(), Convert.ToBase64String(bytes));
+        return ValidAgreement(record) ? record : null;
+    }
+
+    // Missing legacy data is not consent. Preserve existing local data, including
+    // an invalid/new-format record: only the game may decide what that means.
+    internal static bool ShouldRestoreAgreement(SessionSlot target, bool localRecordPresent, string clientStamp)
+        => !localRecordPresent && ValidAgreement(target.Agreement) && target.Agreement!.ClientStamp == clientStamp;
+
+    internal static void RestoreAgreement(SessionSlot target)
+    {
+        ValidateSlot(target);
+        if (target.Agreement == null) return;
+        using var key = Registry.CurrentUser.OpenSubKey(SessionConstants.RegistrySubKey, writable: true);
+        if (key == null || !ShouldRestoreAgreement(target, key.GetValue(AgreementRegistryName) != null, AgreementClientStamp())) return;
+        var current = ReadAuthenticationIdentity();
+        if (current.Stamp != AuthenticationStamp(target) || current.Member != SessionIdentity.GetMemberId(target)) return;
+        byte[] bytes = Convert.FromBase64String(target.Agreement.DateBase64);
+        key.SetValue(AgreementRegistryName, bytes, RegistryValueKind.Binary);
+        key.Flush();
+        if (key.GetValue(AgreementRegistryName) is not byte[] actual || !actual.AsSpan().SequenceEqual(bytes))
+            throw new SessionManagerException("已保存的协议记录恢复后校验失败，请在游戏内确认。");
     }
 
     internal static void ValidateSlot(SessionSlot slot)

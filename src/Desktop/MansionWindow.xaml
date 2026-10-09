@@ -1,0 +1,36 @@
+<Window x:Class="Dustweave.Desktop.MansionWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:l="clr-namespace:Dustweave.Desktop" Title="MANSION RUNAWAY · Dustweave" Width="820" Height="700" MinWidth="720" MinHeight="620" WindowStartupLocation="CenterScreen">
+ <Grid Margin="24,6,24,24">
+  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <StackPanel Margin="0,0,0,18"><TextBlock Text="{l:Tr mansion.title}" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="{l:Tr mansion.subtitle}" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,6,0,0"/></StackPanel>
+  <Grid Grid.Row="1" Margin="0,0,0,20"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+   <StackPanel><TextBlock Text="{l:Tr mansion.stage}" Foreground="{DynamicResource MutedInk}" FontSize="12"/><TextBlock x:Name="StageText" Text="—" FontSize="26" Margin="0,3,0,0"/></StackPanel>
+   <StackPanel Grid.Column="1"><TextBlock Text="{l:Tr mansion.candy}" Foreground="{DynamicResource MutedInk}" FontSize="12"/><TextBlock x:Name="CandyText" Text="—" FontSize="26" Margin="0,3,0,0"/></StackPanel>
+   <StackPanel Grid.Column="2"><TextBlock Text="{l:Tr mansion.time}" Foreground="{DynamicResource MutedInk}" FontSize="12"/><TextBlock x:Name="TimeText" Text="—" FontSize="26" Margin="0,3,0,0"/></StackPanel>
+  </Grid>
+  <Grid Grid.Row="2"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="220"/></Grid.ColumnDefinitions>
+   <Border Background="{DynamicResource SurfaceMuted}" CornerRadius="12" Padding="10"><Grid><l:MansionMap x:Name="Map"/><TextBlock x:Name="EmptyText" Text="{l:Tr mansion.empty}" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" TextAlignment="Center" VerticalAlignment="Center" Margin="30"/></Grid></Border>
+   <ScrollViewer Grid.Column="1" Margin="24,0,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel>
+    <TextBlock Text="{l:Tr mansion.mode}" FontWeight="SemiBold" Margin="0,0,0,10"/>
+    <RadioButton Foreground="{DynamicResource Ink}" x:Name="NormalMode" Content="{l:Tr mansion.normal}" IsChecked="True" Margin="0,0,0,12"/>
+    <RadioButton Foreground="{DynamicResource Ink}" x:Name="ChallengeMode" Content="{l:Tr mansion.challenge}" Margin="0,0,0,16"/>
+    <TextBlock Text="{l:Tr mansion.rules}" FontSize="12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,0,0,20"/>
+    <CheckBox x:Name="Goal80Box" Checked="GoalChanged" Unchecked="GoalChanged" Margin="0,0,0,8"><TextBlock Text="{l:Tr mansion.goal80}" TextWrapping="Wrap"/></CheckBox>
+    <TextBlock x:Name="GoalHint" Text="{l:Tr mansion.goal80_hint}" FontSize="12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,0,0,12" Visibility="Collapsed"/>
+    <TextBlock x:Name="GoalProgress" FontWeight="SemiBold" Margin="0,0,0,12" TextWrapping="Wrap" Visibility="Collapsed"/>
+    <CheckBox x:Name="RetryBox" IsChecked="True" Margin="0,0,0,22"><TextBlock Text="{l:Tr mansion.retry}" TextWrapping="Wrap"/></CheckBox>
+    <TextBlock x:Name="HealthText" FontWeight="SemiBold" Margin="0,0,0,8"/>
+    <TextBlock x:Name="ScoreText" Foreground="{DynamicResource MutedInk}" Margin="0,0,0,16"/>
+    <TextBlock x:Name="ChainText" Foreground="{DynamicResource MutedInk}" Margin="0,0,0,16" TextWrapping="Wrap"/>
+    <TextBlock Text="{l:Tr mansion.legend}" FontSize="12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap"/>
+   </StackPanel></ScrollViewer>
+  </Grid>
+  <Grid Grid.Row="3" Margin="0,20,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <StackPanel Margin="0,0,20,0" VerticalAlignment="Center"><TextBlock x:Name="StatusText" Text="{l:Tr mansion.ready}" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock Text="{l:Tr mansion.stop_hint}" FontSize="11" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,4,0,0"/></StackPanel>
+   <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+    <Button x:Name="ConnectButton" Content="{l:Tr mansion.connect}" Click="ConnectClicked" Margin="0,0,8,0"/>
+    <Button x:Name="StopButton" Content="{l:Tr mansion.stop}" Click="StopClicked" IsEnabled="False" Margin="0,0,8,0"/>
+    <Button x:Name="StartButton" Content="{l:Tr mansion.start}" Click="StartClicked" IsEnabled="False" Style="{StaticResource PrimaryButton}"/>
+   </StackPanel>
+  </Grid>
+ </Grid>
+</Window>

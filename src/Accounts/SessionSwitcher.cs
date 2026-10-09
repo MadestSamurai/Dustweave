@@ -37,6 +37,7 @@ internal static class SessionSwitcher
         SessionSlot current = SessionRegistry.Capture("automatic-recovery");
         if (SessionRegistry.SessionsEqual(current, target))
         {
+            SessionRegistry.RestoreAgreement(target);
             return new ActivationResult(
                 target.Alias,
                 vault.Fingerprint(target),

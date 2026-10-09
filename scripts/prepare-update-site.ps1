@@ -20,7 +20,7 @@ try{
  $feed=[Text.Encoding]::UTF8.GetString($payload)|ConvertFrom-Json
 }finally{$key.Dispose()}
 $release=$feed.Releases[0]
-if($feed.Schema -ne 2 -or $feed.Product -ne 'Dustweave' -or $feed.Channel -ne 'stable' -or $release.Version -notmatch '^\d+\.\d+\.\d+$'){throw 'Invalid release identity.'}
+if($feed.Schema -ne 2 -or $feed.Product -ne 'Dustweave' -or $feed.Channel -ne 'stable' -or $release.Version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$'){throw 'Invalid release identity.'}
 $target=Join-Path $output ('v'+$release.Version)
 [IO.Directory]::CreateDirectory($target)|Out-Null
 foreach($asset in $release.Assets){
@@ -33,7 +33,7 @@ foreach($asset in $release.Assets){
 foreach($delta in @($release.Deltas)){
  if(!$delta){continue}
  $expected="Dustweave-$($release.Version)-$($delta.Flavor)-from-$($delta.FromVersion)-win-x64.delta.zip"
- if($delta.Flavor -notin @('Portable','Lite') -or $delta.FromVersion -notmatch '^\d+\.\d+\.\d+$' -or $delta.FileName -ne $expected -or $delta.Algorithm -ne 'dustweave-cdc-v1'){throw 'Invalid delta asset name.'}
+ if($delta.Flavor -notin @('Portable','Lite') -or $delta.FromVersion -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$' -or $delta.FileName -ne $expected -or $delta.Algorithm -ne 'dustweave-cdc-v1'){throw 'Invalid delta asset name.'}
  $file=Join-Path $source $expected
  if((Get-Item -LiteralPath $file).Length -ne $delta.Bytes -or (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash -ne $delta.Sha256){throw "Delta verification failed: $expected"}
  Copy-Item -LiteralPath $file -Destination $target

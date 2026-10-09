@@ -48,7 +48,7 @@ internal static class DailySuiteComposition {
   try{
    cancel.ThrowIfCancellationRequested();
    string tool=id.EndsWith("-daily",StringComparison.Ordinal)?id[..^6]:id;
-   string assemblyName=id=="daily"?"Dustweave.Connection":tool=="equipment"?"BD2Equipment.Connection":prefixes[tool]+".Compatibility";
+   string assemblyName=id=="mansion-runaway"?"Dustweave.Compatibility":id=="daily"?"Dustweave.Connection":tool=="equipment"?"BD2Equipment.Connection":prefixes[tool]+".Compatibility";
    var assembly=Assembly.Load(assemblyName);
    string key=DailyIdentity.Hash("module-v1|"+id+"|"+assembly.ManifestModule.ModuleVersionId+"|"+(id=="daily"?DailyPlugin.Current.Fingerprint:""));
    string clientKey=await ClientKey(managed,cancel);
@@ -61,7 +61,9 @@ internal static class DailySuiteComposition {
    }
    progress("首次准备 · "+Name(id));
    byte[] payload;
-   if(id=="daily"){
+   if(id=="mansion-runaway"){
+    payload=await Task.Run(()=>MansionCompiler.Prepare(managed),cancel);
+   }else if(id=="daily"){
     string target=Path.Combine(directory,"build-"+Guid.NewGuid().ToString("N"));
     // Adaptation and compilation are CPU-heavy even before RunAsync's first await.
     await Task.Run(()=>liveUtility::Dustweave.Connection.LiveEntry.RunAsync(["prepare",managed,target],false),cancel);
@@ -85,7 +87,7 @@ internal static class DailySuiteComposition {
    return payload;
   }finally{compiler.Release();}
  }
- private static string Name(string id)=>id=="daily"?"日常执行":DailyToolCatalog.Find(id.EndsWith("-daily",StringComparison.Ordinal)?id[..^6]:id).Name;
+ private static string Name(string id)=>id=="mansion-runaway"?"MANSION RUNAWAY":id=="daily"?"日常执行":DailyToolCatalog.Find(id.EndsWith("-daily",StringComparison.Ordinal)?id[..^6]:id).Name;
  private static string Hash(byte[] bytes)=>Convert.ToHexString(SHA256.HashData(bytes));
  public sealed record CacheInfo(string Hash,BindingReport Report,BindingReport Guild,BindingReport Startup);
  public sealed record ModuleCache(string Hash);
@@ -98,7 +100,7 @@ internal static class DailySuiteComposition {
   if(manifest.GetResourceData().Length!=0||module.Resources.Any(r=>r.Name.StartsWith("Suite.")&&r.Name.EndsWith(".dll")))throw new InvalidDataException("Initial connection eagerly prepared tool modules.");
   await File.WriteAllBytesAsync(Path.Combine(output,"observer.dll"),prepared.Payload);
   var entries=new List<object>();
-  foreach(string id in new[]{"daily"}.Concat(prefixes.Keys).Concat(["equipment","fishing-daily","sichuan-daily"])){
+  foreach(string id in new[]{"daily"}.Concat(prefixes.Keys).Concat(["equipment","fishing-daily","sichuan-daily","mansion-runaway"])){
    var bytes=await PrepareModule(managed,id,_=>{},CancellationToken.None);
    using var child=ModuleDefinition.ReadModule(new MemoryStream(bytes));
    var entry=child.GetType(SuiteRules.ModuleEntry(id))??throw new InvalidDataException("Missing module loader: "+id);

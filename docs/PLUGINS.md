@@ -23,7 +23,7 @@ The ZIP root contains `plugin.json` and exactly the files listed by it. Archives
   "publisher": "Example",
   "names": {"zh-CN": "示例扩展", "zh-TW": "範例擴充", "en-US": "Example extension"},
   "minHostVersion": "0.9.12",
-  "maxHostVersion": "0.9.99",
+  "maxHostVersion": "1.0.0",
   "apiVersion": 4,
   "bridgeExtensionApi": 1,
   "runtime": "net8.0-windows-x64",

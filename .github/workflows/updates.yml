@@ -22,7 +22,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference='Stop'
-          if($env:RELEASE_TAG -notmatch '^v\d+\.\d+\.\d+$'){throw 'Stable release tag required.'}
+          if($env:RELEASE_TAG -notmatch '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$'){throw 'A semantic release tag is required.'}
           New-Item -ItemType Directory -Path ota | Out-Null
           gh release download $env:RELEASE_TAG --pattern 'Dustweave-*-win-x64.zip' --dir ota
           if($LASTEXITCODE -ne 0){throw 'Both tested release packages are required.'}
@@ -43,7 +43,7 @@ jobs:
             $prior=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($signed.Payload))|ConvertFrom-Json
             New-Item -ItemType Directory -Path ota/bases | Out-Null
             foreach($release in @($prior.Releases|Select-Object -First 3)){
-              if($release.Version -notmatch '^\d+\.\d+\.\d+$'){throw 'Invalid baseline version.'}
+              if($release.Version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$'){throw 'Invalid baseline version.'}
               gh release download ("v"+$release.Version) --pattern 'Dustweave-*-win-x64.zip' --dir ota/bases
               if($LASTEXITCODE -ne 0){throw 'Previous release packages could not be obtained.'}
             }

@@ -1,56 +1,230 @@
 [
   {
+    "Version": "1.0.0-beta",
+    "Date": "2026-10-09",
+    "Notes": {
+      "zh-CN": [
+        "织尘首次公开发布，采用 MIT 许可证；提供 Portable 和 Lite 两种版本。",
+        "加入 MANSION RUNAWAY 与80连锁目标，完善隔离账号的登录等待和协议记录保存。",
+        "更新主界面预览与中英文文档，支持带后缀版本的升级和插件兼容检查。"
+      ],
+      "zh-TW": [
+        "織塵首次公開發佈，採用 MIT 授權；提供 Portable 與 Lite 兩種版本。",
+        "加入 MANSION RUNAWAY 與80連鎖目標，完善隔離帳號的登入等待與協議紀錄儲存。",
+        "更新主介面預覽與中英文文件，支援帶後綴版本的升級與插件相容性檢查。"
+      ],
+      "en-US": [
+        "First public MIT release, available in Portable and Lite packages.",
+        "Adds MANSION RUNAWAY and its 80-chain goal, with improved isolated-account login waits and saved agreement records.",
+        "Updated screenshots and bilingual documentation, plus semantic-version support for updates and plugin compatibility."
+      ]
+    }
+  },
+  {
+    "Version": "0.9.18",
+    "Date": "2026-10-09",
+    "Notes": {
+      "zh-CN": [
+        "修复隔离账号交接时遗漏已确认协议记录的问题；保留原始记录，不重复生成确认日期。",
+        "已确认记录仅在同账号、同客户端下补回；等待游戏确认期间不再误报登录失效。"
+      ],
+      "zh-TW": [
+        "修正隔離帳號交接時遺漏已確認協議記錄的問題；保留原始記錄，不重複產生確認日期。",
+        "已確認記錄僅在相同帳號、相同用戶端下補回；等待遊戲確認期間不再誤報登入失效。"
+      ],
+      "en-US": [
+        "Preserve previously confirmed agreement records when transferring an isolated account, without generating a new acceptance date.",
+        "Restore missing records only for the same account and client. Agreement waits no longer consume the login timeout."
+      ]
+    }
+  },
+  {
+    "Version": "0.9.17",
+    "Date": "2026-10-09",
+    "Notes": {
+      "zh-CN": [
+        "遇到游戏服务协议时明确提示等待确认，不再因这段等待报登录失败；确认后自动接续。",
+        "修复隔离登录凭据重复保存时的时间判断，并避免重新写入已关闭的同一份自动登录凭据。"
+      ],
+      "zh-TW": [
+        "遇到遊戲服務協議時明確提示等待確認，不再因這段等待回報登入失敗；確認後自動接續。",
+        "修正隔離登入憑據重複儲存時的時間判斷，並避免重新寫入已關閉的同一份自動登入憑據。"
+      ],
+      "en-US": [
+        "Game service agreements now show a clear waiting status without consuming the login timeout. The queue resumes after your confirmation.",
+        "Preserve credential age when saving the same login again, and avoid restoring an unchanged disabled credential into an isolated instance."
+      ]
+    }
+  },
+  {
+    "Version": "0.9.16",
+    "Date": "2026-10-09",
+    "Notes": {
+      "zh-CN": [
+        "MANSION RUNAWAY开启80连锁目标时，使用此前达到83连的决策配置；关闭后恢复综合策略。"
+      ],
+      "zh-TW": [
+        "MANSION RUNAWAY啟用80連鎖目標時，使用先前達到83連的決策設定；關閉後恢復綜合策略。"
+      ],
+      "en-US": [
+        "The MANSION RUNAWAY 80-chain goal now uses the profile that reached 83. Turn it off to return to the balanced strategy."
+      ]
+    }
+  },
+  {
+    "Version": "0.9.15",
+    "Date": "2026-10-09",
+    "Notes": {
+      "zh-CN": [
+        "MANSION RUNAWAY新增80连锁目标：自动挑战并续局，达到后完成本局结算再停止。",
+        "目标与失败重试分开显示，支持记忆选择、三语言及深浅主题。"
+      ],
+      "zh-TW": [
+        "MANSION RUNAWAY新增80連鎖目標：自動挑戰並續局，達到後完成本局結算再停止。",
+        "目標與失敗重試分開顯示，支援記住選擇、三語及明暗主題。"
+      ],
+      "en-US": [
+        "Added an 80-chain goal to MANSION RUNAWAY: repeat Challenge rounds, then finish and stop when the goal is reached.",
+        "Saved goal selection, clear progress and outcome text, three languages and both themes."
+      ]
+    }
+  },
+  {
+    "Version": "0.9.14",
+    "Date": "2026-10-09",
+    "Notes": {
+      "zh-CN": [
+        "工具菜单新增 MANSION RUNAWAY，共用现有游戏连接，支持普通模式和挑战模式。",
+        "实时显示剩余糖果、关卡、生命、时间及追兵位置；自动收集、使用道具、前往出口，可选择失败重试。",
+        "界面跟随软件语言与深浅主题，记住上次选择；停止或关闭窗口后交回操作。"
+      ],
+      "zh-TW": [
+        "工具選單新增 MANSION RUNAWAY，共用現有遊戲連線，支援普通與挑戰模式。",
+        "即時顯示剩餘糖果、關卡、生命、時間與追兵位置；自動收集、使用道具、前往出口，可選擇失敗重試。",
+        "介面跟隨軟體語言與明暗主題，記住上次選擇；停止或關閉視窗後交回操作。"
+      ],
+      "en-US": [
+        "MANSION RUNAWAY joins the tool menu using the shared game connection, with Normal and Challenge modes.",
+        "See remaining candy, stage, lives, time and pursuers. Collect candy, use items and reach exits, with optional retries after defeat.",
+        "Follows the app language and theme, remembers your last selection, and returns control when stopped or closed."
+      ]
+    }
+  },
+  {
     "Version": "0.9.13",
     "Date": "2026-10-08",
     "Notes": {
-      "zh-CN": ["新增插件管理页，支持导入本地插件包、启用、停用和回退版本。", "插件启用前自动检查兼容性；变更在重启主程序后生效，运行中的任务保持原版本。", "插件页面统一支持简体中文、繁体中文、英文及深浅主题。"],
-      "zh-TW": ["新增外掛管理頁，支援匯入本機外掛套件、啟用、停用和回復版本。", "啟用外掛前自動檢查相容性；變更於重新啟動主程式後生效，執行中的任務保留原版本。", "外掛頁面統一支援簡體中文、繁體中文、英文及明暗主題。"],
-      "en-US": ["Manage local plugin packages: import, enable, disable and return to an earlier version.", "Check compatibility before enabling a plugin. Changes take effect after restarting the app, while running tasks retain their current version.", "The plugin page follows the app language and light or dark appearance."]
+      "zh-CN": [
+        "新增插件管理页，支持导入本地插件包、启用、停用和回退版本。",
+        "插件启用前自动检查兼容性；变更在重启主程序后生效，运行中的任务保持原版本。",
+        "插件页面统一支持简体中文、繁体中文、英文及深浅主题。"
+      ],
+      "zh-TW": [
+        "新增外掛管理頁，支援匯入本機外掛套件、啟用、停用和回復版本。",
+        "啟用外掛前自動檢查相容性；變更於重新啟動主程式後生效，執行中的任務保留原版本。",
+        "外掛頁面統一支援簡體中文、繁體中文、英文及明暗主題。"
+      ],
+      "en-US": [
+        "Manage local plugin packages: import, enable, disable and return to an earlier version.",
+        "Check compatibility before enabling a plugin. Changes take effect after restarting the app, while running tasks retain their current version.",
+        "The plugin page follows the app language and light or dark appearance."
+      ]
     }
   },
   {
     "Version": "0.9.12",
     "Date": "2026-10-08",
     "Notes": {
-      "zh-CN": ["活动环节加入拼图板批量翻开，使用现有代币；整板由游戏自动刷新，余下代币继续下一板。", "免费狩猎直接按设置的优先级批量执行，不再强制先刷一次普通狩猎。"],
-      "zh-TW": ["活動環節加入拼圖板批量翻開，使用現有代幣；整板由遊戲自動刷新，剩餘代幣繼續下一板。", "免費狩獵直接依設定的優先順序批量執行，不再強制先刷一次普通狩獵。"],
-      "en-US": ["Reveal event puzzle tiles in bulk using existing tokens. Let the game refresh completed boards and continue with remaining tokens.", "Spend free hunting rice in batches following your priorities, without a mandatory preliminary chapter hunt."]
+      "zh-CN": [
+        "活动环节加入拼图板批量翻开，使用现有代币；整板由游戏自动刷新，余下代币继续下一板。",
+        "免费狩猎直接按设置的优先级批量执行，不再强制先刷一次普通狩猎。"
+      ],
+      "zh-TW": [
+        "活動環節加入拼圖板批量翻開，使用現有代幣；整板由遊戲自動刷新，剩餘代幣繼續下一板。",
+        "免費狩獵直接依設定的優先順序批量執行，不再強制先刷一次普通狩獵。"
+      ],
+      "en-US": [
+        "Reveal event puzzle tiles in bulk using existing tokens. Let the game refresh completed boards and continue with remaining tokens.",
+        "Spend free hunting rice in batches following your priorities, without a mandatory preliminary chapter hunt."
+      ]
     }
   },
   {
     "Version": "0.9.11",
     "Date": "2026-10-08",
     "Notes": {
-      "zh-CN": ["修复游戏更新后通行证误报重复，导致奖励领取和装备任务中断的问题。", "通行证改用稳定的字段投影，更新检查同时验证列表内容，减少字段改名造成的兼容问题。"],
-      "zh-TW": ["修正遊戲更新後通行證誤報重複，導致獎勵領取和裝備任務中斷的問題。", "通行證改用穩定的欄位投影，更新檢查同時驗證清單內容，減少欄位改名造成的相容問題。"],
-      "en-US": ["Fixed false duplicate passes after a game update, which blocked reward claims and equipment tasks.", "Use stable projected pass fields and validate collection outputs during client preparation to catch renamed-field incompatibilities earlier."]
+      "zh-CN": [
+        "修复游戏更新后通行证误报重复，导致奖励领取和装备任务中断的问题。",
+        "通行证改用稳定的字段投影，更新检查同时验证列表内容，减少字段改名造成的兼容问题。"
+      ],
+      "zh-TW": [
+        "修正遊戲更新後通行證誤報重複，導致獎勵領取和裝備任務中斷的問題。",
+        "通行證改用穩定的欄位投影，更新檢查同時驗證清單內容，減少欄位改名造成的相容問題。"
+      ],
+      "en-US": [
+        "Fixed false duplicate passes after a game update, which blocked reward claims and equipment tasks.",
+        "Use stable projected pass fields and validate collection outputs during client preparation to catch renamed-field incompatibilities earlier."
+      ]
     }
   },
-{
+  {
     "Version": "0.9.10",
     "Date": "2026-10-08",
     "Notes": {
-      "zh-CN": ["自动关闭已确认无后续操作的支付地区查询超时提示，避免日常因后台查询错误中断。", "关闭前再次核对提示内容和回调；付款确认、重试和退出游戏提示不会被误点。"],
-      "zh-TW": ["自動關閉已確認無後續操作的付款地區查詢逾時提示，避免日常因背景查詢錯誤中斷。", "關閉前再次核對提示內容與回呼；付款確認、重試和退出遊戲提示不會被誤點。"],
-      "en-US": ["Dismiss verified acknowledgement-only payment-region lookup timeouts so background query errors do not block daily tasks.", "Recheck notification content and callbacks before dismissal; payment confirmations, retries and game-exit prompts remain protected."]
+      "zh-CN": [
+        "自动关闭已确认无后续操作的支付地区查询超时提示，避免日常因后台查询错误中断。",
+        "关闭前再次核对提示内容和回调；付款确认、重试和退出游戏提示不会被误点。"
+      ],
+      "zh-TW": [
+        "自動關閉已確認無後續操作的付款地區查詢逾時提示，避免日常因背景查詢錯誤中斷。",
+        "關閉前再次核對提示內容與回呼；付款確認、重試和退出遊戲提示不會被誤點。"
+      ],
+      "en-US": [
+        "Dismiss verified acknowledgement-only payment-region lookup timeouts so background query errors do not block daily tasks.",
+        "Recheck notification content and callbacks before dismissal; payment confirmations, retries and game-exit prompts remain protected."
+      ]
     }
   },
   {
     "Version": "0.9.9",
     "Date": "2026-10-08",
     "Notes": {
-      "zh-CN": ["登录凭据刷新期间保留检查，恢复后自动继续，不再因瞬时状态缺失直接退出。", "等待超时明确说明本机状态，保留账号；仍严格核对目标账号，不重复点击登录。", "包含隔离空间登记缺失的自动恢复修复。"],
-      "zh-TW": ["登入憑據更新期間保留檢查，恢復後自動繼續，不再因瞬間狀態缺失直接退出。", "等待逾時明確說明本機狀態並保留帳號；仍嚴格核對目標帳號，不重複點擊登入。", "包含隔離空間登記遺失的自動恢復修正。"],
-      "en-US": ["Keep sign-in checks active while credentials refresh, resuming automatically when ready instead of failing on a transient state.", "Explain local sign-in timeouts and retain saved accounts. Target identity checks remain strict, without repeated sign-in clicks.", "Includes automatic recovery of missing sandbox registrations."]
+      "zh-CN": [
+        "登录凭据刷新期间保留检查，恢复后自动继续，不再因瞬时状态缺失直接退出。",
+        "等待超时明确说明本机状态，保留账号；仍严格核对目标账号，不重复点击登录。",
+        "包含隔离空间登记缺失的自动恢复修复。"
+      ],
+      "zh-TW": [
+        "登入憑據更新期間保留檢查，恢復後自動繼續，不再因瞬間狀態缺失直接退出。",
+        "等待逾時明確說明本機狀態並保留帳號；仍嚴格核對目標帳號，不重複點擊登入。",
+        "包含隔離空間登記遺失的自動恢復修正。"
+      ],
+      "en-US": [
+        "Keep sign-in checks active while credentials refresh, resuming automatically when ready instead of failing on a transient state.",
+        "Explain local sign-in timeouts and retain saved accounts. Target identity checks remain strict, without repeated sign-in clicks.",
+        "Includes automatic recovery of missing sandbox registrations."
+      ]
     }
   },
   {
     "Version": "0.9.8",
     "Date": "2026-10-08",
     "Notes": {
-      "zh-CN": ["修复隔离空间登记缺失被误报为账号归属不一致、阻止启动的问题。", "根据沙箱配置、内部绑定及加密账号记录自动恢复缺失登记，保留原账号和游戏数据。", "区分登记缺失、文件不可读和真正账号冲突；未使用的空目录不再阻断普通启动。"],
-      "zh-TW": ["修正隔離空間登記遺失被誤報為帳號歸屬不一致、阻止啟動的問題。", "依沙箱設定、內部綁定及加密帳號記錄自動恢復遺失登記，保留原帳號與遊戲資料。", "區分登記遺失、檔案無法讀取與真正帳號衝突；未使用的空目錄不再阻擋一般啟動。"],
-      "en-US": ["Fixed missing sandbox registration being reported as an account ownership conflict and blocking startup.", "Recover a missing registration from matching sandbox configuration, internal binding and encrypted account records, retaining account and game data.", "Distinguish missing records, unreadable files and genuine identity conflicts; unused empty folders no longer block ordinary startup."]
+      "zh-CN": [
+        "修复隔离空间登记缺失被误报为账号归属不一致、阻止启动的问题。",
+        "根据沙箱配置、内部绑定及加密账号记录自动恢复缺失登记，保留原账号和游戏数据。",
+        "区分登记缺失、文件不可读和真正账号冲突；未使用的空目录不再阻断普通启动。"
+      ],
+      "zh-TW": [
+        "修正隔離空間登記遺失被誤報為帳號歸屬不一致、阻止啟動的問題。",
+        "依沙箱設定、內部綁定及加密帳號記錄自動恢復遺失登記，保留原帳號與遊戲資料。",
+        "區分登記遺失、檔案無法讀取與真正帳號衝突；未使用的空目錄不再阻擋一般啟動。"
+      ],
+      "en-US": [
+        "Fixed missing sandbox registration being reported as an account ownership conflict and blocking startup.",
+        "Recover a missing registration from matching sandbox configuration, internal binding and encrypted account records, retaining account and game data.",
+        "Distinguish missing records, unreadable files and genuine identity conflicts; unused empty folders no longer block ordinary startup."
+      ]
     }
   },
   {

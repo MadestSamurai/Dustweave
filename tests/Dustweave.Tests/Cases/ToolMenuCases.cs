@@ -6,8 +6,8 @@ internal static class ToolMenuCases
     public static void Run(string root, List<string> cases)
     {
         void Check(bool pass, string name) { if (!pass) throw new Exception(name); cases.Add("tool-menu: " + name); }
-        Check(DailyToolCatalog.All.Count == 9, "all nine public tools present");
-        Check(DailyToolCatalog.All.Select(t => t.Id).Distinct().Count() == 9, "unique tool identities");
+        Check(DailyToolCatalog.All.Count == 10, "nine bundled tools plus the native mansion tool present");
+        Check(DailyToolCatalog.All.Select(t => t.Id).Distinct().Count() == DailyToolCatalog.All.Count, "unique tool identities");
         Check(DailyToolCatalog.Search("连连看").Single().Id == "sichuan", "Chinese search");
         Check(DailyToolCatalog.Search(" SECRET ").Single().Id == "secret-vision", "case insensitive trimmed search");
         Check(!DailyToolCatalog.Search("not a tool").Any(), "empty search result");
@@ -52,4 +52,3 @@ internal static class ToolMenuCases
         File.Delete(statePath);
     }
 }
-

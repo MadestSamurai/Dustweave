@@ -7,6 +7,7 @@
     <EmbeddedResource Include="$(PkgLib_Harmony)/lib/net472/0Harmony.dll" LogicalName="BD2Daily.Harmony.dll" />
     <EmbeddedResource Include="../Runtime/*.cs" LogicalName="Hook.%(Filename)%(Extension)" />
     <EmbeddedResource Include="../Shared/*.cs" LogicalName="Hook.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../Mansion/*.cs" LogicalName="Mansion.%(Filename)%(Extension)" />
     <EmbeddedResource Include="startup-contract.json" Condition="Exists('startup-contract.json')" LogicalName="BD2Daily.StartupContract.json" />
     <EmbeddedResource Include="guild-contract.json" Condition="Exists('guild-contract.json')" LogicalName="BD2Daily.GuildContract.json" />
     <EmbeddedResource Include="contract.json" Condition="Exists('contract.json')" LogicalName="BD2Daily.Contract.json" />

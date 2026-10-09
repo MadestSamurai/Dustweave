@@ -33,9 +33,9 @@
 
 普通实例已到 TOUCH TO START；两份 Sandboxie 实例同时启动并独立连接，均停在游戏协议弹窗，未进入游戏、未发送日常操作。主机 14 个账号槽位文件不变。集中队列调度、登录身份与实际日常结果仍待后续使用验证。新版移除了魔兽页快速战斗入口，该环节会说明原因并标记待处理，不替代为实际战斗，也不阻止其他环节。见 [更新适配清单](CLIENT_UPDATES.md)。本地候选不代表 GitHub／OTA 已发布。
 
-Dustweave is a private preview being prepared for open source. The .NET application, integrated tools, synthetic tests and packaging scripts are maintained in this repository. The main project license and public release are not finalized; integrated tools and third-party components retain their own licenses.
+Dustweave 1.0.0-beta is prepared for public distribution under MIT. The .NET application, integrated tools, synthetic tests and packaging scripts are maintained here. Third-party licenses are preserved. Earlier private-release records below are historical.
 
-Dustweave 目前为私有预览，正在整理开源。日常本体、内置工具、合成测试与打包脚本统一维护。主体许可证与公开发布尚未确定，内置工具和第三方组件保留各自许可。
+Dustweave 1.0.0-beta 按 MIT 许可证整理公开分发；本体、内置工具、合成测试与打包脚本统一维护。以下旧版私有发布记录仅描述当时状态。
 
 ## Interface / 界面
 

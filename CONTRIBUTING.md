@@ -1,8 +1,8 @@
 # Contributing / 参与贡献
 
-感谢帮助改进 Dustweave · 织尘。欢迎错误复现、翻译、文档、可访问性改进和代码修复。仓库目前仍私有，只有已获访问权限的协作者可以参与；开放时间单独决定。
+感谢帮助改进 Dustweave · 织尘。欢迎错误复现、翻译、文档、可访问性改进和代码修复。贡献以 MIT 许可证提交；请保留依赖声明。
 
-Thank you for improving Dustweave. Reproducible reports, translations, documentation, accessibility improvements and code fixes are welcome. Access remains limited to invited collaborators while the repository is private.
+Thank you for improving Dustweave. Reproducible reports, translations, documentation, accessibility improvements and code fixes are welcome. Contributions are accepted under the MIT license; preserve dependency notices.
 
 ## Issues
 

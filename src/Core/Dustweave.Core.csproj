@@ -14,4 +14,4 @@
 <ItemGroup><EmbeddedResource Include="../../third-party/highs/highs.dll" LogicalName="Dustweave.highs.dll"/><EmbeddedResource Include="../../third-party/highs/LICENSE.txt" LogicalName="Dustweave.Highs.LICENSE.txt"/></ItemGroup>  <ItemGroup><Using Include="BD2Daily" /></ItemGroup>
   <ItemGroup><EmbeddedResource Include="../../assets/updates/trust.json" LogicalName="Dustweave.update-trust.json" /></ItemGroup>
   <ItemGroup><AssemblyMetadata Include="DustweaveVersion" Value="$(DustweaveVersion)" /></ItemGroup>
-</Project>
+<ItemGroup><Compile Include="../Mansion/Planning.cs;../Mansion/Motion.cs;../Mansion/RouteGuide.cs;../Mansion/RunGoal.cs" Link="Mansion/%(Filename)%(Extension)" /></ItemGroup></Project>

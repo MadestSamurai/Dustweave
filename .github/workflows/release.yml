@@ -1,0 +1,73 @@
+name: Publish verified release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing draft release tag (v1.0.0-beta)
+        required: true
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: publish-release
+  cancel-in-progress: false
+jobs:
+  verify-and-publish:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+          global-json-file: global.json
+      - name: Check source, build and test
+        shell: pwsh
+        run: |
+          ./build.ps1
+          ./test.ps1 -NoBuild
+          ./check-source.ps1 -AfterBuild
+      - name: Validate candidate and publish normal release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RELEASE_TAG -notmatch '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$'){throw 'Invalid tag'}
+          $version=$env:RELEASE_TAG.Substring(1)
+          $release=gh release view $env:RELEASE_TAG --json isDraft,assets | ConvertFrom-Json
+          if($LASTEXITCODE -ne 0 -or !$release.isDraft){throw 'An unpublished candidate is required'}
+          git fetch origin "refs/tags/$env:RELEASE_TAG"
+          if($LASTEXITCODE -ne 0){throw 'Cannot resolve release tag'}
+          $tagCommit=git rev-parse 'FETCH_HEAD^{commit}'
+          if($tagCommit -ne $env:GITHUB_SHA){throw 'Release tag differs from verified workflow source'}
+          $expected=@("Dustweave-$version-Portable-win-x64.zip","Dustweave-$version-Lite-win-x64.zip",'SHA256SUMS.txt','release-provenance.json')
+          if(@(Compare-Object ($expected|Sort-Object) (@($release.assets.name)|Sort-Object)).Count){throw 'Unexpected release assets'}
+          gh release download $env:RELEASE_TAG --dir artifacts/candidate
+          if($LASTEXITCODE -ne 0){throw 'Cannot download candidate'}
+          $proof=Get-Content artifacts/candidate/release-provenance.json -Raw|ConvertFrom-Json
+          if($proof.version -ne $version -or $proof.sourceCommit -ne $env:GITHUB_SHA -or $proof.validation -ne 'passed' -or $proof.privatePluginIncluded -ne $false){throw 'Candidate provenance mismatch'}
+          foreach($flavor in @('Portable','Lite')){
+            $name="Dustweave-$version-$flavor-win-x64.zip"
+            $file=Join-Path artifacts/candidate $name
+            $hash=(Get-FileHash -LiteralPath $file).Hash.ToLowerInvariant()
+            if($hash -ne $proof.assets.$flavor.sha256 -or "$hash  $name" -notin (Get-Content artifacts/candidate/SHA256SUMS.txt)){throw 'Candidate digest mismatch'}
+            $zip=[IO.Compression.ZipFile]::OpenRead($file)
+            try{
+              $names=@($zip.Entries.FullName)
+              if('LICENSE' -notin $names -or 'Dustweave.exe' -notin $names -or 'update-package.json' -notin $names){throw 'Incomplete package'}
+              if($names|Where-Object {$_ -match '(?i)(^|/)(plugins|secrets|private-data|references)/|Assembly-CSharp|GameAssembly|\.py[cd]?$|\.pfx$|\.key$|(^|/)\.\.?/|\\|:'}){throw 'Forbidden package content'}
+              $reader=[IO.StreamReader]::new($zip.GetEntry('update-package.json').Open())
+              try{$metadata=$reader.ReadToEnd()|ConvertFrom-Json}finally{$reader.Dispose()}
+              if($metadata.Version -ne $version -or $metadata.Flavor -ne $flavor){throw 'Package version mismatch'}
+              $reader=[IO.StreamReader]::new($zip.GetEntry('LICENSE').Open())
+              try{if($reader.ReadToEnd() -notmatch 'MIT License'){throw 'Missing MIT license'}}finally{$reader.Dispose()}
+            }finally{$zip.Dispose()}
+          }
+          gh release edit $env:RELEASE_TAG --draft=false --prerelease=false --latest
+          if($LASTEXITCODE -ne 0){throw 'Publication failed'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-test-results
+          path: artifacts/tests-*/results.json

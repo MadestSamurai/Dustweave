@@ -42,6 +42,16 @@ internal static class UnifiedSuiteCases {
  }
  public static void Run(List<string> cases){
   void Check(bool value,string message){if(!value)throw new Exception(message);cases.Add("unified-session: "+message);}
+  Check(DailyTransport.EndpointExists(false,121)&&DailyTransport.EndpointExists(false,231),"busy IPC endpoint retains identity read and uses bounded authenticated transport");
+  Check(!DailyTransport.EndpointExists(false,2)&&!DailyTransport.EndpointExists(false,5),"missing or inaccessible IPC endpoint does not become ready");
+  using(var self=Process.GetCurrentProcess()){
+   var instance=new GameInstance(self.Id,self.StartTime.ToUniversalTime().Ticks,"");
+   string endpoint=Wire.Endpoint(instance.ProcessId,instance.StartTicks);
+   using var server=new System.IO.Pipes.NamedPipeServerStream(endpoint,System.IO.Pipes.PipeDirection.InOut,1,System.IO.Pipes.PipeTransmissionMode.Byte,System.IO.Pipes.PipeOptions.Asynchronous);
+   using var client=new System.IO.Pipes.NamedPipeClientStream(".",endpoint,System.IO.Pipes.PipeDirection.InOut);
+   var accepted=server.WaitForConnectionAsync();client.Connect(1000);accepted.GetAwaiter().GetResult();
+   Check(DailyTransport.EndpointReady(instance),"connected single-instance named pipe is busy, not disconnected");
+  }
   var hostModule=Guid.Parse("85860bca-8f04-442e-807c-2338d3117b20");
   var connection=DailySuite.ConnectionFingerprint(hostModule,"plugin-a");
   Check(connection==DailySuite.ConnectionFingerprint(hostModule,"plugin-a"),"same host and plugin reuse connection");

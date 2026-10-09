@@ -12,17 +12,19 @@ internal static class SuiteHostProbe {
    foreach(var tool in DailyToolCatalog.All){
     Environment.SetEnvironmentVariable(names[0],tool.Id);
     var assembly=Assembly.Load(tool.Id=="equipment"?"BD2Equipment.Connection":tool.AssemblyName+".Core");
-    var injector=assembly.GetType("SharpMonoInjector.Injector",true)!;
     bool rejected=false;
+    if(tool.Id!="mansion-runaway"){
+    var injector=assembly.GetType("SharpMonoInjector.Injector",true)!;
     try{Activator.CreateInstance(injector,[int.MaxValue]);}
     catch(TargetInvocationException e)when(e.InnerException is InvalidOperationException x&&x.Message.Contains("managed by the daily host")){rejected=true;}
     if(!rejected)throw new Exception(tool.Id+" can still inject in hosted mode");
     checks.Add(tool.Id+": hosted injector unavailable");
+    }
     var pipeType=assembly.GetType("BD2.LocalIpc.PipeClient",true)!;
     var pipe=Activator.CreateInstance(pipeType,[output,int.MaxValue,1L])!;
-    var guard=assembly.GetType("BD2.LocalIpc.HostedConnection",true)!;
+    var guard=tool.Id=="mansion-runaway"?null:assembly.GetType("BD2.LocalIpc.HostedConnection",true)!;
     rejected=false;
-    try{guard.GetMethod("TryOpen")!.Invoke(null,[pipe,int.MaxValue,1L]);}
+    try{if(guard!=null)guard.GetMethod("TryOpen")!.Invoke(null,[pipe,int.MaxValue,1L]);else Activator.CreateInstance(typeof(MansionClient),[output,int.MaxValue,1L,"fixture"]);}
     catch(TargetInvocationException e)when(e.InnerException is InvalidOperationException){rejected=true;}
     if(!rejected)throw new Exception(tool.Id+" accepts a changed game");
     checks.Add(tool.Id+": changed process rejected before transport");

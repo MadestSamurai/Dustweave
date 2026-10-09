@@ -109,8 +109,9 @@ internal sealed class SessionService
 
     internal SlotSummary SaveCurrentToSlot(int slotNumber, string displayName, string? expectedMemberId = null)
     {
-        SessionSlot current = SessionRegistry.Capture(displayName);
-        var result = SaveCapturedToSlot(current, slotNumber, displayName, expectedMemberId,
+        SessionSlot current = PreserveCredentialAge(SessionRegistry.Capture(displayName));
+        SessionSlot selected = LatestSameAccount(current, _vault.TryLoadFixedSlot);
+        var result = SaveCapturedToSlot(selected, slotNumber, displayName, expectedMemberId,
             _vault.TryLoadFixedSlot, _vault.SaveFixedSlot);
         _vault.RememberObserved(current);
         return result;
@@ -143,12 +144,20 @@ internal sealed class SessionService
         string? member = SessionIdentity.GetMemberId(saved);
         if (string.IsNullOrEmpty(member)) return saved;
         var latest = saved;
+        var candidates = new List<SessionSlot> { saved };
         for (int number = 1; number <= SlotCount; number++)
         {
             SessionSlot? candidate;
             try { candidate = load(number); } catch { continue; }
-            if (candidate != null && SessionIdentity.GetMemberId(candidate) == member && candidate.CapturedAtUtc > latest.CapturedAtUtc)
-                latest = candidate;
+            if (candidate == null || SessionIdentity.GetMemberId(candidate) != member) continue;
+            candidates.Add(candidate);
+            if (candidate.CapturedAtUtc > latest.CapturedAtUtc) latest = candidate;
+        }
+        if (latest.Agreement == null)
+        {
+            var record = candidates.OrderByDescending(x => x.CapturedAtUtc)
+                .FirstOrDefault(x => x.Agreement != null && SessionRegistry.SameAuthentication(x, latest));
+            if (record != null) latest = latest with { Agreement = record.Agreement };
         }
         return latest with { Alias = saved.Alias };
     }
@@ -304,16 +313,29 @@ internal sealed class SessionService
         }
         if (matching.Count == 0) return null;
         var observed = _vault.ReadObserved();
-        if (observed != null && SessionRegistry.SessionsEqual(current, observed)) return matching[0].Number;
+        if (observed != null && SessionRegistry.SameAuthentication(current, observed) && current.Agreement == observed.Agreement) return matching[0].Number;
         // A known token read from another context retains its actual capture age.
-        var known = matching.Where(x => SessionRegistry.SessionsEqual(current,x.Slot))
-            .OrderByDescending(x => x.Slot.CapturedAtUtc).FirstOrDefault().Slot;
-        var captured = known ?? current;
+        var captured = PreserveCredentialAge(current);
         AcceptTransferred(captured, member);
         _vault.RememberObserved(captured);
         return matching[0].Number;
     }
 
+    // Reading/saving the same credential again must not make it newer than a
+    // token renewed in another instance. Metadata-only changes retain its age.
+    internal SessionSlot PreserveCredentialAge(SessionSlot current)
+    {
+        SessionSlot? known = _vault.ReadObserved();
+        if (known == null || !SessionRegistry.SameAuthentication(known, current)) known = null;
+        for (int n = 1; n <= SlotCount; n++)
+        {
+            SessionSlot? candidate;
+            try { candidate = _vault.TryLoadFixedSlot(n); } catch { continue; }
+            if (candidate != null && SessionRegistry.SameAuthentication(candidate, current)
+                && (known == null || candidate.CapturedAtUtc < known.CapturedAtUtc)) known = candidate;
+        }
+        return known == null ? current : current with { CapturedAtUtc = known.CapturedAtUtc };
+    }
     internal void AcceptTransferred(SessionSlot incoming, string expectedMember)
     {
         SessionRegistry.ValidateSlot(incoming);
@@ -324,7 +346,12 @@ internal sealed class SessionService
             var saved = _vault.TryLoadFixedSlot(n);
             if (saved == null || SessionIdentity.GetMemberId(saved) != expectedMember) continue;
             var latest = LatestSameAccount(saved, _vault.TryLoadFixedSlot);
-            if (SessionRegistry.SessionsEqual(incoming,latest)) return;
+            if (SessionRegistry.SameAuthentication(incoming,latest))
+            {
+                if (incoming.Agreement != null && incoming.Agreement != latest.Agreement)
+                    _vault.SaveFixedSlot(n, latest with { Agreement = incoming.Agreement }, saved.Alias, true);
+                return;
+            }
             if (incoming.CapturedAtUtc < latest.CapturedAtUtc) return;
             if (incoming.CapturedAtUtc == latest.CapturedAtUtc)
                 throw new SessionManagerException("同一时刻存在不同的登录凭据，已保留原账号；请重新登录后保存。");

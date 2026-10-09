@@ -1,4 +1,19 @@
 {
+  "message.agreement_restore_verify_failed": {
+    "zh-CN": "已保存的协议记录恢复后校验失败，请在游戏内确认。",
+    "zh-TW": "已儲存的協議記錄還原後驗證失敗，請在遊戲內確認。",
+    "en-US": "The restored agreement record could not be verified. Please review it in the game."
+  },
+  "message.sandbox_login_disabled": {
+    "zh-CN": "这个隔离账号的自动登录已失效或关闭，未重新写入旧凭据。请在普通窗口重新登录并保存此账号，再打开隔离窗口。",
+    "zh-TW": "這個隔離帳號的自動登入已失效或關閉，未重新寫入舊憑據。請在一般視窗重新登入並儲存此帳號，再開啟隔離視窗。",
+    "en-US": "Automatic sign-in in this isolated account is unavailable or disabled. Old credentials were not restored. Sign in and save this account in the main window, then reopen isolation."
+  },
+  "message.game_agreement_wait": {
+    "zh-CN": "等待你在游戏内确认服务协议；登录凭据仍保留，确认后会自动继续，无需重新保存账号。",
+    "zh-TW": "等待你在遊戲內確認服務協議；登入憑據仍保留，確認後會自動繼續，無需重新儲存帳號。",
+    "en-US": "Waiting for you to review the service agreement in the game. Saved credentials are retained. The process resumes after confirmation; no need to save the account again."
+  },
   "message.pass_schema_incompatible": {
     "zh-CN": "通行证列表读取格式不兼容，请更新连接组件；未将缺失字段视为无任务。",
     "zh-TW": "通行證清單讀取格式不相容，請更新連線元件；未將缺少欄位視為沒有任務。",
@@ -4528,5 +4543,25 @@
     "zh-CN": "拼图代币消耗或奖励不一致",
     "zh-TW": "拼圖代幣消耗或獎勵不一致",
     "en-US": "The puzzle token debit or rewards are inconsistent."
+  },
+  "message.dispatch_verify": {
+    "zh-CN": "核对派遣结果",
+    "zh-TW": "核對派遣結果",
+    "en-US": "Checking dispatch results"
+  },
+  "message.mirror_remaining": {
+    "zh-CN": "使用剩余免费次数",
+    "zh-TW": "使用剩餘免費次數",
+    "en-US": "Use the remaining free entries"
+  },
+  "message.trade_stages": {
+    "zh-CN": "购买、料理与售卖",
+    "zh-TW": "購買、料理與售賣",
+    "en-US": "Buy ingredients, cook and sell"
+  },
+  "message.mail_finish": {
+    "zh-CN": "最后收取本次奖励",
+    "zh-TW": "最後收取本次獎勵",
+    "en-US": "Collect the final rewards"
   }
 }

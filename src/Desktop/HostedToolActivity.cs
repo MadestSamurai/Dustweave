@@ -46,7 +46,10 @@ internal sealed class HostedToolActivity : IDisposable
         if(host.Find()!=game)throw new InvalidOperationException("游戏会话已结束，请返回日常助手重新连接。");
         var snapshot=host.ReadSnapshot();
         if(snapshot==null||snapshot.AccountKey!=account||snapshot.PlayerKey!=player||snapshot.FrameUtcTicks<DateTime.UtcNow.AddSeconds(-5).Ticks)
+        {
+            DailyJson.Write(Path.Combine(root,"tools",id+"-identity-error.json"),new{atUtc=DateTimeOffset.UtcNow,missing=snapshot==null,expectedAccount=account,expectedPlayer=player,actualAccount=snapshot?.AccountKey,actualPlayer=snapshot?.PlayerKey,frameAgeSeconds=snapshot==null?(double?)null:(DateTime.UtcNow.Ticks-snapshot.FrameUtcTicks)/(double)TimeSpan.TicksPerSecond,state=snapshot?.State,scene=snapshot?.Scene,error=snapshot?.ErrorCode});
             throw new InvalidOperationException("游戏身份已变化或连接已过期，请返回日常助手。");
+        }
     }
     void BeforeWrite(string dataRoot,string name,byte[] value)
     {
@@ -97,5 +100,3 @@ internal sealed class HostedToolActivity : IDisposable
         AppDomain.CurrentDomain.SetData(GuardKey,null);activity.Dispose();
     }
 }
-
-

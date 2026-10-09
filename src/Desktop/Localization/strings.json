@@ -1040,9 +1040,9 @@
     "en-US": "Daily and weekly mission rewards"
   },
   "tools.count": {
-    "zh-CN": "9 个开源工具",
-    "zh-TW": "9 個開源工具",
-    "en-US": "9 open-source tools"
+    "zh-CN": "10 个开源工具",
+    "zh-TW": "10 個開源工具",
+    "en-US": "10 open-source tools"
   },
   "tools.hint": {
     "zh-CN": "共用游戏连接、统一语言设置。已打开的工具会同步切换语言；单独启动工具时仍保留原有偏好。",
@@ -3653,5 +3653,260 @@
     "zh-CN": "拼图板使用现有代币批量翻开",
     "zh-TW": "拼圖板使用現有代幣批量翻開",
     "en-US": "Reveal puzzle tiles in bulk using existing tokens"
+  },
+  "tool.mansion-runaway": {
+    "zh-TW": "MANSION RUNAWAY",
+    "en-US": "MANSION RUNAWAY",
+    "zh-CN": "MANSION RUNAWAY"
+  },
+  "tool.mansion-runaway.description": {
+    "zh-TW": "收集糖果、避開追兵並推進關卡。",
+    "en-US": "Collect candy, evade pursuers and advance through stages.",
+    "zh-CN": "收集糖果、避开追兵并推进关卡。"
+  },
+  "mansion.title": {
+    "zh-TW": "MANSION RUNAWAY",
+    "en-US": "MANSION RUNAWAY",
+    "zh-CN": "MANSION RUNAWAY"
+  },
+  "mansion.subtitle": {
+    "zh-TW": "看清路線，保持前進。與日常共用遊戲連線。",
+    "en-US": "Find a path forward. Uses Dustweave’s shared game connection.",
+    "zh-CN": "看清路线，保持前进。与日常共用游戏连接。"
+  },
+  "mansion.stage": {
+    "zh-TW": "目前 STAGE",
+    "en-US": "CURRENT STAGE",
+    "zh-CN": "当前 STAGE"
+  },
+  "mansion.candy": {
+    "zh-TW": "剩餘普通糖果",
+    "en-US": "CANDY REMAINING",
+    "zh-CN": "剩余普通糖果"
+  },
+  "mansion.time": {
+    "zh-TW": "剩餘時間",
+    "en-US": "TIME REMAINING",
+    "zh-CN": "剩余时间"
+  },
+  "mansion.mode": {
+    "zh-TW": "遊玩模式",
+    "en-US": "Play mode",
+    "zh-CN": "游玩模式"
+  },
+  "mansion.normal": {
+    "zh-TW": "普通模式",
+    "en-US": "Normal",
+    "zh-CN": "普通模式"
+  },
+  "mansion.challenge": {
+    "zh-TW": "挑戰模式",
+    "en-US": "Challenge",
+    "zh-CN": "挑战模式"
+  },
+  "mansion.rules": {
+    "zh-TW": "收齊普通糖果後前往出口。挑戰每過一關補時30秒，關數不限。",
+    "en-US": "Collect all regular candy, then reach the exit. Challenge adds 30 seconds per stage and has no stage limit.",
+    "zh-CN": "收齐普通糖果后前往出口。挑战每过一关补时30秒，关数不限。"
+  },
+  "mansion.retry": {
+    "zh-TW": "失敗後自動重試",
+    "en-US": "Retry after defeat",
+    "zh-CN": "失败后自动重试"
+  },
+  "mansion.health": {
+    "zh-TW": "剩餘生命  {0}",
+    "en-US": "Lives  {0}",
+    "zh-CN": "剩余生命  {0}"
+  },
+  "mansion.score": {
+    "zh-TW": "得分  {0}",
+    "en-US": "Score  {0}",
+    "zh-CN": "得分  {0}"
+  },
+  "mansion.chain": {
+    "zh-TW": "連鎖 {0} · 本局最高 {1}",
+    "en-US": "Chain {0} · Best {1}",
+    "zh-CN": "连锁 {0} · 本局最高 {1}"
+  },
+  "mansion.legend": {
+    "zh-TW": "綠色：我方　紅色：追兵\n金色：糖果　藍色：出口",
+    "en-US": "Green: you · Red: pursuers\nGold: candy · Blue: exit",
+    "zh-CN": "绿色：我方　红色：追兵\n金色：糖果　蓝色：出口"
+  },
+  "mansion.empty": {
+    "zh-TW": "進入迷你遊戲後，這裡會顯示路線與追兵位置。",
+    "en-US": "Enter the minigame to see the maze and pursuers.",
+    "zh-CN": "进入小游戏后，这里会显示路线与追兵位置。"
+  },
+  "mansion.ready": {
+    "zh-TW": "準備就緒",
+    "en-US": "Ready",
+    "zh-CN": "准备就绪"
+  },
+  "mansion.connect": {
+    "zh-TW": "連線",
+    "en-US": "Connect",
+    "zh-CN": "连接"
+  },
+  "mansion.stop": {
+    "zh-TW": "停止",
+    "en-US": "Stop",
+    "zh-CN": "停止"
+  },
+  "mansion.start": {
+    "zh-TW": "開始遊玩",
+    "en-US": "Start",
+    "zh-CN": "开始游玩"
+  },
+  "mansion.stop_hint": {
+    "zh-TW": "停止後立即交回操作；關閉視窗也會停止。",
+    "en-US": "Stop to take control. Closing this window also stops automation.",
+    "zh-CN": "停止后立即交回操作；关闭窗口也会停止。"
+  },
+  "mansion.state.ready": {
+    "zh-TW": "準備就緒",
+    "en-US": "Ready",
+    "zh-CN": "准备就绪"
+  },
+  "mansion.state.connecting": {
+    "zh-TW": "正在連線迷你遊戲",
+    "en-US": "Connecting to the minigame",
+    "zh-CN": "正在连接小游戏"
+  },
+  "mansion.state.disconnected": {
+    "zh-TW": "連線中斷，請從工具選單重新連線",
+    "en-US": "Disconnected. Reconnect from the Tools page.",
+    "zh-CN": "连接中断，请从工具菜单重新连接"
+  },
+  "mansion.state.paused": {
+    "zh-TW": "已停止，可以手動操作",
+    "en-US": "Stopped. You have control.",
+    "zh-CN": "已停止，可以手动操作"
+  },
+  "mansion.state.collecting": {
+    "zh-TW": "收集糖果，預測追兵路線",
+    "en-US": "Collecting candy and tracking pursuers",
+    "zh-CN": "收集糖果，预测追兵路线"
+  },
+  "mansion.state.heading-exit": {
+    "zh-TW": "糖果已收齊，前往出口",
+    "en-US": "All candy collected. Heading to the exit.",
+    "zh-CN": "糖果已收齐，前往出口"
+  },
+  "mansion.state.next-stage": {
+    "zh-TW": "準備下一關",
+    "en-US": "Preparing the next stage",
+    "zh-CN": "准备下一关"
+  },
+  "mansion.state.entering": {
+    "zh-TW": "正在進入迷你遊戲",
+    "en-US": "Entering the minigame",
+    "zh-CN": "正在进入小游戏"
+  },
+  "mansion.state.selecting-mode": {
+    "zh-TW": "正在選擇模式",
+    "en-US": "Selecting play mode",
+    "zh-CN": "正在选择模式"
+  },
+  "mansion.state.mode-unavailable": {
+    "zh-TW": "此模式尚未開放",
+    "en-US": "This mode is not available yet.",
+    "zh-CN": "该模式尚未开放"
+  },
+  "mansion.state.recovering-life": {
+    "zh-TW": "被追兵抓到，等待恢復",
+    "en-US": "Caught. Waiting to respawn.",
+    "zh-CN": "被追兵抓到，等待恢复"
+  },
+  "mansion.state.retrying": {
+    "zh-TW": "開始下一次嘗試",
+    "en-US": "Starting another attempt",
+    "zh-CN": "开始下一次尝试"
+  },
+  "mansion.state.waiting-result": {
+    "zh-TW": "等待結算完成",
+    "en-US": "Waiting for results",
+    "zh-CN": "等待结算完成"
+  },
+  "mansion.state.waiting-game": {
+    "zh-TW": "等待進入迷你遊戲",
+    "en-US": "Waiting for the minigame",
+    "zh-CN": "等待进入小游戏"
+  },
+  "mansion.state.completed": {
+    "zh-TW": "本局已結算，自動操作已停止",
+    "en-US": "Run finished. Automation stopped.",
+    "zh-CN": "本局已结算，自动操作已停止"
+  },
+  "mansion.state.defeated": {
+    "zh-TW": "本局失敗，已停止",
+    "en-US": "Defeated. Automation stopped.",
+    "zh-CN": "本局失败，已停止"
+  },
+  "mansion.state.retry-unavailable": {
+    "zh-TW": "無法重試，請返回迷你遊戲入口",
+    "en-US": "Retry unavailable. Return to the minigame menu.",
+    "zh-CN": "无法重试，请返回小游戏入口"
+  },
+  "mansion.state.heartbeat-expired": {
+    "zh-TW": "控制連線已中斷，已停止操作",
+    "en-US": "Connection expired. Automation stopped.",
+    "zh-CN": "控制连接已中断，已停止操作"
+  },
+  "mansion.state.runtime-error": {
+    "zh-TW": "操作遇到異常，診斷已儲存",
+    "en-US": "An error occurred. Diagnostics saved.",
+    "zh-CN": "操作遇到异常，诊断已保存"
+  },
+  "mansion.state.avoiding-enemy": {
+    "zh-CN": "短暂让行，等待追兵通过",
+    "zh-TW": "短暫讓行，等待追兵通過",
+    "en-US": "Briefly yielding to a pursuer"
+  },
+  "mansion.state.no-route": {
+    "zh-TW": "正在尋找可行路線",
+    "en-US": "Looking for a route",
+    "zh-CN": "正在寻找可行路线"
+  },
+  "mansion.item_warning": {
+    "zh-CN": "道具辅助暂不可用，继续寻路",
+    "zh-TW": "道具輔助暫不可用，繼續尋路",
+    "en-US": "Item assistance unavailable; navigation continues"
+  },
+  "mansion.already_open": {
+    "zh-CN": "工具已经打开，请使用现有窗口。",
+    "zh-TW": "工具已經開啟，請使用現有視窗。",
+    "en-US": "This tool is already open. Use the existing window."
+  },
+  "mansion.goal80": {
+    "zh-CN": "刷到 80 连锁后停止",
+    "zh-TW": "刷到 80 連鎖後停止",
+    "en-US": "Stop after an 80-chain run"
+  },
+  "mansion.goal80_hint": {
+    "zh-CN": "使用挑战模式及曾达到83连的决策配置；未达标自动续局，达标后完成本局结算再停止。",
+    "zh-TW": "使用挑戰模式及曾達到83連的決策設定；未達標自動續局，達標後完成本局結算再停止。",
+    "en-US": "Uses Challenge mode and the profile that reached 83. Repeat until 80, then finish the round and stop."
+  },
+  "mansion.goal80_progress": {
+    "zh-CN": "本局最高 {0} / 80 连锁",
+    "zh-TW": "本局最高 {0} / 80 連鎖",
+    "en-US": "Best this round: {0} / 80"
+  },
+  "mansion.state.goal-finishing": {
+    "zh-CN": "已达到 80 连锁，完成本局结算后停止",
+    "zh-TW": "已達到 80 連鎖，完成本局結算後停止",
+    "en-US": "80-chain reached; finishing this round"
+  },
+  "mansion.state.goal-completed": {
+    "zh-CN": "80 连锁目标已完成，已停止",
+    "zh-TW": "80 連鎖目標已完成，已停止",
+    "en-US": "80-chain goal completed; stopped"
+  },
+  "mansion.state.goal-restarting": {
+    "zh-CN": "本局未达到 80 连锁，正在开始下一局",
+    "zh-TW": "本局未達到 80 連鎖，正在開始下一局",
+    "en-US": "Below 80; starting the next round"
   }
 }

@@ -11,7 +11,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
  if(!$BaselineDirectory){
   $releases=Join-Path $Root 'artifacts/releases'
   if(Test-Path -LiteralPath $releases){
-   $BaselineDirectory=Get-ChildItem -LiteralPath $releases -Directory|Where-Object {$_.Name -match '^\d+\.\d+\.\d+$'}|Sort-Object {[version]$_.Name} -Descending|Where-Object {
+   $BaselineDirectory=Get-ChildItem -LiteralPath $releases -Directory|Where-Object {$_.Name -match '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$'}|Sort-Object {[semver]$_.Name} -Descending|Where-Object {
     $record=Join-Path $_.FullName 'validation-scope.json'
     (Test-Path -LiteralPath $record) -and ((Get-Content -LiteralPath $record -Raw|ConvertFrom-Json).scope -eq 'Full')
    }|Select-Object -First 1 -ExpandProperty FullName

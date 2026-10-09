@@ -80,10 +80,10 @@ public partial class DailyToolPanel : UserControl
     }
     internal void VerifyFiltersForSmoke()
     {
-        if (VisibleTools.Count != 9) throw new InvalidOperationException("工具清单缺失");
+        if (VisibleTools.Count != DailyToolCatalog.All.Count) throw new InvalidOperationException("工具清单缺失");
         SearchBox.Text = "连连看"; if (!VisibleTools.SequenceEqual(new[] { "sichuan" })) throw new InvalidOperationException("中文搜索失败");
         SearchBox.Text = "secret"; if (!VisibleTools.SequenceEqual(new[] { "secret-vision" })) throw new InvalidOperationException("英文搜索失败");
-        SearchBox.Text = ""; Category.SelectedValue = "games"; if (VisibleTools.Count != 5) throw new InvalidOperationException("工具分类错误");
+        SearchBox.Text = ""; Category.SelectedValue = "games"; if (VisibleTools.Count != DailyToolCatalog.All.Count(t=>t.Category=="小游戏")) throw new InvalidOperationException("工具分类错误");
         Category.SelectedIndex = 0;
         Refresh(true, null, "日常正在执行，停止后可以打开工具。");
         if (((ToolMenuRow[])ToolsList.ItemsSource).Any(t => t.Enabled)) throw new InvalidOperationException("日常执行时仍可启动工具");

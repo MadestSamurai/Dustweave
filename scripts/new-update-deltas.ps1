@@ -21,11 +21,11 @@ try{
  if(!$key.VerifyData($bytes,[Convert]::FromBase64String($envelope.Signature),[Security.Cryptography.HashAlgorithmName]::SHA256,[Security.Cryptography.DSASignatureFormat]::IeeeP1363FixedFieldConcatenation)){throw 'Previous feed signature failed.'}
  $prior=[Text.Encoding]::UTF8.GetString($bytes)|ConvertFrom-Json
 }finally{$key.Dispose()}
-if($Version -notmatch '^\d+\.\d+\.\d+$' -or $prior.Product -ne 'Dustweave' -or $prior.Schema -ne 2){throw 'Invalid release identity.'}
+if($Version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$' -or $prior.Product -ne 'Dustweave' -or $prior.Schema -ne 2){throw 'Invalid release identity.'}
 $reports=@()
 # At most six baselines per flavor, bounded identically to client validation.
-foreach($release in @($prior.Releases|Sort-Object {[version]$_.Version} -Descending|Select-Object -First 6)){
- if([version]$release.Version -ge [version]$Version){throw 'Delta publication must advance the version.'}
+foreach($release in @($prior.Releases|Sort-Object {[semver]$_.Version} -Descending|Select-Object -First 6)){
+ if([semver]$release.Version -ge [semver]$Version){throw 'Delta publication must advance the version.'}
  foreach($flavor in @('Portable','Lite')){
   $asset=$release.Assets|Where-Object Flavor -eq $flavor
   if(!$asset){continue}

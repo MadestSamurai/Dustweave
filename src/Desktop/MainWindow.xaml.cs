@@ -633,6 +633,14 @@ public partial class MainWindow : Window
         if (dailyPanel.ShowingPlan || dailyPanel.RetryEnabled || dailyPanel.StartEnabled || dailyPanel.VisibleTasks.Count != 6)
             throw new Exception("Theme change reset the active queue or enabled conflicting actions");
         Capture("timeline-running-light");
+        // README screenshots use real controls and a synthetic queue in both languages.
+        LanguageSelector.SelectedIndex = 2;
+        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        Capture("timeline-running-en-light");
+        ThemeSelector.SelectedIndex = 2;
+        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        Capture("timeline-running-en-dark");
+        LanguageSelector.SelectedIndex = 0;
         ThemeSelector.SelectedIndex = 2;
         WorkspaceTabs.SelectedItem = SettingsTab;
         preferencesPanel.ShowMirrorSettingsForSmoke();

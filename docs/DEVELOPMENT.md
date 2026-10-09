@@ -14,7 +14,7 @@ Run root scripts from this repository, or invoke them by full path while retaini
 | `scripts/check-layout.ps1` | Validate solution coverage and project/source/resource paths |
 | `check-source.ps1 -AfterBuild` | Validate allowed source inputs and restored/compiled boundaries |
 | `build.ps1 -Mode Smoke` | UI checks using isolated demonstration data |
-| `package.ps1` | Complete private release package; requires locally installed client data |
+| `package.ps1` | Complete release package; requires locally installed client data |
 
 `Dustweave.slnx` lists every project for IDE navigation. RID-specific command-line builds use project entry points because MSBuild does not accept `-r` at solution scope. Owned projects and managed host assemblies use `Dustweave.*`; the desktop assembly and executable are `Dustweave` / `Dustweave.exe`.
 
@@ -60,9 +60,9 @@ The nine source inputs retain their versions, locks and notices. Import reviewed
 旧版 `source-staging` 是初次建立仓库的过程，不再是日常开发入口。现有发行包留在原交付位置；源码搬迁本身不需要用户重启游戏或迁移账号数据。
 ## 版本策略 / Version policy
 
-默认使用正式 X.Y.Z 版本号，不使用 preview 后缀；版本号与仓库公开权限独立。Dustweave 保持私有，包不包含外部插件实现。
+版本号支持 X.Y.Z 及语义化后缀（如 1.0.0-beta）。后缀不决定 GitHub 的 Release 类型；本次 1.0.0-beta 使用普通 Release。分发包不包含外部插件实现。
 
-Use stable X.Y.Z version numbers by default. Version labels do not change repository visibility; Dustweave remains private and excludes external plugin implementations.
+Semantic release labels such as 1.0.0-beta are supported. This release uses a normal GitHub Release despite its beta label. Packages exclude external plugin implementations.
 
 ## Passive UI and preview recovery / 背景提示与预览收尾
 

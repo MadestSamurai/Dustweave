@@ -86,10 +86,14 @@ public static class DailyPlugin
     internal static bool ValidId(string? value) => value is { Length: > 0 and <= 100 } && char.IsAsciiLetterOrDigit(value[0]) && value.All(c => char.IsAsciiLetterOrDigit(c) || c is '.' or '-' or '_');
     public static bool CompatibleHost(string min, string max, string current)
     {
-        if (!Version.TryParse(current, out var host)) return false;
-        if (min.Length != 0 && (!Version.TryParse(min, out var lower) || host < lower)) return false;
-        if (max.Length != 0 && (!Version.TryParse(max, out var upper) || host > upper)) return false;
-        return true;
+        try
+        {
+            var host = DailyVersion.Parse(current);
+            if (min.Length != 0 && host < DailyVersion.Parse(min)) return false;
+            if (max.Length != 0 && host > DailyVersion.Parse(max)) return false;
+            return true;
+        }
+        catch (InvalidDataException) { return false; }
     }
     private static string SafePath(string root, string relative)
     {

@@ -12,12 +12,24 @@ internal static class UpdateSafetyCases
     {
         void Check(string name, bool value) { if (!value) throw new Exception(name); cases.Add(name); }
         void Reject(string name, Action action) { try { action(); } catch (InvalidDataException) { cases.Add(name); return; } throw new Exception(name); }
+        var beta = DailyUpdates.VersionOf("1.0.0-beta");
+        Check("beta version is newer than 0.9.x and older than its final", beta > DailyUpdates.VersionOf("0.9.99") && beta < DailyUpdates.VersionOf("1.0.0"));
+        Check("numeric prerelease identifiers use numeric precedence", DailyUpdates.VersionOf("1.0.0-beta.2") < DailyUpdates.VersionOf("1.0.0-beta.10"));
+        Check("prerelease prefix and textual identifiers follow SemVer", beta < DailyUpdates.VersionOf("1.0.0-beta.1") && DailyUpdates.VersionOf("1.0.0-1") < beta);
+        Check("beta host supports bounded plugin compatibility", DailyPlugin.CompatibleHost("0.9.0", "1.0.0", "1.0.0-beta") && !DailyPlugin.CompatibleHost("1.0.0", "", "1.0.0-beta"));
+        Check("MIT license survives update extraction", DailyUpdates.AllowedFile("LICENSE"));
+        foreach (string invalid in new[] { "01.0.0", "1.0", "1.0.0-beta.01", "1.0.0-../a", "1.0.0+metadata", "1.0.0\n" })
+            Reject("unsafe or ambiguous version rejected: " + invalid, () => DailyUpdates.VersionOf(invalid));
         string data = Path.Combine(root, "update-safety"); Directory.CreateDirectory(data);
         var notes = new Dictionary<string, string[]> { ["zh-CN"] = ["升级"], ["zh-TW"] = ["升級"], ["en-US"] = ["Update"] };
         byte[] package = Encoding.UTF8.GetBytes(new string('x', 500));
         var asset = new DailyUpdateAsset("Lite", "Dustweave-0.9.1-Lite-win-x64.zip", package.Length, Convert.ToHexString(SHA256.HashData(package)));
         var release = new DailyUpdateRelease("0.9.1", null, 1, notes, [asset]);
         var feed = new DailyUpdateFeed(2, "Dustweave", "stable", [release]);
+        var betaRelease = release with { Version = "1.0.0-beta", Assets = [asset with { FileName = "Dustweave-1.0.0-beta-Lite-win-x64.zip" }] };
+        Check("beta feed is accepted and offered to numeric predecessor", DailyUpdates.Latest(feed with { Releases = [betaRelease] }, "0.9.18") == betaRelease);
+        var finalRelease = betaRelease with { Version = "1.0.0", Assets = [asset with { FileName = "Dustweave-1.0.0-Lite-win-x64.zip" }] };
+        Check("final release updates its beta and never downgrades", DailyUpdates.Latest(feed with { Releases = [finalRelease] }, "1.0.0-beta") == finalRelease && DailyUpdates.Latest(feed with { Releases = [betaRelease] }, "1.0.0") == null);
         using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         var sources = new[] { new DailyUpdateSource("cn", "https://cn.test/updates.json", "https://cn.test"), new DailyUpdateSource("global", "https://global.test/updates.json", "https://global.test") };
         var trust = new DailyUpdateTrust(new() { ["test"] = Convert.ToBase64String(key.ExportSubjectPublicKeyInfo()) }, sources);

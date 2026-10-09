@@ -31,6 +31,6 @@
 
 ## 来源与说明
 
-免费提供：B站 **MadSamurai** / GitHub **MadestSamurai**。源码仓库保持私有。集成工具的许可证与来源见 `licenses`、`docs/tools` 和 `THIRD_PARTY_NOTICES.md`。
+免费提供：B站 **MadSamurai** / GitHub **MadestSamurai**。源码使用 MIT 许可证：[Dustweave](https://github.com/MadestSamurai/Dustweave)。集成工具的许可证与来源见 `licenses`、`docs/tools` 和 `THIRD_PARTY_NOTICES.md`。
 
 本项目不隶属于游戏官方。辅助工具可能带来账号及运行风险，请自行决定是否使用。打包时完成离线检查；新增插件的实际游戏任务仍待正常使用验证。

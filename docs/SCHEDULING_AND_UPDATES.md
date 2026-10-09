@@ -32,7 +32,7 @@ New and saved schedules use Windows' daily trigger with an interval of one day. 
 
 ## OTA / 版本更新
 
-The domestic static source is https://bd2.madsam.work/updates/dustweave/. Full and differential packages are authenticated with an embedded ECDSA public key; interrupted downloads resume, and file replacement uses durable backups and a recovery journal. The public GitHub update mirror is deferred; existing private Releases provide first-install and manual-download packages. Domestic hosting is reserved for in-app OTA and is not promoted as a manual download site. Details and release steps are in [OTA_RELEASE.md](OTA_RELEASE.md).
+The domestic static source is https://bd2.madsam.work/updates/dustweave/. Full and differential packages are authenticated with an embedded ECDSA public key; interrupted downloads resume, and file replacement uses durable backups and a recovery journal. The public GitHub update mirror is deferred; GitHub Releases provide first-install and manual-download packages. Domestic hosting is reserved for in-app OTA and is not promoted as a manual download site. Details and release steps are in [OTA_RELEASE.md](OTA_RELEASE.md).
 
 国内更新源使用现有网站。0.9.1 起优先差分更新，不适用时自动回退完整包；0.9.0 需完整更新一次才能获得差分能力。下载与安装均验证签名及文件哈希；中断下载可接续，失败或中断替换可从备份恢复。默认后台下载，空闲时确认重启；游戏不重启，账号、设置和插件保留。Portable 与 Lite 不互换。首次需从 GitHub Releases 手动安装支持 OTA 的版本；国内线路只作为软件内 OTA 更新入口，不提供手动下载入口。
 

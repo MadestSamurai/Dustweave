@@ -8,26 +8,24 @@ A multi-account daily assistant for BrownDust II on Windows
 
 [简体中文](README.md) · English
 
-![Windows x64](https://img.shields.io/badge/Windows-x64-0078D4?style=flat-square) ![.NET 8](https://img.shields.io/badge/.NET-8-512BD4?style=flat-square) ![Languages](https://img.shields.io/badge/languages-zh--CN%20%2F%20zh--TW%20%2F%20en--US-176B58?style=flat-square)
+[![MIT License](https://img.shields.io/badge/license-MIT-176B58?style=flat-square)](LICENSE) [![Release](https://img.shields.io/github/v/release/MadestSamurai/Dustweave?style=flat-square)](https://github.com/MadestSamurai/Dustweave/releases/latest) ![Windows x64](https://img.shields.io/badge/Windows-x64-0078D4?style=flat-square) ![.NET 8](https://img.shields.io/badge/.NET-8-512BD4?style=flat-square) ![Languages](https://img.shields.io/badge/languages-zh--CN%20%2F%20zh--TW%20%2F%20en--US-176B58?style=flat-square)
 
 [Getting started](docs/GETTING_STARTED.en.md) · [Releases](https://github.com/MadestSamurai/Dustweave/releases) · [Report an issue](https://github.com/MadestSamurai/Dustweave/issues) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
-> **Invite-only access**: this repository remains private. First installations and manual downloads use GitHub Releases and require repository access. The domestic route is reserved for in-app OTA updates. Source publication will be announced separately.
->
 > Provided free by **MadSamurai** on Bilibili ([MadestSamurai](https://github.com/MadestSamurai) on GitHub). This is an unofficial project. Automation may affect your account or game operation; understand the applicable rules before deciding to use it.
 
 Dustweave brings account switching, daily and weekly tasks, resource management and minigames into one desktop workspace. Set up tasks for each account, review the current plan and follow its progress on a timeline. Disable tasks you do not need or rerun selected unfinished stages.
 
 ## Preview
 
-<img src="docs/images/timeline-light.png" alt="Dustweave task timeline showing the current account, circular progress and stage completion times" width="1040">
+<img src="docs/images/timeline-en-light.png" alt="Dustweave task timeline showing the current account, circular progress and stage completion times" width="1040">
 
 <details>
 <summary>Show the dark theme</summary>
 
-![Dustweave dark timeline](docs/images/timeline-dark.png)
+![Dustweave dark timeline](docs/images/timeline-en-dark.png)
 
 </details>
 
@@ -55,7 +53,9 @@ Some stages require unlocked account content, an active event or a compatible ga
 | [Territory](https://github.com/MadestSamurai/bd2-territory) | [Apostle Defense](https://github.com/MadestSamurai/bd2-apostle-defense) · [SECRET VISION](https://github.com/MadestSamurai/bd2-secret-vision) |
 | [Equipment Assistant](https://github.com/MadestSamurai/bd2-equipment-assistant) | [Fiend Hunter](https://github.com/MadestSamurai/bd2-fiend-hunter) · [Infinite Gacha](https://github.com/MadestSamurai/bd2-infinite-gacha) |
 
-Each tool retains its independent project. Within Dustweave, the host coordinates connections, language and automation ownership. Changing the host language does not overwrite a standalone tool's saved language preference.
+Dustweave also includes a native [MANSION RUNAWAY](docs/MANSION_RUNAWAY.md) tool for realtime navigation and stage progression.
+
+The tools listed in the table retain their independent projects. Within Dustweave, the host coordinates connections, language and automation ownership. Changing the host language does not overwrite a standalone tool's saved language preference.
 
 ## Download and start
 
@@ -73,7 +73,7 @@ Both packages have the same features. Download a complete package from [GitHub R
 3. Configure the desired stages in daily settings, then select this run's plan on the task page.
 4. Start the selected stages or the multi-account queue. Follow progress and any items needing attention on the timeline.
 
-Start with a few familiar stages. The [getting-started guide](docs/GETTING_STARTED.en.md) covers updates, local data and troubleshooting. From 0.9.0, use Updates at the bottom left to check for signed updates. Downloads run in the background and restart only after confirmation while idle. Earlier versions need one manual upgrade.
+Start with a few familiar stages. The [getting-started guide](docs/GETTING_STARTED.en.md) covers updates, local data and troubleshooting. Install `1.0.0-beta` by extracting the complete download into a new folder; existing accounts and settings are reused. Older OTA clients cannot parse suffixed versions, so this release does not replace their feed. Subsequent compatible releases can use signed updates.
 
 ## Get help
 
@@ -93,13 +93,13 @@ cd Dustweave
 .\check-source.ps1 -AfterBuild
 ```
 
-Access is required while the repository remains private. Normal builds and synthetic tests neither require nor connect to the game. See the [development guide](docs/DEVELOPMENT.md) for prerequisites and packaging.
+Normal builds and synthetic tests neither require nor connect to the game. See the [development guide](docs/DEVELOPMENT.md) for prerequisites and packaging.
 
 [Contributing](CONTRIBUTING.md) · [Architecture](docs/ARCHITECTURE.md) · [Test scope](tests/Dustweave.Tests/README.md) · [Changelog](CHANGELOG.md)
 
 ## License and acknowledgements
 
-The main project's open-source license is still being finalized; this is not yet a completed public open-source release. Integrated tools and third-party components retain their own licenses. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and the [dependency inventory](docs/DEPENDENCIES.md). Game content remains the property of its respective rights holders.
+Dustweave is licensed under [MIT](LICENSE). Integrated tools and third-party components retain their respective licenses. The license grants no rights to game code, assets or trademarks. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and the [dependency inventory](docs/DEPENDENCIES.md). Game content remains the property of its respective rights holders.
 
 Thanks to the tool and dependency maintainers, testers, translators and users who provide reproducible reports. Dustweave is provided free and does not sell activation codes or paid licenses. Verify downloads through this repository and the author's own channels.
 

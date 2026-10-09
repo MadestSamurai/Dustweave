@@ -19,6 +19,7 @@ namespace BD2Daily {
   public static string ModuleEntry(string id) {
    switch(id) {
     case "daily": return "BD2Daily.Live.Bridge";
+    case "mansion-runaway": return "Dustweave.Mansion.Runtime.Loader";
     case "equipment": return "BD2Equipment.Live.Bridge";
     case "fishing": case "fishing-daily": return "BD2Fishing.Runtime.Loader";
     case "sichuan": case "sichuan-daily": return "BD2Sichuan.Runtime.Loader";

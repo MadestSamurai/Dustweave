@@ -26,7 +26,7 @@ internal static class PluginStoreCases
             File.WriteAllText(Path.Combine(folder, "hook", "Sample.cs"), "// synthetic");
             var files = new JsonArray();
             foreach (string file in Directory.GetFiles(folder, "*", SearchOption.AllDirectories)) files.Add(new JsonObject { ["path"] = Path.GetRelativePath(folder, file).Replace('\\', '/'), ["sha256"] = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(file))) });
-            var manifest = new JsonObject { ["id"] = "example.test", ["version"] = version, ["runtime"] = "net8.0-windows-x64", ["apiVersion"] = 4, ["bridgeExtensionApi"] = 1, ["minHostVersion"] = "0.9.12", ["maxHostVersion"] = "0.9.99", ["names"] = new JsonObject { ["zh-CN"] = "示例扩展", ["en-US"] = "Example" }, ["publisher"] = "Example", ["entryAssembly"] = "managed/Sample.dll", ["entryType"] = "SyntheticPlugin", ["capabilities"] = new JsonArray("sample_task"), ["hookSources"] = new JsonArray("hook/Sample.cs"), ["files"] = files };
+            var manifest = new JsonObject { ["id"] = "example.test", ["version"] = version, ["runtime"] = "net8.0-windows-x64", ["apiVersion"] = 4, ["bridgeExtensionApi"] = 1, ["minHostVersion"] = "0.9.12", ["maxHostVersion"] = DailyPlugin.HostVersion, ["names"] = new JsonObject { ["zh-CN"] = "示例扩展", ["en-US"] = "Example" }, ["publisher"] = "Example", ["entryAssembly"] = "managed/Sample.dll", ["entryType"] = "SyntheticPlugin", ["capabilities"] = new JsonArray("sample_task"), ["hookSources"] = new JsonArray("hook/Sample.cs"), ["files"] = files };
             edit?.Invoke(manifest); File.WriteAllText(Path.Combine(folder, "plugin.json"), manifest.ToJsonString());
             string zip = folder + ".zip"; ZipFile.CreateFromDirectory(folder, zip);
             if (extra != null) { using var archive = ZipFile.Open(zip, ZipArchiveMode.Update); using var writer = new StreamWriter(archive.CreateEntry(extra).Open()); writer.Write("unlisted"); }
@@ -34,7 +34,16 @@ internal static class PluginStoreCases
         }
         Check(!DailyPluginStore.HasSelection(Path.Combine(root, "user")), "empty store preserves explicit local installation");
         var firstZip = Package("1.0.0");
-        using var prepared = store.Prepare(firstZip); var first = store.Install(prepared);
+        using var prepared = store.Prepare(firstZip);
+        DailyInstalledPlugin first;
+        using (var held = new FileStream(Path.Combine(prepared.Info.Root, "managed/Sample.dll"), FileMode.Open, FileAccess.Read, FileShare.Read))
+        {
+            var install = Task.Run(() => store.Install(prepared));
+            await Task.Delay(150);
+            held.Dispose();
+            first = await install;
+        }
+        Check(store.Inspect(first).Available, "transient extracted-file lock does not interrupt verified installation");
         Check(store.Read().Active == null && !store.Read().OverrideLocal, "import alone does not execute or disable local plugin");
         Check(store.Inspect(first).Name("zh-TW") == "Example", "plugin-owned localized metadata uses fallback");
         Check(!store.Inspect(first, "1.0.0").Available, "host update compatibility rejected before loading");

@@ -20,7 +20,7 @@ internal static class ToolApplicationHost
             }
         }),System.Windows.Threading.DispatcherPriority.Loaded);
     }
-    internal static string Version(DailyToolDefinition tool) => Assembly.Load(new AssemblyName(tool.AssemblyName)).GetName().Version!.ToString(3);
+    internal static string Version(DailyToolDefinition tool) => tool.Id=="mansion-runaway" ? DailyProductVersion.Current : Assembly.Load(new AssemblyName(tool.AssemblyName)).GetName().Version!.ToString(3);
     public static int CheckClient(string id, string managed, string output)
     {
         Directory.CreateDirectory(output);
@@ -45,6 +45,7 @@ internal static class ToolApplicationHost
             if (!helper) DailyLanguage.Current.Initialize(DailyIdentity.DataRoot);
             if (!helper && Environment.GetEnvironmentVariable("BD2_DAILY_HOSTED_TOOL")!=id)throw new InvalidOperationException("请从日常助手的工具菜单打开，以共用游戏连接。");
             if (!helper) languageScope = HostedToolLocale.Begin(DailyLanguage.Current.Code);
+            if(id=="mansion-runaway")return MansionTool.Run(arguments,helper?null:app=>ConfigureWindow(app,id));
             var assembly = Assembly.Load(new AssemblyName(tool.AssemblyName));
             var typeName = tool.Id == "equipment" ? "BD2Equipment.App" : tool.AssemblyName + ".Desktop.App";
             var entry = assembly.GetType(typeName)!.GetMethod("RunHosted", BindingFlags.Public | BindingFlags.Static)
@@ -63,6 +64,3 @@ internal static class ToolApplicationHost
         finally { languageScope?.Dispose(); }
     }
 }
-
-
-

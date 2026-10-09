@@ -8,14 +8,12 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 
 简体中文 · [English](README.en.md)
 
-![Windows x64](https://img.shields.io/badge/Windows-x64-0078D4?style=flat-square) ![.NET 8](https://img.shields.io/badge/.NET-8-512BD4?style=flat-square) ![Languages](https://img.shields.io/badge/languages-zh--CN%20%2F%20zh--TW%20%2F%20en--US-176B58?style=flat-square)
+[![MIT License](https://img.shields.io/badge/license-MIT-176B58?style=flat-square)](LICENSE) [![Release](https://img.shields.io/github/v/release/MadestSamurai/Dustweave?style=flat-square)](https://github.com/MadestSamurai/Dustweave/releases/latest) ![Windows x64](https://img.shields.io/badge/Windows-x64-0078D4?style=flat-square) ![.NET 8](https://img.shields.io/badge/.NET-8-512BD4?style=flat-square) ![Languages](https://img.shields.io/badge/languages-zh--CN%20%2F%20zh--TW%20%2F%20en--US-176B58?style=flat-square)
 
 [开始使用](docs/GETTING_STARTED.md) · [版本发布](https://github.com/MadestSamurai/Dustweave/releases) · [问题反馈](https://github.com/MadestSamurai/Dustweave/issues) · [参与贡献](CONTRIBUTING.md)
 
 </div>
 
-> **受邀使用**：仓库目前保持私有。首次安装与手动下载使用 GitHub Releases，需要仓库访问权限；国内线路仅作为软件内 OTA 更新入口。源码公开计划另行公布。
->
 > 本项目由 B 站 **MadSamurai**（GitHub：[MadestSamurai](https://github.com/MadestSamurai)）免费提供，不隶属于游戏官方。辅助工具可能带来账号或游戏运行风险，请了解相关规则并自行决定是否使用。
 
 织尘将账号切换、日常与周常、经营和小游戏收进同一个工作台。为每个账号选择需要的环节，查看本次计划，再沿时间线执行；不需要的环节可以关闭，未完成的部分可以单独重跑。
@@ -55,7 +53,9 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 | [领地自动化](https://github.com/MadestSamurai/bd2-territory) | [使徒运气防守](https://github.com/MadestSamurai/bd2-apostle-defense) · [SECRET VISION](https://github.com/MadestSamurai/bd2-secret-vision) |
 | [装备助手](https://github.com/MadestSamurai/bd2-equipment-assistant) | [恶魔猎人](https://github.com/MadestSamurai/bd2-fiend-hunter) · [无限抽抽乐](https://github.com/MadestSamurai/bd2-infinite-gacha) |
 
-这些工具仍有各自的独立项目。在织尘中打开时，由主程序协调连接、语言和自动化控制权；独立版设置不会因主程序语言切换而被改写。
+此外，内置 [MANSION RUNAWAY](docs/MANSION_RUNAWAY.md) 的实时寻路与关卡推进工具。
+
+表中的工具仍保留各自的独立项目。在织尘中打开时，由主程序协调连接、语言和自动化控制权；独立版设置不会因主程序语言切换而被改写。
 
 ## 下载与开始
 
@@ -73,7 +73,7 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 3. 在**日常设置**中选择需要的环节，再到**今日任务**勾选本次计划。
 4. 点击**运行勾选环节**；多账号需求使用**多账号运行**。进度与需要处理的事项会显示在时间线中。
 
-首次使用建议先选择少量熟悉的环节。[完整入门](docs/GETTING_STARTED.md)包含更新、数据位置和常见问题。0.9.0 起可在左下角「版本更新」检查更新，默认后台下载并在空闲时确认重启；首次从更早版本升级仍需手动安装。
+首次使用建议先选择少量熟悉的环节。[完整入门](docs/GETTING_STARTED.md)包含更新、数据位置和常见问题。本次 `1.0.0-beta` 请完整下载后解压到新目录，已有账号与设置会沿用。旧版 OTA 无法识别带后缀版本，本次不向旧更新源推送不兼容清单；后续兼容版本仍可使用签名自动更新。
 
 ## 遇到问题
 
@@ -93,13 +93,13 @@ cd Dustweave
 .\check-source.ps1 -AfterBuild
 ```
 
-仓库仍私有，克隆需要访问权限。普通构建与合成测试不需要安装游戏，也不会连接游戏；开发环境和打包方式见[开发指南](docs/DEVELOPMENT.md)。
+普通构建与合成测试不需要安装游戏，也不会连接游戏；开发环境和打包方式见[开发指南](docs/DEVELOPMENT.md)。
 
 [贡献指南](CONTRIBUTING.md) · [项目架构](docs/ARCHITECTURE.md) · [测试范围](tests/Dustweave.Tests/README.md) · [变更记录](CHANGELOG.md)
 
 ## 许可与致谢
 
-主体开源许可证正在确认，仓库暂不宣称已完成开源发布。已有独立工具和第三方组件继续遵循各自许可证，见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) 和[依赖清单](docs/DEPENDENCIES.md)。游戏及其素材的权利归各自权利人所有。
+Dustweave 主体采用 [MIT 许可证](LICENSE)。内置独立工具与第三方组件保留各自许可证；MIT 不授予游戏代码、资源或商标的权利。见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) 和[依赖清单](docs/DEPENDENCIES.md)。游戏及其素材的权利归各自权利人所有。
 
 感谢独立工具维护者、依赖项目，以及提供测试反馈、翻译和问题复现的用户。项目免费提供，不出售激活码或付费授权；请通过本仓库及作者发布渠道核对来源。
 

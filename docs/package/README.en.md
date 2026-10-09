@@ -31,6 +31,6 @@ Updates at the bottom left offers checks and downloads. Domestic hosting serves 
 
 ## Attribution and notes
 
-Provided free by **MadSamurai** on Bilibili / **MadestSamurai** on GitHub. The source repository remains private. Integrated tool licenses and sources are in `licenses`, `docs/tools` and `THIRD_PARTY_NOTICES.md`.
+Provided free by **MadSamurai** on Bilibili / **MadestSamurai** on GitHub. Source is MIT licensed: [Dustweave](https://github.com/MadestSamurai/Dustweave). Integrated tool licenses and sources are in `licenses`, `docs/tools` and `THIRD_PARTY_NOTICES.md`.
 
 This is an unofficial project. Automation can carry account and operational risks; decide whether to use it accordingly. Packaging includes offline verification. New plugin behavior in actual game tasks still needs validation during normal use.

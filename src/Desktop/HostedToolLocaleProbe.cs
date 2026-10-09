@@ -21,7 +21,7 @@ internal static class HostedToolLocaleProbe
         try
         {
             AppDomain.CurrentDomain.SetData(HostedToolLocale.Key,null);
-            foreach(var tool in DailyToolCatalog.All)
+            foreach(var tool in DailyToolCatalog.All.Where(t=>t.Id!="mansion-runaway"))
             {
                 string root=Path.Combine(output,"isolated",tool.Id);
                 Directory.CreateDirectory(root);
@@ -60,10 +60,12 @@ internal static class HostedToolLocaleProbe
                 Check(adapter.Read()=="en-US",tool.Id+": invalid host hint ignored");
                 AppDomain.CurrentDomain.SetData(HostedToolLocale.Key,null);
             }
+            DailyLanguage.Current.Initialize(Path.Combine(output,"isolated","mansion-runaway"));
+            foreach(var code in new[]{"zh-CN","zh-TW","en-US"}){DailyLanguage.Current.Select(code);Check(DailyLanguage.Current.Get("mansion.mode") is {Length:>0},"mansion-runaway: shared native catalog "+code);}
             Check(CultureInfo.CurrentCulture.Name==culture&&CultureInfo.CurrentUICulture.Name==uiCulture,"Execution culture unchanged");
             bool rejected=false;try{using var invalid=HostedToolLocale.Begin("unknown");}catch(ArgumentOutOfRangeException){rejected=true;}
             Check(rejected,"Invalid host locale rejected");
-            DailyJson.Write(Path.Combine(output,"result.json"),new {status="passed",count=checks.Count,checks,tools=9,gameCommands=0,realGameTouched=false});
+            DailyJson.Write(Path.Combine(output,"result.json"),new {status="passed",count=checks.Count,checks,tools=DailyToolCatalog.All.Count,gameCommands=0,realGameTouched=false});
         }
         finally
         {
@@ -131,4 +133,3 @@ internal static class HostedToolLocaleProbe
             code=>preference.GetMethod("Save")!.Invoke(null,[root,code]));
     }
 }
-

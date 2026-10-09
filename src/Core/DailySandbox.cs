@@ -249,6 +249,17 @@ public static class DailySandbox
                     local = SessionService.LatestSameAccount(local,vault.TryLoadFixedSlot);
                     if (state.Complete && current == request.Account && local.CapturedAtUtc > saved.CapturedAtUtc) saved = local;
                 }
+                if (old != null && !state.Complete)
+                {
+                    var identity = SessionRegistry.ReadAuthenticationIdentity();
+                    var observed = vault.ReadObserved();
+                    if (identity.Member.Length > 0 && DailyIdentity.MemberKey(identity.Member) != request.Account)
+                        throw new InvalidOperationException("隔离窗口已登录其他账号，未导出凭据。");
+                    if (observed != null && DailyIdentity.MemberKey(SessionIdentity.GetMemberId(observed) ?? "") != request.Account) observed = null;
+                    DailySandboxSessions.RequireFreshReplacement(saved,
+                        identity.Stamp.Length > 0 ? identity.Stamp : observed == null ? "" : SessionRegistry.AuthenticationStamp(observed),
+                        observed?.CapturedAtUtc ?? old.ImportedSessionUtc);
+                }
                 if(ShouldImportSession(old, saved.CapturedAtUtc, state.Complete, current, request.Account))
                 {
                     SessionRegistry.WriteAndVerify(saved);
@@ -256,7 +267,11 @@ public static class DailySandbox
                     vault.RememberObserved(saved);
                     imported = saved.CapturedAtUtc;
                 }
+                // The agreement can change without a token rotation. Restore only
+                // an actual same-client record bound to the selected account.
+                SessionRegistry.RestoreAgreement(saved);
                 if(SessionRegistry.HasPendingLauncherToken())throw new InvalidOperationException("仍有启动器登录请求，已停止隔离启动。");
+                DailySandboxSessions.WriteAudit(request.Account, "bootstrap", SessionRegistry.ReadAuthenticationIdentity().Stamp, SessionRegistry.AuthenticationStamp(saved));
                 GameLauncher.ValidateLaunchContext();
                 // Updates can restore the Google Play channel. Prepare the
                 // direct-PC channel inside this box, with its own exact backup.

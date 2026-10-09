@@ -121,7 +121,19 @@ public sealed class DailyPluginStore
             var existing = DailyPlugin.Inspect(destination);
             if (!existing.Available || existing.Fingerprint != info.Fingerprint) throw new InvalidDataException("plugins.invalid_hash");
         }
-        else Directory.Move(info.Root, destination);
+        else
+        {
+            // Windows scanners may briefly hold newly extracted files without delete sharing.
+            // Keep the immutable destination and registry untouched on a persistent failure.
+            for (int attempt = 0; ; attempt++)
+            {
+                try { Directory.Move(info.Root, destination); break; }
+                catch (IOException error) when (attempt < 3 && (error.HResult & 0xffff) is 5 or 32 or 33)
+                { Thread.Sleep(100 * (attempt + 1)); }
+            }
+        }
+        var moved = DailyPlugin.Inspect(destination);
+        if (!moved.Available || moved.Fingerprint != info.Fingerprint) throw new InvalidDataException("plugins.invalid_hash");
         installed = new(info.Id, info.Version, info.Fingerprint, DateTimeOffset.UtcNow);
         Save(state with { Installed = [..state.Installed, installed] });
         return installed;
