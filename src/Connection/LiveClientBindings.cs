@@ -112,9 +112,41 @@ public static class LiveClientBindings
             (!SymbolEqualityComparer.Default.Equals(n,n.OriginalDefinition)&&n.TypeArguments.Length>0?"<"+string.Join(",",n.TypeArguments.Select(TypeName))+">":""),
         _=>throw new InvalidDataException("Unsupported baseline type: "+type)
     };
-    public static SyntaxTree[] Adapt(string managed,IEnumerable<SyntaxTree> source,LiveBindingContract contract,string reportPath)
+    // Share the immutable client's scan across contracts during one preparation only.
+    internal sealed class ResolutionContext : IDisposable
     {
-        var rewriter=new Rewriter(ResolveCached(managed,contract,reportPath));
+        private string? path, digest;
+        private MetadataIndex? index;
+        private Dictionary<string,HashSet<string>>? uses;
+        private bool disposed;
+        internal int ClientScanCount { get; private set; }
+        internal void ValidateClient(string managed,string hash)
+        {
+            ObjectDisposedException.ThrowIf(disposed,this);
+            string candidate=Path.GetFullPath(Path.Combine(managed,"Assembly-CSharp.dll"));
+            if(path!=null && (!string.Equals(path,candidate,StringComparison.OrdinalIgnoreCase)||digest!=hash))
+                throw new InvalidDataException("Client changed during connection preparation; prepare again.");
+            path=candidate;digest=hash;
+        }
+        internal ResolvedBindings ResolveContract(string managed,LiveBindingContract contract)
+        {
+            ValidateClient(managed,ClientHash(managed));
+            index??=new MetadataIndex(path!);
+            if(uses==null){uses=LocalUses(index);ClientScanCount++;}
+            return Resolve(index,contract,uses);
+        }
+        public void Dispose(){if(disposed)return;disposed=true;index?.Dispose();index=null;uses=null;}
+    }
+    private static string ClientHash(string managed)
+    {
+        using var input=File.OpenRead(Path.Combine(managed,"Assembly-CSharp.dll"));
+        return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(input));
+    }
+    public static SyntaxTree[] Adapt(string managed,IEnumerable<SyntaxTree> source,LiveBindingContract contract,string reportPath)
+        =>Adapt(managed,source,contract,reportPath,null);
+    internal static SyntaxTree[] Adapt(string managed,IEnumerable<SyntaxTree> source,LiveBindingContract contract,string reportPath,ResolutionContext? context)
+    {
+        var rewriter=new Rewriter(ResolveCached(managed,contract,reportPath,context));
         return source.Select(t=>CSharpSyntaxTree.Create((CSharpSyntaxNode)rewriter.Visit(t.GetRoot())!,path:t.FilePath)).ToArray();
     }
     internal static JsonNode AdaptSpec(string managed,JsonNode spec,string reportPath,out Dictionary<string,string> resolvedNames)
@@ -134,10 +166,10 @@ public static class LiveClientBindings
     }
     private sealed record NameCache(string Key,string Payload,string Sha256);
     private sealed record NamePayload(Dictionary<string,string> Names,BindingReport Report);
-    internal static Dictionary<string,string> ResolveCached(string managed,LiveBindingContract contract,string reportPath)
+    internal static Dictionary<string,string> ResolveCached(string managed,LiveBindingContract contract,string reportPath,ResolutionContext? context=null)
     {
-        string client;
-        using(var input=File.OpenRead(Path.Combine(managed,"Assembly-CSharp.dll")))client=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(input));
+        string client=ClientHash(managed);
+        context?.ValidateClient(managed,client);
         string key=MetadataIndex.Hash("live-names-v1|"+typeof(LiveClientBindings).Module.ModuleVersionId+"|"+client+"|"+JsonSerializer.Serialize(contract));
         string directory=Path.Combine(BD2Daily.DailyIdentity.DataRoot,"live","binding-cache"),path=Path.Combine(directory,key+".json");
         try{
@@ -152,7 +184,7 @@ public static class LiveClientBindings
                 }
             }
         }catch(Exception error) when(error is IOException or JsonException or InvalidOperationException){ /* Rebuild an incomplete cache. */ }
-        var names=ResolveNames(managed,contract,reportPath);
+        var names=ResolveNames(managed,contract,reportPath,context);
         var report=JsonSerializer.Deserialize<BindingReport>(File.ReadAllText(reportPath))!;
         string payload=JsonSerializer.Serialize(new NamePayload(names,report));
         Directory.CreateDirectory(directory);
@@ -161,10 +193,10 @@ public static class LiveClientBindings
         finally{if(File.Exists(temporary))File.Delete(temporary);}
         return names;
     }
-    internal static Dictionary<string,string> ResolveNames(string managed,LiveBindingContract contract,string reportPath)
+    internal static Dictionary<string,string> ResolveNames(string managed,LiveBindingContract contract,string reportPath,ResolutionContext? context=null)
     {
-        using var index=new MetadataIndex(Path.Combine(managed,"Assembly-CSharp.dll"));
-        var resolved=Resolve(index,contract);
+        if(context==null){using var owned=new ResolutionContext();return ResolveNames(managed,contract,reportPath,owned);}
+        var resolved=context.ResolveContract(managed,contract);
         void Report(BindingReport report)=>File.WriteAllText(reportPath,JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true}));
         if(resolved.Report.Status!="compatible"){Report(resolved.Report);throw new InvalidDataException("Daily client binding failed: "+string.Join("; ",resolved.Report.Errors));}
         try{
@@ -219,11 +251,11 @@ public static class LiveClientBindings
     private static string[] Uses(IMemberDefinition member,Dictionary<string,HashSet<string>> uses)
         =>(member is PropertyDefinition p?new[]{p.GetMethod?.FullName,p.SetMethod?.FullName}:new[]{member.FullName})
         .Where(n=>n!=null).SelectMany(n=>uses.TryGetValue(n!,out var values)?values:Enumerable.Empty<string>()).Distinct().OrderBy(s=>s,StringComparer.Ordinal).ToArray();
-    private static ResolvedBindings Resolve(MetadataIndex index,LiveBindingContract contract)
+    private static ResolvedBindings Resolve(MetadataIndex index,LiveBindingContract contract,Dictionary<string,HashSet<string>> localUses)
     {
         var initial=BindingResolver.Resolve(index,contract.Bindings);
         var types=initial.Types;var members=initial.Members;
-        var localUses=LocalUses(index);var usage=contract.Uses.ToDictionary(x=>x.Key);
+        var usage=contract.Uses.ToDictionary(x=>x.Key);
         // Type references from already resolved members preserve semantic relationships.
         for(int pass=0;pass<3;pass++)
         {

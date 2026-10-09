@@ -114,14 +114,15 @@ try {
    Console.WriteLine("Baseline contract generated; no game operation.");return;
   }
   var plugin=DailyPlugin.Current;
+  using var resolution=new LiveClientBindings.ResolutionContext();
   if(plugin.BindingContract.Length!=0){
    var original=sources.ToArray();
    using(var resource=assembly.GetManifestResourceStream("Live.BindingContract.json")!)
-    sources=LiveClientBindings.Adapt(managed,original.Where(t=>!t.FilePath.StartsWith("Plugin.",StringComparison.Ordinal)),JsonSerializer.Deserialize<LiveBindingContract>(resource)!,Path.Combine(output,"bindings.json"));
+    sources=LiveClientBindings.Adapt(managed,original.Where(t=>!t.FilePath.StartsWith("Plugin.",StringComparison.Ordinal)),JsonSerializer.Deserialize<LiveBindingContract>(resource)!,Path.Combine(output,"bindings.json"),resolution);
    var contract=JsonSerializer.Deserialize<LiveBindingContract>(File.ReadAllBytes(Path.Combine(plugin.Root,plugin.BindingContract)))!;
-   sources=sources.Concat(LiveClientBindings.Adapt(managed,original.Where(t=>t.FilePath.StartsWith("Plugin.",StringComparison.Ordinal)),contract,Path.Combine(output,"plugin-bindings.json")));
+   sources=sources.Concat(LiveClientBindings.Adapt(managed,original.Where(t=>t.FilePath.StartsWith("Plugin.",StringComparison.Ordinal)),contract,Path.Combine(output,"plugin-bindings.json"),resolution));
   }else using(var resource=assembly.GetManifestResourceStream("Live.BindingContract.json")!)
-   sources=LiveClientBindings.Adapt(managed,sources,JsonSerializer.Deserialize<LiveBindingContract>(resource)!,Path.Combine(output,"bindings.json"));
+   sources=LiveClientBindings.Adapt(managed,sources,JsonSerializer.Deserialize<LiveBindingContract>(resource)!,Path.Combine(output,"bindings.json"),resolution);
   var refs=new List<MetadataReference>();foreach(var file in Directory.EnumerateFiles(managed,"*.dll")){try{refs.Add(MetadataReference.CreateFromFile(file));}catch(BadImageFormatException){}}
   refs.Add(MetadataReference.CreateFromImage(DailyHookCompiler.Resource("BD2Daily.Harmony.dll")));
   var compilation=CSharpCompilation.Create("BD2Daily.LiveBridge"+LiveProtocol.BridgeVersion+".Hot."+Fingerprint.Substring(0,12),sources,refs,new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,optimizationLevel:OptimizationLevel.Release,platform:Platform.X64,deterministic:true));

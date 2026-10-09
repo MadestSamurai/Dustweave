@@ -47,6 +47,21 @@ internal static class GameInstallationCases
         File.WriteAllText(config, "{\"Schema\":99,\"Executable\":null}");
         Reject(() => store.Resolve(), GameInstallation.Unreadable, "unknown schema is not silently ignored");
         store.UseAutomatic(); Check(store.Resolve() == auto, "restore repairs an unreadable preference");
+        // A concurrent reader that does not share delete must not corrupt or lose the preference.
+        var held = new FileStream(config, FileMode.Open, FileAccess.Read, FileShare.Read);
+        var release = Task.Run(async () => { await Task.Delay(100); held.Dispose(); });
+        try { store.Select(auto); } finally { held.Dispose(); release.GetAwaiter().GetResult(); }
+        Check(store.Read().IsManual && store.Resolve() == auto, "brief replacement conflict recovers without losing the selected path");
+        var beforeLock = File.ReadAllBytes(config);
+        using (var locked = new FileStream(config, FileMode.Open, FileAccess.Read, FileShare.Read))
+        {
+            bool failed = false; var watch = System.Diagnostics.Stopwatch.StartNew();
+            try { store.UseAutomatic(); }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException) { failed = true; }
+            Check(failed && watch.Elapsed < TimeSpan.FromSeconds(3), "persistent access failure is bounded and reported");
+            Check(beforeLock.SequenceEqual(File.ReadAllBytes(config)), "failed replacement preserves the original settings");
+        }
+        store.UseAutomatic(); Check(!store.Read().IsManual, "saving works after a persistent lock is released");
         var empty = new GameInstallation(Path.Combine(root, "not-installed"), () => null);
         Check(empty.Read().Executable == "" && empty.Read().Error == GameInstallation.Missing, "new installation has a useful empty state");
         Check(Directory.GetFiles(settings, "*.tmp").Length == 0, "atomic writes leave no pending files");

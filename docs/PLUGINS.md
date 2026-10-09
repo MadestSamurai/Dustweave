@@ -40,6 +40,10 @@ The ZIP root contains `plugin.json` and exactly the files listed by it. Archives
 }
 ```
 
+`minHostVersion` records the oldest required host. Omit `maxHostVersion` when the extension follows the stable API contract; set it only for a known incompatibility, not as a routine release ceiling. Omitting the ceiling does not bypass exact API/bridge versions, payload hashes, managed loading or local-client preparation. Validate release candidates against the actual extension privately; do not add private payloads to the public repository or CI.
+
+During one preparation, the host and extension share a client metadata/use-site index but still resolve their contracts independently. The index is disposed afterward; a different client path or content is rejected rather than reusing stale bindings.
+
 This is a structural example, not an executable sample. API 4 uses `IDailyExtension` from the host Core assembly; arbitrary capability names do not create new task definitions. Existing task integrations keep using the shared account identity, queue, control ownership, transport and recovery workflow.
 
 `bindingContract` is optional for components without renamed client interfaces. Components that use them should ship a hashed contract captured from their matching source baseline. `generate-plugin-contract <baseline Managed> <output>` captures only plugin source references. The base and extension contracts are adapted separately; private interface descriptions never need to be embedded in the public host. Updating the plugin changes only the on-demand daily module identity, not the common observer.

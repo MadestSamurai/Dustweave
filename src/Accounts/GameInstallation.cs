@@ -32,7 +32,8 @@ public sealed class GameInstallation
             if (File.Exists(file))
             {
                 if (new FileInfo(file).Length > 65536) return new("", true, Unreadable);
-                var value = JsonSerializer.Deserialize<Preference>(File.ReadAllText(file));
+                using var input = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                var value = JsonSerializer.Deserialize<Preference>(input);
                 if (value?.Schema != 1 || value.Executable is "") return new("", true, Unreadable);
                 selected = value.Executable;
             }
@@ -68,10 +69,23 @@ public sealed class GameInstallation
                 JsonSerializer.Serialize(stream, value);
                 stream.Flush(flushToDisk: true);
             }
-            File.Move(temporary, file, overwrite: true);
+            // Readers and file scanners can briefly deny replacement on Windows.
+            // Keep the old complete preference intact and retry only bounded sharing/access failures.
+            for (int attempt = 0; ; attempt++)
+            {
+                try { File.Move(temporary, file, overwrite: true); break; }
+                catch (Exception error) when (attempt < 5 && IsTemporaryAccess(error))
+                {
+                    Thread.Sleep(20 << attempt);
+                }
+            }
         }
         finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }
+
+    private static bool IsTemporaryAccess(Exception error) => OperatingSystem.IsWindows()
+        && error is IOException or UnauthorizedAccessException
+        && (error.HResult & 0xffff) is 5 or 32 or 33;
 
     private static string Validate(string executable)
     {

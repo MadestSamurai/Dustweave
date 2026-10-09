@@ -45,6 +45,26 @@ static class LiveBindingCases
         Check(map["α"]=="δ"&&map["β"]=="ε","client field rename follows use sites rather than declaration order");
         Check(map["κ"]=="λ","same-shaped getters use stable accessor identity");
         Check(map["θ"]=="ι","added enum values preserve known action values");
+        using(var shared=new LiveClientBindings.ResolutionContext())
+        {
+            var first=LiveClientBindings.ResolveNames(current,contract,Path.Combine(directory,"shared-base.json"),shared);
+            var subset=contract with { Bindings=contract.Bindings with { Types=[contract.Bindings.Types[0]] }, Enums=[] };
+            var second=LiveClientBindings.ResolveNames(current,subset,Path.Combine(directory,"shared-extension.json"),shared);
+            Check(shared.ClientScanCount==1&&first["α"]==second["α"]&&second["κ"]==map["κ"],"separate contracts share one client scan without changing bindings");
+            Reject(()=>LiveClientBindings.ResolveNames(changed,contract,Path.Combine(directory,"shared-changed.json"),shared),"shared preparation refuses another client identity");
+            _=LiveClientBindings.ResolveCached(current,contract,Path.Combine(directory,"shared-cache.json"),shared);
+            Reject(()=>shared.ValidateClient(current,"changed-content"),"same path with changed client content cannot reuse the scan");
+            shared.Dispose();
+            bool disposed=false;
+            try{LiveClientBindings.ResolveCached(current,contract,Path.Combine(directory,"disposed.json"),shared);}catch(ObjectDisposedException){disposed=true;}
+            Check(disposed,"disposed preparation cannot reuse either metadata or cached names");
+        }
+        using(var fresh=new LiveClientBindings.ResolutionContext())
+        {
+            Check(fresh.ClientScanCount==0,"new preparation does not retain the previous client scan");
+            _=LiveClientBindings.ResolveNames(current,contract,Path.Combine(directory,"fresh.json"),fresh);
+            Check(fresh.ClientScanCount==1,"new preparation independently verifies the client");
+        }
         var cached=LiveClientBindings.ResolveCached(current,contract,Path.Combine(directory,"cached.json"));
         Check(cached["α"]=="δ","verified name cache preserves resolved member identity");
         string cacheDirectory=Path.Combine(BD2Daily.DailyIdentity.DataRoot,"live","binding-cache");
