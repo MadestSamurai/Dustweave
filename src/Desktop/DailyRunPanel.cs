@@ -17,12 +17,18 @@ public sealed partial class DailyRunPanel : UserControl
     public event Action<QueuePlanRequest>? PlanRequested;
     public event Action? StopRequested;
     public event Action? AccountsRequested;
+    public event Action<string>? AccountRequested;
+    public event Action? BatchRequested;
     public event Action? SyncCollectionRequested;
     private readonly Button syncCollection = new() { Content = "手动检查收集进度", ToolTip = "按已保存的地图范围读取游戏服务器；会切换卡带，可能需要数分钟，只同步、不采集。" };
     private readonly Button current = new() { Content = "开始日常" }, resume = new() { Content = "接续原队列" }, stop = new() { Content = "停止", IsEnabled = false, Visibility = Visibility.Collapsed };
     private readonly Button selectUnfinished = new() { Content = "勾选未完成" }, clearSelection = new() { Content = "清空勾选" }, retry = new() { Content = "补跑勾选环节（0）", IsEnabled = false };
     private readonly ObservableCollection<StageRow> rows = new();
     private readonly Dictionary<string, bool> planChoices = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Dictionary<string, bool>> accountChoices = new(StringComparer.Ordinal);
+    private readonly ComboBox accountSelector = new() { Width = 220, DisplayMemberPath = nameof(DailyAccount.Name), SelectedValuePath = nameof(DailyAccount.AccountKey), Margin = new(0, 0, 12, 4) };
+    private readonly Button batch = new() { Margin = new(0, 0, 0, 4), Visibility = Visibility.Collapsed };
+    private bool settingAccounts;
     private DailyPreferences plan = new(); private bool showingReport; private bool rowsAreReport; private bool chooseInitialView = true;
     private readonly Button chooseTasks = new();
     private readonly TextBlock actionHint = new() { TextWrapping = TextWrapping.Wrap, FontSize = 12, Margin = new(0, 0, 0, 10) };
@@ -118,6 +124,16 @@ public sealed partial class DailyRunPanel : UserControl
         top.Children.Add(new Border { Style = (Style)Application.Current.FindResource("Panel"),
             Padding = new(18, 16, 18, 16), Child = summary });
 
+        var accountBar = new WrapPanel { Margin = new(0, 10, 0, 0) };
+        var accountLabel = new TextBlock { Margin = new(0, 0, 10, 4), VerticalAlignment = VerticalAlignment.Center };
+        L.Text(accountLabel, "run.task_account");
+        L.Bind(accountSelector, System.Windows.Automation.AutomationProperties.NameProperty, "run.task_account");
+        L.Bind(accountSelector, FrameworkElement.ToolTipProperty, "run.task_account_help");
+        L.Bind(batch, ContentControl.ContentProperty, "run.batch_overview");
+        accountBar.Children.Add(accountLabel); accountBar.Children.Add(accountSelector); accountBar.Children.Add(batch);
+        top.Children.Add(accountBar);
+        accountSelector.SelectionChanged += (_, _) => { if (!settingAccounts && !isBusy && accountSelector.SelectedValue is string key) AccountRequested?.Invoke(key); };
+        batch.Click += (_, _) => BatchRequested?.Invoke();
         var viewSwitch = new StackPanel { Orientation = Orientation.Horizontal };
         foreach (var b in new[] { planButton, reportButton })
         {
@@ -182,6 +198,7 @@ public sealed partial class DailyRunPanel : UserControl
     public void Busy(bool busy, bool canStop = true)
     {
         isBusy = busy;
+        accountSelector.IsEnabled = !busy;
         views.Visibility = busy ? Visibility.Collapsed : Visibility.Visible;
         current.Visibility = busy ? Visibility.Collapsed : Visibility.Visible;
         stop.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
@@ -196,15 +213,30 @@ public sealed partial class DailyRunPanel : UserControl
     {
         if (activeAccount != key)
         {
+            if (DailyProfiles.ValidKey(activeAccount)) accountChoices[activeAccount] = new(planChoices, StringComparer.Ordinal);
             ClearSelection();
             planChoices.Clear();
+            if (accountChoices.TryGetValue(key, out var saved)) foreach (var pair in saved) planChoices[pair.Key] = pair.Value;
             showingReport = false;
             chooseInitialView = true;
+            currentView = new("idle", "", "", [], key);
         }
         if (activeAccount != key) ClearOperationError();
         activeAccount = key;
         L.Bind(current, FrameworkElement.ToolTipProperty, "run.account_help", name);
         UpdateChoices();
+    }
+    public void SetAccounts(IEnumerable<DailyAccount> accounts, string key, bool hasBatch)
+    {
+        settingAccounts = true;
+        try
+        {
+            var values = accounts.Where(a => a.Valid && DailyProfiles.ValidKey(a.AccountKey)).DistinctBy(a => a.AccountKey).ToArray();
+            if (!accountSelector.Items.OfType<DailyAccount>().SequenceEqual(values)) accountSelector.ItemsSource = values;
+            accountSelector.SelectedValue = key;
+            batch.Visibility = hasBatch ? Visibility.Visible : Visibility.Collapsed;
+        }
+        finally { settingAccounts = false; }
     }
     public void ShowPlan(DailyPreferences preferences)
     {
@@ -288,7 +320,7 @@ public sealed partial class DailyRunPanel : UserControl
         L.Text(status, "run.start_failed");
         var error = operationError;
         var translation = operationErrorTranslation;
-        L.Bind(detail, TextBlock.TextProperty, () => translation != null ? L.Describe(translation) : Describe(error));
+        L.Bind(detail, TextBlock.TextProperty, () => DailyIssuePresentation.WithAdvice(error, translation != null ? L.Describe(translation) : Describe(error)));
         L.Bind(detail, FrameworkElement.ToolTipProperty, () => L.Diagnostic(error, detail.Text));
 
     }
@@ -311,9 +343,9 @@ public sealed partial class DailyRunPanel : UserControl
         }
         if (crossed)
         {
-            if (showingReport)
-                ClearSelection();
+            if (showingReport) ClearSelection();
             planChoices.Clear();
+            accountChoices.Remove(activeAccount);
             ShowCurrentPlan();
         }
         else if (showingReport)
@@ -488,6 +520,8 @@ public sealed partial class DailyRunPanel : UserControl
             {
                 var text = snapshot.State == "skipped" && string.IsNullOrWhiteSpace(snapshot.Detail)
                     ? L.Get("run.skipped_unknown") : Describe(snapshot.Detail);
+                if (snapshot.State is "blocked" or "failed" or "error" && DailyIssues.Classify(snapshot.Detail).Code != "unknown")
+                    text = DailyIssuePresentation.WithAdvice(snapshot.Detail, text);
                 if (snapshot.State == "recovery_required") text = L.Get("run.needs_check", text);
                 return snapshot.Carried ? L.Get("run.carried", text) : text;
             }

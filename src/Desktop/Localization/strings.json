@@ -4,63 +4,286 @@
     "zh-TW": "語言 / Language",
     "en-US": "Language"
   },
-  "onboarding.title": {"zh-CN":"启动引导","zh-TW":"啟動引導","en-US":"Getting started"},
-  "onboarding.step": {"zh-CN":"连接准备 · {0} / {1}","zh-TW":"連線準備 · {0} / {1}","en-US":"Connection setup · {0} / {1}"},
-  "onboarding.page": {"zh-CN":"功能导览 · {0} / {1}","zh-TW":"功能導覽 · {0} / {1}","en-US":"App tour · {0} / {1}"},
-  "onboarding.path_title": {"zh-CN":"先确认游戏的位置","zh-TW":"先確認遊戲的位置","en-US":"Check your game location"},
-  "onboarding.path_body": {"zh-CN":"确认下方是你使用的游戏本体。继续后会尝试启动一次；如果游戏已在运行，将直接验证当前游戏。","zh-TW":"確認下方是你使用的遊戲本體。繼續後會嘗試啟動一次；若遊戲已在執行，將直接驗證目前的遊戲。","en-US":"Confirm the game executable below. Continue to try one launch, or verify the game if it is already running."},
-  "onboarding.start": {"zh-CN":"位置正确，开始验证","zh-TW":"位置正確，開始驗證","en-US":"Launch and verify"},
-  "onboarding.login_title": {"zh-CN":"请进入游戏","zh-TW":"請進入遊戲","en-US":"Enter the game"},
-  "onboarding.launching": {"zh-CN":"正在尝试启动游戏。请在游戏中完成登录并进入主菜单，织尘会自动检测账号。","zh-TW":"正在嘗試啟動遊戲。請在遊戲中完成登入並進入主選單，織塵會自動偵測帳號。","en-US":"Starting the game. Sign in and enter the main menu; Dustweave will detect your account automatically."},
-  "onboarding.connecting": {"zh-CN":"正在准备连接与身份验证。你可以切换到游戏继续登录。","zh-TW":"正在準備連線與身分驗證。你可以切換到遊戲繼續登入。","en-US":"Preparing the connection and identity check. You can switch to the game to continue signing in."},
-  "onboarding.login": {"zh-CN":"连接已准备好。请进入主菜单；读到真实角色信息后，这里会自动提示。","zh-TW":"連線已準備好。請進入主選單；讀到實際角色資訊後，這裡會自動提示。","en-US":"The connection is ready. Enter the main menu; this window will notify you when your character is detected."},
-  "onboarding.detected_title": {"zh-CN":"已经检测到你的账号","zh-TW":"已經偵測到你的帳號","en-US":"Account detected"},
-  "onboarding.detected": {"zh-CN":"已验证角色「{0}」。请正常关闭游戏并等待启动器退出，然后在这里保存账号。不会切换或覆盖其他账号。","zh-TW":"已驗證角色「{0}」。請正常關閉遊戲並等待啟動器退出，然後在這裡儲存帳號。不會切換或覆寫其他帳號。","en-US":"Character verified: {0}. Exit the game normally and wait for the launcher to close, then save this account here. Other saved accounts will not be overwritten."},
-  "onboarding.account_name": {"zh-CN":"账号备注名","zh-TW":"帳號備註名稱","en-US":"Account label"},
-  "onboarding.save": {"zh-CN":"保存账号","zh-TW":"儲存帳號","en-US":"Save account"},
-  "onboarding.wait_close": {"zh-CN":"等待游戏和启动器退出，退出后即可保存。","zh-TW":"等待遊戲與啟動器退出，退出後即可儲存。","en-US":"Waiting for the game and launcher to close before saving."},
-  "onboarding.can_save": {"zh-CN":"游戏已关闭，可以保存最新登录信息。","zh-TW":"遊戲已關閉，可以儲存最新登入資訊。","en-US":"Game closed. Ready to save the latest sign-in information."},
-  "onboarding.saved_title": {"zh-CN":"账号已准备好","zh-TW":"帳號已準備好","en-US":"Your account is ready"},
-  "onboarding.saved_body": {"zh-CN":"「{0}」已保存。以后请在织尘的账号管理里点击「进入游戏」，避免通过桌面快捷方式或加速器启动。接下来带你看看各个分页。","zh-TW":"「{0}」已儲存。以後請在織塵的帳號管理點選「進入遊戲」，避免透過桌面捷徑或加速器啟動。接下來帶你看看各個分頁。","en-US":"{0} has been saved. From now on, use Play in Dustweave’s Accounts page instead of a desktop game shortcut or an accelerator. Next, take a short tour of the app."},
-  "onboarding.tour": {"zh-CN":"进入织尘，了解功能","zh-TW":"進入織塵，了解功能","en-US":"Explore Dustweave"},
-  "onboarding.skip": {"zh-CN":"跳过引导","zh-TW":"略過引導","en-US":"Skip guide"},
-  "onboarding.skip_title": {"zh-CN":"跳过启动引导？","zh-TW":"略過啟動引導？","en-US":"Skip setup?"},
-  "onboarding.skip_warning": {"zh-CN":"游戏路径或账号验证可能尚未完成。跳过后请自行确认这些设置，否则无法正常启动日常。不会关闭游戏或清除登录状态。以后可在「账号管理 → 启动引导」重新开始。","zh-TW":"遊戲路徑或帳號驗證可能尚未完成。略過後請自行確認這些設定，否則無法正常啟動日常。不會關閉遊戲或清除登入狀態。日後可在「帳號管理 → 啟動引導」重新開始。","en-US":"Game location or account verification may be unfinished. Complete these settings before running tasks. Skipping will not close the game or clear your sign-in. Reopen Getting started from Accounts at any time."},
-  "onboarding.skip_tour": {"zh-CN":"跳过功能介绍？已经保存的设置和账号会保留。之后可以从账号管理重新打开启动引导。","zh-TW":"略過功能介紹？已儲存的設定與帳號會保留。之後可以從帳號管理重新開啟啟動引導。","en-US":"Skip the app tour? Saved settings and accounts will be kept. You can reopen Getting started from Accounts."},
-  "onboarding.retry": {"zh-CN":"重新验证","zh-TW":"重新驗證","en-US":"Verify again"},
-  "onboarding.back": {"zh-CN":"上一步","zh-TW":"上一步","en-US":"Back"},
-  "onboarding.next": {"zh-CN":"下一页","zh-TW":"下一頁","en-US":"Next"},
-  "onboarding.finish": {"zh-CN":"开始使用","zh-TW":"開始使用","en-US":"Get started"},
-  "onboarding.complete": {"zh-CN":"启动引导已完成。先选少量熟悉的任务开始使用。","zh-TW":"啟動引導已完成。先選少量熟悉的任務開始使用。","en-US":"Setup complete. Start with a few familiar tasks."},
-  "onboarding.reopen": {"zh-CN":"已跳过引导，可从账号管理重新打开。","zh-TW":"已略過引導，可從帳號管理重新開啟。","en-US":"Guide skipped. Reopen it from Accounts at any time."},
-  "onboarding.close_launcher": {"zh-CN":"请先关闭游戏启动器，再重试验证。当前账号保持不变。","zh-TW":"請先關閉遊戲啟動器，再重試驗證。目前帳號維持不變。","en-US":"Close the game launcher, then retry verification. Your current account is unchanged."},
-  "onboarding.launch_timeout": {"zh-CN":"启动后未检测到游戏。请检查游戏位置与系统提示，再点击验证；不会反复自动启动。","zh-TW":"啟動後未偵測到遊戲。請檢查遊戲位置與系統提示，再點選驗證；不會反覆自動啟動。","en-US":"The game was not detected after launch. Check its location and any system prompts, then retry. Dustweave will not repeatedly relaunch it."},
-  "onboarding.verify_timeout": {"zh-CN":"尚未读到稳定的角色身份。请进入主菜单并处理登录或网络提示，再重新验证。","zh-TW":"尚未讀到穩定的角色身分。請進入主選單並處理登入或網路提示，再重新驗證。","en-US":"A stable character identity was not detected. Enter the main menu and resolve any sign-in or network prompts, then verify again."},
-  "onboarding.game_changed": {"zh-CN":"验证期间游戏退出或进程改变。请重新验证当前游戏。","zh-TW":"驗證期間遊戲退出或程序改變。請重新驗證目前的遊戲。","en-US":"The game exited or its process changed during verification. Verify the current game again."},
-  "onboarding.identity_changed": {"zh-CN":"当前登录账号与刚验证的账号不同，未保存。请重新验证。","zh-TW":"目前登入帳號與剛驗證的帳號不同，未儲存。請重新驗證。","en-US":"The signed-in account has changed since verification. Nothing was saved. Verify it again."},
-  "onboarding.close_first": {"zh-CN":"请先正常退出游戏及启动器，再保存账号。","zh-TW":"請先正常退出遊戲與啟動器，再儲存帳號。","en-US":"Exit the game and launcher normally before saving the account."},
-  "onboarding.name_required": {"zh-CN":"请填写方便区分的账号备注名。","zh-TW":"請填寫方便區分的帳號備註名稱。","en-US":"Enter an account label you can recognize."},
-  "onboarding.save_unconfirmed": {"zh-CN":"账号保存结果未确认，请检查账号列表后重试。","zh-TW":"帳號儲存結果未確認，請檢查帳號清單後重試。","en-US":"The saved account could not be confirmed. Check the Accounts page before retrying."},
-  "onboarding.page.daily": {"zh-CN":"查看本次执行计划、正在进行的环节和完成情况。你可以选择部分任务；中断后优先接续原队列，也可以补跑未完成项。","zh-TW":"查看本次執行計畫、進行中的環節與完成情況。可以選擇部分任務；中斷後優先接續原佇列，也能補跑未完成項。","en-US":"Review the plan, current task and results. Run selected tasks, resume an interrupted queue, or retry unfinished tasks."},
-  "onboarding.page.settings": {"zh-CN":"上方统一设置游戏位置，下方按账号选择日常环节与参数。不需要的环节可以关闭；修改任务偏好后记得保存。","zh-TW":"上方統一設定遊戲位置，下方依帳號選擇日常環節與參數。不需要的環節可以關閉；修改任務偏好後記得儲存。","en-US":"Set the shared game location at the top, then choose tasks and options for each account below. Disable tasks you do not need and save your task preferences."},
-  "onboarding.page.tools": {"zh-CN":"打开需要的小工具，共用当前游戏连接。工具开始自动化后会占用控制权，其他自动化需要等待；仅打开工具窗口不会占用。","zh-TW":"開啟需要的小工具，共用目前的遊戲連線。工具開始自動化後會占用控制權，其他自動化需要等待；僅開啟視窗不會占用。","en-US":"Open tools using the shared game connection. An active automation has exclusive control; simply opening a tool window does not block other work."},
-  "onboarding.page.accounts": {"zh-CN":"保存或更新当前账号，在列表中进入游戏、重命名和排序。勾选多个账号后，可以按顺序运行各自的日常。之后请通过这里启动游戏。","zh-TW":"儲存或更新目前帳號，在清單中進入遊戲、重新命名與排序。勾選多個帳號後，可依序執行各自的日常。之後請透過這裡啟動遊戲。","en-US":"Save or update an account, then launch, rename or reorder it in the list. Select multiple accounts to run their daily tasks in order. Use this page for future game launches."},
-  "onboarding.page.schedule": {"zh-CN":"设置每天的固定时间，并添加要执行的账号、拖动调整顺序。电脑保持开机时，即使织尘已关闭，也可以自动启动执行。","zh-TW":"設定每天的固定時間，加入要執行的帳號並拖曳調整順序。電腦保持開機時，即使織塵已關閉，也可以自動啟動執行。","en-US":"Choose a daily time, add accounts and drag them into order. With the computer powered on, Dustweave can open and run the schedule even when the app is closed."},
-  "onboarding.page.plugins": {"zh-CN":"在这里管理可选插件。导入后按照页面提示启用或停用；没有插件也可以使用本体提供的功能。","zh-TW":"在這裡管理選用外掛。匯入後依頁面提示啟用或停用；沒有外掛也能使用本體提供的功能。","en-US":"Manage optional plugins here. Follow the page instructions to enable or disable them. Built-in features remain available without plugins."},
-  "onboarding.page.diagnostics": {"zh-CN":"查看连接状态、当前观察与操作记录。遇到问题时先看这里的原因和建议，再导出对应时间段的诊断。","zh-TW":"查看連線狀態、目前觀察與操作紀錄。遇到問題先看這裡的原因與建議，再匯出對應時段的診斷。","en-US":"Review connection status, observations and activity. If something goes wrong, check the explanation here and export diagnostics for the affected time."},
-  "onboarding.page.updates": {"zh-CN":"点击左下角的版本号查看更新说明与检查更新。下载完成后，程序会等空闲时提示重启更新，保留账号和设置。","zh-TW":"點選左下角版本號查看更新說明與檢查更新。下載完成後，程式會等閒置時提示重新啟動更新，保留帳號與設定。","en-US":"Select the version at the bottom left to see release notes and check for updates. After download, Dustweave waits until idle to offer a restart, keeping accounts and settings."},
-
-  "game_path.title": { "zh-CN": "游戏启动位置", "zh-TW": "遊戲啟動位置", "en-US": "Game location" },
-  "game_path.choose": { "zh-CN": "选择游戏…", "zh-TW": "選擇遊戲…", "en-US": "Choose game…" },
-  "game_path.auto": { "zh-CN": "恢复自动查找", "zh-TW": "恢復自動尋找", "en-US": "Use auto-detection" },
-  "game_path.help": { "zh-CN": "所有账号、定时执行和隔离启动共用此位置。选择后自动保存，下次启动游戏时生效。", "zh-TW": "所有帳號、定時執行與隔離啟動共用此位置。選擇後自動儲存，下次啟動遊戲時生效。", "en-US": "Shared by all accounts, schedules and isolated launches. Saved automatically for the next game launch." },
-  "game_path.inherited": { "zh-CN": "沿用主窗口的游戏位置。请在主窗口修改，下次启动此隔离账号时同步。", "zh-TW": "沿用主視窗的遊戲位置。請在主視窗修改，下次啟動此隔離帳號時同步。", "en-US": "Uses the main window’s game location. Change it there; it will sync when this isolated account next starts." },
-  "game_path.manual": { "zh-CN": "已保存自选位置", "zh-TW": "已儲存自選位置", "en-US": "Custom location saved" },
-  "game_path.detected": { "zh-CN": "已自动找到游戏", "zh-TW": "已自動找到遊戲", "en-US": "Game detected automatically" },
-  "game_path.missing": { "zh-CN": "未找到游戏，请在日常设置的「游戏启动位置」中选择 BrownDust II.exe。", "zh-TW": "找不到遊戲，請在任務設定的「遊戲啟動位置」中選擇 BrownDust II.exe。", "en-US": "Game not found. Choose BrownDust II.exe under Game location in Daily settings." },
-  "game_path.invalid": { "zh-CN": "请选择游戏本体 BrownDust II.exe，不是启动器或快捷方式。", "zh-TW": "請選擇遊戲本體 BrownDust II.exe，不是啟動器或捷徑。", "en-US": "Select the game’s BrownDust II.exe, not a launcher or shortcut." },
-  "game_path.incomplete": { "zh-CN": "游戏文件不存在或不完整，请重新选择 BrownDust II.exe，或先完成游戏更新。", "zh-TW": "遊戲檔案不存在或不完整，請重新選擇 BrownDust II.exe，或先完成遊戲更新。", "en-US": "Game files are missing or incomplete. Choose BrownDust II.exe again, or finish updating the game first." },
-  "game_path.unreadable": { "zh-CN": "游戏路径设置无法读取，请重新选择游戏，或恢复自动查找。", "zh-TW": "無法讀取遊戲路徑設定，請重新選擇遊戲，或恢復自動尋找。", "en-US": "Cannot read the saved game location. Choose the game again or restore auto-detection." },
+  "onboarding.title": {
+    "zh-CN": "启动引导",
+    "zh-TW": "啟動引導",
+    "en-US": "Getting started"
+  },
+  "onboarding.step": {
+    "zh-CN": "连接准备 · {0} / {1}",
+    "zh-TW": "連線準備 · {0} / {1}",
+    "en-US": "Connection setup · {0} / {1}"
+  },
+  "onboarding.page": {
+    "zh-CN": "功能导览 · {0} / {1}",
+    "zh-TW": "功能導覽 · {0} / {1}",
+    "en-US": "App tour · {0} / {1}"
+  },
+  "onboarding.path_title": {
+    "zh-CN": "先确认游戏的位置",
+    "zh-TW": "先確認遊戲的位置",
+    "en-US": "Check your game location"
+  },
+  "onboarding.path_body": {
+    "zh-CN": "确认下方是你使用的游戏本体。继续后会尝试启动一次；如果游戏已在运行，将直接验证当前游戏。",
+    "zh-TW": "確認下方是你使用的遊戲本體。繼續後會嘗試啟動一次；若遊戲已在執行，將直接驗證目前的遊戲。",
+    "en-US": "Confirm the game executable below. Continue to try one launch, or verify the game if it is already running."
+  },
+  "onboarding.start": {
+    "zh-CN": "位置正确，开始验证",
+    "zh-TW": "位置正確，開始驗證",
+    "en-US": "Launch and verify"
+  },
+  "onboarding.login_title": {
+    "zh-CN": "请进入游戏",
+    "zh-TW": "請進入遊戲",
+    "en-US": "Enter the game"
+  },
+  "onboarding.launching": {
+    "zh-CN": "正在尝试启动游戏。请在游戏中完成登录并进入主菜单，织尘会自动检测账号。",
+    "zh-TW": "正在嘗試啟動遊戲。請在遊戲中完成登入並進入主選單，織塵會自動偵測帳號。",
+    "en-US": "Starting the game. Sign in and enter the main menu; Dustweave will detect your account automatically."
+  },
+  "onboarding.connecting": {
+    "zh-CN": "正在准备连接与身份验证。你可以切换到游戏继续登录。",
+    "zh-TW": "正在準備連線與身分驗證。你可以切換到遊戲繼續登入。",
+    "en-US": "Preparing the connection and identity check. You can switch to the game to continue signing in."
+  },
+  "onboarding.login": {
+    "zh-CN": "连接已准备好。请进入主菜单；读到真实角色信息后，这里会自动提示。",
+    "zh-TW": "連線已準備好。請進入主選單；讀到實際角色資訊後，這裡會自動提示。",
+    "en-US": "The connection is ready. Enter the main menu; this window will notify you when your character is detected."
+  },
+  "onboarding.detected_title": {
+    "zh-CN": "已经检测到你的账号",
+    "zh-TW": "已經偵測到你的帳號",
+    "en-US": "Account detected"
+  },
+  "onboarding.detected": {
+    "zh-CN": "已验证角色「{0}」。请正常关闭游戏并等待启动器退出，然后在这里保存账号。不会切换或覆盖其他账号。",
+    "zh-TW": "已驗證角色「{0}」。請正常關閉遊戲並等待啟動器退出，然後在這裡儲存帳號。不會切換或覆寫其他帳號。",
+    "en-US": "Character verified: {0}. Exit the game normally and wait for the launcher to close, then save this account here. Other saved accounts will not be overwritten."
+  },
+  "onboarding.account_name": {
+    "zh-CN": "账号备注名",
+    "zh-TW": "帳號備註名稱",
+    "en-US": "Account label"
+  },
+  "onboarding.save": {
+    "zh-CN": "保存账号",
+    "zh-TW": "儲存帳號",
+    "en-US": "Save account"
+  },
+  "onboarding.wait_close": {
+    "zh-CN": "等待游戏和启动器退出，退出后即可保存。",
+    "zh-TW": "等待遊戲與啟動器退出，退出後即可儲存。",
+    "en-US": "Waiting for the game and launcher to close before saving."
+  },
+  "onboarding.can_save": {
+    "zh-CN": "游戏已关闭，可以保存最新登录信息。",
+    "zh-TW": "遊戲已關閉，可以儲存最新登入資訊。",
+    "en-US": "Game closed. Ready to save the latest sign-in information."
+  },
+  "onboarding.saved_title": {
+    "zh-CN": "账号已准备好",
+    "zh-TW": "帳號已準備好",
+    "en-US": "Your account is ready"
+  },
+  "onboarding.saved_body": {
+    "zh-CN": "「{0}」已保存。以后请在织尘的账号管理里点击「进入游戏」，避免通过桌面快捷方式或加速器启动。接下来带你看看各个分页。",
+    "zh-TW": "「{0}」已儲存。以後請在織塵的帳號管理點選「進入遊戲」，避免透過桌面捷徑或加速器啟動。接下來帶你看看各個分頁。",
+    "en-US": "{0} has been saved. From now on, use Play in Dustweave’s Accounts page instead of a desktop game shortcut or an accelerator. Next, take a short tour of the app."
+  },
+  "onboarding.tour": {
+    "zh-CN": "进入织尘，了解功能",
+    "zh-TW": "進入織塵，了解功能",
+    "en-US": "Explore Dustweave"
+  },
+  "onboarding.skip": {
+    "zh-CN": "跳过引导",
+    "zh-TW": "略過引導",
+    "en-US": "Skip guide"
+  },
+  "onboarding.skip_title": {
+    "zh-CN": "跳过启动引导？",
+    "zh-TW": "略過啟動引導？",
+    "en-US": "Skip setup?"
+  },
+  "onboarding.skip_warning": {
+    "zh-CN": "游戏路径或账号验证可能尚未完成。跳过后请自行确认这些设置，否则无法正常启动日常。不会关闭游戏或清除登录状态。以后可在「账号管理 → 启动引导」重新开始。",
+    "zh-TW": "遊戲路徑或帳號驗證可能尚未完成。略過後請自行確認這些設定，否則無法正常啟動日常。不會關閉遊戲或清除登入狀態。日後可在「帳號管理 → 啟動引導」重新開始。",
+    "en-US": "Game location or account verification may be unfinished. Complete these settings before running tasks. Skipping will not close the game or clear your sign-in. Reopen Getting started from Accounts at any time."
+  },
+  "onboarding.skip_tour": {
+    "zh-CN": "跳过功能介绍？已经保存的设置和账号会保留。之后可以从账号管理重新打开启动引导。",
+    "zh-TW": "略過功能介紹？已儲存的設定與帳號會保留。之後可以從帳號管理重新開啟啟動引導。",
+    "en-US": "Skip the app tour? Saved settings and accounts will be kept. You can reopen Getting started from Accounts."
+  },
+  "onboarding.retry": {
+    "zh-CN": "重新验证",
+    "zh-TW": "重新驗證",
+    "en-US": "Verify again"
+  },
+  "onboarding.back": {
+    "zh-CN": "上一步",
+    "zh-TW": "上一步",
+    "en-US": "Back"
+  },
+  "onboarding.next": {
+    "zh-CN": "下一页",
+    "zh-TW": "下一頁",
+    "en-US": "Next"
+  },
+  "onboarding.finish": {
+    "zh-CN": "开始使用",
+    "zh-TW": "開始使用",
+    "en-US": "Get started"
+  },
+  "onboarding.complete": {
+    "zh-CN": "启动引导已完成。先选少量熟悉的任务开始使用。",
+    "zh-TW": "啟動引導已完成。先選少量熟悉的任務開始使用。",
+    "en-US": "Setup complete. Start with a few familiar tasks."
+  },
+  "onboarding.reopen": {
+    "zh-CN": "已跳过引导，可从账号管理重新打开。",
+    "zh-TW": "已略過引導，可從帳號管理重新開啟。",
+    "en-US": "Guide skipped. Reopen it from Accounts at any time."
+  },
+  "onboarding.close_launcher": {
+    "zh-CN": "请先关闭游戏启动器，再重试验证。当前账号保持不变。",
+    "zh-TW": "請先關閉遊戲啟動器，再重試驗證。目前帳號維持不變。",
+    "en-US": "Close the game launcher, then retry verification. Your current account is unchanged."
+  },
+  "onboarding.launch_timeout": {
+    "zh-CN": "启动后未检测到游戏。请检查游戏位置与系统提示，再点击验证；不会反复自动启动。",
+    "zh-TW": "啟動後未偵測到遊戲。請檢查遊戲位置與系統提示，再點選驗證；不會反覆自動啟動。",
+    "en-US": "The game was not detected after launch. Check its location and any system prompts, then retry. Dustweave will not repeatedly relaunch it."
+  },
+  "onboarding.verify_timeout": {
+    "zh-CN": "尚未读到稳定的角色身份。请进入主菜单并处理登录或网络提示，再重新验证。",
+    "zh-TW": "尚未讀到穩定的角色身分。請進入主選單並處理登入或網路提示，再重新驗證。",
+    "en-US": "A stable character identity was not detected. Enter the main menu and resolve any sign-in or network prompts, then verify again."
+  },
+  "onboarding.game_changed": {
+    "zh-CN": "验证期间游戏退出或进程改变。请重新验证当前游戏。",
+    "zh-TW": "驗證期間遊戲退出或程序改變。請重新驗證目前的遊戲。",
+    "en-US": "The game exited or its process changed during verification. Verify the current game again."
+  },
+  "onboarding.identity_changed": {
+    "zh-CN": "当前登录账号与刚验证的账号不同，未保存。请重新验证。",
+    "zh-TW": "目前登入帳號與剛驗證的帳號不同，未儲存。請重新驗證。",
+    "en-US": "The signed-in account has changed since verification. Nothing was saved. Verify it again."
+  },
+  "onboarding.close_first": {
+    "zh-CN": "请先正常退出游戏及启动器，再保存账号。",
+    "zh-TW": "請先正常退出遊戲與啟動器，再儲存帳號。",
+    "en-US": "Exit the game and launcher normally before saving the account."
+  },
+  "onboarding.name_required": {
+    "zh-CN": "请填写方便区分的账号备注名。",
+    "zh-TW": "請填寫方便區分的帳號備註名稱。",
+    "en-US": "Enter an account label you can recognize."
+  },
+  "onboarding.save_unconfirmed": {
+    "zh-CN": "账号保存结果未确认，请检查账号列表后重试。",
+    "zh-TW": "帳號儲存結果未確認，請檢查帳號清單後重試。",
+    "en-US": "The saved account could not be confirmed. Check the Accounts page before retrying."
+  },
+  "onboarding.page.daily": {
+    "zh-CN": "查看本次执行计划、正在进行的环节和完成情况。你可以选择部分任务；中断后优先接续原队列，也可以补跑未完成项。",
+    "zh-TW": "查看本次執行計畫、進行中的環節與完成情況。可以選擇部分任務；中斷後優先接續原佇列，也能補跑未完成項。",
+    "en-US": "Review the plan, current task and results. Run selected tasks, resume an interrupted queue, or retry unfinished tasks."
+  },
+  "onboarding.page.settings": {
+    "zh-CN": "上方统一设置游戏位置，下方按账号选择日常环节与参数。不需要的环节可以关闭；修改任务偏好后记得保存。",
+    "zh-TW": "上方統一設定遊戲位置，下方依帳號選擇日常環節與參數。不需要的環節可以關閉；修改任務偏好後記得儲存。",
+    "en-US": "Set the shared game location at the top, then choose tasks and options for each account below. Disable tasks you do not need and save your task preferences."
+  },
+  "onboarding.page.tools": {
+    "zh-CN": "打开需要的小工具，共用当前游戏连接。工具开始自动化后会占用控制权，其他自动化需要等待；仅打开工具窗口不会占用。",
+    "zh-TW": "開啟需要的小工具，共用目前的遊戲連線。工具開始自動化後會占用控制權，其他自動化需要等待；僅開啟視窗不會占用。",
+    "en-US": "Open tools using the shared game connection. An active automation has exclusive control; simply opening a tool window does not block other work."
+  },
+  "onboarding.page.accounts": {
+    "zh-CN": "保存或更新当前账号，在列表中进入游戏、重命名和排序。勾选多个账号后，可以按顺序运行各自的日常。之后请通过这里启动游戏。",
+    "zh-TW": "儲存或更新目前帳號，在清單中進入遊戲、重新命名與排序。勾選多個帳號後，可依序執行各自的日常。之後請透過這裡啟動遊戲。",
+    "en-US": "Save or update an account, then launch, rename or reorder it in the list. Select multiple accounts to run their daily tasks in order. Use this page for future game launches."
+  },
+  "onboarding.page.schedule": {
+    "zh-CN": "设置每天的固定时间，并添加要执行的账号、拖动调整顺序。电脑保持开机时，即使织尘已关闭，也可以自动启动执行。",
+    "zh-TW": "設定每天的固定時間，加入要執行的帳號並拖曳調整順序。電腦保持開機時，即使織塵已關閉，也可以自動啟動執行。",
+    "en-US": "Choose a daily time, add accounts and drag them into order. With the computer powered on, Dustweave can open and run the schedule even when the app is closed."
+  },
+  "onboarding.page.plugins": {
+    "zh-CN": "在这里管理可选插件。导入后按照页面提示启用或停用；没有插件也可以使用本体提供的功能。",
+    "zh-TW": "在這裡管理選用外掛。匯入後依頁面提示啟用或停用；沒有外掛也能使用本體提供的功能。",
+    "en-US": "Manage optional plugins here. Follow the page instructions to enable or disable them. Built-in features remain available without plugins."
+  },
+  "onboarding.page.diagnostics": {
+    "zh-CN": "查看连接状态、当前观察与操作记录。遇到问题时先看这里的原因和建议，再导出对应时间段的诊断。",
+    "zh-TW": "查看連線狀態、目前觀察與操作紀錄。遇到問題先看這裡的原因與建議，再匯出對應時段的診斷。",
+    "en-US": "Review connection status, observations and activity. If something goes wrong, check the explanation here and export diagnostics for the affected time."
+  },
+  "onboarding.page.updates": {
+    "zh-CN": "点击左下角的版本号查看更新说明与检查更新。下载完成后，程序会等空闲时提示重启更新，保留账号和设置。",
+    "zh-TW": "點選左下角版本號查看更新說明與檢查更新。下載完成後，程式會等閒置時提示重新啟動更新，保留帳號與設定。",
+    "en-US": "Select the version at the bottom left to see release notes and check for updates. After download, Dustweave waits until idle to offer a restart, keeping accounts and settings."
+  },
+  "game_path.title": {
+    "zh-CN": "游戏启动位置",
+    "zh-TW": "遊戲啟動位置",
+    "en-US": "Game location"
+  },
+  "game_path.choose": {
+    "zh-CN": "选择游戏…",
+    "zh-TW": "選擇遊戲…",
+    "en-US": "Choose game…"
+  },
+  "game_path.auto": {
+    "zh-CN": "恢复自动查找",
+    "zh-TW": "恢復自動尋找",
+    "en-US": "Use auto-detection"
+  },
+  "game_path.help": {
+    "zh-CN": "所有账号、定时执行和隔离启动共用此位置。选择后自动保存，下次启动游戏时生效。",
+    "zh-TW": "所有帳號、定時執行與隔離啟動共用此位置。選擇後自動儲存，下次啟動遊戲時生效。",
+    "en-US": "Shared by all accounts, schedules and isolated launches. Saved automatically for the next game launch."
+  },
+  "game_path.inherited": {
+    "zh-CN": "沿用主窗口的游戏位置。请在主窗口修改，下次启动此隔离账号时同步。",
+    "zh-TW": "沿用主視窗的遊戲位置。請在主視窗修改，下次啟動此隔離帳號時同步。",
+    "en-US": "Uses the main window’s game location. Change it there; it will sync when this isolated account next starts."
+  },
+  "game_path.manual": {
+    "zh-CN": "已保存自选位置",
+    "zh-TW": "已儲存自選位置",
+    "en-US": "Custom location saved"
+  },
+  "game_path.detected": {
+    "zh-CN": "已自动找到游戏",
+    "zh-TW": "已自動找到遊戲",
+    "en-US": "Game detected automatically"
+  },
+  "game_path.missing": {
+    "zh-CN": "未找到游戏，请在日常设置的「游戏启动位置」中选择 BrownDust II.exe。",
+    "zh-TW": "找不到遊戲，請在任務設定的「遊戲啟動位置」中選擇 BrownDust II.exe。",
+    "en-US": "Game not found. Choose BrownDust II.exe under Game location in Daily settings."
+  },
+  "game_path.invalid": {
+    "zh-CN": "请选择游戏本体 BrownDust II.exe，不是启动器或快捷方式。",
+    "zh-TW": "請選擇遊戲本體 BrownDust II.exe，不是啟動器或捷徑。",
+    "en-US": "Select the game’s BrownDust II.exe, not a launcher or shortcut."
+  },
+  "game_path.incomplete": {
+    "zh-CN": "游戏文件不存在或不完整，请重新选择 BrownDust II.exe，或先完成游戏更新。",
+    "zh-TW": "遊戲檔案不存在或不完整，請重新選擇 BrownDust II.exe，或先完成遊戲更新。",
+    "en-US": "Game files are missing or incomplete. Choose BrownDust II.exe again, or finish updating the game first."
+  },
+  "game_path.unreadable": {
+    "zh-CN": "游戏路径设置无法读取，请重新选择游戏，或恢复自动查找。",
+    "zh-TW": "無法讀取遊戲路徑設定，請重新選擇遊戲，或恢復自動尋找。",
+    "en-US": "Cannot read the saved game location. Choose the game again or restore auto-detection."
+  },
   "run.details": {
     "zh-CN": "详细信息",
     "zh-TW": "詳細資訊",
@@ -177,9 +400,9 @@
     "en-US": "Resume continues pending tasks in the original queue, regardless of checkboxes. Retry runs only selected tasks."
   },
   "run.plan_footer": {
-    "zh-CN": "运行当前账号的勾选环节；多账号运行使用各账号保存的设置。",
-    "zh-TW": "執行目前帳號的勾選環節；多帳號執行使用各帳號儲存的設定。",
-    "en-US": "Run selected tasks for this account. Multi-account runs use saved account settings."
+    "zh-CN": "运行所选任务账号的勾选环节；与当前游戏账号不同，会先切换并核对身份。",
+    "zh-TW": "執行所選任務帳號的勾選環節；與目前遊戲帳號不同，會先切換並核對身分。",
+    "en-US": "Run the checked tasks for the selected account. Switch and verify the game account first if needed."
   },
   "run.choose_footer": {
     "zh-CN": "这份记录仅供查看。选择任务后，可以开始新一次运行。",
@@ -707,8 +930,8 @@
     "en-US": "Runs selected accounts with their saved settings, rather than this run's temporary task selection."
   },
   "run.account_help": {
-    "zh-CN": "执行当前账号：{0}",
-    "zh-TW": "執行目前帳號：{0}",
+    "zh-CN": "执行所选账号：{0}",
+    "zh-TW": "執行所選帳號：{0}",
     "en-US": "Run for: {0}"
   },
   "run.choose": {
@@ -2572,9 +2795,9 @@
     "en-US": "Need more help?"
   },
   "diagnostics.help_body": {
-    "zh-CN": "先复制状态摘要，并说明卡住的步骤。需要日志时，打开诊断文件夹，选择对应时间的记录；记录可能包含角色信息，请勿公开上传。",
-    "zh-TW": "先複製狀態摘要，並說明卡住的步驟。需要日誌時，開啟診斷資料夾，選擇對應時間的紀錄；紀錄可能包含角色資訊，請勿公開上傳。",
-    "en-US": "Copy the status summary and describe where you got stuck. If logs are needed, choose records from that time in the diagnostics folder. Logs may contain character details; do not post them publicly."
+    "zh-TW": "匯出記錄壓縮檔，並說明卡住的步驟與發生時間。匯出視窗內可選擇儲存位置並查看開發者聯絡方式。",
+    "en-US": "Export a log archive and describe the step and time of the problem. The export dialog lets you choose a save location and contact the developer.",
+    "zh-CN": "导出日志压缩包，并说明卡住的步骤和发生时间。导出窗口内可选择保存位置并查看开发者联系方式。"
   },
   "diagnostics.copy": {
     "zh-CN": "复制状态摘要",
@@ -4045,5 +4268,395 @@
     "zh-CN": "打开账号管理",
     "zh-TW": "開啟帳號管理",
     "en-US": "Open Accounts"
+  },
+  "run.task_account": {
+    "zh-CN": "任务账号",
+    "zh-TW": "任務帳號",
+    "en-US": "Task account"
+  },
+  "run.task_account_help": {
+    "zh-CN": "仅查看此账号的任务与记录；点击执行后才会切换游戏账号。",
+    "zh-TW": "僅查看此帳號的任務與記錄；點擊執行後才會切換遊戲帳號。",
+    "en-US": "View tasks and history for this account. The game account changes only when you start."
+  },
+  "run.viewing_account": {
+    "zh-CN": "任务账号：{0}",
+    "zh-TW": "任務帳號：{0}",
+    "en-US": "Tasks for {0}"
+  },
+  "run.batch_overview": {
+    "zh-CN": "返回批量总览",
+    "zh-TW": "返回批次總覽",
+    "en-US": "Back to batch overview"
+  },
+  "run.account_unavailable": {
+    "zh-CN": "所选任务账号已变化或不可用，请重新选择账号。",
+    "zh-TW": "所選任務帳號已變更或無法使用，請重新選擇帳號。",
+    "en-US": "The selected account has changed or is unavailable. Select an account again."
+  },
+  "parallel.tasks": {
+    "zh-CN": "选择任务",
+    "zh-TW": "選擇任務",
+    "en-US": "Choose tasks"
+  },
+  "parallel.tasks_help": {
+    "zh-CN": "打开此隔离账号的任务勾选页，不启动游戏或日常。",
+    "zh-TW": "開啟此隔離帳號的任務勾選頁，不啟動遊戲或日常。",
+    "en-US": "Open task selection for this isolated account without starting the game or a run."
+  },
+  "parallel.tasks_busy": {
+    "zh-CN": "请先完成或停止批量队列，再选择单个账号的任务。",
+    "zh-TW": "請先完成或停止批次佇列，再選擇單一帳號的任務。",
+    "en-US": "Finish or stop the batch before selecting tasks for one account."
+  },
+  "issue.reason.cancelled": {
+    "zh-CN": "已按请求停止本次操作。",
+    "zh-TW": "已按要求停止本次操作。",
+    "en-US": "This operation was stopped as requested."
+  },
+  "issue.action.cancelled": {
+    "zh-CN": "在今日任务选择未完成的环节，或接续原队列。",
+    "zh-TW": "在今日任務選擇未完成的環節，或接續原佇列。",
+    "en-US": "Select unfinished tasks in Today, or resume the original queue."
+  },
+  "issue.reason.owner-ended": {
+    "zh-CN": "原控制窗口已退出，本次执行已暂停。",
+    "zh-TW": "原控制視窗已退出，本次執行已暫停。",
+    "en-US": "The controlling window ended, so this run was paused."
+  },
+  "issue.action.owner-ended": {
+    "zh-CN": "在当前织尘窗口重新连接，再接续任务；无需先重启游戏。",
+    "zh-TW": "在目前織塵視窗重新連線，再接續任務；無需先重啟遊戲。",
+    "en-US": "Reconnect from this Dustweave window, then resume the task. A game restart is not the first step."
+  },
+  "issue.reason.owner-unreadable": {
+    "zh-CN": "无法确认控制窗口是否仍在运行，已暂停操作。",
+    "zh-TW": "無法確認控制視窗是否仍在執行，已暫停操作。",
+    "en-US": "The controlling window could not be verified; actions are paused."
+  },
+  "issue.action.owner-unreadable": {
+    "zh-CN": "保留游戏现场，回到织尘重新连接；若再次发生，请导出诊断日志。",
+    "zh-TW": "保留遊戲現場，回到織塵重新連線；若再次發生，請匯出診斷記錄。",
+    "en-US": "Keep the game open and reconnect in Dustweave. Export diagnostics if it happens again."
+  },
+  "issue.reason.identity-unavailable": {
+    "zh-CN": "暂时未读到完整的游戏账号信息。",
+    "zh-TW": "暫時未讀到完整的遊戲帳號資訊。",
+    "en-US": "Complete game account information is temporarily unavailable."
+  },
+  "issue.action.identity-unavailable": {
+    "zh-CN": "等待登录或加载完成，再重新连接并接续任务；这不代表账号已更换。",
+    "zh-TW": "等待登入或載入完成，再重新連線並接續任務；這不代表帳號已更換。",
+    "en-US": "Wait for sign-in or loading to finish, reconnect, then resume. This does not mean the account changed."
+  },
+  "issue.reason.identity-changed": {
+    "zh-CN": "当前账号或角色与本次任务绑定的信息不一致，操作已暂停。",
+    "zh-TW": "目前帳號或角色與本次任務綁定的資訊不一致，操作已暫停。",
+    "en-US": "The current account or character does not match this task, so actions are paused."
+  },
+  "issue.action.identity-changed": {
+    "zh-CN": "核对游戏中的账号与区服，再选择对应账号执行；不要直接重试其他账号的任务。",
+    "zh-TW": "核對遊戲中的帳號與伺服器，再選擇對應帳號執行；不要直接重試其他帳號的任務。",
+    "en-US": "Check the in-game account and server, then select the matching account. Do not retry another account's task."
+  },
+  "issue.reason.handoff": {
+    "zh-CN": "功能控制权正在交接，当前操作尚未继续。",
+    "zh-TW": "功能控制權正在交接，目前操作尚未繼續。",
+    "en-US": "Control is changing between features; this operation has not continued."
+  },
+  "issue.action.handoff": {
+    "zh-CN": "等待当前功能停止并完成结算，再从织尘选择要运行的功能。",
+    "zh-TW": "等待目前功能停止並完成結算，再從織塵選擇要執行的功能。",
+    "en-US": "Wait for the active feature to stop and settle, then choose the feature in Dustweave."
+  },
+  "issue.reason.legacy-session": {
+    "zh-CN": "旧版只记录了“会话已停止”，无法从这条提示确定具体原因。",
+    "zh-TW": "舊版只記錄了「工作階段已停止」，無法從這條提示確定具體原因。",
+    "en-US": "The old version only recorded “session stopped”; this message does not identify the cause."
+  },
+  "issue.action.legacy-session": {
+    "zh-CN": "先核对游戏账号并重新连接；再次发生时导出日志，包含更具体的停止原因。",
+    "zh-TW": "先核對遊戲帳號並重新連線；再次發生時匯出記錄，包含更具體的停止原因。",
+    "en-US": "Check the game account and reconnect. If it recurs, export logs for the more specific stop reason."
+  },
+  "issue.reason.game-ended": {
+    "zh-CN": "原游戏进程已退出或被替换，本次连接不能继续使用。",
+    "zh-TW": "原遊戲處理程序已退出或被替換，本次連線無法繼續使用。",
+    "en-US": "The original game process ended or changed; this connection cannot be reused."
+  },
+  "issue.action.game-ended": {
+    "zh-CN": "通过账号管理启动需要的账号，完成登录后重新连接。",
+    "zh-TW": "透過帳號管理啟動需要的帳號，完成登入後重新連線。",
+    "en-US": "Launch the intended account from Accounts, sign in, and reconnect."
+  },
+  "issue.reason.login-expired": {
+    "zh-CN": "游戏拒绝了已保存的登录信息。",
+    "zh-TW": "遊戲拒絕了已儲存的登入資訊。",
+    "en-US": "The game rejected the saved sign-in information."
+  },
+  "issue.action.login-expired": {
+    "zh-CN": "正常登录一次，关闭游戏后重新保存该账号，再从织尘启动。",
+    "zh-TW": "正常登入一次，關閉遊戲後重新儲存該帳號，再從織塵啟動。",
+    "en-US": "Sign in normally once, close the game, save that account again, then launch it from Dustweave."
+  },
+  "issue.reason.component": {
+    "zh-TW": "所需的連線元件未能準備就緒。",
+    "en-US": "A required connection component could not be prepared.",
+    "zh-CN": "所需的连接组件未能准备就绪。"
+  },
+  "issue.action.component": {
+    "zh-CN": "检查更新后重新连接；若仍失败，请导出日志，不必反复重启游戏。",
+    "zh-TW": "檢查更新後重新連線；若仍失敗，請匯出記錄，不必反覆重啟遊戲。",
+    "en-US": "Check for updates and reconnect. If it still fails, export logs instead of repeatedly restarting the game."
+  },
+  "issue.reason.access": {
+    "zh-CN": "Windows 拒绝访问所需文件或进程。",
+    "zh-TW": "Windows 拒絕存取所需檔案或處理程序。",
+    "en-US": "Windows denied access to a required file or process."
+  },
+  "issue.action.access": {
+    "zh-CN": "确认文件未被占用、目录可写，并保留原始错误；重新连接仍失败时导出日志。",
+    "zh-TW": "確認檔案未被占用、目錄可寫入，並保留原始錯誤；重新連線仍失敗時匯出記錄。",
+    "en-US": "Check for locked files and a writable folder. Keep the original error and export logs if reconnecting still fails."
+  },
+  "issue.reason.popup": {
+    "zh-CN": "游戏出现尚未识别的交互弹窗，操作已暂停。",
+    "zh-TW": "遊戲出現尚未識別的互動視窗，操作已暫停。",
+    "en-US": "An unrecognized game dialog requires attention; actions are paused."
+  },
+  "issue.action.popup": {
+    "zh-CN": "切换到游戏，按自己的选择处理弹窗，再接续任务。",
+    "zh-TW": "切換到遊戲，按自己的選擇處理視窗，再接續任務。",
+    "en-US": "Switch to the game, handle the dialog as you choose, then resume."
+  },
+  "issue.reason.timeout": {
+    "zh-CN": "等待游戏状态或操作回执超时。",
+    "zh-TW": "等待遊戲狀態或操作回覆逾時。",
+    "en-US": "Waiting for game state or an operation response timed out."
+  },
+  "issue.action.timeout": {
+    "zh-CN": "先看游戏是否仍在加载或结算；完成后接续任务，持续卡住时导出日志。",
+    "zh-TW": "先看遊戲是否仍在載入或結算；完成後接續任務，持續卡住時匯出記錄。",
+    "en-US": "Check whether the game is still loading or settling a result. Resume afterward; export logs if it remains stuck."
+  },
+  "issue.reason.uncertain": {
+    "zh-CN": "操作可能已经提交，但结果尚未确认；没有重复执行。",
+    "zh-TW": "操作可能已經提交，但結果尚未確認；沒有重複執行。",
+    "en-US": "The operation may have been submitted, but its result is unconfirmed. It has not been repeated."
+  },
+  "issue.action.uncertain": {
+    "zh-CN": "先在游戏中核对奖励或资源变化，再使用任务详情中的核对／恢复入口；不要反复点击执行。",
+    "zh-TW": "先在遊戲中核對獎勵或資源變化，再使用任務詳情中的核對／恢復入口；不要反覆點擊執行。",
+    "en-US": "Check the reward or resource change in the game, then use the task's review or recovery action. Avoid repeated submissions."
+  },
+  "issue.action.unknown": {
+    "zh-CN": "查看任务详情；无法判断时，导出诊断日志并联系开发者。",
+    "zh-TW": "查看任務詳情；無法判斷時，匯出診斷記錄並聯絡開發者。",
+    "en-US": "Open task details. If the cause is unclear, export diagnostics and contact the developer."
+  },
+  "issue.category.stopped": {
+    "zh-CN": "主动停止",
+    "zh-TW": "主動停止",
+    "en-US": "Stopped"
+  },
+  "issue.category.connection": {
+    "zh-CN": "连接与控制",
+    "zh-TW": "連線與控制",
+    "en-US": "Connection and control"
+  },
+  "issue.category.identity": {
+    "zh-CN": "账号与登录",
+    "zh-TW": "帳號與登入",
+    "en-US": "Account and sign-in"
+  },
+  "issue.category.permission": {
+    "zh-CN": "文件与权限",
+    "zh-TW": "檔案與權限",
+    "en-US": "Files and permissions"
+  },
+  "issue.category.compatibility": {
+    "zh-CN": "游戏兼容",
+    "zh-TW": "遊戲相容",
+    "en-US": "Game compatibility"
+  },
+  "issue.category.game": {
+    "zh-CN": "游戏弹窗",
+    "zh-TW": "遊戲視窗",
+    "en-US": "Game dialog"
+  },
+  "issue.category.result": {
+    "zh-CN": "结果待核对",
+    "zh-TW": "結果待核對",
+    "en-US": "Unconfirmed result"
+  },
+  "issue.category.unknown": {
+    "zh-CN": "原因待诊断",
+    "zh-TW": "原因待診斷",
+    "en-US": "Needs diagnosis"
+  },
+  "issue.recorded": {
+    "zh-CN": "{0} · {1:yyyy-MM-dd HH:mm:ss}",
+    "zh-TW": "{0} · {1:yyyy-MM-dd HH:mm:ss}",
+    "en-US": "{0} · {1:yyyy-MM-dd HH:mm:ss}"
+  },
+  "diagnostics.export": {
+    "zh-CN": "导出诊断日志…",
+    "zh-TW": "匯出診斷記錄…",
+    "en-US": "Export diagnostic logs…"
+  },
+  "diagnostics.export.title": {
+    "zh-CN": "导出日志与反馈",
+    "zh-TW": "匯出記錄與回報",
+    "en-US": "Export logs and get help"
+  },
+  "diagnostics.export.body": {
+    "zh-CN": "生成最近 7 天的运行、连接和任务记录，最多 64 MB。不会导出登录凭据、插件或密钥，不会自动上传。",
+    "zh-TW": "產生最近 7 天的執行、連線和任務記錄，最多 64 MB。不會匯出登入憑證、外掛或金鑰，不會自動上傳。",
+    "en-US": "Export up to 64 MB of run, connection and task logs from the last 7 days. Sign-in credentials, plugins and keys are excluded. Nothing is uploaded automatically."
+  },
+  "diagnostics.export.privacy": {
+    "zh-CN": "日志可能包含角色名、任务内容和本机路径，请私下发送给开发者。",
+    "zh-TW": "記錄可能包含角色名稱、任務內容和本機路徑，請私下傳送給開發者。",
+    "en-US": "Logs may contain character names, task details and local paths. Send the archive privately to the developer."
+  },
+  "diagnostics.export.contact": {
+    "zh-CN": "联系开发者",
+    "zh-TW": "聯絡開發者",
+    "en-US": "Contact the developer"
+  },
+  "diagnostics.export.wechat": {
+    "zh-CN": "微信：{0}",
+    "zh-TW": "微信：{0}",
+    "en-US": "WeChat: {0}"
+  },
+  "diagnostics.export.qq": {
+    "zh-CN": "QQ：{0}",
+    "zh-TW": "QQ：{0}",
+    "en-US": "QQ: {0}"
+  },
+  "diagnostics.export.copy": {
+    "zh-CN": "复制联系方式",
+    "zh-TW": "複製聯絡方式",
+    "en-US": "Copy contact details"
+  },
+  "diagnostics.export.path": {
+    "zh-CN": "保存位置",
+    "zh-TW": "儲存位置",
+    "en-US": "Save location"
+  },
+  "diagnostics.export.browse": {
+    "zh-CN": "选择位置…",
+    "zh-TW": "選擇位置…",
+    "en-US": "Choose location…"
+  },
+  "diagnostics.export.start": {
+    "zh-CN": "生成日志包",
+    "zh-TW": "產生記錄包",
+    "en-US": "Create log archive"
+  },
+  "diagnostics.export.working": {
+    "zh-CN": "正在整理日志，可关闭窗口取消…",
+    "zh-TW": "正在整理記錄，可關閉視窗取消…",
+    "en-US": "Collecting logs. Close this window to cancel…"
+  },
+  "diagnostics.export.done": {
+    "zh-CN": "已导出 {0} 份记录；{1} 项已跳过，原因见包内清单。",
+    "zh-TW": "已匯出 {0} 份記錄；{1} 項已略過，原因見包內清單。",
+    "en-US": "Exported {0} records; {1} items were skipped. See the archive manifest for details."
+  },
+  "diagnostics.export.open": {
+    "zh-CN": "打开所在文件夹",
+    "zh-TW": "開啟所在資料夾",
+    "en-US": "Open containing folder"
+  },
+  "diagnostics.export.exists": {
+    "zh-CN": "此位置已有同名文件，请选择新的文件名。",
+    "zh-TW": "此位置已有同名檔案，請選擇新的檔案名稱。",
+    "en-US": "A file with that name already exists. Choose a new name."
+  },
+  "diagnostics.export.extension": {
+    "zh-CN": "请保存为 .zip 文件。",
+    "zh-TW": "請儲存為 .zip 檔案。",
+    "en-US": "Save the archive as a .zip file."
+  },
+  "diagnostics.export.link": {
+    "zh-CN": "日志目录是链接，未读取它指向的其他位置。",
+    "zh-TW": "記錄目錄是連結，未讀取其指向的其他位置。",
+    "en-US": "The log folder is a link. Its destination was not read."
+  },
+  "diagnostics.activity_note": {
+    "zh-CN": "下面是最近一次操作记录，与上方实时连接状态分别显示。",
+    "zh-TW": "下方是最近一次操作記錄，與上方即時連線狀態分別顯示。",
+    "en-US": "The most recent operation is shown below, separately from the live connection status above."
+  },
+  "updates.release_link": {
+    "zh-CN": "最新 GitHub Release",
+    "zh-TW": "最新 GitHub Release",
+    "en-US": "Latest GitHub Release"
+  },
+  "updates.mirror_link": {
+    "zh-CN": "夸克下载目录",
+    "zh-TW": "夸克下載目錄",
+    "en-US": "Quark download folder"
+  },
+  "updates.mirror_code": {
+    "zh-CN": "提取码：5AgC",
+    "zh-TW": "提取碼：5AgC",
+    "en-US": "Access code: 5AgC"
+  },
+  "updates.mirror_copy": {
+    "zh-CN": "复制提取码",
+    "zh-TW": "複製提取碼",
+    "en-US": "Copy access code"
+  },
+  "suite.owner-exited": {
+    "zh-CN": "原控制窗口已退出，本次执行已暂停。",
+    "zh-TW": "原控制視窗已退出，本次執行已暫停。",
+    "en-US": "The controlling window ended, so this run was paused."
+  },
+  "suite.owner-replaced": {
+    "zh-CN": "原控制窗口已退出，本次执行已暂停。",
+    "zh-TW": "原控制視窗已退出，本次執行已暫停。",
+    "en-US": "The controlling window ended, so this run was paused."
+  },
+  "suite.owner-missing": {
+    "zh-CN": "原控制窗口已退出，本次执行已暂停。",
+    "zh-TW": "原控制視窗已退出，本次執行已暫停。",
+    "en-US": "The controlling window ended, so this run was paused."
+  },
+  "suite.owner-unreadable": {
+    "zh-CN": "无法确认控制窗口是否仍在运行，已暂停操作。",
+    "zh-TW": "無法確認控制視窗是否仍在執行，已暫停操作。",
+    "en-US": "The controlling window could not be verified; actions are paused."
+  },
+  "suite.identity-unavailable": {
+    "zh-CN": "暂时未读到完整的游戏账号信息。",
+    "zh-TW": "暫時未讀到完整的遊戲帳號資訊。",
+    "en-US": "Complete game account information is temporarily unavailable."
+  },
+  "suite.account-changed": {
+    "zh-CN": "当前账号或角色与本次任务绑定的信息不一致，操作已暂停。",
+    "zh-TW": "目前帳號或角色與本次任務綁定的資訊不一致，操作已暫停。",
+    "en-US": "The current account or character does not match this task, so actions are paused."
+  },
+  "suite.player-changed": {
+    "zh-CN": "当前账号或角色与本次任务绑定的信息不一致，操作已暂停。",
+    "zh-TW": "目前帳號或角色與本次任務綁定的資訊不一致，操作已暫停。",
+    "en-US": "The current account or character does not match this task, so actions are paused."
+  },
+  "suite.control-changed": {
+    "zh-CN": "功能控制权正在交接，当前操作尚未继续。",
+    "zh-TW": "功能控制權正在交接，目前操作尚未繼續。",
+    "en-US": "Control is changing between features; this operation has not continued."
+  },
+  "diagnostics.export.contact_copied": {
+    "zh-TW": "聯絡方式已複製。",
+    "en-US": "Contact details copied.",
+    "zh-CN": "联系方式已复制。"
+  },
+  "updates.mirror_copied": {
+    "zh-TW": "提取碼已複製。",
+    "en-US": "Access code copied.",
+    "zh-CN": "提取码已复制。"
   }
 }

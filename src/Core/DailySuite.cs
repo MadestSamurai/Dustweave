@@ -9,15 +9,17 @@ public static class DailySuite {
  // Extensions belong to the on-demand daily module; the common observer contains none.
  public static string ConnectionFingerprint(Guid hostModule, string pluginFingerprint) => DailyIdentity.Hash("on-demand-v3|"+hostModule);
  static readonly JsonSerializerOptions Json=new(){IncludeFields=true};
+ static readonly System.Collections.Concurrent.ConcurrentDictionary<string,string> LastStatus=new();
  public static string Owner=>Environment.GetEnvironmentVariable("BD2_DAILY_SUITE_OWNER")??throw new InvalidOperationException("统一会话缺少控制器身份。");
  public static async Task ActivateAsync(IGameHost host,string root,string id,Action<string> progress,CancellationToken cancel){
   var game=host.Find()??throw new InvalidOperationException("请先启动游戏，并在日常助手连接一次。");
   var snapshot=host.ReadSnapshot();
   if(snapshot==null||snapshot.ProcessId!=game.ProcessId||snapshot.ProcessStartTicks!=game.StartTicks||snapshot.FrameUtcTicks<DateTime.UtcNow.AddSeconds(-5).Ticks)
    throw new InvalidOperationException("游戏连接已失效，请在日常助手重新连接。");
+  if(snapshot.State!="identified"||string.IsNullOrEmpty(snapshot.AccountKey)||string.IsNullOrEmpty(snapshot.PlayerKey))throw new InvalidOperationException("suite.identity-unavailable" );
   var pipe=new PipeClient(Path.Combine(root,"suite"),game.ProcessId,game.StartTicks);
   var previous=Read(root,game);
-  if(previous?.Tool==id&&previous.State=="ready"&&previous.Owner==Owner)return;
+  if(previous?.Tool==id&&previous.State=="ready"&&previous.Owner==Owner&&previous.Account==snapshot.AccountKey&&previous.Player==snapshot.PlayerKey&&previous.At>=DateTime.UtcNow.AddSeconds(-5).Ticks)return;
   byte[]? payload=null;
   if(previous?.Available.Contains(id)!=true){
    var prepare=PrepareModule??throw new InvalidOperationException("功能准备器未就绪。");
@@ -52,7 +54,15 @@ public static class DailySuite {
  }
  public static SuiteStatus? Read(string root,GameInstance game){
   var bytes=new PipeClient(Path.Combine(root,"suite"),game.ProcessId,game.StartTicks).Read("status.json");
-  return bytes==null?null:JsonSerializer.Deserialize<SuiteStatus>(bytes,Json);
+  var state=bytes==null?null:JsonSerializer.Deserialize<SuiteStatus>(bytes,Json);
+  if(state!=null){
+   string key=root+"|"+game.ProcessId+"|"+game.StartTicks, value=state.Request+"|"+state.Tool+"|"+state.State+"|"+state.Error;
+   if(!LastStatus.TryGetValue(key,out var previous)||previous!=value){
+    LastStatus[key]=value;
+    try{DailyJson.Write(Path.Combine(root,"suite","last-transition.json"),new{atUtc=DateTimeOffset.UtcNow,game.ProcessId,game.StartTicks,state});}catch(IOException){}catch(UnauthorizedAccessException){}
+   }
+  }
+  return state;
  }
  public static void SetToolEnvironment(System.Diagnostics.ProcessStartInfo start,SuiteStatus state,GameInstance game,string id){
   if(state.State!="ready"||state.Tool!=id||state.Owner!=Owner)throw new InvalidOperationException("功能还未准备好。");

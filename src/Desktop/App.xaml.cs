@@ -205,9 +205,10 @@ public partial class App : Application
         bool updated = args.Length == 2 && args[0] == "--updated";
         string? smoke = args.Length == 2 && args[0] == "--smoke" ? Path.GetFullPath(args[1]) : null;
         string? runSelected = args.Length == 2 && args[0] == "--run-selected" ? Path.GetFullPath(args[1]) : null;
+        string? viewAccount = args.Length == 2 && args[0] == "--view-account" && DailyProfiles.ValidKey(args[1]) ? args[1] : null;
         string? inspectAccount = args.Length == 2 && args[0] == "--inspect-account" && DailyProfiles.ValidKey(args[1]) ? args[1] : null;
         string? resumeAccount = args.Length == 2 && args[0] == "--resume-account" && DailyProfiles.ValidKey(args[1]) ? args[1] : null;
-        if (args.Length > 0 && smoke == null && runSelected == null && inspectAccount == null && resumeAccount == null && !scheduled && !updated)
+        if (args.Length > 0 && smoke == null && runSelected == null && viewAccount == null && inspectAccount == null && resumeAccount == null && !scheduled && !updated)
         {
             Shutdown(2);
             return;
@@ -230,6 +231,7 @@ public partial class App : Application
             StartupDiagnostics.Mark("main-window");
             sessions = new AccountSessions();
             var window = new MainWindow(sessions, new DailyGameHost(), DailyIdentity.DataRoot, null) { ScheduledStartup = scheduled, UpdatedStartup = updated, UpdateNonce = updated ? args[1] : "" };
+            if (viewAccount != null) { DailySandbox.RequireBoundAccount(viewAccount); window.Loaded += (_, _) => { try { window.ViewAccountTasks(viewAccount); } catch (Exception error) { window.ShowTaskNavigationError(error); } }; }
             if (inspectAccount != null) window.Loaded += async (_, _) => await window.InspectAccountAsync(inspectAccount);
             if (resumeAccount != null) window.Loaded += async (_, _) => await window.ResumeQueueAsync(resumeAccount);
             if (runSelected != null)

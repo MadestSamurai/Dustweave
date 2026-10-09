@@ -1,5 +1,65 @@
 [
   {
+    "Version": "1.1.0-beta",
+    "Date": "2026-10-10",
+    "Notes": {
+      "en-US": [
+        "Fixes sessions stopping when a new window inherits an old controller or activates components before sign-in is ready.",
+        "Interruptions now explain the cause and next step. Export a diagnostic ZIP with a chosen save location and developer contact details.",
+        "Adds an app icon, latest Release and Quark download links, and a taller default window across all languages and themes.",
+        "Browse separate task selections for each account and return to account tasks after a batch. Includes first-time plugin preparation and settings-save improvements."
+      ],
+      "zh-TW": [
+        "修正新視窗沿用舊控制身分及登入尚未完成時提前啟用元件造成的工作階段停止。",
+        "連線中斷現在區分原因並提供下一步；診斷頁新增一鍵記錄壓縮檔匯出、路徑選擇與開發者聯絡方式。",
+        "新增應用程式圖示、最新 Release 與夸克下載目錄入口，預設視窗更高並適配深淺主題及三種語言。",
+        "今日任務可切換查看各帳號計畫與勾選；批次結束後可返回對應帳號選任務。包含首次套件匯入與設定儲存改善。"
+      ],
+      "zh-CN": [
+        "修复新窗口沿用旧控制身份和登录未完成时提前启用组件导致的会话停止。",
+        "连接中断现在区分原因并给出下一步；诊断页新增一键日志压缩包导出、路径选择和开发者联系方式。",
+        "新增应用图标、最新 Release 与夸克下载目录入口，默认窗口更高并适配深浅主题及三种语言。",
+        "今日任务可切换查看各账号计划与勾选；批量结束后可返回对应账号选任务。包含首次插件导入与设置保存改进。"
+      ]
+    }
+  },
+  {
+    "Version": "1.0.9-beta",
+    "Date": "2026-10-10",
+    "Notes": {
+      "zh-CN": [
+        "今日任务支持选择账号，分别查看任务与执行记录，并保留各账号本次勾选。",
+        "隔离批量完成或停止后，可从对应账号返回任务选择；点击执行后才切换并核对游戏账号。",
+        "包含插件首次导入检查优化，减少无缓存时的等待与超时。"
+      ],
+      "zh-TW": [
+        "今日任務支援選擇帳號，分別查看任務與執行記錄，並保留各帳號本次勾選。",
+        "隔離批次完成或停止後，可從對應帳號返回任務選擇；點擊執行後才切換並核對遊戲帳號。",
+        "包含套件首次匯入檢查改善，減少無快取時的等待與逾時。"
+      ],
+      "en-US": [
+        "Select an account in Today to view its tasks and history, with separate task selections for each account.",
+        "After an isolated batch finishes or stops, open task selection for any account. Game accounts are switched and verified only when you start a run.",
+        "Includes faster first-time plugin checks to reduce cold-import waits and timeouts."
+      ]
+    }
+  },
+  {
+    "Version": "1.0.8-beta",
+    "Date": "2026-10-09",
+    "Notes": {
+      "zh-CN": [
+        "优化插件首次导入检查：共用客户端解析结果，减少无缓存时的等待和超时；接口与文件完整性检查保持独立。"
+      ],
+      "zh-TW": [
+        "改善套件首次匯入檢查：共用用戶端解析結果，減少無快取時的等待與逾時；介面與檔案完整性檢查維持獨立。"
+      ],
+      "en-US": [
+        "Reuses client analysis during plugin preparation to reduce cold-import waits and timeouts. Interface and file-integrity checks remain independent."
+      ]
+    }
+  },
+  {
     "Version": "1.0.7-beta",
     "Date": "2026-10-09",
     "Notes": {

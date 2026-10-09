@@ -47,8 +47,9 @@ public sealed class DailyParallelRuntime(string executable) : IDailyParallelRunt
         using var game = Process.GetProcessById(status.GameId);
         if (game.StartTime.ToUniversalTime().Ticks != status.GameStartTicks || SandboxProcessScope.BoxOf(game.Id) != DailySandbox.BoxName(item.Account.AccountKey)) throw new InvalidOperationException("parallel.identity_changed");
         if (game.MainWindowHandle == 0) throw new InvalidOperationException("parallel.game_missing");
-        ShowWindowAsync(game.MainWindowHandle, 9); SetForegroundWindow(game.MainWindowHandle);
+        ShowWindow(game.MainWindowHandle);
     }
+    internal static void ShowWindow(nint window) { ShowWindowAsync(window, 9); SetForegroundWindow(window); }
     [DllImport("user32.dll")] private static extern bool ShowWindowAsync(nint window, int command);
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint window);
 }

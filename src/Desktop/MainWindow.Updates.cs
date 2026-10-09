@@ -28,7 +28,7 @@ public sealed class DailyUpdatePanel : ScrollViewer
         var actions = new WrapPanel(); L.Bind(check, ContentControl.ContentProperty, "updates.check"); actions.Children.Add(check);
         L.Bind(install, ContentControl.ContentProperty, "updates.install"); install.Style = (Style)Application.Current.FindResource("PrimaryButton"); actions.Children.Add(install); card.Children.Add(actions); card.Children.Add(status);
         stack.Children.Add(new Border { Style = (Style)Application.Current.FindResource("Panel"), Padding = new(20), Margin = new(0, 0, 0, 16), Child = card });
-        stack.Children.Add(notes); Content = stack;
+        stack.Children.Add(DailyDownloadLinks.Create()); stack.Children.Add(notes); Content = stack;
         check.Click += (_, _) => CheckRequested?.Invoke(); install.Click += (_, _) => InstallRequested?.Invoke();
         automatic.Click += (_, _) => AutomaticChanged?.Invoke(Automatic);
         L.Text(status, "updates.idle");
@@ -107,6 +107,7 @@ public partial class MainWindow
     {
             var panel = new StackPanel { Margin = new(24) };
             var title = new TextBlock { FontSize = 24, FontWeight = FontWeights.SemiBold, Margin = new(0, 0, 0, 8) }; L.Text(title, "updates.whats_new", DailyProductVersion.Current); panel.Children.Add(title);
+            panel.Children.Add(DailyDownloadLinks.Create());
             foreach (var release in DailyReleaseHistory.Read().Where(r => r.Version == DailyProductVersion.Current))
                 foreach (var i in Enumerable.Range(0, release.Notes["zh-CN"].Length))
                 {

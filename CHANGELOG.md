@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 1.1.0-beta — 2026-10-10
+
+- 修复控制身份继承及登录阶段提前绑定，保留真实停止原因；新增错误分类、下一步指引和诊断 ZIP 导出。
+- 新增软件图标、Release 与夸克入口、更高的默认窗口；补齐三语言与深浅主题。
+- 今日任务支持按账号查看及保留勾选，批量后返回账号任务；包含插件准备和设置保存改进。
+- Fixes session ownership and early login binding, adds actionable interruption messages and diagnostic ZIP export, and refreshes app identity and download access. Includes per-account task browsing and preparation improvements.
+- [完整说明 / Full notes](docs/releases/1.1.0-beta.md)
+
 ## 1.0.1-beta — 2026-10-09
 
 - 新增首次连接教程与账号页常驻入口，支持三语言和深浅主题；明确退出游戏后保存账号，并从织尘启动的流程。

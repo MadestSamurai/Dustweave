@@ -10,7 +10,7 @@ namespace BD2Daily {
  }
  [DataContract] public sealed class SuiteStatus {
   [DataMember] public string Request="", Tool="", State="idle", Error="", Owner="", Account="", Player="", RejectedRequest="", RejectedReason="";
-  [DataMember] public string Pending="";
+  [DataMember] public string Pending="", IdentityState="", OwnerProblem="";
   [DataMember] public long At;
   [DataMember] public string[] Available=new string[0], Fingerprints=new string[0];
  }
@@ -32,11 +32,19 @@ namespace BD2Daily {
     default: return "";
    }
   }
+  public static string Revocation(string ownerProblem, SuiteStatus current, DailySnapshot snapshot) {
+   if(!string.IsNullOrEmpty(ownerProblem))return ownerProblem;
+   if(snapshot.State!="identified"||string.IsNullOrEmpty(snapshot.AccountKey)||string.IsNullOrEmpty(snapshot.PlayerKey))return "suite.identity-unavailable";
+   if(current.Account!=snapshot.AccountKey)return "suite.account-changed";
+   if(current.Player!=snapshot.PlayerKey)return "suite.player-changed";
+   return "";
+  }
   public static string Validate(SuiteCommand c,DailySnapshot s,long now) {
    if(c==null||string.IsNullOrEmpty(c.Id)||string.IsNullOrEmpty(c.Owner))return "missing-request";
    if(c.OwnerProcessId<=0||c.OwnerStartTicks<=0)return "missing-owner";
    if(c.Expires<=now||c.Expires>now+TimeSpan.FromSeconds(45).Ticks)return "expired-request";
    if(c.ProcessId!=s.ProcessId||c.StartTicks!=s.ProcessStartTicks)return "game-changed";
+   if(s.State!="identified"||string.IsNullOrEmpty(s.AccountKey)||string.IsNullOrEmpty(s.PlayerKey))return "suite.identity-unavailable";
    if(c.Account!=s.AccountKey||c.Player!=s.PlayerKey)return "account-changed";
    if(c.Tool!="daily"&&(string.IsNullOrEmpty(c.Account)||string.IsNullOrEmpty(c.Player)))return "login-required";
    return "";

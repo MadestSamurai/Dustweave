@@ -85,7 +85,7 @@ internal static class UnifiedSuiteCases {
   var channel=new RuntimeChannel();Set("channel",channel);Set("initialized",true);Set("hasBundle",true);
   Set("status",new SuiteStatus());Set("active","");Set("lastRequest","");Set("loadingId","");Set("request",null!);
   using var owner=Process.GetCurrentProcess();
-  var identity=new DailySnapshot{ProcessId=42,ProcessStartTicks=900,AccountKey="account",PlayerKey="player"};
+  var identity=new DailySnapshot{State="identified",ProcessId=42,ProcessStartTicks=900,AccountKey="account",PlayerKey="player"};
   SuiteCommand Command(string id)=>new(){Id=Guid.NewGuid().ToString("N"),Tool=id,Owner="owner",Account="account",Player="player",ProcessId=42,StartTicks=900,Expires=DateTime.UtcNow.AddSeconds(40).Ticks,OwnerProcessId=owner.Id,OwnerStartTicks=owner.StartTime.ToUniversalTime().Ticks};
   void Send(SuiteCommand command)=>channel.Write("command.json",JsonSerializer.SerializeToUtf8Bytes(command,Json));
   void Step(){
@@ -135,6 +135,26 @@ internal static class UnifiedSuiteCases {
   Check(State().Tool=="territory","error does not poison next valid request");
   Set("ownerPid",int.MaxValue);Step();
   Check(State().State=="paused"&&State().Tool=="","host process exit stops active tool");
+  Check(State().Error=="suite.owner-exited","controller exit has its own diagnosis");
+  Send(Command("fishing"));Finish();int stopCount=SuiteFixtureBus.Stops["fishing"];SuiteFixtureBus.Waiting.Add("fishing");Set("ownerPid",int.MaxValue);Step();Step();
+  Check(State().Error=="suite.owner-exited"&&SuiteFixtureBus.Stops["fishing"]==stopCount&&!SuiteFixtureBus.Flows["fishing"].IsActive,"pending receipt preserves the original stop reason without restarting or retiring the actor");
+  SuiteFixtureBus.Waiting.Clear();Step();Check(SuiteFixtureBus.Stops["fishing"]==stopCount+1,"stopped module retires after the pending receipt drains");
+  Send(Command("daily"));Finish();identity.PlayerKey="";identity.State="waiting_player";Step();
+  Check(State().State=="paused"&&State().Error=="suite.identity-unavailable","missing identity is not falsely called a changed account");
+  identity.PlayerKey="player";identity.State="identified";Send(Command("daily"));Finish();
+  Check(State().State=="ready","explicit retry recovers after identity returns");
+  identity.AccountKey="other";Step();Check(State().Error=="suite.account-changed","real account change remains stopped");identity.AccountKey="account";
+  var login=Command("daily");login.Account="";login.Player="";var empty=new DailySnapshot{ProcessId=42,ProcessStartTicks=900,State="waiting_login"};
+  Check(SuiteRules.Validate(login,empty,DateTime.UtcNow.Ticks)=="suite.identity-unavailable","daily activation cannot bind an empty login identity");
+  string[] names={"BD2_DAILY_SUITE_OWNER","BD2_DAILY_OWNER_PID","BD2_DAILY_OWNER_START"};var env=names.Select(Environment.GetEnvironmentVariable).ToArray();
+  try{
+   Environment.SetEnvironmentVariable(names[0],"old-owner");Environment.SetEnvironmentVariable(names[1],"123");Environment.SetEnvironmentVariable(names[2],"456");
+   DailySuiteOwner.Configure(false);string newOwner=Environment.GetEnvironmentVariable(names[0])!;
+   Check(newOwner!="old-owner"&&Environment.GetEnvironmentVariable(names[1])==Environment.ProcessId.ToString(),"new host discards inherited owner identity");
+   DailySuiteOwner.Configure(true);Check(Environment.GetEnvironmentVariable(names[0])==newOwner,"hosted helper preserves parent owner");
+   foreach(var entry in new[]{"--updated","--parallel-worker","--view-account","--scheduled"})Check(!DailySuiteOwner.Inherits(new[]{entry}),"independent process owns its lifetime: "+entry);
+   Check(DailySuiteOwner.Inherits(new[]{"--tool"})&&DailySuiteOwner.Inherits(new[]{"--utility"}),"integrated tool helper inherits session");
+  }finally{for(int n=0;n<names.Length;n++)Environment.SetEnvironmentVariable(names[n],env[n]);}
   Send(Command("fishing"));Finish();SuiteFixtureBus.Waiting.Add("fishing");Send(Command("territory"));Step();
   Set("began",DateTime.UtcNow.AddMinutes(-1));Step();
   Check(State().State=="error"&&SuiteFixtureBus.Pauses["fishing"]>0,"busy deadline retains paused operation");

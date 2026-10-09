@@ -90,9 +90,9 @@ namespace BD2Daily.Runtime {
    return "";
   }
   internal static void Dispose(){Stop();if(Busy()!="")throw new InvalidOperationException(Busy());foreach(var id in modules.Keys)Retire(id);active="";var owned=AppDomain.CurrentDomain.GetData(OwnedKey) as HashSet<string>;if(owned!=null)owned.Remove(typeof(SuiteRuntime).Assembly.FullName);if(channel!=null)channel.Revoke();}
-  static bool OwnerAlive(){
-   if(ownerPid==0)return false;
-   try{using(var p=System.Diagnostics.Process.GetProcessById(ownerPid))return !p.HasExited&&p.StartTime.ToUniversalTime().Ticks==ownerStart;}catch{return false;}
+  static string OwnerProblem(){
+   if(ownerPid==0)return "suite.owner-missing";
+   try{using(var p=System.Diagnostics.Process.GetProcessById(ownerPid)){if(p.HasExited)return "suite.owner-exited";return p.StartTime.ToUniversalTime().Ticks==ownerStart?"":"suite.owner-replaced";}}catch(ArgumentException){return "suite.owner-exited";}catch{return "suite.owner-unreadable";}
   }
   static T Read<T>(byte[] bytes)where T:class{if(bytes==null)return null;using(var memory=new MemoryStream(bytes))return(T)new DataContractJsonSerializer(typeof(T)).ReadObject(memory);}
   static void Save(){using(var memory=new MemoryStream()){new DataContractJsonSerializer(typeof(SuiteStatus)).WriteObject(memory,status);channel.Write("status.json",memory.ToArray());}}
@@ -115,10 +115,12 @@ namespace BD2Daily.Runtime {
       status.State="switching";status.Error="";began=now;idle=default(DateTime);loadingId="";paused=false;
      }
     }
-    if(request==null&&active!=""&&(Entry(active)==null||Entry(active).ContainsKey("paused")&&(bool)Entry(active)["paused"])) {Stop();status.State="paused";status.Error="功能控制权已变化，请返回日常助手。";active="";}
-    bool revoked=status.Owner!=""&&(!OwnerAlive()||status.Account!=identity.AccountKey||status.Player!=identity.PlayerKey);
+    if(request==null&&active!=""&&(Entry(active)==null||Entry(active).ContainsKey("paused")&&(bool)Entry(active)["paused"])) {Stop();if(status.State!="paused"&&status.State!="error"){status.State="paused";status.Error="suite.control-changed";}if(Busy()==""){foreach(var id in modules.Keys)Retire(id);active="";}}
+    status.IdentityState=identity.State;status.OwnerProblem=status.Owner==""?"":OwnerProblem();
+    string revokeReason=status.Owner==""?"":SuiteRules.Revocation(status.OwnerProblem,status,identity);
+    bool revoked=revokeReason!="";
     if(revoked&&(active!=""||request!=null)){
-     Stop();request=null;status.State="paused";status.Error="会话已停止，请在日常助手重新选择功能。";
+     Stop();request=null;status.State="paused";status.Error=revokeReason;
      if(Busy()==""){foreach(var id in modules.Keys)Retire(id);active="";}
     }else if(request!=null){
      if(now-began>TimeSpan.FromSeconds(30))throw new TimeoutException("等待当前操作结束超时；保持暂停，不重复执行。");

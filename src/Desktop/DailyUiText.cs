@@ -18,7 +18,7 @@ internal static class DailyUiText
     }
     public static void Error(TextBlock target, Exception error, string prefix = "")
     {
-        DailyLanguage.Current.Bind(target, TextBlock.TextProperty, () => DailyLanguage.Current.Translate(prefix) + DailyUserText.Error(error, DailyLanguage.Current.Translate));
+        DailyLanguage.Current.Bind(target, TextBlock.TextProperty, () => DailyLanguage.Current.Translate(prefix) + DailyIssuePresentation.Describe(error));
         DailyLanguage.Current.Bind(target, System.Windows.FrameworkElement.ToolTipProperty, () => DailyLanguage.Current.Diagnostic(error.ToString(), target.Text));
     }
 }

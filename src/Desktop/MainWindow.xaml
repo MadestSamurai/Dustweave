@@ -1,5 +1,5 @@
 <Window x:Class="Dustweave.Desktop.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:l="clr-namespace:Dustweave.Desktop" xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
- Style="{StaticResource {x:Type Window}}" Title="{l:Tr app.window_title}" Width="1180" Height="800" MinWidth="920" MinHeight="650" Background="{DynamicResource AppBackground}" WindowStartupLocation="CenterScreen">
+ Style="{StaticResource {x:Type Window}}" Title="{l:Tr app.window_title}" Icon="Assets/Dustweave.ico" Width="1180" Height="900" MinWidth="920" MinHeight="650" Background="{DynamicResource AppBackground}" WindowStartupLocation="CenterScreen">
  <shell:WindowChrome.WindowChrome>
   <shell:WindowChrome CaptionHeight="80" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="8" UseAeroCaptionButtons="False"/>
  </shell:WindowChrome.WindowChrome>
@@ -213,7 +213,7 @@
           </StackPanel>
          </Grid>
         </Border>
-        <TextBlock Text="{l:Tr diagnostics.activity}" FontSize="14" FontWeight="SemiBold" Margin="0,22,0,8"/>
+        <TextBlock Text="{l:Tr diagnostics.activity}" FontSize="14" FontWeight="SemiBold" Margin="0,22,0,8"/><TextBlock Text="{l:Tr diagnostics.activity_note}" Foreground="{DynamicResource MutedInk}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"/><TextBlock x:Name="DiagnosticIssueCategory" FontSize="12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Visibility="Collapsed" Margin="0,0,0,8"/>
         <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Padding="0,0,0,18">
          <StackPanel>
           <ScrollViewer MaxHeight="96" VerticalScrollBarVisibility="Auto"><TextBlock Text="{Binding Text,ElementName=ProgressText}" Foreground="{Binding Foreground,ElementName=ProgressText}" TextWrapping="Wrap" FontSize="13"/></ScrollViewer>
@@ -226,7 +226,7 @@
         <TextBlock Text="{l:Tr diagnostics.help}" FontSize="14" FontWeight="SemiBold" Margin="0,18,0,6"/>
         <TextBlock Text="{l:Tr diagnostics.help_body}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" FontSize="13"/>
         <WrapPanel Margin="0,12,0,0">
-         <Button x:Name="CopyDiagnosticButton" Content="{l:Tr diagnostics.copy}" Click="CopyDiagnostics_Click" Margin="0,0,8,4"/>
+         <Button x:Name="ExportDiagnosticButton" Content="{l:Tr diagnostics.export}" Click="ExportDiagnostics_Click" Style="{StaticResource PrimaryButton}" Margin="0,0,8,4"/><Button x:Name="CopyDiagnosticButton" Content="{l:Tr diagnostics.copy}" Click="CopyDiagnostics_Click" Margin="0,0,8,4"/>
          <Button Content="{l:Tr diagnostics.folder}" Click="OpenDiagnosticsFolder_Click" Margin="0,0,0,4"/>
         </WrapPanel>
         <TextBlock x:Name="DiagnosticCopyFeedback" Foreground="{DynamicResource Primary}" TextWrapping="Wrap" FontSize="12" Visibility="Collapsed" Margin="0,4,0,0"/>

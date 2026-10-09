@@ -20,6 +20,12 @@ public partial class MainWindow
         if(!IsSandboxWindow&&smoke==null)parallel=new(root,parallelRuntime);
         parallelPanel.ControlRequested+=(account,action)=>{parallel?.Control(account,action);_=PollParallelAsync();};
         parallelPanel.GameRequested+=item=>{if(smoke==null)try{parallelRuntime.ShowGame(item);}catch(Exception e){ShowError(e);}};
+        parallelPanel.TasksRequested+=async item=>
+        {
+            if(smoke!=null||Unavailable)return;
+            try { await DailySandbox.OpenTasksAsync(item.Account.AccountKey,Environment.ProcessPath!,CancellationToken.None); }
+            catch(Exception error) { parallelPanel.Feedback(error.Message); }
+        };
         parallelPanel.BackRequested+=()=>WorkspaceTabs.SelectedItem=AccountsTab;
         ExecutionModeButton.Visibility=IsSandboxWindow?Visibility.Collapsed:Visibility.Visible;RefreshParallelMode();
         if(parallel?.Current!=null){RunTab.Content=parallelPanel;parallelPanel.Show(parallel.Current);}

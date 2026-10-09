@@ -7,6 +7,85 @@ namespace Dustweave.Desktop;
 
 public partial class MainWindow
 {
+    private async Task CheckTaskNavigationForSmoke()
+    {
+        var fixture = (DemoEnvironment)sessions;
+        int calls = fixture.Calls.Count, checks = 0;
+        string original = fixture.CurrentKey;
+        void Check(bool condition, string why) { if (!condition) throw new Exception(why); checks++; }
+        static IEnumerable<T> Descendants<T>(DependencyObject node) where T : DependencyObject
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++)
+            {
+                var child = VisualTreeHelper.GetChild(node, i);
+                if (child is T match) yield return match;
+                foreach (var nested in Descendants<T>(child)) yield return nested;
+            }
+        }
+        var a = fixture.Accounts[0]; var b = fixture.Accounts[1];
+        string record = Path.Combine(root, "live", "queues", Guid.NewGuid().ToString("N"), "result.json");
+        DailyJson.Write(record, new { state = "paused", context = new { actor = new object[] { 1, 2, "fixture", b.AccountKey, "player" } }, items = new[] { new { task = "mail", state = "pending" } } });
+        DailyQueueHistory.Remember(root, b.AccountKey, record);
+        var store = new DailyPreferenceStore(root);
+        var bPrefs = new DailyPreferences(); bPrefs.Mirror.Enabled = false; store.Save(b.AccountKey, bPrefs);
+        try
+        {
+            ViewAccountTasks(a.AccountKey); dailyPanel.ShowCurrentPlan(); dailyPanel.ClearSelection(); dailyPanel.SelectPlanTask("free_draws", true);
+            var selector = Descendants<ComboBox>(dailyPanel).Single();
+            selector.SelectedValue = b.AccountKey;
+            Check(TaskAccountKey == b.AccountKey && fixture.CurrentKey == original && fixture.Calls.Count == calls, "Choosing tasks switched the game account");
+            Check(!dailyPanel.ShowingPlan && dailyPanel.VisibleTasks.SequenceEqual(new[] { "mail" }), "Account history was not selected by identity");
+            dailyPanel.ShowCurrentPlan();
+            Check(!dailyPanel.VisibleTasks.Contains("mirror"), "Selected account used another account settings");
+            dailyPanel.ClearSelection(); dailyPanel.SelectPlanTask("mail", true);
+            fixture.CurrentKey = fixture.Accounts[2].AccountKey;
+            RefreshAccounts(); RefreshDailyHistory(true);
+            Check(TaskAccountKey == b.AccountKey && (string?)selector.SelectedValue == b.AccountKey && dailyPanel.SelectedPlanTasks.SequenceEqual(new[] { "mail" }), "Background account/history refresh stole the task selection");
+            ViewAccountTasks(a.AccountKey); dailyPanel.ShowCurrentPlan();
+            Check(dailyPanel.SelectedPlanTasks.SequenceEqual(new[] { "free_draws" }), "Returning to an account lost its draft selection");
+            ViewAccountTasks(b.AccountKey); dailyPanel.ShowCurrentPlan();
+            Check(dailyPanel.SelectedPlanTasks.SequenceEqual(new[] { "mail" }), "Draft selections leaked across accounts");
+            QueuePlanRequest? request = null; void Observe(QueuePlanRequest value) => request = value;
+            dailyPanel.PlanRequested += Observe; dailyPanel.StartCurrentSelection(); dailyPanel.PlanRequested -= Observe;
+            Check(request?.Account == b.AccountKey && request.Tasks.SequenceEqual(new[] { "mail" }), "Selection sent the logged-in account rather than the viewed account");
+            QueueRetryRequest? retryRequest = null; void Retry(QueueRetryRequest value) => retryRequest = value;
+            dailyPanel.ShowHistory(); dailyPanel.SelectUnfinished(); dailyPanel.RetryRequested += Retry;
+            Descendants<Button>(dailyPanel).Single(x => x.Content as string == L.Get("run.retry", 1)).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            dailyPanel.RetryRequested -= Retry;
+            Check(retryRequest?.Account == b.AccountKey && retryRequest.Record == record, "Retry lost the selected account record");
+            dailyPanel.ShowCurrentPlan();
+            SetBusy(true); Check(!selector.IsEnabled, "Account selector remains enabled during execution"); SetBusy(false);
+            foreach (var language in new[] { 0, 1, 2 }) foreach (var appearance in new[] { 1, 2 })
+            {
+                LanguageSelector.SelectedIndex = language; ThemeSelector.SelectedIndex = appearance; Width = 920; Height = 650;
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); UpdateLayout();
+                dailyPanel.CheckViewportForSmoke();
+                Check(!Descendants<TextBlock>(dailyPanel).Any(t => t.Text.StartsWith("run.")), "Untranslated task navigation text");
+                Check(TaskAccountKey == b.AccountKey && dailyPanel.SelectedPlanTasks.SequenceEqual(new[] { "mail" }), "Presentation change erased task draft");
+                Capture("task-account-" + L.Code + "-" + appearance);
+            }
+            Check(fixture.Calls.Count == calls, "Task navigation executed a game/session operation");
+            bool rejected = false;
+            try { ViewAccountTasks(new string('d', 64)); } catch (InvalidOperationException) { rejected = true; }
+            Check(rejected && TaskAccountKey == b.AccountKey, "Deleted or unknown account was accepted for tasks");
+            await ConnectTaskAccountAsync(b.AccountKey);
+            Check(fixture.CurrentKey == b.AccountKey && fixture.Calls.Skip(calls).Contains("launch:" + b.SlotNumber), "Explicit start did not connect the selected account");
+            int afterSwitch = fixture.Calls.Count;
+            await ConnectTaskAccountAsync(b.AccountKey);
+            Check(!fixture.Calls.Skip(afterSwitch).Any(x => x == "close" || x.StartsWith("launch")), "Already selected game was needlessly restarted");
+            afterSwitch = fixture.Calls.Count;
+            rejected = false;
+            try { await ConnectTaskAccountAsync(new string('d', 64)); } catch (InvalidOperationException) { rejected = true; }
+            Check(rejected && fixture.Calls.Count == afterSwitch, "Missing target fell back to the logged-in account");
+            DailyJson.Write(Path.Combine(smoke!, "task-navigation-ui.json"), new { status = "passed", checks, realGameTouched = false });
+        }
+        finally
+        {
+            fixture.CurrentKey = original; viewedAccount = ""; RefreshAccounts();
+            LanguageSelector.SelectedIndex = 0; ThemeSelector.SelectedIndex = 1; Width = 1180; Height = 800;
+            File.Delete(record); File.Delete(Path.Combine(root, "queue-history", b.AccountKey + ".json")); File.Delete(store.PathFor(b.AccountKey));
+        }
+    }
     private async Task CheckParallelForSmoke()
     {
         int calls=((DemoEnvironment)sessions).Calls.Count;
@@ -34,6 +113,16 @@ public partial class MainWindow
                 parallelPanel.ControlRequested+=Control;
                 buttons.First(b=>b.Content as string==L.Get("parallel.resume")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 parallelPanel.ControlRequested-=Control;Check(controlled==accounts[1].AccountKey+":resume","Row action targeted another account");
+                Check(buttons.Count(b=>b.Content as string==L.Get("parallel.tasks")&&!b.IsEnabled)==3,"Active batch exposes conflicting individual execution");
+                var finishedRun=run with { Items=run.Items.Select(x=>x with {State="completed", Detail="", Status=x.Status! with { Queue=new("completed","","",[new("management","completed",""),new("mail","completed","")],x.Account.AccountKey) }}).ToArray() };
+                parallelPanel.Show(finishedRun);UpdateLayout();
+                string? viewed=null;void View(DailyParallelItem value)=>viewed=value.Account.AccountKey;
+                parallelPanel.TasksRequested+=View;
+                var taskButtons=Children<Button>(parallelPanel).Where(b=>b.Content as string==L.Get("parallel.tasks")).ToArray();
+                Check(taskButtons.Length==3&&taskButtons.All(b=>b.IsEnabled),"Finished batch has no account task entry");
+                taskButtons[1].RaiseEvent(new RoutedEventArgs(Button.ClickEvent));parallelPanel.TasksRequested-=View;
+                Check(viewed==accounts[1].AccountKey,"Batch task entry targeted a different account");
+                await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
                 Capture("parallel-"+L.Code+"-"+appearance);
             }
             foreach(int appearance in new[]{1,2})

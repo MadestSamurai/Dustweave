@@ -14,6 +14,7 @@ public sealed class DailyParallelPanel : ScrollViewer
     private DailyParallelRun? displayed;
     public event Action<string,string>? ControlRequested;
     public event Action<DailyParallelItem>? GameRequested;
+    public event Action<DailyParallelItem>? TasksRequested;
     public event Action? BackRequested;
     public DailyParallelPanel()
     {
@@ -63,6 +64,9 @@ public sealed class DailyParallelPanel : ScrollViewer
         header.Children.Add(new ProgressBar { Width=52,Height=52,Style=(Style)Application.Current.FindResource("CircularProgress"),Minimum=0,Maximum=Math.Max(1,stages.Count),Value=done,Margin=new(0,0,12,0),ToolTip=$"{done} / {stages.Count}" });
         var detail=new TextBlock { Text=item.Detail.StartsWith("parallel.")?L.Get(item.Detail):L.Describe(item.Detail),TextWrapping=TextWrapping.Wrap,Margin=new(0,0,0,8) };detail.SetResourceReference(TextBlock.ForegroundProperty,"MutedInk");detail.Visibility=string.IsNullOrWhiteSpace(detail.Text)?Visibility.Collapsed:Visibility.Visible;detail.Margin=new(64,4,0,8);body.Children.Add(detail);
         var controls=new WrapPanel { Margin=new(64,4,0,0) };
+        var tasks=Button("parallel.tasks",()=>TasksRequested?.Invoke(item));
+        tasks.IsEnabled=displayed?.Items.All(x=>!DailyParallelSession.Occupies(x.State)&&x.State is not ("waiting" or "held"))==true;
+        L.Bind(tasks,FrameworkElement.ToolTipProperty,tasks.IsEnabled?"parallel.tasks_help":"parallel.tasks_busy");controls.Children.Add(tasks);
         var game=Button("parallel.game",()=>GameRequested?.Invoke(item));game.IsEnabled=item.Status?.GameId>0;controls.Children.Add(game);
         var toggle=Button(item.State is "paused" or "held"?"parallel.resume":"parallel.pause",()=>ControlRequested?.Invoke(item.Account.AccountKey,item.State is "paused" or "held"?"resume":"pause"));
         toggle.IsEnabled=item.State is "waiting" or "starting" or "connecting" or "running" or "paused" or "held";controls.Children.Add(toggle);

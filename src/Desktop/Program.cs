@@ -10,7 +10,7 @@ public static class Program
     public static int Main(string[] args)
     {
         bool window = args.Length == 0 || args[0] is "--desktop-session" or "--launch-desktop"
-            or "--inspect-account" or "--resume-account" or "--run-selected" or "--scheduled" or "--updated";
+            or "--view-account" or "--inspect-account" or "--resume-account" or "--run-selected" or "--scheduled" or "--updated";
         try { if (window) StartupDiagnostics.Begin(); return MainCore(args); }
         catch (Exception error)
         {
@@ -68,7 +68,7 @@ public static class Program
             catch(Exception error) { DailyJson.Write(Path.Combine(args[1],"result.json"),new {status="failed",error=error.ToString(),realGameTouched=false}); return 1; }
         }
         StartupDiagnostics.Mark("host-configuration");
-        DailySuiteComposition.Configure();
+        DailySuiteComposition.Configure(DailySuiteOwner.Inherits(args));
         if (args.Length == 2 && args[0] == "--parallel-worker")
         {
             try { return DailyParallelWorker.RunAsync(args[1]).GetAwaiter().GetResult(); }

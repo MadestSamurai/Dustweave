@@ -64,6 +64,7 @@ public partial class MainWindow : Window
         designPreview = !automatedSmoke;
         theme = new DailyTheme(root);
         InitializeComponent();
+        if(smoke==null){Height=Math.Min(900,SystemParameters.WorkArea.Height-32);MinHeight=Math.Min(MinHeight,Height);}
         InitializeWindowChrome();
         L.Bind(ConnectionGuideButton, ContentControl.ContentProperty, "onboarding.title");
         ThemeSelector.SelectedIndex = (int)theme.Preference;
@@ -89,6 +90,8 @@ public partial class MainWindow : Window
         toolPanel.OpenRequested += async id => { toolMessage = null; await OpenTool(id); };
         toolPanel.CloseRequested += async () => await CloseTool();
         dailyPanel.AccountsRequested += () => WorkspaceTabs.SelectedItem = AccountsTab;
+        dailyPanel.AccountRequested += key => { try { ViewAccountTasks(key); } catch (Exception error) { ShowError(error); } };
+        dailyPanel.BatchRequested += () => { if (parallel?.Current != null) { RunTab.Content = parallelPanel; parallelPanel.Show(parallel.Current); } };
         dailyPanel.StartRequested += async (multi, resume) => await StartDaily(multi, resume);
         dailyPanel.RetryRequested += async request => await StartDaily(false, false, retry: request);
         dailyPanel.PlanRequested += async request => await StartDaily(false, false, selection: request);
@@ -116,7 +119,7 @@ public partial class MainWindow : Window
         coordinator.Progress += p => Dispatcher.Invoke(() => { if (dailyQueue.IsRunning || WorkspaceTabs.SelectedItem == RunTab && busy) dailyPanel.Show(new("preparing", p.Message, "", [])); DailyUiText.Set(ProgressText, p.Message); ProgressText.Foreground = (Brush)FindResource(p.State == "error" ? "Error" : "Ink"); });
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         timer.Tick += (_, _) => { _ = PollParallelAsync(); L.RefreshFromDisk(); RefreshTools(); UpdateConnection(); if (smoke == null && !busy) { _ = RefreshAccountIdentityAsync(); RefreshDailyHistory(); } if (smoke == null) { _ = CheckScheduleAsync(); _ = OfferUpdateAsync(); if (DateTime.UtcNow >= nextUpdateCheck) { nextUpdateCheck = DateTime.UtcNow.AddHours(6); _ = CheckUpdatesAsync(); } } };
-        Loaded += async (_, _) => { RefreshAccounts(); var last = DailyJson.TryRead<DailyRunStatus>(Path.Combine(root, "run.json")); if (last != null) { DailyUiText.History(ProgressText, "history.previous", last.AtUtc.LocalDateTime, last.Progress.Message); } if (smoke == null) { var previous = dailyQueue.ReadView(catalog?.CurrentKey ?? ""); dailyPanel.LoadHistory(previous); } timer.Start(); if (smoke != null && automatedSmoke) await SmokeAsync();  };
+        Loaded += async (_, _) => { RefreshAccounts(); var last = DailyJson.TryRead<DailyRunStatus>(Path.Combine(root, "run.json")); if (last != null) { DailyUiText.History(ProgressText, "history.previous", last.AtUtc.LocalDateTime, last.Progress.Message); } if (smoke == null) { var previous = dailyQueue.ReadView(TaskAccountKey); dailyPanel.LoadHistory(previous); } timer.Start(); if (smoke != null && automatedSmoke) await SmokeAsync();  };
         bool startupShown = false;
         ContentRendered += async (_, _) => { if (startupShown || smoke != null) return; startupShown = true;
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ContextIdle);
@@ -182,6 +185,37 @@ public partial class MainWindow : Window
         if(previousRunning!=running){previousRunning=running;SetBusy(busy);}
         if(previousTool!=id){bool returnToDaily=previousTool!=null&&id==null&&!toolChanging;previousTool=id;SetBusy(busy);if(returnToDaily)_=CloseTool();}
     }
+    private string viewedAccount = "";
+    private string TaskAccountKey => viewedAccount.Length > 0 ? viewedAccount : catalog?.CurrentKey ?? "";
+    private void RefreshTaskAccount()
+    {
+        if (catalog == null) return;
+        if (busy || viewedAccount.Length > 0 && viewedAccount != catalog.CurrentKey && !catalog.Accounts.Any(a => a.Valid && a.AccountKey == viewedAccount)) viewedAccount = "";
+        string key = TaskAccountKey;
+        var account = catalog.Accounts.FirstOrDefault(a => a.Valid && a.AccountKey == key);
+        string name = account?.Name ?? L.Get("account.unsaved");
+        var available = catalog.Accounts.Where(a => !IsSandboxWindow || a.AccountKey == catalog.CurrentKey).ToList();
+        if (DailyProfiles.ValidKey(catalog.CurrentKey) && available.All(a => a.AccountKey != catalog.CurrentKey))
+            available.Add(new(0, L.Get("account.unsaved"), catalog.CurrentKey, "", true, true, ""));
+        dailyPanel.SetAccounts(available, key, parallel?.Current != null);
+        L.Bind(dailyPanel.CurrentAccountText, TextBlock.TextProperty, () => DailyProfiles.ValidKey(key) ? L.Get("run.viewing_account", name) : L.Get("account.not_signed_in"));
+        dailyPanel.SetAccount(name, key);
+        if (DailyProfiles.ValidKey(key)) dailyPanel.ShowPlan(new DailyPreferenceStore(root).Read(key));
+        if (!busy) dailyPanel.LoadHistory(dailyQueue.ReadView(key));
+    }
+    internal void ShowTaskNavigationError(Exception error) => ShowError(error);
+    public void ViewAccountTasks(string key)
+    {
+        if (Unavailable || !preferencesPanel.SavePending()) return;
+        DailySandbox.RequireBoundAccount(key);
+        var current = sessions.Read();
+        if (!DailyProfiles.ValidKey(key) || key != current.CurrentKey && !current.Accounts.Any(a => a.Valid && a.AccountKey == key))
+            throw new InvalidOperationException("run.account_unavailable");
+        viewedAccount = key;
+        RefreshAccounts(current);
+        RunTab.Content = dailyPanel;
+        WorkspaceTabs.SelectedItem = RunTab;
+    }
     private DateTime nextHistoryRefresh;
     private void RefreshDailyHistory(bool refreshPlan = false)
     {
@@ -190,9 +224,9 @@ public partial class MainWindow : Window
         nextHistoryRefresh = DateTime.UtcNow.AddSeconds(5);
         try
         {
-            dailyPanel.LoadHistory(dailyQueue.ReadView(catalog?.CurrentKey ?? ""));
-            if (refreshPlan && catalog != null && DailyProfiles.ValidKey(catalog.CurrentKey))
-                dailyPanel.ShowPlan(new DailyPreferenceStore(root).Read(catalog.CurrentKey));
+            dailyPanel.LoadHistory(dailyQueue.ReadView(TaskAccountKey));
+            if (refreshPlan && DailyProfiles.ValidKey(TaskAccountKey))
+                dailyPanel.ShowPlan(new DailyPreferenceStore(root).Read(TaskAccountKey));
         }
         catch (Exception e) { DailyUiText.Error(ProgressText, e, "读取历史记录失败："); }
     }
@@ -235,17 +269,11 @@ public partial class MainWindow : Window
                 row.PropertyChanged += RowChanged;
                 rows.Add(row);
             }
-            L.Bind(dailyPanel.CurrentAccountText, TextBlock.TextProperty, () => catalog.CurrentKey.Length == 0 ? L.Get("account.not_signed_in") : L.Get("account.current", catalog.Accounts.FirstOrDefault(a => a.AccountKey == catalog.CurrentKey)?.Name ?? L.Get("account.unsaved")));
             CountText.Text = $"{rows.Count} / 100";
             EmptyText.Visibility = rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             AccountsGrid.SelectedItem = rows.FirstOrDefault(r => r.Account.AccountKey == old) ?? rows.FirstOrDefault();
             preferencesPanel.SetAccounts(catalog.Accounts); schedulePanel.SetAccounts(catalog.Accounts);
-            string accountName = catalog.Accounts.FirstOrDefault(a => a.AccountKey == catalog.CurrentKey)?.Name ?? "当前游戏账号";
-            dailyPanel.SetAccount(accountName, catalog.CurrentKey);
-            if (!busy)
-                dailyPanel.LoadHistory(dailyQueue.ReadView(catalog.CurrentKey));
-            if (DailyProfiles.ValidKey(catalog.CurrentKey))
-                dailyPanel.ShowPlan(new DailyPreferenceStore(root).Read(catalog.CurrentKey));
+            RefreshTaskAccount();
             UpdateSelection();
             UpdateConnection();
         }
@@ -338,6 +366,7 @@ public partial class MainWindow : Window
     }
     private void ReportPreparation(string message)
     {
+        DiagnosticIssueCategory.Visibility=Visibility.Collapsed;
         dailyPanel.Show(new("preparing", message, "", []));
         DailyUiText.Set(ProgressText, message);
     }
@@ -351,7 +380,7 @@ public partial class MainWindow : Window
         try
         {
             using var toolsLease = DailyToolControl.Acquire(root);
-            if(!connectsGame && smoke==null && host.Find() is {} currentGame && host.ReadSnapshot() is {} snapshot && snapshot.ProcessId==currentGame.ProcessId && snapshot.FrameUtcTicks>DateTime.UtcNow.AddSeconds(-5).Ticks)
+            if(!connectsGame && smoke==null && host.Find() is {} currentGame && host.ReadSnapshot() is {} snapshot && snapshot.State=="identified" && snapshot.AccountKey.Length>0 && snapshot.PlayerKey.Length>0 && snapshot.ProcessId==currentGame.ProcessId && snapshot.FrameUtcTicks>DateTime.UtcNow.AddSeconds(-5).Ticks)
                 await DailySuite.ActivateAsync(host,root,"daily",ReportPreparation,CancellationToken.None);
             operation = action();
             await operation;
@@ -364,7 +393,10 @@ public partial class MainWindow : Window
         if (RunTab.Content == parallelPanel) parallelPanel.Feedback(e.Message);
         if (WorkspaceTabs.SelectedItem == RunTab)
             dailyPanel.ShowOperationError(e.Message, DailyUserText.Error(e));
-        DailyJson.Write(Path.Combine(root, "ui-operation-error.json"), new { atUtc = DateTimeOffset.UtcNow, version = DailyIdentity.Version, error = e.ToString() });
+        DailyJson.Write(Path.Combine(root, "ui-operation-error.json"), new { atUtc = DateTimeOffset.UtcNow, version = DailyProductVersion.Current, issue = DailyIssues.Classify(e), error = e.ToString() });
+        var issue=DailyIssues.Classify(e);
+        DiagnosticIssueCategory.Visibility=Visibility.Visible;var at=DateTime.Now;
+        L.Bind(DiagnosticIssueCategory,TextBlock.TextProperty,()=>L.Get("issue.recorded",L.Get("issue.category."+issue.Category),at));
         DailyUiText.Error(ProgressText, e);
         ProgressText.Foreground = (Brush)FindResource("Error");
     }
@@ -561,41 +593,51 @@ public partial class MainWindow : Window
             DailySandbox.RequireBoundAccount(accountKey);
             if (sessions.Read().CurrentKey != accountKey)
                 throw new InvalidOperationException("当前登录账号与接续队列不一致，未开始执行。");
+            ViewAccountTasks(accountKey);
             await StartDaily(false, true);
         }
         catch (Exception error) { ShowError(error); }
     }
     public Task RunSelectedAsync(QueuePlanRequest request) => StartDaily(false, false, selection: request);
+    private async Task ConnectTaskAccountAsync(string targetKey)
+    {
+        DailySandbox.RequireBoundAccount(targetKey);
+        var before = sessions.Read();
+        if (!DailyProfiles.ValidKey(targetKey)) throw new InvalidOperationException("run.account_unavailable");
+        if (before.CurrentKey != targetKey || host.Find() == null)
+        {
+            var target = before.Accounts.SingleOrDefault(a => a.Valid && a.AccountKey == targetKey)
+                ?? throw new InvalidOperationException("run.account_unavailable");
+            await coordinator.InspectAsync([target]);
+        }
+        else await coordinator.ConnectCurrentAsync();
+        if (!dailyStopping && sessions.Read().CurrentKey != targetKey) throw new InvalidOperationException("run.account_unavailable");
+    }
     private async Task StartDaily(bool multi, bool resume, bool syncCollection = false, QueueRetryRequest? retry = null, QueuePlanRequest? selection = null)
     {
         if (smoke != null || Unavailable || !preferencesPanel.SavePending())
             return;
         if (multi) { RunAccounts_Click(this, new RoutedEventArgs()); return; }
-        if (retry != null)
+        string targetKey = retry?.Account ?? selection?.Account ?? TaskAccountKey;
+        try
         {
-            try
-            {
-                DailyQueueRetry.Validate(dailyQueue.ReadView(sessions.Read().CurrentKey), sessions.Read().CurrentKey, retry);
-            }
-            catch (Exception e) { ShowError(e); return; }
+            DailySandbox.RequireBoundAccount(targetKey);
+            var current = sessions.Read();
+            if (!DailyProfiles.ValidKey(targetKey) || targetKey != current.CurrentKey && !current.Accounts.Any(a => a.Valid && a.AccountKey == targetKey))
+                throw new InvalidOperationException("run.account_unavailable");
+            if (retry != null) DailyQueueRetry.Validate(dailyQueue.ReadView(targetKey), targetKey, retry);
+            selection?.Validate(targetKey, new DailyPreferenceStore(root).Read(targetKey));
         }
-        if (selection != null)
-        {
-            try
-            {
-                string key = sessions.Read().CurrentKey;
-                selection.Validate(key, new DailyPreferenceStore(root).Read(key));
-            }
-            catch (Exception e) { ShowError(e); return; }
-        }
+        catch (Exception error) { ShowError(error); return; }
         dailyStopping = false;
         await OperateAsync(async () =>
         {
-                await coordinator.ConnectCurrentAsync();
+                await ConnectTaskAccountAsync(targetKey);
                 RefreshAccounts();
                 if (dailyStopping)
                     return;
                 var current = sessions.Read().CurrentKey;
+                if (current != targetKey) throw new InvalidOperationException("run.account_unavailable");
                 await dailyQueue.RunAsync(current, resume, syncCollection, retry, selection);
 
         }, connectsGame: true);
@@ -679,6 +721,19 @@ public partial class MainWindow : Window
         try
         {
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "support")
+            {
+                await CheckSupportForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "support", realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "task-navigation")
+            {
+                await CheckTaskNavigationForSmoke();
+                await CheckParallelForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "task-navigation", realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
             await CheckGameLocationForSmoke();
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "game-location")
             {
@@ -914,6 +969,8 @@ public partial class MainWindow : Window
             await observe;
             if (!File.Exists(guild.LastTrace))
                 throw new Exception("Observer did not record isolated snapshots");
+            await CheckSupportForSmoke();
+            await CheckTaskNavigationForSmoke();
             DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new
             {
                 status = "passed",

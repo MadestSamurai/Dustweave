@@ -99,6 +99,47 @@ public static class DailySandbox
         try { return await LaunchCoreAsync(account, executable, progress, token, worker); }
         finally { configurationGate.Release(); }
     }
+    // Open the existing account workspace only. No credential import, bootstrap or game launch.
+    public static async Task OpenTasksAsync(string account, string executable, CancellationToken token)
+    {
+        RequireHost();
+        string box = BoxName(account);
+        executable = Path.GetFullPath(executable);
+        if (!File.Exists(executable) || !DailyApplication.IsExecutable(executable)) throw new InvalidOperationException("run.account_unavailable");
+        string installation = Installation() ?? throw new InvalidOperationException("parallel.install_required");
+        await configurationGate.WaitAsync(token);
+        try
+        {
+            string state = Path.Combine(Store, box);
+            var owned = DailyJson.TryRead<DailySandboxRequest>(Path.Combine(state, "instance.json"));
+            string actual = (await Run(installation, "SbieIni.exe", ["query", box, "FileRootPath"], token)).Trim();
+            if (owned?.Account != account || owned.Box != box || !string.Equals(actual, Path.Combine(state, "root"), StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("parallel.identity_changed");
+            foreach (string setting in new[] { "OpenKeyPath", "OpenIpcPath", "OpenPipePath", "OpenFilePath", "BreakoutProcess", "BreakoutFolder", "BreakoutDocument" })
+                if (!string.IsNullOrWhiteSpace(await Run(installation, "SbieIni.exe", ["query", box, setting], token)))
+                    throw new InvalidOperationException("parallel.identity_changed");
+            var windows = Process.GetProcessesByName("Dustweave");
+            try
+            {
+                foreach (var process in windows)
+                {
+                    if (process.HasExited || SandboxProcessScope.BoxOf(process.Id) != box) continue;
+                    if (process.MainWindowHandle == 0) throw new InvalidOperationException("parallel.tasks_busy");
+                    DailyParallelRuntime.ShowWindow(process.MainWindowHandle);
+                    return;
+                }
+            }
+            finally { foreach (var process in windows) process.Dispose(); }
+            // A persistent UI must not inherit captured stdout/stderr handles from the launcher.
+            var start = new ProcessStartInfo(Path.Combine(installation, "Start.exe")) { UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden, WorkingDirectory = Directory.GetCurrentDirectory() };
+            start.Environment["DUSTWEAVE_PLUGIN"] = DailyPlugin.Current.Available ? DailyPlugin.Current.Root : "none";
+            foreach (string argument in new[] { "/box:" + box, "/silent", executable, "--view-account", account }) start.ArgumentList.Add(argument);
+            using var launcher = Process.Start(start) ?? throw new IOException("parallel.window_open");
+            await launcher.WaitForExitAsync(token).WaitAsync(TimeSpan.FromSeconds(20), token);
+            if (launcher.ExitCode != 0) throw new IOException("parallel.window_open");
+        }
+        finally { configurationGate.Release(); }
+    }
     private static async Task<string> LaunchCoreAsync(DailyAccount account, string executable, Action<string> progress, CancellationToken token, DailyParallelJob? worker)
     {
         RequireHost();

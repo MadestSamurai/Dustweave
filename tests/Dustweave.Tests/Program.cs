@@ -74,6 +74,7 @@ async Task Group(string name, Func<Task> run)
 }
 Task Sync(Action run) { run(); return Task.CompletedTask; }
 await Group("ProductIdentity", () => Sync(() => ProductIdentityCases.Run(cases)));
+await Group("DiagnosticExport", () => DiagnosticExportCases.Run(root,cases));
 await Group("ClientUpdate", () => Sync(() => ClientUpdateCases.Run(root,cases)));
 await Group("LiveBindings", () => Sync(() => LiveBindingCases.Run(root,cases)));
 await Group("Parallel", () => ParallelCases.Run(root, cases));

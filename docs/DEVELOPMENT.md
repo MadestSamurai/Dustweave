@@ -125,3 +125,19 @@ Scoped checks: `FirstRun,GameInstallation,LoginIdentity,AccountIdentity,AccountR
 ## Game screen terminology / 游戏界面用语
 
 Use 主菜单 / 主選單 / main menu for the game's MenuUI. Cartridge towns, the plaza and individual lobbies keep their actual names. DailyIdentityGuard checks fresh character identity and does not require a particular town or map. A process-locator error should only ask users to start the game. Keep interface strings, embedded tool labels and both getting-started documents aligned.
+
+## Per-account task selection / 按账号选择任务
+
+“今日任务”的任务账号独立于当前游戏账号。切换账号仅展示对应设置和历史，后台刷新不改变用户正在查看的账号；本次计划勾选按账号分别保留。明确点击执行后才走既有账号启动及身份核对流程，再执行勾选、补跑或接续。队列运行期间禁止切换任务账号。
+
+隔离批量完成或停止后，每个账号的“选择任务”打开其已有隔离空间中的任务页。此入口不导入凭据、不启动游戏，不把隔离执行记录复制到主窗口；账号归属检查和单实例锁仍生效。真实 Sandboxie 窗口打开需要运行时验收，合成界面检查只验证入口与身份路由。
+
+The task account is a browsing choice, separate from the signed-in game account. Background refresh preserves it; drafts remain separate per account. An explicit run switches and verifies the selected account through the existing coordinator before dispatch. Isolated batch entries reopen their existing account workspace without credential import or game launch.
+
+Use `DUSTWEAVE_UI_SMOKE_SCOPE=task-navigation` with the desktop `--smoke` entry for focused UI verification: account history, separate draft selections, refresh, targeted startup, three languages, both themes and parallel-row routing. The fixture never operates a real game. Related core groups: `QueueSession`, `Parallel`, `Sandbox`, `AccountIdentity`.
+
+## Session diagnostics / 会话诊断
+
+Normal desktop, updated and isolated-worker processes own a fresh control identity. Only explicit hosted tool/utility/connection-helper entry points inherit the parent owner. Module activation requires a fresh, identified, nonempty account and player. Runtime revocation keeps separate owner-exit, unreadable-owner, missing-identity, actual-account-change and handoff codes; pending receipts retain their original stop reason until drained.
+
+`DailyIssues` classifies failures without inventing a cause for legacy messages. The desktop localizes reason and next action, while raw errors remain in diagnostic records. See [DIAGNOSTICS.md](DIAGNOSTICS.md) for export boundaries and targeted checks. Regenerate the Windows icon with `scripts/build-app-icon.ps1` from the supplied branding mark; all sizes remain bundled in the executable.

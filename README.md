@@ -81,6 +81,8 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 
 先查看[使用与排错](docs/GETTING_STARTED.md#遇到问题)，再提交 [Issue](https://github.com/MadestSamurai/Dustweave/issues/new/choose)。请写明工具版本、发生的环节、实际现象与复现步骤；需要日志时只附相关时段，并检查其中的账号标识与其他私人信息。
 
+也可在 **诊断 → 导出日志与联系开发者** 一键生成日志 ZIP，选择保存位置后私下发送。微信 **SuJakads0133** · QQ **1104563414**。[导出范围与状态说明](docs/DIAGNOSTICS.md)。更新页提供最新 Release 和作者的夸克下载目录入口。
+
 不要上传整个账号目录、登录凭据、完整库存或回放。安全问题的反馈方式见 [SECURITY.md](SECURITY.md)。
 
 ## 参与开发

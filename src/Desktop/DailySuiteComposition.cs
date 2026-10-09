@@ -12,9 +12,8 @@ internal static class DailySuiteComposition {
   ["fishing"]="BD2Fishing",["sichuan"]="BD2Sichuan",["territory"]="BD2Territory",
   ["rhythm"]="BD2Rhythm",["apostle-defense"]="BD2ApostleDefense",
   ["infinite-gacha"]="BD2InfiniteGacha",["secret-vision"]="BD2SecretVision",["fiend-hunter"]="BD2FiendHunter"};
- public static void Configure(){
-  if(Environment.GetEnvironmentVariable("BD2_DAILY_SUITE_OWNER")==null)
-   { Environment.SetEnvironmentVariable("BD2_DAILY_SUITE_OWNER",Guid.NewGuid().ToString("N")); using var owner=System.Diagnostics.Process.GetCurrentProcess(); Environment.SetEnvironmentVariable("BD2_DAILY_OWNER_PID",owner.Id.ToString()); Environment.SetEnvironmentVariable("BD2_DAILY_OWNER_START",owner.StartTime.ToUniversalTime().Ticks.ToString()); }
+ public static void Configure(bool inheritOwner = false){
+  DailySuiteOwner.Configure(inheritOwner);
   // The connection must not load or resolve the nine optional compilers.
   DailyHookCompiler.SuiteFingerprint=DailySuite.ConnectionFingerprint(typeof(DailySuiteComposition).Module.ModuleVersionId,DailyPlugin.Current.Fingerprint);
   DailySuite.Prepare=Prepare;

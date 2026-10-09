@@ -81,6 +81,8 @@ For a custom game installation, open **Daily settings → Game location → Choo
 
 Check [troubleshooting](docs/GETTING_STARTED.en.md#troubleshooting), then [open an issue](https://github.com/MadestSamurai/Dustweave/issues/new/choose). Include your version, the affected stage, expected and actual behavior, and reproduction steps. Attach only relevant diagnostic excerpts after checking for account identifiers or other personal information.
 
+Use **Diagnostics → Export logs and get help** to save a diagnostic ZIP and send it privately. **WeChat: SuJakads0133** · **QQ: 1104563414**. See [export scope and status explanations](docs/DIAGNOSTICS.md). The Updates page also links to the latest Release and the author's Quark download folder.
+
 Do not upload account directories, credentials, complete inventories or replays. See [SECURITY.md](SECURITY.md) for security reporting.
 
 ## Contribute
