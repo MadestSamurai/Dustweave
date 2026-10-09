@@ -11,6 +11,7 @@ public interface IAccountSessions
     void Save(int slot, string name, string expectedKey);
     void Rename(int slot, string name, string expectedKey);
     void Delete(int slot, string expectedKey);
+    void LaunchCurrent() => throw new NotSupportedException();
     void LoginNew();
     void Recover();
 }
@@ -38,6 +39,16 @@ public sealed class AccountSessions : IAccountSessions, IDisposable
             throw new InvalidOperationException("原账户切换工具正在运行。请先关闭它，再使用这里的账户操作。");
     }
     public void EnsureControl() => Own();
+    public void LaunchCurrent()
+    {
+        DailySandbox.RequireHost();
+        Own();
+        var status = SessionRegistry.GetStatus();
+        if (status.GameRunning || status.StarterRunning) throw new InvalidOperationException("onboarding.close_launcher");
+        string executable = GameLauncher.ResolveExecutable();
+        GameLauncher.ValidateLaunchContext(executable);
+        GameLauncher.LaunchDirect(executable);
+    }
     public DailyAccountCatalog Read()
     {
         var d = service.GetDashboard();

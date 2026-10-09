@@ -6,13 +6,30 @@ internal static class LoginIdentityCases
     internal static async Task Run(string root, List<string> cases)
     {
         void Check(bool ok,string name){if(!ok)throw new Exception(name);cases.Add("login identity: "+name);}
-        Check(DailyDesktopLaunch.NeedsRelay([]),"ordinary GUI launch relays before registry access");
-        Check(DailyDesktopLaunch.NeedsRelay(["--inspect-account",new string('a',64)]),"explicit login check uses desktop context");
+        Check(!DailyDesktopLaunch.NeedsRelay([]),"ordinary GUI launch works without Explorer COM");
+        Check(!DailyDesktopLaunch.NeedsRelay(["--inspect-account",new string('a',64)]),"login-check window does not depend on Explorer COM");
         Check(!DailyDesktopLaunch.NeedsRelay([DailyDesktopLaunch.ChildSwitch]),"desktop child does not loop");
         Check(DailyDesktopLaunch.Normalize(DailyDesktopLaunch.ChildArguments([])).Length==0,"normal window never acquires an automatic task");
         Check(DailyDesktopLaunch.Normalize(DailyDesktopLaunch.ChildArguments(["--inspect-account","key"])).SequenceEqual(new[]{"--inspect-account","key"}),"explicit target survives relay");
         foreach(var mode in new[]{"--smoke","--utility","--check-suite","--daily-connect-elevated"}) Check(!DailyDesktopLaunch.NeedsRelay([mode,"fixture"]),"background entry remains unchanged "+mode);
         Check(DailyDesktopLaunch.Quote("a b")=="\"a b\"","desktop argument quoting preserves spaces");
+        Check(!DailyDesktopLaunch.NeedsRelay(["--run-selected", "fixture"]), "selected queue keeps its process context");
+        Check(DailyDesktopLaunch.NeedsRelay(["--launch-desktop"]), "explicit developer desktop relay remains available");
+        Check(!DailyDesktopLaunch.NeedsRelay(["--scheduled", "fixture"]), "scheduled queue is not relayed");
+        string diagnosticRoot = Path.Combine(root, "early-startup");
+        string state = StartupDiagnostics.Save(diagnosticRoot, "managed-entry", null);
+        Check(File.Exists(state), "records startup before window creation");
+        string failure = StartupDiagnostics.Save(diagnosticRoot, "application-resources", new InvalidOperationException("fixture resource load failed"));
+        using (var report = JsonDocument.Parse(File.ReadAllText(failure)))
+        {
+            Check(report.RootElement.GetProperty("stage").GetString() == "application-resources", "early failure retains failing stage");
+            Check(report.RootElement.GetProperty("error").GetString()!.Contains("fixture resource load failed"), "early failure retains diagnostic");
+            Check(!report.RootElement.TryGetProperty("args", out _) && !report.RootElement.TryGetProperty("environment", out _), "startup report excludes arguments and environment");
+        }
+        string blockedRoot = Path.Combine(root, "startup-root-is-file");
+        File.WriteAllText(blockedRoot, "fixture");
+        Check(StartupDiagnostics.Save(blockedRoot, "managed-entry", null) == "", "unwritable diagnostic location never prevents startup");
+        Check(StartupDiagnostics.Save(blockedRoot, "main-window", new IOException("fixture")) == "", "failed diagnostic write never hides original failure");
         foreach(bool title in new[]{true,false})
         {
             string path=Path.Combine(root,"login-store-"+title);var env=new DemoEnvironment(path){TitleVisible=title};

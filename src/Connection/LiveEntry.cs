@@ -21,7 +21,7 @@ if(configureConsole)Console.OutputEncoding=new UTF8Encoding(false);
 var root=Path.Combine(DailyIdentity.DataRoot,"live");Directory.CreateDirectory(root);BD2.LocalIpc.DesktopFiles.Configure(root,LiveProtocol.LiveEntries);
 try {
  if(args.Length==1&&args[0]=="locate"){
-  var host=new DailyGameHost();var game=host.Find()??throw new Exception("请先启动游戏并进入主城");
+  var host=new DailyGameHost();var game=host.Find()??throw new Exception("请先启动游戏");
   Console.WriteLine(JsonSerializer.Serialize(new{managed=Path.Combine(Path.GetDirectoryName(game.Executable)!,"BrownDust II_Data","Managed"),processId=game.ProcessId,startTicks=game.StartTicks}));return;
  }
  if(args.Length==1&&args[0]=="ready"){

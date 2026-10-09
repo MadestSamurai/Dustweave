@@ -45,7 +45,7 @@
   "原生达标即停（游戏目标{0}）": "Stop at native target (game target {0})",
   "发现未完成计划：已完成 {0:N0} 件，下方仅列剩余 {1:N0} 件。点击确认后接续，不会重做。": "Unfinished plan found: {0:N0} items completed, {1:N0} remaining below. Confirm to resume without repeating completed quantities.",
   "只看已选": "Selected only",
-  "在主城连接游戏，读取当前账号的材料和装备。": "Connect from the home screen to read this account's materials and equipment.",
+  "在主菜单连接游戏，读取当前账号的材料和装备。": "Connect from the main menu to read this account's materials and equipment.",
   "天赋药": "Ability Pills",
   "头盔": "Helmet",
   "实例ID从大到小": "Instance ID, descending",

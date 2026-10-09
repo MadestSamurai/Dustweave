@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/Core/Dustweave.Core.csproj" />
     <Compile Include="../../src/Desktop/DemoEnvironment.cs" Link="DemoEnvironment.cs" />
+    <Compile Include="../../src/Desktop/StartupDiagnostics.cs" Link="StartupDiagnostics.cs" />
     <Compile Include="../../src/Runtime/SuiteRuntime.cs" Link="Unified/SuiteRuntime.cs" />
     <Compile Include="../../src/Shared/Ipc/runtime/Handoff.cs" Link="Unified/Handoff.cs" />
     <Compile Include="../../src/Runtime/SdkIdentity.cs" Link="SdkIdentity.cs" />

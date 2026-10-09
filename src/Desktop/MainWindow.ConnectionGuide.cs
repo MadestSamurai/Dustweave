@@ -1,69 +1,95 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
+using System.Windows.Threading;
+using Dustweave.Accounts;
 
 namespace Dustweave.Desktop;
 
 public partial class MainWindow
 {
-    private sealed record ConnectionGuideSeen(int Revision);
+    private bool onboardingOpen;
+    private PageTour? firstRunTour;
+    private AdornerLayer? firstRunLayer;
+    private int firstRunTourIndex;
+    private string FirstRunPath => Path.Combine(root, "first-run.json");
     private bool ShowInitialConnectionGuide()
     {
-        if (smoke != null || ScheduledStartup || IsSandboxWindow || Unavailable || catalog == null ||
-            catalog.Accounts.Any(a => a.Valid) || DailyJson.TryRead<ConnectionGuideSeen>(Path.Combine(root, "connection-guide.json"))?.Revision >= 1)
-            return false;
-        ShowConnectionGuide();
+        if (smoke != null || ScheduledStartup || IsSandboxWindow || Unavailable || catalog == null) return false;
+        var state = DailyJson.TryRead<FirstRunRecord>(FirstRunPath);
+        if (!DailyFirstRun.ShouldOffer(state, catalog.Accounts.Any(a => a.Valid))) return false;
+        if (state?.State == "tour" && catalog.Accounts.Any(a => a.Valid)) BeginPageTour(state.TourIndex);
+        else ShowConnectionGuide();
         return true;
     }
     private void ConnectionGuide_Click(object sender, RoutedEventArgs e) => ShowConnectionGuide();
     private void ShowConnectionGuide()
     {
-        releaseDialogOpen = true;
+        if (Unavailable || IsSandboxWindow) return;
+        onboardingOpen = true; SetBusy(busy);
         try
         {
-            DailyDialogs.ShowModal(CreateConnectionGuideWindow());
-            if (smoke == null) DailyJson.Write(Path.Combine(root, "connection-guide.json"), new ConnectionGuideSeen(1));
+            using (DailyToolControl.Acquire(root))
+            {
+                DailyJson.Write(FirstRunPath, new FirstRunRecord());
+                var window = CreateConnectionGuideWindow();
+                DailyDialogs.ShowModal(window);
+                RefreshAccounts();
+                if (!window.Saved || DailyJson.TryRead<FirstRunRecord>(FirstRunPath)?.State != "tour") return;
+            }
+            BeginPageTour(0);
         }
-        finally { releaseDialogOpen = false; }
+        catch (Exception error) { ShowError(error); }
+        finally { if (firstRunTour == null) { onboardingOpen = false; SetBusy(busy); } }
     }
-    private Window CreateConnectionGuideWindow()
+    private FirstRunWindow CreateConnectionGuideWindow()
+        => new(this, new DailyFirstRun(sessions, host, root), new GameInstallation(smoke == null ? null : Path.Combine(root, "game-path-preview")), root);
+
+    private (TabItem? Tab, FrameworkElement Focus, string Title, string Description)[] TourPages =>
+    [
+        (RunTab, dailyPanel, "nav.daily", "onboarding.page.daily"),
+        (SettingsTab, preferencesPanel, "nav.settings", "onboarding.page.settings"),
+        (ToolsTab, toolPanel, "nav.tools", "onboarding.page.tools"),
+        (AccountsTab, CurrentLoginCard, "nav.accounts", "onboarding.page.accounts"),
+        (ScheduleTab, schedulePanel, "nav.schedule", "onboarding.page.schedule"),
+        (PluginsTab, pluginPanel, "plugins.title", "onboarding.page.plugins"),
+        (DiagnosticsTab, (FrameworkElement)DiagnosticsTab.Content, "nav.diagnostics", "onboarding.page.diagnostics"),
+        (null, VersionButton, "nav.updates", "onboarding.page.updates")
+    ];
+    private void BeginPageTour(int index)
     {
-        var dialog = new Window { Owner = this, Width = Math.Min(620, SystemParameters.WorkArea.Width - 64),
-            Height = Math.Min(664, SystemParameters.WorkArea.Height - 80), ResizeMode = ResizeMode.NoResize,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner };
-        L.Bind(dialog, Window.TitleProperty, "guide.title");
-        TextBlock Text(string key, double size, string brush = "Ink")
+        if (firstRunTour != null) return;
+        onboardingOpen = true; SetBusy(busy);
+        var content = (UIElement)Content;
+        firstRunLayer = AdornerLayer.GetAdornerLayer(content) ?? throw new InvalidOperationException("Onboarding overlay is unavailable.");
+        firstRunTour = new(content);
+        firstRunTour.Move += delta =>
         {
-            var text = new TextBlock { FontSize = size, TextWrapping = TextWrapping.Wrap };
-            text.SetResourceReference(TextBlock.ForegroundProperty, brush); L.Text(text, key); return text;
-        }
-        var layout = new DockPanel { Margin = new Thickness(24, 8, 24, 24) };
-        var actions = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 20, 0, 0) };
-        var later = new Button { IsCancel = true, Margin = new Thickness(0, 0, 10, 0) };
-        L.Bind(later, ContentControl.ContentProperty, "guide.later"); later.Click += (_, _) => dialog.Close(); actions.Children.Add(later);
-        var open = new Button { IsDefault = true, Style = (Style)FindResource("PrimaryButton") };
-        L.Bind(open, ContentControl.ContentProperty, "guide.accounts");
-        open.Click += (_, _) => { WorkspaceTabs.SelectedItem = AccountsTab; dialog.Close(); ConnectionGuideButton.Focus(); };
-        actions.Children.Add(open); DockPanel.SetDock(actions, Dock.Bottom); layout.Children.Add(actions);
-        var body = new StackPanel();
-        var heading = Text("guide.heading", 24); heading.FontWeight = FontWeights.SemiBold; heading.Margin = new Thickness(0, 0, 0, 22); body.Children.Add(heading);
-        for (int i = 1; i <= 3; i++)
-        {
-            var row = new Grid { Margin = new Thickness(0, 0, 0, 20) };
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(42) }); row.ColumnDefinitions.Add(new ColumnDefinition());
-            var marker = new Border { Width = 28, Height = 28, CornerRadius = new CornerRadius(14), VerticalAlignment = VerticalAlignment.Top, HorizontalAlignment = HorizontalAlignment.Left,
-                Child = new TextBlock { Text = i.ToString(), FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center } };
-            marker.SetResourceReference(Border.BackgroundProperty, "PrimarySoft");
-            ((TextBlock)marker.Child).SetResourceReference(TextBlock.ForegroundProperty, "Primary");
-            row.Children.Add(marker);
-            var copy = new StackPanel(); var title = Text("guide.step" + i + ".title", 16); title.FontWeight = FontWeights.SemiBold; title.Margin = new Thickness(0, 2, 0, 6);
-            copy.Children.Add(title); copy.Children.Add(Text("guide.step" + i + ".body", 14, "MutedInk")); Grid.SetColumn(copy, 1); row.Children.Add(copy); body.Children.Add(row);
-        }
-        var note = new StackPanel();var noteTitle = Text("guide.permissions.title", 14);noteTitle.FontWeight = FontWeights.SemiBold;noteTitle.Margin = new Thickness(0,0,0,6);
-        note.Children.Add(noteTitle);note.Children.Add(Text("guide.permissions.body", 13, "MutedInk"));
-        var notice = new Border { Padding = new Thickness(14), CornerRadius = new CornerRadius(8), Child = note }; notice.SetResourceReference(Border.BackgroundProperty, "SurfaceMuted");body.Children.Add(notice);
-        var reopen=Text("guide.reopen",12,"MutedInk");reopen.Margin=new Thickness(0,14,0,0);body.Children.Add(reopen);
-        layout.Children.Add(new ScrollViewer { Content = body, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled });
-        dialog.Content = layout;DailyDialogs.Prepare(dialog);return dialog;
+            if (firstRunTourIndex + delta >= TourPages.Length) EndPageTour(true);
+            else ShowTourPage(firstRunTourIndex + delta);
+        };
+        firstRunTour.Skip += () => { if (Confirm(L.Get("onboarding.skip_tour"))) EndPageTour(false); };
+        firstRunLayer.Add(firstRunTour); ShowTourPage(index);
+        SizeChanged += ResizeFirstRunTour;
+    }
+    private void ResizeFirstRunTour(object sender, SizeChangedEventArgs e) => firstRunTour?.InvalidateVisual();
+    private void ShowTourPage(int index)
+    {
+        firstRunTourIndex = Math.Clamp(index, 0, TourPages.Length - 1);
+        var page = TourPages[firstRunTourIndex];
+        if (page.Tab != null) WorkspaceTabs.SelectedItem = page.Tab;
+        UpdateLayout();
+        firstRunTour!.Show(page.Tab ?? (FrameworkElement)VersionButton, page.Focus, page.Title, page.Description, firstRunTourIndex, TourPages.Length);
+        DailyJson.Write(FirstRunPath, new FirstRunRecord(State: "tour", TourIndex: firstRunTourIndex));
+    }
+    private void EndPageTour(bool complete)
+    {
+        if (firstRunTour == null) return;
+        firstRunLayer?.Remove(firstRunTour); firstRunTour = null; SizeChanged -= ResizeFirstRunTour;
+        DailyJson.Write(FirstRunPath, new FirstRunRecord(State: complete ? "completed" : "skipped"));
+        onboardingOpen = false; SetBusy(busy); WorkspaceTabs.SelectedItem = RunTab;
+        L.Text(ProgressText, complete ? "onboarding.complete" : "onboarding.reopen");
+        ConnectionGuideButton.Focus();
     }
 }

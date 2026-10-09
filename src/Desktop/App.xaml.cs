@@ -227,6 +227,7 @@ public partial class App : Application
                 Shutdown();
                 return;
             }
+            StartupDiagnostics.Mark("main-window");
             sessions = new AccountSessions();
             var window = new MainWindow(sessions, new DailyGameHost(), DailyIdentity.DataRoot, null) { ScheduledStartup = scheduled, UpdatedStartup = updated, UpdateNonce = updated ? args[1] : "" };
             if (inspectAccount != null) window.Loaded += async (_, _) => await window.InspectAccountAsync(inspectAccount);
@@ -238,6 +239,7 @@ public partial class App : Application
                 window.Loaded += async (_, _) => await window.RunSelectedAsync(request);
             }
             window.Show();
+            StartupDiagnostics.Mark("main-window-visible");
         }
         catch (Exception ex)
         {
@@ -247,27 +249,30 @@ public partial class App : Application
                 Shutdown(1);
                 return;
             }
-            try { DailyJson.Write(Path.Combine(DailyIdentity.DataRoot, "startup-error.json"), new { version = DailyIdentity.Version, utc = DateTimeOffset.UtcNow, error = ex.ToString() }); } catch { }
-            ShowStartupFailure(ex); Shutdown(1);
+            ShowStartupFailure(ex, StartupDiagnostics.Fail(ex)); Shutdown(1);
         }
     }
-    private static void ShowStartupFailure(Exception error)
+    internal static void ShowStartupFailure(Exception error, string diagnostic)
     {
         string text, title;
         try
         {
             var language = DailyLanguage.Current;
-            text = DailyUserText.Error(error, language.Translate) + "\n\n" + language.Get("startup.diagnostic");
+            language.Initialize(DailyIdentity.DataRoot);
+            text = DailyUserText.Error(error, language.Translate) + "\n\n" + language.Get(diagnostic.Length > 0 ? "startup.diagnostic_path" : "startup.diagnostic_unavailable", diagnostic);
             title = language.Get("startup.failed");
         }
         catch
         {
             // Resource loading itself can fail during startup; reporting must not recurse.
-            text = "Dustweave could not start. See startup-error.json for details.";
+            text = "Dustweave 启动失败 / could not start.\n\n" + error.Message + (diagnostic.Length > 0 ? "\n\n" + diagnostic : "");
             title = "Dustweave";
         }
-        MessageBox.Show(text, title, MessageBoxButton.OK, MessageBoxImage.Error);
+        try { MessageBox.Show(text, title, MessageBoxButton.OK, MessageBoxImage.Error); }
+        catch { NativeStartupMessage(0, text, title, 0x10); }
     }
+    [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "MessageBoxW", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    private static extern int NativeStartupMessage(nint owner, string text, string title, uint flags);
     protected override void OnExit(ExitEventArgs e)
     {
         sessions?.Dispose();

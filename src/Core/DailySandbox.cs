@@ -226,10 +226,14 @@ public static class DailySandbox
         string actualClient = ClientInputs.ReadGame(request.GameExecutable);
         DailyJson.Write(Path.Combine(DailyIdentity.DataRoot,"client-update-check.json"),new { atUtc=DateTimeOffset.UtcNow, expected=request.ClientKey, actual=actualClient, matches=request.ClientKey==actualClient });
         ClientInputs.RequireSame(request.ClientKey, actualClient);
+        // Refresh the sandbox's copy from the validated host request, never an old virtualized choice.
+        new GameInstallation().Select(request.GameExecutable);
         var old=Current;
         if(old!=null&&old.Account!=request.Account)throw new InvalidOperationException("隔离空间已绑定其他账号。");
         var vault=new SessionVault(); var saved=vault.ReadLaunchSnapshot(Path.ChangeExtension(requestPath,".bd2slot"));
         if(DailyIdentity.MemberKey(SessionIdentity.GetMemberId(saved)??"")!=request.Account)throw new InvalidOperationException("账号槽位已变化，未写入登录信息。");
+        // Refresh the sandbox's copy only after validating the host request, client and account identity.
+        new GameInstallation().Select(request.GameExecutable);
         DateTimeOffset imported = old?.ImportedSessionUtc ?? default;
         var games=SandboxProcessScope.Find("BrownDust II");
         try
@@ -272,7 +276,7 @@ public static class DailySandbox
                 SessionRegistry.RestoreAgreement(saved);
                 if(SessionRegistry.HasPendingLauncherToken())throw new InvalidOperationException("仍有启动器登录请求，已停止隔离启动。");
                 DailySandboxSessions.WriteAudit(request.Account, "bootstrap", SessionRegistry.ReadAuthenticationIdentity().Stamp, SessionRegistry.AuthenticationStamp(saved));
-                GameLauncher.ValidateLaunchContext();
+                GameLauncher.ValidateLaunchContext(request.GameExecutable);
                 // Updates can restore the Google Play channel. Prepare the
                 // direct-PC channel inside this box, with its own exact backup.
                 GameLauncher.LaunchDirect(request.GameExecutable);

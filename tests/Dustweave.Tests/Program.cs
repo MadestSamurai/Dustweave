@@ -117,6 +117,8 @@ await Group("UpdateSafety", () => UpdateSafetyCases.Run(root, cases));
 await Group("UpdateDelta", () => UpdateDeltaCases.Run(root, cases));
 await Group("Storage", () => StorageCases.Run(root, cases));
 await Group("AccountIdentity", () => Sync(() => AccountIdentityCases.Run(root, cases)));
+await Group("GameInstallation", () => Sync(() => GameInstallationCases.Run(root, cases)));
+await Group("FirstRun", () => FirstRunCases.Run(root, cases));
 await Group("Preference", () => Sync(() => PreferenceCases.Run(root, cases)));
 await Group("PackagedUtility", () => Sync(() => PackagedUtilityCases.Run(root, cases)));
 await Group("Plugin", () => Sync(() => PluginCases.Run(root, cases)));

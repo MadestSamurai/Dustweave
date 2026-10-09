@@ -23,7 +23,7 @@ Windows x64 only. Both editions have the same features. Each EXE works on its ow
 
 ## Quick start
 
-1. Start the game normally and enter town. Keep one game instance and use the same Windows privileges for both programs.
+1. Start the game normally and enter the main menu. Keep one game instance and use the same Windows privileges for both programs.
 2. Open the EXE and select **Connect and read inventory**. Opening the tool does not connect or consume resources.
 3. In **Craft N gear for powder**, set the enhancement level, quantity or budget and calculate a plan. Alternatively, use **Batch refinement** to filter and select exact equipment instances, then calculate with your target and budget.
 4. Review gold, materials, Ability Pills, expected powder or refinement budget, confirm in the review dialog, then execute.

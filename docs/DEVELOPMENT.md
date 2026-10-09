@@ -98,3 +98,30 @@ The Navigation scope rechecks navigation, command dispatch, managed inputs and p
 
 `package.ps1 -ValidationScope Rewards` extends the navigation scope for pass/workflow and observation-schema changes. It runs affected workflow, binding, data, readiness and localization cases, recompiles the daily bridge and regenerates all daily evidence configurations. Independent tools reuse the unchanged full baseline. Unknown changes outside the declared boundary still require broader validation.
 The Rewards scope also covers event puzzle batches, hunting policy and per-account preferences. It rechecks preference migration and the desktop settings smoke in addition to workflow/command regressions; a changed binding contract is regenerated from the matching baseline client, then adapted and compiled against the current client. Independent tool payloads remain unchanged.
+
+## Desktop startup / 桌面启动
+
+普通双击、账号检查、选中队列及计划启动直接进入当前进程的界面入口，不依赖 Explorer COM 再启动一次自身。保留显式开发入口 --launch-desktop 和既有 --desktop-session 参数；游戏启动仍由 Accounts/DesktopGameLaunch 校验 Windows 用户、会话与沙箱归属，连接组件按需要单独提权。
+
+主界面前的托管启动阶段记录到用户数据目录的 startup-state.json；失败写入 startup-error.json，并显示记录路径。主目录不可写时尝试当前用户临时目录的 Dustweave-startup。日志不记录命令行、环境变量内容或账号凭据。Windows 拒绝执行和 .NET 宿主尚未进入托管入口的失败仍需系统事件／宿主诊断。
+
+Normal, account-check, selected-queue and scheduled launches open the UI in the current process without an Explorer COM relaunch. Keep the explicit developer relay and legacy child switch. Game launch identity/sandbox validation and separately elevated connection helpers are unchanged. Managed startup stages and failures are recorded before the window opens, with a user-temp fallback; OS blocks and failures before managed entry still require OS/host diagnostics.
+## Game launch location / 游戏启动位置
+
+`Accounts/GameInstallation` stores one per-Windows-user setting at `%LOCALAPPDATA%/BD2AccountSessionManager/game-installation.json`. It is outside the application directory and account slots. Normal launches, new-account launches, recovery and scheduled execution resolve through `GameLauncher`; a validated path is held through session switching. A missing explicit choice fails with an actionable message rather than falling back to another installation. No game registry values or launcher settings are changed when selecting a path.
+
+日常设置顶部提供统一路径选择，三种界面语言和深浅主题共用现有组件。读取与保存异步执行；独立账号窗口只读。主窗口构造隔离启动请求时携带已解析的路径，隔离启动在核对请求、账号空间与客户端版本后更新该空间的设置副本，避免虚拟化目录遗留旧位置。已有游戏连接仍按实际进程路径读取，不会因修改下次启动的位置而改连其他进程。
+
+Focused verification: `test.ps1 -Groups GameInstallation,LoginIdentity,AccountIdentity,Sandbox`. For an isolated settings-only UI smoke, set `DUSTWEAVE_UI_SMOKE_SCOPE=game-location`, `DUSTWEAVE_PLUGIN=none` and an isolated `BD2_DAILY_DATA_ROOT`, then invoke the built desktop with `--smoke <new-output-directory>`. This uses demonstration accounts and synthetic game files, never launches or connects to the game. Omit the scope variable for the full desktop smoke.
+
+## First-run setup / 启动引导
+
+`DailyFirstRun` uses the existing identity guard: two advancing fresh game snapshots, exact process identity, and a matching complete local login. It tries one launch without switching accounts, or observes the already running game. Skipping cancels the observation and leaves the game running. Saving requires the game and launcher to be closed, rechecks the full identity and writes through the existing account vault; read-back must find the same account and slot before the tour begins.
+
+`FirstRunWindow` provides setup and skip confirmation. `PageTour` highlights real pages with an input-blocking adorner; schedules and other automation wait while the guide is open. `first-run.json` records started, tour, completed or skipped, without login credentials. Existing accounts are not forced to redo setup; interrupted tours can resume. The account page can reopen the guide.
+
+Scoped checks: `FirstRun,GameInstallation,LoginIdentity,AccountIdentity,AccountRestart,Startup,Sandbox`. Use `DUSTWEAVE_UI_SMOKE_SCOPE=first-run` with the isolated `--smoke` command for the wizard and tour in all three locales and both themes. Synthetic verification and rendered UI checks do not claim a fresh user's actual game launch / connection / exit / save flow has been runtime-tested.
+
+## Game screen terminology / 游戏界面用语
+
+Use 主菜单 / 主選單 / main menu for the game's MenuUI. Cartridge towns, the plaza and individual lobbies keep their actual names. DailyIdentityGuard checks fresh character identity and does not require a particular town or map. A process-locator error should only ask users to start the game. Keep interface strings, embedded tool labels and both getting-started documents aligned.

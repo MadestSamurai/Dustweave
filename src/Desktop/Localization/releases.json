@@ -1,5 +1,65 @@
 [
   {
+    "Version": "1.0.4-beta",
+    "Date": "2026-10-09",
+    "Notes": {
+      "zh-CN": [
+        "新增可跳过的启动引导：确认游戏位置、试启动、验证角色身份，正常退出游戏后保存账号，再通过高亮导览了解各分页。",
+        "日常设置可统一指定游戏位置，所有账号共用；修复部分电脑双击后没有窗口的问题。",
+        "统一程序、首次使用教程和内置装备助手的主菜单称谓，避免误导用户前往卡带城镇。"
+      ],
+      "zh-TW": [
+        "新增可略過的啟動引導：確認遊戲位置、試啟動、驗證角色身分，正常退出遊戲後儲存帳號，再透過高亮導覽認識各分頁。",
+        "日常設定可統一指定遊戲位置，所有帳號共用；修正部分電腦按兩下後沒有視窗的問題。",
+        "統一程式、首次使用教學與內建裝備助手的主選單用語，避免誤導使用者前往卡帶城鎮。"
+      ],
+      "en-US": [
+        "Adds skippable setup: check the game location, launch once, verify your character, exit normally and save the account, then explore the highlighted page tour.",
+        "Set one shared game location in Daily settings. Fixes startup without a window on some PCs.",
+        "Uses consistent main-menu wording throughout setup, documentation and the integrated Equipment Assistant. Visiting a cartridge town is not required for account verification."
+      ]
+    }
+  },
+  {
+    "Version": "1.0.3-beta",
+    "Date": "2026-10-09",
+    "Notes": {
+      "zh-CN": [
+        "首次使用可按引导确认游戏位置、试启动并验证角色身份，正常退出游戏后保存账号。",
+        "新增可跳过的分页高亮导览，可在账号管理重新打开；日常设置提供所有账号共用的游戏位置。",
+        "包含双击无窗口的启动修复与早期错误提示。"
+      ],
+      "zh-TW": [
+        "首次使用可依引導確認遊戲位置、試啟動並驗證角色身分，正常退出遊戲後儲存帳號。",
+        "新增可略過的分頁高亮導覽，可在帳號管理重新開啟；日常設定提供所有帳號共用的遊戲位置。",
+        "包含按兩下無視窗的啟動修正與早期錯誤提示。"
+      ],
+      "en-US": [
+        "Guided setup checks the game location, tries one launch and verifies your character before saving the account after a normal game exit.",
+        "Adds a skippable tour highlighting each page. Reopen it from Accounts; Daily settings provides one game location shared by all accounts.",
+        "Includes the startup-without-a-window fix and early startup error reporting."
+      ]
+    }
+  },
+  {
+    "Version": "1.0.2-beta",
+    "Date": "2026-10-09",
+    "Notes": {
+      "zh-CN": [
+        "修复部分电脑双击后没有窗口的问题，打开主界面不再依赖桌面转启动。",
+        "补充主界面出现前的启动记录和错误提示；保留游戏启动、连接提权及账号隔离校验。"
+      ],
+      "zh-TW": [
+        "修正部分電腦按兩下後沒有視窗的問題，開啟主介面不再依賴桌面轉啟動。",
+        "補充主介面出現前的啟動紀錄與錯誤提示；保留遊戲啟動、連接提權及帳號隔離驗證。"
+      ],
+      "en-US": [
+        "Fixes startup without a window on some PCs. Opening the main window no longer requires an Explorer relaunch.",
+        "Adds early startup diagnostics and visible errors while preserving game launch, connection elevation and account isolation checks."
+      ]
+    }
+  },
+  {
     "Version": "1.0.1-beta",
     "Date": "2026-10-09",
     "Notes": {

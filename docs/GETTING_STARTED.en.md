@@ -12,15 +12,14 @@ Run `Dustweave.exe`. Keep the accompanying `data`, `flows`, `connection` and oth
 
 ## First run
 
-1. **Open the game and sign in.** Enter town and confirm the intended account.
-2. **Exit normally, then save.** Wait for both the game and launcher to close so the login state is written locally. Choose **Accounts → Save current account** and check its identity.
-3. **Launch through Dustweave from now on.** Choose **Play** in the account list before running tasks or tools. Avoid the desktop game shortcut or an accelerator's launch button; enable only its acceleration service when needed.
-4. Enable the desired stages in daily settings. Review hunting, Mirror multipliers, equipment budgets and other relevant options.
-5. Select this run's stages on the task page. Temporary run selection is separate from the account's saved preferences.
-6. Start the selected stages and follow completion, skipped work or items needing attention on the timeline.
-7. Before using multiple accounts, save and verify each account and its settings, then run the selected queue.
+1. **Open Getting started and check the game location.** Setup appears automatically when no account has been saved, and can be reopened from **Accounts → Getting started**. Select the game's `BrownDust II.exe`, then continue to try one launch. An already running game is verified directly.
+2. **Enter the game and wait for detection.** Sign in and enter the main menu. Dustweave connects and checks your actual character identity, then displays the detected name.
+3. **Exit normally, then save.** Close the game and launcher, enter an account label and save. This captures the latest sign-in state after normal exit. A changed account must be verified again.
+4. **Take the page tour.** Highlights introduce tasks, settings, tools, accounts, schedules, plugins, diagnostics and updates. The tour does not execute tasks.
+5. **Launch through Dustweave from now on.** Use **Play** in Accounts instead of the desktop game shortcut or an accelerator's launch button; enable only its acceleration service if needed.
+6. Configure each account and test a few tasks before enabling multiple accounts or schedules.
 
-A connection guide appears on first use and remains available under **Accounts → Connection guide**. The game launcher may start an elevated game; elevating the tool as well does not guarantee a connection. Prefer the save-and-launch sequence above, then follow any specific permission prompt. The guide does not change Windows permission settings.
+Setup can be skipped after a reminder about unfinished configuration. Skipping never closes the game or clears a sign-in. Existing saved accounts are not forced through setup after an upgrade. Change the shared location later in **Daily settings → Game location**; it applies to the next launch.
 
 Start with a few familiar stages. Locked content, changing events and unknown dialogs may need human attention; unattended completion is not guaranteed in every situation.
 

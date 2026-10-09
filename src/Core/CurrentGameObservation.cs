@@ -9,7 +9,7 @@ public static class CurrentGameObservation
         var key = sessions.Read().CurrentKey;
         if (!DailyProfiles.ValidKey(key))
             throw new InvalidOperationException("请先在游戏内完成登录，再连接装备助手。");
-        var game = host.Find() ?? throw new InvalidOperationException("请先启动游戏并进入主城。");
+        var game = host.Find() ?? throw new InvalidOperationException("请先启动游戏。");
         await host.ConnectAsync(game, progress, token);
         var guard = new DailyIdentityGuard();
         var deadline = DateTimeOffset.UtcNow + (timeout ?? TimeSpan.FromSeconds(30));
@@ -30,7 +30,7 @@ public static class CurrentGameObservation
                 return;
             }
             if (DateTimeOffset.UtcNow >= deadline)
-                throw new TimeoutException("尚未读到当前账号的游戏画面，请进入主城后重新连接。");
+                throw new TimeoutException("尚未读到当前账号的游戏画面，请进入主菜单后重新连接。");
             await Task.Delay(interval ?? TimeSpan.FromMilliseconds(250), token);
         }
     }

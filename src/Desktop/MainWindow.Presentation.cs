@@ -239,7 +239,7 @@ public partial class MainWindow
                 LanguageSelector.SelectedIndex=language;
                 foreach(string state in new[]{"closed","unconnected","stale","login","ready","unreadable"})
                 {
-                    var frame=new DailySnapshot{State=state=="login"?"waiting_start":"identified",Scene="演示主城",
+                    var frame=new DailySnapshot{State=state=="login"?"waiting_start":"identified",Scene="演示主菜单",
                         AccountKey="PRIVATE-ACCOUNT-ID",PlayerKey="PRIVATE-PLAYER-ID",PlayerName="PRIVATE-NAME"};
                     PresentDiagnostics(state=="closed"?null:game,state=="unconnected"?null:frame,state is "ready" or "login",state=="unreadable");
                     if(diagnosticState!=state || DiagnosticStatus.Text!=L.Get("diagnostics.status."+state) || string.IsNullOrEmpty(DiagnosticAdvice.Text))
@@ -258,7 +258,7 @@ public partial class MainWindow
                 }
             }
             LanguageSelector.SelectedIndex=0;
-            PresentDiagnostics(game,new DailySnapshot{State="identified",Scene="演示主城"},true);
+            PresentDiagnostics(game,new DailySnapshot{State="identified",Scene="演示主菜单"},true);
             if(GuildDiagnostics.IsExpanded || ActionFooter.IsVisible)throw new Exception("Advanced checks obscure the diagnostic overview");
             foreach(int appearance in new[]{1,2})
             {

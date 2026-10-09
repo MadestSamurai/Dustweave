@@ -9,6 +9,7 @@ public sealed class DailyPreferencesPanel : UserControl
 {
     private static DailyLanguage L => DailyLanguage.Current;
     private readonly bool allowGame;
+    internal GameInstallationPanel GamePath { get; }
     private readonly bool extensionTasks = DailyPlugin.Current.Supports("tactics");
     private readonly bool extensionEvents = DailyPlugin.Current.Supports("event_battle");
     private readonly DailyPreferenceStore store;
@@ -86,6 +87,10 @@ public sealed class DailyPreferencesPanel : UserControl
         var layout = new DockPanel { Margin = new(20) };
         DockPanel.SetDock(status, Dock.Bottom);
         layout.Children.Add(status);
+        var installation = new Dustweave.Accounts.GameInstallation(allowGame ? null : Path.Combine(root, "game-path-preview"));
+        GamePath = new GameInstallationPanel(installation, allowGame && Dustweave.Accounts.SandboxProcessScope.CurrentBox.Length != 0);
+        DockPanel.SetDock(GamePath, Dock.Top);
+        layout.Children.Add(GamePath);
         var header = new DockPanel { Margin = new(0, 0, 0, 16) };
         var save = LocalButton("保存本账号偏好"); save.Style = (Style)Application.Current.FindResource("PrimaryButton");
         save.Click += (_, _) => Save();

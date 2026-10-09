@@ -1,4 +1,61 @@
 {
+  "onboarding.title": {"zh-CN":"启动引导","zh-TW":"啟動引導","en-US":"Getting started"},
+  "onboarding.step": {"zh-CN":"连接准备 · {0} / {1}","zh-TW":"連線準備 · {0} / {1}","en-US":"Connection setup · {0} / {1}"},
+  "onboarding.page": {"zh-CN":"功能导览 · {0} / {1}","zh-TW":"功能導覽 · {0} / {1}","en-US":"App tour · {0} / {1}"},
+  "onboarding.path_title": {"zh-CN":"先确认游戏的位置","zh-TW":"先確認遊戲的位置","en-US":"Check your game location"},
+  "onboarding.path_body": {"zh-CN":"确认下方是你使用的游戏本体。继续后会尝试启动一次；如果游戏已在运行，将直接验证当前游戏。","zh-TW":"確認下方是你使用的遊戲本體。繼續後會嘗試啟動一次；若遊戲已在執行，將直接驗證目前的遊戲。","en-US":"Confirm the game executable below. Continue to try one launch, or verify the game if it is already running."},
+  "onboarding.start": {"zh-CN":"位置正确，开始验证","zh-TW":"位置正確，開始驗證","en-US":"Launch and verify"},
+  "onboarding.login_title": {"zh-CN":"请进入游戏","zh-TW":"請進入遊戲","en-US":"Enter the game"},
+  "onboarding.launching": {"zh-CN":"正在尝试启动游戏。请在游戏中完成登录并进入主菜单，织尘会自动检测账号。","zh-TW":"正在嘗試啟動遊戲。請在遊戲中完成登入並進入主選單，織塵會自動偵測帳號。","en-US":"Starting the game. Sign in and enter the main menu; Dustweave will detect your account automatically."},
+  "onboarding.connecting": {"zh-CN":"正在准备连接与身份验证。你可以切换到游戏继续登录。","zh-TW":"正在準備連線與身分驗證。你可以切換到遊戲繼續登入。","en-US":"Preparing the connection and identity check. You can switch to the game to continue signing in."},
+  "onboarding.login": {"zh-CN":"连接已准备好。请进入主菜单；读到真实角色信息后，这里会自动提示。","zh-TW":"連線已準備好。請進入主選單；讀到實際角色資訊後，這裡會自動提示。","en-US":"The connection is ready. Enter the main menu; this window will notify you when your character is detected."},
+  "onboarding.detected_title": {"zh-CN":"已经检测到你的账号","zh-TW":"已經偵測到你的帳號","en-US":"Account detected"},
+  "onboarding.detected": {"zh-CN":"已验证角色「{0}」。请正常关闭游戏并等待启动器退出，然后在这里保存账号。不会切换或覆盖其他账号。","zh-TW":"已驗證角色「{0}」。請正常關閉遊戲並等待啟動器退出，然後在這裡儲存帳號。不會切換或覆寫其他帳號。","en-US":"Character verified: {0}. Exit the game normally and wait for the launcher to close, then save this account here. Other saved accounts will not be overwritten."},
+  "onboarding.account_name": {"zh-CN":"账号备注名","zh-TW":"帳號備註名稱","en-US":"Account label"},
+  "onboarding.save": {"zh-CN":"保存账号","zh-TW":"儲存帳號","en-US":"Save account"},
+  "onboarding.wait_close": {"zh-CN":"等待游戏和启动器退出，退出后即可保存。","zh-TW":"等待遊戲與啟動器退出，退出後即可儲存。","en-US":"Waiting for the game and launcher to close before saving."},
+  "onboarding.can_save": {"zh-CN":"游戏已关闭，可以保存最新登录信息。","zh-TW":"遊戲已關閉，可以儲存最新登入資訊。","en-US":"Game closed. Ready to save the latest sign-in information."},
+  "onboarding.saved_title": {"zh-CN":"账号已准备好","zh-TW":"帳號已準備好","en-US":"Your account is ready"},
+  "onboarding.saved_body": {"zh-CN":"「{0}」已保存。以后请在织尘的账号管理里点击「进入游戏」，避免通过桌面快捷方式或加速器启动。接下来带你看看各个分页。","zh-TW":"「{0}」已儲存。以後請在織塵的帳號管理點選「進入遊戲」，避免透過桌面捷徑或加速器啟動。接下來帶你看看各個分頁。","en-US":"{0} has been saved. From now on, use Play in Dustweave’s Accounts page instead of a desktop game shortcut or an accelerator. Next, take a short tour of the app."},
+  "onboarding.tour": {"zh-CN":"进入织尘，了解功能","zh-TW":"進入織塵，了解功能","en-US":"Explore Dustweave"},
+  "onboarding.skip": {"zh-CN":"跳过引导","zh-TW":"略過引導","en-US":"Skip guide"},
+  "onboarding.skip_title": {"zh-CN":"跳过启动引导？","zh-TW":"略過啟動引導？","en-US":"Skip setup?"},
+  "onboarding.skip_warning": {"zh-CN":"游戏路径或账号验证可能尚未完成。跳过后请自行确认这些设置，否则无法正常启动日常。不会关闭游戏或清除登录状态。以后可在「账号管理 → 启动引导」重新开始。","zh-TW":"遊戲路徑或帳號驗證可能尚未完成。略過後請自行確認這些設定，否則無法正常啟動日常。不會關閉遊戲或清除登入狀態。日後可在「帳號管理 → 啟動引導」重新開始。","en-US":"Game location or account verification may be unfinished. Complete these settings before running tasks. Skipping will not close the game or clear your sign-in. Reopen Getting started from Accounts at any time."},
+  "onboarding.skip_tour": {"zh-CN":"跳过功能介绍？已经保存的设置和账号会保留。之后可以从账号管理重新打开启动引导。","zh-TW":"略過功能介紹？已儲存的設定與帳號會保留。之後可以從帳號管理重新開啟啟動引導。","en-US":"Skip the app tour? Saved settings and accounts will be kept. You can reopen Getting started from Accounts."},
+  "onboarding.retry": {"zh-CN":"重新验证","zh-TW":"重新驗證","en-US":"Verify again"},
+  "onboarding.back": {"zh-CN":"上一步","zh-TW":"上一步","en-US":"Back"},
+  "onboarding.next": {"zh-CN":"下一页","zh-TW":"下一頁","en-US":"Next"},
+  "onboarding.finish": {"zh-CN":"开始使用","zh-TW":"開始使用","en-US":"Get started"},
+  "onboarding.complete": {"zh-CN":"启动引导已完成。先选少量熟悉的任务开始使用。","zh-TW":"啟動引導已完成。先選少量熟悉的任務開始使用。","en-US":"Setup complete. Start with a few familiar tasks."},
+  "onboarding.reopen": {"zh-CN":"已跳过引导，可从账号管理重新打开。","zh-TW":"已略過引導，可從帳號管理重新開啟。","en-US":"Guide skipped. Reopen it from Accounts at any time."},
+  "onboarding.close_launcher": {"zh-CN":"请先关闭游戏启动器，再重试验证。当前账号保持不变。","zh-TW":"請先關閉遊戲啟動器，再重試驗證。目前帳號維持不變。","en-US":"Close the game launcher, then retry verification. Your current account is unchanged."},
+  "onboarding.launch_timeout": {"zh-CN":"启动后未检测到游戏。请检查游戏位置与系统提示，再点击验证；不会反复自动启动。","zh-TW":"啟動後未偵測到遊戲。請檢查遊戲位置與系統提示，再點選驗證；不會反覆自動啟動。","en-US":"The game was not detected after launch. Check its location and any system prompts, then retry. Dustweave will not repeatedly relaunch it."},
+  "onboarding.verify_timeout": {"zh-CN":"尚未读到稳定的角色身份。请进入主菜单并处理登录或网络提示，再重新验证。","zh-TW":"尚未讀到穩定的角色身分。請進入主選單並處理登入或網路提示，再重新驗證。","en-US":"A stable character identity was not detected. Enter the main menu and resolve any sign-in or network prompts, then verify again."},
+  "onboarding.game_changed": {"zh-CN":"验证期间游戏退出或进程改变。请重新验证当前游戏。","zh-TW":"驗證期間遊戲退出或程序改變。請重新驗證目前的遊戲。","en-US":"The game exited or its process changed during verification. Verify the current game again."},
+  "onboarding.identity_changed": {"zh-CN":"当前登录账号与刚验证的账号不同，未保存。请重新验证。","zh-TW":"目前登入帳號與剛驗證的帳號不同，未儲存。請重新驗證。","en-US":"The signed-in account has changed since verification. Nothing was saved. Verify it again."},
+  "onboarding.close_first": {"zh-CN":"请先正常退出游戏及启动器，再保存账号。","zh-TW":"請先正常退出遊戲與啟動器，再儲存帳號。","en-US":"Exit the game and launcher normally before saving the account."},
+  "onboarding.name_required": {"zh-CN":"请填写方便区分的账号备注名。","zh-TW":"請填寫方便區分的帳號備註名稱。","en-US":"Enter an account label you can recognize."},
+  "onboarding.save_unconfirmed": {"zh-CN":"账号保存结果未确认，请检查账号列表后重试。","zh-TW":"帳號儲存結果未確認，請檢查帳號清單後重試。","en-US":"The saved account could not be confirmed. Check the Accounts page before retrying."},
+  "onboarding.page.daily": {"zh-CN":"查看本次执行计划、正在进行的环节和完成情况。你可以选择部分任务；中断后优先接续原队列，也可以补跑未完成项。","zh-TW":"查看本次執行計畫、進行中的環節與完成情況。可以選擇部分任務；中斷後優先接續原佇列，也能補跑未完成項。","en-US":"Review the plan, current task and results. Run selected tasks, resume an interrupted queue, or retry unfinished tasks."},
+  "onboarding.page.settings": {"zh-CN":"上方统一设置游戏位置，下方按账号选择日常环节与参数。不需要的环节可以关闭；修改任务偏好后记得保存。","zh-TW":"上方統一設定遊戲位置，下方依帳號選擇日常環節與參數。不需要的環節可以關閉；修改任務偏好後記得儲存。","en-US":"Set the shared game location at the top, then choose tasks and options for each account below. Disable tasks you do not need and save your task preferences."},
+  "onboarding.page.tools": {"zh-CN":"打开需要的小工具，共用当前游戏连接。工具开始自动化后会占用控制权，其他自动化需要等待；仅打开工具窗口不会占用。","zh-TW":"開啟需要的小工具，共用目前的遊戲連線。工具開始自動化後會占用控制權，其他自動化需要等待；僅開啟視窗不會占用。","en-US":"Open tools using the shared game connection. An active automation has exclusive control; simply opening a tool window does not block other work."},
+  "onboarding.page.accounts": {"zh-CN":"保存或更新当前账号，在列表中进入游戏、重命名和排序。勾选多个账号后，可以按顺序运行各自的日常。之后请通过这里启动游戏。","zh-TW":"儲存或更新目前帳號，在清單中進入遊戲、重新命名與排序。勾選多個帳號後，可依序執行各自的日常。之後請透過這裡啟動遊戲。","en-US":"Save or update an account, then launch, rename or reorder it in the list. Select multiple accounts to run their daily tasks in order. Use this page for future game launches."},
+  "onboarding.page.schedule": {"zh-CN":"设置每天的固定时间，并添加要执行的账号、拖动调整顺序。电脑保持开机时，即使织尘已关闭，也可以自动启动执行。","zh-TW":"設定每天的固定時間，加入要執行的帳號並拖曳調整順序。電腦保持開機時，即使織塵已關閉，也可以自動啟動執行。","en-US":"Choose a daily time, add accounts and drag them into order. With the computer powered on, Dustweave can open and run the schedule even when the app is closed."},
+  "onboarding.page.plugins": {"zh-CN":"在这里管理可选插件。导入后按照页面提示启用或停用；没有插件也可以使用本体提供的功能。","zh-TW":"在這裡管理選用外掛。匯入後依頁面提示啟用或停用；沒有外掛也能使用本體提供的功能。","en-US":"Manage optional plugins here. Follow the page instructions to enable or disable them. Built-in features remain available without plugins."},
+  "onboarding.page.diagnostics": {"zh-CN":"查看连接状态、当前观察与操作记录。遇到问题时先看这里的原因和建议，再导出对应时间段的诊断。","zh-TW":"查看連線狀態、目前觀察與操作紀錄。遇到問題先看這裡的原因與建議，再匯出對應時段的診斷。","en-US":"Review connection status, observations and activity. If something goes wrong, check the explanation here and export diagnostics for the affected time."},
+  "onboarding.page.updates": {"zh-CN":"点击左下角的版本号查看更新说明与检查更新。下载完成后，程序会等空闲时提示重启更新，保留账号和设置。","zh-TW":"點選左下角版本號查看更新說明與檢查更新。下載完成後，程式會等閒置時提示重新啟動更新，保留帳號與設定。","en-US":"Select the version at the bottom left to see release notes and check for updates. After download, Dustweave waits until idle to offer a restart, keeping accounts and settings."},
+
+  "game_path.title": { "zh-CN": "游戏启动位置", "zh-TW": "遊戲啟動位置", "en-US": "Game location" },
+  "game_path.choose": { "zh-CN": "选择游戏…", "zh-TW": "選擇遊戲…", "en-US": "Choose game…" },
+  "game_path.auto": { "zh-CN": "恢复自动查找", "zh-TW": "恢復自動尋找", "en-US": "Use auto-detection" },
+  "game_path.help": { "zh-CN": "所有账号、定时执行和隔离启动共用此位置。选择后自动保存，下次启动游戏时生效。", "zh-TW": "所有帳號、定時執行與隔離啟動共用此位置。選擇後自動儲存，下次啟動遊戲時生效。", "en-US": "Shared by all accounts, schedules and isolated launches. Saved automatically for the next game launch." },
+  "game_path.inherited": { "zh-CN": "沿用主窗口的游戏位置。请在主窗口修改，下次启动此隔离账号时同步。", "zh-TW": "沿用主視窗的遊戲位置。請在主視窗修改，下次啟動此隔離帳號時同步。", "en-US": "Uses the main window’s game location. Change it there; it will sync when this isolated account next starts." },
+  "game_path.manual": { "zh-CN": "已保存自选位置", "zh-TW": "已儲存自選位置", "en-US": "Custom location saved" },
+  "game_path.detected": { "zh-CN": "已自动找到游戏", "zh-TW": "已自動找到遊戲", "en-US": "Game detected automatically" },
+  "game_path.missing": { "zh-CN": "未找到游戏，请在日常设置的「游戏启动位置」中选择 BrownDust II.exe。", "zh-TW": "找不到遊戲，請在任務設定的「遊戲啟動位置」中選擇 BrownDust II.exe。", "en-US": "Game not found. Choose BrownDust II.exe under Game location in Daily settings." },
+  "game_path.invalid": { "zh-CN": "请选择游戏本体 BrownDust II.exe，不是启动器或快捷方式。", "zh-TW": "請選擇遊戲本體 BrownDust II.exe，不是啟動器或捷徑。", "en-US": "Select the game’s BrownDust II.exe, not a launcher or shortcut." },
+  "game_path.incomplete": { "zh-CN": "游戏文件不存在或不完整，请重新选择 BrownDust II.exe，或先完成游戏更新。", "zh-TW": "遊戲檔案不存在或不完整，請重新選擇 BrownDust II.exe，或先完成遊戲更新。", "en-US": "Game files are missing or incomplete. Choose BrownDust II.exe again, or finish updating the game first." },
+  "game_path.unreadable": { "zh-CN": "游戏路径设置无法读取，请重新选择游戏，或恢复自动查找。", "zh-TW": "無法讀取遊戲路徑設定，請重新選擇遊戲，或恢復自動尋找。", "en-US": "Cannot read the saved game location. Choose the game again or restore auto-detection." },
   "run.details": {
     "zh-CN": "详细信息",
     "zh-TW": "詳細資訊",
@@ -617,7 +674,7 @@
   "run.settings": {
     "zh-CN": "环节设置",
     "zh-TW": "環節設定",
-    "en-US": "Task settings"
+    "en-US": "Daily settings"
   },
   "run.records": {
     "zh-CN": "执行记录",
@@ -2329,6 +2386,16 @@
     "zh-TW": "Dustweave 啟動失敗",
     "en-US": "Dustweave could not start"
   },
+  "startup.diagnostic_path": {
+    "zh-CN": "启动记录已保存到：{0}",
+    "zh-TW": "啟動紀錄已儲存至：{0}",
+    "en-US": "Startup details were saved to: {0}"
+  },
+  "startup.diagnostic_unavailable": {
+    "zh-CN": "无法写入启动记录，请保留此错误提示。",
+    "zh-TW": "無法寫入啟動紀錄，請保留此錯誤提示。",
+    "en-US": "Startup details could not be saved. Please keep this error message."
+  },
   "startup.diagnostic": {
     "zh-CN": "原始错误保存在诊断目录的 startup-error.json 中。",
     "zh-TW": "原始錯誤儲存於診斷目錄的 startup-error.json。",
@@ -2797,7 +2864,7 @@
   "schedule.account_help": {
     "zh-TW": "拖曳卡片調整執行順序，沿用各帳號的任務設定。修改後儲存，與帳號頁勾選互不影響。",
     "en-US": "Drag cards to set the run order. Each account uses its saved tasks. Save changes here; Accounts page selections are separate.",
-    "zh-CN": "拖动卡片调整执行顺序，沿用各账号的任务设置。修改后保存，与账号页勾选互不影响。"
+    "zh-CN": "拖动卡片调整执行顺序，沿用各账号的日常设置。修改后保存，与账号页勾选互不影响。"
   },
   "schedule.no_accounts": {
     "zh-TW": "請先在帳號頁儲存至少一個帳號。",
@@ -3925,9 +3992,9 @@
     "en-US": "Open the game and sign in"
   },
   "guide.step1.body": {
-    "zh-CN": "首次使用先正常登录目标账号，进入主城，确认账号正确。",
-    "zh-TW": "首次使用先正常登入目標帳號，進入主城，確認帳號正確。",
-    "en-US": "For your first setup, sign in to the intended account and enter the home screen. Check that it is the correct account."
+    "zh-CN": "首次使用先正常登录目标账号，进入主菜单，确认账号正确。",
+    "zh-TW": "首次使用先正常登入目標帳號，進入主選單，確認帳號正確。",
+    "en-US": "For your first setup, sign in to the intended account and enter the main menu. Check that it is the correct account."
   },
   "guide.step2.title": {
     "zh-CN": "退出游戏，在账号页保存",

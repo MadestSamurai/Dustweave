@@ -169,7 +169,8 @@ internal sealed class SessionService
 
     internal ActivationResult UseSlotAndLaunch(int slotNumber)
     {
-        GameLauncher.ValidateLaunchContext();
+        string executable = GameLauncher.ResolveExecutable();
+        GameLauncher.ValidateLaunchContext(executable);
         SynchronizeCurrentSlot();
         SessionSlot saved = _vault.LoadFixedSlot(slotNumber);
         SessionSlot target = LatestSameAccount(saved, _vault.TryLoadFixedSlot);
@@ -181,7 +182,7 @@ internal sealed class SessionService
             target,
             allowIncompleteCurrent: !status.Complete);
         _vault.RememberObserved(target);
-        GameLauncher.LaunchDirect();
+        GameLauncher.LaunchDirect(executable);
         return activation;
     }
 
@@ -211,13 +212,16 @@ internal sealed class SessionService
 
     internal int PrepareNewLoginAndLaunch()
     {
-        GameLauncher.ValidateLaunchContext();
+        string executable = GameLauncher.ResolveExecutable();
+        GameLauncher.ValidateLaunchContext(executable);
         PrepareNewLogin();
-        return GameLauncher.LaunchDirect();
+        return GameLauncher.LaunchDirect(executable);
     }
 
     internal int LaunchPreparedLogin()
     {
+        string executable = GameLauncher.ResolveExecutable();
+        GameLauncher.ValidateLaunchContext(executable);
         SessionDashboardState dashboard = GetDashboard();
         if (dashboard.Status.GameRunning || dashboard.Status.StarterRunning)
         {
@@ -230,12 +234,13 @@ internal sealed class SessionService
                 "当前已经存在完整账户会话，请使用对应槽位启动游戏。");
         }
 
-        return GameLauncher.LaunchDirect();
+        return GameLauncher.LaunchDirect(executable);
     }
 
     internal ActivationResult RecoverPreviousSession(bool launch)
     {
-        if (launch) GameLauncher.ValidateLaunchContext();
+        string? executable = launch ? GameLauncher.ResolveExecutable() : null;
+        if (launch) GameLauncher.ValidateLaunchContext(executable);
         SessionStatus status = SessionRegistry.GetStatus();
         if (status.GameRunning || status.StarterRunning)
         {
@@ -250,7 +255,7 @@ internal sealed class SessionService
         _vault.RememberObserved(recovery);
         if (launch)
         {
-            GameLauncher.LaunchDirect();
+            GameLauncher.LaunchDirect(executable);
         }
 
         return activation;

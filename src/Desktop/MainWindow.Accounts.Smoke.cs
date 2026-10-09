@@ -132,33 +132,6 @@ public partial class MainWindow
                 !DeleteAccountButton.IsEnabled && !MoveUpButton.IsEnabled && !MoveDownButton.IsEnabled && !SandboxLaunchButton.IsEnabled,
                 "Empty account list exposes management actions.");
             Capture("accounts-empty");
-            foreach (var appearance in new[] { DailyAppearance.Light, DailyAppearance.Dark })
-            foreach (string language in DailyLanguage.Codes)
-            {
-                L.Select(language); ThemeSelector.SelectedIndex = (int)appearance;
-                var guide = CreateConnectionGuideWindow();
-                guide.ShowActivated = false; guide.ShowInTaskbar = false;
-                guide.WindowStartupLocation = WindowStartupLocation.Manual; guide.Left = -12000; guide.Top = 0;
-                using (DailyDialogs.Dim(this))
-                {
-                    guide.Show();
-                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-                    guide.UpdateLayout();
-                    Check(ReferenceEquals(guide.Background, FindResource("Surface")) && DailyDialogs.ModalDepth == 1,
-                        "Connection guide lost its theme or modal shade.");
-                    Check(guide.Title == L.Get("guide.title") && Descendants<TextBlock>(guide).Any(t => t.Text == L.Get("guide.step2.body")),
-                        "Connection guide language is stale.");
-                    var openGuideAccounts = Descendants<Button>(guide).Single(b => b.IsDefault);
-                    Check(openGuideAccounts.ActualHeight >= 36 && openGuideAccounts.TransformToAncestor(guide).TransformBounds(new Rect(openGuideAccounts.RenderSize)).Bottom <= guide.ActualHeight,
-                        "Connection guide action is clipped.");
-                    Capture("connection-guide-" + language + "-" + appearance, (FrameworkElement)guide.Content);
-                    WorkspaceTabs.SelectedItem = RunTab;
-                    openGuideAccounts.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                    Check(WorkspaceTabs.SelectedItem == AccountsTab && !guide.IsVisible,
-                        "Connection guide did not open account management.");
-                }
-                Check(DailyDialogs.ModalDepth == 0, "Connection guide left its shade open.");
-            }
             Check(fixture.Calls.Count == calls, "Account presentation issued a game or session command.");
             DailyJson.Write(Path.Combine(smoke!, "accounts-presentation.json"), new { status = "passed", checks,
                 rowAndQueueSelectionSeparate = true, loginStatesVerified = true, filteredSelectionPreserved = true,

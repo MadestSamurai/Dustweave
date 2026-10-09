@@ -41,9 +41,10 @@ public sealed class DemoEnvironment : IAccountSessions, IGameHost
         CurrentKey = expectedKey;
         Game = new(100 + slot, DateTimeOffset.UtcNow.UtcTicks, "demo-game.exe");
     }
-    public void Save(int slot, string name, string expectedKey) { if (expectedKey != CurrentKey) throw new InvalidOperationException("Account changed"); Calls.Add("save:" + slot); }
+    public void Save(int slot, string name, string expectedKey) { if (expectedKey != CurrentKey || Game != null) throw new InvalidOperationException("Account changed or game running"); Calls.Add("save:" + slot); var existing = Accounts.FindIndex(a => a.AccountKey == expectedKey); var value = new DailyAccount(slot, name, expectedKey, "fixture", true, true, ""); if (existing >= 0) Accounts[existing] = value; else Accounts.Add(value); }
     public void Rename(int slot, string name, string expectedKey) => Calls.Add("rename:" + slot);
     public void Delete(int slot, string expectedKey) => Calls.Add("delete:" + slot);
+    public void LaunchCurrent() { Calls.Add("launch-current"); Game = new(150, DateTimeOffset.UtcNow.UtcTicks, "demo-game.exe"); }
     public void LoginNew() => Calls.Add("new"); public void Recover() => Calls.Add("recover");
     public GameInstance? Find() => Game;
     public Task CloseAsync(GameInstance instance, CancellationToken cancellation)
@@ -67,7 +68,7 @@ public sealed class DemoEnvironment : IAccountSessions, IGameHost
         if (Game == null || !Ready)
             return null;
         var key = ForcedKey ?? CurrentKey;
-        var s = new DailySnapshot { ProcessId = Game.ProcessId, ProcessStartTicks = Game.StartTicks, AccountKey = key, PlayerKey = DailyIdentity.PlayerKey(key, 500), PlayerName = Accounts.FirstOrDefault(a => a.AccountKey == key)?.Name + "的角色", InstanceId = "fixture-" + Game.ProcessId, Sequence = ++sequence, FrameUtcTicks = DateTimeOffset.UtcNow.UtcTicks, State = "identified", Scene = "演示主城" };
+        var s = new DailySnapshot { ProcessId = Game.ProcessId, ProcessStartTicks = Game.StartTicks, AccountKey = key, PlayerKey = DailyIdentity.PlayerKey(key, 500), PlayerName = Accounts.FirstOrDefault(a => a.AccountKey == key)?.Name + "的角色", InstanceId = "fixture-" + Game.ProcessId, Sequence = ++sequence, FrameUtcTicks = DateTimeOffset.UtcNow.UtcTicks, State = "identified", Scene = "演示主菜单" };
         s.Guild = new GuildObservation { Supported = true, InGuild = true, MenuVisible = true, GuildName = "演示公会", GuildKey = DailyIdentity.Hash("fixture-guild"), ServerKey = DailyIdentity.Hash("fixture-server"), ServerTicks = DateTime.UtcNow.Ticks, ResetTicks = DateTime.UtcNow.Date.AddDays(1).Ticks, CycleKey = DateTime.UtcNow.Date.AddDays(1).Ticks.ToString(), ClientMvid = "fixture" };
         s.Capabilities = ["account.identity", "guild.observe", "guild.single"];
         var lease = DailyJson.TryRead<DailyLease>(Path.Combine(root, "lease.json"));

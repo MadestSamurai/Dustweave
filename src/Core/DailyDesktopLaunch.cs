@@ -1,14 +1,12 @@
 using Dustweave.Accounts;
 namespace Dustweave;
 
-// Both account registry writes and the game must run in Explorer's desktop context.
-// A single relay prevents inherited development-host registry views from splitting them.
+// Opening the UI must not depend on Explorer COM. Game launches still use the
+// validated desktop route; the explicit relay remains available for developer hosts.
 public static class DailyDesktopLaunch
 {
     public const string ChildSwitch = "--desktop-session";
-    public static bool NeedsRelay(string[] args) => args.Length == 0 ||
-        args.Length == 1 && args[0] == "--launch-desktop" ||
-        args.Length == 2 && args[0] is "--run-selected" or "--inspect-account";
+    public static bool NeedsRelay(string[] args) => args.Length == 1 && args[0] == "--launch-desktop";
     public static string[] ChildArguments(string[] args) =>
         args.Length == 1 && args[0] == "--launch-desktop" ? [ChildSwitch] : [ChildSwitch, ..args];
     public static string[] Normalize(string[] args) => args.Length > 0 && args[0] == ChildSwitch ? args[1..] : args;

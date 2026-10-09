@@ -65,6 +65,7 @@ public partial class MainWindow : Window
         theme = new DailyTheme(root);
         InitializeComponent();
         InitializeWindowChrome();
+        L.Bind(ConnectionGuideButton, ContentControl.ContentProperty, "onboarding.title");
         ThemeSelector.SelectedIndex = (int)theme.Preference;
         LanguageSelector.SelectedIndex = Array.IndexOf(DailyLanguage.Codes, DailyLanguage.Current.Code);
         appearanceReady = true;
@@ -144,7 +145,7 @@ public partial class MainWindow : Window
     private bool toolChanging;
     private bool ToolOpen => toolSession.Current != null;
     private bool ToolRunning => !busy && parallelControl == null && DailyToolControl.IsOccupied(root);
-    private bool Unavailable => busy || toolChanging || ToolRunning || updateInstalling || ParallelBusy || pluginChanging;
+    private bool Unavailable => onboardingOpen || busy || toolChanging || ToolRunning || updateInstalling || ParallelBusy || pluginChanging;
     private async Task OpenTool(string id)
     {
         if (smoke != null || busy || toolChanging || ParallelBusy || pluginChanging) return;
@@ -501,6 +502,11 @@ public partial class MainWindow : Window
     {
         if (finalClose)
             return;
+        if (firstRunTour != null)
+        {
+            if (!Confirm(L.Get("onboarding.skip_tour"))) { e.Cancel = true; return; }
+            EndPageTour(false);
+        }
         if (ParallelBusy || parallelClosing)
         {
             e.Cancel=true;if(parallelClosing)return;parallelClosing=true;
@@ -673,6 +679,18 @@ public partial class MainWindow : Window
         try
         {
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            await CheckGameLocationForSmoke();
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "game-location")
+            {
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "game-location", realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
+            await CheckFirstRunForSmoke();
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "first-run")
+            {
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "first-run", realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
             await CheckThemesForSmoke();
             await CheckLanguagesForSmoke();
             await CheckPresentationForSmoke();

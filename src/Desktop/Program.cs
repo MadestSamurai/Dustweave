@@ -9,6 +9,22 @@ public static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        bool window = args.Length == 0 || args[0] is "--desktop-session" or "--launch-desktop"
+            or "--inspect-account" or "--resume-account" or "--run-selected" or "--scheduled" or "--updated";
+        try { if (window) StartupDiagnostics.Begin(); return MainCore(args); }
+        catch (Exception error)
+        {
+            string diagnostic = StartupDiagnostics.Fail(error);
+            if (window) App.ShowStartupFailure(error, diagnostic);
+            else { try { Console.Error.WriteLine(error); } catch { } }
+            return 1;
+        }
+    }
+
+    // Keep early initialization/JIT failures inside the outer reporting boundary.
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static int MainCore(string[] args)
+    {
         if (args.Length == 3 && args[0] == DailySandboxSessions.ExportSwitch)
         {
             try { DailySandboxSessions.Export(args[1],args[2]); return 0; }
@@ -42,14 +58,16 @@ public static class Program
             }
             catch (Exception error) { DailyJson.Write(Path.Combine(DailyIdentity.DataRoot, "sandbox-error.json"), new DailySandboxError(DateTimeOffset.UtcNow, Path.GetFileName(args[1]), error.Message, error.ToString())); return 1; }
         }
+        StartupDiagnostics.Mark("update-recovery");
         if (Dustweave.Accounts.SandboxProcessScope.CurrentBox.Length == 0 && DailyUpdateInstaller.RecoverBeforeStartup(DailyDesktopLaunch.Normalize(args))) return 0;
-        if (DailyDesktopLaunch.NeedsRelay(args)) { DailyDesktopLaunch.Start(Environment.ProcessPath ?? throw new InvalidOperationException("无法定位日常助手"), args); return 0; }
+        if (DailyDesktopLaunch.NeedsRelay(args)) { StartupDiagnostics.Mark("explicit-desktop-relay"); DailyDesktopLaunch.Start(Environment.ProcessPath ?? throw new InvalidOperationException("无法定位日常助手"), args); return 0; }
         args = DailyDesktopLaunch.Normalize(args);
         if (args.Length==2 && args[0] is "--check-tool-languages" or "--check-tool-language-ui")
         {
             try { if(args[0]=="--check-tool-language-ui")HostedToolLocaleUiProbe.Run(Path.GetFullPath(args[1]));else HostedToolLocaleProbe.Run(Path.GetFullPath(args[1])); return 0; }
             catch(Exception error) { DailyJson.Write(Path.Combine(args[1],"result.json"),new {status="failed",error=error.ToString(),realGameTouched=false}); return 1; }
         }
+        StartupDiagnostics.Mark("host-configuration");
         DailySuiteComposition.Configure();
         if (args.Length == 2 && args[0] == "--parallel-worker")
         {
@@ -77,6 +95,7 @@ public static class Program
             }
             catch (Exception error) { Console.Error.WriteLine(error); return 1; }
         }
+        StartupDiagnostics.Mark("application-resources");
         var app = new App { StartupArguments = args };
         app.InitializeComponent();
         return app.Run();

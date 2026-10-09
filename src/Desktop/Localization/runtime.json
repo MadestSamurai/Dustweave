@@ -1,4 +1,14 @@
 {
+  "message.game_start_first": {
+    "zh-CN": "请先启动游戏。",
+    "zh-TW": "請先啟動遊戲。",
+    "en-US": "Please start the game first."
+  },
+  "message.game_identity_wait_menu": {
+    "zh-CN": "尚未读到当前账号的游戏画面，请进入主菜单后重新连接。",
+    "zh-TW": "尚未讀到目前帳號的遊戲畫面，請進入主選單後重新連線。",
+    "en-US": "The current account has not been detected. Enter the main menu and reconnect."
+  },
   "message.agreement_restore_verify_failed": {
     "zh-CN": "已保存的协议记录恢复后校验失败，请在游戏内确认。",
     "zh-TW": "已儲存的協議記錄還原後驗證失敗，請在遊戲內確認。",
