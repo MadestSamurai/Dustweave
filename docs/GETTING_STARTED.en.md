@@ -14,7 +14,7 @@ Run `Dustweave.exe`. Keep the accompanying `data`, `flows`, `connection` and oth
 
 1. **Open the game and sign in.** Enter town and confirm the intended account.
 2. **Exit normally, then save.** Wait for both the game and launcher to close so the login state is written locally. Choose **Accounts → Save current account** and check its identity.
-3. **Launch through Dustweave from now on.** Choose **Enter game** in the account list before running tasks or tools. Avoid the desktop game shortcut or an accelerator's launch button; enable only its acceleration service when needed.
+3. **Launch through Dustweave from now on.** Choose **Play** in the account list before running tasks or tools. Avoid the desktop game shortcut or an accelerator's launch button; enable only its acceleration service when needed.
 4. Enable the desired stages in daily settings. Review hunting, Mirror multipliers, equipment budgets and other relevant options.
 5. Select this run's stages on the task page. Temporary run selection is separate from the account's saved preferences.
 6. Start the selected stages and follow completion, skipped work or items needing attention on the timeline.

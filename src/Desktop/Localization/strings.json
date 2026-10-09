@@ -3947,7 +3947,7 @@
   "guide.step3.body": {
     "zh-CN": "点击已保存账号右侧的「进入游戏」，再运行日常或工具。之后不要从桌面游戏快捷方式或加速器内启动；需要加速时，只开启加速服务。",
     "zh-TW": "點擊已儲存帳號右側的「進入遊戲」，再執行日常或工具。之後請勿從桌面遊戲捷徑或加速器內啟動；需要加速時，只開啟加速服務。",
-    "en-US": "Use Enter game beside the saved account, then run tasks or tools. Avoid launching from a desktop game shortcut or inside an accelerator. If needed, enable only its network acceleration."
+    "en-US": "Use Play beside the saved account, then run tasks or tools. Avoid launching from a desktop game shortcut or inside an accelerator. If needed, enable only its network acceleration."
   },
   "guide.permissions.title": {
     "zh-CN": "避免启动器带来的权限差异",

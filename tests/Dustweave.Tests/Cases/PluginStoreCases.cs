@@ -46,7 +46,8 @@ internal static class PluginStoreCases
         Check(store.Inspect(first).Available, "transient extracted-file lock does not interrupt verified installation");
         Check(store.Read().Active == null && !store.Read().OverrideLocal, "import alone does not execute or disable local plugin");
         Check(store.Inspect(first).Name("zh-TW") == "Example", "plugin-owned localized metadata uses fallback");
-        Check(!store.Inspect(first, "1.0.0").Available, "host update compatibility rejected before loading");
+        string nextHost = (int.Parse(DailyPlugin.HostVersion.Split('.')[0]) + 1) + ".0.0";
+        Check(!store.Inspect(first, nextHost).Available, "host update compatibility rejected before loading");
         await DailyPluginProbe.RunAsync(Environment.ProcessPath!, Path.Combine(root, "probe"), store.Inspect(first));
         Check(true, "child process loads actual extension and reports matching fingerprint");
         string? priorProbe = Environment.GetEnvironmentVariable("DUSTWEAVE_TEST_PROBE");
