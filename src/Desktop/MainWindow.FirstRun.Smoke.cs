@@ -41,9 +41,37 @@ public partial class MainWindow
                     window.Show();
                     await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
                     Check(window.Stage == 0 && window.CanContinue && window.Title == L.Get("onboarding.title"), "First step is not ready or localized");
+                    var language = Descendants<ComboBox>(window).Single(c => System.Windows.Automation.AutomationProperties.GetAutomationId(c) == "OnboardingLanguage");
+                    Check(language.IsVisible && language.IsEnabled && (string)language.SelectedValue == code, "Setup language selector is unavailable before starting");
+                    Check(language.Items.Cast<ComboBoxItem>().Select(i => (string)i.Content).SequenceEqual(new[] { "简体中文", "繁體中文", "English" }), "Language choices must use their native names");
+                    string alternate = code == "en-US" ? "zh-TW" : "en-US";
+                    async Task SwitchLanguage(string choice)
+                    {
+                        language.SelectedValue = choice;
+                        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                        Check(L.Code == choice && LanguageSelector.SelectedIndex == Array.IndexOf(DailyLanguage.Codes, choice) && window.Title == L.Get("onboarding.title") && (string)RunTab.Header == L.Get("nav.daily"), "Setup and main window did not change language together");
+                        Check(DailyJson.TryRead<DailyLanguage.LanguageSetting>(Path.Combine(root, "language.json"))?.Language == choice, "Setup language was not persisted for the next launch");
+                    }
+                    await SwitchLanguage(alternate); await SwitchLanguage(code);
+                    Check(window.Stage == 0 && fixture.Calls.Count == 0, "Language choice started game verification");
+                    if (code == "en-US")
+                    {
+                        double originalWidth = window.Width; window.Width = 480;
+                        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                        var position = language.TranslatePoint(new Point(), window);
+                        Check(position.X > 0 && position.X + language.ActualWidth < window.ActualWidth - 16 && language.ActualWidth >= 140, "Language selector is clipped in compact setup");
+                        Capture("onboarding-language-compact-" + mode, (FrameworkElement)window.Content);
+                        window.Width = originalWidth;
+                        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                    }
                     Capture("onboarding-path-" + code + "-" + mode, (FrameworkElement)window.Content);
                     await window.StartVerificationAsync();
                     Check(window.Stage == 2 && !window.CanContinue, "Detected account must wait for normal game exit");
+                    var accountName = Descendants<TextBox>(window).Single(t => t.IsVisible && !t.IsReadOnly);
+                    accountName.Text = "My account";
+                    int calls = fixture.Calls.Count; var game = fixture.Game;
+                    await SwitchLanguage(alternate); await SwitchLanguage(code);
+                    Check(window.Stage == 2 && !window.CanContinue && accountName.Text == "My account" && fixture.Game == game && fixture.Calls.Count == calls, "Language change reset the guide, account name or verification state");
                     Capture("onboarding-detected-" + code + "-" + mode, (FrameworkElement)window.Content);
                     fixture.Game = null; await window.CheckClosedAsync();
                     Check(window.CanContinue, "Closing the game did not unlock saving");
@@ -64,11 +92,38 @@ public partial class MainWindow
                 EndPageTour(true);
                 Check(!onboardingOpen && DailyJson.TryRead<FirstRunRecord>(FirstRunPath)?.State == "completed", "Tour did not release the interface or remember completion");
             }
+            // Exercise the actual nested confirmation, before any async verification has
+            // started. Closing synchronously inside Closing used to leave setup open.
+            foreach (int mode in new[] { 1, 2 })
+            {
+                ThemeSelector.SelectedIndex = mode;
+                string local = Path.Combine(root, "first-run-skip-" + mode);
+                var fixture = new DemoEnvironment(local);
+                var initial = new FirstRunWindow(this, new(fixture, fixture, local), store, local) { ShowActivated = false, WindowStartupLocation = WindowStartupLocation.Manual, Left = -12000, Top = 0 };
+                bool confirmed = false, nestedShade = false;
+                var answer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(20) };
+                answer.Tick += (_, _) =>
+                {
+                    var dialog = initial.OwnedWindows.Cast<Window>().FirstOrDefault(w => w.IsVisible && w.Title == L.Get("onboarding.skip_title"));
+                    if (dialog == null) return;
+                    nestedShade = DailyDialogs.ModalDepth == 2;
+                    confirmed = true; answer.Stop();
+                    Descendants<Button>(dialog).Single(b => b.IsDefault).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                };
+                initial.Loaded += (_, _) => Dispatcher.BeginInvoke(new Action(() => { initial.Close(); initial.Close(); }));
+                answer.Start();
+                try { DailyDialogs.ShowModal(initial); } finally { answer.Stop(); }
+                Check(confirmed && nestedShade && !initial.IsVisible, "Initial skip did not confirm and close the actual modal window");
+                Check(DailyDialogs.ModalDepth == 0 && IsEnabled, "Initial skip left the app dimmed or disabled");
+                Check(!File.Exists(Path.Combine(local, "onboarding-error.json")), "Initial skip logged a closing error");
+                Check(DailyJson.TryRead<FirstRunRecord>(Path.Combine(local, "first-run.json"))?.State == "skipped" && fixture.Calls.Count == 0, "Initial skip changed the game or did not persist");
+            }
             var waiting = new DemoEnvironment(root) { Ready = false };
             var skipWindow = new FirstRunWindow(this, new(waiting, waiting, root), store, root) { ShowActivated = false, WindowStartupLocation = WindowStartupLocation.Manual, Left = -12000, Top = 0 };
             bool prompted = false;
             skipWindow.ConfirmSkipForSmoke = () => { prompted = true; return false; };
             skipWindow.Show(); skipWindow.Close();
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             Check(prompted && skipWindow.IsVisible, "Closing setup bypassed the skip warning");
             var verifying = skipWindow.StartVerificationAsync(); await Task.Delay(40);
             skipWindow.ConfirmSkipForSmoke = () => true; skipWindow.Close();

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-09T10:29:52.1471190+00:00",
+  "generatedUtc": "2026-10-09T11:57:12.7730602+00:00",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -224,7 +224,7 @@
     },
     {
       "path": "Directory.Build.props",
-      "sha256": "2d2fe0dbdd82da9b04ad40368882f6c46abdb4edad387ada7ab132c9cca72083",
+      "sha256": "f1e26ac9e816fee1f6807c82d44f748ec76b19b6a1a457b388ad8126e344c135",
       "reasons": [
         "build input"
       ],
@@ -2128,7 +2128,7 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "5cb1977522168c3b3bc7ded34a637293a2cf6014c41ae33f14c644b356b96103",
+      "sha256": "d062c19a5fb96352400790b70aebd44a438bec27ec75c955fa2bf91695824fc1",
       "reasons": [
         "build input"
       ],
@@ -2144,7 +2144,7 @@
     },
     {
       "path": "src/Desktop/Localization/strings.json",
-      "sha256": "04c640d8ec3c58b2b65f0f31a6916ce46259d76337fa8082a3af6efa0ec581af",
+      "sha256": "539082acedf49b388fb76b2c4fee40c2a06b9107e826fbd6ea35d6c576e05c0b",
       "reasons": [
         "build input"
       ],
@@ -6888,7 +6888,7 @@
     },
     {
       "path": "standalone/bd2-territory/core/TerritoryConnection.cs",
-      "sha256": "6056aea8273e78e96f8790e0a297c9bfdd5cc78871b7487ccbcde78d7e766d17",
+      "sha256": "51ccd629624d57499e9a4f70a6d689147f9e140890fdb5d16c48fd9794c46580",
       "reasons": [
         "build input"
       ],
@@ -6944,7 +6944,7 @@
     },
     {
       "path": "standalone/bd2-territory/desktop/ConnectionSmoke.cs",
-      "sha256": "36f0690f0ea629a8277138cd555f6157cbc056e5de85096980a642b2f2dd6421",
+      "sha256": "418cb6cf6d9dcbd86b0bd474601f5ebb5da83464dd944671a3f9348f71f3517f",
       "reasons": [
         "build input"
       ],
@@ -7000,7 +7000,7 @@
     },
     {
       "path": "standalone/bd2-territory/desktop/TerritoryWindow.xaml.cs",
-      "sha256": "8252b1f50bc3a4ae4395d228e2f6c411e3f0d72021d5cdb15e3160a297de3e8d",
+      "sha256": "ddc42825107d54722f2500c3d9f8f7043a5100e7d4a1bffa531e10827b69e1cd",
       "reasons": [
         "build input"
       ],
@@ -7312,7 +7312,7 @@
     },
     {
       "path": "standalone/bd2-territory/localization/en-US.json",
-      "sha256": "1880e769ead005409b146d01960411978f3d7cd716e93a4c5b22b77d605fca98",
+      "sha256": "0956aa5290c4202754d8014bdb0b4af07ab2665c6f8ba86bf8551f1c3e2c3f4a",
       "reasons": [
         "build input"
       ],
@@ -7328,7 +7328,7 @@
     },
     {
       "path": "standalone/bd2-territory/localization/zh-CN.json",
-      "sha256": "60d6eef84ecf05c88ed496a94d8b7088f9f1435703ad68f61e73571c4b0b4f7c",
+      "sha256": "440deef30930e1d25b68d68ada888088b12b4c69483507d3de977cc2776fc6d8",
       "reasons": [
         "build input"
       ],
@@ -8560,7 +8560,7 @@
     },
     {
       "path": "src/Desktop/FirstRunWindow.cs",
-      "sha256": "504c992033ee081fb5df7a5bc2a4f38e43634b8162fdf92848d39cb1b0ec03cb",
+      "sha256": "e56a79bb39097baac576aa4cc026e104389a6cf150948f04ff4fea56975617cd",
       "reasons": [
         "build input"
       ],
@@ -8576,7 +8576,7 @@
     },
     {
       "path": "src/Desktop/MainWindow.FirstRun.Smoke.cs",
-      "sha256": "78bcea2ff6f19c6d16b0636d045274f3312060f9338189752d5cff11e7949189",
+      "sha256": "5a585304fe2c35706d9178ef88e6f9d63e2afc5f6478e21b7c045a7c330c73fc",
       "reasons": [
         "build input"
       ],

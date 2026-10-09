@@ -1,4 +1,6 @@
 {
+  "统一会话未就绪，请返回日常助手重新连接。": "The shared session is not ready. Return to the daily assistant and reconnect.",
+  "尚无有效连接记录，请先点击「连接 / 更新组件」。": "No valid connection is recorded. Click Connect / Update component first.",
   "预测存在接触，按游戏正常移动验证通行": "Predicted contact; checking passage through normal game movement",
   "角色移动控制器无法唯一确认，尚未注入": "Cannot uniquely identify the game movement controller; nothing was injected",
   "回调 IL 不完整": "Incomplete callback IL",

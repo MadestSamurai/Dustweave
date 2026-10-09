@@ -12,6 +12,8 @@ Run `Dustweave.exe`. Keep the accompanying `data`, `flows`, `connection` and oth
 
 ## First run
 
+Use **Language** at the top right of setup to choose **简体中文 / 繁體中文 / English** before starting. The choice applies throughout the app and is remembered for future launches. Switching keeps your current step and account label.
+
 1. **Open Getting started and check the game location.** Setup appears automatically when no account has been saved, and can be reopened from **Accounts → Getting started**. Select the game's `BrownDust II.exe`, then continue to try one launch. An already running game is verified directly.
 2. **Enter the game and wait for detection.** Sign in and enter the main menu. Dustweave connects and checks your actual character identity, then displays the detected name.
 3. **Exit normally, then save.** Close the game and launcher, enter an account label and save. This captures the latest sign-in state after normal exit. A changed account must be verified again.

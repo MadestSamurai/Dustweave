@@ -1,4 +1,9 @@
 {
+  "onboarding.language": {
+    "zh-CN": "语言 / Language",
+    "zh-TW": "語言 / Language",
+    "en-US": "Language"
+  },
   "onboarding.title": {"zh-CN":"启动引导","zh-TW":"啟動引導","en-US":"Getting started"},
   "onboarding.step": {"zh-CN":"连接准备 · {0} / {1}","zh-TW":"連線準備 · {0} / {1}","en-US":"Connection setup · {0} / {1}"},
   "onboarding.page": {"zh-CN":"功能导览 · {0} / {1}","zh-TW":"功能導覽 · {0} / {1}","en-US":"App tour · {0} / {1}"},

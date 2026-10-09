@@ -19,6 +19,7 @@ internal sealed class FirstRunWindow : Window
     private readonly TextBlock status = new() { TextWrapping = TextWrapping.Wrap, Margin = new(0, 12, 0, 0) };
     private readonly TextBox name = new() { MaxLength = 64, Margin = new(0, 6, 0, 0) };
     private readonly StackPanel identity = new();
+    private readonly ComboBox language = new() { Width = 148, MinHeight = 36, SelectedValuePath = "Tag", VerticalAlignment = VerticalAlignment.Center };
     private readonly Button next = new() { IsDefault = true }, skip = new() { Margin = new(0, 0, 10, 0) }, retry = new() { Margin = new(0, 0, 10, 0), Visibility = Visibility.Collapsed };
     private readonly DispatcherTimer poll = new() { Interval = TimeSpan.FromSeconds(1) };
     private CancellationTokenSource? verification;
@@ -40,8 +41,22 @@ internal sealed class FirstRunWindow : Window
         L.Bind(skip, ContentControl.ContentProperty, "onboarding.skip"); L.Bind(retry, ContentControl.ContentProperty, "onboarding.retry");
         next.Style = (Style)FindResource("PrimaryButton"); actions.Children.Add(skip); actions.Children.Add(retry); actions.Children.Add(next);
         DockPanel.SetDock(actions, Dock.Bottom); body.Children.Add(actions);
-        var content = new StackPanel(); progress.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk"); progress.Margin = new(0, 0, 0, 10);
-        content.Children.Add(progress); content.Children.Add(heading); content.Children.Add(message);
+        var top = new DockPanel { Margin = new(0, 0, 0, 18) };
+        var languages = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+        var languageLabel = new TextBlock { VerticalAlignment = VerticalAlignment.Center, Margin = new(0, 0, 10, 0) };
+        languageLabel.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk"); L.Text(languageLabel, "onboarding.language");
+        L.Bind(language, System.Windows.Automation.AutomationProperties.NameProperty, "onboarding.language");
+        System.Windows.Automation.AutomationProperties.SetAutomationId(language, "OnboardingLanguage");
+        language.Items.Add(new ComboBoxItem { Content = "简体中文", Tag = "zh-CN" });
+        language.Items.Add(new ComboBoxItem { Content = "繁體中文", Tag = "zh-TW" });
+        language.Items.Add(new ComboBoxItem { Content = "English", Tag = "en-US" });
+        language.SelectedValue = L.Code; language.SelectionChanged += SelectLanguage;
+        WeakEventManager<DailyLanguage, EventArgs>.AddHandler(L, nameof(DailyLanguage.Changed), LanguageChanged);
+        languages.Children.Add(languageLabel); languages.Children.Add(language);
+        DockPanel.SetDock(languages, Dock.Right); top.Children.Add(languages);
+        progress.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk"); progress.VerticalAlignment = VerticalAlignment.Center;
+        top.Children.Add(progress); DockPanel.SetDock(top, Dock.Top); body.Children.Add(top);
+        var content = new StackPanel(); content.Children.Add(heading); content.Children.Add(message);
         location = new(installation, false); content.Children.Add(location);
         var label = new TextBlock(); L.Text(label, "onboarding.account_name"); identity.Children.Add(label);
         L.Bind(name, System.Windows.Automation.AutomationProperties.NameProperty, "onboarding.account_name"); identity.Children.Add(name); content.Children.Add(identity); content.Children.Add(status);
@@ -50,10 +65,23 @@ internal sealed class FirstRunWindow : Window
         next.Click += async (_, _) => { if (Stage == 0) await StartVerificationAsync(); else if (Stage == 2) SaveAccount(); else if (Stage == 3) { allowClose = true; Close(); } };
         skip.Click += (_, _) => Close(); retry.Click += (_, _) => Reset();
         Closing += CloseRequested;
-        Closed += (_, _) => { poll.Stop(); verification?.Cancel(); };
+        Closed += (_, _) => { poll.Stop(); verification?.Cancel(); WeakEventManager<DailyLanguage, EventArgs>.RemoveHandler(L, nameof(DailyLanguage.Changed), LanguageChanged); };
         flow.Progress += p => Dispatcher.Invoke(() => { L.Text(message, "onboarding." + p.Stage); if (p.Detail.Length > 0) DailyUiText.Set(status, p.Detail); });
         poll.Tick += async (_, _) => await CheckClosedAsync();
         Reset();
+    }
+
+    private void LanguageChanged(object? sender, EventArgs e) => language.SelectedValue = L.Code;
+    private void SelectLanguage(object sender, SelectionChangedEventArgs e)
+    {
+        if (language.SelectedValue is not string code || code == L.Code) return;
+        try { L.Select(code); }
+        catch (Exception error)
+        {
+            language.SelectedValue = L.Code;
+            L.Bind(status, TextBlock.TextProperty, () => L.Get("language.error", DailyUserText.Error(error, L.Translate)));
+            status.SetResourceReference(TextBlock.ForegroundProperty, "Error");
+        }
     }
 
     private void Reset()
@@ -69,6 +97,7 @@ internal sealed class FirstRunWindow : Window
         try
         {
             await Task.Run(installation.Resolve);
+            verification.Token.ThrowIfCancellationRequested();
             Stage = 1; location.Visibility = Visibility.Collapsed;
             L.Text(progress, "onboarding.step", 2, 3); L.Text(heading, "onboarding.login_title"); L.Text(message, "onboarding.launching");
             var task = flow.VerifyAsync(verification.Token); pending = task;
@@ -115,10 +144,15 @@ internal sealed class FirstRunWindow : Window
         }
         catch (Exception error) { DailyUiText.Error(status, error, ""); }
     }
-    private async void CloseRequested(object? sender, CancelEventArgs e)
+    private void CloseRequested(object? sender, CancelEventArgs e)
     {
         if (allowClose) return;
         e.Cancel = true; if (closing) return; closing = true;
+        // Leave WPF Closing before opening a confirmation or calling Close again.
+        Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(async () => await ConfirmSkipAndCloseAsync()));
+    }
+    private async Task ConfirmSkipAndCloseAsync()
+    {
         try
         {
             bool confirmed = ConfirmSkipForSmoke?.Invoke() ?? DailyDialogs.ShowModal(DailyDialogs.Message(this, L.Get("onboarding.skip_title"), L.Get(Saved ? "onboarding.skip_tour" : "onboarding.skip_warning"), true)) == true;
@@ -126,6 +160,11 @@ internal sealed class FirstRunWindow : Window
             verification?.Cancel(); if (pending != null) { try { await pending; } catch { } }
             DailyJson.Write(Path.Combine(root, "first-run.json"), new FirstRunRecord(State: "skipped"));
             allowClose = true; Close();
+        }
+        catch (Exception error)
+        {
+            allowClose = false; DailyUiText.Error(status, error, "");
+            try { DailyJson.Write(Path.Combine(root, "onboarding-error.json"), new { atUtc = DateTimeOffset.UtcNow, stage = Stage, operation = "skip", error = error.ToString() }); } catch { }
         }
         finally { closing = false; }
     }

@@ -27,7 +27,7 @@ public sealed class TerritoryConnection
         string fingerprint=HookCompiler.ToolFingerprint;var path=Path.Combine(root,"connection.json");
         trace.Stage("process.found");TerritoryDiagnostics.Write(root,"process.identity",$"pid={pid}; startedUtcTicks={start}");
         trace.Stage("pipe.probe");
-        var pipe=BD2.LocalIpc.DesktopFiles.Connect(root,pid,start); if(BD2.LocalIpc.HostedConnection.TryOpen(pipe,pid,start))return "已使用日常助手的统一连接";
+        var pipe=BD2.LocalIpc.DesktopFiles.Connect(root,pid,start); if(BD2.LocalIpc.HostedConnection.TryOpen(pipe,pid,start)){trace.Stage("connected.hosted");return "已使用日常助手的统一连接";}
         try
         {
             if(pipe.Fingerprint()==fingerprint)
@@ -78,6 +78,21 @@ public sealed class TerritoryConnection
         }
         throw new InvalidOperationException("组件尚未返回连接状态，请确认游戏已完成加载且旧工具已暂停，再次点击连接查看结果。");
         }catch(Exception ex){trace.Fail(ex);throw;}
+    }
+    // Hosted tools are authorized by the live host session, not a standalone
+    // injection receipt. Revalidate ownership before starting, even after Connect.
+    public void ValidateStart(int observedPid,int pid,long start)
+    {
+        if(observedPid!=pid)throw new InvalidOperationException("游戏进程已变化，请重新连接。");
+        if(BD2.LocalIpc.HostedConnection.Enabled)
+        {
+            var pipe=BD2.LocalIpc.DesktopFiles.Connect(root,pid,start);
+            if(BD2.LocalIpc.HostedConnection.TryOpen(pipe,pid,start))return;
+            throw new InvalidOperationException("统一会话未就绪，请返回日常助手重新连接。");
+        }
+        var saved=TerritoryJson.Read<TerritoryConnectionState>(Path.Combine(root,"connection.json"));
+        if(saved==null)throw new InvalidOperationException("尚无有效连接记录，请先点击「连接 / 更新组件」。");
+        if(!SameProcess(saved,pid,start))throw new InvalidOperationException("游戏进程已变化，请重新连接。");
     }
     public static Process FindGame()
     {

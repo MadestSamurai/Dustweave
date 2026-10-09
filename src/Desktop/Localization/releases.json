@@ -1,5 +1,50 @@
 [
   {
+    "Version": "1.0.6-beta",
+    "Date": "2026-10-09",
+    "Notes": {
+      "zh-CN": [
+        "启动引导现在可直接选择简体中文、繁體中文或 English，即时应用到整个软件并记住选择。",
+        "修复直接跳过启动引导时窗口不关闭、底部报错的问题；确认跳过后正常返回主界面。",
+        "修复内置领地工具已连接却提示游戏进程变化的问题，统一连接不再依赖独立版连接记录。",
+        "修复一次启动失败后布局工具仍沿用旧错误、无法打开的问题。"
+      ],
+      "zh-TW": [
+        "啟動引導現在可直接選擇简体中文、繁體中文或 English，即時套用至整個軟體並記住選擇。",
+        "修正直接略過啟動引導時視窗未關閉、底部顯示錯誤的問題；確認略過後正常返回主介面。",
+        "修正內建領地工具已連接卻提示遊戲程序變更的問題，統一連接不再依賴獨立版連接紀錄。",
+        "修正一次啟動失敗後配置工具仍沿用舊錯誤、無法開啟的問題。"
+      ],
+      "en-US": [
+        "Choose English, 简体中文 or 繁體中文 directly in setup. The entire app switches immediately and remembers your choice.",
+        "Fixes setup remaining open with an error when skipped before verification. Confirming Skip now returns to the main window.",
+        "Fixes the integrated Territory tool reporting a changed game process after a successful shared connection. Hosted sessions no longer require a standalone connection record.",
+        "Fixes the Layout tool reopening a previous start error instead of opening after recovery."
+      ]
+    }
+  },
+  {
+    "Version": "1.0.5-beta",
+    "Date": "2026-10-09",
+    "Notes": {
+      "zh-CN": [
+        "修复直接跳过启动引导时窗口不关闭、底部报错的问题；确认跳过后正常返回主界面。",
+        "修复内置领地工具已连接却提示游戏进程变化的问题，统一连接不再依赖独立版连接记录。",
+        "修复一次启动失败后布局工具仍沿用旧错误、无法打开的问题。"
+      ],
+      "zh-TW": [
+        "修正直接略過啟動引導時視窗未關閉、底部顯示錯誤的問題；確認略過後正常返回主介面。",
+        "修正內建領地工具已連接卻提示遊戲程序變更的問題，統一連接不再依賴獨立版連接紀錄。",
+        "修正一次啟動失敗後配置工具仍沿用舊錯誤、無法開啟的問題。"
+      ],
+      "en-US": [
+        "Fixes setup remaining open with an error when skipped before verification. Confirming Skip now returns to the main window.",
+        "Fixes the integrated Territory tool reporting a changed game process after a successful shared connection. Hosted sessions no longer require a standalone connection record.",
+        "Fixes the Layout tool reopening a previous start error instead of opening after recovery."
+      ]
+    }
+  },
+  {
     "Version": "1.0.4-beta",
     "Date": "2026-10-09",
     "Notes": {

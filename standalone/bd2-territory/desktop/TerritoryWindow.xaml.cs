@@ -63,7 +63,7 @@ public partial class TerritoryWindow : Window
  {
   if(link.Enabled||connecting||starting||closing||layoutOpen){ShowError("请先暂停采集和种植，再打开布局工具。");return;}
   layoutOpen=true;timer.Stop();
-  try{await controlQueue;if(!closing)new LayoutWindow(root,link){Owner=this}.ShowDialog();}
+  try{await QueueControl(()=>{});if(!closing)new LayoutWindow(root,link){Owner=this}.ShowDialog();}
   catch(Exception ex){TerritoryDiagnostics.Write(root,"layout.open.failed",error:ex);if(!closing)ShowError(ex.GetBaseException().Message);}
   finally{layoutOpen=false;if(!closing){timer.Start();await RefreshAsync();}}
  }
@@ -96,8 +96,8 @@ public partial class TerritoryWindow : Window
    if(closing||link.StopVersion!=stopped)throw new OperationCanceledException();
    if(!smoke)
    {
-    using var game=TerritoryConnection.FindGame();var saved=TerritoryJson.Read<TerritoryConnectionState>(Path.Combine(root,"connection.json"));
-    if(game.Id!=pid||saved==null||!TerritoryConnection.SameProcess(saved,game.Id,game.StartTime.ToUniversalTime().Ticks))throw new InvalidOperationException("游戏进程已变化，请重新连接。");
+    using var game=TerritoryConnection.FindGame();
+    new TerritoryConnection(root).ValidateStart(pid,game.Id,game.StartTime.ToUniversalTime().Ticks);
    }
    link.Configure(settings);link.Start(pid,expectedStopVersion:stopped);});if(!closing){ShowError("");await RefreshAsync();}
   }
