@@ -781,8 +781,9 @@ public partial class MainWindow : Window
             dailyPanel.ShowOperationError("fixture: component fingerprint mismatch");
             dailyPanel.LoadHistory(retryView);
             dailyPanel.ShowPlan(new DailyPreferences());
-            if (dailyPanel.DisplayedMessage != DailyUserText.Describe("fixture: component fingerprint mismatch"))
-                throw new Exception("History refresh erased queue startup failure");
+            if (!dailyPanel.DisplayedMessage.Contains(DailyUserText.Describe("fixture: component fingerprint mismatch"))
+                || !dailyPanel.DisplayedMessage.Contains(L.Get("issue.action.unknown")))
+                throw new Exception("History refresh erased queue startup failure or next action");
             RunTab.Content = dailyPanel; dailyPanel.ClearOperationError();
             dailyPanel.ShowCurrentPlan();
             CheckPlanSelectionForSmoke(retryView);
