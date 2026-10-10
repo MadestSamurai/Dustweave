@@ -2108,7 +2108,7 @@
     },
     {
       "path": "src/Desktop/DailyRunPanel.cs",
-      "sha256": "14f18d99b3a91a13b4dff91b666dbd3b03eacb717819cd9873cbf945379fea8a",
+      "sha256": "b43aa8f3d1a963b01110a43d1a0e06d37a57927c65aa1c0da87aaa766aeb2b18",
       "reasons": [
         "build input"
       ],
@@ -2444,7 +2444,7 @@
     },
     {
       "path": "src/Desktop/MainWindow.Presentation.cs",
-      "sha256": "15e7837eece856a0d4d205ce30f8383728e03541c4f13fa42b9cdbd4d5411e39",
+      "sha256": "94d19b8c07976afc57f1a3117a0bf08b8cfd7e0fa8a5c0114280dc664e1ac5c5",
       "reasons": [
         "build input"
       ],

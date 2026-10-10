@@ -37,6 +37,9 @@ public sealed partial class DailyRunPanel
         if (!panel.SelectedPlanTasks.Contains("mail")) throw new Exception("Switching accounts erased the manually selected repeat task");
         panel.LoadHistory(view with {Expired=true,Stages=[]});
         if (panel.rows.Any(r=>r.Completed) || !panel.SelectedPlanTasks.Contains("mail")) throw new Exception("Daily reset kept yesterday's completion or choices");
+        panel.ClearSelection();
+        panel.LoadHistory(view with {Period=period with {Cycle="tomorrow",ResetUtcTicks=DateTimeOffset.UtcNow.AddDays(1).UtcTicks},Stages=[]});
+        if (panel.SelectedPlanTasks.Count==0 || panel.rows.Any(r=>r.Completed)) throw new Exception("New-cycle progress retained yesterday's empty selection");
     }
     internal void CheckRecoveryActionsForSmoke()
     {

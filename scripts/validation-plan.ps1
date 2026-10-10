@@ -36,6 +36,9 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
      '^docs/', '^scripts/validation-plan\.ps1$', '^src/Accounts/[^/]+\.cs$',
      '^src/Core/(AccountSessions|DailyCoordinator|DailyLogin[^/]*|DailySandbox[^/]*|DailyParallel[^/]*|DailyAccountIdentity|DailyAccountOrder)\.cs$',
      '^src/Desktop/(DemoEnvironment|MainWindow\.(Accounts|Sandbox|Parallel)(\.Smoke)?|DailyParallelPanel|DailyParallelWorker)\.cs$',
+     # Account task presentation is checked by each actual Portable/Lite smoke.
+     # Runtime, XAML themes and shared contracts remain outside this boundary.
+     '^src/Desktop/(DailyRunPanel|MainWindow\.Presentation)\.cs$',
      '^src/Desktop/Localization/(runtime|releases|strings)\.json$', '^tests/Dustweave.Tests/Program\.cs$',
      '^tests/Dustweave.Tests/Cases/(Startup|LoginIdentity|Sandbox|Parallel|ParallelProcess|AccountOrder|AccountIdentity|AccountRestart|QueueSession)Cases\.cs$'
     ) -join '|'
@@ -59,7 +62,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
      }
      $reason='Full baseline evidence is missing or failed.'
      if($evidenceValid){
-      $groups=@('ProductIdentity','Startup','LoginIdentity','Sandbox','Parallel','ParallelProcess','AccountOrder','AccountIdentity','AccountRestart','QueueSession')
+      $groups=@('ProductIdentity','Startup','LoginIdentity','Sandbox','Parallel','ParallelProcess','AccountOrder','AccountIdentity','AccountRestart','QueueSession','QueuePeriod')
       if($selectedScope -eq 'Trading'){$groups=@('ProductIdentity','TradeOptimizer','TradeData','TradeReplan','TradeQuote','TradeResume')}
       if($selectedScope -in @('Navigation','Rewards')){$groups+=@('HomeNavigation','HomeRecovery','CommandDriver','ManagedInputs','PassiveUi')}
       if($selectedScope -eq 'Rewards'){$groups+=@('LiveBindings','Workflow','Preference','RuleData','EvidenceReadiness','UserText')}

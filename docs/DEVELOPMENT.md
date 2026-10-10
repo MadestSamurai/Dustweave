@@ -94,6 +94,8 @@ Use targeted `test.ps1 -Groups ...` during iteration. Packaging defaults to auto
 
 `Navigation` 范围覆盖本轮后台提示处理：运行相关导航、命令驱动、托管输入与背景界面回归，并重新编译当前客户端的日常执行组件，执行原生输入策略检查；未改动的观察配置与独立小游戏模块复用完整基线。范围匹配不足时仍回到完整验证。
 
+账号范围也包含 `DailyRunPanel.cs` 和 `MainWindow.Presentation.cs` 的任务界面调整：追加每日刷新回归，并在两个实际发行包中检查任务选择、账号切换、批量返回和三语言／深浅界面。公共执行模型、主题及其他运行逻辑不在这一豁免范围内。
+
 The Navigation scope rechecks navigation, command dispatch, managed inputs and passive UI, plus the current-client daily runtime compilation and native input policy. Unchanged independent tools reuse the recorded full baseline.
 
 `package.ps1 -ValidationScope Rewards` extends the navigation scope for pass/workflow and observation-schema changes. It runs affected workflow, binding, data, readiness and localization cases, recompiles the daily bridge and regenerates all daily evidence configurations. Independent tools reuse the unchanged full baseline. Unknown changes outside the declared boundary still require broader validation.

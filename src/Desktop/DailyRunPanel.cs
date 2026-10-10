@@ -27,6 +27,7 @@ public sealed partial class DailyRunPanel : UserControl
     private readonly Dictionary<string, Dictionary<string, bool>> accountChoices = new(StringComparer.Ordinal);
     private readonly ComboBox accountSelector = new() { Width = 220, DisplayMemberPath = nameof(DailyAccount.Name), SelectedValuePath = nameof(DailyAccount.AccountKey), Margin = new(0, 0, 12, 4) };
     private readonly Dictionary<string, HashSet<string>> appliedProgress = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string> planPeriods = new(StringComparer.Ordinal);
     private bool settingAccounts;
     private DailyPreferences plan = new(); private bool showingReport; private bool rowsAreReport; private bool chooseInitialView = true;
     private readonly Button chooseTasks = new();
@@ -349,7 +350,17 @@ public sealed partial class DailyRunPanel : UserControl
         currentView = view;
         if (!view.Expired && view.Account == activeAccount && view.Period != null)
         {
-            string periodKey = activeAccount + ":" + view.Period.Server + ":" + view.Period.Cycle;
+            string cycle = view.Period.Server + ":" + view.Period.Cycle + ":" + view.Period.Player;
+            if (planPeriods.TryGetValue(activeAccount, out var previous) && previous != cycle)
+            {
+                // A new day's worker may report before this UI observes yesterday's
+                // expired view. Reset the old draft in either transition.
+                planChoices.Clear(); accountChoices.Remove(activeAccount);
+                foreach (var key in appliedProgress.Keys.Where(k => k.StartsWith(activeAccount + ":", StringComparison.Ordinal)).ToArray()) appliedProgress.Remove(key);
+                progressChanged = true;
+            }
+            planPeriods[activeAccount] = cycle;
+            string periodKey = activeAccount + ":" + cycle;
             if (!appliedProgress.TryGetValue(periodKey, out var seen)) appliedProgress[periodKey] = seen = new(StringComparer.Ordinal);
             foreach (var stage in view.PlanStages ?? view.Stages)
                 if (stage.State is "completed" or "skipped" && seen.Add(stage.Task + ":" + stage.State + ":" + stage.FinishedAt)) planChoices[stage.Task] = false;
