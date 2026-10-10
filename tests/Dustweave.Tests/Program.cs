@@ -1,5 +1,7 @@
 using Dustweave;
 
+if (args.Length == 2 && args[0] == "--suite-owner-child") { await SuiteOwnerProbeCases.Child(args[1]); return; }
+
 // Only the existing synthetic cases are linked. Captured account fixtures stay in the parent repo.
 if (args.Length == 2 && args[0] == "--desktop-launch-child")
 {
@@ -138,6 +140,7 @@ await Group("NativeCancellation", () => Sync(() => NativeCancellationCases.Run(c
 await Group("WeeklyGoal", () => Sync(() => WeeklyGoalCases.RunSynthetic(cases)));
 await Group("Mansion", () => Sync(() => MansionCases.Run(cases)));
 await Group("UnifiedSuite", () => Sync(() => UnifiedSuiteCases.Run(cases)));
+await Group("SuiteOwnerProbe", () => SuiteOwnerProbeCases.Run(cases));
 await Group("Workflow", () => Sync(() => WorkflowCases.Run(cases)));
 await Group("EventTradeBoundary", () => Sync(() => EventTradeBoundaryCases.Run(cases)));
 await Group("ConnectionAccess", () => ConnectionAccessCases.Run(cases));

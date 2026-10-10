@@ -1,5 +1,26 @@
 [
   {
+    "Version": "1.1.2-beta",
+    "Date": "2026-10-10",
+    "Notes": {
+      "zh-CN": [
+        "修复权限受限时将仍运行的控制程序误判为已退出，导致反复连接失败的问题。",
+        "诊断包补充连接切换、进程检查和队列初始化记录；优先保留关键错误，大日志保留末尾并注明截断。",
+        "如果自动更新失败，可能需要手动下载完整软件包。"
+      ],
+      "zh-TW": [
+        "修正權限受限時將仍在執行的控制程式誤判為已結束，導致反覆連線失敗的問題。",
+        "診斷包補充連線切換、處理程序檢查及佇列初始化記錄；優先保留關鍵錯誤，大型記錄保留末尾並註明截斷。",
+        "若自動更新失敗，可能需要手動下載完整軟體套件。"
+      ],
+      "en-US": [
+        "Fixes repeated connection failures caused by restricted process access being mistaken for an exited controller.",
+        "Diagnostic exports now include connection transitions, process checks and queue initialization. Critical errors take priority, and large logs retain a clearly marked tail.",
+        "If automatic updating fails, download the full package manually."
+      ]
+    }
+  },
+  {
     "Version": "1.1.1-beta",
     "Date": "2026-10-10",
     "Notes": {

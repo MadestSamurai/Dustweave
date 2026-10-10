@@ -34,6 +34,9 @@ public static class DailySuite {
   pipe.Open(DailyHookCompiler.Fingerprint);
   var command=new SuiteCommand {Id=Guid.NewGuid().ToString("N"),Tool=id,Owner=Owner,ProcessId=game.ProcessId,StartTicks=game.StartTicks,Account=snapshot.AccountKey,Player=snapshot.PlayerKey,Expires=DateTime.UtcNow.AddSeconds(40).Ticks,
    OwnerProcessId=int.Parse(Environment.GetEnvironmentVariable("BD2_DAILY_OWNER_PID")!),OwnerStartTicks=long.Parse(Environment.GetEnvironmentVariable("BD2_DAILY_OWNER_START")!)};
+  var ownerCheck=SuiteOwnerProbe.Read(command.OwnerProcessId,command.OwnerStartTicks);
+  DailySuiteDiagnostics.Record(root,"activation-request",new{command.Id,command.Tool,command.Owner,command.OwnerProcessId,command.OwnerStartTicks,command.ProcessId,command.StartTicks,command.Account,command.Player,observerFingerprint=DailyHookCompiler.Fingerprint,ownerCheck});
+  if(ownerCheck.Problem.Length!=0)throw new InvalidOperationException(ownerCheck.Problem);
   if(payload!=null){command.ModulePayload=Convert.ToBase64String(payload);command.ModuleHash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(payload));}
   cancel.ThrowIfCancellationRequested();
   pipe.Write("command.json",JsonSerializer.SerializeToUtf8Bytes(command,Json));
@@ -56,9 +59,10 @@ public static class DailySuite {
   var bytes=new PipeClient(Path.Combine(root,"suite"),game.ProcessId,game.StartTicks).Read("status.json");
   var state=bytes==null?null:JsonSerializer.Deserialize<SuiteStatus>(bytes,Json);
   if(state!=null){
-   string key=root+"|"+game.ProcessId+"|"+game.StartTicks, value=state.Request+"|"+state.Tool+"|"+state.State+"|"+state.Error;
+   string key=root+"|"+game.ProcessId+"|"+game.StartTicks, value=state.Request+"|"+state.Tool+"|"+state.State+"|"+state.Error+"|"+state.RejectedRequest+"|"+state.OwnerProblem+"|"+state.OwnerCheck?.NativeError;
    if(!LastStatus.TryGetValue(key,out var previous)||previous!=value){
     LastStatus[key]=value;
+    DailySuiteDiagnostics.Record(root,"runtime-transition",new{game.ProcessId,game.StartTicks,state});
     try{DailyJson.Write(Path.Combine(root,"suite","last-transition.json"),new{atUtc=DateTimeOffset.UtcNow,game.ProcessId,game.StartTicks,state});}catch(IOException){}catch(UnauthorizedAccessException){}
    }
   }

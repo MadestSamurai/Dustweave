@@ -12,6 +12,7 @@ namespace BD2Daily {
   [DataMember] public string Request="", Tool="", State="idle", Error="", Owner="", Account="", Player="", RejectedRequest="", RejectedReason="";
   [DataMember] public string Pending="", IdentityState="", OwnerProblem="";
   [DataMember] public long At;
+  [DataMember] public SuiteOwnerObservation OwnerCheck=new SuiteOwnerObservation();
   [DataMember] public string[] Available=new string[0], Fingerprints=new string[0];
  }
  // Pure transition rules shared by runtime and offline regression.

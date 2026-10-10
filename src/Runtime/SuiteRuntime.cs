@@ -90,10 +90,6 @@ namespace BD2Daily.Runtime {
    return "";
   }
   internal static void Dispose(){Stop();if(Busy()!="")throw new InvalidOperationException(Busy());foreach(var id in modules.Keys)Retire(id);active="";var owned=AppDomain.CurrentDomain.GetData(OwnedKey) as HashSet<string>;if(owned!=null)owned.Remove(typeof(SuiteRuntime).Assembly.FullName);if(channel!=null)channel.Revoke();}
-  static string OwnerProblem(){
-   if(ownerPid==0)return "suite.owner-missing";
-   try{using(var p=System.Diagnostics.Process.GetProcessById(ownerPid)){if(p.HasExited)return "suite.owner-exited";return p.StartTime.ToUniversalTime().Ticks==ownerStart?"":"suite.owner-replaced";}}catch(ArgumentException){return "suite.owner-exited";}catch{return "suite.owner-unreadable";}
-  }
   static T Read<T>(byte[] bytes)where T:class{if(bytes==null)return null;using(var memory=new MemoryStream(bytes))return(T)new DataContractJsonSerializer(typeof(T)).ReadObject(memory);}
   static void Save(){using(var memory=new MemoryStream()){new DataContractJsonSerializer(typeof(SuiteStatus)).WriteObject(memory,status);channel.Write("status.json",memory.ToArray());}}
   internal static void Tick(DailySnapshot identity){
@@ -116,7 +112,7 @@ namespace BD2Daily.Runtime {
      }
     }
     if(request==null&&active!=""&&(Entry(active)==null||Entry(active).ContainsKey("paused")&&(bool)Entry(active)["paused"])) {Stop();if(status.State!="paused"&&status.State!="error"){status.State="paused";status.Error="suite.control-changed";}if(Busy()==""){foreach(var id in modules.Keys)Retire(id);active="";}}
-    status.IdentityState=identity.State;status.OwnerProblem=status.Owner==""?"":OwnerProblem();
+    status.IdentityState=identity.State;status.OwnerCheck=SuiteOwnerProbe.Read(ownerPid,ownerStart);status.OwnerProblem=status.Owner==""?"":status.OwnerCheck.Problem;
     string revokeReason=status.Owner==""?"":SuiteRules.Revocation(status.OwnerProblem,status,identity);
     bool revoked=revokeReason!="";
     if(revoked&&(active!=""||request!=null)){

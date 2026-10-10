@@ -105,7 +105,7 @@ public static class DailyLogCleanup
         var candidates=new List<DailyLogUnit>();int entriesCount=0,examined=0;
         void Report(){progress?.Report(new(entriesCount,total,examined));}
         // Never include caches, account stores, queues, exported ZIPs or transaction evidence.
-        foreach(var (tree,depth) in new[]{("",0),("live/diagnostics",1),("tools",3),("parallel-workers",2)})
+        foreach(var (tree,depth) in new[]{("",0),("suite/diagnostics",1),("live/diagnostics",1),("tools",3),("parallel-workers",2)})
         {
             string folder=Path.Combine(root,tree);
             if(!Directory.Exists(folder) || tree.Length>0 && !Safe(root,folder)) continue;
@@ -147,7 +147,7 @@ public static class DailyLogCleanup
             && unit.Files.All(f=>Path.GetDirectoryName(f.Path)==unit.Path && StepNames.Contains(Path.GetFileName(f.Path)));
         if(unit.Files.Length!=1 || unit.Path!=unit.Files[0].Path || !LogName(Path.GetFileName(unit.Path)))return false;
         string relative=Path.GetRelativePath(root,unit.Path).Replace(Path.DirectorySeparatorChar,'/');
-        return !relative.Contains('/') || new[]{"live/diagnostics/","tools/","parallel-workers/"}.Any(prefix=>relative.StartsWith(prefix,StringComparison.Ordinal));
+        return !relative.Contains('/') || new[]{"suite/diagnostics/","live/diagnostics/","tools/","parallel-workers/"}.Any(prefix=>relative.StartsWith(prefix,StringComparison.Ordinal));
     }
     public static Task<DailyLogCleanupResult> ApplyAsync(DailyLogPlan plan, CancellationToken token = default) => Task.Run(()=>Apply(plan,token),token);
     public static DailyLogCleanupResult Apply(DailyLogPlan plan, CancellationToken token = default)

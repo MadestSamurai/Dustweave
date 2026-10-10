@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 1.1.2-beta — 2026-10-10
+
+- 修复控制程序仍运行却被误判为退出导致的连接失败，区分权限不足与实际退出。
+- 诊断导出补齐连接与控制权历史、队列初始化和轮转日志；关键证据优先，大日志保留有标记的末尾。
+- Fixes live controllers being misreported as exited under restricted process access.
+- Adds connection and ownership evidence, queue initialization and rotated logs to diagnostic exports, prioritizing critical evidence and marking retained tails of large logs.
+
 ## 1.1.1-beta — 2026-10-10
 
 - 新增日志保留设置、清理预览和空闲自动清理，保护账号、任务进度与未结算操作。

@@ -9,22 +9,28 @@ public sealed record DailyDiagnosticExportResult(string Path, int Files, int Ski
 public static class DailyDiagnosticExport
 {
     public const string WeChat = "SuJakads0133", QQ = "1104563414";
-    static readonly HashSet<string> Top = new(StringComparer.OrdinalIgnoreCase) { "ui-operation-error.json", "startup-state.json", "startup-error.json", "queue-worker.log", "queue-ui.json", "connection-watchdog.json", "run.json", "sandbox-error.json", "parallel-worker-error.json", "plugin-error.json", "runtime.log", "connection.log", "connection-cleanup.log" };
-    static readonly string[] Trees = ["live/diagnostics", "live/steps", "live/queues", "queue-history", "tools", "parallel-workers"];
+    static readonly HashSet<string> Top = new(StringComparer.OrdinalIgnoreCase) { "ui-operation-error.json", "startup-state.json", "startup-error.json", "queue-worker.log", "queue-ui.json", "connection-watchdog.json", "connection.json", "compatibility.json", "guild-compatibility.json", "startup-compatibility.json", "run.json", "run-error.json", "sandbox-error.json", "parallel-worker-error.json", "plugin-error.json", "runtime.log", "connection.log", "connection-cleanup.log" };
+    static readonly string[] Trees = ["suite/diagnostics", "live/diagnostics", "live/queue-bootstrap", "live/queues", "queue-history", "tools", "parallel-workers", "live/steps"];
     static readonly string[] Singles = ["suite/last-transition.json", "updates/check-error.json", "updates/install-error.json"];
+    static readonly string[] Rotations = [".1", ".2", ".3", ".previous"];
+    static readonly HashSet<string> PrivateNames = new(StringComparer.OrdinalIgnoreCase) { "accounts.json", "preferences.json", "settings.json", "endpoint.json", "session.json", "sessions.json", "command.json" };
+    static string Unrotate(string name) => Rotations.FirstOrDefault(s => name.EndsWith(s,StringComparison.OrdinalIgnoreCase)) is { } suffix ? name[..^suffix.Length] : name;
+    static bool LogName(string name) => Unrotate(name).EndsWith(".log",StringComparison.OrdinalIgnoreCase) || Unrotate(name).EndsWith(".jsonl",StringComparison.OrdinalIgnoreCase);
+    static int Priority(string relative) => Top.Contains(Unrotate(relative)) || Singles.Contains(relative,StringComparer.OrdinalIgnoreCase) || relative.StartsWith("suite/diagnostics/",StringComparison.OrdinalIgnoreCase) ? 0 : relative.StartsWith("live/steps/",StringComparison.OrdinalIgnoreCase) ? 2 : 1;
     static readonly Regex SecretKey = new("password|passwd|credential|authorization|cookie|refresh.?token|access.?token|id.?token|session.?token|auth.?token|private.?key|api.?key|secret|dpapi|modulepayload|sessionblob|^token$|^auth$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     static readonly Regex SecretText = new("(?i)(\\b(?:password|passwd|authorization|cookie|token|credential|api[_-]?key|access[_-]?token|refresh[_-]?token|id[_-]?token|session[_-]?token|auth[_-]?token|secret|private[_-]?key)[\"']?\\s*[=:]\\s*)(?:Bearer\\s+)?(?:\"[^\"]*\"|'[^']*'|[^\\s,;]+)", RegexOptions.CultureInvariant);
     static readonly Regex Bearer = new(@"(?i)\bBearer\s+[A-Za-z0-9_.+/=-]+|\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+", RegexOptions.CultureInvariant);
     public static bool Allowed(string relative)
     {
         var p = relative.Replace('\\','/');
-        if (p.Split('/').Any(x => x is ".." or "." || SecretKey.IsMatch(x) || x.Equals("plugins",StringComparison.OrdinalIgnoreCase))) return false;
-        if (Top.Contains(p) || Singles.Contains(p, StringComparer.OrdinalIgnoreCase)) return true;
+        if (p.Split('/').Any(x => x is ".." or "." || SecretKey.IsMatch(x) || x.Equals("plugins",StringComparison.OrdinalIgnoreCase) || x.Equals("accounts",StringComparison.OrdinalIgnoreCase))) return false;
+        if (PrivateNames.Contains(Unrotate(Path.GetFileName(p)))) return false;
+        if (Top.Contains(p) || LogName(p) && Top.Contains(Unrotate(p)) || Singles.Contains(p, StringComparer.OrdinalIgnoreCase)) return true;
         if (!Trees.Any(t => p.StartsWith(t + "/", StringComparison.OrdinalIgnoreCase))) return false;
         var name = Path.GetFileName(p);
+        if(p.StartsWith("live/queue-bootstrap/",StringComparison.OrdinalIgnoreCase))return name.Equals("result.json",StringComparison.OrdinalIgnoreCase);
         // Runtime payloads, endpoint credentials, preference/account vaults and binaries are never exported.
-        return name.EndsWith(".json",StringComparison.OrdinalIgnoreCase) || name.EndsWith(".log",StringComparison.OrdinalIgnoreCase)
-            || name.Contains(".jsonl",StringComparison.OrdinalIgnoreCase);
+        return name.EndsWith(".json",StringComparison.OrdinalIgnoreCase) || LogName(name);
     }
     public static string Redact(string text, bool json)
     {
@@ -91,11 +97,12 @@ public static class DailyDiagnosticExport
             return false;
         }
         void Walk(string folder,int depth) {
-            if(depth>8||visited>=6000)return;
+            if(depth>8){skipped.Add(new{path=sourceName+"/"+Path.GetRelativePath(root,folder),reason="depth-limit"});return;}
+            if(visited>=6000)return;
             try {
                 if(!Directory.Exists(folder)||!SafePath(folder))return;
                 foreach(var path in Directory.EnumerateFileSystemEntries(folder)) {
-                    token.ThrowIfCancellationRequested();if(++visited>6000){skipped.Add(new{path="[scan limit]",reason="limit"});break;}
+                    token.ThrowIfCancellationRequested();if(++visited>6000){skipped.Add(new{path=sourceName+"/"+Path.GetRelativePath(root,folder),reason="scan-limit"});break;}
                     string rel=Path.GetRelativePath(root,path).Replace('\\','/');
                     if(Link(path)){skipped.Add(new{path=sourceName+"/"+rel,reason="link"});continue;}
                     if(Directory.Exists(path))Walk(path,depth+1);else if(Allowed(rel))files.Add((new FileInfo(path),root,sourceName));
@@ -105,38 +112,54 @@ public static class DailyDiagnosticExport
         var sources=new Dictionary<string,string>{{"main",root}};
         if(additionalSources!=null)foreach(var item in additionalSources){if(!Regex.IsMatch(item.Key,@"^[a-zA-Z0-9-]{1,64}$")||item.Key=="main")throw new InvalidDataException("Invalid diagnostic source label");sources.Add(item.Key,Path.GetFullPath(item.Value));}
         foreach(var source in sources){
-            root=source.Value;sourceName=source.Key;
+            root=source.Value;sourceName=source.Key;visited=0;
             if(Directory.Exists(root)&&Link(root)){skipped.Add(new{path=sourceName,reason="link"});continue;}
-            foreach(var name in Top.Concat(Singles)) {string p=Path.Combine(root,name);try{if(File.Exists(p)&&SafePath(p))files.Add((new FileInfo(p),root,sourceName));}catch(Exception e) when(e is IOException or UnauthorizedAccessException){skipped.Add(new{path=sourceName+"/"+name,reason=e.GetType().Name});}}
+            foreach(var name in Top.Concat(Singles).Concat(Top.Where(LogName).SelectMany(n=>Rotations.Select(r=>n+r)))) {string p=Path.Combine(root,name);try{if(File.Exists(p)&&SafePath(p))files.Add((new FileInfo(p),root,sourceName));}catch(Exception e) when(e is IOException or UnauthorizedAccessException){skipped.Add(new{path=sourceName+"/"+name,reason=e.GetType().Name});}}
             foreach(var tree in Trees)Walk(Path.Combine(root,tree),0);
         }
         string parent=Path.GetDirectoryName(destination)!;Directory.CreateDirectory(parent);
         string temporary=destination+"."+Guid.NewGuid().ToString("N")+".tmp";
-        int count=0;long total=0;var inventory=new List<object>();
+        int count=0;long total=0;var inventory=new List<object>();var included=new HashSet<string>(StringComparer.OrdinalIgnoreCase);string lastOperation="";
         try {
             using(var output=new FileStream(temporary,FileMode.CreateNew,FileAccess.Write,FileShare.None)) {
                 using(var zip=new ZipArchive(output,ZipArchiveMode.Create,true)) {
                     void Add(string name,string data) {var entry=zip.CreateEntry(name,CompressionLevel.Optimal);using var writer=new StreamWriter(entry.Open(),new UTF8Encoding(false));writer.Write(data);}
-                    foreach(var source in files.DistinctBy(f=>f.File.FullName,StringComparer.OrdinalIgnoreCase).OrderByDescending(f=>f.File.LastWriteTimeUtc)) {
+                    foreach(var source in files.DistinctBy(f=>f.File.FullName,StringComparer.OrdinalIgnoreCase).OrderBy(f=>Priority(Path.GetRelativePath(f.Root,f.File.FullName).Replace('\\','/'))).ThenByDescending(f=>f.File.LastWriteTimeUtc)) {
                         root=source.Root;var file=source.File;
                         token.ThrowIfCancellationRequested();string rel=source.Prefix+"/"+Path.GetRelativePath(root,file.FullName).Replace('\\','/');
                         if(file.LastWriteTimeUtc<DateTime.UtcNow.AddDays(-7)){skipped.Add(new{path=rel,reason="older-than-7-days"});continue;}
-                        if(count>=2000||total>=64*1024*1024||file.Length>8*1024*1024){skipped.Add(new{path=rel,reason="size-limit"});continue;}
+                        bool log=LogName(file.Name);
+                        if(count>=2000||total>=64*1024*1024||file.Length>8*1024*1024&&!log){skipped.Add(new{path=rel,reason="size-limit"});continue;}
                         try {
                             if(!SafePath(file.FullName))throw new IOException("link");
                             using var stream=new FileStream(file.FullName,FileMode.Open,FileAccess.Read,FileShare.ReadWrite|FileShare.Delete);
-                            if(stream.Length>8*1024*1024)throw new IOException("size-limit");
+                            long originalBytes=stream.Length;bool truncated=originalBytes>8*1024*1024;
+                            if(truncated) {
+                                if(!log)throw new IOException("size-limit");
+                                stream.Seek(-2*1024*1024,SeekOrigin.End);
+                                // Start at a complete UTF-8 line; never expose a partial JSON record.
+                                int next;do{next=stream.ReadByte();}while(next!=-1&&next!='\n');
+                            }
                             using var reader=new StreamReader(stream,new UTF8Encoding(false,true));
                             var buffer=new char[8192];var text=new StringBuilder();int read;
                             while((read=reader.Read(buffer,0,buffer.Length))>0){token.ThrowIfCancellationRequested();if(text.Length+read>8*1024*1024)throw new IOException("size-limit");text.Append(buffer,0,read);}
                             string data=Redact(text.ToString(),file.Extension.Equals(".json",StringComparison.OrdinalIgnoreCase));
                             int bytes=Encoding.UTF8.GetByteCount(data);if(total+bytes>64*1024*1024){skipped.Add(new{path=rel,reason="size-limit"});continue;}
-                            Add("logs/"+rel,data);total+=bytes;count++;inventory.Add(new{path=rel,bytes,atUtc=file.LastWriteTimeUtc});
+                            Add("logs/"+rel,data);total+=bytes;count++;included.Add(rel);inventory.Add(new{path=rel,bytes,originalBytes,truncated,atUtc=file.LastWriteTimeUtc});
+                            if(rel.Equals("main/ui-operation-error.json",StringComparison.OrdinalIgnoreCase)) {
+                                using var record=JsonDocument.Parse(data);var operation=record.RootElement;
+                                if(operation.ValueKind==JsonValueKind.Object) {
+                                    string at=operation.TryGetProperty("atUtc",out var atValue)?atValue.ToString():"unknown";
+                                    string reason=operation.TryGetProperty("error",out var errorValue)?errorValue.ToString().Split('\n')[0].Trim():"unknown";
+                                    lastOperation="\n\nLast recorded operation failure (historical, separate from current connection):\nUTC: "+at+"\n"+reason+"\nSee logs/main/ui-operation-error.json and logs/main/suite/.\n";
+                                }
+                            }
                         }catch(Exception e) when(e is IOException or UnauthorizedAccessException or JsonException or DecoderFallbackException){skipped.Add(new{path=rel,reason=e.GetType().Name});}
                     }
-                    Add("summary.txt",Redact(summary,false));
+                    Add("summary.txt",Redact(summary+lastOperation,false));
                     Add("README.txt","Dustweave diagnostics\nWeChat: "+WeChat+"\nQQ: "+QQ+"\nCreated locally. Send privately; may include game character names, task history and paths. Login/session stores, plugins, executables and keys are excluded. This is a best-effort snapshot; see manifest.json for omitted files.\n");
-                    Add("manifest.json",JsonSerializer.Serialize(new{schema=1,version,atUtc=DateTimeOffset.UtcNow,files=count,bytes=total,days=7,sources=sources.Keys,inventory,skipped,automaticallyUploaded=false},DailyJson.Options));
+                    var coverage=sources.Keys.Select(label=>new{source=label,operationError=included.Contains(label+"/ui-operation-error.json"),startup=included.Contains(label+"/startup-state.json"),connection=included.Contains(label+"/connection.json"),ownerTransition=included.Contains(label+"/suite/last-transition.json"),ownerHistory=included.Any(p=>p.StartsWith(label+"/suite/diagnostics/",StringComparison.OrdinalIgnoreCase)),queueBootstrap=included.Any(p=>p.StartsWith(label+"/live/queue-bootstrap/",StringComparison.OrdinalIgnoreCase))});
+                    Add("manifest.json",JsonSerializer.Serialize(new{schema=2,version,atUtc=DateTimeOffset.UtcNow,files=count,bytes=total,days=7,sources=sources.Keys,coverage,inventory,skipped,automaticallyUploaded=false},DailyJson.Options));
                 }
                 output.Flush(true);
             }

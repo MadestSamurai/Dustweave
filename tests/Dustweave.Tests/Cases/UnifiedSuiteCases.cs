@@ -97,6 +97,7 @@ internal static class UnifiedSuiteCases {
   SuiteStatus State()=>JsonSerializer.Deserialize<SuiteStatus>(channel.Read("status.json"),Json)!;
   Send(Command("daily"));Finish();
   Check(State().State=="ready"&&State().Tool=="daily","daily module activated by host");
+  Check(State().OwnerCheck.ProcessId==owner.Id&&State().OwnerCheck.State=="alive"&&State().OwnerCheck.ObservedStartTicks==owner.StartTime.ToUniversalTime().Ticks,"runtime publishes the actual owner liveness proof");
   byte[] rhythm=Payload("rhythm");
   SuiteCommand Demand(){var c=Command("rhythm");c.ModulePayload=Convert.ToBase64String(rhythm);c.ModuleHash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(rhythm));return c;}
   var mismatch=Demand();mismatch.Account="other";Send(mismatch);Step();
@@ -136,6 +137,7 @@ internal static class UnifiedSuiteCases {
   Set("ownerPid",int.MaxValue);Step();
   Check(State().State=="paused"&&State().Tool=="","host process exit stops active tool");
   Check(State().Error=="suite.owner-exited","controller exit has its own diagnosis");
+  Check(State().OwnerCheck.NativeError==87&&State().OwnerCheck.ProcessId==int.MaxValue,"failed runtime probe preserves the Windows error and queried PID");
   Send(Command("fishing"));Finish();int stopCount=SuiteFixtureBus.Stops["fishing"];SuiteFixtureBus.Waiting.Add("fishing");Set("ownerPid",int.MaxValue);Step();Step();
   Check(State().Error=="suite.owner-exited"&&SuiteFixtureBus.Stops["fishing"]==stopCount&&!SuiteFixtureBus.Flows["fishing"].IsActive,"pending receipt preserves the original stop reason without restarting or retiring the actor");
   SuiteFixtureBus.Waiting.Clear();Step();Check(SuiteFixtureBus.Stops["fishing"]==stopCount+1,"stopped module retires after the pending receipt drains");
