@@ -1,6 +1,6 @@
 # Changelog / 更新记录
 
-## 1.1.5-beta — 2026-10-10
+## 1.1.6-beta — 2026-10-10
 
 - 跑商计划可直接准备连接并读取商店，不再需要先运行其他日常；修复尚未生成购买记录的商品被误判为数据缺失。
 - 新增默认关闭、按账号保存的零收益采购选项：使用剩余预算购买折扣后买价等于120%卖价的额外商品，不分摊砍价费，实际药耗和垫资仍完整记录。
@@ -10,7 +10,8 @@
 - Adds opt-in break-even resale purchases using spare funds, with the bargaining fee excluded from eligibility and strategy but retained in actual costs.
 - Fixes first-read and unsubmitted-preview interruptions in free draws, and resumes weekly travel after the field interface recovers.
 - Expands diagnostic exports for route recovery and standalone trade planning.
-- [完整说明 / Full notes](docs/releases/1.1.5-beta.md)
+- 按实际写入顺序保留错误前后证据，避免相同文件时间导致错序；Preserves failure context by write order even when file timestamps tie.
+- [完整说明 / Full notes](docs/releases/1.1.6-beta.md)
 
 ## 1.1.3-beta — 2026-10-10
 

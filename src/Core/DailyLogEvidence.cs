@@ -9,7 +9,8 @@ public sealed class DailyLogEvidence : IDisposable
     static readonly AsyncLocal<DailyLogEvidence?> Current = new();
     readonly DailyLogEvidence? parent;
     readonly string root;
-    readonly ConcurrentDictionary<string, byte> written = new(StringComparer.OrdinalIgnoreCase);
+    readonly ConcurrentDictionary<string, long> written = new(StringComparer.OrdinalIgnoreCase);
+    long sequence;
     bool complete, disposed;
     public DailyLogEvidence(string root)
     {
@@ -22,7 +23,7 @@ public sealed class DailyLogEvidence : IDisposable
     {
         var scope = Current.Value;
         if (scope != null && !scope.disposed && path.StartsWith(scope.root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
-            scope.written.TryAdd(path, 0);
+            scope.written.GetOrAdd(path, _ => Interlocked.Increment(ref scope.sequence));
     }
     internal static string Text(JsonNode? value) => value is JsonValue v && v.TryGetValue<string>(out var s) ? s : "";
     internal static bool Settled(JsonObject value) => Text(value["state"]) == "completed"
@@ -173,16 +174,19 @@ public sealed class DailyLogEvidence : IDisposable
         Try(() =>
         {
             DailyJson.Write(Path.Combine(root,"live","log-compaction",Guid.NewGuid().ToString("N")+".json"),
-                new { complete, paths = written.Keys.Select(p => Path.GetRelativePath(root,p)).ToArray() });
+                new { complete, order = "write-sequence-v1", paths = written.OrderBy(p => p.Value).Select(p => Path.GetRelativePath(root,p.Key)).ToArray() });
             return true;
         });
     }
-    static void CompactWritten(string root, string[] written, bool complete, CancellationToken token)
+    static void CompactWritten(string root, string[] written, bool complete, bool ordered, CancellationToken token)
     {
         // Diagnostics must never turn an otherwise completed stage into a failure.
         // Compaction is bounded to files produced by this stage, never a whole-root scan.
         var steps = written.Where(p => string.Equals(Path.GetDirectoryName(Path.GetDirectoryName(p)), Path.Combine(root, "live", "steps"),StringComparison.OrdinalIgnoreCase))
-            .Select(p => Path.GetDirectoryName(p)!).Distinct().OrderBy(p => File.GetLastWriteTimeUtc(Path.Combine(p, "intent.json"))).ToArray();
+            .Select(p => Path.GetDirectoryName(p)!).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        // File timestamps may tie or go backwards, and dictionary enumeration
+        // is not execution order. New journals carry first-write order durably.
+        if (!ordered) steps = steps.OrderBy(p => File.GetLastWriteTimeUtc(Path.Combine(p, "intent.json"))).ToArray();
         var preserve = new HashSet<int>();
         for (int i = 0; i < steps.Length; i++)
         {
@@ -190,6 +194,14 @@ public sealed class DailyLogEvidence : IDisposable
             var result = DailyJson.TryRead<JsonObject>(Path.Combine(steps[i], "result.json"));
             if (Text(result?["state"]) is not ("observed_expected_ui" or "dispatched_only") || !complete && i >= steps.Length - 3)
                 for (int j = Math.Max(0, i - 3); j <= Math.Min(steps.Length - 1, i + 2); j++) preserve.Add(j);
+        }
+        if (!ordered)
+        {
+            // Older journals cannot disambiguate equal timestamps. Retain the
+            // whole tied group instead of discarding a possible failure neighbor.
+            var times = preserve.Select(i => File.GetLastWriteTimeUtc(Path.Combine(steps[i], "intent.json"))).ToHashSet();
+            for (int i = 0; i < steps.Length; i++)
+                if (times.Contains(File.GetLastWriteTimeUtc(Path.Combine(steps[i], "intent.json")))) preserve.Add(i);
         }
         for (int i = 0; i < steps.Length; i++)
         {
@@ -222,7 +234,7 @@ public sealed class DailyLogEvidence : IDisposable
                 if(value?["paths"] is not JsonArray paths || paths.Count>100000 || value["complete"] is not JsonValue finished || !finished.TryGetValue<bool>(out var complete))return false;
                 string[] records=paths.Select(p=>Text(p)).Select(p=>Path.GetFullPath(Path.Combine(root,p)))
                     .Where(p=>p.StartsWith(Path.Combine(root,"live")+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase)&&File.Exists(p)&&SafePath(root,p)).ToArray();
-                CompactWritten(root,records,complete,token);
+                CompactWritten(root,records,complete,Text(value["order"]) == "write-sequence-v1",token);
                 var f=new FileInfo(file);
                 return DailyLogFileRemoval.Delete(new(file,f.Length,f.LastWriteTimeUtc,f.CreationTimeUtc));
             });

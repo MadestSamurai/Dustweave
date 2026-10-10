@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-10T09:30:27.8587165+00:00",
+  "generatedUtc": "2026-10-10T09:36:24.4728365+00:00",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -240,7 +240,7 @@
     },
     {
       "path": "Directory.Build.props",
-      "sha256": "024d409741bd71b5b06fe6ed7764671555bad230fa4029dc56b7c5dbe60ee5bf",
+      "sha256": "99f030aa4d0af7d4f847eadd0e47be4c0537e85c55a4d256b75b36fd8adf94ee",
       "reasons": [
         "build input"
       ],
@@ -1232,11 +1232,11 @@
     },
     {
       "path": "src/Core/DailyLogEvidence.cs",
-      "sha256": "ca960714fb1e9adde1115a0e17c843c510000b0073bda75c6695527a966294e3",
+      "sha256": "6f800639e6f31ae8ae4ef495b0060dd69acf062b961447c66ce97a3a7d526a1b",
       "reasons": [
         "build input"
       ],
-      "bytes": 14563
+      "bytes": 15472
     },
     {
       "sha256": "e2ab0b98492387fcea39a52bab7ecf198cb83a50deefb0398d3869287fc6dab1",
@@ -2317,11 +2317,11 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "0f49715cbc5f35fd595605e4e50159d97fcba466769bba18ef7faa85e437ce2a",
+      "sha256": "094258d714eb235252cd40baba63f01a1f7b312e26d845511690bd14ec9065c9",
       "reasons": [
         "build input"
       ],
-      "bytes": 43447
+      "bytes": 43783
     },
     {
       "path": "src/Desktop/Localization/runtime.json",
@@ -8106,11 +8106,11 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/LogEvidenceCases.cs",
-      "sha256": "f9e425148165945a3528a900584a86b99f85395a63b40ceed83c0812c879f0cf",
+      "sha256": "c6e73301a0a336cf2a832b3169ef409e4adcf7f687c4b59f08a960ca0fb2ef14",
       "reasons": [
         "build input"
       ],
-      "bytes": 7861
+      "bytes": 8744
     },
     {
       "path": "tests/Dustweave.Tests/Cases/LoginIdentityCases.cs",

@@ -36,12 +36,23 @@ internal static class LogEvidenceCases
         var sequence=new List<string>();
         using(var scope=new DailyLogEvidence(root))
         {
-            for(int i=0;i<12;i++) sequence.Add(Step(i==7?"unknown_timeout":"dispatched_only"));
+            var sameTime=DateTime.UtcNow.AddMinutes(-1);
+            for(int i=0;i<12;i++)
+            {
+                sequence.Add(Step(i==7?"unknown_timeout":"dispatched_only"));
+                File.SetLastWriteTimeUtc(Path.Combine(sequence[^1],"intent.json"),sameTime);
+            }
             scope.Complete();
         }
         await DailyLogEvidence.FlushAsync(root);
         Check(Enumerable.Range(4,6).All(i=>File.Exists(Path.Combine(sequence[i],"before.json"))),"recovered failure keeps full evidence plus three preceding and two following steps");
         Check(!File.Exists(Path.Combine(sequence[0],"before.json"))&&!File.Exists(Path.Combine(sequence[11],"before.json")),"unrelated successful steps remain compact");
+        string[] oldSteps=Enumerable.Range(0,12).Select(i=>Step(i==7?"unknown_timeout":"dispatched_only")).ToArray();
+        foreach(string folder in oldSteps)File.SetLastWriteTimeUtc(Path.Combine(folder,"intent.json"),DateTime.UtcNow.Date);
+        DailyJson.Write(Path.Combine(root,"live","log-compaction","legacy-ties.json"),new { complete=true,
+            paths=oldSteps.Reverse().SelectMany(folder=>Directory.GetFiles(folder)).Select(p=>Path.GetRelativePath(root,p)).ToArray() });
+        await DailyLogEvidence.FlushAsync(root);
+        Check(oldSteps.All(folder=>File.Exists(Path.Combine(folder,"before.json"))),"legacy tied timestamps preserve all ambiguous failure neighbors");
         string business=Guid.NewGuid().ToString("N"),businessPath=Path.Combine(root,"live","managed-business",business+".json"),pending;
         DailyJson.Write(businessPath,new { id=business,state="unknown" });
         using(var scope=new DailyLogEvidence(root)){pending=Step("observed_expected_ui","business:"+business+"|confirm");scope.Complete();}

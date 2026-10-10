@@ -1,6 +1,6 @@
 [
   {
-    "Version": "1.1.5-beta",
+    "Version": "1.1.6-beta",
     "Date": "2026-10-10",
     "Notes": {
       "zh-CN": [
@@ -8,6 +8,7 @@
         "新增默认关闭、按账号保存的零收益采购选项，用剩余预算购买折扣后买价等于120%卖价的额外商品，不分摊砍价费，实际费用仍记录。",
         "修复免费抽取首次预览和旧的未提交预览造成的卡点；继续前重新核对免费次数。",
         "周收集在切图操作界面恢复后重新识别出口并接续；诊断导出补齐跑商读取和路线恢复记录。",
+        "修复快速连续操作的落盘时间相同时，错误前后证据保留顺序不准确的问题。",
         "如果自动更新失败，可能需要手动下载完整软件包。"
       ],
       "zh-TW": [
@@ -15,6 +16,7 @@
         "新增預設關閉、按帳號儲存的零收益採購選項，以剩餘預算購買折扣後買價等於120%賣價的額外商品，不分攤議價費，實際費用仍記錄。",
         "修正免費抽取首次預覽和舊的未提交預覽造成的卡點；繼續前重新核對免費次數。",
         "每週收集在切圖操作介面恢復後重新辨識出口並接續；診斷匯出補齊交易讀取與路線恢復記錄。",
+        "修正快速連續操作的寫入時間相同時，錯誤前後證據保留順序不準確的問題。",
         "若自動更新失敗，可能需要手動下載完整軟體套件。"
       ],
       "en-US": [
@@ -22,6 +24,7 @@
         "Adds an opt-in, per-account break-even resale strategy using spare funds. Discounted buy and 120% sale prices must match; the bargaining fee is excluded from the strategy but retained in actual costs.",
         "Fixes first free-draw previews and stale unsubmitted previews, rechecking free counts before continuing.",
         "Weekly collection resumes after the field interface recovers and reacquires exits. Diagnostic exports include trade capture and route recovery evidence.",
+        "Keeps the correct evidence around failures when consecutive steps share the same file timestamp.",
         "If automatic updating fails, download the full package manually."
       ]
     }
