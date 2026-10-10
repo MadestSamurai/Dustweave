@@ -14,14 +14,15 @@ public static class DailyDiagnosticExport
         "live/trade-quote-reads", "live/trade-closes", "trade/diagnostics", "trade/data-preflights", "trade/capture", "trade/executions", "trade/plans",
         "live/travel-diagnostics", "live/route-atlas", "live/server-collection"];
     static readonly string[] Singles = ["suite/last-transition.json", "updates/check-error.json", "updates/install-error.json", "login-identity-error.json",
-        "live/diagnostics/login-request.json", "live/diagnostics/login-verified.json", "live/diagnostics/login-failed.json", "live/trade-failure.json", "live/trade-navigation-cleanup.json"];
+        "live/diagnostics/login-request.json", "live/diagnostics/login-verified.json", "live/diagnostics/login-failed.json", "live/trade-failure.json", "live/trade-navigation-cleanup.json",
+        "live/pass-claims-latest.json", "live/mission-inspection-latest.json"];
     static readonly string[] Rotations = [".1", ".2", ".3", ".previous"];
     static readonly HashSet<string> PrivateNames = new(StringComparer.OrdinalIgnoreCase) { "accounts.json", "preferences.json", "settings.json", "endpoint.json", "session.json", "sessions.json", "command.json" };
     static string Unrotate(string name) => Rotations.FirstOrDefault(s => name.EndsWith(s,StringComparison.OrdinalIgnoreCase)) is { } suffix ? name[..^suffix.Length] : name;
     static bool LogName(string name) => Unrotate(name).EndsWith(".log",StringComparison.OrdinalIgnoreCase) || Unrotate(name).EndsWith(".jsonl",StringComparison.OrdinalIgnoreCase);
     static int Priority(string relative) => Top.Contains(Unrotate(relative)) || Singles.Contains(relative,StringComparer.OrdinalIgnoreCase) || relative.StartsWith("suite/diagnostics/",StringComparison.OrdinalIgnoreCase) ? 0
         : relative.StartsWith("live/steps/",StringComparison.OrdinalIgnoreCase) ? 3
-        : new[]{"live/business/","live/managed-business/","live/trade-quote-reads/","trade/diagnostics/","live/travel-diagnostics/"}.Any(p=>relative.StartsWith(p,StringComparison.OrdinalIgnoreCase)) ? 1 : 2;
+        : new[]{"live/business/","live/managed-business/","live/trade-quote-reads/","trade/diagnostics/","live/travel-diagnostics/","live/diagnostics/failures/"}.Any(p=>relative.StartsWith(p,StringComparison.OrdinalIgnoreCase)) ? 1 : 2;
     static readonly Regex SecretKey = new("password|passwd|credential|authorization|cookie|refresh.?token|access.?token|id.?token|session.?token|auth.?token|private.?key|api.?key|secret|dpapi|modulepayload|sessionblob|^token$|^auth$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     static readonly Regex SecretText = new("(?i)(\\b(?:password|passwd|authorization|cookie|token|credential|api[_-]?key|access[_-]?token|refresh[_-]?token|id[_-]?token|session[_-]?token|auth[_-]?token|secret|private[_-]?key)[\"']?\\s*[=:]\\s*)(?:Bearer\\s+)?(?:\"[^\"]*\"|'[^']*'|[^\\s,;]+)", RegexOptions.CultureInvariant);
     static readonly Regex Bearer = new(@"(?i)\bBearer\s+[A-Za-z0-9_.+/=-]+|\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+", RegexOptions.CultureInvariant);

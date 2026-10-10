@@ -130,6 +130,7 @@ await Group("AccountIdentity", () => Sync(() => AccountIdentityCases.Run(root, c
 await Group("GameInstallation", () => Sync(() => GameInstallationCases.Run(root, cases)));
 await Group("DesktopLaunch", () => DesktopLaunchCases.Run(root, cases));
 await Group("FirstRun", () => FirstRunCases.Run(root, cases));
+await Group("TalentPotion", () => TalentPotionCases.Run(root, cases));
 await Group("Preference", () => Sync(() => PreferenceCases.Run(root, cases)));
 await Group("PackagedUtility", () => Sync(() => PackagedUtilityCases.Run(root, cases)));
 await Group("Plugin", () => Sync(() => PluginCases.Run(root, cases)));
@@ -143,6 +144,7 @@ await Group("Mansion", () => Sync(() => MansionCases.Run(cases)));
 await Group("UnifiedSuite", () => Sync(() => UnifiedSuiteCases.Run(cases)));
 await Group("SuiteOwnerProbe", () => SuiteOwnerProbeCases.Run(cases));
 await Group("Workflow", () => Sync(() => WorkflowCases.Run(cases)));
+await Group("PassRecovery", () => PassRecoveryCases.Run(root, cases));
 await Group("EventTradeBoundary", () => Sync(() => EventTradeBoundaryCases.Run(cases)));
 await Group("ConnectionAccess", () => ConnectionAccessCases.Run(cases));
 await Group("HelperLifetime", () => HelperLifetimeCases.Run(cases));

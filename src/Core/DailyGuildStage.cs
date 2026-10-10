@@ -126,10 +126,22 @@ public sealed class DailyGuildStage : IDailyManagedStage
                 throw new InvalidDataException("Invalid managed guild record");
             bool role = JsonNode.DeepEquals(a[3], b[3]) && JsonNode.DeepEquals(a[4], b[4]) && JsonNode.DeepEquals(old["server"], context["server"]);
             string status = row["entry_status"]!.GetValue<string>();
-            if (status is not ("none" or "prepared" or "dispatching" or "unknown" or "rejected" or "confirmed"))
+            if (status is not ("none" or "prepared" or "dispatching" or "unknown" or "rejected" or "confirmed" or "superseded"))
                 throw new InvalidDataException("Invalid managed guild entry state");
             if (!role || status is not ("prepared" or "dispatching" or "unknown"))
                 continue;
+            bool newCycle = !JsonNode.DeepEquals(old["cycle"], context["cycle"]);
+            bool refresh = row["guild_key"]?.GetValue<string>() == daily.Guild.GuildKey && GuildPolicy.CanRefresh(daily, receipt, now())
+                && DailyData.N(row["started"]) <= receipt!.StartedUtcTicks;
+            if (newCycle || refresh)
+            {
+                row["entry_status"] = "superseded";
+                row["original_entry_status"] = status;
+                row["recovery_reason"] = newCycle ? "new_server_cycle" : "bounded_idempotent_entry_refresh";
+                row["original_outcome"] = "unknown";
+                Save(row);
+                continue;
+            }
             if (receipt != null && (receipt.State is "completed" or "checked_no_grant" or "confirmed_cleanup_pending") && SameScope(receipt, daily) && JsonNode.DeepEquals(old["cycle"], context["cycle"]) && row["guild_key"]?.GetValue<string>() == daily.Guild.GuildKey)
             {
                 row["entry_status"] = "confirmed";
@@ -215,7 +227,8 @@ public sealed class DailyGuildStage : IDailyManagedStage
                     await delay(TimeSpan.FromMilliseconds(200));
                     continue;
                 }
-                var decision = Decide(frame, daily, receipt, recipe, policy);
+                bool refresh = !entry && GuildPolicy.CanRefresh(daily, receipt, now());
+                var decision = Decide(frame, daily, refresh ? null : receipt, recipe, policy);
                 record["decision"] = decision.DeepClone();
                 Save(record);
                 if (decision["wait"] != null)

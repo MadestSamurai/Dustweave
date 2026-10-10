@@ -1,5 +1,6 @@
 using Dustweave;
 using System.Text.Json.Nodes;
+using System.Text.Json;
 static class ManagedInputsCases
 {
     public static async Task Run(string output, List<string> cases)
@@ -19,6 +20,40 @@ static class ManagedInputsCases
             }
             catch (StageHostException e) { found = e.Kind; }
             Check(found == kind, label + " (" + found + ")");
+        }
+        foreach (string mode in new[] { "restarted", "expired", "in-flight", "wrong-owner" })
+        {
+            using var f = new WorkflowHarness(Path.Combine(output, "room-rerun-" + mode), [], ["room.info"], (frame, ctx) => {
+                string player = DailyIdentity.PlayerKey(frame["AccountKey"]!.GetValue<string>(), 42);
+                frame["PlayerKey"] = player; ctx["actor"]![4] = player;
+            });
+            f.Page("MenuUI", "_buttonMyRoom");
+            f.Readings = () => [WorkflowCases.Reading("room.cache", ("OwnerIndex", mode == "wrong-owner" ? 43 : 42))];
+            string id = Guid.NewGuid().ToString("N"), oldPath = Path.Combine(f.Root, "live", "business", id + ".json");
+            var old = new JsonObject {
+                ["id"] = id, ["role"] = "room.info", ["stage"] = "room", ["state"] = "unknown", ["at"] = f.Ticks - (mode == "expired" ? 60 : 1) * TimeSpan.TicksPerSecond,
+                ["account"] = f.Context["actor"]![3]!.DeepClone(), ["player"] = f.Context["actor"]![4]!.DeepClone(),
+                ["server"] = f.Context["server"]!.DeepClone(), ["cycle"] = f.Context["cycle"]!.DeepClone(), ["before"] = f.Evidence(), ["events"] = new JsonArray()
+            };
+            if (mode is "restarted" or "wrong-owner") old["before"]!["Frame"]!["ProcessStartTicks"] = 1;
+            DailyJson.Write(oldPath, old);
+            var report = await new DailyManagedReconciliation(f.Root, f.Driver, ["room.info"], () => false).RunAsync(f.Context);
+            Check(report["unresolved"]!.AsArray().Count == 1 && report["unresolved"]![0]!["recover_in_stage"]!.GetValue<bool>(), "room query uncertainty defers to fresh stage evidence: " + mode);
+            f.OnCommand = _ => {
+                if (DailyNavigationDecision.Types(f.Frame).Contains("MenuUI")) {
+                    f.Event("room.info", "request"); f.Page("MyRoomUI", "_objBackButton");
+                    f.Event("room.info", "response", ("RoomInfo.OwnerIndex", 42));
+                } else f.Page("MenuUI", "_buttonMyRoom");
+            };
+            var room = new DailyRoomStage(f.Root, f.Driver, () => false, () => f.Time, t => { f.Time += t.TotalSeconds; return Task.CompletedTask; });
+            string outcome = "";
+            try { outcome = (await room.ExecuteAsync(f.Context, (_, _, _) => throw new Exception("Unexpected relay")))["state"]!.GetValue<string>(); }
+            catch (StageHostException e) { outcome = e.Kind; }
+            Check(mode == "in-flight" ? outcome == "pending" && f.Box.Commands.Count == 0 : mode == "wrong-owner" ? outcome == "pending" && f.Box.Commands.Count == 1 : outcome == "completed" && f.Box.Commands.Count == 2,
+                "room restart recovery keeps independent native owner proof: " + mode + " -> " + outcome);
+            var retained = DailyJson.TryRead<JsonObject>(oldPath)!;
+            Check(retained["state"]!.GetValue<string>() == (mode == "in-flight" ? "unknown" : "superseded") &&
+                (mode == "in-flight" || retained["reconciliation"]!["original_outcome"]!.GetValue<string>() == "unknown"), "old room request never becomes fabricated success: " + mode);
         }
         JsonObject Page(string name, string field = "_objBackButton")
         {
@@ -158,6 +193,49 @@ static class ManagedInputsCases
             await Reject(() => driver.GuildAsync(entry, guildKey), "guild_rejected", "existing dispatched guild receipt prevents a second entry");
             Check(box.Commands.Count == 1, "guild duplicate guard reaches no native input");
             await Reject(() => driver.GuildAsync(entry, new string('d', 64)), "identity", "guild identity change prevents managed input");
+        }
+        foreach (bool restarted in new[] { false, true })
+        {
+            long baseline = DateTime.UtcNow.Ticks; time = 0;
+            long Now() => baseline + (long)(time * TimeSpan.TicksPerSecond);
+            current = Page("MenuUI", "_buttonGuild");
+            daily.Guild.MenuVisible = true; daily.Guild.GuildVisible = false;
+            daily.Guild.ServerKey = new string('e', 64); context["server"] = daily.Guild.ServerKey;
+            daily.Guild.ServerTicks = baseline; daily.Guild.ResetTicks = baseline + TimeSpan.FromHours(2).Ticks;
+            string restartRoot = Path.Combine(output, "guild-full-refresh-" + restarted);
+            var store = new GuildStore(restartRoot);
+            var original = GuildStore.Intent(Guid.NewGuid().ToString("N"), daily);
+            original.StartedUtcTicks = baseline - TimeSpan.FromSeconds(60).Ticks;
+            original.State = restarted ? "waiting_response" : "unknown";
+            original.RequestCount = 1; original.MayHaveDispatched = true;
+            if (restarted) { original.ProcessStartTicks--; original.ReentryCount = 2; }
+            store.Save(original);
+            string managedId = Guid.NewGuid().ToString("N"), managedPath = Path.Combine(restartRoot, "live", "managed-guild", managedId + ".json");
+            var previousContext = context.DeepClone().AsObject(); if (restarted) previousContext["actor"]![1] = original.ProcessStartTicks;
+            DailyJson.Write(managedPath, new JsonObject { ["schema"]=1, ["id"]=managedId, ["context"]=previousContext, ["guild_key"]=guildKey, ["entry_status"]="unknown", ["started"]=original.StartedUtcTicks - TimeSpan.TicksPerSecond });
+            box = new() { Error = "" };
+            box.Values["live:receipts~old.json"] = JsonSerializer.SerializeToUtf8Bytes(new JsonObject {
+                ["MayHaveDispatched"]=true, ["State"]="unknown", ["Command"]=new JsonObject {
+                    ["AccountKey"]=daily.AccountKey, ["PlayerKey"]=daily.PlayerKey, ["Reason"]="guild-once|today|old",
+                    ["ObservedUtcTicks"]=original.StartedUtcTicks - TimeSpan.TicksPerSecond, ["ExpiresUtcTicks"]=original.StartedUtcTicks + 10 * TimeSpan.TicksPerSecond
+                }
+            });
+            Task<DailyStageFrame> ReadGuild() { current["AtUtcTicks"]=Now(); current["ProcessStartTicks"]=daily.ProcessStartTicks; daily.FrameUtcTicks=Now(); return Task.FromResult(new DailyStageFrame(current.DeepClone().AsObject(), context.DeepClone().AsObject(), daily)); }
+            Task Delay(TimeSpan t) { time += t.TotalSeconds; return Task.CompletedTask; }
+            using var driver = new DailyCommandDriver(restartRoot, box, ReadGuild, () => false, Now, () => time, Delay);
+            driver.Bind(context);
+            box.AfterCommand = command => {
+                if (DailyNavigationDecision.Types(current).Contains("MenuUI")) {
+                    var fresh = GuildStore.Intent(Guid.NewGuid().ToString("N"), daily);
+                    fresh.StartedUtcTicks=Now(); fresh.State="checked_no_grant"; fresh.RequestCount=1;
+                    fresh.ResponseSeen=fresh.CallbackMatched=fresh.MemberMatched=fresh.CacheMatched=fresh.MayHaveDispatched=true;
+                    store.Save(fresh); current=Page("GuildUI"); daily.Guild.MenuVisible=false; daily.Guild.GuildVisible=true;
+                } else { current=Page("MenuUI", "_buttonGuild"); daily.Guild.MenuVisible=true; daily.Guild.GuildVisible=false; }
+            };
+            var stage = new DailyGuildStage(restartRoot, ReadGuild, () => false, now:Now, clock:() => time, delay:Delay);
+            var complete = await stage.ExecuteAsync(context, (_, _, arguments) => driver.GuildAsync(arguments!["action"]!.AsObject(), arguments["guild_key"]!.GetValue<string>()));
+            Check(complete["state"]!.GetValue<string>() == "completed" && box.Commands.Count==2, "full guild refresh traverses workflow, managed input and original-receipt guard: restart=" + restarted);
+            Check(store.Receipt(original.Id)!.State == original.State && DailyJson.TryRead<JsonObject>(managedPath)!["entry_status"]!.GetValue<string>()=="superseded", "guild old response is preserved separately from new completion: restart=" + restarted);
         }
     }
 }

@@ -51,6 +51,12 @@ public static class DailyTradePlan
         finally { if (File.Exists(temp)) File.Delete(temp); }
     }
     public static string SettingsPath(string root, string account) => Path.Combine(root, "trade", "plans", Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(account))).ToLowerInvariant(), "settings.json");
+    public static JsonObject ReadSettings(string root, string account)
+    {
+        string path = SettingsPath(root, account);
+        // A malformed saved file must remain visible as an error, not become an unlimited budget.
+        return DailyTradeOptimizer.Preferences(File.Exists(path) ? JsonNode.Parse(File.ReadAllText(path))!.AsObject() : null);
+    }
     public static string Report(JsonObject p)
     {
         var b = new StringBuilder("# 跑商计划\n\n");
@@ -62,6 +68,8 @@ public static class DailyTradePlan
         if (B(p["settings"]?["include_break_even_resales"]))
             b.AppendLine($"已开启金币成就采购：额外零收益商品 {N(s["break_even_count"]):N0} 个，垫资／预计回款 {N(s["break_even_value"]):N0} 金币。仅比较折扣后买价与120%卖价，不分摊砍价费；实际药耗仍计入上方账目，卖出须等待高价日。").AppendLine();
         if (p["drop_forecast"] is JsonObject drops) b.AppendLine($"掉落预测：已知周收集路线 {Rows(drops["maps"]).Length} 张地图，按静态奖励权重计算期望；仅影响材料分配，不允许使用未到账物品。");
+        if (S(p["forecast"]?["terminal_method"]) == "bounded_batch_residue_joint_supply_duals")
+            b.AppendLine("预测窗口末尾不足一份配方的食材，会按已知后续供给估计用途；该估值只用于分配，不加入本轮增益或金币余额。每次以当前库存重新计算，不依赖历史保留记录。");
         foreach (var warning in Rows(p["warnings"]))
             b.AppendLine(S(warning["message"]));
         b.AppendLine(B(p["solver"]!["optimal"]) ? "当前库存与29天供给预测模型已求到最优；这不代表全年或随机掉落下的最优保证。" : "当前可行方案，尚未证明最优。");

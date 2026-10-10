@@ -16,6 +16,25 @@ public sealed class DailyWeeklyRoute
     private readonly DailyWorkflow w; private readonly DailyFieldRoute route; private readonly Action<string, JsonObject> progress;
     private readonly Dictionary<string, HashSet<(long Pack, long Map)>> known = Stages.ToDictionary(s => s, _ => new HashSet<(long, long)>()), done = Stages.ToDictionary(s => s, _ => new HashSet<(long, long)>());
     private readonly HashSet<(long, long)> deferred = [], reentered = []; private HashSet<string> active = []; private DailyWeeklyNpc? npc; private DailyCollectionNavigator? nav; private JsonObject? checkpoint; private string week = ""; private long pack; private bool entered;
+    private bool catalogReady;
+    public JsonObject VerifiedResults()
+    {
+        var result = new JsonObject();
+        if (!catalogReady) return result;
+        foreach (string stage in active)
+        {
+            bool complete = stage == "weekly_npc"
+                ? npc?.Data != null && N(npc.Data.Native["Limit"]) > 0 && N(npc.Data.Native["Completed"]) == N(npc.Data.Native["Limit"])
+                : known[stage].Count > 0 && known[stage].SetEquals(done[stage]);
+            if (complete)
+            {
+                result[stage] = Finish(stage);
+                result[stage]!["week"] = week;
+                result[stage]!["verified_maps"] = Array(done[stage].OrderBy(p => p.Pack).ThenBy(p => p.Map).Select(p => (JsonNode)new JsonArray(p.Pack, p.Map)));
+            }
+        }
+        return result;
+    }
     public DailyWeeklyRoute(DailyWorkflow workflow, Action<string, JsonObject>? progress = null)
     {
         w = workflow;
@@ -230,6 +249,12 @@ public sealed class DailyWeeklyRoute
         week = S(R(evidence, "mainline.reset", "GetWeeklyResetTime().Ticks"));
         Require(week.Length > 0, "缺少周周期");
         var packs = route.Catalog.AvailablePacks(evidence);
+        foreach (long p in packs)
+        {
+            if (active.Contains("weekly_mainline")) known["weekly_mainline"].UnionWith(route.Catalog.Maps(p).Select(m => (p, m)));
+            if (active.Contains("weekly_steal")) known["weekly_steal"].UnionWith(route.Catalog.StealMaps(p).Select(m => (p, m)));
+        }
+        catalogReady = true;
         void EmitAll(string place)
         {
             foreach (string s in selected)

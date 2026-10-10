@@ -24,7 +24,7 @@ public sealed record QueuePlanRequest(string Account, IReadOnlyList<string> Task
 public sealed record QueueRetryRequest(string Account, string Record, IReadOnlyList<string> Tasks);
 public static class DailyQueueRetry
 {
-    public static bool CanSelect(QueueStage stage) => stage.State is "pending" or "partial" or "blocked" or "recovery_required";
+    public static bool CanSelect(QueueStage stage) => stage.Task != DailyTalentPotions.Stage && stage.State is ("pending" or "partial" or "blocked" or "recovery_required");
     public static string[] Validate(QueueView view, string account, QueueRetryRequest request)
     {
         if (!DailyProfiles.ValidKey(account) || account != request.Account || view.Account != account || view.Record.Length == 0 || view.Record != request.Record)
@@ -107,6 +107,7 @@ public sealed class PackagedDailyQueueExecutor(string directory) : IDailyQueueEx
         bool Stopped() => File.Exists(Path.Combine(root, "queue-stop"));
         var game = new DailyGameHost(root).Find() ?? throw new StageHostException("identity", "游戏已退出，没有建立执行连接。");
         using var driver = new DailyCommandDriver(root, new DailyPipeMailbox(root, game), observation.ReadFrameAsync, Stopped);
+        driver.PotionPolicy = () => new DailyPreferenceStore(root).Read(account).General;
         var navigation = new DailyStageNavigation(observation.ReadFrameAsync, Stopped);
         var extension = DailyExtensionLoader.Load(DailyPlugin.Current);
         var proofs = DailyWorkflowRegistry.Proofs(extension);

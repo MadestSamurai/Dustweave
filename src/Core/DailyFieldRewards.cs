@@ -187,7 +187,7 @@ public static class DailyCafeteria
                     operations.Add(op["id"]!.DeepClone());
                     last = w.Time;
                 }
-                catch (DailyStepException ex) when (ex.Kind == "rejected" && !ex.Submitted && (ex.Message.Contains("screen_changed", StringComparison.Ordinal) || ex.Message.Contains("target_unavailable", StringComparison.Ordinal) || role == "cafeteria.event" && ex.RejectionCode == "target_missing")) { await w.Delay(200); continue; }
+                catch (DailyStepException ex) when (ex.PresentationChanged && (ex.RejectionCode is "screen_changed" or "target_unavailable" || role == "cafeteria.event" && ex.RejectionCode == "target_missing")) { await w.Delay(200); continue; }
             }
             else if (count >= limit && !pending)
             {

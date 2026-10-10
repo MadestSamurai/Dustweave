@@ -62,6 +62,8 @@ public sealed class DailyWorkflowRegistry
         for (int i = 0; i < result.Count; i++)
         {
             var proof = result[i];
+            if (proof.Role == "trade.buy")
+                result[i] = proof with { ScopeStages = scope => S(scope["action"]) == "queue_potion_refill" ? ["*"] : proof.Stages };
             if (proof.Role == "mirror.end")
                 result[i] = proof with
                 {

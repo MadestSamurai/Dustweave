@@ -127,7 +127,9 @@ public sealed class DailyManagedReconciliation
                 op["recovery_error"] = last;
                 DailyJson.Write(path, op);
                 entry["reason"] = last;
-                entry["recover_in_stage"] = false;
+                // room.info is a non-consuming read/visit. Its old response stays
+                // unknown, but must not permanently block a fresh guarded visit.
+                entry["recover_in_stage"] = role == "room.info";
                 unresolved.Add(entry);
             }
         }

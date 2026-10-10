@@ -20,6 +20,12 @@ static class SelfTest {
    f.Surfaces=f.Surfaces.Append(new Surface{Id=100,Type="BattleUI_FieldBattle"}).ToArray();Check(LivePolicy.Gate(c,f,now,false)!="","battle retains ownership");
   }
   Check(LiveProtocol.IsSquareScene("Map3009_001"),"plaza routes permit A*");
+  {
+   var f=Frame();var c=Command();var u=f.Surfaces[0];u.Type="MessagePopupUI";u.NativeContext=BackgroundErrorPolicy.RequestContext;u.Text=new[]{"網路請求超時請檢查網路連接狀態。"};u.Targets[0].Field="_buttonOK";c.Kind="background_error_ack";c.TargetId=0;
+   Check(LivePolicy.Gate(c,f,now,false)=="","callback-free network acknowledgement accepted");
+   u.NativeContext="";Check(LivePolicy.Gate(c,f,now,false)!="","network text cannot authorize a retry callback");
+   u.NativeContext=BackgroundErrorPolicy.RequestContext;u.Text=new[]{"Unknown confirmation"};Check(LivePolicy.Gate(c,f,now,false)!="","unknown confirmation still blocked");
+  }
   foreach(var scene in new[]{"Map0001_001","Map0006_008","Map1003_001","Map30090_001","",null})
    Check(!LiveProtocol.IsSquareScene(scene),"A* never handles cartridge or unknown scene: "+scene);
   {

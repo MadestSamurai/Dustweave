@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-10T09:36:24.4728365+00:00",
+  "generatedUtc": "2026-10-10T17:36:24.4728365+08:00",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -46,6 +46,14 @@
     "tools/OtaChannel/Dustweave.OtaChannel.csproj"
   ],
   "files": [
+    {
+      "reasons": [
+        "build input"
+      ],
+      "sha256": "c7bdf3e493fcbc61f55621c56081ba1e678fc1c5b0c58aec4cfc6e237f009551",
+      "bytes": 9739,
+      "path": "tests/Dustweave.Tests/Cases/PassRecoveryCases.cs"
+    },
     {
       "reasons": [
         "build input"
@@ -8815,6 +8823,30 @@
         "build input"
       ],
       "bytes": 1102
+    },
+    {
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 4389,
+      "path": "src/Core/DailyTalentPotions.cs",
+      "sha256": "e3d1102a3043253ac87b5db41ce1f1dbfd16b6b5ea6c3966435d81c320cc5cac"
+    },
+    {
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 4508,
+      "path": "src/Connection/TalentPotionNative.cs",
+      "sha256": "1f7968c17d46f3c67720b1af6759c02ea056548d63052d0f41d896f9e96196a5"
+    },
+    {
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 5205,
+      "path": "tests/Dustweave.Tests/Cases/TalentPotionCases.cs",
+      "sha256": "279f25c069aa15458ad3d1a357b99fb894fb7045d9ebbe8deeec4028c4b04218"
     }
   ],
   "publicReleaseApproved": false,

@@ -24,6 +24,19 @@ internal static class DiagnosticExportCases
             Check(all.Contains("incomplete JSON line omitted"),"in-flight JSON line is not copied unredacted");
         }
         byte[] before=File.ReadAllBytes(destination);bool rejected=false;
+        string failureRoot=Path.Combine(output,"diagnostic-failure-source");
+        var trail = new DailyDiagnosticTrail(failureRoot, () => 1, () => DateTime.UtcNow.Ticks, 1);
+        trail.Observe(CommandDriverCases.Frame());
+        for (int i=0;i<20;i++) trail.Failure("failure", new System.Text.Json.Nodes.JsonObject { ["error"]="synthetic popup failure" });
+        string faultDirectory=Path.Combine(failureRoot,"live","diagnostics","failures");
+        Check(Directory.GetFiles(faultDirectory).Length==1,"repeated identical failures retain one bounded snapshot");
+        foreach (string name in new[] {"pass-claims-latest.json", "mission-inspection-latest.json"})
+            File.WriteAllText(Path.Combine(failureRoot,"live",name),"{\"state\":\"partial\",\"pass_issues\":[{\"pass_id\":501,\"detail\":\"synthetic incompatible pass\"}]}");
+        var withFault=await DailyDiagnosticExport.CreateAsync(failureRoot,Path.Combine(output,"with-failure.zip"),"","test");
+        using(var archive=ZipFile.OpenRead(withFault.Path)) {
+            Check(archive.Entries.Any(e=>e.FullName.StartsWith("logs/main/live/diagnostics/failures/")),"failure snapshot survives observation rotation and is exported");
+            Check(new[]{"pass-claims-latest.json", "mission-inspection-latest.json"}.All(n=>archive.GetEntry("logs/main/live/"+n)!=null),"partial pass and mission inspection results survive export");
+        }
         try{await DailyDiagnosticExport.CreateAsync(root,destination,"","1.1.0-beta");}catch(IOException){rejected=true;}
         Check(rejected&&before.SequenceEqual(File.ReadAllBytes(destination)),"existing export is preserved");
         using(var cancelled=new CancellationTokenSource()){cancelled.Cancel();try{await DailyDiagnosticExport.CreateAsync(root,Path.Combine(output,"cancelled.zip"),"","1.1.0-beta",cancelled.Token);}catch(OperationCanceledException){}Check(!File.Exists(Path.Combine(output,"cancelled.zip")),"cancelled export leaves no archive");}

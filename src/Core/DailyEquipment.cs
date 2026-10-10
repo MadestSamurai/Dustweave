@@ -139,6 +139,7 @@ public static class DailyEquipment
         await w.Step("MenuUI", operation: "equipment_craft_menu", expect: "EquipmentMakingSelectUI", reason: "打开原生装备制作");
         await w.Step("EquipmentMakingSelectUI", operation: "equipment_craft_preview", expect: "EquipmentMakingUI", reason: "预览任务需要的一把N剑");
         var e = await w.WaitEvidence(Prefixes, x => N(R(x, "equipment.craft_ui", "_craftMaterial.craftCount")) == 1);
+        if (w.Driver.PotionPolicy != null) await w.Driver.RequirePotionsAsync(N(R(e, "equipment.craft_ui", "_craftButton.UseResourceCount")));
         Require(N(R(e, "equipment.craft_ui", "ὤὭὠὥὤὠὡὣὣὠὣ.ὫὮὩὬὤὫὮὨὢὯὬ.Id")) == 1 && !B(R(e, "equipment.craft_ui", "_craftButton.objDisableButton.activeSelf")), "N sword recipe unavailable");
         var scope = O(("recipe", 1), ("count", 1), ("mission", mission), ("equipment_definitions", w.Table("policy/EquipmentTable.json").Where(r => N(r["grade"]) == 1 && N(r["slotType"]) == 0).ToArray()));
         if (mission.HasValue)
@@ -358,7 +359,8 @@ public static class DailyEquipment
         }
         await w.Home("equipment");
         await w.Refresh();
-        var reports = await DailyMissionInspection.Read(w);
+        var inspection = await DailyMissionInspection.Inspect(w);
+        var reports = Rows(inspection["missions"]);
         var settings = new EquipmentPreferences { Enabled = stage != "equipment_refine" && w.Settings.Equipment.Enabled, RefineEnabled = stage != "equipment_recycle" && w.Settings.Equipment.RefineEnabled, KeepFiveStarSr = w.Settings.Equipment.KeepFiveStarSr, EnhanceLevel = w.Settings.Equipment.EnhanceLevel, CraftFallback = w.Settings.Equipment.CraftFallback, RefineInstance = w.Settings.Equipment.RefineInstance };
         bool Needed(int type) => reports.Any(r => S(r["status"]) == "pending" && N(r["condition_type"]) == type && N(r["condition_subtype"]) == 0 && (r["params"] as JsonArray)?.Count == 0);
         var inventoryEvidence = await w.Evidence(Prefixes);
@@ -380,12 +382,15 @@ public static class DailyEquipment
         }
         if (operations.Count > 0)
             await DailyResults.Cleanup(w);
-        return O(("state", plan["pending"]!.AsArray().Count > 0 ? "partial" : operations.Count > 0 ? "completed" : "skipped"), ("operations", operations), ("plan", plan), ("engine", "dotnet-equipment-v1"));
+        var summary = O(("state", S(inspection["state"]) == "partial" || plan["pending"]!.AsArray().Count > 0 ? "partial" : operations.Count > 0 ? "completed" : "skipped"), ("operations", operations), ("plan", plan), ("inspection", inspection), ("engine", "dotnet-equipment-v1"));
+        if (S(inspection["state"]) == "partial") summary["reason"] = "已处理可确认的装备任务；部分通行证任务待检查";
+        return summary;
     }
 }
 public static class DailyMissionInspection
 {
-    public static async Task<JsonObject[]> Read(DailyWorkflow w)
+    public static async Task<JsonObject[]> Read(DailyWorkflow w) => Rows((await Inspect(w))["missions"]);
+    public static async Task<JsonObject> Inspect(DailyWorkflow w)
     {
         await w.Refresh();
         var reports = new List<JsonObject>();
@@ -400,6 +405,8 @@ public static class DailyMissionInspection
         await w.Step("MissionUI", "_objBackButton", expect: "MenuUI");
         var passes = await DailyPasses.Run(w, false);
         reports.AddRange(Rows(passes["reports"]).SelectMany(r => Rows(r["missions"])));
-        return reports.ToArray();
+        var result = O(("state", passes["state"]), ("missions", reports.ToArray()), ("pass_issues", passes["issues"]));
+        w.Save("mission-inspection-latest.json", result);
+        return result;
     }
 }

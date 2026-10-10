@@ -1,4 +1,5 @@
 using System.IO;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -34,6 +35,10 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly CheckBox mainline = Check("周收集"), weeklyNpc = Check("周NPC任务"), npcHunting = Check("允许接取必须去狩猎场的任务"), weeklySteal = Check("每周偷窃"), walkCollect = Check("步行收集（不使用吸收）"), monsterHunt = Check("魔兽最高档快速战斗"), fishing = Check("周常钓鱼"), roomLikes = Check("周常小屋点赞");
     private readonly CheckBox events = Check("活动奖励"), eventMissions = Check("领取活动任务与活动代币"), roulette = Check("使用免费次数和已有转盘券"), exchange = Check("活动代币最大批量兑换"), quiz = Check("自动完成已开放答题"), dice = Check("自动使用现有活动骰子"), puzzle = Check("拼图板使用现有代币批量翻开");
     private readonly CheckBox trade = Check("自动跑商、料理与120%售卖");
+    private readonly TextBox tradeReserve = new(), tradeMaximum = new();
+    private readonly TextBox potionReserve = new(), potionTarget = new();
+    private readonly CheckBox potionRefill = Check("药不足时自动补药");
+    private readonly CheckBox tradeBreakEven = Check("购买零收益商品（金币成就）");
     private StackPanel section = new();
     private readonly TextBlock status = new() { TextWrapping = TextWrapping.Wrap, Margin = new(0, 8, 0, 0) };
     private readonly ComboBox refineChoice = new() { DisplayMemberPath = "Label", SelectedValuePath = "Instance", MinWidth = 210, MaxWidth = 660 };
@@ -121,6 +126,19 @@ public sealed class DailyPreferencesPanel : UserControl
         stone.SelectedValuePath = "Key";
         section = form;
         Note("勾选要做的环节，展开调整参数。设置只影响所选账号。");
+        var generalBody = new StackPanel { Margin = new(24, 8, 12, 16) };
+        var generalTitle = Label("整体设置"); generalTitle.FontWeight = FontWeights.SemiBold;
+        var general = new Border { BorderBrush = (Brush)Application.Current.FindResource("Line"), BorderThickness = new(0, 0, 0, 1), Child = new Expander { Header = generalTitle, Content = generalBody, IsExpanded = true, Margin = new(0, 8, 0, 8), Style = (Style)Application.Current.FindResource("SettingsExpander") } };
+        form.Children.Add(general); sections.Add((general, "整体设置", "天赋药保留下限与自动补药")); section = generalBody;
+        Row("天赋药保留下限", potionReserve);
+        Note("默认0。只允许消耗保留量以外的天赋药；不足时在队列中说明受限任务，不影响其他可执行任务。仅适用于日常队列。");
+        section.Children.Add(potionRefill);
+        Row("补药至", potionTarget);
+        Note("默认不购买。开启后，药不足时临时加入补药环节；须已完成本周至少一条NPC任务，并确认广场商人的天赋药享九折。补至目标数量后接续任务。");
+        potionRefill.Checked += (_, _) => potionTarget.IsEnabled = true;
+        potionRefill.Unchecked += (_, _) => potionTarget.IsEnabled = false;
+        L.Bind(potionReserve, System.Windows.Automation.AutomationProperties.NameProperty, () => L.Translate("天赋药保留下限"));
+        L.Bind(potionTarget, System.Windows.Automation.AutomationProperties.NameProperty, () => L.Translate("补药至"));
         Stage(guild, "公会签到", "签到与领取可用奖励");
         Stage(room, "小屋奖励", "领取可用的小屋奖励");
         Stage(income, "经营一键领取", "一起领取餐厅、鱼笼和领地工人收益；鱼笼沿用游戏中的自动出售设置");
@@ -196,10 +214,18 @@ public sealed class DailyPreferencesPanel : UserControl
         Stage(roomLikes, "周常小屋点赞", "随机推荐中优先选择赞数最少的三个，按本周任务进度补足");
         Stage(fishing, "周常钓鱼", "使用独立钓鱼组件，完成周任务即停止；不出售、不使用鱼饵");
         Stage(weeklySichuan, "周常连连看", "完成一把常规未通关关卡；全部通关时重玩第1关，本周任务已完成则跳过");
-        Stage(trade, "跑商、料理与高价售卖", "采集后统一分配库存；先采购，再烹饪，最后仅按120%报价售卖", expanded: true);
-        Note("保留金币、垫资上限及原料保留量沿用本账号跑商计划设置。低于1000万会提示30天周转；不会出售装备、制作材料或属性石。完成当天交易后重复运行不再花费。");
-        var tradeButton = LocalButton("预览计划与跑商设置"); tradeButton.HorizontalAlignment = HorizontalAlignment.Left;
-        tradeButton.Click += (_, _) => { if (account.Length == 0) return; var trade = new Window { Title = L.Translate("跑商计划"), Width = 1060, Height = 780, MinWidth = 760, MinHeight = 560, Owner = Window.GetWindow(this), Content = new TradePlanPanel(dataRoot, account, allowGame), WindowStartupLocation = WindowStartupLocation.CenterOwner }; DailyDialogs.Prepare(trade); trade.Show(); };
+        Stage(trade, "跑商、料理与高价售卖", "采集后统一分配库存；先采购，再烹饪，最后仅按120%报价售卖", expanded: true, editableWhenOff: true);
+        Row("保留金币", tradeReserve);
+        Row("本轮最多垫资", tradeMaximum);
+        L.Bind(tradeReserve, System.Windows.Automation.AutomationProperties.NameProperty, "trade.reserve");
+        L.Bind(tradeMaximum, System.Windows.Automation.AutomationProperties.NameProperty, "trade.budget");
+        Note("垫资上限留空表示不限额；保留金币不会用于本轮采购。");
+        section.Children.Add(tradeBreakEven);
+        Note("默认关闭。开启后，用剩余预算购买折扣后买价等于120%卖价的额外商品，不分摊砍价费；仍须等到高价日卖出。");
+        Note("设置仅用于当前账号。低于1000万会提示30天周转；不会出售装备、制作材料或属性石。");
+        var tradeButton = LocalButton("预览跑商计划"); tradeButton.HorizontalAlignment = HorizontalAlignment.Left;
+        tradeButton.Click += (_, _) => { if (account.Length == 0 || !Save()) return; var trade = new Window { Title = L.Translate("跑商计划"), Width = 1060, Height = 780, MinWidth = 760, MinHeight = 560, Owner = Window.GetWindow(this), Content = new TradePlanPanel(dataRoot, account, allowGame), WindowStartupLocation = WindowStartupLocation.CenterOwner }; DailyDialogs.Prepare(trade); trade.Show(); };
+        L.Bind(tradeButton, FrameworkElement.ToolTipProperty, "prefs.trade_preview_help");
         section.Children.Add(tradeButton);
         Stage(events, "活动游戏与领奖", "自动检查当前活动；批量兑换，整页完成后继续下一页");
         section.Children.Add(eventMissions);
@@ -231,6 +257,14 @@ public sealed class DailyPreferencesPanel : UserControl
         }
         foreach (var c in new[] { tacticsSearch, eventSearch, chapter, stone, enhance, refineChoice, multiplier })
             c.SelectionChanged += (_, _) => MarkDirty();
+        tradeReserve.TextChanged += (_, _) => MarkDirty();
+        tradeMaximum.TextChanged += (_, _) => MarkDirty();
+        potionReserve.TextChanged += (_, _) => MarkDirty();
+        potionTarget.TextChanged += (_, _) => MarkDirty();
+        potionRefill.Checked += (_, _) => MarkDirty();
+        potionRefill.Unchecked += (_, _) => MarkDirty();
+        tradeBreakEven.Checked += (_, _) => MarkDirty();
+        tradeBreakEven.Unchecked += (_, _) => MarkDirty();
         form.IsEnabled = false;
         WeakEventManager<DailyLanguage, EventArgs>.AddHandler(L, nameof(DailyLanguage.Changed), LanguageChanged);
     }
@@ -368,6 +402,10 @@ public sealed class DailyPreferencesPanel : UserControl
         {
             loaded = store.Read(account);
             updating = true;
+            potionReserve.Text = loaded.General.TalentPotionReserve.ToString(CultureInfo.InvariantCulture);
+            potionTarget.Text = loaded.General.TalentPotionTarget.ToString(CultureInfo.InvariantCulture);
+            potionRefill.IsChecked = loaded.General.RefillTalentPotions;
+            potionTarget.IsEnabled = loaded.General.RefillTalentPotions;
             hunt.IsChecked = loaded.Hunt.Enabled;
             gold.IsChecked = loaded.Hunt.FarmGold;
             slime.IsChecked = loaded.Hunt.FarmSlime;
@@ -407,6 +445,10 @@ public sealed class DailyPreferencesPanel : UserControl
             quickFriendship.IsChecked = loaded.Friendship.Quick;
             friendship.IsChecked = loaded.Friendship.Enabled;
             trade.IsChecked = loaded.Trade.Enabled;
+            var tradeSettings = DailyTradePlan.ReadSettings(dataRoot, account);
+            tradeReserve.Text = DailyData.N(tradeSettings["reserve_gold"]).ToString(CultureInfo.InvariantCulture);
+            tradeMaximum.Text = tradeSettings["max_spend"] == null ? "" : DailyData.N(tradeSettings["max_spend"]).ToString(CultureInfo.InvariantCulture);
+            tradeBreakEven.IsChecked = tradeSettings["include_break_even_resales"]!.GetValue<bool>();
             monsterHunt.IsChecked = loaded.MonsterHunt.Enabled;
             fishing.IsChecked = loaded.Weekly.Fishing;
             roomLikes.IsChecked = loaded.Weekly.RoomLikes;
@@ -471,6 +513,17 @@ public sealed class DailyPreferencesPanel : UserControl
             return false;
         try
         {
+            var general = new GeneralPreferences { TalentPotionReserve = PotionAmount(potionReserve), TalentPotionTarget = PotionAmount(potionTarget), RefillTalentPotions = potionRefill.IsChecked == true };
+            general.Validate();
+            long keep = TradeAmount(tradeReserve);
+            long? limit = tradeMaximum.Text.Trim().Length == 0 ? null : TradeAmount(tradeMaximum);
+            // Merge the visible fields only: retain existing ingredient reserves and other policy.
+            var tradeSettings = DailyTradePlan.ReadSettings(dataRoot, account);
+            var previousTradeSettings = tradeSettings.ToJsonString();
+            tradeSettings["reserve_gold"] = keep;
+            tradeSettings["max_spend"] = limit;
+            tradeSettings["include_break_even_resales"] = tradeBreakEven.IsChecked == true;
+            loaded.General = general;
             loaded.Hunt.Enabled = hunt.IsChecked == true;
             loaded.Hunt.FarmGold = gold.IsChecked == true;
             loaded.Hunt.FarmSlime = slime.IsChecked == true;
@@ -531,11 +584,32 @@ public sealed class DailyPreferencesPanel : UserControl
             loaded.Events.Roulette = roulette.IsChecked == true;
             loaded.Events.Exchange = exchange.IsChecked == true;
             store.Save(account, loaded);
+            if (tradeSettings.ToJsonString() != previousTradeSettings)
+                DailyJson.Write(DailyTradePlan.SettingsPath(dataRoot, account), tradeSettings);
             dirty = false;
             L.Text(status, "prefs.saved");
             return true;
         }
         catch (Exception ex) { DailyUiText.Error(status, ex, "保存失败："); return false; }
+    }
+    private static long PotionAmount(TextBox field)
+    {
+        if (!long.TryParse(field.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out long value) || value > int.MaxValue)
+        {
+            field.BringIntoView(); field.Focus();
+            throw new InvalidDataException("天赋药数量须为非负整数；原输入已保留。");
+        }
+        return value;
+    }
+    private static long TradeAmount(TextBox field)
+    {
+        if (!long.TryParse(field.Text.Trim().Replace(",", ""), NumberStyles.None, CultureInfo.InvariantCulture, out long value) || value > 1_000_000_000_000)
+        {
+            field.BringIntoView();
+            field.Focus();
+            throw new InvalidDataException("金币设置须为0至一万亿之间的整数；原输入已保留。");
+        }
+        return value;
     }
     internal void CheckSearchForSmoke()
     {
@@ -626,6 +700,52 @@ public sealed class DailyPreferencesPanel : UserControl
             if (before != Snapshot() || !ReferenceEquals(originalItems, priority.ItemsSource) || !ReferenceEquals(originalGear, refineChoice.ItemsSource))
                 throw new Exception("Language change lost unsaved preferences, filter or stable choice IDs");
         }, () => { updating = true; multiplier.SelectedItem = oldMultiplier; gold.IsChecked = oldGold; filter.Text = oldFilter; dirty = oldDirty; updating = false; });
+    }
+    internal Action TradeSettingsProbeForSmoke()
+    {
+        if (allowGame) throw new Exception("Trade settings checks require an isolated panel");
+        string first = new string('a', 64), second = new string('b', 64);
+        DailyJson.Write(DailyTradePlan.SettingsPath(dataRoot, first), new {
+            enabled = true, reserve_gold = 12000L, max_spend = (long?)null,
+            reserve_items = new Dictionary<string, long> { ["777"] = 18 }
+        }); // Legacy settings without the optional strategy must still load.
+        DailyJson.Write(DailyTradePlan.SettingsPath(dataRoot, second), new {
+            enabled = false, reserve_gold = 700L, max_spend = (long?)null, reserve_items = new Dictionary<string, long>()
+        });
+        SetAccounts([new(1, "Demo trader", first, "***001", true, true, ""), new(2, "Second account", second, "***002", true, false, "")]);
+        if (tradeReserve.Text != "12000" || tradeMaximum.Text != "" || tradeBreakEven.IsChecked == true)
+            throw new Exception("Legacy trade settings did not load in daily preferences");
+        if (trade.IsChecked == true || !tradeReserve.IsEnabled || !tradeMaximum.IsEnabled || !tradeBreakEven.IsEnabled)
+            throw new Exception("Trade preferences require enabling automation before editing");
+        tradeReserve.Text = "42,000"; tradeMaximum.Text = "210000"; tradeBreakEven.IsChecked = true;
+        if (!Save()) throw new Exception("Trade settings save failed");
+        var saved = DailyTradePlan.ReadSettings(dataRoot, first);
+        if (DailyData.N(saved["reserve_gold"]) != 42000 || DailyData.N(saved["max_spend"]) != 210000 ||
+            !DailyData.B(saved["include_break_even_resales"]) || !DailyData.B(saved["enabled"]) || DailyData.N(saved["reserve_items"]?["777"]) != 18)
+            throw new Exception("Trade settings save lost budget, strategy or existing policy");
+        tradeReserve.Text = "43000";
+        accounts.SelectedValue = second; // Account navigation saves the previous draft.
+        if (DailyData.N(DailyTradePlan.ReadSettings(dataRoot, first)["reserve_gold"]) != 43000 || tradeReserve.Text != "700" || tradeMaximum.Text != "" || tradeBreakEven.IsChecked == true)
+            throw new Exception("Switching account mixed trade budgets or lost the draft");
+        tradeMaximum.Text = "0";
+        if (!Save() || DailyTradePlan.ReadSettings(dataRoot, second)["max_spend"] == null)
+            throw new Exception("Zero spending was incorrectly treated as unlimited");
+        string prior = File.ReadAllText(DailyTradePlan.SettingsPath(dataRoot, second));
+        tradeMaximum.Text = "invalid";
+        accounts.SelectedValue = first;
+        if (account != second || tradeMaximum.Text != "invalid" || File.ReadAllText(DailyTradePlan.SettingsPath(dataRoot, second)) != prior)
+            throw new Exception("Invalid trade budget was discarded or persisted while changing account");
+        tradeMaximum.Text = "";
+        accounts.SelectedValue = first;
+        if (DailyTradePlan.ReadSettings(dataRoot, second)["max_spend"] != null || tradeReserve.Text != "43000" || tradeMaximum.Text != "210000" || tradeBreakEven.IsChecked != true)
+            throw new Exception("Saved trade settings did not round-trip by account");
+        tradeReserve.Text = "44000";
+        filter.Text = "跑商";
+        var firstFile = File.ReadAllText(DailyTradePlan.SettingsPath(dataRoot, first));
+        return () => {
+            if (!dirty || tradeReserve.Text != "44000" || tradeMaximum.Text != "210000" || tradeBreakEven.IsChecked != true || firstFile != File.ReadAllText(DailyTradePlan.SettingsPath(dataRoot, first)))
+                throw new Exception("Language or theme change overwrote a trade draft");
+        };
     }
     public bool SavePending() => !dirty || Save();
 }

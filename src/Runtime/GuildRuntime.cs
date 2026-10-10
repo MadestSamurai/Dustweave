@@ -78,6 +78,7 @@ namespace BD2Daily.Runtime {
    bool bound=GuildPolicy.Matches(c,snapshot,lease,now)&&incoming.State=="prepared"&&!incoming.MayHaveDispatched&&incoming.AccountKey==c.AccountKey&&incoming.PlayerKey==c.PlayerKey&&incoming.GuildKey==c.GuildKey&&incoming.ServerKey==c.ServerKey&&incoming.CycleKey==c.CycleKey;
    var reason=bound?GuildPolicy.Gate(snapshot,store.Prior(snapshot,c.Id),now):"操作身份、控制权或有效期不匹配";
    if(reason.Length>0){incoming.State="rejected";incoming.Message=reason;store.Save(incoming);return;}
+   var previous=store.Prior(snapshot,c.Id);incoming.ReentryCount=GuildPolicy.NextReentry(snapshot,previous);
    receipt=incoming;command=c;requestCallback=null;lastDecision="";foreach(var frame in history)store.Append(receipt.Id,new GuildTrace{Event="before_snapshot",Snapshot=frame});popupClicked=false;backClicked=false;observedGuild=false;responseAt=0;
    var menu=Uis().OfType<MenuUI>().Single();var button=(GameObject)Field("Menu.Guild",menu);
    receipt.MayHaveDispatched=true;receipt.State="waiting_response";receipt.Message="已记录进入公会意图，等待服务器结果";
@@ -88,8 +89,9 @@ namespace BD2Daily.Runtime {
   private static void BeforeInfo(Action __0){var a=active;if(a==null)return;try{a.RecordRequest(__0);}catch(Exception e){a.failure="请求采证失败："+e.GetBaseException().Message;} }
   private void RecordRequest(Action callback){
    if(snapshot==null||snapshot.Guild==null||!snapshot.Guild.InGuild||snapshot.State!="identified"||snapshot.FrameUtcTicks<DateTime.UtcNow.AddSeconds(-5).Ticks)return;
-   if(receipt==null||(GuildPolicy.Terminal(receipt.State)&&receipt.State!="unknown")){
-    receipt=GuildStore.Intent(Guid.NewGuid().ToString("N"),snapshot);receipt.Passive=true;command=null;receipt.State="waiting_response";popupClicked=false;backClicked=false;responseAt=0;
+   if(receipt==null||GuildPolicy.Terminal(receipt.State)){
+    var previous=store.Prior(snapshot);
+    receipt=GuildStore.Intent(Guid.NewGuid().ToString("N"),snapshot);receipt.ReentryCount=GuildPolicy.NextReentry(snapshot,previous);receipt.Passive=true;command=null;receipt.State="waiting_response";popupClicked=false;backClicked=false;responseAt=0;
    }
    if(receipt.RequestCount==0)requestCallback=callback;else requestCallback=null;
    receipt.MayHaveDispatched=true;receipt.RequestCount++;Save("request_observed");

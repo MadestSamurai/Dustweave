@@ -9,6 +9,12 @@ public sealed class DailyStepException(string kind, string message, bool submitt
 {
     public string Kind { get; } = kind;
     public bool Submitted { get; } = submitted;
+    public DailyPotionLimit? PotionLimit { get; init; }
+    // Mailbox submission is not execution. Only an explicit matching native
+    // rejection can clear this flag after submission.
+    public bool MayHaveDispatched { get; init; } = submitted;
+    public bool DefinitelyNotDispatched => !MayHaveDispatched;
+    public bool PresentationChanged => Kind == "rejected" && DefinitelyNotDispatched && RejectionCode is "scene_changed" or "screen_changed" or "ui_not_ready" or "target_unavailable" or "target_missing" or "surface_missing";
     public string RejectionCode { get; init; } = "";
     public JsonObject? Command
     {
@@ -233,7 +239,8 @@ public sealed partial class DailyCommandDriver : IDisposable
         var daily = observed.Daily ?? throw new DailyStepException("rejected", "Daily guild observation unavailable");
         if (daily.FrameUtcTicks > now() || now() - daily.FrameUtcTicks > 3 * TimeSpan.TicksPerSecond)
             throw new DailyStepException("rejected", "Daily guild observation changed");
-        string gate = GuildPolicy.Gate(daily, new GuildStore(root).Prior(daily), now());
+        var prior = new GuildStore(root).Prior(daily);
+        string gate = GuildPolicy.Gate(daily, prior, now());
         if (gate.Length > 0)
             throw new DailyStepException("rejected", gate);
         foreach (string name in mailbox.List("live", "receipts~"))
@@ -243,8 +250,12 @@ public sealed partial class DailyCommandDriver : IDisposable
                 continue;
             var receipt = JsonNode.Parse(raw)!.AsObject();
             var command = receipt["Command"]?.AsObject();
-            if (command != null && Text(command, "AccountKey") == Text(observed.Frame, "AccountKey") && Text(command, "Reason").StartsWith("guild-once|" + daily.Guild.CycleKey + "|", StringComparison.Ordinal) && Flag(receipt, "MayHaveDispatched"))
-                throw new DailyStepException("rejected", "Previous live guild dispatch exists; inspect before retry");
+            if (command != null && Text(command, "AccountKey") == Text(observed.Frame, "AccountKey") && Text(command, "PlayerKey") == Text(observed.Frame, "PlayerKey") && Text(command, "Reason").StartsWith("guild-once|" + daily.Guild.CycleKey + "|", StringComparison.Ordinal) && Flag(receipt, "MayHaveDispatched"))
+            {
+                bool refresh = GuildPolicy.CanRefresh(daily, prior, now()) && Number(command, "ObservedUtcTicks") > 0
+                    && Number(command, "ObservedUtcTicks") <= prior!.StartedUtcTicks && Number(command, "ExpiresUtcTicks") < now();
+                if (!refresh) throw new DailyStepException("rejected", "Previous live guild dispatch exists; inspect before retry");
+            }
         }
         reason = "guild-once|" + daily.Guild.CycleKey + "|" + reason;
     }
@@ -314,8 +325,10 @@ public sealed partial class DailyCommandDriver : IDisposable
             throw new DailyStepException("rejected", "日常流程只能取消退出游戏确认，不能确认退出。");
         if (ownedFrame != null && !DailyTradePreview.Matches(action, ownedFrame, before))
             throw new DailyStepException("rejected", "Owned confirmation changed before dispatch; no command sent");
-        if (requiredFrame != null && (!DailyEvidence.SameActor(before, requiredFrame) || !JsonNode.DeepEquals(before["Scene"], requiredFrame["Scene"])))
-            throw new DailyStepException("rejected", "Input scene or identity changed before native input; no dispatch");
+        if (requiredFrame != null && !DailyEvidence.SameActor(before, requiredFrame))
+            throw new DailyStepException("identity", "Input identity changed before native input; no dispatch");
+        if (requiredFrame != null && !JsonNode.DeepEquals(before["Scene"], requiredFrame["Scene"]))
+            throw new DailyStepException("rejected", "Input scene changed before native input; no dispatch") { RejectionCode = "scene_changed" };
         var surfaces = DailyNavigationDecision.Rows(before).Where(s => Text(s, "Type") == ui).ToArray();
         if (surfaces.Length != 1)
             throw new DailyStepException("rejected", $"Need one observed {ui}; found {surfaces.Length}") { RejectionCode = surfaces.Length == 0 ? "surface_missing" : "surface_ambiguous" };
@@ -341,11 +354,13 @@ public sealed partial class DailyCommandDriver : IDisposable
         var current = refreshed.Frame;
         if (ownedFrame != null && !DailyTradePreview.Matches(action, ownedFrame, current))
             throw new DailyStepException("rejected", "Owned confirmation changed during final preflight; no command sent");
-        if (ActorKeys.Concat(["Scene"]).Any(k => !JsonNode.DeepEquals(current[k], before[k])))
-            throw new DailyStepException("rejected", "Identity or scene changed before dispatch");
+        if (ActorKeys.Any(k => !JsonNode.DeepEquals(current[k], before[k])))
+            throw new DailyStepException("identity", "Identity changed before dispatch");
+        if (!JsonNode.DeepEquals(current["Scene"], before["Scene"]))
+            throw new DailyStepException("rejected", "Scene changed before dispatch") { RejectionCode = "scene_changed" };
         var matching = DailyNavigationDecision.Rows(current).Where(s => JsonNode.DeepEquals(s["Id"], surface["Id"]) && Text(s, "Type") == ui).ToArray();
         if (matching.Length != 1 || target != 0 && !matching[0]["Targets"]!.AsArray().Any(t => Number(t!.AsObject(), "Id") == target && Flag(t.AsObject(), "Enabled")))
-            throw new DailyStepException("rejected", "rejected: screen_changed");
+            throw new DailyStepException("rejected", "rejected: screen_changed") { RejectionCode = "screen_changed" };
         if (ownedFrame != null && DailyTradePreview.IsConfirmation(action) && !DailyNavigationDecision.ReadyInput(matching[0], fallback: false))
             throw new DailyStepException("rejected", "rejected: ui_not_ready");
         if (DailyNavigationDecision.Blockers(current, ui, policy).Length > 0)
@@ -364,6 +379,7 @@ public sealed partial class DailyCommandDriver : IDisposable
         before = current;
         string id = Guid.NewGuid().ToString("N"), session = Path.Combine(root, "live", "steps", id);
         var command = BuildCommand(before, surface, target, action, now(), id, reason, route);
+        if (PotionPolicy != null) { command["GuardTalentPotions"] = true; command["TalentPotionReserve"] = PotionPolicy().TalentPotionReserve; }
         DailyJson.Write(Path.Combine(session, "before.json"), before);
         DailyJson.Write(Path.Combine(session, "intent.json"), command);
         Diagnostics.Event("command_prepared", DailyData.O(("id", id), ("action", action), ("command", command)));
@@ -385,7 +401,12 @@ public sealed partial class DailyCommandDriver : IDisposable
                     if (state == "rejected" && receipt["MayHaveDispatched"] is JsonValue dispatchFlag && dispatchFlag.TryGetValue<bool>(out var didDispatch) && !didDispatch)
                     {
                         DailyJson.Write(Path.Combine(session, "result.json"), receipt);
-                        throw new DailyStepException("rejected", "rejected: " + Text(receipt, "Error"), true);
+                        var limit = DailyPotionLimit.Parse(Text(receipt, "Error"));
+                        string rejection = Text(receipt, "Error");
+                        string message = limit?.Message ?? (rejection.StartsWith("potion_cost_unavailable:", StringComparison.Ordinal)
+                            ? "未能读取本次操作的天赋药消耗，尚未执行；请重新连接后补跑，若仍出现请导出诊断。"
+                            : "rejected: " + rejection);
+                        throw new DailyStepException("rejected", message, true) { MayHaveDispatched = false, RejectionCode = rejection, PotionLimit = limit };
                     }
                     if (state is "rejected" or "unknown")
                         throw new DailyStepException("pending", state + ": " + Text(receipt, "Error"), true);

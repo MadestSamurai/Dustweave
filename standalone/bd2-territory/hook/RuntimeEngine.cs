@@ -24,6 +24,7 @@ namespace BD2Territory.Runtime
   private PlayerController player;private PlayerMoveController move;private LifePlayerToolEquipmentController tool;private LifeFarmingUIPanel panel;private LifeFarmFieldObject targetFarm;private LifeGatheringObject targetNode;
   private readonly TerritoryWorkCycle workCycle=new TerritoryWorkCycle();
   private string lastWorkPhase="";
+  private int minimumTreeStage;
   private readonly GatheringProgress gathering=new GatheringProgress();private bool gatheringReposition;
   private readonly NavigationProgress navigation=new NavigationProgress();private readonly List<Vector3> triedDestinations=new List<Vector3>();
   private readonly InteractionProgress interaction=new InteractionProgress();
@@ -69,6 +70,8 @@ namespace BD2Territory.Runtime
     if(farmScene!=s.Scene){workCycle.Reset();farmScene=s.Scene;gatheringStands.Clear();emptyProgress.Clear();network.ClearEvidence();failures.Clear();skip.Clear();ResetLocalRecovery();}
     network.Reconcile(now);RefreshWorld(now);SettleReceipt();SettleCooking();SettleSales();s.SoldItems=sales==null?0:sales.ConfirmedItems;s.SaleCurrency=sales==null?0:sales.ConfirmedCurrency;s.SalesState=sales==null?"":sales.State;s.Cooked=cooking==null?0:cooking.ConfirmedTotal;s.CookingState=cooking==null?"":cooking.State;
     var c=control??new TerritoryControl();s.OwnerId=c.OwnerId;
+    minimumTreeStage=c.MinimumTreeStage;
+    s.MaxTreeStage=nodes.Where(n=>B.Active(n)&&Kind(n)==1).Select(n=>Convert.ToInt32(B.Read("Gather.FinalStage",n))).DefaultIfEmpty(0).Max();
     s.Trees=nodes.Count(n=>Harvestable(n)&&Kind(n)==1);s.Ores=nodes.Count(n=>Harvestable(n)&&Kind(n)==2);s.Mature=nodes.Count(n=>Harvestable(n)&&Kind(n)==3);s.RetryTargets=nodes.Count(n=>Harvestable(n)&&failures.TryGetValue(ResourceKey(n),out var retry)&&retry.Failures>0);
     s.GatherReplies=network.GatherReplies;s.ReceivedItems=network.ReceivedItems;s.Network=network.Last;s.Spent=spent;
     ReadCatalog(s,c,now);
@@ -92,7 +95,7 @@ namespace BD2Territory.Runtime
     s.ActiveRecipeId=progress.RecipeId;s.ActiveFixedSeedId=progress.FixedSeedId;spent=progress.BudgetOwner==owner?progress.Spent:0;
     if(c.Farming&&now-lastCrops>TimeSpan.FromSeconds(1).Ticks){crops=ReadPlantingCrops(progress.RecipeId,progress.FixedSeedId);lastCrops=now;}s.Crops=crops;s.BatchSeedId=progress.SeedId;s.BatchPlanted=progress.Planted;s.BatchTotal=farmStage>0?batchFields.Length:progress.PlannedCount;s.CompletedBatches=progress.Batches;
     if(!c.Farming&&farmStage>0&&farmStage<4)Release();
-    if(ownsTool&&targetNode!=null&&!Enabled(Kind(targetNode),c))StopMotion();
+    if(ownsTool&&targetNode!=null&&(!Enabled(Kind(targetNode),c)||!GrowthAllowed(targetNode)))StopMotion();
     s.Enabled=true;if(RecoverInterruptedOperations(s,now)){Publish(s);return;}
     bool pending=network.Waiting;if(network.Error.Length>0)fault=network.Error;if(fault.Length>0){Release();s.Error=fault;s.Reason="已暂停："+fault;Publish(s);return;}
     s.Enabled=true;
@@ -132,7 +135,7 @@ namespace BD2Territory.Runtime
     if(phase==TerritoryWorkPhase.Harvesting||phase==TerritoryWorkPhase.Gathering)
     {
      targetFarm=null;targetNode=SelectResource(c,now);
-     if(targetNode!=null)Gather(s,now);else s.Reason=phase==TerritoryWorkPhase.Harvesting?"收完本批作物后集中补种":"本轮采集尚未结束，继续处理成熟资源";
+     if(targetNode!=null)Gather(s,now);else s.Reason=phase==TerritoryWorkPhase.Harvesting?"收完本批作物后集中补种":"本轮采集尚未结束，继续处理符合设置的资源";
      Publish(s);return;
     }
     if(phase==TerritoryWorkPhase.Planting)
@@ -179,7 +182,7 @@ namespace BD2Territory.Runtime
   private static void OwnedAutoAim(object __0,Vector3 __1,ref LifeGatheringObject __result)
   {
    var e=current;if(e==null||!e.protectResources)return;
-   try{int kind=Convert.ToInt32(__0);if(kind<1||kind>3)return;var candidates=e.Detected(kind).Where(Harvestable).ToArray();
+   try{int kind=Convert.ToInt32(__0);if(kind<1||kind>3)return;var candidates=e.Detected(kind).Where(e.Harvestable).ToArray();
     __result=candidates.Contains(e.targetNode)?e.targetNode:candidates.OrderBy(n=>(n.transform.position-__1).sqrMagnitude).FirstOrDefault();
    }catch(Exception ex){__result=null;e.fault="采集目标核对失败："+ex.GetBaseException().Message;}
   }
@@ -196,19 +199,19 @@ namespace BD2Territory.Runtime
    if(bestNode!=null)
    {
     resourceSelections++;activeTargetKey=ResourceKey(bestNode);failures[activeTargetKey].Selected(now);ResetLocalRecovery();travel.Reset();
-    interaction.Select(bestNode.GetInstanceID());LocalStorage.Log("选定资源 target="+bestNode.GetInstanceID()+" kind="+Kind(bestNode)+" retry="+failures[activeTargetKey].Failures+" key="+activeTargetKey);
+    interaction.Select(bestNode.GetInstanceID());LocalStorage.Log("选定资源 target="+bestNode.GetInstanceID()+" kind="+Kind(bestNode)+" stage="+bestNode.GetStatus()+" minTreeStage="+minimumTreeStage+" retry="+failures[activeTargetKey].Failures+" key="+activeTargetKey);
    }
    return bestNode;
   }
   private static int Kind(LifeGatheringObject n)=>Convert.ToInt32(B.Read("Gather.Function",n));
-  private static bool FinalGrowth(LifeGatheringObject n)=>n!=null&&ResourceReadiness.Mature(n.GetStatus(),Convert.ToInt32(B.Read("Gather.FinalStage",n)));
-  private static bool Harvestable(LifeGatheringObject n)=>B.Active(n)&&n.CanGatheringState()&&FinalGrowth(n)&&Convert.ToDouble(B.Read("Gather.Hp",n))>0;
+  private bool GrowthAllowed(LifeGatheringObject n)=>n!=null&&ResourceReadiness.GatherableGrowth(Kind(n),n.GetStatus(),Convert.ToInt32(B.Read("Gather.FinalStage",n)),minimumTreeStage);
+  private bool Harvestable(LifeGatheringObject n)=>B.Active(n)&&n.CanGatheringState()&&GrowthAllowed(n)&&Convert.ToDouble(B.Read("Gather.Hp",n))>0;
   private static void MatureOnly(LifeGatheringObject __instance,ref bool __result)
   {
-   // A mature target can share the weapon collider with a young tree. Protect incidental hits too,
+   // A target can share the weapon collider with a tree below the selected threshold. Protect incidental hits too,
    // only during a tool action initiated by this runtime; manual play keeps the original rule.
    var engine=current;if(engine==null||!engine.protectResources||!__result)return;
-   try{int kind=Kind(__instance);if(kind==1||kind==2)__result=FinalGrowth(__instance);}
+   try{int kind=Kind(__instance);if(kind==1||kind==2)__result=engine.GrowthAllowed(__instance);}
    catch(Exception e){__result=false;engine.fault="生长阶段核对失败："+e.GetBaseException().Message;}
   }
   private static LifeWorldObjectDBInfo Db(LifeFarmFieldObject f){var p=f.GetPlaceableObject();return p==null?null:(LifeWorldObjectDBInfo)B.Read("Farm.Db",p);}

@@ -48,3 +48,13 @@ Completed stages enqueue durable compaction work without delaying execution. The
 Only allowlisted files are managed. Open, changed or linked files are skipped. Accounts, settings, queue/retry progress, plugins, caches and exported ZIPs are preserved. The storage target is soft and does not cover the entire data folder. Sandboxed instances manage their own stores. Manual cleanup previews reclaimable space; closing its dialog cancels the operation.
 
 Focused verification: `test.ps1 -Groups LogCleanup,LogEvidence,DiagnosticExport,QueueEngine,TradeResume,FieldTalent`, plus the desktop `support` smoke scope. Tests delete only synthetic fixture files.
+
+### Failure snapshots / 异常现场快照
+
+输入或环节失败时，`live/diagnostics/failures/` 额外保存最近观察到的界面、错误、会话与步骤信息。输入失败同时区分“指令已提交”和“游戏可能已执行”；没有明确回执时不猜测结果。快照使用已经收到的数据，不增加游戏轮询。同一环节、同一场景的相同错误在 30 秒内只保存一份独立快照，普通观察时间线仍按原上限滚动。
+
+异常快照参与现有最近 7 天导出与到期清理，导出优先级高于普通步骤。这样，操作准备前出现的错误提示不会仅因时间线滚动而丢失。导出仍会过滤凭据；完整现场可能包含角色名和界面文字，仍用于私下排查。
+
+Failure snapshots preserve the latest already-observed frame when an input or stage fails, independently of rotating observation logs. Submission and possible execution are recorded separately. Identical failures within the same scope and scene are deduplicated for 30 seconds. Snapshots add no game queries and follow existing retention, redaction and export limits.
+
+通行证读取异常额外记录该页编号、定义与错误，不影响其他页检查；`live/pass-claims-latest.json` 和 `live/mission-inspection-latest.json` 纳入导出，区分已处理任务与未能读取的通行证。偷窃入口不可用时保存原生天赋就绪条件、冷却与待办目标，避免只留下“未找到可用天赋”的泛化提示。

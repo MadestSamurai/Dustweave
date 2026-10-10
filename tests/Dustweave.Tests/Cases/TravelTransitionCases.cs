@@ -35,6 +35,42 @@ static class TravelTransitionCases
             await DailyTravel.Ready(f.Workflow, "CafeteriaFieldDefaultUI", 3);
             Check(f.Time >= 1.3 && f.Box.Commands.Count == 0, "visible field UI in Empty scene cannot complete arrival");
         }
+        foreach (string entry in new[] { "travel", "field-ready" })
+        foreach (string mode in new[] { "arrived", "vanished", "identity", "unknown", "unstable" })
+        {
+            using var f = New("story-" + entry + "-" + mode);
+            void Story()
+            {
+                f.Page("StorySkipUI", "_objSkipButton");
+                f.Frame["Surfaces"]![0]!["NativeContext"] = "story_skip";
+            }
+            Story(); f.Frame["Scene"] = "Empty";
+            var before = f.Frame.DeepClone().AsObject();
+            bool changed = false;
+            f.Driver.SubmissionGuard = () =>
+            {
+                if (changed && mode != "unstable") return;
+                changed = true;
+                f.Frame["Scene"] = S(f.Frame["Scene"]) == "Empty" ? "Map2002_005" : "Empty";
+                if (mode == "vanished") f.Page("GameFieldDefaultUI");
+                if (mode == "identity") f.Frame["PlayerKey"] = new string('c', 64);
+            };
+            if (mode == "unknown") { f.Driver.SubmissionGuard = null; f.Box.ThrowCreate = true; }
+            f.OnCommand = _ => f.Page("GameFieldDefaultUI");
+            string outcome = "";
+            try {
+                if (entry == "field-ready") { await new DailyFieldRoute(f.Workflow).FieldReady(timeout: 3, settle: 0); outcome = "handled"; }
+                else outcome = await DailyTravel.RecoverPresentation(f.Workflow, before) ? "handled" : "none";
+            }
+            catch (StageHostException e) { outcome = e.Kind; }
+            Check(mode switch {
+                "arrived" => changed && outcome == "handled" && f.Box.Commands.Count == 1,
+                "vanished" => changed && outcome == "handled" && f.Box.Commands.Count == 0,
+                "identity" => outcome == "identity" && f.Box.Commands.Count == 0,
+                "unknown" => outcome == "pending" && f.Box.Commands.Count == 1,
+                _ => outcome == "adapter" && f.Box.Commands.Count == 0 && f.Time < 2
+            }, "story transition recovery preserves dispatch boundary: " + entry + " / " + mode + " -> " + outcome);
+        }
         using (var f = New("preflight"))
         {
             f.Frame["Scene"] = "Map3008_001"; f.Page("MenuUI");

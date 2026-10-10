@@ -22,12 +22,14 @@ public partial class TerritoryWindow : Window
  private Func<TerritorySnapshot?>? testSnapshotReader;
  private Func<Action<string>,CancellationToken,Task<string>>? testConnector;
  private DateTime lastDiagnostic;private int selectedRecipe=3,selectedSeed;private string seedCatalogKey="";private bool refreshingRecipes;private string recipeCatalogKey="";
+ private int selectedTreeStage,knownTreeStage=3;private bool refreshingTreeStages;private string treeStageKey="";
  public TerritoryWindow(string? dataRoot=null)
  {
   root=dataRoot??TerritoryIdentity.DataRoot;link=new(root);InitializeComponent();BD2.Distribution.DistributionNotice.Attach(this,LanguageBox);InitializeLanguage();
   Set(VersionText,typeof(TerritoryWindow).Assembly.GetName().Version!.ToString(3));
   var settings=TerritoryJson.Read<TerritorySettings>(Path.Combine(root,"settings.json"))??new();
   if(!settings.ValidSettings())settings=new();
+  selectedTreeStage=settings.MinimumTreeStage;RefreshTreeStages();
   selectedSeed=settings.FixedSeedId;PlantingModeBox.SelectedIndex=settings.FixedCrop?1:0;
   if(selectedSeed>0){FixedSeedBox.ItemsSource=new[]{new RecipeOption{Id=selectedSeed,Name=ui.Language.Text("作物 ")+selectedSeed,Available=true}};FixedSeedBox.SelectedValue=selectedSeed;}
   selectedRecipe=settings.RecipeId;RecipeBox.ItemsSource=new[]{new RecipeOption{Id=selectedRecipe,Name=selectedRecipe==3?"活力面疙瘩":"配方 "+selectedRecipe,Available=true}};RecipeBox.SelectedValue=selectedRecipe;
@@ -42,6 +44,7 @@ public partial class TerritoryWindow : Window
   if(!int.TryParse(CookingBatchBox.Text,out int cookingBatch)||!int.TryParse(IntervalBox.Text,out int interval)||!long.TryParse(BudgetBox.Text,out long budget))throw new InvalidOperationException("间隔和预算请输入整数。");
   if(!int.TryParse(SellThresholdBox.Text,out int threshold)||!SurplusSales.ValidThreshold(threshold))throw new InvalidOperationException("售卖保留数量必须是 100–9900 的整数。");
   var s=new TerritorySettings{AutoSell=true,SellThreshold=threshold,FixedCrop=PlantingModeBox.SelectedIndex==1,FixedSeedId=selectedSeed,Cooking=CookingBox.IsChecked==true,CookingBatch=cookingBatch,RecipeId=selectedRecipe,Logging=LoggingBox.IsChecked==true,Mining=MiningBox.IsChecked==true,Farming=FarmingBox.IsChecked==true,UseNavMesh=NavMeshBox.IsChecked==true,UseVehicle=VehicleBox.IsChecked==true,DashRecovery=DashBox.IsChecked==true,IntervalMs=interval,PlantingBudget=budget};
+  s.MinimumTreeStage=selectedTreeStage;
   if(!s.ValidSettings())throw new InvalidOperationException("间隔范围 100–60000 毫秒，预算范围 0–10000000；料理每批 1–1000 份。");return s;
  }
  private async void SettingsChanged(object sender,RoutedEventArgs e)
@@ -52,8 +55,28 @@ public partial class TerritoryWindow : Window
  }
  private void UpdatePlantingControls()
  {
+  TreeStageBox.IsEnabled=LoggingBox.IsChecked==true;
   bool fixedCrop=PlantingModeBox.SelectedIndex==1;FixedCropPanel.Visibility=fixedCrop?Visibility.Visible:Visibility.Collapsed;
   RecipePanel.Visibility=!fixedCrop||CookingBox.IsChecked==true?Visibility.Visible:Visibility.Collapsed;
+ }
+ private void RefreshTreeStages()
+ {
+  knownTreeStage=Math.Max(knownTreeStage,snapshot?.MaxTreeStage??0);
+  string key=ui.Language.Language+"|"+knownTreeStage+"|"+selectedTreeStage;
+  if(TreeStageBox.IsDropDownOpen||treeStageKey==key)return;
+  refreshingTreeStages=true;
+  try
+  {
+   TreeStageBox.ItemsSource=Enumerable.Range(0,knownTreeStage+1).Append(selectedTreeStage).Distinct().OrderBy(v=>v)
+    .Select(v=>new RecipeOption{Id=v,Name=v==0?ui.Language.Text("仅完全成熟（默认）"):string.Format(ui.Language.Text("阶段 {0} 及以上"),v),Available=true}).ToArray();
+   TreeStageBox.SelectedValue=selectedTreeStage;treeStageKey=key;
+  }
+  finally{refreshingTreeStages=false;}
+ }
+ private void TreeStageChanged(object sender,System.Windows.Controls.SelectionChangedEventArgs e)
+ {
+  if(!initialized||refreshingTreeStages||TreeStageBox.SelectedValue is not int value)return;
+  selectedTreeStage=value;SettingsChanged(sender,e);
  }
  private void PlantingChanged(object sender,System.Windows.Controls.SelectionChangedEventArgs e)
  {if(!initialized||refreshingRecipes)return;if(FixedSeedBox.SelectedValue is int seed)selectedSeed=seed;SettingsChanged(sender,e);}
@@ -130,6 +153,7 @@ public partial class TerritoryWindow : Window
    _ = UpdateDiagnosticsAsync();return;
   }
   var s=snapshot!;
+  RefreshTreeStages();
   if(s.Seeds?.Length>0)
   {
    var key=ui.Language.Language+"|"+string.Join("|",s.Seeds.Select(v=>v.Id+v.Label));
@@ -151,7 +175,7 @@ public partial class TerritoryWindow : Window
   BatchBar.Maximum=Math.Max(1,s.BatchTotal);BatchBar.Value=Math.Clamp(s.BatchPlanted,0,Math.Max(0,s.BatchTotal));
   CropsGrid.Columns[1].Visibility=s.ActiveFixedSeedId>0?Visibility.Collapsed:Visibility.Visible;
   CropsGrid.ItemsSource=(s.Crops??Array.Empty<CropStock>()).Select(c=>new CropRow(c.Name,c.Required,c.Inventory,c.Growing,ui.Language.Text(c.GrowthSeconds>=60?$"{c.GrowthSeconds/60} 分钟":$"{c.GrowthSeconds} 秒"))).ToArray();
-  Set(StatsText,$"耕地 {s.Fields}，空地 {s.EmptyFields}，可收作物 {s.Mature} · 成熟树 {s.Trees} · 成熟矿点 {s.Ores}\n已确认采集 {s.GatherReplies} 次，物品 {s.ReceivedItems} 个 · 本次播种已用 {s.Spent}");
+  Set(StatsText,$"耕地 {s.Fields}，空地 {s.EmptyFields}，可收作物 {s.Mature} · 可砍树 {s.Trees} · 成熟矿点 {s.Ores}\n已确认采集 {s.GatherReplies} 次，物品 {s.ReceivedItems} 个 · 本次播种已用 {s.Spent}");
   StartButton.IsEnabled=s.Ready&&!link.Enabled&&!connecting&&!starting;StopButton.IsEnabled=link.Enabled;ConnectButton.IsEnabled=!connecting&&!link.Enabled;_ = UpdateDiagnosticsAsync();
  }
  private void DiagnosticsExpanded(object sender,RoutedEventArgs e){if(initialized){lastDiagnostic=DateTime.MinValue;_ = UpdateDiagnosticsAsync();}}

@@ -10,16 +10,45 @@ public sealed class DailyWeeklySteal(DailyFieldRoute route)
     {
         var states = status.ToDictionary(r => N(r["Instance"]));
         var groups = pending.Select(p => N(p["Group"])).ToHashSet();
-        return rows.Where(r => r["skill"] is JsonObject t && states.TryGetValue(N(r["instance"]), out var s) && S(s["Reason"]) == "" && DailyRegionRouter.D(s["Cooldown"]) <= 0 && !B(r["disabled"]) && N(t["classType"]) == 1 && N(t["resetType"]) == 2 && groups.Contains(N(t["groupId"])))
+        return rows.Where(r => r["skill"] is JsonObject t && states.TryGetValue(N(r["instance"]), out var s) && S(s["Reason"]) == "" && S(s["Gate"]) == "" && DailyRegionRouter.D(s["Cooldown"]) <= 0 && !B(r["disabled"]) && N(t["classType"]) == 1 && N(t["resetType"]) == 2 && groups.Contains(N(t["groupId"])))
             .OrderByDescending(r => DailyRegionRouter.D((r["skill"]!["valueList"] as JsonArray)?.FirstOrDefault())).ThenBy(r => N(r["skill"]!["catalystValue"])).ThenByDescending(r => N(r["skill"]!["id"])).FirstOrDefault();
+    }
+    public static bool WaitingForTalent(JsonObject[] status, JsonObject[] pending) => status.Length == 0 || status.Any(s => pending.Any(p => N(p["Group"]) == N(s["Group"])) && S(s["Gate"]).StartsWith("talent_wait:", StringComparison.Ordinal) && DailyRegionRouter.D(s["Cooldown"]) <= 15);
+    private async Task<(JsonObject Evidence, JsonObject Talent)> SelectTalent(long map, string week, JsonObject[] remaining)
+    {
+        double end = W.Time + 15;
+        while (true)
+        {
+            var e = await route.Evidence();
+            Require(N(Map(e)["id"]) == map && S(R(e, "mainline.reset", "GetWeeklyResetTime().Ticks")) == week, "连续偷窃期间地图或周周期变化");
+            var rows = Rows(e["Readings"]).Where(r => S(r["Id"]) == "dispatch.talent" && S(r["Error"]) == "").Select(r => { var v = DailyEvidence.Values(r); return O(("instance", r["InstanceId"]), ("skill", v[SkillPath]), ("disabled", v["_objDisableImage.activeSelf"])); }).ToArray();
+            var status = Talents(e);
+            var selected = Choose(rows, status, remaining);
+            if (selected != null)
+            {
+                await W.Driver.RequirePotionsAsync(N(selected["skill"]?["catalystValue"]));
+                return (e, selected);
+            }
+            var shortage = rows.Where(r => status.Any(s => N(s["Instance"]) == N(r["instance"]) && S(s["Reason"]) == "catalyst_insufficient") &&
+                remaining.Any(p => N(p["Group"]) == N(r["skill"]?["groupId"]))).OrderBy(r => N(r["skill"]?["catalystValue"])).FirstOrDefault();
+            if (shortage != null) await W.Driver.RequirePotionsAsync(N(shortage["skill"]?["catalystValue"]));
+            if (W.Time >= end || rows.Length > 0 && !WaitingForTalent(status, remaining))
+            {
+                W.Driver.Diagnostics.Failure("weekly_steal_unavailable", O(("error", "steal_talent_unavailable"), ("map", map), ("pending", remaining), ("talents", status), ("rows", rows)));
+                await W.Step("QuickMenuUI", back: true, absent: "QuickMenuUI");
+                throw new StageHostException("adapter", "当前偷窃天赋尚不可用，已保留待办。请检查角色状态、冷却和天赋药；不会自动购买或升级。");
+            }
+            await W.Delay(200);
+        }
     }
     private async Task<bool> Popup(JsonObject frame)
     {
         var policy = DailyNavigationPolicy.Load();
-        var a = DailyNavigationDecision.TalentAction(frame, policy) ?? DailyNavigationDecision.Notice(frame, policy, out _);
+        var a = DailyHomeDecision.BackgroundErrorAction(frame, policy) ?? DailyNavigationDecision.TalentAction(frame, policy) ?? DailyNavigationDecision.Notice(frame, policy, out _);
         if (a == null)
             return false;
-        await W.Driver.NavigationAsync(a);
+        try { await W.Driver.NavigationAsync(a); }
+        catch (StageHostException e) when (e.Kind == "navigation_changed") { await W.Delay(150); }
         return true;
     }
     private async Task<JsonObject> Approach(JsonObject target, long map)
@@ -122,17 +151,22 @@ public sealed class DailyWeeklySteal(DailyFieldRoute route)
                 target = await Approach(target, map);
                 await W.Step("GameFieldDefaultUI", operation: "weekly_steal_menu", value: I(target["Instance"]), expect: "QuickMenuUI");
             }
-            var e = await route.Evidence();
-            Require(N(Map(e)["id"]) == map && S(R(e, "mainline.reset", "GetWeeklyResetTime().Ticks")) == week, "连续偷窃期间地图或周周期变化");
-            var rows = Rows(e["Readings"]).Where(r => S(r["Id"]) == "dispatch.talent" && S(r["Error"]) == "").Select(r => { var v = DailyEvidence.Values(r); return O(("instance", r["InstanceId"]), ("skill", v[SkillPath]), ("disabled", v["_objDisableImage.activeSelf"])); }).ToArray();
-            var selected = Choose(rows, Talents(e), remaining.ToArray());
-            if (selected == null)
-            {
-                await W.Step("QuickMenuUI", back: true, absent: "QuickMenuUI");
-                throw new StageHostException("adapter", "没有可用的每周偷窃天赋，请检查冷却和天赋药；不购买或升级。");
-            }
+            var (e, selected) = await SelectTalent(map, week, remaining.ToArray());
             long group = N(selected["skill"]!["groupId"]), npc = N(target["Npc"]);
-            await W.Step(O(("ui", "QuickMenuUI"), ("operation", "weekly_steal_talent"), ("value", selected["instance"]), ("items", new[] { npc, group }), ("expect", "StealInfoPopupUI")));
+            for (int attempt = 0; ; attempt++)
+            {
+                try
+                {
+                    await W.Step(O(("ui", "QuickMenuUI"), ("operation", "weekly_steal_talent"), ("value", selected["instance"]), ("items", new[] { npc, group }), ("expect", "StealInfoPopupUI")));
+                    break;
+                }
+                catch (DailyStepException error) when (attempt < 2 && error.Kind == "rejected" && !error.MayHaveDispatched && error.Message.StartsWith("rejected: talent_wait:", StringComparison.Ordinal))
+                {
+                    await W.Delay(200);
+                    (e, selected) = await SelectTalent(map, week, remaining.ToArray());
+                    group = N(selected["skill"]!["groupId"]);
+                }
+            }
             var op = await W.Transact("dispatch.start", O(("kind", 1), ("map", map), ("npc", npc), ("group", group), ("week", week), ("server_now", State(e, "mainline.network", "$self")["Now"])), O(("ui", "StealInfoPopupUI"), ("operation", "weekly_steal_confirm"), ("value", npc), ("items", new[] { group })), 30);
             results.Add(O(("state", "completed"), ("id", op["id"]), ("result", op["result"])));
             remaining.RemoveAll(t => N(t["Group"]) == group);

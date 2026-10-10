@@ -41,6 +41,45 @@ static class TradeOptimizerCases
   s=State(c,O(("1",100),("2",150)));s["capacity_limits"]=O(("3",3));p=DailyTradeOptimizer.Plan(c,s);
   Check(Cooks(p,1)==3,"executable cooking honors observed output capacity");
 
+  // Each call is independent: no previous plan, hold target or execution record.
+  // The old finite horizon repeatedly consumed the remainder in the 2-unit recipe
+  // instead of completing more profitable 15-unit batches on later days.
+  var residue=Catalog([Item(1,1),Item(2,1),Item(3,100),Item(4,1100)],
+   [Recipe(1,3,1,("1",2),("2",2)),Recipe(2,4,1,("1",15),("2",15))]);
+  long left=0,cheap=0,preferred=0,gain=0;
+  for(int day=1;day<=6;day++){
+   s=State(residue,O(("1",left+100),("2",left+100)));s["future_supply"]=Supply(residue,O(("1",2900L),("2",2900L)));
+   s["context"]!["cycle"]=day.ToString();p=DailyTradeOptimizer.Plan(residue,s);
+   long low=Cooks(p,1),high=Cooks(p,2);cheap+=low;preferred+=high;gain+=low*51+high*1025;left+=100-2*low-15*high;
+   Check(left>=0&&left<15,"independent rolling plan preserves only useful batch residue on day "+day);
+   Check(Rows(p["forecast"]?["terminal_stock"]).All(r=>{double q=r["count"]!.GetValue<double>();return q>=0&&q<=N(r["limit"])&&N(r["limit"])<15&&Math.Abs(q-Math.Round(q))<1e-8;}),"terminal stock stays integral and bounded on day "+day);
+  }
+  Check(preferred==40&&cheap==0&&gain==41000&&left==0,"stateless six-day allocation reaches the exhaustive batch optimum");
+  var pairs=Catalog([Item(1,1),Item(2,1),Item(3,100),Item(4,300)],
+   [Recipe(1,3,1,("1",1),("2",1)),Recipe(2,4,1,("1",2),("2",2))]);
+  left=cheap=preferred=0;
+  for(int day=1;day<=6;day++){
+   s=State(pairs,O(("1",left+101),("2",left+101)));s["future_supply"]=Supply(pairs,O(("1",2929L),("2",2929L)));
+   p=DailyTradeOptimizer.Plan(pairs,s);long low=Cooks(p,1),high=Cooks(p,2);cheap+=low;preferred+=high;left+=101-low-2*high;
+  }
+  Check(cheap==0&&preferred==303&&left==0,"one-unit cheap recipe cannot repeatedly consume the residue of a two-unit profitable batch");
+  // Honey/apple versus honey/almond/butter: real recipe quantities and prices,
+  // with synthetic identities and inventory. Known future partners count too.
+  var honey=Catalog([Item(1,60),Item(2,24),Item(3,78),Item(4,30),Item(5,258),Item(6,912)],
+   [Recipe(1,5,1,("1",1),("2",1)),Recipe(2,6,5,("1",2),("3",2),("4",2))]);
+  s=State(honey,O(("1",10),("2",10),("3",10),("4",10)));p=DailyTradeOptimizer.Plan(honey,s);
+  Check(Cooks(p,1)==0&&Cooks(p,2)==5,"scarce honey goes to almond recipe before profitable apples");
+  s=State(honey,O(("1",10),("2",10)));s["future_supply"]=Supply(honey,O(("3",10L),("4",10L)));p=DailyTradeOptimizer.Plan(honey,s);
+  Check(Cooks(p,1)==0&&Holds(p,1)==10,"honey is preserved for known incoming almonds and butter despite profitable apples today");
+  s=State(honey,O(("1",10),("2",10),("3",4),("4",4)));p=DailyTradeOptimizer.Plan(honey,s);
+  Check(Cooks(p,2)==2&&Cooks(p,1)==6,"apples use genuine honey surplus only after available almond recipe demand is met");
+  var excess=Catalog([Item(1,1),Item(2,1),Item(3,100),Item(4,1100)],
+   [Recipe(1,3,1,("1",2)),Recipe(2,4,1,("1",15),("2",1))]);
+  s=State(excess,O(("1",10000),("2",1)));s["future_supply"]=Supply(excess,O(("1",2900L),("2",29L)));p=DailyTradeOptimizer.Plan(excess,s);
+  Check(Cooks(p,1)>4000&&Cooks(p,2)==1,"genuine recurring surplus still earns money in cheaper recipes");
+  s=State(residue,O(("1",14),("2",14)));s["future_supply"]=Supply(residue,O(("1",2900L)));p=DailyTradeOptimizer.Plan(residue,s);
+  Check(!Rows(p["forecast"]?["terminal_stock"]).Any(),"no terminal recipe promise without a known recurring partner supply");
+
   JsonObject Offer(long product,long item,long price,long limit)=>O(("shop",1),("product",product),("item",item),("base_price",price),("limit",limit));
   JsonObject Available(JsonObject catalog)
   {

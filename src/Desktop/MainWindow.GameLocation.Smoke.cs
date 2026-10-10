@@ -41,8 +41,16 @@ public partial class MainWindow
                     Width = 960; Height = 700; ThemeSelector.SelectedIndex = mode;
                     await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
                     UpdateLayout();
-                    Check(panel.ActualWidth > 0 && panel.ActualHeight > 0 && panel.CanChoose, "Location panel not usable");
+                    Check(panel.ActualWidth > 0 && panel.ActualHeight is > 0 and < 100 && panel.CanChoose, "Compact location row not usable");
                     Capture("game-location-" + code + "-" + (mode == 1 ? "light" : "dark"));
+                    var dialog = panel.CreateEditor(); dialog.Show();
+                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                    Check(dialog.ActualWidth >= 440 && dialog.ActualHeight > 150, "Location editor was not rendered");
+                    var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)dialog.ActualWidth, (int)dialog.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                    bitmap.Render(dialog);
+                    var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
+                    using (var stream = File.Create(Path.Combine(smoke!, "game-location-editor-" + code + "-" + mode + ".png"))) encoder.Save(stream);
+                    dialog.Close();
                 }
             }
             File.Move(client, client + ".moved");

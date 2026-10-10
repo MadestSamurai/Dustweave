@@ -186,7 +186,7 @@ public static class DailyTradeOptimizer
         if (settings["max_spend"] != null)
             budget = Math.Min(budget, N(settings["max_spend"]));
         int saleStart = products.Length + recipes.Length, carryStart = saleStart + keys.Length;
-        var future = new DailyTradeForecast(catalog, state, carryStart);
+        var future = new DailyTradeForecast(catalog, state, carryStart, check);
         var carryKeys = future.CarryKeys;
         int n = future.Count, potionCol = future.Start - 1;
         var balance = keys.Select(_ => new double[n]).ToArray();
@@ -401,6 +401,6 @@ public static class DailyTradeOptimizer
             ("solver", O(("elapsed_seconds", Math.Round(started.Elapsed.TotalSeconds, 3)), ("engine", "dotnet-highs-1.15.1"), ("scope", "joint_current_and_29_day_supply"), ("optimal", proven), ("forecast_profit", best.Profit), ("profit_upper_bound", globalBound), ("gap_gold", globalBound == null ? null : Math.Max(0, globalBound.Value - best.Profit)), ("strategy_excludes_bargain_fee", includeBreakEven), ("strategy_profit", RankingProfit(best)), ("strategy_upper_bound", strategyBound), ("realization_tie_optimal", best.Tie), ("cash_tie_optimal", false))),
             ("summary", O(("incremental_profit", best.CurrentProfit), ("eventual_sale_value", saleValue), ("carryover_estimated_value", holdValue), ("initial_stock_value", baseValue), ("purchase_cost", buyCost), ("potions_used", best.Potions), ("potion_cost", N(state["potion_price"]) * best.Potions), ("potion_unit_price", state["potion_price"]), ("potions_to_buy", best.PotionBuy), ("cash_required", best.Cash), ("cash_remaining", N(state["gold"]) - best.Cash), ("break_even_count", best.BreakEven.Sum()), ("break_even_value", best.BreakEvenValue))),
             ("bargain", O(("mode", best.Mode), ("start", best.Mode == "bargain"), ("potions", best.Opening))), ("purchases", purchases), ("cooking", cooking), ("sales", sales), ("holds", holds), ("forecast", best.Forecast), ("drop_forecast", state["future_supply"]), ("resources_spent", false),
-            ("notes", new[] { "共同分配当前库存与29轮已解锁供货，优先总收益；收益相同时优先完成本轮可盈利加工，并释放仅用于未来原料售卖的库存。", "只执行本轮采购与制作。已知周收集路线按掉落概率估计未来供给，不把预计掉落作为当前库存。", "本轮增益按原料高价卖价核账，未来收益单列且不用于今日垫资。库存变化后重新规划，料理等到120%报价确认再出售。" }));
+            ("notes", new[] { "共同分配当前库存与29轮已解锁供货，优先总收益；收益相同时优先完成本轮可盈利加工，并释放仅用于未来原料售卖的库存。", "不足一份配方的期末食材，按共同供给模型估计后续价值；最多计入该食材一份配方以内的零头，不是已到账收益，也不依赖历史计划。", "只执行本轮采购与制作。已知周收集路线按掉落概率估计未来供给，不把预计掉落作为当前库存。", "本轮增益按原料高价卖价核账，未来收益单列且不用于今日垫资。库存变化后重新规划，料理等到120%报价确认再出售。" }));
     }
 }

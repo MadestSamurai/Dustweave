@@ -149,3 +149,36 @@ Normal desktop, updated and isolated-worker processes own a fresh control identi
 `-ValidationScope Trading` is a narrow follow-up scope for `DailyTradeOptimizer`, its forecast/drop model, plan/execution integration and the corresponding optimizer tests. It reuses a completed full baseline only when the actual source difference is wholly inside this allowlist, documentation and packaging metadata, and the installed client code fingerprint is unchanged. Changes to the shared linear solver, connection, dependencies or UI require full checks. Trading and product-identity regressions plus both packaged startup/identity/boundary gates still run; the recorded scope does not claim to rerun unchanged tool checks.
 
 跑商专项复用已完成的完整基线，当前源文件逐一比较；共享求解器、连接、界面或未知范围的改动会拒绝复用。年度分析见 [365天对照](TRADING_ANNUAL_2026-10-10.md)，日志维护见 [诊断说明](DIAGNOSTICS.md)。
+
+### Restart and recovery boundaries / 重启与恢复边界
+
+Account, player, server and reset identity remain mandatory. Closing a game ends its process/session; reconnecting a component in the same process does not create a fresh retry budget. A new run keeps confirmed progress and accounting evidence, but old non-consuming reads must not remain permanent execution locks.
+
+- `room.info` is a room visit/read, not a reward claim. An unresolved visit can be superseded from a clean main menu after the original process ends, or after its response deadline. The new visit needs its own response and room-owner/cache proof. The old outcome stays unknown.
+- Guild entry is server-idempotent. A single request that timed out without a response permits at most two fresh entries in the same process. An identified new game process can independently refresh an orphaned query. Failed, interleaved or unattributed response evidence is not treated as success. Native receipts, managed attempts and command guards apply the same policy.
+- Mailbox submission and game execution are separate facts. Only a matching native rejection explicitly reporting no dispatch permits re-selection of a vanished target. Missing receipts and changed account identity remain non-replayable.
+- Weekly collection, NPC quests and theft retain independent server-proven completion when a sibling fails. Progress totals include all available cartridge targets before traversal; an encountered subset is not a full-route completion proof.
+
+小屋旧访问、公会旧读取与购买等消耗操作分开恢复。旧记录保留诊断意义；新进程不能借用旧进程的回执冒充成功。地图加载期间已确认未点击的页面变化应重新观察，不应把整条路线标成失败。这里只处理确认属于当前界面的提示收尾，不自动重复结果未知的交易。
+
+Focused groups: `Guild,ManagedInputs,CommandDriver,TravelTransition,CollectionReadiness,CafeteriaRecovery,QueueEngine,ManagedBootstrap,DiagnosticExport,LogCleanup,LogEvidence`. Connection `self-test` and offline `prepare` / compatibility checks compile against installed client assemblies without attaching to the game. These do not replace a real dual-instance rerun.
+
+### Pass isolation and theft readiness / 通行证隔离与偷窃就绪
+
+Pass mission definitions follow `PassTable.ExpEventMissionGroupId` and the native mission-group links. `EventMissionGroupTable.UsePass` is not an eligibility requirement: guide/newbie passes can legitimately omit that protobuf default. Read the active catalogue independently of any selected page and refresh it after claims. A server-confirmed `PassRewardResponse.NewbiePassStep` advancement can change the selected pass and active list; account identity, mission completion and reward-cache proof still apply.
+
+A settled, incompatible pass is recorded individually as pending review, with its definition evidence. Other readable passes and proven daily/weekly equipment tasks continue. Schema errors are not loading delays, and unrecognized pages cannot authorize claims. A claim already dispatched with an unknown result remains pending and must not be replayed. Tests cover both inspection and claim modes, catalogue advancement, stop/identity propagation and unknown-claim boundaries.
+
+Weekly theft uses the same read-only native talent gates as field collection. Short animation, menu-timeline, cooldown or attempt-latch waits are bounded. Only a native rejection explicitly confirming no dispatch permits another selection attempt; the actual theft confirmation retains its accounting proof. Unavailable-talent diagnostics include the native gates and pending groups without inferring a missing resource from an absent popup.
+
+Focused groups: `PassRecovery,Workflow,FieldTalent,CollectionReadiness,DiagnosticExport`. Synthetic tests contain no user captures; captured-report replay and current-client compilation belong under ignored investigation artifacts.
+
+### Daily Talent Pill policy / 日常天赋药限制
+
+General settings are account-scoped: reserve defaults to 0, automatic refill is off, and the initial refill target is 1000. Only the daily queue supplies `PotionPolicy`; embedded and standalone tool sessions keep their own settings. Schema 16 migrates without changing task selections.
+
+Check the complete native action cost before dispatch, including batch cooking/crafting and collect-all dispatch with automatic renewal. Free actions remain possible below the reserve; spending exactly down to it is allowed. The native command also carries the reserve and performs a final check after identity validation, before any dispatch marker. A missing cost is a explained, unsubmitted failure, not permission to consume. Refresh the binding contract from its matching baseline when adding native members.
+
+A confirmed shortage becomes a visible auxiliary queue row. If refill is enabled, clean up only confirmed unsubmitted previews, use the plaza merchant's current weekly NPC-task 10% discount, and buy only to the target while respecting reserved gold. A missing discount, inadequate stock/gold or an undersized target gives an actionable restriction. Unknown purchases retain their accounting records and block all consuming queue stages. After verified replenishment, reopen the original stage and recompute from current game state; never replay its previous consuming command. Auxiliary refill rows cannot be selected or resumed as independent purchases. Trading also observes the budget and reports when its allowed potion budget is reached.
+
+Focused verification: `TalentPotion,Preference,QueueEngine,CommandDriver,BusinessJournal,BusinessScope,DispatchRecovery,TradeOptimizer`; game-location/settings desktop smoke covers the compact launch row and modal in both themes and all three languages. Native `prepare` compiles against the installed client without connecting to or operating the game. Real discounted purchases and automatic return to a live task require separate runtime validation.

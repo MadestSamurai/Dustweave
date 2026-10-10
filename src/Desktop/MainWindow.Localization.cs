@@ -113,6 +113,8 @@ public partial class MainWindow
             cooking = new[] { new { name="Demo dish", count=10, potions=40, sale_date="2026-10-10" } },
             sales = new[] { new { name="Demo dish", count=10, price=4000, shop=1, date="2026-10-10", today_quote_confirmed=false } }
         });
+        var preferences = new DailyPreferencesPanel(folder, allowGame:false);
+        var verifyPreferences = preferences.TradeSettingsProbeForSmoke();
         var panel = new TradePlanPanel(folder, account, allowGame:false);
         panel.LoadSnapshot(Path.Combine(folder,"snapshot.json"));
         panel.Display(Path.Combine(folder,"plan.json"));
@@ -132,6 +134,14 @@ public partial class MainWindow
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
                 verify();
                 Capture("locale-"+L.Code+"-trade", surface);
+                surface.Child = preferences;
+                window.Width = language == 2 ? 760 : 960;
+                window.Height = language == 2 ? 780 : 840;
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                verifyPreferences();
+                Capture("locale-"+L.Code+"-trade-settings", surface);
+                surface.Child = panel;
+                window.Width = 960; window.Height = 700;
             }
         }
         finally { window.Close(); LanguageSelector.SelectedIndex=0; ThemeSelector.SelectedIndex=1; }

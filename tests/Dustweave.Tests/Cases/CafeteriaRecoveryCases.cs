@@ -6,7 +6,7 @@ static class CafeteriaRecoveryCases
 {
     public static async Task Run(string output, List<string> cases)
     {
-        foreach (string mode in new[] { "expired", "ambiguous", "unknown" })
+        foreach (string mode in new[] { "expired", "native-expired", "ambiguous", "unknown" })
         {
             using var f = new WorkflowHarness(Path.Combine(output, "cafeteria-bubble-" + mode), DailyCafeteria.Proofs().ToArray());
             f.Frame["Scene"] = "Map3007_001";
@@ -27,12 +27,18 @@ static class CafeteriaRecoveryCases
                 if (mode == "ambiguous") targets.Add(target.DeepClone());
             };
             if (mode == "unknown") f.Box.ThrowCreate = true;
+            if (mode == "native-expired")
+            {
+                f.Box.State = "rejected"; f.Box.Dispatched = false; f.Box.Error = "target_unavailable";
+                f.OnDelay = () => { if (f.Box.Commands.Count > 0) { expired = true; f.Frame["Surfaces"]![1]!["Targets"]!.AsArray().Clear(); } };
+            }
             string outcome = "";
             try { outcome = S((await DailyCafeteria.Run(f.Workflow))["state"]); }
             catch (DailyStepException e) { outcome = e.RejectionCode; }
             catch (StageHostException e) { outcome = e.Kind; }
             bool ok = mode switch {
                 "expired" => expired && outcome == "completed" && f.Box.Commands.Count == 0,
+                "native-expired" => expired && outcome == "completed" && f.Box.Commands.Count == 1,
                 "ambiguous" => outcome == "target_ambiguous" && f.Box.Commands.Count == 0,
                 _ => outcome == "pending" && f.Box.Commands.Count == 1
             };

@@ -3,6 +3,11 @@ namespace BD2Territory
  public static class ResourceReadiness
  {
   public static bool Mature(int status,int finalStage)=>finalStage>0&&status>=finalStage;
+  public static bool GatherableGrowth(int kind,int status,int finalStage,int minimumTreeStage)
+  {
+   if(kind<1||kind>3||minimumTreeStage<0||status<=0||finalStage<=0)return false;
+   return kind==1&&minimumTreeStage>0?status>=minimumTreeStage:Mature(status,finalStage);
+  }
   // Strict baseline; reconciliation below handles stale client world caches using native field state.
   public static bool EmptyField(bool known,bool serverCrop,bool occupied,bool liveCrop)=>known&&!serverCrop&&!occupied&&!liveCrop;
  }

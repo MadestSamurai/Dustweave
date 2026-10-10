@@ -7,7 +7,8 @@ namespace Dustweave;
 public sealed class DailyPreferences
 {
     [JsonRequired]
-    public int Schema { get; set; } = 16;
+    public int Schema { get; set; } = 17;
+    [JsonRequired] public GeneralPreferences General { get; set; } = new();
     [JsonRequired] public FriendshipPreferences Friendship { get; set; } = new();
     [JsonRequired]
     public HuntPreferences Hunt { get; set; } = new();
@@ -147,14 +148,21 @@ public sealed class DailyPreferences
                 weekly.Remove(field);
             node["Schema"] = 16;
         }
+        if (node["Schema"]?.GetValue<int>() == 16)
+        {
+            if (node.ContainsKey("General")) throw new InvalidDataException("旧版整体设置字段不匹配。");
+            node["General"] = JsonSerializer.SerializeToNode(new GeneralPreferences());
+            node["Schema"] = 17;
+        }
         var value = node.Deserialize<DailyPreferences>(DailyJson.Options) ?? throw new InvalidDataException("日常设置不能为空。");
         value.Validate();
         return value;
     }
     public void Validate()
     {
-        if (Schema != 16 || Friendship == null || Tactics == null || Events == null || EventBattle == null || Trade == null || Weekly == null || MonsterHunt == null || Hunt == null || Equipment == null || Tasks == null || Stages == null || Mirror == null)
+        if (Schema != 17 || General == null || Friendship == null || Tactics == null || Events == null || EventBattle == null || Trade == null || Weekly == null || MonsterHunt == null || Hunt == null || Equipment == null || Tasks == null || Stages == null || Mirror == null)
             throw new InvalidDataException("日常偏好版本或字段不完整。");
+        General.Validate();
         if (Tactics.SearchSeconds is < 1 or > 120)
             throw new InvalidDataException("战术教材搜索时间必须为 1 至 120 秒。");
         if (EventBattle.SearchSeconds is < 1 or > 120)
@@ -174,6 +182,20 @@ public sealed class DailyPreferences
         if (Equipment.RefineInstance == null || (Equipment.RefineInstance.Length > 0 &&
             (!long.TryParse(Equipment.RefineInstance, out long id) || id <= 0 || !Equipment.RefineInstance.All(char.IsAsciiDigit))))
             throw new InvalidDataException("指定精炼装备必须为有效的库存编号。");
+    }
+}
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+public sealed class GeneralPreferences
+{
+    [JsonRequired] public long TalentPotionReserve { get; set; } = 0;
+    [JsonRequired] public bool RefillTalentPotions { get; set; } = false;
+    [JsonRequired] public long TalentPotionTarget { get; set; } = 1000;
+    public void Validate()
+    {
+        if (TalentPotionReserve < 0 || TalentPotionReserve > int.MaxValue || TalentPotionTarget < 1 || TalentPotionTarget > int.MaxValue)
+            throw new InvalidDataException("天赋药保留下限须为非负整数，补药目标须为正整数。");
+        if (RefillTalentPotions && TalentPotionTarget <= TalentPotionReserve)
+            throw new InvalidDataException("补药目标必须高于天赋药保留下限。");
     }
 }
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]

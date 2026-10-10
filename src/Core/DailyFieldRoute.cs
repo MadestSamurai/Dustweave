@@ -77,10 +77,10 @@ public sealed partial class DailyFieldRoute
             var frame = (await W.Observe()).Frame;
             DailyGameVisibility.EnsureVisible(I(frame["ProcessId"]));
             var types = DailyNavigationDecision.Types(frame);
-            var popup = DailyNavigationDecision.TalentAction(frame, policy) ?? DailyNavigationDecision.Notice(frame, policy, out _) ?? DailyNavigationDecision.WeeklyResult(frame, policy);
+            var popup = DailyHomeDecision.BackgroundErrorAction(frame, policy) ?? DailyNavigationDecision.TalentAction(frame, policy) ?? DailyNavigationDecision.Notice(frame, policy, out _) ?? DailyNavigationDecision.WeeklyResult(frame, policy);
             if (popup != null)
             {
-                await W.Driver.NavigationAsync(popup);
+                await DailyTravel.RecoverPresentation(W, frame);
                 stable = null;
                 continue;
             }
@@ -99,11 +99,7 @@ public sealed partial class DailyFieldRoute
                 string signature = S(frame["Scene"]) + "|" + S(frame["UiToken"]) + "|" + story.ToJsonString();
                 if (signature != storySeen)
                 {
-                    try
-                    {
-                        await W.Driver.NavigationAsync(story);
-                    }
-                    catch (DailyStepException e) when (e.Kind == "rejected") { var after = (await W.Observe()).Frame; if (S(after["Scene"]) == S(frame["Scene"]) && DailyNavigationDecision.Types(after).Contains(S(story["ui"]))) throw; }
+                    await DailyTravel.RecoverPresentation(W, frame);
                     storySeen = signature;
                 }
                 stable = null;
@@ -298,6 +294,9 @@ public sealed partial class DailyFieldRoute
         var selected = candidates.Where(r => status.TryGetValue(N(r["instance"]), out var st) && S(st["Reason"]) == "" && DailyRegionRouter.D(st["Cooldown"]) <= 0 && !B(r["_objDisableImage.activeSelf"]) && (!(kind is 3 or 4 or 20) || used.GetValueOrDefault(N(r[SkillPath]!["groupId"])) < N(r[SkillPath]!["valueList"]![0]))).OrderByDescending(r => kind is 2 or 17 ? DailyRegionRouter.D(r[SkillPath]!["valueList"]![1]) : 0).ThenByDescending(r => N(r[SkillPath]!["id"])).ThenBy(r => N(r[SkillPath]!["catalystValue"])).FirstOrDefault();
         if (selected == null)
         {
+            var shortage = candidates.Where(r => status.TryGetValue(N(r["instance"]), out var st) && S(st["Reason"]) == "catalyst_insufficient")
+                .OrderBy(r => N(r[SkillPath]?["catalystValue"])).FirstOrDefault();
+            if (shortage != null) await W.Driver.RequirePotionsAsync(N(shortage[SkillPath]?["catalystValue"]));
             await W.Step("QuickMenuUI", back: true, absent: "QuickMenuUI");
             return DailyWorkflow.Skipped("native_disabled");
         }
@@ -310,6 +309,7 @@ public sealed partial class DailyFieldRoute
                 return DailyWorkflow.Skipped("native_research_active");
             }
         }
+        await W.Driver.RequirePotionsAsync(N(selected[SkillPath]?["catalystValue"]));
         if (kind == 15)
         {
             await W.Step("QuickMenuUI", operation: "mainline_talent", value: I(selected["instance"]), expect: "WayPointUI");

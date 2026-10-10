@@ -11,6 +11,7 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
     private readonly DailyManagedBusiness business; private readonly DailyManagedBootstrap bootstrap; private readonly DailyManagedReconciliation reconciliation;
     private readonly DailyWorkflowRegistry workflows; private readonly IReadOnlyDictionary<string, IDailyManagedStage> managed; private readonly DailyTradeData? tradeData; private readonly DailyBusinessProof[] proofs;
     private readonly SemaphoreSlim serial = new(1, 1); private JsonObject? context; private bool closed;
+    private JsonObject verifiedWeekly = new();
     public DailyStageHost(string root, DailyStageObservation observation, DailyStageNavigation navigation, DailyCommandDriver driver, DailyManagedBusiness business, DailyManagedBootstrap bootstrap, DailyManagedReconciliation reconciliation, DailyWorkflowRegistry workflows, IReadOnlyDictionary<string, IDailyManagedStage> managed, DailyBusinessProof[] proofs, DailyTradeData? tradeData = null)
     {
         this.root = root;
@@ -35,9 +36,20 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
             return new();
         try
         {
-            return DailyWeeklyCompletion.Inspect(await driver.EvidenceAsync(["weekly_npc.native", "mainline.reset"]), stages);
+            var evidence = await driver.EvidenceAsync(["weekly_npc.native", "mainline.reset"]);
+            var result = DailyWeeklyCompletion.Inspect(evidence, stages);
+            string week = S(DailyEvidence.Reading(evidence, "mainline.reset", "GetWeeklyResetTime().Ticks"));
+            foreach (var part in result) part.Value!["week"] = week;
+            foreach (var part in verifiedWeekly)
+                if (stages.Contains(part.Key) && S(part.Value?["week"]) == week && result[part.Key] == null) result[part.Key] = Copy(part.Value);
+            return result;
         }
-        catch (Exception e) when (e is InvalidDataException or StageHostException or DailyStepException or IOException) { return new(); }
+        catch (Exception e) when (e is InvalidDataException or StageHostException or DailyStepException or IOException)
+        {
+            // Historical completion belongs to this bound queue even when stopping
+            // prevents a new read. Never reconstruct it from UI progress counters.
+            return new JsonObject(verifiedWeekly.Where(p => stages.Contains(p.Key)).Select(p => new KeyValuePair<string, JsonNode?>(p.Key, Copy(p.Value))));
+        }
     }
     private JsonArray UnknownPending()
     {
@@ -76,6 +88,58 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
         return result;
     }
     public async Task<JsonObject> CallAsync(string operation, string? stage = null, JsonObject? arguments = null)
+    {
+        // Resume the workflow from current server state; never replay a consuming command.
+        long? lastRefillBalance = null;
+        while (true)
+        {
+            try { return await CallOnceAsync(operation, stage, arguments); }
+            catch (StageHostException error) when (error.PotionLimit != null && operation is "execute" or "navigate")
+            {
+                var limit = error.PotionLimit;
+                var settings = new DailyPreferenceStore(root).Read(S(Bound()["actor"]![3])).General;
+                void Status(string state, string detail) => Progress(DailyTalentPotions.Stage, O(("state", state), ("detail", detail), ("parent", stage), ("limit", limit.Json())));
+                try
+                {
+                    DailyTalentPotions.PurchaseCount(settings, limit.Available, limit.Required);
+                    if (lastRefillBalance.HasValue && limit.Available >= lastRefillBalance.Value)
+                        throw new InvalidDataException("补药后同一消耗仍受限，已停止重复购买；请核对补药目标与当前库存。");
+                }
+                catch (InvalidDataException reason)
+                {
+                    string message = "天赋药限制：" + limit.Message + "；" + reason.Message;
+                    Status("blocked", message);
+                    throw new StageHostException("adapter", message);
+                }
+                Status("running", "天赋药不足，前往广场核对周任务九折报价；补药后接续原任务。");
+                try
+                {
+                    await serial.WaitAsync();
+                    try
+                    {
+                        await business.CleanupRejectedPreviewsAsync(Bound());
+                        var recovered = await navigation.RecoverAsync("trade", Bound(), error.Message, Relay);
+                        if (!B(recovered["safe"])) throw new StageHostException("adapter", "耗药任务现场尚未关闭，未开始补药。");
+                        var refill = await new DailyTradeExecution(Workflow(), new()).RefillPotions(limit.Required, settings);
+                        lastRefillBalance = N(refill["balance"]);
+                        Status("completed", $"已按九折补充 {N(refill["bought"])} 个天赋药，当前 {N(refill["balance"])}；继续原任务。");
+                    }
+                    finally { serial.Release(); }
+                    // Reopen the owning stage, not the old preview or old action.
+                    if (operation == "execute") await CallOnceAsync("navigate", stage);
+                }
+                catch (Exception failure)
+                {
+                    Status(failure is StageHostException { Kind: "pending" } or DailyStepException { MayHaveDispatched: true } ? "recovery_required" : "blocked", failure.Message);
+                    if (failure is InvalidDataException) throw new StageHostException("adapter", failure.Message);
+                    if (failure is DailyStepException step && step.Kind == "rejected" && !step.MayHaveDispatched)
+                        throw new StageHostException(driver.PauseRequested ? "stopped" : "adapter", step.Message);
+                    throw;
+                }
+            }
+        }
+    }
+    private async Task<JsonObject> CallOnceAsync(string operation, string? stage = null, JsonObject? arguments = null)
     {
         await serial.WaitAsync();
         using var diagnostic = operation == "observe" ? null : driver.Diagnostics.Scope(operation + ":" + (stage ?? "queue"));
@@ -127,6 +191,8 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
                 if (!managed.TryGetValue(stage, out var adapter))
                     throw new StageHostException("protocol", "未注册.NET环节：" + stage);
                 var result = await adapter.ExecuteAsync(Bound(), Relay);
+                if (stage == "trade" && B(result["daily_potion_budget_reached"]))
+                    Progress(DailyTalentPotions.Stage, O(("state", "completed"), ("parent", stage), ("detail", "跑商已用完本轮允许的天赋药预算；保留量和补药设置已生效，需要继续加工可调整整体设置后补跑。")));
                 if (stage == "trade" && tradeData != null)
                 {
                     result["data_preflight"] = tradeData.Proof.DeepClone();
@@ -139,26 +205,28 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
         }
         catch (DailyStepException e) when (e.Kind == "rejected")
         {
-            driver.Diagnostics.Event("failure", O(("kind", e.Kind), ("message", e.Message), ("submitted", e.Submitted), ("command", e.Command)));
+            driver.Diagnostics.Failure("failure", O(("kind", e.Kind), ("message", e.Message), ("submitted", e.Submitted), ("may_have_dispatched", e.MayHaveDispatched), ("command", e.Command)));
             // Rejected means no native action dispatched (including an explicit rejected receipt).
             // A missing/changed button is a stage failure, not an uncertain consuming operation.
             // Pending transport and identity failures deliberately still pause the whole queue.
-            throw new StageHostException(driver.PauseRequested ? "stopped" : "adapter", e.Message);
+            throw new StageHostException(driver.PauseRequested ? "stopped" : "adapter", e.Message) { PotionLimit = e.PotionLimit };
         }
-        catch (InvalidDataException e) { driver.Diagnostics.Event("failure", O(("kind", "data"), ("message", e.Message))); throw new StageHostException("adapter", e.Message); }
-        catch (Exception e) { driver.Diagnostics.Event("failure", O(("kind", e.GetType().Name), ("message", e.Message))); throw; }
+        catch (InvalidDataException e) { driver.Diagnostics.Failure("failure", O(("kind", "data"), ("message", e.Message))); throw new StageHostException("adapter", e.Message); }
+        catch (Exception e) { driver.Diagnostics.Failure("failure", O(("kind", e.GetType().Name), ("message", e.Message))); throw; }
         finally { driver.SubmissionGuard = oldGuard; driver.TradeStageActive = oldTrade; if (stage == "trade" && operation == "execute") driver.ConfigureTradeResume(null); serial.Release(); }
     }
     private async Task<JsonObject> ExecuteWeekly(string[] names)
     {
+        verifiedWeekly = new();
         var settled = await SettleWeeklyAsync(names, Bound());
         var remaining = names.Where(n => settled[n] == null).ToArray();
         if (settled["weekly_npc"] is JsonObject npc)
             Progress("weekly_npc", O(("detail", npc["detail"]), ("completed", npc["proof"]!["Completed"]), ("total", npc["proof"]!["Limit"]), ("active", false)));
         JsonObject parts;
+        var route = new DailyWeeklyRoute(Workflow(), Progress);
         try
         {
-            parts = remaining.Length == 0 ? new() : (await new DailyWeeklyRoute(Workflow(), Progress).Run(remaining))["stages"]!.AsObject();
+            parts = remaining.Length == 0 ? new() : (await route.Run(remaining))["stages"]!.AsObject();
         }
         catch (Exception error) when (error is StageHostException { Kind: "adapter" } or DailyStepException { Kind: "deferred" })
         {
@@ -175,7 +243,11 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
                 Progress(name, O(("detail", parts[name]!["detail"]), ("active", false)));
             }
         }
-        foreach (var p in settled)
+        finally {
+            verifiedWeekly = route.VerifiedResults();
+            foreach (var p in settled) verifiedWeekly[p.Key] = Copy(p.Value);
+        }
+        foreach (var p in verifiedWeekly)
             parts[p.Key] = Copy(p.Value);
         return O(("state", parts.All(p => S(p.Value?["state"]) is "completed" or "skipped") ? "completed" : "partial"), ("stages", parts), ("engine", "dotnet-weekly-v2"));
     }

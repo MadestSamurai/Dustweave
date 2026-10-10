@@ -28,7 +28,7 @@ static class PreferenceCases
         foreach (bool walk in new[] { false, true })
         {
             var oldRange = JsonSerializer.SerializeToNode(new DailyPreferences())!.AsObject();
-            oldRange["Schema"] = 15;
+            oldRange.Remove("General");            oldRange["Schema"] = 15;
             var weekly = oldRange["Weekly"]!.AsObject();
             weekly["FirstChapter"] = 8;
             weekly["LastChapter"] = 8;
@@ -39,7 +39,7 @@ static class PreferenceCases
             weekly["Steal"] = true;
             weekly["Npc"] = true;
             var migratedRoute = DailyPreferences.Parse(oldRange.ToJsonString());
-            Check(migratedRoute.Schema == 16 && migratedRoute.Weekly.WalkCollect == walk &&
+            Check(migratedRoute.Schema == 17 && migratedRoute.Weekly.WalkCollect == walk &&
                 !migratedRoute.Weekly.Mainline && migratedRoute.Weekly.Steal && migratedRoute.Weekly.Npc,
                 "range migration preserves independent tasks and walking choice " + walk);
             store.Save(b, migratedRoute);
@@ -67,11 +67,11 @@ static class PreferenceCases
             Reject(() => routeCatalog.AvailablePacks(evidence), "incomplete cartridge ownership cannot silently report collection complete");
         }
         var priorPuzzle = JsonSerializer.SerializeToNode(p)!.AsObject();
-        priorPuzzle["Schema"] = 14;
+        priorPuzzle.Remove("General");        priorPuzzle["Schema"] = 14;
         priorPuzzle["Events"]!.AsObject().Remove("Puzzle");
         priorPuzzle["Events"]!["Enabled"] = false;
         var migratedPuzzle = DailyPreferences.Parse(priorPuzzle.ToJsonString());
-        Check(migratedPuzzle.Schema == 16 && migratedPuzzle.Events.Puzzle && !migratedPuzzle.Events.Enabled, "puzzle migration preserves disabled parent stage");
+        Check(migratedPuzzle.Schema == 17 && migratedPuzzle.Events.Puzzle && !migratedPuzzle.Events.Enabled, "puzzle migration preserves disabled parent stage");
         migratedPuzzle.Events.Puzzle = false;
         Check(!DailyPreferences.Parse(JsonSerializer.Serialize(migratedPuzzle)).Events.Puzzle, "puzzle opt out survives preference roundtrip");
         Check(p.Hunt.OrdinaryChapter == 9 && p.Hunt.FarmGold && !p.Hunt.FarmSlime && p.Hunt.StoneElement == "least" && p.Hunt.TorchLimit == 60, "daily defaults match requested policy");
@@ -93,7 +93,7 @@ static class PreferenceCases
         legacy.Remove("MonsterHunt");
         legacy.Remove("Mirror");
         legacy.Remove("Stages");
-        legacy["Schema"] = 1;
+        legacy.Remove("General");        legacy["Schema"] = 1;
         legacy["Equipment"]!["EnhanceLevel"] = 3;
         Check(DailyPreferences.Parse(legacy.ToJsonString()).Equipment.EnhanceLevel == 3, "legacy preference values migrated");
         legacy["Hunt"]!.AsObject().Remove("Enabled");
@@ -106,11 +106,11 @@ static class PreferenceCases
         v2.Remove("Trade");
         v2.Remove("Weekly");
         v2.Remove("MonsterHunt");
-        v2["Schema"] = 2;
+        v2.Remove("General");        v2["Schema"] = 2;
         v2["Stages"]!.AsObject().Remove("Mail");
         v2["Stages"]!["Guild"] = false;
         var migrated = DailyPreferences.Parse(v2.ToJsonString());
-        Check(migrated.Schema == 16 && migrated.Stages.Mail && !migrated.Stages.Guild, "v2 mail migration preserves disabled daily stages");
+        Check(migrated.Schema == 17 && migrated.Stages.Mail && !migrated.Stages.Guild, "v2 mail migration preserves disabled daily stages");
         v2["Stages"]!.AsObject().Remove("FreeDraws");
         Reject(() => DailyPreferences.Parse(v2.ToJsonString()), "incomplete v2 cannot implicitly reenable draw");
         var v5 = JsonSerializer.SerializeToNode(new DailyPreferences())!.AsObject();
@@ -118,20 +118,20 @@ static class PreferenceCases
         v5.Remove("Tactics");
         v5.Remove("Events");
         v5.Remove("EventBattle");
-        v5["Schema"] = 5;
+        v5.Remove("General");        v5["Schema"] = 5;
         v5["Mirror"]!["Multiplier"] = 15;
         var v6 = DailyPreferences.Parse(v5.ToJsonString());
-        Check(v6.Schema == 16 && !v6.EventBattle.Enabled && v6.EventBattle.Challenge && v6.Mirror.Multiplier == 15, "event migration opt in and retains prior settings");
+        Check(v6.Schema == 17 && !v6.EventBattle.Enabled && v6.EventBattle.Challenge && v6.Mirror.Multiplier == 15, "event migration opt in and retains prior settings");
         v6.EventBattle.SearchSeconds = 0;
         Reject(v6.Validate, "event invalid search bound rejected");
         var old6 = JsonSerializer.SerializeToNode(new DailyPreferences())!.AsObject();
         old6.Remove("Friendship");
         old6.Remove("Tactics");
         old6.Remove("Events");
-        old6["Schema"] = 6;
+        old6.Remove("General");        old6["Schema"] = 6;
         old6["Mirror"]!["Enabled"] = false;
         var now7 = DailyPreferences.Parse(old6.ToJsonString());
-        Check(now7.Schema == 16 && now7.Events.Enabled && now7.Events.Missions && now7.Events.Roulette && now7.Events.Exchange && !now7.Mirror.Enabled, "event settings migration preserves disabled mirror");
+        Check(now7.Schema == 17 && now7.Events.Enabled && now7.Events.Missions && now7.Events.Roulette && now7.Events.Exchange && !now7.Mirror.Enabled, "event settings migration preserves disabled mirror");
         var incompleteEvents = JsonSerializer.SerializeToNode(now7)!.AsObject();
         incompleteEvents["Events"]!.AsObject().Remove("Exchange");
         Reject(() => DailyPreferences.Parse(incompleteEvents.ToJsonString()), "incomplete event spending preference rejected");
@@ -139,21 +139,21 @@ static class PreferenceCases
         store.Save(b, now7);
         Check(!store.Read(b).Events.Enabled && store.Read(a).Events.Enabled, "event reward settings isolated by account");
         var old10 = JsonSerializer.SerializeToNode(new DailyPreferences())!.AsObject();
-        old10["Schema"] = 10;
+        old10.Remove("General");        old10["Schema"] = 10;
         old10["Weekly"]!.AsObject().Remove("Book");
         old10["Weekly"]!.AsObject().Remove("EquipmentCraft");
         old10["Equipment"]!["Enabled"] = false;
         var new11 = DailyPreferences.Parse(old10.ToJsonString());
-        Check(new11.Schema == 16 && new11.Weekly.Book && new11.Weekly.EquipmentCraft && !new11.Equipment.Enabled, "weekly migration preserves recycle choice");
+        Check(new11.Schema == 17 && new11.Weekly.Book && new11.Weekly.EquipmentCraft && !new11.Equipment.Enabled, "weekly migration preserves recycle choice");
         new11.Weekly.Book = false;
         store.Save(b, new11);
         Check(!store.Read(b).Weekly.Book && store.Read(b).Weekly.EquipmentCraft, "weekly task switches independent");
         var old12 = JsonSerializer.SerializeToNode(new DailyPreferences())!.AsObject();
-        old12["Schema"] = 12;
+        old12.Remove("General");        old12["Schema"] = 12;
         old12["Weekly"]!.AsObject().Remove("Steal");
         old12["Weekly"]!["Mainline"] = false;
         var steal = DailyPreferences.Parse(old12.ToJsonString());
-        Check(steal.Schema == 16 && !steal.Weekly.Steal && !steal.Weekly.Mainline, "steal migration preserves disabled collection");
+        Check(steal.Schema == 17 && !steal.Weekly.Steal && !steal.Weekly.Mainline, "steal migration preserves disabled collection");
         steal.Weekly.Steal = true;
         store.Save(b, steal);
         Check(store.Read(b).Weekly.Steal && !store.Read(a).Weekly.Steal, "steal switch isolated per account");

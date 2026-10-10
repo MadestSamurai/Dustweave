@@ -29,7 +29,7 @@ public static class DailyStageCatalog
     public static IEnumerable<string> Adapters => All.Select(s => s.Id).Concat(CompatibilityAdapters).Distinct(StringComparer.Ordinal);
     public static IEnumerable<DailyStageDefinition> Selectable => All.Where(s => s.Id != "tactics" || DailyPlugin.Current.Supports(s.Id));
     public static bool IsWeeklyRoute(string id) => id is "weekly_mainline" or "weekly_npc" or "weekly_steal";
-    public static string Name(string id) => Selectable.FirstOrDefault(s => s.Id == id)?.Name ?? id switch
+    public static string Name(string id) => id == DailyTalentPotions.Stage ? "天赋药补给与限制" : Selectable.FirstOrDefault(s => s.Id == id)?.Name ?? id switch
     {
         "collection_sync" => "手动检查收集进度", "life_helpers" => "经营收益领取",
         "cafeteria_income" => "餐厅收益", "cafeteria_guests" => "餐厅顾客奖励",

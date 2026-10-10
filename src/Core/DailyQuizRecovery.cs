@@ -149,7 +149,13 @@ public sealed partial class DailyCommandDriver
                 var story = DailyNavigationDecision.StoryAction(frame, policy);
                 if (story == null)
                     throw new StageHostException("adapter", "对话不是可核对的活动问答或已识别剧情，保留现场。");
-                var advanced = await NavigationAsync(story);
+                JsonObject advanced;
+                try { advanced = await NavigationAsync(story); }
+                catch (StageHostException e) when (e.Kind == "navigation_changed")
+                {
+                    await ReadBound();
+                    return new() { ["state"] = "presentation_changed", ["actions"] = 0, ["started_new_quiz"] = false };
+                }
                 return new()
                 {
                     ["state"] = "field_story_advanced",

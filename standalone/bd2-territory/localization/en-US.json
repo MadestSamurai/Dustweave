@@ -1,4 +1,10 @@
 {
+  "最低砍伐阶段": "Minimum tree stage",
+  "选定阶段是下限，更高阶段也会砍伐；矿点和作物仍等完全成熟。": "Trees at or above this stage can be cut. Ore and crops still wait until fully grown.",
+  "仅完全成熟（默认）": "Fully grown only (default)",
+  "阶段 {0} 及以上": "Stage {0} and above",
+  "可砍树": "Eligible trees",
+  "本轮采集尚未结束，继续处理符合设置的资源": "Continuing this gathering pass with eligible resources",
   "统一会话未就绪，请返回日常助手重新连接。": "The shared session is not ready. Return to the daily assistant and reconnect.",
   "尚无有效连接记录，请先点击「连接 / 更新组件」。": "No valid connection is recorded. Click Connect / Update component first.",
   "预测存在接触，按游戏正常移动验证通行": "Predicted contact; checking passage through normal game movement",

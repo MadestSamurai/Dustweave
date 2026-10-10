@@ -12,6 +12,8 @@ namespace BD2Territory
  public class TerritorySettings
  {
   public bool Logging{get;set;}=true;public bool Mining{get;set;}=true;public bool Farming{get;set;}=true;
+  // Zero preserves the original policy: wait for each tree's final growth stage.
+  public int MinimumTreeStage{get;set;}=0;
   public bool UseNavMesh{get;set;}=false;
   public bool DashRecovery{get;set;}=true;public bool UseVehicle{get;set;}=true;
   public bool FixedCrop{get;set;}=false;public int FixedSeedId{get;set;}=0;
@@ -19,7 +21,7 @@ namespace BD2Territory
   public bool AutoSell{get{return true;}set{}}public int SellThreshold{get;set;}=9900;
   public int RecipeId{get;set;}=3;public bool Cooking{get;set;}=false;public int CookingBatch{get;set;}=100;
   public int IntervalMs{get;set;}=500;public long PlantingBudget{get;set;}=1400;
-  public bool ValidSettings()=>SurplusSales.ValidThreshold(SellThreshold)&&FixedSeedId>=0&&CookingBatch>=1&&CookingBatch<=1000&&RecipeId>0&&IntervalMs>=100&&IntervalMs<=60000&&PlantingBudget>=0&&PlantingBudget<=10000000;
+  public bool ValidSettings()=>MinimumTreeStage>=0&&SurplusSales.ValidThreshold(SellThreshold)&&FixedSeedId>=0&&CookingBatch>=1&&CookingBatch<=1000&&RecipeId>0&&IntervalMs>=100&&IntervalMs<=60000&&PlantingBudget>=0&&PlantingBudget<=10000000;
  }
  public sealed class TerritoryControl:TerritorySettings
  {
@@ -39,6 +41,7 @@ namespace BD2Territory
   public string FarmState{get;set;}="";
   public string WorkPhase{get;set;}="";public int WorkRemaining{get;set;}
   public int RetryTargets{get;set;}public int Trees{get;set;}public int Ores{get;set;}public int Mature{get;set;}public int Fields{get;set;}public int EmptyFields{get;set;}
+  public int MaxTreeStage{get;set;}
   public int GatherReplies{get;set;}public int ReceivedItems{get;set;}public long Spent{get;set;}public int BatchSeedId{get;set;}public int BatchPlanted{get;set;}public int BatchTotal{get;set;}public int CompletedBatches{get;set;}
   public RecipeOption[] Seeds{get;set;}=new RecipeOption[0];public int ActiveFixedSeedId{get;set;}
   public RecipeOption[] Recipes{get;set;}=new RecipeOption[0];public int ActiveRecipeId{get;set;}

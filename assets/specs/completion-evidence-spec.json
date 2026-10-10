@@ -171,6 +171,7 @@
       "Type": "EquipmentMakingUI",
       "Paths": [
         "_craftMaterial.craftCount",
+        "_craftButton.UseResourceCount",
         "ὤὭὠὥὤὠὡὣὣὠὣ.ὫὮὩὬὤὫὮὨὢὯὬ.Id",
         "_craftButton.objDisableButton.activeSelf"
       ]

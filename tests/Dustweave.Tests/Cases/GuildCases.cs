@@ -105,7 +105,44 @@ internal static class GuildCases
             });
         foreach (var state in new[] { "completed", "confirmed_cleanup_pending", "checked_no_grant", "prepared", "waiting_response", "unknown" })
             Case("journal blocks retry of " + state, () => { var s = Snap(); var r = Intent(s); r.State = state; r.MayHaveDispatched = state != "prepared"; var store = new GuildStore(NewRoot()); store.Save(r); var reopened = new GuildStore(store.Root); Check(GuildPolicy.Gate(s, reopened.Prior(s), DateTime.UtcNow.Ticks) != "", "retry allowed"); });
-        Case("unresolved survives a reset and guild change", () => { var s = Snap(); var r = Intent(s); r.State = "unknown"; r.MayHaveDispatched = true; var store = new GuildStore(NewRoot()); store.Save(r); s.Guild.CycleKey += "1"; s.Guild.GuildKey = DailyIdentity.Hash("other-guild"); Check(store.Prior(s)?.Id == r.Id, "unresolved erased"); });
+        Case("old unresolved attendance does not block a new cycle", () => { var s = Snap(); var r = Intent(s); r.State = "unknown"; r.MayHaveDispatched = true; var store = new GuildStore(NewRoot()); store.Save(r); s.Guild.CycleKey += "1"; Check(store.Prior(s) == null && store.Receipt(r.Id)!.State == "unknown", "old outcome must remain unknown without locking the new day"); });
+        Case("timed-out single attendance query permits bounded refresh", () =>
+        {
+            var s = Snap(); var r = Intent(s); long now = DateTime.UtcNow.Ticks;
+            r.State = "unknown"; r.RequestCount = 1; r.MayHaveDispatched = true; r.StartedUtcTicks = now - TimeSpan.FromSeconds(46).Ticks;
+            Check(GuildPolicy.CanRefresh(s, r, now) && GuildPolicy.Gate(s, r, now) == "", "settled timeout should allow a new independently attributed entry");
+            r.ReentryCount = 2; Check(!GuildPolicy.CanRefresh(s, r, now), "retry budget enforced"); r.ReentryCount = 0;
+            r.ResponseSeen = true; Check(!GuildPolicy.CanRefresh(s, r, now), "failed or ambiguous responses not replayed"); r.ResponseSeen = false;
+            r.RequestCount = 2; Check(!GuildPolicy.CanRefresh(s, r, now), "interleaved requests not replayed"); r.RequestCount = 1;
+            r.StartedUtcTicks = now; Check(!GuildPolicy.CanRefresh(s, r, now), "in-flight request not retried");
+            r.StartedUtcTicks = now - TimeSpan.FromSeconds(46).Ticks; s.AccountKey = DailyIdentity.MemberKey("different");
+            Check(!GuildPolicy.CanRefresh(s, r, now), "changed actor cannot authorize retry");
+        });
+        Case("newest attributed receipt supersedes old timeout without deleting it", () =>
+        {
+            var s = Snap(); var store = new GuildStore(NewRoot()); var old = Intent(s); old.State = "unknown"; old.StartedUtcTicks -= TimeSpan.FromMinutes(2).Ticks; store.Save(old);
+            var current = Intent(s); current.State = "completed"; store.Save(current);
+            Check(store.Prior(s)?.Id == current.Id && store.Receipt(old.Id)!.State == "unknown", "journal enumeration cannot resurrect an earlier timeout");
+        });
+        Case("game restart resets exhausted attendance refresh budget without crossing accounts", () =>
+        {
+            var s = Snap(); var r = Intent(s); long now = DateTime.UtcNow.Ticks;
+            r.State = "unknown"; r.RequestCount = 1; r.MayHaveDispatched = true; r.ReentryCount = 2;
+            r.StartedUtcTicks = now - TimeSpan.FromSeconds(46).Ticks;
+            Check(!GuildPolicy.CanRefresh(s, r, now), "same process cannot renew the budget");
+            s.InstanceId = Guid.NewGuid().ToString("N");
+            Check(!GuildPolicy.CanRefresh(s, r, now), "component reconnect is not a game restart");
+            s.ProcessStartTicks++;
+            Check(GuildPolicy.CanRefresh(s, r, now) && GuildPolicy.NextReentry(s, r) == 0, "new game process owns a fresh refresh budget");
+            foreach (string interrupted in new[] { "prepared", "dispatching", "waiting_response" }) {
+                r.State = interrupted; r.RequestCount = interrupted == "prepared" ? 0 : 1;
+                Check(GuildPolicy.CanRefresh(s, r, now), "closed process cannot retain an in-flight read lock: " + interrupted);
+                r.ResponseSeen = true; Check(!GuildPolicy.CanRefresh(s, r, now), "existing response must still be inspected: " + interrupted); r.ResponseSeen = false;
+            }
+            r.State = "unknown"; r.RequestCount = 1;
+            s.PlayerKey = DailyIdentity.PlayerKey(s.AccountKey, 987654);
+            Check(!GuildPolicy.CanRefresh(s, r, now), "restart never permits cross-player authorization");
+        });
         Case("completed opens at the next game cycle", () => { var s = Snap(); var r = Intent(s); r.State = "completed"; var store = new GuildStore(NewRoot()); store.Save(r); s.Guild.CycleKey += "1"; Check(store.Prior(s) == null, "completed leaks cycle"); });
         Case("pending is isolated by account player server", () => { var s = Snap(); var r = Intent(s); var store = new GuildStore(NewRoot()); store.Save(r); s.AccountKey = DailyIdentity.MemberKey("987"); Check(store.Prior(s) == null, "account leaked"); s.AccountKey = r.AccountKey; s.PlayerKey = DailyIdentity.PlayerKey(r.AccountKey, 999); Check(store.Prior(s) == null, "player leaked"); s.PlayerKey = r.PlayerKey; s.Guild.ServerKey = DailyIdentity.Hash("other"); Check(store.Prior(s) == null, "server leaked"); });
         Case("command matches exact instance and bounded lease", () =>

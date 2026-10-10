@@ -41,7 +41,7 @@ public sealed class DailyRoomStage : IDailyManagedStage
             yield return op;
         }
     }
-    public bool CanResume(DailyStageFrame frame) => DailyNavigationDecision.Types(frame.Frame).Contains("MyRoomUI") && Prior(frame.Context).Any(op => op["state"]?.GetValue<string>() is "prepared" or "dispatching" or "unknown" || op["state"]?.GetValue<string>() == "completed" && JsonNode.DeepEquals(op["cycle"], frame.Context["cycle"]));
+    public bool CanResume(DailyStageFrame frame) => DailyNavigationDecision.Types(frame.Frame).Contains("MyRoomUI") && Prior(frame.Context).Any(op => op["state"]?.GetValue<string>() == "completed" && JsonNode.DeepEquals(op["cycle"], frame.Context["cycle"]));
     private async Task WaitTarget(string ui, string field)
     {
         double end = clock() + 40;
@@ -65,8 +65,17 @@ public sealed class DailyRoomStage : IDailyManagedStage
         if (!JsonNode.DeepEquals(observed.Context, context))
             throw new StageHostException("identity", "小屋现场与队列不一致");
         var prior = Prior(context).ToArray();
-        if (prior.Any(p => p["state"]?.GetValue<string>() is "prepared" or "dispatching" or "unknown"))
-            throw new StageHostException("pending", "已有小屋操作待只读核账，不重复访问。");
+        var unresolved = prior.Where(p => p["state"]?.GetValue<string>() is "prepared" or "dispatching" or "unknown").ToArray();
+        if (unresolved.Length > 0)
+        {
+            if (!DailyNavigationDecision.Types(observed.Frame).Contains("MenuUI") || DailyNavigationDecision.Blockers(observed.Frame, "MenuUI", DailyNavigationPolicy.Load()).Length > 0)
+                throw new StageHostException("adapter", "小屋旧访问尚未确认，先完成当前页面收尾再重新读取。");
+            // Do not replay the old request. A fresh visit has its own identity,
+            // evidence and response; the former outcome is never labelled success.
+            foreach (var old in unresolved)
+                if (new[] { "ProcessId", "ProcessStartTicks" }.All(k => JsonNode.DeepEquals(old["before"]!["Frame"]![k], observed.Frame[k])) && driver.UtcTicks - DailyEvidence.Integer(old["at"]) < 45 * TimeSpan.TicksPerSecond)
+                    throw new StageHostException("pending", "小屋原请求仍在响应期限内，稍后可重新读取。");
+        }
         var completed = prior.FirstOrDefault(p => p["state"]?.GetValue<string>() == "completed" && JsonNode.DeepEquals(p["cycle"], context["cycle"]));
         string flowId = Guid.NewGuid().ToString("N"), flowPath = Path.Combine(root, "live", "workflows", flowId, "result.json");
         var steps = new JsonArray();
@@ -109,6 +118,13 @@ public sealed class DailyRoomStage : IDailyManagedStage
                     ["engine"] = "dotnet-room-v1"
                 };
                 DailyJson.Write(opPath, op);
+                foreach (var old in unresolved)
+                {
+                    old["previous_state"] = old["state"]!.DeepClone();
+                    old["state"] = "superseded";
+                    old["reconciliation"] = new JsonObject { ["method"] = "fresh_read_only_visit", ["replacement_id"] = id, ["at"] = driver.UtcTicks, ["original_outcome"] = "unknown" };
+                    DailyJson.Write(Path.Combine(root, "live", "business", old["id"]!.GetValue<string>() + ".json"), old);
+                }
                 try
                 {
                     if (stopped())

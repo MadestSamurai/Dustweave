@@ -213,10 +213,10 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
                 lastProgress = W.Time;
                 continue;
             }
-            var presentation = DailyNavigationDecision.WeeklyResult(f, policy) ?? DailyNavigationDecision.StoryAction(f, policy) ?? DailyNavigationDecision.TalentAction(f, policy) ?? DailyNavigationDecision.Notice(f, policy, out _);
+            var presentation = DailyHomeDecision.BackgroundErrorAction(f, policy) ?? DailyNavigationDecision.WeeklyResult(f, policy) ?? DailyNavigationDecision.StoryAction(f, policy) ?? DailyNavigationDecision.TalentAction(f, policy) ?? DailyNavigationDecision.Notice(f, policy, out _);
             if (presentation != null)
             {
-                await W.Driver.NavigationAsync(presentation);
+                await DailyTravel.RecoverPresentation(W, f);
                 continue;
             }
             if (types.Contains("RewardReceivePopupUI"))

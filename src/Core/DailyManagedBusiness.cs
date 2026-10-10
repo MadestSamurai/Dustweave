@@ -233,7 +233,7 @@ public sealed partial class DailyManagedBusiness
             if (op["state"]?.GetValue<string>() is not ("completed" or "rejected" or "server_rejected"))
                 op["state"] = op["state"]?.GetValue<string>() == "preview_ready" ? "preview_ready" : op["state"]?.GetValue<string>() == "prepared" ? "rejected" : "unknown";
             op["error"] = error.Message;
-            if (error is DailyStepException { Kind: "rejected", Submitted: false, Command: null } && op["command_id"] == null)
+            if (error is DailyStepException { Kind: "rejected", MayHaveDispatched: false } && op["command_id"] == null)
                 op["confirmation_not_submitted"] = true;
             Save(op);
             if (op["confirmation_not_submitted"]?.GetValue<bool>() == true && !DailyTradePreview.IsConfirmation(op["action"]!.AsObject()))

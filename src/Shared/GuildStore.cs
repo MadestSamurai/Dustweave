@@ -30,12 +30,13 @@ namespace BD2Daily {
    foreach(var file in Directory.GetFiles(path,"*.json")){
     var id=Path.GetFileNameWithoutExtension(file);var r=Receipt(id);if(r==null||id==ignoreId||r.AccountKey!=s.AccountKey||r.PlayerKey!=s.PlayerKey||r.ServerKey!=s.Guild.ServerKey)continue;
     bool unresolved=r.State=="prepared"||r.State=="dispatching"||r.State=="waiting_response"||r.State=="response_received"||r.State=="unknown";
-    if(unresolved)return r; // An ambiguous operation blocks retries even after a reset.
-    if(r.CycleKey==s.Guild.CycleKey&&r.GuildKey==s.Guild.GuildKey&&(r.State=="completed"||r.State=="checked_no_grant"||r.State=="confirmed_cleanup_pending")&&(latest==null||r.StartedUtcTicks>latest.StartedUtcTicks))latest=r;
+    // Old attendance reads remain diagnostic records, not locks on a new day.
+    // Within the current scope, use the newest attempt deterministically.
+    if(r.CycleKey==s.Guild.CycleKey&&r.GuildKey==s.Guild.GuildKey&&(unresolved||r.State=="completed"||r.State=="checked_no_grant"||r.State=="confirmed_cleanup_pending")&&(latest==null||r.StartedUtcTicks>latest.StartedUtcTicks))latest=r;
    }return latest;
   }
   public string TracePath(string id){if(!ValidId(id))throw new InvalidDataException("Invalid trace ID");return Path.Combine(Root,"guild","traces",id+".jsonl");}
   public void Append(string id,GuildTrace trace){var path=TracePath(id);Directory.CreateDirectory(Path.GetDirectoryName(path));using(var bytes=new MemoryStream()){new DataContractJsonSerializer(typeof(GuildTrace)).WriteObject(bytes,trace);using(var f=new FileStream(path,FileMode.Append,FileAccess.Write,FileShare.Read)){bytes.Position=0;bytes.CopyTo(f);f.WriteByte(10);f.Flush(true);}}}
-  public static GuildReceipt Intent(string id,DailySnapshot s){return new GuildReceipt{Id=id,AccountKey=s.AccountKey,PlayerKey=s.PlayerKey,GuildKey=s.Guild.GuildKey,ServerKey=s.Guild.ServerKey,CycleKey=s.Guild.CycleKey,ClientMvid=s.Guild.ClientMvid,StartedUtcTicks=DateTime.UtcNow.Ticks};}
+  public static GuildReceipt Intent(string id,DailySnapshot s){return new GuildReceipt{Id=id,AccountKey=s.AccountKey,PlayerKey=s.PlayerKey,GuildKey=s.Guild.GuildKey,ServerKey=s.Guild.ServerKey,CycleKey=s.Guild.CycleKey,ClientMvid=s.Guild.ClientMvid,StartedUtcTicks=DateTime.UtcNow.Ticks,ProcessId=s.ProcessId,ProcessStartTicks=s.ProcessStartTicks};}
  }
 }

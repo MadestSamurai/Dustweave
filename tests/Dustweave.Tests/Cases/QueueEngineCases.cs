@@ -20,6 +20,15 @@ static class QueueEngineCases
         async Task<JsonObject> Run(FakeHost host, string root, string[]? tasks = null, string? resume = null, string? retry = null, DailyPreferences? prefs = null, Func<bool>? pause = null) => await new DailyQueueEngine(host, pause ?? (() => false), () => prefs ?? new DailyPreferences { Trade = new() { Enabled = true } }).RunAsync(new(root, Account, Path.Combine(root, "queue-ui.json"), resume, false, tasks, retry));
         var root = Root();
         var host = new FakeHost();
+        {
+            var refillHost = new FakeHost { Refill = true };
+            string refillRoot = Root();
+            var refilled = await Run(refillHost, refillRoot, ["mail"]);
+            Check(Stage(refilled, DailyTalentPotions.Stage) == "completed" && State(refilled) == "completed", "auxiliary potion refill progress persists outside weekly stage group");
+            refillHost.Executed.Clear();
+            await Run(refillHost, refillRoot, resume: refilled["id"]!.GetValue<string>());
+            Check(refillHost.Executed.Count == 0, "resume never executes refill as an independent purchase stage");
+        }
         var record = await Run(host, root, ["mail", "trade"]);
         Check(State(record) == "completed" && host.Executed.SequenceEqual(new[] { "mail", "trade" }), "native queue owns ordering and completion");
         Check(record["engine"]!.GetValue<string>() == "dotnet-v1" && File.Exists(DailyQueueEngine.RecordPath(root, record["id"]!.GetValue<string>())), "native queue persists engine ownership");
@@ -268,6 +277,13 @@ static class QueueEngineCases
         host.Fail["execute:weekly_mainline"] = "pending";
         record = await Run(host, Root(), weekly, prefs: prefs);
         Check(Stage(record, "weekly_npc") == "completed" && Stage(record, "weekly_mainline") == "recovery_required" && Stage(record, "weekly_steal") == "recovery_required", "shared native uncertainty preserves independently verified NPC completion and leaves other scopes pending");
+        foreach (string kind in new[] { "navigation_changed", "transport" })
+        {
+            host = new() { Safe = true, SettledNpc = true, SettledSteal = true };
+            host.Fail["execute:weekly_mainline"] = kind;
+            record = await Run(host, Root(), weekly, prefs: prefs);
+            Check(Stage(record, "weekly_npc") == "completed" && Stage(record, "weekly_steal") == "completed" && Stage(record, "weekly_mainline") != "completed", "independent weekly proofs survive " + kind);
+        }
 
         root = Root(); host = new();
         old = Old(id, host.Context, "weekly_sichuan", "mail");
@@ -318,8 +334,14 @@ static class QueueEngineCases
     static JsonObject Old(string id, JsonObject context, params string[] tasks) => new() { ["schema"] = 1, ["id"] = id, ["context"] = context.DeepClone(), ["state"] = "paused", ["items"] = new JsonArray(tasks.Select(t => (JsonNode)new JsonObject { ["task"] = t, ["state"] = "pending" }).ToArray()) };
     private sealed class FakeHost : IDailyStageHost, IDailyStageProgressHost, IDailyWeeklyCompletionHost
     {
-        public event Action<string, JsonObject>? StageProgress; public List<string> Members = []; public bool PartialCollection, SettledNpc;
-        public Task<JsonObject> SettleWeeklyAsync(IReadOnlyList<string> stages, JsonObject context) => Task.FromResult(SettledNpc && stages.Contains("weekly_npc") ? new JsonObject { ["weekly_npc"] = new JsonObject { ["state"] = "completed", ["source"] = "TodayQuestInfoResponse" } } : new JsonObject());
+        public event Action<string, JsonObject>? StageProgress; public List<string> Members = []; public bool PartialCollection, SettledNpc, SettledSteal, Refill;
+        public Task<JsonObject> SettleWeeklyAsync(IReadOnlyList<string> stages, JsonObject context)
+        {
+            var result = new JsonObject();
+            if (SettledNpc && stages.Contains("weekly_npc")) result["weekly_npc"] = new JsonObject { ["state"] = "completed", ["source"] = "TodayQuestInfoResponse" };
+            if (SettledSteal && stages.Contains("weekly_steal")) result["weekly_steal"] = new JsonObject { ["state"] = "completed", ["source"] = "game_network" };
+            return Task.FromResult(result);
+        }
         public JsonObject Context = JsonNode.Parse("{\"actor\":[1,2,\"fixture\",\"" + Account + "\",\"player\"],\"server\":\"fixture\",\"cycle\":\"today\"}")!.AsObject();
         public List<string> Executed = [], Calls = []; public Dictionary<string, string> Fail = new(); public bool Safe, FailOnce, RecoverInStage; public string? Unresolved, Owner; public Action<string, string>? After;
         public Task<JsonObject> CallAsync(string operation, string? stage = null, JsonObject? arguments = null)
@@ -329,6 +351,11 @@ static class QueueEngineCases
             if (operation == "execute")
                 Executed.Add(stage!);
             After?.Invoke(operation, stage ?? "");
+            if (Refill && operation == "execute")
+            {
+                StageProgress?.Invoke(DailyTalentPotions.Stage, new() { ["state"] = "running", ["detail"] = "refilling" });
+                StageProgress?.Invoke(DailyTalentPotions.Stage, new() { ["state"] = "completed", ["detail"] = "refilled" });
+            }
             if (Fail.TryGetValue(key, out var kind))
             {
                 if (FailOnce)

@@ -14,6 +14,8 @@ public sealed class DailyDiagnosticTrail(string root, Func<double> clock, Func<l
     string scope = "", key = "";
     double observedAt = double.NegativeInfinity;
     long sequence;
+    JsonObject? latestFrame;
+    readonly Dictionary<string, double> savedFailures = new();
     public string LastError { get; private set; } = "";
     public IDisposable Scope(string name, JsonObject? detail = null)
     {
@@ -23,8 +25,25 @@ public sealed class DailyDiagnosticTrail(string root, Func<double> clock, Func<l
         return new Exit(() => { Event("end"); scope = parent; key = ""; });
     }
     public void Event(string kind, JsonObject? detail = null) => Write(O(("kind", kind), ("detail", detail)));
+    public void Failure(string kind, JsonObject detail)
+    {
+        detail = detail.DeepClone().AsObject();
+        if (detail["last_observed"] == null) detail["last_observed"] = latestFrame?.DeepClone();
+        Event(kind, detail);
+        // Failure-only snapshots survive rotation of the busy observation timeline.
+        // Existing live-log age/size retention still applies to this directory.
+        string failureKey = scope + "|" + kind + "|" + S(detail["error"] ?? detail["message"]) + "|" + S(detail["last_observed"]?["Scene"]);
+        double at = clock();
+        if (savedFailures.TryGetValue(failureKey, out var saved) && at - saved < 30) return;
+        if (savedFailures.Count >= 64) savedFailures.Remove(savedFailures.MinBy(p => p.Value).Key);
+        savedFailures[failureKey] = at;
+        try { DailyJson.Write(Path.Combine(root, "live", "diagnostics", "failures", Guid.NewGuid().ToString("N") + ".json"),
+            O(("kind", kind), ("detail", detail), ("session", session), ("utc_ticks", now()), ("scope", scope))); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { LastError = e.Message; }
+    }
     public void Observe(JsonObject frame, string phase = "observe", JsonObject? detail = null)
     {
+        latestFrame = frame.DeepClone().AsObject();
         double at = clock();
         if (at - observedAt < .25) return;
         var rows = DailyNavigationDecision.Rows(frame).OrderByDescending(r => N(r["Order"])).Take(24).ToArray();

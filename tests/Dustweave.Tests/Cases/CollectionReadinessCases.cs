@@ -38,6 +38,28 @@ static class CollectionReadinessCases
                 throw new Exception(name);
             cases.Add(name);
         }
+        using (var f = new WorkflowHarness(Path.Combine(output, "weekly-full-catalog"), []))
+        {
+            f.Workflow.Settings.Weekly.Mainline = true;
+            f.Workflow.Settings.Weekly.Steal = true;
+            f.Page("GameFieldDefaultUI");
+            f.Readings = () => [
+                WorkflowCases.Reading("mainline.reset", ("GetWeeklyResetTime().Ticks", 500L)),
+                WorkflowCases.Reading("mainline.owned_packs", ("Count", 2), ("$items", new JsonArray(new JsonObject { ["Key"]=1, ["Value.Id"]=1 }, new JsonObject { ["Key"]=2, ["Value.Id"]=2 }))),
+                WorkflowCases.Reading("mainline.packs", ("Count", 2), ("$items", new JsonArray(new JsonObject { ["Id"]=1, ["PackType"]=0 }, new JsonObject { ["Id"]=2, ["PackType"]=0 })))
+            ];
+            var counts = new Dictionary<string, long>();
+            var route = new DailyWeeklyRoute(f.Workflow, (stage, progress) => {
+                counts[stage] = DailyData.N(progress["total"]);
+                if (counts.Count == 2) throw new OperationCanceledException("Synthetic pause before entering a cartridge");
+            });
+            try { await route.Run(["weekly_mainline", "weekly_steal"]); }
+            catch (OperationCanceledException) { }
+            var catalog = new DailyCollectionCatalog(f.Workflow);
+            Check(counts["weekly_mainline"] == catalog.Maps(1).Length + catalog.Maps(2).Length && counts["weekly_steal"] == catalog.StealMaps(1).Length + catalog.StealMaps(2).Length,
+                "weekly progress includes every available cartridge before entering the first one");
+            Check(route.VerifiedResults().Count == 0 && f.Box.Commands.Count == 0, "known weekly targets cannot become completion proof without server progress");
+        }
         foreach (int kind in new[] { 3, 4, 6, 20 })
         {
             var proof = DailyCollectionReadiness.Inspect(Evidence("GameFieldDefaultUI", new()), Evidence("QuickMenuUI", new(Row(kind * 100 + 5))), kind);

@@ -130,7 +130,8 @@ public static class DailyMissions
         if (results["passes"]?["reports"] is JsonArray reports)
             foreach (var row in Rows(reports).SelectMany(r => Rows(r["missions"])).Where(r => S(r["status"]) is "pending" or "claimable"))
                 pending.Add(row.DeepClone());
-        return O(("state", results.Any(r => S(r.Value?["state"]) is not ("completed" or "skipped")) ? "partial" : "completed"), ("stages", results), ("pending_tasks", pending), ("reason", pending.Count > 0 ? "奖励检查完成；仍有未完成任务" : "奖励检查完成"), ("engine", "dotnet-rewards-v1"));
+        bool passIssues = Rows(results["passes"]?["issues"]).Length > 0;
+        return O(("state", results.Any(r => S(r.Value?["state"]) is not ("completed" or "skipped")) ? "partial" : "completed"), ("stages", results), ("pending_tasks", pending), ("reason", passIssues ? "部分通行证待检查；其余奖励已处理" : pending.Count > 0 ? "奖励检查完成；仍有未完成任务" : "奖励检查完成"), ("engine", "dotnet-rewards-v1"));
     }
 }
 
@@ -165,21 +166,23 @@ public static class DailyPasses
         Require(activeIds.Contains(pid), "Selected pass is not active");
         var native = State(e, "pass.definition", "$self");
         Require(N(native["PassId"]) == pid, "Pass selection has not settled");
-        var table = JsonNode.Parse(S(native["Table"]))!.AsObject();
-        var group = JsonNode.Parse(S(native["Group"]))!.AsObject();
-        Require(N(table["id"]) == pid && N(table["expEventMissionGroupId"]) == N(group["id"]) && N(group["usePass"]) != 0, "Native pass definition mismatch");
-        var definitions = native["Missions"]!.AsArray().Select(raw => JsonNode.Parse(S(raw))!.AsObject()).ToDictionary(r => N(r["id"]));
+        var table = JsonNode.Parse(S(native["Table"])) as JsonObject ?? throw new InvalidDataException("Missing native pass table");
+        var group = JsonNode.Parse(S(native["Group"])) as JsonObject ?? throw new InvalidDataException("Missing native pass group");
+        // Newbie/guide passes legitimately omit UsePass (protobuf zero). The
+        // native page links its missions through ExpEventMissionGroupId.
+        Require(pid > 0 && N(table["id"]) == pid && N(group["id"]) > 0 && N(table["expEventMissionGroupId"]) == N(group["id"]), "Native pass definition mismatch");
+        var definitions = (native["Missions"] as JsonArray ?? throw new InvalidDataException("Missing native pass missions")).Select(raw => JsonNode.Parse(S(raw)) as JsonObject ?? throw new InvalidDataException("Missing native pass mission")).ToDictionary(r => N(r["id"]));
         const string prefix = "ὨὤὭὯὣὥὡὯὯὭὬ";
-        var keys = R(e, "pass.scope", prefix + ".Keys")!.AsArray().Select(I).ToArray();
-        var values = R(e, "pass.scope", prefix + ".Values")!.AsArray();
-        var groupIds = group["missionGroupId"]!.AsArray().Select(N).ToArray();
+        var keys = (R(e, "pass.scope", prefix + ".Keys") as JsonArray ?? throw new InvalidDataException("Missing pass group keys")).Select(I).ToArray();
+        var values = R(e, "pass.scope", prefix + ".Values") as JsonArray ?? throw new InvalidDataException("Missing pass group values");
+        var groupIds = (group["missionGroupId"] as JsonArray ?? throw new InvalidDataException("Missing pass mission groups")).Select(N).ToArray();
         Require(keys.Length == N(R(e, "pass.scope", prefix + ".Count")) && values.Count == keys.Length && keys.Order().SequenceEqual(Enumerable.Range(0, groupIds.Length)), "Native pass groups incomplete");
         int unlocked = I(R(e, "pass.scope", "ὥὠὣὪὮὭὧὣὩὩὧ"));
         var ids = new List<long>();
         var locked = new HashSet<long>();
         for (int i = 0; i < keys.Length; i++)
         {
-            var listed = values[i]!.AsArray().Select(N).ToArray();
+            var listed = (values[i] as JsonArray ?? throw new InvalidDataException("Missing pass mission list")).Select(N).ToArray();
             var expected = definitions.Where(p => N(p.Value["groupType"]) == 2 && N(p.Value["groupId"]) == groupIds[keys[i]]).Select(p => p.Key).ToHashSet();
             Require(listed.Distinct().Count() == listed.Length && expected.SetEquals(listed), "Pass tasks differ from dated native definitions");
             ids.AddRange(listed);
@@ -224,29 +227,52 @@ public static class DailyPasses
         var before = op["before"]!.AsObject();
         Identity(before, after);
         var old = Report(before, op["cycle"]!);
-        var current = Report(after, op["cycle"]!);
-        Require(new[] { "selected_pass_id", "cycle", "active_pass_ids" }.All(k => JsonNode.DeepEquals(old[k], current[k])), "Pass/reset changed during claim");
         var missionReplies = Responses("missions.clear", events, before, after, 0, 2 * I(old["total"]));
         var levelReplies = Responses("pass.reward", events, before, after, 1, 2);
-        var prior = Rows(old["missions"]).ToDictionary(r => S(r["key"]));
-        var latest = Rows(current["missions"]).ToDictionary(r => S(r["key"]));
-        Require(prior.Keys.ToHashSet().SetEquals(latest.Keys), "Pass mission set changed");
-        var ready = prior.Where(p => S(p.Value["status"]) == "claimable").Select(p => p.Key).ToArray();
-        Require((ready.Length == 0 || missionReplies.Length > 0) && ready.All(k => S(latest[k]["status"]) == "claimed") && latest.Values.All(r => S(r["status"]) != "claimable") && !B(R(after, "pass.scope", Enabled)), "Pass native All chain incomplete");
         long pid = N(old["selected_pass_id"]);
+        var oldTable = JsonNode.Parse(S(State(before, "pass.definition", "$self")["Table"]))!.AsObject();
+        bool advanced = N(oldTable["newbiePassStep"]) > 0 && levelReplies.Any(r => N(r["NewbiePassStep"]) > N(oldTable["newbiePassStep"]));
+        var current = Report(after, op["cycle"]!);
+        bool selectionChanged = N(current["selected_pass_id"]) != pid;
+        Require(!selectionChanged || advanced, "Pass selection changed without a confirmed newbie progression");
+        Require(JsonNode.DeepEquals(old["active_pass_ids"], current["active_pass_ids"]) || advanced, "Active passes changed without a confirmed newbie progression");
+        var prior = Rows(old["missions"]).ToDictionary(r => S(r["key"]));
+        var ready = prior.Where(p => S(p.Value["status"]) == "claimable").Select(p => p.Key).ToArray();
+        var cache = Rows(R(after, "pass.cache", "$items"));
+        Require(cache.Length == N(R(after, "pass.cache", "Count")), "Pass cache incomplete");
+        Require((ready.Length == 0 || missionReplies.Length > 0) && ready.All(k => cache.Count(r => S(r["EventId"]) == S(prior[k]["event_id"]) && N(r["Id"]) == N(prior[k]["id"]) && B(r["IsComplete"])) == 1), "Pass claimed mission cache incomplete");
+        if (!selectionChanged)
+        {
+            var latest = Rows(current["missions"]).ToDictionary(r => S(r["key"]));
+            Require(prior.Keys.ToHashSet().SetEquals(latest.Keys), "Pass mission set changed");
+            Require(latest.Values.All(r => S(r["status"]) != "claimable") && !B(R(after, "pass.scope", Enabled)), "Pass native All chain incomplete");
+        }
         var previous = Rewards(before, pid);
         var now = Rewards(after, pid);
         Require(previous.IsSubsetOf(now), "Pass reward cache regressed");
         var added = now.Except(previous).OrderBy(p => p.Id).ThenBy(p => p.Kind).ToArray();
         Require(ready.Length > 0 || added.Length > 0, "No pass reward change confirmed");
         var rewards = missionReplies.Select(r => O(("role", "missions.clear"), ("data", r))).Concat(levelReplies.Select(r => O(("role", "pass.reward"), ("data", r))));
-        return O(("pass_id", pid), ("claimed_missions", ready), ("new_level_rewards", added.Select(p => O(("id", p.Id), ("kind", p.Kind))).ToArray()), ("response_counts", O(("missions.clear", missionReplies.Length), ("pass.reward", levelReplies.Length))), ("reward_info", rewards.ToArray()), ("cache_matched", true), ("report", current));
+        return O(("pass_id", pid), ("claimed_missions", ready), ("new_level_rewards", added.Select(p => O(("id", p.Id), ("kind", p.Kind))).ToArray()), ("response_counts", O(("missions.clear", missionReplies.Length), ("pass.reward", levelReplies.Length))), ("reward_info", rewards.ToArray()), ("cache_matched", true), ("newbie_advanced", advanced), ("report", current));
     }
     private static async Task<JsonObject> Read(DailyWorkflow w, long? expected = null)
     {
-        JsonObject? report = null;
-        await w.WaitEvidence(["pass", "missions"], e => { report = Report(e, w.Context["cycle"]!, w.Index("missions/LocalTextTable.json")); return expected == null || N(report["selected_pass_id"]) == expected; }, 15, "通行证定义尚未载入");
-        return report!;
+        var e = await w.WaitEvidence(["pass", "missions"], e =>
+        {
+            long selected = N(R(e, "pass.scope", "ὢὡὧὮὫὫὬὥὪὪὢ"));
+            return ActiveIds(e).Contains(selected) && (expected == null || selected == expected)
+                && N(State(e, "pass.definition", "$self")["PassId"]) == selected;
+        }, 12, "通行证页面尚未载入，保留待检查项");
+        // A settled but incompatible definition is not a loading delay.
+        try { return Report(e, w.Context["cycle"]!, w.Index("missions/LocalTextTable.json")); }
+        catch (InvalidDataException error)
+        { error.Data["pass_evidence"] = e; throw; }
+        catch (Exception error) when (error is System.Text.Json.JsonException or InvalidOperationException or ArgumentException)
+        {
+            var failure = new InvalidDataException("Pass definition cannot be read: " + error.Message, error);
+            failure.Data["pass_evidence"] = e;
+            throw failure;
+        }
     }
     private static async Task Prepare(DailyWorkflow w)
     {
@@ -308,38 +334,69 @@ public static class DailyPasses
         var e = await w.Evidence("pass", "missions");
         if (N(R(e, "pass.active", "ὠὤὭὯὯὪὯὧὮὪὬ.Count")) == 0 && N(R(e, "pass.active", "ὦὩὪὣὣὤὣὯὩὠὢ")) == 0)
             await w.Step(O(("ui", "PassUI"), ("pass_init", true), ("reason", "初始化游戏通行证入口")));
-        var first = await Read(w);
-        var active = first["active_pass_ids"]!.AsArray().Select(N).ToArray();
-        long selected = N(first["selected_pass_id"]);
-        var order = new[] { selected }.Concat(active.Where(id => id != selected)).ToArray();
         var reports = new JsonArray();
         var operations = new JsonArray();
-        foreach (long id in order)
+        var issues = new JsonArray();
+        var visited = new HashSet<long>();
+        void SaveReport(JsonObject report)
         {
-            if (id != selected)
-                await w.Step("PassUI", operation: "pass_select", value: checked((int)id), reason: "检查当前有效通行证");
-            await Read(w, id);
-            await Prepare(w);
-            var report = await Read(w, id);
-            Require(report["active_pass_ids"]!.AsArray().Select(N).SequenceEqual(active), "Active pass list changed");
-            e = await w.Evidence("pass", "missions");
-            if (!claim || !B(R(e, "pass.scope", Enabled)))
+            var previous = reports.OfType<JsonObject>().FirstOrDefault(r => N(r["selected_pass_id"]) == N(report["selected_pass_id"]));
+            if (previous != null) reports.Remove(previous);
+            reports.Add(report.DeepClone());
+        }
+        // Read the catalogue independently of any one prefab. A new/expired
+        // pass, or a newbie step advancing, must not poison every other page.
+        while (true)
+        {
+            long id = 0;
+            bool submitted = false;
+            try
             {
-                Require(!claim || N(report["claimable"]) == 0, "Pass native button/eligibility differs");
-                operations.Add(O(("state", "completed"), ("actions", 0), ("report", report)));
+                e = await w.Evidence("pass", "missions");
+                var active = ActiveIds(e);
+                var remaining = active.Where(x => !visited.Contains(x)).ToArray();
+                if (remaining.Length == 0)
+                    break;
+                if (visited.Count >= 100)
+                    throw new InvalidDataException("通行证列表持续变化，保留待检查项");
+                long selected;
+                try { selected = N(R(e, "pass.scope", "ὢὡὧὮὫὫὬὥὪὪὢ")); }
+                catch (InvalidDataException) { selected = 0; }
+                id = remaining.Contains(selected) ? selected : remaining[0];
+                visited.Add(id);
+                if (id != selected)
+                    await w.Step("PassUI", operation: "pass_select", value: checked((int)id), reason: "检查当前有效通行证");
+                await Prepare(w);
+                var report = await Read(w, id);
+                e = await w.Evidence("pass", "missions");
+                if (!claim || !B(R(e, "pass.scope", Enabled)))
+                {
+                    Require(!claim || N(report["claimable"]) == 0, "Pass native button/eligibility differs");
+                    operations.Add(O(("state", "completed"), ("actions", 0), ("report", report)));
+                    SaveReport(report);
+                }
+                else
+                {
+                    var target = await w.Pointer("PassUI", t => S(t["Route"]) == "pointer" && S(t["Field"]).EndsWith("/Button - AllRecv", StringComparison.Ordinal));
+                    submitted = true;
+                    var op = await w.Transact("pass.claim_all", O(("pass_id", id)), O(("ui", "PassUI"), ("field", target["Field"]), ("target_id", target["Id"]), ("reason", "领取全部已解锁通行证奖励")));
+                    bool popup = Rows(op["result"]!["reward_info"]).Any(r => S(r["role"]) == "missions.clear" && r["data"]?["RewardInfoBundle"] != null);
+                    await Finish(w, popup);
+                    operations.Add(O(("state", "completed"), ("actions", 1), ("id", op["id"]), ("result", op["result"])));
+                    SaveReport(op["result"]!["report"]!.AsObject());
+                }
             }
-            else
+            catch (Exception error) when (!submitted && (error is InvalidDataException || error is StageHostException { Kind: "adapter" }))
             {
-                var target = await w.Pointer("PassUI", t => S(t["Route"]) == "pointer" && S(t["Field"]).EndsWith("/Button - AllRecv", StringComparison.Ordinal));
-                var op = await w.Transact("pass.claim_all", O(("pass_id", id)), O(("ui", "PassUI"), ("field", target["Field"]), ("target_id", target["Id"]), ("reason", "领取全部已解锁通行证奖励")));
-                bool popup = Rows(op["result"]!["reward_info"]).Any(r => S(r["role"]) == "missions.clear" && r["data"]?["RewardInfoBundle"] != null);
-                await Finish(w, popup);
-                operations.Add(O(("state", "completed"), ("actions", 1), ("id", op["id"]), ("result", op["result"])));
+                var issue = O(("pass_id", id), ("state", "needs_attention"), ("reason", "该通行证暂无法读取，已保留待检查；其他任务继续"), ("detail", error.Message));
+                issues.Add(issue);
+                w.Driver.Diagnostics.Failure("pass_read_failed", O(("error", error.Message), ("issue", issue), ("evidence", error.Data["pass_evidence"] as JsonObject ?? e)));
+                if (id == 0)
+                    break; // No trustworthy catalogue: do not invent pass IDs.
             }
-            reports.Add(await Read(w, id));
         }
         await w.Step("PassUI", "_objBackButton", expect: "MenuUI");
-        var result = O(("state", "completed"), ("reports", reports), ("operations", operations), ("engine", "dotnet-passes-v1"));
+        var result = O(("state", issues.Count > 0 ? "partial" : "completed"), ("reason", issues.Count > 0 ? "部分通行证待检查；其余奖励已处理" : "通行证检查完成"), ("reports", reports), ("operations", operations), ("issues", issues), ("engine", "dotnet-passes-v2"));
         w.Save("pass-claims-latest.json", result);
         return result;
     }

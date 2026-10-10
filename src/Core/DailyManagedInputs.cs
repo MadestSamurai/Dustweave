@@ -17,7 +17,7 @@ public sealed partial class DailyCommandDriver
         try { return await SendObservedCoreAsync(action, ownedFrame, false); }
         catch (Exception e)
         {
-            Diagnostics.Event("input_failed", DailyData.O(("action", action), ("error", e.Message), ("submitted", e is DailyStepException step && step.Submitted), ("last_observed", lastDiagnosticFrame)));
+            Diagnostics.Failure("input_failed", DailyData.O(("action", action), ("error", e.Message), ("submitted", e is DailyStepException step && step.Submitted), ("may_have_dispatched", e is DailyStepException fault ? fault.MayHaveDispatched : (bool?)null), ("last_observed", lastDiagnosticFrame)));
             throw;
         }
     }
@@ -38,7 +38,7 @@ public sealed partial class DailyCommandDriver
                     throw new DailyStepException("rejected", "Paused before managed UI input; no command sent");
                 var current = (await ReadBound()).Frame;
                 if (Text(current, "Scene") != Text(bound, "Scene"))
-                    throw new DailyStepException("rejected", "Scene changed during preflight; no command sent");
+                    throw new DailyStepException("rejected", "Scene changed during preflight; no command sent") { RejectionCode = "scene_changed" };
                 if (ownedFrame != null && !DailyTradePreview.Matches(action, ownedFrame, current))
                     throw new DailyStepException("rejected", "Owned confirmation changed while waiting for input; no command sent");
                 if (clock() >= end)
@@ -142,7 +142,8 @@ public sealed partial class DailyCommandDriver
         var talent = DailyNavigationDecision.TalentAction(frame, policy);
         if (talent != null && Text(talent, "ui") != destination)
         {
-            await NavigationAsync(talent);
+            try { await NavigationAsync(talent); }
+            catch (StageHostException e) when (e.Kind == "navigation_changed") { await delay(TimeSpan.FromMilliseconds(150)); }
             return true;
         }
         var action = DailyNavigationDecision.Notice(frame, policy, out var notice);
@@ -154,7 +155,8 @@ public sealed partial class DailyCommandDriver
             return true;
         }
         Diagnostics.Event("popup_recovery", DailyData.O(("action", action), ("destination", destination)));
-        await NavigationAsync(action);
+        try { await NavigationAsync(action); }
+        catch (StageHostException e) when (e.Kind == "navigation_changed") { await delay(TimeSpan.FromMilliseconds(150)); return true; }
         if (Text(action, "operation") == "notice_suppress")
         {
             double end = clock() + 5;
@@ -258,7 +260,7 @@ public sealed partial class DailyCommandDriver
         var notice = DailyNavigationDecision.Notice(observed.Frame, policy, out _);
         var prior = new GuildStore(root).Prior(daily);
         DailyGuildStage.ValidateConfirmed(prior);
-        var decision = DailyGuildStage.Decide(observed.Frame, daily, prior, DailyGuildStage.LoadRecipe(), policy);
+        var decision = DailyGuildStage.Decide(observed.Frame, daily, GuildPolicy.CanRefresh(daily, prior, now()) ? null : prior, DailyGuildStage.LoadRecipe(), policy);
         JsonObject? selected = notice != null && !Flag(action, "allow_guild") && SameAction(notice, action) ? notice : decision["action"] is JsonObject candidate && Flag(candidate, "allow_guild") == Flag(action, "allow_guild") && SameAction(candidate, action) ? candidate : null;
         if (selected == null)
             throw new StageHostException("guild_changed", "Guild page or receipt changed before dispatch; no input submitted");

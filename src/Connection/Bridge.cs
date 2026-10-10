@@ -199,7 +199,12 @@ namespace BD2Daily.Live {
     var r=new Receipt{Command=c,Before=frame};Save(r);
     var reason=(BD2.LocalIpc.RuntimeFiles.Read(Path.Combine(live,"pause"))!=null)?"paused":LivePolicy.Gate(c,frame,DateTime.UtcNow.Ticks,OtherOwner());
     if(reason.Length>0){r.State="rejected";r.Error=reason;Save(r);return;}
-    if(c.Kind=="mainline_talent"){
+    if(c.GuardTalentPotions){
+     UIBase potionUi;uis.TryGetValue(c.SurfaceId,out potionUi);
+     reason=TalentPotionNative.Gate(c,frame,potionUi);
+     if(reason.Length>0){r.State="rejected";r.Error=reason;r.MayHaveDispatched=false;Save(r);return;}
+    }
+    if(c.Kind=="mainline_talent"||c.Kind=="weekly_steal_talent"){
      try{var row=Find(typeof(QuickMenuTalentSkillLoopScrollItem)).Cast<QuickMenuTalentSkillLoopScrollItem>().SingleOrDefault(x=>x.GetInstanceID()==c.Value);
       reason=CollectionProgressNative.TalentGate(row,uis[c.SurfaceId] as QuickMenuUI);
      }catch(Exception ex){reason="talent_reject:unreadable_gate:"+ex.GetType().Name;}
@@ -486,14 +491,16 @@ namespace BD2Daily.Live {
     if(!(ui is MessagePopupUI)||ui.gameObject.name!="ErrorMessagePopupUI(Clone)")return "";
     var type=typeof(MessagePopupUI);var label=type.GetField("_textMessage",Flags).GetValue(ui) as TMPro.TMP_Text;
     var cancel=type.GetField("_buttonCancel",Flags).GetValue(ui) as Button;
-    if(label==null||!BackgroundErrorPolicy.RegionLookupTimeout(new[]{label.text})||cancel!=null&&cancel.gameObject.activeInHierarchy)return "";
+    if(label==null||cancel!=null&&cancel.gameObject.activeInHierarchy)return "";
+    string context=BackgroundErrorPolicy.RegionLookupTimeout(new[]{label.text})?BackgroundErrorPolicy.Context:BackgroundErrorPolicy.RequestTimeout(new[]{label.text})?BackgroundErrorPolicy.RequestContext:"";
+    if(context.Length==0)return "";
     foreach(var field in type.GetFields(Flags).Where(f=>typeof(Delegate).IsAssignableFrom(f.FieldType)))
-     if(!EmptyClose(field.GetValue(ui) as Delegate))return "";
-    return BackgroundErrorPolicy.Context;
+     if(context==BackgroundErrorPolicy.RequestContext?field.GetValue(ui)!=null:!EmptyClose(field.GetValue(ui) as Delegate))return "";
+    return context;
    }catch{return "";}
   }
   internal static void Acknowledge(UIBase ui){
-   if(Context(ui)!=BackgroundErrorPolicy.Context)throw new InvalidOperationException("Background notification changed; no input sent");
+   var context=Context(ui);if(context!=BackgroundErrorPolicy.Context&&context!=BackgroundErrorPolicy.RequestContext)throw new InvalidOperationException("Background notification changed; no input sent");
    var button=(Button)typeof(MessagePopupUI).GetField("_buttonOK",Flags).GetValue(ui);
    if(button==null||!button.gameObject.activeInHierarchy||!button.interactable)throw new InvalidOperationException("Background notification is not ready");
    ui.OnClickUI(button.gameObject);

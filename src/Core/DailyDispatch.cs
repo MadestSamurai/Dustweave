@@ -217,6 +217,7 @@ public static class DailyDispatch
         var plan = Preflight(await w.Evidence(Prefixes));
         if (N(plan["count"]) == 0)
             return O(("state", "completed"), ("actions", 0), ("character", plan["character"]), ("reason", "all_dispatched"));
+        await w.Driver.RequirePotionsAsync(N(plan["cost"]));
         if (plan["due"]!.AsArray().Count == 0 && !B(plan["enough"]))
             return O(("state", "partial"), ("actions", 0), ("character", plan["character"]), ("reason", "insufficient_catalyst"));
         var before = await w.Evidence(Prefixes);

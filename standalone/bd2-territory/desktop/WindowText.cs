@@ -15,7 +15,7 @@ public partial class TerritoryWindow
  WindowText ui=null!;
  void InitializeLanguage(){ui=new(this,root);LanguageBox.SelectedIndex=ui.Language.Language=="zh-CN"?0:1;}
  void Set(FrameworkElement target,string source)=>ui.Set(target,source);
- void LanguageChanged(object sender,SelectionChangedEventArgs e){if(!initialized)return;try{var selected=(string)((ComboBoxItem)LanguageBox.SelectedItem).Tag;LanguagePreference.Save(root,selected);ui.Language.Select(selected);ui.Apply();recipeCatalogKey="";_ = RefreshAsync();}catch(Exception ex){ShowError(ex.Message);}}
+ void LanguageChanged(object sender,SelectionChangedEventArgs e){if(!initialized)return;try{var selected=(string)((ComboBoxItem)LanguageBox.SelectedItem).Tag;LanguagePreference.Save(root,selected);ui.Language.Select(selected);ui.Apply();RefreshTreeStages();recipeCatalogKey="";_ = RefreshAsync();}catch(Exception ex){ShowError(ex.Message);}}
 }
 public partial class LayoutWindow
 {

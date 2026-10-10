@@ -1985,14 +1985,24 @@
     "en-US": "Allocate inventory after collection: buy, cook, then sell only at a 120% quote."
   },
   "prefs.trade_note": {
-    "zh-CN": "保留金币、垫资上限及原料保留量沿用本账号跑商计划设置。低于1000万会提示30天周转；不会出售装备、制作材料或属性石。完成当天交易后重复运行不再花费。",
-    "zh-TW": "保留金幣、墊資上限及原料保留量沿用本帳號交易計畫設定。低於 1000 萬會提示 30 天週轉；不販售裝備、製作材料或屬性石。當日交易完成後重跑不再花費。",
-    "en-US": "Uses this account's cash reserve, funding limit and ingredient reserves. Warns below 10 million for the 30-day cycle. Never sells gear, crafting materials or ability stones. Completed daily trades are not repeated."
+    "zh-CN": "设置仅用于当前账号。低于1000万会提示30天周转；不会出售装备、制作材料或属性石。",
+    "zh-TW": "設定僅用於目前帳號。低於 1000 萬會提示 30 天週轉；不販售裝備、製作材料或屬性石。",
+    "en-US": "Settings apply to this account only. Below 10 million gold, a warning explains the 30-day cycle. Gear, crafting materials and ability stones are never sold."
   },
   "prefs.trade_open": {
-    "zh-CN": "预览计划与跑商设置",
-    "zh-TW": "預覽計畫與交易設定",
-    "en-US": "Preview plan and trade settings"
+    "zh-CN": "预览跑商计划",
+    "zh-TW": "預覽交易計畫",
+    "en-US": "Preview trading plan"
+  },
+  "prefs.trade_budget_help": {
+    "zh-CN": "垫资上限留空表示不限额；保留金币不会用于本轮采购。",
+    "zh-TW": "墊資上限留空表示不限額；保留金幣不會用於本輪採購。",
+    "en-US": "Leave maximum spending blank for no limit. Reserved gold stays out of the purchase budget."
+  },
+  "prefs.trade_preview_help": {
+    "zh-CN": "先保存本账号设置，再打开计划预览；不会执行交易。",
+    "zh-TW": "先儲存本帳號設定，再開啟計畫預覽；不會執行交易。",
+    "en-US": "Save this account's settings and open the preview. No trades will be made."
   },
   "prefs.trade_title": {
     "zh-CN": "跑商计划",
@@ -2258,6 +2268,31 @@
     "zh-CN": "留空表示不限额",
     "zh-TW": "留空表示不限額",
     "en-US": "Leave blank for no limit"
+  },
+  "trade.no_limit": {
+    "zh-CN": "不限额",
+    "zh-TW": "不限額",
+    "en-US": "No limit"
+  },
+  "trade.strategy_on": {
+    "zh-CN": "开启",
+    "zh-TW": "開啟",
+    "en-US": "On"
+  },
+  "trade.strategy_off": {
+    "zh-CN": "关闭",
+    "zh-TW": "關閉",
+    "en-US": "Off"
+  },
+  "trade.settings_summary": {
+    "zh-CN": "本次设置：保留金币 {0:N0} · 最多垫资 {1} · 零收益商品 {2}",
+    "zh-TW": "本次設定：保留金幣 {0:N0} · 最多墊資 {1} · 零收益商品 {2}",
+    "en-US": "Plan settings: reserve {0:N0} gold · Spending limit {1} · Break-even resales {2}"
+  },
+  "trade.settings_location": {
+    "zh-CN": "在「日常设置 → 跑商」调整并保存设置，重新计算后生效。",
+    "zh-TW": "在「日常設定 → 交易」調整並儲存設定，重新計算後生效。",
+    "en-US": "Edit and save settings under Daily settings → Trading, then recalculate the plan."
   },
   "trade.buy_tab": {
     "zh-CN": "采购",
@@ -4803,5 +4838,125 @@
     "en-US": "Wait for the batch to finish, or stop all accounts before returning to tasks.",
     "zh-CN": "请等待本次批量结束，或先停止全部账号，再返回日常。",
     "zh-TW": "請等待本次批次結束，或先停止全部帳號，再返回日常。"
+  },
+  "更改位置": {
+    "zh-CN": "更改位置",
+    "zh-TW": "變更位置",
+    "en-US": "Change location"
+  },
+  "整体设置": {
+    "zh-CN": "整体设置",
+    "zh-TW": "整體設定",
+    "en-US": "General settings"
+  },
+  "天赋药保留下限与自动补药": {
+    "zh-CN": "天赋药保留下限与自动补药",
+    "zh-TW": "天賦藥保留下限與自動補藥",
+    "en-US": "Talent Pill reserve and automatic refill"
+  },
+  "天赋药保留下限": {
+    "zh-CN": "天赋药保留下限",
+    "zh-TW": "天賦藥保留下限",
+    "en-US": "Minimum Talent Pills to keep"
+  },
+  "药不足时自动补药": {
+    "zh-CN": "药不足时自动补药",
+    "zh-TW": "藥不足時自動補藥",
+    "en-US": "Refill Talent Pills when needed"
+  },
+  "补药至": {
+    "zh-CN": "补药至",
+    "zh-TW": "補藥至",
+    "en-US": "Refill up to"
+  },
+  "默认0。只允许消耗保留量以外的天赋药；不足时在队列中说明受限任务，不影响其他可执行任务。仅适用于日常队列。": {
+    "zh-CN": "默认0。只允许消耗保留量以外的天赋药；不足时在队列中说明受限任务，不影响其他可执行任务。仅适用于日常队列。",
+    "zh-TW": "預設0。僅使用保留量以外的天賦藥；不足時在佇列中說明受限任務，不影響其他可執行任務。僅適用於日常佇列。",
+    "en-US": "Default: 0. Daily tasks can only use Talent Pills above this reserve. Tasks that need more pills show a reminder; other tasks can continue. Applies only to the daily queue."
+  },
+  "默认不购买。开启后，药不足时临时加入补药环节；须已完成本周至少一条NPC任务，并确认广场商人的天赋药享九折。补至目标数量后接续任务。": {
+    "zh-CN": "默认不购买。开启后，药不足时临时加入补药环节；须已完成本周至少一条NPC任务，并确认广场商人的天赋药享九折。补至目标数量后接续任务。",
+    "zh-TW": "預設不購買。啟用後，藥不足時臨時加入補藥環節；須已完成本週至少一條NPC任務，並確認廣場商人的天賦藥享九折。補至目標數量後接續任務。",
+    "en-US": "Purchases are off by default. When enabled, the queue adds a refill step if needed. Complete at least one weekly NPC quest first; the plaza merchant must offer the 10% discount. Tasks resume after refilling to the target."
+  },
+  "天赋药数量须为非负整数；原输入已保留。": {
+    "zh-CN": "天赋药数量须为非负整数；原输入已保留。",
+    "zh-TW": "天賦藥數量須為非負整數；原輸入已保留。",
+    "en-US": "Enter a non-negative whole number of Talent Pills. Your input has been kept."
+  },
+  "天赋药保留下限须为非负整数，补药目标须为正整数。": {
+    "zh-CN": "天赋药保留下限须为非负整数，补药目标须为正整数。",
+    "zh-TW": "天賦藥保留下限須為非負整數，補藥目標須為正整數。",
+    "en-US": "The Talent Pill reserve must be a non-negative whole number; the refill target must be a positive whole number."
+  },
+  "补药目标必须高于天赋药保留下限。": {
+    "zh-CN": "补药目标必须高于天赋药保留下限。",
+    "zh-TW": "補藥目標必須高於天賦藥保留下限。",
+    "en-US": "The refill target must be higher than the Talent Pill reserve."
+  },
+  "未能读取本次操作的天赋药消耗，尚未执行；请重新连接后补跑，若仍出现请导出诊断。": {
+    "zh-CN": "未能读取本次操作的天赋药消耗，尚未执行；请重新连接后补跑，若仍出现请导出诊断。",
+    "zh-TW": "未能讀取本次操作的天賦藥消耗，尚未執行；請重新連線後補跑，若仍出現請匯出診斷。",
+    "en-US": "The Talent Pill cost could not be read, so the action was not performed. Reconnect and retry this task; export diagnostics if it happens again."
+  },
+  "跑商已用完本轮允许的天赋药预算；保留量和补药设置已生效，需要继续加工可调整整体设置后补跑。": {
+    "zh-CN": "跑商已用完本轮允许的天赋药预算；保留量和补药设置已生效，需要继续加工可调整整体设置后补跑。",
+    "zh-TW": "跑商已用完本輪允許的天賦藥預算；保留量和補藥設定已生效，需要繼續加工可調整整體設定後補跑。",
+    "en-US": "Trading reached this run's Talent Pill budget. Your reserve and refill settings were respected. Adjust General settings and retry if you want to craft more."
+  },
+  "stage.talent_potions": {
+    "zh-CN": "天赋药补给与限制",
+    "zh-TW": "天賦藥補給與限制",
+    "en-US": "Talent Pill supply"
+  },
+  "天赋药补给与限制": {
+    "zh-CN": "天赋药补给与限制",
+    "zh-TW": "天賦藥補給與限制",
+    "en-US": "Talent Pill supply"
+  },
+  "自动补药未开启；请补足天赋药或调整整体设置后补跑此项。": {
+    "zh-CN": "自动补药未开启；请补足天赋药或调整整体设置后补跑此项。",
+    "zh-TW": "自動補藥未啟用；請補足天賦藥或調整整體設定後補跑此項。",
+    "en-US": "Automatic refill is off. Refill Talent Pills or change General settings, then retry this task."
+  },
+  "尚未取得周NPC任务的九折天赋药报价；请先完成本周至少一条NPC任务，再补跑受限环节。没有购买原价天赋药。": {
+    "zh-CN": "尚未取得周NPC任务的九折天赋药报价；请先完成本周至少一条NPC任务，再补跑受限环节。没有购买原价天赋药。",
+    "zh-TW": "尚未取得週NPC任務的九折天賦藥報價；請先完成本週至少一條NPC任務，再補跑受限環節。沒有購買原價天賦藥。",
+    "en-US": "The weekly NPC quest discount is not available. Complete at least one quest this week, then retry the affected task. No full-price Talent Pills were purchased."
+  },
+  "天赋药不足，前往广场核对周任务九折报价；补药后接续原任务。": {
+    "zh-CN": "天赋药不足，前往广场核对周任务九折报价；补药后接续原任务。",
+    "zh-TW": "天賦藥不足，前往廣場核對週任務九折報價；補藥後接續原任務。",
+    "en-US": "Talent Pills are low. Checking the plaza merchant for the weekly 10% discount before refilling and resuming the task."
+  },
+  "补药后同一消耗仍受限，已停止重复购买；请核对补药目标与当前库存。": {
+    "zh-CN": "补药后同一消耗仍受限，已停止重复购买；请核对补药目标与当前库存。",
+    "zh-TW": "補藥後同一消耗仍受限，已停止重複購買；請核對補藥目標與目前庫存。",
+    "en-US": "The same action is still restricted after refilling. Further purchases stopped; check your refill target and inventory."
+  },
+  "当前药量已达到补药目标；请检查本次消耗或提高补药目标。": {
+    "zh-CN": "当前药量已达到补药目标；请检查本次消耗或提高补药目标。",
+    "zh-TW": "目前藥量已達到補藥目標；請檢查本次消耗或提高補藥目標。",
+    "en-US": "You already have the target number of Talent Pills. Check the required cost or raise the refill target."
+  },
+  "金币不足，或购买会触及保留金币；未补药。": {
+    "zh-CN": "金币不足，或购买会触及保留金币；未补药。",
+    "zh-TW": "金幣不足，或購買會觸及保留金幣；未補藥。",
+    "en-US": "Not enough gold, or the purchase would use reserved gold. No Talent Pills were purchased."
+  },
+  "九折天赋药可购数量不足以补至目标，未购买；请调整补药目标。": {
+    "zh-CN": "九折天赋药可购数量不足以补至目标，未购买；请调整补药目标。",
+    "zh-TW": "九折天賦藥可購數量不足以補至目標，未購買；請調整補藥目標。",
+    "en-US": "The discounted stock cannot reach your refill target. Nothing was purchased; adjust the target."
+  },
+  "耗药任务现场尚未关闭，未开始补药。": {
+    "zh-CN": "耗药任务现场尚未关闭，未开始补药。",
+    "zh-TW": "耗藥任務畫面尚未關閉，未開始補藥。",
+    "en-US": "The current task screen has not closed safely. Refilling has not started."
+  },
+  "补药回执与库存不一致；保留记录，未重复购买。": {
+    "zh-CN": "补药回执与库存不一致；保留记录，未重复购买。",
+    "zh-TW": "補藥回執與庫存不一致；保留紀錄，未重複購買。",
+    "en-US": "The refill result does not match the inventory. The record was kept; no repeat purchase was made."
   }
 }

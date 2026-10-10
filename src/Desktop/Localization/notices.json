@@ -1351,9 +1351,103 @@
     "zh-TW": "每日親密度諮詢",
     "en-US": "Daily friendship consultations"
   },
+  "notice.recovery.presentation-changing": {
+    "zh-CN": "页面持续切换，未能完成剧情或提示收尾；已保留当前路线进度。",
+    "zh-TW": "頁面持續切換，未能完成劇情或提示收尾；已保留目前路線進度。",
+    "en-US": "The screen kept changing before the story or notice could be closed. Route progress has been preserved."
+  },
+  "notice.recovery.room-cleanup": {
+    "zh-CN": "小屋旧访问尚未确认，先完成当前页面收尾再重新读取。",
+    "zh-TW": "小屋先前訪問尚未確認，先完成目前頁面收尾再重新讀取。",
+    "en-US": "The previous room visit is unconfirmed. Return to the main menu before reading it again."
+  },
+  "notice.recovery.room-pending": {
+    "zh-CN": "小屋原请求仍在响应期限内，稍后可重新读取。",
+    "zh-TW": "小屋原請求仍在回應期限內，稍後可重新讀取。",
+    "en-US": "The room request is still awaiting a response. It can be read again after this request times out."
+  },
+  "notice.recovery.request-timeout-ack": {
+    "zh-CN": "关闭无后续操作的网络超时提示，重新核对当前环节",
+    "zh-TW": "關閉無後續操作的網路逾時提示，重新核對目前環節",
+    "en-US": "Dismiss the informational network timeout notice and recheck the current task"
+  },
+  "notice.pass.read-pending": {
+    "zh-CN": "通行证页面尚未载入，保留待检查项",
+    "zh-TW": "通行證頁面尚未載入，保留待檢查項目",
+    "en-US": "The pass page has not loaded. Its tasks remain pending review."
+  },
+  "notice.pass.catalogue-changing": {
+    "zh-CN": "通行证列表持续变化，保留待检查项",
+    "zh-TW": "通行證清單持續變化，保留待檢查項目",
+    "en-US": "The pass list keeps changing. Unchecked passes remain pending review."
+  },
+  "notice.pass.isolated": {
+    "zh-CN": "该通行证暂无法读取，已保留待检查；其他任务继续",
+    "zh-TW": "此通行證暫時無法讀取，已保留待檢查；其他任務繼續",
+    "en-US": "This pass could not be read and remains pending review. Other tasks will continue."
+  },
+  "notice.pass.partial": {
+    "zh-CN": "部分通行证待检查；其余奖励已处理",
+    "zh-TW": "部分通行證待檢查；其餘獎勵已處理",
+    "en-US": "Some passes need review. Other rewards have been processed."
+  },
+  "notice.pass.checked": {
+    "zh-CN": "通行证检查完成",
+    "zh-TW": "通行證檢查完成",
+    "en-US": "Pass inspection completed"
+  },
+  "notice.pass.equipment-partial": {
+    "zh-CN": "已处理可确认的装备任务；部分通行证任务待检查",
+    "zh-TW": "已處理可確認的裝備任務；部分通行證任務待檢查",
+    "en-US": "Known equipment tasks have been processed. Some pass tasks still need review."
+  },
+  "notice.steal.talent-not-ready": {
+    "zh-CN": "当前偷窃天赋尚不可用，已保留待办。请检查角色状态、冷却和天赋药；不会自动购买或升级。",
+    "zh-TW": "目前偷竊天賦尚無法使用，已保留待辦。請檢查角色狀態、冷卻和天賦藥；不會自動購買或升級。",
+    "en-US": "The theft talent is not ready. The task remains pending. Check character availability, cooldowns and talent pills; nothing will be purchased or upgraded automatically."
+  },
   "notice.settings.stones": {
     "zh-CN": "每天刷圣石",
     "zh-TW": "每天刷聖石",
     "en-US": "Farm ability stones daily"
+  },
+  "notice.potion.limit": {
+    "zh-CN": "天赋药不足：现有 {0}，本次需 {1}，须保留 {2}。本次操作未执行。",
+    "zh-TW": "天賦藥不足：現有 {0}，本次需 {1}，須保留 {2}。本次操作未執行。",
+    "en-US": "Not enough Talent Pills: {0} available, {1} needed, {2} reserved. This action was not performed.",
+    "parameters": [
+      "number",
+      "number",
+      "number"
+    ]
+  },
+  "notice.potion.reason": {
+    "zh-CN": "{0} {1}",
+    "zh-TW": "{0} {1}",
+    "en-US": "{0} {1}",
+    "source": "天赋药限制：{0}；{1}",
+    "parameters": [
+      "message",
+      "message"
+    ]
+  },
+  "notice.potion.target": {
+    "zh-CN": "补药目标 {0} 无法同时满足本次消耗 {1} 和保留量 {2}，请提高补药目标。",
+    "zh-TW": "補藥目標 {0} 無法同時滿足本次消耗 {1} 和保留量 {2}，請提高補藥目標。",
+    "en-US": "The refill target of {0} cannot cover the cost of {1} and reserve of {2}. Increase the refill target.",
+    "parameters": [
+      "number",
+      "number",
+      "number"
+    ]
+  },
+  "notice.potion.refilled": {
+    "zh-CN": "已按九折补充 {0} 个天赋药，当前 {1}；继续原任务。",
+    "zh-TW": "已按九折補充 {0} 個天賦藥，目前 {1}；繼續原任務。",
+    "en-US": "Bought {0} Talent Pills at 10% off. Current balance: {1}. Resuming the task.",
+    "parameters": [
+      "number",
+      "number"
+    ]
   }
 }

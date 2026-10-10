@@ -14,6 +14,7 @@ public partial class TerritoryWindow {
   Check(!link.Enabled&&!StartButton.IsEnabled&&TerritoryJson.Read<TerritoryControl>(Path.Combine(root,"control.json"))?.Enabled!=true,"启动不自动操作游戏");
   Check(LoggingBox.IsChecked==true&&MiningBox.IsChecked==true&&FarmingBox.IsChecked==true,"默认三个项目可见并选中");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
   Check(IntervalBox.Text=="500"&&BudgetBox.Text=="1400","默认间隔与预算");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  Check(TreeStageBox.SelectedValue is int initialStage&&initialStage==0,"默认仅砍完全成熟的树");
   Check(VehicleBox.IsChecked==true&&DashBox.IsChecked==true,"默认开启载具赶路与冲刺脱困");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
   Check(NavMeshBox.IsChecked==false,"默认不启用 NavMesh，使用 A* 寻路");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
   await StartAsync();Check(!link.Enabled&&ErrorText.Visibility==Visibility.Visible,"无心跳不能开始");ShowError("");
@@ -29,6 +30,11 @@ public partial class TerritoryWindow {
   Check(TargetText.Text.Contains("采矿／砍树")&&TargetText.Text.Contains("25"),"运行时显示工作阶段和本轮剩余目标");
   s.WorkPhase="Planting";s.WorkRemaining=38;await Feed();Check(TargetText.Text.Contains("集中播种")&&TargetText.Text.Contains("38"),"切到种植阶段更新显示");
   s.WorkPhase="Gathering";s.WorkRemaining=25;await Feed();
+  s.MaxTreeStage=5;await Feed();
+  Check(TreeStageBox.Items.Cast<RecipeOption>().Any(v=>v.Id==5),"自动扩展到游戏报告的更高生长阶段");
+  TreeStageBox.SelectedValue=2;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  command=TerritoryJson.Read<TerritoryControl>(Path.Combine(root,"control.json"));
+  Check(command?.MinimumTreeStage==2&&TerritoryJson.Read<TerritorySettings>(Path.Combine(root,"settings.json"))?.MinimumTreeStage==2,"砍树下限实时下发并持久保存");
   Check(BatchBar.Value==37&&BatchBar.Maximum==37&&BatchText.Text.Contains("37 / 37"),"批次显示实际确认进度");
   s.BatchTotal=9;s.BatchPlanted=0;await Feed();Check(BatchBar.Maximum==9&&BatchBar.Value==0&&BatchText.Text.Contains("0 / 9"),"下一片小田重新显示实际待确认数量");
   s.BatchTotal=0;await Feed();Check(BatchText.Text.Contains("等待读取本片农田")&&!BatchText.Text.Contains("/ 100"),"未取得预览时不显示虚构百格进度");
@@ -74,6 +80,7 @@ public partial class TerritoryWindow {
   LanguageBox.SelectedIndex=1;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);UpdateLayout();
   Check(!link.Enabled&&File.ReadAllText(Path.Combine(root,"settings.json"))==settingsBefore,"切换英语不会改变运行设置或启动自动化");
   Check((string)Resources["Ui62"]=="Start automation"&&RecipeBox.SelectedValue is int,"英语主操作与配方选择保留");
+  Check(TreeStageBox.SelectedValue is int englishStage&&englishStage==2&&((RecipeOption)TreeStageBox.SelectedItem).Name=="Stage 2 and above","英语切换保留砍树下限并翻译选项");
   Check(!CookingBox.IsChecked.GetValueOrDefault()&&CookingBatchBox.Text=="100","料理默认关闭且批次限制可见");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
   Check(new[]{"同种作物 × 37 · 一次提交","等待 37 格整批播种回执","当前 37 格播种费用超出余额或剩余预算；继续处理其他农田、采集和收获","批量预览 37 格，等待空田核对：缓存 2，数据未载入 0，请求未结算 0","等待读取本片农田","本轮采集 · 本轮剩余 25","集中播种","料理／售卖","等待下一轮","本轮采集尚未结束，继续处理成熟资源"}.All(v=>!System.Text.RegularExpressions.Regex.IsMatch(ui.Language.Text(v),"[\u4e00-\u9fff]")),"动态农田数量与状态可完整显示英文");
   Check(UiLabels.All.Values.All(v=>ui.Language.Text(v)!=v||!System.Text.RegularExpressions.Regex.IsMatch(v,"[\u4e00-\u9fff]")),"全部静态界面文本覆盖英文");
@@ -84,7 +91,7 @@ public partial class TerritoryWindow {
   LanguageBox.SelectedIndex=0;await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
   Width=720;Height=610;UpdateLayout();Check(StartButton.IsVisible&&StopButton.IsVisible&&ConnectButton.IsVisible,"最小窗口保留操作栏");
   await Feed();await StartAsync();Close();await shutdownTask;command=TerritoryJson.Read<TerritoryControl>(Path.Combine(root,"control.json"));Check(command?.Enabled==false,"关闭窗口停止控制租约");
-  var restored=new TerritoryWindow(root);Check(restored.PlantingModeBox.SelectedIndex==1&&restored.FixedSeedBox.SelectedValue is int restoredSeed&&restoredSeed==4,"重新打开保留固定作物");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Check(restored.NavMeshBox.IsChecked==false,"重新打开仍默认 A*");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);restored.NavMeshBox.IsChecked=true;await restored.controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);restored.Close();await restored.shutdownTask;
+  var restored=new TerritoryWindow(root);Check(restored.TreeStageBox.SelectedValue is int restoredStage&&restoredStage==2,"重新打开保留砍树下限");Check(restored.PlantingModeBox.SelectedIndex==1&&restored.FixedSeedBox.SelectedValue is int restoredSeed&&restoredSeed==4,"重新打开保留固定作物");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Check(restored.NavMeshBox.IsChecked==false,"重新打开仍默认 A*");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);restored.NavMeshBox.IsChecked=true;await restored.controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);restored.Close();await restored.shutdownTask;
   restored=new TerritoryWindow(root);Check(restored.NavMeshBox.IsChecked==true,"重新打开保留主动选择的 NavMesh");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);restored.NavMeshBox.IsChecked=false;await restored.controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);restored.Close();await restored.shutdownTask;
   File.WriteAllText(Path.Combine(output,"results.json"),JsonSerializer.Serialize(new{status="pass",assertions=checks,isolatedRoot=root}));
  }

@@ -1,5 +1,9 @@
 namespace BD2Territory.Desktop;
 static class UiLabels { public static readonly Dictionary<string,string> All=new(){
+{"TreeStageLabel","最低砍伐阶段"},
+{"TreeStageHint","选定阶段是下限，更高阶段也会砍伐；矿点和作物仍等完全成熟。"},
+{"TreeStageMature","仅完全成熟（默认）"},
+{"TreeStageOption","阶段 {0} 及以上"},
 {"SalesTitle","库存余量售卖"},
 {"SalesEnabled","库存容量保护已开启"},
 {"SalesRetain","每种物品保留"},

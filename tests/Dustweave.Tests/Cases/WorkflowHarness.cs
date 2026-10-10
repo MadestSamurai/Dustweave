@@ -30,10 +30,11 @@ sealed class WorkflowHarness : IDisposable
     public long Ticks => 638948160000000000L + (long)(Time * TimeSpan.TicksPerSecond);
     private long sequence;
     private readonly string[] taps;
-    public WorkflowHarness(string root, DailyBusinessProof[] proofs, string[]? extraTaps = null)
+    public WorkflowHarness(string root, DailyBusinessProof[] proofs, string[]? extraTaps = null, Action<JsonObject, JsonObject>? configureIdentity = null, string? assetDirectory = null)
     {
         Root = root;
         Frame["BridgeVersion"] = DailyStageObservation.BridgeVersion;
+        configureIdentity?.Invoke(Frame, Context);
         taps = proofs.SelectMany(p => p.EventRoles).Concat(extraTaps ?? []).Distinct().ToArray();
         Box.AfterWrite = (_, name, _) => { if (name == "observation-request.json") Publish(); };
         Box.AfterCommand = command => { OnCommand?.Invoke(command); Publish(); };
@@ -48,7 +49,7 @@ sealed class WorkflowHarness : IDisposable
         Driver.Bind(Context);
         Business = new(root, Driver, proofs, () => Stopped);
         var navigation = new DailyStageNavigation(Read, () => Stopped);
-        Workflow = new(root, TestPaths.SourceRoot, Context, Driver, Business, navigation, proofs, () => Stopped, (_, _, _) => throw new Exception("Unexpected workflow relay"));
+        Workflow = new(root, assetDirectory ?? Path.Combine(TestPaths.SourceRoot, "assets"), Context, Driver, Business, navigation, proofs, () => Stopped, (_, _, _) => throw new Exception("Unexpected workflow relay"));
     }
     public void Page(string ui, params string[] fields)
     {

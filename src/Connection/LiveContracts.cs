@@ -61,6 +61,8 @@ namespace BD2Daily.Live {
   [DataMember] public string Scope="gameplay",Id="",Kind="",Instance="",AccountKey="",PlayerKey="",Scene="",UiToken="",Reason="";
   [DataMember] public int ProcessId,SurfaceId,TargetId,Value;
   [DataMember] public bool RequireStealth;
+  [DataMember] public bool GuardTalentPotions;
+  [DataMember] public long TalentPotionReserve;
   [DataMember] public long[] Items=new long[0];
   [DataMember] public long ProcessStartTicks,ExpiresUtcTicks,ObservedUtcTicks;
  }
@@ -160,7 +162,7 @@ namespace BD2Daily.Live {
     return f.Surfaces.Any(x=>x.Popup&&x.Id!=ui.Id&&!PassiveSurface(x.Type)&&!(c.Kind=="weekly_npc_accept"&&x.Type=="QuestBoardUI"&&x.NativeContext=="weekly_npc_board"&&x.Order<=ui.Order))?"weekly_npc_popup_blocked":"";
    }
    if(c.Kind=="background_error_ack"){
-    if(!GameplayReady(f)||ui.Type!="MessagePopupUI"||ui.NativeContext!=BackgroundErrorPolicy.Context||!BackgroundErrorPolicy.RegionLookupTimeout(ui.Text)||c.TargetId!=0||c.Value!=0||c.Items==null||c.Items.Length!=0||!ui.InputReady||!ui.Targets.Any(t=>t.Field=="_buttonOK"&&t.Enabled)||ui.Targets.Any(t=>t.Field=="_buttonCancel"&&t.Enabled))return "background_error_context_rejected";
+    if(!GameplayReady(f)||ui.Type!="MessagePopupUI"||!BackgroundErrorPolicy.Matches(ui.NativeContext,ui.Text)||c.TargetId!=0||c.Value!=0||c.Items==null||c.Items.Length!=0||!ui.InputReady||!ui.Targets.Any(t=>t.Field=="_buttonOK"&&t.Enabled)||ui.Targets.Any(t=>t.Field=="_buttonCancel"&&t.Enabled))return "background_error_context_rejected";
     return f.Surfaces.Any(x=>x.Type.StartsWith("BattleUI",StringComparison.Ordinal)||x.Popup&&x.Id!=ui.Id&&x.Order>=ui.Order&&!PassiveSurface(x.Type))?"background_error_popup_blocked":"";
    }
    if(c.Kind=="talent_error_ack"){
@@ -356,6 +358,9 @@ namespace BD2Daily.Live {
 namespace BD2Daily.Live {
  public static class BackgroundErrorPolicy {
   public const string Context="billing_region_unavailable_ack_only";
+  public const string RequestContext="request_timeout_ack_only";
+  public static bool RequestTimeout(System.Collections.Generic.IEnumerable<string> texts){return texts!=null&&texts.Any(t=>t=="網路請求超時請檢查網路連接狀態。"||t=="网络请求超时请检查网络连接状态。");}
+  public static bool Matches(string context,System.Collections.Generic.IEnumerable<string> texts){return context==Context&&RegionLookupTimeout(texts)||context==RequestContext&&RequestTimeout(texts);}
   public static bool RegionLookupTimeout(System.Collections.Generic.IEnumerable<string> texts){
    return texts!=null&&texts.Any(t=>t!=null&&t.Contains("Neo.Unity.Http.NeoNetworkException:/api/billing/mycard/check/mycard/nation, 0, ConnectionError, Request timeout"));
   }

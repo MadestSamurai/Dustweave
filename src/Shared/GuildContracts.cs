@@ -54,6 +54,9 @@ namespace BD2Daily {
   [DataMember] public bool CacheMatched;
   [DataMember] public bool ReturnedHome;
   [DataMember] public bool Passive;
+  [DataMember] public int ReentryCount;
+  [DataMember] public int ProcessId;
+  [DataMember] public long ProcessStartTicks;
  }
  [DataContract] public sealed class GuildTrace {
   [DataMember] public string Origin="runtime";
@@ -70,6 +73,19 @@ namespace BD2Daily {
  }
  // Shared by production and offline replay. No Unity references, no I/O or clock reads.
  public static class GuildPolicy {
+  // Guild entry is a server-idempotent attendance/read operation, not a purchase.
+  // Only a timed-out single request can be refreshed; mixed/failed responses and
+  // active requests still require diagnosis. Keep the same account/guild/cycle.
+  public static bool NewProcess(DailySnapshot s,GuildReceipt r){return s!=null&&r!=null&&s.ProcessId>0&&s.ProcessStartTicks>0&&r.ProcessId>0&&r.ProcessStartTicks>0&&(r.ProcessId!=s.ProcessId||r.ProcessStartTicks!=s.ProcessStartTicks);}
+  public static int NextReentry(DailySnapshot s,GuildReceipt r){return r!=null&&r.State=="unknown"&&!NewProcess(s,r)?r.ReentryCount+1:0;}
+  public static bool CanRefresh(DailySnapshot s,GuildReceipt r,long now){
+   if(r==null||!SameIdentity(s,r)||r.ResponseSeen||r.StartedUtcTicks<=0||now-r.StartedUtcTicks<TimeSpan.FromSeconds(45).Ticks)return false;
+   bool restarted=NewProcess(s,r);
+   // A closed game cannot deliver the old in-flight query. Keep that record intact
+   // and authorize an independent read, never transplant its receipt to this process.
+   bool eligible=r.State=="unknown"&&r.RequestCount==1||restarted&&(r.State=="prepared"||r.State=="dispatching"||r.State=="waiting_response")&&r.RequestCount>=0&&r.RequestCount<=1;
+   return eligible&&(restarted||r.ReentryCount<2);
+  }
   public static bool Terminal(string state){return state=="completed"||state=="checked_no_grant"||state=="skipped"||state=="rejected"||state=="unknown"||state=="confirmed_cleanup_pending";}
   public static string Gate(DailySnapshot s,GuildReceipt prior,long now){
    if(s==null||string.IsNullOrEmpty(s.AccountKey)||string.IsNullOrEmpty(s.PlayerKey)||s.Runtime!=DailyIdentity.RuntimeName||s.State!="identified"||s.FrameUtcTicks<now-TimeSpan.FromSeconds(5).Ticks||s.FrameUtcTicks>now+TimeSpan.FromSeconds(2).Ticks)return "等待新鲜的游戏身份快照";
@@ -77,7 +93,7 @@ namespace BD2Daily {
    if(!g.InGuild)return "当前角色未加入公会";
    if(string.IsNullOrEmpty(g.ServerKey)||string.IsNullOrEmpty(g.CycleKey)||string.IsNullOrEmpty(g.GuildKey)||g.ResetTicks<=g.ServerTicks)return "等待游戏重置时间与公会身份";
    if(g.ResetTicks-g.ServerTicks<TimeSpan.FromSeconds(60).Ticks)return "即将跨日，等待游戏刷新后再执行";
-   if(prior!=null){if(prior.State=="completed"||prior.State=="confirmed_cleanup_pending")return "本周期签到已确认，跳过";if(prior.State=="checked_no_grant")return "本周期已检查，服务器未新增签到；不重复请求";if(prior.MayHaveDispatched||prior.State=="prepared")return "存在未确认操作，先核对记录；不重复请求";}
+   if(prior!=null){if(prior.State=="completed"||prior.State=="confirmed_cleanup_pending")return "本周期签到已确认，跳过";if(prior.State=="checked_no_grant")return "本周期已检查，服务器未新增签到；不重复请求";if((prior.MayHaveDispatched||prior.State=="prepared")&&!CanRefresh(s,prior,now))return "存在未确认操作，先核对记录；不重复请求";}
    if(!string.IsNullOrEmpty(g.BlockReason))return g.BlockReason;
    if(!g.MenuVisible||g.GuildVisible)return "请打开游戏主菜单，显示公会入口";
    return "";

@@ -30,6 +30,11 @@
      <StackPanel>
       <TextBlock Text="{DynamicResource Ui35}" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,14"/>
       <WrapPanel Margin="0,0,0,18"><CheckBox x:Name="LoggingBox" Content="{DynamicResource Ui36}" Checked="SettingsChanged" Unchecked="SettingsChanged"/><CheckBox x:Name="MiningBox" Content="{DynamicResource Ui37}" Checked="SettingsChanged" Unchecked="SettingsChanged"/><CheckBox x:Name="FarmingBox" Content="{DynamicResource Ui38}" Checked="SettingsChanged" Unchecked="SettingsChanged"/></WrapPanel>
+      <WrapPanel Margin="0,0,0,6">
+       <TextBlock Text="{DynamicResource TreeStageLabel}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+       <ComboBox x:Name="TreeStageBox" MinWidth="200" MinHeight="34" DisplayMemberPath="Name" SelectedValuePath="Id" SelectionChanged="TreeStageChanged" AutomationProperties.Name="{DynamicResource TreeStageLabel}"/>
+      </WrapPanel>
+      <TextBlock Text="{DynamicResource TreeStageHint}" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,0,0,18"/>
       <WrapPanel Margin="0,0,0,18"><CheckBox x:Name="VehicleBox" Content="{DynamicResource Ui39}" Checked="SettingsChanged" Unchecked="SettingsChanged" ToolTip="{DynamicResource Ui40}"/><CheckBox x:Name="DashBox" Content="{DynamicResource Ui41}" Checked="SettingsChanged" Unchecked="SettingsChanged" ToolTip="{DynamicResource Ui42}"/></WrapPanel>
       <CheckBox x:Name="NavMeshBox" Content="{DynamicResource NavMeshLabel}" ToolTip="{DynamicResource NavMeshHint}" Margin="0,0,0,6" Checked="SettingsChanged" Unchecked="SettingsChanged"/>
       <TextBlock Text="{DynamicResource NavMeshHint}" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,0,0,18"/>

@@ -11,15 +11,26 @@ public static class DailyTravel
     private static readonly DailyNavigationPolicy Policy = DailyNavigationPolicy.Load();
     // Native menus can stay on Empty indefinitely; only overlays or a missing scene imply transit.
     private static bool InTransit(JsonObject frame) => string.IsNullOrWhiteSpace(S(frame["Scene"])) || DailyNavigationDecision.Types(frame).Overlaps(DailyNavigationDecision.Transitions);
-    private static bool UnsentTransition(DailyStepException error) => !error.Submitted && error.Kind == "rejected" && (error.RejectionCode is "surface_missing" or "target_missing" || error.Message is "Scene changed during preflight; no command sent" or "rejected: screen_changed" or "rejected: ui_not_ready");
+    private static bool UnsentTransition(DailyStepException error) => error.PresentationChanged;
     public static async Task<bool> RecoverPresentation(DailyWorkflow w, JsonObject frame)
     {
         if (await DailyMirror.RecoverRankPresentation(w, frame)) return true;
-        var action = DailyNavigationDecision.TalentAction(frame, Policy) ?? DailyNavigationDecision.Notice(frame, Policy, out _) ?? DailyNavigationDecision.StoryAction(frame, Policy) ?? DailyNavigationDecision.WeeklyResult(frame, Policy);
-        if (action == null)
-            return false;
-        await w.Driver.NavigationAsync(action);
-        return true;
+        bool changed = false;
+        for (int attempt = 0; attempt < 5; attempt++)
+        {
+            var action = DailyHomeDecision.BackgroundErrorAction(frame, Policy) ?? DailyNavigationDecision.TalentAction(frame, Policy) ?? DailyNavigationDecision.Notice(frame, Policy, out _) ?? DailyNavigationDecision.StoryAction(frame, Policy) ?? DailyNavigationDecision.WeeklyResult(frame, Policy);
+            if (action == null) return changed;
+            try { await w.Driver.NavigationAsync(action); return true; }
+            catch (StageHostException e) when (e.Kind == "navigation_changed")
+            {
+                // No game input occurred. Re-select from the new frame, never replay
+                // the old action into the next scene. ReadBound retains identity checks.
+                changed = true;
+                await w.Delay(150);
+                frame = (await w.Observe()).Frame;
+            }
+        }
+        throw new StageHostException("adapter", "页面持续切换，未能完成剧情或提示收尾；已保留当前路线进度。");
     }
     public static async Task Ready(DailyWorkflow w, string ui, double seconds = 60, IEnumerable<string>? absent = null)
     {

@@ -15,40 +15,59 @@ internal sealed class GameInstallationPanel : Border
     private readonly TextBlock state = new() { TextWrapping = TextWrapping.Wrap, Margin = new(0, 7, 0, 0) };
     private readonly Button browse = new() { Margin = new(0, 0, 8, 0) };
     private readonly Button automatic = new();
+    private readonly Button edit = new();
+    private readonly TextBlock summary = new() { TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center, Margin = new(12, 0, 12, 0) };
+    private Window? editor;
     private bool working;
     internal string DisplayedPath => path.Text;
-    internal bool CanChoose => browse.IsEnabled;
+    internal bool CanChoose => IsEnabled && !working && !readOnly;
 
     internal GameInstallationPanel(GameInstallation store, bool readOnly)
     {
         this.store = store; this.readOnly = readOnly;
-        Style = (Style)Application.Current.FindResource("Panel"); Padding = new(16); Margin = new(0, 0, 0, 16);
-        var body = new StackPanel();
-        var header = new DockPanel { LastChildFill = true };
-        var actions = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Right };
+        Padding = new(0, 0, 0, 12); Margin = new(0, 0, 0, 12);
+        BorderThickness = new(0, 0, 0, 1); SetResourceReference(BorderBrushProperty, "Line");
+        var header = new DockPanel();
+        L.Bind(edit, ContentControl.ContentProperty, () => L.Translate("更改位置"));
+        edit.Click += (_, _) => OpenEditor(); DockPanel.SetDock(edit, Dock.Right); header.Children.Add(edit);
+        var title = new TextBlock { FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
+        L.Text(title, "game_path.title"); DockPanel.SetDock(title, Dock.Left); header.Children.Add(title);
+        summary.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk"); header.Children.Add(summary); Child = header;
         L.Bind(browse, ContentControl.ContentProperty, "game_path.choose");
         L.Bind(automatic, ContentControl.ContentProperty, "game_path.auto");
-        actions.Children.Add(browse); actions.Children.Add(automatic);
-        DockPanel.SetDock(actions, Dock.Right); header.Children.Add(actions);
-        var title = new TextBlock { FontSize = 16, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center, Margin = new(0, 0, 12, 0) };
-        L.Text(title, "game_path.title"); header.Children.Add(title); body.Children.Add(header);
         L.Bind(path, System.Windows.Automation.AutomationProperties.NameProperty, "game_path.title");
         path.TextChanged += (_, _) => path.ToolTip = path.Text;
-        body.Children.Add(path); body.Children.Add(state);
-        var help = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 5, 0, 0), FontSize = 12 };
-        help.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk");
-        L.Text(help, readOnly ? "game_path.inherited" : "game_path.help"); body.Children.Add(help); Child = body;
         browse.Click += async (_, _) =>
         {
             if (working || readOnly) return;
             var picker = new OpenFileDialog { Filter = "BrownDust II.exe|BrownDust II.exe", CheckFileExists = true, Multiselect = false, Title = L.Get("game_path.choose") };
-            if (picker.ShowDialog(Window.GetWindow(this)) == true) await SelectAsync(picker.FileName);
+            if (picker.ShowDialog(editor ?? Window.GetWindow(this)) == true) await SelectAsync(picker.FileName);
         };
         automatic.Click += async (_, _) => await ChangeAsync(store.UseAutomatic);
         Loaded += async (_, _) => await RefreshAsync();
         SetWorking(false);
     }
 
+    internal Window CreateEditor()
+    {
+        var body = new StackPanel { Margin = new(24) };
+        var help = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 0, 0, 8) };
+        L.Text(help, readOnly ? "game_path.inherited" : "game_path.help"); body.Children.Add(help);
+        body.Children.Add(path); body.Children.Add(state);
+        var actions = new WrapPanel { Margin = new(0, 16, 0, 0) };
+        actions.Children.Add(browse); actions.Children.Add(automatic); body.Children.Add(actions);
+        var window = new Window { Title = L.Get("game_path.title"), Width = 640, MinWidth = 440, SizeToContent = SizeToContent.Height,
+            MaxHeight = Math.Max(360, SystemParameters.WorkArea.Height - 40), Owner = Window.GetWindow(this), WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Content = new ScrollViewer { Content = body, VerticalScrollBarVisibility = ScrollBarVisibility.Auto } };
+        window.Closed += (_, _) => { body.Children.Remove(path); body.Children.Remove(state); actions.Children.Clear(); editor = null; };
+        DailyDialogs.Prepare(window); return window;
+    }
+    private void OpenEditor()
+    {
+        if (working || !IsEnabled) return;
+        if (editor != null) { editor.Activate(); return; }
+        editor = CreateEditor(); DailyDialogs.ShowModal(editor);
+    }
     internal async Task RefreshAsync()
     {
         var value = await Task.Run(store.Read);
@@ -66,11 +85,14 @@ internal sealed class GameInstallationPanel : Border
     private void Present(GameInstallationState value)
     {
         path.Text = value.Executable;
+        L.Bind(summary, TextBlock.TextProperty, () => value.Executable.Length > 0 ? value.Executable : L.Get("game_path.choose"));
+        summary.ToolTip = value.Executable;
+        summary.SetResourceReference(TextBlock.ForegroundProperty, value.Error != null ? "Error" : "MutedInk");
         L.Bind(state, TextBlock.TextProperty, () => value.Error != null ? L.Describe(value.Error) : L.Get(value.IsManual ? "game_path.manual" : "game_path.detected"));
         state.SetResourceReference(TextBlock.ForegroundProperty, value.Error != null ? "Error" : "MutedInk");
     }
     private void SetWorking(bool value)
     {
-        working = value; browse.IsEnabled = automatic.IsEnabled = !value && !readOnly;
+        working = value; browse.IsEnabled = automatic.IsEnabled = !value && !readOnly; edit.IsEnabled = !value;
     }
 }

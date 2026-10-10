@@ -92,11 +92,11 @@ public static class DailyHomeDecision
     public static JsonObject? BackgroundErrorAction(JsonObject frame, DailyNavigationPolicy policy)
     {
         var rows = DailyNavigationDecision.Rows(frame).Where(r => Text(r, "Type") == "MessagePopupUI").ToArray();
-        if (rows.Length != 1 || Text(rows[0], "NativeContext") != "billing_region_unavailable_ack_only"
+        if (rows.Length != 1 || Text(rows[0], "NativeContext") is not ("billing_region_unavailable_ack_only" or "request_timeout_ack_only")
             || !DailyNavigationDecision.ReadyInput(rows[0], false) || !Enabled(rows[0], "_buttonOK")
             || DailyNavigationDecision.Blockers(frame, "MessagePopupUI", policy).Length != 0) return null;
         return new JsonObject { ["ui"] = "MessagePopupUI", ["operation"] = "background_error_ack",
-            ["absent"] = "MessagePopupUI", ["reason"] = "关闭支付地区查询超时提示，继续日常；不发起付款或重试" };
+            ["absent"] = "MessagePopupUI", ["reason"] = Text(rows[0], "NativeContext") == "request_timeout_ack_only" ? "关闭无后续操作的网络超时提示，重新核对当前环节" : "关闭支付地区查询超时提示，继续日常；不发起付款或重试" };
     }
     public static DailyHomePlan Inspect(JsonObject frame, DailyNavigationPolicy policy)
     {
@@ -140,7 +140,7 @@ public static class DailyHomeDecision
         }
         if (types.Contains("MessagePopupUI"))
         {
-            if (rows.Any(r => Text(r, "NativeContext") == "billing_region_unavailable_ack_only"))
+            if (rows.Any(r => Text(r, "NativeContext") is "billing_region_unavailable_ack_only" or "request_timeout_ack_only"))
                 return Wait("等待后台查询提示的确认按钮");
             if (rows.Any(r => Text(r, "NativeContext") == "talent_inactive_ack_only"))
                 return Wait("等待探查失效提示的原生确认按钮");

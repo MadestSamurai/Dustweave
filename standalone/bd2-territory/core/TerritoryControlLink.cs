@@ -23,7 +23,7 @@ public sealed class TerritoryControlLink:IDisposable
   {
    lock(sync)if(disposed)throw new ObjectDisposedException(nameof(TerritoryControlLink));
    TerritoryJson.Write(Path.Combine(root,"settings.json"),s);
-   bool publish;lock(sync){command.AutoSell=s.AutoSell;command.SellThreshold=s.SellThreshold;command.FixedCrop=s.FixedCrop;command.FixedSeedId=s.FixedSeedId;command.Cooking=s.Cooking;command.CookingBatch=s.CookingBatch;command.RecipeId=s.RecipeId;command.Logging=s.Logging;command.Mining=s.Mining;command.Farming=s.Farming;command.DashRecovery=s.DashRecovery;command.UseVehicle=s.UseVehicle;command.UseNavMesh=s.UseNavMesh;command.IntervalMs=s.IntervalMs;command.PlantingBudget=s.PlantingBudget;revision++;publish=command.Enabled;}
+   bool publish;lock(sync){command.AutoSell=s.AutoSell;command.SellThreshold=s.SellThreshold;command.FixedCrop=s.FixedCrop;command.FixedSeedId=s.FixedSeedId;command.Cooking=s.Cooking;command.CookingBatch=s.CookingBatch;command.RecipeId=s.RecipeId;command.Logging=s.Logging;command.MinimumTreeStage=s.MinimumTreeStage;command.Mining=s.Mining;command.Farming=s.Farming;command.DashRecovery=s.DashRecovery;command.UseVehicle=s.UseVehicle;command.UseNavMesh=s.UseNavMesh;command.IntervalMs=s.IntervalMs;command.PlantingBudget=s.PlantingBudget;revision++;publish=command.Enabled;}
    publish=publish||BD2.LocalIpc.DesktopFiles.HasLease(root);
    if(publish)PublishLocked();
   }

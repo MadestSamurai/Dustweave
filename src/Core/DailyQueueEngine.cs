@@ -4,6 +4,7 @@ namespace Dustweave;
 public sealed class StageHostException(string kind, string message) : Exception(message)
 {
     public string Kind { get; } = kind;
+    public DailyPotionLimit? PotionLimit { get; init; }
 }
 public interface IDailyStageHost : IAsyncDisposable
 {
@@ -149,7 +150,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
             state = "preparing",
             engine = "dotnet-v1"
         });
-        var itemsToRun = record["items"]!.AsArray().Select(i => i!.AsObject()).ToArray();
+        var itemsToRun = record["items"]!.AsArray().Select(i => i!.AsObject()).Where(i => Text(i["task"]) != DailyTalentPotions.Stage).ToArray();
         var settings = preferences();
         settings.Validate();
         var owners = initial["owners"]!.AsArray().Select(Text).ToArray();
@@ -157,6 +158,19 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
         HashSet<string> activeWeekly = [];
         void OnProgress(string stage, JsonObject progress)
         {
+            if (stage == DailyTalentPotions.Stage)
+            {
+                var items = record["items"]!.AsArray();
+                var auxiliary = items.Select(i => i!.AsObject()).SingleOrDefault(i => Text(i["task"]) == stage);
+                if (auxiliary == null) { auxiliary = new JsonObject { ["task"] = stage, ["auxiliary"] = true }; items.Add(auxiliary); }
+                auxiliary["state"] = Text(progress["state"]);
+                auxiliary["progress"] = progress.DeepClone();
+                auxiliary["result"] = new JsonObject { ["reason"] = Text(progress["detail"]) };
+                auxiliary.Remove("carried_forward");
+                if (Text(progress["state"]) == "running") auxiliary["started"] = DateTime.UtcNow.Ticks;
+                else auxiliary["finished"] = DateTime.UtcNow.Ticks;
+                Save(); return;
+            }
             if (!activeWeekly.Contains(stage))
                 throw new StageHostException("protocol", "收到未选择环节的进度。");
             var row = itemsToRun.Single(i => Text(i["task"]) == stage);
@@ -254,7 +268,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                         }
                         Save();
                     }
-                    catch (StageHostException error) when (error.Kind is "adapter" or "pending" or "reconciled")
+                    catch (StageHostException error) when (error.Kind is "adapter" or "pending" or "reconciled" or "navigation_changed")
                     {
                         foreach (var row in members)
                         {
@@ -364,6 +378,23 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
         {
             record["state"] = "paused";
             record["error"] = error.Message;
+            // Independently proven categories must survive failures outside the
+            // normal weekly recovery branch too. No input or workflow restart here.
+            if (host is IDailyWeeklyCompletionHost completion)
+            {
+                var running = itemsToRun.Where(i => Text(i["state"]) == "running" && DailyStageCatalog.IsWeeklyRoute(Text(i["task"]))).ToArray();
+                if (running.Length > 0)
+                {
+                    try
+                    {
+                        var settled = await completion.SettleWeeklyAsync(running.Select(i => Text(i["task"])).ToArray(), context);
+                        foreach (var row in running)
+                            if (settled[Text(row["task"])] is JsonObject part && Text(part["state"]) == "completed")
+                            { row["state"] = "completed"; row["result"] = part.DeepClone(); row["finished"] = DateTime.UtcNow.Ticks; row.Remove("error"); }
+                    }
+                    catch (Exception settlementError) { record["settlement_error"] = settlementError.Message; }
+                }
+            }
             foreach (var item in itemsToRun.Where(i => Text(i["state"]) == "running"))
             {
                 item["state"] = "recovery_required";
