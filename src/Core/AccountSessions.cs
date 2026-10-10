@@ -2,7 +2,13 @@ using Dustweave.Accounts;
 namespace Dustweave;
 
 public sealed record DailyAccount(int SlotNumber, string Name, string AccountKey, string MaskedMemberId, bool Valid, bool IsCurrent, string Error);
-public sealed record DailyAccountCatalog(IReadOnlyList<DailyAccount> Accounts, string CurrentKey, int? CurrentSlot, bool SessionComplete, bool GameRunning, bool StarterRunning, bool HasRecovery) { public IReadOnlyList<int> OccupiedSlots { get; init; } = []; }
+public sealed record DailyLocalLoginEntry(string Name, bool Present, string? Kind, bool HasData, bool? Enabled);
+public sealed record DailyLocalLoginState(bool RegistryPresent, string IdentitySource, IReadOnlyList<DailyLocalLoginEntry> Entries);
+public sealed record DailyAccountCatalog(IReadOnlyList<DailyAccount> Accounts, string CurrentKey, int? CurrentSlot, bool SessionComplete, bool GameRunning, bool StarterRunning, bool HasRecovery)
+{
+    public IReadOnlyList<int> OccupiedSlots { get; init; } = [];
+    public DailyLocalLoginState? LocalLogin { get; init; }
+}
 public interface IAccountSessions
 {
     DailyAccountCatalog Read();
@@ -18,6 +24,10 @@ public interface IAccountSessions
 // Reuses the original session service and vault. No session bytes leave this adapter.
 public sealed class AccountSessions : IAccountSessions, IDisposable
 {
+    private readonly IGameHost? host;
+    private readonly DailyLiveAccountIdentity liveIdentity = new();
+    public AccountSessions() : this(null) { }
+    public AccountSessions(IGameHost? host) => this.host = host;
     private readonly SessionService service = new(); private readonly SessionVault vault = new(); private Mutex? ownership;
     public string VaultDirectory => vault.RootDirectory;
     public bool TryAcquire()
@@ -70,14 +80,21 @@ public sealed class AccountSessions : IAccountSessions, IDisposable
             accounts.Add(new(slot.Number, slot.DisplayName ?? "未命名", key, slot.MaskedMemberId ?? "", valid, slot.IsCurrent, error));
         }
         string current = "";
-        if (d.CurrentSessionComplete)
-            try
-            {
-                current = DailyIdentity.MemberKey(SessionIdentity.GetMemberId(SessionRegistry.ReadCurrent("identity-read")) ?? "");
-            }
-            catch { }
+        try { current = DailyIdentity.MemberKey(SessionRegistry.ReadMemberIdentity()); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Security.SecurityException) { }
+        string source = DailyProfiles.ValidKey(current) ? "local-member" : "unavailable";
+        if (host != null && !DailyProfiles.ValidKey(current))
+        {
+            try { current = liveIdentity.Resolve(host.Find(), host.ReadSnapshot(), DateTimeOffset.UtcNow); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidOperationException or TimeoutException)
+            { liveIdentity.Resolve(null, null, DateTimeOffset.UtcNow); }
+            if (DailyProfiles.ValidKey(current)) source = "live-game";
+        }
         if (DailySandbox.Current is {} binding) accounts = accounts.Where(a => a.AccountKey == binding.Account).ToList();
-        return DailyAccountIdentity.Normalize(new(accounts, current, d.CurrentSlotNumber, d.CurrentSessionComplete, d.Status.GameRunning, d.Status.StarterRunning, d.HasRecovery));
+        return DailyAccountIdentity.Normalize(new(accounts, current, d.CurrentSlotNumber, d.CurrentSessionComplete, d.Status.GameRunning, d.Status.StarterRunning, d.HasRecovery)
+        {
+            LocalLogin = new(d.Status.RegistryKeyPresent, source, d.Status.Entries.Select(e => new DailyLocalLoginEntry(e.LogicalName, e.Present, e.Kind, e.ByteLength > 0, e.Enabled)).ToArray())
+        });
     }
     private void RequireIdentity(int slot, string key)
     {

@@ -7,7 +7,20 @@ public sealed class DailyCollectionCatalog(DailyWorkflow workflow)
     private readonly Dictionary<long, JsonObject> cartridges = Rows(workflow.Asset("collection-catalog.json")["cartridges"]).ToDictionary(r => N(r["id"]));
     private readonly Dictionary<long, JsonObject> steals = Rows(workflow.Asset("steal-catalog.json")["packs"]).ToDictionary(r => N(r["id"]));
     public bool Supported(long pack) => pack is >= 1 and <= 19 || cartridges.ContainsKey(pack);
-    public long[] Extra(int characters, bool events) => cartridges.Where(p => S(p.Value["kind"]) == "character" && p.Key <= 1000 + characters || events && S(p.Value["kind"]) == "event").Select(p => p.Key).ToArray();
+    public long[] Packs() => Enumerable.Range(1, 19).Select(id => (long)id)
+        .Concat(cartridges.Where(p => (S(p.Value["kind"]) is "character" or "event") && p.Value["maps"] is JsonArray { Count: > 0 }).Select(p => p.Key).Order())
+        .Distinct().ToArray();
+    public long[] AvailablePacks(JsonObject evidence)
+    {
+        var owned = Rows(R(evidence, "mainline.owned_packs", "$items"));
+        var definitions = Rows(R(evidence, "mainline.packs", "$items"));
+        Require(owned.Length > 0 && owned.Length == N(R(evidence, "mainline.owned_packs", "Count")) &&
+            definitions.Length > 0 && definitions.Length == N(R(evidence, "mainline.packs", "Count")), "collection_pack_list_incomplete");
+        Require(owned.All(p => N(p["Key"]) > 0 && N(p["Key"]) == N(p["Value.Id"])), "collection_pack_list_incomplete");
+        var ids = owned.Select(p => N(p["Value.Id"])).ToHashSet();
+        var fields = definitions.Where(p => N(p["PackType"]) is 0 or 1 or 6).Select(p => N(p["Id"])).ToHashSet();
+        return Packs().Where(id => ids.Contains(id) && fields.Contains(id)).ToArray();
+    }
     public HashSet<long> Transit(long pack) => cartridges[pack]["transitMaps"]!.AsArray().Select(N).ToHashSet();
     public long[] Maps(long pack) => pack switch { 6 => [601, 602, 606, 605, 608, 607], 11 => [1101, 1102, 1103], 14 => [141, 143, 142, 144], 15 => [151, 153, 154], 18 => [181, 186, 183], 1001 => [10011, 10014, 10015], 1002 => [10021, 10022, 10023], 1003 => [10031, 10032, 10033], _ => cartridges.TryGetValue(pack, out var c) ? c["maps"]!.AsArray().Select(N).ToArray() : pack is >= 1 and <= 19 ? new long[] { 1, 2, 3 }.Select(offset => (pack == 1 ? 0 : pack * 10) + offset).ToArray() : throw new InvalidDataException("Unsupported collection cartridge") };
     public long[] StealMaps(long pack)

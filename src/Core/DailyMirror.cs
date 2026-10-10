@@ -7,7 +7,17 @@ public static class DailyMirror
     private const string Auto = "BattleAutoSettingPopupUI", Boost = "BattleAutoCurrencyAccelSettingPopupUI", BoostValue = "ὣὤὥὪὥὡὥὢὧὮὠ", Count = "ὯὠὭὣὮὠὯὬὤὯὠ", Slider = "_sliderCount.ὮὢὥὯὥὧὤὭὨὨὪ";
     private static readonly string[] RankWindows = ["PVPClassUpUI", "PVPHistoryUI", "PVPSeasonRewardPopupUI"];
     private static readonly string[] ReadyPaths = ["ὣὤὥὦὯὦὩὤὨὠὪ", "ὪὯὣὥὬὫὬὩὠὮὠ", "ὮὬὧὦὣὠὠὤὮὦὧ"];
-    public static DailyBusinessProof Proof() => new("mirror.end", "mirror", ["mirror"], (op, events, after) => Verify(op["before"]!.AsObject(), events, after, I(op["scope"]!["multiplier"])), ["mirror.matching", "mirror.end"]);
+    public static DailyBusinessProof Proof() => new("mirror.end", "mirror", ["mirror"],
+        (op, events, after) => Verify(op["before"]!.AsObject(), events, after, I(op["scope"]!["multiplier"]), BatchCount(op)),
+        ["mirror.matching", "mirror.end"], CanResume: (op, current) =>
+            JsonNode.DeepEquals(op["cycle"], current.Context["cycle"]) &&
+            DailyEvidence.SameActor(op["before"]!["Frame"]!.AsObject(), current.Frame) &&
+            S(current.Frame["Scene"]) == "Map3001_001" &&
+            (DailyNavigationDecision.Phase(current.Frame, "mirror") == "owned_battle" ||
+             DailyNavigationDecision.Types(current.Frame).Overlaps(["BattleUI_PVP", "PVPMatchingUI", "PVPAutoHistoryPopupUI", "BattleResultUI"])));
+    // Old journals represent a single battle and remain readable after upgrading.
+    private static int BatchCount(JsonObject op) => op["scope"]?["repetitions"] == null ? 1 : I(op["scope"]!["repetitions"]);
+    private static double BatchTimeout(int repetitions) => Math.Min(1800, 120d * repetitions + 30);
     public static JsonObject Tickets(JsonObject e) => O(("free", R(e, "mirror.currency", "PvpTicket")), ("paid", R(e, "mirror.currency", "PvpTicketStack")));
     public static int Allocation(int multiplier, int free)
     {
@@ -19,17 +29,25 @@ public static class DailyMirror
         Require(new[] { "free", "paid" }.All(k => before[k] != null && after[k] != null && N(before[k]) >= 0 && N(after[k]) >= 0), "Mirror tickets incomplete");
         Require(N(before["free"]) - N(after["free"]) == cost && N(before["paid"]) == N(after["paid"]), "Mirror ticket debit differs; paid tickets must not change");
     }
-    public static void ValidateReady(JsonObject e, int cost)
+    public static void ValidateReady(JsonObject e, int cost) => ValidateReady(e, cost, 1);
+    public static void ValidateReady(JsonObject e, int cost, int repetitions)
     {
-        Require(N(R(e, "mirror.auto", BoostValue)) == cost && N(R(e, "mirror.auto", Count)) == 1 && B(R(e, "mirror.auto", "_buttonFreeOnly.IsEnable")) && N(Tickets(e)["free"]) >= cost, "Mirror multiplier/repetitions/free-only changed");
+        Require(cost is >= 1 and <= 40 && repetitions > 0 && (long)cost * repetitions <= int.MaxValue, "Invalid Mirror free budget");
+        Require(N(R(e, "mirror.auto", BoostValue)) == cost && N(R(e, "mirror.auto", Count)) == repetitions && B(R(e, "mirror.auto", "_buttonFreeOnly.IsEnable")) && N(Tickets(e)["free"]) >= (long)cost * repetitions, "Mirror multiplier/repetitions/free-only changed");
     }
-    public static JsonObject Verify(JsonObject before, JsonArray events, JsonObject after, int cost)
+    public static JsonObject Verify(JsonObject before, JsonArray events, JsonObject after, int cost) => Verify(before, events, after, cost, 1);
+    public static JsonObject Verify(JsonObject before, JsonArray events, JsonObject after, int cost, int repetitions)
     {
-        ValidateReady(before, cost);
-        Response("mirror.matching", events, before, after);
-        var result = Response("mirror.end", events, before, after);
-        Debit(Tickets(before), Tickets(after), cost);
-        return O(("cost", cost), ("remaining", Tickets(after)), ("native_result", result));
+        ValidateReady(before, cost, repetitions);
+        Responses("mirror.matching", events, before, after, repetitions, repetitions, alternating: true);
+        var results = Responses("mirror.end", events, before, after, repetitions, repetitions, alternating: true);
+        var order = Rows(events).Where(e => S(e["Role"]) is "mirror.matching" or "mirror.end").OrderBy(e => N(e["Sequence"]));
+        Require(order.Select(e => S(e["Role"]) + ":" + S(e["Kind"])).SequenceEqual(Enumerable.Range(0, repetitions).SelectMany(_ =>
+            new[] { "mirror.matching:request", "mirror.matching:response", "mirror.end:request", "mirror.end:response" })), "Mirror batch response order differs");
+        int total = checked(cost * repetitions);
+        Debit(Tickets(before), Tickets(after), total);
+        return O(("cost", total), ("multiplier", cost), ("repetitions", repetitions), ("remaining", Tickets(after)),
+            ("native_result", results[^1]), ("native_results", Array(results)));
     }
     public static string BoostButton(int delta) => delta == 0 ? throw new ArgumentException("Multiplier already selected") : delta >= 10 ? "_objPlus10Button" : delta <= -10 ? "_objMinus10Button" : delta > 0 ? "_objPlusButton" : "_objMinusButton";
     private static async Task<JsonObject> Target(DailyWorkflow w, string ui, string? field = null, string? suffix = null)
@@ -135,7 +153,7 @@ public static class DailyMirror
         await w.Step(O(("ui", "GameFieldDefaultUI"), ("mirror_entry", true), ("expect", "BattleUI_PVP"), ("timeout", 60), ("reason", "进入原生镜中备战")));
         await Ready(w);
     }
-    private static async Task Prepare(DailyWorkflow w, int cost)
+    private static async Task Prepare(DailyWorkflow w, int cost, int repetitions)
     {
         await Rank(w);
         if (await w.Has(Boost))
@@ -167,9 +185,15 @@ public static class DailyMirror
             await Click(w, Auto, suffix: "/FreeOnly/Button - Toggle");
         if (!B(R(await w.Evidence("mirror"), "mirror.auto", "_buttonSkip.IsEnable")))
             await Click(w, Auto, suffix: "/BattleSkip/Button - Toggle");
-        if (N(R(await w.Evidence("mirror"), "mirror.auto", Count)) != 1)
-            await Click(w, Auto, suffix: "/Button - -100");
-        await w.WaitEvidence(["mirror"], e => { ValidateReady(e, cost); return true; });
+        var configured = await w.Evidence("mirror");
+        if (N(R(configured, "mirror.auto", Count)) != repetitions)
+        {
+            // The game's maximum is floor(free tickets / multiplier) after FreeOnly is enabled.
+            string name = S(R(configured, "mirror.auto", "_sliderAutoCount._objPlusMaxButton.name"));
+            Require(name.Length > 0, "Mirror continuous battle selector unavailable");
+            await Click(w, Auto, suffix: "/" + name);
+        }
+        await w.WaitEvidence(["mirror"], e => { ValidateReady(e, cost, repetitions); return true; });
     }
     private static async Task Cleanup(DailyWorkflow w, bool reenter)
     {
@@ -234,7 +258,8 @@ public static class DailyMirror
     }
     private static async Task Recover(DailyWorkflow w)
     {
-        double end = w.Time + 150;
+        int repetitions = w.Business.Records(w.Context, "mirror.end").Where(DailyManagedBusiness.Pending).Select(BatchCount).DefaultIfEmpty(1).Max();
+        double end = w.Time + BatchTimeout(repetitions);
         while (true)
         {
             var frame = await w.Observe();
@@ -245,10 +270,8 @@ public static class DailyMirror
                 await w.Business.ReconcileAsync(w.Context);
                 pending = w.Business.Records(w.Context, "mirror.end").Where(DailyManagedBusiness.Pending).ToArray();
             }
-            if (phase != "owned_battle")
+            if (phase != "owned_battle" && pending.Length == 0)
             {
-                if (pending.Length > 0)
-                    throw new StageHostException("pending", "上次镜中战斗尚未核账，没有再次匹配。");
                 return;
             }
             Require(w.Business.Records(w.Context, "mirror.end").Any(r => S(r["state"]) is "dispatching" or "unknown" or "completed" && DailyEvidence.SameActor(r["before"]!["Frame"]!.AsObject(), frame.Frame)), "Active Mirror battle has no owned journal");
@@ -280,12 +303,14 @@ public static class DailyMirror
             Debit(before, before, 0);
             if (cost == 0)
                 break;
-            await Prepare(w, cost);
+            int repetitions = I(before["free"]) / cost;
+            int total = checked(cost * repetitions);
+            await Prepare(w, cost, repetitions);
             var t = await Target(w, Auto, field: "_currencyButtonOK");
-            var op = await w.Transact("mirror.end", O(("multiplier", cost), ("free_only", true)), O(("ui", Auto), ("field", t["Field"]), ("target_id", t["Id"]), ("native", true), ("reason", "使用已核对的免费镜中次数")), 120);
+            var op = await w.Transact("mirror.end", O(("multiplier", cost), ("repetitions", repetitions), ("free_only", true)), O(("ui", Auto), ("field", t["Field"]), ("target_id", t["Id"]), ("native", true), ("reason", "使用已核对的免费镜中次数")), BatchTimeout(repetitions));
             var after = Tickets(await w.Evidence("mirror"));
-            Debit(before, after, cost);
-            rounds.Add(O(("cost", cost), ("remaining_free", after["free"]), ("receipt", op["id"])));
+            Debit(before, after, total);
+            rounds.Add(O(("cost", total), ("multiplier", cost), ("repetitions", repetitions), ("remaining_free", after["free"]), ("receipt", op["id"])));
             Require(rounds.Count <= initial, "Mirror free budget unexpectedly increased");
             await Cleanup(w, N(after["free"]) > 0);
         }

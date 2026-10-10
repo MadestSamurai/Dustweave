@@ -71,7 +71,7 @@ Both packages have the same features. Download a complete package from [GitHub R
 1. **Extract the entire folder** and run `Dustweave.exe`. Keep its data, flow and component directories alongside the executable.
 2. Follow **Getting started** to check the game location, launch and enter the main menu. After character detection, exit normally and save the account. Setup is skippable and can be reopened from Accounts.
 3. Explore the pages with the highlight tour. Use **Play** in Accounts for future launches, avoiding permission differences from desktop shortcuts or accelerator launch buttons.
-4. Configure stages in daily settings, then start the selected tasks or account queue. Reopen **Getting started** from Accounts at any time.
+4. Configure stages in daily settings, choose the account in **Today**, then use **Launch game and run selected tasks** at the top. It connects directly if the game is already running. Use **Run accounts** for an account queue. Reopen **Getting started** from Accounts at any time.
 
 Start with a few familiar stages. The [getting-started guide](docs/GETTING_STARTED.en.md) covers updates, local data and troubleshooting. Users of the first public release, `1.0.0-beta`, and later versions can check for updates in the app, which prefers differential packages. Upgrade compatibility for earlier internal versions is no longer maintained: extract a complete package into a new folder. Existing accounts and settings are reused.
 

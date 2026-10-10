@@ -51,5 +51,71 @@ internal static class LoginIdentityCases
             Check(doc.RootElement.GetProperty("classification").GetString()=="different_logged_in_account","wrong selection distinct from different stores");
             Check(!ex.Message.Contains("资源管理器"),"ordinary wrong selection not blamed on launch environment");
         }
+        foreach (bool memberAvailable in new[] { true, false })
+        {
+            string path = Path.Combine(root, "incomplete-local-login-" + memberAvailable);
+            var env = new DemoEnvironment(path) { IncompleteCatalogReads = int.MaxValue };
+            string actual = env.CurrentKey;
+            if (!memberAvailable) { env.ForcedKey = actual; env.CurrentKey = ""; }
+            var coordinator = new DailyCoordinator(env, env, path, new DailyOptions { PollInterval = TimeSpan.FromMilliseconds(2), LoginTimeout = TimeSpan.FromSeconds(1) });
+            await coordinator.ConnectCurrentAsync();
+            Check(new DailyProfiles(path).Read().Single().AccountKey == actual, "live login is verified without reusable credentials " + memberAvailable);
+            Check(env.Calls.Count(c => c == "connect") == 1, "identity discovery connects once " + memberAvailable);
+            Check(!env.Calls.Any(c => c is "startup.click" or "close" || c.StartsWith("launch:") || c.StartsWith("save:")), "incomplete login verification never changes credentials or game " + memberAvailable);
+            Check(!env.Read().SessionComplete, "live verification does not manufacture saved session " + memberAvailable);
+            using var proof = JsonDocument.Parse(File.ReadAllText(Path.Combine(path, "live", "diagnostics", "login-verified.json")));
+            Check(!proof.RootElement.GetProperty("SessionComplete").GetBoolean() && proof.RootElement.GetProperty("observed").GetProperty("identityReady").GetBoolean(), "diagnostics separate saved login from live identity " + memberAvailable);
+            bool saveRejected = false;
+            try { DailyAccountIdentity.SavePlan(env.Read() with { GameRunning = false, CurrentKey = actual }); } catch (InvalidOperationException) { saveRejected = true; }
+            Check(saveRejected, "incomplete local session remains unsavable " + memberAvailable);
+            if (memberAvailable)
+            {
+                await coordinator.InspectAsync([env.Accounts[0]]);
+                Check(!env.Calls.Any(c => c == "close" || c.StartsWith("launch:")), "checking the already active account does not require launch credentials");
+                bool switchingBlocked = false;
+                try { await coordinator.InspectAsync([env.Accounts[1]]); } catch (InvalidOperationException) { switchingBlocked = true; }
+                Check(switchingBlocked && !env.Calls.Any(c => c == "close" || c.StartsWith("launch:")), "incomplete session cannot be discarded to switch accounts");
+            }
+            env.Calls.Clear();
+            await CurrentGameObservation.ConnectAsync(env, env, _ => { }, CancellationToken.None, TimeSpan.FromSeconds(1), TimeSpan.FromMilliseconds(2));
+            Check(env.Calls.SequenceEqual(new[] { "connect" }), "read-only observation works without owning accounts " + memberAvailable);
+        }
+        foreach (bool title in new[] { false, true })
+        {
+            string path = Path.Combine(root, "missing-live-login-" + title);
+            var env = new DemoEnvironment(path) { CurrentKey = "", Ready = title, TitleVisible = title, IncompleteCatalogReads = int.MaxValue };
+            env.ForcedKey = env.Accounts[0].AccountKey;
+            var coordinator = new DailyCoordinator(env, env, path, new DailyOptions { PollInterval = TimeSpan.FromMilliseconds(2), LoginTimeout = TimeSpan.FromMilliseconds(40) });
+            string error = "";
+            try { await coordinator.ConnectCurrentAsync(); } catch (TimeoutException ex) { error = ex.Message; }
+            Check(error == "connection.login_identity_unavailable", "missing live identity has actionable diagnosis " + title);
+            Check(new DailyProfiles(path).Read().Count == 0 && env.TitleClicks == 0, "title or missing frames never authorize account " + title);
+            Check(File.Exists(Path.Combine(path, "live", "diagnostics", "login-failed.json")), "failed discovery retains bounded evidence " + title);
+        }
+        {
+            string path = Path.Combine(root, "cancel-discovery"); var env = new DemoEnvironment(path) { CurrentKey = "", Ready = false };
+            var coordinator = new DailyCoordinator(env, env, path);
+            coordinator.Progress += p => { if (p.State == "waiting_login") coordinator.Stop(); };
+            await coordinator.ConnectCurrentAsync();
+            Check(new DailyProfiles(path).Read().Count == 0 && env.TitleClicks == 0, "identity discovery stops immediately without input");
+        }
+        {
+            var env = new DemoEnvironment(Path.Combine(root, "identity-cache"));
+            var live = new DailyLiveAccountIdentity(); var first = env.ReadSnapshot()!;
+            Check(live.Resolve(env.Game, first, DateTimeOffset.UtcNow) == "", "one frame cannot supply missing local identity");
+            Check(live.Resolve(env.Game, first, DateTimeOffset.UtcNow) == "", "repeated frame cannot confirm identity");
+            var second = env.ReadSnapshot()!;
+            Check(live.Resolve(env.Game, second, DateTimeOffset.UtcNow) == env.CurrentKey, "two advancing frames supply missing local identity");
+            Check(live.Resolve(env.Game, second, DateTimeOffset.UtcNow) == env.CurrentKey, "fresh duplicate preserves already verified identity");
+            Check(live.Resolve(env.Game, second, DateTimeOffset.UtcNow.AddSeconds(6)) == "", "stale identity is never reused");
+            live.Resolve(env.Game, env.ReadSnapshot(), DateTimeOffset.UtcNow);
+            Check(live.Resolve(env.Game, env.ReadSnapshot(), DateTimeOffset.UtcNow) == env.CurrentKey, "fresh frames restore identity after staleness");
+            env.ForcedKey = env.Accounts[1].AccountKey;
+            Check(live.Resolve(env.Game, env.ReadSnapshot(), DateTimeOffset.UtcNow) == "", "account change invalidates prior proof");
+            Check(live.Resolve(env.Game, env.ReadSnapshot(), DateTimeOffset.UtcNow) == env.ForcedKey, "new account needs its own advancing proof");
+            Check(live.Resolve(null, env.ReadSnapshot(), DateTimeOffset.UtcNow) == "", "closed game removes volatile identity");
+            var wrongProcess = env.ReadSnapshot()!; wrongProcess.ProcessStartTicks--;
+            Check(live.Resolve(env.Game, wrongProcess, DateTimeOffset.UtcNow) == "", "wrong game start time is not an identity source");
+        }
     }
 }

@@ -91,7 +91,7 @@ public partial class MainWindow : Window
         toolPanel.CloseRequested += async () => await CloseTool();
         dailyPanel.AccountsRequested += () => WorkspaceTabs.SelectedItem = AccountsTab;
         dailyPanel.AccountRequested += key => { try { ViewAccountTasks(key); } catch (Exception error) { ShowError(error); } };
-        dailyPanel.BatchRequested += () => { if (parallel?.Current != null) { RunTab.Content = parallelPanel; parallelPanel.Show(parallel.Current); } };
+
         dailyPanel.StartRequested += async (multi, resume) => await StartDaily(multi, resume);
         dailyPanel.RetryRequested += async request => await StartDaily(false, false, retry: request);
         dailyPanel.PlanRequested += async request => await StartDaily(false, false, selection: request);
@@ -119,7 +119,7 @@ public partial class MainWindow : Window
         coordinator.Progress += p => Dispatcher.Invoke(() => { if (dailyQueue.IsRunning || WorkspaceTabs.SelectedItem == RunTab && busy) dailyPanel.Show(new("preparing", p.Message, "", [])); DailyUiText.Set(ProgressText, p.Message); ProgressText.Foreground = (Brush)FindResource(p.State == "error" ? "Error" : "Ink"); });
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         timer.Tick += (_, _) => { _ = PollParallelAsync(); L.RefreshFromDisk(); RefreshTools(); UpdateConnection(); if (smoke == null && !busy) { _ = RefreshAccountIdentityAsync(); RefreshDailyHistory(); } if (smoke == null) { _ = CheckLogCleanupAsync(); _ = CheckScheduleAsync(); _ = OfferUpdateAsync(); if (DateTime.UtcNow >= nextUpdateCheck) { nextUpdateCheck = DateTime.UtcNow.AddHours(6); _ = CheckUpdatesAsync(); } } };
-        Loaded += async (_, _) => { RefreshAccounts(); var last = DailyJson.TryRead<DailyRunStatus>(Path.Combine(root, "run.json")); if (last != null) { DailyUiText.History(ProgressText, "history.previous", last.AtUtc.LocalDateTime, last.Progress.Message); } if (smoke == null) { var previous = dailyQueue.ReadView(TaskAccountKey); dailyPanel.LoadHistory(previous); } timer.Start(); if (smoke != null && automatedSmoke) await SmokeAsync();  };
+        Loaded += async (_, _) => { RefreshAccounts(); var last = DailyJson.TryRead<DailyRunStatus>(Path.Combine(root, "run.json")); if (last != null) { DailyUiText.History(ProgressText, "history.previous", last.AtUtc.LocalDateTime, last.Progress.Message); } if (smoke == null) { var previous = ReadTaskHistory(TaskAccountKey); dailyPanel.LoadHistory(previous); } timer.Start(); if (smoke != null && automatedSmoke) await SmokeAsync();  };
         bool startupShown = false;
         ContentRendered += async (_, _) => { if (startupShown || smoke != null) return; startupShown = true;
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ContextIdle);
@@ -197,11 +197,11 @@ public partial class MainWindow : Window
         var available = catalog.Accounts.Where(a => !IsSandboxWindow || a.AccountKey == catalog.CurrentKey).ToList();
         if (DailyProfiles.ValidKey(catalog.CurrentKey) && available.All(a => a.AccountKey != catalog.CurrentKey))
             available.Add(new(0, L.Get("account.unsaved"), catalog.CurrentKey, "", true, true, ""));
-        dailyPanel.SetAccounts(available, key, parallel?.Current != null);
+        dailyPanel.SetAccounts(available, key);
         L.Bind(dailyPanel.CurrentAccountText, TextBlock.TextProperty, () => DailyProfiles.ValidKey(key) ? L.Get("run.viewing_account", name) : L.Get("account.not_signed_in"));
         dailyPanel.SetAccount(name, key);
         if (DailyProfiles.ValidKey(key)) dailyPanel.ShowPlan(new DailyPreferenceStore(root).Read(key));
-        if (!busy) dailyPanel.LoadHistory(dailyQueue.ReadView(key));
+        if (!busy) dailyPanel.LoadHistory(ReadTaskHistory(key));
     }
     internal void ShowTaskNavigationError(Exception error) => ShowError(error);
     public void ViewAccountTasks(string key)
@@ -216,6 +216,7 @@ public partial class MainWindow : Window
         RunTab.Content = dailyPanel;
         WorkspaceTabs.SelectedItem = RunTab;
     }
+    private QueueView ReadTaskHistory(string key) => DailyParallelProgress.Read(root, key, dailyQueue.ReadView(key));
     private DateTime nextHistoryRefresh;
     private void RefreshDailyHistory(bool refreshPlan = false)
     {
@@ -224,7 +225,7 @@ public partial class MainWindow : Window
         nextHistoryRefresh = DateTime.UtcNow.AddSeconds(5);
         try
         {
-            dailyPanel.LoadHistory(dailyQueue.ReadView(TaskAccountKey));
+            dailyPanel.LoadHistory(ReadTaskHistory(TaskAccountKey));
             if (refreshPlan && DailyProfiles.ValidKey(TaskAccountKey))
                 dailyPanel.ShowPlan(new DailyPreferenceStore(root).Read(TaskAccountKey));
         }
@@ -918,7 +919,7 @@ public partial class MainWindow : Window
             preferencesPanel.ShowWeeklySettingsForSmoke();
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             Capture("preferences-weekly");
-            preferencesPanel.CheckStealScopeForSmoke();
+            preferencesPanel.CheckWeeklySettingsForSmoke();
             preferencesPanel.CheckSearchForSmoke();
             preferencesPanel.ShowMirrorSettingsForSmoke();
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);

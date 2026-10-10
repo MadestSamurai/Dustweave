@@ -213,6 +213,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                     Save();
                     continue;
                 }
+                using var evidenceLog = new DailyLogEvidence(request.Root);
                 if (DailyStageCatalog.IsWeeklyRoute(stage))
                 {
                     var members = itemsToRun.Where(i => i["carried_forward"]?.GetValue<bool>() != true && !Terminal.Contains(Text(i["state"])) && DailyStageCatalog.IsWeeklyRoute(Text(i["task"])) && DailyStageCatalog.Enabled(Text(i["task"]), preferences())).ToArray();
@@ -283,6 +284,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                             throw new InvalidOperationException("周任务现场未能安全恢复：" + error.Message);
                     }
                     finally { activeWeekly.Clear(); }
+                    if (members.All(row => Text(row["state"]) is "completed" or "skipped")) evidenceLog.Complete();
                     if (paused())
                         throw new StageHostException("stopped", "已停止后续操作；周任务进度已保留。");
                     await Observe(context);
@@ -351,6 +353,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                 }
                 item["finished"] = DateTime.UtcNow.Ticks;
                 Save();
+                if (Text(item["state"]) is "completed" or "skipped") evidenceLog.Complete();
                 if (paused())
                     throw new StageHostException("stopped", "已停止后续操作；原请求结果已保留。");
                 await Observe(context);

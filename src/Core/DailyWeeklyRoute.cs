@@ -226,10 +226,10 @@ public sealed class DailyWeeklyRoute
         var result = new JsonObject();
         foreach (string s in requested.Except(selected))
             result[s] = O(("state", "skipped"), ("reason", "disabled"), ("detail", "已关闭"));
-        week = S(R(await route.Evidence(), "mainline.reset", "GetWeeklyResetTime().Ticks"));
+        var evidence = await route.Evidence();
+        week = S(R(evidence, "mainline.reset", "GetWeeklyResetTime().Ticks"));
         Require(week.Length > 0, "缺少周周期");
-        var settings = w.Settings.Weekly;
-        var packs = Enumerable.Range(settings.FirstChapter, settings.LastChapter - settings.FirstChapter + 1).Select(i => (long)i).Concat(route.Catalog.Extra(settings.CharacterCartridges, settings.EventCartridges));
+        var packs = route.Catalog.AvailablePacks(evidence);
         void EmitAll(string place)
         {
             foreach (string s in selected)
@@ -314,7 +314,7 @@ public sealed class DailyWeeklyRoute
         var settings = w.Settings.Weekly;
         var completed = new JsonArray();
         route.Progress.Steal = settings.Steal;
-        foreach (long p in Enumerable.Range(settings.FirstChapter, settings.LastChapter - settings.FirstChapter + 1).Select(i => (long)i).Concat(route.Catalog.Extra(settings.CharacterCartridges, settings.EventCartridges)))
+        foreach (long p in route.Catalog.AvailablePacks(await route.Evidence()))
         {
             await route.Enter(p);
             var checkpoint = await route.Checkpoint();

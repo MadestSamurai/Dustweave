@@ -10,9 +10,9 @@
     "en-US": "Logs and storage"
   },
   "logs.body": {
-    "zh-CN": "清理过期日志和已完成步骤的详细快照。扫描与清理在后台进行，关闭此窗口即可取消。",
-    "zh-TW": "清理過期日誌及已完成步驟的詳細快照。掃描與清理在背景進行，關閉此視窗即可取消。",
-    "en-US": "Remove old logs and detailed snapshots from completed steps. Scanning and cleanup run in the background; close this window to cancel."
+    "en-US": "Successful tasks keep summaries; failures keep full evidence and nearby steps. Expiring diagnostics does not reset task progress.",
+    "zh-TW": "成功環節保留摘要，異常保留完整現場及相鄰步驟。清理過期診斷不會重設日常進度。",
+    "zh-CN": "成功环节保留摘要，异常保留完整现场及相邻步骤。清理过期诊断不会重置日常进度。"
   },
   "logs.automatic": {
     "zh-CN": "空闲时自动清理（每 12 小时检查一次）",
@@ -40,14 +40,14 @@
     "en-US": "{0} MB"
   },
   "logs.protection": {
-    "zh-CN": "默认保留 7 天，空间目标为 512 MB。超出目标时先清理较早记录，始终保留最近 48 小时。账号、设置、队列进度、交易核对记录及导出的压缩包不受影响；待核对或占用中的文件会跳过，因此容量可能暂时超出目标。",
-    "zh-TW": "預設保留 7 天，空間目標為 512 MB。超出目標時先清理較早記錄，始終保留最近 48 小時。帳號、設定、佇列進度、交易核對記錄及匯出的壓縮檔不受影響；待核對或使用中的檔案會略過，因此容量可能暫時超出目標。",
-    "en-US": "Defaults: 7 days and a 512 MB target. Older records are removed first when over target; the latest 48 hours are always kept. Accounts, settings, queue progress, transaction records and exported ZIPs are preserved. Pending or open files are skipped, so usage may remain above target."
+    "en-US": "Logs expire after at most 7 days; the default storage target is 512 MB. Older successful records are removed first, with the latest 48 hours retained. Failure diagnostics also expire. Accounts, settings, queue progress and recovery state needed to prevent repeat operations are kept separately. Open files are retried later; exported ZIPs are not deleted.",
+    "zh-TW": "日誌最多保留 7 天，預設空間目標 512 MB。超出目標時優先清理較早的成功記錄，保留最近 48 小時。異常診斷也會到期清理；帳號、設定、佇列進度及防止重複操作所需的恢復狀態獨立保留。使用中的檔案稍後再清理，已匯出的壓縮檔不自動刪除。",
+    "zh-CN": "日志最多保留 7 天，默认空间目标 512 MB。超出目标时优先清理较早的成功记录，保留最近 48 小时。异常诊断也会到期清理；账号、设置、队列进度及防止重复操作所需的恢复状态独立保留。使用中的文件稍后再清理，已导出的压缩包不自动删除。"
   },
   "logs.scope": {
-    "zh-CN": "只管理当前运行空间的诊断日志与已完成步骤快照；不会清空整个数据目录。",
-    "zh-TW": "僅管理目前執行空間的診斷日誌與已完成步驟快照；不會清空整個資料目錄。",
-    "en-US": "Only diagnostic logs and completed-step snapshots in this instance are managed. The data folder itself is never cleared."
+    "en-US": "Manages logs, operation snapshots and query records in this instance. Accounts, progress and component caches are preserved.",
+    "zh-TW": "管理目前執行空間的日誌、操作快照及查詢記錄；不清空帳號、進度或元件快取。",
+    "zh-CN": "管理当前运行空间的日志、操作快照和查询记录；不清空账户、进度或组件缓存。"
   },
   "logs.scanning": {
     "zh-CN": "正在统计可清理的日志…",
@@ -1040,9 +1040,9 @@
     "en-US": "Choose tasks to run"
   },
   "run.start_selected": {
-    "zh-CN": "运行勾选环节（{0}）",
-    "zh-TW": "執行勾選環節（{0}）",
-    "en-US": "Run selected ({0})"
+    "en-US": "Launch & run ({0})",
+    "zh-CN": "启动并执行 · {0} 项",
+    "zh-TW": "啟動並執行 · {0} 項"
   },
   "run.selected_count": {
     "zh-CN": "已选 {0} / {1} 个环节",
@@ -1925,29 +1925,9 @@
     "en-US": "Use this account's highest quick-battle level for both current and rerun hunts. Do not lower the level or enter practice."
   },
   "prefs.collection_hint": {
-    "zh-CN": "与周NPC任务、偷窃共用一次跑图；展开设置三项共用的地图范围",
-    "zh-TW": "與每週 NPC 任務、偷竊共用一次跑圖；展開設定三項共用的地圖範圍",
-    "en-US": "Shares a route with NPC quests and stealing. Expand to set the map range for all three."
-  },
-  "prefs.first_chapter": {
-    "zh-CN": "起始章节",
-    "zh-TW": "起始章節",
-    "en-US": "First chapter"
-  },
-  "prefs.last_chapter": {
-    "zh-CN": "结束章节",
-    "zh-TW": "結束章節",
-    "en-US": "Last chapter"
-  },
-  "prefs.characters": {
-    "zh-CN": "随后角色卡带（0 为不做）",
-    "zh-TW": "接續角色卡帶（0 為略過）",
-    "en-US": "Then character packs (0 to skip)"
-  },
-  "prefs.events_maps": {
-    "zh-CN": "继续收集已开放活动地图（仅有采集物）",
-    "zh-TW": "繼續採集已開放活動地圖（僅有採集物）",
-    "en-US": "Continue into unlocked event maps with collectibles"
+    "zh-CN": "自动收集已拥有卡带中的固定采集地图，按游戏内进度接续",
+    "zh-TW": "自動收集已擁有卡帶中的固定採集地圖，依遊戲內進度接續",
+    "en-US": "Automatically collect from supported maps in owned packs, resuming from in-game progress."
   },
   "prefs.walk": {
     "zh-CN": "步行收集（不使用吸收）",
@@ -1955,9 +1935,9 @@
     "en-US": "Collect on foot without Absorb"
   },
   "prefs.collection_note": {
-    "zh-CN": "默认吸收；次数耗尽时只停止周收集，其余勾选项目继续。三项共用地图范围，可单独补跑任意一项；按游戏进度接续。第六章只到 7／8 层。",
-    "zh-TW": "預設吸收；次數耗盡時僅停止每週採集，其餘勾選項目繼續。三項共用地圖範圍，可獨立補跑任意一項；依遊戲進度接續。第六章僅到 7／8 層。",
-    "en-US": "Absorb by default. When uses run out, only collection stops; other enabled tasks continue. Each route task can be retried independently from game progress. Chapter 6 ends at floors 7/8."
+    "zh-CN": "步行收集默认关闭，使用吸收；次数用完后次日接续。已勾选的周NPC任务与偷窃共用路线并继续执行。",
+    "zh-TW": "步行收集預設關閉，使用吸收；次數用完後隔日接續。已勾選的每週 NPC 任務與偷竊共用路線並繼續執行。",
+    "en-US": "Walking is off by default. Use Absorb and resume the next day when uses run out. Enabled weekly NPC quests and stealing share the route and continue."
   },
   "prefs.npc_hint": {
     "zh-CN": "按本周剩余名额最多完成三条；先推进任务，再压制相关目标",
@@ -3770,9 +3750,9 @@
     "zh-CN": "首次需要安装官方 Sandboxie-Plus，无需手动配置。默认同时执行 2 个账号；3–4 个尚未实机验证。暂停会保留该账号的运行位置，其他账号继续。维护期间请勿开始执行。"
   },
   "parallel.overview_help": {
-    "zh-TW": "各帳號獨立執行。展開步驟查看目前環節；暫停會等待目前操作安全停止。",
-    "en-US": "Accounts run independently. Expand steps to see progress. Pause waits for the current operation to stop safely.",
-    "zh-CN": "各账号独立执行。展开步骤查看当前环节；暂停会等待当前操作安全停下。"
+    "en-US": "This view follows the current batch. Once it ends, return to tasks to switch accounts, review progress and choose what to run.",
+    "zh-CN": "这是本次批量的临时进度页。结束后返回日常，即可切换账号，查看完成情况并选择任务。",
+    "zh-TW": "這是本次批次的臨時進度頁。結束後返回日常，即可切換帳號，查看完成情況並選擇任務。"
   },
   "parallel.summary": {
     "zh-TW": "已結束 {0} / {1} 個帳號 · 最多同時執行 {2} 個",
@@ -3795,9 +3775,9 @@
     "zh-CN": "停止队列"
   },
   "parallel.back": {
-    "zh-TW": "選擇帳號",
-    "en-US": "Choose accounts",
-    "zh-CN": "选择账号"
+    "en-US": "Back to account tasks",
+    "zh-CN": "返回单账号日常",
+    "zh-TW": "返回單帳號日常"
   },
   "parallel.pause": {
     "zh-TW": "暫停",
@@ -4384,30 +4364,10 @@
     "zh-TW": "任務帳號：{0}",
     "en-US": "Tasks for {0}"
   },
-  "run.batch_overview": {
-    "zh-CN": "返回批量总览",
-    "zh-TW": "返回批次總覽",
-    "en-US": "Back to batch overview"
-  },
   "run.account_unavailable": {
     "zh-CN": "所选任务账号已变化或不可用，请重新选择账号。",
     "zh-TW": "所選任務帳號已變更或無法使用，請重新選擇帳號。",
     "en-US": "The selected account has changed or is unavailable. Select an account again."
-  },
-  "parallel.tasks": {
-    "zh-CN": "选择任务",
-    "zh-TW": "選擇任務",
-    "en-US": "Choose tasks"
-  },
-  "parallel.tasks_help": {
-    "zh-CN": "打开此隔离账号的任务勾选页，不启动游戏或日常。",
-    "zh-TW": "開啟此隔離帳號的任務勾選頁，不啟動遊戲或日常。",
-    "en-US": "Open task selection for this isolated account without starting the game or a run."
-  },
-  "parallel.tasks_busy": {
-    "zh-CN": "请先完成或停止批量队列，再选择单个账号的任务。",
-    "zh-TW": "請先完成或停止批次佇列，再選擇單一帳號的任務。",
-    "en-US": "Finish or stop the batch before selecting tasks for one account."
   },
   "issue.reason.cancelled": {
     "zh-CN": "已按请求停止本次操作。",
@@ -4443,6 +4403,26 @@
     "zh-CN": "暂时未读到完整的游戏账号信息。",
     "zh-TW": "暫時未讀到完整的遊戲帳號資訊。",
     "en-US": "Complete game account information is temporarily unavailable."
+  },
+  "issue.reason.local-login-incomplete": {
+    "zh-CN": "本机可保存的登录信息不完整；这不代表游戏已退出登录。",
+    "zh-TW": "本機可儲存的登入資訊不完整；這不代表遊戲已登出。",
+    "en-US": "Local sign-in data is not ready to save. This does not mean the game is signed out."
+  },
+  "issue.action.local-login-incomplete": {
+    "zh-CN": "游戏已登录时可连接当前游戏。若需保存或切换账号，请在游戏中启用自动登录，正常退出游戏和启动器后再保存。",
+    "zh-TW": "遊戲已登入時可連線目前遊戲。若需儲存或切換帳號，請在遊戲中啟用自動登入，正常退出遊戲和啟動器後再儲存。",
+    "en-US": "You can connect to a signed-in game. To save or switch accounts, enable auto sign-in in the game, then close the game and launcher normally and save the account."
+  },
+  "issue.reason.live-login-unavailable": {
+    "zh-CN": "连接已尝试，但尚未确认游戏中的账号身份。",
+    "zh-TW": "已嘗試連線，但尚未確認遊戲中的帳號身分。",
+    "en-US": "Connection was attempted, but the in-game account identity could not be confirmed."
+  },
+  "issue.action.live-login-unavailable": {
+    "zh-CN": "若停在登录或加载页面，请先完成登录；若已进入游戏，请导出诊断日志。无需注销账号或删除已保存的账号。",
+    "zh-TW": "若停在登入或載入頁面，請先完成登入；若已進入遊戲，請匯出診斷記錄。無需登出或刪除已儲存的帳號。",
+    "en-US": "Finish signing in if the game is on a login or loading screen. If already in the game, export diagnostics. Do not sign out or delete saved accounts."
   },
   "issue.action.identity-unavailable": {
     "zh-CN": "等待登录或加载完成，再重新连接并接续任务；这不代表账号已更换。",
@@ -4758,5 +4738,25 @@
     "zh-TW": "提取碼已複製。",
     "en-US": "Access code copied.",
     "zh-CN": "提取码已复制。"
+  },
+  "run.launch_selected": {
+    "en-US": "Launch game and run selected tasks",
+    "zh-TW": "啟動遊戲並執行所選日常",
+    "zh-CN": "启动游戏并执行所选日常"
+  },
+  "run.launch_help": {
+    "en-US": "Uses the account selected above. Connects if the game is already running, then runs the selected tasks.",
+    "zh-TW": "使用上方選定的帳號；遊戲已執行時直接連線，然後執行勾選的日常。",
+    "zh-CN": "使用上方选定的账号；游戏已运行时直接连接，然后执行勾选的日常。"
+  },
+  "parallel.return_help": {
+    "en-US": "Close this batch view and keep daily progress for each account.",
+    "zh-CN": "关闭本次批量视图，保留各账号当天的完成情况。",
+    "zh-TW": "關閉本次批次檢視，保留各帳號當天的完成情況。"
+  },
+  "parallel.return_busy": {
+    "en-US": "Wait for the batch to finish, or stop all accounts before returning to tasks.",
+    "zh-CN": "请等待本次批量结束，或先停止全部账号，再返回日常。",
+    "zh-TW": "請等待本次批次結束，或先停止全部帳號，再返回日常。"
   }
 }

@@ -18,7 +18,6 @@ public sealed partial class DailyRunPanel : UserControl
     public event Action? StopRequested;
     public event Action? AccountsRequested;
     public event Action<string>? AccountRequested;
-    public event Action? BatchRequested;
     public event Action? SyncCollectionRequested;
     private readonly Button syncCollection = new() { Content = "手动检查收集进度", ToolTip = "按已保存的地图范围读取游戏服务器；会切换卡带，可能需要数分钟，只同步、不采集。" };
     private readonly Button current = new() { Content = "开始日常" }, resume = new() { Content = "接续原队列" }, stop = new() { Content = "停止", IsEnabled = false, Visibility = Visibility.Collapsed };
@@ -27,7 +26,7 @@ public sealed partial class DailyRunPanel : UserControl
     private readonly Dictionary<string, bool> planChoices = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Dictionary<string, bool>> accountChoices = new(StringComparer.Ordinal);
     private readonly ComboBox accountSelector = new() { Width = 220, DisplayMemberPath = nameof(DailyAccount.Name), SelectedValuePath = nameof(DailyAccount.AccountKey), Margin = new(0, 0, 12, 4) };
-    private readonly Button batch = new() { Margin = new(0, 0, 0, 4), Visibility = Visibility.Collapsed };
+    private readonly Dictionary<string, HashSet<string>> appliedProgress = new(StringComparer.Ordinal);
     private bool settingAccounts;
     private DailyPreferences plan = new(); private bool showingReport; private bool rowsAreReport; private bool chooseInitialView = true;
     private readonly Button chooseTasks = new();
@@ -81,6 +80,7 @@ public sealed partial class DailyRunPanel : UserControl
         var summary = new Grid();
         summary.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
         summary.ColumnDefinitions.Add(new() { Width = new(1, GridUnitType.Star) });
+        summary.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
         var summaryIcon = new System.Windows.Shapes.Path {
             Style = (Style)Application.Current.FindResource("LineIcon"),
             Data = (Geometry)Application.Current.FindResource("Icon.Tasks"),
@@ -99,10 +99,8 @@ public sealed partial class DailyRunPanel : UserControl
         summary.Children.Add(summaryText);
         var heading = new DockPanel { LastChildFill = true };
         status.FontSize = 20;
-        counts.Margin = new(16, 0, 0, 0);
+        counts.Margin = new(0, 6, 0, 0);
         counts.FontSize = 12;
-        DockPanel.SetDock(counts, Dock.Right);
-        heading.Children.Add(counts);
         var identity = new Grid();
         identity.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
         identity.ColumnDefinitions.Add(new() { Width = new(1, GridUnitType.Star) });
@@ -120,20 +118,31 @@ public sealed partial class DailyRunPanel : UserControl
         summaryText.Children.Add(new ScrollViewer { Content = detail, MaxHeight = 96,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
+        summaryText.Children.Add(counts);
         progress.SetBinding(FrameworkElement.ToolTipProperty, new Binding(nameof(TextBlock.Text)) { Source = counts });
         top.Children.Add(new Border { Style = (Style)Application.Current.FindResource("Panel"),
             Padding = new(18, 16, 18, 16), Child = summary });
+
+        current.Style = (Style)Application.Current.FindResource("PrimaryButton");
+        current.MinHeight = 52;
+        current.FontSize = 14;
+        current.Padding = new(18, 12, 18, 12);
+        current.Margin = new(18, 0, 0, 0);
+        current.HorizontalAlignment = HorizontalAlignment.Right;
+        current.VerticalAlignment = VerticalAlignment.Center;
+        Grid.SetColumn(current, 2);
+        summary.Children.Add(current);
+        L.Bind(current, System.Windows.Automation.AutomationProperties.NameProperty, "run.launch_selected");
+        L.Bind(current, FrameworkElement.ToolTipProperty, "run.launch_help");
 
         var accountBar = new WrapPanel { Margin = new(0, 10, 0, 0) };
         var accountLabel = new TextBlock { Margin = new(0, 0, 10, 4), VerticalAlignment = VerticalAlignment.Center };
         L.Text(accountLabel, "run.task_account");
         L.Bind(accountSelector, System.Windows.Automation.AutomationProperties.NameProperty, "run.task_account");
         L.Bind(accountSelector, FrameworkElement.ToolTipProperty, "run.task_account_help");
-        L.Bind(batch, ContentControl.ContentProperty, "run.batch_overview");
-        accountBar.Children.Add(accountLabel); accountBar.Children.Add(accountSelector); accountBar.Children.Add(batch);
+        accountBar.Children.Add(accountLabel); accountBar.Children.Add(accountSelector);
         top.Children.Add(accountBar);
         accountSelector.SelectionChanged += (_, _) => { if (!settingAccounts && !isBusy && accountSelector.SelectedValue is string key) AccountRequested?.Invoke(key); };
-        batch.Click += (_, _) => BatchRequested?.Invoke();
         var viewSwitch = new StackPanel { Orientation = Orientation.Horizontal };
         foreach (var b in new[] { planButton, reportButton })
         {
@@ -167,7 +176,7 @@ public sealed partial class DailyRunPanel : UserControl
         retry.Style = (Style)Application.Current.FindResource(typeof(Button));
         resume.Style = (Style)Application.Current.FindResource("PrimaryButton");
         current.Style = (Style)Application.Current.FindResource("PrimaryButton");
-        foreach (var b in new[] { chooseTasks, stop, current, retry, resume })
+        foreach (var b in new[] { chooseTasks, stop, retry, resume })
         {
             b.Margin = new(8, 0, 0, 4);
             actions.Children.Add(b);
@@ -226,7 +235,7 @@ public sealed partial class DailyRunPanel : UserControl
         L.Bind(current, FrameworkElement.ToolTipProperty, "run.account_help", name);
         UpdateChoices();
     }
-    public void SetAccounts(IEnumerable<DailyAccount> accounts, string key, bool hasBatch)
+    public void SetAccounts(IEnumerable<DailyAccount> accounts, string key)
     {
         settingAccounts = true;
         try
@@ -234,7 +243,6 @@ public sealed partial class DailyRunPanel : UserControl
             var values = accounts.Where(a => a.Valid && DailyProfiles.ValidKey(a.AccountKey)).DistinctBy(a => a.AccountKey).ToArray();
             if (!accountSelector.Items.OfType<DailyAccount>().SequenceEqual(values)) accountSelector.ItemsSource = values;
             accountSelector.SelectedValue = key;
-            batch.Visibility = hasBatch ? Visibility.Visible : Visibility.Collapsed;
         }
         finally { settingAccounts = false; }
     }
@@ -293,7 +301,9 @@ public sealed partial class DailyRunPanel : UserControl
         rows.Clear();
         foreach (var definition in DailyStageCatalog.All.Where(s => s.Enabled(plan)))
         {
-            var row = new StageRow(new(definition.Id, "pending", "按游戏进度执行，已完成则跳过")) { Selected = planChoices[definition.Id], IsPlan = true };
+            var saved = !currentView.Expired && currentView.Account == activeAccount
+                ? (currentView.PlanStages ?? currentView.Stages).FirstOrDefault(s => s.Task == definition.Id) : null;
+            var row = new StageRow(saved ?? new(definition.Id, "pending", "按游戏进度执行，已完成则跳过"), true) { Selected = planChoices[definition.Id] };
             row.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(StageRow.Selected)) { planChoices[row.Task] = row.Selected; UpdateChoices(); } };
             rows.Add(row);
         }
@@ -334,7 +344,16 @@ public sealed partial class DailyRunPanel : UserControl
             ClearSelection();
             rows.Clear();
         }
+        bool progressChanged = currentView.Account != view.Account || currentView.Period != view.Period || currentView.Expired != view.Expired
+            || System.Text.Json.JsonSerializer.Serialize(currentView.PlanStages ?? currentView.Stages) != System.Text.Json.JsonSerializer.Serialize(view.PlanStages ?? view.Stages);
         currentView = view;
+        if (!view.Expired && view.Account == activeAccount && view.Period != null)
+        {
+            string periodKey = activeAccount + ":" + view.Period.Server + ":" + view.Period.Cycle;
+            if (!appliedProgress.TryGetValue(periodKey, out var seen)) appliedProgress[periodKey] = seen = new(StringComparer.Ordinal);
+            foreach (var stage in view.PlanStages ?? view.Stages)
+                if (stage.State is "completed" or "skipped" && seen.Add(stage.Task + ":" + stage.State + ":" + stage.FinishedAt)) planChoices[stage.Task] = false;
+        }
         if (chooseInitialView && view.Account == activeAccount)
         {
             chooseInitialView = false;
@@ -350,6 +369,8 @@ public sealed partial class DailyRunPanel : UserControl
         }
         else if (showingReport)
             RenderHistory();
+        else if (progressChanged)
+            ShowCurrentPlan();
         else
             UpdateChoices();
         RenderOperationError();
@@ -470,6 +491,8 @@ public sealed partial class DailyRunPanel : UserControl
         bool available = !isBusy && DailyProfiles.ValidKey(currentView.Account) && currentView.Account == activeAccount && hasReport && !currentView.Expired;
         bool planAvailable = !isBusy && !showingReport && DailyProfiles.ValidKey(activeAccount);
         L.Bind(current, ContentControl.ContentProperty, showingReport ? "run.choose" : "run.start_selected", SelectedPlanTasks.Count);
+        L.Bind(current, System.Windows.Automation.AutomationProperties.NameProperty, showingReport ? "run.choose" : "run.start_selected", SelectedPlanTasks.Count);
+        L.Bind(current, FrameworkElement.ToolTipProperty, showingReport ? "run.choose_footer" : "run.launch_help");
         current.IsEnabled = !isBusy && DailyProfiles.ValidKey(activeAccount) && (showingReport || SelectedPlanTasks.Count > 0);
         if (!showingReport)
             L.Text(counts, "run.selected_count", SelectedPlanTasks.Count, rows.Count);
@@ -511,7 +534,7 @@ public sealed partial class DailyRunPanel : UserControl
         public string Name => L.Stage(Task);
         public string State => L.State(snapshot.State);
         public string AccessibleName => Name + " · " + State + (HasFinishedTime ? " · " + FinishedTimeHelp : "");
-        public bool HasFinishedTime => !IsPlan && snapshot.State is ("completed" or "skipped") && snapshot.FinishedAt.HasValue;
+        public bool HasFinishedTime => snapshot.State is ("completed" or "skipped") && snapshot.FinishedAt.HasValue;
         public string FinishedTime => HasFinishedTime ? snapshot.FinishedAt!.Value.ToLocalTime().ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture) : "";
         public string FinishedTimeHelp => HasFinishedTime ? L.Get("run.finished_at", snapshot.FinishedAt!.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss zzz", System.Globalization.CultureInfo.InvariantCulture)) : "";
         public string Detail
@@ -528,11 +551,12 @@ public sealed partial class DailyRunPanel : UserControl
         }
         public IReadOnlyList<QueueTaskDetail> PendingTasks => snapshot.PendingTasks ?? [];
         public DateTimeOffset? FinishedAt => snapshot.FinishedAt;
-        public bool HasTaskDetails => !IsPlan && (PendingTasks.Count>0 || snapshot.Detail.Contains("仍有未完成任务", StringComparison.Ordinal));
+        public bool HasTaskDetails => PendingTasks.Count>0 || snapshot.Detail.Contains("仍有未完成任务", StringComparison.Ordinal);
         public string TaskDetailsLabel => PendingTasks.Count>0 ? L.Get("run.details_count",PendingTasks.Count) : L.Get("run.details");
         public string TaskDetailsAccessibleName => L.Get("run.details_accessible",Name);
         public string DiagnosticDetail => L.Diagnostic(snapshot.Detail, Detail);
         public bool IsPlan { get; init; }
+        public bool CompactPlan => IsPlan && snapshot.State is "pending" or "waiting";
         public void RefreshLanguage() => Changed("");
         public bool Completed => snapshot.State == "completed";
         public bool Compact { get; private set; }
@@ -566,9 +590,10 @@ public sealed partial class DailyRunPanel : UserControl
                 Changed(nameof(CanEdit));
             }
         }
-        public StageRow(QueueStage stage)
+        public StageRow(QueueStage stage, bool isPlan = false)
         {
             Task = stage.Task;
+            IsPlan = isPlan;
             Update(stage);
         }
         public void Update(QueueStage stage)
@@ -593,7 +618,7 @@ public sealed partial class DailyRunPanel : UserControl
                 }
             };
             Icon = (Geometry)Application.Current.FindResource("Icon." + symbol);
-            Eligible = DailyQueueRetry.CanSelect(stage);
+            Eligible = IsPlan || DailyQueueRetry.CanSelect(stage);
 
             StateBrush = (Brush)Application.Current.FindResource(stage.State switch
             {

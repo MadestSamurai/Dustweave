@@ -74,6 +74,20 @@ public partial class MainWindow
             busy=false;await CheckLogCleanupAsync();
             if(File.Exists(automaticLog)||nextLogCleanup<DateTime.UtcNow.AddHours(11))throw new Exception("Idle retention did not run or persist its schedule");
             if(!File.Exists(Path.Combine(root,"log-cleanup-last.json")))throw new Exception("Cleanup schedule was not persisted");checks+=4;
+            string stepId=Guid.NewGuid().ToString("N"),stepFolder=Path.Combine(root,"live","steps",stepId);
+            using(var scope=new DailyLogEvidence(root))
+            {
+                DailyJson.Write(Path.Combine(stepFolder,"intent.json"),new{Id=stepId,Reason="fixture"});
+                DailyJson.Write(Path.Combine(stepFolder,"before.json"),new{fixture="full snapshot"});
+                DailyJson.Write(Path.Combine(stepFolder,"result.json"),new{id=stepId,state="dispatched_only",engine="dotnet-driver-v1"});
+                scope.Complete();
+            }
+            logPolicy=new(false);nextEvidenceCleanup=DateTime.UtcNow.AddMinutes(-1);busy=true;
+            await CheckLogCleanupAsync();
+            if(!DailyLogEvidence.HasPending(root)||!File.Exists(Path.Combine(stepFolder,"before.json")))throw new Exception("Log compaction ran during automation");
+            busy=false;await CheckLogCleanupAsync();
+            if(DailyLogEvidence.HasPending(root)||File.Exists(Path.Combine(stepFolder,"before.json")))throw new Exception("Idle compaction did not drain completed work independently of retention");
+            checks+=2;
             if(demo.Calls.Count!=calls)throw new Exception("Support workflow touched the game");
             DailyJson.Write(Path.Combine(smoke,"support-ui.json"),new{status="passed",checks,realGameTouched=false,exportUsesIsolatedData=true});
         }finally{Width=1180;Height=900;LanguageSelector.SelectedIndex=0;ThemeSelector.SelectedIndex=1;DiagnosticIssueCategory.Visibility=Visibility.Collapsed;timer.Start();}

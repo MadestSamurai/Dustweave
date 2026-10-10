@@ -1,4 +1,19 @@
 {
+  "message.collection_pack_list_incomplete": {
+    "zh-CN": "卡带列表尚未完整载入，请等待游戏加载后重试周收集。",
+    "zh-TW": "卡帶清單尚未完整載入，請等待遊戲載入後重試周收集。",
+    "en-US": "The cartridge list has not fully loaded. Wait for the game to load, then retry weekly collection."
+  },
+  "message.account.local_login_incomplete": {
+    "zh-CN": "本机登录信息尚未准备好保存。请在游戏中启用自动登录，正常退出游戏和启动器后再保存。",
+    "zh-TW": "本機登入資訊尚未準備好儲存。請在遊戲中啟用自動登入，正常退出遊戲和啟動器後再儲存。",
+    "en-US": "Local sign-in data is not ready to save. Enable auto sign-in, then close the game and launcher normally before saving."
+  },
+  "message.connection.login_identity_unavailable": {
+    "zh-CN": "尚未确认游戏中的账号身份。请完成登录；若已进入游戏，请导出诊断日志，无需注销账号。",
+    "zh-TW": "尚未確認遊戲中的帳號身分。請完成登入；若已進入遊戲，請匯出診斷記錄，無需登出帳號。",
+    "en-US": "The in-game account identity is not confirmed. Finish signing in; if already in the game, export diagnostics without signing out."
+  },
   "message.game_start_first": {
     "zh-CN": "请先启动游戏。",
     "zh-TW": "請先啟動遊戲。",
@@ -280,9 +295,9 @@
     "en-US": "Selected maps are fully collected. No repeat traversal is needed."
   },
   "message.weekly_route_verified": {
-    "zh-CN": "本周所选地图已收集完成",
-    "zh-TW": "本周所選地圖已收集完成",
-    "en-US": "Weekly collection completed for the selected maps."
+    "zh-CN": "本周可收集地图已完成",
+    "zh-TW": "本週可收集地圖已完成",
+    "en-US": "Weekly collection is complete for all available collection maps."
   },
   "message.weekly_npc_verified": {
     "zh-CN": "本周NPC任务已核对完成",

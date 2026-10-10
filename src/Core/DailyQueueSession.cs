@@ -3,7 +3,11 @@ using System.Text.Json;
 namespace Dustweave;
 
 public sealed record QueueStage(string Task, string State, string Detail, bool Carried = false, DateTimeOffset? FinishedAt = null, IReadOnlyList<QueueTaskDetail>? PendingTasks = null);
-public sealed record QueueView(string State, string Message, string Record, IReadOnlyList<QueueStage> Stages, string Account = "", QueuePeriod? Period = null, bool Expired = false);
+public sealed record QueueView(string State, string Message, string Record, IReadOnlyList<QueueStage> Stages, string Account = "", QueuePeriod? Period = null, bool Expired = false)
+{
+    // Presentation only. Worker results must never become host-side resumable journals.
+    public IReadOnlyList<QueueStage>? PlanStages { get; init; }
+}
 public sealed record QueuePlanRequest(string Account, IReadOnlyList<string> Tasks)
 {
     public string[] Validate(string account, DailyPreferences preferences)

@@ -298,6 +298,7 @@ public sealed partial class DailyCommandDriver
                 var raw = mailbox.Read("live", "receipts~" + commandId + ".json");
                 receipt = raw == null ? null : JsonNode.Parse(raw)!.AsObject();
                 receipt ??= DailyJson.TryRead<JsonObject>(Path.Combine(root, "live", "steps", commandId, "result.json"))?["receipt"]?.AsObject();
+                receipt ??= DailyJson.TryRead<JsonObject>(Path.Combine(root, "live", "step-recovery", commandId + ".json"))?["receipt"]?.AsObject();
             }
             string? state = null;
             JsonObject? proof = null;

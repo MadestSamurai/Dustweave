@@ -145,6 +145,22 @@ internal static class SessionRegistry
         return slot;
     }
 
+    // Reading the member is not capturing a launchable session. The SDK can be
+    // logged in while auto-login is disabled or its token is being refreshed.
+    internal static string ReadMemberIdentity()
+    {
+        using var key = Registry.CurrentUser.OpenSubKey(SessionConstants.RegistrySubKey);
+        const string name = "neon_auth_member_h1293550423";
+        if (key?.GetValue(name) is not byte[] data || key.GetValueKind(name) != RegistryValueKind.Binary) return "";
+        try
+        {
+            var member = new SessionSlot(SessionConstants.SchemaVersion, "identity-only", default,
+                SessionConstants.RegistrySubKey, [new(name, RegistryValueKind.Binary.ToString(), Convert.ToBase64String(data))]);
+            return SessionIdentity.GetMemberId(member) ?? "";
+        }
+        finally { System.Security.Cryptography.CryptographicOperations.ZeroMemory(data); }
+    }
+
     internal static bool HasPendingLauncherToken()
     {
         using RegistryKey? key = Registry.CurrentUser.OpenSubKey(

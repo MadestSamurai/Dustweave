@@ -109,6 +109,21 @@
     "zh-TW": "尚未找到完整登錄會話，請先在遊戲內登錄。",
     "en-US": "No complete sign-in session was found. Sign in to the game first."
   },
+  "notice.account.read_live_identity": {
+    "zh-CN": "正在读取游戏中的登录身份；请保持游戏打开，若停在登录页请完成登录。",
+    "zh-TW": "正在讀取遊戲中的登入身分；請保持遊戲開啟，若停在登入頁請完成登入。",
+    "en-US": "Reading the in-game account identity. Keep the game open and finish signing in if it is on the login screen."
+  },
+  "notice.account.local_login_incomplete": {
+    "zh-CN": "本机登录信息尚未准备好保存。请在游戏中启用自动登录，正常退出游戏和启动器后再保存。",
+    "zh-TW": "本機登入資訊尚未準備好儲存。請在遊戲中啟用自動登入，正常退出遊戲和啟動器後再儲存。",
+    "en-US": "Local sign-in data is not ready to save. Enable auto sign-in, then close the game and launcher normally before saving."
+  },
+  "notice.account.live_login_unavailable": {
+    "zh-CN": "尚未确认游戏中的账号身份。请完成登录；若已进入游戏，请导出诊断日志，无需注销账号。",
+    "zh-TW": "尚未確認遊戲中的帳號身分。請完成登入；若已進入遊戲，請匯出診斷記錄，無需登出帳號。",
+    "en-US": "The in-game account identity is not confirmed. Finish signing in; if already in the game, export diagnostics without signing out."
+  },
   "notice.account.game_missing": {
     "zh-CN": "游戏没有运行，请先启动并登录。",
     "zh-TW": "遊戲沒有運行，請先啟動并登錄。",

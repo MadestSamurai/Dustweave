@@ -33,6 +33,12 @@ internal static class FirstRunCases
         demo.Game = first.Game; demo.Calls.Clear();
         await flow.VerifyAsync(CancellationToken.None, TimeSpan.FromSeconds(1), TimeSpan.FromMilliseconds(5));
         Check(!demo.Calls.Contains("launch-current") && demo.Calls.Count(x => x == "connect") == 1, "running game is reused instead of relaunched");
+        demo.IncompleteCatalogReads = int.MaxValue;
+        await flow.VerifyAsync(CancellationToken.None, TimeSpan.FromSeconds(1), TimeSpan.FromMilliseconds(5));
+        Check(flow.Proof?.Account == expected, "onboarding can identify an online account before credentials are saveable");
+        demo.Game = null;
+        await Reject(() => { flow.Save("not ready"); return Task.CompletedTask; }, "onboarding still refuses saving incomplete credentials");
+        demo.Game = first.Game; demo.IncompleteCatalogReads = 0;
         demo.Ready = false;
         using (var cancel = new CancellationTokenSource(TimeSpan.FromMilliseconds(35)))
             await Reject(async () => { await flow.VerifyAsync(cancel.Token, TimeSpan.FromSeconds(1), TimeSpan.FromMilliseconds(5)); }, "skipping cancels an ongoing identity wait");

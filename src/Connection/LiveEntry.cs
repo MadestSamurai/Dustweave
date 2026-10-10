@@ -77,13 +77,15 @@ try {
   Console.WriteLine("Daily execution connection ready");return;
  }
  if(args.Length==1&&args[0]=="connect-observer"){
-  using var sessions=new AccountSessions();
-  await CurrentGameObservation.ConnectAsync(sessions,new DailyGameHost(),Console.WriteLine,CancellationToken.None);
+  var host=new DailyGameHost();
+  using var sessions=new AccountSessions(host);
+  await CurrentGameObservation.ConnectAsync(sessions,host,Console.WriteLine,CancellationToken.None);
   Console.WriteLine("Current game identity observed; account switch controls unchanged.");return;
  }
  if(args.Length==1&&(args[0]=="connect"||args[0]=="check-current")){
-  using var sessions=new AccountSessions();
-  var coordinator=new DailyCoordinator(sessions,new DailyGameHost(),DailyIdentity.DataRoot);
+  var host=new DailyGameHost();
+  using var sessions=new AccountSessions(host);
+  var coordinator=new DailyCoordinator(sessions,host,DailyIdentity.DataRoot);
   coordinator.Progress+=p=>Console.WriteLine(JsonSerializer.Serialize(p));
   Console.CancelKeyPress+=(_,e)=>{e.Cancel=true;coordinator.Stop();};
   if(args[0]=="check-current"){

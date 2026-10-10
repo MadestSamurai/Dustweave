@@ -14,7 +14,7 @@ internal static class LogCleanupCases
             FileAt($"live/steps/{id}/before.json","{}",age);return id;
         }
         var policy=new DailyLogPolicy();Check(policy.Automatic&&policy.Days==7&&policy.LimitMiB==512,"sensible automatic retention defaults");
-        DailyLogCleanup.Save(root,new(false,30,1024));Check(DailyLogCleanup.Load(root)==new DailyLogPolicy(false,30,1024),"settings persist");
+        DailyLogCleanup.Save(root,new(false,30,1024));Check(DailyLogCleanup.Load(root)==new DailyLogPolicy(false,7,1024),"legacy retention migrates to seven-day maximum");
         Check(new DailyLogPolicy(true,0,int.MaxValue).Normalize()==new DailyLogPolicy(true,2,4096),"retention bounds cannot erase recent evidence");
         string completed=Step(),pending=Step("unknown_timeout"),recent=Step(age:1),unproven=Step("dispatched_only");
         string businessId=Guid.NewGuid().ToString("N");string business=FileAt($"live/managed-business/{businessId}.json",JsonSerializer.Serialize(new{id=businessId,state="unknown"}));
@@ -23,10 +23,10 @@ internal static class LogCleanupCases
         string vault=FileAt("accounts/private.log","account-secret"),queue=FileAt("live/queues/fixture/result.json","recovery"),exported=FileAt("diagnostics-export.zip","saved ZIP");
         string tool=FileAt("tools/fishing/runtime.log.previous","old tool log");
         var plan=await DailyLogCleanup.ScanAsync(root,policy);
-        Check(plan.Files==5,"selects completed step plus old main and hosted-tool logs");
-        Check(plan.Units.All(u=>!u.Path.Contains(pending)&&!u.Path.Contains(recent)&&!u.Path.Contains(owned)&&!u.Path.Contains(missing)&&!u.Path.Contains(unproven)),"uncertain, recent and transaction-dependent steps remain protected");
+        Check(plan.Files==17,"all expired diagnostic steps, including errors and legacy dispatches, are selected");
+        Check(plan.Units.All(u=>!u.Path.Contains(recent)),"recent evidence remains protected");
         var result=await DailyLogCleanup.ApplyAsync(plan);
-        Check(result.Files==5&&result.Bytes==plan.ReclaimableBytes,"manual preview matches actual reclaimed bytes");
+        Check(result.Files==17&&result.Bytes==plan.ReclaimableBytes,"manual preview matches actual reclaimed bytes");
         Check(!Directory.Exists(Path.Combine(root,"live","steps",completed))&&!File.Exists(oldLog)&&!File.Exists(tool),"empty completed-step folder and selected logs removed");
         Check(new[]{vault,queue,business,newLog,exported}.All(File.Exists),"accounts, queues, transactions, recent logs and exported ZIPs survive");
         string changed=FileAt("connection.log","old");plan=await DailyLogCleanup.ScanAsync(root,policy);File.AppendAllText(changed," changed");
@@ -44,13 +44,20 @@ internal static class LogCleanupCases
         string terminalId=Guid.NewGuid().ToString("N");string journal=FileAt($"live/business/{terminalId}.json",JsonSerializer.Serialize(new{id=terminalId,state="completed"}));
         string terminal=Step(reason:"preview-business:"+terminalId+"|preview");plan=await DailyLogCleanup.ScanAsync(root,policy);
         File.WriteAllText(journal,JsonSerializer.Serialize(new{id=terminalId,state="unknown"}));await DailyLogCleanup.ApplyAsync(plan);
-        Check(File.Exists(Path.Combine(root,"live","steps",terminal,"result.json")),"owning transaction is rechecked at deletion time");
+        Check(!File.Exists(Path.Combine(root,"live","steps",terminal,"result.json")) && File.Exists(journal),"expired diagnostics do not remove the independent pending transaction guard");
         string budget=FileAt("oversized.log","",3);using(var stream=File.OpenWrite(budget))stream.SetLength(129L*1024*1024);File.SetLastWriteTimeUtc(budget,now.AddDays(-3));
         plan=await DailyLogCleanup.ScanAsync(root,new(true,30,128));Check(plan.Units.Any(u=>u.Path==budget),"capacity target removes older records before retention expiry");
         File.SetLastWriteTimeUtc(budget,now.AddDays(-1));plan=await DailyLogCleanup.ScanAsync(root,new(true,30,128));Check(plan.Units.All(u=>u.Path!=budget),"capacity never overrides the 48-hour evidence floor");
         using var cancel=new CancellationTokenSource();cancel.Cancel();bool cancelled=false;try{await DailyLogCleanup.ScanAsync(root,policy,cancel.Token);}catch(OperationCanceledException){cancelled=true;}
         Check(cancelled,"scan supports immediate cancellation");
         bool stale=false;try{DailyLogCleanup.Apply(plan with{At=now.AddHours(-1)});}catch(InvalidOperationException){stale=true;}Check(stale,"stale previews require another scan");
-        string odd=Step();FileAt($"live/steps/{odd}/result.json","broken");plan=await DailyLogCleanup.ScanAsync(root,policy);Check(plan.Units.All(u=>!u.Path.Contains(odd)),"malformed evidence is retained");
+        string odd=Step();FileAt($"live/steps/{odd}/result.json","broken");plan=await DailyLogCleanup.ScanAsync(root,policy);Check(plan.Units.Any(u=>u.Path.Contains(odd)),"malformed diagnostics also expire instead of accumulating forever");
+        string query=FileAt("live/reward-queries/123.json","{}"),evt=FileAt("live/event-journal/123-event.json","{}"),diagnostic=FileAt("live/diagnostics/error.json","{}");
+        plan=await DailyLogCleanup.ScanAsync(root,policy);await DailyLogCleanup.ApplyAsync(plan);
+        Check(new[]{query,evt,diagnostic}.All(p=>!File.Exists(p)),"queries, event snapshots and JSON diagnostics expire too");
+        string guard=Step("unknown_timeout",reason:"business:"+businessId+"|confirm");
+        FileAt($"live/steps/{guard}/result.json",JsonSerializer.Serialize(new {state="unknown_timeout",receipt=new {Id=guard,Status="observed_after_dispatch"}}));
+        plan=await DailyLogCleanup.ScanAsync(root,policy);await DailyLogCleanup.ApplyAsync(plan);
+        Check(DailyJson.TryRead<System.Text.Json.Nodes.JsonObject>(Path.Combine(root,"live","step-recovery",guard+".json"))?["receipt"]?["Id"]?.GetValue<string>()==guard,"pending receipt survives diagnostic expiry in independent recovery storage");
     }
 }

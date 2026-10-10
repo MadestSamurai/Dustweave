@@ -20,15 +20,14 @@ public partial class MainWindow
         if(!IsSandboxWindow&&smoke==null)parallel=new(root,parallelRuntime);
         parallelPanel.ControlRequested+=(account,action)=>{parallel?.Control(account,action);_=PollParallelAsync();};
         parallelPanel.GameRequested+=item=>{if(smoke==null)try{parallelRuntime.ShowGame(item);}catch(Exception e){ShowError(e);}};
-        parallelPanel.TasksRequested+=async item=>
+        parallelPanel.BackRequested+=async ()=>
         {
-            if(smoke!=null||Unavailable)return;
-            try { await DailySandbox.OpenTasksAsync(item.Account.AccountKey,Environment.ProcessPath!,CancellationToken.None); }
+            if (ParallelBusy) return;
+            try { await ReturnFromParallelAsync(); }
             catch(Exception error) { parallelPanel.Feedback(error.Message); }
         };
-        parallelPanel.BackRequested+=()=>WorkspaceTabs.SelectedItem=AccountsTab;
         ExecutionModeButton.Visibility=IsSandboxWindow?Visibility.Collapsed:Visibility.Visible;RefreshParallelMode();
-        if(parallel?.Current!=null){RunTab.Content=parallelPanel;parallelPanel.Show(parallel.Current);}
+        // A saved batch provides account progress, not a permanent navigation page.
     }
     private void RefreshParallelMode()=>L.Bind(ExecutionModeButton,ContentControl.ContentProperty,parallelOptions.Enabled?"parallel.mode_parallel":"parallel.mode_sequential");
     private async Task PollParallelAsync()
@@ -38,9 +37,20 @@ public partial class MainWindow
         {
             await Task.Run(() => parallel.TickAsync());parallelPanel.Show(parallel.Current);
             bool active=ParallelBusy;if(!active){parallelControl?.Dispose();parallelControl=null;}if(parallelWasBusy!=active){parallelWasBusy=active;SetBusy(busy);}
+            if (parallel.Current == null && ReferenceEquals(RunTab.Content, parallelPanel)) await ReturnFromParallelAsync();
         }
         catch(Exception error){ShowError(error);}
         finally{parallelPolling=false;}
+    }
+    private async Task ReturnFromParallelAsync()
+    {
+        if (ParallelBusy) return;
+        if (parallel != null) await parallel.DismissAsync();
+        if (!DailyProfiles.ValidKey(TaskAccountKey)) viewedAccount = catalog?.Accounts.FirstOrDefault(a => a.Valid)?.AccountKey ?? "";
+        RunTab.Content = dailyPanel;
+        WorkspaceTabs.SelectedItem = RunTab;
+        RefreshTaskAccount();
+        dailyPanel.ShowCurrentPlan();
     }
     private async Task StartParallelAsync(DailyAccount[] targets)
     {

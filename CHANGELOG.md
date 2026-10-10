@@ -1,5 +1,20 @@
 # Changelog / 更新记录
 
+## 1.1.3-beta — 2026-10-10
+
+- 周收集自动覆盖固定的可收集卡带并按游戏进度接续，移除章节范围及角色／活动卡带设置；仅保留默认关闭的步行收集选项。
+- 镜中免费战斗使用游戏原生连续次数：1倍40场一次启动，余票不足倍率时再处理尾批；整批核对及中断接续避免重复匹配。
+- 修复当前游戏已登录、但本地启动凭据不完整时被提前拒绝连接的问题；补齐登录阶段诊断。
+- 日志最多保留7天；成功步骤保留摘要，异常步骤保留前后证据，并保存恢复任务必需的状态。
+- 今日任务的启动执行按钮移到顶部状态卡右侧；批量视图可单向返回主窗口的单账号任务列表，不再另开沙盒窗口。
+- 批量完成情况按账号保留，已完成项默认不勾选；旧批量页在游戏每日刷新后关闭，不再跨天恢复。
+- Mirror battles now use native continuous counts, verify the whole batch and resume observation without submitting it again.
+- Weekly collection follows the maintained cartridge route and in-game progress. Range selectors are removed; walking collection remains optional and off by default.
+- Fixes connecting to an already signed-in game when local launch credentials are incomplete, and adds bounded login diagnostics.
+- Keeps logs for at most seven days, summarizes successful steps and retains failure evidence and required recovery state.
+- Places launch-and-run on the right of the Today’s Tasks status card. The temporary batch view returns to account tasks in the same window.
+- Preserves per-account completion without preselecting finished tasks, and expires batch overviews at the game’s daily reset.
+
 ## 1.1.2-beta — 2026-10-10
 
 - 修复控制程序仍运行却被误判为退出导致的连接失败，区分权限不足与实际退出。

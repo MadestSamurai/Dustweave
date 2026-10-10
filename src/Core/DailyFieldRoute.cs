@@ -326,7 +326,8 @@ public sealed partial class DailyFieldRoute
         {
             if (!JsonNode.DeepEquals(op["cycle"], W.Context["cycle"]) || !DailyHomeProof.SameGameAccount(op["before"]!["Frame"]!.AsObject(), current["Frame"]!.AsObject()) || N(current["AtUtcTicks"]) - N(op["at"]) < 600_000_000 || W.Business.Events(op).Count > 0)
                 continue;
-            var receipt = DailyJson.TryRead<JsonObject>(Path.Combine(W.Root, "live", "steps", S(op["command_id"]), "result.json"))?["receipt"] as JsonObject;
+            var receipt = DailyJson.TryRead<JsonObject>(Path.Combine(W.Root, "live", "steps", S(op["command_id"]), "result.json"))?["receipt"] as JsonObject
+                ?? DailyJson.TryRead<JsonObject>(Path.Combine(W.Root, "live", "step-recovery", S(op["command_id"]) + ".json"))?["receipt"] as JsonObject;
             if (receipt == null || S(receipt["State"]) != "observed_after_dispatch" || S(receipt["Error"]) != "" || S(receipt["Command"]?["Id"]) != S(op["command_id"]) || S(receipt["Command"]?["Kind"]) != "mainline_talent" || !JsonNode.DeepEquals(receipt["Command"]?["Value"], op["action"]?["value"]) || !DailyEvidence.SameActor(receipt["Before"]!.AsObject(), op["before"]!["Frame"]!.AsObject()) || !DailyNavigationDecision.Types(receipt["After"]!.AsObject()).Contains("QuickMenuUI"))
                 continue;
             var rows = Talents(current).Where(r => N(r["Group"]) == N(op["scope"]!["group"])).ToArray();

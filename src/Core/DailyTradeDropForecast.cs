@@ -51,8 +51,8 @@ public static class DailyTradeDropForecast
    string directory=Path.Combine(workflow.Root,"live","server-collection",account);
    if(!Directory.Exists(directory))return null;
    var date=DateOnly.ParseExact(S(state["game_date"]),"yyyy-MM-dd",CultureInfo.InvariantCulture).ToDateTime(TimeOnly.MinValue);
-   var route=new DailyCollectionCatalog(workflow);var settings=workflow.Settings.Weekly;
-   var packs=Enumerable.Range(settings.FirstChapter,settings.LastChapter-settings.FirstChapter+1).Select(i=>(long)i).Concat(route.Extra(settings.CharacterCartridges,settings.EventCartridges));
+   var route=new DailyCollectionCatalog(workflow);
+   var packs=route.Packs();
    var maps=new List<(long Pack,long Map,HashSet<long> Monsters)>();
    var weeks=Directory.GetDirectories(directory).Where(p=>long.TryParse(Path.GetFileName(p),out long ticks)&&ticks>=date.AddDays(-14).Ticks&&ticks<=date.AddDays(8).Ticks).OrderDescending().ToArray();
    foreach(long pack in packs){

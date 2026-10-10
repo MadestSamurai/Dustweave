@@ -11,6 +11,33 @@ namespace Dustweave.Desktop;
 
 public sealed partial class DailyRunPanel
 {
+    internal void CheckHeaderActionForSmoke()
+    {
+        UpdateLayout();
+        if (current.Parent is not Grid header || Grid.GetColumn(current) != 2 || header.Parent is not Border)
+            throw new Exception("Launch action is not inside the right side of the status card");
+        var button = current.TransformToAncestor(this).TransformBounds(new Rect(current.RenderSize));
+        var text = detail.TransformToAncestor(this).TransformBounds(new Rect(detail.RenderSize));
+        if (button.Right > ActualWidth + 1 || button.Left < text.Right - 1 || current.ActualHeight < 44)
+            throw new Exception("Header action clips or overlaps the summary");
+    }
+    internal static void CheckAccountProgressForSmoke(string root)
+    {
+        var panel = new DailyRunPanel(root);
+        string a = new('a',64), b = new('b',64);
+        var period = new QueuePeriod("fixture", "today", "player", DateTimeOffset.UtcNow.AddHours(1).UtcTicks);
+        var view = new QueueView("completed", "", "", [new("mail","completed","",FinishedAt:DateTimeOffset.UtcNow),new("mirror","failed","")], a, period);
+        panel.SetAccount("A",a);panel.ShowPlan(new());panel.LoadHistory(view);
+        if (!panel.ShowingPlan || panel.SelectedPlanTasks.Contains("mail") || !panel.SelectedPlanTasks.Contains("mirror") || !panel.rows.Single(r=>r.Task=="mail").HasFinishedTime)
+            throw new Exception("Imported progress lost its status, time or unfinished selection");
+        panel.SelectPlanTask("mail",true);
+        panel.SetAccount("B",b);panel.ShowPlan(new());panel.LoadHistory(view with {Account=b,Stages=[new("mirror","completed","")]});
+        if (!panel.SelectedPlanTasks.Contains("mail") || panel.SelectedPlanTasks.Contains("mirror")) throw new Exception("Progress leaked across accounts");
+        panel.SetAccount("A",a);panel.ShowPlan(new());panel.LoadHistory(view);
+        if (!panel.SelectedPlanTasks.Contains("mail")) throw new Exception("Switching accounts erased the manually selected repeat task");
+        panel.LoadHistory(view with {Expired=true,Stages=[]});
+        if (panel.rows.Any(r=>r.Completed) || !panel.SelectedPlanTasks.Contains("mail")) throw new Exception("Daily reset kept yesterday's completion or choices");
+    }
     internal void CheckRecoveryActionsForSmoke()
     {
         UpdateLayout();

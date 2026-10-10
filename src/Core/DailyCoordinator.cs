@@ -13,16 +13,19 @@ public sealed class DailyOptions
 public sealed class DailyIdentityGuard
 {
     private DailySnapshot? previous;
+    public static bool Ready(DailySnapshot? s, GameInstance game, DateTimeOffset now)
+        => s != null && s.Runtime == DailyIdentity.RuntimeName && s.ProcessId == game.ProcessId && s.ProcessStartTicks == game.StartTicks
+            && s.FrameUtcTicks >= now.UtcTicks - TimeSpan.FromSeconds(5).Ticks && s.FrameUtcTicks <= now.UtcTicks + TimeSpan.FromSeconds(2).Ticks
+            && s.State == "identified" && s.Startup?.Visible != true && DailyProfiles.ValidKey(s.AccountKey) && DailyProfiles.ValidKey(s.PlayerKey)
+            && !string.IsNullOrEmpty(s.InstanceId) && s.Sequence > 0 && s.Capabilities?.Contains("account.identity") == true;
     public bool Observe(DailySnapshot? s, GameInstance game, string account, string expectedPlayer, DateTimeOffset now)
     {
-        if (s == null || s.Runtime != DailyIdentity.RuntimeName || s.ProcessId != game.ProcessId || s.ProcessStartTicks != game.StartTicks
-            || s.FrameUtcTicks < now.UtcTicks - TimeSpan.FromSeconds(5).Ticks || s.FrameUtcTicks > now.UtcTicks + TimeSpan.FromSeconds(2).Ticks
-            || s.State != "identified" || s.Startup?.Visible == true || !DailyProfiles.ValidKey(s.AccountKey) || !DailyProfiles.ValidKey(s.PlayerKey) || string.IsNullOrEmpty(s.InstanceId) || s.Sequence <= 0 || s.Capabilities?.Contains("account.identity") != true)
+        if (!Ready(s, game, now))
         {
             previous = null;
             return false;
         }
-        if (s.AccountKey != account)
+        if (s!.AccountKey != account)
             throw new InvalidOperationException("游戏登录的账号与目标账号不一致，已停止；请检查登录状态后重新连接。");
         if (expectedPlayer.Length > 0 && s.PlayerKey != expectedPlayer)
             throw new InvalidOperationException("该账号的游戏角色身份发生变化，已停止；请先核对登录区服和角色。");
@@ -98,12 +101,31 @@ public sealed class DailyCoordinator
     {
         sessions.EnsureControl();
         var catalog = sessions.Read();
-        if (!DailyProfiles.ValidKey(catalog.CurrentKey))
-            throw new InvalidOperationException("尚未找到完整登录会话，请先在游戏内登录。");
         var instance = game.Find() ?? throw new InvalidOperationException("游戏没有运行，请先启动并登录。");
-        var target = catalog.Accounts.FirstOrDefault(a => a.Valid && a.AccountKey == catalog.CurrentKey)
-            ?? new DailyAccount(0, "当前未保存账号", catalog.CurrentKey, "", true, true, "");
-        await VerifyAsync(target, instance, token);
+        bool connected = false;
+        try
+        {
+            DailyLoginDiagnostics.Capture(Path.GetDirectoryName(runPath)!, "request", catalog, game, sessions);
+            string key = catalog.CurrentKey;
+            if (!DailyProfiles.ValidKey(key))
+            {
+                await game.ConnectAsync(instance, m => Report("connecting", m), token);
+                connected = true;
+                Report("waiting_login", "正在读取游戏中的登录身份；请保持游戏打开，若停在登录页请完成登录。");
+                key = await CurrentGameObservation.WaitForIdentityAsync(sessions, game, instance, token, options.LoginTimeout, options.PollInterval);
+                catalog = sessions.Read();
+            }
+            DailySandbox.RequireBoundAccount(key);
+            var target = catalog.Accounts.FirstOrDefault(a => a.Valid && a.AccountKey == key)
+                ?? new DailyAccount(0, "当前未保存账号", key, "", true, true, "");
+            await VerifyAsync(target, instance, token, connected);
+            DailyLoginDiagnostics.Capture(Path.GetDirectoryName(runPath)!, "verified", catalog, game, sessions);
+        }
+        catch
+        {
+            DailyLoginDiagnostics.Capture(Path.GetDirectoryName(runPath)!, "failed", catalog, game, sessions);
+            throw;
+        }
         Report("completed", "当前账号身份已核对。可继续保存账号，或选择多个账号进行登录检查。", 1, 1);
     });
     public Task InspectAsync(IEnumerable<DailyAccount> selected) => RunAsync(async token =>
@@ -155,7 +177,7 @@ public sealed class DailyCoordinator
         var catalog = sessions.Read();
         if (catalog.StarterRunning)
             throw new InvalidOperationException("请先关闭游戏启动器，再进行账号切换。");
-        if (catalog.GameRunning && !catalog.SessionComplete)
+        if (catalog.GameRunning && !catalog.SessionComplete && targets.Any(a => a.AccountKey != catalog.CurrentKey))
             throw new InvalidOperationException("当前游戏的登录会话尚不完整，请先完成登录并保存账号，或手动关闭游戏。");
         foreach (var target in targets)
             if (!catalog.Accounts.Any(a => a.SlotNumber == target.SlotNumber && a.AccountKey == target.AccountKey && a.Valid))
@@ -163,11 +185,11 @@ public sealed class DailyCoordinator
         if (catalog.SessionComplete && catalog.Accounts.All(a => !a.Valid || a.AccountKey != catalog.CurrentKey))
             throw new InvalidOperationException("当前登录账号尚未保存。请先正常关闭游戏并保存当前账号，再开始切换。");
     }
-    private async Task VerifyAsync(DailyAccount target, GameInstance instance, CancellationToken token)
+    private async Task VerifyAsync(DailyAccount target, GameInstance instance, CancellationToken token, bool connected = false)
     {
         token.ThrowIfCancellationRequested();
         var profile = DailyAccountOrder.ProfileFor(target, profiles.Read());
-        await game.ConnectAsync(instance, m => Report("connecting", $"{target.Name} · {m}"), token);
+        if (!connected) await game.ConnectAsync(instance, m => Report("connecting", $"{target.Name} · {m}"), token);
         var guard = new DailyIdentityGuard();
         var deadline = DateTimeOffset.UtcNow + options.LoginTimeout;
         var owner = Guid.NewGuid().ToString("N");
@@ -270,6 +292,9 @@ public sealed class DailyCoordinator
             { throw DailyLoginFailure.Mismatch(Path.GetDirectoryName(runPath)!, runId, target, snapshot, sessions.Read(), startup: false); }
             if (verified)
             {
+                var verifiedCatalog = sessions.Read();
+                if (DailyProfiles.ValidKey(verifiedCatalog.CurrentKey) && verifiedCatalog.CurrentKey != target.AccountKey)
+                    throw DailyLoginFailure.Mismatch(Path.GetDirectoryName(runPath)!, runId, target, snapshot!, verifiedCatalog, startup: false);
                 lock (ownership)
                 {
                     token.ThrowIfCancellationRequested();

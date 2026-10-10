@@ -293,6 +293,25 @@ static class QueueEngineCases
         host.After = (op, stage) => { if (op != "execute") return; var head = DailyJson.TryRead<JsonObject>(Path.Combine(root, "queue-ui.json"))!; var saved = DailyJson.TryRead<JsonObject>(head["record"]!.GetValue<string>())!; durable = Stage(saved, stage) == "running"; };
         await Run(host, root, ["mail"]);
         Check(durable, "running journal is flushed before executing business");
+        // Exercise the real queue boundary, rather than assuming a dispatch receipt
+        // proves that its enclosing task finished.
+        foreach(bool fail in new[]{false,true})
+        {
+            host=new(); root=Root(); string step=Guid.NewGuid().ToString("N");
+            string folder=Path.Combine(root,"live","steps",step);
+            host.After=(operation,_)=>
+            {
+                if(operation!="execute")return;
+                DailyJson.Write(Path.Combine(folder,"intent.json"),new{Id=step,Reason="navigate"});
+                DailyJson.Write(Path.Combine(folder,"before.json"),new{fixture="full evidence"});
+                DailyJson.Write(Path.Combine(folder,"result.json"),new{id=step,state="dispatched_only",engine="dotnet-driver-v1"});
+            };
+            if(fail)host.Fail["execute:mail"]="adapter";
+            await Run(host,root,["mail"]);
+            Check(DailyLogEvidence.HasPending(root),"queue completion persists idle log work: "+fail);
+            await DailyLogEvidence.FlushAsync(root);
+            Check(File.Exists(Path.Combine(folder,"before.json"))==fail,"only confirmed queue success compacts dispatch-only evidence: "+fail);
+        }
     }
     static string State(JsonObject r) => r["state"]!.GetValue<string>();
     static string Stage(JsonObject r, string task) => r["items"]!.AsArray().First(i => i!["task"]!.GetValue<string>() == task)!["state"]!.GetValue<string>();

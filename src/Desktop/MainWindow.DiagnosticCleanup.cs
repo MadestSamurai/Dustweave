@@ -8,6 +8,7 @@ public partial class MainWindow
     private DailyLogPolicy logPolicy = new();
     private CancellationTokenSource? logCleanupCancellation;
     private DateTime nextLogCleanup = DateTime.UtcNow.AddMinutes(1);
+    private DateTime nextEvidenceCleanup = DateTime.UtcNow.AddSeconds(15);
     private bool logCleanupRunning;
     private sealed record LogCleanupRun(DateTime At, int Files, long Bytes, int Skipped);
     private void InitializeLogCleanup()
@@ -21,10 +22,15 @@ public partial class MainWindow
     {
         if(Unavailable || dailyQueue.IsRunning || scheduleChecking || DailyDialogs.ModalDepth>0)
         { logCleanupCancellation?.Cancel();return; }
-        if(logCleanupRunning || !logPolicy.Automatic || DateTime.UtcNow<nextLogCleanup)return;
-        logCleanupRunning=true;nextLogCleanup=DateTime.UtcNow.AddMinutes(5);
+        bool retentionDue=logPolicy.Automatic&&DateTime.UtcNow>=nextLogCleanup;
+        if(logCleanupRunning || !retentionDue && (DateTime.UtcNow<nextEvidenceCleanup || !DailyLogEvidence.HasPending(root)))return;
+        logCleanupRunning=true;nextEvidenceCleanup=DateTime.UtcNow.AddMinutes(1);
+        if(retentionDue)nextLogCleanup=DateTime.UtcNow.AddMinutes(5);
         using var lifetime=new CancellationTokenSource();logCleanupCancellation=lifetime;
         try {
+            await DailyLogEvidence.FlushAsync(root,lifetime.Token);
+            if(!retentionDue)return;
+            await DailyLogEvidence.MaintainAsync(root,lifetime.Token);
             var plan=await DailyLogCleanup.ScanAsync(root,logPolicy,lifetime.Token);
             if(Unavailable || dailyQueue.IsRunning || scheduleChecking || DailyDialogs.ModalDepth>0)return;
             var result=await DailyLogCleanup.ApplyAsync(plan,lifetime.Token);
@@ -50,7 +56,7 @@ public partial class MainWindow
         var automatic=new CheckBox{Name="AutomaticLogCleanup",IsChecked=logPolicy.Automatic,Margin=new(0,22,0,14)};L.Bind(automatic,ContentControl.ContentProperty,"logs.automatic");panel.Children.Add(automatic);
         var settings=new Grid();settings.ColumnDefinitions.Add(new());settings.ColumnDefinitions.Add(new());
         ComboBox Choice(string label,string name,int[] options,int value,int column){var row=new StackPanel{Margin=new(0,0,column==0?16:0,0)};var caption=new TextBlock{Margin=new(0,0,0,8)};L.Text(caption,label);row.Children.Add(caption);var choice=new ComboBox{Name=name,MinWidth=150};foreach(int n in options){var item=new ComboBoxItem{Tag=n};L.Bind(item,ContentControl.ContentProperty,label+".value",n);choice.Items.Add(item);if(n==value)choice.SelectedItem=item;}if(choice.SelectedIndex<0)choice.SelectedIndex=1;row.Children.Add(choice);Grid.SetColumn(row,column);settings.Children.Add(row);return choice;}
-        var days=Choice("logs.days","LogRetentionDays",[2,7,14,30,90],logPolicy.Days,0);
+        var days=Choice("logs.days","LogRetentionDays",[2,3,7],logPolicy.Days,0);
         var size=Choice("logs.size","LogRetentionSize",[128,512,1024,4096],logPolicy.LimitMiB,1);panel.Children.Add(settings);
         Text("logs.protection",16).SetResourceReference(TextBlock.ForegroundProperty,"MutedInk");
         var status=Text("logs.scanning",20);status.Name="LogCleanupStatus";status.FontSize=16;status.FontWeight=FontWeights.SemiBold;

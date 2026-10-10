@@ -1,5 +1,38 @@
 [
   {
+    "Version": "1.1.3-beta",
+    "Date": "2026-10-10",
+    "Notes": {
+      "zh-CN": [
+        "今日任务的启动执行按钮移到顶部状态卡右侧；批量结束后可返回同一窗口，切换账号查看进度和选择任务。",
+        "批量页返回后关闭，跨天按游戏每日刷新时间重置；各账号当天完成情况保留，已完成项默认不勾选。",
+        "周收集自动覆盖固定的可收集卡带，只保留默认关闭的步行收集选项；旧的起止范围不再限制路线。",
+        "镜中免费战斗改用游戏原生连续次数，减少重复进出；按整批核对结果，中断后先接续原批次。",
+        "修复已进入游戏但本地启动凭据不完整时无法连接的问题，补齐登录诊断。",
+        "日志最多保留7天，成功步骤保留摘要，异常步骤保留前后证据及必要恢复状态。",
+        "如果自动更新失败，可能需要手动下载完整软件包。"
+      ],
+      "zh-TW": [
+        "今日任務的啟動執行按鈕移到頂部狀態卡右側；批次結束後可返回同一視窗，切換帳號查看進度和選擇任務。",
+        "批次頁返回後關閉，跨天依遊戲每日刷新時間重設；各帳號當天完成情況保留，已完成項預設不勾選。",
+        "每週收集自動涵蓋固定的可收集卡帶，僅保留預設關閉的步行收集選項；舊的起訖範圍不再限制路線。",
+        "鏡中免費戰鬥改用遊戲原生連續次數，減少重複進出；按整批核對結果，中斷後先接續原批次。",
+        "修正已進入遊戲但本機啟動憑據不完整時無法連線的問題，補齊登入診斷。",
+        "記錄最多保留7天，成功步驟保留摘要，異常步驟保留前後證據及必要恢復狀態。",
+        "若自動更新失敗，可能需要手動下載完整軟體套件。"
+      ],
+      "en-US": [
+        "Launch-and-run moves to the right of the status card. Return from a finished batch to switch accounts and choose tasks in the same window.",
+        "Batch views close on return and expire at the game reset. Account progress is retained, with completed tasks unchecked by default.",
+        "Weekly collection automatically covers supported cartridges. Only optional walking collection remains; previous range settings no longer limit the route.",
+        "Mirror battles now use the game's continuous battle count, verify the whole batch and resume the original batch after an interruption.",
+        "Fixes connecting to an already signed-in game when local launch credentials are incomplete, and adds login diagnostics.",
+        "Logs are retained for at most seven days. Successful steps keep summaries; failed steps retain surrounding evidence and required recovery state.",
+        "If automatic updating fails, download the full package manually."
+      ]
+    }
+  },
+  {
     "Version": "1.1.2-beta",
     "Date": "2026-10-10",
     "Notes": {

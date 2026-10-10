@@ -60,11 +60,16 @@ public partial class MainWindow
                 LanguageSelector.SelectedIndex = language; ThemeSelector.SelectedIndex = appearance; Width = 920; Height = 650;
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); UpdateLayout();
                 dailyPanel.CheckViewportForSmoke();
+                dailyPanel.CheckHeaderActionForSmoke();
                 Check(!Descendants<TextBlock>(dailyPanel).Any(t => t.Text.StartsWith("run.")), "Untranslated task navigation text");
                 Check(TaskAccountKey == b.AccountKey && dailyPanel.SelectedPlanTasks.SequenceEqual(new[] { "mail" }), "Presentation change erased task draft");
                 Capture("task-account-" + L.Code + "-" + appearance);
             }
             Check(fixture.Calls.Count == calls, "Task navigation executed a game/session operation");
+            DailyRunPanel.CheckAccountProgressForSmoke(root);
+            var today = new QueuePeriod("fixture", "today", "player", DateTimeOffset.UtcNow.AddHours(1).UtcTicks);
+            dailyPanel.LoadHistory(new("completed", "", "", [new("free_draws","completed","",FinishedAt:DateTimeOffset.UtcNow),new("mail","completed","",FinishedAt:DateTimeOffset.UtcNow)], b.AccountKey, today));
+            dailyPanel.ShowCurrentPlan(); UpdateLayout(); Capture("task-inherited-progress");
             bool rejected = false;
             try { ViewAccountTasks(new string('d', 64)); } catch (InvalidOperationException) { rejected = true; }
             Check(rejected && TaskAccountKey == b.AccountKey, "Deleted or unknown account was accepted for tasks");
@@ -113,17 +118,18 @@ public partial class MainWindow
                 parallelPanel.ControlRequested+=Control;
                 buttons.First(b=>b.Content as string==L.Get("parallel.resume")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 parallelPanel.ControlRequested-=Control;Check(controlled==accounts[1].AccountKey+":resume","Row action targeted another account");
-                Check(buttons.Count(b=>b.Content as string==L.Get("parallel.tasks")&&!b.IsEnabled)==3,"Active batch exposes conflicting individual execution");
+                Check(!buttons.Single(b=>b.Content as string==L.Get("parallel.back")).IsEnabled,"Active batch can be discarded while workers run");
                 var finishedRun=run with { Items=run.Items.Select(x=>x with {State="completed", Detail="", Status=x.Status! with { Queue=new("completed","","",[new("management","completed",""),new("mail","completed","")],x.Account.AccountKey) }}).ToArray() };
                 parallelPanel.Show(finishedRun);UpdateLayout();
-                string? viewed=null;void View(DailyParallelItem value)=>viewed=value.Account.AccountKey;
-                parallelPanel.TasksRequested+=View;
-                var taskButtons=Children<Button>(parallelPanel).Where(b=>b.Content as string==L.Get("parallel.tasks")).ToArray();
-                Check(taskButtons.Length==3&&taskButtons.All(b=>b.IsEnabled),"Finished batch has no account task entry");
-                taskButtons[1].RaiseEvent(new RoutedEventArgs(Button.ClickEvent));parallelPanel.TasksRequested-=View;
-                Check(viewed==accounts[1].AccountKey,"Batch task entry targeted a different account");
-                await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                var back=Children<Button>(parallelPanel).Single(b=>b.Content as string==L.Get("parallel.back"));
+                Check(back.IsEnabled,"Finished batch cannot return to account tasks");
+                int windows=Application.Current.Windows.Count;
                 Capture("parallel-"+L.Code+"-"+appearance);
+                back.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                Check(ReferenceEquals(RunTab.Content,dailyPanel)&&Application.Current.Windows.Count==windows,"Batch return opened a secondary window instead of the account list");
+                Check(!Children<Button>(dailyPanel).Any(b=>b.Content as string=="批量总览"),"Dismissed batch can be reopened from daily tasks");
+                RunTab.Content=parallelPanel;
+                await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
             }
             foreach(int appearance in new[]{1,2})
             {

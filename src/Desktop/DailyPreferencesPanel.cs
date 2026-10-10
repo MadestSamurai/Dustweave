@@ -15,8 +15,6 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly DailyPreferenceStore store;
     private readonly string dataRoot;
     private readonly ComboBox accounts = new() { MinWidth = 230, DisplayMemberPath = "Name", SelectedValuePath = "AccountKey" };
-    private readonly ComboBox characterCartridges = new();
-    private readonly CheckBox eventCartridges = Check("继续收集已开放活动地图（仅有采集物）");
     private readonly CheckBox eventBattle = Check("活动战斗"), eventChallenge = Check("普通全部通关后继续挑战战斗");
     private readonly ComboBox eventSearch = new();
     private readonly CheckBox tactics = Check("战术教材");
@@ -36,7 +34,6 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly CheckBox mainline = Check("周收集"), weeklyNpc = Check("周NPC任务"), npcHunting = Check("允许接取必须去狩猎场的任务"), weeklySteal = Check("每周偷窃"), walkCollect = Check("步行收集（不使用吸收）"), monsterHunt = Check("魔兽最高档快速战斗"), fishing = Check("周常钓鱼"), roomLikes = Check("周常小屋点赞");
     private readonly CheckBox events = Check("活动奖励"), eventMissions = Check("领取活动任务与活动代币"), roulette = Check("使用免费次数和已有转盘券"), exchange = Check("活动代币最大批量兑换"), quiz = Check("自动完成已开放答题"), dice = Check("自动使用现有活动骰子"), puzzle = Check("拼图板使用现有代币批量翻开");
     private readonly CheckBox trade = Check("自动跑商、料理与120%售卖");
-    private readonly ComboBox firstChapter = new(), lastChapter = new();
     private StackPanel section = new();
     private readonly TextBlock status = new() { TextWrapping = TextWrapping.Wrap, Margin = new(0, 8, 0, 0) };
     private readonly ComboBox refineChoice = new() { DisplayMemberPath = "Label", SelectedValuePath = "Instance", MinWidth = 210, MaxWidth = 660 };
@@ -189,16 +186,9 @@ public sealed class DailyPreferencesPanel : UserControl
         Stage(friendship, "亲密度咨询", "每天补足三次免费咨询，优先好感度未满的角色；不消耗额外咨询次数");
         section.Children.Add(quickFriendship);
         Stage(monsterHunt, "魔兽快速战斗", "使用本账号当期及复刻魔兽各自最高可快速战斗等级；不降档、不进入练习");
-        Stage(mainline, "周收集", "与周NPC任务、偷窃共用一次跑图；展开设置三项共用的地图范围", editableWhenOff: true);
-        firstChapter.ItemsSource = Enumerable.Range(1, 19).ToArray();
-        lastChapter.ItemsSource = Enumerable.Range(1, 19).ToArray();
-        Row("起始章节", firstChapter);
-        Row("结束章节", lastChapter);
-        characterCartridges.ItemsSource = Enumerable.Range(0, 8).ToArray();
-        Row("随后角色卡带（0 为不做）", characterCartridges);
-        section.Children.Add(eventCartridges);
+        Stage(mainline, "周收集", "自动收集已拥有卡带中的固定采集地图，按游戏内进度接续", expanded: true);
         section.Children.Add(walkCollect);
-        Note("默认吸收；次数耗尽时只停止周收集，其余勾选项目继续。三项共用地图范围，可单独补跑任意一项；按游戏进度接续。第六章只到 7／8 层。");
+        Note("步行收集默认关闭，使用吸收；次数用完后次日接续。已勾选的周NPC任务与偷窃共用路线并继续执行。");
         Stage(weeklyNpc, "周NPC任务", "按本周剩余名额最多完成三条；先推进任务，再压制相关目标", expanded: true);
         section.Children.Add(npcHunting);
         Note("默认跳过只能去狩猎场的新任务，包括野外目标已被击杀的情况。已接任务保留，不自动放弃；完成情况以游戏回执为准。");
@@ -234,24 +224,29 @@ public sealed class DailyPreferencesPanel : UserControl
         layout.Children.Add(new ScrollViewer { Content = form, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled });
         Content = new Border { Style = (Style)Application.Current.FindResource("Panel"), Child = layout };
         accounts.SelectionChanged += ChangedAccount;
-        foreach (var c in new[] { weeklyBook, weeklyCraft, weeklySichuan, quickFriendship, friendship, tactics, eventBattle, eventChallenge, hunt, gold, slime, stones, recycle, keepSr, fallback, refine, pass, dispatch, goddess, ranking, mirror, guild, room, income, guests, draws, dailyRewards, weeklyRewards, mail, mainline, weeklyNpc, npcHunting, weeklySteal, walkCollect, eventCartridges, monsterHunt, fishing, roomLikes, trade, events, eventMissions, quiz, dice, puzzle, roulette, exchange })
+        foreach (var c in new[] { weeklyBook, weeklyCraft, weeklySichuan, quickFriendship, friendship, tactics, eventBattle, eventChallenge, hunt, gold, slime, stones, recycle, keepSr, fallback, refine, pass, dispatch, goddess, ranking, mirror, guild, room, income, guests, draws, dailyRewards, weeklyRewards, mail, mainline, weeklyNpc, npcHunting, weeklySteal, walkCollect, monsterHunt, fishing, roomLikes, trade, events, eventMissions, quiz, dice, puzzle, roulette, exchange })
         {
             c.Checked += (_, _) => MarkDirty();
             c.Unchecked += (_, _) => MarkDirty();
         }
-        foreach (var c in new[] { tacticsSearch, eventSearch, chapter, stone, enhance, refineChoice, multiplier, firstChapter, lastChapter, characterCartridges })
+        foreach (var c in new[] { tacticsSearch, eventSearch, chapter, stone, enhance, refineChoice, multiplier })
             c.SelectionChanged += (_, _) => MarkDirty();
         form.IsEnabled = false;
         WeakEventManager<DailyLanguage, EventArgs>.AddHandler(L, nameof(DailyLanguage.Changed), LanguageChanged);
     }
-    public void CheckStealScopeForSmoke()
+    public void CheckWeeklySettingsForSmoke()
     {
         var previous = mainline.IsChecked;
         try
         {
             mainline.IsChecked = false;
-            if (!firstChapter.IsEnabled || !lastChapter.IsEnabled || !characterCartridges.IsEnabled || !eventCartridges.IsEnabled)
-                throw new Exception("Theft scope is locked when ordinary weekly collection is disabled");
+            if (!weeklySteal.IsEnabled || !weeklyNpc.IsEnabled)
+                throw new Exception("Independent weekly tasks are locked when collection is disabled");
+            mainline.IsChecked = true;
+            if (walkCollect.Parent is not StackPanel body || body.Children.OfType<Control>().Single() != walkCollect || !walkCollect.IsEnabled)
+                throw new Exception("Weekly collection should expose only its walking preference");
+            if (loaded == null || walkCollect.IsChecked != loaded.Weekly.WalkCollect)
+                throw new Exception("Walking collection choice differs from saved account preference");
         }
         finally { mainline.IsChecked = previous; }
     }
@@ -399,15 +394,11 @@ public sealed class DailyPreferencesPanel : UserControl
             dailyRewards.IsChecked = loaded.Stages.DailyRewards;
             weeklyRewards.IsChecked = loaded.Stages.WeeklyRewards;
             mail.IsChecked = loaded.Stages.Mail;
-            eventCartridges.IsChecked = loaded.Weekly.EventCartridges;
             mainline.IsChecked = loaded.Weekly.Mainline;
             weeklySteal.IsChecked = loaded.Weekly.Steal;
             weeklyNpc.IsChecked = loaded.Weekly.Npc;
             npcHunting.IsChecked = loaded.Weekly.NpcHunting;
             walkCollect.IsChecked = loaded.Weekly.WalkCollect;
-            firstChapter.SelectedItem = loaded.Weekly.FirstChapter;
-            lastChapter.SelectedItem = loaded.Weekly.LastChapter;
-            characterCartridges.SelectedItem = loaded.Weekly.CharacterCartridges;
             tactics.IsChecked = loaded.Tactics.Enabled;
             tacticsSearch.SelectedItem = loaded.Tactics.SearchSeconds;
             eventBattle.IsChecked = loaded.EventBattle.Enabled;
@@ -510,15 +501,11 @@ public sealed class DailyPreferencesPanel : UserControl
             loaded.Weekly.EquipmentCraft = weeklyCraft.IsChecked == true;
             loaded.Stages.WeeklyRewards = weeklyRewards.IsChecked == true;
             loaded.Stages.Mail = mail.IsChecked == true;
-            loaded.Weekly.EventCartridges = eventCartridges.IsChecked == true;
             loaded.Weekly.Mainline = mainline.IsChecked == true;
             loaded.Weekly.Steal = weeklySteal.IsChecked == true;
             loaded.Weekly.Npc = weeklyNpc.IsChecked == true;
             loaded.Weekly.NpcHunting = npcHunting.IsChecked == true;
             loaded.Weekly.WalkCollect = walkCollect.IsChecked == true;
-            loaded.Weekly.FirstChapter = (int)firstChapter.SelectedItem;
-            loaded.Weekly.LastChapter = (int)lastChapter.SelectedItem;
-            loaded.Weekly.CharacterCartridges = (int)characterCartridges.SelectedItem;
             loaded.Weekly.Fishing = fishing.IsChecked == true;
             loaded.Weekly.RoomLikes = roomLikes.IsChecked == true;
             if (extensionTasks)

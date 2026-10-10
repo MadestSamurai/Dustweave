@@ -33,7 +33,7 @@ public interface IDailyParallelRuntime
 // connection and the existing queue. Persist before starting any external work.
 public sealed class DailyParallelSession
 {
-    private readonly string path;
+    private readonly string path, root;
     private readonly IDailyParallelRuntime runtime;
     private readonly Func<DateTimeOffset> now;
     private readonly Dictionary<string, Task> starting = new();
@@ -47,12 +47,14 @@ public sealed class DailyParallelSession
     public static bool Occupies(string state) => state is "starting" or "connecting" or "running" or "pausing" or "paused" or "stopping" or "closing";
     public DailyParallelSession(string root, IDailyParallelRuntime runtime, Func<DateTimeOffset>? now = null)
     {
-        path = Path.Combine(root, "parallel-queue.json"); this.runtime = runtime; this.now = now ?? (() => DateTimeOffset.UtcNow);
+        this.root = root; path = Path.Combine(root, "parallel-queue.json"); this.runtime = runtime; this.now = now ?? (() => DateTimeOffset.UtcNow);
         var prior = DailyJson.TryRead<DailyParallelRun>(path);
         if (prior != null)
         {
             // Reopening never starts a game or silently replays an uncertain command.
             Current = prior with { Items = prior.Items.Select(x => x with { State = Occupies(x.State) || x.State is "waiting" or "held" ? "interrupted" : x.State, Detail = Occupies(x.State) || x.State is "waiting" or "held" ? "parallel.reopen" : x.Detail }).ToArray() };
+            Save();
+            ExpireOverview();
         }
     }
     public async Task StartAsync(IEnumerable<DailyAccount> accounts, DailyParallelOptions options, Func<string, DailyPreferences> preferences)
@@ -81,6 +83,7 @@ public sealed class DailyParallelSession
         await gate.WaitAsync(token);
         try
         {
+            ExpireOverview();
             if (Current == null || !HasWork && commands.IsEmpty) return;
             var items = Current.Items.ToArray();
             while (commands.TryDequeue(out var command))
@@ -158,5 +161,26 @@ public sealed class DailyParallelSession
         finally { gate.Release(); }
     }
     private static bool KnownStatus(string state) => Occupies(state) || state is "completed" or "partial" or "failed" or "stopped" or "interrupted";
-    private void Save() => DailyJson.Write(path, Current);
+    public async Task DismissAsync()
+    {
+        await gate.WaitAsync();
+        try
+        {
+            if (HasWork) throw new InvalidOperationException("parallel.busy");
+            Save(); Current = null; Save();
+        }
+        finally { gate.Release(); }
+    }
+    private void ExpireOverview()
+    {
+        if (Current == null || HasWork) return;
+        bool expired = Current.Items.Any(i => i.Status?.Queue?.Period is {} p && DailyQueuePeriod.IsExpired(p, DailyQueuePeriod.Snapshot(root, p.Server), now().UtcTicks));
+        if (!expired && (Current.Items.Any(i => i.Status?.Queue?.Period != null) || now() - Current.CreatedUtc < TimeSpan.FromDays(1))) return;
+        Current = null; Save();
+    }
+    private void Save()
+    {
+        foreach (var item in Current?.Items ?? []) DailyParallelProgress.Remember(root, item);
+        DailyJson.Write(path, Current);
+    }
 }

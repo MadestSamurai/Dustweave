@@ -74,7 +74,7 @@
   <DataTemplate.Triggers><DataTrigger Binding="{Binding Compact}" Value="True"><Setter TargetName="Explanation" Property="Visibility" Value="Collapsed"/></DataTrigger>
    <DataTrigger Binding="{Binding HasTaskDetails}" Value="True"><Setter TargetName="TaskDetails" Property="Visibility" Value="Visible"/></DataTrigger>
    <DataTrigger Binding="{Binding HasFinishedTime}" Value="True"><Setter TargetName="FinishedTime" Property="Visibility" Value="Visible"/></DataTrigger>
-   <DataTrigger Binding="{Binding IsPlan}" Value="True">
+   <DataTrigger Binding="{Binding CompactPlan}" Value="True">
     <Setter TargetName="FinishedTime" Property="Visibility" Value="Collapsed"/>
     <Setter TargetName="Explanation" Property="Visibility" Value="Collapsed"/>
     <Setter TargetName="StateLabel" Property="Visibility" Value="Collapsed"/>

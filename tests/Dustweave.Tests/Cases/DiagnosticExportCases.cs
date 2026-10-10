@@ -35,6 +35,9 @@ internal static class DiagnosticExportCases
         }
         Check(DailyIssues.Classify("suite.owner-exited").Code=="owner-ended","owner exit is not account change");
         Check(DailyIssues.Classify("suite.identity-unavailable").Code=="identity-unavailable","missing identity is distinguishable");
+        Check(DailyIssues.Classify("尚未找到完整登录会话，请先在游戏内登录。").Code == "local-login-incomplete", "legacy session precheck is not unknown or expired login");
+        Check(DailyIssues.Classify("connection.login_identity_unavailable").Code == "live-login-unavailable", "live identity timeout differs from local credential readiness");
+        Check(DailyDiagnosticExport.Allowed("live/diagnostics/login-failed.json") && DailyDiagnosticExport.Allowed("login-identity-error.json"), "identity evidence is exportable without the credential store");
         Check(DailyIssues.Classify("UI observation interrupted after dispatch; no replay: timeout").Code=="uncertain","uncertain dispatch has priority over timeout retry guidance");
         Check(DailyIssues.Classify(new OperationCanceledException()).Code=="cancelled","user cancellation is not a connection failure");
         Check(DailyIssues.Classify("会话已停止，请在日常助手重新选择功能。").Code=="legacy-session","old generic message does not invent a root cause");

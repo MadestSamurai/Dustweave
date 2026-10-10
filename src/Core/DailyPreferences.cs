@@ -7,7 +7,7 @@ namespace Dustweave;
 public sealed class DailyPreferences
 {
     [JsonRequired]
-    public int Schema { get; set; } = 15;
+    public int Schema { get; set; } = 16;
     [JsonRequired] public FriendshipPreferences Friendship { get; set; } = new();
     [JsonRequired]
     public HuntPreferences Hunt { get; set; } = new();
@@ -138,22 +138,27 @@ public sealed class DailyPreferences
             if (!events.ContainsKey("Puzzle")) events["Puzzle"] = true;
             node["Schema"] = 15;
         }
+        if (node["Schema"]?.GetValue<int>() == 15)
+        {
+            var weekly = node["Weekly"] as JsonObject ?? throw new InvalidDataException("周常设置缺失。");
+            // The maintained route catalog now defines coverage for all three weekly activities.
+            // Preserve task switches and an explicitly selected walking preference.
+            foreach (string field in new[] { "FirstChapter", "LastChapter", "CharacterCartridges", "EventCartridges" })
+                weekly.Remove(field);
+            node["Schema"] = 16;
+        }
         var value = node.Deserialize<DailyPreferences>(DailyJson.Options) ?? throw new InvalidDataException("日常设置不能为空。");
         value.Validate();
         return value;
     }
     public void Validate()
     {
-        if (Schema != 15 || Friendship == null || Tactics == null || Events == null || EventBattle == null || Trade == null || Weekly == null || MonsterHunt == null || Hunt == null || Equipment == null || Tasks == null || Stages == null || Mirror == null)
+        if (Schema != 16 || Friendship == null || Tactics == null || Events == null || EventBattle == null || Trade == null || Weekly == null || MonsterHunt == null || Hunt == null || Equipment == null || Tasks == null || Stages == null || Mirror == null)
             throw new InvalidDataException("日常偏好版本或字段不完整。");
         if (Tactics.SearchSeconds is < 1 or > 120)
             throw new InvalidDataException("战术教材搜索时间必须为 1 至 120 秒。");
         if (EventBattle.SearchSeconds is < 1 or > 120)
             throw new InvalidDataException("活动搜索时间必须为 1 至 120 秒。");
-        if (Weekly.CharacterCartridges < 0 || Weekly.CharacterCartridges > 7)
-            throw new InvalidDataException("角色卡带数量必须为 0 至 7。");
-        if (Weekly.FirstChapter < 1 || Weekly.LastChapter > 19 || Weekly.FirstChapter > Weekly.LastChapter)
-            throw new InvalidDataException("周收集章节范围必须为 1 至 19，起点不能大于终点。");
         if (Mirror.Multiplier is < 1 or > 40)
             throw new InvalidDataException("镜中倍率必须为 1 至 40。");
         if (Hunt.OrdinaryChapter is < 1 or > 10)
@@ -248,16 +253,6 @@ public sealed class WeeklyPreferences
     [JsonRequired] public bool EquipmentCraft { get; set; } = true;
     [JsonRequired]
     public bool Mainline
-    {
-        get; set;
-    }
-    [JsonRequired] public int FirstChapter { get; set; } = 1;
-    [JsonRequired] public int LastChapter { get; set; } = 15;
-    public int CharacterCartridges
-    {
-        get; set;
-    }
-    public bool EventCartridges
     {
         get; set;
     }

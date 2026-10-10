@@ -10,13 +10,15 @@ public static class DailyDiagnosticExport
 {
     public const string WeChat = "SuJakads0133", QQ = "1104563414";
     static readonly HashSet<string> Top = new(StringComparer.OrdinalIgnoreCase) { "ui-operation-error.json", "startup-state.json", "startup-error.json", "queue-worker.log", "queue-ui.json", "connection-watchdog.json", "connection.json", "compatibility.json", "guild-compatibility.json", "startup-compatibility.json", "run.json", "run-error.json", "sandbox-error.json", "parallel-worker-error.json", "plugin-error.json", "runtime.log", "connection.log", "connection-cleanup.log" };
-    static readonly string[] Trees = ["suite/diagnostics", "live/diagnostics", "live/queue-bootstrap", "live/queues", "queue-history", "tools", "parallel-workers", "live/steps"];
-    static readonly string[] Singles = ["suite/last-transition.json", "updates/check-error.json", "updates/install-error.json"];
+    static readonly string[] Trees = ["suite/diagnostics", "live/diagnostics", "live/queue-bootstrap", "live/queues", "queue-history", "tools", "parallel-workers", "live/steps", "live/business", "live/managed-business", "live/step-recovery"];
+    static readonly string[] Singles = ["suite/last-transition.json", "updates/check-error.json", "updates/install-error.json", "login-identity-error.json",
+        "live/diagnostics/login-request.json", "live/diagnostics/login-verified.json", "live/diagnostics/login-failed.json"];
     static readonly string[] Rotations = [".1", ".2", ".3", ".previous"];
     static readonly HashSet<string> PrivateNames = new(StringComparer.OrdinalIgnoreCase) { "accounts.json", "preferences.json", "settings.json", "endpoint.json", "session.json", "sessions.json", "command.json" };
     static string Unrotate(string name) => Rotations.FirstOrDefault(s => name.EndsWith(s,StringComparison.OrdinalIgnoreCase)) is { } suffix ? name[..^suffix.Length] : name;
     static bool LogName(string name) => Unrotate(name).EndsWith(".log",StringComparison.OrdinalIgnoreCase) || Unrotate(name).EndsWith(".jsonl",StringComparison.OrdinalIgnoreCase);
-    static int Priority(string relative) => Top.Contains(Unrotate(relative)) || Singles.Contains(relative,StringComparer.OrdinalIgnoreCase) || relative.StartsWith("suite/diagnostics/",StringComparison.OrdinalIgnoreCase) ? 0 : relative.StartsWith("live/steps/",StringComparison.OrdinalIgnoreCase) ? 2 : 1;
+    static int Priority(string relative) => Top.Contains(Unrotate(relative)) || Singles.Contains(relative,StringComparer.OrdinalIgnoreCase) || relative.StartsWith("suite/diagnostics/",StringComparison.OrdinalIgnoreCase) ? 0
+        : new[]{"live/steps/","live/business/","live/managed-business/"}.Any(p=>relative.StartsWith(p,StringComparison.OrdinalIgnoreCase)) ? 2 : 1;
     static readonly Regex SecretKey = new("password|passwd|credential|authorization|cookie|refresh.?token|access.?token|id.?token|session.?token|auth.?token|private.?key|api.?key|secret|dpapi|modulepayload|sessionblob|^token$|^auth$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     static readonly Regex SecretText = new("(?i)(\\b(?:password|passwd|authorization|cookie|token|credential|api[_-]?key|access[_-]?token|refresh[_-]?token|id[_-]?token|session[_-]?token|auth[_-]?token|secret|private[_-]?key)[\"']?\\s*[=:]\\s*)(?:Bearer\\s+)?(?:\"[^\"]*\"|'[^']*'|[^\\s,;]+)", RegexOptions.CultureInvariant);
     static readonly Regex Bearer = new(@"(?i)\bBearer\s+[A-Za-z0-9_.+/=-]+|\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+", RegexOptions.CultureInvariant);
@@ -101,7 +103,7 @@ public static class DailyDiagnosticExport
             if(visited>=6000)return;
             try {
                 if(!Directory.Exists(folder)||!SafePath(folder))return;
-                foreach(var path in Directory.EnumerateFileSystemEntries(folder)) {
+                foreach(var path in Directory.EnumerateFileSystemEntries(folder).OrderByDescending(File.GetLastWriteTimeUtc)) {
                     token.ThrowIfCancellationRequested();if(++visited>6000){skipped.Add(new{path=sourceName+"/"+Path.GetRelativePath(root,folder),reason="scan-limit"});break;}
                     string rel=Path.GetRelativePath(root,path).Replace('\\','/');
                     if(Link(path)){skipped.Add(new{path=sourceName+"/"+rel,reason="link"});continue;}
@@ -115,7 +117,9 @@ public static class DailyDiagnosticExport
             root=source.Value;sourceName=source.Key;visited=0;
             if(Directory.Exists(root)&&Link(root)){skipped.Add(new{path=sourceName,reason="link"});continue;}
             foreach(var name in Top.Concat(Singles).Concat(Top.Where(LogName).SelectMany(n=>Rotations.Select(r=>n+r)))) {string p=Path.Combine(root,name);try{if(File.Exists(p)&&SafePath(p))files.Add((new FileInfo(p),root,sourceName));}catch(Exception e) when(e is IOException or UnauthorizedAccessException){skipped.Add(new{path=sourceName+"/"+name,reason=e.GetType().Name});}}
-            foreach(var tree in Trees)Walk(Path.Combine(root,tree),0);
+            // A large historical step tree must not consume another category's
+            // entire enumeration budget. Export byte/file limits still apply below.
+            foreach(var tree in Trees){visited=0;Walk(Path.Combine(root,tree),0);}
         }
         string parent=Path.GetDirectoryName(destination)!;Directory.CreateDirectory(parent);
         string temporary=destination+"."+Guid.NewGuid().ToString("N")+".tmp";

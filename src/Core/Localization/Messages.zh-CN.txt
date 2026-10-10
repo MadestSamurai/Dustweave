@@ -31,7 +31,8 @@ free_attempts_exhausted=活动免费次数已用完，下次从最新解锁关�
 all_unlocked_stages_completed=已完成全部已解锁活动关卡
 server_collection_synchronized=所选地图已同步，可直接开始日常。
 server_collection_verified=所选地图已收齐，无需重新遍历。
-weekly_route_verified=本周所选地图已收集完成
+weekly_route_verified=本周可收集地图已完成
+collection_pack_list_incomplete=卡带列表尚未完整载入，请等待游戏加载后重试周收集。
 weekly_npc_verified=本周NPC任务已核对完成
 weekly_fishing_complete=本周钓鱼任务已完成
 weekly_minigame_complete=本周游玩小游戏任务已完成
@@ -824,3 +825,6 @@ Waypoint map not available: page did not change=传送列表未翻页，尚未�
 Weekly craft progress did not advance=每周制作装备任务进度尚未更新
 Weekly Total War progress not confirmed=每周公会战任务进度尚未确认
 Workflow time budget reached; no automatic restart=本环节达到运行时限，已保留进度，未自动重开。
+
+account.local_login_incomplete=本机登录信息尚未准备好保存。请在游戏中启用自动登录，正常退出游戏和启动器后再保存。
+connection.login_identity_unavailable=尚未确认游戏中的账号身份。请完成登录；若已进入游戏，请导出诊断日志，无需注销账号。

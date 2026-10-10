@@ -48,7 +48,7 @@ public sealed class DailyFirstRun(IAccountSessions sessions, IGameHost host, str
             var snapshot = host.ReadSnapshot();
             var catalog = sessions.Read();
             // An existing registry token is not proof of the account currently in the game.
-            if (catalog.SessionComplete && DailyProfiles.ValidKey(catalog.CurrentKey) && snapshot?.AccountKey == catalog.CurrentKey &&
+            if (DailyProfiles.ValidKey(catalog.CurrentKey) && snapshot?.AccountKey == catalog.CurrentKey &&
                 guard.Observe(snapshot, game, catalog.CurrentKey, "", DateTimeOffset.UtcNow))
             {
                 Proof = new(game, snapshot.AccountKey, snapshot.PlayerKey, snapshot.PlayerName, DateTimeOffset.UtcNow);
@@ -65,7 +65,8 @@ public sealed class DailyFirstRun(IAccountSessions sessions, IGameHost host, str
         if (Proof == null) return false;
         var catalog = sessions.Read();
         if (host.Find() != null || catalog.GameRunning || catalog.StarterRunning) return false;
-        if (!catalog.SessionComplete || catalog.CurrentKey != Proof.Account) throw new InvalidOperationException("onboarding.identity_changed");
+        if (!catalog.SessionComplete) throw new InvalidOperationException("account.local_login_incomplete");
+        if (catalog.CurrentKey != Proof.Account) throw new InvalidOperationException("onboarding.identity_changed");
         return true;
     }
 

@@ -57,6 +57,8 @@ internal static class AccountIdentityCases
         Check(written==14 && !replaced && slots.Count==4,"new identity creates exactly one slot");
         Check(SessionIdentity.GetMemberId(S("0001000001","x",1))=="1000001","numeric and string identities normalize identically");
         var latest=SessionService.LatestSameAccount(old,Load);
+        var identityOnly = old with { Entries = old.Entries.Where(e => e.Name == "neon_auth_member_h1293550423").ToArray() };
+        Check(SessionIdentity.GetMemberId(identityOnly) == SessionIdentity.GetMemberId(old), "member identity is readable without token or auto-login flags");
         Check(latest.Entries.SequenceEqual(current.Entries) && latest.Alias==old.Alias,"launch uses newest same-account credentials but original alias");
         Check(SessionIdentity.GetMemberId(latest)!="2000001","newer other account never selected for launch");
         Check(slots[13].Alias=="Accidental copy","legacy duplicate file retained, no destructive migration");

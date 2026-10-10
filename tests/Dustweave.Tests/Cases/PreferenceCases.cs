@@ -24,12 +24,54 @@ static class PreferenceCases
             throw new Exception(name);
         }
         var p = store.Read(a);
+        Check(!p.Weekly.WalkCollect, "weekly collection defaults to Absorb, not walking");
+        foreach (bool walk in new[] { false, true })
+        {
+            var oldRange = JsonSerializer.SerializeToNode(new DailyPreferences())!.AsObject();
+            oldRange["Schema"] = 15;
+            var weekly = oldRange["Weekly"]!.AsObject();
+            weekly["FirstChapter"] = 8;
+            weekly["LastChapter"] = 8;
+            weekly["CharacterCartridges"] = 0;
+            weekly["EventCartridges"] = false;
+            weekly["WalkCollect"] = walk;
+            weekly["Mainline"] = false;
+            weekly["Steal"] = true;
+            weekly["Npc"] = true;
+            var migratedRoute = DailyPreferences.Parse(oldRange.ToJsonString());
+            Check(migratedRoute.Schema == 16 && migratedRoute.Weekly.WalkCollect == walk &&
+                !migratedRoute.Weekly.Mainline && migratedRoute.Weekly.Steal && migratedRoute.Weekly.Npc,
+                "range migration preserves independent tasks and walking choice " + walk);
+            store.Save(b, migratedRoute);
+            var saved = JsonNode.Parse(File.ReadAllText(store.PathFor(b)))!["Weekly"]!.AsObject();
+            Check(new[] { "FirstChapter", "LastChapter", "CharacterCartridges", "EventCartridges" }.All(key => !saved.ContainsKey(key)) && store.Read(b).Weekly.WalkCollect == walk,
+                "retired route bounds do not survive save and reload " + walk);
+        }
+        using (var harness = new WorkflowHarness(Path.Combine(output, "fixed-weekly-route"), []))
+        {
+            var workflow = new DailyWorkflow(harness.Root, Path.Combine(TestPaths.SourceRoot, "assets"), harness.Context,
+                harness.Driver, harness.Business, harness.Workflow.Navigation, [], () => false,
+                (_, _, _) => throw new Exception("Catalog validation must not send game commands"));
+            var routeCatalog = new DailyCollectionCatalog(workflow);
+            var expected = Enumerable.Range(1, 19).Select(n => (long)n)
+                .Concat(Enumerable.Range(1001, 7).Select(n => (long)n)).Concat(new long[] { 2001, 2002, 2005, 2007 }).ToArray();
+            Check(routeCatalog.Packs().SequenceEqual(expected), "fixed weekly catalog covers all supported story, character and event packs");
+            Check(routeCatalog.Packs().All(id => routeCatalog.Maps(id).Length > 0 && routeCatalog.StealMaps(id) != null), "shared weekly route has collection and theft coverage for every pack");
+            Check(routeCatalog.Maps(6).SequenceEqual(new long[] { 601, 602, 606, 605, 608, 607 }), "fixed route retains chapter six floor exclusions");
+            var owned = new long[] { 2007, 1007, 19, 1, 2003, 1008, 9999 };
+            var evidence = WorkflowCases.Evidence(
+                WorkflowCases.Reading("mainline.owned_packs", ("Count", owned.Length), ("$items", DailyData.Array(owned.Select(id => DailyData.O(("Key", id), ("Value.Id", id)))))),
+                WorkflowCases.Reading("mainline.packs", ("Count", expected.Length + 3), ("$items", DailyData.Array(expected.Concat(new long[] { 2003, 1008, 9999 }).Select(id => DailyData.O(("Id", id), ("PackType", id >= 2000 ? 6 : id >= 1000 ? 1 : 0)))))));
+            Check(routeCatalog.AvailablePacks(evidence).SequenceEqual(new long[] { 1, 19, 1007, 2007 }), "automatic route excludes unowned and noncollectible cartridges while retaining latest supported packs");
+            evidence["Readings"]![0]!["Values"]![0]!["Json"] = "100";
+            Reject(() => routeCatalog.AvailablePacks(evidence), "incomplete cartridge ownership cannot silently report collection complete");
+        }
         var priorPuzzle = JsonSerializer.SerializeToNode(p)!.AsObject();
         priorPuzzle["Schema"] = 14;
         priorPuzzle["Events"]!.AsObject().Remove("Puzzle");
         priorPuzzle["Events"]!["Enabled"] = false;
         var migratedPuzzle = DailyPreferences.Parse(priorPuzzle.ToJsonString());
-        Check(migratedPuzzle.Schema == 15 && migratedPuzzle.Events.Puzzle && !migratedPuzzle.Events.Enabled, "puzzle migration preserves disabled parent stage");
+        Check(migratedPuzzle.Schema == 16 && migratedPuzzle.Events.Puzzle && !migratedPuzzle.Events.Enabled, "puzzle migration preserves disabled parent stage");
         migratedPuzzle.Events.Puzzle = false;
         Check(!DailyPreferences.Parse(JsonSerializer.Serialize(migratedPuzzle)).Events.Puzzle, "puzzle opt out survives preference roundtrip");
         Check(p.Hunt.OrdinaryChapter == 9 && p.Hunt.FarmGold && !p.Hunt.FarmSlime && p.Hunt.StoneElement == "least" && p.Hunt.TorchLimit == 60, "daily defaults match requested policy");
@@ -68,7 +110,7 @@ static class PreferenceCases
         v2["Stages"]!.AsObject().Remove("Mail");
         v2["Stages"]!["Guild"] = false;
         var migrated = DailyPreferences.Parse(v2.ToJsonString());
-        Check(migrated.Schema == 15 && migrated.Stages.Mail && !migrated.Stages.Guild, "v2 mail migration preserves disabled daily stages");
+        Check(migrated.Schema == 16 && migrated.Stages.Mail && !migrated.Stages.Guild, "v2 mail migration preserves disabled daily stages");
         v2["Stages"]!.AsObject().Remove("FreeDraws");
         Reject(() => DailyPreferences.Parse(v2.ToJsonString()), "incomplete v2 cannot implicitly reenable draw");
         var v5 = JsonSerializer.SerializeToNode(new DailyPreferences())!.AsObject();
@@ -79,7 +121,7 @@ static class PreferenceCases
         v5["Schema"] = 5;
         v5["Mirror"]!["Multiplier"] = 15;
         var v6 = DailyPreferences.Parse(v5.ToJsonString());
-        Check(v6.Schema == 15 && !v6.EventBattle.Enabled && v6.EventBattle.Challenge && v6.Mirror.Multiplier == 15, "event migration opt in and retains prior settings");
+        Check(v6.Schema == 16 && !v6.EventBattle.Enabled && v6.EventBattle.Challenge && v6.Mirror.Multiplier == 15, "event migration opt in and retains prior settings");
         v6.EventBattle.SearchSeconds = 0;
         Reject(v6.Validate, "event invalid search bound rejected");
         var old6 = JsonSerializer.SerializeToNode(new DailyPreferences())!.AsObject();
@@ -89,7 +131,7 @@ static class PreferenceCases
         old6["Schema"] = 6;
         old6["Mirror"]!["Enabled"] = false;
         var now7 = DailyPreferences.Parse(old6.ToJsonString());
-        Check(now7.Schema == 15 && now7.Events.Enabled && now7.Events.Missions && now7.Events.Roulette && now7.Events.Exchange && !now7.Mirror.Enabled, "event settings migration preserves disabled mirror");
+        Check(now7.Schema == 16 && now7.Events.Enabled && now7.Events.Missions && now7.Events.Roulette && now7.Events.Exchange && !now7.Mirror.Enabled, "event settings migration preserves disabled mirror");
         var incompleteEvents = JsonSerializer.SerializeToNode(now7)!.AsObject();
         incompleteEvents["Events"]!.AsObject().Remove("Exchange");
         Reject(() => DailyPreferences.Parse(incompleteEvents.ToJsonString()), "incomplete event spending preference rejected");
@@ -102,7 +144,7 @@ static class PreferenceCases
         old10["Weekly"]!.AsObject().Remove("EquipmentCraft");
         old10["Equipment"]!["Enabled"] = false;
         var new11 = DailyPreferences.Parse(old10.ToJsonString());
-        Check(new11.Schema == 15 && new11.Weekly.Book && new11.Weekly.EquipmentCraft && !new11.Equipment.Enabled, "weekly migration preserves recycle choice");
+        Check(new11.Schema == 16 && new11.Weekly.Book && new11.Weekly.EquipmentCraft && !new11.Equipment.Enabled, "weekly migration preserves recycle choice");
         new11.Weekly.Book = false;
         store.Save(b, new11);
         Check(!store.Read(b).Weekly.Book && store.Read(b).Weekly.EquipmentCraft, "weekly task switches independent");
@@ -111,7 +153,7 @@ static class PreferenceCases
         old12["Weekly"]!.AsObject().Remove("Steal");
         old12["Weekly"]!["Mainline"] = false;
         var steal = DailyPreferences.Parse(old12.ToJsonString());
-        Check(steal.Schema == 15 && !steal.Weekly.Steal && !steal.Weekly.Mainline, "steal migration preserves disabled collection");
+        Check(steal.Schema == 16 && !steal.Weekly.Steal && !steal.Weekly.Mainline, "steal migration preserves disabled collection");
         steal.Weekly.Steal = true;
         store.Save(b, steal);
         Check(store.Read(b).Weekly.Steal && !store.Read(a).Weekly.Steal, "steal switch isolated per account");

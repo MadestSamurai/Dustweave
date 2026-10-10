@@ -38,7 +38,7 @@ public static class DailyJson
     }
     public static void Write<T>(string path, T value)
     {
-        if (BD2.LocalIpc.DesktopFiles.Write(path, JsonSerializer.SerializeToUtf8Bytes(value, Options), Path.GetFileName(path) == "guild-command.json"))
+        if (BD2.LocalIpc.DesktopFiles.Handles(path) && BD2.LocalIpc.DesktopFiles.Write(path, JsonSerializer.SerializeToUtf8Bytes(value, Options), Path.GetFileName(path) == "guild-command.json"))
             return;
         path = Path.GetFullPath(path);
         lock (Writes.GetOrAdd(path, _ => new object()))
@@ -78,6 +78,7 @@ public static class DailyJson
                         delay = Math.Min(100, delay * 2);
                     }
                 }
+                DailyLogEvidence.Written(path);
             }
             finally { if (!ready && File.Exists(tmp)) File.Delete(tmp); }
         }

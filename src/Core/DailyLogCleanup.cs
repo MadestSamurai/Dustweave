@@ -3,7 +3,7 @@ namespace Dustweave;
 
 public sealed record DailyLogPolicy(bool Automatic = true, int Days = 7, int LimitMiB = 512)
 {
-    public DailyLogPolicy Normalize() => this with { Days = Math.Clamp(Days, 2, 90), LimitMiB = Math.Clamp(LimitMiB, 128, 4096) };
+    public DailyLogPolicy Normalize() => this with { Days = Math.Clamp(Days, 2, 7), LimitMiB = Math.Clamp(LimitMiB, 128, 4096) };
 }
 public sealed record DailyLogFile(string Path, long Bytes, DateTime Written, DateTime Created);
 public sealed record DailyLogUnit(string Path, bool Step, DailyLogFile[] Files)
@@ -24,6 +24,8 @@ public sealed record DailyLogCleanupResult(int Files, long Bytes, int Skipped);
 public static class DailyLogCleanup
 {
     static readonly HashSet<string> StepNames = new(StringComparer.Ordinal) { "before.json", "intent.json", "transport.json", "result.json" };
+    // These are observations, not account, queue or consuming-operation state.
+    static readonly string[] EvidenceTrees = ["live/event-journal", "live/reward-queries", "live/weekly-npc-queries", "live/log-compaction"];
     public static DailyLogPolicy Load(string root) => (DailyJson.TryRead<DailyLogPolicy>(Path.Combine(root, "log-retention.json")) ?? new()).Normalize();
     public static void Save(string root, DailyLogPolicy policy) => DailyJson.Write(Path.Combine(root, "log-retention.json"), policy.Normalize());
     static bool Id(string value) => value.Length == 32 && value.All(char.IsAsciiHexDigit);
@@ -54,7 +56,9 @@ public static class DailyLogCleanup
         using var command = Read(intent, 128 * 1024);
         if (Text(command.RootElement,"Id") != id) return false;
         using var final = Read(result);
-        if (Text(final.RootElement,"state") != "observed_expected_ui" || Text(final.RootElement,"id") != id || Text(final.RootElement,"engine") != "dotnet-driver-v1") return false;
+        bool successful = Text(final.RootElement,"state") == "observed_expected_ui"
+            || Text(final.RootElement,"state") == "dispatched_only" && Text(final.RootElement,"diagnostic_storage") == "summary-v1";
+        if (!successful || Text(final.RootElement,"id") != id || Text(final.RootElement,"engine") != "dotnet-driver-v1") return false;
         // UI visibility is not proof of a transaction. Keep its command until the
         // owning business record itself confirms completion. Unknown formats stay.
         string reason = Text(command.RootElement,"Reason");
@@ -78,7 +82,7 @@ public static class DailyLogCleanup
         return true;
     }
     static bool LogName(string name) => name.EndsWith(".log",StringComparison.OrdinalIgnoreCase) || name.EndsWith(".jsonl",StringComparison.OrdinalIgnoreCase)
-        || Enumerable.Range(1,3).Any(n => name.EndsWith(".jsonl."+n,StringComparison.OrdinalIgnoreCase) || name.EndsWith(".log."+n,StringComparison.OrdinalIgnoreCase))
+        || Enumerable.Range(1,4).Any(n => name.EndsWith(".jsonl."+n,StringComparison.OrdinalIgnoreCase) || name.EndsWith(".log."+n,StringComparison.OrdinalIgnoreCase))
         || name.EndsWith(".log.previous",StringComparison.OrdinalIgnoreCase);
     static IEnumerable<FileInfo> Logs(string root, string folder, int depth, CancellationToken token)
     {
@@ -93,10 +97,16 @@ public static class DailyLogCleanup
             {
                 token.ThrowIfCancellationRequested();
                 if((item.Attributes & FileAttributes.ReparsePoint)!=0) continue;
-                if(item is FileInfo file && LogName(file.Name) && Safe(root,file.FullName)) yield return file;
+                if(item is FileInfo file && (LogName(file.Name) || DiagnosticJson(root,file.FullName)) && Safe(root,file.FullName)) yield return file;
                 else if(item is DirectoryInfo dir && entry.Depth>0) pending.Push((dir.FullName,entry.Depth-1));
             }
         }
+    }
+    static bool DiagnosticJson(string root, string path)
+    {
+        string relative = Path.GetRelativePath(root, path).Replace('\\', '/');
+        return Path.GetExtension(path).Equals(".json", StringComparison.OrdinalIgnoreCase)
+            && new[] { "suite/diagnostics/", "live/diagnostics/" }.Concat(EvidenceTrees.Select(t => t + "/")).Any(p => relative.StartsWith(p, StringComparison.Ordinal));
     }
     public static Task<DailyLogPlan> ScanAsync(string root, DailyLogPolicy policy, CancellationToken token = default, IProgress<DailyLogScanProgress>? progress = null) => Task.Run(()=>Scan(root,policy,DateTime.UtcNow,token,progress),token);
     public static DailyLogPlan Scan(string root, DailyLogPolicy policy, DateTime now, CancellationToken token = default, IProgress<DailyLogScanProgress>? progress = null)
@@ -105,7 +115,7 @@ public static class DailyLogCleanup
         var candidates=new List<DailyLogUnit>();int entriesCount=0,examined=0;
         void Report(){progress?.Report(new(entriesCount,total,examined));}
         // Never include caches, account stores, queues, exported ZIPs or transaction evidence.
-        foreach(var (tree,depth) in new[]{("",0),("suite/diagnostics",1),("live/diagnostics",1),("tools",3),("parallel-workers",2)})
+        foreach(var (tree,depth) in new[]{("",0),("suite/diagnostics",1),("live/diagnostics",1),("tools",3),("parallel-workers",2)}.Concat(EvidenceTrees.Select(t => (t,0))))
         {
             string folder=Path.Combine(root,tree);
             if(!Directory.Exists(folder) || tree.Length>0 && !Safe(root,folder)) continue;
@@ -133,8 +143,9 @@ public static class DailyLogCleanup
         {
             token.ThrowIfCancellationRequested();
             if(unit.Written>=now.AddDays(-policy.Days) && remaining <= policy.LimitMiB*1024L*1024)continue;
+            if(!unit.Step && DiagnosticJson(root,unit.Path) && unit.Written>=now.AddDays(-policy.Days))continue;
             if(++examined%100==0)Report();
-            try { if(unit.Step&&!CompletedStep(root,unit.Path)){skipped++;continue;} }
+            try { if(unit.Step && unit.Written>=now.AddDays(-policy.Days) && !CompletedStep(root,unit.Path)){skipped++;continue;} }
             catch(Exception e) when(e is IOException or UnauthorizedAccessException or JsonException){skipped++;continue;}
             selected.Add(unit);remaining-=unit.Bytes;
         }
@@ -145,9 +156,9 @@ public static class DailyLogCleanup
         if(unit.Files.Length==0)return false;
         if(unit.Step)return Path.GetDirectoryName(unit.Path)==Path.Combine(root,"live","steps") && Id(Path.GetFileName(unit.Path))
             && unit.Files.All(f=>Path.GetDirectoryName(f.Path)==unit.Path && StepNames.Contains(Path.GetFileName(f.Path)));
-        if(unit.Files.Length!=1 || unit.Path!=unit.Files[0].Path || !LogName(Path.GetFileName(unit.Path)))return false;
+        if(unit.Files.Length!=1 || unit.Path!=unit.Files[0].Path || !(LogName(Path.GetFileName(unit.Path)) || DiagnosticJson(root,unit.Path)))return false;
         string relative=Path.GetRelativePath(root,unit.Path).Replace(Path.DirectorySeparatorChar,'/');
-        return !relative.Contains('/') || new[]{"suite/diagnostics/","live/diagnostics/","tools/","parallel-workers/"}.Any(prefix=>relative.StartsWith(prefix,StringComparison.Ordinal));
+        return !relative.Contains('/') || new[]{"suite/diagnostics/","live/diagnostics/","tools/","parallel-workers/"}.Concat(EvidenceTrees.Select(t=>t+"/")).Any(prefix=>relative.StartsWith(prefix,StringComparison.Ordinal));
     }
     public static Task<DailyLogCleanupResult> ApplyAsync(DailyLogPlan plan, CancellationToken token = default) => Task.Run(()=>Apply(plan,token),token);
     public static DailyLogCleanupResult Apply(DailyLogPlan plan, CancellationToken token = default)
@@ -161,7 +172,16 @@ public static class DailyLogCleanup
             token.ThrowIfCancellationRequested();
             try {
                 if(!AllowedUnit(plan.Root,unit) || unit.Written>=DateTime.UtcNow.AddDays(-2) || unit.Files.Any(f=>!Safe(plan.Root,f.Path)||Stamp(new FileInfo(f.Path))!=f)) {skipped++;continue;}
-                if(unit.Step && (!CompletedStep(plan.Root,unit.Path)||Directory.GetFileSystemEntries(unit.Path).Length!=unit.Files.Length)){skipped++;continue;}
+                bool expired = unit.Written < DateTime.UtcNow.AddDays(-plan.Policy.Normalize().Days);
+                if(unit.Step && ((!expired && !CompletedStep(plan.Root,unit.Path))||Directory.GetFileSystemEntries(unit.Path).Length!=unit.Files.Length)){skipped++;continue;}
+                // A pending operation may still need its receipt to avoid replay.
+                // Preserve that independent recovery checkpoint before expiring logs.
+                if (unit.Step && expired && !DailyLogEvidence.BusinessResolved(plan.Root, DailyJson.TryRead<System.Text.Json.Nodes.JsonObject>(Path.Combine(unit.Path,"intent.json"))))
+                {
+                    var result = DailyJson.TryRead<System.Text.Json.Nodes.JsonObject>(Path.Combine(unit.Path,"result.json"));
+                    if (result?["receipt"] is System.Text.Json.Nodes.JsonObject receipt)
+                        DailyJson.Write(Path.Combine(plan.Root,"live","step-recovery",Path.GetFileName(unit.Path)+".json"), new { receipt, intent = DailyJson.TryRead<System.Text.Json.Nodes.JsonObject>(Path.Combine(unit.Path,"intent.json")), diagnosticExpired = true });
+                }
                 foreach(var file in unit.Files)
                 {
                     token.ThrowIfCancellationRequested();
