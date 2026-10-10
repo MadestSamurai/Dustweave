@@ -1,3 +1,4 @@
+extern alias liveUtility;
 using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography;
@@ -20,7 +21,8 @@ public sealed class TradePlanPanel : UserControl
     private readonly TextBlock totals = Text("导入后可查看预计增益、垫资和回款日期。");
     private readonly TextBox reserve = new() { Text = "0", Width = 130 }, maximum = new() { Text = "", Width = 130 };
     private readonly Button capture = new() { Content = "读取当前游戏" }, import = new() { Content = "导入离线快照" }, compute = new() { Content = "计算计划", IsEnabled = false }, export = new() { Content = "导出明细", IsEnabled = false };
-    private readonly Button saveSettings = new() { Content = "保存资金设置" };
+    private readonly Button saveSettings = new() { Content = "保存跑商设置" };
+    private readonly CheckBox includeBreakEven = new() { Margin = new(0, 0, 0, 4), Content = Text("购买零收益商品（金币成就）") };
     private readonly DataGrid buys = Grid(), cooks = Grid(), today = Grid(), future = Grid();
     private JsonElement? snapshot;
     private string? output, scope;
@@ -54,6 +56,11 @@ public sealed class TradePlanPanel : UserControl
         AddField(settings, "本轮最多垫资", maximum);
         settings.Children.Add(Text("留空表示不限额"));
         heading.Children.Add(settings);
+        heading.Children.Add(includeBreakEven);
+        var breakEvenHint = Text("默认关闭。开启后，用剩余预算购买折扣后买价等于120%卖价的额外商品，不分摊砍价费；仍须等到高价日卖出。");
+        breakEvenHint.Margin = new(24, 0, 0, 12);
+        breakEvenHint.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk");
+        heading.Children.Add(breakEvenHint);
         var actions = new WrapPanel { Margin = new(0, 0, 0, 10) };
         foreach (var button in new[] { capture, import, compute, export, saveSettings })
         {
@@ -73,7 +80,7 @@ public sealed class TradePlanPanel : UserControl
         import.Click += (_, _) => Import();
         compute.Click += async (_, _) => await Compute();
         export.Click += (_, _) => Export();
-        saveSettings.Click += (_, _) => { try { SaveSettings(); L.Literal(status, "本账号资金设置已保存，下次开始跑商时生效；没有执行交易。"); } catch (Exception ex) { DailyUiText.Error(status, ex); } };
+        saveSettings.Click += (_, _) => { try { SaveSettings(); L.Literal(status, "本账号跑商设置已保存，下次开始跑商时生效；没有执行交易。"); } catch (Exception ex) { DailyUiText.Error(status, ex); } };
         if (expectedAccount != null && DailyProfiles.ValidKey(expectedAccount))
         {
             scope = Path.Combine(root, "trade", "plans", Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(expectedAccount))).ToLowerInvariant());
@@ -82,6 +89,8 @@ public sealed class TradePlanPanel : UserControl
         saveSettings.IsEnabled = scope != null;
         reserve.TextChanged += (_, _) => Changed();
         maximum.TextChanged += (_, _) => Changed();
+        includeBreakEven.Checked += (_, _) => Changed();
+        includeBreakEven.Unchecked += (_, _) => Changed();
     }
     private void ReadSettings()
     {
@@ -89,10 +98,12 @@ public sealed class TradePlanPanel : UserControl
         itemReserves = new();
         reserve.Text = "0";
         maximum.Text = "";
+        includeBreakEven.IsChecked = false;
         if (!File.Exists(path))
             return;
         using var saved = JsonDocument.Parse(File.ReadAllText(path));
         var s = saved.RootElement;
+        includeBreakEven.IsChecked = s.TryGetProperty("include_break_even_resales", out var breakEven) && breakEven.GetBoolean();
         reserve.Text = s.GetProperty("reserve_gold").GetInt64().ToString();
         maximum.Text = s.GetProperty("max_spend").ValueKind == JsonValueKind.Null ? "" : s.GetProperty("max_spend").GetInt64().ToString();
         foreach (var entry in s.GetProperty("reserve_items").EnumerateObject())
@@ -108,6 +119,7 @@ public sealed class TradePlanPanel : UserControl
         DailyJson.Write(Path.Combine(scope, "settings.json"), new
         {
             enabled = false,
+            include_break_even_resales = includeBreakEven.IsChecked == true,
             reserve_gold = keep,
             max_spend = max,
             reserve_items = itemReserves
@@ -223,29 +235,40 @@ public sealed class TradePlanPanel : UserControl
         {
             Directory.CreateDirectory(Path.GetDirectoryName(temporary)!);
             busy = true;
-            capture.IsEnabled = import.IsEnabled = compute.IsEnabled = export.IsEnabled = reserve.IsEnabled = maximum.IsEnabled = false;
+            capture.IsEnabled = import.IsEnabled = compute.IsEnabled = export.IsEnabled = reserve.IsEnabled = maximum.IsEnabled = includeBreakEven.IsEnabled = saveSettings.IsEnabled = false;
             L.Literal(status, "正在读取已连接游戏的库存和商店；不会购买、制作或出售。");
-            var game = new DailyGameHost(root).Find() ?? throw new InvalidOperationException("游戏未运行。");
-            string account = expectedAccount ?? DailyJson.TryRead<DailySnapshot>(Path.Combine(root, "snapshot.json"))?.AccountKey ?? "";
-            var observation = DailyStageObservation.Attach(root, account);
-            var before = await observation.ReadFrameAsync();
-            var data = await DailyTradeData.PrepareAsync(AppContext.BaseDirectory, root, game, before, () => false, _ => { }, allowCompleted: false);
-            data.AssertReady();
-            if (!System.Text.Json.Nodes.JsonNode.DeepEquals(before.Context, (await observation.ReadFrameAsync()).Context))
-                throw new InvalidOperationException("准备期间游戏身份变化；没有读取旧账号库存。");
-            preparedDirectory = data.Directory;
-            using var driver = new DailyCommandDriver(root, new DailyPipeMailbox(root, game), observation.ReadFrameAsync, () => false);
-            driver.EnsureBound(before.Context);
-            driver.Acquire("live");
-            var navigation = new DailyStageNavigation(observation.ReadFrameAsync, () => false);
-            var proofs = DailyWorkflowRegistry.Proofs();
-            var business = new DailyManagedBusiness(root, driver, proofs, () => false);
-            var workflow = new DailyWorkflow(root, AppContext.BaseDirectory, before.Context, driver, business, navigation, proofs, () => false, (_, _, _) => throw new InvalidOperationException("只读采集不可执行导航。"));
-            await new DailyTradeExecution(workflow, data.VerifiedCatalog ?? throw new InvalidDataException("缺少已校验的跑商规则。")).Capture(temporary);
+            await Task.Run(() => DailyTradeCaptureConnection.RunAsync(root, new DailyGameHost(root), expectedAccount,
+                async () =>
+                {
+                    // Reuse the daily readiness path without running any daily task.
+                    await DailySuite.ActivateAsync(new DailyGameHost(root), root, "daily", _ => { }, CancellationToken.None);
+                    await liveUtility::Dustweave.Connection.LiveEntry.RunAsync(["ready"], false,
+                        args => liveUtility::Dustweave.Connection.LiveEntry.RunAsync(args, false));
+                }, async (game, account) =>
+                {
+                    // A prior queue stop does not cancel an explicit, read-only capture.
+                    var observation = DailyStageObservation.Attach(root, account, () => false);
+                    var before = await observation.ReadFrameAsync();
+                    var data = await DailyTradeData.PrepareAsync(AppContext.BaseDirectory, root, game, before, () => false, _ => { }, allowCompleted: false);
+                    data.AssertReady();
+                    if (!System.Text.Json.Nodes.JsonNode.DeepEquals(before.Context, (await observation.ReadFrameAsync()).Context))
+                        throw new InvalidOperationException("准备期间游戏身份变化；没有读取旧账号库存。");
+                    preparedDirectory = data.Directory;
+                    using var driver = new DailyCommandDriver(root, new DailyPipeMailbox(root, game), observation.ReadFrameAsync, () => false);
+                    driver.SubmissionGuard = () => throw new InvalidOperationException("只读采集不可执行导航。");
+                    driver.EnsureBound(before.Context);
+                    driver.Acquire("live");
+                    var navigation = new DailyStageNavigation(observation.ReadFrameAsync, () => false);
+                    var proofs = DailyWorkflowRegistry.Proofs();
+                    var business = new DailyManagedBusiness(root, driver, proofs, () => false);
+                    var workflow = new DailyWorkflow(root, AppContext.BaseDirectory, before.Context, driver, business, navigation, proofs, () => false, (_, _, _) => throw new InvalidOperationException("只读采集不可执行导航。"));
+                    await new DailyTradeExecution(workflow, data.VerifiedCatalog ?? throw new InvalidDataException("缺少已校验的跑商规则。")).Capture(temporary);
+                    return true;
+                }));
             LoadSnapshot(temporary);
         }
-        catch (Exception ex) { DailyUiText.Error(status, ex, "无法读取："); return; }
-        finally { busy = false; import.IsEnabled = reserve.IsEnabled = maximum.IsEnabled = true; capture.IsEnabled = allowGame; compute.IsEnabled = snapshot != null; }
+        catch (Exception ex) { RecordFailure("capture", ex, temporary); DailyUiText.Error(status, ex, "无法读取："); return; }
+        finally { busy = false; import.IsEnabled = reserve.IsEnabled = maximum.IsEnabled = includeBreakEven.IsEnabled = true; saveSettings.IsEnabled = scope != null; capture.IsEnabled = allowGame; compute.IsEnabled = snapshot != null; }
         await Compute();
     }
     private static long Amount(TextBox control)
@@ -264,7 +287,7 @@ public sealed class TradePlanPanel : UserControl
             long? max = maximum.Text.Trim().Length == 0 ? null : Amount(maximum);
             var catalog = DailyTradeCatalog.Read(DailyTradeData.CatalogPath(preparedDirectory ?? AppContext.BaseDirectory));
             busy = true;
-            capture.IsEnabled = import.IsEnabled = compute.IsEnabled = export.IsEnabled = reserve.IsEnabled = maximum.IsEnabled = false;
+            capture.IsEnabled = import.IsEnabled = compute.IsEnabled = export.IsEnabled = reserve.IsEnabled = maximum.IsEnabled = includeBreakEven.IsEnabled = saveSettings.IsEnabled = false;
             L.Literal(status, "正在计算原料、料理与资金的共同最优分配……");
             ClearResult();
             string input = Path.Combine(scope, "snapshot.json"), settings = Path.Combine(scope, "settings.json");
@@ -274,6 +297,7 @@ public sealed class TradePlanPanel : UserControl
             File.WriteAllText(settings, JsonSerializer.Serialize(new
             {
                 enabled = false,
+                include_break_even_resales = includeBreakEven.IsChecked == true,
                 reserve_gold = keep,
                 max_spend = max,
                 reserve_items = itemReserves
@@ -285,8 +309,17 @@ public sealed class TradePlanPanel : UserControl
             Display(output);
             export.IsEnabled = true;
         }
-        catch (Exception ex) { DailyUiText.Error(status, ex, "未生成新计划："); }
-        finally { busy = false; import.IsEnabled = reserve.IsEnabled = maximum.IsEnabled = true; capture.IsEnabled = allowGame; compute.IsEnabled = snapshot != null; }
+        catch (Exception ex) { RecordFailure("compute", ex, output); DailyUiText.Error(status, ex, "未生成新计划："); }
+        finally { busy = false; import.IsEnabled = reserve.IsEnabled = maximum.IsEnabled = includeBreakEven.IsEnabled = true; saveSettings.IsEnabled = scope != null; capture.IsEnabled = allowGame; compute.IsEnabled = snapshot != null; }
+    }
+    private void RecordFailure(string operation, Exception error, string? artifact)
+    {
+        // Settings capture is outside the task queue. Give it its own durable
+        // diagnostic rather than overwriting an unrelated queue's last error.
+        try { DailyJson.Write(Path.Combine(root, "trade", "diagnostics", Guid.NewGuid().ToString("N") + ".json"),
+            new { atUtc = DateTimeOffset.UtcNow, version = DailyProductVersion.Current, operation, error = error.ToString(), artifact,
+                issue = DailyIssues.Classify(error), gameplayActions = 0 }); }
+        catch (Exception writeError) when (writeError is IOException or UnauthorizedAccessException) { /* Keep the original UI error. */ }
     }
     public void Display(string path)
     {
@@ -295,7 +328,11 @@ public sealed class TradePlanPanel : UserControl
         var s = p.GetProperty("summary");
         if (snapshot != null && p.GetProperty("context").GetProperty("account").GetString() != snapshot.Value.GetProperty("context").GetProperty("account").GetString())
             throw new InvalidDataException("计划账号不匹配。");
-        L.Text(totals, "trade.totals", s.GetProperty("incremental_profit").GetInt64(), s.GetProperty("cash_required").GetInt64(), s.GetProperty("eventual_sale_value").GetInt64(), s.GetProperty("cash_remaining").GetInt64(), s.GetProperty("potions_used").GetInt64(), s.GetProperty("potions_to_buy").GetInt64());
+        object?[] amounts = [s.GetProperty("incremental_profit").GetInt64(), s.GetProperty("cash_required").GetInt64(), s.GetProperty("eventual_sale_value").GetInt64(), s.GetProperty("cash_remaining").GetInt64(), s.GetProperty("potions_used").GetInt64(), s.GetProperty("potions_to_buy").GetInt64()];
+        bool breakEvenEnabled = p.TryGetProperty("settings", out var settings) && settings.TryGetProperty("include_break_even_resales", out var enabled) && enabled.GetBoolean();
+        long breakEvenCount = s.TryGetProperty("break_even_count", out var count) ? count.GetInt64() : 0;
+        long breakEvenValue = s.TryGetProperty("break_even_value", out var value) ? value.GetInt64() : 0;
+        L.Bind(totals, TextBlock.TextProperty, () => L.Get("trade.totals", amounts) + (breakEvenEnabled ? "\n" + L.Get("trade.break_even_totals", breakEvenCount, breakEvenValue) : ""));
         buys.ItemsSource = p.GetProperty("purchases").EnumerateArray().Select(r => new { 物品 = r.GetProperty("name").GetString(), 数量 = r.GetProperty("count").GetInt64(), 单价 = r.GetProperty("price").GetInt64(), 金额 = r.GetProperty("cost").GetInt64(), 商店 = r.GetProperty("shop").GetInt32(), 商品 = r.GetProperty("product").GetInt32() }).ToArray();
         cooks.ItemsSource = p.GetProperty("cooking").EnumerateArray().Select(r => new { 料理 = r.GetProperty("name").GetString(), 份数 = r.GetProperty("count").GetInt64(), 天赋药 = r.GetProperty("potions").GetInt64(), 预计售日 = r.GetProperty("sale_date").GetString() }).ToArray();
         var sales = p.GetProperty("sales").EnumerateArray().Select(r => new { 物品 = r.GetProperty("name").GetString(), 数量 = r.GetProperty("count").GetInt64(), 单价 = r.GetProperty("price").GetInt64(), 商店 = r.GetProperty("shop").GetInt32(), 预计售日 = r.GetProperty("date").GetString(), 今日报价已确认 = r.GetProperty("today_quote_confirmed").GetBoolean() }).ToArray();
@@ -307,12 +344,19 @@ public sealed class TradePlanPanel : UserControl
     }
     internal Action LanguageProbeForSmoke()
     {
-        reserve.Text = "12345"; maximum.Text = "invalid input retained";
+        if (allowGame || scope == null) throw new Exception("Trade settings probe requires an isolated account");
+        includeBreakEven.IsChecked = true;
+        SaveSettings(); includeBreakEven.IsChecked = false; ReadSettings();
+        if (includeBreakEven.IsChecked != true) throw new Exception("Trade strategy was not persisted for the account");
+        includeBreakEven.IsChecked = false;
+        SaveSettings(); includeBreakEven.IsChecked = true; ReadSettings();
+        if (includeBreakEven.IsChecked != false) throw new Exception("Trade strategy cannot be disabled after saving");
+        reserve.Text = "12345"; maximum.Text = "invalid input retained"; includeBreakEven.IsChecked = true;
         var rows = buys.ItemsSource;
         string value = totals.Text;
         string code = L.Code;
         return () => {
-            if (reserve.Text != "12345" || maximum.Text != "invalid input retained" || !ReferenceEquals(rows, buys.ItemsSource))
+            if (reserve.Text != "12345" || maximum.Text != "invalid input retained" || includeBreakEven.IsChecked != true || !ReferenceEquals(rows, buys.ItemsSource))
                 throw new Exception("Locale change reset trade budget input or plan rows");
             if (capture.IsEnabled || allowGame) throw new Exception("Preview can access the real game");
             if (L.Code != code && totals.Text == value) throw new Exception("Trade totals were not localized");

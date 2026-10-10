@@ -10,15 +10,18 @@ public static class DailyDiagnosticExport
 {
     public const string WeChat = "SuJakads0133", QQ = "1104563414";
     static readonly HashSet<string> Top = new(StringComparer.OrdinalIgnoreCase) { "ui-operation-error.json", "startup-state.json", "startup-error.json", "queue-worker.log", "queue-ui.json", "connection-watchdog.json", "connection.json", "compatibility.json", "guild-compatibility.json", "startup-compatibility.json", "run.json", "run-error.json", "sandbox-error.json", "parallel-worker-error.json", "plugin-error.json", "runtime.log", "connection.log", "connection-cleanup.log" };
-    static readonly string[] Trees = ["suite/diagnostics", "live/diagnostics", "live/queue-bootstrap", "live/queues", "queue-history", "tools", "parallel-workers", "live/steps", "live/business", "live/managed-business", "live/step-recovery"];
+    static readonly string[] Trees = ["suite/diagnostics", "live/diagnostics", "live/queue-bootstrap", "live/queues", "queue-history", "tools", "parallel-workers", "live/steps", "live/business", "live/managed-business", "live/step-recovery",
+        "live/trade-quote-reads", "live/trade-closes", "trade/diagnostics", "trade/data-preflights", "trade/capture", "trade/executions", "trade/plans",
+        "live/travel-diagnostics", "live/route-atlas", "live/server-collection"];
     static readonly string[] Singles = ["suite/last-transition.json", "updates/check-error.json", "updates/install-error.json", "login-identity-error.json",
-        "live/diagnostics/login-request.json", "live/diagnostics/login-verified.json", "live/diagnostics/login-failed.json"];
+        "live/diagnostics/login-request.json", "live/diagnostics/login-verified.json", "live/diagnostics/login-failed.json", "live/trade-failure.json", "live/trade-navigation-cleanup.json"];
     static readonly string[] Rotations = [".1", ".2", ".3", ".previous"];
     static readonly HashSet<string> PrivateNames = new(StringComparer.OrdinalIgnoreCase) { "accounts.json", "preferences.json", "settings.json", "endpoint.json", "session.json", "sessions.json", "command.json" };
     static string Unrotate(string name) => Rotations.FirstOrDefault(s => name.EndsWith(s,StringComparison.OrdinalIgnoreCase)) is { } suffix ? name[..^suffix.Length] : name;
     static bool LogName(string name) => Unrotate(name).EndsWith(".log",StringComparison.OrdinalIgnoreCase) || Unrotate(name).EndsWith(".jsonl",StringComparison.OrdinalIgnoreCase);
     static int Priority(string relative) => Top.Contains(Unrotate(relative)) || Singles.Contains(relative,StringComparer.OrdinalIgnoreCase) || relative.StartsWith("suite/diagnostics/",StringComparison.OrdinalIgnoreCase) ? 0
-        : new[]{"live/steps/","live/business/","live/managed-business/"}.Any(p=>relative.StartsWith(p,StringComparison.OrdinalIgnoreCase)) ? 2 : 1;
+        : relative.StartsWith("live/steps/",StringComparison.OrdinalIgnoreCase) ? 3
+        : new[]{"live/business/","live/managed-business/","live/trade-quote-reads/","trade/diagnostics/","live/travel-diagnostics/"}.Any(p=>relative.StartsWith(p,StringComparison.OrdinalIgnoreCase)) ? 1 : 2;
     static readonly Regex SecretKey = new("password|passwd|credential|authorization|cookie|refresh.?token|access.?token|id.?token|session.?token|auth.?token|private.?key|api.?key|secret|dpapi|modulepayload|sessionblob|^token$|^auth$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     static readonly Regex SecretText = new("(?i)(\\b(?:password|passwd|authorization|cookie|token|credential|api[_-]?key|access[_-]?token|refresh[_-]?token|id[_-]?token|session[_-]?token|auth[_-]?token|secret|private[_-]?key)[\"']?\\s*[=:]\\s*)(?:Bearer\\s+)?(?:\"[^\"]*\"|'[^']*'|[^\\s,;]+)", RegexOptions.CultureInvariant);
     static readonly Regex Bearer = new(@"(?i)\bBearer\s+[A-Za-z0-9_.+/=-]+|\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+", RegexOptions.CultureInvariant);
@@ -31,6 +34,8 @@ public static class DailyDiagnosticExport
         if (!Trees.Any(t => p.StartsWith(t + "/", StringComparison.OrdinalIgnoreCase))) return false;
         var name = Path.GetFileName(p);
         if(p.StartsWith("live/queue-bootstrap/",StringComparison.OrdinalIgnoreCase))return name.Equals("result.json",StringComparison.OrdinalIgnoreCase);
+        if(p.StartsWith("trade/executions/",StringComparison.OrdinalIgnoreCase)||p.StartsWith("trade/plans/",StringComparison.OrdinalIgnoreCase))
+            return new[]{"execution.json","latest.json","snapshot.json","planning-state.json","planning-state.evidence.json","planning-state.proof.json","planning-state.identity.json"}.Contains(name,StringComparer.OrdinalIgnoreCase);
         // Runtime payloads, endpoint credentials, preference/account vaults and binaries are never exported.
         return name.EndsWith(".json",StringComparison.OrdinalIgnoreCase) || LogName(name);
     }
@@ -162,7 +167,10 @@ public static class DailyDiagnosticExport
                     }
                     Add("summary.txt",Redact(summary+lastOperation,false));
                     Add("README.txt","Dustweave diagnostics\nWeChat: "+WeChat+"\nQQ: "+QQ+"\nCreated locally. Send privately; may include game character names, task history and paths. Login/session stores, plugins, executables and keys are excluded. This is a best-effort snapshot; see manifest.json for omitted files.\n");
-                    var coverage=sources.Keys.Select(label=>new{source=label,operationError=included.Contains(label+"/ui-operation-error.json"),startup=included.Contains(label+"/startup-state.json"),connection=included.Contains(label+"/connection.json"),ownerTransition=included.Contains(label+"/suite/last-transition.json"),ownerHistory=included.Any(p=>p.StartsWith(label+"/suite/diagnostics/",StringComparison.OrdinalIgnoreCase)),queueBootstrap=included.Any(p=>p.StartsWith(label+"/live/queue-bootstrap/",StringComparison.OrdinalIgnoreCase))});
+                    bool HasTree(string label,string tree)=>included.Any(p=>p.StartsWith(label+"/"+tree+"/",StringComparison.OrdinalIgnoreCase));
+                    var coverage=sources.Keys.Select(label=>new{source=label,operationError=included.Contains(label+"/ui-operation-error.json"),startup=included.Contains(label+"/startup-state.json"),connection=included.Contains(label+"/connection.json"),ownerTransition=included.Contains(label+"/suite/last-transition.json"),ownerHistory=HasTree(label,"suite/diagnostics"),queueBootstrap=HasTree(label,"live/queue-bootstrap"),
+                        businessJournal=HasTree(label,"live/business")||HasTree(label,"live/managed-business"),tradeCapture=HasTree(label,"trade/capture"),tradeDiagnostics=HasTree(label,"trade/diagnostics"),tradeExecution=HasTree(label,"trade/executions"),tradeQuote=HasTree(label,"live/trade-quote-reads"),
+                        travelDiagnostics=HasTree(label,"live/travel-diagnostics"),routeAtlas=HasTree(label,"live/route-atlas"),serverCollection=HasTree(label,"live/server-collection")});
                     Add("manifest.json",JsonSerializer.Serialize(new{schema=2,version,atUtc=DateTimeOffset.UtcNow,files=count,bytes=total,days=7,sources=sources.Keys,coverage,inventory,skipped,automaticallyUploaded=false},DailyJson.Options));
                 }
                 output.Flush(true);

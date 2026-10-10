@@ -21,7 +21,18 @@ public static class DailyTradeQuoteReadiness
         if (DailyNavigationDecision.Blockers(frame, "ShopUI", DailyNavigationPolicy.Load()).Length > 0
             || DailyNavigationDecision.Types(frame).Any(t => t.StartsWith("BattleUI", StringComparison.Ordinal)))
             throw new StageHostException("identity", "报价读取期间出现其他弹窗或战斗，保留现场。");
-        var native = State(e, "trade.native", "$self");
+        JsonObject native;
+        try { native = State(e, "trade.native", "$self"); }
+        catch (Exception error) when (error is InvalidDataException or InvalidOperationException or System.Text.Json.JsonException)
+        {
+            var readings = (e["Readings"] as JsonArray ?? []).OfType<JsonObject>().Where(r => S(r["Id"]) == "trade.native").ToArray();
+            if (readings.Length == 0)
+                throw new InvalidDataException("trade.read.configuration: missing trade.native; config=" + S(e["Config"]));
+            var detail = readings.Length == 1 ? S(readings[0]["Error"]) : "reading count=" + readings.Length;
+            if (detail.Length == 0 && readings.Length == 1)
+                detail = string.Join("; ", (readings[0]["Values"] as JsonArray ?? []).OfType<JsonObject>().Select(v => S(v["Error"])).Where(s => s.Length > 0));
+            throw new InvalidDataException("trade.read.native: " + (detail.Length > 0 ? detail : error.Message));
+        }
         var guild = observation.Daily["Guild"]!.AsObject();
         return O(("config", e["Config"]), ("actor", Array(new[] { "ProcessId", "ProcessStartTicks", "Instance", "AccountKey", "PlayerKey", "Scene" }.Select(k => frame[k]))),
             ("surface", shop["Id"]), ("shop", R(e, "trade.shop_ui", "ὬὥὫὥὮὤὭὥὪὥὣ")), ("mode", R(e, "trade.shop_ui", "ὯὣὡὫὨὫὡὧὩὬὠ")),
@@ -36,11 +47,12 @@ public static class DailyTradeQuoteReadiness
         JsonObject? binding = null, first = null, last = null;
         int waits = 0;
         string outcome = "failed", error = "";
+        DailyTradeQuoteObservation? latest = null;
         try
         {
             while (true)
             {
-                var observation = await read();
+                var observation = latest = await read();
                 var currentBinding = Binding(observation);
                 if (binding != null && !JsonNode.DeepEquals(binding, currentBinding))
                     throw new StageHostException("identity", "等待报价期间账号、商人、商店、折扣或周期已改变，保留现场。");
@@ -66,12 +78,17 @@ public static class DailyTradeQuoteReadiness
                 }
             }
         }
-        catch (Exception failure) { error = failure.Message; throw; }
+        catch (Exception failure) { error = failure.ToString(); throw; }
         finally
         {
-            if (waits > 0)
-                record(O(("engine", "dotnet-trade-quote-readiness-v1"), ("state", outcome), ("error", error), ("waits", waits),
-                    ("elapsed_seconds", clock() - started), ("binding", binding), ("first", first), ("last", last), ("gameplay_actions", 0)));
+            // Binding can fail on the very first native read. Preserve that
+            // observation, including each reading's error, before any retry.
+            if (outcome == "failed" && latest != null)
+                last = O(("at", latest.UtcTicks), ("evidence", latest.Evidence), ("daily", latest.Daily));
+            if (waits > 0 || outcome == "failed")
+                try { record(O(("engine", "dotnet-trade-quote-readiness-v1"), ("state", outcome), ("error", error), ("waits", waits),
+                    ("elapsed_seconds", clock() - started), ("binding", binding), ("first", first), ("last", last), ("gameplay_actions", 0))); }
+                catch (Exception writeError) when (writeError is IOException or UnauthorizedAccessException) { /* Preserve the original failure. */ }
         }
     }
 }

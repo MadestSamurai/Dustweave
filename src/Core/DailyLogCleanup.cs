@@ -25,7 +25,7 @@ public static class DailyLogCleanup
 {
     static readonly HashSet<string> StepNames = new(StringComparer.Ordinal) { "before.json", "intent.json", "transport.json", "result.json" };
     // These are observations, not account, queue or consuming-operation state.
-    static readonly string[] EvidenceTrees = ["live/event-journal", "live/reward-queries", "live/weekly-npc-queries", "live/log-compaction"];
+    static readonly string[] EvidenceTrees = ["live/event-journal", "live/reward-queries", "live/weekly-npc-queries", "live/log-compaction", "live/trade-quote-reads", "trade/diagnostics", "live/travel-diagnostics"];
     public static DailyLogPolicy Load(string root) => (DailyJson.TryRead<DailyLogPolicy>(Path.Combine(root, "log-retention.json")) ?? new()).Normalize();
     public static void Save(string root, DailyLogPolicy policy) => DailyJson.Write(Path.Combine(root, "log-retention.json"), policy.Normalize());
     static bool Id(string value) => value.Length == 32 && value.All(char.IsAsciiHexDigit);

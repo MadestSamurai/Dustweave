@@ -12,40 +12,58 @@ public sealed partial class DailyFieldRoute
         before = await Evidence();
         long origin = N(Map(before)["id"]);
         bool protectedRoute = NeedsStealth(before);
-        try
-        {
-            await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "mainline_walk"), ("value", target), ("require_stealth", protectedRoute)));
-        }
-        catch (Exception ex) when (ex.Message.Contains("travel_unreachable:", StringComparison.Ordinal)) { await Failure(before, target, ex.Message); throw new DailyTravelBlocked(ex.Message); }
         double? initial = Rows(Travel(before)["Approaches"]).Where(p => N(p["Instance"]) == target && B(p["Reachable"])).Select(p => (double?)DailyRegionRouter.D(p["Distance"])).FirstOrDefault();
         double start = W.Time, budget = DailyTravelProgress.Budget(initial), end = start + budget, hard = end + 120;
         bool nudged = false;
         var progress = new DailyTravelProgress(start);
         JsonObject current = before;
-        async Task<JsonObject?> Resume()
+        async Task<JsonObject?> Resume(string reason)
         {
-            Require(storyRetries < 3, "剧情打断导航超过恢复上限");
             var logical = new[] { "gate", "waypoint" }.SelectMany(kind => FieldRows(before, kind).Where(r => N(r["instance"]) == target).Select(r => (Kind: kind, Object: N(r[ObjectPath])))).ToArray();
-            await FieldReady();
+            try { await FieldReady(); }
+            catch (StageHostException ex) when (ex.Kind == "adapter")
+            {
+                await Failure(current, target, "field_transition_not_ready", O(("destination", destination), ("trigger", reason), ("attempt", storyRetries), ("error", ex.Message)));
+                throw;
+            }
             var fresh = await Evidence();
+            Identity(before, fresh);
             long map = N(Map(fresh)["id"]);
             if (destination.HasValue && map == destination)
                 return null;
+            if (storyRetries >= 3)
+            {
+                await Failure(fresh, target, "field_transition_repeated", O(("destination", destination), ("trigger", reason), ("attempt", storyRetries)));
+                throw new DailyTravelBlocked("field.route-interrupted: 地图操作界面反复切换，重新选择路线。");
+            }
             if (map != origin || logical.Length != 1)
-                throw new DailyTravelBlocked("剧情改变了路线，需要重新观察地图");
+                throw new DailyTravelBlocked("field.route-interrupted: 地图或入口已经改变，需要重新观察路线。");
             var matches = FieldRows(fresh, logical[0].Kind).Where(r => N(r[ObjectPath]) == logical[0].Object).ToArray();
-            if (matches.Length != 1)
-                throw new DailyTravelBlocked("剧情替换了原导航目标");
+            if (matches.Length != 1 || logical[0].Kind == "gate" && destination.HasValue && N(matches[0][DestinationPath]) != destination)
+                throw new DailyTravelBlocked("field.route-interrupted: 原入口已不可用，需要重新选择路线。");
+            // A transition can replace the Unity instance without changing the logical
+            // gate. Resolve it again; never send an old-scene instance back to the game.
             return await Walk(I(matches[0]["instance"]), destination, storyRetries + 1);
         }
         try
         {
+            try
+            {
+                await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "mainline_walk"), ("value", target), ("require_stealth", protectedRoute)));
+            }
+            catch (Exception ex) when (ex.Message.Contains("travel_unreachable:", StringComparison.Ordinal)) { await Failure(before, target, ex.Message); throw new DailyTravelBlocked(ex.Message); }
             while (W.Time < end)
             {
                 current = await Evidence();
+                Identity(before, current);
                 var frame = current["Frame"]!.AsObject();
                 if (await Encounter(frame) || DailyNavigationDecision.StoryAction(frame, DailyNavigationPolicy.Load()) != null)
-                    return await Resume();
+                    return await Resume("encounter_or_story");
+                // Hidden/disabled field controls are a presentation transition, not
+                // evidence of a stuck character. Do not sample stall timers or cancel
+                // navigation until the actual field is controllable again.
+                if (!FieldInputReady(frame))
+                    return await Resume("field_input_unavailable");
                 long map = N(Map(current)["id"]);
                 if (destination.HasValue && map == destination)
                 {
@@ -68,6 +86,7 @@ public sealed partial class DailyFieldRoute
                     double pause = W.Time;
                     await Skill(17, 4);
                     var renewed = await Evidence();
+                    Identity(before, renewed);
                     Require(Remaining(renewed, 17) > 4, "藏身续用未生效");
                     long arrived = N(Map(renewed)["id"]);
                     if (destination.HasValue && arrived == destination)
@@ -99,13 +118,24 @@ public sealed partial class DailyFieldRoute
                 }
                 await W.Delay(250);
             }
+            await W.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
         }
-        catch (DailyStepException ex) when (ex.Kind == "rejected" && destination.HasValue && (ex.Message.Contains("Scene changed", StringComparison.OrdinalIgnoreCase) || ex.Message.Contains("scene changed", StringComparison.OrdinalIgnoreCase) || ex.Message.Contains("found 0", StringComparison.Ordinal))) { var frame = (await W.Observe()).Frame; if (DailyNavigationDecision.StoryAction(frame, DailyNavigationPolicy.Load()) != null) return await Resume(); try { await WaitMap(destination!.Value, 30); return null; } catch (Exception) { throw ex; } }
-        await W.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
+        catch (DailyStepException ex) when (UnsentFieldTransition(ex))
+        {
+            // The UI may disappear between the last evidence frame and cancellation.
+            // Re-observe both same-map recovery and arrival; waiting only for the
+            // destination used to time out after the field had already recovered.
+            return await Resume("unsent_field_action: " + ex.Message);
+        }
         string reason = W.Time >= end ? "navigation_deadline" : "navigation_no_progress";
         await Failure(current, target, reason, O(("elapsed", W.Time - start), ("initial_distance", initial), ("best_remaining", progress.Best), ("budget", budget), ("extended", end - start - budget), ("ordinary_approach", nudged)));
         throw new DailyTravelBlocked(reason == "navigation_deadline" ? "导航到期仍未到达交互范围" : "导航没有净进展，停止后重新选择路线");
     }
+    private static bool UnsentFieldTransition(DailyStepException ex) => !ex.Submitted && ex.Kind == "rejected"
+        && (ex.Message.Contains("Scene changed", StringComparison.OrdinalIgnoreCase)
+            || ex.Message == "Need one observed GameFieldDefaultUI; found 0"
+            || new[] { "rejected: screen_changed", "rejected: ui_not_ready", "rejected: surface_missing", "rejected: foreground_popup" }.Contains(ex.Message)
+            || ex.Message.StartsWith("Foreground popup needs handling:", StringComparison.Ordinal));
     public async Task<JsonObject?> PrepareTeleport(bool allowSummon = true, long? destination = null)
     {
         var router = new DailyRegionRouter();

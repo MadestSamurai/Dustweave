@@ -32,6 +32,7 @@ try {
   var host=new DailyGameHost();var game=host.Find()??throw new Exception("Game not running");
   var pipe=BD2.LocalIpc.DesktopFiles.Connect(root,game.ProcessId,game.StartTicks);string? fingerprint=null;try{fingerprint=pipe.Fingerprint();}catch(IOException){}catch(TimeoutException){}
   var frame=DailyJson.TryRead<Frame>(Path.Combine(root,"snapshot.json"));
+  if(BD2.LocalIpc.DesktopFiles.Exists(Path.Combine(root,"command.json")))throw new Exception("Another operation is in flight");
   var managed=Path.Combine(Path.GetDirectoryName(game.Executable)!,"BrownDust II_Data","Managed");
   string output=Path.Combine(root,"prepared",DailyIdentity.Version);Directory.CreateDirectory(output);
   async Task Invoke(params string[] argv){
@@ -53,6 +54,9 @@ try {
   // client that subsequent writes actually use, rather than the pre-attach handle.
   if(host.Find()!=game)throw new InvalidOperationException("连接准备期间游戏进程已变化，请重新连接。");
   pipe=BD2.LocalIpc.DesktopFiles.Connect(root,game.ProcessId,game.StartTicks);
+  // Opening a new writer clears pending mailbox inputs. Check before ownership
+  // changes, including manual read-only preparation outside a daily queue.
+  if(BD2.LocalIpc.DesktopFiles.Exists(Path.Combine(root,"command.json")))throw new Exception("Another operation is in flight");
   pipe.Open(Fingerprint);BD2.LocalIpc.DesktopFiles.Write(Path.Combine(root,"pause"),new byte[0]);
   await Invoke("taps",managed,DailyTools.EvidenceSpec(AppContext.BaseDirectory,evidenceSpec),Path.Combine(output,"evidence-config.json"));
   // The GUI never starts ready concurrently with a daily worker. Refuse other owners too.

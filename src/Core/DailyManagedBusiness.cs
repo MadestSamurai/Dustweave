@@ -382,6 +382,17 @@ public sealed partial class DailyManagedBusiness
             }
             if (op["state"]!.GetValue<string>() is "previewing" or "preview_ready" or "unknown_preview")
             {
+                if (role == DailyFreeDrawProof.Role && DailyFreeDrawStage.AbandonedPreview(op, current, Events(op)))
+                {
+                    op["state"] = "superseded";
+                    op["reconciliation"] = new JsonObject { ["method"] = "unsubmitted_free_preview_closed", ["at"] = driver.UtcTicks,
+                        ["actions"] = 0, ["draw_completed"] = false, ["recheck_current_free_draws"] = true };
+                    op.Remove("error");
+                    Save(op);
+                    entry["reason"] = "未提交的免费预览已关闭，按游戏当前免费次数重新检查。";
+                    completed.Add(entry);
+                    continue;
+                }
                 entry["reason"] = "免费预览尚未提交，需核对原弹窗所有权";
                 entry["recover_in_stage"] = op["state"]!.GetValue<string>() == "preview_ready" && proofs[role].PreviewOwner?.Invoke(op, current) == true;
                 unresolved.Add(entry);

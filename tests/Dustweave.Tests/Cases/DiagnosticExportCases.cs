@@ -34,6 +34,9 @@ internal static class DiagnosticExportCases
             Check(partial.Skipped>=2&&partial.Files==2,"locked and incomplete files do not abort other diagnostics");
         }
         Check(DailyIssues.Classify("suite.owner-exited").Code=="owner-ended","owner exit is not account change");
+        Check(DailyIssues.Classify("Need one observed GameFieldDefaultUI; found 0").Code=="field-transition"
+            && DailyIssues.Classify("field.not-ready: waiting").Code=="field-transition","historical and current field transition errors explain map recovery");
+        Check(DailyIssues.Classify("uncertain: Need one observed GameFieldDefaultUI; found 0").Code=="uncertain","uncertain dispatch still takes priority over map recovery");
         Check(DailyIssues.Classify("suite.identity-unavailable").Code=="identity-unavailable","missing identity is distinguishable");
         Check(DailyIssues.Classify("尚未找到完整登录会话，请先在游戏内登录。").Code == "local-login-incomplete", "legacy session precheck is not unknown or expired login");
         Check(DailyIssues.Classify("connection.login_identity_unavailable").Code == "live-login-unavailable", "live identity timeout differs from local credential readiness");
@@ -77,7 +80,22 @@ internal static class DiagnosticExportCases
         string pressure=Path.Combine(output,"diagnostic-pressure");Directory.CreateDirectory(Path.Combine(pressure,"live","steps","sample"));
         for(int i=0;i<2005;i++)File.WriteAllText(Path.Combine(pressure,"live","steps","sample",i+".json"),"{}");
         File.WriteAllText(Path.Combine(pressure,"ui-operation-error.json"),"{\"error\":\"critical evidence\"}");File.SetLastWriteTimeUtc(Path.Combine(pressure,"ui-operation-error.json"),DateTime.UtcNow.AddDays(-1));
+        string[] important = ["live/managed-business/pending.json", "live/business/legacy.json", "live/trade-quote-reads/failed.json", "trade/diagnostics/capture.json", "trade/capture/sample.evidence.json", "trade/executions/account/day/execution.json",
+            "live/travel-diagnostics/failed.json", "live/route-atlas/account/2002.json", "live/server-collection/account/week/2002.json"];
+        foreach (var relative in important) { string path=Path.Combine(pressure,relative); Directory.CreateDirectory(Path.GetDirectoryName(path)!); File.WriteAllText(path,"{\"error\":\"native stock failure\",\"token\":\"hidden-trade-secret\"}"); File.SetLastWriteTimeUtc(path,DateTime.UtcNow.AddDays(-1)); }
         var pressured=await DailyDiagnosticExport.CreateAsync(pressure,Path.Combine(output,"pressure.zip"),"","fixture",additionalSources:new Dictionary<string,string>{{"tool-fixture",tool}});
         using(var archive=ZipFile.OpenRead(pressured.Path))Check(pressured.Files==2000&&pressured.Skipped>0&&archive.GetEntry("logs/main/ui-operation-error.json")!=null&&archive.GetEntry("logs/tool-fixture/runtime.log")!=null,"old critical evidence and other tool logs survive a large step archive");
+        using(var archive=ZipFile.OpenRead(pressured.Path)) {
+            Check(important.All(p=>archive.GetEntry("logs/main/"+p)!=null),"business journals, trade and route/collection evidence survive newer step-file pressure");
+            using var travelManifest=JsonDocument.Parse(new StreamReader(archive.GetEntry("manifest.json")!.Open()).ReadToEnd());
+            var travelCoverage=travelManifest.RootElement.GetProperty("coverage")[0];
+            Check(travelCoverage.GetProperty("travelDiagnostics").GetBoolean()&&travelCoverage.GetProperty("routeAtlas").GetBoolean()&&travelCoverage.GetProperty("serverCollection").GetBoolean(),"route evidence coverage is visible in diagnostic export");
+            using var log=new StreamReader(archive.GetEntry("logs/main/trade/diagnostics/capture.json")!.Open());
+            Check(!log.ReadToEnd().Contains("hidden-trade-secret"),"trade diagnostic secrets remain redacted");
+            using var manifest=JsonDocument.Parse(archive.GetEntry("manifest.json")!.Open());
+            var coverage=manifest.RootElement.GetProperty("coverage")[0];
+            Check(new[]{"businessJournal","tradeCapture","tradeDiagnostics","tradeExecution","tradeQuote"}.All(k=>coverage.GetProperty(k).GetBoolean()),"export manifest reports business and trade evidence coverage");
+        }
+        Check(!DailyDiagnosticExport.Allowed("trade/plans/account/settings.json")&&!DailyDiagnosticExport.Allowed("trade/catalogs/rules.json")&&!DailyDiagnosticExport.Allowed("trade/executions/account/planning-catalog.json"),"trade diagnostics exclude settings and bulky rule catalogs");
     }
 }

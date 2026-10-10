@@ -39,7 +39,6 @@ internal sealed class DailyTradeForecast
         Cost = new double[n];
         var balances = keys.ToDictionary(k => k, _ => new double[n]);
         var funding = (double[])currentCash.Clone();
-        long Price(JsonObject offer) => N(offer["base_price"]) * (B(state["can_bargain"]) || B(state["bargain_active"]) ? 40 : 100) / 100;
         for (int i = 0; i < CarryKeys.Length; i++) balances[CarryKeys[i]][carryStart + i] = 1;
         for (int i = 0; i < offers.Length; i++)
         {
@@ -64,6 +63,23 @@ internal sealed class DailyTradeForecast
         // Forecast revenue never funds today's orders or duplicates current working capital.
         rows.Add(funding); lower.Add(double.NegativeInfinity); caps.Add(budget);
         for (int j = Start; j < n; j++) objective[j] = Cost[j];
+    }
+
+    private long Price(JsonObject offer) => N(offer["base_price"]) * (B(state["can_bargain"]) || B(state["bargain_active"]) ? 40 : 100) / 100;
+
+    // Equal-price future purchases/resales must not consume the spare funding
+    // available to actual orders. Purchases needed for recipes remain intact.
+    public void RemoveBreakEvenResales(double[] x)
+    {
+        for (int i = 0; i < offers.Length; i++)
+        {
+            long k = N(offers[i]["item"]);
+            if (Price(offers[i]) != N(items[k]["sale"])) continue;
+            int sale = saleStart + System.Array.IndexOf(keys, k);
+            double q = Math.Min(x[buyStart + i], x[sale]);
+            x[buyStart + i] -= q;
+            x[sale] -= q;
+        }
     }
 
     // Move any current stock assigned only to future raw resale back to this round.

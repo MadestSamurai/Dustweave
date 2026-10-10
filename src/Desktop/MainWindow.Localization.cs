@@ -105,8 +105,9 @@ public partial class MainWindow
         });
         DailyJson.Write(Path.Combine(folder,"plan.json"), new {
             context = new { account },
+            settings = new { include_break_even_resales = true },
             summary = new { incremental_profit=2000000, cash_required=8000000, eventual_sale_value=10000000,
-                cash_remaining=92000000, potions_used=400, potions_to_buy=0 },
+                cash_remaining=92000000, potions_used=400, potions_to_buy=0, break_even_count=100, break_even_value=20000 },
             solver = new { optimal=true },
             purchases = new[] { new { name="Demo ingredient", count=100, price=200, cost=20000, shop=1, product=1 } },
             cooking = new[] { new { name="Demo dish", count=10, potions=40, sale_date="2026-10-10" } },
@@ -124,7 +125,7 @@ public partial class MainWindow
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             var verify = panel.LanguageProbeForSmoke();
             await panel.Capture(); // Must short-circuit before any live host or pipe access.
-            foreach (int language in new[] { 2, 1 })
+            foreach (int language in new[] { 0, 2, 1 })
             {
                 LanguageSelector.SelectedIndex=language;
                 ThemeSelector.SelectedIndex=language==2 ? 2 : 1;

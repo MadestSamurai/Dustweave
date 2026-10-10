@@ -722,6 +722,13 @@ public partial class MainWindow : Window
         try
         {
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "trade")
+            {
+                L.Audit();
+                await CheckTradeLanguageForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "trade", realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "support")
             {
                 await CheckSupportForSmoke();

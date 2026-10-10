@@ -198,7 +198,7 @@ public sealed class DailyPreferencesPanel : UserControl
         Stage(weeklySichuan, "周常连连看", "完成一把常规未通关关卡；全部通关时重玩第1关，本周任务已完成则跳过");
         Stage(trade, "跑商、料理与高价售卖", "采集后统一分配库存；先采购，再烹饪，最后仅按120%报价售卖", expanded: true);
         Note("保留金币、垫资上限及原料保留量沿用本账号跑商计划设置。低于1000万会提示30天周转；不会出售装备、制作材料或属性石。完成当天交易后重复运行不再花费。");
-        var tradeButton = LocalButton("预览计划与资金设置"); tradeButton.HorizontalAlignment = HorizontalAlignment.Left;
+        var tradeButton = LocalButton("预览计划与跑商设置"); tradeButton.HorizontalAlignment = HorizontalAlignment.Left;
         tradeButton.Click += (_, _) => { if (account.Length == 0) return; var trade = new Window { Title = L.Translate("跑商计划"), Width = 1060, Height = 780, MinWidth = 760, MinHeight = 560, Owner = Window.GetWindow(this), Content = new TradePlanPanel(dataRoot, account, allowGame), WindowStartupLocation = WindowStartupLocation.CenterOwner }; DailyDialogs.Prepare(trade); trade.Show(); };
         section.Children.Add(tradeButton);
         Stage(events, "活动游戏与领奖", "自动检查当前活动；批量兑换，整页完成后继续下一页");

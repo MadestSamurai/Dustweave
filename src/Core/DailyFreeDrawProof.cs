@@ -105,6 +105,19 @@ public static class DailyFreeDrawProof
             throw new InvalidDataException("Negative gacha counter");
         return count;
     }
+    public static bool PreviewCacheUnchanged(JsonObject before, JsonObject after)
+    {
+        var old = Users(before);
+        var current = Users(after);
+        // Querying free availability lazily inserts a pristine GachaUserDBInfo.
+        // Only this additive, zero-valued initialization is harmless; existing
+        // rows, missing groups and every nonzero/new unknown field stay guarded.
+        if (old.Any(p => !current.TryGetValue(p.Key, out var row) || !JsonNode.DeepEquals(p.Value, row))) return false;
+        string[] counters = ["point", "totalBuyCount", "oneFreePickCount", "oneCashPickCount", "tenFreePickCount", "tenCashPickCount", "exchangeItemCount", "exchangeMileageCount", "beforePoint"];
+        return current.Where(p => !old.ContainsKey(p.Key)).All(p =>
+            p.Value["groupId"] != null && DailyEvidence.Integer(p.Value["groupId"]) == p.Key &&
+            p.Value.All(f => f.Key == "groupId" || counters.Contains(f.Key) && f.Value != null && DailyEvidence.Integer(f.Value) == 0));
+    }
     public static JsonObject Verify(JsonObject before, JsonArray events, JsonObject after, DailyFreeDrawRules rules)
     {
         var data = DailyNativeProof.Response(Role, before, events, after);

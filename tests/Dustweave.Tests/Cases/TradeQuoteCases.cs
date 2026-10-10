@@ -97,8 +97,114 @@ internal static class TradeQuoteCases
         var bad = catalog.DeepClone().AsObject(); bad["offers"]![0]!["base_price"] = 28;
         try { await DailyTradeQuoteReadiness.ReadAsync(bad, () => Task.FromResult(Sample(0)), () => clock, _ => throw new Exception("must not retry rules"), records.Add); }
         catch (InvalidDataException) { invalid = true; }
-        Check(invalid && records.Count == 0 && clock == 0, "invalid native rules are not retried as an animation");
+        Check(invalid && records.Count == 1 && clock == 0 && records[0]["last"]?["evidence"] != null, "invalid native rules preserve first-read diagnostics without retrying as an animation");
+        clock = 0; records.Clear(); bool nativeFailed = false;
+        var unreadable = Sample(0);
+        Rows(unreadable.Evidence["Readings"]).Single(r => S(r["Id"]) == "trade.native")["Error"] = "Shop supply is missing or expired: 8";
+        try { await DailyTradeQuoteReadiness.ReadAsync(catalog, () => Task.FromResult(unreadable), () => clock,
+            _ => throw new Exception("native failure must not loop"), records.Add); }
+        catch (InvalidDataException e) { nativeFailed = DailyIssues.Classify(e).Code == "trade-read" && e.Message.Contains("expired: 8"); }
+        Check(nativeFailed && records.Count == 1 && N(records[0]["waits"]) == 0 && records[0]["last"]?["evidence"] != null,
+            "initial trade.native failure retains its cause and complete evidence without a transaction or retry");
+        records.Clear(); bool originalError = false;
+        try { await DailyTradeQuoteReadiness.ReadAsync(catalog, () => Task.FromResult(unreadable), () => clock, _ => Task.CompletedTask,
+            _ => throw new IOException("diagnostic disk unavailable")); }
+        catch (InvalidDataException e) { originalError = e.Message.Contains("expired: 8"); }
+        Check(originalError, "diagnostic write failure never masks the native read failure");
+        foreach (string missing in new[] { "row", "values", "path-error" })
+        {
+            var sample = Sample(0); records.Clear(); bool classified = false;
+            var row = Rows(sample.Evidence["Readings"]).Single(r => S(r["Id"]) == "trade.native");
+            if (missing == "row") sample.Evidence["Readings"]!.AsArray().Remove(row);
+            if (missing == "values") row["Values"] = new JsonArray();
+            if (missing == "path-error") row["Values"]![0]!["Error"] = "fixture native path failure";
+            try { await DailyTradeQuoteReadiness.ReadAsync(catalog, () => Task.FromResult(sample), () => clock, _ => Task.CompletedTask, records.Add); }
+            catch (InvalidDataException e) { classified = DailyIssues.Classify(e).Code == (missing == "row" ? "trade-configuration" : "trade-read"); }
+            Check(classified && records.Count == 1, "incomplete native evidence is classified and retained: " + missing);
+        }
+        BD2Daily.Live.TradeStockRules.RequireFresh(8, null, 200L, 100L);
+        Check(BD2Daily.Live.TradeStockRules.Remaining(400, false, null) == 400,
+            "unvisited shop uses fresh common reset and the game's zero purchased count");
+        BD2Daily.Live.TradeStockRules.RequireFresh(8, 200L, null, 100L);
+        Check(BD2Daily.Live.TradeStockRules.Remaining(400, false, 400) == 0 && BD2Daily.Live.TradeStockRules.Remaining(400, false, 25) == 375,
+            "existing sold-out and partial shop records keep their exact purchased amounts");
+        foreach (var timers in new (long? Own, long? Common)[] { (null, null), (null, 100L), (99L, 200L) })
+        {
+            bool rejected = false;
+            try { BD2Daily.Live.TradeStockRules.RequireFresh(8, timers.Own, timers.Common, 100L); }
+            catch (InvalidOperationException) { rejected = true; }
+            Check(rejected, "missing or expired stock cannot be guessed from an unrelated fresh timer: " + timers);
+        }
+        await Connection(output, cases);
         if (replay != null) await Replay(replay, output, cases);
+    }
+    private static async Task Connection(string output, List<string> cases)
+    {
+        void Check(bool ok, string name) { if (!ok) throw new Exception(name); cases.Add(name); }
+        string root = Path.Combine(output, "manual-trade-connection");
+        Directory.CreateDirectory(root);
+        var host = new Dustweave.Desktop.DemoEnvironment(root);
+        int prepared = 0, captured = 0; bool installed = false;
+        Task Prepare() { prepared++; installed = true; return Task.CompletedTask; }
+        Task<int> Capture(GameInstance game, string account)
+        {
+            Check(installed && DailyToolControl.IsOccupied(root) && game == host.Game && account == host.CurrentKey,
+                "manual shop capture prepares evidence and retains exclusive ownership before reading");
+            return Task.FromResult(++captured);
+        }
+        File.WriteAllText(Path.Combine(root, "queue-stop"), "previous queue stopped");
+        Check(await DailyTradeCaptureConnection.RunAsync(root, host, host.CurrentKey, Prepare, Capture) == 1 && prepared == 1,
+            "cold shop capture works without a guild visit or prior daily queue");
+        Check(File.ReadAllText(Path.Combine(root, "queue-stop")) == "previous queue stopped" && host.Calls.Count == 0,
+            "manual capture neither resumes a stopped queue nor launches, logs in or changes game pages");
+        installed = false;
+        Check(await DailyTradeCaptureConnection.RunAsync(root, host, host.CurrentKey, Prepare, Capture) == 2 && prepared == 2,
+            "repeat manual read reestablishes configuration after another feature changed it");
+        bool blocked = false;
+        using (DailyToolControl.Acquire(root))
+        {
+            try { await DailyTradeCaptureConnection.RunAsync(root, host, host.CurrentKey, Prepare, Capture); }
+            catch (InvalidOperationException) { blocked = true; }
+        }
+        Check(blocked && prepared == 2 && captured == 2, "busy automation is never displaced by manual shop preparation");
+        blocked = false;
+        try { await DailyTradeCaptureConnection.RunAsync(root, host, host.Accounts[1].AccountKey, Prepare, Capture); }
+        catch (InvalidOperationException) { blocked = true; }
+        Check(blocked && prepared == 2, "wrong selected account is rejected before preparing or reading the shop");
+        foreach (var change in new[] { "account", "process", "closed", "not-ready", "prepare-failed" })
+        {
+            var original = host.CurrentKey; var game = host.Game; blocked = false;
+            try
+            {
+                await DailyTradeCaptureConnection.RunAsync(root, host, original, () =>
+                {
+                    if (change == "account") host.CurrentKey = host.Accounts[1].AccountKey;
+                    if (change == "process") host.Game = game! with { StartTicks = game!.StartTicks + 1 };
+                    if (change == "closed") host.Game = null;
+                    if (change == "not-ready") host.Ready = false;
+                    if (change == "prepare-failed") throw new TimeoutException("fixture preparation timeout");
+                    return Task.CompletedTask;
+                }, Capture);
+            }
+            catch (Exception e) when (e is InvalidOperationException or TimeoutException) { blocked = true; }
+            finally { host.CurrentKey = original; host.Game = game; host.Ready = true; }
+            Check(blocked && captured == 2 && !DailyToolControl.IsOccupied(root), "preparation failure preserves capture and releases ownership: " + change);
+        }
+        blocked = false;
+        string key = host.CurrentKey;
+        try
+        {
+            await DailyTradeCaptureConnection.RunAsync(root, host, key, Prepare, (_, _) =>
+            { host.CurrentKey = host.Accounts[1].AccountKey; return Task.FromResult("stale result"); });
+        }
+        catch (InvalidOperationException) { blocked = true; }
+        finally { host.CurrentKey = key; }
+        Check(blocked && !DailyToolControl.IsOccupied(root), "identity change during capture never exposes a previous account result");
+        var reports = Directory.GetFiles(Path.Combine(root, "trade", "diagnostics"), "*.json").Select(DailyTradeCatalog.Read).ToArray();
+        Check(reports.Any(r => S(r["phase"]) == "prepare" && S(r["error"]).Contains("fixture preparation timeout"))
+            && reports.Any(r => S(r["phase"]) == "capture" && S(r["state"]) == "ready")
+            && reports.All(r => S(r["transport"]) == "local-named-pipe" && N(r["gameplayActions"]) == 0),
+            "capture diagnostics separate initialization failures from shop reads without gameplay");
     }
     private static void SetReading(JsonObject e, string id, string field, JsonNode value) => Rows(e["Readings"]).Single(r => S(r["Id"]) == id)["Values"]!.AsArray()
         .Single(v => S(v!["Path"]) == field)!["Json"] = value.ToJsonString();

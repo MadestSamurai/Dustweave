@@ -43,7 +43,7 @@ public sealed class DailyStageObservation
         this.interval = interval ?? TimeSpan.FromMilliseconds(200);
         this.delay = delay ?? (t => Task.Delay(t));
     }
-    public static DailyStageObservation Attach(string root, string account)
+    public static DailyStageObservation Attach(string root, string account, Func<bool>? stopped = null)
     {
         var host = new DailyGameHost(root);
         var game = host.Find() ?? throw new StageHostException("identity", "游戏已退出，请重新连接日常工具。");
@@ -58,7 +58,7 @@ public sealed class DailyStageObservation
             return DailyJson.TryRead<JsonObject>(Path.Combine(liveRoot, "snapshot.json"));
         }
         return new(account, ReadLive, () => DailyJson.TryRead<DailySnapshot>(Path.Combine(root, "snapshot.json")),
-            () => File.Exists(Path.Combine(root, "queue-stop")), expectedGame: game,
+            stopped ?? (() => File.Exists(Path.Combine(root, "queue-stop"))), expectedGame: game,
             diagnostic: (error, frame, identity) => DailyJson.Write(Path.Combine(root, "live", "observation-failures", DateTime.UtcNow.Ticks + "-" + Guid.NewGuid().ToString("N") + ".json"), new { error, frame, identity, at = DateTime.UtcNow.Ticks }));
     }
     private static string Text(JsonObject frame, string name) => frame[name]?.GetValue<string>() ?? "";

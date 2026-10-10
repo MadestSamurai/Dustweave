@@ -1990,9 +1990,9 @@
     "en-US": "Uses this account's cash reserve, funding limit and ingredient reserves. Warns below 10 million for the 30-day cycle. Never sells gear, crafting materials or ability stones. Completed daily trades are not repeated."
   },
   "prefs.trade_open": {
-    "zh-CN": "预览计划与资金设置",
-    "zh-TW": "預覽計畫與資金設定",
-    "en-US": "Preview plan and budget"
+    "zh-CN": "预览计划与跑商设置",
+    "zh-TW": "預覽計畫與交易設定",
+    "en-US": "Preview plan and trade settings"
   },
   "prefs.trade_title": {
     "zh-CN": "跑商计划",
@@ -2220,9 +2220,24 @@
     "en-US": "Export details"
   },
   "trade.save": {
-    "zh-CN": "保存资金设置",
-    "zh-TW": "儲存資金設定",
-    "en-US": "Save budget"
+    "zh-CN": "保存跑商设置",
+    "zh-TW": "儲存交易設定",
+    "en-US": "Save trade settings"
+  },
+  "trade.break_even": {
+    "zh-CN": "购买零收益商品（金币成就）",
+    "zh-TW": "購買零收益商品（金幣成就）",
+    "en-US": "Include break-even resales (gold achievements)"
+  },
+  "trade.break_even_hint": {
+    "zh-CN": "默认关闭。开启后，用剩余预算购买折扣后买价等于120%卖价的额外商品，不分摊砍价费；仍须等到高价日卖出。",
+    "zh-TW": "預設關閉。開啟後，以剩餘預算購買折扣後買價等於120%賣價的額外商品，不分攤議價費；仍須等到高價日出售。",
+    "en-US": "Off by default. Use spare funds for extra goods whose discounted buy price equals their 120% sale price, excluding the bargaining fee. Sell on their premium-price day."
+  },
+  "trade.break_even_totals": {
+    "zh-CN": "金币成就：额外零收益商品 {0:N0} 个 · 垫资／预计回款 {1:N0}（已含在上方总额中）",
+    "zh-TW": "金幣成就：額外零收益商品 {0:N0} 個 · 墊資／預計回款 {1:N0}（已含在上方總額中）",
+    "en-US": "Gold achievements: {0:N0} extra break-even items · Upfront / expected sales {1:N0} (included in totals above)"
   },
   "trade.cycle": {
     "zh-CN": "按当前供货统一分配原料和料理。回款约需30天；尚未售出的收入不会计入采购预算。",
@@ -2265,9 +2280,9 @@
     "en-US": "Future sales"
   },
   "trade.saved": {
-    "zh-CN": "本账号资金设置已保存，下次开始跑商时生效；没有执行交易。",
-    "zh-TW": "已儲存本帳號資金設定，下次開始跑商時生效；沒有執行交易。",
-    "en-US": "Budget saved for this account's next trade run. No trades were made."
+    "zh-CN": "本账号跑商设置已保存，下次开始跑商时生效；没有执行交易。",
+    "zh-TW": "已儲存本帳號交易設定，下次開始跑商時生效；沒有執行交易。",
+    "en-US": "Trade settings saved for this account's next run. No trades were made."
   },
   "trade.select_account": {
     "zh-CN": "请先选择账号。",
@@ -4499,6 +4514,16 @@
     "zh-TW": "確認檔案未被占用、目錄可寫入，並保留原始錯誤；重新連線仍失敗時匯出記錄。",
     "en-US": "Check for locked files and a writable folder. Keep the original error and export logs if reconnecting still fails."
   },
+  "issue.reason.field-transition": {
+    "zh-CN": "地图操作界面尚未恢复，或路线入口在切换中发生了变化。",
+    "zh-TW": "地圖操作介面尚未恢復，或路線入口在切換中發生了變化。",
+    "en-US": "The field controls have not recovered, or the route entrance changed during a transition."
+  },
+  "issue.action.field-transition": {
+    "zh-CN": "确认游戏已回到可移动的地图界面，再接续原队列。已完成的收集会按游戏进度保留；若同一位置反复发生，请导出诊断。",
+    "zh-TW": "確認遊戲已回到可移動的地圖介面，再接續原佇列。已完成的收集會依遊戲進度保留；若同一位置反覆發生，請匯出診斷。",
+    "en-US": "Return to a playable field, then resume the queue. Collection progress is read from the game. Export diagnostics if this repeats at the same location."
+  },
   "issue.reason.popup": {
     "zh-CN": "游戏出现尚未识别的交互弹窗，操作已暂停。",
     "zh-TW": "遊戲出現尚未識別的互動視窗，操作已暫停。",
@@ -4753,6 +4778,26 @@
     "en-US": "Close this batch view and keep daily progress for each account.",
     "zh-CN": "关闭本次批量视图，保留各账号当天的完成情况。",
     "zh-TW": "關閉本次批次檢視，保留各帳號當天的完成情況。"
+  },
+  "issue.reason.trade-configuration": {
+    "zh-CN": "商店读取配置尚未就绪，当前连接没有返回供货数据。本次没有进行交易。",
+    "zh-TW": "商店讀取設定尚未就緒，目前連線沒有回傳供貨資料。本次沒有進行交易。",
+    "en-US": "The shop read configuration is not ready, so this connection returned no stock data. No trade was made."
+  },
+  "issue.action.trade-configuration": {
+    "zh-CN": "保持商店购买页打开，再点一次读取当前游戏即可重新准备；无需先运行其他日常。若仍失败，请导出诊断日志。",
+    "zh-TW": "保持商店購買頁開啟，再點一次讀取目前遊戲即可重新準備；無需先執行其他日常。若仍失敗，請匯出診斷日誌。",
+    "en-US": "Keep the shop's Buy tab open and click Read Current Game again to prepare the connection. No other daily task is required. Export diagnostics if it still fails."
+  },
+  "issue.reason.trade-read": {
+    "zh-CN": "未能读取当前商店的完整供货与价格，本次没有进行交易。",
+    "zh-TW": "未能讀取目前商店的完整供貨與價格，本次沒有進行交易。",
+    "en-US": "The current shop's stock and prices could not be read completely. No trade was made."
+  },
+  "issue.action.trade-read": {
+    "zh-CN": "请保持在广场商店的购买页，确认连接组件已更新后重新读取；仍失败时，请从诊断页导出日志。",
+    "zh-TW": "請保持在廣場商店的購買頁，確認連線元件已更新後重新讀取；仍失敗時，請從診斷頁匯出日誌。",
+    "en-US": "Stay on the plaza shop's Buy tab, update the connection component and read again. If it still fails, export logs from Diagnostics."
   },
   "parallel.return_busy": {
     "en-US": "Wait for the batch to finish, or stop all accounts before returning to tasks.",

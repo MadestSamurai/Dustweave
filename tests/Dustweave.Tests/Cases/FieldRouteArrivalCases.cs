@@ -13,6 +13,7 @@ static class FieldRouteArrivalCases
         public long MapId = 9, Destination = 1;
         public bool Near, PortNear, BlockExit, FailCommand;
         public double GateDistance = 2; public double? FirstCommandAt;
+        public int GateInstance = 91;
         public Fixture(string root)
         {
             H = new(root, [new DailyBusinessProof("dispatch.start", "collection", [], (_, _, _) => new())]);
@@ -68,15 +69,16 @@ static class FieldRouteArrivalCases
             };
             var approaches = new List<JsonObject>();
             var rows = new List<JsonObject> {
-                Read("mainline.map",0,(MapPath,O(("id",MapId),("packId",1)))),
+                Read("mainline.map",0,(MapPath,O(("id",MapId),("packId",1))),
+                    ("ὪὨὯὢὫὮὨὩὮὡὬ.transform.position.x",0), ("ὪὨὯὢὫὮὨὩὮὡὬ.transform.position.y",0), ("ὪὨὯὢὫὮὨὩὮὡὬ.transform.position.z",0)),
                 Read("weekly_npc.native",0,("$self",Native())),
                 Read("navigation.pack",0,(DailyTravel.CurrentPack+".Id",1),(DailyTravel.CurrentPack+".PackType",0))
             };
             if (MapId is 9 or 1)
             {
-                int instance = MapId == 9 ? 91 : 12;
+                int instance = MapId == 9 ? GateInstance : 12;
                 long dest = MapId == 9 ? 1 : 2;
-                rows.Add(Read("mainline.gate",instance,("gameObject.name","Gate_test"),(ObjectPath,instance),(DestinationPath,dest)));
+                rows.Add(Read("mainline.gate",instance,("gameObject.name","Gate_test"),(ObjectPath,MapId == 9 ? 91 : 12),(DestinationPath,dest)));
                 approaches.Add(O(("Instance",instance),("Reachable",!BlockExit),("Distance",MapId==9?2:GateDistance),("Kind","gate"),("Destination",dest)));
             }
             if (MapId == 1)
@@ -95,6 +97,92 @@ static class FieldRouteArrivalCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool yes, string message) { if (!yes) throw new Exception(message); checks.Add(message); }
+        foreach (bool sameMap in new[] { false, true })
+        using (var f = new Fixture(Path.Combine(root, "walk-hidden-field-" + sameMap)))
+        {
+            bool hidden = false, restored = false;
+            f.H.OnCommand = c =>
+            {
+                Check(S(c["Kind"]) == "mainline_walk", "field transition does not emit stop or nudge commands");
+                if (f.Steps.Length == 1) { f.H.Page("OverheadManageUI"); hidden = true; }
+                else { Check(N(c["Value"]) == 191, "resumed walk resolves replacement gate instance"); f.MapId = 1; f.Scene(); }
+            };
+            f.H.OnDelay = () =>
+            {
+                if (hidden && !restored && f.H.Time >= 8)
+                {
+                    restored = true; f.GateInstance = 191;
+                    if (!sameMap) f.MapId = 1;
+                    f.Scene();
+                }
+            };
+            await f.Route.Walk(91, 1);
+            Check(restored && f.MapId == 1 && f.Steps.Length == (sameMap ? 2 : 1),
+                "hidden controls beyond stall timeout recover by real map state: " + sameMap);
+        }
+        using (var f = new Fixture(Path.Combine(root, "walk-cancel-ui-race")))
+        {
+            bool changed = false; double changedAt = 0;
+            f.H.OnCommand = c => { if (S(c["Kind"]) != "mainline_walk") throw new Exception("Unexpected movement during transition"); };
+            f.H.Driver.SubmissionGuard = () =>
+            {
+                if (!changed && f.Steps.Length == 1 && f.H.Time >= 5)
+                { changed = true; changedAt = f.H.Time; f.H.Page("OverheadManageUI"); }
+            };
+            f.H.OnDelay = () => { if (changed && f.H.Time >= changedAt + .6) { f.MapId = 1; f.Scene(); } };
+            await f.Route.Walk(91, 1);
+            Check(changed && f.Steps.Length == 1 && f.MapId == 1 && f.H.Time < 12,
+                "unsent cancellation racing HUD hide recovers without old 30-second destination wait");
+        }
+        using (var f = new Fixture(Path.Combine(root, "walk-persistent-hidden-field")))
+        {
+            f.H.OnCommand = _ => f.H.Page("OverheadManageUI");
+            bool blocked = false;
+            try { await f.Route.Walk(91, 1); }
+            catch (StageHostException ex) { blocked = ex.Message.StartsWith("field.not-ready:", StringComparison.Ordinal); }
+            Check(blocked && f.Steps.Length == 1 && f.H.Time < 50,
+                "persistent field absence has bounded actionable failure without blind movement");
+            var report = DailyJson.TryRead<JsonObject>(Directory.GetFiles(Path.Combine(f.H.Root, "live", "travel-diagnostics")).Single())!;
+            Check(S(report["reason"]) == "field_transition_not_ready" && N(report["details"]!["destination"]) == 1
+                && report["frame"] != null && report["latest_frame"] != null,
+                "failed transition retains destination, old and current UI, gates and travel state");
+        }
+        using (var f = new Fixture(Path.Combine(root, "walk-repeated-interruption")))
+        {
+            double hiddenAt = 0;
+            f.H.OnCommand = _ => { hiddenAt = f.H.Time; f.H.Page("OverheadManageUI"); };
+            f.H.OnDelay = () => { if (f.H.Time >= hiddenAt + .6) f.Scene(); };
+            bool blocked = false;
+            try { await f.Route.Walk(91, 1); }
+            catch (DailyTravelBlocked ex) { blocked = ex.Message.StartsWith("field.route-interrupted:", StringComparison.Ordinal); }
+            Check(blocked && f.Steps.Length == 4, "repeated same-map interruptions return to route planner after bounded retries");
+        }
+        using (var f = new Fixture(Path.Combine(root, "walk-hidden-user-stop")))
+        {
+            f.H.OnCommand = _ => f.H.Page("OverheadManageUI");
+            f.H.OnDelay = () => { if (f.Steps.Length > 0) f.H.Stopped = true; };
+            bool stopped = false;
+            try { await f.Route.Walk(91, 1); }
+            catch (StageHostException ex) { stopped = ex.Kind == "stopped"; }
+            Check(stopped && f.Steps.Length == 1, "field transition never masks cancellation or restarts stopped movement");
+        }
+        using (var f = new Fixture(Path.Combine(root, "walk-unknown-popup")))
+        {
+            f.H.OnCommand = _ => f.H.Page("UnknownPaymentPopupUI");
+            bool blocked = false;
+            try { await f.Route.Walk(91, 1); }
+            catch (StageHostException ex) { blocked = ex.Kind == "adapter"; }
+            Check(blocked && f.Steps.Length == 1, "field recovery leaves an unknown confirmation untouched");
+        }
+        using (var f = new Fixture(Path.Combine(root, "walk-hidden-account-change")))
+        {
+            f.H.OnCommand = _ => f.H.Page("OverheadManageUI");
+            f.H.OnDelay = () => { if (f.Steps.Length > 0) { f.H.Frame["AccountKey"] = "another-account"; f.Scene(); } };
+            bool blocked = false;
+            try { await f.Route.Walk(91, 1); }
+            catch (InvalidDataException ex) { blocked = ex.Message.Contains("account/process changed", StringComparison.Ordinal); }
+            Check(blocked && f.Steps.Length == 1, "account change during field recovery cannot replay navigation on the new account");
+        }
         using (var f = new Fixture(Path.Combine(root, "route-planning-no-settle")))
         {
             var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence());

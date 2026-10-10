@@ -8,7 +8,10 @@ public static class DailyIssues
     {
         string text = raw ?? "";
         bool Has(params string[] words) => words.Any(w => text.Contains(w, StringComparison.OrdinalIgnoreCase));
+        if (text.StartsWith("trade.read.configuration:", StringComparison.Ordinal)) return new("trade-configuration", "connection");
+        if (text.StartsWith("trade.read.native:", StringComparison.Ordinal)) return new("trade-read", "game");
         if (Has("no replay", "uncertain", "结果尚未确认", "结果未知", "结果不明", "未确认消费", "unresolved", "requires reconciliation")) return new("uncertain", "result");
+        if (Has("field.not-ready:", "field.route-interrupted:", "Need one observed GameFieldDefaultUI; found 0")) return new("field-transition", "game");
         if (Has("suite.owner-exited", "suite.owner-replaced", "suite.owner-missing")) return new("owner-ended", "connection");
         if (Has("suite.owner-unreadable")) return new("owner-unreadable", "permission");
         if (Has("connection.login_identity_unavailable")) return new("live-login-unavailable", "identity");

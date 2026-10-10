@@ -41,6 +41,74 @@ static class TradeOptimizerCases
   s=State(c,O(("1",100),("2",150)));s["capacity_limits"]=O(("3",3));p=DailyTradeOptimizer.Plan(c,s);
   Check(Cooks(p,1)==3,"executable cooking honors observed output capacity");
 
+  JsonObject Offer(long product,long item,long price,long limit)=>O(("shop",1),("product",product),("item",item),("base_price",price),("limit",limit));
+  JsonObject Available(JsonObject catalog)
+  {
+   var state=State(catalog,new());state["bargain_active"]=true;
+   foreach(var offer in Rows(state["offers"])){
+    offer["remaining"]=N(Rows(catalog["offers"]).Single(o=>N(o["product"])==N(offer["product"]))["limit"]);
+    offer["price"]=Copy(offer["bargain_price"]);
+   }
+   return state;
+  }
+  long Buys(JsonObject plan,long item)=>Rows(plan["purchases"]).Where(r=>N(r["item"])==item).Sum(r=>N(r["count"]));
+  var achievement=O(("include_break_even_resales",true));
+  Check(!B(DailyTradeOptimizer.Preferences()["include_break_even_resales"]),"break-even purchases are opt-in for existing accounts");
+  Reject(()=>DailyTradeOptimizer.Preferences(O(("include_break_even_resales",1))),"break-even switch rejects non-boolean values");
+  var flat=Catalog([Item(1,40),Item(2,39)],[],[Offer(1,1,100,10),Offer(2,2,100,10)]);
+  s=Available(flat);p=DailyTradeOptimizer.Plan(flat,s);
+  Check(Rows(p["purchases"]).Length==0,"default excludes arbitrary zero-profit purchase and resale ties");
+  p=DailyTradeOptimizer.Plan(flat,s,achievement);
+  Check(Buys(p,1)==10&&Buys(p,2)==0&&N(p["summary"]!["break_even_value"])==400,"opt-in adds equal-price goods but never even one gold of resale loss");
+  Check(N(p["summary"]!["incremental_profit"])==0&&N(p["summary"]!["cash_required"])==400&&N(p["summary"]!["eventual_sale_value"])==400,"break-even turnover is not counted as profit or free cash");
+  Check(Rows(p["sales"]).All(r=>!B(r["today_quote_confirmed"])&&S(r["date"])=="2026-11-01"),"achievement goods still wait for confirmed premium sale day");
+  s["bargain_active"]=false;s["can_bargain"]=true;s["potions"]=0;s["gold"]=1000;
+  foreach(var offer in Rows(s["offers"]))offer["price"]=100;
+  p=DailyTradeOptimizer.Plan(flat,s,achievement);
+  Check(Buys(p,1)==10&&B(p["bargain"]!["start"])&&N(p["summary"]!["incremental_profit"])==-450,"bargaining fee does not disqualify equal-price achievement goods");
+  Check(N(p["summary"]!["potions_to_buy"])==10&&N(p["summary"]!["cash_required"])==850,"actual bargaining fee still reserves funds and appears in ledger");
+  s["gold"]=449;p=DailyTradeOptimizer.Plan(flat,s,achievement);
+  Check(Rows(p["purchases"]).Length==0&&!B(p["bargain"]!["start"]),"ignoring fee in strategy never spends unavailable potion money");
+  var noFlat=Catalog([Item(1,41)],[],[Offer(1,1,100,1)]);
+  var noFlatState=Available(noFlat);noFlatState["bargain_active"]=false;noFlatState["can_bargain"]=true;
+  Rows(noFlatState["offers"])[0]["price"]=100;
+  p=DailyTradeOptimizer.Plan(noFlat,noFlatState,achievement);
+  Check(Rows(p["purchases"]).Length==0&&!B(p["bargain"]!["start"]),"achievement switch cannot waive bargaining fee for unrelated loss-making plans without equal-price extras");
+  s=Available(flat);s["items"]=O(("1",8));s["capacity_limits"]=O(("1",10));s["protected_items"]=O(("1",7));
+  p=DailyTradeOptimizer.Plan(flat,s,achievement);
+  Check(Buys(p,1)==2&&N(p["summary"]!["break_even_count"])==2&&Rows(p["sales"]).Single()["count"]!.GetValue<long>()==3,"extra buying obeys real stack capacity and preserves protected inventory");
+  s=Available(flat);p=DailyTradeOptimizer.Plan(flat,s,O(("include_break_even_resales",true),("reserve_gold",99999900L),("max_spend",80)));
+  Check(Buys(p,1)==2&&N(p["summary"]!["cash_required"])==80,"extra turnover respects both account reserve and spending cap");
+
+  var profitable=Catalog([Item(1,60),Item(2,40)],[],[Offer(1,1,100,2),Offer(2,2,100,10)]);
+  s=Available(profitable);s["gold"]=2500;
+  var normal=DailyTradeOptimizer.Plan(profitable,s);p=DailyTradeOptimizer.Plan(profitable,s,achievement);
+  Check(Buys(p,1)==Buys(normal,1)&&Buys(p,2)==2&&p["solver"]!["forecast_profit"]!.GetValue<double>()==normal["solver"]!["forecast_profit"]!.GetValue<double>(),"only funds left after profitable current and future purchases are used for achievements");
+  s["gold"]=80;p=DailyTradeOptimizer.Plan(profitable,s,achievement);
+  Check(Buys(p,1)==2&&Buys(p,2)==0,"tight budget prioritizes profit over achievement turnover");
+
+  var flatIngredient=Catalog([Item(1,40),Item(2,1),Item(3,200)],[Recipe(1,3,1,("1",1),("2",1))],[Offer(1,1,100,10)]);
+  s=Available(flatIngredient);s["items"]=O(("2",1));normal=DailyTradeOptimizer.Plan(flatIngredient,s);
+  p=DailyTradeOptimizer.Plan(flatIngredient,s,achievement);
+  Check(Buys(normal,1)==1&&Cooks(normal,1)==1&&N(normal["summary"]!["break_even_count"])==0,"disabled option does not forbid equal-price ingredients needed by profitable cooking");
+  Check(Buys(p,1)==10&&Cooks(p,1)==1&&N(p["summary"]!["break_even_count"])==9&&N(p["summary"]!["incremental_profit"])==N(normal["summary"]!["incremental_profit"]),"achievement counts only extra direct resales, preserving existing cooking allocations");
+  string cached=Path.Combine(output,"break-even-plan.json");
+  DailyTradePlan.Generate(flatIngredient,s,null,cached,"a");
+  p=DailyTradePlan.Generate(flatIngredient,s,achievement,cached,"a");
+  Check(!B(p["cache_reused"])&&N(p["summary"]!["break_even_count"])==9&&DailyTradePlan.Report(p).Contains("不分摊砍价费"),"strategy change invalidates plan cache and export explains fee exclusion");
+  p=DailyTradePlan.Generate(flatIngredient,s,achievement,cached,"a");
+  Check(B(p["cache_reused"]),"unchanged achievement plan can reuse verified optimum");
+  var split=DailyTradeProof.Split(p,s);
+  Check(Rows(split["full"]).Single()["count"]!.GetValue<long>()==10,"achievement goods enter the existing favorites purchase execution path");
+
+  var knapsack=Catalog([Item(1,6),Item(2,10)],[],[Offer(1,1,15,3),Offer(2,2,25,3)]);
+  for(int budget=0;budget<=32;budget++)
+  {
+   s=Available(knapsack);s["gold"]=budget;p=DailyTradeOptimizer.Plan(knapsack,s,achievement);
+   int best=0;for(int a=0;a<=3;a++)for(int b=0;b<=3;b++)if(6*a+10*b<=budget)best=Math.Max(best,6*a+10*b);
+   Check(N(p["summary"]!["break_even_value"])==best&&N(p["summary"]!["incremental_profit"])==0,$"integer extra turnover matches exhaustive budget allocation {budget}");
+  }
+
   // Exhaustive independent oracle: no offers, no random supply; both recipes compete for material 1.
   var competing=Catalog([Item(1,8),Item(2,6),Item(3,90),Item(4,150)],[Recipe(1,3,1,("1",2)),Recipe(2,4,1,("1",3),("2",2))]);
   for(int a=0;a<=6;a++)for(int b=0;b<=3;b++){

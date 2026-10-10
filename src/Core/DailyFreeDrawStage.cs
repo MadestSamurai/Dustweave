@@ -24,6 +24,24 @@ public sealed class DailyFreeDrawStage : IDailyManagedStage
             throw new StageHostException("stopped", "免费抽取已停止，原预览和回执保留。");
     }
     private static bool SameCycle(JsonObject op, DailyStageFrame frame) => JsonNode.DeepEquals(op["cycle"], frame.Context["cycle"]) && JsonNode.DeepEquals(op["server"], frame.Context["server"]) && DailyEvidence.SameActor(op["before"]!["Frame"]!.AsObject(), frame.Frame);
+    internal static bool AbandonedPreview(JsonObject op, DailyStageFrame frame, JsonArray events)
+    {
+        // Commit persists dispatching BEFORE submitting a confirmation. A preview-only
+        // record can be retired once its popup is gone, even after reconnect/reset.
+        // This never proves a draw succeeded; the next run reads current free counters.
+        if (op["engine"]?.GetValue<string>() != "dotnet-business-v1" || op["role"]?.GetValue<string>() != DailyFreeDrawProof.Role
+            || op["state"]?.GetValue<string>() is not ("previewing" or "preview_ready" or "unknown_preview")
+            || op["scope"]?["native_free_only"]?.GetValue<bool>() != true || op["command_id"] != null
+            || op["confirmed_at"] != null || op["result"] != null || events.Count != 0
+            || op["action"]?["ui"]?.GetValue<string>() != "MessagePopupUI" || op["action"]?["field"]?.GetValue<string>() != "_buttonOK"
+            || !JsonNode.DeepEquals(op["account"], frame.Context["actor"]?[3]) || !JsonNode.DeepEquals(op["player"], frame.Context["actor"]?[4])
+            || !JsonNode.DeepEquals(op["server"], frame.Context["server"])) return false;
+        var rows = DailyNavigationDecision.Rows(frame.Frame).ToArray();
+        var pages = rows.Where(r => DailyNavigationDecision.Text(r, "Type") is "MenuUI" or "GachaMainUI").ToArray();
+        return pages.Length == 1 && DailyNavigationDecision.ReadyInput(pages[0], false)
+            && !rows.Any(r => DailyNavigationDecision.Text(r, "Type") is "MessagePopupUI" or "GachaResultUI")
+            && DailyNavigationDecision.Blockers(frame.Frame, DailyNavigationDecision.Text(pages[0], "Type"), DailyNavigationPolicy.Load()).Length == 0;
+    }
     public static bool OwnsPreview(JsonObject op, DailyStageFrame frame)
     {
         if (op["role"]?.GetValue<string>() != DailyFreeDrawProof.Role || op["state"]?.GetValue<string>() != "preview_ready" || op["preview_frame"] is not JsonObject saved || !SameCycle(op, frame) || !JsonNode.DeepEquals(saved["Scene"], frame.Frame["Scene"]) || !JsonNode.DeepEquals(saved["UiToken"], frame.Frame["UiToken"]))
@@ -130,9 +148,7 @@ public sealed class DailyFreeDrawStage : IDailyManagedStage
         if (!OwnsPreview(op, current))
             throw new StageHostException("pending", "原免费抽取预览与当前弹窗不一致，保留现场。");
         var before = await driver.EvidenceAsync(["gacha", "missions.cache"]);
-        var old = DailyFreeDrawProof.Users(op["before"]!.AsObject());
-        var fresh = DailyFreeDrawProof.Users(before);
-        if (old.Count != fresh.Count || old.Any(p => !fresh.TryGetValue(p.Key, out var value) || !JsonNode.DeepEquals(p.Value, value)))
+        if (!DailyFreeDrawProof.PreviewCacheUnchanged(op["before"]!.AsObject(), before))
             throw new StageHostException("pending", "免费预览期间抽取缓存改变，未提交确认。");
         if (!before["Taps"]!.AsArray().Any(t => t?.GetValue<string>() == DailyFreeDrawProof.Role))
             throw new StageHostException("adapter", "免费抽取回执观察未就绪，未提交确认。");

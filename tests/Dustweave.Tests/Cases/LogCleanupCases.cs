@@ -52,9 +52,9 @@ internal static class LogCleanupCases
         Check(cancelled,"scan supports immediate cancellation");
         bool stale=false;try{DailyLogCleanup.Apply(plan with{At=now.AddHours(-1)});}catch(InvalidOperationException){stale=true;}Check(stale,"stale previews require another scan");
         string odd=Step();FileAt($"live/steps/{odd}/result.json","broken");plan=await DailyLogCleanup.ScanAsync(root,policy);Check(plan.Units.Any(u=>u.Path.Contains(odd)),"malformed diagnostics also expire instead of accumulating forever");
-        string query=FileAt("live/reward-queries/123.json","{}"),evt=FileAt("live/event-journal/123-event.json","{}"),diagnostic=FileAt("live/diagnostics/error.json","{}");
+        string query=FileAt("live/reward-queries/123.json","{}"),evt=FileAt("live/event-journal/123-event.json","{}"),diagnostic=FileAt("live/diagnostics/error.json","{}"),tradeRead=FileAt("live/trade-quote-reads/failed.json","{}"),tradeUi=FileAt("trade/diagnostics/capture.json","{}"),travel=FileAt("live/travel-diagnostics/failed.json","{}");
         plan=await DailyLogCleanup.ScanAsync(root,policy);await DailyLogCleanup.ApplyAsync(plan);
-        Check(new[]{query,evt,diagnostic}.All(p=>!File.Exists(p)),"queries, event snapshots and JSON diagnostics expire too");
+        Check(new[]{query,evt,diagnostic,tradeRead,tradeUi,travel}.All(p=>!File.Exists(p)),"queries, event snapshots and trade/route diagnostics expire too");
         string guard=Step("unknown_timeout",reason:"business:"+businessId+"|confirm");
         FileAt($"live/steps/{guard}/result.json",JsonSerializer.Serialize(new {state="unknown_timeout",receipt=new {Id=guard,Status="observed_after_dispatch"}}));
         plan=await DailyLogCleanup.ScanAsync(root,policy);await DailyLogCleanup.ApplyAsync(plan);

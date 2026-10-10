@@ -59,6 +59,8 @@ public static class DailyTradePlan
         foreach (var (key, name) in new[] { ("incremental_profit", "本轮加工与交易增益"), ("eventual_sale_value", "预计回款"), ("cash_required", "本轮垫资"), ("cash_remaining", "垫资后金币"), ("potion_unit_price", "天赋药单价"), ("potions_used", "天赋药总消耗"), ("potions_to_buy", "其中需补买") })
             b.AppendLine($"|{name}|{N(s[key]):N0}|");
         b.AppendLine();
+        if (B(p["settings"]?["include_break_even_resales"]))
+            b.AppendLine($"已开启金币成就采购：额外零收益商品 {N(s["break_even_count"]):N0} 个，垫资／预计回款 {N(s["break_even_value"]):N0} 金币。仅比较折扣后买价与120%卖价，不分摊砍价费；实际药耗仍计入上方账目，卖出须等待高价日。").AppendLine();
         if (p["drop_forecast"] is JsonObject drops) b.AppendLine($"掉落预测：已知周收集路线 {Rows(drops["maps"]).Length} 张地图，按静态奖励权重计算期望；仅影响材料分配，不允许使用未到账物品。");
         foreach (var warning in Rows(p["warnings"]))
             b.AppendLine(S(warning["message"]));
@@ -69,7 +71,7 @@ public static class DailyTradePlan
             foreach (var row in rows)
                 b.AppendLine("|" + string.Join('|', row.Select(x => (x?.ToString() ?? "—").Replace('|', '／').Replace('\n', ' '))) + "|");
         }
-        Table("采购", ["商店", "商品", "物品", "数量", "单价", "金额"], Rows(p["purchases"]).Select(r => new object?[] { N(r["shop"]), N(r["product"]), S(r["name"]), N(r["count"]), N(r["price"]), N(r["cost"]) }));
+        Table("采购", ["商店", "商品", "物品", "数量", "其中零收益", "单价", "金额"], Rows(p["purchases"]).Select(r => new object?[] { N(r["shop"]), N(r["product"]), S(r["name"]), N(r["count"]), N(r["break_even_count"]), N(r["price"]), N(r["cost"]) }));
         Table("料理分配", ["料理", "份数", "天赋药", "预计售日"], Rows(p["cooking"]).Select(r => new object?[] { S(r["name"]), N(r["count"]), N(r["potions"]), S(r["sale_date"]) }));
         Table("售卖分配", ["物品", "数量", "单价", "商店", "预计售日", "今日报价确认"], Rows(p["sales"]).Select(r => new object?[] { S(r["name"]), N(r["count"]), N(r["price"]), N(r["shop"]), S(r["date"]), B(r["today_quote_confirmed"]) ? "是" : "否" }));
         Table("后续料理保留", ["食材", "数量", "原料120%卖价"], Rows(p["holds"]).Select(r => new object?[] { S(r["name"]), N(r["count"]), N(r["price"]) }));

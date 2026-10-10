@@ -63,6 +63,9 @@ public sealed partial class DailyFieldRoute
         return eligible.Length > 0 && eligible.All(r => DailyRegionRouter.D(r["Cooldown"]) > 0);
     }
     public static bool NeedsStealth(JsonObject e) => N(Map(e)["packId"]) is 14 or 1003;
+    private static bool FieldInputReady(JsonObject frame) => DailyNavigationDecision.MapSceneReady(frame)
+        && DailyNavigationDecision.Rows(frame).Any(r => S(r["Type"]) == "GameFieldDefaultUI" && DailyNavigationDecision.ReadyInput(r))
+        && DailyNavigationDecision.Types(frame).All(t => t == "GameFieldDefaultUI" || DailyNavigationDecision.PassiveSurface(t));
     public async Task FieldReady(double timeout = 45, double settle = 1)
     {
         double end = W.Time + timeout;
@@ -113,7 +116,7 @@ public sealed partial class DailyFieldRoute
                 await W.Step("QuickMenuUI", back: true, absent: "QuickMenuUI");
                 continue;
             }
-            bool ready = DailyNavigationDecision.Rows(frame).Any(r => S(r["Type"]) == "GameFieldDefaultUI" && DailyNavigationDecision.ReadyInput(r)) && types.All(t => t == "GameFieldDefaultUI" || DailyNavigationDecision.PassiveSurface(t));
+            bool ready = FieldInputReady(frame);
             if (ready)
             {
                 stable ??= W.Time;
@@ -124,7 +127,7 @@ public sealed partial class DailyFieldRoute
                 stable = null;
             await W.Delay(200);
         }
-        throw new StageHostException("adapter", "地图仍未就绪，未盲目发送移动或技能。");
+        throw new StageHostException("adapter", "field.not-ready: 地图操作界面仍未恢复，已保留收集进度；请回到可移动的地图界面后接续任务。");
     }
     public async Task PrepareNpcMap(long map)
     {
@@ -373,10 +376,11 @@ public sealed partial class DailyFieldRoute
     }
     private async Task Failure(JsonObject e, int target, string reason, JsonObject? detail = null)
     {
-        var report = O(("reason", reason), ("target", target), ("map", Map(e)), ("travel", Travel(e)), ("gates", Array(FieldRows(e, "gate"))), ("waypoints", Array(FieldRows(e, "waypoint"))), ("details", detail));
+        var report = O(("reason", reason), ("target", target), ("frame", e["Frame"]), ("map", Map(e)), ("travel", Travel(e)), ("gates", Array(FieldRows(e, "gate"))), ("waypoints", Array(FieldRows(e, "waypoint"))), ("details", detail));
         try
         {
             var fresh = await W.Evidence("mainline", "route.gates", "route.navigation");
+            report["latest_frame"] = Copy(fresh["Frame"]);
             if (N(Map(fresh)["id"]) == N(Map(e)["id"]))
             {
                 report["contacts"] = Copy(R(fresh, "route.gates", "$self"));
@@ -384,7 +388,8 @@ public sealed partial class DailyFieldRoute
             }
         }
         catch (Exception ex) { report["diagnostic_error"] = ex.Message; }
-        DailyJson.Write(Path.Combine(W.Root, "live", "travel-diagnostics", W.Driver.UtcTicks + ".json"), report);
+        try { DailyJson.Write(Path.Combine(W.Root, "live", "travel-diagnostics", W.Driver.UtcTicks + ".json"), report); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* Preserve the navigation failure if diagnostics cannot be saved. */ }
     }
     public static JsonObject[] Drops(JsonObject e) => FieldRows(e, "reward").Where(r => B(r["ὦὫὧὯὥὫὦὪὣὦὪ"]) || B(r["ὯὩὮὩὮὣὯὫὮὡὧ"])).ToArray();
 }

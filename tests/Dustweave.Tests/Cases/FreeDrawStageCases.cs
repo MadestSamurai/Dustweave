@@ -158,6 +158,54 @@ static class FreeDrawStageCases
         }
         using (var f = Create())
         {
+            await f.PreviewRecord();
+            f.Counts[7] = 0; // The game's preview queries an untouched banner.
+            await f.Stage.ExecuteAsync(f.Context, NoRelay);
+            Check(f.Confirmations == 2 && f.Previews == 1 && f.PaidCommands == 0 && f.Counts[7] == 0,
+                "lazy empty banner initialization does not block an owned free preview or add a draw");
+        }
+        foreach (string change in new[] { "used-new-group", "changed-existing", "removed-existing" })
+        using (var f = Create())
+        {
+            await f.PreviewRecord();
+            if (change == "used-new-group") f.Counts[7] = 1;
+            if (change == "changed-existing") f.Counts[6] = 1;
+            if (change == "removed-existing") f.Counts.Remove(6);
+            await Reject(() => f.Stage.ExecuteAsync(f.Context, NoRelay), "pending", "free preview preserves actual cache change: " + change);
+            Check(f.Confirmations == 0, "cache change cannot authorize a consuming confirmation: " + change);
+        }
+        foreach (string state in new[] { "previewing", "preview_ready", "unknown_preview" })
+        using (var f = Create())
+        {
+            var op = await f.PreviewRecord();
+            op["state"] = state;
+            op["cycle"] = "yesterday";
+            op["before"]!["Frame"]!["ProcessId"] = 999; // Original game has exited.
+            f.Business.Save(op);
+            f.Page("MenuUI");
+            var report = await f.Business.ReconcileAsync(f.Context);
+            Check(report["unresolved"]!.AsArray().Count == 0 && f.Box.Commands.Count == 0 &&
+                f.Records().Single()["state"]!.GetValue<string>() == "superseded", "closed unsubmitted " + state + " is retired without input across restart/reset");
+            await f.Stage.ExecuteAsync(f.Context, NoRelay);
+            Check(f.Confirmations == 2 && f.Records().Count == 3, "retired preview rechecks current free availability: " + state);
+        }
+        foreach (string condition in new[] { "result", "popup", "not-ready", "confirmed", "paid-scope", "dispatching", "unknown", "other-page" })
+        using (var f = Create())
+        {
+            var op = await f.PreviewRecord();
+            f.Page(condition == "result" ? "GachaResultUI" : condition == "other-page" ? "ShopUI" : "MenuUI");
+            if (condition == "popup") f.AddPopup();
+            if (condition == "not-ready") f.Current["Surfaces"]![0]!["InputReady"] = false;
+            if (condition == "confirmed") op["command_id"] = "submitted";
+            if (condition == "paid-scope") op["scope"]!["native_free_only"] = false;
+            if (condition is "dispatching" or "unknown") op["state"] = condition;
+            f.Business.Save(op);
+            var report = await f.Business.ReconcileAsync(f.Context);
+            Check(report["unresolved"]!.AsArray().Count == 1 && f.Confirmations == 0,
+                "preview recovery preserves ambiguous/consumed state: " + condition);
+        }
+        using (var f = Create())
+        {
             var op = await f.PreviewRecord();
             f.Current["UiToken"] = "new-popup";
             await Reject(() => f.Stage.ExecuteAsync(f.Context, NoRelay), "pending", "replacement preview popup cannot inherit old ownership");
