@@ -30,7 +30,7 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly CheckBox mirror = Check("镜中之战"), guild = Check("公会签到"), room = Check("小屋奖励"),
         income = Check("经营一键领取"), guests = Check("餐厅特殊顾客与气泡"), draws = Check("每日免费抽取"),
         dailyRewards = Check("日常任务奖励"), weeklyRewards = Check("周常任务奖励"), mail = Check("邮箱物品");
-    private readonly CheckBox friendship = Check("每日亲密度咨询"), quickFriendship = Check("使用快速咨询（默认关闭）");
+    private readonly CheckBox friendship = Check("每日亲密度咨询"), quickFriendship = Check("prefs.friendship_quick");
     private readonly CheckBox weeklyBook = Check("周常末日之书"), weeklyCraft = Check("周常制作装备"), weeklySichuan = Check("周常连连看");
     private readonly CheckBox mainline = Check("周收集"), weeklyNpc = Check("周NPC任务"), npcHunting = Check("允许接取必须去狩猎场的任务"), weeklySteal = Check("每周偷窃"), walkCollect = Check("步行收集（不使用吸收）"), monsterHunt = Check("魔兽最高档快速战斗"), fishing = Check("周常钓鱼"), roomLikes = Check("周常小屋点赞");
     private readonly CheckBox events = Check("活动奖励"), eventMissions = Check("领取活动任务与活动代币"), roulette = Check("使用免费次数和已有转盘券"), exchange = Check("活动代币最大批量兑换"), quiz = Check("自动完成已开放答题"), dice = Check("自动使用现有活动骰子"), puzzle = Check("拼图板使用现有代币批量翻开");
@@ -94,14 +94,14 @@ public sealed class DailyPreferencesPanel : UserControl
         DockPanel.SetDock(GamePath, Dock.Top);
         layout.Children.Add(GamePath);
         var header = new DockPanel { Margin = new(0, 0, 0, 16) };
-        var save = LocalButton("保存本账号偏好"); save.Style = (Style)Application.Current.FindResource("PrimaryButton");
+        var save = LocalButton("prefs.save"); save.Style = (Style)Application.Current.FindResource("PrimaryButton");
         save.Click += (_, _) => Save();
         DockPanel.SetDock(save, Dock.Right);
         header.Children.Add(save);
         var accountGroup = new Grid { Margin = new(0, 0, 16, 0), MaxWidth = 440, HorizontalAlignment = HorizontalAlignment.Left };
         accountGroup.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         accountGroup.ColumnDefinitions.Add(new ColumnDefinition());
-        var accountLabel = Label("偏好账号"); accountLabel.VerticalAlignment = VerticalAlignment.Center; accountLabel.Margin = new(0, 0, 12, 0); accountGroup.Children.Add(accountLabel);
+        var accountLabel = Label("prefs.account"); accountLabel.VerticalAlignment = VerticalAlignment.Center; accountLabel.Margin = new(0, 0, 12, 0); accountGroup.Children.Add(accountLabel);
         accounts.MinWidth = 160;
         accounts.MaxWidth = 280;
         Grid.SetColumn(accounts, 1);
@@ -125,7 +125,6 @@ public sealed class DailyPreferencesPanel : UserControl
         stone.DisplayMemberPath = "Label";
         stone.SelectedValuePath = "Key";
         section = form;
-        Note("勾选要做的环节，展开调整参数。设置只影响所选账号。");
         var generalBody = new StackPanel { Margin = new(24, 8, 12, 16) };
         var generalTitle = Label("整体设置"); generalTitle.FontWeight = FontWeights.SemiBold;
         var general = new Border { BorderBrush = (Brush)Application.Current.FindResource("Line"), BorderThickness = new(0, 0, 0, 1), Child = new Expander { Header = generalTitle, Content = generalBody, IsExpanded = true, Margin = new(0, 8, 0, 8), Style = (Style)Application.Current.FindResource("SettingsExpander") } };
@@ -139,31 +138,30 @@ public sealed class DailyPreferencesPanel : UserControl
         potionRefill.Unchecked += (_, _) => potionTarget.IsEnabled = false;
         L.Bind(potionReserve, System.Windows.Automation.AutomationProperties.NameProperty, () => L.Translate("天赋药保留下限"));
         L.Bind(potionTarget, System.Windows.Automation.AutomationProperties.NameProperty, () => L.Translate("补药至"));
-        Stage(guild, "公会签到", "签到与领取可用奖励");
-        Stage(room, "小屋奖励", "领取可用的小屋奖励");
-        Stage(income, "经营一键领取", "一起领取餐厅、鱼笼和领地工人收益；鱼笼沿用游戏中的自动出售设置");
+        Stage(guild, "公会签到", "签到与领取可用奖励", showSummary: false);
+        Stage(room, "小屋奖励", "领取可用的小屋奖励", showSummary: false);
+        Stage(income, "经营一键领取", "prefs.business_hint");
         Stage(guests, "餐厅特殊顾客与气泡", "领取属性圣石和限时装饰币");
-        Stage(draws, "每日免费抽取", "只使用当日免费抽取，不消耗付费抽券");
+        Stage(draws, "每日免费抽取", "prefs.draws_hint");
         Stage(recycle, "装备分解", "只处理本日免费抽取的可分解装备");
         section.Children.Add(keepSr);
         Row("分解前强化等级", enhance);
-        Note("默认强化 +7 后分解，0 为直接分解。排除锁定、保留和装备中的物品；关闭免费抽取不会自动替你开启抽取。");
+        Note("prefs.enhance_note");
         section.Children.Add(fallback);
-        Stage(weeklyCraft, "周常制作装备", "本周任务未完成时制作一件N剑；材料不足时保留待办，不购买材料");
-        Note("沿用装备分解设置：开启分解时，仅将本次新制作的装备强化后分解；关闭分解则保留。已手动完成或本日兜底制作过会自动跳过。");
-        Stage(refine, "装备精炼", "有未完成任务时精炼一次，完成后不重复");
+        Stage(weeklyCraft, "周常制作装备", "prefs.craft_hint");
+        Note("prefs.craft_note");
+        Stage(refine, "装备精炼", "prefs.refine_hint");
         section.Children.Add(refineChoice);
         section.Children.Add(inventoryState);
         var refreshInventory = LocalButton("刷新可选装备"); refreshInventory.HorizontalAlignment = HorizontalAlignment.Left; refreshInventory.Margin = new(0, 4, 0, 8);
         refreshInventory.Click += (_, _) => RefreshInventory();
         section.Children.Add(refreshInventory);
-        Note("未指定时，选择已强化 +9 的五星专武：精炼未满 24，且同种同稀有度没有 24 级成品。此环节可独立开启，不受装备分解开关影响。");
-        Stage(hunt, "普通狩猎与奖励日", "默认第 9 章、刷金币、不刷史莱姆");
+        Note("prefs.refine_note");
+        Stage(hunt, "普通狩猎与奖励日", "prefs.hunt_hint");
         Row("普通狩猎关卡", chapter);
-        Note("免费米饭直接按优先级批量使用，不再先刷一次普通狩猎。");
         section.Children.Add(gold);
         section.Children.Add(slime);
-        Note("金币和史莱姆只在勾选且当天有加成时参与；从上往下选择第一个可用去向。");
+        Note("prefs.priority_note");
         var rankingRow = new StackPanel { Orientation = Orientation.Horizontal };
         rankingRow.Children.Add(priority);
         var moves = new StackPanel { Margin = new(8, 0, 0, 0) };
@@ -178,67 +176,67 @@ public sealed class DailyPreferencesPanel : UserControl
         section.Children.Add(rankingRow);
         Stage(stones, "圣石狩猎", "按所选属性用完剩余免费火炬");
         Row("圣石属性", stone);
-        Note("选择库存最少时，开始前比较五种属性。关闭普通狩猎不影响圣石环节。");
+        Note("prefs.stones_note");
         Stage(mirror, "镜中之战", "用完实际剩余免费次数", expanded: true);
         multiplier.ItemsSource = Enumerable.Range(1, 40).ToArray();
         Row("每轮倍率", multiplier);
-        Note("每轮结算后重新读取剩余次数，最后一轮自动缩小倍率。例如剩余 40 次、设置 15 倍，会执行 15 + 15 + 10。只用免费次数，不自动购买。");
-        Stage(dispatch, "每日派遣", "原生一键领取派遣、会战和恶魔城奖励，等待游戏自动续派");
-        Stage(goddess, "女神像奖励", "进入广场领取当日可用奖励");
-        Stage(ranking, "广场排行榜奖励", "与女神像共用一次广场访问，领取可用周期奖励");
+        Note("prefs.multiplier_note");
+        Stage(dispatch, "每日派遣", "prefs.dispatch_hint");
+        Stage(goddess, "女神像奖励", "进入广场领取当日可用奖励", showSummary: false);
+        Stage(ranking, "广场排行榜奖励", "prefs.ranking_hint");
         tacticsSearch.ItemsSource = new[] { 15, 30, 45, 60, 120 };
         if (extensionTasks)
         {
             Stage(tactics, "战术教材", "按当前配置执行");
             Row("每关搜索秒数", tacticsSearch);
         }
-        Stage(eventBattle, extensionEvents ? "活动战斗" : "活动每日挑战15", extensionEvents ? "按当前配置执行" : "已通关挑战15时，仅使用原生扫荡完成当天剩余免费次数，最多5次；不能扫荡就跳过", expanded: true);
+        Stage(eventBattle, extensionEvents ? "活动战斗" : "活动每日挑战15", extensionEvents ? "按当前配置执行" : "prefs.event_sweep_hint", expanded: true);
         eventSearch.ItemsSource = new[] { 5, 15, 30, 60, 120 };
         if (extensionEvents)
         {
             section.Children.Add(eventChallenge);
             Row("每关搜索秒数", eventSearch);
         }
-        Note("仅使用免费次数，完成后保留游戏进度。");
-        Stage(weeklyBook, "周常末日之书", "沿用游戏中已保存的编队挑战一次，完成周任务即停止；使用原生跳过");
-        Stage(friendship, "亲密度咨询", "每天补足三次免费咨询，优先好感度未满的角色；不消耗额外咨询次数");
+        if (extensionEvents) Note("仅使用免费次数，完成后保留游戏进度。");
+        Stage(weeklyBook, "周常末日之书", "prefs.book_hint");
+        Stage(friendship, "亲密度咨询", "prefs.friendship_hint");
         section.Children.Add(quickFriendship);
-        Stage(monsterHunt, "魔兽快速战斗", "使用本账号当期及复刻魔兽各自最高可快速战斗等级；不降档、不进入练习");
-        Stage(mainline, "周收集", "自动收集已拥有卡带中的固定采集地图，按游戏内进度接续", expanded: true);
+        Stage(monsterHunt, "魔兽快速战斗", "prefs.monster_hint");
+        Stage(mainline, "周收集", "prefs.collection_hint", expanded: true);
         section.Children.Add(walkCollect);
-        Note("步行收集默认关闭，使用吸收；次数用完后次日接续。已勾选的周NPC任务与偷窃共用路线并继续执行。");
-        Stage(weeklyNpc, "周NPC任务", "按本周剩余名额最多完成三条；先推进任务，再压制相关目标", expanded: true);
+        Note("prefs.collection_note");
+        Stage(weeklyNpc, "周NPC任务", "prefs.npc_hint", expanded: true);
         section.Children.Add(npcHunting);
-        Note("默认跳过只能去狩猎场的新任务，包括野外目标已被击杀的情况。已接任务保留，不自动放弃；完成情况以游戏回执为准。");
-        Stage(weeklySteal, "每周偷窃", "按NPC的服务器冷却补足；与已勾选的周收集、周NPC任务合并路线");
-        Stage(roomLikes, "周常小屋点赞", "随机推荐中优先选择赞数最少的三个，按本周任务进度补足");
-        Stage(fishing, "周常钓鱼", "使用独立钓鱼组件，完成周任务即停止；不出售、不使用鱼饵");
-        Stage(weeklySichuan, "周常连连看", "完成一把常规未通关关卡；全部通关时重玩第1关，本周任务已完成则跳过");
-        Stage(trade, "跑商、料理与高价售卖", "采集后统一分配库存；先采购，再烹饪，最后仅按120%报价售卖", expanded: true, editableWhenOff: true);
+        Note("prefs.npc_note");
+        Stage(weeklySteal, "每周偷窃", "prefs.steal_hint");
+        Stage(roomLikes, "周常小屋点赞", "prefs.likes_hint");
+        Stage(fishing, "周常钓鱼", "prefs.fishing_hint");
+        Stage(weeklySichuan, "周常连连看", "prefs.tiles_hint");
+        Stage(trade, "跑商、料理与高价售卖", "prefs.trade_hint", expanded: true, editableWhenOff: true);
         Row("保留金币", tradeReserve);
         Row("本轮最多垫资", tradeMaximum);
         L.Bind(tradeReserve, System.Windows.Automation.AutomationProperties.NameProperty, "trade.reserve");
         L.Bind(tradeMaximum, System.Windows.Automation.AutomationProperties.NameProperty, "trade.budget");
-        Note("垫资上限留空表示不限额；保留金币不会用于本轮采购。");
+        Note("prefs.trade_budget_help");
         section.Children.Add(tradeBreakEven);
-        Note("默认关闭。开启后，用剩余预算购买折扣后买价等于120%卖价的额外商品，不分摊砍价费；仍须等到高价日卖出。");
-        Note("设置仅用于当前账号。低于1000万会提示30天周转；不会出售装备、制作材料或属性石。");
+        Note("trade.break_even_hint");
+        Note("prefs.trade_note");
         var tradeButton = LocalButton("预览跑商计划"); tradeButton.HorizontalAlignment = HorizontalAlignment.Left;
         tradeButton.Click += (_, _) => { if (account.Length == 0 || !Save()) return; var trade = new Window { Title = L.Translate("跑商计划"), Width = 1060, Height = 780, MinWidth = 760, MinHeight = 560, Owner = Window.GetWindow(this), Content = new TradePlanPanel(dataRoot, account, allowGame), WindowStartupLocation = WindowStartupLocation.CenterOwner }; DailyDialogs.Prepare(trade); trade.Show(); };
         L.Bind(tradeButton, FrameworkElement.ToolTipProperty, "prefs.trade_preview_help");
         section.Children.Add(tradeButton);
-        Stage(events, "活动游戏与领奖", "自动检查当前活动；批量兑换，整页完成后继续下一页");
+        Stage(events, "活动游戏与领奖", "prefs.events_hint");
         section.Children.Add(eventMissions);
         section.Children.Add(quiz);
         section.Children.Add(dice);
         section.Children.Add(puzzle);
         section.Children.Add(roulette);
         section.Children.Add(exchange);
-        Note("使用现有活动代币，不购买付费钻石或礼包。领奖后复查新完成的活动任务。");
+        Note("prefs.events_note");
         Stage(dailyRewards, "日常任务奖励", "在行动结束后领取新完成的日常任务");
         Stage(weeklyRewards, "周常任务奖励", "在行动结束后领取新完成的周常任务");
-        Stage(pass, "通行证奖励", "检查各通行证的任务与等级奖励");
-        Stage(mail, "邮箱物品", "所有日常和通行证领奖结束后，一键收取邮箱物品");
+        Stage(pass, "通行证奖励", "检查各通行证的任务与等级奖励", showSummary: false);
+        Stage(mail, "邮箱物品", "prefs.mail_hint");
         // Stages without parameters need only a switch, not an empty expansion affordance.
         foreach (var border in form.Children.OfType<Border>())
             if (border.Child is Expander exp && exp.Content is StackPanel body && body.Children.Count == 0 && exp.Header is StackPanel heading)
@@ -289,18 +287,21 @@ public sealed class DailyPreferencesPanel : UserControl
         // Wrapping keeps long translated options readable at compact widths.
         return new CheckBox { Content = Label(label), Margin = new(0, 6, 0, 6) };
     }
-    private void Stage(CheckBox toggle, string title, string summary, bool expanded = false, bool editableWhenOff = false)
+    private void Stage(CheckBox toggle, string title, string summary, bool expanded = false, bool editableWhenOff = false, bool showSummary = true)
     {
         toggle.Content = Label(title);
         toggle.FontWeight = FontWeights.SemiBold;
         toggle.MinWidth = 200;
         var header = new StackPanel();
         header.Children.Add(toggle);
-        var summaryText = Label(summary);
-        summaryText.Margin = new(24, 0, 12, 4);
-        summaryText.FontSize = 13;
-        summaryText.Foreground = (Brush)Application.Current.FindResource("MutedInk");
-        header.Children.Add(summaryText);
+        if (showSummary)
+        {
+            var summaryText = Label(summary);
+            summaryText.Margin = new(24, 0, 12, 4);
+            summaryText.FontSize = 13;
+            summaryText.Foreground = (Brush)Application.Current.FindResource("MutedInk");
+            header.Children.Add(summaryText);
+        }
         var body = new StackPanel { Margin = new(48, 8, 12, 12), IsEnabled = editableWhenOff || toggle.IsChecked == true };
         toggle.Checked += (_, _) => body.IsEnabled = true;
         toggle.Unchecked += (_, _) => body.IsEnabled = editableWhenOff;

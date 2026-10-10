@@ -193,17 +193,10 @@
    <TabItem Visibility="Collapsed" x:Name="UpdatesTab" Tag="{StaticResource Icon.Link}" Header="{l:Tr nav.updates}"/>
    <TabItem x:Name="DiagnosticsTab" Tag="{StaticResource Icon.Diagnostics}" Header="{l:Tr nav.diagnostics}">
     <Border Background="{DynamicResource AppBackground}">
-     <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-      <Grid Margin="0,0,0,20"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-       <StackPanel Margin="0,0,16,0" VerticalAlignment="Center">
-        <TextBlock Text="{l:Tr diagnostics.intro}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" FontSize="13"/>
-       </StackPanel>
-       <Button Grid.Column="1" Content="{l:Tr diagnostics.refresh}" Click="RefreshDiagnostics_Click" VerticalAlignment="Top"/>
-      </Grid>
-      <ScrollViewer x:Name="DiagnosticsScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <ScrollViewer x:Name="DiagnosticsScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
        <StackPanel Margin="0,0,8,0">
         <Border Style="{StaticResource Panel}" Padding="18">
-         <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="36"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+         <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="36"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
           <Border Width="28" Height="28" CornerRadius="14" Background="{DynamicResource PrimarySoft}" VerticalAlignment="Top"><Path x:Name="DiagnosticIcon" Style="{StaticResource LineIcon}" Data="{StaticResource Icon.Link}"/></Border>
           <StackPanel Grid.Column="1" Margin="8,0,0,0">
            <TextBlock x:Name="DiagnosticStatus" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"/>
@@ -211,9 +204,10 @@
            <TextBlock x:Name="DiagnosticScene" FontSize="12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,10,0,0"/>
            <Button x:Name="DiagnosticConnect" Content="{l:Tr connection.connect}" Click="Connect_Click" IsEnabled="{Binding IsEnabled,ElementName=ConnectButton}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left" Margin="0,12,0,0" Visibility="Collapsed"/>
           </StackPanel>
+          <Button Grid.Column="2" Content="{l:Tr diagnostics.refresh}" Click="RefreshDiagnostics_Click" VerticalAlignment="Top" Margin="16,0,0,0"/>
          </Grid>
         </Border>
-        <TextBlock Text="{l:Tr diagnostics.activity}" FontSize="14" FontWeight="SemiBold" Margin="0,22,0,8"/><TextBlock Text="{l:Tr diagnostics.activity_note}" Foreground="{DynamicResource MutedInk}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"/><TextBlock x:Name="DiagnosticIssueCategory" FontSize="12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Visibility="Collapsed" Margin="0,0,0,8"/>
+        <TextBlock Text="{l:Tr diagnostics.activity}" FontSize="14" FontWeight="SemiBold" Margin="0,22,0,8"/><TextBlock x:Name="DiagnosticIssueCategory" FontSize="12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Visibility="Collapsed" Margin="0,0,0,8"/>
         <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Padding="0,0,0,18">
          <StackPanel>
           <ScrollViewer MaxHeight="96" VerticalScrollBarVisibility="Auto"><TextBlock Text="{Binding Text,ElementName=ProgressText}" Foreground="{Binding Foreground,ElementName=ProgressText}" TextWrapping="Wrap" FontSize="13"/></ScrollViewer>
@@ -246,7 +240,6 @@
         </Expander>
        </StackPanel>
       </ScrollViewer>
-     </Grid>
     </Border>
    </TabItem>
   </TabControl>

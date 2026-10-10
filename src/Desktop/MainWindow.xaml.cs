@@ -181,7 +181,7 @@ public partial class MainWindow : Window
     {
         var id = toolSession.Current?.ToolId;
         bool running=ToolRunning;
-        toolPanel.Refresh(busy || toolChanging || ParallelBusy || pluginChanging, id, running ? "工具自动化正在运行或等待结算；停止后即可使用其他自动化，无需关闭窗口。" : toolMessage ?? (busy ? "日常正在执行；工具设置窗口可以保留。" : toolSession.Message),running);
+        toolPanel.Refresh(busy || toolChanging || ParallelBusy || pluginChanging, id, running ? "tools.active_notice" : toolMessage ?? (busy ? "日常正在执行；工具设置窗口可以保留。" : toolSession.Message),running);
         if(previousRunning!=running){previousRunning=running;SetBusy(busy);}
         if(previousTool!=id){bool returnToDaily=previousTool!=null&&id==null&&!toolChanging;previousTool=id;SetBusy(busy);if(returnToDaily)_=CloseTool();}
     }
@@ -501,7 +501,7 @@ public partial class MainWindow : Window
     {
         var plan = DailyAccountIdentity.SavePlan(sessions.Read());
         string? name = Prompt(L.Get(plan.Existing ? "account.slot_update" : "account.slot_save", plan.SlotNumber),
-            plan.Existing ? "已识别为保存过的账号。更新登录凭据，保留原位置、日常设置和进度。" : "为这个账号取一个容易区分的名字。", plan.Name);
+            plan.Existing ? "account.update_hint" : "为这个账号取一个容易区分的名字。", plan.Name);
         if (name == null) return;
         sessions.Save(plan.SlotNumber, name, plan.AccountKey);
         L.Text(ProgressText, plan.Existing ? "account.updated" : "account.new_saved", name);

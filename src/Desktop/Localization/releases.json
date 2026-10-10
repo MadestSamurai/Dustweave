@@ -1,5 +1,29 @@
 [
   {
+    "Version": "1.1.9-beta",
+    "Date": "2026-10-11",
+    "Notes": {
+      "zh-CN": [
+        "精简日常设置、今日任务、工具、跑商和定时页面的说明，保留消耗限制和操作条件。",
+        "诊断页将刷新状态并入连接卡片，简化帮助说明，便于查看错误和导出日志。",
+        "简中、繁中和英文同步调整；任务参数、账号设置及自动化行为保持不变。",
+        "如果自动更新失败，可能需要手动下载完整软件包。"
+      ],
+      "zh-TW": [
+        "精簡日常設定、今日任務、工具、交易與定時頁面的說明，保留消耗限制和操作條件。",
+        "診斷頁將重新整理狀態併入連線卡片，簡化說明，方便查看錯誤和匯出記錄。",
+        "簡中、繁中與英文同步調整；任務參數、帳號設定與自動化行為保持不變。",
+        "若自動更新失敗，可能需要手動下載完整軟體套件。"
+      ],
+      "en-US": [
+        "Shorter descriptions across Daily settings, Today, Tools, Trading and Schedules, while retaining spending limits and prerequisites.",
+        "Moves Refresh status into the connection card on Diagnostics and simplifies help for errors and log export.",
+        "Simplified Chinese, Traditional Chinese and English updated together; task parameters, account settings and automation behavior are unchanged.",
+        "If automatic updating fails, download the full package manually."
+      ]
+    }
+  },
+  {
     "Version": "1.1.8-beta",
     "Date": "2026-10-11",
     "Notes": {

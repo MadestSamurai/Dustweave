@@ -203,7 +203,7 @@ public sealed partial class DailyRunPanel : UserControl
         current.Click += (_, _) => StartCurrentSelection();
         resume.Click += (_, _) => { if (resume.IsEnabled && !isBusy) StartRequested?.Invoke(false, true); };
         stop.Click += (_, _) => StopRequested?.Invoke();
-        Show(new("idle", "开始前可调整各环节设置；已完成的日常会按游戏进度跳过。", "", []));
+        Show(new("idle", "run.initial_hint", "", []));
     }
     public void Busy(bool busy, bool canStop = true)
     {

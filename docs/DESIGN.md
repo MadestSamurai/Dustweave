@@ -28,6 +28,14 @@ Updated: 2026-10-06. The interface is a WPF desktop workspace for players watchi
 
 The timeline-led layout uses cool neutral backgrounds, blue-gray dark surfaces and a restrained mint accent. Summary cards carry the immediate state; the timeline stays on the page canvas, with uninterrupted rails in the item container. Keep component geometry and text contrast consistent across themes. Stable builds display the plain version number; the isolated interactive demo is still explicitly labeled as a design preview.
 
+## Interface copy
+
+- Let headings, controls and current values explain the obvious. Omit page introductions that restate the heading, default-value reminders next to visible values, and task summaries that only repeat a task name.
+- Use one short description for the decision the user needs to make. Keep account scope, spending limits, prerequisites and the difference between resuming and rerunning explicit. Do not replace actionable errors with generic reassurance.
+- Keep implementation history out of permanent help text. Put recovery instructions in the relevant state and retain original diagnostic evidence separately from localized presentation.
+- Change Simplified Chinese, Traditional Chinese and English together. Prefer stable localization keys when editing existing copy; retain exact translations for messages still emitted by Core. Never translate arbitrary names, paths or protocol values.
+- Compare actual WPF renders against the previous build in both themes and at compact widths. A reduction in copy length is not evidence of better task completion without user testing. See [the 2026-10-11 comparison](UI_COPY_ABLATION_2026-10-11.md).
+
 ## Validation
 
 `build.ps1 -Mode Smoke` exercises the isolated WPF demo without connecting to the game. It captures the five main pages in all three languages and both explicit themes at the minimum window size, plus normal-width plans, running tasks, long errors and dropdown content. Presentation checks cover selection semantics, visible controls, text editing, focus and layout stability. Existing smoke checks also verify that language/theme changes preserve account, plan and preference state.

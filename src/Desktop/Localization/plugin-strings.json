@@ -5,9 +5,9 @@
     "en-US": "Plugins"
   },
   "plugins.help": {
-    "zh-CN": "导入插件包即可扩展功能。与日常共用账号和连接；变更在重启 Dustweave 后生效，游戏可保持运行。",
-    "zh-TW": "匯入套件即可新增功能。與日常共用帳號和連線；變更在重新啟動 Dustweave 後生效，遊戲可保持執行。",
-    "en-US": "Import a package to add features. Plugins share accounts and connections. Restart Dustweave to apply changes; the game can stay open."
+    "zh-CN": "导入后重启织尘生效，游戏可保持运行。",
+    "zh-TW": "匯入後重新啟動織塵生效，遊戲可保持執行。",
+    "en-US": "Restart Dustweave after import; the game can stay open."
   },
   "plugins.import": {
     "zh-CN": "导入插件…",
@@ -25,9 +25,9 @@
     "en-US": "Disable plugin"
   },
   "plugins.empty": {
-    "zh-CN": "尚未安装插件。点击「导入插件」，或将 ZIP 插件包拖到这里。",
-    "zh-TW": "尚未安裝套件。點擊「匯入擴充套件」，或將 ZIP 檔拖到這裡。",
-    "en-US": "No plugins installed. Choose Import plugin or drop a plugin ZIP here."
+    "zh-CN": "尚无插件。可导入或拖入 ZIP 插件包。",
+    "zh-TW": "尚無套件。可匯入或拖入 ZIP 套件。",
+    "en-US": "No plugins. Import or drop a plugin ZIP here."
   },
   "plugins.environment_override": {
     "zh-CN": "本次由外部配置指定插件。请从正常入口重启以应用选择。",
@@ -40,9 +40,9 @@
     "en-US": "Changes saved. This session keeps its current version until Dustweave restarts."
   },
   "plugins.stable": {
-    "zh-CN": "插件独立安装，不会被主程序更新覆盖。当前接口每次启用一个插件包。",
-    "zh-TW": "套件獨立安裝，不會被主程式更新覆蓋。目前介面每次啟用一個套件。",
-    "en-US": "Plugins survive app updates. The current interface supports one active package at a time."
+    "zh-CN": "一次启用一个插件；更新织尘时保留。",
+    "zh-TW": "一次啟用一個套件；更新織塵時保留。",
+    "en-US": "One active plugin at a time; kept across app updates."
   },
   "plugins.active": {
     "zh-CN": "已启用",

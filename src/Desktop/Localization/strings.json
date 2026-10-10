@@ -415,14 +415,14 @@
     "en-US": "{0} tasks are unfinished or have unclaimed rewards"
   },
   "run.pending_note": {
-    "zh-CN": "以下为本次执行记录中的进度，查看详情不会重新操作游戏。",
-    "zh-TW": "以下為本次執行紀錄中的進度，查看詳情不會重新操作遊戲。",
-    "en-US": "Progress from this run. Viewing details does not perform game actions."
+    "zh-CN": "本次记录中的任务进度。",
+    "zh-TW": "本次記錄中的任務進度。",
+    "en-US": "Task progress from this run."
   },
   "run.pending_recorded": {
-    "zh-CN": "记录时间：{0}。查看详情不会重新操作游戏。",
-    "zh-TW": "紀錄時間：{0}。查看詳情不會重新操作遊戲。",
-    "en-US": "Recorded {0}. Viewing details does not perform game actions."
+    "zh-CN": "记录于 {0}",
+    "zh-TW": "記錄於 {0}",
+    "en-US": "Recorded at {0}"
   },
   "run.pending_missing": {
     "zh-CN": "这份记录没有附带具体任务明细。重新运行奖励检查后，可查看新的结果。",
@@ -495,19 +495,19 @@
     "en-US": "No specific skip reason was recorded. Check the activity records for details."
   },
   "run.resume_footer": {
-    "zh-CN": "接续按原记录继续待执行环节，不受勾选影响；补跑只执行勾选的环节。",
-    "zh-TW": "接續依原紀錄繼續待執行環節，不受勾選影響；補跑只執行勾選的環節。",
-    "en-US": "Resume continues pending tasks in the original queue, regardless of checkboxes. Retry runs only selected tasks."
+    "zh-CN": "接续原队列不受勾选影响；补跑只执行勾选项。",
+    "zh-TW": "接續原佇列不受勾選影響；補跑只執行勾選項。",
+    "en-US": "Resume follows the original queue; retry uses checked tasks only."
   },
   "run.plan_footer": {
-    "zh-CN": "运行所选任务账号的勾选环节；与当前游戏账号不同，会先切换并核对身份。",
-    "zh-TW": "執行所選任務帳號的勾選環節；與目前遊戲帳號不同，會先切換並核對身分。",
-    "en-US": "Run the checked tasks for the selected account. Switch and verify the game account first if needed."
+    "zh-CN": "账号不同时，会先切换并核对身份。",
+    "zh-TW": "帳號不同時，會先切換並核對身分。",
+    "en-US": "A different account will be switched to and verified first."
   },
   "run.choose_footer": {
-    "zh-CN": "这份记录仅供查看。选择任务后，可以开始新一次运行。",
-    "zh-TW": "此紀錄僅供查看。選擇任務後，可以開始新一次執行。",
-    "en-US": "Choose tasks to start a new run. This record stays unchanged."
+    "zh-CN": "记录仅供查看；重新选择任务可开始新一轮。",
+    "zh-TW": "記錄僅供查看；重新選擇任務可開始新一輪。",
+    "en-US": "This is a past record; select tasks to start another run."
   },
   "run.retry_empty": {
     "zh-CN": "先勾选要补跑的环节，或点击上方「勾选未完成」。",
@@ -790,9 +790,9 @@
     "en-US": "Verify sign-ins…"
   },
   "account.selected": {
-    "zh-CN": "日常队列：{0} 个 · 按列表顺序运行",
-    "zh-TW": "日常佇列：{0} 個 · 依列表順序執行",
-    "en-US": "Daily queue: {0} · Runs in list order"
+    "zh-CN": "日常队列：{0} 个账号",
+    "zh-TW": "日常佇列：{0} 個帳號",
+    "en-US": "Daily queue: {0} accounts"
   },
   "account.select_hint": {
     "zh-CN": "勾选账号后开始登录检查",
@@ -893,11 +893,6 @@
     "zh-CN": "诊断与帮助",
     "zh-TW": "診斷與說明",
     "en-US": "Diagnostics & help"
-  },
-  "diagnostics.intro": {
-    "zh-CN": "查看连接状态，找到下一步。",
-    "zh-TW": "查看連線狀態，找到下一步。",
-    "en-US": "Understand the connection and what to do next."
   },
   "diagnostics.guild_wait": {
     "zh-CN": "等待当前账号的公会状态",
@@ -1080,9 +1075,9 @@
     "en-US": "This run"
   },
   "run.plan_hint": {
-    "zh-CN": "勾选本次要跑的环节，不改变账号设置。未列出的项目可在日常设置中开启。",
-    "zh-TW": "勾選本次要執行的環節，不變更帳號設定。未列出的項目可在日常設定中開啟。",
-    "en-US": "Choose tasks for this run. Saved account settings stay unchanged. Enable other tasks in Daily settings."
+    "zh-CN": "勾选仅用于本次；更多环节可在日常设置开启。",
+    "zh-TW": "勾選僅用於本次；更多環節可在日常設定開啟。",
+    "en-US": "Selections apply to this run; enable more tasks in Daily settings."
   },
   "run.new_day": {
     "zh-CN": "已进入新一天。 {0}",
@@ -1120,9 +1115,9 @@
     "en-US": "This view preserves the previous queue. Newly enabled tasks are in the current plan."
   },
   "run.initial_hint": {
-    "zh-CN": "开始前可调整各环节设置；已完成的日常会按游戏进度跳过。",
-    "zh-TW": "開始前可調整各環節設定；已完成的日常會依遊戲進度跳過。",
-    "en-US": "Adjust task settings before starting. Tasks already completed in the game will be skipped."
+    "zh-CN": "已完成的环节会按游戏进度跳过。",
+    "zh-TW": "已完成的環節會按遊戲進度跳過。",
+    "en-US": "Completed tasks are skipped based on game progress."
   },
   "run.plan_stage": {
     "zh-CN": "按游戏进度执行，已完成则跳过",
@@ -1430,9 +1425,9 @@
     "en-US": "10 open-source tools"
   },
   "tools.hint": {
-    "zh-CN": "共用游戏连接、统一语言设置。已打开的工具会同步切换语言；单独启动工具时仍保留原有偏好。",
-    "zh-TW": "共用遊戲連線、統一語言設定。已開啟的工具會同步切換語言；單獨啟動工具時仍保留原有偏好。",
-    "en-US": "One shared connection and language setting. Open tool windows follow language changes; standalone tools keep their own preferences."
+    "zh-CN": "共用连接和语言设置，启用自动化后才占用游戏。",
+    "zh-TW": "共用連線和語言設定，啟用自動化後才占用遊戲。",
+    "en-US": "Shared connection and language; game control is reserved only while automation is active."
   },
   "tools.search": {
     "zh-CN": "搜索工具名称或用途…",
@@ -1493,11 +1488,6 @@
     "zh-CN": "关闭工具，返回日常",
     "zh-TW": "關閉工具，返回日常",
     "en-US": "Close tool and return"
-  },
-  "tools.idle": {
-    "zh-CN": "工具共用日常助手的连接，不会自动开始操作。仅在自动化启用或等待结算时占用控制权。",
-    "zh-TW": "工具共用日常助手的連線，不會自動開始操作。僅在自動化啟用或等待結算時占用控制權。",
-    "en-US": "Tools share the assistant's connection. Control is held only while automation is active or awaiting a result."
   },
   "tool.fishing": {
     "zh-CN": "自动钓鱼",
@@ -1590,13 +1580,13 @@
     "en-US": "Priority lists, stop conditions and target notifications."
   },
   "prefs.account": {
-    "zh-CN": "偏好账号",
-    "zh-TW": "偏好帳號",
-    "en-US": "Settings for"
+    "zh-CN": "设置账号",
+    "zh-TW": "設定帳號",
+    "en-US": "Account"
   },
   "prefs.save": {
-    "zh-CN": "保存本账号偏好",
-    "zh-TW": "儲存本帳號偏好",
+    "zh-CN": "保存设置",
+    "zh-TW": "儲存設定",
     "en-US": "Save settings"
   },
   "prefs.search": {
@@ -1613,11 +1603,6 @@
     "zh-CN": "查找日常环节",
     "zh-TW": "尋找日常環節",
     "en-US": "Find daily tasks"
-  },
-  "prefs.intro": {
-    "zh-CN": "勾选要做的环节，展开调整参数。设置只影响所选账号。",
-    "zh-TW": "勾選要執行的環節，展開調整參數。設定僅影響所選帳號。",
-    "en-US": "Choose tasks and expand their settings. Changes apply only to this account."
   },
   "prefs.none": {
     "zh-CN": "没有匹配环节",
@@ -1640,14 +1625,14 @@
     "en-US": "Save a valid account in Accounts first."
   },
   "prefs.loaded": {
-    "zh-CN": "已读取本账号偏好。",
-    "zh-TW": "已讀取本帳號偏好。",
+    "zh-CN": "已加载账号设置。",
+    "zh-TW": "已載入帳號設定。",
     "en-US": "Account settings loaded."
   },
   "prefs.saved": {
-    "zh-CN": "已保存；队列进入下一环节时读取新设置，当前已开始的操作会先结算。",
-    "zh-TW": "已儲存；佇列進入下一環節時讀取新設定，目前已開始的操作會先結算。",
-    "en-US": "Saved. New settings apply at the next task; active operations finish first."
+    "zh-CN": "已保存，下个环节生效。",
+    "zh-TW": "已儲存，下個環節生效。",
+    "en-US": "Saved. Applies from the next task."
   },
   "prefs.guild_hint": {
     "zh-CN": "签到与领取可用奖励",
@@ -1665,9 +1650,9 @@
     "en-US": "Claim business income"
   },
   "prefs.business_hint": {
-    "zh-CN": "一起领取餐厅、鱼笼和领地工人收益；鱼笼沿用游戏中的自动出售设置",
-    "zh-TW": "一起領取餐廳、魚籠與領地工人收益；魚籠沿用遊戲中的自動販售設定",
-    "en-US": "Claim restaurant, fish-trap and territory-worker income together. Fish traps use the game's sale settings."
+    "zh-CN": "领取餐厅、鱼笼和工人收益；鱼笼沿用游戏售卖设置",
+    "zh-TW": "領取餐廳、魚籠和工人收益；魚籠沿用遊戲販售設定",
+    "en-US": "Collect restaurant, fish trap and worker income; keep the game's fish-sale settings"
   },
   "prefs.guests": {
     "zh-CN": "餐厅特殊顾客与气泡",
@@ -1680,9 +1665,9 @@
     "en-US": "Claim ability stones and limited-time decoration coins."
   },
   "prefs.draws_hint": {
-    "zh-CN": "只使用当日免费抽取，不消耗付费抽券",
-    "zh-TW": "僅使用當日免費抽取，不消耗付費抽券",
-    "en-US": "Use daily free draws only, without paid tickets."
+    "zh-CN": "仅用免费次数，不消耗抽券",
+    "zh-TW": "僅用免費次數，不消耗抽券",
+    "en-US": "Free draws only; no tickets spent"
   },
   "prefs.recycle_hint": {
     "zh-CN": "只处理本日免费抽取的可分解装备",
@@ -1700,9 +1685,9 @@
     "en-US": "Enhance before recycling"
   },
   "prefs.enhance_note": {
-    "zh-CN": "默认强化 +7 后分解，0 为直接分解。排除锁定、保留和装备中的物品；关闭免费抽取不会自动替你开启抽取。",
-    "zh-TW": "預設強化 +7 後分解，0 為直接分解。排除鎖定、保留與裝備中的物品；關閉免費抽取不會自動替你開啟抽取。",
-    "en-US": "Default: enhance to +7 before recycling; 0 skips enhancement. Locked, retained and equipped gear is excluded. Free draws must be enabled separately."
+    "zh-CN": "0 为不强化。跳过锁定、保留及穿戴中的装备。",
+    "zh-TW": "0 為不強化。跳過鎖定、保留及穿戴中的裝備。",
+    "en-US": "0 skips enhancement. Locked, reserved and equipped items are excluded."
   },
   "prefs.craft_fallback": {
     "zh-CN": "分解任务未完成且无可分解装备时，制作一把 N 剑",
@@ -1710,19 +1695,19 @@
     "en-US": "Craft an N sword if the recycling mission is unfinished and no eligible gear is available"
   },
   "prefs.craft_hint": {
-    "zh-CN": "本周任务未完成时制作一件N剑；材料不足时保留待办，不购买材料",
-    "zh-TW": "本週任務未完成時製作一件 N 劍；材料不足時保留待辦，不購買材料",
-    "en-US": "Craft an N sword for the unfinished weekly mission. Leave pending if materials are insufficient; do not buy them."
+    "zh-CN": "周任务未完成时制作一把 N 剑，材料不足则保留待办",
+    "zh-TW": "週任務未完成時製作一把 N 劍，材料不足則保留待辦",
+    "en-US": "Craft one N sword for an unfinished weekly task; defer if materials are missing"
   },
   "prefs.craft_note": {
-    "zh-CN": "沿用装备分解设置：开启分解时，仅将本次新制作的装备强化后分解；关闭分解则保留。已手动完成或本日兜底制作过会自动跳过。",
-    "zh-TW": "沿用裝備分解設定：開啟分解時，僅將本次新製作的裝備強化後分解；關閉分解則保留。已手動完成或本日已補做製作時會自動跳過。",
-    "en-US": "Uses recycling settings for newly crafted gear only. Keeps gear if recycling is disabled. Skips if completed manually or already covered by today's fallback craft."
+    "zh-CN": "开启装备分解时，也会按其设置处理本次新制作的装备。",
+    "zh-TW": "開啟裝備分解時，也會按其設定處理本次新製作的裝備。",
+    "en-US": "If dismantling is enabled, its settings also apply to this newly crafted item."
   },
   "prefs.refine_hint": {
-    "zh-CN": "有未完成任务时精炼一次，完成后不重复",
-    "zh-TW": "有未完成任務時精煉一次，完成後不重複",
-    "en-US": "Refine once for an unfinished mission; do not repeat after completion."
+    "zh-CN": "有精炼任务时执行一次",
+    "zh-TW": "有精煉任務時執行一次",
+    "en-US": "Refine once for an unfinished refinement task"
   },
   "prefs.refresh_gear": {
     "zh-CN": "刷新可选装备",
@@ -1730,9 +1715,9 @@
     "en-US": "Refresh gear choices"
   },
   "prefs.refine_note": {
-    "zh-CN": "未指定时，选择已强化 +9 的五星专武：精炼未满 24，且同种同稀有度没有 24 级成品。此环节可独立开启，不受装备分解开关影响。",
-    "zh-TW": "未指定時，選擇已強化 +9 的五星專武：精煉未滿 24，且同種同稀有度沒有 24 級成品。此環節可獨立開啟，不受裝備分解開關影響。",
-    "en-US": "By default, choose +9 five-star exclusive gear below refinement 24, with no level-24 copy of the same type and rarity. This task is independent of recycling."
+    "zh-CN": "未指定时选择 +9 五星专武：精炼未满 24，且同款同稀有度没有 24 级装备。",
+    "zh-TW": "未指定時選擇 +9 五星專武：精煉未滿 24，且同款同稀有度沒有 24 級裝備。",
+    "en-US": "If none is selected: a +9 five-star exclusive below refinement 24, with no level-24 copy of the same rarity."
   },
   "prefs.refine_auto": {
     "zh-CN": "自动选择：未满 24 且无同种满精炼装备",
@@ -1755,19 +1740,14 @@
     "en-US": "Hunting and bonus days"
   },
   "prefs.hunt_hint": {
-    "zh-CN": "默认第 9 章、刷金币、不刷史莱姆",
-    "zh-TW": "預設第 9 章、刷金幣、不刷史萊姆",
-    "en-US": "Default: chapter 9, gold enabled, slimes disabled."
+    "zh-CN": "按下方优先级分配免费米饭",
+    "zh-TW": "按下方優先順序分配免費白飯",
+    "en-US": "Allocate free rice by the priority below"
   },
   "prefs.hunt_chapter": {
     "zh-CN": "普通狩猎关卡",
     "zh-TW": "普通狩獵關卡",
     "en-US": "Hunting chapter"
-  },
-  "prefs.hunt_note": {
-    "zh-CN": "免费米饭直接按优先级批量使用，不再先刷一次普通狩猎。",
-    "zh-TW": "免費白飯直接依優先順序批量使用，不再先刷一次普通狩獵。",
-    "en-US": "Spend free rice in one batch following your priorities, without a preliminary chapter hunt."
   },
   "prefs.gold": {
     "zh-CN": "金币加成日刷金币",
@@ -1780,9 +1760,9 @@
     "en-US": "Farm slimes on bonus days"
   },
   "prefs.priority_note": {
-    "zh-CN": "金币和史莱姆只在勾选且当天有加成时参与；从上往下选择第一个可用去向。",
-    "zh-TW": "金幣與史萊姆僅在勾選且當天有加成時參與；由上往下選擇第一個可用去向。",
-    "en-US": "Gold and slimes are eligible only when enabled and boosted that day. Use the first available destination from the top."
+    "zh-CN": "从上往下选首个可用去向；金币、史莱姆仅在对应加成日参与。",
+    "zh-TW": "從上往下選首個可用去向；金幣、史萊姆僅在對應加成日參與。",
+    "en-US": "Use the first eligible destination; gold and slime require their bonus day."
   },
   "prefs.priority_gold": {
     "zh-CN": "金币加成",
@@ -1810,9 +1790,9 @@
     "en-US": "Stone element"
   },
   "prefs.stones_note": {
-    "zh-CN": "选择库存最少时，开始前比较五种属性。关闭普通狩猎不影响圣石环节。",
-    "zh-TW": "選擇庫存最少時，開始前比較五種屬性。關閉普通狩獵不影響聖石環節。",
-    "en-US": "Lowest stock compares all five elements before starting. Stone hunting is independent of chapter hunting."
+    "zh-CN": "“库存数量最少”会在开始前比较五种属性。",
+    "zh-TW": "「庫存數量最少」會在開始前比較五種屬性。",
+    "en-US": "“Lowest stock” compares all five elements before starting."
   },
   "prefs.least": {
     "zh-CN": "库存数量最少",
@@ -1860,14 +1840,14 @@
     "en-US": "Battle multiplier"
   },
   "prefs.multiplier_note": {
-    "zh-CN": "每轮结算后重新读取剩余次数，最后一轮自动缩小倍率。例如剩余 40 次、设置 15 倍，会执行 15 + 15 + 10。只用免费次数，不自动购买。",
-    "zh-TW": "每輪結算後重新讀取剩餘次數，最後一輪自動縮小倍率。例如剩餘 40 次、設定 15 倍，會執行 15 + 15 + 10。僅用免費次數，不自動購買。",
-    "en-US": "Recheck attempts after each result and reduce the final multiplier as needed. For 40 attempts at 15×, run 15 + 15 + 10. Never buy extra attempts."
+    "zh-CN": "仅用免费次数，余量不足时降低倍率，如 15 + 15 + 10。",
+    "zh-TW": "僅用免費次數，餘量不足時降低倍率，如 15 + 15 + 10。",
+    "en-US": "Free entries only. Lower the final multiplier as needed, e.g. 15 + 15 + 10."
   },
   "prefs.dispatch_hint": {
-    "zh-CN": "原生一键领取派遣、会战和恶魔城奖励，等待游戏自动续派",
-    "zh-TW": "使用遊戲一鍵領取派遣、會戰與惡魔城獎勵，等待遊戲自動續派",
-    "en-US": "Use the game's claim-all for dispatch, guild-raid and castle rewards, then wait for automatic redispatch."
+    "zh-CN": "一键领取派遣、会战与恶魔城奖励，并自动续派",
+    "zh-TW": "一鍵領取派遣、會戰與惡魔城獎勵，並自動續派",
+    "en-US": "Collect dispatch, guild raid and Evil Castle rewards, then redispatch"
   },
   "prefs.goddess_hint": {
     "zh-CN": "进入广场领取当日可用奖励",
@@ -1875,9 +1855,9 @@
     "en-US": "Visit the plaza and claim today's available rewards."
   },
   "prefs.ranking_hint": {
-    "zh-CN": "与女神像共用一次广场访问，领取可用周期奖励",
-    "zh-TW": "與女神像共用一次廣場訪問，領取可用週期獎勵",
-    "en-US": "Claim available periodic rewards during the same plaza visit."
+    "zh-CN": "领取可用的周期奖励，与女神像共用广场行程",
+    "zh-TW": "領取可用的週期獎勵，與女神像共用廣場行程",
+    "en-US": "Collect periodic rewards during the Goddess Statue visit"
   },
   "prefs.search_seconds": {
     "zh-CN": "每关搜索秒数",
@@ -1890,9 +1870,9 @@
     "en-US": "Event battles"
   },
   "prefs.event_sweep_hint": {
-    "zh-CN": "已通关挑战15时，仅使用原生扫荡完成当天剩余免费次数，最多5次；不能扫荡就跳过",
-    "zh-TW": "已通關挑戰 15 時，僅使用遊戲掃蕩完成當天剩餘免費次數，最多 5 次；無法掃蕩即跳過",
-    "en-US": "If challenge 15 is cleared, sweep up to five remaining daily free attempts. Skip if unavailable."
+    "zh-CN": "已通关挑战 15 才扫荡，仅用免费次数，最多 5 次",
+    "zh-TW": "已通關挑戰 15 才掃蕩，僅用免費次數，最多 5 次",
+    "en-US": "Sweep cleared Challenge 15 with free entries only, up to 5 times"
   },
   "prefs.event_challenge": {
     "zh-CN": "普通全部通关后继续挑战战斗",
@@ -1900,19 +1880,19 @@
     "en-US": "Continue to challenge stages after clearing normal"
   },
   "prefs.book_hint": {
-    "zh-CN": "沿用游戏中已保存的编队挑战一次，完成周任务即停止；使用原生跳过",
-    "zh-TW": "沿用遊戲中已儲存的編隊挑戰一次，完成週任務即停止；使用遊戲跳過功能",
-    "en-US": "Run the saved formation once and stop when the weekly mission completes. Use the game's skip."
+    "zh-CN": "用已保存的编队挑战一次并跳过战斗",
+    "zh-TW": "用已儲存的編隊挑戰一次並跳過戰鬥",
+    "en-US": "Challenge once with the saved team and skip combat"
   },
   "prefs.friendship_hint": {
-    "zh-CN": "每天补足三次免费咨询，优先好感度未满的角色；不消耗额外咨询次数",
-    "zh-TW": "每天補足三次免費諮詢，優先好感度未滿的角色；不消耗額外諮詢次數",
-    "en-US": "Complete three free daily consultations, prioritizing characters below maximum affinity. No extra attempts."
+    "zh-CN": "补足每日 3 次免费咨询，优先好感度未满角色",
+    "zh-TW": "補足每日 3 次免費諮詢，優先好感度未滿角色",
+    "en-US": "Complete 3 free daily consultations; prioritize unfinished affinity"
   },
   "prefs.friendship_quick": {
-    "zh-CN": "使用快速咨询（默认关闭）",
-    "zh-TW": "使用快速諮詢（預設關閉）",
-    "en-US": "Use quick consultation (off by default)"
+    "zh-CN": "使用快速咨询",
+    "zh-TW": "使用快速諮詢",
+    "en-US": "Use quick consultation"
   },
   "prefs.monster": {
     "zh-CN": "魔兽快速战斗",
@@ -1920,14 +1900,14 @@
     "en-US": "Fiend Hunt quick battle"
   },
   "prefs.monster_hint": {
-    "zh-CN": "使用本账号当期及复刻魔兽各自最高可快速战斗等级；不降档、不进入练习",
-    "zh-TW": "使用本帳號當期與復刻魔獸各自最高可快速戰鬥等級；不降階、不進入練習",
-    "en-US": "Use this account's highest quick-battle level for both current and rerun hunts. Do not lower the level or enter practice."
+    "zh-CN": "当期与复刻分别选择最高可快速战斗等级",
+    "zh-TW": "當期與復刻分別選擇最高可快速戰鬥等級",
+    "en-US": "Use the highest quick-battle level for both current and rerun bosses"
   },
   "prefs.collection_hint": {
-    "zh-CN": "自动收集已拥有卡带中的固定采集地图，按游戏内进度接续",
-    "zh-TW": "自動收集已擁有卡帶中的固定採集地圖，依遊戲內進度接續",
-    "en-US": "Automatically collect from supported maps in owned packs, resuming from in-game progress."
+    "zh-CN": "按游戏进度收集已拥有卡带，默认使用吸收",
+    "zh-TW": "按遊戲進度收集已擁有卡帶，預設使用吸收",
+    "en-US": "Collect owned packs from game progress, using Absorption by default"
   },
   "prefs.walk": {
     "zh-CN": "步行收集（不使用吸收）",
@@ -1935,14 +1915,14 @@
     "en-US": "Collect on foot without Absorb"
   },
   "prefs.collection_note": {
-    "zh-CN": "步行收集默认关闭，使用吸收；次数用完后次日接续。已勾选的周NPC任务与偷窃共用路线并继续执行。",
-    "zh-TW": "步行收集預設關閉，使用吸收；次數用完後隔日接續。已勾選的每週 NPC 任務與偷竊共用路線並繼續執行。",
-    "en-US": "Walking is off by default. Use Absorb and resume the next day when uses run out. Enabled weekly NPC quests and stealing share the route and continue."
+    "zh-CN": "吸收用完次日继续；与已启用的周 NPC 任务、偷窃共用路线。",
+    "zh-TW": "吸收用完次日繼續；與已啟用的週 NPC 任務、偷竊共用路線。",
+    "en-US": "Resume next day when Absorption runs out; share routes with enabled NPC quests and theft."
   },
   "prefs.npc_hint": {
-    "zh-CN": "按本周剩余名额最多完成三条；先推进任务，再压制相关目标",
-    "zh-TW": "依本週剩餘名額最多完成三條；先推進任務，再壓制相關目標",
-    "en-US": "Complete up to three quests within the weekly limit. Progress quests before suppressing their targets."
+    "zh-CN": "每周最多 3 条，先推进任务再压制目标",
+    "zh-TW": "每週最多 3 條，先推進任務再壓制目標",
+    "en-US": "Up to 3 per week; progress quests before suppressing targets"
   },
   "prefs.npc_hunt": {
     "zh-CN": "允许接取必须去狩猎场的任务",
@@ -1950,29 +1930,29 @@
     "en-US": "Accept quests that require a hunting ground"
   },
   "prefs.npc_note": {
-    "zh-CN": "默认跳过只能去狩猎场的新任务，包括野外目标已被击杀的情况。已接任务保留，不自动放弃；完成情况以游戏回执为准。",
-    "zh-TW": "預設略過僅能前往狩獵場的新任務，包括野外目標已被擊殺的情況。保留已接任務，不自動放棄；完成情況以遊戲回應為準。",
-    "en-US": "By default, skip new hunting-ground-only quests, including when field targets are already defeated. Keep accepted quests; never abandon automatically. Confirm completion from game responses."
+    "zh-CN": "关闭时不接狩猎场任务；已接任务保留，不自动放弃。",
+    "zh-TW": "關閉時不接狩獵場任務；已接任務保留，不自動放棄。",
+    "en-US": "When off, skip new hunting-ground quests; keep already accepted quests."
   },
   "prefs.steal_hint": {
-    "zh-CN": "按NPC的服务器冷却补足；与已勾选的周收集、周NPC任务合并路线",
-    "zh-TW": "依 NPC 的伺服器冷卻補足；與已勾選的每週採集、NPC 任務合併路線",
-    "en-US": "Follow server cooldowns and share a route with enabled collection and NPC quests."
+    "zh-CN": "按游戏冷却补足，与周收集、NPC 任务共用路线",
+    "zh-TW": "按遊戲冷卻補足，與週收集、NPC 任務共用路線",
+    "en-US": "Use available theft attempts along the collection and NPC quest routes"
   },
   "prefs.likes_hint": {
-    "zh-CN": "随机推荐中优先选择赞数最少的三个，按本周任务进度补足",
-    "zh-TW": "在隨機推薦中優先選擇讚數最少的三個，依本週任務進度補足",
-    "en-US": "Like the three least-liked random recommendations as needed for the weekly mission."
+    "zh-CN": "从随机推荐中选赞数最少的 3 人，补足周任务",
+    "zh-TW": "從隨機推薦中選讚數最少的 3 人，補足週任務",
+    "en-US": "Complete the weekly task with the 3 least-liked random recommendations"
   },
   "prefs.fishing_hint": {
-    "zh-CN": "使用独立钓鱼组件，完成周任务即停止；不出售、不使用鱼饵",
-    "zh-TW": "使用獨立釣魚元件，完成週任務即停止；不販售、不使用魚餌",
-    "en-US": "Fish until the weekly mission completes, without selling or using bait."
+    "zh-CN": "完成周任务即停，不售鱼、不用鱼饵",
+    "zh-TW": "完成週任務即停，不售魚、不用魚餌",
+    "en-US": "Stop when the weekly task is complete; no fish sales or bait"
   },
   "prefs.tiles_hint": {
-    "zh-CN": "完成一把常规未通关关卡；全部通关时重玩第1关，本周任务已完成则跳过",
-    "zh-TW": "完成一場一般未通關關卡；全部通關時重玩第 1 關，本週任務已完成則略過",
-    "en-US": "Clear an unfinished normal stage, or replay stage 1 if all are cleared. Skip if the weekly mission is complete."
+    "zh-CN": "完成一关未通关常规关卡，全通关则重玩第 1 关",
+    "zh-TW": "完成一關未通關常規關卡，全通關則重玩第 1 關",
+    "en-US": "Clear an unfinished normal stage, or replay stage 1 if all are cleared"
   },
   "prefs.trade": {
     "zh-CN": "跑商、料理与高价售卖",
@@ -1980,14 +1960,14 @@
     "en-US": "Trading, cooking and premium sales"
   },
   "prefs.trade_hint": {
-    "zh-CN": "采集后统一分配库存；先采购，再烹饪，最后仅按120%报价售卖",
-    "zh-TW": "採集後統一分配庫存；先採購，再烹飪，最後僅依 120% 報價販售",
-    "en-US": "Allocate inventory after collection: buy, cook, then sell only at a 120% quote."
+    "zh-CN": "先采购、再料理，仅按 120% 报价售卖",
+    "zh-TW": "先採購、再料理，僅按 120% 報價販售",
+    "en-US": "Buy, cook, then sell only at 120% quotes"
   },
   "prefs.trade_note": {
-    "zh-CN": "设置仅用于当前账号。低于1000万会提示30天周转；不会出售装备、制作材料或属性石。",
-    "zh-TW": "設定僅用於目前帳號。低於 1000 萬會提示 30 天週轉；不販售裝備、製作材料或屬性石。",
-    "en-US": "Settings apply to this account only. Below 10 million gold, a warning explains the 30-day cycle. Gear, crafting materials and ability stones are never sold."
+    "zh-CN": "约 30 天周转，少于 1000 万金币时会提醒。装备、制作材料与属性石不出售。",
+    "zh-TW": "約 30 天週轉，少於 1000 萬金幣時會提醒。裝備、製作材料與屬性石不出售。",
+    "en-US": "Allow about 30 days for returns; a warning appears below 10M gold. Gear, crafting materials and elemental stones are never sold."
   },
   "prefs.trade_open": {
     "zh-CN": "预览跑商计划",
@@ -1995,9 +1975,9 @@
     "en-US": "Preview trading plan"
   },
   "prefs.trade_budget_help": {
-    "zh-CN": "垫资上限留空表示不限额；保留金币不会用于本轮采购。",
-    "zh-TW": "墊資上限留空表示不限額；保留金幣不會用於本輪採購。",
-    "en-US": "Leave maximum spending blank for no limit. Reserved gold stays out of the purchase budget."
+    "zh-CN": "垫资上限留空为不限额；保留金币不参与采购。",
+    "zh-TW": "墊資上限留空為不限額；保留金幣不參與採購。",
+    "en-US": "Blank means no spending cap; reserved gold is not spent."
   },
   "prefs.trade_preview_help": {
     "zh-CN": "先保存本账号设置，再打开计划预览；不会执行交易。",
@@ -2015,9 +1995,9 @@
     "en-US": "Event games and rewards"
   },
   "prefs.events_hint": {
-    "zh-CN": "自动检查当前活动；批量兑换，整页完成后继续下一页",
-    "zh-TW": "自動檢查目前活動；批量兌換，整頁完成後繼續下一頁",
-    "en-US": "Check current events, exchange in batches and finish each page before continuing."
+    "zh-CN": "完成可用活动并领取奖励",
+    "zh-TW": "完成可用活動並領取獎勵",
+    "en-US": "Complete available events and collect rewards"
   },
   "prefs.events_missions": {
     "zh-CN": "领取活动任务与活动代币",
@@ -2045,9 +2025,9 @@
     "en-US": "Exchange event tokens in maximum batches"
   },
   "prefs.events_note": {
-    "zh-CN": "使用现有活动代币，不购买付费钻石或礼包。领奖后复查新完成的活动任务。",
-    "zh-TW": "使用現有活動代幣，不購買付費鑽石或禮包。領獎後複查新完成的活動任務。",
-    "en-US": "Use existing event tokens. Never buy premium diamonds or bundles. Recheck completed missions after claiming rewards."
+    "zh-CN": "仅用现有代币，不购买钻石或礼包。",
+    "zh-TW": "僅用現有代幣，不購買鑽石或禮包。",
+    "en-US": "Use existing tokens only; never buy gems or packs."
   },
   "prefs.daily_hint": {
     "zh-CN": "在行动结束后领取新完成的日常任务",
@@ -2070,9 +2050,9 @@
     "en-US": "Mail items"
   },
   "prefs.mail_hint": {
-    "zh-CN": "所有日常和通行证领奖结束后，一键收取邮箱物品",
-    "zh-TW": "所有日常與通行證領獎結束後，一鍵收取信箱物品",
-    "en-US": "Claim all mail after daily and pass rewards."
+    "zh-CN": "其他领奖完成后收取邮箱",
+    "zh-TW": "其他領獎完成後收取信箱",
+    "en-US": "Collect mail after other rewards"
   },
   "prefs.gear_unavailable": {
     "en-US": "Selected gear unavailable in inventory ({0})",
@@ -2110,9 +2090,9 @@
     "en-US": "Save to empty slot {0:00}"
   },
   "account.update_hint": {
-    "zh-CN": "已识别为保存过的账号。更新登录凭据，保留原位置、日常设置和进度。",
-    "zh-TW": "已識別為儲存過的帳號。更新登入憑證，保留原位置、日常設定與進度。",
-    "en-US": "This account is already saved. Update its login credentials while keeping its slot, settings and progress."
+    "zh-CN": "更新登录凭据，保留账号位置、设置和进度。",
+    "zh-TW": "更新登入憑證，保留帳號位置、設定和進度。",
+    "en-US": "Update sign-in details; keep account order, settings and progress."
   },
   "account.new_hint": {
     "zh-CN": "为这个账号取一个容易区分的名字。",
@@ -2195,9 +2175,9 @@
     "en-US": "The UI preview does not read the game or switch maps."
   },
   "trade.intro": {
-    "zh-CN": "在游戏广场商店的购买页读取当前账号，或导入已保存的快照。",
-    "zh-TW": "在遊戲廣場商店購買頁讀取目前帳號，或匯入已儲存的快照。",
-    "en-US": "Read the current account from the plaza shop's purchase page, or import a saved snapshot."
+    "zh-CN": "在广场商店购买页读取库存，或导入快照。",
+    "zh-TW": "在廣場商店購買頁讀取庫存，或匯入快照。",
+    "en-US": "Read stock from the plaza shop's Buy page, or import a snapshot."
   },
   "trade.preview_only": {
     "zh-CN": "仅预览计划，不执行采购、料理或出售。",
@@ -2240,9 +2220,9 @@
     "en-US": "Include break-even resales (gold achievements)"
   },
   "trade.break_even_hint": {
-    "zh-CN": "默认关闭。开启后，用剩余预算购买折扣后买价等于120%卖价的额外商品，不分摊砍价费；仍须等到高价日卖出。",
-    "zh-TW": "預設關閉。開啟後，以剩餘預算購買折扣後買價等於120%賣價的額外商品，不分攤議價費；仍須等到高價日出售。",
-    "en-US": "Off by default. Use spare funds for extra goods whose discounted buy price equals their 120% sale price, excluding the bargaining fee. Sell on their premium-price day."
+    "zh-CN": "用剩余预算买入折后买价＝120%卖价的商品，等高价日售卖；不计砍价费。",
+    "zh-TW": "用剩餘預算買入折後買價＝120%賣價的商品，等高價日販售；不計砍價費。",
+    "en-US": "Use spare funds when the discounted price equals the 120% sale price, excluding bargaining costs. Sell on the high-price day."
   },
   "trade.break_even_totals": {
     "zh-CN": "金币成就：额外零收益商品 {0:N0} 个 · 垫资／预计回款 {1:N0}（已含在上方总额中）",
@@ -2250,9 +2230,9 @@
     "en-US": "Gold achievements: {0:N0} extra break-even items · Upfront / expected sales {1:N0} (included in totals above)"
   },
   "trade.cycle": {
-    "zh-CN": "按当前供货统一分配原料和料理。回款约需30天；尚未售出的收入不会计入采购预算。",
-    "zh-TW": "依目前供貨統一分配原料與料理。回款約需 30 天；尚未售出的收入不計入採購預算。",
-    "en-US": "Allocate ingredients and cooking from current stock. Returns take about 30 days; unsold goods do not fund purchases."
+    "zh-CN": "回款约需 30 天，未售出收入不计入采购预算。",
+    "zh-TW": "回款約需 30 天，未售出收入不計入採購預算。",
+    "en-US": "Returns take about 30 days; unsold income cannot fund purchases."
   },
   "trade.reserve": {
     "zh-CN": "保留金币",
@@ -2485,14 +2465,14 @@
     "en-US": "Sale date"
   },
   "tools.idle_notice": {
-    "zh-CN": "连接一次即可切换工具；打开工具后不会自动开始操作。",
-    "zh-TW": "連線一次即可切換工具；開啟工具後不會自動開始操作。",
-    "en-US": "Connect once to switch tools. Opening a tool does not start automation."
+    "zh-CN": "选择工具，确认设置后开始。",
+    "zh-TW": "選擇工具，確認設定後開始。",
+    "en-US": "Choose a tool, review its settings, then start."
   },
   "tools.active_notice": {
-    "zh-CN": "工具自动化正在运行或等待结算；停止后即可使用其他自动化，无需关闭窗口。",
-    "zh-TW": "工具自動化正在執行或等待結算；停止後即可使用其他自動化，無需關閉視窗。",
-    "en-US": "A tool is running or awaiting a result. Stop it to use other automation; its window can stay open."
+    "zh-CN": "工具正在运行或结算；停止自动化即可切换，无需关闭窗口。",
+    "zh-TW": "工具正在執行或結算；停止自動化即可切換，無需關閉視窗。",
+    "en-US": "Tool running or settling. Stop automation to switch; the window can stay open."
   },
   "tools.active_release": {
     "zh-CN": "工具自动化正在运行或等待结算；停止后释放，无需关闭窗口。",
@@ -2800,9 +2780,9 @@
     "en-US": "{0} could not start. Check the tool diagnostics."
   },
   "tools.window_ready": {
-    "zh-CN": "{0}窗口已打开。未启用自动化时，可以直接运行日常或切换工具。",
-    "zh-TW": "{0}視窗已開啟。未啟用自動化時，可以直接執行日常或切換工具。",
-    "en-US": "{0} is open. While its automation is off, you can run daily tasks or switch tools."
+    "zh-CN": "{0}已打开；未启用自动化时可切换工具。",
+    "zh-TW": "{0}已開啟；未啟用自動化時可切換工具。",
+    "en-US": "{0} is open. You can switch tools while automation is off."
   },
   "suite.reuse": {
     "zh-CN": "复用已准备组件 · {0}",
@@ -2925,9 +2905,9 @@
     "en-US": "Need more help?"
   },
   "diagnostics.help_body": {
-    "zh-TW": "匯出記錄壓縮檔，並說明卡住的步驟與發生時間。匯出視窗內可選擇儲存位置並查看開發者聯絡方式。",
-    "en-US": "Export a log archive and describe the step and time of the problem. The export dialog lets you choose a save location and contact the developer.",
-    "zh-CN": "导出日志压缩包，并说明卡住的步骤和发生时间。导出窗口内可选择保存位置并查看开发者联系方式。"
+    "zh-TW": "匯出日誌，並告知卡住的步驟和時間。",
+    "en-US": "Export logs and describe the step and time of the problem.",
+    "zh-CN": "导出日志，并告知卡住的步骤和时间。"
   },
   "diagnostics.copy": {
     "zh-CN": "复制状态摘要",
@@ -2975,9 +2955,9 @@
     "en-US": "Connected"
   },
   "diagnostics.advice.ready": {
-    "zh-CN": "正在接收当前游戏的信息。可以返回时间线，选择需要执行的任务。",
-    "zh-TW": "正在接收目前遊戲的資訊。可以返回時間軸，選擇需要執行的任務。",
-    "en-US": "Receiving updates from the current game. Return to the timeline to select your tasks."
+    "zh-CN": "可返回今日任务开始执行。",
+    "zh-TW": "可返回今日任務開始執行。",
+    "en-US": "Ready to run tasks from Today."
   },
   "diagnostics.status.closed": {
     "zh-CN": "游戏尚未运行",
@@ -3015,9 +2995,9 @@
     "en-US": "Waiting for sign-in"
   },
   "diagnostics.advice.login": {
-    "zh-CN": "组件已连接，但角色身份尚未就绪。请完成游戏登录或等待加载结束。",
-    "zh-TW": "元件已連接，但角色身分尚未就緒。請完成遊戲登入或等待載入結束。",
-    "en-US": "The component is connected, but the character is not ready. Finish signing in or wait for loading to complete."
+    "zh-CN": "请完成游戏登录，或等待角色加载。",
+    "zh-TW": "請完成遊戲登入，或等待角色載入。",
+    "en-US": "Sign in to the game or wait for the character to load."
   },
   "diagnostics.status.tool": {
     "zh-CN": "工具正在使用连接",
@@ -3025,9 +3005,9 @@
     "en-US": "Connection in use by a tool"
   },
   "diagnostics.advice.tool": {
-    "zh-CN": "这是正常的占用状态。停止工具的自动化后，即可继续日常任务，无需关闭工具窗口。",
-    "zh-TW": "這是正常的占用狀態。停止工具的自動化後，即可繼續日常任務，無須關閉工具視窗。",
-    "en-US": "This is expected while a tool is active. Stop its automation to continue daily tasks; its window can stay open."
+    "zh-CN": "停止工具自动化后即可继续日常，无需关闭窗口。",
+    "zh-TW": "停止工具自動化後即可繼續日常，無需關閉視窗。",
+    "en-US": "Stop the tool's automation to resume daily tasks; its window can stay open."
   },
   "diagnostics.status.unreadable": {
     "zh-CN": "暂时无法读取连接",
@@ -3210,9 +3190,9 @@
     "zh-CN": "每天开始时间"
   },
   "schedule.requirements": {
-    "zh-TW": "每天依本機時區執行。電腦須開機、保持喚醒且已登入 Windows；軟體關閉時會自動啟動。忙碌或短暫錯過時最多延後 15 分鐘，超過後等到隔天。不會自動重複中斷的佇列。",
-    "en-US": "Runs every day in the local time zone. Keep the computer awake and signed in to Windows. Dustweave starts if closed. A busy or missed run may wait up to 15 minutes, then waits until tomorrow. Interrupted queues are not automatically repeated.",
-    "zh-CN": "每天按本机时区执行。电脑需开机、保持唤醒且已登录 Windows；软件关闭时会自动启动。忙碌或短暂错过时最多延后 15 分钟，超过后等到第二天。不会自动重复中断的队列。"
+    "zh-TW": "需電腦開機、保持喚醒並登入 Windows；織塵可自動啟動。忙碌或錯過時最多延後 15 分鐘，中斷佇列需手動接續。",
+    "en-US": "Keep the PC awake and signed in; Dustweave can open automatically. Busy or missed starts wait up to 15 minutes. Interrupted queues require manual resume.",
+    "zh-CN": "需电脑开机、保持唤醒并登录 Windows；织尘可自动启动。忙碌或错过时最多延后 15 分钟，中断队列需手动接续。"
   },
   "schedule.accounts": {
     "zh-TW": "執行帳號",
@@ -3220,9 +3200,9 @@
     "zh-CN": "执行账号"
   },
   "schedule.account_help": {
-    "zh-TW": "拖曳卡片調整執行順序，沿用各帳號的任務設定。修改後儲存，與帳號頁勾選互不影響。",
-    "en-US": "Drag cards to set the run order. Each account uses its saved tasks. Save changes here; Accounts page selections are separate.",
-    "zh-CN": "拖动卡片调整执行顺序，沿用各账号的日常设置。修改后保存，与账号页勾选互不影响。"
+    "zh-TW": "拖動排序，沿用各帳號設定；與帳號頁勾選獨立儲存。",
+    "en-US": "Drag to reorder. Uses each account's settings, saved separately from the Accounts queue.",
+    "zh-CN": "拖动排序，沿用各账号设置；与账号页勾选独立保存。"
   },
   "schedule.no_accounts": {
     "zh-TW": "請先在帳號頁儲存至少一個帳號。",
@@ -3340,9 +3320,9 @@
     "zh-CN": "已超过 15 分钟，本次跳过"
   },
   "updates.help": {
-    "zh-CN": "通过 bd2.madsam.work 下载更新。后台下载完成后，仅在空闲时提示重启，保留账号、设置和插件。",
-    "zh-TW": "透過 bd2.madsam.work 下載更新。背景下載完成後，僅在閒置時提示重新啟動，保留帳號、設定與外掛。",
-    "en-US": "Updates download from bd2.madsam.work in the background. Restart is offered only when idle. Accounts, settings and plugins are preserved."
+    "zh-CN": "后台下载，空闲时确认重启更新。账号、设置和插件保留。",
+    "zh-TW": "背景下載，閒置時確認重新啟動更新。帳號、設定和套件保留。",
+    "en-US": "Downloads in the background; confirm restart when idle. Keeps accounts, settings and plugins."
   },
   "updates.automatic": {
     "zh-TW": "自動檢查並在背景下載更新",
@@ -4650,9 +4630,9 @@
     "en-US": "Export logs and get help"
   },
   "diagnostics.export.body": {
-    "zh-CN": "生成最近 7 天的运行、连接和任务记录，最多 64 MB。不会导出登录凭据、插件或密钥，不会自动上传。",
-    "zh-TW": "產生最近 7 天的執行、連線和任務記錄，最多 64 MB。不會匯出登入憑證、外掛或金鑰，不會自動上傳。",
-    "en-US": "Export up to 64 MB of run, connection and task logs from the last 7 days. Sign-in credentials, plugins and keys are excluded. Nothing is uploaded automatically."
+    "zh-CN": "导出最近 7 天记录，最多 64 MB。不含登录凭据、插件或密钥，不会自动上传。",
+    "zh-TW": "匯出最近 7 天記錄，最多 64 MB。不含登入憑證、套件或金鑰，不會自動上傳。",
+    "en-US": "Export up to 64 MB from the last 7 days. Excludes credentials, plugins and keys; nothing is uploaded automatically."
   },
   "diagnostics.export.privacy": {
     "zh-CN": "日志可能包含角色名、任务内容和本机路径，请私下发送给开发者。",
@@ -4723,11 +4703,6 @@
     "zh-CN": "日志目录是链接，未读取它指向的其他位置。",
     "zh-TW": "記錄目錄是連結，未讀取其指向的其他位置。",
     "en-US": "The log folder is a link. Its destination was not read."
-  },
-  "diagnostics.activity_note": {
-    "zh-CN": "下面是最近一次操作记录，与上方实时连接状态分别显示。",
-    "zh-TW": "下方是最近一次操作記錄，與上方即時連線狀態分別顯示。",
-    "en-US": "The most recent operation is shown below, separately from the live connection status above."
   },
   "updates.release_link": {
     "zh-CN": "最新 GitHub Release",
@@ -4870,14 +4845,14 @@
     "en-US": "Refill up to"
   },
   "默认0。只允许消耗保留量以外的天赋药；不足时在队列中说明受限任务，不影响其他可执行任务。仅适用于日常队列。": {
-    "zh-CN": "默认0。只允许消耗保留量以外的天赋药；不足时在队列中说明受限任务，不影响其他可执行任务。仅适用于日常队列。",
-    "zh-TW": "預設0。僅使用保留量以外的天賦藥；不足時在佇列中說明受限任務，不影響其他可執行任務。僅適用於日常佇列。",
-    "en-US": "Default: 0. Daily tasks can only use Talent Pills above this reserve. Tasks that need more pills show a reminder; other tasks can continue. Applies only to the daily queue."
+    "zh-CN": "仅限日常队列；药不足时暂停相关环节，其他环节继续。",
+    "zh-TW": "僅限日常佇列；藥不足時暫停相關環節，其他環節繼續。",
+    "en-US": "Daily queue only. If pills are short, defer affected tasks and continue the rest."
   },
   "默认不购买。开启后，药不足时临时加入补药环节；须已完成本周至少一条NPC任务，并确认广场商人的天赋药享九折。补至目标数量后接续任务。": {
-    "zh-CN": "默认不购买。开启后，药不足时临时加入补药环节；须已完成本周至少一条NPC任务，并确认广场商人的天赋药享九折。补至目标数量后接续任务。",
-    "zh-TW": "預設不購買。啟用後，藥不足時臨時加入補藥環節；須已完成本週至少一條NPC任務，並確認廣場商人的天賦藥享九折。補至目標數量後接續任務。",
-    "en-US": "Purchases are off by default. When enabled, the queue adds a refill step if needed. Complete at least one weekly NPC quest first; the plaza merchant must offer the 10% discount. Tasks resume after refilling to the target."
+    "zh-CN": "需本周已完成至少 1 条 NPC 任务，且商人提供天赋药九折价。",
+    "zh-TW": "需本週已完成至少 1 條 NPC 任務，且商人提供天賦藥九折價。",
+    "en-US": "Requires at least 1 completed weekly NPC quest and a merchant offering the 10% Talent Pill discount."
   },
   "天赋药数量须为非负整数；原输入已保留。": {
     "zh-CN": "天赋药数量须为非负整数；原输入已保留。",

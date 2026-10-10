@@ -17,7 +17,7 @@ public sealed class TradePlanPanel : UserControl
     private readonly bool allowGame;
     private readonly string root;
     private readonly string? expectedAccount;
-    private readonly TextBlock identity = Text("在游戏广场商店的购买页读取当前账号，或导入已保存的快照。"), warning = Text(""), status = Text("仅预览计划，不执行采购、料理或出售。");
+    private readonly TextBlock identity = Text("trade.intro"), warning = Text(""), status = Text("仅预览计划，不执行采购、料理或出售。");
     private readonly TextBlock totals = Text("导入后可查看预计增益、垫资和回款日期。");
     private readonly TextBlock settingsSummary = Text("");
     private readonly Button capture = new() { Content = "读取当前游戏" }, import = new() { Content = "导入离线快照" }, compute = new() { Content = "计算计划", IsEnabled = false }, export = new() { Content = "导出明细", IsEnabled = false };
@@ -47,7 +47,7 @@ public sealed class TradePlanPanel : UserControl
         heading.Children.Add(warning);
         warning.Visibility = Visibility.Collapsed;
         warning.SetResourceReference(TextBlock.ForegroundProperty, "Warning");
-        heading.Children.Add(Text("按当前供货统一分配原料和料理。回款约需30天；尚未售出的收入不会计入采购预算。"));
+        heading.Children.Add(Text("trade.cycle"));
         settingsSummary.Margin = new(0, 6, 0, 12);
         settingsSummary.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk");
         L.Text(settingsSummary, "trade.settings_location");

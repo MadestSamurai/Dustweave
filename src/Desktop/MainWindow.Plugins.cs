@@ -26,7 +26,6 @@ public sealed class DailyPluginPanel : ScrollViewer
         VerticalScrollBarVisibility = ScrollBarVisibility.Auto; HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
         var content = new StackPanel { Margin = new(0, 0, 8, 0) };
         var overview = new StackPanel();
-        var title = new TextBlock { FontSize = 24, FontWeight = FontWeights.SemiBold }; L.Text(title, "plugins.title"); overview.Children.Add(title);
         overview.Children.Add(Text("plugins.help"));
         var actions = new WrapPanel { Margin = new(0, 16, 0, 0) };
         import.Style = (Style)Application.Current.FindResource("PrimaryButton");

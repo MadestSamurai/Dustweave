@@ -19,8 +19,10 @@ public sealed partial class DailyLanguage
         }
         result.Add("复用已准备组件 · 日常执行", ("suite.reuse", "suite.daily"));
         result.Add("首次准备 · 日常执行", ("suite.prepare", "suite.daily"));
+        result.Add("连接一次即可切换工具；打开工具后不会自动开始操作。", ("tools.idle_notice", ""));
+        result.Add("工具共用日常助手的连接，不会自动开始操作。仅在自动化启用或等待结算时占用控制权。", ("tools.idle_notice", ""));
         return result;
     }
     private string TranslateToolMessage(string original) => toolMessages.TryGetValue(original, out var entry)
-        ? Get(entry.Template, Get(entry.Name)) : original;
+        ? entry.Name.Length == 0 ? Get(entry.Template) : Get(entry.Template, Get(entry.Name)) : original;
 }
