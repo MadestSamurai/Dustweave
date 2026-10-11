@@ -131,7 +131,7 @@ public sealed partial class Planner
   var plannedInvestment=clearStrategy&&core!=null?CoreInvestment(s,defs,boards,coreElements):null;
   // Boss pursuit can offer another small move every tick. An affordable planned
   // upgrade must not be starved by that continuous stream of repositioning.
-  if(cur.Boss&&plannedInvestment is {Kind:"upgrade"})return plannedInvestment;
+  if((cur.Boss||(s.Catalog.GameOverCount>0&&s.EnemyCount>=s.Catalog.GameOverCount*.6))&&plannedInvestment is {Kind:"upgrade"})return plannedInvestment;
   if(cur.Boss)
   {
    var chase=bossChase.Decide(s,settings,now??s.At,canMove);Focus="BOSS追击：动态换位与持续输出";

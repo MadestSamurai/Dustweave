@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-11T21:02:19.6619073Z",
+  "generatedUtc": "2026-10-11T21:32:27.7959315Z",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -258,7 +258,7 @@
       "reasons": [
         "build input"
       ],
-      "sha256": "f0f13a679dd8321459345a6f048f50f973cff88147d0180845b999008eb3eaa2",
+      "sha256": "733e1f66237a5561a87ebad656480164d18514dff778b0eece7edb1437ac3396",
       "bytes": 2880,
       "path": "docs/releases/1.2.1.md"
     },
@@ -3447,7 +3447,7 @@
       "reasons": [
         "build input"
       ],
-      "sha256": "376d503d050b73a9b468d3d611471eb87e1dfe865803663d1e8e75ab48b47efa",
+      "sha256": "97750810dea7959c3c25caeb3816341b10cc8ae6a0006dbfed66475f415c32ab",
       "bytes": 9570,
       "path": "standalone/bd2-apostle-defense/planner/Clear50Strategy.cs"
     },
@@ -3461,7 +3461,7 @@
     },
     {
       "path": "standalone/bd2-apostle-defense/planner/Planner.cs",
-      "sha256": "b819941a467eb8aac9f383eef88b4fb245501e349e9400e0f6512fcdb911c207",
+      "sha256": "ec7ee384acaf660099013e4eb78cc8e7018ad73749193b117686b14f495314f3",
       "reasons": [
         "build input"
       ],

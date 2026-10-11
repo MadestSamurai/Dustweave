@@ -113,6 +113,24 @@ public sealed partial class Planner
  }
  private Decision? CoreInvestment(Snapshot s,Dictionary<int,UnitDef> defs,Dictionary<int,Board> boards,HashSet<int> elements)
  {
+  // The future-wave model cannot justify waiting while the live lane is filling.
+  // Use an affordable improvement to current-wave output before reserving for a
+  // more efficient future upgrade. Restrict it to the same core elements; crowd
+  // pressure is not permission to buy unrelated cheap upgrades.
+  var current=Current(s);
+  if(!current.Boss&&s.Catalog.GameOverCount>0&&s.EnemyCount>=s.Catalog.GameOverCount*.6)
+  {
+   int urgent=-1;double immediateValue=0;
+   foreach(int element in elements.OrderBy(e=>e))
+   {
+    int price=s.UpgradeCosts[element];
+    if(price<=0||price>s.Gold||!s.CanUpgrade[element]||s.Levels[element]>=s.Catalog.MaxUpgrade)continue;
+    double extra=s.Units.Where(u=>u.Ready&&defs[u.Id].Element==element).Sum(u=>
+     Power(defs[u.Id],boards[u.Grid],s.Levels[element]+1,current,s)-Power(defs[u.Id],boards[u.Grid],s.Levels[element],current,s));
+    if(extra/price>immediateValue+1e-10){immediateValue=extra/price;urgent=element;}
+   }
+   if(urgent>=0)return new(){Kind="upgrade",Element=urgent,Policy="clear50-core",Score=immediateValue,Reason="升级核心体系，补足后续波次与首领输出"};
+  }
   // Budget for the next five waves and the next boss (at most ten waves away).
   // Considering unaffordable upgrades is essential: buying a roll whenever gold
   // reaches 25 otherwise prevents a 45+ gold core upgrade indefinitely.
