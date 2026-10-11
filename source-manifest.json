@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-11T21:57:04.1687123Z",
+  "generatedUtc": "2026-10-11T22:24:11.3471203Z",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -258,7 +258,7 @@
       "reasons": [
         "build input"
       ],
-      "sha256": "a24f71400c071b2788c056c2c7317807e54375987725754e6a4f48ff46dbdc28",
+      "sha256": "1a2ce890b16ffdb9d713b9611196c4a16858304f954a93ef0b1c57bd90882683",
       "bytes": 2880,
       "path": "docs/releases/1.2.1.md"
     },
@@ -3453,7 +3453,7 @@
     },
     {
       "path": "standalone/bd2-apostle-defense/planner/OpeningEconomy.cs",
-      "sha256": "efe250f84a28327132f3b1fcce9a0f593a1091d3618aa855493434ad420bf7bf",
+      "sha256": "1d1b1706d4c01756dbc5ab0f1c43bc09af982fa974242141fd97f3db5069b712",
       "reasons": [
         "build input"
       ],
@@ -3461,7 +3461,7 @@
     },
     {
       "path": "standalone/bd2-apostle-defense/planner/Planner.cs",
-      "sha256": "ec7ee384acaf660099013e4eb78cc8e7018ad73749193b117686b14f495314f3",
+      "sha256": "34151f751a29cd0abc7188f1c8fa90114321baa43542889067385fe67816924e",
       "reasons": [
         "build input"
       ],

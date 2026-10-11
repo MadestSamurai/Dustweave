@@ -10,7 +10,8 @@ public sealed partial class Planner
   if(hit<=0||w.Hp<=0)return 0;
   double attacks=Math.Max(1,Math.Ceiling(w.Hp/hit));
   double targets=u.SplashRange>0?Math.Min(Math.Max(1,w.Count),1+2*u.SplashRange/Math.Max(.25,w.Speed*w.SpawnInterval)):1;
-  return Coverage(u,b,s.Path)*Math.Min(targets,8)/(attacks*Math.Max(.1,u.Interval+1.0/60));
+  double length=routeLength;if(length<=0)for(int i=0;i<s.Path.Length;i++)length+=Distance(s.Path[i],s.Path[(i+1)%s.Path.Length]);
+  return AttackUptime(Coverage(u,b,s.Path),length,w)*Math.Min(targets,8)/(attacks*Math.Max(.1,u.Interval+1.0/60));
  }
 
  private double OpeningUtility(UnitDef u,Board b,Snapshot s,int extra)

@@ -3,7 +3,7 @@ namespace BD2ApostleDefense;
 // Short-horizon expected-value planner. Scores are estimates, never claimed as a win probability.
 public sealed partial class Planner
 {
- private readonly Dictionary<string,double> coverageCache=new();private string geometry="";
+ private readonly Dictionary<string,double> coverageCache=new();private string geometry="";private double routeLength;
  private readonly BossChase bossChase=new();
  public void ResetTactics(){bossChase.Reset();strategyRoom="";observedOpening=false;selectedCore=-1;}
  public void Confirm(Decision d,Snapshot s,long now){bossChase.Confirm(d,s,now);ConfirmRecruit(d);}
@@ -28,9 +28,18 @@ public sealed partial class Planner
   if((attack==0&&defense==2)||(attack==1&&defense==0)||(attack==2&&defense==1))return 1-c.Penalty;
   return 1;
  }
+ public static double AttackUptime(double coverage,double length,WaveDef w)
+ {
+  // Path coverage is single-target uptime. A short-range unit can attack
+  // continuously when the next ordinary enemy arrives before the last leaves
+  // its range. Do not apply a second coverage penalty to a continuous stream.
+  if(w.Boss||w.Count<=1||length<=0||w.Speed<=0||w.SpawnInterval<=0)return coverage;
+  double spacing=Math.Max(w.Speed*w.SpawnInterval,length/w.Count);
+  return Math.Min(1,coverage*length/spacing);
+ }
  private double Power(UnitDef u,Board b,int level,WaveDef w,Snapshot s)
  {
-  double coverage=Coverage(u,b,s.Path);
+  double coverage=AttackUptime(Coverage(u,b,s.Path),routeLength,w);
   double attack=(u.Attack+u.UpAttack*(double)level)*ElementMultiplier(u.Element,w.Element,s.Catalog);
   // Number of targets in the splash disk estimated from spawn spacing; bosses keep their actual count.
   double splash=u.SplashRange>0?Math.Min(w.Count,1+2*u.SplashRange/Math.Max(.25,w.Speed*w.SpawnInterval)):1;
@@ -113,7 +122,7 @@ public sealed partial class Planner
   if(s.Stage!="playing"||!s.Ready||!s.MyView)return Act("wait",s.Stage=="matching"?"等待原生匹配倒计时":"等待己方盘面与使徒加载完成");
   if(s.Catalog.Waves.Length==0||s.Catalog.Units.Length==0)return Act("wait","等待游戏规则表");
   if(s.Boards.Length==0||s.Units.Length>s.Boards.Length||s.Boards.Select(b=>b.Id).Distinct().Count()!=s.Boards.Length||s.Units.Any(u=>!s.Boards.Any(b=>b.Id==u.Grid)))return Act("wait","等待使徒与格位数据同步");
-  string key=Identity.Hash(string.Join(";",s.Boards.Cast<Point>().Concat(s.Path).Select(p=>$"{p.Id}:{p.X:R}:{p.Y:R}:{p.Z:R}"))+s.Catalog.Key);if(key!=geometry){geometry=key;coverageCache.Clear();}
+  string key=Identity.Hash(string.Join(";",s.Boards.Cast<Point>().Concat(s.Path).Select(p=>$"{p.Id}:{p.X:R}:{p.Y:R}:{p.Z:R}"))+s.Catalog.Key);if(key!=geometry){geometry=key;coverageCache.Clear();routeLength=0;for(int i=0;i<s.Path.Length;i++)routeLength+=Distance(s.Path[i],s.Path[(i+1)%s.Path.Length]);}
   bool rareMode=settings.Rare&&(!settings.Clear50||(s.AchievementsKnown&&s.ClearProgress>=s.ClearTarget));
   // Pending spawns must settle before achievement completion; stop spending on extra rolls meanwhile.
   if(rareMode&&s.AchievementsKnown&&s.RareProgress+s.RoundRare>=s.RareTarget)rareMode=false;
