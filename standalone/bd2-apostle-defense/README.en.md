@@ -12,7 +12,7 @@ A standalone Apostle Defense assistant for the BrownDust II Windows client. Work
 
 ## Download
 
-Current version: **0.3.7**. Both editions have the same features and include Simplified Chinese / English.
+Current version: **0.3.8**. Both editions have the same features and include Simplified Chinese / English.
 
 | Edition | Runtime requirement | Recommended for |
 | --- | --- | --- |
@@ -41,7 +41,8 @@ Download one edition: the EXE runs on its own; ZIPs include both READMEs and lic
 - The 68-cell board shows actual positions, elements, tiers, enemies and move arrows. Click a unit to inspect its stats, range and route coverage. Inspection does not control the game; arrow keys navigate and Esc clears selection.
 - English cells use Wa / Fi / Wi / Li / Da for Water / Fire / Wind / Light / Dark, followed by tier. Tooltips and selection details show full names.
 - Ordinary waves compare executable moves and swaps, upgrades, summons and low-risk rerolls. A confirmed sale is followed by a refill before other spending.
-- Before the first boss, build a three-unit starting lineup and save toward summons. After that, upgrades are evaluated against current-wave hits to kill; overkill does not count as extra clearing speed. When saving for the next summon, an upgrade must earn that summon back sooner through extra kills. This is a decision estimate, not a full battle simulation.
+- While pursuing an unfinished wave-50 goal, the first 10 waves prioritize rolling a tier-7/8 core, retaining basic earners and avoiding scattered element upgrades. With auto-next enabled and stop-after-round disabled, an opening without a core is abandoned and restarted. Attaching after the opening never causes a late round to be discarded this way.
+- Once a core appears, investment focuses on dark, water and one high-tier support element. Off-colour upgrades without a main attacker are skipped. Low-contribution off-colour units are sold under low pressure to fund core upgrades or subsequent summons; tier-7/8 units are retained. Until wave 35, a missing high-tier Water/Dark complement allows at most two extra rolls per safe non-boss wave. Useful tier-5/6 units may fill the third element. Positioning and boss pursuit remain active.
 - Boss waves use enemy position, speed and route to predict short-term damage and move attackers to stay in range. The planner handles multiple bosses, deducts displaced allies' losses and preserves attack progress. Static repositioning and selling are suspended during boss waves.
 - Action interval: 100–3000 ms, default 500 ms. Commands wait for game confirmation rather than accumulating. Pursuit also checks the exact live target, wave and snapshot age.
 - Results, Exit, confirmation and return to lobby follow the game's own flow. Achievement progress is read back from the server before continuing. Disabling auto-next still allows the current round to exit normally.
@@ -58,7 +59,7 @@ See [translation maintenance](docs/LOCALIZATION.md).
 
 Supports the official Windows x64 PC client, one game process at a time, with the same privilege level as the game. Mobile and Android emulator clients are not supported. First connection resolves local interfaces and builds the component, which may take a few seconds. Uncertain interface matches stop connection with a diagnostic; adaptation does not guarantee every future update will work without maintenance.
 
-Releases contain no game DLLs, resources, account inventories or private captures. Uses short-horizon estimates and does not guarantee wave 50 or a specific summon; it does not abandon a live round.
+Releases contain no game DLLs, resources, account inventories or private captures. Summons use the game's normal random results. Opening restarts only apply to the unfinished wave-50 goal under the conditions above; neither a clear nor a specific summon is guaranteed.
 
 ## Diagnostics and feedback
 

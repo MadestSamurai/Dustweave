@@ -9,6 +9,9 @@ public sealed class DailySchedulePanel : ScrollViewer
 {
     private static DailyLanguage L => DailyLanguage.Current;
     private readonly CheckBox enabled = new();
+    private readonly CheckBox takeover = new(), closeGame = new();
+    private readonly ComboBox mode = new() { MinWidth = 180 }, maximum = new() { Width = 80, ItemsSource = new[] { 1, 2, 3, 4 } };
+    private readonly WrapPanel parallelSettings = new() { Margin = new(0, 10, 0, 0) };
     private readonly TextBox time = new() { Width = 105, MaxLength = 5 };
     private readonly DailyScheduleAccounts accountList = new();
     private readonly TextBlock next = new() { FontSize = 22, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap };
@@ -31,6 +34,20 @@ public sealed class DailySchedulePanel : ScrollViewer
         L.Bind(time, System.Windows.Automation.AutomationProperties.NameProperty, "schedule.time"); row.Children.Add(time);
         var local = new TextBlock { Margin = new(14, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap, MaxWidth = 340 }; L.Bind(local, TextBlock.TextProperty, () => L.Get("schedule.timezone", "UTC" + (DateTimeOffset.Now.Offset < TimeSpan.Zero ? "-" : "+") + DateTimeOffset.Now.Offset.Duration().ToString(@"hh\:mm"))); local.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk"); row.Children.Add(local); form.Children.Add(row);
         var requirements = Text("schedule.requirements", 12); requirements.Margin = new(0, 16, 0, 0); form.Children.Add(requirements); content.Children.Add(Card(form));
+        var execution = new StackPanel(); execution.Children.Add(Text("schedule.execution", 16));
+        foreach (string key in new[] { "schedule.serial", "schedule.parallel" })
+        { var item = new ComboBoxItem(); L.Bind(item, ContentControl.ContentProperty, key); mode.Items.Add(item); }
+        mode.Margin = new(0, 12, 0, 0); mode.HorizontalAlignment = HorizontalAlignment.Left;
+        L.Bind(mode, System.Windows.Automation.AutomationProperties.NameProperty, "schedule.execution"); execution.Children.Add(mode);
+        var limit = Text("parallel.maximum"); limit.VerticalAlignment = VerticalAlignment.Center; limit.Margin = new(0, 0, 12, 0);
+        parallelSettings.Children.Add(limit); parallelSettings.Children.Add(maximum);
+        L.Bind(maximum, System.Windows.Automation.AutomationProperties.NameProperty, "parallel.maximum");
+        closeGame.Margin = new(18, 0, 0, 0); closeGame.VerticalAlignment = VerticalAlignment.Center;
+        L.Bind(closeGame, ContentControl.ContentProperty, "parallel.close_game"); parallelSettings.Children.Add(closeGame); execution.Children.Add(parallelSettings);
+        mode.SelectionChanged += (_, _) => parallelSettings.Visibility = mode.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
+        takeover.Margin = new(0, 16, 0, 0); L.Bind(takeover, ContentControl.ContentProperty, "schedule.takeover"); execution.Children.Add(takeover);
+        var takeoverHint = Text("schedule.takeover_hint", 12); takeoverHint.Margin = new(24, 6, 0, 0); takeoverHint.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk"); execution.Children.Add(takeoverHint);
+        content.Children.Add(Card(execution));
         var selection = new StackPanel(); selection.Children.Add(Text("schedule.accounts", 16));
         var hint = Text("schedule.account_help", 12); hint.Margin = new(0, 6, 0, 12); selection.Children.Add(hint); selection.Children.Add(accountList);
         L.Bind(save, ContentControl.ContentProperty, "schedule.save"); save.Style = (Style)Application.Current.FindResource("PrimaryButton"); selection.Children.Add(save); selection.Children.Add(feedback); selection.Margin = new Thickness(0, 4, 0, 16); content.Children.Add(selection);
@@ -44,6 +61,8 @@ public sealed class DailySchedulePanel : ScrollViewer
     public void Show(DailySchedulePlan plan, DailyScheduleRun? last)
     {
         saved = plan; enabled.IsChecked = plan.Enabled; time.Text = $"{plan.Hour:00}:{plan.Minute:00}";
+        mode.SelectedIndex = plan.Execution.Enabled ? 1 : 0; maximum.SelectedItem = plan.Execution.Maximum;
+        closeGame.IsChecked = plan.Execution.CloseGame; takeover.IsChecked = plan.TakeOverTools;
         accountList.Select(plan.Accounts);
         RefreshStatus(plan, last);
     }
@@ -63,7 +82,8 @@ public sealed class DailySchedulePanel : ScrollViewer
     {
         if (!TimeOnly.TryParseExact(time.Text.Trim(), "HH:mm", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var parsed)) { if (enabled.IsChecked == true) { Feedback("schedule.invalid_time", true); return; } parsed = new TimeOnly(saved.Hour, saved.Minute); }
         if (enabled.IsChecked == true && accountList.HasUnavailable) { Feedback("schedule.account_missing", true); return; }
-        var plan = new DailySchedulePlan { Enabled = enabled.IsChecked == true, Hour = parsed.Hour, Minute = parsed.Minute, Accounts = accountList.SelectedKeys, SavedUtc = DateTimeOffset.UtcNow };
+        var plan = new DailySchedulePlan { Enabled = enabled.IsChecked == true, Hour = parsed.Hour, Minute = parsed.Minute, Accounts = accountList.SelectedKeys, SavedUtc = DateTimeOffset.UtcNow,
+            Execution = new(mode.SelectedIndex == 1, (int)(maximum.SelectedItem ?? 2), closeGame.IsChecked == true), TakeOverTools = takeover.IsChecked == true };
         try { if (plan.Enabled) plan.Validate(); SaveRequested?.Invoke(plan); }
         catch (Exception e) { Feedback(e.Message, true); }
     }

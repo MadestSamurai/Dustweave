@@ -1,4 +1,13 @@
 {
+  "累计出售所选料理，每批": "Sell selected dishes in batches of",
+  "份": "dishes",
+  "积分不足时出售料理，优先补种": "Sell dishes to fund replanting when points are low",
+  "仅出售所选配方成品，不卖锁定物品。累计出售保留余数；补种仅卖够当前批次，仍遵守种植预算。": "Only sells the selected recipe's finished dishes, excluding locked items. Batch sales keep the remainder; replanting sells only what's needed and respects the planting budget.",
+  "料理累计售卖数量必须是 1–9900 的整数。": "Enter a whole number from 1 to 9900 for the dish sale batch.",
+  "正在出售所选料理，补足本批播种积分": "Selling selected dishes to fund this planting batch",
+  "正在按整批出售所选料理，保留余数": "Selling full batches of selected dishes and keeping the remainder",
+  "等待制作所选料理，为本批播种补充积分": "Preparing selected dishes to fund this planting batch",
+  "积分及所选料理不足，继续采集并等待作物成熟": "Not enough points or selected dishes; gathering and waiting for crops to grow",
   "最低砍伐阶段": "Minimum tree stage",
   "选定阶段是下限，更高阶段也会砍伐；矿点和作物仍等完全成熟。": "Trees at or above this stage can be cut. Ore and crops still wait until fully grown.",
   "仅完全成熟（默认）": "Fully grown only (default)",

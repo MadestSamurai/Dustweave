@@ -34,6 +34,7 @@ public partial class TerritoryWindow : Window
   if(selectedSeed>0){FixedSeedBox.ItemsSource=new[]{new RecipeOption{Id=selectedSeed,Name=ui.Language.Text("作物 ")+selectedSeed,Available=true}};FixedSeedBox.SelectedValue=selectedSeed;}
   selectedRecipe=settings.RecipeId;RecipeBox.ItemsSource=new[]{new RecipeOption{Id=selectedRecipe,Name=selectedRecipe==3?"活力面疙瘩":"配方 "+selectedRecipe,Available=true}};RecipeBox.SelectedValue=selectedRecipe;
   SellThresholdBox.Text=settings.SellThreshold.ToString();CookingBox.IsChecked=settings.Cooking;CookingBatchBox.Text=settings.CookingBatch.ToString();LoggingBox.IsChecked=settings.Logging;MiningBox.IsChecked=settings.Mining;FarmingBox.IsChecked=settings.Farming;
+  SellCookingBatchBox.IsChecked=settings.SellCookingBatches;CookingSaleBatchBox.Text=settings.CookingSaleBatch.ToString();SellCookingForPlantingBox.IsChecked=settings.SellCookingForPlanting;
   NavMeshBox.IsChecked=settings.UseNavMesh;VehicleBox.IsChecked=settings.UseVehicle;DashBox.IsChecked=settings.DashRecovery;
   Set(IntervalBox,settings.IntervalMs.ToString());Set(BudgetBox,settings.PlantingBudget.ToString());Set(DataPathBox,root);
   _ = InitializeControlAsync(settings);initialized=true;UpdatePlantingControls();timer=new DispatcherTimer{Interval=TimeSpan.FromMilliseconds(500)};timer.Tick+=async(_,_)=>await RefreshAsync();timer.Start();
@@ -43,8 +44,10 @@ public partial class TerritoryWindow : Window
  {
   if(!int.TryParse(CookingBatchBox.Text,out int cookingBatch)||!int.TryParse(IntervalBox.Text,out int interval)||!long.TryParse(BudgetBox.Text,out long budget))throw new InvalidOperationException("间隔和预算请输入整数。");
   if(!int.TryParse(SellThresholdBox.Text,out int threshold)||!SurplusSales.ValidThreshold(threshold))throw new InvalidOperationException("售卖保留数量必须是 100–9900 的整数。");
+  if(!int.TryParse(CookingSaleBatchBox.Text,out int saleBatch)||!CookingSales.ValidBatch(saleBatch))throw new InvalidOperationException("料理累计售卖数量必须是 1–9900 的整数。");
   var s=new TerritorySettings{AutoSell=true,SellThreshold=threshold,FixedCrop=PlantingModeBox.SelectedIndex==1,FixedSeedId=selectedSeed,Cooking=CookingBox.IsChecked==true,CookingBatch=cookingBatch,RecipeId=selectedRecipe,Logging=LoggingBox.IsChecked==true,Mining=MiningBox.IsChecked==true,Farming=FarmingBox.IsChecked==true,UseNavMesh=NavMeshBox.IsChecked==true,UseVehicle=VehicleBox.IsChecked==true,DashRecovery=DashBox.IsChecked==true,IntervalMs=interval,PlantingBudget=budget};
   s.MinimumTreeStage=selectedTreeStage;
+  s.SellCookingBatches=SellCookingBatchBox.IsChecked==true;s.CookingSaleBatch=saleBatch;s.SellCookingForPlanting=SellCookingForPlantingBox.IsChecked==true;
   if(!s.ValidSettings())throw new InvalidOperationException("间隔范围 100–60000 毫秒，预算范围 0–10000000；料理每批 1–1000 份。");return s;
  }
  private async void SettingsChanged(object sender,RoutedEventArgs e)
@@ -56,6 +59,7 @@ public partial class TerritoryWindow : Window
  private void UpdatePlantingControls()
  {
   TreeStageBox.IsEnabled=LoggingBox.IsChecked==true;
+  CookingSalesPanel.IsEnabled=CookingBox.IsChecked==true;CookingSaleBatchBox.IsEnabled=SellCookingBatchBox.IsChecked==true;
   bool fixedCrop=PlantingModeBox.SelectedIndex==1;FixedCropPanel.Visibility=fixedCrop?Visibility.Visible:Visibility.Collapsed;
   RecipePanel.Visibility=!fixedCrop||CookingBox.IsChecked==true?Visibility.Visible:Visibility.Collapsed;
  }

@@ -12,9 +12,13 @@ public sealed record DailySchedulePlan
     [System.Text.Json.Serialization.JsonIgnore]
     public bool IsDaily => Days is { Length: 7 } && Days.Order().SequenceEqual(Enumerable.Range(0, 7));
     public string[] Accounts { get; init; } = [];
+    public DailyParallelOptions Execution { get; init; } = new();
+    public bool TakeOverTools { get; init; }
     public DateTimeOffset SavedUtc { get; init; }
     public void Validate()
     {
+        if (Execution is null) throw new InvalidDataException("schedule.invalid_mode");
+        Execution.Validate();
         if (Hour is < 0 or > 23 || Minute is < 0 or > 59 || Days is null || Days.Length == 0 || Days.Any(d => d is < 0 or > 6) || Days.Distinct().Count() != Days.Length)
             throw new InvalidDataException("schedule.invalid_time");
         if (Accounts is null || Accounts.Length == 0 || Accounts.Any(k => !DailyProfiles.ValidKey(k)) || Accounts.Distinct().Count() != Accounts.Length)

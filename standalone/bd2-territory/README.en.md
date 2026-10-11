@@ -20,7 +20,7 @@ If a sale confirmation is missing, the tool waits for game requests to finish, r
 
 ## Download
 
-Current stable version: **0.4.4**. One application includes Simplified Chinese and English, switchable from the top-right corner.
+Current stable version: **0.4.5**. One application includes Simplified Chinese and English, switchable from the top-right corner.
 
 Connection freeze fix: state and diagnostic reads run in the background, polling pauses while connecting, and pause/close no longer wait on the pipe lock. `connection.log` is available from the start of each attempt.
 
@@ -60,7 +60,7 @@ Pause and close the previous tool, then open this version and connect. Standalon
 
 New installs and upgrades without a saved navigation preference default to NavMesh off. If A* cannot find a route, the target remains queued for retry; NavMesh is never enabled automatically. Water is impassable except through existing bridges; detours, movement trials and recovery dashes all follow this rule. NPCs and workers no longer receive synthetic obstacle footprints. Prediction uses effective game collisions; uncertain routes can be tested by ordinary movement and are temporarily excluded only after 3 seconds without progress.
 
-Cooking does not buy ingredients, sell items or switch dishes. Unknown results keep their journal and pause further operations to avoid duplicate consumption. Check inventory and diagnostics; do not delete records to blindly retry.
+Cooking does not buy ingredients or switch dishes. When enabled, two separate sale options default to on: sell complete batches of 100 finished dishes, retaining the remainder; and sell only enough dishes to fund the next native planting batch when territory currency is low. The batch threshold is adjustable from 1 to 9900. Only unlocked finished dishes from the selected recipe are eligible. A spent planting budget never triggers extra funding sales. Unknown results are reconciled against current inventory and game requests without replaying the old transaction.
 
 ## Fixed crop planting and navigation
 
@@ -70,7 +70,7 @@ A* refines narrow passages when the coarse grid fails. Ground checks and discove
 
 ## Separate gathering and planting passes
 
-The tool first finishes the mature, enabled and currently eligible resources captured at the start of a pass. It then plants the available field groups consecutively, followed by enabled cooking and sales. A few newly empty cells no longer interrupt harvesting. Crops that mature and resources that respawn during planting wait for the next pass.
+The tool harvests the current crop batch and replants empty fields before mining and logging, so crops can grow during gathering. Cooking and sales follow. A few newly empty cells do not interrupt harvesting; field groups are planted consecutively. Crops that mature and resources that respawn during planting wait for the next pass.
 
 Each gathering pass has a finite set of targets, so continuous respawns cannot postpone planting indefinitely. Unreachable targets keep their existing cooldown and retry policy without blocking the whole farm. Gathering continues when the planting budget is exhausted. The window shows the current phase and remaining targets.
 
@@ -117,7 +117,7 @@ Requires Windows, PowerShell and .NET 8 SDK. From this repository root:
 .\package.ps1 -Locked
 ```
 
-Packages go to `dist/v0.4.4/`. [Development](docs/DEVELOPMENT.md) · [Localization](docs/LOCALIZATION.md) · [Publication style](docs/PUBLICATION_STYLE.md) · [Release notes](docs/RELEASE_NOTES.md)
+Packages go to `dist/v0.4.5/`. [Development](docs/DEVELOPMENT.md) · [Localization](docs/LOCALIZATION.md) · [Publication style](docs/PUBLICATION_STYLE.md) · [Release notes](docs/RELEASE_NOTES.md)
 
 ## License
 

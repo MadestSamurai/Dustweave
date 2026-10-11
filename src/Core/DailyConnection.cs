@@ -13,6 +13,8 @@ public interface IGameHost
     Task<bool> RecoverStartupAsync(string account, Action<string> progress, CancellationToken cancellation) => Task.FromResult(false);
     DailySnapshot? ReadSnapshot();
     DailyRuntimeStatus? ReadStatus();
+    DailySnapshot? ReadSnapshot(GameInstance? expected) => expected == null ? null : ReadSnapshot();
+    DailyRuntimeStatus? ReadStatus(GameInstance? expected) => expected == null ? null : ReadStatus();
 }
 public sealed class DailyConnectionState
 {
@@ -69,13 +71,21 @@ public sealed class DailyGameHost : IGameHost
         }
         catch (OperationCanceledException) when (!cancellation.IsCancellationRequested) { throw new TimeoutException("游戏尚未退出，请处理游戏中的确认窗口后重试。账号会话尚未改写。"); }
     }
-    private bool ReadReady()
+    private bool ReadReady(GameInstance? expected) => DailyTransport.Refresh(root, expected) && DailyTransport.EndpointReady(expected!);
+    public DailySnapshot? ReadSnapshot() => ReadSnapshot(Find());
+    public DailyRuntimeStatus? ReadStatus() => ReadStatus(Find());
+    // Reuse discovery within one observation. The endpoint includes PID + creation
+    // time, and returned identity is checked again; this is not a cached snapshot.
+    public DailySnapshot? ReadSnapshot(GameInstance? expected)
     {
-        var current = Find();
-        return DailyTransport.Refresh(root, current) && DailyTransport.EndpointReady(current!);
+        var value = ReadReady(expected) ? DailyJson.TryRead<DailySnapshot>(Path.Combine(root, "snapshot.json")) : null;
+        return value != null && value.ProcessId == expected!.ProcessId && value.ProcessStartTicks == expected.StartTicks ? value : null;
     }
-    public DailySnapshot? ReadSnapshot() => ReadReady() ? DailyJson.TryRead<DailySnapshot>(Path.Combine(root, "snapshot.json")) : null;
-    public DailyRuntimeStatus? ReadStatus() => ReadReady() ? DailyJson.TryRead<DailyRuntimeStatus>(Path.Combine(root, "runtime.json")) : null;
+    public DailyRuntimeStatus? ReadStatus(GameInstance? expected)
+    {
+        var value = ReadReady(expected) ? DailyJson.TryRead<DailyRuntimeStatus>(Path.Combine(root, "runtime.json")) : null;
+        return value != null && value.ProcessId == expected!.ProcessId && value.ProcessStartTicks == expected.StartTicks ? value : null;
+    }
     public async Task ConnectAsync(GameInstance instance, Action<string> progress, CancellationToken cancellation)
     {
         var path = Path.Combine(root, "connection.json");

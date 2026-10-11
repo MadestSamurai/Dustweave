@@ -66,6 +66,11 @@
       </StackPanel>
       <WrapPanel Margin="0,0,0,10"><CheckBox x:Name="CookingBox" Content="{DynamicResource CookingLabel}" Checked="SettingsChanged" Unchecked="SettingsChanged"/><TextBlock Text="{DynamicResource CookingBatchLabel}" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox x:Name="CookingBatchBox" Width="80" LostFocus="SettingsChanged" AutomationProperties.Name="Cooking batch size"/></WrapPanel>
       <TextBlock Text="{DynamicResource CookingHint}" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" Margin="0,0,0,8"/>
+      <StackPanel x:Name="CookingSalesPanel" Margin="0,2,0,12">
+       <WrapPanel><CheckBox x:Name="SellCookingBatchBox" Content="{DynamicResource CookingSaleBatchLabel}" Checked="SettingsChanged" Unchecked="SettingsChanged"/><TextBox x:Name="CookingSaleBatchBox" Width="80" LostFocus="SettingsChanged" AutomationProperties.Name="{DynamicResource CookingSaleQuantity}"/><TextBlock Text="{DynamicResource CookingSaleQuantity}" Margin="8,0,0,0" VerticalAlignment="Center"/></WrapPanel>
+       <CheckBox x:Name="SellCookingForPlantingBox" Content="{DynamicResource CookingSalePlantingLabel}" Margin="0,8,0,0" Checked="SettingsChanged" Unchecked="SettingsChanged"/>
+       <TextBlock Text="{DynamicResource CookingSaleHelp}" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" Margin="0,6,0,0"/>
+      </StackPanel>
       <TextBlock x:Name="CookingText" TextWrapping="Wrap" Margin="0,0,0,8"/>
       <TextBlock x:Name="BatchText" Text="{DynamicResource Ui51}" Margin="0,0,0,6"/>
       <ProgressBar x:Name="BatchBar" Height="6" Maximum="1" Foreground="{StaticResource PrimaryBrush}" Background="#E8EDF3" BorderThickness="0"/>

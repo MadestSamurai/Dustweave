@@ -1,4 +1,4 @@
-param([switch]$NoBuild,[string[]]$Groups=@())
+param([switch]$NoBuild,[string[]]$Groups=@(),[switch]$KeepFixtures)
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath($PSScriptRoot)
 $project=Join-Path $root 'tests/Dustweave.Tests/Dustweave.Tests.csproj'
@@ -32,4 +32,8 @@ $stdout.GetAwaiter().GetResult()+$stderr.GetAwaiter().GetResult()|Set-Content -L
 if($proc.ExitCode -ne 0){throw "Regression failed; see $output"}
 $report=Get-Content -LiteralPath (Join-Path $output 'results.json') -Raw|ConvertFrom-Json
 if($report.status -ne 'passed' -or $report.realGameTouched -ne $false -or $report.capturedFixturesIncluded -ne $false){throw 'Unexpected test evidence.'}
+if(!$KeepFixtures){
+ try { & (Join-Path $root 'scripts/compact-test-run.ps1') -Output $output }
+ catch { Write-Warning "Tests passed; fixture cleanup was deferred: $($_.Exception.Message)" }
+}
 [pscustomobject]@{status=$report.status;checks=$report.count;groups=$report.groups.Count;sourceRoot=$report.sourceRoot;output=$output}|ConvertTo-Json

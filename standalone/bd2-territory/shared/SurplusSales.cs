@@ -18,6 +18,7 @@ namespace BD2Territory
  {
   public int Schema{get;set;}=1;public string Account{get;set;}="";public string Token{get;set;}="";public string State{get;set;}="idle";
   public int Threshold{get;set;}=9900;public long SubmittedTicks{get;set;}public long CurrencyBefore{get;set;}
+  public string Purpose{get;set;}="overflow";public int Recipe{get;set;}
   public long ConfirmedItems{get;set;}public long ConfirmedCurrency{get;set;}public SaleLine[] Lines{get;set;}=new SaleLine[0];
   public bool BalancesMatched{get;set;}public long ObservedCurrency{get;set;}public SaleStock[] ObservedItems{get;set;}=new SaleStock[0];
   public SalesSnapshot Recovery{get;set;}
@@ -29,6 +30,36 @@ namespace BD2Territory
   public string Token{get;set;}="";public string Account{get;set;}="";public string Error{get;set;}="";
   public long RequestedTicks{get;set;}public long CapturedTicks{get;set;}public long Currency{get;set;}=-1;
   public bool Accepted{get;set;}public SaleStock[] Items{get;set;}=new SaleStock[0];
+ }
+ public static class CookingSales
+ {
+  public static bool ValidBatch(int count)=>count>=1&&count<=9900;
+  // Only the chosen recipe's finished dish is eligible. Locked stacks do not count
+  // towards a sale batch; funding uses ceiling division and takes priority over batches.
+  public static SaleLine[] Plan(IEnumerable<SaleStock> inventory,int resultItem,int batch,long missingCurrency)
+  {
+   if(resultItem<=0||!ValidBatch(batch)||missingCurrency<0)throw new ArgumentOutOfRangeException();
+   var all=inventory.ToArray();
+   if(all.Any(s=>s==null||s.Index<=0||s.Item<=0||s.Count<0)||all.Select(s=>s.Index).Distinct().Count()!=all.Length)throw new InvalidOperationException("Invalid territory inventory identity");
+   var stocks=all.Where(s=>s.Item==resultItem&&s.Eligible&&!s.Locked&&s.Kind==66&&s.Group==1&&s.Row>0&&s.UnitCount==1&&s.Price>0).OrderBy(s=>s.Index).ToArray();
+   if(stocks.Length==0)return new SaleLine[0];
+   if(stocks.Select(s=>s.Price).Distinct().Count()!=1)throw new InvalidOperationException("Inconsistent cooking sale price");
+   // A native request has at most 32 inventory lines. Preserve the batch multiple
+   // even when the selected dish is split across more stacks than one request.
+   stocks=stocks.Where(s=>s.Count>0).Take(32).ToArray();
+   if(stocks.Length==0)return new SaleLine[0];
+   long owned=stocks.Sum(s=>(long)s.Count),price=stocks[0].Price;
+   long requested=missingCurrency>0?missingCurrency/price+(missingCurrency%price==0?0:1):owned/batch*batch;
+   long remaining=Math.Min(owned,requested);var result=new List<SaleLine>();
+   foreach(var s in stocks)
+   {
+    if(remaining==0||result.Count>=32)break;
+    int count=(int)Math.Min(remaining,s.Count);if(count==0)continue;
+    result.Add(new SaleLine{Index=s.Index,Item=s.Item,Before=s.Count,Count=count,Group=s.Group,Row=s.Row,Price=s.Price});remaining-=count;
+   }
+   if(result.Sum(s=>(long)s.Count*s.Price)>int.MaxValue)throw new InvalidOperationException("Territory sale value exceeds the native transaction range");
+   return result.ToArray();
+  }
  }
  public static class SurplusSales
  {

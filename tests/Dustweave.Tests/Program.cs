@@ -129,6 +129,7 @@ await Group("UpdateDelta", () => UpdateDeltaCases.Run(root, cases));
 await Group("Storage", () => StorageCases.Run(root, cases));
 await Group("AccountIdentity", () => Sync(() => AccountIdentityCases.Run(root, cases)));
 await Group("GameInstallation", () => Sync(() => GameInstallationCases.Run(root, cases)));
+await Group("SandboxInstallation", () => Sync(() => SandboxInstallationCases.Run(root, cases)));
 await Group("DesktopLaunch", () => DesktopLaunchCases.Run(root, cases));
 await Group("FirstRun", () => FirstRunCases.Run(root, cases));
 await Group("TalentPotion", () => TalentPotionCases.Run(root, cases));

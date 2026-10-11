@@ -57,7 +57,8 @@ namespace BD2Territory.Runtime
    if(!SurplusSales.ProbeDue(now,lastSurplusProbe,network.GatherReplies,lastSurplusGather))return new SaleLine[0];
    lastSurplusProbe=now;lastSurplusGather=network.GatherReplies;return PlanSurplus(c.SellThreshold);
   }
-  private SaleLine[] PlanSurplus(int threshold)
+  private SaleLine[] PlanSurplus(int threshold)=>SurplusSales.Plan(SaleStocks(),threshold);
+  private SaleStock[] SaleStocks()
   {
    var rows=(IEnumerable<LifeSellItemTable>)B.Invoke("Sales.Rows",1);
    if(rows==null)throw new InvalidOperationException("等待领地售卖表同步");
@@ -66,9 +67,9 @@ namespace BD2Territory.Runtime
     LifeSellItemTable row;byItem.TryGetValue(x.Id,out row);var item=(LifeItemTable)B.Invoke("Tables.ItemById",x.Id);
     return new SaleStock{Index=x.InvenIndex,Item=x.Id,Count=x.Count,Locked=x.KeepFlag!=0||x.IsDisableSlot,Kind=x.Type,Group=row==null?0:row.GroupId,Row=row==null?0:row.Id,UnitCount=row==null?0:row.ItemCount,Price=row==null?0:row.PriceCount,Eligible=row!=null&&item!=null&&item.Type>=1&&item.Type<=3};
    }).ToArray();
-   return SurplusSales.Plan(stocks,threshold);
+   return stocks;
   }
-  private bool SalesTick(TerritorySnapshot s,TerritoryControl c,long now,SaleLine[] prepared=null)
+  private bool SalesTick(TerritorySnapshot s,TerritoryControl c,long now,SaleLine[] prepared=null,string purpose="overflow")
   {
    if(sales==null)return false;
    if(sales.Pending)return RecoverSales(s,now);
@@ -77,11 +78,13 @@ namespace BD2Territory.Runtime
    var lines=prepared??PlanSurplus(c.SellThreshold);if(lines.Length==0)return false;
    // No gathering/cooking/planting is active here. Recheck the lease before any irreversible request.
    var live=control;if(live==null||!live.Valid(DateTime.UtcNow.Ticks,pid)||live.OwnerId!=c.OwnerId||live.SellThreshold!=c.SellThreshold)return false;
+   if(purpose!="overflow"&&(!live.Cooking||live.RecipeId!=c.RecipeId||live.CookingSaleBatch!=c.CookingSaleBatch||live.SellCookingBatches!=c.SellCookingBatches||live.SellCookingForPlanting!=c.SellCookingForPlanting||live.PlantingBudget!=c.PlantingBudget))return false;
    StopMotion();sales=new SalesProgress{Account=account,Token=Guid.NewGuid().ToString("N"),State="pending",Threshold=c.SellThreshold,SubmittedTicks=now,CurrencyBefore=SaleCurrency(),Lines=lines,ConfirmedItems=sales.ConfirmedItems,ConfirmedCurrency=sales.ConfirmedCurrency};
+   sales.Purpose=purpose;sales.Recipe=purpose=="overflow"?0:c.RecipeId;
    SurplusSales.Validate(sales,account);LocalStorage.WriteJsonAtomically(salesPath,sales);network.ArmSales(sales);lastInput=now;
    var request=lines.Select(x=>new SellItemInfo{InvenIndex=x.Index,GroupId=x.Group,Id=x.Row,SellCount=x.Count}).ToList();
    LocalStorage.Log("Territory sale prepared token="+sales.Token+" lines="+lines.Length+" items="+lines.Sum(x=>(long)x.Count)+" threshold="+sales.Threshold+" balancesMatched="+sales.BalancesMatched);
-   B.Invoke("Sales.Send",request,null);s.Reason="正在售卖超过保留数量的领地物品";s.Target="";return true;
+   B.Invoke("Sales.Send",request,null);s.Reason=purpose=="planting"?"正在出售所选料理，补足本批播种积分":purpose=="cooking-batch"?"正在按整批出售所选料理，保留余数":"正在售卖超过保留数量的领地物品";s.Target="";return true;
   }
  }
 }

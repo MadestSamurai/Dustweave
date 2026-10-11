@@ -1,4 +1,89 @@
 {
+  "schedule.execution": {
+    "zh-CN": "到点如何执行",
+    "zh-TW": "到點如何執行",
+    "en-US": "Scheduled execution"
+  },
+  "schedule.takeover": {
+    "zh-CN": "到点停止内置工具并执行日常",
+    "zh-TW": "到點停止內建工具並執行日常",
+    "en-US": "Stop built-in tools when the schedule is due"
+  },
+  "schedule.takeover_hint": {
+    "zh-CN": "等待当前操作结束后接管。关闭时，工具运行期间最多等候 15 分钟。",
+    "zh-TW": "等待目前操作結束後接管。關閉時，工具執行期間最多等候 15 分鐘。",
+    "en-US": "Waits for the current operation to finish before taking over. When disabled, a busy tool delays the schedule for up to 15 minutes."
+  },
+  "schedule.stopping_tool": {
+    "zh-CN": "正在正常停止内置工具，等待当前操作结束",
+    "zh-TW": "正在正常停止內建工具，等待目前操作結束",
+    "en-US": "Stopping the built-in tool and waiting for its current operation"
+  },
+  "schedule.tool_busy": {
+    "zh-CN": "内置工具正在运行，未开启定时接管",
+    "zh-TW": "內建工具正在執行，未開啟定時接管",
+    "en-US": "A built-in tool is running; scheduled takeover is disabled"
+  },
+  "schedule.takeover_pending": {
+    "zh-CN": "工具已停止，仍在等待游戏确认当前操作；确认后再执行日常。",
+    "zh-TW": "工具已停止，仍在等待遊戲確認目前操作；確認後再執行日常。",
+    "en-US": "The tool has stopped. Waiting for the game to finish its pending operation before starting dailies."
+  },
+  "schedule.invalid_mode": {
+    "zh-CN": "请选择有效的定时执行方式。",
+    "zh-TW": "請選擇有效的定時執行方式。",
+    "en-US": "Choose a valid scheduled execution mode."
+  },
+  "sandbox_path.title": {
+    "zh-CN": "沙盒工具位置",
+    "zh-TW": "沙盒工具位置",
+    "en-US": "Sandboxie location"
+  },
+  "sandbox_path.choose": {
+    "zh-CN": "选择安装文件夹",
+    "zh-TW": "選擇安裝資料夾",
+    "en-US": "Choose installation folder"
+  },
+  "sandbox_path.auto": {
+    "zh-CN": "恢复自动查找",
+    "zh-TW": "恢復自動尋找",
+    "en-US": "Use automatic detection"
+  },
+  "sandbox_path.help": {
+    "zh-CN": "选择已安装的 Sandboxie 文件夹，应包含 Start.exe、SbieIni.exe 和 SbieDll.dll。",
+    "zh-TW": "選擇已安裝的 Sandboxie 資料夾，應包含 Start.exe、SbieIni.exe 和 SbieDll.dll。",
+    "en-US": "Choose the installed Sandboxie folder containing Start.exe, SbieIni.exe and SbieDll.dll."
+  },
+  "sandbox_path.inherited": {
+    "zh-CN": "沙盒位置由普通主窗口管理。请在主窗口的日常设置中更改。",
+    "zh-TW": "沙盒位置由一般主視窗管理。請在主視窗的日常設定中變更。",
+    "en-US": "The main window manages this location. Change it in Daily settings outside the sandbox."
+  },
+  "sandbox_path.manual": {
+    "zh-CN": "使用你选择的安装位置",
+    "zh-TW": "使用你選擇的安裝位置",
+    "en-US": "Using your selected installation"
+  },
+  "sandbox_path.detected": {
+    "zh-CN": "已自动找到 Sandboxie",
+    "zh-TW": "已自動找到 Sandboxie",
+    "en-US": "Sandboxie detected automatically"
+  },
+  "sandbox_path.missing": {
+    "zh-CN": "未找到 Sandboxie。使用隔离多开前，请安装并选择其文件夹。",
+    "zh-TW": "找不到 Sandboxie。使用隔離多開前，請安裝並選擇其資料夾。",
+    "en-US": "Sandboxie was not found. Install it and select its folder before running isolated accounts."
+  },
+  "sandbox_path.invalid": {
+    "zh-CN": "安装文件夹不完整，请选择包含 Start.exe、SbieIni.exe 和 SbieDll.dll 的 Sandboxie 文件夹。",
+    "zh-TW": "安裝資料夾不完整，請選擇包含 Start.exe、SbieIni.exe 和 SbieDll.dll 的 Sandboxie 資料夾。",
+    "en-US": "Select a complete Sandboxie folder containing Start.exe, SbieIni.exe and SbieDll.dll."
+  },
+  "sandbox_path.unreadable": {
+    "zh-CN": "无法读取沙盒位置设置，请重新选择安装文件夹或恢复自动查找。",
+    "zh-TW": "無法讀取沙盒位置設定，請重新選擇安裝資料夾或恢復自動尋找。",
+    "en-US": "The Sandboxie location setting cannot be read. Select the folder again or restore automatic detection."
+  },
   "logs.progress": {
     "zh-CN": "已统计 {0} 个文件（{1} MB），已核对 {2} 项清理条件…",
     "zh-TW": "已統計 {0} 個檔案（{1} MB），已核對 {2} 項清理條件…",
@@ -5153,5 +5238,15 @@
     "zh-TW": "僅按已解鎖商店計算收益；需要未解鎖商店出售的物品保留，不計預計回款。",
     "en-US": "Revenue uses unlocked shops only. Items requiring a locked merchant are kept and excluded from expected proceeds.",
     "zh-CN": "仅按已解锁商店计算收益；需要未解锁商店出售的物品保留，不计预计回款。"
+  },
+  "schedule.serial": {
+    "zh-CN": "逐个账号执行",
+    "zh-TW": "逐一帳號執行",
+    "en-US": "Run accounts sequentially"
+  },
+  "schedule.parallel": {
+    "zh-CN": "沙盒并行执行",
+    "zh-TW": "沙盒平行執行",
+    "en-US": "Run in parallel sandboxes"
   }
 }

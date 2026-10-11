@@ -18,6 +18,10 @@ public partial class MainWindow
         File.WriteAllText(Path.Combine(managed, "Assembly-CSharp.dll"), "fixture only");
         File.WriteAllText(Path.Combine(managed, "mscorlib.dll"), "fixture only");
         var panel = preferencesPanel.GamePath;
+        var sandboxPath = preferencesPanel.SandboxPath;
+        string sandboxDirectory = Path.Combine(root, "自选沙盒 Sandboxie"); Directory.CreateDirectory(sandboxDirectory);
+        foreach (string name in new[] { "Start.exe", "SbieIni.exe", "SbieDll.dll" }) File.WriteAllText(Path.Combine(sandboxDirectory, name), "synthetic installation; never run");
+        var sandboxStore = new SandboxInstallation(Path.Combine(root, "sandbox-path-preview"));
         int checks = 0;
         void Check(bool value, string reason) { if (!value) throw new Exception(reason); checks++; }
         var previousTab = WorkspaceTabs.SelectedItem;
@@ -25,6 +29,12 @@ public partial class MainWindow
         try
         {
             WorkspaceTabs.SelectedItem = SettingsTab;
+            await sandboxPath.SelectAsync(sandboxDirectory);
+            Check(sandboxPath.DisplayedPath == sandboxDirectory && sandboxStore.ResolveOptional() == sandboxDirectory, "Sandbox chooser did not persist manual path");
+            await sandboxPath.SelectAsync(Path.Combine(root, "missing-sandbox"));
+            Check(sandboxStore.ResolveOptional() == sandboxDirectory, "Invalid sandbox choice replaced valid path");
+            await sandboxPath.RefreshAsync();
+            Check(!new SandboxInstallationPanel(sandboxStore, true).CanChoose, "Sandbox child window may modify shared installation");
             await panel.SelectAsync(client);
             Check(panel.DisplayedPath == client && new GameInstallation(directory).Resolve() == client, "Chooser did not save and display the selection");
             await panel.SelectAsync(Path.Combine(root, "BD2Starter.exe"));
@@ -32,7 +42,7 @@ public partial class MainWindow
             await panel.RefreshAsync();
             var sandboxPanel = new GameInstallationPanel(new GameInstallation(directory), true);
             Check(!sandboxPanel.CanChoose, "Isolated window must use the host setting");
-            SetBusy(true); Check(!panel.CanChoose, "Location can change during an active task"); SetBusy(false);
+            SetBusy(true); Check(!panel.CanChoose && !sandboxPath.CanChoose, "Location can change during an active task"); SetBusy(false);
             foreach (var code in DailyLanguage.Codes)
             {
                 L.Select(code);
@@ -51,6 +61,13 @@ public partial class MainWindow
                     var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
                     using (var stream = File.Create(Path.Combine(smoke!, "game-location-editor-" + code + "-" + mode + ".png"))) encoder.Save(stream);
                     dialog.Close();
+                    var sandboxDialog = sandboxPath.CreateEditor(); sandboxDialog.Show();
+                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                    Check(sandboxDialog.ActualHeight > 150 && sandboxPath.CanChoose, "Sandbox editor was not rendered or editable");
+                    var sandboxBitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)sandboxDialog.ActualWidth, (int)sandboxDialog.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                    sandboxBitmap.Render(sandboxDialog); var sandboxEncoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); sandboxEncoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(sandboxBitmap));
+                    using (var stream = File.Create(Path.Combine(smoke!, "sandbox-location-editor-" + code + "-" + mode + ".png"))) sandboxEncoder.Save(stream);
+                    sandboxDialog.Close();
                 }
             }
             File.Move(client, client + ".moved");

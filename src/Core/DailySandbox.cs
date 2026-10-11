@@ -65,15 +65,7 @@ public static class DailySandbox
         if (!DailyProfiles.ValidKey(account)) throw new ArgumentException("账号标识无效。");
         return "Dustweave_" + account[..20];
     }
-    public static string? Installation()
-    {
-        foreach (var name in new[] { "Sandboxie-Plus", "Sandboxie" })
-        {
-            string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), name);
-            if (File.Exists(Path.Combine(path,"Start.exe")) && File.Exists(Path.Combine(path,"SbieIni.exe"))) return path;
-        }
-        return null;
-    }
+    public static string? Installation() => new SandboxInstallation().ResolveOptional();
     private static string BindingPath => Path.Combine(DailyIdentity.DataRoot, "sandbox-binding.json");
     public static DailySandboxBinding? Current
     {

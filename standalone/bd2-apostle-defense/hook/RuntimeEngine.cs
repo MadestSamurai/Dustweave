@@ -17,6 +17,7 @@ namespace BD2ApostleDefense.Runtime
   private sealed class UiNotReadyException:Exception {internal UiNotReadyException(string message):base(message){}}
   private static RuntimeEngine current;
   private readonly SettlementTracker settlement=new SettlementTracker();
+  private readonly OpeningRestart restart=new OpeningRestart();
   private readonly Harmony patch=new Harmony("bd2.apostle-defense.inputs");
   private Timer timer; private int ioBusy; private bool stopped;
   private readonly int pid=System.Diagnostics.Process.GetCurrentProcess().Id;
@@ -35,7 +36,7 @@ namespace BD2ApostleDefense.Runtime
    try{NetworkGuard.Install();var pump=typeof(GameCameraManager).GetMethod("LateUpdate",BindingFlags.NonPublic|BindingFlags.Instance);if(pump==null)throw new MissingMethodException("GameCameraManager.LateUpdate");patch.Patch(pump,postfix:new HarmonyMethod(typeof(RuntimeEngine),nameof(Frame)));timer=new Timer(_=>IO(),null,0,100);Loader.Status("active","");}catch{Stop();throw;}
   }
   internal void StartProbe(){B.ValidateCompiledClient();Storage.Write("probe.json",new Snapshot{State="compatible",Message=B.Validate()+" interfaces",At=DateTime.UtcNow.Ticks});}
-  internal void PrepareHandoff(){control=new Control();CancelSelection();}
+  internal void PrepareHandoff(){control=new Control();restart.Clear();CancelSelection();}
   internal string HandoffBusy()=>ioBusy!=0?"snapshot writer":latest.Exiting?"native exit awaiting reply":"";
   internal void Stop(){CancelSelection();stopped=true;NetworkGuard.Remove();timer?.Dispose();timer=null;patch.Unpatch(typeof(GameCameraManager).GetMethod("LateUpdate",BindingFlags.NonPublic|BindingFlags.Instance),HarmonyPatchType.All,patch.Id);current=null;}
   private static void Frame(){current?.Tick();}
@@ -69,7 +70,7 @@ namespace BD2ApostleDefense.Runtime
    try
    {
     if(now-lastScan>TimeSpan.FromMilliseconds(400).Ticks){surfaces=UnityEngine.Object.FindObjectsOfType<UIBase>().Where(B.Active).ToArray();lastScan=now;}
-    Read(s);settlement.Observe(s);NetworkGuard.Pump(s);NetworkGuard.Apply(s);observed=s;
+    Read(s);settlement.Observe(s);restart.Observe(s,control,now);NetworkGuard.Pump(s);NetworkGuard.Apply(s);observed=s;
     if(s.Account!=account){account=s.Account;achievementsKnown=false;achievementRequest=false;clearProgress=rareProgress=0;catalog=null;fault="";}
     // A complete native result must be settled before refreshing the server-backed counters.
     if(s.Stage=="lobby"&&lastStage!="lobby")achievementsKnown=false;
@@ -203,6 +204,13 @@ namespace BD2ApostleDefense.Runtime
     case "open-result":if(s.Stage!="ended"||!GameFlow.CanSettle(s))throw new InvalidOperationException("对局尚未结束");Click(hud,"_goExitButton");break;
     case "settle":if(s.Stage!="result"||!GameFlow.CanSettle(s))throw new InvalidOperationException("请先完成当前对局");Click(Surface<DefenseResultPopupUI>(),"_goExitButton");break;
     case "confirm-exit":if(s.Stage!="confirm-exit"||!GameFlow.CanSettle(s))throw new InvalidOperationException("不自动放弃进行中的对局");Click(Surface<DefenseGiveUpConfirmPopupUI>(),"_goOkButton");break;
+    case "restart":
+     if(OpeningRestart.Reject(a,s).Length>0)throw new UiNotReadyException("重开条件已变化，按当前界面继续");
+     if(!s.RestartPending)restart.Begin(pending,DateTime.UtcNow.Ticks);
+     if(s.Stage=="playing")Click(hud,"_goExitButton");
+     else if(s.Stage=="result")Click(Surface<DefenseResultPopupUI>(),"_goExitButton");
+     else if(s.Stage=="confirm-exit")Click(Surface<DefenseGiveUpConfirmPopupUI>(),"_goOkButton");
+     break;
     case "summon":Click(hud,"_goRecallButton");break;
     case "upgrade":
      var button=Items(B.Get(hud,"_elementButtons")).Single(b=>(int)B.Num(b,"_elementType")==a.Element);

@@ -62,7 +62,7 @@
       "bd2apostledefense.core": {
         "type": "Project",
         "dependencies": {
-          "BD2ApostleDefense.Compatibility": "[0.3.6, )"
+          "BD2ApostleDefense.Compatibility": "[0.3.8, )"
         }
       }
     },

@@ -10,6 +10,17 @@ namespace BD2Territory.Runtime
  internal sealed partial class RuntimeEngine
  {
   private CookingProgress cooking;private string cookingPath="";private long lastCookAttempt;
+  private long lastCookingSaleProbe;
+  private bool CookingSalesTick(TerritorySnapshot s,TerritoryControl c,long now,long missingCurrency=0)
+  {
+   if(!c.Cooking||missingCurrency>0&&!c.SellCookingForPlanting||missingCurrency==0&&!c.SellCookingBatches)return false;
+   if(network.NativeBusy||network.Waiting||SalesBusy()||CookingBusy())return false;
+   if(missingCurrency==0&&now-lastCookingSaleProbe<TimeSpan.FromSeconds(5).Ticks)return false;
+   lastCookingSaleProbe=now;
+   var recipe=(LifeCookTable)B.Invoke("Tables.Cook",c.RecipeId);if(recipe==null||recipe.ResultItemId<=0)return false;
+   var lines=CookingSales.Plan(SaleStocks(),recipe.ResultItemId,c.CookingSaleBatch,missingCurrency);
+   return lines.Length>0&&SalesTick(s,c,now,lines,missingCurrency>0?"planting":"cooking-batch");
+  }
   private bool CookingBusy()=>cooking!=null&&cooking.Pending;
   private void LoadCooking(string key)
   {
@@ -19,7 +30,7 @@ namespace BD2Territory.Runtime
   private void SettleCooking()
   {
    if(cooking==null||!cooking.Pending)return;var reply=network.LastCookReply;if(reply==null||reply.Token!=cooking.Token)return;
-   CookingPlanner.Confirm(cooking,reply);LocalStorage.WriteJsonAtomically(cookingPath,cooking);lastCrops=0;lastCatalog=0;LocalStorage.Log("Cooking "+cooking.State+" recipe="+cooking.Recipe+" count="+cooking.Count);
+   CookingPlanner.Confirm(cooking,reply);LocalStorage.WriteJsonAtomically(cookingPath,cooking);lastCrops=0;lastCatalog=0;lastCookingSaleProbe=0;LocalStorage.Log("Cooking "+cooking.State+" recipe="+cooking.Recipe+" count="+cooking.Count);
   }
   private int CookingCount(int recipeId,int limit)
   {

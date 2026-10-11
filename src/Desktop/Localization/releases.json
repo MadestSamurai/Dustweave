@@ -1,5 +1,38 @@
 [
   {
+    "Version": "1.2.1",
+    "Date": "2026-10-12",
+    "Notes": {
+      "zh-CN": [
+        "定时任务单独保存串行／沙盒并行模式与并发数量。",
+        "可选择到点正常停止内置工具，等待操作结束后接管日常；默认关闭。",
+        "日常设置支持选择 Sandboxie 安装位置，保留自动识别。",
+        "减少重复进程扫描，连接状态读取移到后台。",
+        "领地自动料理支持累计整批售卖与积分不足时补充播种周转。",
+        "使徒防守前10波筛选7/8阶核心，之后集中培养、有限补抽暗水补位，并为后期预留升级金币。",
+        "如果自动更新失败，可能需要手动下载完整软件包。"
+      ],
+      "zh-TW": [
+        "定時任務獨立儲存循序／沙盒平行模式與同時執行數量。",
+        "可選擇到點正常停止內建工具，等待操作結束後接管日常；預設關閉。",
+        "日常設定支援選擇 Sandboxie 安裝位置，保留自動辨識。",
+        "減少重複程序掃描，連線狀態讀取移至背景。",
+        "領地自動料理支援累積整批出售與積分不足時補充播種周轉。",
+        "使徒防守前10波篩選7/8階核心，之後集中培養、有限補抽暗水補位，並為後期預留升級金幣。",
+        "若自動更新失敗，可能需要手動下載完整軟體套件。"
+      ],
+      "en-US": [
+        "Schedules save their own sequential or parallel-sandbox mode and concurrency.",
+        "Optional takeover stops the active integrated tool normally and waits for settlement before running daily tasks. Off by default.",
+        "Choose a Sandboxie installation directory or use automatic detection.",
+        "Connection polling avoids repeated process scans and runs in the background.",
+        "Territory cooking can sell complete batches or fund the next planting batch when currency is low.",
+        "Apostle Defense prioritizes an opening tier-7/8 core, bounded rolls for Water/Dark support and upgrade savings for later waves.",
+        "If automatic updating fails, download the full package manually."
+      ]
+    }
+  },
+  {
     "Version": "1.2.0",
     "Date": "2026-10-11",
     "Notes": {

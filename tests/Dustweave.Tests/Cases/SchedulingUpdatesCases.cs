@@ -38,6 +38,13 @@ internal static class SchedulingUpdatesCases
         Reject("schedule rejects invalid times", () => (plan with { Hour = 24 }).Validate());
         Reject("schedule rejects duplicate accounts", () => (plan with { Accounts = [new string('a', 64), new string('a', 64)] }).Validate());
         var store = new DailyScheduleStore(data); store.Save(plan);
+        Check("legacy schedules remain sequential and never stop tools by default", !store.Read().Execution.Enabled && !store.Read().TakeOverTools);
+        var takeover = plan with { TakeOverTools = true, Execution = new(true, 3, false) };
+        store.Save(takeover);
+        Check("scheduled mode and takeover survive restart independently of manual batch preferences", new DailyScheduleStore(data).Read() is { TakeOverTools: true, Execution.Enabled: true, Execution.Maximum: 3, Execution.CloseGame: false });
+        Reject("schedule rejects invalid parallel limits before takeover", () => (plan with { Execution = new(true, 0) }).Validate());
+        Reject("schedule rejects missing execution policy", () => (plan with { Execution = null! }).Validate());
+        store.Save(plan);
         Check("schedule preserves fixed identities and order", store.Read().Accounts.SequenceEqual(plan.Accounts));
         Check("first occurrence can claim", store.Claim(now, now));
         Check("duplicate launch cannot claim same occurrence", !new DailyScheduleStore(data).Claim(now, now));

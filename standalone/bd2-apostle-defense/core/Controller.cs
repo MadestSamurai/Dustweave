@@ -77,7 +77,9 @@ public sealed class Controller
    if(s.AckResult is "timeout" or "retry")
    {recovery.Record(active.Action,false,now);Diagnostic?.Invoke("单次操作未完成，保留自动化并按当前界面恢复："+s.AckMessage);}
    else if(s.AckResult=="ok")recovery.Record(active.Action,true,now);
-   if(active.Action.Kind=="sell"&&s.AckResult=="ok"){refillPending=true;refillRoom=active.Room;}
+   // Opening/full-board rerolls require a replacement. Core consolidation instead
+   // recovers money for the plan; forcing a summon here would spend its upgrade reserve.
+   if(active.Action.Kind=="sell"&&s.AckResult=="ok"){refillPending=active.Action.Policy!="clear50-core";refillRoom=active.Room;}
    if(active.Action.Kind=="summon"&&s.AckResult=="ok")refillPending=false;
    if(s.AckResult=="ok")planner.Confirm(active.Action,s,now);
    active.Command=0;active.Action=new();nextAction=now+TimeSpan.FromMilliseconds(settings.IntervalMs).Ticks;

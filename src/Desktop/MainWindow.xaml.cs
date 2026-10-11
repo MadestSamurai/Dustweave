@@ -318,8 +318,10 @@ public partial class MainWindow : Window
 
         RunAccountsButton.Visibility = busy || ParallelBusy ? Visibility.Collapsed : Visibility.Visible;
     }
-    private void UpdateConnection()
+    private bool connectionReading;
+    private async void UpdateConnection()
     {
+        if (connectionReading || finalClose) return;
         if (ParallelBusy)
         {
             L.Text(ConnectionText,"parallel.connection");ConnectionText.ToolTip=ConnectionText.Text;
@@ -334,8 +336,10 @@ public partial class MainWindow : Window
         }
         try
         {
-            var game = host.Find();
-            var s = host.ReadSnapshot();
+            connectionReading = true;
+            (GameInstance? game, DailySnapshot? s) Read() { var found = host.Find(); return (found, host.ReadSnapshot(found)); }
+            var (game, s) = smoke != null ? Read() : await Task.Run(Read);
+            if (finalClose || ParallelBusy) return;
             L.Bind(ConnectionText, TextBlock.TextProperty, () => game == null ? L.Get("connection.closed") : s != null && s.ProcessId == game.ProcessId && s.ProcessStartTicks == game.StartTicks && s.FrameUtcTicks > DateTimeOffset.UtcNow.AddSeconds(-5).UtcTicks
                 ? L.Get("connection.ready", s.State == "identified" ? s.PlayerName : L.Get("connection.login"), L.Translate(DailyUserText.Scene(s.Scene)))
                 : L.Get("connection.loading"));
@@ -358,6 +362,7 @@ public partial class MainWindow : Window
             catch (Exception e) { DailyUiText.Error(GuildResultText, e, "操作记录不可读："); GuildRunButton.IsEnabled = false; }
         }
         catch (Exception e) { DailyUiText.Error(ConnectionText, e); PresentDiagnostics(null, null, false, readFailed: true); }
+        finally { connectionReading = false; }
     }
     private void SetBusy(bool value)
     {
@@ -762,6 +767,12 @@ public partial class MainWindow : Window
                 await CheckTaskNavigationForSmoke();
                 await CheckParallelForSmoke();
                 DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "task-navigation", realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "scheduling")
+            {
+                await CheckSchedulingForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "scheduling", realGameTouched = false });
                 Application.Current.Shutdown(); return;
             }
             await CheckGameLocationForSmoke();

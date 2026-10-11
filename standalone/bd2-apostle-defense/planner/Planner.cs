@@ -5,8 +5,8 @@ public sealed partial class Planner
 {
  private readonly Dictionary<string,double> coverageCache=new();private string geometry="";
  private readonly BossChase bossChase=new();
- public void ResetTactics()=>bossChase.Reset();
- public void Confirm(Decision d,Snapshot s,long now)=>bossChase.Confirm(d,s,now);
+ public void ResetTactics(){bossChase.Reset();strategyRoom="";observedOpening=false;selectedCore=-1;}
+ public void Confirm(Decision d,Snapshot s,long now){bossChase.Confirm(d,s,now);ConfirmRecruit(d);}
  public string Focus {get;private set;}="50波通关";
  public double Coverage(UnitDef u,Board b,Point[] path)
  {
@@ -92,6 +92,9 @@ public sealed partial class Planner
  private static Decision Act(string kind,string reason)=>new(){Kind=kind,Reason=reason};
  public Decision Decide(Snapshot s,Settings settings,long? now=null,Func<int,bool>? canMove=null)
  {
+  ObserveOpening(s);
+  if(s.RestartPending&&!s.Exiting&&s.Blocker==""&&s.Stage is "playing" or "result" or "confirm-exit")
+   return settings.Clear50&&settings.AutoNext&&!settings.StopAfterRound?new(){Kind="restart",Policy="clear50-opening",Wave=s.Wave,Reason="继续原生退出流程，返回大厅重新刷核心"}:Act("wait","已取消自动重开，请在游戏中选择继续或退出");
   if(s.Stage=="lobby"&&!s.Exiting&&s.CanDismissEvent)return Act("close-event","关闭返回大厅后的活动弹窗，继续核对成就");
   if(s.Blocker!="")return Act("wait","等待关闭弹窗："+s.Blocker);
   if(s.Exiting)return Act("wait","正在等待游戏提交结算并返回大厅");
@@ -116,6 +119,19 @@ public sealed partial class Planner
   if(rareMode&&s.AchievementsKnown&&s.RareProgress+s.RoundRare>=s.RareTarget)rareMode=false;
   Focus=rareMode?"最高级使徒：保留产金核心，增加召唤次数":"50波通关：输出、覆盖与首领准备";
   var defs=s.Catalog.Units.ToDictionary(u=>u.Id);var boards=s.Boards.ToDictionary(b=>b.Id);var cur=Current(s);
+  bool clearStrategy=ClearStrategy(s,settings);
+  var core=clearStrategy?Core(s,defs,boards):null;
+  var coreElements=clearStrategy?CoreElements(s,defs,core):new HashSet<int>();
+  if(clearStrategy)
+  {
+   var openingRoll=OpeningRoll(s,settings,defs,boards,core);
+   if(openingRoll!=null)return openingRoll;
+   if(core!=null)Focus="核心成型：集中培养暗、水及高阶补位";
+  }
+  var plannedInvestment=clearStrategy&&core!=null?CoreInvestment(s,defs,boards,coreElements):null;
+  // Boss pursuit can offer another small move every tick. An affordable planned
+  // upgrade must not be starved by that continuous stream of repositioning.
+  if(cur.Boss&&plannedInvestment is {Kind:"upgrade"})return plannedInvestment;
   if(cur.Boss)
   {
    var chase=bossChase.Decide(s,settings,now??s.At,canMove);Focus="BOSS追击：动态换位与持续输出";
@@ -154,6 +170,13 @@ public sealed partial class Planner
   }
   if(bestMove!=null)return bestMove;
   }
+  if(clearStrategy&&core!=null)
+  {
+   if(plannedInvestment is {Kind:"upgrade"})return plannedInvestment;
+   var consolidation=Consolidate(s,defs,boards,core,coreElements);if(consolidation!=null)return consolidation;
+   var recruitment=RecruitComplement(s,defs,boards,core);if(recruitment!=null)return recruitment;
+   if(plannedInvestment!=null)return plannedInvestment;
+  }
   double total=s.Units.Sum(u=>Utility(defs[u.Id],boards[u.Grid],s));
   double currentDps=s.Units.Sum(u=>Power(defs[u.Id],boards[u.Grid],s.Levels[defs[u.Id].Element],cur,s));
   double required=cur.Boss?s.Enemies.Sum(e=>e.Hp)/Math.Max(1,s.SecondsLeft):cur.Hp*cur.Count/Math.Max(1,cur.Duration);
@@ -175,6 +198,7 @@ public sealed partial class Planner
   Decision? bestUpgrade=null;double upgradeValue=0;
   for(int e=0;e<5;e++)if(s.CanUpgrade[e]&&s.Levels[e]<s.Catalog.MaxUpgrade&&s.UpgradeCosts[e]>0&&s.Gold>=s.UpgradeCosts[e])
   {
+   if(clearStrategy&&core!=null&&!coreElements.Contains(e))continue;
    if(opening&&!OpeningUpgradeAllowed(e,s,defs,boards))continue;
    double gain=s.Units.Where(u=>defs[u.Id].Element==e).Sum(u=>SpendingValue(defs[u.Id],boards[u.Grid],1)-SpendingValue(defs[u.Id],boards[u.Grid]));double v=gain/s.UpgradeCosts[e];
    if(v>upgradeValue){upgradeValue=v;bestUpgrade=new(){Kind="upgrade",Element=e,Score=v,Reason=$"升级{Names.Element(e)}属性，强化现有{ s.Units.Count(u=>defs[u.Id].Element==e)}名使徒"};}
@@ -192,6 +216,7 @@ public sealed partial class Planner
   Decision? bestSell=null;double replaceValue=0;
   foreach(var u in cur.Boss?Array.Empty<Unit>():s.Units)
   {
+   if(clearStrategy&&defs[u.Id].Grade>=7)continue;
    if(s.Units.Length<=1)break;var d=defs[u.Id];double value=Utility(d,boards[u.Grid],s);
    double contribution=Power(d,boards[u.Grid],s.Levels[d.Element],cur,s);
    if(s.Gold+d.Sell<s.Catalog.SummonCost||!CanReroll(contribution,currentDps,required,s.EnemyCount,s.Catalog.GameOverCount,cur.Boss,s.SecondsLeft))continue;

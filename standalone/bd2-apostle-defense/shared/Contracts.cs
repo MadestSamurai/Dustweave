@@ -9,7 +9,7 @@ namespace BD2ApostleDefense
  public static class Identity
  {
         public const string LiveEntries="runtime.json|control.json|snapshot.json";
-  public const string Version="0.3.6",Runtime="BD2ApostleDefense.Runtime9";
+  public const string Version="0.3.8",Runtime="BD2ApostleDefense.Runtime10";
   public static string Root {get{return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BD2ApostleDefense");}}
   public static string Hash(string value){using(var sha=SHA256.Create())return BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(value))).Replace("-","").ToLowerInvariant();}
  }
@@ -37,7 +37,7 @@ namespace BD2ApostleDefense
   [DataMember] public long At,ProcessStart,Sequence,Ack,AcceptedCommand;
   [DataMember] public int ProcessId,Wave,Gold,EnemyCount,RoundRare,ClearProgress,RareProgress,ClearTarget=1,RareTarget=3;
   [DataMember] public bool Ready,AchievementsKnown,CanSummon,Win,Dead,MyView,RoomEnded,CanStartMatch,Exiting,EventPopupOpen,CanDismissEvent;
-  [DataMember] public bool NetworkHold,SettlementPending,SettlementRoomEnded;
+  [DataMember] public bool NetworkHold,SettlementPending,SettlementRoomEnded,RestartPending;
   [DataMember] public string NetworkState="inactive",NetworkMessage="";
   [DataMember] public long NetworkLastPacketAt;
   [DataMember] public int NetworkProbeFailures,NetworkAvoidedDisconnects,NetworkNativeDisconnects;
@@ -105,6 +105,7 @@ namespace BD2ApostleDefense
    if(c.Action.Kind=="close-event")return s.Stage=="lobby"&&!s.Exiting&&s.CanDismissEvent?"":"等待可关闭的大厅活动弹窗";
    if(s.Blocker.Length>0)return "等待关闭弹窗："+s.Blocker;
    var a=c.Action;
+   if(a.Kind=="restart")return OpeningRestart.Reject(a,s);
    if(a.Policy=="boss-chase")
    {
     var wave=s.Catalog.Waves.FirstOrDefault(w=>w.Id==s.Wave);

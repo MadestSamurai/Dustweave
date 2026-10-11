@@ -39,6 +39,7 @@ namespace BD2Territory.Runtime
   private readonly Dictionary<int,long> skip=new Dictionary<int,long>();
   private RecipeBatchProgress progress;private string progressPath="",owner="",fault="",account="",lastReason="";private long lastScan,lastCrops,lastTick,lastInput,entered;
   private string[] batchFields=new string[0];private bool ownsMove,ownsTool;private int farmStage;private long spent;private CropStock[] crops=new CropStock[0];
+  private string[] fundingFields=new string[0];private int fundingSeed,fundingPrice;
   internal void Start()
   {
    if(timer!=null)return;B.ValidateCompiledClient();B.Validate();network.Start();current=this;
@@ -121,6 +122,7 @@ namespace BD2Territory.Runtime
     if(CookingBusy()){CookingTick(s,c,now);Publish(s);return;}
     var surplus=UrgentSurplus(c,now);
     if(surplus.Length>0&&SalesTick(s,c,now,surplus)){Publish(s);return;}
+    if(FundPlanting(s,c,now)){Publish(s);return;}
     // Check owned walking every tick, independent of the configurable interval and target selection.
     if(ownsMove){ContinueWalk(s,now,c);Publish(s);return;}
     // Native tool motions may anchor the player. Observe the whole action above before any movement decision.
@@ -156,6 +158,7 @@ namespace BD2Territory.Runtime
     targetFarm=null;
     if(phase==TerritoryWorkPhase.Processing)
     {
+     if(CookingSalesTick(s,c,now)){Publish(s);return;}
      if(CookingTick(s,c,now)){Publish(s);return;}
      if(SalesTick(s,c,now)){Publish(s);return;}
      workCycle.FinishProcessing();
@@ -286,6 +289,26 @@ namespace BD2Territory.Runtime
    if(!(bool)B.Read("Panel.Multi",panel))throw new InvalidOperationException("未能开启游戏原生批量播种");
    s.Reason="准备批量播种 "+crop.Name+"；正在读取实际预览数量";
   }
+  private bool FundPlanting(TerritorySnapshot s,TerritoryControl c,long now)
+  {
+   if(fundingFields.Length==0)return false;
+   if(!c.Cooking||!c.SellCookingForPlanting||!c.Farming||progress.SeedId!=fundingSeed||
+      !PlantingTransaction.WithinBudget(progress,owner,c.PlantingBudget,fundingPrice,fundingFields.Length)||
+      farms.Count(f=>Db(f)!=null&&fundingFields.Contains(FarmKey(f))&&Empty(f))!=fundingFields.Length)
+   {fundingFields=new string[0];return false;}
+   long missing=(long)fundingPrice*fundingFields.Length-SaleCurrency();
+   if(missing<=0){fundingFields=new string[0];return false;}
+   if(CookingSalesTick(s,c,now,missing))return true;
+   if(CookingCount(c.RecipeId,c.CookingBatch)>0)
+   {
+    if(CookingTick(s,c,now))return true;
+    s.Reason="等待制作所选料理，为本批播种补充积分";return true;
+   }
+   // No finished food or complete recipe: keep harvesting resources while plants grow.
+   // Never buy currency, consume other dishes or bypass the user's planting budget.
+   foreach(var f in farms.Where(f=>Db(f)!=null&&fundingFields.Contains(FarmKey(f))))skip[f.GetInstanceID()]=now+TimeSpan.FromSeconds(60).Ticks;
+   fundingFields=new string[0];s.Reason="积分及所选料理不足，继续采集并等待作物成熟";return false;
+  }
   private LifeFarmFieldObject[] PlantedPreviews()=>farms.Where(f=>Db(f)!=null&&batchFields.Contains(FarmKey(f))&&(bool)B.Read("Farm.Occupied",f)&&Convert.ToInt32(B.Read("Farm.Seed",f))>0).ToArray();
   private void ValidatePlantedPreview()
   {
@@ -319,6 +342,12 @@ namespace BD2Territory.Runtime
     var crop=crops.Single(x=>x.SeedId==progress.SeedId);
     if(!PlantingTransaction.WithinBudget(progress,owner,control.PlantingBudget,crop.Price,keys.Length)||!(bool)B.Read("Panel.CanAfford",panel))
     {
+     if(control.Cooking&&control.SellCookingForPlanting&&PlantingTransaction.WithinBudget(progress,owner,control.PlantingBudget,crop.Price,keys.Length)&&SaleCurrency()<(long)crop.Price*keys.Length)
+     {
+      // Use the game's actual connected preview group, not all empty fields on the map.
+      fundingFields=(string[])keys.Clone();fundingSeed=crop.SeedId;fundingPrice=crop.Price;
+      CloseOwnedPanel();lastInput=now;FundPlanting(s,control,now);return;
+     }
      // Do not reopen this whole group on every tick, or shrink the game's preview after quoting it.
      foreach(var f in preview)skip[f.GetInstanceID()]=now+TimeSpan.FromSeconds(60).Ticks;
      CloseOwnedPanel();lastInput=now;s.Reason="当前 "+keys.Length+" 格播种费用超出余额或剩余预算；继续处理其他农田、采集和收获";return;
@@ -543,6 +572,7 @@ namespace BD2Territory.Runtime
   }
   private void Release()
   {
+   fundingFields=new string[0];
    workCycle.Reset();lastWorkPhase="";StopMotion();ResetLocalRecovery();if(farmStage>0&&farmStage<4)CloseOwnedPanel();
    // A submitted operation outlives its UI phase. Keep its persisted intent until an authoritative result arrives.
    farmStage=0;targetFarm=null;targetNode=null;gathering.Reset();gatheringReposition=false;navigation.Reset();interaction.Reset();triedDestinations.Clear();network.ForgetUnsentArm();

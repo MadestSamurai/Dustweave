@@ -16,7 +16,7 @@ namespace BD2ApostleDefense
    if(before.Account!=after.Account)return false;
    if(BoardAction(kind))return RoundFinished(after)||after.Exiting||after.Stage=="lobby"||after.Stage=="match-failed"||
     (after.Room.Length>0&&after.Room!=before.Room);
-   if(SettlementAction(kind)&&after.Room.Length>0&&after.Room!=before.Room)return true;
+   if((SettlementAction(kind)||kind=="restart")&&after.Room.Length>0&&after.Room!=before.Room)return true;
    return kind=="match-start"&&(after.Stage=="lobby"||after.Stage=="match-failed");
   }
   public static bool Receipt(string kind,Snapshot before,Snapshot after)
@@ -33,6 +33,9 @@ namespace BD2ApostleDefense
     case "open-result":return lobby||(sameRoom&&(after.Exiting||(CanSettle(after)&&(after.Stage=="result"||after.Stage=="confirm-exit"))));
     case "settle":return lobby||(sameRoom&&CanSettle(after)&&after.Stage=="confirm-exit");
     case "confirm-exit":return lobby;
+    case "restart":return lobby||(sameRoom&&(after.Exiting||
+     (before.Stage=="playing"&&(after.Stage=="result"||after.Stage=="confirm-exit"))||
+     (before.Stage=="result"&&after.Stage=="confirm-exit")));
     case "close-event":return !after.EventPopupOpen;
     default:return false;
    }

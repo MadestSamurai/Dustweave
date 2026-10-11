@@ -10,6 +10,18 @@ internal static class GameInstallationCases
             try { action(); } catch (SessionManagerException error) { Check(error.Message == expected, name); return; }
             throw new Exception("Not rejected: " + name);
         }
+        // This is fixture preparation, not the operation under test. Windows can
+        // briefly deny renaming a directory containing newly created EXE/DLL files.
+        // Keep the real move and every assertion; never turn a persistent lock into a pass.
+        void MoveFixture(Action move)
+        {
+            for (int attempt = 0; ; attempt++)
+            {
+                try { move(); return; }
+                catch (IOException error) when (OperatingSystem.IsWindows() && attempt < 6 && (error.HResult & 0xffff) is 5 or 32 or 33)
+                { Console.WriteLine($"Fixture rename retry {attempt + 1}, Windows error {error.HResult & 0xffff}"); Thread.Sleep(20 << attempt); }
+            }
+        }
         string Client(string name)
         {
             string folder = Path.Combine(root, name);
@@ -33,12 +45,12 @@ internal static class GameInstallationCases
         Reject(() => store.Select(Path.Combine(root, "BrownDust II.lnk")), GameInstallation.Invalid, "shortcuts are rejected");
         Reject(() => store.Select(Path.Combine(root, "missing", "BrownDust II.exe")), GameInstallation.Incomplete, "missing files are rejected");
         Check(saved.SequenceEqual(File.ReadAllBytes(Path.Combine(settings, "game-installation.json"))), "invalid choice preserves the working configuration");
-        string moved = Path.Combine(root, "moved game"); Directory.Move(Path.GetDirectoryName(chosen)!, moved);
+        string moved = Path.Combine(root, "moved game"); MoveFixture(() => Directory.Move(Path.GetDirectoryName(chosen)!, moved));
         Check(store.Read().Executable == chosen && store.Read().Error == GameInstallation.Incomplete, "moved game retains the selected path for correction");
         Reject(() => store.Resolve(), GameInstallation.Incomplete, "missing override never silently launches a different copy");
         string corrected = Path.Combine(moved, "BrownDust II.exe"); store.Select(corrected);
         Check(store.Resolve() == corrected, "moved installation can be reselected");
-        File.Move(Path.Combine(moved, "BrownDust II_Data", "Managed", "mscorlib.dll"), Path.Combine(moved, "runtime-held"));
+        MoveFixture(() => File.Move(Path.Combine(moved, "BrownDust II_Data", "Managed", "mscorlib.dll"), Path.Combine(moved, "runtime-held")));
         Reject(() => store.Resolve(), GameInstallation.Incomplete, "partially updated client is rejected");
         store.UseAutomatic(); Check(store.Resolve() == auto && !store.Read().IsManual, "automatic detection can be restored");
         string config = Path.Combine(settings, "game-installation.json"); File.WriteAllText(config, "interrupted or corrupt configuration");

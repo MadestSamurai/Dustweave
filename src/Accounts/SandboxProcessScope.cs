@@ -10,13 +10,25 @@ public static class SandboxProcessScope
 {
     [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode)]
     private delegate int QueryProcess(nint pid, StringBuilder box, nint image, nint sid, nint session);
-    private static readonly Lazy<QueryProcess?> query = new(Load);
+    private static readonly object queryGate = new();
+    private static QueryProcess? query;
+    private static int loadedRevision = -1;
     private static nint library;
     public static string CurrentBox => BoxOf(Environment.ProcessId);
     public static string BoxOf(int pid)
     {
         if (pid <= 0) throw new ArgumentOutOfRangeException(nameof(pid));
-        var api = query.Value;
+        QueryProcess? api;
+        lock (queryGate)
+        {
+            if (loadedRevision != SandboxInstallation.Revision)
+            {
+                // A previous 'not installed' result must not survive a manual selection.
+                query = Load();
+                loadedRevision = SandboxInstallation.Revision;
+            }
+            api = query;
+        }
         if (api == null) return "";
         var name = new StringBuilder(34);
         int status = api(pid, name, 0, 0, 0);
@@ -51,14 +63,13 @@ public static class SandboxProcessScope
         library = GetModuleHandle("SbieDll.dll");
         if (library == 0)
         {
-            foreach (string folder in new[] { "Sandboxie-Plus", "Sandboxie" })
+            string? directory = new SandboxInstallation().ResolveScopeDirectory();
+            if (directory != null)
             {
-                string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), folder, "SbieDll.dll");
-                if (!File.Exists(path)) continue;
+                string path = Path.Combine(directory, "SbieDll.dll");
                 // Dependencies are resolved beside the installed library or in System32.
                 library = LoadLibraryEx(path, 0, 0x100 | 0x800);
                 if (library == 0) throw new IOException("已安装 Sandboxie，但无法读取隔离状态，请检查它的服务是否运行。");
-                break;
             }
         }
         return library == 0 ? null : Marshal.GetDelegateForFunctionPointer<QueryProcess>(NativeLibrary.GetExport(library, "SbieApi_QueryProcess"));

@@ -26,7 +26,7 @@ internal sealed class HostedToolActivity : IDisposable
         activity=new(root);
         running=window.GetType().GetProperty("HostedAutomationEnabled")??throw new InvalidOperationException("工具未提供运行状态。");
         game=host.Find()??throw new InvalidOperationException("游戏已退出。");
-        var snapshot=host.ReadSnapshot()??throw new InvalidOperationException("游戏身份尚未就绪。");
+        var snapshot=host.ReadSnapshot(game)??throw new InvalidOperationException("游戏身份尚未就绪。");
         account=snapshot.AccountKey;player=snapshot.PlayerKey;
         if(id=="equipment")starts.Add("ConnectButton");
         AppDomain.CurrentDomain.SetData(GuardKey,(Action<string,string,byte[]>)BeforeWrite);
@@ -44,7 +44,7 @@ internal sealed class HostedToolActivity : IDisposable
     void AssertIdentity()
     {
         if(host.Find()!=game)throw new InvalidOperationException("游戏会话已结束，请返回日常助手重新连接。");
-        var snapshot=host.ReadSnapshot();
+        var snapshot=host.ReadSnapshot(game);
         if(snapshot==null||snapshot.AccountKey!=account||snapshot.PlayerKey!=player||snapshot.FrameUtcTicks<DateTime.UtcNow.AddSeconds(-5).Ticks)
         {
             DailyJson.Write(Path.Combine(root,"tools",id+"-identity-error.json"),new{atUtc=DateTimeOffset.UtcNow,missing=snapshot==null,expectedAccount=account,expectedPlayer=player,actualAccount=snapshot?.AccountKey,actualPlayer=snapshot?.PlayerKey,frameAgeSeconds=snapshot==null?(double?)null:(DateTime.UtcNow.Ticks-snapshot.FrameUtcTicks)/(double)TimeSpan.TicksPerSecond,state=snapshot?.State,scene=snapshot?.Scene,error=snapshot?.ErrorCode});

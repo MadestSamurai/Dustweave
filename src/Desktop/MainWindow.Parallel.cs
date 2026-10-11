@@ -52,13 +52,13 @@ public partial class MainWindow
         RefreshTaskAccount();
         dailyPanel.ShowCurrentPlan();
     }
-    private async Task StartParallelAsync(DailyAccount[] targets)
+    private async Task StartParallelAsync(DailyAccount[] targets, DailyParallelOptions? execution = null)
     {
         if(parallel==null)throw new InvalidOperationException("parallel.host_only");
         if(DailySandbox.Installation()==null)throw new InvalidOperationException("parallel.install_required");
         parallelPanel.Feedback("");
         parallelControl=DailyToolControl.Acquire(root);
-        try { await parallel.StartAsync(targets,parallelOptions,new DailyPreferenceStore(root).Read, new DailyTaskPresetStore(root).Selection); }
+        try { await parallel.StartAsync(targets,execution ?? parallelOptions,new DailyPreferenceStore(root).Read, new DailyTaskPresetStore(root).Selection); }
         catch { parallelControl.Dispose();parallelControl=null;throw; }
         RunTab.Content=parallelPanel;WorkspaceTabs.SelectedItem=RunTab;parallelPanel.Show(parallel.Current);SetBusy(busy);await PollParallelAsync();
     }

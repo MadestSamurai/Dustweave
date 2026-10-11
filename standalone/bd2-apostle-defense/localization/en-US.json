@@ -285,6 +285,23 @@
   "连接仍在进行，已等待 ": "Connection is still in progress; waiting ",
   "正在连接使徒防守组件…": "Connecting to the Apostle Defense component…",
   "组件控制权已转移，请重新连接": "Component control has moved to another tool. Please reconnect.",
-  "GitHub: MadestSamurai · B站: MadSamurai": "GitHub: MadestSamurai · Bilibili: MadSamurai"
+  "GitHub: MadestSamurai · B站: MadSamurai": "GitHub: MadestSamurai · Bilibili: MadSamurai",
+  "重开条件已变化，按当前界面继续": "Restart conditions changed; follow the current screen",
+  "只在已观察的开局结束后判断重新召唤": "Only restart after observing the opening waves",
+  "核心或召唤状态已变化，保留当前对局": "Core or summon state changed; keep the current match",
+  "前10波未形成7/8阶核心，退出本局后重新召唤": "No tier 7/8 core in the first ten waves; leave and start a new match",
+  "开局筛选：前10波优先召唤7/8阶核心": "Opening: prioritize a tier 7/8 core in the first ten waves",
+  "前10波优先刷核心，金币留给召唤": "Save opening gold for core summons",
+  "等待击杀金币，开局不分散升级属性": "Wait for kill income; avoid scattered opening upgrades",
+  "保留基础阵容产金，等待下一次补抽": "Keep the income lineup and wait for the next replacement",
+  "开局卖出最弱使徒，立即补抽7/8阶核心": "Replace the weakest opening unit to roll for a tier 7/8 core",
+  "保留高阶核心与暗水体系，回收低贡献杂色卡的金币": "Keep high-tier cores and Water/Dark units; recover gold from weak off-element cards",
+  "继续原生退出流程，返回大厅重新刷核心": "Continue leaving through the game UI, then roll a new opening",
+  "已取消自动重开，请在游戏中选择继续或退出": "Automatic restart cancelled; choose Continue or Exit in the game",
+  "核心成型：集中培养暗、水及高阶补位": "Core ready: focus on Dark, Water and a high-tier support element",
+  "保留产金主力，回收低贡献使徒继续刷核心": "Keep the income core and recycle a weak unit for more opening rolls",
+  "核心培养：为后续波次与首领预留升级金币": "Core investment: save for upcoming waves and bosses",
+  "升级核心体系，补足后续波次与首领输出": "Upgrade the core elements for upcoming waves and bosses",
+  "保留金币等待核心升级，暂不消耗于随机召唤": "Save for the core upgrade instead of spending on random summons",
+  "补齐暗水高阶输出，每个安全波次最多补抽两次": "Build the Water/Dark complement, with at most two extra rolls per safe wave"
 }
-

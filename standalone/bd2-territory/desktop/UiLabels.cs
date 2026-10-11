@@ -1,5 +1,9 @@
 namespace BD2Territory.Desktop;
 static class UiLabels { public static readonly Dictionary<string,string> All=new(){
+{"CookingSaleBatchLabel","累计出售所选料理，每批"},
+{"CookingSaleQuantity","份"},
+{"CookingSalePlantingLabel","积分不足时出售料理，优先补种"},
+{"CookingSaleHelp","仅出售所选配方成品，不卖锁定物品。累计出售保留余数；补种仅卖够当前批次，仍遵守种植预算。"},
 {"TreeStageLabel","最低砍伐阶段"},
 {"TreeStageHint","选定阶段是下限，更高阶段也会砍伐；矿点和作物仍等完全成熟。"},
 {"TreeStageMature","仅完全成熟（默认）"},

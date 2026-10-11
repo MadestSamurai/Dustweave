@@ -34,7 +34,16 @@ public partial class MainWindow
             schedulePanel.SetAccounts(rows.Select(r => r.Account));
             WorkspaceTabs.SelectedItem = ScheduleTab;
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-            Check(Descendants<CheckBox>(schedulePanel).Count() == 1, "Schedule still exposes weekday selection");
+            Check(Descendants<CheckBox>(schedulePanel).Count() == 3, "Schedule should expose enable, takeover and parallel close options without weekdays");
+            var takeover = Descendants<CheckBox>(schedulePanel).Single(x => x.Content?.ToString() == L.Get("schedule.takeover"));
+            Check(takeover.IsChecked == false, "Tool takeover must default to off");
+            schedulePanel.Show(plan with { TakeOverTools = true, Execution = new(true, 3, false) }, null);
+            DailySchedulePlan? executionPlan = null; void CaptureExecution(DailySchedulePlan value) => executionPlan = value;
+            schedulePanel.SaveRequested += CaptureExecution;
+            Descendants<Button>(schedulePanel).Single(b => b.Content?.ToString() == L.Get("schedule.save")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            schedulePanel.SaveRequested -= CaptureExecution;
+            Check(executionPlan is { TakeOverTools: true, Execution.Enabled: true, Execution.Maximum: 3, Execution.CloseGame: false }, "Schedule UI lost the independent execution mode or takeover choice");
+            schedulePanel.Show(plan, null);
             var cards = Descendants<DailyScheduleAccounts>(schedulePanel).Single();
             var catalog = rows.Select(r => r.Account).ToArray();
             var original = cards.SelectedKeys;

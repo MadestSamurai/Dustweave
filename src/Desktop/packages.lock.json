@@ -55,7 +55,7 @@
       "BD2ApostleDefense": {
         "type": "Project",
         "dependencies": {
-          "BD2ApostleDefense.Core": "[0.3.7, )"
+          "BD2ApostleDefense.Core": "[0.3.8, )"
         }
       },
       "bd2apostledefense.compatibility": {
@@ -68,7 +68,7 @@
       "bd2apostledefense.core": {
         "type": "Project",
         "dependencies": {
-          "BD2ApostleDefense.Compatibility": "[0.3.6, )"
+          "BD2ApostleDefense.Compatibility": "[0.3.8, )"
         }
       },
       "bd2equipment.connection": {
@@ -81,14 +81,14 @@
       "bd2equipment.core": {
         "type": "Project",
         "dependencies": {
-          "BD2Equipment.Connection": "[0.3.6, )"
+          "BD2Equipment.Connection": "[0.3.7, )"
         }
       },
       "bd2equipmentassistant": {
         "type": "Project",
         "dependencies": {
-          "BD2Equipment.Connection": "[0.3.6, )",
-          "BD2Equipment.Core": "[0.3.6, )"
+          "BD2Equipment.Connection": "[0.3.7, )",
+          "BD2Equipment.Core": "[0.3.7, )"
         }
       },
       "BD2FiendHunter": {
@@ -208,7 +208,7 @@
       "BD2Territory": {
         "type": "Project",
         "dependencies": {
-          "BD2Territory.Core": "[0.4.3, )"
+          "BD2Territory.Core": "[0.4.5, )"
         }
       },
       "bd2territory.compatibility": {
@@ -221,7 +221,7 @@
       "bd2territory.core": {
         "type": "Project",
         "dependencies": {
-          "BD2Territory.Compatibility": "[0.4.3, )"
+          "BD2Territory.Compatibility": "[0.4.5, )"
         }
       },
       "dustweave.accounts": {

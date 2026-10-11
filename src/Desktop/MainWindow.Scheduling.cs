@@ -9,6 +9,8 @@ public partial class MainWindow
     private readonly DailySchedulePanel schedulePanel = new();
     private DailyScheduleStore scheduleStore = null!;
     private bool scheduleChecking;
+    private bool scheduleToolDraining;
+    private GameInstance? scheduleToolGame;
     private DateTime nextScheduleCheck;
     private void InitializeSchedules()
     {
@@ -70,7 +72,9 @@ public partial class MainWindow
                 return;
             }
             if (scheduleStore.IsClaimed(due.Value)) return;
-            if (Unavailable || updateInstalling || releaseDialogOpen || DailyDialogs.ModalDepth > 0)
+            // A running tool is the one optional handoff. Never interrupt another daily queue,
+            // an update, onboarding or a user's modal operation.
+            if (onboardingOpen || busy || toolChanging || updateInstalling || ParallelBusy || pluginChanging || releaseDialogOpen || DailyDialogs.ModalDepth > 0)
             {
                 scheduleStore.Record(new(due.Value.ToString("O"), "waiting", now)); return;
             }
@@ -79,10 +83,17 @@ public partial class MainWindow
             var targets = plan.Accounts.Select(key => catalogNow.Accounts.SingleOrDefault(a => a.Valid && a.AccountKey == key)
                 ?? throw new InvalidDataException("schedule.account_missing")).ToArray();
             if (!preferencesPanel.SavePending()) throw new InvalidDataException("schedule.unsaved_settings");
+            if (plan.Execution.Enabled && DailySandbox.Installation() == null) throw new InvalidDataException("parallel.install_required");
+            if (ToolRunning || scheduleToolDraining)
+            {
+                scheduleStore.Record(new(due.Value.ToString("O"), "waiting", now,
+                    plan.TakeOverTools ? "schedule.stopping_tool" : "schedule.tool_busy"));
+                if (!plan.TakeOverTools || !await StopToolForScheduleAsync()) return;
+            }
             if (!scheduleStore.Claim(due.Value, now)) return;
             scheduleStore.Record(new(due.Value.ToString("O"), "running", now));
             WorkspaceTabs.SelectedItem = RunTab;
-            string state = await ExecuteAccountQueue(targets);
+            string state = await ExecuteAccountQueue(targets, plan.Execution);
             scheduleStore.Record(new(due.Value.ToString("O"), state, DateTimeOffset.UtcNow));
         }
         catch (Exception e)
@@ -92,13 +103,44 @@ public partial class MainWindow
         }
         finally { scheduleChecking = false; }
     }
-    private async Task<string> ExecuteAccountQueue(DailyAccount[] targets)
+    private async Task<bool> StopToolForScheduleAsync()
+    {
+        // Only the child registered by this menu may be stopped; never kill a process
+        // or release another automation's lease to make a schedule start.
+        if (toolSession.Current == null && !scheduleToolDraining) return false;
+        toolChanging = true; SetBusy(busy);
+        try
+        {
+            if (!scheduleToolDraining) { scheduleToolGame = host.Find(); scheduleToolDraining = true; }
+            if (!await toolSession.CloseAsync()) return false;
+            var game = scheduleToolGame;
+            var until = DateTime.UtcNow.AddSeconds(35);
+            while (DateTime.UtcNow < until)
+            {
+                if (finalClose) return false;
+                bool idle = await Task.Run(() =>
+                {
+                    if (DailyToolControl.IsOccupied(root)) return false;
+                    if (game == null || host.Find() != game) return true;
+                    var state = DailySuite.Read(root, game);
+                    return state != null && state.At >= DateTime.UtcNow.AddSeconds(-5).Ticks && !DailyActivityRules.ExecutionPending(state.Pending);
+                });
+                if (idle) { scheduleToolDraining = false; scheduleToolGame = null; return true; }
+                await Task.Delay(250);
+            }
+            schedulePanel.Feedback("schedule.takeover_pending", true);
+            return false;
+        }
+        finally { toolChanging = false; SetBusy(busy); }
+    }
+    private async Task<string> ExecuteAccountQueue(DailyAccount[] targets, DailyParallelOptions? execution = null)
     {
         var presets = new DailyTaskPresetStore(root);
         var selections = targets.ToDictionary(a => a.AccountKey, a => presets.Selection(a.AccountKey, new DailyPreferenceStore(root).Read(a.AccountKey)));
-        if (parallelOptions.Enabled && !IsSandboxWindow)
+        execution ??= parallelOptions;
+        if (execution.Enabled && !IsSandboxWindow)
         {
-            await StartParallelAsync(targets);
+            await StartParallelAsync(targets, execution);
             while (ParallelBusy) await Task.Delay(500);
             return parallel!.Current!.Items.All(x => x.State == "completed") ? "completed" : "partial";
         }

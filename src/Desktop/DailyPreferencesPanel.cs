@@ -11,6 +11,7 @@ public sealed class DailyPreferencesPanel : UserControl
     private static DailyLanguage L => DailyLanguage.Current;
     private readonly bool allowGame;
     internal GameInstallationPanel GamePath { get; }
+    internal SandboxInstallationPanel SandboxPath { get; }
     private readonly bool extensionTasks = DailyPlugin.Current.Supports("tactics");
     private readonly bool extensionEvents = DailyPlugin.Current.Supports("event_battle");
     private readonly DailyPreferenceStore store;
@@ -93,6 +94,10 @@ public sealed class DailyPreferencesPanel : UserControl
         GamePath = new GameInstallationPanel(installation, allowGame && Dustweave.Accounts.SandboxProcessScope.CurrentBox.Length != 0);
         DockPanel.SetDock(GamePath, Dock.Top);
         layout.Children.Add(GamePath);
+        SandboxPath = new SandboxInstallationPanel(new Dustweave.Accounts.SandboxInstallation(allowGame ? null : Path.Combine(root, "sandbox-path-preview")),
+            allowGame && Dustweave.Accounts.SandboxProcessScope.CurrentBox.Length != 0);
+        DockPanel.SetDock(SandboxPath, Dock.Top);
+        layout.Children.Add(SandboxPath);
         var header = new DockPanel { Margin = new(0, 0, 0, 16) };
         var save = LocalButton("prefs.save"); save.Style = (Style)Application.Current.FindResource("PrimaryButton");
         save.Click += (_, _) => Save();

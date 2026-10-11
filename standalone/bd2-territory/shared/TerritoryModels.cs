@@ -4,7 +4,7 @@ namespace BD2Territory
  public static class TerritoryIdentity
  {
   public const string LiveEntries="runtime.json|control.json|latest.json|layout-request.json|layout-status.json|layout-world.json";
-  public const string RuntimeName="BD2Territory.Runtime26";
+  public const string RuntimeName="BD2Territory.Runtime27";
   public static string DataRoot=>System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BD2Territory");
   public static bool IsGameProcessName(string name)=>string.Equals(name,"BrownDust II",StringComparison.OrdinalIgnoreCase)||string.Equals(name,"BrownDust II.exe",StringComparison.OrdinalIgnoreCase);
  }
@@ -20,8 +20,10 @@ namespace BD2Territory
   // Capacity protection is mandatory; ignore the obsolete saved opt-out.
   public bool AutoSell{get{return true;}set{}}public int SellThreshold{get;set;}=9900;
   public int RecipeId{get;set;}=3;public bool Cooking{get;set;}=false;public int CookingBatch{get;set;}=100;
+  public bool SellCookingBatches{get;set;}=true;public int CookingSaleBatch{get;set;}=100;
+  public bool SellCookingForPlanting{get;set;}=true;
   public int IntervalMs{get;set;}=500;public long PlantingBudget{get;set;}=1400;
-  public bool ValidSettings()=>MinimumTreeStage>=0&&SurplusSales.ValidThreshold(SellThreshold)&&FixedSeedId>=0&&CookingBatch>=1&&CookingBatch<=1000&&RecipeId>0&&IntervalMs>=100&&IntervalMs<=60000&&PlantingBudget>=0&&PlantingBudget<=10000000;
+  public bool ValidSettings()=>MinimumTreeStage>=0&&SurplusSales.ValidThreshold(SellThreshold)&&CookingSales.ValidBatch(CookingSaleBatch)&&FixedSeedId>=0&&CookingBatch>=1&&CookingBatch<=1000&&RecipeId>0&&IntervalMs>=100&&IntervalMs<=60000&&PlantingBudget>=0&&PlantingBudget<=10000000;
  }
  public sealed class TerritoryControl:TerritorySettings
  {

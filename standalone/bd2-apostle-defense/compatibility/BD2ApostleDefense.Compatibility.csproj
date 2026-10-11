@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 <!-- Component identity includes embedded sources and build metadata; current components use same-process handoff. -->
-<PropertyGroup><Version>0.3.6</Version><TargetFramework>net8.0-windows</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+<PropertyGroup><Version>0.3.8</Version><TargetFramework>net8.0-windows</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
 <ItemGroup>
 <PackageReference Include="Mono.Cecil" Version="0.11.6" />
 <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
