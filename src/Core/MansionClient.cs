@@ -8,6 +8,8 @@ namespace Dustweave;
 public sealed class MansionClient
 {
     readonly PipeClient pipe;
+    readonly string diagnostics;
+    string lastDiagnostic = "";
     string runId = Guid.NewGuid().ToString("N");
     DateTimeOffset lastObservation = DateTimeOffset.UtcNow, started;
     public bool Enabled { get; private set; }
@@ -21,6 +23,7 @@ public sealed class MansionClient
             throw new InvalidOperationException("Invalid hosted game identity");
         if (Environment.GetEnvironmentVariable("BD2_DAILY_HOSTED_TOOL") != "mansion-runaway" || Environment.GetEnvironmentVariable("BD2_DAILY_GAME_PID") != pid.ToString() || Environment.GetEnvironmentVariable("BD2_DAILY_GAME_START") != start.ToString())
             throw new InvalidOperationException("Changed hosted game identity");
+        diagnostics = Path.Combine(root, "tools");
         pipe = new PipeClient(Path.Combine(root, "mansion"), pid, start);
         pipe.Open(fingerprint);
     }
@@ -63,10 +66,37 @@ public sealed class MansionClient
         if (!DateTimeOffset.TryParse(state["At"]?.ToString(), out var at) || at < DateTimeOffset.UtcNow.AddSeconds(-5))
             throw new IOException("Minigame observation expired");
         lastObservation = at;
+        Record(state);
         if (Enabled && DateTimeOffset.UtcNow - started > TimeSpan.FromSeconds(5) && state["RunId"]?.ToString() != runId)
             throw new IOException("Minigame control was not acknowledged");
         if (state["RunId"]?.ToString() == runId && (state["Finished"]?.GetValue<bool>() == true || state["Faulted"]?.GetValue<bool>() == true))
             Enabled = false;
         return state;
+    }
+
+    internal static JsonObject DiagnosticState(JsonObject state)
+    {
+        var result = new JsonObject();
+        foreach (var key in new[] { "At", "Pid", "RunId", "Running", "Finished", "Faulted", "Reason", "Attempts", "State", "ManagerPhase", "Entry", "SavedEntry", "EntryRecoveries", "Result", "EarlyRetries", "EarlyRetryEvidence" })
+            result[key] = state[key]?.DeepClone();
+        return result;
+    }
+
+    void Record(JsonObject state)
+    {
+        var record = DiagnosticState(state);
+        var key = record.DeepClone().AsObject();
+        key.Remove("At");
+        string signature = key.ToJsonString();
+        if (signature == lastDiagnostic) return;
+        try
+        {
+            DailyJson.Write(Path.Combine(diagnostics, "mansion-runaway-state.json"), record);
+            if (state["Faulted"]?.GetValue<bool>() == true)
+                DailyJson.Write(Path.Combine(diagnostics, "mansion-runaway-runtime-error.json"), record);
+            lastDiagnostic = signature;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        { /* A log directory problem must not interrupt a live round. */ }
     }
 }

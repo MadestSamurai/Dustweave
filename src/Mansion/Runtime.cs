@@ -352,7 +352,7 @@ namespace Dustweave.Mansion.Runtime
                     Command(command);
                 if (running && autoFlow)
                     Flow();
-                if (running && player != null && grid != null && State == "Playing" && Convert.ToString(Bound(manager, "managerState")) == "InGame")
+                if (running && earlyRetryStep == 0 && player != null && grid != null && State == "Playing" && Convert.ToString(Bound(manager, "managerState")) == "InGame")
                     Step();
                 else
                     desired = Vector3.zero;
@@ -484,7 +484,7 @@ namespace Dustweave.Mansion.Runtime
                 };
             }
 
-            Write("state.json", new { At = DateTime.UtcNow, Pid = System.Diagnostics.Process.GetCurrentProcess().Id, Running = running, Reason = reason, Finished = finished, Faulted = faulted, RunId = runId, Attempts = attempts, TargetChain = targetChain, State = State, Target = target, Board = board, Objective = Objective(), Camera = new { Yaw = player == null ? 0 : player.transform.eulerAngles.y, Target = heading.Target, TurnSeconds = Motion.TurnDuration(frameSeconds) }, Plan = plan, PlannerSettings = plannerOptions, PlannerProfile = targetChain == 80 ? "chain80-build26" : "balanced", Result = result, ItemsUsed = itemsUsed, ItemGoal = itemGoal, ItemWarning = itemWarning, Inventory = Inventory().Select(v => new { v.Index, v.Kind, v.Active }).ToArray(), Mode = manager == null ? "" : Convert.ToString(Bound(Bound(manager, "mode"), "modeType")), UIs = CachedUis() });
+            Write("state.json", new { At = DateTime.UtcNow, Pid = System.Diagnostics.Process.GetCurrentProcess().Id, Running = running, Reason = reason, Finished = finished, Faulted = faulted, RunId = runId, Attempts = attempts, TargetChain = targetChain, Entry = EntryNative.Read(), SavedEntry = entryRecovery.Saved, EntryRecoveries = entryRecovery.Recoveries, EarlyRetries = earlyRetries, EarlyRetryEvidence = earlyRetryEvidence, Opportunity = new { Sequence = opportunitySequence, Evidence = opportunity }, ManagerPhase = manager == null ? "None" : Convert.ToString(Bound(manager, "managerState")), State = State, Target = target, Board = board, Objective = Objective(), Camera = new { Yaw = player == null ? 0 : player.transform.eulerAngles.y, Target = heading.Target, TurnSeconds = Motion.TurnDuration(frameSeconds) }, Plan = plan, PlannerSettings = plannerOptions, PlannerProfile = targetChain == 80 ? "chain80-objective-v2" : "balanced", Result = result, ItemsUsed = itemsUsed, ItemGoal = itemGoal, ItemWarning = itemWarning, Inventory = Inventory().Select(v => new { v.Index, v.Kind, v.Active }).ToArray(), Mode = manager == null ? "" : Convert.ToString(Bound(Bound(manager, "mode"), "modeType")), UIs = CachedUis() });
         }
 
         IEnumerable<PackManCharChaser> Chasers()
@@ -581,7 +581,7 @@ namespace Dustweave.Mansion.Runtime
                     magnetHere = MagnetCount(tile, radius);
                 double best = magnetHere;
                 int start = graph.Nearest(p.x, p.z);
-                for (int n = 0; n < graph.Count; n++)
+                for (int n = 0; plannerOptions.ChainTarget == 0 && n < graph.Count; n++)
                 {
                     int distance = graph.Distance(start, n);
                     if (distance > 6)
@@ -713,6 +713,7 @@ namespace Dustweave.Mansion.Runtime
             centers = positions.ToArray();
             graph = new MazeGraph(centers.Select(p => p.x).ToArray(), centers.Select(p => p.z).ToArray(), edges);
             planner = new Planner(graph, plannerOptions);
+            ResetOpportunity();
             gridId = grid.GetInstanceID();
             target = -1;
             waitUntil = 0;
@@ -720,6 +721,15 @@ namespace Dustweave.Mansion.Runtime
 
         void Step()
         {
+            if (RunGoal.AwaitSettlement(targetChain, RoundMaximum()))
+            {
+                // Escape discards the record. Let the native timer/catch settle
+                // the real maximum instead; no more clearing, items or evasion.
+                desired = Vector3.zero;
+                target = itemGoal = -1;
+                reason = "goal-finishing";
+                return;
+            }
             if (graph == null || gridId != grid.GetInstanceID())
             {
                 BuildGraph();
@@ -739,6 +749,7 @@ namespace Dustweave.Mansion.Runtime
                     Write("error.json", new { At = DateTime.UtcNow, Severity = "warning", Phase = "items", Error = error.ToString(), MovementContinues = true });
                 }
 
+            if (CheckOpportunity()) return;
             if (Time.unscaledTime < waitUntil)
             {
                 desired = Vector3.zero;
@@ -751,13 +762,14 @@ namespace Dustweave.Mansion.Runtime
             if (arrived || Time.unscaledTime - lastPlan > 0.5f)
             {
                 var coins = new bool[graph.Count];
-                foreach (var c in OrdinaryCoins())
+                foreach (var c in targetChain > 0 ? Coins() : OrdinaryCoins())
                     if (c != null && c.isActiveAndEnabled && !Convert.ToBoolean(Bound(c, "coinCollected")))
                         coins[graph.Nearest(c.transform.position.x, c.transform.position.z)] = true;
                 int exit = -1;
                 var door = Typed<PackManObjectExit>(ruler);
                 if (door != null && door.isActiveAndEnabled && Convert.ToBoolean(Bound(door, "exitActive")))
                     exit = graph.Nearest(door.transform.position.x, door.transform.position.z);
+                if (targetChain > 0 && Array.Exists(coins, value => value)) exit = -1;
                 headingExit = exit >= 0;
                 var threats = new List<Threat>();
                 foreach (var c in Chasers())
@@ -780,7 +792,10 @@ namespace Dustweave.Mansion.Runtime
                 }
 
                 float speed = Convert.ToSingle(Field(player, "_moveSpeed")) * Convert.ToSingle(Bound(player, "speedMultiplier"));
-                plan = planner.Choose(pos.x, pos.z, speed, threats.ToArray(), coins, exit >= 0 ? exit : itemGoal, Time.unscaledTime, Convert.ToBoolean(Bound(player, "invincible")), player.transform.eulerAngles.y, Motion.TurnDuration(frameSeconds), Convert.ToString(Bound(Bound(manager, "mode"), "modeType")) == "Challenge");
+                plan = planner.Choose(pos.x, pos.z, speed, threats.ToArray(), coins, exit >= 0 ? exit : itemGoal, Time.unscaledTime, Convert.ToBoolean(Bound(player, "invincible")), player.transform.eulerAngles.y, Motion.TurnDuration(frameSeconds), Convert.ToString(Bound(Bound(manager, "mode"), "modeType")) == "Challenge",
+                    targetChain > 0 ? Convert.ToInt32(Bound(ruler, "chain")) : 0,
+                    targetChain > 0 ? Convert.ToSingle(Bound(ruler, "chainRemaining")) : 0,
+                    targetChain > 0 ? ChainWindow() : 0);
                 target = plan.Next;
                 lastPlan = Time.unscaledTime;
                 if (plan.Wait > 0)
@@ -803,9 +818,7 @@ namespace Dustweave.Mansion.Runtime
             desired = centers[target] - pos;
             desired.y = 0;
             desired = desired.normalized;
-            reason = headingExit ? "heading-exit" : "collecting";
+            reason = headingExit ? "heading-exit" : targetChain > 0 ? "chain-collecting" : "collecting";
         }
     }
 }
-
-

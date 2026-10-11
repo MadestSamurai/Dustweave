@@ -1,5 +1,29 @@
 [
   {
+    "Version": "1.1.10-beta",
+    "Date": "2026-10-11",
+    "Notes": {
+      "zh-CN": [
+        "MANSION RUNAWAY 的80连锁模式优先保持连续吃豆，达到目标后等待本局结算确认；常规模式保留综合策略。",
+        "改善小游戏自动续局时入口信息丢失的恢复，区分入口丢失与活动不可用。",
+        "内置工具重新连接时保持当前账号的游戏进程，避免多开时误选其他窗口。",
+        "80连锁模式在剩余糖果不足或多次找不到有希望的路线时提前重开，计入后续连锁奖励；达到80后保留结算。"
+      ],
+      "zh-TW": [
+        "MANSION RUNAWAY 的80連鎖模式優先保持連續吃豆，達標後等待本局結算確認；一般模式保留綜合策略。",
+        "改善小遊戲自動續局時入口資訊遺失的恢復，區分入口遺失與活動不可用。",
+        "內建工具重新連線時維持目前帳號的遊戲程序，避免多開時誤選其他視窗。",
+        "80連鎖模式在剩餘糖果不足或多次找不到有希望的路線時提前重開，計入後續連鎖獎勵；達到80後保留結算。"
+      ],
+      "en-US": [
+        "MANSION RUNAWAY's 80-chain mode prioritizes continuous candy collection and waits for the native result after reaching the goal. Normal play retains its balanced strategy.",
+        "Improves restart recovery when minigame entry information is lost and distinguishes missing entry data from an unavailable event.",
+        "Integrated tools reconnect to the current account's game process instead of selecting another running instance.",
+        "80-chain mode retries early when too few candies remain or repeated route searches are unpromising, allowing for future chain rewards. Reached goals are preserved for settlement."
+      ]
+    }
+  },
+  {
     "Version": "1.1.9-beta",
     "Date": "2026-10-11",
     "Notes": {

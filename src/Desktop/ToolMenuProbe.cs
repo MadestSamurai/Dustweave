@@ -66,6 +66,19 @@ internal static class ToolMenuProbe
             Check(DailyToolControl.IsOccupied(profile),"disabled tool retains pending receipt ownership");
             File.Delete(Path.Combine(profile,"pending-fishing"));until=DateTime.UtcNow.AddSeconds(3);while(DailyToolControl.IsOccupied(profile)&&DateTime.UtcNow<until)await Task.Delay(25);
             Check(!DailyToolControl.IsOccupied(profile)&&session.Current==original,"acknowledged stop unlocks with window still open");
+            using (var paused = Process.GetProcessById(original.ProcessId))
+            {
+                var handle = paused.MainWindowHandle;
+                Check(handle != IntPtr.Zero, "paused tool retains a restorable window handle");
+                ShowWindowAsync(handle, 6);
+                until = DateTime.UtcNow.AddSeconds(3);
+                while (!IsIconic(handle) && DateTime.UtcNow < until) await Task.Delay(25);
+                Check(IsIconic(handle), "paused test window can be minimized");
+                await Session().OpenAsync("fishing");
+                until = DateTime.UtcNow.AddSeconds(3);
+                while (IsIconic(handle) && DateTime.UtcNow < until) await Task.Delay(25);
+                Check(!IsIconic(handle) && session.Current == original, "reopening a paused tool restores its original window without a second launch");
+            }
             File.WriteAllText(Path.Combine(profile, "hold-close"), "hold");
             await session.OpenAsync("sichuan");
             Check(session.Current == original, "cancelled close preserves original tool");
@@ -97,4 +110,6 @@ internal static class ToolMenuProbe
             await session.CloseAsync();
         }
     }
+    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool ShowWindowAsync(IntPtr window, int command);
+    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool IsIconic(IntPtr window);
 }

@@ -94,11 +94,6 @@ public sealed class TerritoryConnection
         if(saved==null)throw new InvalidOperationException("尚无有效连接记录，请先点击「连接 / 更新组件」。");
         if(!SameProcess(saved,pid,start))throw new InvalidOperationException("游戏进程已变化，请重新连接。");
     }
-    public static Process FindGame()
-    {
-        var games=new List<Process>();
-        foreach(var p in Process.GetProcesses())try{if(TerritoryIdentity.IsGameProcessName(p.ProcessName))games.Add(p);else p.Dispose();}catch{p.Dispose();}
-        if(games.Count==1)return games[0];foreach(var p in games)p.Dispose();
-        throw new InvalidOperationException(games.Count==0?"请先启动 BrownDust II，再点击连接游戏。":"检测到多个游戏实例，请只保留需要操作的一个。");
-    }
+    public static Process FindGame() => BD2.LocalIpc.HostedConnection.FindGame(TerritoryIdentity.IsGameProcessName,
+        "检测到多个游戏实例，请只保留需要操作的一个。") ?? throw new InvalidOperationException("请先启动 BrownDust II，再点击连接游戏。");
 }

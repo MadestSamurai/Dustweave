@@ -65,11 +65,6 @@ public sealed class SichuanConnection
         }
         throw new InvalidOperationException("组件交接尚未完成，请等待游戏界面恢复或当前操作结算后重新连接；游戏可以保持运行。");
     }
-    public static Process FindGame()
-    {
-        var games=new List<Process>();
-        foreach(var p in Process.GetProcesses())try{if(SichuanIdentity.IsGameProcessName(p.ProcessName))games.Add(p);else p.Dispose();}catch{p.Dispose();}
-        if(games.Count==1)return games[0];foreach(var p in games)p.Dispose();
-        throw new InvalidOperationException(games.Count==0?"请先启动 BrownDust II，再点击连接游戏。":"检测到多个游戏实例，请只保留需要操作的一个。");
-    }
+    public static Process FindGame() => BD2.LocalIpc.HostedConnection.FindGame(SichuanIdentity.IsGameProcessName,
+        "检测到多个游戏实例，请只保留需要操作的一个。") ?? throw new InvalidOperationException("请先启动 BrownDust II，再点击连接游戏。");
 }

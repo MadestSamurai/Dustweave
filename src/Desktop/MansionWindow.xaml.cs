@@ -234,7 +234,7 @@ public partial class MansionWindow : Window
         EmptyText.Visibility = snapshot?["Board"] is null ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    static readonly HashSet<string> States = ["goal-completed", "goal-restarting", "ready", "connecting", "disconnected", "paused", "collecting", "heading-exit", "next-stage", "entering", "selecting-mode", "mode-unavailable", "recovering-life", "retrying", "waiting-result", "waiting-game", "completed", "defeated", "retry-unavailable", "heartbeat-expired", "runtime-error", "no-route", "avoiding-enemy"];
+    static readonly HashSet<string> States = ["chain-insufficient", "chain-route-retry", "goal-retry-timeout", "chain-collecting", "goal-finishing", "restoring-entry", "waiting-transition", "waiting-popup", "event-unavailable", "entry-changed", "entry-missing", "entry-timeout", "goal-completed", "goal-restarting", "ready", "connecting", "disconnected", "paused", "collecting", "heading-exit", "next-stage", "entering", "selecting-mode", "mode-unavailable", "recovering-life", "retrying", "waiting-result", "waiting-game", "completed", "defeated", "retry-unavailable", "heartbeat-expired", "runtime-error", "no-route", "avoiding-enemy"];
 }
 
 

@@ -4239,6 +4239,41 @@
     "en-US": "Waiting for the minigame",
     "zh-CN": "等待进入小游戏"
   },
+  "mansion.state.restoring-entry": {
+    "zh-CN": "正在恢复本次小游戏入口",
+    "zh-TW": "正在恢復本次迷你遊戲入口",
+    "en-US": "Restoring this minigame's entry"
+  },
+  "mansion.state.waiting-transition": {
+    "zh-CN": "等待游戏完成场景切换",
+    "zh-TW": "等待遊戲完成場景切換",
+    "en-US": "Waiting for the scene transition"
+  },
+  "mansion.state.waiting-popup": {
+    "zh-CN": "请先处理游戏弹窗，关闭后继续",
+    "zh-TW": "請先處理遊戲彈窗，關閉後繼續",
+    "en-US": "Handle the game dialog to continue"
+  },
+  "mansion.state.event-unavailable": {
+    "zh-CN": "本次活动当前不可用，已停止。请在小游戏大厅核对活动时间。",
+    "zh-TW": "本次活動目前無法使用，已停止。請在迷你遊戲大廳核對活動時間。",
+    "en-US": "This event is unavailable. Stopped; check its schedule in the minigame hub."
+  },
+  "mansion.state.entry-changed": {
+    "zh-CN": "小游戏入口已变化，已停止。请重新进入 MANSION RUNAWAY 后开始。",
+    "zh-TW": "迷你遊戲入口已變更，已停止。請重新進入 MANSION RUNAWAY 後開始。",
+    "en-US": "The minigame entry changed. Stopped; reopen MANSION RUNAWAY and start again."
+  },
+  "mansion.state.entry-missing": {
+    "zh-CN": "小游戏入口信息已丢失，已停止。请从小游戏大厅重新进入后开始。",
+    "zh-TW": "迷你遊戲入口資訊已遺失，已停止。請從迷你遊戲大廳重新進入後開始。",
+    "en-US": "Minigame entry information was lost. Stopped; reopen it from the minigame hub."
+  },
+  "mansion.state.entry-timeout": {
+    "zh-CN": "游戏未完成模式读取，已停止。请检查游戏网络后重新开始。",
+    "zh-TW": "遊戲未完成模式讀取，已停止。請檢查遊戲網路後重新開始。",
+    "en-US": "The game did not finish loading modes. Stopped; check its connection and start again."
+  },
   "mansion.state.completed": {
     "zh-TW": "本局已結算，自動操作已停止",
     "en-US": "Run finished. Automation stopped.",
@@ -4290,9 +4325,9 @@
     "en-US": "Stop after an 80-chain run"
   },
   "mansion.goal80_hint": {
-    "zh-CN": "使用挑战模式及曾达到83连的决策配置；未达标自动续局，达标后完成本局结算再停止。",
-    "zh-TW": "使用挑戰模式及曾達到83連的決策設定；未達標自動續局，達標後完成本局結算再停止。",
-    "en-US": "Uses Challenge mode and the profile that reached 83. Repeat until 80, then finish the round and stop."
+    "zh-CN": "优先冲击80连锁，不要求通关；未达标自动续局，达标后等待游戏结算再停止。",
+    "zh-TW": "優先衝擊80連鎖，不要求通關；未達標自動續局，達標後等待遊戲結算再停止。",
+    "en-US": "Prioritize an 80-chain, without needing to clear stages. Retry until reached, then await the game's result and stop."
   },
   "mansion.goal80_progress": {
     "zh-CN": "本局最高 {0} / 80 连锁",
@@ -4300,9 +4335,29 @@
     "en-US": "Best this round: {0} / 80"
   },
   "mansion.state.goal-finishing": {
-    "zh-CN": "已达到 80 连锁，完成本局结算后停止",
-    "zh-TW": "已達到 80 連鎖，完成本局結算後停止",
-    "en-US": "80-chain reached; finishing this round"
+    "zh-CN": "已达到80连锁，停止推关，等待游戏结算确认",
+    "zh-TW": "已達到80連鎖，停止推關，等待遊戲結算確認",
+    "en-US": "80-chain reached; no further clearing, awaiting the game's result"
+  },
+  "mansion.state.chain-collecting": {
+    "zh-CN": "优先连续吃豆，冲击80连锁",
+    "zh-TW": "優先連續吃豆，衝擊80連鎖",
+    "en-US": "Prioritizing continuous pickups toward an 80-chain"
+  },
+  "mansion.state.chain-insufficient": {
+    "zh-CN": "剩余糖果不足80连锁，正在重开",
+    "zh-TW": "剩餘糖果不足80連鎖，正在重開",
+    "en-US": "Too few remaining candies for an 80-chain; retrying"
+  },
+  "mansion.state.chain-route-retry": {
+    "zh-CN": "多次规划仍未找到80连路线，正在重开",
+    "zh-TW": "多次規劃仍未找到80連路線，正在重開",
+    "en-US": "Repeated searches found no promising 80-chain route; retrying"
+  },
+  "mansion.state.goal-retry-timeout": {
+    "zh-CN": "游戏未完成重开，请检查小游戏画面后重新开始",
+    "zh-TW": "遊戲未完成重開，請檢查小遊戲畫面後重新開始",
+    "en-US": "The game did not finish restarting. Check its screen and start again."
   },
   "mansion.state.goal-completed": {
     "zh-CN": "80 连锁目标已完成，已停止",

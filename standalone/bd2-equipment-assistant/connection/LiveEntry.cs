@@ -15,7 +15,7 @@ public static class LiveEntry {
  static LiveEntry(){EquipmentTransport.Configure();}
  public static string Fingerprint=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(typeof(LiveEntry).Module.ModuleVersionId.ToString())));
  public static string Root=>Path.Combine(Environment.GetEnvironmentVariable("BD2_EQUIPMENT_DATA_ROOT")??Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BD2EquipmentAssistant"),"live");
- static Process Game(){var games=Process.GetProcessesByName("BrownDust II");if(games.Length!=1){foreach(var p in games)p.Dispose();throw new InvalidOperationException("Open exactly one game instance and enter the home screen.");}return games[0];}
+ static Process Game()=>BD2.LocalIpc.HostedConnection.FindGame(n=>string.Equals(n,"BrownDust II",StringComparison.OrdinalIgnoreCase),"Open exactly one game instance and enter the home screen.")??throw new InvalidOperationException("Open exactly one game instance and enter the home screen.");
  static byte[] Resource(string name){using var s=typeof(LiveEntry).Assembly.GetManifestResourceStream(name)??throw new InvalidDataException("Missing embedded component: "+name);using var b=new MemoryStream();s.CopyTo(b);return b.ToArray();}
  public static void Prepare(string managed,string output){
   Directory.CreateDirectory(output);var assembly=typeof(LiveEntry).Assembly; using var adapter=new BD2Equipment.Compatibility.ClientAdapter(managed); LiveJson.Write(Path.Combine(output,"compatibility.json"),adapter.Bindings.Report);

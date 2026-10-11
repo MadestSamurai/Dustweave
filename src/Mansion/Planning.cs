@@ -136,25 +136,47 @@ namespace Dustweave.Mansion
 
     public sealed class PlannerOptions
     {
-        // Build26's 83-chain run used 3 / 110 / 0 before nearby-pickup detours
-        // were introduced. Keep this goal profile fixed when normal tuning changes.
+        // Achievement runs accept uncertain distant threats, but still reject
+        // imminent collisions. Their route objective is independent of coverage.
         public static PlannerOptions ForGoal(int targetChain, PlannerOptions normal = null)
         {
             return RunGoal.Normalize(targetChain) == 80
-                ? new PlannerOptions(3f, 110, 0, false)
+                ? new PlannerOptions(1f, 180, 0, false, 80)
                 : normal ?? new PlannerOptions();
         }
         public readonly float CollisionHorizon;
         public readonly double GuideWeight;
         public readonly float WaitSeconds;
         public readonly bool CollectNearbyItems;
-        public PlannerOptions(float collisionHorizon = 3f, double guideWeight = 110, float waitSeconds = 0, bool collectNearbyItems = true)
+        public readonly int ChainTarget;
+        public PlannerOptions(float collisionHorizon = 3f, double guideWeight = 110, float waitSeconds = 0, bool collectNearbyItems = true, int chainTarget = 0)
         {
             CollisionHorizon = Math.Max(.75f, Math.Min(3, collisionHorizon));
             GuideWeight = Math.Max(30, Math.Min(250, guideWeight));
             WaitSeconds = Math.Max(0, Math.Min(.4f, waitSeconds));
             CollectNearbyItems = collectNearbyItems;
+            ChainTarget = RunGoal.Normalize(chainTarget);
         }
+    }
+
+    public struct ChainProgress
+    {
+        public int Current, Peak;
+        public float Remaining;
+        public bool Broken;
+        public ChainProgress(int current, float remaining)
+        { Current = Peak = Math.Max(0, current); Remaining = Math.Max(0, remaining); Broken = false; }
+        public void Advance(float seconds, bool candy, float window)
+        {
+            Remaining -= seconds;
+            if (Remaining < 0) { Broken |= Current > 0; Current = 0; }
+            if (!candy) return;
+            Current++;
+            Peak = Math.Max(Peak, Current);
+            Remaining = window;
+        }
+        public double Value(int target)
+        { return Math.Min(target, Peak) * 1000.0 + Math.Min(target, Current) * 25.0; }
     }
 
     public static class PickupPolicy
@@ -177,6 +199,7 @@ namespace Dustweave.Mansion
         public double Score, Milliseconds, GuideMilliseconds;
         public float Wait;
         public int Expanded;
+        public int ProjectedChain;
         public bool Unsafe;
     }
 
@@ -188,6 +211,7 @@ namespace Dustweave.Mansion
             public float X, Z, Time, FirstWait;
             public Heading Heading;
             public double Score, Rank;
+            public ChainProgress Chain;
             public Threat[] Threats = Array.Empty<Threat>();
             public readonly int[] Visited = new int[34];
         }
@@ -211,12 +235,15 @@ namespace Dustweave.Mansion
             guide.Invalidate();
         }
 
-        public PlanResult Choose(float x, float z, float speed, Threat[] enemies, bool[] coins, int exit, float now, bool invincible, float yaw = float.NaN, float turnSeconds = Motion.DefaultTurnSeconds, bool preserveChain = false)
+        public PlanResult Choose(float x, float z, float speed, Threat[] enemies, bool[] coins, int exit, float now, bool invincible, float yaw = float.NaN, float turnSeconds = Motion.DefaultTurnSeconds, bool preserveChain = false, int currentChain = 0, float chainRemaining = 0, float chainWindow = 0)
         {
             var watch = Stopwatch.StartNew();
             var result = new PlanResult();
             speed = Math.Max(0.1f, speed);
             int start = graph.Nearest(x, z);
+            bool chainGoal = options.ChainTarget > 0 && chainWindow > 0;
+            // An open exit is irrelevant while collectible chain links remain.
+            if (chainGoal && Array.Exists(coins, value => value)) exit = -1;
             if (start == exit)
             {
                 result.Next = exit;
@@ -234,7 +261,8 @@ namespace Dustweave.Mansion
             for (int n = 0; n < visits.Length; n++)
                 visits[n] *= decay;
             visits[start] += 1;
-            int preferred = exit < 0 ? guide.Next(start, coins, speed, now, preserveChain) : -1;
+            int preferred = exit < 0 ? guide.Next(start, coins, speed, now, preserveChain,
+                chainGoal ? options.ChainTarget : 0, currentChain, chainRemaining, chainWindow) : -1;
             result.Guide = guide.LastSearch;
             result.GuideNext = preferred;
             result.GuideMilliseconds = watch.Elapsed.TotalMilliseconds;
@@ -249,6 +277,7 @@ namespace Dustweave.Mansion
                     Z = z,
                     Heading = Heading.At(yaw),
                     Threats = enemies,
+                    Chain = new ChainProgress(currentChain, chainRemaining),
                     Length = 1
                 }
             };
@@ -295,7 +324,7 @@ namespace Dustweave.Mansion
                 foreach (var p in beam)
                     foreach (int n in graph.Edges[p.Node])
                     {
-                        if (p.Length > 1 && p.Visited[p.Length - 2] == n && graph.Edges[p.Node].Length > 1)
+                        if (!chainGoal && p.Length > 1 && p.Visited[p.Length - 2] == n && graph.Edges[p.Node].Length > 1)
                             continue;
                         float dx = graph.X[n] - p.X, dz = graph.Z[n] - p.Z;
                         float duration = (float)Math.Sqrt(dx * dx + dz * dz) / speed;
@@ -312,6 +341,7 @@ namespace Dustweave.Mansion
                             FirstWait = p.FirstWait,
                             Heading = p.Heading,
                             Score = p.Score,
+                            Chain = p.Chain,
                             Threats = (Threat[])p.Threats.Clone()
                         };
                         Array.Copy(p.Visited, q.Visited, p.Length);
@@ -323,6 +353,7 @@ namespace Dustweave.Mansion
                             if (p.Visited[i] == n)
                                 revisited = true;
                         double reward = exit < 0 && coins[n] && !revisited ? 12 : 0;
+                        if (chainGoal) q.Chain.Advance(duration, coins[n] && !revisited, chainWindow);
                         if (n == exit && danger < 500)
                         {
                             double terminalValue = 10000 - q.Time * 10 + p.Score - danger;
@@ -353,6 +384,23 @@ namespace Dustweave.Mansion
                         if (nearest == short.MaxValue)
                             nearest = 0;
                         double value = q.Score - nearest * (exit >= 0 ? 3.0 : 2.0) + Math.Min(4, graph.Edges[n].Length) * 0.15;
+                        if (chainGoal)
+                        {
+                            value += q.Chain.Value(options.ChainTarget);
+                            // Do not let a fourteen-step horizon undo a verified
+                            // longer chain route just for one extra nearby coin.
+                            if (q.First == preferred && !q.Chain.Broken && result.Guide != null)
+                                value += Math.Max(0, Math.Min(options.ChainTarget, result.Guide.ProjectedChain)
+                                    - Math.Min(options.ChainTarget, q.Chain.Peak)) * 1000.0;
+                            // Reaching the goal is terminal: no fictitious safe
+                            // continuation or visit to the exit is required.
+                            if (q.Chain.Current >= options.ChainTarget && danger < 500)
+                            {
+                                double reached = 1000000 - q.Time * 100 + q.Score;
+                                if (reached > terminalBest)
+                                { terminalBest = reached; terminalNext = q.First; terminalWait = q.FirstWait; }
+                            }
+                        }
                         q.Rank = value;
                         if (danger < 500)
                         {
@@ -362,6 +410,7 @@ namespace Dustweave.Mansion
                                 depthBest = value;
                                 depthNext = q.First;
                                 depthWait = q.FirstWait;
+                                result.ProjectedChain = q.Chain.Peak;
                             }
                         }
 

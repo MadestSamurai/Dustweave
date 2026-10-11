@@ -20,7 +20,7 @@ public sealed class GamePort:IClientPort
 {
     private readonly string root;
     public GamePort(string? root=null){this.root=root??Identity.Root;BD2.LocalIpc.DesktopFiles.Configure(this.root,Identity.LiveEntries);}
-    public GameProcess? Find(){var all=Process.GetProcessesByName("BrownDust II");try{if(all.Length>1)throw new InvalidOperationException("检测到多个游戏进程，请只保留一个。");if(all.Length==0)return null;var p=all[0];return new(p.Id,p.StartTime.ToUniversalTime().Ticks,p.MainModule?.FileName??throw new InvalidOperationException("无法读取游戏路径，请使用与游戏相同的权限。"));}finally{foreach(var p in all)p.Dispose();}}
+    public GameProcess? Find(){using var p=BD2.LocalIpc.HostedConnection.FindGame(n=>string.Equals(n,"BrownDust II",StringComparison.OrdinalIgnoreCase),"检测到多个游戏进程，请只保留一个。");if(p==null)return null;return new(p.Id,p.StartTime.ToUniversalTime().Ticks,p.MainModule?.FileName??throw new InvalidOperationException("无法读取游戏路径，请使用与游戏相同的权限。"));}
     public Snapshot? Read()=>JsonFiles.Read<Snapshot>(Path.Combine(root,"snapshot.json"));
     public void Write(Control command)=>JsonFiles.Write(Path.Combine(root,"control.json"),command);
     private sealed class Connection

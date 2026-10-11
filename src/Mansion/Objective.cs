@@ -8,6 +8,19 @@ namespace Dustweave.Mansion.Runtime
 {
     public sealed partial class Engine
     {
+        int RoundMaximum()
+        {
+            var record = manager == null ? null : Bound(manager, "scoreRecord");
+            return record == null ? 0 : Convert.ToInt32(record.GetType().GetMethod(Bindings.Names["maxChain"], All).Invoke(record, null));
+        }
+
+        float ChainWindow()
+        {
+            if (ruler == null) return 0;
+            var rules = Bound(ruler, "chainRules");
+            return Convert.ToSingle(rules.GetType().GetMethod(Bindings.Names["chainWindow"], All).Invoke(rules, null));
+        }
+
         object Objective()
         {
             var hud = manager == null ? null : Typed<MansionRunawayHUD>(manager);
@@ -52,7 +65,8 @@ namespace Dustweave.Mansion.Runtime
                 Seconds = seconds,
                 OrdinaryRemaining = ordinary,
                 ExitOpen = open,
-                Goal = open ? "exit" : ordinary > 0 ? "candy" : "transition"
+                Goal = RunGoal.AwaitSettlement(targetChain, maxChain) ? "settle-chain" :
+                    targetChain > 0 ? "chain" : open ? "exit" : ordinary > 0 ? "candy" : "transition"
             };
         }
     }

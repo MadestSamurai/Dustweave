@@ -204,8 +204,8 @@ public static class DailySandbox
         foreach(string setting in new[]{"OpenKeyPath","OpenIpcPath","OpenPipePath","OpenFilePath","BreakoutProcess","BreakoutFolder","BreakoutDocument"})
             if(!string.IsNullOrWhiteSpace(await Run(installation,"SbieIni.exe",["query",box,setting],token)))
                 throw new InvalidOperationException("隔离空间包含额外的共享或退出隔离设置，请先移除它们："+setting);
-        // Legacy integrated tools enumerate by game name before checking the shared
-        // connection descriptor. Keep unrelated host/box games out of that view.
+        // Keep unrelated host/box processes out of the isolated desktop. Integrated
+        // tools also validate the exact game lifetime supplied by their parent.
         foreach(string setting in new[]{"HideOtherBoxes","HideNonSystemProcesses"})
             if((await Run(installation,"SbieIni.exe",["query",box,setting],token)).Trim()!="y")
                 await Run(installation,"SbieIni.exe",["set",box,setting,"y"],token);

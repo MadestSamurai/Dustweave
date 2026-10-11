@@ -3,7 +3,7 @@ namespace BD2SecretVision;
 public sealed record GameProcess(int Pid,long Start,string File);
 public sealed class Connection {
  public string Root{get;}public Connection(string? root=null){Root=root??Files.Root;BD2.LocalIpc.DesktopFiles.Configure(Root,Files.LiveEntries);}
- public static GameProcess? Find(){var games=Process.GetProcessesByName("BrownDust II");try{if(games.Length>1)throw new InvalidOperationException("multiple-games");if(games.Length==0)return null;var p=games[0];return new(p.Id,p.StartTime.ToUniversalTime().Ticks,p.MainModule!.FileName);}finally{foreach(var p in games)p.Dispose();}}
+ public static GameProcess? Find(){using var p=BD2.LocalIpc.HostedConnection.FindGame(n=>string.Equals(n,"BrownDust II",StringComparison.OrdinalIgnoreCase),"multiple-games");if(p==null)return null;return new(p.Id,p.StartTime.ToUniversalTime().Ticks,p.MainModule!.FileName);}
  public Snapshot? Read()=>Files.Read<Snapshot>(Path.Combine(Root,"state.json"));
  public static bool Fresh(Snapshot? s,GameProcess? g,DateTimeOffset now)=>s!=null&&g!=null&&s.Protocol==1&&s.Pid==g.Pid&&s.ProcessStart==g.Start&&s.AtUtc>now.AddSeconds(-6)&&s.AtUtc<=now.AddSeconds(2);
  public sealed class Record {public int Pid{get;set;}public long Start{get;set;}public string Fingerprint{get;set;}="";public string State{get;set;}="";public long Address{get;set;}public string Error{get;set;}="";}

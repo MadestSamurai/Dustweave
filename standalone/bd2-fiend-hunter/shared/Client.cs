@@ -12,7 +12,7 @@ public static class Client {
  public static readonly string Root=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BD2FiendHunter");
  static Client(){DesktopFiles.Configure(Root,"runtime.json|state.json|error.json|control.json|command.json|stop|receipt-*");}
  static PipeClient? pipe;static bool acquired;
- static PipeClient Reader(){if(pipe!=null)return pipe;using var game=Process.GetProcessesByName("BrownDust II").SingleOrDefault()??throw new IOException("请先启动游戏");return pipe=DesktopFiles.Connect(Root,game.Id,game.StartTime.ToUniversalTime().Ticks);}
+ static PipeClient Reader(){if(pipe!=null)return pipe;using var game=HostedConnection.FindGame(n=>string.Equals(n,"BrownDust II",StringComparison.OrdinalIgnoreCase),"检测到多个游戏进程，请只保留一个。")??throw new IOException("请先启动游戏");return pipe=DesktopFiles.Connect(Root,game.Id,game.StartTime.ToUniversalTime().Ticks);}
  public static void Acquire(){if(!acquired){var p=Reader();p.Open(p.Fingerprint());acquired=true;}}
  public static readonly JsonSerializerOptions Options=new(){IncludeFields=true};
  public static JsonObject? State(){try{Reader();return JsonNode.Parse(AtomicFiles.Read(Path.Combine(Root,"state.json")))!.AsObject();}catch(Exception e)when(e is IOException or JsonException){return null;}}
@@ -21,7 +21,7 @@ public static class Client {
   for(int i=0;i<12;i++){if(AtomicFiles.TryWrite(p,text))return;Thread.Sleep(25);}
   throw new IOException("控制文件暂时被占用："+file);
  }
- public static async Task Connect(){using var game=Process.GetProcessesByName("BrownDust II").SingleOrDefault()??throw new Exception("请先启动游戏");
+ public static async Task Connect(){using var game=HostedConnection.FindGame(n=>string.Equals(n,"BrownDust II",StringComparison.OrdinalIgnoreCase),"检测到多个游戏进程，请只保留一个。")??throw new Exception("请先启动游戏");
   pipe=DesktopFiles.Connect(Root,game.Id,game.StartTime.ToUniversalTime().Ticks);if(HostedConnection.TryOpen(pipe,game.Id,game.StartTime.ToUniversalTime().Ticks)){acquired=true;return;} var managed=Path.Combine(Path.GetDirectoryName(game.MainModule!.FileName)!,"BrownDust II_Data","Managed");
   var hook=await Task.Run(()=>BD2FiendHunter.Compatibility.HookCompiler.Prepare(managed));
   Directory.CreateDirectory(Root);File.WriteAllText(Path.Combine(Root,"compatibility.json"),JsonSerializer.Serialize(hook.Report,Options));

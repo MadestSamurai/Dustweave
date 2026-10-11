@@ -9,7 +9,7 @@ namespace Dustweave.Compatibility;
 /// <summary>Resolve semantic anchors from the installed client, never a release-time symbol map.</summary>
 public static class MansionCompiler
 {
-    public static string Fingerprint => MetadataIndex.Hash("mansion-v1|" + typeof(MansionCompiler).Module.ModuleVersionId);
+    public static string Fingerprint => MetadataIndex.Hash("mansion-v2|" + typeof(MansionCompiler).Module.ModuleVersionId);
 
     public static byte[] Prepare(string managed)
     {
@@ -102,6 +102,11 @@ public static class MansionCompiler
         var chainChange = ruler.Methods.Single(m => m.HasBody && m.Body.Instructions.Any(i => i.Operand is MethodReference f && f.Name == "RecordScore") && m.Body.Instructions.Any(i => i.Operand is MethodReference f && f.Name == "NotifyChainChanged"));
         Add("chain", chainChange.Body.Instructions.Where(i => i.OpCode == OpCodes.Stfld).Select(i => (FieldReference)i.Operand).Single(f => f.FieldType.FullName == "System.Int32").Name);
         Add("chainRemaining", chainChange.Body.Instructions.Where(i => i.OpCode == OpCodes.Stfld).Select(i => (FieldReference)i.Operand).Single(f => f.FieldType.FullName == "System.Single").Name);
+        var chainTimerWrite = chainChange.Body.Instructions.Single(i => i.OpCode == OpCodes.Stfld && i.Operand is FieldReference f && f.FieldType.FullName == "System.Single");
+        var chainWindow = chainChange.Body.Instructions.TakeWhile(i => i != chainTimerWrite).Select(i => i.Operand).OfType<MethodReference>().Last(m => m.ReturnType.FullName == "System.Single" && m.Parameters.Count == 0);
+        Add("chainRules", Field(ruler, f => f.FieldType.FullName == chainWindow.DeclaringType.FullName).Name);
+        Add("chainWindow", chainWindow.Name);
+        Add("rareRewardLookup", chainWindow.DeclaringType.Resolve().Methods.Single(m => m.ReturnType.FullName == "System.Boolean" && m.Parameters.Count == 2 && m.Parameters[0].ParameterType.FullName == "System.Int32" && m.Parameters[1].ParameterType.FullName == "System.Int32&").Name);
         var recordMethod = manager.Methods.Single(m => m.Name == "RecordScore");
         var scoreField = recordMethod.Body.Instructions.Select(i => i.Operand).OfType<FieldReference>().First();
         Add("scoreRecord", scoreField.Name);
@@ -114,6 +119,7 @@ public static class MansionCompiler
         Add("maxChain", chainGetter.Name);
         var sourceNames = typeof(MansionCompiler).Assembly.GetManifestResourceNames().Where(n => n.StartsWith("Mansion.") && n.EndsWith(".cs") || n.StartsWith("Hook.Ipc.")).ToArray();
         var sources = sourceNames.Select(n => CSharpSyntaxTree.ParseText(Encoding.UTF8.GetString(DailyHookCompiler.Resource(n)), path: n)).ToList();
+        sources.Add(CSharpSyntaxTree.ParseText(EntrySource(module), path: "Mansion.EntryNative.generated.cs"));
         sources.Add(CSharpSyntaxTree.ParseText("namespace Dustweave.Mansion.Runtime { static class Bindings { public static readonly System.Collections.Generic.Dictionary<string,string> Names = new System.Collections.Generic.Dictionary<string,string>{" + string.Join(",", names.Select(p => "{" + JsonSerializer.Serialize(p.Key) + "," + JsonSerializer.Serialize(p.Value) + "}")) + "}; } }"));
         sources.Add(CSharpSyntaxTree.ParseText("namespace BD2.LocalIpc { public static class Build { public const string Fingerprint=" + JsonSerializer.Serialize(Fingerprint) + "; } }"));
         var refs = new List<MetadataReference>();
@@ -133,5 +139,54 @@ public static class MansionCompiler
         if (!result.Success)
             throw new InvalidOperationException(string.Join("\n", result.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).Take(25)));
         return output.ToArray();
+    }
+
+    static string EntrySource(ModuleDefinition module)
+    {
+        // The native Start handler owns the schedule check. Resolve it from
+        // semantic calls, not this client's obfuscated names or an event ID.
+        var main = module.Types.Single(t => t.FullName == "MansionRunawayMainUI");
+        var start = main.Methods.Single(m => m.HasBody && m.Body.Instructions.Any(i =>
+            i.OpCode == OpCodes.Ldc_I4 && i.Operand is int n && n == 60110));
+        var calls = start.Body.Instructions.Select(i => i.Operand).OfType<MethodReference>().Select(m => m.Resolve()).ToArray();
+        var schedule = calls.Single(m => m.IsStatic && m.IsGetter && m.ReturnType.FullName == "System.Int32");
+        var available = calls.Single(m => m.IsStatic && m.ReturnType.FullName == "System.Boolean" &&
+            m.Parameters.Count == 1 && m.Parameters[0].ParameterType.FullName == "System.Int32");
+        var context = schedule.DeclaringType;
+        var scheduleProperty = context.Properties.Single(p => p.GetMethod == schedule);
+        var game = context.Properties.Single(p => p != scheduleProperty && p.GetMethod.IsStatic && p.PropertyType.FullName == "System.Int32");
+        var origin = context.Properties.Single(p => p.GetMethod.IsStatic && p.PropertyType.Resolve() is { IsEnum: true } e && e.Fields.Any(f => f.Name == "MiniGameHub"));
+        var open = context.Methods.Single(m => m.IsPublic && m.IsStatic && m.Parameters.Count == 4 &&
+            m.Parameters[0].ParameterType.FullName == origin.PropertyType.FullName &&
+            m.Parameters[1].ParameterType.FullName == "System.Int32" && m.Parameters[2].ParameterType.FullName == "System.Int32");
+        var table = open.Body.Instructions.Select(i => i.Operand).OfType<MethodReference>().Select(m => m.Resolve())
+            .Single(m => m.IsStatic && m.ReturnType.FullName == "Proto.Design.common.PackEventMiniGameTable" && m.Parameters.Count == 1);
+        var scheduleRow = available.Body.Instructions.Select(i => i.Operand).OfType<MethodReference>().Select(m => m.Resolve())
+            .Single(m => m.IsStatic && m.ReturnType.FullName == "Proto.Net.EventScheduleDBInfo" && m.Parameters.Count == 1);
+        var callback = (GenericInstanceType)open.Parameters[3].ParameterType;
+        int packManKind = Convert.ToInt32(callback.GenericArguments[0].Resolve().Fields.Single(f => f.Name == "PackMan").Constant);
+        string Qual(TypeReference t) => "global::" + t.FullName.Replace('/', '.');
+        string Call(MethodDefinition m) => Qual(m.DeclaringType) + "." + m.Name;
+        string owner = Qual(context);
+        return $$"""
+            namespace Dustweave.Mansion.Runtime {
+                static class EntryNative {
+                    public static EntryIdentity Read() { return new EntryIdentity(
+                        {{owner}}.{{origin.Name}}.ToString(), {{owner}}.{{scheduleProperty.Name}}, {{owner}}.{{game.Name}}); }
+                    public static bool Available(EntryIdentity entry) {
+                        if (entry == null || !entry.Complete) return false;
+                        var row = {{Call(scheduleRow)}}(entry.ScheduleId);
+                        var game = {{Call(table)}}(entry.MiniGameId);
+                        return row != null && row.EventId == entry.MiniGameId && game != null &&
+                            (int)game.EventClearType == {{packManKind}} && {{Call(available)}}(entry.ScheduleId);
+                    }
+                    public static void Open(EntryIdentity entry) {
+                        if (!Available(entry)) throw new System.InvalidOperationException("mansion-entry-unavailable");
+                        {{Call(open)}}(({{Qual(origin.PropertyType)}})System.Enum.Parse(typeof({{Qual(origin.PropertyType)}}), entry.Origin),
+                            entry.ScheduleId, entry.MiniGameId, null);
+                    }
+                }
+            }
+            """;
     }
 }

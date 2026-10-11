@@ -19,7 +19,7 @@ public static class DailyToolControl
 public sealed record DailyToolProcessState(string ToolId, int ProcessId, long StartTicks, string Executable);
 
 /// <summary>Owns only windows started by this menu. Never kills the game or a hung tool.</summary>
-public sealed class DailyToolSession(string root, string executable, Func<DailyToolDefinition, ProcessStartInfo>? launcher = null, TimeSpan? closeTimeout = null, Func<DailyToolDefinition, string>? mutexName = null)
+public sealed class DailyToolSession(string root, string executable, Func<DailyToolDefinition, ProcessStartInfo>? launcher = null, TimeSpan? closeTimeout = null, Func<DailyToolDefinition, string>? mutexName = null, Func<int,bool>? containsProcess = null)
 {
     private readonly string path = Path.Combine(root, "tools", "window.json");
     private readonly string executable = Path.GetFullPath(executable);
@@ -42,9 +42,10 @@ public sealed class DailyToolSession(string root, string executable, Func<DailyT
         {
             using var process = Process.GetProcessById(state.ProcessId);
             return !process.HasExited && process.StartTime.ToUniversalTime().Ticks == state.StartTicks
+                && (containsProcess ?? Accounts.SandboxProcessScope.Contains)(state.ProcessId)
                 && string.Equals(process.MainModule?.FileName, executable, StringComparison.OrdinalIgnoreCase);
         }
-        catch (Exception e) when (e is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception) { return false; }
+        catch (Exception e) when (e is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception or IOException) { return false; }
     }
     public async Task OpenAsync(string id, bool controlReserved=false)
     {

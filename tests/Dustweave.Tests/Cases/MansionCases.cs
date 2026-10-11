@@ -22,6 +22,58 @@ internal static class MansionCases
         Check(RunGoal.Decide(true, false, 90, false, true, 0) == ResultAction.Defeated, "ordinary retry-off remains stopped on defeat");
         Check(RunGoal.Decide(true, false, 2, true, true, 0) == ResultAction.Retry, "ordinary retry-on still retries defeat");
         Check(RunGoal.Normalize(81) == 0 && RunGoal.Normalize(-1) == 0, "unsupported target values are not silently accepted");
+        Check(RunGoal.AwaitSettlement(80, 80) && !RunGoal.AwaitSettlement(80, 79) && !RunGoal.AwaitSettlement(0, 90), "only a reached goal stops further clearing before native settlement");
+        var entry = new EntryIdentity("MiniGameHub", 41001, 3001);
+        var retryPolicy = new ChainRetryPolicy();
+        Check(retryPolicy.Observe(10, 10, 80, 68, 0, 41, 3, 1, 29, 0) == ChainRetryReason.None, "quantity shortage is debounced across fresh game frames");
+        Check(retryPolicy.Observe(11, 11, 80, 68, 0, 41, 3, 1, 29, 0) == ChainRetryReason.InsufficientCandy, "broken chain with insufficient candy retries before the timer ends");
+        retryPolicy.Reset();
+        retryPolicy.Observe(10, 10, 80, 30, 30, 48, 3, 1, 78, 0);
+        Check(retryPolicy.Observe(25, 25, 80, 30, 30, 48, 3, 2, 78, 0) == ChainRetryReason.None, "future native chain rewards protect near-eighty opportunities");
+        retryPolicy.Reset();
+        retryPolicy.Observe(0, 0, 80, 5, 5, 100, 3, 1, 45, 0);
+        Check(retryPolicy.Observe(30, 30, 80, 5, 5, 100, 3, 1, 45, 0) == ChainRetryReason.None, "re-reading one bad route is not multiple searches");
+        retryPolicy.Observe(32, 32, 80, 8, 8, 97, 3, 2, 47, 0);
+        Check(retryPolicy.Observe(34, 34, 80, 10, 10, 95, 3, 3, 48, 0) == ChainRetryReason.UnpromisingRoute, "independent poor routes can abandon a map that still has enough candy");
+        Check(retryPolicy.Observe(35, 35, 80, 10, 10, 95, 3, 4, 80, 0) == ChainRetryReason.None, "a viable refreshed route clears the retry suspicion");
+        Check(retryPolicy.Observe(40, 40, 80, 80, 0, 2, 3, 5, 2, 0) == ChainRetryReason.None, "native eighty is never abandoned even after its chain breaks");
+        retryPolicy.Reset();
+        retryPolicy.Observe(1, 1, 80, 4, 4, 90, 0, 1, 77, 0);
+        retryPolicy.Observe(4, 4, 80, 5, 5, 89, 0, 2, 77, 0);
+        Check(retryPolicy.Observe(9, 9, 80, 7, 7, 87, 0, 3, 77, 0) == ChainRetryReason.None, "a near miss receives longer observation");
+        Check(retryPolicy.Observe(14, 14, 80, 9, 9, 85, 0, 4, 77, 0) == ChainRetryReason.UnpromisingRoute, "persistently near-miss maps do not waste the full game timer");
+        Check(retryPolicy.Observe(20, 20, 0, 0, 0, 1, 0, 5, 1, 0) == ChainRetryReason.None, "balanced play never activates chain retries");
+        retryPolicy.Reset();
+        retryPolicy.Observe(0, 0, 80, 0, 0, 100, 0, 1, 40, 0);
+        retryPolicy.Observe(4, 4, 80, 0, 0, 100, 0, 2, 40, 0);
+        Check(retryPolicy.Observe(10, 10, 80, 0, 0, 100, 0, 3, 40, 4) == ChainRetryReason.None, "stale search evidence cannot trigger a retry");
+        var emptyEntry = new EntryIdentity("None", 0, 0);
+        var recovery = new EntryRecovery();
+        recovery.Observe(entry, false);
+        Check(recovery.Decide(entry, false, "None", true, false) == EntryAction.Missing, "an unverified schedule cannot seed recovery");
+        recovery.Observe(entry, true);
+        Check(recovery.Decide(entry, true, "InGame", false, true) == EntryAction.Ready, "valid native retries preserve the current run");
+        foreach (var phase in new[] { "Entering", "ReloadingStage", "Exiting" })
+            Check(recovery.Decide(emptyEntry, false, phase, true, true) == EntryAction.Wait, "a visible lobby or old result cannot override transition " + phase);
+        Check(recovery.Decide(emptyEntry, true, "None", true, false) == EntryAction.Reopen, "returning to the territory with a cleared entry reopens the verified minigame");
+        Check(recovery.Decide(emptyEntry, true, "InGame", false, true) == EntryAction.ExitToRestore, "retry with a cleared schedule first exits through the native result");
+        Check(recovery.Decide(emptyEntry, true, "InGame", false, false) == EntryAction.Missing, "an unfinished run cannot be silently replaced");
+        Check(recovery.Decide(emptyEntry, true, "None", false, false) == EntryAction.Missing, "no reopening after the user leaves the minigame lobby");
+        Check(recovery.Decide(emptyEntry, false, "None", true, false) == EntryAction.Unavailable, "expired or removed schedules cannot be restored");
+        foreach (var changed in new[] { new EntryIdentity("MiniGameHub", 41002, 3001), new EntryIdentity("MiniGameHub", 41001, 3002), new EntryIdentity("EventHub", 41001, 3001), new EntryIdentity("None", 41001, 0) })
+            Check(recovery.Decide(changed, true, "None", true, false) == EntryAction.Changed, "conflicting or partially cleared context is not overwritten: " + changed.Origin + changed.ScheduleId + changed.MiniGameId);
+        recovery.Reopening();
+        Check(recovery.Decide(emptyEntry, true, "None", true, false) == EntryAction.Missing && recovery.Recoveries == 1, "failed entry recovery cannot loop indefinitely");
+        Check(recovery.Decide(entry, true, "None", true, false) == EntryAction.Ready, "confirmed native context resumes after recovery");
+        recovery.NewRound();
+        Check(recovery.Decide(emptyEntry, true, "None", true, false) == EntryAction.Reopen, "another completed round has its own bounded recovery");
+        recovery = new EntryRecovery();
+        Check(recovery.Decide(emptyEntry, true, "None", true, false) == EntryAction.Missing, "a new control run never borrows an old activity identity");
+        var diagnostic = MansionClient.DiagnosticState(System.Text.Json.Nodes.JsonNode.Parse("""
+            {"At":"2026-10-11T00:00:00Z","Reason":"entry-missing","ManagerPhase":"None","Entry":{"ScheduleId":0},"SavedEntry":{"ScheduleId":41001},"EntryRecoveries":1,"Board":{"Tiles":[1,2,3]},"UIs":["private text"]}
+            """)!.AsObject());
+        Check(diagnostic["Entry"]?["ScheduleId"]?.GetValue<int>() == 0 && diagnostic["SavedEntry"]?["ScheduleId"]?.GetValue<int>() == 41001 && diagnostic["ManagerPhase"]?.ToString() == "None", "exportable diagnostic retains cleared and original activity context");
+        Check(!diagnostic.ContainsKey("Board") && !diagnostic.ContainsKey("UIs") && DailyDiagnosticExport.Allowed("tools/mansion-runaway-runtime-error.json"), "bounded restart diagnostic excludes board frames and is included in diagnostic exports");
         Check(PickupPolicy.Benefit("SpeedUp", 1, .4f, 0, 50, 5, 25) > 0, "adjacent speed pickup pays for a round trip");
         Check(PickupPolicy.Benefit("SpeedUp", 2, .4f, 0, 50, 5, 25) == 0, "far speed pickup is not worth its travel");
         Check(PickupPolicy.Benefit("SpeedUp", 1, .4f, 0, 5, 5, 25) == 0, "finish the last candy instead of collecting another item");
@@ -30,12 +82,20 @@ internal static class MansionCases
         Check(PickupPolicy.Benefit("NightVision", 1, .4f, 14, 50, 5, 0) == 0, "visibility-only item does not divert the route");
         var normalOptions = PlannerOptions.ForGoal(0);
         var chainOptions = PlannerOptions.ForGoal(80, new PlannerOptions(1, 180, .4f, true));
-        Check(chainOptions.CollisionHorizon == 3 && chainOptions.GuideWeight == 110 && chainOptions.WaitSeconds == 0 && !chainOptions.CollectNearbyItems, "eighty-chain goal pins the recorded build26 profile despite normal tuning");
+        Check(chainOptions.ChainTarget == 80 && chainOptions.CollisionHorizon < normalOptions.CollisionHorizon && chainOptions.WaitSeconds == 0 && !chainOptions.CollectNearbyItems, "eighty-chain goal has its own objective and shorter hard collision horizon without item detours");
         Check(normalOptions.CollectNearbyItems && normalOptions.CollisionHorizon == 3 && normalOptions.GuideWeight == 110 && normalOptions.WaitSeconds == 0, "ordinary mode keeps the current balanced planner");
         Check(PlannerOptions.ForGoal(0).CollectNearbyItems && normalOptions.CollectNearbyItems, "leaving goal mode restores pickups without contaminating the normal profile");
         var researchOptions = new PlannerOptions(2, 180, .2f, false);
         Check(ReferenceEquals(PlannerOptions.ForGoal(0, researchOptions), researchOptions), "ordinary research overrides remain available");
-        Check(ReferenceEquals(PlannerOptions.ForGoal(79, researchOptions), researchOptions), "an unsupported goal cannot activate the historical planner");
+        Check(ReferenceEquals(PlannerOptions.ForGoal(79, researchOptions), researchOptions), "an unsupported goal cannot activate the chain planner");
+        var chainProgress = new ChainProgress(79, .3f);
+        chainProgress.Advance(.2f, true, .9f);
+        Check(chainProgress.Current == 80 && Math.Abs(chainProgress.Remaining - .9f) < .001, "pickup before the live deadline reaches eighty and resets to the native window");
+        chainProgress.Advance(1, true, .9f);
+        Check(chainProgress.Current == 1 && chainProgress.Peak == 80, "an empty gap breaks the live chain without erasing its real peak");
+        var narrowWindow = new ChainProgress(50, .3f);
+        narrowWindow.Advance(.4f, true, .9f);
+        Check(narrowWindow.Current == 1, "the first pickup uses remaining time rather than a fresh full timer");
         var heading = Heading.At(350);
         heading.Aim(10, 5f / 60);
         float previous = 350;
@@ -60,6 +120,24 @@ internal static class MansionCases
         plan = new Planner(line).Choose(5.3f, 0, 5, [], [false, false, false, false ], 3, 2, false);
         Check(plan.Next == 3, "enter exit center when already its nearest node");
         var loop = new MazeGraph([0, 2, 4, 4, 2, 0], [0, 0, 0, 2, 2, 2], [[1, 5], [0, 2], [1, 3], [2, 4], [3, 5], [4, 0]]);
+        var goalFork = new MazeGraph([0, 1, -2], [0, 0, 0], [[1, 2], [0], [0]]);
+        plan = new Planner(goalFork, chainOptions).Choose(0, 0, 5, [], [false, true, true], 2, 1, false,
+            currentChain: 79, chainRemaining: .3f, chainWindow: .9f);
+        Check(plan.Next == 1 && !plan.Unsafe, "live deadline and eighty-chain target beat an open exit and clearing both branches");
+        plan = new Planner(loop, chainOptions).Choose(0, 0, 5,
+            [new Threat { X = 2f, Z = 0, Node = 1, Next = 0, Destination = 0, Speed = 4, Radius = 1.05f, State = 1, StateRemaining = 10 }],
+            [false, true, true, true, true, true], -1, 1, false, currentChain: 79, chainRemaining: .9f, chainWindow: .9f);
+        Check(plan.Next == 5 && !plan.Unsafe, "aggressive goal still rejects an immediate head-on catch");
+        var chainEdges = Enumerable.Range(0, 92).Select(_ => new List<int>()).ToArray();
+        for (int i = 0; i < 90; i++) { chainEdges[i].Add(i + 1); chainEdges[i + 1].Add(i); }
+        chainEdges[0].Insert(0, 91); chainEdges[91].Add(0);
+        var chainMaze = new MazeGraph(Enumerable.Range(0, 92).Select(i => i == 91 ? -2f : i * 2f).ToArray(), new float[92], chainEdges.Select(e => e.ToArray()).ToArray());
+        var chainCandy = Enumerable.Range(0, 92).Select(i => i != 0).ToArray();
+        var goalGuide = new RouteGuide(chainMaze);
+        var goalRoute = goalGuide.Search(0, chainCandy, 5, true, 80, 70, .5f, .5f);
+        Check(goalRoute.Length == 11 && goalRoute[1] == 1 && !goalRoute.Contains(91), "chain guide skips an isolated candy and stops its route at eighty instead of clearing the maze");
+        Check(goalGuide.LastSearch?.ProjectedChain == 80 && goalGuide.LastSearch.TargetChain == 80, "route evidence identifies the goal and projected chain");
+        Check(goalRoute.Zip(goalRoute.Skip(1)).All(p => chainMaze.Edges[p.First].Contains(p.Second)), "chain-first route retains real corridor connectivity");
         plan = new Planner(loop).Choose(0, 0, 5, [new Threat { X = 1.1f, Z = 0, Node = 1, Next = 0, Destination = 0, Speed = 4, Radius = 1.05f, State = 1, StateRemaining = 10 }], [false, true, true, true, true, true ], -1, 1, false);
         Check(plan.Next == 5, "choose escape branch instead of a head-on collision");
         plan = new Planner(loop).Choose(4, 2, 5, [new Threat { X = 4, Z = .2f, Node = 2, Next = 1, Destination = 3, Speed = 4, Radius = 1.05f, State = 0, StateRemaining = 5, NativeX = [4, 4], NativeZ = [.2f, 2], NativeCursor = 1, NativeSeconds = 1 }], [true, true, true, false, true, true ], -1, 1, false);

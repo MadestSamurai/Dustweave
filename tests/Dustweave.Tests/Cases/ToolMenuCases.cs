@@ -41,6 +41,11 @@ internal static class ToolMenuCases
         var state = new DailyToolProcessState("sichuan", process.Id, process.StartTime.ToUniversalTime().Ticks, executable);
         DailyJson.Write(statePath, state);
         Check(manager.Current == state, "reopening menu recognizes original process");
+        var foreignScope = new DailyToolSession(directory, executable, containsProcess: _ => false);
+        Check(foreignScope.Current == null, "a copied window journal cannot select another sandbox's tool");
+        var unknownScope = new DailyToolSession(directory, executable, containsProcess: _ => throw new IOException("scope unavailable"));
+        Check(unknownScope.Current == null, "unknown window scope cannot select a process");
+        Check(manager.Current == state, "foreign scope lookup leaves original window journal intact");
         DailyJson.Write(statePath, state with { StartTicks = state.StartTicks + 1 });
         Check(manager.Current == null, "reused process id rejected");
         DailyJson.Write(statePath, state with { Executable = executable + ".other" });
@@ -50,5 +55,51 @@ internal static class ToolMenuCases
         File.WriteAllText(statePath, "{broken");
         Check(manager.Current == null, "corrupt journal cannot target a process");
         File.Delete(statePath);
+        CheckHostedProcessSelection(Check);
+    }
+
+    private static void CheckHostedProcessSelection(Action<bool,string> check)
+    {
+        string[] keys = ["BD2_DAILY_HOSTED_TOOL", "BD2_DAILY_GAME_PID", "BD2_DAILY_GAME_START"];
+        var saved = keys.ToDictionary(k => k, Environment.GetEnvironmentVariable);
+        using var self = Process.GetCurrentProcess();
+        void Reject(Action action, string name)
+        {
+            bool rejected = false; try { action(); } catch (InvalidOperationException) { rejected = true; }
+            check(rejected, name);
+        }
+        Process? Find(Func<string,bool>? match = null) => BD2.LocalIpc.HostedConnection.FindGame(match ?? (_ => true), "multiple test processes");
+        void Descriptor(string? pid, string? start)
+        {
+            Environment.SetEnvironmentVariable(keys[1], pid);
+            Environment.SetEnvironmentVariable(keys[2], start);
+        }
+        string lifetime = self.StartTime.ToUniversalTime().Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        try
+        {
+            Environment.SetEnvironmentVariable(keys[0], "territory");
+            Descriptor(self.Id.ToString(), lifetime);
+            // Every visible process matches. Only the exact parent-bound lifetime
+            // may win; a global enumeration would report multiple instances here.
+            using (var selected = Find()) check(selected?.Id == self.Id, "hosted tool uses exact parent-bound process despite other visible instances");
+            using (var resumed = Find()) check(resumed?.Id == self.Id, "pause and reconnect retain the same hosted target");
+            Reject(() => { using var ignored = Find(_ => false); }, "host descriptor cannot select an unrelated executable");
+            Descriptor(self.Id.ToString(), (self.StartTime.ToUniversalTime().Ticks + 1).ToString());
+            Reject(() => { using var ignored = Find(); }, "stale process lifetime never falls back to a different game");
+            foreach (var pid in new[] { null, "bad", "0", "-1", int.MaxValue.ToString() })
+            {
+                Descriptor(pid, lifetime);
+                Reject(() => { using var ignored = Find(); }, "missing or invalid hosted process rejected: " + (pid ?? "missing"));
+            }
+            foreach (var start in new[] { null, "bad", "0", "-1" })
+            {
+                Descriptor(self.Id.ToString(), start);
+                Reject(() => { using var ignored = Find(); }, "invalid hosted lifetime rejected: " + (start ?? "missing"));
+            }
+            Environment.SetEnvironmentVariable(keys[0], null);
+            using (var missing = Find(_ => false)) check(missing == null, "standalone missing game remains nullable even with a stale host descriptor");
+            Reject(() => { using var ignored = Find(); }, "standalone ambiguous process selection remains blocked");
+        }
+        finally { foreach (var key in keys) Environment.SetEnvironmentVariable(key, saved[key]); }
     }
 }
