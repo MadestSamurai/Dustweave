@@ -77,6 +77,7 @@ This supports interrupted-process recovery; it cannot repair failing storage or 
 3. Run scripts/prepare-update-site.ps1 -PackageDirectory <packages>. It verifies signatures/hashes and prepares only the public static payload.
 4. Upload immutable vX.Y.Z/ files to the existing web server, verify remote lengths/hashes, then atomically rename the new updates.json **last**. Never overwrite a published version's files. Publish a new higher version to repair a release.
 5. Download both flavors through the public HTTPS address and verify them; test upgrade from a prior packaged version before announcing availability.
+6. Complete the local [artifact retention](ARTIFACT_RETENTION.md) step: preview, review and apply cleanup, then record reclaimed space and retained baselines with the deployment receipt. Do not clean failed or unfinished validation runs.
 
 The manually dispatched Prepare signed update feed workflow generates deltas for the latest three available release baselines and creates a signed artifact from existing tested release packages. It creates no public repository/release and performs no deployment.
 Runtime endpoints are independent from whether the source repository is public.

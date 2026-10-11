@@ -8,6 +8,7 @@ param(
 )
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath($PSScriptRoot)
+. (Join-Path $root 'scripts/copy-prepared-cache.ps1')
 
 if(!$PreparedCacheDirectory){$PreparedCacheDirectory=Join-Path $root 'artifacts/prepared-modules'}
 $PreparedCacheDirectory=[IO.Path]::GetFullPath($PreparedCacheDirectory)
@@ -155,22 +156,12 @@ foreach($flavor in $Flavors){
   Run $exe @('--utility','live','taps-all',$managed,(Join-Path $bundle 'connection/specs'),(Join-Path $checks 'evidence')) 'evidence-configs'
   Pass (Join-Path $checks 'evidence/result.json')
   $suiteCache=Join-Path $work 'unified-suite-daily/suite-cache'
-  if(Test-Path -LiteralPath $PreparedCacheDirectory){
-   [IO.Directory]::CreateDirectory($suiteCache)|Out-Null
-   foreach($file in Get-ChildItem -LiteralPath $PreparedCacheDirectory -Recurse -File){
-    $relative=[IO.Path]::GetRelativePath($PreparedCacheDirectory,$file.FullName)
-    $target=Join-Path $suiteCache $relative;[IO.Directory]::CreateDirectory((Split-Path -Parent $target))|Out-Null
-    Copy-Item -LiteralPath $file.FullName -Destination $target
-   }
-  }
+  Copy-DustweavePreparedCache -Source $PreparedCacheDirectory -Destination $suiteCache
   # The normal compiler revalidates all managed inputs, component assembly identity and payload SHA.
   # Changed modules are rebuilt; reuse never substitutes a pass result for the actual check.
   Run $exe @('--check-suite',$managed,(Join-Path $checks 'suite')) 'unified-suite' 900
   Pass (Join-Path $checks 'suite/suite.json')
-  foreach($file in Get-ChildItem -LiteralPath $suiteCache -Recurse -File|Where-Object {$_.FullName -notmatch '[\\/]build-[^\\/]+[\\/]'} ){
-   $target=Join-Path $PreparedCacheDirectory ([IO.Path]::GetRelativePath($suiteCache,$file.FullName));[IO.Directory]::CreateDirectory((Split-Path -Parent $target))|Out-Null
-   Copy-Item -LiteralPath $file.FullName -Destination $target -Force
-  }
+  Copy-DustweavePreparedCache -Source $suiteCache -Destination $PreparedCacheDirectory
   foreach($id in @('fishing','sichuan','rhythm','territory','equipment','apostle-defense','infinite-gacha','secret-vision','fiend-hunter','mansion-runaway')){
    $check=Join-Path $checks ('tools/'+$id);[IO.Directory]::CreateDirectory($check)|Out-Null
    Run $exe @('--tool',$id,'--smoke',$check) ('tool-'+$id)
