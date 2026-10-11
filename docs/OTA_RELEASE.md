@@ -81,6 +81,10 @@ This supports interrupted-process recovery; it cannot repair failing storage or 
 The manually dispatched Prepare signed update feed workflow generates deltas for the latest three available release baselines and creates a signed artifact from existing tested release packages. It creates no public repository/release and performs no deployment.
 Runtime endpoints are independent from whether the source repository is public.
 
+### GitHub publication preflight / GitHub 发布前检查
+
+Before dispatching `release.yml`, explicitly create and push the version tag at the verified source commit. Confirm that the remote tag resolves to the same commit recorded in `release-provenance.json` and selected for the workflow. Creating a draft release with `--target` does **not** create its Git tag until publication; the verification workflow needs that tag beforehand. Upload the two archives, checksums and provenance to the draft, then let the workflow verify and publish it. Keep the tagged source unchanged; commit deployment receipts separately after publication.
+
 ### Server configuration / 服务端配置
 
 Use the website's existing HTTPS host. Map only /updates/dustweave/ to a dedicated static directory, not the source repository.
