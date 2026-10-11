@@ -62,6 +62,7 @@ function Setup($name,$flavor,$baselineFolder){
  WriteJson (Join-Path $data 'updates-preference.json') @{Automatic=$false}
  WriteJson (Join-Path $data 'seen-release.json') @{Version=$release.Version;SeenVersions=@($release.Version,$baseDescriptor.Version)}
  WriteJson (Join-Path $data 'schedule.json') @{Enabled=$false}
+ WriteJson (Join-Path $data 'desktop-behavior.json') @{CloseAction='exit';RunOnOpen=$false}
  WriteJson (Join-Path $data 'connection-guide.json') @{Revision=1}
  [IO.Directory]::CreateDirectory((Join-Path $targetFolder 'plugins'))|Out-Null
  [IO.File]::WriteAllText((Join-Path $targetFolder 'plugins/acceptance.keep'),'private plugin sentinel')
