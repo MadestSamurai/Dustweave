@@ -30,9 +30,13 @@ public sealed partial class Planner
   if(core!=null&&defs[core.Id].Element is not (0 or 4))result.Add(defs[core.Id].Element);
   else
   {
-   // The third element need not be another rare core. A tier-5/6 counter is a
-   // useful complement, particularly against a boss that resists the main core.
-   var candidates=s.Units.Where(u=>u.Ready&&defs[u.Id].Grade>=5&&defs[u.Id].Element is not (0 or 4)).ToArray();
+   // Reserve a counter to a boss that resists the main core before selling the
+   // early roster. Requiring tier five here discards useful fast tier-two fire
+   // units, leaving a water core without an answer to the wind boss. A lone
+   // unrelated low-tier card still does not open another upgrade branch.
+   var resisted=core==null?null:s.Catalog.Waves.FirstOrDefault(w=>w.Boss&&w.Id>=Math.Max(1,s.Wave)&&ElementMultiplier(defs[core.Id].Element,w.Element,s.Catalog)<1);
+   bool Useful(Unit u)=>u.Index==selectedSupport||defs[u.Id].Grade>=5||(defs[u.Id].Grade>=2&&resisted!=null&&ElementMultiplier(defs[u.Id].Element,resisted.Element,s.Catalog)>1);
+   var candidates=s.Units.Where(u=>u.Ready&&Useful(u)&&defs[u.Id].Element is not (0 or 4)).ToArray();
    var flexible=candidates.FirstOrDefault(u=>u.Index==selectedSupport);
    int grade=candidates.Select(u=>defs[u.Id].Grade).DefaultIfEmpty(0).Max();
    if(flexible==null||defs[flexible.Id].Grade<grade)
