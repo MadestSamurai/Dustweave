@@ -11,6 +11,16 @@ static class ParallelCases
         string root=Path.Combine(output,"parallel");var session=new DailyParallelSession(root,runtime,()=>clock);
         DailyAccount Account(char c,int slot)=>new(slot,"Account "+slot,new string(c,64),"",true,false,"");
         var accounts=new[]{Account('a',1),Account('b',2),Account('c',3)};
+        var presetRoot = Path.Combine(output, "parallel-presets");
+        var presetStore = new DailyTaskPresetStore(presetRoot);
+        var mail = presetStore.Save("Mail", ["mail"]); var mirror = presetStore.Save("Mirror", ["mirror"]);
+        presetStore.Assign(accounts[0].AccountKey, mail.Id); presetStore.Assign(accounts[1].AccountKey, mirror.Id);
+        var selectedSession = new DailyParallelSession(presetRoot, runtime, () => clock);
+        await selectedSession.StartAsync(accounts, new(true, 2), _ => new(), presetStore.Selection);
+        presetStore.Save("Mail renamed", ["free_draws"], mail.Id);
+        var frozen = new DailyParallelSession(presetRoot, runtime, () => clock).Current!.Items;
+        Check(frozen[0].Job.Tasks!.SequenceEqual(["mail"]) && frozen[1].Job.Tasks!.SequenceEqual(["mirror"]) && frozen[2].Job.Tasks == null,
+            "parallel jobs snapshot distinct per-account presets and retain them across restart and preset edits");
         await session.StartAsync(accounts,new(true,2),_=>new());
         async Task Pump(){await session.TickAsync();await Task.Delay(20);await session.TickAsync();}
         await Pump();

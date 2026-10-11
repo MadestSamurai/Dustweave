@@ -4988,5 +4988,170 @@
     "zh-CN": "补药回执与库存不一致；保留记录，未重复购买。",
     "zh-TW": "補藥回執與庫存不一致；保留紀錄，未重複購買。",
     "en-US": "The refill result does not match the inventory. The record was kept; no repeat purchase was made."
+  },
+  "presets.default": {
+    "zh-CN": "全部已启用环节",
+    "zh-TW": "全部已啟用環節",
+    "en-US": "All enabled tasks"
+  },
+  "presets.label": {
+    "zh-CN": "日常预设",
+    "zh-TW": "日常預設",
+    "en-US": "Task preset"
+  },
+  "presets.help": {
+    "zh-CN": "选择预设，套用已保存的勾选项。",
+    "zh-TW": "選擇預設，套用已儲存的勾選項。",
+    "en-US": "Apply a saved task selection."
+  },
+  "presets.account_help": {
+    "zh-CN": "此账号执行日常时使用的预设",
+    "zh-TW": "此帳號執行日常時使用的預設",
+    "en-US": "Task selection for this account"
+  },
+  "presets.save": {
+    "zh-CN": "保存预设",
+    "zh-TW": "儲存預設",
+    "en-US": "Save preset"
+  },
+  "presets.manage": {
+    "zh-CN": "管理预设",
+    "zh-TW": "管理預設",
+    "en-US": "Manage presets"
+  },
+  "presets.replace": {
+    "zh-CN": "用当前勾选覆盖",
+    "zh-TW": "用目前勾選覆蓋",
+    "en-US": "Replace with current selection"
+  },
+  "presets.rename": {
+    "zh-CN": "重命名预设",
+    "zh-TW": "重新命名預設",
+    "en-US": "Rename preset"
+  },
+  "presets.delete": {
+    "zh-CN": "删除预设",
+    "zh-TW": "刪除預設",
+    "en-US": "Delete preset"
+  },
+  "presets.delete_confirm": {
+    "zh-CN": "删除此预设？使用中的预设需先从账号取消指定。",
+    "zh-TW": "刪除此預設？使用中的預設需先從帳號取消指定。",
+    "en-US": "Delete this preset? Unassign it from accounts first."
+  },
+  "presets.name": {
+    "zh-CN": "预设名称",
+    "zh-TW": "預設名稱",
+    "en-US": "Preset name"
+  },
+  "presets.selection_only": {
+    "zh-CN": "只保存勾选项。各账号的倍率、任务设置和完成记录不变。",
+    "zh-TW": "只儲存勾選項。各帳號的倍率、任務設定和完成紀錄不變。",
+    "en-US": "Saves task selection only. Account settings and completion records stay separate."
+  },
+  "presets.invalid": {
+    "zh-CN": "日常预设文件无法读取，已保留原文件。",
+    "zh-TW": "日常預設檔案無法讀取，已保留原檔案。",
+    "en-US": "Task presets could not be read. The original file was preserved."
+  },
+  "presets.name_invalid": {
+    "zh-CN": "请填写1–60字且未被使用的预设名称。",
+    "zh-TW": "請填寫1–60字且未被使用的預設名稱。",
+    "en-US": "Enter a unique preset name of 1–60 characters."
+  },
+  "presets.empty": {
+    "zh-CN": "请先勾选至少一个日常环节。",
+    "zh-TW": "請先勾選至少一個日常環節。",
+    "en-US": "Select at least one task first."
+  },
+  "presets.missing": {
+    "zh-CN": "该账号或预设已变化，请重新选择。",
+    "zh-TW": "該帳號或預設已變更，請重新選擇。",
+    "en-US": "The account or preset changed. Select it again."
+  },
+  "presets.limit": {
+    "zh-CN": "最多保存100个预设，请先删除不用的预设。",
+    "zh-TW": "最多儲存100個預設，請先刪除不用的預設。",
+    "en-US": "You can save up to 100 presets. Delete an unused preset first."
+  },
+  "presets.in_use": {
+    "zh-CN": "此预设仍被账号使用，请先为这些账号选择其他预设。",
+    "zh-TW": "此預設仍被帳號使用，請先為這些帳號選擇其他預設。",
+    "en-US": "This preset is assigned to an account. Choose another preset for that account first."
+  },
+  "presets.none_enabled": {
+    "zh-CN": "预设中的环节在此账号均未启用，请调整设置或预设。",
+    "zh-TW": "預設中的環節在此帳號均未啟用，請調整設定或預設。",
+    "en-US": "None of this preset's tasks are enabled for this account. Adjust its settings or preset."
+  },
+  "desktop.invalid": {
+    "zh-CN": "启动与关闭设置无法读取，已保留原文件。",
+    "zh-TW": "啟動與關閉設定無法讀取，已保留原檔案。",
+    "en-US": "Startup and close settings could not be read. The original file was preserved."
+  },
+  "desktop.tray_failed": {
+    "zh-CN": "无法创建系统托盘图标，窗口已保留。",
+    "zh-TW": "無法建立系統匣圖示，視窗已保留。",
+    "en-US": "Could not create the tray icon. The window remains open."
+  },
+  "desktop.show": {
+    "zh-CN": "显示织尘",
+    "zh-TW": "顯示織塵",
+    "en-US": "Show Dustweave"
+  },
+  "desktop.exit": {
+    "zh-CN": "退出软件",
+    "zh-TW": "結束軟體",
+    "en-US": "Exit Dustweave"
+  },
+  "desktop.minimize": {
+    "zh-CN": "收起到系统托盘，继续运行",
+    "zh-TW": "縮至系統匣，繼續執行",
+    "en-US": "Minimize to tray and keep running"
+  },
+  "desktop.remember_close": {
+    "zh-CN": "记住本次选择",
+    "zh-TW": "記住本次選擇",
+    "en-US": "Remember my choice"
+  },
+  "desktop.close_title": {
+    "zh-CN": "关闭织尘",
+    "zh-TW": "關閉織塵",
+    "en-US": "Close Dustweave"
+  },
+  "desktop.close_settings": {
+    "zh-CN": "重选关闭方式",
+    "zh-TW": "重選關閉方式",
+    "en-US": "Reset close action"
+  },
+  "desktop.close_reset": {
+    "zh-CN": "下次关闭窗口时会重新询问。",
+    "zh-TW": "下次關閉視窗時會重新詢問。",
+    "en-US": "You will be asked again the next time you close the window."
+  },
+  "desktop.run_on_open": {
+    "zh-CN": "打开软件后执行勾选账号的日常",
+    "zh-TW": "開啟軟體後執行勾選帳號的日常",
+    "en-US": "Run checked accounts when Dustweave opens"
+  },
+  "desktop.run_on_open_help": {
+    "zh-CN": "使用账号列表的顺序、各自预设和当前执行方式；默认关闭。",
+    "zh-TW": "使用帳號清單的順序、各自預設和目前執行方式；預設關閉。",
+    "en-US": "Uses the checked accounts, their order, presets and execution mode. Off by default."
+  },
+  "desktop.select_accounts": {
+    "zh-CN": "请先在账号列表勾选要自动执行的账号。",
+    "zh-TW": "請先在帳號清單勾選要自動執行的帳號。",
+    "en-US": "Check at least one account in the account list first."
+  },
+  "message.collection_story_locked": {
+    "zh-TW": "部分地圖的敵人尚未隨劇情開放，完成對應卡帶劇情後可再次收集。",
+    "en-US": "Some enemies are still locked by story progress. Continue the cartridge story, then collect again.",
+    "zh-CN": "部分地图的敌人尚未随剧情开放，完成对应卡带剧情后可再次收集。"
+  },
+  "trade.locked_shops": {
+    "zh-TW": "僅按已解鎖商店計算收益；需要未解鎖商店出售的物品保留，不計預計回款。",
+    "en-US": "Revenue uses unlocked shops only. Items requiring a locked merchant are kept and excluded from expected proceeds.",
+    "zh-CN": "仅按已解锁商店计算收益；需要未解锁商店出售的物品保留，不计预计回款。"
   }
 }

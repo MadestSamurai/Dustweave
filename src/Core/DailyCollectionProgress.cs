@@ -94,6 +94,15 @@ public sealed class DailyCollectionProgress(DailyWorkflow workflow)
             }
         }
         var complete = new JsonObject(result.Where(p => p.Value!.AsObject().All(v => v.Value!.AsArray().Count == 0)).Select(p => new KeyValuePair<string, JsonNode?>(p.Key, p.Value!.DeepClone())));
+        if (!onlySteal)
+            foreach (var target in Rows(data["DeferredTargets"] ?? new JsonArray()))
+            {
+                string map = N(target["Map"]).ToString();
+                Require(result.ContainsKey(map), "Deferred monster belongs to another map");
+                result[map]!["story_locked"] ??= new JsonArray();
+                result[map]!["story_locked"]!.AsArray().Add(Copy(target));
+                complete.Remove(map);
+            }
         return O(("source", "game_network"), ("weekly_reset", S(data["Week"])), ("maps", result), ("completed", complete));
     }
     private string PathFor(string week, long pack) => Path.Combine(workflow.Root, "live", "server-collection", S(workflow.Context["actor"]![3]), week, pack + ".json");
@@ -112,6 +121,9 @@ public sealed class DailyCollectionProgress(DailyWorkflow workflow)
             var stored = JsonNode.Parse(File.ReadAllText(path))!.AsObject();
             Require(N(stored["schema"]) == 1 && S(stored["source"]) == "FieldObjectInfoResponse+MonsterInfoResponse" && JsonNode.DeepEquals(stored["account"], workflow.Context["actor"]![3]) && JsonNode.DeepEquals(stored["player"], workflow.Context["actor"]![4]) && S(stored["network"]!["Week"]) == week, "Collection cache identity/cycle mismatch");
             var network = stored["network"]!.AsObject();
+            // Story advancement can unlock these monsters during the same week.
+            // Re-read native prerequisites; a cached lock is never weekly completion.
+            if (network["DeferredTargets"] is JsonArray { Count: > 0 } && missingAllowed) return null;
             if (Steal && !B(network["StealReady"]))
             {
                 if (missingAllowed)
@@ -127,7 +139,7 @@ public sealed class DailyCollectionProgress(DailyWorkflow workflow)
             }
             var projected = network.DeepClone().AsObject();
             projected["Maps"] = new JsonArray(maps.Select(n => (JsonNode)JsonValue.Create(n)!).ToArray());
-            foreach (string key in new[] { "Drops", "Targets", "StealTargets" })
+            foreach (string key in new[] { "Drops", "Targets", "StealTargets", "DeferredTargets" })
                 if (projected[key] is JsonArray rows)
                     projected[key] = Array(Rows(rows).Where(r => maps.Contains(N(r["Map"]))));
             return Classify(projected, pack, maps, Steal, OnlySteal);

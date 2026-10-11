@@ -49,6 +49,18 @@ internal static class TradeQuoteCases
         var correct = await DailyTradeQuoteReadiness.ReadAsync(catalog, () => Task.FromResult(Sample(clock)), () => clock,
             ms => { clock += ms / 1000d; return Task.CompletedTask; }, records.Add);
         Check(N(correct.State["offers"]![0]!["price"]) == 10 && records.Count == 0 && clock == 0, "already matching shop does not add waits or actions");
+        var partialCatalog = catalog.DeepClone().AsObject();
+        partialCatalog["items"]!.AsArray().Add(O(("id", 1014), ("shop", 2), ("sale", 90), ("stack", 999), ("day", 2)));
+        var partiallyUnlocked = Sample(clock);
+        var availability = State(partiallyUnlocked.Evidence, "trade.native", "$self");
+        availability["UnavailableShops"] = new JsonArray(2);
+        SetReading(partiallyUnlocked.Evidence, "trade.native", "$self", availability);
+        SetReading(partiallyUnlocked.Evidence, "trade.available_shops", "$items", new JsonArray(O(("Id", 1)), O(("Id", 2))));
+        SetReading(partiallyUnlocked.Evidence, "trade.available_shops", "ὫὨὧὫὯὭὨὢὦὬὪ.Count", JsonValue.Create(2)!);
+        var partialRead = await DailyTradeQuoteReadiness.ReadAsync(partialCatalog, () => Task.FromResult(partiallyUnlocked), () => clock,
+            _ => throw new Exception("locked merchants are not a transient read failure"), records.Add);
+        Check(partialRead.State["available_shops"]!.AsArray().Select(N).SequenceEqual([1L]) && Rows(partialRead.State["offers"]).All(o => N(o["shop"]) == 1),
+            "early account reads unlocked shops without requiring later premium merchants");
         var recovered = await DailyTradeQuoteReadiness.ReadAsync(catalog, () => Task.FromResult(Sample(clock, ++reads < 3 ? 24 : 10)), () => clock,
             ms => { clock += ms / 1000d; return Task.CompletedTask; }, records.Add);
         Check(reads == 3 && N(recovered.State["offers"]![0]!["price"]) == 10, "input-ready ordinary models wait for confirmed bargain prices");

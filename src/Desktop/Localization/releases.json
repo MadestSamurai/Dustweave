@@ -1,5 +1,38 @@
 [
   {
+    "Version": "1.2.0",
+    "Date": "2026-10-11",
+    "Notes": {
+      "zh-CN": [
+        "修复未解锁后续商店时跑商计划无法读取的问题。",
+        "跑商适度减少未来资金预留，计入近期可售现有库存的部分回款；今日采购仍遵守实际余额和支出限制。",
+        "通行证切换后重新读取任务按钮；周收集避开剧情尚未开放的敌人，单张地图或卡带受阻时保留未完成项并继续后续地点。",
+        "日常设置跟随当前查看账号，补充镜中倍率与批量计划的诊断记录。",
+        "今日任务支持保存预设，账号管理可为各账号指定不同预设。",
+        "可选择打开软件后执行勾选账号的日常；关闭窗口可收起到托盘，并记住选择。",
+        "如果自动更新失败，可能需要手动下载完整软件包。"
+      ],
+      "zh-TW": [
+        "修正尚未解鎖後續商店時無法讀取跑商計畫的問題。",
+        "交易適度減少未來資金預留，計入近期可售現有庫存的部分回款；今日採購仍遵守實際餘額和支出限制。",
+        "通行證切換後重新讀取任務按鈕；每週收集避開劇情尚未開放的敵人，單張地圖或卡帶受阻時保留未完成項並繼續後續地點。",
+        "日常設定跟隨目前查看的帳號，補充鏡中倍率與批次計畫的診斷記錄。",
+        "今日任務支援儲存預設，帳號管理可為各帳號指定不同預設。",
+        "可選擇開啟軟體後執行勾選帳號的日常；關閉視窗可縮至系統匣並記住選擇。",
+        "若自動更新失敗，可能需要手動下載完整軟體套件。"
+      ],
+      "en-US": [
+        "Trading plans support accounts with partially unlocked shops.",
+        "Trading reserves allow partial near-term proceeds from existing stock. Today's purchases still respect actual balances and spending limits.",
+        "Pass switching refreshes mission controls. Weekly collection respects enemy story gates and continues other locations when one map or cartridge is blocked, retaining unfinished targets.",
+        "Daily settings follow the viewed account. Mirror diagnostics include the configured multiplier and batch plan.",
+        "Save task presets and assign different presets to each account.",
+        "Optionally run checked accounts on opening. Choose exit or minimize to tray, and remember the close action.",
+        "If automatic updating fails, download the full package manually."
+      ]
+    }
+  },
+  {
     "Version": "1.1.10-beta",
     "Date": "2026-10-11",
     "Notes": {

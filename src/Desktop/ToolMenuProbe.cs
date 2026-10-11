@@ -35,14 +35,16 @@ internal static class ToolMenuProbe
         // Synthetic windows must not inspect or reserve a real user's standalone-tool mutex.
         string fixtureId = Guid.NewGuid().ToString("N");
         string FixtureMutex(DailyToolDefinition tool) => @"Local\Dustweave.ToolMenuProbe." + fixtureId + "." + tool.Id;
-        DailyToolSession Session() => new(profile, exe, Launch, TimeSpan.FromMilliseconds(400), FixtureMutex);
+        // A single-file WPF child may take over 400 ms to finish a normal close.
+        // Preserve the cancellation check without treating ordinary teardown as refusal.
+        DailyToolSession Session() => new(profile, exe, Launch, TimeSpan.FromSeconds(3), FixtureMutex);
         var session = Session(); var cases = new List<string>();
         void Check(bool pass, string message) { if (!pass) throw new InvalidOperationException(message); cases.Add(message); }
         async Task Ready(string id)
         {
             var watch = Stopwatch.StartNew();
             while (!File.Exists(Path.Combine(profile, "ready-" + id)))
-            { if (watch.ElapsedMilliseconds > 6000) throw new TimeoutException("Probe failed to open"); await Task.Delay(30); }
+            { if (watch.ElapsedMilliseconds > 15000) throw new TimeoutException("Probe failed to open"); await Task.Delay(30); }
         }
         try
         {

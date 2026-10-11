@@ -749,4 +749,20 @@ public sealed class DailyPreferencesPanel : UserControl
         };
     }
     public bool SavePending() => !dirty || Save();
+    internal void CheckMirrorAccountForSmoke(string first, string second)
+    {
+        SelectAccount(first); multiplier.SelectedItem = 1;
+        if (!Save()) throw new Exception("First account mirror settings not saved");
+        SelectAccount(second); multiplier.SelectedItem = 4;
+        if (!Save()) throw new Exception("Second account mirror settings not saved");
+        SelectAccount(first);
+        if ((int)multiplier.SelectedItem != 1) throw new Exception("Second account overwrote first account multiplier");
+        SelectAccount(second);
+        if ((int)multiplier.SelectedItem != 4 || store.Read(second).Mirror.Multiplier != 4) throw new Exception("Mirror multiplier did not survive settings navigation");
+    }
+    public void SelectAccount(string key)
+    {
+        if (account == key || !SavePending()) return;
+        if (accounts.Items.OfType<DailyAccount>().Any(a => a.AccountKey == key)) accounts.SelectedValue = key;
+    }
 }

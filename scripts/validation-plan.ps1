@@ -1,4 +1,4 @@
-# Reuse a full validation only when every changed input is inside the account boundary.
+# Reuse a full validation only when every changed input is inside an explicit boundary.
 function Get-DustweaveBuildSettingsHash([string]$Root) {
  $text=[IO.File]::ReadAllText((Join-Path $Root 'Directory.Build.props'))
  $text=[regex]::Replace($text,'(?s)(<DustweaveVersion\b[^>]*>).*?(</DustweaveVersion>)','$1PRODUCT_VERSION$2')
@@ -51,6 +51,9 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     # Trading-only changes reuse component/client gates; every modified runtime input is explicit.
     $trading='^(source-manifest\.json|CHANGELOG\.md|package\.ps1|scripts/validation-plan\.ps1)$|^docs/|^src/Core/DailyTrade(Optimizer|Forecast|Plan|DropForecast|Drops|Execution)\.cs$|^tests/Dustweave.Tests/Cases/TradeOptimizerCases\.cs$'
     if($Scope -in @('Auto','Trading') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $trading}).Count){$selectedScope='Trading';$outside=@()}
+    # Weekly orchestration does not change the native components or other tools.
+    $weekly='^(Directory\.Build\.props|source-manifest\.json|package\.ps1|scripts/validation-plan\.ps1)$|^docs/|^src/Core/DailyWeeklyRoute\.cs$|^src/Core/Localization/Messages\.zh-CN\.txt$|^src/Desktop/Localization/(releases|notices|runtime)\.json$|^tests/Dustweave.Tests/(Program\.cs|Cases/WeeklyIsolationCases\.cs)$'
+    if($Scope -in @('Auto','Weekly') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $weekly}).Count){$selectedScope='Weekly';$outside=@()}
     $full.changed=$changed
     $reason='Changes outside the account validation boundary: '+($outside -join ', ')
     if(!$outside.Count){
@@ -64,6 +67,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
      if($evidenceValid){
       $groups=@('ProductIdentity','Startup','LoginIdentity','Sandbox','Parallel','ParallelProcess','AccountOrder','AccountIdentity','AccountRestart','QueueSession','QueuePeriod')
       if($selectedScope -eq 'Trading'){$groups=@('ProductIdentity','TradeOptimizer','TradeData','TradeReplan','TradeQuote','TradeResume')}
+      if($selectedScope -eq 'Weekly'){$groups=@('ProductIdentity','WeeklyIsolation','WeeklyGoal','CollectionReadiness','FieldTalent','WeeklyNpcBoard','WeeklyNpcQuery','CommandDriver','ManagedInputs','QueueSession','UserText')}
       if($selectedScope -in @('Navigation','Rewards')){$groups+=@('HomeNavigation','HomeRecovery','CommandDriver','ManagedInputs','PassiveUi')}
       if($selectedScope -eq 'Rewards'){$groups+=@('LiveBindings','Workflow','Preference','RuleData','EvidenceReadiness','UserText')}
       return [ordered]@{schema=1;scope=$selectedScope;buildSettingsHash=$settings;baseline=$BaselineDirectory;baselineInputsHash=(Get-FileHash -LiteralPath $inputsPath).Hash;groups=$groups;changed=$changed;reason='Mapped host changes; unchanged tool validation reused from a completed full baseline.'}
@@ -72,7 +76,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
    }
   }
  }
- if($Scope -in @('Accounts','Navigation','Rewards','Trading')){throw "Account validation cannot reuse this baseline: $reason"}
+ if($Scope -in @('Accounts','Navigation','Rewards','Trading','Weekly')){throw "Scoped validation cannot reuse this baseline: $reason"}
  $full.reason=$reason
  return $full
 }

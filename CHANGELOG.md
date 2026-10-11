@@ -1,5 +1,16 @@
 # Changelog / 更新记录
 
+## 1.2.0 — 2026-10-11
+
+- 支持任务预设、按账号选择预设、可选启动后执行与关闭到托盘。
+- 修复未解锁商店、通行证切换、周收集地图隔离与账号设置跟随问题。
+- Adds per-account task presets, optional run-on-open and minimize-to-tray behavior.
+- Fixes partially unlocked shops, pass navigation, weekly route isolation and settings account selection.
+
+- 小幅放宽跑商未来资金预留：7天内可按高价出售、已分配售卖的现有未锁定库存，按预计回款的50%计入周转，额度最多为可用资金的25%。当前采购仍受实际余额、保留金币和支出上限限制，预计掉落和新购商品不增加该额度。
+- Trading forecasts now allow limited turnover from existing unlocked stock allocated to premium sales within seven days: 50% of expected receipts, capped at 25% of usable cash. Current orders still respect real balances, reserves and spending limits; predicted drops and newly purchased stock do not increase this allowance.
+- [完整说明 / Full notes](docs/releases/1.2.0.md)
+
 ## 1.1.6-beta — 2026-10-10
 
 - 跑商计划可直接准备连接并读取商店，不再需要先运行其他日常；修复尚未生成购买记录的商品被误判为数据缺失。

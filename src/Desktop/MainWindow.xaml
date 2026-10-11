@@ -119,7 +119,7 @@
    <TabItem x:Name="AccountsTab" Tag="{StaticResource Icon.Account}" Header="{l:Tr nav.accounts}">
     <Grid>
      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-     <Border x:Name="CurrentLoginCard" Style="{StaticResource Panel}" Padding="16" Margin="0,0,0,16">
+     <Border x:Name="CurrentLoginCard" Style="{StaticResource Panel}" Padding="12,8" Margin="0,0,0,8">
       <Grid>
        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -132,16 +132,16 @@
         <Button x:Name="LoginNewButton" Content="{l:Tr account.login_new}" Click="LoginNew_Click" ToolTipService.ShowOnDisabled="True"/>
        </StackPanel>
        <TextBlock x:Name="LoginHintText" Grid.Row="1" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" FontSize="12" Margin="0,10,16,0" VerticalAlignment="Center"/>
-       <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
+       <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
         <Button x:Name="ConnectionGuideButton" Content="{l:Tr guide.title}" Click="ConnectionGuide_Click" Margin="0,0,8,0"/>
         <Button x:Name="RecoverButton" Content="{l:Tr account.recover}" Click="Recover_Click" Style="{StaticResource QuietButton}" ToolTipService.ShowOnDisabled="True"/>
        </StackPanel>
       </Grid>
      </Border>
-     <Border Grid.Row="1" Style="{StaticResource Panel}" Padding="16,12">
+     <Border Grid.Row="1" Style="{StaticResource Panel}" Padding="16,8">
       <Grid>
-       <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-       <Grid Margin="0,0,0,12"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="220"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+       <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+       <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="220"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
         <StackPanel Margin="0,0,12,0" VerticalAlignment="Center">
          <StackPanel Orientation="Horizontal"><TextBlock Text="{l:Tr account.list}" FontWeight="SemiBold" FontSize="16"/><TextBlock x:Name="CountText" Foreground="{DynamicResource MutedInk}" Margin="12,2,0,0" FontSize="12" ToolTip="{l:Tr account.local_data}"/></StackPanel>
          <TextBlock x:Name="SelectionText" Foreground="{DynamicResource MutedInk}" Margin="0,4,0,0" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{l:Tr account.queue_help}"/>
@@ -163,6 +163,9 @@
            </Grid>
           </DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
           <DataGridTextColumn Header="{l:Tr account.verified}" Binding="{Binding VerifiedLabel}" Width="135" IsReadOnly="True" ElementStyle="{StaticResource AccountCellText}"/>
+          <DataGridTemplateColumn Header="{l:Tr presets.label}" Width="180"><DataGridTemplateColumn.CellTemplate><DataTemplate>
+           <ComboBox ItemsSource="{Binding PresetOptions}" DisplayMemberPath="Label" SelectedValuePath="Id" SelectedItem="{Binding SelectedPreset,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Margin="4,0" VerticalAlignment="Center" IsEnabled="{Binding Account.Valid}" ToolTip="{l:Tr presets.account_help}" AutomationProperties.Name="{l:Tr presets.label}"/>
+          </DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
           <DataGridTextColumn Header="{l:Tr account.status}" Binding="{Binding StatusLabel}" Width="110" IsReadOnly="True" ElementStyle="{StaticResource AccountCellText}"/>
           <DataGridTemplateColumn Width="128"><DataGridTemplateColumn.CellTemplate><DataTemplate>
            <Button x:Name="EnterAccountButton" Foreground="{DynamicResource Primary}" BorderBrush="{DynamicResource Primary}" FontWeight="SemiBold" Content="{l:Tr account.enter}" Click="EnterAccount_Click" Margin="4,0" VerticalAlignment="Center" IsEnabled="{Binding Account.Valid}" AutomationProperties.Name="{Binding EnterLabel}" ToolTip="{Binding EnterLabel}"/>
@@ -172,7 +175,7 @@
         </DataGrid>
         <TextBlock x:Name="EmptyText" Text="{l:Tr account.empty}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="440" Margin="20" Visibility="Collapsed"/>
        </Grid>
-       <DockPanel Grid.Row="2" x:Name="ManageBar" Margin="0,12,0,0" LastChildFill="False">
+       <DockPanel Grid.Row="2" x:Name="ManageBar" Margin="0,8,0,0" LastChildFill="False">
 
         <Button DockPanel.Dock="Right" x:Name="SandboxLaunchButton" Content="{l:Tr sandbox.launch}" Click="SandboxLaunch_Click" Margin="8,0,0,0" ToolTip="{l:Tr sandbox.launch_help}" ToolTipService.ShowOnDisabled="True"/>
         <Button DockPanel.Dock="Right" x:Name="RunButton" Content="{l:Tr account.check}" Click="Run_Click" ToolTip="{l:Tr account.check_help}" ToolTipService.ShowOnDisabled="True"/>
@@ -183,7 +186,11 @@
          <Button x:Name="DeleteAccountButton" Content="{l:Tr account.remove}" Click="Delete_Click" Style="{StaticResource DangerButton}"/>
         </StackPanel>
        </DockPanel>
-       <TextBlock x:Name="SandboxHelpText" Grid.Row="3" Visibility="Collapsed" Text="{l:Tr sandbox.help}" FontSize="12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,12,0,0"/>
+       <DockPanel Grid.Row="3" Margin="0,4,0,0" LastChildFill="True">
+        <Button DockPanel.Dock="Right" Content="{l:Tr desktop.close_settings}" Click="CloseBehavior_Click" Style="{StaticResource QuietButton}" Margin="8,0,0,0"/>
+        <CheckBox x:Name="RunOnOpen" Content="{l:Tr desktop.run_on_open}" Click="RunOnOpen_Click" VerticalAlignment="Center" ToolTip="{l:Tr desktop.run_on_open_help}"/>
+       </DockPanel>
+       <TextBlock x:Name="SandboxHelpText" Grid.Row="4" Visibility="Collapsed" Text="{l:Tr sandbox.help}" FontSize="12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,12,0,0"/>
       </Grid>
      </Border>
     </Grid>

@@ -31,6 +31,7 @@ namespace BD2Daily.Live {
   [DataMember] public int Pack;
   [DataMember] public long Week,Now,At;
   [DataMember] public CollectionTarget[] Drops=new CollectionTarget[0],Targets=new CollectionTarget[0];
+  [DataMember] public CollectionTarget[] DeferredTargets=new CollectionTarget[0];
   [DataMember] public int[] Maps=new int[0];
  }
  [DataContract] internal sealed class CollectionTravelMap {
@@ -272,7 +273,7 @@ namespace BD2Daily.Live {
    foreach(int id in maps){var m=ὩὥὫὮὯὥὮὪὨὡὩ.ὧὥὮὪὣὬὦὡὫὧὢ(id);if(m==null||m.PackId!=c.Value)throw new InvalidOperationException("Collection map is outside requested cartridge");}
    var raw=Singleton<RawDataManager>.ὪὫὢὨὯὭὦὪὦὨὣ;
    var objects=raw.GetTableList<FieldRewardObjectTable>(ὯὭὣὩὩὦὬὢὯὩὪ.DB_PACK,"FieldRewardObjectTable",c.Value);
-   var drops=new List<CollectionTarget>();var monsters=new List<CollectionTarget>();
+   var drops=new List<CollectionTarget>();var monsters=new List<CollectionTarget>();var deferred=new List<CollectionTarget>();
    foreach(var r in objects.Where(x=>maps.Contains(x.MapId))){
     var group=ὧὣὭὥὢὢὠὣὥὫὣ.ὯὫὭὤὭὧὬὢὯὯὦ(c.Value,r.FieldObjectGroupId);
     if(group.ὫὣὬὥὪὫὪὤὫὮὧ==1||group.ὫὣὬὥὪὫὪὤὫὮὧ==3)drops.Add(new CollectionTarget{Map=r.MapId,Id=r.Id,Group=r.FieldObjectGroupId,Type=group.ὫὣὬὥὪὫὪὤὫὮὧ});
@@ -281,10 +282,18 @@ namespace BD2Daily.Live {
     var map=ὩὥὫὮὯὥὮὪὨὡὩ.ὧὥὮὪὣὬὦὡὫὧὢ(id);
     foreach(int mid in ὧὩὫὫὩὣὥὨὥὤὠ.ὪὯὤὭὢὭὪὮὬὭὢ(c.Value,map.MapScenePath,ὢὩὭὬὪὪὬὩὫὪὬ.Monster).Distinct()){
      var m=ὨὩὤὥὡὫὮὪὣὫὨ.ὥὩὡὬὧὬὥὣὨὡὥ(c.Value,mid);
-     if(m.ὯὢὭὮὤὪὨὬὭὭὮ>0&&m.ὫὣὬὥὪὫὪὤὫὮὧ!=3&&(m.ὬὬὨὠὪὧὠὦὠὢὣ||m.ὫὣὬὥὪὫὪὤὫὮὧ==2))monsters.Add(new CollectionTarget{Map=id,Id=mid,Group=m.ὯὢὭὮὤὪὨὬὭὭὮ,Type=m.ὫὣὬὥὪὫὪὤὫὮὧ});
+     if(m.ὯὢὭὮὤὪὨὬὭὭὮ>0&&m.ὫὣὬὥὪὫὪὤὫὮὧ!=3&&(m.ὬὬὨὠὪὧὠὦὠὢὣ||m.ὫὣὬὥὪὫὪὤὫὮὧ==2)){
+      var target=new CollectionTarget{Map=id,Id=mid,Group=m.ὯὢὭὮὤὪὨὬὭὭὮ,Type=m.ὫὣὬὥὪὫὪὤὫὮὧ};
+      // Match the client's MonsterInfoRequest gate: a purchased cartridge
+      // can still contain monsters whose appearance quest is not complete.
+      var regen=ὨὩὤὥὡὫὮὪὣὫὨ.ὦὮὣὦὠὡὩὬὥὠὦ(m.ὯὢὭὮὤὪὨὬὭὭὮ);
+      if(regen==null)throw new InvalidOperationException("Missing monster regeneration rule");
+      if(regen.ὯὤὥὥὥὪὣὤὤὧὮ>0&&!ὮὢὦὯὧὣὦὡὧὯὢ.ὥὫὣὧὩὧὦὮὤὧὠ(regen.ὯὤὥὥὥὪὣὤὤὧὮ))deferred.Add(target);else monsters.Add(target);
+     }
     }
    }
    owner=c;var next=new CollectionNetworkState{Query=c.Id,Pack=c.Value,Maps=maps,Drops=drops.ToArray(),Targets=monsters.ToArray(),State="pending",At=DateTime.UtcNow.Ticks,Week=ὫὨὪὠὢὨὮὤὩὤὮ.ὠὥὬὪὮὬὢὨὬὮὫ.GetWeeklyResetTime().Ticks};result=next;
+   next.DeferredTargets=deferred.ToArray();
    var request=new FieldObjectInfoRequest{Seq=ὠὦὨὨὨὥὢὬὧὦὦ.ὬὪὭὤὥὭὢὮὧὯὤ,PackId=c.Value};
    // Read-only responses are kept separately: never overwrite another cartridge's game cache.
    ὫὨὪὠὢὨὮὤὩὤὮ.ὩὮὠὠὩὭὭὠὥὬὪ.Send(request,(byte[] data,int code,int error)=>{

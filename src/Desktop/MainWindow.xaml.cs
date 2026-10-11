@@ -23,6 +23,10 @@ public sealed class AccountRow : INotifyPropertyChanged
     public string DetailsLabel => $"{Name}\n{PlayerLabel}\n{IdentityLabel}";
     public string EnterLabel => DailyLanguage.Current.Get("account.enter_named", Name);
     public string QueueLabel => DailyLanguage.Current.Get("account.queue_named", Name);
+    public TaskPresetChoice[] PresetOptions { get; set; } = [];
+    private string presetId = "";
+    public string PresetId { get => presetId; set { if (value == null || presetId == value) return; presetId = value; PropertyChanged?.Invoke(this, new(nameof(PresetId))); PropertyChanged?.Invoke(this, new(nameof(SelectedPreset))); } }
+    public TaskPresetChoice? SelectedPreset { get => PresetOptions.FirstOrDefault(p => p.Id == presetId); set { if (value != null) PresetId = value.Id; } }
     public required int DisplayOrder
     {
         get; init;
@@ -81,7 +85,8 @@ public partial class MainWindow : Window
         InitializeSchedules(); InitializeUpdates(); InitializeSandboxPresentation(); InitializeLogCleanup();
         dailyPanel = new DailyRunPanel(root);
         dailyQueue = new(root, new PackagedDailyQueueExecutor(AppContext.BaseDirectory));
-        RunTab.Content = dailyPanel; InitializeParallel();
+        RunTab.Content = dailyPanel; InitializeParallel(); InitializeDesktopBehavior();
+        dailyPanel.PresetsChanged += RefreshAccountPresets;
         toolSession = new(root, Environment.ProcessPath!);
         if(smoke==null)toolSession.ConfigureLaunch=(start,id)=>{var game=host.Find()??throw new InvalidOperationException("游戏已退出。");DailySuite.SetToolEnvironment(start,DailySuite.Read(root,game)??throw new InvalidOperationException("统一会话未就绪。"),game,id);};
         toolPanel = new DailyToolPanel();
@@ -129,6 +134,7 @@ public partial class MainWindow : Window
         Closing += OnClosing;
         WorkspaceTabs.SelectedItem = RunTab;
         WorkspaceTabs.SelectionChanged += (_, e) => { if (smoke == null && e.Source == WorkspaceTabs && WorkspaceTabs.SelectedItem == RunTab && !busy && preferencesPanel.SavePending()) RefreshDailyHistory(refreshPlan: true); };
+        WorkspaceTabs.SelectionChanged += (_, e) => { if (e.Source == WorkspaceTabs && WorkspaceTabs.SelectedItem == SettingsTab && !busy && DailyProfiles.ValidKey(TaskAccountKey)) preferencesPanel.SelectAccount(TaskAccountKey); };
     }
     private void OnLanguageChanged(object? sender, EventArgs e) { bool ready=appearanceReady;appearanceReady=false;LanguageSelector.SelectedIndex=Array.IndexOf(DailyLanguage.Codes,L.Code);appearanceReady=ready;foreach (var row in rows) row.RefreshLanguage(); }
     private void Language_Changed(object sender, SelectionChangedEventArgs e)
@@ -263,10 +269,12 @@ public partial class MainWindow : Window
             var old = (AccountsGrid.SelectedItem as AccountRow)?.Account.AccountKey;
             catalog = observed ?? sessions.Read();
             var saved = profiles.Read();
+            var presets = new DailyTaskPresetStore(root).Read();
             rows.Clear();
             foreach (var entry in DailyAccountOrder.Arrange(catalog.Accounts, saved))
             {
-                var row = new AccountRow { Account = entry.Account, Profile = entry.Profile, DisplayOrder = rows.Count + 1 };
+                var row = new AccountRow { Account = entry.Account, Profile = entry.Profile, DisplayOrder = rows.Count + 1,
+                    PresetOptions = PresetOptions(presets), PresetId = presets.Accounts.GetValueOrDefault(entry.Account.AccountKey, "") };
                 row.PropertyChanged += RowChanged;
                 rows.Add(row);
             }
@@ -282,6 +290,12 @@ public partial class MainWindow : Window
     }
     private void RowChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (!refreshingAccountPresets && e.PropertyName == nameof(AccountRow.PresetId) && sender is AccountRow presetRow)
+        {
+            try { new DailyTaskPresetStore(root).Assign(presetRow.Account.AccountKey, presetRow.PresetId); dailyPanel.RefreshPresets(); }
+            catch (Exception error) { ShowError(error); RefreshAccounts(); }
+            return;
+        }
         if (e.PropertyName == nameof(AccountRow.Selected) && sender is AccountRow row)
             try
             {
@@ -535,6 +549,8 @@ public partial class MainWindow : Window
     {
         if (finalClose)
             return;
+        try { if (KeepWindowInTray()) { e.Cancel = true; return; } }
+        catch (Exception error) { e.Cancel = true; ShowError(error); return; }
         if (firstRunTour != null)
         {
             if (!Confirm(L.Get("onboarding.skip_tour"))) { e.Cancel = true; return; }
@@ -722,6 +738,12 @@ public partial class MainWindow : Window
         try
         {
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "presets")
+            {
+                await CheckPresetsForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "presets", realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "trade")
             {
                 L.Audit();
@@ -758,6 +780,7 @@ public partial class MainWindow : Window
             await CheckLanguagesForSmoke();
             await CheckPresentationForSmoke();
             await CheckAccountsForSmoke(); await CheckSchedulingForSmoke(); await CheckParallelForSmoke();
+            await CheckPresetsForSmoke();
             Capture("normal");
             WorkspaceTabs.SelectedItem = ToolsTab;
             toolPanel.VerifyFiltersForSmoke();

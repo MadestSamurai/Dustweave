@@ -828,3 +828,5 @@ Workflow time budget reached; no automatic restart=本环节达到运行时限�
 
 account.local_login_incomplete=本机登录信息尚未准备好保存。请在游戏中启用自动登录，正常退出游戏和启动器后再保存。
 connection.login_identity_unavailable=尚未确认游戏中的账号身份。请完成登录；若已进入游戏，请导出诊断日志，无需注销账号。
+collection_story_locked=部分地图的敌人尚未随剧情开放，完成对应卡带剧情后可再次收集。
+weekly_locations_deferred=部分地图或卡带暂缓，其余地点继续处理；未完成项可之后补跑。

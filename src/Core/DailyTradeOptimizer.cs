@@ -78,6 +78,13 @@ public static class DailyTradeOptimizer
             Require(Integer(i["day"], "sale day", 1) <= 31, "Invalid sale day");
         }
         var offers = Rows(catalog["offers"]);
+        if (state["available_shops"] is JsonArray availableShops)
+        {
+            var available = availableShops.Select(v => Integer(v, "available shop", 1)).ToHashSet();
+            Require(available.Count > 0 && available.Count == availableShops.Count, "Invalid available trade shops");
+            Require(Rows(state["offers"]).All(p => available.Contains(N(p["shop"]))) &&
+                Rows(state["today_quotes"] ?? new JsonArray()).All(p => available.Contains(N(p["shop"]))), "Quote belongs to a locked shop");
+        }
         foreach (var p in offers)
         {
             Require(ids.Contains(N(p["item"])), "Offer item missing");
@@ -165,6 +172,17 @@ public static class DailyTradeOptimizer
         check?.Invoke();
         var started = Stopwatch.StartNew();
         Validate(catalog, state);
+        // Availability is account-specific. Keep ingredients usable for unlocked
+        // recipes, but never assign revenue from a merchant this account cannot visit.
+        string catalogHash = DailyTradeCatalog.Fingerprint(catalog);
+        var inaccessible = state["available_shops"] is JsonArray shops
+            ? Rows(catalog["items"]).Where(i => !shops.Select(N).Contains(N(i["shop"]))).Select(i => N(i["id"])).ToHashSet()
+            : new HashSet<long>();
+        if (inaccessible.Count > 0)
+        {
+            catalog = catalog.DeepClone().AsObject();
+            foreach (var item in Rows(catalog["items"]).Where(i => inaccessible.Contains(N(i["id"])))) item["sale"] = 0;
+        }
         var settings = Preferences(inputSettings);
         bool includeBreakEven = B(settings["include_break_even_resales"]);
         Require(double.IsFinite(timeLimit) && timeLimit > 0 && timeLimit <= 300, "Invalid time limit");
@@ -186,7 +204,7 @@ public static class DailyTradeOptimizer
         if (settings["max_spend"] != null)
             budget = Math.Min(budget, N(settings["max_spend"]));
         int saleStart = products.Length + recipes.Length, carryStart = saleStart + keys.Length;
-        var future = new DailyTradeForecast(catalog, state, carryStart, check);
+        var future = new DailyTradeForecast(catalog, state, carryStart, available, check);
         var carryKeys = future.CarryKeys;
         int n = future.Count, potionCol = future.Start - 1;
         var balance = keys.Select(_ => new double[n]).ToArray();
@@ -272,7 +290,7 @@ public static class DailyTradeOptimizer
             }
             var currentValue = (double[])obj.Clone();
             for (int i = 0; i < carryKeys.Length; i++) currentValue[carryStart + i] = -N(items[carryKeys[i]]["sale"]);
-            future.Add(upper, obj, rows, lower, cap, cash, budget, carryStart);
+            future.Add(upper, obj, rows, lower, cap, cash, budget, carryStart, saleStart);
             if (candidates.Count > 0)
             {
                 var relaxation = DailyLinearOptimizer.Solve(obj, upper, rows, lower, cap, false, Math.Min(timeLimit, 2), check);
@@ -313,9 +331,11 @@ public static class DailyTradeOptimizer
                 x[j] -= q; x[saleColumns[j]] -= q;
             }
             future.RemoveBreakEvenResales(x);
+            future.ReconcileTurnover(x);
             var breakEven = includeBreakEven
                 ? AllocateBreakEven(x, breakEvenProducts, saleColumns, prices, upper, rows, lower, cap, timeLimit, check)
                 : new long[products.Length];
+            future.ReconcileTurnover(x);
             Require(!x.Where((v, j) => v < -1e-6 || v > upper[j] + 1e-6).Any(), "Trade integer bounds failed");
             for (int i = 0; i < rows.Count; i++)
             {
@@ -368,6 +388,11 @@ public static class DailyTradeOptimizer
             if (q == 0)
                 continue;
             var item = items[k];
+            if (inaccessible.Contains(k))
+            {
+                holds.Add(O(("item", k), ("name", item["name"]), ("count", q), ("price", 0), ("estimated_value", 0), ("reason", "sale_shop_locked")));
+                continue;
+            }
             string when = NextSale(S(state["game_date"]), I(item["day"]));
             quotes.TryGetValue((k, N(item["shop"])), out var quote);
             bool today = when == S(state["game_date"]) && quote != null && N(quote["rate"]) == 120 && N(quote["price"]) == N(item["sale"]);
@@ -393,11 +418,13 @@ public static class DailyTradeOptimizer
         double? strategyBound = globalBound == null ? null : candidates.Max(c => c.Bound + RankingFee(c));
         bool proven = strategyBound != null && strategyBound - RankingProfit(best) < .01;
         var warnings = new JsonArray();
+        if (inaccessible.Count > 0)
+            warnings.Add(O(("code", "locked_sale_shops"), ("message", "仅按已解锁商店计算收益；需要未解锁商店出售的物品保留，不计预计回款。")));
         if (N(state["gold"]) < LowFunds)
             warnings.Add(O(("code", "low_working_capital"), ("message", Warning)));
         if (stock.Any(p => p.Value > 0 && !items.ContainsKey(p.Key)))
             warnings.Add(O(("code", "unvalued_stock"), ("message", "部分库存不在120%跑商范围，未用于采购或收益计算。")));
-        return O(("schema", 1), ("mode", "plan_only"), ("context", state["context"]), ("captured_utc", state["captured_utc"]), ("game_date", state["game_date"]), ("input_hash", DailyTradeCatalog.Fingerprint(state)), ("catalog_hash", DailyTradeCatalog.Fingerprint(catalog)), ("settings", settings), ("warnings", warnings), ("gold", state["gold"]), ("cycle_days", 30),
+        return O(("schema", 1), ("mode", "plan_only"), ("context", state["context"]), ("captured_utc", state["captured_utc"]), ("game_date", state["game_date"]), ("input_hash", DailyTradeCatalog.Fingerprint(state)), ("catalog_hash", catalogHash), ("settings", settings), ("warnings", warnings), ("gold", state["gold"]), ("cycle_days", 30),
             ("solver", O(("elapsed_seconds", Math.Round(started.Elapsed.TotalSeconds, 3)), ("engine", "dotnet-highs-1.15.1"), ("scope", "joint_current_and_29_day_supply"), ("optimal", proven), ("forecast_profit", best.Profit), ("profit_upper_bound", globalBound), ("gap_gold", globalBound == null ? null : Math.Max(0, globalBound.Value - best.Profit)), ("strategy_excludes_bargain_fee", includeBreakEven), ("strategy_profit", RankingProfit(best)), ("strategy_upper_bound", strategyBound), ("realization_tie_optimal", best.Tie), ("cash_tie_optimal", false))),
             ("summary", O(("incremental_profit", best.CurrentProfit), ("eventual_sale_value", saleValue), ("carryover_estimated_value", holdValue), ("initial_stock_value", baseValue), ("purchase_cost", buyCost), ("potions_used", best.Potions), ("potion_cost", N(state["potion_price"]) * best.Potions), ("potion_unit_price", state["potion_price"]), ("potions_to_buy", best.PotionBuy), ("cash_required", best.Cash), ("cash_remaining", N(state["gold"]) - best.Cash), ("break_even_count", best.BreakEven.Sum()), ("break_even_value", best.BreakEvenValue))),
             ("bargain", O(("mode", best.Mode), ("start", best.Mode == "bargain"), ("potions", best.Opening))), ("purchases", purchases), ("cooking", cooking), ("sales", sales), ("holds", holds), ("forecast", best.Forecast), ("drop_forecast", state["future_supply"]), ("resources_spent", false),

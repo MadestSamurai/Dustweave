@@ -33,7 +33,6 @@ public static class DailyTradeSnapshot
         Require(available.Count == native["AvailableShops"]!.AsArray().Count && !available.Overlaps(unavailable), "Invalid shop availability");
         var shops = Rows(R(e, "trade.available_shops", "$items"));
         Require(shops.Length == N(R(e, "trade.available_shops", "ὫὨὧὫὯὭὨὢὦὬὪ.Count")) && shops.Select(r => N(r["Id"])).ToHashSet().SetEquals(available.Concat(unavailable)), "Shop availability truncated");
-        Require(Rows(catalog["items"]).All(r => available.Contains(N(r["shop"]))), "Premium stores inaccessible; valuation requires reduced catalog");
         var food = Rows(Counted(e, "trade.inventory")).Single(r => S(r["Key"]) == "Food");
         var stacks = Rows(food["Value.Values"]);
         Require(stacks.Length == N(food["Value.Count"]), "Food inventory truncated");
@@ -114,6 +113,7 @@ public static class DailyTradeSnapshot
         var recipes = Rows(catalog["recipes"]).Where(r => unlocked.Contains(N(r["id"])) && N(r["talent_level"]) <= cookingLevel).Select(r => r["id"]);
         static JsonObject Quantities(Dictionary<long, long> d) => new(d.Select(p => new KeyValuePair<string, JsonNode?>(p.Key.ToString(CultureInfo.InvariantCulture), JsonValue.Create(p.Value))));
         var state = O(("schema", 1), ("context", O(("account", frame["AccountKey"]), ("player", frame["PlayerKey"]), ("player_name", daily["PlayerName"]), ("server", guild["ServerKey"]), ("cycle", guild["CycleKey"]), ("client", catalog["client"]), ("database_sha256", catalog["database_sha256"]))), ("captured_utc", new DateTimeOffset(N(e["AtUtcTicks"]), TimeSpan.Zero).ToString("O", CultureInfo.InvariantCulture)), ("game_date", native["Date"]), ("inventory_complete", true), ("offers_complete", true), ("recipes_complete", true), ("gold", R(e, "trade.currency", "Gold")), ("potions", R(e, "trade.currency", "Catalyst")), ("potion_price", potion["Price"]), ("potion_buy_limit", potion["Remaining"]), ("can_bargain", canBargain), ("bargain_active", active), ("items", Quantities(inventory)), ("protected_items", Quantities(locked)), ("recipes", Array(recipes)), ("offers", offers), ("today_quotes", Array(Rows(native["Quotes"]).Select(q => O(("item", q["Item"]), ("shop", q["Shop"]), ("price", q["Price"]), ("rate", q["Rate"]))))));
+        state["available_shops"] = new JsonArray(available.Order().Select(id => (JsonNode)JsonValue.Create(id)!).ToArray());
         DailyTradeOptimizer.Validate(catalog, state);
         var proof = O(("evidence_hash", DailyTradeCatalog.Fingerprint(e)), ("daily_hash", DailyTradeCatalog.Fingerprint(daily)), ("food_stacks", stacks.Length), ("food_types", inventory.Count), ("displayed_prices_matched", matched), ("available_shops", available.Order().ToArray()), ("food_offers", offers.Count), ("unlocked_recipes", unlocked.Count), ("usable_recipes", state["recipes"]!.AsArray().Count), ("talents", talents), ("protected_items", Quantities(locked)), ("resources_spent", false));
         return (state, proof);

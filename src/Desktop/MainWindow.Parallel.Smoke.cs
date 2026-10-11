@@ -31,7 +31,7 @@ public partial class MainWindow
         try
         {
             ViewAccountTasks(a.AccountKey); dailyPanel.ShowCurrentPlan(); dailyPanel.ClearSelection(); dailyPanel.SelectPlanTask("free_draws", true);
-            var selector = Descendants<ComboBox>(dailyPanel).Single();
+            var selector = Descendants<ComboBox>(dailyPanel).Single(c => c.SelectedValuePath == nameof(DailyAccount.AccountKey));
             selector.SelectedValue = b.AccountKey;
             Check(TaskAccountKey == b.AccountKey && fixture.CurrentKey == original && fixture.Calls.Count == calls, "Choosing tasks switched the game account");
             Check(!dailyPanel.ShowingPlan && dailyPanel.VisibleTasks.SequenceEqual(new[] { "mail" }), "Account history was not selected by identity");

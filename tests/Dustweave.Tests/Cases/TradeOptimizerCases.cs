@@ -18,6 +18,13 @@ static class TradeOptimizerCases
   var s=State(c,O(("1",100),("2",150)));var p=DailyTradeOptimizer.Plan(c,s);
   Check(Cooks(p,1)==50&&Holds(p,1)==0,"profitable ready processing is completed rather than perpetually deferred");
   Check(N(p["summary"]!["incremental_profit"])==50*(330-90-24-18),"processing ledger charges raw opportunity value and all talent potions");
+  var locked = Catalog([Item(1,12),Item(2,6),Item(3,330)], [Recipe(1,3,2,("1",2),("2",3))]);
+  locked["items"]![0]!["shop"] = 2;
+  s=State(locked,O(("1",102),("2",150)));s["available_shops"]=new JsonArray(1);p=DailyTradeOptimizer.Plan(locked,s);
+  Check(Cooks(p,1)==50 && !Rows(p["sales"]).Any(r=>N(r["item"])==1) && Holds(p,1)==2,
+   "unavailable raw merchant does not prevent cooking but leftover is retained without a sale");
+  Check(S(p["catalog_hash"])==DailyTradeCatalog.Fingerprint(locked) && N(locked["items"]![0]!["sale"])==12,
+   "availability valuation keeps original catalog fingerprint and immutable rules");
 
   var pie=Catalog([Item(1,36),Item(2,216),Item(3,1481-36),Item(4,2292),Item(5,2484)],
    [Recipe(1,4,10,("1",1),("2",5)),Recipe(2,5,10,("1",1),("3",1))]);
@@ -91,6 +98,44 @@ static class TradeOptimizerCases
    return state;
   }
   long Buys(JsonObject plan,long item)=>Rows(plan["purchases"]).Where(r=>N(r["item"])==item).Sum(r=>N(r["count"]));
+  double Turnover(JsonObject plan)=>plan["forecast"]!["turnover"]!["allowance_used"]!.GetValue<double>();
+  var receipts=Catalog([Item(1,120),Item(2,20)],[],[Offer(1,1,250,10)]);
+  receipts["items"]![1]!["day"]=11;
+  var cashState=Available(receipts);cashState["gold"]=1000;cashState["items"]=O(("2",300));
+  var cashPlan=DailyTradeOptimizer.Plan(receipts,cashState);
+  DailyJson.Write(Path.Combine(output,"turnover-case.json"),cashPlan);
+  Check(Math.Abs(Turnover(cashPlan)-250)<1e-4 && N(cashPlan["summary"]!["cash_required"])<=1000,
+   "near-term existing sales relax future funding by at most 25 percent without paying today's orders");
+  Check(Math.Abs(cashPlan["forecast"]!["purchase_cost"]!.GetValue<double>()+N(cashPlan["summary"]!["cash_required"])-1250)<1e-4,
+   "bounded turnover releases profitable forecast purchases previously blocked by funding");
+  Check(!B(cashPlan["forecast"]!["turnover"]!["today_spendable"]) && DailyTradePlan.Report(cashPlan).Contains("50%"),
+   "plan reports discounted future allowance separately from real cash");
+  cashState["items"]=O(("2",1));cashPlan=DailyTradeOptimizer.Plan(receipts,cashState);
+  Check(Math.Abs(Turnover(cashPlan)-10)<1e-4,"allowance cannot exceed half of original saleable inventory value");
+  cashState["items"]=O(("2",300));cashState["protected_items"]=O(("2",300));cashPlan=DailyTradeOptimizer.Plan(receipts,cashState);
+  Check(Turnover(cashPlan)==0,"locked goods cannot support projected turnover");
+  cashState.Remove("protected_items");receipts["items"]![1]!["shop"]=2;cashState["available_shops"]=new JsonArray(1);
+  cashPlan=DailyTradeOptimizer.Plan(receipts,cashState);
+  Check(Turnover(cashPlan)==0,"locked sale merchant cannot support projected turnover");
+  receipts["items"]![1]!["shop"]=1;cashState.Remove("available_shops");receipts["items"]![1]!["day"]=18;
+  cashPlan=DailyTradeOptimizer.Plan(receipts,cashState);Check(Turnover(cashPlan)==0,"sales beyond seven days do not relax funding");
+  receipts["items"]![1]!["day"]=10;cashPlan=DailyTradeOptimizer.Plan(receipts,cashState);
+  Check(Turnover(cashPlan)==0,"today's sale requires a confirmed native premium quote");
+  cashState["today_quotes"]=Array([O(("item",2),("shop",1),("rate",120),("price",20))]);
+  cashPlan=DailyTradeOptimizer.Plan(receipts,cashState);Check(Math.Abs(Turnover(cashPlan)-250)<1e-4,"confirmed current-day sales qualify only for future funding");
+  cashState["today_quotes"]=new JsonArray();cashState["game_date"]="2026-10-28";receipts["items"]![1]!["day"]=1;
+  cashPlan=DailyTradeOptimizer.Plan(receipts,cashState);Check(Math.Abs(Turnover(cashPlan)-250)<1e-4,"seven-day sale window crosses the month boundary");
+  cashState["game_date"]="2026-10-10";receipts["items"]![1]!["day"]=11;
+  cashState["items"]=new JsonObject();cashState["future_supply"]=Supply(receipts,O(("2",300L)));
+  cashPlan=DailyTradeOptimizer.Plan(receipts,cashState);Check(Turnover(cashPlan)==0,"hypothetical drops and newly bought stock cannot manufacture turnover credit");
+  cashState.Remove("future_supply");cashState["items"]=O(("2",300));
+  cashPlan=DailyTradeOptimizer.Plan(receipts,cashState,O(("reserve_gold",600),("max_spend",100)));
+  Check(Turnover(cashPlan)<=25+1e-4 && N(cashPlan["summary"]!["cash_required"])<=100,
+   "account reserve and spending cap also bound future turnover allowance");
+  var consume=Catalog([Item(1,120),Item(2,20),Item(3,100000)],[Recipe(1,3,1,("2",1))],[Offer(1,1,250,10)]);
+  consume["items"]![1]!["day"]=11;var consumeState=Available(consume);consumeState["gold"]=1000;consumeState["items"]=O(("2",300));
+  cashPlan=DailyTradeOptimizer.Plan(consume,consumeState);
+  Check(Cooks(cashPlan,1)==300&&Turnover(cashPlan)==0,"materials consumed by cooking cannot also be pledged as future raw sales");
   var achievement=O(("include_break_even_resales",true));
   Check(!B(DailyTradeOptimizer.Preferences()["include_break_even_resales"]),"break-even purchases are opt-in for existing accounts");
   Reject(()=>DailyTradeOptimizer.Preferences(O(("include_break_even_resales",1))),"break-even switch rejects non-boolean values");
@@ -178,10 +223,10 @@ static class TradeOptimizerCases
   Reject(()=>DailyLinearOptimizer.Solve([1],[1],[],[],[],true,initial:[double.NaN]),"invalid warm start rejected before native call");
   // A solved horizon may allocate eight of ten current ingredients to later raw resale.
   // Release that allocation even if every secondary MIP runs out of time.
-  var flow = new DailyTradeForecast(competing, State(competing,O(("1",10))), 4);
+  var flow = new DailyTradeForecast(competing, State(competing,O(("1",10))), 4, new Dictionary<long,long>{{1,10}});
   var vector = new double[flow.Count]; var costs = new double[flow.Count];
   var resourceRows = new List<double[]>(); var lows = new List<double>(); var caps = new List<double>();
-  flow.Add(Enumerable.Repeat(DailyLinearOptimizer.Infinity,flow.Count).ToArray(),costs,resourceRows,lows,caps,new double[flow.Count],100000000,4);
+  flow.Add(Enumerable.Repeat(DailyLinearOptimizer.Infinity,flow.Count).ToArray(),costs,resourceRows,lows,caps,new double[flow.Count],100000000,4,0);
   vector[4]=10; vector[flow.Start]=1; vector[flow.Count-4]=8; vector[flow.Count-2]=1;
   double Value()=>costs.Zip(vector,(a,b)=>a*b).Sum()-8*vector[0];
   double beforeValue=Value(); var beforeRows=resourceRows.Select(r=>r.Zip(vector,(a,b)=>a*b).Sum()).ToArray();

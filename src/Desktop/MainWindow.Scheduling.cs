@@ -94,6 +94,8 @@ public partial class MainWindow
     }
     private async Task<string> ExecuteAccountQueue(DailyAccount[] targets)
     {
+        var presets = new DailyTaskPresetStore(root);
+        var selections = targets.ToDictionary(a => a.AccountKey, a => presets.Selection(a.AccountKey, new DailyPreferenceStore(root).Read(a.AccountKey)));
         if (parallelOptions.Enabled && !IsSandboxWindow)
         {
             await StartParallelAsync(targets);
@@ -112,7 +114,7 @@ public partial class MainWindow
                     if (dailyStopping) { state = "paused"; break; }
                     await coordinator.InspectAsync([account]); RefreshAccounts();
                     if (dailyStopping) { state = "paused"; break; }
-                    var result = await dailyQueue.RunAsync(account.AccountKey);
+                    var result = await dailyQueue.RunAsync(account.AccountKey, selection: selections[account.AccountKey]);
                     if (result.State == "paused" || result.Stages.Any(s => s.State == "recovery_required")) { state = "paused"; break; }
                     if (result.State is not ("completed" or "skipped")) state = "partial";
                 }

@@ -231,7 +231,7 @@ public partial class App : Application
             StartupDiagnostics.Mark("main-window");
             var gameHost = new DailyGameHost();
             sessions = new AccountSessions(gameHost);
-            var window = new MainWindow(sessions, gameHost, DailyIdentity.DataRoot, null) { ScheduledStartup = scheduled, UpdatedStartup = updated, UpdateNonce = updated ? args[1] : "" };
+            var window = new MainWindow(sessions, gameHost, DailyIdentity.DataRoot, null) { ScheduledStartup = scheduled, UpdatedStartup = updated, DirectedStartup = args.Length > 0, UpdateNonce = updated ? args[1] : "" };
             if (viewAccount != null) { DailySandbox.RequireBoundAccount(viewAccount); window.Loaded += (_, _) => { try { window.ViewAccountTasks(viewAccount); } catch (Exception error) { window.ShowTaskNavigationError(error); } }; }
             if (inspectAccount != null) window.Loaded += async (_, _) => await window.InspectAccountAsync(inspectAccount);
             if (resumeAccount != null) window.Loaded += async (_, _) => await window.ResumeQueueAsync(resumeAccount);

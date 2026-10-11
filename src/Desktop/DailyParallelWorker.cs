@@ -72,7 +72,7 @@ internal static class DailyParallelWorker
                     await coordinator.InspectAsync([target]);
                     if (control.Stopped || control.Paused) continue;
                     State("running");
-                    var result = await queue.RunAsync(job.Account, resume: resume);
+                    var result = await queue.RunAsync(job.Account, resume: resume, selection: !resume && job.Tasks != null ? new(job.Account, job.Tasks) : null);
                     lock (stateGate) { view = result; detail = result.Message; }
                     if (control.Stopped) break;
                     if (control.Paused || result.State == "paused")

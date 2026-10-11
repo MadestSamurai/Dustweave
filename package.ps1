@@ -3,7 +3,7 @@ param(
  [Parameter(Mandatory)][string]$GameManagedDir,
  [ValidateSet('Portable','Lite')][string[]]$Flavors=@('Portable','Lite'),
  [string]$PreparedCacheDirectory='',
- [ValidateSet('Auto','Accounts','Navigation','Rewards','Trading','Full')][string]$ValidationScope='Auto',
+ [ValidateSet('Auto','Accounts','Navigation','Rewards','Trading','Weekly','Full')][string]$ValidationScope='Auto',
  [string]$ValidationBaseline=''
 )
 $ErrorActionPreference='Stop'

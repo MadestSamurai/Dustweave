@@ -65,6 +65,8 @@ public static class DailyTradePlan
         foreach (var (key, name) in new[] { ("incremental_profit", "本轮加工与交易增益"), ("eventual_sale_value", "预计回款"), ("cash_required", "本轮垫资"), ("cash_remaining", "垫资后金币"), ("potion_unit_price", "天赋药单价"), ("potions_used", "天赋药总消耗"), ("potions_to_buy", "其中需补买") })
             b.AppendLine($"|{name}|{N(s[key]):N0}|");
         b.AppendLine();
+        if (p["forecast"]?["turnover"] is JsonObject turnover)
+            b.AppendLine($"未来周转：7天内可高价出售的现有库存按回款的50%计入，最多放宽可用资金的25%；本方案使用 {turnover["allowance_used"]!.GetValue<double>():N0} 金币额度。该额度只影响未来资金预留，今天采购仍须有足额金币。").AppendLine();
         if (B(p["settings"]?["include_break_even_resales"]))
             b.AppendLine($"已开启金币成就采购：额外零收益商品 {N(s["break_even_count"]):N0} 个，垫资／预计回款 {N(s["break_even_value"]):N0} 金币。仅比较折扣后买价与120%卖价，不分摊砍价费；实际药耗仍计入上方账目，卖出须等待高价日。").AppendLine();
         if (p["drop_forecast"] is JsonObject drops) b.AppendLine($"掉落预测：已知周收集路线 {Rows(drops["maps"]).Length} 张地图，按静态奖励权重计算期望；仅影响材料分配，不允许使用未到账物品。");

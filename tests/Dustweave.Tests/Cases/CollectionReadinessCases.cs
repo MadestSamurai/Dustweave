@@ -32,6 +32,16 @@ static class CollectionReadinessCases
     }
     public static async Task Run(string output, List<string> cases)
     {
+        var locked = new JsonObject { ["State"] = "ready", ["Error"] = "", ["Pack"] = 2001, ["Maps"] = new JsonArray(20011, 20012),
+            ["Week"] = 100, ["Now"] = 50, ["Rewards"] = "[]", ["Monsters"] = "[]", ["Drops"] = new JsonArray(), ["Targets"] = new JsonArray(),
+            ["DeferredTargets"] = new JsonArray(new JsonObject { ["Id"] = 1, ["Map"] = 20011, ["Group"] = 2 }), ["StealReady"] = true, ["Steals"] = "[]", ["StealTargets"] = new JsonArray() };
+        var classified = DailyCollectionProgress.Classify(locked, 2001, [20011, 20012]);
+        if (classified["completed"]!["20011"] != null || classified["completed"]!["20012"] == null || classified["maps"]!["20011"]!["story_locked"]!.AsArray().Count != 1)
+            throw new Exception("Story locked targets became false completion or blocked unrelated maps");
+        cases.Add("story gated monsters remain pending while unrelated maps can complete");
+        var theft = DailyCollectionProgress.Classify(locked, 2001, [20011, 20012], true, true);
+        if (theft["completed"]!.AsObject().Count != 2) throw new Exception("Story monster gates blocked independent theft");
+        cases.Add("story monster gates do not block independent NPC theft");
         void Check(bool value, string name)
         {
             if (!value)

@@ -5,10 +5,20 @@ namespace Dustweave.Desktop;
 
 public partial class MainWindow
 {
+    private bool refreshingAccountPresets;
+    private static TaskPresetChoice[] PresetOptions(DailyTaskPresetData data) => new[] { new TaskPresetChoice("", "") }.Concat(data.Presets.Select(p => new TaskPresetChoice(p.Id, p.Name))).ToArray();
+    private void RefreshAccountPresets()
+    {
+        var data = new DailyTaskPresetStore(root).Read();
+        refreshingAccountPresets = true;
+        try { foreach (var row in rows) { row.PresetOptions = PresetOptions(data); row.PresetId = data.Accounts.GetValueOrDefault(row.Account.AccountKey, ""); row.RefreshLanguage(); } }
+        finally { refreshingAccountPresets = false; }
+    }
     private void UpdateAccountPresentation()
     {
         if (catalog == null || SaveAccountButton == null) return;
         bool idle = !Unavailable;
+        RunOnOpen.IsEnabled = idle && !IsSandboxWindow;
         bool closed = !catalog.GameRunning && !catalog.StarterRunning;
         bool identified = catalog.SessionComplete && DailyProfiles.ValidKey(catalog.CurrentKey);
         var current = catalog.Accounts.FirstOrDefault(a => a.Valid && a.AccountKey == catalog.CurrentKey);

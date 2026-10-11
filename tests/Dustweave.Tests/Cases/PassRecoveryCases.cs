@@ -68,6 +68,25 @@ static class PassRecoveryCases
             Check(h.Time < 5 && !h.Box.Commands.Any(c => S(c["Reason"]).Contains("领取全部")), "stable pass schema error fails promptly without claims in mode " + claim);
             Check(DailyNavigationDecision.Types(h.Frame).Contains("MenuUI"), "isolated pass returns to usable menu in mode " + claim);
         }
+        using (var h = new WorkflowHarness(Path.Combine(root, "pass-page-race"), DailyMissions.Proofs().ToArray(), ["missions.query", "missions.event_query"], assetDirectory: Path.Combine(root, "pass-assets-False")))
+        {
+            int selected = 501; bool arm = false, captured = false, changed = false; int newPageClicks = 0;
+            void Page(string name) { h.Page("PassUI", "$pointer/" + name + "/Button - Tab - Mission", "_objBackButton"); h.Frame["Surfaces"]![0]!["Targets"]![0]!["Route"] = "pointer"; }
+            Page("OldGuide");
+            h.Readings = () => Rows(Pass(selected, active: [501, 502])["Readings"]);
+            var publish = h.Box.AfterWrite;
+            h.Box.AfterWrite = (channel, file, bytes) => { publish?.Invoke(channel, file, bytes); if (arm && file == "observation-request.json") captured = true; };
+            h.OnRead = () => { if (captured && !changed) { changed = true; Page("Seasonal"); } };
+            h.OnCommand = c => {
+                if (S(c["Kind"]) == "reward_refresh") foreach (string role in new[] {"missions.query", "missions.event_query"}) { h.Event(role, "request"); h.Event(role, "response"); }
+                if (S(c["Kind"]) == "pass_select") { selected = I(c["Value"]); arm = selected == 502; }
+                if (S(c["Kind"]) == "pointer" && selected == 502) { if (!changed) throw new Exception("Sent an obsolete pass tab"); newPageClicks++; }
+                if (S(c["Kind"]) == "click" && N(c["TargetId"]) == 11) h.Page("MenuUI");
+            };
+            var result = await DailyPasses.Run(h.Workflow, false);
+            Check(changed && newPageClicks == 1 && Rows(result["reports"]).Select(r => N(r["selected_pass_id"])).ToHashSet().SetEquals([501L, 502L]),
+                "pass switch discards obsolete mission target and reads each pass once without replaying a claim");
+        }
         foreach (string mode in new[] {"progression", "unknown-claim", "stopped", "identity"})
         {
             using var h = new WorkflowHarness(Path.Combine(root, "pass-guard-"+mode), DailyMissions.Proofs().ToArray(), ["missions.query", "missions.event_query"], assetDirectory: Path.Combine(root, "pass-assets-True"));

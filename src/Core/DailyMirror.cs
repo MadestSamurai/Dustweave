@@ -284,6 +284,7 @@ public static class DailyMirror
     {
         if (!w.Settings.Mirror.Enabled)
             return DailyWorkflow.Skipped("disabled");
+        w.Driver.Diagnostics.Event("mirror_settings", O(("configured_multiplier", w.Settings.Mirror.Multiplier), ("account", w.Context["actor"]![3])));
         await Recover(w);
         var frame = await w.Observe();
         if (DailyNavigationDecision.Types(frame.Frame).Overlaps(["PVPAutoHistoryPopupUI", "BattleResultUI"]))
@@ -305,6 +306,7 @@ public static class DailyMirror
                 break;
             int repetitions = I(before["free"]) / cost;
             int total = checked(cost * repetitions);
+            w.Driver.Diagnostics.Event("mirror_batch_plan", O(("configured_multiplier", w.Settings.Mirror.Multiplier), ("free", before["free"]), ("multiplier", cost), ("repetitions", repetitions)));
             await Prepare(w, cost, repetitions);
             var t = await Target(w, Auto, field: "_currencyButtonOK");
             var op = await w.Transact("mirror.end", O(("multiplier", cost), ("repetitions", repetitions), ("free_only", true)), O(("ui", Auto), ("field", t["Field"]), ("target_id", t["Id"]), ("native", true), ("reason", "使用已核对的免费镜中次数")), BatchTimeout(repetitions));

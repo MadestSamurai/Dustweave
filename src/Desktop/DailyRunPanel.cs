@@ -142,7 +142,10 @@ public sealed partial class DailyRunPanel : UserControl
         L.Bind(accountSelector, System.Windows.Automation.AutomationProperties.NameProperty, "run.task_account");
         L.Bind(accountSelector, FrameworkElement.ToolTipProperty, "run.task_account_help");
         accountBar.Children.Add(accountLabel); accountBar.Children.Add(accountSelector);
-        top.Children.Add(accountBar);
+        var accountStrip = new DockPanel();
+        var presetBar = CreatePresets(root); DockPanel.SetDock(presetBar, Dock.Right);
+        accountStrip.Children.Add(presetBar); accountStrip.Children.Add(accountBar);
+        top.Children.Add(accountStrip);
         accountSelector.SelectionChanged += (_, _) => { if (!settingAccounts && !isBusy && accountSelector.SelectedValue is string key) AccountRequested?.Invoke(key); };
         var viewSwitch = new StackPanel { Orientation = Orientation.Horizontal };
         foreach (var b in new[] { planButton, reportButton })
@@ -208,6 +211,7 @@ public sealed partial class DailyRunPanel : UserControl
     public void Busy(bool busy, bool canStop = true)
     {
         isBusy = busy;
+        presetSelector.IsEnabled = savePreset.IsEnabled = managePreset.IsEnabled = !busy && DailyProfiles.ValidKey(activeAccount);
         accountSelector.IsEnabled = !busy;
         views.Visibility = busy ? Visibility.Collapsed : Visibility.Visible;
         current.Visibility = busy ? Visibility.Collapsed : Visibility.Visible;
@@ -250,6 +254,7 @@ public sealed partial class DailyRunPanel : UserControl
     public void ShowPlan(DailyPreferences preferences)
     {
         plan = preferences;
+        RefreshPresets();
         SyncPlanChoices();
         if (!isBusy && !showingReport)
             ShowCurrentPlan();
@@ -491,6 +496,7 @@ public sealed partial class DailyRunPanel : UserControl
     }
     private void UpdateChoices()
     {
+        savePreset.IsEnabled = managePreset.IsEnabled = !isBusy && !showingReport && DailyProfiles.ValidKey(activeAccount);
         bool hasReport = showingReport && currentView.Record.Length > 0;
         planButton.IsEnabled = !isBusy;
         reportButton.IsEnabled = !isBusy && currentView.Record.Length > 0;
@@ -651,6 +657,7 @@ public sealed partial class DailyRunPanel : UserControl
     private void LanguageChanged(object? sender, EventArgs args)
     {
         foreach (var row in rows) row.RefreshLanguage();
+        RefreshPresets();
     }
     private static string Describe(string text) => L.Describe(text);
     public void Show(QueueView view)

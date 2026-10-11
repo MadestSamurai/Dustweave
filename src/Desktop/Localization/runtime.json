@@ -1,4 +1,9 @@
 {
+  "message.weekly_locations_deferred": {
+    "zh-CN": "部分地图或卡带暂缓，其余地点继续处理；未完成项可之后补跑。",
+    "zh-TW": "部分地圖或卡帶暫緩，其餘地點繼續處理；未完成項可之後補跑。",
+    "en-US": "Some maps or cartridges are deferred while other locations continue. Unfinished tasks can be retried later."
+  },
   "message.collection_pack_list_incomplete": {
     "zh-CN": "卡带列表尚未完整载入，请等待游戏加载后重试周收集。",
     "zh-TW": "卡帶清單尚未完整載入，請等待遊戲載入後重試周收集。",

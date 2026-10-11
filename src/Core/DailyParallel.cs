@@ -9,10 +9,12 @@ public sealed record DailyParallelOptions(bool Enabled = false, int Maximum = 2,
 public sealed record DailyParallelJob(string Id, string Account, string Name, string Preferences, bool CloseGame)
 {
     public bool StartedGame { get; init; }
+    public string[]? Tasks { get; init; }
     public void Validate()
     {
         if (!Guid.TryParseExact(Id, "N", out _) || !DailyProfiles.ValidKey(Account) || string.IsNullOrWhiteSpace(Name)) throw new InvalidDataException("parallel.invalid_job");
         DailyPreferences.Parse(Preferences).Validate();
+        if (Tasks != null) new QueuePlanRequest(Account, Tasks).Validate(Account, DailyPreferences.Parse(Preferences));
     }
 }
 public sealed record DailyParallelCommand(string Id, string Account, string Action, long Sequence, DateTimeOffset AtUtc);
@@ -57,7 +59,7 @@ public sealed class DailyParallelSession
             ExpireOverview();
         }
     }
-    public async Task StartAsync(IEnumerable<DailyAccount> accounts, DailyParallelOptions options, Func<string, DailyPreferences> preferences)
+    public async Task StartAsync(IEnumerable<DailyAccount> accounts, DailyParallelOptions options, Func<string, DailyPreferences> preferences, Func<string, DailyPreferences, QueuePlanRequest?>? selection = null)
     {
         await gate.WaitAsync();
         try
@@ -66,7 +68,11 @@ public sealed class DailyParallelSession
             options.Validate();
             var targets = accounts.ToArray();
             if (targets.Length == 0 || targets.Any(x => !x.Valid || !DailyProfiles.ValidKey(x.AccountKey)) || targets.Select(x => x.AccountKey).Distinct().Count() != targets.Length) throw new InvalidDataException("parallel.invalid_accounts");
-            var items = targets.Select(a => new DailyParallelItem(a, new(Guid.NewGuid().ToString("N"), a.AccountKey, a.Name, System.Text.Json.JsonSerializer.Serialize(preferences(a.AccountKey)), options.CloseGame))).ToArray();
+            var items = targets.Select(a => {
+                var settings = preferences(a.AccountKey);
+                var tasks = selection?.Invoke(a.AccountKey, settings)?.Validate(a.AccountKey, settings);
+                return new DailyParallelItem(a, new(Guid.NewGuid().ToString("N"), a.AccountKey, a.Name, System.Text.Json.JsonSerializer.Serialize(settings), options.CloseGame) { Tasks = tasks });
+            }).ToArray();
             foreach (var item in items) item.Job.Validate();
             starting.Clear(); launched.Clear(); while (commands.TryDequeue(out _)) { } holdWaiting = false;
             Current = new(Guid.NewGuid().ToString("N"), options, now(), items); Save();

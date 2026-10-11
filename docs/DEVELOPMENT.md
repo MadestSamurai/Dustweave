@@ -148,6 +148,10 @@ Normal desktop, updated and isolated-worker processes own a fresh control identi
 
 `-ValidationScope Trading` is a narrow follow-up scope for `DailyTradeOptimizer`, its forecast/drop model, plan/execution integration and the corresponding optimizer tests. It reuses a completed full baseline only when the actual source difference is wholly inside this allowlist, documentation and packaging metadata, and the installed client code fingerprint is unchanged. Changes to the shared linear solver, connection, dependencies or UI require full checks. Trading and product-identity regressions plus both packaged startup/identity/boundary gates still run; the recorded scope does not claim to rerun unchanged tool checks.
 
+### Weekly route validation scope
+
+`-ValidationScope Weekly` covers only `DailyWeeklyRoute`, its isolation regressions, notice translations and release metadata. It checks the exact input difference against a completed full baseline and verifies the unchanged game code fingerprint. Weekly, talent, command/identity and localization regressions run again, together with both packaged startup and boundary checks. Native components and unrelated tools reuse their recorded baseline; shared runtime or connection changes require full validation.
+
 跑商专项复用已完成的完整基线，当前源文件逐一比较；共享求解器、连接、界面或未知范围的改动会拒绝复用。年度分析见 [365天对照](TRADING_ANNUAL_2026-10-10.md)，日志维护见 [诊断说明](DIAGNOSTICS.md)。
 
 ### Restart and recovery boundaries / 重启与恢复边界

@@ -15,10 +15,16 @@ internal sealed class DailyTradeForecast
     private readonly long[] keys;
     private readonly JsonObject state;
     private readonly Dictionary<long, long> supply;
-    private readonly int buyStart, cookStart, saleStart, tailStart;
+    private readonly int buyStart, cookStart, saleStart, tailStart, turnoverStart;
     private readonly (long Item, long Limit, double Value)[] tail;
+    private readonly (long Item, long Stock, double Price, string Date)[] turnover;
+    private double[] fundingCost = [];
+    private long fundingBudget;
+    private int currentSaleStart;
+    private const int TurnoverDays = 7;
+    private const double TurnoverShare = .5;
 
-    public DailyTradeForecast(JsonObject catalog, JsonObject snapshot, int currentStart, Action? check = null)
+    public DailyTradeForecast(JsonObject catalog, JsonObject snapshot, int currentStart, IReadOnlyDictionary<long, long> available, Action? check = null)
     {
         state = snapshot; supply = DailyTradeDropForecast.Supply(catalog, snapshot);
         items = Rows(catalog["items"]).ToDictionary(i => N(i["id"]));
@@ -32,7 +38,17 @@ internal sealed class DailyTradeForecast
         buyStart = Start; cookStart = buyStart + offers.Length; saleStart = cookStart + recipes.Length;
         tailStart = saleStart + keys.Length;
         tail = EndStockValues(check);
-        Count = tailStart + tail.Length;
+        turnoverStart = tailStart + tail.Length;
+        var today = DateOnly.ParseExact(S(state["game_date"]), "yyyy-MM-dd");
+        turnover = keys.Where(k => available.GetValueOrDefault(k) > 0 && N(items[k]["sale"]) > 0)
+            .Select(k => (Item: k, Stock: available[k], Price: N(items[k]["sale"]) * TurnoverShare,
+                Date: DailyTradeOptimizer.NextSale(S(state["game_date"]), I(items[k]["day"]))))
+            .Where(p => DateOnly.ParseExact(p.Date, "yyyy-MM-dd").DayNumber - today.DayNumber <= TurnoverDays
+                && (p.Date != S(state["game_date"]) || Rows(state["today_quotes"]).Any(q =>
+                    N(q["item"]) == p.Item && N(q["shop"]) == N(items[p.Item]["shop"])
+                    && N(q["rate"]) == 120 && N(q["price"]) == N(items[p.Item]["sale"]))))
+            .ToArray();
+        Count = turnoverStart + turnover.Length;
     }
 
     // A finite integer horizon calls an incomplete final batch "surplus" and
@@ -71,7 +87,7 @@ internal sealed class DailyTradeForecast
     }
 
     public void Add(double[] upper, double[] objective, List<double[]> rows, List<double> lower, List<double> caps,
-        double[] currentCash, long budget, int carryStart)
+        double[] currentCash, long budget, int carryStart, int currentSales)
     {
         int n = Count;
         Cost = new double[n];
@@ -103,9 +119,40 @@ internal sealed class DailyTradeForecast
             balances[ending.Item][j] = -1; upper[j] = ending.Limit; Cost[j] = -ending.Value;
         }
         foreach (var pair in balances) { rows.Add(pair.Value); lower.Add(-supply.GetValueOrDefault(pair.Key)); caps.Add(-supply.GetValueOrDefault(pair.Key)); }
-        // Forecast revenue never funds today's orders or duplicates current working capital.
+        // Today's cash constraint remains unchanged. Only forecast funding can use
+        // half of near-term sales of ORIGINAL, unlocked inventory, capped at 25%
+        // of usable cash. Neither new purchases nor hypothetical drops earn credit.
+        fundingBudget = budget; currentSaleStart = currentSales;
+        fundingCost = (double[])funding.Clone();
+        var turnoverCap = new double[n];
+        for (int i = 0; i < turnover.Length; i++)
+        {
+            var p = turnover[i]; int j = turnoverStart + i;
+            funding[j] = -1; turnoverCap[j] = 1;
+            upper[j] = p.Stock * p.Price;
+            var sold = new double[n]; sold[j] = 1;
+            sold[currentSaleStart + System.Array.IndexOf(keys, p.Item)] = -p.Price;
+            rows.Add(sold); lower.Add(double.NegativeInfinity); caps.Add(0);
+        }
+        rows.Add(turnoverCap); lower.Add(double.NegativeInfinity); caps.Add(budget / 4);
         rows.Add(funding); lower.Add(double.NegativeInfinity); caps.Add(budget);
         for (int j = Start; j < n; j++) objective[j] = Cost[j];
+    }
+
+    // Credit has no objective value. Normalize solver ties after resale cleanup,
+    // so diagnostics show only the allowance actually needed by this plan.
+    public void ReconcileTurnover(double[] x)
+    {
+        double need = Math.Max(0, fundingCost.Select((v, j) => v * x[j]).Sum() - fundingBudget);
+        Require(need <= fundingBudget / 4 + 1e-4, "Forecast turnover allowance exceeded");
+        for (int i = 0; i < turnover.Length; i++)
+        {
+            var p = turnover[i];
+            double quantity = Math.Max(0, Math.Min(p.Stock, x[currentSaleStart + System.Array.IndexOf(keys, p.Item)]));
+            double used = Math.Min(need, quantity * p.Price);
+            x[turnoverStart + i] = used; need -= used;
+        }
+        Require(need <= 1e-4, "Forecast turnover is not backed by current saleable stock");
     }
 
     private long Price(JsonObject offer) => N(offer["base_price"]) * (B(state["can_bargain"]) || B(state["bargain_active"]) ? 40 : 100) / 100;
@@ -145,5 +192,10 @@ internal sealed class DailyTradeForecast
         ("terminal_stock", Array(tail.Select((p, i) => O(("item", p.Item), ("count", x[tailStart + i]), ("limit", p.Limit), ("unit_value", p.Value), ("raw_sale_price", items[p.Item]["sale"]))).Where(r => r["count"]!.GetValue<double>() > 1e-8))),
         ("purchase_cost", offers.Select((_, i) => (long)Cost[buyStart + i] * x[buyStart + i]).Sum()),
         ("potion_cost", recipes.Select((_, i) => (long)Cost[cookStart + i] * x[cookStart + i]).Sum()),
+        ("turnover", O(("days", TurnoverDays), ("receipt_share", TurnoverShare), ("cash_limit", fundingBudget / 4),
+            ("allowance_used", Enumerable.Range(turnoverStart, turnover.Length).Sum(i => x[i])),
+            ("today_spendable", false), ("source", "existing_unlocked_stock_allocated_to_sale"),
+            ("receipts", Array(turnover.Select((p, i) => O(("item", p.Item), ("date", p.Date),
+                ("allowance", x[turnoverStart + i]))).Where(r => r["allowance"]!.GetValue<double>() > 1e-6))))),
         ("cooking", Array(recipes.Select((r, i) => O(("recipe", r["id"]), ("count", x[cookStart + i]))).Where(r => r["count"]!.GetValue<double>() > 1e-8))));
 }

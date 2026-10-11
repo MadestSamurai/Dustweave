@@ -1,4 +1,32 @@
 {
+  "notice.weekly.map_deferred": {
+    "zh-CN": "卡带 {0} · 地图 {1} 暂缓：{2}；继续后续地点",
+    "zh-TW": "卡帶 {0} · 地圖 {1} 暫緩：{2}；繼續後續地點",
+    "en-US": "Cartridge {0} · Map {1} deferred: {2}; continuing to other locations",
+    "parameters": ["number", "number", "message"]
+  },
+  "notice.weekly.pack_deferred": {
+    "zh-CN": "卡带 {0} 暂缓：{1}；继续后续地点",
+    "zh-TW": "卡帶 {0} 暫緩：{1}；繼續後續地點",
+    "en-US": "Cartridge {0} deferred: {1}; continuing to other locations",
+    "parameters": ["number", "message"]
+  },
+  "notice.weekly.deferred_summary": {
+    "zh-CN": "{0} · 卡带 {1} 有暂缓项目，原因已保留，可之后补跑",
+    "zh-TW": "{0} · 卡帶 {1} 有暫緩項目，原因已保留，可之後補跑",
+    "en-US": "{0} · Cartridges {1} have deferred tasks. Reasons are saved for a later retry.",
+    "parameters": ["message", "value"]
+  },
+  "notice.weekly.reentry_unresolved": {
+    "zh-CN": "重进后仍有待办，保留服务器进度",
+    "zh-TW": "重新進入後仍有待辦，保留伺服器進度",
+    "en-US": "Targets remain after reentry; server progress is preserved"
+  },
+  "notice.weekly.locations_deferred": {
+    "zh-CN": "部分地图或卡带暂缓，其余地点继续处理；未完成项可之后补跑。",
+    "zh-TW": "部分地圖或卡帶暫緩，其餘地點繼續處理；未完成項目可之後補跑。",
+    "en-US": "Some maps or cartridges are deferred while other locations continue. Unfinished tasks can be retried later."
+  },
   "notice.connect.engine": {
     "zh-CN": "等待游戏引擎初始化",
     "zh-TW": "等待遊戲引擎初始化",

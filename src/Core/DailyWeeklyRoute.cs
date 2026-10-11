@@ -17,6 +17,10 @@ public sealed class DailyWeeklyRoute
     private readonly Dictionary<string, HashSet<(long Pack, long Map)>> known = Stages.ToDictionary(s => s, _ => new HashSet<(long, long)>()), done = Stages.ToDictionary(s => s, _ => new HashSet<(long, long)>());
     private readonly HashSet<(long, long)> deferred = [], reentered = []; private HashSet<string> active = []; private DailyWeeklyNpc? npc; private DailyCollectionNavigator? nav; private JsonObject? checkpoint; private string week = ""; private long pack; private bool entered;
     private bool catalogReady;
+    private readonly HashSet<(long Pack, long Map)> storyLocked = [];
+    // Deferrals belong to this run only. A retry starts from fresh server progress,
+    // never from a persistent blacklist of maps or cartridges.
+    private readonly Dictionary<string, Dictionary<(long Pack, long Map), JsonObject>> failures = Stages.ToDictionary(s => s, _ => new Dictionary<(long, long), JsonObject>());
     public JsonObject VerifiedResults()
     {
         var result = new JsonObject();
@@ -64,7 +68,42 @@ public sealed class DailyWeeklyRoute
     }
     private string Summary(string stage) => stage == "weekly_npc" ? npc?.Summary() ?? "等待读取周NPC任务" : $"{Names[stage]}已核对 {done[stage].Count}/{known[stage].Count} 张地图";
     private Dictionary<string, long[]> Maps() => new() { { "weekly_mainline", active.Contains("weekly_mainline") ? route.Catalog.Maps(pack) : [] }, { "weekly_steal", active.Contains("weekly_steal") ? route.Catalog.StealMaps(pack) : [] } };
-    private Dictionary<string, long[]> MapJobs() => Maps().Where(p => active.Contains(p.Key)).ToDictionary(p => p.Key, p => p.Value.Where(id => !done[p.Key].Contains((pack, id))).ToArray());
+    private Dictionary<string, long[]> MapJobs() => Maps().Where(p => active.Contains(p.Key)).ToDictionary(p => p.Key, p => p.Value.Where(id => !done[p.Key].Contains((pack, id)) && !failures[p.Key].ContainsKey((pack, id)) && (p.Key != "weekly_mainline" || !storyLocked.Contains((pack, id)))).ToArray());
+    private void Defer(string stage, long map, string reason, JsonObject? metadata = null)
+    {
+        var failure = O(("pack", pack), ("map", map), ("reason", reason), ("at", w.Driver.UtcTicks), ("metadata", metadata));
+        failures[stage][(pack, map)] = failure;
+        w.Driver.Diagnostics.Failure("weekly_location_deferred", O(("stage", stage), ("message", reason), ("location", failure)));
+        Emit(stage, $"卡带 {pack}" + (map > 0 ? $" · 地图 {map}" : "") + " 暂缓：" + reason + "；继续后续地点", true);
+    }
+    private void DeferPack(string reason, JsonObject? metadata = null)
+    {
+        w.Driver.Diagnostics.Event("weekly_cartridge_deferred", O(("pack", pack), ("reason", reason), ("metadata", metadata)));
+        foreach (string stage in active)
+        {
+            if (stage == "weekly_npc")
+            {
+                if (npc?.Data == null || N(npc.Data.Native["Completed"]) < N(npc.Data.Native["Limit"]))
+                    Defer(stage, 0, reason, metadata);
+                continue;
+            }
+            foreach (var location in known[stage].Except(done[stage]).Where(p => p.Pack == pack).OrderBy(p => p.Map))
+                if (!failures[stage].ContainsKey(location)) Defer(stage, location.Map, reason, metadata);
+        }
+    }
+    private JsonObject IncludeDeferrals(string stage, JsonObject result)
+    {
+        var unresolved = failures[stage].Where(p => !done[stage].Contains(p.Key)).OrderBy(p => p.Key.Pack).ThenBy(p => p.Key.Map).Select(p => p.Value).ToArray();
+        if (unresolved.Length == 0) return result;
+        result["deferred_locations"] = Array(unresolved);
+        if (S(result["state"]) == "partial")
+        {
+            string locations = string.Join("、", unresolved.Select(p => N(p["pack"])).Distinct());
+            result["detail"] = S(result["detail"]) + $" · 卡带 {locations} 有暂缓项目，原因已保留，可之后补跑";
+            if (!B(result["waiting_daily_reset"])) result["reason"] = "weekly_locations_deferred";
+        }
+        return result;
+    }
     private async Task Refresh(bool cache = false)
     {
         var maps = Maps();
@@ -88,8 +127,12 @@ public sealed class DailyWeeklyRoute
             if (checkpoint == null)
                 continue;
             var keys = pair.Key == "weekly_steal" ? new[] { "steals" } : new[] { "drops", "monsters" };
+            if (pair.Key == "weekly_mainline")
+                foreach (long id in pair.Value)
+                    if (checkpoint["maps"]![id.ToString()]!["story_locked"] is JsonArray { Count: > 0 }) storyLocked.Add((pack, id));
+                    else storyLocked.Remove((pack, id));
             done[pair.Key].ExceptWith(pair.Value.Select(id => (pack, id)));
-            done[pair.Key].UnionWith(pair.Value.Where(id => keys.All(key => (checkpoint["maps"]![id.ToString()]![key] as JsonArray)?.Count == 0)).Select(id => (pack, id)));
+            done[pair.Key].UnionWith(pair.Value.Where(id => (pair.Key != "weekly_mainline" || !storyLocked.Contains((pack, id))) && keys.All(key => (checkpoint["maps"]![id.ToString()]![key] as JsonArray)?.Count == 0)).Select(id => (pack, id)));
         }
     }
     private async Task<bool> Prepare(long currentPack)
@@ -184,7 +227,10 @@ public sealed class DailyWeeklyRoute
             if (!MapJobs().GetValueOrDefault(stage, []).Contains(map))
                 break;
             if (attempt > 0 || !reentered.Add((pack, map)))
-                throw new DailyWeeklyCategoryStop(stage, $"卡带 {pack} 地图 {map} 重进后仍有待办，保留服务器进度", O(("remaining", checkpoint!["maps"]![map.ToString()]), ("reentry_attempted", true)));
+            {
+                Defer(stage, map, "重进后仍有待办，保留服务器进度", O(("remaining", checkpoint!["maps"]![map.ToString()]), ("reentry_attempted", true)));
+                break;
+            }
             Emit(stage, $"地图 {map} 收集状态不一致，切换卡带重进核对", true);
             nav = await route.ReloadMap(pack, map, week);
             await Guard();
@@ -220,7 +266,7 @@ public sealed class DailyWeeklyRoute
                 return;
             var p = await nav.Plan([], target);
             var actions = Rows(p["actions"]);
-            Require(actions.Length > 0, "周路线未能安全返回入口");
+            if (actions.Length == 0) throw new DailyTravelBlocked("周路线未能安全返回入口");
             await nav.Step(actions[0]);
         }
         throw new DailyTravelBlocked("周路线返回入口超时");
@@ -235,6 +281,9 @@ public sealed class DailyWeeklyRoute
             return O(("state", complete ? "completed" : "partial"), ("detail", npc.Summary() + (complete ? "" : " · 范围内暂无符合设置的可执行任务")), ("reason", complete ? "weekly_npc_verified" : "no_eligible_quests"), ("source", "TodayQuestInfoResponse"));
         }
         var pending = known[stage].Except(done[stage]).OrderBy(p => p.Pack).ThenBy(p => p.Map).ToArray();
+        if (stage == "weekly_mainline" && storyLocked.Count > 0)
+            return O(("state", "partial"), ("detail", Summary(stage) + " · 部分地图尚未推进到敌人出现阶段，完成对应卡带剧情后再收集"),
+                ("reason", "collection_story_locked"), ("source", "game_network"), ("pending_maps", Array(pending.Select(p => (JsonNode)new JsonArray(p.Pack, p.Map)))));
         return O(("state", pending.Length > 0 ? "partial" : "completed"), ("detail", Summary(stage) + (pending.Length > 0 && deferred.Count > 0 ? " · NPC前置未完成，暂缓相关压制" : "")), ("reason", pending.Length > 0 && deferred.Count > 0 ? "protected_npc_targets" : "weekly_route_verified"), ("source", "game_network"), ("pending_maps", Array(pending.Select(p => (JsonNode)new JsonArray(p.Pack, p.Map)))));
     }
     public async Task<JsonObject> Run(string[] requested)
@@ -263,7 +312,10 @@ public sealed class DailyWeeklyRoute
         void Stop(DailyWeeklyCategoryStop e)
         {
             Require(active.Remove(e.Stage), "未知周任务停止项");
-            var r = O(("state", "partial"), ("reason", e.Message), ("detail", e.Message));
+            var r = Finish(e.Stage);
+            r["state"] = "partial";
+            r["reason"] = e.Message;
+            r["detail"] = e.Message;
             foreach (var pair in e.Metadata)
                 r[pair.Key] = Copy(pair.Value);
             result[e.Stage] = r;
@@ -274,62 +326,80 @@ public sealed class DailyWeeklyRoute
             if (active.Count == 0)
                 break;
             EmitAll("规划卡带 " + current);
-            bool prepared = false;
-            while (active.Count > 0)
+            try
             {
-                try
+                bool prepared = false;
+                while (active.Count > 0)
                 {
-                    prepared = await Prepare(current);
-                    break;
-                }
-                catch (DailyWeeklyCategoryStop e) { Stop(e); EmitAll("卡带 " + current); }
-            }
-            if (!prepared)
-                continue;
-            bool finished = false;
-            for (int i = 0; i < 256; i++)
-            {
-                await Guard();
-                try
-                {
-                    var jobs = await Jobs();
-                    if (!jobs.Values.Any(v => v.Length > 0))
+                    try
                     {
-                        finished = true;
+                        prepared = await Prepare(current);
                         break;
                     }
-                    long map = await nav!.Observe();
-                    EmitAll($"卡带 {pack} · 地图 {map}");
-                    bool acted = false;
-                    foreach (string stage in StageOrder)
+                    catch (DailyWeeklyCategoryStop e) { Stop(e); EmitAll("卡带 " + current); }
+                }
+                if (!prepared)
+                    continue;
+                bool finished = false;
+                for (int i = 0; i < 256; i++)
+                {
+                    await Guard();
+                    try
                     {
-                        if (!active.Contains(stage) || !jobs.GetValueOrDefault(stage, []).Contains(map) || !CanRun(stage, map))
-                            continue;
-                        await Guard();
-                        Emit(stage, $"卡带 {pack} · 地图 {map} · 正在{Names[stage]}", true);
-                        await Perform(stage, map);
-                        acted = true;
+                        var jobs = await Jobs();
+                        if (!jobs.Values.Any(v => v.Length > 0))
+                        {
+                            finished = true;
+                            break;
+                        }
+                        long map = await nav!.Observe();
                         EmitAll($"卡带 {pack} · 地图 {map}");
-                        // Collection/suppression can advance NPC objectives. Re-read jobs before the next category.
-                        break;
+                        bool acted = false;
+                        foreach (string stage in StageOrder)
+                        {
+                            if (!active.Contains(stage) || !jobs.GetValueOrDefault(stage, []).Contains(map) || !CanRun(stage, map))
+                                continue;
+                            await Guard();
+                            Emit(stage, $"卡带 {pack} · 地图 {map} · 正在{Names[stage]}", true);
+                            await Perform(stage, map);
+                            acted = true;
+                            EmitAll($"卡带 {pack} · 地图 {map}");
+                            // Collection/suppression can advance NPC objectives. Re-read jobs before the next category.
+                            break;
+                        }
+                        if (acted)
+                            continue;
+                        var pending = jobs.Values.SelectMany(v => v).Where(id => id != map).Distinct().ToArray();
+                        if (pending.Length == 0) throw new DailyTravelBlocked("共享周路线没有可执行动作，保留未完成项目");
+                        var plan = await nav.Plan(pending);
+                        var actions = Rows(plan["actions"]);
+                        if (actions.Length == 0) throw new DailyTravelBlocked("所选周任务没有可用地图路径");
+                        await nav.Step(actions[0]);
                     }
-                    if (acted)
-                        continue;
-                    var pending = jobs.Values.SelectMany(v => v).Where(id => id != map).Distinct().ToArray();
-                    Require(pending.Length > 0, "共享周路线没有可执行动作，保留未完成项目");
-                    var plan = await nav.Plan(pending);
-                    var actions = Rows(plan["actions"]);
-                    Require(actions.Length > 0, "所选周任务没有可用地图路径");
-                    await nav.Step(actions[0]);
+                    catch (DailyWeeklyCategoryStop e) { Stop(e); EmitAll("继续其他已选项目"); if (active.Count == 0) { finished = true; break; } }
                 }
-                catch (DailyWeeklyCategoryStop e) { Stop(e); EmitAll("继续其他已选项目"); if (active.Count == 0) { finished = true; break; } }
+                if (!finished) throw new DailyTravelBlocked("共享周路线超过恢复次数，已保留分项进度");
+                await FinishPack();
             }
-            Require(finished, "共享周路线超过恢复次数，已保留分项进度");
-            await FinishPack();
+            catch (DailyTravelBlocked e)
+            {
+                // Only a bounded, non-consuming navigation failure is local.
+                // Identity loss, uncertain talent receipts and cancellation propagate.
+                await Guard();
+                DeferPack(e.Message);
+            }
+            catch (DailyStepException e) when (e.Kind == "deferred" && e.DefinitelyNotDispatched)
+            {
+                var proof = await w.Driver.TakeCollectionDeferralAsync();
+                if (proof == null || N(proof["pack"]) != pack || S(proof["weekly_reset"]) != week) throw;
+                await Guard();
+                DeferPack(S(proof["detail"]), proof);
+            }
         }
         foreach (string s in selected)
         {
             result[s] ??= Finish(s);
+            IncludeDeferrals(s, result[s]!.AsObject());
             Emit(s, S(result[s]!["detail"] ?? result[s]!["reason"]), false);
         }
         return O(("state", result.All(p => S(p.Value!["state"]) is "completed" or "skipped") ? "completed" : "partial"), ("stages", result), ("engine", "dotnet-weekly-route-v1"));

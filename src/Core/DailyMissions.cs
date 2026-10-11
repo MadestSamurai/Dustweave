@@ -274,16 +274,24 @@ public static class DailyPasses
             throw failure;
         }
     }
-    private static async Task Prepare(DailyWorkflow w)
+    private static async Task Prepare(DailyWorkflow w, long expected)
     {
         double end = w.Time + 12;
         while (w.Time < end)
         {
-            var rows = DailyNavigationDecision.Rows((await w.Observe()).Frame).Where(r => S(r["Type"]) == "PassUI").SelectMany(r => Rows(r["Targets"])).Where(t => S(t["Route"]) == "pointer" && S(t["Field"]).EndsWith("/Button - Tab - Mission", StringComparison.Ordinal)).ToArray();
+            var e = await w.Evidence("pass");
+            if (N(R(e, "pass.scope", "ὢὡὧὮὫὫὬὥὪὪὢ")) != expected || N(State(e, "pass.definition", "$self")["PassId"]) != expected)
+            { await w.Delay(150); continue; }
+            var rows = DailyNavigationDecision.Rows(e["Frame"]!.AsObject()).Where(r => S(r["Type"]) == "PassUI").SelectMany(r => Rows(r["Targets"])).Where(t => S(t["Route"]) == "pointer" && S(t["Field"]).EndsWith("/Button - Tab - Mission", StringComparison.Ordinal)).ToArray();
             if (rows.Length == 1)
             {
-                if (B(rows[0]["Enabled"]))
-                    await w.Step(O(("ui", "PassUI"), ("field", rows[0]["Field"]), ("target_id", rows[0]["Id"]), ("reason", "初始化所有已解锁通行证任务组")));
+                try
+                {
+                    if (B(rows[0]["Enabled"]))
+                        await w.Step(O(("ui", "PassUI"), ("field", rows[0]["Field"]), ("target_id", rows[0]["Id"]), ("reason", "初始化所有已解锁通行证任务组")));
+                }
+                catch (DailyStepException error) when (error.PresentationChanged)
+                { await w.Delay(150); continue; }
                 return;
             }
             await w.Delay(200);
@@ -366,7 +374,7 @@ public static class DailyPasses
                 visited.Add(id);
                 if (id != selected)
                     await w.Step("PassUI", operation: "pass_select", value: checked((int)id), reason: "检查当前有效通行证");
-                await Prepare(w);
+                await Prepare(w, id);
                 var report = await Read(w, id);
                 e = await w.Evidence("pass", "missions");
                 if (!claim || !B(R(e, "pass.scope", Enabled)))

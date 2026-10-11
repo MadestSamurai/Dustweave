@@ -114,6 +114,16 @@ static class MirrorStageCases
             await DailyMirror.Run(s.F.Workflow);
             Check(s.Batches.Count == 2, "Mirror rerun uses current zero free balance without another match");
         }
+        using (var s = new Scenario(Path.Combine(root, "mirror-four-x-ten")))
+        {
+            var store = new DailyPreferenceStore(s.F.Root);
+            string account = new('a', 64);
+            var preferences = store.Read(account); preferences.Mirror.Multiplier = 4; store.Save(account, preferences);
+            s.F.Workflow.Settings.Mirror.Multiplier = store.Read(account).Mirror.Multiplier;
+            await DailyMirror.Run(s.F.Workflow);
+            Check(s.Batches.SequenceEqual(new[] {4}) && s.BatchRepeats.SequenceEqual(new[] {10}) && s.Settled == 10 && s.Free == 0 && s.Paid == 7,
+                "saved fourfold preference starts exactly one native 4x10 batch");
+        }
         using (var s = new Scenario(Path.Combine(root, "mirror-one-x-forty")) { SecondsPerBattle = 4 })
         {
             s.F.Workflow.Settings.Mirror.Multiplier = 1;
