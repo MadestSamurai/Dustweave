@@ -14,7 +14,7 @@ public static class HookCompiler
     public static byte[] Resource(string name)
     {using var s=typeof(HookCompiler).Assembly.GetManifestResourceStream(name)??throw new InvalidDataException("Missing embedded resource: "+name);using var b=new MemoryStream();s.CopyTo(b);return b.ToArray();}
     public static BindingContract Contract()=>JsonSerializer.Deserialize<BindingContract>(Resource("BD2Territory.Contract.json"))!;
-    public static PreparedHook Prepare(string managed,BindingContract? contract=null)
+    public static PreparedHook Prepare(string managed,BindingContract? contract=null,bool daily=false)
     {
         using var index=new MetadataIndex(Path.Combine(managed,"Assembly-CSharp.dll"));
         var resolved=BindingResolver.Resolve(index,contract??Contract());
@@ -24,14 +24,14 @@ public static class HookCompiler
         ValidateSurfaceInterfaces(index);
         var assembly=typeof(HookCompiler).Assembly;
         var sources=assembly.GetManifestResourceNames().Where(n=>n.StartsWith("Hook.",StringComparison.Ordinal)).OrderBy(n=>n,StringComparer.Ordinal).Select(n=>CSharpSyntaxTree.ParseText(Encoding.UTF8.GetString(Resource(n)),path:n)).ToList();
-        sources.Add(CSharpSyntaxTree.ParseText(GenerateSource(resolved),path:"TerritoryClient.g.cs"));
-        sources.Add(CSharpSyntaxTree.ParseText("namespace BD2.LocalIpc { public static class Build { public const string Fingerprint = " + JsonSerializer.Serialize(ToolFingerprint) + "; } }"));
+        sources.Add(CSharpSyntaxTree.ParseText(GenerateSource(resolved,daily),path:"TerritoryClient.g.cs"));
+        sources.Add(CSharpSyntaxTree.ParseText("namespace BD2.LocalIpc { public static class Build { public const string Fingerprint = " + JsonSerializer.Serialize(ToolFingerprint+(daily?".daily":"")) + "; public const string Group = "+JsonSerializer.Serialize(daily?"daily":"territory")+"; } }"));
         var refs=new List<MetadataReference>();
         // Read metadata only. Do not execute or copy game assemblies into the application directory.
         foreach(var file in Directory.EnumerateFiles(managed,"*.dll").OrderBy(x=>x,StringComparer.Ordinal))
         {try{refs.Add(MetadataReference.CreateFromFile(file));}catch(BadImageFormatException){}}
         refs.Add(MetadataReference.CreateFromImage(Resource("BD2Territory.Harmony.dll")));
-        var compilation=CSharpCompilation.Create("BD2Territory.Runtime27."+ToolFingerprint.Substring(0,16),sources,refs,new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,optimizationLevel:OptimizationLevel.Release,platform:Platform.X64,deterministic:true));
+        var compilation=CSharpCompilation.Create("BD2Territory.Runtime27."+ToolFingerprint.Substring(0,16)+(daily?".Daily":""),sources,refs,new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,optimizationLevel:OptimizationLevel.Release,platform:Platform.X64,deterministic:true));
         using var stream=new MemoryStream();
         var emit=compilation.Emit(stream,manifestResources:new[]{new ResourceDescription("BD2Territory.Harmony.dll",()=>new MemoryStream(Resource("BD2Territory.Harmony.dll")),true)});
         if(!emit.Success)throw new InvalidOperationException("当前客户端接口无法编译，尚未注入。\n"+string.Join("\n",emit.Diagnostics.Where(d=>d.Severity==DiagnosticSeverity.Error).Take(30)));
@@ -109,7 +109,7 @@ public static class HookCompiler
             if(count<1)throw new InvalidOperationException("缺少原生回执入口："+response);
         }
     }
-    public static string GenerateSource(ResolvedBindings r)
+    public static string GenerateSource(ResolvedBindings r,bool daily=false)
     {
         static string Q(string s)=>JsonSerializer.Serialize(s);
         var types=r.Types.ToDictionary(x=>x.Key,x=>x.Value.FullName.Replace('/','+'));
@@ -128,6 +128,7 @@ public static class HookCompiler
             return "{"+Q(api.Role)+",new[]{"+Q(m.DeclaringType.FullName.Replace('/','+'))+","+Q(method?m.MetadataToken.ToInt32().ToString():m.Name)+","+Q(method?"method":"member")+"}}";
         });
         apiEntries=apiEntries.Concat(SalesBindings.Resolve(r).Select(pair=>"{"+Q(pair.Key)+",new[]{"+Q(pair.Value.DeclaringType.FullName.Replace('/','+'))+","+Q(pair.Value.MetadataToken.ToInt32().ToString())+","+Q("method")+"}}"));
+        if(daily)apiEntries=apiEntries.Concat(SaffronBindings.Resolve(r).Select(pair=>"{"+Q(pair.Key)+",new[]{"+Q(pair.Value.DeclaringType.FullName.Replace('/','+'))+","+Q(pair.Value.MetadataToken.ToInt32().ToString())+","+Q("method")+"}}"));
         string Dictionary(Dictionary<string,string> d)=>"new System.Collections.Generic.Dictionary<string,string>{"+string.Join(",",d.Select(x=>"{"+Q(x.Key)+","+Q(x.Value)+"}"))+"}";
         return "namespace BD2Territory.Runtime { internal static class TerritoryClient { internal const string NormalStepFieldName="+Q(NormalStepField(r).Name)+"; internal const string CompiledMvid="+Q(r.Report.ClientMvid)+"; internal static readonly System.Collections.Generic.Dictionary<string,string> TypeNames="+Dictionary(types)+"; internal static readonly System.Collections.Generic.Dictionary<string,string> MemberNames="+Dictionary(names)+"; internal static readonly System.Collections.Generic.Dictionary<string,string[]> Apis=new System.Collections.Generic.Dictionary<string,string[]>{"+string.Join(",",apiEntries)+"}; }}";
     }

@@ -13,7 +13,7 @@ public static class DailyDiagnosticExport
     static readonly string[] Trees = ["suite/diagnostics", "live/diagnostics", "live/queue-bootstrap", "live/queues", "queue-history", "tools", "parallel-workers", "live/steps", "live/business", "live/managed-business", "live/step-recovery",
         "live/trade-quote-reads", "live/trade-closes", "trade/diagnostics", "trade/data-preflights", "trade/capture", "trade/executions", "trade/plans",
         "live/travel-diagnostics", "live/route-atlas", "live/server-collection", "live/weekly-npc-recovery", "live/weekly-npc-queries"];
-    static readonly string[] Singles = ["suite/last-transition.json", "updates/check-error.json", "updates/install-error.json", "login-identity-error.json",
+    static readonly string[] Singles = ["registration-mismatch.json", "registration-recovery.json", "saffron-latest.json", "suite/last-transition.json", "updates/check-error.json", "updates/install-error.json", "login-identity-error.json",
         "live/diagnostics/login-request.json", "live/diagnostics/login-verified.json", "live/diagnostics/login-failed.json", "live/trade-failure.json", "live/trade-navigation-cleanup.json",
         "live/pass-claims-latest.json", "live/mission-inspection-latest.json"];
     static readonly string[] Rotations = [".1", ".2", ".3", ".previous"];
@@ -75,6 +75,9 @@ public static class DailyDiagnosticExport
             int index=0;
             foreach(var box in Directory.EnumerateDirectories(sandboxStore,"Dustweave_*").Take(32)) {
                 if((File.GetAttributes(box)&FileAttributes.ReparsePoint)!=0)continue;
+                // Only the explicit diagnostic allowlist is exported from this
+                // root; instance.json and the encrypted account vault stay out.
+                sources["sandbox-host-"+(++index).ToString("D2")]=box;
                 string data=Path.Combine(box,"root","user","current","AppData","Local","BD2DailyAssistant");
                 bool linked=false;for(string? p=data;p!=null&&p.Length>=box.Length;p=Path.GetDirectoryName(p))if(Directory.Exists(p)&&(File.GetAttributes(p)&FileAttributes.ReparsePoint)!=0){linked=true;break;}
                 if(linked)continue;

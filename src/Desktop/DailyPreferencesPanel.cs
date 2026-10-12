@@ -29,7 +29,7 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly CheckBox pass = Check("检查并领取通行证任务与等级奖励"), dispatch = Check("领取到期派遣并继续派遣");
     private readonly CheckBox goddess = Check("领取女神像奖励"), ranking = Check("检查广场排行榜周期奖励");
     private readonly CheckBox mirror = Check("镜中之战"), guild = Check("公会签到"), room = Check("小屋奖励"),
-        income = Check("经营一键领取"), guests = Check("餐厅特殊顾客与气泡"), draws = Check("每日免费抽取"),
+        saffron = Check("藏红花种植与收割"), income = Check("经营一键领取"), guests = Check("餐厅特殊顾客与气泡"), draws = Check("每日免费抽取"),
         dailyRewards = Check("日常任务奖励"), weeklyRewards = Check("周常任务奖励"), mail = Check("邮箱物品");
     private readonly CheckBox friendship = Check("每日亲密度咨询"), quickFriendship = Check("prefs.friendship_quick");
     private readonly CheckBox weeklyBook = Check("周常末日之书"), weeklyCraft = Check("周常制作装备"), weeklySichuan = Check("周常连连看");
@@ -147,6 +147,8 @@ public sealed class DailyPreferencesPanel : UserControl
         Stage(room, "小屋奖励", "领取可用的小屋奖励", showSummary: false);
         Stage(income, "经营一键领取", "prefs.business_hint");
         Stage(guests, "餐厅特殊顾客与气泡", "领取属性圣石和限时装饰币");
+        Stage(saffron, "藏红花种植与收割", "prefs.saffron_hint");
+        Note("prefs.saffron_details");
         Stage(draws, "每日免费抽取", "prefs.draws_hint");
         Stage(recycle, "装备分解", "只处理本日免费抽取的可分解装备");
         section.Children.Add(keepSr);
@@ -263,7 +265,7 @@ public sealed class DailyPreferencesPanel : UserControl
         layout.Children.Add(new ScrollViewer { Content = form, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled });
         Content = new Border { Style = (Style)Application.Current.FindResource("Panel"), Child = layout };
         accounts.SelectionChanged += ChangedAccount;
-        foreach (var c in new[] { weeklyBook, weeklyCraft, weeklySichuan, quickFriendship, friendship, tactics, eventBattle, eventChallenge, hunt, gold, slime, stones, recycle, keepSr, fallback, refine, pass, dispatch, goddess, ranking, mirror, guild, room, income, guests, draws, dailyRewards, weeklyRewards, mail, mainline, weeklyNpc, npcHunting, weeklySteal, walkCollect, monsterHunt, fishing, roomLikes, trade, events, eventMissions, quiz, dice, puzzle, roulette, exchange })
+        foreach (var c in new[] { weeklyBook, weeklyCraft, weeklySichuan, quickFriendship, friendship, tactics, eventBattle, eventChallenge, hunt, gold, slime, stones, recycle, keepSr, fallback, refine, pass, dispatch, goddess, ranking, mirror, guild, room, income, guests, saffron, draws, dailyRewards, weeklyRewards, mail, mainline, weeklyNpc, npcHunting, weeklySteal, walkCollect, monsterHunt, fishing, roomLikes, trade, events, eventMissions, quiz, dice, puzzle, roulette, exchange })
         {
             c.Checked += (_, _) => MarkDirty();
             c.Unchecked += (_, _) => MarkDirty();
@@ -441,6 +443,7 @@ public sealed class DailyPreferencesPanel : UserControl
             room.IsChecked = loaded.Stages.Room;
             income.IsChecked = loaded.Stages.CafeteriaIncome;
             guests.IsChecked = loaded.Stages.CafeteriaGuests;
+            saffron.IsChecked = loaded.Stages.Saffron;
             draws.IsChecked = loaded.Stages.FreeDraws;
             weeklySichuan.IsChecked = loaded.Weekly.Sichuan;
             weeklyBook.IsChecked = loaded.Weekly.Book;
@@ -563,6 +566,7 @@ public sealed class DailyPreferencesPanel : UserControl
             loaded.Stages.Room = room.IsChecked == true;
             loaded.Stages.CafeteriaIncome = income.IsChecked == true;
             loaded.Stages.CafeteriaGuests = guests.IsChecked == true;
+            loaded.Stages.Saffron = saffron.IsChecked == true;
             loaded.Stages.FreeDraws = draws.IsChecked == true;
             loaded.Stages.DailyRewards = dailyRewards.IsChecked == true;
             loaded.Weekly.Sichuan = weeklySichuan.IsChecked == true;

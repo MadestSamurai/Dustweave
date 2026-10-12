@@ -26,8 +26,11 @@ internal static class DailySandboxRegistration
         if (markerPresent && registered==null) throw new InvalidDataException("隔离空间登记文件无法读取，已保留原文件；仅此账号暂未启动。");
         if (registered!=null && (registered.Account!=account || registered.Box!=box))
             throw new InvalidDataException("隔离空间登记属于其他账号，未修改；仅此账号暂未启动。");
-        if(configuredRoot.Length>0 && !Path.GetFullPath(configuredRoot).TrimEnd('\\').Equals(Path.GetFullPath(root).TrimEnd('\\'),StringComparison.OrdinalIgnoreCase))
+        if(configuredRoot.Length>0 && !SandboxConfiguration.SameRoot(configuredRoot,root))
+        {
+            DailyJson.Write(Path.Combine(state,"registration-mismatch.json"),new {atUtc=DateTimeOffset.UtcNow,reason="configured_root_mismatch",reader="SbieApi_QueryConf_UTF16",expectedRoot=root,configuredRoot});
             throw new InvalidDataException("隔离目录与登记位置不一致，未修改；仅此账号暂未启动。");
+        }
         string local=Path.Combine(root,"user","current","AppData","Local");
         string bindingPath=Path.Combine(local,"BD2DailyAssistant","sandbox-binding.json");
         bool bindingPresent=File.Exists(bindingPath);

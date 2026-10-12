@@ -70,7 +70,9 @@ namespace BD2Territory.Runtime
     s.Ready=player!=null&&move!=null&&tool!=null&&surfaces.Any(v=>v is AvatarLifeGameFieldDefaultUI||v is AvatarLifeHousingEditUI||v is AvatarLifeLevelUpPopupUI||v is AvatarLifeNewItemPopupUI);
     if(farmScene!=s.Scene){workCycle.Reset();farmScene=s.Scene;gatheringStands.Clear();emptyProgress.Clear();network.ClearEvidence();failures.Clear();skip.Clear();ResetLocalRecovery();}
     network.Reconcile(now);RefreshWorld(now);SettleReceipt();SettleCooking();SettleSales();s.SoldItems=sales==null?0:sales.ConfirmedItems;s.SaleCurrency=sales==null?0:sales.ConfirmedCurrency;s.SalesState=sales==null?"":sales.State;s.Cooked=cooking==null?0:cooking.ConfirmedTotal;s.CookingState=cooking==null?"":cooking.State;
-    var c=control??new TerritoryControl();s.OwnerId=c.OwnerId;
+    var c=control??new TerritoryControl();s.OwnerId=c.OwnerId;s.Saffron=saffronOwner==c.OwnerId?saffron:new SaffronStatus();
+    if(c.SaffronDaily&&BD2.LocalIpc.Build.Group!="daily")throw new InvalidOperationException("藏红花环节需要日常队列连接");
+    if(c.SaffronDaily){c.Logging=false;c.Mining=false;c.Farming=true;c.Cooking=true;c.RecipeId=SaffronCycle.Recipe;c.FixedCrop=true;c.FixedSeedId=saffronOwner==c.OwnerId&&(saffron.State=="potatoes"||saffron.State=="drain")?SaffronCycle.Potato:SaffronCycle.Seed;}
     minimumTreeStage=c.MinimumTreeStage;
     s.MaxTreeStage=nodes.Where(n=>B.Active(n)&&Kind(n)==1).Select(n=>Convert.ToInt32(B.Read("Gather.FinalStage",n))).DefaultIfEmpty(0).Max();
     s.Trees=nodes.Count(n=>Harvestable(n)&&Kind(n)==1);s.Ores=nodes.Count(n=>Harvestable(n)&&Kind(n)==2);s.Mature=nodes.Count(n=>Harvestable(n)&&Kind(n)==3);s.RetryTargets=nodes.Count(n=>Harvestable(n)&&failures.TryGetValue(ResourceKey(n),out var retry)&&retry.Failures>0);
@@ -116,6 +118,11 @@ namespace BD2Territory.Runtime
     if(farmStage>0){AdvancePlant(s,now);Publish(s);return;}
     if(progress.PendingToken.Length>0){s.Reason="等待播种确认，必要时自动同步农田状态";Publish(s);return;}
     if(UnityEngine.Object.FindObjectsOfType<LifeFarmingUIPanel>().Any(B.Active)){StopMotion();s.Reason="请关闭手动播种界面后继续";Publish(s);return;}
+    if(c.SaffronDaily){
+     s.Saffron=saffron;
+     if(ownsMove)ContinueWalk(s,now,c);else SaffronTick(s,c,now);
+     Publish(s);return;
+    }
     // Capacity checks run before continuing a resource, walking or starting another
     // gather pass. A new gather receipt invalidates the five-second idle probe cache.
     if(SalesBusy()){SalesTick(s,c,now);Publish(s);return;}
@@ -185,7 +192,7 @@ namespace BD2Territory.Runtime
   private static void OwnedAutoAim(object __0,Vector3 __1,ref LifeGatheringObject __result)
   {
    var e=current;if(e==null||!e.protectResources)return;
-   try{int kind=Convert.ToInt32(__0);if(kind<1||kind>3)return;var candidates=e.Detected(kind).Where(e.Harvestable).ToArray();
+   try{int kind=Convert.ToInt32(__0);if(kind<1||kind>3)return;var candidates=e.Detected(kind).Where(e.Harvestable).Where(e.SaffronAllows).ToArray();
     __result=candidates.Contains(e.targetNode)?e.targetNode:candidates.OrderBy(n=>(n.transform.position-__1).sqrMagnitude).FirstOrDefault();
    }catch(Exception ex){__result=null;e.fault="采集目标核对失败："+ex.GetBaseException().Message;}
   }
@@ -214,7 +221,7 @@ namespace BD2Territory.Runtime
    // A target can share the weapon collider with a tree below the selected threshold. Protect incidental hits too,
    // only during a tool action initiated by this runtime; manual play keeps the original rule.
    var engine=current;if(engine==null||!engine.protectResources||!__result)return;
-   try{int kind=Kind(__instance);if(kind==1||kind==2)__result=engine.GrowthAllowed(__instance);}
+   try{int kind=Kind(__instance);if(kind==1||kind==2)__result=engine.GrowthAllowed(__instance);if(__result&&!engine.SaffronAllows(__instance))__result=false;}
    catch(Exception e){__result=false;engine.fault="生长阶段核对失败："+e.GetBaseException().Message;}
   }
   private static LifeWorldObjectDBInfo Db(LifeFarmFieldObject f){var p=f.GetPlaceableObject();return p==null?null:(LifeWorldObjectDBInfo)B.Read("Farm.Db",p);}
@@ -591,6 +598,7 @@ namespace BD2Territory.Runtime
   {LocalStorage.WriteJsonAtomically(progressPath,next);progress=next;}
   internal void PrepareHandoff(){handoffRequested=true;control=new TerritoryControl();StopMove();}
   internal string HandoffBusy(){
+   if(saffronJournal!=null&&saffronJournal.Pending.Length>0&&!saffronCallback&&DateTime.UtcNow.Ticks-saffronActionAt<TimeSpan.FromSeconds(20).Ticks)return "saffron response";
    if(ioBusy!=0)return "snapshot writer";
    if(network.NativeBusy||network.NonSalesWaiting||Convert.ToInt32(B.Read("Network.QueuedHarvest",null))>0)return "harvest response";
    if(tool!=null&&((bool)B.Read("Tool.Busy",tool)||ToolLoading()))return "native tool action";

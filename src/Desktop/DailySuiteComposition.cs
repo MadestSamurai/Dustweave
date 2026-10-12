@@ -99,7 +99,7 @@ internal static class DailySuiteComposition {
   if(manifest.GetResourceData().Length!=0||module.Resources.Any(r=>r.Name.StartsWith("Suite.")&&r.Name.EndsWith(".dll")))throw new InvalidDataException("Initial connection eagerly prepared tool modules.");
   await File.WriteAllBytesAsync(Path.Combine(output,"observer.dll"),prepared.Payload);
   var entries=new List<object>();
-  foreach(string id in new[]{"daily"}.Concat(prefixes.Keys).Concat(["equipment","fishing-daily","sichuan-daily","mansion-runaway"])){
+  foreach(string id in new[]{"daily"}.Concat(prefixes.Keys).Concat(["equipment","territory-daily","fishing-daily","sichuan-daily","mansion-runaway"])){
    var bytes=await PrepareModule(managed,id,_=>{},CancellationToken.None);
    using var child=ModuleDefinition.ReadModule(new MemoryStream(bytes));
    var entry=child.GetType(SuiteRules.ModuleEntry(id))??throw new InvalidDataException("Missing module loader: "+id);

@@ -9,6 +9,7 @@ public static class DailyStageCatalog
     } = [
         new("guild","公会签到",p=>p.Stages.Guild),new("room","小屋奖励",p=>p.Stages.Room),
         new("management","经营与餐厅",p=>p.Stages.CafeteriaIncome||p.Stages.CafeteriaGuests),
+        new("territory_saffron","藏红花种植与收割",p=>p.Stages.Saffron),
         new("free_draws","每日免费抽取",p=>p.Stages.FreeDraws),
         new("equipment","装备分解与精炼",p=>p.Equipment.Enabled||p.Equipment.RefineEnabled),
         new("weekly_equipment","周常制作装备",p=>p.Weekly.EquipmentCraft),

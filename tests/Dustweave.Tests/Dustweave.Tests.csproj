@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/Core/Dustweave.Core.csproj" />
+    <Compile Include="../../standalone/bd2-territory/shared/SaffronCycle.cs" Link="SaffronCycle.cs" />
     <Compile Include="../../src/Desktop/DemoEnvironment.cs" Link="DemoEnvironment.cs" />
     <Compile Include="../../src/Desktop/StartupDiagnostics.cs" Link="StartupDiagnostics.cs" />
     <Compile Include="../../standalone/bd2-territory/ipc/desktop/HostedConnection.cs" Link="Unified/HostedConnection.cs" />

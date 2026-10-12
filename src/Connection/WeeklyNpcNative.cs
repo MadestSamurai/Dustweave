@@ -81,9 +81,9 @@ namespace BD2Daily.Live {
     if(source==null||!OwnsCarry(source,q)||!source.gameObject.activeInHierarchy||c.Kind=="weekly_npc_lift"&&!CarryReady(source))return "npc_target_unavailable";
    }
    if(c.Kind=="weekly_npc_interact"){
-    if(!new[]{2,9,18}.Contains(q.ConditionType))return "npc_step_changed";
+    if(!new[]{1,2,9,18}.Contains(q.ConditionType))return "npc_step_changed";
     var target=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὫὢὬὢὧὫὭὧὫὡὡ.OfType<FieldQuestObjectController>().SingleOrDefault(x=>x!=null&&x.GetInstanceID()==c.Items[0]);
-    if(target==null||target.ὦὣὣὧὭὭὣὬὭὤὨ!=q.Id||!q.MagicValue.Contains(target.ὪὬὣὧὥὨὦὯὨὮὬ)||!ObjectReady(target))return "npc_target_unavailable";
+    if(target==null||target.ὦὣὣὧὭὭὣὬὭὤὨ!=q.Id||q.ConditionType!=1&&!q.MagicValue.Contains(target.ὪὬὣὧὥὨὦὯὨὮὬ)||!ObjectReady(target))return "npc_target_unavailable";
     if(q.ConditionType==9){var action=Singleton<FieldActionManager>.ὪὫὢὨὯὭὦὪὦὨὣ;
      if(!action.IsInActionWithFieldItem()||!GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὫὢὬὢὧὫὭὧὫὡὡ.OfType<FieldActionObjectController>().Any(x=>x!=null&&OwnsCarry(x,q)&&x.ὪὬὣὧὥὨὦὯὨὮὬ==action.ὪὮὫὯὯὯὠὬὯὬὤ.ὯὫὪὡὭὤὪὮὫὬὣ))return "npc_carry_changed";
     }
@@ -242,7 +242,7 @@ namespace BD2Daily.Live {
     Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.StartFieldObjectNav(source.ὪὬὣὧὥὨὦὯὨὮὬ,ὢὩὭὬὪὪὬὩὫὪὬ.ActionObject,false);return;
    }
    if(c.Kind=="weekly_npc_interact"){
-    if(!new[]{2,9,18}.Contains(q.ConditionType))throw new InvalidOperationException("Unsupported NPC object quest");
+    if(!new[]{1,2,9,18}.Contains(q.ConditionType))throw new InvalidOperationException("Unsupported NPC object quest");
     var target=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὫὢὬὢὧὫὭὧὫὡὡ.OfType<FieldQuestObjectController>().Single(x=>x!=null&&x.GetInstanceID()==c.Items[0]);
     if(target.ὦὣὣὧὭὭὣὬὭὤὨ!=q.Id||!ObjectReady(target))throw new InvalidOperationException("NPC quest object changed, busy or out of range");
     if(q.ConditionType==9){

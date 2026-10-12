@@ -5463,5 +5463,216 @@
     "zh-CN": "砍价结果尚未确认，未重复消耗。请导出诊断核对。",
     "zh-TW": "殺價結果尚未確認，未重複消耗。請匯出診斷核對。",
     "en-US": "The bargain result is unconfirmed. Spending was not repeated; export diagnostics for review."
+  },
+  "stage.territory_saffron": {
+    "zh-CN": "藏红花种植与收割",
+    "zh-TW": "藏紅花種植與收割",
+    "en-US": "Saffron planting and harvest"
+  },
+  "prefs.saffron_hint": {
+    "zh-CN": "默认关闭 · 生长20小时，未成熟即跳过",
+    "zh-TW": "預設關閉 · 生長20小時，未成熟即略過",
+    "en-US": "Off by default · Grows in 20 hours; skips unripe crops"
+  },
+  "prefs.saffron_details": {
+    "zh-CN": "空田种藏红花。成熟后先确认路线和资源，再购买缺少的三种增产料理并使用，立即收割。剩余加成时间种收土豆，效果结束再补种藏红花；制作爱欲浓汤并售卖，保留一份。条件不足不吃料理。",
+    "zh-TW": "空田種藏紅花。成熟後先確認路線和資源，再購買缺少的三種增產料理並使用，立即收割。剩餘加成時間種收馬鈴薯，效果結束再補種藏紅花；製作愛慾濃湯並出售，保留一份。條件不足不吃料理。",
+    "en-US": "Plants saffron in empty fields. Once ripe, checks access and resources, buys any missing yield foods, uses all three and harvests immediately. Grows potatoes for the remaining buff time, then replants saffron. Cooks saffron soup and sells it, keeping one. No food is used if checks fail."
+  },
+
+  "saffron.message.1": {
+    "zh-CN": "藏红花种植与收割",
+    "zh-TW": "藏紅花種植與收割",
+    "en-US": "Saffron planting and harvest"
+  },
+  "saffron.message.2": {
+    "zh-CN": "领地卡带尚未开放，未使用料理",
+    "zh-TW": "領地卡帶尚未開放，未使用料理",
+    "en-US": "Territory is not unlocked. No food was used."
+  },
+  "saffron.message.3": {
+    "zh-CN": "领地农田数据尚未就绪，未使用料理",
+    "zh-TW": "領地農田資料尚未就緒，未使用料理",
+    "en-US": "Farm data is not ready. No food was used."
+  },
+  "saffron.message.4": {
+    "zh-CN": "领地观察已过期，未继续操作",
+    "zh-TW": "領地觀察已過期，未繼續操作",
+    "en-US": "Territory data is stale. Actions stopped."
+  },
+  "saffron.message.5": {
+    "zh-CN": "领地已有运行中的控制器，未接管",
+    "zh-TW": "領地已有執行中的控制器，未接管",
+    "en-US": "Another controller is using the territory. Control was not taken."
+  },
+  "saffron.message.6": {
+    "zh-CN": "领地控制权已改变，未继续操作",
+    "zh-TW": "領地控制權已改變，未繼續操作",
+    "en-US": "Territory control changed. Actions stopped."
+  },
+  "saffron.message.7": {
+    "zh-CN": "藏红花环节超时，已停止；其余日常继续",
+    "zh-TW": "藏紅花環節逾時，已停止；其餘日常繼續",
+    "en-US": "The saffron step timed out and stopped. Other daily tasks can continue."
+  },
+  "saffron.message.8": {
+    "zh-CN": "藏红花控制权已改变，未提交操作",
+    "zh-TW": "藏紅花控制權已改變，未提交操作",
+    "en-US": "Saffron control changed. No action was submitted."
+  },
+  "saffron.message.9": {
+    "zh-CN": "藏红花料理配方已变化，未使用料理",
+    "zh-TW": "藏紅花料理配方已變化，未使用料理",
+    "en-US": "The saffron recipe changed. No food was used."
+  },
+  "saffron.message.10": {
+    "zh-CN": "增产料理未解锁或效果已变化，未使用料理",
+    "zh-TW": "增產料理未解鎖或效果已變化，未使用料理",
+    "en-US": "Yield foods are locked or their effects changed. No food was used."
+  },
+  "saffron.message.11": {
+    "zh-CN": "缺少的增产料理当前不能购买，未使用料理",
+    "zh-TW": "缺少的增產料理目前不能購買，未使用料理",
+    "en-US": "Missing yield foods cannot be bought. No food was used."
+  },
+  "saffron.message.12": {
+    "zh-CN": "种植预算不足，未继续种植",
+    "zh-TW": "種植預算不足，未繼續種植",
+    "en-US": "The planting budget is insufficient. Planting stopped."
+  },
+  "saffron.message.13": {
+    "zh-CN": "藏红花上次操作身份不匹配，未继续执行",
+    "zh-TW": "藏紅花上次操作身分不符，未繼續執行",
+    "en-US": "The previous saffron operation belongs to a different session. Actions stopped."
+  },
+  "saffron.message.14": {
+    "zh-CN": "藏红花环节超时，已停止并保留当前进度",
+    "zh-TW": "藏紅花環節逾時，已停止並保留目前進度",
+    "en-US": "The saffron step timed out. Current progress was retained."
+  },
+  "saffron.message.15": {
+    "zh-CN": "正在同步藏红花库存与增产效果，不重复上次操作",
+    "zh-TW": "正在同步藏紅花庫存與增產效果，不重複上次操作",
+    "en-US": "Refreshing saffron inventory and yield buffs without repeating the previous action."
+  },
+  "saffron.message.16": {
+    "zh-CN": "藏红花库存暂时无法同步；未重复购买或使用料理，可稍后重试此环节",
+    "zh-TW": "藏紅花庫存暫時無法同步；未重複購買或使用料理，可稍後重試此環節",
+    "en-US": "Saffron inventory could not be refreshed. No purchase or food use was repeated. Retry this step later."
+  },
+  "saffron.message.17": {
+    "zh-CN": "藏红花操作回执未确认，未重复提交；请核对诊断记录",
+    "zh-TW": "藏紅花操作回執未確認，未重複提交；請核對診斷紀錄",
+    "en-US": "The saffron action is unconfirmed and was not repeated. Check diagnostics."
+  },
+  "saffron.message.18": {
+    "zh-CN": "等待当前领地操作结算",
+    "zh-TW": "等待目前領地操作結算",
+    "en-US": "Waiting for the current territory action to finish."
+  },
+  "saffron.message.19": {
+    "zh-CN": "农田未完整载入，未使用料理",
+    "zh-TW": "農田未完整載入，未使用料理",
+    "en-US": "Fields are not fully loaded. No food was used."
+  },
+  "saffron.message.20": {
+    "zh-CN": "农田含其他作物，未使用料理；请为藏红花环节准备空田或成熟藏红花",
+    "zh-TW": "農田含其他作物，未使用料理；請準備空田或成熟藏紅花",
+    "en-US": "Fields contain other crops. No food was used. Prepare empty fields or ripe saffron."
+  },
+  "saffron.message.21": {
+    "zh-CN": "藏红花尚未全部成熟，未使用料理；成熟后再运行",
+    "zh-TW": "藏紅花尚未全部成熟，未使用料理；成熟後再執行",
+    "en-US": "Some saffron is still growing. No food was used. Run again once all saffron is ripe."
+  },
+  "saffron.message.22": {
+    "zh-CN": "农田布局已变化，已停止藏红花环节",
+    "zh-TW": "農田配置已變化，已停止藏紅花環節",
+    "en-US": "The field layout changed. The saffron step stopped."
+  },
+  "saffron.message.23": {
+    "zh-CN": "无法及时到达全部藏红花，未使用料理",
+    "zh-TW": "無法及時抵達全部藏紅花，未使用料理",
+    "en-US": "Not all saffron can be reached in time. No food was used."
+  },
+  "saffron.message.24": {
+    "zh-CN": "藏红花状态变化，未使用料理",
+    "zh-TW": "藏紅花狀態變化，未使用料理",
+    "en-US": "The saffron crop state changed. No food was used."
+  },
+  "saffron.message.25": {
+    "zh-CN": "藏红花存在不可达点，未使用料理",
+    "zh-TW": "藏紅花存在不可達點，未使用料理",
+    "en-US": "Some saffron is unreachable. No food was used."
+  },
+  "saffron.message.26": {
+    "zh-CN": "收割准备超时，未使用料理",
+    "zh-TW": "收割準備逾時，未使用料理",
+    "en-US": "Harvest preparation timed out. No food was used."
+  },
+  "saffron.message.27": {
+    "zh-CN": "收割时间、背包容量或积分不足，未使用料理",
+    "zh-TW": "收割時間、背包容量或積分不足，未使用料理",
+    "en-US": "Harvest time, inventory capacity or territory currency is insufficient. No food was used."
+  },
+  "saffron.message.28": {
+    "zh-CN": "尚未站到可收割位置，未使用料理",
+    "zh-TW": "尚未站到可收割位置，未使用料理",
+    "en-US": "The character is not ready at a harvest position. No food was used."
+  },
+  "saffron.message.29": {
+    "zh-CN": "增产料理库存变化，未使用料理",
+    "zh-TW": "增產料理庫存變化，未使用料理",
+    "en-US": "Yield-food inventory changed. No food was used."
+  },
+  "saffron.message.30": {
+    "zh-CN": "三种增产效果未完整确认，未继续收割",
+    "zh-TW": "三種增產效果未完整確認，未繼續收割",
+    "en-US": "All three yield buffs could not be confirmed. Harvesting stopped."
+  },
+  "saffron.message.31": {
+    "zh-CN": "增产效果已结束，藏红花未收完；已停止，未无加成收割",
+    "zh-TW": "增產效果已結束，藏紅花未收完；已停止，未無加成收割",
+    "en-US": "Yield buffs expired before all saffron was harvested. Harvesting stopped."
+  },
+  "saffron.message.32": {
+    "zh-CN": "藏红花收割路径变化，停止后续操作",
+    "zh-TW": "藏紅花收割路徑變化，停止後續操作",
+    "en-US": "The saffron harvest route changed. Further actions stopped."
+  },
+  "saffron.message.33": {
+    "zh-CN": "土豆收割路径暂不可达，保留作物",
+    "zh-TW": "馬鈴薯收割路徑暫不可達，保留作物",
+    "en-US": "Potatoes are currently unreachable. Crops were left in place."
+  },
+  "saffron.message.34": {
+    "zh-CN": "等待本批土豆成熟，不提前补种藏红花",
+    "zh-TW": "等待本批馬鈴薯成熟，不提前補種藏紅花",
+    "en-US": "Waiting for this potato round to ripen before replanting saffron."
+  },
+  "saffron.message.35": {
+    "zh-CN": "剩余增产时间不足一轮土豆；效果结束后补种藏红花",
+    "zh-TW": "剩餘增產時間不足一輪馬鈴薯；效果結束後補種藏紅花",
+    "en-US": "Not enough buff time remains for another potato round. Saffron will be replanted when the buffs expire."
+  },
+  "saffron.message.36": {
+    "zh-CN": "尚有其他作物未收完，未覆盖种植",
+    "zh-TW": "尚有其他作物未收完，未覆蓋種植",
+    "en-US": "Other crops remain. They were not overwritten."
+  },
+  "saffron.message.37": {
+    "zh-CN": "已补种并售卖成品，仍有藏红花原料；土豆或料理容量不足，已保留供下次制作",
+    "zh-TW": "已補種並出售成品，仍有藏紅花原料；馬鈴薯或料理容量不足，已保留供下次製作",
+    "en-US": "Replanting and sales finished. Some saffron remains because potatoes or dish capacity were insufficient; it was kept for later cooking."
+  },
+  "saffron.message.38": {
+    "zh-CN": "藏红花已收割，增产土豆循环结束；已补种并制作料理，成品保留一份",
+    "zh-TW": "藏紅花已收割，增產馬鈴薯循環結束；已補種並製作料理，成品保留一份",
+    "en-US": "Saffron and potato rounds finished. Saffron was replanted and cooked dishes were sold, keeping one."
+  },
+  "saffron.message.39": {
+    "zh-CN": "已补种藏红花，成熟后再运行收割",
+    "zh-TW": "已補種藏紅花，成熟後再執行收割",
+    "en-US": "Saffron planted. Run the harvest step after it ripens."
   }
 }

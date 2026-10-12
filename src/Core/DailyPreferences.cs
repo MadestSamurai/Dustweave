@@ -7,7 +7,7 @@ namespace Dustweave;
 public sealed class DailyPreferences
 {
     [JsonRequired]
-    public int Schema { get; set; } = 17;
+    public int Schema { get; set; } = 18;
     [JsonRequired] public GeneralPreferences General { get; set; } = new();
     [JsonRequired] public FriendshipPreferences Friendship { get; set; } = new();
     [JsonRequired]
@@ -154,13 +154,18 @@ public sealed class DailyPreferences
             node["General"] = JsonSerializer.SerializeToNode(new GeneralPreferences());
             node["Schema"] = 17;
         }
+        if (node["Schema"]?.GetValue<int>() == 17)
+        {
+            node["Stages"]!["Saffron"] = false;
+            node["Schema"] = 18;
+        }
         var value = node.Deserialize<DailyPreferences>(DailyJson.Options) ?? throw new InvalidDataException("日常设置不能为空。");
         value.Validate();
         return value;
     }
     public void Validate()
     {
-        if (Schema != 17 || General == null || Friendship == null || Tactics == null || Events == null || EventBattle == null || Trade == null || Weekly == null || MonsterHunt == null || Hunt == null || Equipment == null || Tasks == null || Stages == null || Mirror == null)
+        if (Schema != 18 || General == null || Friendship == null || Tactics == null || Events == null || EventBattle == null || Trade == null || Weekly == null || MonsterHunt == null || Hunt == null || Equipment == null || Tasks == null || Stages == null || Mirror == null)
             throw new InvalidDataException("日常偏好版本或字段不完整。");
         General.Validate();
         if (Tactics.SearchSeconds is < 1 or > 120)
@@ -256,6 +261,7 @@ public sealed class StagePreferences
     [JsonRequired] public bool Room { get; set; } = true;
     [JsonRequired] public bool CafeteriaIncome { get; set; } = true;
     [JsonRequired] public bool CafeteriaGuests { get; set; } = true;
+    [JsonRequired] public bool Saffron { get; set; }
     [JsonRequired] public bool FreeDraws { get; set; } = true;
     [JsonRequired] public bool DailyRewards { get; set; } = true;
     [JsonRequired] public bool WeeklyRewards { get; set; } = true;

@@ -122,8 +122,8 @@ public static class Program
             "diagnostics" => "Dustweave.RuntimeCheck",
             _ => throw new ArgumentException("Unknown daily utility: " + args[0])
         };
-        if(args.Length>=2&&(args[0]=="live"&&args[1]=="ready"||args[0]=="minigame"&&(args[1]=="connect"||args[1]=="connect-sichuan"))){
-            string id=args[0]=="live"?"daily":args[1]=="connect"?"fishing-daily":"sichuan-daily";
+        if(args.Length>=2&&(args[0]=="live"&&args[1]=="ready"||args[0]=="minigame"&&(args[1]=="connect"||args[1]=="connect-sichuan"||args[1]=="connect-territory"))){
+            string id=args[0]=="live"?"daily":args[1]=="connect"?"fishing-daily":args[1]=="connect-territory"?"territory-daily":"sichuan-daily";
             var host=new DailyGameHost();
             await DailySuite.ActivateAsync(host,DailyIdentity.DataRoot,id,Console.WriteLine,CancellationToken.None);
             if(id!="daily"){
@@ -131,6 +131,7 @@ public static class Program
                 var descriptor=new System.Diagnostics.ProcessStartInfo();DailySuite.SetToolEnvironment(descriptor,state,game,id);
                 foreach(var variable in descriptor.Environment.Where(x=>x.Key.StartsWith("BD2_DAILY_",StringComparison.Ordinal)))Environment.SetEnvironmentVariable(variable.Key,variable.Value);
             }
+            if(id=="territory-daily")return 0;
         }
         var assembly = Assembly.Load(new AssemblyName(assemblyName));
         var entry = args[0] == "live"

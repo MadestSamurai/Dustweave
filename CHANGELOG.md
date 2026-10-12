@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 1.2.8 — 2026-10-12
+
+- 修复 Sandboxie 路径读取丢失非 ASCII 字符及周 NPC 狩猎任务未触发交互的问题，补充诊断记录。
+- 新增默认关闭的藏红花环节：收割、增产土豆循环、补种、料理及售卖留一份；完整成熟收割仍待实机验收。
+- Fixes Unicode sandbox-path reads and weekly hunt triggers, with additional diagnostic evidence.
+- Adds an opt-in saffron stage; the full mature-crop live cycle remains pending validation.
+- [完整说明 / Full notes](docs/releases/1.2.8.md)
+
 ## 1.2.7 — 2026-10-12
 
 - 周收集按实际可拾取状态和拾取范围寻找落脚点；明确不可达的目标暂缓，继续其他物品和地图。

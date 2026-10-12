@@ -1,5 +1,14 @@
 [
 {
+  "Version": "1.2.8",
+  "Date": "2026-10-12",
+  "Notes": {
+    "zh-CN": ["修复隔离目录含非ASCII字符时的路径读取，以及周NPC狩猎任务到点后不交互。", "新增默认关闭的藏红花环节：成熟后使用增产料理收割，剩余加成种收土豆，结束后补种并制作售卖。完整成熟收割仍待实机验收。"],
+    "zh-TW": ["修正隔離目錄含非ASCII字元時的路徑讀取，以及每週NPC狩獵任務到點後不互動。", "新增預設關閉的藏紅花環節：成熟後使用增產料理收割，剩餘加成種收馬鈴薯，結束後補種並製作出售。完整成熟收割仍待實機驗收。"],
+    "en-US": ["Fixes Unicode sandbox-path reads and weekly hunt quests failing to interact at their target.", "Adds an opt-in saffron stage with yield foods, potato rounds, replanting, cooking and sales. The complete mature-crop live cycle still needs validation."]
+  }
+},
+{
   "Version": "1.2.7",
   "Date": "2026-10-12",
   "Notes": {

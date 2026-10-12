@@ -14,6 +14,8 @@ static class WeeklyNpcInteractionCases
         public bool Navigating, Ready = true, Unknown;
         public bool NavigationReady = true;
         public double X;
+        public long? TriggerId;
+        public long TriggerQuest = 10;
         public int Rejections, Interactions, Lifts, Navs, Held;
         public double AckAt = -1, AckDelay;
         string query = "prior";
@@ -53,7 +55,7 @@ static class WeeklyNpcInteractionCases
             ("Rows", new JsonArray(Row.DeepClone()).ToJsonString()), ("Active", Active.ToJsonString()), ("Posted", new JsonArray()), ("Cleared", new JsonArray()),
             ("Navigating", Navigating), ("NavigationLeaseQuest", 10), ("NavigationLeaseUntil", H.Ticks + TimeSpan.TicksPerMinute), ("CarryId", Held),
             ("Position", new[] { X, 0d, 0d }), ("NavigationReady", NavigationReady), ("NavQuest", Navigating ? 10 : 0),
-            ("Objects", Array((Row["magicValue"] as JsonArray)!.Select(value => O(("Quest", 10), ("Instance", 200 + N(value)), ("Id", value), ("Near", true), ("Ready", Ready))))),
+            ("Objects", Array((Row["magicValue"] as JsonArray)!.Select(value => O(("Quest", TriggerQuest), ("Instance", 200 + N(value)), ("Id", TriggerId ?? N(value)), ("Near", true), ("Ready", Ready))))),
             ("CarryObjects", new JsonArray(O(("Quest", 10), ("Instance", 400), ("Id", 200), ("Available", true), ("Near", true), ("Ready", Ready), ("Distance", 0)))));
         public async Task Run() { await Npc.Query(1); await Npc.Advance(Row); }
         public void Dispose() => H.Dispose();
@@ -61,6 +63,18 @@ static class WeeklyNpcInteractionCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool value, string name) { if (!value) throw new Exception(name); checks.Add(name); }
+        using (var f = new Fixture(Path.Combine(root, "npc-hunt-trigger"), 1))
+        {
+            f.TriggerId = 90001; f.AckDelay = 4;
+            await f.Run();
+            Check(f.Interactions == 1 && f.H.Time < 12, "hunt interacts once with its owned trigger even though MagicValue contains different monster IDs");
+        }
+        using (var f = new Fixture(Path.Combine(root, "npc-foreign-hunt-trigger"), 1))
+        {
+            f.TriggerId = 90001; f.TriggerQuest = 11;
+            bool deferred = false; try { await f.Run(); } catch (DailyNpcUnavailable) { deferred = true; }
+            Check(deferred && f.Interactions == 0, "hunt never interacts with another quest's nearby object");
+        }
         foreach (int kind in new[] { 2, 9, 18 })
         using (var f = new Fixture(Path.Combine(root, "npc-arrival-" + kind), kind))
         {

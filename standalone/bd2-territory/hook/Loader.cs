@@ -14,7 +14,7 @@ namespace BD2Territory.Runtime
         {
             lock(typeof(Loader))
             {
-                if(handoff==null)handoff=new Handoff(typeof(Loader).Assembly.FullName,"territory","territory",false,Start,Pause,Busy,Stop,WriteStatus);
+                if(handoff==null)handoff=new Handoff(typeof(Loader).Assembly.FullName,Build.Group,"territory",false,Start,Pause,Busy,Stop,WriteStatus);
                 if(!handoff.IsActive&&!handoff.Pending)RuntimeFiles.Start(LocalStorage.DataRoot,Build.Fingerprint,TerritoryIdentity.LiveEntries);
                 handoff.Request(DateTime.UtcNow);
                 if(frame==null)frame=new MainThread(()=>{LegacyPilots.Discover();handoff.Tick(DateTime.UtcNow);return handoff.Pending;},handoff.Fail);
@@ -23,6 +23,7 @@ namespace BD2Territory.Runtime
         }
         private static void Start()
         {
+            if(Build.Group=="daily"&&!Handoff.HasActive("daily","daily-live"))throw new InvalidOperationException("日常执行器未激活，不能启动藏红花环节。");
             RuntimeFiles.Start(LocalStorage.DataRoot,Build.Fingerprint,TerritoryIdentity.LiveEntries);
             if(!resolver){AppDomain.CurrentDomain.AssemblyResolve+=Resolve;resolver=true;}
             engine=Activator.CreateInstance(typeof(Loader).Assembly.GetType("BD2Territory.Runtime.RuntimeEngine",true),true);Invoke("Start");

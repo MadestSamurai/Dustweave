@@ -63,7 +63,7 @@ public static class DailyNavigationDecision
     public static bool PassiveSurface(string type) => Passive.Contains(type);
     public static readonly HashSet<string> Transitions = ["LoadingUI", "EntranceBackgroundCoverUI"];
     public static readonly HashSet<string> FieldPack = ["GameFieldDefaultUI", "CafeteriaFieldDefaultUI", "AvatarLifeGameFieldDefaultUI", "AvatarFishingHarborUI"];
-    public static readonly HashSet<string> FieldStages = ["weekly_mainline", "weekly_npc", "weekly_steal", "collection_sync", "square", "goddess", "square_ranking", "trade", "weekly_fishing", "mirror", "weekly_book", "cafeteria_guests"];
+    public static readonly HashSet<string> FieldStages = ["territory_saffron", "weekly_mainline", "weekly_npc", "weekly_steal", "collection_sync", "square", "goddess", "square_ranking", "trade", "weekly_fishing", "mirror", "weekly_book", "cafeteria_guests"];
     public static readonly HashSet<string> Overlays = ["MenuUI", "PackListUI", "PackInfoUI", "PackCollectionUI", "QuickMenuUI"];
     public static readonly HashSet<string> Suppressible = ["NewsPopupEventUI", "PackagePopupUI", "AttendanceSpecialPackageUI", "BundlePackageUI", "BundleGroupPackageUI", "BundleGroupRelayPackageUI", "BonusBundleGroupPackageUI", "ClearPackageUI", "LoginPassPackageUI", "SkinPackageUI"];
     public static IReadOnlyDictionary<string, string?> Closeable

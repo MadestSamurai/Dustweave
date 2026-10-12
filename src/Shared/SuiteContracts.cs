@@ -24,7 +24,7 @@ namespace BD2Daily {
     case "equipment": return "BD2Equipment.Live.Bridge";
     case "fishing": case "fishing-daily": return "BD2Fishing.Runtime.Loader";
     case "sichuan": case "sichuan-daily": return "BD2Sichuan.Runtime.Loader";
-    case "territory": return "BD2Territory.Runtime.Loader";
+    case "territory": case "territory-daily": return "BD2Territory.Runtime.Loader";
     case "rhythm": return "BD2Rhythm.Runtime.Loader";
     case "apostle-defense": return "BD2ApostleDefense.Runtime.Loader";
     case "infinite-gacha": return "BD2InfiniteGacha.Runtime.Loader";

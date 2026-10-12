@@ -86,7 +86,7 @@ public static class DailySandboxSessions
         if (binding.Account != account || binding.Box != box) throw new InvalidDataException("隔离账号绑定不一致，未读取凭据。");
         string installation = DailySandbox.Installation() ?? throw new InvalidOperationException("无法找到 Sandboxie，尚未收回隔离窗口的登录状态。");
         string actual = (await DailySandbox.Run(installation,"SbieIni.exe",["query",box,"FileRootPath"],token).ConfigureAwait(false)).Trim();
-        if (!string.Equals(root,actual,StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("隔离目录已变化，未读取凭据。");
+        if (!SandboxConfiguration.SameRoot(actual,root)) throw new InvalidDataException("隔离目录已变化，未读取凭据。");
         string nonce=Guid.NewGuid().ToString("N"), directory=Path.Combine(local,SessionConstants.VaultDirectoryName,"transfers");
         string sessionPath=Path.Combine(directory,nonce+".bd2slot"), resultPath=Path.Combine(directory,nonce+".json");
         try

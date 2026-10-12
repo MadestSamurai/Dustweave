@@ -61,7 +61,7 @@ internal static class UnifiedSuiteCases {
   string? priorOwner=Environment.GetEnvironmentVariable("BD2_DAILY_SUITE_OWNER");
   try {
    Environment.SetEnvironmentVariable("BD2_DAILY_SUITE_OWNER","helper-owner");
-   foreach(string id in new[]{"fishing-daily","sichuan-daily"}){
+   foreach(string id in new[]{"fishing-daily","sichuan-daily","territory-daily"}){
     var launch=new ProcessStartInfo();launch.Environment.Remove("BD2_DAILY_DATA_ROOT");
     var state=new SuiteStatus{State="ready",Tool=id,Owner="helper-owner",Fingerprints=new[]{id+"|helper-fingerprint"}};
     DailySuite.SetToolEnvironment(launch,state,new GameInstance(42,123,"game.exe"),id);
@@ -73,7 +73,7 @@ internal static class UnifiedSuiteCases {
   AppDomain.CurrentDomain.SetData("BD2.LocalIpc.Handoff.v1",new List<Dictionary<string,object>>());
   AppDomain.CurrentDomain.SetData("BD2.LocalIpc.Handoff.v1.pending",null);
   var modules=Get<Dictionary<string,Type>>("modules");modules.Clear();
-  foreach(string id in new[]{"daily","fishing","territory","fishing-daily"}){
+  foreach(string id in new[]{"daily","fishing","territory","fishing-daily","territory-daily"}){
    var asm=AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("SuiteFixture."+id),AssemblyBuilderAccess.Run);
    var type=asm.DefineDynamicModule("main").DefineType("Loader",TypeAttributes.Public|TypeAttributes.Abstract|TypeAttributes.Sealed);
    foreach(string method in new[]{"Load","Unload"}){
@@ -125,6 +125,8 @@ internal static class UnifiedSuiteCases {
   Send(Command("daily"));Finish();int starts=SuiteFixtureBus.Starts["daily"],stops=SuiteFixtureBus.Stops["daily"];
   Send(Command("fishing-daily"));Finish();
   Check(State().Tool=="fishing-daily"&&SuiteFixtureBus.Starts["daily"]==starts&&SuiteFixtureBus.Stops["daily"]==stops,"daily helper shares resident daily execution");
+  Send(Command("territory-daily"));Finish();
+  Check(State().Tool=="territory-daily"&&SuiteFixtureBus.Starts["daily"]==starts&&SuiteFixtureBus.Stops["daily"]==stops,"saffron helper retains resident daily identity and execution");
   identity.PlayerKey="different";Step();
   Check(State().State=="paused"&&State().Tool=="","identity change stops both engines");
   Check(!SuiteFixtureBus.Flows.Values.Any(f=>f.IsActive),"identity change leaves no actor");

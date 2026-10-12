@@ -8,6 +8,20 @@ static class SandboxCases
         void Check(bool value, string name) { if (!value) throw new InvalidOperationException(name); cases.Add(name); }
         void Reject(Action action, string name) { try { action(); } catch (ArgumentException) { cases.Add(name); return; } catch (InvalidDataException) { cases.Add(name); return; } throw new InvalidOperationException(name); }
         string a = new('a', 64), b = new('b', 64);
+        string unicodeRoot = @"C:\Users\测试用户\隔离空间\root";
+        var reads = new List<uint>();
+        string queried = SandboxConfiguration.ReadValues((section, setting, index, text, bytes) => {
+            reads.Add(index);
+            if ((index & 0xffff) > 0) return unchecked((int)0xC000008B);
+            text.Append(unicodeRoot); return 0;
+        }, "Dustweave_fixture", "FileRootPath");
+        Check(queried == unicodeRoot && reads.SequenceEqual(new uint[] { 0x30000000, 0x30000001 }), "sandbox configuration preserves Unicode and raw no-template query semantics");
+        Check(SandboxConfiguration.SameRoot(queried + "\\", unicodeRoot.ToUpperInvariant()), "sandbox root normalization accepts trailing separator and casing");
+        Check(!SandboxConfiguration.SameRoot(queried + "-foreign", unicodeRoot) && !SandboxConfiguration.SameRoot("root", unicodeRoot), "sandbox root normalization still rejects other roots and relative paths");
+        bool queryFailed = false;
+        try { SandboxConfiguration.ReadValues((s, k, i, t, n) => unchecked((int)0xC0000022), "box", "FileRootPath"); }
+        catch (IOException) { queryFailed = true; }
+        Check(queryFailed, "sandbox driver read failure is never treated as an empty configuration");
         Check(DailySandbox.BoxName(a) == "Dustweave_" + new string('a', 20), "stable per-account sandbox name survives changes to account alias and slot");
         Check(DailySandbox.BoxName(a) != DailySandbox.BoxName(b), "different identities have separate sandbox registrations");
         foreach (var key in new[] { "", "../account", new string('z',64), a[..63] })

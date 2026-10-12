@@ -104,6 +104,7 @@ public sealed class DailyWorkflowRegistry
         Add("weekly_book", DailyWeeklyBook.Run, BookOwner);
         Add("weekly_room_likes", DailyWeeklyRooms.Run);
         Add("weekly_fishing", DailyWeeklyFishing.Run);
+        Add("territory_saffron", DailySaffron.Run);
         Add("weekly_sichuan", DailyWeeklySichuan.Run);
         Add("trade", w => new DailyTradeExecution(w, tradeCatalog() ?? throw new StageHostException("adapter", "跑商数据没有通过当前客户端核对。")).Run(), TradeOwner);
         Add("collection_sync", w => new DailyWeeklyRoute(w).SyncProgress());

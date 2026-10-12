@@ -64,6 +64,15 @@ internal static class DiagnosticExportCases
         using(var archive=ZipFile.OpenRead(combined.Path))Check(archive.GetEntry("logs/tool-fixture/runtime.log")!=null,"related tool logs keep distinct source labels");
         string isolated=Path.Combine(output,"isolated-empty");
         Check(DailyDiagnosticExport.RelatedSources(output,isolated).Count==0,"absent sandbox and tool stores are harmless");
+        string box=Path.Combine(isolated,"Dustweave_synthetic");Directory.CreateDirectory(box);
+        DailyJson.Write(Path.Combine(box,"registration-mismatch.json"),new {reader="SbieApi_QueryConf_UTF16",configuredRoot="D:\\隔离空间",expectedRoot="D:\\游戏空间"});
+        File.WriteAllText(Path.Combine(box,"instance.json"),"private-registration");
+        var roots=DailyDiagnosticExport.RelatedSources(output,isolated);
+        var registrationExport=await DailyDiagnosticExport.CreateAsync(Path.Combine(output,"empty-main"),Path.Combine(output,"registration-export.zip"),"","test",additionalSources:roots);
+        using(var archive=ZipFile.OpenRead(registrationExport.Path)){
+            Check(archive.Entries.Any(e=>e.FullName.EndsWith("/registration-mismatch.json")),"sandbox path diagnostics survive missing inner account binding");
+            Check(!archive.Entries.Any(e=>e.FullName.EndsWith("/instance.json")),"exporting path evidence never includes sandbox account registration");
+        }
         Check(!DailyDiagnosticExport.Allowed("parallel-workers/a/accounts.json")&&!DailyDiagnosticExport.Allowed("tools/fishing/preferences.json")&&!DailyDiagnosticExport.Allowed("live/queue-bootstrap/a/command.json"),"nested vaults preferences and raw commands remain excluded");
         Check(DailyDiagnosticExport.Allowed("runtime.log.1")&&DailyDiagnosticExport.Allowed("suite/diagnostics/ownership.jsonl.3")&&!DailyDiagnosticExport.Allowed("tools/evidence.jsonl.dll"),"only recognized text rotations are included");
         Directory.CreateDirectory(Path.Combine(root,"live","queue-bootstrap","sample"));File.WriteAllText(Path.Combine(root,"live","queue-bootstrap","sample","result.json"),"{\"state\":\"failed\",\"error\":\"owner\"}");

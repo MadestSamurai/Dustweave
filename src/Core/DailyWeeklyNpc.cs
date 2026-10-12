@@ -254,6 +254,7 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
         bool liftSent = false, interactionSent = false;
         long pendingObject = 0;
         bool objectStep = N(row["conditionType"]) is 2 or 9 or 18;
+        bool huntStep = N(row["conditionType"]) == 1;
         static HashSet<long> Collected(JsonObject step) => (step["objectId"] as JsonArray ?? new()).Select(N).ToHashSet();
         double end = W.Time + 180, lastProgress = W.Time;
         string last = "", recoveryRecorded = "", decisionRecorded = "";
@@ -274,6 +275,7 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
                 }
                 await Battle(row);
                 lastProgress = W.Time;
+                end = W.Time + 180;
                 continue;
             }
             var presentation = DailyHomeDecision.BackgroundErrorAction(f, policy) ?? DailyNavigationDecision.WeeklyResult(f, policy) ?? DailyNavigationDecision.StoryAction(f, policy) ?? DailyNavigationDecision.TalentAction(f, policy) ?? DailyNavigationDecision.Notice(f, policy, out _);
@@ -377,14 +379,16 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
                     continue;
                 }
             }
-            if (carry == null && !interactionSent && objectStep && collected.Count < N(row["conditionCount"]) && types.Contains("GameFieldDefaultUI"))
+            if (carry == null && !interactionSent && (huntStep || objectStep && collected.Count < N(row["conditionCount"])) && types.Contains("GameFieldDefaultUI"))
             {
-                var target = Rows(data.Native["Objects"] ?? new JsonArray()).Where(x => N(x["Quest"]) == id && !collected.Contains(N(x["Id"])) && (row["magicValue"] as JsonArray ?? new()).Select(N).Contains(N(x["Id"])) && B(x["Near"]) && B(x["Ready"])).OrderBy(x => N(x["Id"])).FirstOrDefault();
+                // Hunt MagicValue contains monster IDs, not the ID of the quest
+                // trigger. The scene object's own active quest is authoritative.
+                var target = Rows(data.Native["Objects"] ?? new JsonArray()).Where(x => N(x["Quest"]) == id && !B(x["Collected"]) && !collected.Contains(N(x["Id"])) && (huntStep || (row["magicValue"] as JsonArray ?? new()).Select(N).Contains(N(x["Id"]))) && B(x["Near"]) && B(x["Ready"])).OrderBy(x => N(x["Id"])).FirstOrDefault();
                 if (target != null)
                 {
                     await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "weekly_npc_interact"), ("value", id), ("items", new[] { N(target["Instance"]) })));
                     interactionSent = true;
-                    pendingObject = N(target["Id"]);
+                    pendingObject = huntStep ? 0 : N(target["Id"]);
                     lastProgress = W.Time;
                     continue;
                 }

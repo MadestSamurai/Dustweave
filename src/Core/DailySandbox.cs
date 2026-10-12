@@ -105,7 +105,7 @@ public static class DailySandbox
             string state = Path.Combine(Store, box);
             var owned = DailyJson.TryRead<DailySandboxRequest>(Path.Combine(state, "instance.json"));
             string actual = (await Run(installation, "SbieIni.exe", ["query", box, "FileRootPath"], token)).Trim();
-            if (owned?.Account != account || owned.Box != box || !string.Equals(actual, Path.Combine(state, "root"), StringComparison.OrdinalIgnoreCase))
+            if (owned?.Account != account || owned.Box != box || !SandboxConfiguration.SameRoot(actual, Path.Combine(state, "root")))
                 throw new InvalidOperationException("parallel.identity_changed");
             foreach (string setting in new[] { "OpenKeyPath", "OpenIpcPath", "OpenPipePath", "OpenFilePath", "BreakoutProcess", "BreakoutFolder", "BreakoutDocument" })
                 if (!string.IsNullOrWhiteSpace(await Run(installation, "SbieIni.exe", ["query", box, setting], token)))
@@ -173,7 +173,7 @@ public static class DailySandbox
             else
             {
                 if (owned == null || owned.Account != request.Account || owned.Box != box) throw new InvalidOperationException("同名沙箱不是由此账号登记的，未修改它。");
-                if (!string.Equals(actual,root,StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("隔离目录已被修改，请先检查 Sandboxie 设置。");
+                if (!SandboxConfiguration.SameRoot(actual,root)) throw new InvalidOperationException("隔离目录已被修改，请先检查 Sandboxie 设置。");
             }
         }
         if(!configured)
@@ -327,10 +327,16 @@ public static class DailySandbox
 
     internal static async Task<string> Run(string installation,string file,IEnumerable<string> args,CancellationToken token)
     {
+        string[] arguments = args.ToArray();
+        if (file.Equals("SbieIni.exe", StringComparison.OrdinalIgnoreCase) && arguments is ["query", var section, var setting])
+        {
+            token.ThrowIfCancellationRequested();
+            return await Task.Run(() => SandboxConfiguration.Read(installation, section, setting), token).ConfigureAwait(false);
+        }
         var start=new ProcessStartInfo(Path.Combine(installation,file)){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden,WorkingDirectory=Directory.GetCurrentDirectory(),RedirectStandardOutput=true,RedirectStandardError=true};
         // Pin the parent's immutable plugin version for isolated account workers too.
         start.Environment["DUSTWEAVE_PLUGIN"]=DailyPlugin.Current.Available?DailyPlugin.Current.Root:"none";
-        foreach(var arg in args)start.ArgumentList.Add(arg);
+        foreach(var arg in arguments)start.ArgumentList.Add(arg);
         using var process=Process.Start(start)??throw new IOException("Sandboxie 未启动。");
         var output=process.StandardOutput.ReadToEndAsync(); var error=process.StandardError.ReadToEndAsync();
         try { await process.WaitForExitAsync(token).WaitAsync(TimeSpan.FromSeconds(20),token).ConfigureAwait(false); }
