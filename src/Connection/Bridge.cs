@@ -215,6 +215,11 @@ namespace BD2Daily.Live {
      try{reason=WeeklyNpcNative.Preflight(c,uis[c.SurfaceId]);}catch(Exception ex){reason="npc_preflight_unavailable:"+ex.GetType().Name;}
      if(reason.Length>0){r.State="rejected";r.Error=reason;r.MayHaveDispatched=false;Save(r);return;}
     }
+    if(LiveProtocol.RequiresMirrorPeriod(c,frame)){
+     try{var period=RewardNative.MirrorPeriod();reason=period.Ready&&period.State=="ScheduleSeason"?"":period.Ready&&new[]{"ScheduleOffSeason","ScheduleCalculate","ScheduleComingSoon","ScheduleTraining"}.Contains(period.State)?"mirror_period_closed":"mirror_period_unavailable";}
+     catch(Exception){reason="mirror_period_unavailable";}
+     if(reason.Length>0){r.State="rejected";r.Error=reason;r.MayHaveDispatched=false;Save(r);return;}
+    }
     r.MayHaveDispatched=true;r.State="dispatching";Save(r);
     try{
      if(c.Kind=="detach"){Unload();r.State="detached";Save(r);return;}

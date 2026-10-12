@@ -63,7 +63,7 @@ public sealed partial class DailyFieldRoute
         return eligible.Length > 0 && eligible.All(r => DailyRegionRouter.D(r["Cooldown"]) > 0);
     }
     public static bool NeedsStealth(JsonObject e) => N(Map(e)["packId"]) is 14 or 1003;
-    private static bool FieldInputReady(JsonObject frame) => DailyNavigationDecision.MapSceneReady(frame)
+    internal static bool FieldInputReady(JsonObject frame) => DailyNavigationDecision.MapSceneReady(frame)
         && DailyNavigationDecision.Rows(frame).Any(r => S(r["Type"]) == "GameFieldDefaultUI" && DailyNavigationDecision.ReadyInput(r))
         && DailyNavigationDecision.Types(frame).All(t => t == "GameFieldDefaultUI" || DailyNavigationDecision.PassiveSurface(t));
     public async Task FieldReady(double timeout = 45, double settle = 1)

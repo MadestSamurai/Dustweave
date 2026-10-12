@@ -196,3 +196,11 @@ The settings dialog shares the daily controller and native evidence adapter. See
 ### Delayed Last Night record presentation
 
 `TotalWarNewcordPopupUI` is a foreground `UIBase` even when its observation says `Popup=false`. It can appear on returning to the field after the weekly battle has already been confirmed complete. Home navigation and cartridge travel share its explicit native return handling; animation/readiness is awaited, unknown modals and battles are preserved, and uncertain submissions are never replayed. Closing this score display must not restart a completed weekly battle. Synthetic delayed-arrival and command-boundary regressions live in `HomeNavigation` and `TravelTransition`. Narrow host routing changes can reuse a completed full package baseline; native inputs are still identity-checked and the changed routes rerun.
+
+## Mirror schedule and interrupted NPC navigation
+
+Mirror reads the native schedule manager's content 1 state, matching the game's own PVP matching button. Only ScheduleSeason permits a new match. Known off-season, calculation, coming-soon and training states produce an explained skip; absent or unknown data is not classified as closed. A submitted journal must settle first. Native entry and auto-confirmation recheck the schedule before the dispatch marker. This guard is scoped to Mirror, not the shared hunting auto popup.
+
+Native environmental knockback temporarily uses DontMove, then stops and resumes a cached touch-move destination; a task navigation latch can remain active independently of actual movement. Weekly NPC navigation now records position and movement readiness. UI-token changes do not count as progress. After six stationary, controllable seconds, at most three explicit native cancel/start sequences re-resolve the same quest or carry source. Input locks, pending pickup/delivery acknowledgements and native object interactions prevent recovery from interrupting an action. Persistent failure defers that NPC task through the existing cartridge isolation path.
+
+Validation is synthetic plus compilation against the installed client, separate from an actual train/trap or off-season game run. Private decompilation evidence is retained outside this repository.

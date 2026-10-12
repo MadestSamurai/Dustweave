@@ -29,6 +29,8 @@ namespace BD2Daily.Live {
   [DataMember] public int[] NavigationCollected=new int[0],NavigationStale=new int[0],NavigationRemoved=new int[0];
   [DataMember] public string NavigationRecovery="";
   [DataMember] public bool Navigating,BattleReady,BattlePlaying,BattleAuto;
+  [DataMember] public float[] Position=new float[0];
+  [DataMember] public bool NavigationReady;
   [DataMember] public string BattleResult="";
   [DataMember] public long Week,Now,At;
   [DataMember] public int NavigationLeaseQuest;
@@ -108,6 +110,9 @@ namespace BD2Daily.Live {
     .Where(x=>x!=null&&activeIds.Any(id=>OwnsCarry(x,Tables[id])))
     .Select(x=>new WeeklyNpcObject{Instance=x.GetInstanceID(),Id=x.ὪὬὣὧὥὨὦὯὨὮὬ,Quest=activeIds.Single(id=>OwnsCarry(x,Tables[id])),Near=x.ὩὤὨὮὥὦὫὭὫὭὨ,Ready=CarryReady(x),Available=x.gameObject.activeInHierarchy&&!action.CheckFieldItemBeforeInteract(x.ὪὬὣὧὥὨὦὯὨὮὬ),Distance=(x.ὩὬὧὢὧὬὠὡὦὥὧ-GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὪὨὯὢὫὮὨὩὮὡὬ.transform.position).sqrMagnitude}).ToArray();
    result.Navigating=Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ὤὬὪὨὠὢὢὭὧὫὨ;
+   var player=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὪὨὯὢὫὮὨὩὮὡὬ;
+   result.Position=player==null?new float[0]:new[]{player.transform.position.x,player.transform.position.y,player.transform.position.z};
+   result.NavigationReady=player!=null&&player.ὭὦὫὤὮὧὦὡὨὤὢ.ὠὭὬὪὫὣὠὡὡὠὫ!=MoveController.ὯὣὠὮὤὡὤὯὢὩὯ.DontMove;
    result.NavigationLeaseQuest=navQuest;result.NavigationLeaseUntil=navUntil;
    result.NavQuest=Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ὢὬὧὣὣὣὪὯὬὮὥ;
    var ui=Bridge.Find(typeof(BattleUI_FieldBattle)).Cast<BattleUI_FieldBattle>().SingleOrDefault();

@@ -6,6 +6,10 @@ using Google.Protobuf;
 using Proto.Net;
 using UnityEngine;
 namespace BD2Daily.Live {
+ [DataContract] internal sealed class MirrorPeriodState {
+  [DataMember] public bool Ready;
+  [DataMember] public string State="unknown";
+ }
  [DataContract] internal sealed class RewardPage {
   [DataMember] public string[] Catalog=new string[0],Missions=new string[0];
   [DataMember] public string Kind="",Table="",Group="",Cache="",Schedule="",Currency="";
@@ -19,6 +23,13 @@ namespace BD2Daily.Live {
   [DataMember] public string[] Missions=new string[0];
  }
  internal static class RewardNative {
+  internal static MirrorPeriodState MirrorPeriod(){
+   var schedule=ὫὨὪὠὢὨὮὤὩὤὮ.ὤὪὦὠὡὠὠὣὮὡὮ;
+   // Same schedule and eligibility as the native Mirror matching button.
+   // Check presence first: SeasonState asserts when login data has not arrived.
+   if(schedule==null||!schedule.IsContainScheduleContentId(1))return new MirrorPeriodState();
+   return new MirrorPeriodState{Ready=true,State=schedule.SeasonState(1).ToString()};
+  }
   // Use the same dated ChangeMissionTable predicate as PassRootUI. The packaged
   // MissionTable includes historical replacements and is not the active task set.
   internal static PassDefinition CapturePass(){

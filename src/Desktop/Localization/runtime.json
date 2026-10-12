@@ -1,4 +1,14 @@
 {
+  "message.outside_mirror_play_period": {
+    "zh-CN": "镜中当前不在战斗期，保留剩余次数并继续后续日常",
+    "zh-TW": "鏡中目前不在戰鬥期，保留剩餘次數並繼續後續日常",
+    "en-US": "Mirror battles are currently closed. Remaining tickets are kept; continuing other daily tasks."
+  },
+  "message.mirror_period_unavailable": {
+    "zh-CN": "尚未读到镜中赛季状态，未开始战斗；连接稳定后可重跑镜中",
+    "zh-TW": "尚未讀到鏡中賽季狀態，未開始戰鬥；連線穩定後可重跑鏡中",
+    "en-US": "The Mirror schedule is not available yet. No battle was started; retry Mirror when the connection is ready."
+  },
   "message.book_record_blocked": {
     "zh-CN": "末日之书纪录展示被其他页面遮挡或尚在战斗结算，保留现场。",
     "zh-TW": "末日之書紀錄展示被其他頁面遮擋或尚在戰鬥結算，保留現場。",

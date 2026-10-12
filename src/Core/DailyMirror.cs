@@ -4,8 +4,30 @@ namespace Dustweave;
 
 public static class DailyMirror
 {
+    private sealed class PeriodClosed : Exception { }
+    internal static string Period(JsonObject evidence)
+    {
+        var rows = Readings(evidence, "mirror.period").ToArray();
+        if (rows.Length != 1 || rows[0]["$self"] is not JsonObject p || !B(p["Ready"])) return "unknown";
+        return S(p["State"]) switch {
+            "ScheduleSeason" => "open",
+            "ScheduleOffSeason" or "ScheduleCalculate" or "ScheduleComingSoon" or "ScheduleTraining" => "closed",
+            _ => "unknown"
+        };
+    }
+    private static async Task RequireOpen(DailyWorkflow w)
+    {
+        double end = w.Time + 5;
+        do {
+            string period = Period(await w.Evidence("mirror"));
+            if (period == "open") return;
+            if (period == "closed") throw new PeriodClosed();
+            await w.Delay(250);
+        } while (w.Time < end);
+        throw new StageHostException("adapter", "mirror_period_unavailable");
+    }
     private const string Auto = "BattleAutoSettingPopupUI", Boost = "BattleAutoCurrencyAccelSettingPopupUI", BoostValue = "ὣὤὥὪὥὡὥὢὧὮὠ", Count = "ὯὠὭὣὮὠὯὬὤὯὠ", Slider = "_sliderCount.ὮὢὥὯὥὧὤὭὨὨὪ";
-    private static readonly string[] RankWindows = ["PVPClassUpUI", "PVPHistoryUI", "PVPSeasonRewardPopupUI"];
+    private static readonly string[] RankWindows = ["PVPClassUpUI", "PVPHistoryUI", "PVPSeasonRewardPopupUI", "PVPSeasonEndPopupUI"];
     private static readonly string[] ReadyPaths = ["ὣὤὥὦὯὦὩὤὨὠὪ", "ὪὯὣὥὬὫὬὩὠὮὠ", "ὮὬὧὦὣὠὠὤὮὦὧ"];
     public static DailyBusinessProof Proof() => new("mirror.end", "mirror", ["mirror"],
         (op, events, after) => Verify(op["before"]!.AsObject(), events, after, I(op["scope"]!["multiplier"]), BatchCount(op)),
@@ -124,6 +146,7 @@ public static class DailyMirror
         while (w.Time < end)
         {
             await Rank(w);
+            await RequireOpen(w);
             await DailyTravel.Ready(w, "BattleUI_PVP");
             var e = await w.Evidence("mirror");
             var v = Readings(e, "mirror.input").Single();
@@ -139,6 +162,7 @@ public static class DailyMirror
     }
     private static async Task Enter(DailyWorkflow w)
     {
+        await RequireOpen(w);
         await Rank(w);
         if (await w.Has("BattleUI_PVP"))
         {
@@ -155,6 +179,7 @@ public static class DailyMirror
     }
     private static async Task Prepare(DailyWorkflow w, int cost, int repetitions)
     {
+        await RequireOpen(w);
         await Rank(w);
         if (await w.Has(Boost))
             await w.Step(Boost, back: true, absent: Boost, expect: Auto);
@@ -282,6 +307,32 @@ public static class DailyMirror
     }
     public static async Task<JsonObject> Run(DailyWorkflow w)
     {
+        if (!w.Settings.Mirror.Enabled) return DailyWorkflow.Skipped("disabled");
+        // Settle previously submitted batches before treating a closed season as a skip.
+        await Recover(w);
+        int initial = I(Tickets(await w.Evidence("mirror"))["free"]);
+        try { return await RunAvailable(w); }
+        catch (Exception e) when (e is PeriodClosed || e is DailyStepException step && step.DefinitelyNotDispatched && step.RejectionCode == "mirror_period_closed")
+        {
+            await Recover(w);
+            await Rank(w);
+            if (await w.Has(Boost)) await w.Step(Boost, back: true, absent: Boost);
+            if (await w.Has(Auto)) await w.Step(Auto, back: true, absent: Auto);
+            if (await w.Has("BattleUI_PVP")) {
+                await w.Step("BattleUI_PVP", back: true);
+                await DailyTravel.Ready(w, "GameFieldDefaultUI", absent: ["BattleUI_PVP"]);
+            }
+            var result = DailyWorkflow.Skipped("outside_mirror_play_period");
+            int remaining = I(Tickets(await w.Evidence("mirror"))["free"]);
+            result["remaining_free"] = remaining;
+            result["free_spent"] = Math.Max(0, initial - remaining);
+            if (initial > remaining) result["state"] = "partial";
+            w.Save("mirror-latest.json", result);
+            return result;
+        }
+    }
+    private static async Task<JsonObject> RunAvailable(DailyWorkflow w)
+    {
         if (!w.Settings.Mirror.Enabled)
             return DailyWorkflow.Skipped("disabled");
         w.Driver.Diagnostics.Event("mirror_settings", O(("configured_multiplier", w.Settings.Mirror.Multiplier), ("account", w.Context["actor"]![3])));
@@ -308,6 +359,7 @@ public static class DailyMirror
             int total = checked(cost * repetitions);
             w.Driver.Diagnostics.Event("mirror_batch_plan", O(("configured_multiplier", w.Settings.Mirror.Multiplier), ("free", before["free"]), ("multiplier", cost), ("repetitions", repetitions)));
             await Prepare(w, cost, repetitions);
+            await RequireOpen(w);
             var t = await Target(w, Auto, field: "_currencyButtonOK");
             var op = await w.Transact("mirror.end", O(("multiplier", cost), ("repetitions", repetitions), ("free_only", true)), O(("ui", Auto), ("field", t["Field"]), ("target_id", t["Id"]), ("native", true), ("reason", "使用已核对的免费镜中次数")), BatchTimeout(repetitions));
             var after = Tickets(await w.Evidence("mirror"));

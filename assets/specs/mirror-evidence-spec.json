@@ -14,6 +14,11 @@
   ],
   "Reads": [
     {
+      "Id": "mirror.period",
+      "Type": "GameFieldManager",
+      "Paths": []
+    },
+    {
       "Id": "mirror.currency",
       "Type": "ὣὡὧὡὦὣὣὬὨὪὫ",
       "Paths": [
@@ -136,6 +141,17 @@
     {
       "Id": "mirror.presentation.PVPSeasonRewardPopupUI",
       "Type": "PVPSeasonRewardPopupUI",
+      "Paths": [
+        "ὣὤὥὦὯὦὩὤὨὠὪ",
+        "ὪὯὣὥὬὫὬὩὠὮὠ",
+        "ὮὬὧὦὣὠὠὤὮὦὧ",
+        "ὫὥὧὬὭὫὡὠὠὪὠ",
+        "ὦὡὮὫὧὠὮὡὭὭὬ"
+      ]
+    },
+    {
+      "Id": "mirror.presentation.PVPSeasonEndPopupUI",
+      "Type": "PVPSeasonEndPopupUI",
       "Paths": [
         "ὣὤὥὦὯὦὩὤὨὠὪ",
         "ὪὯὣὥὬὫὬὩὠὮὠ",

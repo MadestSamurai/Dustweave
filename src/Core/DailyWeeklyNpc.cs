@@ -257,6 +257,8 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
         static HashSet<long> Collected(JsonObject step) => (step["objectId"] as JsonArray ?? new()).Select(N).ToHashSet();
         double end = W.Time + 180, lastProgress = W.Time;
         string last = "", recoveryRecorded = "", decisionRecorded = "";
+        var movement = new DailyTravelProgress(W.Time, 6);
+        int navigationRestarts = 0;
         var policy = DailyNavigationPolicy.Load();
         while (W.Time < end)
         {
@@ -387,14 +389,43 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
                     continue;
                 }
             }
-            string signature = current.ToJsonString() + "|" + S(data.Native["Map"]) + "|" + S(data.Native["Navigating"]) + "|" + S(f["UiToken"]);
+            // UI refreshes and a latched navigation flag do not prove movement.
+            string signature = current.ToJsonString() + "|" + S(data.Native["Map"]) + "|" + S(data.Native["CarryId"]);
             if (signature != last)
             {
                 last = signature;
                 lastProgress = W.Time;
+                movement = new(W.Time, 6);
             }
-            if (!B(data.Native["Navigating"]) && W.Time - lastProgress > 12)
-                break;
+            bool nativeInteraction = Rows(data.Native["Objects"] ?? new JsonArray()).Any(x => N(x["Quest"]) == id && B(x["Near"])
+                && (S(x["State"]) is not ("" or "Idle") || S(x["Interaction"]) is not ("" or "None")));
+            bool awaitingInteraction = interactionSent || nativeInteraction || carry != null && liftSent || objectStep && collected.Count >= N(row["conditionCount"]);
+            var point = (data.Native["Position"] as JsonArray)?.Select(DailyRegionRouter.D).ToArray();
+            bool canNavigate = FieldInputReady(f) && B(data.Native["NavigationReady"]);
+            if (!canNavigate || awaitingInteraction) movement = new(W.Time, 6);
+            bool stalled = canNavigate && !awaitingInteraction && point is { Length: 3 } && point.All(double.IsFinite) && movement.Sample(point, null, W.Time);
+            if (stalled)
+            {
+                if (navigationRestarts >= 3) break;
+                if (N(data.Native["NavQuest"]) != 0 && N(data.Native["NavQuest"]) != id || N(data.Native["NavigationLeaseQuest"]) != id)
+                    throw new DailyNpcUnavailable("任务导航目标已改变，保留现场");
+                SaveRecovery("navigation_stalled_restart", row, data);
+                // Use the same off/on sequence as the task navigation button.
+                // Never replay a pickup, lift or delivery with unknown outcome.
+                await W.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
+                await route.FieldReady();
+                Data = data = await Observe();
+                if (!data.Active.Any(a => N(a["id"]) == id)) return;
+                carry = N(row["conditionType"]) == 9 ? data.CarrySource(id) : null;
+                if (carry != null)
+                    await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "weekly_npc_carry_nav"), ("value", id), ("items", new[] { N(carry["Instance"]) })));
+                else await Navigate(id);
+                navigationRestarts++;
+                movement = new(W.Time, 6);
+                lastProgress = W.Time;
+                continue;
+            }
+            if (!B(data.Native["Navigating"]) && W.Time - lastProgress > 12 && !awaitingInteraction && point is not { Length: 3 }) break;
             await W.Delay(300);
         }
         if (await W.Has("GameFieldDefaultUI"))

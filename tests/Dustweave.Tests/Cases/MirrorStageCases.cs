@@ -13,6 +13,9 @@ static class MirrorStageCases
         public readonly List<int> BatchRepeats = [];
         public int Settled;
         public double SecondsPerBattle = 2;
+        public string Period = "ScheduleSeason";
+        public bool PeriodReady = true;
+        public bool CloseAfterBatch, CloseInSettings;
         private int pending;
         private double settleAt;
         private const string Auto = "BattleAutoSettingPopupUI", Boost = "BattleAutoCurrencyAccelSettingPopupUI";
@@ -28,6 +31,7 @@ static class MirrorStageCases
         }
         private JsonObject[] Readings() =>
         [
+            WorkflowCases.Reading("mirror.period", ("$self", O(("Ready", PeriodReady), ("State", Period)))),
             WorkflowCases.Reading("mirror.presentation.PVPClassUpUI", ("ὣὤὥὦὯὦὩὤὨὠὪ", true), ("ὪὯὣὥὬὫὬὩὠὮὠ", true), ("ὮὬὧὦὣὠὠὤὮὦὧ", true), ("ὫὥὧὬὭὫὡὠὠὪὠ", false), ("ὦὡὮὫὧὠὮὡὭὭὬ", false)),
             WorkflowCases.Reading("mirror.currency", ("PvpTicket", Free), ("PvpTicketStack", Paid)),
             WorkflowCases.Reading("mirror.auto", ("ὣὤὥὪὥὡὥὢὧὮὠ", Multiplier), ("ὯὠὭὣὮὠὯὬὤὯὠ", Repeats), ("_buttonFreeOnly.IsEnable", FreeOnly), ("_buttonSkip.IsEnable", Skip), ("_sliderAutoCount._objPlusMaxButton.name", "Button - +100")),
@@ -44,6 +48,7 @@ static class MirrorStageCases
             Settled++;
             F.Event("mirror.end", "response", ("win", true));
             pending--;
+            if (pending == 0 && CloseAfterBatch) Period = "ScheduleOffSeason";
             if (pending > 0) Match();
             Lobby();
             F.Time += .01;
@@ -62,9 +67,10 @@ static class MirrorStageCases
             if (ui == "PVPClassUpUI" && field == "_objCancelButton") { Lobby(); return; }
             if (kind == "back" && ui == "BattleUI_PVP") { F.Page("GameFieldDefaultUI", "_buttonMenu"); return; }
             if (ui == "GameFieldDefaultUI" && field == "_buttonMenu") { F.Page("MenuUI"); return; }
-            if (ui == "BattleUI_PVP" && field.EndsWith("/Button - AutoSetting", StringComparison.Ordinal)) { AutoPage(); return; }
+            if (ui == "BattleUI_PVP" && field.EndsWith("/Button - AutoSetting", StringComparison.Ordinal)) { AutoPage(); if (CloseInSettings) Period = "ScheduleOffSeason"; return; }
             if (ui == Auto)
             {
+                if (kind == "back") { Lobby(); return; }
                 if (field == "_btnSettingBoost") { Slider = Multiplier; F.Page(Boost, "Panel/+10", "Panel/-10", "Panel/+1", "Panel/-1", "_btnOk"); return; }
                 if (field.Contains("FreeOnly", StringComparison.Ordinal)) { FreeOnly = !FreeOnly; return; }
                 if (field.Contains("BattleSkip", StringComparison.Ordinal)) { Skip = !Skip; return; }
@@ -95,6 +101,38 @@ static class MirrorStageCases
         await MirrorArrivalCases.Run(Path.Combine(root, "mirror-arrival"), cases);
         void Check(bool ok, string name) { if (!ok) throw new Exception(name); cases.Add(name); }
         void Reject(Action action, string name) { try { action(); } catch (InvalidDataException) { cases.Add(name); return; } throw new Exception(name); }
+        var command = new BD2Daily.Live.Command { Kind = "native_click", SurfaceId = 1, TargetId = 2 };
+        var native = new BD2Daily.Live.Frame { Scene = "Map3001_001", Surfaces = [new() { Id = 1, Type = "BattleAutoSettingPopupUI", Targets = [new() { Id = 2, Field = "_currencyButtonOK" }] }] };
+        Check(BD2Daily.Live.LiveProtocol.RequiresMirrorPeriod(command, native), "Mirror auto confirmation is checked before native dispatch");
+        native.Scene = "Map0009_001";
+        Check(!BD2Daily.Live.LiveProtocol.RequiresMirrorPeriod(command, native), "Mirror season guard does not intercept hunting's shared auto popup");
+        native.Scene = "Map3001_001"; command.Kind = "back";
+        Check(!BD2Daily.Live.LiveProtocol.RequiresMirrorPeriod(command, native), "closed Mirror settings remain dismissible");
+        foreach (string period in new[] { "ScheduleOffSeason", "ScheduleCalculate", "ScheduleComingSoon", "ScheduleTraining" })
+        using (var s = new Scenario(Path.Combine(root, "mirror-closed-" + period)) { Period = period })
+        {
+            var result = await DailyMirror.Run(s.F.Workflow);
+            Check(S(result["state"]) == "skipped" && S(result["reason"]) == "outside_mirror_play_period" && s.Batches.Count == 0 && s.Free == 40 && s.F.Time < 5,
+                "Mirror unavailable period skips quickly without spending tickets: " + period);
+        }
+        using (var s = new Scenario(Path.Combine(root, "mirror-period-not-loaded")) { PeriodReady = false })
+        {
+            bool failed = false;
+            try { await DailyMirror.Run(s.F.Workflow); } catch (StageHostException e) { failed = e.Message == "mirror_period_unavailable"; }
+            Check(failed && s.Batches.Count == 0, "missing Mirror schedule is not fabricated into rest or battle availability");
+        }
+        using (var s = new Scenario(Path.Combine(root, "mirror-period-boundary")) { CloseInSettings = true })
+        {
+            var result = await DailyMirror.Run(s.F.Workflow);
+            Check(S(result["state"]) == "skipped" && s.Batches.Count == 0 && s.Free == 40,
+                "Mirror period closing during auto configuration prevents a new battle and exits settings");
+        }
+        using (var s = new Scenario(Path.Combine(root, "mirror-period-after-batch")) { CloseAfterBatch = true })
+        {
+            var result = await DailyMirror.Run(s.F.Workflow);
+            Check(S(result["state"]) == "partial" && s.Settled == 2 && s.Free == 10 && N(result["free_spent"]) == 30 && s.Batches.Count == 1,
+                "Mirror settles a submitted batch before deferring its remainder after period close");
+        }
         using (var s = new Scenario(Path.Combine(root, "mirror-full")))
         {
             var result = await DailyMirror.Run(s.F.Workflow);

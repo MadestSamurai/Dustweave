@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 1.2.3 — 2026-10-12
+
+- 镜中非战斗期明确跳过，继续其他日常；已提交战斗先完成结算。
+- 周NPC任务寻路受场景伤害打断时按实际位移恢复，保留拾取和搬运进度。
+- Skip Mirror outside its battle period and recover interrupted weekly NPC navigation without replaying pending interactions.
+- [完整说明 / Full notes](docs/releases/1.2.3.md)
+
 ## 1.2.2 — 2026-10-12
 
 - 修复货币栏控件和末日之书新纪录展示导致的日常中断。

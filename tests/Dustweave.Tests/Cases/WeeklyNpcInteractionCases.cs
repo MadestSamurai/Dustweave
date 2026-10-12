@@ -12,6 +12,8 @@ static class WeeklyNpcInteractionCases
         public JsonObject Row;
         public JsonArray Active = new(O(("id", 10), ("objectId", new JsonArray())));
         public bool Navigating, Ready = true, Unknown;
+        public bool NavigationReady = true;
+        public double X;
         public int Rejections, Interactions, Lifts, Navs, Held;
         public double AckAt = -1, AckDelay;
         string query = "prior";
@@ -50,6 +52,7 @@ static class WeeklyNpcInteractionCases
             ("Week", 500), ("Limit", 3), ("Remaining", 2), ("Completed", 0), ("ActionsSupported", true), ("CanAccept", false),
             ("Rows", new JsonArray(Row.DeepClone()).ToJsonString()), ("Active", Active.ToJsonString()), ("Posted", new JsonArray()), ("Cleared", new JsonArray()),
             ("Navigating", Navigating), ("NavigationLeaseQuest", 10), ("NavigationLeaseUntil", H.Ticks + TimeSpan.TicksPerMinute), ("CarryId", Held),
+            ("Position", new[] { X, 0d, 0d }), ("NavigationReady", NavigationReady), ("NavQuest", Navigating ? 10 : 0),
             ("Objects", Array((Row["magicValue"] as JsonArray)!.Select(value => O(("Quest", 10), ("Instance", 200 + N(value)), ("Id", value), ("Near", true), ("Ready", Ready))))),
             ("CarryObjects", new JsonArray(O(("Quest", 10), ("Instance", 400), ("Id", 200), ("Available", true), ("Near", true), ("Ready", Ready), ("Distance", 0)))));
         public async Task Run() { await Npc.Query(1); await Npc.Advance(Row); }
@@ -64,6 +67,46 @@ static class WeeklyNpcInteractionCases
             await f.Run();
             Check(f.Interactions == 1 && f.H.Time < 10, "NPC interacts in range while navigation mode remains active: " + kind);
             Check(f.Lifts == (kind == 9 ? 1 : 0), "carry source is lifted exactly once before delivery: " + kind);
+        }
+        foreach (bool activeFlag in new[] { true, false })
+        using (var f = new Fixture(Path.Combine(root, "npc-hazard-" + activeFlag)))
+        {
+            f.Ready = false;
+            f.H.OnDelay = () => {
+                // Passive UI changes used to keep the old timeout alive forever.
+                f.H.Frame["UiToken"] = "frame-" + f.H.Time;
+                if (f.Navs < 2) f.Navigating = activeFlag; else f.Ready = true;
+            };
+            await f.Run();
+            var commands = f.H.Box.Commands.Select(c => S(c["Kind"])).ToArray();
+            Check(f.Navs == 2 && f.Interactions == 1 && commands.Contains("mainline_cancel_nav") && f.H.Time < 15,
+                "stationary interrupted task resumes via cancel then start despite UI churn, navigation flag=" + activeFlag);
+        }
+        using (var f = new Fixture(Path.Combine(root, "npc-moving")))
+        {
+            f.Ready = false; f.H.OnDelay = () => { f.X += .5; if (f.H.Time > 15) f.Ready = true; };
+            await f.Run();
+            Check(f.Navs == 1, "long moving route is not restarted by elapsed time alone");
+        }
+        using (var f = new Fixture(Path.Combine(root, "npc-damage-animation")))
+        {
+            f.Ready = false; f.NavigationReady = false;
+            f.H.OnDelay = () => { if (f.H.Time > 10) { f.NavigationReady = true; f.Ready = true; } };
+            await f.Run();
+            Check(f.Navs == 1, "locked movement during an animation is not cancelled");
+        }
+        using (var f = new Fixture(Path.Combine(root, "npc-persistent-obstacle")))
+        {
+            f.Ready = false;
+            bool deferred = false; try { await f.Run(); } catch (DailyNpcUnavailable) { deferred = true; }
+            Check(deferred && f.Navs == 4 && f.H.Time < 40 && f.Interactions == 0, "three unsuccessful route restarts defer the NPC task without an endless daily loop");
+        }
+        using (var f = new Fixture(Path.Combine(root, "npc-carry-hazard"), 9))
+        {
+            f.Ready = false;
+            f.H.OnDelay = () => { if (f.Navs >= 2) f.Ready = true; };
+            await f.Run();
+            Check(f.Navs == 3 && f.Lifts == 1 && f.Interactions == 1, "carry approach re-resolves its source after a hazard and lifts only once");
         }
         using (var f = new Fixture(Path.Combine(root, "npc-delayed-ready")))
         {
@@ -80,10 +123,10 @@ static class WeeklyNpcInteractionCases
             Check(f.H.Box.Commands.Where(c => S(c["Kind"]) == "weekly_npc_interact").Select(c => N(c["Items"]![0])).SequenceEqual([300L, 301L, 302L]),
                 "confirmed objects are excluded from subsequent navigation and pickup: " + kind);
         }
-        using (var f = new Fixture(Path.Combine(root, "npc-delayed-ack")) { AckDelay = 4 })
+        using (var f = new Fixture(Path.Combine(root, "npc-delayed-ack")) { AckDelay = 10 })
         {
             await f.Run();
-            Check(f.Interactions == 1, "unconfirmed pickup is not replayed while native acknowledgement is delayed");
+            Check(f.Interactions == 1 && f.Navs == 1, "unconfirmed pickup is neither replayed nor interrupted by stalled-route recovery");
         }
         using (var f = new Fixture(Path.Combine(root, "npc-expired-lease")) { Rejections = 1 })
         {

@@ -1,4 +1,28 @@
 [
+{
+  "Version": "1.2.3",
+  "Date": "2026-10-12",
+  "Notes": {
+    "zh-CN": [
+      "镜中非战斗期显示原因并继续日常，已提交战斗先完成结算。",
+      "修复列车、陷阱等打断周NPC任务寻路后空等，按实际位移判断并有限次恢复。",
+      "拾取或搬运仍在处理时不打断、不重复执行。",
+      "如果自动更新失败，请手动下载完整软件包。"
+    ],
+    "zh-TW": [
+      "鏡中非戰鬥期顯示原因並繼續日常，已提交戰鬥先完成結算。",
+      "修正列車、陷阱等打斷每週NPC任務尋路後空等，按實際位移判斷並有限次恢復。",
+      "拾取或搬運仍在處理時不打斷、不重複執行。",
+      "若自動更新失敗，請手動下載完整軟體套件。"
+    ],
+    "en-US": [
+      "Skips Mirror outside its battle period after settling submitted battles.",
+      "Recovers interrupted weekly NPC navigation using actual position progress and bounded retries.",
+      "Preserves pending pickup and carry interactions without replaying them.",
+      "If automatic updating fails, download the full package manually."
+    ]
+  }
+},
   {
     "Version": "1.2.2",
     "Date": "2026-10-12",
