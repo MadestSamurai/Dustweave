@@ -83,6 +83,7 @@ public static class DailyNavigationDecision
         ["MailUI"] = null,
         ["GachaMainUI"] = null,
         ["WorldMapUI"] = null,
+        ["WayPointUI"] = "_objBackButton",
         ["HuntOrAirwayUI"] = null,
         ["ManagementRewardPopupUI"] = null,
         ["TotalWarUI"] = null,

@@ -1,5 +1,29 @@
 [
 {
+  "Version": "1.2.4",
+  "Date": "2026-10-12",
+  "Notes": {
+    "zh-CN": [
+      "修复已被游戏拒绝的拾取记录反复阻塞周收集；步行收集时重新检查探查状态。",
+      "修复旧游戏进程跨日镜中记录阻塞新任务，保留当前战斗和次数校验。",
+      "中断的偷窃仅影响偷窃环节；补充传送窗口的返回路径。",
+      "诊断包优先保留最新队列、地图进度和任务信息。"
+    ],
+    "zh-TW": [
+      "修正已被遊戲拒絕的拾取紀錄反覆阻塞每週收集；步行收集時重新檢查探查狀態。",
+      "修正舊遊戲程序跨日鏡中紀錄阻塞新任務，保留目前戰鬥及次數驗證。",
+      "中斷的偷竊僅影響偷竊環節；補充傳送視窗的返回路徑。",
+      "診斷包優先保留最新佇列、地圖進度及任務資訊。"
+    ],
+    "en-US": [
+      "Server-rejected pickups no longer block future weekly collection. Walking collection rechecks the research talent.",
+      "Old Mirror records from a previous game process and day no longer block fresh tasks, while active battles and ticket checks remain protected.",
+      "Interrupted theft affects only theft. Adds recovery from the waypoint screen.",
+      "Diagnostic exports prioritize the latest queue, map progress and NPC task evidence."
+    ]
+  }
+},
+{
   "Version": "1.2.3",
   "Date": "2026-10-12",
   "Notes": {

@@ -69,9 +69,10 @@ public sealed partial class DailyManagedBusiness
             }
         }
     }
-    public void RequireResolved(JsonObject context, string role)
+    public void RequireResolved(JsonObject context, string role) => RequireResolved(context, role, null);
+    private void RequireResolved(JsonObject context, string role, JsonObject? scope)
     {
-        if (!DailyManagementProof.IsFreeClaim(role) && HasUnresolvedRecord(context, role))
+        if (!DailyManagementProof.IsFreeClaim(role) && HasUnresolvedRecord(context, role, scope))
             throw new StageHostException("pending", "已有未确认的" + proofs[role].Stage + "操作；先核对原回执，不重复提交。");
     }
     public void Save(JsonObject op)
@@ -86,7 +87,7 @@ public sealed partial class DailyManagedBusiness
     }
     public JsonObject Create(JsonObject context, string role, JsonObject before, JsonObject scope, JsonObject action)
     {
-        if (!DailyTradeJournal.IsTrade(role, scope)) RequireResolved(context, role);
+        if (!DailyTradeJournal.IsTrade(role, scope)) RequireResolved(context, role, scope);
         if (!DailyEvidence.SameActor(before["Frame"]!.AsObject(), FrameActor(context)))
             throw new StageHostException("identity", "业务证据与队列身份不一致。");
         if (!DailyManagementProof.IsFreeClaim(role) && (before["Taps"] is not JsonArray taps || proofs[role].RolesFor(scope).Any(required => !taps.Any(t => t?.GetValue<string>() == required))))
@@ -200,6 +201,14 @@ public sealed partial class DailyManagedBusiness
                 var after = await driver.EvidenceAsync(proofs[role].PrefixesFor(op["scope"]));
                 op["events"] = events.DeepClone();
                 op["last_observation"] = after.DeepClone();
+                if (DailyPickupRecovery.Rejection(op, events) is { } pickupRejection)
+                {
+                    op["state"] = "server_rejected";
+                    op["rejection"] = pickupRejection;
+                    op["confirmed_at"] = driver.UtcTicks;
+                    Save(op);
+                    throw new DailyPickupRejectedException(DailyPickupRecovery.TalentInactive(after));
+                }
                 try
                 {
                     if (role is "missions.clear" or "pass.claim_all" or "event_rewards.1")
@@ -399,6 +408,38 @@ public sealed partial class DailyManagedBusiness
                 continue;
             }
             var events = Events(op);
+            if (DailyPickupRecovery.Rejection(op, events) is { } pickupRejection)
+            {
+                op["state"] = "server_rejected";
+                op["rejection"] = pickupRejection;
+                op["events"] = events.DeepClone();
+                op["confirmed_at"] = driver.UtcTicks;
+                op["reconciliation"] = new JsonObject { ["method"] = "explicit_pickup_rejection", ["actions"] = 0, ["at"] = driver.UtcTicks };
+                Save(op);
+                entry["reason"] = "原拾取已被游戏明确拒绝；保留失败记录，按当前地图重新检查。";
+                completed.Add(entry);
+                continue;
+            }
+            if (role == "mirror.end" && DailyMirror.CanRetireHistorical(op, current))
+            {
+                try
+                {
+                    var fresh = await driver.EvidenceAsync(["mirror"]);
+                    if (DailyMirror.CanRetireHistorical(op, new DailyStageFrame(fresh["Frame"]!.AsObject(), context)))
+                    {
+                        var tickets = DailyMirror.Tickets(fresh);
+                        DailyMirror.Debit(tickets, tickets, 0);
+                        op["state"] = "superseded";
+                        op["reconciliation"] = new JsonObject { ["method"] = "new_cycle_new_process_outside_battle", ["actions"] = 0,
+                            ["at"] = driver.UtcTicks, ["battle_completed"] = false, ["current_tickets"] = tickets.DeepClone() };
+                        Save(op);
+                        entry["reason"] = "旧进程跨日战斗记录保留为诊断；当前不在战斗中，按现有免费次数重新规划。";
+                        completed.Add(entry);
+                        continue;
+                    }
+                }
+                catch (InvalidDataException e) { op["historical_recovery_wait"] = e.Message; }
+            }
             string last = "Original business proof unavailable";
             bool ok = false;
             bool Try(JsonObject candidate)

@@ -39,6 +39,8 @@ public sealed partial class DailyManagedBusiness
             summary[key] = op[key]?.DeepClone();
         // Only dispatch.start uses scope to distinguish a trade operation.
         summary["trade"] = DailyTradeJournal.IsTrade(op);
+        if (op["role"]?.GetValue<string>() == "dispatch.start" && op["scope"] is JsonObject scope)
+            summary["talent_kind"] = scope["kind"]?.DeepClone();
         return summary;
     }
     private void RememberHeader(string path, JsonObject op) => journalHeaders[path] = new(Stamp(path), Summary(op));
@@ -64,7 +66,7 @@ public sealed partial class DailyManagedBusiness
             throw new StageHostException("pending", "业务记录正在更新；稍后重新核对，未重复提交。");
         return op;
     }
-    private bool HasUnresolvedRecord(JsonObject context, string role)
+    private bool HasUnresolvedRecord(JsonObject context, string role, JsonObject? requestedScope = null)
     {
         var seen = new Dictionary<string, string>(StringComparer.Ordinal);
         var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -94,7 +96,14 @@ public sealed partial class DailyManagedBusiness
                 if (Pending(op) && op["trade"]?.GetValue<bool>() != true
                     && JsonNode.DeepEquals(op["account"], context["actor"]![3])
                     && JsonNode.DeepEquals(op["player"], context["actor"]![4])
-                    && JsonNode.DeepEquals(op["server"], context["server"])) return true;
+                    && JsonNode.DeepEquals(op["server"], context["server"]))
+                {
+                    // Stealing uses the same network endpoint as research/absorption.
+                    // An unknown steal still blocks more theft, not unrelated talents.
+                    if (role == "dispatch.start" && DailyData.N(op["talent_kind"]) == 1 && requestedScope?["kind"] is JsonValue kind &&
+                        kind.TryGetValue<int>(out var requested) && requested is 2 or 3 or 4 or 6 or 17 or 20) continue;
+                    return true;
+                }
             }
         }
         foreach (string removed in journalHeaders.Keys.Where(p => !paths.Contains(p)).ToArray()) journalHeaders.Remove(removed);

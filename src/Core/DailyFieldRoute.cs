@@ -187,7 +187,8 @@ public sealed partial class DailyFieldRoute
     }
     public static IEnumerable<DailyBusinessProof> Proofs()
     {
-        yield return new("dispatch.start", "weekly_mainline", ["mainline", "dispatch.talent"], (op, es, a) => VerifyTalent(op, es, a), AffectedStages: ["weekly_mainline", "weekly_npc", "weekly_steal"]);
+        yield return new("dispatch.start", "weekly_mainline", ["mainline", "dispatch.talent"], (op, es, a) => VerifyTalent(op, es, a), AffectedStages: ["weekly_mainline", "weekly_npc", "weekly_steal"],
+            ScopeStages: scope => N(scope["kind"]) == 1 ? ["weekly_steal"] : ["weekly_mainline", "weekly_npc", "weekly_steal"]);
         yield return new("mainline.waypoint_use", "weekly_mainline", ["mainline"], (op, es, a) => Response("mainline.waypoint_use", es, op["before"]!.AsObject(), a)!, AffectedStages: ["weekly_mainline", "weekly_npc", "weekly_steal", "trade"]);
         yield return new("mainline.pickup", "weekly_mainline", ["mainline"], (op, es, a) => VerifyPickup(op, es, a), ["mainline.pickup", "mainline.pickup_list"]);
     }

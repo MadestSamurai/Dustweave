@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-12T04:52:14.0598756Z",
+  "generatedUtc": "2026-10-12T08:24:26.1896099Z",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -240,11 +240,11 @@
     },
     {
       "path": "Directory.Build.props",
-      "sha256": "23776c8ce7b8661574cc9aaf0aad60d91a169fde7bbe4455812aac45a701e8f1",
+      "sha256": "0158184c8a33e08c92e5635940378cd183a53c3745009f3dbcee1f1ce195d812",
       "reasons": [
         "build input"
       ],
-      "bytes": 529
+      "bytes": 530
     },
     {
       "path": "docs/BARGAIN_TRAINING.md",
@@ -992,11 +992,11 @@
     },
     {
       "path": "src/Core/DailyBusinessJournal.cs",
-      "sha256": "a865044367c6b51b32aa18420a7007d70832db9eafeade6c2df28d126d38359d",
+      "sha256": "4c4fba650702d8d19680d54903e7c192384a97aef7aa977a3bb9e79e963b4312",
       "reasons": [
         "build input"
       ],
-      "bytes": 6336
+      "bytes": 7034
     },
     {
       "path": "src/Core/DailyCollectionNavigator.cs",
@@ -1074,8 +1074,8 @@
       "reasons": [
         "build input"
       ],
-      "sha256": "d9b5b4d084ccf46ca0bae55bd132439d554c034205e6ef7168dae16a6ed0f80e",
-      "bytes": 18902,
+      "sha256": "590c0f7a891235532a03cfeeeccc92a3bd53ff0da09de58ed865da24cc8d77c1",
+      "bytes": 19924,
       "path": "src/Core/DailyDiagnosticExport.cs"
     },
     {
@@ -1160,11 +1160,11 @@
     },
     {
       "path": "src/Core/DailyFieldRoute.cs",
-      "sha256": "f186391a3351a1e1a1a06c7016aeb5bf610eb0e85724cabbae62a2dffffbe6e4",
+      "sha256": "871a6e3586972fbf7ade1f1a9f6223b37cf98bc72ad1767dcdac4a27618edd6c",
       "reasons": [
         "build input"
       ],
-      "bytes": 23589
+      "bytes": 23717
     },
     {
       "path": "src/Core/DailyFieldTalents.cs",
@@ -1176,11 +1176,11 @@
     },
     {
       "path": "src/Core/DailyFieldTravel.cs",
-      "sha256": "a3955f99d449bd85738127123e40c56342fdd95c9aa5de5eb92dacabb1c64ca4",
+      "sha256": "20cfe72e558538603b8e76ea661a2f48f0c35e65f760661a1e3993fb5d6416c1",
       "reasons": [
         "build input"
       ],
-      "bytes": 23125
+      "bytes": 23988
     },
     {
       "path": "src/Core/DailyFirstRun.cs",
@@ -1360,11 +1360,11 @@
     },
     {
       "path": "src/Core/DailyManagedBusiness.cs",
-      "sha256": "c4a11707a768e0eb1f7751d4b7edb549d0c89a6f9e29e39e8146873f93a39da2",
+      "sha256": "eb19fe1df1da4a1ad519420d339ebc6dfe94d9211e8f48367fb6cc707def0494",
       "reasons": [
         "build input"
       ],
-      "bytes": 29984
+      "bytes": 32469
     },
     {
       "path": "src/Core/DailyManagedInputs.cs",
@@ -1424,11 +1424,11 @@
     },
     {
       "path": "src/Core/DailyMirror.cs",
-      "sha256": "fd8f624e4c4b3a8c3279d745b94e021841ba1fbe81a366d53300fd38a3787f5a",
+      "sha256": "21ec4b7dacb964a6c06591463c9c086decf25d91bcf811820ea92e8d52386d94",
       "reasons": [
         "build input"
       ],
-      "bytes": 23089
+      "bytes": 24686
     },
     {
       "path": "src/Core/DailyMissions.cs",
@@ -1448,11 +1448,11 @@
     },
     {
       "path": "src/Core/DailyNavigationPolicy.cs",
-      "sha256": "8662f164723ffd9956cf6b5686600b5dd8e79c300e6410d5c9acfd15bb1e5bf9",
+      "sha256": "1dae2d604aa0e08812cd1a70bec807e0a720e82af16032ffd3cdac9fac566732",
       "reasons": [
         "build input"
       ],
-      "bytes": 22767
+      "bytes": 22811
     },
     {
       "path": "src/Core/DailyParallel.cs",
@@ -1490,6 +1490,14 @@
         "build input"
       ],
       "bytes": 3104
+    },
+    {
+      "reasons": [
+        "build input"
+      ],
+      "sha256": "b05863622c0ba8ac90ce219d96aafa429bf2f77af2d9d25e7592db47c0ffb03f",
+      "bytes": 2386,
+      "path": "src/Core/DailyPickupRecovery.cs"
     },
     {
       "path": "src/Core/DailyPlugin.cs",
@@ -2045,11 +2053,11 @@
     },
     {
       "path": "src/Core/DailyWorkflowRegistry.cs",
-      "sha256": "d542519f2a21df6977fef0caeafda8cf2e268be76d8dd632b42cd21e18ec0913",
+      "sha256": "df30f045e145a382f2c5d3322afafea68e7c70405c649702a1680495ffd2c975",
       "reasons": [
         "build input"
       ],
-      "bytes": 9674
+      "bytes": 9684
     },
     {
       "path": "src/Core/Dustweave.Core.csproj",
@@ -2437,11 +2445,11 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "debb79f960e755b8afe968d6dd792afc5d49e4182a8eebc347c47e0fdfbf512d",
+      "sha256": "f2fbe1c68e6a917d9861d5415e75a37a53b522b6c54c6b1baaa5337697347eb2",
       "reasons": [
         "build input"
       ],
-      "bytes": 60591
+      "bytes": 61937
     },
     {
       "path": "src/Desktop/Localization/runtime.json",
@@ -8085,11 +8093,11 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/BusinessScopeCases.cs",
-      "sha256": "0c4f1e006183c0b9a0b8d975adfcc51dcebf75664e445a65bdffee7d546006b9",
+      "sha256": "19e982000df71b065cb889fe0886bb9c335b28dca936445a600d5974095db504",
       "reasons": [
         "build input"
       ],
-      "bytes": 2105
+      "bytes": 3620
     },
     {
       "path": "tests/Dustweave.Tests/Cases/CafeteriaRecoveryCases.cs",
@@ -8148,8 +8156,8 @@
       "reasons": [
         "build input"
       ],
-      "sha256": "2efc022f082ae224353f5f09355dbd06c0efd9fbd9534ad239582fb9ccc1b8ce",
-      "bytes": 15258,
+      "sha256": "46dc464be8a3d004fd8b46347d2f1212dbcd5261722ac05a07e1154d67cfd1fe",
+      "bytes": 16795,
       "path": "tests/Dustweave.Tests/Cases/DiagnosticExportCases.cs"
     },
     {
@@ -8346,11 +8354,11 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/MirrorStageCases.cs",
-      "sha256": "913d14f219615cdc99fa0f4f286584d66f7ba359e7dc4ba1d69e5b4314607475",
+      "sha256": "eff4ceadcab5d5b9de0a5e6406a28d121a9cf1ce010ee273b03d59e78b6a3ada",
       "reasons": [
         "build input"
       ],
-      "bytes": 16581
+      "bytes": 19937
     },
     {
       "path": "tests/Dustweave.Tests/Cases/NativeCancellationCases.cs",
@@ -8399,6 +8407,14 @@
       "sha256": "70a861cd18a047efa40dbb8b1ecf62772a14a84a5ecf19e01c4afa2e8cf1b401",
       "bytes": 11602,
       "path": "tests/Dustweave.Tests/Cases/PassRecoveryCases.cs"
+    },
+    {
+      "reasons": [
+        "build input"
+      ],
+      "sha256": "eaf89be0849f20014497a2df332839bf5652dc41a19dd768243d22efb5fdfc3f",
+      "bytes": 4072,
+      "path": "tests/Dustweave.Tests/Cases/PickupRecoveryCases.cs"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/PluginCases.cs",
@@ -8738,11 +8754,11 @@
     },
     {
       "path": "tests/Dustweave.Tests/Program.cs",
-      "sha256": "c1dde14ea3a7a861eb3f089662fedaf9a38d525c954a60ec95f4e4980c202e61",
+      "sha256": "eebeec569a21466c434a7f2b0072433a07f4d665e711432777d19707830c98ba",
       "reasons": [
         "build input"
       ],
-      "bytes": 11041
+      "bytes": 11116
     },
     {
       "path": "tests/Dustweave.Tests/README.md",

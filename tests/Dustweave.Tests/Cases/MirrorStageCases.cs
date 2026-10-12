@@ -115,6 +115,43 @@ static class MirrorStageCases
             Check(S(result["state"]) == "skipped" && S(result["reason"]) == "outside_mirror_play_period" && s.Batches.Count == 0 && s.Free == 40 && s.F.Time < 5,
                 "Mirror unavailable period skips quickly without spending tickets: " + period);
         }
+        foreach (bool closed in new[] { false, true })
+        using (var s = new Scenario(Path.Combine(root, "mirror-historical-" + closed)))
+        {
+            if (closed) s.Period = "ScheduleOffSeason";
+            var old = s.F.Business.Create(s.F.Context, "mirror.end", s.F.Evidence(), O(("multiplier", 1), ("free_only", true)), O(("ui", "BattleAutoSettingPopupUI")));
+            old["state"] = "unknown"; old["cycle"] = "older-day";
+            old["before"]!["Frame"]!["ProcessId"] = N(s.F.Frame["ProcessId"]) + 10;
+            old["before"]!["Frame"]!["ProcessStartTicks"] = N(s.F.Frame["ProcessStartTicks"]) - 1;
+            old["events"] = new JsonArray(); old["error"] = "stopped in old game process";
+            s.F.Business.Save(old);
+            var stable = new DailyStageFrame(s.F.Frame.DeepClone().AsObject(), s.F.Context.DeepClone().AsObject());
+            Check(DailyMirror.CanRetireHistorical(old, stable), "old Mirror process and cycle can be retired in a verified lobby");
+            foreach (string guard in new[] { "same-cycle", "same-process", "account", "loading", "active", "result", "not-ready", "unknown-popup" })
+            {
+                var candidate = old.DeepClone().AsObject();
+                var frame = stable.Frame.DeepClone().AsObject();
+                switch (guard) {
+                    case "same-cycle": candidate["cycle"] = s.F.Context["cycle"]!.DeepClone(); break;
+                    case "same-process": candidate["before"]!["Frame"]!["ProcessId"] = s.F.Frame["ProcessId"]!.DeepClone(); candidate["before"]!["Frame"]!["ProcessStartTicks"] = s.F.Frame["ProcessStartTicks"]!.DeepClone(); candidate["before"]!["Frame"]!["Instance"] = "old-component"; break;
+                    case "account": frame["AccountKey"] = "other"; break;
+                    case "loading": frame["Scene"] = ""; break;
+                    case "active": frame["Surfaces"]![0]!["Targets"] = new JsonArray(); break;
+                    case "not-ready": frame["Surfaces"]![0]!["InputReady"] = false; break;
+                    case "result": frame["Surfaces"]!.AsArray().Add(O(("Type", "PVPAutoHistoryPopupUI"))); break;
+                    case "unknown-popup": frame["Surfaces"]!.AsArray().Add(O(("Type", "MessagePopupUI"), ("Popup", true), ("Order", 99))); break;
+                }
+                Check(!DailyMirror.CanRetireHistorical(candidate, new(frame, stable.Context)), "historical Mirror recovery refuses " + guard);
+            }
+            var result = await DailyMirror.Run(s.F.Workflow);
+            var retired = s.F.Business.Records(s.F.Context).Single(r => S(r["id"]) == S(old["id"]));
+            Check(S(retired["state"]) == "superseded" && retired["result"] == null && S(retired["error"]) == S(old["error"]) &&
+                retired["reconciliation"]?["battle_completed"]?.GetValue<bool>() == false && JsonNode.DeepEquals(retired["events"], old["events"]),
+                "old Mirror evidence remains historical and never becomes a fabricated win");
+            Check(closed ? S(result["state"]) == "skipped" && s.Batches.Count == 0 && s.Free == 40
+                : s.Free == 0 && s.Paid == 7 && s.Batches.SequenceEqual(new[] {15,10}),
+                "historical Mirror journal permits fresh free-ticket planning or closed-period skip: " + closed);
+        }
         using (var s = new Scenario(Path.Combine(root, "mirror-period-not-loaded")) { PeriodReady = false })
         {
             bool failed = false;

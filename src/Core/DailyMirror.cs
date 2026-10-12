@@ -39,6 +39,21 @@ public static class DailyMirror
              DailyNavigationDecision.Types(current.Frame).Overlaps(["BattleUI_PVP", "PVPMatchingUI", "PVPAutoHistoryPopupUI", "BattleResultUI"])));
     // Old journals represent a single battle and remain readable after upgrading.
     private static int BatchCount(JsonObject op) => op["scope"]?["repetitions"] == null ? 1 : I(op["scope"]!["repetitions"]);
+    internal static bool CanRetireHistorical(JsonObject op, DailyStageFrame current)
+    {
+        if (S(op["role"]) != "mirror.end" || op["before"]?["Frame"] is not JsonObject prior ||
+            op["cycle"] == null || current.Context["cycle"] == null || JsonNode.DeepEquals(op["cycle"], current.Context["cycle"]) ||
+            DailyEvidence.SameActor(prior, current.Frame)) return false;
+        // A component reload alone is not evidence of a terminated battle process.
+        if (prior["ProcessId"] == null || prior["ProcessStartTicks"] == null || current.Frame["ProcessId"] == null || current.Frame["ProcessStartTicks"] == null ||
+            JsonNode.DeepEquals(prior["ProcessId"], current.Frame["ProcessId"]) && JsonNode.DeepEquals(prior["ProcessStartTicks"], current.Frame["ProcessStartTicks"])) return false;
+        if (!new[] { "AccountKey", "PlayerKey" }.All(k => prior[k] != null && JsonNode.DeepEquals(prior[k], current.Frame[k]))) return false;
+        var phase = DailyNavigationDecision.Phase(current.Frame, "mirror");
+        if (phase is not ("page" or "owned_lobby") || DailyNavigationDecision.Types(current.Frame).Overlaps(
+            ["PVPMatchingUI", "BattleResultUI", "PVPAutoHistoryPopupUI", "BattlePauseUI", "BattlePopupUI"])) return false;
+        return DailyNavigationDecision.Rows(current.Frame).Any(r => S(r["Type"]) is "MenuUI" or "GameFieldDefaultUI" or "BattleUI_PVP" &&
+            DailyNavigationDecision.ReadyInput(r, false) && DailyNavigationDecision.Blockers(current.Frame, S(r["Type"]), DailyNavigationPolicy.Load()).Length == 0);
+    }
     private static double BatchTimeout(int repetitions) => Math.Min(1800, 120d * repetitions + 30);
     public static JsonObject Tickets(JsonObject e) => O(("free", R(e, "mirror.currency", "PvpTicket")), ("paid", R(e, "mirror.currency", "PvpTicketStack")));
     public static int Allocation(int multiplier, int free)

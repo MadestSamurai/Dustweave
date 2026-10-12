@@ -21,8 +21,9 @@ public static class DailyDiagnosticExport
     static string Unrotate(string name) => Rotations.FirstOrDefault(s => name.EndsWith(s,StringComparison.OrdinalIgnoreCase)) is { } suffix ? name[..^suffix.Length] : name;
     static bool LogName(string name) => Unrotate(name).EndsWith(".log",StringComparison.OrdinalIgnoreCase) || Unrotate(name).EndsWith(".jsonl",StringComparison.OrdinalIgnoreCase);
     static int Priority(string relative) => Top.Contains(Unrotate(relative)) || Singles.Contains(relative,StringComparer.OrdinalIgnoreCase) || relative.StartsWith("suite/diagnostics/",StringComparison.OrdinalIgnoreCase) ? 0
-        : relative.StartsWith("live/steps/",StringComparison.OrdinalIgnoreCase) ? 3
-        : new[]{"live/business/","live/managed-business/","live/trade-quote-reads/","trade/diagnostics/","live/travel-diagnostics/","live/diagnostics/failures/","live/weekly-npc-recovery/"}.Any(p=>relative.StartsWith(p,StringComparison.OrdinalIgnoreCase)) ? 1 : 2;
+        : relative.StartsWith("live/steps/",StringComparison.OrdinalIgnoreCase) ? 4
+        : new[]{"live/queues/","live/queue-bootstrap/","live/server-collection/","live/weekly-npc-queries/","live/travel-diagnostics/","live/diagnostics/failures/","live/weekly-npc-recovery/"}.Any(p=>relative.StartsWith(p,StringComparison.OrdinalIgnoreCase)) ? 1
+        : new[]{"live/business/","live/managed-business/","live/trade-quote-reads/","trade/diagnostics/"}.Any(p=>relative.StartsWith(p,StringComparison.OrdinalIgnoreCase)) ? 2 : 3;
     static readonly Regex SecretKey = new("password|passwd|credential|authorization|cookie|refresh.?token|access.?token|id.?token|session.?token|auth.?token|private.?key|api.?key|secret|dpapi|modulepayload|sessionblob|^token$|^auth$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     static readonly Regex SecretText = new("(?i)(\\b(?:password|passwd|authorization|cookie|token|credential|api[_-]?key|access[_-]?token|refresh[_-]?token|id[_-]?token|session[_-]?token|auth[_-]?token|secret|private[_-]?key)[\"']?\\s*[=:]\\s*)(?:Bearer\\s+)?(?:\"[^\"]*\"|'[^']*'|[^\\s,;]+)", RegexOptions.CultureInvariant);
     static readonly Regex Bearer = new(@"(?i)\bBearer\s+[A-Za-z0-9_.+/=-]+|\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+", RegexOptions.CultureInvariant);
@@ -130,11 +131,15 @@ public static class DailyDiagnosticExport
         string parent=Path.GetDirectoryName(destination)!;Directory.CreateDirectory(parent);
         string temporary=destination+"."+Guid.NewGuid().ToString("N")+".tmp";
         int count=0;long total=0;var inventory=new List<object>();var included=new HashSet<string>(StringComparer.OrdinalIgnoreCase);string lastOperation="";
+        // At least the newest queue result per source precedes bulky historical
+        // failure/business frames; otherwise even priority sorting can starve it.
+        var newestQueues=files.Where(f=>Path.GetRelativePath(f.Root,f.File.FullName).Replace('\\','/').StartsWith("live/queues/",StringComparison.OrdinalIgnoreCase)&&f.File.Name.Equals("result.json",StringComparison.OrdinalIgnoreCase))
+            .GroupBy(f=>f.Prefix).Select(g=>g.OrderByDescending(f=>f.File.LastWriteTimeUtc).First().File.FullName).ToHashSet(StringComparer.OrdinalIgnoreCase);
         try {
             using(var output=new FileStream(temporary,FileMode.CreateNew,FileAccess.Write,FileShare.None)) {
                 using(var zip=new ZipArchive(output,ZipArchiveMode.Create,true)) {
                     void Add(string name,string data) {var entry=zip.CreateEntry(name,CompressionLevel.Optimal);using var writer=new StreamWriter(entry.Open(),new UTF8Encoding(false));writer.Write(data);}
-                    foreach(var source in files.DistinctBy(f=>f.File.FullName,StringComparer.OrdinalIgnoreCase).OrderBy(f=>Priority(Path.GetRelativePath(f.Root,f.File.FullName).Replace('\\','/'))).ThenByDescending(f=>f.File.LastWriteTimeUtc)) {
+                    foreach(var source in files.DistinctBy(f=>f.File.FullName,StringComparer.OrdinalIgnoreCase).OrderBy(f=>newestQueues.Contains(f.File.FullName)?-1:Priority(Path.GetRelativePath(f.Root,f.File.FullName).Replace('\\','/'))).ThenByDescending(f=>f.File.LastWriteTimeUtc)) {
                         root=source.Root;var file=source.File;
                         token.ThrowIfCancellationRequested();string rel=source.Prefix+"/"+Path.GetRelativePath(root,file.FullName).Replace('\\','/');
                         if(file.LastWriteTimeUtc<DateTime.UtcNow.AddDays(-7)){skipped.Add(new{path=rel,reason="older-than-7-days"});continue;}
@@ -171,7 +176,8 @@ public static class DailyDiagnosticExport
                     bool HasTree(string label,string tree)=>included.Any(p=>p.StartsWith(label+"/"+tree+"/",StringComparison.OrdinalIgnoreCase));
                     var coverage=sources.Keys.Select(label=>new{source=label,operationError=included.Contains(label+"/ui-operation-error.json"),startup=included.Contains(label+"/startup-state.json"),connection=included.Contains(label+"/connection.json"),ownerTransition=included.Contains(label+"/suite/last-transition.json"),ownerHistory=HasTree(label,"suite/diagnostics"),queueBootstrap=HasTree(label,"live/queue-bootstrap"),
                         businessJournal=HasTree(label,"live/business")||HasTree(label,"live/managed-business"),tradeCapture=HasTree(label,"trade/capture"),tradeDiagnostics=HasTree(label,"trade/diagnostics"),tradeExecution=HasTree(label,"trade/executions"),tradeQuote=HasTree(label,"live/trade-quote-reads"),
-                        travelDiagnostics=HasTree(label,"live/travel-diagnostics"),routeAtlas=HasTree(label,"live/route-atlas"),serverCollection=HasTree(label,"live/server-collection")});
+                        queueResults=included.Any(p=>p.StartsWith(label+"/live/queues/",StringComparison.OrdinalIgnoreCase)&&p.EndsWith("/result.json",StringComparison.OrdinalIgnoreCase)),
+                        npcQueries=HasTree(label,"live/weekly-npc-queries"),travelDiagnostics=HasTree(label,"live/travel-diagnostics"),routeAtlas=HasTree(label,"live/route-atlas"),serverCollection=HasTree(label,"live/server-collection")});
                     Add("manifest.json",JsonSerializer.Serialize(new{schema=2,version,atUtc=DateTimeOffset.UtcNow,files=count,bytes=total,days=7,sources=sources.Keys,coverage,inventory,skipped,automaticallyUploaded=false},DailyJson.Options));
                 }
                 output.Flush(true);

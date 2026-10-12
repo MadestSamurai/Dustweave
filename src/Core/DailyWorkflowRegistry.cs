@@ -57,7 +57,7 @@ public sealed class DailyWorkflowRegistry
             Verify = (op, events, after) => S(op["scope"]?["_proof"]?["kind"]) == "bargain" ? DailyTradeProof.Verify(op, events, after) : DailyFieldRoute.VerifyTalent(op, events, after),
             ScopePrefixes = scope => S(scope["_proof"]?["kind"]) == "bargain" ? ["trade", "dispatch"] : old.Prefixes,
             ScopeRoles = scope => S(scope["_proof"]?["kind"]) == "bargain" ? ["dispatch.start"] : old.EventRoles,
-            ScopeStages = scope => S(scope["_proof"]?["kind"]) == "bargain" ? ["trade"] : old.Stages
+            ScopeStages = scope => S(scope["_proof"]?["kind"]) == "bargain" ? ["trade"] : old.StagesFor(scope)
         };
         for (int i = 0; i < result.Count; i++)
         {

@@ -24,5 +24,19 @@ static class BusinessScopeCases
         try { await other.Business.ReconcileAsync(other.Context); }
         catch (InvalidDataException) { rejected = true; }
         Check(rejected && other.Box.Commands.Count == 0, "scope-dependent proof rejects a scalar explicitly without inventing defaults");
+        var talentProof = DailyWorkflowRegistry.Proofs().Single(p => p.Role == "dispatch.start");
+        using var talents = new WorkflowHarness(Path.Combine(output, "scope-stolen-talent"), [talentProof]);
+        var steal = talents.Business.Create(talents.Context, "dispatch.start", talents.Evidence(), O(("kind", 1), ("npc", 4), ("group", 114)), O(("ui", "StealInfoPopupUI")));
+        steal["state"] = "unknown"; talents.Business.Save(steal);
+        var recovery = await talents.Business.ReconcileAsync(talents.Context);
+        Check(JsonNode.DeepEquals(recovery["unresolved"]![0]!["stages"], new JsonArray("weekly_steal")),
+            "an interrupted theft blocks only theft in the composed production registry");
+        var research = talents.Business.Create(talents.Context, "dispatch.start", talents.Evidence(), O(("kind", 6)), O(("ui", "QuickMenuUI")));
+        research["state"] = "rejected"; talents.Business.Save(research);
+        bool theftBlocked = false;
+        try { talents.Business.Create(talents.Context, "dispatch.start", talents.Evidence(), O(("kind", 1), ("npc", 5)), O(("ui", "StealInfoPopupUI"))); }
+        catch (StageHostException e) { theftBlocked = e.Kind == "pending"; }
+        Check(theftBlocked && talents.Box.Commands.Count == 0 && S(talents.Business.Records(talents.Context).Single(r => S(r["id"]) == S(steal["id"]))["state"]) == "unknown",
+            "uncertain theft is preserved without stopping independent research or being replayed on another NPC");
     }
 }

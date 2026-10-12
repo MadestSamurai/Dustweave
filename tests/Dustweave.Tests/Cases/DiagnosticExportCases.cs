@@ -111,5 +111,17 @@ internal static class DiagnosticExportCases
             Check(new[]{"businessJournal","tradeCapture","tradeDiagnostics","tradeExecution","tradeQuote"}.All(k=>coverage.GetProperty(k).GetBoolean()),"export manifest reports business and trade evidence coverage");
         }
         Check(!DailyDiagnosticExport.Allowed("trade/plans/account/settings.json")&&!DailyDiagnosticExport.Allowed("trade/catalogs/rules.json")&&!DailyDiagnosticExport.Allowed("trade/executions/account/planning-catalog.json"),"trade diagnostics exclude settings and bulky rule catalogs");
+        string bytePressure=Path.Combine(output,"diagnostic-byte-pressure");
+        string business=Path.Combine(bytePressure,"live","managed-business");Directory.CreateDirectory(business);
+        string body="{\"state\":\"completed\",\"evidence\":\""+new string('a',7*1024*1024)+"\"}";
+        for(int i=0;i<10;i++)File.WriteAllText(Path.Combine(business,i+".json"),body);
+        string[] essentials=["live/queues/latest/result.json","live/server-collection/account/week/1.json","live/weekly-npc-queries/latest.json"];
+        foreach(string rel in essentials){string path=Path.Combine(bytePressure,rel);Directory.CreateDirectory(Path.GetDirectoryName(path)!);File.WriteAllText(path,"{\"state\":\"pending\"}");File.SetLastWriteTimeUtc(path,DateTime.UtcNow.AddDays(-1));}
+        var capped=await DailyDiagnosticExport.CreateAsync(bytePressure,Path.Combine(output,"byte-pressure.zip"),"","fixture");
+        using(var archive=ZipFile.OpenRead(capped.Path)) {
+            Check(capped.Skipped>0&&capped.Bytes<=64*1024*1024&&essentials.All(p=>archive.GetEntry("logs/main/"+p)!=null),"latest queue, server collection and NPC state survive 70 MiB of newer historical business evidence");
+            using var manifest=JsonDocument.Parse(archive.GetEntry("manifest.json")!.Open());var coverage=manifest.RootElement.GetProperty("coverage")[0];
+            Check(coverage.GetProperty("queueResults").GetBoolean()&&coverage.GetProperty("npcQueries").GetBoolean(),"manifest distinguishes queue/NPC coverage from journal coverage");
+        }
     }
 }

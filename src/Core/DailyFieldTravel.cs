@@ -381,17 +381,34 @@ public sealed partial class DailyFieldRoute
     public async Task<JsonArray> WalkDrops()
     {
         var result = new JsonArray();
+        int rejected = 0;
         for (int i = 0; i < 100; i++)
         {
             await FieldReady();
+            // Research can expire while visiting the preceding drops on a large map.
+            await Skill(6);
             var e = await Evidence();
             var drops = Drops(e);
             if (drops.Length == 0)
                 return result;
             var origin = FieldRows(e, "map").Single();
             var target = drops.OrderBy(r => new[] { "x", "y", "z" }.Sum(axis => Math.Pow(DailyRegionRouter.D(r["transform.position." + axis]) - DailyRegionRouter.D(origin["ὪὨὯὢὫὮὨὩὮὡὬ.transform.position." + axis]), 2))).First();
-            var op = await W.Transact("mainline.pickup", O(("map", Map(e)["id"]), ("object", target[ObjectPath])), O(("ui", "GameFieldDefaultUI"), ("operation", "mainline_walk"), ("value", target["instance"])), 65);
-            result.Add(O(("state", "completed"), ("id", op["id"]), ("result", op["result"])));
+            try
+            {
+                var op = await W.Transact("mainline.pickup", O(("map", Map(e)["id"]), ("object", target[ObjectPath])), O(("ui", "GameFieldDefaultUI"), ("operation", "mainline_walk"), ("value", target["instance"])), 65);
+                result.Add(O(("state", "completed"), ("id", op["id"]), ("result", op["result"])));
+            }
+            catch (DailyPickupRejectedException error)
+            {
+                // Only the known acknowledgement is closed. Unknown rejection never
+                // replays input or declares the invisible target collected.
+                if (!error.TalentInactive || ++rejected > 2)
+                    throw new DailyTravelBlocked("游戏拒绝了本图拾取，已保留回执；本次跳过，后续可按服务器进度补收。");
+                await FieldReady(settle: 0);
+                await Skill(6);
+                // Re-observe and select a fresh target; the rejected instance may be gone.
+                continue;
+            }
             await W.Delay(300);
         }
         throw new DailyTravelBlocked("步行拾取超过本图目标预算");

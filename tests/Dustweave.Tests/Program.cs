@@ -101,6 +101,7 @@ await Group("StageProtocol", () => StageProtocolCases.Run(root, cases));
 await Group("CommandDriver", () => CommandDriverCases.Run(root, cases));
 await Group("EvidenceReadiness", () => EvidenceReadinessCases.Run(root, cases));
 await Group("FieldTalent", () => FieldTalentCases.Run(root, cases));
+await Group("PickupRecovery", () => PickupRecoveryCases.Run(root, cases));
 await Group("WeeklyNpcQuery", () => WeeklyNpcQueryCases.Run(root, cases));
 await Group("WeeklyNpcInteraction", () => WeeklyNpcInteractionCases.Run(root, cases));
 await Group("WeeklyNpcBoard", () => WeeklyNpcBoardCases.Run(root, cases));
