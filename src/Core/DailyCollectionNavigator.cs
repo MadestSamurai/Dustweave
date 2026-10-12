@@ -156,6 +156,7 @@ public sealed partial class DailyFieldRoute
     }
     public async Task<JsonObject> Gather(bool manual = false)
     {
+        JsonArray? walking = null;
         await FieldReady();
         var before = await Evidence();
         long map = N(Map(before)["id"]), pack = N(Map(before)["packId"]);
@@ -181,7 +182,7 @@ public sealed partial class DailyFieldRoute
             if (Drops(e).Length > 0)
             {
                 if (manual)
-                    await WalkDrops();
+                    walking = await WalkDrops();
                 else
                 {
                     Quota(e);
@@ -197,7 +198,8 @@ public sealed partial class DailyFieldRoute
         {
             if (!manual)
                 Quota(after);
-            throw new DailyCollectionTargetsRemain("服务器仍有待处理目标：" + map);
+            var deferred = Rows(walking ?? new JsonArray()).Where(r => S(r["state"]) == "deferred").ToArray();
+            throw new DailyCollectionTargetsRemain("服务器仍有待处理目标：" + map, deferred.Length == 0 ? null : Array(deferred));
         }
         return DailyWorkflow.Completed(result);
     }

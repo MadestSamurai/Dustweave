@@ -45,12 +45,11 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
             && JsonNode.DeepEquals(a[3], b[3]) && JsonNode.DeepEquals(a[4], b[4])
             && JsonNode.DeepEquals(before["server"], now["server"]) && JsonNode.DeepEquals(before["cycle"], now["cycle"]);
     }
-    // A clean stop can reconnect to the same live game after the observer reloads.
-    // Never reinterpret a changed game/account/cycle or an unsettled transaction.
+    // Renew only the observer of the same live game/account/cycle. Unsettled items
+    // stay unsettled until the normal business reconciliation below proves otherwise.
     internal static bool CanReconnectPausedQueue(JsonObject record, JsonObject current)
     {
-        if (Text(record["state"]) != "paused" || record["items"] is not JsonArray items ||
-            items.Any(i => Text(i?["state"]) is "running" or "recovery_required") ||
+        if (Text(record["state"]) is not ("paused" or "partial") || record["items"] is not JsonArray ||
             record["context"] is not JsonObject prior || prior["actor"] is not JsonArray a ||
             current["actor"] is not JsonArray b || a.Count != 5 || b.Count != 5)
             return false;
@@ -193,14 +192,30 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
             var unresolved = record["reconciliation"]?["unresolved"]?.AsArray() ?? [];
             foreach (var item in itemsToRun)
             {
-                bool blocked = unresolved.Any(row => row?["recover_in_stage"]?.GetValue<bool>() != true && (row?["stages"] is not JsonArray stages || stages.Any(s => Text(s) == "*" || Text(s) == Text(item["task"]))));
-                if (Text(item["state"]) == "recovery_required" && blocked && Text(item["task"]) != priority)
+                if (item["carried_forward"]?.GetValue<bool>() == true || Text(item["state"]) is not ("pending" or "running" or "recovery_required")) continue;
+                if (!DailyStageCatalog.Enabled(Text(item["task"]), settings))
+                {
+                    // Let the normal disabled-stage path skip it without touching the
+                    // journal; disabling a task must never recover or replay its work.
+                    item["state"] = "pending";
+                    continue;
+                }
+                var blockers = unresolved.Where(row => row?["recover_in_stage"]?.GetValue<bool>() != true && (row?["stages"] is not JsonArray stages || stages.Any(s => Text(s) == "*" || Text(s) == Text(item["task"])))).ToArray();
+                bool blocked = blockers.Length > 0;
+                // A new selection must obey the same preflight as Resume. Otherwise
+                // it navigates and uses talents before Create notices the old journal.
+                if (blocked && Text(item["task"]) != priority)
+                {
+                    item["state"] = "recovery_required";
                     item["error"] = "上次操作结果仍未确认，未重复执行；请查看核对记录。";
+                    item["recovery_blockers"] = new JsonArray(blockers.Select(row => row!.DeepClone()).ToArray());
+                }
                 if (Text(item["state"]) == "recovery_required" && (!blocked || Text(item["task"]) == priority))
                 {
                     item["state"] = "pending";
                     item["recovered"] = true;
                     item.Remove("error");
+                    item.Remove("recovery_blockers");
                 }
             }
             Save();

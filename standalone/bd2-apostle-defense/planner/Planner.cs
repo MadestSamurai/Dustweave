@@ -99,7 +99,8 @@ public sealed partial class Planner
   return !boss&&unitDps<=armyDps*.01;
  }
  private static Decision Act(string kind,string reason)=>new(){Kind=kind,Reason=reason};
- public Decision Decide(Snapshot s,Settings settings,long? now=null,Func<int,bool>? canMove=null)
+ public Decision Decide(Snapshot s,Settings settings,long? now=null,Func<int,bool>? canMove=null)=>Decide(s,settings,now,canMove,false);
+ internal Decision Decide(Snapshot s,Settings settings,long? now,Func<int,bool>? canMove,bool awaitingRefill)
  {
   ObserveOpening(s);
   if(s.RestartPending&&!s.Exiting&&s.Blocker==""&&s.Stage is "playing" or "result" or "confirm-exit")
@@ -131,13 +132,21 @@ public sealed partial class Planner
   bool clearStrategy=ClearStrategy(s,settings);
   var core=clearStrategy?Core(s,defs,boards):null;
   var coreElements=clearStrategy?CoreElements(s,defs,core):new HashSet<int>();
-  if(clearStrategy)
+  // Reserving gold blocks spending, not free tactics. A funded opening action
+  // still takes priority; waits fall through to placement/pursuit, then return
+  // before any unrelated sale, upgrade or recruitment can spend the reserve.
+  Decision? reservedWait=awaitingRefill?Act("wait","出售已确认，等待金币和召唤按钮就绪后补位"):null;
+  if(clearStrategy&&!awaitingRefill)
   {
    var openingRoll=OpeningRoll(s,settings,defs,boards,core);
-   if(openingRoll!=null)return openingRoll;
+   if(openingRoll!=null)
+   {
+    if(openingRoll.Kind!="wait")return openingRoll;
+    reservedWait=openingRoll;
+   }
    if(core!=null)Focus="核心成型：集中培养暗、水及高阶补位";
   }
-  var plannedInvestment=clearStrategy&&core!=null?CoreInvestment(s,defs,boards,coreElements):null;
+  var plannedInvestment=reservedWait==null&&clearStrategy&&core!=null?CoreInvestment(s,defs,boards,coreElements):null;
   // Boss pursuit can offer another small move every tick. An affordable planned
   // upgrade must not be starved by that continuous stream of repositioning.
   if((cur.Boss||(s.Catalog.GameOverCount>0&&s.EnemyCount>=s.Catalog.GameOverCount*.6))&&plannedInvestment is {Kind:"upgrade"})return plannedInvestment;
@@ -179,6 +188,7 @@ public sealed partial class Planner
   }
   if(bestMove!=null)return bestMove;
   }
+  if(reservedWait!=null)return reservedWait;
   if(clearStrategy&&core!=null)
   {
    if(plannedInvestment is {Kind:"upgrade"})return plannedInvestment;

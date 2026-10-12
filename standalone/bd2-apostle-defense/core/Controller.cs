@@ -104,6 +104,9 @@ public sealed class Controller
   {
    if(s.Units.Length>=s.Boards.Length){refillPending=false;return planner.Decide(s,settings,now,index=>recovery.CanMove(index,now));}
    if(s.CanSummon&&s.Gold>=s.Catalog.SummonCost)return new(){Kind="summon",Reason="出售已确认，优先补抽填回空位"};
+   // Keep the replacement obligation while allowing free moves during the
+   // native summon cooldown / income wait. The planner retains all board guards.
+   return planner.Decide(s,settings,now,index=>recovery.CanMove(index,now),awaitingRefill:true);
   }
   return new(){Reason=s.Blocker.Length>0?"等待关闭弹窗："+s.Blocker:"出售已确认，等待金币和召唤按钮就绪后补位"};
  }

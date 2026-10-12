@@ -185,7 +185,13 @@ public sealed partial class DailyManagedBusiness
                 var sent = await driver.SendObservedAsync(action, op["preview_frame"] as JsonObject);
                 op["command_id"] = sent["id"]!.DeepClone();
             }
-            catch (DailyStepException e) when (e.Kind == "rejected") { op["state"] = "rejected"; throw; }
+            catch (DailyStepException e) when (e.Kind == "rejected")
+            {
+                op["state"] = "rejected";
+                if (e.DefinitelyNotDispatched) op["confirmation_not_submitted"] = true;
+                if (e.Command != null) op["command_id"] = e.Command["Id"]!.DeepClone();
+                throw;
+            }
             catch (DailyStepException e) { op["ui_error"] = e.Message; if (e.Command != null) op["command_id"] = e.Command["Id"]!.DeepClone(); }
             Save(op);
             if (drive != null)
@@ -408,6 +414,19 @@ public sealed partial class DailyManagedBusiness
                 continue;
             }
             var events = Events(op);
+            string walkId = op["command_id"]?.GetValue<string>() ?? "";
+            var walkReceipt = role == "mainline.pickup" && Guid.TryParseExact(walkId, "N", out _)
+                ? DailyJson.TryRead<JsonObject>(Path.Combine(root, "live", "steps", walkId, "result.json"))?["receipt"] as JsonObject : null;
+            if (DailyPickupRecovery.CanRetireUnstartedWalk(op, events, walkReceipt, current))
+            {
+                op["state"] = "superseded";
+                op["reconciliation"] = new JsonObject { ["method"] = "original_walk_path_rejected_before_movement", ["actions"] = 0,
+                    ["target_collected"] = false, ["recheck_current_targets"] = true, ["at"] = driver.UtcTicks };
+                op.Remove("error"); op.Remove("recovery_error"); Save(op);
+                entry["reason"] = "原移动在路径检查阶段已拒绝；保留未收集目标，按当前可达范围继续。";
+                completed.Add(entry);
+                continue;
+            }
             if (DailyPickupRecovery.Rejection(op, events) is { } pickupRejection)
             {
                 op["state"] = "server_rejected";
@@ -474,6 +493,21 @@ public sealed partial class DailyManagedBusiness
             }
             if (ok)
                 completed.Add(entry);
+            else if (DailyPickupRecovery.CanRetireWalk(op, events, current))
+            {
+                // Walking is not a resource purchase. Incidental pickups can produce
+                // fully settled replies before reaching the selected target. Retire
+                // the interrupted navigation; never mark that target collected.
+                op["state"] = "superseded";
+                op["events"] = events.DeepClone();
+                op["reconciliation"] = new JsonObject { ["method"] = "settled_walk_reselect_native_targets", ["actions"] = 0,
+                    ["at"] = driver.UtcTicks, ["target_collected"] = false, ["recheck_current_targets"] = true };
+                op.Remove("error");
+                op.Remove("recovery_error");
+                Save(op);
+                entry["reason"] = "原步行拾取回执已结束；按游戏当前未收集目标继续，不将原目标记为完成。";
+                completed.Add(entry);
+            }
             else
             {
                 op["events"] = events.DeepClone();

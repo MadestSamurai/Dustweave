@@ -101,6 +101,8 @@ The Navigation scope rechecks navigation, command dispatch, managed inputs and p
 `package.ps1 -ValidationScope Rewards` extends the navigation scope for pass/workflow and observation-schema changes. It runs affected workflow, binding, data, readiness and localization cases, recompiles the daily bridge and regenerates all daily evidence configurations. Independent tools reuse the unchanged full baseline. Unknown changes outside the declared boundary still require broader validation.
 The Rewards scope also covers event puzzle batches, hunting policy and per-account preferences. It rechecks preference migration and the desktop settings smoke in addition to workflow/command regressions; a changed binding contract is regenerated from the matching baseline client, then adapted and compiled against the current client. Independent tool payloads remain unchanged.
 
+`Weekly` also covers managed pickup reconciliation and queue recovery. Changes to these shared host boundaries run queue, business journal, mirror, free draw, dispatch, management, trade-resume and weekly-route regressions. Client bindings, runtime, transport and independent tool sources must remain identical to the full baseline; they are not exempted by this scope.
+
 ## Desktop startup / 桌面启动
 
 普通双击、账号检查、选中队列及计划启动直接进入当前进程的界面入口，不依赖 Explorer COM 再启动一次自身。保留显式开发入口 --launch-desktop 和既有 --desktop-session 参数；游戏启动仍由 Accounts/DesktopGameLaunch 校验 Windows 用户、会话与沙箱归属，连接组件按需要单独提权。
@@ -204,3 +206,17 @@ Mirror reads the native schedule manager's content 1 state, matching the game's 
 Native environmental knockback temporarily uses DontMove, then stops and resumes a cached touch-move destination; a task navigation latch can remain active independently of actual movement. Weekly NPC navigation now records position and movement readiness. UI-token changes do not count as progress. After six stationary, controllable seconds, at most three explicit native cancel/start sequences re-resolve the same quest or carry source. Input locks, pending pickup/delivery acknowledgements and native object interactions prevent recovery from interrupting an action. Persistent failure defers that NPC task through the existing cartridge isolation path.
 
 Validation is synthetic plus compilation against the installed client, separate from an actual train/trap or off-season game run. Private decompilation evidence is retained outside this repository.
+
+## Walking collection: pickup areas and local deferrals
+
+Native walk path checks run before the dispatch marker. A definitely unsubmitted target/path rejection is a local navigation failure, not an uncertain reward. Walking collection defers that object for the current map visit, processes other objects, and continues subsequent maps. Deferred targets retain their map, region, positions and rejection reason. They never count as collected; server collection state remains authoritative. Missing player/navigation state and unknown submitted pickup results are not silently converted into target deferrals.
+
+Upgrade recovery can retire a v115 walk rejected before movement only with the durable matching original command receipt, audited failure code, matching account/server identities and no pickup events. An empty event list alone is insufficient. The original receipt and observations remain unchanged.
+
+A native reward collider defines an acceptance area rather than a mandatory object-coordinate destination. Selected-reward approach checks bounded ground candidates using the game's own collision-area predicate, including its height-ignore and angle rules, then requires a complete native path. This does not flatten terrain navigation or permit traversal through walls, water or other floors. Geometry checks and current-client compilation are distinct from real-map validation.
+
+### Next route layer: region goals (design, not yet enabled)
+
+The existing atlas learns directed gate-to-region links, but collection planning and `GoTo` still consider a map ID sufficient for arrival. A disconnected second region of the same map therefore needs a different goal representation. Model a goal as `(pack, map, object, acceptable regions)`; model travel nodes as `(map, connected region)` and edges as a specific native gate with its observed landing region. The valid route can be A1 -> B -> A2. Visiting A1 must neither fulfill nor blacklist the goal in A2.
+
+Use weighted shortest paths over the small directed region graph, with native local paths inside each region. Compare gate walking and loading costs with usable waypoint costs. An unknown landing is an exploration frontier, never assumed to be every region in its destination map. Exploration must have a per-run door/time budget and must not repeat an already observed no-progress region/door pair. Returning to a genuinely new region rechecks temporarily deferred targets. Stable topology may be cached by game/map geometry version, but availability, scene instances, account unlocks and pickup completion must be refreshed from the game. Remaining validation needs native entry/exit identities and landing observations from disconnected-map examples; a local path failure alone does not prove that a pickup is globally unreachable.

@@ -220,6 +220,18 @@ namespace BD2Daily.Live {
      catch(Exception){reason="mirror_period_unavailable";}
      if(reason.Length>0){r.State="rejected";r.Error=reason;r.MayHaveDispatched=false;Save(r);return;}
     }
+    // A path rejection is a completed preflight, not an uncertain pickup. No
+    // movement or reward API has run yet; keep the receipt explicitly unsent.
+    UnityEngine.Vector3 walkDestination=UnityEngine.Vector3.zero;float walkLength=0;
+    if(c.Kind=="mainline_walk"){
+     try{
+      var walkTarget=Find(typeof(FieldObjectBase)).Cast<FieldObjectBase>().SingleOrDefault(x=>x.GetInstanceID()==c.Value);
+      string pathReason="target_missing";
+      if(walkTarget==null||!CollectionProgressNative.TryApproach(walkTarget,out walkDestination,out walkLength,out pathReason)){
+       r.State="rejected";r.Error="travel_unreachable:"+pathReason;r.MayHaveDispatched=false;Save(r);return;
+      }
+     }catch(Exception ex){r.State="rejected";r.Error="travel_preflight_unavailable:"+ex.GetType().Name;r.MayHaveDispatched=false;Save(r);return;}
+    }
     r.MayHaveDispatched=true;r.State="dispatching";Save(r);
     try{
      if(c.Kind=="detach"){Unload();r.State="detached";Save(r);return;}
@@ -357,8 +369,7 @@ namespace BD2Daily.Live {
       mainlineStealthNav=LiveProtocol.TransitRequiresStealth(field.ὮὬὬὮὠὮὪὠὧὩὪ.PackId,c.RequireStealth);
       if(mainlineStealthNav&&!TalentSkillManager.ὪὫὢὨὯὭὦὪὦὨὣ.IsTalentSkillDurationing(ὪὯὯὢὨὮὨὠὥὤὬ.Stealth))throw new InvalidOperationException("Protected transit requires active stealth");
       var player=field.ὪὨὯὢὫὮὨὩὮὡὬ;var move=player.ὭὦὫὤὮὧὦὡὨὤὢ;
-      UnityEngine.Vector3 destination;float length;string pathReason;
-      if(!CollectionProgressNative.TryApproach(target,out destination,out length,out pathReason))throw new InvalidOperationException("travel_unreachable:"+pathReason);
+      UnityEngine.Vector3 destination=walkDestination;float length=walkLength;
       if(!move.CanNavReach(destination))throw new InvalidOperationException("travel_unreachable:native_check");
       Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ClearQuestNav(true);move.ChangeMoveType(MoveController.ὧὮὧὠὢὢὦὪὭὢὨ.Navigation);player.SetMoveStart();
       if(!move.SetMoveNav(destination,null,true)){field.SetPlayerMoveState(MoveController.ὯὣὠὮὤὡὤὯὢὩὯ.Stop);throw new InvalidOperationException("Native navigation did not start");}

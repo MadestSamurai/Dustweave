@@ -52,7 +52,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     $trading='^(source-manifest\.json|CHANGELOG\.md|package\.ps1|scripts/validation-plan\.ps1)$|^docs/|^src/Core/DailyTrade(Optimizer|Forecast|Plan|DropForecast|Drops|Execution)\.cs$|^tests/Dustweave.Tests/Cases/TradeOptimizerCases\.cs$'
     if($Scope -in @('Auto','Trading') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $trading}).Count){$selectedScope='Trading';$outside=@()}
     # Weekly orchestration does not change the native components or other tools.
-    $weekly='^(Directory\.Build\.props|source-manifest\.json|package\.ps1|scripts/validation-plan\.ps1)$|^docs/|^src/Core/DailyWeeklyRoute\.cs$|^src/Core/Localization/Messages\.zh-CN\.txt$|^src/Desktop/Localization/(releases|notices|runtime)\.json$|^tests/Dustweave.Tests/(Program\.cs|Cases/WeeklyIsolationCases\.cs)$'
+    $weekly='^(Directory\.Build\.props|source-manifest\.json|package\.ps1|scripts/validation-plan\.ps1)$|^docs/|^src/Core/(DailyWeeklyRoute|DailyPickupRecovery|DailyManagedBusiness|DailyQueueEngine)\.cs$|^src/Core/Localization/Messages\.zh-CN\.txt$|^src/Desktop/Localization/(releases|notices|runtime)\.json$|^tests/Dustweave.Tests/(Program\.cs|Cases/(WeeklyIsolation|PickupRecovery|PickupQueueRecovery|QueueEngine)Cases\.cs)$'
     if($Scope -in @('Auto','Weekly') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $weekly}).Count){$selectedScope='Weekly';$outside=@()}
     $full.changed=$changed
     $reason='Changes outside the account validation boundary: '+($outside -join ', ')
@@ -67,7 +67,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
      if($evidenceValid){
       $groups=@('ProductIdentity','Startup','LoginIdentity','Sandbox','Parallel','ParallelProcess','AccountOrder','AccountIdentity','AccountRestart','QueueSession','QueuePeriod')
       if($selectedScope -eq 'Trading'){$groups=@('ProductIdentity','TradeOptimizer','TradeData','TradeReplan','TradeQuote','TradeResume')}
-      if($selectedScope -eq 'Weekly'){$groups=@('ProductIdentity','WeeklyIsolation','WeeklyGoal','CollectionReadiness','FieldTalent','WeeklyNpcBoard','WeeklyNpcQuery','CommandDriver','ManagedInputs','QueueSession','UserText')}
+      if($selectedScope -eq 'Weekly'){$groups=@('ProductIdentity','WeeklyIsolation','WeeklyGoal','CollectionReadiness','FieldTalent','WeeklyNpcBoard','WeeklyNpcQuery','WeeklyNpcInteraction','CommandDriver','ManagedInputs','QueueSession','QueueEngine','QueuePeriod','QueueExecutionThread','PickupRecovery','BusinessJournal','BusinessScope','MirrorStage','FreeDrawStage','DispatchRecovery','ManagementStage','TradeResume','TravelTransition','UserText')}
       if($selectedScope -in @('Navigation','Rewards')){$groups+=@('HomeNavigation','HomeRecovery','TravelTransition','WeeklyGoal','CollectionReadiness','CafeteriaRecovery','CommandDriver','ManagedInputs','PassiveUi','UserText')}
       if($selectedScope -eq 'Rewards'){$groups+=@('LiveBindings','Workflow','Preference','RuleData','EvidenceReadiness','UserText')}
       return [ordered]@{schema=1;scope=$selectedScope;buildSettingsHash=$settings;baseline=$BaselineDirectory;baselineInputsHash=(Get-FileHash -LiteralPath $inputsPath).Hash;groups=$groups;changed=$changed;reason='Mapped host changes; unchanged tool validation reused from a completed full baseline.'}

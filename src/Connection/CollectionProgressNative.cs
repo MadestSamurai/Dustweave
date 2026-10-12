@@ -152,6 +152,15 @@ namespace BD2Daily.Live {
     int mask=(int)typeof(MoveController).GetProperty("ὤὥὮὬὡὣὮὢὪὧὨ",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(player.ὭὦὫὤὮὧὦὡὨὤὢ,null);
    NavMeshHit start,end;
    if(!NavMesh.SamplePosition(player.transform.position,out start,height*2,mask)){reason="player_off_navigation";return false;}
+   // A reward is collected in an area, not at its model pivot. The game's
+   // CircleSectorCollider decides whether height/angle matter for this object.
+   // Prefer reachable ground in that area; never change the collider or reward.
+   var reward=target as FieldRewardObjectController;
+   var circle=reward==null?null:reward.GetComponent<CircleSectorCollider>();
+   if(circle!=null&&circle.isActiveAndEnabled){
+    if(TryRewardApproach(circle,target.ὩὬὧὢὧὬὠὡὦὥὧ,start.position,height,mask,out endpoint,out distance))return true;
+    reason="pickup_area_unreachable";return false;
+   }
    // Same logical point as QuestNavigationManager, not a model pivot.
    if(!NavMesh.SamplePosition(target.ὩὬὧὢὧὬὠὡὦὥὧ,out end,height*2,mask)){reason="target_off_navigation";return false;}
    var path=new NavMeshPath();
@@ -159,6 +168,26 @@ namespace BD2Daily.Live {
    endpoint=end.position;var points=path.corners;
    for(int i=1;i<points.Length;i++)distance+=Vector3.Distance(points[i-1],points[i]);
    return true;
+  }
+  static bool TryRewardApproach(CircleSectorCollider circle,Vector3 logical,Vector3 start,float height,int mask,out Vector3 endpoint,out float distance){
+   endpoint=Vector3.zero;distance=float.PositiveInfinity;
+   float radius=circle.ὬὦὭὦὢὢὩὬὠὡὯ;
+   if(float.IsNaN(radius)||float.IsInfinity(radius)||radius<=0)return false;
+   Vector3 center=circle.transform.position;var candidates=new List<Vector3>{start,new Vector3(center.x,start.y,center.z),center,logical};
+   // At most 68 samples for a selected reward, not an all-map scan each tick.
+   foreach(float y in new[]{start.y,center.y})foreach(float scale in new[]{.5f,.85f})for(int i=0;i<16;i++){
+    float a=i*Mathf.PI/8;candidates.Add(new Vector3(center.x+Mathf.Cos(a)*radius*scale,y,center.z+Mathf.Sin(a)*radius*scale));
+   }
+   var seen=new HashSet<string>();
+   foreach(var candidate in candidates){
+    NavMeshHit hit;if(!NavMesh.SamplePosition(candidate,out hit,height*2,mask)||!circle.IsDetectionInCollisionArea(hit.position))continue;
+    string key=hit.position.x.ToString("R",System.Globalization.CultureInfo.InvariantCulture)+"|"+hit.position.y.ToString("R",System.Globalization.CultureInfo.InvariantCulture)+"|"+hit.position.z.ToString("R",System.Globalization.CultureInfo.InvariantCulture);
+    if(!seen.Add(key))continue;
+    var path=new NavMeshPath();if(!NavMesh.CalculatePath(start,hit.position,mask,path)||path.status!=NavMeshPathStatus.PathComplete)continue;
+    var corners=path.corners;float length=0;for(int i=1;i<corners.Length;i++)length+=Vector3.Distance(corners[i-1],corners[i]);
+    if(length>=distance)continue;endpoint=hit.position;distance=length;if(length<.05f)break;
+   }
+   return !float.IsPositiveInfinity(distance);
   }
   static string approachKey="";static long approachAt;static TravelApproach[] approaches;
   static TravelApproach[] Approaches(Frame frame){

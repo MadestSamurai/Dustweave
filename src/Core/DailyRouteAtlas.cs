@@ -4,7 +4,10 @@ namespace Dustweave;
 
 public sealed class DailyTravelBlocked(string message) : Exception(message);
 public sealed class DailyQuotaExhausted(string message) : Exception(message);
-public sealed class DailyCollectionTargetsRemain(string message) : Exception(message);
+public sealed class DailyCollectionTargetsRemain(string message, JsonArray? deferredPickups = null) : Exception(message)
+{
+    public JsonArray? DeferredPickups { get; } = deferredPickups;
+}
 public sealed class DailyCollectionSyncRequired(string message) : Exception(message);
 
 public sealed class DailyTravelProgress(double now, double timeout = 4)

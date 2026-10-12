@@ -16,13 +16,15 @@ static class WeeklyIsolationCases
         public readonly List<long> Queries = [], Visits = [];
         public Action? BeforeQuery;
         public bool NpcEnabled, RejectNpc, HuntingOffer, QueryFailsFirst;
+        public bool WalkingBlocked;
+        public readonly HashSet<long> Picked = [];
         public readonly List<long> Accepted = [], Cleared = [];
         readonly Dictionary<long, long> npcActive = [];
         string npcQuery = "prior"; long popup; bool navigating;
         JsonObject network = new();
         public Fixture(string root)
         {
-            H = new(root, []);
+            H = new(root, DailyFieldRoute.Proofs().ToArray());
             H.Workflow.Settings.Weekly.Mainline = true;
             H.Readings = Readings;
             Scene();
@@ -59,6 +61,15 @@ static class WeeklyIsolationCases
                         Pack = N(c["Value"]); MapId = Pack == 1 ? 1 : 21; Scene();
                         break;
                     case "mainline_walk":
+                        if (WalkingBlocked && N(c["Value"]) >= 1000)
+                        {
+                            long id = N(c["Value"]) - 1000;
+                            if (id == 101)
+                                H.Box.Values["live:receipts~" + S(c["Id"]) + ".json"] = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(
+                                    O(("Command", c), ("State", "rejected"), ("Error", "travel_unreachable:path_incomplete"), ("MayHaveDispatched", false)));
+                            else { Picked.Add(id); H.Event("mainline.pickup", "request"); H.Event("mainline.pickup", "response", ("RewardInfoBundle", new JsonObject())); }
+                            break;
+                        }
                         MapId = N(c["Value"]); Visits.Add(MapId); Scene();
                         break;
                     case "mainline_menu":
@@ -81,6 +92,7 @@ static class WeeklyIsolationCases
             if (Pending && Pack == 1)
             {
                 if (MapOnePending) targets.Add(O(("Id", 101), ("Map", 1)));
+                if (WalkingBlocked && !Picked.Contains(103)) targets.Add(O(("Id", 103), ("Map", 1)));
                 if (!Visits.Contains(2)) targets.Add(O(("Id", 102), ("Map", 2)));
             }
             return O(("State", "ready"), ("Error", ""), ("Query", command["Id"]), ("Pack", Pack),
@@ -112,6 +124,14 @@ static class WeeklyIsolationCases
                 rows.Add(gate);
             }
             if (NpcEnabled) rows.Add(WorkflowCases.Reading("weekly_npc.native", ("$self", NpcState())));
+            if (WalkingBlocked && Pack == 1 && MapId == 1)
+                foreach (long id in new[] { 101L, 103L })
+                {
+                    var reward = WorkflowCases.Reading("mainline.reward", (ObjectPath, id), (DropAvailablePath, !Picked.Contains(id)),
+                        ("ὯὩὮὩὮὣὯὫὮὡὧ", true), ("ὦὫὧὯὥὫὦὪὣὦὪ", false),
+                        ("transform.position.x", id - 100), ("transform.position.y", 0), ("transform.position.z", 0));
+                    reward["InstanceId"] = id + 1000; rows.Add(reward);
+                }
             return rows.ToArray();
         }
         JsonObject NpcState()
@@ -143,6 +163,20 @@ static class WeeklyIsolationCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool yes, string message) { if (!yes) throw new Exception(message); checks.Add(message); }
+        using (var f = new Fixture(Path.Combine(root, "weekly-walk-one-unreachable")) { WalkingBlocked = true })
+        {
+            f.H.Workflow.Settings.Weekly.WalkCollect = true;
+            var r = await f.Run(); var stage = r["stages"]!["weekly_mainline"]!;
+            Check(f.Picked.SetEquals([103L]) && f.H.Box.Commands.Count(c => S(c["Kind"]) == "mainline_walk" && N(c["Value"]) == 1101) == 1,
+                "unreachable drop is attempted once while reachable drops on the same map still collect");
+            Check(f.Visits.SequenceEqual([2L]) && f.Queries.Last() == 2 && S(stage["state"]) == "partial" && stage["pending_maps"]!.ToJsonString() == "[[1,1]]",
+                "walking local path refusal continues the next map and cartridge without marking the blocked drop complete");
+            Check(stage["deferred_locations"]![0]!["metadata"]!["targets"]![0]!["object"]!.GetValue<long>() == 101 &&
+                f.H.Business.Records(f.H.Context).All(op => S(op["state"]) is "completed" or "rejected"),
+                "weekly result retains the exact deferred target without an unknown transaction");
+            Check(f.H.Box.Commands.Count(c => S(c["Kind"]) == "mainline_pack") == 1,
+                "known unreachable pickup does not force cartridge reload or repeat 65 second waits");
+        }
         using (var f = new Fixture(Path.Combine(root, "weekly-npc-local-failure")) { RejectNpc = true })
         {
             var r = await f.RunNpc(); var npc = r["stages"]!["weekly_npc"]!;

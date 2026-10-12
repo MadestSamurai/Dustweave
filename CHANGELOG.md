@@ -1,5 +1,14 @@
 # Changelog / 更新记录
 
+## 1.2.7 — 2026-10-12
+
+- 周收集按实际可拾取状态和拾取范围寻找落脚点；明确不可达的目标暂缓，继续其他物品和地图。
+- 修复旧步行记录及连接更新阻塞当前计划、接续和补跑的问题，保留未完成目标与原始回执。
+- 塔防等待补抽时继续进行不消耗金币的站位调整与 Boss 追击，保留补位义务和培养预算。
+- Walking collection uses native pickup areas, defers unreachable targets, and reconciles interrupted journals across connection updates.
+- Apostle Defense keeps free positioning and boss pursuit active while reserving gold for recruitment.
+- [完整说明 / Full notes](docs/releases/1.2.7.md)
+
 ## 1.2.4 — 2026-10-12
 
 - 修复明确拒绝的拾取记录、旧进程跨日镜中记录持续阻塞日常的问题。

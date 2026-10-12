@@ -214,7 +214,13 @@ public sealed partial class DailyFieldRoute
     {
         var before = op["before"]!.AsObject();
         long target = N(op["scope"]!["object"]);
-        Require(N(Map(before)["id"]) == N(Map(after)["id"]) && !Drops(after).Any(r => N(r[ObjectPath]) == target) && Used(before, 4) == Used(after, 4), "步行收集地图、目标或吸收计数不一致");
+        Identity(before, after);
+        Require(N(Map(before)["id"]) == N(op["scope"]!["map"]) && N(Map(before)["id"]) == N(Map(after)["id"]), "拾取期间地图发生变化，需重新核对目标。");
+        Require(Used(before, 4) == Used(after, 4), "拾取期间吸收次数发生变化，需重新核对目标。");
+        var original = RewardObjects(before).Where(r => N(r[ObjectPath]) == target).ToArray();
+        Require(original.Length == 1 && DropAvailable(original[0]), "原拾取目标不唯一或已不再可拾取。");
+        var remaining = RewardObjects(after).Where(r => N(r[ObjectPath]) == target).ToArray();
+        Require(remaining.Length <= 1 && (remaining.Length == 0 || !DropAvailable(remaining[0])), "目标尚未确认拾取；途中其他物品的回执不代表目标完成。");
         var replies = new List<JsonObject>();
         foreach (string role in new[] { "mainline.pickup", "mainline.pickup_list" })
         {
@@ -392,5 +398,19 @@ public sealed partial class DailyFieldRoute
         try { DailyJson.Write(Path.Combine(W.Root, "live", "travel-diagnostics", W.Driver.UtcTicks + ".json"), report); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* Preserve the navigation failure if diagnostics cannot be saved. */ }
     }
-    public static JsonObject[] Drops(JsonObject e) => FieldRows(e, "reward").Where(r => B(r["ὦὫὧὯὥὫὦὪὣὦὪ"]) || B(r["ὯὩὮὩὮὣὯὫὮὡὧ"])).ToArray();
+    public const string DropAvailablePath = "ὪὤὦὬὭὪὯὫὦὠὫ";
+    private static JsonObject[] RewardObjects(JsonObject e)
+    {
+        Require(!Rows(e["Readings"]).Any(r => S(r["Id"]) == "mainline.reward" && S(r["Error"]) != ""), "地图物品状态读取失败，不能视为已经收集。");
+        return FieldRows(e, "reward");
+    }
+    internal static bool DropAvailable(JsonObject row)
+    {
+        // Normal/hidden are immutable type flags. The native callback updates this
+        // separate property from the server's obtained-object cache after pickup.
+        Require(row[DropAvailablePath] is JsonValue value && value.TryGetValue<bool>(out _), "拾取状态尚未读取，请重新连接以更新观察组件。");
+        return B(row[DropAvailablePath]);
+    }
+    public static JsonObject[] Drops(JsonObject e) => RewardObjects(e).Where(r =>
+        (B(r["ὦὫὧὯὥὫὦὪὣὦὪ"]) || B(r["ὯὩὮὩὮὣὯὫὮὡὧ"])) && DropAvailable(r)).ToArray();
 }

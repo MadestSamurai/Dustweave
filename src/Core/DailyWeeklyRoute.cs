@@ -217,6 +217,7 @@ public sealed class DailyWeeklyRoute
         }
         for (int attempt = 0; attempt < 2; attempt++)
         {
+            JsonArray? deferredPickups = null;
             await Guard();
             bool oldSteal = route.Progress.Steal, oldOnly = route.Progress.OnlySteal;
             route.Progress.Steal = route.Progress.OnlySteal = stage == "weekly_steal";
@@ -228,11 +229,16 @@ public sealed class DailyWeeklyRoute
                     await route.Gather(w.Settings.Weekly.WalkCollect);
             }
             catch (DailyQuotaExhausted) { throw new DailyWeeklyCategoryStop(stage, "吸收次数已用完，次日接续", O(("waiting_daily_reset", true))); }
-            catch (DailyCollectionTargetsRemain) { }
+            catch (DailyCollectionTargetsRemain error) { deferredPickups = error.DeferredPickups; }
             finally { route.Progress.Steal = oldSteal; route.Progress.OnlySteal = oldOnly; }
             await Refresh();
             if (!MapJobs().GetValueOrDefault(stage, []).Contains(map))
                 break;
+            if (deferredPickups is { Count: > 0 })
+            {
+                Defer(stage, map, "可达物品已处理，部分拾取点当前不可达；继续其他地图", O(("targets", deferredPickups), ("remaining", checkpoint!["maps"]![map.ToString()])));
+                break;
+            }
             if (attempt > 0 || !reentered.Add((pack, map)))
             {
                 Defer(stage, map, "重进后仍有待办，保留服务器进度", O(("remaining", checkpoint!["maps"]![map.ToString()]), ("reentry_attempted", true)));

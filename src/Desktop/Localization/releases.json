@@ -1,5 +1,71 @@
 [
 {
+  "Version": "1.2.7",
+  "Date": "2026-10-12",
+  "Notes": {
+    "zh-CN": [
+      "周收集按实际可拾取状态和范围寻找落脚点；明确不可达的物品暂缓，继续其他物品及地图。",
+      "修复路径失败后的无效等待、旧步行记录阻塞和连接更新后的队列接续；未收集目标继续保留。",
+      "塔防等待金币或补抽时仍可调整站位和追击Boss，同时保留补位义务及培养预算。",
+      "如果自动更新失败，请手动下载完整软件包。"
+    ],
+    "zh-TW": [
+      "每週收集依實際可拾取狀態及範圍尋找落腳點；明確無法到達的物品暫緩，繼續其他物品及地圖。",
+      "修正路徑失敗後的無效等待、舊步行紀錄阻塞及連線更新後的佇列接續；未收集目標繼續保留。",
+      "塔防等待金幣或補抽時仍可調整站位及追擊Boss，同時保留補位義務及培養預算。",
+      "若自動更新失敗，請手動下載完整軟體套件。"
+    ],
+    "en-US": [
+      "Weekly collection uses native pickup availability and pickup areas; individually unreachable items are deferred while other items and maps continue.",
+      "Fixes idle waits after path rejection, historical walking blockers and queue resume across connection reloads, preserving uncollected targets.",
+      "Apostle Defense keeps positioning and boss pursuit active while waiting for recruitment, without spending reserved gold.",
+      "If automatic updating fails, download the full package manually."
+    ]
+  }
+},
+{
+  "Version": "1.2.6",
+  "Date": "2026-10-12",
+  "Notes": {
+    "zh-CN": [
+      "修复更新连接组件后，已结束的旧步行拾取记录仍阻塞周收集的问题。",
+      "统一接续、补跑与当前计划的恢复检查，避免切图和使用天赋后才发现旧操作阻塞。",
+      "接续原队列支持同一游戏进程的连接更新，保留账号校验与未确认操作保护。"
+    ],
+    "zh-TW": [
+      "修正更新連線元件後，已結束的舊步行拾取紀錄仍阻塞每週收集的問題。",
+      "統一接續、補跑與目前計畫的恢復檢查，避免切換地圖及使用天賦後才發現舊操作阻塞。",
+      "接續原佇列支援同一遊戲程序的連線更新，保留帳號驗證及未確認操作保護。"
+    ],
+    "en-US": [
+      "Fixes settled walking records blocking weekly collection after a connection component update.",
+      "Resume, retry and new plans now reconcile before map travel and talent use.",
+      "Interrupted queues can resume after the observer reloads in the same game process, while retaining account checks and unresolved-operation safeguards."
+    ]
+  }
+},
+{
+  "Version": "1.2.5",
+  "Date": "2026-10-12",
+  "Notes": {
+    "zh-CN": [
+      "修复周收集误把物品类型当作可拾取状态，按游戏实际状态筛选和确认目标。",
+      "途中拾取其他物品后，目标寻路停滞会有限次恢复；未收集目标保留供后续补收。",
+      "已结束的步行拾取记录不再反复阻塞重跑；仍保护没有完整回执的操作。"
+    ],
+    "zh-TW": [
+      "修正每週收集誤將物品類型當作可拾取狀態，依遊戲實際狀態篩選及確認目標。",
+      "途中拾取其他物品後，目標尋路停滯會有限次恢復；未收集目標保留供後續補收。",
+      "已結束的步行拾取紀錄不再反覆阻塞重跑；仍保護沒有完整回執的操作。"
+    ],
+    "en-US": [
+      "Weekly collection now uses native pickup availability instead of immutable object-type flags.",
+      "Walking can resume after incidental pickups interrupt progress, with bounded retries and uncollected targets preserved.",
+      "Settled walking records no longer block future retries. Operations with incomplete responses remain protected."
+    ]
+  }
+},
+{
   "Version": "1.2.4",
   "Date": "2026-10-12",
   "Notes": {

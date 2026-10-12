@@ -41,6 +41,9 @@ static class QueueEngineCases
         prefs.Trade.Enabled = true;
         record = await Run(host, Root(), ["mail", "trade"], prefs: prefs);
         Check(host.Executed.SequenceEqual(new[] { "trade" }) && Stage(record, "mail") == "skipped", "disabled native stage does not navigate or execute");
+        host = new() { Unresolved = "mail" };
+        record = await Run(host, Root(), ["mail", "trade"], prefs: prefs);
+        Check(Stage(record, "mail") == "skipped" && host.Executed.SequenceEqual(new[] { "trade" }), "disabled uncertain stage does not block unrelated work or replay its journal");
         host = new();
         host.Fail["execute:mail"] = "pending";
         record = await Run(host, Root(), ["mail", "trade"]);
@@ -101,7 +104,8 @@ static class QueueEngineCases
         foreach (string state in new[] { "running", "recovery_required" })
         {
             var uncertain = record.DeepClone().AsObject(); uncertain["items"]![0]!["state"] = state;
-            Check(!DailyQueueEngine.CanReconnectPausedQueue(uncertain, host.Context), "reconnect cannot silently reuse " + state + " operation");
+            Check(DailyQueueEngine.CanReconnectPausedQueue(uncertain, host.Context) && Stage(uncertain, "mail") == state,
+                "observer renewal preserves " + state + " until business reconciliation");
         }
         static string TextForTest(JsonNode? value) => value?.GetValue<string>() ?? "";
         // Import an old Python schema-1 interrupted record and scope recovery to its ledger.

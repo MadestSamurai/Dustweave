@@ -381,6 +381,7 @@ public sealed partial class DailyFieldRoute
     public async Task<JsonArray> WalkDrops()
     {
         var result = new JsonArray();
+        var deferred = new Dictionary<long, JsonObject>();
         int rejected = 0;
         for (int i = 0; i < 100; i++)
         {
@@ -389,13 +390,17 @@ public sealed partial class DailyFieldRoute
             await Skill(6);
             var e = await Evidence();
             var drops = Drops(e);
-            if (drops.Length == 0)
+            var candidates = drops.Where(r => !deferred.ContainsKey(N(r[ObjectPath]))).ToArray();
+            if (candidates.Length == 0)
+            {
+                foreach (var pending in deferred.Where(p => drops.Any(r => N(r[ObjectPath]) == p.Key))) result.Add(pending.Value.DeepClone());
                 return result;
+            }
             var origin = FieldRows(e, "map").Single();
-            var target = drops.OrderBy(r => new[] { "x", "y", "z" }.Sum(axis => Math.Pow(DailyRegionRouter.D(r["transform.position." + axis]) - DailyRegionRouter.D(origin["ὪὨὯὢὫὮὨὩὮὡὬ.transform.position." + axis]), 2))).First();
+            var target = candidates.OrderBy(r => new[] { "x", "z" }.Sum(axis => Math.Pow(DailyRegionRouter.D(r["transform.position." + axis]) - DailyRegionRouter.D(origin["ὪὨὯὢὫὮὨὩὮὡὬ.transform.position." + axis]), 2))).First();
             try
             {
-                var op = await W.Transact("mainline.pickup", O(("map", Map(e)["id"]), ("object", target[ObjectPath])), O(("ui", "GameFieldDefaultUI"), ("operation", "mainline_walk"), ("value", target["instance"])), 65);
+                var op = await WalkPickup(e, target);
                 result.Add(O(("state", "completed"), ("id", op["id"]), ("result", op["result"])));
             }
             catch (DailyPickupRejectedException error)
@@ -409,8 +414,69 @@ public sealed partial class DailyFieldRoute
                 // Re-observe and select a fresh target; the rejected instance may be gone.
                 continue;
             }
+            catch (DailyTravelBlocked error)
+            {
+                // Only WalkPickup's known navigation failures reach this branch.
+                // Unknown pickup replies and identity failures still propagate.
+                long id = N(target[ObjectPath]);
+                var item = O(("state", "deferred"), ("pack", Map(e)["packId"]), ("map", Map(e)["id"]), ("region", Region(e)),
+                    ("object", id), ("reason", error.Message), ("target_collected", false),
+                    ("player_position", new[] { "x", "y", "z" }.Select(axis => DailyRegionRouter.D(origin["ὪὨὯὢὫὮὨὩὮὡὬ.transform.position." + axis])).ToArray()),
+                    ("target_position", new[] { "x", "y", "z" }.Select(axis => DailyRegionRouter.D(target["transform.position." + axis])).ToArray()));
+                deferred[id] = item;
+                W.Driver.Diagnostics.Failure("pickup_target_deferred", item);
+            }
             await W.Delay(300);
         }
         throw new DailyTravelBlocked("步行拾取超过本图目标预算");
+    }
+    internal async Task<JsonObject> WalkPickup(JsonObject before, JsonObject target)
+    {
+        long map = N(Map(before)["id"]), id = N(target[ObjectPath]);
+        var op = W.Business.Create(W.Context, "mainline.pickup", before, O(("map", map), ("object", id)),
+            O(("ui", "GameFieldDefaultUI"), ("operation", "mainline_walk"), ("value", target["instance"])));
+        var progress = new DailyTravelProgress(W.Time);
+        int resumed = 0;
+        DailyTravelBlocked? stalled = null;
+        async Task Heartbeat()
+        {
+            var e = await Evidence();
+            Identity(before, e);
+            var frame = e["Frame"]!.AsObject();
+            if (!FieldInputReady(frame) || N(Map(e)["id"]) != map) return;
+            var remaining = Drops(e).SingleOrDefault(r => N(r[ObjectPath]) == id);
+            if (remaining == null) return;
+            var point = new[] { "x", "y", "z" }.Select(axis => DailyRegionRouter.D(R(e, "mainline.map", "ὪὨὯὢὫὮὨὩὮὡὬ.transform.position." + axis))).ToArray();
+            if (!progress.Sample(point, null, W.Time)) return;
+            // A nearby healing object may finish before the chosen drop. Reissue
+            // only navigation, and never while a pickup request is unanswered.
+            var events = W.Business.Events(op);
+            if (!DailyPickupRecovery.SettledWalk(op, events, frame)) return;
+            await W.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
+            if (resumed >= 2)
+                throw stalled = new DailyTravelBlocked("本图拾取移动连续受阻；保留未收集目标，继续其他地图，之后可补收。");
+            await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "mainline_walk"), ("value", remaining["instance"])));
+            op["navigation_resumes"] = ++resumed;
+            W.Business.Save(op);
+            progress = new DailyTravelProgress(W.Time);
+        }
+        try { await W.Business.CommitAsync(op, W.Context, 65, heartbeat: Heartbeat); }
+        catch (DailyStepException error) when (DailyPickupRecovery.PathRejected(error))
+        {
+            throw new DailyTravelBlocked("当前拾取点没有可用路径，暂缓此点：" + error.RejectionCode);
+        }
+        catch (StageHostException error) when (stalled != null && error.Kind == "pending" && error.Message == stalled.Message)
+        {
+            var frame = (await W.Observe()).Frame;
+            var events = W.Business.Events(op);
+            if (DailyPickupRecovery.SettledWalk(op, events, frame))
+            {
+                op["state"] = "superseded";
+                op["reconciliation"] = O(("method", "settled_walk_stalled"), ("target_collected", false), ("recheck_current_targets", true));
+                W.Business.Save(op);
+            }
+            throw stalled;
+        }
+        return op;
     }
 }
