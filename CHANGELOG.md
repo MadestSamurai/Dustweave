@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 1.2.4 — 2026-10-12
+
+- 修复明确拒绝的拾取记录、旧进程跨日镜中记录持续阻塞日常的问题。
+- 中断的偷窃不再连带限制其他天赋；补充传送窗口返回和最新诊断记录保留。
+- Recover rejected pickups and historical Mirror blockers; isolate interrupted theft and preserve current diagnostic evidence.
+- [完整说明 / Full notes](docs/releases/1.2.4.md)
+
 ## 1.2.3 — 2026-10-12
 
 - 镜中非战斗期明确跳过，继续其他日常；已提交战斗先完成结算。
