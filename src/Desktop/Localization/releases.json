@@ -1,5 +1,32 @@
 [
   {
+    "Version": "1.2.2",
+    "Date": "2026-10-12",
+    "Notes": {
+      "zh-CN": [
+        "修复货币栏控件误判导致无法开始日常的问题。",
+        "关闭延迟出现的末日之书新纪录展示，接续后续任务。",
+        "改善周NPC拾取和搬运，失败卡带隔离，并优先选择高金币报酬任务。",
+        "新增砍价技能训练：预先核对资源，练满当前级别后提醒使用天赋书；减少连续砍价的重复进出。",
+        "如果自动更新失败，可能需要手动下载完整软件包。"
+      ],
+      "zh-TW": [
+        "修正貨幣列元件誤判導致無法開始日常的問題。",
+        "關閉延遲出現的末日之書新紀錄展示，接續後續任務。",
+        "改善每週NPC拾取和搬運，隔離失敗卡帶，並優先選擇高金幣報酬任務。",
+        "新增砍價技能訓練：預先核對資源，練滿目前級別後提醒使用天賦書；減少連續砍價的重複進出。",
+        "若自動更新失敗，可能需要手動下載完整軟體套件。"
+      ],
+      "en-US": [
+        "Fixes currency UI components blocking the start of daily tasks.",
+        "Closes delayed Last Night record screens and continues subsequent tasks.",
+        "Improves weekly NPC pickup and carry interactions, isolates failed cartridges and prioritizes higher gold rewards.",
+        "Adds bargaining training with resource previews and tier-cap reminders; reuses the shop between attempts.",
+        "If automatic updating fails, download the full package manually."
+      ]
+    }
+  },
+  {
     "Version": "1.2.1",
     "Date": "2026-10-12",
     "Notes": {

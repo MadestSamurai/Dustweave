@@ -5248,5 +5248,220 @@
     "zh-CN": "沙盒并行执行",
     "zh-TW": "沙盒平行執行",
     "en-US": "Run in parallel sandboxes"
+  },
+"bargain.title": {
+    "zh-CN": "砍价技能训练",
+    "zh-TW": "殺價技能訓練",
+    "en-US": "Bargaining training"
+  },
+  "bargain.refresh": {
+    "zh-CN": "读取账号",
+    "zh-TW": "讀取帳號",
+    "en-US": "Read account"
+  },
+  "bargain.start": {
+    "zh-CN": "前往商人并训练",
+    "zh-TW": "前往商人並訓練",
+    "en-US": "Go to merchant and train"
+  },
+  "bargain.stop": {
+    "zh-CN": "停止训练",
+    "zh-TW": "停止訓練",
+    "en-US": "Stop training"
+  },
+  "bargain.intro": {
+    "zh-CN": "请先启动游戏并登录所选账号。",
+    "zh-TW": "請先啟動遊戲並登入所選帳號。",
+    "en-US": "Open the game and log in to the selected account."
+  },
+  "bargain.character": {
+    "zh-CN": "训练角色",
+    "zh-TW": "訓練角色",
+    "en-US": "Character"
+  },
+  "bargain.estimate_label": {
+    "zh-CN": "练满本级 · 预计消耗",
+    "zh-TW": "練滿本級 · 預計消耗",
+    "en-US": "Estimated cost to fill this tier"
+  },
+  "bargain.hint": {
+    "zh-CN": "自动前往广场商人，只训练当前等级。耗药以此处预估为上限，不自动购买天赋药。",
+    "zh-TW": "自動前往廣場商人，只訓練目前等級。耗藥以此處預估為上限，不自動購買天賦藥。",
+    "en-US": "Travels to the plaza merchant and trains this tier only. Spending is capped at the estimate; talent pills are never purchased automatically."
+  },
+  "bargain.account": {
+    "zh-CN": "当前账号 · {0}",
+    "zh-TW": "目前帳號 · {0}",
+    "en-US": "Account · {0}"
+  },
+  "bargain.count": {
+    "zh-CN": "已完成 {0:N0} 次 · 已用 {1:N0} 瓶",
+    "zh-TW": "已完成 {0:N0} 次 · 已用 {1:N0} 瓶",
+    "en-US": "{0:N0} attempts completed · {1:N0} pills used"
+  },
+  "bargain.experience": {
+    "zh-CN": "天赋 Lv{0} · 经验 {1:N0} / {2:N0}",
+    "zh-TW": "天賦 Lv{0} · 經驗 {1:N0} / {2:N0}",
+    "en-US": "Talent Lv{0} · XP {1:N0} / {2:N0}"
+  },
+  "bargain.full": {
+    "zh-CN": "本级经验已满",
+    "zh-TW": "本級經驗已滿",
+    "en-US": "Tier complete"
+  },
+  "bargain.estimate": {
+    "zh-CN": "{0:N0} 瓶 · 约 {1:N0} 次",
+    "zh-TW": "{0:N0} 瓶 · 約 {1:N0} 次",
+    "en-US": "{0:N0} pills · about {1:N0} attempts"
+  },
+  "bargain.stock": {
+    "zh-CN": "持有 {0:N0} 瓶 · 每次 {1:N0} 瓶",
+    "zh-TW": "持有 {0:N0} 瓶 · 每次 {1:N0} 瓶",
+    "en-US": "{0:N0} pills available · {1:N0} per attempt"
+  },
+  "bargain.maximum": {
+    "zh-CN": "砍价天赋已达最高等级，无需继续训练。",
+    "zh-TW": "殺價天賦已達最高等級，無需繼續訓練。",
+    "en-US": "Bargaining is at its maximum tier. No further training is needed."
+  },
+  "bargain.upgrade": {
+    "zh-CN": "本级经验已满。请在游戏中使用天赋书升级，再点击「读取账号」继续。",
+    "zh-TW": "本級經驗已滿。請在遊戲中使用天賦書升級，再點擊「讀取帳號」繼續。",
+    "en-US": "This tier is complete. Upgrade with a talent book in the game, then read the account again to continue."
+  },
+  "bargain.shortage": {
+    "zh-CN": "天赋药不足：练满本级预计需要 {0:N0} 瓶，现有 {1:N0} 瓶，还差 {2:N0} 瓶。补足后重新读取即可开始。",
+    "zh-TW": "天賦藥不足：練滿本級預計需要 {0:N0} 瓶，現有 {1:N0} 瓶，還差 {2:N0} 瓶。補足後重新讀取即可開始。",
+    "en-US": "Not enough talent pills: this tier needs about {0:N0}, you have {1:N0}, and need {2:N0} more. Refill and read the account again."
+  },
+  "bargain.no_growth": {
+    "zh-CN": "没有获得经验，训练已停止。请检查角色的天赋等级后重新读取。",
+    "zh-TW": "沒有獲得經驗，訓練已停止。請檢查角色的天賦等級後重新讀取。",
+    "en-US": "No XP was gained. Training stopped; check the character's talent tier and read the account again."
+  },
+  "bargain.stopped": {
+    "zh-CN": "训练已停止，已完成的经验保留。",
+    "zh-TW": "訓練已停止，已完成的經驗保留。",
+    "en-US": "Training stopped. Earned XP is retained."
+  },
+  "bargain.stopping": {
+    "zh-CN": "正在停止，等待当前操作结算…",
+    "zh-TW": "正在停止，等待目前操作結算…",
+    "en-US": "Stopping after the current operation settles…"
+  },
+  "bargain.travel": {
+    "zh-CN": "正在前往广场商人…",
+    "zh-TW": "正在前往廣場商人…",
+    "en-US": "Travelling to the plaza merchant…"
+  },
+  "bargain.training": {
+    "zh-CN": "正在砍价并核对经验…",
+    "zh-TW": "正在殺價並核對經驗…",
+    "en-US": "Bargaining and checking XP…"
+  },
+  "bargain.connecting": {
+    "zh-CN": "正在读取当前账号与砍价天赋…",
+    "zh-TW": "正在讀取目前帳號與殺價天賦…",
+    "en-US": "Reading the current account and bargaining talent…"
+  },
+  "bargain.none": {
+    "zh-CN": "当前账号没有可读取的砍价角色。",
+    "zh-TW": "目前帳號沒有可讀取的殺價角色。",
+    "en-US": "No bargaining character was found on this account."
+  },
+  "bargain.ready": {
+    "zh-CN": "确认角色和预计耗药后，点击下方按钮开始。",
+    "zh-TW": "確認角色和預計耗藥後，點擊下方按鈕開始。",
+    "en-US": "Check the character and estimated cost, then start below."
+  },
+  "bargain.surface_timeout": {
+    "zh-CN": "砍价页面尚未就绪。已停止，请检查游戏弹窗后重新读取。",
+    "zh-TW": "殺價頁面尚未就緒。已停止，請檢查遊戲彈窗後重新讀取。",
+    "en-US": "The bargaining page is not ready. Check the game for a dialog, then read the account again."
+  },
+  "bargain.merchant_changed": {
+    "zh-CN": "商人目标已改变，已停止；请返回广场后重新读取。",
+    "zh-TW": "商人目標已改變，已停止；請返回廣場後重新讀取。",
+    "en-US": "The merchant changed. Return to the plaza and read the account again."
+  },
+  "bargain.character_unavailable": {
+    "zh-CN": "所选角色当前无法砍价。请检查角色生命、卡带限制和天赋状态后重新读取。",
+    "zh-TW": "所選角色目前無法殺價。請檢查角色生命、卡帶限制和天賦狀態後重新讀取。",
+    "en-US": "This character cannot bargain now. Check their health, cartridge restrictions and talent status, then read the account again."
+  },
+  "bargain.preview_changed": {
+    "zh-CN": "角色或耗药预览已变化，未继续消耗。请重新读取账号。",
+    "zh-TW": "角色或耗藥預覽已變化，未繼續消耗。請重新讀取帳號。",
+    "en-US": "The character or pill cost changed. No further pills were spent; read the account again."
+  },
+  "bargain.budget_reached": {
+    "zh-CN": "已达到本次预计耗药上限，训练已停止。请重新读取并检查经验。",
+    "zh-TW": "已達到本次預計耗藥上限，訓練已停止。請重新讀取並檢查經驗。",
+    "en-US": "The estimated pill budget was reached. Training stopped; read the account again to check XP."
+  },
+  "bargain.potions_changed": {
+    "zh-CN": "天赋药库存已不足，训练已停止。请补足后重新读取。",
+    "zh-TW": "天賦藥庫存已不足，訓練已停止。請補足後重新讀取。",
+    "en-US": "Talent pills ran short. Refill and read the account again."
+  },
+  "bargain.existing_discount": {
+    "zh-CN": "商店已有砍价折扣。请先在游戏中退出该商店，再开始训练。",
+    "zh-TW": "商店已有殺價折扣。請先在遊戲中退出該商店，再開始訓練。",
+    "en-US": "A discount is already active. Exit that shop in the game before starting training."
+  },
+  "bargain.shop_result_changed": {
+    "zh-CN": "商店折扣与本轮结果不一致，已停止。请保留现场并导出诊断。",
+    "zh-TW": "商店折扣與本輪結果不一致，已停止。請保留現場並匯出診斷。",
+    "en-US": "The shop discount does not match this attempt. Training stopped; preserve the game state and export diagnostics."
+  },
+  "bargain.exit_unconfirmed": {
+    "zh-CN": "尚未确认本轮商店退出，未再次砍价。请检查游戏并导出诊断。",
+    "zh-TW": "尚未確認本輪商店退出，未再次殺價。請檢查遊戲並匯出診斷。",
+    "en-US": "Shop exit was not confirmed. No further bargain was attempted; check the game and export diagnostics."
+  },
+  "bargain.close_changed": {
+    "zh-CN": "退出商店时资源发生变化，已停止。请导出诊断核对。",
+    "zh-TW": "退出商店時資源發生變化，已停止。請匯出診斷核對。",
+    "en-US": "Resources changed while closing the shop. Training stopped; export diagnostics for review."
+  },
+  "bargain.open_game": {
+    "zh-CN": "请先启动游戏并登录，再读取账号。",
+    "zh-TW": "請先啟動遊戲並登入，再讀取帳號。",
+    "en-US": "Start the game and log in before reading the account."
+  },
+  "bargain.account_changed": {
+    "zh-CN": "当前游戏与所选账号不一致，未开始训练。请登录正确账号后重新读取。",
+    "zh-TW": "目前遊戲與所選帳號不一致，未開始訓練。請登入正確帳號後重新讀取。",
+    "en-US": "The game does not match the selected account. Log in to that account and read it again."
+  },
+  "bargain.data_incomplete": {
+    "zh-CN": "砍价天赋数据不完整，请重新读取账号；仍有问题时导出诊断。",
+    "zh-TW": "殺價天賦資料不完整，請重新讀取帳號；仍有問題時匯出診斷。",
+    "en-US": "Talent data is incomplete. Read the account again; export diagnostics if it persists."
+  },
+  "bargain.response_changed": {
+    "zh-CN": "砍价回执属于其他天赋，已停止。请保留现场并导出诊断。",
+    "zh-TW": "殺價回執屬於其他天賦，已停止。請保留現場並匯出診斷。",
+    "en-US": "The reply belongs to another talent. Training stopped; preserve the game state and export diagnostics."
+  },
+  "bargain.experience_changed": {
+    "zh-CN": "天赋经验与游戏回执不一致，未继续砍价。请导出诊断核对。",
+    "zh-TW": "天賦經驗與遊戲回執不一致，未繼續殺價。請匯出診斷核對。",
+    "en-US": "XP does not match the game's reply. Training stopped; export diagnostics for review."
+  },
+  "bargain.cost_changed": {
+    "zh-CN": "实际耗药与预览不一致，训练已停止。请导出诊断核对。",
+    "zh-TW": "實際耗藥與預覽不一致，訓練已停止。請匯出診斷核對。",
+    "en-US": "Actual pill spending differs from the preview. Training stopped; export diagnostics for review."
+  },
+  "bargain.gold_changed": {
+    "zh-CN": "训练期间金币发生变化，已停止。请导出诊断核对。",
+    "zh-TW": "訓練期間金幣發生變化，已停止。請匯出診斷核對。",
+    "en-US": "Gold changed during training. Training stopped; export diagnostics for review."
+  },
+  "bargain.result_missing": {
+    "zh-CN": "砍价结果尚未确认，未重复消耗。请导出诊断核对。",
+    "zh-TW": "殺價結果尚未確認，未重複消耗。請匯出診斷核對。",
+    "en-US": "The bargain result is unconfirmed. Spending was not repeated; export diagnostics for review."
   }
 }

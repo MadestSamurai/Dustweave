@@ -98,6 +98,25 @@ public static class DailyHomeDecision
         return new JsonObject { ["ui"] = "MessagePopupUI", ["operation"] = "background_error_ack",
             ["absent"] = "MessagePopupUI", ["reason"] = Text(rows[0], "NativeContext") == "request_timeout_ack_only" ? "关闭无后续操作的网络超时提示，重新核对当前环节" : "关闭支付地区查询超时提示，继续日常；不发起付款或重试" };
     }
+    public static DailyHomePlan? BookRecordPresentation(JsonObject frame, DailyNavigationPolicy policy)
+    {
+        const string ui = "TotalWarNewcordPopupUI";
+        var rows = DailyNavigationDecision.Rows(frame).Where(r => Text(r, "Type") == ui).ToArray();
+        if (rows.Length == 0) return null;
+        var types = DailyNavigationDecision.Types(frame);
+        if (rows.Length != 1 || types.Any(t => t.StartsWith("BattleUI", StringComparison.Ordinal)) || types.Contains("BattleResultUI")
+            || DailyNavigationDecision.Blockers(frame, ui, policy).Length > 0)
+            return Block("末日之书纪录展示被其他页面遮挡或尚在战斗结算，保留现场。");
+        if (Transitioning(frame) || !DailyNavigationDecision.ReadyInput(rows[0], false))
+            return Wait("等待末日之书纪录展示结束");
+        // Native UIBase reports Popup=false and may appear only after returning to
+        // the field. Both explicit OnClickUI branches only call CloseUI: no reward,
+        // battle or network transaction. Do not treat this foreground page as passive.
+        foreach (string field in new[] { "_objBackButton", "_objSubBackButton" })
+            if (Enabled(rows[0], field))
+                return Step(Close(ui, field, "关闭末日之书新纪录展示，继续当前日常"));
+        return Wait("等待末日之书纪录展示的返回按钮");
+    }
     public static DailyHomePlan Inspect(JsonObject frame, DailyNavigationPolicy policy)
     {
         var rows = DailyNavigationDecision.Rows(frame).ToArray();
@@ -127,6 +146,8 @@ public static class DailyHomeDecision
         var weekly = DailyNavigationDecision.WeeklyResult(frame, policy);
         if (weekly != null)
             return Step(weekly);
+        var bookRecord = BookRecordPresentation(frame, policy);
+        if (bookRecord != null) return bookRecord;
         if (types.Contains("RewardReceivePopupUI") && DailyNavigationDecision.Blockers(frame, "RewardReceivePopupUI", policy).Length == 0)
             return Special("reward");
         foreach (var row in rows.OrderByDescending(r => r["Order"]?.GetValue<int>() ?? 0))

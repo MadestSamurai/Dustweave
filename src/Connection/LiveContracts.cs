@@ -74,7 +74,9 @@ namespace BD2Daily.Live {
   [DataMember] public Frame Before,After;
  }
  public static class LivePolicy {
-  public static readonly string[] PassiveSurfaces={"NoticeUI","CharNoticeUI","DetailNoticeUI","CurrencyManageUI","OverheadManageUI"};
+  // Currency-bar parts inherit UIBase and are pooled per owner; multiple
+  // DebtButtons are expected. Keep detail/confirmation pages observable.
+  public static readonly string[] PassiveSurfaces={"NoticeUI","CharNoticeUI","DetailNoticeUI","CurrencyManageUI","DebtButton","OverheadManageUI"};
   public static bool HiddenPickupReady(bool active,double remaining){return active&&!double.IsNaN(remaining)&&!double.IsInfinity(remaining)&&remaining>1;}
   public static bool PassiveSurface(string type){return PassiveSurfaces.Contains(type);}
   // Passive HUD/mission notices remain observable, but never invalidate an input.

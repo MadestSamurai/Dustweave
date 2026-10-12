@@ -13,6 +13,53 @@ static class TravelTransitionCases
             f.Readings = () => [WorkflowCases.Reading("navigation.pack", (DailyTravel.CurrentPack + ".Id", 3007), (DailyTravel.CurrentPack + ".PackType", 9))];
             return f;
         }
+        foreach (string entry in new[] { "pack-list", "reuse", "ready" })
+        {
+            using var f = New("delayed-book-record-" + entry);
+            f.Frame["Scene"] = "Map3005_001";
+            f.Page("MenuUI");
+            void Record()
+            {
+                f.Page("TotalWarNewcordPopupUI", "_objBackButton");
+                f.Frame["Surfaces"]![0]!["Popup"] = false;
+                f.Frame["Surfaces"]![0]!["InputReady"] = false;
+            }
+            if (entry == "ready") Record();
+            var closedPages = new List<string>();
+            f.OnDelay = () => { if (f.Time >= .6) f.Frame["Surfaces"]![0]!["InputReady"] = true; };
+            f.OnCommand = c =>
+            {
+                string page = S(f.Frame["Surfaces"]![0]!["Type"]);
+                closedPages.Add(page);
+                if (page == "MenuUI") Record();
+                else if (page == "TotalWarNewcordPopupUI") f.Page("GameFieldDefaultUI", "_buttonPackList");
+                else f.Page("PackListUI");
+            };
+            if (entry == "pack-list") await DailyTravel.PackList(f.Workflow, 5);
+            else if (entry == "ready") await DailyTravel.Ready(f.Workflow, "GameFieldDefaultUI", 5);
+            else Check(await DailyTravel.Reuse(f.Workflow, packType: 9, surfaces: ["GameFieldDefaultUI"], seconds: 5), "delayed Book record permits reuse of the current cartridge");
+            Check(closedPages.Count(page => page == "TotalWarNewcordPopupUI") == 1 && f.Time >= .6,
+                "delayed Book record closes once after animation and continues route: " + entry);
+            Check(f.Box.Commands.All(c => S(c["Kind"]) is "click" or "back") && closedPages.All(page => page is "MenuUI" or "TotalWarNewcordPopupUI" or "GameFieldDefaultUI"), "record cleanup uses presentation buttons without restarting Book battle: " + entry);
+        }
+        foreach (string mode in new[] { "duplicate", "unknown-modal", "pending", "vanished" })
+        {
+            using var f = New("book-record-guard-" + mode);
+            f.Page("TotalWarNewcordPopupUI", "_objBackButton");
+            f.Frame["Surfaces"]![0]!["Popup"] = false;
+            if (mode == "duplicate") f.Frame["Surfaces"]!.AsArray().Add(f.Frame["Surfaces"]![0]!.DeepClone());
+            if (mode == "unknown-modal") f.Frame["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("MessagePopupUI", true, "_buttonOK", 99));
+            if (mode == "pending") f.Box.ThrowCreate = true;
+            if (mode == "vanished") f.Driver.SubmissionGuard = () => f.Page("GameFieldDefaultUI");
+            string outcome = "";
+            try { outcome = await DailyTravel.RecoverPresentation(f.Workflow, f.Frame.DeepClone().AsObject()) ? "handled" : "none"; }
+            catch (StageHostException e) { outcome = e.Kind; }
+            Check(mode switch {
+                "pending" => outcome == "pending" && f.Box.Commands.Count == 1,
+                "vanished" => outcome == "handled" && f.Box.Commands.Count == 0,
+                _ => outcome == "adapter" && f.Box.Commands.Count == 0
+            }, "Book record cleanup preserves command safety: " + mode + " -> " + outcome);
+        }
         foreach (string scene in new[] { "Empty", "" })
         {
             using var f = New("persistent-menu-" + scene);

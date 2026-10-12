@@ -1,5 +1,15 @@
 # Changelog / 更新记录
 
+## 1.2.2 — 2026-10-12
+
+- 修复货币栏控件和末日之书新纪录展示导致的日常中断。
+- 改善周NPC任务拾取、搬运和失败卡带隔离，优先接取高金币报酬任务。
+- 新增砍价技能训练入口，预先显示资源需求，当前级别练满后提示使用天赋书。
+- Fixes daily interruptions from currency UI parts and delayed Last Night record screens.
+- Improves weekly NPC interactions and isolates failed cartridges; prioritizes higher gold rewards.
+- Adds bargaining training with resource previews and a talent-book reminder at the current tier cap.
+- [完整说明 / Full notes](docs/releases/1.2.2.md)
+
 ## 1.2.0 — 2026-10-11
 
 - 支持任务预设、按账号选择预设、可选启动后执行与关闭到托盘。

@@ -31,6 +31,8 @@ namespace BD2Daily.Live {
   [DataMember] public bool Navigating,BattleReady,BattlePlaying,BattleAuto;
   [DataMember] public string BattleResult="";
   [DataMember] public long Week,Now,At;
+  [DataMember] public int NavigationLeaseQuest;
+  [DataMember] public long NavigationLeaseUntil;
   [DataMember] public WeeklyNpcBoardTarget[] Boards=new WeeklyNpcBoardTarget[0];
   [DataMember] public WeeklyNpcBoardState Board=new WeeklyNpcBoardState();
   [DataMember] public int[] Posted=new int[0],Cleared=new int[0];
@@ -46,7 +48,7 @@ namespace BD2Daily.Live {
   static long Week {get{return Clock.ὠὥὬὪὮὬὢὨὬὮὫ.GetWeeklyResetTime().Ticks;}}
   static bool Matches(Command c){var f=Bridge.CurrentFrame;return f!=null&&c!=null&&f.ProcessId==c.ProcessId&&f.ProcessStartTicks==c.ProcessStartTicks&&f.Instance==c.Instance&&f.AccountKey==c.AccountKey&&f.PlayerKey==c.PlayerKey&&result.Week==Week;}
   static bool Active(int id){return Q.ὨὢὧὪὩὯὣὦὠὠὧ.Any(x=>x.Id==id);}
-  internal static string Preflight(Command c){
+  internal static string Preflight(Command c,UIBase ui){
    int pack=Singleton<PackManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ὢὠὮὠὥὥὥὣὡὮὯ;
    if(c.Kind=="weekly_npc_query"){
     var map=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὮὬὬὮὠὮὪὠὧὩὪ;
@@ -54,7 +56,37 @@ namespace BD2Daily.Live {
     if(result.State=="pending"&&DateTime.UtcNow.Ticks-result.At<TimeSpan.FromSeconds(40).Ticks)return "npc_query_pending";
     return "";
    }
-   return !CollectionProgressNative.IsStoryField(pack)||!result.ActionsSupported?"npc_actions_unsupported_cartridge":"";
+   if(!CollectionProgressNative.IsStoryField(pack)||!result.ActionsSupported)return "npc_actions_unsupported_cartridge";
+   if(owner==null||!Matches(owner)||result.State!="ready"||pack!=result.Pack)return "npc_context_changed";
+   if(c.Kind.StartsWith("weekly_npc_board_",StringComparison.Ordinal))return "";
+   TodayQuestTable q;if(!Tables.TryGetValue(c.Value,out q)||q.PackId!=pack)return "npc_context_changed";
+   if(c.Kind=="weekly_npc_accept")return "";
+   // These checks must run before Bridge marks a command as dispatched. A
+   // rejected local lease/target has not called a game interaction or sent a request.
+   if(c.Kind!="weekly_npc_talk"&&!Active(q.Id))return "npc_step_changed";
+   if(new[]{"weekly_npc_interact","weekly_npc_lift","weekly_npc_talk","weekly_npc_auto"}.Contains(c.Kind)
+      &&(navQuest!=q.Id||DateTime.UtcNow.Ticks>=navUntil))return "npc_lease_expired";
+   if(c.Kind=="weekly_npc_talk"){
+    var balloon=ui as BalloonScriptUI;if(balloon==null)return "npc_dialogue_changed";
+    var choice=BoardField<VisualNovelSelectChoiceUI>(balloon,"_selectUI");
+    var npc=BoardField<NPCController>(balloon,"ὠὩὤὮὯὪὡὪὦὯὢ");int id=npc==null?0:npc.ὪὬὣὧὥὨὦὯὨὮὬ;
+    if(choice!=null&&choice.gameObject.activeInHierarchy||id!=q.AcceptNpcId&&id!=q.CompleteNpcId&&!(q.ConditionType==19&&q.MagicValue.Count>0&&id==q.MagicValue[0]))return "npc_dialogue_changed";
+   }
+   if(c.Kind=="weekly_npc_carry_nav"||c.Kind=="weekly_npc_lift"){
+    var action=Singleton<FieldActionManager>.ὪὫὢὨὯὭὦὪὦὨὣ;
+    if(q.ConditionType!=9||action.IsInActionWithFieldItem())return "npc_carry_changed";
+    var source=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὫὢὬὢὧὫὭὧὫὡὡ.OfType<FieldActionObjectController>().SingleOrDefault(x=>x!=null&&x.GetInstanceID()==c.Items[0]);
+    if(source==null||!OwnsCarry(source,q)||!source.gameObject.activeInHierarchy||c.Kind=="weekly_npc_lift"&&!CarryReady(source))return "npc_target_unavailable";
+   }
+   if(c.Kind=="weekly_npc_interact"){
+    if(!new[]{2,9,18}.Contains(q.ConditionType))return "npc_step_changed";
+    var target=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὫὢὬὢὧὫὭὧὫὡὡ.OfType<FieldQuestObjectController>().SingleOrDefault(x=>x!=null&&x.GetInstanceID()==c.Items[0]);
+    if(target==null||target.ὦὣὣὧὭὭὣὬὭὤὨ!=q.Id||!q.MagicValue.Contains(target.ὪὬὣὧὥὨὦὯὨὮὬ)||!ObjectReady(target))return "npc_target_unavailable";
+    if(q.ConditionType==9){var action=Singleton<FieldActionManager>.ὪὫὢὨὯὭὦὪὦὨὣ;
+     if(!action.IsInActionWithFieldItem()||!GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὫὢὬὢὧὫὭὧὫὡὡ.OfType<FieldActionObjectController>().Any(x=>x!=null&&OwnsCarry(x,q)&&x.ὪὬὣὧὥὨὦὯὨὮὬ==action.ὪὮὫὯὯὯὠὬὯὬὤ.ὯὫὪὡὭὤὪὮὫὬὣ))return "npc_carry_changed";
+    }
+   }
+   return "";
   }
   internal static WeeklyNpcState Capture(){
    if(owner==null)return result;
@@ -76,6 +108,7 @@ namespace BD2Daily.Live {
     .Where(x=>x!=null&&activeIds.Any(id=>OwnsCarry(x,Tables[id])))
     .Select(x=>new WeeklyNpcObject{Instance=x.GetInstanceID(),Id=x.ὪὬὣὧὥὨὦὯὨὮὬ,Quest=activeIds.Single(id=>OwnsCarry(x,Tables[id])),Near=x.ὩὤὨὮὥὦὫὭὫὭὨ,Ready=CarryReady(x),Available=x.gameObject.activeInHierarchy&&!action.CheckFieldItemBeforeInteract(x.ὪὬὣὧὥὨὦὯὨὮὬ),Distance=(x.ὩὬὧὢὧὬὠὡὦὥὧ-GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὪὨὯὢὫὮὨὩὮὡὬ.transform.position).sqrMagnitude}).ToArray();
    result.Navigating=Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ὤὬὪὨὠὢὢὭὧὫὨ;
+   result.NavigationLeaseQuest=navQuest;result.NavigationLeaseUntil=navUntil;
    result.NavQuest=Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ὢὬὧὣὣὣὪὯὬὮὥ;
    var ui=Bridge.Find(typeof(BattleUI_FieldBattle)).Cast<BattleUI_FieldBattle>().SingleOrDefault();
    var battle=BattlePlayManager.ὪὫὢὨὯὭὦὪὦὨὣ;
@@ -180,7 +213,7 @@ namespace BD2Daily.Live {
     AcceptOnBoard(c,ui);return;
    }
    if(c.Kind=="weekly_npc_talk"){
-    if(navQuest!=q.Id||DateTime.UtcNow.Ticks>navUntil)throw new InvalidOperationException("No active NPC quest dialogue lease");
+    // Lease was checked before the dispatch marker in this same main-thread tick.
     var balloon=(BalloonScriptUI)ui;var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.NonPublic;
     var choice=(VisualNovelSelectChoiceUI)balloon.GetType().GetField("_selectUI",flags).GetValue(balloon);
     var npc=(NPCController)balloon.GetType().GetField("ὠὩὤὮὯὪὡὪὦὯὢ",flags).GetValue(balloon);
@@ -194,20 +227,24 @@ namespace BD2Daily.Live {
     var source=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὫὢὬὢὧὫὭὧὫὡὡ.OfType<FieldActionObjectController>().Single(x=>x!=null&&x.GetInstanceID()==c.Items[0]);
     if(!OwnsCarry(source,q)||!source.gameObject.activeInHierarchy)throw new InvalidOperationException("Carry source does not belong to active quest");
     if(c.Kind=="weekly_npc_lift"){
-     if(navQuest!=q.Id||DateTime.UtcNow.Ticks>navUntil||!CarryReady(source))throw new InvalidOperationException("Carry source changed or is not reachable");
+     if(!CarryReady(source))throw new InvalidOperationException("Carry source changed or is not reachable");
+     // Arrival is proved by the target's own interaction range, not by the
+     // navigation-mode flag. Cancel its auto callback before our single pickup.
+     Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ClearQuestNav(true);
      source.InteractionFieldObject();return;
     }
     navQuest=q.Id;navUntil=DateTime.UtcNow.AddSeconds(180).Ticks;
     Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.StartFieldObjectNav(source.ὪὬὣὧὥὨὦὯὨὮὬ,ὢὩὭὬὪὪὬὩὫὪὬ.ActionObject,false);return;
    }
    if(c.Kind=="weekly_npc_interact"){
-    if(navQuest!=q.Id||DateTime.UtcNow.Ticks>navUntil||!new[]{2,9,18}.Contains(q.ConditionType))throw new InvalidOperationException("No active NPC quest object lease");
+    if(!new[]{2,9,18}.Contains(q.ConditionType))throw new InvalidOperationException("Unsupported NPC object quest");
     var target=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὫὢὬὢὧὫὭὧὫὡὡ.OfType<FieldQuestObjectController>().Single(x=>x!=null&&x.GetInstanceID()==c.Items[0]);
     if(target.ὦὣὣὧὭὭὣὬὭὤὨ!=q.Id||!ObjectReady(target))throw new InvalidOperationException("NPC quest object changed, busy or out of range");
     if(q.ConditionType==9){
      var action=Singleton<FieldActionManager>.ὪὫὢὨὯὭὦὪὦὨὣ;
      if(!action.IsInActionWithFieldItem()||!GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὫὢὬὢὧὫὭὧὫὡὡ.OfType<FieldActionObjectController>().Any(x=>x!=null&&OwnsCarry(x,q)&&x.ὪὬὣὧὥὨὦὯὨὮὬ==action.ὪὮὫὯὯὯὠὬὯὬὤ.ὯὫὪὡὭὤὪὮὫὬὣ))throw new InvalidOperationException("Carry quest requires its own held object");
     }
+    Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ClearQuestNav(true);
     target.InteractionFieldObject();return;
    }
    if(c.Kind=="weekly_npc_auto"){

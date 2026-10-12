@@ -68,6 +68,9 @@ public sealed partial class DailyCommandDriver
             await delay(TimeSpan.FromMilliseconds(200));
         }
         DailyJson.Write(path, new JsonObject { ["state"] = "unavailable", ["engine"] = "dotnet-weekly-npc-query-v1", ["transport"] = sent.DeepClone(), ["before"] = before, ["after"] = after, ["error"] = last, ["read_only"] = true });
-        throw new StageHostException("adapter", "NPC progress query could not be verified; no NPC mutation submitted: " + last);
+        // This operation only reads quest progress. Let the weekly orchestrator
+        // defer this cartridge instead of treating a missing read as an unknown
+        // consuming operation. ReadBound and the route's reset guard still apply.
+        throw new DailyNpcUnavailable("周NPC任务进度暂时无法读取；未接取或提交任务，本次暂缓该卡带");
     }
 }

@@ -46,16 +46,36 @@ public sealed record DailyNpcData(JsonObject Native, Dictionary<long, JsonObject
     public JsonObject[] Wild(JsonObject row) => DailyData.Rows(Native["Wild"]).Where(x => N(x["Step"]) == N(row["id"]) && B(x["Available"])).ToArray();
     public bool RequiresHunting(JsonObject row) => N(row["conditionType"]) == 1 && Wild(row).GroupBy(x => N(x["Monster"])).Sum(g => N(g.First()["Count"])) < N(row["conditionCount"] ?? JsonValue.Create(1));
     public JsonObject? Current(long pack) => Active.Select(a => Rows[N(a["id"])]).FirstOrDefault(r => N(r["packId"]) == pack);
-    public JsonObject[] Candidates(long pack, bool allowHunting, IEnumerable<long> excluded)
+    public static long GoldReward(IEnumerable<JsonObject> steps) => steps.Sum(row =>
     {
-        if (Native["CanAccept"] != null && !B(Native["CanAccept"]) || N(Native["Remaining"]) <= 0 || Current(pack) != null)
+        var types = (row["rewardType"] as JsonArray ?? new()).Select(N).ToArray();
+        var ids = (row["rewardId"] as JsonArray ?? new()).Select(N).ToArray();
+        var counts = (row["rewardCount"] as JsonArray ?? new()).Select(N).ToArray();
+        if (types.Length != ids.Length || ids.Length != counts.Length || counts.Any(n => n < 0))
+            throw new DailyNpcUnavailable("周NPC任务报酬数据不完整，暂缓接取");
+        // Currency type 4 is gold. Count the actual chain rewards once, not
+        // DisplayRewardCount (which repeats a preview on some quest rows).
+        return types.Select((type, i) => type == 4 && ids[i] == 0 ? counts[i] : 0).Sum();
+    });
+    public JsonObject[] Offers(long pack, IEnumerable<long> excluded)
+    {
+        if (N(Native["Remaining"]) <= 0 || Current(pack) != null)
             return [];
         var done = Native["Cleared"]!.AsArray().Select(N).Where(Rows.ContainsKey).Select(Root).ToHashSet();
         var excludedMaps = excluded.ToHashSet();
         return Native["Posted"]!.AsArray().Select(N).Where(Rows.ContainsKey).Where(id => N(Rows[id]["priorQuestId"]) == 0 && N(Rows[id]["packId"]) == pack && !done.Contains(id))
             .Select(id => (Id: id, Steps: Chain(id))).Where(x => x.Steps.All(r => N(r["conditionType"]) is 1 or 2 or 9 or 18 or 19) && !x.Steps.Any(r => excludedMaps.Contains(N(r["mapId"])) && N(r["conditionType"]) != 1))
-            .Select(x => (x.Id, x.Steps, Hunting: x.Steps.Any(RequiresHunting))).Where(x => allowHunting || !x.Hunting).OrderBy(x => x.Hunting).ThenBy(x => x.Steps.Any(r => N(r["conditionType"]) == 1)).ThenBy(x => x.Steps.Select(r => N(r["mapId"])).Distinct().Count()).ThenBy(x => x.Steps.Length).ThenBy(x => x.Id)
-            .Select(x => O(("id", x.Id), ("hunting", x.Hunting), ("steps", Array(x.Steps)))).ToArray();
+            .Select(x => O(("id", x.Id), ("reward_gold", GoldReward(x.Steps)), ("steps", Array(x.Steps)))).ToArray();
+    }
+    public JsonObject[] Candidates(long pack, bool allowHunting, IEnumerable<long> excluded)
+    {
+        if (Native["CanAccept"] != null && !B(Native["CanAccept"])) return [];
+        return Offers(pack, excluded).Select(x => (Row: x, Steps: DailyData.Rows(x["steps"])))
+            .Select(x => (x.Row, x.Steps, Hunting: x.Steps.Any(RequiresHunting))).Where(x => allowHunting || !x.Hunting)
+            .OrderByDescending(x => N(x.Row["reward_gold"])).ThenBy(x => x.Hunting)
+            .ThenBy(x => x.Steps.Any(r => N(r["conditionType"]) == 1)).ThenBy(x => x.Steps.Select(r => N(r["mapId"])).Distinct().Count())
+            .ThenBy(x => x.Steps.Length).ThenBy(x => N(x.Row["id"]))
+            .Select(x => { x.Row["hunting"] = x.Hunting; return x.Row; }).ToArray();
     }
     public bool Protects(long map) => Active.Any(a => Chain(N(a["id"])).Skip(1).Any(r => N(r["conditionType"]) == 1 && Wild(r).Any(x => N(x["Map"]) == map)));
     public JsonObject? CarrySource(long id)
@@ -80,6 +100,25 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
     }
     public HashSet<long> ExcludedRoots { get; } = [];
     public HashSet<long> ExhaustedPacks { get; } = [];
+    public long[] AvailablePacks { get; set; } = [];
+    public long[] OrderPacks(IEnumerable<long> packs) => packs.OrderBy(p => Data?.Current(p) == null ? 1 : 0)
+        .ThenByDescending(p => HasOffers(p) ? Data!.Offers(p, Excluded).Where(c => !ExcludedRoots.Contains(N(c["id"]))).Max(c => N(c["reward_gold"])) : -1)
+        .ToArray();
+    public bool HasOffers(long pack) => Data != null && N(Data.Native["Completed"]) < N(Data.Native["Limit"])
+        && !ExhaustedPacks.Contains(pack) && Data.Offers(pack, Excluded).Any(c => !ExcludedRoots.Contains(N(c["id"])));
+    private JsonObject? Choose(long pack)
+    {
+        var candidates = Data!.Candidates(pack, allowHunting, Excluded);
+        // Wild monster availability is only known for the currently loaded pack.
+        // Eliminate impossible candidates after that read, then rerank globally.
+        foreach (var offered in Data.Offers(pack, Excluded))
+            if (!candidates.Any(c => N(c["id"]) == N(offered["id"]))) ExcludedRoots.Add(N(offered["id"]));
+        var chosen = candidates.FirstOrDefault(c => !ExcludedRoots.Contains(N(c["id"])));
+        if (chosen == null) { ExhaustedPacks.Add(pack); return null; }
+        if (AvailablePacks.Length > 0 && OrderPacks(AvailablePacks.Where(p => HasOffers(p))).FirstOrDefault() != pack) return null;
+        W.Driver.Diagnostics.Event("weekly_npc_selection", O(("pack", pack), ("quest", chosen["id"]), ("reward_gold", chosen["reward_gold"]), ("priority", "gold_descending")));
+        return chosen;
+    }
     public async Task<DailyNpcData> Observe() => DailyNpcData.Decode(State(await route.Evidence(), "weekly_npc.native", "$self"));
     public async Task<DailyNpcData> Query(long pack)
     {
@@ -104,18 +143,17 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
     {
         Data = await Query(pack);
         if (Data.Current(pack) != null) { await DailyWeeklyNpcBoard.Close(W); return; }
-        var chosen = Data.Candidates(pack, allowHunting, Excluded).FirstOrDefault(c => !ExcludedRoots.Contains(N(c["id"])));
+        var chosen = Choose(pack);
         if (chosen == null)
         {
-            ExhaustedPacks.Add(pack);
             await DailyWeeklyNpcBoard.Close(W);
             return;
         }
         await DailyWeeklyNpcBoard.Open(route, Data, pack);
         // Walking can take time: re-read quota and offered quests on the open board.
         Data = await Query(pack);
-        chosen = Data.Candidates(pack, allowHunting, Excluded).FirstOrDefault(c => !ExcludedRoots.Contains(N(c["id"])));
-        if (chosen == null) { if (Data.Current(pack) == null) ExhaustedPacks.Add(pack); await DailyWeeklyNpcBoard.Close(W); return; }
+        chosen = Choose(pack);
+        if (chosen == null) { await DailyWeeklyNpcBoard.Close(W); return; }
         long id = N(chosen["id"]);
         await DailyWeeklyNpcBoard.Select(W, Observe, id);
         // A lost confirmation is never replayed. A new run queries the accepted server state.
@@ -181,7 +219,30 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
         finally { route.NpcActing = prior; }
     }
     private Task<JsonObject> Navigate(long id) => W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "weekly_npc_nav"), ("value", id), ("items", new[] { allowHunting ? 1 : 0 })));
-    private async Task Advance(JsonObject row)
+    internal async Task Advance(JsonObject row)
+    {
+        for (int attempt = 0; ; attempt++)
+        {
+            try { await AdvanceAttempt(row); return; }
+            catch (DailyStepException e) when (RecoverableRejection(e))
+            {
+                // A matching native rejection proves that no interaction ran.
+                // Re-read the live quest/object rather than repeating the old command.
+                Data = await Observe();
+                SaveRecovery("preflight_rejected:" + e.RejectionCode, row, Data);
+                if (!Data.Active.Any(a => N(a["id"]) == N(row["id"])))
+                {
+                    await route.FieldReady();
+                    return;
+                }
+                if (attempt >= 2 || !await W.Has("GameFieldDefaultUI"))
+                    throw new DailyNpcUnavailable("任务交互条件持续变化，已保留进度；本次暂缓该卡带的NPC任务，继续其他日常");
+            }
+        }
+    }
+    internal static bool RecoverableRejection(DailyStepException e) => e.DefinitelyNotDispatched && e.Kind == "rejected"
+        && e.RejectionCode is "npc_lease_expired" or "npc_step_changed" or "npc_target_unavailable" or "npc_carry_changed" or "npc_dialogue_changed";
+    private async Task AdvanceAttempt(JsonObject row)
     {
         long id = N(row["id"]);
         var before = Data!.Active.Single(a => N(a["id"]) == id).DeepClone().AsObject();
@@ -195,7 +256,7 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
         bool objectStep = N(row["conditionType"]) is 2 or 9 or 18;
         static HashSet<long> Collected(JsonObject step) => (step["objectId"] as JsonArray ?? new()).Select(N).ToHashSet();
         double end = W.Time + 180, lastProgress = W.Time;
-        string last = "", recoveryRecorded = "";
+        string last = "", recoveryRecorded = "", decisionRecorded = "";
         var policy = DailyNavigationPolicy.Load();
         while (W.Time < end)
         {
@@ -232,6 +293,16 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
             }
             var data = await Observe();
             Data = data;
+            string decision = O(("map", data.Native["Map"]), ("navigating", data.Native["Navigating"]),
+                ("lease", data.Native["NavigationLeaseQuest"]), ("carry", data.Native["CarryId"]),
+                ("objects", Array(Rows(data.Native["Objects"] ?? new JsonArray()).Concat(Rows(data.Native["CarryObjects"] ?? new JsonArray()))
+                    .Where(x => N(x["Quest"]) == id).Select(x => O(("id", x["Id"]), ("near", x["Near"]), ("ready", x["Ready"]), ("collected", x["Collected"])))))).ToJsonString();
+            if (decision != decisionRecorded)
+            {
+                decisionRecorded = decision;
+                W.Driver.Diagnostics.Event("weekly_npc_decision", O(("quest", id), ("state", JsonNode.Parse(decision)),
+                    ("lease_until", data.Native["NavigationLeaseUntil"]), ("pending_object", pendingObject)));
+            }
             string recovery = S(data.Native["NavigationRecovery"]) + "|" + data.Native["NavigationRemoved"]?.ToJsonString();
             if (S(data.Native["NavigationRecovery"]) == "repaired_stale_collection_cache" && recoveryRecorded != recovery) {
                 recoveryRecorded = recovery;
@@ -296,7 +367,7 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
                     lastProgress = W.Time;
                     continue;
                 }
-                if (!liftSent && !B(data.Native["Navigating"]) && Rows(data.Native["CarryObjects"] ?? new JsonArray()).Any(x => N(x["Instance"]) == N(carry["Instance"]) && N(x["Quest"]) == id && B(x["Near"]) && B(x["Ready"])))
+                if (!liftSent && Rows(data.Native["CarryObjects"] ?? new JsonArray()).Any(x => N(x["Instance"]) == N(carry["Instance"]) && N(x["Quest"]) == id && B(x["Near"]) && B(x["Ready"])))
                 {
                     await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "weekly_npc_lift"), ("value", id), ("items", new[] { N(carry["Instance"]) })));
                     liftSent = true;
@@ -304,7 +375,7 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
                     continue;
                 }
             }
-            if (carry == null && !interactionSent && objectStep && collected.Count < N(row["conditionCount"]) && types.Contains("GameFieldDefaultUI") && !B(data.Native["Navigating"]))
+            if (carry == null && !interactionSent && objectStep && collected.Count < N(row["conditionCount"]) && types.Contains("GameFieldDefaultUI"))
             {
                 var target = Rows(data.Native["Objects"] ?? new JsonArray()).Where(x => N(x["Quest"]) == id && !collected.Contains(N(x["Id"])) && (row["magicValue"] as JsonArray ?? new()).Select(N).Contains(N(x["Id"])) && B(x["Near"]) && B(x["Ready"])).OrderBy(x => N(x["Id"])).FirstOrDefault();
                 if (target != null)

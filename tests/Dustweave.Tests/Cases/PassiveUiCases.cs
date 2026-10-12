@@ -12,6 +12,31 @@ static class PassiveUiCases
         void Check(bool ok, string name) { if (!ok) throw new Exception(name); cases.Add(name); }
         var policy = DailyNavigationPolicy.Load();
         Check(policy.Background.SetEquals(Native.LivePolicy.PassiveSurfaces), "native and managed passive surfaces agree");
+        // DebtButton derives from UIBase but is a reusable currency-bar part.
+        // Native creation preloads several owners under the cleanup root even
+        // while just one menu is visible. It is not a duplicate page.
+        var currencyParts = HomeNavigationCases.Menu();
+        string cleanToken = Token(currencyParts), cleanSignature = DailyHomeDecision.Signature(currencyParts);
+        string cleanMenuSignature = DailyHomeDecision.MenuSignature(currencyParts, policy);
+        int partId = 700;
+        foreach (string owner in new[] { "MenuUI", "ShopUI", "EventMainUI", "EventCoinExchangeUI", "MonsterHuntUI", "EventStoryUI", "CurrencyManageUI" })
+        {
+            var part = HomeNavigationCases.Surface("DebtButton", field: "$pointer/$self", id: ++partId);
+            part["Path"] = owner == "MenuUI" ? "Root/MenuUI/CurrencyLayout/debtButton:MenuUI" : "Root/SelfCleanupRootSingleton/debtButton:" + owner;
+            currencyParts["Surfaces"]!.AsArray().Add(part);
+        }
+        Check(DailyHomeDecision.Inspect(currencyParts, policy).Kind == "ready", "pooled currency-bar buttons do not block the only menu");
+        Check(Token(currencyParts) == cleanToken && DailyHomeDecision.Signature(currencyParts) == cleanSignature
+            && DailyHomeDecision.MenuSignature(currencyParts, policy) == cleanMenuSignature, "pooled currency parts cannot restart readiness or invalidate native commands");
+        var fromShop = currencyParts.DeepClone().AsObject();
+        fromShop["Surfaces"]![0]!["Type"] = "ShopUI";
+        Check(DailyHomeDecision.Inspect(fromShop, policy).Action?["ui"]?.GetValue<string>() == "ShopUI", "pooled currency parts permit normal shop return without clicking the parts");
+        currencyParts["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("MenuUI", id: 800));
+        Check(DailyHomeDecision.Inspect(currencyParts, policy).Kind == "blocked", "real duplicate menus are still rejected with currency parts present");
+        currencyParts["Surfaces"]!.AsArray().RemoveAt(currencyParts["Surfaces"]!.AsArray().Count - 1);
+        currencyParts["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("MessagePopupUI", true, "_buttonOK", 801));
+        Check(DailyHomeDecision.Inspect(currencyParts, policy).Kind == "blocked" && Token(currencyParts) != cleanToken, "currency classification never hides an unknown confirmation");
+        Check(!DailyNavigationDecision.PassiveSurface("DebtTooltip"), "opened debt detail is not silently ignored with its currency button");
         foreach (string page in new[] { "MessagePopupUI", "ShopPopupUI", "BuyFavoritePopupUI", "GachaMainUI", "MenuUI", "GameFieldDefaultUI", "MonsterHuntUI", "GuildUI", "PassUI", "MissionUI", "EquipmentMakingUI", "BattleResultUI" })
         {
             var frame = HomeNavigationCases.Frame(HomeNavigationCases.Surface(page, field: "_buttonOK"));

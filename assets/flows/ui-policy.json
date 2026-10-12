@@ -5,6 +5,7 @@
     "CharNoticeUI",
     "DetailNoticeUI",
     "CurrencyManageUI",
+    "DebtButton",
     "OverheadManageUI"
   ],
   "safe_dismiss": [

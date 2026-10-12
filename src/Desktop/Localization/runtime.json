@@ -1,4 +1,24 @@
 {
+  "message.book_record_blocked": {
+    "zh-CN": "末日之书纪录展示被其他页面遮挡或尚在战斗结算，保留现场。",
+    "zh-TW": "末日之書紀錄展示被其他頁面遮擋或尚在戰鬥結算，保留現場。",
+    "en-US": "The Last Night record screen is obstructed or battle results are still active. The current state has been preserved."
+  },
+  "message.book_record_wait": {
+    "zh-CN": "等待末日之书纪录展示结束",
+    "zh-TW": "等待末日之書紀錄展示結束",
+    "en-US": "Waiting for the Last Night record animation to finish"
+  },
+  "message.book_record_return": {
+    "zh-CN": "等待末日之书纪录展示的返回按钮",
+    "zh-TW": "等待末日之書紀錄展示的返回按鈕",
+    "en-US": "Waiting for the Last Night record screen's return button"
+  },
+  "message.book_record_close": {
+    "zh-CN": "关闭末日之书新纪录展示，继续当前日常",
+    "zh-TW": "關閉末日之書新紀錄展示，繼續目前日常",
+    "en-US": "Closing the Last Night record screen and continuing the current task"
+  },
   "message.weekly_locations_deferred": {
     "zh-CN": "部分地图或卡带暂缓，其余地点继续处理；未完成项可之后补跑。",
     "zh-TW": "部分地圖或卡帶暫緩，其餘地點繼續處理；未完成項可之後補跑。",

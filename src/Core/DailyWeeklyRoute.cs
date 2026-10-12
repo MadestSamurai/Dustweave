@@ -147,7 +147,7 @@ public sealed class DailyWeeklyRoute
                 route.Quota(await route.Evidence());
             }
             catch (DailyQuotaExhausted) { throw new DailyWeeklyCategoryStop("weekly_mainline", "吸收次数已用完，次日接续", O(("waiting_daily_reset", true))); }
-        bool needed = active.Contains("weekly_npc");
+        bool needed = active.Contains("weekly_npc") && !failures["weekly_npc"].Keys.Any(p => p.Pack == pack);
         if (npc?.Data is DailyNpcData d)
         {
             needed = needed && (d.Native["Posted"]!.AsArray().Select(N).Any(id => d.Rows.TryGetValue(id, out var row) && N(row["packId"]) == pack) || d.Current(pack) != null);
@@ -164,18 +164,15 @@ public sealed class DailyWeeklyRoute
         if (needed)
         {
             npc ??= new(route, w.Settings.Weekly.NpcHunting);
-            try
-            {
-                await npc.Prepare(pack);
-            }
-            catch (DailyNpcUnavailable e) { throw new DailyWeeklyCategoryStop("weekly_npc", e.Message); }
+            await RunNpc(() => npc.Prepare(pack));
         }
         return true;
     }
     private async Task<Dictionary<string, long[]>> Jobs()
     {
         var jobs = MapJobs();
-        if (!active.Contains("weekly_npc") && npc?.Data is DailyNpcData d)
+        bool npcDeferred = failures["weekly_npc"].Keys.Any(p => p.Pack == pack);
+        if ((!active.Contains("weekly_npc") || npcDeferred) && npc?.Data is DailyNpcData d)
         {
             foreach (long id in jobs.GetValueOrDefault("weekly_mainline", []))
                 if (d.Protects(id))
@@ -183,29 +180,39 @@ public sealed class DailyWeeklyRoute
             if (jobs.ContainsKey("weekly_mainline"))
                 jobs["weekly_mainline"] = jobs["weekly_mainline"].Where(id => !deferred.Contains((pack, id))).ToArray();
         }
-        if (active.Contains("weekly_npc") && npc?.Data != null && N(npc.Data.Native["Pack"]) == pack)
+        if (active.Contains("weekly_npc") && !npcDeferred && npc?.Data != null && N(npc.Data.Native["Pack"]) == pack)
         {
-            try
+            await RunNpc(async () =>
             {
                 if (npc.Data.Current(pack) == null && !npc.ExhaustedPacks.Contains(pack))
                     await npc.Prepare(pack);
                 jobs["weekly_npc"] = await npc.Targets(pack);
-            }
-            catch (DailyNpcUnavailable e) { throw new DailyWeeklyCategoryStop("weekly_npc", e.Message); }
+            });
         }
         return jobs;
     }
     public static readonly string[] StageOrder = ["weekly_mainline", "weekly_npc", "weekly_steal"];
     private bool CanRun(string stage, long map) => stage != "weekly_mainline" || npc?.Data == null || !npc.Data.Protects(map);
+    private async Task RunNpc(Func<Task> action)
+    {
+        try { await action(); }
+        catch (Exception e) when (e is DailyNpcUnavailable or DailyTravelBlocked || e is DailyStepException step && DailyWeeklyNpc.RecoverableRejection(step))
+        {
+            // Only bounded quest/navigation failures are local. Identity changes,
+            // unknown dispatched operations and unrelated confirmations still stop.
+            await Guard();
+            await DailyWeeklyNpcBoard.Close(w);
+            await route.FieldReady(15);
+            await w.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
+            npc!.ExhaustedPacks.Add(pack);
+            Defer("weekly_npc", N(Map(await route.Evidence())["id"]), e.Message);
+        }
+    }
     private async Task Perform(string stage, long map)
     {
         if (stage == "weekly_npc")
         {
-            try
-            {
-                await npc!.AtMap(pack, map);
-            }
-            catch (DailyNpcUnavailable e) { throw new DailyWeeklyCategoryStop(stage, e.Message); }
+            await RunNpc(async () => { await npc!.AtMap(pack, map); });
             return;
         }
         for (int attempt = 0; attempt < 2; attempt++)
@@ -238,8 +245,8 @@ public sealed class DailyWeeklyRoute
             if (!MapJobs().GetValueOrDefault(stage, []).Contains(map))
                 break;
         }
-        if (npc != null && active.Contains("weekly_npc"))
-            await npc.Query(pack);
+        if (npc != null && active.Contains("weekly_npc") && !failures["weekly_npc"].Keys.Any(p => p.Pack == pack))
+            await RunNpc(async () => { await npc.Query(pack); });
     }
     private void Emit(string stage, string detail, bool running)
     {
@@ -298,6 +305,7 @@ public sealed class DailyWeeklyRoute
         week = S(R(evidence, "mainline.reset", "GetWeeklyResetTime().Ticks"));
         Require(week.Length > 0, "缺少周周期");
         var packs = route.Catalog.AvailablePacks(evidence);
+        if (active.Contains("weekly_npc")) npc = new(route, w.Settings.Weekly.NpcHunting) { AvailablePacks = packs };
         foreach (long p in packs)
         {
             if (active.Contains("weekly_mainline")) known["weekly_mainline"].UnionWith(route.Catalog.Maps(p).Select(m => (p, m)));
@@ -320,8 +328,11 @@ public sealed class DailyWeeklyRoute
                 r[pair.Key] = Copy(pair.Value);
             result[e.Stage] = r;
         }
-        foreach (long current in packs)
+        var pendingPacks = packs.ToList();
+        while (pendingPacks.Count > 0)
         {
+            long current = npc != null && active.Contains("weekly_npc") ? npc.OrderPacks(pendingPacks)[0] : pendingPacks[0];
+            pendingPacks.Remove(current);
             await Guard();
             if (active.Count == 0)
                 break;
@@ -380,12 +391,18 @@ public sealed class DailyWeeklyRoute
                 }
                 if (!finished) throw new DailyTravelBlocked("共享周路线超过恢复次数，已保留分项进度");
                 await FinishPack();
+                // A lower-paying quest in this pack can wait while another pack
+                // offers more gold. Revisit only for NPC work; completed collection
+                // and theft retain their server-backed per-map progress.
+                if (active.Contains("weekly_npc") && npc?.HasOffers(current) == true && !failures["weekly_npc"].Keys.Any(p => p.Pack == current))
+                    pendingPacks.Add(current);
             }
             catch (DailyTravelBlocked e)
             {
                 // Only a bounded, non-consuming navigation failure is local.
                 // Identity loss, uncertain talent receipts and cancellation propagate.
                 await Guard();
+                npc?.ExhaustedPacks.Add(pack);
                 DeferPack(e.Message);
             }
             catch (DailyStepException e) when (e.Kind == "deferred" && e.DefinitelyNotDispatched)
@@ -393,6 +410,7 @@ public sealed class DailyWeeklyRoute
                 var proof = await w.Driver.TakeCollectionDeferralAsync();
                 if (proof == null || N(proof["pack"]) != pack || S(proof["weekly_reset"]) != week) throw;
                 await Guard();
+                npc?.ExhaustedPacks.Add(pack);
                 DeferPack(S(proof["detail"]), proof);
             }
         }

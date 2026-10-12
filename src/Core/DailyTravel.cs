@@ -19,6 +19,12 @@ public static class DailyTravel
         for (int attempt = 0; attempt < 5; attempt++)
         {
             var action = DailyHomeDecision.BackgroundErrorAction(frame, Policy) ?? DailyNavigationDecision.TalentAction(frame, Policy) ?? DailyNavigationDecision.Notice(frame, Policy, out _) ?? DailyNavigationDecision.StoryAction(frame, Policy) ?? DailyNavigationDecision.WeeklyResult(frame, Policy);
+            if (action == null && DailyHomeDecision.BookRecordPresentation(frame, Policy) is { } record)
+            {
+                if (record.Kind == "blocked") throw new StageHostException("adapter", record.Reason);
+                if (record.Kind == "waiting") { await w.Delay(150); return true; }
+                action = record.Action;
+            }
             if (action == null) return changed;
             try { await w.Driver.NavigationAsync(action); return true; }
             catch (StageHostException e) when (e.Kind == "navigation_changed")

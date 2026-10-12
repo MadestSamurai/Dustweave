@@ -22,6 +22,18 @@ static class HomeNavigationCases
             cases.Add(label);
         }
         var policy = DailyNavigationPolicy.Load();
+        var record = Surface("TotalWarNewcordPopupUI", false, "_objBackButton");
+        var recordPlan = DailyHomeDecision.Inspect(Frame(record, Surface("CurrencyManageUI"), Surface("NoticeUI")), policy);
+        Check(recordPlan.Action?["field"]?.GetValue<string>() == "_objBackButton" && recordPlan.Action?["absent"]?.GetValue<string>() == "TotalWarNewcordPopupUI", "non-popup Book record presentation closes its native return button");
+        record["InputReady"] = false;
+        Check(DailyHomeDecision.Inspect(Frame(record), policy).Kind == "waiting", "Book record animation waits without discarding the route");
+        record["InputReady"] = true;
+        record["Targets"]![0]!["Enabled"] = false;
+        Check(DailyHomeDecision.Inspect(Frame(record), policy).Kind == "waiting", "Book record disabled return waits");
+        record["Targets"]![0]!["Enabled"] = true;
+        Check(DailyHomeDecision.Inspect(Frame(record, record), policy).Kind == "blocked", "duplicate Book record screens never select an arbitrary target");
+        Check(DailyHomeDecision.Inspect(Frame(record, Surface("MessagePopupUI", true, "_buttonOK", 99)), policy).Kind == "blocked", "Book record cleanup preserves an unknown modal");
+        Check(DailyHomeDecision.Inspect(Frame(record, Surface("BattleUI_TotalWar")), policy).Kind == "blocked", "Book record cleanup cannot exit an active Book battle");
         var pages = new Dictionary<string, string?>(DailyNavigationDecision.Closeable) { ["MyRoomUI"] = null, ["GuildUI"] = null, ["EventUI"] = null, ["ShopUI"] = null, ["EquipmentMakingUI"] = null, ["EquipmentUpgradePopupUI"] = null, ["SichuanStagePopupUI"] = null, ["HuntDispatchPopupUI"] = null, ["TarosTacticsBingoUI"] = "_objBackButton", ["EventBattleUI"] = null, ["EventMainUI"] = null, ["TarosTacticsSeasonFinishUI"] = "_btnBack", ["PVPClassUpUI"] = "_objCancelButton" };
         foreach (var page in pages)
         {

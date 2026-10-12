@@ -230,6 +230,16 @@ public sealed class DailyPreferencesPanel : UserControl
         tradeButton.Click += (_, _) => { if (account.Length == 0 || !Save()) return; var trade = new Window { Title = L.Translate("跑商计划"), Width = 1060, Height = 780, MinWidth = 760, MinHeight = 560, Owner = Window.GetWindow(this), Content = new TradePlanPanel(dataRoot, account, allowGame), WindowStartupLocation = WindowStartupLocation.CenterOwner }; DailyDialogs.Prepare(trade); trade.Show(); };
         L.Bind(tradeButton, FrameworkElement.ToolTipProperty, "prefs.trade_preview_help");
         section.Children.Add(tradeButton);
+        var bargainButton = LocalButton("bargain.title");
+        bargainButton.HorizontalAlignment = HorizontalAlignment.Left;
+        bargainButton.Margin = new(0, 8, 0, 0);
+        bargainButton.Click += (_, _) =>
+        {
+            if (account.Length == 0 || !SavePending()) return;
+            var dialog = new DailyBargainWindow(dataRoot, account, allowGame) { Owner = Window.GetWindow(this) };
+            DailyDialogs.ShowModal(dialog);
+        };
+        section.Children.Add(bargainButton);
         Stage(events, "活动游戏与领奖", "prefs.events_hint");
         section.Children.Add(eventMissions);
         section.Children.Add(quiz);

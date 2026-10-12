@@ -212,7 +212,7 @@ namespace BD2Daily.Live {
      if(reason.Length>0){r.State="rejected";r.Error=reason;r.MayHaveDispatched=false;Save(r);return;}
     }
     if(LivePolicy.WeeklyNpcKind(c.Kind)){
-     try{reason=WeeklyNpcNative.Preflight(c);}catch(Exception ex){reason="npc_preflight_unavailable:"+ex.GetType().Name;}
+     try{reason=WeeklyNpcNative.Preflight(c,uis[c.SurfaceId]);}catch(Exception ex){reason="npc_preflight_unavailable:"+ex.GetType().Name;}
      if(reason.Length>0){r.State="rejected";r.Error=reason;r.MayHaveDispatched=false;Save(r);return;}
     }
     r.MayHaveDispatched=true;r.State="dispatching";Save(r);

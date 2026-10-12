@@ -32,7 +32,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     $current=@{};foreach($row in ($InputsJson|ConvertFrom-Json)){$current[$row.path.Replace('\','/')]=[string]$row.hash}
     $changed=@(@($old.Keys)+@($current.Keys)|Sort-Object -Unique|Where-Object {$old[$_] -ne $current[$_]})
     $allowed=@(
-     '^(AGENTS\.md|Directory\.Build\.props|source-manifest\.json|test\.ps1|package\.ps1)$',
+     '^(AGENTS\.md|CHANGELOG\.md|Directory\.Build\.props|source-manifest\.json|test\.ps1|package\.ps1)$',
      '^docs/', '^scripts/validation-plan\.ps1$', '^src/Accounts/[^/]+\.cs$',
      '^src/Core/(AccountSessions|DailyCoordinator|DailyLogin[^/]*|DailySandbox[^/]*|DailyParallel[^/]*|DailyAccountIdentity|DailyAccountOrder)\.cs$',
      '^src/Desktop/(DemoEnvironment|MainWindow\.(Accounts|Sandbox|Parallel)(\.Smoke)?|DailyParallelPanel|DailyParallelWorker)\.cs$',
@@ -44,7 +44,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     ) -join '|'
     $outside=@($changed|Where-Object {$_ -notmatch $allowed})
     $selectedScope='Accounts'
-    $navigation='^src/Connection/(Bridge|LiveContracts|SelfTest)\.cs$|^src/Core/DailyHomeNavigation\.cs$|^tests/Dustweave.Tests/Cases/HomeNavigationCases\.cs$'
+    $navigation='^src/Connection/(Bridge|LiveContracts|SelfTest)\.cs$|^src/Core/(DailyHomeNavigation|DailyTravel)\.cs$|^tests/Dustweave.Tests/Cases/(HomeNavigation|TravelTransition)Cases\.cs$'
     if($outside.Count -and $Scope -ne 'Accounts' -and !@($outside|Where-Object {$_ -notmatch $navigation}).Count){$selectedScope='Navigation';$outside=@()}
     $rewards='^assets/specs/(policy|daily)-evidence-spec\.json$|^src/Connection/(EvidenceBindings|TapManifest|RewardNative)\.cs$|^src/Connection/live-binding-contract\.json$|^src/Shared/DailyBridgeVersion\.cs$|^src/Core/(DailyMissions|DailyPreferences|DailyEventRewards|DailyHunting)\.cs$|^src/Desktop/DailyPreferencesPanel\.cs$|^tests/Dustweave.Tests/Cases/(LiveBinding|Workflow|Preference)Cases\.cs$'
     if($outside.Count -and $Scope -notin @('Accounts','Navigation') -and !@($outside|Where-Object {$_ -notmatch $navigation -and $_ -notmatch $rewards}).Count){$selectedScope='Rewards';$outside=@()}
@@ -68,7 +68,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
       $groups=@('ProductIdentity','Startup','LoginIdentity','Sandbox','Parallel','ParallelProcess','AccountOrder','AccountIdentity','AccountRestart','QueueSession','QueuePeriod')
       if($selectedScope -eq 'Trading'){$groups=@('ProductIdentity','TradeOptimizer','TradeData','TradeReplan','TradeQuote','TradeResume')}
       if($selectedScope -eq 'Weekly'){$groups=@('ProductIdentity','WeeklyIsolation','WeeklyGoal','CollectionReadiness','FieldTalent','WeeklyNpcBoard','WeeklyNpcQuery','CommandDriver','ManagedInputs','QueueSession','UserText')}
-      if($selectedScope -in @('Navigation','Rewards')){$groups+=@('HomeNavigation','HomeRecovery','CommandDriver','ManagedInputs','PassiveUi')}
+      if($selectedScope -in @('Navigation','Rewards')){$groups+=@('HomeNavigation','HomeRecovery','TravelTransition','WeeklyGoal','CollectionReadiness','CafeteriaRecovery','CommandDriver','ManagedInputs','PassiveUi','UserText')}
       if($selectedScope -eq 'Rewards'){$groups+=@('LiveBindings','Workflow','Preference','RuleData','EvidenceReadiness','UserText')}
       return [ordered]@{schema=1;scope=$selectedScope;buildSettingsHash=$settings;baseline=$BaselineDirectory;baselineInputsHash=(Get-FileHash -LiteralPath $inputsPath).Hash;groups=$groups;changed=$changed;reason='Mapped host changes; unchanged tool validation reused from a completed full baseline.'}
      }

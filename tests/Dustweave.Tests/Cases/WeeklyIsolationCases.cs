@@ -15,6 +15,10 @@ static class WeeklyIsolationCases
         public bool Pending = true, Restricted, Reachable = true, MapOnePending = true;
         public readonly List<long> Queries = [], Visits = [];
         public Action? BeforeQuery;
+        public bool NpcEnabled, RejectNpc, HuntingOffer, QueryFailsFirst;
+        public readonly List<long> Accepted = [], Cleared = [];
+        readonly Dictionary<long, long> npcActive = [];
+        string npcQuery = "prior"; long popup; bool navigating;
         JsonObject network = new();
         public Fixture(string root)
         {
@@ -27,9 +31,25 @@ static class WeeklyIsolationCases
                 switch (S(c["Kind"]))
                 {
                     case "collection_query":
+                    case "collection_query_steal":
                         BeforeQuery?.Invoke();
                         Queries.Add(Pack);
                         network = Network(c);
+                        break;
+                    case "weekly_npc_query": npcQuery = S(c["Id"]); break;
+                    case "weekly_npc_nav": navigating = true; break;
+                    case "mainline_cancel_nav": navigating = false; break;
+                    case "weekly_npc_board_nav": break;
+                    case "weekly_npc_board_stop": break;
+                    case "weekly_npc_board_open": H.Page("QuestBoardUI"); break;
+                    case "weekly_npc_board_select": popup = N(c["Value"]); H.Page("QuestPopupUI"); break;
+                    case "weekly_npc_accept":
+                        Accepted.Add(popup); npcActive[Pack] = popup; popup = 0; H.Page("QuestBoardUI"); break;
+                    case "weekly_npc_interact":
+                        if (RejectNpc && Pack == 1)
+                            H.Box.Values["live:receipts~" + S(c["Id"]) + ".json"] = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(
+                                O(("Command", c), ("State", "rejected"), ("Error", "npc_lease_expired"), ("MayHaveDispatched", false)));
+                        else { Cleared.Add(npcActive[Pack]); npcActive.Remove(Pack); }
                         break;
                     case "click":
                         if (N(c["TargetId"]) != 10 || S(H.Frame["UiToken"]) != "GameFieldDefaultUI") throw new Exception("Unexpected click: " + c);
@@ -65,7 +85,7 @@ static class WeeklyIsolationCases
             }
             return O(("State", "ready"), ("Error", ""), ("Query", command["Id"]), ("Pack", Pack),
                 ("Maps", command["Items"]), ("Week", 500), ("Now", 100), ("Rewards", "[]"), ("Monsters", "[]"),
-                ("Drops", targets), ("Targets", new JsonArray()));
+                ("Drops", targets), ("Targets", new JsonArray()), ("StealReady", true), ("Steals", "[]"), ("StealTargets", new JsonArray()));
         }
         JsonObject[] Readings()
         {
@@ -91,7 +111,31 @@ static class WeeklyIsolationCases
                 gate["InstanceId"] = 2;
                 rows.Add(gate);
             }
+            if (NpcEnabled) rows.Add(WorkflowCases.Reading("weekly_npc.native", ("$self", NpcState())));
             return rows.ToArray();
+        }
+        JsonObject NpcState()
+        {
+            JsonObject Quest(long id, long pack, long gold, int kind = 2) => O(("id", id), ("packId", pack), ("mapId", pack == 1 ? 1 : 21),
+                ("conditionType", kind), ("conditionCount", 1), ("magicValue", new[] { 100 }),
+                ("rewardType", new[] { 4 }), ("rewardId", new[] { 0 }), ("rewardCount", new[] { gold }));
+            var quests = new[] { Quest(10, 1, 100), Quest(20, 1, 20), Quest(30, 2, 90), Quest(40, 2, 80) }.ToList();
+            if (HuntingOffer) quests.Add(Quest(50, 2, 1000, 1));
+            long current = npcActive.GetValueOrDefault(Pack);
+            return O(("State", QueryFailsFirst && Pack == 1 ? "failed" : "ready"), ("Error", ""), ("Query", npcQuery), ("Pack", Pack), ("Map", MapId), ("Week", 500),
+                ("Limit", 3), ("Remaining", 3 - Cleared.Count - npcActive.Count), ("Completed", Cleared.Count), ("ActionsSupported", true), ("CanAccept", true),
+                ("Rows", Array(quests).ToJsonString()), ("Active", Array(npcActive.Values.Select(id => O(("id", id), ("objectId", new JsonArray())))).ToJsonString()),
+                ("Posted", Array(quests.Select(q => q["id"]!))), ("Cleared", Cleared.ToArray()), ("Wild", new JsonArray()),
+                ("Navigating", navigating), ("CarryId", 0), ("CarryObjects", new JsonArray()),
+                ("Objects", current == 0 ? new JsonArray() : new JsonArray(O(("Quest", current), ("Instance", 300), ("Id", 100), ("Near", true), ("Ready", true)))),
+                ("Boards", new JsonArray(O(("Map", MapId), ("Near", true), ("Instance", 71)))),
+                ("Board", O(("Ui", S(H.Frame["UiToken"]) == "QuestBoardUI" ? 2 : 0), ("VisibleQuests", quests.Select(q => N(q["id"])).ToArray()),
+                    ("PopupQuest", popup), ("PopupCanAccept", popup != 0))));
+        }
+        public Task<JsonObject> RunNpc()
+        {
+            NpcEnabled = true; H.Workflow.Settings.Weekly.Npc = true; H.Workflow.Settings.Weekly.Steal = true;
+            return new DailyWeeklyRoute(H.Workflow).Run(["weekly_mainline", "weekly_npc", "weekly_steal"]);
         }
         public Task<JsonObject> Run() => new DailyWeeklyRoute(H.Workflow).Run(["weekly_mainline"]);
         public void Dispose() => H.Dispose();
@@ -99,6 +143,28 @@ static class WeeklyIsolationCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool yes, string message) { if (!yes) throw new Exception(message); checks.Add(message); }
+        using (var f = new Fixture(Path.Combine(root, "weekly-npc-local-failure")) { RejectNpc = true })
+        {
+            var r = await f.RunNpc(); var npc = r["stages"]!["weekly_npc"]!;
+            Check(f.Visits.Contains(2) && f.Accepted.SequenceEqual([10L, 30L, 40L]), "stalled NPC pickup continues collection and NPC quests in another cartridge");
+            Check(S(npc["state"]) == "partial" && npc["deferred_locations"]!.AsArray().Count == 1 && S(r["stages"]!["weekly_steal"]!["state"]) == "completed",
+                "NPC deferral reports unfinished work independently from completed theft");
+            Check(f.H.Box.Commands.Count(c => S(c["Kind"]) == "weekly_npc_interact" && N(c["Value"]) == 10) == 3,
+                "merged weekly route never restarts an exhausted NPC recovery loop");
+        }
+        foreach (bool hunting in new[] { false, true })
+        using (var f = new Fixture(Path.Combine(root, "weekly-npc-reward-order-" + hunting)) { Pending = false, HuntingOffer = hunting })
+        {
+            var r = await f.RunNpc();
+            Check(f.Accepted.SequenceEqual([10L, 30L, 40L]) && S(r["state"]) == "completed", "global reward ordering crosses cartridges before accepting a cheaper quest; hunting offer=" + hunting);
+            Check(f.H.Box.Commands.Count(c => S(c["Kind"]) == "weekly_npc_accept") == 3, "reward reranking respects three-quest quota; hunting offer=" + hunting);
+        }
+        using (var f = new Fixture(Path.Combine(root, "weekly-npc-read-failure")) { Pending = false, QueryFailsFirst = true })
+        {
+            var r = await f.RunNpc();
+            Check(f.Accepted.SequenceEqual([30L, 40L]) && S(r["stages"]!["weekly_mainline"]!["state"]) == "completed", "unavailable read-only NPC query defers its cartridge and continues other work");
+            Check(r["stages"]!["weekly_npc"]!["deferred_locations"]!.AsArray().Count == 1, "read-only query failure remains visible as unfinished NPC work");
+        }
         using (var f = new Fixture(Path.Combine(root, "weekly-map-isolation")))
         {
             var r = await f.Run(); var stage = r["stages"]!["weekly_mainline"]!;

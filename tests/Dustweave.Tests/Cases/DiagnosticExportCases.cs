@@ -94,12 +94,13 @@ internal static class DiagnosticExportCases
         for(int i=0;i<2005;i++)File.WriteAllText(Path.Combine(pressure,"live","steps","sample",i+".json"),"{}");
         File.WriteAllText(Path.Combine(pressure,"ui-operation-error.json"),"{\"error\":\"critical evidence\"}");File.SetLastWriteTimeUtc(Path.Combine(pressure,"ui-operation-error.json"),DateTime.UtcNow.AddDays(-1));
         string[] important = ["live/managed-business/pending.json", "live/business/legacy.json", "live/trade-quote-reads/failed.json", "trade/diagnostics/capture.json", "trade/capture/sample.evidence.json", "trade/executions/account/day/execution.json",
-            "live/travel-diagnostics/failed.json", "live/route-atlas/account/2002.json", "live/server-collection/account/week/2002.json"];
+            "live/travel-diagnostics/failed.json", "live/route-atlas/account/2002.json", "live/server-collection/account/week/2002.json",
+            "live/weekly-npc-recovery/failed.json", "live/weekly-npc-queries/failed.json"];
         foreach (var relative in important) { string path=Path.Combine(pressure,relative); Directory.CreateDirectory(Path.GetDirectoryName(path)!); File.WriteAllText(path,"{\"error\":\"native stock failure\",\"token\":\"hidden-trade-secret\"}"); File.SetLastWriteTimeUtc(path,DateTime.UtcNow.AddDays(-1)); }
         var pressured=await DailyDiagnosticExport.CreateAsync(pressure,Path.Combine(output,"pressure.zip"),"","fixture",additionalSources:new Dictionary<string,string>{{"tool-fixture",tool}});
         using(var archive=ZipFile.OpenRead(pressured.Path))Check(pressured.Files==2000&&pressured.Skipped>0&&archive.GetEntry("logs/main/ui-operation-error.json")!=null&&archive.GetEntry("logs/tool-fixture/runtime.log")!=null,"old critical evidence and other tool logs survive a large step archive");
         using(var archive=ZipFile.OpenRead(pressured.Path)) {
-            Check(important.All(p=>archive.GetEntry("logs/main/"+p)!=null),"business journals, trade and route/collection evidence survive newer step-file pressure");
+            Check(important.All(p=>archive.GetEntry("logs/main/"+p)!=null),"business journals, trade, NPC and route/collection evidence survive newer step-file pressure");
             using var travelManifest=JsonDocument.Parse(new StreamReader(archive.GetEntry("manifest.json")!.Open()).ReadToEnd());
             var travelCoverage=travelManifest.RootElement.GetProperty("coverage")[0];
             Check(travelCoverage.GetProperty("travelDiagnostics").GetBoolean()&&travelCoverage.GetProperty("routeAtlas").GetBoolean()&&travelCoverage.GetProperty("serverCollection").GetBoolean(),"route evidence coverage is visible in diagnostic export");
