@@ -24,11 +24,18 @@ internal static class UpdateLayoutCases
         Check("runtime changes require full manual package", DailyUpdates.ManualUpdateReason(feed,releases[1] with { RuntimeVersion="8.0.31" },installed)=="updates.manual_runtime");
         Check("oversized delta cannot trigger background full download", DailyUpdates.ManualUpdateReason(feed,releases[1] with { Deltas=[releases[1].Deltas![0] with { Bytes=DailyUpdates.MaxAutomaticDelta+1 }] },installed)=="updates.manual_size");
         Check("missing direct base never chains intermediate downloads",DailyUpdates.ManualUpdateReason(feed,releases[1] with { Deltas=[] },installed)=="updates.manual_delta");
-        Check("split layout allows only package data, not arbitrary executables",DailyUpdates.AllowedFile("Dustweave.Core.dll") && DailyUpdates.AllowedFile("support/Dustweave.Updater.exe") && !DailyUpdates.AllowedFile("other.exe") && !DailyUpdates.AllowedFile("plugins/private.dll"));
+        Check("split layout allows only package data, not arbitrary executables",DailyUpdates.AllowedFile("app/Dustweave.Core.dll") && DailyUpdates.AllowedFile("support/Dustweave.Updater.exe") && !DailyUpdates.AllowedFile("other.exe") && !DailyUpdates.AllowedFile("plugins/private.dll"));
         string folder=Path.Combine(root,"layout2");Directory.CreateDirectory(folder);
+        Check("nested distribution limits payloads and keeps executable at root",DailyUpdates.AllowedFile("app/Dustweave.Core.dll") && DailyUpdates.AllowedFile("app/support/Dustweave.Updater.exe") && !DailyUpdates.AllowedFile("app/Dustweave.exe") && !DailyUpdates.AllowedFile("app/plugins/private.dll") && !DailyUpdates.AllowedFile("app/app/Dustweave.Core.dll") && !DailyUpdates.AllowedFile("app/../outside.dll"));
+        string packageRoot=Path.Combine(folder,"安装 folder"), payloadRoot=Path.Combine(packageRoot,"app");Directory.CreateDirectory(payloadRoot);
+        File.WriteAllBytes(Path.Combine(packageRoot,"Dustweave.exe"),[0]);
+        File.WriteAllText(Path.Combine(payloadRoot,DailyTools.Marker),"{\"protocol\":1}");
+        Check("nested utilities resolve from installation root",DailyTools.PackageDirectory(packageRoot)==payloadRoot);
+        Check("nested utilities keep a single executable identity",DailyTools.Unified(payloadRoot) && DailyTools.StartInfo(payloadRoot,"live").FileName==Path.Combine(packageRoot,"Dustweave.exe") && DailyTools.StartInfo(packageRoot,"exporter").FileName==Path.Combine(packageRoot,"Dustweave.exe"));
+        Check("nested evidence paths remain under app",DailyTools.EvidenceSpec(packageRoot,"policy.json")==Path.Combine(payloadRoot,"connection/specs","policy.json"));
         byte[] original = new byte[512000]; new Random(7391).NextBytes(original);
-        var old = new Dictionary<string,byte[]> { ["Dustweave.exe"]=[1], ["Dustweave.Core.dll"]=original, ["coreclr.dll"]=original, ["docs/removed.md"]=[4] };
-        var next = new Dictionary<string,byte[]> { ["Dustweave.exe"]=[1], ["Dustweave.Core.dll"]=original[..13001].Concat(new byte[]{9,2,3}).Concat(original[13001..]).ToArray(), ["coreclr.dll"]=original, ["docs/new.md"]=[8] };
+        var old = new Dictionary<string,byte[]> { ["Dustweave.exe"]=[1], ["app/Dustweave.Core.dll"]=original, ["app/coreclr.dll"]=original, ["docs/removed.md"]=[4] };
+        var next = new Dictionary<string,byte[]> { ["Dustweave.exe"]=[1], ["app/Dustweave.Core.dll"]=original[..13001].Concat(new byte[]{9,2,3}).Concat(original[13001..]).ToArray(), ["app/coreclr.dll"]=original, ["docs/new.md"]=[8] };
         string Zip(string version, Dictionary<string,byte[]> files, int layout=2)
         {
             string path=Path.Combine(folder,version+".zip");
@@ -45,16 +52,16 @@ internal static class UpdateLayoutCases
         var manifest=DailyUpdateDeltaPackage.Read(patch,release,asset,delta);
         string stage=Path.Combine(folder,"stage");
         var names=DailyUpdateDeltaPackage.Extract(patch,installation,stage,release,asset,delta,copyUnchanged:false);
-        Check("sparse reconstruction writes changed files only",!File.Exists(Path.Combine(stage,"coreclr.dll")) && File.ReadAllBytes(Path.Combine(stage,"Dustweave.Core.dll")).SequenceEqual(next["Dustweave.Core.dll"]));
+        Check("sparse reconstruction writes changed files only",!File.Exists(Path.Combine(stage,"app/coreclr.dll")) && File.ReadAllBytes(Path.Combine(stage,"app/Dustweave.Core.dll")).SequenceEqual(next["app/Dustweave.Core.dll"]));
         var retained=manifest.Files.Where(f=>f.Mode=="copy").ToDictionary(f=>f.Name,f=>f.Sha256);
-        using(var runtimeLock=new FileStream(Path.Combine(installation,"coreclr.dll"),FileMode.Open,FileAccess.Read,FileShare.Read))
+        using(var runtimeLock=new FileStream(Path.Combine(installation,"app/coreclr.dll"),FileMode.Open,FileAccess.Read,FileShare.Read))
         {
             var journal=DailyUpdateTransaction.Prepare(stage,installation,Path.Combine(folder,"backup"),names,retained);
-            Check("locked unchanged runtime is not backed up or replaced",journal.Files.All(f=>f.Name is not ("coreclr.dll" or "Dustweave.exe")));
+            Check("locked unchanged runtime is not backed up or replaced",journal.Files.All(f=>f.Name is not ("app/coreclr.dll" or "Dustweave.exe")));
             journal=DailyUpdateTransaction.Apply(journal);
-            Check("split assembly update commits changed business files",File.ReadAllBytes(Path.Combine(installation,"Dustweave.Core.dll")).SequenceEqual(next["Dustweave.Core.dll"]));
+            Check("split assembly update commits changed business files",File.ReadAllBytes(Path.Combine(installation,"app/Dustweave.Core.dll")).SequenceEqual(next["app/Dustweave.Core.dll"]));
             DailyUpdateTransaction.Restore(journal);
-            Check("split assembly rollback restores deleted and replaced files",File.ReadAllBytes(Path.Combine(installation,"Dustweave.Core.dll")).SequenceEqual(original) && File.Exists(Path.Combine(installation,"docs/removed.md")) && !File.Exists(Path.Combine(installation,"docs/new.md")));
+            Check("split assembly rollback restores deleted and replaced files",File.ReadAllBytes(Path.Combine(installation,"app/Dustweave.Core.dll")).SequenceEqual(original) && File.Exists(Path.Combine(installation,"docs/removed.md")) && !File.Exists(Path.Combine(installation,"docs/new.md")));
         }
         var signedFeed=new DailyUpdateFeed(3,"Dustweave","stable",[release,Release(0) with {Deltas=[]}]);
         using var key=ECDsa.Create(ECCurve.NamedCurves.nistP256);
@@ -64,7 +71,7 @@ internal static class UpdateLayoutCases
         try { await new DailyUpdateTransport(trust).DownloadAsync(client,new(signedFeed,signed,"test"),release.Version,"Lite",Path.Combine(folder,"download"),null,default,installation); throw new Exception("Missing patch accepted"); }
         catch(InvalidDataException e){Check("new layout missing patch reports manual recovery",e.Message=="updates.manual_delta");}
         Check("new layout never requests full archive on delta failure",handler.Paths.Count>0 && handler.Paths.All(p=>p.EndsWith(".delta.zip")));
-        File.WriteAllBytes(Path.Combine(installation,"coreclr.dll"),[0]);
+        File.WriteAllBytes(Path.Combine(installation,"app/coreclr.dll"),[0]);
         Reject("retained file mutation between extraction and prepare is rejected",()=>DailyUpdateTransaction.Prepare(stage,installation,Path.Combine(folder,"mutated-backup"),names,retained));
     }
     private sealed class Missing : HttpMessageHandler

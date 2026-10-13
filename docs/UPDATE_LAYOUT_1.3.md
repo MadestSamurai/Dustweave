@@ -4,6 +4,12 @@ Status: released and deployed on 2026-10-13. See [the deployment receipt](releas
 
 ## Package layout
 
+### 1.3.1 directory correction
+
+The initial 1.3.0 release was withdrawn because its flat runtime directory obscured the launch entry. Starting with 1.3.1, the installation root contains `Dustweave.exe`, the `app` directory, the two readme files, the license and the update inventory. The .NET apphost embeds the relative path `app/Dustweave.Launcher.dll`; Portable locates its private runtime there without depending on a globally installed runtime. All payload resources, flows, tools and the independent recovery helper live below `app`.
+
+Application resources use the managed application directory, while update transactions and the executable identity use the installation root. Utility children still launch the root `Dustweave.exe`; plugin selection and user-data paths are unchanged. This correction changes frozen bootstrap paths, so 1.3.0 cannot apply a compatible direct delta: its updater prompts for the complete 1.3.1 download. The v2 feed advances to a new version rather than replacing cached 1.3.0 files. Future deltas between matching nested layouts retain the small-update policy.
+
 Both flavors are complete directories. `Dustweave.exe` is a stable launcher; `Dustweave.dll` contains the WPF application. Tool assemblies and dependencies remain separate. Public names, account storage, process identity, control locks and IPC ownership are unchanged. The `support` directory holds an independent updater. Large resources live in `resources/shared/<SHA256>.bin`; owning assemblies embed small indexes. Identical Harmony and HiGHS payloads have one shared copy. Runtime-compiled game components still receive their original embedded dependencies.
 
 Portable pins its app-local .NET desktop runtime to 8.0.30. Its independent updater carries a fixed runtime so it can restore a damaged installation. Lite uses an installed .NET 8 desktop runtime and has a small framework-dependent updater; its minimum framework is 8.0.0 with normal patch roll-forward. The package compatibility identity remains 8.0.30 for both flavors. Pinning makes builds reproducible; it is not a promise to ignore future runtime security fixes.

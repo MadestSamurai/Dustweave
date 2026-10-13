@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-13T22:17:09.2998027+08:00",
+  "generatedUtc": "2026-10-13T22:51:16.4465596+08:00",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -250,7 +250,7 @@
     },
     {
       "path": "Directory.Build.props",
-      "sha256": "c65b92226a9dde3245ec5a259ad8ad57d67b293df830262d731eca79949201d1",
+      "sha256": "b3c36b7559fcb67245563af4fb25befeb2794a5a018945dcd5c6a048eec40c31",
       "reasons": [
         "build input"
       ],
@@ -407,7 +407,7 @@
     },
     {
       "path": "scripts/publish-layout.ps1",
-      "sha256": "3db74dd4bfb9c47f92203c15e4fe6bad62f3f322921be0580510283d171f9638",
+      "sha256": "6397ca4c90de86aa2f10e1d3562a4d0c25d151ab53afef9ffc28c680030c330b",
       "bytes": 4255,
       "reasons": [
         "repository build or verification entry"
@@ -415,7 +415,7 @@
     },
     {
       "path": "scripts/test-layout-update.ps1",
-      "sha256": "7c7361b85e4fadeb785564bc1d9f2e675d133d3ea47e13e131c8dabe4055e9b2",
+      "sha256": "f670ceed04c1c4973394e88dabc3897e89abff5e34fff27cd0bce6e9ef87dce2",
       "bytes": 12713,
       "reasons": [
         "repository build or verification entry"
@@ -1564,7 +1564,7 @@
     },
     {
       "path": "src/Core/DailyPlugin.cs",
-      "sha256": "480b2657586bf2557f6545f20b430f5f1ad5d4133d819a239f3a34ce481dd181",
+      "sha256": "53d7377d4d086655461874d750f7a335812a327b769bb791f05c948002042aa3",
       "reasons": [
         "build input"
       ],
@@ -1812,7 +1812,7 @@
     },
     {
       "path": "src/Core/DailyTools.cs",
-      "sha256": "3b71c9dc451b939e9684258c6570b280cc10f600523bcd29e4844f0e4503078e",
+      "sha256": "95ff310cbf3c15a0893e219553882bdd36d5324a724501df02e2c5043b760cb8",
       "reasons": [
         "build input"
       ],
@@ -1998,7 +1998,7 @@
       "reasons": [
         "build input"
       ],
-      "sha256": "fedf04c9745924f85e42df876878d85e9a31207a7b4eadcf8cf7ed2ba87965dd",
+      "sha256": "2c519dfa3a0d8514769d14c463e0346cb70152d68f258f6bfe059768758ddaea",
       "bytes": 1630,
       "path": "src/Core/DailyUpdateHost.cs"
     },
@@ -2012,7 +2012,7 @@
     },
     {
       "path": "src/Core/DailyUpdates.cs",
-      "sha256": "316f08c65ed473fa0b7f63dd42daec542e5e2a66dd20ee33253163c18ec7ae0f",
+      "sha256": "3b3418ce4fcb4bf7d8a00ea26415f92a71724a543706b4301c5b7c34222fc7ef",
       "reasons": [
         "build input"
       ],
@@ -2420,7 +2420,7 @@
     },
     {
       "path": "src/Desktop/DailyUpdateInstaller.cs",
-      "sha256": "63c96e06af3d9d6e81472411aff6104774220de1cddb9ef360046a343b1f8cd0",
+      "sha256": "3ff3bb5d1d5a93c876c20b1dfb0d4df584731e0616fee5a3862ae717fee7c06f",
       "reasons": [
         "build input"
       ],
@@ -2540,7 +2540,7 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "e6c2b07d816d0ecab84b65991367a0b9e798e9a0fb629cce4b95e0c55c725474",
+      "sha256": "636035bd33d773db4df5ae98832949780f1ef69e4a78c8696780535ba0def7b7",
       "reasons": [
         "build input"
       ],
@@ -2756,7 +2756,7 @@
     },
     {
       "path": "src/Desktop/MainWindow.Updates.cs",
-      "sha256": "f8baeb2c7903f5405731bb943f41cc4fb5170014aa15560f0c9f03be9cf6d149",
+      "sha256": "1aebdebeeb3588a86e8a8450e5fba4d8a2ef1081d7689051fc7499163a6dad48",
       "reasons": [
         "build input"
       ],
@@ -2918,7 +2918,7 @@
       "reasons": [
         "build input"
       ],
-      "sha256": "6b5a38bd83d79b26b8c6c008a2cf741f713b664d9da1b69b524277d72b5f9583",
+      "sha256": "a5c1e7270a97544489b4ae5b8190672067bb923d6c9314f7cdbfadd29a85368f",
       "bytes": 7298,
       "path": "src/Launcher/Program.cs"
     },
@@ -8875,7 +8875,7 @@
       "reasons": [
         "build input"
       ],
-      "sha256": "97455ca6f080c350025805ab0abdc9cc8b96945df8a882d7b7191ff6b80696e3",
+      "sha256": "7015398b3cc0a71c4b462db2e13b12d0818bd23ec04c6d3738cfa3f4f4179e1c",
       "bytes": 7628,
       "path": "tests/Dustweave.Tests/Cases/UpdateLayoutCases.cs"
     },

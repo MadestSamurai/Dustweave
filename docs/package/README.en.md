@@ -2,7 +2,7 @@
 
 Your daily routine, woven into one timeline.
 
-**0.9.13 · Windows x64 · 简体中文 / 繁體中文 / English**
+**1.3.1 · Windows x64 · 简体中文 / 繁體中文 / English**
 
 | Package | Requirements |
 | --- | --- |
@@ -11,17 +11,15 @@ Your daily routine, woven into one timeline.
 
 ## Get started
 
-Extract the complete package into a new folder and run `Dustweave.exe`. Keep data, flows, connection, licenses and documentation alongside it. The EXE alone is not the complete distribution. Do not mix old and new program files. Tasks do not start automatically on first launch.
+Extract the complete package into a new folder and run `Dustweave.exe`. Keep the app folder alongside it; it contains the runtime and all components. The EXE alone is not the complete distribution. Do not mix old and new program files. Tasks do not start automatically on first launch.
 
 Close the previous Dustweave before upgrading. Saved accounts, settings, plugin registrations and history are reused without migration. Updating the host does not require restarting the game. Integrated tools follow the host language and appearance.
 
 ## What's new
 
-- A Plugins page to import local ZIP packages, enable, disable, return to an earlier version and remove registered packages.
-- Integrity and compatibility checks before activation. Changes apply after restarting Dustweave; running tasks keep their current plugin version.
-- Three languages and light or dark appearance. One plugin package can be active at a time.
-
-Open Plugins, select Import plugin, choose the separately provided ZIP, review its source, import and enable it, then restart Dustweave when prompted. The host package does not include additional plugins. Install only trusted packages: integrity checks do not authenticate a publisher's signature.
+- Launch the clearly visible Dustweave.exe at the top level; application files are grouped in app.
+- Version 1.3.0 has been withdrawn. Extract the complete 1.3.1 package into a new folder; existing accounts and settings are reused.
+- The new OTA channel remains independent. This startup-layout change needs one manual download; future compatible updates use direct patches.
 
 ## Accounts, schedules and updates
 

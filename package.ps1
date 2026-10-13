@@ -136,6 +136,7 @@ foreach($flavor in $Flavors){
   Copy-Item -LiteralPath (Join-Path $module 'LICENSE') -Destination (Join-Path $bundle ('licenses/'+$repository+'-MIT.txt'))
  }
  foreach($name in @('README.md','README.en.md')){Copy-Item -LiteralPath (Join-Path $root 'docs/package' $name) -Destination $bundle}
+ Complete-DustweaveLayout -Root $root -Destination $bundle
  Run $exe @('--identity',(Join-Path $checks 'identity.txt')) ($flavor+'-identity')
  if((Get-Content -LiteralPath (Join-Path $checks 'identity.txt') -First 1) -ne ('Dustweave '+$Version)){throw 'Release label differs from executable.'}
  $utilityAssemblies=[ordered]@{live='Dustweave.Connection';minigame='Dustweave.ToolHost';exporter='Dustweave.TableExporter';diagnostics='Dustweave.RuntimeCheck'}
@@ -153,7 +154,7 @@ foreach($flavor in $Flavors){
  Pass (Join-Path $checks 'smoke/smoke.json')
  if($validation.scope -in @('Full','Updates')){Pass (Join-Path $checks 'check-tool-languages/result.json');Pass (Join-Path $checks 'check-tool-language-ui/result.json')}
  Run $exe @('--utility','live','self-test') ($flavor+'-live-self-test')
- Run $exe @('--tool-catalog',(Join-Path $bundle 'tools.json')) ($flavor+'-tool-catalog')
+ Run $exe @('--tool-catalog',(Join-Path $bundle 'app/tools.json')) ($flavor+'-tool-catalog')
  if($flavor -eq $Flavors[0] -and $validation.scope -in @('Navigation','Rewards')){
   Run $exe @('--utility','live','prepare',$managed,(Join-Path $checks 'live-client')) 'live-client'
   if($validation.scope -eq 'Rewards'){
@@ -168,7 +169,7 @@ foreach($flavor in $Flavors){
    Run $exe @('--utility','live','taps-all',$managed,(Join-Path $root 'assets/specs'),(Join-Path $checks 'evidence')) 'evidence-configs'
    Pass (Join-Path $checks 'evidence/result.json')
   }
-  Run $exe @('--utility','live','taps-all',$managed,(Join-Path $bundle 'connection/specs'),(Join-Path $checks 'evidence')) 'evidence-configs'
+  Run $exe @('--utility','live','taps-all',$managed,(Join-Path $bundle 'app/connection/specs'),(Join-Path $checks 'evidence')) 'evidence-configs'
   Pass (Join-Path $checks 'evidence/result.json')
   $suiteCache=Join-Path $work 'unified-suite-daily/suite-cache'
   Copy-DustweavePreparedCache -Source $PreparedCacheDirectory -Destination $suiteCache
@@ -185,9 +186,10 @@ foreach($flavor in $Flavors){
   }
  }
  $inventory=@(Get-ChildItem -LiteralPath $bundle -File -Recurse|ForEach-Object {[IO.Path]::GetRelativePath($bundle,$_.FullName).Replace([IO.Path]::DirectorySeparatorChar,[char]47)})+@('update-package.json')
- [ordered]@{Version=$Version;Flavor=$flavor;Layout=2;RuntimeVersion='8.0.30';BootstrapFiles=(Get-Content -LiteralPath (Join-Path $bundle 'package-components.json') -Raw|ConvertFrom-Json).bootstrapFiles;Files=@($inventory|Sort-Object -Unique)}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $bundle 'update-package.json') -Encoding utf8
+ [ordered]@{Version=$Version;Flavor=$flavor;Layout=2;RuntimeVersion='8.0.30';BootstrapFiles=(Get-Content -LiteralPath (Join-Path $bundle 'app/package-components.json') -Raw|ConvertFrom-Json).bootstrapFiles;Files=@($inventory|Sort-Object -Unique)}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $bundle 'update-package.json') -Encoding utf8
  $files=@(Get-ChildItem -LiteralPath $bundle -File -Recurse)
- if(@($files|Where-Object Extension -eq '.exe').Count -ne 2 -or !(Test-Path -LiteralPath (Join-Path $bundle 'support/Dustweave.Updater.exe'))){throw 'Expected launcher plus independent updater.'}
+ if(@($files|Where-Object Extension -eq '.exe').Count -ne 2 -or !(Test-Path -LiteralPath (Join-Path $bundle 'app/support/Dustweave.Updater.exe'))){throw 'Expected launcher plus independent updater.'}
+ if(@(Get-ChildItem -LiteralPath $bundle -File|Where-Object Name -notin @('Dustweave.exe','README.md','README.en.md','LICENSE','update-package.json')).Count -or @(Get-ChildItem -LiteralPath $bundle -Directory|Where-Object Name -ne 'app').Count){throw 'Package root must expose only the launcher, guides, license and update inventory.'}
  if($files|Where-Object {$_.Name -match 'Assembly-CSharp|GameAssembly|python.*\.(exe|dll)' -or $_.Extension -in @('.py','.pyd','.pyc','.pfx','.key') -or $_.FullName -match '[\\/]plugins[\\/]'}){throw 'Forbidden private/legacy payload in release.'}
  $archive=Join-Path $output ('Dustweave-'+$Version+'-'+$flavor+'-win-x64.zip')
  [IO.Compression.ZipFile]::CreateFromDirectory($bundle,$archive,[IO.Compression.CompressionLevel]::Optimal,$false)

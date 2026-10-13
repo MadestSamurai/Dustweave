@@ -88,6 +88,11 @@ public static class DailyUpdates
     public static bool AllowedFile(string name)
     {
         if (string.IsNullOrWhiteSpace(name) || name.Contains('\\') || name.Contains(':') || name.StartsWith('/') || name.Split('/').Any(s => s is "" or "." or ".." || s.EndsWith('.') || s.EndsWith(' '))) return false;
+        if (name.StartsWith("app/", StringComparison.Ordinal))
+        {
+            var inner = name[4..];
+            return inner is not ("Dustweave.exe" or "update-package.json") && !inner.StartsWith("app/", StringComparison.Ordinal) && AllowedFile(inner);
+        }
         return name is "Dustweave.exe" or "utility-host.json" or "tools.json" or "update-package.json" or "README.md" or "README.en.md" or "THIRD_PARTY_NOTICES.md" or "LICENSE"
             or "package-components.json" or "support/Dustweave.Updater.exe"
             || !name.Contains('/') && (name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) || (name.StartsWith("Dustweave", StringComparison.Ordinal) || name.StartsWith("BD2", StringComparison.Ordinal)) && (name.EndsWith(".deps.json", StringComparison.Ordinal) || name.EndsWith(".runtimeconfig.json", StringComparison.Ordinal)))

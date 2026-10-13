@@ -6,6 +6,7 @@ namespace Dustweave;
 // deliberately identical to the existing account and automation ownership locks.
 public static class DailyUpdateHost
 {
+    public static string InstallRoot => Path.GetDirectoryName(Environment.ProcessPath!)!;
     public static string DataRoot => Environment.GetEnvironmentVariable("BD2_DAILY_DATA_ROOT") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BD2DailyAssistant");
     public static void RequireHost()
     {

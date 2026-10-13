@@ -33,6 +33,7 @@ internal static class Program
         }
     }
     private static string DataRoot => Environment.GetEnvironmentVariable("BD2_DAILY_DATA_ROOT") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BD2DailyAssistant");
+    private static string InstallRoot => Path.GetDirectoryName(Environment.ProcessPath!)!;
     private static string Hash(string path) { using var stream = File.OpenRead(path); return Convert.ToHexString(SHA256.HashData(stream)); }
     private static string Text(JsonElement root, string name) => root.GetProperty(name).GetString() ?? throw new InvalidDataException("Invalid recovery record");
     private static bool SamePath(string a, string b) => Path.TrimEndingDirectorySeparator(Path.GetFullPath(a)).Equals(Path.TrimEndingDirectorySeparator(Path.GetFullPath(b)), StringComparison.OrdinalIgnoreCase);
@@ -43,7 +44,7 @@ internal static class Program
     }
     private static bool Recover(string[] args)
     {
-        string target = Environment.ProcessPath!, markerPath = Path.Combine(AppContext.BaseDirectory, ".dustweave-update.json");
+        string target = Environment.ProcessPath!, markerPath = Path.Combine(InstallRoot, ".dustweave-update.json");
         if (!File.Exists(markerPath)) return false;
         NoLinks(markerPath);
         using var markerDocument = JsonDocument.Parse(File.ReadAllBytes(markerPath)); var marker = markerDocument.RootElement;
@@ -59,7 +60,7 @@ internal static class Program
         if (!SamePath(target, Text(job, "Target")) || Text(job, "Nonce") != nonce || !SamePath(directory, Path.Combine(DataRoot, "updates", version + "-" + flavor)) || !SamePath(jobPath, Path.Combine(attempt, "job.json"))) throw new InvalidDataException("Invalid recovery ownership");
         string journalPath = Path.Combine(attempt, "backup", "transaction.json"); NoLinks(journalPath);
         using var journalDocument = JsonDocument.Parse(File.ReadAllBytes(journalPath)); var journal = journalDocument.RootElement;
-        if (!SamePath(Text(journal, "Target"), AppContext.BaseDirectory) || !SamePath(Text(journal, "Backup"), Path.Combine(attempt, "backup"))) throw new InvalidDataException("Invalid recovery journal ownership");
+        if (!SamePath(Text(journal, "Target"), InstallRoot) || !SamePath(Text(journal, "Backup"), Path.Combine(attempt, "backup"))) throw new InvalidDataException("Invalid recovery journal ownership");
         string state = Text(journal, "State");
         if (state is "completed" or "rolled_back") { File.Delete(markerPath); return false; }
         if (args.Length == 2 && args[0] == "--updated" && args[1] == nonce && state == "awaiting_start") return false;

@@ -1,5 +1,14 @@
 [
 {
+  "Version": "1.3.1",
+  "Date": "2026-10-13",
+  "Notes": {
+    "zh-CN": ["整理安装目录：双击根目录的 Dustweave.exe 即可启动，运行库和组件统一收纳到 app 文件夹。", "1.3.0 已撤回。由于启动文件的位置调整，请手动下载完整 1.3.1 包并解压到新目录；原有账号和设置继续沿用。", "保留独立新版 OTA 与差分更新。后续更新继续复用未变化的运行库；请不要单独移动 EXE 或删除 app 文件夹。"],
+    "zh-TW": ["整理安裝目錄：按兩下根目錄的 Dustweave.exe 即可啟動，執行階段與元件統一收納至 app 資料夾。", "1.3.0 已撤回。由於啟動檔案的位置調整，請手動下載完整 1.3.1 包並解壓至新目錄；既有帳號與設定繼續沿用。", "保留獨立新版 OTA 與差分更新。後續更新繼續重用未變更的執行階段；請勿單獨移動 EXE 或刪除 app 資料夾。"],
+    "en-US": ["A clearer installation folder: launch Dustweave.exe from the root. Runtime files and components are grouped in the app folder.", "1.3.0 has been withdrawn. The startup layout changed: manually download the complete 1.3.1 package into a new folder. Existing accounts and settings are retained.", "The separate OTA channel and differential updates remain enabled. Future updates reuse unchanged runtime files; keep Dustweave.exe together with the app folder."]
+  }
+},
+{
   "Version": "1.3.0",
   "Date": "2026-10-13",
   "Notes": {

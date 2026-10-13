@@ -33,6 +33,15 @@ foreach($release in @($prior.Releases|Sort-Object {[semver]$_.Version} -Descendi
   if(!$old.Count){continue}
   if((Get-Item -LiteralPath $old[0]).Length -ne $asset.Bytes -or (Get-FileHash -LiteralPath $old[0]).Hash -ne $asset.Sha256){throw 'Baseline differs from signed release.'}
   $next=Join-Path $folder "Dustweave-$Version-$flavor-win-x64.zip"
+  function ReadPackage($path){
+   $zip=[IO.Compression.ZipFile]::OpenRead($path)
+   try{$reader=[IO.StreamReader]::new($zip.GetEntry('update-package.json').Open());try{return $reader.ReadToEnd()|ConvertFrom-Json}finally{$reader.Dispose()}}finally{$zip.Dispose()}
+  }
+  $before=ReadPackage $old[0];$after=ReadPackage $next
+  if($before.Layout -ne $after.Layout -or $before.RuntimeVersion -ne $after.RuntimeVersion -or (@($before.BootstrapFiles|Sort-Object) -join "`n") -cne (@($after.BootstrapFiles|Sort-Object) -join "`n")){
+   $reports+=@{from=$release.Version;to=$Version;flavor=$flavor;offered=$false;reason='manual_layout'}
+   continue
+  }
   $start=[Diagnostics.ProcessStartInfo]::new($Tool);$start.UseShellExecute=$false;$start.CreateNoWindow=$true;$start.WindowStyle='Hidden';$start.WorkingDirectory=(Get-Location).Path
   foreach($arg in @('--create-update-delta',[IO.Path]::GetFullPath($old[0]),$next,$folder)){$start.ArgumentList.Add($arg)}
   $process=[Diagnostics.Process]::Start($start)

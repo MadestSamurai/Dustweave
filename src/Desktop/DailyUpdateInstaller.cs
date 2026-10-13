@@ -11,7 +11,7 @@ internal static class DailyUpdateInstaller
     {
         // Packaged startup recovery is handled by the stable launcher before it
         // loads this assembly. A development entry must not ignore a transaction.
-        string marker = Path.Combine(AppContext.BaseDirectory, DailyUpdateTransaction.MarkerName);
+        string marker = Path.Combine(DailyUpdateHost.InstallRoot, DailyUpdateTransaction.MarkerName);
         if (!File.Exists(marker) || args.Length == 2 && args[0] == "--updated") return false;
         throw new IOException("updates.recovery_required");
     }

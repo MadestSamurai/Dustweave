@@ -1,4 +1,28 @@
 $ErrorActionPreference='Stop'
+function Complete-DustweaveLayout {
+ param([string]$Root,[string]$Destination)
+ $destinationRoot=[IO.Path]::GetFullPath($Destination).TrimEnd('\')
+ if(!$destinationRoot.StartsWith((Join-Path ([IO.Path]::GetFullPath($Root)) 'artifacts')+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'Nested layout must remain under repository artifacts.'}
+ $app=Join-Path $destinationRoot 'app'
+ if(Test-Path -LiteralPath $app){throw 'Nested layout already exists.'}
+ [IO.Directory]::CreateDirectory($app)|Out-Null
+ foreach($entry in Get-ChildItem -LiteralPath $destinationRoot | Where-Object Name -notin @('app','Dustweave.exe','README.md','README.en.md','LICENSE','update-package.json')){
+  $source=[IO.Path]::GetFullPath($entry.FullName);$target=[IO.Path]::GetFullPath((Join-Path $app $entry.Name))
+  if(!$source.StartsWith($destinationRoot+'\',[StringComparison]::OrdinalIgnoreCase) -or !$target.StartsWith($app+'\',[StringComparison]::OrdinalIgnoreCase) -or $entry.Attributes.HasFlag([IO.FileAttributes]::ReparsePoint)){throw 'Invalid nested package move.'}
+  Move-Item -LiteralPath $source -Destination $target
+ }
+ $sdkVersion=(& dotnet --version).Trim()
+ $dotnetRoot=Split-Path -Parent (Get-Command dotnet).Source
+ Add-Type -Path (Join-Path $dotnetRoot "sdk/$sdkVersion/Microsoft.NET.HostModel.dll")
+ $assets=Get-Content -LiteralPath (Join-Path $Root 'src/Launcher/obj/project.assets.json') -Raw|ConvertFrom-Json
+ $templates=@($assets.packageFolders.PSObject.Properties.Name | ForEach-Object {Join-Path $_ 'microsoft.netcore.app.host.win-x64/8.0.30/runtimes/win-x64/native/apphost.exe'} | Where-Object {Test-Path -LiteralPath $_})
+ if($templates.Count -ne 1){throw 'Pinned .NET apphost template is unavailable.'}
+ [Microsoft.NET.HostModel.AppHost.HostWriter]::CreateAppHost($templates[0],(Join-Path $destinationRoot 'Dustweave.exe'),'app/Dustweave.Launcher.dll',$true,(Join-Path $app 'Dustweave.Launcher.dll'),$false,$false,$null)
+ $componentsPath=Join-Path $app 'package-components.json'
+ $components=Get-Content -LiteralPath $componentsPath -Raw|ConvertFrom-Json
+ $components.bootstrapFiles=@($components.bootstrapFiles|ForEach-Object {if($_ -eq 'Dustweave.exe'){$_}else{'app/'+$_}})
+ $components|ConvertTo-Json -Depth 6|Set-Content -LiteralPath $componentsPath -Encoding utf8
+}
 function Publish-DustweaveLayout {
  param([string]$Root,[string]$Work,[string]$Destination,[string]$Version,[ValidateSet('Lite','Portable')][string]$Flavor)
  $self=if($Flavor -eq 'Portable'){'true'}else{'false'}

@@ -31,6 +31,9 @@ public static class DailyPlugin
         if (DailyPluginStore.HasSelection(dataRoot))
             return new DailyPluginStore(dataRoot).SelectedRoot();
         var current = Path.GetFullPath(AppContext.BaseDirectory);
+        if (Path.GetFileName(Path.TrimEndingDirectorySeparator(current)).Equals("app", StringComparison.OrdinalIgnoreCase) &&
+            Directory.GetParent(Path.TrimEndingDirectorySeparator(current)) is { } package && File.Exists(Path.Combine(package.FullName, DailyApplication.ExecutableName)))
+            current = package.FullName;
         if (new[] { "connection", "diagnostics" }.Contains(Path.GetFileName(Path.TrimEndingDirectorySeparator(current)), StringComparer.OrdinalIgnoreCase))
             current = Directory.GetParent(current)!.FullName;
         return Path.Combine(current, "plugins", "extension");

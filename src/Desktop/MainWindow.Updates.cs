@@ -139,13 +139,13 @@ public partial class MainWindow
             if (release == null) { updatePanel.Status("updates.current"); return; }
             availableVersion = release.Version;
             updatePanel.ShowNotes(feed.Releases.OrderByDescending(r => DailyUpdates.VersionOf(r.Version)).Select(r => new DailyReleaseNote(r.Version, "", r.Notes)));
-            var installed = DailyJson.TryRead<DailyUpdatePackage>(Path.Combine(AppContext.BaseDirectory, "update-package.json"));
+            var installed = DailyJson.TryRead<DailyUpdatePackage>(Path.Combine(DailyUpdateHost.InstallRoot, "update-package.json"));
             string flavor = installed?.Flavor ?? throw new InvalidDataException("updates.packaged_only");
             manualUpdateReason = DailyUpdates.ManualUpdateReason(feed, release, installed);
             if (manualUpdateReason != null) { manualUpdateVersion = release.Version; updatePanel.Status(manualUpdateReason); return; }
             var asset = release.Assets.SingleOrDefault(a => a.Flavor == flavor) ?? throw new InvalidDataException("updates.flavor_missing");
             var progress = new Progress<int>(p => updatePanel.Status("updates.downloading", release.Version, p));
-            string directory = await transport.DownloadAsync(client, verified, release.Version, flavor, root, progress, updateLifetime.Token, AppContext.BaseDirectory);
+            string directory = await transport.DownloadAsync(client, verified, release.Version, flavor, root, progress, updateLifetime.Token, DailyUpdateHost.InstallRoot);
             using var process = Process.GetCurrentProcess();
             readyUpdate = new(directory, Environment.ProcessPath!, process.Id, process.StartTime.ToUniversalTime().Ticks, release, asset, DeltaFileName: DailyJson.TryRead<DailyUpdateDownload>(Path.Combine(directory, "download-choice.json"))?.DeltaFileName);
             updatePanel.Status("updates.ready", release.Version); updatePromptShown = false;
@@ -187,7 +187,7 @@ public partial class MainWindow
     {
         if (IsSandboxWindow || smoke != null || readyUpdate == null || Unavailable || scheduleChecking || updateInstalling || !preferencesPanel.SavePending()) return;
         string helperSource = Path.Combine(AppContext.BaseDirectory, "support", "Dustweave.Updater.exe");
-        if (DailyJson.TryRead<DailyUpdatePackage>(Path.Combine(AppContext.BaseDirectory, "update-package.json"))?.Layout != DailyUpdates.CurrentLayout || !File.Exists(helperSource)) { updatePanel.Status("updates.packaged_only"); return; }
+        if (DailyJson.TryRead<DailyUpdatePackage>(Path.Combine(DailyUpdateHost.InstallRoot, "update-package.json"))?.Layout != DailyUpdates.CurrentLayout || !File.Exists(helperSource)) { updatePanel.Status("updates.packaged_only"); return; }
         updateInstalling = true; UpdateUpdateControls();
         try
         {
