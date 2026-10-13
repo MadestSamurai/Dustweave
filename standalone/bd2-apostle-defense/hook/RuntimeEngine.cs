@@ -163,7 +163,7 @@ namespace BD2ApostleDefense.Runtime
    s.Path=Items(B.Read("Field.Path",field)).Cast<Component>().Select(b=>Point(b,N("Field.Id",b))).ToArray();
    s.Units=Values(B.Read("Manager.Units",manager)).Select(u=>{var target=B.Read("Unit.Target",u) as Component;return new Unit{Index=N("Field.Id",u),Id=N("Unit.Table",u),Grid=N("Unit.Grid",u),Ready=Flag("Unit.Ready",u),TargetEnemy=target==null?-1:N("Field.Id",target),AttackElapsed=Convert.ToDouble(B.Read("Unit.AttackElapsed",u)),AttackState=N("Unit.AttackState",u)-1};}).ToArray();
    s.Enemies=Values(B.Read("Manager.Enemies",manager)).Cast<Component>().Where(e=>!Flag("Enemy.Dead",e)).Select(e=>{var pos=e.transform.position;int id=N("Enemy.Table",e),next=N("Enemy.NextPoint",e);var row=raw.GetMGDEnemyTable(id);return new Enemy{Id=N("Field.Id",e),Table=id,X=pos.x,Y=pos.y,Z=pos.z,Element=row.Element,Speed=row.MoveSpeed,NextPoint=next>=0&&next<s.Path.Length?s.Path[next].Id:-1,Hp=Convert.ToDouble(B.Read("Enemy.Hp",e))};}).ToArray();
-   var clock=B.Read("Services.Clock",null);var gameNow=(DateTime)B.Call(clock,"Now");s.SecondsLeft=Math.Max(0,((DateTime)B.Read("Manager.Deadline",manager)-gameNow).TotalSeconds);
+   var clock=B.Read("Services.Clock",null);var gameNow=(DateTime)B.Call(clock,"Now");s.FrameSeconds=Time.smoothDeltaTime;s.SecondsLeft=Math.Max(0,((DateTime)B.Read("Manager.Deadline",manager)-gameNow).TotalSeconds);
    s.CanSummon=B.Active(B.Get(hud,"_goEnableRecall") as GameObject);
    s.Ready=s.MyView&&s.Boards.Length>0&&s.Path.Length>1&&s.Catalog.Units.Length>0&&s.Units.All(u=>u.Ready&&s.Catalog.Units.Any(d=>d.Id==u.Id))&&s.Units.Select(u=>u.Grid).Distinct().Count()==s.Units.Length;
    s.BoardKey=Guards.BoardKey(s);

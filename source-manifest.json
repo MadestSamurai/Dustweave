@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-13T06:10:11.4762513+00:00",
+  "generatedUtc": "2026-10-13T10:53:18.772929+00:00",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -240,7 +240,7 @@
     },
     {
       "path": "Directory.Build.props",
-      "sha256": "87c9bcc291c987b959aba7307089e61b670a75e991bffc7333fb98db06d8940e",
+      "sha256": "2d47c66613426f49f9aadf17d18e9280210da9eb95d7893138055e49d7a0be8b",
       "reasons": [
         "build input"
       ],
@@ -424,11 +424,11 @@
     },
     {
       "path": "src/Accounts/packages.lock.json",
-      "sha256": "60c1e9169fbf3fd58356d35d9d939d17c8df6b402e17bd417b515118e6b5db4b",
+      "sha256": "88375fdc71350548252f1e8ac425dc57334d58bb124a342f03e25ffe05774b9c",
       "reasons": [
         "build input"
       ],
-      "bytes": 108
+      "bytes": 114
     },
     {
       "path": "src/Accounts/SandboxConfiguration.cs",
@@ -592,11 +592,11 @@
     },
     {
       "path": "src/Compatibility/packages.lock.json",
-      "sha256": "0af9d216e14fa427f2f8d468a5ff6f27b960bb9f33a92cde5348cb52a21a7b3c",
+      "sha256": "916311fa59822720f456f827a7236f54e67a516beed2411d6e7eb4b483d8a123",
       "reasons": [
         "build input"
       ],
-      "bytes": 2257
+      "bytes": 2316
     },
     {
       "path": "src/Compatibility/startup-contract.json",
@@ -784,11 +784,11 @@
     },
     {
       "path": "src/Connection/packages.lock.json",
-      "sha256": "883b6990c6ccbd0bb0b9a33e8083bc2e92017018c2ca684e9361e7dc98b5c015",
+      "sha256": "c72047f0e51e166bdf46b61f06e37033359fdd45537ec8c5c303dc43890b2538",
       "reasons": [
         "build input"
       ],
-      "bytes": 2420
+      "bytes": 2488
     },
     {
       "path": "src/Connection/PluginBridge.cs",
@@ -1012,7 +1012,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 14169
+      "bytes": 14484
     },
     {
       "path": "src/Core/DailyCollectionProgress.cs",
@@ -1180,7 +1180,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 23296
+      "bytes": 27016
     },
     {
       "path": "src/Core/DailyFieldTravel.cs",
@@ -1569,7 +1569,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 20566
+      "bytes": 21552
     },
     {
       "path": "src/Core/DailyQuizRecovery.cs",
@@ -2117,11 +2117,11 @@
     },
     {
       "path": "src/Core/packages.lock.json",
-      "sha256": "8da53d693048546f0b7b2fbd8d6c7951d60a682cf0f6c204030cb56e5f241529",
+      "sha256": "6d3163ba2dbc763e5ba0ad210debfe45ec3766cf990486e6c0b55cca9c91b90d",
       "reasons": [
         "build input"
       ],
-      "bytes": 2226
+      "bytes": 2287
     },
     {
       "path": "src/Core/RefinementChoices.cs",
@@ -2177,7 +2177,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 6308
+      "bytes": 6408
     },
     {
       "reasons": [
@@ -2257,7 +2257,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 40819
+      "bytes": 43680
     },
     {
       "path": "src/Desktop/DailyRunPanel.Presets.cs",
@@ -2461,11 +2461,11 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "7517a4645f478adde0f1b14aa1535f07828548a9e28a5b4e1daf44e4e4f471a9",
+      "sha256": "874e28ecbc1966f0938abc9242091b15fec62cb45fa5f32cd77e0778bcdd5034",
       "reasons": [
         "build input"
       ],
-      "bytes": 69077
+      "bytes": 70747
     },
     {
       "path": "src/Desktop/Localization/runtime.json",
@@ -2481,7 +2481,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 253876
+      "bytes": 259660
     },
     {
       "path": "src/Desktop/MainWindow.Accounts.cs",
@@ -2625,7 +2625,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 34473
+      "bytes": 37194
     },
     {
       "path": "src/Desktop/MainWindow.Presets.Smoke.cs",
@@ -2697,7 +2697,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 73268
+      "bytes": 76516
     },
     {
       "path": "src/Desktop/MansionMap.cs",
@@ -2793,7 +2793,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 8727
+      "bytes": 9251
     },
     {
       "path": "src/Desktop/ToolApplicationHost.cs",
@@ -3149,7 +3149,7 @@
     },
     {
       "path": "standalone/bd2-apostle-defense/compatibility/packages.lock.json",
-      "sha256": "0af9d216e14fa427f2f8d468a5ff6f27b960bb9f33a92cde5348cb52a21a7b3c",
+      "sha256": "916311fa59822720f456f827a7236f54e67a516beed2411d6e7eb4b483d8a123",
       "reasons": [
         "build input"
       ],
@@ -3189,15 +3189,15 @@
     },
     {
       "path": "standalone/bd2-apostle-defense/core/Controller.cs",
-      "sha256": "9cea67be991286700a351948dacfcedf9d9ab743e876c4a15a7fcb3fe068dff5",
+      "sha256": "5fa8c7edcf14d47ac348df229c8bb6272b87e64fd8e5eb8f77dfce0000d50a77",
       "reasons": [
         "build input"
       ],
-      "bytes": 7688
+      "bytes": 7700
     },
     {
       "path": "standalone/bd2-apostle-defense/core/packages.lock.json",
-      "sha256": "7f75e6b618876dd04b9bf6d78c1a0487e059650dd356ff9b5960a8fc30a60c64",
+      "sha256": "1cff0e5ebeb3fd5e4a284372a7bbbce9a9daa8202f2ac1036d82af81b6d08b4e",
       "reasons": [
         "build input"
       ],
@@ -3301,11 +3301,11 @@
     },
     {
       "path": "standalone/bd2-apostle-defense/desktop/MainWindow.xaml",
-      "sha256": "91a9032109b327786db4b8406f62e2a7db4d2ac252715d38604e56557e0fab77",
+      "sha256": "3408eb437e929e57efc70011fa86551c2c1a5ffc4297acc0d264dc34276873ee",
       "reasons": [
         "build input"
       ],
-      "bytes": 6264
+      "bytes": 6279
     },
     {
       "path": "standalone/bd2-apostle-defense/desktop/MainWindow.xaml.cs",
@@ -3381,11 +3381,11 @@
     },
     {
       "path": "standalone/bd2-apostle-defense/hook/RuntimeEngine.cs",
-      "sha256": "105d8ac8d303ad1c307ca7fdbccb07f979c79f5a2048e516a3085c43254c00a8",
+      "sha256": "17e5a91d59db857b50368d253eeda3edebebf4a352a285b937554926d7c34c73",
       "reasons": [
         "build input"
       ],
-      "bytes": 23689
+      "bytes": 23725
     },
     {
       "path": "standalone/bd2-apostle-defense/hook/Storage.cs",
@@ -3493,11 +3493,11 @@
     },
     {
       "path": "standalone/bd2-apostle-defense/localization/en-US.json",
-      "sha256": "411a9162f9efe5ac09e81601f1b5ba4ea1eb25a244729a5bfb69ba82ea2c0155",
+      "sha256": "ced0e8ac3537f57c18a936e3ff9ba5cb8aa5033fcc91d7f0a66cda4476ae3243",
       "reasons": [
         "build input"
       ],
-      "bytes": 22937
+      "bytes": 24274
     },
     {
       "path": "standalone/bd2-apostle-defense/localization/LanguageCatalog.cs",
@@ -3509,11 +3509,11 @@
     },
     {
       "path": "standalone/bd2-apostle-defense/localization/zh-CN.json",
-      "sha256": "521207734c6036971a49394d9b288b8a981547333d8e14d11643f28865d261fc",
+      "sha256": "a450459af20b477bc75a09a66d733287651b3f1b6a32276c5ec1bb8a9143028d",
       "reasons": [
         "build input"
       ],
-      "bytes": 22630
+      "bytes": 23863
     },
     {
       "path": "standalone/bd2-apostle-defense/planner/BossChase.cs",
@@ -3541,27 +3541,27 @@
     },
     {
       "path": "standalone/bd2-apostle-defense/planner/Planner.cs",
-      "sha256": "faea32f0a24288f0c4bebd80446759381b167562d2dbf99c86399fb0d9aa45d9",
+      "sha256": "175791eb591aa16512128e77f5ee0a1ad5ec3dd333e1644e3801d3143016d457",
       "reasons": [
         "build input"
       ],
-      "bytes": 18332
+      "bytes": 18633
     },
     {
       "path": "standalone/bd2-apostle-defense/README.en.md",
-      "sha256": "09dcb23f6dbdd1dc9190781db8f1d250c206d59a3e9d3ab419e6778bdd0c6124",
+      "sha256": "17d00a535c84abbd9ae9f207cb60af9ff8b3b0055d3466e554ccc34a8db9053c",
       "reasons": [
         "build input"
       ],
-      "bytes": 9417
+      "bytes": 9029
     },
     {
       "path": "standalone/bd2-apostle-defense/README.md",
-      "sha256": "08f2837928cd518a9c3b64415e7ae519aa5158627ad3d89c49c2b129c2b3ad90",
+      "sha256": "ae6ec853d956c5e58156dbfea508795185794f75ffc01b5b911c2d58c30639f4",
       "reasons": [
         "build input"
       ],
-      "bytes": 8275
+      "bytes": 7979
     },
     {
       "path": "standalone/bd2-apostle-defense/shared/AtomicFiles.cs",
@@ -3573,11 +3573,11 @@
     },
     {
       "path": "standalone/bd2-apostle-defense/shared/Contracts.cs",
-      "sha256": "0bc68f556c58605a0a5d9c6f9787ede5397200b88f8b3212ab80fd63ccadbfd2",
+      "sha256": "3e36d8ca76737e54dd1eb408dec2a450cfcae80516681c37fe2c43074150e0f2",
       "reasons": [
         "build input"
       ],
-      "bytes": 8969
+      "bytes": 9406
     },
     {
       "path": "standalone/bd2-apostle-defense/shared/GameFlow.cs",
@@ -8246,7 +8246,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 17813
+      "bytes": 21421
     },
     {
       "path": "tests/Dustweave.Tests/Cases/FirstRunCases.cs",
@@ -8526,7 +8526,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 17836
+      "bytes": 18583
     },
     {
       "path": "tests/Dustweave.Tests/Cases/RuleDataCases.cs",
@@ -8794,27 +8794,27 @@
     },
     {
       "path": "tests/Dustweave.Tests/Dustweave.Tests.csproj",
-      "sha256": "1b03775bd987417ecad1553d2ac7e62b35f0b71822dda04e7129892095247e3a",
+      "sha256": "792aa9715009b1ccb8a59fe3ca6ddaeacd005ecb261e8544e93e2730775f3653",
       "reasons": [
         "build input"
       ],
-      "bytes": 2134
+      "bytes": 2265
     },
     {
       "path": "tests/Dustweave.Tests/packages.lock.json",
-      "sha256": "c72047f0e51e166bdf46b61f06e37033359fdd45537ec8c5c303dc43890b2538",
+      "sha256": "11c3237a17f81b241d76ee0bfaffb8d37cc71c98b4db518b1ad70d59fcaab52e",
       "reasons": [
         "build input"
       ],
-      "bytes": 2488
+      "bytes": 2873
     },
     {
       "path": "tests/Dustweave.Tests/Program.cs",
-      "sha256": "d88a543549ff37099e61ba76f13be93b31269a59743d8541b9d88deeaf169ae8",
+      "sha256": "15db910aece5477386fc08b0b644d6556c7a924648075e7b1b2c4a46a023c507",
       "reasons": [
         "build input"
       ],
-      "bytes": 11184
+      "bytes": 11435
     },
     {
       "path": "tests/Dustweave.Tests/README.md",
@@ -9114,7 +9114,8 @@
     },
     {
       "path": "docs/releases/1.2.9.md",
-      "sha256": "2a139b22f80688d517f0e7a81e3879ede782ac20cfca267131d05129b4cea86b"
+      "sha256": "2a139b22f80688d517f0e7a81e3879ede782ac20cfca267131d05129b4cea86b",
+      "bytes": 2078
     },
     {
       "path": "docs/releases/1.2.9-deployment.md",
@@ -9126,11 +9127,11 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "a52a40902526df91bb380988d14c7b6758bfdcd80b570471cfee49f0dabaa65f",
+      "sha256": "3b5b41e8c57909426f697cd82e2f4547116ebbbd0011ca3f67499a1118b53a25",
       "reasons": [
         "release notes"
       ],
-      "bytes": 30236
+      "bytes": 31004
     },
     {
       "path": "docs/releases/1.2.10.md",
@@ -9147,6 +9148,22 @@
         "release evidence"
       ],
       "bytes": 3189
+    },
+    {
+      "reasons": [
+        "build input"
+      ],
+      "sha256": "5517570100a623bdfb1a3fae4e2b5029fc7e39bb4ee294d8398d2c52bc76d7e6",
+      "bytes": 12397,
+      "path": "standalone/bd2-apostle-defense/planner/AnnealedPolicy.cs"
+    },
+    {
+      "reasons": [
+        "build input"
+      ],
+      "sha256": "2c0846106dc60b9bdc98ed833808050edf92fd572b14b2a7e8f6d8597f6b1a73",
+      "bytes": 5768,
+      "path": "tests/Dustweave.Tests/Cases/ApostleAnnealingCases.cs"
     }
   ],
   "publicReleaseApproved": false,

@@ -42,6 +42,7 @@ namespace BD2ApostleDefense
   [DataMember] public long NetworkLastPacketAt;
   [DataMember] public int NetworkProbeFailures,NetworkAvoidedDisconnects,NetworkNativeDisconnects;
   [DataMember] public double SecondsLeft;
+  [DataMember] public double FrameSeconds;
   [DataMember] public int[] Levels=new int[5],UpgradeCosts=new int[5];
   [DataMember] public bool[] CanUpgrade=new bool[5];
   [DataMember] public Board[] Boards=new Board[0]; [DataMember] public Point[] Path=new Point[0];
@@ -110,6 +111,12 @@ namespace BD2ApostleDefense
    {
     var wave=s.Catalog.Waves.FirstOrDefault(w=>w.Id==s.Wave);
     if(a.Wave!=s.Wave||wave==null||!wave.Boss||!s.Enemies.Any(e=>e.Id==a.TargetEnemy&&e.Table==wave.EnemyTable&&e.Hp>0))return "追击目标或首领波已变化，重新决策";
+    if(c.SnapshotAt<now-TimeSpan.FromMilliseconds(900).Ticks)return "追击位置已过期，重新读取首领位置";
+   }
+   if(a.Policy=="clear50-annealed-chase")
+   {
+    var wave=s.Catalog.Waves.FirstOrDefault(w=>w.Id==s.Wave);
+    if(a.Wave!=s.Wave||wave==null||!wave.Boss||!s.Enemies.Any(e=>e.Id==a.TargetEnemy&&e.Hp>0))return "追击目标或首领波已变化，重新决策";
     if(c.SnapshotAt<now-TimeSpan.FromMilliseconds(900).Ticks)return "追击位置已过期，重新读取首领位置";
    }
    if(a.Kind=="open-result"&&(s.Stage!="ended"||!GameFlow.CanSettle(s)))return "对局尚未结束或已开始退出";

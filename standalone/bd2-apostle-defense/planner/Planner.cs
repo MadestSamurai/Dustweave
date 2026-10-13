@@ -5,8 +5,9 @@ public sealed partial class Planner
 {
  private readonly Dictionary<string,double> coverageCache=new();private string geometry="";private double routeLength;
  private readonly BossChase bossChase=new();
- public void ResetTactics(){bossChase.Reset();strategyRoom="";observedOpening=false;selectedCore=-1;}
- public void Confirm(Decision d,Snapshot s,long now){bossChase.Confirm(d,s,now);ConfirmRecruit(d);}
+ private readonly AnnealedPolicy annealed=new();
+ public void ResetTactics(){annealed.Reset();bossChase.Reset();strategyRoom="";observedOpening=false;selectedCore=-1;}
+ public void Confirm(Decision d,Snapshot s,long now){bossChase.Confirm(d,s,now);annealed.Confirm(d,s,now);ConfirmRecruit(d);}
  public string Focus {get;private set;}="50波通关";
  public double Coverage(UnitDef u,Board b,Point[] path)
  {
@@ -128,6 +129,8 @@ public sealed partial class Planner
   // Pending spawns must settle before achievement completion; stop spending on extra rolls meanwhile.
   if(rareMode&&s.AchievementsKnown&&s.RareProgress+s.RoundRare>=s.RareTarget)rareMode=false;
   Focus=rareMode?"最高级使徒：保留产金核心，增加召唤次数":"50波通关：输出、覆盖与首领准备";
+  if(settings.Clear50&&(!s.AchievementsKnown||s.ClearProgress<s.ClearTarget))
+  {Focus="50波通关：离线退火优化策略";return annealed.Decide(s,now??DateTime.UtcNow.Ticks,canMove,awaitingRefill);}
   var defs=s.Catalog.Units.ToDictionary(u=>u.Id);var boards=s.Boards.ToDictionary(b=>b.Id);var cur=Current(s);
   bool clearStrategy=ClearStrategy(s,settings);
   var core=clearStrategy?Core(s,defs,boards):null;

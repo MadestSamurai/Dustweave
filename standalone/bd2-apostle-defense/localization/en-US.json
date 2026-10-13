@@ -303,5 +303,16 @@
   "核心培养：为后续波次与首领预留升级金币": "Core investment: save for upcoming waves and bosses",
   "升级核心体系，补足后续波次与首领输出": "Upgrade the core elements for upcoming waves and bosses",
   "保留金币等待核心升级，暂不消耗于随机召唤": "Save for the core upgrade instead of spending on random summons",
-  "补齐暗水高阶输出，每个安全波次最多补抽两次": "Build the Water/Dark complement, with at most two extra rolls per safe wave"
+  "补齐暗水高阶输出，每个安全波次最多补抽两次": "Build the Water/Dark complement, with at most two extra rolls per safe wave",
+  "50波使用离线退火优化策略，完成后转向最高级使徒召唤。": "Use an offline annealing–optimized strategy for wave 50, then pursue top-tier summons.",
+  "50波通关：离线退火优化策略": "Wave 50: offline annealing–optimized strategy",
+  "退火策略：追击首领，计入换位损失": "Annealed strategy: pursue bosses, accounting for swap losses",
+  "退火策略：调整站位，提高路线覆盖": "Annealed strategy: reposition for better path coverage",
+  "退火策略：召唤基础阵容": "Annealed strategy: build the starting lineup",
+  "退火策略：等待召唤条件就绪": "Annealed strategy: wait for summoning to become ready",
+  "退火策略：升级属性，缓解当前波次压力": "Annealed strategy: upgrade to relieve current wave pressure",
+  "退火策略：扩充阵容并保留升级预算": "Annealed strategy: expand the lineup with an upgrade reserve",
+  "退火策略：保留主力，回收低贡献使徒后补抽": "Annealed strategy: retain damage dealers and reroll weak contributors",
+  "退火策略：培养阵容，准备后续首领": "Annealed strategy: develop the lineup for upcoming bosses",
+  "退火策略：保持当前输出，等待金币或波次变化": "Annealed strategy: maintain output and wait for gold or the next wave"
 }

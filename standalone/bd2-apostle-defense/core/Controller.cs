@@ -103,7 +103,7 @@ public sealed class Controller
   if(s.Stage=="playing"&&s.Ready&&s.MyView&&s.Blocker.Length==0)
   {
    if(s.Units.Length>=s.Boards.Length){refillPending=false;return planner.Decide(s,settings,now,index=>recovery.CanMove(index,now));}
-   if(s.CanSummon&&s.Gold>=s.Catalog.SummonCost)return new(){Kind="summon",Reason="出售已确认，优先补抽填回空位"};
+   if(s.CanSummon&&s.Gold>=s.Catalog.SummonCost)return new(){Kind="summon",Wave=s.Wave,Reason="出售已确认，优先补抽填回空位"};
    // Keep the replacement obligation while allowing free moves during the
    // native summon cooldown / income wait. The planner retains all board guards.
    return planner.Decide(s,settings,now,index=>recovery.CanMove(index,now),awaitingRefill:true);

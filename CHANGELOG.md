@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 1.2.11 — 2026-10-13
+
+- 使徒运气防守接入离线退火搜索得到的50波策略，普通阵容继续培养；保留换位和首领追击。
+- 368个案例、1,466,835次决策的移植对照一致，保留306个模拟通关案例；模拟不代表实机胜率。
+- Apostle Defense now uses an offline annealing–optimized wave-50 policy, including ordinary-lineup development, swaps and boss pursuit.
+- [完整说明 / Full notes](docs/releases/1.2.11.md)
+
 ## 1.2.10 — 2026-10-13
 
 - 中断后的历史操作记录保留为诊断，接续和补跑按游戏当前状态重新规划，避免旧记录永久阻塞队列。

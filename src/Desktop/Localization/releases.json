@@ -1,5 +1,26 @@
 [
 {
+  "Version": "1.2.11",
+  "Date": "2026-10-13",
+  "Notes": {
+    "zh-CN": [
+      "使徒运气防守的50波目标改用离线退火搜索得到的策略；普通盘面也会继续培养，不再仅因前10波没有7／8阶核心而重开。",
+      "按阶段安排召唤、属性升级与低贡献使徒替换，保留换位优化及首领追击。",
+      "离线模型已做随机对照和移植一致性验证；模拟结果不等同于实机胜率。自动更新失败时，请手动下载完整软件包。"
+    ],
+    "zh-TW": [
+      "使徒運氣防守的50波目標改用離線退火搜尋得到的策略；普通盤面也會繼續培養，不再只因前10波沒有7／8階核心而重開。",
+      "依階段安排召喚、屬性升級及低貢獻使徒替換，保留換位最佳化與首領追擊。",
+      "離線模型已做隨機對照及移植一致性驗證；模擬結果不等同於實機勝率。自動更新失敗時，請手動下載完整軟體套件。"
+    ],
+    "en-US": [
+      "The Apostle Defense wave-50 goal now uses a strategy obtained through offline simulated annealing. Ordinary lineups keep developing instead of restarting solely because no tier-7/8 core appeared in the first ten waves.",
+      "Summoning, element upgrades and weak-unit replacement follow a staged policy, with repositioning and boss pursuit.",
+      "Randomized model trials and port-consistency checks passed; simulated results are not live win rates. If automatic updating fails, download the complete package manually."
+    ]
+  }
+},
+{
   "Version": "1.2.10",
   "Date": "2026-10-13",
   "Notes": {
