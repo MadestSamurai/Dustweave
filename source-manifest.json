@@ -3309,7 +3309,7 @@
     },
     {
       "path": "standalone/bd2-apostle-defense/desktop/MainWindow.xaml.cs",
-      "sha256": "6216d707087b6042cee0d80903708d071397ba691b94fddb29c2aee86b544fdb",
+      "sha256": "0fc9c6a5b08f7a3b9106a75cec5d020a56ab16e89d96bebd7a3b72037b9bdd5c",
       "reasons": [
         "build input"
       ],

@@ -152,7 +152,9 @@ public partial class MainWindow:Window
    opening.Catalog.Units=new[]{new UnitDef{Id=501,Element=4,Grade=1,Attack=12,UpAttack=12,Interval=1.5,Range=100,Weight=1}};
    opening.Catalog.Waves=new[]{new WaveDef{Id=1,Element=0,Hp=9,Count=60,Duration=30,Gold=1},new WaveDef{Id=50,Element=3,Hp=100000,Count=1,Duration=60,Boss=true}};
    opening.Units=new[]{new Unit{Id=501,Index=1,Grid=opening.Boards[0].Id,Ready=true}};
-   if(new Planner().Decide(opening,new()).Kind!="wait")throw new InvalidOperationException("Packaged opening spends second-summon gold on upgrades");
+   if(new Planner().Decide(opening,new(){Clear50=false,Rare=true}).Kind!="wait")throw new InvalidOperationException("Packaged opening spends second-summon gold on upgrades");
+   var cultivation=new Planner().Decide(opening,new());
+   if(cultivation.Kind!="upgrade"||cultivation.Element!=4||cultivation.Policy!=AnnealedPolicy.Policy)throw new InvalidOperationException("Packaged annealed cultivation differs from frozen policy");
    opening.Gold=25;opening.CanSummon=true;
    if(new Planner().Decide(opening,new()).Kind!="summon")throw new InvalidOperationException("Packaged opening fails to summon second unit when affordable");
    var melee=DemoPort.Demo();melee.Boards=new[]{new Board{Id=10},new Board{Id=11,Z=4.5},new Board{Id=12,X=3}};
@@ -164,7 +166,7 @@ public partial class MainWindow:Window
    if(swap.Kind!="move"||swap.UnitIndex!=1||swap.TargetIndex!=2)throw new InvalidOperationException("Packaged planner suppresses melee swap with unchanged ranged coverage");
    var late=JsonFiles.Clone(melee);late.Boards[1].Z=0;late.Boards[1].X=.5;late.Catalog.Units.Single(d=>d.Id==2).Range=1;
    late.Catalog.Waves[0].Hp=10000000;late.Catalog.Waves[0].Count=40;late.Catalog.Waves[0].Duration=30;
-   var reroll=new Planner().Decide(late,new());if(reroll.Kind!="sell"||reroll.UnitIndex!=1)throw new InvalidOperationException("Packaged planner locks zero-output reroll behind army DPS requirement");
+   var reroll=new Planner().Decide(late,new(){Clear50=false,Rare=true});if(reroll.Kind!="sell"||reroll.UnitIndex!=1)throw new InvalidOperationException("Packaged planner locks zero-output reroll behind army DPS requirement");
    var boss=DemoPort.Demo();boss.At=DateTime.UtcNow.Ticks;boss.Room="boss-smoke";boss.Wave=50;boss.SecondsLeft=120;boss.Gold=0;
    boss.Boards=new[]{new Board{Id=10,X=3,Z=-3},new Board{Id=20,X=-3,Z=3}};
    boss.Path=new[]{new BD2ApostleDefense.Point{Id=1,X=-5,Z=5},new BD2ApostleDefense.Point{Id=2,X=-5,Z=-5},new BD2ApostleDefense.Point{Id=3,X=5,Z=-5},new BD2ApostleDefense.Point{Id=4,X=5,Z=5}};
@@ -172,7 +174,7 @@ public partial class MainWindow:Window
    boss.Catalog.Waves=new[]{new WaveDef{Id=50,EnemyTable=1050,Boss=true,Count=1,Hp=2100000,Duration=120,Speed=3}};
    boss.Enemies=new[]{new Enemy{Id=901,Table=1050,Hp=2100000,Speed=3,X=-5,Z=5,NextPoint=2}};boss.BoardKey=Guards.BoardKey(boss);
    var chase=new Planner().Decide(boss,new(),boss.At);
-   if(chase.Policy!=BossChase.Policy||chase.Kind!="move"||chase.TargetGrid!=20||chase.TargetEnemy!=901)throw new InvalidOperationException("Packaged boss pursuit failed");
+   if(chase.Policy!=AnnealedPolicy.ChasePolicy||chase.Kind!="move"||chase.TargetGrid!=20||chase.TargetEnemy!=901)throw new InvalidOperationException("Packaged boss pursuit failed");
    var bossCommand=new Control{Enabled=true,Owner=new('b',32),Account=boss.Account,Room=boss.Room,ProcessId=boss.ProcessId,ProcessStart=boss.ProcessStart,SnapshotAt=boss.At,Expires=boss.At+TimeSpan.FromSeconds(10).Ticks,BoardKey=boss.BoardKey,Action=chase};
    if(Guards.Reject(bossCommand,boss,boss.At)!=""||Guards.Reject(bossCommand,boss,boss.At+TimeSpan.FromSeconds(1).Ticks)=="")throw new InvalidOperationException("Packaged boss freshness guard failed");
    var result=DemoPort.Demo();result.Stage="result";result.Dead=true;
@@ -182,10 +184,10 @@ public partial class MainWindow:Window
    var recovery=new RecoveryBackoff();recovery.Sync(boss);recovery.Record(chase,false,boss.At);
    if(recovery.CanMove(chase.UnitIndex,boss.At)||!recovery.Ready(new(){Kind="summon"},boss.At))throw new InvalidOperationException("Packaged failed move blocks summoning");
    await BoardSmoke();await LanguageSmoke();
-   FocusText.Text="50波通关：输出、覆盖与首领准备";DecisionText.Text="准备水属性升级，强化现有2名使徒；等待游戏确认后继续。";Log("演示盘面，不连接或操作游戏");
+   FocusText.Text="50波通关：离线退火优化策略";DecisionText.Text="退火策略：培养阵容，准备后续首领";Log("演示盘面，不连接或操作游戏");
    await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);UpdateLayout();Directory.CreateDirectory(root);
    Capture("ui.png");
-   JsonFiles.Write(System.IO.Path.Combine(root,"smoke.json"),new{status="passed",version=AppVersion.Current,checks=new[]{"board","goals","invalid-input-preserved","start-pause","snapshot-render","36-slot-packaged-planner","opening-summon-savings","opening-second-unit","melee-rescue-with-strong-teammate","melee-swap-with-strong-occupant","zero-output-reroll","68-slot-default-minimum-wide-layout","nonoverlap-in-bounds","selection-range-and-fallback-name","selection-follows-unit-not-replacement","enemy-layer-live-update","pending-move-and-stale-state","keyboard-navigation","spectator-and-empty-board","boss-chase-native-command","boss-chase-freshness-guard","english-static-and-dynamic","language-running-state-preserved","language-settings-preserved","english-minimum-layout","english-tile-width","source-names-preserved","settlement-popup-recovery","cancelled-match-recovery","move-recovery-keeps-summon","language-roundtrip","language-listener-cleanup"}});Application.Current.Shutdown();
+   JsonFiles.Write(System.IO.Path.Combine(root,"smoke.json"),new{status="passed",version=AppVersion.Current,checks=new[]{"board","goals","invalid-input-preserved","start-pause","snapshot-render","36-slot-packaged-planner","rare-opening-summon-savings","annealed-opening-cultivation","opening-second-unit","melee-rescue-with-strong-teammate","melee-swap-with-strong-occupant","zero-output-reroll","68-slot-default-minimum-wide-layout","nonoverlap-in-bounds","selection-range-and-fallback-name","selection-follows-unit-not-replacement","enemy-layer-live-update","pending-move-and-stale-state","keyboard-navigation","spectator-and-empty-board","boss-chase-native-command","boss-chase-freshness-guard","english-static-and-dynamic","language-running-state-preserved","language-settings-preserved","english-minimum-layout","english-tile-width","source-names-preserved","settlement-popup-recovery","cancelled-match-recovery","move-recovery-keeps-summon","language-roundtrip","language-listener-cleanup"}});Application.Current.Shutdown();
   }catch(Exception e){JsonFiles.Write(System.IO.Path.Combine(root,"smoke.json"),new{status="failed",error=e.ToString()});Application.Current.Shutdown(1);}
  }
 }
