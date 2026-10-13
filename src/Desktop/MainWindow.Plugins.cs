@@ -30,7 +30,8 @@ public sealed class DailyPluginPanel : ScrollViewer
         var actions = new WrapPanel { Margin = new(0, 16, 0, 0) };
         import.Style = (Style)Application.Current.FindResource("PrimaryButton");
         actions.Children.Add(import); actions.Children.Add(disable); actions.Children.Add(restart); overview.Children.Add(actions); overview.Children.Add(status);
-        content.Children.Add(Card(overview)); content.Children.Add(cards); Content = content;
+        overview.Margin=new(0,0,0,24);content.Children.Add(overview); content.Children.Add(cards);
+        var layout=new Grid();layout.ColumnDefinitions.Add(new ColumnDefinition{MaxWidth=880});layout.Children.Add(content);Content=layout;
         import.Click += (_, _) => ImportRequested?.Invoke(null); disable.Click += (_, _) => DisableRequested?.Invoke(); restart.Click += (_, _) => RestartRequested?.Invoke();
         AllowDrop = true;
         DragOver += (_, e) => { e.Effects = !occupied && e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None; e.Handled = true; };

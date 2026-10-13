@@ -81,6 +81,7 @@ public partial class MainWindow
             DailyJson.Write(Path.Combine(root, "task-presets.json"), old);
             preferences.Save(a, first); preferences.Save(b, second);
             new DailyDesktopBehavior().Save(root);
+            RefreshCloseAction();
             viewedAccount = previousViewedAccount;
             Width = previousWidth; Height = previousHeight;
             LanguageSelector.SelectedIndex = previousLanguage; ThemeSelector.SelectedIndex = previousTheme;

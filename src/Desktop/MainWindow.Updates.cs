@@ -28,7 +28,8 @@ public sealed class DailyUpdatePanel : ScrollViewer
         var actions = new WrapPanel(); L.Bind(check, ContentControl.ContentProperty, "updates.check"); actions.Children.Add(check);
         L.Bind(install, ContentControl.ContentProperty, "updates.install"); install.Style = (Style)Application.Current.FindResource("PrimaryButton"); actions.Children.Add(install); card.Children.Add(actions); card.Children.Add(status);
         stack.Children.Add(new Border { Style = (Style)Application.Current.FindResource("Panel"), Padding = new(20), Margin = new(0, 0, 0, 16), Child = card });
-        stack.Children.Add(DailyDownloadLinks.Create()); stack.Children.Add(notes); Content = stack;
+        stack.Children.Add(DailyDownloadLinks.Create()); stack.Children.Add(notes);
+        var layout=new Grid();layout.ColumnDefinitions.Add(new ColumnDefinition {MaxWidth=880});layout.Children.Add(stack);Content = layout;
         check.Click += (_, _) => CheckRequested?.Invoke(); install.Click += (_, _) => InstallRequested?.Invoke();
         automatic.Click += (_, _) => AutomaticChanged?.Invoke(Automatic);
         L.Text(status, "updates.idle");
@@ -38,15 +39,19 @@ public sealed class DailyUpdatePanel : ScrollViewer
     public void ShowNotes(IEnumerable<DailyReleaseNote> releases)
     {
         notes.Children.Clear();
+        bool first=true;
         foreach (var release in releases)
         {
-            var body = new StackPanel(); body.Children.Add(new TextBlock { Text = release.Version + "  ·  " + release.Date, FontSize = 18, FontWeight = FontWeights.SemiBold, Margin = new(0, 0, 0, 12) });
+            var body = new StackPanel { Margin=new(0,12,0,0) };
             foreach (int i in Enumerable.Range(0, release.Notes["zh-CN"].Length))
             {
                 var text = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 0, 0, 10), FontSize = 14 };
                 L.Bind(text, TextBlock.TextProperty, () => "• " + release.Notes[L.Code][i]); body.Children.Add(text);
             }
-            notes.Children.Add(new Border { Style = (Style)Application.Current.FindResource("Panel"), Padding = new(20), Margin = new(0, 0, 0, 16), Child = body });
+            var heading=new TextBlock {Text=release.Version+"  ·  "+release.Date,FontSize=16,FontWeight=FontWeights.SemiBold};
+            var expander=new Expander { Header=heading,Content=body,IsExpanded=first,Style=(Style)Application.Current.FindResource("DisclosureExpander"),Margin=new(0,16,0,16) };
+            first=false;
+            var section=new Border { BorderThickness=new(0,0,0,1),Child=expander };section.SetResourceReference(Border.BorderBrushProperty,"Line");notes.Children.Add(section);
         }
     }
 }

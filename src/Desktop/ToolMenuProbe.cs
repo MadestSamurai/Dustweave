@@ -35,9 +35,9 @@ internal static class ToolMenuProbe
         // Synthetic windows must not inspect or reserve a real user's standalone-tool mutex.
         string fixtureId = Guid.NewGuid().ToString("N");
         string FixtureMutex(DailyToolDefinition tool) => @"Local\Dustweave.ToolMenuProbe." + fixtureId + "." + tool.Id;
-        // A single-file WPF child may take over 400 ms to finish a normal close.
-        // Preserve the cancellation check without treating ordinary teardown as refusal.
-        DailyToolSession Session() => new(profile, exe, Launch, TimeSpan.FromSeconds(3), FixtureMutex);
+        // Normal WPF teardown after the language/UI checks can exceed three seconds.
+        // Use the production close deadline; only the deliberate refusal probe is shortened.
+        DailyToolSession Session(TimeSpan? closeDeadline = null) => new(profile, exe, Launch, closeDeadline, FixtureMutex);
         var session = Session(); var cases = new List<string>();
         void Check(bool pass, string message) { if (!pass) throw new InvalidOperationException(message); cases.Add(message); }
         async Task Ready(string id)
@@ -82,11 +82,13 @@ internal static class ToolMenuProbe
                 Check(!IsIconic(handle) && session.Current == original, "reopening a paused tool restores its original window without a second launch");
             }
             File.WriteAllText(Path.Combine(profile, "hold-close"), "hold");
-            await session.OpenAsync("sichuan");
+            await Session(TimeSpan.FromSeconds(3)).OpenAsync("sichuan");
             Check(session.Current == original, "cancelled close preserves original tool");
             Check(!File.Exists(Path.Combine(profile, "ready-sichuan")), "switch does not launch before close");
             File.Delete(Path.Combine(profile, "hold-close"));
-            await session.OpenAsync("sichuan"); await Ready("sichuan");
+            await session.OpenAsync("sichuan");
+            Check(session.Current?.ToolId == "sichuan", "normal switch request completed: " + session.Message);
+            await Ready("sichuan");
             Check(session.Current?.ToolId == "sichuan", "switch starts next tool after normal close");
             Check(session.Current?.ProcessId != original.ProcessId, "tools isolated into distinct processes");
             Check(await session.CloseAsync(), "normal close accepted");

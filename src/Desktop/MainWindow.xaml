@@ -80,11 +80,12 @@
   </StackPanel>
   <Grid x:Name="PageHeader" Grid.Column="1" Margin="24,24,24,20">
    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
    <StackPanel Margin="0,0,16,0">
     <TextBlock x:Name="PageTitle" Text="{Binding SelectedItem.Header,ElementName=WorkspaceTabs}" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text,RelativeSource={RelativeSource Self}}"/>
     <TextBlock x:Name="ConnectionText" FontSize="12" Text="{l:Tr connection.none}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" Margin="0,6,0,0"/>
    </StackPanel>
-   <Button Grid.Column="1" x:Name="ConnectButton" Content="{l:Tr connection.connect}" Click="Connect_Click" VerticalAlignment="Center" Margin="0,0,16,0" shell:WindowChrome.IsHitTestVisibleInChrome="True"/>
+   <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"><Button x:Name="ConnectionGuideButton" Content="{l:Tr onboarding.title}" Click="ConnectionGuide_Click" Margin="0,0,8,0" shell:WindowChrome.IsHitTestVisibleInChrome="True"/><Button x:Name="ConnectButton" Content="{l:Tr connection.connect}" Click="Connect_Click" VerticalAlignment="Center" Margin="0,0,16,0" shell:WindowChrome.IsHitTestVisibleInChrome="True"/></StackPanel>
    <StackPanel x:Name="WindowControls" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
     <Button x:Name="MinimizeButton" Style="{StaticResource CaptionButton}" ToolTip="{l:Tr window.minimize}" Click="Minimize_Click">
      <Path Style="{StaticResource LineIcon}" Data="{StaticResource Icon.WindowMinimize}" Stroke="{Binding Foreground,RelativeSource={RelativeSource AncestorType=Button}}"/>
@@ -103,12 +104,15 @@
      <Path Style="{StaticResource LineIcon}" Data="{StaticResource Icon.WindowClose}" Stroke="{Binding Foreground,RelativeSource={RelativeSource AncestorType=Button}}"/>
     </Button>
    </StackPanel>
+   <Border x:Name="ActionNotice" Grid.Row="1" Grid.ColumnSpan="3" Visibility="Collapsed" CornerRadius="8" Background="{DynamicResource ErrorSoft}" Padding="12,8" Margin="0,12,0,0">
+    <DockPanel><Button DockPanel.Dock="Right" Click="DismissActionNotice_Click" Style="{StaticResource QuietButton}" AutomationProperties.Name="{l:Tr common.close}" ToolTip="{l:Tr common.close}" Content="×" Margin="12,0,0,0"/><ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="90"><TextBlock x:Name="ActionNoticeText" TextWrapping="Wrap" Foreground="{DynamicResource Error}"/></ScrollViewer></DockPanel>
+   </Border>
   </Grid>
   <TabControl x:Name="WorkspaceTabs" Grid.Row="1" Grid.ColumnSpan="2" SelectionChanged="WorkspaceTab_Changed" Background="Transparent" BorderThickness="0" SelectedIndex="0" TabStripPlacement="Left" ItemContainerStyle="{StaticResource NavigationTab}">
    <TabControl.Template><ControlTemplate TargetType="TabControl">
     <Grid>
      <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False" Margin="0,0,0,100">
       <TabPanel IsItemsHost="True" KeyboardNavigation.TabIndex="1" KeyboardNavigation.DirectionalNavigation="Contained" VerticalAlignment="Top"/>
      </ScrollViewer>
      <ContentPresenter Grid.Column="1" Margin="24,0,24,20" ContentSource="SelectedContent" KeyboardNavigation.TabIndex="2"/>
@@ -119,24 +123,16 @@
    <TabItem x:Name="AccountsTab" Tag="{StaticResource Icon.Account}" Header="{l:Tr nav.accounts}">
     <Grid>
      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-     <Border x:Name="CurrentLoginCard" Style="{StaticResource Panel}" Padding="12,8" Margin="0,0,0,8">
-      <Grid>
-       <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-       <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-       <StackPanel Margin="0,0,16,0">
-        <TextBlock Text="{l:Tr account.local_login}" FontSize="12" Foreground="{DynamicResource MutedInk}"/>
-        <TextBlock x:Name="LoginAccountText" FontSize="20" FontWeight="SemiBold" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text,RelativeSource={RelativeSource Self}}"/>
-       </StackPanel>
-       <StackPanel x:Name="LoginActions" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+     <Border x:Name="CurrentLoginCard" Style="{StaticResource Panel}" Padding="16,10" Margin="0,0,0,8">
+      <StackPanel>
+       <DockPanel LastChildFill="True"><TextBlock Text="{l:Tr account.local_login}" FontSize="12" Foreground="{DynamicResource MutedInk}" Margin="0,0,12,0" VerticalAlignment="Center"/><TextBlock x:Name="LoginAccountText" FontSize="18" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text,RelativeSource={RelativeSource Self}}"/></DockPanel>
+       <StackPanel x:Name="LoginActions" Orientation="Horizontal" Margin="0,10,0,0">
         <Button x:Name="SaveAccountButton" Content="{l:Tr account.save}" Click="Save_Click" Style="{StaticResource PrimaryButton}" Margin="0,0,8,0" ToolTipService.ShowOnDisabled="True"/>
-        <Button x:Name="LoginNewButton" Content="{l:Tr account.login_new}" Click="LoginNew_Click" ToolTipService.ShowOnDisabled="True"/>
+        <Button x:Name="LoginNewButton" Content="{l:Tr account.login_new}" Click="LoginNew_Click" Margin="0,0,8,0" ToolTipService.ShowOnDisabled="True"/>
+        <Button x:Name="RecoverButton" Content="{l:Tr account.recover}" Click="Recover_Click" ToolTipService.ShowOnDisabled="True"/>
        </StackPanel>
-       <TextBlock x:Name="LoginHintText" Grid.Row="1" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" FontSize="12" Margin="0,10,16,0" VerticalAlignment="Center"/>
-       <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-        <Button x:Name="ConnectionGuideButton" Content="{l:Tr guide.title}" Click="ConnectionGuide_Click" Margin="0,0,8,0"/>
-        <Button x:Name="RecoverButton" Content="{l:Tr account.recover}" Click="Recover_Click" Style="{StaticResource QuietButton}" ToolTipService.ShowOnDisabled="True"/>
-       </StackPanel>
-      </Grid>
+       <TextBlock x:Name="LoginHintText" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" FontSize="12" Margin="0,8,0,0"/>
+      </StackPanel>
      </Border>
      <Border Grid.Row="1" Style="{StaticResource Panel}" Padding="16,8">
       <Grid>
@@ -152,8 +148,8 @@
        <Grid Grid.Row="1">
         <DataGrid x:Name="AccountsGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserSortColumns="False" HeadersVisibility="Column" RowHeight="54" ColumnHeaderHeight="34" GridLinesVisibility="None" Background="Transparent" BorderThickness="0" RowBackground="Transparent" AlternatingRowBackground="Transparent" RowStyle="{StaticResource AccountRowStyle}" ColumnHeaderStyle="{StaticResource AccountColumnHeader}" SelectionMode="Single" SelectionUnit="FullRow" SelectionChanged="Selection_Changed" ScrollViewer.HorizontalScrollBarVisibility="Auto">
          <DataGrid.Columns>
-          <DataGridTemplateColumn Width="92">
-           <DataGridTemplateColumn.Header><StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0"><CheckBox x:Name="SelectAll" ToolTip="{l:Tr account.select_all}" AutomationProperties.Name="{l:Tr account.select_all}" Click="SelectAll_Click" VerticalAlignment="Center"/><TextBlock Text="{l:Tr account.queue_column}" Margin="6,0,0,0" ToolTip="{l:Tr account.queue_help}" VerticalAlignment="Center"/></StackPanel></DataGridTemplateColumn.Header>
+          <DataGridTemplateColumn Width="44">
+           <DataGridTemplateColumn.Header><StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0"><CheckBox x:Name="SelectAll" ToolTip="{l:Tr account.select_all}" AutomationProperties.Name="{l:Tr account.select_all}" Click="SelectAll_Click" VerticalAlignment="Center"/></StackPanel></DataGridTemplateColumn.Header>
            <DataGridTemplateColumn.CellTemplate><DataTemplate><CheckBox IsChecked="{Binding Selected,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding Account.Valid}" HorizontalAlignment="Left" Margin="12,0,0,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding QueueLabel}" ToolTip="{l:Tr account.queue_help}"/></DataTemplate></DataGridTemplateColumn.CellTemplate>
           </DataGridTemplateColumn>
           <DataGridTemplateColumn Header="{l:Tr account.name}" Width="*" MinWidth="150"><DataGridTemplateColumn.CellTemplate><DataTemplate>
@@ -162,9 +158,8 @@
             <StackPanel Grid.Column="1"><TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding PlayerLabel}" FontSize="11" Foreground="{DynamicResource MutedInk}" TextTrimming="CharacterEllipsis" Margin="0,3,0,0" ToolTip="{Binding PlayerLabel}"/></StackPanel>
            </Grid>
           </DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-          <DataGridTextColumn Header="{l:Tr account.verified}" Binding="{Binding VerifiedLabel}" Width="135" IsReadOnly="True" ElementStyle="{StaticResource AccountCellText}"/>
-          <DataGridTemplateColumn Header="{l:Tr presets.label}" Width="180"><DataGridTemplateColumn.CellTemplate><DataTemplate>
-           <ComboBox ItemsSource="{Binding PresetOptions}" DisplayMemberPath="Label" SelectedValuePath="Id" SelectedItem="{Binding SelectedPreset,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Margin="4,0" VerticalAlignment="Center" IsEnabled="{Binding Account.Valid}" ToolTip="{l:Tr presets.account_help}" AutomationProperties.Name="{l:Tr presets.label}"/>
+          <DataGridTemplateColumn Header="{l:Tr presets.label}" Width="200"><DataGridTemplateColumn.CellTemplate><DataTemplate>
+           <ComboBox ItemsSource="{Binding PresetOptions}" TextSearch.TextPath="Label" SelectedValuePath="Id" SelectedItem="{Binding SelectedPreset,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Margin="4,0" VerticalAlignment="Center" IsEnabled="{Binding Account.Valid}" ToolTip="{Binding SelectedPreset.Label}" AutomationProperties.Name="{l:Tr presets.label}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis"/></DataTemplate></ComboBox.ItemTemplate></ComboBox>
           </DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
           <DataGridTextColumn Header="{l:Tr account.status}" Binding="{Binding StatusLabel}" Width="110" IsReadOnly="True" ElementStyle="{StaticResource AccountCellText}"/>
           <DataGridTemplateColumn Width="128"><DataGridTemplateColumn.CellTemplate><DataTemplate>
@@ -176,20 +171,14 @@
         <TextBlock x:Name="EmptyText" Text="{l:Tr account.empty}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="440" Margin="20" Visibility="Collapsed"/>
        </Grid>
        <DockPanel Grid.Row="2" x:Name="ManageBar" Margin="0,8,0,0" LastChildFill="False">
+        <Button DockPanel.Dock="Right" x:Name="SandboxRepairButton" Content="{l:Tr sandbox.repair.title}" Click="SandboxRepair_Click" Margin="8,0,0,0" ToolTip="{l:Tr sandbox.repair.selected_help}"/>
 
-        <Button DockPanel.Dock="Right" x:Name="SandboxLaunchButton" Content="{l:Tr sandbox.launch}" Click="SandboxLaunch_Click" Margin="8,0,0,0" ToolTip="{l:Tr sandbox.launch_help}" ToolTipService.ShowOnDisabled="True"/>
-        <Button DockPanel.Dock="Right" x:Name="RunButton" Content="{l:Tr account.check}" Click="Run_Click" ToolTip="{l:Tr account.check_help}" ToolTipService.ShowOnDisabled="True"/>
         <StackPanel Orientation="Horizontal" ToolTip="{l:Tr account.manage_help}">
          <Button x:Name="RenameAccountButton" Content="{l:Tr account.rename}" Click="Rename_Click" Margin="0,0,8,0"/>
          <Button x:Name="MoveUpButton" Content="{l:Tr account.move_up}" Click="Up_Click" Margin="0,0,8,0"/>
          <Button x:Name="MoveDownButton" Content="{l:Tr account.move_down}" Click="Down_Click" Margin="0,0,8,0"/>
          <Button x:Name="DeleteAccountButton" Content="{l:Tr account.remove}" Click="Delete_Click" Style="{StaticResource DangerButton}"/>
         </StackPanel>
-       </DockPanel>
-       <DockPanel Grid.Row="3" Margin="0,4,0,0" LastChildFill="True">
-        <Button DockPanel.Dock="Right" Content="{l:Tr desktop.close_settings}" Click="CloseBehavior_Click" Style="{StaticResource QuietButton}" Margin="8,0,0,0"/>
-        <Button DockPanel.Dock="Right" x:Name="SandboxRepairButton" Content="{l:Tr sandbox.repair.title}" Click="SandboxRepair_Click" Style="{StaticResource QuietButton}" Margin="8,0,0,0"/>
-        <CheckBox x:Name="RunOnOpen" Content="{l:Tr desktop.run_on_open}" Click="RunOnOpen_Click" VerticalAlignment="Center" ToolTip="{l:Tr desktop.run_on_open_help}"/>
        </DockPanel>
        <TextBlock x:Name="SandboxHelpText" Grid.Row="4" Visibility="Collapsed" Text="{l:Tr sandbox.help}" FontSize="12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,12,0,0"/>
       </Grid>
@@ -199,10 +188,49 @@
    <TabItem x:Name="ScheduleTab" Tag="{StaticResource Icon.Clock}" Header="{l:Tr nav.schedule}"/>
    <TabItem x:Name="PluginsTab" Tag="{StaticResource Icon.Plugin}" Header="{l:Tr plugins.title}"/>
    <TabItem Visibility="Collapsed" x:Name="UpdatesTab" Tag="{StaticResource Icon.Link}" Header="{l:Tr nav.updates}"/>
+   <TabItem x:Name="SoftwareSettingsTab" Visibility="Collapsed" Tag="{StaticResource Icon.Settings}" Header="{l:Tr nav.software}">
+    <ScrollViewer x:Name="SoftwareSettingsScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+     <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" MaxWidth="880"/></Grid.ColumnDefinitions><StackPanel Margin="0,0,12,12">
+      <TextBlock Text="{l:Tr software.appearance}" FontSize="17" FontWeight="SemiBold" Margin="0,4,0,16"/>
+      <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+       <StackPanel MaxWidth="260" HorizontalAlignment="Left" MinWidth="220">
+   <TextBlock Text="{l:Tr appearance.label}" FontSize="12" Foreground="{DynamicResource MutedInk}" Margin="0,0,0,8"/>
+   <Border Background="{DynamicResource SurfaceMuted}" CornerRadius="8" Padding="2" BorderBrush="{DynamicResource Line}" BorderThickness="1">
+    <ListBox x:Name="ThemeSelector" SelectedIndex="0" SelectionChanged="Theme_Changed" AutomationProperties.Name="{l:Tr appearance.label}" Background="Transparent" BorderThickness="0" Padding="0" ItemContainerStyle="{StaticResource AppearanceChoice}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled">
+     <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" Columns="3"/></ItemsPanelTemplate></ListBox.ItemsPanel>
+     <ListBoxItem AutomationProperties.Name="{l:Tr appearance.system}" ToolTip="{l:Tr appearance.system}"><StackPanel><Path Style="{StaticResource LineIcon}" Data="{StaticResource Icon.System}" Stroke="{Binding Foreground,RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/><TextBlock Text="{l:Tr appearance.system_short}" FontSize="11" HorizontalAlignment="Center" Margin="0,5,0,0"/></StackPanel></ListBoxItem>
+     <ListBoxItem AutomationProperties.Name="{l:Tr appearance.light}" ToolTip="{l:Tr appearance.light}"><StackPanel><Path Style="{StaticResource LineIcon}" Data="{StaticResource Icon.Sun}" Stroke="{Binding Foreground,RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/><TextBlock Text="{l:Tr appearance.light}" FontSize="11" HorizontalAlignment="Center" Margin="0,5,0,0"/></StackPanel></ListBoxItem>
+     <ListBoxItem AutomationProperties.Name="{l:Tr appearance.dark}" ToolTip="{l:Tr appearance.dark}"><StackPanel><Path Style="{StaticResource LineIcon}" Data="{StaticResource Icon.Moon}" Stroke="{Binding Foreground,RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/><TextBlock Text="{l:Tr appearance.dark}" FontSize="11" HorizontalAlignment="Center" Margin="0,5,0,0"/></StackPanel></ListBoxItem>
+    </ListBox>
+   </Border>
+
+       </StackPanel><StackPanel Grid.Column="1" MaxWidth="240" HorizontalAlignment="Right" MinWidth="180">
+   <TextBlock Text="{l:Tr language.label}" Foreground="{DynamicResource MutedInk}" FontSize="12" Margin="0,0,0,8"/>
+   <ComboBox x:Name="LanguageSelector" SelectedIndex="0" SelectionChanged="Language_Changed" AutomationProperties.Name="{l:Tr language.label}">
+    <ComboBoxItem Content="简体中文"/><ComboBoxItem Content="繁體中文"/><ComboBoxItem Content="English"/>
+   </ComboBox>
+
+       </StackPanel>
+      </Grid>
+      <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Margin="0,24,0,22"/>
+      <TextBlock Text="{l:Tr software.startup}" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,16"/>
+      <CheckBox x:Name="StartWithWindows" Content="{l:Tr software.windows_startup}" Click="StartWithWindows_Click"/>
+      <TextBlock Text="{l:Tr software.windows_startup_help}" Foreground="{DynamicResource MutedInk}" FontSize="12" TextWrapping="Wrap" Margin="24,4,0,14"/>
+      <DockPanel LastChildFill="True"><Button DockPanel.Dock="Right" Content="{l:Tr software.manage_queue}" Click="OpenAccountsSettings_Click" Margin="16,0,0,0"/><CheckBox x:Name="RunOnOpen" Content="{l:Tr desktop.run_on_open}" Click="RunOnOpen_Click" VerticalAlignment="Center" ToolTip="{l:Tr desktop.run_on_open_help}"/></DockPanel>
+      <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="240"/></Grid.ColumnDefinitions><TextBlock Text="{l:Tr software.close_action}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,16,0"/><ComboBox Grid.Column="1" x:Name="CloseActionChoice" SelectionChanged="CloseAction_Changed" AutomationProperties.Name="{l:Tr software.close_action}"><ComboBoxItem Content="{l:Tr software.close_ask}"/><ComboBoxItem Content="{l:Tr desktop.minimize}"/><ComboBoxItem Content="{l:Tr desktop.exit}"/></ComboBox></Grid>
+      <TextBlock x:Name="SoftwareSettingsStatus" Visibility="Collapsed" TextWrapping="Wrap" FontSize="12" Margin="0,10,0,0"/>
+      <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Margin="0,16,0,22"/>
+      <TextBlock Text="{l:Tr software.locations}" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,16"/>
+      <StackPanel x:Name="SoftwarePaths"/>
+      <TextBlock Text="{l:Tr software.maintenance}" FontSize="17" FontWeight="SemiBold" Margin="0,8,0,16"/>
+      <WrapPanel><Button Content="{l:Tr nav.updates}" Click="Updates_Click" Margin="0,0,8,8"/><Button x:Name="LogCleanupButton" Content="{l:Tr logs.title}" Click="CleanupDiagnostics_Click" Margin="0,0,8,8"/></WrapPanel>
+     </StackPanel></Grid>
+    </ScrollViewer>
+   </TabItem>
    <TabItem x:Name="DiagnosticsTab" Tag="{StaticResource Icon.Diagnostics}" Header="{l:Tr nav.diagnostics}">
     <Border Background="{DynamicResource AppBackground}">
       <ScrollViewer x:Name="DiagnosticsScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-       <StackPanel Margin="0,0,8,0">
+       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" MaxWidth="880"/></Grid.ColumnDefinitions><StackPanel Margin="0,0,8,0">
         <Border Style="{StaticResource Panel}" Padding="18">
          <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="36"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
           <Border Width="28" Height="28" CornerRadius="14" Background="{DynamicResource PrimarySoft}" VerticalAlignment="Top"><Path x:Name="DiagnosticIcon" Style="{StaticResource LineIcon}" Data="{StaticResource Icon.Link}"/></Border>
@@ -215,61 +243,29 @@
           <Button Grid.Column="2" Content="{l:Tr diagnostics.refresh}" Click="RefreshDiagnostics_Click" VerticalAlignment="Top" Margin="16,0,0,0"/>
          </Grid>
         </Border>
-        <TextBlock Text="{l:Tr diagnostics.activity}" FontSize="14" FontWeight="SemiBold" Margin="0,22,0,8"/><TextBlock x:Name="DiagnosticIssueCategory" FontSize="12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Visibility="Collapsed" Margin="0,0,0,8"/>
-        <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Padding="0,0,0,18">
-         <StackPanel>
-          <ScrollViewer MaxHeight="96" VerticalScrollBarVisibility="Auto"><TextBlock Text="{Binding Text,ElementName=ProgressText}" Foreground="{Binding Foreground,ElementName=ProgressText}" TextWrapping="Wrap" FontSize="13"/></ScrollViewer>
-          <WrapPanel Margin="0,10,0,0">
-           <Button Content="{l:Tr diagnostics.timeline}" Click="DiagnosticTimeline_Click" Style="{StaticResource QuietButton}" Margin="0,0,8,0"/>
-           <Button Content="{l:Tr common.stop_operation}" Click="Stop_Click" IsEnabled="{Binding IsEnabled,ElementName=StopButton}" Visibility="{Binding IsEnabled,ElementName=StopButton,Converter={StaticResource BooleanToVisibility}}"/>
-          </WrapPanel>
-         </StackPanel>
-        </Border>
-        <TextBlock Text="{l:Tr diagnostics.help}" FontSize="14" FontWeight="SemiBold" Margin="0,18,0,6"/>
+        <TextBlock Text="{l:Tr diagnostics.help}" FontSize="17" FontWeight="SemiBold" Margin="0,28,0,8"/>
         <TextBlock Text="{l:Tr diagnostics.help_body}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" FontSize="13"/>
         <WrapPanel Margin="0,12,0,0">
          <Button x:Name="ExportDiagnosticButton" Content="{l:Tr diagnostics.export}" Click="ExportDiagnostics_Click" Style="{StaticResource PrimaryButton}" Margin="0,0,8,4"/><Button x:Name="CopyDiagnosticButton" Content="{l:Tr diagnostics.copy}" Click="CopyDiagnostics_Click" Margin="0,0,8,4"/>
          <Button Content="{l:Tr diagnostics.folder}" Click="OpenDiagnosticsFolder_Click" Margin="0,0,0,4"/>
         </WrapPanel>
-        <Button x:Name="LogCleanupButton" Content="{l:Tr logs.title}" Click="CleanupDiagnostics_Click" HorizontalAlignment="Left" Margin="0,12,0,0"/>
         <TextBlock x:Name="DiagnosticCopyFeedback" Foreground="{DynamicResource Primary}" TextWrapping="Wrap" FontSize="12" Visibility="Collapsed" Margin="0,4,0,0"/>
-        <Expander x:Name="GuildDiagnostics" Header="{l:Tr diagnostics.advanced}" Style="{StaticResource DisclosureExpander}" Margin="0,20,0,0">
-         <StackPanel Margin="0,14,0,0">
-          <TextBlock x:Name="GuildIdentityText" Text="{l:Tr diagnostics.guild_wait}" FontWeight="SemiBold" TextWrapping="Wrap"/>
-          <TextBlock x:Name="GuildStateText" Text="{l:Tr diagnostics.guild_connect}" TextWrapping="Wrap" FontSize="13" Margin="0,8,0,0"/>
-          <TextBlock x:Name="GuildResultText" Text="{l:Tr diagnostics.guild_empty}" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" FontSize="13"/>
-          <TextBlock Text="{l:Tr diagnostics.guild_notice}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" FontSize="12" Margin="0,12,0,0"/>
-          <WrapPanel Margin="0,12,0,0">
-           <Button x:Name="ObserveButton" Content="{l:Tr diagnostics.observe}" Click="Observe_Click" Margin="0,0,8,4"/>
-           <Button x:Name="GuildRunButton" Content="{l:Tr diagnostics.guild_run}" Click="GuildRun_Click" Margin="0,0,8,4"/>
-           <Button Content="{l:Tr diagnostics.records}" Click="OpenRecords_Click" Margin="0,0,0,4"/>
-          </WrapPanel>
-         </StackPanel>
-        </Expander>
-       </StackPanel>
+
+       </StackPanel></Grid>
       </ScrollViewer>
     </Border>
    </TabItem>
   </TabControl>
-  <StackPanel x:Name="SidebarPreferences" Grid.Row="1" Grid.RowSpan="2" VerticalAlignment="Bottom" Margin="20,0,20,24">
-   <TextBlock Text="{l:Tr appearance.label}" FontSize="12" Foreground="{DynamicResource MutedInk}" Margin="0,0,0,8"/>
-   <Border Background="{DynamicResource SurfaceMuted}" CornerRadius="8" Padding="2" BorderBrush="{DynamicResource Line}" BorderThickness="1">
-    <ListBox x:Name="ThemeSelector" SelectedIndex="0" SelectionChanged="Theme_Changed" AutomationProperties.Name="{l:Tr appearance.label}" Background="Transparent" BorderThickness="0" Padding="0" ItemContainerStyle="{StaticResource AppearanceChoice}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled">
-     <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" Columns="3"/></ItemsPanelTemplate></ListBox.ItemsPanel>
-     <ListBoxItem AutomationProperties.Name="{l:Tr appearance.system}" ToolTip="{l:Tr appearance.system}"><StackPanel><Path Style="{StaticResource LineIcon}" Data="{StaticResource Icon.System}" Stroke="{Binding Foreground,RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/><TextBlock Text="{l:Tr appearance.system_short}" FontSize="11" HorizontalAlignment="Center" Margin="0,5,0,0"/></StackPanel></ListBoxItem>
-     <ListBoxItem AutomationProperties.Name="{l:Tr appearance.light}" ToolTip="{l:Tr appearance.light}"><StackPanel><Path Style="{StaticResource LineIcon}" Data="{StaticResource Icon.Sun}" Stroke="{Binding Foreground,RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/><TextBlock Text="{l:Tr appearance.light}" FontSize="11" HorizontalAlignment="Center" Margin="0,5,0,0"/></StackPanel></ListBoxItem>
-     <ListBoxItem AutomationProperties.Name="{l:Tr appearance.dark}" ToolTip="{l:Tr appearance.dark}"><StackPanel><Path Style="{StaticResource LineIcon}" Data="{StaticResource Icon.Moon}" Stroke="{Binding Foreground,RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/><TextBlock Text="{l:Tr appearance.dark}" FontSize="11" HorizontalAlignment="Center" Margin="0,5,0,0"/></StackPanel></ListBoxItem>
-    </ListBox>
-   </Border>
-   <TextBlock Text="{l:Tr language.label}" Foreground="{DynamicResource MutedInk}" FontSize="12" Margin="0,14,0,6"/>
-   <ComboBox x:Name="LanguageSelector" SelectedIndex="0" SelectionChanged="Language_Changed" AutomationProperties.Name="{l:Tr language.label}">
-    <ComboBoxItem Content="简体中文"/><ComboBoxItem Content="繁體中文"/><ComboBoxItem Content="English"/>
-   </ComboBox>
+  <StackPanel x:Name="SidebarPreferences" Grid.Row="1" Grid.RowSpan="2" VerticalAlignment="Bottom" Margin="12,0,12,16">
+   <Button x:Name="SoftwareSettingsButton" Click="OpenSoftwareSettings_Click" AutomationProperties.Name="{l:Tr nav.software}" HorizontalContentAlignment="Stretch" Padding="12,8" Margin="0,0,0,4">
+    <Button.Style><Style TargetType="Button" BasedOn="{StaticResource QuietButton}"><Style.Triggers><DataTrigger Binding="{Binding IsSelected,ElementName=SoftwareSettingsTab}" Value="True"><Setter Property="Background" Value="{DynamicResource PrimarySoft}"/><Setter Property="Foreground" Value="{DynamicResource Primary}"/><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger></Style.Triggers></Style></Button.Style>
+    <StackPanel Orientation="Horizontal"><Path Style="{StaticResource LineIcon}" Data="{StaticResource Icon.Settings}" Stroke="{Binding Foreground,RelativeSource={RelativeSource AncestorType=Button}}" Margin="0,0,10,0"/><TextBlock Text="{l:Tr nav.software}" VerticalAlignment="Center"/></StackPanel>
+   </Button>
    <Button x:Name="VersionButton" Click="Updates_Click" Style="{StaticResource QuietButton}" HorizontalAlignment="Left" Margin="0,10,0,0" ToolTip="{l:Tr nav.updates}" AutomationProperties.Name="{l:Tr nav.updates}"><TextBlock x:Name="VersionText" Foreground="{DynamicResource MutedInk}" FontSize="11"/></Button>
   </StackPanel>
   <Grid x:Name="ActionFooter" Grid.Row="2" Grid.Column="1" Margin="24,0,24,16" MinHeight="36">
    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-   <TextBlock x:Name="ProgressText" Text="{l:Tr common.ready}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text,RelativeSource={RelativeSource Self}}" Margin="0,0,12,0"/>
+   <TextBlock x:Name="ProgressText" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text,RelativeSource={RelativeSource Self}}" Margin="0,0,12,0"/>
    <Button Grid.Column="1" x:Name="ExecutionModeButton" Content="{l:Tr parallel.mode_sequential}" Click="ExecutionMode_Click" Margin="0,0,8,0" ToolTip="{l:Tr parallel.settings}"/><Button Grid.Column="2" x:Name="RunAccountsButton" Content="{l:Tr account.run_queue}" Click="RunAccounts_Click" Style="{StaticResource PrimaryButton}" ToolTip="{l:Tr account.run_queue_help}"/>
    <Button Grid.Column="2" x:Name="StopButton" Content="{l:Tr common.stop_operation}" Click="Stop_Click" IsEnabled="False" Visibility="{Binding IsEnabled,RelativeSource={RelativeSource Self},Converter={StaticResource BooleanToVisibility}}"/>
   </Grid>

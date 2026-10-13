@@ -55,6 +55,7 @@ public partial class MainWindow
         (ScheduleTab, schedulePanel, "nav.schedule", "onboarding.page.schedule"),
         (PluginsTab, pluginPanel, "plugins.title", "onboarding.page.plugins"),
         (DiagnosticsTab, (FrameworkElement)DiagnosticsTab.Content, "nav.diagnostics", "onboarding.page.diagnostics"),
+        (SoftwareSettingsTab, SoftwareSettingsScroll, "nav.software", "onboarding.page.software"),
         (null, VersionButton, "nav.updates", "onboarding.page.updates")
     ];
     private void BeginPageTour(int index)
@@ -80,7 +81,7 @@ public partial class MainWindow
         var page = TourPages[firstRunTourIndex];
         if (page.Tab != null) WorkspaceTabs.SelectedItem = page.Tab;
         UpdateLayout();
-        firstRunTour!.Show(page.Tab ?? (FrameworkElement)VersionButton, page.Focus, page.Title, page.Description, firstRunTourIndex, TourPages.Length);
+        firstRunTour!.Show(page.Tab == SoftwareSettingsTab ? SoftwareSettingsButton : page.Tab ?? (FrameworkElement)VersionButton, page.Focus, page.Title, page.Description, firstRunTourIndex, TourPages.Length);
         DailyJson.Write(FirstRunPath, new FirstRunRecord(State: "tour", TourIndex: firstRunTourIndex));
     }
     private void EndPageTour(bool complete)

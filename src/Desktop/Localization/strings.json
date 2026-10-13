@@ -29,7 +29,6 @@
     "zh-TW": "此次更新超出小型更新包的大小限制，請手動下載完整軟體包。",
     "en-US": "This update exceeds the automatic download size limit. Please download the complete package."
   },
-
   "run.recovery_details": {
     "zh-CN": "查看恢复方法",
     "zh-TW": "查看恢復方法",
@@ -56,10 +55,10 @@
     "en-US": "the last action in {0}"
   },
   "run.recovery_talent_2": {
-  "en-US": "Sprint",
-  "zh-CN": "飞奔",
-  "zh-TW": "飛奔"
-},
+    "en-US": "Sprint",
+    "zh-CN": "飞奔",
+    "zh-TW": "飛奔"
+  },
   "run.recovery_talent_3": {
     "zh-CN": "压制",
     "zh-TW": "壓制",
@@ -76,25 +75,25 @@
     "en-US": "Search"
   },
   "run.recovery_talent_17": {
-  "en-US": "Stealth",
-  "zh-CN": "藏身",
-  "zh-TW": "藏身"
-},
+    "en-US": "Stealth",
+    "zh-CN": "藏身",
+    "zh-TW": "藏身"
+  },
   "run.recovery_talent_20": {
     "zh-CN": "召唤收集物",
     "zh-TW": "召喚收集物",
     "en-US": "Collectible summoning"
   },
   "run.recovery_body": {
-  "en-US": "Task: {0}\nInterrupted action: {1}\n\nA disconnect or interrupted read does not mean the action failed. Once logged in again, resume the original queue or run this task again.\n\nFor absorption, Dustweave automatically reads the affected map. It skips collected items and continues remaining targets using the current limits. No old reply or manual check is needed. If the map cannot be read, it is deferred with a reason.\n\nOther actions that cannot be resolved automatically retain their reason. You can deselect that task, run the others and export diagnostic logs.",
-  "zh-CN": "环节：{0}\n中断的操作：{1}\n\n游戏断线或读取中断不代表操作失败。恢复登录后，可直接接续原队列或重新运行此环节。\n\n吸收卡点会自动读取对应地图：已收完就继续下一张，仍有物品就按当前剩余目标和次数继续，无需旧回执或手动核对。暂时读不到时会保留原因并跳过该地点。\n\n其他无法自动判断的操作会保留具体原因；可先取消勾选该环节继续其他任务，并导出诊断日志。",
-  "zh-TW": "環節：{0}\n中斷的操作：{1}\n\n遊戲斷線或讀取中斷不代表操作失敗。恢復登入後，可直接接續原佇列或重新執行此環節。\n\n吸收卡點會自動讀取對應地圖：已收完就繼續下一張，仍有物品就按目前剩餘目標與次數繼續，無需舊回應或手動核對。暫時讀不到時會保留原因並跳過該地點。\n\n其他無法自動判斷的操作會保留具體原因；可先取消勾選該環節繼續其他任務，並匯出診斷記錄。"
-},
+    "en-US": "Task: {0}\nInterrupted action: {1}\n\nA disconnect or interrupted read does not mean the action failed. Once logged in again, resume the original queue or run this task again.\n\nFor absorption, Dustweave automatically reads the affected map. It skips collected items and continues remaining targets using the current limits. No old reply or manual check is needed. If the map cannot be read, it is deferred with a reason.\n\nOther actions that cannot be resolved automatically retain their reason. You can deselect that task, run the others and export diagnostic logs.",
+    "zh-CN": "环节：{0}\n中断的操作：{1}\n\n游戏断线或读取中断不代表操作失败。恢复登录后，可直接接续原队列或重新运行此环节。\n\n吸收卡点会自动读取对应地图：已收完就继续下一张，仍有物品就按当前剩余目标和次数继续，无需旧回执或手动核对。暂时读不到时会保留原因并跳过该地点。\n\n其他无法自动判断的操作会保留具体原因；可先取消勾选该环节继续其他任务，并导出诊断日志。",
+    "zh-TW": "環節：{0}\n中斷的操作：{1}\n\n遊戲斷線或讀取中斷不代表操作失敗。恢復登入後，可直接接續原佇列或重新執行此環節。\n\n吸收卡點會自動讀取對應地圖：已收完就繼續下一張，仍有物品就按目前剩餘目標與次數繼續，無需舊回應或手動核對。暫時讀不到時會保留原因並跳過該地點。\n\n其他無法自動判斷的操作會保留具體原因；可先取消勾選該環節繼續其他任務，並匯出診斷記錄。"
+  },
   "run.recovery_continue": {
-  "en-US": "Continue task",
-  "zh-CN": "继续此环节",
-  "zh-TW": "繼續此環節"
-},
+    "en-US": "Continue task",
+    "zh-CN": "继续此环节",
+    "zh-TW": "繼續此環節"
+  },
   "run.recovery_select_current": {
     "zh-CN": "这份记录不是当前可恢复的任务。请返回「当前计划」，选择对应账号和环节再运行。",
     "zh-TW": "這份記錄不是目前可恢復的任務。請返回「目前計畫」，選擇對應帳號與環節再執行。",
@@ -111,10 +110,10 @@
     "en-US": "Check maps"
   },
   "run.sync_confirm_body": {
-  "en-US": "This optional full refresh is for clearly incorrect collection progress after manual play. After a disconnect or interrupted absorption, simply resume the queue; Dustweave checks the affected map automatically.\n\nIt switches between available cartridges and reads server progress. This may take several minutes. It does not use absorption or suppression, or mark tasks complete without checking.\n\nFinish any battle or other automation first. You can stop at any time.",
-  "zh-CN": "这是可选的全量进度刷新，适用于手动收集后列表仍明显不正确的情况。普通断线或吸收中断，直接接续队列即可，工具会自动检查出问题的地图。\n\n确认后将切换可用卡带、读取服务器记录并更新收集进度，可能需要数分钟；不会使用吸收或压制，也不会直接把任务标记为完成。\n\n请先结束当前战斗或其他自动化。检查期间可随时停止。",
-  "zh-TW": "這是可選的完整進度重新整理，適用於手動收集後清單仍明顯不正確的情況。一般斷線或吸收中斷，直接接續佇列即可，工具會自動檢查出問題的地圖。\n\n確認後將切換可用卡帶、讀取伺服器記錄並更新收集進度，可能需要數分鐘；不會使用吸收或壓制，也不會直接將任務標記為完成。\n\n請先結束目前戰鬥或其他自動化。檢查期間可隨時停止。"
-},
+    "en-US": "This optional full refresh is for clearly incorrect collection progress after manual play. After a disconnect or interrupted absorption, simply resume the queue; Dustweave checks the affected map automatically.\n\nIt switches between available cartridges and reads server progress. This may take several minutes. It does not use absorption or suppression, or mark tasks complete without checking.\n\nFinish any battle or other automation first. You can stop at any time.",
+    "zh-CN": "这是可选的全量进度刷新，适用于手动收集后列表仍明显不正确的情况。普通断线或吸收中断，直接接续队列即可，工具会自动检查出问题的地图。\n\n确认后将切换可用卡带、读取服务器记录并更新收集进度，可能需要数分钟；不会使用吸收或压制，也不会直接把任务标记为完成。\n\n请先结束当前战斗或其他自动化。检查期间可随时停止。",
+    "zh-TW": "這是可選的完整進度重新整理，適用於手動收集後清單仍明顯不正確的情況。一般斷線或吸收中斷，直接接續佇列即可，工具會自動檢查出問題的地圖。\n\n確認後將切換可用卡帶、讀取伺服器記錄並更新收集進度，可能需要數分鐘；不會使用吸收或壓制，也不會直接將任務標記為完成。\n\n請先結束目前戰鬥或其他自動化。檢查期間可隨時停止。"
+  },
   "schedule.execution": {
     "zh-CN": "到点如何执行",
     "zh-TW": "到點如何執行",
@@ -411,14 +410,14 @@
     "en-US": "Skip setup?"
   },
   "onboarding.skip_warning": {
-    "zh-CN": "游戏路径或账号验证可能尚未完成。跳过后请自行确认这些设置，否则无法正常启动日常。不会关闭游戏或清除登录状态。以后可在「账号管理 → 启动引导」重新开始。",
-    "zh-TW": "遊戲路徑或帳號驗證可能尚未完成。略過後請自行確認這些設定，否則無法正常啟動日常。不會關閉遊戲或清除登入狀態。日後可在「帳號管理 → 啟動引導」重新開始。",
-    "en-US": "Game location or account verification may be unfinished. Complete these settings before running tasks. Skipping will not close the game or clear your sign-in. Reopen Getting started from Accounts at any time."
+    "zh-CN": "游戏位置或账号验证可能尚未完成，请在执行日常前完成设置。跳过不会关闭游戏或清除登录状态。以后可从窗口顶部的「启动引导」重新开始。",
+    "zh-TW": "遊戲位置或帳號驗證可能尚未完成，請在執行日常前完成設定。略過不會關閉遊戲或清除登入狀態。日後可從視窗頂部的「啟動引導」重新開始。",
+    "en-US": "Game location or account verification may be unfinished. Complete setup before running tasks. Skipping will not close the game or clear your sign-in. Reopen Getting started from the window header."
   },
   "onboarding.skip_tour": {
-    "zh-CN": "跳过功能介绍？已经保存的设置和账号会保留。之后可以从账号管理重新打开启动引导。",
-    "zh-TW": "略過功能介紹？已儲存的設定與帳號會保留。之後可以從帳號管理重新開啟啟動引導。",
-    "en-US": "Skip the app tour? Saved settings and accounts will be kept. You can reopen Getting started from Accounts."
+    "zh-CN": "跳过功能介绍？已保存的设置和账号会保留。之后可从窗口顶部重新打开启动引导。",
+    "zh-TW": "略過功能介紹？已儲存的設定與帳號會保留。之後可從視窗頂部重新開啟啟動引導。",
+    "en-US": "Skip the app tour? Saved settings and accounts will be kept. Reopen Getting started from the window header."
   },
   "onboarding.retry": {
     "zh-CN": "重新验证",
@@ -496,9 +495,9 @@
     "en-US": "Review the plan, current task and results. Run selected tasks, resume an interrupted queue, or retry unfinished tasks."
   },
   "onboarding.page.settings": {
-    "zh-CN": "上方统一设置游戏位置，下方按账号选择日常环节与参数。不需要的环节可以关闭；修改任务偏好后记得保存。",
-    "zh-TW": "上方統一設定遊戲位置，下方依帳號選擇日常環節與參數。不需要的環節可以關閉；修改任務偏好後記得儲存。",
-    "en-US": "Set the shared game location at the top, then choose tasks and options for each account below. Disable tasks you do not need and save your task preferences."
+    "zh-CN": "先选择账号，再按分类或搜索找到日常环节与参数。不需要的环节可以关闭；修改后点击保存设置。",
+    "zh-TW": "先選擇帳號，再依分類或搜尋找到日常環節與參數。不需要的環節可以關閉；修改後點選儲存設定。",
+    "en-US": "Choose an account, then browse categories or search for tasks and options. Disable tasks you do not need, and save your changes."
   },
   "onboarding.page.tools": {
     "zh-CN": "打开需要的小工具，共用当前游戏连接。工具开始自动化后会占用控制权，其他自动化需要等待；仅打开工具窗口不会占用。",
@@ -521,9 +520,9 @@
     "en-US": "Manage optional plugins here. Follow the page instructions to enable or disable them. Built-in features remain available without plugins."
   },
   "onboarding.page.diagnostics": {
-    "zh-CN": "查看连接状态、当前观察与操作记录。遇到问题时先看这里的原因和建议，再导出对应时间段的诊断。",
-    "zh-TW": "查看連線狀態、目前觀察與操作紀錄。遇到問題先看這裡的原因與建議，再匯出對應時段的診斷。",
-    "en-US": "Review connection status, observations and activity. If something goes wrong, check the explanation here and export diagnostics for the affected time."
+    "zh-CN": "遇到问题时查看连接状态，并导出诊断包联系开发者。",
+    "zh-TW": "遇到問題時查看連線狀態，並匯出診斷包聯絡開發者。",
+    "en-US": "Check the connection and export a diagnostic bundle when you need help."
   },
   "onboarding.page.updates": {
     "zh-CN": "点击左下角的版本号查看更新说明与检查更新。下载完成后，程序会等空闲时提示重启更新，保留账号和设置。",
@@ -921,9 +920,9 @@
     "en-US": "Order"
   },
   "account.name": {
-    "zh-CN": "账号",
     "zh-TW": "帳號",
-    "en-US": "Account"
+    "en-US": "Account",
+    "zh-CN": "账号"
   },
   "account.character": {
     "zh-CN": "游戏角色",
@@ -976,9 +975,9 @@
     "en-US": "Remove"
   },
   "account.recover": {
-    "zh-CN": "恢复上次登录…",
-    "zh-TW": "還原上次登入…",
-    "en-US": "Restore previous sign-in…"
+    "zh-TW": "恢復上次登入",
+    "en-US": "Restore sign-in",
+    "zh-CN": "恢复上次登录"
   },
   "account.switch": {
     "zh-CN": "切换并启动选中账号",
@@ -1796,9 +1795,9 @@
     "en-US": "Find tasks"
   },
   "prefs.search_help": {
-    "zh-CN": "按环节名称或说明筛选",
-    "zh-TW": "依環節名稱或說明篩選",
-    "en-US": "Filter by task name or description"
+    "zh-TW": "搜尋所有分類中的環節與設定名稱；Esc 清除搜尋。",
+    "zh-CN": "搜索所有分类中的环节与设置名称；Esc 清除搜索。",
+    "en-US": "Search task and setting names across all categories. Press Esc to clear."
   },
   "prefs.search_accessible": {
     "zh-CN": "查找日常环节",
@@ -3101,14 +3100,14 @@
     "en-US": "View task timeline"
   },
   "diagnostics.help": {
-    "zh-CN": "需要进一步排查？",
-    "zh-TW": "需要進一步排查？",
-    "en-US": "Need more help?"
+    "zh-CN": "反馈问题",
+    "zh-TW": "回報問題",
+    "en-US": "Report a problem"
   },
   "diagnostics.help_body": {
-    "zh-TW": "匯出日誌，並告知卡住的步驟和時間。",
-    "en-US": "Export logs and describe the step and time of the problem.",
-    "zh-CN": "导出日志，并告知卡住的步骤和时间。"
+    "zh-CN": "导出诊断包，附上卡住的环节与大致时间后联系开发者。压缩包可能包含角色信息，请勿公开上传。",
+    "zh-TW": "匯出診斷包，附上卡住的環節與大致時間後聯絡開發者。壓縮包可能包含角色資訊，請勿公開上傳。",
+    "en-US": "Export a diagnostic bundle and tell the developer which step failed and roughly when. The bundle may contain character information; share it privately."
   },
   "diagnostics.copy": {
     "zh-CN": "复制状态摘要",
@@ -3391,9 +3390,9 @@
     "zh-CN": "每天开始时间"
   },
   "schedule.requirements": {
-    "zh-TW": "需電腦開機、保持喚醒並登入 Windows；織塵可自動啟動。忙碌或錯過時最多延後 15 分鐘，中斷佇列需手動接續。",
-    "en-US": "Keep the PC awake and signed in; Dustweave can open automatically. Busy or missed starts wait up to 15 minutes. Interrupted queues require manual resume.",
-    "zh-CN": "需电脑开机、保持唤醒并登录 Windows；织尘可自动启动。忙碌或错过时最多延后 15 分钟，中断队列需手动接续。"
+    "zh-TW": "軟體關閉也能啟動；電腦需開機、保持喚醒並登入 Windows。",
+    "en-US": "Works when the app is closed. Keep the PC on, awake and signed in to Windows.",
+    "zh-CN": "软件关闭也能启动；电脑需开机、保持唤醒并登录 Windows。"
   },
   "schedule.accounts": {
     "zh-TW": "執行帳號",
@@ -4621,9 +4620,9 @@
     "en-US": "A launcher may start the game as administrator. Elevating the tool does not guarantee a connection. Exit the game normally and relaunch through Dustweave first. If elevation is still required, follow the connection component prompt."
   },
   "guide.reopen": {
-    "zh-CN": "可随时从「账号管理 → 连接教程」重新查看。",
-    "zh-TW": "可隨時從「帳號管理 → 連線教學」重新查看。",
-    "en-US": "Reopen this guide at any time from Accounts → Connection guide."
+    "zh-CN": "可随时从窗口顶部的「启动引导」重新查看。",
+    "zh-TW": "可隨時從視窗頂部的「啟動引導」重新查看。",
+    "en-US": "Reopen Getting started from the window header at any time."
   },
   "guide.later": {
     "zh-CN": "稍后设置",
@@ -5286,9 +5285,9 @@
     "en-US": "None of this preset's tasks are enabled for this account. Adjust its settings or preset."
   },
   "desktop.invalid": {
-    "zh-CN": "启动与关闭设置无法读取，已保留原文件。",
-    "zh-TW": "啟動與關閉設定無法讀取，已保留原檔案。",
-    "en-US": "Startup and close settings could not be read. The original file was preserved."
+    "zh-CN": "无法读取启动与关闭设置，本次不会自动执行日常。请到诊断页导出日志；原设置文件已保留。",
+    "zh-TW": "無法讀取啟動與關閉設定，本次不會自動執行日常。請至診斷頁匯出記錄；原設定檔已保留。",
+    "en-US": "Startup and closing preferences could not be read. Daily tasks will not start automatically this time. Export a report from Diagnostics; your original settings file is retained."
   },
   "desktop.tray_failed": {
     "zh-CN": "无法创建系统托盘图标，窗口已保留。",
@@ -5365,7 +5364,7 @@
     "zh-TW": "沙盒平行執行",
     "en-US": "Run in parallel sandboxes"
   },
-"bargain.title": {
+  "bargain.title": {
     "zh-CN": "砍价技能训练",
     "zh-TW": "殺價技能訓練",
     "en-US": "Bargaining training"
@@ -5595,7 +5594,6 @@
     "zh-TW": "空田種藏紅花。成熟後先確認路線和資源，再購買缺少的三種增產料理並使用，立即收割。剩餘加成時間種收馬鈴薯，效果結束再補種藏紅花；製作愛慾濃湯並出售，保留一份。條件不足不吃料理。",
     "en-US": "Plants saffron in empty fields. Once ripe, checks access and resources, buys any missing yield foods, uses all three and harvests immediately. Grows potatoes for the remaining buff time, then replants saffron. Cooks saffron soup and sells it, keeping one. No food is used if checks fail."
   },
-
   "saffron.message.1": {
     "zh-CN": "藏红花种植与收割",
     "zh-TW": "藏紅花種植與收割",
@@ -5791,7 +5789,7 @@
     "zh-TW": "已補種藏紅花，成熟後再執行收割",
     "en-US": "Saffron planted. Run the harvest step after it ripens."
   },
-"sandbox.repair.account": {
+  "sandbox.repair.account": {
     "zh-CN": "账号：{0}",
     "zh-TW": "帳號：{0}",
     "en-US": "Account: {0}"
@@ -5880,5 +5878,160 @@
     "zh-CN": "账号和原数据目录一致，可绑定。",
     "zh-TW": "帳號與原資料目錄一致，可綁定。",
     "en-US": "Account and original data directory match. Ready to bind."
+  },
+  "nav.software": {
+    "zh-CN": "软件设置",
+    "zh-TW": "軟體設定",
+    "en-US": "App settings"
+  },
+  "software.appearance": {
+    "zh-CN": "外观与语言",
+    "zh-TW": "外觀與語言",
+    "en-US": "Appearance & language"
+  },
+  "software.startup": {
+    "zh-CN": "启动与关闭",
+    "zh-TW": "啟動與關閉",
+    "en-US": "Startup & closing"
+  },
+  "software.windows_startup": {
+    "zh-CN": "登录 Windows 时启动织尘",
+    "zh-TW": "登入 Windows 時啟動織塵",
+    "en-US": "Start Dustweave when I sign in to Windows"
+  },
+  "software.windows_startup_help": {
+    "zh-CN": "仅打开软件；是否执行日常由下方选项决定。",
+    "zh-TW": "僅開啟軟體；是否執行日常由下方選項決定。",
+    "en-US": "Opens the app. Running daily tasks is a separate choice below."
+  },
+  "software.manage_queue": {
+    "zh-CN": "选择执行账号",
+    "zh-TW": "選擇執行帳號",
+    "en-US": "Choose accounts"
+  },
+  "software.close_action": {
+    "zh-CN": "关闭窗口时",
+    "zh-TW": "關閉視窗時",
+    "en-US": "When closing the window"
+  },
+  "software.close_ask": {
+    "zh-CN": "每次询问",
+    "zh-TW": "每次詢問",
+    "en-US": "Ask every time"
+  },
+  "software.locations": {
+    "zh-CN": "游戏与沙盒位置",
+    "zh-TW": "遊戲與沙盒位置",
+    "en-US": "Game & sandbox locations"
+  },
+  "software.maintenance": {
+    "zh-CN": "更新与存储",
+    "zh-TW": "更新與儲存",
+    "en-US": "Updates & storage"
+  },
+  "software.startup_path_invalid": {
+    "zh-CN": "无法设置开机启动，请从完整软件包中的 Dustweave.exe 启动后重试。",
+    "zh-TW": "無法設定開機啟動，請從完整軟體包中的 Dustweave.exe 啟動後重試。",
+    "en-US": "Open Dustweave.exe from the complete package, then try enabling Windows startup again."
+  },
+  "sandbox.repair.selected_help": {
+    "zh-CN": "修复列表中选中账号的沙盒关联，不会启动游戏。",
+    "zh-TW": "修復清單中所選帳號的沙盒關聯，不會啟動遊戲。",
+    "en-US": "Repair the highlighted account’s sandbox binding without starting the game."
+  },
+  "sandbox.repair.intro": {
+    "zh-CN": "先为此账号查找匹配的沙盒。确认后可用于多账号并行执行。",
+    "zh-TW": "先為此帳號尋找符合的沙盒。確認後可用於多帳號並行執行。",
+    "en-US": "Find this account’s sandbox for parallel account queues."
+  },
+  "sandbox.repair.use_match": {
+    "zh-CN": "使用此沙盒",
+    "zh-TW": "使用此沙盒",
+    "en-US": "Use this sandbox"
+  },
+  "sandbox.repair.not_this": {
+    "zh-CN": "不是这个",
+    "zh-TW": "不是這個",
+    "en-US": "Not this one"
+  },
+  "sandbox.repair.choose_hint": {
+    "zh-CN": "没有唯一匹配，请选择此账号原来使用的沙盒。",
+    "zh-TW": "沒有唯一符合項，請選擇此帳號原本使用的沙盒。",
+    "en-US": "No unique match. Choose the sandbox previously used by this account."
+  },
+  "onboarding.page.software": {
+    "zh-CN": "在这里设置外观、语言、启动方式、游戏位置，以及更新和日志保留。",
+    "zh-TW": "在這裡設定外觀、語言、啟動方式、遊戲位置，以及更新與記錄保留。",
+    "en-US": "Set appearance, language, startup, game locations, updates and log retention here."
+  },
+  "prefs.resources": {
+    "zh-CN": "资源使用",
+    "zh-TW": "資源使用",
+    "en-US": "Resource use"
+  },
+  "schedule.mode_hint": {
+    "zh-CN": "顺序执行逐个运行；沙盒并行让多个账号同时运行。",
+    "zh-TW": "依序執行逐一運行；沙盒並行讓多個帳號同時運行。",
+    "en-US": "Sequential runs one account at a time. Sandbox parallel runs accounts together."
+  },
+  "prefs.category.all": {
+    "zh-CN": "全部",
+    "zh-TW": "全部",
+    "en-US": "All"
+  },
+  "prefs.category.daily": {
+    "zh-CN": "每日与领奖",
+    "zh-TW": "每日與領獎",
+    "en-US": "Daily & rewards"
+  },
+  "prefs.category.battle": {
+    "zh-CN": "战斗",
+    "zh-TW": "戰鬥",
+    "en-US": "Battles"
+  },
+  "prefs.category.weekly": {
+    "zh-CN": "每周",
+    "zh-TW": "每週",
+    "en-US": "Weekly"
+  },
+  "prefs.category.resources": {
+    "zh-CN": "资源与跑商",
+    "zh-TW": "資源與跑商",
+    "en-US": "Resources & trade"
+  },
+  "prefs.categories": {
+    "zh-TW": "設定分類",
+    "en-US": "Settings categories",
+    "zh-CN": "设置分类"
+  },
+  "software.save_failed": {
+    "zh-TW": "無法儲存設定，請重試。若仍失敗，請在診斷頁匯出記錄。",
+    "zh-CN": "未能保存设置，请重试。若仍失败，请在诊断页导出日志。",
+    "en-US": "Could not save settings. Try again; if it keeps failing, export a report from Diagnostics."
+  },
+  "schedule.saved_next": {
+    "zh-TW": "已儲存的下次執行",
+    "zh-CN": "已保存的下次执行",
+    "en-US": "Next saved run"
+  },
+  "schedule.unsaved": {
+    "zh-TW": "有尚未儲存的修改。儲存後，排程才會生效。",
+    "zh-CN": "有未保存的修改。保存后，定时计划才会生效。",
+    "en-US": "Unsaved changes. Save to update the scheduled run."
+  },
+  "run.no_account_hint": {
+    "en-US": "Save a game account in Accounts, then choose the daily tasks to run.",
+    "zh-TW": "先在帳號管理儲存一個遊戲帳號，再選擇要執行的日常。",
+    "zh-CN": "先在账号管理保存一个游戏账号，再选择要执行的日常。"
+  },
+  "run.setup_account": {
+    "en-US": "Set up account",
+    "zh-TW": "設定帳號",
+    "zh-CN": "设置账号"
+  },
+  "prefs.search_placeholder": {
+    "zh-TW": "搜尋環節或設定…",
+    "zh-CN": "搜索环节或设置…",
+    "en-US": "Find tasks or settings…"
   }
 }

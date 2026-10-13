@@ -50,7 +50,7 @@ public partial class MainWindow
                     LoginAccountText.Text == L.Get("account.not_signed_in"), "Missing sign-in or backup offers an invalid action.");
                 RefreshAccounts(before);
                 AccountsGrid.SelectedItem = rows[1];
-                Check(SandboxLaunchButton.IsEnabled && SandboxLaunchButton.Visibility == Visibility.Visible && (string)SandboxLaunchButton.Content == L.Get("sandbox.launch"), "Isolated launch must follow the highlighted saved account in every language.");
+                Check(SandboxRepairButton.IsEnabled && SandboxRepairButton.Visibility == Visibility.Visible && (string)SandboxRepairButton.Content == L.Get("sandbox.repair.title"), "Isolated launch must follow the highlighted saved account in every language.");
                 var selections = rows.Select(r => r.Selected).ToArray();
                 AccountsGrid.SelectedItem = rows[2];
                 Check(rows.Select(r => r.Selected).SequenceEqual(selections), "Highlighting an account changed its daily queue selection.");
@@ -72,7 +72,7 @@ public partial class MainWindow
                 "Filtered select-all changed hidden accounts.");
             SelectAll.IsChecked = false;
             SelectAll_Click(SelectAll, new RoutedEventArgs());
-            Check(!rows[0].Selected && rows[1].Selected && !rows[2].Selected && RunButton.IsEnabled &&
+            Check(!rows[0].Selected && rows[1].Selected && !rows[2].Selected && RunAccountsButton.IsEnabled &&
                 SelectionText.Text == L.Get("account.selected", 1), "Clearing filtered accounts lost a hidden checked account.");
             Search.Text = "no-such-account";
             Check(EmptyText.Visibility == Visibility.Visible && EmptyText.Text == L.Get("account.no_matches") &&
@@ -86,7 +86,7 @@ public partial class MainWindow
             Check(MoveUpButton.IsEnabled && !MoveDownButton.IsEnabled, "Last account offers invalid reorder controls.");
             SetBusy(true);
             Check(!AccountsGrid.IsEnabled && !SaveAccountButton.IsEnabled && !LoginNewButton.IsEnabled &&
-                !RunButton.IsEnabled && StopButton.IsVisible && StopButton.IsEnabled, "Busy account page is not safely stoppable.");
+                !RunAccountsButton.IsEnabled && StopButton.IsVisible && StopButton.IsEnabled, "Busy account page is not safely stoppable.");
             SetBusy(false);
             RefreshAccounts(before with { GameRunning = false });
             Width = 1180; Height = 800;
@@ -128,8 +128,8 @@ public partial class MainWindow
             RefreshAccounts(before);
             Width = 1180; Height = 800;
             RefreshAccounts(before with { Accounts = [], CurrentKey = "", CurrentSlot = null, SessionComplete = false, GameRunning = false, HasRecovery = false });
-            Check(EmptyText.IsVisible && !RunButton.IsEnabled && !RenameAccountButton.IsEnabled &&
-                !DeleteAccountButton.IsEnabled && !MoveUpButton.IsEnabled && !MoveDownButton.IsEnabled && !SandboxLaunchButton.IsEnabled,
+            Check(EmptyText.IsVisible && !RunAccountsButton.IsEnabled && !RenameAccountButton.IsEnabled &&
+                !DeleteAccountButton.IsEnabled && !MoveUpButton.IsEnabled && !MoveDownButton.IsEnabled && !SandboxRepairButton.IsEnabled,
                 "Empty account list exposes management actions.");
             Capture("accounts-empty");
             Check(fixture.Calls.Count == calls, "Account presentation issued a game or session command.");

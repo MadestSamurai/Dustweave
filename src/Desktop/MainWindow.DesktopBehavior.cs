@@ -7,12 +7,18 @@ public partial class MainWindow
 {
     private DesktopTray? tray;
     private bool exitChosen, closeDialogOpen, changingDesktopBehavior;
+    private bool desktopBehaviorValid = true;
+    private DailyDesktopBehavior? ReadDesktopBehavior()
+    {
+        try { var value = DailyDesktopBehavior.Read(root); desktopBehaviorValid = true; return value; }
+        catch (Exception error) { desktopBehaviorValid = false; SoftwareSettingsError(error); return null; }
+    }
     private void InitializeDesktopBehavior()
     {
         changingDesktopBehavior = true;
-        try { RunOnOpen.IsChecked = DailyDesktopBehavior.Read(root).RunOnOpen; }
+        try { RunOnOpen.IsChecked = ReadDesktopBehavior()?.RunOnOpen == true; }
         finally { changingDesktopBehavior = false; }
-        RunOnOpen.IsEnabled = !IsSandboxWindow;
+        RunOnOpen.IsEnabled = !IsSandboxWindow && desktopBehaviorValid;
         Application.Current.SessionEnding += DesktopSessionEnding;
         Closed += (_, _) => { tray?.Dispose(); tray = null; };
         Closed += (_, _) => Application.Current.SessionEnding -= DesktopSessionEnding;
@@ -22,7 +28,7 @@ public partial class MainWindow
     {
         if (smoke != null || exitChosen || updateInstalling || IsSandboxWindow) return false;
         if (closeDialogOpen) return true;
-        var settings = DailyDesktopBehavior.Read(root);
+        var settings = ReadDesktopBehavior() ?? new();
         string? action = settings.CloseAction;
         if (action == "ask")
         {
@@ -44,6 +50,8 @@ public partial class MainWindow
         minimize.SetResourceReference(Control.ForegroundProperty, "Ink");
         exit.SetResourceReference(Control.ForegroundProperty, "Ink");
         var remember = new CheckBox { Margin = new(0, 0, 0, 20) };
+        remember.IsEnabled = desktopBehaviorValid;
+        if (!desktopBehaviorValid) L.Bind(remember, ToolTipProperty, "desktop.invalid");
         L.Bind(minimize, ContentControl.ContentProperty, "desktop.minimize");
         L.Bind(exit, ContentControl.ContentProperty, "desktop.exit");
         L.Bind(remember, ContentControl.ContentProperty, "desktop.remember_close");
@@ -55,16 +63,11 @@ public partial class MainWindow
         confirm.Click += (_, _) => {
             try {
                 var action = minimize.IsChecked == true ? "tray" : "exit";
-                if (remember.IsChecked == true) (DailyDesktopBehavior.Read(root) with { CloseAction = action }).Save(root);
+                if (remember.IsChecked == true) { (DailyDesktopBehavior.Read(root) with { CloseAction = action }).Save(root); RefreshCloseAction(); }
                 selected = action; window.DialogResult = true;
             } catch (Exception error) { ShowError(error); }
         };
         DailyDialogs.ShowModal(window); return selected;
-    }
-    private void CloseBehavior_Click(object sender, RoutedEventArgs e)
-    {
-        try { (DailyDesktopBehavior.Read(root) with { CloseAction = "ask" }).Save(root); L.Text(ProgressText, "desktop.close_reset"); }
-        catch (Exception error) { ShowError(error); }
     }
     private void RunOnOpen_Click(object sender, RoutedEventArgs e)
     {
@@ -72,11 +75,12 @@ public partial class MainWindow
         try {
             if (RunOnOpen.IsChecked == true && !rows.Any(r => r.Selected && r.Account.Valid)) throw new InvalidOperationException("desktop.select_accounts");
             (DailyDesktopBehavior.Read(root) with { RunOnOpen = RunOnOpen.IsChecked == true }).Save(root);
-        } catch (Exception error) { RunOnOpen.IsChecked = false; ShowError(error); }
+            ClearSoftwareSettingsError();
+        } catch (Exception error) { RunOnOpen.IsChecked = ReadDesktopBehavior()?.RunOnOpen == true; SoftwareSettingsError(error); }
     }
     private async Task RunOnOpenAsync(bool guided)
     {
-        if (!DailyDesktopBehavior.Read(root).ShouldRun(ScheduledStartup, UpdatedStartup, IsSandboxWindow, guided, Unavailable, DirectedStartup)) return;
+        if (ReadDesktopBehavior()?.ShouldRun(ScheduledStartup, UpdatedStartup, IsSandboxWindow, guided, Unavailable, DirectedStartup) != true) return;
         // Capture the saved checked identities once. No fallback to the current login.
         var targets = rows.Where(r => r.Selected).Select(r => r.Account).ToArray();
         if (targets.Length == 0 || targets.Any(a => !a.Valid)) throw new InvalidOperationException("desktop.select_accounts");

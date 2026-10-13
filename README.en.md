@@ -69,13 +69,15 @@ For **Windows x64 and the native BrownDust II PC client**. Python is not require
 Both packages have the same features. Download a complete package from [GitHub Releases](https://github.com/MadestSamurai/Dustweave/releases). The domestic route is reserved for in-app OTA rather than first-install downloads. Then:
 
 1. **Extract the entire folder** and run `Dustweave.exe`. Keep the `app` folder beside the executable; it contains the runtime, resources and components.
-2. Follow **Getting started** to check the game location, launch and enter the main menu. After character detection, exit normally and save the account. Setup is skippable and can be reopened from Accounts.
+2. Follow **Getting started** to check the game location, launch and enter the main menu. After character detection, exit normally and save the account. Setup is skippable and can be reopened from the window header.
 3. Explore the pages with the highlight tour. Use **Play** in Accounts for future launches, avoiding permission differences from desktop shortcuts or accelerator launch buttons.
-4. Configure stages in daily settings, choose the account in **Today**, then use **Launch game and run selected tasks** at the top. It connects directly if the game is already running. Use **Run accounts** for an account queue. Reopen **Getting started** from Accounts at any time.
+4. Configure tasks by category in **Daily settings**, choose the account in **Today**, then use the launch button at the top. It connects directly if the game is already running. For multiple accounts, select them in **Accounts** and run the queue.
 
 Start with a few familiar stages. [Getting started](docs/GETTING_STARTED.en.md) covers updates, data locations and common questions. Version 1.3.1 groups application files under `app`. Version 1.3.0 has been withdrawn; users on any earlier version must extract the complete download into a new folder. Accounts and settings are retained. Future compatible automatic updates use small direct patches across up to 10 releases; patches above 8 MiB or runtime changes require a manual download. Keep all files beside the EXE.
 
-For a custom game installation, open **Daily settings → Game location → Choose game…** and select `BrownDust II.exe`. The choice is saved automatically and shared by all accounts, scheduled runs and isolated launches. **Use auto-detection** restores the default lookup.
+For a custom game installation, open **App settings → Game & sandbox locations → Change location** and select `BrownDust II.exe`. The choice is saved automatically and shared by all accounts and scheduled runs. You can restore auto-detection or change the Sandboxie installation location here.
+
+**App settings** is at the bottom of the sidebar. It groups appearance, language, startup and closing behavior, installation paths and log cleanup. Starting Dustweave when you sign in to Windows is off by default; running daily tasks when the app opens is a separate option.
 
 ## Get help
 

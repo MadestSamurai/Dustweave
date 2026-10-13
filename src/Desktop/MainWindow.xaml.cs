@@ -20,7 +20,7 @@ public sealed class AccountRow : INotifyPropertyChanged
         get; init;
     }
     public string Name => Account.Name;
-    public string DetailsLabel => $"{Name}\n{PlayerLabel}\n{IdentityLabel}";
+    public string DetailsLabel => $"{Name}\n{PlayerLabel}\n{IdentityLabel}\n{DailyLanguage.Current.Get("account.verified")}: {VerifiedLabel}";
     public string EnterLabel => DailyLanguage.Current.Get("account.enter_named", Name);
     public string QueueLabel => DailyLanguage.Current.Get("account.queue_named", Name);
     public TaskPresetChoice[] PresetOptions { get; set; } = [];
@@ -82,7 +82,7 @@ public partial class MainWindow : Window
         this.smoke = smoke;
         preferencesPanel = new DailyPreferencesPanel(root, allowGame: smoke == null);
         SettingsTab.Content = preferencesPanel;
-        InitializeSchedules(); InitializeUpdates(); InitializeSandboxPresentation(); InitializeLogCleanup();
+        InitializeSoftwareSettings(); InitializeSchedules(); InitializeUpdates(); InitializeSandboxPresentation(); InitializeLogCleanup();
         dailyPanel = new DailyRunPanel(root);
         dailyQueue = new(root, new PackagedDailyQueueExecutor(AppContext.BaseDirectory));
         RunTab.Content = dailyPanel; InitializeParallel(); InitializeDesktopBehavior();
@@ -313,13 +313,18 @@ public partial class MainWindow : Window
             ActionFooter.Visibility = accounts ? Visibility.Visible : Visibility.Collapsed;
         L.Text(SelectionText, "account.selected", count);
         UpdateAccountPresentation();
-        RunButton.IsEnabled = RunAccountsButton.IsEnabled = !Unavailable && count > 0;
+        RunAccountsButton.IsEnabled = !Unavailable && count > 0;
         L.Bind(RunAccountsButton, ContentControl.ContentProperty, "account.run_queue_count", count);
 
         RunAccountsButton.Visibility = busy || ParallelBusy ? Visibility.Collapsed : Visibility.Visible;
     }
     private bool connectionReading;
-    private async void UpdateConnection()
+    private Task connectionUpdate = Task.CompletedTask;
+    private void UpdateConnection()
+    {
+        if (connectionUpdate.IsCompleted) connectionUpdate = ReadConnectionAsync();
+    }
+    private async Task ReadConnectionAsync()
     {
         if (connectionReading || finalClose) return;
         if (ParallelBusy)
@@ -350,28 +355,21 @@ public partial class MainWindow : Window
             PresentDiagnostics(game, s, fresh);
             if (fresh)
                 DailyQueuePeriod.Remember(root, s);
-            L.Bind(GuildIdentityText, TextBlock.TextProperty, () => fresh && s!.Guild != null ? $"{s.PlayerName} · {(s.Guild.InGuild ? s.Guild.GuildName : L.Get("diagnostics.no_guild"))}" : L.Get("diagnostics.guild_wait"));
-            DailyUiText.Set(GuildStateText, guild.Describe(fresh ? s : null));
-            ObserveButton.IsEnabled = !Unavailable && fresh;
-            GuildRunButton.IsEnabled = !Unavailable && fresh && s!.Guild?.Supported == true;
-            try
-            {
-                var previous = fresh && s!.Guild != null ? guildStore.Prior(s) : null;
-                if (previous == null) DailyUiText.Set(GuildResultText, "尚无本周期记录；当前客户端没有可无副作用查询的签到标志。"); else DailyUiText.History(GuildResultText, "history.local", new DateTime(previous.AtUtcTicks, DateTimeKind.Utc).ToLocalTime(), previous.Message);
-            }
-            catch (Exception e) { DailyUiText.Error(GuildResultText, e, "操作记录不可读："); GuildRunButton.IsEnabled = false; }
+
         }
         catch (Exception e) { DailyUiText.Error(ConnectionText, e); PresentDiagnostics(null, null, false, readFailed: true); }
         finally { connectionReading = false; }
     }
     private void SetBusy(bool value)
     {
+        if(value)ActionNotice.Visibility=Visibility.Collapsed;
         busy = value;
         schedulePanel.Busy(value || ParallelBusy); ExecutionModeButton.IsEnabled = !Unavailable; UpdateUpdateControls();
         var unavailable = Unavailable;
         pluginPanel.Busy(unavailable || IsSandboxWindow);
         dailyPanel.Busy(unavailable, value);
         preferencesPanel.IsEnabled = !unavailable;
+        UpdateSoftwareSettingsAvailability();
         AccountsGrid.IsEnabled = !unavailable;
         ManageBar.IsEnabled = !unavailable;
         RefreshButton.IsEnabled = !unavailable;
@@ -379,14 +377,11 @@ public partial class MainWindow : Window
         StopButton.IsEnabled = value || ParallelBusy; L.Bind(StopButton,ContentControl.ContentProperty,ParallelBusy?"parallel.pause_all":"common.stop_operation");
         toolPanel.Refresh(value || toolChanging || ParallelBusy || pluginChanging, toolSession.Current?.ToolId, ToolRunning ? "工具自动化正在运行或等待结算；停止后释放，无需关闭窗口。" : toolMessage ?? (value ? "日常正在执行；工具设置窗口可以保留。" : toolSession.Message),ToolRunning);
         SelectAll.IsEnabled = !unavailable;
-        ObserveButton.IsEnabled = !unavailable;
-        GuildRunButton.IsEnabled = !unavailable;
         UpdateSelection();
         UpdateConnection();
     }
     private void ReportPreparation(string message)
     {
-        DiagnosticIssueCategory.Visibility=Visibility.Collapsed;
         dailyPanel.Show(new("preparing", message, "", []));
         DailyUiText.Set(ProgressText, message);
     }
@@ -414,12 +409,11 @@ public partial class MainWindow : Window
         if (WorkspaceTabs.SelectedItem == RunTab)
             dailyPanel.ShowOperationError(e.Message, DailyUserText.Error(e));
         DailyJson.Write(Path.Combine(root, "ui-operation-error.json"), new { atUtc = DateTimeOffset.UtcNow, version = DailyProductVersion.Current, issue = DailyIssues.Classify(e), error = e.ToString() });
-        var issue=DailyIssues.Classify(e);
-        DiagnosticIssueCategory.Visibility=Visibility.Visible;var at=DateTime.Now;
-        L.Bind(DiagnosticIssueCategory,TextBlock.TextProperty,()=>L.Get("issue.recorded",L.Get("issue.category."+issue.Category),at));
         DailyUiText.Error(ProgressText, e);
         ProgressText.Foreground = (Brush)FindResource("Error");
+        if(WorkspaceTabs.SelectedItem!=RunTab) {DailyUiText.Error(ActionNoticeText,e);ActionNotice.Visibility=Visibility.Visible;}
     }
+    private void DismissActionNotice_Click(object sender,RoutedEventArgs e) => ActionNotice.Visibility=Visibility.Collapsed;
     private AccountRow? Selected => AccountsGrid.SelectedItem as AccountRow;
     private bool Confirm(string message)
     {
@@ -435,12 +429,6 @@ public partial class MainWindow : Window
             return;
         if (Confirm(L.Get("account.enter_confirm", row.Name)))
             await OperateAsync(() => coordinator.InspectAsync([row.Account]), connectsGame: true);
-    }
-    private async void Run_Click(object sender, RoutedEventArgs e)
-    {
-        var selected = rows.Where(r => r.Selected && r.Account.Valid).Select(r => r.Account).ToArray();
-        if (!Unavailable && selected.Length > 0 && Confirm(L.Get("account.batch_confirm", selected.Length, string.Join("、", selected.Select(a => a.Name)))))
-            await OperateAsync(() => coordinator.InspectAsync(selected), connectsGame: true);
     }
     private void Stop_Click(object sender, RoutedEventArgs e)
     {
@@ -467,8 +455,6 @@ public partial class MainWindow : Window
         }
         catch (Exception ex) { ShowError(ex); }
     }
-    private async void Observe_Click(object sender, RoutedEventArgs e) => await OperateAsync(guild.ObserveAsync);
-    private async void GuildRun_Click(object sender, RoutedEventArgs e) => await OperateAsync(guild.SingleAsync);
     private void OpenRecords_Click(object sender, RoutedEventArgs e)
     {
         try
@@ -481,7 +467,8 @@ public partial class MainWindow : Window
     }
     private void WorkspaceTab_Changed(object sender, SelectionChangedEventArgs e)
     {
-        if (RunButton != null && WorkspaceTabs != null && e.Source == WorkspaceTabs)
+        if(e.Source==WorkspaceTabs && ActionNotice!=null)ActionNotice.Visibility=Visibility.Collapsed;
+        if (RunAccountsButton != null && WorkspaceTabs != null && e.Source == WorkspaceTabs)
             UpdateSelection();
     }
     private void Refresh_Click(object sender, RoutedEventArgs e) => RefreshAccounts();
@@ -495,7 +482,7 @@ public partial class MainWindow : Window
     }
     private void Selection_Changed(object sender, SelectionChangedEventArgs e)
     {
-        if (RunButton != null)
+        if (RunAccountsButton != null)
             UpdateSelection();
     }
     private void SelectAll_Click(object sender, RoutedEventArgs e)
@@ -809,6 +796,19 @@ public partial class MainWindow : Window
                 DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "trade", realGameTouched = false });
                 Application.Current.Shutdown(); return;
             }
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "ux")
+            {
+                L.Audit();
+                await CheckAccountsForSmoke();
+                await CheckPresentationForSmoke();
+                await CheckThemesForSmoke();
+                await CheckSchedulingForSmoke();
+                await CheckSupportForSmoke();
+                await CheckGameLocationForSmoke();
+                await CheckSoftwareSettingsForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "ux", realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "support")
             {
                 await CheckSupportForSmoke();
@@ -1067,6 +1067,7 @@ public partial class MainWindow : Window
             if (!File.Exists(guild.LastTrace))
                 throw new Exception("Observer did not record isolated snapshots");
             await CheckSupportForSmoke();
+            await CheckSoftwareSettingsForSmoke();
             await CheckTaskNavigationForSmoke();
             DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new
             {

@@ -30,5 +30,18 @@ static class TaskPresetCases
         for (int i = 0; i < 5; i++) { var guards = new bool[5]; guards[i] = true; Check(!behavior.ShouldRun(guards[0], guards[1], guards[2], guards[3], guards[4]), "startup automation avoids duplicate execution guard " + i); }
         Check(!behavior.ShouldRun(false, false, false, false, false, true), "explicit inspect or resume launches cannot trigger an unrelated account queue");
         Reject(() => (behavior with { CloseAction = "invalid" }).Save(root), "corrupt desktop action is not treated as permission to execute");
+        string? startupValue=null;int startupWrites=0;
+        var startup=new DailyWindowsStartup(()=>startupValue,value=>{startupValue=value;startupWrites++;});
+        startup.RefreshEnabledPath(@"C:\Apps\Dustweave\Dustweave.exe");
+        Check(!startup.Enabled && startupWrites==0,"Windows startup remains opt-in on first run");
+        startup.Set(true,@"C:\Apps\织尘 Portable\Dustweave.exe");
+        Check(startup.Enabled && startupValue=="\"C:\\Apps\\织尘 Portable\\Dustweave.exe\"","startup quotes paths with spaces and Unicode without enabling a daily queue");
+        startup.RefreshEnabledPath(@"D:\Apps\Dustweave.exe");
+        Check(startupValue=="\"D:\\Apps\\Dustweave.exe\"","existing startup registration follows a moved portable installation");
+        Reject(()=>startup.Set(true,"Dustweave.exe"),"relative startup executables rejected");
+        Reject(()=>startup.Set(true,"C:\\App\\Dustweave.exe\" --other"),"startup command injection rejected");
+        startup.Set(false,"");Check(!startup.Enabled && startupValue==null,"startup opt-out removes only the owned registration");
+        var deniedStartup=new DailyWindowsStartup(()=>null,_=>throw new UnauthorizedAccessException());
+        try { deniedStartup.Set(true,@"C:\App\Dustweave.exe");throw new Exception("Registration failure swallowed"); } catch(UnauthorizedAccessException) { cases.Add("startup failure propagates for actionable UI feedback"); }
     }
 }

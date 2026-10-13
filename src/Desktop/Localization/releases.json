@@ -1,5 +1,38 @@
 [
 {
+  "Version": "1.3.3",
+  "Date": "2026-10-14",
+  "Notes": {
+    "zh-CN": [
+      "新增软件设置页，集中管理外观、语言、启动与关闭、程序位置、更新和日志清理。",
+      "可选登录 Windows 时启动织尘，默认关闭；打开软件后执行日常单独设置。",
+      "精简账号管理；沙盒修复先自动匹配，点击「不是这个」再手动选择。",
+      "日常设置增加分类与跨分类搜索，修正对齐并在输入错误时展开对应选项。",
+      "定时执行合为一份连续计划，保存按钮始终可见，提示尚未保存的修改。",
+      "诊断仅保留连接状态和反馈；启动引导移到顶部，优化三语、深浅色及键盘操作。",
+      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+    ],
+    "zh-TW": [
+      "新增軟體設定頁，集中管理外觀、語言、啟動與關閉、程式位置、更新和記錄清理。",
+      "可選登入 Windows 時啟動織塵，預設關閉；開啟軟體後執行日常另行設定。",
+      "精簡帳號管理；沙盒修復先自動配對，按「不是這個」再手動選擇。",
+      "日常設定新增分類及跨分類搜尋，修正對齊，輸入錯誤時展開對應選項。",
+      "排程整合為一份連續計畫，儲存按鈕保持可見，提示尚未儲存的修改。",
+      "診斷僅保留連線狀態與回報；啟動引導移至頂部，改善三語、深淺色及鍵盤操作。",
+      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+    ],
+    "en-US": [
+      "New App settings page groups appearance, language, startup and closing, installation paths, updates and log cleanup.",
+      "Optional startup at Windows sign-in is off by default. Running daily tasks when the app opens remains a separate setting.",
+      "Simpler account management. Sandbox repair offers a verified match first; Not this one reveals manual selection.",
+      "Daily settings adds categories and cross-category search, aligned fields and visible validation without losing input.",
+      "Scheduling is one continuous plan with an always-visible save button and clear unsaved-change feedback.",
+      "Diagnostics focuses on connection and reporting. Getting started moves to the header; themes, translations and keyboard controls are refined.",
+      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+    ]
+  }
+},
+{
   "Version": "1.3.2",
   "Date": "2026-10-14",
   "Notes": {

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-13T16:44:38.9099332+00:00",
+  "generatedUtc": "2026-10-14T00:44:38.9099332+08:00",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -250,7 +250,7 @@
     },
     {
       "path": "Directory.Build.props",
-      "sha256": "47fceb867d81947708bc8cd77b9595afd040df0837774fdffa034b49cd72b2f4",
+      "sha256": "d0c686e36c924f229459ece47f2fec0720e9694ee8917e6aea8943f9c743958e",
       "reasons": [
         "build input"
       ],
@@ -1137,8 +1137,8 @@
       "reasons": [
         "build input"
       ],
-      "sha256": "ce76df649504d428b3a65d9fe205ed6a3fe0c0d947fbb26b809a9682e4d27776",
-      "bytes": 20248,
+      "sha256": "2d617cd927fed85a666f533c97c77499b4bf255a67af42719b8b24c8f32fc401",
+      "bytes": 20303,
       "path": "src/Core/DailyDiagnosticExport.cs"
     },
     {
@@ -1544,7 +1544,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 3063
+      "bytes": 3211
     },
     {
       "path": "src/Core/DailyPendingTasks.cs",
@@ -1672,7 +1672,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 25907
+      "bytes": 26114
     },
     {
       "path": "src/Core/DailySandboxRegistration.cs",
@@ -1680,7 +1680,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 6186
+      "bytes": 6343
     },
     {
       "reasons": [
@@ -1696,7 +1696,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 8033
+      "bytes": 8083
     },
     {
       "path": "src/Core/DailyScheduling.cs",
@@ -2228,11 +2228,11 @@
     },
     {
       "path": "src/Desktop/App.xaml",
-      "sha256": "5c627d70e1626f0b9e144b58671e6a1c424855d876b669485d510b7cb08eab3f",
+      "sha256": "38bcb7da93badb024b0501e5d444da35ee7d4fb8461e370b1c89abd2332649c8",
       "reasons": [
         "build input"
       ],
-      "bytes": 27020
+      "bytes": 28802
     },
     {
       "path": "src/Desktop/App.xaml.cs",
@@ -2324,11 +2324,11 @@
     },
     {
       "path": "src/Desktop/DailyPreferencesPanel.cs",
-      "sha256": "be0fdb757847fe83bb57a2a654d1c47b1af53bcbacf61deb80f79bed9aaa455c",
+      "sha256": "ec93a7dd2e86fe7d99dd59e01a2729eb2332a47c6018f43abd43b45894b4d814",
       "reasons": [
         "build input"
       ],
-      "bytes": 49625
+      "bytes": 55923
     },
     {
       "path": "src/Desktop/DailyProductVersion.cs",
@@ -2340,11 +2340,11 @@
     },
     {
       "path": "src/Desktop/DailyRunPanel.cs",
-      "sha256": "58c1874b420ece1c98f8037eaa0d5e000857b6c6f380b4fc4dd7041d41cc14ab",
+      "sha256": "d1d29fa5f364787f87b769e15f97e6673b8f8fc8d1a5b76c6b0817a181dd91c7",
       "reasons": [
         "build input"
       ],
-      "bytes": 43680
+      "bytes": 44428
     },
     {
       "path": "src/Desktop/DailyRunPanel.Presets.cs",
@@ -2356,27 +2356,27 @@
     },
     {
       "path": "src/Desktop/DailyScheduleAccounts.cs",
-      "sha256": "ef5670553a787a2ae1c93f0497a965207cae4d3bc7e2492ddde626cef9d82763",
+      "sha256": "eb778445b0a4c0bf5b843d4ab32239edb8fd76cc478f12a934136c8adcaa4544",
       "reasons": [
         null
       ],
-      "bytes": 10328
+      "bytes": 10429
     },
     {
       "path": "src/Desktop/DailyScheduleAccounts.Reordering.cs",
-      "sha256": "96222306145be41396821fe8040d4986ac85f61a60cd5e299a8bd3daefc66257",
+      "sha256": "b86763ecdcafa2a009a3cac066fd26a18b90daecc38f73986979bce4482340ed",
       "reasons": [
         null
       ],
-      "bytes": 8516
+      "bytes": 8544
     },
     {
       "path": "src/Desktop/DailySchedulePanel.cs",
-      "sha256": "fe9b1f6253b63ea8c80ce668914be2601096e0db904cdc163c26af615b1418cb",
+      "sha256": "2305c698d0f4cecd2ba0272ecc54b8bd076d801855795597b1f91ee11406e071",
       "reasons": [
         "build input"
       ],
-      "bytes": 8254
+      "bytes": 10976
     },
     {
       "path": "src/Desktop/DailySuiteComposition.cs",
@@ -2404,11 +2404,11 @@
     },
     {
       "path": "src/Desktop/DailyToolPanel.xaml",
-      "sha256": "6348254989f8b46ca9d0034629824db4bd75cafc894a33fd2bd207a25ec59592",
+      "sha256": "c8470f889471a0507c8d86e7799f6e0de82b85c210ac00d82b8ee2ddb6027745",
       "reasons": [
         "build input"
       ],
-      "bytes": 3162
+      "bytes": 3147
     },
     {
       "path": "src/Desktop/DailyToolPanel.xaml.cs",
@@ -2556,11 +2556,11 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "4b9b015c6d2a7b49f204f2b85e37a617e5dc1a821bfc8761ecff661d2a17f627",
+      "sha256": "745a08aa6b0df0d85b25c3447f04890100ad04031b57c57a73a83dcd9140e811",
       "reasons": [
         "build input"
       ],
-      "bytes": 75481
+      "bytes": 77023
     },
     {
       "path": "src/Desktop/Localization/runtime.json",
@@ -2572,27 +2572,27 @@
     },
     {
       "path": "src/Desktop/Localization/strings.json",
-      "sha256": "3e32d2527565b99d2469aac083cfd603f0d68401ef042607419d1321861fc37c",
+      "sha256": "d79117d952cf10fe19ff6283aa5e9908207f3ca8fab2e1d06c94487d78f38c75",
       "reasons": [
         "build input"
       ],
-      "bytes": 260878
+      "bytes": 272609
     },
     {
       "path": "src/Desktop/MainWindow.Accounts.cs",
-      "sha256": "66d838d211490c37fb2482ea24526e2520179252b5e00990824b6256daede587",
+      "sha256": "0076d3a7a2f8c69d2a14a4b4dff0a211a6d390697ce0ddd8099cdc3939e752d3",
       "reasons": [
         "build input"
       ],
-      "bytes": 3995
+      "bytes": 3963
     },
     {
       "path": "src/Desktop/MainWindow.Accounts.Smoke.cs",
-      "sha256": "b5e52387683fb0055147befbb444b4253d8c652f76e9ce53fe6ab82cf94fa120",
+      "sha256": "9961865172bdcd7aa64e2ab09d7584221bf2072d13e11630ed0211d6e17a1138",
       "reasons": [
         "build input"
       ],
-      "bytes": 10269
+      "bytes": 10299
     },
     {
       "path": "src/Desktop/MainWindow.Bargain.Smoke.cs",
@@ -2612,19 +2612,19 @@
     },
     {
       "path": "src/Desktop/MainWindow.ConnectionGuide.cs",
-      "sha256": "4cb710f605753adee2d1fbc1252012c8491cc010407c1000661c86b0038d8e39",
+      "sha256": "d30660c91e35b1869e642e8fcff20743448595159f11071069cad895ba2724ed",
       "reasons": [
         "build input"
       ],
-      "bytes": 4700
+      "bytes": 4858
     },
     {
       "path": "src/Desktop/MainWindow.DesktopBehavior.cs",
-      "sha256": "1abf3bc57ddfb051ebaeb217a8174835539e97c4c2bf4deb71f0bd78a535d361",
+      "sha256": "37b7c559a712de3ae6e6da0860cb9fa42a62efaeb02313b1a10ee6a9997969d0",
       "reasons": [
         "build input"
       ],
-      "bytes": 4791
+      "bytes": 5120
     },
     {
       "sha256": "cfcdbbac6eead07f3b9f204812e352bccadbc57adab44eff31de392126fe7540",
@@ -2644,11 +2644,11 @@
     },
     {
       "path": "src/Desktop/MainWindow.Diagnostics.cs",
-      "sha256": "49bc52cab8bba55a5afa1f15648e98e1332afd910e55ed4339fd52ee0748b449",
+      "sha256": "d7fc64095fd758525bb49f190cd5be0c90e8c125f54896a5e099f531b3116c0e",
       "reasons": [
         "build input"
       ],
-      "bytes": 3814
+      "bytes": 3748
     },
     {
       "path": "src/Desktop/MainWindow.DynamicLocalization.cs",
@@ -2668,11 +2668,11 @@
     },
     {
       "path": "src/Desktop/MainWindow.GameLocation.Smoke.cs",
-      "sha256": "8f8afb525c5c3934d1e23856f2cf3609b88d109ed859ba0aa4f067e78a5f6a53",
+      "sha256": "90201c68756988b9a0f83c1ee7b45c6fd0380bd8146bc82c6ab4a583fd938dfb",
       "reasons": [
         "build input"
       ],
-      "bytes": 6328
+      "bytes": 6318
     },
     {
       "path": "src/Desktop/MainWindow.Localization.cs",
@@ -2708,35 +2708,35 @@
     },
     {
       "path": "src/Desktop/MainWindow.Plugins.cs",
-      "sha256": "c676ab1f393d2699faf49c51a088aa130accd895565b8d042db0a39cb53a1fee",
+      "sha256": "3498a85b1bf2d17fd4c435b091ac0c04fe454ddb01239ac187e82dc6c35185ea",
       "reasons": [
         "build input"
       ],
-      "bytes": 13270
+      "bytes": 13415
     },
     {
       "path": "src/Desktop/MainWindow.Presentation.cs",
-      "sha256": "76b3c97c79a8fa68acc9c17d5e4e41a11d015a430c321ac00577e58e3da0f344",
+      "sha256": "9eabc702c4c945220944ae924e0caafccd41b00b28e5d6f88289ee1787856e89",
       "reasons": [
         "build input"
       ],
-      "bytes": 37194
+      "bytes": 37709
     },
     {
       "path": "src/Desktop/MainWindow.Presets.Smoke.cs",
-      "sha256": "09354db961e8284390df84185bda6c3fa08ae17b67299b41a6c7e223dacb0d3e",
+      "sha256": "8802720ad8cb4017cad7fce231610f89cc37d84549c95cea1a74c64cdac23be7",
       "reasons": [
         "build input"
       ],
-      "bytes": 6979
+      "bytes": 7013
     },
     {
       "path": "src/Desktop/MainWindow.Sandbox.cs",
-      "sha256": "cad455f0e731311774e2e0f7858287bf727dff30da5eab8914f1cafbb56a4533",
+      "sha256": "33b8a3a743c9c616f404107547276b2bd36255a480089652ae142a6eb2040c49",
       "reasons": [
         "build input"
       ],
-      "bytes": 6814
+      "bytes": 7726
     },
     {
       "path": "src/Desktop/MainWindow.Scheduling.cs",
@@ -2766,33 +2766,33 @@
       "reasons": [
         "build input"
       ],
-      "sha256": "c1fd84d9c72c7dd15d2a60f481676b9a2e22ecf392d0d70375912524470f59d1",
-      "bytes": 11312,
+      "sha256": "23d928c532c74ef0c8dfb311613753768d810b70496ed38c47a665131533494e",
+      "bytes": 11670,
       "path": "src/Desktop/MainWindow.Support.Smoke.cs"
     },
     {
       "path": "src/Desktop/MainWindow.Updates.cs",
-      "sha256": "1aebdebeeb3588a86e8a8450e5fba4d8a2ef1081d7689051fc7499163a6dad48",
+      "sha256": "2fcbbb1e40aac0128a058a6984793f72f37928293a7e06a3308f7138337237bc",
       "reasons": [
         "build input"
       ],
-      "bytes": 16029
+      "bytes": 16379
     },
     {
       "path": "src/Desktop/MainWindow.xaml",
-      "sha256": "8fddba3e41ffd2598d07e11facd0766c4f2444106bac24c4692659a8ef4f23a9",
+      "sha256": "2b3bda7de9a5e508f23d2a394fda699662617a435eef88fc298c55a343bf7b52",
       "reasons": [
         "build input"
       ],
-      "bytes": 31807
+      "bytes": 32753
     },
     {
       "path": "src/Desktop/MainWindow.xaml.cs",
-      "sha256": "f7319672cedad495e4c9b10584b14aed6f1ad76b55ce108561fe1d767ec53761",
+      "sha256": "d5f61d99dbfa11ae0a19cfd7264c16c9e2b0fc1bd105d7aafd23d527e4e9eb74",
       "reasons": [
         "build input"
       ],
-      "bytes": 76516
+      "bytes": 75878
     },
     {
       "path": "src/Desktop/MansionMap.cs",
@@ -2900,11 +2900,11 @@
     },
     {
       "path": "src/Desktop/ToolMenuProbe.cs",
-      "sha256": "6530c65b8ae82c48460ccc3658f95b54e0b1a4090f483b28423815865035f9ed",
+      "sha256": "aa9438e0c5b2ebdf4d3579deb0ac4a4a6f11c843d4a98d41568202ddabc69a09",
       "reasons": [
         "build input"
       ],
-      "bytes": 8129
+      "bytes": 8311
     },
     {
       "path": "src/Desktop/TradePlanPanel.cs",
@@ -8717,7 +8717,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 21898
+      "bytes": 23314
     },
     {
       "path": "tests/Dustweave.Tests/Cases/SandboxInstallationCases.cs",
@@ -8793,11 +8793,11 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/TaskPresetCases.cs",
-      "sha256": "b15cab382d34a9bdd6f8ddefd8023a4d0ac23d4d4e8a00e5c897660c0327a47b",
+      "sha256": "79319e54384cd6d8e0d16c4cb1880c5c037033f4ff6565cee60ad4b4cb6e5db2",
       "reasons": [
         "build input"
       ],
-      "bytes": 3197
+      "bytes": 4632
     },
     {
       "path": "tests/Dustweave.Tests/Cases/TestPaths.cs",
@@ -9286,6 +9286,30 @@
         "build input"
       ],
       "bytes": 1102
+    },
+    {
+      "path": "src/Core/DailyWindowsStartup.cs",
+      "sha256": "e832da1ccdf3b64e0aa3b75d5ee8ac28058697a919bdc56db86498c55833fb8a",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1577
+    },
+    {
+      "path": "src/Desktop/MainWindow.SoftwareSettings.cs",
+      "sha256": "0b3ffc84441f304c4d2439b1c992980ba0c6a900aad3b13f16307062bac3b6b2",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 4110
+    },
+    {
+      "path": "src/Desktop/MainWindow.SoftwareSettings.Smoke.cs",
+      "sha256": "d24cb0ad36ad2763387c2dae8be0b44eb948edec9a1333096ee5dce06d53a756",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 4948
     }
   ],
   "publicReleaseApproved": false,

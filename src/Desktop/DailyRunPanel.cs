@@ -121,6 +121,11 @@ public sealed partial class DailyRunPanel : UserControl
         detail.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk");
         detail.FontSize = 13;
         detail.Margin = new(0, 6, 0, 0);
+        var detailStyle = new Style(typeof(TextBlock));
+        var noDetail = new Trigger { Property = TextBlock.TextProperty, Value = "" };
+        noDetail.Setters.Add(new Setter(VisibilityProperty, Visibility.Collapsed));
+        detailStyle.Triggers.Add(noDetail);
+        detail.Style = detailStyle;
         summaryText.Children.Add(new ScrollViewer { Content = detail, MaxHeight = 96,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
@@ -324,6 +329,11 @@ public sealed partial class DailyRunPanel : UserControl
     {
         if (isBusy)
             return;
+        if (!DailyProfiles.ValidKey(activeAccount))
+        {
+            AccountsRequested?.Invoke();
+            return;
+        }
         if (showingReport)
         {
             ShowCurrentPlan();
@@ -349,7 +359,7 @@ public sealed partial class DailyRunPanel : UserControl
             rows.Add(row);
         }
         L.Text(status, "run.title");
-        L.Bind(detail, TextBlock.TextProperty, () => currentView.Expired ? L.Get("run.new_day", L.Get("run.plan_hint")) : L.Get("run.plan_hint"));
+        L.Bind(detail, TextBlock.TextProperty, () => !DailyProfiles.ValidKey(activeAccount) ? L.Get("run.no_account_hint") : currentView.Expired ? L.Get("run.new_day", "").Trim() : "");
         L.Bind(detail, FrameworkElement.ToolTipProperty, () => detail.Text);
         RenderOperationError();
         progress.Maximum = 1;
@@ -542,10 +552,12 @@ public sealed partial class DailyRunPanel : UserControl
         L.Bind(reportButton, ContentControl.ContentProperty, currentView.Expired ? "run.expired_report" : "run.report");
         bool available = !isBusy && DailyProfiles.ValidKey(currentView.Account) && currentView.Account == activeAccount && hasReport && !currentView.Expired;
         bool planAvailable = !isBusy && !showingReport && DailyProfiles.ValidKey(activeAccount);
-        L.Bind(current, ContentControl.ContentProperty, showingReport ? "run.choose" : "run.start_selected", SelectedPlanTasks.Count);
-        L.Bind(current, System.Windows.Automation.AutomationProperties.NameProperty, showingReport ? "run.choose" : "run.start_selected", SelectedPlanTasks.Count);
-        L.Bind(current, FrameworkElement.ToolTipProperty, showingReport ? "run.choose_footer" : "run.launch_help");
-        current.IsEnabled = !isBusy && DailyProfiles.ValidKey(activeAccount) && (showingReport || SelectedPlanTasks.Count > 0);
+        bool needsAccount = !DailyProfiles.ValidKey(activeAccount);
+        string primaryAction = needsAccount ? "run.setup_account" : showingReport ? "run.choose" : "run.start_selected";
+        L.Bind(current, ContentControl.ContentProperty, primaryAction, SelectedPlanTasks.Count);
+        L.Bind(current, System.Windows.Automation.AutomationProperties.NameProperty, primaryAction, SelectedPlanTasks.Count);
+        L.Bind(current, FrameworkElement.ToolTipProperty, needsAccount ? "run.no_account_hint" : showingReport ? "run.choose_footer" : "run.launch_help");
+        current.IsEnabled = !isBusy && (needsAccount || showingReport || SelectedPlanTasks.Count > 0);
         if (!showingReport)
             L.Text(counts, "run.selected_count", SelectedPlanTasks.Count, rows.Count);
         L.Bind(selectUnfinished, ContentControl.ContentProperty, showingReport ? "run.select_unfinished" : "run.select_all");
@@ -555,7 +567,8 @@ public sealed partial class DailyRunPanel : UserControl
         current.Visibility = !isBusy && !retryContext ? Visibility.Visible : Visibility.Collapsed;
         resume.Visibility = retryContext ? Visibility.Visible : Visibility.Collapsed;
         chooseTasks.IsEnabled = !isBusy;
-        actionHint.Visibility = isBusy ? Visibility.Collapsed : Visibility.Visible;
+        actionHint.Visibility = isBusy || !showingReport ? Visibility.Collapsed : Visibility.Visible;
+        CurrentAccountText.Visibility = showingReport || isBusy ? Visibility.Visible : Visibility.Collapsed;
         L.Bind(actionHint, TextBlock.TextProperty, retryContext
             ? (canResume ? "run.resume_footer" : SelectedTasks.Count > 0 ? "run.retry_footer" : "run.retry_empty")
             : showingReport ? "run.choose_footer" : "run.plan_footer");

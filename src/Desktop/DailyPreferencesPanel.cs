@@ -10,8 +10,6 @@ public sealed class DailyPreferencesPanel : UserControl
 {
     private static DailyLanguage L => DailyLanguage.Current;
     private readonly bool allowGame;
-    internal GameInstallationPanel GamePath { get; }
-    internal SandboxInstallationPanel SandboxPath { get; }
     private readonly bool extensionTasks = DailyPlugin.Current.Supports("tactics");
     private readonly bool extensionEvents = DailyPlugin.Current.Supports("event_battle");
     private readonly DailyPreferenceStore store;
@@ -45,8 +43,11 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly ComboBox refineChoice = new() { DisplayMemberPath = "Label", SelectedValuePath = "Instance", MinWidth = 210, MaxWidth = 660 };
     private readonly TextBlock inventoryState = new() { TextWrapping = TextWrapping.Wrap, Margin = new(0, 4, 0, 8) };
     private readonly StackPanel form = new();
+    private readonly ScrollViewer formScroll = new() { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
     private readonly TextBox filter = new() { MinWidth = 240, ToolTip = "按环节名称或说明筛选", Margin = new(8, 0, 0, 0) };
     private readonly List<(Border View, string Title, string Summary)> sections = new();
+    private readonly ListBox categories = new() { BorderThickness=new(0), Background=Brushes.Transparent, Padding=new(0), Margin=new(0,0,0,12) };
+    private string category = "daily";
     private readonly TextBlock filterCount = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new(12, 0, 0, 0) };
     private DailyPreferences? loaded;
     private string account = "";
@@ -87,52 +88,78 @@ public sealed class DailyPreferencesPanel : UserControl
         this.allowGame = allowGame;
         store = new(root);
         dataRoot = root;
-        var layout = new DockPanel { Margin = new(20) };
+        var layout = new DockPanel { Margin = new(0,0,8,0) };
+        var statusStyle = new Style(typeof(TextBlock));
+        var emptyStatus = new Trigger { Property = TextBlock.TextProperty, Value = "" };
+        emptyStatus.Setters.Add(new Setter(VisibilityProperty, Visibility.Collapsed));
+        statusStyle.Triggers.Add(emptyStatus);
+        status.Style = statusStyle;
         DockPanel.SetDock(status, Dock.Bottom);
         layout.Children.Add(status);
-        var installation = new Dustweave.Accounts.GameInstallation(allowGame ? null : Path.Combine(root, "game-path-preview"));
-        GamePath = new GameInstallationPanel(installation, allowGame && Dustweave.Accounts.SandboxProcessScope.CurrentBox.Length != 0);
-        DockPanel.SetDock(GamePath, Dock.Top);
-        layout.Children.Add(GamePath);
-        SandboxPath = new SandboxInstallationPanel(new Dustweave.Accounts.SandboxInstallation(allowGame ? null : Path.Combine(root, "sandbox-path-preview")),
-            allowGame && Dustweave.Accounts.SandboxProcessScope.CurrentBox.Length != 0);
-        DockPanel.SetDock(SandboxPath, Dock.Top);
-        layout.Children.Add(SandboxPath);
-        var header = new DockPanel { Margin = new(0, 0, 0, 16) };
+
+        var header = new Grid { Margin = new(0, 0, 0, 16) };
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        header.ColumnDefinitions.Add(new ColumnDefinition());
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var save = LocalButton("prefs.save"); save.Style = (Style)Application.Current.FindResource("PrimaryButton");
+        save.SetBinding(IsEnabledProperty, new System.Windows.Data.Binding(nameof(IsEnabled)) { Source = form });
         save.Click += (_, _) => Save();
-        DockPanel.SetDock(save, Dock.Right);
+        Grid.SetColumn(save, 2);
         header.Children.Add(save);
-        var accountGroup = new Grid { Margin = new(0, 0, 16, 0), MaxWidth = 440, HorizontalAlignment = HorizontalAlignment.Left };
+        var accountGroup = new Grid { MaxWidth = 280, HorizontalAlignment = HorizontalAlignment.Left };
         accountGroup.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         accountGroup.ColumnDefinitions.Add(new ColumnDefinition());
         var accountLabel = Label("prefs.account"); accountLabel.VerticalAlignment = VerticalAlignment.Center; accountLabel.Margin = new(0, 0, 12, 0); accountGroup.Children.Add(accountLabel);
         accounts.MinWidth = 160;
-        accounts.MaxWidth = 280;
+        accounts.MaxWidth = 200;
         Grid.SetColumn(accounts, 1);
         accounts.VerticalAlignment = VerticalAlignment.Center;
         accountGroup.Children.Add(accounts);
         header.Children.Add(accountGroup);
         DockPanel.SetDock(header, Dock.Top);
         layout.Children.Add(header);
-        var searchBar = new WrapPanel { Margin = new(0, 0, 0, 16) };
-        var searchLabel = Label("查找环节"); searchLabel.VerticalAlignment = VerticalAlignment.Center; searchBar.Children.Add(searchLabel);
+        var searchBar = new Grid { Margin = new(16, 0, 16, 0), MaxWidth = 300 };
+        filter.MinWidth = 140;
+        filter.Margin = new(0);
         L.Bind(filter, System.Windows.Automation.AutomationProperties.NameProperty, "prefs.search_accessible");
         L.Bind(filter, FrameworkElement.ToolTipProperty, "prefs.search_help");
         searchBar.Children.Add(filter);
-        searchBar.Children.Add(filterCount);
-        DockPanel.SetDock(searchBar, Dock.Top);
-        layout.Children.Add(searchBar);
-        filter.TextChanged += (_, _) => FilterSections();
+        var searchPlaceholder = Label("prefs.search_placeholder");
+        searchPlaceholder.IsHitTestVisible = false;
+        searchPlaceholder.VerticalAlignment = VerticalAlignment.Center;
+        searchPlaceholder.Margin = new(11, 0, 11, 0);
+        searchPlaceholder.FontSize = 12;
+        searchPlaceholder.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk");
+        searchBar.Children.Add(searchPlaceholder);
+        Grid.SetColumn(searchBar, 1);
+        header.Children.Add(searchBar);
+        categories.ItemsPanel = new ItemsPanelTemplate(new FrameworkElementFactory(typeof(WrapPanel)));
+        categories.ItemContainerStyle=(Style)Application.Current.FindResource("FilterChoice");
+        L.Bind(categories,System.Windows.Automation.AutomationProperties.NameProperty,"prefs.categories");
+        foreach(string key in new[]{"all","daily","battle","weekly","resources"})
+        {
+            var item=new ListBoxItem { Tag=key };L.Bind(item,ContentControl.ContentProperty,"prefs.category."+key);categories.Items.Add(item);
+        }
+        categories.SelectedIndex=1;
+        categories.SelectionChanged += (_, _) => { category = (categories.SelectedItem as ListBoxItem)?.Tag as string ?? "all"; FilterSections(); formScroll.ScrollToTop(); };
+        DockPanel.SetDock(categories,Dock.Top);layout.Children.Add(categories);
+        filter.TextChanged += (_, _) => {
+            searchPlaceholder.Visibility = filter.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+            if (filter.Text.Trim().Length > 0) categories.SelectedIndex = 0;
+            FilterSections(); formScroll.ScrollToTop();
+        };
+        filter.PreviewKeyDown += (_, e) => { if (e.Key == System.Windows.Input.Key.Escape && filter.Text.Length > 0) { filter.Clear(); e.Handled = true; } };
+        filterCount.Margin = new(0, 0, 0, 8);
+        DockPanel.SetDock(filterCount, Dock.Top); layout.Children.Add(filterCount);
         chapter.ItemsSource = Enumerable.Range(1, 10).ToArray();
         enhance.ItemsSource = Enumerable.Range(0, 10).ToArray();
         stone.ItemsSource = new[] { new Choice("least", "库存数量最少"), new Choice("fire", "火"), new Choice("water", "水"), new Choice("wind", "风"), new Choice("light", "光"), new Choice("dark", "暗") };
         stone.DisplayMemberPath = "Label";
         stone.SelectedValuePath = "Key";
         section = form;
-        var generalBody = new StackPanel { Margin = new(24, 8, 12, 16) };
-        var generalTitle = Label("整体设置"); generalTitle.FontWeight = FontWeights.SemiBold;
-        var general = new Border { BorderBrush = (Brush)Application.Current.FindResource("Line"), BorderThickness = new(0, 0, 0, 1), Child = new Expander { Header = generalTitle, Content = generalBody, IsExpanded = true, Margin = new(0, 8, 0, 8), Style = (Style)Application.Current.FindResource("SettingsExpander") } };
+        var generalBody = new StackPanel { Margin = new(48, 8, 12, 16) };
+        var generalTitle = Label("prefs.resources"); generalTitle.FontWeight = FontWeights.SemiBold;
+        var general = new Border { BorderBrush = (Brush)Application.Current.FindResource("Line"), BorderThickness = new(0, 0, 0, 1), Child = new Expander { Header = generalTitle, Content = generalBody, IsExpanded = false, Margin = new(0, 8, 0, 8), Style = (Style)Application.Current.FindResource("SettingsExpander") } };
         form.Children.Add(general); sections.Add((general, "整体设置", "天赋药保留下限与自动补药")); section = generalBody;
         Row("天赋药保留下限", potionReserve);
         Note("默认0。只允许消耗保留量以外的天赋药；不足时在队列中说明受限任务，不影响其他可执行任务。仅适用于日常队列。");
@@ -262,8 +289,10 @@ public sealed class DailyPreferencesPanel : UserControl
                 heading.Margin = new(24, 8, 0, 8);
                 border.Child = heading;
             }
-        layout.Children.Add(new ScrollViewer { Content = form, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled });
-        Content = new Border { Style = (Style)Application.Current.FindResource("Panel"), Child = layout };
+        formScroll.Content = form;
+        layout.Children.Add(formScroll);
+        Content = layout;
+        FilterSections();
         accounts.SelectionChanged += ChangedAccount;
         foreach (var c in new[] { weeklyBook, weeklyCraft, weeklySichuan, quickFriendship, friendship, tactics, eventBattle, eventChallenge, hunt, gold, slime, stones, recycle, keepSr, fallback, refine, pass, dispatch, goddess, ranking, mirror, guild, room, income, guests, saffron, draws, dailyRewards, weeklyRewards, mail, mainline, weeklyNpc, npcHunting, weeklySteal, walkCollect, monsterHunt, fishing, roomLikes, trade, events, eventMissions, quiz, dice, puzzle, roulette, exchange })
         {
@@ -316,7 +345,7 @@ public sealed class DailyPreferencesPanel : UserControl
             var summaryText = Label(summary);
             summaryText.Margin = new(24, 0, 12, 4);
             summaryText.FontSize = 13;
-            summaryText.Foreground = (Brush)Application.Current.FindResource("MutedInk");
+            summaryText.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk");
             header.Children.Add(summaryText);
         }
         var body = new StackPanel { Margin = new(48, 8, 12, 12), IsEnabled = editableWhenOff || toggle.IsChecked == true };
@@ -327,7 +356,7 @@ public sealed class DailyPreferencesPanel : UserControl
             Style = (Style)Application.Current.FindResource("SettingsExpander"),
             Header = header,
             Content = body,
-            IsExpanded = expanded,
+            IsExpanded = false,
             Margin = new(0, 8, 0, 8),
             HorizontalContentAlignment = HorizontalAlignment.Stretch
         };
@@ -343,26 +372,82 @@ public sealed class DailyPreferencesPanel : UserControl
         int count = 0;
         foreach (var (view, title, summary) in sections)
         {
-            bool show = (title + " " + summary + " " + L.Translate(title) + " " + L.Translate(summary)).Contains(query, StringComparison.OrdinalIgnoreCase);
+            bool show = (category=="all" || CategoryFor(title)==category) &&
+                (query.Length == 0 || (title + " " + summary + " " + L.Translate(title) + " " + L.Translate(summary) + " " + SearchableLabels(view)).Contains(query, StringComparison.OrdinalIgnoreCase));
             view.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            if (show && query.Length > 0 && view.Child is Expander found) found.IsExpanded = true;
+            if(show && title=="整体设置" && category=="resources" && view.Child is Expander general)general.IsExpanded=true;
             if (show)
                 count++;
         }
         L.Bind(filterCount, TextBlock.TextProperty, () => query.Length == 0 ? "" : count == 0 ? L.Get("prefs.none") : L.Get("prefs.count", count));
+        filterCount.Visibility = query.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+    }
+    private static string SearchableLabels(DependencyObject owner)
+    {
+        IEnumerable<string> Labels(DependencyObject node)
+        {
+            if (node is TextBlock text) yield return text.Text;
+            if (node is ContentControl { Content: string caption }) yield return caption;
+            foreach (var child in LogicalTreeHelper.GetChildren(node).OfType<DependencyObject>())
+                foreach (string label in Labels(child)) yield return label;
+        }
+        return string.Join(" ", Labels(owner));
+    }
+    private static string CategoryFor(string title) => title switch
+    {
+        "整体设置" or "跑商、料理与高价售卖" or "藏红花种植与收割" => "resources",
+        "普通狩猎与奖励日" or "圣石狩猎" or "镜中之战" or "魔兽快速战斗" or "战术教材" or "活动战斗" or "活动每日挑战15" => "battle",
+        "周收集" or "周NPC任务" or "每周偷窃" or "周常末日之书" or "周常制作装备" or "周常小屋点赞" or "周常钓鱼" or "周常连连看" or "周常任务奖励" => "weekly",
+        _ => "daily"
+    };
+    internal void ReviewCategoryForSmoke(string key)
+    {
+        if(allowGame)throw new InvalidOperationException("Isolated settings required");
+        filter.Clear();categories.SelectedItem=categories.Items.Cast<ListBoxItem>().Single(i=>(string)i.Tag==key);
+        if(!sections.Any(s=>s.View.IsVisible) && IsVisible)throw new Exception("Settings category has no visible tasks");
+        if(sections.Any(s=>s.View.Visibility==Visibility.Visible && key!="all" && CategoryFor(s.Title)!=key))throw new Exception("Unrelated settings in category");
+    }
+    internal void CheckCategorySearchForSmoke()
+    {
+        if(allowGame)throw new InvalidOperationException("Isolated settings required");
+        var before=(potionReserve.Text,potionTarget.Text,potionRefill.IsChecked,mirror.IsChecked,mainline.IsChecked);
+        ReviewCategoryForSmoke("weekly");filter.Text=L.Translate("镜中之战");
+        if(category!="all" || sections.Single(s=>s.Title=="镜中之战").View.Visibility!=Visibility.Visible)throw new Exception("Search cannot find settings outside selected category");
+        filter.Text = L.Translate("每轮倍率");
+        var mirrorSection = sections.Single(s => s.Title == "镜中之战").View;
+        if (mirrorSection.Visibility != Visibility.Visible || mirrorSection.Child is not Expander { IsExpanded: true })
+            throw new Exception("Search cannot reveal a setting inside a collapsed task");
+        if(before!=(potionReserve.Text,potionTarget.Text,potionRefill.IsChecked,mirror.IsChecked,mainline.IsChecked))throw new Exception("Filtering changed saved task inputs");
+        ReviewCategoryForSmoke("daily");
+    }
+    internal void CheckHiddenFieldValidationForSmoke()
+    {
+        if (allowGame) throw new InvalidOperationException("Isolated settings required");
+        string value = potionReserve.Text;
+        bool wasDirty = dirty;
+        try
+        {
+            potionReserve.Text = "invalid";
+            ReviewCategoryForSmoke("weekly");
+            if (Save() || !potionReserve.IsVisible || potionReserve.Text != "invalid")
+                throw new Exception("Invalid settings were hidden, accepted or erased after filtering");
+        }
+        finally { potionReserve.Text = value; dirty = wasDirty; L.Bind(status, TextBlock.TextProperty, () => ""); ReviewCategoryForSmoke("daily"); }
     }
     private void Note(string text)
     {
         var note = Label(text); note.MaxWidth = 720; note.FontSize = 13; note.HorizontalAlignment = HorizontalAlignment.Left;
-        note.Foreground = (Brush)Application.Current.FindResource("MutedInk"); note.Margin = new(0, 3, 0, 8);
+        note.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk"); note.Margin = new(0, 4, 0, 12);
         section.Children.Add(note);
     }
     private void Row(string label, Control field)
     {
-        var row = new Grid { Margin = new(0, 6, 0, 6), MaxWidth = 600, HorizontalAlignment = HorizontalAlignment.Stretch };
-        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MaxWidth = 210 });
-        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.2, GridUnitType.Star) });
+        var row = new Grid { Margin = new(0, 8, 0, 8), HorizontalAlignment = HorizontalAlignment.Stretch };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(240) });
         var text = Label(label); text.VerticalAlignment = VerticalAlignment.Center; text.Margin = new(0, 0, 16, 0); row.Children.Add(text);
-        field.MaxWidth = 320;
+        field.MaxWidth = 240;
         field.HorizontalAlignment = HorizontalAlignment.Stretch;
         Grid.SetColumn(field, 1);
         row.Children.Add(field);
@@ -398,7 +483,7 @@ public sealed class DailyPreferencesPanel : UserControl
             // A temporarily empty catalog can return with the same account and no
             // SelectionChanged event. Restore editing without discarding unsaved settings.
             form.IsEnabled = true;
-            L.Text(status, dirty ? "prefs.dirty" : "prefs.loaded");
+            if (dirty) L.Text(status, "prefs.dirty"); else L.Bind(status, TextBlock.TextProperty, () => "");
         }
     }
     private void ChangedAccount(object sender, SelectionChangedEventArgs e)
@@ -485,7 +570,7 @@ public sealed class DailyPreferencesPanel : UserControl
             ranking.IsChecked = loaded.Tasks.SquareRanking;
             form.IsEnabled = true;
             dirty = false;
-            L.Text(status, "prefs.loaded");
+            L.Bind(status, TextBlock.TextProperty, () => "");
         }
         catch (Exception ex) { loaded = null; form.IsEnabled = false; DailyUiText.Error(status, ex, "无法读取偏好："); }
         finally { updating = false; }
@@ -533,7 +618,8 @@ public sealed class DailyPreferencesPanel : UserControl
         try
         {
             var general = new GeneralPreferences { TalentPotionReserve = PotionAmount(potionReserve), TalentPotionTarget = PotionAmount(potionTarget), RefillTalentPotions = potionRefill.IsChecked == true };
-            general.Validate();
+            try { general.Validate(); }
+            catch { RevealField(potionTarget); throw; }
             long keep = TradeAmount(tradeReserve);
             long? limit = tradeMaximum.Text.Trim().Length == 0 ? null : TradeAmount(tradeMaximum);
             // Merge the visible fields only: retain existing ingredient reserves and other policy.
@@ -612,21 +698,33 @@ public sealed class DailyPreferencesPanel : UserControl
         }
         catch (Exception ex) { DailyUiText.Error(status, ex, "保存失败："); return false; }
     }
-    private static long PotionAmount(TextBox field)
+    private void RevealField(TextBox field)
+    {
+        filter.Clear();
+        categories.SelectedIndex = 0;
+        // Collapsed Expander content is not in the visual tree yet. Follow its
+        // logical owner first so filtered validation can open the correct section.
+        for (DependencyObject? node = field; node != null; node = LogicalTreeHelper.GetParent(node) ?? (node is Visual ? VisualTreeHelper.GetParent(node) : null))
+            if (node is Expander expander) expander.IsExpanded = true;
+        UpdateLayout();
+        field.BringIntoView();
+        field.Focus();
+        field.SelectAll();
+    }
+    private long PotionAmount(TextBox field)
     {
         if (!long.TryParse(field.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out long value) || value > int.MaxValue)
         {
-            field.BringIntoView(); field.Focus();
+            RevealField(field);
             throw new InvalidDataException("天赋药数量须为非负整数；原输入已保留。");
         }
         return value;
     }
-    private static long TradeAmount(TextBox field)
+    private long TradeAmount(TextBox field)
     {
         if (!long.TryParse(field.Text.Trim().Replace(",", ""), NumberStyles.None, CultureInfo.InvariantCulture, out long value) || value > 1_000_000_000_000)
         {
-            field.BringIntoView();
-            field.Focus();
+            RevealField(field);
             throw new InvalidDataException("金币设置须为0至一万亿之间的整数；原输入已保留。");
         }
         return value;
@@ -688,6 +786,7 @@ public sealed class DailyPreferencesPanel : UserControl
     }
     internal void ShowEventSettingsForSmoke()
     {
+        ReviewCategoryForSmoke("daily");
         var exp = form.Children.OfType<Border>().Select(b => b.Child).OfType<Expander>()
             .Single(e => e.Content is StackPanel body && body.Children.Contains(dice));
         if (puzzle.Parent == null || loaded == null || puzzle.IsChecked != loaded.Events.Puzzle) throw new Exception("Puzzle event option is inaccessible or not loaded");
@@ -697,6 +796,7 @@ public sealed class DailyPreferencesPanel : UserControl
     }
     internal void ShowMirrorSettingsForSmoke()
     {
+        ReviewCategoryForSmoke("battle");
         for (DependencyObject? node = multiplier; node != null; node = VisualTreeHelper.GetParent(node))
             if (node is Expander exp)
             {

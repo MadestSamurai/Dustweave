@@ -29,15 +29,18 @@ public partial class MainWindow
         DiagnosticConnect.Visibility = diagnosticState is "unconnected" or "stale" ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private void RefreshDiagnostics_Click(object sender, RoutedEventArgs e)
+    private async void RefreshDiagnostics_Click(object sender, RoutedEventArgs e)
     {
+        var button = sender as System.Windows.Controls.Button;
+        if (button != null) button.IsEnabled = false;
+        try
+        {
         UpdateConnection();
-        L.Text(DiagnosticCopyFeedback, "diagnostics.refreshed");
-        DiagnosticCopyFeedback.Foreground = (Brush)FindResource("Primary");
-        DiagnosticCopyFeedback.Visibility = Visibility.Visible;
+        await connectionUpdate;
+        }
+        finally { if (button != null) button.IsEnabled = true; }
     }
 
-    private void DiagnosticTimeline_Click(object sender, RoutedEventArgs e) => WorkspaceTabs.SelectedItem = RunTab;
 
     private string DiagnosticSummary() => string.Join(Environment.NewLine,
         "Dustweave " + DailyProductVersion.Current, diagnosticObserved.ToString("yyyy-MM-dd HH:mm:ss zzz"),

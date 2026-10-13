@@ -1,7 +1,7 @@
-# README screenshots
+# Implemented interface screenshots
 
-`timeline-light.png`, `timeline-dark.png`, `diagnostics-light.png` and `diagnostics-dark.png` are unedited screenshots from the 2026-10-06 isolated UI availability check, including the shared vector icons and appearance segments. The unreleased source build retains the 0.8.0-preview.4 version label; these images do not depict a new published package. They show fictional accounts created by `DemoEnvironment`; no actual game connection or account capture was used.
+These unedited WPF renders were captured from Dustweave 1.3.3 on 2026-10-14 during the isolated UI check (`ux-final`). They show the implemented interface and fictional accounts from `DemoEnvironment`. No real account capture, game connection or task execution was used.
 
-The README always shows the light theme first, with the dark theme in an expandable section. The selected appearance segment is checked in both screenshots. Screenshots illustrate the implemented UI, not a concept design or a claim of completed live tasks.
+The README shows the light theme first; dark and English images use the same running timeline fixture. Account, diagnosis, software settings and daily settings images come from the 920×650 minimum-window check (rendered at the test display scale). No screenshot was recolored or relabeled after capture.
 
-四张截图来自2026-10-06可用选项清理后的隔离检查，源码尚未发布，底栏仍显示preview.4基线版本。使用演示账号，无真实账号或游戏采集信息。后续更新截图时继续使用演示模式，并同步更新这里的记录。
+截图来自 1.3.3 实际界面的隔离渲染，使用演示账号。浅色、深色与英文时间线均展示同一演示任务状态，不代表真实游戏执行结果。更新截图时应同步维护这里的版本与来源。

@@ -39,7 +39,11 @@ public partial class MainWindow
                     await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
                     var manual=Nodes<Button>(bindingDialog).Single(b=>b.Name=="SandboxBindingManual");
                     var choose=Nodes<ComboBox>(bindingDialog).Single(b=>b.Name=="SandboxBindingChoice");
-                    if(!manual.IsEnabled || choose.Items.Count!=2)throw new Exception("Verified manual binding unavailable");
+                    if(choose.IsVisible || manual.IsVisible || choose.Items.Count!=2)throw new Exception("Manual selector shown before automatic match");
+                    Capture($"sandbox-match-{language}-{appearance}",(FrameworkElement)bindingDialog.Content);
+                    Nodes<Button>(bindingDialog).Single(b=>b.Name=="SandboxBindingWrong").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    if(!manual.IsEnabled || !choose.IsVisible)throw new Exception("Manual correction unavailable");
                     Capture($"sandbox-binding-{language}-{appearance}",(FrameworkElement)bindingDialog.Content);
                     choose.SelectedIndex=1;if(manual.IsEnabled)throw new Exception("Foreign box can be bound from UI");
                     if(manual.TransformToAncestor(bindingDialog).TransformBounds(new Rect(manual.RenderSize)).Bottom>bindingDialog.ActualHeight)throw new Exception("Binding action clipped");
@@ -50,7 +54,7 @@ public partial class MainWindow
             foreach(int language in new[]{0,1,2})foreach(int appearance in new[]{1,2}) {
                 LanguageSelector.SelectedIndex=language;ThemeSelector.SelectedIndex=appearance;Width=1180;Height=900;
                 ShowError(new InvalidOperationException("suite.owner-exited"));
-                if(!ProgressText.Text.Contains(L.Get("issue.action.owner-ended"))||!DiagnosticIssueCategory.Text.Contains(L.Get("issue.category.connection")))throw new Exception("Session issue lost its actionable category");
+                if(!ProgressText.Text.Contains(L.Get("issue.action.owner-ended")))throw new Exception("Session issue lost its actionable category");
                 await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture($"support-{language}-{appearance}");
                 using var shade=DailyDialogs.Dim(this);
                 var dialog=CreateDiagnosticExportWindow();dialog.Show();
@@ -120,7 +124,7 @@ public partial class MainWindow
             checks+=2;
             if(demo.Calls.Count!=calls)throw new Exception("Support workflow touched the game");
             DailyJson.Write(Path.Combine(smoke,"support-ui.json"),new{status="passed",checks,realGameTouched=false,exportUsesIsolatedData=true});
-        }finally{Width=1180;Height=900;LanguageSelector.SelectedIndex=0;ThemeSelector.SelectedIndex=1;DiagnosticIssueCategory.Visibility=Visibility.Collapsed;timer.Start();}
+        }finally{Width=1180;Height=900;LanguageSelector.SelectedIndex=0;ThemeSelector.SelectedIndex=1;timer.Start();}
     }
     [System.Runtime.InteropServices.DllImport("user32.dll",EntryPoint="SendMessageW")]
     private static extern IntPtr TaskbarGetIcon(IntPtr hwnd,uint message,IntPtr wParam,IntPtr lParam);

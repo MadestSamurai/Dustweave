@@ -17,8 +17,8 @@ public partial class MainWindow
         File.WriteAllText(client, "fixture only");
         File.WriteAllText(Path.Combine(managed, "Assembly-CSharp.dll"), "fixture only");
         File.WriteAllText(Path.Combine(managed, "mscorlib.dll"), "fixture only");
-        var panel = preferencesPanel.GamePath;
-        var sandboxPath = preferencesPanel.SandboxPath;
+        var panel = softwareGamePath;
+        var sandboxPath = softwareSandboxPath;
         string sandboxDirectory = Path.Combine(root, "自选沙盒 Sandboxie"); Directory.CreateDirectory(sandboxDirectory);
         foreach (string name in new[] { "Start.exe", "SbieIni.exe", "SbieDll.dll" }) File.WriteAllText(Path.Combine(sandboxDirectory, name), "synthetic installation; never run");
         var sandboxStore = new SandboxInstallation(Path.Combine(root, "sandbox-path-preview"));
@@ -28,7 +28,7 @@ public partial class MainWindow
         double width = Width, height = Height; string locale = L.Code; int appearance = ThemeSelector.SelectedIndex;
         try
         {
-            WorkspaceTabs.SelectedItem = SettingsTab;
+            WorkspaceTabs.SelectedItem = SoftwareSettingsTab;
             await sandboxPath.SelectAsync(sandboxDirectory);
             Check(sandboxPath.DisplayedPath == sandboxDirectory && sandboxStore.ResolveOptional() == sandboxDirectory, "Sandbox chooser did not persist manual path");
             await sandboxPath.SelectAsync(Path.Combine(root, "missing-sandbox"));

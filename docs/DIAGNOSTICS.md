@@ -6,9 +6,9 @@ Open **Diagnostics → Export logs and get help**, choose a ZIP location and exp
 
 ## Reading the status / 怎样理解提示
 
-The connection card describes the current game connection. The operation section describes an earlier action; a healthy connection does not mean that action succeeded. Each recognized issue explains a cause category and next step. Unconfirmed results must be checked before retrying; the app does not replay them blindly.
+The connection card describes the current game connection and the next step when it is unavailable. It does not imply that a previous task succeeded. Task results and recovery actions stay with the affected task in Today; Diagnostics provides status copying and report export.
 
-连接卡片表示当前连接；最近一次操作表示之前执行的动作。连接正常不代表上次动作已完成。已识别的问题会给出类别和下一步；结果待核对时先核对游戏，不会自动重复消费或提交。
+连接卡片只表示当前连接状态，并在不可用时说明下一步。连接正常不代表此前的任务成功；具体任务结果和恢复入口留在今日任务的对应环节中。诊断页用于复制连接摘要、导出日志并联系开发者。
 
 “本机登录信息不完整”与游戏未登录不同。连接当前游戏会核对实时身份，不要求可保存的自动登录凭据；保存账号和切换账号仍有独立检查。导出包含连接前、成功或失败时的简短身份诊断（`live/diagnostics/login-*.json`）：进程、观察时间、身份是否就绪，以及本机登录字段是否存在、自动登录是否启用；不含字段值或令牌。没有这些记录的旧版导出无法确定缺少哪一项。
 
@@ -29,7 +29,7 @@ Use `test.ps1 -Groups UnifiedSuite,DiagnosticExport` and the isolated desktop sm
 
 ## Log retention / 日志清理
 
-在 **诊断 → 日志与空间管理** 中设置保留时间、容量目标，或统计后手动清理。
+在 **软件设置 → 更新与存储 → 日志与空间管理** 中设置保留时间、容量目标，或统计后手动清理。
 
 - 默认开启自动清理：程序启动后等待空闲，每 12 小时执行一次；未运行程序时不会清理。开始任务或关闭窗口会取消后台扫描／清理。
 - 默认保留 7 天、目标 512 MB。可选保留 2／3／7 天；旧版超过 7 天的设置会收敛到 7 天。容量超标时先清理较早的成功步骤和普通日志，始终保留最近 48 小时。
@@ -39,7 +39,7 @@ Use `test.ps1 -Groups UnifiedSuite,DiagnosticExport` and the isolated desktop sm
 - 账号、设置、队列与补跑进度、插件、组件缓存及已导出的 ZIP 不清理。容量目标只针对诊断文件，不是整个数据目录的硬上限。
 - 手动清理先显示可释放容量和文件数，不会直接清空目录。只删除明确允许的文件；跳过符号链接和硬链接，不跟随链接删除其他目录。隔离账号的运行空间由对应实例独立管理。
 
-Open **Diagnostics → Logs and storage** to configure retention or preview and perform manual cleanup. Automatic cleanup is enabled by default and runs when idle, at most once every 12 hours while the app is open. Defaults are 7 days and a 512 MB target; the latest 48 hours always remain. Task startup cancels background maintenance.
+Open **App settings → Updates & storage → Logs and storage** to configure retention or preview and perform manual cleanup. Automatic cleanup is enabled by default and runs when idle, at most once every 12 hours while the app is open. Defaults are 7 days and a 512 MB target; the latest 48 hours always remain. Task startup cancels background maintenance.
 
 Retention is capped at 7 days (options: 2, 3, 7). Expired failure, legacy and malformed diagnostics are removed too. Native event snapshots and query records are included. An unresolved operation's necessary receipt is preserved separately before its diagnostic files expire; account, task and transaction recovery state remain intact.
 

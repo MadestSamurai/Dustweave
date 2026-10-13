@@ -101,7 +101,7 @@ internal sealed partial class DailyScheduleAccounts
         if (!IsEnabled || from < 0 || insertionIndex < 0 || insertionIndex > selected.Count) return false;
         int destination = insertionIndex > from ? insertionIndex - 1 : insertionIndex;
         if (destination == from) return false;
-        selected.RemoveAt(from); selected.Insert(destination, key); Render();
+        selected.RemoveAt(from); selected.Insert(destination, key); Render(); SelectionChanged?.Invoke();
         if (!dragging) Children.OfType<Border>().FirstOrDefault(c => c.Tag as string == key)?.Focus();
         return true;
     }

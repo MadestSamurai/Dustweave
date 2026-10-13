@@ -44,6 +44,8 @@
     </Style>
 
     <Style TargetType="Button">
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
       <Setter Property="MinHeight" Value="36" />
       <Setter Property="Padding" Value="13,6" />
       <Setter Property="Foreground" Value="{DynamicResource Ink}" />
@@ -62,8 +64,8 @@
                     BorderBrush="{TemplateBinding BorderBrush}"
                     BorderThickness="{TemplateBinding BorderThickness}"
                     CornerRadius="8">
-              <ContentPresenter HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
+              <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                 RecognizesAccessKey="True" />
             </Border>
             <ControlTemplate.Triggers>
@@ -101,7 +103,7 @@
                     BorderBrush="{TemplateBinding BorderBrush}"
                     BorderThickness="{TemplateBinding BorderThickness}"
                     CornerRadius="8">
-              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+              <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" RecognizesAccessKey="True" />
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
@@ -224,20 +226,33 @@
    </ControlTemplate.Triggers>
   </ControlTemplate></Setter.Value></Setter>
  </Style>
+ <Style x:Key="FilterChoice" TargetType="ListBoxItem">
+  <Setter Property="Padding" Value="12,8"/><Setter Property="Margin" Value="0,0,4,4"/>
+  <Setter Property="Foreground" Value="{DynamicResource MutedInk}"/><Setter Property="HorizontalContentAlignment" Value="Left"/>
+  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
+   <Border x:Name="Face" CornerRadius="6" Padding="{TemplateBinding Padding}" Background="Transparent" BorderThickness="1" BorderBrush="Transparent"><ContentPresenter/></Border>
+   <ControlTemplate.Triggers>
+    <Trigger Property="IsSelected" Value="True"><Setter TargetName="Face" Property="Background" Value="{DynamicResource PrimarySoft}"/><Setter Property="Foreground" Value="{DynamicResource Primary}"/><Setter Property="FontWeight" Value="SemiBold"/></Trigger>
+    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Face" Property="BorderBrush" Value="{DynamicResource LineStrong}"/></Trigger>
+    <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Face" Property="BorderBrush" Value="{DynamicResource Focus}"/></Trigger>
+   </ControlTemplate.Triggers>
+  </ControlTemplate></Setter.Value></Setter>
+ </Style>
  <Style TargetType="ComboBox">
   <Setter Property="MinHeight" Value="36"/><Setter Property="Foreground" Value="{DynamicResource Ink}"/>
+  <Setter Property="HorizontalContentAlignment" Value="Left"/><Setter Property="VerticalContentAlignment" Value="Center"/>
   <Setter Property="Background" Value="{DynamicResource Surface}"/><Setter Property="BorderBrush" Value="{DynamicResource LineStrong}"/>
   <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ComboBox">
    <Grid x:Name="ComboRoot">
     <ToggleButton x:Name="Toggle" Focusable="False" IsChecked="{Binding IsDropDownOpen,RelativeSource={RelativeSource TemplatedParent},Mode=TwoWay}">
      <ToggleButton.Template><ControlTemplate TargetType="ToggleButton">
-      <Border x:Name="Box" CornerRadius="8" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource LineStrong}" BorderThickness="1"><Path Data="M 0,0 L 4,4 L 8,0" Stroke="{DynamicResource MutedInk}" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"/></Border>
-      <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource Focus}"/></Trigger></ControlTemplate.Triggers>
+      <Border x:Name="Box" CornerRadius="6" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource LineStrong}" BorderThickness="1"><Path Data="M 0,0 L 4,4 L 8,0" Stroke="{DynamicResource MutedInk}" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"/></Border>
+      <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Box" Property="Background" Value="{DynamicResource SurfaceMuted}"/></Trigger></ControlTemplate.Triggers>
      </ControlTemplate></ToggleButton.Template>
     </ToggleButton>
-    <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}" Margin="10,6,32,6" VerticalAlignment="Center" IsHitTestVisible="False" ClipToBounds="True"/>
-    <Border x:Name="ComboFocus" BorderBrush="Transparent" BorderThickness="1" CornerRadius="8" IsHitTestVisible="False"/>
+    <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}" Margin="12,7,34,7" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" IsHitTestVisible="False" ClipToBounds="True"/>
+    <Border x:Name="ComboFocus" BorderBrush="Transparent" BorderThickness="1" CornerRadius="6" IsHitTestVisible="False"/>
     <Popup x:Name="PART_Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False">
      <Border Background="{DynamicResource Surface}" BorderBrush="{DynamicResource LineStrong}" BorderThickness="1" CornerRadius="8" MinWidth="{Binding ActualWidth,ElementName=ComboRoot}" MaxHeight="{TemplateBinding MaxDropDownHeight}" Padding="4" Margin="0,4,0,0">
       <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/></ScrollViewer>

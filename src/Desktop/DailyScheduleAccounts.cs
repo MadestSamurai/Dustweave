@@ -13,6 +13,7 @@ internal sealed partial class DailyScheduleAccounts : WrapPanel
     private readonly List<string> selected = [];
     internal string[] SelectedKeys => selected.ToArray();
     internal bool HasUnavailable => selected.Any(key => !available.Any(a => a.Valid && a.AccountKey == key));
+    internal event Action? SelectionChanged;
 
     internal void SetAccounts(IEnumerable<DailyAccount> source)
     {
@@ -55,7 +56,7 @@ internal sealed partial class DailyScheduleAccounts : WrapPanel
             cross.SetResourceReference(System.Windows.Shapes.Shape.StrokeProperty, "MutedInk"); remove.Content = cross;
             L.Bind(remove, ToolTipService.ToolTipProperty, () => L.Get("schedule.remove_account", account?.Name ?? L.Get("schedule.account_unavailable")));
             L.Bind(remove, AutomationProperties.NameProperty, () => L.Get("schedule.remove_account", account?.Name ?? L.Get("schedule.account_unavailable")));
-            remove.Click += (_, _) => { selected.Remove(key); Render(); Children.OfType<Button>().Last().Focus(); };
+            remove.Click += (_, _) => { selected.Remove(key); Render(); SelectionChanged?.Invoke(); Children.OfType<Button>().Last().Focus(); };
             Grid.SetColumn(remove, 2); body.Children.Add(remove);
             var card = new Border { Width = 244, Height = 88, Margin = new Thickness(0, 0, 12, 12), CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1), Child = body, Tag = key };
             card.SetResourceReference(Border.BackgroundProperty, "Surface"); card.SetResourceReference(Border.BorderBrushProperty, valid ? "Line" : "Error"); PrepareReorder(card, account?.Name ?? L.Get("schedule.account_unavailable")); Children.Add(card);
@@ -104,7 +105,7 @@ internal sealed partial class DailyScheduleAccounts : WrapPanel
         };
         confirm.Click += (_, _) => {
             foreach (var (key, box) in choices) if (box.IsChecked == true && !selected.Contains(key) && available.Any(a => a.Valid && a.AccountKey == key)) selected.Add(key);
-            Render(); dialog.DialogResult = true;
+            Render(); SelectionChanged?.Invoke(); dialog.DialogResult = true;
         };
         Count(); dialog.Content = body; DailyDialogs.Prepare(dialog); dialog.ContentRendered += (_, _) => search.Focus(); return dialog;
     }

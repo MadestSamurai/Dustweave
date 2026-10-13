@@ -11,6 +11,18 @@ namespace Dustweave.Desktop;
 
 public sealed partial class DailyRunPanel
 {
+    internal static void CheckEmptyAccountForSmoke(string root)
+    {
+        var panel = new DailyRunPanel(root);
+        int accountPages = 0, runs = 0;
+        panel.AccountsRequested += () => accountPages++;
+        panel.PlanRequested += _ => runs++;
+        panel.SetAccount("", ""); panel.ShowPlan(new());
+        if (!panel.current.IsEnabled || panel.current.Content?.ToString() != L.Get("run.setup_account") || panel.detail.Text != L.Get("run.no_account_hint"))
+            throw new Exception("New users cannot find the next action from Today");
+        panel.current.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        if (accountPages != 1 || runs != 0) throw new Exception("Empty-account action dispatched automation");
+    }
     internal void CheckHeaderActionForSmoke()
     {
         UpdateLayout();
@@ -328,7 +340,7 @@ public partial class MainWindow
             }
             LanguageSelector.SelectedIndex=0;
             PresentDiagnostics(game,new DailySnapshot{State="identified",Scene="演示主菜单"},true);
-            if(GuildDiagnostics.IsExpanded || ActionFooter.IsVisible)throw new Exception("Advanced checks obscure the diagnostic overview");
+            if(ActionFooter.IsVisible)throw new Exception("Advanced checks obscure the diagnostic overview");
             foreach(int appearance in new[]{1,2})
             {
                 ThemeSelector.SelectedIndex=appearance;
@@ -340,16 +352,11 @@ public partial class MainWindow
                 if(CopyDiagnosticButton.TransformToAncestor(DiagnosticsScroll).TransformBounds(new Rect(CopyDiagnosticButton.RenderSize)).Bottom>DiagnosticsScroll.ActualHeight)
                     throw new Exception("The compact diagnostic overview hides feedback actions");
             }
-            GuildDiagnostics.IsExpanded=true;DiagnosticsScroll.ScrollToBottom();
-            await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
-            Capture("diagnostics-advanced-compact");
-            if(!ObserveButton.IsVisible || !GuildRunButton.IsVisible || commands!=demo.Calls.Count)
-                throw new Exception("Advanced diagnostics are unavailable or expanding them performed an action");
             checks+=4;
         }
         finally
         {
-            GuildDiagnostics.IsExpanded=false;demo.HandleGuildCommands=observeGuild;demo.TitleVisible=title;
+            demo.HandleGuildCommands=observeGuild;demo.TitleVisible=title;
             UpdateConnection();timer.Start();
         }
         return checks;
@@ -424,7 +431,7 @@ public partial class MainWindow
             foreach (int theme in new[]{1,2})
             {
                 LanguageSelector.SelectedIndex=language;ThemeSelector.SelectedIndex=theme;
-                foreach (var tab in new[]{RunTab,SettingsTab,ToolsTab,AccountsTab,ScheduleTab,DiagnosticsTab})
+                foreach (var tab in new[]{RunTab,SettingsTab,ToolsTab,AccountsTab,ScheduleTab,SoftwareSettingsTab,DiagnosticsTab})
                 {
                     WorkspaceTabs.SelectedItem=tab;
                     await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
@@ -437,15 +444,15 @@ public partial class MainWindow
                         throw new Exception("Connection action overlaps the window controls");
                     // Every navigation destination must remain visible above appearance settings.
                     Rect Bounds(FrameworkElement e) => e.TransformToAncestor(this).TransformBounds(new Rect(e.RenderSize));
-                    foreach (var nav in new[]{RunTab,SettingsTab,ToolsTab,AccountsTab,ScheduleTab,DiagnosticsTab})
-                        if(Bounds(nav).Bottom>Bounds(ThemeSelector).Top-16)
+                    foreach (var nav in new[]{RunTab,SettingsTab,ToolsTab,AccountsTab,ScheduleTab,SoftwareSettingsTab,DiagnosticsTab})
+                        if(nav.IsVisible && Bounds(nav).Bottom>Bounds(SoftwareSettingsButton).Top-8)
                             throw new Exception("Compact navigation overlaps appearance controls");
                     if (PageTitle.Text != tab.Header as string || PageTitle.ActualWidth < 80)
                         throw new Exception("Page heading lost its translated navigation context");
-                    if (tab.Template.FindName("NavIcon", tab) is not System.Windows.Shapes.Path navIcon || navIcon.Data?.IsEmpty() != false)
+                    if (tab!=SoftwareSettingsTab && (tab.Template.FindName("NavIcon", tab) is not System.Windows.Shapes.Path navIcon || navIcon.Data?.IsEmpty() != false))
                         throw new Exception("Navigation destination has no vector icon");
                     // Selection color belongs to navigation, never to the page's inherited text.
-                    if (tab.Foreground != FindResource("Ink"))
+                    if (tab!=SoftwareSettingsTab && tab.Foreground != FindResource("Ink"))
                         throw new Exception("Navigation selection changed page text color");
                     checks += 3;
                     if(tab==AccountsTab)
@@ -464,7 +471,8 @@ public partial class MainWindow
                     checks++;
                 }
             }
-            WorkspaceTabs.SelectedItem=RunTab;
+            WorkspaceTabs.SelectedItem=SoftwareSettingsTab; SoftwareSettingsScroll.ScrollToTop();
+            await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
             foreach(int index in new[]{0,1,2})
             {
                 var choice=(ListBoxItem)ThemeSelector.Items[index];
