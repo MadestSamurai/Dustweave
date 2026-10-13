@@ -1,5 +1,11 @@
 # Repository status / 仓库状态
 
+## 1.3.1 published / 目录整理版已发布
+
+2026-10-13：1.3.1 已由 GitHub Actions 完成普通 Release 发布，独立 v2 OTA 已从 1.3.0 推进到 1.3.1。根目录只保留启动入口 `Dustweave.exe`、`app` 文件夹及少量说明；1.3.0 已撤回。旧版用户需完整下载到新目录，账号和设置沿用。3,630 项回归、双版本成品、真实更新器五项升级与恢复验收、公网下载和签名均通过。旧 OTA 仍为 1.2.11，校验值未变。详见[发布验收](releases/1.3.1-deployment.md)。
+
+Version **1.3.1** is now the normal GitHub release and latest independent v2 OTA entry. Start the root `Dustweave.exe`; keep its `app` folder. Earlier versions require a complete manual download. The legacy 1.2.11 channel is unchanged. Entries below are historical.
+
 ## 1.3.0 withdrawn / 发行撤回
 
 2026-10-13：因根目录组件过多、启动入口不明显，1.3.0 Release 已撤回为草稿；最新正式版暂恢复为 1.2.11。正在准备目录整理后的 1.3.1。以下为撤回前的历史验收记录。
