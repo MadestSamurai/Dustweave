@@ -3,12 +3,16 @@ param(
  [Parameter(Mandatory)][string]$GameManagedDir,
  [ValidateSet('Portable','Lite')][string[]]$Flavors=@('Portable','Lite'),
  [string]$PreparedCacheDirectory='',
- [ValidateSet('Auto','Accounts','Navigation','Rewards','Trading','Weekly','Full')][string]$ValidationScope='Auto',
- [string]$ValidationBaseline=''
+ [ValidateSet('Auto','Accounts','Navigation','Rewards','Trading','Weekly','Updates','Full')][string]$ValidationScope='Auto',
+ [string]$ValidationBaseline='',
+ [string]$SyntheticEvidence='',
+ [string]$SyntheticInputs='',
+ [string]$OutputDirectory=''
 )
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath($PSScriptRoot)
 . (Join-Path $root 'scripts/copy-prepared-cache.ps1')
+. (Join-Path $root 'scripts/publish-layout.ps1')
 
 if(!$PreparedCacheDirectory){$PreparedCacheDirectory=Join-Path $root 'artifacts/prepared-modules'}
 $PreparedCacheDirectory=[IO.Path]::GetFullPath($PreparedCacheDirectory)
@@ -19,7 +23,8 @@ if(!$Flavors.Count -or @($Flavors|Select-Object -Unique).Count -ne $Flavors.Coun
 $managed=[IO.Path]::GetFullPath($GameManagedDir)
 if(!(Test-Path -LiteralPath (Join-Path $managed 'Assembly-CSharp.dll'))){throw 'Provide the installed game Managed directory; the game does not need to run.'}
 $game=Split-Path -Parent (Split-Path -Parent $managed)
-$output=Join-Path $root ('artifacts/releases/'+$Version)
+$output=if($OutputDirectory){[IO.Path]::GetFullPath($OutputDirectory)}else{Join-Path $root ('artifacts/releases/'+$Version)}
+if(!$output.StartsWith((Join-Path $root 'artifacts')+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Release output must remain inside repository artifacts.'}
 if(Test-Path -LiteralPath $output){throw 'Output already exists. Preserve it and use a new release version.'}
 $work=Join-Path $root ('artifacts/package-'+$Version+'-'+[Guid]::NewGuid().ToString('N'))
 [IO.Directory]::CreateDirectory($work)|Out-Null
@@ -59,11 +64,22 @@ Write-Host ("Validation scope: "+$validation.scope+" — "+$validation.reason)
 $before|Set-Content -LiteralPath (Join-Path $work 'source-before.json') -Encoding utf8
 $packageImport='-p:CustomAfterMicrosoftCommonTargets='+ (Join-Path $root 'Package.Build.targets')
 Run 'dotnet' @('build',$entry,'-c','Release','-r','win-x64','-p:SelfContained=false',$packageImport,('-p:DustweavePackageLockRoot='+ (Join-Path $work 'locks/build')),'--nologo') 'build'
-foreach($component in @('tools/TradeData','tools/CompatibilityCli','tests/Dustweave.Tests')){
+foreach($component in @('tools/TradeData','tools/CompatibilityCli','tests/Dustweave.Tests','src/Launcher','src/Updater')){
  Run 'dotnet' @('build',(Join-Path $root $component),'-c','Release','-r','win-x64','-p:SelfContained=false',$packageImport,('-p:DustweavePackageLockRoot='+ (Join-Path $work 'locks/build')),'--nologo') ('build-'+($component -replace '/','-'))
 }
 & (Join-Path $root 'check-source.ps1') -AfterBuild
-& (Join-Path $root 'test.ps1') -NoBuild -Groups $validation.groups
+if($SyntheticEvidence){
+ $proof=Get-Content -LiteralPath $SyntheticEvidence -Raw|ConvertFrom-Json
+ if($validation.scope -ne 'Full' -or $proof.status -ne 'passed' -or $proof.scope -ne 'full synthetic regressions' -or $proof.realGameTouched -ne $false -or $proof.sourceRoot -ne $root){throw 'Invalid synthetic validation baseline.'}
+ $old=@{};foreach($row in (Get-Content -LiteralPath $SyntheticInputs -Raw|ConvertFrom-Json)){$old[$row.path.Replace('\','/')]=[string]$row.hash}
+ $current=@{};foreach($row in ($before|ConvertFrom-Json)){$current[$row.path.Replace('\','/')]=[string]$row.hash}
+ # Package-only targets are exercised by actual artifact gates below; synthetic builds do not enable shared resources.
+ $changed=@(@($old.Keys)+@($current.Keys)|Sort-Object -Unique|Where-Object {$_ -match '^(src|tools|tests|assets|standalone|third-party)/|^Directory.Build.props$|^global.json$' -and $old[$_] -ne $current[$_]})
+ if($changed.Count){throw ('Synthetic baseline inputs changed: '+($changed -join ', '))}
+ $validation.syntheticEvidence=[IO.Path]::GetFullPath($SyntheticEvidence)
+ $validation.syntheticInputs=[IO.Path]::GetFullPath($SyntheticInputs)
+ Copy-Item -LiteralPath $SyntheticEvidence -Destination (Join-Path $work 'reused-synthetic-results.json')
+}else{& (Join-Path $root 'test.ps1') -NoBuild -Groups $validation.groups}
 Run 'dotnet' @('run','--project',(Join-Path $root 'tools/CompatibilityCli'),'-c','Release','-r','win-x64','--no-build','--','client-inputs',$managed,(Join-Path $work 'client-before.json')) 'client-before'
 $tools=@('bd2-fishing','bd2-sichuan','bd2-rhythm','bd2-territory','bd2-equipment-assistant','bd2-apostle-defense','bd2-infinite-gacha','bd2-secret-vision','bd2-fiend-hunter')
 $tables=Join-Path $work 'tables'
@@ -84,8 +100,7 @@ $flavorReports=@()
 foreach($flavor in $Flavors){
  $self=if($flavor -eq 'Portable'){'true'}else{'false'}
  $bundle=Join-Path $output $flavor
- Run 'dotnet' @('publish',$entry,'-c','Release','-r','win-x64','--self-contained',$self,('-p:SelfContained='+$self),('-p:PublishSelfContained='+$self),'-p:PublishSingleFile=true','-p:IncludeNativeLibrariesForSelfExtract=true',('-p:EnableCompressionInSingleFile='+$self),'-p:DebugType=None','-p:DebugSymbols=false',('-p:DustweaveVersion='+$Version),$packageImport,('-p:DustweavePackageLockRoot='+ (Join-Path $work ('locks/'+$flavor))),'-o',$bundle,'--nologo') ($flavor+'-publish')
- foreach($extra in Get-ChildItem -LiteralPath $bundle -File -Filter '*.runtimeconfig.json'|Where-Object Name -ne 'Dustweave.runtimeconfig.json'){Remove-Item -LiteralPath $extra.FullName}
+ Publish-DustweaveLayout -Root $root -Work $work -Destination $bundle -Version $Version -Flavor $flavor
  $exe=Join-Path $bundle 'Dustweave.exe'
  $checks=Join-Path $work ($flavor+'-checks');[IO.Directory]::CreateDirectory($checks)|Out-Null
  [ordered]@{protocol=1;tools=@('live','minigame','exporter','diagnostics')}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $bundle 'utility-host.json') -Encoding utf8
@@ -130,13 +145,13 @@ foreach($flavor in $Flavors){
   $identity=Get-Content -LiteralPath $description -Raw|ConvertFrom-Json
   if($identity.assembly -ne $utility.Value -or $identity.tool -ne $utility.Key -or $identity.realGameTouched -ne $false){throw "Packaged utility identity differs: $($utility.Key)"}
  }
- $modes=if($validation.scope -eq 'Full'){@('smoke','check-tool-languages','check-tool-language-ui','check-stage-host','check-tool-session','check-suite-host')}else{@('smoke')}
+ $modes=if($validation.scope -in @('Full','Updates')){@('smoke','check-tool-languages','check-tool-language-ui','check-stage-host','check-tool-session','check-suite-host')}else{@('smoke')}
  foreach($mode in $modes){
   $check=Join-Path $checks $mode;[IO.Directory]::CreateDirectory($check)|Out-Null
   Run $exe @(('--'+$mode),$check) ($flavor+'-'+$mode)
  }
  Pass (Join-Path $checks 'smoke/smoke.json')
- if($validation.scope -eq 'Full'){Pass (Join-Path $checks 'check-tool-languages/result.json');Pass (Join-Path $checks 'check-tool-language-ui/result.json')}
+ if($validation.scope -in @('Full','Updates')){Pass (Join-Path $checks 'check-tool-languages/result.json');Pass (Join-Path $checks 'check-tool-language-ui/result.json')}
  Run $exe @('--utility','live','self-test') ($flavor+'-live-self-test')
  Run $exe @('--tool-catalog',(Join-Path $bundle 'tools.json')) ($flavor+'-tool-catalog')
  if($flavor -eq $Flavors[0] -and $validation.scope -in @('Navigation','Rewards')){
@@ -170,9 +185,9 @@ foreach($flavor in $Flavors){
   }
  }
  $inventory=@(Get-ChildItem -LiteralPath $bundle -File -Recurse|ForEach-Object {[IO.Path]::GetRelativePath($bundle,$_.FullName).Replace([IO.Path]::DirectorySeparatorChar,[char]47)})+@('update-package.json')
- [ordered]@{Version=$Version;Flavor=$flavor;Files=@($inventory|Sort-Object -Unique)}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $bundle 'update-package.json') -Encoding utf8
+ [ordered]@{Version=$Version;Flavor=$flavor;Layout=2;RuntimeVersion='8.0.30';BootstrapFiles=(Get-Content -LiteralPath (Join-Path $bundle 'package-components.json') -Raw|ConvertFrom-Json).bootstrapFiles;Files=@($inventory|Sort-Object -Unique)}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $bundle 'update-package.json') -Encoding utf8
  $files=@(Get-ChildItem -LiteralPath $bundle -File -Recurse)
- if(@($files|Where-Object Extension -eq '.exe').Count -ne 1){throw 'Expected one application executable.'}
+ if(@($files|Where-Object Extension -eq '.exe').Count -ne 2 -or !(Test-Path -LiteralPath (Join-Path $bundle 'support/Dustweave.Updater.exe'))){throw 'Expected launcher plus independent updater.'}
  if($files|Where-Object {$_.Name -match 'Assembly-CSharp|GameAssembly|python.*\.(exe|dll)' -or $_.Extension -in @('.py','.pyd','.pyc','.pfx','.key') -or $_.FullName -match '[\\/]plugins[\\/]'}){throw 'Forbidden private/legacy payload in release.'}
  $archive=Join-Path $output ('Dustweave-'+$Version+'-'+$flavor+'-win-x64.zip')
  [IO.Compression.ZipFile]::CreateFromDirectory($bundle,$archive,[IO.Compression.CompressionLevel]::Optimal,$false)

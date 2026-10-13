@@ -6,7 +6,7 @@ $entry=Join-Path $PSScriptRoot 'src/Desktop/Dustweave.Desktop.csproj'
 if(-not(Test-Path -LiteralPath $entry)){throw 'Dustweave source tree is incomplete.'}
 $restoreMode=if($RefreshDependencyLocks){'--force-evaluate'}else{'--locked-mode'}
 # RID-specific builds belong to project roots; MSBuild does not support -r on a solution.
-$projects=@($entry)+@('tools/TradeData','tools/CompatibilityCli','tests/Dustweave.Tests'|ForEach-Object {Join-Path $PSScriptRoot $_})
+$projects=@($entry)+@('tools/TradeData','tools/CompatibilityCli','tests/Dustweave.Tests','src/Launcher','src/Updater'|ForEach-Object {Join-Path $PSScriptRoot $_})
 foreach($project in $projects){
  & dotnet restore $project $restoreMode -r win-x64 -p:SelfContained=false --nologo
  if($LASTEXITCODE -ne 0){throw "Dependency restore failed: $project"}

@@ -10,9 +10,9 @@ namespace BD2Sichuan.Compatibility;
 public sealed record PreparedHook(byte[] Payload,BindingReport Report);
 public static class HookCompiler
 {
-    public static string ToolFingerprint => MetadataIndex.Hash(typeof(HookCompiler).Module.ModuleVersionId+"|"+string.Join("|",typeof(HookCompiler).Assembly.GetManifestResourceNames().OrderBy(n=>n,StringComparer.Ordinal).Select(n=>MetadataIndex.Hash(Convert.ToBase64String(Resource(n))))));
+    public static string ToolFingerprint => MetadataIndex.Hash(typeof(HookCompiler).Module.ModuleVersionId+"|"+string.Join("|",DustweaveSharedResources.Names(typeof(HookCompiler).Assembly).OrderBy(n=>n,StringComparer.Ordinal).Select(n=>MetadataIndex.Hash(Convert.ToBase64String(Resource(n))))));
     public static byte[] Resource(string name)
-    {using var s=typeof(HookCompiler).Assembly.GetManifestResourceStream(name)??throw new InvalidDataException("Missing embedded resource: "+name);using var b=new MemoryStream();s.CopyTo(b);return b.ToArray();}
+    {using var s=DustweaveSharedResources.Open(typeof(HookCompiler).Assembly,name)??throw new InvalidDataException("Missing embedded resource: "+name);using var b=new MemoryStream();s.CopyTo(b);return b.ToArray();}
     public static BindingContract Contract()=>JsonSerializer.Deserialize<BindingContract>(Resource("BD2Sichuan.Contract.json"))!;
     public static PreparedHook Prepare(string managed,BindingContract? contract=null,bool daily=false)
     {
@@ -26,7 +26,7 @@ public static class HookCompiler
         if(expectedKinds.Count!=actualKinds.Count || expectedKinds.Any(p=>!actualKinds.TryGetValue(p.Key,out var value)||value!=p.Value))
             throw new InvalidOperationException("连连看方块规则发生变化，需要更新求解规则；尚未注入。");
         var assembly=typeof(HookCompiler).Assembly;
-        var sources=assembly.GetManifestResourceNames().Where(n=>n.StartsWith("Hook.",StringComparison.Ordinal)).OrderBy(n=>n,StringComparer.Ordinal).Select(n=>CSharpSyntaxTree.ParseText(Encoding.UTF8.GetString(Resource(n)),path:n)).ToList();
+        var sources=DustweaveSharedResources.Names(assembly).Where(n=>n.StartsWith("Hook.",StringComparison.Ordinal)).OrderBy(n=>n,StringComparer.Ordinal).Select(n=>CSharpSyntaxTree.ParseText(Encoding.UTF8.GetString(Resource(n)),path:n)).ToList();
         sources.Add(CSharpSyntaxTree.ParseText(GenerateSource(resolved),path:"SichuanClient.g.cs"));
         sources.Add(CSharpSyntaxTree.ParseText("namespace BD2.LocalIpc { public static class Build { public const string Fingerprint = " + JsonSerializer.Serialize(fingerprint) + "; public const string Group = " + JsonSerializer.Serialize(daily?"daily":"sichuan") + "; } }"));
         var refs=new List<MetadataReference>();

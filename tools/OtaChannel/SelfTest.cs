@@ -16,6 +16,8 @@ static class SelfTest
         var checks=new List<string>();
         void Pass(string name,bool ok=true) { Rules.Need(ok,"Test failed: "+name);checks.Add(name); }
         void Reject(string name,Action action) { try { action(); }catch { checks.Add(name);return; }throw new Exception("Not rejected: "+name); }
+        Pass("legacy-account-fixed-config",Channel.ConfigPathForAccount("dustweave-ota")=="/etc/dustweave-ota-channel/config.json");
+        Pass("v2-account-separate-config",Channel.ConfigPathForAccount("dustweave-ota-v2")=="/etc/dustweave-ota-channel-v2/config.json");
         async Task RejectAsync(string name,Func<Task> action) { try { await action(); }catch { checks.Add(name);return; }throw new Exception("Not rejected: "+name); }
         Envelope Sign<T>(T value,string domain="") { var data=Rules.Bytes(value);return new(1,"test","ECDSA-P256-SHA256",Convert.ToBase64String(data),Convert.ToBase64String(signer.SignData(Encoding.UTF8.GetBytes(domain).Concat(data).ToArray(),HashAlgorithmName.SHA256,DSASignatureFormat.IeeeP1363FixedFieldConcatenation))); }
         var notes=new Dictionary<string,string[]>{{"zh-CN",["test"]},{"zh-TW",["test"]},{"en-US",["test"]}};
@@ -86,6 +88,34 @@ static class SelfTest
         using(var gate=new FileStream(Path.Combine(locked.State,"publish.lock"),FileMode.Create,FileAccess.ReadWrite,FileShare.None))
             Reject("concurrent-publish-lock",()=>Channel.Worker(locked,kr.Nonce));
         Pass("busy-worker-records-failure",JsonSerializer.Serialize(Channel.Status(locked,kr.Nonce)).Contains("failed"));
+        // Layout 2 hosts patches only and remains isolated from the legacy lane.
+        var layoutBase=ReleaseOf("1.3.0",null) with{Layout=2,RuntimeVersion="8.0.30"};
+        var layoutNext=ReleaseOf("1.3.1","1.3.0") with{Layout=2,RuntimeVersion="8.0.30"};
+        layoutNext=layoutNext with{Assets=layoutNext.Assets.Select(a=>a with{Bytes=400}).ToArray(),Deltas=layoutNext.Assets.Select(a=>new Delta(a.Flavor,"1.3.0",$"Dustweave-1.3.1-{a.Flavor}-from-1.3.0-win-x64.delta.zip",4,Rules.Hash([1,2,3,4]),"dustweave-copy-v2")).ToArray()};
+        var layoutConfig=Setup("layout2") with{Layout=2};
+        var layoutOld=Rules.Bytes(Sign(new Feed(3,"Dustweave","stable",[layoutBase])));
+        File.WriteAllBytes(Path.Combine(layoutConfig.Public,"updates.json"),layoutOld);
+        var layoutEvidence=Rules.Bytes(new{status="passed",cases=new[]{"upgrade-Lite","upgrade-Portable","startup-failure","bootstrap-recovery"}.Select(name=>new{@case=name,status="passed",to=layoutNext.Version,baselineHelper=true,delta=true}).ToArray()});
+        Header LayoutHeader(Release next,Release? prior=null,bool full=false)
+        {
+            var bytes=Rules.Bytes(Sign(new Feed(3,"Dustweave","stable",[next,prior??layoutBase])));
+            var blobs=(full?next.Assets.Select(a=>new Blob(a.FileName,a.Bytes,a.Sha256)):next.Deltas!.Select(d=>new Blob(d.FileName,d.Bytes,d.Sha256))).OrderBy(b=>b.FileName,StringComparer.Ordinal).ToArray();
+            var request=new Request(1,"Dustweave",next.Version,Rules.Hash(layoutOld),Rules.Hash(bytes),Rules.Hash(layoutEvidence),Guid.NewGuid().ToString("N"),DateTimeOffset.UtcNow,DateTimeOffset.UtcNow.AddMinutes(10),blobs);
+            return new(Sign(request,Rules.Domain),Convert.ToBase64String(bytes),Convert.ToBase64String(layoutEvidence));
+        }
+        var layoutHeader=LayoutHeader(layoutNext);
+        Pass("layout2-patch-only-accepted",Rules.Validate(layoutHeader,layoutConfig,DateTimeOffset.UtcNow).Request.Files.Length==2);
+        Reject("layout2-rejects-full-uploads",()=>Rules.Validate(LayoutHeader(layoutNext,full:true),layoutConfig,DateTimeOffset.UtcNow));
+        Reject("layout2-cannot-target-legacy-lane",()=>Rules.Validate(layoutHeader,c,DateTimeOffset.UtcNow));
+        Reject("legacy-cannot-target-layout2-lane",()=>Rules.VerifyFeed(old,layoutConfig));
+        Reject("layout2-runtime-crossing-rejected",()=>Rules.Validate(LayoutHeader(layoutNext with{RuntimeVersion="9.0.0"}),layoutConfig,DateTimeOffset.UtcNow));
+        Reject("layout2-oversized-delta-rejected",()=>Rules.Validate(LayoutHeader(layoutNext with{Deltas=[layoutNext.Deltas![0] with{Bytes=8388609},layoutNext.Deltas![1]]}),layoutConfig,DateTimeOffset.UtcNow));
+        Reject("layout2-poor-ratio-rejected",()=>Rules.Validate(LayoutHeader(layoutNext with{Deltas=[layoutNext.Deltas![0] with{Bytes=320},layoutNext.Deltas![1]]}),layoutConfig,DateTimeOffset.UtcNow));
+        await Channel.Submit(layoutConfig,Frame(layoutHeader),false);
+        var layoutRequest=Rules.Read<Request>(Rules.Verify(layoutHeader.Request,layoutConfig,Rules.Domain));
+        Channel.Worker(layoutConfig,layoutRequest.Nonce);
+        Pass("layout2-publishes-patches-only",Directory.GetFiles(Path.Combine(layoutConfig.Public,"v1.3.1")).All(p=>p.EndsWith(".delta.zip",StringComparison.Ordinal)));
+        Pass("layout2-feed-switched",Rules.VerifyFeed(File.ReadAllBytes(Path.Combine(layoutConfig.Public,"updates.json")),layoutConfig).Releases[0].Version=="1.3.1");
         var report=new{status="passed",checks=checks.Count,cases=checks,gameTouched=false,serverTouched=false};
         File.WriteAllBytes(Path.Combine(folder,"results.json"),Rules.Bytes(report));Console.WriteLine($"{checks.Count} OTA channel checks passed: {folder}");
     }

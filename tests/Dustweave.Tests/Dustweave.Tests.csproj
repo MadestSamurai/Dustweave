@@ -27,4 +27,5 @@
     <Compile Include="../../standalone/bd2-territory/shared/LocalRoute.cs;../../standalone/bd2-territory/shared/LocalNavigationCache.cs;../../standalone/bd2-territory/shared/RouteGeometry.cs" Link="SquareGeometry/%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup><Using Include="BD2Daily" /></ItemGroup>
+  <ItemGroup><Compile Include="../../src/Packaging/SharedResources.cs" Link="Packaging/SharedResources.cs" /></ItemGroup>
 </Project>

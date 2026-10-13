@@ -12,7 +12,7 @@ public partial class MainWindow
         if (UpdatedStartup) DailyUpdateInstaller.Acknowledge(UpdateNonce);
         if (scheduleStore.Last is { State: "running" } previous)
             scheduleStore.Record(previous with { State = "interrupted", AtUtc = DateTimeOffset.UtcNow });
-        if (DailyJson.TryRead<DailyUpdateInstaller.Result>(Path.Combine(root, "update-result.json")) is { State: "failed" or "rolled_back" or "recovery_required" })
+        if (DailyJson.TryRead<DailyUpdateEngine.Result>(Path.Combine(root, "update-result.json")) is { State: "failed" or "rolled_back" or "recovery_required" })
             updatePanel.Status("updates.previous_failed");
         if (ScheduledStartup) await CheckScheduleAsync();
         bool guided = ShowInitialConnectionGuide();

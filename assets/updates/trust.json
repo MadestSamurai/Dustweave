@@ -5,8 +5,8 @@
   "Sources": [
     {
       "Id": "cn",
-      "FeedUrl": "https://bd2.madsam.work/updates/dustweave/updates.json",
-      "PackageBaseUrl": "https://bd2.madsam.work/updates/dustweave"
+      "FeedUrl": "https://bd2.madsam.work/updates/dustweave/v2/updates.json",
+      "PackageBaseUrl": "https://bd2.madsam.work/updates/dustweave/v2"
     }
   ]
 }

@@ -14,7 +14,7 @@ public sealed record DailyDeltaManifest(int Schema, string FromVersion, string V
 // chunks. Neither weak boundary hashes nor installed version labels authorize content.
 public static class DailyUpdateDeltaPackage
 {
-    public const string Algorithm = "dustweave-cdc-v1";
+    public const string Algorithm = "dustweave-copy-v2";
     private const int MinChunk = 2048, MaxChunk = 32768;
     private const long MaxExpanded = 2L * 1024 * 1024 * 1024;
     private static readonly ulong[] Gear = Enumerable.Range(0, 256).Select(i =>
@@ -56,7 +56,7 @@ public static class DailyUpdateDeltaPackage
         }
         if (start < data.Length) yield return (start, data.Length - start);
     }
-    private static void WritePatch(Stream output, byte[] previous, byte[] current)
+    private static void WriteChunkPatch(Stream output, byte[] previous, byte[] current)
     {
         var index = new Dictionary<string, (int Start, int Length)>(StringComparer.Ordinal);
         foreach (var chunk in Chunks(previous))
@@ -72,6 +72,46 @@ public static class DailyUpdateDeltaPackage
             else { writer.Write((byte)0); writer.Write(chunk.Length); writer.Write(data); }
         }
         writer.Write((byte)255);
+    }
+    // Search small anchors, then extend exact byte matches. The wire format and its
+    // bounded COPY/LITERAL decoder are unchanged; hashes still authorize the result.
+    private static void WriteMatchedPatch(Stream output, byte[] previous, byte[] current)
+    {
+        var index = new Dictionary<ulong, int>();
+        for (int i = 0; i + 32 <= previous.Length; i += 16)
+            index.TryAdd(BitConverter.ToUInt64(previous, i), i);
+        using var compressed = new BrotliStream(output, CompressionLevel.Optimal, true);
+        using var writer = new BinaryWriter(compressed, Encoding.UTF8, true);
+        writer.Write(0x31574444);
+        void Literal(int start, int count)
+        {
+            while (count > 0) { int n = Math.Min(MaxChunk, count); writer.Write((byte)0); writer.Write(n); writer.Write(current, start, n); start += n; count -= n; }
+        }
+        void Copy(int start, int count)
+        {
+            while (count > 0) { int n = Math.Min(MaxChunk, count); writer.Write((byte)1); writer.Write((long)start); writer.Write(n); start += n; count -= n; }
+        }
+        int at = 0, literal = 0;
+        while (at + 32 <= current.Length)
+        {
+            if (index.TryGetValue(BitConverter.ToUInt64(current, at), out int offset) && previous.AsSpan(offset, 32).SequenceEqual(current.AsSpan(at, 32)))
+            {
+                int count = 32;
+                while (offset + count + 8 <= previous.Length && at + count + 8 <= current.Length && BitConverter.ToUInt64(previous, offset + count) == BitConverter.ToUInt64(current, at + count)) count += 8;
+                while (offset + count < previous.Length && at + count < current.Length && previous[offset + count] == current[at + count]) count++;
+                Literal(literal, at - literal); Copy(offset, count); at += count; literal = at;
+            }
+            else at++;
+        }
+        Literal(literal, current.Length - literal); writer.Write((byte)255);
+    }
+    private static void WritePatch(Stream output, byte[] previous, byte[] current)
+    {
+        using var matched = new MemoryStream(); WriteMatchedPatch(matched, previous, current);
+        using var chunks = new MemoryStream(); WriteChunkPatch(chunks, previous, current);
+        using var whole = new MemoryStream(); WriteChunkPatch(whole, [], current);
+        var best = new[] { matched, chunks, whole }.MinBy(s => s.Length)!;
+        best.Position = 0; best.CopyTo(output);
     }
     private static void ApplyPatch(Stream patch, Stream previous, Stream output, long size, CancellationToken token)
     {
@@ -105,10 +145,16 @@ public static class DailyUpdateDeltaPackage
     {
         using var oldZip = ZipFile.OpenRead(previousZip); using var nextZip = ZipFile.OpenRead(targetZip);
         DailyUpdatePackage Metadata(ZipArchive zip) => JsonSerializer.Deserialize<DailyUpdatePackage>(
-            ReadEntry(zip.GetEntry("update-package.json") ?? throw new InvalidDataException("Missing descriptor"), 1024 * 1024), DailyJson.Options)!;
+            ReadEntry(zip.GetEntry("update-package.json") ?? throw new InvalidDataException("Missing descriptor"), 1024 * 1024), DailyUpdateJson.Options)!;
         var before = Metadata(oldZip); var after = Metadata(nextZip);
-        if (before.Flavor != after.Flavor || DailyUpdates.VersionOf(before.Version) >= DailyUpdates.VersionOf(after.Version))
+        if (before.Layout != after.Layout || before.RuntimeVersion != after.RuntimeVersion || before.Flavor != after.Flavor || DailyUpdates.VersionOf(before.Version) >= DailyUpdates.VersionOf(after.Version))
             throw new InvalidDataException("updates.invalid_package");
+        if (!(before.BootstrapFiles ?? []).Order().SequenceEqual((after.BootstrapFiles ?? []).Order())) throw new InvalidDataException("updates.manual_layout");
+        foreach (var stable in before.BootstrapFiles ?? [])
+        {
+            var old = oldZip.GetEntry(stable); var next = nextZip.GetEntry(stable);
+            if (old == null || next == null || !Same(Hash(ReadEntry(old)), Hash(ReadEntry(next)))) throw new InvalidDataException("updates.manual_runtime");
+        }
         var entries = nextZip.Entries.Where(e => !e.FullName.EndsWith('/')).ToArray();
         if (entries.Length > 5000 || entries.Sum(e => e.Length) > MaxExpanded ||
             entries.Any(e => !DailyUpdates.AllowedFile(e.FullName)) ||
@@ -141,7 +187,7 @@ public static class DailyUpdateDeltaPackage
             }
             var manifest = new DailyDeltaManifest(1, before.Version, after.Version, after.Flavor, DailyUpdateTransaction.Hash(targetZip), files.ToArray());
             using var metadata = zip.CreateEntry("delta.json", CompressionLevel.Optimal).Open();
-            JsonSerializer.Serialize(metadata, manifest, DailyJson.Options);
+            JsonSerializer.Serialize(metadata, manifest, DailyUpdateJson.Options);
         }
         return new(after.Flavor, before.Version, name, new FileInfo(result).Length, DailyUpdateTransaction.Hash(result), Algorithm);
     }
@@ -151,7 +197,7 @@ public static class DailyUpdateDeltaPackage
         if (!VerifyFile(path, delta.Bytes, delta.Sha256)) throw new InvalidDataException("updates.hash_failed");
         using var zip = ZipFile.OpenRead(path);
         var entry = zip.GetEntry("delta.json") ?? throw new InvalidDataException("updates.invalid_package");
-        var manifest = JsonSerializer.Deserialize<DailyDeltaManifest>(ReadEntry(entry, 4 * 1024 * 1024), DailyJson.Options)
+        var manifest = JsonSerializer.Deserialize<DailyDeltaManifest>(ReadEntry(entry, 4 * 1024 * 1024), DailyUpdateJson.Options)
             ?? throw new InvalidDataException("updates.invalid_package");
         if (manifest.Schema != 1 || manifest.Version != release.Version || manifest.FromVersion != delta.FromVersion ||
             manifest.Flavor != asset.Flavor || !Same(manifest.TargetArchiveSha256, asset.Sha256) ||
@@ -179,7 +225,7 @@ public static class DailyUpdateDeltaPackage
     public static bool CanApply(string installed, DailyDeltaManifest manifest, CancellationToken token = default)
     {
         DailyUpdates.EnsureNoLinks(installed);
-        var package = DailyJson.TryRead<DailyUpdatePackage>(PathOf(installed, "update-package.json"));
+        var package = DailyUpdateJson.TryRead<DailyUpdatePackage>(PathOf(installed, "update-package.json"));
         if (package?.Version != manifest.FromVersion || package.Flavor != manifest.Flavor) return false;
         foreach (var file in manifest.Files)
         {
@@ -189,15 +235,19 @@ public static class DailyUpdateDeltaPackage
         return true;
     }
     public static string[] Extract(string path, string installed, string staging, DailyUpdateRelease release,
-        DailyUpdateAsset asset, DailyUpdateDelta delta, CancellationToken token = default)
+        DailyUpdateAsset asset, DailyUpdateDelta delta, CancellationToken token = default, bool copyUnchanged = true)
     {
         var manifest = Read(path, release, asset, delta);
         if (!CanApply(installed, manifest, token)) throw new InvalidDataException("updates.delta_base_changed");
+        var installedPackage = DailyUpdateJson.TryRead<DailyUpdatePackage>(PathOf(installed, "update-package.json"))!;
+        if ((installedPackage.BootstrapFiles ?? []).Any(name => !manifest.Files.Any(f => f.Name == name && f.Mode == "copy")))
+            throw new InvalidDataException("updates.manual_runtime");
         DailyUpdates.EnsureNoLinks(staging);
         using var zip = ZipFile.OpenRead(path);
         foreach (var file in manifest.Files)
         {
             token.ThrowIfCancellationRequested();
+            if (!copyUnchanged && file.Mode == "copy") continue;
             string target = PathOf(staging, file.Name), source = PathOf(installed, file.Name);
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
             using (Stream previous = file.BaseSha256 == null ? new MemoryStream() : File.OpenRead(source))
@@ -213,9 +263,10 @@ public static class DailyUpdateDeltaPackage
             }
             if (!VerifyFile(target, file.Bytes, file.Sha256)) throw new InvalidDataException("updates.hash_failed");
         }
-        var metadata = DailyJson.TryRead<DailyUpdatePackage>(PathOf(staging, "update-package.json"));
+        var metadata = DailyUpdateJson.TryRead<DailyUpdatePackage>(PathOf(staging, "update-package.json"));
         string[] names = manifest.Files.Select(f => f.Name).ToArray();
-        if (metadata?.Version != release.Version || metadata.Flavor != asset.Flavor || metadata.Files == null ||
+        if (metadata?.Version != release.Version || metadata.Flavor != asset.Flavor || metadata.Layout != release.Layout || metadata.RuntimeVersion != release.RuntimeVersion || metadata.Files == null ||
+            !(metadata.BootstrapFiles ?? []).Order().SequenceEqual((installedPackage.BootstrapFiles ?? []).Order()) ||
             !metadata.Files.Order().SequenceEqual(names.Order())) throw new InvalidDataException("updates.invalid_package");
         return names;
     }

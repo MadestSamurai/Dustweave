@@ -5,7 +5,7 @@ namespace Dustweave;
 // Small append-only transition journal, bounded independently of task snapshots.
 public static class DailySuiteDiagnostics {
  static readonly object Sync=new();
- static readonly string Version=Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion??"unknown";
+ static readonly string Version=typeof(DailySuiteDiagnostics).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>().FirstOrDefault(a=>a.Key=="DustweaveVersion")?.Value??"unknown";
  public static void Record(string root,string kind,object detail) {
   try {lock(Sync){
    string path=Path.Combine(root,"suite","diagnostics","ownership.jsonl");

@@ -23,7 +23,7 @@ $start.ArgumentList.Add($output)
 if($Groups.Count){$start.Environment['DUSTWEAVE_TEST_GROUPS']=$Groups -join ','}else{$start.Environment.Remove('DUSTWEAVE_TEST_GROUPS')|Out-Null}
 $proc=[Diagnostics.Process]::Start($start)
 $stdout=$proc.StandardOutput.ReadToEndAsync();$stderr=$proc.StandardError.ReadToEndAsync()
-$deadline=[DateTime]::UtcNow.AddMinutes(3)
+$deadline=[DateTime]::UtcNow.AddMinutes($(if($Groups.Count){3}else{6}))
 while(!$proc.WaitForExit(1000)){
  if([DateTime]::UtcNow -gt $deadline){throw "Tests remain active (PID $($proc.Id)): $output. Inspect before retrying."}
 }

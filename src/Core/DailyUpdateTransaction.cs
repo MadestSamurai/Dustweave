@@ -36,11 +36,11 @@ public static class DailyUpdateTransaction
         { throw new IOException($"Cannot replace {target} (0x{error.HResult:X8})", error); }
         finally { if (File.Exists(temp)) File.Delete(temp); }
     }
-    public static DailyUpdateJournal Prepare(string staging, string target, string backup, string[] names)
+    public static DailyUpdateJournal Prepare(string staging, string target, string backup, string[] names, IReadOnlyDictionary<string, string>? retainedFiles = null)
     {
         foreach (var path in new[] { staging, target, backup }) DailyUpdates.EnsureNoLinks(path);
         if (Directory.Exists(backup)) throw new IOException("updates.backup_exists");
-        var previous = DailyJson.TryRead<DailyUpdatePackage>(Path.Combine(target, "update-package.json"));
+        var previous = DailyUpdateJson.TryRead<DailyUpdatePackage>(Path.Combine(target, "update-package.json"));
         string[] obsolete = (previous?.Files ?? []).Except(names, StringComparer.OrdinalIgnoreCase).ToArray();
         var all = names.Concat(obsolete).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         if (all.Length > 10000 || all.Any(n => !DailyUpdates.AllowedFile(n))) throw new InvalidDataException("updates.invalid_package");
@@ -51,6 +51,17 @@ public static class DailyUpdateTransaction
             string destination = Path.Combine(target, name), saved = Path.Combine(backup, name);
             DailyUpdates.EnsureNoLinks(destination);
             bool existed = File.Exists(destination);
+            if (retainedFiles != null && retainedFiles.TryGetValue(name, out var retainedHash))
+            {
+                if (!names.Contains(name, StringComparer.OrdinalIgnoreCase) || !existed || !Hash(destination).Equals(retainedHash, StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidDataException("updates.delta_base_changed");
+                continue;
+            }
+            // Unchanged runtime/dependency files are neither copied nor replaced.
+            // Staging was verified before preparing this transaction.
+            string incoming = Path.Combine(staging, name);
+            if (names.Contains(name, StringComparer.OrdinalIgnoreCase) && !File.Exists(incoming)) throw new InvalidDataException("updates.invalid_package");
+            if (existed && File.Exists(incoming) && new FileInfo(incoming).Length == new FileInfo(destination).Length && Hash(incoming) == Hash(destination)) continue;
             string? digest = null;
             if (existed) { CopyDurable(destination, saved); digest = Hash(saved); }
             files.Add(new(name, existed, digest));
@@ -93,10 +104,10 @@ public static class DailyUpdateTransaction
         }
         journal = journal with { State = "rolled_back" }; Save(journal); return journal;
     }
-    public static void Save(DailyUpdateJournal journal) => DailyJson.Write(Path.Combine(journal.Backup, "transaction.json"), journal);
+    public static void Save(DailyUpdateJournal journal) => DailyUpdateJson.Write(Path.Combine(journal.Backup, "transaction.json"), journal);
     public static DailyUpdateJournal Read(string backup, string target)
     {
-        var journal = DailyJson.TryRead<DailyUpdateJournal>(Path.Combine(backup, "transaction.json")) ?? throw new IOException("updates.recovery_required");
+        var journal = DailyUpdateJson.TryRead<DailyUpdateJournal>(Path.Combine(backup, "transaction.json")) ?? throw new IOException("updates.recovery_required");
         if (!Path.GetFullPath(journal.Target).Equals(Path.GetFullPath(target), StringComparison.OrdinalIgnoreCase) ||
             !Path.GetFullPath(journal.Backup).Equals(Path.GetFullPath(backup), StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("updates.invalid_package");

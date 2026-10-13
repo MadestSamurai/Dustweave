@@ -21,10 +21,10 @@ try{
  if(!$key.VerifyData($bytes,[Convert]::FromBase64String($envelope.Signature),[Security.Cryptography.HashAlgorithmName]::SHA256,[Security.Cryptography.DSASignatureFormat]::IeeeP1363FixedFieldConcatenation)){throw 'Previous feed signature failed.'}
  $prior=[Text.Encoding]::UTF8.GetString($bytes)|ConvertFrom-Json
 }finally{$key.Dispose()}
-if($Version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$' -or $prior.Product -ne 'Dustweave' -or $prior.Schema -ne 2){throw 'Invalid release identity.'}
+if($Version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$' -or $prior.Product -ne 'Dustweave' -or $prior.Schema -ne 3){throw 'Invalid release identity.'}
 $reports=@()
-# At most six baselines per flavor, bounded identically to client validation.
-foreach($release in @($prior.Releases|Sort-Object {[semver]$_.Version} -Descending|Select-Object -First 6)){
+# At most ten baselines per flavor, bounded identically to client validation.
+foreach($release in @($prior.Releases|Sort-Object {[semver]$_.Version} -Descending|Select-Object -First 10)){
  if([semver]$release.Version -ge [semver]$Version){throw 'Delta publication must advance the version.'}
  foreach($flavor in @('Portable','Lite')){
   $asset=$release.Assets|Where-Object Flavor -eq $flavor
@@ -41,7 +41,7 @@ foreach($release in @($prior.Releases|Sort-Object {[semver]$_.Version} -Descendi
   $name="Dustweave-$Version-$flavor-from-$($release.Version)-win-x64.delta.zip"
   $delta=Get-Content -LiteralPath (Join-Path $folder ($name+'.json')) -Raw|ConvertFrom-Json
   $full=(Get-Item -LiteralPath $next).Length
-  $reports+=@{from=$release.Version;to=$Version;flavor=$flavor;fullBytes=$full;deltaBytes=$delta.Bytes;savingsPercent=[Math]::Round(100*(1-$delta.Bytes/$full),2);offered=($delta.Bytes -lt $full*0.8)}
+  $reports+=@{from=$release.Version;to=$Version;flavor=$flavor;fullBytes=$full;deltaBytes=$delta.Bytes;savingsPercent=[Math]::Round(100*(1-$delta.Bytes/$full),2);offered=($delta.Bytes -le 8MB -and $delta.Bytes -lt $full*0.8)}
  }
 }
 $reports|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $folder 'delta-report.json') -Encoding utf8

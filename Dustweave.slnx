@@ -46,4 +46,6 @@
     <Project Path="standalone/bd2-territory/core/BD2Territory.Core.csproj" />
     <Project Path="standalone/bd2-territory/desktop/BD2Territory.Desktop.csproj" />
   </Folder>
+  <Project Path="src/Launcher/Dustweave.Launcher.csproj" />
+  <Project Path="src/Updater/Dustweave.Updater.csproj" />
 </Solution>

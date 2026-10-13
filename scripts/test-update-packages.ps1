@@ -13,6 +13,11 @@ if($UseDelta -and $UseBaselineHelper){
  }
 }
 $repo=[IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+$layout=Get-Content -LiteralPath (Join-Path $Packages 'Lite/update-package.json') -Raw|ConvertFrom-Json
+if($layout.Layout -eq 2){
+ & (Join-Path $PSScriptRoot 'test-layout-update.ps1') -Packages $Packages -Baseline $Baseline -Output $Output -CoreAssembly (Join-Path $repo 'src/Desktop/bin/Release/net8.0-windows/win-x64/Dustweave.Core.dll')
+ return
+}
 $outputRoot=[IO.Path]::GetFullPath($Output)
 if(!$outputRoot.StartsWith((Join-Path $repo 'artifacts')+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Use an isolated artifacts directory.'}
 if(Test-Path $outputRoot){throw 'Preserve existing acceptance evidence.'}

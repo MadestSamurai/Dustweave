@@ -8,8 +8,8 @@ namespace Dustweave.Compatibility;
 public sealed record PreparedDailyHook(byte[] Payload,BindingReport Report,BindingReport GuildReport,BindingReport StartupReport);
 public static class DailyHookCompiler
 {
-    public static byte[] Resource(string name){using var s=typeof(DailyHookCompiler).Assembly.GetManifestResourceStream(name)??throw new InvalidDataException("Missing resource "+name);using var b=new MemoryStream();s.CopyTo(b);return b.ToArray();}
-    public static string SuiteFingerprint {get;set;}=""; public static string Fingerprint=>SuiteFingerprint.Length>0?MetadataIndex.Hash(BaseFingerprint+"|"+SuiteFingerprint):BaseFingerprint; private static string BaseFingerprint=>MetadataIndex.Hash(typeof(DailyHookCompiler).Module.ModuleVersionId+"|"+string.Join("|",typeof(DailyHookCompiler).Assembly.GetManifestResourceNames().Order().Select(n=>MetadataIndex.Hash(Convert.ToBase64String(Resource(n))))));
+    public static byte[] Resource(string name){using var s=DustweaveSharedResources.Open(typeof(DailyHookCompiler).Assembly,name)??throw new InvalidDataException("Missing resource "+name);using var b=new MemoryStream();s.CopyTo(b);return b.ToArray();}
+    public static string SuiteFingerprint {get;set;}=""; public static string Fingerprint=>SuiteFingerprint.Length>0?MetadataIndex.Hash(BaseFingerprint+"|"+SuiteFingerprint):BaseFingerprint; private static string BaseFingerprint=>MetadataIndex.Hash(typeof(DailyHookCompiler).Module.ModuleVersionId+"|"+string.Join("|",DustweaveSharedResources.Names(typeof(DailyHookCompiler).Assembly).Order().Select(n=>MetadataIndex.Hash(Convert.ToBase64String(Resource(n))))));
     public static BindingContract Generate(string managed)
     {
         using var i=new MetadataIndex(Path.Combine(managed,"Assembly-CSharp.dll"));
@@ -32,7 +32,7 @@ public static class DailyHookCompiler
         var data=(PropertyDefinition)BindingResolver.Api(r,contract.Apis.Single(a=>a.Role=="Player.Data"));
         if(data.GetMethod?.IsStatic!=true||data.PropertyType.FullName!="Proto.Net.UserDBInfo")throw new InvalidOperationException("Player identity getter changed");
         var pump=(MethodDefinition)BindingResolver.Api(r,contract.Apis.Single(a=>a.Role=="Frame.Pump"));
-        var sources=typeof(DailyHookCompiler).Assembly.GetManifestResourceNames().Where(n=>n.StartsWith("Hook.")).Select(n=>CSharpSyntaxTree.ParseText(Encoding.UTF8.GetString(Resource(n)),path:n)).ToList();
+        var sources=DustweaveSharedResources.Names(typeof(DailyHookCompiler).Assembly).Where(n=>n.StartsWith("Hook.")).Select(n=>CSharpSyntaxTree.ParseText(Encoding.UTF8.GetString(Resource(n)),path:n)).ToList();
         string Cs(string s)=>JsonSerializer.Serialize(s);
         sources.Add(CSharpSyntaxTree.ParseText("namespace BD2Daily.Runtime { internal static class ClientNames { internal const string DataType="+Cs(data.DeclaringType.FullName)+"; internal const string DataProperty="+Cs(data.Name)+"; internal const string PumpType="+Cs(pump.DeclaringType.FullName)+"; internal const string PumpMethod="+Cs(pump.Name)+"; } }"));
         sources.Add(CSharpSyntaxTree.ParseText(GuildHookContract.Source(i,out var guildReport),path:"GuildBindings.cs"));

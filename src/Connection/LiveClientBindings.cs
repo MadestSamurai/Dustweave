@@ -151,7 +151,7 @@ public static class LiveClientBindings
     }
     internal static JsonNode AdaptSpec(string managed,JsonNode spec,string reportPath,out Dictionary<string,string> resolvedNames)
     {
-        using var resource=typeof(LiveClientBindings).Assembly.GetManifestResourceStream("Live.BindingContract.json")!;
+        using var resource=DustweaveSharedResources.Open(typeof(LiveClientBindings).Assembly,"Live.BindingContract.json")!;
         var contract=JsonSerializer.Deserialize<LiveBindingContract>(resource)!;
         var names=ResolveCached(managed,contract,reportPath);
         resolvedNames=names;

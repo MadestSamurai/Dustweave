@@ -64,3 +64,11 @@ The channel is installed and has published 1.0.1-beta. Production command/signat
 Routine publication of **1.0.4-beta** succeeded through the same constrained channel, without another administrator key. See [the 1.0.4-beta receipt](releases/1.0.4-beta-deployment.md) for package, differential upgrade and public download verification.
 
 **1.0.6-beta** was subsequently published through the same channel. Both actual 1.0.4-beta helpers passed differential upgrades, and the public downloader verified both patches. See [the 1.0.6-beta receipt](releases/1.0.6-beta-deployment.md).
+
+## Separate layout-2 channel (1.3.0+)
+
+The new channel uses OS account `dustweave-ota-v2`, executable `/usr/local/lib/dustweave-ota-channel-v2/Dustweave.OtaChannel`, configuration `/etc/dustweave-ota-channel-v2/config.json`, state `/var/lib/dustweave-ota-channel-v2`, and public files `/home/nginx/dustweave-updates-v2`. The OS account fixes the configuration path, including detached workers; an SSH request cannot select another lane. Each lane has a separate transport key. Neither publisher can write the other lane's files or state.
+
+`scripts/install-update-channel-v2.sh` initializes the first signed 1.3.0 baseline without modifying the legacy installation. Map `/updates/dustweave/v2/` to the new static directory through an independent, longer-prefix web alias. The original `/updates/dustweave/updates.json` remains unchanged. Never initialize the new lane with a synthetic acceptance feed.
+
+The private local configuration is in the parent workspace at `artifacts/deployments/dustweave-ota-channel-v2/client.json`. Use it with `publish-update-signed.ps1` for future releases. The feed layout and endpoint account must agree. Layout 2 uploads contain deltas only; full downloads remain GitHub release assets. Initial setup requires administrator access; later signed publications use only the constrained account. Deployment verification must compare the legacy feed, configuration and executable hashes before and after, test both channels and confirm cross-lane write denial.

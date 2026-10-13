@@ -117,7 +117,7 @@ public static class MansionCompiler
         var maxChainSet = exportRecord.Body.Instructions.Single(i => i.Operand is MethodReference m && m.Name == "set_MaxChainCount");
         var chainGetter = exportRecord.Body.Instructions.TakeWhile(i => i != maxChainSet).Select(i => i.Operand).OfType<MethodReference>().Last(m => m.DeclaringType.FullName == recordType.FullName);
         Add("maxChain", chainGetter.Name);
-        var sourceNames = typeof(MansionCompiler).Assembly.GetManifestResourceNames().Where(n => n.StartsWith("Mansion.") && n.EndsWith(".cs") || n.StartsWith("Hook.Ipc.")).ToArray();
+        var sourceNames = DustweaveSharedResources.Names(typeof(MansionCompiler).Assembly).Where(n => n.StartsWith("Mansion.") && n.EndsWith(".cs") || n.StartsWith("Hook.Ipc.")).ToArray();
         var sources = sourceNames.Select(n => CSharpSyntaxTree.ParseText(Encoding.UTF8.GetString(DailyHookCompiler.Resource(n)), path: n)).ToList();
         sources.Add(CSharpSyntaxTree.ParseText(EntrySource(module), path: "Mansion.EntryNative.generated.cs"));
         sources.Add(CSharpSyntaxTree.ParseText("namespace Dustweave.Mansion.Runtime { static class Bindings { public static readonly System.Collections.Generic.Dictionary<string,string> Names = new System.Collections.Generic.Dictionary<string,string>{" + string.Join(",", names.Select(p => "{" + JsonSerializer.Serialize(p.Key) + "," + JsonSerializer.Serialize(p.Value) + "}")) + "}; } }"));

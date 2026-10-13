@@ -1,6 +1,9 @@
 # Dustweave signed updates / 签名更新
 
-## Scope / 当前范围
+> **1.3.0 and later:** use the separate layout-2 channel at `https://bd2.madsam.work/updates/dustweave/v2/updates.json`. See [the current layout](UPDATE_LAYOUT_1.3.md). It serves patches only, supports at most ten preceding releases and has no full-package fallback. The legacy layout-1 channel below remains frozen at 1.2.11. Its installation, account, state and public directory are independent; do not submit 1.3.x to it.
+>
+> **1.3.0 起：**旧用户手动下载完整包并解压到新目录。以下单文件、完整包回退及复制主 EXE 为更新器的描述仅适用于旧版，不适用于 1.3.0。常规发布使用 `dustweave-ota-v2` 的独立客户端配置；首个新版基线单独初始化，之后才生成同结构直接差分。
+## Legacy scope (through 1.2.11) / 旧版范围
 
 The host uses its own updater, with signed differential packages and a full-package fallback. Supported upgrade baselines start at the first public release, 1.0.0-beta; earlier internal versions are no longer maintained for upgrade compatibility. It does not use Velopack. The active source is
 https://bd2.madsam.work/updates/dustweave/updates.json.

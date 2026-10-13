@@ -10,7 +10,7 @@ public sealed class ClientAdapter : IDisposable
  public ClientAdapter(string managed)
  {
   Index=new(Path.Combine(managed,"Assembly-CSharp.dll"));
-  using var stream=typeof(ClientAdapter).Assembly.GetManifestResourceStream("Equipment.contract.json")!;
+  using var stream=DustweaveSharedResources.Open(typeof(ClientAdapter).Assembly,"Equipment.contract.json")!;
   Bindings=BindingResolver.Resolve(Index,JsonSerializer.Deserialize<BindingContract>(stream)!);
   if(Bindings.Report.Status!="compatible")throw new InvalidOperationException("Client interface adaptation failed: "+string.Join("; ",Bindings.Report.Errors));
   void Add(string old,string current){if(Names.TryGetValue(old,out var previous)&&previous!=current)throw new InvalidOperationException("Ambiguous symbol adaptation: "+old);Names[old]=current;}

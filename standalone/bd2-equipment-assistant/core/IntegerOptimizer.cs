@@ -10,7 +10,7 @@ internal static class IntegerOptimizer
  static readonly Lazy<IntPtr> Library=new(Load);
  static IntegerOptimizer()=>NativeLibrary.SetDllImportResolver(typeof(IntegerOptimizer).Assembly,(name,assembly,search)=>name=="equipment-highs"?Library.Value:IntPtr.Zero);
  static IntPtr Load(){
-  using var resource=typeof(IntegerOptimizer).Assembly.GetManifestResourceStream("Equipment.highs.dll")??throw new InvalidOperationException("缺少内置规划组件");using var buffer=new MemoryStream();resource.CopyTo(buffer);byte[] bytes=buffer.ToArray();string hash=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();string dir=Path.Combine(J.Data,"native");Directory.CreateDirectory(dir);string path=Path.Combine(dir,"highs-"+hash+".dll");
+  using var resource=DustweaveSharedResources.Open(typeof(IntegerOptimizer).Assembly,"Equipment.highs.dll")??throw new InvalidOperationException("缺少内置规划组件");using var buffer=new MemoryStream();resource.CopyTo(buffer);byte[] bytes=buffer.ToArray();string hash=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();string dir=Path.Combine(J.Data,"native");Directory.CreateDirectory(dir);string path=Path.Combine(dir,"highs-"+hash+".dll");
   bool Valid(){try{using var file=File.OpenRead(path);return Convert.ToHexString(SHA256.HashData(file)).Equals(hash,StringComparison.OrdinalIgnoreCase);}catch(IOException){return false;}}
   if(!Valid()){
    string temp=Path.Combine(dir,"highs-"+hash+"-"+Guid.NewGuid().ToString("N")+".dll");using(var file=new FileStream(temp,FileMode.CreateNew,FileAccess.Write,FileShare.None)){file.Write(bytes);file.Flush(true);}

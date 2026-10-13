@@ -43,7 +43,7 @@ internal static class StartupDiagnostics
             {
                 utc = DateTimeOffset.UtcNow,
                 processId = Environment.ProcessId,
-                version = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion,
+                version = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion,
                 stage,
                 status = error == null ? "progress" : "failed",
                 error = error?.ToString()

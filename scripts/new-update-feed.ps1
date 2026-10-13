@@ -29,13 +29,13 @@ foreach($language in @('zh-CN','zh-TW','en-US')){if(!@($note.Notes.$language).Co
 $prior=@()
 if($PreviousFeed){
  $feed=VerifyEnvelope (Get-Content -LiteralPath $PreviousFeed -Raw|ConvertFrom-Json)
- if($feed.Schema -ne 2 -or $feed.Product -ne 'Dustweave' -or $feed.Channel -ne 'stable'){throw 'Invalid previous update feed.'}
+ if($feed.Schema -ne 3 -or $feed.Product -ne 'Dustweave' -or $feed.Channel -ne 'stable'){throw 'Invalid previous update feed.'}
  if(@($feed.Releases|Where-Object {[semver]$_.Version -ge [semver]$Version}).Count){throw 'Publishing must advance the version. Never silently replace a published version.'}
  $prior=@($feed.Releases|Sort-Object {[semver]$_.Version} -Descending)
  if(@($prior|Group-Object Version|Where-Object Count -gt 1).Count){throw 'Duplicate historical versions.'}
  for($i=0;$i -lt $prior.Count-1;$i++){if($prior[$i].PreviousVersion -ne $prior[$i+1].Version){throw 'Broken historical release chain.'}}
 }
-$assets=@()
+$assets=@();$runtime=$null
 foreach($flavor in @('Portable','Lite')){
  $name="Dustweave-$Version-$flavor-win-x64.zip";$path=Join-Path $folder $name
  if(!(Test-Path -LiteralPath $path)){throw "Required release package is missing: $name"}
@@ -45,10 +45,11 @@ foreach($flavor in @('Portable','Lite')){
   if(!$metadata -or !$archive.GetEntry('Dustweave.exe')){throw "Package has no OTA descriptor: $name"}
   $reader=[IO.StreamReader]::new($metadata.Open())
   try{$info=$reader.ReadToEnd()|ConvertFrom-Json}finally{$reader.Dispose()}
-  if($info.Version -ne $Version -or $info.Flavor -ne $flavor){throw "Package descriptor mismatch: $name"}
+  if($info.Layout -ne 2 -or $info.RuntimeVersion -ne '8.0.30' -or $info.Version -ne $Version -or $info.Flavor -ne $flavor){throw "Package descriptor mismatch: $name"}
   $members=@($archive.Entries|Where-Object {!$_.FullName.EndsWith('/')}|ForEach-Object FullName|Sort-Object)
   if(!$info.Files -or (Compare-Object $members @($info.Files|Sort-Object))){throw 'Package inventory must match the ZIP exactly.'}
  }finally{$archive.Dispose()}
+ $runtime=$info.RuntimeVersion
  $file=Get-Item -LiteralPath $path
  $assets+=[ordered]@{Flavor=$flavor;FileName=$name;Bytes=$file.Length;Sha256=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()}
 }
@@ -57,7 +58,7 @@ foreach($sidecar in Get-ChildItem -LiteralPath $folder -Filter "Dustweave-$Versi
  $delta=Get-Content -LiteralPath $sidecar.FullName -Raw|ConvertFrom-Json
  $asset=$assets|Where-Object Flavor -eq $delta.Flavor
  $expected="Dustweave-$Version-$($delta.Flavor)-from-$($delta.FromVersion)-win-x64.delta.zip"
- if(!$asset -or $delta.Algorithm -ne 'dustweave-cdc-v1' -or $delta.FileName -ne $expected -or !@($prior|Where-Object Version -eq $delta.FromVersion).Count){throw 'Invalid delta descriptor.'}
+ if(!$asset -or $delta.Algorithm -ne 'dustweave-copy-v2' -or $delta.FileName -ne $expected -or !@($prior|Where-Object Version -eq $delta.FromVersion).Count){throw 'Invalid delta descriptor.'}
  $path=Join-Path $folder $expected
  if((Get-Item -LiteralPath $path).Length -ne $delta.Bytes -or (Get-FileHash -LiteralPath $path).Hash -ne $delta.Sha256){throw 'Delta package hash mismatch.'}
  $zip=[IO.Compression.ZipFile]::OpenRead($path)
@@ -66,13 +67,13 @@ foreach($sidecar in Get-ChildItem -LiteralPath $folder -Filter "Dustweave-$Versi
   try{$metadata=$reader.ReadToEnd()|ConvertFrom-Json}finally{$reader.Dispose()}
   if($metadata.Schema -ne 1 -or $metadata.Version -ne $Version -or $metadata.FromVersion -ne $delta.FromVersion -or $metadata.Flavor -ne $delta.Flavor -or $metadata.TargetArchiveSha256 -ne $asset.Sha256){throw 'Delta targets a different full package.'}
  }finally{$zip.Dispose()}
- if($delta.Bytes -lt $asset.Bytes*0.8){$deltas+=$delta}
+ if($delta.Bytes -le 8MB -and $delta.Bytes -lt $asset.Bytes*0.8 -and $delta.FromVersion -in @($prior|Select-Object -First 10|ForEach-Object Version)){$deltas+=$delta}
 }
-if($deltas.Count -gt 12 -or @($deltas|Group-Object Flavor,FromVersion|Where-Object Count -gt 1).Count){throw 'Duplicate or excessive delta baselines.'}
+if($deltas.Count -gt 20 -or @($deltas|Group-Object Flavor,FromVersion|Where-Object Count -gt 1).Count){throw 'Duplicate or excessive delta baselines.'}
 
 $previous=if($prior.Count){$prior[0].Version}else{$null}
-$current=[ordered]@{Version=$Version;PreviousVersion=$previous;Layout=1;Notes=$note.Notes;Assets=$assets;Deltas=$deltas}
-$feed=[ordered]@{Schema=2;Product='Dustweave';Channel='stable';Releases=@($current)+$prior}
+$current=[ordered]@{Version=$Version;PreviousVersion=$previous;Layout=2;RuntimeVersion=$runtime;Notes=$note.Notes;Assets=$assets;Deltas=$deltas}
+$feed=[ordered]@{Schema=3;Product='Dustweave';Channel='stable';Releases=@($current)+$prior}
 $key=[Security.Cryptography.ECDsa]::Create()
 try {
  # CI may supply the PKCS#8 key as a secret; local publishing uses a current-user DPAPI file.

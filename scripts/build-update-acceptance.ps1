@@ -5,28 +5,25 @@ param(
 )
 $ErrorActionPreference='Stop'
 $repo=[IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+. (Join-Path $PSScriptRoot 'publish-layout.ps1')
 $output=[IO.Path]::GetFullPath($OutputDirectory)
 if(!$output.StartsWith((Join-Path $repo 'artifacts')+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Acceptance output must remain inside repository artifacts.'}
 if(Test-Path $output){throw 'Preserve previous acceptance outputs.'}
 [IO.Directory]::CreateDirectory($output)|Out-Null
 foreach($flavor in @('Lite','Portable')){
  $folder=Join-Path $output $flavor
- $self=if($flavor -eq 'Portable'){'true'}else{'false'}
- $args=@('publish',(Join-Path $repo 'src/Desktop/Dustweave.Desktop.csproj'),'-c','Release','-r','win-x64','--self-contained',$self,('-p:SelfContained='+$self),('-p:PublishSelfContained='+$self),'-p:PublishSingleFile=true','-p:IncludeNativeLibrariesForSelfExtract=true',('-p:EnableCompressionInSingleFile='+$self),'-p:DebugType=None','-p:DebugSymbols=false',('-p:DustweaveVersion='+$Version),('-p:CustomAfterMicrosoftCommonTargets='+(Join-Path $repo 'Package.Build.targets')),('-p:DustweavePackageLockRoot='+(Join-Path $output ('locks/'+$flavor))),'-o',$folder,'--nologo')
- & dotnet @args *> (Join-Path $output ($flavor+'-publish.log'))
- if($LASTEXITCODE -ne 0){throw "Failed publishing $flavor"}
- foreach($extra in Get-ChildItem -LiteralPath $folder -File -Filter '*.runtimeconfig.json'|Where-Object Name -ne 'Dustweave.runtimeconfig.json'){Remove-Item -LiteralPath $extra.FullName}
+ Publish-DustweaveLayout -Root $repo -Work $output -Destination $folder -Version $Version -Flavor $flavor
  $baseline=[IO.Path]::GetFullPath((Join-Path $BaselineDirectory $flavor))
- foreach($entry in Get-ChildItem -LiteralPath $baseline|Where-Object Name -ne 'Dustweave.exe'){Copy-Item -LiteralPath $entry.FullName -Destination $folder -Recurse}
+ foreach($entry in Get-ChildItem -LiteralPath $baseline|Where-Object Name -in @('data','docs','licenses','flows','connection','utility-host.json','tools.json','README.md','README.en.md','LICENSE','THIRD_PARTY_NOTICES.md')){Copy-Item -LiteralPath $entry.FullName -Destination $folder -Recurse}
  foreach($group in @(@{source='assets/flows';target='flows'},@{source='assets/specs';target='connection/specs'})){
   $destination=Join-Path $folder $group.target
   [IO.Directory]::CreateDirectory($destination)|Out-Null
   Get-ChildItem -LiteralPath (Join-Path $repo $group.source) -File -Filter '*.json'|ForEach-Object {Copy-Item -LiteralPath $_.FullName -Destination $destination}
  }
  $inventory=@(Get-ChildItem -LiteralPath $folder -File -Recurse|ForEach-Object {[IO.Path]::GetRelativePath($folder,$_.FullName).Replace([IO.Path]::DirectorySeparatorChar,[char]47)})+@('update-package.json')
- [ordered]@{Version=$Version;Flavor=$flavor;Files=@($inventory|Sort-Object -Unique)}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $folder 'update-package.json') -Encoding utf8
+ [ordered]@{Version=$Version;Flavor=$flavor;Layout=2;RuntimeVersion='8.0.30';BootstrapFiles=(Get-Content -LiteralPath (Join-Path $folder 'package-components.json') -Raw|ConvertFrom-Json).bootstrapFiles;Files=@($inventory|Sort-Object -Unique)}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $folder 'update-package.json') -Encoding utf8
  [IO.Compression.ZipFile]::CreateFromDirectory($folder,(Join-Path $output ("Dustweave-$Version-$flavor-win-x64.zip")),[IO.Compression.CompressionLevel]::Optimal,$false)
 }
-& (Join-Path $PSScriptRoot 'new-update-feed.ps1') -Version $Version -PackageDirectory $output
+# Signed acceptance feed is prepared by the caller with its explicit baseline.
 [ordered]@{status='built';purpose='isolated OTA acceptance only';version=$Version;staticDataFrom=[IO.Path]::GetFullPath($BaselineDirectory);realGameTouched=$false;productionDeployed=$false}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $output 'acceptance-build.json') -Encoding utf8
 Write-Host "Acceptance packages: $output"

@@ -7,8 +7,8 @@ namespace BD2InfiniteGacha.Compatibility;
 public sealed record PreparedHook(byte[] Payload,BindingReport Report);
 public static class HookCompiler
 {
-    public static byte[] Resource(string name){using var s=typeof(HookCompiler).Assembly.GetManifestResourceStream(name)??throw new InvalidDataException(name);using var b=new MemoryStream();s.CopyTo(b);return b.ToArray();}
-    public static string Fingerprint=>MetadataIndex.Hash(string.Join("|",typeof(HookCompiler).Assembly.GetManifestResourceNames().Order().Select(n=>MetadataIndex.Hash(Convert.ToBase64String(Resource(n))))));
+    public static byte[] Resource(string name){using var s=DustweaveSharedResources.Open(typeof(HookCompiler).Assembly,name)??throw new InvalidDataException(name);using var b=new MemoryStream();s.CopyTo(b);return b.ToArray();}
+    public static string Fingerprint=>MetadataIndex.Hash(string.Join("|",DustweaveSharedResources.Names(typeof(HookCompiler).Assembly).Order().Select(n=>MetadataIndex.Hash(Convert.ToBase64String(Resource(n))))));
     public static BindingContract Generate(string managed)
     {
         using var index=new MetadataIndex(Path.Combine(managed,"Assembly-CSharp.dll"));
@@ -56,7 +56,7 @@ public static class HookCompiler
         var refreshed=helper.Methods.Single(m=>m.IsStatic&&m.ReturnType.FullName=="System.Boolean"&&m.Parameters.Select(p=>p.ParameterType.FullName).SequenceEqual(new[]{"System.Byte[]","System.Int32","System.Int32"})&&m.HasBody&&m.Body.Instructions.Any(i=>i.Operand is MethodReference call&&call.Name=="get_Parser"&&call.DeclaringType.FullName=="Proto.Net.GachaInfoResponse"));
         var recoveryDeclarations=new[]{("Refresh",refresh),("RefreshResponse",refreshed)}.Select(x=>"internal const string "+x.Item1+"Type="+JsonSerializer.Serialize(x.Item2.DeclaringType.FullName)+", "+x.Item1+"Name="+JsonSerializer.Serialize(x.Item2.Name)+";");
         var declarations=contract.Apis.Select(a=>{var m=BindingResolver.Api(resolved,a);return "internal const string "+a.Role+"Type="+JsonSerializer.Serialize(m.DeclaringType.FullName)+", "+a.Role+"Name="+JsonSerializer.Serialize(m.Name)+";";});
-        var sources=typeof(HookCompiler).Assembly.GetManifestResourceNames().Where(n=>n.StartsWith("Hook.")).Select(n=>CSharpSyntaxTree.ParseText(Encoding.UTF8.GetString(Resource(n)),path:n)).ToList();
+        var sources=DustweaveSharedResources.Names(typeof(HookCompiler).Assembly).Where(n=>n.StartsWith("Hook.")).Select(n=>CSharpSyntaxTree.ParseText(Encoding.UTF8.GetString(Resource(n)),path:n)).ToList();
         sources.Add(CSharpSyntaxTree.ParseText("namespace BD2InfiniteGacha.Runtime { internal static class Names {"+string.Join("\n",declarations.Concat(recoveryDeclarations))+"} }"));
         sources.Add(CSharpSyntaxTree.ParseText("namespace BD2.LocalIpc { public static class Build { public const string Fingerprint = " + JsonSerializer.Serialize(Fingerprint) + "; } }"));
         var refs=new List<MetadataReference>();foreach(var file in Directory.EnumerateFiles(managed,"*.dll"))try{refs.Add(MetadataReference.CreateFromFile(file));}catch(BadImageFormatException){}

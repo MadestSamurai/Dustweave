@@ -34,3 +34,7 @@ Updates at the bottom left offers checks and downloads. Domestic hosting serves 
 Provided free by **MadSamurai** on Bilibili / **MadestSamurai** on GitHub. Source is MIT licensed: [Dustweave](https://github.com/MadestSamurai/Dustweave). Integrated tool licenses and sources are in `licenses`, `docs/tools` and `THIRD_PARTY_NOTICES.md`.
 
 This is an unofficial project. Automation can carry account and operational risks; decide whether to use it accordingly. Packaging includes offline verification. New plugin behavior in actual game tasks still needs validation during normal use.
+
+## Version 1.3.0
+
+Keep all DLLs and the resources and support folders. Users on 1.2.x or earlier must extract this complete package into a new folder. Saved accounts and settings remain available. Automatic updates cover up to 10 releases with a direct patch no larger than 8 MiB. A changed runtime or missing compatible patch requires a manual download; the app does not silently download a full package.

@@ -80,6 +80,7 @@ public partial class MainWindow
     private readonly CancellationTokenSource updateLifetime = new();
     private bool updateChecking, updateInstalling, updatePromptShown, releaseDialogOpen;
     private DailyUpdateJob? readyUpdate;
+    private string? manualUpdateVersion, manualUpdateReason;
     private DateTime nextUpdateCheck = DateTime.UtcNow.AddHours(6);
     private void Updates_Click(object sender, RoutedEventArgs e) { if (!IsSandboxWindow) WorkspaceTabs.SelectedItem = UpdatesTab; else L.Text(ProgressText, "sandbox.host_only"); }
     private void InitializeUpdates()
@@ -126,7 +127,8 @@ public partial class MainWindow
     {
         if (IsSandboxWindow || smoke != null || updateChecking || updateInstalling || !manual && !updatePanel.Automatic) return;
         nextUpdateCheck = DateTime.UtcNow.AddHours(6);
-        readyUpdate = null; updateChecking = true; updatePanel.Status("updates.checking"); UpdateUpdateControls();
+        readyUpdate = null; manualUpdateVersion = null; updatePromptShown = false; updateChecking = true; updatePanel.Status("updates.checking"); UpdateUpdateControls();
+        string? availableVersion = null;
         try
         {
             using var client = DailyUpdates.Client();
@@ -135,8 +137,12 @@ public partial class MainWindow
             var feed = verified.Feed;
             var release = DailyUpdates.Latest(feed, DailyProductVersion.Current);
             if (release == null) { updatePanel.Status("updates.current"); return; }
+            availableVersion = release.Version;
             updatePanel.ShowNotes(feed.Releases.OrderByDescending(r => DailyUpdates.VersionOf(r.Version)).Select(r => new DailyReleaseNote(r.Version, "", r.Notes)));
-            string flavor = DailyJson.TryRead<DailyUpdatePackage>(Path.Combine(AppContext.BaseDirectory, "update-package.json"))?.Flavor ?? throw new InvalidDataException("updates.packaged_only");
+            var installed = DailyJson.TryRead<DailyUpdatePackage>(Path.Combine(AppContext.BaseDirectory, "update-package.json"));
+            string flavor = installed?.Flavor ?? throw new InvalidDataException("updates.packaged_only");
+            manualUpdateReason = DailyUpdates.ManualUpdateReason(feed, release, installed);
+            if (manualUpdateReason != null) { manualUpdateVersion = release.Version; updatePanel.Status(manualUpdateReason); return; }
             var asset = release.Assets.SingleOrDefault(a => a.Flavor == flavor) ?? throw new InvalidDataException("updates.flavor_missing");
             var progress = new Progress<int>(p => updatePanel.Status("updates.downloading", release.Version, p));
             string directory = await transport.DownloadAsync(client, verified, release.Version, flavor, root, progress, updateLifetime.Token, AppContext.BaseDirectory);
@@ -147,25 +153,41 @@ public partial class MainWindow
         catch (OperationCanceledException) { if (!updateLifetime.IsCancellationRequested) updatePanel.Status("updates.unavailable"); }
         catch (Exception e)
         {
+            if (e.Message.StartsWith("updates.manual_", StringComparison.Ordinal)) { manualUpdateVersion = availableVersion; manualUpdateReason = e.Message; }
             updatePanel.Status(e.Message.StartsWith("updates.") ? e.Message : "updates.unavailable");
             DailyJson.Write(Path.Combine(root, "updates", "check-error.json"), new { atUtc = DateTimeOffset.UtcNow, error = e.ToString() });
         }
         finally { updateChecking = false; UpdateUpdateControls(); }
     }
     private void UpdateUpdateControls() => updatePanel.Busy(updateChecking, readyUpdate != null, Unavailable || updateInstalling || scheduleChecking);
+    private sealed record ManualUpdateNotice(string Version);
     private async Task OfferUpdateAsync()
     {
-        if (IsSandboxWindow || smoke != null || readyUpdate == null || updateChecking || updatePromptShown || Unavailable || scheduleChecking || releaseDialogOpen || DailyDialogs.ModalDepth > 0 || updateInstalling) return;
+        if (IsSandboxWindow || smoke != null || updateChecking || updatePromptShown || Unavailable || scheduleChecking || releaseDialogOpen || DailyDialogs.ModalDepth > 0 || updateInstalling) return;
+        if (manualUpdateVersion != null)
+        {
+            string seen = Path.Combine(root, "updates", "manual-notice.json");
+            if (DailyJson.TryRead<ManualUpdateNotice>(seen)?.Version == manualUpdateVersion) return;
+            DailyJson.Write(seen, new ManualUpdateNotice(manualUpdateVersion));
+            var panel = new StackPanel { Margin = new(24) };
+            var text = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 0, 0, 20) };
+            L.Text(text, manualUpdateReason ?? "updates.manual_layout"); panel.Children.Add(text);
+            panel.Children.Add(DailyDownloadLinks.Create());
+            var button = new Button { HorizontalAlignment = HorizontalAlignment.Right, Margin = new(0, 20, 0, 0), IsDefault = true };
+            L.Bind(button, ContentControl.ContentProperty, "updates.got_it"); panel.Children.Add(button);
+            var dialog = new Window { Owner = this, Width = 560, SizeToContent = SizeToContent.Height, ResizeMode = ResizeMode.NoResize, WindowStartupLocation = WindowStartupLocation.CenterOwner, Content = panel };
+            L.Bind(dialog, Window.TitleProperty, "updates.manual_title"); button.Click += (_, _) => dialog.Close();
+            DailyDialogs.Prepare(dialog); DailyDialogs.ShowModal(dialog); return;
+        }
+        if (readyUpdate == null) return;
         updatePromptShown = true;
         if (Confirm(L.Get("updates.confirm", readyUpdate.Release.Version))) await InstallUpdateAsync();
     }
     private async Task InstallUpdateAsync()
     {
         if (IsSandboxWindow || smoke != null || readyUpdate == null || Unavailable || scheduleChecking || updateInstalling || !preferencesPanel.SavePending()) return;
-        // Development outputs are not standalone; never copy a loose apphost as an updater.
-#pragma warning disable IL3000 // Empty Location is the intentional single-file detection.
-        if (!string.IsNullOrEmpty(typeof(App).Assembly.Location)) { updatePanel.Status("updates.packaged_only"); return; }
-#pragma warning restore IL3000
+        string helperSource = Path.Combine(AppContext.BaseDirectory, "support", "Dustweave.Updater.exe");
+        if (DailyJson.TryRead<DailyUpdatePackage>(Path.Combine(AppContext.BaseDirectory, "update-package.json"))?.Layout != DailyUpdates.CurrentLayout || !File.Exists(helperSource)) { updatePanel.Status("updates.packaged_only"); return; }
         updateInstalling = true; UpdateUpdateControls();
         try
         {
@@ -180,7 +202,7 @@ public partial class MainWindow
             DailyUpdates.EnsureNoLinks(attempt); Directory.CreateDirectory(attempt);
             string helper = Path.Combine(attempt, "Dustweave.Updater.exe"), job = Path.Combine(attempt, "job.json");
             readyUpdate = readyUpdate with { Nonce = nonce, OriginalSha256 = await Task.Run(() => DailyUpdateTransaction.Hash(Environment.ProcessPath!)) };
-            await Task.Run(() => DailyUpdateTransaction.CopyDurable(Environment.ProcessPath!, helper));
+            await Task.Run(() => DailyUpdateTransaction.CopyDurable(helperSource, helper));
             DailyJson.Write(job, readyUpdate);
             DailyUpdateInstaller.ValidateJob(readyUpdate, job);
             var start = new ProcessStartInfo(helper) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = readyUpdate.Directory };

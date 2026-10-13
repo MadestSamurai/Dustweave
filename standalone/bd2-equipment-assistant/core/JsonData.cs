@@ -28,7 +28,7 @@ public static class J
   for(int i=0;;i++)try{using var file=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.ReadWrite|FileShare.Delete);return JsonNode.Parse(file)!.AsObject();}catch(IOException)when(i<4){Thread.Sleep(50);}
  }
  public static void Write(string path,JsonNode value){if(BD2.LocalIpc.DesktopFiles.Write(path,Encoding.UTF8.GetBytes(Canonical(value)),Path.GetFileName(path)=="command.json"))return;Directory.CreateDirectory(Path.GetDirectoryName(path)!);string temp=path+"."+Guid.NewGuid().ToString("N")+".tmp";try{using(var file=new FileStream(temp,FileMode.CreateNew,FileAccess.Write,FileShare.None)){var data=Encoding.UTF8.GetBytes(Canonical(value));file.Write(data);file.Flush(true);}File.Move(temp,path,true);}finally{if(File.Exists(temp))File.Delete(temp);}}
- public static string ResourceText(string name){using var stream=typeof(J).Assembly.GetManifestResourceStream("Equipment."+name)??throw new InvalidOperationException("缺少内置数据："+name);using var reader=new StreamReader(stream,Encoding.UTF8);return reader.ReadToEnd();}
+ public static string ResourceText(string name){using var stream=DustweaveSharedResources.Open(typeof(J).Assembly,"Equipment."+name)??throw new InvalidOperationException("缺少内置数据："+name);using var reader=new StreamReader(stream,Encoding.UTF8);return reader.ReadToEnd();}
  public static JsonObject Resource(string name)=>JsonNode.Parse(ResourceText(name))!.AsObject();
  public static string Data=>Environment.GetEnvironmentVariable("BD2_EQUIPMENT_DATA_ROOT")??Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BD2EquipmentAssistant");
  public static string Stop=>Path.Combine(Data,"stop");

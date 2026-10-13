@@ -21,7 +21,7 @@ try{
  $feed=[Text.Encoding]::UTF8.GetString($payload)|ConvertFrom-Json
 }finally{$key.Dispose()}
 $release=$feed.Releases[0]
-if($feed.Schema -ne 2 -or $feed.Product -ne 'Dustweave' -or $feed.Channel -ne 'stable' -or $release.Version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$'){throw 'Invalid release identity.'}
+if($feed.Schema -ne 3 -or $feed.Product -ne 'Dustweave' -or $feed.Channel -ne 'stable' -or $release.Version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$'){throw 'Invalid release identity.'}
 $target=Join-Path $output ('v'+$release.Version)
 if(!$VerifyOnly){[IO.Directory]::CreateDirectory($target)|Out-Null}
 foreach($asset in $release.Assets){
@@ -29,12 +29,12 @@ foreach($asset in $release.Assets){
  if($asset.Flavor -notin @('Portable','Lite') -or $asset.FileName -ne $expected){throw 'Invalid asset name.'}
  $file=Join-Path $source $expected
  if((Get-Item -LiteralPath $file).Length -ne $asset.Bytes -or (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash -ne $asset.Sha256){throw "Asset verification failed: $expected"}
- if(!$VerifyOnly){Copy-Item -LiteralPath $file -Destination $target}
+ # Full packages are verified locally but domestic hosting carries deltas only.
 }
 foreach($delta in @($release.Deltas)){
  if(!$delta){continue}
  $expected="Dustweave-$($release.Version)-$($delta.Flavor)-from-$($delta.FromVersion)-win-x64.delta.zip"
- if($delta.Flavor -notin @('Portable','Lite') -or $delta.FromVersion -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$' -or $delta.FileName -ne $expected -or $delta.Algorithm -ne 'dustweave-cdc-v1'){throw 'Invalid delta asset name.'}
+ if($delta.Flavor -notin @('Portable','Lite') -or $delta.FromVersion -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$' -or $delta.FileName -ne $expected -or $delta.Algorithm -ne 'dustweave-copy-v2'){throw 'Invalid delta asset name.'}
  $file=Join-Path $source $expected
  if((Get-Item -LiteralPath $file).Length -ne $delta.Bytes -or (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash -ne $delta.Sha256){throw "Delta verification failed: $expected"}
  if(!$VerifyOnly){Copy-Item -LiteralPath $file -Destination $target}
@@ -42,5 +42,5 @@ foreach($delta in @($release.Deltas)){
 
 if($VerifyOnly){Write-Host 'Immutable OTA payload verified';return}
 Copy-Item -LiteralPath (Join-Path $source 'updates.json') -Destination $output
-[ordered]@{status='prepared';version=$release.Version;targetUrl='https://bd2.madsam.work/updates/dustweave/';uploadOrder=@("v$($release.Version)/",'updates.json (atomic rename last)');signed=$true;deployed=$false}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $output 'deployment-plan.json') -Encoding utf8
+[ordered]@{status='prepared';version=$release.Version;targetUrl='https://bd2.madsam.work/updates/dustweave/v2/';uploadOrder=@("v$($release.Version)/",'updates.json (atomic rename last)');signed=$true;deployed=$false}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $output 'deployment-plan.json') -Encoding utf8
 Write-Host "Static website payload ready: $output"

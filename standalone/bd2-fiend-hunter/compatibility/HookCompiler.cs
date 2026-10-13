@@ -2,8 +2,8 @@ using System.Text;using System.Text.Json;using System.Text.RegularExpressions;us
 namespace BD2FiendHunter.Compatibility;
 public sealed record PreparedHook(byte[] Payload,BindingReport Report);
 public static class HookCompiler {
- public static byte[] Resource(string name){using var s=typeof(HookCompiler).Assembly.GetManifestResourceStream(name)??throw new InvalidDataException(name);using var b=new MemoryStream();s.CopyTo(b);return b.ToArray();}
- public static string Fingerprint=>MetadataIndex.Hash(string.Join("|",typeof(HookCompiler).Assembly.GetManifestResourceNames().Order().Select(n=>MetadataIndex.Hash(Convert.ToBase64String(Resource(n))))));
+ public static byte[] Resource(string name){using var s=DustweaveSharedResources.Open(typeof(HookCompiler).Assembly,name)??throw new InvalidDataException(name);using var b=new MemoryStream();s.CopyTo(b);return b.ToArray();}
+ public static string Fingerprint=>MetadataIndex.Hash(string.Join("|",DustweaveSharedResources.Names(typeof(HookCompiler).Assembly).Order().Select(n=>MetadataIndex.Hash(Convert.ToBase64String(Resource(n))))));
  public static PreparedHook Prepare(string managed){
  using var index=new MetadataIndex(Path.Combine(managed,"Assembly-CSharp.dll"));var contract=JsonSerializer.Deserialize<BindingContract>(Resource("FiendHunter.Contract.json"))!;
  var resolved=BindingResolver.Resolve(index,contract);if(resolved.Report.Status!="compatible")throw new InvalidOperationException("Unsupported client interfaces: "+string.Join("; ",resolved.Report.Errors));
@@ -14,7 +14,7 @@ public static class HookCompiler {
  void Add(string a,string b){if(names.TryGetValue(a,out var old)&&old!=b)throw new InvalidDataException("Ambiguous client symbol: "+a);names[a]=b;}
  foreach(var t in resolved.Types){var original=t.Key.Split('/').Last().Split('.').Last();if(MetadataIndex.Obfuscated(original))Add(original,t.Value.Name);}
  foreach(var m in resolved.Members){var old=m.Key.Split('|')[1];if(MetadataIndex.Obfuscated(old))Add(old,m.Value.Name);}
- var sources=typeof(HookCompiler).Assembly.GetManifestResourceNames().Where(n=>n.StartsWith("Hook.")).Select(n=>CSharpSyntaxTree.ParseText(Regex.Replace(Encoding.UTF8.GetString(Resource(n)),@"[\u0370-\u1fff]+",m=>names.GetValueOrDefault(m.Value,m.Value)),new CSharpParseOptions(preprocessorSymbols:new[]{"RUNTIME"}),path:n)).ToList();
+ var sources=DustweaveSharedResources.Names(typeof(HookCompiler).Assembly).Where(n=>n.StartsWith("Hook.")).Select(n=>CSharpSyntaxTree.ParseText(Regex.Replace(Encoding.UTF8.GetString(Resource(n)),@"[\u0370-\u1fff]+",m=>names.GetValueOrDefault(m.Value,m.Value)),new CSharpParseOptions(preprocessorSymbols:new[]{"RUNTIME"}),path:n)).ToList();
  sources.Add(CSharpSyntaxTree.ParseText("namespace BD2.LocalIpc { public static class Build { public const string Fingerprint = " + JsonSerializer.Serialize(Fingerprint) + "; } }"));
  var refs=new List<MetadataReference>();foreach(var file in Directory.EnumerateFiles(managed,"*.dll"))try{refs.Add(MetadataReference.CreateFromFile(file));}catch(BadImageFormatException){}
  refs.Add(MetadataReference.CreateFromImage(Resource("FiendHunter.Harmony.dll")));

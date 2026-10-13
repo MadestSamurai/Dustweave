@@ -1,4 +1,35 @@
 {
+  "updates.manual_title": {
+    "zh-CN": "请手动更新",
+    "zh-TW": "請手動更新",
+    "en-US": "Manual update required"
+  },
+  "updates.manual_layout": {
+    "zh-CN": "新版使用不同的软件布局，请下载并解压完整软件包。账号和设置会保留。",
+    "zh-TW": "新版使用不同的軟體配置，請下載並解壓完整軟體包。帳號與設定會保留。",
+    "en-US": "This version uses a different package layout. Download and extract the complete package. Your accounts and settings are retained."
+  },
+  "updates.manual_runtime": {
+    "zh-CN": "新版需要更新运行库，请手动下载完整软件包。",
+    "zh-TW": "新版需要更新執行階段，請手動下載完整軟體包。",
+    "en-US": "The runtime has changed. Please download the complete package."
+  },
+  "updates.manual_distance": {
+    "zh-CN": "版本跨度超过自动更新范围，请手动下载完整软件包。",
+    "zh-TW": "版本跨度超過自動更新範圍，請手動下載完整軟體包。",
+    "en-US": "This version is outside the automatic update window. Please download the complete package."
+  },
+  "updates.manual_delta": {
+    "zh-CN": "当前版本没有可用的小型更新包，或本地文件与更新基准不一致。请手动下载完整软件包。",
+    "zh-TW": "目前版本沒有可用的小型更新包，或本機檔案與更新基準不一致。請手動下載完整軟體包。",
+    "en-US": "No small update is available for this version, or local files no longer match its baseline. Please download the complete package."
+  },
+  "updates.manual_size": {
+    "zh-CN": "此次更新超出小型更新包的大小限制，请手动下载完整软件包。",
+    "zh-TW": "此次更新超出小型更新包的大小限制，請手動下載完整軟體包。",
+    "en-US": "This update exceeds the automatic download size limit. Please download the complete package."
+  },
+
   "run.recovery_details": {
     "zh-CN": "查看恢复方法",
     "zh-TW": "查看恢復方法",

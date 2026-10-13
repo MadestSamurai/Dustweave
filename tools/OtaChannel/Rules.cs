@@ -11,10 +11,10 @@ sealed record Request(int Schema, string Product, string Version, string Expecte
     string EvidenceSha256, string Nonce, DateTimeOffset IssuedUtc, DateTimeOffset ExpiresUtc, Blob[] Files);
 sealed record Envelope(int Schema, string KeyId, string Algorithm, string Payload, string Signature);
 sealed record Header(Envelope Request, string Feed, string Evidence);
-sealed record Config(string State, string Public, Dictionary<string,string> Keys);
+sealed record Config(string State, string Public, Dictionary<string,string> Keys, int Layout = 1);
 sealed record Asset(string Flavor, string FileName, long Bytes, string Sha256);
 sealed record Delta(string Flavor, string FromVersion, string FileName, long Bytes, string Sha256, string Algorithm);
-sealed record Release(string Version, string? PreviousVersion, int Layout, Dictionary<string,string[]> Notes, Asset[] Assets, Delta[]? Deltas);
+sealed record Release(string Version, string? PreviousVersion, int Layout, Dictionary<string,string[]> Notes, Asset[] Assets, Delta[]? Deltas, string? RuntimeVersion = null);
 sealed record Feed(int Schema, string Product, string Channel, Release[] Releases);
 
 static class Rules
@@ -46,20 +46,20 @@ static class Rules
     public static Feed VerifyFeed(byte[] bytes, Config config)
     {
         var feed=Read<Feed>(Verify(Read<Envelope>(bytes),config,""));
-        Need(feed.Schema==2 && feed.Product=="Dustweave" && feed.Channel=="stable" && feed.Releases.Length is >0 and <=300,"Invalid feed");
+        Need(feed.Schema==config.Layout+1 && feed.Product=="Dustweave" && feed.Channel=="stable" && feed.Releases.Length is >0 and <=300,"Invalid feed");
         var versions=new HashSet<string>(StringComparer.Ordinal);
         for(int i=0;i<feed.Releases.Length;i++)
         {
             var r=feed.Releases[i]; var version=DailyVersion.Parse(r.Version);
-            Need(versions.Add(r.Version) && r.Layout==1,"Duplicate release or invalid layout");
+            Need(versions.Add(r.Version) && r.Layout==config.Layout && (r.Layout == 1 || System.Version.TryParse(r.RuntimeVersion,out _)),"Duplicate release or invalid layout");
             Need(r.Assets.Length==2 && r.Assets.Select(a=>a.Flavor).Order().SequenceEqual(new[]{"Lite","Portable"}),"Both flavors required");
             Need(new[]{"zh-CN","zh-TW","en-US"}.All(l=>r.Notes.TryGetValue(l,out var n) && n.Length is >0 and <=100 && n.All(s=>s.Length is >0 and <=4000)),"Missing localized notes");
             if(i+1<feed.Releases.Length) Need(r.PreviousVersion==feed.Releases[i+1].Version && version>DailyVersion.Parse(feed.Releases[i+1].Version),"Broken release chain");
             foreach(var a in r.Assets) Need(a.FileName==$"Dustweave-{r.Version}-{a.Flavor}-win-x64.zip" && a.Bytes is >0 and <=629145600 && IsHash(a.Sha256),"Invalid asset");
             var deltas=r.Deltas??[];
-            Need(deltas.Length<=12 && deltas.Select(d=>(d.Flavor,d.FromVersion)).Distinct().Count()==deltas.Length,"Too many or duplicate patches");
-            foreach(var d in deltas) Need(d.Flavor is "Lite" or "Portable" && d.Algorithm=="dustweave-cdc-v1" && DailyVersion.Parse(d.FromVersion)<version &&
-                d.FileName==$"Dustweave-{r.Version}-{d.Flavor}-from-{d.FromVersion}-win-x64.delta.zip" && d.Bytes is >0 and <=629145600 && IsHash(d.Sha256),"Invalid patch");
+            Need(deltas.Length<=(config.Layout == 1 ? 12 : 20) && deltas.Select(d=>(d.Flavor,d.FromVersion)).Distinct().Count()==deltas.Length,"Too many or duplicate patches");
+            foreach(var d in deltas) Need(d.Flavor is "Lite" or "Portable" && d.Algorithm==(config.Layout == 1 ? "dustweave-cdc-v1" : "dustweave-copy-v2") && DailyVersion.Parse(d.FromVersion)<version &&
+                d.FileName==$"Dustweave-{r.Version}-{d.Flavor}-from-{d.FromVersion}-win-x64.delta.zip" && d.Bytes > 0 && d.Bytes <= (config.Layout == 1 ? 629145600 : 8388608) && IsHash(d.Sha256),"Invalid patch");
         }
         return feed;
     }
@@ -75,8 +75,13 @@ static class Rules
         var feed=VerifyFeed(feedBytes,config);
         Need(feed.Releases[0].Version==r.Version && feed.Releases.All(v=>DailyVersion.Parse(v.Version)>=DailyVersion.Parse("1.0.0-beta")),"Only public release chain supported");
         var top=feed.Releases[0];
-        foreach(var d in top.Deltas??[]) Need(feed.Releases.Any(b=>b.Version==d.FromVersion),"Missing patch baseline");
-        var expected=top.Assets.Select(a=>new Blob(a.FileName,a.Bytes,a.Sha256.ToLowerInvariant())).Concat((top.Deltas??[]).Select(d=>new Blob(d.FileName,d.Bytes,d.Sha256.ToLowerInvariant()))).OrderBy(f=>f.FileName,StringComparer.Ordinal).ToArray();
+        foreach(var d in top.Deltas??[])
+        {
+            int index=Array.FindIndex(feed.Releases,b=>b.Version==d.FromVersion);
+            Need(index>0,"Missing patch baseline");
+            if(config.Layout>=2) Need(index<=10 && feed.Releases[index].RuntimeVersion==top.RuntimeVersion && d.Bytes<top.Assets.Single(a=>a.Flavor==d.Flavor).Bytes*0.8,"Patch exceeds automatic update policy");
+        }
+        var expected=(config.Layout == 1 ? top.Assets : []).Select(a=>new Blob(a.FileName,a.Bytes,a.Sha256.ToLowerInvariant())).Concat((top.Deltas??[]).Select(d=>new Blob(d.FileName,d.Bytes,d.Sha256.ToLowerInvariant()))).OrderBy(f=>f.FileName,StringComparer.Ordinal).ToArray();
         Need(r.Files.SequenceEqual(expected) && r.Files.Sum(f=>f.Bytes)<=1073741824,"Archive inventory differs from signed feed");
         using var doc=JsonDocument.Parse(evidence); var root=doc.RootElement;
         Need(root.GetProperty("status").GetString()=="passed","Package acceptance did not pass");

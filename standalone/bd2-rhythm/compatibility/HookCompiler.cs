@@ -12,7 +12,7 @@ public sealed record PreparedHook(byte[] Payload,BindingReport Report);
 public sealed class CompatibilityException:Exception {public BindingReport Report{get;} public CompatibilityException(string message,BindingReport report):base(message){Report=report;}}
 public static class HookCompiler {
  public static string ToolFingerprint=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(typeof(HookCompiler).Module.ModuleVersionId.ToString())));
- public static byte[] Resource(string name){using var s=typeof(HookCompiler).Assembly.GetManifestResourceStream(name)??throw new InvalidDataException(name);using var b=new MemoryStream();s.CopyTo(b);return b.ToArray();}
+ public static byte[] Resource(string name){using var s=DustweaveSharedResources.Open(typeof(HookCompiler).Assembly,name)??throw new InvalidDataException(name);using var b=new MemoryStream();s.CopyTo(b);return b.ToArray();}
  public static PreparedHook Prepare(string managed){
   using var resolver=new DefaultAssemblyResolver();resolver.AddSearchDirectory(managed);
   using var asm=AssemblyDefinition.ReadAssembly(Path.Combine(managed,"Assembly-CSharp.dll"),new ReaderParameters{AssemblyResolver=resolver});var m=asm.MainModule;
@@ -31,7 +31,7 @@ public static class HookCompiler {
   var st=state.PropertyType.Resolve();if(Convert.ToInt32(st.Fields.Single(f=>f.Name=="Play").Constant)!=1)throw new InvalidOperationException("音游状态定义发生变化。");
   var chart=m.GetType("Rhythm.RhythmLevelDataScriptable");foreach(var name in new[]{"noteDataList","bpm","difficulty"})if(!chart.Fields.Any(f=>f.Name==name))throw new InvalidOperationException("谱面字段变化："+name);
   var maps="namespace BD2Rhythm.Runtime { internal static class ClientMap { internal const string Mvid="+JsonSerializer.Serialize(report.ClientMvid)+"; "+string.Join(" ",report.Members.Select(k=>"internal const int "+k.Key+"="+k.Value+";"))+" } }";
-  var assembly=typeof(HookCompiler).Assembly;var sources=assembly.GetManifestResourceNames().Where(n=>n.StartsWith("Hook.")).OrderBy(n=>n).Select(n=>CSharpSyntaxTree.ParseText(Encoding.UTF8.GetString(Resource(n)),path:n)).ToList();sources.Add(CSharpSyntaxTree.ParseText(maps));
+  var assembly=typeof(HookCompiler).Assembly;var sources=DustweaveSharedResources.Names(assembly).Where(n=>n.StartsWith("Hook.")).OrderBy(n=>n).Select(n=>CSharpSyntaxTree.ParseText(Encoding.UTF8.GetString(Resource(n)),path:n)).ToList();sources.Add(CSharpSyntaxTree.ParseText(maps));
   sources.Add(CSharpSyntaxTree.ParseText("namespace BD2.LocalIpc { public static class Build { public const string Fingerprint = " + JsonSerializer.Serialize(ToolFingerprint) + "; } }"));
   var refs=new List<MetadataReference>();foreach(var file in Directory.EnumerateFiles(managed,"*.dll")){try{refs.Add(MetadataReference.CreateFromFile(file));}catch(BadImageFormatException){}}
   refs.Add(MetadataReference.CreateFromImage(Resource("BD2Rhythm.Harmony.dll")));

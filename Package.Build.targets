@@ -1,6 +1,23 @@
 <Project>
+  <PropertyGroup>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <PathMap>$(MSBuildThisFileDirectory)=/_/Dustweave/</PathMap>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(DustweavePackageLockRoot)' != ''">
     <NuGetLockFilePath>$(DustweavePackageLockRoot)/$(MSBuildProjectName).lock.json</NuGetLockFilePath>
     <RestoreLockedMode>false</RestoreLockedMode>
   </PropertyGroup>
+  <Target Name="DustweaveShareResources" BeforeTargets="AssignTargetPaths" Condition="'$(DustweaveSharedResources)' == 'true'">
+    <ItemGroup>
+      <_SharedResource Include="@(EmbeddedResource)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(EmbeddedResource.LogicalName)', '(?i)(Harmony\.dll|highs\.dll|Contract\.json|Equipment\.display-catalog\.json)$'))" />
+    </ItemGroup>
+    <GetFileHash Files="@(_SharedResource)" Algorithm="SHA256"><Output TaskParameter="Items" ItemName="_HashedSharedResource" /></GetFileHash>
+    <PropertyGroup><_SharedIndex>$(IntermediateOutputPath)Dustweave.PackageResources.txt</_SharedIndex></PropertyGroup>
+    <WriteLinesToFile File="$(_SharedIndex)" Lines="@(_HashedSharedResource->'%(LogicalName)|%(FileHash)')" Overwrite="true" WriteOnlyWhenDifferent="true" Encoding="UTF-8" Condition="'@(_SharedResource)' != ''" />
+    <WriteLinesToFile File="$(DustweaveResourceCatalog)/$(MSBuildProjectName).txt" Lines="@(_HashedSharedResource->'%(FileHash)|%(FullPath)|%(LogicalName)')" Overwrite="true" WriteOnlyWhenDifferent="true" Encoding="UTF-8" Condition="'@(_SharedResource)' != ''" />
+    <ItemGroup Condition="'@(_SharedResource)' != ''">
+      <EmbeddedResource Remove="@(_SharedResource)" />
+      <EmbeddedResource Include="$(_SharedIndex)" LogicalName="Dustweave.PackageResources.txt" WithCulture="false" />
+    </ItemGroup>
+  </Target>
 </Project>

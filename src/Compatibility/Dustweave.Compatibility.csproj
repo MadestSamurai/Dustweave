@@ -12,4 +12,4 @@
     <EmbeddedResource Include="guild-contract.json" Condition="Exists('guild-contract.json')" LogicalName="BD2Daily.GuildContract.json" />
     <EmbeddedResource Include="contract.json" Condition="Exists('contract.json')" LogicalName="BD2Daily.Contract.json" />
   </ItemGroup>
-<ItemGroup><EmbeddedResource Include="../Shared/Ipc/common/*.cs;../Shared/Ipc/runtime/*.cs" LogicalName="Hook.Ipc.%(Filename)%(Extension)"/></ItemGroup></Project>
+<ItemGroup><EmbeddedResource Include="../Shared/Ipc/common/*.cs;../Shared/Ipc/runtime/*.cs" LogicalName="Hook.Ipc.%(Filename)%(Extension)"/></ItemGroup><ItemGroup><Compile Include="../Packaging/SharedResources.cs" Link="Packaging/SharedResources.cs" /></ItemGroup></Project>

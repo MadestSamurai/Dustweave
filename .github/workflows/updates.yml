@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Stable tag with both tested packages (v0.9.0)'
+        description: 'Stable tag with both tested packages (v1.3.0)'
         required: true
 permissions:
   contents: read
@@ -27,7 +27,7 @@ jobs:
           gh release download $env:RELEASE_TAG --pattern 'Dustweave-*-win-x64.zip' --dir ota
           if($LASTEXITCODE -ne 0){throw 'Both tested release packages are required.'}
           try {
-            Invoke-WebRequest 'https://bd2.madsam.work/updates/dustweave/updates.json' -OutFile ota/previous.json
+            Invoke-WebRequest 'https://bd2.madsam.work/updates/dustweave/v2/updates.json' -OutFile ota/previous.json
           } catch {
             if([int]$_.Exception.Response.StatusCode -ne 404){throw}
           }
@@ -42,7 +42,7 @@ jobs:
             $signed=Get-Content 'ota/previous.json' -Raw|ConvertFrom-Json
             $prior=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($signed.Payload))|ConvertFrom-Json
             New-Item -ItemType Directory -Path ota/bases | Out-Null
-            foreach($release in @($prior.Releases|Select-Object -First 3)){
+            foreach($release in @($prior.Releases|Select-Object -First 10)){
               if($release.Version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$'){throw 'Invalid baseline version.'}
               gh release download ("v"+$release.Version) --pattern 'Dustweave-*-win-x64.zip' --dir ota/bases
               if($LASTEXITCODE -ne 0){throw 'Previous release packages could not be obtained.'}

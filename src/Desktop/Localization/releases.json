@@ -1,5 +1,30 @@
 [
 {
+  "Version": "1.3.0",
+  "Date": "2026-10-13",
+  "Notes": {
+    "zh-CN": [
+      "改为完整目录分发，运行库与共享资源独立保存。请完整解压后启动 Dustweave.exe，不要单独移动 EXE。",
+      "1.2.x 及更早版本请手动下载完整软件包并解压到新目录；已有账号和设置继续沿用。",
+      "采用更小的差分更新：最多跨10次发布，更新包超过8 MiB、运行库改变或缺少适用差分时提示手动下载，不自动回退下载完整包。",
+      "增加独立更新助手与启动恢复入口；更新失败可回退，不重复替换未改变的运行库和资源。"
+    ],
+    "zh-TW": [
+      "改為完整目錄發行，執行階段與共用資源獨立保存。請完整解壓後啟動 Dustweave.exe，不要單獨移動 EXE。",
+      "1.2.x 及更早版本請手動下載完整軟體包並解壓至新目錄；既有帳號與設定繼續沿用。",
+      "採用更小的差分更新：最多跨10次發行，更新包超過8 MiB、執行階段改變或缺少適用差分時提示手動下載，不自動改下載完整包。",
+      "新增獨立更新助手與啟動復原入口；更新失敗可回復，不重複替換未變更的執行階段與資源。"
+    ],
+    "en-US": [
+      "Distribution now uses a complete folder with separate runtime and shared resources. Extract everything and launch Dustweave.exe; do not move the EXE alone.",
+      "Users on 1.2.x or earlier must download the full package into a new folder. Existing accounts and settings are retained.",
+      "Smaller direct deltas cover up to 10 releases. Updates above 8 MiB, runtime changes or missing patches require a manual download instead of an automatic full-package fallback.",
+      "An independent updater and recovery launcher handle interrupted installations. Unchanged runtime and resource files are no longer copied or replaced."
+    ]
+  }
+},
+
+{
   "Version": "1.2.11",
   "Date": "2026-10-13",
   "Notes": {

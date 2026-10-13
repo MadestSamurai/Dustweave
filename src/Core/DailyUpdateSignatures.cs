@@ -9,7 +9,7 @@ public sealed record DailyUpdateTrust(Dictionary<string, string> Keys, DailyUpda
     public static DailyUpdateTrust Production()
     {
         using var stream = typeof(DailyUpdateTrust).Assembly.GetManifestResourceStream("Dustweave.update-trust.json")!;
-        return JsonSerializer.Deserialize<DailyUpdateTrust>(stream, DailyJson.Options)!;
+        return JsonSerializer.Deserialize<DailyUpdateTrust>(stream, DailyUpdateJson.Options)!;
     }
 }
 public sealed record DailySignedUpdate(int Schema, string KeyId, string Algorithm, string Payload, string Signature);
@@ -21,7 +21,7 @@ public static class DailyUpdateSignatures
     public static DailySignedUpdate Sign(DailyUpdateFeed feed, string keyId, ECDsa key)
     {
         DailyUpdates.Validate(feed);
-        byte[] payload = JsonSerializer.SerializeToUtf8Bytes(feed, DailyJson.Options);
+        byte[] payload = JsonSerializer.SerializeToUtf8Bytes(feed, DailyUpdateJson.Options);
         return new(1, keyId, "ECDSA-P256-SHA256", Convert.ToBase64String(payload),
             Convert.ToBase64String(key.SignData(payload, HashAlgorithmName.SHA256, DSASignatureFormat.IeeeP1363FixedFieldConcatenation)));
     }
@@ -38,7 +38,7 @@ public static class DailyUpdateSignatures
             if (key.KeySize != 256 || signature.Length != 64 ||
                 !key.VerifyData(payload, signature, HashAlgorithmName.SHA256, DSASignatureFormat.IeeeP1363FixedFieldConcatenation))
                 throw new InvalidDataException("updates.signature_failed");
-            var feed = JsonSerializer.Deserialize<DailyUpdateFeed>(payload, DailyJson.Options) ?? throw new InvalidDataException("updates.invalid_feed");
+            var feed = JsonSerializer.Deserialize<DailyUpdateFeed>(payload, DailyUpdateJson.Options) ?? throw new InvalidDataException("updates.invalid_feed");
             DailyUpdates.Validate(feed);
             return feed;
         }

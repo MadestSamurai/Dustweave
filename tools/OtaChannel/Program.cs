@@ -9,7 +9,9 @@ sealed record Operation(string State,string Nonce,string Version,DateTimeOffset 
 
 static class Channel
 {
-    public const string ConfigPath="/etc/dustweave-ota-channel/config.json";
+    // The OS account fixes the lane; SSH requests cannot select another configuration.
+    public static string ConfigPathForAccount(string account) => account == "dustweave-ota-v2"
+        ? "/etc/dustweave-ota-channel-v2/config.json" : "/etc/dustweave-ota-channel/config.json";
     static string Folder(Config c,string nonce) { Rules.Need(Rules.IsNonce(nonce),"Invalid operation ID"); return Path.Combine(c.State,"operations",nonce); }
     static void Record(string folder,Operation state) => Rules.Atomic(Path.Combine(folder,"status.json"),Rules.Bytes(state));
     static void CheckCurrent(Config c,Request r,byte[] nextFeed)
@@ -50,7 +52,7 @@ static class Channel
         }
         var feedPath=Path.Combine(c.Public,"updates.json");
         var feed=Rules.VerifyFeed(File.ReadAllBytes(feedPath),c);
-        return new {product="Dustweave",version=feed.Releases[0].Version,feedSha256=Rules.HashFile(feedPath),protocol=1};
+        return new {product="Dustweave",version=feed.Releases[0].Version,feedSha256=Rules.HashFile(feedPath),protocol=1,layout=c.Layout};
     }
     public static async Task<object> Submit(Config c,Stream input,bool startWorker=true)
     {
@@ -153,7 +155,8 @@ static class Program
             {
                 var c=Rules.Read<Config>(File.ReadAllBytes(args[1])); Console.WriteLine(JsonSerializer.Serialize(Channel.Status(c),Rules.Json));return 0;
             }
-            Rules.NoLinks(Channel.ConfigPath);var config=Rules.Read<Config>(File.ReadAllBytes(Channel.ConfigPath));
+            var configPath=Channel.ConfigPathForAccount(Environment.UserName);
+            Rules.NoLinks(configPath);var config=Rules.Read<Config>(File.ReadAllBytes(configPath));
             Rules.NoLinks(config.State);Rules.NoLinks(config.Public);
             if(args.Length==2 && args[0]=="worker") { Channel.Worker(config,args[1]);return 0; }
             Rules.Need(args.SequenceEqual(new[]{"serve"}),"Invalid invocation");

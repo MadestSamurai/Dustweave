@@ -8,30 +8,33 @@ namespace Dustweave;
 public sealed record DailyReleaseNote(string Version, string Date, Dictionary<string, string[]> Notes);
 public sealed record DailyUpdateAsset(string Flavor, string FileName, long Bytes, string Sha256);
 public sealed record DailyUpdateDelta(string Flavor, string FromVersion, string FileName, long Bytes, string Sha256, string Algorithm);
-public sealed record DailyUpdateRelease(string Version, string? PreviousVersion, int Layout, Dictionary<string, string[]> Notes, DailyUpdateAsset[] Assets, DailyUpdateDelta[]? Deltas = null);
+public sealed record DailyUpdateRelease(string Version, string? PreviousVersion, int Layout, Dictionary<string, string[]> Notes, DailyUpdateAsset[] Assets, DailyUpdateDelta[]? Deltas = null, string? RuntimeVersion = null);
 public sealed record DailyUpdateFeed(int Schema, string Product, string Channel, DailyUpdateRelease[] Releases);
-public sealed record DailyUpdatePackage(string Version, string Flavor, string[]? Files = null);
+public sealed record DailyUpdatePackage(string Version, string Flavor, string[]? Files = null, int Layout = 1, string? RuntimeVersion = null, string[]? BootstrapFiles = null);
 public sealed record DailyUpdateJob(string Directory, string Target, int ParentPid, long ParentStartTicks, DailyUpdateRelease Release, DailyUpdateAsset Asset, string Nonce = "", string OriginalSha256 = "", string? DeltaFileName = null);
 
 public static class DailyUpdates
 {
-    public const string FeedUrl = "https://bd2.madsam.work/updates/dustweave/updates.json";
+    public const string FeedUrl = "https://bd2.madsam.work/updates/dustweave/v2/updates.json";
+    public const int CurrentLayout = 2, MaxAutomaticSteps = 10;
+    public const long MaxAutomaticDelta = 8L * 1024 * 1024;
     public const long MaxArchive = 600L * 1024 * 1024;
     public static DailyVersion VersionOf(string value) => DailyVersion.Parse(value);
     public static void Validate(DailyUpdateFeed feed)
     {
-        if (feed.Schema != 2 || feed.Product != "Dustweave" || feed.Channel != "stable" || feed.Releases.Length is < 1 or > 300)
+        if (feed.Schema is not (2 or 3) || feed.Product != "Dustweave" || feed.Channel != "stable" || feed.Releases.Length is < 1 or > 300)
             throw new InvalidDataException("updates.invalid_feed");
         var versions = new HashSet<DailyVersion>();
         foreach (var release in feed.Releases)
         {
             var version = VersionOf(release.Version);
-            if (!versions.Add(version) || release.Layout != 1 || release.Assets.Length is < 1 or > 2 || release.Assets.Select(a => a.Flavor).Distinct().Count() != release.Assets.Length)
+            if (!versions.Add(version) || (feed.Schema == 2 ? release.Layout != 1 : release.Layout is < 2 or > 32) || release.Assets.Length is < 1 or > 2 || release.Assets.Select(a => a.Flavor).Distinct().Count() != release.Assets.Length)
                 throw new InvalidDataException("updates.invalid_feed");
+            if (release.Layout >= 2 && (release.RuntimeVersion == null || !System.Version.TryParse(release.RuntimeVersion, out _))) throw new InvalidDataException("updates.invalid_feed");
             if (release.PreviousVersion != null && VersionOf(release.PreviousVersion) >= version) throw new InvalidDataException("updates.invalid_feed");
             if (new[] { "zh-CN", "zh-TW", "en-US" }.Any(c => !release.Notes.TryGetValue(c, out var notes) || notes.Length is < 1 or > 100 || notes.Any(n => string.IsNullOrWhiteSpace(n) || n.Length > 4000))) throw new InvalidDataException("updates.invalid_feed");
             if (release.Notes.Values.Select(n => n.Length).Distinct().Count() != 1) throw new InvalidDataException("updates.invalid_feed");
-            if ((release.Deltas?.Length ?? 0) > 12 ||
+            if ((release.Deltas?.Length ?? 0) > (feed.Schema == 2 ? 12 : MaxAutomaticSteps * 2) ||
                 (release.Deltas ?? []).Select(d => (d.Flavor, d.FromVersion)).Distinct().Count() != (release.Deltas?.Length ?? 0))
                 throw new InvalidDataException("updates.invalid_feed");
             foreach (var delta in release.Deltas ?? [])
@@ -58,6 +61,19 @@ public static class DailyUpdates
         Validate(feed);
         return feed.Releases.OrderByDescending(r => VersionOf(r.Version)).FirstOrDefault(r => VersionOf(r.Version) > VersionOf(current));
     }
+    public static string? ManualUpdateReason(DailyUpdateFeed feed, DailyUpdateRelease release, DailyUpdatePackage? installed)
+    {
+        if (release.Layout == 1) return installed?.Layout > 1 ? "updates.manual_layout" : null; // Legacy fixtures/archives remain readable, never a 1.3 migration path.
+        if (installed == null || installed.Layout != CurrentLayout || release.Layout != CurrentLayout) return "updates.manual_layout";
+        if (installed.RuntimeVersion != release.RuntimeVersion) return "updates.manual_runtime";
+        int target = Array.FindIndex(feed.Releases, r => r.Version == release.Version);
+        int previous = Array.FindIndex(feed.Releases, r => r.Version == installed.Version);
+        if (target < 0 || previous <= target || previous - target > MaxAutomaticSteps) return "updates.manual_distance";
+        var delta = release.Deltas?.FirstOrDefault(d => d.Flavor == installed.Flavor && d.FromVersion == installed.Version && d.Algorithm == DailyUpdateDeltaPackage.Algorithm);
+        if (delta == null) return "updates.manual_delta";
+        if (delta.Bytes > MaxAutomaticDelta || delta.Bytes >= release.Assets.Single(a => a.Flavor == installed.Flavor).Bytes * .8) return "updates.manual_size";
+        return null;
+    }
     public static HttpClient Client()
     {
         var client = new HttpClient { Timeout = TimeSpan.FromMinutes(20) };
@@ -73,6 +89,10 @@ public static class DailyUpdates
     {
         if (string.IsNullOrWhiteSpace(name) || name.Contains('\\') || name.Contains(':') || name.StartsWith('/') || name.Split('/').Any(s => s is "" or "." or ".." || s.EndsWith('.') || s.EndsWith(' '))) return false;
         return name is "Dustweave.exe" or "utility-host.json" or "tools.json" or "update-package.json" or "README.md" or "README.en.md" or "THIRD_PARTY_NOTICES.md" or "LICENSE"
+            or "package-components.json" or "support/Dustweave.Updater.exe"
+            || !name.Contains('/') && (name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) || (name.StartsWith("Dustweave", StringComparison.Ordinal) || name.StartsWith("BD2", StringComparison.Ordinal)) && (name.EndsWith(".deps.json", StringComparison.Ordinal) || name.EndsWith(".runtimeconfig.json", StringComparison.Ordinal)))
+            || System.Text.RegularExpressions.Regex.IsMatch(name, @"^[a-z]{2}(?:-[A-Za-z]+)?/[A-Za-z0-9._-]+\.resources\.dll$")
+            || System.Text.RegularExpressions.Regex.IsMatch(name, @"^resources/shared/[A-Fa-f0-9]{64}\.bin$")
             || name.StartsWith("data/", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal)
             || name.StartsWith("flows/", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal)
             || name.StartsWith("connection/specs/", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal)
@@ -89,8 +109,8 @@ public static class DailyUpdates
         var descriptor = zip.GetEntry("update-package.json") ?? throw new InvalidDataException("updates.invalid_package");
         using (var stream = descriptor.Open())
         {
-            var metadata = JsonSerializer.Deserialize<DailyUpdatePackage>(stream, DailyJson.Options);
-            if (metadata?.Version != release.Version || metadata.Flavor != asset.Flavor || !files.Any(e => e.FullName == "Dustweave.exe")) throw new InvalidDataException("updates.invalid_package");
+            var metadata = JsonSerializer.Deserialize<DailyUpdatePackage>(stream, DailyUpdateJson.Options);
+            if (metadata?.Version != release.Version || metadata.Flavor != asset.Flavor || metadata.Layout != release.Layout || metadata.RuntimeVersion != release.RuntimeVersion || !files.Any(e => e.FullName == "Dustweave.exe") || metadata.Layout >= 2 && (metadata.Files == null || !metadata.Files.Order().SequenceEqual(files.Select(f => f.FullName).Order()))) throw new InvalidDataException("updates.invalid_package");
         }
         EnsureNoLinks(staging);
         foreach (var entry in files)

@@ -24,7 +24,7 @@ try{
  }finally{[Array]::Clear($raw,0,$raw.Length)}
  $public=[Convert]::ToBase64String($key.ExportSubjectPublicKeyInfo())
  $id='dustweave-'+[DateTime]::UtcNow.ToString('yyyyMMdd')
- $config=[ordered]@{Keys=@{$id=$public};Sources=@([ordered]@{Id='cn';FeedUrl='https://bd2.madsam.work/updates/dustweave/updates.json';PackageBaseUrl='https://bd2.madsam.work/updates/dustweave'})}
+ $config=[ordered]@{Keys=@{$id=$public};Sources=@([ordered]@{Id='cn';FeedUrl='https://bd2.madsam.work/updates/dustweave/v2/updates.json';PackageBaseUrl='https://bd2.madsam.work/updates/dustweave/v2'})}
  [IO.Directory]::CreateDirectory((Split-Path -Parent $PublicConfig))|Out-Null
  [IO.File]::WriteAllText([IO.Path]::GetFullPath($PublicConfig),($config|ConvertTo-Json -Depth 5),[Text.UTF8Encoding]::new($false))
  Write-Host "Created protected signing key outside the repository. Public key ID: $id"

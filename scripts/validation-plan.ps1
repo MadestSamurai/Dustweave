@@ -54,6 +54,10 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     # Weekly orchestration does not change the native components or other tools.
     $weekly='^(Directory\.Build\.props|source-manifest\.json|package\.ps1|scripts/validation-plan\.ps1|CHANGELOG\.md)$|^docs/|^src/Core/(DailyWeeklyRoute|DailyPickupRecovery|DailyManagedBusiness|DailyQueueEngine|DailyBusinessJournal|DailyCollectionNavigator|DailyCollectionProgress|DailyFieldRoute|DailyFieldTalents|DailyQueueSession)\.cs$|^src/Core/Localization/Messages\.zh-CN\.txt$|^src/Desktop/(DailyDialogs|DailyRunPanel|MainWindow\.Presentation|MainWindow\.xaml)\.cs$|^src/Desktop/Timeline\.xaml$|^src/Desktop/Localization/(releases|notices|runtime|strings)\.json$|^tests/Dustweave.Tests/(Program\.cs|Cases/(WeeklyIsolation|PickupRecovery|PickupQueueRecovery|QueueEngine|FieldTalent|QueueSession)Cases\.cs)$'
     if($Scope -in @('Auto','Weekly') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $weekly}).Count){$selectedScope='Weekly';$outside=@()}
+    # Update-only finalization reuses unchanged game components, not updater acceptance.
+    # Actual package UI/tool gates still run; signed publication also requires real upgrade/recovery evidence.
+    $updates='^(source-manifest\.json|package\.ps1|scripts/(validation-plan|publish-layout|test-update-packages|test-layout-update|build-update-acceptance|new-update-deltas|new-update-feed|prepare-update-site|publish-update-signed)\.ps1)$|^docs/|^src/Desktop/MainWindow\.Updates\.cs$|^src/Core/DailySuiteDiagnostics\.cs$|^src/Launcher/Program\.cs$|^tools/OtaChannel/(Rules|Program|SelfTest)\.cs$|^\.github/workflows/updates\.yml$'
+    if($Scope -in @('Auto','Updates') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $updates}).Count){$selectedScope='Updates';$outside=@()}
     $full.changed=$changed
     $reason='Changes outside the account validation boundary: '+($outside -join ', ')
     if(!$outside.Count){
@@ -67,6 +71,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
      if($evidenceValid){
       $groups=@('ProductIdentity','Startup','LoginIdentity','Sandbox','Parallel','ParallelProcess','AccountOrder','AccountIdentity','AccountRestart','QueueSession','QueuePeriod')
       if($selectedScope -eq 'Trading'){$groups=@('ProductIdentity','TradeOptimizer','TradeData','TradeReplan','TradeQuote','TradeResume')}
+      if($selectedScope -eq 'Updates'){$groups=@('ProductIdentity','UpdateLayout','UpdateDelta','UpdateSafety','SchedulingUpdates','UnifiedSuite','SuiteOwnerProbe','UserText')}
       if($selectedScope -eq 'Weekly'){$groups=@('ProductIdentity','WeeklyIsolation','WeeklyGoal','CollectionReadiness','FieldTalent','WeeklyNpcBoard','WeeklyNpcQuery','WeeklyNpcInteraction','CommandDriver','ManagedInputs','QueueSession','QueueEngine','QueuePeriod','QueueExecutionThread','PickupRecovery','BusinessJournal','BusinessScope','MirrorStage','FreeDrawStage','DispatchRecovery','ManagementStage','TradeResume','TravelTransition','UserText')}
       if($selectedScope -in @('Navigation','Rewards')){$groups+=@('HomeNavigation','HomeRecovery','TravelTransition','WeeklyGoal','CollectionReadiness','CafeteriaRecovery','CommandDriver','ManagedInputs','PassiveUi','UserText')}
       if($selectedScope -eq 'Rewards'){$groups+=@('LiveBindings','Workflow','Preference','RuleData','EvidenceReadiness','UserText')}
@@ -76,7 +81,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
    }
   }
  }
- if($Scope -in @('Accounts','Navigation','Rewards','Trading','Weekly')){throw "Scoped validation cannot reuse this baseline: $reason"}
+ if($Scope -in @('Accounts','Navigation','Rewards','Trading','Weekly','Updates')){throw "Scoped validation cannot reuse this baseline: $reason"}
  $full.reason=$reason
  return $full
 }
