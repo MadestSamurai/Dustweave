@@ -42,12 +42,21 @@ public static class DailyMirror
     internal static bool CanRetireHistorical(JsonObject op, DailyStageFrame current)
     {
         if (S(op["role"]) != "mirror.end" || op["before"]?["Frame"] is not JsonObject prior ||
-            op["cycle"] == null || current.Context["cycle"] == null || JsonNode.DeepEquals(op["cycle"], current.Context["cycle"]) ||
-            DailyEvidence.SameActor(prior, current.Frame)) return false;
-        // A component reload alone is not evidence of a terminated battle process.
-        if (prior["ProcessId"] == null || prior["ProcessStartTicks"] == null || current.Frame["ProcessId"] == null || current.Frame["ProcessStartTicks"] == null ||
-            JsonNode.DeepEquals(prior["ProcessId"], current.Frame["ProcessId"]) && JsonNode.DeepEquals(prior["ProcessStartTicks"], current.Frame["ProcessStartTicks"])) return false;
+            op["cycle"] == null || current.Context["cycle"] == null) return false;
+        if (current.Context["actor"] is not JsonArray actor || actor.Count != 5 ||
+            new[] { "ProcessId", "ProcessStartTicks", "Instance", "AccountKey", "PlayerKey" }
+                .Where((key, i) => actor[i] == null || !JsonNode.DeepEquals(current.Frame[key], actor[i])).Any()) return false;
+        // Current idle UI plus fresh ticket data, not a day/process change, is
+        // what permits replanning. An active match/result is never retired here.
+        if (prior["ProcessId"] == null || prior["ProcessStartTicks"] == null || current.Frame["ProcessId"] == null || current.Frame["ProcessStartTicks"] == null) return false;
+        bool sameProcess = JsonNode.DeepEquals(prior["ProcessId"], current.Frame["ProcessId"]) &&
+            JsonNode.DeepEquals(prior["ProcessStartTicks"], current.Frame["ProcessStartTicks"]);
+        // The auto button also appears BETWEEN native batch battles. In the same
+        // process only leaving that battle surface proves the batch has ended.
+        if (sameProcess && DailyNavigationDecision.Types(current.Frame).Contains("BattleUI_PVP")) return false;
         if (!new[] { "AccountKey", "PlayerKey" }.All(k => prior[k] != null && JsonNode.DeepEquals(prior[k], current.Frame[k]))) return false;
+        if (!JsonNode.DeepEquals(op["account"], current.Context["actor"]?[3]) || !JsonNode.DeepEquals(op["player"], current.Context["actor"]?[4]) ||
+            !JsonNode.DeepEquals(op["server"], current.Context["server"])) return false;
         var phase = DailyNavigationDecision.Phase(current.Frame, "mirror");
         if (phase is not ("page" or "owned_lobby") || DailyNavigationDecision.Types(current.Frame).Overlaps(
             ["PVPMatchingUI", "BattleResultUI", "PVPAutoHistoryPopupUI", "BattlePauseUI", "BattlePopupUI"])) return false;

@@ -22,6 +22,7 @@ public sealed record DailyBusinessProof(string Role, string Stage, string[] Pref
 public sealed partial class DailyManagedBusiness
 {
     private readonly Dictionary<string, string> recordPaths = new(StringComparer.Ordinal);
+    private readonly HashSet<string> currentOperations = new(StringComparer.Ordinal);
     private readonly string root; private readonly DailyCommandDriver driver; private readonly Func<bool> stopped;
     private readonly Func<double> clock; private readonly Func<TimeSpan, Task> delay; private readonly Dictionary<string, DailyBusinessProof> proofs;
     private static readonly HashSet<string> PendingStates = ["prepared", "previewing", "preview_ready", "unknown_preview", "dispatching", "unknown"];
@@ -35,6 +36,7 @@ public sealed partial class DailyManagedBusiness
         this.delay = delay ?? driver.DelayAsync;
     }
     public static bool Pending(JsonObject op) => PendingStates.Contains(op["state"]?.GetValue<string>() ?? "");
+    internal void BeginAttempt() => currentOperations.Clear();
     // Preserve the public record API used by extensions. Routing happens before loading evidence.
     public IEnumerable<JsonObject> Records(JsonObject context, string? role = null, bool includeLegacy = true) => ReadRecords(context, role, includeLegacy, null);
     // Predicates may use only fields retained by Summary; evidence checks still use the fresh full record.
@@ -73,7 +75,7 @@ public sealed partial class DailyManagedBusiness
     private void RequireResolved(JsonObject context, string role, JsonObject? scope)
     {
         if (!DailyManagementProof.IsFreeClaim(role) && HasUnresolvedRecord(context, role, scope))
-            throw new StageHostException("pending", "已有未确认的" + proofs[role].Stage + "操作；先核对原回执，不重复提交。");
+            throw new StageHostException("pending", "本次操作尚未结束，暂缓该环节；再次运行会按游戏当前状态重新检查。");
     }
     public void Save(JsonObject op)
     {
@@ -94,7 +96,42 @@ public sealed partial class DailyManagedBusiness
             throw new StageHostException("adapter", "Required native response observer unavailable: " + role);
         var op = new JsonObject { ["id"] = Guid.NewGuid().ToString("N"), ["role"] = role, ["stage"] = proofs[role].Stage, ["engine"] = "dotnet-business-v1", ["proof_version"] = 1, ["scope"] = scope.DeepClone(), ["before"] = before.DeepClone(), ["action"] = action.DeepClone(), ["roles"] = new JsonArray(proofs[role].RolesFor(scope).Select(r => (JsonNode)JsonValue.Create(r)!).ToArray()), ["account"] = context["actor"]![3]!.DeepClone(), ["player"] = context["actor"]![4]!.DeepClone(), ["server"] = context["server"]!.DeepClone(), ["cycle"] = context["cycle"]!.DeepClone(), ["state"] = "prepared", ["at"] = driver.UtcTicks };
         Save(op);
+        currentOperations.Add(op["id"]!.GetValue<string>());
         return op;
+    }
+    // A journal describes the previous attempt, not a permanent authorization lock.
+    // Only enter this boundary after normal navigation has established a usable
+    // page. The adapter then reads current inventory/targets/budgets and builds a
+    // NEW plan; it must never dispatch the saved action or assert its success.
+    internal async Task ReplanInterruptedAsync(JsonObject context, string stage)
+    {
+        Stop();
+        var current = await driver.ObserveAsync();
+        if (!JsonNode.DeepEquals(current.Context, context))
+            throw new StageHostException("identity", "恢复任务时账号或游戏连接发生变化。");
+        if (DailyHomeDecision.Transitioning(current.Frame) ||
+            DailyNavigationDecision.Phase(current.Frame, stage) is not ("page" or "owned_lobby")) return;
+        var policy = DailyNavigationPolicy.Load();
+        if (DailyNavigationDecision.Rows(current.Frame).Any(r => r["Popup"]?.GetValue<bool>() == true &&
+            !DailyNavigationDecision.PassiveSurface(r["Type"]?.GetValue<string>() ?? ""))) return;
+        if (!DailyNavigationDecision.Rows(current.Frame).Any(r => DailyNavigationDecision.ReadyInput(r, false) &&
+            DailyNavigationDecision.Blockers(current.Frame, r["Type"]?.GetValue<string>() ?? "", policy).Length == 0)) return;
+        foreach (var op in MatchingRecords(context, Pending).ToArray())
+        {
+            string role = op["role"]!.GetValue<string>();
+            if (currentOperations.Contains(op["id"]!.GetValue<string>()) ||
+                !proofs[role].StagesFor(op["scope"]).Any(s => s == stage || s == "*")) continue;
+            // These adapters have stronger current-state recovery: fresh server
+            // map targets, or current free tickets after exiting a battle.
+            if (role == "mirror.end" || DailyCollectionProgress.RecoveryLocation(op) != null) continue;
+            if (proofs[role].PreviewOwner?.Invoke(op, current) == true) continue;
+            op["state"] = "superseded";
+            op["reconciliation"] = new JsonObject { ["method"] = "replan_from_current_stage", ["stage"] = stage,
+                ["at"] = driver.UtcTicks, ["actions"] = 0, ["original_success_claimed"] = false,
+                ["saved_action_replayed"] = false, ["scene"] = current.Frame["Scene"]?.DeepClone() };
+            Save(op);
+            driver.Diagnostics.Event("interrupted_operation_replanned", new JsonObject { ["id"] = op["id"]!.DeepClone(), ["role"] = role, ["stage"] = stage });
+        }
     }
     private static JsonObject FrameActor(JsonObject context) => new() { ["ProcessId"] = context["actor"]![0]!.DeepClone(), ["ProcessStartTicks"] = context["actor"]![1]!.DeepClone(), ["Instance"] = context["actor"]![2]!.DeepClone(), ["AccountKey"] = context["actor"]![3]!.DeepClone(), ["PlayerKey"] = context["actor"]![4]!.DeepClone() };
     private void Stop()
@@ -463,10 +500,10 @@ public sealed partial class DailyManagedBusiness
                         var tickets = DailyMirror.Tickets(fresh);
                         DailyMirror.Debit(tickets, tickets, 0);
                         op["state"] = "superseded";
-                        op["reconciliation"] = new JsonObject { ["method"] = "new_cycle_new_process_outside_battle", ["actions"] = 0,
+                        op["reconciliation"] = new JsonObject { ["method"] = "current_idle_mirror_budget", ["actions"] = 0,
                             ["at"] = driver.UtcTicks, ["battle_completed"] = false, ["current_tickets"] = tickets.DeepClone() };
                         Save(op);
-                        entry["reason"] = "旧进程跨日战斗记录保留为诊断；当前不在战斗中，按现有免费次数重新规划。";
+                        entry["reason"] = "中断批次保留为诊断；当前已退出战斗，按现有免费次数重新规划。";
                         completed.Add(entry);
                         continue;
                     }
@@ -529,7 +566,7 @@ public sealed partial class DailyManagedBusiness
                 Save(op);
                 entry["reason"] = last;
                 entry["recover_in_stage"] = proofs[role].CanResume?.Invoke(op, current) == true;
-                if (DailyFieldTalentProof.AbsorptionLocation(op) is { } location)
+                if (DailyCollectionProgress.RecoveryLocation(op) is { } location)
                 {
                     entry["pack"] = location.Pack; entry["map"] = location.Map;
                     entry["reason"] = $"将自动读取卡带 {location.Pack} · 地图 {location.Map} 的当前收集状态，按剩余目标继续。";

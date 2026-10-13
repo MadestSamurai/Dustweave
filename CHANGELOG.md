@@ -1,5 +1,14 @@
 # Changelog / 更新记录
 
+## 1.2.10 — 2026-10-13
+
+- 中断后的历史操作记录保留为诊断，接续和补跑按游戏当前状态重新规划，避免旧记录永久阻塞队列。
+- 周收集同时恢复吸收和步行拾取卡点；无法读取的地图暂缓，继续其他地图。
+- 镜中批次中断后按当前剩余免费次数继续；修复邮箱旧记录连带阻塞和藏红花记录无法保存的问题。
+- Interrupted journals remain diagnostic history. Resume and retry replan from current game state instead of permanently blocking the queue.
+- Recovers walking and absorption checkpoints, refreshes remaining free Mirror attempts, and fixes mailbox recovery and saffron record serialization.
+- [完整说明 / Full notes](docs/releases/1.2.10.md)
+
 ## 1.2.9 — 2026-10-13
 
 - 周收集在吸收结果不明时自动读取卡点地图的最新进度，按剩余目标继续；不再要求先手动核对。

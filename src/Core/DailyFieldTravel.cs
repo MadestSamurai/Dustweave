@@ -433,7 +433,7 @@ public sealed partial class DailyFieldRoute
     internal async Task<JsonObject> WalkPickup(JsonObject before, JsonObject target)
     {
         long map = N(Map(before)["id"]), id = N(target[ObjectPath]);
-        var op = W.Business.Create(W.Context, "mainline.pickup", before, O(("map", map), ("object", id)),
+        var op = W.Business.Create(W.Context, "mainline.pickup", before, O(("pack", Map(before)["packId"]), ("map", map), ("object", id)),
             O(("ui", "GameFieldDefaultUI"), ("operation", "mainline_walk"), ("value", target["instance"])));
         var progress = new DailyTravelProgress(W.Time);
         int resumed = 0;

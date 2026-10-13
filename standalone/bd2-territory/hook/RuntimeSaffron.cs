@@ -9,12 +9,6 @@ using UnityEngine;
 using B=BD2Territory.Runtime.TerritoryBindings;
 namespace BD2Territory.Runtime
 {
- internal sealed class SaffronJournal
- {
-  public string Account{get;set;}="";public string Pending{get;set;}="";public string State{get;set;}="";
-  public string Reason{get;set;}="";public long BuffEnd{get;set;}public int Harvested{get;set;}
-  public long At{get;set;}public long Currency{get;set;}public long[] Stocks{get;set;}=new long[0];
- }
  internal sealed partial class RuntimeEngine
  {
   private SaffronStatus saffron=new SaffronStatus();private string saffronOwner="",saffronPath="";

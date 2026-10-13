@@ -305,7 +305,10 @@ public static class DailyEquipment
         var ops = w.Business.MatchingRecords(w.Context, r => (S(r["role"]) == "gacha.free_all" || S(r["role"]).StartsWith("equipment.", StringComparison.Ordinal)) && JsonNode.DeepEquals(r["cycle"], w.Context["cycle"])).ToArray();
         bool found = false;
         var ids = new List<string>();
-        foreach (var op in ops.Where(r => S(r["role"]) == "gacha.free_all" && S(r["state"]) != "rejected"))
+        // A missing draw receipt cannot identify equipment instances safely.
+        // Ignore that source and let current inventory/missions choose the normal
+        // crafting fallback; never guess old rewards or lock this unrelated task.
+        foreach (var op in ops.Where(r => S(r["role"]) == "gacha.free_all" && S(r["state"]) == "completed"))
         {
             Require(S(op["state"]) == "completed" && B(op["result"]?["free_cache_matched"]), "Unresolved free draw receipt");
             foreach (var reward in Rows(op["result"]!["results"]))

@@ -127,7 +127,7 @@ static class MirrorStageCases
             s.F.Business.Save(old);
             var stable = new DailyStageFrame(s.F.Frame.DeepClone().AsObject(), s.F.Context.DeepClone().AsObject());
             Check(DailyMirror.CanRetireHistorical(old, stable), "old Mirror process and cycle can be retired in a verified lobby");
-            foreach (string guard in new[] { "same-cycle", "same-process", "account", "loading", "active", "result", "not-ready", "unknown-popup" })
+            foreach (string guard in new[] { "account", "loading", "active", "result", "not-ready", "unknown-popup" })
             {
                 var candidate = old.DeepClone().AsObject();
                 var frame = stable.Frame.DeepClone().AsObject();
@@ -143,6 +143,15 @@ static class MirrorStageCases
                 }
                 Check(!DailyMirror.CanRetireHistorical(candidate, new(frame, stable.Context)), "historical Mirror recovery refuses " + guard);
             }
+            old["cycle"] = Copy(s.F.Context["cycle"]);
+            old["scope"]!["repetitions"] = 40;
+            s.F.Business.Save(old);
+            Check(DailyMirror.CanRetireHistorical(old, stable), "same-day restarted Mirror replans from its remaining tickets");
+            var sameProcess = old.DeepClone().AsObject(); sameProcess["before"]!["Frame"] = stable.Frame.DeepClone();
+            Check(!DailyMirror.CanRetireHistorical(sameProcess, stable), "same-process auto battle lobby alone is not proof the native batch ended");
+            s.F.Page("GameFieldDefaultUI");
+            Check(DailyMirror.CanRetireHistorical(sameProcess, new(s.F.Frame, s.F.Context)), "leaving the battle permits same-process current-state recovery");
+            s.F.Page("BattleUI_PVP", "Panel/Button - AutoSetting");
             var result = await DailyMirror.Run(s.F.Workflow);
             var retired = s.F.Business.Records(s.F.Context).Single(r => S(r["id"]) == S(old["id"]));
             Check(S(retired["state"]) == "superseded" && retired["result"] == null && S(retired["error"]) == S(old["error"]) &&
@@ -151,6 +160,25 @@ static class MirrorStageCases
             Check(closed ? S(result["state"]) == "skipped" && s.Batches.Count == 0 && s.Free == 40
                 : s.Free == 0 && s.Paid == 7 && s.Batches.SequenceEqual(new[] {15,10}),
                 "historical Mirror journal permits fresh free-ticket planning or closed-period skip: " + closed);
+        }
+        using (var s = new Scenario(Path.Combine(root,"mirror-interrupted-18-of-40")) { Free=22 })
+        {
+            s.F.Workflow.Settings.Mirror.Multiplier=1;
+            var old=s.F.Business.Create(s.F.Context,"mirror.end",s.F.Evidence(),O(("multiplier",1),("repetitions",40),("free_only",true)),new());
+            old["state"]="unknown";old["before"]!["Frame"]!["ProcessId"]=900;
+            var receipts=new JsonArray();
+            for(int i=0;i<18;i++)foreach(var pair in new[]{("mirror.matching","request"),("mirror.matching","response"),("mirror.end","request"),("mirror.end","response")})
+            {
+                var e=WorkflowCases.Event(pair.Item1,pair.Item2,receipts.Count+1);e["Frame"]=old["before"]!["Frame"]!.DeepClone();e["AtUtcTicks"]=s.F.Ticks;receipts.Add(e);
+            }
+            var last=WorkflowCases.Event("mirror.matching","request",73);last["Frame"]=old["before"]!["Frame"]!.DeepClone();last["AtUtcTicks"]=s.F.Ticks;receipts.Add(last);
+            old["events"]=receipts;s.F.Business.Save(old);
+            await DailyMirror.Run(s.F.Workflow);
+            var retained=s.F.Business.Records(s.F.Context).Single(o=>S(o["id"])==S(old["id"]));
+            Check(s.Batches.SequenceEqual([1])&&s.BatchRepeats.SequenceEqual([22])&&s.Free==0&&s.Paid==7,
+                "18 of 40 interrupted battles resume exactly the current 22 free attempts in one batch after same-day restart");
+            Check(retained["events"]!.AsArray().Count==73&&retained["result"]==null&&S(retained["state"])=="superseded",
+                "partial Mirror receipts remain diagnostic without claiming all forty battles completed");
         }
         using (var s = new Scenario(Path.Combine(root, "mirror-period-not-loaded")) { PeriodReady = false })
         {

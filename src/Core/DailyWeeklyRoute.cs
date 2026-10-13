@@ -199,7 +199,7 @@ public sealed class DailyWeeklyRoute
     public static readonly string[] StageOrder = ["weekly_mainline", "weekly_npc", "weekly_steal"];
     private async Task RecoverInterruptedMaps(long[] availablePacks)
     {
-        var locations = route.Progress.PendingAbsorptions().Select(op => DailyFieldTalentProof.AbsorptionLocation(op)!.Value).Distinct().ToArray();
+        var locations = route.Progress.PendingMaps().Select(op => DailyCollectionProgress.RecoveryLocation(op)!.Value).Distinct().ToArray();
         foreach (var group in locations.GroupBy(p => p.Pack))
         {
             await Guard();
@@ -261,8 +261,8 @@ public sealed class DailyWeeklyRoute
             }
             catch (DailyQuotaExhausted) { throw new DailyWeeklyCategoryStop(stage, "吸收次数已用完，次日接续", O(("waiting_daily_reset", true))); }
             catch (DailyCollectionTargetsRemain error) { deferredPickups = error.DeferredPickups; }
-            catch (StageHostException error) when (error.Kind == "pending" && route.Progress.PendingAbsorptions()
-                .Any(op => DailyFieldTalentProof.AbsorptionLocation(op) == (pack, map)))
+            catch (StageHostException error) when (error.Kind == "pending" && route.Progress.PendingMaps()
+                .Any(op => DailyCollectionProgress.RecoveryLocation(op) == (pack, map)))
             {
                 // A live timeout follows the same local recovery path as a restart.
                 // Never resend the old command: query current targets, then replan.
@@ -277,7 +277,7 @@ public sealed class DailyWeeklyRoute
             if (recoveredAbsorption)
             {
                 if (attempt == 0) continue;
-                Defer(stage, map, "吸收后已重新读取进度，本次不再重复尝试；之后可补跑");
+                Defer(stage, map, "收集后已重新读取进度，本次不再重复尝试；继续其他地图，之后可补跑");
                 break;
             }
             if (deferredPickups is { Count: > 0 })

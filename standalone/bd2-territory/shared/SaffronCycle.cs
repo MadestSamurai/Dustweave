@@ -1,6 +1,13 @@
 using System;
 namespace BD2Territory
 {
+ // Public DTO: the runtime stores this with DataContractJsonSerializer.
+ public sealed class SaffronJournal
+ {
+  public string Account{get;set;}="";public string Pending{get;set;}="";public string State{get;set;}="";
+  public string Reason{get;set;}="";public long BuffEnd{get;set;}public int Harvested{get;set;}
+  public long At{get;set;}public long Currency{get;set;}public long[] Stocks{get;set;}=new long[0];
+ }
  public sealed class SaffronStatus
  {
   public string State{get;set;}="idle";public string Reason{get;set;}="";

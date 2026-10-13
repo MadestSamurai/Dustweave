@@ -109,7 +109,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                 if (Text(node!["state"]) == "running")
                 {
                     node["state"] = "recovery_required";
-                    node["error"] = "执行器上次中断，先核对原业务操作。";
+                    node["error"] = "上次执行中断，将读取游戏当前进度后继续。";
                 }
         }
         else
@@ -200,23 +200,16 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                     item["state"] = "pending";
                     continue;
                 }
-                var blockers = unresolved.Where(row => row?["recover_in_stage"]?.GetValue<bool>() != true && (row?["stages"] is not JsonArray stages || stages.Any(s => Text(s) == "*" || Text(s) == Text(item["task"])))).ToArray();
-                bool blocked = blockers.Length > 0;
-                // A new selection must obey the same preflight as Resume. Otherwise
-                // it navigates and uses talents before Create notices the old journal.
-                if (blocked && Text(item["task"]) != priority)
-                {
-                    item["state"] = "recovery_required";
-                    item["error"] = "上次操作结果仍未确认，未重复执行；请查看核对记录。";
-                    item["recovery_blockers"] = new JsonArray(blockers.Select(row => row!.DeepClone()).ToArray());
-                }
-                if (Text(item["state"]) == "recovery_required" && (!blocked || Text(item["task"]) == priority))
-                {
-                    item["state"] = "pending";
-                    item["recovered"] = true;
-                    item.Remove("error");
-                    item.Remove("recovery_blockers");
-                }
+                var history = unresolved.Where(row => row?["stages"] is not JsonArray stages ||
+                    stages.Any(s => Text(s) == "*" || Text(s) == Text(item["task"]))).ToArray();
+                if (history.Length > 0)
+                    item["recovery_diagnostics"] = new JsonArray(history.Select(row => row!.DeepClone()).ToArray());
+                // The stage owns recovery against current game state. Historical
+                // missing receipts must never veto entering that recovery path.
+                if (Text(item["state"]) == "recovery_required") item["recovered"] = true;
+                item["state"] = "pending";
+                item.Remove("error");
+                item.Remove("recovery_blockers");
             }
             Save();
             foreach (var item in itemsToRun.OrderBy(i => Text(i["task"]) == priority ? 0 : 1))
@@ -413,7 +406,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
             foreach (var item in itemsToRun.Where(i => Text(i["state"]) == "running"))
             {
                 item["state"] = "recovery_required";
-                item["error"] = "执行中断，须先核对原业务操作：" + error.Message;
+                item["error"] = "执行中断，再次运行将自动检查游戏当前进度：" + error.Message;
             }
         }
         finally { if (progressHost != null) progressHost.StageProgress -= OnProgress; }

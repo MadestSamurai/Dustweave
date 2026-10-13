@@ -84,11 +84,11 @@ static class PickupQueueRecoveryCases
                 Resume: entry == "resume" ? prior : null, Tasks: entry == "resume" ? null : ["weekly_mainline", "mail"], RetryOf: entry == "retry" ? prior : null));
             var item = Rows(result["items"]).Single(r => S(r["task"]) == "weekly_mainline");
             string label = entry + "/" + page + "/" + settled;
-            Check(S(item["state"]) == (settled ? "completed" : "recovery_required") && moves == (settled ? 1 : 0) && host.WeeklyNavigations == moves,
+            Check(S(item["state"]) == "completed" && moves == 1 && host.WeeklyNavigations == 1,
                 "full queue reconciles before navigation and confirms fresh pickup: " + label);
             Check(S(Rows(result["items"]).Single(r => S(r["task"]) == "mail")["state"]) == "completed", "unrelated task continues: " + label);
             var saved = f.Business.Records(f.Context).Single(r => S(r["id"]) == S(op["id"]));
-            Check(S(saved["state"]) == (settled ? "superseded" : "unknown") && saved["result"] == null && JsonNode.DeepEquals(saved["events"], originalEvents),
+            Check(S(saved["state"]) == "superseded" && saved["result"] == null && JsonNode.DeepEquals(saved["events"], originalEvents),
                 "historical evidence remains intact with no invented target completion: " + label);
             if (settled) Check(saved["error"] == null && saved["recovery_error"] == null, "retired record removes stale blocking errors: " + label);
             if (entry == "resume") Check(result["connection_history"] is JsonArray { Count: 1 }, "resume records observer renewal: " + label);
@@ -102,9 +102,11 @@ static class PickupQueueRecoveryCases
         {
             if (operation == "observe") return O(("context", f.Context), ("adapters", new JsonArray("weekly_mainline", "mail")), ("owners", new JsonArray()));
             if (operation == "reconcile") return await f.Business.ReconcileAsync(f.Context);
+            if (operation == "begin") f.Business.BeginAttempt();
             if (operation == "navigate" && stage == "weekly_mainline") { ++WeeklyNavigations; f.Page("GameFieldDefaultUI"); }
             if (operation == "execute" && stage == "weekly_mainline")
             {
+                await f.Business.ReplanInterruptedAsync(f.Context, stage);
                 var route = new DailyFieldRoute(f.Workflow);
                 var before = await f.Driver.EvidenceAsync(["mainline"]);
                 var op = await route.WalkPickup(before, DailyFieldRoute.Drops(before).Single());

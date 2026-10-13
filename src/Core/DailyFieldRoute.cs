@@ -191,7 +191,8 @@ public sealed partial class DailyFieldRoute
             ScopeStages: scope => N(scope["kind"]) == 1 ? ["weekly_steal"] : ["weekly_mainline", "weekly_npc", "weekly_steal"],
             CanResume: (op, _) => DailyFieldTalentProof.AbsorptionLocation(op) != null);
         yield return new("mainline.waypoint_use", "weekly_mainline", ["mainline"], (op, es, a) => Response("mainline.waypoint_use", es, op["before"]!.AsObject(), a)!, AffectedStages: ["weekly_mainline", "weekly_npc", "weekly_steal", "trade"]);
-        yield return new("mainline.pickup", "weekly_mainline", ["mainline"], (op, es, a) => VerifyPickup(op, es, a), ["mainline.pickup", "mainline.pickup_list"]);
+        yield return new("mainline.pickup", "weekly_mainline", ["mainline"], (op, es, a) => VerifyPickup(op, es, a), ["mainline.pickup", "mainline.pickup_list"],
+            CanResume: (op, _) => DailyPickupRecovery.Location(op) != null);
     }
     public static JsonObject VerifyTalent(JsonObject op, JsonArray es, JsonObject after)
     {

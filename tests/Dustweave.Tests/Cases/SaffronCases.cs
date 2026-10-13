@@ -8,6 +8,14 @@ static class SaffronCases
     public static void Run(List<string> cases)
     {
         void Check(bool value,string text) { if(!value)throw new Exception(text); cases.Add(text); }
+        var journal = new SaffronJournal { Account="fixture", Pending="eat", State="buff", Reason="recover", BuffEnd=1234, Harvested=5, At=987, Currency=654, Stocks=[1,2,3] };
+        var serializer = new System.Runtime.Serialization.Json.DataContractJsonSerializer(typeof(SaffronJournal));
+        using var bytes = new MemoryStream();
+        serializer.WriteObject(bytes, journal); bytes.Position=0;
+        var restored = (SaffronJournal)serializer.ReadObject(bytes)!;
+        Check(restored.Account==journal.Account && restored.Pending==journal.Pending && restored.State==journal.State && restored.Reason==journal.Reason
+            && restored.BuffEnd==1234 && restored.Harvested==5 && restored.At==987 && restored.Currency==654 && restored.Stocks.SequenceEqual(journal.Stocks),
+            "runtime DataContractJsonSerializer round-trips saffron recovery before any consumable action");
         var settings=new DailyPreferences();
         Check(!settings.Stages.Saffron&&!DailyStageCatalog.Enabled("territory_saffron",settings),"saffron is opt-in for new accounts");
         var old=JsonSerializer.SerializeToNode(settings)!.AsObject();old["Schema"]=17;old["Stages"]!.AsObject().Remove("Saffron");old["Stages"]!["Guild"]=false;

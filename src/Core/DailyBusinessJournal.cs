@@ -43,6 +43,8 @@ public sealed partial class DailyManagedBusiness
             summary["talent_kind"] = scope["kind"]?.DeepClone();
         if (DailyFieldTalentProof.AbsorptionLocation(op) is { } location)
             summary["absorption_map"] = location.Map;
+        if (DailyPickupRecovery.Location(op) is { } pickup)
+            summary["pickup_map"] = pickup.Map;
         return summary;
     }
     private void RememberHeader(string path, JsonObject op) => journalHeaders[path] = new(Stamp(path), Summary(op));
@@ -101,6 +103,8 @@ public sealed partial class DailyManagedBusiness
                     && JsonNode.DeepEquals(op["server"], context["server"]))
                 {
                     // Stealing uses the same network endpoint as research/absorption.
+                    if (role == "mainline.pickup" && op["pickup_map"] is JsonValue pickupMap && requestedScope?["map"] != null
+                        && DailyData.N(requestedScope["map"]) != DailyData.N(pickupMap)) continue;
                     // Absorption uncertainty is likewise local to its map. A new
                     // cast there remains blocked until a fresh server map query.
                     if (role == "dispatch.start" && op["absorption_map"] is JsonValue absorptionMap

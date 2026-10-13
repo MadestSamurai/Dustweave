@@ -6,6 +6,20 @@ namespace Dustweave;
 // Missing replies, mixed success/failure and changed actors remain unresolved.
 internal static class DailyPickupRecovery
 {
+    internal static (long Pack, long Map)? Location(JsonObject op)
+    {
+        if (S(op["role"]) != "mainline.pickup" || S(op["action"]?["operation"]) != "mainline_walk") return null;
+        try
+        {
+            long map = N(op["scope"]?["map"]), pack = N(op["scope"]?["pack"]);
+            if (op["before"] is not JsonObject before || N(DailyFieldRoute.Map(before)["id"]) != map) return null;
+            long observedPack = N(DailyFieldRoute.Map(before)["packId"]);
+            if (pack == 0) pack = observedPack;
+            return map > 0 && pack > 0 && pack == observedPack ? (pack, map) : null;
+        }
+        catch (Exception e) when (e is InvalidDataException or InvalidOperationException or System.Text.Json.JsonException) { return null; }
+    }
+
     internal static bool PathRejected(DailyStepException error) => error.Kind == "rejected" && error.DefinitelyNotDispatched &&
         error.RejectionCode is "travel_unreachable:target_missing" or "travel_unreachable:target_off_navigation" or
             "travel_unreachable:path_incomplete" or "travel_unreachable:pickup_area_unreachable";

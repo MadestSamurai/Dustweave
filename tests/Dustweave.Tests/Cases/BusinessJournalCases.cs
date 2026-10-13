@@ -4,7 +4,7 @@ using static Dustweave.DailyData;
 
 static class BusinessJournalCases
 {
-    public static Task Run(string output, List<string> cases)
+    public static async Task Run(string output, List<string> cases)
     {
         void Check(bool ok, string name) { if (!ok) throw new Exception(name); cases.Add(name); }
         var proof = new DailyBusinessProof("cafeteria.event", "cafeteria_guests", ["cafeteria"], (_, _, _) => new());
@@ -55,7 +55,35 @@ static class BusinessJournalCases
         Check(invalid && f.Box.Commands.Count == 0, "unreadable changed record cannot be treated as a successful claim");
         RecordQueries(output, cases);
         EquipmentSources(output, cases);
-        return Task.CompletedTask;
+        await Replan(output, cases);
+    }
+    private static async Task Replan(string root, List<string> cases)
+    {
+        void Check(bool yes,string name) { if(!yes)throw new Exception(name);cases.Add(name); }
+        var proof=new DailyBusinessProof("equipment.refine","equipment",["equipment"],(_,_,_)=>new());
+        using var f=new WorkflowHarness(Path.Combine(root,"journal-current-state"),[proof]);
+        f.Page("GameFieldDefaultUI");
+        var old=f.Business.Create(f.Context,proof.Role,f.Evidence(),new(),O(("value",999)));
+        old["state"]="unknown";old["error"]="missing reply";f.Business.Save(old);
+        f.Business.BeginAttempt();
+        f.Page("MessagePopupUI");
+        f.Frame["Surfaces"]![0]!["Popup"]=true;
+        await f.Business.ReplanInterruptedAsync(f.Context,"equipment");
+        Check(DailyManagedBusiness.Pending(f.Business.Records(f.Context).Single()),"unknown current dialog cannot be bypassed by journal recovery");
+        f.Page("GameFieldDefaultUI");
+        await f.Business.ReplanInterruptedAsync(f.Context,"mail");
+        Check(DailyManagedBusiness.Pending(f.Business.Records(f.Context).Single()),"disabled unrelated task keeps its diagnostic evidence");
+        await f.Business.ReplanInterruptedAsync(f.Context,"equipment");
+        var saved=f.Business.Records(f.Context).Single();
+        Check(S(saved["state"])=="superseded" && saved["result"]==null && S(saved["error"])=="missing reply" && f.Box.Commands.Count==0,
+            "ready stage retires prior journal without replay, fabricated success or erasing diagnostic cause");
+        var current=f.Business.Create(f.Context,proof.Role,f.Evidence(),new(),new());current["state"]="unknown";f.Business.Save(current);
+        await f.Business.ReplanInterruptedAsync(f.Context,"equipment");
+        Check(DailyManagedBusiness.Pending(f.Business.Records(f.Context).Single(o=>S(o["id"])==S(current["id"]))),
+            "a new in-flight operation retains its guard within the same attempt");
+        var other=f.Context.DeepClone().AsObject();other["actor"]![3]="other";
+        bool refused=false;try{await f.Business.ReplanInterruptedAsync(other,"equipment");}catch(StageHostException e) when(e.Kind=="identity"){refused=true;}
+        Check(refused,"current identity remains mandatory for fresh replanning");
     }
     private static void RecordQueries(string output, List<string> cases)
     {

@@ -1,5 +1,14 @@
 [
 {
+  "Version": "1.2.10",
+  "Date": "2026-10-13",
+  "Notes": {
+    "zh-CN": ["旧的中断记录保留为诊断，接续或补跑按游戏当前状态继续，不再永久阻塞队列。", "周收集同时恢复吸收和步行拾取卡点，暂时无法读取的地图保留待办并继续其他地图。", "镜中中断后按当前剩余免费次数继续；修复邮箱、装备环节的旧记录阻塞和藏红花记录保存。"],
+    "zh-TW": ["舊的中斷紀錄保留供診斷，接續或補跑依遊戲目前狀態繼續，不再永久阻塞佇列。", "每週收集同時恢復吸收及步行拾取卡點，暫時無法讀取的地圖保留待辦並繼續其他地圖。", "鏡中中斷後依目前剩餘免費次數繼續；修正信箱、裝備環節的舊紀錄阻塞及藏紅花紀錄儲存。"],
+    "en-US": ["Historical interrupted records remain diagnostic history. Resume and retry use current game state instead of permanently blocking the queue.", "Weekly collection recovers absorption and walking checkpoints, leaving unreadable maps pending while continuing elsewhere.", "Interrupted Mirror batches use remaining free attempts. Fixes mailbox and equipment recovery, and saffron record saving."]
+  }
+},
+{
   "Version": "1.2.9",
   "Date": "2026-10-13",
   "Notes": {

@@ -119,10 +119,10 @@ static class QueueEngineCases
             Unresolved = "mail"
         };
         record = await Run(host, root, resume: id);
-        Check(Stage(record, "mail") == "recovery_required" && host.Executed.SequenceEqual(new[] { "trade" }), "old Python interrupted record requires scoped reconciliation");
+        Check(Stage(record, "mail") == "completed" && host.Executed.SequenceEqual(new[] { "mail", "trade" }), "old interrupted record delegates recovery to live stage state");
         host = new();
         record = await Run(host, root, resume: id);
-        Check(Stage(record, "mail") == "completed" && host.Executed.SequenceEqual(new[] { "mail" }), "resolved old operation resumes without repeating completed sibling");
+        Check(Stage(record, "mail") == "completed" && host.Executed.Count == 0, "completed recovered queue is not repeated");
         root = Root();
         old = Old(id, new FakeHost().Context, "square", "mail");
         old["items"]![0]!["state"] = "recovery_required";
@@ -157,7 +157,7 @@ static class QueueEngineCases
             Unresolved = "event_rewards"
         };
         record = await Run(host, root, ["event_rewards"], retry: id);
-        Check(Stage(record, "event_rewards") == "recovery_required" && host.Executed.Count == 0 && !host.Calls.Contains("navigate:event_rewards"), "selected uncertain stage reconciles without navigation or replay when unresolved");
+        Check(Stage(record, "event_rewards") == "completed" && host.Executed.SequenceEqual(new[] { "event_rewards" }) && host.Calls.Contains("navigate:event_rewards"), "historical missing receipt cannot prevent entering current-state recovery");
         host = new();
         host.Context["actor"]![2] = "updated-bridge";
         record = await Run(host, root, ["event_rewards"], retry: id);

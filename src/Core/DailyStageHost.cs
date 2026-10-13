@@ -156,6 +156,7 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
                 var expected = arguments?["context"]?.AsObject() ?? throw new StageHostException("protocol", "缺少队列身份");
                 var started = await bootstrap.BeginAsync(expected);
                 context = expected.DeepClone().AsObject();
+                business.BeginAttempt();
                 return started;
             }
             Bound();
@@ -186,6 +187,9 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
             if (operation == "execute")
             {
                 await workflows.PrepareAsync(stage);
+                var replanning = arguments?["stages"] is JsonArray selectedStages ? selectedStages.Select(S).ToArray() : [stage];
+                foreach (string selectedStage in replanning)
+                    await business.ReplanInterruptedAsync(Bound(), selectedStage);
                 if (DailyStageCatalog.IsWeeklyRoute(stage))
                     return await ExecuteWeekly(arguments?["stages"] is JsonArray selected ? selected.Select(S).ToArray() : [stage]);
                 if (!managed.TryGetValue(stage, out var adapter))

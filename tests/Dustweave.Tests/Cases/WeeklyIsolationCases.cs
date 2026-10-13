@@ -199,6 +199,25 @@ static class WeeklyIsolationCases
     {
         void Check(bool yes, string message) { if (!yes) throw new Exception(message); checks.Add(message); }
         foreach (bool remaining in new[] { false, true })
+        using (var f = new Fixture(Path.Combine(root, "walk-no-old-proof-"+remaining)) { AbsorbDrops=true, MapOnePending=remaining, Used=6 })
+        {
+            var op=f.H.Business.Create(f.H.Context,"mainline.pickup",f.H.Evidence(),O(("map",1),("object",101)),
+                O(("ui","GameFieldDefaultUI"),("operation","mainline_walk"),("value",-999)));
+            op["state"]="unknown"; op["events"]=new JsonArray();
+            op["before"]!["Frame"]!["ProcessId"]=9876; op["cycle"]="four-days-ago";
+            op["last_observation"]=op["before"]!.DeepClone(); op["last_observation"]!["Frame"]!["Scene"]="Map0001_002";
+            f.H.Business.Save(op);
+            var preflight=await f.H.Business.ReconcileAsync(f.H.Context);
+            Check(B(preflight["unresolved"]![0]!["recover_in_stage"]),"old pickup without replies reaches map recovery after restart");
+            var result=await f.Run();
+            var saved=f.H.Business.Records(f.H.Context).Single(o=>S(o["id"])==S(op["id"]));
+            Check(S(saved["state"])=="superseded" && !B(saved["reconciliation"]!["original_success_claimed"]) && saved["result"]==null,
+                "server targets replace four-day-old changed-map pickup without fabricating its outcome");
+            Check(f.QueryMaps[0].SequenceEqual([1L]) && f.Used==(remaining?7:6) && S(result["state"])=="completed"
+                && f.H.Box.Commands.All(c=>N(c["Value"])!=-999),"recovery uses current remaining drops and never replays stale Unity pointer: "+remaining);
+            Check(S(f.H.Box.Commands[0]["Kind"])=="mainline_cancel_nav","interrupted pickup movement is stopped before querying targets");
+        }
+        foreach (bool remaining in new[] { false, true })
         using (var f = new Fixture(Path.Combine(root, "absorption-no-old-proof-" + remaining)) { AbsorbDrops = true, MapOnePending = remaining, Used = 6 })
         {
             var op = f.InterruptedAbsorption();

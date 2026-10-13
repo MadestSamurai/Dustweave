@@ -1,4 +1,35 @@
 {
+  "notice.recovery.current_pending": {
+    "zh-CN": "本次操作尚未结束，暂缓该环节；再次运行会按游戏当前状态重新检查。",
+    "zh-TW": "本次操作尚未結束，暫緩此環節；再次執行會依遊戲目前狀態重新檢查。",
+    "en-US": "This operation has not finished. The stage is deferred; retrying will check the current game state."
+  },
+  "notice.recovery.identity_changed": {
+    "zh-CN": "恢复任务时账号或游戏连接发生变化。",
+    "zh-TW": "恢復任務時帳號或遊戲連線發生變化。",
+    "en-US": "The account or game connection changed during recovery."
+  },
+  "notice.mail.identity_changed": {
+    "zh-CN": "读取邮箱时游戏或账号发生变化。",
+    "zh-TW": "讀取信箱時遊戲或帳號發生變化。",
+    "en-US": "The game or account changed while reading the mailbox."
+  },
+  "notice.recovery.current_progress": {
+    "zh-CN": "上次执行中断，将读取游戏当前进度后继续。",
+    "zh-TW": "上次執行中斷，將讀取遊戲目前進度後繼續。",
+    "en-US": "The previous run was interrupted. Current game progress will be checked before continuing."
+  },
+  "notice.recovery.retry_progress": {
+    "zh-CN": "执行中断，再次运行将自动检查游戏当前进度：{0}",
+    "zh-TW": "執行中斷，再次執行將自動檢查遊戲目前進度：{0}",
+    "en-US": "Run interrupted. Retrying will check current game progress: {0}",
+    "parameters": ["message"]
+  },
+  "notice.weekly.refreshed_deferred": {
+    "zh-CN": "收集后已重新读取进度，本次不再重复尝试；继续其他地图，之后可补跑",
+    "zh-TW": "收集後已重新讀取進度，本次不再重複嘗試；繼續其他地圖，之後可補跑",
+    "en-US": "Progress was refreshed after collection. No further attempt this run; continuing to other maps. Retry later."
+  },
   "notice.weekly.map_deferred": {
     "zh-CN": "卡带 {0} · 地图 {1} 暂缓：{2}；继续后续地点",
     "zh-TW": "卡帶 {0} · 地圖 {1} 暫緩：{2}；繼續後續地點",

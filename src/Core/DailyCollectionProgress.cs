@@ -40,10 +40,16 @@ public sealed class DailyCollectionProgress(DailyWorkflow workflow)
         "dispatch.start", h => DailyManagedBusiness.Pending(h) && N(h["talent_kind"]) == 4)
         .Where(op => DailyFieldTalentProof.AbsorptionLocation(op) != null).ToArray();
 
+    internal static (long Pack, long Map)? RecoveryLocation(JsonObject op) =>
+        DailyFieldTalentProof.AbsorptionLocation(op) ?? DailyPickupRecovery.Location(op);
+    internal JsonObject[] PendingMaps() => workflow.Business.MatchingRecords(workflow.Context,
+        h => DailyManagedBusiness.Pending(h) && (S(h["role"]) == "mainline.pickup" || S(h["role"]) == "dispatch.start" && N(h["talent_kind"]) == 4))
+        .Where(op => RecoveryLocation(op) != null).ToArray();
+
     private async Task RecoverAbsorptions(long pack, long[] maps, JsonObject network, JsonObject progress)
     {
         if (OnlySteal) return; // A theft-only projection deliberately omits drops.
-        var pending = PendingAbsorptions().Where(op => DailyFieldTalentProof.AbsorptionLocation(op) is { } p
+        var pending = PendingMaps().Where(op => RecoveryLocation(op) is { } p
             && p.Pack == pack && maps.Contains(p.Map)).ToArray();
         if (pending.Length == 0) return;
         var current = await workflow.Evidence("mainline.map", "mainline.reset", "mainline.talent_counts");
@@ -54,7 +60,7 @@ public sealed class DailyCollectionProgress(DailyWorkflow workflow)
         Require(counts.All(c => N(c["groupId"]) > 0 && N(c["useCount"]) >= 0), "Current talent usage unavailable");
         foreach (var op in pending)
         {
-            var p = DailyFieldTalentProof.AbsorptionLocation(op)!.Value;
+            var p = RecoveryLocation(op)!.Value;
             op["state"] = "superseded"; // Old outcome stays unknown; fresh targets replace the old intent.
             op["reconciliation"] = O(("method", "fresh_map_server_progress"), ("at", workflow.Driver.UtcTicks),
                 ("actions", 0), ("original_success_claimed", false), ("pack", pack), ("map", p.Map),
@@ -184,6 +190,10 @@ public sealed class DailyCollectionProgress(DailyWorkflow workflow)
     public Task<JsonObject> Query(long pack, long[] maps) => Query(pack, maps, cache: true);
     public async Task<JsonObject> Query(long pack, long[] maps, bool cache)
     {
+        // End stale movement before replacing its targets. Never replay its saved
+        // Unity instance ID, including when an old walk crossed into another map.
+        if (!OnlySteal && PendingMaps().Any(op => DailyPickupRecovery.Location(op) is { } p && p.Pack == pack && maps.Contains(p.Map)))
+            await workflow.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
         var command = await workflow.Step(O(("ui", "GameFieldDefaultUI"), ("operation", Steal ? "collection_query_steal" : "collection_query"), ("value", pack), ("items", maps), ("reason", "读取本卡带服务器收集进度")));
         JsonObject? data = null;
         try

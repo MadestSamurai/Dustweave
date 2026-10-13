@@ -107,8 +107,7 @@ public sealed class DailyMailStage : IDailyManagedStage
         var initial = await driver.ObserveAsync();
         if (!JsonNode.DeepEquals(initial.Context, context))
             throw new StageHostException("identity", "邮箱现场与原队列不一致。");
-        if (Pending(context).Any())
-            throw new StageHostException("pending", "已有邮箱领取待核账，不重复提交。");
+        var interrupted = Pending(context).ToArray();
         var operations = new JsonArray();
         try
         {
@@ -140,6 +139,17 @@ public sealed class DailyMailStage : IDailyManagedStage
                     Stop();
                     var before = await driver.EvidenceAsync(["mail"]);
                     var ids = DailyMailProof.Ids(before, tab);
+                    if (!DailyEvidence.SameActor(before["Frame"]!.AsObject(), initial.Frame))
+                        throw new StageHostException("identity", "读取邮箱时游戏或账号发生变化。");
+                    // Fresh native mailbox IDs decide what is still claimable. Old
+                    // incomplete receipts do not require a manual journal reset.
+                    foreach (var prior in interrupted.Where(o => o["scope"]?["tab"]?.GetValue<string>() == tab && DailyManagedBusiness.Pending(o)))
+                    {
+                        prior["state"] = "superseded";
+                        prior["reconciliation"] = new JsonObject { ["method"] = "current_mailbox_ids", ["at"] = driver.UtcTicks,
+                            ["original_success_claimed"] = false, ["saved_action_replayed"] = false, ["remaining"] = ids.Count };
+                        DailyJson.Write(Path.Combine(root, "live", "business", prior["id"]!.GetValue<string>() + ".json"), prior);
+                    }
                     if (ids.Count == 0)
                     {
                         drained = true;
@@ -147,7 +157,7 @@ public sealed class DailyMailStage : IDailyManagedStage
                     }
                     if (before["Taps"] is not JsonArray taps || !taps.Any(t => t?.GetValue<string>() == "mail.collect"))
                         throw new StageHostException("adapter", "Required mail response observer unavailable");
-                    if (Pending(context).Any())
+                    if (Pending(context).Any(o => !interrupted.Any(prior => JsonNode.DeepEquals(prior["id"], o["id"]))))
                         throw new StageHostException("pending", "邮箱领取前仍有未确认事务。");
                     string id = Guid.NewGuid().ToString("N"), path = Path.Combine(root, "live", "business", id + ".json");
                     var action = new JsonObject { ["ui"] = "MailUI", ["field"] = "_objAllReceiveButton", ["reason"] = "一键领取邮箱物品" };

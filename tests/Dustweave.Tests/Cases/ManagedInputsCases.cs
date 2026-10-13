@@ -1,10 +1,48 @@
 using Dustweave;
 using System.Text.Json.Nodes;
 using System.Text.Json;
+using static Dustweave.DailyData;
 static class ManagedInputsCases
 {
+    private static async Task MailRecovery(string root, List<string> cases)
+    {
+        foreach(bool remaining in new[]{false,true})
+        {
+            using var f=new WorkflowHarness(Path.Combine(root,"mail-current-state-"+remaining),[],["mail.collect"]);
+            f.Page("MailUI","_objAllReceiveButton");
+            string tab="normal";bool claimable=remaining;int claims=0;
+            f.Readings=()=>[
+                WorkflowCases.Reading("mail.ui",("ὭὯὫὫὮὡὠὮὤὬὨ",tab)),
+                WorkflowCases.Reading("mail.normal",("Count",claimable?1:0),("$items",claimable?new JsonArray(O(("InvenIndex",42))):new JsonArray())),
+                WorkflowCases.Reading("mail.cash",("Count",0),("$items",new JsonArray())),
+                WorkflowCases.Reading("mail.cash_total",("$self",0))];
+            var oldPaths=new List<string>();
+            foreach(string oldTab in new[]{"normal","cash"})
+            {
+                string id=Guid.NewGuid().ToString("N");
+                string path=Path.Combine(f.Root,"live","business",id+".json");oldPaths.Add(path);
+                DailyJson.Write(path,O(("id",id),("role","mail.collect"),("state","unknown"),("at",f.Ticks),
+                    ("account",f.Context["actor"]![3]),("player",f.Context["actor"]![4]),("server",f.Context["server"]),
+                    ("cycle","yesterday"),("scope",O(("tab",oldTab))),("before",f.Evidence()),("events",new JsonArray())));
+            }
+            f.OnCommand=c=>{
+                if(S(c["Kind"])=="mail_tab")tab=N(c["Value"])==0?"normal":"cash";
+                else if(S(c["Kind"])=="back")f.Page("MenuUI");
+                else if(S(c["Kind"])=="click"){
+                    if(!claimable||tab!="normal")throw new Exception("Unexpected repeated mail claim");
+                    claims++;f.Event("mail.collect","request");claimable=false;f.Event("mail.collect","response",("RewardInfoBundle",new JsonObject()));
+                }else throw new Exception("Unexpected mail action: "+c);
+            };
+            var stage=new DailyMailStage(f.Root,f.Driver,()=>false,()=>f.Time,t=>{f.Time+=t.TotalSeconds;return Task.CompletedTask;});
+            var result=await stage.ExecuteAsync(f.Context,(_,_,_)=>throw new Exception("Unexpected mail relay"));
+            if(claims!=(remaining?1:0)||S(result["state"])!=(remaining?"completed":"skipped")||
+                oldPaths.Any(p=>S(DailyJson.TryRead<JsonObject>(p)!["state"])!="superseded"))throw new Exception("Old mail receipt blocked fresh mailbox state");
+            cases.Add("both interrupted mailbox tabs recover from native remaining IDs, claims="+claims);
+        }
+    }
     public static async Task Run(string output, List<string> cases)
     {
+        await MailRecovery(output, cases);
         void Check(bool value, string name)
         {
             if (!value)
