@@ -1,5 +1,29 @@
 [
 {
+  "Version": "1.3.2",
+  "Date": "2026-10-14",
+  "Notes": {
+    "zh-CN": [
+      "修复沙盒改名后无法启动账号的问题，保留原数据和登录信息。",
+      "账号管理新增「修复沙盒绑定」，支持自动找回和手动选择并确认。",
+      "补充任务栏身份及图标路径；旧固定项若仍空白，请取消固定后重新固定。",
+      "1.3.1 支持差分升级；若更新失败，可手动下载完整包，账号与设置继续保留。"
+    ],
+    "zh-TW": [
+      "修復沙盒改名後無法啟動帳號的問題，保留原資料與登入資訊。",
+      "帳號管理新增「修復沙盒綁定」，支援自動找回與手動選擇並確認。",
+      "補充工作列身分與圖示路徑；舊釘選項若仍空白，請取消釘選後重新釘選。",
+      "1.3.1 支援差分升級；若更新失敗，可手動下載完整包，帳號與設定繼續保留。"
+    ],
+    "en-US": [
+      "Repairs renamed sandbox associations while preserving data and sign-in.",
+      "Adds automatic and confirmed manual sandbox binding in Accounts.",
+      "Sets explicit taskbar identity and icon metadata. Repin any old shortcut that remains blank.",
+      "Differential upgrade from 1.3.1 is supported. If updating fails, use the complete download; accounts and settings are retained."
+    ]
+  }
+},
+{
   "Version": "1.3.1",
   "Date": "2026-10-13",
   "Notes": {

@@ -28,6 +28,8 @@ static class SandboxCases
             Reject(() => DailySandbox.BoxName(key), "invalid account cannot choose a sandbox: " + key.Length);
         var valid = new DailySandboxRequest(DailySandbox.BoxName(a), 1, a, "Account", @"C:\Game\BrownDust II.exe", DateTimeOffset.UtcNow);
         DailySandbox.Validate(valid); cases.Add("valid sandbox request contains identity and path but no session bytes");
+        DailySandbox.Validate(valid with { Box = valid.Box.ToUpperInvariant() }); cases.Add("box name casing does not invalidate the same account request");
+        Reject(() => DailySandbox.Validate(valid with { Box = null! }), "missing sandbox name is rejected without a null reference error");
         Reject(() => DailySandbox.Validate(valid with { Box = DailySandbox.BoxName(b) }), "sandbox and account mismatch is rejected before session access");
         foreach (int slot in new[] { 0, 101 }) Reject(() => DailySandbox.Validate(valid with { Slot = slot }), "out-of-range sandbox slot rejected: " + slot);
         foreach (var path in new[] { "BrownDust II.exe", @"C:\Game\other.exe", @"..\BrownDust II.exe" })
@@ -138,6 +140,10 @@ static class SandboxCases
         DailySandboxRegistration.Resolve(registrationAccount,registrationState,registrationRoot,GamePath);
         Check(File.ReadAllBytes(markerFile).SequenceEqual(markerBytes),"rechecking recovered registration is idempotent");
         Check(restoredRegistration!.Name=="Kept alias" && SessionRegistry.SessionsEqual(registrationVault.LoadFixedSlot(1),Credentials("identity-evidence",1)),"index recovery retains alias and encrypted credentials");
+        DailyJson.Write(markerFile,restoredRegistration with {Box=registrationBox.ToUpperInvariant()});
+        DailyJson.Write(bindingFile,registrationBinding with {Box=registrationBox.ToLowerInvariant()});
+        Check(DailySandboxRegistration.Resolve(registrationAccount,registrationState,registrationRoot,GamePath)?.Account==registrationAccount,"case-only differences in inner and host names retain the same registration");
+        DailyJson.Write(bindingFile,registrationBinding);
         DailyJson.Write(markerFile,restoredRegistration with {Account=b});
         Reject(()=>DailySandboxRegistration.Resolve(registrationAccount,registrationState,registrationRoot,GamePath),"explicit conflicting owner is not repaired over");
         Check(DailyJson.TryRead<DailySandboxRequest>(markerFile)?.Account==b,"conflicting ownership record stays unchanged");
@@ -147,6 +153,33 @@ static class SandboxCases
         DailyJson.Write(markerFile,restoredRegistration);
         DailyJson.Write(bindingFile,registrationBinding with {Account=b});
         Reject(()=>DailySandboxRegistration.Resolve(registrationAccount,registrationState,registrationRoot,GamePath),"valid host index cannot conceal conflicting inner binding");
+        DailyJson.Write(bindingFile,registrationBinding with {ImportedSessionUtc=boxRefreshed.CapturedAtUtc});
+        var credentialBefore=Directory.GetFiles(registrationVault.RootDirectory,"*",SearchOption.AllDirectories)
+            .ToDictionary(p=>p,p=>File.ReadAllBytes(p));
+        var renamed=new DailySandboxCandidate("RenamedAccount",registrationRoot,DailySandboxRepair.ProofIssue(registrationAccount,registrationState,registrationRoot));
+        Check(renamed.CanBind,"renamed box requires both original root and encrypted account proof");
+        Check(DailySandboxRepair.Select([renamed],null)==renamed,"one matching box is automatically selected after rename");
+        var alias=renamed with {Box="SecondAlias"};
+        Reject(()=>DailySandboxRepair.Select([renamed,alias],null),"ambiguous box aliases require manual selection");
+        Check(DailySandboxRepair.Select([renamed,alias],"secondalias")==alias,"manual selection chooses a verified box case insensitively");
+        Check(DailySandboxRepair.Select([renamed with {Issue="sandbox.repair.other_root"}],renamed.Box)==null,"manual binding cannot bypass root proof");
+        DailySandboxRepair.Commit(registrationAccount,registrationState,renamed.Box,registrationRoot);
+        Check(DailyJson.TryRead<DailySandboxRequest>(markerFile)?.Box==renamed.Box && DailyJson.TryRead<DailySandboxBinding>(bindingFile)?.Box==renamed.Box,"rename updates both host and inner binding without renaming directory");
+        Check(DailyJson.TryRead<DailySandboxBinding>(bindingFile)?.ImportedSessionUtc==boxRefreshed.CapturedAtUtc,"rename preserves imported credential age");
+        Check(credentialBefore.All(p=>File.ReadAllBytes(p.Key).SequenceEqual(p.Value)),"rename never rewrites encrypted account credentials");
+        DailyJson.Write(markerFile,restoredRegistration);
+        DailySandboxRepair.Commit(registrationAccount,registrationState,renamed.Box,registrationRoot);
+        Check(DailyJson.TryRead<DailySandboxRequest>(markerFile)?.Box==renamed.Box,"interruption between binding writes is repaired idempotently");
+        DailyJson.Write(bindingFile,registrationBinding with {Box=null!,ImportedSessionUtc=boxRefreshed.CapturedAtUtc});
+        Check(DailySandboxRepair.ProofIssue(registrationAccount,registrationState,registrationRoot)=="","missing box name remains recoverable from original root and encrypted identity");
+        DailySandboxRepair.Commit(registrationAccount,registrationState,renamed.Box,registrationRoot);
+        Check(DailyJson.TryRead<DailySandboxBinding>(bindingFile)?.Box==renamed.Box && credentialBefore.All(p=>File.ReadAllBytes(p.Key).SequenceEqual(p.Value)),"repairing a missing name preserves encrypted credentials");
+        DailyJson.Write(bindingFile,registrationBinding with {Account=b});
+        Reject(()=>DailySandboxRepair.Commit(registrationAccount,registrationState,alias.Box,registrationRoot),"manual repair cannot rebind another account");
+        DailyJson.Write(bindingFile,registrationBinding);
+        Reject(()=>DailySandboxRepair.Commit(registrationAccount,registrationState,alias.Box,registrationRoot+"-foreign"),"manual repair cannot move account data to another root");
+        Reject(()=>DailySandboxRepair.Commit(registrationAccount,registrationState,"../box",registrationRoot),"invalid box name cannot alter registration");
+        Check(DailySandbox.StateDirectory(a).EndsWith(DailySandbox.CanonicalBoxName(a)),"parallel data path uses canonical account directory");
         // A human confirmation updates auxiliary state even if login stays the same.
         string clientStamp = new('A',64);
         var consent = new SessionAgreementSnapshot(clientStamp, Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("1791500000\0")));

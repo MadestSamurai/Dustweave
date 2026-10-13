@@ -16,7 +16,7 @@ public sealed class DailyParallelRuntime(string executable) : IDailyParallelRunt
     public static string HostDirectory(DailyParallelJob job)
     {
         job.Validate();
-        return WorkerDirectory(Path.Combine(DailySandbox.Store, DailySandbox.BoxName(job.Account), "root", "user", "current", "AppData", "Local", "BD2DailyAssistant"), job.Id);
+        return WorkerDirectory(Path.Combine(DailySandbox.StateDirectory(job.Account), "root", "user", "current", "AppData", "Local", "BD2DailyAssistant"), job.Id);
     }
     public DailyParallelStatus? Read(DailyParallelJob job) => DailyJson.TryRead<DailyParallelStatus>(Path.Combine(HostDirectory(job), "status.json"));
     public bool Alive(DailyParallelStatus status)
@@ -24,7 +24,7 @@ public sealed class DailyParallelRuntime(string executable) : IDailyParallelRunt
         try
         {
             using var process = Process.GetProcessById(status.ProcessId);
-            return process.StartTime.ToUniversalTime().Ticks == status.ProcessStartTicks && !process.HasExited && SandboxProcessScope.BoxOf(process.Id) == DailySandbox.BoxName(status.Account);
+            return process.StartTime.ToUniversalTime().Ticks == status.ProcessStartTicks && !process.HasExited && string.Equals(SandboxProcessScope.BoxOf(process.Id), DailySandbox.BoxName(status.Account), StringComparison.OrdinalIgnoreCase);
         }
         catch (ArgumentException) { return false; }
         catch (InvalidOperationException) { return false; }
@@ -32,7 +32,7 @@ public sealed class DailyParallelRuntime(string executable) : IDailyParallelRunt
     public bool Busy(DailyParallelJob job)
     {
         var all = Process.GetProcessesByName("Dustweave");
-        try { return all.Any(p => !p.HasExited && SandboxProcessScope.BoxOf(p.Id) == DailySandbox.BoxName(job.Account)); }
+        try { return all.Any(p => !p.HasExited && string.Equals(SandboxProcessScope.BoxOf(p.Id), DailySandbox.BoxName(job.Account), StringComparison.OrdinalIgnoreCase)); }
         finally { foreach (var process in all) process.Dispose(); }
     }
     public void Send(DailyParallelJob job, string action, long sequence)
@@ -45,7 +45,7 @@ public sealed class DailyParallelRuntime(string executable) : IDailyParallelRunt
     {
         if (item.Status is not { GameId: > 0 } status) throw new InvalidOperationException("parallel.game_missing");
         using var game = Process.GetProcessById(status.GameId);
-        if (game.StartTime.ToUniversalTime().Ticks != status.GameStartTicks || SandboxProcessScope.BoxOf(game.Id) != DailySandbox.BoxName(item.Account.AccountKey)) throw new InvalidOperationException("parallel.identity_changed");
+        if (game.StartTime.ToUniversalTime().Ticks != status.GameStartTicks || !string.Equals(SandboxProcessScope.BoxOf(game.Id), DailySandbox.BoxName(item.Account.AccountKey), StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("parallel.identity_changed");
         if (game.MainWindowHandle == 0) throw new InvalidOperationException("parallel.game_missing");
         ShowWindow(game.MainWindowHandle);
     }

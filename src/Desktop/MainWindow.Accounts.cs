@@ -42,7 +42,7 @@ public partial class MainWindow
         idle &= !IsSandboxWindow;
         if (IsSandboxWindow) SaveAccountButton.IsEnabled = LoginNewButton.IsEnabled = RecoverButton.IsEnabled = false;
         var row = Selected;
-        SandboxLaunchButton.IsEnabled = idle && row?.Account.Valid == true;
+        SandboxRepairButton.IsEnabled = SandboxLaunchButton.IsEnabled = idle && row?.Account.Valid == true;
         // Editing actions only affect the highlighted row, never the checked queue.
         RenameAccountButton.IsEnabled = DeleteAccountButton.IsEnabled = idle && row?.Account.Valid == true;
         MoveUpButton.IsEnabled = idle && row != null && rows.IndexOf(row) > 0;

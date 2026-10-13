@@ -39,7 +39,10 @@ public static class DailySandbox
             {
                 string box;
                 try{box=SandboxProcessScope.BoxOf(game.Id);}catch(IOException)when(game.HasExited){continue;}
-                if(box==wanted&&box!=current)throw new InvalidOperationException("这个账号已在隔离窗口运行，请先关闭对应游戏，避免同一账号重复登录。");
+                bool sameAccount = box.Equals(wanted,StringComparison.OrdinalIgnoreCase);
+                if (!sameAccount && box.Length != 0 && Installation() is {} installed)
+                    sameAccount = SandboxConfiguration.SameRoot(SandboxConfiguration.Read(installed,box,"FileRootPath"),Path.Combine(StateDirectory(account),"root"));
+                if(sameAccount&&!box.Equals(current,StringComparison.OrdinalIgnoreCase))throw new InvalidOperationException("这个账号已在隔离窗口运行，请先关闭对应游戏，避免同一账号重复登录。");
             }
         }
         finally{foreach(var game in games)game.Dispose();}
@@ -62,9 +65,20 @@ public static class DailySandbox
     public static string Store => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Dustweave", "instances");
     public static string BoxName(string account)
     {
+        string canonical = CanonicalBoxName(account);
+        var binding = Current;
+        if (binding?.Account == account) return binding.Box;
+        var registered = DailyJson.TryRead<DailySandboxRequest>(Path.Combine(StateDirectory(account), "instance.json"));
+        return registered?.Account == account && ValidBoxName(registered.Box) ? registered.Box : canonical;
+    }
+    // The data directory belongs to the account and never follows a display/configuration rename.
+    public static string StateDirectory(string account) => Path.Combine(Store, CanonicalBoxName(account));
+    public static string CanonicalBoxName(string account)
+    {
         if (!DailyProfiles.ValidKey(account)) throw new ArgumentException("账号标识无效。");
         return "Dustweave_" + account[..20];
     }
+    internal static bool ValidBoxName(string box) => !string.IsNullOrWhiteSpace(box) && box.Length <= 32 && box.All(c => char.IsAsciiLetterOrDigit(c) || c == '_');
     public static string? Installation() => new SandboxInstallation().ResolveOptional();
     private static string BindingPath => Path.Combine(DailyIdentity.DataRoot, "sandbox-binding.json");
     public static DailySandboxBinding? Current
@@ -74,38 +88,38 @@ public static class DailySandbox
             string box = SandboxProcessScope.CurrentBox;
             if (box.Length == 0) return null;
             var binding = DailyJson.TryRead<DailySandboxBinding>(BindingPath);
-            return binding != null && binding.Box == box && DailyProfiles.ValidKey(binding.Account) && BoxName(binding.Account) == box ? binding : null;
+            return binding != null && string.Equals(binding.Box, box, StringComparison.OrdinalIgnoreCase) && DailyProfiles.ValidKey(binding.Account) && ValidBoxName(box) ? binding : null;
         }
     }
     internal static void Validate(DailySandboxRequest request)
     {
-        if (request.Box != BoxName(request.Account) || request.Slot is < 1 or > 100 || string.IsNullOrWhiteSpace(request.Name))
+        if (!string.Equals(request.Box, BoxName(request.Account), StringComparison.OrdinalIgnoreCase) || request.Slot is < 1 or > 100 || string.IsNullOrWhiteSpace(request.Name))
             throw new InvalidDataException("隔离实例请求不完整。");
         if (!Path.IsPathFullyQualified(request.GameExecutable) || !Path.GetFileName(request.GameExecutable).Equals("BrownDust II.exe",StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("游戏路径不符合预期。");
     }
-    private static readonly SemaphoreSlim configurationGate = new(1, 1);
+    internal static readonly SemaphoreSlim ConfigurationGate = new(1, 1);
     public static async Task<string> LaunchAsync(DailyAccount account, string executable, Action<string> progress, CancellationToken token, DailyParallelJob? worker = null)
     {
-        await configurationGate.WaitAsync(token);
+        await ConfigurationGate.WaitAsync(token);
         try { return await LaunchCoreAsync(account, executable, progress, token, worker); }
-        finally { configurationGate.Release(); }
+        finally { ConfigurationGate.Release(); }
     }
     // Open the existing account workspace only. No credential import, bootstrap or game launch.
     public static async Task OpenTasksAsync(string account, string executable, CancellationToken token)
     {
         RequireHost();
-        string box = BoxName(account);
         executable = Path.GetFullPath(executable);
         if (!File.Exists(executable) || !DailyApplication.IsExecutable(executable)) throw new InvalidOperationException("run.account_unavailable");
         string installation = Installation() ?? throw new InvalidOperationException("parallel.install_required");
-        await configurationGate.WaitAsync(token);
+        await ConfigurationGate.WaitAsync(token);
         try
         {
-            string state = Path.Combine(Store, box);
+            await DailySandboxRegistration.EnsureAsync(account, token);
+            string box = BoxName(account), state = StateDirectory(account);
             var owned = DailyJson.TryRead<DailySandboxRequest>(Path.Combine(state, "instance.json"));
             string actual = (await Run(installation, "SbieIni.exe", ["query", box, "FileRootPath"], token)).Trim();
-            if (owned?.Account != account || owned.Box != box || !SandboxConfiguration.SameRoot(actual, Path.Combine(state, "root")))
+            if (owned?.Account != account || !string.Equals(owned.Box, box, StringComparison.OrdinalIgnoreCase) || !SandboxConfiguration.SameRoot(actual, Path.Combine(state, "root")))
                 throw new InvalidOperationException("parallel.identity_changed");
             foreach (string setting in new[] { "OpenKeyPath", "OpenIpcPath", "OpenPipePath", "OpenFilePath", "BreakoutProcess", "BreakoutFolder", "BreakoutDocument" })
                 if (!string.IsNullOrWhiteSpace(await Run(installation, "SbieIni.exe", ["query", box, setting], token)))
@@ -115,7 +129,7 @@ public static class DailySandbox
             {
                 foreach (var process in windows)
                 {
-                    if (process.HasExited || SandboxProcessScope.BoxOf(process.Id) != box) continue;
+                    if (process.HasExited || !string.Equals(SandboxProcessScope.BoxOf(process.Id), box, StringComparison.OrdinalIgnoreCase)) continue;
                     if (process.MainWindowHandle == 0) throw new InvalidOperationException("parallel.tasks_busy");
                     DailyParallelRuntime.ShowWindow(process.MainWindowHandle);
                     return;
@@ -130,7 +144,7 @@ public static class DailySandbox
             await launcher.WaitForExitAsync(token).WaitAsync(TimeSpan.FromSeconds(20), token);
             if (launcher.ExitCode != 0) throw new IOException("parallel.window_open");
         }
-        finally { configurationGate.Release(); }
+        finally { ConfigurationGate.Release(); }
     }
     private static async Task<string> LaunchCoreAsync(DailyAccount account, string executable, Action<string> progress, CancellationToken token, DailyParallelJob? worker)
     {
@@ -149,7 +163,7 @@ public static class DailySandbox
         await DailySandboxSessions.CollectAsync(account.AccountKey,vault,executable,token);
         saved = SessionService.LatestSameAccount(vault.LoadFixedSlot(account.SlotNumber),vault.TryLoadFixedSlot);
         string box = BoxName(account.AccountKey);
-        string state = Path.Combine(Store,box); Directory.CreateDirectory(state);
+        string state = StateDirectory(account.AccountKey); Directory.CreateDirectory(state);
         string root = Path.Combine(state,"root");
         string marker = Path.Combine(state,"instance.json");
         var request = new DailySandboxRequest(box,account.SlotNumber,account.AccountKey,account.Name,GameLauncher.ResolveExecutable(),DateTimeOffset.UtcNow) { Worker = worker };
@@ -157,8 +171,7 @@ public static class DailySandbox
         Validate(request);
         if (worker != null) { worker.Validate(); if (worker.Account != account.AccountKey) throw new InvalidDataException("parallel.identity_changed"); }
         // A previously registered box is never silently reconfigured while running.
-        var existing = await Run(installation,"SbieIni.exe",["query","*"],token);
-        bool configured = existing.Split(['\r','\n'],StringSplitOptions.RemoveEmptyEntries).Any(x=>x.Trim()==box);
+        bool configured = SandboxConfiguration.Boxes(installation).Contains(box,StringComparer.OrdinalIgnoreCase);
         if (configured)
         {
             var owned = DailyJson.TryRead<DailySandboxRequest>(marker);
@@ -172,7 +185,7 @@ public static class DailySandbox
             }
             else
             {
-                if (owned == null || owned.Account != request.Account || owned.Box != box) throw new InvalidOperationException("同名沙箱不是由此账号登记的，未修改它。");
+                if (owned == null || owned.Account != request.Account || !string.Equals(owned.Box, box, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("同名沙箱不是由此账号登记的，未修改它。");
                 if (!SandboxConfiguration.SameRoot(actual,root)) throw new InvalidOperationException("隔离目录已被修改，请先检查 Sandboxie 设置。");
             }
         }

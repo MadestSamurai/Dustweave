@@ -16,6 +16,36 @@ public partial class MainWindow
         }
         try {
             if(Icon==null)throw new Exception("Application icon missing");
+            if(Icon is not System.Windows.Media.Imaging.BitmapSource bitmap || bitmap.PixelWidth<16 || bitmap.PixelHeight<16)throw new Exception("Application icon did not decode");
+            var iconPixels=new byte[bitmap.PixelHeight*((bitmap.PixelWidth*bitmap.Format.BitsPerPixel+7)/8)];
+            bitmap.CopyPixels(iconPixels,(bitmap.PixelWidth*bitmap.Format.BitsPerPixel+7)/8,0);
+            if(!iconPixels.Any(p=>p!=0))throw new Exception("Application icon is empty");
+            var handle=new System.Windows.Interop.WindowInteropHelper(this).Handle;
+            if(DesktopWindowIdentity.Read(handle,5)!=DesktopWindowIdentity.AppId || DesktopWindowIdentity.Read(handle,3)!=Environment.ProcessPath+",0")throw new Exception("Taskbar identity or icon resource missing");
+            if(TaskbarGetIcon(handle,127,new IntPtr(1),IntPtr.Zero)==IntPtr.Zero)throw new Exception("Native large window icon missing");
+            foreach(int language in new[]{0,1,2})foreach(int appearance in new[]{1,2})
+            {
+                LanguageSelector.SelectedIndex=language; ThemeSelector.SelectedIndex=appearance;
+                Width=920;Height=650;WorkspaceTabs.SelectedItem=AccountsTab;
+                await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                var repairBounds=SandboxRepairButton.TransformToAncestor(this).TransformBounds(new Rect(SandboxRepairButton.RenderSize));
+                if(!SandboxRepairButton.IsVisible || repairBounds.Right>ActualWidth || repairBounds.Bottom>ActualHeight)throw new Exception("Account binding entry clipped");
+                Capture($"sandbox-accounts-{language}-{appearance}");
+                var bindingDialog=CreateSandboxRepairWindow(new string('a',64),"Example account",[
+                    new("MyRenamedBox",@"C:\Users\Example\AppData\Local\Dustweave\instances\Dustweave_aaaaaaaaaaaaaaaaaaaa\root",""),
+                    new("OtherBox",@"C:\Sandbox\Other","sandbox.repair.other_root")]);
+                bindingDialog.Show();
+                try {
+                    await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    var manual=Nodes<Button>(bindingDialog).Single(b=>b.Name=="SandboxBindingManual");
+                    var choose=Nodes<ComboBox>(bindingDialog).Single(b=>b.Name=="SandboxBindingChoice");
+                    if(!manual.IsEnabled || choose.Items.Count!=2)throw new Exception("Verified manual binding unavailable");
+                    Capture($"sandbox-binding-{language}-{appearance}",(FrameworkElement)bindingDialog.Content);
+                    choose.SelectedIndex=1;if(manual.IsEnabled)throw new Exception("Foreign box can be bound from UI");
+                    if(manual.TransformToAncestor(bindingDialog).TransformBounds(new Rect(manual.RenderSize)).Bottom>bindingDialog.ActualHeight)throw new Exception("Binding action clipped");
+                    checks+=3;
+                } finally {bindingDialog.Close();}
+            }
             WorkspaceTabs.SelectedItem=DiagnosticsTab;
             foreach(int language in new[]{0,1,2})foreach(int appearance in new[]{1,2}) {
                 LanguageSelector.SelectedIndex=language;ThemeSelector.SelectedIndex=appearance;Width=1180;Height=900;
@@ -92,4 +122,6 @@ public partial class MainWindow
             DailyJson.Write(Path.Combine(smoke,"support-ui.json"),new{status="passed",checks,realGameTouched=false,exportUsesIsolatedData=true});
         }finally{Width=1180;Height=900;LanguageSelector.SelectedIndex=0;ThemeSelector.SelectedIndex=1;DiagnosticIssueCategory.Visibility=Visibility.Collapsed;timer.Start();}
     }
+    [System.Runtime.InteropServices.DllImport("user32.dll",EntryPoint="SendMessageW")]
+    private static extern IntPtr TaskbarGetIcon(IntPtr hwnd,uint message,IntPtr wParam,IntPtr lParam);
 }

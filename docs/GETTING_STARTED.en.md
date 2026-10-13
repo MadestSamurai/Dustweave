@@ -63,3 +63,5 @@ Do not treat administrator mode or restarting the game as universal fixes. A gam
 If the issue persists, [open an issue](https://github.com/MadestSamurai/Dustweave/issues/new/choose) with your tool/Windows versions, stage, expected and actual results, and reproduction steps. Attach only relevant logs after checking for personal information. Never upload whole account directories or captured user libraries. See [SECURITY.md](../SECURITY.md) for security reports.
 
 Upgrading from an earlier version: extract the complete package into a new folder and launch `Dustweave.exe`. Existing accounts, settings and history are reused without data migration. Keep old and new program files in separate folders.
+
+After renaming a sandbox: select its account in Accounts and open **Repair sandbox binding**. Close the game and tool windows in that box, then repair automatically or select and confirm a verified box. Do not delete the original sandbox data.

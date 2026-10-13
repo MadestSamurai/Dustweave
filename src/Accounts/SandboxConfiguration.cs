@@ -10,7 +10,35 @@ public static class SandboxConfiguration
     [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode)]
     internal delegate int Query(string section, string setting, uint index, StringBuilder output, uint bytes);
     private static readonly Dictionary<string, Query> queries = new(StringComparer.OrdinalIgnoreCase);
+    [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet=CharSet.Unicode)]
+    private delegate int EnumBoxes(int index,StringBuilder name,[MarshalAs(UnmanagedType.U1)]bool allSessions);
+    private static readonly Dictionary<string, EnumBoxes> enumerators = new(StringComparer.OrdinalIgnoreCase);
     private static readonly object gate = new();
+
+    public static string[] Boxes(string installation)
+    {
+        string path=Path.GetFullPath(Path.Combine(installation,"SbieDll.dll"));
+        EnumBoxes enumerate;
+        lock(gate)
+        {
+            if(!enumerators.TryGetValue(path,out enumerate!))
+            {
+                var library=LoadLibraryEx(path,0,0x100|0x800);
+                if(library==0)throw new IOException("无法读取 Sandboxie 配置，未修改隔离空间。");
+                enumerate=Marshal.GetDelegateForFunctionPointer<EnumBoxes>(NativeLibrary.GetExport(library,"SbieApi_EnumBoxesEx"));
+                enumerators.Add(path,enumerate);
+            }
+        }
+        var names=new List<string>(); int index=-1;
+        for(int count=0;count<4096;count++)
+        {
+            var name=new StringBuilder(34); int next=enumerate(index,name,true);
+            if(next==-1)return names.ToArray();
+            if(next<=index)throw new IOException("Sandboxie 配置条目超出读取范围，未修改隔离空间。");
+            names.Add(name.ToString()); index=next;
+        }
+        throw new IOException("Sandboxie 配置条目超出读取范围，未修改隔离空间。");
+    }
 
     public static string Read(string installation, string section, string setting)
     {

@@ -11,10 +11,23 @@ internal static class DailySandboxRegistration
     internal static async Task<DailySandboxRequest?> EnsureAsync(string account, CancellationToken token)
     {
         DailySandbox.RequireHost();
-        string state = Path.Combine(DailySandbox.Store,DailySandbox.BoxName(account));
+        string state = DailySandbox.StateDirectory(account);
         if (!Directory.Exists(state)) return null;
         string installation = DailySandbox.Installation() ?? throw new InvalidOperationException("无法找到 Sandboxie，尚未核对隔离空间。");
         string actual = (await DailySandbox.Run(installation,"SbieIni.exe",["query",DailySandbox.BoxName(account),"FileRootPath"],token).ConfigureAwait(false)).Trim();
+        string box = DailySandbox.BoxName(account);
+        var binding = DailyJson.TryRead<DailySandboxBinding>(Path.Combine(state,"root","user","current","AppData","Local","BD2DailyAssistant","sandbox-binding.json"));
+        if (!SandboxConfiguration.SameRoot(actual,Path.Combine(state,"root")) || (binding != null && !string.Equals(binding.Box,box,StringComparison.OrdinalIgnoreCase)))
+        {
+            var candidates = await DailySandboxRepair.InspectAsync(account, token).ConfigureAwait(false);
+            var selected = DailySandboxRepair.Select(candidates, null);
+            // A pristine first-launch folder may have no configured box yet.
+            if (selected == null && actual.Length == 0 && binding == null && (!Directory.Exists(Path.Combine(state,"root")) || !Directory.EnumerateFileSystemEntries(Path.Combine(state,"root")).Any()))
+                return Resolve(account,state,actual,GameLauncher.ResolveExecutable);
+            if (selected == null) throw new InvalidDataException("sandbox.repair.required");
+            await DailySandboxRepair.BindCoreAsync(account, selected.Box, token).ConfigureAwait(false);
+            actual = selected.Root;
+        }
         return Resolve(account,state,actual,GameLauncher.ResolveExecutable);
     }
 
@@ -24,7 +37,7 @@ internal static class DailySandboxRegistration
         bool markerPresent=File.Exists(marker);
         var registered=DailyJson.TryRead<DailySandboxRequest>(marker);
         if (markerPresent && registered==null) throw new InvalidDataException("隔离空间登记文件无法读取，已保留原文件；仅此账号暂未启动。");
-        if (registered!=null && (registered.Account!=account || registered.Box!=box))
+        if (registered!=null && (registered.Account!=account || !string.Equals(registered.Box,box,StringComparison.OrdinalIgnoreCase)))
             throw new InvalidDataException("隔离空间登记属于其他账号，未修改；仅此账号暂未启动。");
         if(configuredRoot.Length>0 && !SandboxConfiguration.SameRoot(configuredRoot,root))
         {
@@ -36,7 +49,7 @@ internal static class DailySandboxRegistration
         bool bindingPresent=File.Exists(bindingPath);
         var binding=DailyJson.TryRead<DailySandboxBinding>(bindingPath);
         if(bindingPresent && binding==null)throw new InvalidDataException("隔离账号绑定暂时无法读取，已保留原文件；仅此账号暂未启动。");
-        if(binding!=null && (binding.Account!=account || binding.Box!=box))throw new InvalidDataException("隔离窗口绑定属于其他账号，未修改；仅此账号暂未启动。");
+        if(binding!=null && (binding.Account!=account || !string.Equals(binding.Box,box,StringComparison.OrdinalIgnoreCase)))throw new InvalidDataException("隔离窗口绑定属于其他账号，未修改；仅此账号暂未启动。");
         if(registered!=null)return registered;
         if(configuredRoot.Length==0 && binding==null && (!Directory.Exists(root)||!Directory.EnumerateFileSystemEntries(root).Any()))return null;
         if(configuredRoot.Length==0 || binding==null)throw new InvalidDataException("隔离空间缺少可核对的账号绑定，已保留数据；仅此账号暂未启动。");
@@ -57,7 +70,7 @@ internal static class DailySandboxRegistration
             catch(IOException) when(File.Exists(marker))
             {
                 var raced=DailyJson.TryRead<DailySandboxRequest>(marker);
-                if(raced?.Account!=account || raced.Box!=box)throw new InvalidDataException("登记恢复期间账号发生变化，未覆盖任何记录。");
+                if(raced?.Account!=account || !string.Equals(raced.Box,box,StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("登记恢复期间账号发生变化，未覆盖任何记录。");
                 return raced;
             }
             DailyJson.Write(Path.Combine(state,"registration-recovery.json"),new {atUtc=DateTimeOffset.UtcNow,account,box,reason="missing_host_index",configuredRootMatched=true,innerBindingMatched=true,encryptedAccountMatched=true});

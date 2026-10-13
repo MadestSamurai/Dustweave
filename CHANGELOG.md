@@ -1,5 +1,11 @@
 # Changelog / 更新记录
 
+## 1.3.2 — 2026-10-14
+
+- 沙盒改名后自动恢复关联；账号管理新增手动绑定及归属核对，不改写登录信息。
+- 补充任务栏身份与图标路径，支持从 1.3.1 差分升级。
+- Repairs renamed sandbox associations, adds verified manual binding, and sets explicit Windows taskbar identity/icon metadata.
+- [完整说明 / Full notes](docs/releases/1.3.2.md)
 ## 1.2.11 — 2026-10-13
 
 - 使徒运气防守接入离线退火搜索得到的50波策略，普通阵容继续培养；保留换位和首领追击。

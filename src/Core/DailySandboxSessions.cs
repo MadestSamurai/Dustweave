@@ -74,16 +74,17 @@ public static class DailySandboxSessions
     internal static async Task CollectAsync(string account, SessionVault vault, string executable, CancellationToken token)
     {
         DailySandbox.RequireHost();
-        DailySandbox.RequireAccountAvailable(account);
-        string box = DailySandbox.BoxName(account), state = Path.Combine(DailySandbox.Store,box);
-        if (!Directory.Exists(state)) return;
+        string state = DailySandbox.StateDirectory(account);
+        if (!Directory.Exists(state)) { DailySandbox.RequireAccountAvailable(account); return; }
         var registered = await DailySandboxRegistration.EnsureAsync(account,token).ConfigureAwait(false);
+        DailySandbox.RequireAccountAvailable(account);
         if (registered == null) return; // An unused directory has no credentials to collect.
+        string box = DailySandbox.BoxName(account);
         string root = Path.Combine(state,"root");
         string local = Path.Combine(root,"user","current","AppData","Local");
         var binding = DailyJson.TryRead<DailySandboxBinding>(Path.Combine(local,"BD2DailyAssistant","sandbox-binding.json"));
         if (binding == null) return; // Interrupted before the first bootstrap completed.
-        if (binding.Account != account || binding.Box != box) throw new InvalidDataException("隔离账号绑定不一致，未读取凭据。");
+        if (binding.Account != account || !string.Equals(binding.Box, box, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("隔离账号绑定不一致，未读取凭据。");
         string installation = DailySandbox.Installation() ?? throw new InvalidOperationException("无法找到 Sandboxie，尚未收回隔离窗口的登录状态。");
         string actual = (await DailySandbox.Run(installation,"SbieIni.exe",["query",box,"FileRootPath"],token).ConfigureAwait(false)).Trim();
         if (!SandboxConfiguration.SameRoot(actual,root)) throw new InvalidDataException("隔离目录已变化，未读取凭据。");

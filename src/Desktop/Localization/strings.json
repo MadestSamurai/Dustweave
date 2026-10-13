@@ -5790,5 +5790,95 @@
     "zh-CN": "已补种藏红花，成熟后再运行收割",
     "zh-TW": "已補種藏紅花，成熟後再執行收割",
     "en-US": "Saffron planted. Run the harvest step after it ripens."
+  },
+"sandbox.repair.account": {
+    "zh-CN": "账号：{0}",
+    "zh-TW": "帳號：{0}",
+    "en-US": "Account: {0}"
+  },
+  "sandbox.repair.ambiguous": {
+    "zh-CN": "多个沙盒指向此账号。请在账号管理的「修复沙盒绑定」中手动选择。",
+    "zh-TW": "多個沙盒指向此帳號。請在帳號管理的「修復沙盒綁定」中手動選擇。",
+    "en-US": "Several sandboxes point to this account. Choose one in Accounts / Repair sandbox binding."
+  },
+  "sandbox.repair.auto": {
+    "zh-CN": "自动修复",
+    "zh-TW": "自動修復",
+    "en-US": "Repair automatically"
+  },
+  "sandbox.repair.bind": {
+    "zh-CN": "绑定所选沙盒",
+    "zh-TW": "綁定所選沙盒",
+    "en-US": "Bind selected sandbox"
+  },
+  "sandbox.repair.choose": {
+    "zh-CN": "选择沙盒",
+    "zh-TW": "選擇沙盒",
+    "en-US": "Select sandbox"
+  },
+  "sandbox.repair.confirm": {
+    "zh-CN": "将账号「{0}」关联到「{1}」？只更新绑定名称，不移动目录或改写登录信息。请先关闭此沙盒内的游戏及工具窗口。",
+    "zh-TW": "將帳號「{0}」關聯至「{1}」？只更新綁定名稱，不移動目錄或改寫登入資訊。請先關閉此沙盒內的遊戲與工具視窗。",
+    "en-US": "Bind account {0} to {1}? Only the binding name changes. Files and sign-in stay in place. Close its game and tool windows first."
+  },
+  "sandbox.repair.done": {
+    "zh-CN": "已修复绑定：{0}。现在可以重新启动该账号。",
+    "zh-TW": "已修復綁定：{0}。現在可以重新啟動該帳號。",
+    "en-US": "Binding repaired: {0}. You can now start this account again."
+  },
+  "sandbox.repair.empty": {
+    "zh-CN": "没有找到沙盒。请检查 Sandboxie 安装位置及沙盒配置。",
+    "zh-TW": "找不到沙盒。請檢查 Sandboxie 安裝位置與沙盒設定。",
+    "en-US": "No sandboxes found. Check the Sandboxie installation and configuration."
+  },
+  "sandbox.repair.help": {
+    "zh-CN": "改名后可自动找回原沙盒；也可从列表手动选择。保留原数据和登录信息。",
+    "zh-TW": "改名後可自動找回原沙盒；也可從清單手動選擇。保留原資料與登入資訊。",
+    "en-US": "Find the original sandbox after a rename, or select it below. Your data and sign-in are preserved."
+  },
+  "sandbox.repair.no_proof": {
+    "zh-CN": "无法核对沙盒内的账号，未修改；请保留数据并导出诊断",
+    "zh-TW": "無法核對沙盒內的帳號，未修改；請保留資料並匯出診斷",
+    "en-US": "Cannot verify the saved account; unchanged. Preserve the data and export diagnostics"
+  },
+  "sandbox.repair.other_account": {
+    "zh-CN": "登记信息损坏或属于其他账号，未修改",
+    "zh-TW": "登記資訊損壞或屬於其他帳號，未修改",
+    "en-US": "Registration is unreadable or belongs to another account; unchanged"
+  },
+  "sandbox.repair.other_root": {
+    "zh-CN": "不是此账号的原数据目录",
+    "zh-TW": "不是此帳號的原資料目錄",
+    "en-US": "Different data directory"
+  },
+  "sandbox.repair.required": {
+    "zh-CN": "未找到可确认归属的原沙盒。请在账号管理中选择此账号，打开「修复沙盒绑定」。原数据已保留。",
+    "zh-TW": "找不到可確認歸屬的原沙盒。請在帳號管理中選擇此帳號，開啟「修復沙盒綁定」。原資料已保留。",
+    "en-US": "The original sandbox could not be verified. Select this account in Accounts and open Repair sandbox binding. Existing data is preserved."
+  },
+  "sandbox.repair.running": {
+    "zh-CN": "请先关闭此账号沙盒内的游戏及工具窗口，再修复绑定；不需要删除沙盒。",
+    "zh-TW": "請先關閉此帳號沙盒內的遊戲與工具視窗，再修復綁定；不需要刪除沙盒。",
+    "en-US": "Close the game and tool windows in this sandbox, then repair the binding. Do not delete the sandbox."
+  },
+  "sandbox.repair.scanning": {
+    "zh-CN": "正在查找账号原有的沙盒…",
+    "zh-TW": "正在尋找帳號原有的沙盒…",
+    "en-US": "Finding the original sandbox..."
+  },
+  "sandbox.repair.shared": {
+    "zh-CN": "此沙盒启用了额外的共享或退出隔离设置，请先在 Sandboxie 中检查这些设置，再修复绑定。",
+    "zh-TW": "此沙盒啟用了額外的共用或退出隔離設定，請先在 Sandboxie 中檢查這些設定，再修復綁定。",
+    "en-US": "This sandbox has extra sharing or breakout settings. Review them in Sandboxie before repairing the binding."
+  },
+  "sandbox.repair.title": {
+    "zh-CN": "修复沙盒绑定",
+    "zh-TW": "修復沙盒綁定",
+    "en-US": "Repair sandbox binding"
+  },
+  "sandbox.repair.verified": {
+    "zh-CN": "账号和原数据目录一致，可绑定。",
+    "zh-TW": "帳號與原資料目錄一致，可綁定。",
+    "en-US": "Account and original data directory match. Ready to bind."
   }
 }

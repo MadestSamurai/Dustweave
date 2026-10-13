@@ -83,7 +83,7 @@ public static class DailyDiagnosticExport
                 if(linked)continue;
                 // Read only this product's binding, never the isolated account vault.
                 var binding=DailyJson.TryRead<DailySandboxBinding>(Path.Combine(data,"sandbox-binding.json"));
-                if(binding!=null&&DailyProfiles.ValidKey(binding.Account)&&DailySandbox.BoxName(binding.Account)==Path.GetFileName(box))sources["isolated-"+(++index).ToString("D2")]=data;
+                if(binding!=null&&DailyProfiles.ValidKey(binding.Account)&&DailySandbox.CanonicalBoxName(binding.Account)==Path.GetFileName(box))sources["isolated-"+(++index).ToString("D2")]=data;
             }
         }} catch(Exception e) when(e is IOException or UnauthorizedAccessException) { /* Other log sources remain usable. */ }
         return sources;

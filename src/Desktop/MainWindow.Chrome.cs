@@ -10,6 +10,7 @@ public partial class MainWindow
     // Keep the native resize frame and caption behavior, drawing only our own controls.
     private void InitializeWindowChrome()
     {
+        DesktopWindowIdentity.Initialize(this);
         SourceInitialized += (_, _) => UpdateWindowInsets();
         StateChanged += (_, _) => UpdateWindowInsets();
         SizeChanged += (_, _) => UpdateWindowInsets();
