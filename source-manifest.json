@@ -2766,8 +2766,8 @@
       "reasons": [
         "build input"
       ],
-      "sha256": "23d928c532c74ef0c8dfb311613753768d810b70496ed38c47a665131533494e",
-      "bytes": 11670,
+      "sha256": "31b3b7ef36bd46d57a4dc68cec5385049b4172e2511a370fb3a4759fb04bdd2c",
+      "bytes": 12427,
       "path": "src/Desktop/MainWindow.Support.Smoke.cs"
     },
     {
@@ -2788,11 +2788,11 @@
     },
     {
       "path": "src/Desktop/MainWindow.xaml.cs",
-      "sha256": "d5f61d99dbfa11ae0a19cfd7264c16c9e2b0fc1bd105d7aafd23d527e4e9eb74",
+      "sha256": "726c6f21b25486b6aecc68f0245c28d1965b10d6f63fc55fc77539ae76bb1160",
       "reasons": [
         "build input"
       ],
-      "bytes": 75878
+      "bytes": 76023
     },
     {
       "path": "src/Desktop/MansionMap.cs",

@@ -54,7 +54,15 @@ public partial class MainWindow
             foreach(int language in new[]{0,1,2})foreach(int appearance in new[]{1,2}) {
                 LanguageSelector.SelectedIndex=language;ThemeSelector.SelectedIndex=appearance;Width=1180;Height=900;
                 ShowError(new InvalidOperationException("suite.owner-exited"));
-                if(!ProgressText.Text.Contains(L.Get("issue.action.owner-ended")))throw new Exception("Session issue lost its actionable category");
+                if(ActionNotice.Visibility!=Visibility.Visible || !ActionNoticeText.Text.Contains(L.Get("issue.action.owner-ended")))throw new Exception("Session issue lost its visible actionable category");
+                WorkspaceTabs.SelectedItem=AccountsTab;
+                ShowError(new InvalidOperationException("suite.owner-exited"));
+                if(ActionNotice.Visibility!=Visibility.Visible || ProgressText.Text.Length!=0)throw new Exception("Account error duplicated into operation footer");
+                DismissActionNotice_Click(this,new RoutedEventArgs());
+                if(ActionNotice.Visibility!=Visibility.Collapsed || ProgressText.Text.Length!=0)throw new Exception("Dismissed account error remains visible");
+                WorkspaceTabs.SelectedItem=DiagnosticsTab;
+                ShowError(new InvalidOperationException("suite.owner-exited"));
+                checks+=3;
                 await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture($"support-{language}-{appearance}");
                 using var shade=DailyDialogs.Dim(this);
                 var dialog=CreateDiagnosticExportWindow();dialog.Show();

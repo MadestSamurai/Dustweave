@@ -409,8 +409,10 @@ public partial class MainWindow : Window
         if (WorkspaceTabs.SelectedItem == RunTab)
             dailyPanel.ShowOperationError(e.Message, DailyUserText.Error(e));
         DailyJson.Write(Path.Combine(root, "ui-operation-error.json"), new { atUtc = DateTimeOffset.UtcNow, version = DailyProductVersion.Current, issue = DailyIssues.Classify(e), error = e.ToString() });
-        DailyUiText.Error(ProgressText, e);
-        ProgressText.Foreground = (Brush)FindResource("Error");
+        // The current page owns the error. Do not leave a second, stale copy in
+        // the account-operation footer after the notice is dismissed.
+        ProgressText.Text = "";
+        ProgressText.Foreground = (Brush)FindResource("MutedInk");
         if(WorkspaceTabs.SelectedItem!=RunTab) {DailyUiText.Error(ActionNoticeText,e);ActionNotice.Visibility=Visibility.Visible;}
     }
     private void DismissActionNotice_Click(object sender,RoutedEventArgs e) => ActionNotice.Visibility=Visibility.Collapsed;
