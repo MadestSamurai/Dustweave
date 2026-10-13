@@ -387,6 +387,8 @@ public sealed partial class DailyManagedBusiness
                 continue;
             }
             var entry = new JsonObject { ["id"] = op["id"]!.DeepClone(), ["role"] = role, ["stages"] = new JsonArray(proofs[role].StagesFor(op["scope"]).Select(s => (JsonNode)JsonValue.Create(s)!).ToArray()), ["recover_in_stage"] = false };
+            if (DailyFieldTalentProof.Owns(op)) entry["talent_kind"] = op["scope"]!["kind"]!.DeepClone();
+            entry["started_at"] = op["at"]?.DeepClone();
             if (op["state"]!.GetValue<string>() == "prepared")
             {
                 op["state"] = "rejected";
@@ -414,6 +416,18 @@ public sealed partial class DailyManagedBusiness
                 continue;
             }
             var events = Events(op);
+            if (DailyFieldTalentProof.ConfirmedCountedReceipt(op, events) is { } confirmedTalent)
+            {
+                op["state"] = "completed";
+                op["result"] = confirmedTalent;
+                op["events"] = events.DeepClone();
+                op["reconciliation"] = new JsonObject { ["method"] = "original_counted_talent_response", ["actions"] = 0,
+                    ["at"] = driver.UtcTicks, ["recheck_current_targets"] = true };
+                op.Remove("error"); op.Remove("recovery_error"); Save(op);
+                entry["reason"] = "原天赋使用已由服务器确认，按当前地图剩余目标继续。";
+                completed.Add(entry);
+                continue;
+            }
             string walkId = op["command_id"]?.GetValue<string>() ?? "";
             var walkReceipt = role == "mainline.pickup" && Guid.TryParseExact(walkId, "N", out _)
                 ? DailyJson.TryRead<JsonObject>(Path.Combine(root, "live", "steps", walkId, "result.json"))?["receipt"] as JsonObject : null;
@@ -515,6 +529,11 @@ public sealed partial class DailyManagedBusiness
                 Save(op);
                 entry["reason"] = last;
                 entry["recover_in_stage"] = proofs[role].CanResume?.Invoke(op, current) == true;
+                if (DailyFieldTalentProof.AbsorptionLocation(op) is { } location)
+                {
+                    entry["pack"] = location.Pack; entry["map"] = location.Map;
+                    entry["reason"] = $"将自动读取卡带 {location.Pack} · 地图 {location.Map} 的当前收集状态，按剩余目标继续。";
+                }
                 if (DailyManagementProof.IsFreeClaim(role))
                 {
                     entry["reason"] = "零成本领取回执仅用于诊断；本环节按游戏当前可领取状态继续。";

@@ -3,6 +3,15 @@ static class QueueSessionCases
 {
     public static async Task Run(string output, List<string> cases)
     {
+        using (var recovery = System.Text.Json.JsonDocument.Parse("""
+            {"recovery_blockers":[{"role":"dispatch.start","talent_kind":4},{"role":"dispatch.start","talent_kind":4},null,23,{"role":"trade.buy","talent_kind":"invalid"}]}
+            """))
+        {
+            var recoveryDetails = QueueRecoveryDetail.Read(recovery.RootElement);
+            if (recoveryDetails.Count != 2 || recoveryDetails[0] != new QueueRecoveryDetail("dispatch.start", 4) || recoveryDetails[1].TalentKind != 0)
+                throw new Exception("Recovery presentation metadata was lost or malformed rows broke loading");
+            cases.Add("recovery metadata retains talent type and tolerates old or malformed optional fields");
+        }
         string account = new('a', 64);
         string NewRoot()
         {

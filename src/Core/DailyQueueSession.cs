@@ -2,7 +2,26 @@ using System.Diagnostics;
 using System.Text.Json;
 namespace Dustweave;
 
-public sealed record QueueStage(string Task, string State, string Detail, bool Carried = false, DateTimeOffset? FinishedAt = null, IReadOnlyList<QueueTaskDetail>? PendingTasks = null);
+public sealed record QueueStage(string Task, string State, string Detail, bool Carried = false, DateTimeOffset? FinishedAt = null, IReadOnlyList<QueueTaskDetail>? PendingTasks = null)
+{
+    public IReadOnlyList<QueueRecoveryDetail> Recovery { get; init; } = [];
+}
+public sealed record QueueRecoveryDetail(string Role, int TalentKind)
+{
+    public static IReadOnlyList<QueueRecoveryDetail> Read(JsonElement item)
+    {
+        if (!item.TryGetProperty("recovery_blockers", out var blockers) || blockers.ValueKind != JsonValueKind.Array) return [];
+        var result = new List<QueueRecoveryDetail>();
+        foreach (var row in blockers.EnumerateArray())
+        {
+            if (row.ValueKind != JsonValueKind.Object) continue;
+            string role = row.TryGetProperty("role", out var r) && r.ValueKind == JsonValueKind.String ? r.GetString() ?? "" : "";
+            int kind = row.TryGetProperty("talent_kind", out var k) && k.ValueKind == JsonValueKind.Number && k.TryGetInt32(out int n) ? n : 0;
+            result.Add(new(role, kind));
+        }
+        return result.Distinct().ToArray();
+    }
+}
 public sealed record QueueView(string State, string Message, string Record, IReadOnlyList<QueueStage> Stages, string Account = "", QueuePeriod? Period = null, bool Expired = false)
 {
     // Presentation only. Worker results must never become host-side resumable journals.
@@ -190,7 +209,7 @@ public sealed class DailyQueueSession(string root, IDailyQueueExecutor executor,
         value = JsonSerializer.SerializeToElement(normalized);
         string state = value.GetProperty("state").GetString() ?? "";
         var stages = value.GetProperty("items").EnumerateArray().Select(i => new QueueStage(i.GetProperty("task").GetString() ?? "", i.GetProperty("state").GetString() ?? "",
-          ReadStageDetail(i), i.TryGetProperty("carried_forward", out var carried) && carried.ValueKind == JsonValueKind.True, ReadFinishedAt(i), DailyPendingTasks.Read(i))).ToArray();
+          ReadStageDetail(i), i.TryGetProperty("carried_forward", out var carried) && carried.ValueKind == JsonValueKind.True, ReadFinishedAt(i), DailyPendingTasks.Read(i)) { Recovery = QueueRecoveryDetail.Read(i) }).ToArray();
         var period = DailyQueuePeriod.Read(value);
         long now = utcTicks?.Invoke() ?? DateTime.UtcNow.Ticks;
         bool expired = DailyQueuePeriod.IsExpired(period, DailyQueuePeriod.Snapshot(root, period?.Server ?? ""), now);

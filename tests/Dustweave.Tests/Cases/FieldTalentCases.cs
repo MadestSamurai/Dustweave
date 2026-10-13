@@ -100,6 +100,51 @@ static class FieldTalentCases
         }
         var proof = DailyFieldTalentProof.Verify(op, new JsonArray(Event("request", 1), Event("response", 2)), Evidence());
         Check(proof["IsSuccess"]!.GetValue<bool>(), "managed talent proof accepts one matching successful response");
+        var counted = Op(Guid.NewGuid().ToString("N"));
+        counted["scope"]!["kind"] = 4;
+        counted["before"]!["Readings"]![1]!["Values"]![0]!["Json"] = "[{\"groupId\":605,\"useCount\":\"5\"}]";
+        var countedEvents = new JsonArray(Event("request", 71), Event("response", 72));
+        countedEvents[0]!["AtUtcTicks"] = 100000001;
+        countedEvents[1]!["AtUtcTicks"] = 100000002;
+        countedEvents[1]!["Values"]![1]!["Json"] = "{\"groupId\":605,\"useCount\":\"6\"}";
+        Check(DailyFieldTalentProof.ConfirmedCountedReceipt(counted, countedEvents) != null,
+            "successful counted talent survives missing post-action snapshot");
+        foreach (string condition in new[] { "request-missing", "duplicate", "actor", "scene", "rejected", "failed", "group", "count", "missing-count", "old-request", "order", "read-error", "kind" })
+        {
+            var bad = counted.DeepClone().AsObject(); var events = countedEvents.DeepClone().AsArray();
+            switch (condition)
+            {
+                case "request-missing": events.RemoveAt(0); break;
+                case "duplicate": events.Add(events[1]!.DeepClone()); break;
+                case "actor": events[1]!["Frame"]!["Instance"] = "foreign"; break;
+                case "scene": events[1]!["Frame"]!["Scene"] = "foreign"; break;
+                case "rejected": events[1]!["Accepted"] = false; break;
+                case "failed": events[1]!["Values"]![0]!["Json"] = "false"; break;
+                case "group": events[1]!["Values"]![1]!["Json"] = "{\"groupId\":606,\"useCount\":6}"; break;
+                case "count": events[1]!["Values"]![1]!["Json"] = "{\"groupId\":605,\"useCount\":7}"; break;
+                case "missing-count": events[1]!["Values"]![1]!["Json"] = "{\"groupId\":605}"; break;
+                case "old-request": events[0]!["AtUtcTicks"] = 99999999; break;
+                case "order": events[1]!["Sequence"] = 70; break;
+                case "read-error": bad["before"]!["Readings"]![1]!["Error"] = "unavailable"; break;
+                case "kind": bad["scope"]!["kind"] = 1; break;
+            }
+            Check(DailyFieldTalentProof.ConfirmedCountedReceipt(bad, events) == null, "counted receipt recovery refuses " + condition);
+        }
+        using (var resumed = new WorkflowHarness(Path.Combine(output, "counted-talent-reconnected"), DailyWorkflowRegistry.Proofs(),
+            configureIdentity: (frame, context) => { frame["ProcessId"] = 999; context["actor"]![0] = 999; }))
+        {
+            counted["events"] = countedEvents.DeepClone();
+            resumed.Business.Save(counted);
+            var recovered = await resumed.Business.ReconcileAsync(resumed.Context);
+            Check(recovered["completed"]!.AsArray().Count == 1 && recovered["unresolved"]!.AsArray().Count == 0
+                && resumed.Box.Commands.Count == 0, "reconnected game settles original counted talent without any replay");
+            var saved = resumed.Business.Records(resumed.Context).Single();
+            Check(saved["state"]!.GetValue<string>() == "completed" && saved["after"] == null
+                && saved["reconciliation"]!["method"]!.GetValue<string>() == "original_counted_talent_response",
+                "receipt recovery keeps original evidence without inventing a post-action snapshot");
+            var again = await resumed.Business.ReconcileAsync(resumed.Context);
+            Check(again["completed"]!.AsArray().Count == 0 && resumed.Box.Commands.Count == 0, "counted talent recovery is idempotent");
+        }
         var weekly = Evidence();
         weekly["Readings"]!.AsArray().Add(Reading("weekly_npc.native", "$self", new JsonObject { ["State"] = "ready", ["Error"] = "", ["Limit"] = 3, ["Completed"] = 3, ["Remaining"] = 0, ["Week"] = 500 }));
         weekly["Readings"]!.AsArray().Add(Reading("mainline.reset", "GetWeeklyResetTime().Ticks", JsonValue.Create(500)));

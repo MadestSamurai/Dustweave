@@ -179,7 +179,10 @@ public sealed partial class DailyFieldRoute
                 await Skill(20);
             await Skill(6);
             e = await Evidence();
-            if (Drops(e).Length > 0)
+            // The live object cache can lag after reconnecting. Already-collected
+            // server targets must not spend another absorption use.
+            var remainingDrops = checkpoint["maps"]![map.ToString()]!["drops"]!.AsArray().Select(N).ToHashSet();
+            if (Drops(e).Any(drop => remainingDrops.Contains(N(drop[ObjectPath]))))
             {
                 if (manual)
                     walking = await WalkDrops();

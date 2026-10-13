@@ -1,4 +1,89 @@
 {
+  "run.recovery_details": {
+    "zh-CN": "查看恢复方法",
+    "zh-TW": "查看恢復方法",
+    "en-US": "How to resume"
+  },
+  "run.recovery_accessible": {
+    "zh-CN": "{0}：查看原因并恢复",
+    "zh-TW": "{0}：查看原因並恢復",
+    "en-US": "{0}: review and resume"
+  },
+  "run.recovery_title": {
+    "zh-CN": "恢复未确认的操作",
+    "zh-TW": "恢復未確認的操作",
+    "en-US": "Resume an unconfirmed operation"
+  },
+  "run.recovery_summary": {
+    "zh-CN": "「{0}」中断。游戏恢复后可直接继续，工具会检查当前进度。",
+    "zh-TW": "「{0}」中斷。遊戲恢復後可直接繼續，工具會檢查目前進度。",
+    "en-US": "{0} was interrupted. Once the game is ready, resume to check current progress."
+  },
+  "run.recovery_operation": {
+    "zh-CN": "{0}中的上次操作",
+    "zh-TW": "{0}中的上次操作",
+    "en-US": "the last action in {0}"
+  },
+  "run.recovery_talent_2": {
+  "en-US": "Sprint",
+  "zh-CN": "飞奔",
+  "zh-TW": "飛奔"
+},
+  "run.recovery_talent_3": {
+    "zh-CN": "压制",
+    "zh-TW": "壓制",
+    "en-US": "Suppression"
+  },
+  "run.recovery_talent_4": {
+    "zh-CN": "吸收",
+    "zh-TW": "吸收",
+    "en-US": "Absorption"
+  },
+  "run.recovery_talent_6": {
+    "zh-CN": "探查",
+    "zh-TW": "探查",
+    "en-US": "Search"
+  },
+  "run.recovery_talent_17": {
+  "en-US": "Stealth",
+  "zh-CN": "藏身",
+  "zh-TW": "藏身"
+},
+  "run.recovery_talent_20": {
+    "zh-CN": "召唤收集物",
+    "zh-TW": "召喚收集物",
+    "en-US": "Collectible summoning"
+  },
+  "run.recovery_body": {
+  "en-US": "Task: {0}\nInterrupted action: {1}\n\nA disconnect or interrupted read does not mean the action failed. Once logged in again, resume the original queue or run this task again.\n\nFor absorption, Dustweave automatically reads the affected map. It skips collected items and continues remaining targets using the current limits. No old reply or manual check is needed. If the map cannot be read, it is deferred with a reason.\n\nOther actions that cannot be resolved automatically retain their reason. You can deselect that task, run the others and export diagnostic logs.",
+  "zh-CN": "环节：{0}\n中断的操作：{1}\n\n游戏断线或读取中断不代表操作失败。恢复登录后，可直接接续原队列或重新运行此环节。\n\n吸收卡点会自动读取对应地图：已收完就继续下一张，仍有物品就按当前剩余目标和次数继续，无需旧回执或手动核对。暂时读不到时会保留原因并跳过该地点。\n\n其他无法自动判断的操作会保留具体原因；可先取消勾选该环节继续其他任务，并导出诊断日志。",
+  "zh-TW": "環節：{0}\n中斷的操作：{1}\n\n遊戲斷線或讀取中斷不代表操作失敗。恢復登入後，可直接接續原佇列或重新執行此環節。\n\n吸收卡點會自動讀取對應地圖：已收完就繼續下一張，仍有物品就按目前剩餘目標與次數繼續，無需舊回應或手動核對。暫時讀不到時會保留原因並跳過該地點。\n\n其他無法自動判斷的操作會保留具體原因；可先取消勾選該環節繼續其他任務，並匯出診斷記錄。"
+},
+  "run.recovery_continue": {
+  "en-US": "Continue task",
+  "zh-CN": "继续此环节",
+  "zh-TW": "繼續此環節"
+},
+  "run.recovery_select_current": {
+    "zh-CN": "这份记录不是当前可恢复的任务。请返回「当前计划」，选择对应账号和环节再运行。",
+    "zh-TW": "這份記錄不是目前可恢復的任務。請返回「目前計畫」，選擇對應帳號與環節再執行。",
+    "en-US": "This record cannot be resumed here. Return to Current plan and choose the matching account and task."
+  },
+  "run.sync_confirm_title": {
+    "zh-CN": "重新读取地图收集进度？",
+    "zh-TW": "重新讀取地圖收集進度？",
+    "en-US": "Read map collection progress again?"
+  },
+  "run.sync_confirm_start": {
+    "zh-CN": "开始检查地图",
+    "zh-TW": "開始檢查地圖",
+    "en-US": "Check maps"
+  },
+  "run.sync_confirm_body": {
+  "en-US": "This optional full refresh is for clearly incorrect collection progress after manual play. After a disconnect or interrupted absorption, simply resume the queue; Dustweave checks the affected map automatically.\n\nIt switches between available cartridges and reads server progress. This may take several minutes. It does not use absorption or suppression, or mark tasks complete without checking.\n\nFinish any battle or other automation first. You can stop at any time.",
+  "zh-CN": "这是可选的全量进度刷新，适用于手动收集后列表仍明显不正确的情况。普通断线或吸收中断，直接接续队列即可，工具会自动检查出问题的地图。\n\n确认后将切换可用卡带、读取服务器记录并更新收集进度，可能需要数分钟；不会使用吸收或压制，也不会直接把任务标记为完成。\n\n请先结束当前战斗或其他自动化。检查期间可随时停止。",
+  "zh-TW": "這是可選的完整進度重新整理，適用於手動收集後清單仍明顯不正確的情況。一般斷線或吸收中斷，直接接續佇列即可，工具會自動檢查出問題的地圖。\n\n確認後將切換可用卡帶、讀取伺服器記錄並更新收集進度，可能需要數分鐘；不會使用吸收或壓制，也不會直接將任務標記為完成。\n\n請先結束目前戰鬥或其他自動化。檢查期間可隨時停止。"
+},
   "schedule.execution": {
     "zh-CN": "到点如何执行",
     "zh-TW": "到點如何執行",
@@ -1280,9 +1365,9 @@
     "en-US": "Needs attention"
   },
   "state.recovery_required": {
-    "zh-CN": "需要核对",
-    "zh-TW": "需要核對",
-    "en-US": "Needs reconciliation"
+    "zh-CN": "操作结果未确认",
+    "zh-TW": "操作結果未確認",
+    "en-US": "Result unconfirmed"
   },
   "state.paused": {
     "zh-CN": "已暂停",
@@ -4705,9 +4790,9 @@
     "en-US": "The operation may have been submitted, but its result is unconfirmed. It has not been repeated."
   },
   "issue.action.uncertain": {
-    "zh-CN": "先在游戏中核对奖励或资源变化，再使用任务详情中的核对／恢复入口；不要反复点击执行。",
-    "zh-TW": "先在遊戲中核對獎勵或資源變化，再使用任務詳情中的核對／恢復入口；不要反覆點擊執行。",
-    "en-US": "Check the reward or resource change in the game, then use the task's review or recovery action. Avoid repeated submissions."
+    "zh-CN": "游戏恢复登录后，在今日任务中点击该环节的「查看恢复方法」。仍无法恢复时，可取消勾选此环节先运行其他任务，并导出诊断日志。",
+    "zh-TW": "遊戲恢復登入後，在今日任務中點擊該環節的「查看恢復方法」。仍無法恢復時，可取消勾選此環節先執行其他任務，並匯出診斷記錄。",
+    "en-US": "After signing back in, select How to resume on this task in Today's tasks. If recovery still fails, deselect it to run other tasks and export diagnostics."
   },
   "issue.action.unknown": {
     "zh-CN": "查看任务详情；无法判断时，导出诊断日志并联系开发者。",

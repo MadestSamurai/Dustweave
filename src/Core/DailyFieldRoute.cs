@@ -188,7 +188,8 @@ public sealed partial class DailyFieldRoute
     public static IEnumerable<DailyBusinessProof> Proofs()
     {
         yield return new("dispatch.start", "weekly_mainline", ["mainline", "dispatch.talent"], (op, es, a) => VerifyTalent(op, es, a), AffectedStages: ["weekly_mainline", "weekly_npc", "weekly_steal"],
-            ScopeStages: scope => N(scope["kind"]) == 1 ? ["weekly_steal"] : ["weekly_mainline", "weekly_npc", "weekly_steal"]);
+            ScopeStages: scope => N(scope["kind"]) == 1 ? ["weekly_steal"] : ["weekly_mainline", "weekly_npc", "weekly_steal"],
+            CanResume: (op, _) => DailyFieldTalentProof.AbsorptionLocation(op) != null);
         yield return new("mainline.waypoint_use", "weekly_mainline", ["mainline"], (op, es, a) => Response("mainline.waypoint_use", es, op["before"]!.AsObject(), a)!, AffectedStages: ["weekly_mainline", "weekly_npc", "weekly_steal", "trade"]);
         yield return new("mainline.pickup", "weekly_mainline", ["mainline"], (op, es, a) => VerifyPickup(op, es, a), ["mainline.pickup", "mainline.pickup_list"]);
     }
@@ -324,7 +325,7 @@ public sealed partial class DailyFieldRoute
         }
         if (kind is 2 or 17)
             await RecoverExpired(e);
-        var op = await W.Transact("dispatch.start", O(("kind", kind), ("map", Map(e)["id"]), ("group", selected[SkillPath]!["groupId"])), O(("ui", "QuickMenuUI"), ("operation", "mainline_talent"), ("value", selected["instance"])), 25);
+        var op = await W.Transact("dispatch.start", O(("kind", kind), ("pack", Map(e)["packId"]), ("map", Map(e)["id"]), ("group", selected[SkillPath]!["groupId"])), O(("ui", "QuickMenuUI"), ("operation", "mainline_talent"), ("value", selected["instance"])), 25);
         await FieldReady(settle: 0);
         if (kind is 2 or 17)
             Require(Remaining(await Evidence(), kind) > 0, "移动天赋未确认生效");

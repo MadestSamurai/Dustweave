@@ -1,5 +1,14 @@
 [
 {
+  "Version": "1.2.9",
+  "Date": "2026-10-13",
+  "Notes": {
+    "zh-CN": ["周收集吸收中断后，接续或补跑会自动核对卡点地图的最新进度，无需先手动核对。", "已收完的地图不重复吸收；暂时无法读取的地图保留待办，继续其他地图。", "补充恢复方法说明；手动刷新进度增加用途说明和二次确认。"],
+    "zh-TW": ["每週收集吸收中斷後，接續或補跑會自動核對卡點地圖的最新進度，無需先手動核對。", "已收完的地圖不重複吸收；暫時無法讀取的地圖保留待辦，繼續其他地圖。", "補充恢復方法說明；手動重新整理進度增加用途說明與二次確認。"],
+    "en-US": ["Resuming or retrying weekly collection automatically checks current progress on the affected map after an uncertain absorption.", "Completed maps are not absorbed again. Temporarily unreadable maps remain pending while collection continues elsewhere.", "Recovery guidance is clearer. Manual progress refresh explains its scope and asks for confirmation."]
+  }
+},
+{
   "Version": "1.2.8",
   "Date": "2026-10-12",
   "Notes": {

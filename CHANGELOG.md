@@ -1,5 +1,14 @@
 # Changelog / 更新记录
 
+## 1.2.9 — 2026-10-13
+
+- 周收集在吸收结果不明时自动读取卡点地图的最新进度，按剩余目标继续；不再要求先手动核对。
+- 已完成的地图不重复吸收，暂时无法读取的地图保留待办并继续其他地图。
+- 补充恢复说明，手动刷新收集进度前显示用途说明和二次确认。
+- Weekly collection refreshes affected maps automatically after an uncertain absorption, then continues from current server progress.
+- Completed maps are not absorbed again; unreadable maps remain pending while other maps continue. Manual progress refresh now explains its scope and asks for confirmation.
+- [完整说明 / Full notes](docs/releases/1.2.9.md)
+
 ## 1.2.8 — 2026-10-12
 
 - 修复 Sandboxie 路径读取丢失非 ASCII 字符及周 NPC 狩猎任务未触发交互的问题，补充诊断记录。

@@ -49,6 +49,25 @@ public static class DailyFieldTalentProof
         return result;
     }
     public static bool Owns(JsonObject op) => op["role"]?.GetValue<string>() == "dispatch.start" && op["action"]?["operation"]?.GetValue<string>() == "mainline_talent" && op["scope"]?["kind"] is JsonValue kind && kind.TryGetValue<int>(out int n) && n is 2 or 3 or 4 or 6 or 17 or 20;
+    // The location is routing metadata, not proof that the old cast succeeded.
+    // An absorption can be replanned from a fresh map query even with no old reply.
+    public static (long Pack, long Map)? AbsorptionLocation(JsonObject op)
+    {
+        try
+        {
+            if (!Owns(op) || Numeric(op["scope"]?["kind"]) != 4) return null;
+            long map = Numeric(op["scope"]?["map"]), pack = DailyData.N(op["scope"]?["pack"]);
+            if (pack == 0 && op["before"] is JsonObject before)
+            {
+                var location = DailyFieldRoute.Map(before);
+                if (Numeric(location["id"]) != map) return null;
+                pack = Numeric(location["packId"]);
+            }
+            return pack > 0 && map > 0 ? (pack, map) : null;
+        }
+        catch (Exception e) when (e is InvalidDataException or InvalidOperationException or NullReferenceException
+            or System.Text.Json.JsonException or ArgumentException or OverflowException) { return null; }
+    }
     internal static long Numeric(JsonNode? node)
     {
         if (node is JsonValue v && v.TryGetValue<string>(out string? text) && long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out long n))
@@ -93,6 +112,42 @@ public static class DailyFieldTalentProof
                 throw new InvalidDataException("Talent usage did not advance exactly once");
         }
         return result;
+    }
+    // A process exit can lose the post-action snapshot after the server has
+    // already confirmed a counted talent. Recover that one use from its original
+    // request/response, never by synthesizing an after-frame or replaying input.
+    public static JsonObject? ConfirmedCountedReceipt(JsonObject op, JsonArray events)
+    {
+        try
+        {
+            if (!Owns(op) || Numeric(op["scope"]?["kind"]) is not (3 or 4 or 20)) return null;
+            var before = op["before"]!.AsObject();
+            var frame = before["Frame"]!.AsObject();
+            if (before["Error"]?.GetValue<string>() != "" || frame["Error"]?.GetValue<string>() is { Length: > 0 }
+                || !(before["Taps"]?.AsArray().Any(t => t?.GetValue<string>() == "dispatch.start") ?? false)) return null;
+            var selected = events.Where(e => e?["Role"]?.GetValue<string>() == "dispatch.start").Select(e => e!.AsObject()).ToArray();
+            if (selected.Length != 2) return null;
+            var request = selected.SingleOrDefault(e => e["Kind"]?.GetValue<string>() == "request");
+            var response = selected.SingleOrDefault(e => e["Kind"]?.GetValue<string>() == "response");
+            if (request == null || response == null || Numeric(op["at"]) <= 0
+                || Numeric(request["AtUtcTicks"]) < Numeric(op["at"])
+                || Numeric(response["AtUtcTicks"]) < Numeric(request["AtUtcTicks"])
+                || Numeric(request["Sequence"]) >= Numeric(response["Sequence"])
+                || selected.Any(e => !DailyEvidence.SameActor(frame, e["Frame"]!.AsObject())
+                    || !JsonNode.DeepEquals(frame["Scene"], e["Frame"]!["Scene"])
+                    || e["Error"]?.GetValue<string>() != "" || Numeric(e["ErrorCode"]) != 0)
+                || response["Accepted"]?.GetValue<bool>() != true) return null;
+            var result = DailyEvidence.Values(response);
+            int group = checked((int)Numeric(op["scope"]!["group"]));
+            long used = Numeric(Count(before, group)?["useCount"] ?? JsonValue.Create(0));
+            if (group <= 0 || used < 0 || result["IsSuccess"]?.GetValue<bool>() != true
+                || Numeric(result["TalentSkillInfo"]?["groupId"]) != group
+                || result["TalentSkillInfo"]?["useCount"] == null
+                || Numeric(result["TalentSkillInfo"]!["useCount"]) != checked(used + 1)) return null;
+            return result;
+        }
+        catch (Exception e) when (e is InvalidDataException or InvalidOperationException or NullReferenceException
+            or System.Text.Json.JsonException or ArgumentException or OverflowException) { return null; }
     }
     // The legacy click returned synchronously with the same menu but no RPC.
     // Recovery is restricted to research: its long-lived effect must still have

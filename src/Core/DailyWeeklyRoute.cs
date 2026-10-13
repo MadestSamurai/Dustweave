@@ -17,6 +17,7 @@ public sealed class DailyWeeklyRoute
     private readonly Dictionary<string, HashSet<(long Pack, long Map)>> known = Stages.ToDictionary(s => s, _ => new HashSet<(long, long)>()), done = Stages.ToDictionary(s => s, _ => new HashSet<(long, long)>());
     private readonly HashSet<(long, long)> deferred = [], reentered = []; private HashSet<string> active = []; private DailyWeeklyNpc? npc; private DailyCollectionNavigator? nav; private JsonObject? checkpoint; private string week = ""; private long pack; private bool entered;
     private bool catalogReady;
+    private readonly HashSet<long> recoveredPacks = [];
     private readonly HashSet<(long Pack, long Map)> storyLocked = [];
     // Deferrals belong to this run only. A retry starts from fresh server progress,
     // never from a persistent blacklist of maps or cartridges.
@@ -141,6 +142,10 @@ public sealed class DailyWeeklyRoute
         nav = null;
         entered = false;
         await Refresh(true);
+        // A prior interrupted absorption must never be hidden by a completed cache.
+        // The recovery pass has already queried only the affected maps; refresh the
+        // rest of this cartridge once when normal routing reaches it.
+        if (recoveredPacks.Contains(pack)) checkpoint = null;
         if (MapJobs().GetValueOrDefault("weekly_mainline", []).Length > 0 && !w.Settings.Weekly.WalkCollect)
             try
             {
@@ -192,6 +197,31 @@ public sealed class DailyWeeklyRoute
         return jobs;
     }
     public static readonly string[] StageOrder = ["weekly_mainline", "weekly_npc", "weekly_steal"];
+    private async Task RecoverInterruptedMaps(long[] availablePacks)
+    {
+        var locations = route.Progress.PendingAbsorptions().Select(op => DailyFieldTalentProof.AbsorptionLocation(op)!.Value).Distinct().ToArray();
+        foreach (var group in locations.GroupBy(p => p.Pack))
+        {
+            await Guard();
+            pack = group.Key;
+            var maps = group.Select(p => p.Map).ToArray();
+            foreach (string stage in active) Emit(stage, $"正在恢复卡带 {pack} · 地图 {string.Join("、", maps)} 的当前进度", true);
+            try
+            {
+                if (!availablePacks.Contains(pack)) throw new DailyTravelBlocked("对应卡带当前不可进入");
+                await route.Enter(pack);
+                await route.FieldReady(settle: 0);
+                await route.Progress.Query(pack, maps, cache: false);
+                recoveredPacks.Add(pack);
+            }
+            catch (Exception e) when (e is DailyTravelBlocked or DailyCollectionReadUnavailable)
+            {
+                await Guard();
+                foreach (long map in maps)
+                    foreach (string stage in active) Defer(stage, map, "当前无法读取此地图的收集进度，已保留待办：" + e.Message);
+            }
+        }
+    }
     private bool CanRun(string stage, long map) => stage != "weekly_mainline" || npc?.Data == null || !npc.Data.Protects(map);
     private async Task RunNpc(Func<Task> action)
     {
@@ -218,6 +248,7 @@ public sealed class DailyWeeklyRoute
         for (int attempt = 0; attempt < 2; attempt++)
         {
             JsonArray? deferredPickups = null;
+            bool recoveredAbsorption = false;
             await Guard();
             bool oldSteal = route.Progress.Steal, oldOnly = route.Progress.OnlySteal;
             route.Progress.Steal = route.Progress.OnlySteal = stage == "weekly_steal";
@@ -230,10 +261,25 @@ public sealed class DailyWeeklyRoute
             }
             catch (DailyQuotaExhausted) { throw new DailyWeeklyCategoryStop(stage, "吸收次数已用完，次日接续", O(("waiting_daily_reset", true))); }
             catch (DailyCollectionTargetsRemain error) { deferredPickups = error.DeferredPickups; }
+            catch (StageHostException error) when (error.Kind == "pending" && route.Progress.PendingAbsorptions()
+                .Any(op => DailyFieldTalentProof.AbsorptionLocation(op) == (pack, map)))
+            {
+                // A live timeout follows the same local recovery path as a restart.
+                // Never resend the old command: query current targets, then replan.
+                await route.FieldReady(settle: 0);
+                await route.Progress.Query(pack, [map], cache: false);
+                recoveredAbsorption = true;
+            }
             finally { route.Progress.Steal = oldSteal; route.Progress.OnlySteal = oldOnly; }
             await Refresh();
             if (!MapJobs().GetValueOrDefault(stage, []).Contains(map))
                 break;
+            if (recoveredAbsorption)
+            {
+                if (attempt == 0) continue;
+                Defer(stage, map, "吸收后已重新读取进度，本次不再重复尝试；之后可补跑");
+                break;
+            }
             if (deferredPickups is { Count: > 0 })
             {
                 Defer(stage, map, "可达物品已处理，部分拾取点当前不可达；继续其他地图", O(("targets", deferredPickups), ("remaining", checkpoint!["maps"]![map.ToString()])));
@@ -318,6 +364,7 @@ public sealed class DailyWeeklyRoute
             if (active.Contains("weekly_steal")) known["weekly_steal"].UnionWith(route.Catalog.StealMaps(p).Select(m => (p, m)));
         }
         catalogReady = true;
+        if (active.Count > 0) await RecoverInterruptedMaps(packs);
         void EmitAll(string place)
         {
             foreach (string s in selected)
@@ -403,7 +450,7 @@ public sealed class DailyWeeklyRoute
                 if (active.Contains("weekly_npc") && npc?.HasOffers(current) == true && !failures["weekly_npc"].Keys.Any(p => p.Pack == current))
                     pendingPacks.Add(current);
             }
-            catch (DailyTravelBlocked e)
+            catch (Exception e) when (e is DailyTravelBlocked or DailyCollectionReadUnavailable)
             {
                 // Only a bounded, non-consuming navigation failure is local.
                 // Identity loss, uncertain talent receipts and cancellation propagate.

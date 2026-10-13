@@ -104,6 +104,45 @@ public sealed partial class DailyRunPanel
         panel.Show(view with{Stages=[new QueueStage("trade","blocked","")]});panel.SelectUnfinished();
         panel.resume.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         if(panel.resume.IsEnabled||resumes!=1||!panel.retry.IsEnabled)throw new Exception("A terminal queue offers resume or prevents selected retry");
+        var recoveryStage = new QueueStage("weekly_mainline", "recovery_required", "Original business proof unavailable")
+            { Recovery = [new("dispatch.start", 4)] };
+        panel.Show(view with { Stages = [recoveryStage] });
+        var recoveryRow = panel.rows.Single();
+        if (!recoveryRow.HasRecovery || !recoveryRow.Detail.Contains(L.Get("run.recovery_talent_4"))
+            || recoveryRow.Detail.Contains("proof unavailable")) throw new Exception("Recovery row does not explain the affected action");
+        int confirms = 0, syncs = 0;
+        panel.SyncCollectionRequested += () => syncs++;
+        panel.ConfirmRecoveryForSmoke = dialog => {
+            confirms++;
+            // ContentPresenter is not rendered in this isolated routing test. Verify
+            // the dialog's logical buttons as well as the visible smoke below.
+            IEnumerable<DependencyObject> Logical(DependencyObject node)
+            {
+                yield return node;
+                if (node is ContentPresenter { Content: DependencyObject content })
+                    foreach (var item in Logical(content)) yield return item;
+                foreach (var child in LogicalTreeHelper.GetChildren(node).OfType<DependencyObject>())
+                    foreach (var item in Logical(child)) yield return item;
+            }
+            var buttons = Logical(dialog).OfType<Button>().ToArray();
+            if (!buttons.Any(b => b.IsCancel && b.IsDefault) || buttons.Any(b => !b.IsCancel && b.IsDefault))
+                throw new Exception("Recovery confirmation defaults to a consuming action");
+            return false;
+        };
+        requested = null;
+        panel.ShowRecovery(recoveryRow);
+        panel.syncCollection.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        if (confirms != 2 || requested != null || syncs != 0) throw new Exception("Cancelled recovery or map check dispatched work");
+        panel.ConfirmRecoveryForSmoke = _ => true;
+        panel.ShowRecovery(recoveryRow);
+        if (requested?.Tasks.SequenceEqual(new[] { "weekly_mainline" }) != true || requested.Account != account)
+            throw new Exception("Recovery did not target just the affected account task");
+        panel.syncCollection.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        if (syncs != 1) throw new Exception("Confirmed map check failed to start");
+        requested = null;
+        panel.ConfirmRecoveryForSmoke = _ => { panel.SetAccount("other",new string('b',64)); return true; };
+        panel.ShowRecovery(recoveryRow);
+        if (requested != null) throw new Exception("Account changed inside confirmation but recovery still started");
     }
     internal void ShowOutcomeExplanationsForSmoke()
     {

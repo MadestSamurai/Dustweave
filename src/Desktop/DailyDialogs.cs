@@ -68,7 +68,7 @@ internal static class DailyDialogs
         try { return window.ShowDialog(); }
         finally { if (focused is UIElement { IsVisible: true, IsEnabled: true } previous) previous.Focus(); }
     }
-    internal static Window Message(Window owner, string title, string text, bool confirmation)
+    internal static Window Message(Window owner, string title, string text, bool confirmation, string? acceptKey = null, bool safeDefault = false)
     {
         var dialog = new Window { Owner = owner, Title = title, Width = 520, MaxHeight = Math.Max(300, SystemParameters.WorkArea.Height - 64),
             SizeToContent = SizeToContent.Height, ResizeMode = ResizeMode.NoResize, WindowStartupLocation = WindowStartupLocation.CenterOwner };
@@ -76,11 +76,11 @@ internal static class DailyDialogs
         var actions = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 24, 0, 0) };
         if (confirmation)
         {
-            var cancel = new Button { IsCancel = true, Margin = new Thickness(0, 0, 10, 0) };
+            var cancel = new Button { IsCancel = true, IsDefault = safeDefault, Margin = new Thickness(0, 0, 10, 0) };
             DailyLanguage.Current.Bind(cancel, ContentControl.ContentProperty, "common.cancel"); actions.Children.Add(cancel);
         }
-        var accept = new Button { IsDefault = true, Style = (Style)Application.Current.FindResource("PrimaryButton") };
-        DailyLanguage.Current.Bind(accept, ContentControl.ContentProperty, confirmation ? "common.confirm" : "updates.got_it");
+        var accept = new Button { IsDefault = !safeDefault, Style = (Style)Application.Current.FindResource("PrimaryButton") };
+        DailyLanguage.Current.Bind(accept, ContentControl.ContentProperty, acceptKey ?? (confirmation ? "common.confirm" : "updates.got_it"));
         accept.Click += (_, _) => dialog.DialogResult = true; actions.Children.Add(accept);
         DockPanel.SetDock(actions, Dock.Bottom); body.Children.Add(actions);
         body.Children.Add(new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Content = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap } });

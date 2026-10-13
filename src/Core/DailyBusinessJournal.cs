@@ -41,6 +41,8 @@ public sealed partial class DailyManagedBusiness
         summary["trade"] = DailyTradeJournal.IsTrade(op);
         if (op["role"]?.GetValue<string>() == "dispatch.start" && op["scope"] is JsonObject scope)
             summary["talent_kind"] = scope["kind"]?.DeepClone();
+        if (DailyFieldTalentProof.AbsorptionLocation(op) is { } location)
+            summary["absorption_map"] = location.Map;
         return summary;
     }
     private void RememberHeader(string path, JsonObject op) => journalHeaders[path] = new(Stamp(path), Summary(op));
@@ -99,6 +101,11 @@ public sealed partial class DailyManagedBusiness
                     && JsonNode.DeepEquals(op["server"], context["server"]))
                 {
                     // Stealing uses the same network endpoint as research/absorption.
+                    // Absorption uncertainty is likewise local to its map. A new
+                    // cast there remains blocked until a fresh server map query.
+                    if (role == "dispatch.start" && op["absorption_map"] is JsonValue absorptionMap
+                        && requestedScope?["kind"] != null && requestedScope["map"] != null
+                        && (DailyData.N(requestedScope["kind"]) != 4 || DailyData.N(requestedScope["map"]) != DailyData.N(absorptionMap))) continue;
                     // An unknown steal still blocks more theft, not unrelated talents.
                     if (role == "dispatch.start" && DailyData.N(op["talent_kind"]) == 1 && requestedScope?["kind"] is JsonValue kind &&
                         kind.TryGetValue<int>(out var requested) && requested is 2 or 3 or 4 or 6 or 17 or 20) continue;

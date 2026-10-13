@@ -32,8 +32,39 @@ public sealed class DailyCollectionCatalog(DailyWorkflow workflow)
         return p["maps"]!.AsArray().Select(N).ToArray();
     }
 }
+public sealed class DailyCollectionReadUnavailable(string message) : Exception(message);
+
 public sealed class DailyCollectionProgress(DailyWorkflow workflow)
 {
+    public JsonObject[] PendingAbsorptions() => workflow.Business.MatchingRecords(workflow.Context,
+        "dispatch.start", h => DailyManagedBusiness.Pending(h) && N(h["talent_kind"]) == 4)
+        .Where(op => DailyFieldTalentProof.AbsorptionLocation(op) != null).ToArray();
+
+    private async Task RecoverAbsorptions(long pack, long[] maps, JsonObject network, JsonObject progress)
+    {
+        if (OnlySteal) return; // A theft-only projection deliberately omits drops.
+        var pending = PendingAbsorptions().Where(op => DailyFieldTalentProof.AbsorptionLocation(op) is { } p
+            && p.Pack == pack && maps.Contains(p.Map)).ToArray();
+        if (pending.Length == 0) return;
+        var current = await workflow.Evidence("mainline.map", "mainline.reset", "mainline.talent_counts");
+        Require(N(DailyFieldRoute.Map(current)["packId"]) == pack
+            && S(R(current, "mainline.reset", "GetWeeklyResetTime().Ticks")) == S(network["Week"]),
+            "Collection recovery map or weekly cycle changed");
+        var counts = DailyFieldRoute.Counts(current);
+        Require(counts.All(c => N(c["groupId"]) > 0 && N(c["useCount"]) >= 0), "Current talent usage unavailable");
+        foreach (var op in pending)
+        {
+            var p = DailyFieldTalentProof.AbsorptionLocation(op)!.Value;
+            op["state"] = "superseded"; // Old outcome stays unknown; fresh targets replace the old intent.
+            op["reconciliation"] = O(("method", "fresh_map_server_progress"), ("at", workflow.Driver.UtcTicks),
+                ("actions", 0), ("original_success_claimed", false), ("pack", pack), ("map", p.Map),
+                ("query", network["Query"]), ("week", network["Week"]), ("remaining", progress["maps"]![p.Map.ToString()]),
+                ("current_talent_counts", Array(counts)));
+            op.Remove("error"); op.Remove("recovery_error");
+            workflow.Business.Save(op);
+            workflow.Driver.Diagnostics.Event("collection_map_recovered", O(("id", op["id"]), ("recovery", op["reconciliation"])));
+        }
+    }
     public bool Steal
     {
         get; set;
@@ -144,15 +175,25 @@ public sealed class DailyCollectionProgress(DailyWorkflow workflow)
                     projected[key] = Array(Rows(rows).Where(r => maps.Contains(N(r["Map"]))));
             return Classify(projected, pack, maps, Steal, OnlySteal);
         }
-        catch (Exception e) when (e is IOException or InvalidDataException or System.Text.Json.JsonException or InvalidOperationException or ArgumentException) { throw new DailyCollectionSyncRequired("服务器收集记录异常，请按需手动检查；日常不自动全图扫描：" + e.Message); }
+        catch (Exception e) when (e is IOException or InvalidDataException or System.Text.Json.JsonException or InvalidOperationException or ArgumentException)
+        {
+            if (missingAllowed) return null; // Re-read this cartridge rather than require a manual global scan.
+            throw new DailyCollectionSyncRequired("地图进度暂不可读，再次运行时会重新读取对应卡带：" + e.Message);
+        }
     }
-    public async Task<JsonObject> Query(long pack, long[] maps)
+    public Task<JsonObject> Query(long pack, long[] maps) => Query(pack, maps, cache: true);
+    public async Task<JsonObject> Query(long pack, long[] maps, bool cache)
     {
         var command = await workflow.Step(O(("ui", "GameFieldDefaultUI"), ("operation", Steal ? "collection_query_steal" : "collection_query"), ("value", pack), ("items", maps), ("reason", "读取本卡带服务器收集进度")));
         JsonObject? data = null;
-        await workflow.WaitEvidence(["mainline.network"], e => { var n = State(e, "mainline.network", "$self"); if (S(n["Query"]) != S(command["id"])) return false; if (S(n["State"]) == "failed") throw new StageHostException("adapter", S(n["Error"])); if (S(n["State"]) != "ready") return false; data = n; Classify(n, pack, maps, Steal, OnlySteal); return true; }, 35, "服务器收集进度未返回；未使用本地执行记录代替");
+        try
+        {
+            await workflow.WaitEvidence(["mainline.network"], e => { var n = State(e, "mainline.network", "$self"); if (S(n["Query"]) != S(command["id"])) return false; if (S(n["State"]) == "failed") throw new StageHostException("adapter", S(n["Error"])); if (S(n["State"]) != "ready") return false; data = n; Classify(n, pack, maps, Steal, OnlySteal); return true; }, 35, "服务器收集进度未返回；未使用本地执行记录代替");
+        }
+        catch (StageHostException e) when (e.Kind == "adapter") { throw new DailyCollectionReadUnavailable(e.Message); }
         var result = Classify(data!, pack, maps, Steal, OnlySteal);
-        DailyJson.Write(PathFor(S(data!["Week"]), pack), O(("schema", 1), ("source", "FieldObjectInfoResponse+MonsterInfoResponse"), ("account", workflow.Context["actor"]![3]), ("player", workflow.Context["actor"]![4]), ("network", data), ("at", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000d)));
+        await RecoverAbsorptions(pack, maps, data!, result);
+        if (cache) DailyJson.Write(PathFor(S(data!["Week"]), pack), O(("schema", 1), ("source", "FieldObjectInfoResponse+MonsterInfoResponse"), ("account", workflow.Context["actor"]![3]), ("player", workflow.Context["actor"]![4]), ("network", data), ("at", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000d)));
         DailyJson.Write(Path.Combine(workflow.Root, "live", "mainline", S(workflow.Context["actor"]![3]), "network-" + pack + ".json"), O(("result", result), ("network", data), ("actor", workflow.Context["actor"]), ("at", workflow.Driver.UtcTicks)));
         return result;
     }

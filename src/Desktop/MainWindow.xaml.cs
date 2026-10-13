@@ -738,11 +738,57 @@ public partial class MainWindow : Window
         if (originalAppearance == null) File.Delete(appearancePath);
         else File.WriteAllText(appearancePath, originalAppearance);
     }
+    private async Task CheckRecoveryDialogsForSmoke(int language, int appearance)
+    {
+        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        foreach (bool sync in new[] { false, true })
+        {
+            var dialog = DailyDialogs.Message(this, L.Get(sync ? "run.sync_confirm_title" : "run.recovery_title"),
+                sync ? L.Get("run.sync_confirm_body") : L.Get("run.recovery_body", L.Stage("weekly_mainline"), L.Get("run.recovery_talent_4")),
+                true, sync ? "run.sync_confirm_start" : "run.recovery_continue", safeDefault: true);
+            dialog.ShowActivated = false; dialog.WindowStartupLocation = WindowStartupLocation.Manual; dialog.Left = -12000; dialog.Top = 0;
+            Dispatcher.BeginInvoke(() => {
+                try
+                {
+                    dialog.UpdateLayout();
+                    if (DailyDialogs.ModalDepth != 1 || dialog.ActualHeight > SystemParameters.WorkArea.Height)
+                        throw new Exception("Recovery dialog is not safely cancellable or exceeds the screen");
+                    Capture($"recovery-dialog-{sync}-{language}-{appearance}", (FrameworkElement)dialog.Content);
+                }
+                finally { dialog.Close(); }
+            }, DispatcherPriority.ApplicationIdle);
+            if (DailyDialogs.ShowModal(dialog) == true || DailyDialogs.ModalDepth != 0)
+                throw new Exception("Closing recovery confirmation accepted work or leaked its shade");
+        }
+    }
     private async Task SmokeAsync()
     {
         try
         {
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "recovery")
+            {
+                L.Audit();
+                DailyRunPanel.CheckRecoveryRoutingForSmoke(Path.Combine(root, "recovery-actions-probe"));
+                WorkspaceTabs.SelectedItem = RunTab;
+                string recoveryAccount = new('a', 64);
+                dailyPanel.SetAccount("Fixture", recoveryAccount);
+                dailyPanel.ShowPlan(new DailyPreferences());
+                dailyPanel.Show(new("paused", "", "fixture/recovery.json", [
+                    new QueueStage("weekly_mainline", "recovery_required", "") { Recovery = [new("dispatch.start", 4)] },
+                    new("mail", "pending", "")], recoveryAccount));
+                foreach (int language in new[] { 0, 1, 2 }) foreach (int appearance in new[] { 1, 2 })
+                {
+                    LanguageSelector.SelectedIndex = language; ThemeSelector.SelectedIndex = appearance;
+                    Width = language == 2 ? 920 : 1180; Height = language == 2 ? 650 : 800;
+                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                    dailyPanel.CheckRecoveryActionsForSmoke();
+                    Capture($"recovery-actions-{language}-{appearance}");
+                    await CheckRecoveryDialogsForSmoke(language, appearance);
+                }
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "recovery", languages = 3, themes = 2, realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "bargain")
             {
                 L.Audit();
@@ -906,6 +952,7 @@ public partial class MainWindow : Window
                     await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
                     dailyPanel.CheckRecoveryActionsForSmoke();
                     Capture($"recovery-actions-{language}-{appearance}");
+                    await CheckRecoveryDialogsForSmoke(language, appearance);
                 }
                 dailyPanel.ClearSelection();
                 await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);

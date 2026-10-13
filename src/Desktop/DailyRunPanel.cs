@@ -11,6 +11,8 @@ public sealed partial class DailyRunPanel : UserControl
 {
     private static DailyLanguage L => DailyLanguage.Current;
     public static readonly System.Windows.Input.RoutedUICommand TaskDetailsCommand = new();
+    public static readonly System.Windows.Input.RoutedUICommand RecoveryDetailsCommand = new();
+    internal Func<Window, bool?>? ConfirmRecoveryForSmoke { get; set; }
     private DailyTaskDetailsWindow? taskDetailsWindow;
     public event Action<bool, bool>? StartRequested;
     public event Action<QueueRetryRequest>? RetryRequested;
@@ -46,6 +48,9 @@ public sealed partial class DailyRunPanel : UserControl
     private readonly Button accounts = new() { Content = "管理账号" };
     public DailyRunPanel(string root)
     {
+        CommandBindings.Add(new System.Windows.Input.CommandBinding(RecoveryDetailsCommand, (_, e) => {
+            if (e.Parameter is StageRow row) ShowRecovery(row);
+        }, (_, e) => { e.CanExecute = !isBusy && e.Parameter is StageRow { HasRecovery: true }; e.Handled = true; }));
         CommandBindings.Add(new System.Windows.Input.CommandBinding(TaskDetailsCommand, (_, e) => {
             if(e.Parameter is StageRow row && row.HasTaskDetails) {
                 taskDetailsWindow?.Close();
@@ -202,11 +207,41 @@ public sealed partial class DailyRunPanel : UserControl
         chooseTasks.Click += (_, _) => ShowCurrentPlan();
         layout.Children.Add(stages);
         Content = layout;
-        syncCollection.Click += (_, _) => SyncCollectionRequested?.Invoke();
+        syncCollection.Click += (_, _) => ConfirmCollectionSync();
         current.Click += (_, _) => StartCurrentSelection();
         resume.Click += (_, _) => { if (resume.IsEnabled && !isBusy) StartRequested?.Invoke(false, true); };
         stop.Click += (_, _) => StopRequested?.Invoke();
         Show(new("idle", "run.initial_hint", "", []));
+    }
+    private bool ConfirmRecovery(string title, string message, string accept)
+    {
+        var dialog = DailyDialogs.Message(Window.GetWindow(this), L.Get(title), message, true, accept, safeDefault: true);
+        return (ConfirmRecoveryForSmoke?.Invoke(dialog) ?? (ConfirmRecoveryForSmoke == null ? DailyDialogs.ShowModal(dialog) : false)) == true;
+    }
+    private void ConfirmCollectionSync()
+    {
+        if (isBusy || !syncCollection.IsEnabled) return;
+        string account = activeAccount;
+        if (ConfirmRecovery("run.sync_confirm_title", L.Get("run.sync_confirm_body"), "run.sync_confirm_start")
+            && !isBusy && activeAccount == account) SyncCollectionRequested?.Invoke();
+    }
+    private void ShowRecovery(StageRow row)
+    {
+        if (isBusy || !row.HasRecovery) return;
+        string account = activeAccount, record = currentView.Record;
+        bool history = showingReport;
+        bool canContinue = row.CanEdit && DailyProfiles.ValidKey(account) && !currentView.Expired;
+        string body = L.Get("run.recovery_body", row.Name, row.RecoveryOperations);
+        if (!canContinue)
+        {
+            DailyDialogs.ShowModal(DailyDialogs.Message(Window.GetWindow(this), L.Get("run.recovery_title"),
+                body + "\n\n" + L.Get("run.recovery_select_current"), false));
+            return;
+        }
+        if (!ConfirmRecovery("run.recovery_title", body, "run.recovery_continue") || isBusy || activeAccount != account
+            || currentView.Record != record || showingReport != history || currentView.Expired || !row.HasRecovery || !row.CanEdit) return;
+        if (history) RetryRequested?.Invoke(new(account, record, [row.Task]));
+        else PlanRequested?.Invoke(new(account, [row.Task]));
     }
     public void Busy(bool busy, bool canStop = true)
     {
@@ -562,11 +597,18 @@ public sealed partial class DailyRunPanel : UserControl
                     ? L.Get("run.skipped_unknown") : Describe(snapshot.Detail);
                 if (snapshot.State is "blocked" or "failed" or "error" && DailyIssues.Classify(snapshot.Detail).Code != "unknown")
                     text = DailyIssuePresentation.WithAdvice(snapshot.Detail, text);
-                if (snapshot.State == "recovery_required") text = L.Get("run.needs_check", text);
+                if (HasRecovery) text = L.Get("run.recovery_summary", RecoveryOperations);
                 return snapshot.Carried ? L.Get("run.carried", text) : text;
             }
         }
         public IReadOnlyList<QueueTaskDetail> PendingTasks => snapshot.PendingTasks ?? [];
+        public bool HasRecovery => snapshot.State == "recovery_required";
+        public string RecoveryLabel => L.Get("run.recovery_details");
+        public string RecoveryAccessibleName => L.Get("run.recovery_accessible", Name);
+        public string RecoveryOperations => string.Join(L.Code == "en-US" ? ", " : "、", snapshot.Recovery.Select(r =>
+            r.Role == "dispatch.start" && r.TalentKind is 2 or 3 or 4 or 6 or 17 or 20
+                ? L.Get("run.recovery_talent_" + r.TalentKind)
+                : L.Get("run.recovery_operation", Name)).DefaultIfEmpty(L.Get("run.recovery_operation", Name)).Distinct());
         public DateTimeOffset? FinishedAt => snapshot.FinishedAt;
         public bool HasTaskDetails => PendingTasks.Count>0 || snapshot.Detail.Contains("仍有未完成任务", StringComparison.Ordinal);
         public string TaskDetailsLabel => PendingTasks.Count>0 ? L.Get("run.details_count",PendingTasks.Count) : L.Get("run.details");

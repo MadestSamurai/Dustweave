@@ -17,6 +17,9 @@ static class WeeklyIsolationCases
         public Action? BeforeQuery;
         public bool NpcEnabled, RejectNpc, HuntingOffer, QueryFailsFirst;
         public bool WalkingBlocked;
+        public bool AbsorbDrops, LoseAbsorbReply, RecoveryQueryFails, StaleDrop;
+        public long NetworkWeek = 500;
+        public readonly List<long[]> QueryMaps = [];
         public readonly HashSet<long> Picked = [];
         public readonly List<long> Accepted = [], Cleared = [];
         readonly Dictionary<long, long> npcActive = [];
@@ -36,7 +39,9 @@ static class WeeklyIsolationCases
                     case "collection_query_steal":
                         BeforeQuery?.Invoke();
                         Queries.Add(Pack);
+                        QueryMaps.Add(c["Items"]!.AsArray().Select(N).ToArray());
                         network = Network(c);
+                        if (RecoveryQueryFails && QueryMaps.Last().Length == 1) network["State"] = "failed";
                         break;
                     case "weekly_npc_query": npcQuery = S(c["Id"]); break;
                     case "weekly_npc_nav": navigating = true; break;
@@ -73,9 +78,18 @@ static class WeeklyIsolationCases
                         MapId = N(c["Value"]); Visits.Add(MapId); Scene();
                         break;
                     case "mainline_menu":
-                        if (!Restricted || N(c["Value"]) != 6) throw new Exception("Unexpected talent activation");
+                        if (!(Restricted && N(c["Value"]) == 6) && !(AbsorbDrops && N(c["Value"]) == 4)) throw new Exception("Unexpected talent activation");
                         H.Page("QuickMenuUI");
                         break;
+                    case "mainline_talent":
+                        if (!AbsorbDrops || N(c["Value"]) != 405) throw new Exception("Unexpected absorption");
+                        Used++; MapOnePending = false;
+                        if (!LoseAbsorbReply)
+                        {
+                            H.Event("dispatch.start", "request");
+                            H.Event("dispatch.start", "response", ("IsSuccess", true), ("TalentSkillInfo", O(("groupId", 405), ("useCount", Used))));
+                        }
+                        Scene(); break;
                     case "back": Scene(); break;
                     default: throw new Exception("Unexpected weekly command: " + c);
                 }
@@ -96,8 +110,8 @@ static class WeeklyIsolationCases
                 if (!Visits.Contains(2)) targets.Add(O(("Id", 102), ("Map", 2)));
             }
             return O(("State", "ready"), ("Error", ""), ("Query", command["Id"]), ("Pack", Pack),
-                ("Maps", command["Items"]), ("Week", 500), ("Now", 100), ("Rewards", "[]"), ("Monsters", "[]"),
-                ("Drops", targets), ("Targets", new JsonArray()), ("StealReady", true), ("Steals", "[]"), ("StealTargets", new JsonArray()));
+                ("Maps", command["Items"]), ("Week", NetworkWeek), ("Now", 100), ("Rewards", "[]"), ("Monsters", "[]"),
+                ("Drops", Array(Rows(targets).Where(t => command["Items"]!.AsArray().Any(m => N(m) == N(t["Map"]))))), ("Targets", new JsonArray()), ("StealReady", true), ("Steals", "[]"), ("StealTargets", new JsonArray()));
         }
         JsonObject[] Readings()
         {
@@ -111,7 +125,7 @@ static class WeeklyIsolationCases
                 WorkflowCases.Reading("mainline.map", (MapPath, O(("id", MapId), ("packId", Pack))), ("HasCanOverwhelmMonster()", false)),
                 WorkflowCases.Reading("mainline.talent_counts", ("Values", new JsonArray(O(("groupId", 405), ("useCount", Used))))),
                 WorkflowCases.Reading("mainline.research", ("$self", O(("Active", !Restricted), ("Remaining", 100)))),
-                WorkflowCases.Reading("mainline.talent_rows", ("$self", Restricted ? new JsonArray(O(("Kind", 6), ("Group", 605), ("Instance", 605), ("PackRestricted", true), ("Reason", "character_pack_restricted"))) : new JsonArray())),
+                WorkflowCases.Reading("mainline.talent_rows", ("$self", Restricted ? new JsonArray(O(("Kind", 6), ("Group", 605), ("Instance", 605), ("PackRestricted", true), ("Reason", "character_pack_restricted"))) : AbsorbDrops ? new JsonArray(O(("Kind", 4), ("Group", 405), ("Instance", 405), ("PackRestricted", false), ("Reason", ""), ("Cooldown", 0), ("Gate", ""))) : new JsonArray())),
                 WorkflowCases.Reading("mainline.network", ("$self", network)),
                 WorkflowCases.Reading("mainline.travel", ("$self", O(("Pack", Pack), ("Map", MapId), ("Ground", true),
                     ("Maps", Array(maps.Select(id => O(("Id", id), ("Exits", Reachable && Pack == 1 && id == 1 ? new[] { 2 } : []), ("HasWaypoint", false), ("CanSummon", false))))),
@@ -124,6 +138,18 @@ static class WeeklyIsolationCases
                 rows.Add(gate);
             }
             if (NpcEnabled) rows.Add(WorkflowCases.Reading("weekly_npc.native", ("$self", NpcState())));
+            if (AbsorbDrops)
+            {
+                var talent = WorkflowCases.Reading("dispatch.talent", ("ὬὩὬὡὯὮὨὣὩὦὡ", "FieldRewardAbsorb"),
+                    (SkillPath, O(("id", 4055), ("groupId", 405), ("valueList", new JsonArray(21, 0)), ("catalystValue", 0))), ("_objDisableImage.activeSelf", false));
+                talent["InstanceId"] = 405; rows.Add(talent);
+                if (MapId == 1 && (MapOnePending || StaleDrop))
+                {
+                    var reward = WorkflowCases.Reading("mainline.reward", (ObjectPath, 101), (DropAvailablePath, true),
+                        ("ὯὩὮὩὮὣὯὫὮὡὧ", true), ("ὦὫὧὯὥὫὦὪὣὦὪ", false));
+                    reward["InstanceId"] = 1101; rows.Add(reward);
+                }
+            }
             if (WalkingBlocked && Pack == 1 && MapId == 1)
                 foreach (long id in new[] { 101L, 103L })
                 {
@@ -158,11 +184,79 @@ static class WeeklyIsolationCases
             return new DailyWeeklyRoute(H.Workflow).Run(["weekly_mainline", "weekly_npc", "weekly_steal"]);
         }
         public Task<JsonObject> Run() => new DailyWeeklyRoute(H.Workflow).Run(["weekly_mainline"]);
+        public JsonObject InterruptedAbsorption(bool newProcess = true)
+        {
+            var op = H.Business.Create(H.Context, "dispatch.start", H.Evidence(), O(("kind", 4), ("pack", 1), ("map", 1), ("group", 405)),
+                O(("ui", "QuickMenuUI"), ("operation", "mainline_talent"), ("value", 405)));
+            op["state"] = "unknown";
+            if (newProcess) op["before"]!["Frame"]!["ProcessId"] = 9876;
+            H.Business.Save(op);
+            return op;
+        }
         public void Dispose() => H.Dispose();
     }
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool yes, string message) { if (!yes) throw new Exception(message); checks.Add(message); }
+        foreach (bool remaining in new[] { false, true })
+        using (var f = new Fixture(Path.Combine(root, "absorption-no-old-proof-" + remaining)) { AbsorbDrops = true, MapOnePending = remaining, Used = 6 })
+        {
+            var op = f.InterruptedAbsorption();
+            op["scope"]!.AsObject().Remove("pack"); // Older releases retained this only in the before-map metadata.
+            f.H.Business.Save(op);
+            var preflight = await f.H.Business.ReconcileAsync(f.H.Context);
+            Check(B(preflight["unresolved"]![0]!["recover_in_stage"]), "missing absorption reply delegates recovery to current map instead of blocking queue");
+            var r = await f.Run();
+            var saved = f.H.Business.Records(f.H.Context).Single(o => S(o["id"]) == S(op["id"]));
+            Check(S(saved["state"]) == "superseded" && S(saved["reconciliation"]!["method"]) == "fresh_map_server_progress"
+                && !B(saved["reconciliation"]!["original_success_claimed"]) && saved["after"] == null,
+                "fresh map state replaces unknown absorption intent without inventing original success: " + remaining);
+            Check(f.QueryMaps[0].SequenceEqual([1L]) && f.Used == (remaining ? 7 : 6) && S(r["state"]) == "completed",
+                "automatic local recovery reads only affected map first and absorbs only remaining targets: " + remaining);
+        }
+        using (var f = new Fixture(Path.Combine(root, "absorption-live-lost-reply")) { AbsorbDrops = true, LoseAbsorbReply = true })
+        {
+            var r = await f.Run();
+            Check(f.Used == 1 && S(r["state"]) == "completed" && f.H.Business.Records(f.H.Context).All(o => !DailyManagedBusiness.Pending(o)),
+                "live absorption reply loss recovers from current map and finishes without a second cast or manual check");
+        }
+        using (var f = new Fixture(Path.Combine(root, "absorption-recovery-read-unavailable")) { AbsorbDrops = true, RecoveryQueryFails = true })
+        {
+            f.InterruptedAbsorption();
+            var r = await f.Run();
+            Check(f.Used == 0 && f.Visits.Contains(2) && f.Queries.Last() == 2 && S(r["state"]) == "partial",
+                "unavailable local recovery skips that map and continues other maps and cartridges");
+            Check(r["stages"]!["weekly_mainline"]!["deferred_locations"]!.AsArray().Count == 1,
+                "unavailable affected map retains a concrete recoverable reason");
+        }
+        using (var f = new Fixture(Path.Combine(root, "absorption-recovery-stale-cache")) { Pending = false, Used = 21 })
+        {
+            await new DailyCollectionProgress(f.H.Workflow).Query(1, [1, 2, 3]);
+            f.InterruptedAbsorption(); f.Queries.Clear(); f.QueryMaps.Clear();
+            var r = await f.Run();
+            Check(f.QueryMaps[0].SequenceEqual([1L]) && f.H.Business.Records(f.H.Context).All(o => !DailyManagedBusiness.Pending(o)),
+                "completed local cache and exhausted quota do not suppress automatic fresh map recovery");
+        }
+        using (var f = new Fixture(Path.Combine(root, "absorption-wrong-week")) { Pending = false, NetworkWeek = 501 })
+        {
+            f.InterruptedAbsorption();
+            Exception? failure = null;
+            try { await new DailyCollectionProgress(f.H.Workflow).Query(1, [1]); } catch (Exception e) { failure = e; }
+            Check(failure is InvalidDataException && f.H.Business.Records(f.H.Context).All(DailyManagedBusiness.Pending),
+                "fresh map recovery rejects a changed weekly cycle and leaves old intent intact");
+        }
+        using (var f = new Fixture(Path.Combine(root, "absorption-map-scope")))
+        {
+            f.InterruptedAbsorption();
+            bool blocked = false;
+            try { f.H.Business.Create(f.H.Context, "dispatch.start", f.H.Evidence(), O(("kind", 4), ("pack", 1), ("map", 1)), O(("operation", "mainline_talent"))); }
+            catch (StageHostException e) when (e.Kind == "pending") { blocked = true; }
+            Check(blocked, "pending absorption cannot be blindly repeated on its map before a fresh read");
+            var other = f.H.Business.Create(f.H.Context, "dispatch.start", f.H.Evidence(), O(("kind", 4), ("pack", 1), ("map", 2)), O(("operation", "mainline_talent")));
+            other["state"] = "rejected"; f.H.Business.Save(other);
+            var movement = f.H.Business.Create(f.H.Context, "dispatch.start", f.H.Evidence(), O(("kind", 2), ("pack", 1), ("map", 1)), O(("operation", "mainline_talent")));
+            Check(S(movement["state"]) == "prepared", "pending absorption does not lock unrelated map actions or movement talents");
+        }
         using (var f = new Fixture(Path.Combine(root, "weekly-walk-one-unreachable")) { WalkingBlocked = true })
         {
             f.H.Workflow.Settings.Weekly.WalkCollect = true;
