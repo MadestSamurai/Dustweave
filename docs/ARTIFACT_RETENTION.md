@@ -8,6 +8,8 @@ Run cleanup after the GitHub release, OTA publication and public download verifi
 ./scripts/cleanup-release-artifacts.ps1 -Version X.Y.Z -Apply -Plan <absolute-plan-path>
 ```
 
+If the published candidate was retained in a differently named folder under `artifacts/releases`, pass `-PackageDirectory <absolute-folder>` to both commands. The same signed-feed, archive and public-verification gates apply; the override does not expand cleanup targets. With separate OTA lanes, preserve the legacy lane's active baselines independently of the new feed.
+
 The default invocation only creates a plan. Apply rechecks the signed release feed, verified publication receipts, exact path boundaries, tracked source, running processes and file metadata. Changed targets, links and unrecognized layouts are skipped. Every deletion is recorded under `artifacts/maintenance/`; retain that audit with the release receipt.
 
 | Files | Retention |

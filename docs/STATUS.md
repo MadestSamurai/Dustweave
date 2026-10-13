@@ -1,6 +1,12 @@
 # Repository status / 仓库状态
 
-## 1.1.9-beta published / 当前版本
+## 1.3.0 published / 当前版本
+
+2026-10-13：1.3.0 已由 GitHub Actions 发布为普通 Release。完整文件夹分发与独立恢复程序投入使用，新版 OTA 使用独立账号、配置、状态和静态目录；旧版通道停留在 1.2.11，清单、程序和配置校验值均未变化。旧用户需手动下载完整包到新目录。完整包公网下载、签名与哈希、更新器升级／回退／中断恢复均通过。详见[发布验收](releases/1.3.0-deployment.md)。
+
+Release **1.3.0** is available as a normal GitHub Release. Modular packages use a separate layout-2 OTA channel; the legacy 1.2.11 channel remains unchanged. Existing users must manually extract a complete package into a new directory. Public downloads, hashes, signatures and real updater recovery checks passed. Earlier entries below are historical.
+
+## 1.1.9-beta published / 历史版本
 
 2026-10-11：`1.1.9-beta` 已由 GitHub Actions 发布为普通 Release，并上线国内签名差分 OTA。本轮精简桌面说明并整理诊断页布局，保留任务条件和错误处理指引；三语言同步，日常执行逻辑不变。3,046 项回归、双版本成品、实际 1.1.8 更新器升级／回退／中断恢复与公网差分重建通过。详见[发布验收](releases/1.1.9-beta-deployment.md)。
 

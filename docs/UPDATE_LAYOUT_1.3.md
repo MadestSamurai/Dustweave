@@ -1,6 +1,6 @@
 # 1.3 distribution and updates
 
-Status: implemented and locally validated on 2026-10-13. No deployment is implied by a local build.
+Status: released and deployed on 2026-10-13. See [the deployment receipt](releases/1.3.0-deployment.md) for public verification and legacy-channel isolation. Local measurements below describe the pre-publication acceptance run.
 
 ## Package layout
 

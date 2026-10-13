@@ -2,6 +2,7 @@ param(
  [Parameter(Mandatory)][string]$Version,
  [switch]$Apply,
  [string]$Plan,
+ [string]$PackageDirectory,
  [ValidateRange(4,10)][int]$KeepReleases=4
 )
 $ErrorActionPreference='Stop'
@@ -11,6 +12,12 @@ $prefix=$artifacts+[IO.Path]::DirectorySeparatorChar
 if((Get-Item -LiteralPath $artifacts -Force).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Artifacts root must not be a link.'}
 if($Version -notmatch '^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$'){throw 'Invalid release version.'}
 $releaseRoot=Join-Path $artifacts ('releases/'+$Version)
+if($PackageDirectory){
+ $releaseRoot=[IO.Path]::GetFullPath($PackageDirectory).TrimEnd([IO.Path]::DirectorySeparatorChar)
+ $releasesPrefix=(Join-Path $artifacts 'releases')+[IO.Path]::DirectorySeparatorChar
+ if(!$releaseRoot.StartsWith($releasesPrefix,[StringComparison]::OrdinalIgnoreCase) -or
+    (Get-Item -LiteralPath $releaseRoot -Force).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Package directory must be an ordinary folder under artifacts/releases.'}
+}
 $delivery=Join-Path $artifacts ('deployments/'+$Version)
 # Publication alone is insufficient: require the completed public download gate.
 $public=Get-Content -LiteralPath (Join-Path $delivery 'public-verification.json') -Raw|ConvertFrom-Json
@@ -35,7 +42,7 @@ foreach($release in $feed.Releases){
  $v=$release.Version;$archiveSafe[$v]=$true
  foreach($asset in @($release.Assets)+@($release.Deltas)){
   if(!$asset){continue}
-  $path=Join-Path $artifacts ('releases/'+$v+'/'+$asset.FileName)
+  $path=if($v -eq $Version){Join-Path $releaseRoot $asset.FileName}else{Join-Path $artifacts ('releases/'+$v+'/'+$asset.FileName)}
   if(!(Test-Path -LiteralPath $path) -or (Get-Item -LiteralPath $path).Length -ne $asset.Bytes -or (Get-FileHash -LiteralPath $path).Hash -ne $asset.Sha256){$archiveSafe[$v]=$false;break}
  }
 }
