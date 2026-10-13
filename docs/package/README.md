@@ -25,10 +25,10 @@
 
 账号页支持多账号队列。安装官方 Sandboxie-Plus 后可使用隔离运行；不要在游戏更新期间启动隔离实例。定时执行需要电脑开机、保持唤醒并已登录 Windows，默认不启用。
 
-主界面左下角「版本更新」提供检查与下载。国内线路仅用于软件内 OTA；小型差分包会在空闲时询问是否重启更新，不会自动打断队列。最多自动跨10次发布，超过8 MiB、运行库变更或基准不匹配时请手动下载。1.2.x 及更早版本必须手动迁移到1.3.0。已有账号和设置继续沿用。本地拿到的新版本不一定已推送到 OTA。
+主界面左下角「版本更新」提供检查与下载。国内线路仅用于软件内 OTA；小型差分包会在空闲时询问是否重启更新，不会自动打断队列。最多自动跨10次发布，超过8 MiB、运行库变更或基准不匹配时请手动下载。1.3.0 及更早版本需手动完整解压 1.3.1 到新目录。已有账号和设置继续沿用。本地拿到的新版本不一定已推送到 OTA。
 
 ## 来源与说明
 
-免费提供：B站 **MadSamurai** / GitHub **MadestSamurai**。源码使用 MIT 许可证：[Dustweave](https://github.com/MadestSamurai/Dustweave)。集成工具的许可证与来源见 `licenses`、`docs/tools` 和 `THIRD_PARTY_NOTICES.md`。
+免费提供：B站 **MadSamurai** / GitHub **MadestSamurai**。源码使用 MIT 许可证：[Dustweave](https://github.com/MadestSamurai/Dustweave)。集成工具的许可证与来源见 `app/licenses`、`app/docs/tools` 和 `app/THIRD_PARTY_NOTICES.md`。
 
 本项目不隶属于游戏官方。辅助工具可能带来账号及运行风险，请自行决定是否使用。打包时完成离线检查；新增插件的实际游戏任务仍待正常使用验证。
