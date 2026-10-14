@@ -169,7 +169,11 @@ public partial class MainWindow
                 Check(fixture.Game == null && fixture.Calls.Skip(restartCalls).SequenceEqual(new[] { "close" }), "Takeover reused a game parked in a minigame or attempted UI navigation");
                 Check(!scheduleToolDraining && scheduleToolGame == null, "Successful restart handoff retained an old process");
             }
-            finally { fixture.Game = parkedGame; }
+            finally
+            {
+                fixture.Game = parkedGame;
+                fixture.Calls.RemoveRange(restartCalls, fixture.Calls.Count - restartCalls);
+            }
             Check(DailyReleaseHistory.ShouldShow(root, DailyProductVersion.Current), "New version notice suppressed");
             var oldTheme = theme.Preference;
             foreach (var appearance in new[] { DailyAppearance.Light, DailyAppearance.Dark })
@@ -211,7 +215,7 @@ public partial class MainWindow
 
             DailyReleaseHistory.MarkSeen(root, "99.0.0");
             Check(!DailyReleaseHistory.ShouldShow(root, DailyProductVersion.Current), "Rolling back repeated already read notes");
-            DailyJson.Write(Path.Combine(smoke!, "scheduling-updates.json"), new { status = "passed", checks, gameCommands = 0, windowsTasksRegistered = 0, realGameTouched = false });
+            DailyJson.Write(Path.Combine(smoke!, "scheduling-updates.json"), new { status = "passed", checks, gameCommands = 0, simulatedRestartCommands = 1, windowsTasksRegistered = 0, realGameTouched = false });
         }
         finally { ThemeSelector.SelectedIndex = (int)initialAppearance; L.Select(locale); Width = width; Height = height; WorkspaceTabs.SelectedItem = RunTab; updatePanel.Busy(false, false, false); }
     }

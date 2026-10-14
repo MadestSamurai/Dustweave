@@ -125,9 +125,9 @@
     "en-US": "Stop built-in tools, restart the game, and run dailies"
   },
   "schedule.takeover_hint": {
-    "zh-CN": "等待当前操作结束，正常关闭游戏，再按下方账号计划启动。关闭时，工具运行期间最多等候 15 分钟。",
-    "zh-TW": "等待目前操作結束，正常關閉遊戲，再依下方帳號計畫啟動。關閉時，工具執行期間最多等候 15 分鐘。",
-    "en-US": "Finishes the current operation, closes the game normally, then launches the accounts below. When disabled, a busy tool delays the schedule for up to 15 minutes."
+    "zh-CN": "等待当前操作结束，正常关闭游戏，再按已保存的账号计划启动。关闭时，工具运行期间最多等候 15 分钟。",
+    "zh-TW": "等待目前操作結束，正常關閉遊戲，再依已儲存的帳號計畫啟動。關閉時，工具執行期間最多等候 15 分鐘。",
+    "en-US": "Finishes the current operation, closes the game normally, then launches the saved account plan. When disabled, a busy tool delays the schedule for up to 15 minutes."
   },
   "schedule.stopping_tool": {
     "zh-CN": "正在正常停止内置工具，等待当前操作结束",
