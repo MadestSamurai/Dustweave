@@ -1,5 +1,11 @@
 # Repository status / 仓库状态
 
+## 1.3.8 published / 收藏购买砍价修复已发布
+
+2026-10-14：1.3.8 已由 GitHub Actions 发布为普通 Release，国内 v2 OTA 已上线。只买收藏先砍价，再按折扣后报价购买；沿用已有砍价效果、遵守天赋药保留下限。492 项本地专项检查与 CI 的 3,878 项回归通过，双版本成品、1.3.7 实际更新器及 14 个公网差分验收完成。从 1.3.7 升级约 0.4 MB，兼容的 1.3.1–1.3.7 均可直升。详见[发布验收](releases/1.3.8-deployment.md)。
+
+Version **1.3.8** is the normal GitHub release and latest v2 OTA entry. Favorites-only trading now bargains first. Both editions, prior-updater recovery and public downloads passed validation. No game was operated; the legacy lane is unchanged. Entries below are historical.
+
 ## 1.3.7 published / 料理、跑商与连接修复版已发布
 
 2026-10-14：1.3.7 已由 GitHub Actions 发布为普通 Release，国内独立 v2 OTA 已上线。合并藏红花增产料理优先制作、默认两轮土豆与高级原料售卖、跑商只买收藏、连接恢复，以及潘多拉挑战手动选择装备。3,860 项回归、双版本成品、旧版实际更新器升级／回退／中断恢复及公网验证通过。兼容的 1.3.1–1.3.6 均有直升差分，从 1.3.6 升级约 1.3 MB。详见[发布验收](releases/1.3.7-deployment.md)。
