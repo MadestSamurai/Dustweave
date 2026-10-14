@@ -1,5 +1,11 @@
 # Repository status / 仓库状态
 
+## 1.3.5 published / 定时接管与日常提速版已发布
+
+2026-10-14：1.3.5 已由 GitHub Actions 发布，国内独立 v2 OTA 已上线。定时接管改为停止内置工具、正常重启游戏，再执行计划账号的日常；同时包含历史记录查询提速、天赋菜单展开等待与周任务遇敌恢复修复。十版 OTA 覆盖规则已落实到发布检查，本次提供 1.3.1–1.3.4 的双版本直升补丁，约 1 MB。旧 OTA 保持 1.2.11。详见[发布验收](releases/1.3.5-deployment.md)。
+
+Version **1.3.5** is the normal GitHub release and latest v2 OTA entry. Scheduled takeover restarts the game before running dailies. Publication now checks the full ten-release baseline window; all currently compatible 1.3.1–1.3.4 baselines are covered. Packaged UI, prior-updater recovery and public download checks passed. Live daily automation was not rerun; entries below are historical.
+
 ## 1.3.1 published / 目录整理版已发布
 
 2026-10-13：1.3.1 已由 GitHub Actions 完成普通 Release 发布，独立 v2 OTA 已从 1.3.0 推进到 1.3.1。根目录只保留启动入口 `Dustweave.exe`、`app` 文件夹及少量说明；1.3.0 已撤回。旧版用户需完整下载到新目录，账号和设置沿用。3,630 项回归、双版本成品、真实更新器五项升级与恢复验收、公网下载和签名均通过。旧 OTA 仍为 1.2.11，校验值未变。详见[发布验收](releases/1.3.1-deployment.md)。
