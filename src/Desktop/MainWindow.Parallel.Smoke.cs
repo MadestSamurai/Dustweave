@@ -149,7 +149,7 @@ public partial class MainWindow
                     {
                         Check(dialog!=null,"Parallel settings dialog did not open");dialog!.UpdateLayout();
                         Check(Children<ComboBox>(dialog).Any(c=>(int?)c.SelectedItem==2),"Parallel settings must default to two accounts");
-                        Check(Children<TextBox>(dialog).Any(t=>t.IsReadOnly&&t.Text.Contains("sandboxie-plus.com")),"Installation guidance is not available");
+                        Check(Children<Button>(dialog).Any(b=>b.IsEnabled && (string?)b.Content==L["sandbox_setup.help"]),"Installation guidance is not available");
                         Capture("parallel-settings-"+appearance,dialog);
                     }
                     catch(Exception error){dialogError=error;}
