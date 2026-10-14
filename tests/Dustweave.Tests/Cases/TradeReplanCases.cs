@@ -19,16 +19,24 @@ static class TradeReplanCases
         native["Favorites"]=new JsonArray(new JsonArray(1,99));
         bool refused=false;try{DailyTradeExecution.FavoritePurchases(native);}catch(InvalidDataException){refused=true;}
         Check(refused,"missing favorite quote cannot silently become a different purchase");
-        using (var buy = new WorkflowHarness(Path.Combine(output,"favorites-flow"), DailyWorkflowRegistry.Proofs()))
+        foreach (string scenario in new[] { "new", "active", "empty", "potion-reserve", "failed", "late-quote" })
+        using (var buy = new WorkflowHarness(Path.Combine(output,"favorites-flow-"+scenario), DailyWorkflowRegistry.Proofs()))
         {
             buy.Workflow.Settings.Trade.Enabled=true; buy.Workflow.Settings.Trade.FavoritesOnly=true;
             buy.Frame["Scene"]="Map3009_001";
             buy.Page("ShopUI", "_objBackButton");
-            bool purchased=false; long gold=1000;
+            bool purchased=false, discounted=scenario=="active", quoteReady=discounted; long gold=250, potions=100;
+            int bargains=0;
+            buy.Driver.PotionPolicy=()=>new() { TalentPotionReserve=scenario=="potion-reserve"?95:0 };
+            JsonObject PricedOffer(int product) { var row=Offer(1,product,purchased||scenario=="empty"?0:10); row["Price"]=quoteReady?20:50; return row; }
             var favorites = new JsonArray(new JsonArray(1,10));
             buy.Readings = () => [
-                WorkflowCases.Reading("trade.native",("$self",O(("AvailableShops",new[]{1}), ("Favorites",favorites), ("Offers",new JsonArray(Offer(1,10,purchased?0:10),Offer(1,11)))))),
-                WorkflowCases.Reading("trade.currency",("Gold",gold),("Catalyst",100)),
+                WorkflowCases.Reading("trade.native",("$self",O(("AvailableShops",new[]{1}), ("Favorites",favorites), ("BargainActive",quoteReady), ("Offers",new JsonArray(PricedOffer(10),PricedOffer(11)))))),
+                WorkflowCases.Reading("trade.currency",("Gold",gold),("Catalyst",potions)),
+                WorkflowCases.Reading("dispatch.currency",("Catalyst",potions)),
+                WorkflowCases.Reading("trade.bargain",("$self",discounted)),
+                WorkflowCases.Reading("dispatch.talent",(DailyFieldRoute.SkillPath,O(("id",6055),("classType",16))),("_objDisableImage.activeSelf",false)),
+                WorkflowCases.Reading("trade.discount_popup",(DailyFieldRoute.SkillPath,O(("id",6055),("classType",16),("catalystValue",10),("valueList",new[]{100,60})))),
                 WorkflowCases.Reading("trade.inventory",("Count",1),("$items",new JsonArray(O(("Key","Food"),("Value.Count",purchased?1:0),("Value.Values",purchased?new JsonArray(O(("id",1010),("type",5),("count",10),("keepFlag",0),("invenIndex","1"))):new JsonArray())))))
             ];
             // Supply merchant and shop properties exactly as the native adapter exposes them.
@@ -37,20 +45,42 @@ static class TradeReplanCases
                 WorkflowCases.Reading("trade.merchant",("ὠὫὥὧὭὭὥὠὭὤὣ.ὯὫὪὡὭὤὪὮὫὬὣ",7),("$items",new JsonArray(O(("ὫὠὫὯὠὢὥὧὢὥὥ","Shop"),("ὭὩὪὯὯὬὧὠὠὬὠ",1))))),
                 WorkflowCases.Reading("trade.shop_ui",("ὩὤὬὪὤὦὧὭὣὥὠ.ὯὫὪὡὭὤὪὮὫὬὣ",7),("ὯὣὡὫὨὫὡὧὩὬὠ","Buy"))}).ToArray();
             buy.OnCommand=c=>{
+                buy.Time+=.01;
                 switch(S(c["Kind"]))
                 {
+                    case "trade_talent": buy.Page("DiscountPopupUI","_objButtonOk");break;
                     case "trade_favorite_preview":
                         Check(B(c["ExistingFavoritesOnly"]),"favorite preview preserves the saved selection");
+                        Check(discounted&&quoteReady&&N(c["Value"])==200,"favorites use fresh discounted prices, including when the original basket was unaffordable");
                         buy.Page("BuyFavoritePopupUI");buy.Frame["Surfaces"]!.AsArray().Add(O(("Id",2),("Type","ShopUI"),("InputReady",false)));break;
                     case "trade_favorite_confirm":
                         Check(B(c["ExistingFavoritesOnly"]),"confirmation revalidates the user's existing favorites");
                         buy.Event("trade.buy","request");purchased=true;gold-=200;buy.Event("trade.buy","response");buy.Page("ShopUI","_objBackButton");break;
-                    case "click": buy.Page("GameFieldDefaultUI");break;
+                    case "click":
+                        if(S(c["UiToken"])=="DiscountPopupUI") {
+                            bargains++;buy.Event("dispatch.start","request");potions-=10;
+                            discounted=scenario!="failed";quoteReady=discounted&&scenario!="late-quote";
+                            buy.Event("dispatch.start","response",("IsSuccess",discounted));buy.Page("ShopUI","_objBackButton");
+                        } else if(S(c["UiToken"])=="ShopUI"&&!discounted&&scenario!="empty")buy.Page("QuickMenuUI");
+                        else buy.Page("GameFieldDefaultUI");
+                        break;
                     default: throw new Exception("Unexpected operation in favorites-only flow: "+S(c["Kind"]));
                 }
             };
-            var outcome=await new DailyTradeExecution(buy.Workflow,new JsonObject()).Run();
-            Check(S(outcome["state"])=="completed"&&purchased&&gold==800&&buy.Box.Commands.Count==3,"production favorites-only flow buys once, closes normally and never cooks, sells or needs optimizer data");
+            buy.OnDelay=()=>{if(discounted&&scenario=="late-quote")quoteReady=true;};
+            JsonObject? outcome=null;Exception? failure=null;
+            try { outcome=await new DailyTradeExecution(buy.Workflow,new JsonObject()).Run(); } catch(Exception e) { failure=e; }
+            if(scenario=="potion-reserve")
+                Check(failure is DailyStepException { PotionLimit: not null }&&!purchased&&bargains==0&&potions==100,"favorites preserve the daily potion reserve before bargaining or buying");
+            else if(scenario=="failed")
+                Check(failure!=null&&!purchased&&bargains==1&&gold==250,"failed bargain never buys at full price or repeats consumption");
+            else if(scenario=="empty")
+                Check(failure==null&&S(outcome?["state"])=="skipped"&&!purchased&&bargains==0&&potions==100,"empty favorites skip without spending bargaining potions");
+            else {
+                if(failure!=null)throw failure;
+                Check(S(outcome?["state"])=="completed"&&purchased&&gold==50&&bargains==(scenario=="active"?0:1)&&potions==(scenario=="active"?100:90),"favorites bargain once or reuse the active discount, then buy exactly once: "+scenario);
+            }
+            Check(!buy.Box.Commands.Any(c=>S(c["Kind"]).Contains("cook")||S(c["Kind"]).Contains("sell")),"favorites-only never cooks or sells: "+scenario);
         }
         using var f = new WorkflowHarness(Path.Combine(output, "trade-current-state"), DailyWorkflowRegistry.Proofs());
         var before = WorkflowCases.Evidence();

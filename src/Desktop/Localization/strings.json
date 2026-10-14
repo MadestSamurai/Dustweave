@@ -90,9 +90,9 @@
     "en-US": "Special trading: buy favorites only"
   },
   "prefs.trade_favorites_hint": {
-    "zh-CN": "无视跑商策略，只按商店当前价格购买你的收藏商品。不料理、不卖出，不修改收藏。",
-    "zh-TW": "忽略跑商策略，只按商店目前價格購買你的收藏商品。不料理、不出售，不修改收藏。",
-    "en-US": "Ignores trading strategy and buys your saved favorites at current shop prices. No cooking, selling or changes to favorites."
+    "zh-CN": "无视跑商策略，先砍价再购买你的收藏商品。不料理、不卖出，不修改收藏。",
+    "zh-TW": "忽略跑商策略，先議價再購買你的收藏商品。不料理、不出售，不修改收藏。",
+    "en-US": "Ignores trading strategy, bargains first, then buys your saved favorites. No cooking, selling or changes to favorites."
   },
   "prefs.saffron_processing": {
     "zh-CN": "自动料理／售卖高级藏红花",
@@ -110,9 +110,19 @@
     "en-US": "Saffron grade data is not ready. Nothing was cooked or sold."
   },
   "trade.favorites_completed": {
-    "zh-CN": "已按商店当前价格购买收藏商品；未料理、未售卖，收藏保持不变",
-    "zh-TW": "已按商店目前價格購買收藏商品；未料理、未出售，收藏保持不變",
-    "en-US": "Favorites purchased at current shop prices. Nothing was cooked or sold; favorites are unchanged."
+    "zh-CN": "已砍价并购买收藏商品；未料理、未售卖，收藏保持不变",
+    "zh-TW": "已議價並購買收藏商品；未料理、未出售，收藏保持不變",
+    "en-US": "Favorites purchased after bargaining. Nothing was cooked or sold; favorites are unchanged."
+  },
+  "trade.discount_quote_wait": {
+    "zh-CN": "等待砍价后的商店报价",
+    "zh-TW": "等待議價後的商店報價",
+    "en-US": "Waiting for discounted shop prices"
+  },
+  "trade.discount_changed": {
+    "zh-CN": "砍价状态已变化，请重新执行跑商",
+    "zh-TW": "議價狀態已變更，請重新執行跑商",
+    "en-US": "The bargain status changed. Run trading again."
   },
   "trade.favorites_empty": {
     "zh-CN": "收藏商品已购完、尚未解锁或未设置收藏",

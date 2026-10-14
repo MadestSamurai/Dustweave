@@ -1,5 +1,26 @@
 [
 {
+  "Version": "1.3.8",
+  "Date": "2026-10-14",
+  "Notes": {
+    "zh-CN": [
+      "修复“只购买收藏商品”跳过砍价的问题：先砍价，再按新的折扣报价购买；已有砍价效果时直接沿用，不重复消耗天赋药。",
+      "继续只购买已有收藏，不制作、不卖出、不修改收藏；没有可购买商品时不消耗砍价用药，遵守日常天赋药保留下限。",
+      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+    ],
+    "zh-TW": [
+      "修復「只購買收藏商品」略過議價的問題：先議價，再依新的折扣報價購買；已有議價效果時直接沿用，不重複消耗天賦藥。",
+      "繼續只購買既有收藏，不製作、不出售、不修改收藏；沒有可購買商品時不消耗議價用藥，遵守日常天賦藥保留下限。",
+      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+    ],
+    "en-US": [
+      "Fixes favorites-only trading skipping bargaining. Bargain first, then refresh discounted prices before buying. An active bargain is reused without spending more talent pills.",
+      "Only existing favorites are purchased, without cooking, selling or changing favorites. Empty baskets spend no bargaining pills; the daily pill reserve is respected.",
+      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+    ]
+  }
+},
+{
   "Version": "1.3.7",
   "Date": "2026-10-14",
   "Notes": {

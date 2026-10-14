@@ -1,5 +1,11 @@
 # Changelog / 更新记录
 
+## 1.3.8 — 2026-10-14
+
+- 修复只购买收藏模式遗漏砍价；沿用已有折扣，并以折扣后报价核对金币和购买数量。
+- Favorites-only trading now bargains before buying and reuses active discounts without duplicate pill spending.
+- [完整说明 / Full notes](docs/releases/1.3.8.md)
+
 ## 1.3.7 — 2026-10-14
 
 - 藏红花增产料理优先制作；默认两轮土豆，增加高级藏红花售卖与料理开关。
