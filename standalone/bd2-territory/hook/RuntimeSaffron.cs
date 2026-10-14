@@ -16,6 +16,7 @@ namespace BD2Territory.Runtime
   private string[] saffronFields=new string[0];private bool saffronFilling;
   private LifeGatheringObject[] saffronOrder=new LifeGatheringObject[0];private int saffronVisit,saffronInitial;
   private double saffronRouteSeconds;private bool saffronHadHarvest,saffronSpent;
+  private long saffronWaitEnd;private int saffronHarvestedBefore;private bool saffronRoundPlanted;private string saffronDecision="",saffronResumeState="";
   private long SaffronNow()=>Convert.ToInt64(B.InvokeOn("Saffron.Now",B.Invoke("Saffron.Clock")));
   private long FoodCount(int id)=>SaleInventory().Where(x=>x.Id==id&&!x.IsDisableSlot&&x.KeepFlag==0).Sum(x=>(long)x.Count);
   private long FoodEnd(int id)=>((IEnumerable<LifeEatFoodDBInfo>)B.Invoke("Saffron.Foods")).Where(x=>x.ItemId==id).Select(x=>x.EndTime).DefaultIfEmpty(0).Max();
@@ -24,13 +25,13 @@ namespace BD2Territory.Runtime
   private bool SaffronAllows(LifeGatheringObject n)
   {
    if(control==null||!control.SaffronDaily)return true;
-   if(Kind(n)!=3)return false;
-   return farms.Any(f=>B.Active(f)&&FieldCrop(f)==n&&SaffronCycle.AllowHarvest(saffron.State,FieldSeed(f),saffronFields.Contains(FarmKey(f))));
+   return Kind(n)==3;
   }
+  private LifeGatheringObject SaffronMatureCrop()=>farms.Select(FieldCrop).Where(n=>n!=null&&Harvestable(n)).OrderBy(n=>(n.transform.position-player.transform.position).sqrMagnitude).FirstOrDefault();
   private void SaffronPhase(string state,long now)
-  {if(saffron.State==state)return;saffron.State=state;saffronPhaseAt=now;if(saffronJournal!=null){saffronJournal.State=state;SaveSaffron();}}
+  {if(saffron.State==state)return;saffron.State=state;saffronPhaseAt=now;if(saffronJournal!=null){saffronJournal.State=state;if(state=="harvest"||state=="potatoes"||state=="drain"||state=="replant"||state=="cook"||state=="sell")saffronJournal.WorkState=state;SaveSaffron();}}
   private void SaveSaffron()
-  {if(saffronJournal.Account!=account)return;saffronJournal.Reason=saffron.Reason;saffronJournal.BuffEnd=saffron.BuffEnd;saffronJournal.Harvested=saffron.Harvested;LocalStorage.WriteJsonAtomically(saffronPath,saffronJournal);LocalStorage.WriteJsonAtomically(Path.Combine(LocalStorage.DataRoot,"saffron-latest.json"),saffronJournal);}
+  {if(saffronJournal.Account!=account)return;saffronJournal.Reason=saffron.Reason;saffronJournal.BuffEnd=saffron.BuffEnd;saffronJournal.Harvested=saffron.Harvested;saffronJournal.PotatoRounds=saffron.PotatoRounds;saffronJournal.PotatoRoundLimit=saffron.PotatoRoundLimit;saffronJournal.PotatoRoundPlanted=saffronRoundPlanted;saffronJournal.Filling=saffronFilling;LocalStorage.WriteJsonAtomically(saffronPath,saffronJournal);LocalStorage.WriteJsonAtomically(Path.Combine(LocalStorage.DataRoot,"saffron-latest.json"),saffronJournal);}
   private void SaffronEnd(string state,string reason,long now)
   {StopMotion();saffron.Reason=reason;SaffronPhase(state,now);}
   private void SaffronSubmit(string kind,long now,Action<Action> send)
@@ -81,14 +82,25 @@ namespace BD2Territory.Runtime
    targetFarm=farms.Where(Empty).OrderBy(f=>(f.GetFieldWorldCenter()-player.transform.position).sqrMagnitude).FirstOrDefault();
    if(targetFarm!=null)Plant(s,crop,now);
   }
+  private void SaffronDecision(TerritorySnapshot s,string action,long serverNow,int empty,int grown)
+  {
+   saffron.ServerNow=serverNow;saffron.EmptyFields=empty;saffron.PotatoFields=grown;
+   string key=action+"|"+empty+"|"+grown+"|"+s.Reason;
+   if(key==saffronDecision)return;saffronDecision=key;
+   LocalStorage.Log("藏红花循环 action="+action+" completedRounds="+saffron.PotatoRounds+" targetRounds="+saffron.PotatoRoundLimit+" empty="+empty+" potatoes="+grown);
+  }
   private void SaffronTick(TerritorySnapshot s,TerritoryControl c,long now)
   {
    s.Saffron=saffron;
    try
    {
-    if(saffronOwner!=owner){saffronOwner=owner;saffron=new SaffronStatus();s.Saffron=saffron;saffronOrder=new LifeGatheringObject[0];saffronVisit=0;saffronHadHarvest=false;saffronSpent=false;saffronFilling=false;
+    if(c.SaffronPotatoRounds<1||c.SaffronPotatoRounds>3)throw new InvalidOperationException("藏红花收割后的土豆轮数必须为 1 至 3。");
+    if(saffronOwner!=owner){saffronOwner=owner;saffron=new SaffronStatus{State="sync"};s.Saffron=saffron;saffronOrder=new LifeGatheringObject[0];saffronVisit=0;saffronHadHarvest=false;saffronSpent=false;saffronFilling=false;saffronRoundPlanted=false;saffronWaitEnd=0;saffronDecision="";saffronRouteSeconds=0;
      saffronPath=Path.Combine(LocalStorage.DataRoot,"saffron-"+account+".json");saffronJournal=ReadLayoutFile<SaffronJournal>(saffronPath)??new SaffronJournal{Account=account};
      if(saffronJournal.Account!=account||saffronJournal.Pending==null)throw new InvalidOperationException("藏红花上次操作身份不匹配，未继续执行");
+     saffronResumeState=string.IsNullOrEmpty(saffronJournal.WorkState)?saffronJournal.State:saffronJournal.WorkState;saffron.BuffEnd=saffronJournal.BuffEnd;saffron.Harvested=saffronJournal.Harvested;
+     saffron.PotatoRounds=saffronJournal.PotatoRoundLimit>0?saffronJournal.PotatoRounds:saffronResumeState=="drain"?1:0;
+     saffron.PotatoRoundLimit=c.SaffronPotatoRounds;saffronRoundPlanted=saffronJournal.PotatoRoundPlanted;saffronFilling=saffronJournal.Filling;
      saffronStarted=saffronPhaseAt=now;
      if(saffronJournal.Pending.Length>0){saffron.State="recover";saffronRecoverySent=saffronCallback=false;saffronActionAt=now;}
     }
@@ -112,26 +124,52 @@ namespace BD2Territory.Runtime
      saffronJournal.Pending="";SaveSaffron();saffronCallback=false;
     }
     if(network.NativeBusy||network.Waiting||CookingBusy()||SalesBusy()){s.Reason="等待当前领地操作结算";if(SalesBusy())SalesTick(s,c,now);if(CookingBusy())CookingTick(s,c,now);return;}
+    if(saffron.State=="sync"){
+     // Reconcile even when the previous operation already has a receipt: native
+     // crops and duration buffs may have advanced while daily was disconnected.
+     SaffronSubmit("refresh",now,done=>B.Invoke("Sales.Refresh",done));saffron.State="idle";return;
+    }
     if(saffron.State=="idle"){
      SaffronValidateCatalog();
      int totalFields=worldObjects.Values.Count(o=>((LifeBuildingObjectTable)B.Invoke("Tables.Building",o.ObjectId))?.FunctionType==3);
-     if(farms.Length==0||totalFields!=farms.Length||farms.Any(f=>CurrentDb(f)==null||ReadFarmReadiness(f)==FarmReadiness.Unknown))throw new InvalidOperationException("农田未完整载入，未使用料理");
+     if(farms.Length==0||totalFields!=farms.Length||farms.Any(f=>CurrentDb(f)==null||ReadFarmReadiness(f)==FarmReadiness.Unknown)){
+      if(now-saffronStarted<TimeSpan.FromSeconds(20).Ticks){s.Reason="正在同步农田与料理效果，暂不种收或使用料理";return;}
+      throw new InvalidOperationException("农田数据暂时不完整，已保留作物与料理效果；可稍后重跑此环节");
+     }
      saffronFields=farms.Select(FarmKey).OrderBy(x=>x).ToArray();
-     if(farms.All(Empty)){SaffronPhase("replant",now);return;}
-     if(farms.Any(f=>!Empty(f)&&FieldSeed(f)!=SaffronCycle.Seed))throw new InvalidOperationException("农田含其他作物，未使用料理；请为藏红花环节准备空田或成熟藏红花");
-     saffronOrder=farms.Where(f=>!Empty(f)).Select(FieldCrop).ToArray();saffronInitial=saffronOrder.Length;
-     if(saffronOrder.Any(n=>n==null||!Harvestable(n)))throw new InvalidOperationException("藏红花尚未全部成熟，未使用料理；成熟后再运行");
+     long currentTime=SaffronNow();saffron.BuffEnd=SaffronCycle.Foods.Select(FoodEnd).Min();
+     bool sameCycle=saffronJournal.BuffEnd>0&&saffronJournal.BuffEnd==saffron.BuffEnd;
+     // Replant/cook can resume after buffs have disappeared from the native list.
+     bool recentReplant=saffronJournal.BuffEnd>0&&currentTime-saffronJournal.BuffEnd<TimeSpan.FromHours(19).TotalMilliseconds&&
+      (saffronResumeState=="replant"||saffronResumeState=="cook"||saffronResumeState=="sell");
+     bool recentCycle=saffronJournal.BuffEnd>0&&currentTime-saffronJournal.BuffEnd<TimeSpan.FromHours(19).TotalMilliseconds&&saffronJournal.Harvested>0;
+     if(!(sameCycle||recentCycle||recentReplant)){saffron.Harvested=0;saffron.PotatoRounds=0;saffronRoundPlanted=false;saffronFilling=false;}
+     saffronHarvestedBefore=saffron.Harvested;
+     saffronHadHarvest=saffron.Harvested>0;
+     if((recentReplant||recentCycle)&&saffron.BuffEnd==0)saffron.BuffEnd=saffronJournal.BuffEnd;
+     var occupied=farms.Where(f=>!Empty(f)).ToArray();
+     saffronOrder=occupied.Where(f=>FieldSeed(f)==SaffronCycle.Seed).Select(FieldCrop).ToArray();saffronInitial=saffronOrder.Length;
+     int potatoes=occupied.Count(f=>FieldSeed(f)==SaffronCycle.Potato);
+     string resume=SaffronCycle.ResumePhase(farms.Length-occupied.Length,saffronInitial,potatoes,occupied.Length-saffronInitial-potatoes,
+      saffronOrder.All(n=>n!=null&&Harvestable(n)),recentCycle||saffron.BuffEnd>currentTime,recentReplant);
+     if(resume=="unripe"){
+      targetNode=occupied.Where(f=>FieldSeed(f)!=SaffronCycle.Seed).Select(FieldCrop).Where(n=>n!=null&&Harvestable(n)).OrderBy(n=>(n.transform.position-player.transform.position).sqrMagnitude).FirstOrDefault();
+      if(targetNode!=null){Gather(s,now);return;}
+      throw new InvalidOperationException("藏红花尚未全部成熟，未使用新料理；成熟后再运行");
+     }
+     if(resume!="survey"){if(potatoes>0)saffronRoundPlanted=true;SaffronPhase(resume,now);return;}
      saffronOrder=saffronOrder.OrderBy(n=>(n.transform.position-player.transform.position).sqrMagnitude).ToArray();
-     SaffronSubmit("refresh",now,done=>B.Invoke("Sales.Refresh",done));SaffronPhase("survey",now);return;
+     SaffronPhase("survey",now);return;
     }
     if(!saffronFields.SequenceEqual(farms.Select(FarmKey).OrderBy(x=>x)))throw new InvalidOperationException("农田布局已变化，已停止藏红花环节");
     long serverNow=SaffronNow();
+    saffron.ServerNow=serverNow;saffron.WaitUntil=0;
     if(saffron.State=="survey"){
      if(now-saffronPhaseAt>TimeSpan.FromSeconds(180).Ticks)throw new InvalidOperationException("无法及时到达全部藏红花，未使用料理");
      if(saffronOrder.Any(n=>n==null||!Harvestable(n)))throw new InvalidOperationException("藏红花状态变化，未使用料理");
      if(saffronVisit<saffronOrder.Length){var n=saffronOrder[saffronVisit];
       if(!Allowed(n,now))throw new InvalidOperationException("藏红花存在不可达点，未使用料理");
-      if(CanGatherAt(n,player.transform.position)&&Detected(3).Contains(n)){saffronVisit++;return;}
+      if(CanGatherAt(n,player.transform.position)&&Detected(3).Contains(n)){saffronVisit++;saffron.Surveyed=saffronVisit;return;}
       Approach(n,n.transform.position,s,now,.7f);return;
      }
      saffronRouteSeconds=TimeSpan.FromTicks(now-saffronPhaseAt).TotalSeconds;
@@ -160,34 +198,45 @@ namespace BD2Territory.Runtime
     }
     if(saffron.State=="harvest"){
      if(serverNow>=saffron.BuffEnd)throw new InvalidOperationException("增产效果已结束，藏红花未收完；已停止，未无加成收割");
-     var remaining=farms.Where(f=>FieldSeed(f)==SaffronCycle.Seed&&!Empty(f)).Select(FieldCrop).ToArray();saffron.Harvested=saffronInitial-remaining.Length;
+     var remaining=farms.Where(f=>FieldSeed(f)==SaffronCycle.Seed&&!Empty(f)).Select(FieldCrop).ToArray();saffron.Harvested=saffronHarvestedBefore+saffronInitial-remaining.Length;
      if(remaining.Length==0){targetNode=null;SaffronPhase("potatoes",now);return;}
      targetNode=saffronOrder.FirstOrDefault(n=>n!=null&&remaining.Contains(n)&&Harvestable(n));
      if(targetNode==null||!Allowed(targetNode,now))throw new InvalidOperationException("藏红花收割路径变化，停止后续操作");
      Gather(s,now);return;
     }
     if(saffron.State=="potatoes"||saffron.State=="drain"){
-     var grown=farms.Where(f=>FieldSeed(f)==SaffronCycle.Potato&&!Empty(f)).ToArray();
-     targetNode=grown.Select(FieldCrop).Where(n=>n!=null&&Harvestable(n)).OrderBy(n=>(n.transform.position-player.transform.position).sqrMagnitude).FirstOrDefault();
-     if(!saffronFilling&&grown.Length>0){
-      if(targetNode!=null){if(!Allowed(targetNode,now))throw new InvalidOperationException("土豆收割路径暂不可达，保留作物");Gather(s,now);return;}
-      s.Reason="等待本批土豆成熟，不提前补种藏红花";return;
-     }
-     if(saffron.State=="drain"&&serverNow<saffron.BuffEnd){s.Reason="剩余增产时间不足一轮土豆；效果结束后补种藏红花";return;}
      var potato=ReadCrop((LifeCropSeedTable)B.Invoke("Tables.Crop",SaffronCycle.Potato),1);
-     string action=SaffronCycle.PotatoAction(serverNow,saffron.BuffEnd,potato.GrowthSeconds,SaffronCycle.HarvestSeconds(farms.Length,saffronRouteSeconds),saffronFilling,farms.Count(Empty),targetNode==null?0:1,grown.Length,SaleCurrency()>=(long)farms.Length*(potato.Price+100),SaffronCapacity(farms.Length,SaffronCycle.Potato));
+     var grown=farms.Where(f=>FieldSeed(f)==SaffronCycle.Potato&&!Empty(f)).ToArray();
+     targetNode=SaffronMatureCrop();
+     int empty=farms.Count(Empty);
+     bool fieldsKnown=farms.All(f=>CurrentDb(f)!=null&&ReadFarmReadiness(f)!=FarmReadiness.Unknown);
+     // Growing crops of other kinds may occupy part of the land. They do not
+     // prevent a potato batch from completing; unknown fields still do.
+     if(SaffronCycle.ObservePotatoRound(saffronJournal,fieldsKnown?empty+grown.Length:0,empty,grown.Length)){
+      saffronRoundPlanted=saffronJournal.PotatoRoundPlanted;saffronFilling=saffronJournal.Filling;saffron.PotatoRounds=saffronJournal.PotatoRounds;SaveSaffron();
+     }
+     long replantCost=(long)farms.Length*ReadCrop((LifeCropSeedTable)B.Invoke("Tables.Crop",SaffronCycle.Seed),1).Price;
+     bool affordable=SaleCurrency()>=replantCost+(long)empty*potato.Price,capacity=SaffronCapacity(farms.Length,SaffronCycle.Potato);
+     string action=SaffronCycle.PotatoAction(saffron.PotatoRounds,saffron.PotatoRoundLimit,saffronFilling,empty,targetNode==null?0:1,grown.Length,affordable,capacity);
+     if(action=="wait"){
+      if(saffronWaitEnd==0)saffronWaitEnd=serverNow+(potato.GrowthSeconds+30L)*1000;
+      if(serverNow>saffronWaitEnd)throw new InvalidOperationException("土豆成熟状态未及时更新，已保留作物；可稍后重跑此环节");
+      saffron.WaitUntil=saffronWaitEnd;s.Reason="等待本批土豆成熟，不提前补种藏红花";
+     }else saffronWaitEnd=0;
+     SaffronDecision(s,action,serverNow,empty,grown.Length);
      if(action=="plant"){
-      if(!saffronFilling){saffronFilling=true;saffron.PotatoRounds++;}
+      if(!saffronFilling){saffronFilling=true;SaffronPhase("potatoes",now);SaveSaffron();}
       targetNode=null;SaffronPlant(s,c,now,SaffronCycle.Potato);return;
      }
-     saffronFilling=false;
+     if(saffronFilling){saffronFilling=false;SaveSaffron();}
      if(action=="harvest"){if(!Allowed(targetNode,now))throw new InvalidOperationException("土豆收割路径暂不可达，保留作物");Gather(s,now);return;}
-     if(action=="wait"){s.Reason="等待本批土豆成熟，不提前补种藏红花";return;}
+     if(action=="wait")return;
      if(action=="replant"){SaffronPhase("replant",now);return;}
-     SaffronPhase("drain",now);s.Reason="剩余增产时间不足一轮土豆；效果结束后补种藏红花";return;
+     throw new InvalidOperationException(!affordable?"土豆轮次尚未完成，积分不足且需保留藏红花补种费用；已保留进度，其他日常继续":"土豆轮次尚未完成，库存空间或农田状态暂不允许种植；已保留进度，其他日常继续");
     }
     if(saffron.State=="replant"){
-     if(farms.Any(f=>!Empty(f)&&FieldSeed(f)!=SaffronCycle.Seed))throw new InvalidOperationException("尚有其他作物未收完，未覆盖种植");
+     targetNode=SaffronMatureCrop();
+     if(targetNode!=null){Gather(s,now);return;}
      if(farms.Any(Empty)){SaffronPlant(s,c,now,SaffronCycle.Seed);return;}
      SaffronPhase("cook",now);
     }
@@ -202,6 +251,7 @@ namespace BD2Territory.Runtime
      if(lines.Count>0){SalesTick(s,c,now,lines.Take(32).ToArray(),"saffron");return;}
      var saffronStock=ReadCrop((LifeCropSeedTable)B.Invoke("Tables.Crop",SaffronCycle.Seed),1);
      if(saffronStock.Inventory>=20)throw new InvalidOperationException("已补种并售卖成品，仍有藏红花原料；土豆或料理容量不足，已保留供下次制作");
+     if(farms.Any(f=>!Empty(f)&&FieldSeed(f)!=SaffronCycle.Seed))throw new InvalidOperationException("已完成空田补种与料理；部分农田作物尚未成熟，保留生长，其他日常继续");
      SaffronEnd("completed",saffronHadHarvest?"藏红花已收割，增产土豆循环结束；已补种并制作料理，成品保留一份":"已补种藏红花，成熟后再运行收割",now);return;
     }
    }

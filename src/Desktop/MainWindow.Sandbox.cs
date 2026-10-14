@@ -18,9 +18,10 @@ public partial class MainWindow
         if (DailySandbox.Current is {} binding)
             L.Bind(this, TitleProperty, () => L.Get("sandbox.window_title", binding.Name));
     }
-    private void SandboxRepair_Click(object sender, RoutedEventArgs e)
+    private async void SandboxRepair_Click(object sender, RoutedEventArgs e)
     {
         if (smoke != null || IsSandboxWindow || Unavailable || Selected is not { Account.Valid:true } row) return;
+        if (!await softwareSandboxPath.EnsureReadyAsync() || finalClose || Unavailable) return;
         SetBusy(true);
         try { DailyDialogs.ShowModal(CreateSandboxRepairWindow(row.Account.AccountKey,row.Name)); }
         finally { SetBusy(false); }

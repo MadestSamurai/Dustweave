@@ -178,7 +178,7 @@ foreach($flavor in $Flavors){
   Run $exe @('--check-suite',$managed,(Join-Path $checks 'suite')) 'unified-suite' 900
   Pass (Join-Path $checks 'suite/suite.json')
   Copy-DustweavePreparedCache -Source $suiteCache -Destination $PreparedCacheDirectory
-  foreach($id in @('fishing','sichuan','rhythm','territory','equipment','apostle-defense','infinite-gacha','secret-vision','fiend-hunter','mansion-runaway')){
+  foreach($id in @('fishing','sichuan','rhythm','territory','equipment','apostle-defense','infinite-gacha','secret-vision','fiend-hunter','mansion-runaway','pandora')){
    $check=Join-Path $checks ('tools/'+$id);[IO.Directory]::CreateDirectory($check)|Out-Null
    Run $exe @('--tool',$id,'--smoke',$check) ('tool-'+$id)
    if(!(Get-ChildItem -LiteralPath $check -File -Recurse -Filter '*.png')){throw "Missing tool UI evidence: $id"}

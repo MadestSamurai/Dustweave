@@ -80,10 +80,13 @@ static class PreferenceCases
         p.Mirror.Multiplier = 15;
         p.Stages.Guild = false;
         p.Hunt.OrdinaryChapter = 3;
+        p.SaffronPotatoRounds = 1;
         store.Save(a, p);
+        Check(store.Read(a).SaffronPotatoRounds == 1 && store.Read(b).SaffronPotatoRounds == 3, "potato rounds are saved independently for each account");
         Check(store.Read(a).Hunt.OrdinaryChapter == 3 && store.Read(b).Hunt.OrdinaryChapter == 9, "daily policy isolated by account");
         Check(!store.Read(a).Mirror.Enabled && store.Read(a).Mirror.Multiplier == 15 && !store.Read(a).Stages.Guild, "disabled stage settings retained");
         var legacy = JsonSerializer.SerializeToNode(new DailyPreferences())!.AsObject();
+        legacy.Remove("SaffronPotatoRounds");
         legacy.Remove("Friendship");
         legacy.Remove("Tactics");
         legacy.Remove("Events");
@@ -99,6 +102,7 @@ static class PreferenceCases
         legacy["Hunt"]!.AsObject().Remove("Enabled");
         Reject(() => DailyPreferences.Parse(legacy.ToJsonString()), "incomplete legacy preferences rejected");
         var v2 = JsonSerializer.SerializeToNode(new DailyPreferences())!.AsObject();
+        v2.Remove("SaffronPotatoRounds");
         v2.Remove("Friendship");
         v2.Remove("Tactics");
         v2.Remove("Events");
@@ -115,6 +119,7 @@ static class PreferenceCases
         v2["Stages"]!.AsObject().Remove("FreeDraws");
         Reject(() => DailyPreferences.Parse(v2.ToJsonString()), "incomplete v2 cannot implicitly reenable draw");
         var v5 = JsonSerializer.SerializeToNode(new DailyPreferences())!.AsObject();
+        v5.Remove("SaffronPotatoRounds");
         v5.Remove("Friendship");
         v5.Remove("Tactics");
         v5.Remove("Events");

@@ -1056,7 +1056,9 @@
     {
       "path": "src/Core/DailyDirectoryChanges.cs",
       "sha256": "f065b6be8c1543408f415d0a34a9eb0aa9c1ded1e33fb8eec1974e66a7ee3927",
-      "reasons": ["build input"],
+      "reasons": [
+        "build input"
+      ],
       "bytes": 6129
     },
     {
@@ -9316,6 +9318,142 @@
         "build input"
       ],
       "bytes": 4948
+    },
+    {
+      "path": "src/Compatibility/PandoraCompiler.cs",
+      "sha256": "b8b9f00c3cf8a05fa1842e2b3a89d07d59171790fb0627ba700488b89af14759",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 12048
+    },
+    {
+      "path": "src/Core/PandoraClient.cs",
+      "sha256": "e710934b803aba22d0dab6bb6e30e73042ab57c04543d6c7eadbdd28fadd5190",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 4288
+    },
+    {
+      "path": "src/Desktop/PandoraTool.cs",
+      "sha256": "6be9c3b1c2a1a32166f3c978791933a7b51e8546ec83b02263af0486f56c882f",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3869
+    },
+    {
+      "path": "src/Desktop/PandoraWindow.xaml",
+      "sha256": "5213896bdfd4082dbc4d4bdd4ddf48e964ca96df467ce2c9dbfa6d5bdb6337f5",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3739
+    },
+    {
+      "path": "src/Desktop/PandoraWindow.xaml.cs",
+      "sha256": "a1ce35077bba5cebe7a544979bfacd0c7f7f595ffee431ca9a0dc405b000d7ff",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 8707
+    },
+    {
+      "path": "src/Pandora/AttackArea.cs",
+      "sha256": "39f8e1b85a3e40e28cd7b57e9a2ef648605d5cc089406156df42fd597a187cdc",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3057
+    },
+    {
+      "path": "src/Pandora/ComboPlanner.cs",
+      "sha256": "a33fa3b951c89bc5c2aa5732f7bdbe2a3dfbd59d3948d3311d0ce4e613b2fa06",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 7235
+    },
+    {
+      "path": "src/Pandora/Loader.cs",
+      "sha256": "6d05907a3993b436e4c59121df5855a50a3588a867a25b43686c9ca2a7b09480",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3671
+    },
+    {
+      "path": "src/Pandora/LoopRules.cs",
+      "sha256": "18e264e8883a8976784ba814b21558c43550c0c2b9dbf5d61d53bb7fe51f49df",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1521
+    },
+    {
+      "path": "src/Pandora/Native.cs",
+      "sha256": "71f02383adaf9ae30577d9c280cbd801339451a47ae5a934eb62b06bf13656b0",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 7584
+    },
+    {
+      "path": "src/Pandora/Planner.cs",
+      "sha256": "bb99d8af4d9e48ea50dc4954c36efb4d760a78fdb3ed0bf4c1023b07ca3e5075",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 9284
+    },
+    {
+      "path": "src/Pandora/RegionPlanner.cs",
+      "sha256": "58da6df441dfe6597e4567017d0826df84556dca5ac41952172e20d5edc81620",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 5205
+    },
+    {
+      "path": "src/Pandora/Runtime.cs",
+      "sha256": "e3b722023983318406bf6284ccd5f060d2c1c95e7877a42be2b658e8c4da7686",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 22663
+    },
+    {
+      "path": "src/Pandora/SkillPlanner.cs",
+      "sha256": "c2e7d179548aeeda21dad5370af0784cb287032b194af05a8572af39f1abb1b1",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 8857
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/PandoraCases.cs",
+      "sha256": "adc46d84c44c9c117e3098abf5b77c0198aad2c41c1f731ed76137b17ec3eb47",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 7327
+    },
+    {
+      "path": "src/Desktop/SandboxSetupWindow.cs",
+      "sha256": "916919f661793e9cbc5c2f721bc61b17b1bd761966e6bb88d617599599c57893",
+      "reasons": [
+        "repository build or verification input"
+      ],
+      "bytes": 8485
+    },
+    {
+      "path": "src/Desktop/MainWindow.SandboxSetup.Smoke.cs",
+      "sha256": "683a3d65357ec52697d9b9be0966c8f2aece8b409bc399e3023351084d077dc9",
+      "reasons": [
+        "repository build or verification input"
+      ],
+      "bytes": 7756
     }
   ],
   "publicReleaseApproved": false,

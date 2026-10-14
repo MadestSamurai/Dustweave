@@ -53,7 +53,7 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 | [领地自动化](https://github.com/MadestSamurai/bd2-territory) | [使徒运气防守](https://github.com/MadestSamurai/bd2-apostle-defense) · [SECRET VISION](https://github.com/MadestSamurai/bd2-secret-vision) |
 | [装备助手](https://github.com/MadestSamurai/bd2-equipment-assistant) | [恶魔猎人](https://github.com/MadestSamurai/bd2-fiend-hunter) · [无限抽抽乐](https://github.com/MadestSamurai/bd2-infinite-gacha) |
 
-此外，内置 [MANSION RUNAWAY](docs/MANSION_RUNAWAY.md) 的实时寻路与关卡推进工具。
+此外，内置 [MANSION RUNAWAY](docs/MANSION_RUNAWAY.md) 的实时寻路与关卡推进工具，以及[潘多拉大逃脱](docs/PANDORA.md)的指定关卡循环刷货币和自动挑战工具。潘多拉挑战尚未纳入装备数据，目前自动化无法通关。
 
 表中的工具仍保留各自的独立项目。在织尘中打开时，由主程序协调连接、语言和自动化控制权；独立版设置不会因主程序语言切换而被改写。
 
@@ -76,6 +76,8 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 首次使用建议先选择少量熟悉的环节。[完整入门](docs/GETTING_STARTED.md)包含更新、数据位置和常见问题。1.3.1 将组件整理到 `app` 文件夹。1.3.0 已撤回，所有更早版本请手动下载并完整解压到新目录；已有账号与设置会沿用。后续兼容版本优先使用小型差分更新，最多跨10次发布，超过8 MiB或需要更换运行库时提示手动下载。请保留 EXE 旁的所有文件。
 
 游戏不在默认位置时，打开 **软件设置 → 游戏与沙盒位置 → 更改位置**，选择游戏本体 `BrownDust II.exe`。位置自动保存，所有账号和定时执行共用；也可恢复自动查找。Sandboxie 的安装位置也在这里修改。
+
+隔离多开需要安装 [Sandboxie-Plus](https://sandboxie-plus.com/downloads/) 的 Windows x64 稳定版；串行执行无需安装。未检测到时，启动前会提供下载、选择已安装位置和重新检测；软件设置中的 **沙盒工具位置 → 安装与检测** 也可打开帮助。定时任务缺少沙盒时只提示一次，不会停止正在运行的工具；安装后请手动执行，或等待下一次定时任务。
 
 **软件设置**位于侧栏底部，集中管理外观、语言、启动与关闭行为、程序位置及日志清理。可选择登录 Windows 时启动织尘，默认关闭；打开软件后是否执行日常是另一个独立选项。
 

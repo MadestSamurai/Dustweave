@@ -16,6 +16,7 @@ public partial class MainWindow
     private void InitializeSchedules()
     {
         scheduleStore = new(root); ScheduleTab.Content = schedulePanel;
+        schedulePanel.SandboxSetupRequested += () => { if (!Unavailable && !IsSandboxWindow) softwareSandboxPath.OpenEditor(); };
         try { schedulePanel.Show(scheduleStore.Read(), scheduleStore.Last); }
         catch (Exception e) { schedulePanel.Feedback(e.Message, true); }
         schedulePanel.SaveRequested += async plan =>
@@ -76,7 +77,7 @@ public partial class MainWindow
             if (scheduleStore.IsClaimed(due.Value)) return;
             // A running tool is the one optional handoff. Never interrupt another daily queue,
             // an update, onboarding or a user's modal operation.
-            if (onboardingOpen || busy || toolChanging || updateInstalling || ParallelBusy || pluginChanging || releaseDialogOpen || DailyDialogs.ModalDepth > 0)
+            if (onboardingOpen || busy || toolChanging || updateInstalling || ParallelBusy || pluginChanging || releaseDialogOpen || DailyDialogs.ModalDepth > 0 || softwareSandboxPath.Preparing)
             {
                 scheduleStore.Record(new(due.Value.ToString("O"), "waiting", now)); return;
             }
@@ -85,7 +86,16 @@ public partial class MainWindow
             var targets = plan.Accounts.Select(key => catalogNow.Accounts.SingleOrDefault(a => a.Valid && a.AccountKey == key)
                 ?? throw new InvalidDataException("schedule.account_missing")).ToArray();
             if (!preferencesPanel.SavePending()) throw new InvalidDataException("schedule.unsaved_settings");
-            if (plan.Execution.Enabled && DailySandbox.Installation() == null) throw new InvalidDataException("parallel.install_required");
+            if (plan.Execution.Enabled && !await softwareSandboxPath.EnsureReadyAsync(scheduled: true))
+            {
+                // Claim this occurrence so the ten-second poll cannot reopen setup.
+                // Validate before stopping tools, switching accounts or creating workers.
+                scheduleStore.Claim(due.Value, now);
+                scheduleStore.Record(new(due.Value.ToString("O"), "failed", now, "sandbox_setup.schedule_missing"));
+                schedulePanel.RefreshStatus(plan, scheduleStore.Last);
+                schedulePanel.Feedback("sandbox_setup.schedule_missing", true);
+                return;
+            }
             if (ToolRunning || scheduleToolDraining || plan.TakeOverTools)
             {
                 scheduleStore.Record(new(due.Value.ToString("O"), "waiting", now,
@@ -158,7 +168,7 @@ public partial class MainWindow
         execution ??= parallelOptions;
         if (execution.Enabled && !IsSandboxWindow)
         {
-            await StartParallelAsync(targets, execution);
+            if (!await StartParallelAsync(targets, execution)) return "failed";
             while (ParallelBusy) await Task.Delay(500);
             return parallel!.Current!.Items.All(x => x.State == "completed") ? "completed" : "partial";
         }

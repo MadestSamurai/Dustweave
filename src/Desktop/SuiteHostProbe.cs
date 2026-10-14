@@ -13,7 +13,7 @@ internal static class SuiteHostProbe {
     Environment.SetEnvironmentVariable(names[0],tool.Id);
     var assembly=Assembly.Load(tool.Id=="equipment"?"BD2Equipment.Connection":tool.AssemblyName+".Core");
     bool rejected=false;
-    if(tool.Id!="mansion-runaway"){
+    if(tool.Id is not ("mansion-runaway" or "pandora")){
     var injector=assembly.GetType("SharpMonoInjector.Injector",true)!;
     try{Activator.CreateInstance(injector,[int.MaxValue]);}
     catch(TargetInvocationException e)when(e.InnerException is InvalidOperationException x&&x.Message.Contains("managed by the daily host")){rejected=true;}
@@ -22,9 +22,9 @@ internal static class SuiteHostProbe {
     }
     var pipeType=assembly.GetType("BD2.LocalIpc.PipeClient",true)!;
     var pipe=Activator.CreateInstance(pipeType,[output,int.MaxValue,1L])!;
-    var guard=tool.Id=="mansion-runaway"?null:assembly.GetType("BD2.LocalIpc.HostedConnection",true)!;
+    var guard=tool.Id is "mansion-runaway" or "pandora"?null:assembly.GetType("BD2.LocalIpc.HostedConnection",true)!;
     rejected=false;
-    try{if(guard!=null)guard.GetMethod("TryOpen")!.Invoke(null,[pipe,int.MaxValue,1L]);else Activator.CreateInstance(typeof(MansionClient),[output,int.MaxValue,1L,"fixture"]);}
+    try{if(guard!=null)guard.GetMethod("TryOpen")!.Invoke(null,[pipe,int.MaxValue,1L]);else Activator.CreateInstance(tool.Id=="pandora"?typeof(PandoraClient):typeof(MansionClient),[output,int.MaxValue,1L,"fixture"]);}
     catch(TargetInvocationException e)when(e.InnerException is InvalidOperationException){rejected=true;}
     if(!rejected)throw new Exception(tool.Id+" accepts a changed game");
     checks.Add(tool.Id+": changed process rejected before transport");

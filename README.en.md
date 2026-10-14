@@ -53,7 +53,7 @@ Some stages require unlocked account content, an active event or a compatible ga
 | [Territory](https://github.com/MadestSamurai/bd2-territory) | [Apostle Defense](https://github.com/MadestSamurai/bd2-apostle-defense) · [SECRET VISION](https://github.com/MadestSamurai/bd2-secret-vision) |
 | [Equipment Assistant](https://github.com/MadestSamurai/bd2-equipment-assistant) | [Fiend Hunter](https://github.com/MadestSamurai/bd2-fiend-hunter) · [Infinite Gacha](https://github.com/MadestSamurai/bd2-infinite-gacha) |
 
-Dustweave also includes a native [MANSION RUNAWAY](docs/MANSION_RUNAWAY.md) tool for realtime navigation and stage progression.
+Dustweave also includes native tools for [MANSION RUNAWAY](docs/MANSION_RUNAWAY.md) navigation and stage progression, and [Pandora Escape](docs/PANDORA.md) currency farming on a selected stage or automatic challenge attempts. Pandora's challenge planner does not yet account for equipment and cannot currently clear challenge mode.
 
 The tools listed in the table retain their independent projects. Within Dustweave, the host coordinates connections, language and automation ownership. Changing the host language does not overwrite a standalone tool's saved language preference.
 
@@ -76,6 +76,8 @@ Both packages have the same features. Download a complete package from [GitHub R
 Start with a few familiar stages. [Getting started](docs/GETTING_STARTED.en.md) covers updates, data locations and common questions. Version 1.3.1 groups application files under `app`. Version 1.3.0 has been withdrawn; users on any earlier version must extract the complete download into a new folder. Accounts and settings are retained. Future compatible automatic updates use small direct patches across up to 10 releases; patches above 8 MiB or runtime changes require a manual download. Keep all files beside the EXE.
 
 For a custom game installation, open **App settings → Game & sandbox locations → Change location** and select `BrownDust II.exe`. The choice is saved automatically and shared by all accounts and scheduled runs. You can restore auto-detection or change the Sandboxie installation location here.
+
+Parallel accounts require the stable Windows x64 build of [Sandboxie-Plus](https://sandboxie-plus.com/downloads/); sequential runs do not. If it is unavailable, startup offers a download link, a folder picker and a check-again action. Help is also available under **App settings → Sandboxie location → Installation help**. A scheduled attempt shows one notice and leaves running tools alone. After setup, start the queue manually or wait for the next scheduled run.
 
 **App settings** is at the bottom of the sidebar. It groups appearance, language, startup and closing behavior, installation paths and log cleanup. Starting Dustweave when you sign in to Windows is off by default; running daily tasks when the app opens is a separate option.
 

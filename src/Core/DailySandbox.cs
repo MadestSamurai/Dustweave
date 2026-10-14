@@ -149,7 +149,7 @@ public static class DailySandbox
     private static async Task<string> LaunchCoreAsync(DailyAccount account, string executable, Action<string> progress, CancellationToken token, DailyParallelJob? worker)
     {
         RequireHost();
-        string installation = Installation() ?? throw new InvalidOperationException("尚未安装 Sandboxie-Plus，请先完成它的服务和驱动安装。");
+        string installation = Installation() ?? throw new InvalidOperationException("parallel.install_required");
         var vault = new SessionVault();
         var saved = SessionService.LatestSameAccount(vault.LoadFixedSlot(account.SlotNumber), vault.TryLoadFixedSlot);
         if (!account.Valid || DailyIdentity.MemberKey(SessionIdentity.GetMemberId(saved) ?? "") != account.AccountKey)

@@ -19,7 +19,7 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly ComboBox eventSearch = new();
     private readonly CheckBox tactics = Check("战术教材");
     private readonly ComboBox tacticsSearch = new();
-    private readonly ComboBox chapter = new(), stone = new(), enhance = new(), multiplier = new();
+    private readonly ComboBox chapter = new(), stone = new(), enhance = new(), multiplier = new(), saffronRounds = new();
     private readonly ListBox priority = new() { Height = 94, MinWidth = 240, DisplayMemberPath = "Label" };
     private readonly CheckBox hunt = Check("自动分配免费米饭"), gold = Check("金币加成日刷金币"), slime = Check("史莱姆加成日刷史莱姆");
     private readonly CheckBox stones = Check("每天刷圣石"), recycle = Check("处理本次免费抽到的装备"), keepSr = Check("保留五星角色的 SR 专武");
@@ -175,6 +175,9 @@ public sealed class DailyPreferencesPanel : UserControl
         Stage(income, "经营一键领取", "prefs.business_hint");
         Stage(guests, "餐厅特殊顾客与气泡", "领取属性圣石和限时装饰币");
         Stage(saffron, "藏红花种植与收割", "prefs.saffron_hint");
+        saffronRounds.ItemsSource = new[] { 1, 2, 3 };
+        Row("收割后种收土豆轮数", saffronRounds);
+        L.Bind(saffronRounds, System.Windows.Automation.AutomationProperties.NameProperty, () => L.Get("prefs.saffron_rounds"));
         Note("prefs.saffron_details");
         Stage(draws, "每日免费抽取", "prefs.draws_hint");
         Stage(recycle, "装备分解", "只处理本日免费抽取的可分解装备");
@@ -299,7 +302,7 @@ public sealed class DailyPreferencesPanel : UserControl
             c.Checked += (_, _) => MarkDirty();
             c.Unchecked += (_, _) => MarkDirty();
         }
-        foreach (var c in new[] { tacticsSearch, eventSearch, chapter, stone, enhance, refineChoice, multiplier })
+        foreach (var c in new[] { tacticsSearch, eventSearch, chapter, stone, enhance, refineChoice, multiplier, saffronRounds })
             c.SelectionChanged += (_, _) => MarkDirty();
         tradeReserve.TextChanged += (_, _) => MarkDirty();
         tradeMaximum.TextChanged += (_, _) => MarkDirty();
@@ -529,6 +532,7 @@ public sealed class DailyPreferencesPanel : UserControl
             income.IsChecked = loaded.Stages.CafeteriaIncome;
             guests.IsChecked = loaded.Stages.CafeteriaGuests;
             saffron.IsChecked = loaded.Stages.Saffron;
+            saffronRounds.SelectedItem = loaded.SaffronPotatoRounds;
             draws.IsChecked = loaded.Stages.FreeDraws;
             weeklySichuan.IsChecked = loaded.Weekly.Sichuan;
             weeklyBook.IsChecked = loaded.Weekly.Book;
@@ -653,6 +657,7 @@ public sealed class DailyPreferencesPanel : UserControl
             loaded.Stages.CafeteriaIncome = income.IsChecked == true;
             loaded.Stages.CafeteriaGuests = guests.IsChecked == true;
             loaded.Stages.Saffron = saffron.IsChecked == true;
+            loaded.SaffronPotatoRounds = (int)saffronRounds.SelectedItem;
             loaded.Stages.FreeDraws = draws.IsChecked == true;
             loaded.Stages.DailyRewards = dailyRewards.IsChecked == true;
             loaded.Weekly.Sichuan = weeklySichuan.IsChecked == true;
@@ -740,6 +745,20 @@ public sealed class DailyPreferencesPanel : UserControl
         filter.Text = "";
         if (sections.Any(s => s.View.Visibility != Visibility.Visible))
             throw new Exception("Clearing settings search did not restore sections");
+    }
+    internal void ShowSaffronSettingsForSmoke()
+    {
+        ReviewCategoryForSmoke("resources");
+        filter.Text="藏红花";
+        if(loaded==null||saffronRounds.Items.Count!=3)throw new Exception("Saffron round settings unavailable");
+        int previous=loaded.SaffronPotatoRounds;bool enabled=loaded.Stages.Saffron;
+        try
+        {
+            saffron.IsChecked=true;saffronRounds.SelectedItem=2;
+            if(!Save()||store.Read(account).SaffronPotatoRounds!=2)throw new Exception("Saffron round count did not save for the selected account");
+        }
+        finally {saffronRounds.SelectedItem=previous;saffron.IsChecked=enabled;if(!Save())throw new Exception("Saffron fixture restore failed");}
+        UpdateLayout();saffronRounds.BringIntoView();
     }
     internal void ShowWeeklySettingsForSmoke()
     {

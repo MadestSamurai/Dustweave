@@ -12,6 +12,7 @@ public partial class App : Application
         base.OnStartup(e);
         var args = StartupArguments ?? e.Args;
         if(args.Length>0&&args[0]=="--mansion-window"){MansionTool.Start(this,args.Skip(1).ToArray());return;}
+        if(args.Length>0&&args[0]=="--pandora-window"){PandoraTool.Start(this,args.Skip(1).ToArray());return;}
         if (args.Length == 3 && args[0] == "--restart-after")
         {
             ShutdownMode = ShutdownMode.OnExplicitShutdown;

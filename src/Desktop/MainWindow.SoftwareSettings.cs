@@ -14,6 +14,7 @@ public partial class MainWindow
     {
         softwareGamePath = new(new Accounts.GameInstallation(smoke == null ? null : Path.Combine(root, "game-path-preview")), IsSandboxWindow);
         softwareSandboxPath = new(new Accounts.SandboxInstallation(smoke == null ? null : Path.Combine(root, "sandbox-path-preview")), IsSandboxWindow);
+        softwareSandboxPath.PreparingChanged += () => SetBusy(busy);
         SoftwarePaths.Children.Add(softwareGamePath); SoftwarePaths.Children.Add(softwareSandboxPath);
         string? isolatedStartup = null;
         windowsStartup = smoke == null ? new() : new(() => isolatedStartup, value => isolatedStartup = value);

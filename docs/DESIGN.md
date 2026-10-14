@@ -73,3 +73,11 @@ App settings owns appearance, language, Windows startup, run-on-open, closing be
 Schedules is one plan, with sections separated by spacing and rules rather than independent cards. Keep the save action visible beneath the scroll region. The next occurrence is explicitly the saved plan; edits show an unsaved notice. Keep account-card ordering and the existing execution guards.
 
 See [the 1.3.3 review](UX_REVIEW_1.3.3.md) for the issue inventory and validation scope.
+
+## Sandbox installation guidance
+
+- Preflight the whole parallel queue before account switches or worker creation. Account-page runs, run-on-open and scheduled parallel runs share the installation editor. Binding repair also checks this prerequisite. Ordinary single-account and sequential starts do not require Sandboxie.
+- An interactive start offers the official Sandboxie-Plus download, an installed-folder picker, automatic discovery and explicit check-and-continue. Downloading or selecting a folder alone does not authorize execution; cancel preserves the queue and saved account identities.
+- A missing prerequisite at a scheduled occurrence records that occurrence as failed and opens one non-blocking help window, before stopping tools. The ten-second scheduler does not retry that occurrence. Setup does not replay the missed schedule; the user starts manually or waits for the next occurrence. Repeated requests reuse the existing window.
+- Passive detection and opening App settings never produce an installation popup. A missing location exposes Installation help beside Change location. Parallel execution settings and the schedule's parallel section offer the same editor. An invalid saved location stays visible and editable instead of silently switching installations.
+- Use the shared dialog chrome, theme resources, accessible controls and three languages. Display a copyable official URL if the user's browser cannot open.

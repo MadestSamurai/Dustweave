@@ -6,12 +6,13 @@ internal static class ToolMenuCases
     public static void Run(string root, List<string> cases)
     {
         void Check(bool pass, string name) { if (!pass) throw new Exception(name); cases.Add("tool-menu: " + name); }
-        Check(DailyToolCatalog.All.Count == 10, "nine bundled tools plus the native mansion tool present");
+        Check(DailyToolCatalog.All.Count == 11, "nine bundled tools plus native mansion and pandora tools present");
         Check(DailyToolCatalog.All.Select(t => t.Id).Distinct().Count() == DailyToolCatalog.All.Count, "unique tool identities");
         Check(DailyToolCatalog.Search("连连看").Single().Id == "sichuan", "Chinese search");
         Check(DailyToolCatalog.Search(" SECRET ").Single().Id == "secret-vision", "case insensitive trimmed search");
         Check(!DailyToolCatalog.Search("not a tool").Any(), "empty search result");
-        Check(!DailyToolCatalog.All.Any(t => t.Id is "pandora" or "summoner"), "private tools excluded");
+        Check(DailyToolCatalog.Search("潘多拉").Single().Id == "pandora", "Pandora is discoverable in the host tools menu");
+        Check(!DailyToolCatalog.All.Any(t => t.Id == "summoner"), "private tools excluded");
         foreach (var tool in DailyToolCatalog.All)
         {
             Check(DailyToolArguments.TryClassify(tool.Id, [], out var helper) && !helper, tool.Id + " normal launch requires interactive operation guard");

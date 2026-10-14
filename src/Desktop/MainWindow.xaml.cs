@@ -154,10 +154,10 @@ public partial class MainWindow : Window
     private bool toolChanging;
     private bool ToolOpen => toolSession.Current != null;
     private bool ToolRunning => !busy && parallelControl == null && DailyToolControl.IsOccupied(root);
-    private bool Unavailable => onboardingOpen || busy || toolChanging || ToolRunning || updateInstalling || ParallelBusy || pluginChanging;
+    private bool Unavailable => onboardingOpen || busy || toolChanging || ToolRunning || updateInstalling || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true;
     private async Task OpenTool(string id)
     {
-        if (smoke != null || busy || toolChanging || ParallelBusy || pluginChanging) return;
+        if (smoke != null || busy || toolChanging || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true) return;
         toolChanging = true; SetBusy(busy);
         try {
             if(toolSession.Current?.ToolId==id){toolSession.Show();return;}
@@ -174,7 +174,7 @@ public partial class MainWindow : Window
     }
     private async Task CloseTool()
     {
-        if (smoke != null || busy || toolChanging || ParallelBusy || pluginChanging) return;
+        if (smoke != null || busy || toolChanging || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true) return;
         toolChanging = true; toolMessage = null; SetBusy(busy);
         try { if (await toolSession.CloseAsync()) { if(host.Find()!=null)await DailySuite.ActivateAsync(host,root,"daily",m=>toolMessage=m,CancellationToken.None);WorkspaceTabs.SelectedItem = RunTab; } }
         catch (Exception e) { toolMessage = e.Message; }
@@ -187,7 +187,7 @@ public partial class MainWindow : Window
     {
         var id = toolSession.Current?.ToolId;
         bool running=ToolRunning;
-        toolPanel.Refresh(busy || toolChanging || ParallelBusy || pluginChanging, id, running ? "tools.active_notice" : toolMessage ?? (busy ? "日常正在执行；工具设置窗口可以保留。" : toolSession.Message),running);
+        toolPanel.Refresh(busy || toolChanging || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true, id, running ? "tools.active_notice" : toolMessage ?? (busy ? "日常正在执行；工具设置窗口可以保留。" : toolSession.Message),running);
         if(previousRunning!=running){previousRunning=running;SetBusy(busy);}
         if(previousTool!=id){bool returnToDaily=previousTool!=null&&id==null&&!toolChanging;previousTool=id;SetBusy(busy);if(returnToDaily)_=CloseTool();}
     }
@@ -375,7 +375,7 @@ public partial class MainWindow : Window
         RefreshButton.IsEnabled = !unavailable;
         ConnectButton.IsEnabled = !unavailable;
         StopButton.IsEnabled = value || ParallelBusy; L.Bind(StopButton,ContentControl.ContentProperty,ParallelBusy?"parallel.pause_all":"common.stop_operation");
-        toolPanel.Refresh(value || toolChanging || ParallelBusy || pluginChanging, toolSession.Current?.ToolId, ToolRunning ? "工具自动化正在运行或等待结算；停止后释放，无需关闭窗口。" : toolMessage ?? (value ? "日常正在执行；工具设置窗口可以保留。" : toolSession.Message),ToolRunning);
+        toolPanel.Refresh(value || toolChanging || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true, toolSession.Current?.ToolId, ToolRunning ? "工具自动化正在运行或等待结算；停止后释放，无需关闭窗口。" : toolMessage ?? (value ? "日常正在执行；工具设置窗口可以保留。" : toolSession.Message),ToolRunning);
         SelectAll.IsEnabled = !unavailable;
         UpdateSelection();
         UpdateConnection();
@@ -755,6 +755,13 @@ public partial class MainWindow : Window
         try
         {
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "sandbox-setup")
+            {
+                await CheckSandboxSetupForSmoke();
+                await CheckGameLocationForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "sandbox-setup", realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "recovery")
             {
                 L.Audit();
@@ -1013,6 +1020,10 @@ public partial class MainWindow : Window
             WorkspaceTabs.SelectedItem = SettingsTab;
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             Capture("preferences");
+            preferencesPanel.ShowSaffronSettingsForSmoke();
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            Capture("preferences-saffron");
+            preferencesPanel.ReviewCategoryForSmoke("all");
             preferencesPanel.ShowWeeklySettingsForSmoke();
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             Capture("preferences-weekly");

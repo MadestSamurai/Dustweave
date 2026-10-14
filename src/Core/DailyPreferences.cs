@@ -26,6 +26,7 @@ public sealed class DailyPreferences
     [JsonRequired] public TradePreferences Trade { get; set; } = new();
     [JsonRequired] public EventRewardPreferences Events { get; set; } = new();
     [JsonRequired] public TacticsPreferences Tactics { get; set; } = new();
+    public int SaffronPotatoRounds { get; set; } = 3;
     public static DailyPreferences Parse(string json)
     {
         var node = JsonNode.Parse(json)?.AsObject() ?? throw new InvalidDataException("日常设置不能为空。");
@@ -168,6 +169,8 @@ public sealed class DailyPreferences
         if (Schema != 18 || General == null || Friendship == null || Tactics == null || Events == null || EventBattle == null || Trade == null || Weekly == null || MonsterHunt == null || Hunt == null || Equipment == null || Tasks == null || Stages == null || Mirror == null)
             throw new InvalidDataException("日常偏好版本或字段不完整。");
         General.Validate();
+        if (SaffronPotatoRounds is < 1 or > 3)
+            throw new InvalidDataException("藏红花收割后的土豆轮数必须为 1 至 3。");
         if (Tactics.SearchSeconds is < 1 or > 120)
             throw new InvalidDataException("战术教材搜索时间必须为 1 至 120 秒。");
         if (EventBattle.SearchSeconds is < 1 or > 120)

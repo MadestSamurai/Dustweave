@@ -47,7 +47,7 @@ internal static class DailySuiteComposition {
   try{
    cancel.ThrowIfCancellationRequested();
    string tool=id.EndsWith("-daily",StringComparison.Ordinal)?id[..^6]:id;
-   string assemblyName=id=="mansion-runaway"?"Dustweave.Compatibility":id=="daily"?"Dustweave.Connection":tool=="equipment"?"BD2Equipment.Connection":prefixes[tool]+".Compatibility";
+   string assemblyName=id is "mansion-runaway" or "pandora"?"Dustweave.Compatibility":id=="daily"?"Dustweave.Connection":tool=="equipment"?"BD2Equipment.Connection":prefixes[tool]+".Compatibility";
    var assembly=Assembly.Load(assemblyName);
    string key=DailyIdentity.Hash("module-v1|"+id+"|"+assembly.ManifestModule.ModuleVersionId+"|"+(id=="daily"?DailyPlugin.Current.Fingerprint:""));
    string clientKey=await ClientKey(managed,cancel);
@@ -62,6 +62,8 @@ internal static class DailySuiteComposition {
    byte[] payload;
    if(id=="mansion-runaway"){
     payload=await Task.Run(()=>MansionCompiler.Prepare(managed),cancel);
+   }else if(id=="pandora"){
+    payload=await Task.Run(()=>PandoraCompiler.Prepare(managed),cancel);
    }else if(id=="daily"){
     string target=Path.Combine(directory,"build-"+Guid.NewGuid().ToString("N"));
     // Adaptation and compilation are CPU-heavy even before RunAsync's first await.
@@ -99,7 +101,7 @@ internal static class DailySuiteComposition {
   if(manifest.GetResourceData().Length!=0||module.Resources.Any(r=>r.Name.StartsWith("Suite.")&&r.Name.EndsWith(".dll")))throw new InvalidDataException("Initial connection eagerly prepared tool modules.");
   await File.WriteAllBytesAsync(Path.Combine(output,"observer.dll"),prepared.Payload);
   var entries=new List<object>();
-  foreach(string id in new[]{"daily"}.Concat(prefixes.Keys).Concat(["equipment","territory-daily","fishing-daily","sichuan-daily","mansion-runaway"])){
+  foreach(string id in new[]{"daily"}.Concat(prefixes.Keys).Concat(["equipment","territory-daily","fishing-daily","sichuan-daily","mansion-runaway","pandora"])){
    var bytes=await PrepareModule(managed,id,_=>{},CancellationToken.None);
    using var child=ModuleDefinition.ReadModule(new MemoryStream(bytes));
    var entry=child.GetType(SuiteRules.ModuleEntry(id))??throw new InvalidDataException("Missing module loader: "+id);

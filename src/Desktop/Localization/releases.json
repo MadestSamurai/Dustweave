@@ -1,5 +1,32 @@
 [
 {
+  "Version": "1.3.6",
+  "Date": "2026-10-14",
+  "Notes": {
+    "zh-CN": [
+      "藏红花收割后改为固定种收 1–3 轮土豆，默认 3 轮；不再依赖加成剩余时间，重跑可接续未完成的一轮。",
+      "新增潘多拉大逃脱：选择关卡循环刷游戏货币，或自动尝试挑战。挑战模式未加入装备数据，目前自动化无法通关。",
+      "沙盒启动前统一提供安装检查、官网下载及位置选择；多账号共用提示，定时任务不会反复弹窗。",
+      "潘多拉已验证普通第一关循环及进入第二关；藏红花固定轮数仍待自然成熟后的完整实机验收。",
+      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+    ],
+    "zh-TW": [
+      "藏紅花收割後改為固定種收 1–3 輪馬鈴薯，預設 3 輪；不再依賴加成剩餘時間，重跑可接續未完成的一輪。",
+      "新增潘多拉大逃脫：選擇關卡循環刷遊戲貨幣，或自動嘗試挑戰。挑戰模式未加入裝備資料，目前自動化無法通關。",
+      "沙盒啟動前統一提供安裝檢查、官網下載及位置選擇；多帳號共用提示，定時任務不會反覆彈窗。",
+      "潘多拉已驗證普通第一關循環及進入第二關；藏紅花固定輪數仍待自然成熟後的完整實機驗收。",
+      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+    ],
+    "en-US": [
+      "Saffron harvest now uses 1–3 fixed potato rounds (3 by default), independent of buff duration. Reruns can finish the remaining round.",
+      "Adds Pandora Escape: repeat a selected stage for currency or automatically attempt challenges. Challenge equipment data is not included; automation cannot currently clear challenge mode.",
+      "Sandbox startup offers installation checks, the official download and a folder picker. Multi-account attempts share one prompt; scheduled runs do not repeatedly prompt.",
+      "Pandora was live-tested for normal Stage 1 looping and Stage 2 entry. Fixed-round saffron still needs a complete live harvest after natural maturation.",
+      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+    ]
+  }
+},
+{
   "Version": "1.3.5",
   "Date": "2026-10-14",
   "Notes": {

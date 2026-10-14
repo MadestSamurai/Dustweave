@@ -8,6 +8,7 @@ public sealed record SandboxInstallationState(string Directory, bool IsManual, s
 /// <summary>The launcher and native process-scope API use the same per-user installation.</summary>
 public sealed class SandboxInstallation
 {
+    public const string DownloadUrl = "https://sandboxie-plus.com/downloads/";
     public const string Missing = "sandbox_path.missing";
     public const string Invalid = "sandbox_path.invalid";
     public const string Unreadable = "sandbox_path.unreadable";

@@ -185,9 +185,9 @@
     "en-US": "Choose the installed Sandboxie folder containing Start.exe, SbieIni.exe and SbieDll.dll."
   },
   "sandbox_path.inherited": {
-    "zh-CN": "沙盒位置由普通主窗口管理。请在主窗口的日常设置中更改。",
-    "zh-TW": "沙盒位置由一般主視窗管理。請在主視窗的日常設定中變更。",
-    "en-US": "The main window manages this location. Change it in Daily settings outside the sandbox."
+    "zh-CN": "沙盒位置由普通主窗口管理。请在主窗口的软件设置中更改。",
+    "zh-TW": "沙盒位置由一般主視窗管理。請在主視窗的軟體設定中變更。",
+    "en-US": "The main window manages this location. Change it in App settings outside the sandbox."
   },
   "sandbox_path.manual": {
     "zh-CN": "使用你选择的安装位置",
@@ -200,9 +200,74 @@
     "en-US": "Sandboxie detected automatically"
   },
   "sandbox_path.missing": {
-    "zh-CN": "未找到 Sandboxie。使用隔离多开前，请安装并选择其文件夹。",
-    "zh-TW": "找不到 Sandboxie。使用隔離多開前，請安裝並選擇其資料夾。",
-    "en-US": "Sandboxie was not found. Install it and select its folder before running isolated accounts."
+    "zh-CN": "未检测到 Sandboxie-Plus",
+    "zh-TW": "未偵測到 Sandboxie-Plus",
+    "en-US": "Sandboxie-Plus was not detected"
+  },
+  "sandbox_setup.title": {
+    "zh-CN": "准备沙盒工具",
+    "zh-TW": "準備沙盒工具",
+    "en-US": "Set up Sandboxie"
+  },
+  "sandbox_setup.launch_help": {
+    "zh-CN": "未找到可用的沙盒工具。隔离多开需要 Sandboxie-Plus；安装或选择位置后，再继续。串行执行无需安装。",
+    "zh-TW": "找不到可用的沙盒工具。隔離多開需要 Sandboxie-Plus；安裝或選擇位置後，再繼續。依序執行無需安裝。",
+    "en-US": "No usable Sandboxie installation was found. Parallel accounts require Sandboxie-Plus. Install it or select its folder to continue. Sequential runs do not need it."
+  },
+  "sandbox_setup.schedule_help": {
+    "zh-CN": "本次定时任务未启动：未找到可用的沙盒工具。正在运行的工具保持运行。安装后可手动执行，或等待下一次定时任务。",
+    "zh-TW": "本次定時任務未啟動：找不到可用的沙盒工具。正在執行的工具繼續執行。安裝後可手動執行，或等待下一次定時任務。",
+    "en-US": "This scheduled run did not start because Sandboxie was unavailable. Running tools were left running. After setup, start the queue manually or wait for the next scheduled run."
+  },
+  "sandbox_setup.install_help": {
+    "zh-CN": "尚未安装？从官网下载 Sandboxie-Plus 的 Windows x64 稳定版，完成安装后重新检测。无需手动创建沙盒。",
+    "zh-TW": "尚未安裝？從官網下載 Sandboxie-Plus 的 Windows x64 穩定版，完成安裝後重新偵測。無需手動建立沙盒。",
+    "en-US": "Not installed? Download the stable Windows x64 build of Sandboxie-Plus from its official site, install it, then check again. You do not need to create sandboxes yourself."
+  },
+  "sandbox_setup.download": {
+    "zh-CN": "官网下载 Sandboxie-Plus",
+    "zh-TW": "官網下載 Sandboxie-Plus",
+    "en-US": "Download Sandboxie-Plus"
+  },
+  "sandbox_setup.choose": {
+    "zh-CN": "已安装，选择位置",
+    "zh-TW": "已安裝，選擇位置",
+    "en-US": "Installed? Choose folder"
+  },
+  "sandbox_setup.help": {
+    "zh-CN": "安装与检测",
+    "zh-TW": "安裝與偵測",
+    "en-US": "Installation help"
+  },
+  "sandbox_setup.continue": {
+    "zh-CN": "重新检测并继续",
+    "zh-TW": "重新偵測並繼續",
+    "en-US": "Check and continue"
+  },
+  "sandbox_setup.recheck": {
+    "zh-CN": "重新检测",
+    "zh-TW": "重新偵測",
+    "en-US": "Check again"
+  },
+  "sandbox_setup.done": {
+    "zh-CN": "完成设置",
+    "zh-TW": "完成設定",
+    "en-US": "Done"
+  },
+  "sandbox_setup.not_started": {
+    "zh-CN": "未启动沙盒队列。请在软件设置中安装或指定 Sandboxie-Plus 后重试，也可改用串行执行。",
+    "zh-TW": "未啟動沙盒佇列。請在軟體設定中安裝或指定 Sandboxie-Plus 後重試，也可改用依序執行。",
+    "en-US": "The parallel queue did not start. Set up Sandboxie-Plus in App settings and retry, or use sequential execution."
+  },
+  "sandbox_setup.schedule_missing": {
+    "zh-CN": "未找到可用的 Sandboxie-Plus，本次定时任务未启动。请在软件设置中安装或选择位置后重试。",
+    "zh-TW": "找不到可用的 Sandboxie-Plus，本次定時任務未啟動。請在軟體設定中安裝或選擇位置後重試。",
+    "en-US": "This scheduled run did not start: Sandboxie-Plus is unavailable. Install it or choose its folder in App settings, then retry."
+  },
+  "sandbox_setup.browser_failed": {
+    "zh-CN": "无法打开浏览器，请复制上方官网地址手动打开。",
+    "zh-TW": "無法開啟瀏覽器，請複製上方官網網址手動開啟。",
+    "en-US": "The browser could not open. Copy the official address above and open it manually."
   },
   "sandbox_path.invalid": {
     "zh-CN": "安装文件夹不完整，请选择包含 Start.exe、SbieIni.exe 和 SbieDll.dll 的 Sandboxie 文件夹。",
@@ -4075,9 +4140,9 @@
     "zh-CN": "任务完成，正在正常关闭本次启动的游戏。"
   },
   "parallel.install_required": {
-    "zh-TW": "請先安裝官方 Sandboxie-Plus，再啟用同時執行。",
-    "en-US": "Install official Sandboxie-Plus before running in parallel.",
-    "zh-CN": "请先安装官方 Sandboxie-Plus，再启用同时运行。"
+    "zh-TW": "找不到 Sandboxie-Plus。請在「軟體設定 → 沙盒工具位置 → 安裝與偵測」下載安裝或選擇位置，再重試。",
+    "en-US": "Sandboxie-Plus was not found. Open App settings → Sandboxie location → Installation help to download it or choose its folder, then retry.",
+    "zh-CN": "未找到 Sandboxie-Plus。请在「软件设置 → 沙盒工具位置 → 安装与检测」下载安装或选择位置，再重试。"
   },
   "parallel.host_only": {
     "zh-TW": "請從一般主視窗管理並行佇列。",
@@ -5615,9 +5680,9 @@
     "en-US": "Off by default · Grows in 20 hours; skips unripe crops"
   },
   "prefs.saffron_details": {
-    "zh-CN": "空田种藏红花。成熟后先确认路线和资源，再购买缺少的三种增产料理并使用，立即收割。剩余加成时间种收土豆，效果结束再补种藏红花；制作爱欲浓汤并售卖，保留一份。条件不足不吃料理。",
-    "zh-TW": "空田種藏紅花。成熟後先確認路線和資源，再購買缺少的三種增產料理並使用，立即收割。剩餘加成時間種收馬鈴薯，效果結束再補種藏紅花；製作愛慾濃湯並出售，保留一份。條件不足不吃料理。",
-    "en-US": "Plants saffron in empty fields. Once ripe, checks access and resources, buys any missing yield foods, uses all three and harvests immediately. Grows potatoes for the remaining buff time, then replants saffron. Cooks saffron soup and sells it, keeping one. No food is used if checks fail."
+    "zh-CN": "成熟后使用三种增产料理并收割，再按设定轮数种收土豆，不受加成时长影响。完成后补种藏红花、制作料理并售卖，保留一份。",
+    "zh-TW": "成熟後使用三種增產料理並收割，再按設定輪數種收馬鈴薯，不受加成時長影響。完成後補種藏紅花、製作料理並出售，保留一份。",
+    "en-US": "Uses three yield foods before harvesting ripe saffron, then grows and harvests the selected potato rounds regardless of buff duration. Replants saffron, cooks and sells dishes, keeping one."
   },
   "saffron.message.1": {
     "zh-CN": "藏红花种植与收割",
@@ -5813,6 +5878,76 @@
     "zh-CN": "已补种藏红花，成熟后再运行收割",
     "zh-TW": "已補種藏紅花，成熟後再執行收割",
     "en-US": "Saffron planted. Run the harvest step after it ripens."
+  },
+  "saffron.message.40": {
+    "zh-CN": "正在同步农田与料理效果，暂不种收或使用料理",
+    "zh-TW": "正在同步農田與料理效果，暫不種收或使用料理",
+    "en-US": "Syncing fields and food effects. Planting, harvesting and food use are on hold."
+  },
+  "saffron.message.41": {
+    "zh-CN": "农田数据暂时不完整，已保留作物与料理效果；可稍后重跑此环节",
+    "zh-TW": "農田資料暫時不完整，已保留作物與料理效果；可稍後重跑此環節",
+    "en-US": "Farm data is incomplete. Crops and existing food effects are preserved; retry this task later."
+  },
+  "saffron.message.42": {
+    "zh-CN": "已完成空田补种与料理；部分农田作物尚未成熟，保留生长，其他日常继续",
+    "zh-TW": "已完成空田補種與料理；部分農田作物尚未成熟，保留生長，其他日常繼續",
+    "en-US": "Empty fields were replanted and cooking is complete. Unripe crops will keep growing; other tasks will continue."
+  },
+  "saffron.message.43": {
+    "zh-CN": "藏红花尚未全部成熟，未使用新料理；成熟后再运行",
+    "zh-TW": "藏紅花尚未全部成熟，未使用新料理；成熟後再執行",
+    "en-US": "Some saffron is not ripe. No new food was used; retry after it ripens."
+  },
+  "saffron.message.44": {
+    "zh-CN": "土豆成熟状态未及时更新，已保留作物；可稍后重跑此环节",
+    "zh-TW": "馬鈴薯成熟狀態未及時更新，已保留作物；可稍後重跑此環節",
+    "en-US": "Potato growth data did not update in time. Crops are preserved; retry this task later."
+  },
+  "saffron.message.45": {
+    "zh-CN": "土豆轮次尚未完成，积分不足且需保留藏红花补种费用；已保留进度，其他日常继续",
+    "zh-TW": "馬鈴薯輪次尚未完成，積分不足且需保留藏紅花補種費用；已保留進度，其他日常繼續",
+    "en-US": "Not enough points to finish potato rounds and replant saffron. Progress is saved; other tasks will continue."
+  },
+  "saffron.message.46": {
+    "zh-CN": "土豆轮次尚未完成，库存空间或农田状态暂不允许种植；已保留进度，其他日常继续",
+    "zh-TW": "馬鈴薯輪次尚未完成，庫存空間或農田狀態暫不允許種植；已保留進度，其他日常繼續",
+    "en-US": "Potato rounds cannot continue because of storage capacity or field state. Progress is saved; other tasks will continue."
+  },
+  "saffron.message.47": {
+    "zh-CN": "领地画面或连接暂不可用，已保留作物和料理效果；其余日常继续，可稍后重跑此环节",
+    "zh-TW": "領地畫面或連線暫不可用，已保留作物和料理效果；其餘日常繼續，可稍後重跑此環節",
+    "en-US": "Territory or its connection is unavailable. Crops and food effects are preserved. Other tasks will continue; retry this one later."
+  },
+  "saffron.message.48": {
+    "zh-CN": "领地画面或农田数据尚未就绪，未开始种收；其余日常继续",
+    "zh-TW": "領地畫面或農田資料尚未就緒，未開始種收；其餘日常繼續",
+    "en-US": "Territory or farm data is not ready. No planting or harvesting was started. Other tasks will continue."
+  },
+  "saffron.message.49": {
+    "zh-CN": "藏红花种收连续两分钟没有进展，已保留当前作物；其余日常继续，可稍后重跑此环节",
+    "zh-TW": "藏紅花種收連續兩分鐘沒有進展，已保留目前作物；其餘日常繼續，可稍後重跑此環節",
+    "en-US": "No planting or harvest progress for two minutes. Crops are preserved. Other tasks will continue; retry this one later."
+  },
+  "saffron.message.50": {
+    "zh-CN": "藏红花连接暂不可用，已停止新增操作并保留作物；其余日常继续",
+    "zh-TW": "藏紅花連線暫不可用，已停止新增操作並保留作物；其餘日常繼續",
+    "en-US": "The saffron connection is unavailable. Further actions stopped and crops are preserved. Other tasks will continue."
+  },
+  "saffron.message.51": {
+    "zh-CN": "藏红花环节暂缓，已保留当前作物；其余日常继续，详情见诊断记录",
+    "zh-TW": "藏紅花環節暫緩，已保留目前作物；其餘日常繼續，詳情見診斷紀錄",
+    "en-US": "Saffron is deferred and crops are preserved. Other tasks will continue. See diagnostics for details."
+  },
+  "prefs.saffron_rounds": {
+    "zh-CN": "收割后种收土豆轮数",
+    "zh-TW": "收割後種收馬鈴薯輪數",
+    "en-US": "Potato rounds after harvest"
+  },
+  "saffron.rounds_invalid": {
+    "zh-CN": "藏红花收割后的土豆轮数必须为 1 至 3。",
+    "zh-TW": "藏紅花收割後的馬鈴薯輪數必須為 1 至 3。",
+    "en-US": "Choose 1 to 3 potato rounds after the saffron harvest."
   },
   "sandbox.repair.account": {
     "zh-CN": "账号：{0}",
@@ -6058,5 +6193,191 @@
     "zh-TW": "搜尋環節或設定…",
     "zh-CN": "搜索环节或设置…",
     "en-US": "Find tasks or settings…"
+  },
+  "tool.pandora": {
+    "zh-CN": "潘多拉大逃脱",
+    "zh-TW": "潘朵拉大逃脫",
+    "en-US": "PANDORA ESCAPE"
+  },
+  "tool.pandora.description": {
+    "zh-CN": "固定关卡循环刷货币，或自动挑战。",
+    "zh-TW": "固定關卡循環刷貨幣，或自動挑戰。",
+    "en-US": "Repeat a selected stage for currency, or attempt Challenge."
+  },
+  "pandora.title": {
+    "zh-CN": "潘多拉大逃脱",
+    "zh-TW": "潘朵拉大逃脫",
+    "en-US": "PANDORA ESCAPE"
+  },
+  "pandora.entry": {
+    "zh-CN": "在游戏内打开潘多拉菜单，工具会读取已解锁关卡。",
+    "zh-TW": "在遊戲內開啟潘朵拉選單，工具會讀取已解鎖關卡。",
+    "en-US": "Open the Pandora menu in the game to load unlocked stages."
+  },
+  "pandora.currency": {
+    "zh-CN": "自动刷游戏货币",
+    "zh-TW": "自動刷遊戲貨幣",
+    "en-US": "Farm currency"
+  },
+  "pandora.challenge": {
+    "zh-CN": "自动刷挑战",
+    "zh-TW": "自動刷挑戰",
+    "en-US": "Attempt Challenge"
+  },
+  "pandora.stage": {
+    "zh-CN": "循环关卡",
+    "zh-TW": "循環關卡",
+    "en-US": "Stage to repeat"
+  },
+  "pandora.repeat": {
+    "zh-CN": "使用游戏当前选择的角色，结算后继续同一关。",
+    "zh-TW": "使用遊戲目前選擇的角色，結算後繼續同一關。",
+    "en-US": "Uses your currently selected character and repeats this stage after each result."
+  },
+  "pandora.challenge_warning": {
+    "zh-CN": "尚未加入装备数据，目前自动化无法通关挑战模式。此模式仅用于自动尝试，失败后会继续重试。",
+    "zh-TW": "尚未加入裝備資料，目前自動化無法通關挑戰模式。此模式僅用於自動嘗試，失敗後會繼續重試。",
+    "en-US": "Equipment data is not modeled. The current automation cannot clear Challenge mode. It will attempt the mode and retry after failure."
+  },
+  "pandora.rounds": {
+    "zh-CN": "已结算",
+    "zh-TW": "已結算",
+    "en-US": "Rounds settled"
+  },
+  "pandora.time": {
+    "zh-CN": "本局时间",
+    "zh-TW": "本局時間",
+    "en-US": "Round time"
+  },
+  "pandora.health": {
+    "zh-CN": "生命",
+    "zh-TW": "生命",
+    "en-US": "Health"
+  },
+  "pandora.stop_hint": {
+    "zh-CN": "停止后交还游戏操作，不主动退出当前对局。",
+    "zh-TW": "停止後交還遊戲操作，不主動退出目前對局。",
+    "en-US": "Stopping returns control to you and leaves the current round open."
+  },
+  "pandora.already_open": {
+    "zh-CN": "潘多拉工具已打开。",
+    "zh-TW": "潘朵拉工具已開啟。",
+    "en-US": "The Pandora tool is already open."
+  },
+  "pandora.difficulty.1": {
+    "zh-CN": "普通",
+    "zh-TW": "普通",
+    "en-US": "Normal"
+  },
+  "pandora.difficulty.2": {
+    "zh-CN": "困难",
+    "zh-TW": "困難",
+    "en-US": "Hard"
+  },
+  "pandora.difficulty.3": {
+    "zh-CN": "超困难",
+    "zh-TW": "超困難",
+    "en-US": "Very Hard"
+  },
+  "pandora.state.ready": {
+    "zh-CN": "选择模式和关卡后开始。",
+    "zh-TW": "選擇模式和關卡後開始。",
+    "en-US": "Select a mode and stage to begin."
+  },
+  "pandora.state.connecting": {
+    "zh-CN": "正在连接当前游戏…",
+    "zh-TW": "正在連接目前遊戲…",
+    "en-US": "Connecting to your game…"
+  },
+  "pandora.state.disconnected": {
+    "zh-CN": "连接已中断，请确认游戏仍在运行，再重新连接。",
+    "zh-TW": "連線已中斷，請確認遊戲仍在執行，再重新連線。",
+    "en-US": "Disconnected. Check that the game is running, then reconnect."
+  },
+  "pandora.state.paused": {
+    "zh-CN": "已停止，可以手动操作游戏。",
+    "zh-TW": "已停止，可以手動操作遊戲。",
+    "en-US": "Stopped. You can control the game."
+  },
+  "pandora.state.entering": {
+    "zh-CN": "正在准备对局…",
+    "zh-TW": "正在準備對局…",
+    "en-US": "Preparing a round…"
+  },
+  "pandora.state.selecting": {
+    "zh-CN": "正在选择指定关卡…",
+    "zh-TW": "正在選擇指定關卡…",
+    "en-US": "Selecting the requested stage…"
+  },
+  "pandora.state.settling": {
+    "zh-CN": "等待游戏结算…",
+    "zh-TW": "等待遊戲結算…",
+    "en-US": "Waiting for the game result…"
+  },
+  "pandora.state.retrying": {
+    "zh-CN": "正在重开同一关卡…",
+    "zh-TW": "正在重開同一關卡…",
+    "en-US": "Starting the same stage again…"
+  },
+  "pandora.state.upgrading": {
+    "zh-CN": "正在选择升级…",
+    "zh-TW": "正在選擇升級…",
+    "en-US": "Choosing an upgrade…"
+  },
+  "pandora.state.playing": {
+    "zh-CN": "自动移动与升级中",
+    "zh-TW": "自動移動與升級中",
+    "en-US": "Moving and choosing upgrades"
+  },
+  "pandora.state.game-paused": {
+    "zh-CN": "游戏已暂停，请在游戏中恢复。",
+    "zh-TW": "遊戲已暫停，請在遊戲中恢復。",
+    "en-US": "The game is paused. Resume it in the game."
+  },
+  "pandora.state.stage-unavailable": {
+    "zh-CN": "该关卡未解锁或已不可用，请回到选关页面后重新选择。",
+    "zh-TW": "該關卡未解鎖或已不可用，請回到選關頁面後重新選擇。",
+    "en-US": "This stage is locked or unavailable. Return to stage selection and choose again."
+  },
+  "pandora.state.wrong-stage": {
+    "zh-CN": "当前对局不是选择的关卡，已停止。请回到潘多拉菜单后开始。",
+    "zh-TW": "目前對局不是選擇的關卡，已停止。請回到潘朵拉選單後開始。",
+    "en-US": "Stopped: the current round is a different stage. Return to the Pandora menu before starting."
+  },
+  "pandora.state.open-game": {
+    "zh-CN": "请先在游戏中打开潘多拉菜单。",
+    "zh-TW": "請先在遊戲中開啟潘朵拉選單。",
+    "en-US": "Open the Pandora menu in the game first."
+  },
+  "pandora.state.entry-blocked": {
+    "zh-CN": "进入关卡受阻，已停止。请检查游戏中的提示后重新开始。",
+    "zh-TW": "進入關卡受阻，已停止。請檢查遊戲中的提示後重新開始。",
+    "en-US": "Entry was blocked. Check the in-game message, then start again."
+  },
+  "pandora.state.confirm-manually": {
+    "zh-CN": "遇到未识别的确认弹窗，已停止。请手动处理后重新开始。",
+    "zh-TW": "遇到未識別的確認視窗，已停止。請手動處理後重新開始。",
+    "en-US": "Stopped at an unrecognized confirmation. Handle it in the game, then start again."
+  },
+  "pandora.state.upgrade-timeout": {
+    "zh-CN": "升级未完成，已停止。请处理游戏当前画面后重新开始。",
+    "zh-TW": "升級未完成，已停止。請處理遊戲目前畫面後重新開始。",
+    "en-US": "The upgrade did not finish. Handle the current game screen, then start again."
+  },
+  "pandora.state.transition-timeout": {
+    "zh-CN": "游戏未完成页面切换，已停止。请检查当前画面或网络后重新开始。",
+    "zh-TW": "遊戲未完成頁面切換，已停止。請檢查目前畫面或網路後重新開始。",
+    "en-US": "The game did not finish changing screens. Check the game or network, then start again."
+  },
+  "pandora.state.runtime-error": {
+    "zh-CN": "读取游戏状态失败，已停止。请重新连接；若仍失败，请导出诊断日志。",
+    "zh-TW": "讀取遊戲狀態失敗，已停止。請重新連線；若仍失敗，請匯出診斷記錄。",
+    "en-US": "Stopped because game data could not be read. Reconnect; if it persists, export diagnostics."
+  },
+  "pandora.state.lease-expired": {
+    "zh-CN": "与织尘的连接已失效，自动操作已停止。请重新连接。",
+    "zh-TW": "與織塵的連線已失效，自動操作已停止。請重新連線。",
+    "en-US": "The connection to Dustweave expired. Automation has stopped. Reconnect to continue."
   }
+
 }

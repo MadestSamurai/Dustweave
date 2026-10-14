@@ -84,7 +84,7 @@ await Group("ClientUpdate", () => Sync(() => ClientUpdateCases.Run(root,cases)))
 await Group("LiveBindings", () => Sync(() => LiveBindingCases.Run(root,cases)));
 await Group("Parallel", () => ParallelCases.Run(root, cases));
 await Group("ParallelProcess", () => ParallelProcessCases.Run(root, cases));
-await Group("Saffron", () => Sync(() => SaffronCases.Run(cases)));
+await Group("Saffron", async () => { SaffronCases.Run(cases); await SaffronCases.RuntimeLoop(root,cases); });
 await Group("Sandbox", () => SandboxCases.Run(root, cases));
 await Group("AccountOrder", () => AccountOrderCases.Run(root, cases));
 await Group("Guild", () => GuildCases.Run(root, cases));
@@ -150,6 +150,7 @@ await Group("NativeCancellation", () => Sync(() => NativeCancellationCases.Run(c
 await Group("WeeklyGoal", () => Sync(() => WeeklyGoalCases.RunSynthetic(cases)));
 await Group("ApostleAnnealing", () => Sync(() => ApostleAnnealingCases.Run(cases)));
 await Group("Mansion", () => Sync(() => MansionCases.Run(cases)));
+await Group("Pandora", () => Sync(() => PandoraCases.Run(cases)));
 await Group("UnifiedSuite", () => Sync(() => UnifiedSuiteCases.Run(cases)));
 await Group("SuiteOwnerProbe", () => SuiteOwnerProbeCases.Run(cases));
 await Group("Workflow", () => Sync(() => WorkflowCases.Run(cases)));

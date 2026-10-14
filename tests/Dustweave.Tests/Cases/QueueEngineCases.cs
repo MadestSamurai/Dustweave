@@ -32,6 +32,12 @@ static class QueueEngineCases
         var record = await Run(host, root, ["mail", "trade"]);
         Check(State(record) == "completed" && host.Executed.SequenceEqual(new[] { "mail", "trade" }), "native queue owns ordering and completion");
         Check(record["engine"]!.GetValue<string>() == "dotnet-v1" && File.Exists(DailyQueueEngine.RecordPath(root, record["id"]!.GetValue<string>())), "native queue persists engine ownership");
+        {
+            var saffronHost=new FakeHost{PartialSaffron=true};
+            var saffronSettings=new DailyPreferences();saffronSettings.Stages.Saffron=true;
+            var saffronRun=await Run(saffronHost,Root(),["territory_saffron","mail"],prefs:saffronSettings);
+            Check(Stage(saffronRun,"territory_saffron")=="partial"&&Stage(saffronRun,"mail")=="completed"&&State(saffronRun)=="partial","deferred saffron preserves its status while the next daily stage completes");
+        }
         host.Executed.Clear();
         await Run(host, root, resume: record["id"]!.GetValue<string>());
         Check(host.Executed.Count == 0, "native resume never repeats completed stages");
@@ -348,7 +354,7 @@ static class QueueEngineCases
     static JsonObject Old(string id, JsonObject context, params string[] tasks) => new() { ["schema"] = 1, ["id"] = id, ["context"] = context.DeepClone(), ["state"] = "paused", ["items"] = new JsonArray(tasks.Select(t => (JsonNode)new JsonObject { ["task"] = t, ["state"] = "pending" }).ToArray()) };
     private sealed class FakeHost : IDailyStageHost, IDailyStageProgressHost, IDailyWeeklyCompletionHost
     {
-        public event Action<string, JsonObject>? StageProgress; public List<string> Members = []; public bool PartialCollection, SettledNpc, SettledSteal, Refill;
+        public event Action<string, JsonObject>? StageProgress; public List<string> Members = []; public bool PartialCollection, SettledNpc, SettledSteal, Refill, PartialSaffron;
         public Task<JsonObject> SettleWeeklyAsync(IReadOnlyList<string> stages, JsonObject context)
         {
             var result = new JsonObject();
@@ -390,6 +396,7 @@ static class QueueEngineCases
             }
             JsonObject result = operation switch
             {
+                "execute" when stage=="territory_saffron"&&PartialSaffron => new(){["state"]="partial",["reason"]="crop connection unavailable"},
                 "observe" => new() { ["context"] = Context.DeepClone(), ["adapters"] = new JsonArray(DailyStageCatalog.Selectable.Select(s => (JsonNode)JsonValue.Create(s.Id)!).ToArray()), ["owners"] = Owner == null ? new JsonArray() : new JsonArray(Owner) },
                 "reconcile" => new() { ["unresolved"] = Unresolved == null ? new JsonArray() : new JsonArray(new JsonObject { ["stages"] = new JsonArray(Unresolved), ["recover_in_stage"] = RecoverInStage }) },
                 "recover" => new() { ["safe"] = Safe },

@@ -24,6 +24,7 @@ public sealed class DailySchedulePanel : UserControl
     private DailySchedulePlan saved = new();
     private bool showing;
     public event Action<DailySchedulePlan>? SaveRequested;
+    public event Action? SandboxSetupRequested;
     public DailySchedulePanel()
     {
         var layout=new DockPanel();
@@ -52,7 +53,10 @@ public sealed class DailySchedulePanel : UserControl
         L.Bind(maximum, System.Windows.Automation.AutomationProperties.NameProperty, "parallel.maximum");
         closeGame.Margin = new(18, 0, 0, 0); closeGame.VerticalAlignment = VerticalAlignment.Center;
         L.Bind(closeGame, ContentControl.ContentProperty, "parallel.close_game"); parallelSettings.Children.Add(closeGame); execution.Children.Add(parallelSettings);
-        mode.SelectionChanged += (_, _) => parallelSettings.Visibility = mode.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
+        var setup = new Button { HorizontalAlignment = HorizontalAlignment.Left, Margin = new(0, 10, 0, 0) };
+        L.Bind(setup, ContentControl.ContentProperty, "sandbox_setup.help");
+        setup.Click += (_, _) => SandboxSetupRequested?.Invoke(); execution.Children.Add(setup);
+        mode.SelectionChanged += (_, _) => setup.Visibility = parallelSettings.Visibility = mode.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
         takeover.Margin = new(0, 16, 0, 0); L.Bind(takeover, ContentControl.ContentProperty, "schedule.takeover"); execution.Children.Add(takeover);
         var takeoverHint = Text("schedule.takeover_hint", 12); takeoverHint.Margin = new(24, 6, 0, 0); takeoverHint.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk"); execution.Children.Add(takeoverHint);
         content.Children.Add(execution);
