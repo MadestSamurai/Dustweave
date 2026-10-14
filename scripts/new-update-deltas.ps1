@@ -1,9 +1,10 @@
 param(
  [Parameter(Mandatory)][string]$Version,
  [Parameter(Mandatory)][string]$PackageDirectory,
- [Parameter(Mandatory)][string[]]$BasePackageDirectory,
+ [string[]]$BasePackageDirectory=@(),
  [Parameter(Mandatory)][string]$PreviousFeed,
- [string]$Tool
+ [string]$Tool,
+ [switch]$VerifyBaselinesOnly
 )
 $ErrorActionPreference='Stop'
 $root=Split-Path -Parent $PSScriptRoot
@@ -23,14 +24,48 @@ try{
 }finally{$key.Dispose()}
 if($Version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$' -or $prior.Product -ne 'Dustweave' -or $prior.Schema -ne 3){throw 'Invalid release identity.'}
 $reports=@()
+$automaticBaselines=!$BasePackageDirectory.Count
+$baselineCache=Join-Path $root 'artifacts/update-baselines'
+if($automaticBaselines){
+ $BasePackageDirectory=@($baselineCache)+@(Get-ChildItem -LiteralPath (Join-Path $root 'artifacts/releases') -Directory -ErrorAction SilentlyContinue|ForEach-Object FullName)
+}
+$resolved=[Collections.Generic.List[object]]::new()
+# Resolve the whole supported window before generating any patch. Missing local
+# archives must not silently turn a ten-version update policy into three versions.
+foreach($release in @($prior.Releases|Sort-Object {[semver]$_.Version} -Descending|Select-Object -First 10)){
+ if([semver]$release.Version -ge [semver]$Version){throw 'Delta publication must advance the version.'}
+ if($release.Version -eq '1.3.0'){
+  $reports+=@{from=$release.Version;to=$Version;offered=$false;reason='withdrawn_layout';manualDownload=$true}
+  continue
+ }
+ foreach($asset in @($release.Assets)){
+  $expected="Dustweave-$($release.Version)-$($asset.Flavor)-win-x64.zip"
+  if($asset.Flavor -notin @('Portable','Lite') -or $asset.FileName -ne $expected){throw 'Unexpected signed baseline asset.'}
+  $available=@($BasePackageDirectory|ForEach-Object {Join-Path $_ $asset.FileName}|Where-Object {Test-Path -LiteralPath $_}|Select-Object -Unique)
+  $old=@($available|Where-Object {(Get-Item -LiteralPath $_).Length -eq $asset.Bytes -and (Get-FileHash -LiteralPath $_).Hash -eq $asset.Sha256}|Select-Object -First 1)
+  if(!$old.Count -and $automaticBaselines){
+   [IO.Directory]::CreateDirectory($baselineCache)|Out-Null
+   & gh release download ('v'+$release.Version) --repo MadestSamurai/Dustweave --pattern $asset.FileName --dir $baselineCache
+   if($LASTEXITCODE -ne 0){throw "Cannot obtain supported OTA baseline $($release.Version) $($asset.Flavor)."}
+   $old=@(Join-Path $baselineCache $asset.FileName)
+  }
+  if(!$old.Count){throw "Missing supported OTA baseline $($release.Version) $($asset.Flavor). Provide every baseline in the ten-release window, or omit BasePackageDirectory for verified discovery/download."}
+  if((Get-Item -LiteralPath $old[0]).Length -ne $asset.Bytes -or (Get-FileHash -LiteralPath $old[0]).Hash -ne $asset.Sha256){throw 'Baseline differs from signed release.'}
+  $resolved.Add(@{version=$release.Version;flavor=$asset.Flavor;path=$old[0];bytes=$asset.Bytes;sha256=$asset.Sha256})
+ }
+}
+$baselineReport=@{status='passed';window=10;target=$Version;baselines=$resolved.ToArray();excluded=$reports}
+$baselineReport|ConvertTo-Json -Depth 6|Set-Content -LiteralPath (Join-Path $folder 'baseline-report.json') -Encoding utf8
+if($VerifyBaselinesOnly){$baselineReport|ConvertTo-Json -Depth 6;return}
 # At most ten baselines per flavor, bounded identically to client validation.
 foreach($release in @($prior.Releases|Sort-Object {[semver]$_.Version} -Descending|Select-Object -First 10)){
  if([semver]$release.Version -ge [semver]$Version){throw 'Delta publication must advance the version.'}
+ if($release.Version -eq '1.3.0'){continue}
  foreach($flavor in @('Portable','Lite')){
   $asset=$release.Assets|Where-Object Flavor -eq $flavor
   if(!$asset){continue}
-  $old=@($BasePackageDirectory|ForEach-Object {Join-Path $_ $asset.FileName}|Where-Object {Test-Path -LiteralPath $_}|Select-Object -First 1)
-  if(!$old.Count){continue}
+  $old=@($resolved|Where-Object {$_.version -eq $release.Version -and $_.flavor -eq $flavor}|ForEach-Object path)
+  if($old.Count -ne 1){throw 'Resolved baseline is missing or duplicated.'}
   if((Get-Item -LiteralPath $old[0]).Length -ne $asset.Bytes -or (Get-FileHash -LiteralPath $old[0]).Hash -ne $asset.Sha256){throw 'Baseline differs from signed release.'}
   $next=Join-Path $folder "Dustweave-$Version-$flavor-win-x64.zip"
   function ReadPackage($path){

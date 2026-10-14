@@ -2,6 +2,10 @@
 
 Run cleanup after the GitHub release, OTA publication and public download verification have all passed. A successful build alone is insufficient. Cleanup affects this repository's local `artifacts/` only; it never removes server or GitHub assets.
 
+**Layout-2 OTA baselines:** preserve signed full ZIPs for the current release and the preceding **ten** releases, plus any other active patch baselines. The four-release default below applies to extracted application copies, not to the ZIPs needed to produce the ten-version update window. Older cleanup decisions that kept only three prior archives are superseded. `new-update-deltas.ps1` discovers verified local archives by default and retrieves missing published ZIPs; an explicit incomplete baseline list fails before generating patches. The withdrawn 1.3.0 layout remains a manual-install exception.
+
+**新版 OTA 基线：**完整 ZIP 保留当前版及前十版，并额外保留仍在使用的差分基线。解压目录仍只保留当前版及前三版；不能再据此删除十版窗口内的完整 ZIP。缺少基线时先补齐并核对签名中的哈希，不得静默缩短自动更新范围。1.3.0 已撤回，需手动安装。
+
 ```powershell
 ./scripts/cleanup-release-artifacts.ps1 -Version X.Y.Z
 # Review the returned plan: paths, sizes, reasons and skipped entries.
@@ -14,7 +18,7 @@ The default invocation only creates a plan. Apply rechecks the signed release fe
 
 | Files | Retention |
 | --- | --- |
-| Original full ZIPs and differential ZIPs | Keep the current release and three preceding published releases, including the full packages needed by active delta baselines; older local versions may be retired after an audited preview |
+| Original full ZIPs and differential ZIPs | Keep the current release and ten preceding published releases, plus full packages needed by other active delta baselines; older local versions may be retired after an audited preview |
 | Hashes, signed feeds, release receipts and input manifests | Preserve the release identity and evidence, including when the local package is retired |
 | Extracted application folders | Keep the current release and three preceding releases for rollback and delta tests |
 | Duplicate static-site staging | Remove only after verifying the original archives against the signed feed |
@@ -37,7 +41,7 @@ Do not run cleanup concurrently with packaging or updater acceptance. The proces
 
 ## 发布后的固定步骤
 
-每次 GitHub 与 OTA 发布验收完成后，生成并核对清理清单，再执行清理并记录结果。按用户 2026-10-12 的新保留要求，不再永久保留全部历史发行包：Dustweave 保留当前及前三个已发布版本的完整包、差分包和解压目录，并核对当前差分基线。更老版本可在单独核对清单后整版退役，发布清单、哈希、签名更新清单和验收记录迁出留档。现有脚本仍只清理可重建副本，历史整版退役需单独计划，不能假定已自动执行。失败检查、原始采集、账号数据和签名凭据不参与清理。
+每次 GitHub 与 OTA 发布验收完成后，生成并核对清理清单，再执行清理并记录结果。不永久保留全部历史发行包：完整 ZIP 和差分包保留当前及前十个已发布版本，解压目录保留当前及前三版，并额外保护仍在使用的差分基线。超出十版窗口的版本可在单独核对清单后退役，发布清单、哈希、签名更新清单和验收记录迁出留档。现有脚本仍只清理可重建副本，历史整版退役需单独计划，不能假定已自动执行。失败检查、原始采集、账号数据和签名凭据不参与清理。
 
 2026-10-12 首轮清理保留了 1.2.0、1.1.10-beta、1.1.9-beta、1.1.8-beta。后续发布按「当前及前三个版本」滚动保留，并重新核对差分基线。线上 GitHub 与 OTA 文件保持原样，本地退役不会改变用户已有的下载和更新地址。
 

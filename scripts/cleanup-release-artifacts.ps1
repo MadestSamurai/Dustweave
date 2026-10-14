@@ -3,7 +3,8 @@ param(
  [switch]$Apply,
  [string]$Plan,
  [string]$PackageDirectory,
- [ValidateRange(4,10)][int]$KeepReleases=4
+ # Extracted copies only. Full ZIPs must retain the ten-version OTA window.
+ [ValidateRange(4,11)][int]$KeepReleases=4
 )
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))

@@ -3,6 +3,10 @@
 > **1.3.0 and later:** use the separate layout-2 channel at `https://bd2.madsam.work/updates/dustweave/v2/updates.json`. See [the current layout](UPDATE_LAYOUT_1.3.md). It serves patches only, supports at most ten preceding releases and has no full-package fallback. The legacy layout-1 channel below remains frozen at 1.2.11. Its installation, account, state and public directory are independent; do not submit 1.3.x to it.
 >
 > **1.3.0 起：**旧用户手动下载完整包并解压到新目录。以下单文件、完整包回退及复制主 EXE 为更新器的描述仅适用于旧版，不适用于 1.3.0。常规发布使用 `dustweave-ota-v2` 的独立客户端配置；首个新版基线单独初始化，之后才生成同结构直接差分。
+
+**Current publication policy:** each release covers all compatible baselines in the preceding ten-release window. Omit `-BasePackageDirectory` to discover signed local archives and download missing GitHub archives, or supply every baseline explicitly. Missing archives/patches fail publication preparation; they cannot silently reduce coverage to the former three-version default. Preserve current plus ten previous full ZIPs even when retaining only four extracted application copies. The withdrawn flat-layout 1.3.0 release requires manual installation. `-VerifyBaselinesOnly` checks baseline availability and hashes without generating patches.
+
+**当前发布规则：**覆盖前十版窗口内全部兼容版本；默认自动寻找本地已签名基线，缺少的从 GitHub 下载后核对哈希。显式提供基线时必须给全，生成清单前还会检查差分覆盖是否遗漏。完整 ZIP 保留当前及前十版，与只保留四个解压目录的清理规则分开。1.3.0 已撤回，需手动安装。
 ## Legacy scope (through 1.2.11) / 旧版范围
 
 The host uses its own updater, with signed differential packages and a full-package fallback. Supported upgrade baselines start at the first public release, 1.0.0-beta; earlier internal versions are no longer maintained for upgrade compatibility. It does not use Velopack. The active source is
@@ -82,7 +86,7 @@ This supports interrupted-process recovery; it cannot repair failing storage or 
 5. Download both flavors through the public HTTPS address and verify them; test upgrade from a prior packaged version before announcing availability.
 6. Complete the local [artifact retention](ARTIFACT_RETENTION.md) step: preview, review and apply cleanup, then record reclaimed space and retained baselines with the deployment receipt. Do not clean failed or unfinished validation runs.
 
-The manually dispatched Prepare signed update feed workflow generates deltas for the latest three available release baselines and creates a signed artifact from existing tested release packages. It creates no public repository/release and performs no deployment.
+The manually dispatched Prepare signed update feed workflow generates deltas for the preceding ten release baselines, excluding the withdrawn 1.3.0 layout, and creates a signed artifact from existing tested release packages. It creates no public repository/release and performs no deployment.
 Runtime endpoints are independent from whether the source repository is public.
 
 ### GitHub publication preflight / GitHub 发布前检查

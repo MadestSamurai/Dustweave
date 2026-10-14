@@ -71,6 +71,18 @@ foreach($sidecar in Get-ChildItem -LiteralPath $folder -Filter "Dustweave-$Versi
 }
 if($deltas.Count -gt 20 -or @($deltas|Group-Object Flavor,FromVersion|Where-Object Count -gt 1).Count){throw 'Duplicate or excessive delta baselines.'}
 
+# A partial local archive selection is not permission to shorten OTA support.
+$deltaReportPath=Join-Path $folder 'delta-report.json'
+$deltaReport=if(Test-Path -LiteralPath $deltaReportPath){@(Get-Content -LiteralPath $deltaReportPath -Raw|ConvertFrom-Json)}else{@()}
+foreach($baseline in @($prior|Select-Object -First 10|Where-Object Version -ne '1.3.0')){
+ foreach($flavor in @('Portable','Lite')){
+  if(!@($baseline.Assets|Where-Object Flavor -eq $flavor).Count){continue}
+  if(@($deltas|Where-Object {$_.FromVersion -eq $baseline.Version -and $_.Flavor -eq $flavor}).Count){continue}
+  $exclusion=@($deltaReport|Where-Object {$_.from -eq $baseline.Version -and $_.to -eq $Version -and $_.flavor -eq $flavor -and $_.offered -eq $false -and ($_.reason -eq 'manual_layout' -or $_.deltaBytes -gt 8MB -or ($_.fullBytes -gt 0 -and $_.deltaBytes -ge $_.fullBytes*0.8))})
+  if(!$exclusion.Count){throw "Missing OTA coverage for $($baseline.Version) $flavor in the ten-release window. Generate the missing patch or record the verified layout/size limitation."}
+ }
+}
+
 $previous=if($prior.Count){$prior[0].Version}else{$null}
 $current=[ordered]@{Version=$Version;PreviousVersion=$previous;Layout=2;RuntimeVersion=$runtime;Notes=$note.Notes;Assets=$assets;Deltas=$deltas}
 $feed=[ordered]@{Schema=3;Product='Dustweave';Channel='stable';Releases=@($current)+$prior}
