@@ -1,61 +1,61 @@
 {
 
-  "native.salvation_locked": {
+  "message.salvation_locked": {
     "zh-CN": "救赎之塔尚未解锁，本次跳过。",
     "zh-TW": "救贖之塔尚未解鎖，本次略過。",
     "en-US": "Tower of Salvation is locked; skipped."
   },
-  "native.salvation_closed": {
+  "message.salvation_closed": {
     "zh-CN": "救赎之塔当前未开放，本次跳过。",
     "zh-TW": "救贖之塔目前未開放，本次略過。",
     "en-US": "Tower of Salvation is closed; skipped."
   },
-  "native.salvation_not_ready": {
+  "message.salvation_not_ready": {
     "zh-CN": "救赎之塔数据尚未就绪，未消耗钥匙。",
     "zh-TW": "救贖之塔資料尚未就緒，未消耗鑰匙。",
     "en-US": "Tower data is not ready. No keys were used."
   },
-  "native.salvation_run_in_progress": {
+  "message.salvation_run_in_progress": {
     "zh-CN": "救赎之塔有未结束的挑战，本次不扫荡。",
-    "zh-TW": "救贖之塔有尚未結束的挑戰，本次不掃蕩。",
+    "zh-TW": "救贖之塔有未結束的挑戰，本次不掃蕩。",
     "en-US": "A tower challenge is in progress; no sweep started."
   },
-  "native.salvation_no_cleared_level": {
+  "message.salvation_no_cleared_level": {
     "zh-CN": "尚无可扫荡的救赎之塔难度。",
     "zh-TW": "尚無可掃蕩的救贖之塔難度。",
     "en-US": "No cleared tower difficulty is available to sweep."
   },
-  "native.salvation_growth_funded": {
+  "message.salvation_growth_funded": {
     "zh-CN": "已有成长石足够补满剩余加成，无需扫荡。",
     "zh-TW": "現有成長石足以補滿剩餘加成，無需掃蕩。",
     "en-US": "You already have enough stones for all remaining growth upgrades."
   },
-  "native.salvation_keys_reserved": {
+  "message.salvation_keys_reserved": {
     "zh-CN": "每日钥匙已达到保留下限，本次不扫荡。",
-    "zh-TW": "每日鑰匙已達保留下限，本次不掃蕩。",
+    "zh-TW": "每日鑰匙已達到保留下限，本次不掃蕩。",
     "en-US": "Your daily key reserve has been reached; no sweep started."
   },
-  "native.event_auto_failed_stop": {
+  "message.event_auto_failed_stop": {
     "zh-CN": "游戏内自动战斗失败，已结束此环节，继续其他日常。",
     "zh-TW": "遊戲內自動戰鬥失敗，已結束此環節，繼續其他日常。",
     "en-US": "Native auto battle ended in defeat. Continuing with other daily tasks."
   },
-  "native.event_auto_failed_swept": {
+  "message.event_auto_failed_swept": {
     "zh-CN": "游戏内自动战斗失败，已按设置处理最高可扫荡关卡。",
     "zh-TW": "遊戲內自動戰鬥失敗，已依設定處理最高可掃蕩關卡。",
     "en-US": "After the defeat, the highest eligible stage was swept."
   },
-  "native.event_auto_failed_no_sweep": {
+  "message.event_auto_failed_no_sweep": {
     "zh-CN": "自动战斗失败，当前没有可执行的免费扫荡；继续其他日常。",
     "zh-TW": "自動戰鬥失敗，目前沒有可執行的免費掃蕩；繼續其他日常。",
     "en-US": "Auto battle ended in defeat. No free sweep is available; continuing other tasks."
   },
-  "native.event_native_finished": {
+  "message.event_native_finished": {
     "zh-CN": "活动自动战斗与免费扫荡处理完成。",
     "zh-TW": "活動自動戰鬥與免費掃蕩處理完成。",
     "en-US": "Event auto battles and free sweeps have been checked."
   },
-  "native.event_native_result_pending": {
+  "message.event_native_result_pending": {
     "zh-CN": "活动结算尚未确认，请等待游戏结算完成后接续；不会重复开始战斗。",
     "zh-TW": "活動結算尚未確認，請等待遊戲結算完成後接續；不會重複開始戰鬥。",
     "en-US": "The event result is not confirmed yet. Wait for settlement and resume; the battle will not be started again."
@@ -6576,227 +6576,227 @@
     "en-US": "The connection to Dustweave expired. Automation has stopped. Reconnect to continue."
   },
 
-  "native.battle_guard_1": {
+  "message.Invalid salvation key reserve": {
     "zh-CN": "救赎之塔钥匙保留数量须为0–999。",
     "zh-TW": "救贖之塔鑰匙保留數量須為0–999。",
     "en-US": "Invalid salvation key reserve"
   },
-  "native.battle_guard_2": {
+  "message.Salvation resource data unavailable": {
     "zh-CN": "救赎之塔资源数据不完整，未消耗钥匙；请重新进入大厅后重跑。",
     "zh-TW": "救贖之塔資源資料不完整，未消耗鑰匙；請重新進入大廳後重跑。",
     "en-US": "Salvation resource data unavailable"
   },
-  "native.battle_guard_3": {
+  "message.Salvation growth data unavailable": {
     "zh-CN": "尚未读到救赎之塔成长加成；请重新进入大厅后重跑。",
     "zh-TW": "尚未讀到救贖之塔成長加成；請重新進入大廳後重跑。",
     "en-US": "Salvation growth data unavailable"
   },
-  "native.battle_guard_4": {
+  "message.Salvation growth table unavailable": {
     "zh-CN": "救赎之塔成长规则未就绪，请重新连接后重跑。",
     "zh-TW": "救贖之塔成長規則未就緒，請重新連線後重跑。",
     "en-US": "Salvation growth table unavailable"
   },
-  "native.battle_guard_5": {
+  "message.Salvation growth price changed": {
     "zh-CN": "救赎之塔成长消耗规则已变化，未开始扫荡；请更新工具。",
     "zh-TW": "救贖之塔成長消耗規則已變化，未開始掃蕩；請更新工具。",
     "en-US": "Salvation growth price changed"
   },
-  "native.battle_guard_6": {
+  "message.Salvation cleared level unavailable": {
     "zh-CN": "未读到已通关的救赎之塔难度，未开始扫荡。",
     "zh-TW": "未讀到已通關的救贖之塔難度，未開始掃蕩。",
     "en-US": "Salvation cleared level unavailable"
   },
-  "native.battle_guard_7": {
+  "message.Salvation plan changed before confirmation": {
     "zh-CN": "救赎之塔计划在确认前发生变化，请返回大厅后重跑。",
     "zh-TW": "救贖之塔計畫在確認前發生變化，請返回大廳後重跑。",
     "en-US": "Salvation plan changed before confirmation"
   },
-  "native.battle_guard_8": {
+  "message.Salvation popup differs": {
     "zh-CN": "救赎之塔扫荡弹窗与计划不一致，已停止本次操作。",
     "zh-TW": "救贖之塔掃蕩視窗與計畫不一致，已停止本次操作。",
     "en-US": "Salvation popup differs"
   },
-  "native.battle_guard_9": {
+  "message.Salvation free key debit differs": {
     "zh-CN": "救赎之塔钥匙扣除数量与计划不符，未重复扫荡；请核对游戏结果。",
     "zh-TW": "救贖之塔鑰匙扣除數量與計畫不符，未重複掃蕩；請核對遊戲結果。",
     "en-US": "Salvation free key debit differs"
   },
-  "native.battle_guard_10": {
+  "message.Salvation reward or paid keys changed": {
     "zh-CN": "救赎之塔奖励或储存钥匙发生意外变化，未重复扫荡；请核对游戏结果。",
     "zh-TW": "救贖之塔獎勵或儲存鑰匙發生意外變化，未重複掃蕩；請核對遊戲結果。",
     "en-US": "Salvation reward or paid keys changed"
   },
-  "native.battle_guard_11": {
+  "message.Salvation growth or run state changed": {
     "zh-CN": "救赎之塔成长或挑战状态已变化，未重复扫荡。",
     "zh-TW": "救贖之塔成長或挑戰狀態已變化，未重複掃蕩。",
     "en-US": "Salvation growth or run state changed"
   },
-  "native.battle_guard_12": {
+  "message.Salvation response reward differs": {
     "zh-CN": "救赎之塔结算奖励与预期不同，未重复扫荡；请导出诊断。",
     "zh-TW": "救贖之塔結算獎勵與預期不同，未重複掃蕩；請匯出診斷。",
     "en-US": "Salvation response reward differs"
   },
-  "native.battle_guard_13": {
+  "message.Salvation cartridge not owned": {
     "zh-CN": "当前账号尚未拥有恶魔城卡带，本次未进入。",
     "zh-TW": "目前帳號尚未擁有惡魔城卡帶，本次未進入。",
     "en-US": "Salvation cartridge not owned"
   },
-  "native.battle_guard_14": {
+  "message.Salvation field changed": {
     "zh-CN": "当前已离开恶魔城入口地图，未继续移动。",
     "zh-TW": "目前已離開惡魔城入口地圖，未繼續移動。",
     "en-US": "Salvation field changed"
   },
-  "native.battle_guard_15": {
+  "message.Salvation entrance trigger unavailable": {
     "zh-CN": "未找到恶魔城入口触发区域，请返回卡带入口后重跑。",
     "zh-TW": "未找到惡魔城入口觸發區域，請返回卡帶入口後重跑。",
     "en-US": "Salvation entrance trigger unavailable"
   },
-  "native.battle_guard_16": {
+  "message.Salvation entrance unreachable": {
     "zh-CN": "暂时无法走到恶魔城入口，请回到入口地图后重跑。",
     "zh-TW": "暫時無法走到惡魔城入口，請回到入口地圖後重跑。",
     "en-US": "Salvation entrance unreachable"
   },
-  "native.battle_guard_17": {
+  "message.Salvation entrance navigation did not start": {
     "zh-CN": "恶魔城入口寻路未启动，请关闭游戏弹窗后重跑。",
     "zh-TW": "惡魔城入口尋路未啟動，請關閉遊戲視窗後重跑。",
     "en-US": "Salvation entrance navigation did not start"
   },
-  "native.battle_guard_18": {
+  "message.Salvation sweep eligibility changed": {
     "zh-CN": "救赎之塔扫荡条件已变化，未消耗钥匙；请返回大厅后重跑。",
     "zh-TW": "救贖之塔掃蕩條件已變化，未消耗鑰匙；請返回大廳後重跑。",
     "en-US": "Salvation sweep eligibility changed"
   },
-  "native.battle_guard_19": {
+  "message.Salvation sweep button unavailable": {
     "zh-CN": "当前救赎之塔难度无法扫荡，未消耗钥匙。",
     "zh-TW": "目前救贖之塔難度無法掃蕩，未消耗鑰匙。",
     "en-US": "Salvation sweep button unavailable"
   },
-  "native.battle_guard_20": {
+  "message.Salvation level missing": {
     "zh-CN": "未找到已通关的救赎之塔难度选项，请重新进入大厅。",
     "zh-TW": "未找到已通關的救贖之塔難度選項，請重新進入大廳。",
     "en-US": "Salvation level missing"
   },
-  "native.battle_guard_21": {
+  "message.Salvation sweep is not ready": {
     "zh-CN": "救赎之塔免费扫荡尚未准备好，未消耗钥匙。",
     "zh-TW": "救贖之塔免費掃蕩尚未準備好，未消耗鑰匙。",
     "en-US": "Salvation sweep is not ready"
   },
-  "native.battle_guard_22": {
+  "message.Salvation plan changed": {
     "zh-CN": "救赎之塔资源或难度已变化，未提交扫荡；请重跑此环节。",
     "zh-TW": "救贖之塔資源或難度已變化，未提交掃蕩；請重跑此環節。",
     "en-US": "Salvation plan changed"
   },
-  "native.battle_guard_23": {
+  "message.Salvation growth is already funded": {
     "zh-CN": "成长石已足够或奖励数据未就绪，本次未提交扫荡。",
     "zh-TW": "成長石已足夠或獎勵資料未就緒，本次未提交掃蕩。",
     "en-US": "Salvation growth is already funded"
   },
-  "native.battle_guard_24": {
+  "message.Salvation sweep exceeds free key budget": {
     "zh-CN": "扫荡次数超出每日钥匙预算，未执行；请核对保留数量。",
     "zh-TW": "掃蕩次數超出每日鑰匙預算，未執行；請核對保留數量。",
     "en-US": "Salvation sweep exceeds free key budget"
   },
-  "native.battle_guard_25": {
+  "message.Salvation popup is closing": {
     "zh-CN": "救赎之塔确认弹窗正在关闭，请等待页面稳定后重跑。",
     "zh-TW": "救贖之塔確認視窗正在關閉，請等待頁面穩定後重跑。",
     "en-US": "Salvation popup is closing"
   },
-  "native.battle_guard_26": {
+  "message.Invalid event auto budget": {
     "zh-CN": "活动自动战斗次数须为1–5次。",
     "zh-TW": "活動自動戰鬥次數須為1–5次。",
     "en-US": "Invalid event auto budget"
   },
-  "native.battle_guard_27": {
+  "message.Event native frontier differs": {
     "zh-CN": "活动已解锁关卡与进度不一致，请重新进入活动大厅。",
     "zh-TW": "活動已解鎖關卡與進度不一致，請重新進入活動大廳。",
     "en-US": "Event native frontier differs"
   },
-  "native.battle_guard_28": {
+  "message.Event auto AP cost unavailable": {
     "zh-CN": "未读到活动战斗次数消耗，未开始战斗。",
     "zh-TW": "未讀到活動戰鬥次數消耗，未開始戰鬥。",
     "en-US": "Event auto AP cost unavailable"
   },
-  "native.battle_guard_29": {
+  "message.Event auto batch has not finished": {
     "zh-CN": "活动自动战斗尚未结束，请等待游戏结算后接续。",
     "zh-TW": "活動自動戰鬥尚未結束，請等待遊戲結算後接續。",
     "en-US": "Event auto batch has not finished"
   },
-  "native.battle_guard_30": {
+  "message.Event win progress missing": {
     "zh-CN": "未读到活动胜利进度，未重复战斗；请返回大厅后接续。",
     "zh-TW": "未讀到活動勝利進度，未重複戰鬥；請返回大廳後接續。",
     "en-US": "Event win progress missing"
   },
-  "native.battle_guard_31": {
+  "message.Event auto result belongs to another stage": {
     "zh-CN": "活动结算关卡与计划不一致，已停止本次操作；请导出诊断。",
     "zh-TW": "活動結算關卡與計畫不一致，已停止本次操作；請匯出診斷。",
     "en-US": "Event auto result belongs to another stage"
   },
-  "native.battle_guard_32": {
+  "message.Event auto changed stored AP or exceeded its budget": {
     "zh-CN": "活动次数扣除与免费计划不符，未继续战斗；请核对游戏结果。",
     "zh-TW": "活動次數扣除與免費計畫不符，未繼續戰鬥；請核對遊戲結果。",
     "en-US": "Event auto changed stored AP or exceeded its budget"
   },
-  "native.battle_guard_33": {
+  "message.Event auto stopped without a terminal result": {
     "zh-CN": "活动自动战斗提前停止，尚未读到最终结算；请返回大厅后接续。",
     "zh-TW": "活動自動戰鬥提前停止，尚未讀到最終結算；請返回大廳後接續。",
     "en-US": "Event auto stopped without a terminal result"
   },
-  "native.battle_guard_34": {
+  "message.Event frontier changed": {
     "zh-CN": "活动待挑战关卡已变化，未开始战斗；请重新进入大厅。",
     "zh-TW": "活動待挑戰關卡已變化，未開始戰鬥；請重新進入大廳。",
     "en-US": "Event frontier changed"
   },
-  "native.battle_guard_35": {
+  "message.Event auto target changed": {
     "zh-CN": "活动自动战斗目标已变化，未开始战斗。",
     "zh-TW": "活動自動戰鬥目標已變化，未開始戰鬥。",
     "en-US": "Event auto target changed"
   },
-  "native.battle_guard_36": {
+  "message.Not event native auto popup": {
     "zh-CN": "当前弹窗不是活动自动战斗确认页，未执行。",
     "zh-TW": "目前視窗不是活動自動戰鬥確認頁，未執行。",
     "en-US": "Not event native auto popup"
   },
-  "native.battle_guard_37": {
+  "message.Event auto popup changed": {
     "zh-CN": "活动自动战斗弹窗与计划不符，未执行。",
     "zh-TW": "活動自動戰鬥視窗與計畫不符，未執行。",
     "en-US": "Event auto popup changed"
   },
-  "native.battle_guard_38": {
+  "message.Event auto exceeds free AP": {
     "zh-CN": "活动自动战斗超出免费次数，未执行。",
     "zh-TW": "活動自動戰鬥超出免費次數，未執行。",
     "en-US": "Event auto exceeds free AP"
   },
-  "native.battle_guard_39": {
+  "message.Event batch is still continuing": {
     "zh-CN": "活动连续战斗仍在进行，未退出战斗。",
     "zh-TW": "活動連續戰鬥仍在進行，未退出戰鬥。",
     "en-US": "Event batch is still continuing"
   },
-  "native.battle_guard_40": {
+  "message.Event result exit not ready": {
     "zh-CN": "活动结算退出按钮尚未就绪，请稍后接续。",
     "zh-TW": "活動結算退出按鈕尚未就緒，請稍後接續。",
     "en-US": "Event result exit not ready"
   },
-  "native.battle_guard_41": {
+  "message.Native battle recovery requires an idle lobby": {
     "zh-CN": "请返回对应战斗大厅，再接续此环节。",
     "zh-TW": "請返回對應戰鬥大廳，再接續此環節。",
     "en-US": "Native battle recovery requires an idle lobby"
   },
-  "native.battle_guard_42": {
+  "message.Tower is not idle": {
     "zh-CN": "救赎之塔仍有挑战或弹窗，未开始扫荡。",
     "zh-TW": "救贖之塔仍有挑戰或視窗，未開始掃蕩。",
     "en-US": "Tower is not idle"
   },
-  "native.battle_guard_43": {
+  "message.Event battle is still active": {
     "zh-CN": "活动战斗仍在进行，请等待结算后接续。",
     "zh-TW": "活動戰鬥仍在進行，請等待結算後接續。",
     "en-US": "Event battle is still active"
   },
-  "native.battle_guard_44": {
+  "message.Event AP data unavailable": {
     "zh-CN": "活动免费次数数据尚未就绪，请重新进入活动大厅。",
     "zh-TW": "活動免費次數資料尚未就緒，請重新進入活動大廳。",
     "en-US": "Event AP data unavailable"
   },
-  "native.battle_guard_45": {
+  "message.Native battle recovery account changed": {
     "zh-CN": "当前账号与未完成战斗不一致，未接续旧操作；请检查所选账号。",
     "zh-TW": "目前帳號與未完成戰鬥不一致，未接續舊操作；請檢查所選帳號。",
     "en-US": "Native battle recovery account changed"

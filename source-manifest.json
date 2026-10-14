@@ -2604,7 +2604,7 @@
     },
     {
       "path": "src/Desktop/Localization/strings.json",
-      "sha256": "41d00c8c5dbd61ff013169f9607c6de9553de1e50efcb632b3618b9303922087",
+      "sha256": "7b710a1ddaf3916beecefe16bedacef202609918600b5ac5511f08ff501259de",
       "reasons": [
         "build input"
       ],
