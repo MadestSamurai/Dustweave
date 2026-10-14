@@ -805,6 +805,13 @@ public partial class MainWindow : Window
                 DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "trade", realGameTouched = false });
                 Application.Current.Shutdown(); return;
             }
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "software-settings")
+            {
+                L.Audit();
+                await CheckSoftwareSettingsForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "software-settings", realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "ux")
             {
                 L.Audit();

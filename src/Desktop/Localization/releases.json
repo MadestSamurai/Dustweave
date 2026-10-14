@@ -1,5 +1,29 @@
 [
 {
+  "Version": "1.3.10",
+  "Date": "2026-10-14",
+  "Notes": {
+    "zh-CN": [
+      "无插件时使用游戏内活动自动战斗，每日最多尝试 5 次免费战斗；失败后可停止本环节或扫荡此前最高可扫荡关卡。",
+      "新增默认关闭的救赎之塔扫荡，按成长加成缺少的石头与每日钥匙保留数量安排次数，不结束已有挑战。",
+      "修复恶魔城赛季奖励弹窗阻挡，并改进中断恢复。入口与跳过流程已实测，消耗次数后的结算分支仍待实机验证。",
+      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+    ],
+    "zh-TW": [
+      "無外掛模組時使用遊戲內活動自動戰鬥，每日最多嘗試 5 次免費戰鬥；失敗後可停止本環節或掃蕩先前最高可掃蕩關卡。",
+      "新增預設關閉的救贖之塔掃蕩，依成長加成缺少的石頭與每日鑰匙保留數量安排次數，不結束既有挑戰。",
+      "修復惡魔城賽季獎勵彈窗阻擋，並改善中斷恢復。入口與略過流程已實測，消耗次數後的結算分支仍待實機驗證。",
+      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+    ],
+    "en-US": [
+      "Without a plugin, event battles use the game's auto battle for up to five free attempts daily. After failure, stop this stage or sweep the highest eligible cleared stage.",
+      "Adds opt-in Tower of Salvation sweeps, limited by growth stones still needed and the daily-key reserve, without ending an existing challenge.",
+      "Handles the Evil Castle season reward popup and improves interruption recovery. Entry and skip paths were tested live; consuming settlement paths still need live validation.",
+      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+    ]
+  }
+},
+{
   "Version": "1.3.9",
   "Date": "2026-10-14",
   "Notes": {

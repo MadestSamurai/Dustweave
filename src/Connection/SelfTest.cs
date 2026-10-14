@@ -29,15 +29,27 @@ static class SelfTest {
   foreach(var scene in new[]{"Map0001_001","Map0006_008","Map1003_001","Map30090_001","",null})
    Check(!LiveProtocol.IsSquareScene(scene),"A* never handles cartridge or unknown scene: "+scene);
   {
-   var f=Frame();f.PluginAvailable=false;var c=Command();c.Kind="tactics_select";
+    var f=Frame();f.PluginAvailable=false;var c=Command();c.Kind="tactics_select";
    Check(LivePolicy.Gate(c,f,now,false)=="plugin_unavailable","unavailable extension rejects commands before dispatch");
    c.Kind="event_start";Check(LivePolicy.Gate(c,f,now,false)=="plugin_unavailable","unavailable extension rejects delegated actions");
-   c.Kind="event_sweep_confirm";c.Items=new long[]{8,5,14,115};c.Value=5;
-   Check(LivePolicy.Gate(c,f,now,false)=="public_sweep_challenge15_only","base never sweeps another stage");
-   c.Items[2]=15;c.Value=6;Check(LivePolicy.Gate(c,f,now,false)=="public_sweep_challenge15_only","base caps native sweep count");
+   c.Kind="event_sweep_confirm";c.Items=new long[]{8,5,14,115};c.Value=5;c.TargetId=0;f.Surfaces[0].Type="BattleSkipPopupUI";
+   Check(LivePolicy.Gate(c,f,now,false)=="","base can sweep a cleared stage below challenge15");
+   c.Items[2]=15;c.Value=6;Check(LivePolicy.Gate(c,f,now,false)=="event_sweep_rejected","base caps native sweep count");
    c.Value=5;c.TargetId=0;f.Surfaces[0].Type="BattleSkipPopupUI";
    Check(LivePolicy.Gate(c,f,now,false)=="","base accepts valid challenge15 sweep guard");
   }
+   {
+    var f=Frame();f.PluginAvailable=false;f.BridgeVersion=118;f.Surfaces[0].Type="BattleSkipPopupUI";
+    var c=Command();c.Kind="event_native_confirm";c.TargetId=0;c.Items=[1691,1,2];c.Value=5;
+    Check(LivePolicy.Gate(c,f,now,false)=="","native auto runs without plugin");
+    c.Value=6;Check(LivePolicy.Gate(c,f,now,false)=="native_battle_input_rejected","native auto cannot exceed five");
+    c.Value=1;f.BridgeVersion=117;Check(LivePolicy.Gate(c,f,now,false)=="native_battle_context_rejected","old bridge refuses new native commands");f.BridgeVersion=118;
+    c.Kind="salvation_confirm";c.Items=[12,0,3,80,100];f.Surfaces[0].Type="RogueLikeSkipPopupUI";
+    Check(LivePolicy.Gate(c,f,now,false)=="","free tower sweep has a separate native command");
+    c.Items[1]=-1;Check(LivePolicy.Gate(c,f,now,false)=="native_battle_budget_rejected","negative reserve cannot bypass free budget");c.Items[1]=0;
+    f.Surfaces=[f.Surfaces[0],new(){Id=45,Type="MessagePopupUI",Popup=true,Order=100}];
+    Check(LivePolicy.Gate(c,f,now,false)=="native_battle_surface_rejected","tower purchase or confirmation overlay blocks dispatch");
+   }
   {
    var f=Frame();var ui=f.Surfaces[0];ui.Type="MessagePopupUI";ui.Path="Root/ErrorMessagePopupUI";ui.Text=new[]{"error : 112003"};ui.Targets[0].Field="_buttonOK";ui.Targets[0].Route="ui";
    var c=Command();c.Reason="home-reset-proof|112003|owned";

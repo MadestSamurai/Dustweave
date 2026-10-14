@@ -683,7 +683,7 @@ public sealed partial class DailyRunPanel : UserControl
                     "guild" => "Flag", "room" or "weekly_room_likes" => "Home", "management" or "trade" => "Shop",
                     "free_draws" => "Sparkle", "equipment" or "weekly_equipment" => "Tool",
                     "weekly_mainline" or "weekly_steal" => "Map", "friendship" or "weekly_npc" => "Chat",
-                    "hunting" or "mirror" or "monster_hunt" or "event_battle" => "Battle",
+                    "hunting" or "mirror" or "monster_hunt" or "event_battle" or "salvation" => "Battle",
                     "daily_dispatch" => "Send", "square" or "rewards" or "event_rewards" => "Gift",
                     "weekly_book" or "tactics" => "Book", "weekly_fishing" => "Fish", "weekly_sichuan" => "Game",
                     "mail" => "Mail", _ => "Tasks"

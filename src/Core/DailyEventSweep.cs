@@ -2,9 +2,10 @@ using System.Text.Json.Nodes;
 using static Dustweave.DailyData;
 namespace Dustweave;
 
-/// <summary>Native free-AP sweep. Public policy is exactly cleared Challenge 15, at most five per server day.</summary>
+/// <summary>Native free-AP sweep of a fully cleared stage. The former Challenge-15 policy remains readable for old journals.</summary>
 public static class DailyEventSweep
 {
+    public const string NativePolicy = "native.daily.v2";
     public const string PublicPolicy = "challenge15.daily.v1";
     public static readonly string[] Prefixes = ["event.lobby", "event.currency", "event.sweep"];
     public const string Count = "_sliderAutoCount.ὮὢὥὯὥὧὤὭὨὨὪ";
@@ -57,12 +58,13 @@ public static class DailyEventSweep
             Require(N(P(paths[i])) == N(target[keys[i]]), "Sweep popup changed: " + keys[i]);
         var lobby = Lobby(e);
         var expected = S(target["policy"]) == PublicPolicy ? Challenge15(lobby) : Highest(lobby);
+        if (S(target["policy"]) == NativePolicy && expected != null) expected["policy"] = NativePolicy;
         var canonical = target.DeepClone().AsObject();
         canonical.Remove("budget");
         Require(JsonNode.DeepEquals(expected, canonical) && N(lobby["Selected"]) == N(target["stage"]), "Sweep target changed");
         long count = N(P(Count)), cost = N(target["cost"]);
         Require(cost > 0 && count > 0 && count <= N(R(e, "event.currency", "EventApFree")) / cost, "Sweep exceeds free AP");
-        if (S(target["policy"]) == PublicPolicy)
+        if (S(target["policy"]) is PublicPolicy or NativePolicy)
             Require(count <= N(target["budget"] ?? JsonValue.Create(5)) && N(target["budget"] ?? JsonValue.Create(5)) <= 5, "Daily sweep budget exceeded");
         var result = target.DeepClone().AsObject();
         result["count"] = count;
@@ -161,7 +163,7 @@ public static class DailyEventSweep
         var target = budget != null ? fixedTarget?.DeepClone().AsObject() : Highest(lobby);
         if (budget != null)
         {
-            Require(target != null && S(target["policy"]) == PublicPolicy && budget is > 0 and <= 5, "Invalid daily challenge plan");
+            Require(target != null && S(target["policy"]) is PublicPolicy or NativePolicy && budget is > 0 and <= 5, "Invalid daily challenge plan");
             target!["budget"] = budget.Value;
         }
         if (budget == null && target == null && S(lobby["Category"]) != "Battle")
@@ -207,41 +209,11 @@ public static class DailyEventSweep
             await w.WaitEvidence(Prefixes, e => N(R(e, Popup, Count)) == N(R(e, "event.currency", "EventApFree")) / N(target["cost"]));
         }
         var plan = PopupPlan(await w.Evidence(Prefixes), target);
-        if (budget != null)
+        if (budget != null && S(target["policy"]) == PublicPolicy)
             Require(Remaining(w, N(target["event"])) == budget.Value, "Daily challenge budget changed");
         var op = await w.Transact("event.sweep", plan, O(("ui", "BattleSkipPopupUI"), ("operation", "event_sweep_confirm"), ("items", new JsonArray(Copy(target["event"]), Copy(target["group"]), Copy(target["stage"]), Copy(target["deck"]))), ("value", plan["count"])), 45);
         await w.Dismiss("EventBattleUI", true);
         return O(("state", "completed"), ("operation", op["id"]), ("result", op["result"]));
     }
-    public static async Task<JsonObject> PublicRun(DailyWorkflow w)
-    {
-        if (!w.Settings.EventBattle.Enabled)
-            return DailyWorkflow.Skipped("disabled");
-        var frame = (await w.Observe()).Frame;
-        if (DailyNavigationDecision.Types(frame).Overlaps(new[] { "BattleUI_EventBattle", "BattleResultUI" }))
-            return DailyWorkflow.Skipped("extension_in_progress");
-        if (!await w.Has("EventBattleUI") || S(Lobby(await w.Evidence(Prefixes))["Category"]) != "Challenge")
-        {
-            if (await w.Has("EventBattleUI"))
-                await w.Step("EventBattleUI", back: true, expect: "EventMainUI");
-            if (!await w.Has("EventMainUI"))
-                await EnterMain(w);
-            await w.Target("EventMainUI", "_buttonChallenge._button");
-            await w.Step("EventMainUI", "_buttonChallenge._button", expect: "EventBattleUI");
-        }
-        var lobby = Lobby(await w.Evidence(Prefixes));
-        var target = Challenge15(lobby);
-        JsonObject result;
-        if (target == null)
-            result = DailyWorkflow.Skipped("challenge15_not_sweepable");
-        else
-        {
-            int remaining = Remaining(w, N(target["event"]));
-            result = remaining == 0 ? DailyWorkflow.Skipped("daily_limit_reached") : await Run(w, lobby, target, remaining);
-        }
-        await Leave(w);
-        return result;
-    }
+    public static Task<JsonObject> PublicRun(DailyWorkflow w) => DailyEventNative.Run(w);
 }
-
-

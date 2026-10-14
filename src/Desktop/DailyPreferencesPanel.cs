@@ -16,6 +16,8 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly string dataRoot;
     private readonly ComboBox accounts = new() { MinWidth = 230, DisplayMemberPath = "Name", SelectedValuePath = "AccountKey" };
     private readonly CheckBox eventBattle = Check("活动战斗"), eventChallenge = Check("普通全部通关后继续挑战战斗");
+    private readonly CheckBox eventFailureSweep = Check("prefs.event_failure_sweep"), salvation = Check("stage.salvation");
+    private readonly TextBox salvationReserve = new();
     private readonly ComboBox eventSearch = new();
     private readonly CheckBox tactics = Check("战术教材");
     private readonly ComboBox tacticsSearch = new();
@@ -230,14 +232,17 @@ public sealed class DailyPreferencesPanel : UserControl
             Stage(tactics, "战术教材", "按当前配置执行");
             Row("每关搜索秒数", tacticsSearch);
         }
-        Stage(eventBattle, extensionEvents ? "活动战斗" : "活动每日挑战15", extensionEvents ? "按当前配置执行" : "prefs.event_sweep_hint", expanded: true);
+        Stage(eventBattle, "活动战斗", extensionEvents ? "按当前配置执行" : "prefs.event_sweep_hint", expanded: true);
+        if (!extensionEvents) { section.Children.Add(eventFailureSweep); Note("prefs.event_failure_hint"); }
+        section.Children.Add(eventChallenge);
         eventSearch.ItemsSource = new[] { 5, 15, 30, 60, 120 };
         if (extensionEvents)
         {
-            section.Children.Add(eventChallenge);
             Row("每关搜索秒数", eventSearch);
         }
         if (extensionEvents) Note("仅使用免费次数，完成后保留游戏进度。");
+        Stage(salvation, "救赎之塔扫荡", "prefs.salvation_hint", expanded: true);
+        Row("prefs.salvation_reserve", salvationReserve);
         Stage(weeklyBook, "周常末日之书", "prefs.book_hint");
         Stage(friendship, "亲密度咨询", "prefs.friendship_hint");
         section.Children.Add(quickFriendship);
@@ -308,11 +313,12 @@ public sealed class DailyPreferencesPanel : UserControl
         Content = layout;
         FilterSections();
         accounts.SelectionChanged += ChangedAccount;
-        foreach (var c in new[] { weeklyBook, weeklyCraft, weeklySichuan, quickFriendship, friendship, tactics, eventBattle, eventChallenge, hunt, gold, slime, stones, recycle, keepSr, fallback, refine, pass, dispatch, goddess, ranking, mirror, guild, room, income, guests, saffron, draws, dailyRewards, weeklyRewards, mail, mainline, weeklyNpc, npcHunting, weeklySteal, walkCollect, monsterHunt, fishing, roomLikes, trade, events, eventMissions, quiz, dice, puzzle, roulette, exchange })
+        foreach (var c in new[] { salvation, eventFailureSweep, weeklyBook, weeklyCraft, weeklySichuan, quickFriendship, friendship, tactics, eventBattle, eventChallenge, hunt, gold, slime, stones, recycle, keepSr, fallback, refine, pass, dispatch, goddess, ranking, mirror, guild, room, income, guests, saffron, draws, dailyRewards, weeklyRewards, mail, mainline, weeklyNpc, npcHunting, weeklySteal, walkCollect, monsterHunt, fishing, roomLikes, trade, events, eventMissions, quiz, dice, puzzle, roulette, exchange })
         {
             c.Checked += (_, _) => MarkDirty();
             c.Unchecked += (_, _) => MarkDirty();
         }
+        salvationReserve.TextChanged += (_, _) => { if (!updating) dirty = true; };
         foreach (var c in new[] { tacticsSearch, eventSearch, chapter, stone, enhance, refineChoice, multiplier, saffronRounds })
             c.SelectionChanged += (_, _) => MarkDirty();
         tradeReserve.TextChanged += (_, _) => MarkDirty();
@@ -413,7 +419,7 @@ public sealed class DailyPreferencesPanel : UserControl
     private static string CategoryFor(string title) => title switch
     {
         "整体设置" or "跑商、料理与高价售卖" or "藏红花种植与收割" => "resources",
-        "普通狩猎与奖励日" or "圣石狩猎" or "镜中之战" or "魔兽快速战斗" or "战术教材" or "活动战斗" or "活动每日挑战15" => "battle",
+        "普通狩猎与奖励日" or "圣石狩猎" or "镜中之战" or "魔兽快速战斗" or "战术教材" or "活动战斗" or "活动每日挑战15" or "救赎之塔扫荡" => "battle",
         "周收集" or "周NPC任务" or "每周偷窃" or "周常末日之书" or "周常制作装备" or "周常小屋点赞" or "周常钓鱼" or "周常连连看" or "周常任务奖励" => "weekly",
         _ => "daily"
     };
@@ -423,6 +429,15 @@ public sealed class DailyPreferencesPanel : UserControl
         filter.Clear();categories.SelectedItem=categories.Items.Cast<ListBoxItem>().Single(i=>(string)i.Tag==key);
         if(!sections.Any(s=>s.View.IsVisible) && IsVisible)throw new Exception("Settings category has no visible tasks");
         if(sections.Any(s=>s.View.Visibility==Visibility.Visible && key!="all" && CategoryFor(s.Title)!=key))throw new Exception("Unrelated settings in category");
+    }
+    internal void ShowNativeBattleSettingsForSmoke(bool tower)
+    {
+        if (allowGame || extensionEvents) throw new InvalidOperationException("Isolated public settings required");
+        ReviewCategoryForSmoke("battle");
+        filter.Text = L.Translate(tower ? "救赎之塔扫荡" : "活动战斗");
+        foreach (var item in sections.Where(s => s.View.Visibility == Visibility.Visible))
+            if (item.View.Child is Expander exp) exp.IsExpanded = true;
+        UpdateLayout();
     }
     internal void CheckCategorySearchForSmoke()
     {
@@ -562,6 +577,9 @@ public sealed class DailyPreferencesPanel : UserControl
             tactics.IsChecked = loaded.Tactics.Enabled;
             tacticsSearch.SelectedItem = loaded.Tactics.SearchSeconds;
             eventBattle.IsChecked = loaded.EventBattle.Enabled;
+            salvation.IsChecked = loaded.Salvation.Enabled;
+            salvationReserve.Text = loaded.Salvation.ReserveKeys.ToString(CultureInfo.InvariantCulture);
+            eventFailureSweep.IsChecked = loaded.EventBattle.SweepAfterFailure;
             eventChallenge.IsChecked = loaded.EventBattle.Challenge;
             eventSearch.SelectedItem = loaded.EventBattle.SearchSeconds;
             quickFriendship.IsChecked = loaded.Friendship.Quick;
@@ -695,10 +713,13 @@ public sealed class DailyPreferencesPanel : UserControl
                 loaded.Tactics.Enabled = tactics.IsChecked == true;
                 loaded.Tactics.SearchSeconds = tacticsSearch.SelectedItem is int tacticSeconds ? tacticSeconds : 45;
             }
+            if (!int.TryParse(salvationReserve.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var keys) || keys is < 0 or > 999) { RevealField(salvationReserve); throw new InvalidDataException("救赎之塔保留钥匙必须为 0 至 999。"); }
+            loaded.Salvation.Enabled = salvation.IsChecked == true; loaded.Salvation.ReserveKeys = keys;
+            loaded.EventBattle.SweepAfterFailure = eventFailureSweep.IsChecked == true;
             loaded.EventBattle.Enabled = eventBattle.IsChecked == true;
+            loaded.EventBattle.Challenge = eventChallenge.IsChecked == true;
             if (extensionEvents)
             {
-                loaded.EventBattle.Challenge = eventChallenge.IsChecked == true;
                 loaded.EventBattle.SearchSeconds = eventSearch.SelectedItem is int seconds ? seconds : 15;
             }
             loaded.Friendship.Quick = quickFriendship.IsChecked == true;
@@ -799,7 +820,7 @@ public sealed class DailyPreferencesPanel : UserControl
     {
         if (!extensionTasks && (tactics.Parent != null || tacticsSearch.Parent != null || sections.Any(s => s.Title == "战术教材")))
             throw new Exception("Unavailable optional task remains visible");
-        if (!extensionEvents && (eventChallenge.Parent != null || eventSearch.Parent != null))
+        if (!extensionEvents && eventSearch.Parent != null)
             throw new Exception("Unavailable optional settings remain visible");
         if (loaded == null || string.IsNullOrWhiteSpace(account)) throw new Exception("Settings fixture was not loaded");
         var oldTactics = (loaded.Tactics.Enabled, loaded.Tactics.SearchSeconds);

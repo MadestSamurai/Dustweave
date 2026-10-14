@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 1.3.10 — 2026-10-14
+
+- 无插件时使用游戏内活动自动战斗，最多尝试 5 次免费战斗；失败后可停止本环节或扫荡此前最高可扫荡关卡。
+- 新增默认关闭的救赎之塔扫荡，按成长加成缺少的石头与每日钥匙保留数量安排次数。
+- 处理恶魔城赛季奖励弹窗，完善中断后的当前状态核对与恢复。
+- Adds native event auto battle and opt-in Tower of Salvation sweeps, with guarded daily-resource limits and interrupted-operation recovery.
+- [完整说明 / Full notes](docs/releases/1.3.10.md)
+
 ## 1.3.9 — 2026-10-14
 
 - 减少内置使徒防守决策的重复计算和临时分配，保持现有召唤、培养、出售及换位结果。

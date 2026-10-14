@@ -22,6 +22,10 @@ static class HomeNavigationCases
             cases.Add(label);
         }
         var policy = DailyNavigationPolicy.Load();
+        var castleReward = Surface("EvilCastleSeasonTotalRewardPopupUI", false, "_objBackButton");
+        Check(DailyNavigationDecision.Notice(Frame(castleReward), policy, out _)?["field"]?.GetValue<string>() == "_objBackButton", "Castle season reward closes the native acknowledgement even without popup flag");
+        castleReward["InputReady"] = false;
+        Check(DailyNavigationDecision.Notice(Frame(castleReward), policy, out _) == null, "Castle reward animation is not clicked early");
         var record = Surface("TotalWarNewcordPopupUI", false, "_objBackButton");
         var recordPlan = DailyHomeDecision.Inspect(Frame(record, Surface("CurrencyManageUI"), Surface("NoticeUI")), policy);
         Check(recordPlan.Action?["field"]?.GetValue<string>() == "_objBackButton" && recordPlan.Action?["absent"]?.GetValue<string>() == "TotalWarNewcordPopupUI", "non-popup Book record presentation closes its native return button");

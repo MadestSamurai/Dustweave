@@ -1,6 +1,7 @@
 {
   "Extends": "weekly-evidence-spec.json",
   "Taps": [
+    {"Role":"salvation.sweep","ResponseType":"Proto.Net.EvilCastleRogueLikeQuickBattleResponse","RequestSite":"constructor","ResponseOwner":"ὠὦὯὪὦὠὩὦὫὫὡ","ResponseOwnerIncludesNested":true,"Paths":["ScoreInfo"]},
     {
       "Role": "rewards.puzzle",
       "ResponseType": "Proto.Net.MiniPuzzleAllOpenResponse",
@@ -179,6 +180,8 @@
     }
   ],
   "Reads": [
+    {"Id":"salvation.native","Type":"RogueLikeLobbyUI","Paths":["$self"]},
+    {"Id":"event.native","Type":"EventBattleUI","Paths":["$self"]},
     {
       "Id": "monster.cache",
       "Type": "ὠὥὯὧὤὢὣὦὯὮὨ",

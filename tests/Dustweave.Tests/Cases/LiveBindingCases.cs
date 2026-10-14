@@ -86,6 +86,30 @@ static class LiveBindingCases
         var captured=new List<IMemberDefinition>();
         EvidenceBindings.Capture(baseline.Types,["{\"Taps\":[],\"Reads\":[{\"Id\":\"test\",\"Type\":\"Store\",\"Paths\":[\"α\"]}]}"],_=>{},captured.Add);
         Check(captured.Count==1&&captured[0].Name=="α","evidence contract includes only the declared member path");
+        string ChangedStore(string name, bool renamed, bool duplicate = false)
+        {
+            string dir=Path.Combine(directory,name);Directory.CreateDirectory(dir);
+            using var module=ModuleDefinition.CreateModule("Assembly-CSharp.dll",ModuleKind.Dll);
+            for(int n=0;n<(duplicate?2:1);n++)
+            {
+                var t=new TypeDefinition("",renamed?(n==0?"ρ":"σ"):"π",TypeAttributes.Public,module.TypeSystem.Object);module.Types.Add(t);
+                for(int i=0;i<2;i++)
+                {
+                    var f=new FieldDefinition(renamed?(i==0?"η":"ζ"):(i==0?"α":"β"),FieldAttributes.Public|FieldAttributes.Static,module.TypeSystem.Int32);t.Fields.Add(f);
+                    var caller=new MethodDefinition("Read"+i,MethodAttributes.Public|MethodAttributes.Static,module.TypeSystem.Int32);t.Methods.Add(caller);
+                    var il=caller.Body.GetILProcessor();il.Emit(OpCodes.Ldsfld,f);il.Emit(OpCodes.Ldc_I4,i+10);il.Emit(OpCodes.Add);il.Emit(OpCodes.Ret);
+                }
+                if(renamed)t.Fields.Add(new FieldDefinition("Extra",FieldAttributes.Public,module.TypeSystem.String));
+            }
+            module.Write(Path.Combine(dir,"Assembly-CSharp.dll"));return dir;
+        }
+        string oldStore=ChangedStore("store-before",false),newStore=ChangedStore("store-after",true),twoStores=ChangedStore("store-ambiguous",true,true);
+        using var oldIndex=new MetadataIndex(Path.Combine(oldStore,"Assembly-CSharp.dll"));var oldType=oldIndex.Find("π");
+        var storeContract=new LiveBindingContract(new(1,[new(oldType.FullName,oldIndex.Shape(oldType),[],oldType.Fields.Select(f=>new MemberContract(f.Name,MetadataIndex.Signature(f),"",oldIndex.Uses(f))).ToArray())],[],new()),[],[],[],[]);
+        Check(LiveClientBindings.ResolveNames(newStore,storeContract,Path.Combine(directory,"store-new.json"))["π"]=="ρ","changed store shape binds through two independently unchanged callers");
+        Reject(()=>LiveClientBindings.ResolveNames(twoStores,storeContract,Path.Combine(directory,"store-ambiguous.json")),"multiple stores with the same caller evidence remain ambiguous");
+        var oneAnchor=storeContract with { Bindings=storeContract.Bindings with {Types=[storeContract.Bindings.Types[0] with {Members=[storeContract.Bindings.Types[0].Members[0]]}]} };
+        Reject(()=>LiveClientBindings.ResolveNames(newStore,oneAnchor,Path.Combine(directory,"store-one.json")),"one caller cannot authorize a changed store binding");
         using var schemaModule = ModuleDefinition.CreateModule("SchemaFixture", ModuleKind.Dll);
         var unstable = new TypeDefinition("", "ClientRow", TypeAttributes.Public, schemaModule.TypeSystem.Object);
         schemaModule.Types.Add(unstable);

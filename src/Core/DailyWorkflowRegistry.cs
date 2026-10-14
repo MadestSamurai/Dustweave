@@ -32,14 +32,14 @@ public sealed class DailyWorkflowRegistry
     public DailyWorkflow Create(JsonObject context, Func<string, string?, JsonObject?, Task<JsonObject>> relay) => new(root, directory, context, driver, business, navigation, proofs, stopped, relay, report, rules, prepareTables);
     public async Task PrepareAsync(string stage)
     {
-        if (prepareRules == null || new[] { "guild", "room", "mail", "free_draws", "friendship", "trade", "collection_sync" }.Contains(stage))
+        if (prepareRules == null || new[] { "salvation", "guild", "room", "mail", "free_draws", "friendship", "trade", "collection_sync" }.Contains(stage))
             return;
         rules ??= await prepareRules();
         rules.AssertReady();
     }
     public static DailyBusinessProof[] Proofs(IDailyExtension? extension = null)
     {
-        var result = new List<DailyBusinessProof> { DailyFreeDrawProof.Definition(), DailyFriendshipProof.Definition(), DailyHunting.Proof(), DailyMonsterHunt.Proof(), DailyMirror.Proof(), DailyWeeklyBook.Proof(), DailyWeeklyRooms.Proof(), DailyEventSweep.Definition() };
+        var result = new List<DailyBusinessProof> { DailyFreeDrawProof.Definition(), DailyFriendshipProof.Definition(), DailyHunting.Proof(), DailyMonsterHunt.Proof(), DailyMirror.Proof(), DailyWeeklyBook.Proof(), DailyWeeklyRooms.Proof(), DailyEventSweep.Definition(), DailyEventNative.Definition(), DailySalvation.Definition() };
         result.AddRange(DailyManagementProof.Definitions());
         result.AddRange(DailyDispatch.Proofs());
         result.AddRange(DailySquare.Proofs());
@@ -101,6 +101,7 @@ public sealed class DailyWorkflowRegistry
             Add(name, w => DailyMissions.Run(w, name));
         Add("pass_rewards", w => DailyPasses.Run(w));
         Add("event_rewards", DailyEventRewards.Run, f => DiceOwner(f) || DailyEventRewards.HasPendingPresentation(business, f) || EventPreviewOwner(f));
+        Add("salvation", DailySalvation.Run, f => DailyNavigationDecision.Types(f.Frame).Overlaps(["RogueLikeSkipPopupUI", "RogueLikeTotalScoreUI"]) && business.Records(f.Context, "salvation.sweep").Any(op => DailyNativeBattleRecovery.CanResume(op, f)));
         Add("weekly_book", DailyWeeklyBook.Run, BookOwner);
         Add("weekly_room_likes", DailyWeeklyRooms.Run);
         Add("weekly_fishing", DailyWeeklyFishing.Run);
@@ -109,7 +110,7 @@ public sealed class DailyWorkflowRegistry
         Add("trade", w => new DailyTradeExecution(w, w.Settings.Trade.FavoritesOnly ? new JsonObject() : tradeCatalog() ?? throw new StageHostException("adapter", "跑商数据没有通过当前客户端核对。")).Run(), TradeOwner);
         Add("collection_sync", w => new DailyWeeklyRoute(w).SyncProgress());
         Add("tactics", w => ExtensionFor("tactics")?.ExecuteAsync("tactics", w) ?? Task.FromResult(DailyWorkflow.Skipped("plugin_unavailable")), f => ExtensionFor("tactics")?.CanResume(root, "tactics", f) ?? false);
-        Add("event_battle", w => ExtensionFor("event_battle")?.ExecuteAsync("event_battle", w) ?? DailyEventSweep.PublicRun(w), f => ExtensionFor("event_battle")?.CanResume(root, "event_battle", f) ?? false);
+        Add("event_battle", w => ExtensionFor("event_battle")?.ExecuteAsync("event_battle", w) ?? DailyEventSweep.PublicRun(w), f => ExtensionFor("event_battle")?.CanResume(root, "event_battle", f) ?? business.Records(f.Context, "event.native_batch").Any(op => DailyNativeBattleRecovery.CanResume(op, f)));
         return map;
     }
     public static bool Owned(JsonObject op, DailyStageFrame frame) => JsonNode.DeepEquals(op["cycle"], frame.Context["cycle"]) && DailyEvidence.SameActor(op["before"]!["Frame"]!.AsObject(), frame.Frame);

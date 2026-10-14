@@ -157,6 +157,7 @@ await Group("UnifiedSuite", () => Sync(() => UnifiedSuiteCases.Run(cases)));
 await Group("SuiteOwnerProbe", () => SuiteOwnerProbeCases.Run(cases));
 await Group("Workflow", () => Sync(() => WorkflowCases.Run(cases)));
 await Group("PassRecovery", () => PassRecoveryCases.Run(root, cases));
+await Group("NativeDailyBattle", () => Sync(() => NativeDailyBattleCases.Run(cases)));
 await Group("EventTradeBoundary", () => Sync(() => EventTradeBoundaryCases.Run(cases)));
 await Group("ConnectionAccess", () => ConnectionAccessCases.Run(cases));
 await Group("HelperLifetime", () => HelperLifetimeCases.Run(cases));

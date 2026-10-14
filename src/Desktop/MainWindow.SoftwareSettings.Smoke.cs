@@ -51,6 +51,8 @@ public partial class MainWindow
                 WorkspaceTabs.SelectedItem=SettingsTab;preferencesPanel.CheckCategorySearchForSmoke();
                 foreach(string categoryKey in new[]{"daily","battle","weekly","resources"})
                 {preferencesPanel.ReviewCategoryForSmoke(categoryKey);await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture($"settings-{categoryKey}-{lang}-{themeIndex}");}
+                foreach (bool tower in new[] { false, true })
+                { preferencesPanel.ShowNativeBattleSettingsForSmoke(tower); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); Capture($"native-battle-{tower}-{lang}-{themeIndex}"); }
                 WorkspaceTabs.SelectedItem=PluginsTab;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture($"plugins-empty-{lang}-{themeIndex}");
                 WorkspaceTabs.SelectedItem=UpdatesTab;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture($"updates-{lang}-{themeIndex}");
             }

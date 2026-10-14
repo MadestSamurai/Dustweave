@@ -63,7 +63,7 @@ public static class DailyNavigationDecision
     public static bool PassiveSurface(string type) => Passive.Contains(type);
     public static readonly HashSet<string> Transitions = ["LoadingUI", "EntranceBackgroundCoverUI"];
     public static readonly HashSet<string> FieldPack = ["GameFieldDefaultUI", "CafeteriaFieldDefaultUI", "AvatarLifeGameFieldDefaultUI", "AvatarFishingHarborUI"];
-    public static readonly HashSet<string> FieldStages = ["territory_saffron", "weekly_mainline", "weekly_npc", "weekly_steal", "collection_sync", "square", "goddess", "square_ranking", "trade", "weekly_fishing", "mirror", "weekly_book", "cafeteria_guests"];
+    public static readonly HashSet<string> FieldStages = ["salvation", "territory_saffron", "weekly_mainline", "weekly_npc", "weekly_steal", "collection_sync", "square", "goddess", "square_ranking", "trade", "weekly_fishing", "mirror", "weekly_book", "cafeteria_guests"];
     public static readonly HashSet<string> Overlays = ["MenuUI", "PackListUI", "PackInfoUI", "PackCollectionUI", "QuickMenuUI"];
     public static readonly HashSet<string> Suppressible = ["NewsPopupEventUI", "PackagePopupUI", "AttendanceSpecialPackageUI", "BundlePackageUI", "BundleGroupPackageUI", "BundleGroupRelayPackageUI", "BonusBundleGroupPackageUI", "ClearPackageUI", "LoginPassPackageUI", "SkinPackageUI"];
     public static IReadOnlyDictionary<string, string?> Closeable
@@ -71,6 +71,9 @@ public static class DailyNavigationDecision
         get;
     } = new Dictionary<string, string?>
     {
+        ["EvilCastleEnterUI"] = null,
+        ["RogueLikeLobbyUI"] = null,
+        ["RogueLikeSkipPopupUI"] = null,
         ["SichuanMainUI"] = null,
         ["MiniGameHubUI"] = null,
         ["PackInfoUI"] = "_objBackButton",
@@ -105,6 +108,7 @@ public static class DailyNavigationDecision
         ["daily_dispatch"] = ["GameFieldDefaultUI"],
         ["free_draws"] = ["GachaMainUI", "GachaResultUI"],
         ["event_battle"] = ["EventMainUI", "EventBattleUI"],
+        ["salvation"] = ["EvilCastleEnterUI", "RogueLikeLobbyUI"],
         ["tactics"] = ["TarosTacticsBingoUI"],
         ["weekly_book"] = ["TotalWarUI", "BattleResultUI"],
         ["weekly_fishing"] = ["FishingGameFieldDefaultUI", "AvatarFishingWorldMapUI"],
@@ -284,6 +288,8 @@ public static class DailyNavigationDecision
     private static JsonObject? NoticeAction(JsonObject surface)
     {
         string ui = Text(surface, "Type");
+        if (ui == "EvilCastleSeasonTotalRewardPopupUI")
+            return HasTarget(surface, "_objBackButton") ? Click(ui, "_objBackButton", "关闭已发放的恶魔城赛季奖励") : null;
         if (ui == "GameQuitPopupUI")
             return HasTarget(surface, "_objCloseButton") ? Click(ui, "_objCloseButton", "取消退出游戏确认，继续当前日常") : null;
         if (Suppressible.Contains(ui))

@@ -23,6 +23,7 @@ public sealed class DailyPreferences
     [JsonRequired] public WeeklyPreferences Weekly { get; set; } = new();
     [JsonRequired] public MonsterHuntPreferences MonsterHunt { get; set; } = new();
     [JsonRequired] public EventBattlePreferences EventBattle { get; set; } = new();
+    public SalvationPreferences Salvation { get; set; } = new();
     [JsonRequired] public TradePreferences Trade { get; set; } = new();
     [JsonRequired] public EventRewardPreferences Events { get; set; } = new();
     [JsonRequired] public TacticsPreferences Tactics { get; set; } = new();
@@ -176,6 +177,8 @@ public sealed class DailyPreferences
             throw new InvalidDataException("战术教材搜索时间必须为 1 至 120 秒。");
         if (EventBattle.SearchSeconds is < 1 or > 120)
             throw new InvalidDataException("活动搜索时间必须为 1 至 120 秒。");
+        if (Salvation == null || Salvation.ReserveKeys is < 0 or > 999)
+            throw new InvalidDataException("救赎之塔保留钥匙必须为 0 至 999。");
         if (Mirror.Multiplier is < 1 or > 40)
             throw new InvalidDataException("镜中倍率必须为 1 至 40。");
         if (Hunt.OrdinaryChapter is < 1 or > 10)
@@ -384,6 +387,14 @@ public sealed class EventBattlePreferences
     }
     [JsonRequired] public bool Challenge { get; set; } = true;
     [JsonRequired] public int SearchSeconds { get; set; } = 15;
+    public bool SweepAfterFailure { get; set; } = true;
+}
+
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+public sealed class SalvationPreferences
+{
+    public bool Enabled { get; set; } = false;
+    public int ReserveKeys { get; set; } = 0;
 }
 
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]

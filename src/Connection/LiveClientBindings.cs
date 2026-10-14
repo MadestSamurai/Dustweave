@@ -273,6 +273,23 @@ public static class LiveClientBindings
                 var candidates=index.Types.Where(t=>linked.Count==1?linked.Contains(t.FullName):
                     enumeration!=null?t.IsEnum&&enumeration.Values.All(e=>t.Fields.Any(f=>f.Name==e.Key&&f.HasConstant&&Convert.ToInt64(f.Constant)==e.Value)):
                     index.Shape(t)==expected.Shape).ToArray();
+                if(candidates.Length==0&&linked.Count==0&&enumeration==null&&MetadataIndex.Obfuscated(expected.Name))
+                {
+                    // Large stores can change their largest methods while their public callers stay
+                    // stable. Require two independently identified members, never a getter shape alone.
+                    candidates=index.Types.Where(t=>MetadataIndex.Obfuscated(t.FullName)&&!t.IsEnum).Where(t=>
+                    {
+                        var actual=MetadataIndex.Members(t).ToArray();int anchored=0;
+                        foreach(var member in expected.Members)
+                        {
+                            string key=BindingResolver.Key(expected.Name,member.Name,member.Signature);
+                            var matches=actual.Where(m=>MetadataIndex.Signature(m)==member.Signature&&
+                                (index.Uses(m).Intersect(member.Uses).Any()||usage.TryGetValue(key,out var u)&&Uses(m,localUses).Intersect(u.Anchors).Any())).ToArray();
+                            if(matches.Length==1)anchored++;
+                        }
+                        return anchored>=2;
+                    }).ToArray();
+                }
                 string? parent=expected.Name.Contains('/')?expected.Name[..expected.Name.LastIndexOf('/')]:null;
                 if(parent!=null&&(types.TryGetValue(parent,out var actualParent)||!MetadataIndex.Obfuscated(parent)))
                     candidates=candidates.Where(t=>t.DeclaringType?.FullName==(actualParent?.FullName??parent)).ToArray();
@@ -294,7 +311,7 @@ public static class LiveClientBindings
                     candidates=candidates.Where(m=>m is PropertyDefinition p&&(p.GetMethod?.Name==hint.Accessor||p.SetMethod?.Name==hint.Accessor)).ToArray();
                 var targets=contract.Calls.Where(c=>c.Member==key&&c.Target!=key&&members.ContainsKey(c.Target)).SelectMany(c=>Methods(members[c.Target])).Select(m=>m.FullName).ToHashSet();
                 if(targets.Count>0)candidates=candidates.Where(m=>{var invoked=Methods(m).Where(x=>x.HasBody).SelectMany(x=>x.Body.Instructions).Select(i=>i.Operand).OfType<MethodReference>().Select(r=>r.FullName).ToHashSet();return targets.All(invoked.Contains);}).ToArray();
-                if(candidates.Length>1){var scored=candidates.Select(m=>new{Member=m,Score=Uses(m,localUses).Intersect(usage.TryGetValue(key,out var anchors)?anchors.Anchors:[]).Count()}).OrderByDescending(x=>x.Score).ToArray();
+                if(candidates.Length>1){var scored=candidates.Select(m=>new{Member=m,Score=Uses(m,localUses).Intersect(usage.TryGetValue(key,out var anchors)?anchors.Anchors:[]).Count()+index.Uses(m).Intersect(expected.Uses).Count()}).OrderByDescending(x=>x.Score).ToArray();
                     candidates=scored.Length>0&&scored[0].Score>0?scored.Where(x=>x.Score==scored[0].Score).Select(x=>x.Member).ToArray():[];}
                 if(candidates.Length==1)members[key]=candidates[0];
             }

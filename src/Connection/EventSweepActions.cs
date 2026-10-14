@@ -22,7 +22,7 @@ namespace BD2Daily.Live {
     Require(lobby.ὤὮὯὫὪὡὤὡὫὬὪ==c.Items[0]&&lobby.ὢὣὤὬὮὩὡὬὥὫὩ==c.Items[1],"Event sweep scope changed");
     int id=checked((int)c.Items[2]);
     var eligible=lobby.ὥὣὤὧὥὬὤὧὣὤὠ.Where(x=>SweepEligible(lobby,x)).ToArray();
-    Require(eligible.Length>0&&(PluginHost.Available?id==eligible.Max():id==15&&lobby.ὫὥὣὮὧὦὠὯὭὥὬ.ToString()=="Challenge"),"Highest cleared sweep stage changed");
+    Require(eligible.Length>0&&id==eligible.Max(),"Highest cleared sweep stage changed");
     if(lobby.ὪὣὨὣὭὤὥὮὡὬὦ==id)return;
     if(c.Value==0){
      var scroll=(BetterLoopScrollRect)Field(lobby,"_battleStageScroll").GetValue(lobby);
@@ -36,7 +36,7 @@ namespace BD2Daily.Live {
     var lobby=Bridge.Find(typeof(EventBattleUI)).Cast<EventBattleUI>().Single();
     Require(lobby.ὤὮὯὫὪὡὤὡὫὬὪ==c.Items[0]&&lobby.ὢὣὤὬὮὩὡὬὥὫὩ==c.Items[1]&&lobby.ὪὣὨὣὭὤὥὮὡὬὦ==c.Items[2],"Event sweep scope changed");
     int id=checked((int)c.Items[2]);
-    Require(SweepEligible(lobby,id)&&(PluginHost.Available?id==lobby.ὥὣὤὧὥὬὤὧὣὤὠ.Where(x=>SweepEligible(lobby,x)).Max():id==15&&lobby.ὫὥὣὮὧὦὠὯὭὥὬ.ToString()=="Challenge"&&c.Value<=5),"Sweep eligibility changed");
+    Require(SweepEligible(lobby,id)&&(id==lobby.ὥὣὤὧὥὬὤὧὣὤὠ.Where(x=>SweepEligible(lobby,x)).Max()&&(PluginHost.Available||c.Value<=5)),"Sweep eligibility changed");
     var t=ὥὬὢὮὫὯὥὨὬὣὤ.ὡὥὡὭὯὫὥὥὮὮὥ(lobby.ὢὣὤὬὮὩὡὬὥὫὩ,id);
     Func<string,object> get=n=>Field(popup,n).GetValue(popup);
     Require((Define_BattleModeType)get("ὩὥὭὬὬὥὡὠὥὧὭ")==Define_BattleModeType.PackEventBattle&&get("ὥὩὢὦὫὩὭὬὬὦὥ").ToString()=="Skip","Not event sweep popup");
