@@ -119,6 +119,11 @@ public partial class MainWindow
                 buttons.First(b=>b.Content as string==L.Get("parallel.resume")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 parallelPanel.ControlRequested-=Control;Check(controlled==accounts[1].AccountKey+":resume","Row action targeted another account");
                 Check(!buttons.Single(b=>b.Content as string==L.Get("parallel.back")).IsEnabled,"Active batch can be discarded while workers run");
+                var faultedRun=run with { Items=run.Items.Select((x,i)=>i==1?x with {Detail="Object reference not set to an instance of an object."}:x).ToArray() };
+                parallelPanel.Show(faultedRun);UpdateLayout();
+                Check(Children<TextBlock>(parallelPanel).Any(t=>t.Text==L.Get("parallel.state.interrupted")),"Queue failure is mislabeled as an operator pause");
+                Check(Children<TextBlock>(parallelPanel).Any(t=>t.Text.Contains(L.Get("issue.reason.internal-error"))&&t.Text.Contains(L.Get("issue.action.internal-error"))),"Queue failure has no localized explanation and next step");
+                Check(Children<Button>(parallelPanel).Any(b=>b.Content as string==L.Get("parallel.resume")&&b.IsEnabled),"Explained queue interruption loses its resume action");
                 var finishedRun=run with { Items=run.Items.Select(x=>x with {State="completed", Detail="", Status=x.Status! with { Queue=new("completed","","",[new("management","completed",""),new("mail","completed","")],x.Account.AccountKey) }}).ToArray() };
                 parallelPanel.Show(finishedRun);UpdateLayout();
                 var back=Children<Button>(parallelPanel).Single(b=>b.Content as string==L.Get("parallel.back"));

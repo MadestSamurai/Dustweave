@@ -19,7 +19,12 @@ public sealed record DailyParallelJob(string Id, string Account, string Name, st
 }
 public sealed record DailyParallelCommand(string Id, string Account, string Action, long Sequence, DateTimeOffset AtUtc);
 public sealed record DailyParallelStatus(string Id, string Account, string State, string Detail, DateTimeOffset AtUtc,
-    int ProcessId = 0, long ProcessStartTicks = 0, int GameId = 0, long GameStartTicks = 0, QueueView? Queue = null);
+    int ProcessId = 0, long ProcessStartTicks = 0, int GameId = 0, long GameStartTicks = 0, QueueView? Queue = null)
+{
+    public static string PauseDetail(QueueView? queue, bool operatorPaused) =>
+        !operatorPaused && queue is { State: "paused" } && !string.IsNullOrWhiteSpace(queue.Message)
+            ? queue.Message : "parallel.paused";
+}
 public sealed record DailyParallelItem(DailyAccount Account, DailyParallelJob Job, string State = "waiting", string Detail = "", DailyParallelStatus? Status = null, long Sequence = 0, string Action = "run");
 public sealed record DailyParallelRun(string Id, DailyParallelOptions Options, DateTimeOffset CreatedUtc, IReadOnlyList<DailyParallelItem> Items);
 public interface IDailyParallelRuntime

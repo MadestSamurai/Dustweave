@@ -1,5 +1,18 @@
 # Changelog / 更新记录
 
+## 1.3.4 — 2026-10-14
+
+- 修复成功历史记录清理后，自动日常在检查完成时中断的问题；普通与沙盒队列均适用。
+- 并行执行保留具体中断原因、诊断明细与恢复入口。
+- Fixes startup reconciliation of compacted successful records and preserves actionable parallel interruption details.
+- [完整说明 / Full notes](docs/releases/1.3.4.md)
+
+## 1.3.3 — 2026-10-14
+
+- 重整软件设置、账号管理、日常设置、定时执行与诊断页面，统一深浅色和三语交互。
+- Reorganizes settings, accounts, scheduling and diagnostics across both themes and all three languages.
+- [完整说明 / Full notes](docs/releases/1.3.3.md)
+
 ## 1.3.2 — 2026-10-14
 
 - 沙盒改名后自动恢复关联；账号管理新增手动绑定及归属核对，不改写登录信息。

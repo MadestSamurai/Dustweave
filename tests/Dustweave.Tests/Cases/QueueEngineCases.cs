@@ -84,6 +84,16 @@ static class QueueEngineCases
         record = await Run(host, root, ["mail", "trade"], pause: () => true);
         Check(State(record) == "paused" && !host.Calls.Contains("begin:"), "stop before begin leaves worker paused");
         host = new(); root = Root();
+        host.After = (operation, _) => { if (operation == "reconcile") throw new NullReferenceException("fixture startup failure"); };
+        record = await Run(host, root, ["mail"]);
+        Check(State(record) == "paused" && host.Executed.Count == 0 &&
+            TextForTest(record["error_detail"]).Contains("NullReferenceException") && TextForTest(record["error_detail"]).Contains("QueueEngineCases"),
+            "startup failure keeps its exception type and call stack for diagnosis");
+        host.After = null;
+        record = await Run(host, root, resume: TextForTest(record["id"]));
+        Check(State(record) == "completed" && record["error"] == null && record["error_detail"] == null,
+            "successful resume removes stale startup failure diagnostics from queue status");
+        host = new(); root = Root();
         record = await Run(host, root, ["mail", "trade"], pause: () => true);
         string reconnectId = TextForTest(record["id"]);
         host.Context["actor"]![2] = "reloaded-observer";

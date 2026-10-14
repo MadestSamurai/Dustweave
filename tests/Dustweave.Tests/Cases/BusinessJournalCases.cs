@@ -55,7 +55,24 @@ static class BusinessJournalCases
         Check(invalid && f.Box.Commands.Count == 0, "unreadable changed record cannot be treated as a successful claim");
         RecordQueries(output, cases);
         EquipmentSources(output, cases);
+        IncompletePickupHistory(output, cases);
         await Replan(output, cases);
+    }
+    private static void IncompletePickupHistory(string output, List<string> cases)
+    {
+        var proof = new DailyBusinessProof("mainline.pickup", "weekly_mainline", ["mainline"], (_, _, _) => new());
+        using var f = new WorkflowHarness(Path.Combine(output, "journal-incomplete-pickup"), [proof]);
+        var op = f.Business.Create(f.Context, proof.Role, f.Evidence(), O(("map", 602)), O(("operation", "mainline_walk")));
+        op["state"] = "unknown";
+        op["before"] = O(("Frame", f.Frame));
+        f.Business.Save(op);
+        if (DailyPickupRecovery.Location(op) != null) throw new Exception("Missing location evidence invented a map exemption");
+        bool guarded = false;
+        try { f.Business.RequireResolved(f.Context, proof.Role); }
+        catch (StageHostException e) when (e.Kind == "pending") { guarded = true; }
+        if (!guarded || f.Box.Commands.Count != 0 || !DailyManagedBusiness.Pending(f.Business.Records(f.Context).Single()))
+            throw new Exception("Incomplete pending pickup was silently accepted or replayed");
+        cases.Add("incomplete pending pickup stays guarded without crashing metadata reads or replaying input");
     }
     private static async Task Replan(string root, List<string> cases)
     {

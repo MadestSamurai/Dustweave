@@ -47,6 +47,8 @@ internal static class DiagnosticExportCases
             Check(partial.Skipped>=2&&partial.Files==2,"locked and incomplete files do not abort other diagnostics");
         }
         Check(DailyIssues.Classify("suite.owner-exited").Code=="owner-ended","owner exit is not account change");
+        Check(DailyIssues.Classify(new NullReferenceException()).Code=="internal-error",
+            "programming failure is described as an internal error, not failed login or user pause");
         Check(DailyIssues.Classify("Need one observed GameFieldDefaultUI; found 0").Code=="field-transition"
             && DailyIssues.Classify("field.not-ready: waiting").Code=="field-transition","historical and current field transition errors explain map recovery");
         Check(DailyIssues.Classify("uncertain: Need one observed GameFieldDefaultUI; found 0").Code=="uncertain","uncertain dispatch still takes priority over map recovery");

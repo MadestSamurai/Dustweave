@@ -41,10 +41,15 @@ public sealed partial class DailyManagedBusiness
         summary["trade"] = DailyTradeJournal.IsTrade(op);
         if (op["role"]?.GetValue<string>() == "dispatch.start" && op["scope"] is JsonObject scope)
             summary["talent_kind"] = scope["kind"]?.DeepClone();
-        if (DailyFieldTalentProof.AbsorptionLocation(op) is { } location)
-            summary["absorption_map"] = location.Map;
-        if (DailyPickupRecovery.Location(op) is { } pickup)
-            summary["pickup_map"] = pickup.Map;
+        // Completed journals may contain only compact snapshots. Location is
+        // needed to guard unfinished work, never to re-prove a settled action.
+        if (Pending(op))
+        {
+            if (DailyFieldTalentProof.AbsorptionLocation(op) is { } location)
+                summary["absorption_map"] = location.Map;
+            if (DailyPickupRecovery.Location(op) is { } pickup)
+                summary["pickup_map"] = pickup.Map;
+        }
         return summary;
     }
     private void RememberHeader(string path, JsonObject op) => journalHeaders[path] = new(Stamp(path), Summary(op));

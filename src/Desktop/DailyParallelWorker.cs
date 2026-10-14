@@ -58,14 +58,16 @@ internal static class DailyParallelWorker
             new DailyPreferenceStore(DailyIdentity.DataRoot).Save(job.Account, DailyPreferences.Parse(job.Preferences));
             var target = sessions.Read().Accounts.SingleOrDefault(a => a.Valid && a.AccountKey == job.Account) ?? throw new InvalidOperationException("parallel.account_missing");
             bool resume = false;
+            string pauseDetail = "parallel.paused";
             while (!control.Stopped)
             {
                 if (control.Paused)
                 {
-                    State("paused", "parallel.paused");
+                    State("paused", pauseDetail);
                     while (control.Paused && !control.Stopped) await Task.Delay(200);
                     if (control.Stopped) break;
                 }
+                pauseDetail = "parallel.paused";
                 try
                 {
                     State("connecting", "parallel.connecting");
@@ -77,6 +79,7 @@ internal static class DailyParallelWorker
                     if (control.Stopped) break;
                     if (control.Paused || result.State == "paused")
                     {
+                        pauseDetail = DailyParallelStatus.PauseDetail(result, control.Paused);
                         control.Paused = true; resume = result.Record.Length > 0; continue;
                     }
                     outcome = result.State == "completed" ? "completed" : "partial"; break;

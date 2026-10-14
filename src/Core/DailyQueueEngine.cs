@@ -186,6 +186,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
             await host.CallAsync("begin", arguments: new JsonObject { ["context"] = context.DeepClone() });
             record["state"] = "running";
             record.Remove("error");
+            record.Remove("error_detail");
             Save();
             record["reconciliation"] = await host.CallAsync("reconcile");
             Save();
@@ -386,6 +387,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
         {
             record["state"] = "paused";
             record["error"] = error.Message;
+            record["error_detail"] = error.ToString();
             // Independently proven categories must survive failures outside the
             // normal weekly recovery branch too. No input or workflow restart here.
             if (host is IDailyWeeklyCompletionHost completion)

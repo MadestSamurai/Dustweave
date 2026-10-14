@@ -12,12 +12,17 @@ internal static class DailyPickupRecovery
         try
         {
             long map = N(op["scope"]?["map"]), pack = N(op["scope"]?["pack"]);
-            if (op["before"] is not JsonObject before || N(DailyFieldRoute.Map(before)["id"]) != map) return null;
-            long observedPack = N(DailyFieldRoute.Map(before)["packId"]);
+            if (op["before"] is not JsonObject before || before["Readings"] is not JsonArray) return null;
+            var location = DailyFieldRoute.Map(before);
+            if (N(location["id"]) != map) return null;
+            long observedPack = N(location["packId"]);
             if (pack == 0) pack = observedPack;
             return map > 0 && pack > 0 && pack == observedPack ? (pack, map) : null;
         }
-        catch (Exception e) when (e is InvalidDataException or InvalidOperationException or System.Text.Json.JsonException) { return null; }
+        // Missing/malformed historical evidence means no map-scoped exemption:
+        // the pending operation remains guarded, rather than becoming completed.
+        catch (Exception e) when (e is InvalidDataException or InvalidOperationException or System.Text.Json.JsonException
+            or NullReferenceException or ArgumentException or OverflowException) { return null; }
     }
 
     internal static bool PathRejected(DailyStepException error) => error.Kind == "rejected" && error.DefinitelyNotDispatched &&

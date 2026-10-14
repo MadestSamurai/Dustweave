@@ -11,6 +11,7 @@ public static class DailyIssues
         if (text.StartsWith("trade.read.configuration:", StringComparison.Ordinal)) return new("trade-configuration", "connection");
         if (text.StartsWith("trade.read.native:", StringComparison.Ordinal)) return new("trade-read", "game");
         if (Has("no replay", "uncertain", "结果尚未确认", "结果未知", "结果不明", "未确认消费", "unresolved", "requires reconciliation")) return new("uncertain", "result");
+        if (Has("NullReferenceException", "Object reference not set to an instance of an object", "未将对象引用设置到对象的实例")) return new("internal-error", "unknown");
         if (Has("field.not-ready:", "field.route-interrupted:", "Need one observed GameFieldDefaultUI; found 0")) return new("field-transition", "game");
         if (Has("suite.owner-exited", "suite.owner-replaced", "suite.owner-missing")) return new("owner-ended", "connection");
         if (Has("suite.owner-unreadable")) return new("owner-unreadable", "permission");

@@ -4669,6 +4669,16 @@
     "zh-TW": "原控制視窗已退出，本次執行已暫停。",
     "en-US": "The controlling window ended, so this run was paused."
   },
+  "issue.reason.internal-error": {
+    "zh-CN": "织尘内部错误导致执行中断，未完成的任务已保留。",
+    "zh-TW": "織塵內部錯誤導致執行中斷，未完成的任務已保留。",
+    "en-US": "An internal Dustweave error interrupted the run. Unfinished tasks have been saved."
+  },
+  "issue.action.internal-error": {
+    "zh-CN": "请在诊断页导出日志反馈。更新修复版后可接续任务，无需删除账号或历史记录。",
+    "zh-TW": "請在診斷頁匯出紀錄回報。更新修復版後可接續任務，無需刪除帳號或歷史紀錄。",
+    "en-US": "Export logs from Diagnostics and report the issue. Resume after installing a fix; do not delete accounts or history."
+  },
   "issue.action.owner-ended": {
     "zh-CN": "在当前织尘窗口重新连接，再接续任务；无需先重启游戏。",
     "zh-TW": "在目前織塵視窗重新連線，再接續任務；無需先重啟遊戲。",

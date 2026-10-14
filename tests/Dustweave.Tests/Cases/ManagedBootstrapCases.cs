@@ -23,6 +23,32 @@ static class ManagedBootstrapCases
         int n = 0;
         FreeDrawStageCases.Fixture Create() => new(Path.Combine(output, "managed-bootstrap-" + (++n)));
         DailyManagedBootstrap Boot(FreeDrawStageCases.Fixture f) => new(f.Root, f.Driver, () => Task.FromResult(new DailyStageFrame(f.Current.DeepClone().AsObject(), f.Context.DeepClone().AsObject())), () => f.Stopped);
+        foreach (bool inherited in new[] { false, true })
+        using (var f = Create())
+        {
+            // Successful-log compaction retains the frame but deliberately removes
+            // Readings. A sandbox can inherit such a record from another account.
+            string id = Guid.NewGuid().ToString("N");
+            var old = new JsonObject {
+                ["id"] = id, ["role"] = "mainline.pickup", ["stage"] = "weekly_mainline", ["state"] = "completed",
+                ["account"] = inherited ? new string('c', 64) : f.Context["actor"]![3]!.DeepClone(),
+                ["player"] = f.Context["actor"]![4]!.DeepClone(), ["server"] = f.Context["server"]!.DeepClone(), ["cycle"] = "old-cycle",
+                ["scope"] = new JsonObject { ["map"] = 602, ["object"] = 21 },
+                ["action"] = new JsonObject { ["operation"] = "mainline_walk" },
+                ["before"] = new JsonObject { ["Frame"] = f.Current.DeepClone() }
+            };
+            string path = Path.Combine(f.Root, "live", "business", id + ".json");
+            DailyJson.Write(path, old);
+            string original = File.ReadAllText(path);
+            using var fixture = new ManagedHostFixture(f.Root, () => Task.FromResult(new DailyStageFrame(f.Current, f.Context)), f.Driver, f.Business,
+                bootstrap: Boot(f), stages: new Dictionary<string, IDailyManagedStage> { ["free_draws"] = f.Stage },
+                proofs: [DailyFreeDrawProof.Definition()], stopped: () => f.Stopped);
+            var result = await new DailyQueueEngine(fixture.Host, () => f.Stopped, () => new DailyPreferences())
+                .RunAsync(new(f.Root, (string)f.Context["actor"]![3]!, Path.Combine(f.Root, "queue.json"), Tasks: ["free_draws"]));
+            Check(result["state"]!.GetValue<string>() == "completed" && f.Confirmations == 2,
+                "compacted completed pickup cannot stop queue startup, inherited=" + inherited);
+            Check(File.ReadAllText(path) == original, "startup preserves compacted successful history, inherited=" + inherited);
+        }
         foreach (string failure in new[] { "preflight", "explicit-rejection", "uncertain", "identity", "stopped" })
         using (var f = Create())
         {

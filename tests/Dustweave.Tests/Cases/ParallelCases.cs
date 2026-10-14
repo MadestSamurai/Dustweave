@@ -6,6 +6,14 @@ static class ParallelCases
     public static async Task Run(string output,List<string> cases)
     {
         void Check(bool value,string name){if(!value)throw new Exception(name);cases.Add(name);}
+        var failedQueue = new QueueView("paused", "queue startup failed", "record", []);
+        Check(DailyParallelStatus.PauseDetail(failedQueue, false) == failedQueue.Message,
+            "queue-initiated parallel pause retains its actual failure reason");
+        Check(DailyParallelStatus.PauseDetail(failedQueue, true) == "parallel.paused",
+            "operator pause does not show a stale queue error");
+        Check(DailyParallelStatus.PauseDetail(null, false) == "parallel.paused" &&
+            DailyParallelStatus.PauseDetail(failedQueue with { Message = "" }, false) == "parallel.paused",
+            "empty queue pause retains a valid generic status");
         var clock=DateTimeOffset.UtcNow;
         var runtime=new Fake(()=>clock);
         string root=Path.Combine(output,"parallel");var session=new DailyParallelSession(root,runtime,()=>clock);

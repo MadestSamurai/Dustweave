@@ -61,13 +61,16 @@ public sealed class DailyParallelPanel : ScrollViewer
         var body=new StackPanel { Margin=new(0,12,0,12) };
         var header=new Grid();header.ColumnDefinitions.Add(new(){Width=new GridLength(64)});header.ColumnDefinitions.Add(new());header.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
         var title=new TextBlock { Text=item.Account.Name,FontSize=16,FontWeight=FontWeights.SemiBold,TextTrimming=TextTrimming.CharacterEllipsis,ToolTip=item.Account.Name,Margin=new(0,0,16,0) };
-        var state=Text("parallel.state."+item.State);state.SetResourceReference(TextBlock.ForegroundProperty,item.State is "failed" or "interrupted"?"Error":"MutedInk");Grid.SetColumn(state,2);state.VerticalAlignment=VerticalAlignment.Center;Grid.SetColumn(title,1);title.VerticalAlignment=VerticalAlignment.Center;
+        bool interruptedPause=item.State=="paused" && !string.IsNullOrWhiteSpace(item.Detail) && !item.Detail.StartsWith("parallel.");
+        var state=Text("parallel.state."+(interruptedPause?"interrupted":item.State));state.SetResourceReference(TextBlock.ForegroundProperty,interruptedPause || item.State is "failed" or "interrupted"?"Error":"MutedInk");Grid.SetColumn(state,2);state.VerticalAlignment=VerticalAlignment.Center;Grid.SetColumn(title,1);title.VerticalAlignment=VerticalAlignment.Center;
                 if(item.Status is {} final && !DailyParallelSession.Occupies(item.State) && item.State is not ("waiting" or "held"))
         {state.Text += "  ·  " + final.AtUtc.LocalDateTime.ToString("HH:mm");state.ToolTip=final.AtUtc.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss");}
         header.Children.Add(title);header.Children.Add(state);body.Children.Add(header);
         var stages=item.Status?.Queue?.Stages??[];int done=stages.Count(s=>s.State is "completed" or "skipped");
         header.Children.Add(new ProgressBar { Width=52,Height=52,Style=(Style)Application.Current.FindResource("CircularProgress"),Minimum=0,Maximum=Math.Max(1,stages.Count),Value=done,Margin=new(0,0,12,0),ToolTip=$"{done} / {stages.Count}" });
-        var detail=new TextBlock { Text=item.Detail.StartsWith("parallel.")?L.Get(item.Detail):L.Describe(item.Detail),TextWrapping=TextWrapping.Wrap,Margin=new(0,0,0,8) };detail.SetResourceReference(TextBlock.ForegroundProperty,"MutedInk");detail.Visibility=string.IsNullOrWhiteSpace(detail.Text)?Visibility.Collapsed:Visibility.Visible;detail.Margin=new(64,4,0,8);body.Children.Add(detail);
+        string description=item.Detail.StartsWith("parallel.")?L.Get(item.Detail):L.Describe(item.Detail);
+        if(interruptedPause && DailyIssues.Classify(item.Detail).Code!="unknown") description=DailyIssuePresentation.WithAdvice(item.Detail,description);
+        var detail=new TextBlock { Text=description,TextWrapping=TextWrapping.Wrap,Margin=new(0,0,0,8) };detail.SetResourceReference(TextBlock.ForegroundProperty,"MutedInk");detail.Visibility=string.IsNullOrWhiteSpace(detail.Text)?Visibility.Collapsed:Visibility.Visible;detail.Margin=new(64,4,0,8);body.Children.Add(detail);
         var controls=new WrapPanel { Margin=new(64,4,0,0) };
         var game=Button("parallel.game",()=>GameRequested?.Invoke(item));game.IsEnabled=item.Status?.GameId>0;controls.Children.Add(game);
         var toggle=Button(item.State is "paused" or "held"?"parallel.resume":"parallel.pause",()=>ControlRequested?.Invoke(item.Account.AccountKey,item.State is "paused" or "held"?"resume":"pause"));

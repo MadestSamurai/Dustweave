@@ -216,7 +216,7 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
             throw new StageHostException(driver.PauseRequested ? "stopped" : "adapter", e.Message) { PotionLimit = e.PotionLimit };
         }
         catch (InvalidDataException e) { driver.Diagnostics.Failure("failure", O(("kind", "data"), ("message", e.Message))); throw new StageHostException("adapter", e.Message); }
-        catch (Exception e) { driver.Diagnostics.Failure("failure", O(("kind", e.GetType().Name), ("message", e.Message))); throw; }
+        catch (Exception e) { driver.Diagnostics.Failure("failure", O(("kind", e.GetType().Name), ("message", e.Message), ("exception", e.ToString()))); throw; }
         finally { driver.SubmissionGuard = oldGuard; driver.TradeStageActive = oldTrade; if (stage == "trade" && operation == "execute") driver.ConfigureTradeResume(null); serial.Release(); }
     }
     private async Task<JsonObject> ExecuteWeekly(string[] names)
