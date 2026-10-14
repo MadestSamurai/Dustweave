@@ -12,9 +12,14 @@ static class FriendshipStageCases
         public bool Pending, Gift, Freeze, MissingPending;
         public double GiftDelay = 4, Due = double.PositiveInfinity, ReadyAt;
         public readonly int[] Remaining = [1, 1, 1];
-        public Fixture(string root)
+        public Fixture(string root, string scenario = "same")
         {
-            F = new(root, [DailyFriendshipProof.Definition()]);
+            F = new(root, [DailyFriendshipProof.Definition()], configureIdentity: (frame, context) =>
+            {
+                if (scenario == "wrong-process") { frame["ProcessStartTicks"] = 20; context["actor"]![1] = 20; }
+                if (scenario == "wrong-cycle") context["cycle"] = "tomorrow";
+                if (scenario == "reconnected") { frame["Instance"] = "new-bridge"; context["actor"]![2] = "new-bridge"; }
+            });
             F.Readings = () => [WorkflowCases.Reading("friendship.native", ("$self", State())),
                 WorkflowCases.Reading("reward.presentation", ("ὣὤὥὦὯὦὩὤὨὠὪ", F.Time >= ReadyAt), ("ὪὯὣὥὬὫὬὩὠὮὠ", true), ("ὮὬὧὦὣὠὠὤὮὦὧ", true), ("ὦὡὮὫὧὠὮὡὭὭὬ", false))];
             F.OnDelay = () =>
@@ -99,26 +104,27 @@ static class FriendshipStageCases
             await f.Run();
             Check(f.Claims == 3 && f.Backs == 3, "pending gift can finish on rerun without repeating confirmed counseling");
         }
-        foreach (bool wrongTarget in new[] { false, true })
+        foreach (string scenario in new[] { "same", "reconnected", "wrong-target", "wrong-process", "wrong-cycle" })
         using (var f = New())
         {
             f.Freeze = true;
-            Check(await Error(f.Run) == "adapter" && f.Claims == 1, "interrupted gift preserves confirmed receipt " + wrongTarget);
+            Check(await Error(f.Run) == "adapter" && f.Claims == 1, "interrupted gift preserves confirmed receipt " + scenario);
             f.Freeze = false;
             var op = f.F.Business.Records(f.F.Context, DailyFriendshipProof.Role).Single();
             // Reproduce the old-version record: parent visible, presentation marked closed,
             // then the level reward loads after the operation was saved.
             op["presentation_closed"] = true; op.Remove("presentation_frame"); f.F.Business.Save(op);
-            f.Pending = false; f.Gift = true; f.ReadyAt = 0;
-            if (wrongTarget) f.Selected = 2;
-            f.Page();
-            Check(f.Stage.CanResume(new(f.F.Frame, f.F.Context)), "late old-version gift offers scoped recovery " + wrongTarget);
-            if (wrongTarget)
-                Check(await Error(f.Run) == "adapter" && f.Claims == 1 && f.Backs == 0, "different live character cannot inherit old gift ownership");
+            f.Dispose();
+            using var resumed = new Fixture(f.F.Root, scenario) { Free = f.Free, Claims = f.Claims, Selected = scenario == "wrong-target" ? 2 : f.Selected, Gift = true };
+            f.Remaining.CopyTo(resumed.Remaining, 0);
+            resumed.Page();
+            Check(resumed.Stage.CanResume(new(resumed.F.Frame, resumed.F.Context)) == (scenario is not ("wrong-process" or "wrong-cycle")), "late old-version gift scopes recovery " + scenario);
+            if (scenario.StartsWith("wrong-"))
+                Check(await Error(resumed.Run) == "adapter" && resumed.Claims == 1 && resumed.Backs == 0, "foreign live state cannot inherit old gift ownership " + scenario);
             else
             {
-                await f.Run();
-                Check(f.Claims == 3 && f.Backs == 3, "old prematurely closed gift resumes from current target and quota");
+                await resumed.Run();
+                Check(resumed.Claims == 3 && resumed.Backs == 3, "old prematurely closed gift resumes from current target and quota " + scenario);
             }
         }
         using (var f = New())

@@ -21,9 +21,19 @@ public sealed class DailyFriendshipStage : IDailyManagedStage
         if (stopped())
             throw new StageHostException("stopped", "亲密度咨询已停止，原回执保留。");
     }
+    private static bool CompletedInGame(JsonObject op, DailyStageFrame frame)
+    {
+        // A component update changes Instance, but cannot change an already-issued
+        // gift in the same game process. Only presentation recovery crosses that boundary;
+        // historical receipt verification and every new command retain full identity checks.
+        var original = op["before"]?["Frame"];
+        return op["state"]?.GetValue<string>() == "completed" && JsonNode.DeepEquals(op["cycle"], frame.Context["cycle"]) &&
+            new[] { "ProcessId", "ProcessStartTicks", "AccountKey", "PlayerKey" }.All(k =>
+                original?[k] != null && frame.Frame[k] != null && JsonNode.DeepEquals(original[k], frame.Frame[k]));
+    }
     private bool OwnsReward(JsonObject op, DailyStageFrame frame)
     {
-        if (op["state"]?.GetValue<string>() != "completed" || !JsonNode.DeepEquals(op["cycle"], frame.Context["cycle"]) || !DailyEvidence.SameActor(op["before"]!["Frame"]!.AsObject(), frame.Frame))
+        if (!CompletedInGame(op, frame))
             return false;
         var original = op["presentation_frame"] as JsonObject ?? op["after"]!["Frame"]!.AsObject();
         var saved = DailyNavigationDecision.Rows(original).Where(r => r["Type"]?.GetValue<string>() == "RewardReceivePopupUI").ToArray();
@@ -153,7 +163,7 @@ public sealed class DailyFriendshipStage : IDailyManagedStage
                 var evidence = await driver.EvidenceAsync(["friendship"]);
                 var state = DailyFriendshipProof.State(evidence);
                 var op = business.Records(context, DailyFriendshipProof.Role, includeLegacy: false).FirstOrDefault(o =>
-                    o["state"]?.GetValue<string>() == "completed" && MatchesResult(o, state) &&
+                    CompletedInGame(o, new(evidence["Frame"]!.AsObject(), context)) && MatchesResult(o, state) &&
                     (o["presentation_closed"]?.GetValue<bool>() != true || state["NoticePending"]?.GetValue<bool>() == true));
                 if (op != null)
                 {

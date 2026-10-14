@@ -1319,11 +1319,11 @@
     },
     {
       "path": "src/Core/DailyFriendshipStage.cs",
-      "sha256": "18a5702fe4b5dad7c06eab60b22abcbd49d6268d36618b691e30e761c5c3ae74",
+      "sha256": "475e13094e26f02b6201fd066266868cd3f51ffa650573b9448459a45f5dbca8",
       "reasons": [
         "build input"
       ],
-      "bytes": 15014
+      "bytes": 15625
     },
     {
       "path": "src/Core/DailyGuildStage.cs",
@@ -8673,11 +8673,11 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/FriendshipStageCases.cs",
-      "sha256": "5eb63094768dda87face3426e4b7fa08424b7cd2fadffd1e01e0edcfecb9f89c",
+      "sha256": "683b7606ecafaea9779ac0fac7de7e8c4436517c20dc29d358699055fe89b016",
       "reasons": [
         "build input"
       ],
-      "bytes": 7534
+      "bytes": 8281
     },
     {
       "path": "tests/Dustweave.Tests/Cases/GameInstallationCases.cs",
