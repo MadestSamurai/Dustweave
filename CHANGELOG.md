@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 1.3.9 — 2026-10-14
+
+- 减少内置使徒防守决策的重复计算和临时分配，保持现有召唤、培养、出售及换位结果。
+- 加入退火优化的阶段重开规则，以缩短连续尝试的累计通关时间为目标；关闭自动续局时不主动放弃。
+- Adds an annealed stage-based restart policy and reduces repeated planner calculations, while retaining existing cultivation decisions.
+- [完整说明 / Full notes](docs/releases/1.3.9.md)
+
 ## 1.3.8 — 2026-10-14
 
 - 修复只购买收藏模式遗漏砍价；沿用已有折扣，并以折扣后报价核对金币和购买数量。

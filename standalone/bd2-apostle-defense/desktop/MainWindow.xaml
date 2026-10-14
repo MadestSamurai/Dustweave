@@ -14,7 +14,7 @@
     <CheckBox x:Name="RareGoal" Content="召唤最高级使徒" IsChecked="True" Checked="SettingsChanged" Unchecked="SettingsChanged" Padding="0,2"/>
     <TextBlock x:Name="RareProgress" Text="等待服务器进度" Style="{StaticResource MetaText}" Margin="22,5,0,3"/>
     <TextBlock x:Name="PendingProgress" Text="本局待结算：待同步" Style="{StaticResource MetaText}" Margin="22,0,0,0"/>
-    <TextBlock Text="50波使用离线退火优化策略，完成后转向最高级使徒召唤。" TextWrapping="Wrap" Style="{StaticResource MetaText}" Margin="0,16,0,0"/>
+    <TextBlock Text="50波使用离线退火策略，适时重开低收益对局；关闭自动续局则保留本局。" TextWrapping="Wrap" Style="{StaticResource MetaText}" Margin="0,16,0,0"/>
     <Separator Margin="0,18" Background="{StaticResource Line}"/>
     <TextBlock x:Name="FocusText" Text="当前决策" FontWeight="SemiBold" Foreground="{StaticResource Primary}" TextWrapping="Wrap"/>
     <TextBlock x:Name="DecisionText" Text="连接后先核对已完成成就，再决定下一步。" TextWrapping="Wrap" Margin="0,8,0,0" LineHeight="22"/>

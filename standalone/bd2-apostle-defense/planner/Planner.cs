@@ -6,7 +6,8 @@ public sealed partial class Planner
  private readonly Dictionary<string,double> coverageCache=new();private string geometry="";private double routeLength;
  private readonly BossChase bossChase=new();
  private readonly AnnealedPolicy annealed=new();
- public void ResetTactics(){annealed.Reset();bossChase.Reset();strategyRoom="";observedOpening=false;selectedCore=-1;}
+ private readonly TimeToClearPolicy timeToClear=new();
+ public void ResetTactics(){annealed.Reset();timeToClear.Reset();bossChase.Reset();strategyRoom="";observedOpening=false;selectedCore=-1;}
  public void Confirm(Decision d,Snapshot s,long now){bossChase.Confirm(d,s,now);annealed.Confirm(d,s,now);ConfirmRecruit(d);}
  public string Focus {get;private set;}="50波通关";
  public double Coverage(UnitDef u,Board b,Point[] path)
@@ -105,7 +106,7 @@ public sealed partial class Planner
  {
   ObserveOpening(s);
   if(s.RestartPending&&!s.Exiting&&s.Blocker==""&&s.Stage is "playing" or "result" or "confirm-exit")
-   return settings.Clear50&&settings.AutoNext&&!settings.StopAfterRound?new(){Kind="restart",Policy="clear50-opening",Wave=s.Wave,Reason="继续原生退出流程，返回大厅重新刷核心"}:Act("wait","已取消自动重开，请在游戏中选择继续或退出");
+   return settings.Clear50&&settings.AutoNext&&!settings.StopAfterRound?new(){Kind="restart",Policy=s.RestartPolicy.Length>0?s.RestartPolicy:"clear50-opening",Wave=s.Wave,Reason="继续原生退出流程，返回大厅开始下一局"}:Act("wait","已取消自动重开，请在游戏中选择继续或退出");
   if(s.Stage=="lobby"&&!s.Exiting&&s.CanDismissEvent)return Act("close-event","关闭返回大厅后的活动弹窗，继续核对成就");
   if(s.Blocker!="")return Act("wait","等待关闭弹窗："+s.Blocker);
   if(s.Exiting)return Act("wait","正在等待游戏提交结算并返回大厅");
@@ -130,7 +131,7 @@ public sealed partial class Planner
   if(rareMode&&s.AchievementsKnown&&s.RareProgress+s.RoundRare>=s.RareTarget)rareMode=false;
   Focus=rareMode?"最高级使徒：保留产金核心，增加召唤次数":"50波通关：输出、覆盖与首领准备";
   if(settings.Clear50&&(!s.AchievementsKnown||s.ClearProgress<s.ClearTarget))
-  {Focus="50波通关：离线退火优化策略";return annealed.Decide(s,now??DateTime.UtcNow.Ticks,canMove,awaitingRefill);}
+  {Focus="50波通关：离线退火优化策略";return timeToClear.Decide(s,settings,now??DateTime.UtcNow.Ticks,awaitingRefill)??annealed.Decide(s,now??DateTime.UtcNow.Ticks,canMove,awaitingRefill);}
   var defs=s.Catalog.Units.ToDictionary(u=>u.Id);var boards=s.Boards.ToDictionary(b=>b.Id);var cur=Current(s);
   bool clearStrategy=ClearStrategy(s,settings);
   var core=clearStrategy?Core(s,defs,boards):null;

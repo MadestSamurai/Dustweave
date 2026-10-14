@@ -38,6 +38,7 @@ namespace BD2ApostleDefense
   [DataMember] public int ProcessId,Wave,Gold,EnemyCount,RoundRare,ClearProgress,RareProgress,ClearTarget=1,RareTarget=3;
   [DataMember] public bool Ready,AchievementsKnown,CanSummon,Win,Dead,MyView,RoomEnded,CanStartMatch,Exiting,EventPopupOpen,CanDismissEvent;
   [DataMember] public bool NetworkHold,SettlementPending,SettlementRoomEnded,RestartPending;
+  [DataMember] public string RestartPolicy="";
   [DataMember] public string NetworkState="inactive",NetworkMessage="";
   [DataMember] public long NetworkLastPacketAt;
   [DataMember] public int NetworkProbeFailures,NetworkAvoidedDisconnects,NetworkNativeDisconnects;

@@ -149,6 +149,8 @@ await Group("UserText", () => Sync(() => UserTextCases.Run(cases)));
 await Group("NativeCancellation", () => Sync(() => NativeCancellationCases.Run(cases)));
 await Group("WeeklyGoal", () => Sync(() => WeeklyGoalCases.RunSynthetic(cases)));
 await Group("ApostleAnnealing", () => Sync(() => ApostleAnnealingCases.Run(cases)));
+await Group("ApostlePerformance", () => Sync(() => ApostlePerformanceCases.Run(cases)));
+await Group("ApostleTimeToClear", () => Sync(() => ApostleTimeToClearCases.Run(cases)));
 await Group("Mansion", () => Sync(() => MansionCases.Run(cases)));
 await Group("Pandora", () => Sync(() => PandoraCases.Run(cases)));
 await Group("UnifiedSuite", () => Sync(() => UnifiedSuiteCases.Run(cases)));

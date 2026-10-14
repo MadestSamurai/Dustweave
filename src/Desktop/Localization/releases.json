@@ -1,5 +1,26 @@
 [
 {
+  "Version": "1.3.9",
+  "Date": "2026-10-14",
+  "Notes": {
+    "zh-CN": [
+      "优化内置使徒防守的格位查找与属性评分，减少重复计算和临时内存分配。",
+      "使徒防守加入按阶段评估的重开策略，优先缩短连续尝试的累计通关时间；保留原召唤、培养与换位决策。",
+      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+    ],
+    "zh-TW": [
+      "優化內建使徒防守的格位查找與屬性評分，減少重複計算和暫存記憶體配置。",
+      "使徒防守加入按階段評估的重開策略，優先縮短連續嘗試的累計通關時間；保留原召喚、培養與換位決策。",
+      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+    ],
+    "en-US": [
+      "Optimizes board lookups and attribute scoring in built-in Apostle Defense, reducing repeated calculations and temporary allocations.",
+      "Adds an annealed stage-based restart policy to reduce cumulative time to a clear, retaining existing summoning, development and positioning decisions.",
+      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+    ]
+  }
+},
+{
   "Version": "1.3.8",
   "Date": "2026-10-14",
   "Notes": {

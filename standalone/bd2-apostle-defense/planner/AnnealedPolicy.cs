@@ -66,6 +66,9 @@ public sealed class AnnealedPolicy
   if(geometry!=key){geometry=key;coverage.Clear();}
   var columns=s.Boards.Select((b,i)=>(b.Id,i)).ToDictionary(x=>x.Id,x=>x.i);
   var occupied=s.Units.ToDictionary(u=>u.Grid);
+  // Snapshot-local indices: never reuse mutable unit/readiness data across observations.
+  var occupants=new Unit?[s.Boards.Length];
+  foreach(var u in s.Units)occupants[columns[u.Grid]]=u;
   bool CanSummon()=>s.CanSummon&&s.Gold>=s.Catalog.SummonCost&&s.Units.Length<s.Boards.Length;
   bool Cooling(Unit u)=>canMove!=null&&!canMove(u.Index)||moved.TryGetValue(u.Index,out var at)&&now-at<TimeSpan.FromSeconds(.8).Ticks;
   Decision Move(Unit u,int column,double gain,bool chase=false,int target=-1)=>new(){Kind="move",Policy=chase?ChasePolicy:Policy,Wave=s.Wave,UnitIndex=u.Index,UnitId=u.Id,Grid=u.Grid,TargetGrid=s.Boards[column].Id,TargetIndex=occupied.GetValueOrDefault(s.Boards[column].Id)?.Index??-1,TargetEnemy=target,Score=gain,Reason=chase?"退火策略：追击首领，计入换位损失":"退火策略：调整站位，提高路线覆盖"};
@@ -92,7 +95,8 @@ public sealed class AnnealedPolicy
   {
    if(canMove!=null&&!canMove(u.Index))continue;
    var d=defs[u.Id];var cv=Coverage(d,s);
-   int dest=Enumerable.Range(0,s.Boards.Length).Where(i=>!occupied.ContainsKey(s.Boards[i].Id)).OrderByDescending(i=>cv[i]).ThenBy(i=>i).DefaultIfEmpty(-1).First();
+   int dest=-1;
+   for(int i=0;i<s.Boards.Length;i++)if(occupants[i]==null&&(dest<0||cv[i].CompareTo(cv[dest])>0))dest=i;
    if(dest<0)continue;
    double gain=(cv[dest]-cv[columns[u.Grid]])*d.Attack*(1+s.Levels[d.Element]);
    if(gain>moveGain+1e-4){moveGain=gain;move=Move(u,dest,gain);}
@@ -106,16 +110,26 @@ public sealed class AnnealedPolicy
   }
   if(!boss&&move!=null)return move;
   if(replacing){if(boss){var chase=Chase();if(chase!=null)return chase;}return Wait("出售已确认，等待金币和召唤按钮就绪后补位");}
+  // The same five power values were recomputed in every element-ranking pass.
+  // Preserve each expression and summation order; cache only within this decision.
+  var powerCache=new double[s.Boards.Length*5];var powerKnown=new bool[powerCache.Length];
+  double CachedPower(Unit u,WaveDef w,int extra=0)
+  {
+   int slot=ReferenceEquals(w,current)?extra:ReferenceEquals(w,nextBoss)?2+extra:4;
+   int index=columns[u.Grid]*5+slot;
+   if(!powerKnown[index]){powerCache[index]=Power(u,w,extra);powerKnown[index]=true;}
+   return powerCache[index];
+  }
   double total=0,weak=double.MaxValue;Unit? weakest=null;
-  foreach(var u in s.Units){double value=Power(u,current);total+=value;if(value<weak&&defs[u.Id].Grade<3){weakest=u;weak=value;}}
+  foreach(var u in s.Units){double value=CachedPower(u,current);total+=value;if(value<weak&&defs[u.Id].Grade<3){weakest=u;weak=value;}}
   double required=(boss?s.Enemies.Sum(e=>Math.Max(0,e.Hp))/Math.Max(1,s.SecondsLeft):current.Hp*current.Count/current.Duration)*(.6+X[4+phase]*2.4);
   bool pressured=s.EnemyCount>55||total<required;
-  var elements=Enumerable.Range(0,5).OrderByDescending(e=>s.Units.Where(u=>defs[u.Id].Element==e).Sum(u=>Power(u,nextBoss)+Power(u,final)*.2));
+  var elements=Enumerable.Range(0,5).OrderByDescending(e=>s.Units.Where(u=>defs[u.Id].Element==e).Sum(u=>CachedPower(u,nextBoss)+CachedPower(u,final)*.2));
   int upgrade=-1;double best=0;
   foreach(int e in elements)
   {
    int cost=s.UpgradeCosts[e];if(cost<=0||cost==int.MaxValue||s.Levels[e]>=s.Catalog.MaxUpgrade||!core&&s.Levels[e]>=UpgradeLimit(phase))continue;
-   double gain=s.Units.Where(u=>defs[u.Id].Element==e).Sum(u=>Power(u,current,1)-Power(u,current)+(.1+X[18]*2)*(Power(u,nextBoss,1)-Power(u,nextBoss)));
+   double gain=s.Units.Where(u=>defs[u.Id].Element==e).Sum(u=>CachedPower(u,current,1)-CachedPower(u,current)+(.1+X[18]*2)*(CachedPower(u,nextBoss,1)-CachedPower(u,nextBoss)));
    double value=gain/Math.Pow(cost,.4+X[16]*1.1);if(value>best){best=value;upgrade=e;}
   }
   bool Affordable()=>upgrade>=0&&s.CanUpgrade[upgrade]&&s.Gold>=s.UpgradeCosts[upgrade];
@@ -161,7 +175,7 @@ public sealed class AnnealedPolicy
     if(Cooling(u))continue;var d=defs[u.Id];var scores=Scores(u);int from=columns[u.Grid];double output=(d.Attack+(double)d.UpAttack*s.Levels[d.Element])/(d.Interval+Frame(s));
     for(int b=0;b<scores.Length;b++)
     {
-     if(b==from)continue;double gain=scores[b]-scores[from];var other=occupied.GetValueOrDefault(s.Boards[b].Id);
+     if(b==from)continue;double gain=scores[b]-scores[from];var other=occupants[b];
      if(other!=null){if(Cooling(other))continue;var displaced=Scores(other);gain+=displaced[from]-displaced[b];}
      if(gain>Math.Max(gainBest,output*.8*.01)){gainBest=gain;selected=Move(u,b,gain,true,active[0].Id);}
     }
