@@ -1,5 +1,32 @@
 [
 {
+  "Version": "1.3.7",
+  "Date": "2026-10-14",
+  "Notes": {
+    "zh-CN": [
+      "藏红花增产料理优先使用现有份数，再用材料制作，材料不足才购买；土豆默认两轮，可选择自动料理并先出售二、三级藏红花，只用一级制作浓汤、保留一份。已有轮数设置沿用。",
+      "跑商新增默认关闭的“只买收藏”：按当前商店报价购买已有收藏，不自动砍价、不制作或出售物品，也不修改收藏。",
+      "修复管理员游戏连接助手的跨权限通信问题；本机只读数据偶发截断时有限重读，并补充连接阶段诊断。消费指令不会重复发送。",
+      "潘多拉挑战模式可关闭“自动选择装备”，手动选择升级后继续自动游玩，等待选择不会超时；刷货币模式保持自动选择。",
+      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+    ],
+    "zh-TW": [
+      "藏紅花增產料理優先使用現有份數，再用材料製作，材料不足才購買；馬鈴薯預設兩輪，可選擇自動料理並先出售二、三級藏紅花，只用一級製作濃湯、保留一份。既有輪數設定沿用。",
+      "跑商新增預設關閉的「只買收藏」：依目前商店報價購買既有收藏，不自動議價、不製作或出售物品，也不修改收藏。",
+      "修復系統管理員遊戲連線助手的跨權限通訊問題；本機唯讀資料偶發截斷時有限重讀，並補充連線階段診斷。消耗指令不會重複傳送。",
+      "潘多拉挑戰模式可關閉「自動選擇裝備」，手動選擇升級後繼續自動遊玩，等待選擇不會逾時；刷貨幣模式維持自動選擇。",
+      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+    ],
+    "en-US": [
+      "Saffron harvest reuses owned buff food, crafts missing portions when materials permit, then buys any remaining types. Potato rounds default to two; existing choices are retained. Optional processing sells grade 2/3 saffron first, uses grade 1 for soup and keeps one portion.",
+      "Adds opt-in favorites-only trading: buy existing favorites at current shop prices without bargaining, cooking, selling or changing favorites.",
+      "Fixes cross-elevation communication with the game connection helper. Truncated local read-only responses receive bounded retries, with connection-stage diagnostics. Consuming commands are never replayed.",
+      "Challenge mode in Pandora can disable automatic equipment choices. Choose upgrades manually and automatic play resumes, without a selection timeout. Currency farming remains automatic.",
+      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+    ]
+  }
+},
+{
   "Version": "1.3.6",
   "Date": "2026-10-14",
   "Notes": {

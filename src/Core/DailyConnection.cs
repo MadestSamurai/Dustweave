@@ -116,7 +116,8 @@ public sealed class DailyGameHost : IGameHost
         await Task.Run(() => ClientInputs.RequireStable(managed, inputs.Key), cancellation);
         var state = new DailyConnectionState { ClientKey = inputs.Key, ProcessId = instance.ProcessId, StartTicks = instance.StartTicks, Fingerprint = DailyHookCompiler.Fingerprint, PayloadSha = Convert.ToHexString(SHA256.HashData(prepared.Payload)) };
         DailyJson.Write(path, state);
-        state.Address = await DailyConnectionAccess.InjectAsync(instance, prepared.Payload, progress, cancellation);
+        state.Address = await DailyConnectionAccess.InjectAsync(instance, prepared.Payload, progress, cancellation,
+            diagnostic => DailyJson.Write(Path.Combine(root, "connection-access.json"), diagnostic));
         DailyJson.Write(path, state);
         var ready = DateTimeOffset.UtcNow.AddSeconds(35);
         while (DateTimeOffset.UtcNow < ready)

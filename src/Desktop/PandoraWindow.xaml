@@ -16,6 +16,10 @@
     <Border x:Name="ChallengeNotice" Visibility="Collapsed" Background="{DynamicResource SurfaceMuted}" CornerRadius="10" Padding="16" Margin="0,0,0,20">
      <TextBlock Text="{l:Tr pandora.challenge_warning}" TextWrapping="Wrap" FontWeight="SemiBold"/>
     </Border>
+    <StackPanel x:Name="EquipmentPanel" Visibility="Collapsed" Margin="0,0,0,20">
+     <CheckBox x:Name="AutoEquipment" IsChecked="True" Content="{l:Tr pandora.auto_equipment}"/>
+     <TextBlock Text="{l:Tr pandora.auto_equipment_hint}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource MutedInk}" Margin="0,6,0,0"/>
+    </StackPanel>
     <Border Background="{DynamicResource SurfaceMuted}" CornerRadius="12" Padding="18">
      <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
       <StackPanel><TextBlock Text="{l:Tr pandora.rounds}" Foreground="{DynamicResource MutedInk}"/><TextBlock x:Name="RoundsText" Text="0" FontSize="26" Margin="0,6,0,0"/></StackPanel>

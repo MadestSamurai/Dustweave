@@ -28,7 +28,8 @@ namespace BD2Territory
  public sealed class TerritoryControl:TerritorySettings
  {
   public bool SaffronDaily{get;set;}=false;
-  public int SaffronPotatoRounds{get;set;}=3;
+  public int SaffronPotatoRounds{get;set;}=2;
+  public bool SaffronProcessing{get;set;}=true;
   public string LayoutToken{get;set;}="";
   public string OwnerId{get;set;}="";public int ProcessId{get;set;}public long UntilUtcTicks{get;set;}public bool Enabled{get;set;}
   public bool Valid(long now,int pid)=>Enabled&&!string.IsNullOrEmpty(OwnerId)&&ProcessId==pid&&UntilUtcTicks>now&&UntilUtcTicks<=now+TimeSpan.FromSeconds(15).Ticks&&ValidSettings();

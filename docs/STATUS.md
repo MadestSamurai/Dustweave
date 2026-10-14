@@ -1,5 +1,23 @@
 # Repository status / 仓库状态
 
+## Unreleased / 待发布
+
+潘多拉挑战模式新增“自动选择装备”开关，默认开启；关闭后升级选项交由用户选择，等待期间释放移动且不计自动操作超时，选完后继续。刷货币模式保持自动选择。设置保存到工具配置，简繁英同步；本次仅做针对性离线验证，未操作游戏、未发布。
+
+藏红花增产料理准备改为先使用已有份数，缺少时优先以可用材料各制作一份，再购买材料不足的种类。共享材料统一扣减计划，制作浓汤仍只用一级藏红花；锁定材料不参与制作。制作与购买都在食用前完成，按原有成熟、可达、容量与种植积分条件检查，并核对成品库存增长。设置说明采用新的种收顺序，并同步三语言。137 项藏红花／文案检查与主程序构建通过；本次未实机消耗资源。
+
+2026-10-14：藏红花默认两轮土豆，新增默认开启的自动料理／高级藏红花售卖选项。制作浓汤前先出售二、三级藏红花，料理选材仅允许一级；受保护的高级原料不会混入料理。跑商新增默认关闭的「只买收藏」模式：禁用普通策略设置，按商店当前报价采购既有收藏，不修改收藏、不自动砍价、料理或售卖。设置按账号保存，关闭特殊模式恢复普通设置。
+
+1.3.2 用户周收集记录显示，切换卡带后本机管道读取被截断，直接向上传播为整段中断。1.3.5 的历史扫描与等待优化未覆盖该传输分支；本轮为只读请求增加最多两次重新读取，并同步内置工具客户端。身份校验保留，写入／消费命令不会重发。日志不足以确定服务端断开由超时、场景载入停顿还是其他原因触发，不将其归因于网络加速器。
+
+Saffron defaults to two potato rounds with optional grade-aware processing enabled. Favorites-only trading is opt-in and bypasses the optimizer; it buys saved favorites at current native quotes without bargaining, cooking, selling or changing favorites. Truncated local IPC reads receive at most two retries; writes and consuming commands are never replayed. These changes have not been published or verified in a live game this turn.
+
+验证：589 项相关回归通过；最终文案补齐后另验 55 项 UserText。三语言设置界面及收藏模式禁用状态检查通过，主程序构建、当前游戏程序集的日常与领地组件离线编译、源码边界检查通过。未连接游戏或消耗资源。
+
+另一起 1.2.11 连接报告在管理员助手握手写入时报 `Pipe is broken`，兼容性准备已通过；1.3.6 仍保留同一提权通道。已将该通道从 .NET 8 按 TokenOwner 校验的 CurrentUserOnly 改为仅授权当前 TokenUser 的显式 ACL，并保留双向 PID、启动时间、用户、会话、程序路径及握手校验。助手侧不再用会误拒跨提权连接的所有者比较；未扩大到其他 Windows 用户。新增有界覆盖的 connection-access.json 阶段记录并纳入日志导出，管道中断提供明确恢复提示。154 项连接、诊断导出及文案检查通过。旧包没有助手侧异常，因此与 TokenOwner 缺陷相符，但不能排除其他助手提前退出原因；此次未做真实 UAC 或用户电脑复测。
+
+The elevated-helper pipe now uses an explicit current-user SID ACL instead of .NET 8's owner-SID comparison, while retaining process/session and request validation. Handshake-stage diagnostics are exported. See the [.NET 8 implementation](https://github.com/dotnet/runtime/blob/v8.0.21/src/libraries/System.IO.Pipes/src/System/IO/Pipes/NamedPipeClientStream.Windows.cs). No automatic injection replay or elevation prompt retry was added.
+
 ## 1.3.6 published / 藏红花、潘多拉与沙盒安装引导版已发布
 
 2026-10-14：1.3.6 已由 GitHub Actions 发布，国内 v2 OTA 已上线。藏红花改为固定 1–3 轮土豆种收，新增潘多拉自动游玩，并统一沙盒缺失时的下载与路径设置引导。3,822 项回归、双版本成品、1.3.1 与 1.3.5 实际更新器升级／恢复及公网验证通过。所有兼容的 1.3.1–1.3.5 均有直升差分，约 1.17–1.32 MB。详见[发布验收](releases/1.3.6-deployment.md)。

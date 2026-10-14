@@ -72,7 +72,7 @@ namespace BD2Territory.Runtime
     network.Reconcile(now);RefreshWorld(now);SettleReceipt();SettleCooking();SettleSales();s.SoldItems=sales==null?0:sales.ConfirmedItems;s.SaleCurrency=sales==null?0:sales.ConfirmedCurrency;s.SalesState=sales==null?"":sales.State;s.Cooked=cooking==null?0:cooking.ConfirmedTotal;s.CookingState=cooking==null?"":cooking.State;
     var c=control??new TerritoryControl();s.OwnerId=c.OwnerId;s.Saffron=saffronOwner==c.OwnerId?saffron:new SaffronStatus();
     if(c.SaffronDaily&&BD2.LocalIpc.Build.Group!="daily")throw new InvalidOperationException("藏红花环节需要日常队列连接");
-    if(c.SaffronDaily){c.Logging=false;c.Mining=false;c.Farming=true;c.Cooking=true;c.RecipeId=SaffronCycle.Recipe;c.FixedCrop=true;c.FixedSeedId=saffronOwner==c.OwnerId&&(saffron.State=="potatoes"||saffron.State=="drain")?SaffronCycle.Potato:SaffronCycle.Seed;}
+    if(c.SaffronDaily){c.Logging=false;c.Mining=false;c.Farming=true;c.Cooking=c.SaffronProcessing;c.RecipeId=SaffronCycle.Recipe;c.FixedCrop=true;c.FixedSeedId=saffronOwner==c.OwnerId&&(saffron.State=="potatoes"||saffron.State=="drain")?SaffronCycle.Potato:SaffronCycle.Seed;}
     minimumTreeStage=c.MinimumTreeStage;
     s.MaxTreeStage=nodes.Where(n=>B.Active(n)&&Kind(n)==1).Select(n=>Convert.ToInt32(B.Read("Gather.FinalStage",n))).DefaultIfEmpty(0).Max();
     s.Trees=nodes.Count(n=>Harvestable(n)&&Kind(n)==1);s.Ores=nodes.Count(n=>Harvestable(n)&&Kind(n)==2);s.Mature=nodes.Count(n=>Harvestable(n)&&Kind(n)==3);s.RetryTargets=nodes.Count(n=>Harvestable(n)&&failures.TryGetValue(ResourceKey(n),out var retry)&&retry.Failures>0);

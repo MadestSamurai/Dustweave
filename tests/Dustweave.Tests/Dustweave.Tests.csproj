@@ -12,6 +12,7 @@
     <ProjectReference Include="../../src/Core/Dustweave.Core.csproj" />
     <ProjectReference Include="../../standalone/bd2-apostle-defense/core/BD2ApostleDefense.Core.csproj" Aliases="apostle" />
     <Compile Include="../../standalone/bd2-territory/shared/SaffronCycle.cs" Link="SaffronCycle.cs" />
+    <Compile Include="../../standalone/bd2-territory/shared/SurplusSales.cs" Link="SurplusSales.cs" />
     <Compile Include="../../src/Desktop/DemoEnvironment.cs" Link="DemoEnvironment.cs" />
     <Compile Include="../../src/Desktop/StartupDiagnostics.cs" Link="StartupDiagnostics.cs" />
     <Compile Include="../../standalone/bd2-territory/ipc/desktop/HostedConnection.cs" Link="Unified/HostedConnection.cs" />

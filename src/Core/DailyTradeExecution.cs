@@ -136,7 +136,7 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         }
         return op;
     }
-    private async Task<JsonObject> Buy(JsonObject[] rows, bool favorite, JsonObject scope)
+    private async Task<JsonObject> Buy(JsonObject[] rows, bool favorite, JsonObject scope, bool existingFavoritesOnly = false)
     {
         long[] flat = rows.SelectMany(r => new[] { N(r["shop"]), N(r["product"]), N(r["count"]), N(r["price"]) }).ToArray();
         long cost = rows.Sum(r => N(r["count"]) * N(r["price"])), potions = 0;
@@ -153,7 +153,7 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         }
         string kind = favorite ? "favorite" : "buy", ui = favorite ? "BuyFavoritePopupUI" : "ShopPopupUI";
         scope["_proof"] = O(("kind", "buy"), ("delta", O(("gold", -cost), ("potions", potions), ("items", delta))), ("stock", rows.All(r => S(r["kind"]) != "potion") ? Array(rows) : new JsonArray()));
-        var op = await PreviewCommit("trade.buy", scope, O(("ui", "ShopUI"), ("operation", "trade_" + kind + "_preview"), ("items", flat), ("value", cost), ("expect", ui)), O(("ui", ui), ("operation", "trade_" + kind + "_confirm"), ("items", flat), ("value", cost)));
+        var op = await PreviewCommit("trade.buy", scope, O(("ui", "ShopUI"), ("operation", "trade_" + kind + "_preview"), ("items", flat), ("value", cost), ("expect", ui), ("existing_favorites_only", existingFavoritesOnly)), O(("ui", ui), ("operation", "trade_" + kind + "_confirm"), ("items", flat), ("value", cost), ("existing_favorites_only", existingFavoritesOnly)));
         await w.Dismiss("ShopUI");
         await SettleShop();
         return op;
@@ -272,10 +272,46 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
             throw;
         }
     }
+    internal static JsonObject[] FavoritePurchases(JsonObject native)
+    {
+        var favorites = (native["Favorites"] as JsonArray ?? throw new InvalidDataException("商店收藏数据未就绪"))
+            .Select(x => { var pair = x as JsonArray; Require(pair?.Count == 2, "商店收藏数据不完整"); return (N(pair![0]), N(pair[1])); }).ToHashSet();
+        var available = (native["AvailableShops"] as JsonArray ?? throw new InvalidDataException("商店列表未就绪")).Select(N).ToHashSet();
+        var offers = Rows(native["Offers"]).ToDictionary(x => (N(x["Shop"]), N(x["Product"])));
+        var rows = new List<JsonObject>();
+        foreach (var key in favorites.OrderBy(x => x.Item1).ThenBy(x => x.Item2))
+        {
+            if (!available.Contains(key.Item1)) continue;
+            Require(offers.TryGetValue(key, out var offer), "收藏商品暂时无法读取，未购买；请检查游戏内收藏列表");
+            Require(N(offer!["Type"]) is 5 or 12 && N(offer["PriceType"]) == 4 && N(offer["Price"]) > 0 && N(offer["Remaining"]) >= 0, "收藏商品报价或币种不支持，未购买");
+            if (N(offer["Remaining"]) == 0) continue;
+            rows.Add(O(("shop", key.Item1), ("product", key.Item2), ("item", offer["Item"]), ("kind", N(offer["Type"]) == 12 ? "potion" : "food"), ("count", offer["Remaining"]), ("price", offer["Price"])));
+        }
+        return rows.ToArray();
+    }
+    private async Task<JsonObject> RunFavorites()
+    {
+        // A separate purchase-only path: no optimizer, cooking, selling, potion
+        // refill or edits to the player's favorites, even after a reconnect.
+        await SettleForReplan();
+        await OpenShop();
+        var evidence = await Evidence();
+        var native = State(evidence, "trade.native", "$self");
+        var rows = FavoritePurchases(native);
+        if (rows.Length == 0) { await Close(); return DailyWorkflow.Skipped("收藏商品已购完、尚未解锁或未设置收藏"); }
+        long cost = rows.Aggregate(0L, (sum, r) => checked(sum + N(r["count"]) * N(r["price"])));
+        if (cost > N(R(evidence, "trade.currency", "Gold")))
+        { await Close(); return DailyWorkflow.Skipped("金币不足以购买当前收藏商品；未购买，也未卖出任何物品"); }
+        var scope = O(("trade_session", Guid.NewGuid().ToString("N")), ("action", "existing-favorites"));
+        var op = await Buy(rows, true, scope, existingFavoritesOnly: true);
+        await Close();
+        return O(("state", "completed"), ("reason", "已按商店当前价格购买收藏商品；未料理、未售卖，收藏保持不变"), ("operation", op["id"]), ("gold_spent", cost), ("products", rows.Length), ("engine", "dotnet-trade-favorites-v1"));
+    }
     private async Task<JsonObject> RunCore()
     {
         if (!w.Settings.Trade.Enabled)
             return DailyWorkflow.Skipped("disabled");
+        if (w.Settings.Trade.FavoritesOnly) return await RunFavorites();
         string account = S(w.Context["actor"]![3]), cycle = S(w.Context["cycle"]);
         Require(DailyProfiles.ValidKey(account) && cycle.Length > 0 && cycle.All(char.IsAsciiDigit), "Invalid trade account/cycle");
         string directory = Path.Combine(w.Root, "trade", "executions", account, cycle), path = Path.Combine(directory, "execution.json");

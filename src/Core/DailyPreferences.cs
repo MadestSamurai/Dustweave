@@ -26,7 +26,8 @@ public sealed class DailyPreferences
     [JsonRequired] public TradePreferences Trade { get; set; } = new();
     [JsonRequired] public EventRewardPreferences Events { get; set; } = new();
     [JsonRequired] public TacticsPreferences Tactics { get; set; } = new();
-    public int SaffronPotatoRounds { get; set; } = 3;
+    public int SaffronPotatoRounds { get; set; } = 2;
+    public bool SaffronProcessing { get; set; } = true;
     public static DailyPreferences Parse(string json)
     {
         var node = JsonNode.Parse(json)?.AsObject() ?? throw new InvalidDataException("日常设置不能为空。");
@@ -365,6 +366,7 @@ public sealed class DailyPreferenceStore(string root)
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed class TradePreferences
 {
+    public bool FavoritesOnly { get; set; }
     [JsonRequired]
     public bool Enabled
     {

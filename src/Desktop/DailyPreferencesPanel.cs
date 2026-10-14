@@ -34,6 +34,8 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly CheckBox mainline = Check("周收集"), weeklyNpc = Check("周NPC任务"), npcHunting = Check("允许接取必须去狩猎场的任务"), weeklySteal = Check("每周偷窃"), walkCollect = Check("步行收集（不使用吸收）"), monsterHunt = Check("魔兽最高档快速战斗"), fishing = Check("周常钓鱼"), roomLikes = Check("周常小屋点赞");
     private readonly CheckBox events = Check("活动奖励"), eventMissions = Check("领取活动任务与活动代币"), roulette = Check("使用免费次数和已有转盘券"), exchange = Check("活动代币最大批量兑换"), quiz = Check("自动完成已开放答题"), dice = Check("自动使用现有活动骰子"), puzzle = Check("拼图板使用现有代币批量翻开");
     private readonly CheckBox trade = Check("自动跑商、料理与120%售卖");
+    private readonly CheckBox tradeFavorites = Check("prefs.trade_favorites"), saffronProcessing = Check("prefs.saffron_processing");
+    private readonly StackPanel normalTrade = new();
     private readonly TextBox tradeReserve = new(), tradeMaximum = new();
     private readonly TextBox potionReserve = new(), potionTarget = new();
     private readonly CheckBox potionRefill = Check("药不足时自动补药");
@@ -178,6 +180,7 @@ public sealed class DailyPreferencesPanel : UserControl
         saffronRounds.ItemsSource = new[] { 1, 2, 3 };
         Row("收割后种收土豆轮数", saffronRounds);
         L.Bind(saffronRounds, System.Windows.Automation.AutomationProperties.NameProperty, () => L.Get("prefs.saffron_rounds"));
+        section.Children.Add(saffronProcessing);
         Note("prefs.saffron_details");
         Stage(draws, "每日免费抽取", "prefs.draws_hint");
         Stage(recycle, "装备分解", "只处理本日免费抽取的可分解装备");
@@ -250,6 +253,11 @@ public sealed class DailyPreferencesPanel : UserControl
         Stage(fishing, "周常钓鱼", "prefs.fishing_hint");
         Stage(weeklySichuan, "周常连连看", "prefs.tiles_hint");
         Stage(trade, "跑商、料理与高价售卖", "prefs.trade_hint", expanded: true, editableWhenOff: true);
+        section.Children.Add(tradeFavorites);
+        Note("prefs.trade_favorites_hint");
+        var tradeSection = section;
+        section.Children.Add(normalTrade);
+        section = normalTrade;
         Row("保留金币", tradeReserve);
         Row("本轮最多垫资", tradeMaximum);
         L.Bind(tradeReserve, System.Windows.Automation.AutomationProperties.NameProperty, "trade.reserve");
@@ -272,6 +280,9 @@ public sealed class DailyPreferencesPanel : UserControl
             DailyDialogs.ShowModal(dialog);
         };
         section.Children.Add(bargainButton);
+        section = tradeSection;
+        tradeFavorites.Checked += (_, _) => { normalTrade.IsEnabled = false; normalTrade.Opacity = .5; };
+        tradeFavorites.Unchecked += (_, _) => { normalTrade.IsEnabled = true; normalTrade.Opacity = 1; };
         Stage(events, "活动游戏与领奖", "prefs.events_hint");
         section.Children.Add(eventMissions);
         section.Children.Add(quiz);
@@ -312,6 +323,8 @@ public sealed class DailyPreferencesPanel : UserControl
         potionRefill.Unchecked += (_, _) => MarkDirty();
         tradeBreakEven.Checked += (_, _) => MarkDirty();
         tradeBreakEven.Unchecked += (_, _) => MarkDirty();
+        foreach (var option in new[] { tradeFavorites, saffronProcessing })
+        { option.Checked += (_, _) => MarkDirty(); option.Unchecked += (_, _) => MarkDirty(); }
         form.IsEnabled = false;
         WeakEventManager<DailyLanguage, EventArgs>.AddHandler(L, nameof(DailyLanguage.Changed), LanguageChanged);
     }
@@ -533,6 +546,7 @@ public sealed class DailyPreferencesPanel : UserControl
             guests.IsChecked = loaded.Stages.CafeteriaGuests;
             saffron.IsChecked = loaded.Stages.Saffron;
             saffronRounds.SelectedItem = loaded.SaffronPotatoRounds;
+            saffronProcessing.IsChecked = loaded.SaffronProcessing;
             draws.IsChecked = loaded.Stages.FreeDraws;
             weeklySichuan.IsChecked = loaded.Weekly.Sichuan;
             weeklyBook.IsChecked = loaded.Weekly.Book;
@@ -553,6 +567,8 @@ public sealed class DailyPreferencesPanel : UserControl
             quickFriendship.IsChecked = loaded.Friendship.Quick;
             friendship.IsChecked = loaded.Friendship.Enabled;
             trade.IsChecked = loaded.Trade.Enabled;
+            tradeFavorites.IsChecked = loaded.Trade.FavoritesOnly;
+            normalTrade.IsEnabled = !loaded.Trade.FavoritesOnly;
             var tradeSettings = DailyTradePlan.ReadSettings(dataRoot, account);
             tradeReserve.Text = DailyData.N(tradeSettings["reserve_gold"]).ToString(CultureInfo.InvariantCulture);
             tradeMaximum.Text = tradeSettings["max_spend"] == null ? "" : DailyData.N(tradeSettings["max_spend"]).ToString(CultureInfo.InvariantCulture);
@@ -624,14 +640,15 @@ public sealed class DailyPreferencesPanel : UserControl
             var general = new GeneralPreferences { TalentPotionReserve = PotionAmount(potionReserve), TalentPotionTarget = PotionAmount(potionTarget), RefillTalentPotions = potionRefill.IsChecked == true };
             try { general.Validate(); }
             catch { RevealField(potionTarget); throw; }
-            long keep = TradeAmount(tradeReserve);
-            long? limit = tradeMaximum.Text.Trim().Length == 0 ? null : TradeAmount(tradeMaximum);
             // Merge the visible fields only: retain existing ingredient reserves and other policy.
             var tradeSettings = DailyTradePlan.ReadSettings(dataRoot, account);
             var previousTradeSettings = tradeSettings.ToJsonString();
-            tradeSettings["reserve_gold"] = keep;
-            tradeSettings["max_spend"] = limit;
-            tradeSettings["include_break_even_resales"] = tradeBreakEven.IsChecked == true;
+            if (tradeFavorites.IsChecked != true)
+            {
+                tradeSettings["reserve_gold"] = TradeAmount(tradeReserve);
+                tradeSettings["max_spend"] = tradeMaximum.Text.Trim().Length == 0 ? null : TradeAmount(tradeMaximum);
+                tradeSettings["include_break_even_resales"] = tradeBreakEven.IsChecked == true;
+            }
             loaded.General = general;
             loaded.Hunt.Enabled = hunt.IsChecked == true;
             loaded.Hunt.FarmGold = gold.IsChecked == true;
@@ -658,6 +675,7 @@ public sealed class DailyPreferencesPanel : UserControl
             loaded.Stages.CafeteriaGuests = guests.IsChecked == true;
             loaded.Stages.Saffron = saffron.IsChecked == true;
             loaded.SaffronPotatoRounds = (int)saffronRounds.SelectedItem;
+            loaded.SaffronProcessing = saffronProcessing.IsChecked == true;
             loaded.Stages.FreeDraws = draws.IsChecked == true;
             loaded.Stages.DailyRewards = dailyRewards.IsChecked == true;
             loaded.Weekly.Sichuan = weeklySichuan.IsChecked == true;
@@ -687,6 +705,7 @@ public sealed class DailyPreferencesPanel : UserControl
             loaded.Friendship.Enabled = friendship.IsChecked == true;
             loaded.MonsterHunt.Enabled = monsterHunt.IsChecked == true;
             loaded.Trade.Enabled = trade.IsChecked == true;
+            loaded.Trade.FavoritesOnly = tradeFavorites.IsChecked == true;
             loaded.Events.Enabled = events.IsChecked == true;
             loaded.Events.Missions = eventMissions.IsChecked == true;
             loaded.Events.Quiz = quiz.IsChecked == true;
@@ -751,13 +770,13 @@ public sealed class DailyPreferencesPanel : UserControl
         ReviewCategoryForSmoke("resources");
         filter.Text="藏红花";
         if(loaded==null||saffronRounds.Items.Count!=3)throw new Exception("Saffron round settings unavailable");
-        int previous=loaded.SaffronPotatoRounds;bool enabled=loaded.Stages.Saffron;
+        int previous=loaded.SaffronPotatoRounds;bool enabled=loaded.Stages.Saffron,processing=loaded.SaffronProcessing;
         try
         {
-            saffron.IsChecked=true;saffronRounds.SelectedItem=2;
-            if(!Save()||store.Read(account).SaffronPotatoRounds!=2)throw new Exception("Saffron round count did not save for the selected account");
+            saffron.IsChecked=true;saffronRounds.SelectedItem=2;saffronProcessing.IsChecked=false;
+            if(!Save()||store.Read(account).SaffronPotatoRounds!=2||store.Read(account).SaffronProcessing)throw new Exception("Saffron round count or processing switch did not save for the selected account");
         }
-        finally {saffronRounds.SelectedItem=previous;saffron.IsChecked=enabled;if(!Save())throw new Exception("Saffron fixture restore failed");}
+        finally {saffronRounds.SelectedItem=previous;saffron.IsChecked=enabled;saffronProcessing.IsChecked=processing;if(!Save())throw new Exception("Saffron fixture restore failed");}
         UpdateLayout();saffronRounds.BringIntoView();
     }
     internal void ShowWeeklySettingsForSmoke()
@@ -878,6 +897,15 @@ public sealed class DailyPreferencesPanel : UserControl
         accounts.SelectedValue = first;
         if (DailyTradePlan.ReadSettings(dataRoot, second)["max_spend"] != null || tradeReserve.Text != "43000" || tradeMaximum.Text != "210000" || tradeBreakEven.IsChecked != true)
             throw new Exception("Saved trade settings did not round-trip by account");
+        var originalPolicy = File.ReadAllText(DailyTradePlan.SettingsPath(dataRoot, first));
+        tradeMaximum.Text = "ignored while disabled";
+        tradeFavorites.IsChecked = true;
+        if (normalTrade.IsEnabled || tradeReserve.IsEnabled || tradeBreakEven.IsEnabled || !Save() || !store.Read(first).Trade.FavoritesOnly ||
+            originalPolicy != File.ReadAllText(DailyTradePlan.SettingsPath(dataRoot, first)))
+            throw new Exception("Favorites-only mode did not disable and preserve ordinary policy");
+        tradeFavorites.IsChecked = false; tradeMaximum.Text = "210000";
+        if (!normalTrade.IsEnabled || !Save() || store.Read(first).Trade.FavoritesOnly)
+            throw new Exception("Ordinary trading was not restored after favorites-only mode");
         tradeReserve.Text = "44000";
         filter.Text = "跑商";
         var firstFile = File.ReadAllText(DailyTradePlan.SettingsPath(dataRoot, first));
@@ -887,6 +915,7 @@ public sealed class DailyPreferencesPanel : UserControl
         };
     }
     public bool SavePending() => !dirty || Save();
+    internal void ShowFavoritesForSmoke(bool enabled) { tradeFavorites.IsChecked = enabled; UpdateLayout(); }
     internal void CheckMirrorAccountForSmoke(string first, string second)
     {
         SelectAccount(first); multiplier.SelectedItem = 1;

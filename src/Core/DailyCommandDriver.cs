@@ -53,7 +53,7 @@ public sealed partial class DailyCommandDriver : IDisposable
     public bool HasControl => !closed && owner.Held;
     internal bool PauseRequested => stopped() || mailbox.Read("live", "pause") != null;
     private static readonly string[] ActorKeys = ["ProcessId", "ProcessStartTicks", "Instance", "AccountKey", "PlayerKey"];
-    private static readonly HashSet<string> ActionKeys = ["ui", "field", "back", "expect", "absent", "timeout", "reason", "allow_guild", "target_id", "startup", "native", "mirror_entry", "dispatch_entry", "pass_init", "operation", "items", "value", "require_stealth"];
+    private static readonly HashSet<string> ActionKeys = ["ui", "field", "back", "expect", "absent", "timeout", "reason", "allow_guild", "target_id", "startup", "native", "mirror_entry", "dispatch_entry", "pass_init", "operation", "items", "value", "require_stealth", "existing_favorites_only"];
     public DailyCommandDriver(string root, IDailyCommandMailbox mailbox, Func<Task<DailyStageFrame>> read, Func<bool> stopped,
         Func<long>? now = null, Func<double>? clock = null, Func<TimeSpan, Task>? delay = null, DailyNavigationPolicy? policy = null)
     {
@@ -219,7 +219,7 @@ public sealed partial class DailyCommandDriver : IDisposable
         foreach (string key in new[] { "ui", "field", "expect", "absent", "reason", "operation" })
             if (action[key] != null && (action[key] is not JsonValue value || !value.TryGetValue<string>(out var text) || text.Length > 1024))
                 throw new StageHostException("protocol", "Invalid managed step string");
-        foreach (string key in new[] { "back", "allow_guild", "startup", "native", "mirror_entry", "dispatch_entry", "pass_init", "require_stealth" })
+        foreach (string key in new[] { "back", "allow_guild", "startup", "native", "mirror_entry", "dispatch_entry", "pass_init", "require_stealth", "existing_favorites_only" })
             if (action[key] != null && (action[key] is not JsonValue value || !value.TryGetValue<bool>(out _)))
                 throw new StageHostException("protocol", "Invalid managed step flag");
         if (action["value"] != null)
@@ -279,6 +279,7 @@ public sealed partial class DailyCommandDriver : IDisposable
         command["Items"] = action["items"]?.DeepClone() ?? new JsonArray();
         command["Value"] = action["value"]?.DeepClone() ?? JsonValue.Create(0);
         command["RequireStealth"] = Flag(action, "require_stealth");
+        command["ExistingFavoritesOnly"] = Flag(action, "existing_favorites_only");
         return command;
     }
     public Task<JsonObject> SubmitAsync(JsonObject action) => SubmitBoundAsync(action, null);

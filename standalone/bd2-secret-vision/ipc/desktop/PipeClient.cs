@@ -16,6 +16,18 @@ namespace BD2.LocalIpc
         sealed class Response { internal string Status, Generation, Ticket; internal byte[] Value; }
         Response Call(string verb, string name, byte[] value)
         {
+            // A loading scene may cut a read reply short. Re-read that mailbox,
+            // not the game command whose outcome may already have committed.
+            bool readOnly = verb == "read" || verb == "list" || verb == "info";
+            for (int attempt = 0; ; attempt++)
+            {
+                try { return CallOnce(verb, name, value); }
+                catch (EndOfStreamException) when (readOnly && attempt < 2)
+                { Thread.Sleep(50 * (attempt + 1)); }
+            }
+        }
+        Response CallOnce(string verb, string name, byte[] value)
+        {
             lock (sync)
             {
                 try

@@ -26,11 +26,12 @@ namespace BD2Daily.Live {
    long total=0;var keys=new HashSet<string>();
    for(int i=0;i<c.Items.Length;i+=4){int sid=checked((int)c.Items[i]),pid=checked((int)c.Items[i+1]),qty=checked((int)c.Items[i+2]),price=checked((int)c.Items[i+3]);
     var offer=observed.Offers.Single(x=>x.Shop==sid&&x.Product==pid);
-    Require(keys.Add(sid+":"+pid)&&offer.Type==5&&offer.PriceType==4&&offer.Remaining==qty&&qty>0&&offer.Price==price,"Favorite plan differs from current full stock/price");
+    Require(keys.Add(sid+":"+pid)&&(offer.Type==5||c.ExistingFavoritesOnly&&offer.Type==12)&&offer.PriceType==4&&offer.Remaining==qty&&qty>0&&offer.Price==price,"Favorite plan differs from current full stock/price");
     total=checked(total+(long)qty*price);
    }
    Require(total==c.Value&&total>0&&ὣὡὧὡὦὣὣὬὨὪὫ.ὭὨὣὥὧὨὮὪὯὯὠ(ὥὯὯὠὣὪὦὢὫὠὮ.Gold)>=total,"Favorite total/balance changed");
-   if(add)for(int i=0;i<c.Items.Length;i+=4)ClientLocalInfo.AddFavorite((int)c.Items[i],(int)c.Items[i+1]);
+   if(c.ExistingFavoritesOnly)Require(keys.All(k=>observed.Favorites.Any(f=>k==f[0]+":"+f[1])),"Saved favorites changed; no purchase or favorite edits");
+   else if(add)for(int i=0;i<c.Items.Length;i+=4)ClientLocalInfo.AddFavorite((int)c.Items[i],(int)c.Items[i+1]);
    var args=new object[]{null,0};Require((int)Call(shop,"ὪὩὬὦὢὡὧὡὪὨὠ",args)==0,"Native favorite list unavailable");
    var all=(Dictionary<int,List<Product>>)args[0];var selected=new Dictionary<int,List<Product>>();
    foreach(var pair in all){var rows=pair.Value.Where(p=>keys.Contains(pair.Key+":"+p.ὯὫὪὡὭὤὪὮὫὬὣ)).ToList();if(rows.Count>0)selected.Add(pair.Key,rows);}

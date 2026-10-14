@@ -53,7 +53,7 @@ namespace Dustweave.Pandora.Runtime
                 float now = Time.realtimeSinceStartup;
                 if (now >= nextControl) { nextControl = now + .1f; ReadControl(); }
                 if (now >= nextObserve) { nextObserve = now + .3f; Observe(); if (Live) Act(); else Release(); }
-                if (Live && target != null && Playing && !Paused && avatar != null && hp > 0 && !awaitingRound)
+                if (Live && target != null && Playing && !Paused && avatar != null && hp > 0 && !awaitingRound && !LoopRules.WaitForEquipment(control, uis.Any(x => x is SurvivalSelectUI)))
                 {
                     if (now >= nextPlan) { nextPlan = now + (units.Any(x => x is SurvivalBossMonster) ? .075f : .2f); PlanMove(); }
                     if (ownsMove) { var move = Native.BoundField(avatar, "move"); Native.Call("direction", move, new Vector3((float)direction.X, 0, (float)direction.Z)); avatar.SetMoveStart(); }
@@ -112,6 +112,14 @@ namespace Dustweave.Pandora.Runtime
                 // The response already updated native inventory, but CloseUI can be
                 // rejected while an underlying page is animating. Never resubmit a skill.
                 closingSkillRevision = skillRevision; select.CloseUI(); reason = "upgrading"; Sent(identity); return;
+            }
+            // A human choice is not a stalled automation request. Keep the
+            // control lease alive, release movement and resume when the UI closes.
+            if (gate.ManualChoice(control, select != null && popup == null && result == null))
+            {
+                Release(); waitSince = Time.realtimeSinceStartup;
+                reason = Convert.ToBoolean(Native.BoundField(select, "skillBusy")) ? "upgrading" : "manual-equipment";
+                return;
             }
             bool timedOut; if (gate.Waiting(identity, Time.realtimeSinceStartup, out timedOut)) { if (timedOut) Fail("transition-timeout", identity); return; }
             if (Time.realtimeSinceStartup < nextUi) return;
@@ -232,7 +240,7 @@ namespace Dustweave.Pandora.Runtime
         }
         void Release() { if (ownsMove && avatar != null) { var move = Native.BoundField(avatar, "move"); Native.Invoke(move, "StopMove"); } ownsMove = false; }
         void Fail(string code, string info) { faulted = true; reason = code; detail = info; try { Release(); } catch { } try { Snapshot(); } catch { } }
-        void Snapshot() { var select = uis.OfType<SurvivalSelectUI>().FirstOrDefault(); var value = new { At = DateTime.UtcNow.ToString("O"), RunId = control.RunId, Running = Live, Faulted = faulted, Reason = reason, Detail = detail, Completed = rounds, Hp = hp, MaxHp = maxHp, Seconds = seconds, Level = level, PlanMs = planMs, Plans = planCount, Stages = stages, Stage = target, Ui = lastUi, Mode = control.Mode,
+        void Snapshot() { var select = uis.OfType<SurvivalSelectUI>().FirstOrDefault(); var value = new { At = DateTime.UtcNow.ToString("O"), RunId = control.RunId, Running = Live, Faulted = faulted, Reason = reason, Detail = detail, Completed = rounds, Hp = hp, MaxHp = maxHp, Seconds = seconds, Level = level, PlanMs = planMs, Plans = planCount, Stages = stages, Stage = target, Ui = lastUi, Mode = control.Mode, AutoSelectEquipment = control.AutoSelectEquipment,
             Selection = select == null ? null : new { Ready = Native.Ready(select), Busy = Convert.ToBoolean(Native.BoundField(select, "skillBusy")), Clickable = Native.B(select,"IsAvailableClick"), Animation = Native.BoundField(select,"uiAnimation") == null ? false : Native.B(Native.BoundField(select,"uiAnimation"),"IsPlaying"), Revision = skillRevision, Choices = ((SurvivalCardItem[])Native.Field(select,"_slots")).Where(x=>x.gameObject.activeInHierarchy).Select(x=>new {Id=Native.BoundField(x,"skillId"),Level=Native.BoundField(x,"skillLevel")}).ToArray() },
             Surfaces = uis.Select(x=>x.GetType().Name).ToArray() }; RuntimeFiles.Write(Path.Combine(Loader.Root, "state.json"), System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(value))); }
         void OnDisable() { Release(); }

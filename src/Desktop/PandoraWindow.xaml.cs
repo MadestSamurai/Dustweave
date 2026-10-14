@@ -19,7 +19,7 @@ public partial class PandoraWindow : Window
     int preferredStage, preferredGroup;
     string stageSignature = "";
     sealed record StageChoice(int Id, int Group, string Label);
-    sealed record Preferences(string Mode = "Currency", int StageId = 0, int StageGroup = 0);
+    sealed record Preferences(string Mode = "Currency", int StageId = 0, int StageGroup = 0, bool AutoSelectEquipment = true);
     static string PreferencesPath => Path.Combine(DailyIdentity.DataRoot, "tools", "pandora-settings.json");
     public bool HostedAutomationEnabled => client?.Enabled == true;
     static DailyLanguage L => DailyLanguage.Current;
@@ -36,6 +36,7 @@ public partial class PandoraWindow : Window
             CurrencyMode.IsChecked = preferences.Mode != "Challenge";
             preferredStage = preferences.StageId;
             preferredGroup = preferences.StageGroup;
+            AutoEquipment.IsChecked = preferences.AutoSelectEquipment;
         }
 
         timer.Tick += async (_, _) => await Poll();
@@ -81,9 +82,10 @@ public partial class PandoraWindow : Window
         client.Mode = ChallengeMode.IsChecked == true ? "Challenge" : "Currency";
         client.StageId = (StageBox.SelectedItem as StageChoice)?.Id ?? 0;
         client.StageGroup = (StageBox.SelectedItem as StageChoice)?.Group ?? 0;
+        client.AutoSelectEquipment = AutoEquipment.IsChecked == true;
         try
         {
-            DailyJson.Write(PreferencesPath, new Preferences(client.Mode, client.StageId, client.StageGroup));
+            DailyJson.Write(PreferencesPath, new Preferences(client.Mode, client.StageId, client.StageGroup, client.AutoSelectEquipment));
             await Task.Run(client.Start);
             status = "entering";
         }
@@ -191,9 +193,10 @@ public partial class PandoraWindow : Window
         if (StageBox.SelectedItem is StageChoice choice) { preferredStage = choice.Id; preferredGroup = choice.Group; }
         if (StatusText != null) Render();
     }
-    internal void SetPreview(JsonObject value, bool challenge)
+    internal void SetPreview(JsonObject value, bool challenge, bool autoEquipment = true)
     {
-        snapshot = value; status = "playing";
+        snapshot = value; status = challenge && !autoEquipment ? "manual-equipment" : "playing";
+        AutoEquipment.IsChecked = autoEquipment;
         ChallengeMode.IsChecked = challenge; CurrencyMode.IsChecked = !challenge;
         Render();
     }
@@ -202,6 +205,7 @@ public partial class PandoraWindow : Window
         bool active = HostedAutomationEnabled, challenge = ChallengeMode.IsChecked == true;
         StagePanel.Visibility = challenge ? Visibility.Collapsed : Visibility.Visible;
         ChallengeNotice.Visibility = challenge ? Visibility.Visible : Visibility.Collapsed;
+        EquipmentPanel.Visibility = challenge ? Visibility.Visible : Visibility.Collapsed;
         var nativeStages = snapshot?["Stages"] as JsonArray;
         string signature = nativeStages?.ToJsonString() ?? "";
         if (stageSignature != signature)
@@ -213,6 +217,7 @@ public partial class PandoraWindow : Window
             StageBox.SelectedItem = choices.FirstOrDefault(s => s.Id == preferredStage && s.Group == preferredGroup) ?? choices.FirstOrDefault();
         }
         CurrencyMode.IsEnabled = ChallengeMode.IsEnabled = StageBox.IsEnabled = !active && !polling;
+        AutoEquipment.IsEnabled = !active && !polling;
         ConnectButton.IsEnabled = !active && !polling;
         ConnectButton.Visibility = !smoke && status == "disconnected" ? Visibility.Visible : Visibility.Collapsed;
         bool hasChallenge = nativeStages?.Any(s => s?["Unlocked"]?.GetValue<bool>() == true && s?["Challenge"]?.GetValue<bool>() == true) == true;
@@ -226,6 +231,6 @@ public partial class PandoraWindow : Window
         double hp = snapshot?["Hp"]?.GetValue<double>() ?? 0, max = snapshot?["MaxHp"]?.GetValue<double>() ?? 0;
         HealthText.Text = max > 0 ? (100 * hp / max).ToString("0") + "%" : "—";
     }
-    static readonly HashSet<string> States = ["ready", "connecting", "disconnected", "paused", "entering", "selecting", "settling", "retrying", "upgrading", "playing", "game-paused", "stage-unavailable", "wrong-stage", "open-game", "entry-blocked", "confirm-manually", "upgrade-timeout", "transition-timeout", "runtime-error", "lease-expired"];
+    static readonly HashSet<string> States = ["ready", "connecting", "disconnected", "paused", "entering", "selecting", "settling", "retrying", "upgrading", "manual-equipment", "playing", "game-paused", "stage-unavailable", "wrong-stage", "open-game", "entry-blocked", "confirm-manually", "upgrade-timeout", "transition-timeout", "runtime-error", "lease-expired"];
 }
 

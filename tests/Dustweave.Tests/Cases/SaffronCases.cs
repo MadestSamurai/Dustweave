@@ -18,6 +18,32 @@ static class SaffronCases
             && restored.BuffEnd==1234 && restored.Harvested==5 && restored.At==987 && restored.Currency==654 && restored.Stocks.SequenceEqual(journal.Stocks),
             "runtime DataContractJsonSerializer round-trips saffron recovery before any consumable action");
         var settings=new DailyPreferences();
+        Check(settings.SaffronPotatoRounds==2&&settings.SaffronProcessing,"new accounts default to two potato rounds and grade-aware processing");
+        var noProcessing=DailySaffron.Command("test",123,1000,2,false);
+        Check(!B(noProcessing["Cooking"])&&!B(noProcessing["SaffronProcessing"]),"disabling processing reaches both runtime controls");
+        var grades=new Dictionary<int,int>{{501,1},{502,2},{503,3}};
+        SaleStock Stock(int item,int count,bool locked=false)=>new(){Index=item,Item=item,Count=count,Locked=locked,Eligible=true,Group=1,Row=item,Price=10};
+        var premium=SaffronCycle.PremiumSales([Stock(501,99),Stock(502,8),Stock(503,9),Stock(999,100)],grades);
+        Check(premium.Select(x=>x.Item).SequenceEqual(new[]{502,503})&&premium.Sum(x=>x.Count)==17,"premium sale includes exact grade 2/3 saffron only and preserves lowest grade and unrelated crops");
+        Check(SaffronCycle.PremiumSales([Stock(502,0),Stock(503,9,true)],grades).Length==0,"empty and protected premium saffron are not sold");
+        var foodRecipes=new[]{
+            new SaffronFoodRecipe{Food=3071,Recipe=7,Ingredients=[202,215],Counts=[40,20]},
+            new SaffronFoodRecipe{Food=3111,Recipe=11,Ingredients=[201,214,210],Counts=[20,10,10]},
+            new SaffronFoodRecipe{Food=3121,Recipe=12,Ingredients=[201,211,212],Counts=[15,10,10]}};
+        var foodStocks=new Dictionary<int,long>{{202,40},{215,20},{201,35},{214,10},{210,10},{211,10},{212,10}};
+        Check(SaffronCycle.PrepareFoods(foodRecipes,foodStocks).All(x=>x.Cook),"all missing yield foods are cooked when ingredients cover their combined requirements");
+        Check(foodStocks[201]==35&&foodStocks[215]==20,"preparation planning does not mutate observed native inventory");
+        foodStocks[201]=20;
+        var sharedFoods=SaffronCycle.PrepareFoods(foodRecipes,foodStocks);
+        Check(sharedFoods[0].Cook&&sharedFoods[1].Cook&&!sharedFoods[2].Cook,"shared wheat cannot fund both yield dishes; only the remaining shortfall is purchased");
+        foodStocks[201]=0;foodStocks[202]=0;foodStocks[215]=0;
+        Check(!SaffronCycle.PrepareFoods([foodRecipes[2]],foodStocks).Single().Cook,"after cooking, replanning missing servings preserves the shared-ingredient purchase shortfall");
+        Check(SaffronCycle.PrepareFoods([],foodStocks).Length==0,"existing servings or active effects require no preparation or purchase");
+        Check(SaffronCycle.PrepareFoods(foodRecipes,new Dictionary<int,long>()).All(x=>!x.Cook),"missing ingredients use purchases rather than requesting extra farming");
+        Check(!SaffronCycle.PrepareFoods([new SaffronFoodRecipe{Food=3071}],foodStocks).Single().Cook,"an unavailable recipe falls back to buying the missing serving");
+        Check(!SaffronCycle.PrepareFoods([new SaffronFoodRecipe{Food=3111,Recipe=11,Ingredients=[201,201],Counts=[20,15]}],new Dictionary<int,long>{{201,20}}).Single().Cook,"repeated ingredient groups are counted together");
+        Check(SaffronCycle.PreparedFoodConfirmed(3111,[1,0,1],[1,1,1]),"fresh inventory confirms the requested serving was received");
+        Check(!SaffronCycle.PreparedFoodConfirmed(3111,[1,0,1],[2,0,1])&&!SaffronCycle.PreparedFoodConfirmed(3111,[1,0,1],[1,0,1]),"another food or unchanged stock cannot authorize a repeated cooking or purchase request");
         Check(!settings.Stages.Saffron&&!DailyStageCatalog.Enabled("territory_saffron",settings),"saffron is opt-in for new accounts");
         var old=JsonSerializer.SerializeToNode(settings)!.AsObject();old["Schema"]=17;old["Stages"]!.AsObject().Remove("Saffron");old["Stages"]!["Guild"]=false;
         var migrated=DailyPreferences.Parse(old.ToJsonString());
@@ -57,7 +83,7 @@ static class SaffronCases
         Check(SaffronCycle.ResumePhase(0,50,50,0,true,true,false)=="survey","mixed fields still prepare yield food before harvesting ripe saffron");
         Check(SaffronCycle.ResumePhase(0,0,0,100,false,false,false)=="replant","other mature crops can be harvested normally before replanting saffron");
         var previous=JsonSerializer.SerializeToNode(new DailyPreferences())!.AsObject();previous.Remove("SaffronPotatoRounds");
-        Check(DailyPreferences.Parse(previous.ToJsonString()).SaffronPotatoRounds==3,"existing accounts default to three fixed potato rounds without enabling saffron");
+        Check(DailyPreferences.Parse(previous.ToJsonString()).SaffronPotatoRounds==2,"existing accounts default to two fixed potato rounds without enabling saffron");
         foreach(int target in new[]{1,2,3})
         {
             var p=new DailyPreferences{SaffronPotatoRounds=target};p.Validate();

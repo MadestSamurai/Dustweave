@@ -16,6 +16,7 @@ public sealed class PandoraClient
     public string Mode { get; set; } = "Currency";
     public int StageId { get; set; }
     public int StageGroup { get; set; }
+    public bool AutoSelectEquipment { get; set; } = true;
 
 
     public PandoraClient(string root, int pid, long start, string fingerprint)
@@ -53,7 +54,7 @@ public sealed class PandoraClient
         Write();
     }
 
-    void Write() => pipe.Write("control.json", JsonSerializer.SerializeToUtf8Bytes(new { Enabled, RunId = runId, Mode, StageId, StageGroup, Expires = DateTime.UtcNow.AddSeconds(4).Ticks }));
+    void Write() => pipe.Write("control.json", JsonSerializer.SerializeToUtf8Bytes(new { Enabled, RunId = runId, Mode, StageId, StageGroup, AutoSelectEquipment, Expires = DateTime.UtcNow.AddSeconds(4).Ticks }));
     public JsonObject? Poll()
     {
         Write();
@@ -80,7 +81,7 @@ public sealed class PandoraClient
     internal static JsonObject DiagnosticState(JsonObject state)
     {
         var result = new JsonObject();
-        foreach (var key in new[] { "At", "Pid", "RunId", "Running", "Finished", "Faulted", "Reason", "Detail", "Completed", "Ui", "Stage", "Mode", "Selection", "Surfaces" })
+        foreach (var key in new[] { "At", "Pid", "RunId", "Running", "Finished", "Faulted", "Reason", "Detail", "Completed", "Ui", "Stage", "Mode", "AutoSelectEquipment", "Selection", "Surfaces" })
             result[key] = state[key]?.DeepClone();
         return result;
     }

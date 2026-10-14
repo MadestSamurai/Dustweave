@@ -46,10 +46,12 @@ internal static class PandoraTool
                 foreach (bool challenge in new[] { false, true })
                 {
                     DailyLanguage.Current.Select(language); theme.Select(appearance);
-                    window.SetPreview(JsonNode.Parse("""{"Reason":"playing","Completed":7,"Seconds":184,"Hp":850,"MaxHp":1000,"Stages":[{"Id":11,"Group":1,"Difficulty":1,"Index":0,"Challenge":false,"Unlocked":true,"Name":"STAGE 1"},{"Id":99,"Group":9,"Difficulty":1,"Index":1,"Challenge":true,"Unlocked":true,"Name":"Challenge"}]}""")!.AsObject(), challenge);
+                    window.SetPreview(JsonNode.Parse("""{"Reason":"playing","Completed":7,"Seconds":184,"Hp":850,"MaxHp":1000,"Stages":[{"Id":11,"Group":1,"Difficulty":1,"Index":0,"Challenge":false,"Unlocked":true,"Name":"STAGE 1"},{"Id":99,"Group":9,"Difficulty":1,"Index":1,"Challenge":true,"Unlocked":true,"Name":"Challenge"}]}""")!.AsObject(), challenge, autoEquipment: !challenge);
                     app.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
                     window.UpdateLayout();
                     if (window.ChallengeNotice.Visibility != (challenge ? Visibility.Visible : Visibility.Collapsed)) throw new InvalidOperationException("Challenge warning missing");
+                    if (window.EquipmentPanel.Visibility != (challenge ? Visibility.Visible : Visibility.Collapsed)) throw new InvalidOperationException("Equipment option must be challenge-only");
+                    if (challenge && (window.AutoEquipment.IsChecked != false || window.StatusText.Text != DailyLanguage.Current.Get("pandora.state.manual-equipment"))) throw new InvalidOperationException("Manual equipment choice is not visible");
                     var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
                     bitmap.Render(window); var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap));
                     using var stream = File.Create(Path.Combine(args[1], $"{language}-{appearance}-{(challenge ? "challenge" : "currency")}.png")); png.Save(stream);

@@ -1,5 +1,19 @@
 # Changelog / 更新记录
 
+## 1.3.7 — 2026-10-14
+
+- 藏红花增产料理优先制作；默认两轮土豆，增加高级藏红花售卖与料理开关。
+- 跑商新增只买现有收藏模式；潘多拉挑战可手动选择升级装备。
+- 修复提权连接通信与只读响应截断，补充连接诊断。
+- Adds crafting-first saffron preparation, favorites-only trading and manual Pandora challenge upgrades; repairs local connection communication.
+- [完整说明 / Full notes](docs/releases/1.3.7.md)
+
+## 1.3.6 — 2026-10-14
+
+- 固定 1–3 轮土豆种收，新增潘多拉自动化及统一沙盒安装引导。
+- Adds fixed potato rounds, Pandora automation and shared Sandboxie installation guidance.
+- [完整说明 / Full notes](docs/releases/1.3.6.md)
+
 ## 1.3.5 — 2026-10-14
 
 - 定时接管改为停止内置工具、等待当前操作完成，再正常重启游戏并按计划执行日常；默认关闭。

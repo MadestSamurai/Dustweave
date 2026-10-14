@@ -84,7 +84,7 @@ namespace BD2Territory.Runtime
    SurplusSales.Validate(sales,account);LocalStorage.WriteJsonAtomically(salesPath,sales);network.ArmSales(sales);lastInput=now;
    var request=lines.Select(x=>new SellItemInfo{InvenIndex=x.Index,GroupId=x.Group,Id=x.Row,SellCount=x.Count}).ToList();
    LocalStorage.Log("Territory sale prepared token="+sales.Token+" lines="+lines.Length+" items="+lines.Sum(x=>(long)x.Count)+" threshold="+sales.Threshold+" balancesMatched="+sales.BalancesMatched);
-   B.Invoke("Sales.Send",request,null);s.Reason=purpose=="planting"?"正在出售所选料理，补足本批播种积分":purpose=="cooking-batch"?"正在按整批出售所选料理，保留余数":"正在售卖超过保留数量的领地物品";s.Target="";return true;
+   B.Invoke("Sales.Send",request,null);s.Reason=purpose=="planting"?"正在出售所选料理，补足本批播种积分":purpose=="cooking-batch"?"正在按整批出售所选料理，保留余数":purpose=="saffron-premium"?"正在售卖二、三级藏红花，保留一级用于料理":purpose=="saffron"?"正在售卖藏红花浓汤，保留一份":"正在售卖超过保留数量的领地物品";s.Target="";return true;
   }
  }
 }

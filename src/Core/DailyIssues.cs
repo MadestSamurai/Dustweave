@@ -3,13 +3,15 @@ namespace Dustweave;
 public sealed record DailyIssue(string Code, string Category);
 public static class DailyIssues
 {
-    public static DailyIssue Classify(Exception error) => error is OperationCanceledException ? new("cancelled", "stopped") : Classify(error.GetBaseException().Message);
+    public static DailyIssue Classify(Exception error) => error is OperationCanceledException ? new("cancelled", "stopped")
+        : error.Message.StartsWith("管理员连接组件通信中断", StringComparison.Ordinal) ? new("elevation-pipe", "connection") : Classify(error.GetBaseException().Message);
     public static DailyIssue Classify(string raw)
     {
         string text = raw ?? "";
         bool Has(params string[] words) => words.Any(w => text.Contains(w, StringComparison.OrdinalIgnoreCase));
         if (text.StartsWith("trade.read.configuration:", StringComparison.Ordinal)) return new("trade-configuration", "connection");
         if (text.StartsWith("trade.read.native:", StringComparison.Ordinal)) return new("trade-read", "game");
+        if (Has("管理员连接组件通信中断")) return new("elevation-pipe", "connection");
         if (Has("no replay", "uncertain", "结果尚未确认", "结果未知", "结果不明", "未确认消费", "unresolved", "requires reconciliation")) return new("uncertain", "result");
         if (Has("NullReferenceException", "Object reference not set to an instance of an object", "未将对象引用设置到对象的实例")) return new("internal-error", "unknown");
         if (Has("field.not-ready:", "field.route-interrupted:", "Need one observed GameFieldDefaultUI; found 0")) return new("field-transition", "game");

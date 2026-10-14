@@ -40,7 +40,7 @@ namespace BD2Territory.Runtime
    if(control==null||!control.SaffronDaily||!control.Valid(DateTime.UtcNow.Ticks,pid)||control.OwnerId!=owner)throw new InvalidOperationException("藏红花控制权已改变，未提交操作");
    saffronCallback=false;saffronJournal.Pending=kind;saffronJournal.At=saffronActionAt=now;saffronJournal.Currency=SaleCurrency();saffronJournal.Stocks=SaffronCycle.Foods.Select(FoodCount).ToArray();
    SaveSaffron();
-   if(kind=="eat"||kind.StartsWith("buy-"))saffronSpent=true;
+   if(kind=="eat"||kind.StartsWith("buy-")||kind.StartsWith("cook-"))saffronSpent=true;
    var own=saffronJournal;send(()=>{if(ReferenceEquals(own,saffronJournal))saffronCallback=true;});
   }
   private void SaffronValidateCatalog()
@@ -52,10 +52,24 @@ namespace BD2Territory.Runtime
    }
    ReadCrop((LifeCropSeedTable)B.Invoke("Tables.Crop",SaffronCycle.Seed),1);ReadCrop((LifeCropSeedTable)B.Invoke("Tables.Crop",SaffronCycle.Potato),1);
   }
-  private LifeBuyItemTable[] MissingFoodPurchases(long serverNow)
+  private SaffronFoodPreparation[] PrepareSaffronFoods(long serverNow)
   {
+   var missing=SaffronCycle.Foods.Where(id=>FoodEnd(id)<=serverNow&&FoodCount(id)<1).ToArray();
+   if(missing.Length==0)return new SaffronFoodPreparation[0];
+   var recipes=((IEnumerable<int>)B.Invoke("Tables.CookIds")).Select(id=>(LifeCookTable)B.Invoke("Tables.Cook",id)).Where(x=>x!=null&&missing.Contains(x.ResultItemId)).ToArray();
+   var inputs=missing.Select(id=>{var matches=recipes.Where(x=>x.ResultItemId==id).ToArray();
+    if(matches.Length>1)throw new InvalidOperationException("增产料理配方不唯一，未制作或购买");var recipe=matches.SingleOrDefault();
+    return recipe==null?new SaffronFoodRecipe{Food=id}:new SaffronFoodRecipe{Food=id,Recipe=recipe.Id,Ingredients=recipe.RequireItemUniqueId.ToArray(),Counts=recipe.RequireItemCount.ToArray()};
+   }).ToArray();
+   var inventory=SaleInventory().Where(x=>!x.IsDisableSlot&&x.KeepFlag==0).ToArray();
+   var stocks=inputs.SelectMany(x=>x.Ingredients).Distinct().ToDictionary(id=>id,id=>{var ids=CookingItemIds(id);return inventory.Where(x=>ids.Contains(x.Id)).Sum(x=>(long)x.Count);});
+   return SaffronCycle.PrepareFoods(inputs,stocks);
+  }
+  private LifeBuyItemTable[] MissingFoodPurchases(IEnumerable<int> missing)
+  {
+   if(!missing.Any())return new LifeBuyItemTable[0];
    var rows=((IEnumerable<LifeBuyItemTable>)B.Invoke("Saffron.BuyRows",1)).ToArray();
-   return SaffronCycle.Foods.Where(id=>FoodEnd(id)<=serverNow&&FoodCount(id)<1).Select(id=>{
+   return missing.Select(id=>{
     var matches=rows.Where(x=>x.GroupId==1&&x.ItemId==id&&x.ItemType==66&&x.ItemCount==1&&x.PriceType==64&&x.PriceId==0&&x.PriceCount>0&&x.PurchaseLimitCount==0).ToArray();
     if(matches.Length!=1)throw new InvalidOperationException("缺少的增产料理当前不能购买，未使用料理");return matches[0];
    }).ToArray();
@@ -121,6 +135,11 @@ namespace BD2Territory.Runtime
     if(saffronJournal.Pending.Length>0){
      StopMotion();s.Reason="等待藏红花操作确认："+saffronJournal.Pending;
      if(!saffronCallback){if(now-saffronActionAt>TimeSpan.FromSeconds(15).Ticks)throw new InvalidOperationException("藏红花操作回执未确认，未重复提交；请核对诊断记录");return;}
+     if(saffronJournal.Pending.StartsWith("cook-")||saffronJournal.Pending.StartsWith("buy-")){
+      int food=int.Parse(saffronJournal.Pending.Substring(saffronJournal.Pending.IndexOf('-')+1));
+      if(!SaffronCycle.PreparedFoodConfirmed(food,saffronJournal.Stocks,SaffronCycle.Foods.Select(FoodCount).ToArray()))throw new InvalidOperationException("增产料理份数未增加，已停止准备，未重复制作或购买");
+      saffronPhaseAt=now; // Progress, not a longer wait for the same operation.
+     }
      saffronJournal.Pending="";SaveSaffron();saffronCallback=false;
     }
     if(network.NativeBusy||network.Waiting||CookingBusy()||SalesBusy()){s.Reason="等待当前领地操作结算";if(SalesBusy())SalesTick(s,c,now);if(CookingBusy())CookingTick(s,c,now);return;}
@@ -178,10 +197,14 @@ namespace BD2Territory.Runtime
     }
     if(saffron.State=="prepare"){
      if(now-saffronPhaseAt>TimeSpan.FromSeconds(30).Ticks)throw new InvalidOperationException("收割准备超时，未使用料理");
-     var missing=MissingFoodPurchases(serverNow);long reserve=(long)farms.Length*(ReadCrop((LifeCropSeedTable)B.Invoke("Tables.Crop",SaffronCycle.Seed),1).Price+10);
+     var preparation=PrepareSaffronFoods(serverNow);var missing=MissingFoodPurchases(preparation.Where(x=>!x.Cook).Select(x=>x.Food));long reserve=(long)farms.Length*(ReadCrop((LifeCropSeedTable)B.Invoke("Tables.Crop",SaffronCycle.Seed),1).Price+10);
      double available=SaffronCycle.Foods.Select(id=>FoodEnd(id)>serverNow?(FoodEnd(id)-serverNow)/1000.0:580).Min();
-     bool slots=SaleInventory().Length+missing.Length+3<=((LifeDefaultTable)B.Read("Tables.Default",null)).DefaultConsumableInvenSlotCount;
+     bool slots=SaleInventory().Length+preparation.Length+3<=((LifeDefaultTable)B.Read("Tables.Default",null)).DefaultConsumableInvenSlotCount;
      if(!SaffronCycle.CanBuff(saffronInitial,saffronOrder.All(n=>n!=null&&Harvestable(n)),true,slots&&SaffronCapacity(saffronInitial,SaffronCycle.Seed),SaleCurrency()>=reserve+missing.Sum(r=>(long)r.PriceCount),saffronRouteSeconds,available))throw new InvalidOperationException("收割时间、背包容量或积分不足，未使用料理");
+     var craft=preparation.FirstOrDefault(x=>x.Cook);
+     if(craft!=null){var recipe=(LifeCookTable)B.Invoke("Tables.Cook",craft.Recipe);var ingredients=CookingIngredients(recipe,1);StopMotion();
+      SaffronSubmit("cook-"+craft.Food,now,done=>B.Invoke("Cooking.Make",recipe.Id,1,ingredients,done));s.Reason="正在使用已有材料补足增产料理";return;
+     }
      if(missing.Length>0){var row=missing[0];var priceType=((MethodInfo)B.Api("Saffron.Buy")).GetParameters()[3].ParameterType;
       SaffronSubmit("buy-"+row.ItemId,now,done=>B.Invoke("Saffron.Buy",row.GroupId,row.Id,1,Enum.ToObject(priceType,row.PriceType),row.PriceId,row.PriceCount,done));return;
      }
@@ -241,16 +264,23 @@ namespace BD2Territory.Runtime
      SaffronPhase("cook",now);
     }
     if(saffron.State=="cook"){
+     if(!c.SaffronProcessing){SaffronEnd("completed","已完成种收并补种藏红花；自动料理与售卖未开启",now);return;}
+     // Check on every batch, including a resumed session. Locked premium stock
+     // remains untouched and is never used as fallback cooking material.
+     var grades=((IEnumerable<int>)B.Invoke("Tables.ItemIds",215)).Select(id=>(LifeItemTable)B.Invoke("Tables.ItemById",id)).ToArray();
+     if(grades.Any(x=>x==null||x.UniqueId!=215)||!grades.Any(x=>x.Grade==1))throw new InvalidOperationException("藏红花等级数据未就绪，未料理或售卖");
+     var premium=SaffronCycle.PremiumSales(SaleStocks(),grades.ToDictionary(x=>x.Id,x=>x.Grade));
+     if(premium.Length>0){SalesTick(s,c,now,premium.Take(32).ToArray(),"saffron-premium");return;}
      SaffronSetSeed(c,SaffronCycle.Seed);
      if(CookingCount(SaffronCycle.Recipe,1000)>0){c.Cooking=true;c.CookingBatch=1000;CookingTick(s,c,now);return;}
      SaffronPhase("sell",now);
     }
     if(saffron.State=="sell"){
+     if(!c.SaffronProcessing){SaffronEnd("completed","已完成种收并补种藏红花；自动料理与售卖未开启",now);return;}
      var stocks=SaleStocks().Where(x=>x.Item==SaffronCycle.Dish&&x.Eligible&&!x.Locked).OrderBy(x=>x.Index).ToArray();long remaining=SaffronCycle.SellCount(stocks.Sum(x=>(long)x.Count));var lines=new List<SaleLine>();
      foreach(var stock in stocks){int count=(int)Math.Min(remaining,stock.Count);if(count>0){lines.Add(new SaleLine{Index=stock.Index,Item=stock.Item,Before=stock.Count,Count=count,Group=stock.Group,Row=stock.Row,Price=stock.Price});remaining-=count;}}
      if(lines.Count>0){SalesTick(s,c,now,lines.Take(32).ToArray(),"saffron");return;}
-     var saffronStock=ReadCrop((LifeCropSeedTable)B.Invoke("Tables.Crop",SaffronCycle.Seed),1);
-     if(saffronStock.Inventory>=20)throw new InvalidOperationException("已补种并售卖成品，仍有藏红花原料；土豆或料理容量不足，已保留供下次制作");
+     if(CookingItemIds(215).Sum(id=>Convert.ToInt64(B.Invoke("Inventory.Count",id)))>=20)throw new InvalidOperationException("已补种并售卖成品，仍有藏红花原料；土豆或料理容量不足，已保留供下次制作");
      if(farms.Any(f=>!Empty(f)&&FieldSeed(f)!=SaffronCycle.Seed))throw new InvalidOperationException("已完成空田补种与料理；部分农田作物尚未成熟，保留生长，其他日常继续");
      SaffronEnd("completed",saffronHadHarvest?"藏红花已收割，增产土豆循环结束；已补种并制作料理，成品保留一份":"已补种藏红花，成熟后再运行收割",now);return;
     }

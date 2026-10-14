@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.IO.Pipes;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using Dustweave;
 using BD2Daily.Runtime;
 
@@ -47,10 +49,66 @@ internal static class ConnectionAccessCases
         DailyLoginReadiness.Check(snapshot, image, DateTime.UtcNow.Ticks);
         Check(true, "stale SDK failure from another process is ignored");
 
+        // Reproduce the user's truncated local reply without connecting to a game.
+        async Task<int> InterruptedReply(string verb, int breaks)
+        {
+            using var limit = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+            string endpoint = BD2.LocalIpc.Wire.Endpoint(process.Id, process.StartTime.ToUniversalTime().Ticks);
+            using var service = new NamedPipeServerStream(endpoint, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+            int requests = 0;
+            var serving = Task.Run(async () => {
+                for (int i=0; i <= breaks; i++)
+                {
+                    await service.WaitForConnectionAsync(limit.Token);
+                    _ = BD2.LocalIpc.Wire.ReadFrame(service); requests++;
+                    if (i == breaks) BD2.LocalIpc.Wire.WriteFrame(service, BD2.LocalIpc.Wire.Encode(w => {
+                        w.Write("ok"); w.Write("fixture"); w.Write(""); BD2.LocalIpc.Wire.Bytes(w, new byte[]{42});
+                    }));
+                    service.Disconnect();
+                    if (verb == "write") break;
+                }
+            });
+            var local = new BD2.LocalIpc.PipeClient(Path.Combine(Path.GetTempPath(), "Dustweave-test-"+Guid.NewGuid()), process.Id, process.StartTime.ToUniversalTime().Ticks);
+            try
+            {
+                if (verb == "write")
+                {
+                    bool failed=false;
+                    try { await Task.Run(() => local.Write("control.json", new byte[]{1})); } catch (EndOfStreamException) { failed=true; }
+                    Check(failed,"uncertain write is reported rather than replayed");
+                }
+                else Check((await Task.Run(() => local.Read("frame.json")))!.SequenceEqual(new byte[]{42}),"truncated read reconnects and receives a complete fresh frame");
+                await serving;
+                return requests;
+            }
+            finally { limit.Cancel(); }
+        }
+        Check(await InterruptedReply("read",2)==3,"read-only reconnect is limited to two retries");
+        Check(await InterruptedReply("write",1)==1,"mutating mailbox request is sent exactly once");
+
         // Real asynchronous pipe framing, split messages, cancellation, and bounded allocation.
         string name = "BD2Daily.Test." + Guid.NewGuid().ToString("N");
-        using var server = new NamedPipeServerStream(name, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
-        using var client = new NamedPipeClientStream(".", name, PipeDirection.InOut, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+        using var server = DailyConnectionAccess.CreateElevationServer(name);
+        using var client = DailyConnectionAccess.CreateElevationClient(name);
+        using var identity = WindowsIdentity.GetCurrent();
+        var security = server.GetAccessControl();
+        var access = security.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<PipeAccessRule>().ToArray();
+        Check(security.AreAccessRulesProtected && security.GetOwner(typeof(SecurityIdentifier)).Equals(identity.User),
+            "elevation pipe is owned by the user SID, not the token owner group");
+        Check(access.Length == 1 && access[0].IdentityReference.Equals(identity.User)
+            && access[0].AccessControlType == AccessControlType.Allow && access[0].PipeAccessRights == PipeAccessRights.FullControl,
+            "elevation pipe ACL grants only the current user and does not admit other users or administrator accounts");
+        bool duplicateRejected = false;
+        try { using var duplicate = DailyConnectionAccess.CreateElevationServer(name); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { duplicateRejected = true; }
+        Check(duplicateRejected, "elevation handshake cannot share its name with a second server");
+        Check(DailyConnectionAccess.BrokenElevationPipe(new IOException("localized", unchecked((int)0x8007006D)))
+            && DailyConnectionAccess.BrokenElevationPipe(new EndOfStreamException())
+            && !DailyConnectionAccess.BrokenElevationPipe(new IOException("access", unchecked((int)0x80070005))),
+            "broken transport is classified by native status without hiding other access failures");
+        var helperError = new InvalidOperationException("管理员连接组件通信中断，请重新连接；若仍失败，请通过织尘启动游戏后再试，并导出诊断日志。", new IOException("Pipe is broken."));
+        Check(DailyIssues.Classify(helperError).Code == "elevation-pipe"
+            && DailyUserText.Error(helperError).Contains("重新连接"), "helper failure retains an actionable connection explanation over its inner pipe error");
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         await Task.WhenAll(server.WaitForConnectionAsync(timeout.Token), client.ConnectAsync(timeout.Token));
         var request = new DailyConnectionAccess.Request(nonce, image, "fingerprint", "hash");

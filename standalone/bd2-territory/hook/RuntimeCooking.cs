@@ -32,6 +32,13 @@ namespace BD2Territory.Runtime
    if(cooking==null||!cooking.Pending)return;var reply=network.LastCookReply;if(reply==null||reply.Token!=cooking.Token)return;
    CookingPlanner.Confirm(cooking,reply);LocalStorage.WriteJsonAtomically(cookingPath,cooking);lastCrops=0;lastCatalog=0;lastCookingSaleProbe=0;LocalStorage.Log("Cooking "+cooking.State+" recipe="+cooking.Recipe+" count="+cooking.Count);
   }
+  private int[] CookingItemIds(int uniqueId)
+  {
+   var ids=((IEnumerable<int>)B.Invoke("Tables.ItemIds",uniqueId)).ToArray();
+   if(control!=null&&control.SaffronDaily&&uniqueId==215)
+    return ids.Where(id=>((LifeItemTable)B.Invoke("Tables.ItemById",id))?.Grade==1).ToArray();
+   return ids;
+  }
   private int CookingCount(int recipeId,int limit)
   {
    var r=(LifeCookTable)B.Invoke("Tables.Cook",recipeId);if(r==null)return 0;
@@ -39,7 +46,7 @@ namespace BD2Territory.Runtime
    var items=B.Read("Inventory.Items",null) as IEnumerable<ItemDBInfo>;var defaults=(LifeDefaultTable)B.Read("Tables.Default",null);
    if(items==null||defaults==null||items.Count()>=defaults.DefaultConsumableInvenSlotCount)return 0;
    int owned=Convert.ToInt32(B.Invoke("Inventory.Count",item.Id));int capacity=Math.Max(0,item.StackCount-owned);
-   var stocks=r.RequireItemUniqueId.Select(id=>((IEnumerable<int>)B.Invoke("Tables.ItemIds",id)).Sum(v=>Convert.ToInt64(B.Invoke("Inventory.Count",v)))).ToArray();
+   var stocks=r.RequireItemUniqueId.Select(id=>CookingItemIds(id).Sum(v=>Convert.ToInt64(B.Invoke("Inventory.Count",v)))).ToArray();
    return CookingPlanner.Count(limit,capacity,stocks,r.RequireItemCount.ToArray());
   }
   private bool CookingTick(TerritorySnapshot s,TerritoryControl c,long now)
@@ -48,17 +55,22 @@ namespace BD2Territory.Runtime
    if(cooking.Pending){StopMotion();s.Reason="等待料理制作确认";if(now-cooking.SubmittedTicks>TimeSpan.FromSeconds(30).Ticks)s.Reason="正在同步料理库存，恢复后自动继续";return true;}
    if(!c.Cooking||now-lastCookAttempt<TimeSpan.FromSeconds(5).Ticks)return false;lastCookAttempt=now;
    int count=CookingCount(c.RecipeId,c.CookingBatch);s.Cookable=count;if(count<=0)return false;
-   var r=(LifeCookTable)B.Invoke("Tables.Cook",c.RecipeId);var selected=new List<ItemDBInfo>();
-   for(int i=0;i<r.RequireItemUniqueId.Count;i++)
-   {
-    var ids=((IEnumerable<int>)B.Invoke("Tables.ItemIds",r.RequireItemUniqueId[i])).ToList();int needed=checked(r.RequireItemCount[i]*count);
-    var part=(List<ItemDBInfo>)B.Invoke("Cooking.SelectItems",ids,needed);
-    if(part==null||part.Any(v=>!ids.Contains(v.Id)||v.Count<=0)||part.Sum(v=>v.Count)!=needed)throw new InvalidOperationException("料理原料选择与配方不一致");selected.AddRange(part);
-   }
+   var r=(LifeCookTable)B.Invoke("Tables.Cook",c.RecipeId);var selected=CookingIngredients(r,count);
    StopMotion();cooking=new CookingProgress{Account=account,Token=Guid.NewGuid().ToString("N"),Recipe=c.RecipeId,ResultItem=r.ResultItemId,Count=count,SubmittedTicks=now,ConfirmedTotal=cooking.ConfirmedTotal,State="pending"};
    // Persist intent before invoking the game's own sender; an uncertain result must never be replayed.
    LocalStorage.WriteJsonAtomically(cookingPath,cooking);network.ArmCooking(cooking);lastInput=now;
    B.Invoke("Cooking.Make",r.Id,count,selected,(Action)(()=>{}));s.Reason="正在制作所选料理";s.Target=recipes.FirstOrDefault(v=>v.Id==c.RecipeId)?.Name??c.RecipeId.ToString();return true;
+  }
+  private List<ItemDBInfo> CookingIngredients(LifeCookTable r,int count)
+  {
+   var selected=new List<ItemDBInfo>();
+   for(int i=0;i<r.RequireItemUniqueId.Count;i++)
+   {
+    var ids=CookingItemIds(r.RequireItemUniqueId[i]).ToList();int needed=checked(r.RequireItemCount[i]*count);
+    var part=(List<ItemDBInfo>)B.Invoke("Cooking.SelectItems",ids,needed);
+    if(part==null||part.Any(v=>!ids.Contains(v.Id)||v.Count<=0||v.KeepFlag!=0||v.IsDisableSlot)||part.Sum(v=>v.Count)!=needed)throw new InvalidOperationException("料理原料选择与配方不一致");selected.AddRange(part);
+   }
+   return selected;
   }
  }
 }

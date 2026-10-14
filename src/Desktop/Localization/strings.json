@@ -1,4 +1,129 @@
 {
+  "pandora.auto_equipment": {
+    "zh-CN": "自动选择装备",
+    "zh-TW": "自動選擇裝備",
+    "en-US": "Choose equipment automatically"
+  },
+  "pandora.auto_equipment_hint": {
+    "zh-CN": "关闭后，升级选项由你手动选择，选完自动继续游玩。",
+    "zh-TW": "關閉後，升級選項由你手動選擇，選完自動繼續遊玩。",
+    "en-US": "Turn off to choose upgrades yourself. Automatic play resumes after your selection."
+  },
+  "pandora.state.manual-equipment": {
+    "zh-CN": "请在游戏内选择装备，选完后自动继续。",
+    "zh-TW": "請在遊戲內選擇裝備，選完後自動繼續。",
+    "en-US": "Choose equipment in the game. Automatic play will resume afterwards."
+  },
+  "saffron.preparing_food": {
+    "zh-CN": "正在使用已有材料补足增产料理",
+    "zh-TW": "正在使用現有材料補足增產料理",
+    "en-US": "Using available ingredients to prepare missing yield foods"
+  },
+  "saffron.ambiguous_food_recipe": {
+    "zh-CN": "增产料理配方不唯一，未制作或购买",
+    "zh-TW": "增產料理配方不唯一，未製作或購買",
+    "en-US": "The yield food recipe is ambiguous. Nothing was cooked or bought."
+  },
+  "saffron.food_not_received": {
+    "zh-CN": "增产料理份数未增加，已停止准备，未重复制作或购买",
+    "zh-TW": "增產料理份數未增加，已停止準備，未重複製作或購買",
+    "en-US": "The yield food count did not increase. Preparation stopped without repeating the purchase or cooking request."
+  },
+  "connection.elevation_pipe_closed": {
+    "zh-CN": "管理员连接组件通信中断，请重新连接；若仍失败，请通过织尘启动游戏后再试，并导出诊断日志。",
+    "zh-TW": "管理員連線元件通訊中斷，請重新連線；若仍失敗，請透過織塵啟動遊戲後重試，並匯出診斷記錄。",
+    "en-US": "Communication with the elevated connection helper was interrupted. Reconnect; if it fails again, launch the game through Dustweave and export diagnostics."
+  },
+  "issue.reason.elevation-pipe": {
+    "zh-CN": "管理员连接组件通信中断",
+    "zh-TW": "管理員連線元件通訊中斷",
+    "en-US": "The elevated connection helper disconnected"
+  },
+  "issue.action.elevation-pipe": {
+    "zh-CN": "请重新连接；若仍失败，请通过织尘启动游戏后重试，并导出诊断日志。",
+    "zh-TW": "請重新連線；若仍失敗，請透過織塵啟動遊戲後重試，並匯出診斷記錄。",
+    "en-US": "Reconnect. If it fails again, launch the game through Dustweave and export diagnostics."
+  },
+  "trade.favorites_unready": {
+    "zh-CN": "商店收藏数据未就绪",
+    "zh-TW": "商店收藏資料尚未就緒",
+    "en-US": "Shop favorites are not ready."
+  },
+  "trade.favorites_incomplete": {
+    "zh-CN": "商店收藏数据不完整",
+    "zh-TW": "商店收藏資料不完整",
+    "en-US": "Shop favorites data is incomplete."
+  },
+  "trade.shops_unready": {
+    "zh-CN": "商店列表未就绪",
+    "zh-TW": "商店列表尚未就緒",
+    "en-US": "The shop list is not ready."
+  },
+  "trade.favorite_unreadable": {
+    "zh-CN": "收藏商品暂时无法读取，未购买；请检查游戏内收藏列表",
+    "zh-TW": "收藏商品暫時無法讀取，未購買；請檢查遊戲內收藏列表",
+    "en-US": "A favorite could not be read. Nothing was bought; check your in-game favorites."
+  },
+  "trade.favorite_quote_unsupported": {
+    "zh-CN": "收藏商品报价或币种不支持，未购买",
+    "zh-TW": "收藏商品報價或幣別不支援，未購買",
+    "en-US": "A favorite has an unsupported price or currency. Nothing was bought."
+  },
+  "trade.favorites_changed": {
+    "zh-CN": "收藏已变化，未购买或修改收藏；请重新执行跑商",
+    "zh-TW": "收藏已變更，未購買或修改收藏；請重新執行跑商",
+    "en-US": "Saved favorites changed; no purchase or favorite edits"
+  },
+  "saffron.selling_premium": {
+    "zh-CN": "正在售卖二、三级藏红花，保留一级用于料理",
+    "zh-TW": "正在出售二、三級藏紅花，保留一級用於料理",
+    "en-US": "Selling grade 2/3 saffron; keeping grade 1 for cooking"
+  },
+  "saffron.selling_soup": {
+    "zh-CN": "正在售卖藏红花浓汤，保留一份",
+    "zh-TW": "正在出售藏紅花濃湯，保留一份",
+    "en-US": "Selling saffron soup; keeping one serving"
+  },
+  "prefs.trade_favorites": {
+    "zh-CN": "特殊跑商：只购买收藏商品",
+    "zh-TW": "特殊跑商：只購買收藏商品",
+    "en-US": "Special trading: buy favorites only"
+  },
+  "prefs.trade_favorites_hint": {
+    "zh-CN": "无视跑商策略，只按商店当前价格购买你的收藏商品。不料理、不卖出，不修改收藏。",
+    "zh-TW": "忽略跑商策略，只按商店目前價格購買你的收藏商品。不料理、不出售，不修改收藏。",
+    "en-US": "Ignores trading strategy and buys your saved favorites at current shop prices. No cooking, selling or changes to favorites."
+  },
+  "prefs.saffron_processing": {
+    "zh-CN": "自动料理／售卖高级藏红花",
+    "zh-TW": "自動料理／出售高級藏紅花",
+    "en-US": "Auto-cook / sell higher-grade saffron"
+  },
+  "saffron.processing_disabled": {
+    "zh-CN": "已完成种收并补种藏红花；自动料理与售卖未开启",
+    "zh-TW": "已完成種收並補種藏紅花；自動料理與出售未開啟",
+    "en-US": "Harvest and replanting complete. Cooking and selling are disabled."
+  },
+  "saffron.grades_unready": {
+    "zh-CN": "藏红花等级数据未就绪，未料理或售卖",
+    "zh-TW": "藏紅花等級資料未就緒，未料理或出售",
+    "en-US": "Saffron grade data is not ready. Nothing was cooked or sold."
+  },
+  "trade.favorites_completed": {
+    "zh-CN": "已按商店当前价格购买收藏商品；未料理、未售卖，收藏保持不变",
+    "zh-TW": "已按商店目前價格購買收藏商品；未料理、未出售，收藏保持不變",
+    "en-US": "Favorites purchased at current shop prices. Nothing was cooked or sold; favorites are unchanged."
+  },
+  "trade.favorites_empty": {
+    "zh-CN": "收藏商品已购完、尚未解锁或未设置收藏",
+    "zh-TW": "收藏商品已買完、尚未解鎖或未設定收藏",
+    "en-US": "No available favorites: already bought, locked or none saved."
+  },
+  "trade.favorites_funds": {
+    "zh-CN": "金币不足以购买当前收藏商品；未购买，也未卖出任何物品",
+    "zh-TW": "金幣不足以購買目前收藏商品；未購買，也未出售任何物品",
+    "en-US": "Not enough gold for the current favorites. Nothing was bought or sold."
+  },
   "updates.manual_title": {
     "zh-CN": "请手动更新",
     "zh-TW": "請手動更新",
@@ -2240,9 +2365,9 @@
     "en-US": "Trading, cooking and premium sales"
   },
   "prefs.trade_hint": {
-    "zh-CN": "先采购、再料理，仅按 120% 报价售卖",
-    "zh-TW": "先採購、再料理，僅按 120% 報價販售",
-    "en-US": "Buy, cook, then sell only at 120% quotes"
+    "zh-CN": "按策略跑商，或只购买收藏商品",
+    "zh-TW": "按策略跑商，或只購買收藏商品",
+    "en-US": "Trade by strategy, or buy saved favorites only"
   },
   "prefs.trade_note": {
     "zh-CN": "约 30 天周转，少于 1000 万金币时会提醒。装备、制作材料与属性石不出售。",
@@ -5680,9 +5805,9 @@
     "en-US": "Off by default · Grows in 20 hours; skips unripe crops"
   },
   "prefs.saffron_details": {
-    "zh-CN": "成熟后使用三种增产料理并收割，再按设定轮数种收土豆，不受加成时长影响。完成后补种藏红花、制作料理并售卖，保留一份。",
-    "zh-TW": "成熟後使用三種增產料理並收割，再按設定輪數種收馬鈴薯，不受加成時長影響。完成後補種藏紅花、製作料理並出售，保留一份。",
-    "en-US": "Uses three yield foods before harvesting ripe saffron, then grows and harvests the selected potato rounds regardless of buff duration. Replants saffron, cooks and sells dishes, keeping one."
+    "zh-CN": "成熟后使用三种增产料理（份数/制作材料不足会商店购买）并收割，再按设定轮数种收土豆，不受加成时长影响。完成后补种藏红花、制作料理并售卖，保留1份浓汤。",
+    "zh-TW": "成熟後使用三種增產料理（份數／製作材料不足會到商店購買）並採收，再按設定輪數種收馬鈴薯，不受加成時長影響。完成後補種藏紅花、製作料理並出售，保留1份濃湯。",
+    "en-US": "Uses three yield foods before harvesting ripe saffron, cooking missing servings from available ingredients and buying any shortfall. Then grows and harvests the selected potato rounds regardless of buff duration. Finally replants saffron, cooks and sells dishes, keeping one soup."
   },
   "saffron.message.1": {
     "zh-CN": "藏红花种植与收割",

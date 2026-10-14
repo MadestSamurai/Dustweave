@@ -62,6 +62,7 @@ namespace BD2Daily.Live {
   [DataMember] public string Scope="gameplay",Id="",Kind="",Instance="",AccountKey="",PlayerKey="",Scene="",UiToken="",Reason="";
   [DataMember] public int ProcessId,SurfaceId,TargetId,Value;
   [DataMember] public bool RequireStealth;
+  [DataMember] public bool ExistingFavoritesOnly;
   [DataMember] public bool GuardTalentPotions;
   [DataMember] public long TalentPotionReserve;
   [DataMember] public long[] Items=new long[0];

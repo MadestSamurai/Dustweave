@@ -140,6 +140,10 @@ public partial class MainWindow
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
                 verifyPreferences();
                 Capture("locale-"+L.Code+"-trade-settings", surface);
+                preferences.ShowFavoritesForSmoke(true);
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                Capture("locale-"+L.Code+"-trade-favorites", surface);
+                preferences.ShowFavoritesForSmoke(false);
                 surface.Child = panel;
                 window.Width = 960; window.Height = 700;
             }

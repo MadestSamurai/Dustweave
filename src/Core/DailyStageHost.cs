@@ -164,13 +164,14 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
                 return await Reconcile();
             if (stage == null || !DailyStageCatalog.Adapters.Contains(stage))
                 throw new StageHostException("protocol", "未知日常环节。");
-            if (stage == "trade" && operation is "navigate" or "execute")
+            bool favoritesOnly = stage == "trade" && new DailyPreferenceStore(root).Read(S(Bound()["actor"]![3])).Trade.FavoritesOnly;
+            if (stage == "trade" && !favoritesOnly && operation is "navigate" or "execute")
                 tradeData?.AssertReady();
             if (stage == "trade" && operation == "execute")
             {
                 driver.TradeStageActive = true;
                 driver.ConfigureTradeResume(null); // Replan trades from current game state, never replay an old plan.
-                driver.SubmissionGuard = () => { try { tradeData?.AssertReady(); } catch (StageHostException e) { throw new DailyStepException("rejected", e.Message); } };
+                driver.SubmissionGuard = () => { try { if (!favoritesOnly) tradeData?.AssertReady(); } catch (StageHostException e) { throw new DailyStepException("rejected", e.Message); } };
             }
             if (operation == "recover")
             {

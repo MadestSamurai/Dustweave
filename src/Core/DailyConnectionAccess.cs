@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.IO.Pipes;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
 using Dustweave.Accounts;
@@ -20,6 +22,31 @@ public static class DailyConnectionAccess
     private const string PipePrefix = DailyApplication.ElevationPipePrefix;
     internal sealed record Request(string Nonce, GameInstance Game, string Fingerprint, string PayloadSha);
     internal sealed record Reply(string Nonce, string State, long Address = 0, string Error = "");
+
+    internal static NamedPipeServerStream CreateElevationServer(string name)
+    {
+        using var identity = WindowsIdentity.GetCurrent();
+        var user = identity.User ?? throw new InvalidOperationException("无法确认当前 Windows 用户。");
+        var security = new PipeSecurity();
+        security.SetAccessRuleProtection(true, false);
+        security.SetOwner(user);
+        security.AddAccessRule(new PipeAccessRule(user, PipeAccessRights.FullControl, AccessControlType.Allow));
+        return NamedPipeServerStreamAcl.Create(name, PipeDirection.InOut, 1, PipeTransmissionMode.Byte,
+            PipeOptions.Asynchronous | PipeOptions.FirstPipeInstance, 0, 0, security);
+    }
+
+    internal static NamedPipeClientStream CreateElevationClient(string name)
+    {
+        // .NET 8 CurrentUserOnly compares TokenOwner, which may change to the
+        // Administrators group after UAC even though TokenUser is unchanged.
+        // Restrict the server ACL to TokenUser and verify both peer PIDs, user,
+        // session, executable and generation before accepting any request.
+        return new NamedPipeClientStream(".", name, PipeDirection.InOut, PipeOptions.Asynchronous,
+            TokenImpersonationLevel.Identification);
+    }
+
+    internal static bool BrokenElevationPipe(IOException error) => error is EndOfStreamException
+        || (error.HResult & 0xffff) is 109 or 232 or 233;
 
     internal static GameInstance Describe(int pid)
     {
@@ -56,7 +83,7 @@ public static class DailyConnectionAccess
         }
     }
 
-    internal static async Task<long> InjectAsync(GameInstance game, byte[] payload, Action<string> progress, CancellationToken token)
+    internal static async Task<long> InjectAsync(GameInstance game, byte[] payload, Action<string> progress, CancellationToken token, Action<object>? diagnostic = null)
     {
         token.ThrowIfCancellationRequested(); RequireGame(game);
         var caller = DesktopGameLaunch.ReadToken(Environment.ProcessId);
@@ -64,7 +91,7 @@ public static class DailyConnectionAccess
         if (NeedsElevation(caller.Elevated, target.Elevated, caller.User == target.User, caller.Session == target.Session))
         {
             progress("游戏以管理员权限运行，请允许连接组件的 Windows 权限提示；主窗口保持普通权限");
-            return await ElevateAsync(game, payload, token);
+            return await ElevateAsync(game, payload, token, diagnostic);
         }
         progress("等待游戏引擎初始化");
         await WaitForMono(game, token);
@@ -79,7 +106,7 @@ public static class DailyConnectionAccess
         return injector.Inject(payload, "BD2Daily.Runtime", "Loader", "Load").ToInt64();
     }
 
-    private static async Task<long> ElevateAsync(GameInstance game, byte[] payload, CancellationToken token)
+    private static async Task<long> ElevateAsync(GameInstance game, byte[] payload, CancellationToken token, Action<object>? diagnostic)
     {
         string executable = Environment.ProcessPath ?? throw new InvalidOperationException("无法定位连接组件");
         if (!DailyApplication.IsExecutable(executable))
@@ -87,7 +114,7 @@ public static class DailyConnectionAccess
         string nonce = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)), pipeName = PipePrefix + Guid.NewGuid().ToString("N");
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
         timeout.CancelAfter(TimeSpan.FromMinutes(3));
-        using var pipe = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+        using var pipe = CreateElevationServer(pipeName);
         var self = Describe(Environment.ProcessId);
         var start = new ProcessStartInfo(executable) { UseShellExecute = true, Verb = "runas", WindowStyle = ProcessWindowStyle.Hidden, WorkingDirectory = AppContext.BaseDirectory };
         start.ArgumentList.Add(HelperSwitch); start.ArgumentList.Add(pipeName); start.ArgumentList.Add(nonce);
@@ -95,29 +122,48 @@ public static class DailyConnectionAccess
         // ShellExecute may wait for UAC. Never block the UI or repeat a declined request.
         var launch = Task.Run(() => Process.Start(start) ?? throw new IOException("连接组件未启动。"));
         Process? helper = null;
+        string phase = "launch-helper";
+        void Report(string state, Exception? error = null)
+        {
+            int? exitCode = null;
+            try { if (helper?.HasExited == true) exitCode = helper.ExitCode; } catch { }
+            // No nonce, pipe name, Windows SID, account data or executable paths.
+            try { diagnostic?.Invoke(new { atUtc = DateTimeOffset.UtcNow, phase, state, game.ProcessId,
+                game.StartTicks, callerPid = self.ProcessId, helperPid = helper?.Id, helperExitCode = exitCode,
+                errorType = error?.GetType().FullName, hresult = error?.HResult, error = error?.Message }); } catch { }
+        }
         try
         {
+            Report("progress");
             helper = await launch.WaitAsync(timeout.Token);
+            phase = "connect-helper-pipe"; Report("progress");
             var connected = pipe.WaitForConnectionAsync(timeout.Token);
             var exited = helper.WaitForExitAsync(timeout.Token);
             if (await Task.WhenAny(connected, exited) == exited && !pipe.IsConnected)
                 throw new InvalidOperationException("管理员连接组件已退出，请使用当前 Windows 用户允许授权后重新连接。");
             await connected;
+            phase = "verify-helper"; Report("progress");
             if (!GetNamedPipeClientProcessId(pipe.SafePipeHandle, out uint client) || client != helper.Id)
                 throw new InvalidOperationException("连接组件身份不匹配。");
             var elevated = DesktopGameLaunch.ReadToken(helper.Id);
             var original = DesktopGameLaunch.ReadToken(Environment.ProcessId);
             if (!elevated.Elevated || elevated.User != original.User || elevated.Session != original.Session)
                 throw new InvalidOperationException("请使用当前 Windows 用户允许连接，不支持切换到另一个管理员账号。");
+            phase = "send-request"; Report("progress");
             await Send(pipe, new Request(nonce, game, DailyHookCompiler.Fingerprint, Convert.ToHexString(SHA256.HashData(payload))), timeout.Token);
+            phase = "prepare-observer"; Report("progress");
             var ready = await Receive<Reply>(pipe, timeout.Token); RequireReply(ready, nonce, "ready");
             token.ThrowIfCancellationRequested(); RequireGame(game);
+            phase = "commit-connection"; Report("progress");
             await Send(pipe, new Reply(nonce, "connect"), timeout.Token);
             var result = await Receive<Reply>(pipe, timeout.Token); RequireReply(result, nonce, "connected");
+            Report("connected");
             return result.Address;
         }
-        catch (Win32Exception e) when (e.NativeErrorCode == 1223) { throw new InvalidOperationException("已取消管理员连接授权；游戏与日常任务均未改动。", e); }
-        catch (OperationCanceledException) when (!token.IsCancellationRequested) { throw new TimeoutException("管理员连接等待超时，请处理 Windows 权限提示后重新连接；不会自动重复申请权限。"); }
+        catch (Win32Exception e) when (e.NativeErrorCode == 1223) { Report("cancelled", e); throw new InvalidOperationException("已取消管理员连接授权；游戏与日常任务均未改动。", e); }
+        catch (OperationCanceledException e) when (!token.IsCancellationRequested) { Report("timeout", e); throw new TimeoutException("管理员连接等待超时，请处理 Windows 权限提示后重新连接；不会自动重复申请权限。"); }
+        catch (IOException e) when (BrokenElevationPipe(e)) { Report("disconnected", e); throw new InvalidOperationException("管理员连接组件通信中断，请重新连接；若仍失败，请通过织尘启动游戏后再试，并导出诊断日志。", e); }
+        catch (Exception e) { Report("failed", e); throw; }
         finally
         {
             helper?.Dispose();
@@ -132,7 +178,7 @@ public static class DailyConnectionAccess
             || !Guid.TryParseExact(args[1][PipePrefix.Length..], "N", out _) || args[2].Length != 64
             || !int.TryParse(args[3], out int parentPid) || !long.TryParse(args[4], out long parentStart)) return 2;
         using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(3));
-        using var pipe = new NamedPipeClientStream(".", args[1], PipeDirection.InOut, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+        using var pipe = CreateElevationClient(args[1]);
         try
         {
             var parent = Describe(parentPid); var self = Describe(Environment.ProcessId);

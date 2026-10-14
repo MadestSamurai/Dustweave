@@ -10,11 +10,12 @@ namespace Dustweave.Pandora
     }
     public sealed class Control
     {
-        public bool Enabled; public string RunId = "", Mode = "Currency"; public int StageId, StageGroup; public long Expires;
+        public bool Enabled, AutoSelectEquipment = true; public string RunId = "", Mode = "Currency"; public int StageId, StageGroup; public long Expires;
         public bool Valid(long now) { return !string.IsNullOrEmpty(RunId) && (Mode == "Currency" || Mode == "Challenge") && Expires > now && Expires - now <= TimeSpan.FromSeconds(15).Ticks; }
     }
     public static class LoopRules
     {
+        public static bool WaitForEquipment(Control control, bool selectionOpen) => selectionOpen && control.Mode == "Challenge" && !control.AutoSelectEquipment;
         // Native SetUI can refill the same pooled window at the same level (queued rewards).
         public static string SkillPage(int instance, int level, int revision) { return "skill:" + instance + ":" + level + ":" + revision; }
         public static Stage Select(IEnumerable<Stage> stages, string mode, int group, int stageId)
@@ -29,5 +30,10 @@ namespace Dustweave.Pandora
         public bool Waiting(string identity, double now, out bool timedOut) { timedOut = false; if (pending != identity) { pending = ""; return false; } timedOut = now - since >= 25; return true; }
         public void Sent(string identity, double now) { pending = identity; since = now; }
         public void Reset() { pending = ""; since = 0; }
+        public bool ManualChoice(Control control, bool selectionOpen)
+        {
+            if (!LoopRules.WaitForEquipment(control, selectionOpen)) return false;
+            Reset(); return true;
+        }
     }
 }

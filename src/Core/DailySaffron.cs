@@ -4,8 +4,8 @@ namespace Dustweave;
 
 public static class DailySaffron
 {
-    internal static JsonObject Command(string owner, int pid, long now, int potatoRounds=3) => O(("OwnerId",owner),("ProcessId",pid),("Enabled",true),("UntilUtcTicks",now+TimeSpan.TicksPerSecond*3),("SaffronPotatoRounds",potatoRounds),
-        ("SaffronDaily",true),("Logging",false),("Mining",false),("Farming",true),("Cooking",true),("FixedCrop",true),("FixedSeedId",15),("RecipeId",7),
+    internal static JsonObject Command(string owner, int pid, long now, int potatoRounds=2, bool processing=true) => O(("OwnerId",owner),("ProcessId",pid),("Enabled",true),("UntilUtcTicks",now+TimeSpan.TicksPerSecond*3),("SaffronPotatoRounds",potatoRounds),("SaffronProcessing",processing),
+        ("SaffronDaily",true),("Logging",false),("Mining",false),("Farming",true),("Cooking",processing),("FixedCrop",true),("FixedSeedId",15),("RecipeId",7),
         ("IntervalMs",100),("PlantingBudget",0),("CookingBatch",1000),("UseNavMesh",false),("UseVehicle",false),("DashRecovery",true),
         ("SellThreshold",9900),("CookingSaleBatch",100),("SellCookingBatches",false),("SellCookingForPlanting",false));
     public static async Task<JsonObject> Run(DailyWorkflow w)
@@ -21,7 +21,7 @@ public static class DailySaffron
     {
         long now=w.Driver.UtcTicks;var prior=read("control.json");
         Require(!B(prior["Enabled"])||N(prior["UntilUtcTicks"])<=now,"领地已有运行中的控制器，未接管");
-        string owner=Guid.NewGuid().ToString("N");int pid=I(w.Context["actor"]![0]);var command=Command(owner,pid,now,w.Settings.SaffronPotatoRounds);
+        string owner=Guid.NewGuid().ToString("N");int pid=I(w.Context["actor"]![0]);var command=Command(owner,pid,now,w.Settings.SaffronPotatoRounds,w.Settings.SaffronProcessing);
         JsonObject state=new();double end=w.Time+19*60, unavailableSince=double.NaN, lastProgress=w.Time, naturalWaitEnd=0;long waitStamp=0;string last="",progress="";bool started=false;
         JsonObject Partial(string reason) => O(("state","partial"),("reason",reason),("saffron",state["Saffron"]),("territory",state));
         try

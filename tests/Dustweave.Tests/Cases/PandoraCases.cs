@@ -44,6 +44,19 @@ internal static class PandoraCases
         gate.Sent("result:1", 30); gate.Reset();
         Check(!gate.Waiting("result:1", 31, out _), "a new round can reuse the pooled result window");
 
+        var manual = new Control { Mode = "Challenge" };
+        Check(manual.AutoSelectEquipment && !gate.ManualChoice(manual, true), "challenge keeps automatic choices enabled by default");
+        manual.AutoSelectEquipment = false;
+        gate.Sent("skill:3:5", 32);
+        Check(gate.ManualChoice(manual, true) && !gate.Waiting("skill:3:5", 152, out _), "manual selection clears automation timeout while the human chooses");
+        Check(gate.ManualChoice(manual, true) && !gate.ManualChoice(manual, false), "manual choice waits as long as needed and releases when the page closes");
+        gate.Sent("result:2", 153);
+        Check(!gate.ManualChoice(manual, false) && gate.Waiting("result:2", 179, out timeout) && timeout, "manual choices do not disable settlement timeout recovery");
+        manual.Mode = "Currency";
+        Check(!LoopRules.WaitForEquipment(manual, true), "currency farming continues automatic choices regardless of the challenge setting");
+        var oldControl = System.Text.Json.JsonSerializer.Deserialize<Control>("{\"Mode\":\"Challenge\"}", new System.Text.Json.JsonSerializerOptions { IncludeFields = true })!;
+        Check(oldControl.AutoSelectEquipment, "older control files preserve automatic choice default");
+
         var coin = new Drop { Id = 1, Type = 4, Amount = 20, Position = new(3, 0) };
         var xp = new Drop { Id = 2, Type = 3, Amount = 1, Position = new(-3, 0) };
         var currency = Planner.Choose(new(0, 0), 4, [], [coin, xp], new(), _ => true, farmCurrency: true);
@@ -81,9 +94,10 @@ internal static class PandoraCases
         context.Capacity = 1; context.Owned.Add(new() { Id = 10, Type = 1, Value = 10, AttackCount = 1, Cooldown = 1 });
         Check(SkillPlanner.Evaluate(new() { Id = 11, Type = 1, Value = 1000 }, context).Score < 0, "full skill capacity cannot select a fictitious extra weapon");
 
-        var diagnostic = PandoraClient.DiagnosticState(JsonNode.Parse("""{"At":"now","Running":false,"Faulted":true,"Reason":"transition-timeout","Stage":{"Id":2,"Group":1},"Units":[1,2],"Drops":[3,4]}""")!.AsObject());
+        var diagnostic = PandoraClient.DiagnosticState(JsonNode.Parse("""{"At":"now","Running":false,"Faulted":true,"Reason":"transition-timeout","AutoSelectEquipment":false,"Stage":{"Id":2,"Group":1},"Units":[1,2],"Drops":[3,4]}""")!.AsObject());
         Check(diagnostic["Reason"]?.ToString() == "transition-timeout" && diagnostic["Stage"]?["Group"]?.GetValue<int>() == 1, "diagnostic retains the blocked transition and exact stage");
         Check(!diagnostic.ContainsKey("Units") && !diagnostic.ContainsKey("Drops"), "diagnostics exclude per-frame object lists");
+        Check(diagnostic["AutoSelectEquipment"]?.GetValue<bool>() == false, "diagnostics distinguish manual equipment selection from an automation stall");
         Check(DailyDiagnosticExport.Allowed("tools/pandora-state.json") && DailyDiagnosticExport.Allowed("tools/pandora-runtime-error.json"), "standard log export includes Pandora recovery information");
         bool rejected = false;
         try { _ = new PandoraClient("unused", 0, 0, ""); } catch (InvalidOperationException) { rejected = true; }
