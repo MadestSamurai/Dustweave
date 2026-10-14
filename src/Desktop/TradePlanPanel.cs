@@ -206,7 +206,7 @@ public sealed class TradePlanPanel : UserControl
                     driver.Acquire("live");
                     var navigation = new DailyStageNavigation(observation.ReadFrameAsync, () => false);
                     var proofs = DailyWorkflowRegistry.Proofs();
-                    var business = new DailyManagedBusiness(root, driver, proofs, () => false);
+                    using var business = new DailyManagedBusiness(root, driver, proofs, () => false);
                     var workflow = new DailyWorkflow(root, AppContext.BaseDirectory, before.Context, driver, business, navigation, proofs, () => false, (_, _, _) => throw new InvalidOperationException("只读采集不可执行导航。"));
                     await new DailyTradeExecution(workflow, data.VerifiedCatalog ?? throw new InvalidDataException("缺少已校验的跑商规则。")).Capture(temporary);
                     return true;

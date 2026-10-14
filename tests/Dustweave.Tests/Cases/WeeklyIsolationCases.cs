@@ -111,7 +111,7 @@ static class WeeklyIsolationCases
             }
             return O(("State", "ready"), ("Error", ""), ("Query", command["Id"]), ("Pack", Pack),
                 ("Maps", command["Items"]), ("Week", NetworkWeek), ("Now", 100), ("Rewards", "[]"), ("Monsters", "[]"),
-                ("Drops", Array(Rows(targets).Where(t => command["Items"]!.AsArray().Any(m => N(m) == N(t["Map"]))))), ("Targets", new JsonArray()), ("StealReady", true), ("Steals", "[]"), ("StealTargets", new JsonArray()));
+                ("Drops", Array(Rows(targets).Where(t => command["Items"]!.AsArray().Any(m => N(m) == N(t["Map"]))))), ("Targets", new JsonArray()), ("StealReady", S(command["Kind"]) == "collection_query_steal"), ("Steals", "[]"), ("StealTargets", new JsonArray()));
         }
         JsonObject[] Readings()
         {
@@ -198,6 +198,24 @@ static class WeeklyIsolationCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool yes, string message) { if (!yes) throw new Exception(message); checks.Add(message); }
+        using (var f = new Fixture(Path.Combine(root, "collection-adjacent-query")))
+        {
+            var route = new DailyFieldRoute(f.H.Workflow);
+            await route.Progress.Query(1, [1, 2, 3]);
+            await route.Progress.Query(1, [1, 2, 3]);
+            Check(f.Queries.Count == 1, "adjacent route checks share the same fresh server reply");
+            await f.H.Workflow.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
+            await route.Progress.Query(1, [1, 2, 3]);
+            Check(f.Queries.Count == 2, "any intervening input invalidates collection reply reuse");
+            await route.Progress.Query(1, [1, 2, 3], cache: false);
+            Check(f.Queries.Count == 3, "explicit recovery always sends a fresh server query");
+            f.H.Time += 3;
+            await route.Progress.Query(1, [1, 2, 3]);
+            Check(f.Queries.Count == 4, "reply reuse expires without turning historical cache into current proof");
+            route.Progress.Steal = true;
+            await route.Progress.Query(1, [1, 2, 3]);
+            Check(f.Queries.Count == 5, "collection-only reply cannot replace missing theft cooldown evidence");
+        }
         foreach (bool remaining in new[] { false, true })
         using (var f = new Fixture(Path.Combine(root, "walk-no-old-proof-"+remaining)) { AbsorbDrops=true, MapOnePending=remaining, Used=6 })
         {

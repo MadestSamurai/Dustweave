@@ -153,19 +153,7 @@ public sealed partial class DailyFieldRoute
         recovering = true;
         try
         {
-            async Task Act(string ui, string? field = null, string? expect = null, string? absent = null, bool back = false)
-            {
-                var f = (await W.Observe()).Frame;
-                Require(DailyNavigationDecision.Types(f).Contains("BattleUI_FieldBattle") && DailyNavigationDecision.Blockers(f, ui, DailyNavigationPolicy.Load()).Length == 0, "野外战斗或弹窗已经改变");
-                await W.Step(ui, field, expect, absent, back: back);
-            }
-            if (!types.Contains("BattlePopupUI"))
-            {
-                if (!types.Contains("BattlePauseUI"))
-                    await Act("BattleUI_FieldBattle", expect: "BattlePauseUI", back: true);
-                await Act("BattlePauseUI", "_objectRun", expect: "BattlePopupUI");
-            }
-            await Act("BattlePopupUI", "_objGiveUpButton", "GameFieldDefaultUI", "BattleUI_FieldBattle");
+            await ExitEncounter(frame);
             await FieldReady(settle: 0);
             var e = await Evidence();
             bool allowed = !Progress.OnlySteal && CanSuppress(N(Map(e)["id"]));
@@ -184,6 +172,118 @@ public sealed partial class DailyFieldRoute
             return true;
         }
         finally { recovering = false; }
+    }
+    // This retry policy belongs only to retreating from an already observed field
+    // encounter. It must not make uncertain business/network commands replayable.
+    internal async Task ExitEncounter(JsonObject original)
+    {
+        const string battleUi = "BattleUI_FieldBattle";
+        const string pauseButton = "$pointer/HUD/ButtonLayout/Button - Pause/Button - Pause";
+        var origin = original.DeepClone().AsObject();
+        var battle = DailyNavigationDecision.Rows(origin).Single(r => S(r["Type"]) == battleUi);
+        string[] pages = [battleUi, "BattlePauseUI", "BattlePopupUI"];
+        string[] labels = ["打开暂停菜单", "选择撤退", "确认退出战斗"];
+        var policy = DailyNavigationPolicy.Load();
+        int[] attempts = [0, 0, 0];
+        string?[] targets = [null, null, null];
+        double[] retryAt = [0, 0, 0];
+        int furthest = -1;
+        bool exitSubmitted = false;
+        DailyStepException? uncertain = null;
+        int uncertainStep = -1;
+        double end = W.Time + 45;
+        while (W.Time < end)
+        {
+            var current = (await W.Observe()).Frame;
+            Require(DailyEvidence.SameActor(origin, current), "野外战斗账号或连接已经改变");
+            var types = DailyNavigationDecision.Types(current);
+            bool loading = types.Overlaps(DailyNavigationDecision.Transitions);
+            Require(S(current["Scene"]) == S(origin["Scene"]) || exitSubmitted && loading &&
+                (DailyNavigationDecision.SceneLoading(current) || S(current["Scene"]) == "Empty"), "野外战斗地图已经改变");
+            Require(types.All(t => pages.Contains(t) || t == "GameFieldDefaultUI" ||
+                DailyNavigationDecision.PassiveSurface(t) || DailyNavigationDecision.Transitions.Contains(t)), "野外战斗或弹窗已经改变");
+            if (!types.Contains(battleUi) && FieldInputReady(current))
+                return;
+            if (loading || !types.Contains(battleUi))
+            {
+                await W.Delay(200);
+                continue;
+            }
+            var battles = DailyNavigationDecision.Rows(current).Where(r => S(r["Type"]) == battleUi).ToArray();
+            Require(battles.Length == 1 && JsonNode.DeepEquals(battles[0]["Id"], battle["Id"]), "野外战斗已被另一场战斗替换");
+            int step = types.Contains(pages[2]) ? 2 : types.Contains(pages[1]) ? 1 : 0;
+            // Native give-up closes its dialogs before the return-to-field
+            // coroutine finishes. That is progress, not permission to reopen Pause.
+            if (exitSubmitted && step < 2)
+            {
+                await W.Delay(200);
+                continue;
+            }
+            Require(step >= furthest, "野外战斗退出页面已经改变");
+            furthest = step;
+            if (uncertain != null)
+            {
+                if (step > uncertainStep) uncertain = null;
+                else
+                {
+                    if (W.Time >= retryAt[step]) throw uncertain;
+                    await W.Delay(200);
+                    continue;
+                }
+            }
+            var surfaces = DailyNavigationDecision.Rows(current).Where(r => S(r["Type"]) == pages[step]).ToArray();
+            Require(surfaces.Length == 1 && DailyNavigationDecision.Blockers(current, pages[step], policy).Length == 0, "野外战斗或弹窗已经改变");
+            var surface = surfaces[0];
+            string field = step == 0 ? pauseButton : step == 1 ? "_objectRun" : "_objGiveUpButton";
+            var choices = Rows(surface["Targets"]).Where(t => S(t["Field"]) == field && (step != 0 || S(t["Route"]) == "pointer")).ToArray();
+            Require(choices.Length <= 1, "野外战斗退出按钮不唯一");
+            // Back remains a bounded compatibility fallback only when there is
+            // no pause button; a disabled observed button is never bypassed.
+            bool back = step == 0 && choices.Length == 0;
+            var target = choices.SingleOrDefault();
+            string signature = S(surface["Id"]) + "|" + (back ? "back" : S(target?["Id"]) + "|" + S(target?["Route"]));
+            Require(targets[step] == null || targets[step] == signature, "野外战斗退出按钮已被替换");
+            if (!DailyNavigationDecision.ReadyInput(surface) || !back && (target == null || !B(target["Enabled"])) || W.Time < retryAt[step])
+            {
+                await W.Delay(200);
+                continue;
+            }
+            if (attempts[step] >= 3)
+                throw new StageHostException("adapter", "野外遇敌退出未完成：" + labels[step] + "已尝试3次，收集进度已保留。");
+            targets[step] = signature;
+            attempts[step]++;
+            var action = O(("ui", pages[step]), ("timeout", 5), ("reason", "野外遇敌：" + labels[step]));
+            if (back) action["back"] = true;
+            else { action["field"] = field; action["target_id"] = Copy(target!["Id"]); }
+            W.Driver.Diagnostics.Event("field_retreat", O(("step", step), ("attempt", attempts[step]), ("scene", current["Scene"]), ("surface", surface["Id"])));
+            try
+            {
+                // Own the exact observed page through final preflight and native
+                // dispatch. A receipt confirms input delivery; the next frame
+                // decides progress, including late/already completed transitions.
+                await W.Driver.SubmitOwnedAsync(action, current);
+                if (step == 2) exitSubmitted = true;
+            }
+            catch (DailyStepException error) when (error.DefinitelyNotDispatched &&
+                (error.PresentationChanged || error.Kind == "rejected" && error.Message.StartsWith("Owned confirmation changed", StringComparison.Ordinal)))
+            {
+                W.Driver.Diagnostics.Event("field_retreat_reobserve", O(("step", step), ("reason", error.Message)));
+            }
+            catch (DailyStepException error) when (error.Kind == "pending" && error.MayHaveDispatched)
+            {
+                // Lost receipts may still lead to a visible next page. Observe
+                // that progress, but never replay an input that may still be queued.
+                uncertain = error;
+                uncertainStep = step;
+                if (step == 2) exitSubmitted = true;
+                W.Driver.Diagnostics.Event("field_retreat_await_progress", O(("step", step), ("reason", error.Message)));
+            }
+            // Retreat confirmation can wait on a server response. Do not hammer
+            // it while the game is processing; unknown receipts still propagate.
+            retryAt[step] = W.Time + (uncertain != null ? 10 : step == 2 ? 5 : 1.5);
+        }
+        if (uncertain != null) throw uncertain;
+        throw new StageHostException("adapter", "野外遇敌退出未完成，收集进度已保留；请检查当前战斗画面后接续任务。");
     }
     public static IEnumerable<DailyBusinessProof> Proofs()
     {

@@ -76,5 +76,5 @@ sealed class WorkflowHarness : IDisposable
         item["AtUtcTicks"] = Ticks;
         Box.Values[$"live:events~{Ticks}-{sequence}.json"] = JsonSerializer.SerializeToUtf8Bytes(item);
     }
-    public void Dispose() => Driver.Dispose();
+    public void Dispose() { Business.Dispose(); Driver.Dispose(); }
 }

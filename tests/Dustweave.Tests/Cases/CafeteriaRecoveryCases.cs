@@ -6,6 +6,35 @@ static class CafeteriaRecoveryCases
 {
     public static async Task Run(string output, List<string> cases)
     {
+        using (var f = new WorkflowHarness(Path.Combine(output, "cafeteria-successive-bubbles"), DailyCafeteria.Proofs().ToArray()))
+        {
+            f.Frame["Scene"] = "Map3007_001";
+            f.Page("CafeteriaFieldDefaultUI", "_buttonTrackingRegular.button");
+            const string field = "$pointer/Parent/Cafeteria(Clone)/Button - EventBubble";
+            f.Frame["Surfaces"]!.AsArray().Add(O(("Id", 2), ("Type", "OverheadManageUI"), ("Popup", false), ("Order", 0), ("InputReady", true),
+                ("Targets", new JsonArray(O(("Id", 99), ("Enabled", true), ("Field", field), ("Route", "pointer"))))));
+            int collected = 0;
+            var clickedAt = new List<double>();
+            f.Readings = () => [
+                WorkflowCases.Reading("navigation.pack", (DailyTravel.CurrentPack + ".Id", 3007), (DailyTravel.CurrentPack + ".PackType", 9)),
+                WorkflowCases.Reading("cafeteria.cache", ("DailyRegularCostumeId", new JsonArray()), ("DailyNpcRewardCurrencyCount", collected)),
+                WorkflowCases.Reading("cafeteria.regular_done", ("Keys", new JsonArray()), ("Values", new JsonArray())),
+                WorkflowCases.Reading("cafeteria.rules", ("DailyShopCurrencyLimit", 3), ("EventRewardType", 44))];
+            f.OnCommand = c =>
+            {
+                clickedAt.Add(f.Time);
+                if (N(c["TargetId"]) != 99 + collected) throw new Exception("Reused stale bubble target");
+                f.Event("cafeteria.event", "request"); collected++;
+                f.Event("cafeteria.event", "response", ("DailyNpcRewardCurrencyCount", collected),
+                    ("RewardInfo", O(("itemInfo", new JsonArray(O(("type", 44), ("count", 1)))))));
+                f.Time += .01; // A real response advances the clock before the next transaction.
+                f.Frame["Surfaces"]![1]!["Targets"]![0]!["Id"] = 99 + collected;
+            };
+            var result = await DailyCafeteria.Run(f.Workflow);
+            if (S(result["state"]) != "completed" || f.Box.Commands.Count != 3 || clickedAt.Zip(clickedAt.Skip(1), (a, b) => b - a).Any(gap => gap >= .3))
+                throw new Exception("Visible successive bubbles retained an idle delay: " + string.Join(",", clickedAt));
+            cases.Add("settled restaurant bubbles immediately reselect the next fresh target without idle polling delays");
+        }
         foreach (string mode in new[] { "expired", "native-expired", "ambiguous", "unknown" })
         {
             using var f = new WorkflowHarness(Path.Combine(output, "cafeteria-bubble-" + mode), DailyCafeteria.Proofs().ToArray());

@@ -1054,6 +1054,12 @@
       "bytes": 9709
     },
     {
+      "path": "src/Core/DailyDirectoryChanges.cs",
+      "sha256": "f065b6be8c1543408f415d0a34a9eb0aa9c1ded1e33fb8eec1974e66a7ee3927",
+      "reasons": ["build input"],
+      "bytes": 6129
+    },
+    {
       "path": "src/Core/DailyBusinessJournal.cs",
       "sha256": "e548e45eee9be63800b223c2881022cecdd5260312c96aed31fc32d5183389ea",
       "reasons": [

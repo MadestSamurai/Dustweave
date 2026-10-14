@@ -181,6 +181,18 @@ Weekly theft uses the same read-only native talent gates as field collection. Sh
 
 Focused groups: `PassRecovery,Workflow,FieldTalent,CollectionReadiness,DiagnosticExport`. Synthetic tests contain no user captures; captured-report replay and current-client compilation belong under ignored investigation artifacts.
 
+The field talent menu opens asynchronously. A matching command receipt is not proof that `QuickMenuUI` has appeared. The readiness loop must accept the unchanged field before the first menu frame, then verify menu identity, input readiness and native talent gates. Do not extend a fixed delay or resend the open command. A lost/replaced menu or battle returns to guarded interruption handling; account, scene, map and week changes remain boundaries. Failure snapshots retain the opening receipt and before/after evidence even when ordinary step history is omitted from an export. `CollectionReadiness` covers delayed first appearance, passive overlays, input animation, closure, replacement, battle, unknown popups, timeout, stop and context changes.
+
+### Journal lookup performance / 操作记录查询性能
+
+Scheduled takeover is off by default. When enabled, it closes the registered tool, waits for pending execution to settle, then normally closes only the game instance captured at the start of the handoff. The existing account queue performs a fresh launch and identity verification, including when the tool was already idle in a minigame. Process replacement or close failure must prevent queue startup, never trigger process-wide killing. `SchedulingUpdates` covers restart gating; the packaged scheduling smoke covers localized controls.
+
+`DailyManagedBusiness` builds routing summaries once per queue session. Subsequent checks consume Windows directory-change notifications and inspect only changed records; do not reintroduce a directory enumeration or per-file identity scan on every action. Own saves update the summary directly. External writes, deletion, atomic replacement and notification overflow must remain visible. Overflow forces fresh parsing even if file identity, length and timestamps match; unsupported notifications fall back to fresh reads. Queue and temporary utility sessions must dispose their directory observers.
+
+Use `BusinessJournal` to verify a 5,000-record history, unchanged-file access counts, same-stamp updates, overflow, directory replacement and duplicate evidence. Benchmark both the installed baseline and the candidate inside the same Sandboxie merged filesystem: testing only the physical sandbox directory misses inherited host history. Report cold discovery separately from repeated lookup latency; lookup timing is not an end-to-end map or game benchmark.
+
+餐厅的下一气泡来自新的当前观察，已确认领取后不增加空闲轮询等待。周收集仅在同一流程实例、同一地图、两秒内且没有后续输入或待恢复操作时复用刚收到的服务器结果；显式恢复查询始终重新请求。相关回归为 `CafeteriaRecovery`、`WeeklyIsolation` 和 `CollectionReadiness`，账户、周期及未知回执保护保持不变。
+
 ### Daily Talent Pill policy / 日常天赋药限制
 
 General settings are account-scoped: reserve defaults to 0, automatic refill is off, and the initial refill target is 1000. Only the daily queue supplies `PotionPolicy`; embedded and standalone tool sessions keep their own settings. Schema 16 migrates without changing task selections.

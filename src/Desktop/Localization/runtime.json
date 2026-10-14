@@ -1,4 +1,56 @@
 {
+  "message.field_retreat_0": {
+    "zh-CN": "野外战斗账号或连接已经改变",
+    "zh-TW": "野外戰鬥帳號或連線已改變",
+    "en-US": "The account or connection changed during the field encounter."
+  },
+  "message.field_retreat_1": {
+    "zh-CN": "野外战斗地图已经改变",
+    "zh-TW": "野外戰鬥地圖已改變",
+    "en-US": "The field encounter map changed."
+  },
+  "message.field_retreat_2": {
+    "zh-CN": "野外战斗已被另一场战斗替换",
+    "zh-TW": "野外戰鬥已被另一場戰鬥替換",
+    "en-US": "A different field battle has replaced this encounter."
+  },
+  "message.field_retreat_3": {
+    "zh-CN": "野外战斗退出页面已经改变",
+    "zh-TW": "野外戰鬥退出頁面已改變",
+    "en-US": "The field battle exit screen changed."
+  },
+  "message.field_retreat_4": {
+    "zh-CN": "野外战斗退出按钮不唯一",
+    "zh-TW": "野外戰鬥退出按鈕不唯一",
+    "en-US": "The field battle exit button could not be identified uniquely."
+  },
+  "message.field_retreat_5": {
+    "zh-CN": "野外战斗退出按钮已被替换",
+    "zh-TW": "野外戰鬥退出按鈕已被替換",
+    "en-US": "The field battle exit button changed."
+  },
+  "message.field_retreat_6": {
+    "zh-CN": "野外遇敌退出未完成，收集进度已保留；请检查当前战斗画面后接续任务。",
+    "zh-TW": "野外遇敵退出未完成，收集進度已保留；請檢查目前戰鬥畫面後接續任務。",
+    "en-US": "Could not leave the field encounter. Collection progress is saved; check the battle screen, then resume the task."
+  },
+  "message.field_retreat_retry_0": {
+    "zh-CN": "野外遇敌退出未完成：打开暂停菜单已尝试3次，收集进度已保留。",
+    "zh-TW": "野外遇敵退出未完成：開啟暫停選單已嘗試3次，收集進度已保留。",
+    "en-US": "Could not leave the field encounter after 3 attempts at opening the pause menu. Collection progress is saved."
+  },
+  "message.field_retreat_retry_1": {
+    "zh-CN": "野外遇敌退出未完成：选择撤退已尝试3次，收集进度已保留。",
+    "zh-TW": "野外遇敵退出未完成：選擇撤退已嘗試3次，收集進度已保留。",
+    "en-US": "Could not leave the field encounter after 3 attempts at selecting retreat. Collection progress is saved."
+  },
+  "message.field_retreat_retry_2": {
+    "zh-CN": "野外遇敌退出未完成：确认退出战斗已尝试3次，收集进度已保留。",
+    "zh-TW": "野外遇敵退出未完成：確認退出戰鬥已嘗試3次，收集進度已保留。",
+    "en-US": "Could not leave the field encounter after 3 attempts at confirming retreat. Collection progress is saved."
+  }
+,
+
   "message.outside_mirror_play_period": {
     "zh-CN": "镜中当前不在战斗期，保留剩余次数并继续后续日常",
     "zh-TW": "鏡中目前不在戰鬥期，保留剩餘次數並繼續後續日常",

@@ -130,7 +130,7 @@ public sealed class PackagedDailyQueueExecutor(string directory) : IDailyQueueEx
         var navigation = new DailyStageNavigation(observation.ReadFrameAsync, Stopped);
         var extension = DailyExtensionLoader.Load(DailyPlugin.Current);
         var proofs = DailyWorkflowRegistry.Proofs(extension);
-        var business = new DailyManagedBusiness(root, driver, proofs, Stopped);
+        using var business = new DailyManagedBusiness(root, driver, proofs, Stopped);
         DailyTradeData? tradeData = null;
         if (!syncCollection && (tasks == null || tasks.Contains("trade")) && DailyStageCatalog.Enabled("trade", new DailyPreferenceStore(root).Read(account)))
         {

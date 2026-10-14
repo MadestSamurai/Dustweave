@@ -10,6 +10,7 @@ public partial class MainWindow
     private DailyScheduleStore scheduleStore = null!;
     private bool scheduleChecking;
     private bool scheduleToolDraining;
+    private bool scheduleToolNeedsSettlement;
     private GameInstance? scheduleToolGame;
     private DateTime nextScheduleCheck;
     private void InitializeSchedules()
@@ -67,6 +68,7 @@ public partial class MainWindow
             due = DailyScheduleClock.Due(plan, now, TimeZoneInfo.Local);
             if (due == null)
             {
+                ResetScheduleHandoff();
                 if (scheduleStore.Last is { State: "waiting" } waiting && DateTimeOffset.TryParse(waiting.Occurrence, out var missed) && now - missed > DailyScheduleClock.Grace)
                     scheduleStore.Record(waiting with { State = "missed", AtUtc = now });
                 return;
@@ -84,7 +86,7 @@ public partial class MainWindow
                 ?? throw new InvalidDataException("schedule.account_missing")).ToArray();
             if (!preferencesPanel.SavePending()) throw new InvalidDataException("schedule.unsaved_settings");
             if (plan.Execution.Enabled && DailySandbox.Installation() == null) throw new InvalidDataException("parallel.install_required");
-            if (ToolRunning || scheduleToolDraining)
+            if (ToolRunning || scheduleToolDraining || plan.TakeOverTools)
             {
                 scheduleStore.Record(new(due.Value.ToString("O"), "waiting", now,
                     plan.TakeOverTools ? "schedule.stopping_tool" : "schedule.tool_busy"));
@@ -98,6 +100,7 @@ public partial class MainWindow
         }
         catch (Exception e)
         {
+            ResetScheduleHandoff();
             if (due != null) { scheduleStore.Claim(due.Value, DateTimeOffset.UtcNow); scheduleStore.Record(new(due.Value.ToString("O"), "failed", DateTimeOffset.UtcNow, e.Message)); }
             schedulePanel.Feedback(e.Message.StartsWith("schedule.") ? e.Message : "schedule.failed", true);
         }
@@ -105,13 +108,17 @@ public partial class MainWindow
     }
     private async Task<bool> StopToolForScheduleAsync()
     {
-        // Only the child registered by this menu may be stopped; never kill a process
-        // or release another automation's lease to make a schedule start.
-        if (toolSession.Current == null && !scheduleToolDraining) return false;
+        // Close only the registered tool and the exact game captured before it
+        // stopped. The daily account queue relaunches and verifies the target.
         toolChanging = true; SetBusy(busy);
         try
         {
-            if (!scheduleToolDraining) { scheduleToolGame = host.Find(); scheduleToolDraining = true; }
+            if (!scheduleToolDraining)
+            {
+                scheduleToolGame = host.Find();
+                scheduleToolNeedsSettlement = ToolRunning;
+                scheduleToolDraining = true;
+            }
             if (!await toolSession.CloseAsync()) return false;
             var game = scheduleToolGame;
             var until = DateTime.UtcNow.AddSeconds(35);
@@ -122,16 +129,27 @@ public partial class MainWindow
                 {
                     if (DailyToolControl.IsOccupied(root)) return false;
                     if (game == null || host.Find() != game) return true;
+                    if (!scheduleToolNeedsSettlement) return true;
                     var state = DailySuite.Read(root, game);
                     return state != null && state.At >= DateTime.UtcNow.AddSeconds(-5).Ticks && !DailyActivityRules.ExecutionPending(state.Pending);
                 });
-                if (idle) { scheduleToolDraining = false; scheduleToolGame = null; return true; }
+                if (idle)
+                {
+                    schedulePanel.Feedback("schedule.restarting_game");
+                    await DailyScheduleTakeover.CloseGameAsync(host, game, CancellationToken.None);
+                    ResetScheduleHandoff();
+                    return true;
+                }
                 await Task.Delay(250);
             }
             schedulePanel.Feedback("schedule.takeover_pending", true);
             return false;
         }
         finally { toolChanging = false; SetBusy(busy); }
+    }
+    private void ResetScheduleHandoff()
+    {
+        scheduleToolDraining = false; scheduleToolNeedsSettlement = false; scheduleToolGame = null;
     }
     private async Task<string> ExecuteAccountQueue(DailyAccount[] targets, DailyParallelOptions? execution = null)
     {

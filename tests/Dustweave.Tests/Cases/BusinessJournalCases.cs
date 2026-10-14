@@ -37,7 +37,7 @@ static class BusinessJournalCases
         f.Business.RequireResolved(f.Context, proof.Role);
         Check(true, "other-server pending operation stays isolated");
         second["server"] = Copy(f.Context["server"]); second["cycle"] = "old-cycle"; DailyJson.Write(secondFile, second);
-        var restarted = new DailyManagedBusiness(f.Root, f.Driver, [proof], () => false);
+        using var restarted = new DailyManagedBusiness(f.Root, f.Driver, [proof], () => false);
         Check(Blocked(restarted), "fresh process still detects unresolved history across cycle changes");
         File.Delete(secondFile); f.Business.RequireResolved(f.Context, proof.Role);
         Check(true, "removed journal entries do not leave stale pending state");
@@ -55,8 +55,72 @@ static class BusinessJournalCases
         Check(invalid && f.Box.Commands.Count == 0, "unreadable changed record cannot be treated as a successful claim");
         RecordQueries(output, cases);
         EquipmentSources(output, cases);
+        LargeHistory(output, cases);
         IncompletePickupHistory(output, cases);
         await Replan(output, cases);
+    }
+    private static void LargeHistory(string output, List<string> cases)
+    {
+        void Check(bool ok, string name) { if (!ok) throw new Exception(name); cases.Add(name); }
+        var proof = new DailyBusinessProof("cafeteria.event", "cafeteria_guests", ["cafeteria"], (_, _, _) => new());
+        using var f = new WorkflowHarness(Path.Combine(output, "journal-large-history"), [proof]);
+        string folder = Path.Combine(f.Root, "live", "managed-business"); Directory.CreateDirectory(folder);
+        JsonObject Row(string id) => O(("id", id), ("role", proof.Role), ("account", f.Context["actor"]![3]),
+            ("player", f.Context["actor"]![4]), ("server", f.Context["server"]), ("cycle", "old"), ("state", "completed"));
+        string sample = "";
+        for (int i = 0; i < 5000; i++)
+        {
+            string id = Guid.NewGuid().ToString("N"); sample = Path.Combine(folder, id + ".json");
+            File.WriteAllText(sample, Row(id).ToJsonString());
+        }
+        int stopChecks = 0;
+        using (var interrupted = new DailyManagedBusiness(f.Root, f.Driver, [proof], () => ++stopChecks >= 3))
+        {
+            bool stopped = false;
+            try { interrupted.RequireResolved(f.Context, proof.Role); } catch (StageHostException e) when (e.Kind == "stopped") { stopped = true; }
+            Check(stopped && interrupted.JournalMetadataReads < 500,
+                "cold history discovery honors stop without inspecting the entire history");
+        }
+        f.Business.RequireResolved(f.Context, proof.Role);
+        f.Business.RequireResolved(f.Context, proof.Role); // Drain notifications captured during bootstrap.
+        int scans = f.Business.JournalFullScans, reads = f.Business.JournalMetadataReads;
+        for (int i = 0; i < 50; i++) f.Business.RequireResolved(f.Context, proof.Role);
+        Check(f.Business.JournalFullScans == scans && f.Business.JournalMetadataReads == reads,
+            "5000 settled records cause zero directory scans or per-file metadata opens across 50 hot checks");
+        var current = f.Business.Create(f.Context, proof.Role, f.Evidence(), new(), new());
+        current["state"] = "completed"; f.Business.Save(current); f.Business.RequireResolved(f.Context, proof.Role);
+        Check(f.Business.JournalFullScans == scans && f.Business.JournalMetadataReads - reads < 15,
+            "saving a new action refreshes only its own path, never rescans historical metadata");
+        var row = Row(Path.GetFileNameWithoutExtension(sample)); row["state"] = "unknown";
+        var written = File.GetLastWriteTimeUtc(sample);
+        File.WriteAllText(sample, row.ToJsonString()); File.SetLastWriteTimeUtc(sample, written);
+        bool blocked = false;
+        try { f.Business.RequireResolved(f.Context, proof.Role); } catch (StageHostException e) when (e.Kind == "pending") { blocked = true; }
+        Check(blocked && f.Business.JournalFullScans == scans,
+            "an external in-place pending update is observed synchronously without a history scan");
+        File.Delete(sample); f.Business.RequireResolved(f.Context, proof.Role);
+        Check(f.Business.JournalFullScans == scans, "deleting an active record updates only that path");
+        // Burst beyond the kernel buffer, then modify a known record without
+        // changing identity, length or timestamps. Lost notifications must not
+        // cause the rebuild to trust its previous header.
+        string existing = Directory.EnumerateFiles(folder, "*.json").First();
+        int length = File.ReadAllText(existing).Length;
+        var originalTime = File.GetLastWriteTimeUtc(existing);
+        for (int i = 0; i < 1400; i++) { string id = Guid.NewGuid().ToString("N"); File.WriteAllText(Path.Combine(folder, id + ".json"), Row(id).ToJsonString()); }
+        row = Row(Path.GetFileNameWithoutExtension(existing)); row["state"] = "unknown";
+        File.WriteAllText(existing, row.ToJsonString().PadRight(length)); File.SetLastWriteTimeUtc(existing, originalTime);
+        blocked = false; try { f.Business.RequireResolved(f.Context, proof.Role); } catch (StageHostException e) when (e.Kind == "pending") { blocked = true; }
+        Check(blocked, "change-buffer overflow fully rereads same-stamp records and retains the unresolved guard");
+        File.WriteAllText(existing, Row(Path.GetFileNameWithoutExtension(existing)).ToJsonString());
+        f.Business.RequireResolved(f.Context, proof.Role);
+        Directory.Move(folder, folder + "-replaced"); Directory.CreateDirectory(folder);
+        string replacement = Guid.NewGuid().ToString("N"); row = Row(replacement); row["state"] = "unknown";
+        File.WriteAllText(Path.Combine(folder, replacement + ".json"), row.ToJsonString());
+        blocked = false; try { f.Business.RequireResolved(f.Context, proof.Role); } catch (StageHostException e) when (e.Kind == "pending") { blocked = true; }
+        Check(blocked, "replacing the entire journal folder triggers a safe refresh instead of trusting the old directory handle");
+        File.WriteAllText(Path.Combine(folder, replacement + ".json"), Row(replacement).ToJsonString());
+        f.Business.RequireResolved(f.Context, proof.Role);
+        Check(true, "directory replacement fallback remains usable after pending work is reconciled");
     }
     private static void IncompletePickupHistory(string output, List<string> cases)
     {

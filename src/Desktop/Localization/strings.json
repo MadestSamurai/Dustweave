@@ -120,14 +120,14 @@
     "en-US": "Scheduled execution"
   },
   "schedule.takeover": {
-    "zh-CN": "到点停止内置工具并执行日常",
-    "zh-TW": "到點停止內建工具並執行日常",
-    "en-US": "Stop built-in tools when the schedule is due"
+    "zh-CN": "到点停止内置工具，重启游戏并执行日常",
+    "zh-TW": "到點停止內建工具，重啟遊戲並執行日常",
+    "en-US": "Stop built-in tools, restart the game, and run dailies"
   },
   "schedule.takeover_hint": {
-    "zh-CN": "等待当前操作结束后接管。关闭时，工具运行期间最多等候 15 分钟。",
-    "zh-TW": "等待目前操作結束後接管。關閉時，工具執行期間最多等候 15 分鐘。",
-    "en-US": "Waits for the current operation to finish before taking over. When disabled, a busy tool delays the schedule for up to 15 minutes."
+    "zh-CN": "等待当前操作结束，正常关闭游戏，再按下方账号计划启动。关闭时，工具运行期间最多等候 15 分钟。",
+    "zh-TW": "等待目前操作結束，正常關閉遊戲，再依下方帳號計畫啟動。關閉時，工具執行期間最多等候 15 分鐘。",
+    "en-US": "Finishes the current operation, closes the game normally, then launches the accounts below. When disabled, a busy tool delays the schedule for up to 15 minutes."
   },
   "schedule.stopping_tool": {
     "zh-CN": "正在正常停止内置工具，等待当前操作结束",
@@ -140,9 +140,24 @@
     "en-US": "A built-in tool is running; scheduled takeover is disabled"
   },
   "schedule.takeover_pending": {
-    "zh-CN": "工具已停止，仍在等待游戏确认当前操作；确认后再执行日常。",
-    "zh-TW": "工具已停止，仍在等待遊戲確認目前操作；確認後再執行日常。",
-    "en-US": "The tool has stopped. Waiting for the game to finish its pending operation before starting dailies."
+    "zh-CN": "工具已停止，仍在等待游戏确认当前操作；确认后重启游戏并执行日常。",
+    "zh-TW": "工具已停止，仍在等待遊戲確認目前操作；確認後重啟遊戲並執行日常。",
+    "en-US": "The tool has stopped. Waiting for its pending operation before restarting the game and running dailies."
+  },
+  "schedule.restarting_game": {
+    "zh-CN": "正在正常关闭游戏，随后按计划重新启动并执行日常",
+    "zh-TW": "正在正常關閉遊戲，隨後依計畫重新啟動並執行日常",
+    "en-US": "Closing the game normally before restarting it for scheduled dailies"
+  },
+  "schedule.game_changed": {
+    "zh-CN": "停止工具期间游戏进程发生变化，本次未关闭新进程；请重新连接后执行日常。",
+    "zh-TW": "停止工具期間遊戲程序發生變化，本次未關閉新程序；請重新連線後執行日常。",
+    "en-US": "The game process changed while stopping the tool. The new process was left open; reconnect before running dailies."
+  },
+  "schedule.game_not_closed": {
+    "zh-CN": "游戏尚未正常退出，本次日常未启动；请处理游戏窗口后重试。",
+    "zh-TW": "遊戲尚未正常退出，本次日常未啟動；請處理遊戲視窗後重試。",
+    "en-US": "The game has not exited. Dailies have not started; check the game window and retry."
   },
   "schedule.invalid_mode": {
     "zh-CN": "请选择有效的定时执行方式。",

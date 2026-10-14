@@ -53,7 +53,7 @@ internal sealed class DailyBargainSession(string root, string account)
         using var driver = new DailyCommandDriver(root, new DailyPipeMailbox(root, game), observation.ReadFrameAsync, () => false);
         driver.EnsureBound(first.Context);
         var proofs = new[] { DailyBargainProof.Definition };
-        var business = new DailyManagedBusiness(root, driver, proofs, () => false);
+        using var business = new DailyManagedBusiness(root, driver, proofs, () => false);
         bool StopBetweenRounds() => stop && trainer?.Settling != true;
         var w = new DailyWorkflow(root, AppContext.BaseDirectory, first.Context, driver, business,
             new DailyStageNavigation(observation.ReadFrameAsync, StopBetweenRounds), proofs, StopBetweenRounds,

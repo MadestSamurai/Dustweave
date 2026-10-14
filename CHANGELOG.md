@@ -1,5 +1,14 @@
 # Changelog / 更新记录
 
+## 1.3.5 — 2026-10-14
+
+- 定时接管改为停止内置工具、等待当前操作完成，再正常重启游戏并按计划执行日常；默认关闭。
+- 消除日常操作之间反复扫描全部历史记录的开销，减少餐厅气泡与周收集的重复等待。
+- 修复天赋菜单尚未展开就被误判为关闭，以及周任务遇敌后退出流程推进不稳的问题。
+- Scheduled takeover now restarts the game before daily tasks; faster journal lookups and field/reward transitions reduce repeated waits.
+- Fixes talent-menu opening races and improves encounter-exit recovery during weekly routes.
+- [完整说明 / Full notes](docs/releases/1.3.5.md)
+
 ## 1.3.4 — 2026-10-14
 
 - 修复成功历史记录清理后，自动日常在检查完成时中断的问题；普通与沙盒队列均适用。

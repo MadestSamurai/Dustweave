@@ -161,6 +161,15 @@ public partial class MainWindow
             WorkspaceTabs.SelectedItem = ScheduleTab; await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); Capture("schedule-compact");
             Check(!File.Exists(scheduleStore.PlanPath), "Smoke persisted a real schedule");
             Check(fixture.Calls.Count == before, "Schedule/update UI called the game");
+            var parkedGame = fixture.Game;
+            int restartCalls = fixture.Calls.Count;
+            try
+            {
+                Check(await StopToolForScheduleAsync(), "Scheduled restart did not accept an idle tool/game");
+                Check(fixture.Game == null && fixture.Calls.Skip(restartCalls).SequenceEqual(new[] { "close" }), "Takeover reused a game parked in a minigame or attempted UI navigation");
+                Check(!scheduleToolDraining && scheduleToolGame == null, "Successful restart handoff retained an old process");
+            }
+            finally { fixture.Game = parkedGame; }
             Check(DailyReleaseHistory.ShouldShow(root, DailyProductVersion.Current), "New version notice suppressed");
             var oldTheme = theme.Preference;
             foreach (var appearance in new[] { DailyAppearance.Light, DailyAppearance.Dark })

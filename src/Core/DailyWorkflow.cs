@@ -239,9 +239,17 @@ public sealed class DailyWorkflow
     }
     public async Task<JsonObject> Transact(string role, JsonObject scope, JsonObject action, double seconds = 40, Func<Task>? drive = null, Func<Task>? heartbeat = null)
     {
-        await Observe();
         var p = proofs[role];
         var before = await Evidence(p.PrefixesFor(scope));
+        return await TransactObserved(role, scope, action, before, seconds, drive, heartbeat);
+    }
+    internal async Task<JsonObject> TransactObserved(string role, JsonObject scope, JsonObject action, JsonObject before, double seconds = 40, Func<Task>? drive = null, Func<Task>? heartbeat = null)
+    {
+        await Observe();
+        var p = proofs[role];
+        long age = Driver.UtcTicks - DailyData.N(before["AtUtcTicks"]);
+        if (age < 0 || age > TimeSpan.TicksPerSecond)
+            before = await Evidence(p.PrefixesFor(scope));
         var op = Business.Create(Context, role, before, scope, action);
         report("执行：" + p.Stage + " / " + role);
         await Business.CommitAsync(op, Context, seconds, drive, heartbeat);

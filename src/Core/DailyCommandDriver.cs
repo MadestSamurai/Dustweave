@@ -46,6 +46,9 @@ public sealed partial class DailyCommandDriver : IDisposable
     private JsonObject? lastDiagnosticFrame;
     private bool closed;
     public double MonotonicTime => clock();
+    // Invalidates short-lived read-only results even when a submitted command
+    // times out. An uncertain dispatch must never reuse pre-command progress.
+    internal long InputRevision { get; private set; }
     public Task DelayAsync(TimeSpan duration) => delay(duration);
     public bool HasControl => !closed && owner.Held;
     internal bool PauseRequested => stopped() || mailbox.Read("live", "pause") != null;
@@ -387,6 +390,7 @@ public sealed partial class DailyCommandDriver : IDisposable
         JsonObject? receipt = null;
         try
         {
+            InputRevision++;
             mailbox.Write("live", "command.json", JsonSerializer.SerializeToUtf8Bytes(command), true);
             while (clock() < end)
             {

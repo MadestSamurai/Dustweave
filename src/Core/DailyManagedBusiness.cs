@@ -19,7 +19,7 @@ public sealed record DailyBusinessProof(string Role, string Stage, string[] Pref
 }
 
 /// <summary>Managed transactions share one command driver and a durable, account-scoped operation journal.</summary>
-public sealed partial class DailyManagedBusiness
+public sealed partial class DailyManagedBusiness : IDisposable
 {
     private readonly Dictionary<string, string> recordPaths = new(StringComparer.Ordinal);
     private readonly HashSet<string> currentOperations = new(StringComparer.Ordinal);
@@ -45,30 +45,25 @@ public sealed partial class DailyManagedBusiness
     private IEnumerable<JsonObject> ReadRecords(JsonObject context, string? role, bool includeLegacy, Func<JsonObject, bool>? metadata)
     {
         var seen = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (string directory in includeLegacy ? new[] { "managed-business", "business" } : new[] { "managed-business" })
+        foreach (var entry in JournalEntries(role, includeLegacy))
         {
-            string path = Path.Combine(root, "live", directory);
-            if (!Directory.Exists(path)) continue;
-            foreach (string file in Directory.EnumerateFiles(path, "*.json"))
+            string file = entry.Key;
+            var header = entry.Value.Summary;
+            string name = header["role"]?.GetValue<string>() ?? "";
+            if (!proofs.ContainsKey(name) || role != null && name != role) continue;
+            DailyManagedReconciliation.ValidateRecord(file, header);
+            string id = header["id"]!.GetValue<string>();
+            if (seen.TryGetValue(id, out var prior))
             {
-                var header = ReadHeader(file);
-                string name = header["role"]?.GetValue<string>() ?? "";
-                if (!proofs.ContainsKey(name) || role != null && name != role) continue;
-                DailyManagedReconciliation.ValidateRecord(file, header);
-                string id = header["id"]!.GetValue<string>();
-                if (seen.TryGetValue(id, out var prior))
-                {
-                    // Compare full bodies even for excluded accounts or matching compact headers.
-                    if (!JsonNode.DeepEquals(ReadJournalRecord(prior), ReadJournalRecord(file)))
-                        throw new StageHostException("pending", "发现同一操作的冲突记录，未覆盖或重复提交：" + id);
-                    continue;
-                }
-                seen.Add(id, file);
-                recordPaths[id] = file;
-                if (JsonNode.DeepEquals(header["account"], context["actor"]![3]) && JsonNode.DeepEquals(header["player"], context["actor"]![4]) && JsonNode.DeepEquals(header["server"], context["server"])
-                    && (metadata == null || metadata(header)))
-                    yield return ReadJournalRecord(file);
+                // Compare full bodies even for excluded accounts or matching compact headers.
+                CheckJournalDuplicate(id, prior, file);
+                continue;
             }
+            seen.Add(id, file);
+            recordPaths[id] = file;
+            if (JsonNode.DeepEquals(header["account"], context["actor"]![3]) && JsonNode.DeepEquals(header["player"], context["actor"]![4]) && JsonNode.DeepEquals(header["server"], context["server"])
+                && (metadata == null || metadata(header)))
+                yield return ReadJournalRecord(file);
         }
     }
     public void RequireResolved(JsonObject context, string role) => RequireResolved(context, role, null);

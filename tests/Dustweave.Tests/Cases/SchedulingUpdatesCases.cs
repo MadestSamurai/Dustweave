@@ -11,6 +11,7 @@ internal static class SchedulingUpdatesCases
 {
     public static async Task Run(string root, List<string> cases)
     {
+        await CheckScheduledRestart(cases);
         void Check(string name, bool condition) { if (!condition) throw new Exception(name); cases.Add(name); }
         void Reject(string name, Action action) { try { action(); } catch (InvalidDataException) { cases.Add(name); return; } throw new Exception(name); }
         string data = Path.Combine(root, "schedule-update"); Directory.CreateDirectory(data);
@@ -141,6 +142,51 @@ internal static class SchedulingUpdatesCases
         File.Delete(package); WriteZip(("../escape.txt", "bad"), ("update-package.json", "{}"));
         Reject("ZIP path traversal rejected before extraction", () => DailyUpdates.Extract(package, staging, release, Asset()));
         Check("ZIP traversal creates no outside file", !File.Exists(Path.Combine(data, "escape.txt")));
+    }
+    private static async Task CheckScheduledRestart(List<string> cases)
+    {
+        foreach (string scenario in new[] { "running", "already-exited", "not-started", "replacement", "pid-reused", "unexpected-game", "close-failed", "still-running", "cancelled" })
+        {
+            var original = new GameInstance(7, 10, "fixture-game.exe");
+            var host = new RestartHost { Game = scenario switch
+            {
+                "already-exited" or "not-started" => null,
+                "replacement" => new(8, 11, "fixture-game.exe"),
+                "pid-reused" => original with { StartTicks = 12 },
+                _ => original
+            }, CloseFailure = scenario == "close-failed", KeepRunning = scenario == "still-running" };
+            using var stop = new CancellationTokenSource();
+            if (scenario == "cancelled") stop.Cancel();
+            bool continued = false;
+            try
+            {
+                await DailyScheduleTakeover.CloseGameAsync(host, scenario is "not-started" or "unexpected-game" ? null : original, stop.Token);
+                continued = true; // Only now may the account queue launch and verify its selected account.
+            }
+            catch (Exception error) when (error is InvalidOperationException or OperationCanceledException) { }
+            bool success = scenario is "running" or "already-exited" or "not-started";
+            int closes = scenario is "running" or "close-failed" or "still-running" ? 1 : 0;
+            if (continued != success || host.CloseCalls != closes || continued && host.Game != null)
+                throw new Exception("Scheduled restart did not guard the queue: " + scenario);
+            cases.Add("scheduled takeover closes only the captured game before queue execution: " + scenario);
+        }
+    }
+    private sealed class RestartHost : IGameHost
+    {
+        public GameInstance? Game;
+        public int CloseCalls;
+        public bool CloseFailure, KeepRunning;
+        public GameInstance? Find() => Game;
+        public Task CloseAsync(GameInstance instance, CancellationToken cancellation)
+        {
+            cancellation.ThrowIfCancellationRequested(); CloseCalls++;
+            if (Game != instance || CloseFailure) throw new InvalidOperationException("synthetic close failure");
+            if (!KeepRunning) Game = null;
+            return Task.CompletedTask;
+        }
+        public Task ConnectAsync(GameInstance instance, Action<string> progress, CancellationToken cancellation) => throw new Exception("Takeover must not connect or navigate minigame UI");
+        public DailySnapshot? ReadSnapshot() => null;
+        public DailyRuntimeStatus? ReadStatus() => null;
     }
     private sealed class MemoryHandler(byte[] archive, byte[] feed) : HttpMessageHandler
     {

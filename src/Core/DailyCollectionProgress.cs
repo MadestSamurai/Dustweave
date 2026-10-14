@@ -36,6 +36,10 @@ public sealed class DailyCollectionReadUnavailable(string message) : Exception(m
 
 public sealed class DailyCollectionProgress(DailyWorkflow workflow)
 {
+    private JsonObject? recentNetwork;
+    private long recentInputRevision;
+    private double recentAt = double.NegativeInfinity;
+    private string recentScene = "";
     public JsonObject[] PendingAbsorptions() => workflow.Business.MatchingRecords(workflow.Context,
         "dispatch.start", h => DailyManagedBusiness.Pending(h) && N(h["talent_kind"]) == 4)
         .Where(op => DailyFieldTalentProof.AbsorptionLocation(op) != null).ToArray();
@@ -190,9 +194,21 @@ public sealed class DailyCollectionProgress(DailyWorkflow workflow)
     public Task<JsonObject> Query(long pack, long[] maps) => Query(pack, maps, cache: true);
     public async Task<JsonObject> Query(long pack, long[] maps, bool cache)
     {
+        var observed = await workflow.Observe();
+        var pending = PendingMaps();
+        // Inner collection and outer route coordination often ask the identical
+        // question consecutively. Reuse only this instance's fresh server reply,
+        // with no intervening command, map change or unresolved collection. Never
+        // substitute a disk checkpoint for an explicit recovery query.
+        if (cache && recentNetwork != null && recentInputRevision == workflow.Driver.InputRevision
+            && workflow.Time - recentAt is >= 0 and <= 2 && S(observed.Frame["Scene"]) == recentScene
+            && N(recentNetwork["Pack"]) == pack && (!Steal || B(recentNetwork["StealReady"]))
+            && recentNetwork["Maps"]!.AsArray().Select(N).SequenceEqual(maps)
+            && !pending.Any(op => RecoveryLocation(op) is { } p && p.Pack == pack && maps.Contains(p.Map)))
+            return Classify(recentNetwork, pack, maps, Steal, OnlySteal);
         // End stale movement before replacing its targets. Never replay its saved
         // Unity instance ID, including when an old walk crossed into another map.
-        if (!OnlySteal && PendingMaps().Any(op => DailyPickupRecovery.Location(op) is { } p && p.Pack == pack && maps.Contains(p.Map)))
+        if (!OnlySteal && pending.Any(op => DailyPickupRecovery.Location(op) is { } p && p.Pack == pack && maps.Contains(p.Map)))
             await workflow.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
         var command = await workflow.Step(O(("ui", "GameFieldDefaultUI"), ("operation", Steal ? "collection_query_steal" : "collection_query"), ("value", pack), ("items", maps), ("reason", "读取本卡带服务器收集进度")));
         JsonObject? data = null;
@@ -205,6 +221,10 @@ public sealed class DailyCollectionProgress(DailyWorkflow workflow)
         await RecoverAbsorptions(pack, maps, data!, result);
         if (cache) DailyJson.Write(PathFor(S(data!["Week"]), pack), O(("schema", 1), ("source", "FieldObjectInfoResponse+MonsterInfoResponse"), ("account", workflow.Context["actor"]![3]), ("player", workflow.Context["actor"]![4]), ("network", data), ("at", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000d)));
         DailyJson.Write(Path.Combine(workflow.Root, "live", "mainline", S(workflow.Context["actor"]![3]), "network-" + pack + ".json"), O(("result", result), ("network", data), ("actor", workflow.Context["actor"]), ("at", workflow.Driver.UtcTicks)));
+        recentNetwork = data!.DeepClone().AsObject();
+        recentInputRevision = workflow.Driver.InputRevision;
+        recentAt = workflow.Time;
+        recentScene = S(observed.Frame["Scene"]);
         return result;
     }
 }

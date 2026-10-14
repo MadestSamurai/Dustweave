@@ -278,6 +278,7 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
         try
         {
             closed = true;
+            business.Dispose();
         }
         finally { serial.Release(); }
     }

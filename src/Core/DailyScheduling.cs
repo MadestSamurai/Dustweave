@@ -28,6 +28,24 @@ public sealed record DailySchedulePlan
 
 public sealed record DailyScheduleRun(string Occurrence, string State, DateTimeOffset AtUtc, string Detail = "");
 
+public static class DailyScheduleTakeover
+{
+    // The account queue performs the fresh launch and login verification after
+    // this gate. Never close a replacement process or continue if close failed.
+    public static async Task CloseGameAsync(IGameHost host, GameInstance? owned, CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+        var current = host.Find();
+        if (current == null) return;
+        if (owned == null || current != owned)
+            throw new InvalidOperationException("schedule.game_changed");
+        await host.CloseAsync(owned, token);
+        token.ThrowIfCancellationRequested();
+        if (host.Find() != null)
+            throw new InvalidOperationException("schedule.game_not_closed");
+    }
+}
+
 public sealed class DailyScheduleStore(string root)
 {
     public string PlanPath => Path.Combine(root, "schedule.json");

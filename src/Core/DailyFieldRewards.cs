@@ -183,9 +183,10 @@ public static class DailyCafeteria
             {
                 try
                 {
-                    var op = await w.Transact(role!, O(("daily_count", count), ("kind", role)), action, 20);
+                    var op = await w.TransactObserved(role!, O(("daily_count", count), ("kind", role)), action, e, 20);
                     operations.Add(op["id"]!.DeepClone());
                     last = w.Time;
+                    continue; // The next visible bubble need not wait another idle polling interval.
                 }
                 catch (DailyStepException ex) when (ex.PresentationChanged && (ex.RejectionCode is "screen_changed" or "target_unavailable" || role == "cafeteria.event" && ex.RejectionCode == "target_missing")) { await w.Delay(200); continue; }
             }

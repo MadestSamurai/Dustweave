@@ -1,5 +1,29 @@
 [
 {
+  "Version": "1.3.5",
+  "Date": "2026-10-14",
+  "Notes": {
+    "zh-CN": [
+      "定时接管改为停止内置工具、等待当前操作完成，再正常重启游戏并执行计划中的日常；默认关闭。",
+      "减少历史记录反复扫描，以及餐厅气泡和周收集的重复等待；首次索引仍需读取历史。",
+      "修复天赋菜单尚未展开就被误判为关闭，并改进周任务遇敌后的退出与恢复。",
+      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+    ],
+    "zh-TW": [
+      "定時接管改為停止內建工具、等待目前操作完成，再正常重啟遊戲並執行計畫中的日常；預設關閉。",
+      "減少歷史記錄反覆掃描，以及餐廳氣泡和週收集的重複等待；首次索引仍需讀取歷史。",
+      "修復天賦選單尚未展開就被誤判為關閉，並改善週任務遇敵後的退出與恢復。",
+      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+    ],
+    "en-US": [
+      "Scheduled takeover now stops built-in tools, waits for the current operation, and restarts the game before scheduled dailies. Off by default.",
+      "Reduces repeated history scans and waits between restaurant bubbles and weekly collection steps. Initial indexing still reads history.",
+      "Fixes talent menus being treated as closed before appearing, and improves encounter-exit recovery during weekly tasks.",
+      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+    ]
+  }
+},
+{
   "Version": "1.3.4",
   "Date": "2026-10-14",
   "Notes": {

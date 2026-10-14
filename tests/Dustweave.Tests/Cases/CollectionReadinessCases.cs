@@ -143,6 +143,7 @@ static class CollectionReadinessCases
             Check(invalid ? rejected : !rejected && proof == null, "cartridge restriction proof cannot hide " + condition);
         }
         await ReusedScopeCase(output, cases);
+        await FirstAppearanceCases(output, cases);
         await DelayedMenuCases(output, cases);
         foreach (bool restricted in new[] { false, true })
         {
@@ -229,6 +230,84 @@ static class CollectionReadinessCases
             throw new Exception("Menu scope reused stale evidence or renewed again before row selection");
         cases.Add("menu opening renews evidence once and rejects the cached pre-open frame");
         cases.Add("menu animation and row selection reuse one scope without replaying the open command");
+    }
+    static async Task FirstAppearanceCases(string output, List<string> cases)
+    {
+        foreach (string scenario in new[] { "delayed", "passive-overlay", "input-animation", "never-opens", "closed", "replaced", "battle", "unknown-popup", "stop", "scene", "week" })
+        {
+            double time = 0;
+            bool submitted = false, stopped = false;
+            var box = new CommandDriverCases.Mailbox { Error = "" };
+            string Ui() => !submitted || time < .6 || scenario == "never-opens" || scenario == "closed" && time >= 1.2
+                ? "GameFieldDefaultUI" : scenario == "battle" ? "BattleUI" : "QuickMenuUI";
+            JsonObject Current()
+            {
+                var frame = Frame(Ui());
+                frame["AtUtcTicks"] = 100000000 + (long)(time * TimeSpan.TicksPerSecond);
+                if (scenario == "input-animation" && Ui() == "QuickMenuUI" && time < 1.2) frame["Surfaces"]![0]!["InputReady"] = false;
+                if (scenario == "replaced" && time >= 1.2) frame["Surfaces"]![0]!["Id"] = 2;
+                if (scenario == "passive-overlay")
+                    foreach (string type in new[] { "OverheadManageUI", "NoticeUI", "CurrencyManageUI" })
+                        frame["Surfaces"]!.AsArray().Add(new JsonObject { ["Type"] = type, ["Popup"] = true, ["InputReady"] = true });
+                if (scenario == "unknown-popup" && time >= .3)
+                    frame["Surfaces"]!.AsArray().Add(new JsonObject { ["Type"] = "UnknownPopupUI", ["Popup"] = true, ["InputReady"] = true });
+                if (scenario == "scene" && time >= .3) frame["Scene"] = "other";
+                return frame;
+            }
+            void Publish(JsonObject request)
+            {
+                // Nonempty stale rows must not count as a menu that has appeared.
+                var row = Row(305, false);
+                if (scenario is "closed" or "replaced") row["Gate"] = "talent_wait:animation";
+                var e = Evidence(Ui(), new(row), 100000000 + (long)(time * TimeSpan.TicksPerSecond));
+                e["Frame"] = Current();
+                if (scenario == "week" && time >= .3) e["Readings"]![1]!["Values"]![0]!["Json"] = "501";
+                e["ObservationRequest"] = request["Id"]!.DeepClone();
+                box.Values["live:evidence.json"] = JsonSerializer.SerializeToUtf8Bytes(e);
+            }
+            box.AfterCommand = _ => submitted = true;
+            box.AfterWrite = (_, name, bytes) => { if (name == "observation-request.json") Publish(JsonNode.Parse(bytes)!.AsObject()); };
+            string path = Path.Combine(output, "collection-first-appearance-" + scenario);
+            using var driver = new DailyCommandDriver(path, box,
+                () => Task.FromResult(new DailyStageFrame(Current(), CommandDriverCases.Context())), () => stopped,
+                () => 100000000 + (long)(time * TimeSpan.TicksPerSecond), () => time, t =>
+                {
+                    time += t.TotalSeconds;
+                    if (scenario == "stop" && time >= .3) stopped = true;
+                    if (box.Values.TryGetValue("live:observation-request.json", out var bytes)) Publish(JsonNode.Parse(bytes)!.AsObject());
+                    return Task.CompletedTask;
+                });
+            driver.Bind(CommandDriverCases.Context());
+            JsonObject? result = null;
+            Exception? failure = null;
+            try { result = await driver.SendObservedAsync(new() { ["ui"] = "GameFieldDefaultUI", ["operation"] = "mainline_menu", ["value"] = 3, ["expect"] = "QuickMenuUI" }); }
+            catch (Exception e) { failure = e; }
+            bool ok = scenario switch
+            {
+                "delayed" or "passive-overlay" => failure == null && result?["state"]?.GetValue<string>() == "observed_expected_ui" && time >= .6,
+                "input-animation" => failure == null && result?["state"]?.GetValue<string>() == "observed_expected_ui" && time >= 1.2,
+                "never-opens" => failure is DailyStepException { Kind: "rejected", Submitted: true } && time >= 45 && time < 50,
+                "closed" or "replaced" or "battle" or "unknown-popup" => failure is DailyStepException { Kind: "rejected", Submitted: true } && time < 2,
+                "stop" => failure is StageHostException { Kind: "stopped" },
+                _ => failure is InvalidDataException && time < 2
+            };
+            if (!ok) throw new Exception("collection first appearance " + scenario + ": " + failure);
+            cases.Add("collection first appearance handles " + scenario);
+            if (box.Commands.Count != 1 || box.Commands[0]["Kind"]?.GetValue<string>() != "mainline_menu")
+                throw new Exception("collection first appearance repeated input: " + scenario);
+            cases.Add("collection first appearance " + scenario + " never repeats opening or casts a talent");
+            if (failure is DailyStepException)
+            {
+                var snapshot = Directory.GetFiles(Path.Combine(path, "live", "diagnostics", "failures"), "*.json")
+                    .Select(file => JsonNode.Parse(File.ReadAllText(file))!.AsObject())
+                    .Single(f => f["kind"]?.GetValue<string>() == "collection_menu_readiness_failed");
+                var detail = snapshot["detail"]!;
+                if (!JsonNode.DeepEquals(detail["command"], box.Commands[0]) || detail["receipt"]?["MayHaveDispatched"]?.GetValue<bool>() != true
+                    || detail["before"]?["Frame"] == null || detail["after"]?["Frame"] == null)
+                    throw new Exception("collection failure omitted dispatch and transition evidence: " + scenario);
+                cases.Add("collection failure preserves the dispatched menu receipt and transition for " + scenario);
+            }
+        }
     }
     // Exercise the public observed-input path, not only SubmitAsync: the outer
     // deadline used to expire while the inner native animation wait succeeded.
