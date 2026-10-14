@@ -1,5 +1,11 @@
 # Repository status / 仓库状态
 
+## 1.3.6 published / 藏红花、潘多拉与沙盒安装引导版已发布
+
+2026-10-14：1.3.6 已由 GitHub Actions 发布，国内 v2 OTA 已上线。藏红花改为固定 1–3 轮土豆种收，新增潘多拉自动游玩，并统一沙盒缺失时的下载与路径设置引导。3,822 项回归、双版本成品、1.3.1 与 1.3.5 实际更新器升级／恢复及公网验证通过。所有兼容的 1.3.1–1.3.5 均有直升差分，约 1.17–1.32 MB。详见[发布验收](releases/1.3.6-deployment.md)。
+
+Version **1.3.6** is the normal GitHub release and latest v2 OTA entry. It includes fixed potato rounds, Pandora automation and shared Sandboxie setup guidance. Pandora Stage 1 repetition and Stage 2 entry were checked live; challenge completion and a complete naturally mature saffron harvest remain unverified. The legacy OTA lane is unchanged. Entries below are historical.
+
 ## 1.3.5 published / 定时接管与日常提速版已发布
 
 2026-10-14：1.3.5 已由 GitHub Actions 发布，国内独立 v2 OTA 已上线。定时接管改为停止内置工具、正常重启游戏，再执行计划账号的日常；同时包含历史记录查询提速、天赋菜单展开等待与周任务遇敌恢复修复。十版 OTA 覆盖规则已落实到发布检查，本次提供 1.3.1–1.3.4 的双版本直升补丁，约 1 MB。旧 OTA 保持 1.2.11。详见[发布验收](releases/1.3.5-deployment.md)。
