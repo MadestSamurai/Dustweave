@@ -1,5 +1,11 @@
 # Changelog / 更新记录
 
+## 1.3.11 — 2026-10-15
+
+- 修复咨询升级礼物延迟弹出与重连后的接续处理，以及潘多拉 Game Over 后的重开卡点。
+- Fixes delayed counseling gifts, gift recovery after reconnection, and Pandora restarts after Game Over.
+- [完整说明 / Full notes](docs/releases/1.3.11.md) · [发布验收 / Deployment](docs/releases/1.3.11-deployment.md)
+
 ## 1.3.10 — 2026-10-14
 
 - 无插件时使用游戏内活动自动战斗，最多尝试 5 次免费战斗；失败后可停止本环节或扫荡此前最高可扫荡关卡。

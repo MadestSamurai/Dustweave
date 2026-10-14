@@ -1,5 +1,11 @@
 # Repository status / 仓库状态
 
+## 1.3.11 published / 咨询礼物与潘多拉重开修复已发布
+
+2026-10-15：1.3.11 已由 GitHub Actions 发布为普通 Release，国内 v2 OTA 已上线。修复咨询礼物异步加载、旧版遗留礼物的接续处理，以及潘多拉 Game Over 后的重开卡点。最终源码 88 组、4,067 项回归通过，双版本成品、1.3.10 实际更新器与 20 个公网差分完成验收。1.3.1–1.3.10 可直升，从 1.3.10 升级约 730–759 KB。详见[发布验收](releases/1.3.11-deployment.md)。
+
+Version **1.3.11** is the latest normal release and v2 OTA entry. Both editions, the actual prior updater and public downloads passed validation. This release used log-informed offline verification; live gameplay was not rerun. The legacy lane is unchanged. Entries below are historical.
+
 ## 1.3.8 published / 收藏购买砍价修复已发布
 
 2026-10-14：1.3.8 已由 GitHub Actions 发布为普通 Release，国内 v2 OTA 已上线。只买收藏先砍价，再按折扣后报价购买；沿用已有砍价效果、遵守天赋药保留下限。492 项本地专项检查与 CI 的 3,878 项回归通过，双版本成品、1.3.7 实际更新器及 14 个公网差分验收完成。从 1.3.7 升级约 0.4 MB，兼容的 1.3.1–1.3.7 均可直升。详见[发布验收](releases/1.3.8-deployment.md)。

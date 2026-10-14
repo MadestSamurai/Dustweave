@@ -242,11 +242,11 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "adce0900df6b69ba1a33062e97030507f8f63d3930f320ca3ea90292d203c1f9",
+      "sha256": "8add2d732a92d9ccf8df5bd0a9f565523d0647a8e8695ffd6d41d69358ae1530",
       "reasons": [
         "release notes"
       ],
-      "bytes": 34932
+      "bytes": 35309
     },
     {
       "path": "Directory.Build.props",
