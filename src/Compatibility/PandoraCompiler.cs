@@ -63,6 +63,16 @@ public static class PandoraCompiler
         var hp = player.Methods.Where(m => m.HasBody).SelectMany(m => m.Body.Instructions).First(i => i.Operand is MethodReference m && m.Name == "get_MiniGameHP");
         Method("health", (MethodReference)hp.Previous.Operand);
         var result = M(T("SurvivalResultUI"), "Initalize");
+        // Resolve callback ownership from native assignments, not obfuscated names.
+        var retryAction = (FieldReference)result.Body.Instructions.Single(i => i.OpCode == OpCodes.Stfld && i.Previous.Operand == result.Parameters[5]).Operand;
+        var pendingAction = M(T("SurvivalResultUI"), "OnRemovedCompletely").Body.Instructions.Select(i => i.Operand).OfType<FieldReference>().Single(f => f.FieldType.FullName == "System.Action");
+        Field("resultRetryAction", retryAction);
+        Field("resultPendingAction", pendingAction);
+        Field("popupOkAction", ArgumentField(M(T("SurvivalDefaultPopupUI"), "SetUI"), OpCodes.Ldarg_3));
+        Method("resultRetryConfirmed", T("SurvivalResultUI").Methods.Single(m => m.HasBody && m.Parameters.Count == 0 &&
+            m.Body.Instructions.Any(i => i.OpCode == OpCodes.Ldfld && i.Operand is FieldReference f && f.FullName == retryAction.FullName) &&
+            m.Body.Instructions.Any(i => i.OpCode == OpCodes.Stfld && i.Operand is FieldReference f && f.FullName == pendingAction.FullName) &&
+            Calls(m).Any(c => c.Name == "CloseUI")));
         var activeMap = result.Body.Instructions.Single(i => i.Operand is MethodReference m && m.ReturnType.Name == "FieldMiniGameMapTable" && m.Parameters.Count == 2);
         Field("activeStage", (FieldReference)activeMap.Previous.Operand);
         Field("activeGroup", (FieldReference)activeMap.Previous.Previous.Previous.Previous.Operand);

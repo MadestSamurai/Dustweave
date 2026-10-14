@@ -1,5 +1,29 @@
 [
 {
+  "Version": "1.3.11",
+  "Date": "2026-10-15",
+  "Notes": {
+    "zh-CN": [
+      "修复亲密度咨询升级礼物延迟弹出导致中断，等待奖励展示结束后再继续咨询。",
+      "可接续旧版遗留的咨询礼物弹窗，不重复消耗已完成的免费次数。",
+      "修复潘多拉大逃脱 Game Over 后偶发重开受阻，并补充续局诊断。",
+      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+    ],
+    "zh-TW": [
+      "修復親密度諮詢升級禮物延遲彈出導致中斷，等待獎勵展示結束後再繼續諮詢。",
+      "可接續舊版遺留的諮詢禮物視窗，不重複消耗已完成的免費次數。",
+      "修復潘多拉大逃脫 Game Over 後偶發重新開始受阻，並補充續局診斷。",
+      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+    ],
+    "en-US": [
+      "Fixes counseling interruptions caused by delayed level-up gifts; counseling continues after reward presentation finishes.",
+      "Resumes counseling gift popups left by older versions without repeating confirmed free attempts.",
+      "Fixes intermittent Pandora Escape restarts after Game Over and improves restart diagnostics.",
+      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+    ]
+  }
+},
+{
   "Version": "1.3.10",
   "Date": "2026-10-14",
   "Notes": {

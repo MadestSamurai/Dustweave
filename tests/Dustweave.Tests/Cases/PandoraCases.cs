@@ -44,6 +44,46 @@ internal static class PandoraCases
         gate.Sent("result:1", 30); gate.Reset();
         Check(!gate.Waiting("result:1", 31, out _), "a new round can reuse the pooled result window");
 
+        var entry = new RoundEntry();
+        EntryAction Entry(double time, bool playing = false, int resultId = 1, int revision = 7,
+            bool popup = false, bool main = false, bool sameStage = true, bool selected = true, bool ready = true)
+            => entry.Observe(time, playing, resultId, revision, popup, main, sameStage, selected, ready);
+        entry.Begin(0, 1, 7);
+        Check(Entry(.2, popup:true) == EntryAction.Wait, "retry confirmation must finish its native close before result recovery");
+        Check(Entry(.5, ready:false) == EntryAction.Wait && entry.CloseAttempts == 0, "restoring result animation does not consume close attempts");
+        Check(Entry(1, selected:false) == EntryAction.Wait, "disappeared confirmation alone cannot authorize a retry");
+        Check(Entry(2) == EntryAction.CloseConfirmedResult && entry.Pending, "confirmed retry resumes closing a stranded result instead of waiting 45 seconds");
+        Check(Entry(2.3) == EntryAction.Wait, "result close recovery is paced without resubmitting retry");
+        Check(Entry(3, ready:false) == EntryAction.Wait, "accepted result close animation is allowed to finish");
+        Check(Entry(4, resultId:0) == EntryAction.Wait, "removed result alone is not a running round");
+        Check(Entry(5, playing:true, resultId:0) == EntryAction.Started && !entry.Pending, "actual round start releases movement and the pending transition");
+        foreach (var changed in new[] { "window", "revision", "stage", "main", "callback" })
+        {
+            entry.Begin(0, 1, 7);
+            Check(Entry(1, resultId:changed=="window"?2:1, revision:changed=="revision"?8:7,
+                main:changed=="main", sameStage:changed!="stage", selected:changed!="callback") == EntryAction.Wait && entry.CloseAttempts == 0,
+                "retry recovery does not affect changed " + changed);
+        }
+        entry.Begin(0, 1, 7);
+        Check(Entry(1)==EntryAction.CloseConfirmedResult && Entry(2)==EntryAction.CloseConfirmedResult && Entry(3)==EntryAction.CloseConfirmedResult && Entry(4)==EntryAction.Wait,
+            "repeated native refusal permits at most three result closes");
+        Check(Entry(45)==EntryAction.Blocked, "unresolved entry still stops with a bounded diagnosis");
+        entry.Reset();
+        Check(Entry(46)==EntryAction.Wait && !entry.Pending && entry.CloseAttempts==0, "new control run discards old retry authority");
+        entry.Begin(0);
+        Check(Entry(1)==EntryAction.Wait, "character entry does not authorize closing an unrelated result");
+        Check(Entry(2,playing:true,resultId:0,sameStage:false)==EntryAction.Wait, "another stage does not satisfy the requested entry");
+        Check(Entry(3,playing:true,resultId:0)==EntryAction.Started, "initial character entry still resumes on the selected round");
+        for(int round=1;round<=50;round++)
+        {
+            entry.Begin(round*10, 10, round);
+            var action=entry.Observe(round*10+1,false,10,round,false,false,true,true,false);
+            var close=entry.Observe(round*10+2,false,10,round,false,false,true,true,true);
+            var started=entry.Observe(round*10+3,true,0,round,false,false,true,false,false);
+            Check(action==EntryAction.Wait&&close==EntryAction.CloseConfirmedResult&&started==EntryAction.Started,
+                "pooled Game Over result recovers exactly once in repeated round "+round);
+        }
+
         var manual = new Control { Mode = "Challenge" };
         Check(manual.AutoSelectEquipment && !gate.ManualChoice(manual, true), "challenge keeps automatic choices enabled by default");
         manual.AutoSelectEquipment = false;
@@ -98,7 +138,14 @@ internal static class PandoraCases
         Check(diagnostic["Reason"]?.ToString() == "transition-timeout" && diagnostic["Stage"]?["Group"]?.GetValue<int>() == 1, "diagnostic retains the blocked transition and exact stage");
         Check(!diagnostic.ContainsKey("Units") && !diagnostic.ContainsKey("Drops"), "diagnostics exclude per-frame object lists");
         Check(diagnostic["AutoSelectEquipment"]?.GetValue<bool>() == false, "diagnostics distinguish manual equipment selection from an automation stall");
-        Check(DailyDiagnosticExport.Allowed("tools/pandora-state.json") && DailyDiagnosticExport.Allowed("tools/pandora-runtime-error.json"), "standard log export includes Pandora recovery information");
+        Check(DailyDiagnosticExport.Allowed("tools/pandora-state.json") && DailyDiagnosticExport.Allowed("tools/pandora-runtime-error.json") && DailyDiagnosticExport.Allowed("tools/pandora-transitions.json"), "standard log export includes Pandora recovery information");
+        var transition=PandoraClient.DiagnosticState(JsonNode.Parse("""{"Ui":"result:1","Entry":{"Pending":true,"CloseAttempts":1},"TransitionUi":[{"RetrySelected":true,"CanClose":false}]}""")!.AsObject());
+        Check(transition["Entry"]?["CloseAttempts"]?.GetValue<int>()==1&&transition["TransitionUi"]?[0]?["CanClose"]?.GetValue<bool>()==false,
+            "diagnostics retain native callback and animation/close evidence");
+        var history=new JsonArray();
+        for(int n=0;n<100;n++)PandoraClient.AppendTransition(history,new JsonObject{["Completed"]=n});
+        Check(history.Count==64&&history[0]?["Completed"]?.GetValue<int>()==36&&history[63]?["Completed"]?.GetValue<int>()==99,
+            "transition history is bounded and keeps the latest fault context");
         bool rejected = false;
         try { _ = new PandoraClient("unused", 0, 0, ""); } catch (InvalidOperationException) { rejected = true; }
         Check(rejected, "invalid host identity fails before opening a connection");

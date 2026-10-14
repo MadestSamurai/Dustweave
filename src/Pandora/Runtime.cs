@@ -16,6 +16,7 @@ namespace Dustweave.Pandora.Runtime
         static Engine current;
         Control control = new Control();
         readonly TransitionGate gate = new TransitionGate();
+        readonly RoundEntry entry = new RoundEntry();
         readonly RegionPlanner regions = new RegionPlanner();
         readonly Dictionary<int, Vector3> positions = new Dictionary<int, Vector3>();
         readonly Dictionary<int, Pattern> patterns = new Dictionary<int, Pattern>();
@@ -26,8 +27,9 @@ namespace Dustweave.Pandora.Runtime
         Stage[] stages = new Stage[0]; Stage target;
         EventMiniGameSurvivalManager manager; PlayerController avatar;
         UIBase[] uis = new UIBase[0]; SurvivalUnit[] units = new SurvivalUnit[0]; EventMiniGameEnemyProjectile[] projectiles = new EventMiniGameEnemyProjectile[0];
-        Point direction; bool ownsMove, handingOff, faulted, retryExpected, awaitingRound;
-        float roundRequested;
+        Point direction; bool ownsMove, handingOff, faulted, retryExpected;
+        SurvivalResultUI retryResult;
+        int resultRevision, retryRevision;
         int rounds, lastResult, lastManager, planCount, skillRevision; string reason = "ready", detail = "", lastUi = "";
         int acknowledgedSkillRevision = -1, acknowledgedSkillUi, closingSkillRevision = -1;
         float nextControl, nextObserve, nextPlan, nextWrite, nextUi, lastThreatTime, waitSince;
@@ -42,7 +44,8 @@ namespace Dustweave.Pandora.Runtime
         bool Paused { get { return manager != null && Native.B(manager, "IsPause"); } }
         object Player { get { return manager == null ? null : Native.Get(manager, "Player"); } }
         static Point Flat(Vector3 v) { return new Point(v.x, v.z); }
-        void Awake() { current = this; var harmony = new Harmony(HarmonyId); for (int i = 0; i < 3; i++) harmony.Patch(Native.Bound("bossPattern" + i), prefix: new HarmonyMethod(typeof(Engine), nameof(PatternObserved))); harmony.Patch(typeof(SurvivalSelectUI).GetMethod("SetUI"), postfix: new HarmonyMethod(typeof(Engine), nameof(SkillPageObserved))); harmony.Patch(Native.Bound("skillApplied"), postfix: new HarmonyMethod(typeof(Engine), nameof(SkillApplied))); }
+        void Awake() { current = this; var harmony = new Harmony(HarmonyId); for (int i = 0; i < 3; i++) harmony.Patch(Native.Bound("bossPattern" + i), prefix: new HarmonyMethod(typeof(Engine), nameof(PatternObserved))); harmony.Patch(typeof(SurvivalSelectUI).GetMethod("SetUI"), postfix: new HarmonyMethod(typeof(Engine), nameof(SkillPageObserved))); harmony.Patch(Native.Bound("skillApplied"), postfix: new HarmonyMethod(typeof(Engine), nameof(SkillApplied))); harmony.Patch(typeof(SurvivalResultUI).GetMethod("Initalize"), postfix: new HarmonyMethod(typeof(Engine), nameof(ResultPageObserved))); }
+        public static void ResultPageObserved() { if (current != null) current.resultRevision++; }
         public static void SkillPageObserved() { if (current != null) { current.skillRevision++; current.closingSkillRevision = -1; } }
         public static void SkillApplied(SurvivalSelectUI __instance) { if (current != null) { current.acknowledgedSkillRevision = current.skillRevision; current.acknowledgedSkillUi = __instance.GetInstanceID(); } }
         public static void PatternObserved(SurvivalBossMonster __instance, object __0) { if (current == null) return; current.patterns[__instance.GetInstanceID()] = new Pattern { Table = __0 }; current.nextPlan = 0; }
@@ -53,7 +56,7 @@ namespace Dustweave.Pandora.Runtime
                 float now = Time.realtimeSinceStartup;
                 if (now >= nextControl) { nextControl = now + .1f; ReadControl(); }
                 if (now >= nextObserve) { nextObserve = now + .3f; Observe(); if (Live) Act(); else Release(); }
-                if (Live && target != null && Playing && !Paused && avatar != null && hp > 0 && !awaitingRound && !LoopRules.WaitForEquipment(control, uis.Any(x => x is SurvivalSelectUI)))
+                if (Live && target != null && Playing && !Paused && avatar != null && hp > 0 && !entry.Pending && !LoopRules.WaitForEquipment(control, uis.Any(x => x is SurvivalSelectUI)))
                 {
                     if (now >= nextPlan) { nextPlan = now + (units.Any(x => x is SurvivalBossMonster) ? .075f : .2f); PlanMove(); }
                     if (ownsMove) { var move = Native.BoundField(avatar, "move"); Native.Call("direction", move, new Vector3((float)direction.X, 0, (float)direction.Z)); avatar.SetMoveStart(); }
@@ -68,7 +71,7 @@ namespace Dustweave.Pandora.Runtime
         {
             if (handingOff) return; var bytes = RuntimeFiles.Read(Path.Combine(Loader.Root, "control.json")); if (bytes == null) return;
             var next = JsonConvert.DeserializeObject<Control>(System.Text.Encoding.UTF8.GetString(bytes)); if (next == null || !next.Valid(DateTime.UtcNow.Ticks)) return;
-            if (next.RunId != control.RunId) { faulted = false; detail = ""; target = null; gate.Reset(); retryExpected = false; awaitingRound = false; rounds = 0; lastResult = 0; regions.Reset(); reason = "entering"; waitSince = Time.realtimeSinceStartup; }
+            if (next.RunId != control.RunId) { faulted = false; detail = ""; target = null; gate.Reset(); retryExpected = false; retryResult = null; entry.Reset(); rounds = 0; lastResult = 0; regions.Reset(); reason = "entering"; waitSince = Time.realtimeSinceStartup; }
             control = next;
         }
         void Observe()
@@ -99,13 +102,28 @@ namespace Dustweave.Pandora.Runtime
             var popup = uis.OfType<SurvivalDefaultPopupUI>().FirstOrDefault(); var select = uis.OfType<SurvivalSelectUI>().FirstOrDefault(); var reward = uis.OfType<SurvivalRewardPopupUI>().FirstOrDefault();
             var hub = uis.OfType<MiniGameHubUI>().FirstOrDefault();
             Component panel = main == null ? null : Native.BoundField(main, "panel") as Component;
-            if (awaitingRound)
-            {
-                if (Playing && result == null && popup == null && main == null) { awaitingRound = false; lastResult = 0; gate.Reset(); regions.Reset(); positions.Clear(); patterns.Clear(); catalog = null; }
-                else { reason = "entering"; if (Time.realtimeSinceStartup - roundRequested > 45) Fail("entry-blocked", "awaiting-round"); return; }
-            }
             string identity = popup != null ? "confirm:" + popup.GetInstanceID() : result != null ? "result:" + result.GetInstanceID() : select != null ? LoopRules.SkillPage(select.GetInstanceID(), level, skillRevision) : reward != null ? "reward:" + reward.GetInstanceID() : panel != null ? panel.GetType().Name + ":" + panel.GetInstanceID() : hub != null ? "hub:" + hub.GetInstanceID() : Playing ? "playing" : "waiting";
             if (identity != lastUi) { lastUi = identity; waitSince = Time.realtimeSinceStartup; }
+            if (entry.Pending)
+            {
+                Release();
+                var action = entry.Observe(Time.realtimeSinceStartup, Playing && hp > 0,
+                    result == null ? 0 : result.GetInstanceID(), resultRevision, popup != null, main != null,
+                    SameStage(), Native.RetrySelected(result), result != null && result.CanCloseUI());
+                if (action == EntryAction.Started)
+                {
+                    retryResult = null; lastResult = 0; gate.Reset(); regions.Reset(); positions.Clear(); patterns.Clear(); catalog = null;
+                }
+                else
+                {
+                    reason = "entering";
+                    // Finish the already-selected native callback, without submitting
+                    // another retry or bypassing animation / CanCloseUI guards.
+                    if (action == EntryAction.CloseConfirmedResult) result.CloseUI();
+                    else if (action == EntryAction.Blocked) Fail("entry-blocked", result != null ? "retry-result-not-closed" : "awaiting-round");
+                    return;
+                }
+            }
             if (select != null && Convert.ToBoolean(Native.BoundField(select,"skillBusy")) && closingSkillRevision != skillRevision &&
                 (acknowledgedSkillRevision == skillRevision && acknowledgedSkillUi == select.GetInstanceID() || Native.SkillAlreadyApplied(select, Player)) && Native.Ready(select) && select.CanCloseUI())
             {
@@ -124,13 +142,25 @@ namespace Dustweave.Pandora.Runtime
             bool timedOut; if (gate.Waiting(identity, Time.realtimeSinceStartup, out timedOut)) { if (timedOut) Fail("transition-timeout", identity); return; }
             if (Time.realtimeSinceStartup < nextUi) return;
             if (hub != null && main == null && !Playing) { reason = "entering"; if (Native.OpenFromHub(hub)) Sent(identity); else if (Time.realtimeSinceStartup - waitSince > 15) Fail("open-game", "Pandora entry unavailable"); return; }
-            if (popup != null) { Release(); if (retryExpected && Native.Ready(popup) && popup.CanCloseUI() && Native.Click(popup, "_buttonOk")) { retryExpected = false; awaitingRound = true; roundRequested = Time.realtimeSinceStartup; Sent(identity); } else if (!retryExpected) Fail("confirm-manually", popup.GetType().Name); return; }
+            if (popup != null)
+            {
+                Release();
+                if (!retryExpected || retryResult == null || result != null && retryResult != result || retryRevision != resultRevision || !SameStage() || !Native.RetryPopup(popup, retryResult))
+                { Fail("confirm-manually", popup.GetType().Name); return; }
+                if (Native.Ready(popup) && popup.CanCloseUI())
+                {
+                    int resultId = retryResult.GetInstanceID();
+                    if (Native.Click(popup, "_buttonOk")) { retryExpected = false; entry.Begin(Time.realtimeSinceStartup, resultId, resultRevision); Sent(identity); }
+                }
+                else if (Time.realtimeSinceStartup - waitSince > 45) Fail("transition-timeout", identity);
+                return;
+            }
             if (result != null)
             {
                 Release(); if (lastResult != result.GetInstanceID()) { lastResult = result.GetInstanceID(); rounds++; }
                 if (!Native.Ready(result) || !result.CanCloseUI()) { reason = "settling"; if (Time.realtimeSinceStartup - waitSince > 45) Fail("transition-timeout", identity); return; }
                 // Retry is valid only for a stage verified during this run. A different round exits to selection.
-                if (target != null && Native.ActiveStage == target.Id && Native.ActiveGroup == target.Group && Native.Click(result, "_objRetryButton")) { retryExpected = true; reason = "retrying"; Sent(identity); return; }
+                if (SameStage() && Native.Click(result, "_objRetryButton")) { retryExpected = true; retryResult = result; retryRevision = resultRevision; reason = "retrying"; Sent(identity); return; }
                 if (Native.Click(result, "_objExitButton")) { reason = "selecting"; Sent(identity); } else if (Time.realtimeSinceStartup - waitSince > 45) Fail("transition-timeout", identity); return;
             }
             if (main != null)
@@ -157,7 +187,7 @@ namespace Dustweave.Pandora.Runtime
                     // Always revisit selection once per run; otherwise a manually-open character page could refer to another stage.
                     var map = Native.Field(main, "_selectMapUI"); var selected = Native.BoundField(map, "difficulty");
                     if (Convert.ToInt32(Native.BoundField(map, "mapGroup")) != target.Group || selected == null || Convert.ToInt32(Native.BoundField(selected, "difficultyId")) != target.Id) { main.OpenSelectMap(); Sent(identity); return; }
-                    if (Native.Click(panel, "_objEnterButton")) { awaitingRound = true; roundRequested = Time.realtimeSinceStartup; Sent(identity); }
+                    if (Native.Click(panel, "_objEnterButton")) { entry.Begin(Time.realtimeSinceStartup); Sent(identity); }
                 }
                 reason = "selecting"; if (Time.realtimeSinceStartup - waitSince > 30) Fail("entry-blocked", identity); return;
             }
@@ -180,6 +210,7 @@ namespace Dustweave.Pandora.Runtime
             reason = "open-game"; if (Time.realtimeSinceStartup - waitSince > 45) Fail("open-game", identity);
         }
         void Sent(string id) { gate.Sent(id, Time.realtimeSinceStartup); nextUi = Time.realtimeSinceStartup + .12f; }
+        bool SameStage() { return target != null && Native.ActiveParam != null && Native.ActiveStage == target.Id && Native.ActiveGroup == target.Group; }
         void ChooseSkill(SurvivalSelectUI select)
         {
             if (catalog == null) { int character = Convert.ToInt32(Native.BoundField(Player, "playerCharGroup")); catalog = Native.Items(Native.Call("skillGroups", null)).Where(g => Native.I(g, "UniqueCharGroupId") == 0 || Native.I(g, "UniqueCharGroupId") == character).SelectMany(g => Enumerable.Range(1, Native.I(g, "MaxLevel")).Select(n => Native.Skill(Native.I(g, "Id"), n))).ToList(); }
@@ -241,6 +272,11 @@ namespace Dustweave.Pandora.Runtime
         void Release() { if (ownsMove && avatar != null) { var move = Native.BoundField(avatar, "move"); Native.Invoke(move, "StopMove"); } ownsMove = false; }
         void Fail(string code, string info) { faulted = true; reason = code; detail = info; try { Release(); } catch { } try { Snapshot(); } catch { } }
         void Snapshot() { var select = uis.OfType<SurvivalSelectUI>().FirstOrDefault(); var value = new { At = DateTime.UtcNow.ToString("O"), RunId = control.RunId, Running = Live, Faulted = faulted, Reason = reason, Detail = detail, Completed = rounds, Hp = hp, MaxHp = maxHp, Seconds = seconds, Level = level, PlanMs = planMs, Plans = planCount, Stages = stages, Stage = target, Ui = lastUi, Mode = control.Mode, AutoSelectEquipment = control.AutoSelectEquipment,
+            Entry = new { entry.Pending, entry.ResultId, entry.ResultRevision, entry.CloseAttempts, CurrentResultRevision = resultRevision },
+            TransitionUi = uis.Where(x => x is SurvivalResultUI || x is SurvivalDefaultPopupUI).Select(x => new {
+                Type = x.GetType().Name, Id = x.GetInstanceID(), Ready = Native.Ready(x), CanClose = x.CanCloseUI(),
+                RetrySelected = Native.RetrySelected(x as SurvivalResultUI), OwnedConfirmation = Native.RetryPopup(x as SurvivalDefaultPopupUI, retryResult)
+            }).ToArray(),
             Selection = select == null ? null : new { Ready = Native.Ready(select), Busy = Convert.ToBoolean(Native.BoundField(select, "skillBusy")), Clickable = Native.B(select,"IsAvailableClick"), Animation = Native.BoundField(select,"uiAnimation") == null ? false : Native.B(Native.BoundField(select,"uiAnimation"),"IsPlaying"), Revision = skillRevision, Choices = ((SurvivalCardItem[])Native.Field(select,"_slots")).Where(x=>x.gameObject.activeInHierarchy).Select(x=>new {Id=Native.BoundField(x,"skillId"),Level=Native.BoundField(x,"skillLevel")}).ToArray() },
             Surfaces = uis.Select(x=>x.GetType().Name).ToArray() }; RuntimeFiles.Write(Path.Combine(Loader.Root, "state.json"), System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(value))); }
         void OnDisable() { Release(); }

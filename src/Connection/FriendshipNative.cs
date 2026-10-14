@@ -1,11 +1,14 @@
 using System;
 using System.Linq;
+using System.Collections;
+using System.Reflection;
 using System.Runtime.Serialization;
 using F=ὩὯὯὥὧὤὬὠὩὬὭ;
 using T=ὪὩὠὪὨὫὦὯὢὮὠ;
 namespace BD2Daily.Live {
  [DataContract] internal sealed class FriendshipState {
   [DataMember] public bool Available;
+  [DataMember] public bool NoticePending;
   [DataMember] public int Free,DailyLimit,Selected;
   [DataMember] public FriendshipCandidate[] Candidates=new FriendshipCandidate[0];
  }
@@ -19,6 +22,12 @@ namespace BD2Daily.Live {
   [DataMember] public string Period="";
  }
  internal static class FriendshipNative {
+  // Resolve by the stable native method signature, not an obfuscated field name.
+  static readonly Lazy<FieldInfo> pendingRewards=new Lazy<FieldInfo>(()=>{
+   var type=typeof(FriendshipManageUI).GetMethod("AddPendingNoticeInfoes").GetParameters()[0].ParameterType;
+   return typeof(FriendshipManageUI).GetFields(BindingFlags.Instance|BindingFlags.NonPublic|BindingFlags.Public)
+    .Single(f=>f.FieldType==type);
+  });
   internal static FriendshipState Capture(){
    var state=new FriendshipState{Available=F.ὨὪὥὪὪὭὡὥὭὤὢ(false)};
    if(!state.Available)return state;
@@ -26,6 +35,7 @@ namespace BD2Daily.Live {
    state.DailyLimit=ὩὣὩὠὧὠὢὪὬὫὬ.ὢὢὦὬὩὮὭὦὦὬὥ.MaxCounselingAP;
    var ui=Bridge.Find(typeof(FriendshipManageUI)).Cast<FriendshipManageUI>().SingleOrDefault();
    state.Selected=ui==null?0:ui.ὨὢὪὠὧὨὠὠὫὩὪ;
+   state.NoticePending=ui!=null && (pendingRewards.Value.GetValue(ui) as ICollection)?.Count>0;
    state.Candidates=T.ὬὮὬὬὨὪὮὪὨὠὥ().Select(id=>T.Ὣὣὧὣὦὣὣὣὠὢὤ(id))
     .Where(t=>t!=null && ὪὪὡὭὩὣὫὭὨὯὨ.ὪὡὥὫὩὤὦὥὫὢὥ(t.CostumeId,ὠὫὣὦὡὨὩὥὨὯὯ.TT_NONE,0L)!=null)
     .Select(t=>new FriendshipCandidate{Id=t.Id,Costume=t.CostumeId,Level=F.ὮὭὣὢὭὭὥὫὯὤὬ(t.Id)?.Level??1,

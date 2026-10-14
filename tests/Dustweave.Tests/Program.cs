@@ -118,6 +118,7 @@ await Group("BusinessJournal", () => BusinessJournalCases.Run(root, cases));
 await Group("FreeDrawStage", () => FreeDrawStageCases.Run(root, cases));
 await Group("ManagedBootstrap", () => ManagedBootstrapCases.Run(root, cases));
 await Group("ManagementStage", () => ManagementStageCases.Run(root, cases));
+await Group("FriendshipStage", () => FriendshipStageCases.Run(root, cases));
 await Group("FreeDrawData", () => FreeDrawDataCases.Run(root, cases));
 await Group("EmptyScene", () => EmptySceneCases.Run(root, cases));
 await Group("SquareApproach", () => SquareApproachCases.Run(root, cases));

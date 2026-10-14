@@ -48,6 +48,18 @@ namespace Dustweave.Pandora.Runtime
             return animation == null || !B(animation, "IsPlaying");
         }
         public static bool Click(Component panel, string field) { var v = Field(panel, field); var go = v as GameObject ?? (v as Component)?.gameObject; return Click(panel, go); }
+        public static bool RetrySelected(SurvivalResultUI result)
+        {
+            if (result == null) return false;
+            var retry = BoundField(result, "resultRetryAction") as Action;
+            return retry != null && retry.Equals(BoundField(result, "resultPendingAction"));
+        }
+        public static bool RetryPopup(SurvivalDefaultPopupUI popup, SurvivalResultUI result)
+        {
+            if (popup == null || result == null) return false;
+            var action = BoundField(popup, "popupOkAction") as Action;
+            return action != null && ReferenceEquals(action.Target, result) && action.Method == Bound("resultRetryConfirmed");
+        }
         public static bool Click(Component panel, GameObject go) { if (go == null || !go.activeInHierarchy) return false; var root = panel as UIBase ?? panel.GetComponentInParent<UIBase>(); if (!Ready(root)) return false; root.OnClickUI(go); return true; }
         public static bool OpenFromHub(MiniGameHubUI hub)
         {

@@ -36,4 +36,38 @@ namespace Dustweave.Pandora
             Reset(); return true;
         }
     }
+
+    public enum EntryAction { Wait, Started, CloseConfirmedResult, Blocked }
+    // Confirming retry only selects the native result callback. It does not start
+    // a round until the result page has actually closed. Never click Retry again.
+    public sealed class RoundEntry
+    {
+        public bool Pending { get; private set; }
+        public int ResultId { get; private set; }
+        public int ResultRevision { get; private set; }
+        public int CloseAttempts { get; private set; }
+        double requested, lastClose;
+        public void Begin(double now, int resultId = 0, int resultRevision = 0)
+        {
+            Pending = true; requested = now; lastClose = double.NegativeInfinity;
+            ResultId = resultId; ResultRevision = resultRevision; CloseAttempts = 0;
+        }
+        public void Reset() { Pending = false; ResultId = ResultRevision = CloseAttempts = 0; }
+        public EntryAction Observe(double now, bool playing, int resultId, int resultRevision,
+            bool popup, bool main, bool sameStage, bool retrySelected, bool canClose)
+        {
+            if (!Pending) return EntryAction.Wait;
+            if (playing && resultId == 0 && !popup && !main && sameStage)
+            { Pending = false; return EntryAction.Started; }
+            if (now - requested >= 45) return EntryAction.Blocked;
+            if (ResultId != 0 && resultId == ResultId && resultRevision == ResultRevision &&
+                !popup && !main && sameStage && retrySelected && canClose &&
+                CloseAttempts < 3 && now - lastClose >= 1)
+            {
+                lastClose = now; CloseAttempts++;
+                return EntryAction.CloseConfirmedResult;
+            }
+            return EntryAction.Wait;
+        }
+    }
 }

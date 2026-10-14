@@ -23,12 +23,16 @@ public sealed class DailyFriendshipStage : IDailyManagedStage
     }
     private bool OwnsReward(JsonObject op, DailyStageFrame frame)
     {
-        if (op["state"]?.GetValue<string>() != "completed" || op["presentation_closed"]?.GetValue<bool>() == true || !JsonNode.DeepEquals(op["cycle"], frame.Context["cycle"]) || !DailyEvidence.SameActor(op["before"]!["Frame"]!.AsObject(), frame.Frame))
+        if (op["state"]?.GetValue<string>() != "completed" || !JsonNode.DeepEquals(op["cycle"], frame.Context["cycle"]) || !DailyEvidence.SameActor(op["before"]!["Frame"]!.AsObject(), frame.Frame))
             return false;
         var original = op["presentation_frame"] as JsonObject ?? op["after"]!["Frame"]!.AsObject();
         var saved = DailyNavigationDecision.Rows(original).Where(r => r["Type"]?.GetValue<string>() == "RewardReceivePopupUI").ToArray();
         var current = DailyNavigationDecision.Rows(frame.Frame).Where(r => r["Type"]?.GetValue<string>() == "RewardReceivePopupUI").ToArray();
-        if (saved.Length != 1 || current.Length != 1 || !JsonNode.DeepEquals(saved[0]["Id"], current[0]["Id"]) || !JsonNode.DeepEquals(original["Scene"], frame.Frame["Scene"]))
+        if (current.Length != 1 || !DailyNavigationDecision.Types(frame.Frame).Contains("FriendshipManageUI") || DailyNavigationDecision.Blockers(frame.Frame, "RewardReceivePopupUI", policy).Length != 0 || !JsonNode.DeepEquals(original["Scene"], frame.Frame["Scene"]))
+            return false;
+        // Older versions recorded completion before the asynchronous gift appeared.
+        // An unseen popup can be recovered only after checking the current native target/quota below.
+        if (saved.Length > 0 && (saved.Length != 1 || !JsonNode.DeepEquals(saved[0]["Id"], current[0]["Id"])))
             return false;
         business.Verify(op, op["events"]!.AsArray(), op["after"]!.AsObject());
         return true;
@@ -66,13 +70,30 @@ public sealed class DailyFriendshipStage : IDailyManagedStage
                 op["presentation_frame"] = frame.Frame.DeepClone();
                 business.Save(op);
             }
-            await driver.DismissRewardAsync("FriendshipManageUI", false);
+            await driver.DismissRewardAsync(["FriendshipManageUI"], true, async () =>
+            {
+                // The native pending list survives asynchronous UI loading. A visible parent
+                // alone is not proof that its level-up gift has finished presenting.
+                var evidence = await driver.EvidenceAsync(["friendship"]);
+                var state = DailyFriendshipProof.State(evidence);
+                if (!MatchesResult(op, state))
+                    throw new StageHostException("adapter", "咨询角色或剩余次数已变化，请返回咨询页面后继续。");
+                if (state["NoticePending"] is not JsonValue pending || !pending.TryGetValue<bool>(out bool waiting))
+                    throw new StageHostException("adapter", "咨询奖励状态尚未就绪，请重新连接游戏后继续。");
+                var fresh = evidence["Frame"]!.AsObject();
+                return !waiting && DailyNavigationDecision.Types(fresh).Contains("FriendshipManageUI") && DailyNavigationDecision.Blockers(fresh, "FriendshipManageUI", policy).Length == 0;
+            });
             op["presentation_closed"] = true;
+            op.Remove("presentation_error");
             business.Save(op);
         }
         catch (StageHostException e) when (e.Kind == "stopped") { throw; }
         catch (Exception error) { op["presentation_error"] = error.Message; business.Save(op); throw new StageHostException("adapter", "咨询已确认，奖励展示尚未结束；不重复咨询：" + error.Message); }
     }
+    private static bool MatchesResult(JsonObject op, JsonObject state) =>
+        state["Available"]?.GetValue<bool>() == true &&
+        DailyEvidence.Integer(state["Selected"]) == DailyEvidence.Integer(op["result"]?["friendship"]) &&
+        DailyEvidence.Integer(state["Free"]) == DailyEvidence.Integer(op["result"]?["free_remaining"]);
     private async Task LeaveAsync(JsonObject context, Func<string, string?, JsonObject?, Task<JsonObject>> relay)
     {
         Stop();
@@ -122,8 +143,25 @@ public sealed class DailyFriendshipStage : IDailyManagedStage
             }
             else if (DailyNavigationDecision.Types(initial.Frame).Contains("RewardReceivePopupUI"))
             {
-                var op = business.Records(context, DailyFriendshipProof.Role, includeLegacy: false).FirstOrDefault(op => OwnsReward(op, initial)) ?? throw new StageHostException("adapter", "未知咨询奖励展示，保留现场。");
+                var evidence = await driver.EvidenceAsync(["friendship"]);
+                var live = new DailyStageFrame(evidence["Frame"]!.AsObject(), context);
+                var op = business.Records(context, DailyFriendshipProof.Role, includeLegacy: false).FirstOrDefault(op => OwnsReward(op, live) && MatchesResult(op, DailyFriendshipProof.State(evidence))) ?? throw new StageHostException("adapter", "当前礼物无法对应到本次咨询，请领取礼物后继续；不会重复咨询。");
                 await FinishAsync(op);
+            }
+            else if (DailyNavigationDecision.Types(initial.Frame).Contains("FriendshipManageUI"))
+            {
+                var evidence = await driver.EvidenceAsync(["friendship"]);
+                var state = DailyFriendshipProof.State(evidence);
+                var op = business.Records(context, DailyFriendshipProof.Role, includeLegacy: false).FirstOrDefault(o =>
+                    o["state"]?.GetValue<string>() == "completed" && MatchesResult(o, state) &&
+                    (o["presentation_closed"]?.GetValue<bool>() != true || state["NoticePending"]?.GetValue<bool>() == true));
+                if (op != null)
+                {
+                    business.Verify(op, op["events"]!.AsArray(), op["after"]!.AsObject());
+                    await FinishAsync(op);
+                }
+                else if (state["NoticePending"]?.GetValue<bool>() == true)
+                    throw new StageHostException("adapter", "游戏仍在准备咨询礼物，请领取礼物后继续；未提交新咨询。");
             }
             for (int attempt = 0; attempt < 3; attempt++)
             {

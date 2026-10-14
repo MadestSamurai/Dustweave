@@ -9,6 +9,7 @@ public sealed class PandoraClient
 {
     readonly PipeClient pipe;
     readonly string diagnostics;
+    readonly JsonArray transitions = new();
     string lastDiagnostic = "";
     string runId = Guid.NewGuid().ToString("N");
     DateTimeOffset lastObservation = DateTimeOffset.UtcNow, started;
@@ -81,9 +82,15 @@ public sealed class PandoraClient
     internal static JsonObject DiagnosticState(JsonObject state)
     {
         var result = new JsonObject();
-        foreach (var key in new[] { "At", "Pid", "RunId", "Running", "Finished", "Faulted", "Reason", "Detail", "Completed", "Ui", "Stage", "Mode", "AutoSelectEquipment", "Selection", "Surfaces" })
+        foreach (var key in new[] { "At", "Pid", "RunId", "Running", "Finished", "Faulted", "Reason", "Detail", "Completed", "Ui", "Stage", "Mode", "AutoSelectEquipment", "Selection", "Surfaces", "Entry", "TransitionUi" })
             result[key] = state[key]?.DeepClone();
         return result;
+    }
+
+    internal static void AppendTransition(JsonArray history, JsonObject record)
+    {
+        history.Add(record.DeepClone());
+        while (history.Count > 64) history.RemoveAt(0);
     }
 
     void Record(JsonObject state)
@@ -95,6 +102,9 @@ public sealed class PandoraClient
         if (signature == lastDiagnostic) return;
         try
         {
+            // Bounded state changes only; no per-frame positions, health or loot.
+            AppendTransition(transitions, record);
+            DailyJson.Write(Path.Combine(diagnostics, "pandora-transitions.json"), transitions);
             DailyJson.Write(Path.Combine(diagnostics, "pandora-state.json"), record);
             if (state["Faulted"]?.GetValue<bool>() == true)
                 DailyJson.Write(Path.Combine(diagnostics, "pandora-runtime-error.json"), record);

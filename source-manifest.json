@@ -246,15 +246,15 @@
       "reasons": [
         "release notes"
       ],
-      "bytes": 34347
+      "bytes": 34932
     },
     {
       "path": "Directory.Build.props",
-      "sha256": "23f33d4e389cbaf4850eac95996a4e738b69174c9298c0cffecd48e0fc234eba",
+      "sha256": "25722ebd21592d5a3d4629aea50eaf882c6a1a3b5696eabf034b0551c9987b7f",
       "reasons": [
         "build input"
       ],
-      "bytes": 761
+      "bytes": 762
     },
     {
       "path": "docs/BARGAIN_TRAINING.md",
@@ -655,11 +655,11 @@
     },
     {
       "path": "src/Compatibility/PandoraCompiler.cs",
-      "sha256": "2a66dbc39d65d0080edaab00711c2441870750777eba324d99137c706c288bc0",
+      "sha256": "c5be512a4add7efb369507b0db70b2f5efc773176dfde9731cfab05bdc75f5a8",
       "reasons": [
         "build input"
       ],
-      "bytes": 13174
+      "bytes": 14284
     },
     {
       "path": "src/Compatibility/startup-contract.json",
@@ -775,11 +775,11 @@
     },
     {
       "path": "src/Connection/FriendshipNative.cs",
-      "sha256": "a88be015f8a4491f04a1223b67f8087ec3c44bdb89ac9e8852ef7ab4beb72b61",
+      "sha256": "9fa6bbae6792dba9619e6c896872d3e50b65b828587e6a82575758915f18be26",
       "reasons": [
         "build input"
       ],
-      "bytes": 4272
+      "bytes": 4891
     },
     {
       "path": "src/Connection/LegacyGuardTest.cs",
@@ -828,6 +828,14 @@
         "build input"
       ],
       "bytes": 10293
+    },
+    {
+      "path": "src/Connection/NativeDailyBattles.cs",
+      "sha256": "0088542b0fd2a7913acddc35ecd5a511fe0b3dcc7e3d7a2294038f8a9759b044",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 11094
     },
     {
       "path": "src/Connection/NoticeNative.cs",
@@ -1190,6 +1198,14 @@
       "bytes": 804
     },
     {
+      "path": "src/Core/DailyEventNative.cs",
+      "sha256": "0e142744dfe6ad3946e62f388b6199921b63a74af012c1c2b0b354b73265b8e1",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 10440
+    },
+    {
       "path": "src/Core/DailyEventRewards.cs",
       "sha256": "c0c0a0521f3c5d17310f420ad616660ec3317c1158dd742072b4659a8226f520",
       "reasons": [
@@ -1303,11 +1319,11 @@
     },
     {
       "path": "src/Core/DailyFriendshipStage.cs",
-      "sha256": "7f08808404f32b1eb13e33ed99a3d991c061a769b302088e78e14f486e90f68a",
+      "sha256": "18a5702fe4b5dad7c06eab60b22abcbd49d6268d36618b691e30e761c5c3ae74",
       "reasons": [
         "build input"
       ],
-      "bytes": 11886
+      "bytes": 15014
     },
     {
       "path": "src/Core/DailyGuildStage.cs",
@@ -1526,6 +1542,14 @@
       "bytes": 8873
     },
     {
+      "path": "src/Core/DailyNativeBattleRecovery.cs",
+      "sha256": "b450e97dff1f334930735ec2e6ace1924e9dce3760cedbf9e218090beab13899",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3362
+    },
+    {
       "path": "src/Core/DailyNavigationPolicy.cs",
       "sha256": "31ecd490c771293f289f3a72033de16c819713b5acc7eb66fbf2405a60e71bb6",
       "reasons": [
@@ -1681,6 +1705,14 @@
         "build input"
       ],
       "bytes": 6642
+    },
+    {
+      "path": "src/Core/DailySalvation.cs",
+      "sha256": "e8610205713ad70cdbd0f84785cf73d49d812b1f83a23568ae9f4683381b1888",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 7622
     },
     {
       "path": "src/Core/DailySandbox.cs",
@@ -2236,11 +2268,11 @@
     },
     {
       "path": "src/Core/PandoraClient.cs",
-      "sha256": "2fbc258c056b508d091804c871d5a8fc96310d288a2396048d931b94c3362bed",
+      "sha256": "fa1a9c375e1ca0b97db92e16cf9b910a3c699915001837ad8dba62db79c3b433",
       "reasons": [
         "build input"
       ],
-      "bytes": 4415
+      "bytes": 4905
     },
     {
       "path": "src/Core/RefinementChoices.cs",
@@ -2588,11 +2620,11 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "676b631f7a3d3e8bb6f6632ad7c33dcb1eab9f2ef707a4b5b980a16fc11c2b40",
+      "sha256": "6af138af93b236fe19e830fe9a07fa3085130fa953f7e640e3a19423ed13b6c2",
       "reasons": [
         "build input"
       ],
-      "bytes": 88800
+      "bytes": 92295
     },
     {
       "path": "src/Desktop/Localization/runtime.json",
@@ -2608,7 +2640,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 314223
+      "bytes": 315033
     },
     {
       "path": "src/Desktop/MainWindow.Accounts.cs",
@@ -3116,19 +3148,19 @@
     },
     {
       "path": "src/Pandora/LoopRules.cs",
-      "sha256": "f5dcbbb14fa87f2f998d353fac202c11b109a927a07736559a53b2fb8dc26c54",
+      "sha256": "b632af5cc7d4a1e1a74b20f2a17d6c31784835f415bd613e4c187aab246266a2",
       "reasons": [
         "build input"
       ],
-      "bytes": 2153
+      "bytes": 3910
     },
     {
       "path": "src/Pandora/Native.cs",
-      "sha256": "64e1004d39f7651efc495c8eeb7aa42b98ea7f66a618c8eb6c6e2769c0517dc2",
+      "sha256": "6c57c856b473086f5ff4301dd2c401e21817b471fd58ad3a849f84d5f1c0b4b5",
       "reasons": [
         "build input"
       ],
-      "bytes": 9315
+      "bytes": 9989
     },
     {
       "path": "src/Pandora/Planner.cs",
@@ -3148,11 +3180,11 @@
     },
     {
       "path": "src/Pandora/Runtime.cs",
-      "sha256": "fc144107ca38563dff757e211c4128ec152f7242314b24347e8c2becf76388c9",
+      "sha256": "4445093dc7befc8d99a472ae9d254cc6d6bb80863c6dd20d9ca30d0ba31bff7c",
       "reasons": [
         "build input"
       ],
-      "bytes": 25733
+      "bytes": 27942
     },
     {
       "path": "src/Pandora/SkillPlanner.cs",
@@ -3220,7 +3252,7 @@
     },
     {
       "path": "src/Shared/DailyBridgeVersion.cs",
-      "sha256": "8648a08a10d5115ab7d9db8a8ddf8db0c7264646c563121b9a76ab3b70b496e7",
+      "sha256": "6aa33a9f2ca4858279dc925032811bd3aa48bf420c2e8872e9bd3a42abe15ad1",
       "reasons": [
         "build input"
       ],
@@ -8640,6 +8672,14 @@
       "bytes": 27863
     },
     {
+      "path": "tests/Dustweave.Tests/Cases/FriendshipStageCases.cs",
+      "sha256": "5eb63094768dda87face3426e4b7fa08424b7cd2fadffd1e01e0edcfecb9f89c",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 7534
+    },
+    {
       "path": "tests/Dustweave.Tests/Cases/GameInstallationCases.cs",
       "sha256": "4c3f884c43538119325ec7e3a5661f47345acf9574b682d7dbfcd8d7deab4271",
       "reasons": [
@@ -8776,6 +8816,14 @@
       "bytes": 1871
     },
     {
+      "path": "tests/Dustweave.Tests/Cases/NativeDailyBattleCases.cs",
+      "sha256": "b620d855b4ede3f2a7a8ae7b869fa27b7ca9dbc50c30a52d66c0f0362be9f0a3",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 10606
+    },
+    {
       "path": "tests/Dustweave.Tests/Cases/PackagedUtilityCases.cs",
       "sha256": "15ca25cb254cf48b303fce52918bb3cd3062cb6eeb130a1fb8a25203f7a99a26",
       "reasons": [
@@ -8785,11 +8833,11 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/PandoraCases.cs",
-      "sha256": "e7e2a1abe4d4bdfe8b30f4195a87c3a7f0b70506d587743d73c56d30c31729a3",
+      "sha256": "6b08ee0f92f4f32d7beca671c02d8a57981f703fa219ca2ca80f6a98a227818b",
       "reasons": [
         "build input"
       ],
-      "bytes": 9093
+      "bytes": 13372
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ParallelCases.cs",
@@ -9193,11 +9241,11 @@
     },
     {
       "path": "tests/Dustweave.Tests/Program.cs",
-      "sha256": "16fc5b721d92260d8bf5119d7e73bb7fefbe5a63e98279aa168a90c9636e3830",
+      "sha256": "089565d9f7838b01c8ac6ef9667d07d03e86b41d7ffbee229ebea171265b16a5",
       "reasons": [
         "build input"
       ],
-      "bytes": 11886
+      "bytes": 11964
     },
     {
       "path": "tests/Dustweave.Tests/README.md",
@@ -9494,46 +9542,6 @@
         "build input"
       ],
       "bytes": 1102
-    },
-    {
-      "path": "src/Connection/NativeDailyBattles.cs",
-      "sha256": "0088542b0fd2a7913acddc35ecd5a511fe0b3dcc7e3d7a2294038f8a9759b044",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 11094
-    },
-    {
-      "path": "src/Core/DailyEventNative.cs",
-      "sha256": "0e142744dfe6ad3946e62f388b6199921b63a74af012c1c2b0b354b73265b8e1",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 10440
-    },
-    {
-      "path": "src/Core/DailyNativeBattleRecovery.cs",
-      "sha256": "b450e97dff1f334930735ec2e6ace1924e9dce3760cedbf9e218090beab13899",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 3362
-    },
-    {
-      "path": "src/Core/DailySalvation.cs",
-      "sha256": "e8610205713ad70cdbd0f84785cf73d49d812b1f83a23568ae9f4683381b1888",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 7622
-    },
-    {
-      "path": "tests/Dustweave.Tests/Cases/NativeDailyBattleCases.cs",
-      "sha256": "b620d855b4ede3f2a7a8ae7b869fa27b7ca9dbc50c30a52d66c0f0362be9f0a3",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 10606
     }
   ],
   "publicReleaseApproved": false,
