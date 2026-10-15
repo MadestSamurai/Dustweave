@@ -1,5 +1,11 @@
 # Repository status / 仓库状态
 
+## 1.3.12 published / 日常收尾、收集与跑商修复已发布
+
+2026-10-15：1.3.12 已由 GitHub Actions 发布为普通 Release，国内 v2 OTA 已上线。包含活动批量扫荡、可选的日常完成后退出游戏、活动地图收集补齐，以及镜中、救赎之塔和跑商恢复修复；魔兽快速战斗环节已移除。93 组、4,188 项回归通过，双版本成品、1.3.11 实际更新器及全部 20 个公网差分完成验收。1.3.2–1.3.11 可直升，从 1.3.11 升级约 1.05–1.08 MB。详见[发布验收](releases/1.3.12-deployment.md)。
+
+Version **1.3.12** is the latest normal release and v2 OTA entry. Both packaged editions, the actual prior updater and public downloads passed validation. This release used offline verification without operating the game. The legacy lane is unchanged. Entries below are historical.
+
 ## 1.3.11 published / 咨询礼物与潘多拉重开修复已发布
 
 2026-10-15：1.3.11 已由 GitHub Actions 发布为普通 Release，国内 v2 OTA 已上线。修复咨询礼物异步加载、旧版遗留礼物的接续处理，以及潘多拉 Game Over 后的重开卡点。最终源码 88 组、4,067 项回归通过，双版本成品、1.3.10 实际更新器与 20 个公网差分完成验收。1.3.1–1.3.10 可直升，从 1.3.10 升级约 730–759 KB。详见[发布验收](releases/1.3.11-deployment.md)。
