@@ -1,16 +1,16 @@
 # Repository status / 仓库状态
 
-## 1.3.13 candidate / 进度互通与沙盒修复待发布
+## 1.3.13 published / 进度互通与沙盒修复已发布
 
-2026-10-15：准备发布 1.3.13，合并普通与隔离启动的同账号日常摘要和服务器地图进度，缩小周收集补查范围，吸收耗尽后继续可执行压制，并修复沙盒专属目录与全局默认目录被拼接导致的归属误判。账号、服务器、周期及目录归属校验继续保留。
+2026-10-15：1.3.13 已由 GitHub Actions 发布为普通 Release，国内 v2 OTA 已上线。合并普通与隔离启动的同账号日常摘要和服务器地图进度，缩小周收集补查范围，吸收耗尽后继续可执行压制，并修复沙盒专属目录与全局默认目录被拼接导致的归属误判。94 组、4,229 项回归通过；双版本成品、1.3.12 实际更新器及全部 20 个公网差分完成验收。1.3.3–1.3.12 可直升，从 1.3.12 升级约 0.87–0.92 MB。详见[发布验收](releases/1.3.13-deployment.md)。
 
-The candidate includes cross-mode progress, targeted collection rechecks, suppression after absorption exhaustion, and scalar Sandboxie root lookup. Earlier scoped checks passed (516 account/collection checks and 201 sandbox checks); packaging and release gates will validate this exact version. No live game operation is included. See [release notes](releases/1.3.13.md). This entry does not confirm publication.
+Version **1.3.13** is the latest normal release and v2 OTA entry. Both packaged editions, the actual prior updater and public downloads passed validation. Account, server, cycle and directory ownership checks remain in place. This release used offline verification without operating the game. The legacy lane is unchanged. See [release notes](releases/1.3.13.md). All entries below are historical publication records.
 
 ## 1.3.12 published / 日常收尾、收集与跑商修复已发布
 
 2026-10-15：1.3.12 已由 GitHub Actions 发布为普通 Release，国内 v2 OTA 已上线。包含活动批量扫荡、可选的日常完成后退出游戏、活动地图收集补齐，以及镜中、救赎之塔和跑商恢复修复；魔兽快速战斗环节已移除。93 组、4,188 项回归通过，双版本成品、1.3.11 实际更新器及全部 20 个公网差分完成验收。1.3.2–1.3.11 可直升，从 1.3.11 升级约 1.05–1.08 MB。详见[发布验收](releases/1.3.12-deployment.md)。
 
-Version **1.3.12** is the latest normal release and v2 OTA entry. Both packaged editions, the actual prior updater and public downloads passed validation. This release used offline verification without operating the game. The legacy lane is unchanged. Entries below are historical.
+Version **1.3.12** was published as a normal release and v2 OTA entry. Both packaged editions, the actual prior updater and public downloads passed validation. This release used offline verification without operating the game. The legacy lane was unchanged.
 
 ## 1.3.11 published / 咨询礼物与潘多拉重开修复已发布
 

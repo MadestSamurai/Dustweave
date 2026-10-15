@@ -7,7 +7,7 @@
 - 修复沙盒专属目录与全局默认目录被拼接，导致误报登记位置不一致的问题，覆盖启动、登录信息回收与绑定修复。
 - Shares validated account progress across ordinary and sandbox runs, narrows collection rechecks, and continues suppression when absorption is exhausted.
 - Fixes false sandbox directory mismatches caused by combining a per-box path with an inherited global default.
-- [完整说明 / Full notes](docs/releases/1.3.13.md)
+- [完整说明 / Full notes](docs/releases/1.3.13.md) · [发布验收 / Deployment](docs/releases/1.3.13-deployment.md)
 
 ## 1.3.12 — 2026-10-15
 
