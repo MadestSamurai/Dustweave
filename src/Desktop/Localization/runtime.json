@@ -4709,5 +4709,75 @@
     "zh-CN": "收取邮箱物品",
     "en-US": "Collect mailbox items",
     "zh-TW": "收取信箱物品"
+  },
+  "message.no_free_draws": {
+    "zh-CN": "当前没有可用的每日免费抽取",
+    "zh-TW": "目前沒有可用的每日免費抽取",
+    "en-US": "No daily free draws are available right now."
+  },
+  "message.free_draw_receipt_unobserved": {
+    "zh-CN": "未记录到本次免费抽取的装备，无法安全选择分解对象；可开启制作后分解",
+    "zh-TW": "未記錄到本次免費抽取的裝備，無法安全選擇分解對象；可開啟製作後分解",
+    "en-US": "No equipment from the free draw was recorded. Enable the craft-and-dismantle fallback to complete the mission safely."
+  },
+  "message.refinement_daily_limit_reached": {
+    "zh-CN": "今天已执行过精炼，剩余精炼任务留待下次处理",
+    "zh-TW": "今天已執行過精煉，剩餘精煉任務留待下次處理",
+    "en-US": "Refinement has already run today. Remaining refinement missions are deferred."
+  },
+  "message.selected_refine_equipment_unavailable": {
+    "zh-CN": "指定装备不符合精炼条件，请在日常设置中重新选择",
+    "zh-TW": "指定裝備不符合精煉條件，請在日常設定中重新選擇",
+    "en-US": "The selected equipment cannot be refined. Choose another item in Daily settings."
+  },
+  "message.no_useful_refinement_candidate": {
+    "zh-CN": "没有符合条件的精炼装备，请在日常设置中选择装备",
+    "zh-TW": "沒有符合條件的精煉裝備，請在日常設定中選擇裝備",
+    "en-US": "No eligible equipment was found for refinement. Select equipment in Daily settings."
+  },
+  "message.equipment_protected": {
+    "zh-CN": "可识别的装备均受保留、锁定或穿戴设置保护，未分解",
+    "zh-TW": "可識別的裝備均受保留、鎖定或穿戴設定保護，未分解",
+    "en-US": "The identified equipment is protected by keep, lock or equipped status. Nothing was dismantled."
+  },
+  "message.equipment_no_actions": {
+    "zh-CN": "当前任务与装备保护设置下没有可执行操作",
+    "zh-TW": "目前任務與裝備保護設定下沒有可執行操作",
+    "en-US": "No action is available under the current missions and equipment protection settings."
+  },
+  "message.equipment_no_recycle_source": {
+    "zh-CN": "没有可安全分解的本次抽取装备",
+    "zh-TW": "沒有可安全分解的本次抽取裝備",
+    "en-US": "No equipment from this draw is available for safe dismantling."
+  },
+  "message.equipment_no_refinement_task": {
+    "zh-CN": "当前没有待完成的精炼任务",
+    "zh-TW": "目前沒有待完成的精煉任務",
+    "en-US": "There are no pending refinement missions."
+  },
+  "message.dispatch_no_available_characters": {
+    "zh-CN": "当前没有可执行派遣的角色",
+    "zh-TW": "目前沒有可執行派遣的角色",
+    "en-US": "No characters are currently available for dispatch."
+  },
+  "message.idle_no_visible_bubble": {
+    "zh-CN": "餐厅暂时没有可领取的气泡，已结束本次等待；可稍后补跑",
+    "zh-TW": "餐廳暫時沒有可領取的氣泡，已結束本次等待；可稍後補跑",
+    "en-US": "No restaurant reward bubbles appeared during the wait. Retry this stage later."
+  },
+  "message.time_budget_reached": {
+    "zh-CN": "本次领取等待已结束，剩余奖励可稍后补跑",
+    "zh-TW": "本次領取等待已結束，剩餘獎勵可稍後補跑",
+    "en-US": "The collection wait has ended. Retry later for the remaining rewards."
+  },
+  "message.stage_skipped_without_reason": {
+    "zh-CN": "该环节已跳过，但执行器未返回原因。可重新勾选此项；若再次出现，请导出诊断。",
+    "zh-TW": "此環節已略過，但執行器未回傳原因。可重新勾選此項；若再次出現，請匯出診斷。",
+    "en-US": "This stage was skipped without an explanation from the executor. Select it to retry; export diagnostics if this recurs."
+  },
+  "message.stage_partial_without_reason": {
+    "zh-CN": "该环节尚未完成，但执行器未返回原因。请查看游戏是否有断线或弹窗，再补跑此项；若再次出现，请导出诊断。",
+    "zh-TW": "此環節尚未完成，但執行器未回傳原因。請查看遊戲是否斷線或有彈窗，再補跑此項；若再次出現，請匯出診斷。",
+    "en-US": "This stage is incomplete without an explanation from the executor. Check the game for a disconnect or dialog, then retry. Export diagnostics if it recurs."
   }
 }

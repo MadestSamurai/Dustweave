@@ -15,17 +15,20 @@ internal static class ToolApplicationHost
             _ = new HostedToolLocaleBridge(app);
             _ = new HostedToolActivity(window,id);
             if(window.FindName("ConnectButton") is System.Windows.Controls.Button button){
-                if(id!="equipment"){button.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));button.Visibility=Visibility.Collapsed;}
-                else {button.SetResourceReference(System.Windows.Controls.ContentControl.ContentProperty,"SuiteRefresh");app.Resources["SuiteRefresh"]=DailyLanguage.Current.Get("tools.refresh_inventory");_ = ReadEquipmentWhenIdle(window,button);}
+                if(id=="equipment"){button.SetResourceReference(System.Windows.Controls.ContentControl.ContentProperty,"SuiteRefresh");app.Resources["SuiteRefresh"]=DailyLanguage.Current.Get("tools.refresh_inventory");}
+                _ = ConnectWhenIdle(window,button,id!="equipment");
             }
         }),System.Windows.Threading.DispatcherPriority.Loaded);
     }
-    private static async Task ReadEquipmentWhenIdle(Window window,System.Windows.Controls.Button button)
+    internal static async Task ConnectWhenIdle(Window window,System.Windows.Controls.Button button,bool hideAfterConnect, string? dataRoot=null)
     {
         // The parent owns the control lease briefly while recording the new child process.
         for(int i=0;i<60&&window.IsLoaded;i++) {
-            if(window.IsEnabled&&!DailyToolControl.IsOccupied(DailyIdentity.DataRoot)) {
-                button.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));return;
+            if(window.IsEnabled&&!DailyToolControl.IsOccupied(dataRoot??DailyIdentity.DataRoot)) {
+                var request=new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent);
+                button.RaiseEvent(request);
+                if(hideAfterConnect&&!request.Handled)button.Visibility=Visibility.Collapsed;
+                return;
             }
             await Task.Delay(50);
         }

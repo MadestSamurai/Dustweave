@@ -11,24 +11,30 @@ namespace BD2ApostleDefense.Desktop;
 /// Listeners are detached when controls leave the visual tree (including regenerated board cells).</summary>
 internal sealed class WindowLanguage : IDisposable
 {
-    private static readonly ConditionalWeakTable<Window,WindowLanguage> Windows=new();
+    private static readonly ConditionalWeakTable<FrameworkElement,WindowLanguage> Windows=new();
     private static readonly DependencyProperty OwnerProperty=DependencyProperty.RegisterAttached("Owner",typeof(WindowLanguage),typeof(WindowLanguage));
     static WindowLanguage()
     {
         // Loaded/Unloaded are direct routed events; a handler on the Window cannot observe child controls.
         EventManager.RegisterClassHandler(typeof(FrameworkElement),FrameworkElement.LoadedEvent,new RoutedEventHandler((_,e)=>
-        {if(e.OriginalSource is FrameworkElement element && Window.GetWindow(element) is Window root && Windows.TryGetValue(root,out var owner))owner.Attach(element);}));
+        {if(e.OriginalSource is FrameworkElement element && FindScope(element) is { } owner)owner.Attach(element);}));
         EventManager.RegisterClassHandler(typeof(FrameworkElement),FrameworkElement.UnloadedEvent,new RoutedEventHandler((_,e)=>
         {if(e.OriginalSource is DependencyObject node && node.GetValue(OwnerProperty) is WindowLanguage owner)owner.Detach(node);}));
     }
-    private readonly Window window;
+    private static WindowLanguage? FindScope(FrameworkElement element)
+    {
+        for(DependencyObject? node=element;node!=null;node=LogicalTreeHelper.GetParent(node) ?? (node is Visual ? VisualTreeHelper.GetParent(node) : null))
+            if(node is FrameworkElement root && Windows.TryGetValue(root,out var owner))return owner;
+        return null;
+    }
+    private readonly FrameworkElement window;
     private readonly Dictionary<DependencyObject,List<Target>> targets=new();
     public LanguageCatalog Catalog {get;}
-    public WindowLanguage(Window window,string language)
+    public WindowLanguage(FrameworkElement window,string language)
     {
         this.window=window;Catalog=new(language);
         Windows.Add(window,this);
-        Watch(window,Window.TitleProperty);
+        if(window is Window)Watch(window,Window.TitleProperty);
         Walk(window);
     }
     public int TrackedControlCount=>targets.Count;

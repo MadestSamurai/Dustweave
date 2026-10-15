@@ -16,14 +16,14 @@ internal static class DailyDialogs
     private static readonly DependencyProperty PreparedProperty = DependencyProperty.RegisterAttached(
         "Prepared", typeof(bool), typeof(DailyDialogs), new PropertyMetadata(false));
     internal static int ModalDepth { get; private set; }
-    internal static void Prepare(Window window)
+    internal static void Prepare(Window window, bool toolWindow = false)
     {
         if ((bool)window.GetValue(PreparedProperty)) return;
         window.SetValue(PreparedProperty, true);
         window.Style = (Style)Application.Current.FindResource(typeof(Window));
         window.SetResourceReference(Window.BackgroundProperty, "Surface");
         window.SetResourceReference(Window.ForegroundProperty, "Ink");
-        window.ShowInTaskbar = false;
+        window.ShowInTaskbar = toolWindow;
         WindowChrome.SetWindowChrome(window, new WindowChrome {
             CaptionHeight = 48, ResizeBorderThickness = new Thickness(window.ResizeMode == ResizeMode.NoResize ? 0 : 6),
             GlassFrameThickness = new Thickness(0), CornerRadius = new CornerRadius(8), UseAeroCaptionButtons = false
@@ -40,6 +40,28 @@ internal static class DailyDialogs
         DailyLanguage.Current.Bind(close, AutomationProperties.NameProperty, "window.close");
         WindowChrome.SetIsHitTestVisibleInChrome(close, true); close.Click += (_, _) => window.Close();
         DockPanel.SetDock(close, Dock.Right); header.Children.Add(close);
+        if (toolWindow)
+        {
+            Button Caption(string key, string path, Action action)
+            {
+                var button = new Button { Width=36, Height=36, MinWidth=36, Padding=new Thickness(0), Background=Brushes.Transparent, BorderThickness=new Thickness(0) };
+                var icon = new System.Windows.Shapes.Path { Data=Geometry.Parse(path), Width=16, Height=16, StrokeThickness=1.2 };
+                icon.SetResourceReference(System.Windows.Shapes.Shape.StrokeProperty,"Ink"); button.Content=icon;
+                DailyLanguage.Current.Bind(button,ToolTipService.ToolTipProperty,key);
+                DailyLanguage.Current.Bind(button,AutomationProperties.NameProperty,key);
+                WindowChrome.SetIsHitTestVisibleInChrome(button,true);button.Click+=(_,_)=>action();
+                DockPanel.SetDock(button,Dock.Right);header.Children.Add(button);return button;
+            }
+            var maximize=Caption("window.maximize","M 3,3 L 13,3 13,13 3,13 Z",()=>{
+                if(window.WindowState==WindowState.Maximized)SystemCommands.RestoreWindow(window);else SystemCommands.MaximizeWindow(window);
+            });
+            window.StateChanged+=(_,_)=>{
+                string key=window.WindowState==WindowState.Maximized?"window.restore":"window.maximize";
+                DailyLanguage.Current.Bind(maximize,ToolTipService.ToolTipProperty,key);
+                DailyLanguage.Current.Bind(maximize,AutomationProperties.NameProperty,key);
+            };
+            Caption("window.minimize","M 3,8 L 13,8",()=>SystemCommands.MinimizeWindow(window));
+        }
         var title = new TextBlock { VerticalAlignment = VerticalAlignment.Center, FontWeight = FontWeights.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(0, 0, 12, 0) };
         title.SetBinding(TextBlock.TextProperty, new Binding(nameof(Window.Title)) { Source = window });

@@ -226,6 +226,21 @@ static class WeeklyIsolationCases
                 && f.H.Box.Commands.Count(c => S(c["Kind"]) == "mainline_pack") == switches,
                 "completed same-week server maps skip all visits and queries even without absorption quota");
         }
+        using (var f = new Fixture(Path.Combine(root, "collection-theft-rerun")) { Pending = false })
+        {
+            f.H.Workflow.Settings.Weekly.Steal = true;
+            await new DailyWeeklyRoute(f.H.Workflow).Run(["weekly_mainline", "weekly_steal"]);
+            int queries = f.Queries.Count;
+            // Force a later collection-only server read as if the user ran just
+            // that selection, then restart the combined weekly queue.
+            f.Pack = 1;
+            f.H.Frame["Scene"] = "Map0001_001"; f.H.Page("GameFieldDefaultUI", "_buttonPackList");
+            await new DailyCollectionProgress(f.H.Workflow).Query(1, [1, 2, 3], cache: false);
+            var again = await new DailyWeeklyRoute(f.H.Workflow).Run(["weekly_mainline", "weekly_steal"]);
+            Check(S(again["state"]) == "completed" && f.Queries.Count == queries + 1,
+                "combined weekly rerun reuses theft and collection after a collection-only refresh");
+            Check(S(f.H.Box.Commands.Last()["Kind"]) == "collection_query", "completed combined rerun issues no navigation or extra network input");
+        }
         using (var f = new Fixture(Path.Combine(root, "collection-adjacent-query")))
         {
             var route = new DailyFieldRoute(f.H.Workflow);

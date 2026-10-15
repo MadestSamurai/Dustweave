@@ -14,14 +14,14 @@ public partial class PandoraWindow : Window
     readonly bool smoke;
     PandoraClient? client;
     JsonObject? snapshot;
-    bool polling, closing, closeReady;
+    bool polling, closing, closeReady, connecting, starting;
     string status = "ready";
     int preferredStage, preferredGroup;
     string stageSignature = "";
     sealed record StageChoice(int Id, int Group, string Label);
     sealed record Preferences(string Mode = "Currency", int StageId = 0, int StageGroup = 0, bool AutoSelectEquipment = true);
     static string PreferencesPath => Path.Combine(DailyIdentity.DataRoot, "tools", "pandora-settings.json");
-    public bool HostedAutomationEnabled => client?.Enabled == true;
+    public bool HostedAutomationEnabled => client?.Enabled == true || connecting || starting;
     static DailyLanguage L => DailyLanguage.Current;
 
     public PandoraWindow(bool smoke = false)
@@ -55,6 +55,7 @@ public partial class PandoraWindow : Window
         if (smoke || polling)
             return;
         polling = true;
+        connecting = true;
         status = "connecting";
         Render();
         try
@@ -69,6 +70,7 @@ public partial class PandoraWindow : Window
         }
         finally
         {
+            connecting = false;
             polling = false;
             Render();
         }
@@ -79,6 +81,7 @@ public partial class PandoraWindow : Window
         if (e.Handled || client == null || polling)
             return;
         polling = true;
+        starting = true;
         client.Mode = ChallengeMode.IsChecked == true ? "Challenge" : "Currency";
         client.StageId = (StageBox.SelectedItem as StageChoice)?.Id ?? 0;
         client.StageGroup = (StageBox.SelectedItem as StageChoice)?.Group ?? 0;
@@ -95,6 +98,7 @@ public partial class PandoraWindow : Window
         }
         finally
         {
+            starting = false;
             polling = false;
             Render();
         }

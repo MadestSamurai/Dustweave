@@ -606,11 +606,15 @@ public sealed partial class DailyRunPanel : UserControl
         {
             get
             {
-                var text = snapshot.State == "skipped" && string.IsNullOrWhiteSpace(snapshot.Detail)
-                    ? L.Get("run.skipped_unknown") : Describe(snapshot.Detail);
+                var text = string.IsNullOrWhiteSpace(snapshot.Detail) ? snapshot.State switch
+                {
+                    "skipped" => L.Get("run.skipped_unknown"),
+                    "partial" or "blocked" or "failed" or "error" => L.Get("run.outcome_unknown"),
+                    _ => ""
+                } : Describe(snapshot.Detail);
                 if (snapshot.State is "blocked" or "failed" or "error" && DailyIssues.Classify(snapshot.Detail).Code != "unknown")
                     text = DailyIssuePresentation.WithAdvice(snapshot.Detail, text);
-                if (HasRecovery) text = L.Get("run.recovery_summary", RecoveryOperations);
+                if (HasRecovery) text = (text.Length > 0 ? text + "\n" : "") + L.Get("run.recovery_summary", RecoveryOperations);
                 return snapshot.Carried ? L.Get("run.carried", text) : text;
             }
         }

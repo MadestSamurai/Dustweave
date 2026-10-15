@@ -1,5 +1,32 @@
 [
 {
+  "Version": "1.3.16",
+  "Date": "2026-10-15",
+  "Notes": {
+    "zh-CN": [
+      "跳过、暂缓和失败显示具体原因及下一步，改善旧记录的提示。",
+      "合并同账号同周期的地图进度，避免未执行或较旧的记录覆盖已完成结果。",
+      "使徒防守保留独立窗口，先显示界面和加载状态再连接，统一主题、语言与日志；策略不变。",
+      "内置工具连接、运行和收尾统一互斥；空闲窗口不占用日常，暂停、设置与关闭保持可用。",
+      "若 OTA 失败，请下载完整包并解压到新目录，保留 app 文件夹。"
+    ],
+    "zh-TW": [
+      "略過、暫緩和失敗顯示具體原因及下一步，改善舊記錄的提示。",
+      "合併同帳號同週期的地圖進度，避免未執行或較舊的記錄覆蓋已完成結果。",
+      "使徒防守保留獨立視窗，先顯示介面和載入狀態再連線，統一主題、語言與日誌；策略不變。",
+      "內建工具連線、執行和收尾統一互斥；閒置視窗不占用日常，暫停、設定與關閉保持可用。",
+      "若 OTA 失敗，請下載完整包並解壓至新目錄，保留 app 資料夾。"
+    ],
+    "en-US": [
+      "Skipped, deferred and failed tasks show relevant reasons and next actions, including older records.",
+      "Map progress merges across execution modes without unstarted or older records replacing completed results.",
+      "Apostle Defense keeps a separate window, opens before connecting, and shares themes, language and diagnostics. Its strategy is unchanged.",
+      "Hosted tools share exclusive control during connection, execution and settlement. Idle windows release control; stop, settings and close remain available.",
+      "If OTA fails, extract the full package into a new folder and keep the app folder."
+    ]
+  }
+},
+{
   "Version": "1.3.15",
   "Date": "2026-10-15",
   "Notes": {

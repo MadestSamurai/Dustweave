@@ -893,3 +893,18 @@ Event AP data unavailable=活动免费次数数据尚未就绪，请重新进入
 Native battle recovery account changed=当前账号与未完成战斗不一致，未接续旧操作；请检查所选账号。
 
 feature_removed=此环节已移除，继续执行其他日常。
+
+no_free_draws=当前没有可用的每日免费抽取
+free_draw_receipt_unobserved=未记录到本次免费抽取的装备，无法安全选择分解对象；可开启制作后分解
+refinement_daily_limit_reached=今天已执行过精炼，剩余精炼任务留待下次处理
+selected_refine_equipment_unavailable=指定装备不符合精炼条件，请在日常设置中重新选择
+no_useful_refinement_candidate=没有符合条件的精炼装备，请在日常设置中选择装备
+equipment_protected=可识别的装备均受保留、锁定或穿戴设置保护，未分解
+equipment_no_actions=当前任务与装备保护设置下没有可执行操作
+equipment_no_recycle_source=没有可安全分解的本次抽取装备
+equipment_no_refinement_task=当前没有待完成的精炼任务
+dispatch_no_available_characters=当前没有可执行派遣的角色
+idle_no_visible_bubble=餐厅暂时没有可领取的气泡，已结束本次等待；可稍后补跑
+time_budget_reached=本次领取等待已结束，剩余奖励可稍后补跑
+stage_skipped_without_reason=该环节已跳过，但执行器未返回原因。可重新勾选此项；若再次出现，请导出诊断。
+stage_partial_without_reason=该环节尚未完成，但执行器未返回原因。请查看游戏是否有断线或弹窗，再补跑此项；若再次出现，请导出诊断。

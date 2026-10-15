@@ -14,11 +14,11 @@ public partial class MansionWindow : Window
     readonly bool smoke;
     MansionClient? client;
     JsonObject? snapshot;
-    bool polling, closing, closeReady;
+    bool polling, closing, closeReady, connecting, starting;
     string status = "ready";
     sealed record Preferences(string Mode = "Normal", bool Retry = true, bool Chain80 = false);
     static string PreferencesPath => Path.Combine(DailyIdentity.DataRoot, "tools", "mansion-runaway-settings.json");
-    public bool HostedAutomationEnabled => client?.Enabled == true;
+    public bool HostedAutomationEnabled => client?.Enabled == true || connecting || starting;
     static DailyLanguage L => DailyLanguage.Current;
 
     public MansionWindow(bool smoke = false)
@@ -51,6 +51,7 @@ public partial class MansionWindow : Window
         if (smoke || polling)
             return;
         polling = true;
+        connecting = true;
         status = "connecting";
         Render();
         try
@@ -65,6 +66,7 @@ public partial class MansionWindow : Window
         }
         finally
         {
+            connecting = false;
             polling = false;
             Render();
         }
@@ -75,6 +77,7 @@ public partial class MansionWindow : Window
         if (e.Handled || client == null || polling)
             return;
         polling = true;
+        starting = true;
         client.Mode = ChallengeMode.IsChecked == true ? "Challenge" : "Normal";
         client.Retry = RetryBox.IsChecked == true;
         client.Chain80 = Goal80Box.IsChecked == true;
@@ -90,6 +93,7 @@ public partial class MansionWindow : Window
         }
         finally
         {
+            starting = false;
             polling = false;
             Render();
         }

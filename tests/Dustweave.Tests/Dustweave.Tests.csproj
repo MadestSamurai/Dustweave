@@ -15,6 +15,7 @@
     <Compile Include="../../standalone/bd2-territory/shared/SurplusSales.cs" Link="SurplusSales.cs" />
     <Compile Include="../../src/Desktop/DemoEnvironment.cs" Link="DemoEnvironment.cs" />
     <Compile Include="../../src/Desktop/StartupDiagnostics.cs" Link="StartupDiagnostics.cs" />
+    <Compile Include="../../src/Desktop/ApostleToolSession.cs" Link="ApostleToolSession.cs" />
     <Compile Include="../../standalone/bd2-territory/ipc/desktop/HostedConnection.cs" Link="Unified/HostedConnection.cs" />
     <Compile Include="../../src/Runtime/SuiteRuntime.cs" Link="Unified/SuiteRuntime.cs" />
     <Compile Include="../../src/Shared/Ipc/runtime/Handoff.cs" Link="Unified/Handoff.cs" />

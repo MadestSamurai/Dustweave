@@ -229,14 +229,10 @@ public sealed class DailyQueueSession(string root, IDailyQueueExecutor executor,
         item.TryGetProperty("progress", out var progress);
         string state = Text(item, "state"), current = Text(progress, "detail");
         if (state is ("running" or "pending") && !string.IsNullOrWhiteSpace(current)) return current;
-        string detail = Text(result, "detail");
+        string detail = DailyOutcomeExplanation.Read(Text(item, "task"), result);
         if (!string.IsNullOrWhiteSpace(detail)) return detail;
-        if (result.ValueKind == JsonValueKind.Object && result.TryGetProperty("waiting_daily_reset", out var waiting)
-            && waiting.ValueKind == JsonValueKind.True) return "吸收次数用完，次日接续未完成地图";
-        string reason = Text(result, "reason");
-        if (!string.IsNullOrWhiteSpace(reason)) return reason;
         // A final result must not display stale progress such as "preparing".
-        return state is "completed" or "skipped" ? "" : current;
+        return state is "running" or "pending" ? current : "";
     }
     private static DateTimeOffset? ReadFinishedAt(JsonElement item)
     {

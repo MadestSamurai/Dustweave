@@ -152,7 +152,10 @@ public partial class MainWindow : Window
     private readonly DailyToolPanel toolPanel;
     private readonly DailyToolSession toolSession;
     private bool toolChanging;
-    private bool ToolOpen => toolSession.Current != null;
+    private ApostleToolWindow? apostleWindow;
+    private string? ActiveToolId => apostleWindow != null ? "apostle-defense" : toolSession.Current?.ToolId;
+    private bool ToolOpen => apostleWindow != null || toolSession.Current != null;
+    private bool ToolConnecting => apostleWindow?.Panel.Connecting == true;
     private bool ToolRunning => !busy && parallelControl == null && DailyToolControl.IsOccupied(root);
     private bool Unavailable => onboardingOpen || busy || toolChanging || ToolRunning || updateInstalling || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true;
     private async Task OpenTool(string id)
@@ -160,9 +163,26 @@ public partial class MainWindow : Window
         if (smoke != null || busy || toolChanging || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true) return;
         toolChanging = true; SetBusy(busy);
         try {
+            if(id=="apostle-defense" && apostleWindow!=null){apostleWindow.BringForward();return;}
             if(toolSession.Current?.ToolId==id){toolSession.Show();return;}
             using var activityLease=DailyToolControl.Acquire(root);
-            if(!await toolSession.CloseAsync())return;
+            if(!await CloseToolWindowsAsync())return;
+            if(id=="apostle-defense")
+            {
+                var session=new ApostleToolSession(root,async (progress,cancel)=>{
+                    var selected=host.Find()??throw new InvalidOperationException("请先启动游戏。");
+                    await host.ConnectAsync(selected,progress,cancel);
+                    await DailySuite.ActivateAsync(host,root,id,progress,cancel);
+                    if(host.Find()!=selected)throw new InvalidOperationException("游戏已退出或重启，功能切换已停止。");
+                    var identity=host.ReadSnapshot(selected)??throw new InvalidOperationException("游戏身份尚未就绪。");
+                    return new ApostleToolPort(host,root,selected,identity.AccountKey,identity.PlayerKey);
+                });
+                var window=new ApostleToolWindow(this,session,()=>!Unavailable);
+                apostleWindow=window;
+                window.Panel.ActivityChanged+=()=>{RefreshTools();SetBusy(busy);};
+                window.Closed+=(_,_)=>{if(apostleWindow==window)apostleWindow=null;RefreshTools();SetBusy(busy);};
+                window.Show();toolMessage="apostle.ready";return;
+            }
             var game=host.Find()??throw new InvalidOperationException("请先启动游戏。");
             await host.ConnectAsync(game,m=>toolMessage=m,CancellationToken.None);
             for(int i=0;i<20&&host.ReadSnapshot()==null;i++)await Task.Delay(250);
@@ -176,18 +196,27 @@ public partial class MainWindow : Window
     {
         if (smoke != null || busy || toolChanging || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true) return;
         toolChanging = true; toolMessage = null; SetBusy(busy);
-        try { if (await toolSession.CloseAsync()) { if(host.Find()!=null)await DailySuite.ActivateAsync(host,root,"daily",m=>toolMessage=m,CancellationToken.None);WorkspaceTabs.SelectedItem = RunTab; } }
+        try { if (await CloseToolWindowsAsync()) { if(host.Find()!=null)await DailySuite.ActivateAsync(host,root,"daily",m=>toolMessage=m,CancellationToken.None);WorkspaceTabs.SelectedItem = RunTab; } }
         catch (Exception e) { toolMessage = e.Message; }
         finally { toolChanging = false; RefreshTools(); SetBusy(busy); }
     }
     private string? toolMessage;
+    private async Task<bool> CloseToolWindowsAsync()
+    {
+        if(apostleWindow is { } window)
+        {
+            if(!await window.CloseSafelyAsync())return false;
+        }
+        return await toolSession.CloseAsync();
+    }
     private string? previousTool;
     private bool previousRunning;
     private void RefreshTools()
     {
-        var id = toolSession.Current?.ToolId;
+        var id = ActiveToolId;
+        apostleWindow?.Panel.Render();
         bool running=ToolRunning;
-        toolPanel.Refresh(busy || toolChanging || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true, id, running ? "tools.active_notice" : toolMessage ?? (busy ? "日常正在执行；工具设置窗口可以保留。" : toolSession.Message),running);
+        toolPanel.Refresh(busy || toolChanging || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true, id, ToolConnecting ? "apostle.connection_lock" : running ? "tools.active_notice" : toolMessage ?? (busy ? "日常正在执行；工具设置窗口可以保留。" : toolSession.Message),running);
         if(previousRunning!=running){previousRunning=running;SetBusy(busy);}
         if(previousTool!=id){bool returnToDaily=previousTool!=null&&id==null&&!toolChanging;previousTool=id;SetBusy(busy);if(returnToDaily)_=CloseTool();}
     }
@@ -349,8 +378,8 @@ public partial class MainWindow : Window
                 ? L.Get("connection.ready", s.State == "identified" ? s.PlayerName : L.Get("connection.login"), L.Translate(DailyUserText.Scene(s.Scene)))
                 : L.Get("connection.loading"));
             L.Bind(ConnectionText, FrameworkElement.ToolTipProperty, () => s == null ? ConnectionText.Text : L.Diagnostic(s.Scene, ConnectionText.Text));
-            if (ToolRunning && toolSession.Current is { } toolState)
-                L.Bind(ConnectionText, TextBlock.TextProperty, () => L.Get("connection.tool", L.Get("tool." + toolState.ToolId)));
+            if (ToolRunning && ActiveToolId is { } toolId)
+                L.Bind(ConnectionText, TextBlock.TextProperty, () => L.Get("connection.tool", L.Get("tool." + toolId)));
             bool fresh = game != null && s != null && s.Runtime == DailyIdentity.RuntimeName && s.ProcessId == game.ProcessId && s.ProcessStartTicks == game.StartTicks && s.FrameUtcTicks > DateTimeOffset.UtcNow.AddSeconds(-5).UtcTicks;
             PresentDiagnostics(game, s, fresh);
             if (fresh)
@@ -375,7 +404,7 @@ public partial class MainWindow : Window
         RefreshButton.IsEnabled = !unavailable;
         ConnectButton.IsEnabled = !unavailable;
         StopButton.IsEnabled = value || ParallelBusy; L.Bind(StopButton,ContentControl.ContentProperty,ParallelBusy?"parallel.pause_all":"common.stop_operation");
-        toolPanel.Refresh(value || toolChanging || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true, toolSession.Current?.ToolId, ToolRunning ? "工具自动化正在运行或等待结算；停止后释放，无需关闭窗口。" : toolMessage ?? (value ? "日常正在执行；工具设置窗口可以保留。" : toolSession.Message),ToolRunning);
+        toolPanel.Refresh(value || toolChanging || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true, ActiveToolId, ToolConnecting ? "apostle.connection_lock" : ToolRunning ? "工具自动化正在运行或等待结算；停止后释放，无需关闭窗口。" : toolMessage ?? (value ? "日常正在执行；工具设置窗口可以保留。" : toolSession.Message),ToolRunning);
         SelectAll.IsEnabled = !unavailable;
         UpdateSelection();
         UpdateConnection();
@@ -557,7 +586,7 @@ public partial class MainWindow : Window
             return;
         }
         if(toolChanging || pluginChanging){e.Cancel=true;return;}
-        if(ToolOpen){e.Cancel=true;toolChanging=true;try{if(await toolSession.CloseAsync()){finalClose=true;timer.Stop();Close();}}finally{toolChanging=false;}return;}
+        if(ToolOpen){e.Cancel=true;toolChanging=true;try{if(await CloseToolWindowsAsync()){finalClose=true;timer.Stop();Close();}}finally{toolChanging=false;}return;}
         if (!preferencesPanel.SavePending())
         {
             e.Cancel = true;
@@ -768,6 +797,34 @@ public partial class MainWindow : Window
         try
         {
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            if(Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE")=="tool-activity")
+            {
+                await CheckToolActivityForSmoke();
+                DailyJson.Write(Path.Combine(smoke!,"smoke.json"),new{status="passed",scope="tool-activity",realGameTouched=false});
+                Application.Current.Shutdown();return;
+            }
+            if(Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE")=="apostle")
+            {
+                await CheckApostleForSmoke();
+                DailyJson.Write(Path.Combine(smoke!,"smoke.json"),new{status="passed",scope="apostle",languages=3,themes=2,realGameTouched=false});
+                Application.Current.Shutdown();return;
+            }
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "outcomes")
+            {
+                await CheckNoticesForSmoke();
+                WorkspaceTabs.SelectedItem = RunTab;
+                dailyPanel.ShowOutcomeExplanationsForSmoke();
+                foreach (int language in new[] { 0, 1, 2 }) foreach (int appearance in new[] { 1, 2 })
+                {
+                    LanguageSelector.SelectedIndex = language; ThemeSelector.SelectedIndex = appearance;
+                    Width = language == 2 ? 920 : 1180; Height = language == 2 ? 750 : 850;
+                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                    dailyPanel.CheckOutcomeExplanationsForSmoke();
+                    Capture($"outcome-explanations-{language}-{appearance}");
+                }
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "outcomes", languages = 3, themes = 2, realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "sandbox-setup")
             {
                 await CheckSandboxSetupForSmoke();

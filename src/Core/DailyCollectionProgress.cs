@@ -179,33 +179,12 @@ public sealed class DailyCollectionProgress(DailyWorkflow workflow)
         {
             var stored = JsonNode.Parse(File.ReadAllText(path))!.AsObject();
             Require(N(stored["schema"]) == 1 && S(stored["source"]) == "FieldObjectInfoResponse+MonsterInfoResponse" && JsonNode.DeepEquals(stored["account"], workflow.Context["actor"]![3]) && JsonNode.DeepEquals(stored["player"], workflow.Context["actor"]![4]) && S(stored["network"]!["Week"]) == week, "Collection cache identity/cycle mismatch");
-            var network = stored["network"]!.AsObject();
             Require(stored["server"] == null || JsonNode.DeepEquals(stored["server"], workflow.Context["server"]), "Collection cache server mismatch");
-            // Story advancement can unlock these monsters during the same week.
-            // Re-read native prerequisites; a cached lock is never weekly completion.
-            if (network["DeferredTargets"] is JsonArray { Count: > 0 } && missingAllowed) return null;
-            if (Steal && !B(network["StealReady"]))
-            {
-                if (missingAllowed)
-                    return null;
-                throw new DailyCollectionSyncRequired("需要补读本卡带偷窃服务器记录");
-            }
-            Classify(network, pack, network["Maps"]!.AsArray().Select(N).ToArray(), Steal, OnlySteal);
-            if (!maps.All(id => network["Maps"]!.AsArray().Any(m => N(m) == id)))
-            {
-                if (missingAllowed)
-                    return null;
-                throw new DailyCollectionSyncRequired("需要补读本卡带新增地图进度");
-            }
-            var projected = network.DeepClone().AsObject();
-            projected["Maps"] = new JsonArray(maps.Select(n => (JsonNode)JsonValue.Create(n)!).ToArray());
-            foreach (string key in new[] { "Drops", "Targets", "StealTargets", "DeferredTargets" })
-                if (projected[key] is JsonArray rows)
-                    projected[key] = Array(Rows(rows).Where(r => maps.Contains(N(r["Map"]))));
-            return Classify(projected, pack, maps, Steal, OnlySteal);
+            return DailyCollectionCache.Read(stored, pack, maps, Steal, OnlySteal, missingAllowed);
         }
-        catch (Exception e) when (e is IOException or InvalidDataException or System.Text.Json.JsonException or InvalidOperationException or ArgumentException)
+        catch (Exception e) when (e is DailyCollectionSyncRequired or IOException or InvalidDataException or System.Text.Json.JsonException or InvalidOperationException or ArgumentException)
         {
+            workflow.Driver.Diagnostics.Event("collection_cache_refresh_required", O(("pack", pack), ("maps", maps), ("steal", Steal), ("only_steal", OnlySteal), ("reason", e.Message)));
             if (missingAllowed) return null; // Re-read this cartridge rather than require a manual global scan.
             throw new DailyCollectionSyncRequired("地图进度暂不可读，再次运行时会重新读取对应卡带：" + e.Message);
         }
@@ -238,7 +217,22 @@ public sealed class DailyCollectionProgress(DailyWorkflow workflow)
         catch (StageHostException e) when (e.Kind == "adapter") { throw new DailyCollectionReadUnavailable(e.Message); }
         var result = Classify(data!, pack, maps, Steal, OnlySteal);
         await RecoverAbsorptions(pack, maps, data!, result);
-        if (cache) DailyJson.Write(PathFor(S(data!["Week"]), pack), O(("schema", 1), ("source", "FieldObjectInfoResponse+MonsterInfoResponse"), ("account", workflow.Context["actor"]![3]), ("player", workflow.Context["actor"]![4]), ("server", workflow.Context["server"]), ("network", data), ("at", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000d)));
+        // `cache: false` forces a new server request; its confirmed response is
+        // still useful after a restart. Merge it without losing unrelated maps.
+        var snapshot = O(("schema", 1), ("source", "FieldObjectInfoResponse+MonsterInfoResponse"), ("account", workflow.Context["actor"]![3]), ("player", workflow.Context["actor"]![4]), ("server", workflow.Context["server"]), ("network", data), ("at", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000d));
+        string path = PathFor(S(data!["Week"]), pack);
+        lock (DailyCollectionCache.Gate)
+        {
+            var old = DailyJson.TryRead<JsonObject>(path);
+            if (old != null && old["server"] == null) old["server"] = Copy(workflow.Context["server"]);
+            try { snapshot = DailyCollectionCache.Merge(old, snapshot); }
+            catch (Exception e) when (e is InvalidDataException or System.Text.Json.JsonException or InvalidOperationException or ArgumentException)
+            {
+                workflow.Driver.Diagnostics.Event("collection_cache_replaced_invalid", O(("pack", pack), ("reason", e.Message)));
+                snapshot = DailyCollectionCache.Merge(null, snapshot);
+            }
+            DailyJson.Write(path, snapshot);
+        }
         DailyJson.Write(Path.Combine(workflow.Root, "live", "mainline", S(workflow.Context["actor"]![3]), "network-" + pack + ".json"), O(("result", result), ("network", data), ("actor", workflow.Context["actor"]), ("at", workflow.Driver.UtcTicks)));
         recentNetwork = data!.DeepClone().AsObject();
         recentInputRevision = workflow.Driver.InputRevision;

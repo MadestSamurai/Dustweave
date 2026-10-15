@@ -1508,5 +1508,54 @@
       "number",
       "number"
     ]
+  },
+  "notice.outcome.label_0": {
+    "zh-CN": "服装免费抽取：",
+    "zh-TW": "服裝免費抽取：",
+    "en-US": "Free costume draws: "
+  },
+  "notice.outcome.label_1": {
+    "zh-CN": "装备免费抽取：",
+    "zh-TW": "裝備免費抽取：",
+    "en-US": "Free equipment draws: "
+  },
+  "notice.outcome.label_2": {
+    "zh-CN": "每日免费抽取：",
+    "zh-TW": "每日免費抽取：",
+    "en-US": "Daily free draws: "
+  },
+  "notice.outcome.label_3": {
+    "zh-CN": "经营收益：",
+    "zh-TW": "經營收益：",
+    "en-US": "Management income: "
+  },
+  "notice.outcome.label_4": {
+    "zh-CN": "餐厅顾客与气泡：",
+    "zh-TW": "餐廳顧客與氣泡：",
+    "en-US": "Restaurant guests and bubbles: "
+  },
+  "notice.outcome.label_5": {
+    "zh-CN": "装备任务检查：",
+    "zh-TW": "裝備任務檢查：",
+    "en-US": "Equipment mission check: "
+  },
+  "notice.outcome.label_6": {
+    "zh-CN": "派遣：",
+    "zh-TW": "派遣：",
+    "en-US": "Dispatch: "
+  },
+  "notice.outcome.label_7": {
+    "zh-CN": "魔兽快速战斗：",
+    "zh-TW": "魔獸快速戰鬥：",
+    "en-US": "Fiend quick battle:"
+  },
+  "notice.outcome.missing_equipment": {
+    "source": "drawn_equipment_missing:{0}",
+    "zh-CN": "抽取的装备 {0} 已不在库存中，未继续分解",
+    "zh-TW": "抽取的裝備 {0} 已不在庫存中，未繼續分解",
+    "en-US": "Equipment {0} from the draw is no longer in inventory. Dismantling was deferred.",
+    "parameters": [
+      "value"
+    ]
   }
 }

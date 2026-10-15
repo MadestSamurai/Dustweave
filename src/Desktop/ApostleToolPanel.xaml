@@ -1,0 +1,43 @@
+<UserControl x:Class="Dustweave.Desktop.ApostleToolPanel" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:l="clr-namespace:Dustweave.Desktop">
+ <Grid Margin="0,0,0,8">
+  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+  <Grid Margin="0,0,0,18">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <TextBlock Text="{l:Tr tool.apostle-defense}" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center"/>
+   <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom"><Button x:Name="StartButton" Content="{l:Tr apostle.start}" Style="{DynamicResource PrimaryButton}" Click="StartClicked" MinWidth="128"/><Button x:Name="PauseButton" Content="{l:Tr apostle.pause}" Click="PauseClicked" Margin="8,0,0,0" IsEnabled="False"/></StackPanel>
+  </Grid>
+  <Border Grid.Row="1" Background="{DynamicResource SurfaceMuted}" CornerRadius="10" Padding="16,12" Margin="0,0,0,18">
+   <StackPanel><TextBlock x:Name="StatusText" TextWrapping="Wrap" FontWeight="SemiBold" AutomationProperties.LiveSetting="Polite"/><TextBlock x:Name="DecisionText" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" Margin="0,5,0,0"/>
+    <ProgressBar x:Name="ConnectionProgress" Height="3" Margin="0,12,0,0" Visibility="Collapsed" Background="{DynamicResource Line}" Foreground="{DynamicResource Primary}" BorderThickness="0" AutomationProperties.Name="{l:Tr apostle.preparing}">
+     <ProgressBar.Template><ControlTemplate TargetType="ProgressBar"><Grid x:Name="PART_Track" Background="{TemplateBinding Background}"><Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}" HorizontalAlignment="Left" CornerRadius="2"/></Grid>
+      <ControlTemplate.Triggers><Trigger Property="IsIndeterminate" Value="True"><Trigger.EnterActions><BeginStoryboard x:Name="Pulse"><Storyboard><DoubleAnimation Storyboard.TargetName="PART_Indicator" Storyboard.TargetProperty="Opacity" From="0.25" To="1" Duration="0:0:0.65" AutoReverse="True" RepeatBehavior="Forever"/></Storyboard></BeginStoryboard></Trigger.EnterActions><Trigger.ExitActions><RemoveStoryboard BeginStoryboardName="Pulse"/></Trigger.ExitActions></Trigger></ControlTemplate.Triggers>
+     </ControlTemplate></ProgressBar.Template>
+    </ProgressBar>
+   </StackPanel>
+  </Border>
+  <Grid Grid.Row="2">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="230"/><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,10,0"><StackPanel>
+    <TextBlock Text="{l:Tr apostle.targets}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,14"/>
+    <CheckBox x:Name="ClearGoal" Content="{l:Tr apostle.clear}" Checked="SettingsChanged" Unchecked="SettingsChanged"/>
+    <TextBlock x:Name="ClearProgress" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="24,5,0,16"/>
+    <CheckBox x:Name="RareGoal" Content="{l:Tr apostle.rare}" Checked="SettingsChanged" Unchecked="SettingsChanged"/>
+    <TextBlock x:Name="RareProgress" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="24,5,0,0"/>
+    <TextBlock x:Name="PendingProgress" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="24,4,0,16"/>
+    <TextBlock Text="{l:Tr apostle.policy}" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" FontSize="12"/>
+    <Separator Margin="0,18"/>
+    <TextBlock Text="{l:Tr apostle.rounds}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,14"/>
+    <CheckBox x:Name="AutoNext" Checked="SettingsChanged" Unchecked="SettingsChanged" Margin="0,0,0,12"><TextBlock Text="{l:Tr apostle.auto_next}" TextWrapping="Wrap"/></CheckBox>
+    <CheckBox x:Name="StopRound" Checked="SettingsChanged" Unchecked="SettingsChanged" Margin="0,0,0,16"><TextBlock Text="{l:Tr apostle.stop_round}" TextWrapping="Wrap"/></CheckBox>
+    <DockPanel LastChildFill="False"><TextBlock Text="{l:Tr apostle.interval}" VerticalAlignment="Center"/><TextBox x:Name="Interval" DockPanel.Dock="Right" Width="76" LostFocus="SettingsChanged" AutomationProperties.Name="{l:Tr apostle.interval}"/></DockPanel>
+    <TextBlock x:Name="SettingsError" Foreground="{DynamicResource Error}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+    <Expander Header="{l:Tr apostle.recent}" Margin="0,18,0,0"><ItemsControl x:Name="RecentList" Margin="0,8,0,0"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" FontSize="12" Margin="0,0,0,8"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></Expander>
+   </StackPanel></ScrollViewer>
+   <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,8,0"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+    <TextBlock x:Name="WaveText" FontSize="18" FontWeight="SemiBold"/>
+    <TextBlock x:Name="Metrics" Grid.Row="1" Foreground="{DynamicResource MutedInk}" Margin="0,5,0,14" TextWrapping="Wrap"/>
+    <ContentControl x:Name="BoardHost" Grid.Row="2" MinHeight="540" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+   </Grid></ScrollViewer>
+  </Grid>
+ </Grid>
+</UserControl>

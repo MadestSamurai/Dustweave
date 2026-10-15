@@ -1,5 +1,14 @@
 # Changelog / 更新记录
 
+## 1.3.16 — 2026-10-15
+
+- 为跳过、暂缓和失败补充具体原因及下一步说明，改善旧记录的显示。
+- 合并同账号同周期的地图进度，避免未执行或较旧的记录覆盖已完成结果，支持普通启动与隔离多开。
+- 使徒防守接入织尘内置界面，保留独立窗口；先显示窗口与加载状态，再准备连接，统一主题、语言和日志。
+- 所有内置工具在连接、执行及收尾期间统一互斥；空闲窗口释放控制权，暂停、设置与关闭仍可操作。
+- Adds actionable task explanations, preserves completed map progress across account execution modes, and integrates the Apostle Defense window. Shared connection locks prevent competing tool commands without blocking idle windows. The existing defense strategy is unchanged.
+- [完整说明 / Full notes](docs/releases/1.3.16.md)
+
 ## 1.3.15 — 2026-10-15
 
 - 内置装备助手减少重复读取准备，打开后自动获取库存，主按钮合并规划与确认运行，统一主题、弹窗和筛选。

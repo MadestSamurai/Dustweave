@@ -64,9 +64,13 @@ public static class DailyAccountProgress
             var data = Read(file.FullName, account, week.Name, context);
             if (data == null) continue;
             string destination = Path.Combine(target, "live", "server-collection", account, week.Name, file.Name);
-            var old = Read(destination, account, week.Name, targetContext);
-            if (old != null && (!JsonNode.DeepEquals(old["player"], data["player"]) || !JsonNode.DeepEquals(old["server"], data["server"]) || D(old["at"]) >= D(data["at"]))) continue;
-            DailyJson.Write(destination, data);
+            lock (DailyCollectionCache.Gate)
+            {
+                var old = Read(destination, account, week.Name, targetContext);
+                if (old != null && (!JsonNode.DeepEquals(old["player"], data["player"]) || !JsonNode.DeepEquals(old["server"], data["server"]))) continue;
+                var merged = DailyCollectionCache.Merge(old, data);
+                if (!JsonNode.DeepEquals(old, merged)) DailyJson.Write(destination, merged);
+            }
         }
     }
     private static double D(JsonNode? n) => n is JsonValue v && v.TryGetValue<double>(out var d) && double.IsFinite(d) ? d : 0;

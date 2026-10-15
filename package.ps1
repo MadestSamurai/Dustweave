@@ -29,12 +29,14 @@ if(Test-Path -LiteralPath $output){throw 'Output already exists. Preserve it and
 $work=Join-Path $root ('artifacts/package-'+$Version+'-'+[Guid]::NewGuid().ToString('N'))
 [IO.Directory]::CreateDirectory($work)|Out-Null
 [IO.Directory]::CreateDirectory($output)|Out-Null
-function Run([string]$file,[string[]]$arguments,[string]$name,[int]$seconds=300){
+function Run([string]$file,[string[]]$arguments,[string]$name,[int]$seconds=300,[string]$smokeScope=''){
  $start=[Diagnostics.ProcessStartInfo]::new($file);$start.UseShellExecute=$false;$start.CreateNoWindow=$true;$start.WindowStyle='Hidden';$start.WorkingDirectory=(Get-Location).Path
  $start.RedirectStandardOutput=$true;$start.RedirectStandardError=$true
  $start.Environment['BD2_DAILY_DATA_ROOT']=Join-Path $work ($name+'-daily')
  $start.Environment['BD2_EQUIPMENT_DATA_ROOT']=Join-Path $work ($name+'-equipment')
  $start.Environment['DUSTWEAVE_PLUGIN']='none'
+ $start.Environment.Remove('DUSTWEAVE_UI_SMOKE_SCOPE')|Out-Null
+ if($smokeScope){$start.Environment['DUSTWEAVE_UI_SMOKE_SCOPE']=$smokeScope}
  foreach($arg in $arguments){$start.ArgumentList.Add($arg)}
  $proc=[Diagnostics.Process]::Start($start)
  $stdout=$proc.StandardOutput.ReadToEndAsync();$stderr=$proc.StandardError.ReadToEndAsync()
@@ -152,6 +154,13 @@ foreach($flavor in $Flavors){
   Run $exe @(('--'+$mode),$check) ($flavor+'-'+$mode)
  }
  Pass (Join-Path $checks 'smoke/smoke.json')
+ if($validation.scope -in @('Full','Updates')){
+  foreach($scope in @('outcomes','apostle','tool-activity')){
+   $check=Join-Path $checks ('smoke-'+$scope)
+   Run $exe @('--smoke',$check) ($flavor+'-smoke-'+$scope) 180 $scope
+   Pass (Join-Path $check 'smoke.json')
+  }
+ }
  if($validation.scope -in @('Full','Updates')){Pass (Join-Path $checks 'check-tool-languages/result.json');Pass (Join-Path $checks 'check-tool-language-ui/result.json')}
  Run $exe @('--utility','live','self-test') ($flavor+'-live-self-test')
  Run $exe @('--tool-catalog',(Join-Path $bundle 'app/tools.json')) ($flavor+'-tool-catalog')

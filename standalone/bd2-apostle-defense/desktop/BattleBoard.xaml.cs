@@ -32,6 +32,13 @@ public partial class BattleBoard : UserControl
  internal bool HasAction => ActionText.Visibility == Visibility.Visible;
  internal int EnemyMarkers => LiveLayer.Children.OfType<Ellipse>().Count();
  public BattleBoard() { InitializeComponent(); }
+ private WindowLanguage? hostedLanguage;
+ public void ApplyHostedLanguage(string language)
+ {
+  hostedLanguage ??= new WindowLanguage(this,language);
+  Ui.Catalog=hostedLanguage.Catalog;hostedLanguage.Select(language);RefreshLanguage();
+ }
+ public void ReleaseHostedLanguage(){hostedLanguage?.Dispose();hostedLanguage=null;}
  private static SolidColorBrush Paint(string value)
  { var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(value)); brush.Freeze(); return brush; }
  private WPoint Map(GamePoint p) => new(Viewport.ActualWidth / 2 + (p.X - midX) * scale, Viewport.ActualHeight / 2 - (p.Z - midZ) * scale);
@@ -91,6 +98,7 @@ public partial class BattleBoard : UserControl
   if (state.Path.Length > 1)
   {
    var route = new Polyline { Stroke = Paint("#DEE4E8"), StrokeThickness = Math.Clamp(scale * .32, 8, 16), StrokeLineJoin = PenLineJoin.Round };
+   route.SetResourceReference(Shape.StrokeProperty,"LineStrong");
    foreach (var p in state.Path.Concat(new[] { state.Path[0] })) route.Points.Add(Map(p));
    RouteLayer.Children.Add(route);
   }
@@ -138,14 +146,14 @@ public partial class BattleBoard : UserControl
   foreach (var tile in tiles) { tile.Value.BorderThickness = new(tile.Key == selectedGrid ? 3 : 1); tile.Value.BorderBrush = Paint(tile.Key == selectedGrid ? "#176B57" : "#BBC9D1"); }
   var b = state?.MyView == true ? state.Boards.FirstOrDefault(b => b.Id == selectedGrid) : null;
   var u = b == null ? null : Occupant(b.Id); var d = Definition(u);
-  if (b == null) { SelectionTitle.Text = Ui.Text("点选一个使徒"); SelectionIdentity.Text = ""; SelectionStats.Text = "在盘面上查看射程，了解它能攻击哪段路线。"; CoverageText.Text = "射程与覆盖为位置示意；覆盖比例不是伤害占比。"; CoverageText.Foreground = Paint("#5B6670"); return; }
+  if (b == null) { SelectionTitle.Text = Ui.Text("点选一个使徒"); SelectionIdentity.Text = ""; SelectionStats.Text = "在盘面上查看射程，了解它能攻击哪段路线。"; CoverageText.Text = "射程与覆盖为位置示意；覆盖比例不是伤害占比。"; CoverageText.SetResourceReference(TextBlock.ForegroundProperty,"MutedInk"); return; }
   SelectionTitle.Text = d == null ? Ui.Text(u == null ? "空位" : "使徒资料待同步") : Label(d);
   SelectionIdentity.Text = $"格 {b.Id}" + (u == null ? "" : $" · 实例 {u.Index}");
   if (d == null) { SelectionStats.Text = u == null ? "召唤由游戏填充空格；点击盘面只查看信息。" : "已识别占位，正在等待使徒属性。"; CoverageText.Text = ""; return; }
   SelectionStats.Text = $"攻击 {d.Attack + (double)d.UpAttack * Level(d.Element):N0}    攻击间隔 {d.Interval:0.##}s    射程 {d.Range:0.##}    出售价 {d.Sell}";
   double cov = coverage.Coverage(d, b, state!.Path);
   CoverageText.Text = state.Path.Length < 2 ? "等待路线数据，暂不判断覆盖。" : cov <= 1e-6 ? "! 当前射程覆盖不到路线；覆盖为位置估计，不代表伤害占比。" : $"路线覆盖约 {cov:P0} · 绿色路段位于射程内，覆盖比例不是伤害占比。";
-  CoverageText.Foreground = Paint(state.Path.Length > 1 && cov <= 1e-6 ? "#8B5600" : "#5B6670");
+  CoverageText.SetResourceReference(TextBlock.ForegroundProperty,state.Path.Length > 1 && cov <= 1e-6 ? "Warning" : "MutedInk");
   if (RangeToggle.IsChecked != true || tiles.Count == 0) return;
   var center = Map(b); double radius = Math.Max(0, d.Range * scale);
   var disk = new Ellipse { Width = radius * 2, Height = radius * 2, Stroke = Paint("#176B57"), StrokeThickness = 1.5, StrokeDashArray = new() { 4, 3 }, Fill = Paint("#10176B57") };

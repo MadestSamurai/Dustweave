@@ -8,13 +8,13 @@
  <Grid>
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <WrapPanel Margin="0,0,0,8"><TextBlock x:Name="CountText" Text="等待盘面" FontWeight="SemiBold" Margin="0,0,18,0"/><CheckBox x:Name="RangeToggle" Content="显示所选射程" IsChecked="True" Checked="OptionsChanged" Unchecked="OptionsChanged" VerticalAlignment="Center" Margin="0,0,16,0"/><CheckBox x:Name="GapToggle" Content="标记无路线覆盖" IsChecked="True" Checked="OptionsChanged" Unchecked="OptionsChanged" VerticalAlignment="Center"/></WrapPanel>
-  <Grid x:Name="Viewport" Grid.Row="1" Background="#FAFBFC" ClipToBounds="True" SizeChanged="ViewportChanged">
+  <Grid x:Name="Viewport" Grid.Row="1" Background="{DynamicResource SurfaceMuted}" ClipToBounds="True" SizeChanged="ViewportChanged">
    <Canvas x:Name="RouteLayer" IsHitTestVisible="False"/><Canvas x:Name="RangeLayer" IsHitTestVisible="False"/><Canvas x:Name="TileLayer"/><Canvas x:Name="LiveLayer" IsHitTestVisible="False"/>
    <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="300"><TextBlock x:Name="EmptyTitle" Text="等待游戏盘面" FontSize="18" FontWeight="SemiBold" TextAlignment="Center"/><TextBlock x:Name="EmptyHint" Text="连接游戏并进入对局后，这里会显示每个使徒的位置、属性与阶数。" TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource MutedInk}" Margin="0,10,0,0"/></StackPanel>
    <Border x:Name="StaleBanner" Visibility="Collapsed" VerticalAlignment="Top" HorizontalAlignment="Center" Background="{StaticResource WarningSoft}" Padding="12,5"><TextBlock Text="盘面同步暂停 · 显示最后一次状态" Foreground="{StaticResource Warning}" FontSize="12"/></Border>
   </Grid>
   <StackPanel Grid.Row="2" Margin="0,9,0,10">
-   <WrapPanel><TextBlock Text="格内：属性 · 阶数" Style="{StaticResource MetaText}" Margin="0,0,16,0"/><TextBlock Text="● 敌人" Foreground="#963B47" FontSize="12" Margin="0,0,16,0"/><TextBlock Text="! 无路线覆盖" Foreground="{StaticResource Warning}" FontSize="12" Margin="0,0,16,0"/><TextBlock Text="点击查看 · 方向键选格" Style="{StaticResource MetaText}"/></WrapPanel>
+   <WrapPanel><TextBlock Text="格内：属性 · 阶数" Style="{StaticResource MetaText}" Margin="0,0,16,0"/><TextBlock Text="● 敌人" Foreground="{DynamicResource Error}" FontSize="12" Margin="0,0,16,0"/><TextBlock Text="! 无路线覆盖" Foreground="{StaticResource Warning}" FontSize="12" Margin="0,0,16,0"/><TextBlock Text="点击查看 · 方向键选格" Style="{StaticResource MetaText}"/></WrapPanel>
    <TextBlock x:Name="ActionText" Text="" MinHeight="17" FontSize="12" Foreground="{StaticResource Primary}" Margin="0,6,0,0" TextWrapping="Wrap" Visibility="Hidden"/>
   </StackPanel>
   <Border Grid.Row="3" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="0,12,0,0"><StackPanel>

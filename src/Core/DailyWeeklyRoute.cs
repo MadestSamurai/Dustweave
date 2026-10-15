@@ -116,26 +116,39 @@ public sealed class DailyWeeklyRoute
             return;
         }
         bool oldSteal = route.Progress.Steal, oldOnly = route.Progress.OnlySteal;
-        route.Progress.Steal = active.Contains("weekly_steal");
+        route.Progress.Steal = maps["weekly_steal"].Length > 0;
         route.Progress.OnlySteal = false;
         try
         {
-            checkpoint = cache ? route.Progress.Cached(pack, all, week, true) : await route.Progress.Query(pack, all);
+            checkpoint = cache ? null : await route.Progress.Query(pack, all);
+            var cachedMaps = new JsonObject(); bool missing = false;
+            foreach (var pair in maps.Where(p => p.Value.Length > 0))
+            {
+                JsonObject? observed = checkpoint;
+                if (cache)
+                {
+                    route.Progress.Steal = route.Progress.OnlySteal = pair.Key == "weekly_steal";
+                    observed = route.Progress.Cached(pack, pair.Value, week, true);
+                }
+                known[pair.Key].UnionWith(pair.Value.Select(id => (pack, id)));
+                if (observed == null) { missing = true; continue; }
+                var keys = pair.Key == "weekly_steal" ? new[] { "steals" } : new[] { "drops", "monsters" };
+                if (pair.Key == "weekly_mainline")
+                    foreach (long id in pair.Value)
+                        if (observed["maps"]![id.ToString()]!["story_locked"] is JsonArray { Count: > 0 }) storyLocked.Add((pack, id));
+                        else storyLocked.Remove((pack, id));
+                done[pair.Key].ExceptWith(pair.Value.Select(id => (pack, id)));
+                done[pair.Key].UnionWith(pair.Value.Where(id => (pair.Key != "weekly_mainline" || !storyLocked.Contains((pack, id))) && keys.All(key => (observed["maps"]![id.ToString()]![key] as JsonArray)?.Count == 0)).Select(id => (pack, id)));
+                foreach (long id in pair.Value)
+                {
+                    if (cachedMaps[id.ToString()] is not JsonObject state) cachedMaps[id.ToString()] = state = new();
+                    foreach (string key in keys.Append("story_locked"))
+                        if (observed["maps"]![id.ToString()]![key] is JsonNode value) state[key] = Copy(value);
+                }
+            }
+            if (cache && !missing) checkpoint = O(("maps", cachedMaps));
         }
         finally { route.Progress.Steal = oldSteal; route.Progress.OnlySteal = oldOnly; }
-        foreach (var pair in maps)
-        {
-            known[pair.Key].UnionWith(pair.Value.Select(id => (pack, id)));
-            if (checkpoint == null)
-                continue;
-            var keys = pair.Key == "weekly_steal" ? new[] { "steals" } : new[] { "drops", "monsters" };
-            if (pair.Key == "weekly_mainline")
-                foreach (long id in pair.Value)
-                    if (checkpoint["maps"]![id.ToString()]!["story_locked"] is JsonArray { Count: > 0 }) storyLocked.Add((pack, id));
-                    else storyLocked.Remove((pack, id));
-            done[pair.Key].ExceptWith(pair.Value.Select(id => (pack, id)));
-            done[pair.Key].UnionWith(pair.Value.Where(id => (pair.Key != "weekly_mainline" || !storyLocked.Contains((pack, id))) && keys.All(key => (checkpoint["maps"]![id.ToString()]![key] as JsonArray)?.Count == 0)).Select(id => (pack, id)));
-        }
     }
     private async Task<bool> Prepare(long currentPack)
     {
@@ -384,6 +397,9 @@ public sealed class DailyWeeklyRoute
             if (active.Contains("weekly_steal")) known["weekly_steal"].UnionWith(route.Catalog.StealMaps(p).Select(m => (p, m)));
         }
         catalogReady = true;
+        // Restore each selected category before reporting progress. Missing theft
+        // observations must not make verified collection appear to start from zero.
+        foreach (long p in packs) { pack = p; await Refresh(true); }
         if (active.Count > 0) await RecoverInterruptedMaps(packs);
         void EmitAll(string place)
         {

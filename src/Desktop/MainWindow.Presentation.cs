@@ -160,7 +160,8 @@ public sealed partial class DailyRunPanel
     {
         Show(new("completed", "", "fixture/outcome-details.json", [
             new("weekly_fishing", "skipped", "weekly_fishing_complete"),
-            new("management", "skipped", "no_accrued_rewards"),
+            new("management", "partial", "经营收益：no_accrued_rewards\n餐厅顾客与气泡：idle_no_visible_bubble"),
+            new("equipment", "partial", "free_draw_receipt_unobserved\nno_useful_refinement_candidate"),
             new("free_draws", "skipped", ""),
             new("square", "completed", "square_rewards_checked"),
             new("mail", "completed", "")], new string('a',64)));
@@ -187,6 +188,8 @@ public sealed partial class DailyRunPanel
                 throw new Exception("Missing skip evidence was replaced by an invented reason");
             if(row.Task=="weekly_fishing" && row.Detail!=L.Get("message.weekly_fishing_complete"))
                 throw new Exception("Skip explanation did not follow the software language");
+            if (L.Code == "en-US" && System.Text.RegularExpressions.Regex.IsMatch(row.Detail, @"\p{IsCJKUnifiedIdeographs}|no_accrued_rewards|free_draw_receipt_unobserved|idle_no_visible_bubble"))
+                throw new Exception("Outcome explanation did not localize: " + row.Task);
         }
         stages.ScrollIntoView(rows[0]);UpdateLayout();
         CheckViewportForSmoke();

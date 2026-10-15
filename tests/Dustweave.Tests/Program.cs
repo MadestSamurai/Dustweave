@@ -84,6 +84,8 @@ await Group("ClientUpdate", () => Sync(() => ClientUpdateCases.Run(root,cases)))
 await Group("LiveBindings", () => Sync(() => LiveBindingCases.Run(root,cases)));
 await Group("Parallel", () => ParallelCases.Run(root, cases));
 await Group("AccountProgress", () => Sync(() => AccountProgressCases.Run(root, cases)));
+await Group("CollectionCache", () => Sync(() => CollectionCacheCases.Run(root, cases)));
+await Group("OutcomeExplanation", () => Sync(() => OutcomeExplanationCases.Run(cases)));
 await Group("ParallelProcess", () => ParallelProcessCases.Run(root, cases));
 await Group("Saffron", async () => { SaffronCases.Run(cases); await SaffronCases.RuntimeLoop(root,cases); });
 await Group("Sandbox", () => SandboxCases.Run(root, cases));
@@ -152,6 +154,7 @@ await Group("PackagedUtility", () => Sync(() => PackagedUtilityCases.Run(root, c
 await Group("Plugin", () => Sync(() => PluginCases.Run(root, cases)));
 await Group("PluginStore", () => PluginStoreCases.Run(root, cases));
 await Group("ToolMenu", () => Sync(() => ToolMenuCases.Run(root, cases)));
+await Group("ApostleIntegrated", () => ApostleIntegratedCases.Run(root, cases));
 await Group("ActivityLease", () => Sync(() => ActivityLeaseCases.Run(root, cases)));
 await Group("UserText", () => Sync(() => UserTextCases.Run(cases)));
 await Group("NativeCancellation", () => Sync(() => NativeCancellationCases.Run(cases)));

@@ -1,4 +1,190 @@
 {
+  "apostle.connect": {
+    "zh-CN": "连接游戏",
+    "zh-TW": "連接遊戲",
+    "en-US": "Connect game"
+  },
+  "apostle.cancel_connection": {
+    "zh-CN": "取消连接",
+    "zh-TW": "取消連接",
+    "en-US": "Cancel connection"
+  },
+  "apostle.connecting": {
+    "zh-CN": "正在连接当前游戏…",
+    "zh-TW": "正在連接目前遊戲…",
+    "en-US": "Connecting to the current game…"
+  },
+  "apostle.reading": {
+    "zh-CN": "正在读取塔防盘面…",
+    "zh-TW": "正在讀取塔防盤面…",
+    "en-US": "Reading the defense board…"
+  },
+  "apostle.connected": {
+    "zh-CN": "连接已就绪",
+    "zh-TW": "連接已就緒",
+    "en-US": "Ready to start"
+  },
+  "apostle.disconnected": {
+    "zh-CN": "尚未连接",
+    "zh-TW": "尚未連接",
+    "en-US": "Not connected"
+  },
+  "apostle.connection_cancelled": {
+    "zh-CN": "连接已取消，可点击“连接游戏”重试。",
+    "zh-TW": "連接已取消，可點擊「連接遊戲」重試。",
+    "en-US": "Connection cancelled. Select Connect game to retry."
+  },
+  "apostle.no_snapshot": {
+    "zh-CN": "未读到有效盘面。请确认游戏已进入使徒运气防守，再点击“连接游戏”。",
+    "zh-TW": "未讀到有效盤面。請確認遊戲已進入使徒運氣防守，再點擊「連接遊戲」。",
+    "en-US": "No valid board received. Enter Apostle Defense in the game, then select Connect game."
+  },
+  "apostle.connection_lock": {
+    "zh-CN": "塔防正在连接；暂不能切换账号或启动其他自动化。可在工具窗口取消。",
+    "zh-TW": "塔防正在連接；暫不能切換帳號或啟動其他自動化。可在工具視窗取消。",
+    "en-US": "Defense is connecting. Account switching and other automation are unavailable until it finishes. You can cancel in the tool window."
+  },
+  "apostle.open": {
+    "zh-CN": "打开塔防",
+    "zh-TW": "開啟塔防",
+    "en-US": "Open defense"
+  },
+  "apostle.start": {
+    "zh-CN": "开始自动化",
+    "zh-TW": "開始自動化",
+    "en-US": "Start automation"
+  },
+  "apostle.pause": {
+    "zh-CN": "暂停",
+    "zh-TW": "暫停",
+    "en-US": "Pause"
+  },
+  "apostle.targets": {
+    "zh-CN": "本次目标",
+    "zh-TW": "本次目標",
+    "en-US": "Goals"
+  },
+  "apostle.clear": {
+    "zh-CN": "通关第 50 波",
+    "zh-TW": "通關第 50 波",
+    "en-US": "Clear wave 50"
+  },
+  "apostle.rare": {
+    "zh-CN": "召唤最高级使徒",
+    "zh-TW": "召喚最高級使徒",
+    "en-US": "Summon top-grade apostles"
+  },
+  "apostle.policy": {
+    "zh-CN": "使用离线退火策略，适时重开低收益对局。",
+    "zh-TW": "使用離線退火策略，適時重開低收益對局。",
+    "en-US": "Uses the offline annealed strategy and restarts low-value runs."
+  },
+  "apostle.rounds": {
+    "zh-CN": "续局设置",
+    "zh-TW": "續局設定",
+    "en-US": "Between rounds"
+  },
+  "apostle.auto_next": {
+    "zh-CN": "结算后自动开始下一局",
+    "zh-TW": "結算後自動開始下一局",
+    "en-US": "Start another round automatically"
+  },
+  "apostle.stop_round": {
+    "zh-CN": "本局结算后停止",
+    "zh-TW": "本局結算後停止",
+    "en-US": "Stop after this round"
+  },
+  "apostle.interval": {
+    "zh-CN": "操作间隔（ms）",
+    "zh-TW": "操作間隔（ms）",
+    "en-US": "Interval (ms)"
+  },
+  "apostle.recent": {
+    "zh-CN": "最近决策",
+    "zh-TW": "最近決策",
+    "en-US": "Recent decisions"
+  },
+  "apostle.ready": {
+    "zh-CN": "进入使徒运气防守后，点击开始自动化。",
+    "zh-TW": "進入使徒運氣防守後，點擊開始自動化。",
+    "en-US": "Enter Apostle Defense in the game, then start automation."
+  },
+  "apostle.paused": {
+    "zh-CN": "工具已暂停，游戏仍会继续。",
+    "zh-TW": "工具已暫停，遊戲仍會繼續。",
+    "en-US": "Automation is paused. The game continues."
+  },
+  "apostle.stopping": {
+    "zh-CN": "正在停止操作…",
+    "zh-TW": "正在停止操作…",
+    "en-US": "Stopping automation…"
+  },
+  "apostle.settling": {
+    "zh-CN": "等待当前操作结算；完成后释放控制权。",
+    "zh-TW": "等待目前操作結算；完成後釋放控制權。",
+    "en-US": "Waiting for the current action to settle before releasing control."
+  },
+  "apostle.preparing": {
+    "zh-CN": "正在准备塔防…",
+    "zh-TW": "正在準備塔防…",
+    "en-US": "Preparing defense…"
+  },
+  "apostle.running": {
+    "zh-CN": "塔防自动化运行中",
+    "zh-TW": "塔防自動化執行中",
+    "en-US": "Defense automation is running"
+  },
+  "apostle.idle": {
+    "zh-CN": "塔防已暂停",
+    "zh-TW": "塔防已暫停",
+    "en-US": "Defense automation is paused"
+  },
+  "apostle.invalid_interval": {
+    "zh-CN": "操作间隔需为 100–3000 毫秒的整数。",
+    "zh-TW": "操作間隔需為 100–3000 毫秒的整數。",
+    "en-US": "Enter a whole number from 100 to 3000 milliseconds."
+  },
+  "apostle.clear_progress": {
+    "zh-CN": "{0} / {1} 次通关 · 服务器确认",
+    "zh-TW": "{0} / {1} 次通關 · 伺服器確認",
+    "en-US": "{0} / {1} clears · confirmed"
+  },
+  "apostle.rare_progress": {
+    "zh-CN": "{0} / {1} 次召唤 · 服务器确认",
+    "zh-TW": "{0} / {1} 次召喚 · 伺服器確認",
+    "en-US": "{0} / {1} summons · confirmed"
+  },
+  "apostle.wait_progress": {
+    "zh-CN": "连接后读取游戏进度",
+    "zh-TW": "連接後讀取遊戲進度",
+    "en-US": "Progress appears after connecting"
+  },
+  "apostle.pending": {
+    "zh-CN": "本局待结算：{0} 次",
+    "zh-TW": "本局待結算：{0} 次",
+    "en-US": "Pending this round: {0}"
+  },
+  "apostle.board": {
+    "zh-CN": "我的盘面",
+    "zh-TW": "我的盤面",
+    "en-US": "My board"
+  },
+  "apostle.board_hint": {
+    "zh-CN": "连接后显示盘面；可以点选使徒查看射程。",
+    "zh-TW": "連接後顯示盤面；可以點選使徒查看射程。",
+    "en-US": "Connect to see your board. Select an apostle to inspect its range."
+  },
+  "apostle.wave": {
+    "zh-CN": "第 {0} / {1} 波",
+    "zh-TW": "第 {0} / {1} 波",
+    "en-US": "Wave {0} / {1}"
+  },
+  "apostle.metrics": {
+    "zh-CN": "金币 {0:N0} · 敌人 {1}/{2} · 剩余 {3:0}s",
+    "zh-TW": "金幣 {0:N0} · 敵人 {1}/{2} · 剩餘 {3:0}s",
+    "en-US": "Gold {0:N0} · Enemies {1}/{2} · {3:0}s left"
+  },
+
   "message.吸收次数用完，本地图压制仍未确认；继续其他地图": {
     "zh-CN": "吸收次数用完，本地图压制仍未确认；继续其他地图",
     "zh-TW": "吸收次數用完，本地圖壓制仍未確認；繼續其他地圖",
@@ -994,9 +1180,9 @@
     "en-US": "{0} more needed to meet the requirement."
   },
   "run.pending_unknown": {
-    "zh-CN": "本次记录未提供更具体的原因。",
-    "zh-TW": "本次紀錄未提供更具體的原因。",
-    "en-US": "No more specific reason was recorded."
+    "zh-CN": "尚未读到明确的任务进度。请在游戏对应任务页查看条件，之后可补跑领奖环节。",
+    "zh-TW": "尚未讀到明確的任務進度。請在遊戲對應任務頁查看條件，之後可補跑領獎環節。",
+    "en-US": "Task progress is not available. Check the requirements on the game's task page, then retry reward collection."
   },
   "run.pending_group.daily": {
     "zh-CN": "日常任务",
@@ -1024,9 +1210,14 @@
     "en-US": "Other missions"
   },
   "run.skipped_unknown": {
-    "zh-CN": "本次记录未提供具体跳过原因，可在执行记录中查看详情。",
-    "zh-TW": "本次紀錄未提供具體跳過原因，可在執行紀錄中查看詳情。",
-    "en-US": "No specific skip reason was recorded. Check the activity records for details."
+    "zh-CN": "该环节已跳过，但记录中没有原因。可重新勾选此项；若再次出现，请导出诊断。",
+    "zh-TW": "此環節已略過，但紀錄中沒有原因。可重新勾選此項；若再次出現，請匯出診斷。",
+    "en-US": "This stage was skipped without a recorded reason. Select it to retry; export diagnostics if this recurs."
+  },
+  "run.outcome_unknown": {
+    "zh-CN": "该环节尚未完成，但记录中没有原因。请查看游戏是否有断线或弹窗，再补跑此项；若再次出现，请导出诊断。",
+    "zh-TW": "此環節尚未完成，但紀錄中沒有原因。請查看遊戲是否斷線或有彈窗，再補跑此項；若再次出現，請匯出診斷。",
+    "en-US": "This stage is incomplete without a recorded reason. Check the game for a disconnect or dialog, then retry. Export diagnostics if it recurs."
   },
   "run.resume_footer": {
     "zh-CN": "接续原队列不受勾选影响；补跑只执行勾选项。",

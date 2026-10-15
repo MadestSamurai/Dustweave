@@ -129,7 +129,7 @@ public partial class MainWindow
                 scheduleToolNeedsSettlement = ToolRunning;
                 scheduleToolDraining = true;
             }
-            if (!await toolSession.CloseAsync()) return false;
+            if (!await CloseToolWindowsAsync()) return false;
             var game = scheduleToolGame;
             var until = DateTime.UtcNow.AddSeconds(35);
             while (DateTime.UtcNow < until)

@@ -37,6 +37,18 @@ Runtime sources are compiled by the adapter against the user's client. Shared IP
 
 All integrated automation participates in the host's ownership and enabled-state rules. Directory isolation does not authorize concurrent gameplay automation. Main-window language remains the single language setting for hosted tools.
 
+Hosted child windows reserve the same control lease before connection and start handlers run. Initial connection waits for the parent to finish recording the child, and asynchronous connection/start preparation retains ownership until completion. Occupancy is sampled again after background observations to avoid releasing a newly acquired lease from an older observation. Only conflicting command buttons are disabled; settings, pause and close remain available. The `tool-activity` desktop smoke scope checks connection contention, parent/child handoff, pending settlement, idle release and process exit using synthetic hosts for every catalog tool.
+
+### Hosted tower defense / 内置塔防窗口
+
+使徒运气防守通过 `src/Desktop/ApostleToolWindow` 展示独立、非模态的内置工具窗口，承载 `ApostleToolPanel`，复用原工具的控制器、退火决策器与只读盘面控件。窗口先完成首帧显示，再后台按需准备统一连接；显示加载动画和当前阶段，可随时取消。连接成功不启用自动化，仍由用户点击开始。界面使用主程序的语言、主题和控件，切换主程序页面不结束运行。
+
+`ApostleToolSession` prepares the connection and runs the existing controller off the UI thread. `ApostleToolPort` selects only the host's exact process/start/account/player and checks the shared owner before enabled writes. Connection preparation, automation and settlement hold the shared lease, disabling account switches, duplicate connections and competing automation. Connected idle windows release it. Starting revalidates the connection in case daily tasks changed the active module or account. Scheduling, plugin changes, OTA, window close and app exit use the same asynchronous cancellation/stop path. An exited game is never rediscovered or reconnected automatically.
+
+设置保存在当前主程序数据目录的 `tools/apostle-defense/settings.json`；首次读取可以沿用独立版的有效偏好，不导入账号或执行证据。决策与错误日志写入 `live/diagnostics/apostle-defense`，按主程序的导出与空间清理规则处理。独立项目的作者、许可证和版本记录仍保留。
+
+Targeted checks: `test.ps1 -Groups ApostleIntegrated,ToolMenu,ActivityLease,ApostleAnnealing,ApostlePerformance,ApostleTimeToClear`. Set `DUSTWEAVE_UI_SMOKE_SCOPE=apostle` when running the isolated desktop `--smoke` entry to verify all three languages, both themes, compact board layout, paint-before-connect, loading animation, connection locks, idle release, start/pause and close during setup/run. These checks do not connect to a game.
+
 ## Extension boundary / 扩展边界
 
 本体提供通用插件接口。插件清单声明入口程序集、接口版本、文件哈希和适用环节；本体在加载前校验，缺少插件时隐藏依赖它的选项。插件不能绕过账号身份、操作归属或任务恢复检查。

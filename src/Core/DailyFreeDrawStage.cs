@@ -168,6 +168,7 @@ public sealed class DailyFreeDrawStage : IDailyManagedStage
             {
                 ["category"] = category,
                 ["state"] = "no_free_draws",
+                ["reason"] = "no_free_draws",
                 ["actions"] = 0
             };
         if (DailyNavigationDecision.Types((await driver.ObserveAsync()).Frame).Contains("MessagePopupUI"))
@@ -272,9 +273,3 @@ public sealed class DailyFreeDrawStage : IDailyManagedStage
         };
     }
 }
-
-
-
-
-
-

@@ -13,6 +13,7 @@
   </PropertyGroup>
   <ItemGroup><ProjectReference Include="../Core/Dustweave.Core.csproj" /></ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="../../standalone/bd2-apostle-defense/core/BD2ApostleDefense.Core.csproj" Aliases="apostle" />
     <ProjectReference Include="../Connection/Dustweave.Connection.csproj" Aliases="liveUtility" />
     <ProjectReference Include="../ToolHost/Dustweave.ToolHost.csproj" Aliases="minigameUtility" />
     <ProjectReference Include="../../tools/RuntimeCheck/Dustweave.RuntimeCheck.csproj" Aliases="diagnosticUtility" />

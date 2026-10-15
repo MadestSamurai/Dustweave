@@ -65,15 +65,17 @@ public static class DailyTradeDropForecast
      if(record==null||S(record["account"])!=account||S(record["player"])!=player||S(record["source"])!="FieldObjectInfoResponse+MonsterInfoResponse")continue;
      var network=record["network"]!.AsObject();
      if(S(network["State"])!="ready"||S(network["Error"])!=""||N(network["Pack"])!=pack)continue;
-     var active=ActiveMonsters(network);
-     foreach(long map in route.Maps(pack).Where(m=>network["Maps"]!.AsArray().Select(N).Contains(m)))
-      maps.Add((pack,map,Rows(network["Targets"]).Where(t=>N(t["Map"])==map && active.Contains(N(t["Id"]))).Select(t=>N(t["Id"])).ToHashSet()));
+     foreach(var observed in DailyCollectionCache.CollectionNetworks(record)){
+      long map=N(observed["Maps"]![0]);if(!route.Maps(pack).Contains(map))continue;
+      var active=ActiveMonsters(observed);
+      maps.Add((pack,map,Rows(observed["Targets"]).Where(t=>N(t["Map"])==map && active.Contains(N(t["Id"]))).Select(t=>N(t["Id"])).ToHashSet()));
+     }
      break;
     }
    }
    return maps.Count==0?null:Project(model,catalog,maps);
   }
-  catch(Exception error) when(error is IOException or UnauthorizedAccessException or InvalidOperationException or ArgumentException or System.Text.Json.JsonException or KeyNotFoundException or OverflowException){
+  catch(Exception error) when(error is IOException or InvalidDataException or UnauthorizedAccessException or InvalidOperationException or ArgumentException or System.Text.Json.JsonException or KeyNotFoundException or OverflowException){
    // Forecasts are optional. A stale optional source must not interrupt current-stock trading.
    workflow.Save("trade-drop-forecast-unavailable.json",O(("error",error.Message),("resources_spent",false)));return null;
   }

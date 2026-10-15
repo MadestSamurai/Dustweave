@@ -12,34 +12,57 @@ internal sealed class HostedToolActivity : IDisposable
     const string GuardKey="BD2Daily.HostedWriteGuard";
     readonly Window window;
     readonly string id, root, suiteRoot;
-    readonly DailyGameHost host=new();
+    readonly IGameHost host;
+    readonly Func<SuiteStatus?> readState;
+    readonly Action<Exception>? reportRejection;
     readonly DailyActivityLease activity;
     readonly DispatcherTimer timer=new(){Interval=TimeSpan.FromMilliseconds(250)};
     readonly PropertyInfo running;
     readonly GameInstance game;
     readonly string account, player;
-    readonly HashSet<string> starts=new(StringComparer.Ordinal){"StartButton","AutoButton","StepButton","ApplyButton","PreviewButton","ExecuteButton"};
+    readonly HashSet<string> starts=new(StringComparer.Ordinal){"ConnectButton","StartButton","AutoButton","StepButton","ApplyButton","PreviewButton","ExecuteButton"};
+    readonly Dictionary<Button,bool> blockedButtons=new();
     bool disposed, polling, reconnecting, resumeAttempted;
-    public HostedToolActivity(Window window,string id)
+    public HostedToolActivity(Window window,string id) : this(window,id,new DailyGameHost(),DailyIdentity.DataRoot,null,null) { }
+    internal HostedToolActivity(Window window,string id,IGameHost host,string root,Func<SuiteStatus?>? readState,Action<Exception>? reportRejection)
     {
-        this.window=window;this.id=id;root=DailyIdentity.DataRoot;suiteRoot=Path.Combine(root,"suite");
+        this.window=window;this.id=id;this.host=host;this.root=root;suiteRoot=Path.Combine(root,"suite");
+        this.reportRejection=reportRejection;
         activity=new(root);
         running=window.GetType().GetProperty("HostedAutomationEnabled")??throw new InvalidOperationException("工具未提供运行状态。");
         game=host.Find()??throw new InvalidOperationException("游戏已退出。");
         var snapshot=host.ReadSnapshot(game)??throw new InvalidOperationException("游戏身份尚未就绪。");
         account=snapshot.AccountKey;player=snapshot.PlayerKey;
-        if(id=="equipment")starts.Add("ConnectButton");
+        this.readState=readState??(()=>DailySuite.Read(root,game));
         AppDomain.CurrentDomain.SetData(GuardKey,(Action<string,string,byte[]>)BeforeWrite);
         EventManager.RegisterClassHandler(typeof(Button),Button.ClickEvent,new RoutedEventHandler(BeforeClick),true);
         timer.Tick+=async(_,_)=>await Poll();timer.Start();
         window.Closed+=(_,_)=>Dispose();
     }
     bool Enabled => (bool)running.GetValue(window)! || Application.Current.Windows.Cast<Window>().Where(w=>w!=window).Any(w=>w.GetType().GetProperty("HostedAutomationEnabled")?.GetValue(w) is true);
+    void SetOccupied(bool occupied)
+    {
+        // Only commands which need control are disabled. Settings, pause and close
+        // remain reachable; the click guard also rejects a tool's timer re-enabling
+        // a command between refreshes.
+        if(!occupied)
+        {
+            foreach(var pair in blockedButtons)pair.Key.SetCurrentValue(UIElement.IsEnabledProperty,pair.Value);
+            blockedButtons.Clear();return;
+        }
+        foreach(var view in Application.Current.Windows.Cast<Window>().Where(w=>w==window||w.Owner==window))
+        foreach(var name in starts)
+        if(view.FindName(name) is Button button)
+        {
+            if(!blockedButtons.ContainsKey(button)||button.IsEnabled)blockedButtons[button]=button.IsEnabled;
+            button.SetCurrentValue(UIElement.IsEnabledProperty,false);
+        }
+    }
     void BeforeClick(object sender,RoutedEventArgs args)
     {
         if(disposed||args.Handled||sender is not Button button||!starts.Contains(button.Name))return;
         try { activity.Enter(); AssertIdentity(); }
-        catch(Exception error){args.Handled=true;MessageBox.Show(window,DailyLanguage.Current.Diagnostic(error.GetBaseException().Message, DailyUserText.Error(error.GetBaseException(),DailyLanguage.Current.Translate)),DailyLanguage.Current.Get("tools.start_error_title"),MessageBoxButton.OK,MessageBoxImage.Information);}
+        catch(Exception error){args.Handled=true;if(reportRejection!=null)reportRejection(error);else MessageBox.Show(window,DailyLanguage.Current.Diagnostic(error.GetBaseException().Message, DailyUserText.Error(error.GetBaseException(),DailyLanguage.Current.Translate)),DailyLanguage.Current.Get("tools.start_error_title"),MessageBoxButton.OK,MessageBoxImage.Information);}
     }
     void AssertIdentity()
     {
@@ -57,27 +80,28 @@ internal sealed class HostedToolActivity : IDisposable
         if(string.Equals(Path.GetFullPath(dataRoot),Path.GetFullPath(suiteRoot),StringComparison.OrdinalIgnoreCase))return;
         if(!DailyActivityRules.RequiresOwnership(name,value))return;
         activity.Enter();AssertIdentity();
-        var state=DailySuite.Read(root,game);
+        var state=readState();
         if(state?.State!="ready"||state.Tool!=id||state.Owner!=DailySuite.Owner||state.At<DateTime.UtcNow.AddSeconds(-5).Ticks)
             throw new InvalidOperationException("此工具尚未恢复就绪，请等待日常助手完成交接。");
     }
-    async Task Poll()
+    internal async Task Poll()
     {
         if(disposed||polling)return;polling=true;
         try
         {
-            bool enabled=Enabled;
             var current=await Task.Run(()=>{
                 var found=host.Find();
                 SuiteStatus? state=null;
-                if(found==game)try{state=DailySuite.Read(root,game);}catch(IOException){}
+                if(found==game)try{state=readState();}catch(IOException){}
                 return (alive:found==game,state);
             });
             if(disposed)return;
+            // A connect/start click may have arrived while the observation was in flight.
+            bool enabled=Enabled;
             bool fresh=current.state!=null&&current.state.At>=DateTime.UtcNow.AddSeconds(-5).Ticks;
             activity.Observe(enabled||reconnecting,current.alive,fresh,DailyActivityRules.ExecutionPending(current.state?.Pending));
             bool occupied=!activity.Held&&DailyToolControl.IsOccupied(root);
-            window.IsEnabled=!occupied;
+            SetOccupied(occupied);
             if(current.state?.Tool==id&&current.state.State=="ready"){resumeAttempted=false;return;}
             // An idle window may outlive a daily run. Rebind only after that run releases control,
             // once per handoff; a failed connection never becomes an automatic reconnect loop.
@@ -97,6 +121,7 @@ internal sealed class HostedToolActivity : IDisposable
     public void Dispose()
     {
         if(disposed)return;disposed=true;timer.Stop();
+        SetOccupied(false);
         AppDomain.CurrentDomain.SetData(GuardKey,null);activity.Dispose();
     }
 }

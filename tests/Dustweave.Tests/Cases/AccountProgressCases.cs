@@ -74,6 +74,13 @@ static class AccountProgressCases
         var carried = latest with { Stages = [new("weekly_mainline", "completed", "", Carried: true, FinishedAt: now.AddMinutes(-5))] };
         Check(DailyParallelProgress.Read(host, account, carried, now).PlanStages!.Single(s => s.Task == "weekly_mainline").State == "partial",
             "a newer queue file cannot hide newer per-stage outcomes with old carried results");
+        var unstarted = latest with { Stages = [new("weekly_mainline", "pending", "准备中")] };
+        Check(DailyParallelProgress.Read(host, account, unstarted, now).PlanStages!.Single(s => s.Task == "weekly_mainline").State == "partial",
+            "new unstarted queue row cannot overwrite a previously observed task outcome");
+        Queue(box, "mail", "pending", now.AddMinutes(2));
+        DailyAccountProgress.Copy(box, host, account);
+        Check(DailyParallelProgress.Read(host, account, new("idle", "", "", [], account), now).Stages.Single(s => s.Task == "mail").State == "completed",
+            "later unstarted sandbox queue cannot erase completed ordinary progress");
         string unavailable = Path.Combine(root, "progress-summary-unavailable");
         string durable = Queue(unavailable, "mail", "completed", now);
         File.WriteAllText(Path.Combine(unavailable, "parallel-progress"), "blocked directory");

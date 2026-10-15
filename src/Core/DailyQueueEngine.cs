@@ -272,6 +272,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                         foreach (var row in members)
                         {
                             var part = results[Text(row["task"])]!.AsObject();
+                            DailyOutcomeExplanation.Complete(Text(row["task"]), part);
                             row["state"] = Text(part["state"]);
                             row["result"] = part.DeepClone();
                             row["finished"] = DateTime.UtcNow.Ticks;
@@ -368,6 +369,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                     if (Text(result["state"]) is not ("completed" or "skipped" or "partial"))
                         throw new StageHostException("adapter", Text(result["error"]) is { Length: > 0 } e ? e : "环节尚未确认完成。");
                     item["state"] = Text(result["state"]);
+                    DailyOutcomeExplanation.Complete(stage, result);
                     item["result"] = result;
                 }
                 catch (StageHostException error) when (error.Kind is "adapter" or "pending" or "reconciled")

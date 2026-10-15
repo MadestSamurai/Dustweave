@@ -98,6 +98,9 @@ static class ParallelCases
         DailyParallelProgress.Remember(progressRoot,later);
         progress=DailyParallelProgress.Read(progressRoot,a.Account.AccountKey,empty,clock);
         Check(progress.Stages.Count==2&&progress.Stages.All(s=>s.State=="completed"),"rerunning a subset retains other completed tasks in the same cycle");
+        DailyParallelProgress.Remember(progressRoot,later with {Status=later.Status! with {AtUtc=clock.AddMinutes(2).AddMilliseconds(100),Queue=later.Status.Queue! with {Stages=[new("mail","pending",""),new("mirror","skipped","disabled")]}}});
+        Check(DailyParallelProgress.Read(progressRoot,a.Account.AccountKey,empty,clock).Stages.All(s=>s.State=="completed"),
+            "unstarted and disabled rows in a new sandbox heartbeat retain completed per-account tasks");
         var lostItem=later with {State="running",Status=later.Status! with {AtUtc=clock.AddMinutes(2).AddSeconds(1),Queue=later.Status.Queue! with {Stages=[new("trade","running","")]}}};
         DailyParallelProgress.Remember(progressRoot,lostItem);
         DailyParallelProgress.Remember(progressRoot,lostItem with {State="interrupted"});

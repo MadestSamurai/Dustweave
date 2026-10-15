@@ -153,7 +153,7 @@ public partial class MainWindow
         try
         {
             if (DailySandbox.HasIsolatedWindows()) throw new IOException("plugins.isolated_open");
-            if (ToolOpen && !await toolSession.CloseAsync()) throw new IOException("plugins.tool_open");
+            if (ToolOpen && !await CloseToolWindowsAsync()) throw new IOException("plugins.tool_open");
             using var process = Process.GetCurrentProcess();
             var start = new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = Directory.GetCurrentDirectory() };
             start.ArgumentList.Add("--restart-after"); start.ArgumentList.Add(process.Id.ToString()); start.ArgumentList.Add(process.StartTime.ToUniversalTime().Ticks.ToString());

@@ -109,6 +109,20 @@ static class QueueSessionCases
         Check(details[5].Detail == "具体错误", "failure explanation retains the actual error");
         Check(details[6].Detail == "吸收次数用完，次日接续未完成地图", "reset-wait explanation takes precedence over stale progress");
         DailyJson.Write(detailPath, System.Text.Json.Nodes.JsonNode.Parse("""
+        {"state":"partial","items":[
+          {"task":"management","state":"partial","progress":{"detail":"正在进入餐厅"},"result":{"stages":{"income":{"state":"completed"},"guests":{"state":"partial","reason":"idle_no_visible_bubble"}}}},
+          {"task":"free_draws","state":"skipped","result":{"operations":[{"category":"Costume","state":"no_free_draws"},{"category":"Equipment","state":"no_free_draws"}]}},
+          {"task":"equipment","state":"partial","result":{"plan":{"pending":["free_draw_receipt_unobserved"]}}},
+          {"task":"mail","state":"partial","progress":{"detail":"准备中"}}
+        ]}
+        """));
+        string originalDetailFile = File.ReadAllText(detailPath);
+        var legacyDetails = detailSession.ReadView().Stages;
+        Check(legacyDetails[0].Detail.Contains("idle_no_visible_bubble") && legacyDetails[1].Detail.Contains("no_free_draws")
+            && legacyDetails[2].Detail == "free_draw_receipt_unobserved" && legacyDetails[3].Detail == "",
+            "historical results recover nested explanations and never use stale progress as a partial outcome");
+        Check(File.ReadAllText(detailPath) == originalDetailFile, "reading legacy explanations never rewrites durable execution evidence");
+        DailyJson.Write(detailPath, System.Text.Json.Nodes.JsonNode.Parse("""
         {"state":"completed","items":[{"task":"rewards","state":"completed","result":{
           "reason":"奖励检查完成；仍有未完成任务",
           "pending_tasks":[

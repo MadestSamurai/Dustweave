@@ -199,7 +199,7 @@ public partial class MainWindow
             if (DailySandbox.HasIsolatedWindows()) { updatePanel.Status("updates.isolated_open"); return; }
             string? pluginBlock = await Task.Run(() => DailyPlugin.HostUpdateBlockReason(root, readyUpdate.Release.Version));
             if (pluginBlock != null) { updatePanel.Status(pluginBlock); return; }
-            if (ToolOpen && !await toolSession.CloseAsync()) { updatePanel.Status("updates.tool_open"); return; }
+            if (ToolOpen && !await CloseToolWindowsAsync()) { updatePanel.Status("updates.tool_open"); return; }
             string probe = Path.Combine(Path.GetDirectoryName(readyUpdate.Target)!, ".dustweave-write-" + Guid.NewGuid().ToString("N"));
             using (File.Create(probe)) { } File.Delete(probe);
             string nonce = Guid.NewGuid().ToString("N");

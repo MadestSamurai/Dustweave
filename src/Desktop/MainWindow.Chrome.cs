@@ -17,9 +17,12 @@ public partial class MainWindow
     }
 
     private void UpdateWindowInsets()
+        => UpdateWindowInsets(this, WindowRoot);
+
+    internal static void UpdateWindowInsets(Window window, FrameworkElement content)
     {
-        if (WindowState != WindowState.Maximized) { WindowRoot.Margin = new Thickness(0); return; }
-        var handle = new WindowInteropHelper(this).Handle;
+        if (window.WindowState != WindowState.Maximized) { content.Margin = new Thickness(0); return; }
+        var handle = new WindowInteropHelper(window).Handle;
         var info = new ChromeMonitorInfo { Size = Marshal.SizeOf<ChromeMonitorInfo>() };
         if (handle == 0 || !ChromeGetMonitorInfo(ChromeMonitorFromWindow(handle, 2), ref info) ||
             !ChromeGetClientRect(handle, out var client)) return;
@@ -27,8 +30,8 @@ public partial class MainWindow
         if (!ChromeClientToScreen(handle, ref origin)) return;
         // A maximized native frame extends a few physical pixels outside its monitor.
         // Inset the content, not the HWND; Windows retains snap and taskbar behavior.
-        var dpi = VisualTreeHelper.GetDpi(this);
-        WindowRoot.Margin = new Thickness(
+        var dpi = VisualTreeHelper.GetDpi(window);
+        content.Margin = new Thickness(
             Math.Max(0, info.Work.Left - origin.X) / dpi.DpiScaleX,
             Math.Max(0, info.Work.Top - origin.Y) / dpi.DpiScaleY,
             Math.Max(0, origin.X + client.Right - info.Work.Right) / dpi.DpiScaleX,

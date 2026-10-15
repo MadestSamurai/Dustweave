@@ -235,6 +235,7 @@ public static class DailyEquipment
         var actions = new JsonArray();
         var pending = new JsonArray();
         var retained = new JsonArray();
+        var reasons = new JsonArray();
         var byId = rows.ToDictionary(r => S(r["instance"]));
         if (settings.Enabled)
         {
@@ -246,6 +247,7 @@ public static class DailyEquipment
                     actions.Add(O(("task", "equipment.craft_recycle")));
                 else if (breakNeeded)
                     pending.Add("free_draw_receipt_unobserved");
+                else reasons.Add("equipment_no_recycle_source");
             }
             else
             {
@@ -268,6 +270,7 @@ public static class DailyEquipment
                     actions.Add(O(("task", "equipment.recycle"), ("instances", selected.ToArray()), ("enhance_level", settings.EnhanceLevel)));
                 else if (pending.Count == 0 && breakNeeded && settings.CraftFallback)
                     actions.Add(O(("task", "equipment.craft_recycle")));
+                else if (pending.Count == 0) reasons.Add(retained.Count > 0 ? "equipment_protected" : "equipment_no_recycle_source");
             }
         }
         if (settings.RefineEnabled && refineNeeded)
@@ -298,7 +301,9 @@ public static class DailyEquipment
                     actions.Add(O(("task", "equipment.refine"), ("instance", chosen["instance"])));
             }
         }
-        return O(("actions", actions), ("pending", pending), ("retained", retained));
+        if (settings.RefineEnabled && !refineNeeded) reasons.Add("equipment_no_refinement_task");
+        if (!settings.Enabled && !settings.RefineEnabled) reasons.Add("disabled");
+        return O(("actions", actions), ("pending", pending), ("retained", retained), ("reasons", reasons));
     }
     private static string[]? Drawn(DailyWorkflow w)
     {

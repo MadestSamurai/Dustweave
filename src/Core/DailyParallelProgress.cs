@@ -10,7 +10,10 @@ public static class DailyParallelProgress
     }
     private static string PathFor(string root, string account) => Path.Combine(root, "parallel-progress", account + ".json");
     private static bool SamePeriod(QueuePeriod? a, QueuePeriod? b) => a != null && b != null && a.Server == b.Server && a.Cycle == b.Cycle && a.Player == b.Player;
-    private static QueueStage[] Combine(IEnumerable<QueueStage> older, IEnumerable<QueueStage> newer) => older.Concat(newer).GroupBy(s => s.Task, StringComparer.Ordinal).Select(g => g.Last()).ToArray();
+    private static bool CanReplace(QueueStage old, QueueStage next) => next.State is not ("pending" or "waiting" or "preparing" or "idle")
+        && !(old.State == "completed" && next.State == "skipped" && next.Detail is "disabled" or "已关闭");
+    private static QueueStage[] Combine(IEnumerable<QueueStage> older, IEnumerable<QueueStage> newer) => older.Concat(newer).GroupBy(s => s.Task, StringComparer.Ordinal)
+        .Select(g => g.Aggregate((old, next) => CanReplace(old, next) ? next : old)).ToArray();
     public static void Remember(string root, DailyParallelItem item)
     {
         var status = item.Status;
@@ -26,7 +29,8 @@ public static class DailyParallelProgress
         if (old?.Account == account && old.AtUtc == status.AtUtc && System.Text.Json.JsonSerializer.Serialize(old.View.Stages) == System.Text.Json.JsonSerializer.Serialize(stages)) return;
         var times = old?.Account == account && SamePeriod(old.View.Period, view.Period)
             ? old.View.Stages.ToDictionary(s => s.Task, s => old.Observed.GetValueOrDefault(s.Task, s.FinishedAt ?? old.AtUtc)) : new Dictionary<string, DateTimeOffset>();
-        foreach (var stage in observed) times[stage.Task] = stage.FinishedAt ?? status.AtUtc;
+        foreach (var stage in observed)
+            if (stages.Any(s => ReferenceEquals(s, stage))) times[stage.Task] = stage.FinishedAt ?? status.AtUtc;
         DailyJson.Write(path, new Entry(account, status.AtUtc, view with { Record = "", Stages = stages, PlanStages = null }) { Observed = times });
     }
     public static QueueView Read(string root, string account, QueueView local, DateTimeOffset? now = null)
@@ -47,7 +51,7 @@ public static class DailyParallelProgress
             {
                 DateTimeOffset at = stage.FinishedAt ?? new DateTimeOffset(updated, TimeSpan.Zero);
                 if (!combined.TryGetValue(stage.Task, out var oldStage)
-                    || at >= saved.Observed.GetValueOrDefault(stage.Task, oldStage.FinishedAt ?? saved.AtUtc)) combined[stage.Task] = stage;
+                    || CanReplace(oldStage, stage) && at >= saved.Observed.GetValueOrDefault(stage.Task, oldStage.FinishedAt ?? saved.AtUtc)) combined[stage.Task] = stage;
             }
         if (updated >= saved.AtUtc.UtcDateTime)
             return same ? local with { PlanStages = combined.Values.ToArray() } : local;
@@ -90,6 +94,7 @@ public static class DailyParallelProgress
         foreach (var stage in incoming.View.Stages)
         {
             var at = incoming.Observed.GetValueOrDefault(stage.Task, stage.FinishedAt ?? incoming.AtUtc);
+            if (rows.TryGetValue(stage.Task, out var existing) && !CanReplace(existing, stage)) continue;
             if (times.TryGetValue(stage.Task, out var prior) && prior >= at) continue;
             rows[stage.Task] = stage with { State = stage.State == "running" ? "stopped" : stage.State };
             times[stage.Task] = at;
