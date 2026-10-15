@@ -1,4 +1,44 @@
 {
+  "message.周收集范围已补全，可接续核对遗漏地图；已收集物品不会重复吸收。": {
+    "zh-CN": "周收集范围已补全，可接续核对遗漏地图；已收集物品不会重复吸收。",
+    "zh-TW": "週收集範圍已補全，可接續核對遺漏地圖；已收集物品不會重複吸收。",
+    "en-US": "Weekly collection now covers the missing maps. Resume to check them; collected items will not consume another absorption use."
+  },
+  "completion.close_game": {
+    "zh-CN": "日常完成后退出游戏",
+    "zh-TW": "日常完成後退出遊戲",
+    "en-US": "Close the game after daily tasks finish"
+  },
+  "completion.help": {
+    "zh-CN": "每个账号完成后关闭对应游戏；暂停或中断时保留。定时执行可单独设置。",
+    "zh-TW": "每個帳號完成後關閉對應遊戲；暫停或中斷時保留。定時執行可單獨設定。",
+    "en-US": "Close each account's game when its tasks finish. Keep it open if paused or interrupted. Scheduled runs have their own setting."
+  },
+  "completion.schedule_help": {
+    "zh-CN": "仅用于这项定时计划，串行和隔离多开均适用；异常中断时保留游戏。",
+    "zh-TW": "僅用於這項定時計畫，循序和隔離多開均適用；異常中斷時保留遊戲。",
+    "en-US": "Applies to this schedule in sequential and parallel modes. Keep games open if tasks are interrupted."
+  },
+  "completion.closing": {
+    "zh-CN": "日常已完成，正在退出该账号的游戏…",
+    "zh-TW": "日常已完成，正在退出該帳號的遊戲…",
+    "en-US": "Daily tasks finished. Closing this account's game…"
+  },
+  "completion.game_changed": {
+    "zh-CN": "日常已完成，但游戏进程已变化，未自动退出。请手动关闭游戏。",
+    "zh-TW": "日常已完成，但遊戲程序已變化，未自動退出。請手動關閉遊戲。",
+    "en-US": "Daily tasks finished, but the game process changed. Please close the game manually."
+  },
+  "completion.identity_changed": {
+    "zh-CN": "日常已完成，但无法确认当前游戏仍是本次账号，未自动退出。请手动关闭游戏。",
+    "zh-TW": "日常已完成，但無法確認目前遊戲仍是本次帳號，未自動退出。請手動關閉遊戲。",
+    "en-US": "Daily tasks finished, but the current game account could not be verified. Please close the game manually."
+  },
+  "completion.not_closed": {
+    "zh-CN": "日常已完成，游戏尚未退出。请处理游戏中的关闭提示，或手动关闭游戏。",
+    "zh-TW": "日常已完成，遊戲尚未退出。請處理遊戲中的關閉提示，或手動關閉遊戲。",
+    "en-US": "Daily tasks finished, but the game is still open. Respond to its exit prompt or close it manually."
+  },
 
   "message.salvation_locked": {
     "zh-CN": "救赎之塔尚未解锁，本次跳过。",
@@ -1785,9 +1825,9 @@
   },
   "stage.event_battle": {"zh-CN":"活动战斗","zh-TW":"活動戰鬥","en-US":"Event battles"},
   "stage.monster_hunt": {
-    "zh-CN": "魔兽最高档快速战斗",
-    "zh-TW": "魔獸最高階快速戰鬥",
-    "en-US": "Highest-level Fiend Hunt quick battle"
+    "zh-CN": "魔兽快速战斗（已移除）",
+    "zh-TW": "魔獸快速戰鬥（已移除）",
+    "en-US": "Fiend Hunt quick battle (removed)"
   },
   "stage.weekly_room_likes": {
     "zh-CN": "周常小屋点赞",

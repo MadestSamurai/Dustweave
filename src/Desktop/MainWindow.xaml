@@ -217,6 +217,8 @@
       <CheckBox x:Name="StartWithWindows" Content="{l:Tr software.windows_startup}" Click="StartWithWindows_Click"/>
       <TextBlock Text="{l:Tr software.windows_startup_help}" Foreground="{DynamicResource MutedInk}" FontSize="12" TextWrapping="Wrap" Margin="24,4,0,14"/>
       <DockPanel LastChildFill="True"><Button DockPanel.Dock="Right" Content="{l:Tr software.manage_queue}" Click="OpenAccountsSettings_Click" Margin="16,0,0,0"/><CheckBox x:Name="RunOnOpen" Content="{l:Tr desktop.run_on_open}" Click="RunOnOpen_Click" VerticalAlignment="Center" ToolTip="{l:Tr desktop.run_on_open_help}"/></DockPanel>
+      <CheckBox x:Name="CloseGameAfterRun" Content="{l:Tr completion.close_game}" Click="CloseGameAfterRun_Click" Margin="0,16,0,0"/>
+      <TextBlock Text="{l:Tr completion.help}" Foreground="{DynamicResource MutedInk}" FontSize="12" TextWrapping="Wrap" Margin="24,4,0,0"/>
       <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="240"/></Grid.ColumnDefinitions><TextBlock Text="{l:Tr software.close_action}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,16,0"/><ComboBox Grid.Column="1" x:Name="CloseActionChoice" SelectionChanged="CloseAction_Changed" AutomationProperties.Name="{l:Tr software.close_action}"><ComboBoxItem Content="{l:Tr software.close_ask}"/><ComboBoxItem Content="{l:Tr desktop.minimize}"/><ComboBoxItem Content="{l:Tr desktop.exit}"/></ComboBox></Grid>
       <TextBlock x:Name="SoftwareSettingsStatus" Visibility="Collapsed" TextWrapping="Wrap" FontSize="12" Margin="0,10,0,0"/>
       <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Margin="0,16,0,22"/>

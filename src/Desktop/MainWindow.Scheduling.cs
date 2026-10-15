@@ -165,7 +165,7 @@ public partial class MainWindow
     {
         var presets = new DailyTaskPresetStore(root);
         var selections = targets.ToDictionary(a => a.AccountKey, a => presets.Selection(a.AccountKey, new DailyPreferenceStore(root).Read(a.AccountKey)));
-        execution ??= parallelOptions;
+        execution ??= parallelOptions with { CloseGame = DailyDesktopBehavior.Read(root).CloseGameAfterRun };
         if (execution.Enabled && !IsSandboxWindow)
         {
             if (!await StartParallelAsync(targets, execution)) return "failed";
@@ -184,7 +184,8 @@ public partial class MainWindow
                     if (dailyStopping) { state = "paused"; break; }
                     await coordinator.InspectAsync([account]); RefreshAccounts();
                     if (dailyStopping) { state = "paused"; break; }
-                    var result = await dailyQueue.RunAsync(account.AccountKey, selection: selections[account.AccountKey]);
+                    var result = await RunDailyQueueAsync(account.AccountKey, execution.CloseGame,
+                        () => dailyQueue.RunAsync(account.AccountKey, selection: selections[account.AccountKey]));
                     if (result.State == "paused" || result.Stages.Any(s => s.State == "recovery_required")) { state = "paused"; break; }
                     if (result.State is not ("completed" or "skipped")) state = "partial";
                 }

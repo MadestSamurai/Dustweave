@@ -24,6 +24,12 @@ static class PreferenceCases
             throw new Exception(name);
         }
         var p = store.Read(a);
+        var oldMonster = JsonSerializer.SerializeToNode(p)!.AsObject();
+        oldMonster["MonsterHunt"]!["Enabled"] = true;
+        var withoutMonster = DailyPreferences.Parse(oldMonster.ToJsonString());
+        Check(!withoutMonster.MonsterHunt.Enabled && withoutMonster.Mirror.Enabled == p.Mirror.Enabled &&
+            withoutMonster.Stages.Mail == p.Stages.Mail,
+            "retired monster quick battle is disabled in saved settings without changing other stages");
         Check(!p.Weekly.WalkCollect, "weekly collection defaults to Absorb, not walking");
         foreach (bool walk in new[] { false, true })
         {
@@ -54,15 +60,15 @@ static class PreferenceCases
                 (_, _, _) => throw new Exception("Catalog validation must not send game commands"));
             var routeCatalog = new DailyCollectionCatalog(workflow);
             var expected = Enumerable.Range(1, 19).Select(n => (long)n)
-                .Concat(Enumerable.Range(1001, 7).Select(n => (long)n)).Concat(new long[] { 2001, 2002, 2005, 2007 }).ToArray();
+                .Concat(Enumerable.Range(1001, 7).Select(n => (long)n)).Concat(new long[] { 2001, 2002, 2003, 2004, 2005, 2007 }).ToArray();
             Check(routeCatalog.Packs().SequenceEqual(expected), "fixed weekly catalog covers all supported story, character and event packs");
             Check(routeCatalog.Packs().All(id => routeCatalog.Maps(id).Length > 0 && routeCatalog.StealMaps(id) != null), "shared weekly route has collection and theft coverage for every pack");
             Check(routeCatalog.Maps(6).SequenceEqual(new long[] { 601, 602, 606, 605, 608, 607 }), "fixed route retains chapter six floor exclusions");
             var owned = new long[] { 2007, 1007, 19, 1, 2003, 1008, 9999 };
             var evidence = WorkflowCases.Evidence(
                 WorkflowCases.Reading("mainline.owned_packs", ("Count", owned.Length), ("$items", DailyData.Array(owned.Select(id => DailyData.O(("Key", id), ("Value.Id", id)))))),
-                WorkflowCases.Reading("mainline.packs", ("Count", expected.Length + 3), ("$items", DailyData.Array(expected.Concat(new long[] { 2003, 1008, 9999 }).Select(id => DailyData.O(("Id", id), ("PackType", id >= 2000 ? 6 : id >= 1000 ? 1 : 0)))))));
-            Check(routeCatalog.AvailablePacks(evidence).SequenceEqual(new long[] { 1, 19, 1007, 2007 }), "automatic route excludes unowned and noncollectible cartridges while retaining latest supported packs");
+                WorkflowCases.Reading("mainline.packs", ("Count", expected.Length + 2), ("$items", DailyData.Array(expected.Concat(new long[] { 1008, 9999 }).Select(id => DailyData.O(("Id", id), ("PackType", id >= 2000 ? 6 : id >= 1000 ? 1 : 0)))))));
+            Check(routeCatalog.AvailablePacks(evidence).SequenceEqual(new long[] { 1, 19, 1007, 2003, 2007 }), "automatic route includes event three while excluding unowned and noncollectible cartridges");
             evidence["Readings"]![0]!["Values"]![0]!["Json"] = "100";
             Reject(() => routeCatalog.AvailablePacks(evidence), "incomplete cartridge ownership cannot silently report collection complete");
         }

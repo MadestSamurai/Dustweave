@@ -343,7 +343,7 @@ public sealed class DailyWeeklyRoute
         if (stage == "weekly_mainline" && storyLocked.Count > 0)
             return O(("state", "partial"), ("detail", Summary(stage) + " · 部分地图尚未推进到敌人出现阶段，完成对应卡带剧情后再收集"),
                 ("reason", "collection_story_locked"), ("source", "game_network"), ("pending_maps", Array(pending.Select(p => (JsonNode)new JsonArray(p.Pack, p.Map)))));
-        return O(("state", pending.Length > 0 ? "partial" : "completed"), ("detail", Summary(stage) + (pending.Length > 0 && deferred.Count > 0 ? " · NPC前置未完成，暂缓相关压制" : "")), ("reason", pending.Length > 0 && deferred.Count > 0 ? "protected_npc_targets" : "weekly_route_verified"), ("source", "game_network"), ("pending_maps", Array(pending.Select(p => (JsonNode)new JsonArray(p.Pack, p.Map)))));
+        return O(("state", pending.Length > 0 ? "partial" : "completed"), ("detail", Summary(stage) + (pending.Length > 0 && deferred.Count > 0 ? " · NPC前置未完成，暂缓相关压制" : "")), ("reason", pending.Length > 0 && deferred.Count > 0 ? "protected_npc_targets" : "weekly_route_verified"), ("source", "game_network"), ("collection_coverage", DailyCollectionCatalog.CoverageRevision), ("pending_maps", Array(pending.Select(p => (JsonNode)new JsonArray(p.Pack, p.Map)))));
     }
     public async Task<JsonObject> Run(string[] requested)
     {

@@ -286,7 +286,7 @@ namespace BD2Daily.Live {
      }
      else if(c.Kind=="mainline_pack"){
       var pack=ὤὫὬὭὯὪὢὬὬὩὣ.ὬὣὢὥὫὪὬὮὣὠὦ(c.Value);
-      if(pack==null||!(CollectionProgressNative.IsStoryField(c.Value)||(pack.PackType==6&&new[]{2001,2002,2005,2007}.Contains(c.Value)))||ὣὡὧὡὦὣὣὬὨὪὫ.ὬὣὢὥὫὪὬὮὣὠὦ(c.Value)==null)throw new InvalidOperationException("Owned story cartridge required");
+      if(pack==null||!(CollectionProgressNative.IsStoryField(c.Value)||(pack.PackType==6&&LiveProtocol.CollectionEventPack(c.Value)))||ὣὡὧὡὦὣὣὬὨὪὫ.ὬὣὢὥὫὪὬὮὣὠὦ(c.Value)==null)throw new InvalidOperationException("Owned story cartridge required");
       PackListLoopScrollItem.StartPackSelection(pack);
      }
      else if(c.Kind=="weekly_steal_talk")CollectionProgressNative.StealTalk((BalloonScriptUI)u,c);
@@ -363,7 +363,7 @@ namespace BD2Daily.Live {
      }
      else if(c.Kind=="mainline_walk"){
       var field=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ;
-      if(BattlePlayManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὨὢὤὪὪὢὩὢὬὠὦ.ToString()!="BMT_NONE"||!(CollectionProgressNative.IsStoryField(field.ὮὬὬὮὠὮὪὠὧὩὪ.PackId)||new[]{2001,2002,2005,2007}.Contains(field.ὮὬὬὮὠὮὪὠὧὩὪ.PackId)))throw new InvalidOperationException("Mainline field required");
+      if(BattlePlayManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὨὢὤὪὪὢὩὢὬὠὦ.ToString()!="BMT_NONE"||!(CollectionProgressNative.IsStoryField(field.ὮὬὬὮὠὮὪὠὧὩὪ.PackId)||LiveProtocol.CollectionEventPack(field.ὮὬὬὮὠὮὪὠὧὩὪ.PackId)))throw new InvalidOperationException("Mainline field required");
       var target=Find(typeof(FieldObjectBase)).Cast<FieldObjectBase>().Single(x=>x.GetInstanceID()==c.Value);
       if(!(target is GateSpotData||target is FieldRewardObjectController||target is WayPointController||CollectionProgressNative.IsStealNpc(target as NPCController)))throw new InvalidOperationException("Gathering target required");
       var gate=target as GateSpotData;if(gate!=null){var map=ὩὥὫὮὯὥὮὪὨὡὩ.ὧὥὮὪὣὬὦὡὫὧὢ(gate.ὤὦὨὨὭὮὯὡὧὤὯ);if(map==null||map.PackId!=field.ὮὬὬὮὠὮὪὠὧὩὪ.PackId)throw new InvalidOperationException("Gate leaves current chapter");}

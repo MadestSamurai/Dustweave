@@ -119,6 +119,7 @@ public sealed class DailyCollectionNavigator
         }
         long arrived = await Observe();
         Require(arrived == destination, "路线没有到达预期地图");
+        if (DailyFieldRoute.PrefersStealth(Evidence)) await route.Protection(Evidence);
         if (kind == "walk")
             Atlas.Reached(origin, N(gate![ObjectPath]), node, route.W.Time - started);
         else
@@ -159,6 +160,11 @@ public sealed partial class DailyFieldRoute
         JsonArray? walking = null;
         await FieldReady();
         var before = await Evidence();
+        if (PrefersStealth(before))
+        {
+            await Protection(before);
+            before = await Evidence();
+        }
         long map = N(Map(before)["id"]), pack = N(Map(before)["packId"]);
         string week = S(R(before, "mainline.reset", "GetWeeklyResetTime().Ticks"));
         Require(Catalog.Supported(pack) && !Excluded.Contains(map), "地图不在收集范围");
@@ -177,11 +183,14 @@ public sealed partial class DailyFieldRoute
             e = await Evidence();
             if (FieldRows(e, "monster").Any(r => N(r["ὭὫὠὯὯὭὧὬὣὨὨ.ὫὣὬὥὪὫὪὤὫὮὧ"]) == 2))
                 await Skill(20);
-            await Skill(6);
-            e = await Evidence();
             // The live object cache can lag after reconnecting. Already-collected
             // server targets must not spend another absorption use.
             var remainingDrops = checkpoint["maps"]![map.ToString()]!["drops"]!.AsArray().Select(N).ToHashSet();
+            if (remainingDrops.Count > 0)
+            {
+                await Skill(6);
+                e = await Evidence();
+            }
             if (Drops(e).Any(drop => remainingDrops.Contains(N(drop[ObjectPath]))))
             {
                 if (manual)

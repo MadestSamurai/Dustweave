@@ -51,8 +51,10 @@ public sealed class DailySchedulePanel : UserControl
         var limit = Text("parallel.maximum"); limit.VerticalAlignment = VerticalAlignment.Center; limit.Margin = new(0, 0, 12, 0);
         parallelSettings.Children.Add(limit); parallelSettings.Children.Add(maximum);
         L.Bind(maximum, System.Windows.Automation.AutomationProperties.NameProperty, "parallel.maximum");
-        closeGame.Margin = new(18, 0, 0, 0); closeGame.VerticalAlignment = VerticalAlignment.Center;
-        L.Bind(closeGame, ContentControl.ContentProperty, "parallel.close_game"); parallelSettings.Children.Add(closeGame); execution.Children.Add(parallelSettings);
+        execution.Children.Add(parallelSettings);
+        closeGame.Margin = new(0, 16, 0, 0);
+        L.Bind(closeGame, ContentControl.ContentProperty, "completion.close_game"); execution.Children.Add(closeGame);
+        L.Bind(closeGame, ToolTipProperty, "completion.schedule_help");
         var setup = new Button { HorizontalAlignment = HorizontalAlignment.Left, Margin = new(0, 10, 0, 0) };
         L.Bind(setup, ContentControl.ContentProperty, "sandbox_setup.help");
         setup.Click += (_, _) => SandboxSetupRequested?.Invoke(); execution.Children.Add(setup);

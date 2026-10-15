@@ -97,7 +97,7 @@ internal static class TradeQuoteCases
                     return Task.FromResult(s);
                 }, () => clock, ms => { clock += ms / 1000d; return Task.CompletedTask; }, records.Add);
             }
-            catch (StageHostException e) when (e.Kind == "identity") { rejected = true; }
+            catch (StageHostException e) when (e.Kind == (change is "popup" or "closed" ? "adapter" : "identity")) { rejected = true; }
             Check(rejected && reads == 2 && records.Count == 1, "quote refresh preserves " + change + " change");
         }
         clock = 0; reads = 0; records.Clear(); bool stopped = false;

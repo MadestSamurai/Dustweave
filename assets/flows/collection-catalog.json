@@ -173,11 +173,41 @@
       "travel": "teleport"
     },
     {
+      "id": 2003,
+      "name": "海滨天使",
+      "kind": "event",
+      "maps": [
+        20031,
+        20032
+      ],
+      "transitMaps": [
+        20031,
+        20032,
+        20033
+      ],
+      "travel": "walk"
+    },
+    {
+      "id": 2004,
+      "name": "闪乱神乐",
+      "kind": "event",
+      "maps": [
+        20041,
+        20042
+      ],
+      "transitMaps": [
+        20041,
+        20042
+      ],
+      "travel": "walk"
+    },
+    {
       "id": 2005,
       "name": "记忆边缘",
       "kind": "event",
       "maps": [
-        20051
+        20051,
+        20052
       ],
       "transitMaps": [
         20051,
@@ -219,16 +249,6 @@
       "reason": "no_repeatable_collection"
     },
     {
-      "id": 2003,
-      "name": "海滨天使",
-      "reason": "no_repeatable_collection"
-    },
-    {
-      "id": 2004,
-      "name": "闪乱神乐",
-      "reason": "hidden"
-    },
-    {
       "id": 2006,
       "name": "哥布林杀手",
       "reason": "hidden"
@@ -248,5 +268,28 @@
       "name": "Chained Soldier2",
       "reason": "no_repeatable_collection"
     }
-  ]
+  ],
+  "coverageRevision": 2,
+  "eventCoverage": {
+    "auditedAtUtc": "2026-10-15T02:07:31.2004848Z",
+    "clientAssemblySha256": "44EA8FFDB914583954DDA95A313480C7F29F496D90775254079F293341C556F1",
+    "sources": [
+      "PackTable",
+      "MapTable",
+      "FieldRewardObjectTable",
+      "FieldRewardObjectGroupTable",
+      "FieldMonsterTable",
+      "FieldMonsterRegenTable"
+    ],
+    "rules": [
+      "Include repeatable normal and research drops regardless of reward item type.",
+      "Include repeatable suppressible battle areas even without ground drops.",
+      "Hidden store entries remain eligible only when owned by the current account."
+    ],
+    "packs": [
+      2003,
+      2004,
+      2005
+    ]
+  }
 }

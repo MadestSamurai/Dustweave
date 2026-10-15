@@ -74,20 +74,56 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
             await OpenMerchant(npc);
             await SettleShop();
         }
+        await PrepareQuotePage();
         if (S(R(await Evidence(), "trade.shop_ui", ShopMode)) != "Buy")
             await w.Step("ShopUI", "_buyButton.root");
         await SettleShop();
     }
-    public async Task<JsonObject> Capture(string? output = null)
+    internal async Task PrepareQuotePage(JsonObject? observed = null)
+    {
+        var e = observed ?? await Evidence();
+        var frame = e["Frame"]!.AsObject();
+        if (!DailyNavigationDecision.Types(frame).Contains("DiscountPopupUI")) return;
+        // A native skill preview can arrive after the shop underneath it appears.
+        // Cancel this unsubmitted preview, then plan from the live shop. Never
+        // confirm it just to make a read succeed, or repeat a pending bargain.
+        Require(S(frame["Scene"]).StartsWith("Map3009_", StringComparison.Ordinal) &&
+            DailyNavigationDecision.Types(frame).Contains("ShopUI") &&
+            N(R(e, "trade.shop_ui", ShopNpc)) == N(Merchant(e)[NpcPath]) &&
+            N(State(e, "trade.discount_popup", DailyFieldRoute.SkillPath)["classType"]) == 16,
+            "砍价预览与当前广场商人不一致，未操作。");
+        if (w.Business.Records(w.Context, "dispatch.start").Any(op => S(op["scope"]?["_proof"]?["kind"]) == "bargain" && DailyManagedBusiness.Pending(op) && DailyWorkflowRegistry.Owned(op, new(frame, w.Context))))
+            throw new StageHostException("pending", "上一笔砍价仍在确认，未重复使用天赋药。");
+        if (DailyNavigationDecision.Blockers(frame, "DiscountPopupUI", DailyNavigationPolicy.Load()).Length != 0)
+            throw new StageHostException("adapter", "砍价预览被其他窗口遮挡，请关闭额外窗口后继续跑商。");
+        await w.Step("DiscountPopupUI", "_objButtonCancel", absent: "DiscountPopupUI", reason: "关闭未提交的砍价预览，先按当前库存计算采购计划");
+        await PurchasePageReady();
+    }
+    internal Task PurchasePageReady() => w.Wait(f => DailyNavigationDecision.Rows(f.Frame).Any(r =>
+        S(r["Type"]) == "ShopUI" && DailyNavigationDecision.ReadyInput(r, false)) &&
+        DailyNavigationDecision.Blockers(f.Frame, "ShopUI", DailyNavigationPolicy.Load()).Length == 0,
+        20, "等待砍价窗口关闭并返回商店；已确认的砍价不会重复执行");
+    public async Task<JsonObject> Capture(string? output = null, bool recoverBargainPreview = false)
     {
         DailyTradeQuoteObservation? latest = null;
         var (state, proof) = await DailyTradeQuoteReadiness.ReadAsync(catalog, async () =>
         {
             var e = await Evidence();
+            if (recoverBargainPreview && DailyNavigationDecision.Types(e["Frame"]!.AsObject()).Contains("DiscountPopupUI"))
+            {
+                await PrepareQuotePage(e);
+                e = await Evidence();
+            }
             var observed = await w.Observe();
             var daily = JsonSerializer.SerializeToNode(observed.Daily ?? throw new InvalidDataException("缺少当前账号快照"), DailyJson.Options)!.AsObject();
             return latest = new(e, daily, w.Driver.UtcTicks);
-        }, () => w.Time, w.Delay, record => DailyJson.Write(Path.Combine(w.Root, "live", "trade-quote-reads", Guid.NewGuid().ToString("N") + ".json"), record));
+        }, () => w.Time, w.Delay, record => {
+            string id = Guid.NewGuid().ToString("N"), directory = Path.Combine(w.Root, "live", "trade-quote-reads");
+            // Keep a small exportable explanation even when the full inventory
+            // evidence exceeds the diagnostic archive's per-file size limit.
+            DailyJson.Write(Path.Combine(directory, id + ".summary.json"), DailyTradeQuoteReadiness.Summary(record));
+            DailyJson.Write(Path.Combine(directory, id + ".json"), record);
+        });
         if (output != null)
         {
             DailyJson.Write(output, state);
@@ -118,7 +154,7 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         Require(N(skill["classType"]) == 16 && skill["valueList"]!.AsArray().Take(2).Select(N).SequenceEqual(new long[] { 100, 60 }) && N(skill["catalystValue"]) == 10, "预览不是必定60%砍价");
         scope["_proof"] = O(("kind", "bargain"), ("delta", O(("potions", -10))));
         var op = await w.Transact("dispatch.start", scope, O(("ui", "DiscountPopupUI"), ("field", "_objButtonOk")), 40);
-        await Surface("ShopUI");
+        await PurchasePageReady();
         return op;
     }
     private async Task<JsonObject> PreviewCommit(string role, JsonObject scope, JsonObject preview, JsonObject confirm, double seconds = 40)
@@ -334,7 +370,7 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         JsonObject job;
         {
             string statePath = Path.Combine(directory, "planning-state.json");
-            var state = await Capture(statePath);
+            var state = await Capture(statePath, recoverBargainPreview: true);
             var supply = DailyTradeDropForecast.ForAccount(w, catalog, state);
             if (supply != null) state["future_supply"] = supply;
             DailyJson.Write(statePath, state);
@@ -349,7 +385,7 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
                 potionBudget < N(state["potions"]) + N(state["potion_buy_limit"]);
             await w.Observe();
             var e = await Evidence();
-            var verifiedState = await Capture();
+            var verifiedState = await Capture(recoverBargainPreview: true);
             Require(DailyTradeCatalog.Fingerprint(Stable(state)) == DailyTradeCatalog.Fingerprint(Stable(verifiedState)), "规划期间库存、供货或报价改变，请重新计算；未下单");
             job = O(("id", Guid.NewGuid().ToString("N")), ("state", "prepared"), ("account", account), ("context", state["context"]), ("catalog_hash", DailyTradeCatalog.Fingerprint(catalog)), ("npc", R(e, "trade.shop_ui", ShopNpc)), ("plan", plan), ("initial", DailyTradeResume.Wallet(e)), ("operations", new JsonArray()), ("phase", "purchase"), ("at", w.Driver.UtcTicks));
             DailyJson.Write(path, job);
@@ -399,7 +435,7 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
                 }
                 string splitPath = Path.Combine(directory, "purchases-" + S(job["id"]) + ".json");
                 if (!File.Exists(splitPath))
-                    DailyJson.Write(splitPath, DailyTradeProof.Split(planData, await Capture()));
+                    DailyJson.Write(splitPath, DailyTradeProof.Split(planData, await Capture(recoverBargainPreview: true)));
                 var split = DailyTradeCatalog.Read(splitPath);
                 var full = Rows(split["full"]);
                 if (full.Length > 0 && !Done("favorites"))

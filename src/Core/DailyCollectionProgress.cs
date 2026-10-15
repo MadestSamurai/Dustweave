@@ -4,6 +4,10 @@ namespace Dustweave;
 
 public sealed class DailyCollectionCatalog(DailyWorkflow workflow)
 {
+    public const int CoverageRevision = 2;
+    public static bool NeedsCoverageRecheck(JsonObject item) => S(item["task"]) == "weekly_mainline"
+        && S(item["state"]) == "completed" && S(item["result"]?["reason"]) == "weekly_route_verified"
+        && N(item["result"]?["collection_coverage"]) < CoverageRevision;
     private readonly Dictionary<long, JsonObject> cartridges = Rows(workflow.Asset("collection-catalog.json")["cartridges"]).ToDictionary(r => N(r["id"]));
     private readonly Dictionary<long, JsonObject> steals = Rows(workflow.Asset("steal-catalog.json")["packs"]).ToDictionary(r => N(r["id"]));
     public bool Supported(long pack) => pack is >= 1 and <= 19 || cartridges.ContainsKey(pack);

@@ -163,6 +163,8 @@ public sealed class DailyPreferences
             node["Schema"] = 18;
         }
         var value = node.Deserialize<DailyPreferences>(DailyJson.Options) ?? throw new InvalidDataException("日常设置不能为空。");
+        // Retain the legacy field for old profile compatibility only.
+        if (value.MonsterHunt != null) value.MonsterHunt.Enabled = false;
         value.Validate();
         return value;
     }

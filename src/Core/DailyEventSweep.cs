@@ -192,22 +192,7 @@ public static class DailyEventSweep
             await w.Step("BattleSkipPopupUI", "_buttonFreeOnly._objectRoot");
             await w.WaitEvidence(Prefixes, e => B(R(e, Popup, "_buttonFreeOnly.IsEnable")));
         }
-        if (budget != null)
-        {
-            int count = checked((int)Math.Min(budget.Value, free / N(target["cost"])));
-            await w.Step("BattleSkipPopupUI", "_sliderAutoCount._objMinusMaxButton");
-            await w.WaitEvidence(Prefixes, e => N(R(e, Popup, Count)) == 1);
-            for (int value = 2; value <= count; value++)
-            {
-                await w.Step("BattleSkipPopupUI", "_sliderAutoCount._objPlusButton");
-                await w.WaitEvidence(Prefixes, e => N(R(e, Popup, Count)) == value);
-            }
-        }
-        else
-        {
-            await w.Step("BattleSkipPopupUI", "_sliderAutoCount._objPlusMaxButton");
-            await w.WaitEvidence(Prefixes, e => N(R(e, Popup, Count)) == N(R(e, "event.currency", "EventApFree")) / N(target["cost"]));
-        }
+        await SelectCount(w, target, budget);
         var plan = PopupPlan(await w.Evidence(Prefixes), target);
         if (budget != null && S(target["policy"]) == PublicPolicy)
             Require(Remaining(w, N(target["event"])) == budget.Value, "Daily challenge budget changed");
@@ -216,4 +201,19 @@ public static class DailyEventSweep
         return O(("state", "completed"), ("operation", op["id"]), ("result", op["result"]));
     }
     public static Task<JsonObject> PublicRun(DailyWorkflow w) => DailyEventNative.Run(w);
+
+    public static async Task SelectCount(DailyWorkflow w, JsonObject target, int? budget)
+    {
+        var evidence = await w.Evidence(Prefixes);
+        int count = SweepCount(N(R(evidence, "event.currency", "EventApFree")), N(target["cost"]), budget);
+        Require(count > 0, "Free sweep attempts changed before selection");
+        await w.Step(O(("ui", "BattleSkipPopupUI"), ("operation", "event_sweep_count"),
+            ("items", new JsonArray(Copy(target["event"]), Copy(target["group"]), Copy(target["stage"]), Copy(target["deck"]))), ("value", count)));
+        await w.WaitEvidence(Prefixes, e => N(R(e, Popup, Count)) == count);
+    }
+    public static int SweepCount(long free, long cost, int? budget)
+    {
+        Require(free >= 0 && cost > 0 && (budget == null || budget is > 0 and <= 5), "Invalid free sweep budget");
+        return checked((int)Math.Min(free / cost, budget ?? int.MaxValue));
+    }
 }

@@ -13,7 +13,7 @@ public sealed class DailyTaskPresetStore(string root)
             ?? throw new InvalidDataException("presets.invalid") : new(1, [], new());
         if (value.Schema != 1 || value.Presets == null || value.Accounts == null || value.Presets.Length > 100 ||
             value.Presets.Any(p => p == null || !Guid.TryParseExact(p.Id, "N", out _) || string.IsNullOrWhiteSpace(p.Name) || p.Name.Length > 60 ||
-                p.Tasks == null || p.Tasks.Length == 0 || p.Tasks.Distinct().Count() != p.Tasks.Length || p.Tasks.Any(t => !DailyStageCatalog.All.Any(s => s.Id == t))) ||
+                p.Tasks == null || p.Tasks.Length == 0 || p.Tasks.Distinct().Count() != p.Tasks.Length || p.Tasks.Any(t => !DailyStageCatalog.All.Any(s => s.Id == t) && !DailyStageCatalog.IsRetired(t))) ||
             value.Presets.Select(p => p.Id).Distinct().Count() != value.Presets.Length ||
             value.Accounts.Any(p => !DailyProfiles.ValidKey(p.Key) || !value.Presets.Any(v => v.Id == p.Value)))
             throw new InvalidDataException("presets.invalid");
@@ -58,7 +58,7 @@ public sealed class DailyTaskPresetStore(string root)
     }
 }
 
-public sealed record DailyDesktopBehavior(string CloseAction = "ask", bool RunOnOpen = false)
+public sealed record DailyDesktopBehavior(string CloseAction = "ask", bool RunOnOpen = false, bool CloseGameAfterRun = false)
 {
     public static DailyDesktopBehavior Read(string root)
     {

@@ -14,6 +14,10 @@ public partial class MainWindow
         try
         {
             WorkspaceTabs.SelectedItem=SoftwareSettingsTab;
+            CloseGameAfterRun.IsChecked=true;CloseGameAfterRun_Click(this,new RoutedEventArgs());
+            if(!DailyDesktopBehavior.Read(root).CloseGameAfterRun || DailyDesktopBehavior.Read(root).RunOnOpen!=original.RunOnOpen)throw new Exception("Completion setting was not saved independently");
+            CloseGameAfterRun.IsChecked=false;CloseGameAfterRun_Click(this,new RoutedEventArgs());
+            if(DailyDesktopBehavior.Read(root).CloseGameAfterRun)throw new Exception("Completion setting cannot be disabled");
             if(windowsStartup.Enabled || StartWithWindows.IsChecked==true)throw new Exception("Windows startup default is not off");
             StartWithWindows.IsChecked=true;StartWithWindows_Click(this,new RoutedEventArgs());
             if(!windowsStartup.Enabled || DailyDesktopBehavior.Read(root).RunOnOpen!=original.RunOnOpen)throw new Exception("Windows startup changes daily queue behavior");
@@ -22,7 +26,7 @@ public partial class MainWindow
             foreach(var spec in new[]{(1,"tray"),(2,"exit"),(0,"ask")})
             {CloseActionChoice.SelectedIndex=spec.Item1;if(DailyDesktopBehavior.Read(root).CloseAction!=spec.Item2)throw new Exception("Close behavior did not persist immediately");}
             SetBusy(true);
-            if(StartWithWindows.IsEnabled || CloseActionChoice.IsEnabled || ConnectionGuideButton.IsEnabled || softwareGamePath.CanChoose)throw new Exception("Shared preferences editable while queue busy");
+            if(StartWithWindows.IsEnabled || CloseActionChoice.IsEnabled || CloseGameAfterRun.IsEnabled || ConnectionGuideButton.IsEnabled || softwareGamePath.CanChoose)throw new Exception("Shared preferences editable while queue busy");
             SetBusy(false);
             // A corrupt preference must not prevent startup or make the Close button unusable.
             string behaviorPath = Path.Combine(root, "desktop-behavior.json");
@@ -59,6 +63,6 @@ public partial class MainWindow
             if(calls!=demo.Calls.Count)throw new Exception("Settings review sent a game command");
             DailyJson.Write(Path.Combine(smoke,"software-settings.json"),new{status="passed",fakeStartupRegistry=true,closeActions=3,languages=3,themes=2,realGameTouched=false});
         }
-        finally {original.Save(root);RefreshCloseAction();preferencesPanel.ReviewCategoryForSmoke("daily");LanguageSelector.SelectedIndex=language;ThemeSelector.SelectedIndex=appearance;Width=1180;Height=900;ActionNotice.Visibility=Visibility.Collapsed;}
+        finally {original.Save(root);CloseGameAfterRun.IsChecked=original.CloseGameAfterRun;RefreshCloseAction();preferencesPanel.ReviewCategoryForSmoke("daily");LanguageSelector.SelectedIndex=language;ThemeSelector.SelectedIndex=appearance;Width=1180;Height=900;ActionNotice.Visibility=Visibility.Collapsed;}
     }
 }

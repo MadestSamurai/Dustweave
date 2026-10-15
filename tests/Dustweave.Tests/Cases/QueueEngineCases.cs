@@ -21,6 +21,17 @@ static class QueueEngineCases
         var root = Root();
         var host = new FakeHost();
         {
+            var retiredHost = new FakeHost();
+            var legacy = new DailyPreferences(); legacy.MonsterHunt.Enabled = true;
+            string retiredRoot = Root(), retiredId = Guid.NewGuid().ToString("N");
+            DailyJson.Write(DailyQueueEngine.RecordPath(retiredRoot, retiredId), Old(retiredId, retiredHost.Context, "monster_hunt", "mail"));
+            var retired = await Run(retiredHost, retiredRoot, resume: retiredId, prefs: legacy);
+            Check(Stage(retired, "monster_hunt") == "skipped" && retiredHost.Executed.SequenceEqual(["mail"]) && State(retired) == "completed",
+                "legacy queues skip removed Fiend Hunt even when old preferences enabled it, and continue remaining tasks");
+            Check(retired["items"]!.AsArray().Single(i => i!["task"]!.GetValue<string>() == "monster_hunt")!["result"]!["reason"]!.GetValue<string>() == "feature_removed",
+                "retired queue rows explain removal instead of reporting a missing adapter");
+        }
+        {
             var refillHost = new FakeHost { Refill = true };
             string refillRoot = Root();
             var refilled = await Run(refillHost, refillRoot, ["mail"]);

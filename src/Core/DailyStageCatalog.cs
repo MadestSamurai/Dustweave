@@ -20,19 +20,20 @@ public static class DailyStageCatalog
         new("weekly_book","周常末日之书",p=>p.Weekly.Book),new("friendship","亲密度咨询",p=>p.Friendship.Enabled),
         new("tactics","战术教材",p=>DailyPlugin.Current.Supports("tactics")&&p.Tactics.Enabled),new("event_battle","活动战斗",p=>p.EventBattle.Enabled),
         new("salvation","救赎之塔扫荡",p=>p.Salvation.Enabled),
-        new("monster_hunt","魔兽最高档快速战斗",p=>p.MonsterHunt.Enabled),
         new("weekly_room_likes","周常小屋点赞",p=>p.Weekly.RoomLikes),new("weekly_fishing","周常钓鱼",p=>p.Weekly.Fishing),new("weekly_sichuan","周常连连看",p=>p.Weekly.Sichuan),
         new("trade","跑商／料理／高价售卖",p=>p.Trade.Enabled),new("event_rewards","活动任务／转盘／代币兑换",p=>p.Events.Enabled),
         new("rewards","日常／周常／通行证奖励",p=>p.Stages.DailyRewards||p.Stages.WeeklyRewards||p.Tasks.Pass),
         new("mail","邮箱收尾",p=>p.Stages.Mail)
     ];
     // Preserve aliases used by existing schema-1 queues and explicit diagnostic commands.
-    public static readonly string[] CompatibilityAdapters = ["cafeteria_income", "cafeteria_guests", "equipment_recycle", "equipment_refine", "daily_hunt", "stones", "goddess", "square_ranking", "daily_rewards", "weekly_rewards", "pass_rewards", "mission_rewards", "daily_hunt_minimal", "life_helpers", "collection_sync"];
+    public static readonly string[] CompatibilityAdapters = ["monster_hunt", "cafeteria_income", "cafeteria_guests", "equipment_recycle", "equipment_refine", "daily_hunt", "stones", "goddess", "square_ranking", "daily_rewards", "weekly_rewards", "pass_rewards", "mission_rewards", "daily_hunt_minimal", "life_helpers", "collection_sync"];
+    public static bool IsRetired(string id) => id == "monster_hunt";
     public static IEnumerable<string> Adapters => All.Select(s => s.Id).Concat(CompatibilityAdapters).Distinct(StringComparer.Ordinal);
     public static IEnumerable<DailyStageDefinition> Selectable => All.Where(s => s.Id != "tactics" || DailyPlugin.Current.Supports(s.Id));
     public static bool IsWeeklyRoute(string id) => id is "weekly_mainline" or "weekly_npc" or "weekly_steal";
     public static string Name(string id) => id == DailyTalentPotions.Stage ? "天赋药补给与限制" : Selectable.FirstOrDefault(s => s.Id == id)?.Name ?? id switch
     {
+        "monster_hunt" => "魔兽快速战斗（已移除）",
         "collection_sync" => "手动检查收集进度", "life_helpers" => "经营收益领取",
         "cafeteria_income" => "餐厅收益", "cafeteria_guests" => "餐厅顾客奖励",
         "equipment_recycle" => "装备分解", "equipment_refine" => "装备精炼",
@@ -44,6 +45,7 @@ public static class DailyStageCatalog
     };
     public static bool Enabled(string id, DailyPreferences p) => All.FirstOrDefault(s => s.Id == id)?.Enabled(p) ?? (id switch
     {
+        "monster_hunt" => false,
         "collection_sync" or "life_helpers" or "daily_hunt_minimal" => true,
         "cafeteria_income" => p.Stages.CafeteriaIncome,
         "cafeteria_guests" => p.Stages.CafeteriaGuests,

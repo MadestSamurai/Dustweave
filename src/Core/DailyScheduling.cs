@@ -12,7 +12,7 @@ public sealed record DailySchedulePlan
     [System.Text.Json.Serialization.JsonIgnore]
     public bool IsDaily => Days is { Length: 7 } && Days.Order().SequenceEqual(Enumerable.Range(0, 7));
     public string[] Accounts { get; init; } = [];
-    public DailyParallelOptions Execution { get; init; } = new();
+    public DailyParallelOptions Execution { get; init; } = new(CloseGame: false);
     public bool TakeOverTools { get; init; }
     public DateTimeOffset SavedUtc { get; init; }
     public void Validate()

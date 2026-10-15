@@ -31,7 +31,7 @@ namespace BD2Daily.Live {
     var row=lobby.GetComponentsInChildren<EventBattleStageScrollItem>(false).Single(x=>x.ὯὫὪὡὭὤὪὮὫὬὣ==id);
     lobby.SetSelectItem(row,true);return;
    }
-   if(c.Kind=="event_sweep_confirm"){
+   if(c.Kind=="event_sweep_confirm"||c.Kind=="event_sweep_count"){
     var popup=(BattleSkipPopupUI)surface;
     var lobby=Bridge.Find(typeof(EventBattleUI)).Cast<EventBattleUI>().Single();
     Require(lobby.ὤὮὯὫὪὡὤὡὫὬὪ==c.Items[0]&&lobby.ὢὣὤὬὮὩὡὬὥὫὩ==c.Items[1]&&lobby.ὪὣὨὣὭὤὥὮὡὬὦ==c.Items[2],"Event sweep scope changed");
@@ -43,8 +43,15 @@ namespace BD2Daily.Live {
     Require((int)get("ὠὬὦὫὩὨὣὫὤὢὨ")==c.Items[1]&&(int)get("ὦὠὠὧὩὩὮὥὫὧὡ")==id&&(int)get("ὪὪὥὧὡὪὥὡὡὣὡ")==c.Items[3]&&t.BattleDeckId==c.Items[3],"Sweep popup stage changed");
     var free=typeof(QuickBattleUI).GetField("_buttonFreeOnly",BindingFlags.Instance|BindingFlags.NonPublic|BindingFlags.Public).GetValue(popup);
     Require((bool)free.GetType().GetProperty("IsEnable").GetValue(free,null),"Free AP only required");
-    Require((int)get("ὭὮὭὢὮὫὬὦὣὣὧ")==c.Value&&t.EventApCount>0&&(int)get("ὩὤὦὯὯὨὫὧὥὡὯ")==t.EventApCount&&c.Value<=ὣὡὧὡὦὣὣὬὨὪὫ.ὬὯὧὣὪὢὡὬὬὯὦ.EventApFree/t.EventApCount,"Sweep count exceeds free AP");
+    Require(c.Value>0&&t.EventApCount>0&&(int)get("ὩὤὦὯὯὨὫὧὥὡὯ")==t.EventApCount&&c.Value<=ὣὡὧὡὦὣὣὬὨὪὫ.ὬὯὧὣὪὢὡὬὬὯὦ.EventApFree/t.EventApCount,"Sweep count exceeds free AP");
     Require(!(bool)get("ὧὧὦὨὠὥὬὦὢὪὦ"),"Sweep popup is busy");
+    if(c.Kind=="event_sweep_count"){
+     // Use the game's slider notification, not a private count field or repeated clicks.
+     var slider=(SliderSelectCount)typeof(QuickBattleUI).GetField("_sliderAutoCount",BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic).GetValue(popup);
+     slider.SetCountByMinMax(c.Value);
+     Require(slider.ὮὢὥὯὥὧὤὭὨὨὪ==c.Value&&(int)get("ὭὮὭὢὮὫὬὦὣὣὧ")==c.Value,"Sweep count was clamped or not applied");return;
+    }
+    Require((int)get("ὭὮὭὢὮὫὬὦὣὣὧ")==c.Value,"Sweep count changed");
     var button=(GameObject)get("_buttonBattle");Require(button.activeInHierarchy,"Sweep confirmation hidden");popup.OnClickUI(button);return;
    }
    throw new InvalidOperationException("Unknown sweep operation");

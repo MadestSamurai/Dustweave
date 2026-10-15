@@ -89,7 +89,8 @@ public sealed class DailyWorkflowRegistry
         void Add(string name, Func<DailyWorkflow, Task<JsonObject>> run, Func<DailyStageFrame, bool>? resume = null) => map.Add(name, new DailyWorkflowStage(Create, run, resume));
         foreach (string name in new[] { "hunting", "daily_hunt", "stones", "daily_hunt_minimal" })
             Add(name, w => DailyHunting.Run(w, name));
-        Add("monster_hunt", DailyMonsterHunt.Run);
+        // Old queues remain readable, but retired work can never issue gameplay.
+        Add("monster_hunt", _ => Task.FromResult(DailyWorkflow.Skipped("feature_removed")));
         Add("mirror", DailyMirror.Run, MirrorOwner);
         Add("daily_dispatch", DailyDispatch.Run);
         foreach (string name in new[] { "square", "goddess", "square_ranking" })

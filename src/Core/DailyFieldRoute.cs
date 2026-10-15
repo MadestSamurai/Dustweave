@@ -62,7 +62,12 @@ public sealed partial class DailyFieldRoute
         var eligible = Talents(e).Where(r => N(r["Group"]) / 100 == kind && S(r["Reason"]) == "").ToArray();
         return eligible.Length > 0 && eligible.All(r => DailyRegionRouter.D(r["Cooldown"]) > 0);
     }
-    public static bool NeedsStealth(JsonObject e) => N(Map(e)["packId"]) is 14 or 1003;
+    public static bool RequiresStealth(JsonObject e) => N(Map(e)["packId"]) is 14 or 1003;
+    // Nightmare Winter's native map type distinguishes patrol areas from the
+    // safe hub/interiors. Do not infer danger from cartridge or map number alone.
+    public static bool PrefersStealth(JsonObject e) => N(Map(e)["packId"]) == 2002 && N(Map(e)["mapType"]) == 1;
+    public static bool NeedsStealth(JsonObject e) => RequiresStealth(e) || PrefersStealth(e) && Remaining(e, 17) > 0;
+    private long unavailableStealthMap;
     internal static bool FieldInputReady(JsonObject frame) => DailyNavigationDecision.MapSceneReady(frame)
         && DailyNavigationDecision.Rows(frame).Any(r => S(r["Type"]) == "GameFieldDefaultUI" && DailyNavigationDecision.ReadyInput(r))
         && DailyNavigationDecision.Types(frame).All(t => t == "GameFieldDefaultUI" || DailyNavigationDecision.PassiveSurface(t));
@@ -341,7 +346,7 @@ public sealed partial class DailyFieldRoute
         Require(replies.Count > 0, "缺少拾取回执");
         return O(("target", target), ("rewards", Array(replies)));
     }
-    public async Task<JsonObject> Skill(int kind, double minRemaining = 3, int attempts = 0)
+    public async Task<JsonObject> Skill(int kind, double minRemaining = 3, int attempts = 0, bool optional = false)
     {
         Require(!(Progress.OnlySteal && kind is 3 or 4 or 6 or 20), "单独偷窃不允许使用收集天赋");
         Require(attempts < 3, "遇敌使天赋菜单反复失效");
@@ -370,7 +375,7 @@ public sealed partial class DailyFieldRoute
         {
             opened = (await W.Step("GameFieldDefaultUI", operation: "mainline_menu", value: kind, expect: "QuickMenuUI"))["after"]!.AsObject();
         }
-        catch (Exception ex) when (ex is DailyStepException or StageHostException) { if (!await Encounter((await W.Observe()).Frame)) throw; return await Skill(kind, minRemaining, attempts + 1); }
+        catch (Exception ex) when (ex is DailyStepException or StageHostException) { if (!await Encounter((await W.Observe()).Frame)) throw; return await Skill(kind, minRemaining, attempts + 1, optional); }
         if (kind == 6 && remaining > 0)
         {
             double end = W.Time + remaining + 2;
@@ -397,7 +402,8 @@ public sealed partial class DailyFieldRoute
         }
         var menu = DailyNavigationDecision.Rows(opened).Single(r => S(r["Type"]) == "QuickMenuUI");
         JsonObject[] candidates = [];
-        e = await W.WaitEvidence(["mainline", "dispatch.talent"], state => { if (N(state["Frame"]!["Sequence"]) < N(opened["Sequence"]) || !DailyNavigationDecision.Rows(state["Frame"]!.AsObject()).Any(r => S(r["Type"]) == "QuickMenuUI" && JsonNode.DeepEquals(r["Id"], menu["Id"]) && DailyNavigationDecision.ReadyInput(r))) return false; candidates = Rows(state["Readings"]).Where(r => S(r["Id"]) == "dispatch.talent" && S(r["Error"]) == "").Select(r => { var v = DailyEvidence.Values(r); v["instance"] = Copy(r["InstanceId"]); return v; }).Where(r => S(r["ὬὩὬὡὯὮὨὣὩὦὡ"]) == Kinds[kind]).ToArray(); return candidates.Length > 0; }, 4, "原生天赋列表尚未就绪");
+        double menuStarted = W.Time;
+        e = await W.WaitEvidence(["mainline", "dispatch.talent"], state => { if (N(state["Frame"]!["Sequence"]) < N(opened["Sequence"]) || !DailyNavigationDecision.Rows(state["Frame"]!.AsObject()).Any(r => S(r["Type"]) == "QuickMenuUI" && JsonNode.DeepEquals(r["Id"], menu["Id"]) && DailyNavigationDecision.ReadyInput(r))) return false; candidates = Rows(state["Readings"]).Where(r => S(r["Id"]) == "dispatch.talent" && S(r["Error"]) == "").Select(r => { var v = DailyEvidence.Values(r); v["instance"] = Copy(r["InstanceId"]); return v; }).Where(r => S(r["ὬὩὬὡὯὮὨὣὩὦὡ"]) == Kinds[kind]).ToArray(); return candidates.Length > 0 || optional && W.Time - menuStarted >= 3; }, 4, "原生天赋列表尚未就绪");
         var status = Talents(e).ToDictionary(r => N(r["Instance"]));
         var used = Counts(e).ToDictionary(r => N(r["groupId"]), r => N(r["useCount"]));
         var selected = candidates.Where(r => status.TryGetValue(N(r["instance"]), out var st) && S(st["Reason"]) == "" && DailyRegionRouter.D(st["Cooldown"]) <= 0 && !B(r["_objDisableImage.activeSelf"]) && (!(kind is 3 or 4 or 20) || used.GetValueOrDefault(N(r[SkillPath]!["groupId"])) < N(r[SkillPath]!["valueList"]![0]))).OrderByDescending(r => kind is 2 or 17 ? DailyRegionRouter.D(r[SkillPath]!["valueList"]![1]) : 0).ThenByDescending(r => N(r[SkillPath]!["id"])).ThenBy(r => N(r[SkillPath]!["catalystValue"])).FirstOrDefault();
@@ -405,7 +411,7 @@ public sealed partial class DailyFieldRoute
         {
             var shortage = candidates.Where(r => status.TryGetValue(N(r["instance"]), out var st) && S(st["Reason"]) == "catalyst_insufficient")
                 .OrderBy(r => N(r[SkillPath]?["catalystValue"])).FirstOrDefault();
-            if (shortage != null) await W.Driver.RequirePotionsAsync(N(shortage[SkillPath]?["catalystValue"]));
+            if (shortage != null && !optional) await W.Driver.RequirePotionsAsync(N(shortage[SkillPath]?["catalystValue"]));
             await W.Step("QuickMenuUI", back: true, absent: "QuickMenuUI");
             return DailyWorkflow.Skipped("native_disabled");
         }
@@ -418,7 +424,12 @@ public sealed partial class DailyFieldRoute
                 return DailyWorkflow.Skipped("native_research_active");
             }
         }
-        await W.Driver.RequirePotionsAsync(N(selected[SkillPath]?["catalystValue"]));
+        try { await W.Driver.RequirePotionsAsync(N(selected[SkillPath]?["catalystValue"])); }
+        catch (DailyStepException error) when (optional && error.PotionLimit != null)
+        {
+            await W.Step("QuickMenuUI", back: true, absent: "QuickMenuUI");
+            return DailyWorkflow.Skipped("native_disabled");
+        }
         if (kind == 15)
         {
             await W.Step("QuickMenuUI", operation: "mainline_talent", value: I(selected["instance"]), expect: "WayPointUI");
@@ -452,9 +463,18 @@ public sealed partial class DailyFieldRoute
     }
     public async Task Protection(JsonObject e)
     {
-        if (NeedsStealth(e) && Remaining(e, 17) <= 5)
+        bool required = RequiresStealth(e), preferred = PrefersStealth(e);
+        long map = N(Map(e)["id"]);
+        if (map != unavailableStealthMap) unavailableStealthMap = 0;
+        if ((required || preferred && unavailableStealthMap == 0) && Remaining(e, 17) <= 5)
         {
-            await Skill(17, 5);
+            var result = await Skill(17, 5, optional: !required);
+            if (!required && S(result["reason"]) == "native_disabled")
+            {
+                unavailableStealthMap = map;
+                W.Driver.Diagnostics.Event("optional_field_stealth_unavailable", O(("pack", Map(e)["packId"]), ("map", map)));
+                return;
+            }
             Require(Remaining(await Evidence(), 17) > 5, "巡逻路线藏身不足，已停止移动");
         }
     }

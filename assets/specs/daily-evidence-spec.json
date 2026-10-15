@@ -180,6 +180,7 @@
     }
   ],
   "Reads": [
+    {"Id":"salvation.pack","Type":"PackListLoopScrollItem","Paths":["gameObject.name","ὦὡὪὦὥὫὦὡὬὠὢ.Id"]},
     {"Id":"salvation.native","Type":"RogueLikeLobbyUI","Paths":["$self"]},
     {"Id":"event.native","Type":"EventBattleUI","Paths":["$self"]},
     {

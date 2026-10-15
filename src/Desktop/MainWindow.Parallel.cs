@@ -63,7 +63,7 @@ public partial class MainWindow
         if (finalClose || Unavailable) return false;
         parallelPanel.Feedback("");
         parallelControl=DailyToolControl.Acquire(root);
-        try { await parallel.StartAsync(targets,execution ?? parallelOptions,new DailyPreferenceStore(root).Read, new DailyTaskPresetStore(root).Selection); }
+        try { await parallel.StartAsync(targets,execution ?? parallelOptions with { CloseGame = DailyDesktopBehavior.Read(root).CloseGameAfterRun },new DailyPreferenceStore(root).Read, new DailyTaskPresetStore(root).Selection); }
         catch { parallelControl.Dispose();parallelControl=null;throw; }
         RunTab.Content=parallelPanel;WorkspaceTabs.SelectedItem=RunTab;parallelPanel.Show(parallel.Current);SetBusy(busy);await PollParallelAsync();
         return true;
@@ -82,16 +82,15 @@ public partial class MainWindow
         var row=new WrapPanel { Margin=new(0,0,0,14) };
         var label=new TextBlock { VerticalAlignment=VerticalAlignment.Center,Margin=new(0,0,12,0) };L.Text(label,"parallel.maximum");row.Children.Add(label);
         var maximum=new ComboBox { Width=90,ItemsSource=new[]{1,2,3,4},SelectedItem=parallelOptions.Maximum };row.Children.Add(maximum);body.Children.Add(row);
-        var close=new CheckBox { IsChecked=parallelOptions.CloseGame,Margin=new(0,0,0,14) };L.Bind(close,ContentControl.ContentProperty,"parallel.close_game");body.Children.Add(close);
         var help=new TextBlock { TextWrapping=TextWrapping.Wrap,Margin=new(0,0,0,16) };L.Text(help,"parallel.setup_help");body.Children.Add(help);
         var setup=new Button { HorizontalAlignment=HorizontalAlignment.Left,Margin=new(0,0,0,16) };
         L.Bind(setup,ContentControl.ContentProperty,"sandbox_setup.help");body.Children.Add(setup);
-        void EnableOptions(){maximum.IsEnabled=close.IsEnabled=enabled.IsChecked==true;}
+        void EnableOptions(){maximum.IsEnabled=enabled.IsChecked==true;}
         enabled.Checked+=(_,_)=>EnableOptions();enabled.Unchecked+=(_,_)=>EnableOptions();EnableOptions();
         var save=new Button { HorizontalAlignment=HorizontalAlignment.Right,Style=(Style)FindResource("PrimaryButton") };L.Bind(save,ContentControl.ContentProperty,"parallel.save");body.Children.Add(save);
         var window=new Window { Owner=this,Width=520,SizeToContent=SizeToContent.Height,ResizeMode=ResizeMode.NoResize,Content=body,WindowStartupLocation=WindowStartupLocation.CenterOwner };L.Bind(window,TitleProperty,"parallel.settings");
         setup.Click+=(_,_)=>softwareSandboxPath.OpenEditor(window);
-        save.Click+=(_,_)=>{var options=new DailyParallelOptions(enabled.IsChecked==true,(int)(maximum.SelectedItem??2),close.IsChecked==true);options.Validate();DailyJson.Write(Path.Combine(root,"parallel-options.json"),options);parallelOptions=options;RefreshParallelMode();window.DialogResult=true;};
+        save.Click+=(_,_)=>{var options=parallelOptions with { Enabled=enabled.IsChecked==true,Maximum=(int)(maximum.SelectedItem??2) };options.Validate();DailyJson.Write(Path.Combine(root,"parallel-options.json"),options);parallelOptions=options;RefreshParallelMode();window.DialogResult=true;};
         DailyDialogs.ShowModal(window);
     }
 }

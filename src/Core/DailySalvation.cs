@@ -48,12 +48,11 @@ public static class DailySalvation
         {
             if (!await w.Has("EvilCastleEnterUI"))
             {
-                if (!await DailyTravel.Reuse(w, packId: 3003, surfaces: ["GameFieldDefaultUI", "EvilCastleEnterUI", "RogueLikeLobbyUI"]))
-                {
-                    await w.Home(Stage);
-                    await w.Step("MenuUI", operation: "salvation_open");
-                    await DailyTravel.Reuse(w, packId: 3003, surfaces: ["GameFieldDefaultUI", "EvilCastleEnterUI", "RogueLikeLobbyUI"], waitForTarget: true);
-                }
+                // Opening the real list resets the native selection latch in
+                // PackListLoopScrollItem.OnEnable. Direct selection from MenuUI
+                // can otherwise be silently ignored after an earlier pack switch.
+                if (!await DailyTravel.Enter(w, 1, "salvation.pack", packId: 3003, surfaces: ["GameFieldDefaultUI", "EvilCastleEnterUI", "RogueLikeLobbyUI"]))
+                    return Skipped("salvation_locked");
                 if (!await w.Has("EvilCastleEnterUI") && !await w.Has("RogueLikeLobbyUI"))
                 {
                     await w.Step("GameFieldDefaultUI", operation: "salvation_walk", value: 1, reason: "走入恶魔城入口");

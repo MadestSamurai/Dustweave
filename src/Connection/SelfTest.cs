@@ -183,6 +183,16 @@ static class SelfTest {
    f.Surfaces=[f.Surfaces[0],new(){Id=45,Type="BattleResultUI"}];Check(LivePolicy.Gate(c,f,now,false)=="event_popup_blocked","event cannot dispatch behind result");
   }
   {
+    var f=Frame();var c=Command();f.PluginAvailable=false;f.BridgeVersion=120;f.Surfaces[0].Type="BattleSkipPopupUI";
+    c.Kind="event_sweep_count";c.Items=[1,2,3,4];c.TargetId=0;c.Value=5;
+    Check(LivePolicy.Gate(c,f,now,false)=="","free sweep batch count needs no plugin");
+    c.Value=6;Check(LivePolicy.Gate(c,f,now,false)=="event_sweep_rejected","native sweep selection respects daily cap");
+    c.Value=0;Check(LivePolicy.Gate(c,f,now,false)=="event_sweep_rejected","empty sweep selection rejected");
+    c.Value=5;f.BridgeVersion=119;Check(LivePolicy.Gate(c,f,now,false)=="event_sweep_rejected","batch selection requires new bridge");
+    f.BridgeVersion=120;f.Surfaces=[f.Surfaces[0],new(){Id=44,Type="MessagePopupUI",Popup=true}];
+    Check(LivePolicy.Gate(c,f,now,false)=="event_popup_blocked","batch selection blocked by unrelated popup");
+   }
+   {
     var f=Frame();f.Surfaces[0].Type="EventBattleUI";var c=Command();c.Kind="event_sweep_select";c.TargetId=0;c.Items=[1,2,3];c.Value=0;
     Check(LivePolicy.Gate(c,f,now,false)=="","sweep focus accepted");
     c.Value=1;Check(LivePolicy.Gate(c,f,now,false)=="","sweep selection accepted");
@@ -351,6 +361,11 @@ static class SelfTest {
    f.BridgeVersion=84;
    foreach(var chapter in new[]{20,1008,1009,1010}){c.Value=chapter;Check(LivePolicy.Gate(c,f,now,false)=="","new story IDs pass to native ownership/type verification");}
    foreach(var chapter in new[]{0,2009,3001,20000}){c.Value=chapter;Check(LivePolicy.Gate(c,f,now,false)!="","unrelated cartridge ranges remain blocked");}
+   f.BridgeVersion=121;
+   foreach(var chapter in new[]{2001,2002,2003,2004,2005,2007}){c.Value=chapter;Check(LivePolicy.Gate(c,f,now,false)=="","collection event scope reaches native ownership guard");}
+   c.Value=2006;Check(LivePolicy.Gate(c,f,now,false)!="","unconfirmed event six remains outside collection scope");
+   f.BridgeVersion=120;
+   foreach(var chapter in new[]{2003,2004}){c.Value=chapter;Check(LivePolicy.Gate(c,f,now,false)!="","expanded event scope requires updated native component");}
    f.BridgeVersion=26;
    c.Kind="mainline_menu";f.Surfaces[0].Type="GameFieldDefaultUI";
    foreach(var talent in new[]{2,3,4,6,15,17,20}){c.Value=talent;Check(LivePolicy.Gate(c,f,now,false)=="","mainline gathering talents");}

@@ -224,7 +224,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                 if (!DailyStageCatalog.Enabled(stage, preferences()))
                 {
                     item["state"] = "skipped";
-                    item["result"] = new JsonObject { ["state"] = "skipped", ["reason"] = "disabled" };
+                    item["result"] = new JsonObject { ["state"] = "skipped", ["reason"] = DailyStageCatalog.IsRetired(stage) ? "feature_removed" : "disabled" };
                     item["finished"] = DateTime.UtcNow.Ticks;
                     Save();
                     continue;

@@ -1,4 +1,13 @@
 {
+  "message.砍价预览与当前广场商人不一致，未操作。": {"zh-CN":"砍价预览与当前广场商人不一致，未操作。","zh-TW":"砍價預覽與目前廣場商人不一致，未操作。","en-US":"The bargain preview does not match the current plaza merchant. No action was taken."},
+  "message.上一笔砍价仍在确认，未重复使用天赋药。": {"zh-CN":"上一笔砍价仍在确认，未重复使用天赋药。","zh-TW":"上一筆砍價仍在確認，未重複使用天賦藥。","en-US":"The previous bargain is still being confirmed. No additional Ability Pills were used."},
+  "message.砍价预览被其他窗口遮挡，请关闭额外窗口后继续跑商。": {"zh-CN":"砍价预览被其他窗口遮挡，请关闭额外窗口后继续跑商。","zh-TW":"砍價預覽被其他視窗遮擋，請關閉額外視窗後繼續跑商。","en-US":"Another window is covering the bargain preview. Close it to continue trading."},
+  "message.关闭未提交的砍价预览，先按当前库存计算采购计划": {"zh-CN":"关闭未提交的砍价预览，先按当前库存计算采购计划","zh-TW":"關閉未提交的砍價預覽，先按目前庫存計算採購計畫","en-US":"Closing the unsubmitted bargain preview to plan purchases from current stock"},
+  "message.等待砍价窗口关闭并返回商店；已确认的砍价不会重复执行": {"zh-CN":"等待砍价窗口关闭并返回商店；已确认的砍价不会重复执行","zh-TW":"等待砍價視窗關閉並返回商店；已確認的砍價不會重複執行","en-US":"Waiting for the bargain window to close. Confirmed bargains will not be repeated."},
+  "message.feature_removed": {"zh-CN":"此环节已移除，继续执行其他日常。","zh-TW":"此環節已移除，繼續執行其他日常。","en-US":"This task has been removed. Continue with the remaining daily tasks."},
+  "message.商店已关闭，请打开广场商店购买页后重新读取。": {"zh-CN":"商店已关闭，请打开广场商店购买页后重新读取。","zh-TW":"商店已關閉，請打開廣場商店購買頁後重新讀取。","en-US":"The shop is closed. Open the plaza shop purchase page and read again."},
+  "message.砍价预览尚未关闭，请先取消预览后重新读取；本次未购买或使用天赋药。": {"zh-CN":"砍价预览尚未关闭，请先取消预览后重新读取；本次未购买或使用天赋药。","zh-TW":"砍價預覽尚未關閉，請先取消預覽後重新讀取；本次未購買或使用天賦藥。","en-US":"Cancel the bargain preview and read again. No purchases or Ability Pills were used."},
+  "message.商店被其他窗口或战斗遮挡，请返回商店购买页后继续跑商。": {"zh-CN":"商店被其他窗口或战斗遮挡，请返回商店购买页后继续跑商。","zh-TW":"商店被其他視窗或戰鬥遮擋，請返回商店購買頁後繼續跑商。","en-US":"Another window or battle is covering the shop. Return to its purchase page to continue trading."},
   "message.field_retreat_0": {
     "zh-CN": "野外战斗账号或连接已经改变",
     "zh-TW": "野外戰鬥帳號或連線已改變",

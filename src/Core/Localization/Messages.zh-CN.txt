@@ -891,3 +891,5 @@ Tower is not idle=救赎之塔仍有挑战或弹窗，未开始扫荡。
 Event battle is still active=活动战斗仍在进行，请等待结算后接续。
 Event AP data unavailable=活动免费次数数据尚未就绪，请重新进入活动大厅。
 Native battle recovery account changed=当前账号与未完成战斗不一致，未接续旧操作；请检查所选账号。
+
+feature_removed=此环节已移除，继续执行其他日常。

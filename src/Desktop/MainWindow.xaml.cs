@@ -649,9 +649,22 @@ public partial class MainWindow : Window
                     return;
                 var current = sessions.Read().CurrentKey;
                 if (current != targetKey) throw new InvalidOperationException("run.account_unavailable");
-                await dailyQueue.RunAsync(current, resume, syncCollection, retry, selection);
+                await RunDailyQueueAsync(current, !syncCollection && DailyDesktopBehavior.Read(root).CloseGameAfterRun,
+                    () => dailyQueue.RunAsync(current, resume, syncCollection, retry, selection));
 
         }, connectsGame: true);
+    }
+    private async Task<QueueView> RunDailyQueueAsync(string account, bool closeGame, Func<Task<QueueView>> execute)
+    {
+        var target = closeGame ? DailyQueueCompletion.Capture(host, account) : null;
+        var result = await execute();
+        if (closeGame && DailyQueueCompletion.Eligible(result, account, dailyStopping))
+        {
+            L.Text(ProgressText, "completion.closing");
+            await DailyQueueCompletion.CloseAsync(host, target, account, result, dailyStopping);
+            RefreshAccounts();
+        }
+        return result;
     }
     private async Task CheckThemesForSmoke()
     {

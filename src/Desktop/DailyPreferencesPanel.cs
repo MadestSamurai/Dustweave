@@ -33,7 +33,7 @@ public sealed class DailyPreferencesPanel : UserControl
         dailyRewards = Check("日常任务奖励"), weeklyRewards = Check("周常任务奖励"), mail = Check("邮箱物品");
     private readonly CheckBox friendship = Check("每日亲密度咨询"), quickFriendship = Check("prefs.friendship_quick");
     private readonly CheckBox weeklyBook = Check("周常末日之书"), weeklyCraft = Check("周常制作装备"), weeklySichuan = Check("周常连连看");
-    private readonly CheckBox mainline = Check("周收集"), weeklyNpc = Check("周NPC任务"), npcHunting = Check("允许接取必须去狩猎场的任务"), weeklySteal = Check("每周偷窃"), walkCollect = Check("步行收集（不使用吸收）"), monsterHunt = Check("魔兽最高档快速战斗"), fishing = Check("周常钓鱼"), roomLikes = Check("周常小屋点赞");
+    private readonly CheckBox mainline = Check("周收集"), weeklyNpc = Check("周NPC任务"), npcHunting = Check("允许接取必须去狩猎场的任务"), weeklySteal = Check("每周偷窃"), walkCollect = Check("步行收集（不使用吸收）"), fishing = Check("周常钓鱼"), roomLikes = Check("周常小屋点赞");
     private readonly CheckBox events = Check("活动奖励"), eventMissions = Check("领取活动任务与活动代币"), roulette = Check("使用免费次数和已有转盘券"), exchange = Check("活动代币最大批量兑换"), quiz = Check("自动完成已开放答题"), dice = Check("自动使用现有活动骰子"), puzzle = Check("拼图板使用现有代币批量翻开");
     private readonly CheckBox trade = Check("自动跑商、料理与120%售卖");
     private readonly CheckBox tradeFavorites = Check("prefs.trade_favorites"), saffronProcessing = Check("prefs.saffron_processing");
@@ -246,7 +246,6 @@ public sealed class DailyPreferencesPanel : UserControl
         Stage(weeklyBook, "周常末日之书", "prefs.book_hint");
         Stage(friendship, "亲密度咨询", "prefs.friendship_hint");
         section.Children.Add(quickFriendship);
-        Stage(monsterHunt, "魔兽快速战斗", "prefs.monster_hint");
         Stage(mainline, "周收集", "prefs.collection_hint", expanded: true);
         section.Children.Add(walkCollect);
         Note("prefs.collection_note");
@@ -313,7 +312,7 @@ public sealed class DailyPreferencesPanel : UserControl
         Content = layout;
         FilterSections();
         accounts.SelectionChanged += ChangedAccount;
-        foreach (var c in new[] { salvation, eventFailureSweep, weeklyBook, weeklyCraft, weeklySichuan, quickFriendship, friendship, tactics, eventBattle, eventChallenge, hunt, gold, slime, stones, recycle, keepSr, fallback, refine, pass, dispatch, goddess, ranking, mirror, guild, room, income, guests, saffron, draws, dailyRewards, weeklyRewards, mail, mainline, weeklyNpc, npcHunting, weeklySteal, walkCollect, monsterHunt, fishing, roomLikes, trade, events, eventMissions, quiz, dice, puzzle, roulette, exchange })
+        foreach (var c in new[] { salvation, eventFailureSweep, weeklyBook, weeklyCraft, weeklySichuan, quickFriendship, friendship, tactics, eventBattle, eventChallenge, hunt, gold, slime, stones, recycle, keepSr, fallback, refine, pass, dispatch, goddess, ranking, mirror, guild, room, income, guests, saffron, draws, dailyRewards, weeklyRewards, mail, mainline, weeklyNpc, npcHunting, weeklySteal, walkCollect, fishing, roomLikes, trade, events, eventMissions, quiz, dice, puzzle, roulette, exchange })
         {
             c.Checked += (_, _) => MarkDirty();
             c.Unchecked += (_, _) => MarkDirty();
@@ -419,7 +418,7 @@ public sealed class DailyPreferencesPanel : UserControl
     private static string CategoryFor(string title) => title switch
     {
         "整体设置" or "跑商、料理与高价售卖" or "藏红花种植与收割" => "resources",
-        "普通狩猎与奖励日" or "圣石狩猎" or "镜中之战" or "魔兽快速战斗" or "战术教材" or "活动战斗" or "活动每日挑战15" or "救赎之塔扫荡" => "battle",
+        "普通狩猎与奖励日" or "圣石狩猎" or "镜中之战" or "战术教材" or "活动战斗" or "活动每日挑战15" or "救赎之塔扫荡" => "battle",
         "周收集" or "周NPC任务" or "每周偷窃" or "周常末日之书" or "周常制作装备" or "周常小屋点赞" or "周常钓鱼" or "周常连连看" or "周常任务奖励" => "weekly",
         _ => "daily"
     };
@@ -591,7 +590,6 @@ public sealed class DailyPreferencesPanel : UserControl
             tradeReserve.Text = DailyData.N(tradeSettings["reserve_gold"]).ToString(CultureInfo.InvariantCulture);
             tradeMaximum.Text = tradeSettings["max_spend"] == null ? "" : DailyData.N(tradeSettings["max_spend"]).ToString(CultureInfo.InvariantCulture);
             tradeBreakEven.IsChecked = tradeSettings["include_break_even_resales"]!.GetValue<bool>();
-            monsterHunt.IsChecked = loaded.MonsterHunt.Enabled;
             fishing.IsChecked = loaded.Weekly.Fishing;
             roomLikes.IsChecked = loaded.Weekly.RoomLikes;
             RefreshInventory();
@@ -724,7 +722,7 @@ public sealed class DailyPreferencesPanel : UserControl
             }
             loaded.Friendship.Quick = quickFriendship.IsChecked == true;
             loaded.Friendship.Enabled = friendship.IsChecked == true;
-            loaded.MonsterHunt.Enabled = monsterHunt.IsChecked == true;
+            loaded.MonsterHunt.Enabled = false;
             loaded.Trade.Enabled = trade.IsChecked == true;
             loaded.Trade.FavoritesOnly = tradeFavorites.IsChecked == true;
             loaded.Events.Enabled = events.IsChecked == true;

@@ -122,19 +122,33 @@ public static class DailyMirror
     private static async Task Presented(DailyWorkflow w, string ui) =>
         await w.WaitEvidence(["mirror"], e => PresentationReady(e, ui), 20, "镜中结算动画尚未结束");
 
+    private static bool ConfirmedSettlement(DailyWorkflow w, JsonObject evidence)
+    {
+        // A completed batch can survive a connector reload in the same game.
+        // Game/process/account/cycle and current ticket totals must still agree.
+        var frame = evidence["Frame"]!.AsObject();
+        var prior = w.Business.Records(w.Context, "mirror.end").Where(r => JsonNode.DeepEquals(r["cycle"], w.Context["cycle"]) &&
+            DailyHomeProof.SameGameAccount(r["before"]!["Frame"]!.AsObject(), frame)).OrderByDescending(r => N(r["at"])).FirstOrDefault();
+        return prior != null && S(prior["state"]) == "completed" && JsonNode.DeepEquals(prior["result"]?["remaining"], Tickets(evidence));
+    }
+
     // Seasonal/rank presentation belongs to cartridge arrival as well as battle cleanup.
     // Handle one observed page per iteration so a delayed follow-up cannot deadlock the
     // outer wait for the field UI. This never selects a match or changes a ticket budget.
     public static async Task<bool> RecoverRankPresentation(DailyWorkflow w, JsonObject frame)
     {
         if (S(frame["Scene"]) != "Map3001_001") return false;
-        var row = DailyNavigationDecision.Rows(frame).Where(r => RankWindows.Contains(S(r["Type"]))).OrderByDescending(r => N(r["Order"])).FirstOrDefault();
+        // A batch summary may arrive after BattleResultUI closes and cover the
+        // class-up page. Drain the visible owned summary before the rank below it.
+        const string summary = "PVPAutoHistoryPopupUI";
+        var row = DailyNavigationDecision.Rows(frame).Where(r => RankWindows.Contains(S(r["Type"])) || S(r["Type"]) == summary).OrderByDescending(r => N(r["Order"])).FirstOrDefault();
         if (row == null) return false;
         string ui = S(row["Type"]);
         var e = await w.Evidence("mirror");
         var current = e["Frame"]!.AsObject();
         var same = DailyNavigationDecision.Rows(current).SingleOrDefault(r => S(r["Type"]) == ui && N(r["Id"]) == N(row["Id"]));
         if (S(current["Scene"]) != S(frame["Scene"]) || same == null) return true;
+        if (ui == summary && !ConfirmedSettlement(w, e)) return false;
         if (DailyNavigationDecision.Blockers(current, ui, DailyNavigationPolicy.Load()).Length != 0)
             throw new StageHostException("adapter", "镜中段位展示被其他窗口遮挡，保留现场。");
         if (!DailyNavigationDecision.ReadyInput(same) || !PresentationReady(e, ui))
@@ -144,7 +158,8 @@ public static class DailyMirror
         }
         try
         {
-            await w.Step(ui, ui == "PVPClassUpUI" ? "_objCancelButton" : null, back: ui != "PVPClassUpUI", absent: ui, reason: "结束原生段位与赛季奖励展示");
+            await w.Step(ui, ui == "PVPClassUpUI" ? "_objCancelButton" : null, back: ui != "PVPClassUpUI", absent: ui,
+                reason: ui == summary ? "关闭已核账的自动战斗汇总" : "结束原生段位与赛季奖励展示");
         }
         catch (DailyStepException error) when (!error.Submitted && error.Kind == "rejected" && error.RejectionCode is "surface_missing" or "target_missing")
         {
@@ -364,8 +379,7 @@ public static class DailyMirror
         var frame = await w.Observe();
         if (DailyNavigationDecision.Types(frame.Frame).Overlaps(["PVPAutoHistoryPopupUI", "BattleResultUI"]))
         {
-            var prior = w.Business.Records(w.Context, "mirror.end").Where(r => JsonNode.DeepEquals(r["cycle"], w.Context["cycle"]) && DailyEvidence.SameActor(r["before"]!["Frame"]!.AsObject(), frame.Frame)).OrderByDescending(r => N(r["at"])).FirstOrDefault();
-            Require(prior != null && S(prior["state"]) == "completed" && JsonNode.DeepEquals(prior["result"]?["remaining"], Tickets(await w.Evidence("mirror"))), "Mirror result lacks a confirmed settlement");
+            Require(ConfirmedSettlement(w, await w.Evidence("mirror")), "Mirror result lacks a confirmed settlement");
             await Cleanup(w, false);
         }
         var rounds = new JsonArray();

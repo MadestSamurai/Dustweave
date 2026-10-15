@@ -6,6 +6,7 @@ namespace BD2Daily.Live {
  public static class LiveProtocol {
   public const int BridgeVersion=DailyBridgeVersion.Current;
   public static bool IsSquareScene(string scene){return scene!=null&&scene.StartsWith("Map3009_",StringComparison.Ordinal);}
+  public static bool CollectionEventPack(int pack){return new[]{2001,2002,2003,2004,2005,2007}.Contains(pack);}
   public static bool RequiresMirrorPeriod(Command c,Frame f){return c.Kind=="mirror_ready"||c.Kind=="native_click"&&f.Scene=="Map3001_001"&&f.Surfaces.Any(s=>s.Id==c.SurfaceId&&s.Type=="BattleAutoSettingPopupUI"&&s.Targets.Any(t=>t.Id==c.TargetId&&t.Field=="_currencyButtonOK"));}
   public static readonly string[] MissionQuerySurfaces=new[]{"MenuUI","PassUI","MissionUI","EventUI","HuntOrAirwayUI","GameFieldDefaultUI","CafeteriaFieldDefaultUI","AvatarLifeGameFieldDefaultUI","AvatarFishingHarborUI","FishingGameFieldDefaultUI","AvatarFishingWorldMapUI","TotalWarUI","MyRoomUI","MiniGameHubUI","SichuanMainUI","SichuanStagePopupUI","SichuanBoardUI","SichuanStageClearPopupUI"};
   // StorySkipUI is an embedded toolbar, not a modal UIBase popup. Its native
@@ -109,9 +110,9 @@ namespace BD2Daily.Live {
   public static bool QuizKind(string k){return new[]{"quiz_hub","quiz_list","quiz_play","quiz_talk","quiz_leave"}.Contains(k);}
   public static bool RewardKind(string k){return new[]{"reward_select","reward_tab","reward_action"}.Contains(k);}
   public static bool TacticsKind(string k){return new[]{"tactics_select","tactics_priority","tactics_action_open","tactics_burst","tactics_action","tactics_move","tactics_order","tactics_start"}.Contains(k);}
-  public static bool ExtensionKind(string k){return TacticsKind(k)||(EventKind(k)&&k!="event_sweep_select"&&k!="event_sweep_confirm");}
+  public static bool ExtensionKind(string k){return TacticsKind(k)||(EventKind(k)&&k!="event_sweep_select"&&k!="event_sweep_confirm"&&k!="event_sweep_count");}
   public static bool NativeBattleKind(string k){return new[]{"salvation_open","salvation_walk","salvation_select","salvation_popup","salvation_confirm","event_native_select","event_native_confirm","event_native_exit"}.Contains(k);}
-  public static bool EventKind(string k){return new[]{"event_select","event_sweep_select","event_sweep_confirm","event_action_open","event_action","event_move","event_order","event_start","event_bench","event_replace"}.Contains(k);}
+  public static bool EventKind(string k){return new[]{"event_select","event_sweep_select","event_sweep_confirm","event_sweep_count","event_action_open","event_action","event_move","event_order","event_start","event_bench","event_replace"}.Contains(k);}
   public static bool TradeKind(string k){return new[]{"trade_menu","trade_talent","trade_favorite_preview","trade_favorite_confirm","trade_buy_preview","trade_buy_confirm","trade_sell_preview","trade_sell_confirm","trade_cook_preview","trade_cook_quantity","trade_cook_confirm"}.Contains(k);}
   public static bool PowderKind(string kind){return kind=="powder_recipe"||kind=="powder_options";}
   public static bool PreviewKind(string kind){return new[]{"equipment_upgrade_preview","equipment_break_preview","equipment_refine_preview","equipment_craft_menu","equipment_craft_preview","mail_tab","square_goddess_nav","square_shop_nav","square_shop_interact","square_ranking_nav","square_goddess_interact","square_cancel_nav","square_route_probe"}.Contains(kind);}
@@ -124,7 +125,7 @@ namespace BD2Daily.Live {
    if(c.Scope!="gameplay"&&!startup)return "unsupported_scope";
    if(f==null||f.Protocol!=1||(f.Error.Length>0&&(!startup||f.Error!="Waiting for fresh account identity")))return "observation_unavailable";
    if(ExtensionKind(c.Kind)&&!f.PluginAvailable)return "plugin_unavailable";
-   if(!f.PluginAvailable&&c.Kind=="event_sweep_confirm"&&c.Value>5)return "event_sweep_rejected";
+   if(!f.PluginAvailable&&(c.Kind=="event_sweep_confirm"||c.Kind=="event_sweep_count")&&c.Value>5)return "event_sweep_rejected";
    if(c.ExpiresUtcTicks<=now||c.ExpiresUtcTicks>now+TimeSpan.FromSeconds(15).Ticks||c.ObservedUtcTicks<now-TimeSpan.FromSeconds(15).Ticks||c.ObservedUtcTicks>now+TimeSpan.FromSeconds(2).Ticks)return "expired_observation";
    if(f.AtUtcTicks<now-TimeSpan.FromSeconds(3).Ticks||f.AtUtcTicks>now+TimeSpan.FromSeconds(2).Ticks)return "stale_frame";
    if(c.ProcessId!=f.ProcessId||c.ProcessStartTicks!=f.ProcessStartTicks||string.IsNullOrEmpty(c.Instance)||c.Instance!=f.Instance)return "process_changed";
@@ -232,8 +233,8 @@ namespace BD2Daily.Live {
     if(c.Kind=="tactics_start")return c.Items.Length>=6&&c.Items.Length<=61&&(c.Items.Length-1)%5==0?"":"tactics_plan_invalid";
     return c.Items.Length==3&&c.Items[1]!=0&&c.Items[2]>=(c.Kind=="tactics_action"?-1:0)?"":"tactics_plan_invalid";
    }
-   if(c.Kind=="event_sweep_confirm"){
-    if(f.BridgeVersion<97||!GameplayReady(f)||ui.Type!="BattleSkipPopupUI"||c.TargetId!=0||c.Items==null||c.Items.Length!=4||c.Items.Any(x=>x<=0)||c.Value<1)return "event_sweep_rejected";
+   if(c.Kind=="event_sweep_confirm"||c.Kind=="event_sweep_count"){
+    if(f.BridgeVersion<(c.Kind=="event_sweep_count"?120:97)||!GameplayReady(f)||ui.Type!="BattleSkipPopupUI"||c.TargetId!=0||c.Items==null||c.Items.Length!=4||c.Items.Any(x=>x<=0)||c.Value<1)return "event_sweep_rejected";
     if(f.Surfaces.Any(x=>x.Popup&&x.Id!=ui.Id&&x.Order>=ui.Order&&!PassiveSurface(x.Type)))return "event_popup_blocked";
     return "";
    }
@@ -340,7 +341,7 @@ namespace BD2Daily.Live {
    if(c.Kind=="mainline_menu"||c.Kind=="mainline_pack"||c.Kind=="mainline_walk"||c.Kind=="mainline_interact"){
     if(!GameplayReady(f)||f.BridgeVersion<16||c.TargetId!=0)return "mainline_context_rejected";
     if(f.Surfaces.Any(x=>x.Popup&&x.Id!=ui.Id&&x.Order>=ui.Order&&!PassiveSurface(x.Type)))return "mainline_popup_blocked";
-    if(c.Kind=="mainline_pack")return ui.Type=="PackListUI"&&((f.BridgeVersion>=84&&((c.Value>=1&&c.Value<100)||(c.Value>=1001&&c.Value<2000)))||(c.Value>=1&&c.Value<=(f.BridgeVersion>=29?19:f.BridgeVersion>=26?15:8))||(f.BridgeVersion>=29&&c.Value>=1001&&c.Value<=(f.BridgeVersion>=42?1007:1003))||(f.BridgeVersion>=42&&new[]{2001,2002,2005,2007}.Contains(c.Value)))?"":"mainline_chapter_rejected";
+    if(c.Kind=="mainline_pack")return ui.Type=="PackListUI"&&((f.BridgeVersion>=84&&((c.Value>=1&&c.Value<100)||(c.Value>=1001&&c.Value<2000)))||(c.Value>=1&&c.Value<=(f.BridgeVersion>=29?19:f.BridgeVersion>=26?15:8))||(f.BridgeVersion>=29&&c.Value>=1001&&c.Value<=(f.BridgeVersion>=42?1007:1003))||(f.BridgeVersion>=42&&LiveProtocol.CollectionEventPack(c.Value)&&(f.BridgeVersion>=121||c.Value!=2003&&c.Value!=2004)))?"":"mainline_chapter_rejected";
     if(ui.Type!="GameFieldDefaultUI"||((c.Kind=="mainline_walk"||c.Kind=="mainline_interact")?c.Value==0:!(new[]{3,4,6,15,20}.Contains(c.Value)||(f.BridgeVersion>=26&&new[]{2,17}.Contains(c.Value)))))return "mainline_talent_rejected";
     if(f.Surfaces.Any(x=>x.Id!=ui.Id&&!PassiveSurface(x.Type)))return "mainline_popup_blocked";
     return "";

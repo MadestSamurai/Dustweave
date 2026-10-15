@@ -28,6 +28,7 @@ internal static class DailyParallelWorker
         using var sessions = new AccountSessions();
         var host = new DailyGameHost();
         var ownedGame = job.StartedGame ? host.Find() : null;
+        DailyQueueCompletion? completionTarget = null;
         var coordinator = new DailyCoordinator(sessions, host, DailyIdentity.DataRoot, onVerified: token => DailySuite.ActivateAsync(host, DailyIdentity.DataRoot, "daily", _ => { }, token));
         var queue = new DailyQueueSession(DailyIdentity.DataRoot, new PackagedDailyQueueExecutor(AppContext.BaseDirectory));
         coordinator.Progress += p => { lock (stateGate) detail = p.Message; };
@@ -73,6 +74,7 @@ internal static class DailyParallelWorker
                     State("connecting", "parallel.connecting");
                     await coordinator.InspectAsync([target]);
                     if (control.Stopped || control.Paused) continue;
+                    completionTarget = job.CloseGame && ownedGame == host.Find() ? DailyQueueCompletion.Capture(host, job.Account) : null;
                     State("running");
                     var result = await queue.RunAsync(job.Account, resume: resume, selection: !resume && job.Tasks != null ? new(job.Account, job.Tasks) : null);
                     lock (stateGate) { view = result; detail = result.Message; }
@@ -95,10 +97,10 @@ internal static class DailyParallelWorker
             try { coordinator.Stop(); } catch { }
             // A paused or failed task preserves the game for diagnosis. Close only
             // the exact process this launch created after a successful completion.
-            if (outcome == "completed" && job.CloseGame && ownedGame != null)
+            if (outcome == "completed" && job.CloseGame && ownedGame != null && view != null && !control.Stopped && !control.Paused)
             {
                 State("closing", "parallel.closing");
-                try { await host.CloseAsync(ownedGame, CancellationToken.None); instance=host.Find(); }
+                try { await DailyQueueCompletion.CloseAsync(host, completionTarget, job.Account, view, control.Stopped || control.Paused); instance=host.Find(); }
                 catch (Exception error) { outcome = "partial"; lock (stateGate) detail = error.Message; }
             }
             monitorStop.Cancel(); await monitor;

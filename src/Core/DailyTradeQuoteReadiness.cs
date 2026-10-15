@@ -17,10 +17,12 @@ public static class DailyTradeQuoteReadiness
         var e = observation.Evidence;
         var frame = e["Frame"]!.AsObject();
         var shop = DailyNavigationDecision.Rows(frame).SingleOrDefault(r => S(r["Type"]) == "ShopUI")
-            ?? throw new StageHostException("identity", "报价读取期间商店已关闭，保留现场。");
+            ?? throw new StageHostException("adapter", "商店已关闭，请打开广场商店购买页后重新读取。");
         if (DailyNavigationDecision.Blockers(frame, "ShopUI", DailyNavigationPolicy.Load()).Length > 0
             || DailyNavigationDecision.Types(frame).Any(t => t.StartsWith("BattleUI", StringComparison.Ordinal)))
-            throw new StageHostException("identity", "报价读取期间出现其他弹窗或战斗，保留现场。");
+            throw new StageHostException("adapter", DailyNavigationDecision.Types(frame).Contains("DiscountPopupUI")
+                ? "砍价预览尚未关闭，请先取消预览后重新读取；本次未购买或使用天赋药。"
+                : "商店被其他窗口或战斗遮挡，请返回商店购买页后继续跑商。");
         JsonObject native;
         try { native = State(e, "trade.native", "$self"); }
         catch (Exception error) when (error is InvalidDataException or InvalidOperationException or System.Text.Json.JsonException)
@@ -38,6 +40,24 @@ public static class DailyTradeQuoteReadiness
             ("surface", shop["Id"]), ("shop", R(e, "trade.shop_ui", "ὬὥὫὥὮὤὭὥὪὥὣ")), ("mode", R(e, "trade.shop_ui", "ὯὣὡὫὨὫὡὧὩὬὠ")),
             ("merchant", R(e, "trade.shop_ui", "ὩὤὬὪὤὦὧὭὣὥὠ.ὯὫὪὡὭὤὪὮὫὬὣ")), ("bargain", native["BargainActive"]), ("discount", native["BargainPercent"]),
             ("server", guild["ServerKey"]), ("cycle", guild["CycleKey"]), ("client", guild["ClientMvid"]));
+    }
+    public static JsonObject Summary(JsonObject record)
+    {
+        JsonObject Snapshot(JsonNode? value)
+        {
+            var e = value?["evidence"] as JsonObject;
+            var frame = e?["Frame"] as JsonObject;
+            JsonObject? native = null;
+            try { native = e == null ? null : Readings(e, "trade.native").FirstOrDefault()?["$self"] as JsonObject; }
+            catch (Exception ex) when (ex is InvalidDataException or InvalidOperationException or System.Text.Json.JsonException) { }
+            return O(("at", value?["at"]), ("scene", frame?["Scene"]), ("bridge", frame?["BridgeVersion"]),
+                ("surfaces", Array((frame?["Surfaces"] as JsonArray ?? []).OfType<JsonObject>().Select(r => O(("type", r["Type"]), ("order", r["Order"]), ("input_ready", r["InputReady"]), ("popup", r["Popup"]))))),
+                ("bargain_active", native?["BargainActive"]), ("bargain_percent", native?["BargainPercent"]),
+                ("reading_errors", Array((e?["Readings"] as JsonArray ?? []).OfType<JsonObject>().Where(r => S(r["Error"]).Length > 0).Take(12).Select(r => O(("id", r["Id"]), ("error", r["Error"]))))));
+        }
+        return O(("engine", "dotnet-trade-quote-summary-v1"), ("state", record["state"]), ("error", record["error"]),
+            ("waits", record["waits"]), ("elapsed_seconds", record["elapsed_seconds"]), ("binding", record["binding"]),
+            ("first", Snapshot(record["first"])), ("last", Snapshot(record["last"])), ("gameplay_actions", record["gameplay_actions"]));
     }
     public static async Task<(JsonObject State, JsonObject Proof)> ReadAsync(JsonObject catalog,
         Func<Task<DailyTradeQuoteObservation>> read, Func<double> clock, Func<int, Task> delay,

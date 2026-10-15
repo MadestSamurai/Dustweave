@@ -1,5 +1,19 @@
 # Changelog / 更新记录
 
+## 1.3.12 — 2026-10-15
+
+- 移除魔兽快速战斗环节；旧预设保留其他任务，旧队列自动跳过已移除环节。
+- 修复砍价预览遮挡商店时的报价读取与收尾衔接，界面遮挡不再误报账号异常；增加可随日志导出的精简报价现场。
+- Removes Fiend Hunt quick battles while preserving other tasks in existing presets and queues. Fixes bargain-preview handling and adds compact, exportable shop diagnostics.
+- 修复镜中自动战斗汇总与段位窗口同时出现时的收尾中断；已完成战斗可在同一游戏重连后继续收尾，不重复扣次数。
+- 救赎之塔改由正常卡带列表进入恶魔城，避免此前切换卡带后入口指令无效、首次运行等待超时。
+- Fix Mirror settlement when the auto-battle summary covers rank updates, including reconnection after a confirmed batch. Enter Salvation through the native cartridge list to reset its selection state correctly.
+- 活动扫荡一次设置本次可用的最大次数，继续遵守免费次数和每日剩余额度。
+- 软件设置新增“日常完成后退出游戏”，默认关闭，支持单账号、串行及隔离多开；定时计划可独立设置。异常中断或暂停时保留游戏。
+- Event sweeps select the permitted free batch in one step. Optional game exit after daily completion covers single, sequential and sandbox runs, with a separate schedule choice.
+- 补齐活动卡带 3、4、5 的周收集与压制范围，旧版完成记录会重新核对新增地图；活动卡带 2 在非安全区优先使用可用的藏身天赋。
+- Weekly collection now includes the omitted areas in event cartridges 3–5. Previous completion records recheck the expanded coverage; Nightmare Winter uses available stealth outside safe areas.
+
 ## 1.3.11 — 2026-10-15
 
 - 修复咨询升级礼物延迟弹出与重连后的接续处理，以及潘多拉 Game Over 后的重开卡点。

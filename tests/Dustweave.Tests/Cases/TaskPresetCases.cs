@@ -9,6 +9,15 @@ static class TaskPresetCases
         void Check(bool ok, string name) { if (!ok) throw new Exception(name); cases.Add(name); }
         void Reject(Action action, string name) { try { action(); } catch (InvalidDataException) { cases.Add(name); return; } throw new Exception(name); }
         var preferences = new DailyPreferences();
+        {
+            string legacyRoot = Path.Combine(output, "retired-presets"), oldId = Guid.NewGuid().ToString("N"), onlyId = Guid.NewGuid().ToString("N");
+            DailyJson.Write(Path.Combine(legacyRoot, "task-presets.json"), new DailyTaskPresetData(1,
+                [new(oldId, "Old daily", ["monster_hunt", "mail"]), new(onlyId, "Old boss only", ["monster_hunt"])], new() { [a] = oldId, [b] = onlyId }));
+            var legacyStore = new DailyTaskPresetStore(legacyRoot);
+            Check(legacyStore.Selection(a, preferences)!.Tasks.SequenceEqual(["mail"]), "legacy presets retain remaining tasks after Fiend Hunt removal");
+            Reject(() => legacyStore.Selection(b, preferences), "retired-only preset never expands to all daily tasks");
+            Check(!DailyStageCatalog.Selectable.Any(s => s.Id == "monster_hunt"), "removed Fiend Hunt is absent from task selection");
+        }
         var tasks = DailyStageCatalog.Selectable.Where(s => s.Enabled(preferences)).Take(2).Select(s => s.Id).ToArray();
         Check(tasks.Length == 2 && store.Selection(a, preferences) == null, "unassigned accounts retain their configured daily queue");
         var first = store.Save("Short daily", [tasks[0]]); var second = store.Save("Two tasks", tasks);

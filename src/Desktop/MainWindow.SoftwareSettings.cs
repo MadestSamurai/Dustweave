@@ -22,6 +22,7 @@ public partial class MainWindow
         {
             if (!IsSandboxWindow && smoke == null) windowsStartup.RefreshEnabledPath(Environment.ProcessPath!);
             StartWithWindows.IsChecked = windowsStartup.Enabled;
+            CloseGameAfterRun.IsChecked = ReadDesktopBehavior()?.CloseGameAfterRun == true;
             RefreshCloseAction();
         }
         catch (Exception error) { SoftwareSettingsError(error); }
@@ -33,7 +34,7 @@ public partial class MainWindow
         if (!softwareSettingsReady) return;
         bool editable = !Unavailable && !IsSandboxWindow;
         softwareGamePath.IsEnabled = softwareSandboxPath.IsEnabled = StartWithWindows.IsEnabled = editable;
-        CloseActionChoice.IsEnabled = RunOnOpen.IsEnabled = editable && desktopBehaviorValid;
+        CloseActionChoice.IsEnabled = RunOnOpen.IsEnabled = CloseGameAfterRun.IsEnabled = editable && desktopBehaviorValid;
         ConnectionGuideButton.IsEnabled = !Unavailable && !IsSandboxWindow;
     }
     private void RefreshCloseAction()
@@ -58,6 +59,16 @@ public partial class MainWindow
             ClearSoftwareSettingsError();
         }
         catch (Exception error) { RefreshCloseAction(); SoftwareSettingsError(error); }
+    }
+    private void CloseGameAfterRun_Click(object sender, RoutedEventArgs e)
+    {
+        if (!softwareSettingsReady || IsSandboxWindow) return;
+        try
+        {
+            (DailyDesktopBehavior.Read(root) with { CloseGameAfterRun = CloseGameAfterRun.IsChecked == true }).Save(root);
+            ClearSoftwareSettingsError();
+        }
+        catch (Exception error) { CloseGameAfterRun.IsChecked = ReadDesktopBehavior()?.CloseGameAfterRun == true; SoftwareSettingsError(error); }
     }
     private void SoftwareSettingsError(Exception error)
     {

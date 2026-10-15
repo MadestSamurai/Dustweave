@@ -84,10 +84,11 @@ public sealed partial class DailyFieldRoute
                 {
                     await W.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
                     double pause = W.Time;
-                    await Skill(17, 4);
+                    await Protection(current);
                     var renewed = await Evidence();
                     Identity(before, renewed);
-                    Require(Remaining(renewed, 17) > 4, "藏身续用未生效");
+                    Require(!RequiresStealth(renewed) || Remaining(renewed, 17) > 4, "藏身续用未生效");
+                    protectedRoute = NeedsStealth(renewed);
                     long arrived = N(Map(renewed)["id"]);
                     if (destination.HasValue && arrived == destination)
                     {
@@ -95,7 +96,7 @@ public sealed partial class DailyFieldRoute
                         return null;
                     }
                     Require(arrived == origin, "补藏身期间地图改变");
-                    await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "mainline_walk"), ("value", target), ("require_stealth", true)));
+                    await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "mainline_walk"), ("value", target), ("require_stealth", protectedRoute)));
                     double elapsed = W.Time - pause;
                     end = Math.Min(hard, end + elapsed);
                     progress.Suspend(elapsed);
@@ -218,7 +219,7 @@ public sealed partial class DailyFieldRoute
             }
             catch (DailyTravelBlocked) { await Failure(e, 0, "all_physical_regions_exhausted"); throw; }
             var target = gates.Single(g => N(g[ObjectPath]) == N(choice["object"]));
-            if (NeedsStealth(e))
+            if (RequiresStealth(e))
                 await Patrol();
             try
             {
@@ -353,11 +354,17 @@ public sealed partial class DailyFieldRoute
     {
         Require(Catalog.Supported(chapter) || Owned(await Evidence(), chapter), "卡带不支持或未拥有");
         if (await DailyTravel.Reuse(W, packId: checked((int)chapter), surfaces: ["GameFieldDefaultUI"], extra: ["WayPointUI"]))
+        {
+            var current = await Evidence();
+            if (PrefersStealth(current)) await Protection(current);
             return;
+        }
         await DailyTravel.PackList(W);
         await W.Step("PackListUI", operation: "mainline_pack", value: checked((int)chapter));
         Require(await DailyTravel.Reuse(W, packId: checked((int)chapter), surfaces: ["GameFieldDefaultUI"], waitForTarget: true), "卡带切换未完成");
         await FieldReady();
+        var entered = await Evidence();
+        if (PrefersStealth(entered)) await Protection(entered);
         if (leaveInterior && N(Map(await Evidence())["isInsideMap"]) != 0)
             await PrepareTeleport();
     }
@@ -367,7 +374,12 @@ public sealed partial class DailyFieldRoute
         var e = await Evidence();
         long pack = N(Map(e)["packId"]);
         Require(Catalog.Supported(pack) || Owned(e, pack), "卡带不支持门区移动");
-        Require(!NeedsStealth(e) || Remaining(e, 17) > 3, "进入巡逻路线前藏身未确认");
+        if (PrefersStealth(e))
+        {
+            await Protection(e);
+            e = await Evidence();
+        }
+        Require(!RequiresStealth(e) || Remaining(e, 17) > 3, "进入巡逻路线前藏身未确认");
         var targets = Reachable(Travel(e), FieldRows(e, "gate").Where(r => S(r["gameObject.name"]).StartsWith("Gate_", StringComparison.Ordinal) && N(r[DestinationPath]) == destination).ToArray());
         foreach (var t in targets)
             try
