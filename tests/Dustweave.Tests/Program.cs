@@ -81,6 +81,7 @@ await Group("LogCleanup", () => LogCleanupCases.Run(root,cases));
 await Group("LogEvidence", () => LogEvidenceCases.Run(root,cases));
 await Group("DiagnosticExport", () => DiagnosticExportCases.Run(root,cases));
 await Group("ClientUpdate", () => Sync(() => ClientUpdateCases.Run(root,cases)));
+await Group("LegacyMigration", () => Sync(() => LegacyMigrationCases.Run(root,cases)));
 await Group("LiveBindings", () => Sync(() => LiveBindingCases.Run(root,cases)));
 await Group("Parallel", () => ParallelCases.Run(root, cases));
 await Group("ParallelProcess", () => ParallelProcessCases.Run(root, cases));

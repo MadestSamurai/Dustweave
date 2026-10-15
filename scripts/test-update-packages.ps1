@@ -32,7 +32,10 @@ function StartIsolated($exe,$arguments,$data){
 function WaitProcess($process,$seconds=150){if(!$process.WaitForExit($seconds*1000)){throw "Acceptance process is still active: $($process.Id). Inspect without touching unrelated processes."}}
 function CloseInstalled($target){
  $matched=@(Get-Process Dustweave -ErrorAction SilentlyContinue|Where-Object {[string]::Equals($_.Path,$target,[StringComparison]::OrdinalIgnoreCase)})
- foreach($process in $matched){[void]$process.CloseMainWindow();if(!$process.WaitForExit(15000)){throw "Test window did not close: $($process.Id)"}}
+ # The legacy reminder has a separate visible process; close it before waiting
+ # for the blocked host. Only this test's exact installed executable is touched.
+ foreach($process in $matched){if($process.MainWindowHandle -ne 0){[void]$process.CloseMainWindow()}}
+ foreach($process in $matched){if(!$process.WaitForExit(15000)){throw "Test window did not close: $($process.Id)"}}
 }
 function Setup($name,$flavor,$baselineFolder){
  $folder=Join-Path $outputRoot $name;$targetFolder=Join-Path $folder 'install';$data=Join-Path $folder 'data'

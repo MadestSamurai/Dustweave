@@ -64,7 +64,8 @@ jobs:
               try{if($reader.ReadToEnd() -notmatch 'MIT License'){throw 'Missing MIT license'}}finally{$reader.Dispose()}
             }finally{$zip.Dispose()}
           }
-          gh release edit $env:RELEASE_TAG --draft=false --prerelease=false --latest
+          # This maintenance release must not replace the current 1.3+ download destination.
+          gh release edit $env:RELEASE_TAG --draft=false --prerelease=false --latest=false
           if($LASTEXITCODE -ne 0){throw 'Publication failed'}
       - uses: actions/upload-artifact@v4
         if: always()

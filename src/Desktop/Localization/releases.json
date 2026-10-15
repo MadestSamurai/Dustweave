@@ -1,5 +1,26 @@
 [
 {
+  "Version": "1.2.12",
+  "Date": "2026-10-15",
+  "Notes": {
+    "zh-CN": [
+      "此版本仅用于提醒旧版用户迁移：1.3 起采用全新的软件结构，请手动下载最新版完整软件包。",
+      "启动时显示可切换语言的更新提醒；输入“我不需要更新”或 I do not need an update 后才能继续本次使用。关闭提醒将退出软件，确认前不会启动游戏、日常或工具。",
+      "下载：GitHub 最新发布 https://github.com/MadestSamurai/Dustweave/releases/latest；夸克 https://pan.quark.cn/s/0ee553c60c0d?pwd=5AgC，提取码 5AgC。请完整解压到新目录，保留 app 文件夹和已有账号设置。"
+    ],
+    "zh-TW": [
+      "此版本僅用於提醒舊版使用者遷移：1.3 起採用全新的軟體結構，請手動下載最新版完整軟體套件。",
+      "啟動時顯示可切換語言的更新提醒；輸入「我不需要更新」或 I do not need an update 後才能繼續本次使用。關閉提醒將結束軟體，確認前不會啟動遊戲、日常或工具。",
+      "下載：GitHub 最新發行 https://github.com/MadestSamurai/Dustweave/releases/latest；夸克 https://pan.quark.cn/s/0ee553c60c0d?pwd=5AgC，提取碼 5AgC。請完整解壓縮到新目錄，保留 app 資料夾和現有帳號設定。"
+    ],
+    "en-US": [
+      "A migration notice for legacy installations only. Version 1.3 introduced a new application layout; download the latest complete package manually.",
+      "A language-switchable startup notice requires typing I do not need an update or 我不需要更新 before continuing this launch. Closing it exits Dustweave. Game launch, daily tasks and tools remain blocked until confirmation.",
+      "Download: https://github.com/MadestSamurai/Dustweave/releases/latest or https://pan.quark.cn/s/0ee553c60c0d?pwd=5AgC (code: 5AgC). Extract into a new folder, keeping the app folder and your saved accounts/settings."
+    ]
+  }
+},
+{
   "Version": "1.2.11",
   "Date": "2026-10-13",
   "Notes": {

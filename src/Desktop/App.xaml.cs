@@ -11,6 +11,39 @@ public partial class App : Application
     {
         base.OnStartup(e);
         var args = StartupArguments ?? e.Args;
+        if (args.Length == 2 && args[0] is "--legacy-migration-gate" or "--check-migration-gate")
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            try
+            {
+                DailyLanguage.Current.Initialize(DailyIdentity.DataRoot);
+                if (args[0] == "--check-migration-gate")
+                {
+                    await LegacyMigrationWindow.ProbeAsync(Path.GetFullPath(args[1]));
+                    Shutdown();
+                }
+                else
+                {
+                    var scope = LegacyMigrationStartup.RequireOwner(args[1]);
+                    using var theme = new DailyTheme(DailyIdentity.DataRoot);
+                    var notice = new LegacyMigrationWindow();
+                    notice.ContentRendered += (_, _) => DailyJson.Write(Path.Combine(Path.GetDirectoryName(args[1])!, "visible.json"), new { pid = Environment.ProcessId });
+                    var ownerWatch = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+                    ownerWatch.Tick += (_, _) => { try { LegacyMigrationStartup.RequireOwner(args[1]); } catch { notice.Close(); } };
+                    ownerWatch.Start();
+                    bool accepted = notice.ShowDialog() == true;
+                    ownerWatch.Stop();
+                    Shutdown(accepted ? LegacyMigrationStartup.AcceptedExitCode : 0);
+                }
+            }
+            catch (Exception error)
+            {
+                if (args[0] == "--check-migration-gate") DailyJson.Write(Path.Combine(args[1], "result.json"), new { status = "failed", error = error.ToString(), realGameTouched = false });
+                else ShowStartupFailure(error, StartupDiagnostics.Fail(error));
+                Shutdown(1);
+            }
+            return;
+        }
         if(args.Length>0&&args[0]=="--mansion-window"){MansionTool.Start(this,args.Skip(1).ToArray());return;}
         if (args.Length == 3 && args[0] == "--restart-after")
         {

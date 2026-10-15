@@ -136,6 +136,8 @@ foreach($flavor in $Flavors){
   Run $exe @(('--'+$mode),$check) ($flavor+'-'+$mode)
  }
  Pass (Join-Path $checks 'smoke/smoke.json')
+ Run $exe @('--check-migration-gate',(Join-Path $checks 'migration')) ($flavor+'-migration')
+ Pass (Join-Path $checks 'migration/result.json')
  if($validation.scope -eq 'Full'){Pass (Join-Path $checks 'check-tool-languages/result.json');Pass (Join-Path $checks 'check-tool-language-ui/result.json')}
  Run $exe @('--utility','live','self-test') ($flavor+'-live-self-test')
  Run $exe @('--tool-catalog',(Join-Path $bundle 'tools.json')) ($flavor+'-tool-catalog')
