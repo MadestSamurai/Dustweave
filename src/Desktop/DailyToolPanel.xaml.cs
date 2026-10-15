@@ -49,7 +49,7 @@ public partial class DailyToolPanel : UserControl
         string query = SearchBox.Text.Trim();
         var rows = DailyToolCatalog.All.Where(t => query.Length == 0 || (t.Name + " " + t.Repository + " " + L.Get("tool." + t.Id) + " " + L.Get("tool." + t.Id + ".description")).Contains(query, StringComparison.OrdinalIgnoreCase))
             .Where(t => category == null || category.Key == "all" || t.Category == category.Source)
-            .Select(t => new ToolMenuRow(t.Id, L.Get("tool." + t.Id), L.Translate(t.Category) + " · " + ToolApplicationHost.Version(t), L.Get("tool." + t.Id + ".description"),
+            .Select(t => new ToolMenuRow(t.Id, L.Get("tool." + t.Id), L.Translate(t.Category), L.Get("tool." + t.Id + ".description"),
                 L.Get(t.Id == active ? "tools.show" : active != null ? "tools.switch" : "tools.open"), !busy && (!running || t.Id==active))).ToArray();
         ToolsList.ItemsSource = rows;
         EmptyText.Visibility = rows.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
