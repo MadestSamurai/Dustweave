@@ -201,6 +201,10 @@ public sealed class DailyQueueSession(string root, IDailyQueueExecutor executor,
         string allowed = Path.GetFullPath(Path.Combine(root, "live", "queues")) + Path.DirectorySeparatorChar;
         if (record.Length == 0 || !Path.GetFullPath(record).StartsWith(allowed, StringComparison.OrdinalIgnoreCase))
             return new("preparing", "正在准备连接与队列…", "", []);
+        return ReadRecord(root, account, record, utcTicks?.Invoke() ?? DateTime.UtcNow.Ticks);
+    }
+    internal static QueueView ReadRecord(string root, string account, string record, long now)
+    {
         var value = ReadElement(record);
         if (value.ValueKind != JsonValueKind.Object)
             return new("preparing", "正在进入日常菜单…", record, []);
@@ -211,7 +215,6 @@ public sealed class DailyQueueSession(string root, IDailyQueueExecutor executor,
         var stages = value.GetProperty("items").EnumerateArray().Select(i => new QueueStage(i.GetProperty("task").GetString() ?? "", i.GetProperty("state").GetString() ?? "",
           ReadStageDetail(i), i.TryGetProperty("carried_forward", out var carried) && carried.ValueKind == JsonValueKind.True, ReadFinishedAt(i), DailyPendingTasks.Read(i)) { Recovery = QueueRecoveryDetail.Read(i) }).ToArray();
         var period = DailyQueuePeriod.Read(value);
-        long now = utcTicks?.Invoke() ?? DateTime.UtcNow.Ticks;
         bool expired = DailyQueuePeriod.IsExpired(period, DailyQueuePeriod.Snapshot(root, period?.Server ?? ""), now);
         return new(state, value.TryGetProperty("error", out var e) ? e.GetString() ?? "" : "", record, stages, account, period, expired);
     }
@@ -323,7 +326,11 @@ public sealed class DailyQueueSession(string root, IDailyQueueExecutor executor,
             workerStarted = true;
             // The workflow includes synchronous rule parsing and native optimization. Never
             // inherit the WPF synchronization context: the operator must retain Stop.
-            var task = execution = Task.Run(() => executor.ExecuteAsync(root, account, LastOutput, id, Report, syncCollection, selectedTasks, retry == null ? null : Path.GetFileName(Path.GetDirectoryName(retry.Record))));
+            var task = execution = Task.Run(() =>
+            {
+                DailyAccountProgress.ImportSandbox(root, account, force: true);
+                return executor.ExecuteAsync(root, account, LastOutput, id, Report, syncCollection, selectedTasks, retry == null ? null : Path.GetFileName(Path.GetDirectoryName(retry.Record)));
+            });
             while (!task.IsCompleted)
             {
                 // Reassert stop after the worker's startup pause reset, closing that race.

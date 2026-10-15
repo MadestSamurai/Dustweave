@@ -171,8 +171,6 @@ public sealed partial class DailyFieldRoute
         var checkpoint = await Checkpoint();
         if (checkpoint["completed"]!.AsObject().ContainsKey(map.ToString()))
             return DailyWorkflow.Skipped("server_complete");
-        if (!manual)
-            Quota(before);
         if (Progress.Steal && Rows(checkpoint["maps"]![map.ToString()]!["steals"]).Length > 0)
             await new DailyWeeklySteal(this).CollectMap(checkpoint);
         if (!Progress.OnlySteal)
@@ -188,6 +186,7 @@ public sealed partial class DailyFieldRoute
             var remainingDrops = checkpoint["maps"]![map.ToString()]!["drops"]!.AsArray().Select(N).ToHashSet();
             if (remainingDrops.Count > 0)
             {
+                if (!manual) Quota(e);
                 await Skill(6);
                 e = await Evidence();
             }
@@ -208,7 +207,7 @@ public sealed partial class DailyFieldRoute
         var result = await Checkpoint();
         if (!result["completed"]!.AsObject().ContainsKey(map.ToString()))
         {
-            if (!manual)
+            if (!manual && result["maps"]![map.ToString()]!["drops"] is JsonArray { Count: > 0 })
                 Quota(after);
             var deferred = Rows(walking ?? new JsonArray()).Where(r => S(r["state"]) == "deferred").ToArray();
             throw new DailyCollectionTargetsRemain("服务器仍有待处理目标：" + map, deferred.Length == 0 ? null : Array(deferred));
@@ -256,6 +255,7 @@ public sealed partial class DailyFieldRoute
             string week = S(checkpoint["weekly_reset"]);
             var nav = new DailyCollectionNavigator(this, pack, await Evidence());
             var reentered = new HashSet<long>();
+            var quotaDeferred = new HashSet<long>();
             var targets = StandardMaps(pack);
             for (int i = 0; i < 128; i++)
             {
@@ -264,8 +264,12 @@ public sealed partial class DailyFieldRoute
                 var pending = targets.Where(id => !checkpoint["completed"]!.AsObject().ContainsKey(id.ToString())).ToArray();
                 if (pending.Length == 0 && (returnMap == null || current == returnMap))
                     return;
-                if (pending.Length > 0 && !walkCollect)
-                    Quota(nav.Evidence);
+                if (pending.Length > 0 && !walkCollect && Used(nav.Evidence, 4) >= 21)
+                {
+                    pending = pending.Where(id => !quotaDeferred.Contains(id) && (checkpoint["maps"]![id.ToString()]!["drops"] is JsonArray { Count: 0 }
+                        || checkpoint["maps"]![id.ToString()]!["monsters"] is JsonArray { Count: > 0 })).ToArray();
+                    if (pending.Length == 0) Quota(nav.Evidence);
+                }
                 if (pending.Contains(current))
                 {
                     try
@@ -273,6 +277,7 @@ public sealed partial class DailyFieldRoute
                         await Gather(walkCollect);
                     }
                     catch (DailyCollectionTargetsRemain) { }
+                    catch (DailyQuotaExhausted) { quotaDeferred.Add(current); checkpoint = await Checkpoint(); continue; }
                     checkpoint = Progress.Cached(pack, targets, week)!;
                     if (!checkpoint["completed"]!.AsObject().ContainsKey(current.ToString()))
                     {

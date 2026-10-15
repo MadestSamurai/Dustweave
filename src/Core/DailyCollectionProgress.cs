@@ -5,9 +5,6 @@ namespace Dustweave;
 public sealed class DailyCollectionCatalog(DailyWorkflow workflow)
 {
     public const int CoverageRevision = 2;
-    public static bool NeedsCoverageRecheck(JsonObject item) => S(item["task"]) == "weekly_mainline"
-        && S(item["state"]) == "completed" && S(item["result"]?["reason"]) == "weekly_route_verified"
-        && N(item["result"]?["collection_coverage"]) < CoverageRevision;
     private readonly Dictionary<long, JsonObject> cartridges = Rows(workflow.Asset("collection-catalog.json")["cartridges"]).ToDictionary(r => N(r["id"]));
     private readonly Dictionary<long, JsonObject> steals = Rows(workflow.Asset("steal-catalog.json")["packs"]).ToDictionary(r => N(r["id"]));
     public bool Supported(long pack) => pack is >= 1 and <= 19 || cartridges.ContainsKey(pack);
@@ -166,6 +163,7 @@ public sealed class DailyCollectionProgress(DailyWorkflow workflow)
             var stored = JsonNode.Parse(File.ReadAllText(path))!.AsObject();
             Require(N(stored["schema"]) == 1 && S(stored["source"]) == "FieldObjectInfoResponse+MonsterInfoResponse" && JsonNode.DeepEquals(stored["account"], workflow.Context["actor"]![3]) && JsonNode.DeepEquals(stored["player"], workflow.Context["actor"]![4]) && S(stored["network"]!["Week"]) == week, "Collection cache identity/cycle mismatch");
             var network = stored["network"]!.AsObject();
+            Require(stored["server"] == null || JsonNode.DeepEquals(stored["server"], workflow.Context["server"]), "Collection cache server mismatch");
             // Story advancement can unlock these monsters during the same week.
             // Re-read native prerequisites; a cached lock is never weekly completion.
             if (network["DeferredTargets"] is JsonArray { Count: > 0 } && missingAllowed) return null;
@@ -223,7 +221,7 @@ public sealed class DailyCollectionProgress(DailyWorkflow workflow)
         catch (StageHostException e) when (e.Kind == "adapter") { throw new DailyCollectionReadUnavailable(e.Message); }
         var result = Classify(data!, pack, maps, Steal, OnlySteal);
         await RecoverAbsorptions(pack, maps, data!, result);
-        if (cache) DailyJson.Write(PathFor(S(data!["Week"]), pack), O(("schema", 1), ("source", "FieldObjectInfoResponse+MonsterInfoResponse"), ("account", workflow.Context["actor"]![3]), ("player", workflow.Context["actor"]![4]), ("network", data), ("at", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000d)));
+        if (cache) DailyJson.Write(PathFor(S(data!["Week"]), pack), O(("schema", 1), ("source", "FieldObjectInfoResponse+MonsterInfoResponse"), ("account", workflow.Context["actor"]![3]), ("player", workflow.Context["actor"]![4]), ("server", workflow.Context["server"]), ("network", data), ("at", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000d)));
         DailyJson.Write(Path.Combine(workflow.Root, "live", "mainline", S(workflow.Context["actor"]![3]), "network-" + pack + ".json"), O(("result", result), ("network", data), ("actor", workflow.Context["actor"]), ("at", workflow.Driver.UtcTicks)));
         recentNetwork = data!.DeepClone().AsObject();
         recentInputRevision = workflow.Driver.InputRevision;

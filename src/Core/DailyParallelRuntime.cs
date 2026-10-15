@@ -6,6 +6,7 @@ namespace Dustweave;
 
 public sealed class DailyParallelRuntime(string executable) : IDailyParallelRuntime
 {
+    private readonly HashSet<string> imported = [];
     public Task StartAsync(DailyAccount account, DailyParallelJob job, CancellationToken token)
         => DailySandbox.LaunchAsync(account, executable, _ => { }, token, job);
     public static string WorkerDirectory(string root, string id)
@@ -18,7 +19,13 @@ public sealed class DailyParallelRuntime(string executable) : IDailyParallelRunt
         job.Validate();
         return WorkerDirectory(Path.Combine(DailySandbox.StateDirectory(job.Account), "root", "user", "current", "AppData", "Local", "BD2DailyAssistant"), job.Id);
     }
-    public DailyParallelStatus? Read(DailyParallelJob job) => DailyJson.TryRead<DailyParallelStatus>(Path.Combine(HostDirectory(job), "status.json"));
+    public DailyParallelStatus? Read(DailyParallelJob job)
+    {
+        var status = DailyJson.TryRead<DailyParallelStatus>(Path.Combine(HostDirectory(job), "status.json"));
+        if (status?.Id == job.Id && status.Account == job.Account && status.State is "completed" or "partial" or "failed" or "stopped" or "interrupted"
+            && imported.Add(job.Id)) DailyAccountProgress.ScheduleImport(DailyIdentity.DataRoot, job.Account, force: true);
+        return status;
+    }
     public bool Alive(DailyParallelStatus status)
     {
         try

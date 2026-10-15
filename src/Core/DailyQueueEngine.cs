@@ -140,6 +140,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
             record["updated"] = DateTime.UtcNow.Ticks;
             DailyJson.Write(path, record);
         }
+        DailyParallelProgress.Capture(request.Root, request.Account);
         Save();
         DailyQueueHistory.Remember(request.Root, request.Account, path);
         DailyJson.Write(request.Output, new
@@ -414,6 +415,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
         finally { if (progressHost != null) progressHost.StageProgress -= OnProgress; }
         Save();
         DailyQueueHistory.Remember(request.Root, request.Account, path);
+        DailyParallelProgress.Capture(request.Root, request.Account);
         DailyJson.Write(request.Output, new
         {
             account = request.Account,

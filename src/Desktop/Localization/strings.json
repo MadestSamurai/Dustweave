@@ -1,4 +1,14 @@
 {
+  "message.吸收次数用完，本地图压制仍未确认；继续其他地图": {
+    "zh-CN": "吸收次数用完，本地图压制仍未确认；继续其他地图",
+    "zh-TW": "吸收次數用完，本地圖壓制仍未確認；繼續其他地圖",
+    "en-US": "Absorption uses are exhausted and suppression here is not yet confirmed. Continuing with other maps."
+  },
+  "message.吸收次数用完，已继续处理可执行的压制；剩余收集次日接续": {
+    "zh-CN": "吸收次数用完，已继续处理可执行的压制；剩余收集次日接续",
+    "zh-TW": "吸收次數用完，已繼續處理可執行的壓制；剩餘收集次日接續",
+    "en-US": "Absorption uses are exhausted. Available suppression was still processed; remaining collection can resume tomorrow."
+  },
   "message.周收集范围已补全，可接续核对遗漏地图；已收集物品不会重复吸收。": {
     "zh-CN": "周收集范围已补全，可接续核对遗漏地图；已收集物品不会重复吸收。",
     "zh-TW": "週收集範圍已補全，可接續核對遺漏地圖；已收集物品不會重複吸收。",

@@ -1,5 +1,14 @@
 # Changelog / 更新记录
 
+## 1.3.13 — 2026-10-15
+
+- 普通启动与隔离多开共享同账号日常结果及周收集地图进度，保留较新结果，完成状态按游戏周期重置。
+- 缩小周收集补查范围，不再因地图范围更新而重置整项完成记录；吸收次数耗尽后仍继续可执行的压制。
+- 修复沙盒专属目录与全局默认目录被拼接，导致误报登记位置不一致的问题，覆盖启动、登录信息回收与绑定修复。
+- Shares validated account progress across ordinary and sandbox runs, narrows collection rechecks, and continues suppression when absorption is exhausted.
+- Fixes false sandbox directory mismatches caused by combining a per-box path with an inherited global default.
+- [完整说明 / Full notes](docs/releases/1.3.13.md)
+
 ## 1.3.12 — 2026-10-15
 
 - 移除魔兽快速战斗环节；旧预设保留其他任务，旧队列自动跳过已移除环节。

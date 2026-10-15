@@ -7,6 +7,8 @@ namespace Dustweave.Accounts;
 // characters before any stdout decoder gets to see them.
 public static class SandboxConfiguration
 {
+    private const uint NoExpand = 0x20000000;
+    private const uint NoTemplates = 0x10000000;
     [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode)]
     internal delegate int Query(string section, string setting, uint index, StringBuilder output, uint bytes);
     private static readonly Dictionary<string, Query> queries = new(StringComparer.OrdinalIgnoreCase);
@@ -55,19 +57,27 @@ public static class SandboxConfiguration
                 queries.Add(path, query);
             }
         }
-        return ReadValues(query, section, setting);
+        return ReadSetting(query, section, setting);
     }
 
-    internal static string ReadValues(Query query, string section, string setting)
+    internal static string ReadSetting(Query query, string section, string setting)
     {
+        // Box_InitPaths uses Conf_Get(box, "FileRootPath", 0): the first
+        // effective entry wins, including template/global fallback. Enumerating
+        // and joining roots would turn a valid override plus a global default
+        // into one invalid path. Keep raw Unicode for managed absolute roots.
+        bool singleRoot = setting.Equals("FileRootPath", StringComparison.OrdinalIgnoreCase);
+        uint flags = NoExpand | (singleRoot ? 0 : NoTemplates);
         var values = new List<string>();
         for (uint index = 0; index < 4096; index++)
         {
             var value = new StringBuilder(8192);
-            // Same raw-value/no-template semantics as SbieIni query.
-            int status = query(section, setting, index | 0x30000000, value, 16384);
+            // List settings retain the existing raw/no-template enumeration.
+            // In particular, do not truncate shared-path permission checks.
+            int status = query(section, setting, index | flags, value, 16384);
             if (status == unchecked((int)0xC000008B)) return string.Join('\n', values); // STATUS_RESOURCE_NAME_NOT_FOUND
             if (status != 0) throw new IOException($"无法读取 Sandboxie 配置（0x{status:X8}），未修改隔离空间。");
+            if (singleRoot) return value.ToString();
             values.Add(value.ToString());
         }
         throw new IOException("Sandboxie 配置条目超出读取范围，未修改隔离空间。");

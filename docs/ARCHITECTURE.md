@@ -47,9 +47,15 @@ The host exposes a generic plugin interface. A manifest declares its entry assem
 The source manifest records repository-local paths and checksums. Integrated tools retain their authorship, licenses and version records.
 ## Isolated instances / 隔离实例
 
-Optional Sandboxie-Plus instances keep one existing Dustweave pipeline per sandbox. The ordinary window remains the authority for account editing, schedules and OTA. Process selection and child launching verify the driver-reported sandbox, not a command-line hint. Game account preferences, connection ownership and application history stay inside that instance. See [isolated instances](ISOLATED_INSTANCES.md) for tested scope and limitations.
+Optional Sandboxie-Plus instances keep one existing Dustweave pipeline per sandbox. The ordinary window remains the authority for account editing, schedules and OTA. Process selection and child launching verify the driver-reported sandbox, not a command-line hint. Connection ownership and command journals stay inside that instance. Account task summaries and validated weekly server collection snapshots are exchanged by the ordinary host before isolated launch, after a worker finishes, and before an ordinary queue starts. See [isolated instances](ISOLATED_INSTANCES.md) for tested scope and limitations.
 
 可选的 Sandboxie-Plus 实例各自运行原有单游戏链路；普通窗口管理账号、计划和更新。进程查询及子进程启动均按驱动报告的沙箱归属检查。每个实例仍保持单一自动化所有者，不允许两个工具同时控制同一游戏。
+
+Sandbox root lookup follows `Box_InitPaths` / `Conf_Get(box, "FileRootPath", 0)`: read the first effective UTF-16 value, including template/global fallback, instead of joining inherited roots into a path. Account ownership checks still require the managed absolute root and matching protected identity. Shared-path lists retain full enumeration; scalar root handling does not relax those checks.
+
+普通启动与隔离启动共享同账号的日常完成摘要，以及按角色、服务器和周周期核验的地图服务器快照。摘要逐环节合并，跨日后不沿用完成状态；地图快照只复用匹配的周周期，旧数据不覆盖新数据。连接、锁、登录凭据和未确认操作回执不参与交换，另一实例的队列不能直接作为本实例的接续队列。界面同步在后台执行并限频，不扫描历史操作日志。
+
+Weekly catalog updates preserve historical queue completion. Selected routes compare owned map coverage with individual server snapshots; only missing or unfinished cartridges need fresh reads. Exhausting absorption defers remaining drops, while available suppression continues across maps. No fallback enables walking collection when it is disabled.
 
 ### Concurrent queues / 集中并行队列
 

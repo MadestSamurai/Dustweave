@@ -22,6 +22,8 @@ static class WeeklyIsolationCases
         public readonly List<long[]> QueryMaps = [];
         public readonly HashSet<long> Picked = [];
         public readonly List<long> Accepted = [], Cleared = [];
+        public readonly HashSet<long> MonstersPending = [];
+        public readonly List<long> Suppressed = [];
         readonly Dictionary<long, long> npcActive = [];
         string npcQuery = "prior"; long popup; bool navigating;
         JsonObject network = new();
@@ -78,10 +80,16 @@ static class WeeklyIsolationCases
                         MapId = N(c["Value"]); Visits.Add(MapId); Scene();
                         break;
                     case "mainline_menu":
-                        if (!(Restricted && N(c["Value"]) == 6) && !(AbsorbDrops && N(c["Value"]) == 4)) throw new Exception("Unexpected talent activation");
+                        if (!(Restricted && N(c["Value"]) == 6) && !(AbsorbDrops && N(c["Value"]) == 4) && N(c["Value"]) != 3) throw new Exception("Unexpected talent activation");
                         H.Page("QuickMenuUI");
                         break;
                     case "mainline_talent":
+                        if (N(c["Value"]) == 305)
+                        {
+                            Suppressed.Add(MapId); MonstersPending.Remove(MapId);
+                            H.Event("dispatch.start", "request"); H.Event("dispatch.start", "response", ("IsSuccess", true), ("TalentSkillInfo", O(("groupId", 305), ("useCount", Suppressed.Count))));
+                            Scene(); break;
+                        }
                         if (!AbsorbDrops || N(c["Value"]) != 405) throw new Exception("Unexpected absorption");
                         Used++; MapOnePending = false;
                         if (!LoseAbsorbReply)
@@ -110,8 +118,11 @@ static class WeeklyIsolationCases
                 if (!Visits.Contains(2)) targets.Add(O(("Id", 102), ("Map", 2)));
             }
             return O(("State", "ready"), ("Error", ""), ("Query", command["Id"]), ("Pack", Pack),
-                ("Maps", command["Items"]), ("Week", NetworkWeek), ("Now", 100), ("Rewards", "[]"), ("Monsters", "[]"),
-                ("Drops", Array(Rows(targets).Where(t => command["Items"]!.AsArray().Any(m => N(m) == N(t["Map"]))))), ("Targets", new JsonArray()), ("StealReady", S(command["Kind"]) == "collection_query_steal"), ("Steals", "[]"), ("StealTargets", new JsonArray()));
+                ("Maps", command["Items"]), ("Week", NetworkWeek), ("Now", 100), ("Rewards", "[]"),
+                ("Monsters", Array(MonstersPending.Select(m => O(("monsterId", 9000 + m), ("groupId", 1), ("activeFlag", true), ("respawnTime", 0)))).ToJsonString()),
+                ("Drops", Array(Rows(targets).Where(t => command["Items"]!.AsArray().Any(m => N(m) == N(t["Map"]))))),
+                ("Targets", Array(MonstersPending.Where(m => command["Items"]!.AsArray().Any(id => N(id) == m)).Select(m => O(("Id", 9000 + m), ("Map", m), ("Group", 1))))),
+                ("StealReady", S(command["Kind"]) == "collection_query_steal"), ("Steals", "[]"), ("StealTargets", new JsonArray()));
         }
         JsonObject[] Readings()
         {
@@ -122,8 +133,8 @@ static class WeeklyIsolationCases
                 WorkflowCases.Reading("mainline.reset", ("GetWeeklyResetTime().Ticks", 500)),
                 WorkflowCases.Reading("mainline.owned_packs", ("Count", 2), ("$items", new JsonArray(O(("Key", 1), ("Value.Id", 1)), O(("Key", 2), ("Value.Id", 2))))),
                 WorkflowCases.Reading("mainline.packs", ("Count", 2), ("$items", new JsonArray(O(("Id", 1), ("PackType", 0)), O(("Id", 2), ("PackType", 0))))),
-                WorkflowCases.Reading("mainline.map", (MapPath, O(("id", MapId), ("packId", Pack))), ("HasCanOverwhelmMonster()", false)),
-                WorkflowCases.Reading("mainline.talent_counts", ("Values", new JsonArray(O(("groupId", 405), ("useCount", Used))))),
+                WorkflowCases.Reading("mainline.map", (MapPath, O(("id", MapId), ("packId", Pack))), ("HasCanOverwhelmMonster()", MonstersPending.Contains(MapId))),
+                WorkflowCases.Reading("mainline.talent_counts", ("Values", new JsonArray(O(("groupId", 405), ("useCount", Used)), O(("groupId", 305), ("useCount", Suppressed.Count))))),
                 WorkflowCases.Reading("mainline.research", ("$self", O(("Active", !Restricted), ("Remaining", 100)))),
                 WorkflowCases.Reading("mainline.talent_rows", ("$self", Restricted ? new JsonArray(O(("Kind", 6), ("Group", 605), ("Instance", 605), ("PackRestricted", true), ("Reason", "character_pack_restricted"))) : AbsorbDrops ? new JsonArray(O(("Kind", 4), ("Group", 405), ("Instance", 405), ("PackRestricted", false), ("Reason", ""), ("Cooldown", 0), ("Gate", ""))) : new JsonArray())),
                 WorkflowCases.Reading("mainline.network", ("$self", network)),
@@ -138,6 +149,14 @@ static class WeeklyIsolationCases
                 rows.Add(gate);
             }
             if (NpcEnabled) rows.Add(WorkflowCases.Reading("weekly_npc.native", ("$self", NpcState())));
+            if (MonstersPending.Contains(MapId))
+            {
+                rows.RemoveAll(r => S(r["Id"]) == "mainline.talent_rows");
+                rows.Add(WorkflowCases.Reading("mainline.talent_rows", ("$self", new JsonArray(O(("Kind", 3), ("Group", 305), ("Instance", 305), ("PackRestricted", false), ("Reason", ""), ("Cooldown", 0), ("Gate", ""))))));
+                var suppress = WorkflowCases.Reading("dispatch.talent", ("ὬὩὬὡὯὮὨὣὩὦὡ", "Overwhelm"),
+                    (SkillPath, O(("id", 3055), ("groupId", 305), ("valueList", new JsonArray(21, 0)), ("catalystValue", 0))), ("_objDisableImage.activeSelf", false));
+                suppress["InstanceId"] = 305; rows.Add(suppress);
+            }
             if (AbsorbDrops)
             {
                 var talent = WorkflowCases.Reading("dispatch.talent", ("ὬὩὬὡὯὮὨὣὩὦὡ", "FieldRewardAbsorb"),
@@ -198,6 +217,15 @@ static class WeeklyIsolationCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool yes, string message) { if (!yes) throw new Exception(message); checks.Add(message); }
+        using (var f = new Fixture(Path.Combine(root, "weekly-cache-no-global-recheck")) { Pending = false, Used = 21 })
+        {
+            await f.Run();
+            int queries = f.Queries.Count, switches = f.H.Box.Commands.Count(c => S(c["Kind"]) == "mainline_pack");
+            var again = await f.Run();
+            Check(S(again["state"]) == "completed" && f.Queries.Count == queries
+                && f.H.Box.Commands.Count(c => S(c["Kind"]) == "mainline_pack") == switches,
+                "completed same-week server maps skip all visits and queries even without absorption quota");
+        }
         using (var f = new Fixture(Path.Combine(root, "collection-adjacent-query")))
         {
             var route = new DailyFieldRoute(f.H.Workflow);
@@ -357,7 +385,21 @@ static class WeeklyIsolationCases
         using (var f = new Fixture(Path.Combine(root, "weekly-quota-stop")) { Used = 21 })
         {
             var r = await f.Run();
-            Check(B(r["stages"]!["weekly_mainline"]!["waiting_daily_reset"]) && f.H.Box.Commands.Count == 0, "exhausted daily absorption quota stops rather than touring more cartridges");
+            Check(B(r["stages"]!["weekly_mainline"]!["waiting_daily_reset"]) && f.Queries.Contains(2)
+                && !f.H.Box.Commands.Any(c => S(c["Kind"]) == "mainline_talent"), "exhausted absorption checks unknown remaining maps without casting collection talents");
+        }
+        using (var f = new Fixture(Path.Combine(root, "weekly-quota-suppression")) { Used = 21 })
+        {
+            f.MonstersPending.UnionWith([1L, 2L, 21L]);
+            var r = await f.Run();
+            Check(f.Suppressed.Order().SequenceEqual(new long[] { 1, 2, 21 }), "zero absorption finishes suppression on mixed maps and later cartridges");
+            Check(B(r["stages"]!["weekly_mainline"]!["waiting_daily_reset"]) && f.Used == 21, "only uncollected drops wait for tomorrow without extra absorption");
+        }
+        using (var f = new Fixture(Path.Combine(root, "weekly-last-absorption")) { Used = 20, AbsorbDrops = true })
+        {
+            f.MonstersPending.UnionWith([2L, 21L]);
+            var r = await f.Run();
+            Check(f.Used == 21 && f.Suppressed.Order().SequenceEqual(new long[] { 2, 21 }) && S(r["state"]) == "completed", "last absorption does not interrupt remaining suppression-only maps");
         }
         using (var f = new Fixture(Path.Combine(root, "weekly-deferred-then-quota")))
         {
@@ -365,8 +407,8 @@ static class WeeklyIsolationCases
             var r = await f.Run(); var stage = r["stages"]!["weekly_mainline"]!;
             Check(B(stage["waiting_daily_reset"]) && stage["deferred_locations"]!.AsArray().Count == 1 && stage["pending_maps"]!.AsArray().Count > 0,
                 "quota stop retains earlier local failures and the unvisited map list");
-            Check(f.H.Box.Commands.Count(c => S(c["Kind"]) == "mainline_pack") == 2,
-                "a local failure does not override the global quota boundary");
+            Check(f.Queries.Last() == 2 && !f.H.Box.Commands.Any(c => S(c["Kind"]) == "mainline_talent" && N(c["Value"]) / 100 == 4),
+                "a local failure and exhausted absorption do not hide later suppression maps or spend another use");
         }
         foreach (Exception error in new Exception[] { new OperationCanceledException(), new StageHostException("identity", "account changed"), new DailyStepException("pending", "unknown talent receipt", true), new DailyStepException("deferred", "no matching cartridge proof"), new InvalidDataException("unrelated invalid state") })
         using (var f = new Fixture(Path.Combine(root, "weekly-fatal-" + error.GetType().Name + "-" + (error is DailyStepException step ? step.Kind : ""))))

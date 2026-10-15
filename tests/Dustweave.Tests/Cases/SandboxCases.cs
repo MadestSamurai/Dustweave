@@ -10,16 +10,36 @@ static class SandboxCases
         string a = new('a', 64), b = new('b', 64);
         string unicodeRoot = @"C:\Users\测试用户\隔离空间\root";
         var reads = new List<uint>();
-        string queried = SandboxConfiguration.ReadValues((section, setting, index, text, bytes) => {
+        string queried = SandboxConfiguration.ReadSetting((section, setting, index, text, bytes) => {
             reads.Add(index);
             if ((index & 0xffff) > 0) return unchecked((int)0xC000008B);
             text.Append(unicodeRoot); return 0;
         }, "Dustweave_fixture", "FileRootPath");
-        Check(queried == unicodeRoot && reads.SequenceEqual(new uint[] { 0x30000000, 0x30000001 }), "sandbox configuration preserves Unicode and raw no-template query semantics");
+        Check(queried == unicodeRoot && reads.SequenceEqual(new uint[] { 0x20000000 }), "sandbox root preserves Unicode and reads only the first effective value including template fallback");
+        SandboxConfiguration.Query Values(params string[] values) => (section, setting, index, text, bytes) => {
+            uint position = index & 0x0fffffff;
+            if (position >= values.Length) return unchecked((int)0xC000008B);
+            text.Append(values[position]); return 0;
+        };
+        string globalRoot = @"C:\Sandbox\%SANDBOX%";
+        string effectiveRoot = SandboxConfiguration.ReadSetting(Values(unicodeRoot, globalRoot), "Dustweave_fixture", "FileRootPath");
+        Check(effectiveRoot == unicodeRoot && SandboxConfiguration.SameRoot(effectiveRoot, unicodeRoot), "per-box root plus inherited global default does not become a multiline path");
+        Check(SandboxConfiguration.ReadSetting(Values(globalRoot), "Dustweave_fixture", "FileRootPath") == globalRoot, "global-only root is retained for ownership rejection instead of treated as an unconfigured sandbox");
+        Check(SandboxConfiguration.ReadSetting(Values(), "Dustweave_fixture", "FileRootPath") == "", "missing sandbox root remains distinguishable from a global fallback");
+        Check(SandboxConfiguration.ReadSetting(Values(unicodeRoot, globalRoot), "Dustweave_fixture", "filerootpath") == unicodeRoot, "root setting names use case-insensitive scalar semantics");
+        string foreignRoot = unicodeRoot + "-foreign";
+        Check(!SandboxConfiguration.SameRoot(SandboxConfiguration.ReadSetting(Values(foreignRoot, unicodeRoot), "Dustweave_fixture", "FileRootPath"), unicodeRoot), "matching a later root cannot bypass the actual first root ownership check");
+        foreach (string setting in new[] { "OpenKeyPath", "OpenIpcPath", "OpenPipePath", "OpenFilePath", "BreakoutProcess", "BreakoutFolder", "BreakoutDocument" })
+        {
+            reads.Clear();
+            var values = Values(@"C:\first", @"C:\second");
+            string permissions = SandboxConfiguration.ReadSetting((s, k, i, t, n) => { reads.Add(i); return values(s, k, i, t, n); }, "Dustweave_fixture", setting);
+            Check(permissions == "C:\\first\nC:\\second" && reads.SequenceEqual(new uint[] { 0x30000000, 0x30000001, 0x30000002 }), "shared permissions still enumerate every entry: " + setting);
+        }
         Check(SandboxConfiguration.SameRoot(queried + "\\", unicodeRoot.ToUpperInvariant()), "sandbox root normalization accepts trailing separator and casing");
         Check(!SandboxConfiguration.SameRoot(queried + "-foreign", unicodeRoot) && !SandboxConfiguration.SameRoot("root", unicodeRoot), "sandbox root normalization still rejects other roots and relative paths");
         bool queryFailed = false;
-        try { SandboxConfiguration.ReadValues((s, k, i, t, n) => unchecked((int)0xC0000022), "box", "FileRootPath"); }
+        try { SandboxConfiguration.ReadSetting((s, k, i, t, n) => unchecked((int)0xC0000022), "box", "FileRootPath"); }
         catch (IOException) { queryFailed = true; }
         Check(queryFailed, "sandbox driver read failure is never treated as an empty configuration");
         Check(DailySandbox.BoxName(a) == "Dustweave_" + new string('a', 20), "stable per-account sandbox name survives changes to account alias and slot");
@@ -139,6 +159,13 @@ static class SandboxCases
         var markerBytes=File.ReadAllBytes(markerFile);
         DailySandboxRegistration.Resolve(registrationAccount,registrationState,registrationRoot,GamePath);
         Check(File.ReadAllBytes(markerFile).SequenceEqual(markerBytes),"rechecking recovered registration is idempotent");
+        string inheritedRoot=SandboxConfiguration.ReadSetting(Values(registrationRoot,globalRoot),registrationBox,"FileRootPath");
+        Check(DailySandboxRegistration.Resolve(registrationAccount,registrationState,inheritedRoot,GamePath)?.Account==registrationAccount,"second launch accepts the existing account root despite a global default");
+        Check(DailySandboxRepair.ProofIssue(registrationAccount,registrationState,inheritedRoot)=="","binding repair verifies the same effective root as account launch");
+        Check(File.ReadAllBytes(markerFile).SequenceEqual(markerBytes),"inherited root lookup does not rewrite the existing registration");
+        string wrongEffectiveRoot=SandboxConfiguration.ReadSetting(Values(Path.Combine(output,"foreign-root"),registrationRoot),registrationBox,"FileRootPath");
+        Reject(()=>DailySandboxRegistration.Resolve(registrationAccount,registrationState,wrongEffectiveRoot,GamePath),"registration rejects a foreign effective root even if a later entry matches");
+        Check(DailySandboxRepair.ProofIssue(registrationAccount,registrationState,wrongEffectiveRoot)=="sandbox.repair.other_root","binding repair also rejects a foreign first root");
         Check(restoredRegistration!.Name=="Kept alias" && SessionRegistry.SessionsEqual(registrationVault.LoadFixedSlot(1),Credentials("identity-evidence",1)),"index recovery retains alias and encrypted credentials");
         DailyJson.Write(markerFile,restoredRegistration with {Box=registrationBox.ToUpperInvariant()});
         DailyJson.Write(bindingFile,registrationBinding with {Box=registrationBox.ToLowerInvariant()});

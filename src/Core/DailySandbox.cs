@@ -230,6 +230,11 @@ public static class DailySandbox
         if (!privateFiles.Contains(controlLock,StringComparer.OrdinalIgnoreCase))
             await Run(installation,"SbieIni.exe",["append",box,"WriteFilePath",controlLock],token);
         token.ThrowIfCancellationRequested();
+        await Task.Run(() =>
+        {
+            DailyAccountProgress.ImportSandbox(DailyIdentity.DataRoot, account.AccountKey, force: true);
+            DailyAccountProgress.ExportSandbox(DailyIdentity.DataRoot, account.AccountKey);
+        }, token);
         string requests=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BD2DailyAssistant","instance-requests"); Directory.CreateDirectory(requests);
         string requestPath=Path.Combine(requests,"launch-"+Guid.NewGuid().ToString("N")+".json"); DailyJson.Write(requestPath,request);
         string sessionPath = Path.ChangeExtension(requestPath, ".bd2slot");

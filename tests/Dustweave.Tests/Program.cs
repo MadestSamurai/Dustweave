@@ -83,6 +83,7 @@ await Group("DiagnosticExport", () => DiagnosticExportCases.Run(root,cases));
 await Group("ClientUpdate", () => Sync(() => ClientUpdateCases.Run(root,cases)));
 await Group("LiveBindings", () => Sync(() => LiveBindingCases.Run(root,cases)));
 await Group("Parallel", () => ParallelCases.Run(root, cases));
+await Group("AccountProgress", () => Sync(() => AccountProgressCases.Run(root, cases)));
 await Group("ParallelProcess", () => ParallelProcessCases.Run(root, cases));
 await Group("Saffron", async () => { SaffronCases.Run(cases); await SaffronCases.RuntimeLoop(root,cases); });
 await Group("Sandbox", () => SandboxCases.Run(root, cases));

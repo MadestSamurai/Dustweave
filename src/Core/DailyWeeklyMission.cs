@@ -66,12 +66,9 @@ public static class DailyWeeklyMission
     }
     public static void RecheckLegacy(JsonObject record, bool resume = false)
     {
-        foreach (var item in Rows(record["items"]).Where(DailyCollectionCatalog.NeedsCoverageRecheck))
-        {
-            item["state"] = resume ? "pending" : "partial";
-            item["error"] = "周收集范围已补全，可接续核对遗漏地图；已收集物品不会重复吸收。";
-            item.Remove("carried_forward");
-        }
+        // A catalog revision is not evidence that this account has unfinished maps.
+        // Preserve historical completion; the next selected route compares owned
+        // maps with per-cartridge server snapshots and reads only missing coverage.
         foreach (var item in Rows(record["items"]).Where(NeedsRecheck))
         {
             item["state"] = resume ? "pending" : "partial";

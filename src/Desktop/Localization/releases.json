@@ -1,5 +1,32 @@
 [
 {
+  "Version": "1.3.13",
+  "Date": "2026-10-15",
+  "Notes": {
+    "zh-CN": [
+      "普通启动与隔离多开共享同账号日常结果和周收集地图进度，保留较新结果，按游戏周期重置。",
+      "周收集只补查缺失或未完成的地图，不再因地图范围更新而重置整项完成记录。",
+      "吸收次数用完后继续可执行的压制，暂缓剩余物品，不自动开启步行收集。",
+      "修复沙盒专属目录与默认目录并存时的启动、登录信息回收和绑定修复误报。",
+      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+    ],
+    "zh-TW": [
+      "普通啟動與隔離多開共用同帳號日常結果和每週收集地圖進度，保留較新結果，依遊戲週期重置。",
+      "每週收集只補查缺失或未完成的地圖，不再因地圖範圍更新而重置整項完成紀錄。",
+      "吸收次數用完後繼續可執行的壓制，暫緩剩餘物品，不自動開啟步行收集。",
+      "修復沙盒專屬目錄與預設目錄並存時的啟動、登入資訊回收和綁定修復誤報。",
+      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+    ],
+    "en-US": [
+      "Shares validated account results and weekly map progress between ordinary and sandbox runs, retaining newer results and respecting game resets.",
+      "Collection rechecks cover missing or unfinished areas without resetting the whole completed stage after catalog updates.",
+      "Continues available suppression when absorption runs out, deferring remaining drops without enabling walking collection.",
+      "Fixes false sandbox directory mismatches during startup, sign-in recovery and binding repair when a per-box path overrides a global default.",
+      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+    ]
+  }
+},
+{
   "Version": "1.3.12",
   "Date": "2026-10-15",
   "Notes": {

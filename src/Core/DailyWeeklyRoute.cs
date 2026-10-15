@@ -19,6 +19,7 @@ public sealed class DailyWeeklyRoute
     private bool catalogReady;
     private readonly HashSet<long> recoveredPacks = [];
     private readonly HashSet<(long Pack, long Map)> storyLocked = [];
+    private readonly HashSet<(long Pack, long Map)> waitingAbsorption = [];
     // Deferrals belong to this run only. A retry starts from fresh server progress,
     // never from a persistent blacklist of maps or cartridges.
     private readonly Dictionary<string, Dictionary<(long Pack, long Map), JsonObject>> failures = Stages.ToDictionary(s => s, _ => new Dictionary<(long, long), JsonObject>());
@@ -69,7 +70,7 @@ public sealed class DailyWeeklyRoute
     }
     private string Summary(string stage) => stage == "weekly_npc" ? npc?.Summary() ?? "等待读取周NPC任务" : $"{Names[stage]}已核对 {done[stage].Count}/{known[stage].Count} 张地图";
     private Dictionary<string, long[]> Maps() => new() { { "weekly_mainline", active.Contains("weekly_mainline") ? route.Catalog.Maps(pack) : [] }, { "weekly_steal", active.Contains("weekly_steal") ? route.Catalog.StealMaps(pack) : [] } };
-    private Dictionary<string, long[]> MapJobs() => Maps().Where(p => active.Contains(p.Key)).ToDictionary(p => p.Key, p => p.Value.Where(id => !done[p.Key].Contains((pack, id)) && !failures[p.Key].ContainsKey((pack, id)) && (p.Key != "weekly_mainline" || !storyLocked.Contains((pack, id)))).ToArray());
+    private Dictionary<string, long[]> MapJobs() => Maps().Where(p => active.Contains(p.Key)).ToDictionary(p => p.Key, p => p.Value.Where(id => !done[p.Key].Contains((pack, id)) && !failures[p.Key].ContainsKey((pack, id)) && (p.Key != "weekly_mainline" || !storyLocked.Contains((pack, id)) && !waitingAbsorption.Contains((pack, id)))).ToArray());
     private void Defer(string stage, long map, string reason, JsonObject? metadata = null)
     {
         var failure = O(("pack", pack), ("map", map), ("reason", reason), ("at", w.Driver.UtcTicks), ("metadata", metadata));
@@ -146,12 +147,7 @@ public sealed class DailyWeeklyRoute
         // The recovery pass has already queried only the affected maps; refresh the
         // rest of this cartridge once when normal routing reaches it.
         if (recoveredPacks.Contains(pack)) checkpoint = null;
-        if (MapJobs().GetValueOrDefault("weekly_mainline", []).Length > 0 && !w.Settings.Weekly.WalkCollect)
-            try
-            {
-                route.Quota(await route.Evidence());
-            }
-            catch (DailyQuotaExhausted) { throw new DailyWeeklyCategoryStop("weekly_mainline", "吸收次数已用完，次日接续", O(("waiting_daily_reset", true))); }
+        await DeferAbsorptionOnlyMaps();
         bool needed = active.Contains("weekly_npc") && !failures["weekly_npc"].Keys.Any(p => p.Pack == pack);
         if (npc?.Data is DailyNpcData d)
         {
@@ -175,6 +171,7 @@ public sealed class DailyWeeklyRoute
     }
     private async Task<Dictionary<string, long[]>> Jobs()
     {
+        await DeferAbsorptionOnlyMaps();
         var jobs = MapJobs();
         bool npcDeferred = failures["weekly_npc"].Keys.Any(p => p.Pack == pack);
         if ((!active.Contains("weekly_npc") || npcDeferred) && npc?.Data is DailyNpcData d)
@@ -195,6 +192,13 @@ public sealed class DailyWeeklyRoute
             });
         }
         return jobs;
+    }
+    private async Task DeferAbsorptionOnlyMaps()
+    {
+        if (!active.Contains("weekly_mainline") || w.Settings.Weekly.WalkCollect || checkpoint == null || Used(await route.Evidence(), 4) < 21) return;
+        foreach (long map in route.Catalog.Maps(pack))
+            if (checkpoint["maps"]?[map.ToString()] is JsonObject state && state["drops"] is JsonArray { Count: > 0 }
+                && state["monsters"] is JsonArray { Count: 0 }) waitingAbsorption.Add((pack, map));
     }
     public static readonly string[] StageOrder = ["weekly_mainline", "weekly_npc", "weekly_steal"];
     private async Task RecoverInterruptedMaps(long[] availablePacks)
@@ -259,7 +263,16 @@ public sealed class DailyWeeklyRoute
                 else
                     await route.Gather(w.Settings.Weekly.WalkCollect);
             }
-            catch (DailyQuotaExhausted) { throw new DailyWeeklyCategoryStop(stage, "吸收次数已用完，次日接续", O(("waiting_daily_reset", true))); }
+            catch (DailyQuotaExhausted)
+            {
+                // Suppression may already have succeeded. Re-read it and defer only
+                // the remaining drops, never stop other maps or weekly categories.
+                await Refresh();
+                if (checkpoint?["maps"]?[map.ToString()]?["monsters"] is JsonArray { Count: > 0 })
+                    Defer(stage, map, "吸收次数用完，本地图压制仍未确认；继续其他地图");
+                else waitingAbsorption.Add((pack, map));
+                break;
+            }
             catch (DailyCollectionTargetsRemain error) { deferredPickups = error.DeferredPickups; }
             catch (StageHostException error) when (error.Kind == "pending" && route.Progress.PendingMaps()
                 .Any(op => DailyCollectionProgress.RecoveryLocation(op) == (pack, map)))
@@ -340,6 +353,10 @@ public sealed class DailyWeeklyRoute
             return O(("state", complete ? "completed" : "partial"), ("detail", npc.Summary() + (complete ? "" : " · 范围内暂无符合设置的可执行任务")), ("reason", complete ? "weekly_npc_verified" : "no_eligible_quests"), ("source", "TodayQuestInfoResponse"));
         }
         var pending = known[stage].Except(done[stage]).OrderBy(p => p.Pack).ThenBy(p => p.Map).ToArray();
+        if (stage == "weekly_mainline" && pending.Any(waitingAbsorption.Contains))
+            return O(("state", "partial"), ("detail", Summary(stage) + " · 吸收次数用完，已继续处理可执行的压制；剩余收集次日接续"),
+                ("reason", "absorption_exhausted"), ("waiting_daily_reset", true), ("source", "game_network"),
+                ("pending_maps", Array(pending.Select(p => (JsonNode)new JsonArray(p.Pack, p.Map)))));
         if (stage == "weekly_mainline" && storyLocked.Count > 0)
             return O(("state", "partial"), ("detail", Summary(stage) + " · 部分地图尚未推进到敌人出现阶段，完成对应卡带剧情后再收集"),
                 ("reason", "collection_story_locked"), ("source", "game_network"), ("pending_maps", Array(pending.Select(p => (JsonNode)new JsonArray(p.Pack, p.Map)))));

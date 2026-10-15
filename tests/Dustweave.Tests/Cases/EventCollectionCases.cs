@@ -13,6 +13,7 @@ static class EventCollectionCases
         public int MapType, MenuKind;
         public bool DropsPending, MonstersPending, Research, Disabled, Missing;
         public double StealthUntil;
+        public void ExhaustAbsorption() => counts[4] = 21;
         public readonly List<int> Casts = [];
         readonly Dictionary<int, int> counts = [];
         JsonObject network = new();
@@ -93,14 +94,18 @@ static class EventCollectionCases
             var old = O(("schema", 1), ("source", "FieldObjectInfoResponse+MonsterInfoResponse"), ("account", f.H.Context["actor"]![3]), ("player", f.H.Context["actor"]![4]),
                 ("network", O(("State", "ready"), ("Error", ""), ("Pack", 2005), ("Week", 500), ("Now", 100), ("Maps", new JsonArray(20051)), ("Drops", new JsonArray()), ("Targets", new JsonArray()), ("Rewards", "[]"), ("Monsters", "[]"))));
             DailyJson.Write(Path.Combine(f.H.Root, "live", "server-collection", S(f.H.Context["actor"]![3]), "500", "2005.json"), old);
+            Check(f.Route.Progress.Cached(2005, [20051], "500", true) != null, "catalog expansion preserves already verified maps in the same cartridge");
             Check(f.Route.Progress.Cached(2005, [20051, 20052], "500", true) == null, "old event-five cache cannot certify an unqueried battle map");
+            old["server"] = "different-server";
+            DailyJson.Write(Path.Combine(f.H.Root, "live", "server-collection", S(f.H.Context["actor"]![3]), "500", "2005.json"), old);
+            Check(f.Route.Progress.Cached(2005, [20051], "500", true) == null, "shared snapshot must also match the connected server");
             var item = O(("task", "weekly_mainline"), ("state", "completed"), ("carried_forward", true), ("result", O(("reason", "weekly_route_verified"))));
             var queue = O(("items", new JsonArray(item)));
             DailyWeeklyMission.RecheckLegacy(queue);
-            Check(S(queue["items"]![0]!["state"]) == "partial" && queue["items"]![0]!["carried_forward"] == null, "old all-complete result becomes selectable for new coverage");
+            Check(S(queue["items"]![0]!["state"]) == "completed" && B(queue["items"]![0]!["carried_forward"]), "catalog revision preserves historical completion rather than resetting every account");
             queue["items"]![0]!["state"] = "completed";
             DailyWeeklyMission.RecheckLegacy(queue, resume: true);
-            Check(S(queue["items"]![0]!["state"]) == "pending", "resume rechecks omitted maps without manual completion overrides");
+            Check(S(queue["items"]![0]!["state"]) == "completed", "resume does not reopen unrelated completed weekly work");
             queue["items"]![0]!["state"] = "completed";
             queue["items"]![0]!["result"]!["collection_coverage"] = DailyCollectionCatalog.CoverageRevision;
             DailyWeeklyMission.RecheckLegacy(queue, resume: true);
@@ -113,6 +118,12 @@ static class EventCollectionCases
             Check(S(result["state"]) == "completed" && f.Casts.SequenceEqual(new[] { 3 }), "suppression-only area is handled without spending absorption or research: " + pack);
             await f.Route.Gather();
             Check(f.Casts.Count == 1, "fresh server completion prevents repeat suppression: " + pack);
+        }
+        using (var f = new Fixture(Path.Combine(root, "event-suppression-without-absorption"), 2005, 20052, 1) { MonstersPending = true })
+        {
+            f.ExhaustAbsorption();
+            var result = await f.Route.Gather();
+            Check(S(result["state"]) == "completed" && f.Casts.SequenceEqual(new[] { 3 }), "exhausted absorption still allows suppression-only maps to finish");
         }
         using (var f = new Fixture(Path.Combine(root, "event-three-absorb"), 2003, 20031) { DropsPending = true })
         {
