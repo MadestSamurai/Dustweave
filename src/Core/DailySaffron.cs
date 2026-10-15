@@ -51,7 +51,7 @@ public static class DailySaffron
                     if(signature!=last){last=signature;w.Driver.Diagnostics.Event("saffron_phase",O(("cycle",cycle),("reason",state["Reason"])));}
                     if(S(cycle["State"]) is "completed" or "skipped" or "partial")
                         return O(("state",cycle["State"]),("reason",cycle["Reason"]),("saffron",cycle));
-                    string next=string.Join("|",S(cycle["State"]),S(cycle["Surveyed"]),S(cycle["Harvested"]),S(cycle["PotatoRounds"]),S(state["GatherReplies"]),S(state["Spent"]),S(state["Cooked"]),S(state["SoldItems"]),S(state["EmptyFields"]));
+                    string next=string.Join("|",S(cycle["State"]),S(cycle["Harvested"]),S(cycle["PotatoRounds"]),S(state["GatherReplies"]),S(state["Spent"]),S(state["Cooked"]),S(state["SoldItems"]),S(state["EmptyFields"]));
                     if(next!=progress){progress=next;lastProgress=w.Time;}
                     long remaining=N(cycle["WaitUntil"])-N(cycle["ServerNow"]);
                     if(waitStamp!=N(cycle["WaitUntil"])) {waitStamp=N(cycle["WaitUntil"]);naturalWaitEnd=w.Time+Math.Clamp(remaining/1000.0,0,900);}

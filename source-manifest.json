@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-15T05:19:07.3202936Z",
+  "generatedUtc": "2026-10-15T07:35:43.2828440+00:00",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -242,15 +242,15 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "3d980c4cf99a8d54883cddd007c75a4d223919d6ef4d3c9357f38c63c69b4121",
+      "sha256": "177d9a430aaec9cd0f48a8adf5a54ee033d9e72ff995d7df89925b582461e172",
       "reasons": [
         "release notes"
       ],
-      "bytes": 37128
+      "bytes": 38908
     },
     {
       "path": "Directory.Build.props",
-      "sha256": "b3f6caf24d49cadbd87fbbe9d102cc9ff620ba3fbf19c89a510d7bf839ef4b16",
+      "sha256": "6deeb7d4642ae911045bd99ec1eb4100033bcfe26f660ba591207aa7c88342a7",
       "reasons": [
         "build input"
       ],
@@ -491,7 +491,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 4389
+      "bytes": 5090
     },
     {
       "path": "src/Accounts/SandboxInstallation.cs",
@@ -655,11 +655,11 @@
     },
     {
       "path": "src/Compatibility/PandoraCompiler.cs",
-      "sha256": "c5be512a4add7efb369507b0db70b2f5efc773176dfde9731cfab05bdc75f5a8",
+      "sha256": "493b38cc4617d707f992fcb8881d5f6c71a440ecb7bb50448f1d59de89decdd0",
       "reasons": [
         "build input"
       ],
-      "bytes": 14284
+      "bytes": 17112
     },
     {
       "path": "src/Compatibility/startup-contract.json",
@@ -1158,8 +1158,8 @@
       "reasons": [
         "build input"
       ],
-      "sha256": "84320c9ead878a60c6a2970284b88cb81d0933fdb0a27a3347c57c29093c3ea2",
-      "bytes": 20378,
+      "sha256": "f2a11339f3d2100f79f365b93e1fa77d0b7cd64f85198988dc6ab32b1bb8daa9",
+      "bytes": 21167,
       "path": "src/Core/DailyDiagnosticExport.cs"
     },
     {
@@ -1204,11 +1204,11 @@
     },
     {
       "path": "src/Core/DailyEventNative.cs",
-      "sha256": "0e142744dfe6ad3946e62f388b6199921b63a74af012c1c2b0b354b73265b8e1",
+      "sha256": "28a0f3a4b173f02d23c5143ada653e9b44c3fc2c16001dba969c07678c9120d2",
       "reasons": [
         "build input"
       ],
-      "bytes": 10440
+      "bytes": 10480
     },
     {
       "path": "src/Core/DailyEventRewards.cs",
@@ -1228,11 +1228,11 @@
     },
     {
       "path": "src/Core/DailyEventSweep.cs",
-      "sha256": "4fbf449b985ce36e22a217d0182a7d136c2af61e1b8388fa532a6d3eb2919fc1",
+      "sha256": "e183e7a035add06cd4368db542b0722a8e6d8235ca7ae286b8dcfd92f3b21654",
       "reasons": [
         "build input"
       ],
-      "bytes": 13068
+      "bytes": 13141
     },
     {
       "path": "src/Core/DailyEvidence.cs",
@@ -1677,7 +1677,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 21798
+      "bytes": 21835
     },
     {
       "path": "src/Core/DailyQuizRecovery.cs",
@@ -1713,11 +1713,11 @@
     },
     {
       "path": "src/Core/DailySaffron.cs",
-      "sha256": "efd45d8a3e9a619439adc5e593fde0449f995dfb970ea8f216fe634acc4f3110",
+      "sha256": "a0e021c4acb9ce7f273674a1a855d49998a5d6eec030c555ededaad9569f60b0",
       "reasons": [
         "build input"
       ],
-      "bytes": 6642
+      "bytes": 6621
     },
     {
       "path": "src/Core/DailySalvation.cs",
@@ -2233,11 +2233,11 @@
     },
     {
       "path": "src/Core/Dustweave.Core.csproj",
-      "sha256": "5ea8f059fbc5bc618c68467322b24c2d83797b05f3a5455a4dbdd8db097b4217",
+      "sha256": "3b340fd5817932d9f0d27d3d13d717778ad0fcea5f7f354980c524be6cf19c24",
       "reasons": [
         "build input"
       ],
-      "bytes": 2543
+      "bytes": 2596
     },
     {
       "path": "src/Core/GuildSession.cs",
@@ -2281,11 +2281,11 @@
     },
     {
       "path": "src/Core/PandoraClient.cs",
-      "sha256": "fa1a9c375e1ca0b97db92e16cf9b910a3c699915001837ad8dba62db79c3b433",
+      "sha256": "3428935f837b29976a4059434ccd874754d6edb0c6d866480c274b13e8ff10ff",
       "reasons": [
         "build input"
       ],
-      "bytes": 4905
+      "bytes": 5054
     },
     {
       "path": "src/Core/RefinementChoices.cs",
@@ -2633,11 +2633,11 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "d1003ca8c2a4dfd564f013b511109a5ed2872c3fb113dab9fd08f0223449cc44",
+      "sha256": "27b7a44fa6e12d5fcb5777ed6c8bd53f5476efa472d7974b4458df1f6a11a547",
       "reasons": [
         "build input"
       ],
-      "bytes": 94492
+      "bytes": 98600
     },
     {
       "path": "src/Desktop/Localization/runtime.json",
@@ -3137,11 +3137,27 @@
     },
     {
       "path": "src/Pandora/AttackArea.cs",
-      "sha256": "39f8e1b85a3e40e28cd7b57e9a2ef648605d5cc089406156df42fd597a187cdc",
+      "sha256": "216e321413138860e8b09069cb10c9e966b4e807493b881002984936d9abeaa0",
       "reasons": [
         "build input"
       ],
-      "bytes": 3057
+      "bytes": 3383
+    },
+    {
+      "path": "src/Pandora/BossKiting.cs",
+      "sha256": "c972ddc7a93e78e3ed35cd86872588b5605f97000da991dcf16c8cc588ff8d53",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 13617
+    },
+    {
+      "path": "src/Pandora/CombatTactics.cs",
+      "sha256": "92e3f187984eec07c10aa7972743913ad9b2dd4d50da17d8eda87cf0a8352e94",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 14485
     },
     {
       "path": "src/Pandora/ComboPlanner.cs",
@@ -3169,19 +3185,19 @@
     },
     {
       "path": "src/Pandora/Native.cs",
-      "sha256": "6c57c856b473086f5ff4301dd2c401e21817b471fd58ad3a849f84d5f1c0b4b5",
+      "sha256": "84003cbae47da0aa22d49428a40d761d6f3b70028a23056178612d2e8bcfca39",
       "reasons": [
         "build input"
       ],
-      "bytes": 9989
+      "bytes": 12075
     },
     {
       "path": "src/Pandora/Planner.cs",
-      "sha256": "bb99d8af4d9e48ea50dc4954c36efb4d760a78fdb3ed0bf4c1023b07ca3e5075",
+      "sha256": "f67b717a5e09729fe09b8463e79fd653b53de8f4e43821d54287134d79e09c9e",
       "reasons": [
         "build input"
       ],
-      "bytes": 9284
+      "bytes": 11095
     },
     {
       "path": "src/Pandora/RegionPlanner.cs",
@@ -3193,11 +3209,11 @@
     },
     {
       "path": "src/Pandora/Runtime.cs",
-      "sha256": "4445093dc7befc8d99a472ae9d254cc6d6bb80863c6dd20d9ca30d0ba31bff7c",
+      "sha256": "5d4c5e3ee107126d04ab665bd860e23024a2dc598b45789f24f85b59be739712",
       "reasons": [
         "build input"
       ],
-      "bytes": 27942
+      "bytes": 34999
     },
     {
       "path": "src/Pandora/SkillPlanner.cs",
@@ -8001,11 +8017,11 @@
     },
     {
       "path": "standalone/bd2-territory/hook/RuntimeSaffron.cs",
-      "sha256": "62cf1797be6bd404ea372a74fda808867dad8332de29dfa0969229705f5c5a9d",
+      "sha256": "bfbc622599aadd1e5cf5baa9363a05f2b8f7f7a8e4e530a2fea5fc386e6149cd",
       "reasons": [
         "build input"
       ],
-      "bytes": 25646
+      "bytes": 26511
     },
     {
       "path": "standalone/bd2-territory/hook/RuntimeSales.cs",
@@ -8337,11 +8353,11 @@
     },
     {
       "path": "standalone/bd2-territory/shared/SaffronCycle.cs",
-      "sha256": "71fadb046ed6030cd3e535c3069f7aeffb2b2adf0c9bdcc88dce52f01cd63c9f",
+      "sha256": "1725f52dcbeb95ec13d734b849d5c4598ff1b73498bddaf8bdd3dd5016b9fbd5",
       "reasons": [
         "build input"
       ],
-      "bytes": 5167
+      "bytes": 5198
     },
     {
       "path": "standalone/bd2-territory/shared/SurfaceSegments.cs",
@@ -8621,8 +8637,8 @@
       "reasons": [
         "build input"
       ],
-      "sha256": "599de70364cc82dcb96ab4200940700036f8357590bde253ab952e916647516e",
-      "bytes": 18298,
+      "sha256": "78f55566ecabc8e3f51b9a19ceb499453591589abcfdabf1a4b671ef7523eb0b",
+      "bytes": 19612,
       "path": "tests/Dustweave.Tests/Cases/DiagnosticExportCases.cs"
     },
     {
@@ -8882,6 +8898,22 @@
       "bytes": 13372
     },
     {
+      "path": "tests/Dustweave.Tests/Cases/PandoraKitingCases.cs",
+      "sha256": "99e45bd56db258fe6ba066d1f69bc5cd72752207d6b77bed5a9b5614bb9cfa7a",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 7667
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/PandoraTacticsCases.cs",
+      "sha256": "7fb22bb2388c64b25daebac1222c6032dc2b0ffa18f9a77af8d7e0ac377f1157",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 10464
+    },
+    {
       "path": "tests/Dustweave.Tests/Cases/ParallelCases.cs",
       "sha256": "b6241d7603130febf474078746a0388e172e3840c426ba3c3d470ac105ce6016",
       "reasons": [
@@ -9011,11 +9043,11 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/SaffronCases.cs",
-      "sha256": "a30c28192051448d34ccd6d8d0e76bbf6c3453e156782962245f84c709b8c1b5",
+      "sha256": "ee1c0233b5021372c9502e3ca0780cc3aaff83b02a4b6df593d8cdca028ee252",
       "reasons": [
         "build input"
       ],
-      "bytes": 16714
+      "bytes": 17439
     },
     {
       "path": "tests/Dustweave.Tests/Cases/SandboxCases.cs",
@@ -9023,7 +9055,7 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 23314
+      "bytes": 26723
     },
     {
       "path": "tests/Dustweave.Tests/Cases/SandboxInstallationCases.cs",
@@ -9299,11 +9331,11 @@
     },
     {
       "path": "tests/Dustweave.Tests/Program.cs",
-      "sha256": "93113cc78d939f815f50e4648245ab5f1ef345213e6843afebdb15f0016382d6",
+      "sha256": "ddc66ed2699dbc65f49427b5191a47c57f05fa10dd246c4717822feaf3456929",
       "reasons": [
         "build input"
       ],
-      "bytes": 12446
+      "bytes": 12692
     },
     {
       "path": "tests/Dustweave.Tests/README.md",
@@ -9600,6 +9632,22 @@
         "build input"
       ],
       "bytes": 1102
+    },
+    {
+      "path": "src/Core/DailyEventPreview.cs",
+      "sha256": "488fe63615a90f36c982648afcf3a171b0cc4885cc28c192de52e1a64feefa77",
+      "bytes": 4738,
+      "reasons": [
+        "build input"
+      ]
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/EventPreviewCases.cs",
+      "sha256": "f0f3f86e805d6349b58ba424d7ce67edda637df417594ce2fe9827c86fdf7062",
+      "bytes": 4218,
+      "reasons": [
+        "build input"
+      ]
     }
   ],
   "publicReleaseApproved": false,

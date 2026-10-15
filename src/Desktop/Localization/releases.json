@@ -1,5 +1,32 @@
 [
 {
+  "Version": "1.3.14",
+  "Date": "2026-10-15",
+  "Notes": {
+    "zh-CN": [
+      "藏红花取消收割前巡田，直接抵达首个收割位置；三种料理已生效时可恢复遗漏回调，不重复消耗。",
+      "活动扫荡和自动战斗确认窗消失后，仅在确认未提交、关卡与次数未变化时有限重开。",
+      "潘多拉优化 BOSS 距离、退路和转弯，并改进道具与主动技能时机；本次为离线验证。",
+      "诊断导出优先保留各类近期记录，避免大量旧查询挤掉活动交易现场。",
+      "若 OTA 失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+    ],
+    "zh-TW": [
+      "藏紅花取消收割前巡田，直接抵達首個收割位置；三種料理已生效時可恢復遺漏回呼，不重複消耗。",
+      "活動掃蕩和自動戰鬥確認視窗消失後，僅在確認未提交、關卡與次數未變化時有限重開。",
+      "潘多拉最佳化 BOSS 距離、退路和轉彎，並改善道具與主動技能時機；本次為離線驗證。",
+      "診斷匯出優先保留各類近期紀錄，避免大量舊查詢擠掉活動交易現場。",
+      "若 OTA 失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+    ],
+    "en-US": [
+      "Saffron goes directly to the first harvest position. Confirmed food effects recover missed callbacks without consuming food again.",
+      "Lost event previews reopen only when confirmation was not submitted and the stage and AP remain unchanged.",
+      "Improves Pandora boss spacing, escape routes, turns, pickups and skill timing. These changes have offline validation only.",
+      "Diagnostic exports retain recent evidence across categories before bulk historical queries.",
+      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+    ]
+  }
+},
+{
   "Version": "1.3.13",
   "Date": "2026-10-15",
   "Notes": {

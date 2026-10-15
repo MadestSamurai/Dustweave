@@ -1,5 +1,14 @@
 # Changelog / 更新记录
 
+## 1.3.14 — 2026-10-15
+
+- 藏红花不再在收割前巡田；抵达首个可收割位置后准备料理并开始收割，料理已生效时可恢复漏回调的流程。
+- 活动扫荡和自动战斗的确认弹窗消失时，在确认未提交、关卡与次数未变化的前提下有限重开，避免直接中断。
+- 潘多拉优化 BOSS 距离、转弯退路、道具拾取和主动技能时机；改进来自离线验证，尚未验证实机胜率。
+- 诊断导出优先保留各类近期证据，避免大量旧 NPC 查询挤掉活动交易记录。
+- Removes the saffron pre-harvest tour, recovers confirmed food effects and safely reopens lost, unsubmitted event previews. Improves Pandora kiting, pickups and skill timing, with offline validation only. Diagnostic exports retain recent evidence across categories before historical bulk.
+- [完整说明 / Full notes](docs/releases/1.3.14.md)
+
 ## 1.3.13 — 2026-10-15
 
 - 普通启动与隔离多开共享同账号日常结果及周收集地图进度，保留较新结果，完成状态按游戏周期重置。

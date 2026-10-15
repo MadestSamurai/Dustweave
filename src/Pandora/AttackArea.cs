@@ -9,10 +9,12 @@ namespace Dustweave.Pandora
     {
         public Point A, B, Velocity;
         public double Radius;
+        public double ActiveFor = double.PositiveInfinity;
         public int BossId, PatternId;
         public string Kind;
         public double Clearance(Point p, double time = 0)
         {
+            if (time > ActiveFor) return double.PositiveInfinity;
             double ax = A.X + Velocity.X * time, az = A.Z + Velocity.Z * time, dx = B.X - A.X, dz = B.Z - A.Z;
             double l = dx * dx + dz * dz, t = l < 1e-10 ? 0 : Math.Max(0, Math.Min(1, ((p.X - ax) * dx + (p.Z - az) * dz) / l));
             double x = p.X - ax - dx * t, z = p.Z - az - dz * t; return Math.Sqrt(x * x + z * z) - Radius;
@@ -29,7 +31,9 @@ namespace Dustweave.Pandora
             {
                 double t = i * .05; var p = new Point(start.X + direction.X * speed * t, start.Z + direction.Z * speed * t);
                 if (!passable(p)) break;
-                bool clear = true; foreach (var a in areas) if (a.Clearance(p, t) < .1) { clear = false; break; }
+                // An expiring warning is not a physical escape: do not wait inside an
+                // attack merely because its remaining animation is shorter than the exit.
+                bool clear = true; foreach (var a in areas) if (a.Clearance(p, Math.Min(t, a.ActiveFor)) < .1) { clear = false; break; }
                 if (clear) return t * 10 + exposure * .05;
             }
             return 1000 + exposure;

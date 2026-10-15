@@ -54,13 +54,17 @@ static class SaffronCases
         var command=DailySaffron.Command("test-owner",123,1000);
         Check(command["SaffronDaily"]!.GetValue<bool>()&&!command["Logging"]!.GetValue<bool>()&&!command["Mining"]!.GetValue<bool>(),"daily crop control never enables trees or mining");
         Check(command["UntilUtcTicks"]!.GetValue<long>()==1000+TimeSpan.TicksPerSecond*3,"crop control expires if daily supervision disappears");
-        Check(!SaffronCycle.CanBuff(100,false,true,true,true,30,600),"unripe crop state cannot authorize food use regardless of elapsed desktop time");
-        Check(SaffronCycle.CanBuff(100,true,true,true,true,30,600),"mature reachable fields fit the conservative harvest deadline");
+        Check(!SaffronCycle.CanBuff(100,false,true,true,true,600),"unripe crop state cannot authorize food use regardless of elapsed desktop time");
+        Check(SaffronCycle.CanBuff(100,true,true,true,true,600),"mature crops can start from one harvest position without a preliminary field tour");
         foreach(var blockers in new[]{(false,true,true),(true,false,true),(true,true,false)})
-            Check(!SaffronCycle.CanBuff(100,true,blockers.Item1,blockers.Item2,blockers.Item3,30,600),"reachability, capacity and funds each block consuming yield food");
-        Check(!SaffronCycle.CanBuff(0,true,true,true,true,0,600),"empty fields never consume food");
-        Check(!SaffronCycle.CanBuff(100,true,true,true,true,30,280),"expired or insufficient food time cannot start a harvest");
-        Check(!SaffronCycle.CanBuff(100,true,true,true,true,double.NaN,600),"invalid route time cannot authorize a harvest");
+            Check(!SaffronCycle.CanBuff(100,true,blockers.Item1,blockers.Item2,blockers.Item3,600),"first harvest position, capacity and funds each block consuming yield food");
+        Check(!SaffronCycle.CanBuff(0,true,true,true,true,600),"empty fields never consume food");
+        Check(SaffronCycle.CanBuff(100,true,true,true,true,291.715),"100 ripe fields with 292 seconds remaining are not rejected by a redundant 88-second survey budget");
+        Check(!SaffronCycle.CanBuff(100,true,true,true,true,220),"insufficient remaining food time still prevents consuming new food");
+        Check(!SaffronCycle.CanBuff(100,true,true,true,true,double.NaN),"invalid food time cannot authorize consumption");
+        Check(SaffronCycle.FoodsActive(1000,[601000,601000,601000]),"all three native effects confirm eaten food even without an optional callback");
+        Check(!SaffronCycle.FoodsActive(1000,[601000,601000,0])&&!SaffronCycle.FoodsActive(1000,[601000,601000,1000]),"missing or expired effects cannot confirm a food operation");
+        Check(!SaffronCycle.FoodsActive(0,[601000,601000,601000])&&!SaffronCycle.FoodsActive(1000,[601000,601000]),"an unknown server clock or incomplete effect list cannot authorize harvesting");
         string Action(int completed,bool filling,int empty,int mature,int growing,bool affordable=true,bool capacity=true)
             =>SaffronCycle.PotatoAction(completed,3,filling,empty,mature,growing,affordable,capacity);
         Check(Action(0,false,100,0,0)=="plant","the fixed plan starts its first potato round");
@@ -78,9 +82,9 @@ static class SaffronCases
         Check(SaffronCycle.ResumePhase(100,0,0,0,false,false,false)=="replant","initial empty land plants saffron without food");
         Check(SaffronCycle.ResumePhase(25,75,0,0,false,true,true)=="replant","interrupted replant fills only empty land and continues cooking");
         Check(SaffronCycle.ResumePhase(25,75,0,0,false,false,false)=="unripe","unripe saffron without recent replant evidence never authorizes food");
-        Check(SaffronCycle.ResumePhase(25,75,0,0,true,true,false)=="survey","partially harvested ripe saffron must recheck access before consuming or harvesting");
+        Check(SaffronCycle.ResumePhase(25,75,0,0,true,true,false)=="approach","partially harvested ripe saffron resumes directly at the next harvest position");
         Check(SaffronCycle.ResumePhase(25,0,25,50,false,true,false)=="potatoes","mixed mature crops do not block a resumed potato cycle");
-        Check(SaffronCycle.ResumePhase(0,50,50,0,true,true,false)=="survey","mixed fields still prepare yield food before harvesting ripe saffron");
+        Check(SaffronCycle.ResumePhase(0,50,50,0,true,true,false)=="approach","mixed fields go directly to ripe saffron without surveying potato fields");
         Check(SaffronCycle.ResumePhase(0,0,0,100,false,false,false)=="replant","other mature crops can be harvested normally before replanting saffron");
         var previous=JsonSerializer.SerializeToNode(new DailyPreferences())!.AsObject();previous.Remove("SaffronPotatoRounds");
         Check(DailyPreferences.Parse(previous.ToJsonString()).SaffronPotatoRounds==2,"existing accounts default to two fixed potato rounds without enabling saffron");

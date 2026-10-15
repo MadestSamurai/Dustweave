@@ -136,5 +136,18 @@ internal static class DiagnosticExportCases
             using var manifest=JsonDocument.Parse(archive.GetEntry("manifest.json")!.Open());var coverage=manifest.RootElement.GetProperty("coverage")[0];
             Check(coverage.GetProperty("queueResults").GetBoolean()&&coverage.GetProperty("npcQueries").GetBoolean(),"manifest distinguishes queue/NPC coverage from journal coverage");
         }
+        string npcPressure=Path.Combine(output,"diagnostic-npc-pressure");
+        Directory.CreateDirectory(Path.Combine(npcPressure,"live","weekly-npc-queries"));
+        for(int i=0;i<10;i++)File.WriteAllText(Path.Combine(npcPressure,"live","weekly-npc-queries",i+".json"),body);
+        string latestBusiness=Path.Combine(npcPressure,"live","managed-business","event-sweep.json");
+        Directory.CreateDirectory(Path.GetDirectoryName(latestBusiness)!);
+        File.WriteAllText(latestBusiness,"{\"role\":\"event.sweep\",\"state\":\"rejected\"}");
+        File.SetLastWriteTimeUtc(latestBusiness,DateTime.UtcNow.AddHours(-1));
+        File.WriteAllText(Path.Combine(npcPressure,"live","event-preview-recovery.json"),"{\"confirmation_not_submitted\":true}");
+        var npcCapped=await DailyDiagnosticExport.CreateAsync(npcPressure,Path.Combine(output,"npc-byte-pressure.zip"),"","fixture");
+        using(var archive=ZipFile.OpenRead(npcCapped.Path))Check(npcCapped.Skipped>0&&npcCapped.Bytes<=64*1024*1024
+            &&archive.GetEntry("logs/main/live/managed-business/event-sweep.json")!=null
+            &&archive.GetEntry("logs/main/live/event-preview-recovery.json")!=null,
+            "Historical NPC queries cannot consume the entire export budget before event transaction and recovery evidence");
     }
 }

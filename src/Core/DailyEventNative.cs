@@ -95,10 +95,9 @@ public static class DailyEventNative
             foreach (int value in new[] { 0, 1 })
                 await w.Step(O(("ui", "EventBattleUI"), ("operation", "event_native_select"), ("items", new JsonArray(Copy(plan["event"]), Copy(plan["group"]), Copy(plan["stage"]))), ("value", value)));
             await w.WaitEvidence(DailyEventSweep.Prefixes, x => N(DailyEventSweep.Lobby(x)["Selected"]) == N(plan["stage"]));
-            await w.Step("EventBattleUI", "_buttonAutoBattle._button", expect: "BattleSkipPopupUI");
-            await SetCount(w, I(plan["count"]));
-            var op = await w.Transact("event.native_batch", plan, O(("ui", "BattleSkipPopupUI"), ("operation", "event_native_confirm"),
-                ("items", new JsonArray(Copy(plan["event"]), Copy(plan["group"]), Copy(plan["stage"]))), ("value", plan["count"])), 30, drive: () => WaitBatch(w));
+            var op = await DailyEventPreview.Run(w, "_buttonAutoBattle._button", () => SetCount(w, I(plan["count"])),
+                evidence => w.TransactObserved("event.native_batch", plan, O(("ui", "BattleSkipPopupUI"), ("operation", "event_native_confirm"),
+                    ("items", new JsonArray(Copy(plan["event"]), Copy(plan["group"]), Copy(plan["stage"]))), ("value", plan["count"])), evidence, 30, drive: () => WaitBatch(w)));
             results.Add(Copy(op["result"])); used += I(op["result"]?["count"]); failed = B(op["result"]?["lost"]);
             await w.Step("BattleResultUI", operation: "event_native_exit", expect: "EventBattleUI");
             lobby = DailyEventSweep.Lobby(await w.Evidence(DailyEventSweep.Prefixes));
@@ -132,13 +131,13 @@ public static class DailyEventNative
     {
         if (!B(R(await w.Evidence(Prefixes), "event.sweep.popup", "_buttonFreeOnly.IsEnable")))
             await w.Step("BattleSkipPopupUI", "_buttonFreeOnly._objectRoot");
-        await w.WaitEvidence(Prefixes, e => B(R(e, "event.sweep.popup", "_buttonFreeOnly.IsEnable")));
+        await DailyEventPreview.WaitValue(w, Prefixes, e => B(R(e, "event.sweep.popup", "_buttonFreeOnly.IsEnable")));
         await w.Step("BattleSkipPopupUI", "_sliderAutoCount._objMinusMaxButton");
-        await w.WaitEvidence(Prefixes, e => N(R(e, "event.sweep.popup", DailyEventSweep.Count)) == 1);
+        await DailyEventPreview.WaitValue(w, Prefixes, e => N(R(e, "event.sweep.popup", DailyEventSweep.Count)) == 1);
         for (int i = 2; i <= count; i++)
         {
             await w.Step("BattleSkipPopupUI", "_sliderAutoCount._objPlusButton");
-            await w.WaitEvidence(Prefixes, e => N(R(e, "event.sweep.popup", DailyEventSweep.Count)) == i);
+            await DailyEventPreview.WaitValue(w, Prefixes, e => N(R(e, "event.sweep.popup", DailyEventSweep.Count)) == i);
         }
     }
 }

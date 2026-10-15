@@ -82,7 +82,7 @@ public sealed class PandoraClient
     internal static JsonObject DiagnosticState(JsonObject state)
     {
         var result = new JsonObject();
-        foreach (var key in new[] { "At", "Pid", "RunId", "Running", "Finished", "Faulted", "Reason", "Detail", "Completed", "Ui", "Stage", "Mode", "AutoSelectEquipment", "Selection", "Surfaces", "Entry", "TransitionUi" })
+        foreach (var key in new[] { "At", "Pid", "RunId", "Running", "Finished", "Faulted", "Reason", "Detail", "Completed", "Ui", "Stage", "Mode", "AutoSelectEquipment", "Selection", "Surfaces", "Entry", "TransitionUi", "Movement", "Tactics" })
             result[key] = state[key]?.DeepClone();
         return result;
     }
@@ -98,6 +98,8 @@ public sealed class PandoraClient
         var record = DiagnosticState(state);
         var key = record.DeepClone().AsObject();
         key.Remove("At");
+        key.Remove("Movement"); // Attach the decision to transitions, not a new log per plan.
+        key.Remove("Tactics");
         string signature = key.ToJsonString();
         if (signature == lastDiagnostic) return;
         try

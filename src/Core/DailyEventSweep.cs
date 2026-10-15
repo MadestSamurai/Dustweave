@@ -185,18 +185,22 @@ public static class DailyEventSweep
                 await w.Step(O(("ui", "EventBattleUI"), ("operation", "event_sweep_select"), ("items", new JsonArray(Copy(target["event"]), Copy(target["group"]), Copy(target["stage"]))), ("value", value)));
             await w.WaitEvidence(Prefixes, e => N(Lobby(e)["Selected"]) == N(target["stage"]));
         }
-        await w.Target("EventBattleUI", "_buttonSkipBattle._button");
-        await w.Step("EventBattleUI", "_buttonSkipBattle._button", expect: "BattleSkipPopupUI");
-        if (!B(R(await w.Evidence(Prefixes), Popup, "_buttonFreeOnly.IsEnable")))
+        var op = await DailyEventPreview.Run(w, "_buttonSkipBattle._button", async () =>
         {
-            await w.Step("BattleSkipPopupUI", "_buttonFreeOnly._objectRoot");
-            await w.WaitEvidence(Prefixes, e => B(R(e, Popup, "_buttonFreeOnly.IsEnable")));
-        }
-        await SelectCount(w, target, budget);
-        var plan = PopupPlan(await w.Evidence(Prefixes), target);
-        if (budget != null && S(target["policy"]) == PublicPolicy)
-            Require(Remaining(w, N(target["event"])) == budget.Value, "Daily challenge budget changed");
-        var op = await w.Transact("event.sweep", plan, O(("ui", "BattleSkipPopupUI"), ("operation", "event_sweep_confirm"), ("items", new JsonArray(Copy(target["event"]), Copy(target["group"]), Copy(target["stage"]), Copy(target["deck"]))), ("value", plan["count"])), 45);
+            if (!B(R(await w.Evidence(Prefixes), Popup, "_buttonFreeOnly.IsEnable")))
+            {
+                await w.Step("BattleSkipPopupUI", "_buttonFreeOnly._objectRoot");
+                await DailyEventPreview.WaitValue(w, Prefixes, e => B(R(e, Popup, "_buttonFreeOnly.IsEnable")));
+            }
+            await SelectCount(w, target, budget);
+        }, async evidence =>
+        {
+            var plan = PopupPlan(evidence, target);
+            if (budget != null && S(target["policy"]) == PublicPolicy)
+                Require(Remaining(w, N(target["event"])) == budget.Value, "Daily challenge budget changed");
+            return await w.TransactObserved("event.sweep", plan, O(("ui", "BattleSkipPopupUI"), ("operation", "event_sweep_confirm"),
+                ("items", new JsonArray(Copy(target["event"]), Copy(target["group"]), Copy(target["stage"]), Copy(target["deck"]))), ("value", plan["count"])), evidence, 45);
+        });
         await w.Dismiss("EventBattleUI", true);
         return O(("state", "completed"), ("operation", op["id"]), ("result", op["result"]));
     }
@@ -209,7 +213,7 @@ public static class DailyEventSweep
         Require(count > 0, "Free sweep attempts changed before selection");
         await w.Step(O(("ui", "BattleSkipPopupUI"), ("operation", "event_sweep_count"),
             ("items", new JsonArray(Copy(target["event"]), Copy(target["group"]), Copy(target["stage"]), Copy(target["deck"]))), ("value", count)));
-        await w.WaitEvidence(Prefixes, e => N(R(e, Popup, Count)) == count);
+        await DailyEventPreview.WaitValue(w, Prefixes, e => N(R(e, Popup, Count)) == count);
     }
     public static int SweepCount(long free, long cost, int? budget)
     {

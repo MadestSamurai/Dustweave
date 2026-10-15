@@ -12,6 +12,23 @@ namespace Dustweave.Pandora.Runtime
         const BindingFlags All = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
         static readonly Dictionary<string, MethodInfo> methods = new Dictionary<string, MethodInfo>();
         static readonly Dictionary<string, FieldInfo> fields = new Dictionary<string, FieldInfo>();
+        static Func<Vector3, bool> passable;
+        static readonly Dictionary<int, object> itemTables = new Dictionary<int, object>();
+        public static object ItemTable(int id) { object table; if (!itemTables.TryGetValue(id, out table)) { table = Call("item", null, id); itemTables[id] = table; } return table; }
+        public static SkillOption Ultimate(object player)
+        {
+            object[] ids = { 0, 0 }; Call("ultimateInfo", player, ids);
+            var skill = Skill(Convert.ToInt32(ids[0]), Convert.ToInt32(ids[1]));
+            skill.ProjectileSpeed *= Stat(player, "ProjectileSpeed");
+            skill.Duration *= Stat(player, "SkillDuration");
+            if (skill.Subtype == 10) skill.AttackCount += (int)Stat(player, "ProjectileCount", true);
+            return skill;
+        }
+        public static bool Passable(Vector3 point)
+        {
+            if (passable == null) passable = (Func<Vector3, bool>)Delegate.CreateDelegate(typeof(Func<Vector3, bool>), Bound("passable"));
+            return passable(point);
+        }
         public static MethodInfo Bound(string key) { MethodInfo m; if (!methods.TryGetValue(key, out m)) { var p = Bindings.Names[key].Split('|'); m = typeof(SurvivalMainUI).Assembly.GetType(p[0], true).GetMethods(All).Single(x => x.Name == p[1] && x.GetParameters().Length == int.Parse(p[2])); methods[key] = m; } return m; }
         public static object Call(string key, object instance, params object[] args) { return Bound(key).Invoke(instance, args); }
         public static object Invoke(object instance, string name, params object[] args)
@@ -135,6 +152,21 @@ namespace Dustweave.Pandora.Runtime
                 ProjectileSpeed = D(r, "ProjectileSpeed"),
                 Knockback = I(r, "KnockbackType")
             };
+        }
+        public static double CorridorRadius(Collider co, Vector3 origin, Vector3 axis)
+        {
+            axis.y = 0; if (axis.sqrMagnitude < .001f) axis = Vector3.forward; axis.Normalize();
+            var side = new Vector3(-axis.z, 0, axis.x); Vector3 center; double radius = Footprint(co, out center);
+            if (co is BoxCollider)
+            {
+                var box = (BoxCollider)co;
+                radius = Math.Abs(Vector3.Dot(side, box.transform.TransformVector(new Vector3(box.size.x * .5f, 0, 0))))
+                    + Math.Abs(Vector3.Dot(side, box.transform.TransformVector(new Vector3(0, box.size.y * .5f, 0))))
+                    + Math.Abs(Vector3.Dot(side, box.transform.TransformVector(new Vector3(0, 0, box.size.z * .5f))));
+            }
+            // A--B already covers travel along the dash. Only the cross-track width
+            // belongs in its radius; using a box's diagonal counted that length twice.
+            return radius + Math.Abs(Vector3.Dot(center - origin, side));
         }
         public static double Footprint(Collider co, out Vector3 center)
         {

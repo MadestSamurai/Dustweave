@@ -17,7 +17,6 @@ namespace BD2Territory
  {
   public string State{get;set;}="idle";public string Reason{get;set;}="";
   public int Harvested{get;set;}public int PotatoRounds{get;set;}
-  public int Surveyed{get;set;}
   public long BuffEnd{get;set;}
   public long ServerNow{get;set;}public long WaitUntil{get;set;}
   public int EmptyFields{get;set;}public int PotatoFields{get;set;}public int PotatoRoundLimit{get;set;}
@@ -55,16 +54,17 @@ namespace BD2Territory
    int index=Array.IndexOf(Foods,food);
    return index>=0&&before!=null&&after!=null&&before.Length==Foods.Length&&after.Length==Foods.Length&&after[index]>before[index];
   }
-  public static double HarvestSeconds(int count,double routeSeconds)=>count*2.0+routeSeconds*2+20;
+  public static double HarvestSeconds(int count)=>count*2.0+20;
+  public static bool FoodsActive(long serverNow,long[] ends)=>serverNow>0&&ends!=null&&ends.Length==Foods.Length&&ends.All(end=>end>serverNow);
   // Resume from native crops and food expiries, never from an old phase alone.
   public static string ResumePhase(int empty,int saffron,int potatoes,int other,bool saffronMature,bool continueCycle,bool replanted)
   {
-   if(saffron>0)return saffronMature?"survey":replanted?"replant":"unripe";
+   if(saffron>0)return saffronMature?"approach":replanted?"replant":"unripe";
    if(potatoes>0)return "potatoes";
    return empty>0&&continueCycle?"potatoes":"replant";
   }
-  public static bool CanBuff(int count,bool allMature,bool reachable,bool capacity,bool affordable,double routeSeconds,double secondsAvailable)
-   =>count>0&&allMature&&reachable&&capacity&&affordable&&routeSeconds>=0&&HarvestSeconds(count,routeSeconds)<secondsAvailable;
+  public static bool CanBuff(int count,bool allMature,bool positioned,bool capacity,bool affordable,double secondsAvailable)
+   =>count>0&&allMature&&positioned&&capacity&&affordable&&HarvestSeconds(count)<secondsAvailable;
   public static long SellCount(long owned)=>Math.Max(0,owned-1);
   public static SaleLine[] PremiumSales(SaleStock[] stocks,IDictionary<int,int> saffronGrades)
    =>stocks.Where(x=>x.Count>0&&x.Eligible&&!x.Locked&&saffronGrades.ContainsKey(x.Item)&&(saffronGrades[x.Item]==2||saffronGrades[x.Item]==3))

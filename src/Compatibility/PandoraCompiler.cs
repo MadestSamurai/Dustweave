@@ -39,6 +39,16 @@ public static class PandoraCompiler
         Method("skill", Table("FieldMiniGameSkillTable", 2));
         Method("skillGroups", List("FieldMiniGameSkillGroupTable", 0));
         Method("item", Table("FieldMiniGameSurvivalItemTable", 1));
+        // Observe applied effects, not removal from the item pool (which also means expiry).
+        Method("itemApplied", player.Methods.Single(m => m.HasBody && m.ReturnType.Name == "Void" && m.Parameters.Count == 1 &&
+            m.Parameters[0].ParameterType.Name == "Int32" && Calls(m).Any(c => c.Name == "get_ItemType") && Calls(m).Any(c => c.Name == "StartCoroutine")));
+        Field("itemTarget", ArgumentField(M(T("SurvivalItem"), "SetTarget"), OpCodes.Ldarg_1));
+        var ultimateButton = T("UltimateSkillButton");
+        Field("ultimateEnd", M(ultimateButton, "OnClickUI").Body.Instructions.Select(i => i.Operand).OfType<FieldReference>().Single(f => f.FieldType.Name == "Int64"));
+        Method("ultimateInfo", Calls(M(ultimateButton, "Initialize")).Single(m => m.DeclaringType.FullName == player.FullName && m.Parameters.Count == 2 && m.Parameters.All(p => p.ParameterType is ByReferenceType)));
+        foreach (var item in new[] { ("MgsiHp", 0), ("MgsiMagnet", 1), ("MgsiBomb", 2), ("MgsiExp", 3), ("MgsiCoin", 4), ("MgsiSkill", 5), ("MgsiEmp", 6) })
+            if (Convert.ToInt32(T("Proto.Net.Define_MiniGameSurvivalItemType").Fields.Single(f => f.Name == item.Item1).Constant) != item.Item2)
+                throw new InvalidOperationException("Pandora item meanings changed");
         var map = T("SurvivalMapSelectUI");
         var open = M(map, "Open");
         Field("mapIndex", open.Body.Instructions.Select(i => i.Operand).OfType<FieldReference>().Last(f => f.FieldType.Name == "Int32"));
@@ -89,6 +99,19 @@ public static class PandoraCompiler
         var patterns = T("SurvivalBossMonster").Methods.Where(m => m.Parameters.Count == 1 && m.Parameters[0].ParameterType.Name == "FieldMiniGameBossPatternTable").ToArray();
         if (patterns.Length != 3) throw new InvalidOperationException("Pandora boss pattern contract changed");
         for (int i = 0; i < patterns.Length; i++) Method("bossPattern" + i, patterns[i]);
+        var bossType = T("SurvivalBossMonster");
+        var damaged = M(bossType, "Damaged");
+        Field("bossHp", (FieldReference)damaged.Body.Instructions.Single(i => i.OpCode == OpCodes.Stfld && i.Previous.OpCode == OpCodes.Sub && ((FieldReference)i.Operand).FieldType.Name == "Single").Operand);
+        var spawn = M(bossType, "Initialize"); Method("bossSpawn", spawn);
+        // Initialize assigns the same speed argument to base/current speed. The jump
+        // coroutine restores current speed from base speed; resolve that data flow.
+        var speeds = spawn.Body.Instructions.Where(i => i.OpCode == OpCodes.Stfld && i.Previous.Operand == spawn.Parameters[4]).Select(i => (FieldReference)i.Operand).ToArray();
+        if (speeds.Length != 2 || speeds.Any(f => f.FieldType.Name != "Single")) throw new InvalidOperationException("Pandora boss movement contract changed");
+        var resets = bossType.NestedTypes.SelectMany(t => t.Methods).Where(m => m.HasBody).SelectMany(m => m.Body.Instructions)
+            .Where(i => i.OpCode == OpCodes.Stfld && i.Operand is FieldReference target && speeds.Any(s => s.FullName == target.FullName) &&
+                i.Previous.OpCode == OpCodes.Ldfld && i.Previous.Operand is FieldReference source && speeds.Any(s => s.FullName == source.FullName) && source.FullName != target.FullName)
+            .Select(i => (FieldReference)i.Previous.Operand).DistinctBy(f => f.FullName).Single();
+        Field("bossMoveSpeed", resets);
         // Resolve native movement rather than writing transforms or combat attributes.
         var avatar = T("PlayerController");
         Field("move", avatar.Fields.Single(f => f.FieldType.Name == "PlayerMoveController"));
@@ -109,12 +132,12 @@ public static class PandoraCompiler
             ["Proto.Design.common.FieldMiniGameSurvivalItemTable"]="ItemType,ItemValue",
             ["Proto.Design.common.FieldMiniGameSkillGroupTable"]="Id,MaxLevel,SkillType,SkillSubType,UpgradeSynergyId,TargetType,UniqueCharGroupId",
             ["Proto.Design.common.FieldMiniGameSkillTable"]="StatType,SkillNameLocalTextId,SkillValue,Cooldown,Duration,AttackRange,AttackSize,AttackCount,Pierce,ProjectileTerm,ProjectileSpeed,KnockbackType",
-            ["Proto.Design.common.FieldMiniGameBossPatternTable"]="AttackType,AttackRange"
+            ["Proto.Design.common.FieldMiniGameBossPatternTable"]="AttackType,AttackRange,AttackSpeed"
         }) foreach (string property in contract.Value.Split(',')) _ = M(T(contract.Key), "get_" + property);
         foreach (var contract in new Dictionary<string,string> {
             ["SurvivalMainUI"]="_selectMapUI",["SurvivalMenuUI"]="_objEnterButton",["SurvivalMapSelectUI"]="_objNextButton,_objPrevButton,_buttonEnter",
             ["SurvivalCharSelectUI"]="_objEnterButton",["SurvivalSelectUI"]="_slots",["SurvivalDefaultPopupUI"]="_buttonOk",
-            ["SurvivalResultUI"]="_objRetryButton,_objExitButton",["SurvivalBossMonster"]="_animator,_dashBox,_jumpCollider"
+            ["SurvivalResultUI"]="_objRetryButton,_objExitButton",["SurvivalBossMonster"]="_animator,_dashBox,_jumpCollider",["SurvivalUnit"]="_collider"
         }) foreach (string field in contract.Value.Split(',')) _ = T(contract.Key).Fields.Single(f => f.Name == field);
 
         var sources = DustweaveSharedResources.Names(typeof(PandoraCompiler).Assembly)

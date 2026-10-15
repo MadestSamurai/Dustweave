@@ -94,6 +94,7 @@ await Group("LoginIdentity", () => LoginIdentityCases.Run(root, cases));
 await Group("QueueSession", () => QueueSessionCases.Run(root, cases));
 await Group("QueueCompletion", () => QueueCompletionCases.Run(root, cases));
 await Group("EventSweepCount", () => EventSweepCountCases.Run(root, cases));
+await Group("EventPreview", () => EventPreviewCases.Run(root, cases));
 await Group("QueueExecutionThread", () => QueueExecutionThreadCases.Run(root, cases));
 await Group("RuleData", () => RuleDataCases.Run(root, cases));
 await Group("TravelTransition", () => TravelTransitionCases.Run(root, cases));
@@ -160,6 +161,8 @@ await Group("ApostlePerformance", () => Sync(() => ApostlePerformanceCases.Run(c
 await Group("ApostleTimeToClear", () => Sync(() => ApostleTimeToClearCases.Run(cases)));
 await Group("Mansion", () => Sync(() => MansionCases.Run(cases)));
 await Group("Pandora", () => Sync(() => PandoraCases.Run(cases)));
+await Group("PandoraKiting", () => Sync(() => PandoraKitingCases.Run(root, cases)));
+await Group("PandoraTactics", () => Sync(() => PandoraTacticsCases.Run(root, cases)));
 await Group("UnifiedSuite", () => Sync(() => UnifiedSuiteCases.Run(cases)));
 await Group("SuiteOwnerProbe", () => SuiteOwnerProbeCases.Run(cases));
 await Group("Workflow", () => Sync(() => WorkflowCases.Run(cases)));

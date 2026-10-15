@@ -15,7 +15,7 @@ public static class DailyDiagnosticExport
         "live/travel-diagnostics", "live/route-atlas", "live/server-collection", "live/weekly-npc-recovery", "live/weekly-npc-queries"];
     static readonly string[] Singles = ["progress-sync-error.json", "registration-mismatch.json", "registration-recovery.json", "saffron-latest.json", "suite/last-transition.json", "updates/check-error.json", "updates/install-error.json", "login-identity-error.json",
         "live/diagnostics/login-request.json", "live/diagnostics/login-verified.json", "live/diagnostics/login-failed.json", "live/trade-failure.json", "live/trade-navigation-cleanup.json",
-        "live/pass-claims-latest.json", "live/mission-inspection-latest.json"];
+        "live/pass-claims-latest.json", "live/mission-inspection-latest.json", "live/event-preview-recovery.json"];
     static readonly string[] Rotations = [".1", ".2", ".3", ".previous"];
     static readonly HashSet<string> PrivateNames = new(StringComparer.OrdinalIgnoreCase) { "accounts.json", "preferences.json", "settings.json", "endpoint.json", "session.json", "sessions.json", "command.json" };
     static string Unrotate(string name) => Rotations.FirstOrDefault(s => name.EndsWith(s,StringComparison.OrdinalIgnoreCase)) is { } suffix ? name[..^suffix.Length] : name;
@@ -138,11 +138,16 @@ public static class DailyDiagnosticExport
         // failure/business frames; otherwise even priority sorting can starve it.
         var newestQueues=files.Where(f=>Path.GetRelativePath(f.Root,f.File.FullName).Replace('\\','/').StartsWith("live/queues/",StringComparison.OrdinalIgnoreCase)&&f.File.Name.Equals("result.json",StringComparison.OrdinalIgnoreCase))
             .GroupBy(f=>f.Prefix).Select(g=>g.OrderByDescending(f=>f.File.LastWriteTimeUtc).First().File.FullName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // Keep one recent record from every evidence family before taking its
+        // history. Repeated NPC queries must not evict every consuming journal.
+        var familyHeads=files.Where(f=>f.File.LastWriteTimeUtc>=DateTime.UtcNow.AddDays(-7)&&f.File.Length<=8*1024*1024)
+            .GroupBy(f=>(f.Prefix,Family:Trees.FirstOrDefault(t=>Path.GetRelativePath(f.Root,f.File.FullName).Replace('\\','/').StartsWith(t+"/",StringComparison.OrdinalIgnoreCase))))
+            .Where(g=>g.Key.Family!=null).Select(g=>g.OrderByDescending(f=>f.File.LastWriteTimeUtc).First().File.FullName).ToHashSet(StringComparer.OrdinalIgnoreCase);
         try {
             using(var output=new FileStream(temporary,FileMode.CreateNew,FileAccess.Write,FileShare.None)) {
                 using(var zip=new ZipArchive(output,ZipArchiveMode.Create,true)) {
                     void Add(string name,string data) {var entry=zip.CreateEntry(name,CompressionLevel.Optimal);using var writer=new StreamWriter(entry.Open(),new UTF8Encoding(false));writer.Write(data);}
-                    foreach(var source in files.DistinctBy(f=>f.File.FullName,StringComparer.OrdinalIgnoreCase).OrderBy(f=>newestQueues.Contains(f.File.FullName)?-1:Priority(Path.GetRelativePath(f.Root,f.File.FullName).Replace('\\','/'))).ThenByDescending(f=>f.File.LastWriteTimeUtc)) {
+                    foreach(var source in files.DistinctBy(f=>f.File.FullName,StringComparer.OrdinalIgnoreCase).OrderBy(f=>newestQueues.Contains(f.File.FullName)?-3:Priority(Path.GetRelativePath(f.Root,f.File.FullName).Replace('\\','/'))==0?-2:familyHeads.Contains(f.File.FullName)?-1:Priority(Path.GetRelativePath(f.Root,f.File.FullName).Replace('\\','/'))).ThenByDescending(f=>f.File.LastWriteTimeUtc)) {
                         root=source.Root;var file=source.File;
                         token.ThrowIfCancellationRequested();string rel=source.Prefix+"/"+Path.GetRelativePath(root,file.FullName).Replace('\\','/');
                         if(file.LastWriteTimeUtc<DateTime.UtcNow.AddDays(-7)){skipped.Add(new{path=rel,reason="older-than-7-days"});continue;}
