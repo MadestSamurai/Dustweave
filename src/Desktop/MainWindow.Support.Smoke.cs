@@ -100,11 +100,39 @@ public partial class MainWindow
                     }
                     checks+=2;
                 }finally{cleanup.Close();}
+                var warning=CreateStorageWarningWindow([new(@"C:\",512*1048576L),new(@"E:\",384*1048576L)],new(2662*1048576L,2100*1048576L,800*1048576L,0,[]),out var warningAction);warning.Show();
+                try {
+                    await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    var ignore=Nodes<CheckBox>(warning).Single(c=>c.Name=="StorageWarningIgnore");
+                    var cleanButton=Nodes<Button>(warning).Single(b=>b.Name=="StorageWarningClean");
+                    var moveButton=Nodes<Button>(warning).Single(b=>b.Name=="StorageWarningMove");
+                    if(cleanButton.TransformToAncestor(warning).TransformBounds(new Rect(cleanButton.RenderSize)).Bottom>warning.ActualHeight)throw new Exception("Low-space actions clipped");
+                    var warningText=Nodes<TextBlock>(warning).Select(t=>t.Text).ToArray();
+                    if(!warningText.Any(t=>t==L.Get("storage.low.total",2662d)) || warningText.Any(t=>t.StartsWith("storage.low.")))throw new Exception("Full storage size or localization missing");
+                    Capture($"storage-warning-{language}-{appearance}",(FrameworkElement)warning.Content);
+                    if(language==0&&appearance==1){ignore.IsChecked=true;cleanButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));if(warningAction()!="clean" || !DailyStorageWarning.IsIgnored(root,DateTime.Now))throw new Exception("Ignore checkbox or cleanup route failed");}
+                    else if(language==1&&appearance==1){moveButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));if(warningAction()!="move")throw new Exception("Migration entry failed");}
+                    else {Nodes<Button>(warning).Single(b=>b.Name=="StorageWarningLater").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));if(warningAction()!=null)throw new Exception("Dismissal requested maintenance");}
+                    checks+=4;
+                } finally {if(warning.IsVisible)warning.Close();}
                 WorkspaceTabs.SelectedItem=UpdatesTab;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
                 var destinations=Nodes<Button>(updatePanel).Select(b=>b.Tag as string).ToArray();
                 if(!destinations.Contains(DailyDownloadLinks.Release)||!destinations.Contains(DailyDownloadLinks.Mirror))throw new Exception("Download routes missing");
                 Capture($"updates-links-{language}-{appearance}");WorkspaceTabs.SelectedItem=DiagnosticsTab;checks++;
             }
+            int probes=0;nextStorageCheck=DateTime.MinValue;
+            DailyDiskSpace[] LowSpace(){probes++;return [new(@"C:\",128*1048576L)];}
+            await CheckStorageWarningAsync(LowSpace);
+            if(probes!=0)throw new Exception("Persisted ignore still probed or opened a reminder");
+            DailyJson.Write(Path.Combine(root,"storage-warning.json"),new DailyStorageWarningPreference("2000-01-01"));
+            nextStorageCheck=DateTime.MinValue;busy=true;
+            var automaticWarning=CheckStorageWarningAsync(LowSpace);
+            Window? warningWindow=null;
+            for(int i=0;i<200&&warningWindow==null;i++){await Task.Delay(20);warningWindow=Application.Current.Windows.OfType<Window>().FirstOrDefault(w=>w.Name=="StorageWarningWindow");}
+            if(warningWindow==null||DailyDialogs.ModalDepth!=0||!busy)throw new Exception("Automatic warning missing or blocked active work");
+            Nodes<Button>(warningWindow).Single(b=>b.Name=="StorageWarningLater").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));await automaticWarning;busy=false;
+            int previousProbes=probes;nextStorageCheck=DateTime.MinValue;await CheckStorageWarningAsync(LowSpace);
+            if(probes!=previousProbes||storageCheckRunning)throw new Exception("Unignored shortage repeated before cooldown or left running state");checks+=3;
             Width=920;Height=650;WorkspaceTabs.SelectedItem=DiagnosticsTab;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
             if(!ExportDiagnosticButton.IsVisible)throw new Exception("Compact diagnostics lost export entry");
             Capture("support-compact");checks++;

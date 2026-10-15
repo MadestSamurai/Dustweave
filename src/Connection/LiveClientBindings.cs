@@ -171,13 +171,15 @@ public static class LiveClientBindings
         string client=ClientHash(managed);
         context?.ValidateClient(managed,client);
         string key=MetadataIndex.Hash("live-names-v1|"+typeof(LiveClientBindings).Module.ModuleVersionId+"|"+client+"|"+JsonSerializer.Serialize(contract));
-        string directory=Path.Combine(BD2Daily.DailyIdentity.DataRoot,"live","binding-cache"),path=Path.Combine(directory,key+".json");
+        using var storage=Dustweave.DailyCacheStorage.Lease(BD2Daily.DailyIdentity.DataRoot);
+        string directory=Dustweave.DailyCacheStorage.Area(BD2Daily.DailyIdentity.DataRoot,"live/binding-cache"),path=Path.Combine(directory,key+".json");
         try{
             if(File.Exists(path)){
                 var cache=JsonSerializer.Deserialize<NameCache>(File.ReadAllText(path));
                 if(cache?.Key==key&&MetadataIndex.Hash(cache.Payload)==cache.Sha256){
                     var saved=JsonSerializer.Deserialize<NamePayload>(cache.Payload)!;
                     if(saved.Report.Status=="compatible"){
+                        Dustweave.DailyCacheStorage.Touch(path);
                         _=new BD2Daily.Live.EvidenceAliases(saved.Names.Select(p=>new BD2Daily.Live.ClientAlias{Original=p.Key,Current=p.Value}));
                         File.WriteAllText(reportPath,JsonSerializer.Serialize(saved.Report,new JsonSerializerOptions{WriteIndented=true}));return saved.Names;
                     }

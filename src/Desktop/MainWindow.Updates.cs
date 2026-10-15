@@ -130,7 +130,7 @@ public partial class MainWindow
     }
     private async Task CheckUpdatesAsync(bool manual = false)
     {
-        if (IsSandboxWindow || smoke != null || updateChecking || updateInstalling || !manual && !updatePanel.Automatic) return;
+        if (IsSandboxWindow || smoke != null || cacheChanging || updateChecking || updateInstalling || !manual && !updatePanel.Automatic) return;
         nextUpdateCheck = DateTime.UtcNow.AddHours(6);
         readyUpdate = null; manualUpdateVersion = null; updatePromptShown = false; updateChecking = true; updatePanel.Status("updates.checking"); UpdateUpdateControls();
         string? availableVersion = null;

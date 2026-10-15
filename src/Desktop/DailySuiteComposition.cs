@@ -21,15 +21,16 @@ internal static class DailySuiteComposition {
  }
  private static Task<string> ClientKey(string managed,CancellationToken cancel)=>Task.Run(()=>ClientInputs.ReadManaged(managed).Key,cancel);
  public static async Task<PreparedDailyHook> Prepare(string managed,Action<string> progress,CancellationToken cancel){
+  using var storage=DailyCacheStorage.Lease(DailyIdentity.DataRoot);
   await compiler.WaitAsync(cancel);
   try{
    string clientKey=await ClientKey(managed,cancel);
-   string directory=Path.Combine(DailyIdentity.DataRoot,"suite-cache",DailyHookCompiler.Fingerprint,clientKey);
+   string directory=Path.Combine(DailyCacheStorage.Area(DailyIdentity.DataRoot,"suite-cache"),DailyHookCompiler.Fingerprint,clientKey);
    Directory.CreateDirectory(directory);
    string cache=Path.Combine(directory,"observer.dll"), report=Path.Combine(directory,"observer.json");
    if(File.Exists(cache)&&DailyJson.TryRead<CacheInfo>(report) is {} info){
     var bytes=await File.ReadAllBytesAsync(cache,cancel);
-    if(Hash(bytes)==info.Hash)return new(bytes,info.Report,info.Guild,info.Startup);
+    if(Hash(bytes)==info.Hash){DailyCacheStorage.Touch(report);return new(bytes,info.Report,info.Guild,info.Startup);}
    }
    progress("准备公共连接组件");
    // An empty manifest enables the module host without compiling or loading any business tool.
@@ -43,6 +44,7 @@ internal static class DailySuiteComposition {
  }
  public static async Task<byte[]> PrepareModule(string managed,string id,Action<string> progress,CancellationToken cancel){
   if(SuiteRules.ModuleEntry(id).Length==0)throw new ArgumentException("未知功能："+id);
+  using var storage=DailyCacheStorage.Lease(DailyIdentity.DataRoot);
   await compiler.WaitAsync(cancel);
   try{
    cancel.ThrowIfCancellationRequested();
@@ -51,13 +53,13 @@ internal static class DailySuiteComposition {
    var assembly=Assembly.Load(assemblyName);
    string key=DailyIdentity.Hash("module-v1|"+id+"|"+assembly.ManifestModule.ModuleVersionId+"|"+(id=="daily"?DailyPlugin.Current.Fingerprint:""));
    string clientKey=await ClientKey(managed,cancel);
-   string directory=Path.Combine(DailyIdentity.DataRoot,"suite-cache","modules",id,key,clientKey);
+   string directory=Path.Combine(DailyCacheStorage.Area(DailyIdentity.DataRoot,"suite-cache"),"modules",id,key,clientKey);
    Directory.CreateDirectory(directory);
    if(tool=="equipment")await Task.Run(()=>assembly.GetType("BD2Equipment.Live.LiveEntry")!.GetMethod("EnsureEvidenceConfig")!.Invoke(null,[managed,Path.Combine(Environment.GetEnvironmentVariable("BD2_EQUIPMENT_DATA_ROOT")??Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BD2EquipmentAssistant"),"evidence-config.json")]),cancel);
    string cache=Path.Combine(directory,"module.dll"),report=Path.Combine(directory,"module.json");
    if(File.Exists(cache)&&DailyJson.TryRead<ModuleCache>(report) is {} info){
     var bytes=await File.ReadAllBytesAsync(cache,cancel);
-    if(Hash(bytes)==info.Hash){progress("复用已准备组件 · "+Name(id));return bytes;}
+    if(Hash(bytes)==info.Hash){DailyCacheStorage.Touch(report);progress("复用已准备组件 · "+Name(id));return bytes;}
    }
    progress("首次准备 · "+Name(id));
    byte[] payload;

@@ -95,6 +95,11 @@ static class RuleDataCases
             DailyJson.Write(Path.Combine(tables, "OneTable.json"), rows);
             await Reject(() => { DailyRuleData.ValidateExport(tables, a, d, groups.Values.SelectMany(x => x)); return Task.CompletedTask; }, "truncated cached rules cannot satisfy the advertised complete table count");
             await Reject(() => DailyRuleData.PrepareSetAsync(package, root, game, Read, () => false, _ => { }, "../escape", source, groups), "rule cache namespaces cannot escape the account data root");
+            WriteTables(tables);
+            string moved=Path.Combine(output,"relocated-rule-cache");
+            await DailyCacheStorage.MoveAsync(root,moved);
+            var relocated=await Prepare(Path.Combine(package,"not-installed"));
+            Check(S(relocated.Proof["state"])=="cached_current" && relocated.PathFor("rules/TwoTable.json").StartsWith(moved),"migrated legacy absolute-path rule cache reuses validated tables without running exporter");
         }
         finally { Environment.SetEnvironmentVariable("BD2_DATA_ROOT", prior); }
     }

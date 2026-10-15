@@ -78,6 +78,8 @@ Task Sync(Action run) { run(); return Task.CompletedTask; }
 await Group("ProductIdentity", () => Sync(() => ProductIdentityCases.Run(cases)));
 await Group("BargainTraining", () => BargainTrainingCases.Run(root, cases));
 await Group("LogCleanup", () => LogCleanupCases.Run(root,cases));
+await Group("CacheStorage", () => CacheStorageCases.Run(root,cases));
+await Group("StorageWarning", () => StorageWarningCases.Run(root,cases));
 await Group("LogEvidence", () => LogEvidenceCases.Run(root,cases));
 await Group("DiagnosticExport", () => DiagnosticExportCases.Run(root,cases));
 await Group("ClientUpdate", () => Sync(() => ClientUpdateCases.Run(root,cases)));

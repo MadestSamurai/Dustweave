@@ -59,6 +59,7 @@ public sealed class DailyRuleData
     public static async Task<DailyRuleData> PrepareSetAsync(string package, string root, GameInstance game, Func<Task<DailyStageFrame>> read, Func<bool> stopped, Action<string> report, string area, string source, IReadOnlyDictionary<string, string[]> groups)
     {
         Require(System.Text.RegularExpressions.Regex.IsMatch(area, "^[a-z][a-z0-9-]{0,63}$"), "Invalid rules namespace");
+        using var storage = DailyCacheStorage.Lease(root);
         void Stop()
         {
             if (stopped())
@@ -91,7 +92,7 @@ public sealed class DailyRuleData
         else
         {
             Require(DailyTools.Available(package, "exporter"), "缺少.NET规则读取组件，请使用完整安装包");
-            string cache = Path.Combine(root, "rules", area, result.assemblyHash + "-" + result.databaseHash);
+            string cache = Path.Combine(DailyCacheStorage.Area(root, "rules"), area, result.assemblyHash + "-" + result.databaseHash);
             Directory.CreateDirectory(cache);
             using var lease = new FileStream(Path.Combine(cache, "prepare.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
             string tables = Path.Combine(cache, "tables");
@@ -101,7 +102,15 @@ public sealed class DailyRuleData
                 try
                 {
                     var prior = DailyTradeCatalog.Read(Path.Combine(cache, "verified.json"));
-                    tables = Path.GetFullPath(S(prior["directory"]));
+                    string relative = S(prior["relativeDirectory"]);
+                    if(relative.Length==0)
+                    {
+                        string recorded=S(prior["directory"]);
+                        Require(Path.GetFileName(Path.GetDirectoryName(recorded))==Path.GetFileName(cache), "日常规则缓存位置无效");
+                        relative=Path.GetFileName(recorded);
+                    }
+                    Require(relative.Length>0 && relative==Path.GetFileName(relative) && relative is not ("." or ".."), "日常规则缓存位置无效");
+                    tables = Path.GetFullPath(Path.Combine(cache,relative));
                     Require(tables.StartsWith(cache + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase), "日常规则缓存位置无效");
                     hashes = ValidateExport(tables, result.assemblyHash, result.databaseHash, names);
                     valid = JsonNode.DeepEquals(prior["hashes"], hashes);
@@ -141,8 +150,9 @@ public sealed class DailyRuleData
                 result.AssertReady();
                 hashes = ValidateExport(tables, result.assemblyHash, result.databaseHash, names);
                 // Publish the verified location, not an in-place replacement of a directory used by another queue.
-                DailyJson.Write(Path.Combine(cache, "verified.json"), O(("directory", tables), ("hashes", hashes)));
+                DailyJson.Write(Path.Combine(cache, "verified.json"), O(("relativeDirectory", Path.GetFileName(tables)), ("hashes", hashes)));
             }
+            DailyCacheStorage.Touch(Path.Combine(cache,"verified.json"));
             foreach (var group in groups)
                 foreach (string name in group.Value)
                     result.paths.Add(group.Key + "/" + name + ".json", Path.Combine(tables, name + ".json"));
@@ -153,7 +163,7 @@ public sealed class DailyRuleData
         Require(JsonNode.DeepEquals(initial.Context, (await read()).Context), "规则读取期间账号、连接或周期改变");
         result.AssertReady();
         result.Proof["hashes"] = hashes;
-        DailyJson.Write(Path.Combine(root, "rules", area + "-last.json"), result.Proof);
+        DailyJson.Write(Path.Combine(DailyCacheStorage.Area(root, "rules"), area + "-last.json"), result.Proof);
         return result;
     }
 }

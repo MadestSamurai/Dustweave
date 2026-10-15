@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 1.3.17 — 2026-10-16
+
+- 空间统计覆盖完整数据目录和迁移后的缓存，不再只显示日志占用；可清理旧组件缓存及已完成的旧更新备份。
+- 支持将可重建缓存迁移到其他磁盘，校验成功后切换；账号、设置及恢复记录保持原位置。
+- 数据或缓存磁盘可用空间不足 1 GB 时显示完整占用及清理、迁移入口。“今日忽略”按本机早上 8 点刷新，重启后仍有效。
+- Reports complete storage usage, cleans obsolete rebuildable caches, supports verified cache relocation, and adds low-disk reminders with a persisted local 08:00 dismissal boundary.
+- [完整说明 / Full notes](docs/releases/1.3.17.md)
+
 ## 1.3.16 — 2026-10-15
 
 - 为跳过、暂缓和失败补充具体原因及下一步说明，改善旧记录的显示。

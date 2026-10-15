@@ -49,6 +49,16 @@ Hosted child windows reserve the same control lease before connection and start 
 
 Targeted checks: `test.ps1 -Groups ApostleIntegrated,ToolMenu,ActivityLease,ApostleAnnealing,ApostlePerformance,ApostleTimeToClear`. Set `DUSTWEAVE_UI_SMOKE_SCOPE=apostle` when running the isolated desktop `--smoke` entry to verify all three languages, both themes, compact board layout, paint-before-connect, loading animation, connection locks, idle release, start/pause and close during setup/run. These checks do not connect to a game.
 
+## Local storage / 本地空间
+
+“日志与缓存”统计当前数据目录的全部文件大小，以及迁移后的可重建缓存；日志清理白名单的大小不再充当总占用。`DailyCacheStorage` 单独管理连接组件、商品表、规则、预编译和绑定缓存。按组件保留最近使用的两代缓存；已结束的旧 OTA 备份可清理，最新备份、未完成及未知状态的更新保留。后台清理只扫描这些缓存目录。
+
+缓存迁移在主窗口空闲、工具和隔离窗口关闭时执行，与更新下载和自动化互斥。先复制并逐文件校验 SHA-256，再原子切换 `cache-location.json`，最后清除原缓存；失败或取消不切换。账号、登录、操作归属、未确认回执及 OTA 恢复路径保持原位置。迁移后的规则使用相对路径，不触发重复导表。针对性检查：`CacheStorage`、`RuleData`、`TradeData`、`LiveBindings`、`LogCleanup`，以及 `support` 界面检查。
+
+Storage totals cover all files in the active data root and relocated rebuildable caches. Cleanup retains two recent generations per component and the latest update backup; pending or unknown update transactions remain protected. Cache migration copies and verifies files before atomically switching the location. Account data, IPC ownership, operation journals and OTA recovery paths do not move. Maintenance runs off the UI thread and cannot overlap automation, tools or update downloads.
+
+Low-space reminders check the data and current cache volumes without enumerating files every five minutes. Below 1 GiB, a visible primary window measures full usage asynchronously before showing modeless cleanup/migration advice; it never pauses active or scheduled work. Sandbox workers never duplicate this prompt. Dismissal persists in `storage-warning.json` and follows the local 08:00 day boundary; otherwise a continuing shortage is shown at most hourly. IO failures never become a task/connection failure. `StorageWarning` covers threshold, volume deduplication and local-day persistence; the `support` smoke renders and exercises the dialog in all three languages and both themes.
+
 ## Extension boundary / 扩展边界
 
 本体提供通用插件接口。插件清单声明入口程序集、接口版本、文件哈希和适用环节；本体在加载前校验，缺少插件时隐藏依赖它的选项。插件不能绕过账号身份、操作归属或任务恢复检查。

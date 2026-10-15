@@ -82,7 +82,7 @@ public partial class MainWindow : Window
         this.smoke = smoke;
         preferencesPanel = new DailyPreferencesPanel(root, allowGame: smoke == null);
         SettingsTab.Content = preferencesPanel;
-        InitializeSoftwareSettings(); InitializeSchedules(); InitializeUpdates(); InitializeSandboxPresentation(); InitializeLogCleanup();
+        InitializeSoftwareSettings(); InitializeSchedules(); InitializeUpdates(); InitializeSandboxPresentation(); InitializeLogCleanup(); InitializeStorageWarning();
         dailyPanel = new DailyRunPanel(root);
         dailyQueue = new(root, new PackagedDailyQueueExecutor(AppContext.BaseDirectory));
         RunTab.Content = dailyPanel; InitializeParallel(); InitializeDesktopBehavior();
@@ -123,7 +123,7 @@ public partial class MainWindow : Window
         CollectionViewSource.GetDefaultView(rows).Filter = MatchesSearch;
         coordinator.Progress += p => Dispatcher.Invoke(() => { if (dailyQueue.IsRunning || WorkspaceTabs.SelectedItem == RunTab && busy) dailyPanel.Show(new("preparing", p.Message, "", [])); DailyUiText.Set(ProgressText, p.Message); ProgressText.Foreground = (Brush)FindResource(p.State == "error" ? "Error" : "Ink"); });
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        timer.Tick += (_, _) => { _ = PollParallelAsync(); L.RefreshFromDisk(); RefreshTools(); UpdateConnection(); if (smoke == null && !busy) { _ = RefreshAccountIdentityAsync(); RefreshDailyHistory(); } if (smoke == null) { _ = CheckLogCleanupAsync(); _ = CheckScheduleAsync(); _ = OfferUpdateAsync(); if (DateTime.UtcNow >= nextUpdateCheck) { nextUpdateCheck = DateTime.UtcNow.AddHours(6); _ = CheckUpdatesAsync(); } } };
+        timer.Tick += (_, _) => { _ = PollParallelAsync(); L.RefreshFromDisk(); RefreshTools(); UpdateConnection(); if (smoke == null && !busy) { _ = RefreshAccountIdentityAsync(); RefreshDailyHistory(); } if (smoke == null) { _ = CheckLogCleanupAsync(); _ = CheckStorageWarningAsync(); _ = CheckScheduleAsync(); _ = OfferUpdateAsync(); if (DateTime.UtcNow >= nextUpdateCheck) { nextUpdateCheck = DateTime.UtcNow.AddHours(6); _ = CheckUpdatesAsync(); } } };
         Loaded += async (_, _) => { RefreshAccounts(); var last = DailyJson.TryRead<DailyRunStatus>(Path.Combine(root, "run.json")); if (last != null) { DailyUiText.History(ProgressText, "history.previous", last.AtUtc.LocalDateTime, last.Progress.Message); } if (smoke == null) { var previous = ReadTaskHistory(TaskAccountKey); dailyPanel.LoadHistory(previous); } timer.Start(); if (smoke != null && automatedSmoke) await SmokeAsync();  };
         bool startupShown = false;
         ContentRendered += async (_, _) => { if (startupShown || smoke != null) return; startupShown = true;
@@ -157,7 +157,7 @@ public partial class MainWindow : Window
     private bool ToolOpen => apostleWindow != null || toolSession.Current != null;
     private bool ToolConnecting => apostleWindow?.Panel.Connecting == true;
     private bool ToolRunning => !busy && parallelControl == null && DailyToolControl.IsOccupied(root);
-    private bool Unavailable => onboardingOpen || busy || toolChanging || ToolRunning || updateInstalling || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true;
+    private bool Unavailable => onboardingOpen || busy || cacheChanging || toolChanging || ToolRunning || updateInstalling || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true;
     private async Task OpenTool(string id)
     {
         if (smoke != null || busy || toolChanging || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true) return;

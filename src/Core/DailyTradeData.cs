@@ -54,6 +54,7 @@ public sealed class DailyTradeData
     }
     public static async Task<DailyTradeData> PrepareAsync(string package, string root, GameInstance game, DailyStageFrame frame, Func<bool> stopped, Action<string> report, bool allowCompleted = true)
     {
+        using var storage = DailyCacheStorage.Lease(root);
         var result = new DailyTradeData { Directory = package };
         try
         {
@@ -84,7 +85,7 @@ public sealed class DailyTradeData
                 throw new InvalidDataException("缺少.NET跑商表读取组件，请使用完整新版安装包。");
             // Cache only the catalog. Planning executes inside this .NET build.
             string key = typeof(DailyTradeOptimizer).Assembly.ManifestModule.ModuleVersionId.ToString() + originalHash + db;
-            string cache = Path.Combine(root, "trade", "catalogs", Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(key))).ToLowerInvariant());
+            string cache = Path.Combine(DailyCacheStorage.Area(root, "trade/catalogs"), Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(key))).ToLowerInvariant());
             System.IO.Directory.CreateDirectory(cache);
             using var lease = new FileStream(Path.Combine(cache, "prepare.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
             string tables = Path.Combine(cache, "tables");

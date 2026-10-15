@@ -34,7 +34,8 @@ try {
   var frame=DailyJson.TryRead<Frame>(Path.Combine(root,"snapshot.json"));
   if(BD2.LocalIpc.DesktopFiles.Exists(Path.Combine(root,"command.json")))throw new Exception("Another operation is in flight");
   var managed=Path.Combine(Path.GetDirectoryName(game.Executable)!,"BrownDust II_Data","Managed");
-  string output=Path.Combine(root,"prepared",DailyIdentity.Version);Directory.CreateDirectory(output);
+  using var storage=DailyCacheStorage.Lease(DailyIdentity.DataRoot);
+  string output=Path.Combine(DailyCacheStorage.Area(DailyIdentity.DataRoot,"live/prepared"),DailyIdentity.Version);Directory.CreateDirectory(output);
   async Task Invoke(params string[] argv){
    if(invokeUtility!=null){await invokeUtility(argv);return;}
    var start=DailyTools.StartInfo(AppContext.BaseDirectory,"live");start.RedirectStandardOutput=false;start.RedirectStandardError=false;

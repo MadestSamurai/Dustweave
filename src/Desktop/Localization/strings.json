@@ -1,4 +1,59 @@
 {
+  "storage.low.title": {
+    "zh-CN": "磁盘空间不足",
+    "zh-TW": "磁碟空間不足",
+    "en-US": "Low disk space"
+  },
+  "storage.low.body": {
+    "zh-CN": "织尘使用的磁盘可用空间不足 1 GB，可能无法保存记录或下载更新。",
+    "zh-TW": "織塵使用的磁碟可用空間不足 1 GB，可能無法儲存記錄或下載更新。",
+    "en-US": "A drive used by Dustweave has less than 1 GB free. Saving records or downloading updates may fail."
+  },
+  "storage.low.volume": {
+    "zh-CN": "{0} 可用空间：{1:N1} MiB",
+    "zh-TW": "{0} 可用空間：{1:N1} MiB",
+    "en-US": "{0} available: {1:N1} MiB"
+  },
+  "storage.low.total": {
+    "zh-CN": "完整数据与缓存目录：{0:N1} MiB",
+    "zh-TW": "完整資料與快取目錄：{0:N1} MiB",
+    "en-US": "All data and cache folders: {0:N1} MiB"
+  },
+  "storage.low.scope": {
+    "zh-CN": "包含日志、更新文件及已迁移的缓存，按文件大小合计；其中部分数据需要保留。",
+    "zh-TW": "包含日誌、更新檔案及已遷移的快取，按檔案大小合計；其中部分資料需要保留。",
+    "en-US": "Includes logs, update files and relocated cache, summed by file size. Some data must be kept."
+  },
+  "storage.low.partial": {
+    "zh-CN": "另有 {0} 项暂时无法统计，实际占用可能更高。",
+    "zh-TW": "另有 {0} 項暫時無法統計，實際佔用可能更高。",
+    "en-US": "{0} items could not be measured. Actual usage may be higher."
+  },
+  "storage.low.advice": {
+    "zh-CN": "建议清理旧日志和可重建缓存，或将缓存迁移到空间充足的磁盘。账号与设置会保留。",
+    "zh-TW": "建議清理舊日誌和可重建快取，或將快取遷移至空間充足的磁碟。帳號與設定會保留。",
+    "en-US": "Clear old logs and rebuildable cache, or move the cache to a drive with more space. Accounts and settings are preserved."
+  },
+  "storage.low.ignore": {
+    "zh-CN": "今日忽略（按本机时间，下次早上 {0}:00 恢复提醒）",
+    "zh-TW": "今日忽略（按本機時間，下次早上 {0}:00 恢復提醒）",
+    "en-US": "Ignore today (remind again at the next {0}:00 AM, local time)"
+  },
+  "storage.low.later": {
+    "zh-CN": "稍后处理",
+    "zh-TW": "稍後處理",
+    "en-US": "Later"
+  },
+  "storage.low.clean": {
+    "zh-CN": "查看并清理空间",
+    "zh-TW": "查看並清理空間",
+    "en-US": "Review & clean up"
+  },
+  "storage.low.save_failed": {
+    "zh-CN": "暂时无法保存“今日忽略”。请先清理空间，或再次关闭此提示。",
+    "zh-TW": "暫時無法儲存「今日忽略」。請先清理空間，或再次關閉此提示。",
+    "en-US": "Could not save “Ignore today”. Free some space, or close this reminder again."
+  },
   "apostle.connect": {
     "zh-CN": "连接游戏",
     "zh-TW": "連接遊戲",
@@ -184,7 +239,6 @@
     "zh-TW": "金幣 {0:N0} · 敵人 {1}/{2} · 剩餘 {3:0}s",
     "en-US": "Gold {0:N0} · Enemies {1}/{2} · {3:0}s left"
   },
-
   "message.吸收次数用完，本地图压制仍未确认；继续其他地图": {
     "zh-CN": "吸收次数用完，本地图压制仍未确认；继续其他地图",
     "zh-TW": "吸收次數用完，本地圖壓制仍未確認；繼續其他地圖",
@@ -235,7 +289,6 @@
     "zh-TW": "日常已完成，遊戲尚未退出。請處理遊戲中的關閉提示，或手動關閉遊戲。",
     "en-US": "Daily tasks finished, but the game is still open. Respond to its exit prompt or close it manually."
   },
-
   "message.salvation_locked": {
     "zh-CN": "救赎之塔尚未解锁，本次跳过。",
     "zh-TW": "救贖之塔尚未解鎖，本次略過。",
@@ -295,15 +348,37 @@
     "zh-CN": "活动结算尚未确认，请等待游戏结算完成后接续；不会重复开始战斗。",
     "zh-TW": "活動結算尚未確認，請等待遊戲結算完成後接續；不會重複開始戰鬥。",
     "en-US": "The event result is not confirmed yet. Wait for settlement and resume; the battle will not be started again."
-  }
-,
-
-  "stage.salvation": {"zh-CN":"救赎之塔扫荡","zh-TW":"救贖之塔掃蕩","en-US":"Tower of Salvation sweep"},
-  "prefs.salvation_hint": {"zh-CN":"仅扫荡已通关难度，成长石足够补满剩余加成时停止","zh-TW":"僅掃蕩已通關難度，成長石足夠補滿剩餘加成時停止","en-US":"Sweep a cleared difficulty until you have enough stones for all remaining growth upgrades"},
-  "prefs.salvation_reserve": {"zh-CN":"保留每日钥匙","zh-TW":"保留每日鑰匙","en-US":"Daily keys to keep"},
-  "prefs.event_failure_sweep": {"zh-CN":"自动战斗失败后，扫荡最高可扫荡关卡","zh-TW":"自動戰鬥失敗後，掃蕩最高可掃蕩關卡","en-US":"After a defeat, sweep the highest eligible stage"},
-  "prefs.event_failure_hint": {"zh-CN":"关闭后，失败即结束活动战斗环节，继续其他日常。","zh-TW":"關閉後，失敗即結束活動戰鬥環節，繼續其他日常。","en-US":"When off, a defeat ends this stage and the daily queue continues."},
-  "native.salvation_keys_error": {"zh-CN":"救赎之塔保留钥匙必须为 0 至 999。","zh-TW":"救贖之塔保留鑰匙必須為 0 至 999。","en-US":"Keep between 0 and 999 daily tower keys."},
+  },
+  "stage.salvation": {
+    "zh-CN": "救赎之塔扫荡",
+    "zh-TW": "救贖之塔掃蕩",
+    "en-US": "Tower of Salvation sweep"
+  },
+  "prefs.salvation_hint": {
+    "zh-CN": "仅扫荡已通关难度，成长石足够补满剩余加成时停止",
+    "zh-TW": "僅掃蕩已通關難度，成長石足夠補滿剩餘加成時停止",
+    "en-US": "Sweep a cleared difficulty until you have enough stones for all remaining growth upgrades"
+  },
+  "prefs.salvation_reserve": {
+    "zh-CN": "保留每日钥匙",
+    "zh-TW": "保留每日鑰匙",
+    "en-US": "Daily keys to keep"
+  },
+  "prefs.event_failure_sweep": {
+    "zh-CN": "自动战斗失败后，扫荡最高可扫荡关卡",
+    "zh-TW": "自動戰鬥失敗後，掃蕩最高可掃蕩關卡",
+    "en-US": "After a defeat, sweep the highest eligible stage"
+  },
+  "prefs.event_failure_hint": {
+    "zh-CN": "关闭后，失败即结束活动战斗环节，继续其他日常。",
+    "zh-TW": "關閉後，失敗即結束活動戰鬥環節，繼續其他日常。",
+    "en-US": "When off, a defeat ends this stage and the daily queue continues."
+  },
+  "native.salvation_keys_error": {
+    "zh-CN": "救赎之塔保留钥匙必须为 0 至 999。",
+    "zh-TW": "救贖之塔保留鑰匙必須為 0 至 999。",
+    "en-US": "Keep between 0 and 999 daily tower keys."
+  },
   "pandora.auto_equipment": {
     "zh-CN": "自动选择装备",
     "zh-TW": "自動選擇裝備",
@@ -725,9 +800,9 @@
     "en-US": "Counted {0} files ({1} MB), checked {2} cleanup candidates…"
   },
   "logs.title": {
-    "zh-CN": "日志与空间管理",
-    "zh-TW": "日誌與空間管理",
-    "en-US": "Logs and storage"
+    "zh-CN": "日志与缓存",
+    "zh-TW": "日誌與快取",
+    "en-US": "Logs & cache"
   },
   "logs.body": {
     "en-US": "Successful tasks keep summaries; failures keep full evidence and nearby steps. Expiring diagnostics does not reset task progress.",
@@ -750,9 +825,9 @@
     "en-US": "{0} days"
   },
   "logs.size": {
-    "zh-CN": "空间目标",
-    "zh-TW": "空間目標",
-    "en-US": "Storage target"
+    "zh-CN": "日志空间目标",
+    "zh-TW": "日誌空間目標",
+    "en-US": "Log size target"
   },
   "logs.size.value": {
     "zh-CN": "{0} MB",
@@ -760,19 +835,19 @@
     "en-US": "{0} MB"
   },
   "logs.protection": {
-    "en-US": "Logs expire after at most 7 days; the default storage target is 512 MB. Older successful records are removed first, with the latest 48 hours retained. Failure diagnostics also expire. Accounts, settings, queue progress and recovery state needed to prevent repeat operations are kept separately. Open files are retried later; exported ZIPs are not deleted.",
-    "zh-TW": "日誌最多保留 7 天，預設空間目標 512 MB。超出目標時優先清理較早的成功記錄，保留最近 48 小時。異常診斷也會到期清理；帳號、設定、佇列進度及防止重複操作所需的恢復狀態獨立保留。使用中的檔案稍後再清理，已匯出的壓縮檔不自動刪除。",
-    "zh-CN": "日志最多保留 7 天，默认空间目标 512 MB。超出目标时优先清理较早的成功记录，保留最近 48 小时。异常诊断也会到期清理；账号、设置、队列进度及防止重复操作所需的恢复状态独立保留。使用中的文件稍后再清理，已导出的压缩包不自动删除。"
+    "zh-CN": "到期日志会清理；超出空间目标时优先清理较早的成功记录，保留最近 48 小时。账号、任务进度和必要恢复状态不受影响，已导出的压缩包不自动删除。",
+    "zh-TW": "到期日誌會清理；超出空間目標時優先清理較早的成功記錄，保留最近 48 小時。帳號、任務進度和必要復原狀態不受影響，已匯出的壓縮檔不會自動刪除。",
+    "en-US": "Expired logs are removed. Above the size target, older successful records go first; the latest 48 hours stay. Accounts, task progress, recovery state and exported ZIPs are retained."
   },
   "logs.scope": {
-    "en-US": "Manages logs, operation snapshots and query records in this instance. Accounts, progress and component caches are preserved.",
-    "zh-TW": "管理目前執行空間的日誌、操作快照及查詢記錄；不清空帳號、進度或元件快取。",
-    "zh-CN": "管理当前运行空间的日志、操作快照和查询记录；不清空账户、进度或组件缓存。"
+    "zh-CN": "统计当前数据目录和迁移后的缓存；账号、进度及恢复记录不会被清空。",
+    "zh-TW": "統計目前資料目錄和遷移後的快取；帳號、進度及復原記錄不會被清空。",
+    "en-US": "Includes local data and relocated cache. Accounts, progress and recovery records are retained."
   },
   "logs.scanning": {
-    "zh-CN": "正在统计可清理的日志…",
-    "zh-TW": "正在統計可清理的日誌…",
-    "en-US": "Calculating reclaimable space…"
+    "zh-CN": "正在统计日志、缓存和其他数据…",
+    "zh-TW": "正在統計日誌、快取和其他資料…",
+    "en-US": "Measuring logs, cache and other data…"
   },
   "logs.preview": {
     "zh-CN": "可管理记录 {0} MB · 可释放 {1} MB（{2} 个文件）",
@@ -790,9 +865,9 @@
     "en-US": "Recalculate"
   },
   "logs.clean": {
-    "zh-CN": "清理以上记录",
-    "zh-TW": "清理以上記錄",
-    "en-US": "Clean up listed records"
+    "zh-CN": "清理可释放空间",
+    "zh-TW": "清理可釋放空間",
+    "en-US": "Free up space"
   },
   "logs.changed": {
     "zh-CN": "设置已保存。请重新统计可释放空间。",
@@ -2024,7 +2099,11 @@
     "zh-TW": "戰術教材",
     "en-US": "Tactics training"
   },
-  "stage.event_battle": {"zh-CN":"活动战斗","zh-TW":"活動戰鬥","en-US":"Event battles"},
+  "stage.event_battle": {
+    "zh-CN": "活动战斗",
+    "zh-TW": "活動戰鬥",
+    "en-US": "Event battles"
+  },
   "stage.monster_hunt": {
     "zh-CN": "魔兽快速战斗（已移除）",
     "zh-TW": "魔獸快速戰鬥（已移除）",
@@ -2590,7 +2669,11 @@
     "zh-TW": "活動戰鬥",
     "en-US": "Event battles"
   },
-  "prefs.event_sweep_hint": {"zh-CN":"使用游戏内自动战斗，最多 5 次；只消耗免费次数","zh-TW":"使用遊戲內自動戰鬥，最多 5 次；只消耗免費次數","en-US":"Use native auto battle up to 5 times, with free entries only"},
+  "prefs.event_sweep_hint": {
+    "zh-CN": "使用游戏内自动战斗，最多 5 次；只消耗免费次数",
+    "zh-TW": "使用遊戲內自動戰鬥，最多 5 次；只消耗免費次數",
+    "en-US": "Use native auto battle up to 5 times, with free entries only"
+  },
   "prefs.event_challenge": {
     "zh-CN": "普通全部通关后继续挑战战斗",
     "zh-TW": "普通全部通關後繼續挑戰戰鬥",
@@ -6816,7 +6899,6 @@
     "zh-TW": "與織塵的連線已失效，自動操作已停止。請重新連線。",
     "en-US": "The connection to Dustweave expired. Automation has stopped. Reconnect to continue."
   },
-
   "message.Invalid salvation key reserve": {
     "zh-CN": "救赎之塔钥匙保留数量须为0–999。",
     "zh-TW": "救贖之塔鑰匙保留數量須為0–999。",
@@ -7041,5 +7123,90 @@
     "zh-CN": "当前账号与未完成战斗不一致，未接续旧操作；请检查所选账号。",
     "zh-TW": "目前帳號與未完成戰鬥不一致，未接續舊操作；請檢查所選帳號。",
     "en-US": "Native battle recovery account changed"
+  },
+  "storage.move_scope": {
+    "zh-CN": "可迁移连接组件、商品表与规则缓存。账号、日志和更新恢复文件留在原处。清理会保留最近两代组件缓存和最新更新备份。",
+    "zh-TW": "可遷移連接元件、商品表與規則快取。帳號、日誌和更新復原檔案留在原處。清理會保留最近兩代元件快取和最新更新備份。",
+    "en-US": "Move connection components, catalog and rules caches. Accounts, logs and update recovery stay in place. Cleanup keeps two recent cache generations and the latest update backup."
+  },
+  "storage.unreadable": {
+    "zh-CN": "部分缓存无法读取，迁移未开始。请关闭占用文件的程序后重试。",
+    "zh-TW": "部分快取無法讀取，遷移未開始。請關閉佔用檔案的程式後重試。",
+    "en-US": "Some cache files could not be read. Close applications using them and retry; migration has not started."
+  },
+  "storage.breakdown": {
+    "zh-CN": "日志 {0} MiB · 缓存与更新 {1} MiB · 其他数据 {2} MiB。跳过 {3} 项无法读取或受保护的记录。按文件大小统计，磁盘分配空间可能略有差异。",
+    "zh-TW": "日誌 {0} MiB · 快取與更新 {1} MiB · 其他資料 {2} MiB。略過 {3} 項無法讀取或受保護的記錄。按檔案大小統計，磁碟配置空間可能略有差異。",
+    "en-US": "Logs {0} MiB · Cache & updates {1} MiB · Other data {2} MiB. {3} unreadable or protected items skipped. File sizes may differ slightly from allocated disk space."
+  },
+  "storage.move": {
+    "zh-CN": "迁移缓存…",
+    "zh-TW": "遷移快取…",
+    "en-US": "Move cache…"
+  },
+  "storage.busy": {
+    "zh-CN": "请停止自动化、关闭工具及隔离窗口，并等待更新下载结束后再清理或迁移。游戏可保持打开。",
+    "zh-TW": "請停止自動化、關閉工具及隔離視窗，並等候更新下載結束後再清理或遷移。遊戲可保持開啟。",
+    "en-US": "Stop automation, close tool and sandbox windows, and let update downloads finish before cleaning or moving cache. The game may stay open."
+  },
+  "storage.link": {
+    "zh-CN": "所选位置包含目录链接，请选择普通文件夹。",
+    "zh-TW": "所選位置包含目錄連結，請選擇一般資料夾。",
+    "en-US": "Choose a folder without directory links."
+  },
+  "storage.moved": {
+    "zh-CN": "已迁移 {0} MiB，新位置立即生效。原位置保留了 {1} 个被占用或变化的文件。",
+    "zh-TW": "已遷移 {0} MiB，新位置立即生效。原位置保留了 {1} 個使用中或已變更的檔案。",
+    "en-US": "Moved {0} MiB. The new location is active. {1} busy or changed source files were retained."
+  },
+  "storage.rescan": {
+    "zh-CN": "可重新统计查看当前占用。",
+    "zh-TW": "可重新統計查看目前佔用。",
+    "en-US": "Rescan to see the updated usage."
+  },
+  "storage.location": {
+    "zh-CN": "缓存位置",
+    "zh-TW": "快取位置",
+    "en-US": "Cache location"
+  },
+  "storage.changed": {
+    "zh-CN": "迁移时文件发生变化或校验失败，仍使用原位置。请关闭其他工具后重试。",
+    "zh-TW": "遷移時檔案發生變更或驗證失敗，仍使用原位置。請關閉其他工具後重試。",
+    "en-US": "A file changed or failed verification. The original location is still active. Close other tools and retry."
+  },
+  "storage.exists": {
+    "zh-CN": "目标已有 Dustweave-cache 文件夹，请选择其他位置，原文件未更改。",
+    "zh-TW": "目標已有 Dustweave-cache 資料夾，請選擇其他位置，原檔案未變更。",
+    "en-US": "A Dustweave-cache folder already exists there. Choose another location; existing files were not changed."
+  },
+  "storage.preview": {
+    "zh-CN": "总占用 {0} MiB · 可释放 {1} MiB",
+    "zh-TW": "總佔用 {0} MiB · 可釋放 {1} MiB",
+    "en-US": "Total {0} MiB · Reclaimable {1} MiB"
+  },
+  "storage.overlap": {
+    "zh-CN": "新位置不能与当前数据或缓存目录重叠，请选择其他文件夹。",
+    "zh-TW": "新位置不能與目前資料或快取目錄重疊，請選擇其他資料夾。",
+    "en-US": "Choose a location outside the current data and cache directories."
+  },
+  "storage.pick": {
+    "zh-CN": "选择缓存保存位置",
+    "zh-TW": "選擇快取儲存位置",
+    "en-US": "Choose a cache location"
+  },
+  "storage.moving": {
+    "zh-CN": "正在复制并校验… {0} MiB",
+    "zh-TW": "正在複製並驗證… {0} MiB",
+    "en-US": "Copying and verifying… {0} MiB"
+  },
+  "storage.confirm": {
+    "zh-CN": "将缓存迁移到：{0}\n\n复制并校验成功后才切换位置。迁移期间请勿运行其他工具；取消或失败会继续使用原位置。",
+    "zh-TW": "將快取遷移到：{0}\n\n複製並驗證成功後才切換位置。遷移期間請勿執行其他工具；取消或失敗會繼續使用原位置。",
+    "en-US": "Move cache to: {0}\n\nThe location changes only after the copy is verified. Do not run other tools during migration. Cancellation or failure keeps the original location."
+  },
+  "storage.space": {
+    "zh-CN": "目标磁盘空间不足，原缓存未改动。请释放空间或选择其他磁盘。",
+    "zh-TW": "目標磁碟空間不足，原快取未變更。請釋放空間或選擇其他磁碟。",
+    "en-US": "Not enough space on the destination drive. Free up space or choose another drive; the original cache is unchanged."
   }
 }

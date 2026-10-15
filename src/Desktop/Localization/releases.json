@@ -1,5 +1,32 @@
 [
 {
+  "Version": "1.3.17",
+  "Date": "2026-10-16",
+  "Notes": {
+    "zh-CN": [
+      "空间管理显示完整数据和缓存占用，新增旧缓存及已结束更新备份清理。",
+      "支持校验后迁移缓存到其他磁盘，保留账号、设置与恢复记录的位置。",
+      "可用空间不足 1 GB 时显示清理和迁移建议；今日忽略按本机早上 8 点刷新，重启后仍有效。",
+      "空间检查与统计在后台按需执行，不因提醒中断日常。",
+      "若 OTA 失败，请下载完整包并解压到新目录，保留 app 文件夹。"
+    ],
+    "zh-TW": [
+      "空間管理顯示完整資料和快取佔用，新增舊快取及已結束更新備份清理。",
+      "支援驗證後將快取遷移至其他磁碟，保留帳號、設定與恢復記錄的位置。",
+      "可用空間不足 1 GB 時顯示清理和遷移建議；今日忽略按本機早上 8 點重設，重新啟動後仍有效。",
+      "空間檢查與統計在背景按需執行，不因提醒中斷日常。",
+      "若 OTA 失敗，請下載完整包並解壓至新目錄，保留 app 資料夾。"
+    ],
+    "en-US": [
+      "Storage management shows complete data/cache usage and cleans obsolete cache and completed update backups.",
+      "Relocate verified cache to another drive while preserving account, settings and recovery locations.",
+      "Below 1 GB free, receive cleanup and migration suggestions. Ignore today survives restarts until the next local 08:00.",
+      "Storage checks run in the background as needed; reminders do not interrupt automation.",
+      "If OTA fails, extract the full package into a new folder and keep the app folder."
+    ]
+  }
+},
+{
   "Version": "1.3.16",
   "Date": "2026-10-15",
   "Notes": {
