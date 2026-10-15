@@ -361,9 +361,9 @@ static class SelfTest {
    f.BridgeVersion=84;
    foreach(var chapter in new[]{20,1008,1009,1010}){c.Value=chapter;Check(LivePolicy.Gate(c,f,now,false)=="","new story IDs pass to native ownership/type verification");}
    foreach(var chapter in new[]{0,2009,3001,20000}){c.Value=chapter;Check(LivePolicy.Gate(c,f,now,false)!="","unrelated cartridge ranges remain blocked");}
-   f.BridgeVersion=121;
-   foreach(var chapter in new[]{2001,2002,2003,2004,2005,2007}){c.Value=chapter;Check(LivePolicy.Gate(c,f,now,false)=="","collection event scope reaches native ownership guard");}
-   c.Value=2006;Check(LivePolicy.Gate(c,f,now,false)!="","unconfirmed event six remains outside collection scope");
+   f.BridgeVersion=122;
+   foreach(var chapter in new[]{2001,2002,2003,2005,2007}){c.Value=chapter;Check(LivePolicy.Gate(c,f,now,false)=="","current collection event scope reaches native ownership guard");}
+   foreach(var chapter in new[]{2004,2006}){c.Value=chapter;Check(LivePolicy.Gate(c,f,now,false)!="","hidden event cartridges remain outside collection scope");}
    f.BridgeVersion=120;
    foreach(var chapter in new[]{2003,2004}){c.Value=chapter;Check(LivePolicy.Gate(c,f,now,false)!="","expanded event scope requires updated native component");}
    f.BridgeVersion=26;
