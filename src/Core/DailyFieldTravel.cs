@@ -359,8 +359,18 @@ public sealed partial class DailyFieldRoute
             if (PrefersStealth(current)) await Protection(current);
             return;
         }
+        if (chapter is >= 2000 and < 3000)
+        {
+            var access = await W.Evidence("mainline.pack_access");
+            if (!DailyCollectionCatalog.EventPackAvailable(Rows(R(access, "mainline.pack_access", "$self")), chapter))
+                throw new DailyTravelBlocked($"活动卡带 {chapter} 当前未开放，已跳过；后续开放时会重新判断");
+        }
         await DailyTravel.PackList(W);
-        await W.Step("PackListUI", operation: "mainline_pack", value: checked((int)chapter));
+        try { await W.Step("PackListUI", operation: "mainline_pack", value: checked((int)chapter)); }
+        catch (DailyStepException e) when (e.Kind == "rejected" && e.DefinitelyNotDispatched && e.RejectionCode == "pack_entry_unavailable:event_closed")
+        {
+            throw new DailyTravelBlocked($"活动卡带 {chapter} 的开放状态已变化，本次未发送切换，继续后续卡带");
+        }
         Require(await DailyTravel.Reuse(W, packId: checked((int)chapter), surfaces: ["GameFieldDefaultUI"], waitForTarget: true), "卡带切换未完成");
         await FieldReady();
         var entered = await Evidence();

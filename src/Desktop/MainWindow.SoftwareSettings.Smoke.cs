@@ -55,6 +55,17 @@ public partial class MainWindow
                 WorkspaceTabs.SelectedItem=SettingsTab;preferencesPanel.CheckCategorySearchForSmoke();
                 foreach(string categoryKey in new[]{"daily","battle","weekly","resources"})
                 {preferencesPanel.ReviewCategoryForSmoke(categoryKey);await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture($"settings-{categoryKey}-{lang}-{themeIndex}");}
+                preferencesPanel.ReviewCategoryForSmoke("daily");
+                var verifyCategorySurface = preferencesPanel.ObserveCategorySurfaceForSmoke();
+                SetBusy(true);
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                Capture($"settings-disabled-{lang}-{themeIndex}");
+                if (preferencesPanel.IsEnabled) throw new Exception("Running daily queue left settings editable");
+                verifyCategorySurface();
+                SetBusy(false);
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                if (!preferencesPanel.IsEnabled) throw new Exception("Finished daily queue left settings disabled");
+                verifyCategorySurface();
                 foreach (bool tower in new[] { false, true })
                 { preferencesPanel.ShowNativeBattleSettingsForSmoke(tower); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); Capture($"native-battle-{tower}-{lang}-{themeIndex}"); }
                 WorkspaceTabs.SelectedItem=PluginsTab;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture($"plugins-empty-{lang}-{themeIndex}");
@@ -63,6 +74,6 @@ public partial class MainWindow
             if(calls!=demo.Calls.Count)throw new Exception("Settings review sent a game command");
             DailyJson.Write(Path.Combine(smoke,"software-settings.json"),new{status="passed",fakeStartupRegistry=true,closeActions=3,languages=3,themes=2,realGameTouched=false});
         }
-        finally {original.Save(root);CloseGameAfterRun.IsChecked=original.CloseGameAfterRun;RefreshCloseAction();preferencesPanel.ReviewCategoryForSmoke("daily");LanguageSelector.SelectedIndex=language;ThemeSelector.SelectedIndex=appearance;Width=1180;Height=900;ActionNotice.Visibility=Visibility.Collapsed;}
+        finally {SetBusy(false);original.Save(root);CloseGameAfterRun.IsChecked=original.CloseGameAfterRun;RefreshCloseAction();preferencesPanel.ReviewCategoryForSmoke("daily");LanguageSelector.SelectedIndex=language;ThemeSelector.SelectedIndex=appearance;Width=1180;Height=900;ActionNotice.Visibility=Visibility.Collapsed;}
     }
 }

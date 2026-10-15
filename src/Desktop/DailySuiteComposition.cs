@@ -53,6 +53,7 @@ internal static class DailySuiteComposition {
    string clientKey=await ClientKey(managed,cancel);
    string directory=Path.Combine(DailyIdentity.DataRoot,"suite-cache","modules",id,key,clientKey);
    Directory.CreateDirectory(directory);
+   if(tool=="equipment")await Task.Run(()=>assembly.GetType("BD2Equipment.Live.LiveEntry")!.GetMethod("EnsureEvidenceConfig")!.Invoke(null,[managed,Path.Combine(Environment.GetEnvironmentVariable("BD2_EQUIPMENT_DATA_ROOT")??Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BD2EquipmentAssistant"),"evidence-config.json")]),cancel);
    string cache=Path.Combine(directory,"module.dll"),report=Path.Combine(directory,"module.json");
    if(File.Exists(cache)&&DailyJson.TryRead<ModuleCache>(report) is {} info){
     var bytes=await File.ReadAllBytesAsync(cache,cancel);

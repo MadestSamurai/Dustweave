@@ -10,7 +10,7 @@ public partial class MainWindow {
   for(int i=0;i<boxes.Length;i++){string value=L.ConvertToCurrent(selections[i],previous);if(boxes[i].Items.Contains(value))boxes[i].SelectedItem=value;else boxes[i].Text=value;}
   SortFilter.SelectedIndex=sort;SubCountFilter.SelectedIndex=sub;ScoreMinFilter.SelectedItem=min;ScoreMaxFilter.SelectedItem=max;
   ready=true;UpdateRefineHint();FilterGear();if(plan!=null)ShowPlan();else SummaryText.Text=L.T(stock==null?"尚未读取库存":"尚未计算");
-  StatusText.Text=L.T("语言已切换，计划和勾选已保留。");
+  UpdatePrimary();StatusText.Text=L.T("语言已切换，计划和勾选已保留。");
  }
  async Task CheckLanguagePreservation(string folder){
   string original=L.Language;var saved=plan?.ToJsonString();var selected=gear.Where(g=>g.Chosen).Select(g=>g.Instance).ToArray();

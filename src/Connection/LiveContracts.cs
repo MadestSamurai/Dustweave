@@ -6,7 +6,7 @@ namespace BD2Daily.Live {
  public static class LiveProtocol {
   public const int BridgeVersion=DailyBridgeVersion.Current;
   public static bool IsSquareScene(string scene){return scene!=null&&scene.StartsWith("Map3009_",StringComparison.Ordinal);}
-  public static bool CollectionEventPack(int pack){return new[]{2001,2002,2003,2004,2005,2007}.Contains(pack);}
+  public static bool CollectionEventPack(int pack){return new[]{2001,2002,2003,2005,2007}.Contains(pack);}
   public static bool RequiresMirrorPeriod(Command c,Frame f){return c.Kind=="mirror_ready"||c.Kind=="native_click"&&f.Scene=="Map3001_001"&&f.Surfaces.Any(s=>s.Id==c.SurfaceId&&s.Type=="BattleAutoSettingPopupUI"&&s.Targets.Any(t=>t.Id==c.TargetId&&t.Field=="_currencyButtonOK"));}
   public static readonly string[] MissionQuerySurfaces=new[]{"MenuUI","PassUI","MissionUI","EventUI","HuntOrAirwayUI","GameFieldDefaultUI","CafeteriaFieldDefaultUI","AvatarLifeGameFieldDefaultUI","AvatarFishingHarborUI","FishingGameFieldDefaultUI","AvatarFishingWorldMapUI","TotalWarUI","MyRoomUI","MiniGameHubUI","SichuanMainUI","SichuanStagePopupUI","SichuanBoardUI","SichuanStageClearPopupUI"};
   // StorySkipUI is an embedded toolbar, not a modal UIBase popup. Its native

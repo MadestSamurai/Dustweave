@@ -59,5 +59,32 @@ internal static class LogCleanupCases
         FileAt($"live/steps/{guard}/result.json",JsonSerializer.Serialize(new {state="unknown_timeout",receipt=new {Id=guard,Status="observed_after_dispatch"}}));
         plan=await DailyLogCleanup.ScanAsync(root,policy);await DailyLogCleanup.ApplyAsync(plan);
         Check(DailyJson.TryRead<System.Text.Json.Nodes.JsonObject>(Path.Combine(root,"live","step-recovery",guard+".json"))?["receipt"]?["Id"]?.GetValue<string>()==guard,"pending receipt survives diagnostic expiry in independent recovery storage");
+        string equipmentOld=FileAt("live/diagnostics/equipment/step.before.json","{}"),equipmentRecent=FileAt("live/diagnostics/equipment/capture-evidence.json","{}",1);
+        string equipmentJournal=FileAt("tools/equipment/pending-plan.json","{\"state\":\"pending\"}");
+        plan=await DailyLogCleanup.ScanAsync(root,policy);await DailyLogCleanup.ApplyAsync(plan);
+        Check(!File.Exists(equipmentOld)&&File.Exists(equipmentRecent)&&File.Exists(equipmentJournal),"integrated equipment logs share retention without deleting pending execution state");
+        string legacy=Path.Combine(output,"legacy-equipment"),host=Path.Combine(output,"equipment-log-host");
+        string LegacyFile(string relative,int age=15){string p=Path.Combine(legacy,relative);Directory.CreateDirectory(Path.GetDirectoryName(p)!);File.WriteAllText(p,"{}");File.SetLastWriteTimeUtc(p,now.AddDays(-age));return p;}
+        var legacyOld=new[]{LegacyFile("jobs/old.json"),LegacyFile("live/steps/old/before.json"),LegacyFile("receipts/plan/action.json"),LegacyFile("capture-evidence.json")};
+        string legacyFresh=LegacyFile("diagnostics/recent.log",1),legacyHeld=LegacyFile("jobs/held.json");
+        var preserved=new[]{LegacyFile("pending-plan.json"),LegacyFile("inventory.json"),LegacyFile("live/command.json"),LegacyFile("jobs/unknown.bin")};
+        Check(DailyLogCleanup.HasLegacyEquipmentLogs(legacy),"legacy logs trigger the first idle cleanup without opening the tool");
+        using(var held=new FileStream(legacyHeld,FileMode.Open,FileAccess.Read,FileShare.Read))await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(host,legacy);
+        Check(legacyOld.All(p=>!File.Exists(p))&&!File.Exists(legacyFresh)&&File.Exists(legacyHeld),"migration imports closed logs and skips files still in use");
+        Check(preserved.All(File.Exists)&&!Directory.Exists(Path.Combine(legacy,"receipts"))&&!Directory.Exists(Path.Combine(legacy,"live/steps")),"empty log directories disappear while recovery and unknown files survive");
+        string imported=Path.Combine(host,"live/diagnostics/equipment");
+        Check(Directory.GetFiles(imported).Count(p=>File.GetLastWriteTimeUtc(p)<now.AddDays(-7))==4,"migration preserves expired log ages");
+        // A second run must preserve both versions if the old tool recreates a log.
+        LegacyFile("capture-evidence.json",1);await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(host,legacy);
+        plan=await DailyLogCleanup.ScanAsync(host,policy);await DailyLogCleanup.ApplyAsync(plan);
+        Check(Directory.GetFiles(imported).Length==2&&Directory.GetFiles(imported).All(p=>File.GetLastWriteTimeUtc(p)>now.AddDays(-2)),"central cleanup deletes expired imports and retains recent versions without overwriting");
+        string externalDir=Path.Combine(output,"legacy-external");Directory.CreateDirectory(externalDir);string external=Path.Combine(externalDir,"private.json");File.WriteAllText(external,"{}");
+        Directory.CreateSymbolicLink(Path.Combine(legacy,"diagnostics"),externalDir);
+        await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(host,legacy);
+        Check(File.Exists(external)&&Directory.GetFiles(imported).Length==2,"legacy migration never traverses a linked log folder");
+        string linkedRoot=Path.Combine(output,"legacy-linked-root");Directory.CreateSymbolicLink(linkedRoot,legacy);
+        Check(!DailyLogCleanup.HasLegacyEquipmentLogs(linkedRoot),"linked legacy roots are excluded before scheduling cleanup");
+        bool importCancelled=false;try{await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(host,legacy,cancel.Token);}catch(OperationCanceledException){importCancelled=true;}
+        Check(importCancelled,"legacy migration cancels promptly when automation resumes");
     }
 }

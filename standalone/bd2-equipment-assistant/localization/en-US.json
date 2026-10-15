@@ -191,5 +191,16 @@
   "魔珍珠": "Magic Pearl",
   "数值未读取": "Value unavailable",
   "游戏连接暂时超时；已保留本批进度，不会重复消耗材料。请重新连接并读取库存后接续。": "Game connection timed out. This batch is saved and will not be submitted again. Reconnect and read inventory to reconcile and resume.",
-  "游戏连接暂时超时，尚未开始制作。请保持游戏已登录，再点击连接读取；诊断目录已记录失败步骤。": "Game connection timed out before crafting started. Keep the game logged in and reconnect. The failing step is recorded in diagnostics."
+  "游戏连接暂时超时，尚未开始制作。请保持游戏已登录，再点击连接读取；诊断目录已记录失败步骤。": "Game connection timed out before crafting started. Keep the game logged in and reconnect. The failing step is recorded in diagnostics.",
+  "计算规划": "Calculate plan",
+  "确认并运行": "Confirm and run",
+  "正在读取库存…": "Reading inventory…",
+  "库存已更新。计算规划后确认消耗。": "Inventory updated. Calculate a plan to review resource use.",
+  "游戏连接暂时超时，尚未开始制作。请保持游戏已登录，再点击连接读取；请在织尘的诊断页面导出日志。": "The connection timed out before crafting started. Keep the game signed in and refresh inventory. Export a report from Dustweave Diagnostics if it persists.",
+  "上限留空时按现有库存规划；不会购买天赋药。": "Leave limits blank to use available inventory. Ability pills will not be purchased.",
+  "打开后自动读取库存；更换装备或使用材料后可刷新。": "Inventory loads automatically. Refresh after changing gear or using materials.",
+  "刷新库存": "Refresh inventory",
+  "请核对本次用量，确认后开始。": "Review the resource totals, then confirm to start.",
+  "更多筛选": "More filters",
+  "{0} 件装备 · 目标 {1}级 · 预算 {2:N0} 金币 / {3:N0} 粉": "{0} items · Target {1} · Budget {2:N0} gold / {3:N0} powder"
 }

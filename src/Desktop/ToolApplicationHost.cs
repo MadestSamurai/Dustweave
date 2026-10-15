@@ -16,9 +16,19 @@ internal static class ToolApplicationHost
             _ = new HostedToolActivity(window,id);
             if(window.FindName("ConnectButton") is System.Windows.Controls.Button button){
                 if(id!="equipment"){button.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));button.Visibility=Visibility.Collapsed;}
-                else {button.SetResourceReference(System.Windows.Controls.ContentControl.ContentProperty,"SuiteRefresh");app.Resources["SuiteRefresh"]=DailyLanguage.Current.Get("tools.refresh_inventory");}
+                else {button.SetResourceReference(System.Windows.Controls.ContentControl.ContentProperty,"SuiteRefresh");app.Resources["SuiteRefresh"]=DailyLanguage.Current.Get("tools.refresh_inventory");_ = ReadEquipmentWhenIdle(window,button);}
             }
         }),System.Windows.Threading.DispatcherPriority.Loaded);
+    }
+    private static async Task ReadEquipmentWhenIdle(Window window,System.Windows.Controls.Button button)
+    {
+        // The parent owns the control lease briefly while recording the new child process.
+        for(int i=0;i<60&&window.IsLoaded;i++) {
+            if(window.IsEnabled&&!DailyToolControl.IsOccupied(DailyIdentity.DataRoot)) {
+                button.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));return;
+            }
+            await Task.Delay(50);
+        }
     }
     internal static string Version(DailyToolDefinition tool) => tool.Id is "mansion-runaway" or "pandora" ? DailyProductVersion.Current : Assembly.Load(new AssemblyName(tool.AssemblyName)).GetName().Version!.ToString(3);
     public static int CheckClient(string id, string managed, string output)
@@ -52,6 +62,7 @@ internal static class ToolApplicationHost
             var entry = assembly.GetType(typeName)!.GetMethod("RunHosted", BindingFlags.Public | BindingFlags.Static)
                 ?? throw new MissingMethodException("工具缺少统一启动入口，请使用完整版本。");
             Action<Application>? setup=!helper&&!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BD2_DAILY_HOSTED_TOOL")) ? app=>ConfigureWindow(app,id) : null;
+            if(id=="equipment") { var activitySetup=setup; setup=app=>{EquipmentToolPresentation.Install(app);activitySetup?.Invoke(app);}; }
             return (int)entry.Invoke(null, new object?[] { arguments,setup })!;
         }
         catch (Exception error)

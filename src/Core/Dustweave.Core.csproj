@@ -4,6 +4,7 @@
     <EmbeddedResource Include="Localization/Messages.zh-CN.txt" LogicalName="Dustweave.Messages.zh-CN.txt" WithCulture="false" />
     <EmbeddedResource Include="../../assets/flows/room-flow.json" LogicalName="Dustweave.room-flow.json" />
     <Compile Include="../Shared/*.cs" Link="Shared/%(Filename)%(Extension)" />
+    <Compile Include="../LogMaintenance/EquipmentLogs.cs" Link="LogMaintenance/EquipmentLogs.cs" />
     <Compile Include="../../third-party/SharpMonoInjector/*.cs" Link="Injector/%(Filename)%(Extension)" />
     <ProjectReference Include="../Compatibility/Dustweave.Compatibility.csproj" />
     <ProjectReference Include="../Accounts/Dustweave.Accounts.csproj" />

@@ -23,6 +23,9 @@ public sealed record DailyLogCleanupResult(int Files, long Bytes, int Skipped);
 // Queue/account/history/business journals are durable state, not disposable logs.
 public static class DailyLogCleanup
 {
+    public static bool HasLegacyEquipmentLogs(string source) => Maintenance.EquipmentLogs.HasLegacy(source);
+    public static Task ImportLegacyEquipmentLogsAsync(string root, string source, CancellationToken token = default)
+        => Task.Run(() => Maintenance.EquipmentLogs.Import(source, root, token), token);
     static readonly HashSet<string> StepNames = new(StringComparer.Ordinal) { "before.json", "intent.json", "transport.json", "result.json" };
     // These are observations, not account, queue or consuming-operation state.
     static readonly string[] EvidenceTrees = ["live/event-journal", "live/reward-queries", "live/weekly-npc-queries", "live/log-compaction", "live/trade-quote-reads", "trade/diagnostics", "live/travel-diagnostics"];

@@ -188,20 +188,6 @@
       "travel": "walk"
     },
     {
-      "id": 2004,
-      "name": "闪乱神乐",
-      "kind": "event",
-      "maps": [
-        20041,
-        20042
-      ],
-      "transitMaps": [
-        20041,
-        20042
-      ],
-      "travel": "walk"
-    },
-    {
       "id": 2005,
       "name": "记忆边缘",
       "kind": "event",
@@ -221,7 +207,8 @@
       "name": "戏水女王",
       "kind": "event",
       "maps": [
-        20071
+        20071,
+        20072
       ],
       "transitMaps": [
         20071,
@@ -249,6 +236,11 @@
       "reason": "no_repeatable_collection"
     },
     {
+      "id": 2004,
+      "name": "闪乱神乐",
+      "reason": "hidden"
+    },
+    {
       "id": 2006,
       "name": "哥布林杀手",
       "reason": "hidden"
@@ -269,7 +261,7 @@
       "reason": "no_repeatable_collection"
     }
   ],
-  "coverageRevision": 2,
+  "coverageRevision": 3,
   "eventCoverage": {
     "auditedAtUtc": "2026-10-15T02:07:31.2004848Z",
     "clientAssemblySha256": "44EA8FFDB914583954DDA95A313480C7F29F496D90775254079F293341C556F1",
@@ -284,12 +276,13 @@
     "rules": [
       "Include repeatable normal and research drops regardless of reward item type.",
       "Include repeatable suppressible battle areas even without ground drops.",
-      "Hidden store entries remain eligible only when owned by the current account."
+      "Visible event cartridges 1-5 map to IDs 2001, 2002, 2003, 2005 and 2007; hidden collaboration cartridges are excluded.",
+      "Historical ownership does not grant event entry: scheduled cartridges must also pass the current native event availability predicate."
     ],
     "packs": [
       2003,
-      2004,
-      2005
+      2005,
+      2007
     ]
   }
 }

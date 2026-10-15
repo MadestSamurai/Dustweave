@@ -87,15 +87,15 @@ static class EventCollectionCases
         using (var f = new Fixture(Path.Combine(root, "event-coverage"), 2003, 20031))
         {
             Check(f.Route.Catalog.Maps(2003).SequenceEqual(new long[] { 20031, 20032 }), "event three includes material-independent drops and its battle area");
-            Check(f.Route.Catalog.Maps(2004).SequenceEqual(new long[] { 20041, 20042 }), "owned hidden event four is not excluded from collection");
-            Check(f.Route.Catalog.Maps(2005).SequenceEqual(new long[] { 20051, 20052 }), "event five includes its suppression-only area");
-            Check(!f.Route.Catalog.Packs().Contains(2006) && f.Route.Catalog.Maps(2007).SequenceEqual(new long[] { 20071 }), "unconfirmed event six and seven routes remain unchanged");
+            Check(!f.Route.Catalog.Supported(2004) && !f.Route.Catalog.Packs().Contains(2006), "hidden collaboration IDs are not the fourth and fifth visible cartridges");
+            Check(f.Route.Catalog.Maps(2005).SequenceEqual(new long[] { 20051, 20052 }), "visible event four (2005) includes its suppression-only area");
+            Check(f.Route.Catalog.Maps(2007).SequenceEqual(new long[] { 20071, 20072 }), "visible event five (2007) includes its suppression-only area");
             Check(Enumerable.Range(2001, 7).Where(BD2Daily.Live.LiveProtocol.CollectionEventPack).Select(x => (long)x).SequenceEqual(f.Route.Catalog.Packs().Where(p => p >= 2000)), "host collection catalog and native entry/walking scope agree");
             var old = O(("schema", 1), ("source", "FieldObjectInfoResponse+MonsterInfoResponse"), ("account", f.H.Context["actor"]![3]), ("player", f.H.Context["actor"]![4]),
                 ("network", O(("State", "ready"), ("Error", ""), ("Pack", 2005), ("Week", 500), ("Now", 100), ("Maps", new JsonArray(20051)), ("Drops", new JsonArray()), ("Targets", new JsonArray()), ("Rewards", "[]"), ("Monsters", "[]"))));
             DailyJson.Write(Path.Combine(f.H.Root, "live", "server-collection", S(f.H.Context["actor"]![3]), "500", "2005.json"), old);
             Check(f.Route.Progress.Cached(2005, [20051], "500", true) != null, "catalog expansion preserves already verified maps in the same cartridge");
-            Check(f.Route.Progress.Cached(2005, [20051, 20052], "500", true) == null, "old event-five cache cannot certify an unqueried battle map");
+            Check(f.Route.Progress.Cached(2005, [20051, 20052], "500", true) == null, "old event-four cache cannot certify an unqueried battle map");
             old["server"] = "different-server";
             DailyJson.Write(Path.Combine(f.H.Root, "live", "server-collection", S(f.H.Context["actor"]![3]), "500", "2005.json"), old);
             Check(f.Route.Progress.Cached(2005, [20051], "500", true) == null, "shared snapshot must also match the connected server");
@@ -111,7 +111,50 @@ static class EventCollectionCases
             DailyWeeklyMission.RecheckLegacy(queue, resume: true);
             Check(S(queue["items"]![0]!["state"]) == "completed", "current coverage completion is not reset repeatedly");
         }
-        foreach (long pack in new long[] { 2003, 2004, 2005 })
+        using (var f = new Fixture(Path.Combine(root, "event-access-catalog"), 2003, 20031))
+        {
+            JsonObject Catalog(bool open) => WorkflowCases.Evidence(
+                WorkflowCases.Reading("mainline.owned_packs", ("Count", 4), ("$items", Array(new long[] { 2003, 2004, 2005, 2007 }.Select(id => O(("Key", id), ("Value.Id", id)))))),
+                WorkflowCases.Reading("mainline.packs", ("Count", 4), ("$items", Array(new long[] { 2003, 2004, 2005, 2007 }.Select(id => O(("Id", id), ("PackType", 6), ("UseSchedule", id == 2005 ? 1 : 0)))))),
+                WorkflowCases.Reading("mainline.pack_access", ("$self", new JsonArray(O(("Id", 2005), ("Available", open))))));
+            Check(f.Route.Catalog.AvailablePacks(Catalog(false)).SequenceEqual(new long[] { 2003, 2007 }), "historical ownership of a closed event cannot block later permanent events");
+            Check(f.Route.Catalog.UnavailableEventPacks(Catalog(false)).SequenceEqual(new long[] { 2005 }), "closed scheduled cartridge is explained separately from completed maps");
+            Check(f.Route.Catalog.AvailablePacks(Catalog(true)).SequenceEqual(new long[] { 2003, 2005, 2007 }), "native opening restores a supported event while hidden collaboration IDs remain excluded");
+            var missing = Catalog(true); missing["Readings"]!.AsArray().RemoveAt(2);
+            bool rejected = false;
+            try { f.Route.Catalog.AvailablePacks(missing); } catch (InvalidDataException) { rejected = true; }
+            Check(rejected, "missing event availability is not interpreted as permission to enter");
+        }
+        foreach (long target in new long[] { 2005, 2007 })
+        foreach (string mode in new[] { "closed", "open", "expired-before-dispatch", "uncertain", "already-loaded" })
+        using (var f = new Fixture(Path.Combine(root, "event-entry-" + target + "-" + mode), mode == "already-loaded" ? target : 2003, mode == "already-loaded" ? target * 10 + 1 : 20031))
+        {
+            var baseReadings = f.H.Readings;
+            f.H.Readings = () => baseReadings().Concat(new[] {
+                WorkflowCases.Reading("navigation.pack", (DailyTravel.CurrentPack + ".Id", f.Pack), (DailyTravel.CurrentPack + ".PackType", 6)),
+                WorkflowCases.Reading("mainline.pack_access", ("$self", new JsonArray(O(("Id", target), ("Available", mode != "closed")))))
+            }).ToArray();
+            f.H.Page("GameFieldDefaultUI", "_buttonPackList");
+            f.H.OnCommand = c => {
+                if (S(c["Kind"]) == "click") f.H.Page("PackListUI");
+                else if (S(c["Kind"]) == "mainline_pack")
+                {
+                    Check(N(c["Value"]) == target, "visible fourth/fifth entry uses the cartridge ID rather than the list ordinal: " + target);
+                    if (mode == "expired-before-dispatch")
+                        throw new DailyStepException("rejected", "event entry closed", true) { MayHaveDispatched = false, RejectionCode = "pack_entry_unavailable:event_closed" };
+                    if (mode == "uncertain") throw new DailyStepException("uncertain", "entry reply unavailable", true);
+                    f.Pack = target; f.MapId = target * 10 + 1; f.H.Frame["Scene"] = "Map" + target + "_001"; f.H.Page("GameFieldDefaultUI");
+                }
+                else throw new Exception("Unexpected event entry command");
+            };
+            string outcome = "entered";
+            try { await f.Route.Enter(target); }
+            catch (DailyTravelBlocked) { outcome = "skipped"; }
+            catch (DailyStepException e) { outcome = e.Kind; }
+            Check(outcome == (mode is "closed" or "expired-before-dispatch" ? "skipped" : mode == "uncertain" ? "uncertain" : "entered"), "event entry follows live availability and preserves uncertain dispatch: " + mode);
+            Check(f.H.Box.Commands.Count(c => S(c["Kind"]) == "mainline_pack") == (mode is "closed" or "already-loaded" ? 0 : 1), "event selection does not wait or repeat a refused entry: " + mode);
+        }
+        foreach (long pack in new long[] { 2003, 2005, 2007 })
         using (var f = new Fixture(Path.Combine(root, "event-suppression-" + pack), pack, pack * 10 + 2, 1) { MonstersPending = true })
         {
             var result = await f.Route.Gather();

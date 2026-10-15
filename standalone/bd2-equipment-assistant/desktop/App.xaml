@@ -2,6 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Application.Resources>
+    <Style TargetType="DataGrid" />
+    <Style TargetType="DataGridCell" />
     <BooleanToVisibilityConverter x:Key="BooleanToVisibility" />
 
     <SolidColorBrush x:Key="AppBackground" Color="#EEF0F2" />

@@ -63,6 +63,18 @@ namespace BD2Daily.Live {
  [DataContract] internal sealed class RouteCollider { [DataMember] public int Id,Layer; [DataMember] public string Name,Type,Tag,Owner; [DataMember] public bool Enabled,Trigger; [DataMember] public float[] Center,Size,Rotation,LocalSize; }
  [DataContract] internal sealed class GateContactState { [DataMember] public int Object,Instance; [DataMember] public bool Contact; [DataMember] public float Depth; [DataMember] public RouteCollider Gate,Body; [DataMember] public RouteCollider[] Nearby; }
  internal static class CollectionProgressNative {
+  [DataContract] internal sealed class PackAccess {
+   [DataMember] public int Id;
+   [DataMember] public bool Scheduled,Available;
+  }
+  internal static bool PackAvailable(Proto.Design.common.PackTable pack){
+   // This is the predicate used by StartPackSelection and StartPackInfo. A
+   // historical PackDBInfo proves ownership, not a live event entry period.
+   return pack!=null&&(pack.PackType!=6||ὤὫὬὭὯὪὢὬὬὩὣ.ὢὧὪὢὬὪὡὩὪὦὡ(pack.Id));
+  }
+  internal static object EventPackAccess(){
+   return ὤὫὬὭὯὪὢὬὬὩὣ.ὯὩὥὮὩὯὨὡὢὧὣ.Where(p=>p.PackType==6).Select(p=>new PackAccess{Id=p.Id,Scheduled=p.UseSchedule==1,Available=PackAvailable(p)}).ToArray();
+  }
   [DataContract] internal sealed class SceneContext { [DataMember] public string[] ActiveTypes,Uis,FieldFlags; }
   internal static object Context(){
    var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.NonPublic;

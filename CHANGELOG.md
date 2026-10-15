@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 1.3.15 — 2026-10-15
+
+- 内置装备助手减少重复读取准备，打开后自动获取库存，主按钮合并规划与确认运行，统一主题、弹窗和筛选。
+- 装备日志接入织尘诊断与保留策略；空闲时自动处理旧工具日志及空目录，保留未完成批次和连接状态。
+- 修正当前活动卡带 4、5 的周收集范围；修复执行期间深色设置分类条的白底问题。
+- Streamlines equipment loading and planning, unifies presentation and diagnostics, and automatically imports and expires legacy logs without removing recovery state. Corrects event-cartridge selection and dark settings styling.
+- [完整说明 / Full notes](docs/releases/1.3.15.md)
+
 ## 1.3.14 — 2026-10-15
 
 - 藏红花不再在收割前巡田；抵达首个可收割位置后准备料理并开始收割，料理已生效时可恢复漏回调的流程。

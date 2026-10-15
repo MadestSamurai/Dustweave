@@ -4,7 +4,7 @@ namespace Dustweave;
 
 public sealed class DailyCollectionCatalog(DailyWorkflow workflow)
 {
-    public const int CoverageRevision = 2;
+    public const int CoverageRevision = 3;
     private readonly Dictionary<long, JsonObject> cartridges = Rows(workflow.Asset("collection-catalog.json")["cartridges"]).ToDictionary(r => N(r["id"]));
     private readonly Dictionary<long, JsonObject> steals = Rows(workflow.Asset("steal-catalog.json")["packs"]).ToDictionary(r => N(r["id"]));
     public bool Supported(long pack) => pack is >= 1 and <= 19 || cartridges.ContainsKey(pack);
@@ -20,7 +20,24 @@ public sealed class DailyCollectionCatalog(DailyWorkflow workflow)
         Require(owned.All(p => N(p["Key"]) > 0 && N(p["Key"]) == N(p["Value.Id"])), "collection_pack_list_incomplete");
         var ids = owned.Select(p => N(p["Value.Id"])).ToHashSet();
         var fields = definitions.Where(p => N(p["PackType"]) is 0 or 1 or 6).Select(p => N(p["Id"])).ToHashSet();
-        return Packs().Where(id => ids.Contains(id) && fields.Contains(id)).ToArray();
+        var closed = UnavailableEventPacks(evidence);
+        return Packs().Where(id => ids.Contains(id) && fields.Contains(id) && !closed.Contains(id)).ToArray();
+    }
+    public long[] UnavailableEventPacks(JsonObject evidence)
+    {
+        var scheduled = Rows(R(evidence, "mainline.packs", "$items"))
+            .Where(p => N(p["PackType"]) == 6 && N(p["UseSchedule"]) == 1).Select(p => N(p["Id"]))
+            .Intersect(Rows(R(evidence, "mainline.owned_packs", "$items")).Select(p => N(p["Value.Id"])))
+            .Intersect(Packs()).ToArray();
+        if (scheduled.Length == 0) return [];
+        var access = Rows(R(evidence, "mainline.pack_access", "$self"));
+        return scheduled.Where(id => !EventPackAvailable(access, id)).ToArray();
+    }
+    internal static bool EventPackAvailable(JsonObject[] access, long id)
+    {
+        var rows = access.Where(p => N(p["Id"]) == id).ToArray();
+        Require(rows.Length == 1 && rows[0]["Available"] is JsonValue v && v.TryGetValue<bool>(out _), "活动卡带开放状态尚未读齐");
+        return B(rows[0]["Available"]);
     }
     public HashSet<long> Transit(long pack) => cartridges[pack]["transitMaps"]!.AsArray().Select(N).ToHashSet();
     public long[] Maps(long pack) => pack switch { 6 => [601, 602, 606, 605, 608, 607], 11 => [1101, 1102, 1103], 14 => [141, 143, 142, 144], 15 => [151, 153, 154], 18 => [181, 186, 183], 1001 => [10011, 10014, 10015], 1002 => [10021, 10022, 10023], 1003 => [10031, 10032, 10033], _ => cartridges.TryGetValue(pack, out var c) ? c["maps"]!.AsArray().Select(N).ToArray() : pack is >= 1 and <= 19 ? new long[] { 1, 2, 3 }.Select(offset => (pack == 1 ? 0 : pack * 10) + offset).ToArray() : throw new InvalidDataException("Unsupported collection cartridge") };

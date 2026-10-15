@@ -60,7 +60,7 @@ static class PreferenceCases
                 (_, _, _) => throw new Exception("Catalog validation must not send game commands"));
             var routeCatalog = new DailyCollectionCatalog(workflow);
             var expected = Enumerable.Range(1, 19).Select(n => (long)n)
-                .Concat(Enumerable.Range(1001, 7).Select(n => (long)n)).Concat(new long[] { 2001, 2002, 2003, 2004, 2005, 2007 }).ToArray();
+                .Concat(Enumerable.Range(1001, 7).Select(n => (long)n)).Concat(new long[] { 2001, 2002, 2003, 2005, 2007 }).ToArray();
             Check(routeCatalog.Packs().SequenceEqual(expected), "fixed weekly catalog covers all supported story, character and event packs");
             Check(routeCatalog.Packs().All(id => routeCatalog.Maps(id).Length > 0 && routeCatalog.StealMaps(id) != null), "shared weekly route has collection and theft coverage for every pack");
             Check(routeCatalog.Maps(6).SequenceEqual(new long[] { 601, 602, 606, 605, 608, 607 }), "fixed route retains chapter six floor exclusions");

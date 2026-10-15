@@ -103,6 +103,11 @@
       ]
     },
     {
+      "Id": "mainline.pack_access",
+      "Type": "PackManager",
+      "Paths": ["$self"]
+    },
+    {
       "Id": "mainline.packs",
       "Type": "ὤὫὬὭὯὪὢὬὬὩὣ",
       "StaticMember": "ὯὩὥὮὩὯὨὡὢὧὣ",
@@ -113,7 +118,8 @@
       "ItemPaths": [
         "Id",
         "PackType",
-        "PackNameTextId"
+        "PackNameTextId",
+        "UseSchedule"
       ],
       "MaxItems": 500
     },

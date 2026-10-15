@@ -31,5 +31,10 @@ public static class J
  public static string ResourceText(string name){using var stream=DustweaveSharedResources.Open(typeof(J).Assembly,"Equipment."+name)??throw new InvalidOperationException("缺少内置数据："+name);using var reader=new StreamReader(stream,Encoding.UTF8);return reader.ReadToEnd();}
  public static JsonObject Resource(string name)=>JsonNode.Parse(ResourceText(name))!.AsObject();
  public static string Data=>Environment.GetEnvironmentVariable("BD2_EQUIPMENT_DATA_ROOT")??Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BD2EquipmentAssistant");
+ public static string Diagnostics=>BD2.LocalIpc.HostedConnection.Enabled?Path.Combine(Environment.GetEnvironmentVariable("BD2_DAILY_DATA_ROOT")??throw new InvalidOperationException("Missing host data directory"),"live","diagnostics","equipment"):Path.Combine(Data,"diagnostics");
+ public static void MigrateDiagnostics(){
+  if(BD2.LocalIpc.HostedConnection.Enabled)
+   Dustweave.Maintenance.EquipmentLogs.Import(Data,Environment.GetEnvironmentVariable("BD2_DAILY_DATA_ROOT")??throw new InvalidOperationException("Missing host data directory"));
+ }
  public static string Stop=>Path.Combine(Data,"stop");
 }

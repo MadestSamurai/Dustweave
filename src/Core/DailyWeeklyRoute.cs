@@ -374,6 +374,9 @@ public sealed class DailyWeeklyRoute
         week = S(R(evidence, "mainline.reset", "GetWeeklyResetTime().Ticks"));
         Require(week.Length > 0, "缺少周周期");
         var packs = route.Catalog.AvailablePacks(evidence);
+        var unavailableEvents = route.Catalog.UnavailableEventPacks(evidence);
+        if (unavailableEvents.Length > 0)
+            w.Driver.Diagnostics.Event("weekly_event_cartridges_unavailable", O(("packs", unavailableEvents), ("reason", "native_event_schedule_closed")));
         if (active.Contains("weekly_npc")) npc = new(route, w.Settings.Weekly.NpcHunting) { AvailablePacks = packs };
         foreach (long p in packs)
         {
@@ -488,6 +491,11 @@ public sealed class DailyWeeklyRoute
         {
             result[s] ??= Finish(s);
             IncludeDeferrals(s, result[s]!.AsObject());
+            if (unavailableEvents.Length > 0)
+            {
+                result[s]!["unavailable_event_packs"] = Array(unavailableEvents.Select(id => (JsonNode)JsonValue.Create(id)!));
+                result[s]!["detail"] = S(result[s]!["detail"]) + " · 未开放活动卡带已略过：" + string.Join("、", unavailableEvents);
+            }
             Emit(s, S(result[s]!["detail"] ?? result[s]!["reason"]), false);
         }
         return O(("state", result.All(p => S(p.Value!["state"]) is "completed" or "skipped") ? "completed" : "partial"), ("stages", result), ("engine", "dotnet-weekly-route-v1"));

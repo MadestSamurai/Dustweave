@@ -211,6 +211,11 @@ namespace BD2Daily.Live {
      // This is before the dispatch marker and before OnClick's quest/latch side effects.
      if(reason.Length>0){r.State="rejected";r.Error=reason;r.MayHaveDispatched=false;Save(r);return;}
     }
+    if(c.Kind=="mainline_pack"){
+     try{reason=CollectionProgressNative.PackAvailable(ὤὫὬὭὯὪὢὬὬὩὣ.ὬὣὢὥὫὪὬὮὣὠὦ(c.Value))?"":"pack_entry_unavailable:event_closed";}
+     catch(Exception){reason="pack_entry_unavailable:unreadable";}
+     if(reason.Length>0){r.State="rejected";r.Error=reason;r.MayHaveDispatched=false;Save(r);return;}
+    }
     if(LivePolicy.WeeklyNpcKind(c.Kind)){
      try{reason=WeeklyNpcNative.Preflight(c,uis[c.SurfaceId]);}catch(Exception ex){reason="npc_preflight_unavailable:"+ex.GetType().Name;}
      if(reason.Length>0){r.State="rejected";r.Error=reason;r.MayHaveDispatched=false;Save(r);return;}

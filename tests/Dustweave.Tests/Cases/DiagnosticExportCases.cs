@@ -29,12 +29,15 @@ internal static class DiagnosticExportCases
         trail.Observe(CommandDriverCases.Frame());
         for (int i=0;i<20;i++) trail.Failure("failure", new System.Text.Json.Nodes.JsonObject { ["error"]="synthetic popup failure" });
         string faultDirectory=Path.Combine(failureRoot,"live","diagnostics","failures");
+        string equipmentDiagnostics=Path.Combine(failureRoot,"live","diagnostics","equipment");Directory.CreateDirectory(equipmentDiagnostics);
+        File.WriteAllText(Path.Combine(equipmentDiagnostics,"step.result.json"),"{\"state\":\"failed\",\"token\":\"equipment-secret\"}");
         DailyJson.Write(Path.Combine(failureRoot, "connection-access.json"), new { phase = "send-request", state = "disconnected", helperExitCode = 1 });
         Check(Directory.GetFiles(faultDirectory).Length==1,"repeated identical failures retain one bounded snapshot");
         foreach (string name in new[] {"pass-claims-latest.json", "mission-inspection-latest.json"})
             File.WriteAllText(Path.Combine(failureRoot,"live",name),"{\"state\":\"partial\",\"pass_issues\":[{\"pass_id\":501,\"detail\":\"synthetic incompatible pass\"}]}");
         var withFault=await DailyDiagnosticExport.CreateAsync(failureRoot,Path.Combine(output,"with-failure.zip"),"","test");
         using(var archive=ZipFile.OpenRead(withFault.Path)) {
+            using(var equipmentLog=new StreamReader(archive.GetEntry("logs/main/live/diagnostics/equipment/step.result.json")!.Open()))Check(!equipmentLog.ReadToEnd().Contains("equipment-secret"),"integrated equipment evidence is exported and redacted with host diagnostics");
             Check(archive.GetEntry("logs/main/connection-access.json") != null, "elevated handshake phase and helper exit status are exported");
             Check(archive.Entries.Any(e=>e.FullName.StartsWith("logs/main/live/diagnostics/failures/")),"failure snapshot survives observation rotation and is exported");
             Check(new[]{"pass-claims-latest.json", "mission-inspection-latest.json"}.All(n=>archive.GetEntry("logs/main/live/"+n)!=null),"partial pass and mission inspection results survive export");

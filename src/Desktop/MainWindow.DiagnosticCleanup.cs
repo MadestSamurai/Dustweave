@@ -11,11 +11,15 @@ public partial class MainWindow
     private DateTime nextEvidenceCleanup = DateTime.UtcNow.AddSeconds(15);
     private bool logCleanupRunning;
     private sealed record LogCleanupRun(DateTime At, int Files, long Bytes, int Skipped);
+    private string? LegacyEquipmentLogRoot => smoke == null
+        ? Environment.GetEnvironmentVariable("BD2_EQUIPMENT_DATA_ROOT") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BD2EquipmentAssistant")
+        : null;
     private void InitializeLogCleanup()
     {
         logPolicy=DailyLogCleanup.Load(root);
         var last=DailyJson.TryRead<LogCleanupRun>(Path.Combine(root,"log-cleanup-last.json"));
         if(last!=null && last.At>DateTime.UtcNow.AddHours(-12) && last.At<=DateTime.UtcNow)nextLogCleanup=last.At.AddHours(12);
+        if(LegacyEquipmentLogRoot is { } legacy && DailyLogCleanup.HasLegacyEquipmentLogs(legacy))nextLogCleanup=DateTime.UtcNow.AddMinutes(1);
         Closed+=(_,_)=>logCleanupCancellation?.Cancel();
     }
     private async Task CheckLogCleanupAsync()
@@ -30,6 +34,7 @@ public partial class MainWindow
         try {
             await DailyLogEvidence.FlushAsync(root,lifetime.Token);
             if(!retentionDue)return;
+            if(LegacyEquipmentLogRoot is { } legacy)await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(root,legacy,lifetime.Token);
             await DailyLogEvidence.MaintainAsync(root,lifetime.Token);
             var plan=await DailyLogCleanup.ScanAsync(root,logPolicy,lifetime.Token);
             if(Unavailable || dailyQueue.IsRunning || scheduleChecking || DailyDialogs.ModalDepth>0)return;
@@ -69,7 +74,7 @@ public partial class MainWindow
         void Controls(bool enabled){scan.IsEnabled=enabled;days.IsEnabled=enabled;size.IsEnabled=enabled;automatic.IsEnabled=enabled;clean.IsEnabled=enabled&&plan?.Files>0;}
         void Save(){try{logPolicy=new(automatic.IsChecked==true,(int)((ComboBoxItem)days.SelectedItem).Tag,(int)((ComboBoxItem)size.SelectedItem).Tag);DailyLogCleanup.Save(root,logPolicy);nextLogCleanup=DateTime.UtcNow.AddMinutes(1);plan=null;clean.IsEnabled=false;L.Text(status,"logs.changed");}catch(Exception e){DailyUiText.Error(status,e);}}
         automatic.Click+=(_,_)=>Save();days.SelectionChanged+=(_,_)=>Save();size.SelectionChanged+=(_,_)=>Save();
-        async Task Scan(){working=true;plan=null;Controls(false);L.Text(status,"logs.scanning");try{plan=await DailyLogCleanup.ScanAsync(root,logPolicy,lifetime.Token,new Progress<DailyLogScanProgress>(p=>{if(!closed&&working)L.Text(status,"logs.progress",p.Entries,MiB(p.Bytes),p.Examined);}));if(!closed){L.Text(status,"logs.preview",MiB(plan.ManagedBytes),MiB(plan.ReclaimableBytes),plan.Files);L.Text(detail,"logs.skipped",plan.Skipped);}}catch(OperationCanceledException){}catch(Exception e){if(!closed){if(e.Message=="logs.rescan")L.Text(status,"logs.rescan");else DailyUiText.Error(status,e);}}finally{working=false;if(!closed)Controls(true);else lifetime.Dispose();}}
+        async Task Scan(){working=true;plan=null;Controls(false);L.Text(status,"logs.scanning");try{if(LegacyEquipmentLogRoot is { } legacy)await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(root,legacy,lifetime.Token);plan=await DailyLogCleanup.ScanAsync(root,logPolicy,lifetime.Token,new Progress<DailyLogScanProgress>(p=>{if(!closed&&working)L.Text(status,"logs.progress",p.Entries,MiB(p.Bytes),p.Examined);}));if(!closed){L.Text(status,"logs.preview",MiB(plan.ManagedBytes),MiB(plan.ReclaimableBytes),plan.Files);L.Text(detail,"logs.skipped",plan.Skipped);}}catch(OperationCanceledException){}catch(Exception e){if(!closed){if(e.Message=="logs.rescan")L.Text(status,"logs.rescan");else DailyUiText.Error(status,e);}}finally{working=false;if(!closed)Controls(true);else lifetime.Dispose();}}
         scan.Click+=async(_,_)=>await Scan();
         clean.Click+=async(_,_)=>{
             if(plan==null)return;

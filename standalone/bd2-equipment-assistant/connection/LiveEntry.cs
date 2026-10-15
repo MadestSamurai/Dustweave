@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using SharpMonoInjector;
@@ -15,6 +16,16 @@ public static class LiveEntry {
  static LiveEntry(){EquipmentTransport.Configure();}
  public static string Fingerprint=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(typeof(LiveEntry).Module.ModuleVersionId.ToString())));
  public static string Root=>Path.Combine(Environment.GetEnvironmentVariable("BD2_EQUIPMENT_DATA_ROOT")??Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BD2EquipmentAssistant"),"live");
+ public static void EnsureEvidenceConfig(string managed,string output){
+  using var stream=File.OpenRead(Path.Combine(managed,"Assembly-CSharp.dll"));
+  string key=Fingerprint+"|"+Convert.ToHexString(SHA256.HashData(stream));
+  string stamp=output+".cache.json";
+  try{var old=JsonNode.Parse(File.ReadAllText(stamp)) as JsonObject;if(old?["key"]?.ToString()==key&&File.Exists(output)&&old["hash"]?.ToString()==Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(output))))return;}catch(IOException){}catch(JsonException){}
+  Directory.CreateDirectory(Path.GetDirectoryName(output)!);
+  string spec=Path.Combine(Path.GetDirectoryName(output)!,"evidence-spec.json");File.WriteAllBytes(spec,Resource("Equipment.evidence-spec.json"));
+  TapManifest.Generate(managed,spec,output);
+  LiveJson.Write(stamp,new{key,hash=Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(output)))});
+ }
  static Process Game()=>BD2.LocalIpc.HostedConnection.FindGame(n=>string.Equals(n,"BrownDust II",StringComparison.OrdinalIgnoreCase),"Open exactly one game instance and enter the home screen.")??throw new InvalidOperationException("Open exactly one game instance and enter the home screen.");
  static byte[] Resource(string name){using var s=DustweaveSharedResources.Open(typeof(LiveEntry).Assembly,name)??throw new InvalidDataException("Missing embedded component: "+name);using var b=new MemoryStream();s.CopyTo(b);return b.ToArray();}
  public static void Prepare(string managed,string output){
@@ -37,6 +48,7 @@ public static class LiveEntry {
    if(args.Length==1&&args[0]=="self-test"){Console.WriteLine(PolicyChecks.Run());return;}
    if(args.Length==1&&args[0]=="locate"){using var g=Game();Console.WriteLine(JsonSerializer.Serialize(new{managed=Path.Combine(Path.GetDirectoryName(g.MainModule!.FileName)!,"BrownDust II_Data","Managed"),processId=g.Id,startTicks=g.StartTime.ToUniversalTime().Ticks}));return;}
    if(args.Length==3&&args[0]=="prepare"){Prepare(Path.GetFullPath(args[1]),Path.GetFullPath(args[2]));Console.WriteLine("Equipment component compiled; game untouched.");return;}
+   if(args.Length==3&&args[0]=="prepare-evidence"){EnsureEvidenceConfig(Path.GetFullPath(args[1]),Path.GetFullPath(args[2]));Console.WriteLine("Equipment read configuration ready; game untouched.");return;}
    if(args.Length==4&&args[0]=="taps"){TapManifest.Generate(args[1],args[2],args[3]);return;}
    if(args.Length==2&&args[0] is "attach" or "upgrade"){
     Directory.CreateDirectory(Root);using var gate=new FileStream(Path.Combine(Root,"connection.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None);

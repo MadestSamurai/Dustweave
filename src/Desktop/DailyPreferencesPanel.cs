@@ -451,6 +451,26 @@ public sealed class DailyPreferencesPanel : UserControl
         if(before!=(potionReserve.Text,potionTarget.Text,potionRefill.IsChecked,mirror.IsChecked,mainline.IsChecked))throw new Exception("Filtering changed saved task inputs");
         ReviewCategoryForSmoke("daily");
     }
+    internal Action ObserveCategorySurfaceForSmoke()
+    {
+        if (allowGame) throw new InvalidOperationException("Isolated settings required");
+        categories.UpdateLayout();
+        // Inspect the rendered template, not the ListBox.Background property:
+        // Windows' default disabled trigger can paint its inner border differently.
+        var surface = VisualTreeHelper.GetChild(categories, 0) as Border
+            ?? throw new Exception("Settings category surface is not rendered");
+        var color = (surface.Background as SolidColorBrush)?.Color;
+        var selected = categories.SelectedItem;
+        var inputs = (potionReserve.Text, potionTarget.Text, potionRefill.IsChecked, mirror.IsChecked, mainline.IsChecked);
+        return () =>
+        {
+            categories.UpdateLayout();
+            if ((surface.Background as SolidColorBrush)?.Color != color)
+                throw new Exception("Disabling settings replaced the category background");
+            if (categories.SelectedItem != selected || inputs != (potionReserve.Text, potionTarget.Text, potionRefill.IsChecked, mirror.IsChecked, mainline.IsChecked))
+                throw new Exception("Settings availability changed selection or unsaved inputs");
+        };
+    }
     internal void CheckHiddenFieldValidationForSmoke()
     {
         if (allowGame) throw new InvalidOperationException("Isolated settings required");
