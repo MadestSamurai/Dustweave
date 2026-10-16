@@ -44,6 +44,7 @@ public sealed class DemoEnvironment : IAccountSessions, IGameHost
     public void Save(int slot, string name, string expectedKey) { if (expectedKey != CurrentKey || Game != null) throw new InvalidOperationException("Account changed or game running"); Calls.Add("save:" + slot); var existing = Accounts.FindIndex(a => a.AccountKey == expectedKey); var value = new DailyAccount(slot, name, expectedKey, "fixture", true, true, ""); if (existing >= 0) Accounts[existing] = value; else Accounts.Add(value); }
     public void Rename(int slot, string name, string expectedKey) => Calls.Add("rename:" + slot);
     public void Delete(int slot, string expectedKey) => Calls.Add("delete:" + slot);
+    public void DeleteUnreadable(int slot, string expectedRevision) => Calls.Add("delete-unreadable:" + slot + ":" + expectedRevision);
     public void LaunchCurrent() { Calls.Add("launch-current"); Game = new(150, DateTimeOffset.UtcNow.UtcTicks, "demo-game.exe"); }
     public void LoginNew() => Calls.Add("new"); public void Recover() => Calls.Add("recover");
     public GameInstance? Find() => Game;

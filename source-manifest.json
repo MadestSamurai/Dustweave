@@ -655,11 +655,11 @@
     },
     {
       "path": "src/Compatibility/PandoraCompiler.cs",
-      "sha256": "493b38cc4617d707f992fcb8881d5f6c71a440ecb7bb50448f1d59de89decdd0",
+      "sha256": "29c89d256675d32cb368a5af175f419f4cbcea45b9a4a6bb7f1a7eb1e50c030c",
       "reasons": [
         "build input"
       ],
-      "bytes": 17112
+      "bytes": 23913
     },
     {
       "path": "src/Compatibility/startup-contract.json",
@@ -2305,11 +2305,11 @@
     },
     {
       "path": "src/Core/Dustweave.Core.csproj",
-      "sha256": "f21c9d2b37023d60d10ec3f376b4baab22be1b14b0d50f23713a18a4a65a7a77",
+      "sha256": "e5973f09c92f42caba57f07a8e990ca63a177a767cf398eeeb52d9421725ddfe",
       "reasons": [
         "build input"
       ],
-      "bytes": 2696
+      "bytes": 2815
     },
     {
       "path": "src/Core/GuildSession.cs",
@@ -2353,11 +2353,11 @@
     },
     {
       "path": "src/Core/PandoraClient.cs",
-      "sha256": "3428935f837b29976a4059434ccd874754d6edb0c6d866480c274b13e8ff10ff",
+      "sha256": "5cf544d8df53c51ffc438122b417e12ab8b7f16b4f620d53d1fb654e1d11d693",
       "reasons": [
         "build input"
       ],
-      "bytes": 5054
+      "bytes": 5475
     },
     {
       "path": "src/Core/RefinementChoices.cs",
@@ -3337,19 +3337,27 @@
     },
     {
       "path": "src/Pandora/BossKiting.cs",
-      "sha256": "c972ddc7a93e78e3ed35cd86872588b5605f97000da991dcf16c8cc588ff8d53",
+      "sha256": "763b9ba1b85e3087eb95bf98fe85ffe6b40644d8b9e20659f81d026c7f96c317",
       "reasons": [
         "build input"
       ],
-      "bytes": 13617
+      "bytes": 19289
+    },
+    {
+      "path": "src/Pandora/ChallengeBuildPlanner.cs",
+      "sha256": "f6d5daf0dddb0e4ec150d6c257b65005277bf1bf01207a2ff2f0daca3bc68a5d",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 9884
     },
     {
       "path": "src/Pandora/CombatTactics.cs",
-      "sha256": "92e3f187984eec07c10aa7972743913ad9b2dd4d50da17d8eda87cf0a8352e94",
+      "sha256": "fbb21d00ab9cc4f355e65f8167b7572aedf7d47f2fdf8d250cac68db7974af12",
       "reasons": [
         "build input"
       ],
-      "bytes": 14485
+      "bytes": 21511
     },
     {
       "path": "src/Pandora/ComboPlanner.cs",
@@ -3369,27 +3377,27 @@
     },
     {
       "path": "src/Pandora/LoopRules.cs",
-      "sha256": "b632af5cc7d4a1e1a74b20f2a17d6c31784835f415bd613e4c187aab246266a2",
+      "sha256": "df9b2ed4c735dd715d5b9a6be8a17fde1eab0bdbf8c74ecd08c198d2ddbce228",
       "reasons": [
         "build input"
       ],
-      "bytes": 3910
+      "bytes": 6147
     },
     {
       "path": "src/Pandora/Native.cs",
-      "sha256": "84003cbae47da0aa22d49428a40d761d6f3b70028a23056178612d2e8bcfca39",
+      "sha256": "06d85aab190bdc871e882d551d30d963eeacc912154d8aae95892a641fe46522",
       "reasons": [
         "build input"
       ],
-      "bytes": 12075
+      "bytes": 12969
     },
     {
       "path": "src/Pandora/Planner.cs",
-      "sha256": "f67b717a5e09729fe09b8463e79fd653b53de8f4e43821d54287134d79e09c9e",
+      "sha256": "6080500dac8219e7a2928415a9f413e1455522bdc308954d4e2c5913a2ac3a4b",
       "reasons": [
         "build input"
       ],
-      "bytes": 11095
+      "bytes": 12546
     },
     {
       "path": "src/Pandora/RegionPlanner.cs",
@@ -3401,11 +3409,11 @@
     },
     {
       "path": "src/Pandora/Runtime.cs",
-      "sha256": "5d4c5e3ee107126d04ab665bd860e23024a2dc598b45789f24f85b59be739712",
+      "sha256": "7b4cd63f1fec0b1876485c4a9915872940a189092d0919aa0356fc1227f72f5a",
       "reasons": [
         "build input"
       ],
-      "bytes": 34999
+      "bytes": 54955
     },
     {
       "path": "src/Pandora/SkillPlanner.cs",
@@ -9122,28 +9130,36 @@
       "bytes": 4089
     },
     {
-      "path": "tests/Dustweave.Tests/Cases/PandoraCases.cs",
-      "sha256": "6b08ee0f92f4f32d7beca671c02d8a57981f703fa219ca2ca80f6a98a227818b",
+      "path": "tests/Dustweave.Tests/Cases/PandoraBuildCases.cs",
+      "sha256": "6bba09e5d7bd38aaf7f232ac9a230d65adf58ce2fbf92ba13c5882a827cc7321",
       "reasons": [
         "build input"
       ],
-      "bytes": 13372
+      "bytes": 10609
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/PandoraCases.cs",
+      "sha256": "2808360be8fb44111056a57df2367ee4aff0c17550c377970ab764d50d520648",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 15232
     },
     {
       "path": "tests/Dustweave.Tests/Cases/PandoraKitingCases.cs",
-      "sha256": "99e45bd56db258fe6ba066d1f69bc5cd72752207d6b77bed5a9b5614bb9cfa7a",
+      "sha256": "ebc481222b756879f2cfcbfadd18ff33f8925f4f06d6955875e7a3fe38b9e0cf",
       "reasons": [
         "build input"
       ],
-      "bytes": 7667
+      "bytes": 20800
     },
     {
       "path": "tests/Dustweave.Tests/Cases/PandoraTacticsCases.cs",
-      "sha256": "7fb22bb2388c64b25daebac1222c6032dc2b0ffa18f9a77af8d7e0ac377f1157",
+      "sha256": "c069fc788ad375c7ec41e9a7aba0866fc1c29adc96f8eadc23c23be552343d72",
       "reasons": [
         "build input"
       ],
-      "bytes": 10464
+      "bytes": 18746
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ParallelCases.cs",
@@ -9587,11 +9603,11 @@
     },
     {
       "path": "tests/Dustweave.Tests/Program.cs",
-      "sha256": "28f26d34a18c92a0b6f767d11ebe2aac40634bd378b2e31956888c2c2e7d377e",
+      "sha256": "9e3a25cf806c4b6160a1b88272993c652b1bb8b538213b7e37f4c148057a2d1e",
       "reasons": [
         "build input"
       ],
-      "bytes": 13249
+      "bytes": 13426
     },
     {
       "path": "tests/Dustweave.Tests/README.md",
@@ -9888,6 +9904,54 @@
         "build input"
       ],
       "bytes": 1102
+    },
+    {
+      "path": "src/Compatibility/PandoraSimulationCompiler.cs",
+      "sha256": "548b823ec0b589200721eadd79712b545526b995b2c925962dc501c03bbb2dd7",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 10209
+    },
+    {
+      "path": "src/Pandora/CombatSimulation.cs",
+      "sha256": "09b2cefffb0455ffcf7561a94e4c7958b25ccecab49c3904e48c28d255c2654b",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 36980
+    },
+    {
+      "path": "src/Pandora/CombatFlow.cs",
+      "sha256": "74e5bfbcdfe51eb0fe80129d03e06dc3be526839f80d6b43876a306e5ee6af2f",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 4021
+    },
+    {
+      "path": "src/Pandora/CombatWorker.cs",
+      "sha256": "72d983b6565b052c40c71962a1811cf4bcbb2961df89f386cb48a6bd2a99b8e5",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2146
+    },
+    {
+      "path": "src/Pandora/RuntimeSimulation.cs",
+      "sha256": "94f7cb97a524977fa697f20b47d2401d8dc7b93e17bd4f163cc27f72168c8a0c",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 19970
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/PandoraSimulationCases.cs",
+      "sha256": "4e83f0b138cb427665fdfa808c6fa0a1d9a91314f3cd6fd88cdc2b85d14e1bcb",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 17726
     }
   ],
   "publicReleaseApproved": false,

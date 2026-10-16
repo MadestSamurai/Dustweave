@@ -153,6 +153,35 @@ internal sealed class SessionVault
         }
     }
 
+    // Identify the exact unreadable file, without relying on its account identity
+    // or a successful login. Healthy credentials never receive a removal token.
+    internal string UnreadableFixedSlotRevision(int slotNumber)
+    {
+        string path = GetFixedSlotPath(slotNumber);
+        if (!File.Exists(path)) return "";
+        byte[] bytes = File.ReadAllBytes(path);
+        try
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(SessionIdentity.GetMemberId(LoadFromBytes(bytes)))) return "";
+            }
+            catch (Exception error) when (error is System.ComponentModel.Win32Exception or CryptographicException
+                or SessionManagerException or JsonException or FormatException) { }
+            return Convert.ToHexString(SHA256.HashData(bytes));
+        }
+        finally { CryptographicOperations.ZeroMemory(bytes); }
+    }
+
+    internal void DeleteUnreadableFixedSlot(int slotNumber, string expectedRevision)
+    {
+        // The host holds account-management ownership. Recheck after the user's
+        // confirmation so a refreshed/replaced record cannot be deleted by a stale row.
+        if (expectedRevision.Length != 64 || UnreadableFixedSlotRevision(slotNumber) != expectedRevision)
+            throw new SessionManagerException("account.delete_changed");
+        DeleteFixedSlot(slotNumber);
+    }
+
     internal SlotSummary MigrateLegacySlot(
         string legacyAlias,
         int slotNumber,
@@ -375,6 +404,12 @@ internal sealed class SessionVault
     private SessionSlot LoadFromPath(string path)
     {
         byte[] fileBytes = File.ReadAllBytes(path);
+        try { return LoadFromBytes(fileBytes); }
+        finally { CryptographicOperations.ZeroMemory(fileBytes); }
+    }
+
+    private static SessionSlot LoadFromBytes(byte[] fileBytes)
+    {
         if (fileBytes.Length <= SessionConstants.FileMagic.Length
             || !fileBytes.AsSpan(0, SessionConstants.FileMagic.Length)
                 .SequenceEqual(SessionConstants.FileMagic))
@@ -383,13 +418,17 @@ internal sealed class SessionVault
         }
 
         byte[] ciphertext = fileBytes.AsSpan(SessionConstants.FileMagic.Length).ToArray();
-        byte[] plaintext = DpapiProtector.Unprotect(ciphertext);
+        byte[]? plaintext = null;
         try
         {
+            plaintext = DpapiProtector.Unprotect(ciphertext);
             SessionSlot slot = JsonSerializer.Deserialize(
                 plaintext,
                 SessionJsonContext.Default.SessionSlot)
                 ?? throw new SessionManagerException("槽位内容为空。");
+            if (slot.Alias == null || slot.Entries == null || slot.Entries.Any(entry =>
+                entry == null || entry.Name == null || entry.Kind == null || entry.DataBase64 == null))
+                throw new SessionManagerException("槽位内容不完整。");
             ValidateAlias(slot.Alias);
             SessionRegistry.ValidateSlot(slot);
             return slot;
@@ -400,9 +439,8 @@ internal sealed class SessionVault
         }
         finally
         {
-            CryptographicOperations.ZeroMemory(fileBytes);
             CryptographicOperations.ZeroMemory(ciphertext);
-            CryptographicOperations.ZeroMemory(plaintext);
+            if (plaintext != null) CryptographicOperations.ZeroMemory(plaintext);
         }
     }
 

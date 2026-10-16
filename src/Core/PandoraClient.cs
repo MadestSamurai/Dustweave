@@ -18,6 +18,11 @@ public sealed class PandoraClient
     public int StageId { get; set; }
     public int StageGroup { get; set; }
     public bool AutoSelectEquipment { get; set; } = true;
+    // Opt-in, bounded IPC snapshot for local calibration; not retained by normal diagnostics.
+    public bool TraceCombat { get; set; }
+    public int CharacterGroup { get; set; }
+    public int CharacterId { get; set; }
+    public bool ForecastMovement { get; set; } = true;
 
 
     public PandoraClient(string root, int pid, long start, string fingerprint)
@@ -55,7 +60,7 @@ public sealed class PandoraClient
         Write();
     }
 
-    void Write() => pipe.Write("control.json", JsonSerializer.SerializeToUtf8Bytes(new { Enabled, RunId = runId, Mode, StageId, StageGroup, AutoSelectEquipment, Expires = DateTime.UtcNow.AddSeconds(4).Ticks }));
+    void Write() => pipe.Write("control.json", JsonSerializer.SerializeToUtf8Bytes(new { Enabled, RunId = runId, Mode, StageId, StageGroup, AutoSelectEquipment, TraceCombat, CharacterGroup, CharacterId, ForecastMovement, Expires = DateTime.UtcNow.AddSeconds(4).Ticks }));
     public JsonObject? Poll()
     {
         Write();
@@ -82,7 +87,7 @@ public sealed class PandoraClient
     internal static JsonObject DiagnosticState(JsonObject state)
     {
         var result = new JsonObject();
-        foreach (var key in new[] { "At", "Pid", "RunId", "Running", "Finished", "Faulted", "Reason", "Detail", "Completed", "Ui", "Stage", "Mode", "AutoSelectEquipment", "Selection", "Surfaces", "Entry", "TransitionUi", "Movement", "Tactics" })
+        foreach (var key in new[] { "At", "Pid", "RunId", "Running", "Finished", "Faulted", "Reason", "Detail", "Completed", "Ui", "Stage", "Mode", "AutoSelectEquipment", "Character", "RequestedCharacter", "Characters", "Selection", "Surfaces", "Entry", "TransitionUi", "Movement", "Tactics", "Build" })
             result[key] = state[key]?.DeepClone();
         return result;
     }

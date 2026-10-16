@@ -30,6 +30,21 @@ internal static class PandoraCases
         control.Mode = "Challenge"; control.RunId = "";
         Check(!control.Valid(now), "unidentified run is rejected");
 
+        CharacterChoice[] characters = [new() { Group=1,Id=3,Name="A",Unlocked=true },new() { Group=1,Id=7,Name="B",Unlocked=true },new() { Group=1,Id=9,Unlocked=false }];
+        Check(LoopRules.UsesGameCharacter(control) && LoopRules.CharacterMatches(control,1,7), "default preserves the game's character on retry");
+        control.CharacterGroup=1; control.CharacterId=7;
+        Check(ReferenceEquals(LoopRules.SelectCharacter(characters.Reverse(),control),characters[1]), "character selection survives reordered native slots");
+        Check(LoopRules.CharacterMatches(control,1,7) && !LoopRules.CharacterMatches(control,2,7) && !LoopRules.CharacterMatches(control,1,3), "only the same character and group may use direct retry");
+        control.CharacterId=9;
+        Check(LoopRules.SelectCharacter(characters,control)==null,"locked character cannot silently fall back to another slot");
+        control.CharacterId=12;
+        Check(LoopRules.SelectCharacter(characters,control)==null,"removed seasonal character requires another user choice");
+        control.CharacterId=0;
+        Check(!LoopRules.UsesGameCharacter(control) && !LoopRules.CharacterMatches(control,0,0),"partial identity cannot authorize retry");
+        control.CharacterGroup=control.CharacterId=0;
+        var legacy = System.Text.Json.JsonSerializer.Deserialize<Control>("""{"StandStillWhenMaxed":true,"CharacterSlot":2,"Mode":"Challenge"}""",new System.Text.Json.JsonSerializerOptions{IncludeFields=true})!;
+        Check(legacy.ForecastMovement && !legacy.TraceCombat && LoopRules.UsesGameCharacter(legacy),"legacy preferences cannot revive full-equipment holding or select a positional character");
+
         var gate = new TransitionGate();
         Check(!gate.Waiting("result:1", 0, out _), "initial result is actionable");
         gate.Sent("result:1", 1);

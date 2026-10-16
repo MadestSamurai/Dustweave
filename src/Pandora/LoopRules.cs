@@ -8,14 +8,28 @@ namespace Dustweave.Pandora
     {
         public int Id, Group, Difficulty, Index; public bool Challenge, Unlocked; public string Name = "";
     }
+    public sealed class CharacterChoice
+    {
+        public int Id, Group; public string Name = ""; public bool Unlocked;
+    }
     public sealed class Control
     {
-        public bool Enabled, AutoSelectEquipment = true; public string RunId = "", Mode = "Currency"; public int StageId, StageGroup; public long Expires;
+        public bool Enabled, AutoSelectEquipment = true, TraceCombat; public string RunId = "", Mode = "Currency"; public int StageId, StageGroup; public long Expires;
+        // Both zero retain the game's selection. Slot order is not a stable identity.
+        public int CharacterGroup, CharacterId;
+        // Applies to challenge movement only. Unsupported native contracts retain
+        // the established observed-motion controller.
+        public bool ForecastMovement = true;
         public bool Valid(long now) { return !string.IsNullOrEmpty(RunId) && (Mode == "Currency" || Mode == "Challenge") && Expires > now && Expires - now <= TimeSpan.FromSeconds(15).Ticks; }
     }
     public static class LoopRules
     {
         public static bool WaitForEquipment(Control control, bool selectionOpen) => selectionOpen && control.Mode == "Challenge" && !control.AutoSelectEquipment;
+        public static bool UsesGameCharacter(Control control) => control.CharacterGroup == 0 && control.CharacterId == 0;
+        public static bool CharacterMatches(Control control, int group, int id) => UsesGameCharacter(control) ||
+            control.CharacterGroup > 0 && control.CharacterId > 0 && control.CharacterGroup == group && control.CharacterId == id;
+        public static CharacterChoice SelectCharacter(IEnumerable<CharacterChoice> choices, Control control) =>
+            UsesGameCharacter(control) ? null : choices.FirstOrDefault(c => c.Unlocked && c.Group == control.CharacterGroup && c.Id == control.CharacterId);
         // Native SetUI can refill the same pooled window at the same level (queued rewards).
         public static string SkillPage(int instance, int level, int revision) { return "skill:" + instance + ":" + level + ":" + revision; }
         public static Stage Select(IEnumerable<Stage> stages, string mode, int group, int stageId)
@@ -38,6 +52,22 @@ namespace Dustweave.Pandora
     }
 
     public enum EntryAction { Wait, Started, CloseConfirmedResult, Blocked }
+    public enum BuildRestartPhase { None, Requested, PauseSent, ExitSent, Confirmed }
+    // Exit authority belongs to one round and one native pause window, never an arbitrary popup.
+    public sealed class BuildRestart
+    {
+        public BuildRestartPhase Phase;
+        public int ManagerId, PauseId;
+        public double Started;
+        public bool Pending { get { return Phase != BuildRestartPhase.None; } }
+        public void Request(int manager, double now) { if (Pending) return; ManagerId = manager; Started = now; Phase = BuildRestartPhase.Requested; }
+        public bool Owns(int manager, bool challenge, bool autoEquipment, bool sameStage)
+        { return Pending && manager == ManagerId && challenge && autoEquipment && sameStage; }
+        public bool CanConfirm(int manager, int pause, bool matchingCallback)
+        { return Phase == BuildRestartPhase.ExitSent && manager == ManagerId && pause == PauseId && matchingCallback; }
+        public bool Expired(double now) { return Pending && now - Started >= 45; }
+        public void Reset() { Phase = BuildRestartPhase.None; ManagerId = PauseId = 0; Started = 0; }
+    }
     // Confirming retry only selects the native result callback. It does not start
     // a round until the result page has actually closed. Never click Retry again.
     public sealed class RoundEntry

@@ -1,4 +1,4 @@
-<Window x:Class="Dustweave.Desktop.PandoraWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:l="clr-namespace:Dustweave.Desktop" Title="PANDORA ESCAPE · Dustweave" Width="650" Height="580" MinWidth="580" MinHeight="540" WindowStartupLocation="CenterScreen">
+<Window x:Class="Dustweave.Desktop.PandoraWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:l="clr-namespace:Dustweave.Desktop" Title="PANDORA ESCAPE · Dustweave" Width="650" Height="650" MinWidth="580" MinHeight="540" WindowStartupLocation="CenterScreen">
  <Grid Margin="24,8,24,24">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <StackPanel Margin="0,0,0,22"><TextBlock Text="{l:Tr pandora.title}" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="{l:Tr pandora.entry}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" Margin="0,6,0,0"/></StackPanel>
@@ -13,9 +13,14 @@
      <ComboBox x:Name="StageBox" DisplayMemberPath="Label" SelectedValuePath="Id" MinHeight="38" SelectionChanged="StageChanged"/>
      <TextBlock x:Name="StageHint" Text="{l:Tr pandora.repeat}" FontSize="12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,8,0,0"/>
     </StackPanel>
-    <Border x:Name="ChallengeNotice" Visibility="Collapsed" Background="{DynamicResource SurfaceMuted}" CornerRadius="10" Padding="16" Margin="0,0,0,20">
-     <TextBlock Text="{l:Tr pandora.challenge_warning}" TextWrapping="Wrap" FontWeight="SemiBold"/>
-    </Border>
+    <StackPanel Margin="0,0,0,20">
+     <TextBlock Text="{l:Tr pandora.character}" FontWeight="SemiBold" Margin="0,0,0,8"/>
+     <ComboBox x:Name="CharacterBox" DisplayMemberPath="Label" MinHeight="38" SelectionChanged="CharacterChanged" AutomationProperties.Name="{l:Tr pandora.character}">
+      <ComboBox.ItemContainerStyle><Style TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}"><Setter Property="IsEnabled" Value="{Binding Available}"/></Style></ComboBox.ItemContainerStyle>
+     </ComboBox>
+     <TextBlock x:Name="CharacterHint" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource MutedInk}" Margin="0,8,0,0"/>
+    </StackPanel>
+    <TextBlock x:Name="ChallengeNotice" Visibility="Collapsed" Text="{l:Tr pandora.challenge_warning}" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,0,0,20"/>
     <StackPanel x:Name="EquipmentPanel" Visibility="Collapsed" Margin="0,0,0,20">
      <CheckBox x:Name="AutoEquipment" IsChecked="True" Content="{l:Tr pandora.auto_equipment}"/>
      <TextBlock Text="{l:Tr pandora.auto_equipment_hint}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource MutedInk}" Margin="0,6,0,0"/>

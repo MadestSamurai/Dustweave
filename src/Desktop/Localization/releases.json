@@ -1,5 +1,35 @@
 [
 {
+  "Version": "1.4.1",
+  "Date": "2026-10-17",
+  "Notes": {
+    "zh-CN": [
+      "潘多拉新增角色选择，切换角色在下一局生效；移除旧的满装备站定开关，采用新的生存决策。",
+      "挑战模式优化武器与辅助配对、BOSS 冲刺和跳跃避让、回血与眩晕使用；15 分钟后优先生存，被困墙角时没有安全退路则站定。",
+      "挑战策略已在一次实测中坚持到 20 分钟；不同角色、养成与随机局的整体胜率仍待验证。",
+      "修复短暂连接读取间隙被误判为账号变化；潘多拉等待新数据恢复后继续，真实账号或游戏进程变化仍会停止操作。",
+      "无法解密的旧账号可以二次确认后删除，无需先重新登录；删除前会核对记录是否已变化。",
+      "1.3.9–1.3.17 和 1.4.0 支持直接差分更新；若 OTA 失败，请下载完整包并解压到新目录，保留 app 文件夹。"
+    ],
+    "zh-TW": [
+      "潘多拉新增角色選擇，切換角色於下一局生效；移除舊的滿裝備站定開關，採用新的生存決策。",
+      "挑戰模式優化武器與輔助配對、BOSS 衝刺和跳躍閃避、回血與暈眩使用；15 分鐘後優先生存，困於牆角且沒有安全退路時站定。",
+      "挑戰策略已在一次實測中堅持至 20 分鐘；不同角色、養成與隨機局的整體勝率仍待驗證。",
+      "修復短暫連線讀取間隙被誤判為帳號變更；潘多拉等待新資料恢復後繼續，真正的帳號或遊戲程序變更仍會停止操作。",
+      "無法解密的舊帳號可經二次確認後刪除，無需先重新登入；刪除前會核對記錄是否已變更。",
+      "1.3.9–1.3.17 和 1.4.0 支援直接差分更新；若 OTA 失敗，請下載完整包並解壓至新目錄，保留 app 資料夾。"
+    ],
+    "en-US": [
+      "Choose a Pandora character for the next round. The new survival decisions replace the old max-equipment standing option.",
+      "Challenge mode improves weapon/support pairing, boss dash and jump avoidance, healing and stun use. After 15 minutes, survival takes priority; hold position when cornered without a safe escape.",
+      "One live challenge trial reached 20 minutes. Overall success rates across characters, upgrades and random runs remain unverified.",
+      "Fix transient connection-read gaps being mistaken for account changes. Pandora waits for fresh data and resumes; actual account or game-process changes still stop commands.",
+      "Unreadable saved accounts can be deleted after confirmation without signing in again. Deletion checks that the saved record has not changed.",
+      "Direct patches cover 1.3.9–1.3.17 and 1.4.0. If OTA fails, extract the full package into a new folder and keep the app folder."
+    ]
+  }
+},
+{
   "Version": "1.4.0",
   "Date": "2026-10-16",
   "Notes": {

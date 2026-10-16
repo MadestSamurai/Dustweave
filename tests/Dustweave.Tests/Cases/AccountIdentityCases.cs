@@ -75,5 +75,47 @@ internal static class AccountIdentityCases
         Check(written==5 && replaced && slots[5].Alias=="Recovered","verified new login replaces an undecryptable slot atomically through the normal vault writer");
         Reject(()=>SessionService.SaveCapturedToSlot(current,2,"Wrong","1000001",n=>n==2?S("2000001","other",1):null,Save,true),"recovery flag cannot overwrite readable other-account credentials");
         Check(DailyIssues.Classify("Windows DPAPI 解密失败").Code=="credentials-unreadable","reinstall errors explain how to save a fresh login");
+
+        // Real encrypted files in a temporary vault only: removal cannot require
+        // a working DPAPI key, current registry login or a different saved account.
+        var vault = new SessionVault(Path.Combine(root, "unreadable-removal"));
+        var service = new SessionService(vault);
+        string SlotPath(int number) => Path.Combine(vault.RootDirectory, SessionConstants.SlotDirectoryName,
+            $"slot-{number}{SessionConstants.SlotExtension}");
+        var validSession = new SessionSlot(1, "Saved", DateTimeOffset.UtcNow, SessionConstants.RegistrySubKey,
+            SessionConstants.RequiredRegistryValues.Select(d => new RegistryEntrySnapshot(d.RegistryName, d.ExpectedKind.ToString(),
+                Convert.ToBase64String(d.MustBeEnabled ? BitConverter.GetBytes(1) : Encoding.UTF8.GetBytes(
+                    d.RegistryName.Contains("member") ? "{\"member_id\":\"1000001\"}" : "synthetic-sign-in")))).ToArray());
+        vault.SaveFixedSlot(1, validSession, "Saved", false);
+        vault.SaveFixedSlot(2, validSession, "Other record", false);
+        byte[] untouched = File.ReadAllBytes(SlotPath(2));
+        string healthyRevision = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(SlotPath(1))));
+        Check(vault.UnreadableFixedSlotRevision(1) == "", "healthy slot never exposes an unreadable removal token");
+        Reject(() => service.DeleteUnreadableSlot(1, healthyRevision), "even a matching hash cannot bypass healthy-account deletion guards");
+        byte[] broken = File.ReadAllBytes(SlotPath(1)); broken[^1] ^= 0x5a; File.WriteAllBytes(SlotPath(1), broken);
+        string revision = vault.UnreadableFixedSlotRevision(1);
+        Check(revision.Length == 64, "DPAPI failure has an exact encrypted-file removal token");
+        File.WriteAllText(SlotPath(1), "changed broken record");
+        Reject(() => service.DeleteUnreadableSlot(1, revision), "changed unreadable record rejects stale confirmation");
+        Check(File.Exists(SlotPath(1)), "rejected removal leaves changed record intact");
+        revision = vault.UnreadableFixedSlotRevision(1);
+        vault.SaveFixedSlot(1, validSession, "Repaired", true);
+        Reject(() => service.DeleteUnreadableSlot(1, revision), "saving repaired credentials invalidates old delete confirmation");
+        Check(vault.LoadFixedSlot(1).Alias == "Repaired", "repaired account survives a stale remove action");
+        File.WriteAllText(SlotPath(1), "malformed old slot");
+        service.DeleteUnreadableSlot(1, vault.UnreadableFixedSlotRevision(1));
+        Check(!vault.FixedSlotExists(1), "unparseable record can be removed without reading current login or launching the game");
+        Check(File.ReadAllBytes(SlotPath(2)).SequenceEqual(untouched), "unreadable removal does not touch other saved accounts");
+        vault.SaveFixedSlot(1, validSession, "Undecryptable", false);
+        broken = File.ReadAllBytes(SlotPath(1)); broken[^1] ^= 0x5a; File.WriteAllBytes(SlotPath(1), broken);
+        service.DeleteUnreadableSlot(1, vault.UnreadableFixedSlotRevision(1));
+        Check(!vault.FixedSlotExists(1), "undecryptable record is removable independently of a complete session");
+        byte[] incomplete = DpapiProtector.Protect(Encoding.UTF8.GetBytes("{\"SchemaVersion\":1,\"Alias\":null,\"Entries\":null}"));
+        File.WriteAllBytes(SlotPath(1), SessionConstants.FileMagic.Concat(incomplete).ToArray());
+        service.DeleteUnreadableSlot(1, vault.UnreadableFixedSlotRevision(1));
+        Check(!vault.FixedSlotExists(1), "structurally incomplete decrypted JSON can also be removed");
+        Reject(() => service.DeleteUnreadableSlot(2, ""), "missing removal token is rejected");
+        Reject(() => service.DeleteUnreadableSlot(101, new string('a', 64)), "unreadable removal retains slot boundaries");
+        Check(store.Read().Single().PlayerName == "Original player", "removing credentials keeps per-account daily preferences");
     }
 }

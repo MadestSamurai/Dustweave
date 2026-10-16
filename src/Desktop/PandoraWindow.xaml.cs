@@ -14,12 +14,16 @@ public partial class PandoraWindow : Window
     readonly bool smoke;
     PandoraClient? client;
     JsonObject? snapshot;
-    bool polling, closing, closeReady, connecting, starting;
+    bool polling, closing, closeReady, connecting, starting, rendering;
     string status = "ready";
     int preferredStage, preferredGroup;
+    int preferredCharacterId, preferredCharacterGroup;
+    string preferredCharacterName = "", characterSignature = "!";
     string stageSignature = "";
     sealed record StageChoice(int Id, int Group, string Label);
-    sealed record Preferences(string Mode = "Currency", int StageId = 0, int StageGroup = 0, bool AutoSelectEquipment = true);
+    internal sealed record CharacterOption(int Id, int Group, string Name, string Label, bool Available);
+    internal sealed record Preferences(string Mode = "Currency", int StageId = 0, int StageGroup = 0, bool AutoSelectEquipment = true,
+        int CharacterGroup = 0, int CharacterId = 0, string CharacterName = "");
     static string PreferencesPath => Path.Combine(DailyIdentity.DataRoot, "tools", "pandora-settings.json");
     public bool HostedAutomationEnabled => client?.Enabled == true || connecting || starting;
     static DailyLanguage L => DailyLanguage.Current;
@@ -37,6 +41,9 @@ public partial class PandoraWindow : Window
             preferredStage = preferences.StageId;
             preferredGroup = preferences.StageGroup;
             AutoEquipment.IsChecked = preferences.AutoSelectEquipment;
+            preferredCharacterGroup = preferences.CharacterGroup;
+            preferredCharacterId = preferences.CharacterId;
+            preferredCharacterName = preferences.CharacterName;
         }
 
         timer.Tick += async (_, _) => await Poll();
@@ -86,9 +93,12 @@ public partial class PandoraWindow : Window
         client.StageId = (StageBox.SelectedItem as StageChoice)?.Id ?? 0;
         client.StageGroup = (StageBox.SelectedItem as StageChoice)?.Group ?? 0;
         client.AutoSelectEquipment = AutoEquipment.IsChecked == true;
+        client.CharacterGroup = preferredCharacterGroup;
+        client.CharacterId = preferredCharacterId;
         try
         {
-            DailyJson.Write(PreferencesPath, new Preferences(client.Mode, client.StageId, client.StageGroup, client.AutoSelectEquipment));
+            DailyJson.Write(PreferencesPath, new Preferences(client.Mode, client.StageId, client.StageGroup, client.AutoSelectEquipment,
+                client.CharacterGroup, client.CharacterId, preferredCharacterName));
             await Task.Run(client.Start);
             status = "entering";
         }
@@ -144,6 +154,13 @@ public partial class PandoraWindow : Window
                 status = value["Reason"]?.ToString() ?? "ready";
             }
         }
+        catch (DailyObservationPendingException)
+        {
+            // The guard has submitted no heartbeat/command. Keep the existing run
+            // and retry observation on the next tick; the native lease still stops
+            // inputs if the gap lasts. A real account/process change goes to Fail.
+            status = "observation-wait";
+        }
         catch (Exception ex)
         {
             Fail(ex);
@@ -190,11 +207,20 @@ public partial class PandoraWindow : Window
         _ = Dispatcher.BeginInvoke(new Action(() => { if (IsLoaded) Close(); }));
     }
 
-    void LanguageChanged(object? sender, EventArgs e) { stageSignature = ""; Render(); }
+    void LanguageChanged(object? sender, EventArgs e) { stageSignature = ""; characterSignature = "!"; Render(); }
     void ModeChanged(object sender, RoutedEventArgs e) { if (StagePanel != null) Render(); }
     void StageChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         if (StageBox.SelectedItem is StageChoice choice) { preferredStage = choice.Id; preferredGroup = choice.Group; }
+        if (StatusText != null) Render();
+    }
+    void CharacterChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (rendering) return;
+        if (CharacterBox.SelectedItem is CharacterOption choice)
+        {
+            preferredCharacterId = choice.Id; preferredCharacterGroup = choice.Group; preferredCharacterName = choice.Name;
+        }
         if (StatusText != null) Render();
     }
     internal void SetPreview(JsonObject value, bool challenge, bool autoEquipment = true)
@@ -206,6 +232,10 @@ public partial class PandoraWindow : Window
     }
     void Render()
     {
+        if (rendering) return;
+        rendering = true;
+        try
+        {
         bool active = HostedAutomationEnabled, challenge = ChallengeMode.IsChecked == true;
         StagePanel.Visibility = challenge ? Visibility.Collapsed : Visibility.Visible;
         ChallengeNotice.Visibility = challenge ? Visibility.Visible : Visibility.Collapsed;
@@ -220,21 +250,49 @@ public partial class PandoraWindow : Window
             StageBox.ItemsSource = choices;
             StageBox.SelectedItem = choices.FirstOrDefault(s => s.Id == preferredStage && s.Group == preferredGroup) ?? choices.FirstOrDefault();
         }
-        CurrencyMode.IsEnabled = ChallengeMode.IsEnabled = StageBox.IsEnabled = !active && !polling;
+        var nativeCharacters = snapshot?["Characters"] as JsonArray;
+        string charSignature = nativeCharacters?.ToJsonString() ?? "";
+        if (characterSignature != charSignature)
+        {
+            characterSignature = charSignature;
+            var choices = new List<CharacterOption> { new(0, 0, "", L.Get("pandora.character_default"), true) };
+            foreach (var item in nativeCharacters ?? [])
+            {
+                int id = item?["Id"]?.GetValue<int>() ?? 0, group = item?["Group"]?.GetValue<int>() ?? 0;
+                if (id <= 0 || group <= 0) continue;
+                string name = item?["Name"]?.ToString() ?? "";
+                bool available = item?["Unlocked"]?.GetValue<bool>() == true;
+                choices.Add(new(id, group, name, available ? name : name + " · " + L.Get("pandora.character_locked"), available));
+            }
+            var wanted = choices.FirstOrDefault(c => c.Id == preferredCharacterId && c.Group == preferredCharacterGroup);
+            if (wanted == null)
+            {
+                wanted = new(preferredCharacterId, preferredCharacterGroup, preferredCharacterName,
+                    string.IsNullOrWhiteSpace(preferredCharacterName) ? L.Get("pandora.character_missing") : preferredCharacterName + " · " + L.Get("pandora.character_locked"), false);
+                choices.Add(wanted);
+            }
+            CharacterBox.ItemsSource = choices;
+            CharacterBox.SelectedItem = wanted;
+        }
+        CurrencyMode.IsEnabled = ChallengeMode.IsEnabled = StageBox.IsEnabled = CharacterBox.IsEnabled = !active && !polling;
         AutoEquipment.IsEnabled = !active && !polling;
         ConnectButton.IsEnabled = !active && !polling;
         ConnectButton.Visibility = !smoke && status == "disconnected" ? Visibility.Visible : Visibility.Collapsed;
         bool hasChallenge = nativeStages?.Any(s => s?["Unlocked"]?.GetValue<bool>() == true && s?["Challenge"]?.GetValue<bool>() == true) == true;
-        StartButton.IsEnabled = client != null && !active && !polling && (challenge ? hasChallenge : StageBox.SelectedItem != null);
+        bool characterAvailable = CharacterBox.SelectedItem is CharacterOption { Available: true };
+        StartButton.IsEnabled = client != null && !active && !polling && characterAvailable && (challenge ? hasChallenge : StageBox.SelectedItem != null);
         StopButton.IsEnabled = active;
         StageHint.Text = L.Get(StageBox.Items.Count == 0 ? "pandora.entry" : "pandora.repeat");
+        CharacterHint.Text = L.Get(nativeCharacters?.Count > 0 ? characterAvailable ? "pandora.character_hint" : "pandora.state.character-unavailable" : "pandora.character_loading");
         StatusText.Text = L.Get("pandora.state." + (States.Contains(status) ? status : "ready"));
         RoundsText.Text = snapshot?["Completed"]?.ToString() ?? "0";
         double seconds = snapshot?["Seconds"]?.GetValue<double>() ?? 0;
         TimeText.Text = TimeSpan.FromSeconds(Math.Max(0, seconds)).ToString(@"mm\:ss");
         double hp = snapshot?["Hp"]?.GetValue<double>() ?? 0, max = snapshot?["MaxHp"]?.GetValue<double>() ?? 0;
         HealthText.Text = max > 0 ? (100 * hp / max).ToString("0") + "%" : "—";
+        }
+        finally { rendering = false; }
     }
-    static readonly HashSet<string> States = ["ready", "connecting", "disconnected", "paused", "entering", "selecting", "settling", "retrying", "upgrading", "manual-equipment", "playing", "game-paused", "stage-unavailable", "wrong-stage", "open-game", "entry-blocked", "confirm-manually", "upgrade-timeout", "transition-timeout", "runtime-error", "lease-expired"];
+    static readonly HashSet<string> States = ["ready", "connecting", "disconnected", "observation-wait", "paused", "entering", "selecting", "settling", "retrying", "upgrading", "build-rerolling", "build-restarting", "build-restart-blocked", "manual-equipment", "playing", "corner-hold", "character-unavailable", "game-paused", "stage-unavailable", "wrong-stage", "open-game", "entry-blocked", "confirm-manually", "upgrade-timeout", "transition-timeout", "runtime-error", "lease-expired"];
 }
 

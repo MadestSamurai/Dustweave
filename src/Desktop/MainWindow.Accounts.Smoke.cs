@@ -59,6 +59,28 @@ public partial class MainWindow
                 Check(enter.Length == 3 && enter.All(b => b.DataContext is AccountRow row &&
                     new ButtonAutomationPeer(b).GetName() == L.Get("account.enter_named", row.Name)),
                     "Row entry actions are missing or do not identify their own account.");
+
+                var unreadable = before.Accounts[1] with { Valid = false, UnreadableRevision = new string('a', 64), Error = "DPAPI" };
+                RefreshAccounts(before with { Accounts = [before.Accounts[0], unreadable, before.Accounts[2]],
+                    SessionComplete = false, CurrentKey = "", CurrentSlot = null, GameRunning = false });
+                AccountsGrid.SelectedItem = rows.Single(r => r.Account.SlotNumber == unreadable.SlotNumber);
+                Check(DeleteAccountButton.IsEnabled && !RenameAccountButton.IsEnabled && !SandboxLaunchButton.IsEnabled &&
+                    !SandboxRepairButton.IsEnabled, "Unreadable accounts must be removable without permitting launch or credential editing.");
+                int deleteCalls = fixture.Calls.Count;
+                DeleteAccount(unreadable, text => {
+                    Check(text == L.Get("account.delete_unreadable_confirm", unreadable.Name, unreadable.SlotNumber),
+                        "Unreadable removal must explain the selected record and local-only scope in each language.");
+                    return false;
+                });
+                Check(fixture.Calls.Count == deleteCalls, "Cancelling unreadable removal invoked a session command.");
+                DeleteAccount(unreadable, _ => true);
+                Check(fixture.Calls.Skip(deleteCalls).SequenceEqual(new[] { "delete-unreadable:" + unreadable.SlotNumber + ":" + unreadable.UnreadableRevision }),
+                    "Confirmed unreadable removal used the healthy-account identity path or lost the selected record revision.");
+                fixture.Calls.RemoveRange(deleteCalls, fixture.Calls.Count - deleteCalls);
+                SetBusy(true);
+                Check(!DeleteAccountButton.IsEnabled, "Unreadable removal must stay locked during automation.");
+                SetBusy(false);
+                RefreshAccounts(before);
             }
 
             LanguageSelector.SelectedIndex = 0;

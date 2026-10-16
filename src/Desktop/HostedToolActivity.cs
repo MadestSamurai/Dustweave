@@ -23,6 +23,7 @@ internal sealed class HostedToolActivity : IDisposable
     readonly HashSet<string> starts=new(StringComparer.Ordinal){"ConnectButton","StartButton","AutoButton","StepButton","ApplyButton","PreviewButton","ExecuteButton"};
     readonly Dictionary<Button,bool> blockedButtons=new();
     bool disposed, polling, reconnecting, resumeAttempted;
+    string identityProblem = "";
     public HostedToolActivity(Window window,string id) : this(window,id,new DailyGameHost(),DailyIdentity.DataRoot,null,null) { }
     internal HostedToolActivity(Window window,string id,IGameHost host,string root,Func<SuiteStatus?>? readState,Action<Exception>? reportRejection)
     {
@@ -66,13 +67,33 @@ internal sealed class HostedToolActivity : IDisposable
     }
     void AssertIdentity()
     {
-        if(host.Find()!=game)throw new InvalidOperationException("游戏会话已结束，请返回日常助手重新连接。");
-        var snapshot=host.ReadSnapshot(game);
-        if(snapshot==null||snapshot.AccountKey!=account||snapshot.PlayerKey!=player||snapshot.FrameUtcTicks<DateTime.UtcNow.AddSeconds(-5).Ticks)
+        DailyIdentityRead? observed = null;
+        try
         {
-            DailyJson.Write(Path.Combine(root,"tools",id+"-identity-error.json"),new{atUtc=DateTimeOffset.UtcNow,missing=snapshot==null,expectedAccount=account,expectedPlayer=player,actualAccount=snapshot?.AccountKey,actualPlayer=snapshot?.PlayerKey,frameAgeSeconds=snapshot==null?(double?)null:(DateTime.UtcNow.Ticks-snapshot.FrameUtcTicks)/(double)TimeSpan.TicksPerSecond,state=snapshot?.State,scene=snapshot?.Scene,error=snapshot?.ErrorCode});
-            throw new InvalidOperationException("游戏身份已变化或连接已过期，请返回日常助手。");
+            DailyToolIdentity.Require(game, account, player, host.Find, () => observed = host.ReadIdentity(game));
+            if (identityProblem.Length != 0)
+            {
+                RecordIdentity("recovered", observed, "", "");
+                identityProblem = "";
+            }
         }
+        catch (DailyObservationPendingException error)
+        {
+            if (identityProblem != error.Reason) RecordIdentity("waiting", observed, error.Reason, error.Detail);
+            identityProblem = error.Reason;
+            throw;
+        }
+        catch (InvalidOperationException error)
+        {
+            RecordIdentity("rejected", observed, "identity-changed", error.Message);
+            throw;
+        }
+    }
+    void RecordIdentity(string phase, DailyIdentityRead? observed, string problem, string detail)
+    {
+        var snapshot = observed?.Snapshot;
+        try { DailyJson.Write(Path.Combine(root,"tools",id+"-identity-error.json"),new{atUtc=DateTimeOffset.UtcNow,phase,problem,detail,missing=snapshot==null,expectedAccount=account,expectedPlayer=player,actualAccount=snapshot?.AccountKey,actualPlayer=snapshot?.PlayerKey,frameAgeSeconds=snapshot==null?(double?)null:(DateTime.UtcNow.Ticks-snapshot.FrameUtcTicks)/(double)TimeSpan.TicksPerSecond,state=snapshot?.State,scene=snapshot?.Scene,error=snapshot?.ErrorCode}); }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
     }
     void BeforeWrite(string dataRoot,string name,byte[] value)
     {

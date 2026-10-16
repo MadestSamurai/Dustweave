@@ -1,5 +1,14 @@
 # Changelog / 更新记录
 
+## 1.4.1 — 2026-10-17
+
+- 潘多拉整合挑战模式配装与生存策略、短时战斗预测、BOSS 避让和后期墙角处理；增加角色选择，移除旧的满装备站定开关。
+- 一次挑战实测达到 20 分钟，尚未验证跨角色、养成及随机局的整体胜率。
+- 修复本机连接端点短暂消失造成的读取中断，区分暂缺身份数据与真正的账号变化；潘多拉可等待恢复后继续。
+- 无法解密的旧账号可以确认删除，保留删除前的记录变化校验。
+- Integrates Pandora challenge equipment planning and survival decisions, next-round character selection, connection-gap recovery, and confirmed deletion of unreadable saved accounts.
+- [完整说明 / Full notes](docs/releases/1.4.1.md)
+
 ## 1.4.0 — 2026-10-16
 
 - 新增日常结束汇总与 Windows、弹窗、声音提醒；汇总突出抽取结果、未完成事项及活动战斗失败后回退扫荡的情况。

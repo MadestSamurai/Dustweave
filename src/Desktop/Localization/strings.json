@@ -418,6 +418,46 @@
     "zh-TW": "自動選擇裝備",
     "en-US": "Choose equipment automatically"
   },
+  "pandora.character": {
+    "zh-CN": "出战角色",
+    "zh-TW": "出戰角色",
+    "en-US": "Character"
+  },
+  "pandora.character_default": {
+    "zh-CN": "沿用游戏选择",
+    "zh-TW": "沿用遊戲選擇",
+    "en-US": "Use game selection"
+  },
+  "pandora.character_hint": {
+    "zh-CN": "下一局开始时应用，不中断当前对局。",
+    "zh-TW": "下一局開始時套用，不中斷目前對局。",
+    "en-US": "Applies when the next round starts. Leaves the current round intact."
+  },
+  "pandora.character_locked": {
+    "zh-CN": "不可用",
+    "zh-TW": "無法使用",
+    "en-US": "Unavailable"
+  },
+  "pandora.character_missing": {
+    "zh-CN": "上次选择的角色不可用",
+    "zh-TW": "上次選擇的角色無法使用",
+    "en-US": "Previous character unavailable"
+  },
+  "pandora.character_loading": {
+    "zh-CN": "打开游戏内的潘多拉菜单后读取角色。",
+    "zh-TW": "開啟遊戲內的潘朵拉選單後讀取角色。",
+    "en-US": "Open the Pandora menu in the game to load characters."
+  },
+  "pandora.state.character-unavailable": {
+    "zh-CN": "所选角色当前不可用。请选择其他角色，或改为沿用游戏选择。",
+    "zh-TW": "所選角色目前無法使用。請選擇其他角色，或改為沿用遊戲選擇。",
+    "en-US": "This character is unavailable. Choose another character or use the game selection."
+  },
+  "pandora.state.corner-hold": {
+    "zh-CN": "后期被困墙角，保持原地输出，等待眩晕覆盖的安全脱困路线。",
+    "zh-TW": "後期被困牆角，保持原地輸出，等待暈眩覆蓋的安全脫困路線。",
+    "en-US": "Cornered late in the run. Holding position until a stun-covered escape is confirmed."
+  },
   "pandora.auto_equipment_hint": {
     "zh-CN": "关闭后，升级选项由你手动选择，选完自动继续游玩。",
     "zh-TW": "關閉後，升級選項由你手動選擇，選完自動繼續遊玩。",
@@ -6784,14 +6824,14 @@
     "en-US": "Stage to repeat"
   },
   "pandora.repeat": {
-    "zh-CN": "使用游戏当前选择的角色，结算后继续同一关。",
-    "zh-TW": "使用遊戲目前選擇的角色，結算後繼續同一關。",
-    "en-US": "Uses your currently selected character and repeats this stage after each result."
+    "zh-CN": "结算后继续同一关。",
+    "zh-TW": "結算後繼續同一關。",
+    "en-US": "Repeats this stage after each result."
   },
   "pandora.challenge_warning": {
-    "zh-CN": "尚未加入装备数据，目前自动化无法通关挑战模式。此模式仅用于自动尝试，失败后会继续重试。",
-    "zh-TW": "尚未加入裝備資料，目前自動化無法通關挑戰模式。此模式僅用於自動嘗試，失敗後會繼續重試。",
-    "en-US": "Equipment data is not modeled. The current automation cannot clear Challenge mode. It will attempt the mode and retry after failure."
+    "en-US": "After 15 minutes, prioritize survival; hold position when cornered until a stun-covered escape is confirmed. Auto equipment restarts builds that cannot reach five pairs. A 20-minute run passed; clear rate remains unverified.",
+    "zh-CN": "15分钟后优先生存；被困墙角时站定，确认眩晕覆盖安全路线后才脱困。自动配装不足五组且无法补齐时重开。已实测撑满20分钟，通关率仍待验证。",
+    "zh-TW": "15分鐘後優先生存；被困牆角時站定，確認暈眩覆蓋安全路線後才脫困。自動配裝不足五組且無法補齊時重開。已實測撐滿20分鐘，通關率仍待驗證。"
   },
   "pandora.rounds": {
     "zh-CN": "已结算",
@@ -6847,6 +6887,11 @@
     "zh-CN": "连接已中断，请确认游戏仍在运行，再重新连接。",
     "zh-TW": "連線已中斷，請確認遊戲仍在執行，再重新連線。",
     "en-US": "Disconnected. Check that the game is running, then reconnect."
+  },
+  "pandora.state.observation-wait": {
+    "zh-CN": "暂时未读到游戏信息，正在重新核对；恢复后继续，也可点击停止。",
+    "zh-TW": "暫時未讀到遊戲資訊，正在重新核對；恢復後繼續，也可點擊停止。",
+    "en-US": "Waiting for fresh game information. Automation resumes when verified; you can also stop."
   },
   "pandora.state.paused": {
     "zh-CN": "已停止，可以手动操作游戏。",
@@ -7242,5 +7287,10 @@
     "zh-CN": "目标磁盘空间不足，原缓存未改动。请释放空间或选择其他磁盘。",
     "zh-TW": "目標磁碟空間不足，原快取未變更。請釋放空間或選擇其他磁碟。",
     "en-US": "Not enough space on the destination drive. Free up space or choose another drive; the original cache is unchanged."
-  }
+  },
+  "account.delete_unreadable_confirm": {"zh-CN":"移除无法读取的账号记录“{0}”（位置 {1}）？\n\n仅删除该位置保存的旧登录凭据，不需要先登录游戏。不会删除游戏账号、其他已保存账号或日常设置。","zh-TW":"移除無法讀取的帳號記錄「{0}」（位置 {1}）？\n\n僅刪除該位置儲存的舊登入憑據，不需要先登入遊戲。不會刪除遊戲帳號、其他已儲存帳號或日常設定。","en-US":"Remove the unreadable account record “{0}” (slot {1})?\n\nOnly the old sign-in credentials in this slot will be deleted. You do not need to sign in first. Your game account, other saved accounts and daily settings will remain."},
+  "account.delete_changed": {"zh-CN":"这条账号记录已变化或恢复可用，未删除。请刷新账号列表后重新选择。","zh-TW":"這筆帳號記錄已變更或恢復可用，未刪除。請重新整理帳號清單後再選擇。","en-US":"This account record has changed or is readable again. Nothing was deleted. Refresh the account list and select it again."},
+  "pandora.state.build-rerolling": {"en-US":"Rerolling upgrades to preserve key equipment slots…","zh-CN":"正在更换升级候选，保留关键配装栏位…","zh-TW":"正在更換升級候選，保留關鍵配裝欄位…"},
+  "pandora.state.build-restarting": {"en-US":"The Challenge build is no longer achievable. Leaving and starting a new round…","zh-CN":"本局无法凑齐挑战配装，正在退出并重开…","zh-TW":"本局無法湊齊挑戰配裝，正在退出並重開…"},
+  "pandora.state.build-restart-blocked": {"en-US":"Could not finish leaving the round. Handle the current game screen, then start again.","zh-CN":"未能完成本局退出，已停止。请处理游戏当前画面后重新开始。","zh-TW":"未能完成本局退出，已停止。請處理遊戲目前畫面後重新開始。"}
 }

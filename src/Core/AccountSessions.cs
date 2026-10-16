@@ -1,7 +1,10 @@
 using Dustweave.Accounts;
 namespace Dustweave;
 
-public sealed record DailyAccount(int SlotNumber, string Name, string AccountKey, string MaskedMemberId, bool Valid, bool IsCurrent, string Error);
+public sealed record DailyAccount(int SlotNumber, string Name, string AccountKey, string MaskedMemberId, bool Valid, bool IsCurrent, string Error)
+{
+    public string UnreadableRevision { get; init; } = "";
+}
 public sealed record DailyLocalLoginEntry(string Name, bool Present, string? Kind, bool HasData, bool? Enabled);
 public sealed record DailyLocalLoginState(bool RegistryPresent, string IdentitySource, IReadOnlyList<DailyLocalLoginEntry> Entries);
 public sealed record DailyAccountCatalog(IReadOnlyList<DailyAccount> Accounts, string CurrentKey, int? CurrentSlot, bool SessionComplete, bool GameRunning, bool StarterRunning, bool HasRecovery)
@@ -17,6 +20,7 @@ public interface IAccountSessions
     void Save(int slot, string name, string expectedKey);
     void Rename(int slot, string name, string expectedKey);
     void Delete(int slot, string expectedKey);
+    void DeleteUnreadable(int slot, string expectedRevision) => throw new NotSupportedException();
     void LaunchCurrent() => throw new NotSupportedException();
     void LoginNew();
     void Recover();
@@ -77,7 +81,12 @@ public sealed class AccountSessions : IAccountSessions, IDisposable
                         error = "槽位没有有效的成员身份";
                 }
                 catch { valid = false; error = "槽位暂时无法读取"; }
-            accounts.Add(new(slot.Number, slot.DisplayName ?? "未命名", key, slot.MaskedMemberId ?? "", valid, slot.IsCurrent, error));
+            string unreadableRevision = "";
+            if (!valid)
+                try { unreadableRevision = vault.UnreadableFixedSlotRevision(slot.Number); }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+            accounts.Add(new(slot.Number, slot.DisplayName ?? "未命名", key, slot.MaskedMemberId ?? "", valid, slot.IsCurrent, error)
+            { UnreadableRevision = unreadableRevision });
         }
         string current = "";
         try { current = DailyIdentity.MemberKey(SessionRegistry.ReadMemberIdentity()); }
@@ -146,6 +155,12 @@ public sealed class AccountSessions : IAccountSessions, IDisposable
         Own();
         RequireIdentity(slot, expectedKey);
         service.DeleteSlot(slot);
+    }
+    public void DeleteUnreadable(int slot, string expectedRevision)
+    {
+        DailySandbox.RequireHost();
+        Own();
+        service.DeleteUnreadableSlot(slot, expectedRevision);
     }
     public void LoginNew()
     {

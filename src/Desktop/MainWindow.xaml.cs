@@ -553,7 +553,7 @@ public partial class MainWindow : Window
         L.Text(ProgressText, plan.Existing ? "account.updated" : "account.new_saved", name);
     });
     private void Rename_Click(object sender, RoutedEventArgs e) => Manage(() => { if (Selected is not { } row) return; string? name = Prompt("重命名账号", "别名只保存在本机，不会修改游戏角色名称。", row.Name); if (name != null) sessions.Rename(row.Account.SlotNumber, name, row.Account.AccountKey); });
-    private void Delete_Click(object sender, RoutedEventArgs e) => Manage(() => { if (Selected is { } row && Confirm(L.Get("account.delete_confirm", row.Name))) sessions.Delete(row.Account.SlotNumber, row.Account.AccountKey); });
+    private void Delete_Click(object sender, RoutedEventArgs e) => Manage(() => { if (Selected is { } row) DeleteAccount(row.Account, Confirm); });
     private void LoginNew_Click(object sender, RoutedEventArgs e) => Manage(() => { if (Confirm("登录新账号前，请正常退出游戏和启动器。当前登录账号必须已经保存。\n\n接下来会备份当前登录会话，并启动游戏供你登录新账号；登录完成后退出游戏，再保存到空槽位。")) sessions.LoginNew(); });
     private void Recover_Click(object sender, RoutedEventArgs e) => Manage(() => { if (Confirm("游戏和启动器关闭后，可恢复上一次切换前备份的本机会话。\n\n这不会启动游戏，也不会删除已保存账号。")) sessions.Recover(); });
     private void Up_Click(object sender, RoutedEventArgs e) => Move(-1);
@@ -929,6 +929,13 @@ public partial class MainWindow : Window
                 L.Audit();
                 await CheckSoftwareSettingsForSmoke();
                 DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "software-settings", realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "accounts")
+            {
+                L.Audit();
+                await CheckAccountsForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "accounts", realGameTouched = false });
                 Application.Current.Shutdown(); return;
             }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "ux")

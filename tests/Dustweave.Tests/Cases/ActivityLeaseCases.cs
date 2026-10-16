@@ -33,5 +33,26 @@ internal static class ActivityLeaseCases
   Check(Needs("control.json","{\"Enabled\":true,\"UntilUtcTicks\":0}"),"enabled flag never bypasses ownership through an invalid deadline");
   Check(Needs("control.json","broken"),"malformed command does not bypass ownership");
   Check(!DailyActivityRules.ExecutionPending("fishing: snapshot writer")&&DailyActivityRules.ExecutionPending("fishing: pending fishing response"),"capture IO does not retain execution but network reply does");
+  var game=new GameInstance(42,123,"fixture.exe");
+  BD2Daily.DailySnapshot Frame(string account="account",long? ticks=null)=>new(){ProcessId=42,ProcessStartTicks=123,AccountKey=account,PlayerKey="player",State="identified",FrameUtcTicks=ticks??DateTime.UtcNow.Ticks};
+  int reads=0,delays=0;
+  var fresh=DailyToolIdentity.Require(game,"account","player",()=>game,()=>++reads==1?new(null,"endpoint-unavailable","Win32=2"):new(Frame()),_=>delays++);
+  Check(reads==2&&delays==1&&fresh.AccountKey=="account","one empty identity read is recovered from a fresh frame before sending commands");
+  reads=0;bool pending=false;
+  try{DailyToolIdentity.Require(game,"account","player",()=>game,()=>{reads++;return new(null,"transport-timeout","fixture");},_=>{});}catch(DailyObservationPendingException e){pending=e.Reason=="transport-timeout"&&e.Detail=="fixture";}
+  Check(pending&&reads==3,"persistent missing observation is distinguishable from account change and bounded per poll");
+  Check(DailyToolIdentity.Require(game,"account","player",()=>game,()=>new(Frame()),_=>{}).PlayerKey=="player","a later fresh frame resumes the same identity without reconnecting or replacing the run");
+  pending=false;
+  try{DailyToolIdentity.Require(game,"account","player",()=>game,()=>new(Frame(ticks:DateTime.UtcNow.AddSeconds(-10).Ticks)),_=>{});}catch(DailyObservationPendingException e){pending=e.Reason=="snapshot-stale";}
+  Check(pending,"old matching identity cannot authorize a command");
+  reads=0;bool changed=false;
+  try{DailyToolIdentity.Require(game,"account","player",()=>game,()=>++reads==1?new(null,"snapshot-missing"):new(Frame("other")),_=>{});}catch(InvalidOperationException){changed=true;}
+  Check(changed&&reads==2,"actual account change during read retry is rejected immediately");
+  reads=0;changed=false;
+  try{DailyToolIdentity.Require(game,"account","player",()=>null,()=>{reads++;return new(Frame());},_=>{});}catch(InvalidOperationException){changed=true;}
+  Check(changed&&reads==0,"process exit is terminal even when a prior account snapshot could be read");
+  changed=false;var wrongProcess=Frame();wrongProcess.ProcessStartTicks++;
+  try{DailyToolIdentity.Require(game,"account","player",()=>game,()=>new(wrongProcess),_=>{});}catch(InvalidOperationException){changed=true;}
+  Check(changed,"reused PID cannot satisfy the hosted identity guard");
  }
 }

@@ -266,6 +266,11 @@ internal sealed class SessionService
         return activation;
     }
 
+    // Removing an unreadable local record does not switch the active login or
+    // alter the registry, so it must also work with no complete current session.
+    internal void DeleteUnreadableSlot(int slotNumber, string expectedRevision)
+        => _vault.DeleteUnreadableFixedSlot(slotNumber, expectedRevision);
+
     internal void DeleteSlot(int slotNumber)
     {
         SessionDashboardState dashboard = GetDashboard();

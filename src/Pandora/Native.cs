@@ -13,6 +13,13 @@ namespace Dustweave.Pandora.Runtime
         static readonly Dictionary<string, MethodInfo> methods = new Dictionary<string, MethodInfo>();
         static readonly Dictionary<string, FieldInfo> fields = new Dictionary<string, FieldInfo>();
         static Func<Vector3, bool> passable;
+        static Func<double, int, float> quantizeMovement;
+        public static double AxialMultiplier { get { return double.Parse(Bindings.Names["movementAxisMultiplier"], System.Globalization.CultureInfo.InvariantCulture); } }
+        public static double QuantizeMovement(double travel)
+        {
+            if (quantizeMovement == null) quantizeMovement = (Func<double, int, float>)Delegate.CreateDelegate(typeof(Func<double, int, float>), Bound("movementStep"));
+            return quantizeMovement(travel, 2);
+        }
         static readonly Dictionary<int, object> itemTables = new Dictionary<int, object>();
         public static object ItemTable(int id) { object table; if (!itemTables.TryGetValue(id, out table)) { table = Call("item", null, id); itemTables[id] = table; } return table; }
         public static SkillOption Ultimate(object player)
@@ -77,6 +84,12 @@ namespace Dustweave.Pandora.Runtime
             var action = BoundField(popup, "popupOkAction") as Action;
             return action != null && ReferenceEquals(action.Target, result) && action.Method == Bound("resultRetryConfirmed");
         }
+        public static bool ExitPopup(SurvivalDefaultPopupUI popup, SurvivalPauseUI pause)
+        {
+            if (popup == null || pause == null) return false;
+            var action = BoundField(popup, "popupOkAction") as Action;
+            return action != null && ReferenceEquals(action.Target, pause) && action.Method == Bound("pauseExitConfirmed");
+        }
         public static bool Click(Component panel, GameObject go) { if (go == null || !go.activeInHierarchy) return false; var root = panel as UIBase ?? panel.GetComponentInParent<UIBase>(); if (!Ready(root)) return false; root.OnClickUI(go); return true; }
         public static bool OpenFromHub(MiniGameHubUI hub)
         {
@@ -113,6 +126,21 @@ namespace Dustweave.Pandora.Runtime
                         Unlocked = unlocked && (difficulty <= 1 || Convert.ToBoolean(Call("cleared", null, groupId, difficulty - 1)))
                     });
                 }
+            }
+            return result.ToArray();
+        }
+        public static CharacterChoice[] Characters(SurvivalCharSelectUI panel)
+        {
+            // Native initialization fills even the hidden character page. Observe its
+            // own names and lock state; never infer unlocks from list position.
+            var result = new List<CharacterChoice>();
+            foreach (var slot in (SurvivalCharSlot[])Field(panel, "_characterSlots"))
+            {
+                if (slot == null || !slot.gameObject.activeSelf) continue;
+                int group, id; slot.GetCharInfo(out group, out id);
+                if (group <= 0 || id <= 0) continue;
+                result.Add(new CharacterChoice { Group = group, Id = id,
+                    Name = Convert.ToString(Get(Field(slot, "_textName"), "text")), Unlocked = !slot.IsDisable() });
             }
             return result.ToArray();
         }

@@ -46,7 +46,9 @@ public partial class MainWindow
         SandboxRepairButton.IsEnabled = idle && row?.Account.Valid == true;
         SandboxLaunchButton.IsEnabled = idle && row?.Account.Valid == true;
         // Editing actions only affect the highlighted row, never the checked queue.
-        RenameAccountButton.IsEnabled = DeleteAccountButton.IsEnabled = idle && row?.Account.Valid == true;
+        RenameAccountButton.IsEnabled = idle && row?.Account.Valid == true;
+        DeleteAccountButton.IsEnabled = idle && row != null &&
+            (row.Account.Valid || row.Account.UnreadableRevision.Length == 64);
         MoveUpButton.IsEnabled = idle && row != null && rows.IndexOf(row) > 0;
         MoveDownButton.IsEnabled = idle && row != null && rows.IndexOf(row) < rows.Count - 1;
         var visible = rows.Where(r => r.Account.Valid && MatchesSearch(r)).ToArray();
@@ -55,5 +57,13 @@ public partial class MainWindow
             visible.All(r => r.Selected) ? true : null;
         EmptyText.Visibility = rows.Any(MatchesSearch) ? Visibility.Collapsed : Visibility.Visible;
         L.Text(EmptyText, rows.Count == 0 ? "account.empty" : "account.no_matches");
+    }
+
+    private void DeleteAccount(DailyAccount account, Func<string, bool> confirm)
+    {
+        if (!confirm(account.Valid ? L.Get("account.delete_confirm", account.Name) :
+            L.Get("account.delete_unreadable_confirm", account.Name, account.SlotNumber))) return;
+        if (account.Valid) sessions.Delete(account.SlotNumber, account.AccountKey);
+        else sessions.DeleteUnreadable(account.SlotNumber, account.UnreadableRevision);
     }
 }

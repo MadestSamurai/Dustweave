@@ -85,6 +85,7 @@ internal static class ConnectionAccessCases
         }
         Check(await InterruptedReply("read",2)==3,"read-only reconnect is limited to two retries");
         Check(await InterruptedReply("write",1)==1,"mutating mailbox request is sent exactly once");
+        await CheckBrokerContinuity(cases);
 
         // Real asynchronous pipe framing, split messages, cancellation, and bounded allocation.
         string name = "BD2Daily.Test." + Guid.NewGuid().ToString("N");
@@ -126,6 +127,53 @@ internal static class ConnectionAccessCases
         try { await DailyConnectionAccess.Receive<DailyConnectionAccess.Reply>(server, timeout.Token); } catch (InvalidDataException) { bounded = true; }
         Check(bounded, "invalid frame size rejected before allocating payload");
         await invalidSend;
+    }
+    static async Task CheckBrokerContinuity(List<string> cases)
+    {
+        // Exercise the actual embedded broker in this test process. Pausing its
+        // acceptor after dispatch reproduces normal thread-preemption ordering.
+        string source=System.Text.Encoding.UTF8.GetString(Dustweave.Compatibility.DailyHookCompiler.Resource("Hook.Ipc.PipeBroker.cs"));
+        string wire=System.Text.Encoding.UTF8.GetString(Dustweave.Compatibility.DailyHookCompiler.Resource("Hook.Ipc.Wire.cs"));
+        const string enqueue="ThreadPool.QueueUserWorkItem(_ => {try{Serve(connected);}finally{lock(transportSync)serving.Remove(connected);}});";
+        if(!source.Contains(enqueue))throw new Exception("Broker acceptor fixture needs updating");
+        source=source.Replace(enqueue,enqueue+"Thread.Sleep(35);");
+        var references=((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator)
+            .Select(p=>Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(p)).ToArray();
+        using var process=Process.GetCurrentProcess();var game=new GameInstance(process.Id,process.StartTime.ToUniversalTime().Ticks,"");
+        foreach(bool continuous in new[]{false,true})
+        {
+            string key="BD2.Test.Broker."+Guid.NewGuid().ToString("N");
+            var tree=Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree.ParseText(source.Replace("BD2.LocalIpc.Broker.v1",key));
+            if(!continuous)
+            {
+                var root=tree.GetRoot();
+                var statement=root.DescendantNodes().OfType<Microsoft.CodeAnalysis.CSharp.Syntax.TryStatementSyntax>()
+                    .Single(t=>t.Finally?.ToString().Contains("listening = Create(endpoint, false)")==true);
+                tree=(Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree)tree.WithRootAndOptions(Microsoft.CodeAnalysis.SyntaxNodeExtensions.ReplaceNode(root,statement,statement.WithFinally(null)),tree.Options);
+            }
+            var compilation=Microsoft.CodeAnalysis.CSharp.CSharpCompilation.Create("BrokerFixture"+Guid.NewGuid().ToString("N"),
+                new[]{tree,Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree.ParseText(wire)},references,
+                new Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions(Microsoft.CodeAnalysis.OutputKind.DynamicallyLinkedLibrary));
+            using var buffer=new MemoryStream();var emitted=compilation.Emit(buffer);
+            if(!emitted.Success)throw new Exception(string.Join("\n",emitted.Diagnostics.Where(d=>d.Severity==Microsoft.CodeAnalysis.DiagnosticSeverity.Error)));
+            var assembly=System.Reflection.Assembly.Load(buffer.ToArray());var broker=assembly.GetType("BD2.LocalIpc.PipeBroker")!;
+            string path=Path.Combine(Path.GetTempPath(),key);int missing=0;
+            try
+            {
+                var channel=broker.GetMethod("Register")!.Invoke(null,new object[]{path,"fixture","snapshot.json","",true})!;
+                channel.GetType().GetMethod("Write")!.Invoke(channel,new object[]{"snapshot.json",new byte[]{42}});
+                var client=new BD2.LocalIpc.PipeClient(path,game.ProcessId,game.StartTicks);
+                for(int i=0;i<24;i++)
+                {
+                    if(!(await Task.Run(()=>client.Read("snapshot.json")))!.SequenceEqual(new byte[]{42}))throw new Exception("broker reply corrupted");
+                    await Task.Delay(5);
+                    if(!DailyTransport.EndpointReady(game))missing++;
+                }
+            }
+            finally{(AppDomain.CurrentDomain.GetData(key+".stop") as Action)?.Invoke();}
+            if(continuous ? missing!=0 : missing==0)throw new Exception("broker endpoint continuity: repaired="+continuous+", missing="+missing);
+            cases.Add("connection: "+(continuous?"repaired broker keeps the endpoint present across all 24 preempted accept cycles":"old broker reproduces false missing endpoint under acceptor preemption"));
+        }
     }
 }
 internal sealed class NeonInitException : Exception { }

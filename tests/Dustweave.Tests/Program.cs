@@ -167,7 +167,9 @@ await Group("ApostleAnnealing", () => Sync(() => ApostleAnnealingCases.Run(cases
 await Group("ApostlePerformance", () => Sync(() => ApostlePerformanceCases.Run(cases)));
 await Group("ApostleTimeToClear", () => Sync(() => ApostleTimeToClearCases.Run(cases)));
 await Group("Mansion", () => Sync(() => MansionCases.Run(cases)));
+await Group("PandoraSimulation", () => Sync(() => PandoraSimulationCases.Run(root, cases)));
 await Group("Pandora", () => Sync(() => PandoraCases.Run(cases)));
+await Group("PandoraBuild", () => Sync(() => PandoraBuildCases.Run(root, cases)));
 await Group("PandoraKiting", () => Sync(() => PandoraKitingCases.Run(root, cases)));
 await Group("PandoraTactics", () => Sync(() => PandoraTacticsCases.Run(root, cases)));
 await Group("UnifiedSuite", () => Sync(() => UnifiedSuiteCases.Run(cases)));

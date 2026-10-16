@@ -8,7 +8,7 @@ using Mono.Cecil.Cil;
 namespace Dustweave.Compatibility;
 
 /// <summary>Resolve the installed client's UI/table contracts without shipping a client symbol map.</summary>
-public static class PandoraCompiler
+public static partial class PandoraCompiler
 {
     public static string Fingerprint => MetadataIndex.Hash("pandora-public-v1|" + typeof(PandoraCompiler).Module.ModuleVersionId);
     public static byte[] Prepare(string managed)
@@ -30,6 +30,9 @@ public static class PandoraCompiler
         Method("hubTable", Calls(M(T("MiniGameHubScrollItem"), "UpdateData")).Single(m => m.ReturnType.Name == "PackEventMiniGameTable"));
         names.Add("survivalKind", Convert.ToInt32(module.Types.Single(t => t.IsEnum && t.Fields.Any(f => f.Name == "SichuanMahjong")).Fields.Single(f => f.Name == "SurvivorsLikes").Constant).ToString());
         var player = M(manager, "get_Player").ReturnType.Resolve();
+        Method("playerDamaged", player.Methods.Single(m => m.HasBody && m.ReturnType.Name == "Void" &&
+            m.Parameters.Count == 2 && m.Parameters[0].ParameterType.Name == "Int32" && m.Parameters[1].ParameterType.Name == "Boolean" &&
+            Calls(m).Any(c => c.Name == "PlayFieldDamageAnimation") && Calls(m).Any(c => c.Name == "set_MiniGameHP")));
         var provider = Calls(M(manager, "GetFieldMiniGameSurvivalTable")).Single(m => m.ReturnType.Name == "FieldMiniGameSurvivalTable").DeclaringType.Resolve();
         MethodDefinition Table(string result, int count) => provider.Methods.Single(m => m.IsStatic && m.ReturnType.Name == result && m.Parameters.Count == count);
         MethodDefinition List(string item, int count) => provider.Methods.Single(m => m.IsStatic && m.Parameters.Count == count && m.ReturnType is GenericInstanceType g && g.GenericArguments.Count == 1 && g.GenericArguments[0].Name == item);
@@ -64,11 +67,32 @@ public static class PandoraCompiler
         Field("skillId", ArgumentField(M(T("SurvivalCardItem"), "SetSkill"), OpCodes.Ldarg_1));
         Field("skillLevel", ArgumentField(M(T("SurvivalCardItem"), "SetSkill"), OpCodes.Ldarg_2));
         Field("skillBusy", T("SurvivalSelectUI").Fields.Single(f => f.FieldType.Name == "Boolean"));
+        Field("skillRerolls", T("SurvivalSelectUI").Fields.Single(f => f.FieldType.Name == "Int32"));
+        var pause = T("SurvivalPauseUI");
+        Field("pauseManager", pause.Fields.Single(f => f.FieldType.Name == "EventMiniGameSurvivalManager"));
+        Field("pauseExited", pause.Fields.Single(f => f.FieldType.Name == "Boolean"));
+        Method("pauseExitConfirmed", pause.Methods.Single(m => m.HasBody && m.Parameters.Count == 0 &&
+            m.Body.Instructions.Any(i => i.OpCode == OpCodes.Stfld && i.Operand is FieldReference f && f.FieldType.Name == "Boolean") &&
+            Calls(m).Any(c => c.Name == "CloseUI")));
+        var hud = T("UI.EventMainUI.EventMiniGame.Survival.EventMiniGameSurvivalHUD");
+        _ = M(hud, "OpenExitPopup");
+        _ = hud.BaseType.Resolve().Methods.Single(m => m.Name == "Pause" && m.Parameters.Count == 0);
+        Field("hudManager", hud.Methods.Single(m => m.HasBody && m.Parameters.Count == 1 && m.Parameters[0].ParameterType.Name == "SurvivalPauseUI")
+            .Body.Instructions.Select(i => i.Operand).OfType<FieldReference>()
+            .Where(f => f.FieldType.Name == "EventMiniGameManagerBase").DistinctBy(f => f.FullName).Single());
         Method("skillApplied", T("SurvivalSelectUI").Methods.Single(m => m.Parameters.Count == 3 && m.Parameters[0].ParameterType is GenericInstanceType g && g.GenericArguments.Count == 1 && g.GenericArguments[0].Name == "MiniGameSurvivalSkillDBInfo"));
         var stat = player.Methods.Single(m => m.ReturnType.Name == "Single" && m.Parameters.Count == 1 && m.Parameters[0].ParameterType.Resolve() is { IsEnum: true } e && e.Fields.Any(f => f.Name == "MoveSpeed") && m.HasBody && Calls(m).Any(c => c.Name == "get_MoveSpeed"));
         Method("stat", stat);
+        foreach (var expected in new[] { ("MoveSpeed", 2), ("Attack", 3), ("MagnetRange", 4), ("SkillDuration", 5), ("Cooltime", 6), ("ProjectileSpeed", 9) })
+            if (Convert.ToInt32(stat.Parameters[0].ParameterType.Resolve().Fields.Single(f => f.Name == expected.Item1).Constant) != expected.Item2)
+                throw new InvalidOperationException("Pandora equipment stat meanings changed");
+        foreach (var expected in new[] { ("MgSkillSubStraightShot", 2), ("MgSkillSubCircularRotation", 3), ("MgSkillSubRangedAttack", 4), ("MgSkillSubLaser", 5), ("MgSkillSubWhip", 8) })
+            if (Convert.ToInt32(T("Proto.Net.Define_MiniGameSkillSubType").Fields.Single(f => f.Name == expected.Item1).Constant) != expected.Item2)
+                throw new InvalidOperationException("Pandora weapon meanings changed");
         var charLookup = stat.Body.Instructions.Single(i => i.Operand is MethodReference m && m.ReturnType.Name == "FieldMiniGameCharTable");
         Field("playerCharGroup", (FieldReference)charLookup.Previous.Previous.Previous.Operand);
+        Field("playerCharId", (FieldReference)charLookup.Previous.Operand);
+        Method("character", (MethodReference)charLookup.Operand);
         Method("upgradeStat", player.Methods.Single(m => m.ReturnType.Name == "Single" && m.Parameters.Count == 1 && m.Parameters[0].ParameterType.Resolve() is { IsEnum: true } e && e.Fields.Any(f => f.Name == "ProjectileCount")));
         var hp = player.Methods.Where(m => m.HasBody).SelectMany(m => m.Body.Instructions).First(i => i.Operand is MethodReference m && m.Name == "get_MiniGameHP");
         Method("health", (MethodReference)hp.Previous.Operand);
@@ -91,7 +115,12 @@ public static class PandoraCompiler
         Method("time", Calls(result).Single(m => m.DeclaringType.FullName == time.FullName && m.ReturnType.Name == "Int64"));
         var owned = player.Methods.Where(m => m.Parameters.Count == 0 && m.ReturnType is GenericInstanceType g && g.ElementType.FullName == "System.Collections.Generic.IEnumerable`1").ToArray();
         if (owned.Length != 2 || ((GenericInstanceType)owned[0].ReturnType).GenericArguments[0].FullName != ((GenericInstanceType)owned[1].ReturnType).GenericArguments[0].FullName) throw new InvalidOperationException("Pandora skill inventory contract changed");
-        Method("weapons", owned[0]); Method("passives", owned[1]);
+        // Passives are indexed by stat enum, weapons by skill ID. Metadata method order
+        // changed between clients and must never decide which inventory contains weapons.
+        MethodDefinition OwnedWithKey(bool statKey) => owned.Single(m => m.Body.Instructions.Select(i => i.Operand).OfType<FieldReference>()
+            .Any(f => f.FieldType is GenericInstanceType g && g.ElementType.FullName == "System.Collections.Generic.Dictionary`2" &&
+                (g.GenericArguments[0].Resolve()?.IsEnum == true) == statKey));
+        Method("weapons", OwnedWithKey(false)); Method("passives", OwnedWithKey(true));
         var ownedType = ((GenericInstanceType)owned[0].ReturnType).GenericArguments[0].Resolve();
         var ctor = ownedType.Methods.Single(m => m.IsConstructor && m.Parameters.Count == 3);
         Field("ownedId", ArgumentField(ctor, OpCodes.Ldarg_1));
@@ -100,6 +129,11 @@ public static class PandoraCompiler
         if (patterns.Length != 3) throw new InvalidOperationException("Pandora boss pattern contract changed");
         for (int i = 0; i < patterns.Length; i++) Method("bossPattern" + i, patterns[i]);
         var bossType = T("SurvivalBossMonster");
+        var dashState = patterns.Select(p => ((TypeReference)p.CustomAttributes.Single(a => a.AttributeType.Name == "IteratorStateMachineAttribute").ConstructorArguments[0].Value).Resolve())
+            .Single(t => t.Methods.Single(m => m.Name == "MoveNext").Body.Instructions.Any(i => i.Operand is FieldReference f && f.Name == "_dashBox"));
+        // The coroutine stores the native, bounds-clamped destination across yields.
+        // Reading it avoids locking an already-moving boss's position plus a full range.
+        Field("bossDashDestination", dashState.Fields.Single(f => f.FieldType.FullName == "UnityEngine.Vector3"));
         var damaged = M(bossType, "Damaged");
         Field("bossHp", (FieldReference)damaged.Body.Instructions.Single(i => i.OpCode == OpCodes.Stfld && i.Previous.OpCode == OpCodes.Sub && ((FieldReference)i.Operand).FieldType.Name == "Single").Operand);
         var spawn = M(bossType, "Initialize"); Method("bossSpawn", spawn);
@@ -112,11 +146,32 @@ public static class PandoraCompiler
                 i.Previous.OpCode == OpCodes.Ldfld && i.Previous.Operand is FieldReference source && speeds.Any(s => s.FullName == source.FullName) && source.FullName != target.FullName)
             .Select(i => (FieldReference)i.Previous.Operand).DistinctBy(f => f.FullName).Single();
         Field("bossMoveSpeed", resets);
+        Field("bossCurrentSpeed", speeds.Single(f => f.FullName != resets.FullName));
+        Field("bossCanMove", M(bossType,"EnableMoving").Body.Instructions.Select(i=>i.Operand).OfType<FieldReference>().Single());
+        Field("bossRageMultiplier", (FieldReference)spawn.Body.Instructions.Single(i=>i.OpCode==OpCodes.Stfld && i.Previous.Operand is MethodReference m && m.Name=="get_BossRageValue").Operand);
+        var rageCoroutine = bossType.Methods.Single(m=>m.ReturnType.Name=="IEnumerator" && m.Parameters.Count==1 && m.Parameters[0].ParameterType.Name=="Int64");
+        var rageState = ((TypeReference)rageCoroutine.CustomAttributes.Single(a=>a.AttributeType.Name=="IteratorStateMachineAttribute").ConstructorArguments[0].Value).Resolve();
+        Field("bossEnraged", (FieldReference)rageState.Methods.Single(m=>m.Name=="MoveNext").Body.Instructions.Single(i=>i.OpCode==OpCodes.Stfld && i.Previous.OpCode==OpCodes.Ldc_I4_1 && i.Operand is FieldReference f && f.DeclaringType.FullName==bossType.FullName && f.FieldType.Name=="Boolean").Operand);
         // Resolve native movement rather than writing transforms or combat attributes.
         var avatar = T("PlayerController");
         Field("move", avatar.Fields.Single(f => f.FieldType.Name == "PlayerMoveController"));
         var direction = M(T("MoveController"), "set_MoveDir");
         Method("direction", direction);
+        var mover = T("MoveController");
+        Field("moveMaximum", M(mover, "SetMaxSpeed").Body.Instructions.Select(i => i.Operand).OfType<FieldReference>().Single());
+        var acceleration = mover.Methods.Single(m => m.HasBody && Calls(m).Any(c => c.Name == "get_MoveDir") &&
+            Calls(m).Any(c => c.Name == "set_MoveSpeed") && Calls(m).Any(c => c.Name == "get_CurrentSlope"));
+        var axial = acceleration.Body.Instructions.Single(i => i.OpCode == OpCodes.Ldc_R8 && i.Next.OpCode == OpCodes.Mul);
+        if (!acceleration.Body.Instructions.Any(i => i.Operand is FieldReference f && f.Name == "z") ||
+            !acceleration.Body.Instructions.Any(i => i.OpCode == OpCodes.Ldc_R4 && Equals(i.Operand, 1f)))
+            throw new InvalidOperationException("Pandora directional movement contract changed");
+        names.Add("movementAxisMultiplier", Convert.ToDouble(axial.Operand).ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+        var integrate = mover.Methods.Single(m => m.HasBody && m.Parameters.Count == 1 && m.Parameters[0].ParameterType.Name == "Double" &&
+            Calls(m).Any(c => c.Name == "get_IsPackLoading") && Calls(m).Any(c => c.Name == "get_deltaTime"));
+        var quantize = integrate.Body.Instructions.Single(i => i.Operand is MethodReference m && m.ReturnType.Name == "Single" &&
+            m.Parameters.Count == 2 && m.Parameters[0].ParameterType.Name == "Double" && m.Parameters[1].ParameterType.Name == "Int32");
+        if (quantize.Previous.OpCode != OpCodes.Ldc_I4_2) throw new InvalidOperationException("Pandora movement precision changed");
+        Method("movementStep", (MethodReference)quantize.Operand);
         Method("passable", module.Types.SelectMany(t => t.Methods).Single(m => m.IsStatic && m.ReturnType.Name == "Boolean" && m.Parameters.Count == 1 && m.Parameters[0].ParameterType.FullName == "UnityEngine.Vector3" && m.HasBody && Calls(m).Any(c => c.DeclaringType.FullName == "UnityEngine.Bounds" && c.Name == "Contains")));
         // Reflection reads must be validated too: compilation alone cannot verify a property spelling.
         foreach (var contract in new Dictionary<string,string> {
@@ -127,8 +182,10 @@ public static class PandoraCompiler
             ["Proto.Net.EventScheduleDBInfo"]="Id,EventId",
             ["Proto.Design.common.PackEventMiniGameTable"]="EventClearType",
             ["UIAnimationController"]="IsPlaying",
+            ["MoveController"]="CurrentSlope,SlopePerSpeedRate",
             ["Proto.Design.common.FieldMiniGameMapGroupTable"]="Id,MapNameTextId",
             ["Proto.Design.common.FieldMiniGameMapTable"]="Id,StageDifficulty,StageType",
+            ["Proto.Design.common.FieldMiniGameCharTable"]="CharSkillGroupId,CharUltimateSkillGroupId",
             ["Proto.Design.common.FieldMiniGameSurvivalItemTable"]="ItemType,ItemValue",
             ["Proto.Design.common.FieldMiniGameSkillGroupTable"]="Id,MaxLevel,SkillType,SkillSubType,UpgradeSynergyId,TargetType,UniqueCharGroupId",
             ["Proto.Design.common.FieldMiniGameSkillTable"]="StatType,SkillNameLocalTextId,SkillValue,Cooldown,Duration,AttackRange,AttackSize,AttackCount,Pierce,ProjectileTerm,ProjectileSpeed,KnockbackType",
@@ -136,10 +193,12 @@ public static class PandoraCompiler
         }) foreach (string property in contract.Value.Split(',')) _ = M(T(contract.Key), "get_" + property);
         foreach (var contract in new Dictionary<string,string> {
             ["SurvivalMainUI"]="_selectMapUI",["SurvivalMenuUI"]="_objEnterButton",["SurvivalMapSelectUI"]="_objNextButton,_objPrevButton,_buttonEnter",
-            ["SurvivalCharSelectUI"]="_objEnterButton",["SurvivalSelectUI"]="_slots",["SurvivalDefaultPopupUI"]="_buttonOk",
+            ["SurvivalCharSelectUI"]="_objEnterButton,_characterSlots",["SurvivalCharSlot"]="_textName",["SurvivalSelectUI"]="_slots,_objRerollButton",["SurvivalDefaultPopupUI"]="_buttonOk",
+            ["SurvivalPauseUI"]="_objExitButton",
             ["SurvivalResultUI"]="_objRetryButton,_objExitButton",["SurvivalBossMonster"]="_animator,_dashBox,_jumpCollider",["SurvivalUnit"]="_collider"
         }) foreach (string field in contract.Value.Split(',')) _ = T(contract.Key).Fields.Single(f => f.Name == field);
 
+        PrepareSimulation(module, names);
         var sources = DustweaveSharedResources.Names(typeof(PandoraCompiler).Assembly)
             .Where(n => n.StartsWith("Pandora.") && n.EndsWith(".cs") || n.StartsWith("Hook.Ipc."))
             .Select(n => CSharpSyntaxTree.ParseText(Encoding.UTF8.GetString(DailyHookCompiler.Resource(n)), path: n)).ToList();

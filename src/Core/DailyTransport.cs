@@ -38,7 +38,13 @@ public static class DailyTransport
             return true;
         }
     }
-    public static bool EndpointReady(GameInstance game) => EndpointExists(WaitNamedPipe(@"\\.\pipe\" + Wire.Endpoint(game.ProcessId, game.StartTicks), 1), Marshal.GetLastWin32Error());
+    public static bool EndpointReady(GameInstance game) => EndpointReady(game, out _);
+    public static bool EndpointReady(GameInstance game, out int error)
+    {
+        bool ready = WaitNamedPipe(@"\\.\pipe\" + Wire.Endpoint(game.ProcessId, game.StartTicks), 1);
+        error = ready ? 0 : Marshal.GetLastWin32Error();
+        return EndpointExists(ready, error);
+    }
     // Both busy and timeout mean the named endpoint exists; the authenticated read has its own bounded wait.
     public static bool EndpointExists(bool ready, int error) => ready || error is 121 or 231;
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] private static extern bool WaitNamedPipe(string name, uint timeout);

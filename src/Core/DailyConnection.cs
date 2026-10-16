@@ -5,6 +5,7 @@ using SharpMonoInjector;
 namespace Dustweave;
 
 public sealed record GameInstance(int ProcessId, long StartTicks, string Executable);
+public sealed record DailyIdentityRead(DailySnapshot? Snapshot, string Problem = "", string Detail = "");
 public interface IGameHost
 {
     GameInstance? Find();
@@ -14,6 +15,11 @@ public interface IGameHost
     DailySnapshot? ReadSnapshot();
     DailyRuntimeStatus? ReadStatus();
     DailySnapshot? ReadSnapshot(GameInstance? expected) => expected == null ? null : ReadSnapshot();
+    DailyIdentityRead ReadIdentity(GameInstance expected)
+    {
+        var snapshot = ReadSnapshot(expected);
+        return new(snapshot, snapshot == null ? "snapshot-missing" : "");
+    }
     DailyRuntimeStatus? ReadStatus(GameInstance? expected) => expected == null ? null : ReadStatus();
 }
 public sealed class DailyConnectionState
@@ -78,8 +84,28 @@ public sealed class DailyGameHost : IGameHost
     // time, and returned identity is checked again; this is not a cached snapshot.
     public DailySnapshot? ReadSnapshot(GameInstance? expected)
     {
-        var value = ReadReady(expected) ? DailyJson.TryRead<DailySnapshot>(Path.Combine(root, "snapshot.json")) : null;
-        return value != null && value.ProcessId == expected!.ProcessId && value.ProcessStartTicks == expected.StartTicks ? value : null;
+        return expected == null ? null : ReadIdentity(expected).Snapshot;
+    }
+    public DailyIdentityRead ReadIdentity(GameInstance expected)
+    {
+        try
+        {
+            DailyTransport.Refresh(root, expected);
+            if (!DailyTransport.EndpointReady(expected, out int error))
+                return new(null, "endpoint-unavailable", "Win32=" + error);
+            BD2.LocalIpc.DesktopFiles.Read(Path.Combine(root, "snapshot.json"), out var bytes);
+            if (bytes == null) return new(null, "snapshot-missing");
+            var value = System.Text.Json.JsonSerializer.Deserialize<DailySnapshot>(bytes, DailyJson.Options);
+            if (value == null) return new(null, "snapshot-empty");
+            return value.ProcessId == expected.ProcessId && value.ProcessStartTicks == expected.StartTicks
+                ? new(value) : new(null, "process-mismatch");
+        }
+        catch (Exception error) when (error is IOException or TimeoutException or System.Text.Json.JsonException)
+        {
+            // Preserve the failed read's cause instead of collapsing timeout, empty
+            // mailbox and malformed data into an apparent account change.
+            return new(null, error is TimeoutException ? "transport-timeout" : error is System.Text.Json.JsonException ? "snapshot-invalid" : "transport-read", error.GetType().Name + ": " + error.Message);
+        }
     }
     public DailyRuntimeStatus? ReadStatus(GameInstance? expected)
     {

@@ -41,12 +41,20 @@ internal static class PandoraTool
             try
             {
                 Directory.CreateDirectory(args[1]);
+                var oldPreferences = System.Text.Json.JsonSerializer.Deserialize<PandoraWindow.Preferences>("""{"Mode":"Challenge","AutoSelectEquipment":false,"StandStillWhenMaxed":true}""")!;
+                if (oldPreferences.Mode != "Challenge" || oldPreferences.AutoSelectEquipment || oldPreferences.CharacterId != 0 || oldPreferences.CharacterGroup != 0)
+                    throw new InvalidOperationException("Legacy Pandora preferences lost independent settings");
+                if (window.FindName("StandStillWhenMaxed") != null) throw new InvalidOperationException("Legacy holding option is still visible");
+                bool chosen = false;
                 foreach (var language in new[] { "zh-CN", "zh-TW", "en-US" })
                 foreach (var appearance in new[] { DailyAppearance.Light, DailyAppearance.Dark })
                 foreach (bool challenge in new[] { false, true })
                 {
                     DailyLanguage.Current.Select(language); theme.Select(appearance);
-                    window.SetPreview(JsonNode.Parse("""{"Reason":"playing","Completed":7,"Seconds":184,"Hp":850,"MaxHp":1000,"Stages":[{"Id":11,"Group":1,"Difficulty":1,"Index":0,"Challenge":false,"Unlocked":true,"Name":"STAGE 1"},{"Id":99,"Group":9,"Difficulty":1,"Index":1,"Challenge":true,"Unlocked":true,"Name":"Challenge"}]}""")!.AsObject(), challenge, autoEquipment: !challenge);
+                    window.SetPreview(JsonNode.Parse("""{"Reason":"playing","Completed":7,"Seconds":184,"Hp":850,"MaxHp":1000,"Characters":[{"Id":3,"Group":1,"Name":"Justia","Unlocked":true},{"Id":7,"Group":1,"Name":"Schera","Unlocked":true},{"Id":9,"Group":1,"Name":"Gray","Unlocked":false}],"Stages":[{"Id":11,"Group":1,"Difficulty":1,"Index":0,"Challenge":false,"Unlocked":true,"Name":"STAGE 1"},{"Id":99,"Group":9,"Difficulty":1,"Index":1,"Challenge":true,"Unlocked":true,"Name":"Challenge"}]}""")!.AsObject(), challenge, autoEquipment: !challenge);
+                    if (!chosen) { window.CharacterBox.SelectedIndex = 2; chosen = true; }
+                    if (window.CharacterBox.SelectedItem is not PandoraWindow.CharacterOption {Id:7,Group:1,Available:true})
+                        throw new InvalidOperationException("Character selection was lost when changing mode/language/theme");
                     app.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
                     window.UpdateLayout();
                     if (window.ChallengeNotice.Visibility != (challenge ? Visibility.Visible : Visibility.Collapsed)) throw new InvalidOperationException("Challenge warning missing");
@@ -56,6 +64,14 @@ internal static class PandoraTool
                     bitmap.Render(window); var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap));
                     using var stream = File.Create(Path.Combine(args[1], $"{language}-{appearance}-{(challenge ? "challenge" : "currency")}.png")); png.Save(stream);
                 }
+                window.Width = window.MinWidth; window.Height = window.MinHeight;
+                window.SetPreview(JsonNode.Parse("""{"Characters":[{"Id":3,"Group":1,"Name":"Justia","Unlocked":true}]}""")!.AsObject(), true);
+                if (window.CharacterBox.SelectedItem is not PandoraWindow.CharacterOption {Id:7,Group:1,Available:false} || window.StartButton.IsEnabled)
+                    throw new InvalidOperationException("Unavailable saved character was silently replaced");
+                app.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle); window.UpdateLayout();
+                var compact = new RenderTargetBitmap((int)window.ActualWidth,(int)window.ActualHeight,96,96,PixelFormats.Pbgra32);
+                compact.Render(window); var compactPng = new PngBitmapEncoder(); compactPng.Frames.Add(BitmapFrame.Create(compact));
+                using (var stream = File.Create(Path.Combine(args[1], "en-US-Dark-unavailable-compact.png"))) compactPng.Save(stream);
                 DailyJson.Write(Path.Combine(args[1], "result.json"), new { status = "passed", modes = 2, languages = 3, themes = 2, realGameTouched = false });
                 window.Close();
             }

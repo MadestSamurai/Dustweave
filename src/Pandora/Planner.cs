@@ -7,11 +7,14 @@ namespace Dustweave.Pandora
     public sealed class Threat
     {
         public Point Position, Velocity, MotionEnd; public double Radius; public double Weight = 1; public bool Boss, Projectile;
-        public int Id; public BossMotion Motion; public double MoveSpeed, MotionSpeed, PhaseSeconds;
+        public int Id; public BossMotion Motion; public double MoveSpeed, MotionSpeed, PhaseSeconds, MotionDelay, WindupSpeed, StunFor;
+        public bool DashAiming; public double DashRadius, DashRange;
+        public bool JumpEvading, JumpTracking;
+        public double JumpTrackStart, JumpTrackEnd, JumpImpactAfter, JumpAttackUntil, JumpRadius;
         public double PreferredGap = 6, ObservedDps, KillSeconds = double.PositiveInfinity; public bool DamageConfidence;
     }
-    public sealed class Drop { public Point Position; public int Id; public int Type = 3; public double Amount = 1, PickupRadius = .6; }
-    public sealed class Route { public Point Direction; public double Score, LootGain, Danger, WarningCost, BossClearance, EscapeSpace, PredictionSeconds, ObservedDps, PreferredGap, KillSeconds; public bool Collision; public string Reason; }
+    public sealed class Drop { public Point Position; public int Id; public int Type = 3; public double Amount = 1, PickupRadius = .6; public bool Following; }
+    public sealed class Route { public Point Direction; public double Score, LootGain, Danger, WarningCost, PositionCost, RoomCost, BossClearance, EscapeSpace, PredictionSeconds, ObservedDps, PreferredGap, KillSeconds; public bool Collision; public string Reason; }
     public static class Planner
     {
         public static double PickupRadius(int type, double magnet, double contact) { return type == 3 || type == 4 ? Math.Max(.1, magnet) : Math.Max(.1, contact); }
@@ -28,11 +31,21 @@ namespace Dustweave.Pandora
                 default: return 0;
             }
         }
-        public static Route Choose(Point origin, double speed, IList<Threat> threats, IList<Drop> loot, Point previous, Func<Point, bool> passable, Point? region = null, IList<AttackArea> warnings = null, bool farmCurrency = false, TacticalDecision tactic = null)
+        public static Route Choose(Point origin, double speed, IList<Threat> threats, IList<Drop> loot, Point previous, Func<Point, bool> passable, Point? region = null, IList<AttackArea> warnings = null, bool farmCurrency = false, TacticalDecision tactic = null, Func<Point, double> movementSpeed = null, CombatFrame frame = null, CombatRoutePlanner combat = null, IList<Route> candidates = null, BossArrival arrival = null,ArenaRoom room=null)
         {
             warnings = warnings ?? new AttackArea[0]; bool bossPresent = false; foreach (var n in threats) bossPresent |= n.Boss;
+            if(!farmCurrency && !bossPresent && tactic!=null && tactic.CornerLocked)
+            {
+                bool exit=tactic.ControlledExit && !tactic.CornerHold;
+                return new Route {Direction=exit?CombatSimulation.Unit(CombatSimulation.Sub(tactic.ControlTarget,origin)):new Point(),
+                    Reason=exit?"confirmed-corner-exit":"corner-hold"};
+            }
+            if(farmCurrency || bossPresent)room=null;
             if (bossPresent) { loot = new Drop[0]; region = null; } // No discarded loot calculations during a boss forecast.
             if (tactic != null && (tactic.Target != null || tactic.Escaping)) region = null;
+            if (tactic != null && tactic.Stalling) region = null;
+            bool preparing = !farmCurrency && !bossPresent && arrival != null && arrival.Active;
+            if(preparing) { region=null; loot=new Drop[0]; }
             Drop chest = null; foreach (var x in loot) if (x.Type == 5 && (chest == null || Point.Distance(origin, x.Position) < Point.Distance(origin, chest.Position))) chest = x;
             Route best = null; var bossCandidates = new List<Route>(); speed = Math.Max(.1, speed); const double horizon = .8;
             double expUnit = double.PositiveInfinity; int expCount = 0;
@@ -44,6 +57,7 @@ namespace Dustweave.Pandora
             for (int i = 0; i < 33; i++)
             {
                 var d = i == 32 ? new Point(0, 0) : new Point(Math.Cos(i * Math.PI / 16), Math.Sin(i * Math.PI / 16));
+                if (movementSpeed != null) speed = Math.Max(.1, movementSpeed(d));
                 bool blocked = false, collision = false; double danger = 0;
                 for (int k = 1; k <= 5; k++)
                 {
@@ -82,6 +96,7 @@ namespace Dustweave.Pandora
                 }
                 // A large pile must never outweigh a predicted collision.
                 gain = 180 * Math.Tanh(gain / 180);
+                if(tactic!=null && !farmCurrency)gain*=tactic.LootScale;
                 if (chest != null)
                 {
                     // Explicit route to the nearest upgrade chest; hundreds of ordinary orbs cannot bury it.
@@ -100,14 +115,17 @@ namespace Dustweave.Pandora
                     {
                         var future = BossKiting.Advance(n, n.Position, end, 0, horizon);
                         bossClearance = Math.Min(bossClearance, Point.Distance(end, future) - n.Radius);
-                        bossCost += Math.Pow(Point.Distance(end, future) - n.Radius - n.PreferredGap, 2) * 20;
+                        bossCost += n.DashAiming || n.JumpEvading ? -Point.Distance(end, future) * 120 : Math.Pow(Point.Distance(end, future) - n.Radius - n.PreferredGap, 2) * 20;
                     }
                 // A short-route fallback also holds a useful distance; it must not
                 // resurrect the old unbounded radial-retreat objective.
                 double tacticalGain = CombatTactics.Utility(origin, end, speed, tactic);
+                foreach (var n in threats) if (n.DashAiming || n.JumpEvading) { tacticalGain = 0; break; }
                 if (bossPresent) gain = -bossCost - (i == 32 ? 300 : 0) + tacticalGain;
                 else if (tactic != null) gain = (tactic.Target != null || tactic.Escaping ? Math.Max(-60, Math.Min(60, gain)) : gain) + tacticalGain;
-                double score = gain - danger + .8 * (d.X * previous.X + d.Z * previous.Z) - (i == 32 ? .4 : 0);
+                double positionCost=preparing?arrival.Cost(end):0;
+                double roomCost=room==null?0:room.Cost(end);
+                double score = gain - danger - positionCost - roomCost + .8 * (d.X * previous.X + d.Z * previous.Z) - (i == 32 ? .4 : 0);
                 var candidate = new Route
                 {
                     Direction = d,
@@ -116,13 +134,17 @@ namespace Dustweave.Pandora
                     Danger = danger,
                     Collision = collision,
                     WarningCost = warningCost,
+                    PositionCost = positionCost,
+                    RoomCost = roomCost,
                     BossClearance = bossPresent ? bossClearance : 0,
-                    Reason = warnings.Count > 0 ? "快速脱离Boss攻击范围" : bossPresent ? "远离Boss，沿安全方向移动" : danger > 80 ? "避开近身威胁" : tactic != null && tactic.Target != null ? "按当前需要拾取道具" : tactic != null && tactic.Escaping ? "利用缺口绕行脱围" : chest != null ? "优先拾取升级宝箱" : region.HasValue ? "收完当前经验区域" : expCount > 0 ? "优先收集成片经验" : loot.Count > 0 ? "拾取有用道具" : "移动避敌"
+                    Reason = warnings.Count > 0 ? "快速脱离Boss攻击范围" : bossPresent ? "远离Boss，沿安全方向移动" : danger > 80 ? "避开近身威胁" : preparing ? "Boss即将出现，离开边角留出退路" : tactic != null && tactic.Target != null ? "按当前需要拾取道具" : tactic != null && tactic.Escaping ? "利用缺口绕行脱围" : chest != null ? "优先拾取升级宝箱" : region.HasValue ? "收完当前经验区域" : expCount > 0 ? "优先收集成片经验" : loot.Count > 0 ? "拾取有用道具" : "移动避敌"
                 };
                 if (Better(candidate, best)) best = candidate;
-                if (bossPresent) bossCandidates.Add(candidate);
+                if(candidates != null) candidates.Add(candidate);
+                if (bossPresent || frame != null) bossCandidates.Add(candidate);
             }
-            if (bossPresent) best = BossKiting.Choose(origin, speed, threats, warnings, bossCandidates, previous, passable) ?? best;
+            if (bossPresent) best = BossKiting.Choose(origin, speed, threats, warnings, bossCandidates, previous, passable, movementSpeed) ?? best;
+            else if (frame != null && combat != null) best = combat.Choose(frame, bossCandidates, previous, movementSpeed ?? (_ => speed), passable) ?? best;
             return best ?? new Route { Direction = new Point(0, 0), Score = -1e9, Reason = "等待可通行方向" };
         }
         // Collision-free exits first; warning exposure then dominates rewards and boss distance.

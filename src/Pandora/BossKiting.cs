@@ -3,6 +3,29 @@ using System;
 using System.Collections.Generic;
 namespace Dustweave.Pandora
 {
+    // Predict displacement through the game's normal controller, not nominal stat speed.
+    // The controller quantizes each frame's travel and applies an axial speed multiplier.
+    public sealed class MovementProfile
+    {
+        readonly Queue<double> frames = new Queue<double>();
+        double duration;
+        public void Reset() { frames.Clear(); duration = 0; }
+        public void Observe(double dt)
+        {
+            if (dt <= 0 || dt > .1 || double.IsNaN(dt)) return;
+            frames.Enqueue(dt); duration += dt;
+            while (frames.Count > 256 || frames.Count > 1 && duration - frames.Peek() >= .5) duration -= frames.Dequeue();
+        }
+        public Func<Point, double> Resolve(double nominal, double axialMultiplier, Func<double, double> quantize)
+        {
+            double normal = 0, axial = 0;
+            foreach (double dt in frames) { normal += quantize(nominal * dt); axial += quantize(nominal * axialMultiplier * dt); }
+            normal = duration > 0 ? normal / duration : nominal;
+            axial = duration > 0 ? axial / duration : nominal * axialMultiplier;
+            return d => Math.Abs((float)d.Z) == 1f ? axial : normal;
+        }
+    }
+
     public enum BossMotion { Pursuit, Hold, Dash, Jump }
 
     // HP deltas, not nominal weapon damage. Each boss/round owns its samples.
@@ -61,27 +84,114 @@ namespace Dustweave.Pandora
         }
     }
 
+    public sealed class BossArrival
+    {
+        public bool Active;
+        public double SecondsUntil, Clearance;
+        public Point Min, Max;
+        public static BossArrival Prepare(Point min, Point max, double secondsUntil, double speed, bool bossPresent)
+        {
+            double span=Math.Min(max.X-min.X,max.Z-min.Z);
+            return new BossArrival {Min=min,Max=max,SecondsUntil=secondsUntil,
+                Active=!bossPresent && span>8 && secondsUntil>=-.5 && secondsUntil<=20,
+                Clearance=Math.Min(span*.25,Math.Max(8,speed*2.5))};
+        }
+        // A broad inner area, not a fixed centre waypoint. Separate wall deficits
+        // penalize corners more than one edge while leaving many safe destinations.
+        public double Cost(Point point)
+        {
+            if(!Active)return 0;
+            double x=Math.Max(0,Clearance-Math.Min(point.X-Min.X,Max.X-point.X));
+            double z=Math.Max(0,Clearance-Math.Min(point.Z-Min.Z,Max.Z-point.Z));
+            return Math.Min(240,120*(x*x+z*z)/(Clearance*Clearance));
+        }
+    }
+    // Geometry only: clipped radial space is not a claim about future damage or
+    // kills. Keep a broad operating area without prescribing a centre waypoint.
+    public sealed class ArenaRoom
+    {
+        public Point Min,Max;public double Radius;
+        public static ArenaRoom Create(Point min,Point max,double speed,double weaponRange)
+        {
+            double span=Math.Min(max.X-min.X,max.Z-min.Z);
+            return span<=8?null:new ArenaRoom{Min=min,Max=max,Radius=Math.Min(span*.25,Math.Max(8,Math.Min(18,Math.Max(speed*2,weaponRange))))};
+        }
+        static double Clipped(double distance,double radius)
+        {
+            double q=Math.Max(-1,Math.Min(1,distance/radius));
+            return (Math.Acos(q)-q*Math.Sqrt(Math.Max(0,1-q*q)))/Math.PI;
+        }
+        public double Cost(Point p)
+        {
+            if(Radius<=0)return 0;
+            return 200*Math.Min(1,Clipped(p.X-Min.X,Radius)+Clipped(Max.X-p.X,Radius)+
+                Clipped(p.Z-Min.Z,Radius)+Clipped(Max.Z-p.Z,Radius));
+        }
+    }
     public static class BossKiting
     {
         const int Width = 12;
         const double Step = .8;
+        struct Projection { public Point Position, End; public bool Locked; }
         sealed class Node
         {
-            public Route Root; public Point Player, Direction; public Point[] Bosses;
+            public Route Root; public Point Player, Direction; public Projection[] Bosses;
             public double Cost, Time, Space, Gap;
         }
         public static Point Advance(Threat boss, Point from, Point player, double time, double dt)
         {
+            var state = new Projection { Position = from, End = boss.MotionEnd, Locked = !boss.DashAiming };
+            return Advance(boss, ref state, player, player, time, dt);
+        }
+        static Point Advance(Threat boss, ref Projection state, Point playerFrom, Point player, double time, double dt)
+        {
+            var from = state.Position;
+            if (boss.JumpEvading)
+            {
+                // Animation events delimit tracking. A zero velocity before takeoff
+                // is not a stationary attack; after DisableMoving the landing is fixed.
+                double start = Math.Max(time, boss.JumpTrackStart), end = Math.Min(time + dt, boss.JumpTrackEnd);
+                if (boss.JumpTracking && end > start)
+                {
+                    double f = dt > 0 ? (end - time) / dt : 1;
+                    var aim = new Point(playerFrom.X + (player.X - playerFrom.X) * f, playerFrom.Z + (player.Z - playerFrom.Z) * f);
+                    from = Toward(from, aim, Math.Max(0, boss.MotionSpeed) * (end - start));
+                }
+                state.Position = from;
+                return from;
+            }
             double phaseLeft = Math.Max(0, boss.PhaseSeconds - time);
-            double active = Math.Min(dt, phaseLeft);
+            double phase = Math.Min(dt, phaseLeft);
+            double windup = Math.Min(phase, Math.Max(0, boss.MotionDelay - time));
+            if (windup > 0) from = Toward(from, player, Math.Max(0, boss.WindupSpeed) * windup);
+            double active = phase - windup;
             if (boss.Motion == BossMotion.Dash && active > 0)
-                from = Toward(from, boss.MotionEnd, Math.Max(0, boss.MotionSpeed) * active);
+            {
+                if (!state.Locked)
+                {
+                    // Each candidate has its own future aim point. The real boss tracks
+                    // through wind-up, then holds that direction for the whole dash.
+                    double f = dt > 0 ? windup / dt : 0;
+                    var aim = new Point(playerFrom.X + (player.X - playerFrom.X) * f, playerFrom.Z + (player.Z - playerFrom.Z) * f);
+                    double length = Math.Max(.001, Point.Distance(from, aim));
+                    state.End = new Point(from.X + (aim.X - from.X) * boss.DashRange / length, from.Z + (aim.Z - from.Z) * boss.DashRange / length);
+                    state.Locked = true;
+                }
+                from = Toward(from, state.End, Math.Max(0, boss.MotionSpeed) * active);
+            }
             else if (boss.Motion == BossMotion.Jump && active > 0)
                 from = Toward(from, player, Math.Max(0, boss.MotionSpeed) * active);
             // A known wind-up/recovery is stationary only for its remaining duration.
             // Beyond that, use pursuit as an uncertainty envelope; never invent a next skill.
-            double chase = boss.Motion == BossMotion.Pursuit ? dt : dt - active;
-            return Toward(from, player, Math.Max(0, boss.MoveSpeed) * chase);
+            double chase = boss.Motion == BossMotion.Pursuit ? dt : dt - phase;
+            state.Position = Toward(from, player, Math.Max(0, boss.MoveSpeed) * chase);
+            return state.Position;
+        }
+        static double CollisionRadius(Threat boss, double time)
+        {
+            if (boss.JumpEvading) return time >= boss.JumpImpactAfter && time <= boss.JumpAttackUntil ? boss.JumpRadius : -1;
+            return boss.Motion == BossMotion.Dash && time >= boss.MotionDelay && time <= boss.PhaseSeconds
+                ? Math.Max(boss.Radius, boss.DashRadius) : boss.Radius;
         }
         static Point Toward(Point a, Point b, double distance)
         {
@@ -91,12 +201,14 @@ namespace Dustweave.Pandora
         public static double ImmediateGap(Threat boss, Point player, Point direction, double speed, double horizon)
         {
             var p = player; var b = boss.Position; double clear = double.PositiveInfinity;
+            var state = new Projection { Position = b, End = boss.MotionEnd, Locked = !boss.DashAiming };
             for (double t = 0; t < horizon - .00001; t += .1)
             {
                 double dt = Math.Min(.1, horizon - t);
                 var q = new Point(p.X + direction.X * speed * dt, p.Z + direction.Z * speed * dt);
-                var next = Advance(boss, b, q, t, dt);
-                clear = Math.Min(clear, SegmentGap(p, q, b, next) - boss.Radius - .45);
+                var next = Advance(boss, ref state, p, q, t, dt);
+                double radius = CollisionRadius(boss, t + dt);
+                if (radius >= 0) clear = Math.Min(clear, SegmentGap(p, q, b, next) - radius - .45);
                 p = q; b = next;
             }
             return clear;
@@ -104,16 +216,16 @@ namespace Dustweave.Pandora
         // Fixed 3-step, 12-wide beam: 33 first moves + at most 216 continuations.
         // Only the first direction is executed; every observation replans from real positions.
         public static Route Choose(Point origin, double speed, IList<Threat> threats, IList<AttackArea> warnings,
-            IList<Route> candidates, Point previous, Func<Point, bool> passable)
+            IList<Route> candidates, Point previous, Func<Point, bool> passable, Func<Point, double> movementSpeed = null)
         {
             var bosses = new List<Threat>(); foreach (var t in threats) if (t.Boss) bosses.Add(t);
             if (bosses.Count == 0 || candidates.Count == 0) return null;
             var beam = new List<Node>();
-            var initial = new Point[bosses.Count]; for (int i = 0; i < initial.Length; i++) initial[i] = bosses[i].Position;
+            var initial = new Projection[bosses.Count]; for (int i = 0; i < initial.Length; i++) initial[i] = new Projection { Position = bosses[i].Position, End = bosses[i].MotionEnd, Locked = !bosses[i].DashAiming };
             var seed = new Node { Player = origin, Bosses = initial, Direction = previous };
             foreach (var route in candidates)
             {
-                var node = Extend(seed, route.Direction, route, speed, bosses, threats, warnings, passable);
+                var node = Extend(seed, route.Direction, route, movementSpeed == null ? speed : movementSpeed(route.Direction), bosses, threats, warnings, passable);
                 if (node == null) continue;
                 node.Cost += Math.Min(500, route.Danger * .015);
                 node.Cost -= route.LootGain; // Only contextual rescue/item objectives enter boss forecasts.
@@ -130,7 +242,7 @@ namespace Dustweave.Pandora
                     {
                         double a = Math.Atan2(node.Direction.Z, node.Direction.X) + angle * Math.PI / 4;
                         var dir = angle == 8 ? new Point() : new Point(Math.Cos(a), Math.Sin(a));
-                        var child = Extend(node, dir, node.Root, speed, bosses, threats, warnings, passable);
+                        var child = Extend(node, dir, node.Root, movementSpeed == null ? speed : movementSpeed(dir), bosses, threats, warnings, passable);
                         if (child != null) next.Add(child);
                     }
                 if (next.Count == 0) break;
@@ -140,13 +252,13 @@ namespace Dustweave.Pandora
             result.Score = -best.Cost; result.BossClearance = best.Gap; result.EscapeSpace = best.Space; result.PredictionSeconds = best.Time;
             Threat nearest = bosses[0]; foreach (var b in bosses) if (Point.Distance(origin, b.Position) < Point.Distance(origin, nearest.Position)) nearest = b;
             result.ObservedDps = nearest.ObservedDps; result.KillSeconds = nearest.KillSeconds; result.PreferredGap = nearest.PreferredGap;
-            result.Reason = result.WarningCost > .002 ? "避开当前BOSS攻击" : best.Space < .5 ? "绕出墙角，保留退路" : "保持输出距离，绕行牵制BOSS";
+            result.Reason = bosses.Exists(b => b.JumpEvading) ? "跳跃预警，远离追踪与落地区域" : bosses.Exists(b => b.DashAiming) ? "冲刺预警，优先拉开距离" : result.WarningCost > .002 ? "避开当前BOSS攻击" : best.Space < .5 ? "绕出墙角，保留退路" : "保持输出距离，绕行牵制BOSS";
             return result;
         }
         static Node Extend(Node parent, Point direction, Route root, double speed, IList<Threat> bosses,
             IList<Threat> threats, IList<AttackArea> warnings, Func<Point, bool> passable)
         {
-            var locations = (Point[])parent.Bosses.Clone(); var p = parent.Player;
+            var locations = (Projection[])parent.Bosses.Clone(); var p = parent.Player;
             double cost = parent.Cost, gap = double.PositiveInfinity;
             for (int sample = 1; sample <= 4; sample++)
             {
@@ -155,16 +267,17 @@ namespace Dustweave.Pandora
                 if (!passable(q)) return null;
                 for (int b = 0; b < bosses.Count; b++)
                 {
-                    var boss = bosses[b]; var next = Advance(boss, locations[b], q, time, .2);
+                    var boss = bosses[b]; var before = locations[b].Position; var next = Advance(boss, ref locations[b], p, q, time, .2);
                     // Continuous relative segment clearance also catches a fast dash between samples.
-                    double distance = SegmentGap(p, q, locations[b], next) - boss.Radius - .45;
+                    double radius = CollisionRadius(boss, time + .2);
+                    double distance = radius < 0 ? double.PositiveInfinity : SegmentGap(p, q, before, next) - radius - .45;
                     double uncertainty = .12 * (time + .2);
                     double clear = distance - uncertainty;
                     cost += clear < 0 ? 1800 + -clear * 900 : 5 / Math.Pow(clear + .3, 2);
                     double endGap = Point.Distance(q, next) - boss.Radius;
                     double wanted = boss.PreferredGap > 0 ? boss.PreferredGap : 6;
-                    cost += .2 * (Math.Pow(Math.Max(0, wanted - endGap), 2) * 11 + Math.Pow(Math.Max(0, endGap - wanted - 1), 2) * 4);
-                    locations[b] = next; gap = sample == 4 && b == 0 ? endGap : Math.Min(gap, endGap);
+                    cost += boss.DashAiming || boss.JumpEvading ? -.2 * endGap * 120 : .2 * (Math.Pow(Math.Max(0, wanted - endGap), 2) * 11 + Math.Pow(Math.Max(0, endGap - wanted - 1), 2) * 4);
+                    gap = sample == 4 && b == 0 ? endGap : Math.Min(gap, endGap);
                 }
                 // Long-range missile/ordinary-unit predictions are soft costs; current
                 // collisions and attack warnings still dominate through the root comparator.

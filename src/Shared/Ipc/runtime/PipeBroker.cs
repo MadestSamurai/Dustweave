@@ -14,7 +14,7 @@ namespace BD2.LocalIpc
     public static class PipeBroker
     {
         const string Key = "BD2.LocalIpc.Broker.v1";
-        const int Revision = 6; // Increment when changing the in-process broker implementation.
+        const int Revision = 7; // Increment when changing the in-process broker implementation.
         const int MaximumEntries = 2048, MaximumBytes = 64 * 1024 * 1024;
         sealed class Entry { internal byte[] Value; internal DateTime At; }
         sealed class ChannelState
@@ -102,6 +102,18 @@ namespace BD2.LocalIpc
                 {
                     try { var request = Wire.ReadFrame(pipe); Wire.WriteFrame(pipe, Dispatch("request", "", request)); }
                     catch (Exception) { /* Per-connection failure; the listener and other clients remain usable. */ }
+                    finally
+                    {
+                        // A fast reply can finish before the acceptor creates its next
+                        // instance. Keep the endpoint present before closing this one;
+                        // otherwise WaitNamedPipe may report FILE_NOT_FOUND mid-run.
+                        lock (transportSync)
+                        {
+                            if (!stopping && listening == null)
+                                try { listening = Create(endpoint, false); }
+                                catch (Exception) { /* Capacity/OS failure: the acceptor retains its bounded recovery loop. */ }
+                        }
+                    }
                 }
             }
             internal byte[] Dispatch(string operation, string channel, byte[] input)
