@@ -2731,7 +2731,7 @@
       "reasons": [
         "build input"
       ],
-      "sha256": "54d91eeee306d2cbb8ed0b9ac737009afb9bde4b802110757f6a170f5f9dcd19",
+      "sha256": "b493d118e1de777f0a2c47708f3705cb7fb0653d4704ae068ad4dffbba4a7800",
       "bytes": 8066,
       "path": "src/Desktop/HostedToolPreparation.cs"
     },
@@ -3043,7 +3043,7 @@
       "reasons": [
         "build input"
       ],
-      "sha256": "18822cecc3c7c0fb0b50321d8cd13a78083dc364d66ea104eba602315ca2dfb9",
+      "sha256": "93ea43394e99800f03d6b679782ced37c5e46a8a57cfa10b4d91ddb860f76a54",
       "bytes": 7507,
       "path": "src/Desktop/MainWindow.ToolPreparationSmoke.cs"
     },

@@ -48,7 +48,13 @@ internal sealed class HostedToolPreparation
         window.Content=layout;body.IsEnabled=false;
         SetLoading(true);SetStatus("tools.preparing_window");
         action.Click+=async(_,_)=>{if(Preparing)Cancel();else await StartAsync();};
+        // ContentRendered is not a reliable sole trigger for hidden/off-screen
+        // windows, or when a host decorates an already shown tool. Loaded plus
+        // the dispatcher render barrier starts once after layout without waiting
+        // indefinitely for another native paint notification.
+        window.Loaded+=OnRendered;
         window.ContentRendered+=OnRendered;
+        if(window.IsLoaded)window.Dispatcher.BeginInvoke(new Action(()=>OnRendered(window,EventArgs.Empty)),DispatcherPriority.Background);
         window.Closing+=OnClosing;
         window.Closed+=(_,_)=>{closed=true;cancellation?.Cancel();};
     }

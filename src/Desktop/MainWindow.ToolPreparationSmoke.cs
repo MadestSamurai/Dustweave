@@ -30,15 +30,20 @@ public partial class MainWindow
                     (Window)Activator.CreateInstance(equipment,BindingFlags.Instance|BindingFlags.NonPublic,null,new object[]{false},null)!;
                 window.Owner=this;window.ShowInTaskbar=false;window.ShowActivated=false;window.WindowStartupLocation=WindowStartupLocation.Manual;window.Left=-12000;window.Top=0;
                 window.Width=id=="equipment"?1040:820;window.Height=id=="equipment"?800:700;
-                int prepares=0,ready=0;bool painted=false;
+                int prepares=0,ready=0;bool painted=false,rendered=false;
+                window.ContentRendered+=(_,_)=>rendered=true;
                 var entered=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
                 var release=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
                 var loading=new HostedToolPreparation(window,id,root,async(progress,cancel)=>{
-                    prepares++;painted=await Dispatcher.InvokeAsync(()=>window.IsVisible&&window.IsLoaded);
+                    prepares++;painted=await Dispatcher.InvokeAsync(()=>window.IsVisible&&window.IsLoaded&&((FrameworkElement)window.Content).ActualHeight>0);
                     progress("tools.preparation_identity");entered.TrySetResult();await release.Task.WaitAsync(cancel);
                 },()=>ready++);
                 DailyDialogs.Prepare(window,toolWindow:true);window.Show();
-                await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                try { await entered.Task.WaitAsync(TimeSpan.FromSeconds(5)); }
+                catch(TimeoutException error) {
+                    Capture($"preparation-timeout-{id}",(FrameworkElement)window.Content);
+                    throw new InvalidOperationException($"{id}/{language}/{appearance}: preparation did not enter; loaded={window.IsLoaded}, visible={window.IsVisible}, rendered={rendered}, preparing={loading.Preparing}, pending={loading.Pending?.Status}, occupied={DailyToolControl.IsOccupied(root)}",error);
+                }
                 Check(painted&&!loading.Body.IsEnabled&&loading.Preparing&&window.IsEnabled,id+": real window paints first and only tool content is locked");
                 Check(DailyToolControl.IsOccupied(root)&&ready==0,id+": connection lease blocks concurrent automation, without starting it");
                 Check(loading.Progress.IsVisible&&loading.Progress.IsIndeterminate==SystemParameters.ClientAreaAnimation,id+": progress follows reduced motion preference");
@@ -64,6 +69,13 @@ public partial class MainWindow
                 }
                 window.Close();await Until(()=>!window.IsVisible);
             }
+            // The hosted app can finish showing before its deferred decorator runs.
+            var shown=new Window{Content=new Grid(),Width=480,Height=180,ShowActivated=false,ShowInTaskbar=false,Left=-12000};
+            DailyDialogs.Prepare(shown);shown.Show();await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+            int lateStarts=0,lateReady=0;
+            var late=new HostedToolPreparation(shown,"equipment",root,(_,_)=>{lateStarts++;return Task.CompletedTask;},()=>lateReady++);
+            await Until(()=>late.Ready);
+            Check(lateStarts==1&&lateReady==1&&!DailyToolControl.IsOccupied(root),"already-rendered window starts preparation exactly once and releases ownership");shown.Close();
             // Failures do not trigger an automatic retry loop or leave controls unlocked.
             var failed=new Window{Content=new Grid(),Width=480,Height=180,ShowActivated=false,ShowInTaskbar=false,Left=-12000};
             int attempts=0;var broken=new HostedToolPreparation(failed,"equipment",root,(_,_)=>{attempts++;throw new IOException("fixture connection failure");},()=>throw new Exception("Unexpected ready"));
