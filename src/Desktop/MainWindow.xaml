@@ -137,7 +137,7 @@
      <Border Grid.Row="1" Style="{StaticResource Panel}" Padding="16,8">
       <Grid>
        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-       <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="220"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+       <Grid Margin="0,0,0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="220"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
         <StackPanel Margin="0,0,12,0" VerticalAlignment="Center">
          <StackPanel Orientation="Horizontal"><TextBlock Text="{l:Tr account.list}" FontWeight="SemiBold" FontSize="16"/><TextBlock x:Name="CountText" Foreground="{DynamicResource MutedInk}" Margin="12,2,0,0" FontSize="12" ToolTip="{l:Tr account.local_data}"/></StackPanel>
          <TextBlock x:Name="SelectionText" Foreground="{DynamicResource MutedInk}" Margin="0,4,0,0" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{l:Tr account.queue_help}"/>
@@ -170,7 +170,7 @@
         </DataGrid>
         <TextBlock x:Name="EmptyText" Text="{l:Tr account.empty}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="440" Margin="20" Visibility="Collapsed"/>
        </Grid>
-       <DockPanel Grid.Row="2" x:Name="ManageBar" Margin="0,8,0,0" LastChildFill="False">
+       <DockPanel Grid.Row="2" x:Name="ManageBar" Margin="0,4,0,0" LastChildFill="False">
 
         <StackPanel Orientation="Horizontal" ToolTip="{l:Tr account.manage_help}">
          <Button x:Name="RenameAccountButton" Content="{l:Tr account.rename}" Click="Rename_Click" Margin="0,0,8,0"/>
