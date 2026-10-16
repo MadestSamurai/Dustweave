@@ -12,7 +12,7 @@ static class WeeklyIsolationCases
         public readonly WorkflowHarness H;
         public long Pack = 1, MapId = 1;
         public int Used;
-        public bool Pending = true, Restricted, Reachable = true, MapOnePending = true;
+        public bool Pending = true, Restricted, Reachable = true, MapOnePending = true, MapTwoPending = true, LaterDrop;
         public readonly List<long> Queries = [], Visits = [];
         public Action? BeforeQuery;
         public bool NpcEnabled, RejectNpc, HuntingOffer, QueryFailsFirst;
@@ -115,8 +115,9 @@ static class WeeklyIsolationCases
             {
                 if (MapOnePending) targets.Add(O(("Id", 101), ("Map", 1)));
                 if (WalkingBlocked && !Picked.Contains(103)) targets.Add(O(("Id", 103), ("Map", 1)));
-                if (!Visits.Contains(2)) targets.Add(O(("Id", 102), ("Map", 2)));
+                if (MapTwoPending && !Visits.Contains(2)) targets.Add(O(("Id", 102), ("Map", 2)));
             }
+            if (LaterDrop && Pack == 2) targets.Add(O(("Id", 122), ("Map", 22)));
             return O(("State", "ready"), ("Error", ""), ("Query", command["Id"]), ("Pack", Pack),
                 ("Maps", command["Items"]), ("Week", NetworkWeek), ("Now", 100), ("Rewards", "[]"),
                 ("Monsters", Array(MonstersPending.Select(m => O(("monsterId", 9000 + m), ("groupId", 1), ("activeFlag", true), ("respawnTime", 0)))).ToJsonString()),
@@ -400,21 +401,50 @@ static class WeeklyIsolationCases
         using (var f = new Fixture(Path.Combine(root, "weekly-quota-stop")) { Used = 21 })
         {
             var r = await f.Run();
-            Check(B(r["stages"]!["weekly_mainline"]!["waiting_daily_reset"]) && f.Queries.Contains(2)
-                && !f.H.Box.Commands.Any(c => S(c["Kind"]) == "mainline_talent"), "exhausted absorption checks unknown remaining maps without casting collection talents");
+            Check(B(r["stages"]!["weekly_mainline"]!["waiting_daily_reset"]) && !f.Queries.Contains(2)
+                && !f.H.Box.Commands.Any(c => S(c["Kind"]) == "mainline_talent"), "unfinished absorption stops collection without surveying later cartridges for suppression");
+            int queries=f.Queries.Count;
+            await f.Run();
+            Check(f.Queries.Count==queries+1 && f.Queries.Last()==1 && f.Suppressed.Count==0, "same-day retry rechecks only the unfinished cartridge without starting a suppression sweep");
         }
         using (var f = new Fixture(Path.Combine(root, "weekly-quota-suppression")) { Used = 21 })
         {
             f.MonstersPending.UnionWith([1L, 2L, 21L]);
             var r = await f.Run();
-            Check(f.Suppressed.Order().SequenceEqual(new long[] { 1, 2, 21 }), "zero absorption finishes suppression on mixed maps and later cartridges");
-            Check(B(r["stages"]!["weekly_mainline"]!["waiting_daily_reset"]) && f.Used == 21, "only uncollected drops wait for tomorrow without extra absorption");
+            Check(f.Suppressed.Count==0 && !f.Queries.Contains(2), "zero absorption leaves mixed maps and later suppression maps for the next collection run");
+            Check(B(r["stages"]!["weekly_mainline"]!["waiting_daily_reset"]) && f.Used == 21, "unfinished collection waits for tomorrow without spending more talents");
         }
-        using (var f = new Fixture(Path.Combine(root, "weekly-last-absorption")) { Used = 20, AbsorbDrops = true })
+        using (var f = new Fixture(Path.Combine(root, "weekly-last-absorption")) { Used = 20, AbsorbDrops = true, MapTwoPending = false })
         {
             f.MonstersPending.UnionWith([2L, 21L]);
             var r = await f.Run();
             Check(f.Used == 21 && f.Suppressed.Order().SequenceEqual(new long[] { 2, 21 }) && S(r["state"]) == "completed", "last absorption does not interrupt remaining suppression-only maps");
+            int casts=f.Suppressed.Count,queries=f.Queries.Count;
+            f.Used=0;f.MonstersPending.UnionWith([2L,21L]);
+            var tomorrow=await f.Run();
+            Check(S(tomorrow["state"])=="completed"&&f.Suppressed.Count==casts&&f.Queries.Count==queries,
+                "daily talent reset does not restart completed same-week suppression");
+        }
+        using (var f = new Fixture(Path.Combine(root, "weekly-quota-later-drop")) { Used=21,Pending=false,LaterDrop=true })
+        {
+            f.MonstersPending.UnionWith([1L,21L]);
+            var r=await f.Run();
+            Check(f.Suppressed.Count==0&&f.Queries.Contains(2)&&B(r["stages"]!["weekly_mainline"]!["waiting_daily_reset"]),
+                "an empty current cartridge is not proof that all weekly absorption is complete");
+        }
+        using (var f = new Fixture(Path.Combine(root, "weekly-quota-manual-completion")) { Used=21 })
+        {
+            await f.Run();
+            f.Pending=false;f.MonstersPending.UnionWith([1L,21L]);
+            var r=await f.Run();
+            Check(S(r["state"])=="completed"&&f.Suppressed.Order().SequenceEqual(new long[]{1,21}),
+                "fresh game progress overrides a previously unfinished cache and permits the verified suppression tail");
+        }
+        using (var f = new Fixture(Path.Combine(root, "weekly-quota-other-categories")) { Used=21 })
+        {
+            var r=await f.RunNpc();
+            Check(B(r["stages"]!["weekly_mainline"]!["waiting_daily_reset"])&&S(r["stages"]!["weekly_npc"]!["state"])=="completed"
+                &&S(r["stages"]!["weekly_steal"]!["state"])=="completed", "absorption stop does not cancel NPC quests or theft in the shared route");
         }
         using (var f = new Fixture(Path.Combine(root, "weekly-deferred-then-quota")))
         {
@@ -422,8 +452,8 @@ static class WeeklyIsolationCases
             var r = await f.Run(); var stage = r["stages"]!["weekly_mainline"]!;
             Check(B(stage["waiting_daily_reset"]) && stage["deferred_locations"]!.AsArray().Count == 1 && stage["pending_maps"]!.AsArray().Count > 0,
                 "quota stop retains earlier local failures and the unvisited map list");
-            Check(f.Queries.Last() == 2 && !f.H.Box.Commands.Any(c => S(c["Kind"]) == "mainline_talent" && N(c["Value"]) / 100 == 4),
-                "a local failure and exhausted absorption do not hide later suppression maps or spend another use");
+            Check(!f.Queries.Contains(2) && !f.H.Box.Commands.Any(c => S(c["Kind"]) == "mainline_talent" && N(c["Value"]) / 100 == 4),
+                "a local failure and exhausted absorption retain pending maps without a later suppression sweep");
         }
         foreach (Exception error in new Exception[] { new OperationCanceledException(), new StageHostException("identity", "account changed"), new DailyStepException("pending", "unknown talent receipt", true), new DailyStepException("deferred", "no matching cartridge proof"), new InvalidDataException("unrelated invalid state") })
         using (var f = new Fixture(Path.Combine(root, "weekly-fatal-" + error.GetType().Name + "-" + (error is DailyStepException step ? step.Kind : ""))))

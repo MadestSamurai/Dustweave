@@ -43,44 +43,55 @@ public static class DailyLogCleanup
         return true;
     }
     static DailyLogFile Stamp(FileInfo f, bool refresh = true) { if(refresh) f.Refresh(); return new(f.FullName, f.Length, f.LastWriteTimeUtc, f.CreationTimeUtc); }
-    static JsonDocument Read(string path, long maximum = 16 * 1024 * 1024)
+    sealed record CommandHeader(string? Id, string? Reason);
+    sealed record ResultHeader(string? id, string? state, string? engine, string? diagnostic_storage);
+    sealed record BusinessHeader(string? id, string? state);
+    static T? Read<T>(string path, long maximum = 16 * 1024 * 1024)
     {
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
         if (stream.Length > maximum) throw new InvalidDataException("Record too large for automatic cleanup");
-        return JsonDocument.Parse(stream);
+        // Only materialize cleanup metadata. Historical results can contain large UI
+        // snapshots that are irrelevant to eligibility and must not become DOM trees.
+        return JsonSerializer.Deserialize<T>(stream);
     }
-    static string Text(JsonElement d, string key) => d.ValueKind == JsonValueKind.Object && d.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() ?? "" : "";
-    static bool CompletedStep(string root, string folder)
+    static bool CompletedStep(string root, string folder, Dictionary<string,bool>? businessStates = null, bool inspectedFolder = false)
     {
         string id = Path.GetFileName(folder);
         if (!Id(id)) return false;
         string intent = Path.Combine(folder,"intent.json"), result = Path.Combine(folder,"result.json");
-        if (!Safe(root,folder) || (File.GetAttributes(intent)&FileAttributes.ReparsePoint)!=0 || (File.GetAttributes(result)&FileAttributes.ReparsePoint)!=0) return false;
-        using var command = Read(intent, 128 * 1024);
-        if (Text(command.RootElement,"Id") != id) return false;
-        using var final = Read(result);
-        bool successful = Text(final.RootElement,"state") == "observed_expected_ui"
-            || Text(final.RootElement,"state") == "dispatched_only" && Text(final.RootElement,"diagnostic_storage") == "summary-v1";
-        if (!successful || Text(final.RootElement,"id") != id || Text(final.RootElement,"engine") != "dotnet-driver-v1") return false;
+        if (!File.Exists(intent) || !File.Exists(result) || (!inspectedFolder && !Safe(root,folder))
+            || (File.GetAttributes(intent)&FileAttributes.ReparsePoint)!=0 || (File.GetAttributes(result)&FileAttributes.ReparsePoint)!=0) return false;
+        var command = Read<CommandHeader>(intent, 128 * 1024);
+        if (command?.Id != id) return false;
+        var final = Read<ResultHeader>(result);
+        bool successful = final?.state == "observed_expected_ui"
+            || final?.state == "dispatched_only" && final.diagnostic_storage == "summary-v1";
+        if (!successful || final?.id != id || final.engine != "dotnet-driver-v1") return false;
         // UI visibility is not proof of a transaction. Keep its command until the
         // owning business record itself confirms completion. Unknown formats stay.
-        string reason = Text(command.RootElement,"Reason");
+        string reason = command.Reason ?? "";
         if (reason.Contains("business:",StringComparison.Ordinal))
         {
             int start = reason.IndexOf("business:",StringComparison.Ordinal) + 9;
             string business = reason[start..].Split('|')[0];
             if (!Id(business)) return false;
-            bool found = false;
-            foreach (var tree in new[]{"business","managed-business"})
+            if(businessStates?.TryGetValue(business,out bool prior)==true)return prior;
+            bool Resolved()
             {
-                string path = Path.Combine(root,"live",tree,business+".json");
-                if (!File.Exists(path)) continue;
-                if (!Safe(root,path)) return false;
-                using var record = Read(path);
-                if (Text(record.RootElement,"id") != business || Text(record.RootElement,"state") is not ("completed" or "rejected" or "server_rejected" or "superseded")) return false;
-                found = true;
+                bool found=false;
+                foreach (var tree in new[]{"business","managed-business"})
+                {
+                    string path = Path.Combine(root,"live",tree,business+".json");
+                    if (!File.Exists(path)) continue;
+                    if (!Safe(root,path)) return false;
+                    var record = Read<BusinessHeader>(path);
+                    if (record?.id != business || record.state is not ("completed" or "rejected" or "server_rejected" or "superseded")) return false;
+                    found = true;
+                }
+                return found;
             }
-            if (!found) return false;
+            bool resolved=Resolved();if(businessStates!=null)businessStates[business]=resolved;
+            return resolved;
         }
         return true;
     }
@@ -100,7 +111,9 @@ public static class DailyLogCleanup
             {
                 token.ThrowIfCancellationRequested();
                 if((item.Attributes & FileAttributes.ReparsePoint)!=0) continue;
-                if(item is FileInfo file && (LogName(file.Name) || DiagnosticJson(root,file.FullName)) && Safe(root,file.FullName)) yield return file;
+                // Scan only: the root was checked and every traversed directory rejects links.
+                // Apply revalidates every ancestor and file immediately before deletion.
+                if(item is FileInfo file && (LogName(file.Name) || DiagnosticJson(root,file.FullName))) yield return file;
                 else if(item is DirectoryInfo dir && entry.Depth>0) pending.Push((dir.FullName,entry.Depth-1));
             }
         }
@@ -114,7 +127,7 @@ public static class DailyLogCleanup
     public static Task<DailyLogPlan> ScanAsync(string root, DailyLogPolicy policy, CancellationToken token = default, IProgress<DailyLogScanProgress>? progress = null) => Task.Run(()=>Scan(root,policy,DateTime.UtcNow,token,progress),token);
     public static DailyLogPlan Scan(string root, DailyLogPolicy policy, DateTime now, CancellationToken token = default, IProgress<DailyLogScanProgress>? progress = null)
     {
-        root=Path.GetFullPath(root);policy=policy.Normalize();long total=0;int skipped=0;
+        root=Path.GetFullPath(root);DailyCacheStorage.NoLinks(root);policy=policy.Normalize();long total=0;int skipped=0;
         var candidates=new List<DailyLogUnit>();int entriesCount=0,examined=0;
         void Report(){progress?.Report(new(entriesCount,total,examined));}
         // Never include caches, account stores, queues, exported ZIPs or transaction evidence.
@@ -142,13 +155,14 @@ public static class DailyLogCleanup
             }catch(IOException){skipped++;}catch(UnauthorizedAccessException){skipped++;}
         }
         Report();var selected=new List<DailyLogUnit>();long remaining=total;
+        var businessStates=new Dictionary<string,bool>(StringComparer.Ordinal);
         foreach(var unit in candidates.OrderBy(u=>u.Written))
         {
             token.ThrowIfCancellationRequested();
             if(unit.Written>=now.AddDays(-policy.Days) && remaining <= policy.LimitMiB*1024L*1024)continue;
             if(!unit.Step && DiagnosticJson(root,unit.Path) && unit.Written>=now.AddDays(-policy.Days))continue;
             if(++examined%100==0)Report();
-            try { if(unit.Step && unit.Written>=now.AddDays(-policy.Days) && !CompletedStep(root,unit.Path)){skipped++;continue;} }
+            try { if(unit.Step && unit.Written>=now.AddDays(-policy.Days) && !CompletedStep(root,unit.Path,businessStates,true)){skipped++;continue;} }
             catch(Exception e) when(e is IOException or UnauthorizedAccessException or JsonException){skipped++;continue;}
             selected.Add(unit);remaining-=unit.Bytes;
         }

@@ -34,6 +34,7 @@ internal static class CacheStorageCases
         var plan=await DailyCacheStorage.ScanAsync(root);
         long physical=Directory.EnumerateFiles(root,"*",SearchOption.AllDirectories).Sum(f=>new FileInfo(f).Length);
         Check(plan.TotalBytes==physical,"counts all data, not only allowlisted logs");
+        Check(plan.CacheBytes==physical-100 && plan.Units.Any(u=>u.Path.EndsWith(Path.Combine("trade","catalogs","a"))),"slash-delimited cache areas retain complete accounting and cleanup eligibility");
         Check(plan.Units.Count(u=>u.Path.Contains("updates"))==2,"old completed/rolled-back versions eligible; active and damaged recovery protected");
         Check(plan.Units.Count(u=>u.Path.Contains("suite-cache"))==2,"keeps two generations for each component");
         using(var inUse=new FileStream(Path.Combine(root,"trade/catalogs/a/tables/CookingTable.json"),FileMode.Open,FileAccess.Read,FileShare.Read))

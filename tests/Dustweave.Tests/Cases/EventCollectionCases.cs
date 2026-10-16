@@ -168,6 +168,12 @@ static class EventCollectionCases
             var result = await f.Route.Gather();
             Check(S(result["state"]) == "completed" && f.Casts.SequenceEqual(new[] { 3 }), "exhausted absorption still allows suppression-only maps to finish");
         }
+        using (var f = new Fixture(Path.Combine(root, "event-mixed-without-absorption"), 2003, 20031, 1) { MonstersPending=true,DropsPending=true })
+        {
+            f.ExhaustAbsorption();bool stopped=false;
+            try{await f.Route.Gather();}catch(DailyQuotaExhausted){stopped=true;}
+            Check(stopped&&f.Casts.Count==0,"mixed maps check absorption before spending suppression or research");
+        }
         using (var f = new Fixture(Path.Combine(root, "event-three-absorb"), 2003, 20031) { DropsPending = true })
         {
             var result = await f.Route.Gather();

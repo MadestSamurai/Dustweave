@@ -86,5 +86,21 @@ internal static class LogCleanupCases
         Check(!DailyLogCleanup.HasLegacyEquipmentLogs(linkedRoot),"linked legacy roots are excluded before scheduling cleanup");
         bool importCancelled=false;try{await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(host,legacy,cancel.Token);}catch(OperationCanceledException){importCancelled=true;}
         Check(importCancelled,"legacy migration cancels promptly when automation resumes");
+        // Eligibility reads only top-level metadata; a large nested observation
+        // must neither change its outcome nor be materialized as a JSON DOM.
+        string metadataRoot=Path.Combine(output,"log-metadata");Directory.CreateDirectory(metadataRoot);
+        string pressure=Path.Combine(metadataRoot,"runtime.log");
+        using(var stream=File.Create(pressure))stream.SetLength(129L*1024*1024);
+        string metadataId=Guid.NewGuid().ToString("N"),metadataStep=Path.Combine(metadataRoot,"live","steps",metadataId);
+        Directory.CreateDirectory(metadataStep);
+        File.WriteAllText(Path.Combine(metadataStep,"intent.json"),JsonSerializer.Serialize(new{Id=metadataId,Reason="navigate"}));
+        string metadataResult=Path.Combine(metadataStep,"result.json");
+        File.WriteAllText(metadataResult,JsonSerializer.Serialize(new{after=new{state="unknown",payload=new string('x',1024*1024)},id=metadataId,state="observed_expected_ui",engine="dotnet-driver-v1"}));
+        foreach(string path in Directory.GetFiles(metadataStep))File.SetLastWriteTimeUtc(path,now.AddDays(-3));
+        var metadataPlan=await DailyLogCleanup.ScanAsync(metadataRoot,new(true,7,128));
+        Check(metadataPlan.Units.Any(u=>u.Path==metadataStep),"large nested observations do not override successful top-level cleanup metadata");
+        File.WriteAllText(metadataResult,"{\"id\":42,\"state\":\"observed_expected_ui\"}");File.SetLastWriteTimeUtc(metadataResult,now.AddDays(-3));
+        metadataPlan=await DailyLogCleanup.ScanAsync(metadataRoot,new(true,7,128));
+        Check(metadataPlan.Units.All(u=>u.Path!=metadataStep),"invalid metadata types retain recent diagnostic evidence");
     }
 }

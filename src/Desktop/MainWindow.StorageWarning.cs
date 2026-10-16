@@ -32,7 +32,7 @@ public partial class MainWindow
             // Do not cover an existing dialog. The advisory itself is modeless so running/scheduled work continues.
             bool CanShow() => !storageWindowClosed && IsVisible && WindowState != WindowState.Minimized && !onboardingOpen && !cacheChanging && !updateInstalling && DailyDialogs.ModalDepth == 0;
             if (!CanShow()) { nextStorageCheck = DateTime.UtcNow.AddSeconds(30); return; }
-            var report = await DailyCacheStorage.ScanAsync(root, storageWarningLifetime.Token);
+            var report = await new DailyStorageMaintenance(root).ScanAsync(logPolicy, storageWarningLifetime.Token);
             if (!CanShow() || DailyStorageWarning.IsIgnored(root, DateTime.Now)) return;
             // Storage may have been freed or moved while the asynchronous scan was in progress.
             volumes = await Task.Run(ReadSpace, storageWarningLifetime.Token);
@@ -53,7 +53,7 @@ public partial class MainWindow
         finally { storageCheckRunning = false; }
     }
 
-    private Window CreateStorageWarningWindow(DailyDiskSpace[] volumes, DailyStorageReport report, out Func<string?> action)
+    private Window CreateStorageWarningWindow(DailyDiskSpace[] volumes, DailyStorageOverview report, out Func<string?> action)
     {
         string? requested = null; action = () => requested;
         var dialog = new Window { Name = "StorageWarningWindow", Owner = this, Width = 600, MaxHeight = Math.Max(360, SystemParameters.WorkArea.Height - 60), SizeToContent = SizeToContent.Height, ResizeMode = ResizeMode.NoResize, WindowStartupLocation = WindowStartupLocation.CenterOwner };

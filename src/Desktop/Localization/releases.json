@@ -1,5 +1,32 @@
 [
 {
+  "Version": "1.4.2",
+  "Date": "2026-10-17",
+  "Notes": {
+    "zh-CN": [
+      "空间统计覆盖隔离账号、迁移后的缓存与旧运行库解压目录，区分总占用和可清理空间。",
+      "补齐隔离队列的日志维护，清理过期组件和构建临时文件；保护账号、游戏文件、正在使用的目录及待恢复记录。",
+      "减少空间扫描重复遍历和大型日志读取；已完成的旧回执保留结果摘要。",
+      "吸收次数耗尽但还有地图未吸收时等待次日；只有全部地图吸收完成后才继续剩余压制。周 NPC 任务与偷窃独立继续。",
+      "1.3.10–1.3.17、1.4.0 和 1.4.1 支持直接差分更新；若 OTA 失败，请下载完整包并解压到新目录，保留 app 文件夹。"
+    ],
+    "zh-TW": [
+      "空間統計涵蓋隔離帳號、遷移後的快取與舊執行階段解壓目錄，區分總佔用與可清理空間。",
+      "補齊隔離佇列的日誌維護，清理過期元件與建置暫存；保護帳號、遊戲檔案、使用中的目錄及待恢復記錄。",
+      "減少空間掃描重複遍歷及大型日誌讀取；已完成的舊回執保留結果摘要。",
+      "吸收次數耗盡但仍有地圖未吸收時等待次日；僅在全部地圖吸收完成後繼續剩餘壓制。週 NPC 任務與偷竊獨立繼續。",
+      "1.3.10–1.3.17、1.4.0 和 1.4.1 支援直接差分更新；若 OTA 失敗，請下載完整包並解壓至新目錄，保留 app 資料夾。"
+    ],
+    "en-US": [
+      "Storage totals include sandbox accounts, relocated caches and obsolete runtime extraction folders, with reclaimable space shown separately.",
+      "Maintain sandbox logs and remove expired components and build scratch files while protecting accounts, game files, active directories and recovery records.",
+      "Reduce repeated scans and large log reads; retain result summaries for completed old receipts.",
+      "When absorption runs out with weekly drops remaining, wait until the next day. Continue suppression only after all weekly absorption targets are complete. NPC tasks and theft remain independent.",
+      "Direct patches cover 1.3.10–1.3.17, 1.4.0 and 1.4.1. If OTA fails, extract the full package into a new folder and keep the app folder."
+    ]
+  }
+},
+{
   "Version": "1.4.1",
   "Date": "2026-10-17",
   "Notes": {

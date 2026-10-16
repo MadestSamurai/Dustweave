@@ -79,6 +79,7 @@ await Group("ProductIdentity", () => Sync(() => ProductIdentityCases.Run(cases))
 await Group("BargainTraining", () => BargainTrainingCases.Run(root, cases));
 await Group("LogCleanup", () => LogCleanupCases.Run(root,cases));
 await Group("CacheStorage", () => CacheStorageCases.Run(root,cases));
+await Group("StorageMaintenance", () => StorageMaintenanceCases.Run(root,cases));
 await Group("UpdateRetention", () => UpdateRetentionCases.Run(root,cases));
 await Group("StorageWarning", () => StorageWarningCases.Run(root,cases));
 await Group("LogEvidence", () => LogEvidenceCases.Run(root,cases));

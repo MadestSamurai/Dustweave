@@ -62,19 +62,19 @@ internal static class DailySuiteComposition {
     if(Hash(bytes)==info.Hash){DailyCacheStorage.Touch(report);progress("复用已准备组件 · "+Name(id));return bytes;}
    }
    progress("首次准备 · "+Name(id));
-   byte[] payload;
+   byte[] payload;string? scratch=null;
    if(id=="mansion-runaway"){
     payload=await Task.Run(()=>MansionCompiler.Prepare(managed),cancel);
    }else if(id=="pandora"){
     payload=await Task.Run(()=>PandoraCompiler.Prepare(managed),cancel);
    }else if(id=="daily"){
-    string target=Path.Combine(directory,"build-"+Guid.NewGuid().ToString("N"));
+    string target=Path.Combine(directory,"build-"+Guid.NewGuid().ToString("N"));scratch=target;
     // Adaptation and compilation are CPU-heavy even before RunAsync's first await.
     await Task.Run(()=>liveUtility::Dustweave.Connection.LiveEntry.RunAsync(["prepare",managed,target],false),cancel);
     if(!File.Exists(Path.Combine(target,"bridge.dll")))throw new InvalidDataException("日常执行组件编译失败，尚未启用。");
     payload=await File.ReadAllBytesAsync(Path.Combine(target,"bridge.dll"),cancel);
    }else if(tool=="equipment"){
-    string target=Path.Combine(directory,"build-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(target);
+    string target=Path.Combine(directory,"build-"+Guid.NewGuid().ToString("N"));scratch=target;Directory.CreateDirectory(target);
     await Task.Run(()=>assembly.GetType("BD2Equipment.Live.LiveEntry")!.GetMethod("Prepare")!.Invoke(null,[managed,target]),cancel);
     payload=await File.ReadAllBytesAsync(Path.Combine(target,"bridge.dll"),cancel);
    }else{
@@ -88,6 +88,7 @@ internal static class DailySuiteComposition {
    await Task.Run(()=>ClientInputs.RequireStable(managed,clientKey),cancel);
    await File.WriteAllBytesAsync(cache,payload,cancel);
    DailyJson.Write(report,new ModuleCache(Hash(payload)));
+   if(scratch!=null)DailyCacheStorage.DiscardBuild(directory,scratch);
    return payload;
   }finally{compiler.Release();}
  }

@@ -25,7 +25,12 @@ public sealed class DailyWeeklyRoute
     }
     private readonly HashSet<long> recoveredPacks = [];
     private readonly HashSet<(long Pack, long Map)> storyLocked = [];
-    private readonly HashSet<(long Pack, long Map)> waitingAbsorption = [];
+    private readonly HashSet<(long Pack, long Map)> absorptionObserved = [], absorptionPending = [];
+    private readonly HashSet<long> freshAbsorptionPacks = [];
+    private bool absorptionQuotaExhausted;
+    private bool AbsorptionComplete => known["weekly_mainline"].Count > 0
+        && known["weekly_mainline"].IsSubsetOf(absorptionObserved) && absorptionPending.Count == 0;
+    private bool FreshAbsorptionPending => absorptionPending.Any(p => freshAbsorptionPacks.Contains(p.Pack));
     // Deferrals belong to this run only. A retry starts from fresh server progress,
     // never from a persistent blacklist of maps or cartridges.
     private readonly Dictionary<string, Dictionary<(long Pack, long Map), JsonObject>> failures = Stages.ToDictionary(s => s, _ => new Dictionary<(long, long), JsonObject>());
@@ -55,7 +60,8 @@ public sealed class DailyWeeklyRoute
             RecoverEncounters = true
         };
         this.progress = progress ?? ((_, _) => { });
-        route.CanSuppress = map => (active.Contains("weekly_mainline") || active.Contains("weekly_npc")) && CanRun("weekly_mainline", map);
+        route.CanSuppress = map => (active.Contains("weekly_npc") || active.Contains("weekly_mainline")
+            && (!absorptionQuotaExhausted || AbsorptionComplete)) && CanRun("weekly_mainline", map);
     }
     public static string[] Select(IEnumerable<string> stages, WeeklyPreferences settings)
     {
@@ -76,7 +82,7 @@ public sealed class DailyWeeklyRoute
     }
     private string Summary(string stage) => stage == "weekly_npc" ? npc?.Summary() ?? "等待读取周NPC任务" : $"{Names[stage]}已核对 {done[stage].Count}/{known[stage].Count} 张地图";
     private Dictionary<string, long[]> Maps() => new() { { "weekly_mainline", active.Contains("weekly_mainline") ? route.Catalog.Maps(pack) : [] }, { "weekly_steal", active.Contains("weekly_steal") ? route.Catalog.StealMaps(pack) : [] } };
-    private Dictionary<string, long[]> MapJobs() => Maps().Where(p => active.Contains(p.Key)).ToDictionary(p => p.Key, p => p.Value.Where(id => !done[p.Key].Contains((pack, id)) && !failures[p.Key].ContainsKey((pack, id)) && (p.Key != "weekly_mainline" || !storyLocked.Contains((pack, id)) && !waitingAbsorption.Contains((pack, id)))).ToArray());
+    private Dictionary<string, long[]> MapJobs() => Maps().Where(p => active.Contains(p.Key)).ToDictionary(p => p.Key, p => p.Value.Where(id => !done[p.Key].Contains((pack, id)) && !failures[p.Key].ContainsKey((pack, id)) && (p.Key != "weekly_mainline" || !storyLocked.Contains((pack, id)) && (!absorptionQuotaExhausted || AbsorptionComplete))).ToArray());
     private void Defer(string stage, long map, string reason, JsonObject? metadata = null)
     {
         var failure = O(("pack", pack), ("map", map), ("reason", reason), ("at", w.Driver.UtcTicks), ("metadata", metadata));
@@ -140,9 +146,15 @@ public sealed class DailyWeeklyRoute
                 if (observed == null) { missing = true; continue; }
                 var keys = pair.Key == "weekly_steal" ? new[] { "steals" } : new[] { "drops", "monsters" };
                 if (pair.Key == "weekly_mainline")
+                {
+                    if (!cache) freshAbsorptionPacks.Add(pack);
+                    absorptionObserved.UnionWith(pair.Value.Select(id => (pack, id)));
+                    absorptionPending.ExceptWith(pair.Value.Select(id => (pack, id)));
+                    absorptionPending.UnionWith(pair.Value.Where(id => observed["maps"]![id.ToString()]!["drops"] is JsonArray { Count: > 0 }).Select(id => (pack, id)));
                     foreach (long id in pair.Value)
                         if (observed["maps"]![id.ToString()]!["story_locked"] is JsonArray { Count: > 0 }) storyLocked.Add((pack, id));
                         else storyLocked.Remove((pack, id));
+                }
                 done[pair.Key].ExceptWith(pair.Value.Select(id => (pack, id)));
                 done[pair.Key].UnionWith(pair.Value.Where(id => (pair.Key != "weekly_mainline" || !storyLocked.Contains((pack, id))) && keys.All(key => (observed["maps"]![id.ToString()]![key] as JsonArray)?.Count == 0)).Select(id => (pack, id)));
                 foreach (long id in pair.Value)
@@ -166,7 +178,11 @@ public sealed class DailyWeeklyRoute
         // The recovery pass has already queried only the affected maps; refresh the
         // rest of this cartridge once when normal routing reaches it.
         if (recoveredPacks.Contains(pack)) checkpoint = null;
-        await DeferAbsorptionOnlyMaps();
+        await CheckAbsorptionQuota();
+        // Cached completion may skip work, but cached unfinished work must not
+        // block manual progress made in the game. Re-read only that cartridge.
+        bool checkAbsorption = active.Contains("weekly_mainline") && absorptionQuotaExhausted
+            && absorptionPending.Any(p => p.Pack == pack) && !freshAbsorptionPacks.Contains(pack);
         bool needed = active.Contains("weekly_npc") && !failures["weekly_npc"].Keys.Any(p => p.Pack == pack);
         if (npc?.Data is DailyNpcData d)
         {
@@ -174,12 +190,13 @@ public sealed class DailyWeeklyRoute
             if (N(d.Native["Completed"]) >= N(d.Native["Limit"]))
                 needed = false;
         }
-        if (!needed && (checkpoint != null && !MapJobs().Values.Any(v => v.Length > 0) || !Maps().Values.Any(v => v.Length > 0)))
+        if (!needed && !checkAbsorption && (checkpoint != null && !MapJobs().Values.Any(v => v.Length > 0) || !Maps().Values.Any(v => v.Length > 0)))
             return false;
         await route.Enter(pack);
         entered = true;
-        if (checkpoint == null || MapJobs().Values.Any(v => v.Length > 0))
+        if (checkAbsorption || checkpoint == null || MapJobs().Values.Any(v => v.Length > 0))
             await Refresh();
+        await CheckAbsorptionQuota();
         nav = new(route, pack, await route.Evidence());
         if (needed)
         {
@@ -190,7 +207,7 @@ public sealed class DailyWeeklyRoute
     }
     private async Task<Dictionary<string, long[]>> Jobs()
     {
-        await DeferAbsorptionOnlyMaps();
+        await CheckAbsorptionQuota();
         var jobs = MapJobs();
         bool npcDeferred = failures["weekly_npc"].Keys.Any(p => p.Pack == pack);
         if ((!active.Contains("weekly_npc") || npcDeferred) && npc?.Data is DailyNpcData d)
@@ -212,12 +229,15 @@ public sealed class DailyWeeklyRoute
         }
         return jobs;
     }
-    private async Task DeferAbsorptionOnlyMaps()
+    private async Task CheckAbsorptionQuota()
     {
-        if (!active.Contains("weekly_mainline") || w.Settings.Weekly.WalkCollect || checkpoint == null || Used(await route.Evidence(), 4) < 21) return;
-        foreach (long map in route.Catalog.Maps(pack))
-            if (checkpoint["maps"]?[map.ToString()] is JsonObject state && state["drops"] is JsonArray { Count: > 0 }
-                && state["monsters"] is JsonArray { Count: 0 }) waitingAbsorption.Add((pack, map));
+        if (!active.Contains("weekly_mainline") || w.Settings.Weekly.WalkCollect) return;
+        absorptionQuotaExhausted = Used(await route.Evidence(), 4) >= 21;
+        // Running out of today's uses is not completion of this week's collection.
+        // Do not turn the rest of the route into a daily suppression sweep.
+        if (absorptionQuotaExhausted && FreshAbsorptionPending)
+            throw new DailyWeeklyCategoryStop("weekly_mainline", "吸收次数用完，仍有地图待收集；本次周收集已暂停，次日接续",
+                O(("reason", "absorption_exhausted"), ("waiting_daily_reset", true), ("source", "game_network")));
     }
     public static readonly string[] StageOrder = ["weekly_mainline", "weekly_npc", "weekly_steal"];
     private async Task RecoverInterruptedMaps(long[] availablePacks)
@@ -284,12 +304,10 @@ public sealed class DailyWeeklyRoute
             }
             catch (DailyQuotaExhausted)
             {
-                // Suppression may already have succeeded. Re-read it and defer only
-                // the remaining drops, never stop other maps or weekly categories.
+                // Refresh the affected cartridge before deciding whether all
+                // absorption is complete. Other weekly categories remain independent.
                 await Refresh();
-                if (checkpoint?["maps"]?[map.ToString()]?["monsters"] is JsonArray { Count: > 0 })
-                    Defer(stage, map, "吸收次数用完，本地图压制仍未确认；继续其他地图");
-                else waitingAbsorption.Add((pack, map));
+                await CheckAbsorptionQuota();
                 break;
             }
             catch (DailyCollectionTargetsRemain error) { deferredPickups = error.DeferredPickups; }
@@ -373,8 +391,8 @@ public sealed class DailyWeeklyRoute
             return O(("state", complete ? "completed" : "partial"), ("detail", npc.Summary() + (complete ? "" : " · 范围内暂无符合设置的可执行任务")), ("reason", complete ? "weekly_npc_verified" : "no_eligible_quests"), ("source", "TodayQuestInfoResponse"));
         }
         var pending = known[stage].Except(done[stage]).OrderBy(p => p.Pack).ThenBy(p => p.Map).ToArray();
-        if (stage == "weekly_mainline" && pending.Any(waitingAbsorption.Contains))
-            return O(("state", "partial"), ("detail", Summary(stage) + " · 吸收次数用完，已继续处理可执行的压制；剩余收集次日接续"),
+        if (stage == "weekly_mainline" && pending.Length > 0 && absorptionQuotaExhausted && FreshAbsorptionPending)
+            return O(("state", "partial"), ("detail", Summary(stage) + " · 吸收次数用完，仍有地图待收集；本次周收集已暂停，次日接续"),
                 ("reason", "absorption_exhausted"), ("waiting_daily_reset", true), ("source", "game_network"),
                 ("pending_maps", Array(pending.Select(p => (JsonNode)new JsonArray(p.Pack, p.Map)))));
         if (stage == "weekly_mainline" && storyLocked.Count > 0)
@@ -400,6 +418,7 @@ public sealed class DailyWeeklyRoute
         foreach (string s in requested.Except(selected))
             result[s] = O(("state", "skipped"), ("reason", "disabled"), ("detail", "已关闭"));
         var evidence = await route.Evidence();
+        absorptionQuotaExhausted = !w.Settings.Weekly.WalkCollect && Used(evidence, 4) >= 21;
         week = S(R(evidence, "mainline.reset", "GetWeeklyResetTime().Ticks"));
         Require(week.Length > 0, "缺少周周期");
         var packs = route.Catalog.AvailablePacks(evidence);
@@ -434,6 +453,7 @@ public sealed class DailyWeeklyRoute
             result[e.Stage] = r;
         }
         var pendingPacks = packs.ToList();
+        bool suppressionTailQueued = false;
         while (pendingPacks.Count > 0)
         {
             long current = npc != null && active.Contains("weekly_npc") ? npc.OrderPacks(pendingPacks)[0] : pendingPacks[0];
@@ -496,6 +516,16 @@ public sealed class DailyWeeklyRoute
                 }
                 if (!finished) throw new DailyTravelBlocked("共享周路线超过恢复次数，已保留分项进度");
                 await FinishPack();
+                // If the last use completed all collection, unknown cartridges
+                // were only inspected, without suppression. Revisit their actual
+                // remaining monsters once after every absorption target is verified.
+                if (!suppressionTailQueued && active.Contains("weekly_mainline") && absorptionQuotaExhausted && AbsorptionComplete)
+                {
+                    suppressionTailQueued = true;
+                    pendingPacks.AddRange(packs.Where(p => p != current && !pendingPacks.Contains(p)
+                        && known["weekly_mainline"].Except(done["weekly_mainline"]).Any(m => m.Pack == p
+                            && !storyLocked.Contains(m) && !failures["weekly_mainline"].ContainsKey(m))));
+                }
                 // A lower-paying quest in this pack can wait while another pack
                 // offers more gold. Revisit only for NPC work; completed collection
                 // and theft retain their server-backed per-map progress.

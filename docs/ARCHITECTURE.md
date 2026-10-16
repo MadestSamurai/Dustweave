@@ -51,11 +51,13 @@ Targeted checks: `test.ps1 -Groups ApostleIntegrated,ToolMenu,ActivityLease,Apos
 
 ## Local storage / 本地空间
 
-“日志与缓存”统计当前数据目录的全部文件大小，以及迁移后的可重建缓存；日志清理白名单的大小不再充当总占用。`DailyCacheStorage` 单独管理连接组件、商品表、规则、预编译和绑定缓存。按组件保留最近使用的两代缓存；已结束的旧 OTA 备份可清理，最新备份、未完成及未知状态的更新保留。后台清理只扫描这些缓存目录。
+“日志与缓存”按实际文件大小统计主数据目录、迁移后的缓存、隔离空间及本工具的 .NET 解压缓存，重叠路径不重复计算。沙盒中的游戏文件也计入总量，但不纳入清理。`DailyCacheStorage` 管理连接组件、商品表、规则、预编译和绑定缓存：闲置超过 7 天即可淘汰，7 天内通常保留最近两代，多出的代际至少保留 24 小时。成功编译后立即删除临时构建副本，失败构建保留至少 24 小时。OTA 仍按 `UpdateCacheRetention` 的数量、时间及事务保护规则处理。
 
-缓存迁移在主窗口空闲、工具和隔离窗口关闭时执行，与更新下载和自动化互斥。先复制并逐文件校验 SHA-256，再原子切换 `cache-location.json`，最后清除原缓存；失败或取消不切换。账号、登录、操作归属、未确认回执及 OTA 恢复路径保持原位置。迁移后的规则使用相对路径，不触发重复导表。针对性检查：`CacheStorage`、`RuleData`、`TradeData`、`LiveBindings`、`LogCleanup`，以及 `support` 界面检查。
+`DailyStorageMaintenance` 只清理注册信息、真实路径与驱动归属一致且没有运行进程的隔离空间，并逐个获取操作锁。运行中的旧版程序保护解压缓存，账号、游戏存档、未知文件及待恢复的更新始终保留。无界面的双开工作进程结束后也会压缩成功步骤的日志并维护本地缓存，最多使用 20 秒；失败不影响队列结果。主窗口自动维护有 30 秒预算，重试时保留已完成的清理。超过保留期的已结算旧回执去掉 UI 树，保留身份、指令与结果；未确认回执不按成功处理。
 
-Storage totals cover all files in the active data root and relocated rebuildable caches. Cleanup retains two recent generations per component and the latest update backup; pending or unknown update transactions remain protected. Cache migration copies and verifies files before atomically switching the location. Account data, IPC ownership, operation journals and OTA recovery paths do not move. Maintenance runs off the UI thread and cannot overlap automation, tools or update downloads.
+缓存迁移在主窗口空闲、工具和隔离窗口关闭时执行，与更新下载和自动化互斥。先复制并逐文件校验 SHA-256，再原子切换 `cache-location.json`，最后清除原缓存；失败或取消不切换。账号、登录、操作归属、未确认回执及 OTA 恢复路径保持原位置；禁止迁入沙盒或 .NET 解压目录。迁移后的规则使用相对路径，不触发重复导表。针对性检查：`StorageMaintenance`、`CacheStorage`、`RuleData`、`TradeData`、`LiveBindings`、`LogCleanup`、`LogEvidence`、`UpdateRetention`，以及 `support` 界面检查。
+
+Storage totals include the host, relocated caches, complete sandbox containers and this application's .NET extraction trees, without counting overlapping paths twice. Game and account data count toward usage but are never cleanup targets. Unused cache generations expire after seven days; newer generations retain the latest two with a 24-hour grace period for extras. Successful compiler scratch is discarded immediately. OTA retention and pending-transaction protection remain unchanged. Sandbox cleanup requires verified ownership, an idle driver scope and its own operation lock; active legacy hosts protect extraction trees. Headless workers perform bounded local maintenance after the queue ends. Metadata scans avoid materializing old UI snapshots; deletion still revalidates paths, timestamps, ownership and open files. Cache migration copies and verifies files before atomically switching the location; accounts, IPC, journals and OTA recovery do not move.
 
 Low-space reminders check the data and current cache volumes without enumerating files every five minutes. Below 1 GiB, a visible primary window measures full usage asynchronously before showing modeless cleanup/migration advice; it never pauses active or scheduled work. Sandbox workers never duplicate this prompt. Dismissal persists in `storage-warning.json` and follows the local 08:00 day boundary; otherwise a continuing shortage is shown at most hourly. IO failures never become a task/connection failure. `StorageWarning` covers threshold, volume deduplication and local-day persistence; the `support` smoke renders and exercises the dialog in all three languages and both themes.
 
@@ -77,7 +79,7 @@ Sandbox root lookup follows `Box_InitPaths` / `Conf_Get(box, "FileRootPath", 0)`
 
 普通启动与隔离启动共享同账号的日常完成摘要，以及按角色、服务器和周周期核验的地图服务器快照。摘要逐环节合并，跨日后不沿用完成状态；地图快照只复用匹配的周周期，旧数据不覆盖新数据。连接、锁、登录凭据和未确认操作回执不参与交换，另一实例的队列不能直接作为本实例的接续队列。界面同步在后台执行并限频，不扫描历史操作日志。
 
-Weekly catalog updates preserve historical queue completion. Selected routes compare owned map coverage with individual server snapshots; only missing or unfinished cartridges need fresh reads. Exhausting absorption defers remaining drops, while available suppression continues across maps. No fallback enables walking collection when it is disabled.
+Weekly catalog updates preserve historical queue completion. Selected routes compare owned map coverage with individual server snapshots; only missing or unfinished cartridges need fresh reads. Exhausting absorption pauses collection if any weekly drops remain; it must not turn into a daily suppression sweep. Remaining suppression may continue only after all collection maps have confirmed empty drop lists. Unknown cartridges can be inspected once, with suppression held until coverage is complete; already verified cartridges are not rechecked. NPC quests and theft remain independent. No fallback enables walking collection when it is disabled.
 
 ### Concurrent queues / 集中并行队列
 

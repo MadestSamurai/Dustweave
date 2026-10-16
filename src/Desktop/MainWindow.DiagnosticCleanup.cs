@@ -33,26 +33,19 @@ public partial class MainWindow
         if(logCleanupRunning || !retentionDue && (DateTime.UtcNow<nextEvidenceCleanup || !DailyLogEvidence.HasPending(root)))return;
         logCleanupRunning=true;nextEvidenceCleanup=DateTime.UtcNow.AddMinutes(1);
         if(retentionDue)nextLogCleanup=DateTime.UtcNow.AddMinutes(5);
-        using var lifetime=new CancellationTokenSource();logCleanupCancellation=lifetime;
+        using var lifetime=new CancellationTokenSource(TimeSpan.FromSeconds(30));logCleanupCancellation=lifetime;
         try {
             await DailyLogEvidence.FlushAsync(root,lifetime.Token);
             if(!retentionDue)return;
             if(LegacyEquipmentLogRoot is { } legacy)await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(root,legacy,lifetime.Token);
-            await DailyLogEvidence.MaintainAsync(root,lifetime.Token);
-            var plan=await DailyLogCleanup.ScanAsync(root,logPolicy,lifetime.Token);
-            if(Unavailable || dailyQueue.IsRunning || scheduleChecking || DailyDialogs.ModalDepth>0)return;
-            var result=await DailyLogCleanup.ApplyAsync(plan,lifetime.Token);
-            // Maintenance shares the automation ownership lock; an update download must not be pruned.
-            bool cacheChecked=false;
-            if(!updateChecking && !updateInstalling && !ToolOpen && (IsSandboxWindow || !DailyUpdateHost.HasIsolatedWindows()))
-            {
-                using var control=DailyUpdateHost.AcquireControl(root);
-                SetCacheChanging(true);
-                try { var cacheResult=await DailyCacheStorage.CleanAsync(root,lifetime.Token);result=new(result.Files+cacheResult.Files,result.Bytes+cacheResult.Bytes,result.Skipped+cacheResult.Skipped);cacheChecked=true; }
-                finally {SetCacheChanging(false);}
-            }
-            DailyJson.Write(Path.Combine(root,"log-cleanup-last.json"),new LogCleanupRun(DateTime.UtcNow,result.Files,result.Bytes,result.Skipped,cacheChecked?DailyProductVersion.Current:null));
-            nextLogCleanup=cacheChecked?DateTime.UtcNow.AddHours(12):DateTime.UtcNow.AddMinutes(5);
+            if(Unavailable || dailyQueue.IsRunning || scheduleChecking || DailyDialogs.ModalDepth>0 || updateChecking || updateInstalling)return;
+            // The ownership lock protects active tools; an idle tool window is not a running task.
+            SetCacheChanging(true);
+            DailyLogCleanupResult result;
+            try { result=await new DailyStorageMaintenance(root).CleanAsync(logPolicy,lifetime.Token); }
+            finally {SetCacheChanging(false);}
+            DailyJson.Write(Path.Combine(root,"log-cleanup-last.json"),new LogCleanupRun(DateTime.UtcNow,result.Files,result.Bytes,result.Skipped,DailyProductVersion.Current));
+            nextLogCleanup=DateTime.UtcNow.AddHours(12);
         }
         catch(OperationCanceledException) { }
         catch(Exception e) when(e is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or InvalidOperationException) { /* Never stop automation for retention. Retry on the next idle interval. */ }
@@ -86,31 +79,31 @@ public partial class MainWindow
         var actions=new WrapPanel{HorizontalAlignment=HorizontalAlignment.Right,Margin=new(0,20,0,0)};
         var scan=new Button{Name="LogCleanupScan",Margin=new(0,0,10,0)};L.Bind(scan,ContentControl.ContentProperty,"logs.scan");actions.Children.Add(scan);
         var clean=new Button{Name="LogCleanupStart",Style=(Style)FindResource("PrimaryButton"),IsEnabled=false};L.Bind(clean,ContentControl.ContentProperty,"logs.clean");actions.Children.Add(clean);panel.Children.Add(actions);
-        DailyLogPlan? plan=null;DailyStorageReport? storage=null;bool working=false,closed=false;var lifetime=new CancellationTokenSource();
+        DailyStorageOverview? storage=null;bool working=false,closed=false;var lifetime=new CancellationTokenSource();
         static double MiB(long bytes)=>Math.Round(bytes/1048576d,1);
-        void Controls(bool enabled){scan.IsEnabled=enabled;days.IsEnabled=enabled;size.IsEnabled=enabled;automatic.IsEnabled=enabled;move.IsEnabled=enabled&&!IsSandboxWindow;clean.IsEnabled=enabled&&(plan?.Files>0||storage?.ReclaimableBytes>0);}
-        void Save(){try{logPolicy=new(automatic.IsChecked==true,(int)((ComboBoxItem)days.SelectedItem).Tag,(int)((ComboBoxItem)size.SelectedItem).Tag);DailyLogCleanup.Save(root,logPolicy);nextLogCleanup=DateTime.UtcNow.AddMinutes(1);plan=null;clean.IsEnabled=false;L.Text(status,"logs.changed");}catch(Exception e){DailyUiText.Error(status,e);}}
+        void Controls(bool enabled){scan.IsEnabled=enabled;days.IsEnabled=enabled;size.IsEnabled=enabled;automatic.IsEnabled=enabled;move.IsEnabled=enabled&&!IsSandboxWindow;clean.IsEnabled=enabled&&storage?.ReclaimableBytes>0;}
+        void Save(){try{logPolicy=new(automatic.IsChecked==true,(int)((ComboBoxItem)days.SelectedItem).Tag,(int)((ComboBoxItem)size.SelectedItem).Tag);DailyLogCleanup.Save(root,logPolicy);nextLogCleanup=DateTime.UtcNow.AddMinutes(1);storage=null;clean.IsEnabled=false;L.Text(status,"logs.changed");}catch(Exception e){DailyUiText.Error(status,e);}}
         automatic.Click+=(_,_)=>Save();days.SelectionChanged+=(_,_)=>Save();size.SelectionChanged+=(_,_)=>Save();
         void Error(Exception error){if(error.Message.StartsWith("storage.",StringComparison.Ordinal))L.Text(status,error.Message);else DailyUiText.Error(status,error);}
-        async Task Scan(){working=true;plan=null;storage=null;Controls(false);L.Text(status,"logs.scanning");try{if(LegacyEquipmentLogRoot is { } legacy)await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(root,legacy,lifetime.Token);plan=await DailyLogCleanup.ScanAsync(root,logPolicy,lifetime.Token);storage=await DailyCacheStorage.ScanAsync(root,lifetime.Token);if(!closed){L.Text(status,"storage.preview",MiB(storage.TotalBytes),MiB(plan.ReclaimableBytes+storage.ReclaimableBytes));L.Text(detail,"storage.breakdown",MiB(plan.ManagedBytes),MiB(storage.CacheBytes),MiB(Math.Max(0,storage.TotalBytes-plan.ManagedBytes-storage.CacheBytes)),plan.Skipped+storage.Skipped);}}catch(OperationCanceledException){}catch(Exception e){if(!closed)Error(e);}finally{working=false;if(!closed)Controls(true);else lifetime.Dispose();}}
-        bool BusyStorage()=>Unavailable||dailyQueue.IsRunning||updateChecking||updateInstalling||ToolOpen||(!IsSandboxWindow&&smoke==null&&DailyUpdateHost.HasIsolatedWindows());
+        async Task Scan(){working=true;storage=null;Controls(false);L.Text(status,"logs.scanning");try{storage=await new DailyStorageMaintenance(root).ScanAsync(logPolicy,lifetime.Token);if(!closed){L.Text(status,"storage.preview",MiB(storage.TotalBytes),MiB(storage.ReclaimableBytes));L.Text(detail,"storage.breakdown",MiB(storage.LogBytes),MiB(storage.CacheBytes),MiB(Math.Max(0,storage.TotalBytes-storage.LogBytes-storage.CacheBytes)),storage.Skipped,MiB(storage.SandboxBytes),MiB(storage.ExtractionBytes));}}catch(OperationCanceledException){}catch(Exception e){if(!closed)Error(e);}finally{working=false;if(!closed)Controls(true);else lifetime.Dispose();}}
+        bool BusyStorage(bool moving=false)=>Unavailable||dailyQueue.IsRunning||updateChecking||updateInstalling||moving&&(ToolOpen||(!IsSandboxWindow&&smoke==null&&DailyUpdateHost.HasIsolatedWindows()));
         scan.Click+=async(_,_)=>await Scan();
         clean.Click+=async(_,_)=>{
-            if(plan==null)return;
+            if(storage==null)return;
             if(BusyStorage()){L.Text(status,"storage.busy");return;}
             working=true;Controls(false);SetCacheChanging(true);L.Text(status,"logs.cleaning");
-            try{using var control=DailyUpdateHost.AcquireControl(root);var result=await DailyLogCleanup.ApplyAsync(plan,lifetime.Token);var cacheResult=await DailyCacheStorage.CleanAsync(root,lifetime.Token);plan=null;storage=null;if(!closed){L.Text(status,"logs.done",result.Files+cacheResult.Files,MiB(result.Bytes+cacheResult.Bytes),result.Skipped+cacheResult.Skipped);L.Text(detail,"storage.rescan");}}
+            try{if(LegacyEquipmentLogRoot is { } legacy)await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(root,legacy,lifetime.Token);var result=await new DailyStorageMaintenance(root).CleanAsync(logPolicy,lifetime.Token);storage=null;if(!closed){L.Text(status,"logs.done",result.Files,MiB(result.Bytes),result.Skipped);L.Text(detail,"storage.rescan");}}
             catch(OperationCanceledException){}catch(Exception e){if(!closed){if(e.Message=="logs.rescan")L.Text(status,"logs.rescan");else DailyUiText.Error(status,e);}}
             finally{SetCacheChanging(false);working=false;if(!closed)Controls(true);else lifetime.Dispose();}
         };
         move.Click+=async(_,_)=>{
-            if(BusyStorage()){L.Text(status,"storage.busy");return;}
+            if(BusyStorage(true)){L.Text(status,"storage.busy");return;}
             var picker=new Microsoft.Win32.OpenFolderDialog{Title=L.Get("storage.pick")};
             if(picker.ShowDialog(dialog)!=true)return;
             string destination=Path.Combine(picker.FolderName,"Dustweave-cache");
             if(DailyDialogs.ShowModal(DailyDialogs.Message(dialog,L.Get("storage.move"),L.Get("storage.confirm",destination),true))!=true)return;
             working=true;Controls(false);SetCacheChanging(true);L.Text(status,"storage.moving",0);
-            try{using var control=DailyUpdateHost.AcquireControl(root);var result=await DailyCacheStorage.MoveAsync(root,destination,lifetime.Token,new Progress<long>(n=>{if(!closed&&working)L.Text(status,"storage.moving",MiB(n));}));if(!closed){location.Text=result.Path;L.Text(status,"storage.moved",MiB(result.Bytes),result.RetainedFiles);L.Text(detail,"storage.rescan");}plan=null;storage=null;}
+            try{using var control=DailyUpdateHost.AcquireControl(root);var result=await DailyCacheStorage.MoveAsync(root,destination,lifetime.Token,new Progress<long>(n=>{if(!closed&&working)L.Text(status,"storage.moving",MiB(n));}));if(!closed){location.Text=result.Path;L.Text(status,"storage.moved",MiB(result.Bytes),result.RetainedFiles);L.Text(detail,"storage.rescan");}storage=null;}
             catch(OperationCanceledException){}catch(Exception error){if(!closed)Error(error);}
             finally{SetCacheChanging(false);working=false;if(!closed)Controls(true);else lifetime.Dispose();}
         };

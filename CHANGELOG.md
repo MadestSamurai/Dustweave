@@ -1,5 +1,14 @@
 # Changelog / 更新记录
 
+## 1.4.2 — 2026-10-17
+
+- 空间统计纳入隔离账号数据、迁移后的缓存及旧版运行库解压目录，统一显示总占用与可清理空间。
+- 补齐隔离队列结束后的日志维护，清理过期组件、构建临时目录与旧运行库；保护正在使用的目录、账号、游戏文件及待恢复记录。
+- 减少空间扫描重复遍历和大型日志反序列化；已完成的旧记录精简现场数据，保留结果摘要。
+- 修正周收集：吸收次数耗尽且还有地图未吸收时等待次日；只有全部地图吸收完成后才继续剩余压制。周 NPC 任务与偷窃独立继续。
+- Expands storage accounting and cleanup to owned sandbox data and obsolete runtime caches, speeds up scans, and corrects suppression after absorption exhaustion to require completed weekly absorption targets.
+- [完整说明 / Full notes](docs/releases/1.4.2.md)
+
 ## 1.4.1 — 2026-10-17
 
 - 潘多拉整合挑战模式配装与生存策略、短时战斗预测、BOSS 避让和后期墙角处理；增加角色选择，移除旧的满装备站定开关。

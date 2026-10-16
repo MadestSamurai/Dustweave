@@ -54,14 +54,14 @@
     "en-US": "All data and cache folders: {0:N1} MiB"
   },
   "storage.low.scope": {
-    "zh-CN": "包含日志、更新文件及已迁移的缓存，按文件大小合计；其中部分数据需要保留。",
-    "zh-TW": "包含日誌、更新檔案及已遷移的快取，按檔案大小合計；其中部分資料需要保留。",
-    "en-US": "Includes logs, update files and relocated cache, summed by file size. Some data must be kept."
+    "zh-CN": "包括主数据目录、迁移缓存、隔离账号空间和程序解压缓存。运行中的沙盒及需要恢复的数据会保留。",
+    "zh-TW": "包括主資料目錄、遷移快取、隔離帳號空間和程式解壓快取。執行中的沙盒及需要復原的資料會保留。",
+    "en-US": "Includes main data, relocated caches, isolated account spaces and program extraction caches. Running sandboxes and recovery data are protected."
   },
   "storage.low.partial": {
-    "zh-CN": "另有 {0} 项暂时无法统计，实际占用可能更高。",
-    "zh-TW": "另有 {0} 項暫時無法統計，實際佔用可能更高。",
-    "en-US": "{0} items could not be measured. Actual usage may be higher."
+    "zh-CN": "有 {0} 项记录受保护或暂时无法读取；占用按可读取的文件统计。",
+    "zh-TW": "有 {0} 項記錄受保護或暫時無法讀取；用量按可讀取的檔案統計。",
+    "en-US": "{0} records are protected or unreadable. Usage is based on readable files."
   },
   "storage.low.advice": {
     "zh-CN": "建议清理旧日志和可重建缓存，或将缓存迁移到空间充足的磁盘。账号与设置会保留。",
@@ -282,6 +282,11 @@
     "zh-CN": "吸收次数用完，已继续处理可执行的压制；剩余收集次日接续",
     "zh-TW": "吸收次數用完，已繼續處理可執行的壓制；剩餘收集次日接續",
     "en-US": "Absorption uses are exhausted. Available suppression was still processed; remaining collection can resume tomorrow."
+  },
+  "message.吸收次数用完，仍有地图待收集；本次周收集已暂停，次日接续": {
+    "zh-CN": "吸收次数用完，仍有地图待收集；本次周收集已暂停，次日接续",
+    "zh-TW": "吸收次數用完，仍有地圖待收集；本次週收集已暫停，次日接續",
+    "en-US": "Absorption uses are exhausted while collection remains. Weekly collection is paused until tomorrow."
   },
   "message.周收集范围已补全，可接续核对遗漏地图；已收集物品不会重复吸收。": {
     "zh-CN": "周收集范围已补全，可接续核对遗漏地图；已收集物品不会重复吸收。",
@@ -884,9 +889,9 @@
     "zh-CN": "成功环节保留摘要，异常保留完整现场及相邻步骤。清理过期诊断不会重置日常进度。"
   },
   "logs.automatic": {
-    "zh-CN": "空闲时自动清理（每 12 小时检查一次）",
-    "zh-TW": "閒置時自動清理（每 12 小時檢查一次）",
-    "en-US": "Clean up automatically when idle (every 12 hours)"
+    "zh-CN": "空闲时自动清理日志和缓存",
+    "zh-TW": "閒置時自動清理日誌和快取",
+    "en-US": "Automatically clean logs and caches when idle"
   },
   "logs.days": {
     "zh-CN": "日志保留时间",
@@ -899,9 +904,9 @@
     "en-US": "{0} days"
   },
   "logs.size": {
-    "zh-CN": "日志空间目标",
-    "zh-TW": "日誌空間目標",
-    "en-US": "Log size target"
+    "zh-CN": "每个运行空间的日志目标",
+    "zh-TW": "每個執行空間的日誌目標",
+    "en-US": "Log target per workspace"
   },
   "logs.size.value": {
     "zh-CN": "{0} MB",
@@ -914,9 +919,9 @@
     "en-US": "Logs follow the age and size limits. Update caches keep at most 2 versions for up to 7 days; either limit triggers cleanup. Active updates and recovery files are protected. Accounts, task progress and exported ZIPs are retained."
   },
   "logs.scope": {
-    "zh-CN": "统计当前数据目录和迁移后的缓存；账号、进度及恢复记录不会被清空。",
-    "zh-TW": "統計目前資料目錄和遷移後的快取；帳號、進度及復原記錄不會被清空。",
-    "en-US": "Includes local data and relocated cache. Accounts, progress and recovery records are retained."
+    "zh-CN": "包括主数据目录、迁移缓存、隔离账号空间和程序解压缓存。运行中的沙盒及需要恢复的数据会保留。",
+    "zh-TW": "包括主資料目錄、遷移快取、隔離帳號空間和程式解壓快取。執行中的沙盒及需要復原的資料會保留。",
+    "en-US": "Includes main data, relocated caches, isolated account spaces and program extraction caches. Running sandboxes and recovery data are protected."
   },
   "logs.scanning": {
     "zh-CN": "正在统计日志、缓存和其他数据…",
@@ -7204,9 +7209,9 @@
     "en-US": "Native battle recovery account changed"
   },
   "storage.move_scope": {
-    "zh-CN": "可迁移连接组件、商品表与规则缓存。账号、日志和更新恢复文件留在原处。清理会保留最近两代组件缓存和最新更新备份。",
-    "zh-TW": "可遷移連接元件、商品表與規則快取。帳號、日誌和更新復原檔案留在原處。清理會保留最近兩代元件快取和最新更新備份。",
-    "en-US": "Move connection components, catalog and rules caches. Accounts, logs and update recovery stay in place. Cleanup keeps two recent cache generations and the latest update backup."
+    "zh-CN": "迁移主窗口的连接组件、商品表与规则缓存。沙盒、账号、日志及更新恢复文件留在原处。闲置组件缓存保留不超过 7 天，通常最多两代。",
+    "zh-TW": "遷移主視窗的連接元件、商品表與規則快取。沙盒、帳號、日誌及更新復原檔案留在原處。閒置元件快取保留不超過 7 天，通常最多兩代。",
+    "en-US": "Move component, catalog and rules caches for the main window. Sandboxes, accounts, logs and update recovery stay in place. Unused components expire after 7 days; normally two generations are kept."
   },
   "storage.unreadable": {
     "zh-CN": "部分缓存无法读取，迁移未开始。请关闭占用文件的程序后重试。",
@@ -7214,9 +7219,9 @@
     "en-US": "Some cache files could not be read. Close applications using them and retry; migration has not started."
   },
   "storage.breakdown": {
-    "zh-CN": "日志 {0} MiB · 缓存与更新 {1} MiB · 其他数据 {2} MiB。跳过 {3} 项无法读取或受保护的记录。按文件大小统计，磁盘分配空间可能略有差异。",
-    "zh-TW": "日誌 {0} MiB · 快取與更新 {1} MiB · 其他資料 {2} MiB。略過 {3} 項無法讀取或受保護的記錄。按檔案大小統計，磁碟配置空間可能略有差異。",
-    "en-US": "Logs {0} MiB · Cache & updates {1} MiB · Other data {2} MiB. {3} unreadable or protected items skipped. File sizes may differ slightly from allocated disk space."
+    "zh-CN": "日志 {0} MiB · 缓存与更新 {1} MiB · 账号、游戏及其他保留数据 {2} MiB。\n总量已包含沙盒 {4} MiB、解压缓存 {5} MiB（不重复相加）。跳过 {3} 项无法读取或受保护的记录。按文件大小统计。",
+    "zh-TW": "日誌 {0} MiB · 快取與更新 {1} MiB · 帳號、遊戲及其他保留資料 {2} MiB。\n總量已包含沙盒 {4} MiB、解壓快取 {5} MiB（不重複相加）。略過 {3} 項無法讀取或受保護的記錄。按檔案大小統計。",
+    "en-US": "Logs {0} MiB · Cache & updates {1} MiB · Accounts, game and retained data {2} MiB.\nTotals include sandboxes {4} MiB and extraction cache {5} MiB; do not add these again. {3} unreadable or protected items skipped. Measured by file size."
   },
   "storage.move": {
     "zh-CN": "迁移缓存…",

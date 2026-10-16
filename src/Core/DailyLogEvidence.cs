@@ -257,6 +257,25 @@ public sealed class DailyLogEvidence : IDisposable
                 Try(() => CompactRecord(root, path, true, expired: true));
             }
         }
+        // Legacy disk receipts predate the pipe mailbox. Retain their identity,
+        // command and outcome, but not obsolete UI trees after the diagnostic window.
+        string receipts=Path.Combine(root,"live","receipts");
+        if(Directory.Exists(receipts)&&SafePath(root,receipts))foreach(string path in Directory.EnumerateFiles(receipts,"*.json"))
+        {
+            token.ThrowIfCancellationRequested();
+            if(File.GetLastWriteTimeUtc(path)>=DateTime.UtcNow.AddDays(-7))continue;
+            Try(()=>
+            {
+                if(!SafePath(root,path))return false;
+                var value=DailyJson.TryRead<JsonObject>(path);
+                if(value==null || value.ContainsKey("diagnostic_storage") || value["Command"] is not JsonObject command
+                    || Text(command["Id"])!=Path.GetFileNameWithoutExtension(path) || !GuildStore.ValidId(Text(command["Id"]))
+                    || Text(value["State"]) is not ("observed_after_dispatch" or "rejected" or "detached") || !BusinessResolved(root,command))return false;
+                DateTime written=File.GetLastWriteTimeUtc(path);
+                RemoveUiTrees(value);value["diagnostic_storage"]="recovery-facts-v1";
+                DailyJson.Write(path,value);File.SetLastWriteTimeUtc(path,written);return true;
+            });
+        }
         string recovery=Path.Combine(root,"live","step-recovery");
         if(Directory.Exists(recovery)&&SafePath(root,recovery))foreach(string path in Directory.EnumerateFiles(recovery,"*.json"))
         {

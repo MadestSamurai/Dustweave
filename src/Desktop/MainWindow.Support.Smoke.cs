@@ -100,7 +100,7 @@ public partial class MainWindow
                     }
                     checks+=2;
                 }finally{cleanup.Close();}
-                var warning=CreateStorageWarningWindow([new(@"C:\",512*1048576L),new(@"E:\",384*1048576L)],new(2662*1048576L,2100*1048576L,800*1048576L,0,[]),out var warningAction);warning.Show();
+                var warning=CreateStorageWarningWindow([new(@"C:\",512*1048576L),new(@"E:\",384*1048576L)],new([new("main",root,2662*1048576L,2100*1048576L,0,800*1048576L,0)]),out var warningAction);warning.Show();
                 try {
                     await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
                     var ignore=Nodes<CheckBox>(warning).Single(c=>c.Name=="StorageWarningIgnore");

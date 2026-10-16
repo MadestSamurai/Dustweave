@@ -107,6 +107,7 @@ internal static class DailyParallelWorker
             monitorStop.Cancel(); await monitor;
             if (outcome == "interrupted") detail = "parallel.parent_lost";
             State(outcome, detail);
+            await DailyStorageMaintenance.FinishWorkerAsync(DailyIdentity.DataRoot);
         }
         return outcome == "completed" ? 0 : 1;
     }
