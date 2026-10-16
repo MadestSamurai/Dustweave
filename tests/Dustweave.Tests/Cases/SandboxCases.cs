@@ -85,6 +85,15 @@ static class SandboxCases
         var hostRefreshed=Credentials("synthetic-host-renewed",1);
         var boxRefreshed=Credentials("synthetic-box-renewed",2);
         var hostVault=new SessionVault(Path.Combine(output,"host-vault"));
+        var damagedVault=new SessionVault(Path.Combine(output,"damaged-observation-vault"));
+        damagedVault.RememberObserved(original);
+        string damagedObserved=Path.Combine(damagedVault.RootDirectory,"observed-session.bd2slot");
+        var encrypted=File.ReadAllBytes(damagedObserved);encrypted[^1]^=0x5a;File.WriteAllBytes(damagedObserved,encrypted);
+        Check(damagedVault.ReadObserved()==null,"unreadable historical observation after Windows reinstall is discarded as an age hint");
+        damagedVault.RememberObserved(hostRefreshed);
+        Check(SessionRegistry.SessionsEqual(damagedVault.ReadObserved()!,hostRefreshed),"fresh encrypted credentials replace a damaged observation and verify successfully");
+        Check(DailySandboxStorage.PrivatePaths.Contains("*.jsonl*") && DailySandboxStorage.PrivatePaths.Contains("tools") && DailySandboxStorage.PrivatePaths.Contains("cache-location.json"),"sandbox logs, IPC and cache routing cannot fall through to host files");
+        Check(!DailySandboxStorage.PrivatePaths.Contains("accounts.json") && !DailySandboxStorage.PrivatePaths.Contains("instance-requests") && !DailySandboxStorage.PrivatePaths.Contains("account-progress"),"account bootstrap and explicit same-account progress sync remain available");
         var boxVault=new SessionVault(Path.Combine(output,"box-vault"));
         var hostService=new SessionService(hostVault);
         var boxService=new SessionService(boxVault);

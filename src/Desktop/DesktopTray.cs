@@ -13,10 +13,11 @@ internal sealed class DesktopTray : IDisposable
     private HwndSource? source;
     private IconData icon;
     private bool added, ownsIcon;
+    private Action? notificationClick;
     private const int Callback = 0x8000 + 171;
     private readonly uint taskbarCreated = RegisterWindowMessage("TaskbarCreated");
     public DesktopTray(Window owner, Action exit) { this.owner = owner; this.exit = exit; }
-    public void Hide()
+    private void EnsureIcon()
     {
         var handle = new WindowInteropHelper(owner).EnsureHandle();
         if (source == null)
@@ -28,7 +29,17 @@ internal sealed class DesktopTray : IDisposable
                 CallbackMessage = Callback, Icon = ownsIcon ? small[0] : LoadIcon(IntPtr.Zero, new(32512)), Tip = "Dustweave", Info = "", Title = "" };
         }
         if (!added && !ShellNotifyIcon(0, ref icon)) throw new InvalidOperationException("desktop.tray_failed");
-        added = true; owner.Hide();
+        added = true;
+    }
+    public void Hide() { EnsureIcon(); owner.Hide(); }
+    public void Notify(string title, string message, Action clicked)
+    {
+        EnsureIcon(); notificationClick = clicked;
+        var notification = icon; notification.Flags = 0x10;
+        notification.Title = title.Length > 63 ? title[..63] : title;
+        notification.Info = message.Length > 255 ? message[..255] : message;
+        notification.InfoFlags = 1 | 0x10 | 0x80; // Silent, respect quiet hours; sound is a separate choice.
+        if (!ShellNotifyIcon(1, ref notification)) throw new InvalidOperationException("completion.notification_failed");
     }
     public void Restore()
     {
@@ -44,7 +55,9 @@ internal sealed class DesktopTray : IDisposable
         if (message == Callback)
         {
             handled = true;
-            if (lParam.ToInt32() is 0x202 or 0x203) Restore();
+            if (lParam.ToInt32() == 0x405) { Restore(); notificationClick?.Invoke(); }
+            else if (lParam.ToInt32() is 0x403 or 0x404) { if (owner.IsVisible && added) { ShellNotifyIcon(2, ref icon); added = false; } }
+            else if (lParam.ToInt32() is 0x202 or 0x203) Restore();
             else if (lParam.ToInt32() == 0x205)
             {
                 SetForegroundWindow(window);

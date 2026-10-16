@@ -1,5 +1,19 @@
 # Changelog / 更新记录
 
+## 1.4.0 — 2026-10-16
+
+- 新增日常结束汇总与 Windows、弹窗、声音提醒；汇总突出抽取结果、未完成事项及活动战斗失败后回退扫荡的情况。
+- 抽取明细显示五星服装、五星角色 UR 专武数量与具体结果；地图详情优先显示卡带名和地图名，统一详情窗口的背景与主题。
+- 修复队列自然结束但存在暂缓项目时未按设置退出游戏的问题；暂停、中断或仍待核对的队列保持游戏运行。
+- 藏红花流程在等待整轮土豆成熟时采矿砍树，成熟后优先返回收割，完成设定轮数后继续采完剩余资源。
+- 恢复单账号隔离启动，增加用途说明和不再提醒选项；隔离运行的日志、缓存与执行状态不再继承主窗口的同名运行数据。
+- 重装系统导致旧凭据无法解密时，重新登录同账号后可修复原槽位，保留账号设置和排序。
+- MANSION RUNAWAY 与装备助手先显示窗口和可取消的加载动画，再准备连接；增大允许制作 5 药 N 装选项的字号与点击区域。
+- 更新缓存按最多 2 个版本、最长 7 天双重限制清理，保留正在更新及需要恢复的记录。
+- 修复只购买收藏在砍价前、购买后退出商店时依赖普通跑商历史文件的问题；重新执行按当前商店状态处理。
+- Adds completion reports and notifications, detailed draw results and named map locations, idle-time gathering during saffron cycles, isolated launch and credential repair, responsive tool loading, bounded update-cache retention, and a favorites-only trade fix.
+- [完整说明 / Full notes](docs/releases/1.4.0.md)
+
 ## 1.3.17 — 2026-10-16
 
 - 空间统计覆盖完整数据目录和迁移后的缓存，不再只显示日志占用；可清理旧组件缓存及已完成的旧更新备份。

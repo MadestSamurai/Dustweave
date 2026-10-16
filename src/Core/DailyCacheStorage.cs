@@ -3,7 +3,10 @@ namespace Dustweave;
 
 public sealed record DailyCacheLocation(string Path, string[]? Retired = null);
 public sealed record DailyStorageItem(string Path, long Bytes, DateTime Written);
-public sealed record DailyCacheUnit(string Path, DailyStorageItem[] Files);
+public sealed record DailyCacheUnit(string Path, DailyStorageItem[] Files)
+{
+    public string[]? UpdateAttempts { get; init; }
+}
 public sealed record DailyStorageReport(long TotalBytes, long CacheBytes, long ReclaimableBytes, int Skipped, DailyCacheUnit[] Units);
 public sealed record DailyCacheMove(string Path, long Bytes, int RetainedFiles);
 
@@ -12,8 +15,8 @@ public static class DailyCacheStorage
 {
     public static IReadOnlyList<string> Areas { get; } = Array.AsReadOnly(new[] { "suite-cache", "trade/catalogs", "rules", "live/prepared", "live/binding-cache" });
     private static string Configuration(string root) => Path.Combine(root, "cache-location.json");
-    public static string Location(string root) => DailyJson.TryRead<DailyCacheLocation>(Configuration(root)) is { Path.Length: > 0 } value ? Path.GetFullPath(value.Path) : Path.GetFullPath(root);
-    private static string[] Roots(string root) => new[] { Path.GetFullPath(root), Location(root) }.Concat(DailyJson.TryRead<DailyCacheLocation>(Configuration(root))?.Retired ?? []).Select(Path.GetFullPath).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+    public static string Location(string root) => Accounts.SandboxProcessScope.CurrentBox.Length == 0 && DailyJson.TryRead<DailyCacheLocation>(Configuration(root)) is { Path.Length: > 0 } value ? Path.GetFullPath(value.Path) : Path.GetFullPath(root);
+    private static string[] Roots(string root) => Accounts.SandboxProcessScope.CurrentBox.Length != 0 ? [Path.GetFullPath(root)] : new[] { Path.GetFullPath(root), Location(root) }.Concat(DailyJson.TryRead<DailyCacheLocation>(Configuration(root))?.Retired ?? []).Select(Path.GetFullPath).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
     public static string Area(string root, string name)
     {
         if (!Areas.Contains(name)) throw new ArgumentException("Unknown cache area", nameof(name));
@@ -21,8 +24,7 @@ public static class DailyCacheStorage
     }
     public static IDisposable Lease(string root, bool exclusive = false)
     {
-        Directory.CreateDirectory(root);
-        return new FileStream(Path.Combine(root, "cache-storage.lock"), FileMode.OpenOrCreate, FileAccess.Read, exclusive ? FileShare.None : FileShare.Read);
+        return DailyUpdateHost.AcquireStorage(root, exclusive);
     }
     public static void Touch(string file)
     {
@@ -105,15 +107,7 @@ public static class DailyCacheStorage
             foreach (var file in all.Where(f => Within(f.Path, Path.Combine(basis, "live", "binding-cache")) && f.Written < DateTime.UtcNow.AddDays(-7))) units.Add(new(file.Path, [file]));
         }
         string updates = Path.Combine(root, "updates");
-        var versions = all.Where(f => Within(f.Path, updates)).GroupBy(f => Path.GetRelativePath(updates, f.Path).Split(Path.DirectorySeparatorChar)[0])
-            .Where(g => Directory.Exists(Path.Combine(updates, g.Key))).OrderByDescending(g => g.Max(f => f.Written)).ToArray();
-        foreach (var version in versions.Skip(1))
-        {
-            if (version.Max(f => f.Written) >= cut) continue;
-            var jobs = version.Where(f => Path.GetFileName(f.Path) == "job.json").ToArray();
-            bool terminal = jobs.Length > 0 && jobs.All(f => DailyJson.TryRead<DailyUpdateJournal>(Path.Combine(Path.GetDirectoryName(f.Path)!, "backup", "transaction.json"))?.State is "completed" or "rolled_back");
-            if (terminal) units.Add(new(Path.Combine(updates, version.Key), version.ToArray()));
-        }
+        units.AddRange(UpdateCacheRetention.Plan(updates, all.Where(f => Within(f.Path, updates)).ToArray(), DateTime.UtcNow, cancel));
         long cacheBytes = all.Where(f => Within(f.Path, updates) || roots.Any(r=>Areas.Any(a => Within(f.Path, Path.Combine(r, a))))).Sum(f => f.Bytes);
         return new(all.Sum(f => f.Bytes), cacheBytes, units.Sum(u => u.Files.Sum(f => f.Bytes)), skipped, units.ToArray());
     }
@@ -138,6 +132,7 @@ public static class DailyCacheStorage
             cancel.ThrowIfCancellationRequested();
             try
             {
+                if (!UpdateCacheRetention.CanClean(unit)) { skipped++; continue; }
                 // A newer download/compilation or a new recovery file invalidates the entire unit.
                 int ignored = 0;
                 if (Directory.Exists(unit.Path) && (Files(unit.Path, cancel, ref ignored).Count != unit.Files.Length || ignored != 0) || unit.Files.Any(f => !Unchanged(f))) { skipped++; continue; }
@@ -145,8 +140,8 @@ public static class DailyCacheStorage
                 var handles = new List<FileStream>();
                 try
                 {
-                    foreach (var file in unit.Files) handles.Add(new FileStream(file.Path, FileMode.Open, FileAccess.Read, FileShare.Delete));
-                    if (unit.Files.Any(f => !Unchanged(f))) { skipped++; continue; }
+                    foreach (var file in unit.Files) handles.Add(new FileStream(file.Path, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete));
+                    if (unit.Files.Any(f => !Unchanged(f)) || !UpdateCacheRetention.CanClean(unit)) { skipped++; continue; }
                     foreach (var file in unit.Files) { File.Delete(file.Path); removed++; bytes += file.Bytes; }
                 }
                 finally { foreach (var handle in handles) handle.Dispose(); }

@@ -8,6 +8,17 @@ public sealed class DailyFreeDrawStage : IDailyManagedStage
     private const string CategoryPrefix = "$pointer/UIRoot/Mask/BottomObject/Layout - MainCategory - Tab/Button - ";
     private readonly DailyCommandDriver driver; private readonly DailyManagedBusiness business; private readonly Func<bool> stopped; private readonly Func<double> clock; private readonly Func<TimeSpan, Task> delay;
     private DailyFreeDrawRules rules; private readonly Func<Task<DailyFreeDrawData>>? prepare; private DailyFreeDrawData? data; private readonly DailyNavigationPolicy policy = DailyNavigationPolicy.Load();
+    private readonly Dictionary<string, DailyDrawSummary> confirmed = new();
+    private JsonObject Report() => new() { ["draw_summary"] = System.Text.Json.JsonSerializer.SerializeToNode(
+        new DailyDrawSummary(confirmed.Values.Sum(s => s.Draws), confirmed.Values.SelectMany(s => s.Items).ToArray())) };
+    private void Remember(JsonObject op)
+    {
+        if (op["result"] is not JsonObject proof) return;
+        var summary = (data?.Catalog ?? DailyDrawCatalog.Empty).Describe(proof, DailyData.S(op["scope"]?["category"]));
+        confirmed[DailyData.S(op["id"])] = summary;
+        op["draw_summary"] = System.Text.Json.JsonSerializer.SerializeToNode(summary);
+        business.Save(op);
+    }
     public DailyFreeDrawStage(DailyCommandDriver driver, DailyManagedBusiness business, Func<bool> stopped, Func<double>? clock = null, Func<TimeSpan, Task>? delay = null, DailyFreeDrawRules? rules = null, Func<Task<DailyFreeDrawData>>? prepare = null)
     {
         this.prepare = prepare;
@@ -155,7 +166,9 @@ public sealed class DailyFreeDrawStage : IDailyManagedStage
         op["before"] = before.DeepClone();
         business.Save(op);
         data?.AssertReady();
-        return await business.CommitAsync(op, context);
+        var result = await business.CommitAsync(op, context);
+        Remember(op); // Preserve rewards even if the animation cannot be closed.
+        return result;
     }
     private async Task<JsonObject> DrawAsync(string category, JsonObject context)
     {
@@ -205,6 +218,17 @@ public sealed class DailyFreeDrawStage : IDailyManagedStage
     }
     public async Task<JsonObject> ExecuteAsync(JsonObject context, Func<string, string?, JsonObject?, Task<JsonObject>> relay)
     {
+        confirmed.Clear();
+        try
+        {
+            var result = await ExecuteCoreAsync(context, relay);
+            result["draw_summary"] = Report()["draw_summary"]!.DeepClone();
+            return result;
+        }
+        catch (Exception error) { if (confirmed.Count > 0) error.Data["stage_result"] = Report(); throw; }
+    }
+    private async Task<JsonObject> ExecuteCoreAsync(JsonObject context, Func<string, string?, JsonObject?, Task<JsonObject>> relay)
+    {
         Stop();
         var initial = await driver.ObserveAsync();
         if (!JsonNode.DeepEquals(initial.Context, context))
@@ -219,7 +243,8 @@ public sealed class DailyFreeDrawStage : IDailyManagedStage
             data = await prepare();
             rules = data.Rules;
             data.AssertReady();
-            if (preview != null && !JsonNode.DeepEquals(preview["rules"]?["source"], rules.Projection["source"]))
+            if (preview != null && new[] { "assembly_sha256", "database_sha256" }.Any(key =>
+                !JsonNode.DeepEquals(preview["rules"]?["source"]?[key], rules.Projection["source"]?[key])))
                 throw new StageHostException("pending", "原免费预览的数据身份已变化，未提交确认。");
         }
         if (preview != null)
@@ -231,6 +256,7 @@ public sealed class DailyFreeDrawStage : IDailyManagedStage
         else if (DailyNavigationDecision.Types(initial.Frame).Contains("GachaResultUI"))
         {
             var owned = OwnsResult(initial) ?? throw new StageHostException("adapter", "当前抽取结果没有本队列的已确认回执，保留现场。");
+            Remember(owned);
             await FinishResultAsync(owned);
         }
         var current = await driver.ObserveAsync();

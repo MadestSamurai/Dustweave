@@ -171,7 +171,6 @@
         <TextBlock x:Name="EmptyText" Text="{l:Tr account.empty}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="440" Margin="20" Visibility="Collapsed"/>
        </Grid>
        <DockPanel Grid.Row="2" x:Name="ManageBar" Margin="0,8,0,0" LastChildFill="False">
-        <Button DockPanel.Dock="Right" x:Name="SandboxRepairButton" Content="{l:Tr sandbox.repair.title}" Click="SandboxRepair_Click" Margin="8,0,0,0" ToolTip="{l:Tr sandbox.repair.selected_help}"/>
 
         <StackPanel Orientation="Horizontal" ToolTip="{l:Tr account.manage_help}">
          <Button x:Name="RenameAccountButton" Content="{l:Tr account.rename}" Click="Rename_Click" Margin="0,0,8,0"/>
@@ -180,6 +179,10 @@
          <Button x:Name="DeleteAccountButton" Content="{l:Tr account.remove}" Click="Delete_Click" Style="{StaticResource DangerButton}"/>
         </StackPanel>
        </DockPanel>
+       <WrapPanel Grid.Row="3" HorizontalAlignment="Right" Margin="0,8,0,0">
+        <Button x:Name="SandboxLaunchButton" Content="{l:Tr sandbox.launch}" Click="SandboxLaunch_Click" Margin="0,0,8,0" ToolTip="{l:Tr sandbox.launch_help}"/>
+        <Button x:Name="SandboxRepairButton" Content="{l:Tr sandbox.repair.title}" Click="SandboxRepair_Click" ToolTip="{l:Tr sandbox.repair.selected_help}"/>
+       </WrapPanel>
        <TextBlock x:Name="SandboxHelpText" Grid.Row="4" Visibility="Collapsed" Text="{l:Tr sandbox.help}" FontSize="12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,12,0,0"/>
       </Grid>
      </Border>
@@ -219,6 +222,12 @@
       <DockPanel LastChildFill="True"><Button DockPanel.Dock="Right" Content="{l:Tr software.manage_queue}" Click="OpenAccountsSettings_Click" Margin="16,0,0,0"/><CheckBox x:Name="RunOnOpen" Content="{l:Tr desktop.run_on_open}" Click="RunOnOpen_Click" VerticalAlignment="Center" ToolTip="{l:Tr desktop.run_on_open_help}"/></DockPanel>
       <CheckBox x:Name="CloseGameAfterRun" Content="{l:Tr completion.close_game}" Click="CloseGameAfterRun_Click" Margin="0,16,0,0"/>
       <TextBlock Text="{l:Tr completion.help}" Foreground="{DynamicResource MutedInk}" FontSize="12" TextWrapping="Wrap" Margin="24,4,0,0"/>
+      <TextBlock Text="{l:Tr completion.notice_title}" FontWeight="SemiBold" Margin="0,20,0,10"/>
+      <WrapPanel x:Name="CompletionNoticeChoices">
+       <CheckBox x:Name="CompletionWindows" Content="{l:Tr completion.windows}" Click="CompletionNotice_Click" Margin="0,0,20,8"/>
+       <CheckBox x:Name="CompletionPopup" Content="{l:Tr completion.popup}" Click="CompletionNotice_Click" Margin="0,0,20,8"/>
+       <CheckBox x:Name="CompletionSound" Content="{l:Tr completion.sound}" Click="CompletionNotice_Click" Margin="0,0,0,8"/>
+      </WrapPanel>
       <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="240"/></Grid.ColumnDefinitions><TextBlock Text="{l:Tr software.close_action}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,16,0"/><ComboBox Grid.Column="1" x:Name="CloseActionChoice" SelectionChanged="CloseAction_Changed" AutomationProperties.Name="{l:Tr software.close_action}"><ComboBoxItem Content="{l:Tr software.close_ask}"/><ComboBoxItem Content="{l:Tr desktop.minimize}"/><ComboBoxItem Content="{l:Tr desktop.exit}"/></ComboBox></Grid>
       <TextBlock x:Name="SoftwareSettingsStatus" Visibility="Collapsed" TextWrapping="Wrap" FontSize="12" Margin="0,10,0,0"/>
       <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Margin="0,16,0,22"/>

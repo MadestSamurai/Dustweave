@@ -227,8 +227,15 @@ public static class DailySandbox
         // create its own lock instead of attempting to copy the host's open file.
         string controlLock = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BD2DailyAssistant", "tools", "control.lock");
         var privateFiles = (await Run(installation,"SbieIni.exe",["query",box,"WriteFilePath"],token)).Split(['\r','\n'],StringSplitOptions.RemoveEmptyEntries);
-        if (!privateFiles.Contains(controlLock,StringComparer.OrdinalIgnoreCase))
-            await Run(installation,"SbieIni.exe",["append",box,"WriteFilePath",controlLock],token);
+        var missingPrivatePaths = DailySandboxStorage.Paths(DailyIdentity.DataRoot).Append(controlLock)
+            .Except(privateFiles,StringComparer.OrdinalIgnoreCase).ToArray();
+        if(configured && missingPrivatePaths.Length>0)
+        {
+            var pids=(await Run(installation,"Start.exe",["/box:"+box,"/listpids"],token)).Split(['\r','\n'],StringSplitOptions.RemoveEmptyEntries);
+            if(pids.Length!=1||pids[0].Trim()!="0")throw new InvalidOperationException("sandbox.storage_busy");
+        }
+        foreach(string path in missingPrivatePaths)
+            await Run(installation,"SbieIni.exe",["append",box,"WriteFilePath",path],token);
         token.ThrowIfCancellationRequested();
         await Task.Run(() =>
         {
@@ -298,7 +305,10 @@ public static class DailySandbox
                 // Only a verified bootstrap in the driver-reported sandbox can write.
                 using(var key=Registry.CurrentUser.CreateSubKey(SessionConstants.RegistrySubKey)) { }
                 new SessionService(vault).SynchronizeCurrentSlot();
-                var local = vault.TryLoadFixedSlot(request.Slot);
+                SessionSlot? local;
+                try { local = vault.TryLoadFixedSlot(request.Slot); }
+                catch(Exception error) when(error is System.ComponentModel.Win32Exception or System.Security.Cryptography.CryptographicException or SessionManagerException or System.Text.Json.JsonException)
+                { local = null; } // The already verified host request replaces an unreadable old Windows copy.
                 if (local != null && SessionIdentity.GetMemberId(local) == SessionIdentity.GetMemberId(saved))
                 {
                     local = SessionService.LatestSameAccount(local,vault.TryLoadFixedSlot);

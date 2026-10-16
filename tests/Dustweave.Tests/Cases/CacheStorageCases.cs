@@ -19,15 +19,22 @@ internal static class CacheStorageCases
         Put("rules/daily/a/table.json",20);Put("live/prepared/1/bridge.dll",20);Put("live/binding-cache/a.json",20);
         void Update(string version,string? state,int age)
         {
-            Put($"updates/{version}/attempts/id/job.json",4,age);
+            string nonce=new string('a',32),directory=Path.Combine(root,"updates",version),attempt=Path.Combine(directory,"attempts",nonce);
+            string jobPath=Put($"updates/{version}/attempts/{nonce}/job.json",0,age);
+            var asset=new DailyUpdateAsset("Portable","package.zip",50,new string('0',64));
+            var release=new DailyUpdateRelease(version.Replace("-Portable",""),null,2,[],[asset]);
+            string target=Path.Combine(output,"update-install","Dustweave.exe");
+            DailyJson.Write(jobPath,new DailyUpdateJob(directory,target,int.MaxValue,0,release,asset,nonce));
+            File.SetLastWriteTimeUtc(jobPath,DateTime.UtcNow.AddDays(-age));
             Put($"updates/{version}/payload.zip",50,age);
-            if(state!=null){string path=Put($"updates/{version}/attempts/id/backup/transaction.json",0,age);DailyJson.Write(path,new DailyUpdateJournal("target","backup","staging",[],state));File.SetLastWriteTimeUtc(path,DateTime.UtcNow.AddDays(-age));}
+            if(state!=null){string path=Put($"updates/{version}/attempts/{nonce}/backup/transaction.json",0,age);DailyJson.Write(path,new DailyUpdateJournal(Path.GetDirectoryName(target)!,Path.Combine(attempt,"backup"),Path.Combine(attempt,"staging"),[],state));File.SetLastWriteTimeUtc(path,DateTime.UtcNow.AddDays(-age));}
+            else Put($"updates/{version}/attempts/{nonce}/backup/interrupted.bin",10,age);
         }
-        Update("1.0-Portable","completed",10);Update("1.1-Portable","awaiting_start",9);Update("1.2-Portable",null,8);Update("1.3-Portable","rolled_back",7);Update("1.4-Portable","completed",1);
+        Update("1.0.0-Portable","completed",10);Update("1.1.0-Portable","awaiting_start",9);Update("1.2.0-Portable",null,8);Update("1.3.0-Portable","rolled_back",7);Update("1.4.0-Portable","completed",1);
         var plan=await DailyCacheStorage.ScanAsync(root);
         long physical=Directory.EnumerateFiles(root,"*",SearchOption.AllDirectories).Sum(f=>new FileInfo(f).Length);
         Check(plan.TotalBytes==physical,"counts all data, not only allowlisted logs");
-        Check(plan.Units.Count(u=>u.Path.Contains("updates"))==2,"only terminal old updates eligible; newest, pending and missing journal protected");
+        Check(plan.Units.Count(u=>u.Path.Contains("updates"))==2,"old completed/rolled-back versions eligible; active and damaged recovery protected");
         Check(plan.Units.Count(u=>u.Path.Contains("suite-cache"))==2,"keeps two generations for each component");
         using(var inUse=new FileStream(Path.Combine(root,"trade/catalogs/a/tables/CookingTable.json"),FileMode.Open,FileAccess.Read,FileShare.Read))
         {

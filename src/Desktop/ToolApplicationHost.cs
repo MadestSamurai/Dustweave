@@ -13,12 +13,23 @@ internal static class ToolApplicationHost
             var window=app.MainWindow;
             if(window==null)return;
             _ = new HostedToolLocaleBridge(app);
+            if(DailySuite.PreparesInWindow(id)){
+                // Equipment installs its shared chrome after this decorator, too.
+                // Keep the first frame independent of connection and compilation.
+                var root=DailyIdentity.DataRoot;
+                _ = new HostedToolPreparation(window,id,root,(progress,cancel)=>HostedToolPreparation.PrepareAsync(id,root,progress,cancel),()=>ConnectReadyWindow(window,id));
+                DailyDialogs.Prepare(window,toolWindow:true);
+                return;
+            }
+            ConnectReadyWindow(window,id);
+        }),System.Windows.Threading.DispatcherPriority.Loaded);
+    }
+    private static void ConnectReadyWindow(Window window,string id){
             _ = new HostedToolActivity(window,id);
             if(window.FindName("ConnectButton") is System.Windows.Controls.Button button){
-                if(id=="equipment"){button.SetResourceReference(System.Windows.Controls.ContentControl.ContentProperty,"SuiteRefresh");app.Resources["SuiteRefresh"]=DailyLanguage.Current.Get("tools.refresh_inventory");}
+                if(id=="equipment"){button.SetResourceReference(System.Windows.Controls.ContentControl.ContentProperty,"SuiteRefresh");Application.Current.Resources["SuiteRefresh"]=DailyLanguage.Current.Get("tools.refresh_inventory");}
                 _ = ConnectWhenIdle(window,button,id!="equipment");
             }
-        }),System.Windows.Threading.DispatcherPriority.Loaded);
     }
     internal static async Task ConnectWhenIdle(Window window,System.Windows.Controls.Button button,bool hideAfterConnect, string? dataRoot=null)
     {
@@ -65,7 +76,7 @@ internal static class ToolApplicationHost
             var entry = assembly.GetType(typeName)!.GetMethod("RunHosted", BindingFlags.Public | BindingFlags.Static)
                 ?? throw new MissingMethodException("工具缺少统一启动入口，请使用完整版本。");
             Action<Application>? setup=!helper&&!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BD2_DAILY_HOSTED_TOOL")) ? app=>ConfigureWindow(app,id) : null;
-            if(id=="equipment") { var activitySetup=setup; setup=app=>{EquipmentToolPresentation.Install(app);activitySetup?.Invoke(app);}; }
+            if(id=="equipment") { var activitySetup=setup; setup=app=>{EquipmentToolPresentation.Install(app,deferChrome:activitySetup!=null);activitySetup?.Invoke(app);}; }
             return (int)entry.Invoke(null, new object?[] { arguments,setup })!;
         }
         catch (Exception error)

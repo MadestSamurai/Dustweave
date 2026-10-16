@@ -1,5 +1,17 @@
 # Scheduled runs and updates / 定时执行与版本更新
 
+## Local update cache / 本地更新缓存
+
+客户端 `updates` 同时受两个上限约束：最多保留最新 **2 个版本**，最长 **7 天**，任一超出即进入清理。按语义版本号排序；同一版本的 Lite 与 Portable 合计为一个版本。只下载未安装的包、过时的断点下载也适用。此规则与发行端十版差分基线的保留无关。
+
+每次安装尝试单独处理。同版本仅保留最近一次已完成或已回退的备份；确认结束且启动恢复标记已清除后，解压副本和临时更新器即可清理。真正待恢复、损坏或无法确认状态的尝试额外保护，不阻止同目录里其他已结束尝试的清理。正在下载、安装或恢复时持有共享存储锁；清理需要独占锁，并在删除前重新核对记录与文件。
+
+新版本启动及新更新下载完成后，在下一次空闲维护中执行；遵守用户的自动清理开关。手动空间清理使用同一规则。运行中的自动化不会因此中断，也不会删除账号、任务进度或现有安装。
+
+Client update caches keep at most the latest **2 semantic versions** for up to **7 days**; exceeding either limit makes them eligible for cleanup. Lite and Portable share one version slot. Superseded downloads and partial downloads are covered. This is separate from the publisher's ten-version delta baseline window.
+
+Attempts are evaluated individually. Only the most recent terminal backup per version is retained; extraction/helper copies are removed once completion or rollback is confirmed and the launcher marker is cleared. Active, damaged or unresolved recovery is protected separately, without pinning finished sibling attempts. Downloads/installers/recovery share a storage lease; maintenance requires exclusive ownership and rechecks files and recovery state before deletion. New host versions and fresh downloads schedule the next idle cleanup, respecting the automatic cleanup preference. Manual cleanup follows the same rules.
+
 ## Account queues / 多账号队列
 
 账号页中的“执行勾选账号”是多账号队列的主要入口。按列表顺序执行，各账号沿用自己保存的任务配置。今日任务页继续用于查看进度、停止、接续与补跑。

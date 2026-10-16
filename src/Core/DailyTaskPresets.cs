@@ -60,6 +60,8 @@ public sealed class DailyTaskPresetStore(string root)
 
 public sealed record DailyDesktopBehavior(string CloseAction = "ask", bool RunOnOpen = false, bool CloseGameAfterRun = false)
 {
+    public DailyCompletionNotice CompletionNotice { get; init; } = new();
+    public bool HideIsolationReminder { get; init; }
     public static DailyDesktopBehavior Read(string root)
     {
         string path = Path.Combine(root, "desktop-behavior.json");

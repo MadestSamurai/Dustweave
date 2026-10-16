@@ -36,7 +36,12 @@ public partial class MainWindow
         try
         {
             await Task.Run(() => parallel.TickAsync());parallelPanel.Show(parallel.Current);
-            bool active=ParallelBusy;if(!active){parallelControl?.Dispose();parallelControl=null;}if(parallelWasBusy!=active){parallelWasBusy=active;SetBusy(busy);}
+            bool active=ParallelBusy; bool finished=parallelWasBusy && !active;
+            if(!active){parallelControl?.Dispose();parallelControl=null;}if(parallelWasBusy!=active){parallelWasBusy=active;SetBusy(busy);}
+            if (finished && parallel.Current is {} run)
+                ShowRunResults(run.Items.Select(item => new DailyAccountRunResult(item.Account.Name,
+                    item.Status?.Queue is {} view ? view with { Message = view.Message.Length > 0 ? view.Message : item.State is "failed" or "interrupted" or "stopped" ? item.Detail : "" }
+                        : new QueueView(item.State, item.Detail, "", [], item.Account.AccountKey))).ToArray());
             if (parallel.Current == null && ReferenceEquals(RunTab.Content, parallelPanel)) await ReturnFromParallelAsync();
         }
         catch(Exception error){ShowError(error);}

@@ -22,6 +22,7 @@ public partial class MainWindow
         bool closed = !catalog.GameRunning && !catalog.StarterRunning;
         bool identified = catalog.SessionComplete && DailyProfiles.ValidKey(catalog.CurrentKey);
         var current = catalog.Accounts.FirstOrDefault(a => a.Valid && a.AccountKey == catalog.CurrentKey);
+        bool recoverable = catalog.Accounts.Count(a => !a.Valid && a.AccountKey == catalog.CurrentKey) == 1;
         bool hasSlot = catalog.OccupiedSlots.Concat(catalog.Accounts.Select(a => a.SlotNumber)).Distinct().Count() < 100;
         string hint = !closed ? "account.login_running" :
             !identified ? "account.login_needed" :
@@ -29,11 +30,11 @@ public partial class MainWindow
         L.Bind(LoginAccountText, TextBlock.TextProperty, () => current?.Name ?? L.Get(identified ? "account.unsaved" : "account.not_signed_in"));
         L.Text(LoginHintText, hint);
         L.Bind(SaveAccountButton, ContentControl.ContentProperty, current == null ? "account.save" : "account.update_saved");
-        SaveAccountButton.IsEnabled = idle && closed && identified && (current != null || hasSlot);
+        SaveAccountButton.IsEnabled = idle && closed && identified && (current != null || recoverable || hasSlot);
         LoginNewButton.IsEnabled = idle && closed && hasSlot && (!catalog.SessionComplete || current != null);
         RecoverButton.IsEnabled = idle && closed && catalog.HasRecovery;
         L.Bind(SaveAccountButton, FrameworkElement.ToolTipProperty, !closed ? "account.login_running" :
-            !identified ? "account.login_needed" : current != null ? "account.update_help" : hasSlot ? "account.save_help" : "account.slots_full");
+            !identified ? "account.login_needed" : recoverable ? "account.recover_credentials" : current != null ? "account.update_help" : hasSlot ? "account.save_help" : "account.slots_full");
         L.Bind(LoginNewButton, FrameworkElement.ToolTipProperty, !closed ? "account.login_running" :
             !hasSlot ? "account.slots_full" : catalog.SessionComplete && current == null ? "account.login_unsaved" : "account.new_help");
         L.Bind(RecoverButton, FrameworkElement.ToolTipProperty, !closed ? "account.login_running" :
@@ -43,6 +44,7 @@ public partial class MainWindow
         if (IsSandboxWindow) SaveAccountButton.IsEnabled = LoginNewButton.IsEnabled = RecoverButton.IsEnabled = false;
         var row = Selected;
         SandboxRepairButton.IsEnabled = idle && row?.Account.Valid == true;
+        SandboxLaunchButton.IsEnabled = idle && row?.Account.Valid == true;
         // Editing actions only affect the highlighted row, never the checked queue.
         RenameAccountButton.IsEnabled = DeleteAccountButton.IsEnabled = idle && row?.Account.Valid == true;
         MoveUpButton.IsEnabled = idle && row != null && rows.IndexOf(row) > 0;

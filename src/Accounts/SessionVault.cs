@@ -23,7 +23,14 @@ internal sealed class SessionVault
     internal string RootDirectory { get; }
 
     private string ObservedPath => Path.Combine(RootDirectory, "observed-session.bd2slot");
-    internal SessionSlot? ReadObserved() => File.Exists(ObservedPath) ? LoadFromPath(ObservedPath) : null;
+    internal SessionSlot? ReadObserved()
+    {
+        // This is only an age hint, never the source of login credentials.
+        // A Windows reinstall can invalidate its DPAPI key. Fresh verified
+        // credentials must remain saveable; the next atomic write replaces it.
+        try { return File.Exists(ObservedPath) ? LoadFromPath(ObservedPath) : null; }
+        catch (Exception error) when (error is System.ComponentModel.Win32Exception or CryptographicException or SessionManagerException or JsonException) { return null; }
+    }
     internal void RememberObserved(SessionSlot slot) => WriteAndVerify(slot, ObservedPath);
 
     internal bool HasRecovery => File.Exists(Path.Combine(

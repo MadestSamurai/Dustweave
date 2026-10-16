@@ -29,7 +29,7 @@
       <StackPanel Width="175" Margin="0,0,16,8"><TextBlock Text="{DynamicResource Label13}" Margin="0,0,0,6"/><TextBox x:Name="GoldInput" TextChanged="SettingsChanged" ToolTip="{DynamicResource Label14}" AutomationProperties.Name="{DynamicResource Label15}"/></StackPanel>
       <StackPanel Width="160" Margin="0,0,0,8"><TextBlock Text="{DynamicResource Label16}" Margin="0,0,0,6"/><TextBox x:Name="PotionInput" TextChanged="SettingsChanged" ToolTip="{DynamicResource Label17}" AutomationProperties.Name="{DynamicResource Label18}"/></StackPanel>
      </WrapPanel>
-     <CheckBox x:Name="FiveInput" Grid.Row="1" Content="{DynamicResource Label19}" Checked="SettingsChanged" Unchecked="SettingsChanged" Margin="0,0,0,8"/>
+     <CheckBox x:Name="FiveInput" Grid.Row="1" FontSize="14" MinHeight="36" VerticalContentAlignment="Center" Padding="0,6,8,6" HorizontalAlignment="Left" Checked="SettingsChanged" Unchecked="SettingsChanged" Margin="0,0,0,8"><TextBlock Text="{DynamicResource Label19}" FontSize="14" TextWrapping="Wrap"/></CheckBox>
      <TextBlock Grid.Row="2" Text="{DynamicResource Label20}" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,0,0,14"/>
      <Grid Grid.Row="3" MinHeight="100" MaxHeight="240"><DataGrid x:Name="RecipeGrid" IsReadOnly="True" AutomationProperties.Name="{DynamicResource Label21}">
       <DataGrid.Columns><DataGridTextColumn ElementStyle="{StaticResource CellText}" Header="{DynamicResource Label22}" Binding="{Binding Name}" Width="*"/><DataGridTextColumn ElementStyle="{StaticResource CellText}" Header="{DynamicResource Label23}" Binding="{Binding Count}" Width="95"/><DataGridTextColumn ElementStyle="{StaticResource CellText}" Header="{DynamicResource Label24}" Binding="{Binding Gold}" Width="125"/><DataGridTextColumn ElementStyle="{StaticResource CellText}" Header="{DynamicResource Label25}" Binding="{Binding Potions}" Width="105"/><DataGridTextColumn ElementStyle="{StaticResource CellText}" Header="{DynamicResource Label26}" Binding="{Binding Powder}" Width="105"/></DataGrid.Columns>
@@ -103,6 +103,7 @@
    <TextBlock x:Name="SummaryText" Text="{DynamicResource Label71}" FontWeight="SemiBold" FontSize="16" TextWrapping="Wrap" Margin="0,0,0,10"/>
    <DockPanel LastChildFill="False"><Button x:Name="ExecuteButton" DockPanel.Dock="Right" Content="{DynamicResource Label74}" Style="{StaticResource PrimaryButton}" Click="ExecuteClick" IsEnabled="False" MinWidth="135"/><Button x:Name="StopButton" DockPanel.Dock="Right" Content="{DynamicResource Label73}" Click="StopClick" IsEnabled="False" Margin="0,0,10,0"/></DockPanel>
    <TextBlock x:Name="StatusText" Text="{DynamicResource Label76}" TextWrapping="Wrap" MaxHeight="65" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" Foreground="{DynamicResource MutedInk}" Margin="0,10,0,0"/>
+   <ProgressBar x:Name="LoadingProgress" Height="4" Margin="0,10,0,0" Visibility="Collapsed" AutomationProperties.Name="{Binding Text, ElementName=StatusText}"/>
   </StackPanel>
  </Grid>
 </Window>

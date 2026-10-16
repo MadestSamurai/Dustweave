@@ -110,28 +110,36 @@ static class TradeDataCases
         Reject(() => DailyTradeData.CheckTransactions(root, context, different), "stopped trade cannot resume against a different catalog fingerprint");
         resumeJob["state"] = "running";
         DailyJson.Write(job, resumeJob);
-        DailyTradeClose.Owner(root, context);
+        DailyTradeClose.Owner(resumeJob, context);
         Check(true, "managed shop close requires the current original post-purchase session");
         foreach (string phase in new[] { "purchase", "unknown" })
         {
             resumeJob["phase"] = phase;
             DailyJson.Write(job, resumeJob);
-            Reject(() => DailyTradeClose.Owner(root, context), "managed close cannot end unconfirmed " + phase + " purchase");
+            Reject(() => DailyTradeClose.Owner(resumeJob, context), "managed close cannot end unconfirmed " + phase + " purchase");
         }
         resumeJob["phase"] = "purchase";
         DailyJson.Write(job, resumeJob);
-        DailyTradeClose.Owner(root, context, endingBargain: false);
+        DailyTradeClose.Owner(resumeJob, context, endingBargain: false);
         Check(true, "ordinary shop exit is allowed before starting bargain in the running purchase phase");
         foreach (string invalidState in new[] { "prepared", "stopped", "completed" })
         {
             resumeJob["state"] = invalidState;
             DailyJson.Write(job, resumeJob);
-            Reject(() => DailyTradeClose.Owner(root, context, endingBargain: false), "ordinary purchase exit rejects original " + invalidState + " transaction");
+            Reject(() => DailyTradeClose.Owner(resumeJob, context, endingBargain: false), "ordinary purchase exit rejects original " + invalidState + " transaction");
         }
         resumeJob["state"] = "running";
         resumeJob["phase"] = "unknown";
         DailyJson.Write(job, resumeJob);
-        Reject(() => DailyTradeClose.Owner(root, context, endingBargain: false), "ordinary shop exit does not bypass an unknown trade phase");
+        Reject(() => DailyTradeClose.Owner(resumeJob, context, endingBargain: false), "ordinary shop exit does not bypass an unknown trade phase");
+        Reject(() => DailyTradeClose.Owner(null, context, endingBargain: false), "a persisted job alone cannot own current shop navigation");
+        resumeJob["phase"] = "audit";
+        foreach (string key in new[] { "account", "player", "server", "cycle" })
+        {
+            var changed = resumeJob.DeepClone().AsObject();
+            changed["context"]![key] = "different";
+            Reject(() => DailyTradeClose.Owner(changed, context), "active shop close rejects changed " + key);
+        }
         JsonObject Popup(bool ready) => new()
         {
             ["Surfaces"] = new JsonArray(new JsonObject { ["Type"] = "DiscountCancelPopupUI", ["InputReady"] = ready, ["Targets"] = new JsonArray(new JsonObject { ["Field"] = "_objButtonOk", ["Enabled"] = ready }) })

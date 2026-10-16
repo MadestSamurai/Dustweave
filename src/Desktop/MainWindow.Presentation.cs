@@ -214,7 +214,7 @@ public sealed partial class DailyRunPanel
         if(!action.IsVisible || !action.IsEnabled || action.Content?.ToString()!=L.Get("run.details_count",tasks.Count)
             || !TaskDetailsCommand.CanExecute(rows[0],action))throw new Exception("Pending details cannot be opened from a completed reward check");
         TaskDetailsCommand.Execute(rows[0],action);
-        return taskDetailsWindow??throw new Exception("The details action did not open the task window");
+        return taskDetailsWindow as DailyTaskDetailsWindow??throw new Exception("The details action did not open the task window");
     }
     internal int CheckAccessiblePlanForSmoke()
     {

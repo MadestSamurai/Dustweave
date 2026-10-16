@@ -6,7 +6,7 @@ namespace Dustweave.Desktop;
 // Reuse the product's actual controls and palette, not a second copy of its styles.
 internal static class EquipmentToolPresentation
 {
-    internal static void Install(Application app)
+    internal static void Install(Application app,bool deferChrome=false)
     {
         var controls = new ResourceDictionary { Source = new Uri("/Dustweave;component/SharedControls.xaml", UriKind.Relative) };
         foreach (var key in controls.Keys) app.Resources[key] = controls[key];
@@ -19,7 +19,7 @@ internal static class EquipmentToolPresentation
         app.Startup += (_, _) => app.Dispatcher.BeginInvoke(new Action(() => {
             if (app.MainWindow is not { } window) return;
             bool showInTaskbar = window.ShowInTaskbar;
-            DailyDialogs.Prepare(window);
+            if(!deferChrome)DailyDialogs.Prepare(window,toolWindow:true);
             window.ShowInTaskbar = showInTaskbar;
         }), DispatcherPriority.Loaded);
         app.Exit += (_, _) => { timer.Stop(); theme.Dispose(); AppDomain.CurrentDomain.SetData("BD2Daily.ShowModal", null); AppDomain.CurrentDomain.SetData("BD2Daily.ShowMessage", null); };

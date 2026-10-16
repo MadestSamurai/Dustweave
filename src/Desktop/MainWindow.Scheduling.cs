@@ -173,6 +173,7 @@ public partial class MainWindow
             return parallel!.Current!.Items.All(x => x.State == "completed") ? "completed" : "partial";
         }
         string state = "failed";
+        var results = new List<DailyAccountRunResult>();
         dailyStopping = false;
         await OperateAsync(async () =>
         {
@@ -186,12 +187,14 @@ public partial class MainWindow
                     if (dailyStopping) { state = "paused"; break; }
                     var result = await RunDailyQueueAsync(account.AccountKey, execution.CloseGame,
                         () => dailyQueue.RunAsync(account.AccountKey, selection: selections[account.AccountKey]));
+                    results.Add(new(account.Name, result));
                     if (result.State == "paused" || result.Stages.Any(s => s.State == "recovery_required")) { state = "paused"; break; }
                     if (result.State is not ("completed" or "skipped")) state = "partial";
                 }
             }
             catch { state = "failed"; throw; }
         }, connectsGame: true);
+        ShowRunResults(results);
         return state;
     }
     private async void RunAccounts_Click(object sender, RoutedEventArgs e)

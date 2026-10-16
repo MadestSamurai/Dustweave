@@ -107,12 +107,12 @@ internal sealed class SessionService
             Slots: slots);
     }
 
-    internal SlotSummary SaveCurrentToSlot(int slotNumber, string displayName, string? expectedMemberId = null)
+    internal SlotSummary SaveCurrentToSlot(int slotNumber, string displayName, string? expectedMemberId = null, bool replaceUnreadable = false)
     {
         SessionSlot current = PreserveCredentialAge(SessionRegistry.Capture(displayName));
         SessionSlot selected = LatestSameAccount(current, _vault.TryLoadFixedSlot);
         var result = SaveCapturedToSlot(selected, slotNumber, displayName, expectedMemberId,
-            _vault.TryLoadFixedSlot, _vault.SaveFixedSlot);
+            _vault.TryLoadFixedSlot, _vault.SaveFixedSlot, replaceUnreadable);
         _vault.RememberObserved(current);
         return result;
     }
@@ -121,7 +121,7 @@ internal sealed class SessionService
     // decision and the vault's encrypted atomic write/read-back verification.
     internal static SlotSummary SaveCapturedToSlot(SessionSlot current, int slotNumber,
         string displayName, string? expectedMemberId, Func<int, SessionSlot?> load,
-        Func<int, SessionSlot, string, bool, SlotSummary> save)
+        Func<int, SessionSlot, string, bool, SlotSummary> save, bool replaceUnreadable = false)
     {
         if (slotNumber < 1 || slotNumber > SlotCount) throw new SessionManagerException("账户槽位超出范围。");
         string? member = SessionIdentity.GetMemberId(current);
@@ -135,7 +135,12 @@ internal sealed class SessionService
             if (existing != null && SessionIdentity.GetMemberId(existing) == member)
                 return save(number, current, number == slotNumber ? displayName : existing.Alias, true);
         }
-        if (load(slotNumber) != null) throw new SessionManagerException($"账户槽位 {slotNumber} 已被其他账号占用。");
+        SessionSlot? target;
+        try { target = load(slotNumber); }
+        catch (Exception error) when (replaceUnreadable && expectedMemberId == member &&
+            error is System.ComponentModel.Win32Exception or System.Security.Cryptography.CryptographicException or SessionManagerException or System.Text.Json.JsonException)
+        { return save(slotNumber, current, displayName, true); }
+        if (target != null) throw new SessionManagerException($"账户槽位 {slotNumber} 已被其他账号占用。");
         return save(slotNumber, current, displayName, false);
     }
 
@@ -348,7 +353,8 @@ internal sealed class SessionService
             throw new SessionManagerException("登录凭据与所选账号不一致，未覆盖已保存账号。");
         for (int n = 1; n <= SlotCount; n++)
         {
-            var saved = _vault.TryLoadFixedSlot(n);
+            SessionSlot? saved;
+            try { saved = _vault.TryLoadFixedSlot(n); } catch { continue; }
             if (saved == null || SessionIdentity.GetMemberId(saved) != expectedMember) continue;
             var latest = LatestSameAccount(saved, _vault.TryLoadFixedSlot);
             if (SessionRegistry.SameAuthentication(incoming,latest))

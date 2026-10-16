@@ -23,7 +23,9 @@
     "zh-CN": "执行中断，再次运行将自动检查游戏当前进度：{0}",
     "zh-TW": "執行中斷，再次執行將自動檢查遊戲目前進度：{0}",
     "en-US": "Run interrupted. Retrying will check current game progress: {0}",
-    "parameters": ["message"]
+    "parameters": [
+      "message"
+    ]
   },
   "notice.weekly.refreshed_deferred": {
     "zh-CN": "收集后已重新读取进度，本次不再重复尝试；继续其他地图，之后可补跑",
@@ -34,19 +36,29 @@
     "zh-CN": "卡带 {0} · 地图 {1} 暂缓：{2}；继续后续地点",
     "zh-TW": "卡帶 {0} · 地圖 {1} 暫緩：{2}；繼續後續地點",
     "en-US": "Cartridge {0} · Map {1} deferred: {2}; continuing to other locations",
-    "parameters": ["number", "number", "message"]
+    "parameters": [
+      "number",
+      "number",
+      "message"
+    ]
   },
   "notice.weekly.pack_deferred": {
     "zh-CN": "卡带 {0} 暂缓：{1}；继续后续地点",
     "zh-TW": "卡帶 {0} 暫緩：{1}；繼續後續地點",
     "en-US": "Cartridge {0} deferred: {1}; continuing to other locations",
-    "parameters": ["number", "message"]
+    "parameters": [
+      "number",
+      "message"
+    ]
   },
   "notice.weekly.deferred_summary": {
     "zh-CN": "{0} · 卡带 {1} 有暂缓项目，原因已保留，可之后补跑",
     "zh-TW": "{0} · 卡帶 {1} 有暫緩項目，原因已保留，可之後補跑",
     "en-US": "{0} · Cartridges {1} have deferred tasks. Reasons are saved for a later retry.",
-    "parameters": ["message", "value"]
+    "parameters": [
+      "message",
+      "value"
+    ]
   },
   "notice.weekly.reentry_unresolved": {
     "zh-CN": "重进后仍有待办，保留服务器进度",
@@ -1557,5 +1569,15 @@
     "parameters": [
       "value"
     ]
+  },
+  "notice.trade.session_ended": {
+    "zh-CN": "当前跑商已结束，未操作商店；请重新执行跑商以读取当前库存。",
+    "zh-TW": "目前跑商已結束，未操作商店；請重新執行跑商以讀取目前庫存。",
+    "en-US": "This trade run has ended. The shop was left untouched; run trade again to read current stock."
+  },
+  "notice.trade.close_identity_changed": {
+    "zh-CN": "跑商的账号、游戏进程或供货周期已变化；未操作商店。",
+    "zh-TW": "跑商的帳號、遊戲程序或供貨週期已變更；未操作商店。",
+    "en-US": "The trade account, game process or stock cycle changed. The shop was left untouched."
   }
 }

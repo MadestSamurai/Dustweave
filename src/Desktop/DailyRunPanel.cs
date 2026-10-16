@@ -13,7 +13,7 @@ public sealed partial class DailyRunPanel : UserControl
     public static readonly System.Windows.Input.RoutedUICommand TaskDetailsCommand = new();
     public static readonly System.Windows.Input.RoutedUICommand RecoveryDetailsCommand = new();
     internal Func<Window, bool?>? ConfirmRecoveryForSmoke { get; set; }
-    private DailyTaskDetailsWindow? taskDetailsWindow;
+    private Window? taskDetailsWindow;
     public event Action<bool, bool>? StartRequested;
     public event Action<QueueRetryRequest>? RetryRequested;
     public event Action<QueuePlanRequest>? PlanRequested;
@@ -54,7 +54,9 @@ public sealed partial class DailyRunPanel : UserControl
         CommandBindings.Add(new System.Windows.Input.CommandBinding(TaskDetailsCommand, (_, e) => {
             if(e.Parameter is StageRow row && row.HasTaskDetails) {
                 taskDetailsWindow?.Close();
-                taskDetailsWindow = new DailyTaskDetailsWindow(row.Task, row.PendingTasks, row.FinishedAt) { Owner=Window.GetWindow(this) };
+                taskDetailsWindow = row.Draws is { Draws: > 0 } draw ? DailyResultWindow.DrawDetails(draw)
+                    : new DailyTaskDetailsWindow(row.Task, row.PendingTasks, row.FinishedAt);
+                taskDetailsWindow.Owner = Window.GetWindow(this);
                 taskDetailsWindow.Show();
             }
         }, (_, e) => { e.CanExecute=e.Parameter is StageRow {HasTaskDetails:true};e.Handled=true; }));
@@ -611,7 +613,8 @@ public sealed partial class DailyRunPanel : UserControl
                     "skipped" => L.Get("run.skipped_unknown"),
                     "partial" or "blocked" or "failed" or "error" => L.Get("run.outcome_unknown"),
                     _ => ""
-                } : Describe(snapshot.Detail);
+                } : DailyResultText.Detail(snapshot);
+                if (string.IsNullOrWhiteSpace(snapshot.Detail) && snapshot.Draws is { Draws: > 0 } draw) text = DailyResultText.Draws(draw);
                 if (snapshot.State is "blocked" or "failed" or "error" && DailyIssues.Classify(snapshot.Detail).Code != "unknown")
                     text = DailyIssuePresentation.WithAdvice(snapshot.Detail, text);
                 if (HasRecovery) text = (text.Length > 0 ? text + "\n" : "") + L.Get("run.recovery_summary", RecoveryOperations);
@@ -619,6 +622,7 @@ public sealed partial class DailyRunPanel : UserControl
             }
         }
         public IReadOnlyList<QueueTaskDetail> PendingTasks => snapshot.PendingTasks ?? [];
+        public DailyDrawSummary? Draws => snapshot.Draws;
         public bool HasRecovery => snapshot.State == "recovery_required";
         public string RecoveryLabel => L.Get("run.recovery_details");
         public string RecoveryAccessibleName => L.Get("run.recovery_accessible", Name);
@@ -627,7 +631,7 @@ public sealed partial class DailyRunPanel : UserControl
                 ? L.Get("run.recovery_talent_" + r.TalentKind)
                 : L.Get("run.recovery_operation", Name)).DefaultIfEmpty(L.Get("run.recovery_operation", Name)).Distinct());
         public DateTimeOffset? FinishedAt => snapshot.FinishedAt;
-        public bool HasTaskDetails => PendingTasks.Count>0 || snapshot.Detail.Contains("仍有未完成任务", StringComparison.Ordinal);
+        public bool HasTaskDetails => Draws is { Draws: > 0 } || PendingTasks.Count>0 || snapshot.Detail.Contains("仍有未完成任务", StringComparison.Ordinal);
         public string TaskDetailsLabel => PendingTasks.Count>0 ? L.Get("run.details_count",PendingTasks.Count) : L.Get("run.details");
         public string TaskDetailsAccessibleName => L.Get("run.details_accessible",Name);
         public string DiagnosticDetail => L.Diagnostic(snapshot.Detail, Detail);

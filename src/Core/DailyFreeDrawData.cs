@@ -6,6 +6,7 @@ namespace Dustweave;
 public sealed class DailyFreeDrawData
 {
     public DailyFreeDrawRules Rules { get; private set; } = null!;
+    public DailyDrawCatalog Catalog { get; private set; } = DailyDrawCatalog.Empty;
     public JsonObject Proof { get; private set; } = new() { ["engine"] = "dotnet-free-draw-data-v1", ["actions"] = 0 };
     private DailyRuleData data = null!;
     public void AssertReady() => data.AssertReady();
@@ -29,12 +30,19 @@ public sealed class DailyFreeDrawData
     {
         var data = await DailyRuleData.PrepareSetAsync(package, root, game, read, stopped, report,
             "free-draws", Path.Combine(package, "data", "daily"),
-            new Dictionary<string, string[]> { ["gacha"] = ["GachaTable", "GachaGroupTable"] });
+            new Dictionary<string, string[]> {
+                ["gacha"] = ["GachaTable", "GachaGroupTable"],
+                // Keep display data in its own group: existing packages contain
+                // a valid gacha manifest without these additional tables.
+                ["draw-report"] = ["CostumeTable", "CharTable", "EquipmentTable", "NameTextTable"]
+            });
         var result = new DailyFreeDrawData { data = data };
         result.Proof = data.Proof.DeepClone().AsObject();
         result.Proof["engine"] = "dotnet-free-draw-data-v1";
         result.Rules = ReadExport(Path.GetDirectoryName(data.PathFor("gacha/GachaTable.json"))!,
             result.Proof["assembly_sha256"]!.GetValue<string>(), result.Proof["database_sha256"]!.GetValue<string>());
+        JsonObject[] Table(string name) => JsonNode.Parse(File.ReadAllText(data.PathFor("draw-report/" + name + ".json")))!.AsArray().OfType<JsonObject>().ToArray();
+        result.Catalog = new(Table("CostumeTable"), Table("EquipmentTable"), Table("CharTable"), Table("NameTextTable"));
         if (stopped())
             throw new StageHostException("stopped", "免费抽取数据准备已停止，没有游戏输入。");
         result.AssertReady();

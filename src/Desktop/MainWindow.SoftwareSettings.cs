@@ -23,6 +23,8 @@ public partial class MainWindow
             if (!IsSandboxWindow && smoke == null) windowsStartup.RefreshEnabledPath(Environment.ProcessPath!);
             StartWithWindows.IsChecked = windowsStartup.Enabled;
             CloseGameAfterRun.IsChecked = ReadDesktopBehavior()?.CloseGameAfterRun == true;
+            var notices = ReadDesktopBehavior()?.CompletionNotice ?? new();
+            CompletionWindows.IsChecked=notices.Windows;CompletionPopup.IsChecked=notices.Popup;CompletionSound.IsChecked=notices.Sound;
             RefreshCloseAction();
         }
         catch (Exception error) { SoftwareSettingsError(error); }
@@ -35,6 +37,7 @@ public partial class MainWindow
         bool editable = !Unavailable && !IsSandboxWindow;
         softwareGamePath.IsEnabled = softwareSandboxPath.IsEnabled = StartWithWindows.IsEnabled = editable;
         CloseActionChoice.IsEnabled = RunOnOpen.IsEnabled = CloseGameAfterRun.IsEnabled = editable && desktopBehaviorValid;
+        CompletionNoticeChoices.IsEnabled = !Unavailable && desktopBehaviorValid;
         ConnectionGuideButton.IsEnabled = !Unavailable && !IsSandboxWindow;
     }
     private void RefreshCloseAction()
@@ -69,6 +72,12 @@ public partial class MainWindow
             ClearSoftwareSettingsError();
         }
         catch (Exception error) { CloseGameAfterRun.IsChecked = ReadDesktopBehavior()?.CloseGameAfterRun == true; SoftwareSettingsError(error); }
+    }
+    private void CompletionNotice_Click(object sender, RoutedEventArgs e)
+    {
+        if (!softwareSettingsReady) return;
+        try { (DailyDesktopBehavior.Read(root) with { CompletionNotice = new(CompletionWindows.IsChecked==true,CompletionPopup.IsChecked==true,CompletionSound.IsChecked==true) }).Save(root); ClearSoftwareSettingsError(); }
+        catch(Exception error) { SoftwareSettingsError(error); }
     }
     private void SoftwareSettingsError(Exception error)
     {

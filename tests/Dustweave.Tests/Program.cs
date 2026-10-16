@@ -79,6 +79,7 @@ await Group("ProductIdentity", () => Sync(() => ProductIdentityCases.Run(cases))
 await Group("BargainTraining", () => BargainTrainingCases.Run(root, cases));
 await Group("LogCleanup", () => LogCleanupCases.Run(root,cases));
 await Group("CacheStorage", () => CacheStorageCases.Run(root,cases));
+await Group("UpdateRetention", () => UpdateRetentionCases.Run(root,cases));
 await Group("StorageWarning", () => StorageWarningCases.Run(root,cases));
 await Group("LogEvidence", () => LogEvidenceCases.Run(root,cases));
 await Group("DiagnosticExport", () => DiagnosticExportCases.Run(root,cases));
@@ -97,6 +98,7 @@ await Group("Startup", () => StartupCases.Run(root, cases));
 await Group("LoginIdentity", () => LoginIdentityCases.Run(root, cases));
 await Group("QueueSession", () => QueueSessionCases.Run(root, cases));
 await Group("QueueCompletion", () => QueueCompletionCases.Run(root, cases));
+await Group("RunReport", () => Sync(() => RunReportCases.Run(cases)));
 await Group("EventSweepCount", () => EventSweepCountCases.Run(root, cases));
 await Group("EventPreview", () => EventPreviewCases.Run(root, cases));
 await Group("QueueExecutionThread", () => QueueExecutionThreadCases.Run(root, cases));

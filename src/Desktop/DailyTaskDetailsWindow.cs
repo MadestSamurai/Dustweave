@@ -17,10 +17,10 @@ internal sealed class DailyTaskDetailsWindow : Window
         TaskCount=tasks.Count;
         Width=680;Height=560;MinWidth=460;MinHeight=360;
         WindowStartupLocation=WindowStartupLocation.CenterOwner;
-        SetResourceReference(BackgroundProperty,"AppBackground");
+        SetResourceReference(BackgroundProperty,"Surface");
         L.Bind(this,TitleProperty,()=>L.Get("run.details_title",L.Stage(stage)));
         var layout=new DockPanel();
-        layout.SetResourceReference(Panel.BackgroundProperty,"AppBackground");
+        layout.SetResourceReference(Panel.BackgroundProperty,"Surface");
         var heading=new StackPanel{Margin=new(0,0,0,18)};
         heading.Children.Add(Label(()=>L.Stage(stage),21,true));
         heading.Children.Add(Label(()=>L.Get("run.pending_count",tasks.Count),13,false,true,new(0,6,0,0)));

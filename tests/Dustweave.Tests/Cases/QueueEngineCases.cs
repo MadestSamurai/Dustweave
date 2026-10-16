@@ -43,6 +43,26 @@ static class QueueEngineCases
         var record = await Run(host, root, ["mail", "trade"]);
         Check(State(record) == "completed" && host.Executed.SequenceEqual(new[] { "mail", "trade" }), "native queue owns ordering and completion");
         Check(record["engine"]!.GetValue<string>() == "dotnet-v1" && File.Exists(DailyQueueEngine.RecordPath(root, record["id"]!.GetValue<string>())), "native queue persists engine ownership");
+        foreach (string kind in new[] { "adapter", "transport" })
+        {
+            string drawRoot = Root();
+            var drawHost = new FakeHost();
+            drawHost.After = (operation, stage) =>
+            {
+                if (operation != "execute" || stage != "free_draws") return;
+                var error = new StageHostException(kind, "result animation interrupted");
+                error.Data["stage_result"] = new JsonObject { ["draw_summary"] = System.Text.Json.JsonSerializer.SerializeToNode(
+                    new DailyDrawSummary(1, [new("Costume", 101, 1, 5, "", new("服装", "服裝", "Costume"), true, true)])) };
+                throw error;
+            };
+            var drawRecord = await Run(drawHost, drawRoot, ["free_draws", "mail"]);
+            var drawView = new DailyQueueSession(drawRoot, new PackagedDailyQueueExecutor(AppContext.BaseDirectory)).ReadView();
+            var received = drawView.Stages.Single(s => s.Task == "free_draws");
+            Check(received.Draws?.FiveStarCostumes == 1 && received.Draws.Items.Single().Converted,
+                "Confirmed draw rewards survive queue persistence and UI read after " + kind + " failure");
+            Check(Stage(drawRecord, "free_draws") == (kind == "adapter" ? "blocked" : "recovery_required"),
+                "Preserving draw rewards does not turn an interrupted animation into a completed stage: " + kind);
+        }
         {
             var saffronHost=new FakeHost{PartialSaffron=true};
             var saffronSettings=new DailyPreferences();saffronSettings.Stages.Saffron=true;

@@ -1,5 +1,44 @@
 [
 {
+  "Version": "1.4.0",
+  "Date": "2026-10-16",
+  "Notes": {
+    "zh-CN": [
+      "日常结束后汇总抽取、未完成事项及活动战斗回退情况，支持 Windows 通知、弹窗和声音提醒。",
+      "抽取详情显示五星服装与五星角色 UR 专武；地图详情优先使用卡带和地图名称，统一详情窗口主题。",
+      "修复含暂缓事项的队列自然结束后未按设置退出游戏；暂停、停止及待核对状态保留游戏。",
+      "藏红花流程在等土豆成熟时采矿砍树，成熟后优先收割，完成土豆轮数后收完剩余资源。",
+      "恢复单账号隔离启动及用途说明，隔离日志和运行缓存；重装系统后重新登录同账号可修复原凭据槽位。",
+      "MANSION RUNAWAY 和装备助手先显示窗口及可取消的加载动画，再连接；增大 5 药 N 装选项。",
+      "更新缓存最多保留 2 个版本、最长 7 天，保护正在更新和待恢复的记录。",
+      "修复只购买收藏依赖普通跑商历史文件导致中断，旧错误记录不再阻挡新一轮执行。",
+      "1.3.8–1.3.17 支持直接差分更新；若 OTA 失败，请下载完整包并解压到新目录，保留 app 文件夹。"
+    ],
+    "zh-TW": [
+      "日常結束後彙整抽取、未完成事項及活動戰鬥回退情況，支援 Windows 通知、彈窗和聲音提醒。",
+      "抽取詳情顯示五星服裝與五星角色 UR 專武；地圖詳情優先使用卡帶和地圖名稱，統一詳情視窗主題。",
+      "修復含暫緩事項的佇列自然結束後未依設定退出遊戲；暫停、停止及待核對狀態保留遊戲。",
+      "藏紅花流程在等馬鈴薯成熟時採礦伐木，成熟後優先收割，完成輪數後收完剩餘資源。",
+      "恢復單帳號隔離啟動及用途說明，隔離日誌和執行快取；重灌系統後重新登入同帳號可修復原憑據欄位。",
+      "MANSION RUNAWAY 和裝備助手先顯示視窗及可取消的載入動畫，再連線；加大 5 藥 N 裝選項。",
+      "更新快取最多保留 2 個版本、最長 7 天，保護正在更新和待恢復的記錄。",
+      "修復只購買收藏依賴普通跑商歷史檔案而中斷，舊錯誤記錄不再阻擋新一輪執行。",
+      "1.3.8–1.3.17 支援直接差分更新；若 OTA 失敗，請下載完整包並解壓至新目錄，保留 app 資料夾。"
+    ],
+    "en-US": [
+      "Completion reports highlight draws, unfinished tasks and event-battle fallback sweeps, with Windows, popup and sound notifications.",
+      "Draw details identify five-star costumes and five-star character UR weapons. Map details use cartridge/map names and dialogs share consistent themes.",
+      "Fix optional game exit for naturally finished queues with deferred tasks. Paused, stopped or unresolved queues keep the game open.",
+      "Gather wood and ore while potatoes grow, prioritize mature fields, then finish remaining resources after the configured rounds.",
+      "Restore explained single-account isolated launch, isolate logs and runtime caches, and repair unreadable saved slots after signing back into the same account.",
+      "MANSION RUNAWAY and Equipment Assistant show cancellable loading before connecting. Enlarge the 5-potion N-equipment option.",
+      "Keep update caches for at most two versions and seven days, protecting active updates and unresolved recovery.",
+      "Fix favorites-only trade requiring a normal trade history file. Old errors no longer block fresh runs.",
+      "Direct patches cover 1.3.8–1.3.17. If OTA fails, extract the full package into a new folder and keep the app folder."
+    ]
+  }
+},
+{
   "Version": "1.3.17",
   "Date": "2026-10-16",
   "Notes": {

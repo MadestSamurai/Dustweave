@@ -9,6 +9,7 @@ public static class DailyIssues
     {
         string text = raw ?? "";
         bool Has(params string[] words) => words.Any(w => text.Contains(w, StringComparison.OrdinalIgnoreCase));
+        if (Has("DPAPI", "无法由当前 Windows 用户解密")) return new("credentials-unreadable", "identity");
         if (text.StartsWith("trade.read.configuration:", StringComparison.Ordinal)) return new("trade-configuration", "connection");
         if (text.StartsWith("trade.read.native:", StringComparison.Ordinal)) return new("trade-read", "game");
         if (Has("管理员连接组件通信中断")) return new("elevation-pipe", "connection");

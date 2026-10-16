@@ -14,6 +14,8 @@ public partial class MainWindow
         try
         {
             WorkspaceTabs.SelectedItem=SoftwareSettingsTab;
+            CompletionWindows.IsChecked=false;CompletionPopup.IsChecked=true;CompletionSound.IsChecked=true;CompletionNotice_Click(this,new RoutedEventArgs());
+            if(DailyDesktopBehavior.Read(root).CompletionNotice!=new DailyCompletionNotice(false,true,true))throw new Exception("Completion notification choices did not persist independently");
             CloseGameAfterRun.IsChecked=true;CloseGameAfterRun_Click(this,new RoutedEventArgs());
             if(!DailyDesktopBehavior.Read(root).CloseGameAfterRun || DailyDesktopBehavior.Read(root).RunOnOpen!=original.RunOnOpen)throw new Exception("Completion setting was not saved independently");
             CloseGameAfterRun.IsChecked=false;CloseGameAfterRun_Click(this,new RoutedEventArgs());
@@ -26,7 +28,7 @@ public partial class MainWindow
             foreach(var spec in new[]{(1,"tray"),(2,"exit"),(0,"ask")})
             {CloseActionChoice.SelectedIndex=spec.Item1;if(DailyDesktopBehavior.Read(root).CloseAction!=spec.Item2)throw new Exception("Close behavior did not persist immediately");}
             SetBusy(true);
-            if(StartWithWindows.IsEnabled || CloseActionChoice.IsEnabled || CloseGameAfterRun.IsEnabled || ConnectionGuideButton.IsEnabled || softwareGamePath.CanChoose)throw new Exception("Shared preferences editable while queue busy");
+            if(StartWithWindows.IsEnabled || CloseActionChoice.IsEnabled || CloseGameAfterRun.IsEnabled || ConnectionGuideButton.IsEnabled || CompletionNoticeChoices.IsEnabled || softwareGamePath.CanChoose)throw new Exception("Shared preferences editable while queue busy");
             SetBusy(false);
             // A corrupt preference must not prevent startup or make the Close button unusable.
             string behaviorPath = Path.Combine(root, "desktop-behavior.json");
@@ -52,6 +54,9 @@ public partial class MainWindow
                 WorkspaceTabs.SelectedItem=SoftwareSettingsTab;SoftwareSettingsScroll.ScrollToTop();
                 await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture($"software-top-{lang}-{themeIndex}");
                 SoftwareSettingsScroll.ScrollToBottom();await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture($"software-bottom-{lang}-{themeIndex}");
+                WorkspaceTabs.SelectedItem=AccountsTab;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture($"isolation-account-entry-{lang}-{themeIndex}");
+                var isolation=IsolationReminderWindow(_=>{});
+                try{isolation.Show();await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);if(isolation.ActualHeight>SystemParameters.WorkArea.Height)throw new Exception("Isolation explanation exceeds screen");Capture($"isolation-explanation-{lang}-{themeIndex}",(FrameworkElement)isolation.Content);}finally{isolation.Close();}
                 WorkspaceTabs.SelectedItem=SettingsTab;preferencesPanel.CheckCategorySearchForSmoke();
                 foreach(string categoryKey in new[]{"daily","battle","weekly","resources"})
                 {preferencesPanel.ReviewCategoryForSmoke(categoryKey);await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture($"settings-{categoryKey}-{lang}-{themeIndex}");}

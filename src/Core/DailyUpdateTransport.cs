@@ -58,6 +58,7 @@ public sealed class DailyUpdateTransport(DailyUpdateTrust trust)
     public async Task<string> DownloadAsync(HttpClient client, DailyVerifiedUpdate verified, string version, string flavor,
         string root, IProgress<int>? progress, CancellationToken token, string? installedDirectory = null, bool allowDelta = true)
     {
+        using var storage = DailyUpdateHost.AcquireStorage(root);
         var feed = DailyUpdateSignatures.Verify(verified.Signed, trust);
         var release = feed.Releases.Single(r => r.Version == version);
         var asset = release.Assets.Single(a => a.Flavor == flavor);

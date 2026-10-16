@@ -333,9 +333,19 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         await OpenShop();
         var evidence = await Evidence();
         var native = State(evidence, "trade.native", "$self");
-        var rows = FavoritePurchases(native);
-        if (rows.Length == 0) { await Close(); return DailyWorkflow.Skipped("收藏商品已购完、尚未解锁或未设置收藏"); }
         string session = Guid.NewGuid().ToString("N");
+        var job = O(("id", session), ("state", "running"), ("phase", "purchase"), ("account", w.Context["actor"]![3]),
+            ("context", O(("account", w.Context["actor"]![3]), ("player", w.Context["actor"]![4]), ("server", w.Context["server"]), ("cycle", w.Context["cycle"]))));
+        using var closeSession = w.Driver.OwnTradeClose(job);
+        async Task Finish()
+        {
+            // Called only with no purchase to submit or after Buy has reconciled
+            // the purchase. An uncertain confirmation must never reach here.
+            job["phase"] = "audit";
+            await Close();
+        }
+        var rows = FavoritePurchases(native);
+        if (rows.Length == 0) { await Finish(); return DailyWorkflow.Skipped("收藏商品已购完、尚未解锁或未设置收藏"); }
         if (!B(R(evidence, "trade.bargain", "$self")))
             await Bargain(O(("trade_session", session), ("action", "bargain")));
         // The pre-bargain quote can both overcharge and incorrectly reject an
@@ -345,13 +355,13 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         native = State(evidence, "trade.native", "$self");
         Require(B(native["BargainActive"]) && B(R(evidence, "trade.bargain", "$self")), "砍价状态已变化，请重新执行跑商");
         rows = FavoritePurchases(native);
-        if (rows.Length == 0) { await Close(); return DailyWorkflow.Skipped("收藏商品已购完、尚未解锁或未设置收藏"); }
+        if (rows.Length == 0) { await Finish(); return DailyWorkflow.Skipped("收藏商品已购完、尚未解锁或未设置收藏"); }
         long cost = rows.Aggregate(0L, (sum, r) => checked(sum + N(r["count"]) * N(r["price"])));
         if (cost > N(R(evidence, "trade.currency", "Gold")))
-        { await Close(); return DailyWorkflow.Skipped("金币不足以购买当前收藏商品；未购买，也未卖出任何物品"); }
+        { await Finish(); return DailyWorkflow.Skipped("金币不足以购买当前收藏商品；未购买，也未卖出任何物品"); }
         var scope = O(("trade_session", session), ("action", "existing-favorites"));
         var op = await Buy(rows, true, scope, existingFavoritesOnly: true);
-        await Close();
+        await Finish();
         return O(("state", "completed"), ("reason", "已砍价并购买收藏商品；未料理、未售卖，收藏保持不变"), ("operation", op["id"]), ("gold_spent", cost), ("products", rows.Length), ("engine", "dotnet-trade-favorites-v1"));
     }
     private async Task<JsonObject> RunCore()
@@ -410,6 +420,7 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         }
         job["state"] = "running";
         DailyJson.Write(path, job);
+        using var closeSession = w.Driver.OwnTradeClose(job);
         try
         {
             if (S(job["phase"]) == "purchase")

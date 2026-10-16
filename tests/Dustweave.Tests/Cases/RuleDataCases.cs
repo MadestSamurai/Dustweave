@@ -80,8 +80,15 @@ static class RuleDataCases
             DailyJson.Write(Path.Combine(gacha, "manifest.json"), O(("assemblySha256", a), ("databaseSha256", d), ("tables", O(("GachaTable", 1), ("GachaGroupTable", 1)))));
             DailyJson.Write(Path.Combine(gacha, "GachaTable.json"), new JsonArray(O(("id", 50), ("freeCountDay", 1), ("gachaCount", 1))));
             DailyJson.Write(Path.Combine(gacha, "GachaGroupTable.json"), new JsonArray(O(("id", 5), ("oneTimeGachaId", 50))));
+            string drawReport = Path.Combine(package, "data", "daily", "draw-report");
+            var displayTables = new[] { "CostumeTable", "CharTable", "EquipmentTable", "NameTextTable" };
+            DailyJson.Write(Path.Combine(drawReport, "manifest.json"), O(("assemblySha256", a), ("databaseSha256", d),
+                ("tables", new JsonObject(displayTables.Select(name => new KeyValuePair<string, JsonNode?>(name, JsonValue.Create(1)))))));
+            foreach (string name in displayTables)
+                DailyJson.Write(Path.Combine(drawReport, name + ".json"), new JsonArray(O(("id", 1))));
             var draw = await DailyFreeDrawData.PrepareAsync(package, root, game, Read, () => false, _ => throw new Exception("Unexpected draw exporter"));
             Check(draw.Rules.Require(50).Group == 5 && S(draw.Proof["state"]) == "packaged_current", "free draw consumes current packaged tables through the shared rule loader without repeated exports");
+            Check(draw.Proof["hashes"]!["draw-report"]!.AsObject().Count == 4, "packaged draw report tables avoid a new exporter before free draws");
             File.WriteAllText(database, "changed-client-database");
             await Reject(() => { draw.AssertReady(); return Task.CompletedTask; }, "free draw rechecks shared provenance before consuming confirmation");
             await Reject(() => { cached.AssertReady(); return Task.CompletedTask; }, "database changes invalidate already prepared rules before gameplay");

@@ -32,6 +32,12 @@ internal static class AccountIdentityCases
         Check(!DailyAccountIdentity.SameCatalog(catalog,catalog with {GameRunning=true}),"game lifecycle refreshes account display");
         Check(!DailyAccountIdentity.SameCatalog(catalog,catalog with {Accounts=[A(1,key,"Renamed"),A(2,other)]}),"renamed account refreshes display");
         var profile=new DailyAccountProfile {AccountKey=key,SlotNumber=1,Order=4,Selected=true,PlayerName="Original player"};
+        var damaged=catalog with {Accounts=[A(1,"","Unreadable") with {Valid=false},A(2,other)],OccupiedSlots=Enumerable.Range(1,100).ToArray()};
+        var hinted=DailyAccountIdentity.WithRecoveryHints(damaged,[profile]);
+        var repair=DailyAccountIdentity.SavePlan(hinted);
+        Check(repair.SlotNumber==1 && repair.ReplacesUnreadable && repair.AccountKey==key && repair.Name==profile.PlayerName,"reinstall recovery restores the original slot even when the vault is full");
+        Check(!DailyAccountIdentity.Normalize(hinted).Accounts[0].Valid && !DailyAccountIdentity.Normalize(hinted).Accounts[0].IsCurrent,"profile hints never authorize launching unreadable credentials");
+        Check(DailyAccountIdentity.WithRecoveryHints(damaged,[profile,new DailyAccountProfile{AccountKey=other,SlotNumber=1}]).Accounts[0].AccountKey=="","conflicting profile hints cannot select an old identity");
         var store=new DailyProfiles(Path.Combine(root,"identity-profile"));store.Update(profile);
         Check(DailyAccountOrder.ProfileFor(catalog.Accounts[0],store.Read()).Order == 4 && store.Read().Single().Selected,"dedup preserves account preferences and manual order");
         Check(DailyAccountOrder.ProfileFor(catalog.Accounts[0],store.Read()).PlayerName == "Original player","dedup preserves verified player");
@@ -62,5 +68,12 @@ internal static class AccountIdentityCases
         Check(latest.Entries.SequenceEqual(current.Entries) && latest.Alias==old.Alias,"launch uses newest same-account credentials but original alias");
         Check(SessionIdentity.GetMemberId(latest)!="2000001","newer other account never selected for launch");
         Check(slots[13].Alias=="Accidental copy","legacy duplicate file retained, no destructive migration");
+        SessionSlot? Broken(int slot) => slot==5 ? throw new System.ComponentModel.Win32Exception(unchecked((int)0x8009000B),"DPAPI") : null;
+        bool refused=false;try{SessionService.SaveCapturedToSlot(current,5,"Recovered","1000001",Broken,Save);}catch(System.ComponentModel.Win32Exception){refused=true;}
+        Check(refused,"unreadable slots require explicit replacement intent");
+        SessionService.SaveCapturedToSlot(current,5,"Recovered","1000001",Broken,Save,true);
+        Check(written==5 && replaced && slots[5].Alias=="Recovered","verified new login replaces an undecryptable slot atomically through the normal vault writer");
+        Reject(()=>SessionService.SaveCapturedToSlot(current,2,"Wrong","1000001",n=>n==2?S("2000001","other",1):null,Save,true),"recovery flag cannot overwrite readable other-account credentials");
+        Check(DailyIssues.Classify("Windows DPAPI 解密失败").Code=="credentials-unreadable","reinstall errors explain how to save a fresh login");
     }
 }

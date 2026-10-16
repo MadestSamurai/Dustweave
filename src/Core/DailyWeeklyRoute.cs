@@ -17,6 +17,12 @@ public sealed class DailyWeeklyRoute
     private readonly Dictionary<string, HashSet<(long Pack, long Map)>> known = Stages.ToDictionary(s => s, _ => new HashSet<(long, long)>()), done = Stages.ToDictionary(s => s, _ => new HashSet<(long, long)>());
     private readonly HashSet<(long, long)> deferred = [], reentered = []; private HashSet<string> active = []; private DailyWeeklyNpc? npc; private DailyCollectionNavigator? nav; private JsonObject? checkpoint; private string week = ""; private long pack; private bool entered;
     private bool catalogReady;
+    private Dictionary<string, DailyDisplayName> locationLabels = [];
+    private JsonNode Labels(string detail)
+    {
+        var ids = System.Text.RegularExpressions.Regex.Matches(detail, @"\d+").Select(m => m.Value).ToHashSet();
+        return System.Text.Json.JsonSerializer.SerializeToNode(locationLabels.Where(p => ids.Contains(p.Key[1..])).ToDictionary(p => p.Key, p => p.Value))!;
+    }
     private readonly HashSet<long> recoveredPacks = [];
     private readonly HashSet<(long Pack, long Map)> storyLocked = [];
     private readonly HashSet<(long Pack, long Map)> waitingAbsorption = [];
@@ -100,8 +106,8 @@ public sealed class DailyWeeklyRoute
         result["deferred_locations"] = Array(unresolved);
         if (S(result["state"]) == "partial")
         {
-            string locations = string.Join("、", unresolved.Select(p => N(p["pack"])).Distinct());
-            result["detail"] = S(result["detail"]) + $" · 卡带 {locations} 有暂缓项目，原因已保留，可之后补跑";
+            string locations = string.Join("、", unresolved.Select(p => "卡带 " + N(p["pack"]) + (N(p["map"]) > 0 ? " · 地图 " + N(p["map"]) : "")).Distinct());
+            result["detail"] = S(result["detail"]) + $" · {locations} 有暂缓项目，原因已保留，可之后补跑";
             if (!B(result["waiting_daily_reset"])) result["reason"] = "weekly_locations_deferred";
         }
         return result;
@@ -222,7 +228,7 @@ public sealed class DailyWeeklyRoute
             await Guard();
             pack = group.Key;
             var maps = group.Select(p => p.Map).ToArray();
-            foreach (string stage in active) Emit(stage, $"正在恢复卡带 {pack} · 地图 {string.Join("、", maps)} 的当前进度", true);
+            foreach (string stage in active) Emit(stage, "正在恢复" + string.Join("、", maps.Select(id => $"卡带 {pack} · 地图 {id}")) + " 的当前进度", true);
             try
             {
                 if (!availablePacks.Contains(pack)) throw new DailyTravelBlocked("对应卡带当前不可进入");
@@ -330,6 +336,7 @@ public sealed class DailyWeeklyRoute
     {
         var value = Progress(stage);
         value["detail"] = detail;
+        value["location_labels"] = Labels(detail);
         value["active"] = running;
         progress(stage, value);
     }
@@ -379,6 +386,15 @@ public sealed class DailyWeeklyRoute
     {
         var selected = Select(requested, w.Settings.Weekly);
         active = selected.ToHashSet();
+        try
+        {
+            var display = await w.PrepareTables("location-labels", Path.Combine(w.Directory, "data", "locations"),
+                new Dictionary<string, string[]> { ["locations"] = ["PackTable", "MapTable", "NameTextTable"] });
+            JsonObject[] Table(string name) => Rows(JsonNode.Parse(File.ReadAllText(display.PathFor("locations/" + name + ".json"))));
+            locationLabels = DailyLocationLabels.Build(Table("PackTable"), Table("MapTable"), Table("NameTextTable"));
+        }
+        catch (Exception error) when (error is IOException or System.Text.Json.JsonException or StageHostException { Kind: "adapter" })
+        { w.Driver.Diagnostics.Event("location_names_unavailable", O(("message", error.Message))); }
         if (active.Count > 0) await DailyWeeklyNpcBoard.Close(w);
         var result = new JsonObject();
         foreach (string s in requested.Except(selected))
@@ -510,8 +526,9 @@ public sealed class DailyWeeklyRoute
             if (unavailableEvents.Length > 0)
             {
                 result[s]!["unavailable_event_packs"] = Array(unavailableEvents.Select(id => (JsonNode)JsonValue.Create(id)!));
-                result[s]!["detail"] = S(result[s]!["detail"]) + " · 未开放活动卡带已略过：" + string.Join("、", unavailableEvents);
+                result[s]!["detail"] = S(result[s]!["detail"]) + " · 未开放活动卡带已略过：" + string.Join("、", unavailableEvents.Select(id => "卡带 " + id));
             }
+            result[s]!["location_labels"] = Labels(S(result[s]!["detail"]));
             Emit(s, S(result[s]!["detail"] ?? result[s]!["reason"]), false);
         }
         return O(("state", result.All(p => S(p.Value!["state"]) is "completed" or "skipped") ? "completed" : "partial"), ("stages", result), ("engine", "dotnet-weekly-route-v1"));

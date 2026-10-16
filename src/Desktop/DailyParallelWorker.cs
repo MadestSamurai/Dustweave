@@ -95,13 +95,14 @@ internal static class DailyParallelWorker
         {
             queue.Stop();
             try { coordinator.Stop(); } catch { }
-            // A paused or failed task preserves the game for diagnosis. Close only
-            // the exact process this launch created after a successful completion.
-            if (outcome == "completed" && job.CloseGame && ownedGame != null && view != null && !control.Stopped && !control.Paused)
+            // Reaching the end with deferred stages is still a finished run. An
+            // interrupted queue or unsettled operation keeps its game open.
+            if (job.CloseGame && ownedGame != null && view != null && DailyQueueCompletion.Eligible(view, job.Account, control.Stopped || control.Paused))
             {
+                string completedDetail = detail;
                 State("closing", "parallel.closing");
-                try { await DailyQueueCompletion.CloseAsync(host, completionTarget, job.Account, view, control.Stopped || control.Paused); instance=host.Find(); }
-                catch (Exception error) { outcome = "partial"; lock (stateGate) detail = error.Message; }
+                try { await DailyQueueCompletion.CloseAsync(host, completionTarget, job.Account, view, control.Stopped || control.Paused); instance=host.Find(); lock(stateGate) detail=completedDetail; }
+                catch (Exception error) { outcome = "partial"; lock (stateGate) { detail = error.Message; view = view with { CompletionIssue = error.Message }; } }
             }
             monitorStop.Cancel(); await monitor;
             if (outcome == "interrupted") detail = "parallel.parent_lost";

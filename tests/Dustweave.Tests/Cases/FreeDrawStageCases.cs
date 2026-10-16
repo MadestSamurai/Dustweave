@@ -139,11 +139,16 @@ static class FreeDrawStageCases
         using (var f = Create())
         {
             f.FailAnimation = true;
-            await Reject(() => f.Stage.ExecuteAsync(f.Context, NoRelay), "adapter", "confirmed free draw animation timeout reports cleanup only");
+            try { await f.Stage.ExecuteAsync(f.Context, NoRelay); throw new Exception("Stuck animation was not reported"); }
+            catch (StageHostException error) when (error.Kind == "adapter") {
+                Check(error.Data["stage_result"] is JsonObject report && DailyData.N(report["draw_summary"]?["Draws"]) == 1,
+                    "Confirmed draw report survives an animation failure without becoming an unconfirmed reward");
+            }
             var op = f.Records().Single();
             Check(op["state"]!.GetValue<string>() == "completed" && f.Confirmations == 1, "stuck draw animation retains completed server reward proof");
             f.FailAnimation = false;
-            await f.Stage.ExecuteAsync(f.Context, NoRelay);
+            var resumed = await f.Stage.ExecuteAsync(f.Context, NoRelay);
+            Check(DailyData.N(resumed["draw_summary"]?["Draws"]) == 2, "Result-animation resume includes the owned previous draw exactly once");
             Check(f.Confirmations == 2 && f.PaidCommands == 0, "confirmed draw cleanup resumes without repeating the first category draw");
         }
         using (var f = Create())

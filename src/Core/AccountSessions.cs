@@ -91,10 +91,13 @@ public sealed class AccountSessions : IAccountSessions, IDisposable
             if (DailyProfiles.ValidKey(current)) source = "live-game";
         }
         if (DailySandbox.Current is {} binding) accounts = accounts.Where(a => a.AccountKey == binding.Account).ToList();
-        return DailyAccountIdentity.Normalize(new(accounts, current, d.CurrentSlotNumber, d.CurrentSessionComplete, d.Status.GameRunning, d.Status.StarterRunning, d.HasRecovery)
+        var catalog = new DailyAccountCatalog(accounts, current, d.CurrentSlotNumber, d.CurrentSessionComplete, d.Status.GameRunning, d.Status.StarterRunning, d.HasRecovery)
         {
             LocalLogin = new(d.Status.RegistryKeyPresent, source, d.Status.Entries.Select(e => new DailyLocalLoginEntry(e.LogicalName, e.Present, e.Kind, e.ByteLength > 0, e.Enabled)).ToArray())
-        });
+        };
+        try { catalog = DailyAccountIdentity.WithRecoveryHints(catalog, new DailyProfiles(DailyIdentity.DataRoot).Read()); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+        return DailyAccountIdentity.Normalize(catalog);
     }
     private void RequireIdentity(int slot, string key)
     {
@@ -128,7 +131,7 @@ public sealed class AccountSessions : IAccountSessions, IDisposable
         string member = SessionIdentity.GetMemberId(SessionRegistry.ReadCurrent("save-identity")) ?? "";
         if (DailyIdentity.MemberKey(member) != expectedKey)
             throw new InvalidOperationException("保存期间登录身份已改变，请重新保存。");
-        service.SaveCurrentToSlot(slot, name, member);
+        service.SaveCurrentToSlot(slot, name, member, plan.ReplacesUnreadable);
     }
     public void Rename(int slot, string name, string expectedKey)
     {

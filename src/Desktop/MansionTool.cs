@@ -52,7 +52,7 @@ internal static class MansionTool
             }
         }
 
-        var window = new MansionWindow(smoke);
+        var window = new MansionWindow(smoke,deferChrome:!smoke);
         app.MainWindow = window;
         window.Show();
         if (smoke)

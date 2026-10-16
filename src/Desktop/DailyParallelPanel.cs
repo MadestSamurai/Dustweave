@@ -52,7 +52,7 @@ public sealed class DailyParallelPanel : ScrollViewer
         stop.IsEnabled=items.Any(x=>DailyParallelSession.Occupies(x.State)||x.State is "waiting" or "held");
         back.IsEnabled=!stop.IsEnabled;
         L.Bind(back,FrameworkElement.ToolTipProperty,back.IsEnabled?"parallel.return_help":"parallel.return_busy");
-        string key=string.Join("|",items.Select(x=>x.Job.Id+x.State+x.Detail+string.Join(',',x.Status?.Queue?.Stages.Select(s=>s.Task+s.State+s.Detail)??[])))+selected+L.Code;
+        string key=string.Join("|",items.Select(x=>x.Job.Id+x.State+x.Detail+string.Join(',',x.Status?.Queue?.Stages.Select(s=>s.Task+s.State+DailyResultText.Detail(s)+(s.PendingTasks?.Count??0))??[])))+selected+L.Code;
         if(renderKey==key)return;renderKey=key;rows.Children.Clear();
         foreach(var item in items)AddRow(item);
     }
@@ -79,7 +79,21 @@ public sealed class DailyParallelPanel : ScrollViewer
         controls.Children.Add(Button(selected==item.Account.AccountKey?"parallel.hide_details":"parallel.details",()=>{selected=selected==item.Account.AccountKey?"":item.Account.AccountKey;renderKey="";Show(displayed);}));body.Children.Add(controls);
         if(selected==item.Account.AccountKey)
         {
-            foreach(var stage in stages)body.Children.Add(new TextBlock { Text=L.Stage(stage.Task)+"  ·  "+L.State(stage.State)+(stage.Detail.Length==0?"":"\n"+L.Describe(stage.Detail)),TextWrapping=TextWrapping.Wrap,Margin=new(8,6,8,6) });
+            foreach(var stage in stages)
+            {
+                string text=DailyResultText.Detail(stage);
+                var row=new StackPanel { Margin=new(8,6,8,8) };
+                row.Children.Add(new TextBlock { Text=L.Stage(stage.Task)+"  ·  "+L.State(stage.State)+(text.Length==0?"":"\n"+text),TextWrapping=TextWrapping.Wrap });
+                if(stage.Draws is { Draws: > 0 } || stage.PendingTasks?.Count>0)
+                {
+                    var details=Button("run.details",()=>{
+                        Window dialog=stage.Draws is { Draws: > 0 } draw?DailyResultWindow.DrawDetails(draw):new DailyTaskDetailsWindow(stage.Task,stage.PendingTasks??[],stage.FinishedAt);
+                        dialog.Owner=Window.GetWindow(this);dialog.Show();
+                    });
+                    details.HorizontalAlignment=HorizontalAlignment.Left;details.Margin=new(0,8,0,0);row.Children.Add(details);
+                }
+                body.Children.Add(row);
+            }
             if(stages.Count==0)body.Children.Add(Text("parallel.no_steps"));
         }
         var separator=new Border { BorderThickness=new(0,0,0,1),Child=body };separator.SetResourceReference(Border.BorderBrushProperty,"Line");rows.Children.Add(separator);

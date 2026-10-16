@@ -154,6 +154,7 @@ public partial class MainWindow
             using var process = Process.GetCurrentProcess();
             readyUpdate = new(directory, Environment.ProcessPath!, process.Id, process.StartTime.ToUniversalTime().Ticks, release, asset, DeltaFileName: DailyJson.TryRead<DailyUpdateDownload>(Path.Combine(directory, "download-choice.json"))?.DeltaFileName);
             updatePanel.Status("updates.ready", release.Version); updatePromptShown = false;
+            nextLogCleanup = DateTime.UtcNow; // Retire superseded downloads at the next idle interval.
         }
         catch (OperationCanceledException) { if (!updateLifetime.IsCancellationRequested) updatePanel.Status("updates.unavailable"); }
         catch (Exception e)
@@ -196,6 +197,15 @@ public partial class MainWindow
         updateInstalling = true; UpdateUpdateControls();
         try
         {
+            using var storage = DailyUpdateHost.AcquireStorage(root);
+            // A manual download can expire while this window stays open for days.
+            if (!File.Exists(Path.Combine(readyUpdate.Directory, "signed-feed.json")))
+            {
+                readyUpdate = null;
+                updateInstalling = false;
+                await CheckUpdatesAsync(manual: true);
+                return;
+            }
             if (DailySandbox.HasIsolatedWindows()) { updatePanel.Status("updates.isolated_open"); return; }
             string? pluginBlock = await Task.Run(() => DailyPlugin.HostUpdateBlockReason(root, readyUpdate.Release.Version));
             if (pluginBlock != null) { updatePanel.Status(pluginBlock); return; }

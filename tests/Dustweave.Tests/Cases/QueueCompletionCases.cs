@@ -24,7 +24,7 @@ static class QueueCompletionCases
         var host = new Host(account);
         var target = DailyQueueCompletion.Capture(host, account);
         Check(target?.Account == account, "Completion captures the verified game account and process");
-        foreach (string state in new[] { "paused", "partial", "failed", "running", "recovery_required", "preparing" })
+        foreach (string state in new[] { "paused", "failed", "running", "recovery_required", "preparing" })
         {
             await DailyQueueCompletion.CloseAsync(host, target, account, result with { State = state }, false);
             Check(host.Closed == 0, "Completion preserves game on " + state);
@@ -63,6 +63,15 @@ static class QueueCompletionCases
         Check(first.Closed == 1 && second.Closed == 0, "Parallel account completion cannot close the other account");
         await DailyQueueCompletion.CloseAsync(second, secondTarget, other, result with { Account = other }, false);
         Check(second.Closed == 1, "Next sequential or parallel account closes using its own identity");
+        var partial = new Host(account);
+        var deferred = result with { State = "partial", Stages = [new("weekly_mainline", "partial", "absorption_exhausted"), new("event_battle", "partial", "event_auto_failed_swept"), new("mail", "completed", "")] };
+        await DailyQueueCompletion.CloseAsync(partial, DailyQueueCompletion.Capture(partial, account), account, deferred, false);
+        Check(partial.Closed == 1, "Finished queue with deferred collection or event fallback honors exit preference");
+        var unsettled = new Host(account);
+        foreach (string state in new[] { "pending", "running", "recovery_required" })
+            await DailyQueueCompletion.CloseAsync(unsettled, DailyQueueCompletion.Capture(unsettled, account), account,
+                deferred with { Stages = [new("mail", state, "")] }, false);
+        Check(unsettled.Closed == 0, "Unsettled operations still preserve the exact game even in a partial queue");
         var timeout = new Host(account) { RemainOpen = true };
         try { await DailyQueueCompletion.CloseAsync(timeout, DailyQueueCompletion.Capture(timeout, account), account, result, false); throw new Exception("Unclosed game hidden"); }
         catch (InvalidOperationException e) { Check(e.Message == "completion.not_closed" && timeout.Closed == 1 && result.State == "completed", "Exit failure retains completed queue and never retries or kills"); }

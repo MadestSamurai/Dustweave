@@ -12,7 +12,7 @@ static class TradeShopExitCases
                 throw new Exception(name);
             cases.Add(name);
         }
-        foreach (string scenario in new[] { "entry", "entry-after-potions", "late-exit", "active-purchase", "pending-purchase", "unexpected-cancel", "foreign-popup", "resource-change", "stop-after", "never-exits", "bargain-finish", "bargain-cache-persists", "bargain-no-confirm", "bargain-resource-change" })
+        foreach (string scenario in new[] { "entry", "entry-after-potions", "late-exit", "active-purchase", "pending-purchase", "unexpected-cancel", "foreign-popup", "resource-change", "stop-after", "never-exits", "bargain-finish", "bargain-cache-persists", "bargain-no-confirm", "bargain-resource-change", "missing-session", "closed-session", "missing-plan", "corrupt-plan" })
         {
             string root = Path.Combine(output, "trade-shop-exit-" + scenario), account = new string('a', 64), session = new string('c', 32);
             var context = CommandDriverCases.Context();
@@ -46,7 +46,8 @@ static class TradeShopExitCases
                     ["scope"] = new JsonObject { ["trade_session"] = session }
                 });
             }
-            DailyJson.Write(jobPath, job);
+            if(scenario!="missing-plan") DailyJson.Write(jobPath, job);
+            if(scenario=="corrupt-plan") File.WriteAllText(jobPath,"corrupted diagnostic file");
             JsonObject Surface(string type, string field, int order = 0) => new()
             {
                 ["Id"] = order + 1,
@@ -112,6 +113,8 @@ static class TradeShopExitCases
                 TradeStageActive = true
             };
             driver.Bind(context);
+            using var closeSession = scenario=="missing-session"?null:driver.OwnTradeClose(job);
+            if(scenario=="closed-session") closeSession!.Dispose();
             JsonObject? result = null;
             string error = "";
             try
@@ -141,8 +144,10 @@ static class TradeShopExitCases
                 if (scenario == "bargain-cache-persists")
                     Check(proof["bargain_flag_after"]!.GetValue<bool>() && proof["bargain_flag_semantics"]!.GetValue<string>() == "last_shop_open_response", "native cached bargain flag cannot falsely reject the confirmed unchanged exit");
             }
+            else if(scenario is "missing-plan" or "corrupt-plan")
+                Check(error.Length==0&&box.Commands.Count==1,"ordinary trade close uses its active session without reading the diagnostic plan: "+scenario);
             else
-                Check(error.Length > 0 && box.Commands.Count == (scenario == "active-purchase" ? 0 : scenario == "bargain-resource-change" ? 2 : 1), "trade shop exit preserves uncertainty without extra input: " + scenario);
+                Check(error.Length > 0 && box.Commands.Count == (scenario is "active-purchase" or "missing-session" or "closed-session" ? 0 : scenario == "bargain-resource-change" ? 2 : 1), "trade shop exit preserves uncertainty without extra input: " + scenario);
         }
     }
 }

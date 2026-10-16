@@ -20,12 +20,13 @@ public static class DailyTradeClose
         }
         return rows.Any(r => r["Type"]?.GetValue<string>() == "ShopUI") ? "wait" : "settling";
     }
-    public static JsonObject Owner(string root, JsonObject context, bool endingBargain = true)
+    public static JsonObject Owner(JsonObject? job, JsonObject context, bool endingBargain = true)
     {
         string account = context["actor"]![3]!.GetValue<string>(), cycle = context["cycle"]!.GetValue<string>();
         if (!DailyProfiles.ValidKey(account) || !cycle.All(char.IsAsciiDigit) || cycle.Length == 0)
             throw new DailyStepException("rejected", "Invalid trade close identity");
-        var job = DailyTradeCatalog.Read(Path.Combine(root, "trade", "executions", account, cycle, "execution.json"));
+        if (job == null)
+            throw new DailyStepException("rejected", "当前跑商已结束，未操作商店；请重新执行跑商以读取当前库存。");
         string state = job["state"]?.GetValue<string>() ?? "", phase = job["phase"]?.GetValue<string>() ?? "";
         // Activating bargain starts by leaving the ordinary shop. That navigation
         // belongs to the running purchase phase; ending an active bargain still
@@ -34,7 +35,8 @@ public static class DailyTradeClose
         if (state is not ("running" or "completed") || !ownedPhase || job["id"]?.GetValue<string>() is not { Length: 32 } id || !id.All(char.IsAsciiHexDigit)
             || job["account"]?.GetValue<string>() != account || !JsonNode.DeepEquals(job["context"]?["account"], context["actor"]![3]) || !JsonNode.DeepEquals(job["context"]?["player"], context["actor"]![4]) || !JsonNode.DeepEquals(job["context"]?["server"], context["server"]) || !JsonNode.DeepEquals(job["context"]?["cycle"], context["cycle"]))
             throw new DailyStepException("rejected", "商店结束确认不属于当前已完成采购的交易；保留现场。");
-        // Historical unknown trades do not block a fresh current-state plan.
+        // Only the active execution owns navigation. Historical optimizer files
+        // are diagnostics, not a prerequisite for favorites-only purchases.
         return job;
     }
     public static void SameResources(JsonObject before, JsonObject after)
@@ -72,12 +74,33 @@ public static class DailyTradeClose
 
 public sealed partial class DailyCommandDriver
 {
+    private TradeCloseSession? tradeCloseSession;
+    internal IDisposable OwnTradeClose(JsonObject job)
+    {
+        Active();
+        if (tradeCloseSession != null)
+            throw new InvalidOperationException("A trade execution already owns shop navigation");
+        return tradeCloseSession = new(this, job, context!.DeepClone().AsObject());
+    }
+    private sealed class TradeCloseSession(DailyCommandDriver driver, JsonObject job, JsonObject identity) : IDisposable
+    {
+        public JsonObject Resolve(JsonObject current, bool endingBargain)
+        {
+            if (!JsonNode.DeepEquals(identity, current))
+                throw new StageHostException("identity", "跑商的账号、游戏进程或供货周期已变化；未操作商店。");
+            return DailyTradeClose.Owner(job, current, endingBargain);
+        }
+        public void Dispose()
+        {
+            if (ReferenceEquals(driver.tradeCloseSession, this)) driver.tradeCloseSession = null;
+        }
+    }
     private async Task<JsonObject> TradeCloseAsync(JsonObject action)
     {
         var current = await ReadBound();
         var before = await EvidenceAsync(["trade.currency", "trade.inventory", "trade.bargain"]);
         bool bargain = DailyEvidence.Reading(before, "trade.bargain", "$self")!.GetValue<bool>();
-        var job = DailyTradeClose.Owner(root, current.Context, endingBargain: bargain);
+        var job = tradeCloseSession?.Resolve(current.Context, bargain) ?? DailyTradeClose.Owner(null, current.Context, bargain);
         string path = Path.Combine(root, "live", "trade-closes", Guid.NewGuid().ToString("N") + ".json");
         var proof = new JsonObject { ["engine"] = "dotnet-trade-close-v2", ["purpose"] = bargain ? "end_bargain" : "ordinary_shop_exit", ["context"] = current.Context.DeepClone(), ["trade_session"] = job["id"]!.DeepClone(), ["before"] = before.DeepClone(), ["state"] = "prepared", ["resources_spent"] = false };
         DailyJson.Write(path, proof);

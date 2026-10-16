@@ -374,6 +374,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                 }
                 catch (StageHostException error) when (error.Kind is "adapter" or "pending" or "reconciled")
                 {
+                    if (error.Data["stage_result"] is JsonObject confirmed) item["result"] = confirmed.DeepClone();
                     item["state"] = error.Kind == "pending" ? "recovery_required" : "blocked";
                     item["error"] = error.Message;
                 }
@@ -410,6 +411,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
             }
             foreach (var item in itemsToRun.Where(i => Text(i["state"]) == "running"))
             {
+                if (error.Data["stage_result"] is JsonObject confirmed) item["result"] = confirmed.DeepClone();
                 item["state"] = "recovery_required";
                 item["error"] = "执行中断，再次运行将自动检查游戏当前进度：" + error.Message;
             }

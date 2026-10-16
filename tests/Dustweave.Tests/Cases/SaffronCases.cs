@@ -52,7 +52,7 @@ static class SaffronCases
         Check(DailyPreferences.Parse(JsonSerializer.Serialize(settings)).Stages.Saffron&&DailyStageCatalog.Enabled("territory_saffron",settings),"saffron selection survives account preference round trip");
         Check(DailyNavigationDecision.FieldStages.Contains("territory_saffron"),"saffron can reuse the already-open territory cartridge");
         var command=DailySaffron.Command("test-owner",123,1000);
-        Check(command["SaffronDaily"]!.GetValue<bool>()&&!command["Logging"]!.GetValue<bool>()&&!command["Mining"]!.GetValue<bool>(),"daily crop control never enables trees or mining");
+        Check(command["SaffronDaily"]!.GetValue<bool>()&&command["Logging"]!.GetValue<bool>()&&command["Mining"]!.GetValue<bool>(),"saffron controller permits trees and ore during potato waits and its final resource pass");
         Check(command["UntilUtcTicks"]!.GetValue<long>()==1000+TimeSpan.TicksPerSecond*3,"crop control expires if daily supervision disappears");
         Check(!SaffronCycle.CanBuff(100,false,true,true,true,600),"unripe crop state cannot authorize food use regardless of elapsed desktop time");
         Check(SaffronCycle.CanBuff(100,true,true,true,true,600),"mature crops can start from one harvest position without a preliminary field tour");
@@ -70,6 +70,9 @@ static class SaffronCases
         Check(Action(0,false,100,0,0)=="plant","the fixed plan starts its first potato round");
         Check(Action(0,true,50,1,50)=="plant","separate farm patches finish planting the same round before harvesting");
         Check(Action(0,true,0,0,100)=="wait","planted potatoes wait for growth without replanting saffron");
+        Check(Action(0,false,0,75,100)=="wait","partly ripe potatoes do not interrupt gathering to harvest a partial batch");
+        Check(SaffronCycle.ReturnToPotatoes(100,100,true,false),"all ripe potatoes preempt resource travel");
+        Check(!SaffronCycle.ReturnToPotatoes(100,99,true,false)&&!SaffronCycle.ReturnToPotatoes(100,100,false,false)&&!SaffronCycle.ReturnToPotatoes(100,100,true,true)&&!SaffronCycle.ReturnToPotatoes(0,0,true,false),"partial maturity, unknown fields, native settlement and empty batches never preempt gathering");
         Check(Action(0,false,0,100,100)=="harvest","mature potatoes are harvested");
         Check(Action(1,false,100,0,0)=="plant"&&Action(2,false,100,0,0)=="plant","the second and third rounds are independent of food expiry");
         Check(Action(3,false,100,0,0)=="replant","the completed target replants immediately without waiting for food expiry");

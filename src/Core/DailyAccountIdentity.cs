@@ -1,6 +1,9 @@
 namespace Dustweave;
 
-public sealed record DailyAccountSavePlan(int SlotNumber, string AccountKey, string Name, bool Existing);
+public sealed record DailyAccountSavePlan(int SlotNumber, string AccountKey, string Name, bool Existing)
+{
+    public bool ReplacesUnreadable { get; init; }
+}
 
 public static class DailyAccountIdentity
 {
@@ -28,10 +31,21 @@ public static class DailyAccountIdentity
             throw new InvalidOperationException("没有可保存的完整登录身份，请先完成登录。");
         var existing = value.Accounts.FirstOrDefault(a => a.Valid && a.AccountKey == value.CurrentKey);
         if (existing != null) return new(existing.SlotNumber, value.CurrentKey, existing.Name, true);
+        var recoverable = value.Accounts.Where(a => !a.Valid && a.AccountKey == value.CurrentKey).ToArray();
+        if (recoverable.Length == 1) return new(recoverable[0].SlotNumber, value.CurrentKey, recoverable[0].Name, true) { ReplacesUnreadable = true };
         int slot = Enumerable.Range(1, 100).FirstOrDefault(n => !value.OccupiedSlots.Contains(n));
         if (slot == 0) throw new InvalidOperationException("100 个账号槽位已满。");
         return new(slot, value.CurrentKey, $"账号 {slot:00}", false);
     }
+
+    // Historical profiles may identify an unreadable slot for an explicit
+    // replacement. They never make the old credentials valid for launch.
+    public static DailyAccountCatalog WithRecoveryHints(DailyAccountCatalog value, IReadOnlyList<DailyAccountProfile> profiles)
+        => value with { Accounts = value.Accounts.Select(a => {
+            var matches = profiles.Where(p => p.SlotNumber == a.SlotNumber && DailyProfiles.ValidKey(p.AccountKey)).ToArray();
+            return !a.Valid && matches.Length == 1 ? a with { AccountKey = matches[0].AccountKey,
+                Name = matches[0].PlayerName.Length > 0 ? matches[0].PlayerName : a.Name } : a;
+        }).ToArray() };
 
     public static bool SameCatalog(DailyAccountCatalog? previous, DailyAccountCatalog next)
         => previous != null && previous.CurrentKey == next.CurrentKey && previous.CurrentSlot == next.CurrentSlot

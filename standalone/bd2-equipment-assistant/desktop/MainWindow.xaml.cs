@@ -22,7 +22,7 @@ public partial class MainWindow:Window
  void ModeChanged(object sender,SelectionChangedEventArgs e){if(e.Source==ModeTabs)Invalidate();}
  void SearchChanged(object sender,TextChangedEventArgs e){if(!ready)return;FilterGear();}
 
- void Busy(bool value){busy=value;LanguageBox.IsEnabled=!value;ConnectButton.IsEnabled=!value;ModeTabs.IsEnabled=!value;UpdatePrimary();StopButton.IsEnabled=value&&executing;StopButton.Visibility=executing?Visibility.Visible:Visibility.Collapsed;}
+ void Busy(bool value){busy=value;LoadingProgress.Visibility=value&&!executing?Visibility.Visible:Visibility.Collapsed;LoadingProgress.IsIndeterminate=value&&!executing&&SystemParameters.ClientAreaAnimation;LoadingProgress.Value=value?50:0;LanguageBox.IsEnabled=!value;ConnectButton.IsEnabled=!value;ModeTabs.IsEnabled=!value;UpdatePrimary();StopButton.IsEnabled=value&&executing;StopButton.Visibility=executing?Visibility.Visible:Visibility.Collapsed;}
  void UpdatePrimary(){ExecuteButton.Content=L.T(plan==null?"计算规划":"确认并运行");ExecuteButton.IsEnabled=!busy&&inventoryReady&&(plan==null||CanExecute());StopButton.Visibility=executing?Visibility.Visible:Visibility.Collapsed;}
  bool CanExecute()=>plan!=null&&(S(plan["kind"])=="powder"?N(plan["count"])>0:plan["rows"]!.AsArray().Any(r=>N(r!["score"])<N(plan["target"]))&&N(plan["gold"])>0&&N(plan["powder"])>0);
  async Task Do(Func<Task> action){if(busy)return;Busy(true);try{await action();}catch(Exception ex){StatusText.Text=L.T("已暂停：")+L.T(ex.Message);if(AppDomain.CurrentDomain.GetData("BD2Daily.ShowMessage") is Action<Window,string,string> show)show(this,L.T("操作已暂停"),L.T(ex.Message));else MessageBox.Show(this,L.T(ex.Message),L.T("操作已暂停"),MessageBoxButton.OK,MessageBoxImage.Information);}finally{executing=false;Busy(false);}}

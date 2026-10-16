@@ -33,6 +33,15 @@ static class TaskPresetCases
         store.Assign(a, null); store.Delete(first.Id);
         Check(store.Selection(a, preferences) == null && store.Read().Presets.Single().Id == second.Id, "unassign and delete restores only the chosen account default");
         var behavior = DailyDesktopBehavior.Read(root);
+        Check(behavior.CompletionNotice.Windows&&behavior.CompletionNotice.Popup&&!behavior.CompletionNotice.Sound&&!behavior.HideIsolationReminder,"completion notifications preserve result popup and isolation explanation defaults");
+        var delivered=new List<string>();
+        var failures=new DailyCompletionNotice(true,true,true).Deliver(channel=>{delivered.Add(channel);if(channel=="windows")throw new IOException("Explorer unavailable");});
+        Check(failures.Length==1 && delivered.SequenceEqual(new[]{"windows","sound","popup"}),"failed Windows notification cannot suppress sound or results popup");
+        delivered.Clear();new DailyCompletionNotice(false,false,false).Deliver(delivered.Add);
+        Check(delivered.Count==0,"all completion channels can be disabled independently");
+        var choices=behavior with {CompletionNotice=new(false,true,true),HideIsolationReminder=true};choices.Save(root);
+        Check(DailyDesktopBehavior.Read(root)==choices,"notification choices and isolation reminder opt-out survive restart without changing daily settings");
+        behavior.Save(root);
         Check(behavior.CloseAction == "ask" && !behavior.RunOnOpen, "new users choose close behavior and never auto-run by default");
         behavior = behavior with { CloseAction = "tray", RunOnOpen = true }; behavior.Save(root);
         Check(DailyDesktopBehavior.Read(root) == behavior && behavior.ShouldRun(false, false, false, false, false), "remembered desktop behavior survives restart");

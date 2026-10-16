@@ -8,6 +8,14 @@ public static class DailyUpdateHost
 {
     public static string InstallRoot => Path.GetDirectoryName(Environment.ProcessPath!)!;
     public static string DataRoot => Environment.GetEnvironmentVariable("BD2_DAILY_DATA_ROOT") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BD2DailyAssistant");
+    // Shared with cache maintenance; hold across downloads and the whole update/recovery transaction.
+    public static IDisposable AcquireStorage(string root, bool exclusive = false)
+    {
+        string path = Path.Combine(root, "cache-storage.lock");
+        DailyUpdates.EnsureNoLinks(path);
+        Directory.CreateDirectory(root);
+        return new FileStream(path, FileMode.OpenOrCreate, FileAccess.Read, exclusive ? FileShare.None : FileShare.Read);
+    }
     public static void RequireHost()
     {
         if (SandboxProcessScope.CurrentBox.Length != 0) throw new InvalidOperationException("updates.isolated_open");

@@ -21,11 +21,11 @@ public partial class MansionWindow : Window
     public bool HostedAutomationEnabled => client?.Enabled == true || connecting || starting;
     static DailyLanguage L => DailyLanguage.Current;
 
-    public MansionWindow(bool smoke = false)
+    public MansionWindow(bool smoke = false,bool deferChrome = false)
     {
         this.smoke = smoke;
         InitializeComponent();
-        DailyDialogs.Prepare(this);
+        if(!deferChrome)DailyDialogs.Prepare(this,toolWindow:true);
         ShowInTaskbar = true;
         if (!smoke && DailyJson.TryRead<Preferences>(PreferencesPath)is { } preferences)
         {
@@ -201,6 +201,9 @@ public partial class MansionWindow : Window
 
     void Render()
     {
+        LoadingProgress.Visibility=connecting?Visibility.Visible:Visibility.Collapsed;
+        LoadingProgress.IsIndeterminate=connecting&&SystemParameters.ClientAreaAnimation;
+        LoadingProgress.Value=connecting?50:0;
         bool active = HostedAutomationEnabled;
         ConnectButton.IsEnabled = !active && !polling;
         ConnectButton.Visibility = !smoke && status == "disconnected" ? Visibility.Visible : Visibility.Collapsed;

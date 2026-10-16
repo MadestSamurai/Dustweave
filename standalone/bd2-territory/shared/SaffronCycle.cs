@@ -20,6 +20,7 @@ namespace BD2Territory
   public long BuffEnd{get;set;}
   public long ServerNow{get;set;}public long WaitUntil{get;set;}
   public int EmptyFields{get;set;}public int PotatoFields{get;set;}public int PotatoRoundLimit{get;set;}
+  public int GatheredResources{get;set;}public int SkippedResources{get;set;}
  }
  public sealed class SaffronFoodRecipe
  {
@@ -82,10 +83,13 @@ namespace BD2Territory
   public static string PotatoAction(int completed,int target,bool filling,int empty,int mature,int growing,bool affordable,bool capacity)
   {
    if(filling&&empty>0&&completed<target&&affordable&&capacity)return "plant";
+   if(growing>mature)return "wait";
    if(mature>0)return "harvest";
    if(growing>0)return "wait";
    if(completed>=target)return "replant";
    return empty>0&&affordable&&capacity?"plant":"limited";
   }
+  public static bool ReturnToPotatoes(int planted,int mature,bool fieldsKnown,bool gatheringBusy)
+   => fieldsKnown&&planted>0&&planted==mature&&!gatheringBusy;
  }
 }

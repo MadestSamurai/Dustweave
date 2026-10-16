@@ -88,7 +88,12 @@ public partial class MainWindow : Window
         RunTab.Content = dailyPanel; InitializeParallel(); InitializeDesktopBehavior();
         dailyPanel.PresetsChanged += RefreshAccountPresets;
         toolSession = new(root, Environment.ProcessPath!);
-        if(smoke==null)toolSession.ConfigureLaunch=(start,id)=>{var game=host.Find()??throw new InvalidOperationException("游戏已退出。");DailySuite.SetToolEnvironment(start,DailySuite.Read(root,game)??throw new InvalidOperationException("统一会话未就绪。"),game,id);};
+        if(smoke==null)toolSession.ConfigureLaunch=(start,id)=>{
+            var game=host.Find();
+            if(DailySuite.PreparesInWindow(id)){DailySuite.SetPendingToolEnvironment(start,game,id);return;}
+            if(game==null)throw new InvalidOperationException("游戏已退出。");
+            DailySuite.SetToolEnvironment(start,DailySuite.Read(root,game)??throw new InvalidOperationException("统一会话未就绪。"),game,id);
+        };
         toolPanel = new DailyToolPanel();
         ToolsTab.Content = toolPanel;
         InitializePlugins();
@@ -182,6 +187,10 @@ public partial class MainWindow : Window
                 window.Panel.ActivityChanged+=()=>{RefreshTools();SetBusy(busy);};
                 window.Closed+=(_,_)=>{if(apostleWindow==window)apostleWindow=null;RefreshTools();SetBusy(busy);};
                 window.Show();toolMessage="apostle.ready";return;
+            }
+            if(DailySuite.PreparesInWindow(id)){
+                await toolSession.OpenAsync(id,controlReserved:true);
+                toolMessage="tools.preparing_window";return;
             }
             var game=host.Find()??throw new InvalidOperationException("请先启动游戏。");
             await host.ConnectAsync(game,m=>toolMessage=m,CancellationToken.None);
@@ -538,7 +547,7 @@ public partial class MainWindow : Window
     {
         var plan = DailyAccountIdentity.SavePlan(sessions.Read());
         string? name = Prompt(L.Get(plan.Existing ? "account.slot_update" : "account.slot_save", plan.SlotNumber),
-            plan.Existing ? "account.update_hint" : "为这个账号取一个容易区分的名字。", plan.Name);
+            plan.ReplacesUnreadable ? "account.recover_credentials" : plan.Existing ? "account.update_hint" : "为这个账号取一个容易区分的名字。", plan.Name);
         if (name == null) return;
         sessions.Save(plan.SlotNumber, name, plan.AccountKey);
         L.Text(ProgressText, plan.Existing ? "account.updated" : "account.new_saved", name);
@@ -670,6 +679,7 @@ public partial class MainWindow : Window
         }
         catch (Exception error) { ShowError(error); return; }
         dailyStopping = false;
+        QueueView? completedRun = null;
         await OperateAsync(async () =>
         {
                 await ConnectTaskAccountAsync(targetKey);
@@ -678,10 +688,11 @@ public partial class MainWindow : Window
                     return;
                 var current = sessions.Read().CurrentKey;
                 if (current != targetKey) throw new InvalidOperationException("run.account_unavailable");
-                await RunDailyQueueAsync(current, !syncCollection && DailyDesktopBehavior.Read(root).CloseGameAfterRun,
+                completedRun = await RunDailyQueueAsync(current, !syncCollection && DailyDesktopBehavior.Read(root).CloseGameAfterRun,
                     () => dailyQueue.RunAsync(current, resume, syncCollection, retry, selection));
 
         }, connectsGame: true);
+        if (!syncCollection && completedRun != null) ShowRunResults([AccountResult(completedRun)]);
     }
     private async Task<QueueView> RunDailyQueueAsync(string account, bool closeGame, Func<Task<QueueView>> execute)
     {
@@ -690,10 +701,36 @@ public partial class MainWindow : Window
         if (closeGame && DailyQueueCompletion.Eligible(result, account, dailyStopping))
         {
             L.Text(ProgressText, "completion.closing");
-            await DailyQueueCompletion.CloseAsync(host, target, account, result, dailyStopping);
+            try { await DailyQueueCompletion.CloseAsync(host, target, account, result, dailyStopping); }
+            catch (Exception error) { result = result with { CompletionIssue = error.Message }; }
             RefreshAccounts();
         }
         return result;
+    }
+    private DailyResultWindow? runResultsWindow;
+    private DailyAccountRunResult AccountResult(QueueView view) => new(
+        sessions.Read().Accounts.FirstOrDefault(a => a.AccountKey == view.Account)?.Name ?? L.Get("report.current_account"), view);
+    private void ShowRunResults(IReadOnlyList<DailyAccountRunResult> results)
+    {
+        if (finalClose || results.Count == 0) return;
+        void ShowResults()
+        {
+            Show(); if(WindowState==WindowState.Minimized)WindowState=WindowState.Normal;
+            runResultsWindow?.Close();
+            runResultsWindow = DailyResultWindow.RunResults(results);
+            runResultsWindow.Owner = this;
+            runResultsWindow.Show();
+        }
+        // A stopped queue still gets its result panel, but is not announced as finished.
+        bool finished = results.All(r => r.View.State is "completed" or "partial" or "failed");
+        if (!finished) { ShowResults(); return; }
+        var options = ReadDesktopBehavior()?.CompletionNotice ?? new();
+        var errors = options.Deliver(channel => {
+            if(channel=="popup")ShowResults();
+            else if(channel=="sound")System.Media.SystemSounds.Asterisk.Play();
+            else { tray ??= new DesktopTray(this, () => { exitChosen=true;Close(); }); tray.Notify(L.Get("report.title"),L.Get("completion.notification",results.Count),ShowResults); }
+        });
+        if(errors.Length>0)try { DailyJson.Write(Path.Combine(root,"completion-notification-error.json"),new { atUtc=DateTimeOffset.UtcNow, errors }); } catch { }
     }
     private async Task CheckThemesForSmoke()
     {
@@ -797,6 +834,18 @@ public partial class MainWindow : Window
         try
         {
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            if(Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE")=="tool-preparation")
+            {
+                await CheckToolPreparationForSmoke();
+                DailyJson.Write(Path.Combine(smoke!,"smoke.json"),new{status="passed",scope="tool-preparation",languages=3,themes=2,realGameTouched=false});
+                Application.Current.Shutdown();return;
+            }
+            if(Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE")=="run-report")
+            {
+                await CheckRunReportForSmoke();
+                DailyJson.Write(Path.Combine(smoke!,"smoke.json"),new{status="passed",scope="run-report",languages=3,themes=2,realGameTouched=false});
+                Application.Current.Shutdown();return;
+            }
             if(Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE")=="tool-activity")
             {
                 await CheckToolActivityForSmoke();

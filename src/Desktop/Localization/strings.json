@@ -1,4 +1,38 @@
 {
+  "tools.preparing_window": { "zh-CN": "正在准备工具…", "zh-TW": "正在準備工具…", "en-US": "Preparing tool…" },
+  "tools.preparation_stopping": { "zh-CN": "正在取消连接…", "zh-TW": "正在取消連線…", "en-US": "Cancelling connection…" },
+  "tools.preparation_cancelled": { "zh-CN": "已取消连接。可重试或关闭窗口。", "zh-TW": "已取消連線。可重試或關閉視窗。", "en-US": "Connection cancelled. Retry or close this window." },
+  "tools.preparation_retry": { "zh-CN": "重新连接", "zh-TW": "重新連線", "en-US": "Reconnect" },
+  "tools.preparation_identity": { "zh-CN": "正在读取游戏账号…", "zh-TW": "正在讀取遊戲帳號…", "en-US": "Reading game account…" },
+  "tools.preparation_game_changed": { "zh-CN": "游戏已退出或重启。请关闭此窗口，再从工具页打开。", "zh-TW": "遊戲已結束或重新啟動。請關閉此視窗，再從工具頁開啟。", "en-US": "The game closed or restarted. Close this window and reopen the tool from Dustweave." },
+  "saffron.resource_retry": { "zh-CN": "等待树矿路径重试，土豆成熟后优先收割", "zh-TW": "等待樹礦路徑重試，馬鈴薯成熟後優先採收", "en-US": "Waiting to retry a resource route; ripe potatoes take priority." },
+  "saffron.resource_partial": { "zh-CN": "藏红花流程已结束；部分树矿暂不可达，已跳过，其他日常继续", "zh-TW": "藏紅花流程已結束；部分樹礦暫不可達，已略過，其他日常繼續", "en-US": "The saffron cycle has finished. Some trees or ore could not be reached and were skipped; other daily tasks continue." },
+  "account.recover_credentials": { "zh-CN": "旧凭据无法解密。保存本次登录将更新原账号，保留其位置和日常设置。", "zh-TW": "舊憑據無法解密。儲存本次登入將更新原帳號，保留其位置和日常設定。", "en-US": "The old credentials cannot be decrypted. Saving this login restores the existing account and keeps its position and daily settings." },
+  "issue.reason.credentials-unreadable": { "zh-CN": "旧登录凭据无法由当前 Windows 解密，可能来自重装前的系统。", "zh-TW": "目前 Windows 無法解密舊登入憑據，可能來自重裝前的系統。", "en-US": "Windows cannot decrypt the saved login, which may belong to a previous Windows installation." },
+  "issue.action.credentials-unreadable": { "zh-CN": "请在游戏中重新登录，正常退出游戏后，到账号管理保存账号；会更新原账号，无需删除设置。", "zh-TW": "請在遊戲中重新登入，正常退出遊戲後，到帳號管理儲存帳號；會更新原帳號，無需刪除設定。", "en-US": "Sign in again in the game, close it normally, then save the account in Accounts. Your existing account settings will be kept." },
+  "completion.notice_title": { "zh-CN": "日常完成提醒", "zh-TW": "日常完成提醒", "en-US": "Daily completion alerts" },
+  "completion.windows": { "zh-CN": "Windows 通知", "zh-TW": "Windows 通知", "en-US": "Windows notification" },
+  "completion.popup": { "zh-CN": "结果弹窗", "zh-TW": "結果視窗", "en-US": "Results window" },
+  "completion.sound": { "zh-CN": "声音", "zh-TW": "音效", "en-US": "Sound" },
+  "completion.notification": { "zh-CN": "{0} 个账号的日常已结束，点击查看结果。", "zh-TW": "{0} 個帳號的日常已結束，點擊查看結果。", "en-US": "Daily tasks have finished for {0} accounts. Click to view results." },
+  "completion.notification_failed": { "zh-CN": "部分完成提醒未能送达，日常结果已保存。", "zh-TW": "部分完成提醒未能送達，日常結果已儲存。", "en-US": "Some completion alerts could not be delivered. Your daily results are saved." },
+  "sandbox.launch_description": { "zh-CN": "为选中账号打开独立的游戏和织尘窗口，可与其他账号分别执行日常。需要安装 Sandboxie-Plus。\n\n每个隔离窗口有自己的控制、日志和缓存；同一账号的已完成任务会与主窗口同步。请勿让同一账号在多个游戏实例中同时登录。", "zh-TW": "為選取的帳號開啟獨立的遊戲和織塵視窗，可與其他帳號分別執行日常。需要安裝 Sandboxie-Plus。\n\n每個隔離視窗有自己的控制、日誌和快取；同一帳號已完成的任務會與主視窗同步。請勿讓同一帳號在多個遊戲執行個體中同時登入。", "en-US": "Open a separate game and Dustweave window for the selected account, so it can run daily tasks independently of other accounts. Requires Sandboxie-Plus.\n\nEach isolated window has its own controls, logs and cache. Completed tasks sync with the main window for the same account. Do not sign in to the same account in multiple game instances at once." },
+  "sandbox.remember": { "zh-CN": "今后不再提醒", "zh-TW": "今後不再提醒", "en-US": "Do not remind me again" },
+  "sandbox.storage_busy": { "zh-CN": "需要更新此账号的独立日志与缓存设置。请先关闭该隔离空间中的游戏和织尘，再重新隔离启动；其他账号不受影响。", "zh-TW": "需要更新此帳號的獨立日誌與快取設定。請先關閉該隔離空間中的遊戲和織塵，再重新隔離啟動；其他帳號不受影響。", "en-US": "This account needs updated isolated log and cache settings. Close the game and Dustweave in this sandbox, then open it again. Other accounts are unaffected." },
+  "draw.title": { "zh-CN": "抽取详情", "zh-TW": "抽取詳情", "en-US": "Draw results" },
+  "draw.summary": { "zh-CN": "本次共 {0} 抽 · 五星服装 {1} 件 · 五星角色 UR 专武 {2} 件", "zh-TW": "本次共 {0} 抽 · 五星服裝 {1} 件 · 五星角色 UR 專武 {2} 件", "en-US": "{0} draws · {1} five-star costumes · {2} UR weapons for five-star characters" },
+  "draw.unknown": { "zh-CN": "另有 {0} 项奖励资料未读全，未计入稀有统计。", "zh-TW": "另有 {0} 項獎勵資料未讀全，未計入稀有統計。", "en-US": "Details for {0} rewards are incomplete; they are excluded from rarity counts." },
+  "draw.costumes": { "zh-CN": "服装", "zh-TW": "服裝", "en-US": "Costumes" },
+  "draw.equipment": { "zh-CN": "装备", "zh-TW": "裝備", "en-US": "Equipment" },
+  "draw.item_unknown": { "zh-CN": "奖励 {0}（名称未读取）", "zh-TW": "獎勵 {0}（名稱未讀取）", "en-US": "Reward {0} (name unavailable)" },
+  "draw.grade_unknown": { "zh-CN": "星级资料未读取", "zh-TW": "星級資料未讀取", "en-US": "Rarity unavailable" },
+  "draw.converted": { "zh-CN": "重复奖励已转化", "zh-TW": "重複獎勵已轉化", "en-US": "Duplicate converted" },
+  "draw.no_details": { "zh-CN": "已确认抽取，当前记录未保留具体奖励。", "zh-TW": "已確認抽取，目前記錄未保留具體獎勵。", "en-US": "Draws are confirmed, but this record has no item details." },
+  "report.title": { "zh-CN": "日常结果", "zh-TW": "日常結果", "en-US": "Daily results" },
+  "report.success": { "zh-CN": "{0} 个账号执行结束，无需处理其他事项。", "zh-TW": "{0} 個帳號執行結束，無需處理其他事項。", "en-US": "{0} accounts finished. Nothing else needs attention." },
+  "report.issues": { "zh-CN": "{0} 个账号执行结束 · 以下 {1} 项请留意", "zh-TW": "{0} 個帳號執行結束 · 以下 {1} 項請留意", "en-US": "{0} accounts finished · {1} items to review" },
+  "report.not_finished": { "zh-CN": "此项未完成，可回到今日任务查看并补跑。", "zh-TW": "此項未完成，可回到今日任務查看並補跑。", "en-US": "This step is unfinished. Review it in Today and retry when ready." },
+  "report.current_account": { "zh-CN": "当前账号", "zh-TW": "目前帳號", "en-US": "Current account" },
   "storage.low.title": {
     "zh-CN": "磁盘空间不足",
     "zh-TW": "磁碟空間不足",
@@ -260,9 +294,9 @@
     "en-US": "Close the game after daily tasks finish"
   },
   "completion.help": {
-    "zh-CN": "每个账号完成后关闭对应游戏；暂停或中断时保留。定时执行可单独设置。",
-    "zh-TW": "每個帳號完成後關閉對應遊戲；暫停或中斷時保留。定時執行可單獨設定。",
-    "en-US": "Close each account's game when its tasks finish. Keep it open if paused or interrupted. Scheduled runs have their own setting."
+    "zh-CN": "队列走完后关闭对应游戏，部分任务暂缓也会关闭；暂停或中断时保留。定时执行可单独设置。",
+    "zh-TW": "佇列執行結束後關閉對應遊戲，部分任務暫緩也會關閉；暫停或中斷時保留。定時執行可單獨設定。",
+    "en-US": "Close each game when its queue ends, even with deferred tasks. Keep it open when paused or interrupted. Schedules have their own setting."
   },
   "completion.schedule_help": {
     "zh-CN": "仅用于这项定时计划，串行和隔离多开均适用；异常中断时保留游戏。",
@@ -835,9 +869,9 @@
     "en-US": "{0} MB"
   },
   "logs.protection": {
-    "zh-CN": "到期日志会清理；超出空间目标时优先清理较早的成功记录，保留最近 48 小时。账号、任务进度和必要恢复状态不受影响，已导出的压缩包不自动删除。",
-    "zh-TW": "到期日誌會清理；超出空間目標時優先清理較早的成功記錄，保留最近 48 小時。帳號、任務進度和必要復原狀態不受影響，已匯出的壓縮檔不會自動刪除。",
-    "en-US": "Expired logs are removed. Above the size target, older successful records go first; the latest 48 hours stay. Accounts, task progress, recovery state and exported ZIPs are retained."
+    "zh-CN": "日志按期限和空间目标清理。更新缓存最多保留 2 版、最长 7 天，任一超出即清理；正在更新或需要恢复的文件受保护。账号、任务进度和已导出的压缩包不会删除。",
+    "zh-TW": "日誌依期限及空間目標清理。更新快取最多保留 2 版、最長 7 天，任一超出即清理；正在更新或需要復原的檔案受保護。帳號、任務進度及已匯出的壓縮檔不會刪除。",
+    "en-US": "Logs follow the age and size limits. Update caches keep at most 2 versions for up to 7 days; either limit triggers cleanup. Active updates and recovery files are protected. Accounts, task progress and exported ZIPs are retained."
   },
   "logs.scope": {
     "zh-CN": "统计当前数据目录和迁移后的缓存；账号、进度及恢复记录不会被清空。",
@@ -6200,9 +6234,9 @@
     "en-US": "Off by default · Grows in 20 hours; skips unripe crops"
   },
   "prefs.saffron_details": {
-    "zh-CN": "成熟后使用三种增产料理（份数/制作材料不足会商店购买）并收割，再按设定轮数种收土豆，不受加成时长影响。完成后补种藏红花、制作料理并售卖，保留1份浓汤。",
-    "zh-TW": "成熟後使用三種增產料理（份數／製作材料不足會到商店購買）並採收，再按設定輪數種收馬鈴薯，不受加成時長影響。完成後補種藏紅花、製作料理並出售，保留1份濃湯。",
-    "en-US": "Uses three yield foods before harvesting ripe saffron, cooking missing servings from available ingredients and buying any shortfall. Then grows and harvests the selected potato rounds regardless of buff duration. Finally replants saffron, cooks and sells dishes, keeping one soup."
+    "zh-CN": "成熟后使用三种增产料理（份数/制作材料不足会商店购买）并收割，再按设定轮数种收土豆。等待时砍树挖矿，整批成熟后返回收割；轮次完成后收完剩余树矿，再补种藏红花、制作料理并售卖，保留1份浓汤。",
+    "zh-TW": "成熟後使用三種增產料理（份數／製作材料不足會到商店購買）並採收，再按設定輪數種收馬鈴薯。等待時伐木採礦，整批成熟後返回採收；輪次完成後收完剩餘樹礦，再補種藏紅花、製作料理並出售，保留1份濃湯。",
+    "en-US": "Harvests ripe saffron with three yield foods, cooking or buying missing servings, then grows the chosen potato rounds. Gathers trees and ore while waiting and returns when the whole batch is ripe. Finishes remaining resources, replants saffron, cooks and sells dishes, keeping one soup."
   },
   "saffron.message.1": {
     "zh-CN": "藏红花种植与收割",

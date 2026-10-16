@@ -356,10 +356,28 @@
   </ControlTemplate></Setter.Value></Setter>
  </Style>
  <Style TargetType="ProgressBar">
+  <Setter Property="Foreground" Value="{DynamicResource Primary}"/>
+  <Setter Property="Background" Value="{DynamicResource Line}"/>
   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ProgressBar">
-   <Grid x:Name="PART_Track" Background="{TemplateBinding Background}">
+   <Grid x:Name="PART_Track" Background="{TemplateBinding Background}" ClipToBounds="True">
     <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}" HorizontalAlignment="Left" CornerRadius="2"/>
+    <Border x:Name="LoadingSweep" Background="{TemplateBinding Foreground}" Visibility="Collapsed" CornerRadius="2">
+     <Border.OpacityMask><LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+      <LinearGradientBrush.RelativeTransform><TranslateTransform X="-0.5"/></LinearGradientBrush.RelativeTransform>
+      <GradientStop Offset="0" Color="Transparent"/><GradientStop Offset="0.18" Color="White"/><GradientStop Offset="0.36" Color="Transparent"/>
+     </LinearGradientBrush></Border.OpacityMask>
+    </Border>
    </Grid>
+   <ControlTemplate.Triggers>
+    <MultiTrigger><MultiTrigger.Conditions><Condition Property="IsIndeterminate" Value="True"/><Condition Property="IsVisible" Value="True"/></MultiTrigger.Conditions>
+     <Setter TargetName="PART_Indicator" Property="Visibility" Value="Collapsed"/>
+     <Setter TargetName="LoadingSweep" Property="Visibility" Value="Visible"/>
+     <MultiTrigger.EnterActions><BeginStoryboard x:Name="LoadingMotion"><Storyboard RepeatBehavior="Forever">
+      <DoubleAnimation Storyboard.TargetName="LoadingSweep" Storyboard.TargetProperty="(UIElement.OpacityMask).(Brush.RelativeTransform).(TranslateTransform.X)" From="-0.36" To="1" Duration="0:0:1.4"/>
+     </Storyboard></BeginStoryboard></MultiTrigger.EnterActions>
+     <MultiTrigger.ExitActions><RemoveStoryboard BeginStoryboardName="LoadingMotion"/></MultiTrigger.ExitActions>
+    </MultiTrigger>
+   </ControlTemplate.Triggers>
   </ControlTemplate></Setter.Value></Setter>
  </Style>
  <Style TargetType="ScrollBar">

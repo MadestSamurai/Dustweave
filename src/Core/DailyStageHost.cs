@@ -214,9 +214,16 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
             // Rejected means no native action dispatched (including an explicit rejected receipt).
             // A missing/changed button is a stage failure, not an uncertain consuming operation.
             // Pending transport and identity failures deliberately still pause the whole queue.
-            throw new StageHostException(driver.PauseRequested ? "stopped" : "adapter", e.Message) { PotionLimit = e.PotionLimit };
+            var translated = new StageHostException(driver.PauseRequested ? "stopped" : "adapter", e.Message) { PotionLimit = e.PotionLimit };
+            if (e.Data["stage_result"] is JsonObject confirmed) translated.Data["stage_result"] = confirmed;
+            throw translated;
         }
-        catch (InvalidDataException e) { driver.Diagnostics.Failure("failure", O(("kind", "data"), ("message", e.Message))); throw new StageHostException("adapter", e.Message); }
+        catch (InvalidDataException e) {
+            driver.Diagnostics.Failure("failure", O(("kind", "data"), ("message", e.Message)));
+            var translated = new StageHostException("adapter", e.Message);
+            if (e.Data["stage_result"] is JsonObject confirmed) translated.Data["stage_result"] = confirmed;
+            throw translated;
+        }
         catch (Exception e) { driver.Diagnostics.Failure("failure", O(("kind", e.GetType().Name), ("message", e.Message), ("exception", e.ToString()))); throw; }
         finally { driver.SubmissionGuard = oldGuard; driver.TradeStageActive = oldTrade; if (stage == "trade" && operation == "execute") driver.ConfigureTradeResume(null); serial.Release(); }
     }

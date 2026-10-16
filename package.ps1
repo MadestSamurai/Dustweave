@@ -85,8 +85,9 @@ if($SyntheticEvidence){
 Run 'dotnet' @('run','--project',(Join-Path $root 'tools/CompatibilityCli'),'-c','Release','-r','win-x64','--no-build','--','client-inputs',$managed,(Join-Path $work 'client-before.json')) 'client-before'
 $tools=@('bd2-fishing','bd2-sichuan','bd2-rhythm','bd2-territory','bd2-equipment-assistant','bd2-apostle-defense','bd2-infinite-gacha','bd2-secret-vision','bd2-fiend-hunter')
 $tables=Join-Path $work 'tables'
-$tableNames='CookingTable,FoodTable,ProductTable,SellItemTable,ShopTable,TalentSkillTable,TalentTable,NameTextTable,CharTable,EventMissionGroupTable,GachaGroupTable,GachaTable,MissionSectionRewardTable,LocalTextTable,MissionTable,DispatchTable,EquipmentMakingTable,EquipmentTable,HuntDispatchTable,PassTable,SkyWayFieldTable,SquareRewardTable,StatueRewardTable,RewardGroupTable,RandomBoxTable'
+$tableNames='CookingTable,FoodTable,ProductTable,SellItemTable,ShopTable,TalentSkillTable,TalentTable,NameTextTable,CharTable,EventMissionGroupTable,GachaGroupTable,GachaTable,MissionSectionRewardTable,LocalTextTable,MissionTable,DispatchTable,EquipmentMakingTable,EquipmentTable,HuntDispatchTable,PassTable,SkyWayFieldTable,SquareRewardTable,StatueRewardTable,RewardGroupTable,RandomBoxTable,CostumeTable,PackTable,MapTable'
 $groups=[ordered]@{extra=@('EventMissionGroupTable');gacha=@('GachaGroupTable','GachaTable','MissionSectionRewardTable');missions=@('LocalTextTable','MissionTable');names=@('NameTextTable');policy=@('CharTable','DispatchTable','EquipmentMakingTable','EquipmentTable','HuntDispatchTable','MissionTable','PassTable','SkyWayFieldTable','SquareRewardTable','StatueRewardTable')}
+$groups['draw-report']=@('CostumeTable','CharTable','EquipmentTable','NameTextTable')
 if($validation.scope -ne 'Full'){
  $currentClient=Get-Content -LiteralPath (Join-Path $work 'client-before.json') -Raw|ConvertFrom-Json
  $baselineClient=Get-Content -LiteralPath (Join-Path $validation.baseline 'client-code-inputs.json') -Raw|ConvertFrom-Json
@@ -120,6 +121,10 @@ foreach($flavor in $Flavors){
   $target=Join-Path $bundle ('data/daily/'+$group.Key);[IO.Directory]::CreateDirectory($target)|Out-Null
   foreach($table in $group.Value){Copy-Item -LiteralPath (Join-Path $tables ($table+'.json')) -Destination $target}
   Copy-Item -LiteralPath (Join-Path $tables 'manifest.json') -Destination $target
+ }
+ $locations=Join-Path $bundle 'data/locations/locations';[IO.Directory]::CreateDirectory($locations)|Out-Null
+ foreach($name in @('PackTable.json','MapTable.json','NameTextTable.json','manifest.json')){
+  Copy-Item -LiteralPath (Join-Path $tables $name) -Destination $locations
  }
  Copy-Item -LiteralPath (Join-Path $work 'trade-catalog.json') -Destination (Join-Path $bundle 'data/trade-catalog.json')
  Copy-Item -LiteralPath (Join-Path $work 'trade-drops.json') -Destination (Join-Path $bundle 'data/trade-drops.json')
@@ -155,7 +160,7 @@ foreach($flavor in $Flavors){
  }
  Pass (Join-Path $checks 'smoke/smoke.json')
  if($validation.scope -in @('Full','Updates')){
-  foreach($scope in @('outcomes','apostle','tool-activity')){
+  foreach($scope in @('outcomes','apostle','tool-activity','run-report','tool-preparation')){
    $check=Join-Path $checks ('smoke-'+$scope)
    Run $exe @('--smoke',$check) ($flavor+'-smoke-'+$scope) 180 $scope
    Pass (Join-Path $check 'smoke.json')

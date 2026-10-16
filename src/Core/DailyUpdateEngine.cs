@@ -47,9 +47,11 @@ public static class DailyUpdateEngine
         bool parentExited = false, ownInstance = false, ownUpdate = false, mayRestart = false;
         Mutex? updateMutex = null, instance = null;
         Process? next = null;
+        IDisposable? storage = null;
         string? markerPath = null;
         try
         {
+            storage = DailyUpdateHost.AcquireStorage(DailyUpdateHost.DataRoot);
             job = DailyUpdateJson.TryRead<DailyUpdateJob>(jobPath) ?? throw new InvalidDataException("updates.invalid_package");
             ValidateJob(job, jobPath);
             string target = Path.GetDirectoryName(job.Target)!, attempt = Attempt(job);
@@ -152,6 +154,7 @@ public static class DailyUpdateEngine
             next?.Dispose();
             if (ownInstance) instance!.ReleaseMutex(); instance?.Dispose();
             if (ownUpdate) updateMutex!.ReleaseMutex(); updateMutex?.Dispose();
+            storage?.Dispose();
         }
     }
     private static string[] ExtractPayload(DailyUpdateJob job, string target, ref string staging, out Dictionary<string, string>? retained)

@@ -75,4 +75,14 @@ public static class DailySuite {
   start.Environment["BD2_DAILY_GAME_START"]=game.StartTicks.ToString();
   start.Environment["BD2_DAILY_TOOL_FINGERPRINT"]=state.Fingerprints.Single(x=>x.StartsWith(id+"|",StringComparison.Ordinal)).Split('|')[1];
  }
+ // Only these tools have a window-first preparation path. A pending launch must
+ // never inherit another module's usable transport fingerprint.
+ public static bool PreparesInWindow(string id)=>id is "mansion-runaway" or "equipment";
+ public static void SetPendingToolEnvironment(System.Diagnostics.ProcessStartInfo start,GameInstance? game,string id){
+  if(!PreparesInWindow(id))throw new ArgumentException("Unsupported deferred tool",nameof(id));
+  start.Environment["BD2_DAILY_HOSTED_TOOL"]=id;
+  start.Environment["BD2_DAILY_GAME_PID"]=(game?.ProcessId??0).ToString();
+  start.Environment["BD2_DAILY_GAME_START"]=(game?.StartTicks??0).ToString();
+  start.Environment.Remove("BD2_DAILY_TOOL_FINGERPRINT");
+ }
 }

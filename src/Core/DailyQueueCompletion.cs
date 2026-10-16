@@ -14,8 +14,8 @@ public sealed record DailyQueueCompletion(GameInstance Game, string Account, str
     }
 
     public static bool Eligible(QueueView result, string account, bool stopped) =>
-        !stopped && !result.Expired && result.State == "completed" && result.Account == account
-        && result.Stages.Count > 0 && result.Stages.All(s => s.State is "completed" or "skipped");
+        !stopped && !result.Expired && result.State is ("completed" or "partial") && result.Account == account
+        && result.Stages.Count > 0 && result.Stages.All(s => s.State is "completed" or "skipped" or "partial" or "blocked");
 
     public static async Task CloseAsync(IGameHost host, DailyQueueCompletion? target, string account, QueueView result,
         bool stopped, CancellationToken cancellation = default)

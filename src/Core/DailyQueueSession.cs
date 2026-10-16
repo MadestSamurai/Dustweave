@@ -5,6 +5,9 @@ namespace Dustweave;
 public sealed record QueueStage(string Task, string State, string Detail, bool Carried = false, DateTimeOffset? FinishedAt = null, IReadOnlyList<QueueTaskDetail>? PendingTasks = null)
 {
     public IReadOnlyList<QueueRecoveryDetail> Recovery { get; init; } = [];
+    public DailyDrawSummary? Draws { get; init; }
+    public bool HasNotice { get; init; }
+    public Dictionary<string, DailyDisplayName> Locations { get; init; } = [];
 }
 public sealed record QueueRecoveryDetail(string Role, int TalentKind)
 {
@@ -26,6 +29,7 @@ public sealed record QueueView(string State, string Message, string Record, IRea
 {
     // Presentation only. Worker results must never become host-side resumable journals.
     public IReadOnlyList<QueueStage>? PlanStages { get; init; }
+    public string CompletionIssue { get; init; } = "";
 }
 public sealed record QueuePlanRequest(string Account, IReadOnlyList<string> Tasks)
 {
@@ -213,7 +217,10 @@ public sealed class DailyQueueSession(string root, IDailyQueueExecutor executor,
         value = JsonSerializer.SerializeToElement(normalized);
         string state = value.GetProperty("state").GetString() ?? "";
         var stages = value.GetProperty("items").EnumerateArray().Select(i => new QueueStage(i.GetProperty("task").GetString() ?? "", i.GetProperty("state").GetString() ?? "",
-          ReadStageDetail(i), i.TryGetProperty("carried_forward", out var carried) && carried.ValueKind == JsonValueKind.True, ReadFinishedAt(i), DailyPendingTasks.Read(i)) { Recovery = QueueRecoveryDetail.Read(i) }).ToArray();
+          ReadStageDetail(i), i.TryGetProperty("carried_forward", out var carried) && carried.ValueKind == JsonValueKind.True, ReadFinishedAt(i), DailyPendingTasks.Read(i)) {
+              Recovery = QueueRecoveryDetail.Read(i), Draws = DailyDrawSummary.Read(i),
+              HasNotice = DailyRunReport.HasNotice(i), Locations = DailyLocationLabels.Read(i)
+          }).ToArray();
         var period = DailyQueuePeriod.Read(value);
         bool expired = DailyQueuePeriod.IsExpired(period, DailyQueuePeriod.Snapshot(root, period?.Server ?? ""), now);
         return new(state, value.TryGetProperty("error", out var e) ? e.GetString() ?? "" : "", record, stages, account, period, expired);

@@ -12,7 +12,7 @@ public partial class MainWindow
     private bool logCleanupRunning;
     private bool cacheChanging;
     private void SetCacheChanging(bool value){cacheChanging=value;SetBusy(busy);}
-    private sealed record LogCleanupRun(DateTime At, int Files, long Bytes, int Skipped);
+    private sealed record LogCleanupRun(DateTime At, int Files, long Bytes, int Skipped, string? Version = null);
     private string? LegacyEquipmentLogRoot => smoke == null
         ? Environment.GetEnvironmentVariable("BD2_EQUIPMENT_DATA_ROOT") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BD2EquipmentAssistant")
         : null;
@@ -20,7 +20,7 @@ public partial class MainWindow
     {
         logPolicy=DailyLogCleanup.Load(root);
         var last=DailyJson.TryRead<LogCleanupRun>(Path.Combine(root,"log-cleanup-last.json"));
-        if(last!=null && last.At>DateTime.UtcNow.AddHours(-12) && last.At<=DateTime.UtcNow)nextLogCleanup=last.At.AddHours(12);
+        if(last?.Version==DailyProductVersion.Current && last.At>DateTime.UtcNow.AddHours(-12) && last.At<=DateTime.UtcNow)nextLogCleanup=last.At.AddHours(12);
         if(LegacyEquipmentLogRoot is { } legacy && DailyLogCleanup.HasLegacyEquipmentLogs(legacy))nextLogCleanup=DateTime.UtcNow.AddMinutes(1);
         Closed+=(_,_)=>logCleanupCancellation?.Cancel();
     }
@@ -43,15 +43,16 @@ public partial class MainWindow
             if(Unavailable || dailyQueue.IsRunning || scheduleChecking || DailyDialogs.ModalDepth>0)return;
             var result=await DailyLogCleanup.ApplyAsync(plan,lifetime.Token);
             // Maintenance shares the automation ownership lock; an update download must not be pruned.
-            if(!updateChecking && !updateInstalling && !ToolOpen && !IsSandboxWindow && !DailyUpdateHost.HasIsolatedWindows())
+            bool cacheChecked=false;
+            if(!updateChecking && !updateInstalling && !ToolOpen && (IsSandboxWindow || !DailyUpdateHost.HasIsolatedWindows()))
             {
                 using var control=DailyUpdateHost.AcquireControl(root);
                 SetCacheChanging(true);
-                try { var cacheResult=await DailyCacheStorage.CleanAsync(root,lifetime.Token);result=new(result.Files+cacheResult.Files,result.Bytes+cacheResult.Bytes,result.Skipped+cacheResult.Skipped); }
+                try { var cacheResult=await DailyCacheStorage.CleanAsync(root,lifetime.Token);result=new(result.Files+cacheResult.Files,result.Bytes+cacheResult.Bytes,result.Skipped+cacheResult.Skipped);cacheChecked=true; }
                 finally {SetCacheChanging(false);}
             }
-            DailyJson.Write(Path.Combine(root,"log-cleanup-last.json"),new LogCleanupRun(DateTime.UtcNow,result.Files,result.Bytes,result.Skipped));
-            nextLogCleanup=DateTime.UtcNow.AddHours(12);
+            DailyJson.Write(Path.Combine(root,"log-cleanup-last.json"),new LogCleanupRun(DateTime.UtcNow,result.Files,result.Bytes,result.Skipped,cacheChecked?DailyProductVersion.Current:null));
+            nextLogCleanup=cacheChecked?DateTime.UtcNow.AddHours(12):DateTime.UtcNow.AddMinutes(5);
         }
         catch(OperationCanceledException) { }
         catch(Exception e) when(e is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or InvalidOperationException) { /* Never stop automation for retention. Retry on the next idle interval. */ }
@@ -92,7 +93,7 @@ public partial class MainWindow
         automatic.Click+=(_,_)=>Save();days.SelectionChanged+=(_,_)=>Save();size.SelectionChanged+=(_,_)=>Save();
         void Error(Exception error){if(error.Message.StartsWith("storage.",StringComparison.Ordinal))L.Text(status,error.Message);else DailyUiText.Error(status,error);}
         async Task Scan(){working=true;plan=null;storage=null;Controls(false);L.Text(status,"logs.scanning");try{if(LegacyEquipmentLogRoot is { } legacy)await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(root,legacy,lifetime.Token);plan=await DailyLogCleanup.ScanAsync(root,logPolicy,lifetime.Token);storage=await DailyCacheStorage.ScanAsync(root,lifetime.Token);if(!closed){L.Text(status,"storage.preview",MiB(storage.TotalBytes),MiB(plan.ReclaimableBytes+storage.ReclaimableBytes));L.Text(detail,"storage.breakdown",MiB(plan.ManagedBytes),MiB(storage.CacheBytes),MiB(Math.Max(0,storage.TotalBytes-plan.ManagedBytes-storage.CacheBytes)),plan.Skipped+storage.Skipped);}}catch(OperationCanceledException){}catch(Exception e){if(!closed)Error(e);}finally{working=false;if(!closed)Controls(true);else lifetime.Dispose();}}
-        bool BusyStorage()=>Unavailable||dailyQueue.IsRunning||IsSandboxWindow||updateChecking||updateInstalling||ToolOpen||(smoke==null&&DailyUpdateHost.HasIsolatedWindows());
+        bool BusyStorage()=>Unavailable||dailyQueue.IsRunning||updateChecking||updateInstalling||ToolOpen||(!IsSandboxWindow&&smoke==null&&DailyUpdateHost.HasIsolatedWindows());
         scan.Click+=async(_,_)=>await Scan();
         clean.Click+=async(_,_)=>{
             if(plan==null)return;
