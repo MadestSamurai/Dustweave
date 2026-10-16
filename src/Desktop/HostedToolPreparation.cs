@@ -52,17 +52,20 @@ internal sealed class HostedToolPreparation
         // windows, or when a host decorates an already shown tool. Loaded plus
         // the dispatcher render barrier starts once after layout without waiting
         // indefinitely for another native paint notification.
-        window.Loaded+=OnRendered;
+        window.Loaded+=OnLoaded;
         window.ContentRendered+=OnRendered;
-        if(window.IsLoaded)window.Dispatcher.BeginInvoke(new Action(()=>OnRendered(window,EventArgs.Empty)),DispatcherPriority.Background);
+        if(window.IsLoaded)QueueLoaded();
         window.Closing+=OnClosing;
         window.Closed+=(_,_)=>{closed=true;cancellation?.Cancel();};
     }
 
+    void OnLoaded(object sender,RoutedEventArgs args)=>QueueLoaded();
+    void QueueLoaded()=>window.Dispatcher.BeginInvoke(new Action(()=>OnRendered(window,EventArgs.Empty)),DispatcherPriority.Loaded);
     async void OnRendered(object? sender,EventArgs args)
     {
         if(started)return;started=true;
-        await Dispatcher.Yield(DispatcherPriority.Background);
+        // At this point layout/render work has run. Do not wait for Background:
+        // a continuously invalidating tool can starve that priority indefinitely.
         if(!closed&&!closeRequested)await StartAsync();
     }
     internal Task StartAsync()

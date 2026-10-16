@@ -2731,7 +2731,7 @@
       "reasons": [
         "build input"
       ],
-      "sha256": "b493d118e1de777f0a2c47708f3705cb7fb0653d4704ae068ad4dffbba4a7800",
+      "sha256": "608cab849b8a74d9d28b9d738202b2dc798a6aa72dc91f51a6aed9189c9d776f",
       "bytes": 8066,
       "path": "src/Desktop/HostedToolPreparation.cs"
     },
