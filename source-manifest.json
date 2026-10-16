@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-16T23:47:57.7531286+00:00",
+  "generatedUtc": "2026-10-17T07:47:57.7531286+08:00",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -2257,11 +2257,11 @@
     },
     {
       "path": "src/Core/DailyWeeklyRoute.cs",
-      "sha256": "81061b7af2528fc7ed341f3a879fc51c6e7b027dbcf6f74e450da4eba8f020ac",
+      "sha256": "81bd290eed6b8247a54118782c138ebd893c6fbe3ee7e519bb6eabb4a1567bf2",
       "reasons": [
         "build input"
       ],
-      "bytes": 33886
+      "bytes": 33959
     },
     {
       "path": "src/Core/DailyWeeklySteal.cs",

@@ -418,7 +418,8 @@ public sealed class DailyWeeklyRoute
         foreach (string s in requested.Except(selected))
             result[s] = O(("state", "skipped"), ("reason", "disabled"), ("detail", "已关闭"));
         var evidence = await route.Evidence();
-        absorptionQuotaExhausted = !w.Settings.Weekly.WalkCollect && Used(evidence, 4) >= 21;
+        // Read absorption usage in Prepare/Jobs only when collection is active;
+        // catalog progress and independent weekly tasks do not require talent data.
         week = S(R(evidence, "mainline.reset", "GetWeeklyResetTime().Ticks"));
         Require(week.Length > 0, "缺少周周期");
         var packs = route.Catalog.AvailablePacks(evidence);
