@@ -37,6 +37,22 @@ namespace Dustweave.Pandora
             return mode == "Challenge" ? stages.FirstOrDefault(s => s.Challenge && s.Unlocked) : stages.FirstOrDefault(s => s.Group == group && s.Id == stageId && !s.Challenge && s.Unlocked);
         }
     }
+    // Read from the native result callback, not the last periodically sampled clock.
+    // Challenge results use a generic result panel even after surviving to the limit.
+    public sealed class RoundResult
+    {
+        public string RunId = "";
+        public int Id, Revision, Group, StageId;
+        public bool Challenge, Survived;
+        public long ElapsedMilliseconds;
+        public bool Completes(Control control, Stage target, int resultId, int revision)
+        {
+            return control.Mode == "Challenge" && target != null && target.Challenge && Challenge &&
+                RunId.Length > 0 && RunId == control.RunId && Id == resultId && Revision == revision && ElapsedMilliseconds >= 0 &&
+                Group == target.Group && StageId == target.Id &&
+                (Survived || ElapsedMilliseconds >= 20 * 60 * 1000L);
+        }
+    }
     // UI submissions are scoped to one concrete UI instance. Waiting never repeats a request.
     public sealed class TransitionGate
     {

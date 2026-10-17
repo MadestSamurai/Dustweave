@@ -54,6 +54,14 @@ public partial class MainWindow
                     await Task.Delay(900);gate.Set();await observation;readGate=null;await bridge.Poll();
                     Check(DailyToolControl.IsOccupied(profile),"new connection cannot be unlocked by an older slow observation");
                 }
+                var writeGuard=(Action<string,string,byte[]>)AppDomain.CurrentDomain.GetData("BD2Daily.HostedWriteGuard")!;
+                state.Owner=DailySuite.Owner;state.State="preparing";
+                bool pending=false;try{writeGuard(profile,"control.json",System.Text.Encoding.UTF8.GetBytes("{\"Enabled\":true}"));}catch(DailyObservationPendingException){pending=true;}
+                Check(pending,tool.Id+": same owner preparing defers writes without declaring disconnect");
+                state.State="ready";state.Owner="other-owner";
+                bool changed=false;try{writeGuard(profile,"control.json",System.Text.Encoding.UTF8.GetBytes("{\"Enabled\":true}"));}catch(DailyToolSessionChangedException){changed=true;}
+                Check(changed,tool.Id+": positively replaced owner stops rather than waiting forever");
+                state.Owner=DailySuite.Owner;
                 window.Connect.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));fixture.Game=null;
                 await bridge.Poll();
                 Check(!DailyToolControl.IsOccupied(profile),tool.Id+": process exit releases control");

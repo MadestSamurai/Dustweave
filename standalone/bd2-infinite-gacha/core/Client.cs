@@ -98,7 +98,7 @@ public sealed class ClientController
         if(now-renewedAt<TimeSpan.FromSeconds(2).Ticks){if(writeFailedSince==null)Note("");return;}
         active.Expires=now+TimeSpan.FromSeconds(20).Ticks;
         try{port.Write(active);renewedAt=now;writeFailedSince=null;Note("");}
-        catch(Exception e)when(e is IOException or UnauthorizedAccessException){writeFailedSince??=now;Note("运行指令暂时无法保存，正在重试");if(now-writeFailedSince>=TimeSpan.FromSeconds(15).Ticks)Stop("运行指令连续15秒无法保存，已停止");}
+        catch(Exception e)when(e is IOException or UnauthorizedAccessException && !BD2.LocalIpc.PipeClient.SessionEnded(e)){writeFailedSince??=now;Note("运行指令暂时无法保存，正在重试");if(now-writeFailedSince>=TimeSpan.FromSeconds(15).Ticks)Stop("运行指令连续15秒无法保存，已停止");}
     }
     private void Unavailable(long now){unavailableSince??=now;Note("游戏状态短暂中断，正在等待恢复");if(now-unavailableSince>=TimeSpan.FromSeconds(15).Ticks)Stop("游戏状态连续15秒未恢复，请检查连接");}
     public void Stop(string reason="已手动停止")

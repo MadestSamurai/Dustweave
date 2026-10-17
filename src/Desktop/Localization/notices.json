@@ -1,4 +1,14 @@
 {
+  "notice.hunting.expand_inventory": {
+    "zh-CN": "展开圣石库存",
+    "zh-TW": "展開聖石庫存",
+    "en-US": "Expand Holy Stone inventory"
+  },
+  "notice.tool.identity_pending": {
+    "zh-CN": "等待游戏身份数据恢复；未发送操作。",
+    "zh-TW": "等待遊戲身分資料恢復；未傳送操作。",
+    "en-US": "Waiting for game identity data to recover; no action was sent."
+  },
   "notice.recovery.current_pending": {
     "zh-CN": "本次操作尚未结束，暂缓该环节；再次运行会按游戏当前状态重新检查。",
     "zh-TW": "本次操作尚未結束，暫緩此環節；再次執行會依遊戲目前狀態重新檢查。",
@@ -949,6 +959,11 @@
     "zh-CN": "分解前强化等级必须为 0 至 9。",
     "zh-TW": "分解前強化等級必須為 0 至 9。",
     "en-US": "The enhancement level before dismantling must be between 0 and 9."
+  },
+  "notice.settings.equipment_rarity": {
+    "zh-CN": "装备稀有度无法识别，未进行强化或分解。",
+    "zh-TW": "裝備稀有度無法識別，未進行強化或分解。",
+    "en-US": "The equipment rarity could not be identified. No enhancement or dismantling was performed."
   },
   "notice.settings.mirror": {
     "zh-CN": "镜中倍率必须为 1 至 40。",

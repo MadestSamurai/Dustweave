@@ -1,5 +1,35 @@
 [
 {
+  "Version": "1.4.3",
+  "Date": "2026-10-17",
+  "Notes": {
+    "zh-CN": [
+      "修复圣石库存栏折叠时读取失败：按最少库存选择时自动展开并等待完整数据；指定属性不再依赖五种库存。",
+      "日常装备分解支持分别设置 N、R、SR、UR 的强化等级；旧设置自动沿用，锁定、收藏和穿戴保护保持生效。",
+      "潘多拉挑战根据游戏最终结算识别 20 分钟完成，成功后停止并保留结算画面。",
+      "统一内置工具连接处理：短暂缺少状态时等待恢复，确认游戏退出、账号变化或连接被接管时停止操作。",
+      "进一步降低日志与缓存占用：精简记录格式、在 NTFS 上分批压缩适用的旧文件，按实际磁盘占用统计，并清理过期崩溃转储。",
+      "1.3.11–1.3.17、1.4.0–1.4.2 支持直接差分更新；若 OTA 失败，请下载完整包并解压到新目录，保留 app 文件夹。"
+    ],
+    "zh-TW": [
+      "修復聖石庫存欄摺疊時讀取失敗：依最少庫存選擇時自動展開並等待完整資料；指定屬性不再依賴五種庫存。",
+      "日常裝備分解可分別設定 N、R、SR、UR 的強化等級；舊設定自動沿用，鎖定、收藏及穿戴保護仍然有效。",
+      "潘多拉挑戰依遊戲最終結算辨識 20 分鐘完成，成功後停止並保留結算畫面。",
+      "統一內建工具連線處理：短暫缺少狀態時等待恢復，確認遊戲退出、帳號變更或連線被接管時停止操作。",
+      "進一步降低日誌與快取佔用：精簡記錄格式、於 NTFS 分批壓縮適用的舊檔案，依實際磁碟佔用統計，並清理過期崩潰傾印。",
+      "1.3.11–1.3.17、1.4.0–1.4.2 支援直接差分更新；若 OTA 失敗，請下載完整包並解壓至新目錄，保留 app 資料夾。"
+    ],
+    "en-US": [
+      "Fix Holy Stone reads when the inventory panel is collapsed. Least-owned selection expands it and waits for all balances; a fixed element no longer needs inventory comparison.",
+      "Set separate pre-dismantling enhancement levels for N, R, SR and UR equipment. Existing settings carry over, with locked, kept and equipped items still protected.",
+      "Recognize Pandora's 20-minute challenge completion from the game's final result, stop automation and keep the result screen visible.",
+      "Built-in tools wait through temporary missing observations and stop commands on confirmed game exit, account change or connection takeover.",
+      "Reduce storage with compact records, bounded NTFS compression of eligible older files, actual on-disk accounting and expired crash-dump cleanup.",
+      "Direct patches cover 1.3.11–1.3.17 and 1.4.0–1.4.2. If OTA fails, extract the full package into a new folder and keep the app folder."
+    ]
+  }
+},
+{
   "Version": "1.4.2",
   "Date": "2026-10-17",
   "Notes": {

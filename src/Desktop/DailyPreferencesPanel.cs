@@ -21,7 +21,8 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly ComboBox eventSearch = new();
     private readonly CheckBox tactics = Check("战术教材");
     private readonly ComboBox tacticsSearch = new();
-    private readonly ComboBox chapter = new(), stone = new(), enhance = new(), multiplier = new(), saffronRounds = new();
+    private readonly ComboBox chapter = new(), stone = new(), multiplier = new(), saffronRounds = new();
+    private readonly ComboBox[] enhance = Enumerable.Range(0,4).Select(_ => new ComboBox()).ToArray();
     private readonly ListBox priority = new() { Height = 94, MinWidth = 240, DisplayMemberPath = "Label" };
     private readonly CheckBox hunt = Check("自动分配免费米饭"), gold = Check("金币加成日刷金币"), slime = Check("史莱姆加成日刷史莱姆");
     private readonly CheckBox stones = Check("每天刷圣石"), recycle = Check("处理本次免费抽到的装备"), keepSr = Check("保留五星角色的 SR 专武");
@@ -156,7 +157,7 @@ public sealed class DailyPreferencesPanel : UserControl
         filterCount.Margin = new(0, 0, 0, 8);
         DockPanel.SetDock(filterCount, Dock.Top); layout.Children.Add(filterCount);
         chapter.ItemsSource = Enumerable.Range(1, 10).ToArray();
-        enhance.ItemsSource = Enumerable.Range(0, 10).ToArray();
+        foreach (var choice in enhance) choice.ItemsSource = Enumerable.Range(0, 10).ToArray();
         stone.ItemsSource = new[] { new Choice("least", "库存数量最少"), new Choice("fire", "火"), new Choice("water", "水"), new Choice("wind", "风"), new Choice("light", "光"), new Choice("dark", "暗") };
         stone.DisplayMemberPath = "Label";
         stone.SelectedValuePath = "Key";
@@ -187,7 +188,17 @@ public sealed class DailyPreferencesPanel : UserControl
         Stage(draws, "每日免费抽取", "prefs.draws_hint");
         Stage(recycle, "装备分解", "只处理本日免费抽取的可分解装备");
         section.Children.Add(keepSr);
-        Row("分解前强化等级", enhance);
+        var enhanceLabel = Label("prefs.enhance"); enhanceLabel.Margin = new(0,12,0,0); section.Children.Add(enhanceLabel);
+        var enhanceRow = new WrapPanel();
+        foreach (var (rarity, index) in new[] { "N", "R", "SR", "UR" }.Select((name,index)=>(name,index)))
+        {
+            var column = new StackPanel { Width=104, Margin=new(0,8,16,8) };
+            var caption = new TextBlock { Text=rarity, Margin=new(0,0,0,6) }; column.Children.Add(caption);
+            enhance[index].Name = "EquipmentEnhance" + rarity;
+            L.Bind(enhance[index], System.Windows.Automation.AutomationProperties.NameProperty, "prefs.enhance_rarity", rarity);
+            column.Children.Add(enhance[index]); enhanceRow.Children.Add(column);
+        }
+        section.Children.Add(enhanceRow);
         Note("prefs.enhance_note");
         section.Children.Add(fallback);
         Stage(weeklyCraft, "周常制作装备", "prefs.craft_hint");
@@ -318,7 +329,7 @@ public sealed class DailyPreferencesPanel : UserControl
             c.Unchecked += (_, _) => MarkDirty();
         }
         salvationReserve.TextChanged += (_, _) => { if (!updating) dirty = true; };
-        foreach (var c in new[] { tacticsSearch, eventSearch, chapter, stone, enhance, refineChoice, multiplier, saffronRounds })
+        foreach (var c in new[] { tacticsSearch, eventSearch, chapter, stone, refineChoice, multiplier, saffronRounds }.Concat(enhance))
             c.SelectionChanged += (_, _) => MarkDirty();
         tradeReserve.TextChanged += (_, _) => MarkDirty();
         tradeMaximum.TextChanged += (_, _) => MarkDirty();
@@ -451,6 +462,21 @@ public sealed class DailyPreferencesPanel : UserControl
         if(before!=(potionReserve.Text,potionTarget.Text,potionRefill.IsChecked,mirror.IsChecked,mainline.IsChecked))throw new Exception("Filtering changed saved task inputs");
         ReviewCategoryForSmoke("daily");
     }
+    internal void ShowEquipmentSettingsForSmoke()
+    {
+        if (allowGame || loaded == null || account.Length == 0) throw new InvalidOperationException("Isolated account settings required");
+        ReviewCategoryForSmoke("daily");
+        filter.Text = L.Translate("装备分解");
+        foreach (var item in sections.Where(s => s.View.Visibility == Visibility.Visible))
+            if (item.View.Child is Expander exp) exp.IsExpanded = true;
+        int[] levels = [0, 7, 8, 9];
+        for (int i = 0; i < enhance.Length; i++) enhance[i].SelectedItem = levels[i];
+        if (!Save()) throw new Exception("Rarity settings could not be saved");
+        var saved = store.Read(account).Equipment;
+        if (!Enumerable.Range(1, 4).Select(saved.EnhancementTarget).SequenceEqual(levels))
+            throw new Exception("Rarity settings did not persist independently");
+        UpdateLayout();
+    }
     internal Action ObserveCategorySurfaceForSmoke()
     {
         if (allowGame) throw new InvalidOperationException("Isolated settings required");
@@ -569,7 +595,7 @@ public sealed class DailyPreferencesPanel : UserControl
             priority.SelectedIndex = 0;
             recycle.IsChecked = loaded.Equipment.Enabled;
             keepSr.IsChecked = loaded.Equipment.KeepFiveStarSr;
-            enhance.SelectedItem = loaded.Equipment.EnhanceLevel;
+            for (int i=0;i<enhance.Length;i++) enhance[i].SelectedItem = loaded.Equipment.EnhancementTarget(i+1);
             fallback.IsChecked = loaded.Equipment.CraftFallback;
             refine.IsChecked = loaded.Equipment.RefineEnabled;
             mirror.IsChecked = loaded.Mirror.Enabled;
@@ -695,7 +721,10 @@ public sealed class DailyPreferencesPanel : UserControl
             loaded.Hunt.Priority = priority.Items.Cast<Choice>().Select(c => c.Key).ToArray();
             loaded.Equipment.Enabled = recycle.IsChecked == true;
             loaded.Equipment.KeepFiveStarSr = keepSr.IsChecked == true;
-            loaded.Equipment.EnhanceLevel = (int)enhance.SelectedItem;
+            loaded.Equipment.EnhanceLevelN = (int)enhance[0].SelectedItem;
+            loaded.Equipment.EnhanceLevelR = (int)enhance[1].SelectedItem;
+            loaded.Equipment.EnhanceLevelSr = (int)enhance[2].SelectedItem;
+            loaded.Equipment.EnhanceLevelUr = (int)enhance[3].SelectedItem;
             loaded.Equipment.CraftFallback = fallback.IsChecked == true;
             loaded.Equipment.RefineEnabled = refine.IsChecked == true;
             loaded.Equipment.RefineInstance = refineChoice.SelectedValue as string ?? loaded.Equipment.RefineInstance;

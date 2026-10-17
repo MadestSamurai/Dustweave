@@ -2,7 +2,10 @@ using System.Security.Cryptography;
 namespace Dustweave;
 
 public sealed record DailyCacheLocation(string Path, string[]? Retired = null);
-public sealed record DailyStorageItem(string Path, long Bytes, DateTime Written);
+public sealed record DailyStorageItem(string Path, long Bytes, DateTime Written)
+{
+    public long DiskBytes { get; init; } = Bytes;
+}
 public sealed record DailyCacheUnit(string Path, DailyStorageItem[] Files)
 {
     public string[]? UpdateAttempts { get; init; }
@@ -68,7 +71,7 @@ public static class DailyCacheStorage
                         var attributes = entry.Attributes;
                         if ((attributes & FileAttributes.ReparsePoint) != 0) { skipped++; continue; }
                         if ((attributes & FileAttributes.Directory) != 0) pending.Push(entry.FullName);
-                        else { var file = (FileInfo)entry; result.Add(new(file.FullName, file.Length, file.LastWriteTimeUtc)); }
+                        else { var file = (FileInfo)entry; result.Add(new(file.FullName, file.Length, file.LastWriteTimeUtc) { DiskBytes = DailyStorageCompression.StoredBytes(file.FullName, file.Length, attributes) }); }
                     }
                     catch (Exception error) when (error is IOException or UnauthorizedAccessException) { skipped++; }
                 }
@@ -90,7 +93,7 @@ public static class DailyCacheStorage
         else { foreach(string area in Areas.Append("updates")) all.AddRange(Files(Path.Combine(root,area),cancel,ref skipped)); }
         foreach(string basis in roots.Where(r=>!Same(r,root))) foreach(string area in Areas) all.AddRange(Files(Path.Combine(basis,area),cancel,ref skipped));
         var inventory=all.DistinctBy(f=>f.Path,StringComparer.OrdinalIgnoreCase).ToArray();
-        long totalBytes=inventory.Sum(f=>f.Bytes);
+        long totalBytes=inventory.Sum(f=>f.DiskBytes);
         string updates = Path.Combine(root, "updates");
         var managed=roots.SelectMany(r=>Areas.Select(a=>Path.Combine(r,a))).Append(updates).ToArray();
         // Historical queues/receipts contribute to the total, not to cache-generation planning.
@@ -150,11 +153,11 @@ public static class DailyCacheStorage
                 }
         }
         units.AddRange(UpdateCacheRetention.Plan(updates, all.Where(f => Within(f.Path, updates)).ToArray(), DateTime.UtcNow, cancel));
-        long cacheBytes = all.Sum(f => f.Bytes);
+        long cacheBytes = all.Sum(f => f.DiskBytes);
         // Parent expiry supersedes nested scratch/legacy units; count and delete each file once.
         var distinct=new List<DailyCacheUnit>();
         foreach(var unit in units.OrderBy(u=>u.Path.Length)) if(!distinct.Any(p=>Within(unit.Path,p.Path))) distinct.Add(unit);
-        return new(totalBytes, cacheBytes, distinct.Sum(u => u.Files.Sum(f => f.Bytes)), skipped, distinct.ToArray()) { AllFiles=inventory,CacheFiles=all };
+        return new(totalBytes, cacheBytes, distinct.Sum(u => u.Files.Sum(f => f.DiskBytes)), skipped, distinct.ToArray()) { AllFiles=inventory,CacheFiles=all };
     }
     private static bool Unchanged(DailyStorageItem f)
     {
@@ -194,7 +197,7 @@ public static class DailyCacheStorage
                 {
                     foreach (var file in unit.Files) handles.Add(new FileStream(file.Path, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete));
                     if (available?.Invoke()==false || unit.Files.Any(f => !Unchanged(f)) || !UpdateCacheRetention.CanClean(unit)) { skipped++; continue; }
-                    foreach (var file in unit.Files) { File.Delete(file.Path); removed++; bytes += file.Bytes; }
+                    foreach (var file in unit.Files) { File.Delete(file.Path); removed++; bytes += file.DiskBytes; }
                 }
                 finally { foreach (var handle in handles) handle.Dispose(); }
                 EmptyDirectories(unit.Path);

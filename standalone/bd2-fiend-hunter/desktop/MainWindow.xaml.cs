@@ -37,14 +37,14 @@ public partial class MainWindow:Window {
     else throw new Exception("entry");
    });token.ThrowIfCancellationRequested();active=true;Status("waiting");
   }catch(Exception ex){active=false;control.Enabled=false;try{await Task.Run(()=>Client.Heartbeat(control));}catch{}if(ex is OperationCanceledException)Status("paused");else Error(ex);}
-  finally{preparing=false;StartButton.IsEnabled=!active;gate.Release();}
+  finally{preparing=false;StartButton.IsEnabled=!active;if(active)timer.Start();gate.Release();}
  }
  async Task Pulse(){if(closing||!await gate.WaitAsync(0))return;try{
-  var s=await Task.Run(()=>Client.State());if(!Client.Fresh(s)){if(active){active=false;control.Enabled=false;Status("heartbeat");}return;}
+  var s=await Task.Run(()=>Client.State());if(!Client.Fresh(s)){if(active)Status("waiting_data");return;}
   Draw(s!);if(!active)return;
   if(s!["LatchedStop"]?.GetValue<bool>()==true||(s["EndReplies"]?.GetValue<int>()??0)>0){active=false;control.Enabled=false;if((s["EndReplies"]?.GetValue<int>()??0)>0)Status((string?)s["Outcome"]=="victory"?"victory":"defeat");else{Status("error");RecordError(new Exception((string?)s["Error"]??(string?)s["Reason"]??"Stopped"));};}
   await Task.Run(()=>Client.Heartbeat(control));
- }catch(Exception ex){active=false;control.Enabled=false;Error(ex);}finally{StartButton.IsEnabled=!active&&!preparing;gate.Release();}}
+ }catch(Exception ex)when(BD2.LocalIpc.PipeClient.ObservationPending(ex)){Status("waiting_data");}catch(Exception ex){active=false;control.Enabled=false;if(BD2.LocalIpc.PipeClient.SessionEnded(ex))timer.Stop();Error(ex);}finally{StartButton.IsEnabled=!active&&!preparing;gate.Release();}}
  void Draw(JsonObject s){lastState=s;void Unit(string key,System.Windows.Controls.TextBlock label,System.Windows.Controls.ProgressBar bar,string title){var u=s[key];if(u==null){label.Text=title+" —";bar.Value=0;return;}double hp=u["Hp"]!.GetValue<double>(),max=u["MaxHp"]!.GetValue<double>();label.Text=$"{title} {hp:N0} / {max:N0}";bar.Value=max>0?hp/max:0;}Unit("Player",PlayerText,PlayerBar,words["player"]);Unit("Boss",BossText,BossBar,words["boss"]);if(active)StatusText.Text=words.Reason((string?)s["Reason"]??"");}
  async void Pause(object sender,RoutedEventArgs e){if(!ownsControl&&!preparing){Status("idle");return;}preparation?.Cancel();active=false;await gate.WaitAsync();try{control.Enabled=false;await Task.Run(()=>Client.Heartbeat(control));Status("paused");}catch(Exception ex){Error(ex);}finally{StartButton.IsEnabled=true;gate.Release();}}
  async void OnClosing(object? sender,CancelEventArgs e){if(closing)return;e.Cancel=true;closing=true;preparation?.Cancel();active=false;timer.Stop();IsEnabled=false;await gate.WaitAsync();try{if(ownsControl){control.Enabled=false;await Task.Run(()=>{try{Client.Heartbeat(control);}catch{}});}}finally{gate.Release();Close();}}

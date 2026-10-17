@@ -46,7 +46,7 @@ namespace Dustweave.Pandora.Runtime
         float nextControl, nextObserve, nextPlan, nextWrite, nextUi, lastThreatTime, waitSince;
         double hp, maxHp, seconds, planMs; int level;
         double combatTime, weaponRange = 6; Route lastRoute; int weaponRevision = -1;
-        bool wasPlaying;
+        bool wasPlaying, finished; RoundResult roundResult; string resultError = "";
         readonly Queue<object> hitEvents = new Queue<object>(); int hitSequence;
         sealed class Pattern { public object Table, Routine; public Vector3 End; public bool Locked, JumpMoved, JumpStopped, JumpFinished, Recovered; public double Range, Speed; }
         readonly Dictionary<int, AnimationEvent[]> animationEvents = new Dictionary<int, AnimationEvent[]>();
@@ -54,12 +54,12 @@ namespace Dustweave.Pandora.Runtime
         public void PrepareHandoff() { handingOff = true; control.Enabled = false; Release(); }
         public string HandoffBusy() { return ""; } // Native UI owns any outstanding request and completes it without this observer.
         public void Stop() { PrepareHandoff(); UnityEngine.Object.DestroyImmediate(gameObject); }
-        bool Live { get { return !handingOff && !faulted && control.Enabled && control.Valid(DateTime.UtcNow.Ticks); } }
+        bool Live { get { return !handingOff && !faulted && !finished && control.Enabled && control.Valid(DateTime.UtcNow.Ticks); } }
         bool Playing { get { return manager != null && Native.B(manager, "IsPlaying"); } }
         bool Paused { get { return manager != null && Native.B(manager, "IsPause"); } }
         object Player { get { return manager == null ? null : Native.Get(manager, "Player"); } }
         static Point Flat(Vector3 v) { return new Point(v.x, v.z); }
-        void Awake() { current = this; var harmony = new Harmony(HarmonyId); foreach (string name in new[] { "EnableMoving", "DisableMoving", "AttackJumpStart", "AttackJumpEnd" }) harmony.Patch(typeof(SurvivalBossMonster).GetMethod(name), postfix: new HarmonyMethod(typeof(Engine), nameof(JumpEventObserved))); for (int i = 0; i < 3; i++) harmony.Patch(Native.Bound("bossPattern" + i), postfix: new HarmonyMethod(typeof(Engine), nameof(PatternObserved))); harmony.Patch(Native.Bound("bossSpawn"), postfix: new HarmonyMethod(typeof(Engine), nameof(BossSpawned))); harmony.Patch(Native.Bound("itemApplied"), postfix: new HarmonyMethod(typeof(Engine), nameof(ItemApplied))); harmony.Patch(typeof(SurvivalSelectUI).GetMethod("SetSkillSlots"), postfix: new HarmonyMethod(typeof(Engine), nameof(SkillPageObserved))); harmony.Patch(Native.Bound("skillApplied"), postfix: new HarmonyMethod(typeof(Engine), nameof(SkillApplied))); harmony.Patch(typeof(SurvivalResultUI).GetMethod("Initalize"), postfix: new HarmonyMethod(typeof(Engine), nameof(ResultPageObserved))); harmony.Patch(Native.Bound("playerDamaged"), prefix: new HarmonyMethod(typeof(Engine), nameof(DamageStarting)), postfix: new HarmonyMethod(typeof(Engine), nameof(DamageFinished))); }
+        void Awake() { current = this; var harmony = new Harmony(HarmonyId); foreach (string name in new[] { "EnableMoving", "DisableMoving", "AttackJumpStart", "AttackJumpEnd" }) harmony.Patch(typeof(SurvivalBossMonster).GetMethod(name), postfix: new HarmonyMethod(typeof(Engine), nameof(JumpEventObserved))); for (int i = 0; i < 3; i++) harmony.Patch(Native.Bound("bossPattern" + i), postfix: new HarmonyMethod(typeof(Engine), nameof(PatternObserved))); harmony.Patch(Native.Bound("bossSpawn"), postfix: new HarmonyMethod(typeof(Engine), nameof(BossSpawned))); harmony.Patch(Native.Bound("itemApplied"), postfix: new HarmonyMethod(typeof(Engine), nameof(ItemApplied))); harmony.Patch(typeof(SurvivalSelectUI).GetMethod("SetSkillSlots"), postfix: new HarmonyMethod(typeof(Engine), nameof(SkillPageObserved))); harmony.Patch(Native.Bound("skillApplied"), postfix: new HarmonyMethod(typeof(Engine), nameof(SkillApplied))); harmony.Patch(Native.Bound("resultInitialize"), postfix: new HarmonyMethod(typeof(Engine), nameof(ResultPageObserved))); harmony.Patch(Native.Bound("playerDamaged"), prefix: new HarmonyMethod(typeof(Engine), nameof(DamageStarting)), postfix: new HarmonyMethod(typeof(Engine), nameof(DamageFinished))); }
         public static void DamageStarting(object __instance, out double __state)
         {
             __state = -1;
@@ -92,7 +92,22 @@ namespace Dustweave.Pandora.Runtime
             current.nextObserve = current.nextPlan = 0;
         }
         public static void BossSpawned(SurvivalBossMonster __instance) { if (current == null) return; int id = __instance.GetInstanceID(); current.bossDamage.Forget(id); current.patterns.Remove(id); current.positions.Remove(id); current.nextObserve = current.nextPlan = 0; }
-        public static void ResultPageObserved() { if (current != null) current.resultRevision++; }
+        public static void ResultPageObserved(SurvivalResultUI __instance, EventMiniGameSurvivalManager __0, bool __1, bool __2)
+        {
+            if (current == null || current.finished) return;
+            current.resultRevision++;
+            current.roundResult = null;
+            try
+            {
+                var clock = Native.Get(__0, "TimeManager");
+                current.roundResult = new RoundResult { RunId = current.control.RunId, Id = __instance.GetInstanceID(),
+                    Revision = current.resultRevision, Group = Native.ActiveGroup, StageId = Native.ActiveStage,
+                    Challenge = __2, Survived = __1, ElapsedMilliseconds = Convert.ToInt64(Native.Call("time", clock)) };
+                current.resultError = "";
+            }
+            catch (Exception error) { current.resultError = error.GetType().Name + ": " + error.Message; }
+            current.nextObserve = current.nextWrite = 0;
+        }
         public static void SkillPageObserved() { if (current != null) { current.skillRevision++; current.closingSkillRevision = -1; } }
         public static void SkillApplied(SurvivalSelectUI __instance) { if (current != null) { current.acknowledgedSkillRevision = current.skillRevision; current.acknowledgedSkillUi = __instance.GetInstanceID(); } }
         public static void PatternObserved(SurvivalBossMonster __instance, object __0, object __result) { if (current == null) return; current.patterns[__instance.GetInstanceID()] = new Pattern { Table = __0, Routine = __result }; current.nextObserve = current.nextPlan = 0; }
@@ -122,7 +137,7 @@ namespace Dustweave.Pandora.Runtime
                     if (ownsMove) { var move = Native.BoundField(avatar, "move"); Native.Call("direction", move, new Vector3((float)direction.X, 0, (float)direction.Z)); avatar.SetMoveStart(); }
                 }
                 else Release();
-                if (!Live && !faulted) reason = control.Enabled ? "lease-expired" : "paused";
+                if (!Live && !faulted && !finished) reason = control.Enabled ? "lease-expired" : "paused";
                 if (now >= nextWrite) { nextWrite = now + (control.TraceCombat && Playing ? .1f : .5f); Snapshot(); }
             }
             catch (Exception e) { Fail("runtime-error", e.ToString()); }
@@ -131,7 +146,7 @@ namespace Dustweave.Pandora.Runtime
         {
             if (handingOff) return; var bytes = RuntimeFiles.Read(Path.Combine(Loader.Root, "control.json")); if (bytes == null) return;
             var next = JsonConvert.DeserializeObject<Control>(System.Text.Encoding.UTF8.GetString(bytes)); if (next == null || !next.Valid(DateTime.UtcNow.Ticks)) return;
-            if (next.RunId != control.RunId) { faulted = false; detail = ""; target = null; selectedCharacter = null; catalog = null; gate.Reset(); retryExpected = false; retryResult = null; entry.Reset(); buildRestart.Reset(); buildPause = null; buildChoice = null; rounds = 0; lastResult = 0; regions.Reset(); ResetCombat(); reason = "entering"; waitSince = Time.realtimeSinceStartup; }
+            if (next.RunId != control.RunId) { faulted = false; finished = false; roundResult = null; resultError = ""; detail = ""; target = null; selectedCharacter = null; catalog = null; gate.Reset(); retryExpected = false; retryResult = null; entry.Reset(); buildRestart.Reset(); buildPause = null; buildChoice = null; rounds = 0; lastResult = 0; regions.Reset(); ResetCombat(); reason = "entering"; waitSince = Time.realtimeSinceStartup; }
             control = next;
         }
         void Observe()
@@ -201,6 +216,15 @@ namespace Dustweave.Pandora.Runtime
                     ? new Stage { Id = Native.ActiveStage, Group = Native.ActiveGroup, Challenge = Native.B(manager, "IsInifityMode") } : null;
             string identity = popup != null ? "confirm:" + popup.GetInstanceID() : result != null ? "result:" + result.GetInstanceID() : select != null ? LoopRules.SkillPage(select.GetInstanceID(), level, skillRevision) : reward != null ? "reward:" + reward.GetInstanceID() : panel != null ? panel.GetType().Name + ":" + panel.GetInstanceID() : hub != null ? "hub:" + hub.GetInstanceID() : Playing ? "playing" : "waiting";
             if (identity != lastUi) { lastUi = identity; waitSince = Time.realtimeSinceStartup; }
+            if (result != null && roundResult != null && roundResult.Completes(control, target, result.GetInstanceID(), resultRevision))
+            {
+                Release(); finished = true; reason = "challenge-complete";
+                seconds = roundResult.ElapsedMilliseconds / 1000.0;
+                if (lastResult != resultRevision) { lastResult = resultRevision; rounds++; }
+                retryExpected = false; retryResult = null; entry.Reset(); gate.Reset(); buildRestart.Reset();
+                nextWrite = 0;
+                return;
+            }
             if (entry.Pending)
             {
                 Release();
@@ -255,7 +279,9 @@ namespace Dustweave.Pandora.Runtime
             }
             if (result != null)
             {
-                Release(); if (lastResult != result.GetInstanceID()) { lastResult = result.GetInstanceID(); rounds++; }
+                Release(); if (lastResult != resultRevision) { lastResult = resultRevision; rounds++; }
+                // If the settlement observation failed, never turn a possible win into another attempt.
+                if (control.Mode == "Challenge" && roundResult == null && resultError.Length > 0) { Fail("result-unavailable", resultError); return; }
                 if (!Native.Ready(result) || !result.CanCloseUI()) { reason = "settling"; if (Time.realtimeSinceStartup - waitSince > 45) Fail("transition-timeout", identity); return; }
                 // Retry is valid only for a stage verified during this run. A different round exits to selection.
                 if (SameStage() && SameCharacter() && Native.Click(result, "_objRetryButton")) { retryExpected = true; retryResult = result; retryRevision = resultRevision; reason = "retrying"; Sent(identity); return; }
@@ -578,7 +604,7 @@ namespace Dustweave.Pandora.Runtime
         }
         void Release() { if (ownsMove && avatar != null) { var move = Native.BoundField(avatar, "move"); Native.Invoke(move, "StopMove"); } ownsMove = false; }
         void Fail(string code, string info) { faulted = true; reason = code; detail = info; try { Release(); } catch { } try { Snapshot(); } catch { } }
-        void Snapshot() { var select = uis.OfType<SurvivalSelectUI>().FirstOrDefault(); var value = new { At = DateTime.UtcNow.ToString("O"), RunId = control.RunId, Running = Live, Faulted = faulted, Reason = reason, Detail = detail, Completed = rounds, Hp = hp, MaxHp = maxHp, Seconds = seconds, Level = level, PlanMs = planMs, Plans = planCount, Stages = stages, Stage = target, Ui = lastUi, Mode = control.Mode, AutoSelectEquipment = control.AutoSelectEquipment,
+        void Snapshot() { var select = uis.OfType<SurvivalSelectUI>().FirstOrDefault(); var value = new { At = DateTime.UtcNow.ToString("O"), RunId = control.RunId, Running = Live, Finished = finished, Result = roundResult, ResultError = resultError, Faulted = faulted, Reason = reason, Detail = detail, Completed = rounds, Hp = hp, MaxHp = maxHp, Seconds = finished && roundResult != null ? roundResult.ElapsedMilliseconds / 1000.0 : seconds, Level = level, PlanMs = planMs, Plans = planCount, Stages = stages, Stage = target, Ui = lastUi, Mode = control.Mode, AutoSelectEquipment = control.AutoSelectEquipment,
             Combat = !control.TraceCombat || avatar == null || Player == null ? null : new {
                 Time = combatTime, Playing, Paused, Position = Flat(avatar.transform.position), Speed = Native.Stat(Player, "MoveSpeed"),
                 NormalSpeed = predictedNormalSpeed, AxialSpeed = predictedAxialSpeed,

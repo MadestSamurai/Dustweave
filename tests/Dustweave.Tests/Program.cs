@@ -77,9 +77,12 @@ async Task Group(string name, Func<Task> run)
 Task Sync(Action run) { run(); return Task.CompletedTask; }
 await Group("ProductIdentity", () => Sync(() => ProductIdentityCases.Run(cases)));
 await Group("BargainTraining", () => BargainTrainingCases.Run(root, cases));
+await Group("EquipmentRecycling", () => EquipmentRecyclingCases.Run(root, cases));
+await Group("HuntingInventory", () => HuntingInventoryCases.Run(root, cases));
 await Group("LogCleanup", () => LogCleanupCases.Run(root,cases));
 await Group("CacheStorage", () => CacheStorageCases.Run(root,cases));
 await Group("StorageMaintenance", () => StorageMaintenanceCases.Run(root,cases));
+await Group("StorageOptimization", () => StorageOptimizationCases.Run(root,cases));
 await Group("UpdateRetention", () => UpdateRetentionCases.Run(root,cases));
 await Group("StorageWarning", () => StorageWarningCases.Run(root,cases));
 await Group("LogEvidence", () => LogEvidenceCases.Run(root,cases));
@@ -170,6 +173,7 @@ await Group("ApostleTimeToClear", () => Sync(() => ApostleTimeToClearCases.Run(c
 await Group("Mansion", () => Sync(() => MansionCases.Run(cases)));
 await Group("PandoraSimulation", () => Sync(() => PandoraSimulationCases.Run(root, cases)));
 await Group("Pandora", () => Sync(() => PandoraCases.Run(cases)));
+await Group("MinigameCompletion", () => Sync(() => MinigameCompletionCases.Run(root, cases)));
 await Group("PandoraBuild", () => Sync(() => PandoraBuildCases.Run(root, cases)));
 await Group("PandoraKiting", () => Sync(() => PandoraKitingCases.Run(root, cases)));
 await Group("PandoraTactics", () => Sync(() => PandoraTacticsCases.Run(root, cases)));

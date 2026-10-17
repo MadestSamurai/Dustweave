@@ -64,6 +64,13 @@ internal static class PandoraTool
                     bitmap.Render(window); var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap));
                     using var stream = File.Create(Path.Combine(args[1], $"{language}-{appearance}-{(challenge ? "challenge" : "currency")}.png")); png.Save(stream);
                 }
+                foreach (var language in new[] { "zh-CN", "zh-TW", "en-US" })
+                {
+                    DailyLanguage.Current.Select(language);
+                    window.SetPreview(JsonNode.Parse("""{"Finished":true,"Reason":"challenge-complete","Seconds":1200,"Completed":1}""")!.AsObject(), true, false);
+                    if (window.StatusText.Text != DailyLanguage.Current.Get("pandora.state.challenge-complete") || window.StopButton.IsEnabled || window.TimeText.Text != "20:00")
+                        throw new InvalidOperationException("Challenge completion must remain visible instead of manual equipment or playing");
+                }
                 window.Width = window.MinWidth; window.Height = window.MinHeight;
                 window.SetPreview(JsonNode.Parse("""{"Characters":[{"Id":3,"Group":1,"Name":"Justia","Unlocked":true}]}""")!.AsObject(), true);
                 if (window.CharacterBox.SelectedItem is not PandoraWindow.CharacterOption {Id:7,Group:1,Available:false} || window.StartButton.IsEnabled)
@@ -72,7 +79,7 @@ internal static class PandoraTool
                 var compact = new RenderTargetBitmap((int)window.ActualWidth,(int)window.ActualHeight,96,96,PixelFormats.Pbgra32);
                 compact.Render(window); var compactPng = new PngBitmapEncoder(); compactPng.Frames.Add(BitmapFrame.Create(compact));
                 using (var stream = File.Create(Path.Combine(args[1], "en-US-Dark-unavailable-compact.png"))) compactPng.Save(stream);
-                DailyJson.Write(Path.Combine(args[1], "result.json"), new { status = "passed", modes = 2, languages = 3, themes = 2, realGameTouched = false });
+                DailyJson.Write(Path.Combine(args[1], "result.json"), new { status = "passed", modes = 2, languages = 3, themes = 2, completionVisible = true, realGameTouched = false });
                 window.Close();
             }
             catch (Exception e) { DailyJson.Write(Path.Combine(args[1], "error.json"), new { error = e.ToString() }); app.Shutdown(1); }

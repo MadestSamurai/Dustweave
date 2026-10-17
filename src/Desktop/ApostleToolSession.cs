@@ -22,9 +22,7 @@ internal sealed class ApostleToolPort(IGameHost host, string root, GameInstance 
     public A.GameProcess? Find() => Alive ? new(game.ProcessId, game.StartTicks, game.Executable) : null;
     void RequireIdentity()
     {
-        var identity = Alive ? host.ReadSnapshot(game) : null;
-        if (identity == null || identity.AccountKey != account || identity.PlayerKey != player || identity.FrameUtcTicks < DateTime.UtcNow.AddSeconds(-5).Ticks)
-            throw new InvalidOperationException("游戏身份已变化或连接已过期，请返回日常助手。");
+        DailyToolIdentity.Require(game, account, player, host.Find, () => host.ReadIdentity(game));
     }
     bool Matches(SuiteStatus state) => state.Tool == "apostle-defense" && state.State == "ready" && state.Owner == DailySuite.Owner
         && state.Account == account && state.Player == player && state.At >= DateTime.UtcNow.AddSeconds(-5).Ticks;
@@ -168,6 +166,12 @@ internal sealed class ApostleToolSession(string root, Func<Action<string>, Cance
                 if (!port.Alive) Connected = false;
             });
             Message = controller?.Message ?? Message; lastError = "";
+        }
+        catch (DailyObservationPendingException)
+        {
+            // No command reached the game. Retain this controller and resume from
+            // the next fresh frame; its pending decision must not be reconstructed.
+            Message = "等待游戏身份数据恢复；未发送操作。";
         }
         catch (Exception error)
         {

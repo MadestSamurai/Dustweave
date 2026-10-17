@@ -244,7 +244,7 @@ public static class DailyEquipment
                 // Unobserved draws never authorize selecting existing inventory. A new
                 // cheap craft has its own receipt and can independently satisfy a mission.
                 if (breakNeeded && settings.CraftFallback)
-                    actions.Add(O(("task", "equipment.craft_recycle")));
+                    actions.Add(O(("task", "equipment.craft_recycle"), ("enhance_level", settings.EnhancementTarget(1))));
                 else if (breakNeeded)
                     pending.Add("free_draw_receipt_unobserved");
                 else reasons.Add("equipment_no_recycle_source");
@@ -267,9 +267,13 @@ public static class DailyEquipment
                         selected.Add(id);
                 }
                 if (pending.Count == 0 && selected.Count > 0)
-                    actions.Add(O(("task", "equipment.recycle"), ("instances", selected.ToArray()), ("enhance_level", settings.EnhanceLevel)));
+                {
+                    // Retain exact eligible instances, batching only equal target levels.
+                    foreach (var batch in selected.GroupBy(id => settings.EnhancementTarget(I(byId[id]["grade"]))).OrderBy(g => g.Key))
+                        actions.Add(O(("task", "equipment.recycle"), ("instances", batch.ToArray()), ("enhance_level", batch.Key)));
+                }
                 else if (pending.Count == 0 && breakNeeded && settings.CraftFallback)
-                    actions.Add(O(("task", "equipment.craft_recycle")));
+                    actions.Add(O(("task", "equipment.craft_recycle"), ("enhance_level", settings.EnhancementTarget(1))));
                 else if (pending.Count == 0) reasons.Add(retained.Count > 0 ? "equipment_protected" : "equipment_no_recycle_source");
             }
         }
@@ -360,7 +364,7 @@ public static class DailyEquipment
             if (w.Settings.Equipment.Enabled)
             {
                 await w.Step("MenuUI", "_buttonInventory", expect: "InventoryManageUI");
-                result["recycle"] = await Recycle(w, ids, w.Settings.Equipment.EnhanceLevel, "weekly_craft");
+                result["recycle"] = await Recycle(w, ids, w.Settings.Equipment.EnhancementTarget(1), "weekly_craft");
                 await DailyResults.Cleanup(w);
             }
             return result;
@@ -369,7 +373,15 @@ public static class DailyEquipment
         await w.Refresh();
         var inspection = await DailyMissionInspection.Inspect(w);
         var reports = Rows(inspection["missions"]);
-        var settings = new EquipmentPreferences { Enabled = stage != "equipment_refine" && w.Settings.Equipment.Enabled, RefineEnabled = stage != "equipment_recycle" && w.Settings.Equipment.RefineEnabled, KeepFiveStarSr = w.Settings.Equipment.KeepFiveStarSr, EnhanceLevel = w.Settings.Equipment.EnhanceLevel, CraftFallback = w.Settings.Equipment.CraftFallback, RefineInstance = w.Settings.Equipment.RefineInstance };
+        var original = w.Settings.Equipment;
+        var settings = new EquipmentPreferences
+        {
+            Enabled = stage != "equipment_refine" && original.Enabled, RefineEnabled = stage != "equipment_recycle" && original.RefineEnabled,
+            KeepFiveStarSr = original.KeepFiveStarSr, EnhanceLevel = original.EnhanceLevel,
+            EnhanceLevelN = original.EnhanceLevelN, EnhanceLevelR = original.EnhanceLevelR,
+            EnhanceLevelSr = original.EnhanceLevelSr, EnhanceLevelUr = original.EnhanceLevelUr,
+            CraftFallback = original.CraftFallback, RefineInstance = original.RefineInstance
+        };
         bool Needed(int type) => reports.Any(r => S(r["status"]) == "pending" && N(r["condition_type"]) == type && N(r["condition_subtype"]) == 0 && (r["params"] as JsonArray)?.Count == 0);
         var inventoryEvidence = await w.Evidence(Prefixes);
         var inventory = Normalize(inventoryEvidence, w.Table("policy/EquipmentTable.json"), w.Table("policy/CharTable.json"));
@@ -379,20 +391,25 @@ public static class DailyEquipment
         var plan = Plan(settings, inventory, Drawn(w), Needed(216), Needed(217), refined);
         var operations = new JsonArray();
         foreach (var action in Rows(plan["actions"]))
-        {
-            string task = S(action["task"]);
-            string[]? ids = null;
-            if (task == "equipment.craft_recycle")
-                ids = await Craft(w);
-            if (!await w.Has("InventoryManageUI"))
-                await w.Step("MenuUI", "_buttonInventory", expect: "InventoryManageUI");
-            operations.Add(task == "equipment.refine" ? await Refine(w, S(action["instance"])) : await Recycle(w, ids ?? action["instances"]!.AsArray().Select(S).ToArray(), settings.EnhanceLevel, task));
-        }
+            operations.Add(await ExecuteAction(w, action));
         if (operations.Count > 0)
             await DailyResults.Cleanup(w);
         var summary = O(("state", S(inspection["state"]) == "partial" || plan["pending"]!.AsArray().Count > 0 ? "partial" : operations.Count > 0 ? "completed" : "skipped"), ("operations", operations), ("plan", plan), ("inspection", inspection), ("engine", "dotnet-equipment-v1"));
         if (S(inspection["state"]) == "partial") summary["reason"] = "已处理可确认的装备任务；部分通行证任务待检查";
         return summary;
+    }
+    public static async Task<JsonObject> ExecuteAction(DailyWorkflow w, JsonObject action)
+    {
+        string task = S(action["task"]);
+        Require(task is "equipment.refine" or "equipment.recycle" or "equipment.craft_recycle", "Unknown equipment operation");
+        int level = task == "equipment.refine" ? 0 : action["enhance_level"]?.GetValue<int>()
+            ?? throw new InvalidDataException("分解前强化等级必须为 0 至 9。");
+        Require(level is >= 0 and <= 9, "Invalid enhancement target");
+        string[]? ids = task == "equipment.craft_recycle" ? await Craft(w) : null;
+        if (!await w.Has("InventoryManageUI"))
+            await w.Step("MenuUI", "_buttonInventory", expect: "InventoryManageUI");
+        return task == "equipment.refine" ? await Refine(w, S(action["instance"]))
+            : await Recycle(w, ids ?? action["instances"]!.AsArray().Select(S).ToArray(), level, task);
     }
 }
 public static class DailyMissionInspection

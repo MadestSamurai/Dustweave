@@ -50,7 +50,7 @@ public static class DailyJson
             {
                 using (var f = new FileStream(tmp, FileMode.CreateNew, FileAccess.Write, FileShare.None))
                 {
-                    JsonSerializer.Serialize(f, value, Options);
+                    JsonSerializer.Serialize(f, value, DailyStorageCompression.WriteOptions(path));
                     f.Flush(true);
                 }
                 ready = true;

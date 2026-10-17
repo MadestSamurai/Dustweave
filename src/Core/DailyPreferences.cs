@@ -189,6 +189,7 @@ public sealed class DailyPreferences
             throw new InvalidDataException("免费火炬上限必须为 0 至 60。");
         if (Equipment.EnhanceLevel is < 0 or > 9)
             throw new InvalidDataException("分解前强化等级必须为 0 至 9。");
+        foreach (int grade in Enumerable.Range(1, 4)) Equipment.EnhancementTarget(grade);
         if (Hunt.Priority == null || !Hunt.Priority.Order().SequenceEqual(new[] { "gold", "ordinary", "slime" }))
             throw new InvalidDataException("优先级必须包含金币、史莱姆和普通狩猎各一次。");
         if (!new[] { "least", "fire", "water", "wind", "light", "dark" }.Contains(Hunt.StoneElement))
@@ -244,6 +245,21 @@ public sealed class EquipmentPreferences
     public bool KeepFiveStarSr { get; set; } = true;
     [JsonRequired]
     public int EnhanceLevel { get; set; } = 7;
+    // Missing overrides inherit the legacy account setting, including an explicit zero.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public int? EnhanceLevelN { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public int? EnhanceLevelR { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public int? EnhanceLevelSr { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public int? EnhanceLevelUr { get; set; }
+    public int EnhancementTarget(int grade)
+    {
+        int value = (grade switch
+        {
+            1 => EnhanceLevelN, 2 => EnhanceLevelR, 3 => EnhanceLevelSr, 4 => EnhanceLevelUr,
+            _ => throw new InvalidDataException("装备稀有度无法识别，未进行强化或分解。")
+        }) ?? EnhanceLevel;
+        if (value is < 0 or > 9) throw new InvalidDataException("分解前强化等级必须为 0 至 9。");
+        return value;
+    }
     [JsonRequired]
     public bool CraftFallback { get; set; } = true;
     [JsonRequired]

@@ -97,6 +97,11 @@ public static partial class PandoraCompiler
         var hp = player.Methods.Where(m => m.HasBody).SelectMany(m => m.Body.Instructions).First(i => i.Operand is MethodReference m && m.Name == "get_MiniGameHP");
         Method("health", (MethodReference)hp.Previous.Operand);
         var result = M(T("SurvivalResultUI"), "Initalize");
+        if (result.Parameters.Count != 6 || result.Parameters[0].ParameterType.Name != manager.Name ||
+            result.Parameters[1].ParameterType.Name != "Boolean" || result.Parameters[2].ParameterType.Name != "Boolean" ||
+            !result.Body.Instructions.Any(i => i.OpCode == OpCodes.Ldfld && i.Operand is FieldReference f && f.Name == "_objClear"))
+            throw new InvalidOperationException("Pandora result contract changed");
+        Method("resultInitialize", result);
         // Resolve callback ownership from native assignments, not obfuscated names.
         var retryAction = (FieldReference)result.Body.Instructions.Single(i => i.OpCode == OpCodes.Stfld && i.Previous.Operand == result.Parameters[5]).Operand;
         var pendingAction = M(T("SurvivalResultUI"), "OnRemovedCompletely").Body.Instructions.Select(i => i.Operand).OfType<FieldReference>().Single(f => f.FieldType.FullName == "System.Action");

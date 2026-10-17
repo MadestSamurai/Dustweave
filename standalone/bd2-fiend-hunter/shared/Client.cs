@@ -15,7 +15,7 @@ public static class Client {
  static PipeClient Reader(){if(pipe!=null)return pipe;using var game=HostedConnection.FindGame(n=>string.Equals(n,"BrownDust II",StringComparison.OrdinalIgnoreCase),"检测到多个游戏进程，请只保留一个。")??throw new IOException("请先启动游戏");return pipe=DesktopFiles.Connect(Root,game.Id,game.StartTime.ToUniversalTime().Ticks);}
  public static void Acquire(){if(!acquired){var p=Reader();p.Open(p.Fingerprint());acquired=true;}}
  public static readonly JsonSerializerOptions Options=new(){IncludeFields=true};
- public static JsonObject? State(){try{Reader();return JsonNode.Parse(AtomicFiles.Read(Path.Combine(Root,"state.json")))!.AsObject();}catch(Exception e)when(e is IOException or JsonException){return null;}}
+ public static JsonObject? State(){try{Reader();return JsonNode.Parse(AtomicFiles.Read(Path.Combine(Root,"state.json")))!.AsObject();}catch(Exception e)when(e is IOException or JsonException or TimeoutException && !PipeClient.SessionEnded(e)){return null;}}
  public static bool Fresh(JsonObject? s)=>s!=null&&DateTimeOffset.TryParse((string?)s["AtUtc"],out var t)&&DateTimeOffset.UtcNow-t>=TimeSpan.Zero&&DateTimeOffset.UtcNow-t<TimeSpan.FromSeconds(6);
  public static void Write(string file,object value){Directory.CreateDirectory(Root);string p=Path.Combine(Root,file),text=JsonSerializer.Serialize(value,Options);
   for(int i=0;i<12;i++){if(AtomicFiles.TryWrite(p,text))return;Thread.Sleep(25);}
@@ -37,6 +37,6 @@ public static class Client {
   for(int i=0;i<45;i++){await Task.Delay(200);var receipt=Path.Combine(Root,"receipt-"+id+".json");if(!AtomicFiles.Exists(receipt))continue;var result=JsonNode.Parse(AtomicFiles.Read(receipt))!;if((string?)result["Status"]!="dispatched")throw new Exception((string?)result["Error"]);return;}
   throw new Exception("游戏操作结果待确认，不自动重复发送");
  }
- public static void Heartbeat(Control c){Acquire();var s=State();if(!Fresh(s))throw new Exception("游戏心跳中断");var session=(string)s!["Session"]!;if(!string.IsNullOrEmpty(c.Session)&&c.Session!=session)throw new Exception("游戏连接已更换，必须重新开始任务");c.Session=session;c.ExpiresUtcTicks=DateTime.UtcNow.AddSeconds(8).Ticks;c.Validate();Write("control.json",c);}
+ public static void Heartbeat(Control c){Acquire();var s=State();if(!Fresh(s))throw new ObservationUnavailableException("等待游戏数据恢复");var session=(string)s!["Session"]!;if(!string.IsNullOrEmpty(c.Session)&&c.Session!=session)throw new GameSessionEndedException("游戏连接已更换，必须重新开始任务");c.Session=session;c.ExpiresUtcTicks=DateTime.UtcNow.AddSeconds(8).Ticks;c.Validate();Write("control.json",c);}
 }
 #endif

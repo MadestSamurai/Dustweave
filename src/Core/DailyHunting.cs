@@ -31,6 +31,67 @@ public static class DailyHunting
         return O(("count", count), ("cost", cost), ("resource", resource), ("table", table), ("rewards", replies.Select(r => r["RewardInfoBundle"]).ToArray()));
     }
     private static JsonObject Selected(JsonObject e) => State(e, "hunt.selection", TablePath);
+    public static IReadOnlyDictionary<int, long> StoneStock(JsonObject evidence)
+    {
+        const string owned = "ὬὩὨὮὥὫὧὪὥὥὨ";
+        var stock = new Dictionary<int, long>();
+        foreach (var reading in Rows(evidence["Readings"]).Where(r => S(r["Id"]) == "hunt.owned"))
+        {
+            Require(S(reading["Error"]) == "", "Stone inventory incomplete");
+            var row = DailyEvidence.Values(reading);
+            long id = DailyEvidence.Integer(row[owned + ".ὯὫὪὡὭὤὪὮὫὬὣ"]);
+            if (id is < 111 or > 115) continue;
+            long count = DailyEvidence.Integer(row[owned + ".ὮὢὥὯὥὧὤὭὨὨὪ"]);
+            Require(count >= 0 && stock.TryAdd((int)id, count), "Stone inventory incomplete");
+        }
+        Require(stock.Count == Elements.Length, "Stone inventory incomplete");
+        return stock;
+    }
+    public static async Task<string> StoneElement(DailyWorkflow w, string preference)
+    {
+        // A fixed destination needs no inventory comparison, including when the
+        // player has hidden the owned-currency panel in the game.
+        if (Elements.Contains(preference)) return preference;
+        Require(preference == "least", "Unknown hunt category");
+        await w.Step(Ui, "$pointer/Layout - Button/Button - 4 - Crystal", reason: "读取五种圣石库存");
+        var evidence = await w.WaitEvidence(["hunt", "daily.currency", "missions.cache"], x => N(Selected(x)["typeGroupId"]) is >= 3 and <= 7);
+        bool expanded = false;
+        string readError = "";
+        IReadOnlyDictionary<int, long>? stock = null;
+        bool Ready(JsonObject e)
+        {
+            evidence = e;
+            try
+            {
+                if (N(Selected(e)["typeGroupId"]) is < 3 or > 7) return false;
+                stock = StoneStock(e);
+                return true;
+            }
+            catch (InvalidDataException ex) { readError = ex.Message; return false; }
+        }
+        if (!Ready(evidence))
+        {
+            // RefreshOwnedCurrency returns without creating any owned-item rows
+            // while folded. Waiting for rows alone can never recover this state.
+            var frame = (await w.Observe()).Frame;
+            var targets = DailyNavigationDecision.Rows(frame).Where(r => S(r["Type"]) == Ui && DailyNavigationDecision.ReadyInput(r))
+                .SelectMany(r => Rows(r["Targets"])).Where(t => B(t["Enabled"])).ToArray();
+            if (targets.Any(t => S(t["Field"]) == "_expandButtonCurrency") && !targets.Any(t => S(t["Field"]) == "_foldButtonCurrency"))
+            {
+                await w.Step(Ui, "_buttonFoldAndExpand", reason: "展开圣石库存");
+                expanded = true;
+            }
+            try { await w.WaitEvidence(["hunt", "daily.currency", "missions.cache"], Ready, seconds: 5, error: "Stone inventory incomplete"); }
+            catch (StageHostException ex) when (ex.Kind == "adapter")
+            {
+                // Retain the failed inventory readings, not just the last UI tree.
+                w.Driver.Diagnostics.Failure("hunting_inventory", O(("message", "Stone inventory incomplete"), ("expanded", expanded),
+                    ("read_error", readError), ("readings", Array(Rows(evidence["Readings"]).Where(r => S(r["Id"]) is "hunt.owned" or "hunt.selection")))));
+                throw;
+            }
+        }
+        return Elements[Enumerable.Range(0, Elements.Length).OrderBy(i => stock![111 + i]).ThenBy(i => i).First()];
+    }
     private static async Task<JsonObject> Select(DailyWorkflow w, string kind, int chapter = 9, string? element = null)
     {
         int expected = kind switch
@@ -156,12 +217,7 @@ public static class DailyHunting
             long budget = Math.Min(N(R(evidence, "daily.currency", "FreeTorchLightAp")), Math.Max(0, h.TorchLimit - spent));
             if (budget > 0)
             {
-                await w.Step(Ui, "$pointer/Layout - Button/Button - 4 - Crystal", reason: "读取五种圣石库存");
-                var e = await w.WaitEvidence(["hunt", "daily.currency", "missions.cache"], x => N(Selected(x)["typeGroupId"]) >= 3);
-                const string owned = "ὬὩὨὮὥὫὧὪὥὥὨ";
-                var stock = Readings(e, "hunt.owned").ToDictionary(r => I(r[owned + ".ὯὫὪὡὭὤὪὮὫὬὣ"]), r => N(r[owned + ".ὮὢὥὯὥὧὤὭὨὨὪ"]));
-                Require(Enumerable.Range(111, 5).All(stock.ContainsKey), "Stone inventory incomplete");
-                string element = h.StoneElement == "least" ? Elements[Enumerable.Range(0, 5).OrderBy(i => stock[111 + i]).ThenBy(i => i).First()] : h.StoneElement;
+                string element = await StoneElement(w, h.StoneElement);
                 var table = await Select(w, "stone", element: element);
                 int cost = I(table["apPerTime"]);
                 Require(cost > 0, "Invalid torch cost");

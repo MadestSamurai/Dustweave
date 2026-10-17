@@ -39,7 +39,7 @@ public sealed class SichuanControlLink : IDisposable
         {
             if(disposed||!enabled)return;
             try{files.Lease(true);if(owner.Length>0)files.ExecutionLease(owner,true);Error="";}
-            catch(Exception e)when(e is IOException or UnauthorizedAccessException){Error=e.Message;}
+            catch(Exception e){Error=e.Message;if(BD2.LocalIpc.PipeClient.SessionEnded(e)||e is not (IOException or UnauthorizedAccessException)){owner="";enabled=false;}}
         }
     }
     public void Dispose()

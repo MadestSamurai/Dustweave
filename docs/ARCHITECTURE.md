@@ -51,6 +51,12 @@ Targeted checks: `test.ps1 -Groups ApostleIntegrated,ToolMenu,ActivityLease,Apos
 
 ## Local storage / 本地空间
 
+机器生成的操作记录使用紧凑 JSON，设置和用户导出继续保持易读格式。超过 24 小时、位于明确记录或可重建组件目录的文件，可在本地 NTFS 卷上做透明无损压缩。文件内容、路径与原始时间戳不变，现有恢复读取及诊断脱敏导出无需新格式；不支持的卷、加密／链接／占用文件跳过。每次最多处理 128 个文件或约 32 MiB，未完成时在下一次空闲机会继续，不在操作线程上全量压缩。后续批次不重复核对历史记录、清理日志或更新缓存；完整保留期维护仍保持独立的十二小时间隔。占用文件不会挡住后续批次，整轮没有进展时返回正常维护间隔。压缩及稀疏文件的空间统计使用存储大小；普通文件沿用文件长度口径，不计磁盘簇尾部和文件系统元数据。
+
+Windows `CrashDumps` 只识别织尘及其更新器的精确文件名：最多保留两份近期转储，多出的文件至少保留 24 小时，所有超过用户日志保留期（最多七天）的转储可清理。沙盒必须通过现有空闲与归属核验；其他程序的转储、系统目录、注册表、游戏数据均不删除。插件已安装内容不按缓存淘汰，更新事务仍使用原有独立保护。
+
+Machine-generated operational records use compact JSON. Older records and reproducible components can use bounded, byte-preserving [NTFS compression](https://learn.microsoft.com/windows/win32/api/winioctl/ni-winioctl-fsctl_set_compression); recovery and diagnostic readers keep their original paths and formats. Statistics use [stored sizes](https://learn.microsoft.com/windows/win32/api/fileapi/nf-fileapi-getcompressedfilesizew) for compressed/sparse files. Busy, linked, encrypted and unsupported files are skipped. Maintenance preserves original age and yields after 128 files or approximately 32 MiB. Continuations do not repeat journal reconciliation or log/update retention, nor postpone the independent twelve-hour retention clock. A busy prefix cannot starve later files; an exhausted pass without progress returns to the ordinary interval. Owned crash dumps have both a two-file limit and the configured log age limit, without touching unrelated application or sandbox system files. Checks: `StorageOptimization`, existing storage/log/export/OTA groups and the `support` desktop smoke.
+
 “日志与缓存”按实际文件大小统计主数据目录、迁移后的缓存、隔离空间及本工具的 .NET 解压缓存，重叠路径不重复计算。沙盒中的游戏文件也计入总量，但不纳入清理。`DailyCacheStorage` 管理连接组件、商品表、规则、预编译和绑定缓存：闲置超过 7 天即可淘汰，7 天内通常保留最近两代，多出的代际至少保留 24 小时。成功编译后立即删除临时构建副本，失败构建保留至少 24 小时。OTA 仍按 `UpdateCacheRetention` 的数量、时间及事务保护规则处理。
 
 `DailyStorageMaintenance` 只清理注册信息、真实路径与驱动归属一致且没有运行进程的隔离空间，并逐个获取操作锁。运行中的旧版程序保护解压缓存，账号、游戏存档、未知文件及待恢复的更新始终保留。无界面的双开工作进程结束后也会压缩成功步骤的日志并维护本地缓存，最多使用 20 秒；失败不影响队列结果。主窗口自动维护有 30 秒预算，重试时保留已完成的清理。超过保留期的已结算旧回执去掉 UI 树，保留身份、指令与结果；未确认回执不按成功处理。

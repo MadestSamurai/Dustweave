@@ -81,6 +81,13 @@ public partial class MainWindow
                     }
                     checks+=3;
                 }finally{dialog.Close();}
+                string compressionSample=Path.Combine(root,"live","diagnostics","compression-smoke.json");
+                if(DailyStorageCompression.Supported(root))
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(compressionSample)!);
+                    File.WriteAllText(compressionSample,System.Text.Json.JsonSerializer.Serialize(new{state="failed",text=new string('x',65536)}));
+                    File.SetLastWriteTimeUtc(compressionSample,DateTime.UtcNow.AddDays(-3));
+                }
                 var cleanup=CreateLogCleanupWindow();cleanup.Show();
                 try {
                     var rescan=Nodes<Button>(cleanup).Single(b=>b.Name=="LogCleanupScan");
@@ -88,6 +95,7 @@ public partial class MainWindow
                     var start=Nodes<Button>(cleanup).Single(b=>b.Name=="LogCleanupStart");
                     var status=Nodes<TextBlock>(cleanup).Single(b=>b.Name=="LogCleanupStatus");
                     if(!rescan.IsEnabled||status.Text.StartsWith("logs."))throw new Exception("Cleanup preview failed");
+                    if(DailyStorageCompression.Supported(root) && (!start.IsEnabled || !Nodes<TextBlock>(cleanup).Any(t=>t.Visibility==Visibility.Visible&&t.Text==L.Get("storage.compression",1))))throw new Exception("Compression-only maintenance is not understandable or available");
                     await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
                     Capture($"support-cleanup-{language}-{appearance}",(FrameworkElement)cleanup.Content);
                     if(start.TransformToAncestor(cleanup).TransformBounds(new Rect(start.RenderSize)).Bottom>cleanup.ActualHeight)throw new Exception("Cleanup action clipped");
@@ -99,7 +107,7 @@ public partial class MainWindow
                         if(File.Exists(obsolete)||!rescan.IsEnabled)throw new Exception("Manual cleanup did not finish");
                     }
                     checks+=2;
-                }finally{cleanup.Close();}
+                }finally{cleanup.Close();if(File.Exists(compressionSample))File.Delete(compressionSample);}
                 var warning=CreateStorageWarningWindow([new(@"C:\",512*1048576L),new(@"E:\",384*1048576L)],new([new("main",root,2662*1048576L,2100*1048576L,0,800*1048576L,0)]),out var warningAction);warning.Show();
                 try {
                     await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
@@ -143,6 +151,12 @@ public partial class MainWindow
             await CheckLogCleanupAsync();if(!File.Exists(automaticLog))throw new Exception("Retention ran while automation was busy");
             busy=false;await CheckLogCleanupAsync();
             if(File.Exists(automaticLog)||nextLogCleanup<DateTime.UtcNow.AddHours(11))throw new Exception("Idle retention did not run or persist its schedule");
+            var retainedAt=lastRetentionUtc;
+            SaveLogCleanupResult(new(0,0,0){MoreWork=true,CompressedFiles=128},false);
+            if(lastRetentionUtc!=retainedAt || nextLogCleanup>DateTime.UtcNow.AddMinutes(6) || !compressionPending)throw new Exception("Compression continuation changed the retention clock");
+            SaveLogCleanupResult(new(0,0,0),false);
+            if(lastRetentionUtc!=retainedAt || nextLogCleanup!=retainedAt.AddHours(12) || compressionPending)throw new Exception("Completed compression postponed the retention clock");
+            checks+=2;
             if(!File.Exists(Path.Combine(root,"log-cleanup-last.json")))throw new Exception("Cleanup schedule was not persisted");checks+=4;
             string stepId=Guid.NewGuid().ToString("N"),stepFolder=Path.Combine(root,"live","steps",stepId);
             using(var scope=new DailyLogEvidence(root))

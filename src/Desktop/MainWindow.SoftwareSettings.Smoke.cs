@@ -73,6 +73,9 @@ public partial class MainWindow
                 verifyCategorySurface();
                 foreach (bool tower in new[] { false, true })
                 { preferencesPanel.ShowNativeBattleSettingsForSmoke(tower); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); Capture($"native-battle-{tower}-{lang}-{themeIndex}"); }
+                preferencesPanel.ShowEquipmentSettingsForSmoke();
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                Capture($"equipment-levels-{lang}-{themeIndex}");
                 WorkspaceTabs.SelectedItem=PluginsTab;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture($"plugins-empty-{lang}-{themeIndex}");
                 WorkspaceTabs.SelectedItem=UpdatesTab;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture($"updates-{lang}-{themeIndex}");
             }

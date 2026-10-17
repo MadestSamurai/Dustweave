@@ -15,6 +15,7 @@
   "paused": "Automation paused. The game remains running.",
   "idle": "No active task.",
   "heartbeat": "Game connection lost. Automation stopped.",
+  "waiting_data": "Waiting for game data. No actions are being sent; automation will resume when it recovers.",
   "victory": "Very Hard cleared. Result confirmed.",
   "defeat": "Round settled without a clear. You can try again.",
   "running": "Automatic combat in progress",

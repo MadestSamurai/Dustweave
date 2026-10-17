@@ -22,6 +22,14 @@ internal static class ApostleIntegratedCases
         await session.StartAsync(new()); Check(prepared == 1, "double start cannot create another controller");
         bool blocked = false; try { using var lease = DailyToolControl.Acquire(data); } catch (InvalidOperationException) { blocked = true; }
         Check(blocked, "automation excludes daily and other tools");
+        int writesBefore = port.Commands.Count;
+        port.ObservationPending = true;
+        await session.PollAsync();
+        Check(session.Running && session.Connected && session.Occupied && port.Commands.Count == writesBefore,
+            "identity temporarily unavailable preserves controller and ownership without sending another command");
+        port.ObservationPending = false;
+        await session.PollAsync();
+        Check(session.Running && session.Connected && prepared == 1, "fresh identity resumes the existing controller without reconnecting");
         port.Pending = true;
         var stop = session.StopAsync(); await Task.Delay(150);
         Check(!session.Running && session.Occupied && !stop.IsCompleted, "pause stops decisions immediately but waits for settlement");
@@ -86,11 +94,11 @@ internal static class ApostleIntegratedCases
         public bool Ready => Alive;
         public bool Pending { get; set; }
         public int Reads;
-        public bool ReadFailure,FailStopOnce,Stale;
+        public bool ReadFailure,FailStopOnce,Stale,ObservationPending;
         public List<A.Control> Commands = new();
         public Action? FindHook;
         public A.GameProcess? Find() {FindHook?.Invoke();return Alive ? new(42,123,"fixture.exe") : null;}
-        public A.Snapshot? Read() { Reads++;if(ReadFailure)throw new IOException("fixture identity changed"); return Alive ? new() { ProcessId=42, ProcessStart=123, At=Stale?1:DateTime.UtcNow.Ticks, Account=new('a',64), Stage="waiting" } : null; }
+        public A.Snapshot? Read() { Reads++;if(ObservationPending)throw new DailyObservationPendingException("snapshot-missing");if(ReadFailure)throw new IOException("fixture identity changed"); return Alive ? new() { ProcessId=42, ProcessStart=123, At=Stale?1:DateTime.UtcNow.Ticks, Account=new('a',64), Stage="waiting" } : null; }
         public void Write(A.Control c) {if(!c.Enabled&&FailStopOnce){FailStopOnce=false;throw new IOException("fixture stop timeout");}Commands.Add(A.JsonFiles.Clone(c));}
         public Task ConnectAsync(Action<string> progress, CancellationToken cancellation) => Task.CompletedTask;
     }

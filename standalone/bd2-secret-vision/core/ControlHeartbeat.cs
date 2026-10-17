@@ -43,7 +43,7 @@ public sealed class ControlHeartbeat(Action<DateTimeOffset> renew, Action revoke
                     Renew();
                     if(firstFailure!=null) diagnose("heartbeat-recovered",firstFailure);
                     firstFailure=null; delay=1000;
-                } catch(Exception error) when(Files.IsFileError(error)) {
+                } catch(Exception error) when(Files.IsFileError(error) && !BD2.LocalIpc.PipeClient.SessionEnded(error)) {
                     if(firstFailure==null) {firstFailure=error;diagnose("heartbeat-retrying",error);}
                     delay=200;
                 }

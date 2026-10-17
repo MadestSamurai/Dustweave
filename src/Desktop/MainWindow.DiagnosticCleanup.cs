@@ -10,9 +10,11 @@ public partial class MainWindow
     private DateTime nextLogCleanup = DateTime.UtcNow.AddMinutes(1);
     private DateTime nextEvidenceCleanup = DateTime.UtcNow.AddSeconds(15);
     private bool logCleanupRunning;
+    private bool compressionPending;
+    private DateTime lastRetentionUtc=DateTime.MinValue;
     private bool cacheChanging;
     private void SetCacheChanging(bool value){cacheChanging=value;SetBusy(busy);}
-    private sealed record LogCleanupRun(DateTime At, int Files, long Bytes, int Skipped, string? Version = null);
+    private sealed record LogCleanupRun(DateTime At, int Files, long Bytes, int Skipped, string? Version = null, bool MoreWork = false, int CompressedFiles = 0, DateTime? RetentionAt = null);
     private string? LegacyEquipmentLogRoot => smoke == null
         ? Environment.GetEnvironmentVariable("BD2_EQUIPMENT_DATA_ROOT") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BD2EquipmentAssistant")
         : null;
@@ -20,9 +22,20 @@ public partial class MainWindow
     {
         logPolicy=DailyLogCleanup.Load(root);
         var last=DailyJson.TryRead<LogCleanupRun>(Path.Combine(root,"log-cleanup-last.json"));
-        if(last?.Version==DailyProductVersion.Current && last.At>DateTime.UtcNow.AddHours(-12) && last.At<=DateTime.UtcNow)nextLogCleanup=last.At.AddHours(12);
+        compressionPending=last?.Version==DailyProductVersion.Current && last.MoreWork;
+        if(last?.Version==DailyProductVersion.Current)lastRetentionUtc=last.RetentionAt??last.At;
+        if(!compressionPending && lastRetentionUtc>DateTime.UtcNow.AddHours(-12) && lastRetentionUtc<=DateTime.UtcNow)nextLogCleanup=lastRetentionUtc.AddHours(12);
         if(LegacyEquipmentLogRoot is { } legacy && DailyLogCleanup.HasLegacyEquipmentLogs(legacy))nextLogCleanup=DateTime.UtcNow.AddMinutes(1);
         Closed+=(_,_)=>logCleanupCancellation?.Cancel();
+    }
+    private void SaveLogCleanupResult(DailyLogCleanupResult result,bool retention)
+    {
+        var now=DateTime.UtcNow;
+        if(retention)lastRetentionUtc=now;
+        compressionPending=result.MoreWork;
+        DailyJson.Write(Path.Combine(root,"log-cleanup-last.json"),new LogCleanupRun(now,result.Files,result.Bytes,result.Skipped,DailyProductVersion.Current,result.MoreWork,result.CompressedFiles,lastRetentionUtc));
+        var retentionDue=lastRetentionUtc.AddHours(12);
+        nextLogCleanup=result.MoreWork&&now.AddMinutes(5)<retentionDue?now.AddMinutes(5):retentionDue;
     }
     private async Task CheckLogCleanupAsync()
     {
@@ -37,15 +50,18 @@ public partial class MainWindow
         try {
             await DailyLogEvidence.FlushAsync(root,lifetime.Token);
             if(!retentionDue)return;
-            if(LegacyEquipmentLogRoot is { } legacy)await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(root,legacy,lifetime.Token);
+            bool continuing=compressionPending&&lastRetentionUtc>DateTime.UtcNow.AddHours(-12)&&lastRetentionUtc<=DateTime.UtcNow;
+            if(!continuing&&LegacyEquipmentLogRoot is { } legacy)await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(root,legacy,lifetime.Token);
             if(Unavailable || dailyQueue.IsRunning || scheduleChecking || DailyDialogs.ModalDepth>0 || updateChecking || updateInstalling)return;
             // The ownership lock protects active tools; an idle tool window is not a running task.
             SetCacheChanging(true);
             DailyLogCleanupResult result;
-            try { result=await new DailyStorageMaintenance(root).CleanAsync(logPolicy,lifetime.Token); }
+            try {
+                var maintenance=new DailyStorageMaintenance(root);
+                result=continuing?await maintenance.ContinueCompressionAsync(lifetime.Token):await maintenance.CleanAsync(logPolicy,lifetime.Token);
+            }
             finally {SetCacheChanging(false);}
-            DailyJson.Write(Path.Combine(root,"log-cleanup-last.json"),new LogCleanupRun(DateTime.UtcNow,result.Files,result.Bytes,result.Skipped,DailyProductVersion.Current));
-            nextLogCleanup=DateTime.UtcNow.AddHours(12);
+            SaveLogCleanupResult(result,!continuing);
         }
         catch(OperationCanceledException) { }
         catch(Exception e) when(e is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or InvalidOperationException) { /* Never stop automation for retention. Retry on the next idle interval. */ }
@@ -65,6 +81,7 @@ public partial class MainWindow
         Text("logs.body",0).SetResourceReference(TextBlock.ForegroundProperty,"MutedInk");
         var status=Text("logs.scanning",20);status.Name="LogCleanupStatus";status.FontSize=18;status.FontWeight=FontWeights.SemiBold;
         var detail=Text("logs.scope",10);detail.FontSize=12;detail.SetResourceReference(TextBlock.ForegroundProperty,"MutedInk");
+        var optimization=Text("storage.compression",8);optimization.FontSize=12;optimization.SetResourceReference(TextBlock.ForegroundProperty,"MutedInk");optimization.Visibility=Visibility.Collapsed;
         var locationTitle=Text("storage.location",20);locationTitle.FontWeight=FontWeights.SemiBold;
         var locationRow=new DockPanel{Margin=new(0,8,0,8)};
         var move=new Button{Name="CacheStorageMove",Margin=new(10,0,0,0)};L.Bind(move,ContentControl.ContentProperty,"storage.move");DockPanel.SetDock(move,Dock.Right);locationRow.Children.Add(move);
@@ -81,18 +98,18 @@ public partial class MainWindow
         var clean=new Button{Name="LogCleanupStart",Style=(Style)FindResource("PrimaryButton"),IsEnabled=false};L.Bind(clean,ContentControl.ContentProperty,"logs.clean");actions.Children.Add(clean);panel.Children.Add(actions);
         DailyStorageOverview? storage=null;bool working=false,closed=false;var lifetime=new CancellationTokenSource();
         static double MiB(long bytes)=>Math.Round(bytes/1048576d,1);
-        void Controls(bool enabled){scan.IsEnabled=enabled;days.IsEnabled=enabled;size.IsEnabled=enabled;automatic.IsEnabled=enabled;move.IsEnabled=enabled&&!IsSandboxWindow;clean.IsEnabled=enabled&&storage?.ReclaimableBytes>0;}
-        void Save(){try{logPolicy=new(automatic.IsChecked==true,(int)((ComboBoxItem)days.SelectedItem).Tag,(int)((ComboBoxItem)size.SelectedItem).Tag);DailyLogCleanup.Save(root,logPolicy);nextLogCleanup=DateTime.UtcNow.AddMinutes(1);storage=null;clean.IsEnabled=false;L.Text(status,"logs.changed");}catch(Exception e){DailyUiText.Error(status,e);}}
+        void Controls(bool enabled){scan.IsEnabled=enabled;days.IsEnabled=enabled;size.IsEnabled=enabled;automatic.IsEnabled=enabled;move.IsEnabled=enabled&&!IsSandboxWindow;clean.IsEnabled=enabled&&storage!=null&&(storage.ReclaimableBytes>0||storage.OptimizableFiles>0);}
+        void Save(){try{logPolicy=new(automatic.IsChecked==true,(int)((ComboBoxItem)days.SelectedItem).Tag,(int)((ComboBoxItem)size.SelectedItem).Tag);DailyLogCleanup.Save(root,logPolicy);compressionPending=false;nextLogCleanup=DateTime.UtcNow.AddMinutes(1);storage=null;clean.IsEnabled=false;optimization.Visibility=Visibility.Collapsed;L.Text(status,"logs.changed");}catch(Exception e){DailyUiText.Error(status,e);}}
         automatic.Click+=(_,_)=>Save();days.SelectionChanged+=(_,_)=>Save();size.SelectionChanged+=(_,_)=>Save();
         void Error(Exception error){if(error.Message.StartsWith("storage.",StringComparison.Ordinal))L.Text(status,error.Message);else DailyUiText.Error(status,error);}
-        async Task Scan(){working=true;storage=null;Controls(false);L.Text(status,"logs.scanning");try{storage=await new DailyStorageMaintenance(root).ScanAsync(logPolicy,lifetime.Token);if(!closed){L.Text(status,"storage.preview",MiB(storage.TotalBytes),MiB(storage.ReclaimableBytes));L.Text(detail,"storage.breakdown",MiB(storage.LogBytes),MiB(storage.CacheBytes),MiB(Math.Max(0,storage.TotalBytes-storage.LogBytes-storage.CacheBytes)),storage.Skipped,MiB(storage.SandboxBytes),MiB(storage.ExtractionBytes));}}catch(OperationCanceledException){}catch(Exception e){if(!closed)Error(e);}finally{working=false;if(!closed)Controls(true);else lifetime.Dispose();}}
+        async Task Scan(){working=true;storage=null;Controls(false);L.Text(status,"logs.scanning");optimization.Visibility=Visibility.Collapsed;try{storage=await new DailyStorageMaintenance(root).ScanAsync(logPolicy,lifetime.Token);if(!closed){L.Text(status,"storage.preview",MiB(storage.TotalBytes),MiB(storage.ReclaimableBytes));L.Text(detail,"storage.breakdown",MiB(storage.LogBytes),MiB(storage.CacheBytes),MiB(Math.Max(0,storage.TotalBytes-storage.LogBytes-storage.CacheBytes)),storage.Skipped,MiB(storage.SandboxBytes),MiB(storage.ExtractionBytes));if(storage.OptimizableFiles>0){L.Text(optimization,"storage.compression",storage.OptimizableFiles);optimization.Visibility=Visibility.Visible;}}}catch(OperationCanceledException){}catch(Exception e){if(!closed)Error(e);}finally{working=false;if(!closed)Controls(true);else lifetime.Dispose();}}
         bool BusyStorage(bool moving=false)=>Unavailable||dailyQueue.IsRunning||updateChecking||updateInstalling||moving&&(ToolOpen||(!IsSandboxWindow&&smoke==null&&DailyUpdateHost.HasIsolatedWindows()));
         scan.Click+=async(_,_)=>await Scan();
         clean.Click+=async(_,_)=>{
             if(storage==null)return;
             if(BusyStorage()){L.Text(status,"storage.busy");return;}
             working=true;Controls(false);SetCacheChanging(true);L.Text(status,"logs.cleaning");
-            try{if(LegacyEquipmentLogRoot is { } legacy)await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(root,legacy,lifetime.Token);var result=await new DailyStorageMaintenance(root).CleanAsync(logPolicy,lifetime.Token);storage=null;if(!closed){L.Text(status,"logs.done",result.Files,MiB(result.Bytes),result.Skipped);L.Text(detail,"storage.rescan");}}
+            try{if(LegacyEquipmentLogRoot is { } legacy)await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(root,legacy,lifetime.Token);var result=await new DailyStorageMaintenance(root).CleanAsync(logPolicy,lifetime.Token);storage=null;SaveLogCleanupResult(result,true);if(!closed){L.Text(status,"storage.optimized",result.Files,result.CompressedFiles,MiB(result.Bytes),result.Skipped);L.Text(detail,"storage.rescan");optimization.Visibility=Visibility.Collapsed;}}
             catch(OperationCanceledException){}catch(Exception e){if(!closed){if(e.Message=="logs.rescan")L.Text(status,"logs.rescan");else DailyUiText.Error(status,e);}}
             finally{SetCacheChanging(false);working=false;if(!closed)Controls(true);else lifetime.Dispose();}
         };

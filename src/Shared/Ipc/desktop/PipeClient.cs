@@ -6,8 +6,31 @@ using System.Threading;
 
 namespace BD2.LocalIpc
 {
+    public sealed class ObservationUnavailableException : IOException
+    {
+        public ObservationUnavailableException(string message) : base(message) { }
+    }
+    public sealed class GameSessionEndedException : IOException
+    {
+        public GameSessionEndedException(string message, Exception inner = null) : base(message, inner) { }
+    }
     public sealed class PipeClient
     {
+        // Shared contract across independently built tool assemblies. These
+        // exceptions are raised before dispatch, not inferred from error text.
+        public static bool ObservationPending(Exception error)
+        {
+            for (; error != null; error = error.InnerException)
+                if (error is ObservationUnavailableException || error.GetType().FullName == "Dustweave.DailyObservationPendingException") return true;
+            return false;
+        }
+        public static bool SessionEnded(Exception error)
+        {
+            for (; error != null; error = error.InnerException)
+                if (error is GameSessionEndedException || error is LeaseRevokedException ||
+                    error.GetType().FullName == "Dustweave.DailyToolSessionChangedException") return true;
+            return false;
+        }
         readonly int pid; readonly long start; readonly string channel, dataRoot;
         readonly object sync = new object();
         string generation = "", ticket = "";
@@ -34,9 +57,9 @@ namespace BD2.LocalIpc
                 {
                     using (var process = System.Diagnostics.Process.GetProcessById(pid))
                         if (process.HasExited || process.StartTime.ToUniversalTime().Ticks != start)
-                            throw new IOException("Game session ended; return to the host to connect again.");
+                            throw new GameSessionEndedException("Game session ended; return to the host to connect again.");
                 }
-                catch (ArgumentException error) { throw new IOException("Game process is no longer running.", error); }
+                catch (ArgumentException error) { throw new GameSessionEndedException("Game process is no longer running.", error); }
                 catch (System.ComponentModel.Win32Exception error) { throw new IOException("Game session cannot be accessed.", error); }
 
                 using (var pipe = new NamedPipeClientStream(".", Wire.Endpoint(pid, start), PipeDirection.InOut, PipeOptions.Asynchronous))

@@ -46,13 +46,13 @@ internal static class ActivityLeaseCases
   try{DailyToolIdentity.Require(game,"account","player",()=>game,()=>new(Frame(ticks:DateTime.UtcNow.AddSeconds(-10).Ticks)),_=>{});}catch(DailyObservationPendingException e){pending=e.Reason=="snapshot-stale";}
   Check(pending,"old matching identity cannot authorize a command");
   reads=0;bool changed=false;
-  try{DailyToolIdentity.Require(game,"account","player",()=>game,()=>++reads==1?new(null,"snapshot-missing"):new(Frame("other")),_=>{});}catch(InvalidOperationException){changed=true;}
+  try{DailyToolIdentity.Require(game,"account","player",()=>game,()=>++reads==1?new(null,"snapshot-missing"):new(Frame("other")),_=>{});}catch(DailyToolSessionChangedException){changed=true;}
   Check(changed&&reads==2,"actual account change during read retry is rejected immediately");
   reads=0;changed=false;
-  try{DailyToolIdentity.Require(game,"account","player",()=>null,()=>{reads++;return new(Frame());},_=>{});}catch(InvalidOperationException){changed=true;}
+  try{DailyToolIdentity.Require(game,"account","player",()=>null,()=>{reads++;return new(Frame());},_=>{});}catch(DailyToolSessionChangedException){changed=true;}
   Check(changed&&reads==0,"process exit is terminal even when a prior account snapshot could be read");
   changed=false;var wrongProcess=Frame();wrongProcess.ProcessStartTicks++;
-  try{DailyToolIdentity.Require(game,"account","player",()=>game,()=>new(wrongProcess),_=>{});}catch(InvalidOperationException){changed=true;}
+  try{DailyToolIdentity.Require(game,"account","player",()=>game,()=>new(wrongProcess),_=>{});}catch(DailyToolSessionChangedException){changed=true;}
   Check(changed,"reused PID cannot satisfy the hosted identity guard");
  }
 }

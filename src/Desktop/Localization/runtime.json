@@ -4016,9 +4016,9 @@
     "en-US": "Steal-only requires server cooldown"
   },
   "message.Stone inventory incomplete": {
-    "zh-CN": "圣石库存数据不完整",
-    "zh-TW": "圣石庫存數據不完整",
-    "en-US": "Stone inventory incomplete"
+    "zh-CN": "未能读取五种圣石库存，本次未消耗火把。请在游戏的圣石洞穴页面展开库存栏后重试，或在日常设置中指定圣石属性；若仍失败，请导出诊断日志。",
+    "zh-TW": "未能讀取五種聖石庫存，本次未消耗火把。請在遊戲的聖石洞穴頁面展開庫存欄後重試，或在日常設定中指定聖石屬性；若仍失敗，請匯出診斷日誌。",
+    "en-US": "Could not read all five Holy Stone balances. No torches were spent in this attempt. Expand the inventory panel on the Holy Stone Cave screen and retry, or choose a specific element in Daily Settings. Export diagnostics if the problem persists."
   },
   "message.Stored AP was changed": {
     "zh-CN": "储存的行动次数发生变化",

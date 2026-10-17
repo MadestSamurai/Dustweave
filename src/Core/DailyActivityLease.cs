@@ -7,6 +7,7 @@ public sealed class DailyObservationPendingException(string reason, string detai
     public string Reason { get; } = reason;
     public string Detail { get; } = detail;
 }
+public sealed class DailyToolSessionChangedException(string message) : InvalidOperationException(message);
 
 public static class DailyToolIdentity
 {
@@ -17,15 +18,15 @@ public static class DailyToolIdentity
         DailyIdentityRead observed = new(null, "snapshot-missing");
         for (int attempt = 0; attempt < 3; attempt++)
         {
-            if (find() != game) throw new InvalidOperationException("游戏会话已结束，请返回日常助手重新连接。");
+            if (find() != game) throw new DailyToolSessionChangedException("游戏会话已结束，请返回日常助手重新连接。");
             observed = read();
             var snapshot = observed.Snapshot;
             if (observed.Problem == "process-mismatch" || snapshot != null && (snapshot.ProcessId != game.ProcessId || snapshot.ProcessStartTicks != game.StartTicks))
-                throw new InvalidOperationException("游戏进程已变化，请返回日常助手重新连接。");
+                throw new DailyToolSessionChangedException("游戏进程已变化，请返回日常助手重新连接。");
             // A positive identity mismatch is terminal, even during the retry window.
             // Missing/old data grants no permission; only a new matching frame can pass.
             if (snapshot != null && ((!string.IsNullOrEmpty(snapshot.AccountKey) && snapshot.AccountKey != account) || (!string.IsNullOrEmpty(snapshot.PlayerKey) && snapshot.PlayerKey != player)))
-                throw new InvalidOperationException("游戏账号已变化，请返回日常助手重新连接。");
+                throw new DailyToolSessionChangedException("游戏账号已变化，请返回日常助手重新连接。");
             if (snapshot != null && snapshot.AccountKey == account && snapshot.PlayerKey == player && !string.IsNullOrEmpty(account) && !string.IsNullOrEmpty(player) && snapshot.FrameUtcTicks >= DateTime.UtcNow.AddSeconds(-5).Ticks)
                 return snapshot;
             if (snapshot != null) observed = new(snapshot, snapshot.FrameUtcTicks < DateTime.UtcNow.AddSeconds(-5).Ticks ? "snapshot-stale" : "identity-loading", snapshot.State);

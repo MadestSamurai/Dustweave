@@ -7,12 +7,14 @@ namespace Dustweave;
 /// <summary>Hosted transport only: never launches, injects, or reconnects to another game.</summary>
 public sealed class PandoraClient
 {
-    readonly PipeClient pipe;
+    readonly Func<string, byte[]?> read;
+    readonly Action<string, byte[]> write;
+    readonly Func<DateTimeOffset> utcNow = () => DateTimeOffset.UtcNow;
     readonly string diagnostics;
     readonly JsonArray transitions = new();
     string lastDiagnostic = "";
     string runId = Guid.NewGuid().ToString("N");
-    DateTimeOffset lastObservation = DateTimeOffset.UtcNow, started;
+    DateTimeOffset started;
     public bool Enabled { get; private set; }
     public string Mode { get; set; } = "Currency";
     public int StageId { get; set; }
@@ -32,8 +34,14 @@ public sealed class PandoraClient
         if (Environment.GetEnvironmentVariable("BD2_DAILY_HOSTED_TOOL") != "pandora" || Environment.GetEnvironmentVariable("BD2_DAILY_GAME_PID") != pid.ToString() || Environment.GetEnvironmentVariable("BD2_DAILY_GAME_START") != start.ToString())
             throw new InvalidOperationException("Changed hosted game identity");
         diagnostics = Path.Combine(root, "tools");
-        pipe = new PipeClient(Path.Combine(root, "pandora"), pid, start);
+        var pipe = new PipeClient(Path.Combine(root, "pandora"), pid, start);
         pipe.Open(fingerprint);
+        read = pipe.Read; write = (name, bytes) => pipe.Write(name, bytes);
+    }
+
+    internal PandoraClient(string root, Func<string, byte[]?> read, Action<string, byte[]> write, Func<DateTimeOffset> clock)
+    {
+        diagnostics = Path.Combine(root, "tools"); this.read = read; this.write = write; utcNow = clock;
     }
 
     public void Start()
@@ -41,7 +49,7 @@ public sealed class PandoraClient
         if (Mode is not ("Currency" or "Challenge") || Mode == "Currency" && (StageId <= 0 || StageGroup <= 0))
             throw new InvalidOperationException("Choose an unlocked Pandora stage first");
         runId = Guid.NewGuid().ToString("N");
-        started = DateTimeOffset.UtcNow;
+        started = utcNow();
         Enabled = true;
         try
         {
@@ -60,34 +68,30 @@ public sealed class PandoraClient
         Write();
     }
 
-    void Write() => pipe.Write("control.json", JsonSerializer.SerializeToUtf8Bytes(new { Enabled, RunId = runId, Mode, StageId, StageGroup, AutoSelectEquipment, TraceCombat, CharacterGroup, CharacterId, ForecastMovement, Expires = DateTime.UtcNow.AddSeconds(4).Ticks }));
+    void Write() => write("control.json", JsonSerializer.SerializeToUtf8Bytes(new { Enabled, RunId = runId, Mode, StageId, StageGroup, AutoSelectEquipment, TraceCombat, CharacterGroup, CharacterId, ForecastMovement, Expires = utcNow().UtcDateTime.AddSeconds(4).Ticks }));
     public JsonObject? Poll()
     {
-        Write();
-        var bytes = pipe.Read("state.json");
-        if (bytes == null)
-        {
-            if (DateTimeOffset.UtcNow - lastObservation > TimeSpan.FromSeconds(5))
-                throw new IOException("Minigame observation missing");
-            return null;
-        }
-
+        byte[]? bytes;
+        try { bytes = read("state.json"); }
+        catch (Exception e) when (e is IOException or TimeoutException && e is not InvalidDataException && !PipeClient.SessionEnded(e))
+        { throw new DailyObservationPendingException("minigame-read-unavailable", e.Message); }
+        if (bytes == null) throw new DailyObservationPendingException("minigame-snapshot-missing");
         var state = JsonNode.Parse(bytes)?.AsObject() ?? throw new InvalidDataException("Invalid minigame state");
-        if (!DateTimeOffset.TryParse(state["At"]?.ToString(), out var at) || at < DateTimeOffset.UtcNow.AddSeconds(-5))
-            throw new IOException("Minigame observation expired");
-        lastObservation = at;
+        if (!DateTimeOffset.TryParse(state["At"]?.ToString(), out var at) || at < utcNow().AddSeconds(-5) || at > utcNow().AddSeconds(2))
+            throw new DailyObservationPendingException("minigame-snapshot-stale");
         Record(state);
-        if (Enabled && DateTimeOffset.UtcNow - started > TimeSpan.FromSeconds(5) && state["RunId"]?.ToString() != runId)
+        if (Enabled && utcNow() - started > TimeSpan.FromSeconds(5) && state["RunId"]?.ToString() != runId)
             throw new IOException("Minigame control was not acknowledged");
         if (state["RunId"]?.ToString() == runId && (state["Finished"]?.GetValue<bool>() == true || state["Faulted"]?.GetValue<bool>() == true))
             Enabled = false;
+        Write();
         return state;
     }
 
     internal static JsonObject DiagnosticState(JsonObject state)
     {
         var result = new JsonObject();
-        foreach (var key in new[] { "At", "Pid", "RunId", "Running", "Finished", "Faulted", "Reason", "Detail", "Completed", "Ui", "Stage", "Mode", "AutoSelectEquipment", "Character", "RequestedCharacter", "Characters", "Selection", "Surfaces", "Entry", "TransitionUi", "Movement", "Tactics", "Build" })
+        foreach (var key in new[] { "At", "Pid", "RunId", "Running", "Finished", "Faulted", "Reason", "Detail", "Completed", "Result", "ResultError", "Seconds", "Ui", "Stage", "Mode", "AutoSelectEquipment", "Character", "RequestedCharacter", "Characters", "Selection", "Surfaces", "Entry", "TransitionUi", "Movement", "Tactics", "Build" })
             result[key] = state[key]?.DeepClone();
         return result;
     }
@@ -103,6 +107,7 @@ public sealed class PandoraClient
         var record = DiagnosticState(state);
         var key = record.DeepClone().AsObject();
         key.Remove("At");
+        key.Remove("Seconds"); // Keep final time in evidence without writing a log every clock tick.
         key.Remove("Movement"); // Attach the decision to transitions, not a new log per plan.
         key.Remove("Tactics");
         string signature = key.ToJsonString();

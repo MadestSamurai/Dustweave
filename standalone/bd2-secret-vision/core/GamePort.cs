@@ -21,7 +21,11 @@ public sealed class GamePort:IGamePort {
  if(walk.Length==0&&!drawing)return "completed";
  var nodes=walk.Select(p=>new Node(p.X,p.Y)).Concat(actual.Select((p,i)=>new Node(p.X,p.Y,true,i==0?1:0))).ToArray();
  Log("routes",new{At=s.AtUtc,BoardId=b.Id,Drawing=drawing,Start=start,Corners=actual,Nodes=nodes});
- var id=await Send("route",new{BoardId=b.Id,Route=nodes,Guard=true},token);
+ string id;
+ try{id=await Send("route",new{BoardId=b.Id,Route=nodes,Guard=true},token);}
+ // The hosted preflight rejected the write before dispatch. Re-read and replan
+ // instead of ending the round or submitting an old path after the gap.
+ catch(Exception error)when(BD2.LocalIpc.PipeClient.ObservationPending(error)){return "replan-window";}
  var r=Files.Read<JsonNode>(Path.Combine(Root,"receipt-"+id+".json"))!;if(r.S("Status")=="deferred"){await Task.Delay(100,token);return "deferred";}var receiptAt=DateTimeOffset.Parse(r.S("AtUtc"));var deadline=DateTimeOffset.UtcNow.AddSeconds(40);
  while(true){await Task.Delay(100,token);s=await Read(token);b=s.Board;if(s.AtUtc<=receiptAt)continue;if(b==null||b.Finished)return "ended";
  if(!s.Running){if(s.Reason=="route-completed")return "completed";if(s.Reason is "replan-window" or "replan-topology" or "escape-completed")return s.Reason;if(s.Reason is "lease/stop" or "requested")throw new OperationCanceledException();throw new RouteFailure(s.Reason);}

@@ -55,7 +55,7 @@ public sealed class TerritoryControlLink:IDisposable
  {
   if(!Monitor.TryEnter(sendSync))return;
   try{lock(sync)if(disposed||!command.Enabled)return;PublishLocked();}
-  catch(Exception e){lock(sync){error=e.Message;if(e is BD2.LocalIpc.LeaseRevokedException){command.Enabled=false;revision++;}}TerritoryDiagnostics.Throttled(root,"heartbeat.failed",e);}
+  catch(Exception e){lock(sync){error=e.Message;if(BD2.LocalIpc.PipeClient.SessionEnded(e)){command.Enabled=false;revision++;}}TerritoryDiagnostics.Throttled(root,"heartbeat.failed",e);}
   finally{Monitor.Exit(sendSync);}
  }
  public void Dispose(){lock(sync){if(disposed)return;disposed=true;command.Enabled=false;stopVersion++;revision++;}timer.Dispose();try{Publish();}catch(Exception e){lock(sync)error=e.Message;TerritoryDiagnostics.Throttled(root,"close.stop",e);}}

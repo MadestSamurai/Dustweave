@@ -8,7 +8,8 @@ public sealed class RhythmSettings{public int JitterMs{get;set;}=50;public int O
 public sealed class RhythmControlLink:IDisposable {
  readonly object gate=new();readonly Timer timer;readonly string root;readonly RhythmControl control=new();bool disposed;public string Error{get;private set;}="";
  public bool Enabled{get{lock(gate)return control.Enabled;}}public string OwnerId{get{lock(gate)return control.OwnerId;}}
- public RhythmControlLink(string root){this.root=root;BD2.LocalIpc.DesktopFiles.Configure(root,RhythmIdentity.LiveEntries);timer=new(_=>{lock(gate){if(!disposed&&control.Enabled)try{Write();}catch(Exception e){Error=e.Message;}}},null,500,500);}
+ public RhythmControlLink(string root){this.root=root;BD2.LocalIpc.DesktopFiles.Configure(root,RhythmIdentity.LiveEntries);timer=new(_=>Pulse(),null,500,500);}
+ void Pulse(){lock(gate){if(!disposed&&control.Enabled)try{Write();}catch(Exception e){Error=e.Message;if(BD2.LocalIpc.PipeClient.SessionEnded(e))control.Enabled=false;}}}
  public void Configure(RhythmSettings s){if(!RhythmControl.ValidSettings(s.JitterMs,s.OffsetMs))throw new ArgumentException("随机偏移为0–200ms，整体校准为-500–500ms。");lock(gate){control.JitterMs=s.JitterMs;control.OffsetMs=s.OffsetMs;RhythmJson.Write(Path.Combine(root,"settings.json"),s);if(control.Enabled)Write();}}
  public void Start(int pid){lock(gate){if(disposed)throw new ObjectDisposedException(nameof(RhythmControlLink));control.OwnerId=Guid.NewGuid().ToString("N");control.ProcessId=pid;control.Enabled=true;try{Write();}catch{control.Enabled=false;throw;}}}
  public void Stop(){lock(gate){control.Enabled=false;Write();}}

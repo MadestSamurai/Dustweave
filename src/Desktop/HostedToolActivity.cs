@@ -102,8 +102,11 @@ internal sealed class HostedToolActivity : IDisposable
         if(!DailyActivityRules.RequiresOwnership(name,value))return;
         activity.Enter();AssertIdentity();
         var state=readState();
-        if(state?.State!="ready"||state.Tool!=id||state.Owner!=DailySuite.Owner||state.At<DateTime.UtcNow.AddSeconds(-5).Ticks)
-            throw new InvalidOperationException("此工具尚未恢复就绪，请等待日常助手完成交接。");
+        if(state==null||state.At<DateTime.UtcNow.AddSeconds(-5).Ticks||state.At>DateTime.UtcNow.AddSeconds(2).Ticks)
+            throw new DailyObservationPendingException("suite-snapshot-stale");
+        if(state.Tool!=id||state.Owner!=DailySuite.Owner)
+            throw new DailyToolSessionChangedException("此工具尚未恢复就绪，请等待日常助手完成交接。");
+        if(state.State!="ready")throw new DailyObservationPendingException("suite-not-ready",state.State);
     }
     internal async Task Poll()
     {

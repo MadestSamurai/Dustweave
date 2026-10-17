@@ -225,7 +225,7 @@ public partial class PandoraWindow : Window
     }
     internal void SetPreview(JsonObject value, bool challenge, bool autoEquipment = true)
     {
-        snapshot = value; status = challenge && !autoEquipment ? "manual-equipment" : "playing";
+        snapshot = value; status = value["Finished"]?.GetValue<bool>() == true ? value["Reason"]?.ToString() ?? "challenge-complete" : challenge && !autoEquipment ? "manual-equipment" : "playing";
         AutoEquipment.IsChecked = autoEquipment;
         ChallengeMode.IsChecked = challenge; CurrencyMode.IsChecked = !challenge;
         Render();
@@ -293,6 +293,6 @@ public partial class PandoraWindow : Window
         }
         finally { rendering = false; }
     }
-    static readonly HashSet<string> States = ["ready", "connecting", "disconnected", "observation-wait", "paused", "entering", "selecting", "settling", "retrying", "upgrading", "build-rerolling", "build-restarting", "build-restart-blocked", "manual-equipment", "playing", "corner-hold", "character-unavailable", "game-paused", "stage-unavailable", "wrong-stage", "open-game", "entry-blocked", "confirm-manually", "upgrade-timeout", "transition-timeout", "runtime-error", "lease-expired"];
+    static readonly HashSet<string> States = ["challenge-complete", "result-unavailable", "ready", "connecting", "disconnected", "observation-wait", "paused", "entering", "selecting", "settling", "retrying", "upgrading", "build-rerolling", "build-restarting", "build-restart-blocked", "manual-equipment", "playing", "corner-hold", "character-unavailable", "game-paused", "stage-unavailable", "wrong-stage", "open-game", "entry-blocked", "confirm-manually", "upgrade-timeout", "transition-timeout", "runtime-error", "lease-expired"];
 }
 

@@ -5,10 +5,13 @@ public sealed record DailyLogPolicy(bool Automatic = true, int Days = 7, int Lim
 {
     public DailyLogPolicy Normalize() => this with { Days = Math.Clamp(Days, 2, 7), LimitMiB = Math.Clamp(LimitMiB, 128, 4096) };
 }
-public sealed record DailyLogFile(string Path, long Bytes, DateTime Written, DateTime Created);
+public sealed record DailyLogFile(string Path, long Bytes, DateTime Written, DateTime Created)
+{
+    public long DiskBytes { get; init; } = Bytes;
+}
 public sealed record DailyLogUnit(string Path, bool Step, DailyLogFile[] Files)
 {
-    public long Bytes => Files.Sum(f => f.Bytes);
+    public long Bytes => Files.Sum(f => f.DiskBytes);
     public DateTime Written => Files.Max(f => f.Written);
 }
 public sealed record DailyLogPlan(string Root, DailyLogPolicy Policy, DateTime At, long ManagedBytes, DailyLogUnit[] Units, int Skipped)
@@ -17,7 +20,13 @@ public sealed record DailyLogPlan(string Root, DailyLogPolicy Policy, DateTime A
     public int Files => Units.Sum(u => u.Files.Length);
 }
 public sealed record DailyLogScanProgress(int Entries, long Bytes, int Examined);
-public sealed record DailyLogCleanupResult(int Files, long Bytes, int Skipped);
+public sealed record DailyLogCleanupResult(int Files, long Bytes, int Skipped)
+{
+    public int CompressedFiles { get; init; }
+    public bool MoreWork { get; init; }
+    public DailyLogCleanupResult Add(DailyLogCleanupResult other) => new(Files + other.Files, Bytes + other.Bytes, Skipped + other.Skipped)
+        { CompressedFiles = CompressedFiles + other.CompressedFiles, MoreWork = MoreWork || other.MoreWork };
+}
 
 // An explicit deletion allowlist, deliberately much narrower than diagnostic export.
 // Queue/account/history/business journals are durable state, not disposable logs.
@@ -42,7 +51,7 @@ public static class DailyLogCleanup
         }
         return true;
     }
-    static DailyLogFile Stamp(FileInfo f, bool refresh = true) { if(refresh) f.Refresh(); return new(f.FullName, f.Length, f.LastWriteTimeUtc, f.CreationTimeUtc); }
+    static DailyLogFile Stamp(FileInfo f, bool refresh = true) { if(refresh) f.Refresh(); return new(f.FullName, f.Length, f.LastWriteTimeUtc, f.CreationTimeUtc) { DiskBytes = DailyStorageCompression.StoredBytes(f.FullName, f.Length, f.Attributes) }; }
     sealed record CommandHeader(string? Id, string? Reason);
     sealed record ResultHeader(string? id, string? state, string? engine, string? diagnostic_storage);
     sealed record BusinessHeader(string? id, string? state);
@@ -137,7 +146,7 @@ public static class DailyLogCleanup
             if(!Directory.Exists(folder) || tree.Length>0 && !Safe(root,folder)) continue;
             foreach(var file in Logs(root,folder,depth,token))
             {
-                try { var stamp=Stamp(file);total+=stamp.Bytes;if(stamp.Written<now.AddDays(-2)) candidates.Add(new(file.FullName,false,[stamp])); }
+                try { var stamp=Stamp(file);total+=stamp.DiskBytes;if(stamp.Written<now.AddDays(-2)) candidates.Add(new(file.FullName,false,[stamp])); }
                 catch(IOException){skipped++;}catch(UnauthorizedAccessException){skipped++;}
             }
         }
@@ -204,7 +213,7 @@ public static class DailyLogCleanup
                     token.ThrowIfCancellationRequested();
                     if(!Safe(plan.Root,file.Path)||Stamp(new FileInfo(file.Path))!=file){skipped++;continue;}
                     // A locked file is skipped. Cleanup never waits for a writer or retries an operation.
-                    if(DailyLogFileRemoval.Delete(file)){deleted++;bytes+=file.Bytes;}else skipped++;
+                    if(DailyLogFileRemoval.Delete(file)){deleted++;bytes+=file.DiskBytes;}else skipped++;
                 }
                 if(unit.Step && Directory.Exists(unit.Path) && !Directory.EnumerateFileSystemEntries(unit.Path).Any())Directory.Delete(unit.Path,false);
             }catch(IOException){skipped++;}catch(UnauthorizedAccessException){skipped++;}catch(JsonException){skipped++;}

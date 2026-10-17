@@ -1,4 +1,6 @@
 {
+  "storage.compression": { "zh-CN": "另有 {0} 个历史记录或组件可尝试无损压缩，将在空闲时分批处理。", "zh-TW": "另有 {0} 個歷史記錄或元件可嘗試無損壓縮，將在閒置時分批處理。", "en-US": "Lossless compression is available for {0} older records or components, processed in small batches while idle." },
+  "storage.optimized": { "zh-CN": "已清理 {0} 个文件、压缩 {1} 个文件，释放 {2} MiB；跳过 {3} 项。", "zh-TW": "已清理 {0} 個檔案、壓縮 {1} 個檔案，釋放 {2} MiB；略過 {3} 項。", "en-US": "Removed {0} files and compressed {1}, freeing {2} MiB. Skipped {3} items." },
   "tools.preparing_window": { "zh-CN": "正在准备工具…", "zh-TW": "正在準備工具…", "en-US": "Preparing tool…" },
   "tools.preparation_stopping": { "zh-CN": "正在取消连接…", "zh-TW": "正在取消連線…", "en-US": "Cancelling connection…" },
   "tools.preparation_cancelled": { "zh-CN": "已取消连接。可重试或关闭窗口。", "zh-TW": "已取消連線。可重試或關閉視窗。", "en-US": "Connection cancelled. Retry or close this window." },
@@ -2562,6 +2564,11 @@
     "zh-CN": "分解前强化等级",
     "zh-TW": "分解前強化等級",
     "en-US": "Enhance before recycling"
+  },
+  "prefs.enhance_rarity": {
+    "zh-CN": "{0} 装备分解前强化等级",
+    "zh-TW": "{0} 裝備分解前強化等級",
+    "en-US": "{0} enhancement level before dismantling"
   },
   "prefs.enhance_note": {
     "zh-CN": "0 为不强化。跳过锁定、保留及穿戴中的装备。",
@@ -6893,6 +6900,21 @@
     "zh-TW": "連線已中斷，請確認遊戲仍在執行，再重新連線。",
     "en-US": "Disconnected. Check that the game is running, then reconnect."
   },
+  "pandora.state.challenge-complete": {
+    "zh-CN": "20 分钟挑战已完成，自动化已停止。",
+    "zh-TW": "20 分鐘挑戰已完成，自動化已停止。",
+    "en-US": "The 20-minute Challenge is complete. Automation has stopped."
+  },
+  "pandora.state.result-unavailable": {
+    "zh-CN": "暂时无法确认本局结算，已停止重试。请查看游戏结算画面。",
+    "zh-TW": "暫時無法確認本局結算，已停止重試。請查看遊戲結算畫面。",
+    "en-US": "This result could not be verified. Retries have stopped; check the result in the game."
+  },
+  "mansion.state.observation-wait": {
+    "zh-CN": "等待游戏数据恢复，暂不发送操作；恢复后继续。",
+    "zh-TW": "等待遊戲資料恢復，暫不傳送操作；恢復後繼續。",
+    "en-US": "Waiting for game data. No actions are being sent; automation will resume when it recovers."
+  },
   "pandora.state.observation-wait": {
     "zh-CN": "暂时未读到游戏信息，正在重新核对；恢复后继续，也可点击停止。",
     "zh-TW": "暫時未讀到遊戲資訊，正在重新核對；恢復後繼續，也可點擊停止。",
@@ -7219,9 +7241,9 @@
     "en-US": "Some cache files could not be read. Close applications using them and retry; migration has not started."
   },
   "storage.breakdown": {
-    "zh-CN": "日志 {0} MiB · 缓存与更新 {1} MiB · 账号、游戏及其他保留数据 {2} MiB。\n总量已包含沙盒 {4} MiB、解压缓存 {5} MiB（不重复相加）。跳过 {3} 项无法读取或受保护的记录。按文件大小统计。",
-    "zh-TW": "日誌 {0} MiB · 快取與更新 {1} MiB · 帳號、遊戲及其他保留資料 {2} MiB。\n總量已包含沙盒 {4} MiB、解壓快取 {5} MiB（不重複相加）。略過 {3} 項無法讀取或受保護的記錄。按檔案大小統計。",
-    "en-US": "Logs {0} MiB · Cache & updates {1} MiB · Accounts, game and retained data {2} MiB.\nTotals include sandboxes {4} MiB and extraction cache {5} MiB; do not add these again. {3} unreadable or protected items skipped. Measured by file size."
+    "zh-CN": "日志 {0} MiB · 缓存与更新 {1} MiB · 账号、游戏及其他保留数据 {2} MiB。\n总量已包含沙盒 {4} MiB、解压缓存 {5} MiB（不重复相加）。跳过 {3} 项无法读取或受保护的记录。压缩文件按存储大小统计。",
+    "zh-TW": "日誌 {0} MiB · 快取與更新 {1} MiB · 帳號、遊戲及其他保留資料 {2} MiB。\n總量已包含沙盒 {4} MiB、解壓快取 {5} MiB（不重複相加）。略過 {3} 項無法讀取或受保護的記錄。壓縮檔案按儲存大小統計。",
+    "en-US": "Logs {0} MiB · Cache & updates {1} MiB · Accounts, game and retained data {2} MiB.\nTotals include sandboxes {4} MiB and extraction cache {5} MiB; do not add these again. {3} unreadable or protected items skipped. Compressed files use stored size."
   },
   "storage.move": {
     "zh-CN": "迁移缓存…",
