@@ -469,7 +469,7 @@
   },
   "message.mail_filtered_page_unavailable": {
     "zh-CN": "剩余邮件未加载完成，未执行一键领取。请稍后重试。",
-    "zh-TW": "剩餘郵件尚未載入完成，未執行全部領取。請稍後重試。",
+    "zh-TW": "剩餘郵件未載入完成，未執行全部領取。請稍後重試。",
     "en-US": "Remaining mail could not be loaded. Claim All was not used. Retry later."
   },
   "message.mail_filtered_page_limit": {

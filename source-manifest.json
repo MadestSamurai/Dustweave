@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-18T10:47:29.4752983Z",
+  "generatedUtc": "2026-10-18T10:57:42.7377129Z",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -2825,11 +2825,11 @@
     },
     {
       "path": "src/Desktop/Localization/runtime.json",
-      "sha256": "c0625db57e4d4ed4ae2cb88d7a072310f96f36e80cb0a2542007fe89a0b524d6",
+      "sha256": "c6642a9dbcdff5109e12117371418f53e4f0970f3dd864313e20110b1eb59503",
       "reasons": [
         "build input"
       ],
-      "bytes": 210492
+      "bytes": 210490
     },
     {
       "path": "src/Desktop/Localization/strings.json",
