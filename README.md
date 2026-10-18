@@ -35,27 +35,48 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 
 | 能力 | 用法 |
 | --- | --- |
-| 多账号管理 | 保存本机账号会话，每个账号配置自己的任务，按选择顺序运行 |
-| 日常与周常 | 签到、经营奖励、免费抽取、狩猎、派遣、镜中免费次数、任务与通行证奖励、邮箱收尾等 |
-| 地图与经营 | 按需启用周收集、周 NPC 任务、偷窃、跑商、料理和高价售卖 |
-| 清晰的执行计划 | 分环节显示进度，选择本次任务，查看记录，对未完成环节补跑 |
+| 多账号管理 | 保存本机账号会话，为各账号选择任务预设；按顺序执行，或通过 Sandboxie 隔离多开 |
+| 日常与周常 | 签到、经营奖励、好感度咨询、免费抽取、装备分解与精炼、狩猎、派遣、镜中之战、活动战斗、救赎之塔扫荡、任务与通行证奖励、邮箱领取等 |
+| 地图与经营 | 按需启用周收集、周 NPC 任务、偷窃、跑商、料理与高价售卖，以及藏红花种收流程 |
+| 清晰的执行计划 | 分环节显示进度与原因，保存任务预设、接续队列或补跑选中项；完成后查看汇总，可设置通知与退出游戏 |
 | 一次连接，多个工具 | 日常与内置工具共用连接；按自动化启用状态协调使用，避免同时操作游戏 |
 | 定时执行与更新 | 每天固定时间和账号队列；后台下载签名更新包，空闲时确认重启 |
 | 全局语言与外观 | 简体中文、繁體中文、English；主窗口和内置工具统一切换语言 |
+| 诊断与空间管理 | 一键导出诊断包，统计日志与缓存占用，按保留规则清理，并可迁移缓存位置 |
 
 部分环节依赖账号已解锁的内容、当前活动或游戏版本。支持可选插件，界面按当前可用功能显示。
 
 ### 工具箱
 
-| 经营与装备 | 小游戏与抽取 |
+以下工具均可从织尘的**工具**页打开，无需另装独立版。内置版本在本仓库维护，随织尘更新；连接准备、自动运行与结算期间统一协调控制权，避免多个功能同时操作游戏。
+
+| 工具 | 主要功能 |
 | --- | --- |
-| [自动钓鱼](https://github.com/MadestSamurai/bd2-fishing) | [连连看](https://github.com/MadestSamurai/bd2-sichuan) · [音游](https://github.com/MadestSamurai/bd2-rhythm) |
-| [领地自动化](https://github.com/MadestSamurai/bd2-territory) | [使徒运气防守](https://github.com/MadestSamurai/bd2-apostle-defense) · [SECRET VISION](https://github.com/MadestSamurai/bd2-secret-vision) |
-| [装备助手](https://github.com/MadestSamurai/bd2-equipment-assistant) | [恶魔猎人](https://github.com/MadestSamurai/bd2-fiend-hunter) · [无限抽抽乐](https://github.com/MadestSamurai/bd2-infinite-gacha) |
+| 自动钓鱼 | 钓鱼、鱼饵管理、保留规则与背包出售 |
+| 领地自动化 | 种植、采集、料理、库存出售与布局 |
+| 装备助手 | 搓粉规划与批量精炼，确认预算后执行 |
+| 连连看 · 音游 | 盘面求解与续局；读取谱面并自动操作 |
+| 使徒运气防守 | 采用离线退火优化的策略，自动召唤、合成、培养、布局与阶段重开 |
+| SECRET VISION · 恶魔猎人 | 自动圈地与避让；自动移动与攻击，两者均支持失败重试 |
+| 无限抽抽乐 | 双列表目标、停止条件与命中通知 |
+| [MANSION RUNAWAY](docs/MANSION_RUNAWAY.md) | 实时寻路、避敌与关卡推进，也可选择刷到 80 连锁后停止 |
+| [潘多拉大逃脱](docs/PANDORA.md) | 指定关卡循环刷货币；挑战模式支持角色选择、武器与辅助道具配对、BOSS 避让及后期生存决策，确认通关后停止 |
 
-此外，内置 [MANSION RUNAWAY](docs/MANSION_RUNAWAY.md) 的实时寻路与关卡推进工具，以及[潘多拉大逃脱](docs/PANDORA.md)的指定关卡循环刷货币和自动挑战工具。潘多拉挑战尚未纳入装备数据，目前自动化无法通关。
+潘多拉挑战策略已有一次实机坚持到 20 分钟的记录；角色养成与随机局仍会影响结果。可关闭自动选装备，改由自己选择。
 
-表中的工具仍保留各自的独立项目。在织尘中打开时，由主程序协调连接、语言和自动化控制权；独立版设置不会因主程序语言切换而被改写。
+<details>
+<summary>原独立仓库与维护说明</summary>
+
+原仓库用于查阅独立版源码与历史发行；不能据此判断织尘内置版的功能或更新进度。**装备助手原仓库已归档并停止维护，后续代码与反馈统一转到 Dustweave。**其余下列仓库截至 2026-10-18 尚未归档，但与内置版不保证同步发布。
+
+- [装备助手（已归档）](https://github.com/MadestSamurai/bd2-equipment-assistant)
+- [自动钓鱼](https://github.com/MadestSamurai/bd2-fishing) · [领地自动化](https://github.com/MadestSamurai/bd2-territory)
+- [连连看](https://github.com/MadestSamurai/bd2-sichuan) · [音游](https://github.com/MadestSamurai/bd2-rhythm) · [使徒运气防守](https://github.com/MadestSamurai/bd2-apostle-defense)
+- [SECRET VISION](https://github.com/MadestSamurai/bd2-secret-vision) · [恶魔猎人](https://github.com/MadestSamurai/bd2-fiend-hunter) · [无限抽抽乐](https://github.com/MadestSamurai/bd2-infinite-gacha)
+
+内置源码位于 [`standalone/`](standalone)、[`src/Mansion/`](src/Mansion) 和 [`src/Pandora/`](src/Pandora)，保留各自署名与许可证。
+
+</details>
 
 ## 下载与开始
 
@@ -66,14 +87,14 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 | **Portable** | 希望解压即用，或不确定是否安装了运行时 | 已包含 .NET 8 桌面运行时 |
 | **Lite** | 已安装运行时，希望下载更小 | [.NET 8 Desktop Runtime x64](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) |
 
-两种包功能一致。请从 [GitHub Releases](https://github.com/MadestSamurai/Dustweave/releases) 下载完整包。国内线路用于软件内 OTA，不提供首次安装的下载入口。下载后：
+两种包功能一致。请从 [GitHub 最新发行版](https://github.com/MadestSamurai/Dustweave/releases/latest) 或[作者的夸克下载目录](https://pan.quark.cn/s/0ee553c60c0d?pwd=5AgC)（提取码 **5AgC**）下载完整包。国内更新服务器用于软件内 OTA，不提供首次安装的下载入口。下载后：
 
 1. **完整解压**到自己的文件夹，运行 `Dustweave.exe`。运行库、资源与组件统一放在 `app` 文件夹内，请完整保留，不要只复制 EXE。
 2. 按**启动引导**确认游戏位置，试启动并进入主菜单；检测到角色后正常退出游戏，在引导中保存账号。引导可跳过，也可从窗口顶部重新打开。
 3. 通过高亮导览了解各个分页；以后在账号列表点击**进入游戏**，避免桌面快捷方式或加速器启动造成权限差异。
 4. 在**日常设置**按分类配置环节，再到**今日任务**选好账号，点击顶部的启动按钮；游戏已运行时会直接连接。多账号在**账号管理**勾选账号并执行队列。
 
-首次使用建议先选择少量熟悉的环节。[完整入门](docs/GETTING_STARTED.md)包含更新、数据位置和常见问题。1.3.1 将组件整理到 `app` 文件夹。1.3.0 已撤回，所有更早版本请手动下载并完整解压到新目录；已有账号与设置会沿用。后续兼容版本优先使用小型差分更新，最多跨10次发布，超过8 MiB或需要更换运行库时提示手动下载。请保留 EXE 旁的所有文件。
+首次使用建议先选择少量熟悉的环节。[完整入门](docs/GETTING_STARTED.md)包含更新、数据位置和常见问题。兼容版本优先使用小型差分更新，最多跨 10 次发布；差分包超过 8 MiB、需要更换运行库或版本跨度过大时，提示手动下载。自动更新失败也可完整解压到新目录，已有账号与设置会沿用。1.2 系列及已撤回的 1.3.0 须手动换用完整包，不能沿旧通道升级到当前版本。
 
 游戏不在默认位置时，打开 **软件设置 → 游戏与沙盒位置 → 更改位置**，选择游戏本体 `BrownDust II.exe`。位置自动保存，所有账号和定时执行共用；也可恢复自动查找。Sandboxie 的安装位置也在这里修改。
 

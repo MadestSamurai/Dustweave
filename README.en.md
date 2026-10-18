@@ -35,27 +35,48 @@ Screenshots use fictional accounts in the application's isolated demo mode. The 
 
 | Capability | What you can do |
 | --- | --- |
-| Multiple accounts | Save local account sessions, configure tasks per account and run selected accounts in order |
-| Daily and weekly tasks | Check-ins, management rewards, free draws, hunting, dispatch, free Mirror battles, mission/pass rewards and mail collection |
-| Maps and resource management | Enable weekly collection, NPC quests, stealing, trading, cooking and high-price sales as needed |
-| A visible execution plan | Select stages, follow progress, review records and rerun unfinished work |
+| Multiple accounts | Save local sessions, assign task presets per account, and run accounts sequentially or in parallel through Sandboxie |
+| Daily and weekly tasks | Check-ins, management rewards, affinity consultations, free draws, equipment dismantling/refinement, hunting, dispatch, Mirror battles, event battles, Tower of Salvation sweeps, mission/pass rewards and mail collection |
+| Maps and resource management | Enable weekly collection, NPC quests, stealing, trading, cooking, high-price sales and saffron farming as needed |
+| A visible execution plan | Follow progress and explanations, save presets, resume queues or rerun selected stages; review completion summaries and optionally notify or exit the game |
 | One connection, integrated tools | Share the game connection and coordinate active automation so tasks do not compete for control |
 | Scheduled runs and updates | Daily fixed times and account queues; signed background downloads with idle restart confirmation |
 | Consistent language and appearance | Simplified Chinese, Traditional Chinese and English across the host and integrated tools |
+| Diagnostics and storage | Export diagnostic ZIPs, inspect log/cache usage, apply retention cleanup and relocate the cache |
 
 Some stages require unlocked account content, an active event or a compatible game version. Optional plugins are supported; the interface shows available features.
 
 ### Toolbox
 
-| Management and equipment | Minigames and draws |
+Open any of these from Dustweave's **Tools** page; no separate installation is needed. Built-in versions are maintained here and updated with Dustweave. Connection setup, active automation and settlement share control coordination so tools do not operate the game simultaneously.
+
+| Tool | Main features |
 | --- | --- |
-| [Fishing](https://github.com/MadestSamurai/bd2-fishing) | [Sichuan](https://github.com/MadestSamurai/bd2-sichuan) · [Rhythm](https://github.com/MadestSamurai/bd2-rhythm) |
-| [Territory](https://github.com/MadestSamurai/bd2-territory) | [Apostle Defense](https://github.com/MadestSamurai/bd2-apostle-defense) · [SECRET VISION](https://github.com/MadestSamurai/bd2-secret-vision) |
-| [Equipment Assistant](https://github.com/MadestSamurai/bd2-equipment-assistant) | [Fiend Hunter](https://github.com/MadestSamurai/bd2-fiend-hunter) · [Infinite Gacha](https://github.com/MadestSamurai/bd2-infinite-gacha) |
+| Fishing | Fishing, bait management, keep rules and inventory sales |
+| Territory | Planting, gathering, cooking, inventory sales and layout |
+| Equipment Assistant | Powder planning and batch refinement with budget confirmation |
+| Sichuan · Rhythm | Board solving and repeat play; chart reading and automated input |
+| Apostle Defense | An offline simulated-annealing-tuned policy for summoning, merging, upgrades, positioning and checkpoint restarts |
+| SECRET VISION · Fiend Hunter | Territory capture and evasion; movement and attacks, both with retries after defeat |
+| Infinite Gacha | Two target lists, stop conditions and target notifications |
+| [MANSION RUNAWAY](docs/MANSION_RUNAWAY.md) | Live navigation, enemy avoidance and stage progression, with an optional 80-chain goal |
+| [Pandora Escape](docs/PANDORA.md) | Repeat a selected stage for currency; challenge mode with character selection, weapon/support pairings, boss evasion and late-run survival, stopping on confirmed completion |
 
-Dustweave also includes native tools for [MANSION RUNAWAY](docs/MANSION_RUNAWAY.md) navigation and stage progression, and [Pandora Escape](docs/PANDORA.md) currency farming on a selected stage or automatic challenge attempts. Pandora's challenge planner does not yet account for equipment and cannot currently clear challenge mode.
+The Pandora challenge strategy has reached 20 minutes in one live trial. Character upgrades and random runs still affect the outcome. Automatic equipment selection can be disabled for manual choices.
 
-The tools listed in the table retain their independent projects. Within Dustweave, the host coordinates connections, language and automation ownership. Changing the host language does not overwrite a standalone tool's saved language preference.
+<details>
+<summary>Original repositories and maintenance</summary>
+
+The original repositories provide standalone source and historical releases; they do not describe the current built-in versions. **The Equipment Assistant repository is archived and no longer maintained. Its ongoing code and issue reports belong in Dustweave.** The other repositories below were not archived as of October 18, 2026, but their releases are not guaranteed to stay synchronized with the built-in versions.
+
+- [Equipment Assistant (archived)](https://github.com/MadestSamurai/bd2-equipment-assistant)
+- [Fishing](https://github.com/MadestSamurai/bd2-fishing) · [Territory](https://github.com/MadestSamurai/bd2-territory)
+- [Sichuan](https://github.com/MadestSamurai/bd2-sichuan) · [Rhythm](https://github.com/MadestSamurai/bd2-rhythm) · [Apostle Defense](https://github.com/MadestSamurai/bd2-apostle-defense)
+- [SECRET VISION](https://github.com/MadestSamurai/bd2-secret-vision) · [Fiend Hunter](https://github.com/MadestSamurai/bd2-fiend-hunter) · [Infinite Gacha](https://github.com/MadestSamurai/bd2-infinite-gacha)
+
+Built-in sources live under [`standalone/`](standalone), [`src/Mansion/`](src/Mansion) and [`src/Pandora/`](src/Pandora), retaining their attribution and licenses.
+
+</details>
 
 ## Download and start
 
@@ -66,14 +87,14 @@ For **Windows x64 and the native BrownDust II PC client**. Python is not require
 | **Portable** | You want an extract-and-run package | Includes the .NET 8 desktop runtime |
 | **Lite** | You already have the runtime and prefer a smaller download | [.NET 8 Desktop Runtime x64](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) |
 
-Both packages have the same features. Download a complete package from [GitHub Releases](https://github.com/MadestSamurai/Dustweave/releases). The domestic route is reserved for in-app OTA rather than first-install downloads. Then:
+Both packages have the same features. Download a complete package from the [latest GitHub release](https://github.com/MadestSamurai/Dustweave/releases/latest) or the [author's Quark download folder](https://pan.quark.cn/s/0ee553c60c0d?pwd=5AgC) (code **5AgC**). The domestic update server is reserved for in-app OTA rather than first-install downloads. Then:
 
 1. **Extract the entire folder** and run `Dustweave.exe`. Keep the `app` folder beside the executable; it contains the runtime, resources and components.
 2. Follow **Getting started** to check the game location, launch and enter the main menu. After character detection, exit normally and save the account. Setup is skippable and can be reopened from the window header.
 3. Explore the pages with the highlight tour. Use **Play** in Accounts for future launches, avoiding permission differences from desktop shortcuts or accelerator launch buttons.
 4. Configure tasks by category in **Daily settings**, choose the account in **Today**, then use the launch button at the top. It connects directly if the game is already running. For multiple accounts, select them in **Accounts** and run the queue.
 
-Start with a few familiar stages. [Getting started](docs/GETTING_STARTED.en.md) covers updates, data locations and common questions. Version 1.3.1 groups application files under `app`. Version 1.3.0 has been withdrawn; users on any earlier version must extract the complete download into a new folder. Accounts and settings are retained. Future compatible automatic updates use small direct patches across up to 10 releases; patches above 8 MiB or runtime changes require a manual download. Keep all files beside the EXE.
+Start with a few familiar stages. [Getting started](docs/GETTING_STARTED.en.md) covers updates, data locations and common questions. Compatible automatic updates use small direct patches across up to 10 releases. Patches above 8 MiB, runtime changes or a larger version gap require a manual download. If automatic updating fails, extract the full package into a new folder; existing accounts and settings are retained. The 1.2 series and withdrawn 1.3.0 require a full manual download and cannot reach the current version through the legacy channel.
 
 For a custom game installation, open **App settings → Game & sandbox locations → Change location** and select `BrownDust II.exe`. The choice is saved automatically and shared by all accounts and scheduled runs. You can restore auto-detection or change the Sandboxie installation location here.
 
