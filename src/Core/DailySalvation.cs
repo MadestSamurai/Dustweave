@@ -7,20 +7,25 @@ public static class DailySalvation
     public const string Stage = "salvation";
     public static readonly string[] Prefixes = ["salvation.native"];
     public static JsonObject StateOf(JsonObject e) => State(e, "salvation.native", "$self");
-    public static JsonObject Plan(JsonObject s, int reserve)
+    public static JsonObject Plan(JsonObject s, int reserve, int fixedCount = 0)
     {
         Require(reserve is >= 0 and <= 999, "Invalid salvation key reserve");
+        Require(fixedCount is >= 0 and <= 999, "Invalid salvation sweep count");
         string reason = !B(s["Unlocked"]) ? "salvation_locked" : !B(s["Season"]) ? "salvation_closed" :
             !B(s["Ready"]) ? "salvation_not_ready" : !B(s["Idle"]) ? "salvation_run_in_progress" :
             N(s["Level"]) <= 0 ? "salvation_no_cleared_level" : "";
         if (reason.Length > 0) return Skipped(reason);
         long free = N(s["Free"]), stones = N(s["Stones"]), remaining = N(s["RemainingCost"]), reward = N(s["Reward"]), cost = N(s["Cost"]);
         Require(free >= 0 && stones >= 0 && remaining >= 0 && reward > 0 && cost > 0, "Salvation resource data unavailable");
-        if (stones >= remaining) return Skipped("salvation_growth_funded");
-        long count = Math.Min(Math.Max(0, free - reserve) / cost, (remaining - stones - 1) / reward + 1);
+        if (fixedCount == 0 && stones >= remaining) return Skipped("salvation_growth_funded");
+        long wanted = fixedCount > 0 ? fixedCount : (remaining - stones - 1) / reward + 1;
+        long count = Math.Min(Math.Max(0, free - reserve) / cost, wanted);
         if (count == 0) return Skipped("salvation_keys_reserved");
-        return O(("state", "ready"), ("level", s["Level"]), ("count", count), ("reserve", reserve), ("free", free), ("paid", s["Paid"]),
+        var plan = O(("state", "ready"), ("level", s["Level"]), ("count", count), ("reserve", reserve), ("free", free), ("paid", s["Paid"]),
             ("stones", stones), ("remainingCost", remaining), ("reward", reward), ("cost", cost));
+        // Preserve the original growth-mode scope for interrupted older operations.
+        if (fixedCount > 0) plan["fixedCount"] = fixedCount;
+        return plan;
     }
     private static JsonObject Skipped(string reason) => DailyWorkflow.Skipped(reason);
     public static JsonObject Verify(JsonObject op, JsonArray events, JsonObject after)
@@ -28,7 +33,7 @@ public static class DailySalvation
         var before = op["before"]!.AsObject(); Identity(before, after);
         var reply = Response("salvation.sweep", events, before, after)!;
         var scope = op["scope"]!.AsObject(); var first = StateOf(before); var last = StateOf(after);
-        Require(JsonNode.DeepEquals(Plan(first, I(scope["reserve"])), scope), "Salvation plan changed before confirmation");
+        Require(JsonNode.DeepEquals(Plan(first, I(scope["reserve"]), I(scope["fixedCount"])), scope), "Salvation plan changed before confirmation");
         Require(B(first["Popup"]) && B(first["FreeOnly"]) && N(first["PopupLevel"]) == N(scope["level"]) && N(first["PopupCost"]) == N(scope["cost"]) && N(first["Count"]) == N(scope["count"]), "Salvation popup differs");
         Require(N(first["Free"]) - N(last["Free"]) == checked(N(scope["count"]) * N(scope["cost"])) && N(last["Free"]) >= N(scope["reserve"]), "Salvation free key debit differs");
         Require(N(first["Paid"]) == N(last["Paid"]) && N(last["Stones"]) - N(first["Stones"]) == checked(N(scope["count"]) * N(scope["reward"])), "Salvation reward or paid keys changed");
@@ -69,7 +74,7 @@ public static class DailySalvation
         }
         var state = StateOf(await w.Evidence(Prefixes));
         await DailyNativeBattleRecovery.Replan(w, "salvation.sweep");
-        var plan = Plan(state, w.Settings.Salvation.ReserveKeys);
+        var plan = Plan(state, w.Settings.Salvation.ReserveKeys, w.Settings.Salvation.UseFixedCount ? w.Settings.Salvation.SweepCount : 0);
         if (S(plan["state"]) != "ready") return await Finish(w, plan);
         foreach (int value in new[] { 0, 1 })
             await w.Step(O(("ui", "RogueLikeLobbyUI"), ("operation", "salvation_select"), ("items", new JsonArray(Copy(plan["level"]))), ("value", value)));
@@ -85,8 +90,10 @@ public static class DailySalvation
             await w.Step("RogueLikeSkipPopupUI", "_sliderAutoCount._objPlusButton");
             await w.WaitEvidence(Prefixes, e => N(StateOf(e)["Count"]) == count);
         }
+        var items = new JsonArray(Copy(plan["level"]), Copy(plan["reserve"]), Copy(plan["free"]), Copy(plan["stones"]), Copy(plan["remainingCost"]));
+        if (I(plan["fixedCount"]) > 0) items.Add(Copy(plan["fixedCount"]));
         var op = await w.Transact("salvation.sweep", plan, O(("ui", "RogueLikeSkipPopupUI"), ("operation", "salvation_confirm"),
-            ("items", new JsonArray(Copy(plan["level"]), Copy(plan["reserve"]), Copy(plan["free"]), Copy(plan["stones"]), Copy(plan["remainingCost"]))), ("value", plan["count"])), 60);
+            ("items", items), ("value", plan["count"])), 60);
         await w.Wait(f => DailyNavigationDecision.Types(f.Frame).Contains("RogueLikeTotalScoreUI"), 30);
         await w.Step("RogueLikeTotalScoreUI", "_objBackButton", absent: "RogueLikeTotalScoreUI");
         return await Finish(w, O(("state", "completed"), ("result", op["result"])));

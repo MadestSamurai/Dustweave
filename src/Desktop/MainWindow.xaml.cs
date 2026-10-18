@@ -924,6 +924,20 @@ public partial class MainWindow : Window
                 DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "trade", realGameTouched = false });
                 Application.Current.Shutdown(); return;
             }
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "salvation")
+            {
+                L.Audit(); WorkspaceTabs.SelectedItem = SettingsTab;
+                foreach (int language in new[] { 0, 1, 2 })
+                foreach (int theme in new[] { 1, 2 })
+                {
+                    LanguageSelector.SelectedIndex = language; ThemeSelector.SelectedIndex = theme;
+                    preferencesPanel.CheckFixedTowerSettingsForSmoke();
+                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                    Capture($"salvation-{language}-{theme}");
+                }
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "salvation", languages = 3, themes = 2, realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "software-settings")
             {
                 L.Audit();

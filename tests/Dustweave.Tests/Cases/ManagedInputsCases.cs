@@ -4,6 +4,44 @@ using System.Text.Json;
 using static Dustweave.DailyData;
 static class ManagedInputsCases
 {
+    private static async Task OpeningTalentNotice(string root, List<string> cases)
+    {
+        foreach (string mode in new[] { "opens", "disabled-button", "never-ready", "unknown", "changes", "account", "stopped" })
+        {
+            using var h = new WorkflowHarness(Path.Combine(root, "opening-talent-" + mode), []);
+            h.Frame["Scene"] = "Map0008_001";
+            h.Page("GameFieldDefaultUI");
+            var popup = O(("Id", 2), ("Type", "MessagePopupUI"), ("Popup", true), ("Order", 10000),
+                ("InputReady", mode == "disabled-button"), ("NativeContext", mode == "unknown" ? "" : "talent_inactive_ack_only"),
+                ("Targets", new JsonArray(O(("Id", 20), ("Field", "_buttonOK"), ("Route", "ui"), ("Enabled", mode != "disabled-button")))));
+            h.Frame["Surfaces"]!.AsArray().Add(popup);
+            h.Frame["UiToken"] = "opening-talent";
+            h.OnDelay = () => {
+                if (h.Time < .3) return;
+                if (mode is "opens" or "disabled-button") { popup["InputReady"] = true; popup["Targets"]![0]!["Enabled"] = true; }
+                if (mode == "changes") popup["NativeContext"] = "";
+                if (mode == "account") h.Frame["AccountKey"] = "changed";
+                if (mode == "stopped") h.Stopped = true;
+            };
+            h.OnCommand = c => {
+                if (S(c["Kind"]) == "talent_error_ack")
+                {
+                    if (!B(popup["InputReady"]) || !B(popup["Targets"]![0]!["Enabled"])) throw new Exception("Input sent behind opening talent notice");
+                    h.Page("GameFieldDefaultUI");
+                }
+                else if (S(c["Kind"]) != "mainline_cancel_nav") throw new Exception("Unexpected retry or talent consumption");
+            };
+            Exception? failure = null;
+            try { await h.Driver.SendObservedAsync(O(("ui", "GameFieldDefaultUI"), ("operation", "mainline_cancel_nav"), ("timeout", 2))); }
+            catch (Exception e) { failure = e; }
+            bool success = mode is "opens" or "disabled-button";
+            if (success ? failure != null || h.Time < .3 || !h.Box.Commands.Select(c => S(c["Kind"])).SequenceEqual(new[] { "talent_error_ack", "mainline_cancel_nav" })
+                : failure == null || h.Box.Commands.Count != 0)
+                throw new Exception("Opening talent notice recovery failed: " + mode, failure);
+            if (mode == "never-ready" && (h.Time < 2 || h.Time > 3)) throw new Exception("Talent readiness extended the original timeout");
+            cases.Add("opening talent notice stays in current step without consuming or replaying business input: " + mode);
+        }
+    }
     private static async Task MailRecovery(string root, List<string> cases)
     {
         foreach(bool remaining in new[]{false,true})
@@ -40,9 +78,109 @@ static class ManagedInputsCases
             cases.Add("both interrupted mailbox tabs recover from native remaining IDs, claims="+claims);
         }
     }
+    private static async Task ProtectedMail(string root, List<string> cases)
+    {
+        JsonObject Mail(long id, params int[] types) => O(("InvenIndex", id), ("RewardExpireTime", 1),
+            ("ItemType", types), ("ItemId", types.Select(_ => 0).ToArray()), ("ItemCount", types.Select(_ => 1).ToArray()));
+        foreach (string mode in new[] { "mixed", "only-protected", "off", "missing", "mismatch", "paged", "page-stuck", "repeat", "interrupted", "rejected", "identity" })
+        {
+            using var f = new WorkflowHarness(Path.Combine(root, "protected-mail-" + mode), [], ["mail.collect"]);
+            string tab = "normal";
+            var normal = new List<JsonObject> { Mail(10, 15), Mail(11, 4, 24) };
+            var cash = new List<JsonObject> { Mail(30, 24), Mail(31, 4) };
+            if (mode != "only-protected") normal.AddRange(Enumerable.Range(100, 23).Select(i => Mail(i, 4)));
+            else cash.RemoveAt(1);
+            if (mode == "missing") normal[0].Remove("ItemType");
+            if (mode == "mismatch") normal[0]["ItemId"] = new JsonArray();
+            bool pageLoaded = mode is not ("paged" or "page-stuck");
+            f.Page("MailUI", "_objAllReceiveButton");
+            f.Readings = () => [
+                WorkflowCases.Reading("mail.ui", ("ὭὯὫὫὮὡὠὮὤὬὨ", tab)),
+                WorkflowCases.Reading("mail.normal", ("Count", normal.Count), ("$items", Array(normal))),
+                WorkflowCases.Reading("mail.cash", ("Count", cash.Count), ("$items", Array(cash))),
+                WorkflowCases.Reading("mail.normal_total", ("$self", normal.Count + (pageLoaded ? 0 : 1))),
+                WorkflowCases.Reading("mail.cash_total", ("$self", cash.Count))];
+            int claims = 0, pages = 0;
+            f.OnCommand = c => {
+                string kind = S(c["Kind"]);
+                if (kind == "mail_tab") { tab = N(c["Value"]) == 0 ? "normal" : "cash"; return; }
+                if (kind == "back") { f.Page("MenuUI", "_buttonMail"); return; }
+                if (kind == "mail_page")
+                {
+                    pages++;
+                    if (mode == "paged") { pageLoaded = true; normal.Add(Mail(200, 4)); }
+                    return;
+                }
+                if (kind == "click" && DailyNavigationDecision.Types(f.Frame).Contains("MenuUI")) { f.Page("MailUI", "_objAllReceiveButton"); return; }
+                var list = tab == "normal" ? normal : cash;
+                long[] ids;
+                if (mode == "off")
+                {
+                    if (kind != "click") throw new Exception("Disabled preservation changed Claim All behavior");
+                    ids = list.Select(r => N(r["InvenIndex"])).ToArray();
+                }
+                else
+                {
+                    if (kind != "mail_collect_filtered") throw new Exception("Filtered mailbox used Claim All");
+                    ids = c["Items"]!.AsArray().Select(N).ToArray();
+                    if (ids.Length is < 1 or > 10 || list.Where(r => ids.Contains(N(r["InvenIndex"]))).Any(r => r["ItemType"]!.AsArray().Any(t => N(t) is 15 or 24)))
+                        throw new Exception("Protected or oversized mailbox batch");
+                }
+                claims += ids.Length;
+                if (mode == "identity") f.Frame["AccountKey"] = "changed";
+                if (mode == "rejected") { f.Box.Error = "mail_selection_rejected"; return; }
+                for (int n = 0; n < (ids.Length + 9) / 10; n++) f.Event("mail.collect", "request");
+                list.RemoveAll(r => ids.Contains(N(r["InvenIndex"])));
+                for (int n = 0; n < (ids.Length + 9) / 10; n++) f.Event("mail.collect", "response", ("RewardInfoBundle", new JsonObject()));
+                if (mode == "interrupted" && claims == 10) f.Stopped = true;
+            };
+            var stage = new DailyMailStage(f.Root, f.Driver, () => f.Stopped, () => f.Time,
+                t => { f.Time += t.TotalSeconds; return Task.CompletedTask; }, () => mode != "off");
+            Exception? failure = null;
+            JsonObject? result = null;
+            try
+            {
+                var dependency = new DailyEventMailDependency(true);
+                await dependency.Collect(async () => result = await stage.ExecuteAsync(f.Context, (_, _, _) => throw new Exception("Unexpected relay")));
+                if (dependency.Required) throw new Exception("Preservation blocked event token dependency");
+                if (mode == "repeat")
+                {
+                    int before = claims;
+                    await stage.ExecuteAsync(f.Context, (_, _, _) => throw new Exception("Unexpected relay"));
+                    if (claims != before) throw new Exception("Repeat claimed retained mail");
+                }
+            }
+            catch (Exception e) { failure = e; }
+            if (mode == "interrupted")
+            {
+                if (failure == null || claims != 10) throw new Exception("Interrupted-mail fixture did not stop after first receipt");
+                f.Stopped = false;
+                int inputs = f.Box.Commands.Count;
+                var reconciled = await new DailyManagedReconciliation(f.Root, f.Driver, ["mail.collect"], () => false).RunAsync(f.Context);
+                if (reconciled["completed"]!.AsArray().Count != 1 || reconciled["unresolved"]!.AsArray().Count != 0 || inputs != f.Box.Commands.Count)
+                    throw new Exception("Selected mail receipt could not reconcile while protected mail remains");
+                result = await stage.ExecuteAsync(f.Context, (_, _, _) => throw new Exception("Unexpected relay"));
+                failure = null;
+            }
+            bool fails = mode is "missing" or "mismatch" or "page-stuck" or "rejected" or "identity";
+            if (fails != (failure != null)) throw new Exception("Mailbox scenario " + mode, failure);
+            if (mode is "missing" or "mismatch" or "page-stuck" && claims != 0) throw new Exception("Unreadable mail was claimed");
+            if (mode == "rejected" && claims != 10) throw new Exception("Rejected batch repeated");
+            if (!fails)
+            {
+                if (mode == "off" ? normal.Count + cash.Count != 0 : normal.Count != 2 || cash.Count != 1 || N(result?["preserved_mail_count"]) != 3)
+                    throw new Exception("Mailbox remaining attachments differ: " + mode);
+                if (mode == "only-protected" && (claims != 0 || S(result?["reason"]) != "mailbox_blood_cocktail_preserved")) throw new Exception("Protected mail reported as empty");
+                if (mode == "paged" && (pages != 1 || claims != 25)) throw new Exception("Later-page reward missed");
+            }
+            cases.Add("mail preservation handles " + mode + " without claiming cocktail attachments");
+        }
+    }
     public static async Task Run(string output, List<string> cases)
     {
         await MailRecovery(output, cases);
+        await ProtectedMail(output, cases);
+        await OpeningTalentNotice(output, cases);
         void Check(bool value, string name)
         {
             if (!value)

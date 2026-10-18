@@ -1,4 +1,6 @@
 {
+  "message.mail_selection_rejected": { "zh-CN": "本次邮箱选择已失效，未继续领取。请重新连接后重试。", "zh-TW": "本次信箱選擇已失效，未繼續領取。請重新連線後重試。", "en-US": "The mail selection is no longer valid. Reconnect and retry." },
+  "message.mail_selection_changed": { "zh-CN": "所选邮件已变化，未继续领取。请重新读取邮箱后重试。", "zh-TW": "所選郵件已變化，未繼續領取。請重新讀取信箱後重試。", "en-US": "The selected mail changed. Read the mailbox again before retrying." },
   "message.砍价预览与当前广场商人不一致，未操作。": {"zh-CN":"砍价预览与当前广场商人不一致，未操作。","zh-TW":"砍價預覽與目前廣場商人不一致，未操作。","en-US":"The bargain preview does not match the current plaza merchant. No action was taken."},
   "message.上一笔砍价仍在确认，未重复使用天赋药。": {"zh-CN":"上一笔砍价仍在确认，未重复使用天赋药。","zh-TW":"上一筆砍價仍在確認，未重複使用天賦藥。","en-US":"The previous bargain is still being confirmed. No additional Ability Pills were used."},
   "message.砍价预览被其他窗口遮挡，请关闭额外窗口后继续跑商。": {"zh-CN":"砍价预览被其他窗口遮挡，请关闭额外窗口后继续跑商。","zh-TW":"砍價預覽被其他視窗遮擋，請關閉額外視窗後繼續跑商。","en-US":"Another window is covering the bargain preview. Close it to continue trading."},
@@ -444,6 +446,36 @@
     "zh-CN": "邮箱没有可领取的奖励",
     "zh-TW": "郵箱沒有可領取的獎勵",
     "en-US": "No mail rewards to collect."
+  },
+  "message.mailbox_blood_cocktail_preserved": {
+    "zh-CN": "血之鸡尾酒邮件已保留，请在到期前手动领取。",
+    "zh-TW": "血之雞尾酒郵件已保留，請在到期前手動領取。",
+    "en-US": "Blood Cocktail mail was kept. Claim it manually before expiry."
+  },
+  "message.mailbox_collected_with_preservation": {
+    "zh-CN": "其他邮箱奖励已领取；血之鸡尾酒邮件已保留，等待手动领取。",
+    "zh-TW": "其他信箱獎勵已領取；血之雞尾酒郵件已保留，等待手動領取。",
+    "en-US": "Other mail rewards were collected. Blood Cocktail mail was kept for manual collection."
+  },
+  "message.mail_attachment_data_unavailable": {
+    "zh-CN": "无法确认邮件附件，未自动领取。请重新连接后重试，或在游戏内手动领取所需邮件。",
+    "zh-TW": "無法確認郵件附件，未自動領取。請重新連線後重試，或在遊戲內手動領取所需郵件。",
+    "en-US": "Mail attachments could not be verified, so they were not claimed. Reconnect and retry, or claim the desired mail in the game."
+  },
+  "message.mail_preserved_items_changed": {
+    "zh-CN": "保留邮件的状态发生变化。已停止本次领取，请在游戏邮箱核对剩余邮件后重试。",
+    "zh-TW": "保留郵件的狀態發生變化。已停止本次領取，請在遊戲信箱核對剩餘郵件後重試。",
+    "en-US": "The retained mail changed. Collection stopped; check the remaining mail in the game before retrying."
+  },
+  "message.mail_filtered_page_unavailable": {
+    "zh-CN": "剩余邮件未加载完成，未执行一键领取。请稍后重试。",
+    "zh-TW": "剩餘郵件尚未載入完成，未執行全部領取。請稍後重試。",
+    "en-US": "Remaining mail could not be loaded. Claim All was not used. Retry later."
+  },
+  "message.mail_filtered_page_limit": {
+    "zh-CN": "邮件数量超出本次筛选范围，未执行一键领取。请先在游戏内整理邮箱后重试。",
+    "zh-TW": "郵件數量超出本次篩選範圍，未執行全部領取。請先在遊戲內整理信箱後重試。",
+    "en-US": "There is too much mail to filter in one run. Claim All was not used. Organize the mailbox in the game and retry."
   },
   "message.no_accrued_rewards": {
     "zh-CN": "当前没有可领取的经营收益",

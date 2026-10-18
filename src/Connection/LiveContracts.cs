@@ -115,7 +115,7 @@ namespace BD2Daily.Live {
   public static bool EventKind(string k){return new[]{"event_select","event_sweep_select","event_sweep_confirm","event_sweep_count","event_action_open","event_action","event_move","event_order","event_start","event_bench","event_replace"}.Contains(k);}
   public static bool TradeKind(string k){return new[]{"trade_menu","trade_talent","trade_favorite_preview","trade_favorite_confirm","trade_buy_preview","trade_buy_confirm","trade_sell_preview","trade_sell_confirm","trade_cook_preview","trade_cook_quantity","trade_cook_confirm"}.Contains(k);}
   public static bool PowderKind(string kind){return kind=="powder_recipe"||kind=="powder_options";}
-  public static bool PreviewKind(string kind){return new[]{"equipment_upgrade_preview","equipment_break_preview","equipment_refine_preview","equipment_craft_menu","equipment_craft_preview","mail_tab","square_goddess_nav","square_shop_nav","square_shop_interact","square_ranking_nav","square_goddess_interact","square_cancel_nav","square_route_probe"}.Contains(kind);}
+  public static bool PreviewKind(string kind){return new[]{"equipment_upgrade_preview","equipment_break_preview","equipment_refine_preview","equipment_craft_menu","equipment_craft_preview","mail_tab","mail_page","mail_collect_filtered","square_goddess_nav","square_shop_nav","square_shop_interact","square_ranking_nav","square_goddess_interact","square_cancel_nav","square_route_probe"}.Contains(kind);}
   public static string Gate(Command c,Frame f,long now,bool otherOwner){
    Guid id;
    if(c==null||c.Id==null||c.Id.Length!=32||!Guid.TryParseExact(c.Id,"N",out id))return "invalid_command_id";
@@ -161,7 +161,7 @@ namespace BD2Daily.Live {
     if(c.Kind=="salvation_open"||c.Kind=="event_native_exit")return c.Value==0&&c.Items.Length==0?"":"native_battle_input_rejected";
     if(c.Kind=="salvation_walk")return c.Value>=0&&c.Value<=1&&c.Items.Length==0?"":"native_battle_input_rejected";
     if(c.Kind=="salvation_select"||c.Kind=="salvation_popup")return c.Items.Length==1&&c.Items[0]>0&&c.Items[0]<=int.MaxValue&&c.Value>=0&&c.Value<=1?"":"native_battle_input_rejected";
-    if(c.Kind=="salvation_confirm")return c.Value>0&&c.Items.Length==5&&c.Items[0]>0&&c.Items[0]<=int.MaxValue&&c.Items[1]>=0&&c.Items[1]<=999&&c.Items.Skip(2).All(x=>x>=0)?"":"native_battle_budget_rejected";
+    if(c.Kind=="salvation_confirm")return c.Value>0&&(c.Items.Length==5||(c.Items.Length==6&&f.BridgeVersion>=124&&c.Items[5]>=1&&c.Items[5]<=999&&c.Value<=c.Items[5]))&&c.Items[0]>0&&c.Items[0]<=int.MaxValue&&c.Items[1]>=0&&c.Items[1]<=999&&c.Items.Skip(2).All(x=>x>=0)?"":"native_battle_budget_rejected";
     return c.Items.Length==3&&c.Items.All(x=>x>0&&x<=int.MaxValue)&&(c.Kind=="event_native_select"?c.Value>=0&&c.Value<=1:c.Value>=1&&c.Value<=5)?"":"native_battle_input_rejected";
    }
    if(c.Kind=="notice_suppress"){
@@ -287,9 +287,14 @@ namespace BD2Daily.Live {
      if(c.Kind.StartsWith("square_shop_"))return f.BridgeVersion>=35&&c.Value==0?"":"square_merchant_rejected";
        return c.Value>=0&&c.Value<=100?"":"square_target_rejected";
     }
-    var expected=c.Kind=="mail_tab"?"MailUI":c.Kind=="equipment_craft_menu"?"MenuUI":c.Kind=="equipment_craft_preview"?"EquipmentMakingSelectUI":"InventoryManageUI";
+    var expected=c.Kind.StartsWith("mail_")?"MailUI":c.Kind=="equipment_craft_menu"?"MenuUI":c.Kind=="equipment_craft_preview"?"EquipmentMakingSelectUI":"InventoryManageUI";
     if(ui.Type!=expected||f.Surfaces.Any(x=>x.Popup&&x.Id!=ui.Id&&x.Order>=ui.Order&&!PassiveSurface(x.Type)))return "preview_surface_rejected";
     if(c.Kind=="mail_tab")return c.Value>=0&&c.Value<=1?"":"mail_tab_rejected";
+    if(c.Kind=="mail_page"||c.Kind=="mail_collect_filtered"){
+     if(f.BridgeVersion<123||c.Value<0||c.Value>1||c.Items==null)return "mail_selection_rejected";
+     if(c.Kind=="mail_page")return c.Items.Length==1&&c.Items[0]>=0?"":"mail_selection_rejected";
+     return c.Items.Length>0&&c.Items.Length<=10&&c.Items.All(x=>x>0)&&c.Items.Distinct().Count()==c.Items.Length?"":"mail_selection_rejected";
+    }
     if(c.Kind=="equipment_craft_menu"||c.Kind=="equipment_craft_preview")return "";
     if(c.Items==null||c.Items.Length==0||c.Items.Length>30||c.Items.Any(id=>id<=0)||c.Items.Distinct().Count()!=c.Items.Length)return "equipment_selection_rejected";
     if(c.Kind=="equipment_refine_preview"&&c.Items.Length!=1)return "refine_selection_rejected";

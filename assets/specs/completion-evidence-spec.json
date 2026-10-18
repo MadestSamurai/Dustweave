@@ -102,7 +102,10 @@
       "CollectionPath": "$self",
       "ItemPaths": [
         "InvenIndex",
-        "RewardExpireTime"
+          "RewardExpireTime",
+          "ItemType",
+          "ItemId",
+          "ItemCount"
       ],
       "MaxItems": 1000
     },
@@ -116,9 +119,18 @@
       "CollectionPath": "$self",
       "ItemPaths": [
         "InvenIndex",
-        "RewardExpireTime"
+          "RewardExpireTime",
+          "ItemType",
+          "ItemId",
+          "ItemCount"
       ],
       "MaxItems": 1000
+    },
+    {
+      "Id": "mail.normal_total",
+      "Type": "ὪὨὣὠὦὣὥὤὭὢὤ",
+      "StaticMember": "ὭὠὬὭὦὤὣὪὡὬὪ",
+      "Paths": [ "$self" ]
     },
     {
       "Id": "mail.cash_total",

@@ -147,7 +147,7 @@ public sealed class PackagedDailyQueueExecutor(string directory) : IDailyQueueEx
         var managed = workflows.Stages();
         managed["guild"] = new DailyGuildStage(root, observation.ReadFrameAsync, Stopped);
         managed["room"] = new DailyRoomStage(root, driver, Stopped);
-        managed["mail"] = new DailyMailStage(root, driver, Stopped);
+        managed["mail"] = new DailyMailStage(root, driver, Stopped, preserveBloodCocktail: () => new DailyPreferenceStore(root).Read(account).Stages.PreserveBloodCocktailMail);
         managed["friendship"] = new DailyFriendshipStage(root, driver, business, navigation, Stopped);
         managed["free_draws"] = new DailyFreeDrawStage(driver, business, Stopped, prepare: () => DailyFreeDrawData.PrepareAsync(directory, root, game, observation.ReadFrameAsync, Stopped, report));
         foreach (string name in new[] { "management", "cafeteria_income", "life_helpers" })

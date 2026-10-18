@@ -14,6 +14,54 @@ static class BattleArrivalRecoveryCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool ok, string name) { if (!ok) throw new Exception(name); checks.Add(name); }
+        foreach (string timing in new[] { "terminal", "hud-gone", "continuing" })
+        using (var h = new WorkflowHarness(Path.Combine(root, "event-result-" + timing), [DailyEventNative.Definition(), DailyEventSweep.Definition()]))
+        {
+            h.Workflow.Settings.EventBattle.Enabled = true; h.Workflow.Settings.EventBattle.Challenge = false;
+            int free = 5, exits = 0; bool atResult = false;
+            var lobby = EventTradeBoundaryCases.Lobby(); lobby["Latest"] = 13;
+            lobby["Stages"] = Array(Enumerable.Range(1, 13).Select(i => EventTradeBoundaryCases.Stage(i, true)));
+            h.Readings = () =>
+            {
+                bool continuing = atResult && timing == "continuing" && h.Time < 1;
+                var exit = BD2Daily.Live.EventBattleResultRules.ExitField(atResult, continuing,
+                    field => field is "_winObject" or "_goWinSafeArea");
+                return [WorkflowCases.Reading("event.currency", ("EventApFree", free), ("EventApStack", 7)),
+                    WorkflowCases.Reading("event.lobby", ("$self", lobby)),
+                    WorkflowCases.Reading("event.native", ("$self", O(("Battle", atResult), ("Result", exit.Length > 0),
+                        ("Continuing", continuing), ("Lost", false), ("Current", 5), ("Total", 5), ("ExitField", exit))))];
+            };
+            h.Page("BattleSkipPopupUI");
+            var op = h.Business.Create(h.Context, "event.native_batch", h.Evidence(),
+                O(("event", 100), ("group", 10), ("stage", 9), ("count", 5), ("cost", 1), ("category", "Battle")),
+                O(("ui", "BattleSkipPopupUI"), ("operation", "event_native_confirm")));
+            op["state"] = "unknown"; op["error"] = "Event auto batch has not finished"; h.Business.Save(op);
+            free = 0; atResult = true;
+            var result = HomeNavigationCases.Surface("BattleResultUI", field: "_goWinSafeArea", id: 700);
+            Page(h, timing == "hud-gone" ? [result] : [result, HomeNavigationCases.Surface("BattleUI_EventBattle", id: 50)]);
+            for (int i = 9; i <= 13; i++)
+            {
+                h.Event("event.end", "request");
+                h.Event("event.end", "response", ("PackEventBattleInfo", O(("eventUid", 100), ("groupId", 10), ("id", i))));
+            }
+            h.OnCommand = c =>
+            {
+                if (S(c["Kind"]) == "event_native_exit")
+                {
+                    if (!atResult || timing == "continuing" && h.Time < 1) throw new Exception("Premature or duplicate event exit");
+                    exits++; atResult = false; h.Page("EventBattleUI"); return;
+                }
+                if (S(c["Kind"]) == "back" && DailyNavigationDecision.Types(h.Frame).Contains("EventBattleUI")) { h.Page("EventMainUI"); return; }
+                if (S(c["Kind"]) == "back" && DailyNavigationDecision.Types(h.Frame).Contains("EventMainUI")) { h.Page("MenuUI"); return; }
+                throw new Exception("Unexpected post-batch command: " + S(c["Kind"]));
+            };
+            var done = await DailyEventNative.Run(h.Workflow);
+            var settled = h.Business.Records(h.Context, "event.native_batch").Single();
+            Check(S(done["state"]) == "completed" && exits == 1 && S(settled["state"]) == "completed" && N(settled["result"]?["count"]) == 5,
+                "Native event result reconciles five victories and exits once: " + timing);
+            Check(h.Time < 10 && h.Box.Commands.All(c => S(c["Kind"]) is "event_native_exit" or "back"),
+                "Result recovery never repeats a paid action or waits fifteen minutes: " + timing);
+        }
         foreach (string timing in new[] { "simultaneous", "delayed-summary", "summary-before-result", "reconnected" })
         using (var h = new WorkflowHarness(Path.Combine(root, "mirror-overlap-" + timing), [DailyMirror.Proof()]))
         {

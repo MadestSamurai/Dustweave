@@ -454,6 +454,24 @@ namespace BD2Daily.Live {
         var goal=collider.bounds.center;
         SquareRoutePilot.Begin(c,target,collider,goal);
        }
+      }else if(c.Kind=="mail_collect_filtered"||c.Kind=="mail_page"){
+       var mail=(MailUI)u;
+       if((int)mail.ὭὯὫὫὮὡὠὮὤὬὨ!=c.Value)throw new InvalidOperationException("mail_tab_rejected");
+       if(c.Kind=="mail_page"){
+        if(c.Value==0)ὪὨὣὠὦὣὥὤὭὢὤ.ὭὩὭὣὤὩὭὥὢὥὦ(c.Items[0],100,mail.RefreshMail);
+        else ὪὨὣὠὦὣὥὤὭὢὤ.ὫὠὨὦὫὠὨὧὭὥὠ(c.Items[0],20,mail.RefreshMail);
+       }else{
+        var rows=mail.ὦὧὣὥὯὦὤὨὮὯὬ.Where(m=>c.Items.Contains(m.InvenIndex)).ToList();
+        if(rows.Count!=c.Items.Length)throw new InvalidOperationException("mail_selection_changed");
+        // Recheck live attachments immediately before dispatch, never invoke the recursive ReceiveAllMails callback.
+        if(rows.Any(m=>m.ItemType.Count!=m.ItemId.Count||m.ItemType.Count!=m.ItemCount.Count||m.ItemType.Any(t=>t==15||t==24)))
+         throw new InvalidOperationException("mail_attachment_data_unavailable");
+        ὪὨὣὠὦὣὥὤὭὢὤ.ὣὤὦὪὡὫὡὯὯὣὠ();
+        ὪὨὣὠὦὣὥὤὭὢὤ.ὫὬὩὯὨὨὮὮὯὫὠ(mail.ὭὯὫὫὮὡὠὮὤὬὨ,rows,()=>{
+         ὪὨὣὠὦὣὥὤὭὢὤ.ὠὨὠὪὪὦὨὪὬὪὢ();
+         if(mail!=null&&mail.gameObject.activeInHierarchy)mail.RefreshMail();
+        });
+       }
       }else if(c.Kind=="mail_tab"){
        var tabs=(Array)Fields(u.GetType()).Single(x=>x.Name=="_mailTabs").GetValue(u);
        var tab=tabs.GetValue(c.Value);var root=(GameObject)tab.GetType().GetField("root").GetValue(tab);

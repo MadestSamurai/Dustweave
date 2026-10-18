@@ -1,5 +1,32 @@
 [
 {
+  "Version": "1.4.4",
+  "Date": "2026-10-18",
+  "Notes": {
+    "zh-CN": [
+      "修复活动自动战斗结束后停在胜利画面的问题，识别活动专用返回按钮；恢复时不重复消耗战斗次数。",
+      "救赎之塔新增固定次数扫荡模式，可忽略成长是否已满，仍遵守每日钥匙保留下限，不使用付费次数。",
+      "新增保留血之鸡尾酒邮件选项，默认关闭；开启后整封邮件始终留待手动领取，活动补领也遵守。",
+      "修复周收集遇到天赋提示动画或战斗技能演出时中断的问题。",
+      "1.3.12–1.3.17、1.4.0–1.4.3 支持直接差分更新；若 OTA 失败，请手动下载完整软件包。"
+    ],
+    "zh-TW": [
+      "修復活動自動戰鬥結束後停在勝利畫面的問題，辨識活動專用返回按鈕；恢復時不重複消耗戰鬥次數。",
+      "救贖之塔新增固定次數掃蕩模式，可忽略成長是否已滿，仍遵守每日鑰匙保留下限，不使用付費次數。",
+      "新增保留血之雞尾酒郵件選項，預設關閉；開啟後整封郵件始終留待手動領取，活動補領亦遵守。",
+      "修復每週收集遇到天賦提示動畫或戰鬥技能演出時中斷的問題。",
+      "1.3.12–1.3.17、1.4.0–1.4.3 支援直接差分更新；若 OTA 失敗，請手動下載完整軟體包。"
+    ],
+    "en-US": [
+      "Fix event auto-battles waiting on the final victory screen. Recognize the event return button and recover without replaying consumed battles.",
+      "Add optional fixed-count Salvation sweeps regardless of growth completion, while respecting daily-key reserves and excluding paid attempts.",
+      "Add optional Blood Cocktail mail retention, off by default. Entire matching messages remain for manual collection, including activity mailbox visits.",
+      "Fix weekly collection interruptions during talent notices and battle skill animations.",
+      "Direct patches cover 1.3.12–1.3.17 and 1.4.0–1.4.3. If OTA fails, download the full package manually."
+    ]
+  }
+},
+{
   "Version": "1.4.3",
   "Date": "2026-10-17",
   "Notes": {

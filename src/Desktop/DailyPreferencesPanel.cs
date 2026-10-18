@@ -17,7 +17,9 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly ComboBox accounts = new() { MinWidth = 230, DisplayMemberPath = "Name", SelectedValuePath = "AccountKey" };
     private readonly CheckBox eventBattle = Check("活动战斗"), eventChallenge = Check("普通全部通关后继续挑战战斗");
     private readonly CheckBox eventFailureSweep = Check("prefs.event_failure_sweep"), salvation = Check("stage.salvation");
-    private readonly TextBox salvationReserve = new();
+    private readonly TextBox salvationReserve = new(), salvationCount = new();
+    private readonly ComboBox salvationMode = new() { DisplayMemberPath = "Label", SelectedValuePath = "Key" };
+    private Grid salvationCountRow = null!;
     private readonly ComboBox eventSearch = new();
     private readonly CheckBox tactics = Check("战术教材");
     private readonly ComboBox tacticsSearch = new();
@@ -42,6 +44,7 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly TextBox tradeReserve = new(), tradeMaximum = new();
     private readonly TextBox potionReserve = new(), potionTarget = new();
     private readonly CheckBox potionRefill = Check("药不足时自动补药");
+    private readonly CheckBox preserveBloodCocktailMail = Check("prefs.mail_preserve_cocktail");
     private readonly CheckBox tradeBreakEven = Check("购买零收益商品（金币成就）");
     private StackPanel section = new();
     private readonly TextBlock status = new() { TextWrapping = TextWrapping.Wrap, Margin = new(0, 8, 0, 0) };
@@ -84,7 +87,7 @@ public sealed class DailyPreferencesPanel : UserControl
     }
     private void LanguageChanged(object? sender, EventArgs e)
     {
-        foreach (var item in stone.Items.Cast<Choice>().Concat(priority.Items.Cast<Choice>())) item.Refresh();
+        foreach (var item in stone.Items.Cast<Choice>().Concat(priority.Items.Cast<Choice>()).Concat(salvationMode.Items.Cast<Choice>())) item.Refresh();
         foreach (var item in refineChoice.Items.Cast<RefinementView>()) item.Refresh();
         FilterSections();
     }
@@ -253,7 +256,12 @@ public sealed class DailyPreferencesPanel : UserControl
         }
         if (extensionEvents) Note("仅使用免费次数，完成后保留游戏进度。");
         Stage(salvation, "救赎之塔扫荡", "prefs.salvation_hint", expanded: true);
+        salvationMode.ItemsSource = new[] { new Choice("growth", "prefs.salvation_growth"), new Choice("fixed", "prefs.salvation_fixed") };
+        Row("prefs.salvation_mode", salvationMode);
+        salvationCountRow = Row("prefs.salvation_count", salvationCount);
+        salvationCountRow.Visibility = Visibility.Collapsed;
         Row("prefs.salvation_reserve", salvationReserve);
+        Note("prefs.salvation_budget");
         Stage(weeklyBook, "周常末日之书", "prefs.book_hint");
         Stage(friendship, "亲密度咨询", "prefs.friendship_hint");
         section.Children.Add(quickFriendship);
@@ -309,7 +317,9 @@ public sealed class DailyPreferencesPanel : UserControl
         Stage(dailyRewards, "日常任务奖励", "在行动结束后领取新完成的日常任务");
         Stage(weeklyRewards, "周常任务奖励", "在行动结束后领取新完成的周常任务");
         Stage(pass, "通行证奖励", "检查各通行证的任务与等级奖励", showSummary: false);
-        Stage(mail, "邮箱物品", "prefs.mail_hint");
+        Stage(mail, "邮箱物品", "prefs.mail_hint", editableWhenOff: true);
+        section.Children.Add(preserveBloodCocktailMail);
+        Note("prefs.mail_preserve_hint");
         // Stages without parameters need only a switch, not an empty expansion affordance.
         foreach (var border in form.Children.OfType<Border>())
             if (border.Child is Expander exp && exp.Content is StackPanel body && body.Children.Count == 0 && exp.Header is StackPanel heading)
@@ -323,12 +333,18 @@ public sealed class DailyPreferencesPanel : UserControl
         Content = layout;
         FilterSections();
         accounts.SelectionChanged += ChangedAccount;
-        foreach (var c in new[] { salvation, eventFailureSweep, weeklyBook, weeklyCraft, weeklySichuan, quickFriendship, friendship, tactics, eventBattle, eventChallenge, hunt, gold, slime, stones, recycle, keepSr, fallback, refine, pass, dispatch, goddess, ranking, mirror, guild, room, income, guests, saffron, draws, dailyRewards, weeklyRewards, mail, mainline, weeklyNpc, npcHunting, weeklySteal, walkCollect, fishing, roomLikes, trade, events, eventMissions, quiz, dice, puzzle, roulette, exchange })
+        foreach (var c in new[] { salvation, eventFailureSweep, weeklyBook, weeklyCraft, weeklySichuan, quickFriendship, friendship, tactics, eventBattle, eventChallenge, hunt, gold, slime, stones, recycle, keepSr, fallback, refine, pass, dispatch, goddess, ranking, mirror, guild, room, income, guests, saffron, draws, dailyRewards, weeklyRewards, mail, preserveBloodCocktailMail, mainline, weeklyNpc, npcHunting, weeklySteal, walkCollect, fishing, roomLikes, trade, events, eventMissions, quiz, dice, puzzle, roulette, exchange })
         {
             c.Checked += (_, _) => MarkDirty();
             c.Unchecked += (_, _) => MarkDirty();
         }
         salvationReserve.TextChanged += (_, _) => { if (!updating) dirty = true; };
+        salvationCount.TextChanged += (_, _) => MarkDirty();
+        salvationMode.SelectionChanged += (_, _) =>
+        {
+            salvationCountRow.Visibility = (string?)salvationMode.SelectedValue == "fixed" ? Visibility.Visible : Visibility.Collapsed;
+            MarkDirty();
+        };
         foreach (var c in new[] { tacticsSearch, eventSearch, chapter, stone, refineChoice, multiplier, saffronRounds }.Concat(enhance))
             c.SelectionChanged += (_, _) => MarkDirty();
         tradeReserve.TextChanged += (_, _) => MarkDirty();
@@ -449,6 +465,18 @@ public sealed class DailyPreferencesPanel : UserControl
             if (item.View.Child is Expander exp) exp.IsExpanded = true;
         UpdateLayout();
     }
+    internal void CheckFixedTowerSettingsForSmoke()
+    {
+        if (allowGame || loaded == null) throw new InvalidOperationException("Isolated settings required");
+        salvation.IsChecked = true;
+        salvationMode.SelectedValue = "growth";
+        if (salvationCountRow.Visibility != Visibility.Collapsed) throw new Exception("Growth mode shows an irrelevant count");
+        salvationMode.SelectedValue = "fixed"; salvationCount.Text = "3";
+        if (salvationCountRow.Visibility != Visibility.Visible || !Save()) throw new Exception("Fixed sweep settings unavailable");
+        var saved = store.Read(account);
+        if (!saved.Salvation.UseFixedCount || saved.Salvation.SweepCount != 3) throw new Exception("Fixed tower policy did not persist");
+        ShowNativeBattleSettingsForSmoke(true);
+    }
     internal void CheckCategorySearchForSmoke()
     {
         if(allowGame)throw new InvalidOperationException("Isolated settings required");
@@ -517,7 +545,7 @@ public sealed class DailyPreferencesPanel : UserControl
         note.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk"); note.Margin = new(0, 4, 0, 12);
         section.Children.Add(note);
     }
-    private void Row(string label, Control field)
+    private Grid Row(string label, Control field)
     {
         var row = new Grid { Margin = new(0, 8, 0, 8), HorizontalAlignment = HorizontalAlignment.Stretch };
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -528,6 +556,7 @@ public sealed class DailyPreferencesPanel : UserControl
         Grid.SetColumn(field, 1);
         row.Children.Add(field);
         section.Children.Add(row);
+        return row;
     }
     private void MarkDirty()
     {
@@ -614,6 +643,7 @@ public sealed class DailyPreferencesPanel : UserControl
             dailyRewards.IsChecked = loaded.Stages.DailyRewards;
             weeklyRewards.IsChecked = loaded.Stages.WeeklyRewards;
             mail.IsChecked = loaded.Stages.Mail;
+            preserveBloodCocktailMail.IsChecked = loaded.Stages.PreserveBloodCocktailMail;
             mainline.IsChecked = loaded.Weekly.Mainline;
             weeklySteal.IsChecked = loaded.Weekly.Steal;
             weeklyNpc.IsChecked = loaded.Weekly.Npc;
@@ -624,6 +654,8 @@ public sealed class DailyPreferencesPanel : UserControl
             eventBattle.IsChecked = loaded.EventBattle.Enabled;
             salvation.IsChecked = loaded.Salvation.Enabled;
             salvationReserve.Text = loaded.Salvation.ReserveKeys.ToString(CultureInfo.InvariantCulture);
+            salvationCount.Text = loaded.Salvation.SweepCount.ToString(CultureInfo.InvariantCulture);
+            salvationMode.SelectedValue = loaded.Salvation.UseFixedCount ? "fixed" : "growth";
             eventFailureSweep.IsChecked = loaded.EventBattle.SweepAfterFailure;
             eventChallenge.IsChecked = loaded.EventBattle.Challenge;
             eventSearch.SelectedItem = loaded.EventBattle.SearchSeconds;
@@ -748,6 +780,7 @@ public sealed class DailyPreferencesPanel : UserControl
             loaded.Weekly.EquipmentCraft = weeklyCraft.IsChecked == true;
             loaded.Stages.WeeklyRewards = weeklyRewards.IsChecked == true;
             loaded.Stages.Mail = mail.IsChecked == true;
+            loaded.Stages.PreserveBloodCocktailMail = preserveBloodCocktailMail.IsChecked == true;
             loaded.Weekly.Mainline = mainline.IsChecked == true;
             loaded.Weekly.Steal = weeklySteal.IsChecked == true;
             loaded.Weekly.Npc = weeklyNpc.IsChecked == true;
@@ -762,6 +795,14 @@ public sealed class DailyPreferencesPanel : UserControl
             }
             if (!int.TryParse(salvationReserve.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var keys) || keys is < 0 or > 999) { RevealField(salvationReserve); throw new InvalidDataException("救赎之塔保留钥匙必须为 0 至 999。"); }
             loaded.Salvation.Enabled = salvation.IsChecked == true; loaded.Salvation.ReserveKeys = keys;
+            bool fixedSweeps = (string?)salvationMode.SelectedValue == "fixed";
+            if (fixedSweeps)
+            {
+                if (!int.TryParse(salvationCount.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var count) || count is < 1 or > 999)
+                { RevealField(salvationCount); throw new InvalidDataException("救赎之塔固定扫荡次数必须为 1 至 999。"); }
+                loaded.Salvation.SweepCount = count;
+            }
+            loaded.Salvation.UseFixedCount = fixedSweeps;
             loaded.EventBattle.SweepAfterFailure = eventFailureSweep.IsChecked == true;
             loaded.EventBattle.Enabled = eventBattle.IsChecked == true;
             loaded.EventBattle.Challenge = eventChallenge.IsChecked == true;

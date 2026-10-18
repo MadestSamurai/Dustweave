@@ -96,6 +96,23 @@ static class FieldEncounterCases
    await new DailyFieldRoute(h.Workflow).ExitEncounter(h.Frame);
    Check(count==3&&h.Box.Commands.Count==5,"same field retreat step retries only its unchanged control "+stalled);
   }
+  foreach(string mode in new[]{"finishes","never-finishes","replaced-battle","unknown-popup"})
+  {
+   using var h=Harness("skill-cutscene-"+mode);
+   h.Frame["Surfaces"]!.AsArray().Add(O(("Id",104),("Type","SubSkillCutSceneUI"),("Popup",true),("Order",100),("InputReady",true),("Targets",new JsonArray())));Token(h);
+   h.OnDelay=()=>{
+    if(h.Time<.6)return;
+    if(mode=="finishes")Page(h,0);
+    if(mode=="replaced-battle")h.Frame["Surfaces"]![0]!["Id"]=999;
+    if(mode=="unknown-popup"&&h.Frame["Surfaces"]!.AsArray().Count==2)h.Frame["Surfaces"]!.AsArray().Add(O(("Id",105),("Type","MessagePopupUI"),("Popup",true),("Order",101),("Targets",new JsonArray())));
+    Token(h);
+   };
+   Exception? error=null;
+   try{await new DailyFieldRoute(h.Workflow).ExitEncounter(h.Frame);}catch(Exception e){error=e;}
+   Check(mode=="finishes" ? error==null&&h.Time>=.6&&h.Box.Commands.Select(Step).SequenceEqual(new[]{0,1,2})
+    : error!=null&&h.Box.Commands.Count==0,"field retreat waits for skill presentation without weakening identity or dialog guards: "+mode);
+   if(mode=="never-finishes")Check(h.Time>=45&&h.Time<46,"skill presentation uses the existing bounded retreat deadline");
+  }
   using(var h=Harness("delayed-pause"))
   {
    double next=double.PositiveInfinity;

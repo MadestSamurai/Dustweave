@@ -183,6 +183,7 @@ public sealed partial class DailyFieldRoute
     internal async Task ExitEncounter(JsonObject original)
     {
         const string battleUi = "BattleUI_FieldBattle";
+        const string skillPresentation = "SubSkillCutSceneUI";
         const string pauseButton = "$pointer/HUD/ButtonLayout/Button - Pause/Button - Pause";
         var origin = original.DeepClone().AsObject();
         var battle = DailyNavigationDecision.Rows(origin).Single(r => S(r["Type"]) == battleUi);
@@ -205,7 +206,7 @@ public sealed partial class DailyFieldRoute
             bool loading = types.Overlaps(DailyNavigationDecision.Transitions);
             Require(S(current["Scene"]) == S(origin["Scene"]) || exitSubmitted && loading &&
                 (DailyNavigationDecision.SceneLoading(current) || S(current["Scene"]) == "Empty"), "野外战斗地图已经改变");
-            Require(types.All(t => pages.Contains(t) || t == "GameFieldDefaultUI" ||
+            Require(types.All(t => pages.Contains(t) || t is "GameFieldDefaultUI" or skillPresentation ||
                 DailyNavigationDecision.PassiveSurface(t) || DailyNavigationDecision.Transitions.Contains(t)), "野外战斗或弹窗已经改变");
             if (!types.Contains(battleUi) && FieldInputReady(current))
                 return;
@@ -216,6 +217,14 @@ public sealed partial class DailyFieldRoute
             }
             var battles = DailyNavigationDecision.Rows(current).Where(r => S(r["Type"]) == battleUi).ToArray();
             Require(battles.Length == 1 && JsonNode.DeepEquals(battles[0]["Id"], battle["Id"]), "野外战斗已被另一场战斗替换");
+            if (types.Contains(skillPresentation))
+            {
+                // A skill cutscene belongs to this same encounter. Wait for it
+                // to release input without clicking behind it or restarting the
+                // retreat budget. Unrelated dialogs are still rejected above.
+                await W.Delay(200);
+                continue;
+            }
             int step = types.Contains(pages[2]) ? 2 : types.Contains(pages[1]) ? 1 : 0;
             // Native give-up closes its dialogs before the return-to-field
             // coroutine finishes. That is progress, not permission to reopen Pause.

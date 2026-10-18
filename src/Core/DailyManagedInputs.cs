@@ -139,6 +139,14 @@ public sealed partial class DailyCommandDriver
     }
     private async Task<bool> RecoverPresentationAsync(JsonObject frame, string destination)
     {
+        if (destination != "MessagePopupUI" && DailyNavigationDecision.TalentNotice(frame, policy) != null
+            && DailyNavigationDecision.TalentAction(frame, policy) == null)
+        {
+            // Keep the original preflight deadline and re-read identity/UI. Do
+            // not send the field command through an opening acknowledgement.
+            await delay(TimeSpan.FromMilliseconds(150));
+            return true;
+        }
         var talent = DailyNavigationDecision.TalentAction(frame, policy);
         if (talent != null && Text(talent, "ui") != destination)
         {

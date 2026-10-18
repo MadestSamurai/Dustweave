@@ -8,6 +8,12 @@ static class PreferenceCases
         string root = Path.Combine(output, "policy-" + Guid.NewGuid().ToString("N"));
         var store = new DailyPreferenceStore(root);
         string a = new('a', 64), b = new('b', 64);
+        var prior = JsonSerializer.SerializeToNode(new DailyPreferences())!.AsObject();
+        prior["Stages"]!.AsObject().Remove("PreserveBloodCocktailMail");
+        if (DailyPreferences.Parse(prior.ToJsonString()).Stages.PreserveBloodCocktailMail) throw new Exception("Legacy mail collection default changed");
+        prior["Stages"]!["PreserveBloodCocktailMail"] = true;
+        if (!DailyPreferences.Parse(prior.ToJsonString()).Stages.PreserveBloodCocktailMail) throw new Exception("Mail preservation setting did not round trip");
+        cases.Add("mail preservation is opt-in and round-trips in account settings");
         void Check(bool ok, string name)
         {
             if (!ok)
@@ -122,6 +128,7 @@ static class PreferenceCases
         v2.Remove("MonsterHunt");
         v2.Remove("General");        v2["Schema"] = 2;
         v2["Stages"]!.AsObject().Remove("Mail");
+        v2["Stages"]!.AsObject().Remove("PreserveBloodCocktailMail");
         v2["Stages"]!.AsObject().Remove("Saffron");
         v2["Stages"]!["Guild"] = false;
         var migrated = DailyPreferences.Parse(v2.ToJsonString());

@@ -396,9 +396,44 @@
     "en-US": "Tower of Salvation sweep"
   },
   "prefs.salvation_hint": {
-    "zh-CN": "仅扫荡已通关难度，成长石足够补满剩余加成时停止",
-    "zh-TW": "僅掃蕩已通關難度，成長石足夠補滿剩餘加成時停止",
-    "en-US": "Sweep a cleared difficulty until you have enough stones for all remaining growth upgrades"
+    "zh-CN": "扫荡已通关难度，可按成长石需求或固定次数执行",
+    "zh-TW": "掃蕩已通關難度，可按成長石需求或固定次數執行",
+    "en-US": "Sweep a cleared difficulty for remaining growth upgrades or a fixed number of runs"
+  },
+  "prefs.salvation_mode": {
+    "zh-CN": "扫荡方式",
+    "zh-TW": "掃蕩方式",
+    "en-US": "Sweep mode"
+  },
+  "prefs.salvation_growth": {
+    "zh-CN": "补满成长石",
+    "zh-TW": "補滿成長石",
+    "en-US": "Until growth is funded"
+  },
+  "prefs.salvation_fixed": {
+    "zh-CN": "固定次数（无视是否满）",
+    "zh-TW": "固定次數（無視是否滿）",
+    "en-US": "Fixed count (ignore growth)"
+  },
+  "prefs.salvation_count": {
+    "zh-CN": "每次执行扫荡次数",
+    "zh-TW": "每次執行掃蕩次數",
+    "en-US": "Sweeps per execution"
+  },
+  "prefs.salvation_budget": {
+    "zh-CN": "只用每日钥匙；扣除保留数量后，不足设定次数时刷完可用次数。",
+    "zh-TW": "只用每日鑰匙；扣除保留數量後，不足設定次數時刷完可用次數。",
+    "en-US": "Uses daily keys only. If fewer runs are available after the key reserve, sweeps only those available."
+  },
+  "native.salvation_count_error": {
+    "zh-CN": "救赎之塔固定扫荡次数必须为 1 至 999。",
+    "zh-TW": "救贖之塔固定掃蕩次數必須為 1 至 999。",
+    "en-US": "The fixed tower sweep count must be between 1 and 999."
+  },
+  "message.Invalid salvation sweep count": {
+    "zh-CN": "救赎之塔扫荡次数设置无效，请检查日常设置。",
+    "zh-TW": "救贖之塔掃蕩次數設定無效，請檢查日常設定。",
+    "en-US": "The tower sweep count is invalid. Check daily settings."
   },
   "prefs.salvation_reserve": {
     "zh-CN": "保留每日钥匙",
@@ -2939,6 +2974,16 @@
     "zh-CN": "其他领奖完成后收取邮箱",
     "zh-TW": "其他領獎完成後收取信箱",
     "en-US": "Collect mail after other rewards"
+  },
+  "prefs.mail_preserve_cocktail": {
+    "zh-CN": "保留血之鸡尾酒邮件",
+    "zh-TW": "保留血之雞尾酒郵件",
+    "en-US": "Keep Blood Cocktail mail"
+  },
+  "prefs.mail_preserve_hint": {
+    "zh-CN": "含血之鸡尾酒的邮件整封保留，周日也不自动领取；请在到期前手动领取。活动补领邮箱时同样生效。",
+    "zh-TW": "含血之雞尾酒的郵件整封保留，週日也不自動領取；請在到期前手動領取。活動補領信箱時同樣生效。",
+    "en-US": "Keep any mail containing Blood Cocktails, including on Sundays. Claim it manually before expiry. This also applies when activities collect mail."
   },
   "prefs.gear_unavailable": {
     "en-US": "Selected gear unavailable in inventory ({0})",

@@ -214,12 +214,20 @@ public static class DailyNavigationDecision
         string ui = Text(row, "Type");
         return ui == "PackInfoUI" ? Click(ui, "_objBackButton", "关闭当前卡带说明，复用已加载场景") : Back(ui, "返回已加载的目标卡带，不重复进入");
     }
-    public static JsonObject? TalentAction(JsonObject f, DailyNavigationPolicy p)
+    // Recognition and input readiness are separate states. A known notification
+    // still blocks the field while its opening animation disables input.
+    public static JsonObject? TalentNotice(JsonObject f, DailyNavigationPolicy p)
     {
         if (f["BridgeVersion"]?.GetValue<int>() < 101)
             return null;
         var rows = Rows(f).Where(r => Text(r, "Type") == "MessagePopupUI").ToArray();
-        if (rows.Length != 1 || Text(rows[0], "NativeContext") != "talent_inactive_ack_only" || !ReadyInput(rows[0], false) || Blockers(f, "MessagePopupUI", p).Length > 0 || !HasTarget(rows[0], "_buttonOK"))
+        return rows.Length == 1 && Text(rows[0], "NativeContext") == "talent_inactive_ack_only"
+            && Blockers(f, "MessagePopupUI", p).Length == 0 ? rows[0] : null;
+    }
+    public static JsonObject? TalentAction(JsonObject f, DailyNavigationPolicy p)
+    {
+        var notice = TalentNotice(f, p);
+        if (notice == null || !ReadyInput(notice, false) || !HasTarget(notice, "_buttonOK"))
             return null;
         return new()
         {

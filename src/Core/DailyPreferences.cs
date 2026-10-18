@@ -181,6 +181,8 @@ public sealed class DailyPreferences
             throw new InvalidDataException("活动搜索时间必须为 1 至 120 秒。");
         if (Salvation == null || Salvation.ReserveKeys is < 0 or > 999)
             throw new InvalidDataException("救赎之塔保留钥匙必须为 0 至 999。");
+        if (Salvation.SweepCount is < 1 or > 999)
+            throw new InvalidDataException("救赎之塔固定扫荡次数必须为 1 至 999。");
         if (Mirror.Multiplier is < 1 or > 40)
             throw new InvalidDataException("镜中倍率必须为 1 至 40。");
         if (Hunt.OrdinaryChapter is < 1 or > 10)
@@ -291,6 +293,7 @@ public sealed class StagePreferences
     [JsonRequired] public bool DailyRewards { get; set; } = true;
     [JsonRequired] public bool WeeklyRewards { get; set; } = true;
     [JsonRequired] public bool Mail { get; set; } = true;
+    public bool PreserveBloodCocktailMail { get; set; }
 }
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed class MirrorPreferences
@@ -413,6 +416,8 @@ public sealed class SalvationPreferences
 {
     public bool Enabled { get; set; } = false;
     public int ReserveKeys { get; set; } = 0;
+    public bool UseFixedCount { get; set; } = false;
+    public int SweepCount { get; set; } = 1;
 }
 
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]

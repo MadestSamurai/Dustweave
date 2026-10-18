@@ -1,5 +1,14 @@
 # Changelog / 更新记录
 
+## 1.4.4 — 2026-10-18
+
+- 修复活动自动战斗最后一场已结束却等待超时的问题；正确识别活动专用结算返回按钮，恢复流程不重复消耗次数。
+- 救赎之塔新增固定次数扫荡模式，可忽略成长是否已满，仍保留每日钥匙下限且不使用付费次数。
+- 新增保留血之鸡尾酒邮件选项，始终留待手动领取；包含混合附件的整封邮件，活动补领邮箱同样遵守。
+- 修复周收集遇到天赋提示动画或战斗技能演出时中断的问题。
+- Fixes event battle completion and weekly collection recovery; adds fixed-count Salvation sweeps and optional Blood Cocktail mail retention.
+- [完整说明 / Full notes](docs/releases/1.4.4.md)
+
 ## 1.4.2 — 2026-10-17
 
 - 空间统计纳入隔离账号数据、迁移后的缓存及旧版运行库解压目录，统一显示总占用与可清理空间。

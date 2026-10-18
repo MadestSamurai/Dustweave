@@ -15,7 +15,9 @@ internal static class DailyNativeBattleRecovery
         var types = DailyNavigationDecision.Types(f.Frame);
         if (types.Any(t => t.StartsWith("BattleUI", StringComparison.Ordinal)) || types.Contains("BattleResultUI"))
             return S(op["role"]) == "event.native_batch" && DailyWorkflowRegistry.Owned(op, f) &&
-                types.Contains("BattleUI_EventBattle") && (DailyManagedBusiness.Pending(op) || S(op["state"]) == "completed");
+                !types.Any(t => t.StartsWith("BattleUI", StringComparison.Ordinal) && t != "BattleUI_EventBattle") &&
+                (types.Contains("BattleUI_EventBattle") || types.Contains("BattleResultUI")) &&
+                (DailyManagedBusiness.Pending(op) || S(op["state"]) == "completed");
         return types.Overlaps(S(op["role"]) == "salvation.sweep"
             ? ["MenuUI", "GameFieldDefaultUI", "EvilCastleEnterUI", "RogueLikeLobbyUI", "RogueLikeSkipPopupUI", "RogueLikeTotalScoreUI"]
             : new[] { "MenuUI", "GameFieldDefaultUI", "EventMainUI", "EventBattleUI" });
@@ -34,7 +36,7 @@ internal static class DailyNativeBattleRecovery
         if (role == "salvation.sweep")
         {
             var s = DailySalvation.StateOf(e); Require(B(s["Ready"]) && B(s["Idle"]) && !B(s["Popup"]), "Tower is not idle");
-            _ = DailySalvation.Plan(s, w.Settings.Salvation.ReserveKeys);
+            _ = DailySalvation.Plan(s, w.Settings.Salvation.ReserveKeys, w.Settings.Salvation.UseFixedCount ? w.Settings.Salvation.SweepCount : 0);
         }
         else
         {

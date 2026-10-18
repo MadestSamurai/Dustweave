@@ -9,6 +9,7 @@ namespace BD2Daily.Live {
  [DataContract] internal sealed class NativeEventState {
   [DataMember] public int Current,Total;
   [DataMember] public bool Battle,Result,Lost,Continuing;
+  [DataMember] public string ExitField="";
  }
  [DataContract] internal sealed class SalvationState {
   [DataMember] public bool Ready,Idle,Unlocked,Season,Popup,FreeOnly;
@@ -27,9 +28,10 @@ namespace BD2Daily.Live {
    var result=Bridge.Find(typeof(BattleResultUI)).Cast<BattleResultUI>().FirstOrDefault();
    bool eventBattle=bpm!=null&&bpm.IsEventBattleMode();
    bool lost=eventBattle&&result!=null&&Active(result,"_loseObject");
-   bool finished=result!=null&&(lost?Active(result,"_objectLoseExitButton"):Active(result,"_winObject")&&Active(result,"_objectWinExitButton"));
-   return new NativeEventState{Current=tuple.Item1,Total=tuple.Item2,Battle=eventBattle,Result=eventBattle&&finished,Lost=lost,
-    Continuing=eventBattle&&!lost&&ὥὬὢὮὫὯὥὨὬὣὤ.ὧὯὦὡὨὥὡὮὤὣὤ()&&!ὥὬὢὮὫὯὥὨὬὣὤ.ὫὯὣὮὠὭὥὠὯὯὠ()};
+   bool continuing=eventBattle&&!lost&&ὥὬὢὮὫὯὥὨὬὣὤ.ὧὯὦὡὨὥὡὮὤὣὤ()&&!ὥὬὢὮὫὯὥὨὬὣὤ.ὫὯὣὮὠὭὥὠὯὯὠ();
+   string exit=result==null?"":EventBattleResultRules.ExitField(eventBattle,continuing,name=>Active(result,name));
+   return new NativeEventState{Current=tuple.Item1,Total=tuple.Item2,Battle=eventBattle,Result=exit.Length>0,Lost=lost,
+    Continuing=continuing,ExitField=exit};
   }
   internal static SalvationState Salvation(){
    var lobby=Bridge.Find(typeof(RogueLikeLobbyUI)).Cast<RogueLikeLobbyUI>().FirstOrDefault();
@@ -91,8 +93,10 @@ namespace BD2Daily.Live {
    if(c.Kind=="salvation_confirm"){
     var s=Salvation();Require(s.Ready&&s.Idle&&s.Unlocked&&s.Season&&s.Popup&&s.FreeOnly,"Salvation sweep is not ready");
     Require(c.Items[0]==s.Level&&s.Selected==s.Level&&s.PopupLevel==s.Level&&c.Items[2]==s.Free&&c.Items[3]==s.Stones&&c.Items[4]==s.RemainingCost,"Salvation plan changed");
-    Require(s.Cost>0&&s.PopupCost==s.Cost&&s.Reward>0&&s.RemainingCost>s.Stones,"Salvation growth is already funded");
-    long needed=(s.RemainingCost-s.Stones+s.Reward-1)/s.Reward;
+    Require(s.Cost>0&&s.PopupCost==s.Cost&&s.Reward>0,"Salvation resource data unavailable");
+    bool fixedCount=c.Items.Length==6;
+    Require(fixedCount||s.RemainingCost>s.Stones,"Salvation growth is already funded");
+    long needed=fixedCount?c.Items[5]:(s.RemainingCost-s.Stones-1)/s.Reward+1;
     Require(c.Value==s.Count&&c.Value>0&&c.Value<=needed&&(long)c.Value*s.Cost<=s.Free-c.Items[1],"Salvation sweep exceeds free key budget");
     var popup=(RogueLikeSkipPopupUI)ui;Require(!(bool)Get(popup,"ὮὩὪὪὦὤὯὯὧὨὪ"),"Salvation popup is closing");popup.OnClickUI((GameObject)Get(popup,"_buttonBattle"));return;
    }
@@ -113,7 +117,7 @@ namespace BD2Daily.Live {
    }
    if(c.Kind=="event_native_exit"){
     var state=Event();Require(state.Result&&!state.Continuing,"Event batch is still continuing");
-    var result=(BattleResultUI)ui;string name=state.Lost?"_objectLoseExitButton":"_objectWinExitButton";
+    var result=(BattleResultUI)ui;string name=state.ExitField;
     Require(Active(result,name),"Event result exit not ready");result.OnClickUI((GameObject)Get(result,name));return;
    }
    throw new InvalidOperationException("Unknown native daily battle operation");

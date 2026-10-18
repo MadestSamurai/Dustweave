@@ -21,6 +21,16 @@ static class SelfTest {
   }
   Check(LiveProtocol.IsSquareScene("Map3009_001"),"plaza routes permit A*");
   {
+   var f=Frame();var c=Command();var u=f.Surfaces[0];f.Scene=c.Scene="Map0001_001";f.BridgeVersion=123;u.Type="MailUI";c.TargetId=0;c.Kind="mail_collect_filtered";c.Items=new long[]{1,2};
+   Check(LivePolicy.Gate(c,f,now,false)=="","selected mail batch accepted");
+   c.Items=new long[]{1,1};Check(LivePolicy.Gate(c,f,now,false)!="","duplicate mail rejected");
+   c.Items=Enumerable.Range(1,11).Select(i=>(long)i).ToArray();Check(LivePolicy.Gate(c,f,now,false)!="","mail batch exceeds native limit rejected");
+   c.Items=new long[]{1};c.Value=2;Check(LivePolicy.Gate(c,f,now,false)!="","mail history cannot be claimed");c.Value=0;
+   f.BridgeVersion=122;Check(LivePolicy.Gate(c,f,now,false)!="","old mailbox component rejected");f.BridgeVersion=123;
+   c.Kind="mail_page";c.Items=new long[]{0};Check(LivePolicy.Gate(c,f,now,false)=="","first mailbox page accepted");
+   c.Items=new long[]{-1};Check(LivePolicy.Gate(c,f,now,false)!="","negative mailbox cursor rejected");
+  }
+  {
    var f=Frame();var c=Command();var u=f.Surfaces[0];u.Type="MessagePopupUI";u.NativeContext=BackgroundErrorPolicy.RequestContext;u.Text=new[]{"網路請求超時請檢查網路連接狀態。"};u.Targets[0].Field="_buttonOK";c.Kind="background_error_ack";c.TargetId=0;
    Check(LivePolicy.Gate(c,f,now,false)=="","callback-free network acknowledgement accepted");
    u.NativeContext="";Check(LivePolicy.Gate(c,f,now,false)!="","network text cannot authorize a retry callback");
@@ -46,6 +56,13 @@ static class SelfTest {
     c.Value=1;f.BridgeVersion=117;Check(LivePolicy.Gate(c,f,now,false)=="native_battle_context_rejected","old bridge refuses new native commands");f.BridgeVersion=118;
     c.Kind="salvation_confirm";c.Items=[12,0,3,80,100];f.Surfaces[0].Type="RogueLikeSkipPopupUI";
     Check(LivePolicy.Gate(c,f,now,false)=="","free tower sweep has a separate native command");
+    c.Items=[12,0,3,100,0,2];c.Value=2;
+    Check(LivePolicy.Gate(c,f,now,false)=="native_battle_budget_rejected","old bridge cannot accept fixed tower sweeps");
+    f.BridgeVersion=124;
+    Check(LivePolicy.Gate(c,f,now,false)=="","fixed tower sweep can explicitly ignore funded growth");
+    c.Value=3;Check(LivePolicy.Gate(c,f,now,false)=="native_battle_budget_rejected","fixed tower count cannot exceed the requested amount");c.Value=2;
+    c.Items[5]=0;Check(LivePolicy.Gate(c,f,now,false)=="native_battle_budget_rejected","fixed tower mode requires a positive count");
+    c.Items[5]=1000;Check(LivePolicy.Gate(c,f,now,false)=="native_battle_budget_rejected","fixed tower count is bounded");c.Items=[12,0,3,80,100];c.Value=1;
     c.Items[1]=-1;Check(LivePolicy.Gate(c,f,now,false)=="native_battle_budget_rejected","negative reserve cannot bypass free budget");c.Items[1]=0;
     f.Surfaces=[f.Surfaces[0],new(){Id=45,Type="MessagePopupUI",Popup=true,Order=100}];
     Check(LivePolicy.Gate(c,f,now,false)=="native_battle_surface_rejected","tower purchase or confirmation overlay blocks dispatch");

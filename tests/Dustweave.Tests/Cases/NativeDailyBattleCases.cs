@@ -9,6 +9,17 @@ static class NativeDailyBattleCases
     {
         void Check(bool ok, string name) { if (!ok) throw new Exception(name); checks.Add(name); }
         void Reject(Action run, string name) { try { run(); } catch (InvalidDataException) { checks.Add(name); return; } throw new Exception(name); }
+        string Exit(bool inEvent, bool continuing, params string[] visible) => BD2Daily.Live.EventBattleResultRules.ExitField(inEvent, continuing, visible.Contains);
+        Check(Exit(true, false, "_winObject", "_goWinSafeArea") == "_goWinSafeArea", "Event victory returns through its actual safe-area control without WinExit");
+        Check(Exit(true, false, "_winObject", "_goWinSafeArea", "_objectWinExitButton") == "_goWinSafeArea", "Event return control takes priority over generic win layout");
+        Check(Exit(true, false, "_winObject", "_objectWinExitButton") == "_objectWinExitButton", "Generic event result layout still supported");
+        Check(Exit(true, false, "_loseObject", "_objectLoseExitButton") == "_objectLoseExitButton", "Defeat uses loss exit instead of retry");
+        Check(Exit(true, false, "_loseObject", "_goLoseSafeArea") == "_goLoseSafeArea", "Loss safe-area variant supported");
+        Check(Exit(true, true, "_winObject", "_goWinSafeArea") == "", "Visible intermediate win cannot interrupt native continuation");
+        Check(Exit(false, false, "_winObject", "_goWinSafeArea") == "", "Foreign battle result is never claimed as event completion");
+        Check(Exit(true, false, "_winObject", "_objEventBattleNextBattleButton") == "", "Next-stage button alone never authorizes exiting or advancing");
+        Check(Exit(true, false, "_winObject", "_loseObject", "_goWinSafeArea") == "", "Overlapping result panes wait for native transition");
+        Check(Exit(true, false, "_goWinSafeArea") == "", "An exit outside a visible result pane does not finish battle");
         var p = new DailyPreferences();
         Check(!p.Salvation.Enabled && p.Salvation.ReserveKeys == 0 && p.EventBattle.SweepAfterFailure, "New battle defaults are opt-in tower and sweep after defeat");
         var legacy = JsonSerializer.SerializeToNode(p)!.AsObject(); legacy.Remove("Salvation"); legacy["EventBattle"]!.AsObject().Remove("SweepAfterFailure");
@@ -19,6 +30,16 @@ static class NativeDailyBattleCases
         p.Salvation.ReserveKeys = 3; p.Salvation.Enabled = true; p.EventBattle.SweepAfterFailure = false;
         restored = DailyPreferences.Parse(JsonSerializer.Serialize(p));
         Check(restored.Salvation.Enabled && restored.Salvation.ReserveKeys == 3 && !restored.EventBattle.SweepAfterFailure, "Account settings round trip both options");
+        Check(!restored.Salvation.UseFixedCount && restored.Salvation.SweepCount == 1, "Existing tower settings keep growth mode and a one-run fixed default");
+        var previousTower = JsonSerializer.SerializeToNode(p)!.AsObject();
+        previousTower["Salvation"]!.AsObject().Remove("UseFixedCount"); previousTower["Salvation"]!.AsObject().Remove("SweepCount");
+        restored = DailyPreferences.Parse(previousTower.ToJsonString());
+        Check(restored.Salvation.ReserveKeys == 3 && !restored.Salvation.UseFixedCount && restored.Salvation.SweepCount == 1, "Tower mode migration preserves the existing key reserve");
+        p.Salvation.UseFixedCount = true; p.Salvation.SweepCount = 4;
+        restored = DailyPreferences.Parse(JsonSerializer.Serialize(p));
+        Check(restored.Salvation.UseFixedCount && restored.Salvation.SweepCount == 4, "Fixed tower policy persists for the account");
+        p.Salvation.SweepCount = 0; Reject(p.Validate, "Zero fixed tower count rejected");
+        p.Salvation.SweepCount = 1000; Reject(p.Validate, "Oversized fixed tower count rejected"); p.Salvation.SweepCount = 4;
         Check(DailyStageCatalog.Enabled("salvation", restored) && DailyStageCatalog.Name("event_battle") == "活动战斗", "Both native battle stages are selectable without a plugin");
 
         var s = O(("Ready", true), ("Idle", true), ("Unlocked", true), ("Season", true), ("Level", 12), ("Free", 6), ("Paid", 99), ("Stones", 80), ("RemainingCost", 100), ("Reward", 9), ("Cost", 1));
@@ -27,6 +48,17 @@ static class NativeDailyBattleCases
         Check(S(DailySalvation.Plan(s, 8)["reason"]) == "salvation_keys_reserved", "Reserve above inventory skips without paid tickets");
         s["Cost"] = 2; Check(N(DailySalvation.Plan(s, 1)["count"]) == 2, "Tower count accounts for multi-key sweep cost"); s["Cost"] = 1;
         s["Stones"] = 100; Check(S(DailySalvation.Plan(s, 0)["reason"]) == "salvation_growth_funded", "Unspent stones already sufficient prevents farming");
+        Check(N(DailySalvation.Plan(s, 0, 5)["count"]) == 5, "Fixed tower count ignores sufficient saved growth stones");
+        s["RemainingCost"] = 0;
+        Check(N(DailySalvation.Plan(s, 0, 5)["count"]) == 5, "Fixed tower count runs after all upgrades are maxed");
+        Check(N(DailySalvation.Plan(s, 4, 5)["count"]) == 2, "Fixed tower count still respects retained daily keys");
+        Check(S(DailySalvation.Plan(s, 6, 5)["reason"]) == "salvation_keys_reserved", "No daily keys never falls back to stored paid keys");
+        s["Cost"] = 2;
+        Check(N(DailySalvation.Plan(s, 1, 5)["count"]) == 2, "Fixed tower count is clamped to multi-key costs"); s["Cost"] = 1;
+        s["RemainingCost"] = 100; s["Stones"] = 99;
+        Check(N(DailySalvation.Plan(s, 0, 5)["count"]) == 5 && N(DailySalvation.Plan(s, 0)["count"]) == 1, "Fixed count is not shortened by a one-run growth deficit");
+        Reject(() => DailySalvation.Plan(s, 0, -1), "Negative fixed count rejected");
+        Reject(() => DailySalvation.Plan(s, 0, 1000), "Unbounded fixed count rejected");
         s["RemainingCost"] = 0; Check(S(DailySalvation.Plan(s, 0)["reason"]) == "salvation_growth_funded", "Maxed growth skips"); s["RemainingCost"] = 100; s["Stones"] = 80;
         foreach (var pair in new[] { ("Idle", "salvation_run_in_progress"), ("Ready", "salvation_not_ready"), ("Unlocked", "salvation_locked"), ("Season", "salvation_closed") })
         {
@@ -78,6 +110,13 @@ static class NativeDailyBattleCases
         var towerEvents = new JsonArray(Event("salvation.sweep", "request", 1), Event("salvation.sweep", "response", 2, ("ScoreInfo", O(("obsidian", 27)))));
         Check(N(DailySalvation.Verify(towerOp, towerEvents, Evidence(Read("salvation.native", ("$self", towerAfterState))))["count"]) == 3, "Tower settles native score and free key changes");
         towerAfterState["Paid"] = 98; Reject(() => DailySalvation.Verify(towerOp, towerEvents, Evidence(Read("salvation.native", ("$self", towerAfterState)))), "Tower refuses any paid key debit");
+        s["RemainingCost"] = 0; s["Stones"] = 100;
+        var fixedPlan = DailySalvation.Plan(s, 3, 5);
+        var fixedOp = O(("before", Evidence(Read("salvation.native", ("$self", s)))), ("scope", fixedPlan));
+        var fixedAfter = s.DeepClone().AsObject(); fixedAfter["Free"] = 3; fixedAfter["Stones"] = 127; fixedAfter["Popup"] = false;
+        Check(N(DailySalvation.Verify(fixedOp, towerEvents, Evidence(Read("salvation.native", ("$self", fixedAfter))))["count"]) == 3, "Fixed sweep confirms actual limited count with growth already maxed");
+        fixedOp["scope"]!["fixedCount"] = 2;
+        Reject(() => DailySalvation.Verify(fixedOp, towerEvents, Evidence(Read("salvation.native", ("$self", fixedAfter)))), "Fixed mode receipt cannot confirm more runs than requested");
         var cycle = O(("day", "today")); var context = O(("cycle", cycle));
         var history = new[] { O(("cycle", cycle), ("scope", nativePlan), ("state", "superseded")) };
         Check(DailyEventNative.BudgetUsed(history, context, 100) == 2 && DailyEventNative.BudgetUsed(history, context, 101) == 0, "Uncertain interrupted auto reserves its budget without blocking a fresh lobby");
@@ -86,6 +125,11 @@ static class NativeDailyBattleCases
         var liveFrame = frame.DeepClone().AsObject();
         liveFrame["Surfaces"] = new JsonArray(HomeNavigationCases.Surface("BattleUI_EventBattle"), HomeNavigationCases.Surface("BattleResultUI"));
         Check(DailyNativeBattleRecovery.CanResume(resumeOp, new(liveFrame, resumeContext)), "Owned native result can be exited after restart of the controller");
+        liveFrame["Surfaces"] = new JsonArray(HomeNavigationCases.Surface("BattleResultUI"));
+        Check(DailyNativeBattleRecovery.CanResume(resumeOp, new(liveFrame, resumeContext)), "Owned terminal result resumes after the event HUD disappears");
+        liveFrame["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("BattleUI_PVP"));
+        Check(!DailyNativeBattleRecovery.CanResume(resumeOp, new(liveFrame, resumeContext)), "A later foreign battle cannot inherit the event result record");
+        liveFrame["Surfaces"] = new JsonArray(HomeNavigationCases.Surface("BattleResultUI"));
         liveFrame["ProcessId"] = 99;
         Check(!DailyNativeBattleRecovery.CanResume(resumeOp, new(liveFrame, resumeContext)), "A different game process cannot inherit an active native battle");
         liveFrame["Surfaces"] = new JsonArray(HomeNavigationCases.Surface("EventBattleUI"));

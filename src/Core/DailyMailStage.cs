@@ -5,6 +5,22 @@ namespace Dustweave;
 
 public static class DailyMailProof
 {
+    // Native Define_ElementType: both regular and stacked PvP entry currency.
+    // Inspect every attachment; a mixed reward is received as one indivisible mail.
+    public static HashSet<string> ClaimableIds(JsonObject state, string tab, bool preserve)
+    {
+        var ids = Ids(state, tab);
+        if (!preserve) return ids;
+        foreach (var row in DailyEvidence.Reading(state, "mail." + tab, "$items")!.AsArray())
+        {
+            if (row?["ItemType"] is not JsonArray types || row["ItemId"] is not JsonArray items || row["ItemCount"] is not JsonArray counts ||
+                types.Count != items.Count || types.Count != counts.Count)
+                throw new InvalidDataException("mail_attachment_data_unavailable");
+            if (types.Any(t => DailyEvidence.Integer(t) is 15 or 24))
+                ids.Remove(DailyEvidence.Integer(row["InvenIndex"]).ToString(CultureInfo.InvariantCulture));
+        }
+        return ids;
+    }
     public static HashSet<string> Ids(JsonObject state, string tab)
     {
         var rows = DailyEvidence.Reading(state, "mail." + tab, "$items")!.AsArray();
@@ -12,11 +28,13 @@ public static class DailyMailProof
             throw new InvalidDataException("Mailbox truncated");
         return rows.Select(r => DailyEvidence.Integer(r!["InvenIndex"]).ToString(CultureInfo.InvariantCulture)).ToHashSet(StringComparer.Ordinal);
     }
-    public static JsonObject Verify(JsonObject before, JsonArray events, JsonObject after, string tab)
+    public static JsonObject Verify(JsonObject before, JsonArray events, JsonObject after, string tab, HashSet<string>? claimed = null)
     {
         if (tab is not ("normal" or "cash"))
             throw new InvalidDataException("Invalid mailbox tab");
-        var ids = Ids(before, tab);
+        var all = Ids(before, tab);
+        var ids = claimed ?? all;
+        if (!ids.IsSubsetOf(all)) throw new InvalidDataException("Claimed mail not in original snapshot");
         var remaining = Ids(after, tab);
         var selected = events.Select(e => e!.AsObject()).Where(e => e["Role"]?.GetValue<string>() == "mail.collect").ToArray();
         var requests = selected.Where(e => e["Kind"]?.GetValue<string>() == "request").ToArray();
@@ -35,7 +53,9 @@ public static class DailyMailProof
             DailyEvidence.Values(response);
         if (ids.Count == 0 || ids.Overlaps(remaining))
             throw new InvalidDataException("Claimed mail still in cache");
-        long expected = tab == "cash" ? DailyEvidence.Integer(DailyEvidence.Reading(before, "mail.cash_total", "$self")) : ids.Count;
+        if (claimed != null && all.Except(ids).Any(id => !remaining.Contains(id)))
+            throw new InvalidDataException("mail_preserved_items_changed");
+        long expected = claimed == null && tab == "cash" ? DailyEvidence.Integer(DailyEvidence.Reading(before, "mail.cash_total", "$self")) : ids.Count;
         if (responses.LongLength < (expected + 9) / 10)
             throw new InvalidDataException("Mail responses incomplete");
         return new()
@@ -51,14 +71,47 @@ public sealed class DailyMailStage : IDailyManagedStage
 {
     private const string TabPath = "ὭὯὫὫὮὡὠὮὤὬὨ";
     private readonly string root; private readonly DailyCommandDriver driver; private readonly Func<bool> stopped; private readonly Func<double> clock; private readonly Func<TimeSpan, Task> delay; private readonly DailyNavigationPolicy policy;
-    public DailyMailStage(string root, DailyCommandDriver driver, Func<bool> stopped, Func<double>? clock = null, Func<TimeSpan, Task>? delay = null)
+    private readonly Func<bool> preserveBloodCocktail;
+    public DailyMailStage(string root, DailyCommandDriver driver, Func<bool> stopped, Func<double>? clock = null, Func<TimeSpan, Task>? delay = null, Func<bool>? preserveBloodCocktail = null)
     {
         this.root = root;
         this.driver = driver;
         this.stopped = stopped;
         this.clock = clock ?? (() => Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency);
         this.delay = delay ?? (t => Task.Delay(t));
+        this.preserveBloodCocktail = preserveBloodCocktail ?? (() => false);
         policy = DailyNavigationPolicy.Load();
+    }
+    private async Task LoadFilteredMailbox(string tab, int value, JsonObject actor)
+    {
+        // The native list initially contains only 100 normal / 20 cash mails.
+        // Load later pages before deciding that only protected rewards remain.
+        for (int page = 0; page < 100; page++)
+        {
+            Stop();
+            var before = await driver.EvidenceAsync(["mail"]);
+            if (!DailyEvidence.SameActor(before["Frame"]!.AsObject(), actor)) throw new StageHostException("identity", "读取邮箱时游戏或账号发生变化。");
+            var ids = DailyMailProof.Ids(before, tab);
+            long total = DailyEvidence.Integer(DailyEvidence.Reading(before, "mail." + tab + "_total", "$self"));
+            if (ids.Count >= total) return;
+            if (total > 1000) throw new StageHostException("adapter", "mail_filtered_page_limit");
+            long cursor = ids.Count == 0 ? 0 : tab == "normal" ? ids.Max(long.Parse) : ids.Min(long.Parse);
+            await driver.SendObservedAsync(new() { ["ui"] = "MailUI", ["operation"] = "mail_page", ["value"] = value,
+                ["items"] = new JsonArray(cursor), ["reason"] = "读取剩余邮件附件" });
+            double end = clock() + 25;
+            bool progressed = false;
+            while (clock() < end)
+            {
+                Stop();
+                var after = await driver.EvidenceAsync(["mail"]);
+                if (!DailyEvidence.SameActor(after["Frame"]!.AsObject(), actor)) throw new StageHostException("identity", "读取邮箱时游戏或账号发生变化。");
+                if (DailyMailProof.Ids(after, tab).Count > ids.Count || DailyEvidence.Integer(DailyEvidence.Reading(after, "mail." + tab + "_total", "$self")) <= ids.Count)
+                { progressed = true; break; }
+                await delay(TimeSpan.FromMilliseconds(150));
+            }
+            if (!progressed) throw new StageHostException("adapter", "mail_filtered_page_unavailable");
+        }
+        throw new StageHostException("adapter", "mail_filtered_page_limit");
     }
     private IEnumerable<JsonObject> Pending(JsonObject context)
     {
@@ -109,6 +162,8 @@ public sealed class DailyMailStage : IDailyManagedStage
             throw new StageHostException("identity", "邮箱现场与原队列不一致。");
         var interrupted = Pending(context).ToArray();
         var operations = new JsonArray();
+        bool preserve = preserveBloodCocktail();
+        var preserved = new HashSet<string>(StringComparer.Ordinal);
         try
         {
             if (DailyNavigationDecision.Types(initial.Frame).Contains("MailUI"))
@@ -133,12 +188,16 @@ public sealed class DailyMailStage : IDailyManagedStage
                     ["reason"] = "检查另一类邮箱"
                 });
                 await WaitTab(tab);
+                if (preserve) await LoadFilteredMailbox(tab, value, initial.Frame);
                 bool drained = false;
-                for (int batch = 0; batch < 100; batch++)
+                for (int batch = 0; batch <= 100; batch++)
                 {
                     Stop();
                     var before = await driver.EvidenceAsync(["mail"]);
                     var ids = DailyMailProof.Ids(before, tab);
+                    var claimable = DailyMailProof.ClaimableIds(before, tab, preserve);
+                    foreach (string held in ids.Except(claimable)) preserved.Add(tab + ":" + held);
+                    var selected = preserve ? claimable.OrderBy(long.Parse).Take(10).ToHashSet(StringComparer.Ordinal) : ids;
                     if (!DailyEvidence.SameActor(before["Frame"]!.AsObject(), initial.Frame))
                         throw new StageHostException("identity", "读取邮箱时游戏或账号发生变化。");
                     // Fresh native mailbox IDs decide what is still claimable. Old
@@ -150,25 +209,29 @@ public sealed class DailyMailStage : IDailyManagedStage
                             ["original_success_claimed"] = false, ["saved_action_replayed"] = false, ["remaining"] = ids.Count };
                         DailyJson.Write(Path.Combine(root, "live", "business", prior["id"]!.GetValue<string>() + ".json"), prior);
                     }
-                    if (ids.Count == 0)
+                    if (selected.Count == 0)
                     {
                         drained = true;
                         break;
                     }
+                    if (batch == 100) break;
                     if (before["Taps"] is not JsonArray taps || !taps.Any(t => t?.GetValue<string>() == "mail.collect"))
                         throw new StageHostException("adapter", "Required mail response observer unavailable");
                     if (Pending(context).Any(o => !interrupted.Any(prior => JsonNode.DeepEquals(prior["id"], o["id"]))))
                         throw new StageHostException("pending", "邮箱领取前仍有未确认事务。");
                     string id = Guid.NewGuid().ToString("N"), path = Path.Combine(root, "live", "business", id + ".json");
-                    var action = new JsonObject { ["ui"] = "MailUI", ["field"] = "_objAllReceiveButton", ["reason"] = "一键领取邮箱物品" };
-                    var op = new JsonObject { ["id"] = id, ["role"] = "mail.collect", ["scope"] = new JsonObject { ["tab"] = tab, ["instances"] = new JsonArray(ids.Order(StringComparer.Ordinal).Select(s => (JsonNode)JsonValue.Create(s)!).ToArray()) }, ["account"] = context["actor"]![3]!.DeepClone(), ["player"] = context["actor"]![4]!.DeepClone(), ["server"] = context["server"]!.DeepClone(), ["cycle"] = context["cycle"]!.DeepClone(), ["state"] = "prepared", ["at"] = driver.UtcTicks, ["before"] = before.DeepClone(), ["action"] = action.DeepClone(), ["roles"] = new JsonArray("mail.collect"), ["proof_version"] = 1, ["stage"] = "mail", ["engine"] = "dotnet-mail-v1" };
+                    var action = preserve
+                        ? new JsonObject { ["ui"] = "MailUI", ["operation"] = "mail_collect_filtered", ["value"] = value,
+                            ["items"] = new JsonArray(selected.OrderBy(long.Parse).Select(s => (JsonNode)JsonValue.Create(long.Parse(s))!).ToArray()), ["reason"] = "领取未保留的邮箱物品" }
+                        : new JsonObject { ["ui"] = "MailUI", ["field"] = "_objAllReceiveButton", ["reason"] = "一键领取邮箱物品" };
+                    var op = new JsonObject { ["id"] = id, ["role"] = "mail.collect", ["scope"] = new JsonObject { ["tab"] = tab, ["instances"] = new JsonArray(selected.Order(StringComparer.Ordinal).Select(s => (JsonNode)JsonValue.Create(s)!).ToArray()) }, ["account"] = context["actor"]![3]!.DeepClone(), ["player"] = context["actor"]![4]!.DeepClone(), ["server"] = context["server"]!.DeepClone(), ["cycle"] = context["cycle"]!.DeepClone(), ["state"] = "prepared", ["at"] = driver.UtcTicks, ["before"] = before.DeepClone(), ["action"] = action.DeepClone(), ["roles"] = new JsonArray("mail.collect"), ["proof_version"] = 1, ["stage"] = "mail", ["engine"] = "dotnet-mail-v1" };
                     DailyJson.Write(path, op);
                     try
                     {
                         Stop();
                         op["state"] = "dispatching";
                         DailyJson.Write(path, op);
-                        action["reason"] = "business:" + id + "|一键领取邮箱物品";
+                        action["reason"] = "business:" + id + "|" + action["reason"]!.GetValue<string>();
                         try
                         {
                             var done = await driver.SendObservedAsync(action);
@@ -187,7 +250,7 @@ public sealed class DailyMailStage : IDailyManagedStage
                             op["last_observation"] = after.DeepClone();
                             try
                             {
-                                var result = DailyMailProof.Verify(before, events, after, tab);
+                                var result = DailyMailProof.Verify(before, events, after, tab, preserve ? selected : null);
                                 op["result"] = result;
                                 op["after"] = after;
                                 op["state"] = "completed";
@@ -236,7 +299,8 @@ public sealed class DailyMailStage : IDailyManagedStage
             return new()
             {
                 ["state"] = operations.Count > 0 ? "completed" : "skipped",
-                ["reason"] = operations.Count > 0 ? "mailbox_collected" : "mailbox_empty",
+                ["reason"] = preserved.Count > 0 ? operations.Count > 0 ? "mailbox_collected_with_preservation" : "mailbox_blood_cocktail_preserved" : operations.Count > 0 ? "mailbox_collected" : "mailbox_empty",
+                ["preserved_mail_count"] = preserved.Count,
                 ["operations"] = operations,
                 ["engine"] = "dotnet-mail-v1"
             };

@@ -25,7 +25,9 @@ public sealed class DailyManagedReconciliation
     private static JsonObject Verify(JsonObject op, JsonArray events, JsonObject after) => op["role"]!.GetValue<string>() switch
     {
         "room.info" => DailyEvidence.VerifyRoom(op["before"]!.AsObject(), events, after),
-        "mail.collect" => DailyMailProof.Verify(op["before"]!.AsObject(), events, after, op["scope"]!["tab"]!.GetValue<string>()),
+        "mail.collect" => DailyMailProof.Verify(op["before"]!.AsObject(), events, after, op["scope"]!["tab"]!.GetValue<string>(),
+            op["action"]?["operation"]?.GetValue<string>() == "mail_collect_filtered"
+                ? op["scope"]!["instances"]!.AsArray().Select(id => id!.GetValue<string>()).ToHashSet(StringComparer.Ordinal) : null),
         _ => throw new InvalidDataException("Unsupported managed proof")
     };
     public async Task<JsonObject> RunAsync(JsonObject context)
