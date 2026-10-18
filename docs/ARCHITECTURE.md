@@ -1,8 +1,8 @@
 # Repository architecture / 仓库架构
 
-Dustweave 是一个日常应用。源码、账号、连接、配置与验证在同一仓库内维护；`standalone/` 中的小游戏与辅助工具保留独立项目边界。支持可选插件。
+Dustweave 是一个日常应用。源码、账号、连接、配置与验证在同一仓库内维护。装备助手、MANSION RUNAWAY 与潘多拉是 `src/` 下的自有模块；其余工具在 `standalone/` 中保留独立项目边界。支持可选插件。
 
-Dustweave is one daily application. Its accounts, workflows, connection, configuration and verification are maintained together. Independent games/tools retain their own boundaries under `standalone/`. Optional plugins are supported.
+Dustweave is one daily application. Its accounts, workflows, connection, configuration and verification are maintained together. Equipment Assistant, MANSION RUNAWAY and Pandora are owned modules under `src/`; the remaining independent tools retain their boundaries under `standalone/`. Optional plugins are supported.
 
 ## Dependencies / 依赖方向
 
@@ -12,6 +12,7 @@ Desktop ── Core ── Accounts
     ├── Connection ── Core + Shared/Ipc (bounded helper mode)
     ├── ToolHost ── standalone fishing / sichuan
     ├── tools/TableExporter + tools/RuntimeCheck
+    ├── Equipment/desktop ── Equipment/core ── Equipment/connection
     └── standalone tool windows
 
 assets/flows + assets/rules → Core resources and package data
@@ -31,6 +32,7 @@ Runtime sources are compiled by the adapter against the user's client. Shared IP
 | `src/Core` | Stages, scheduling, recovery, trading, optional extension contracts | External plugin implementations |
 | `src/Accounts` | Identity, protected sessions and launching | Copying user credentials into source |
 | `src/Connection`, `Compatibility`, `Runtime`, `Shared` | Adaptation, command delivery, observations and shared IPC | Ad-hoc second connections bypassing host ownership |
+| [`src/Equipment`](../src/Equipment), [`src/Mansion`](../src/Mansion), [`src/Pandora`](../src/Pandora) | Owned tool logic and integration, shipped with Dustweave | Requiring archived standalone downloads or separate releases |
 | `assets` | Flow rules and observation specifications | Captures, inventories or whole client assemblies |
 | `standalone` | Reviewed independent tool updates and host integration | Moving daily business into an unrelated tool |
 | `tools` | Data generation and development/diagnostic entry points | Another user-facing daily application |

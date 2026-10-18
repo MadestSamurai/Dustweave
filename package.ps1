@@ -138,7 +138,8 @@ foreach($flavor in $Flavors){
  Copy-Item -LiteralPath (Join-Path $root 'THIRD_PARTY_NOTICES.md') -Destination $bundle
  Copy-Item -LiteralPath (Join-Path $root 'LICENSE') -Destination $bundle
  foreach($repository in $tools){
-  $module=Join-Path $root ('standalone/'+$repository);$guide=Join-Path $bundle ('docs/tools/'+$repository);[IO.Directory]::CreateDirectory($guide)|Out-Null
+  $sourceDirectory=if($repository -eq 'bd2-equipment-assistant'){'src/Equipment'}else{'standalone/'+$repository}
+  $module=Join-Path $root $sourceDirectory;$guide=Join-Path $bundle ('docs/tools/'+$repository);[IO.Directory]::CreateDirectory($guide)|Out-Null
   foreach($name in @('README.md','README.en.md','README_EN.md','THIRD_PARTY_NOTICES.md')){if(Test-Path -LiteralPath (Join-Path $module $name)){Copy-Item -LiteralPath (Join-Path $module $name) -Destination $guide}}
   Copy-Item -LiteralPath (Join-Path $module 'LICENSE') -Destination (Join-Path $bundle ('licenses/'+$repository+'-MIT.txt'))
  }

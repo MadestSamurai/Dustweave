@@ -28,7 +28,7 @@ foreach($file in $sourceFiles){
  if($file.Name -in $blockedNames -or $relative -match '(^|/)(references|artifacts|private-data|secrets|plugins|\.git)/' -or $file.Extension -in @('.py','.pyc','.pyd','.pfx','.key','.db')){
   $errors.Add("Forbidden source payload: $relative")
  }
- if($file.Extension -in @('.dll','.exe','.so') -and $relative -notmatch '^(third-party/|standalone/[^/]+/vendor/)'){
+ if($file.Extension -in @('.dll','.exe','.so') -and $relative -notmatch '^(third-party/|standalone/[^/]+/vendor/)' -and $relative -ne 'src/Equipment/vendor/highs/highs.dll'){
   $errors.Add("Unexpected binary source: $relative")
  }
 }

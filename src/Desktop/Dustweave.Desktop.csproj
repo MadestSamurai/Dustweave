@@ -24,7 +24,7 @@
     <ProjectReference Include="../../standalone/bd2-sichuan/desktop/BD2Sichuan.Desktop.csproj" Aliases="toolBD2Sichuan" />
     <ProjectReference Include="../../standalone/bd2-rhythm/desktop/BD2Rhythm.Desktop.csproj" Aliases="toolBD2Rhythm" />
     <ProjectReference Include="../../standalone/bd2-territory/desktop/BD2Territory.Desktop.csproj" Aliases="toolBD2Territory" />
-    <ProjectReference Include="../../standalone/bd2-equipment-assistant/desktop/BD2EquipmentAssistant.csproj" Aliases="toolBD2EquipmentAssistant" />
+    <ProjectReference Include="../Equipment/desktop/Dustweave.Equipment.Desktop.csproj" Aliases="toolBD2EquipmentAssistant" />
     <ProjectReference Include="../../standalone/bd2-apostle-defense/desktop/BD2ApostleDefense.Desktop.csproj" Aliases="toolBD2ApostleDefense" />
     <ProjectReference Include="../../standalone/bd2-infinite-gacha/desktop/BD2InfiniteGacha.Desktop.csproj" Aliases="toolBD2InfiniteGacha" />
     <ProjectReference Include="../../standalone/bd2-secret-vision/desktop/BD2SecretVision.Desktop.csproj" Aliases="toolBD2SecretVision" />

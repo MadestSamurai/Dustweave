@@ -5,6 +5,9 @@
     <Project Path="src/Connection/Dustweave.Connection.csproj" />
     <Project Path="src/Core/Dustweave.Core.csproj" />
     <Project Path="src/Desktop/Dustweave.Desktop.csproj" />
+    <Project Path="src/Equipment/connection/Dustweave.Equipment.Connection.csproj" />
+    <Project Path="src/Equipment/core/Dustweave.Equipment.Core.csproj" />
+    <Project Path="src/Equipment/desktop/Dustweave.Equipment.Desktop.csproj" />
     <Project Path="src/ToolHost/Dustweave.ToolHost.csproj" />
   </Folder>
   <Folder Name="/tools/">
@@ -21,9 +24,6 @@
     <Project Path="standalone/bd2-apostle-defense/compatibility/BD2ApostleDefense.Compatibility.csproj" />
     <Project Path="standalone/bd2-apostle-defense/core/BD2ApostleDefense.Core.csproj" />
     <Project Path="standalone/bd2-apostle-defense/desktop/BD2ApostleDefense.Desktop.csproj" />
-    <Project Path="standalone/bd2-equipment-assistant/connection/BD2Equipment.Connection.csproj" />
-    <Project Path="standalone/bd2-equipment-assistant/core/BD2Equipment.Core.csproj" />
-    <Project Path="standalone/bd2-equipment-assistant/desktop/BD2EquipmentAssistant.csproj" />
     <Project Path="standalone/bd2-fiend-hunter/compatibility/BD2FiendHunter.Compatibility.csproj" />
     <Project Path="standalone/bd2-fiend-hunter/core/BD2FiendHunter.Core.csproj" />
     <Project Path="standalone/bd2-fiend-hunter/desktop/BD2FiendHunter.Desktop.csproj" />

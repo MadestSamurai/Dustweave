@@ -44,7 +44,7 @@ internal static class ToolApplicationHost
             await Task.Delay(50);
         }
     }
-    internal static string Version(DailyToolDefinition tool) => tool.Id is "mansion-runaway" or "pandora" ? DailyProductVersion.Current : Assembly.Load(new AssemblyName(tool.AssemblyName)).GetName().Version!.ToString(3);
+    internal static string Version(DailyToolDefinition tool) => tool.Id is "equipment" or "mansion-runaway" or "pandora" ? DailyProductVersion.Current : Assembly.Load(new AssemblyName(tool.AssemblyName)).GetName().Version!.ToString(3);
     public static int CheckClient(string id, string managed, string output)
     {
         Directory.CreateDirectory(output);

@@ -54,7 +54,7 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 | --- | --- |
 | 自动钓鱼 | 钓鱼、鱼饵管理、保留规则与背包出售 |
 | 领地自动化 | 种植、采集、料理、库存出售与布局 |
-| 装备助手 | 搓粉规划与批量精炼，确认预算后执行 |
+| [装备助手](src/Equipment) | 搓粉规划与批量精炼，确认预算后执行 |
 | 连连看 · 音游 | 盘面求解与续局；读取谱面并自动操作 |
 | 使徒运气防守 | 采用离线退火优化的策略，自动召唤、合成、培养、布局与阶段重开 |
 | SECRET VISION · 恶魔猎人 | 自动圈地与避让；自动移动与攻击，两者均支持失败重试 |
@@ -74,7 +74,7 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 - [连连看](https://github.com/MadestSamurai/bd2-sichuan) · [音游](https://github.com/MadestSamurai/bd2-rhythm) · [使徒运气防守](https://github.com/MadestSamurai/bd2-apostle-defense)
 - [SECRET VISION](https://github.com/MadestSamurai/bd2-secret-vision) · [恶魔猎人](https://github.com/MadestSamurai/bd2-fiend-hunter) · [无限抽抽乐](https://github.com/MadestSamurai/bd2-infinite-gacha)
 
-内置源码位于 [`standalone/`](standalone)、[`src/Mansion/`](src/Mansion) 和 [`src/Pandora/`](src/Pandora)，保留各自署名与许可证。
+装备助手、MANSION RUNAWAY 与潘多拉分别在 [`src/Equipment/`](src/Equipment)、[`src/Mansion/`](src/Mansion) 和 [`src/Pandora/`](src/Pandora) 维护；其余独立工具的内置源码位于 [`standalone/`](standalone)。各模块保留原有署名与许可证。
 
 </details>
 

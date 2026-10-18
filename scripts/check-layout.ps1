@@ -11,6 +11,13 @@ if(@($solutionProjects|Group-Object|Where-Object Count -gt 1).Count){$errors.Add
 if($manifest.entryProject -ne 'src/Desktop/Dustweave.Desktop.csproj'){$errors.Add('Unexpected application entry project.')}
 
 $references=0;$resources=0
+# These owned projects retain the original assembly names used by the hosted
+# loader, WPF resources and package dependency locks. Do not exempt other names.
+$equipmentAssemblies=@{
+ 'src/Equipment/connection/Dustweave.Equipment.Connection.csproj'='BD2Equipment.Connection'
+ 'src/Equipment/core/Dustweave.Equipment.Core.csproj'='BD2Equipment.Core'
+ 'src/Equipment/desktop/Dustweave.Equipment.Desktop.csproj'='BD2EquipmentAssistant'
+}
 foreach($relative in $declared){
  $project=[IO.Path]::GetFullPath((Join-Path $root $relative))
  if(!$project.StartsWith($prefix,[StringComparison]::OrdinalIgnoreCase) -or !(Test-Path -LiteralPath $project -PathType Leaf)){$errors.Add("Missing/outside project: $relative");continue}
@@ -18,7 +25,7 @@ foreach($relative in $declared){
  if($relative -notlike 'standalone/*'){
   if([IO.Path]::GetFileName($relative) -notlike 'Dustweave.*.csproj'){$errors.Add("Owned project does not use the product name: $relative")}
   $assembly=$xml.SelectSingleNode('//AssemblyName')
-  if($assembly -and $assembly.InnerText -ne 'Dustweave' -and $assembly.InnerText -notlike 'Dustweave.*'){$errors.Add("Owned assembly does not use the product name: $relative")}
+  if($assembly -and $assembly.InnerText -ne 'Dustweave' -and $assembly.InnerText -notlike 'Dustweave.*' -and $assembly.InnerText -ne $equipmentAssemblies[$relative]){$errors.Add("Owned assembly does not use the product name: $relative")}
  }
  foreach($item in $xml.SelectNodes('//ProjectReference[@Include]|//Compile[@Include]|//EmbeddedResource[@Include]')){
   foreach($include in $item.Include.Split(';')){

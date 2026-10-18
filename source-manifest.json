@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-18T10:57:42.7377129Z",
+  "generatedUtc": "2026-10-18T12:34:23.712468Z",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -10,15 +10,15 @@
     "src/Connection/Dustweave.Connection.csproj",
     "src/Core/Dustweave.Core.csproj",
     "src/Desktop/Dustweave.Desktop.csproj",
+    "src/Equipment/connection/Dustweave.Equipment.Connection.csproj",
+    "src/Equipment/core/Dustweave.Equipment.Core.csproj",
+    "src/Equipment/desktop/Dustweave.Equipment.Desktop.csproj",
     "src/Launcher/Dustweave.Launcher.csproj",
     "src/ToolHost/Dustweave.ToolHost.csproj",
     "src/Updater/Dustweave.Updater.csproj",
     "standalone/bd2-apostle-defense/compatibility/BD2ApostleDefense.Compatibility.csproj",
     "standalone/bd2-apostle-defense/core/BD2ApostleDefense.Core.csproj",
     "standalone/bd2-apostle-defense/desktop/BD2ApostleDefense.Desktop.csproj",
-    "standalone/bd2-equipment-assistant/connection/BD2Equipment.Connection.csproj",
-    "standalone/bd2-equipment-assistant/core/BD2Equipment.Core.csproj",
-    "standalone/bd2-equipment-assistant/desktop/BD2EquipmentAssistant.csproj",
     "standalone/bd2-fiend-hunter/compatibility/BD2FiendHunter.Compatibility.csproj",
     "standalone/bd2-fiend-hunter/core/BD2FiendHunter.Core.csproj",
     "standalone/bd2-fiend-hunter/desktop/BD2FiendHunter.Desktop.csproj",
@@ -266,11 +266,11 @@
     },
     {
       "path": "docs/DEVELOPMENT.md",
-      "sha256": "5bc591ae279f6e8903b3e651b431433903ab2e9a069f2a173140e11cfa7d4eb2",
+      "sha256": "7cb47645b65b614ce7d74cfdf166e0a8b28fa33abc85c712fb8254384bbe07ac",
       "reasons": [
         "build input"
       ],
-      "bytes": 38828
+      "bytes": 39546
     },
     {
       "reasons": [
@@ -1993,11 +1993,11 @@
     },
     {
       "path": "src/Core/DailyToolCatalog.cs",
-      "sha256": "e63204f67127c05ec7c52362783dc6e1961020e78eb06c9868fb45185c09d19e",
+      "sha256": "90f3f73a04cb7739aa3fc574acbd5ebadc03adc92dfdb1914304669208f414bd",
       "reasons": [
         "build input"
       ],
-      "bytes": 3843
+      "bytes": 3829
     },
     {
       "path": "src/Core/DailyTools.cs",
@@ -2705,11 +2705,11 @@
     },
     {
       "path": "src/Desktop/Dustweave.Desktop.csproj",
-      "sha256": "3fad544304757a1f8f0f863ac7aa5d50ca1241df74b4bceecf14cadfaffe899e",
+      "sha256": "79f2b13b02ccbc5b8e7eeba8677dce4596e4f5f03de5fb50ccffae086f0f2719",
       "reasons": [
         "build input"
       ],
-      "bytes": 3959
+      "bytes": 3937
     },
     {
       "path": "src/Desktop/EquipmentToolPresentation.cs",
@@ -3257,11 +3257,11 @@
     },
     {
       "path": "src/Desktop/ToolApplicationHost.cs",
-      "sha256": "e9bf6c6885135a31f7356a000aa215a8d31e962c94c89163b8065d835c82ab1f",
+      "sha256": "d0d81d8f3ffaf6222ea071645adad0643fba69267758b841f066be76f5adc641",
       "reasons": [
         "build input"
       ],
-      "bytes": 5984
+      "bytes": 5999
     },
     {
       "path": "src/Desktop/ToolMenuProbe.cs",
@@ -3278,6 +3278,630 @@
         "build input"
       ],
       "bytes": 20377
+    },
+    {
+      "path": "src/Equipment/catalog.json",
+      "sha256": "fc412529ef4301c1c7229267c5f5abde287a33256b84a52b8cc82f0831324633",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 211996
+    },
+    {
+      "path": "src/Equipment/compatibility/BindingResolver.cs",
+      "sha256": "d82b4bef66ba58bfcb0f20a585681ae255fd3265493be7927393c3627a97a836",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 4913
+    },
+    {
+      "path": "src/Equipment/compatibility/ClientAdapter.cs",
+      "sha256": "b43530c38258b57818743b55bfd37fa6208650378448ca4c6d76ba1270913cfa",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1822
+    },
+    {
+      "path": "src/Equipment/compatibility/contract.json",
+      "sha256": "59f9b272cc474ddd33b4dd1b2974ec989ad5b981e83a95bef23751349e0a2ed2",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 180475
+    },
+    {
+      "path": "src/Equipment/compatibility/ContractGenerator.cs",
+      "sha256": "48da0a19e4540618d74fc9e641f5133791a011c076b0e1956ab4c40acf04ffc8",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2297
+    },
+    {
+      "path": "src/Equipment/compatibility/MetadataIndex.cs",
+      "sha256": "25c4057d3dd74db940558da2f812befe6bf59f8e940a48c38a64a3720b592e51",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 6226
+    },
+    {
+      "path": "src/Equipment/connection/Dustweave.Equipment.Connection.csproj",
+      "sha256": "ec294badc69bf72c6ae5fd5992a55d18911352c0c55a601dbef332fc63f286ea",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1575
+    },
+    {
+      "path": "src/Equipment/connection/EquipmentTransport.cs",
+      "sha256": "7b6b1f60c4169efc06f4ac217d46fed48badb39388c705851c36d01537e9ca52",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 790
+    },
+    {
+      "path": "src/Equipment/connection/LiveEntry.cs",
+      "sha256": "05fe565e928054d2b30043f6e394d072ad75c94857e8d1d95171ad30e8263339",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 9071
+    },
+    {
+      "path": "src/Equipment/connection/packages.lock.json",
+      "sha256": "916311fa59822720f456f827a7236f54e67a516beed2411d6e7eb4b483d8a123",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2316
+    },
+    {
+      "path": "src/Equipment/connection/PolicyChecks.cs",
+      "sha256": "ed1a86eb3e082bedf0f44ba8937b916d5dbcaffaf1924ce7591ae5e11f7bf883",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2269
+    },
+    {
+      "path": "src/Equipment/connection/TapManifest.cs",
+      "sha256": "d1ab449b84dfcc6eff2e30348f1c96b9f2c45b43a305cc790439338a0e4907db",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 7906
+    },
+    {
+      "path": "src/Equipment/core/CurrentCatalog.cs",
+      "sha256": "bfb12e56765e8432ba12328f2513a511c249b51a4442574dc0f3f3b075940dab",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 6266
+    },
+    {
+      "path": "src/Equipment/core/Dustweave.Equipment.Core.csproj",
+      "sha256": "0a4ecc081f5d0b59deb57761e5e04cd1c9f65e657443911cbe37862011933539",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1090
+    },
+    {
+      "path": "src/Equipment/core/EquipmentExecution.cs",
+      "sha256": "719f7487003d6f3321ae150a92fbf01236503d70edb7012dcbca3dc38b7b9d40",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 9202
+    },
+    {
+      "path": "src/Equipment/core/EquipmentPlanner.cs",
+      "sha256": "cf748555aaec9e42261c89ea0a5b15177b2234eb2dc7a09eb17f0913fcce5d68",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 8126
+    },
+    {
+      "path": "src/Equipment/core/EquipmentReadRetry.cs",
+      "sha256": "f6b244cd84ec207c327e05c8b90dc8f8a524e29992234ed38627beaddf97711e",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 698
+    },
+    {
+      "path": "src/Equipment/core/EquipmentUiFlow.cs",
+      "sha256": "2bf2bf001360d31ab6d7aa11b6be544732f56160263185617b60a74795bfafc7",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3844
+    },
+    {
+      "path": "src/Equipment/core/GearView.cs",
+      "sha256": "fbcfa63b4fa9ee5b8dbfb1638368f0d7cba9bf00c9379e6097397d735f43cc8a",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 5819
+    },
+    {
+      "path": "src/Equipment/core/IntegerOptimizer.cs",
+      "sha256": "bef6d13baf831f49188ad7d5551adb165efc98998702a645c4bef31aea4c345b",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 5379
+    },
+    {
+      "path": "src/Equipment/core/JsonData.cs",
+      "sha256": "b36586ee79cda9436a1530542413cc08142f5ffb3cdbb23acebf918c05e3cc08",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 4757
+    },
+    {
+      "path": "src/Equipment/core/LiveEquipment.cs",
+      "sha256": "2a2c927947fc5810604923a3133c584a2ee3b7452ec0e4844c648c51fd15b4ff",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 23571
+    },
+    {
+      "path": "src/Equipment/core/LiveEvidence.cs",
+      "sha256": "fdbd37cb0174d00a0d514c6c475f91cc027b518d9f3ae3046df0646f89604ede",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 6112
+    },
+    {
+      "path": "src/Equipment/core/packages.lock.json",
+      "sha256": "988cacee0d677864a0d96dae09189f972b7bb13197ff944fc3ec2c9765b4891e",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2219
+    },
+    {
+      "path": "src/Equipment/desktop/app.manifest",
+      "sha256": "d0d9dad643d2ab84e704c4f771c4a9277bb51213aefe7709b5c274d609d21f6e",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1135
+    },
+    {
+      "path": "src/Equipment/desktop/App.xaml",
+      "sha256": "3e925e2041af5269ae678c443e718a68b0091f4ace9aa6789c7867d2e2ccedc1",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 8884
+    },
+    {
+      "path": "src/Equipment/desktop/App.xaml.cs",
+      "sha256": "e698b22cd50fca478618db64f37ff339a082be5b2a68b21242e6bc1cc695f0a4",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3560
+    },
+    {
+      "path": "src/Equipment/desktop/DistributionNotice.cs",
+      "sha256": "dd17b9ed5f71e0717c2d9e16cc3d4bd92b0e1fd9d58a211cefeec69f767683f7",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 5564
+    },
+    {
+      "path": "src/Equipment/desktop/Dustweave.Equipment.Desktop.csproj",
+      "sha256": "dd80a2f4f248aa498ca0aceaef4bc24822d1c4c2060a2263939d225ae6780b77",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1186
+    },
+    {
+      "path": "src/Equipment/desktop/GearBrowser.cs",
+      "sha256": "57fc692699dfcbf789c404107b45915b89c203e1e4f068f6502afddefda6a8fd",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 11752
+    },
+    {
+      "path": "src/Equipment/desktop/Language.cs",
+      "sha256": "ff149fbf54218a0a69982544c7dc987aa1292725ecbc664cab912a7beac7842d",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3979
+    },
+    {
+      "path": "src/Equipment/desktop/LanguageWindow.cs",
+      "sha256": "2acae9431574ecdf84bff0ea0becf3ec418d7ca9ab5eece5dcdfd2d5760bce38",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2445
+    },
+    {
+      "path": "src/Equipment/desktop/MainWindow.xaml",
+      "sha256": "f6549c45cc55f4d1aa7699558490197eedba651dd30ee305974026682dae8931",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 19399
+    },
+    {
+      "path": "src/Equipment/desktop/MainWindow.xaml.cs",
+      "sha256": "b732835e67b791bba733e47eb996cae52661183e477b3a52935f424b7e34a163",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 19792
+    },
+    {
+      "path": "src/Equipment/desktop/packages.lock.json",
+      "sha256": "18ee1f0cee97599f1db54cc2e3e5ddf2daee09927d1971bb752003bd097a0e59",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2633
+    },
+    {
+      "path": "src/Equipment/desktop/WorkerClient.cs",
+      "sha256": "968804ef7809cf74616f5ca15f5cdec2da0a830cb89bb54dfb65ff8cc0363220",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2789
+    },
+    {
+      "path": "src/Equipment/Directory.Build.props",
+      "sha256": "84a5fc26d89ba641a782c371f1d813843422ca05f5c9eb4991922b69164d2ca2",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 398
+    },
+    {
+      "path": "src/Equipment/display-catalog.json",
+      "sha256": "17cb4fa54e7648a242b11adfb2d02ec2369ca561dd3fc22e0081575c6628690e",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1072156
+    },
+    {
+      "path": "src/Equipment/evidence-spec.json",
+      "sha256": "394c5d1b0ddacf83f82393516868b8e42d80a9d08e43b2bc4b3ae1976c6a314e",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 4246
+    },
+    {
+      "path": "src/Equipment/hook/Bridge.cs",
+      "sha256": "c2d7d88e9fb48352ffa5b02fa8680600e5f2ee96e29917d249137705b500e831",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 16768
+    },
+    {
+      "path": "src/Equipment/hook/EquipmentToolsNative.cs",
+      "sha256": "d415caf46b2766f4a41860721a46e0bde08d495c18070902a8f79fa980bc5263",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3913
+    },
+    {
+      "path": "src/Equipment/hook/Evidence.cs",
+      "sha256": "cd719da7b06f7c4a74debe24c75ef1da38d248b259d561372e7f2ed9b8029552",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 14602
+    },
+    {
+      "path": "src/Equipment/hook/NativeCatalog.cs",
+      "sha256": "991251eb68e2d51981651a16bb74ce0c2fba62bc1004f7abcecd4a52762fd307",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 6130
+    },
+    {
+      "path": "src/Equipment/hook/ObservationProjection.cs",
+      "sha256": "4a05de904644e441f125dc2c132748c8e8f6dbe33f90b40b4dc33970018b4ec0",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1628
+    },
+    {
+      "path": "src/Equipment/ipc/common/RequestObservation.cs",
+      "sha256": "1da48a63ae6868716b1830251a949a53f6182373facdd93eb8f7be17b49803f7",
+      "reasons": [
+        null
+      ],
+      "bytes": 5010
+    },
+    {
+      "path": "src/Equipment/ipc/common/Wire.cs",
+      "sha256": "c3cfd4805d3127a7224f110f8ca9db6a349201d1efb74ce8f75709b330a6f9ce",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 4305
+    },
+    {
+      "path": "src/Equipment/ipc/desktop/DesktopFiles.cs",
+      "sha256": "74c9c404ab39fb69a34b116c6b9471df1d8629d95fa5c75bbd0fa795dab1f68d",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3673
+    },
+    {
+      "path": "src/Equipment/ipc/desktop/HostedConnection.cs",
+      "sha256": "1c5718c64ce64dba1921efca84c35a8e6587fb95569ddeb61df0dbf3acb20910",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3418
+    },
+    {
+      "path": "src/Equipment/ipc/desktop/PipeClient.cs",
+      "sha256": "0e2418cb32800a94816efad5951f39d0da08349269af9611f6004773357c4fb6",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 6153
+    },
+    {
+      "path": "src/Equipment/ipc/runtime/Handoff.cs",
+      "sha256": "768b723b7cfd745f366002ad6aa8cb6f85d3c775821d87cf62513e2ed5a933d3",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 6769
+    },
+    {
+      "path": "src/Equipment/ipc/runtime/LegacyPilots.cs",
+      "sha256": "52f47d1431e15405fbf46c846ee49299eb65ba6b9bc5c1e7b98e9e21f1e23da8",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1526
+    },
+    {
+      "path": "src/Equipment/ipc/runtime/MainThread.cs",
+      "sha256": "230f4c3c109bbc280e27bf671f95fbc2248389ffcb9dc7f275a78133d86945da",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2234
+    },
+    {
+      "path": "src/Equipment/ipc/runtime/NativeNetworkWatch.cs",
+      "sha256": "4a36fa7d0fbcf21e74d4b261a8f304e69ae6818a04d4d35b3612931a2940e7f6",
+      "reasons": [
+        null
+      ],
+      "bytes": 1416
+    },
+    {
+      "path": "src/Equipment/ipc/runtime/PipeBroker.cs",
+      "sha256": "8f38c6333e74a1a7cf75cb64f92d05443250798953ac042f1941cf876e737ee9",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 23094
+    },
+    {
+      "path": "src/Equipment/ipc/runtime/RuntimeFiles.cs",
+      "sha256": "c0f438c02e80e654d4cfbba8e96ae91ccdebedd0573a6b086b5690157e91c060",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2772
+    },
+    {
+      "path": "src/Equipment/LICENSE",
+      "sha256": "4e52e70b106c45f0a14bc058ed8c09bbe16fb2dbbbdd84ebfcc0ccf4016f8f0c",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1089
+    },
+    {
+      "path": "src/Equipment/localization/en-US.json",
+      "sha256": "a2e82cf0132204ad17f671c62efd87202548181e2f78d4dd251852ef12f45948",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 14865
+    },
+    {
+      "path": "src/Equipment/localization/game-names.json",
+      "sha256": "506e166ece203c2d9d6f353d950f4d2a287a77cedda654cebb62fd59d0a583a5",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 25280
+    },
+    {
+      "path": "src/Equipment/localization/labels.json",
+      "sha256": "dd6e87ae9ff44311554a9625d66ca34597b818c636faf17665a571b323b2a935",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3001
+    },
+    {
+      "path": "src/Equipment/README.en.md",
+      "sha256": "414434449679dcbf5876393ffb24dedaf7056592cc40868d9588bdafdbdd9475",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3018
+    },
+    {
+      "path": "src/Equipment/README.md",
+      "sha256": "604d0111e19251d37a91c504a60eb9e4f3ebc8d1482c6e0a9ed790602c90c763",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2655
+    },
+    {
+      "path": "src/Equipment/shared/CatalogProjection.cs",
+      "sha256": "f9ab90c93bc43a471698c32429f403ae0ffdb29adbf684cd255d0dba699bc27e",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1319
+    },
+    {
+      "path": "src/Equipment/shared/CatalogTransfer.cs",
+      "sha256": "8e5f1dd21c3d9de352547e6804c971158aab72d126481c00c20a52188dfae453",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1968
+    },
+    {
+      "path": "src/Equipment/shared/LiveContracts.cs",
+      "sha256": "dd6f4bc317bef4ac0ec2ebb5fe5661a402993587c95193d883a5f42ab58c12ee",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 6227
+    },
+    {
+      "path": "src/Equipment/shared/NativeTableReader.cs",
+      "sha256": "d0dc32cbed6ba685ba2bebe73f63481af9e7630e6dc6e1d930a9cda693eca15b",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1345
+    },
+    {
+      "path": "src/Equipment/THIRD_PARTY_NOTICES.md",
+      "sha256": "b8ee14413aa6c0f76bfaa696a48591d7392626e8e6d43cbb1e0f07b4242c1c6e",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1387
+    },
+    {
+      "path": "src/Equipment/ui-policy.json",
+      "sha256": "1ae41727ed26a192b8bd6dcc256c8e31599af426c153e7c483e475ee2743bd9a",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 147
+    },
+    {
+      "path": "src/Equipment/vendor/highs/highs.dll",
+      "sha256": "92f06d06681d6c797899b2ac8dca63eacaa05b6d6a06ae448a11992509c0b39a",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 7206400
+    },
+    {
+      "path": "src/Equipment/vendor/highs/LICENSE.txt",
+      "sha256": "dd4cdc98726c5657e39129be5bc4c1c452e8e242325807f99aeaa38605af1ca4",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1083
+    },
+    {
+      "path": "src/Equipment/vendor/highs/provenance.json",
+      "sha256": "064e1f6ec5bb0feb01e9eb417e4c96502256370e077627632b7d4e0ac9d57324",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 701
+    },
+    {
+      "path": "src/Equipment/vendor/SharpMonoInjector/Assembler.cs",
+      "sha256": "f56d46c12e43174def0952f9bf6e5948de4b3fe69970b2b14441c4dc3e42adc6",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2605
+    },
+    {
+      "path": "src/Equipment/vendor/SharpMonoInjector/ExportedFunction.cs",
+      "sha256": "d809edf5b183df53c135ccc1c6e96fdf1ba488afd4bab09423d048ad03a24c0d",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 309
+    },
+    {
+      "path": "src/Equipment/vendor/SharpMonoInjector/Injector.cs",
+      "sha256": "004663b2d96d301ae0054337593fe063ccdb25c29b2691e3a26f9bfcc4c44759",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 16864
+    },
+    {
+      "path": "src/Equipment/vendor/SharpMonoInjector/InjectorException.cs",
+      "sha256": "b7e231bd16afc47856012c21739fc160a8cb82a8ac90642f934c4c448f38245e",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 334
+    },
+    {
+      "path": "src/Equipment/vendor/SharpMonoInjector/Memory.cs",
+      "sha256": "d1998fc4e6d4b2b794c06629042ad555e1eeaaf7d99116057630884e0feaa354",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3342
+    },
+    {
+      "path": "src/Equipment/vendor/SharpMonoInjector/MonoImageOpenStatus.cs",
+      "sha256": "9f69ac8ddacb0ffd26ea77916da5bdb1dfb6273b401bae690975ead6b3ce1aa4",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 218
+    },
+    {
+      "path": "src/Equipment/vendor/SharpMonoInjector/Native.cs",
+      "sha256": "38d93c250927ae304ca0f91e14dd1f3c36f014a6361d977d94afde0f30012958",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 5107
+    },
+    {
+      "path": "src/Equipment/vendor/SharpMonoInjector/ProcessUtils.cs",
+      "sha256": "8041f5f0e91fdccb9de0efcb2272901dce17bf2cbaa5f54e3266bb274cac58b5",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3763
     },
     {
       "reasons": [
@@ -4382,630 +5006,6 @@
         "build input"
       ],
       "bytes": 3675
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/catalog.json",
-      "sha256": "fc412529ef4301c1c7229267c5f5abde287a33256b84a52b8cc82f0831324633",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 211996
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/compatibility/BindingResolver.cs",
-      "sha256": "d82b4bef66ba58bfcb0f20a585681ae255fd3265493be7927393c3627a97a836",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 4913
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/compatibility/ClientAdapter.cs",
-      "sha256": "b43530c38258b57818743b55bfd37fa6208650378448ca4c6d76ba1270913cfa",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1822
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/compatibility/contract.json",
-      "sha256": "59f9b272cc474ddd33b4dd1b2974ec989ad5b981e83a95bef23751349e0a2ed2",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 180475
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/compatibility/ContractGenerator.cs",
-      "sha256": "48da0a19e4540618d74fc9e641f5133791a011c076b0e1956ab4c40acf04ffc8",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2297
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/compatibility/MetadataIndex.cs",
-      "sha256": "25c4057d3dd74db940558da2f812befe6bf59f8e940a48c38a64a3720b592e51",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 6226
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/connection/BD2Equipment.Connection.csproj",
-      "sha256": "9986fdd106eacab0275c01bed515301339a5dc2bb25c6ab9275abc6d3a3cac39",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1469
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/connection/EquipmentTransport.cs",
-      "sha256": "7b6b1f60c4169efc06f4ac217d46fed48badb39388c705851c36d01537e9ca52",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 790
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/connection/LiveEntry.cs",
-      "sha256": "05fe565e928054d2b30043f6e394d072ad75c94857e8d1d95171ad30e8263339",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 9071
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/connection/packages.lock.json",
-      "sha256": "916311fa59822720f456f827a7236f54e67a516beed2411d6e7eb4b483d8a123",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2316
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/connection/PolicyChecks.cs",
-      "sha256": "ed1a86eb3e082bedf0f44ba8937b916d5dbcaffaf1924ce7591ae5e11f7bf883",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2269
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/connection/TapManifest.cs",
-      "sha256": "d1ab449b84dfcc6eff2e30348f1c96b9f2c45b43a305cc790439338a0e4907db",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 7906
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/core/BD2Equipment.Core.csproj",
-      "sha256": "16e91b6590823ffff94e3e1a7d13a7f291344f5811197839182cc82bd41b4421",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 993
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/core/CurrentCatalog.cs",
-      "sha256": "bfb12e56765e8432ba12328f2513a511c249b51a4442574dc0f3f3b075940dab",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 6266
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/core/EquipmentExecution.cs",
-      "sha256": "719f7487003d6f3321ae150a92fbf01236503d70edb7012dcbca3dc38b7b9d40",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 9202
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/core/EquipmentPlanner.cs",
-      "sha256": "cf748555aaec9e42261c89ea0a5b15177b2234eb2dc7a09eb17f0913fcce5d68",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 8126
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/core/EquipmentReadRetry.cs",
-      "sha256": "f6b244cd84ec207c327e05c8b90dc8f8a524e29992234ed38627beaddf97711e",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 698
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/core/EquipmentUiFlow.cs",
-      "sha256": "2bf2bf001360d31ab6d7aa11b6be544732f56160263185617b60a74795bfafc7",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 3844
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/core/GearView.cs",
-      "sha256": "fbcfa63b4fa9ee5b8dbfb1638368f0d7cba9bf00c9379e6097397d735f43cc8a",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 5819
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/core/IntegerOptimizer.cs",
-      "sha256": "bef6d13baf831f49188ad7d5551adb165efc98998702a645c4bef31aea4c345b",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 5379
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/core/JsonData.cs",
-      "sha256": "b36586ee79cda9436a1530542413cc08142f5ffb3cdbb23acebf918c05e3cc08",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 4757
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/core/LiveEquipment.cs",
-      "sha256": "2a2c927947fc5810604923a3133c584a2ee3b7452ec0e4844c648c51fd15b4ff",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 23571
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/core/LiveEvidence.cs",
-      "sha256": "fdbd37cb0174d00a0d514c6c475f91cc027b518d9f3ae3046df0646f89604ede",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 6112
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/core/packages.lock.json",
-      "sha256": "988cacee0d677864a0d96dae09189f972b7bb13197ff944fc3ec2c9765b4891e",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2219
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/desktop/app.manifest",
-      "sha256": "d0d9dad643d2ab84e704c4f771c4a9277bb51213aefe7709b5c274d609d21f6e",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1135
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/desktop/App.xaml",
-      "sha256": "3e925e2041af5269ae678c443e718a68b0091f4ace9aa6789c7867d2e2ccedc1",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 8884
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/desktop/App.xaml.cs",
-      "sha256": "e698b22cd50fca478618db64f37ff339a082be5b2a68b21242e6bc1cc695f0a4",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 3560
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/desktop/BD2EquipmentAssistant.csproj",
-      "sha256": "d5ec84a6b82cf969d187b8fb06cf96e4a7a1ed5f4b145ee6e71c13275cf44164",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1178
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/desktop/DistributionNotice.cs",
-      "sha256": "6be81dc38713337a900ba6d8c0a6ecd71ab628932d0d96d22973473fbbb3fc83",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 5578
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/desktop/GearBrowser.cs",
-      "sha256": "57fc692699dfcbf789c404107b45915b89c203e1e4f068f6502afddefda6a8fd",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 11752
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/desktop/Language.cs",
-      "sha256": "ff149fbf54218a0a69982544c7dc987aa1292725ecbc664cab912a7beac7842d",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 3979
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/desktop/LanguageWindow.cs",
-      "sha256": "2acae9431574ecdf84bff0ea0becf3ec418d7ca9ab5eece5dcdfd2d5760bce38",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2445
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/desktop/MainWindow.xaml",
-      "sha256": "f6549c45cc55f4d1aa7699558490197eedba651dd30ee305974026682dae8931",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 19399
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/desktop/MainWindow.xaml.cs",
-      "sha256": "b732835e67b791bba733e47eb996cae52661183e477b3a52935f424b7e34a163",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 19792
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/desktop/packages.lock.json",
-      "sha256": "18ee1f0cee97599f1db54cc2e3e5ddf2daee09927d1971bb752003bd097a0e59",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2633
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/desktop/WorkerClient.cs",
-      "sha256": "968804ef7809cf74616f5ca15f5cdec2da0a830cb89bb54dfb65ff8cc0363220",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2789
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/Directory.Build.props",
-      "sha256": "355205ba9e06058ad076581ce5a158e040d0f303d134e67bfb9953cd07de90d5",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 250
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/display-catalog.json",
-      "sha256": "17cb4fa54e7648a242b11adfb2d02ec2369ca561dd3fc22e0081575c6628690e",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1072156
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/evidence-spec.json",
-      "sha256": "394c5d1b0ddacf83f82393516868b8e42d80a9d08e43b2bc4b3ae1976c6a314e",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 4246
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/hook/Bridge.cs",
-      "sha256": "c2d7d88e9fb48352ffa5b02fa8680600e5f2ee96e29917d249137705b500e831",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 16768
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/hook/EquipmentToolsNative.cs",
-      "sha256": "d415caf46b2766f4a41860721a46e0bde08d495c18070902a8f79fa980bc5263",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 3913
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/hook/Evidence.cs",
-      "sha256": "cd719da7b06f7c4a74debe24c75ef1da38d248b259d561372e7f2ed9b8029552",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 14602
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/hook/NativeCatalog.cs",
-      "sha256": "991251eb68e2d51981651a16bb74ce0c2fba62bc1004f7abcecd4a52762fd307",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 6130
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/hook/ObservationProjection.cs",
-      "sha256": "4a05de904644e441f125dc2c132748c8e8f6dbe33f90b40b4dc33970018b4ec0",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1628
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/ipc/common/RequestObservation.cs",
-      "sha256": "1da48a63ae6868716b1830251a949a53f6182373facdd93eb8f7be17b49803f7",
-      "reasons": [
-        null
-      ],
-      "bytes": 5010
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/ipc/common/Wire.cs",
-      "sha256": "c3cfd4805d3127a7224f110f8ca9db6a349201d1efb74ce8f75709b330a6f9ce",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 4305
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/ipc/desktop/DesktopFiles.cs",
-      "sha256": "74c9c404ab39fb69a34b116c6b9471df1d8629d95fa5c75bbd0fa795dab1f68d",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 3673
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/ipc/desktop/HostedConnection.cs",
-      "sha256": "1c5718c64ce64dba1921efca84c35a8e6587fb95569ddeb61df0dbf3acb20910",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 3418
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/ipc/desktop/PipeClient.cs",
-      "sha256": "0e2418cb32800a94816efad5951f39d0da08349269af9611f6004773357c4fb6",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 6153
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/ipc/runtime/Handoff.cs",
-      "sha256": "768b723b7cfd745f366002ad6aa8cb6f85d3c775821d87cf62513e2ed5a933d3",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 6769
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/ipc/runtime/LegacyPilots.cs",
-      "sha256": "52f47d1431e15405fbf46c846ee49299eb65ba6b9bc5c1e7b98e9e21f1e23da8",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1526
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/ipc/runtime/MainThread.cs",
-      "sha256": "230f4c3c109bbc280e27bf671f95fbc2248389ffcb9dc7f275a78133d86945da",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2234
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/ipc/runtime/NativeNetworkWatch.cs",
-      "sha256": "4a36fa7d0fbcf21e74d4b261a8f304e69ae6818a04d4d35b3612931a2940e7f6",
-      "reasons": [
-        null
-      ],
-      "bytes": 1416
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/ipc/runtime/PipeBroker.cs",
-      "sha256": "8f38c6333e74a1a7cf75cb64f92d05443250798953ac042f1941cf876e737ee9",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 23094
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/ipc/runtime/RuntimeFiles.cs",
-      "sha256": "c0f438c02e80e654d4cfbba8e96ae91ccdebedd0573a6b086b5690157e91c060",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2772
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/LICENSE",
-      "sha256": "4e52e70b106c45f0a14bc058ed8c09bbe16fb2dbbbdd84ebfcc0ccf4016f8f0c",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1089
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/localization/en-US.json",
-      "sha256": "a2e82cf0132204ad17f671c62efd87202548181e2f78d4dd251852ef12f45948",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 14865
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/localization/game-names.json",
-      "sha256": "506e166ece203c2d9d6f353d950f4d2a287a77cedda654cebb62fd59d0a583a5",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 25280
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/localization/labels.json",
-      "sha256": "dd6e87ae9ff44311554a9625d66ca34597b818c636faf17665a571b323b2a935",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 3001
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/README.en.md",
-      "sha256": "e80c4cd8ea7b3284b13affa1ca84e835a3991868b8ba308b6438b51b8929ef41",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 7970
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/README.md",
-      "sha256": "1c9c0e031e4b4896ef98b4d28ac7dc457daebd2062abd4da886b5b31c253936b",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 7000
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/shared/CatalogProjection.cs",
-      "sha256": "f9ab90c93bc43a471698c32429f403ae0ffdb29adbf684cd255d0dba699bc27e",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1319
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/shared/CatalogTransfer.cs",
-      "sha256": "8e5f1dd21c3d9de352547e6804c971158aab72d126481c00c20a52188dfae453",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1968
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/shared/LiveContracts.cs",
-      "sha256": "dd6f4bc317bef4ac0ec2ebb5fe5661a402993587c95193d883a5f42ab58c12ee",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 6227
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/shared/NativeTableReader.cs",
-      "sha256": "d0dc32cbed6ba685ba2bebe73f63481af9e7630e6dc6e1d930a9cda693eca15b",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1345
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/THIRD_PARTY_NOTICES.md",
-      "sha256": "d68017a74512fdbb2897a22587e1885aa3eb6b7733a1306fc834eb2a05d1e765",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1411
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/ui-policy.json",
-      "sha256": "1ae41727ed26a192b8bd6dcc256c8e31599af426c153e7c483e475ee2743bd9a",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 147
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/vendor/highs/highs.dll",
-      "sha256": "92f06d06681d6c797899b2ac8dca63eacaa05b6d6a06ae448a11992509c0b39a",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 7206400
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/vendor/highs/LICENSE.txt",
-      "sha256": "dd4cdc98726c5657e39129be5bc4c1c452e8e242325807f99aeaa38605af1ca4",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1083
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/vendor/highs/provenance.json",
-      "sha256": "064e1f6ec5bb0feb01e9eb417e4c96502256370e077627632b7d4e0ac9d57324",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 701
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/vendor/SharpMonoInjector/Assembler.cs",
-      "sha256": "f56d46c12e43174def0952f9bf6e5948de4b3fe69970b2b14441c4dc3e42adc6",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2605
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/vendor/SharpMonoInjector/ExportedFunction.cs",
-      "sha256": "d809edf5b183df53c135ccc1c6e96fdf1ba488afd4bab09423d048ad03a24c0d",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 309
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/vendor/SharpMonoInjector/Injector.cs",
-      "sha256": "004663b2d96d301ae0054337593fe063ccdb25c29b2691e3a26f9bfcc4c44759",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 16864
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/vendor/SharpMonoInjector/InjectorException.cs",
-      "sha256": "b7e231bd16afc47856012c21739fc160a8cb82a8ac90642f934c4c448f38245e",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 334
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/vendor/SharpMonoInjector/Memory.cs",
-      "sha256": "d1998fc4e6d4b2b794c06629042ad555e1eeaaf7d99116057630884e0feaa354",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 3342
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/vendor/SharpMonoInjector/MonoImageOpenStatus.cs",
-      "sha256": "9f69ac8ddacb0ffd26ea77916da5bdb1dfb6273b401bae690975ead6b3ce1aa4",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 218
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/vendor/SharpMonoInjector/Native.cs",
-      "sha256": "38d93c250927ae304ca0f91e14dd1f3c36f014a6361d977d94afde0f30012958",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 5107
-    },
-    {
-      "path": "standalone/bd2-equipment-assistant/vendor/SharpMonoInjector/ProcessUtils.cs",
-      "sha256": "8041f5f0e91fdccb9de0efcb2272901dce17bf2cbaa5f54e3266bb274cac58b5",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 3763
     },
     {
       "path": "standalone/bd2-fiend-hunter/compatibility/BD2FiendHunter.Compatibility.csproj",
@@ -9747,11 +9747,11 @@
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
-      "sha256": "c6d6db5449a158be1ecc80c6bc65045397d06760dfdef3a8a7b9586436078034",
+      "sha256": "15b2f26bea33ffa5dd90b945f9144ae1c17cd22a47d581a250dda4e3552c937f",
       "reasons": [
         "build input"
       ],
-      "bytes": 2362
+      "bytes": 2647
     },
     {
       "path": "third-party/highs/highs.dll",

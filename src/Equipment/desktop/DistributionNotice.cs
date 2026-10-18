@@ -7,7 +7,7 @@ namespace BD2.Distribution;
 // Presentation only. No network access, game actions, file writes or external processes.
 internal static class DistributionNotice
 {
- internal const string Repository="https://github.com/MadestSamurai/bd2-equipment-assistant";
+ internal const string Repository="https://github.com/MadestSamurai/Dustweave";
  internal static void Attach(Window window,Selector language)
  {
   if(window.Content is not UIElement body)throw new InvalidOperationException("Missing main view");

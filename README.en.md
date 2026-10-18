@@ -54,7 +54,7 @@ Open any of these from Dustweave's **Tools** page; no separate installation is n
 | --- | --- |
 | Fishing | Fishing, bait management, keep rules and inventory sales |
 | Territory | Planting, gathering, cooking, inventory sales and layout |
-| Equipment Assistant | Powder planning and batch refinement with budget confirmation |
+| [Equipment Assistant](src/Equipment) | Powder planning and batch refinement with budget confirmation |
 | Sichuan · Rhythm | Board solving and repeat play; chart reading and automated input |
 | Apostle Defense | An offline simulated-annealing-tuned policy for summoning, merging, upgrades, positioning and checkpoint restarts |
 | SECRET VISION · Fiend Hunter | Territory capture and evasion; movement and attacks, both with retries after defeat |
@@ -74,7 +74,7 @@ The original repositories provide standalone source and historical releases; the
 - [Sichuan](https://github.com/MadestSamurai/bd2-sichuan) · [Rhythm](https://github.com/MadestSamurai/bd2-rhythm) · [Apostle Defense](https://github.com/MadestSamurai/bd2-apostle-defense)
 - [SECRET VISION](https://github.com/MadestSamurai/bd2-secret-vision) · [Fiend Hunter](https://github.com/MadestSamurai/bd2-fiend-hunter) · [Infinite Gacha](https://github.com/MadestSamurai/bd2-infinite-gacha)
 
-Built-in sources live under [`standalone/`](standalone), [`src/Mansion/`](src/Mansion) and [`src/Pandora/`](src/Pandora), retaining their attribution and licenses.
+Equipment Assistant, MANSION RUNAWAY and Pandora are maintained under [`src/Equipment/`](src/Equipment), [`src/Mansion/`](src/Mansion) and [`src/Pandora/`](src/Pandora). The other standalone tools' integrated sources remain under [`standalone/`](standalone). All modules retain their attribution and licenses.
 
 </details>
 

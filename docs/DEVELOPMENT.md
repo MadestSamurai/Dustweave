@@ -47,11 +47,15 @@ Maintain host changes directly in this repository. Register new inputs in the so
 
 ## Independent tools / 独立工具
 
-`standalone/` 中的九个目录是经过边界检查的源码输入，不依赖父研究仓库，也不是构建时在线下载。它们保留自己的版本、依赖锁、说明和许可证。此处的主程序接入层在 `src/Desktop`、`src/Core`、`src/ToolHost`。
+`standalone/` 中的八个目录是经过边界检查的源码输入，不依赖父研究仓库，也不是构建时在线下载。它们保留自己的版本、依赖锁、说明和许可证。此处的主程序接入层在 `src/Desktop`、`src/Core`、`src/ToolHost`。
+
+装备助手已移入 [`src/Equipment`](../src/Equipment)，与 `src/Mansion`、`src/Pandora` 一样在本仓库直接维护。三个 `Dustweave.Equipment.*` 工程保留原有程序集名、依赖身份、命名空间、连接与数据标识，避免影响宿主加载和历史设置。原独立仓库已归档；无需再从原仓库导入或向其发布。
 
 更新独立工具时先在其独立项目验证，按明确版本导入需要的源码差异，再登记新文件、检查源码边界、构建并运行主程序的语言/控制锁/工具宿主回归。不要覆盖账号、连接所有权或把独立工具用户数据一起导入。不要为了统一目录而改写其 GitHub 发行版本。
 
-The nine source inputs retain their versions, locks and notices. Import reviewed upstream changes, then verify source boundaries and host language/ownership integration. Do not import user data or alter upstream release identities merely to align directories.
+The eight standalone source inputs retain their versions, locks and notices. Import reviewed upstream changes, then verify source boundaries and host language/ownership integration. Do not import user data or alter upstream release identities merely to align directories.
+
+Equipment Assistant is maintained directly under [`src/Equipment`](../src/Equipment), alongside Mansion and Pandora. Its three `Dustweave.Equipment.*` projects retain existing assembly/package identities, namespaces, connection contracts and data locations for compatibility. The original repository is archived and no longer an import or release target.
 
 ## Packaging / 打包
 
