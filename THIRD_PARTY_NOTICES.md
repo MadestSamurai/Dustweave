@@ -33,7 +33,7 @@ The equipment tool also embeds its MIT-licensed HiGHS binary; its source project
 license notice is retained. The applications share the packaged .NET and Roslyn
 dependencies rather than carrying separate copies of their runtime environments.
 
-Equipment Assistant is now an owned module under [`src/Equipment`](src/Equipment).
-Its original repository is archived; the repository name above identifies its
+Equipment Assistant and Apostle Defense are owned modules under [`src/Equipment`](src/Equipment) and [`src/ApostleDefense`](src/ApostleDefense).
+Their original repositories are archived; the repository names above identify their
 provenance and retained package license filename, not a separate update channel.
-The remaining eight tool inputs stay under `standalone/`.
+The remaining seven tool inputs stay under `standalone/`.

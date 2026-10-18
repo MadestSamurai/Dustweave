@@ -1,8 +1,8 @@
 # Repository architecture / 仓库架构
 
-Dustweave 是一个日常应用。源码、账号、连接、配置与验证在同一仓库内维护。装备助手、MANSION RUNAWAY 与潘多拉是 `src/` 下的自有模块；其余工具在 `standalone/` 中保留独立项目边界。支持可选插件。
+Dustweave 是一个日常应用。源码、账号、连接、配置与验证在同一仓库内维护。装备助手、使徒运气防守、MANSION RUNAWAY 与潘多拉是 `src/` 下的自有模块；其余工具在 `standalone/` 中保留独立项目边界。支持可选插件。
 
-Dustweave is one daily application. Its accounts, workflows, connection, configuration and verification are maintained together. Equipment Assistant, MANSION RUNAWAY and Pandora are owned modules under `src/`; the remaining independent tools retain their boundaries under `standalone/`. Optional plugins are supported.
+Dustweave is one daily application. Its accounts, workflows, connection, configuration and verification are maintained together. Equipment Assistant, Apostle Defense, MANSION RUNAWAY and Pandora are owned modules under `src/`; the remaining independent tools retain their boundaries under `standalone/`. Optional plugins are supported.
 
 ## Dependencies / 依赖方向
 
@@ -13,6 +13,7 @@ Desktop ── Core ── Accounts
     ├── ToolHost ── standalone fishing / sichuan
     ├── tools/TableExporter + tools/RuntimeCheck
     ├── Equipment/desktop ── Equipment/core ── Equipment/connection
+    ├── ApostleDefense/desktop ── ApostleDefense/core ── ApostleDefense/compatibility
     └── standalone tool windows
 
 assets/flows + assets/rules → Core resources and package data
@@ -32,7 +33,7 @@ Runtime sources are compiled by the adapter against the user's client. Shared IP
 | `src/Core` | Stages, scheduling, recovery, trading, optional extension contracts | External plugin implementations |
 | `src/Accounts` | Identity, protected sessions and launching | Copying user credentials into source |
 | `src/Connection`, `Compatibility`, `Runtime`, `Shared` | Adaptation, command delivery, observations and shared IPC | Ad-hoc second connections bypassing host ownership |
-| [`src/Equipment`](../src/Equipment), [`src/Mansion`](../src/Mansion), [`src/Pandora`](../src/Pandora) | Owned tool logic and integration, shipped with Dustweave | Requiring archived standalone downloads or separate releases |
+| [`src/Equipment`](../src/Equipment), [`src/ApostleDefense`](../src/ApostleDefense), [`src/Mansion`](../src/Mansion), [`src/Pandora`](../src/Pandora) | Owned tool logic and integration, shipped with Dustweave | Requiring archived standalone downloads or separate releases |
 | `assets` | Flow rules and observation specifications | Captures, inventories or whole client assemblies |
 | `standalone` | Reviewed independent tool updates and host integration | Moving daily business into an unrelated tool |
 | `tools` | Data generation and development/diagnostic entry points | Another user-facing daily application |
@@ -47,7 +48,7 @@ Hosted child windows reserve the same control lease before connection and start 
 
 `ApostleToolSession` prepares the connection and runs the existing controller off the UI thread. `ApostleToolPort` selects only the host's exact process/start/account/player and checks the shared owner before enabled writes. Connection preparation, automation and settlement hold the shared lease, disabling account switches, duplicate connections and competing automation. Connected idle windows release it. Starting revalidates the connection in case daily tasks changed the active module or account. Scheduling, plugin changes, OTA, window close and app exit use the same asynchronous cancellation/stop path. An exited game is never rediscovered or reconnected automatically.
 
-设置保存在当前主程序数据目录的 `tools/apostle-defense/settings.json`；首次读取可以沿用独立版的有效偏好，不导入账号或执行证据。决策与错误日志写入 `live/diagnostics/apostle-defense`，按主程序的导出与空间清理规则处理。独立项目的作者、许可证和版本记录仍保留。
+设置保存在当前主程序数据目录的 `tools/apostle-defense/settings.json`；首次读取可以沿用独立版的有效偏好，不导入账号或执行证据。决策与错误日志写入 `live/diagnostics/apostle-defense`，按主程序的导出与空间清理规则处理。模块源码统一维护于 `src/ApostleDefense`，原独立仓库已归档；作者、许可证和版本记录仍保留。加载动画与首帧后的启动时机复用其他内置工具的实现，连接准备先等待当前游戏的有效身份。
 
 Targeted checks: `test.ps1 -Groups ApostleIntegrated,ToolMenu,ActivityLease,ApostleAnnealing,ApostlePerformance,ApostleTimeToClear`. Set `DUSTWEAVE_UI_SMOKE_SCOPE=apostle` when running the isolated desktop `--smoke` entry to verify all three languages, both themes, compact board layout, paint-before-connect, loading animation, connection locks, idle release, start/pause and close during setup/run. These checks do not connect to a game.
 

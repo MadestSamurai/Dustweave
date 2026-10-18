@@ -128,9 +128,12 @@ public partial class ApostleToolPanel : UserControl, IDisposable
         Render();
         if(!session.Starting || StartButton.IsEnabled || !PauseButton.IsEnabled || !ConnectionProgress.IsVisible ||
             PauseButton.Content.ToString()!=L.Get("apostle.cancel_connection"))throw new Exception("Loading must show progress, disable start and allow cancellation");
-        ConnectionProgress.ApplyTemplate();
-        if(SystemParameters.ClientAreaAnimation && ConnectionProgress.Template.FindName("PART_Indicator",ConnectionProgress) is Border {HasAnimatedProperties:false})
-            throw new Exception("Loading indicator has no animation");
+        ConnectionProgress.ApplyTemplate();ConnectionProgress.UpdateLayout();
+        if(ConnectionProgress.IsIndeterminate!=SystemParameters.ClientAreaAnimation)throw new Exception("Loading must respect reduced motion");
+        if(SystemParameters.ClientAreaAnimation &&
+            (ConnectionProgress.Template.FindName("LoadingSweep",ConnectionProgress) is not Border sweep ||
+             sweep.OpacityMask?.RelativeTransform.HasAnimatedProperties!=true))
+            throw new Exception("Tool must use the shared animated loading indicator");
     }
     internal void CheckInvalidSettingsForSmoke()
     {
@@ -138,5 +141,12 @@ public partial class ApostleToolPanel : UserControl, IDisposable
         if(Interval.Text!="50" || SettingsError.Text!=L.Get("apostle.invalid_interval") || session.LoadSettings().IntervalMs!=350)
             throw new Exception("Invalid input was lost or saved");
         Interval.Text="350";SettingsChanged(null,new());
+    }
+    internal void CheckDisconnectedForSmoke()
+    {
+        Render();
+        if(!StartButton.IsEnabled||StartButton.Content.ToString()!=L.Get("apostle.connect")||
+            PauseButton.IsVisible||ConnectionProgress.IsVisible||string.IsNullOrWhiteSpace(DecisionText.Text))
+            throw new Exception("Connection failure must show a reason and an available reconnect action");
     }
 }

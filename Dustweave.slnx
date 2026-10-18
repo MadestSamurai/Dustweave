@@ -1,5 +1,8 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/ApostleDefense/compatibility/Dustweave.ApostleDefense.Compatibility.csproj" />
+    <Project Path="src/ApostleDefense/core/Dustweave.ApostleDefense.Core.csproj" />
+    <Project Path="src/ApostleDefense/desktop/Dustweave.ApostleDefense.Desktop.csproj" />
     <Project Path="src/Accounts/Dustweave.Accounts.csproj" />
     <Project Path="src/Compatibility/Dustweave.Compatibility.csproj" />
     <Project Path="src/Connection/Dustweave.Connection.csproj" />
@@ -21,9 +24,6 @@
     <Project Path="tests/Dustweave.Tests/Dustweave.Tests.csproj" />
   </Folder>
   <Folder Name="/standalone/">
-    <Project Path="standalone/bd2-apostle-defense/compatibility/BD2ApostleDefense.Compatibility.csproj" />
-    <Project Path="standalone/bd2-apostle-defense/core/BD2ApostleDefense.Core.csproj" />
-    <Project Path="standalone/bd2-apostle-defense/desktop/BD2ApostleDefense.Desktop.csproj" />
     <Project Path="standalone/bd2-fiend-hunter/compatibility/BD2FiendHunter.Compatibility.csproj" />
     <Project Path="standalone/bd2-fiend-hunter/core/BD2FiendHunter.Core.csproj" />
     <Project Path="standalone/bd2-fiend-hunter/desktop/BD2FiendHunter.Desktop.csproj" />

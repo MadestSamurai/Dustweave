@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Windows;
-using System.Windows.Threading;
 
 namespace Dustweave.Desktop;
 
@@ -9,7 +8,7 @@ internal sealed class ApostleToolWindow : Window
 {
     internal ApostleToolPanel Panel { get; }
     Task<bool>? closing;
-    bool finished, rendered;
+    bool finished;
     internal Task? InitialConnection { get; private set; }
     internal ApostleToolWindow(Window owner, ApostleToolSession session, Func<bool> canStart)
     {
@@ -24,16 +23,12 @@ internal sealed class ApostleToolWindow : Window
         void UpdateInsets(object? sender,EventArgs args)=>MainWindow.UpdateWindowInsets(this,(FrameworkElement)Content);
         SourceInitialized+=UpdateInsets;StateChanged+=UpdateInsets;
         SizeChanged+=(_,_)=>MainWindow.UpdateWindowInsets(this,(FrameworkElement)Content);
-        ContentRendered+=OnRendered;
+        HostedToolPreparation.AfterFirstLayout(this,ConnectAfterLayoutAsync);
         Closing+=OnClosing;
         Closed+=(_,_)=>{finished=true;Panel.Dispose();};
     }
-    async void OnRendered(object? sender, EventArgs args)
+    async Task ConnectAfterLayoutAsync()
     {
-        if(rendered)return;
-        rendered=true;
-        // Let the window finish its first frame and release OpenTool's short reservation.
-        await Dispatcher.Yield(DispatcherPriority.Background);
         if(finished || closing!=null)return;
         InitialConnection=Panel.ConnectAsync();
         await InitialConnection;

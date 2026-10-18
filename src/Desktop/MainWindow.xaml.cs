@@ -177,6 +177,7 @@ public partial class MainWindow : Window
                 var session=new ApostleToolSession(root,async (progress,cancel)=>{
                     var selected=host.Find()??throw new InvalidOperationException("请先启动游戏。");
                     await host.ConnectAsync(selected,progress,cancel);
+                    await HostedToolPreparation.WaitForIdentityAsync(host,selected,progress,cancel);
                     await DailySuite.ActivateAsync(host,root,id,progress,cancel);
                     if(host.Find()!=selected)throw new InvalidOperationException("游戏已退出或重启，功能切换已停止。");
                     var identity=host.ReadSnapshot(selected)??throw new InvalidOperationException("游戏身份尚未就绪。");

@@ -10,7 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/Core/Dustweave.Core.csproj" />
-    <ProjectReference Include="../../standalone/bd2-apostle-defense/core/BD2ApostleDefense.Core.csproj" Aliases="apostle" />
+    <ProjectReference Include="../../src/ApostleDefense/core/Dustweave.ApostleDefense.Core.csproj" Aliases="apostle" />
     <Compile Include="../../standalone/bd2-territory/shared/SaffronCycle.cs" Link="SaffronCycle.cs" />
     <Compile Include="../../standalone/bd2-territory/shared/SurplusSales.cs" Link="SurplusSales.cs" />
     <Compile Include="../../src/Desktop/DemoEnvironment.cs" Link="DemoEnvironment.cs" />

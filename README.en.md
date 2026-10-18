@@ -56,7 +56,7 @@ Open any of these from Dustweave's **Tools** page; no separate installation is n
 | Territory | Planting, gathering, cooking, inventory sales and layout |
 | [Equipment Assistant](src/Equipment) | Powder planning and batch refinement with budget confirmation |
 | Sichuan · Rhythm | Board solving and repeat play; chart reading and automated input |
-| Apostle Defense | An offline simulated-annealing-tuned policy for summoning, merging, upgrades, positioning and checkpoint restarts |
+| [Apostle Defense](src/ApostleDefense) | An offline simulated-annealing-tuned policy for summoning, merging, upgrades, positioning and checkpoint restarts |
 | SECRET VISION · Fiend Hunter | Territory capture and evasion; movement and attacks, both with retries after defeat |
 | Infinite Gacha | Two target lists, stop conditions and target notifications |
 | [MANSION RUNAWAY](docs/MANSION_RUNAWAY.md) | Live navigation, enemy avoidance and stage progression, with an optional 80-chain goal |
@@ -67,14 +67,14 @@ The Pandora challenge strategy has reached 20 minutes in one live trial. Charact
 <details>
 <summary>Original repositories and maintenance</summary>
 
-The original repositories provide standalone source and historical releases; they do not describe the current built-in versions. **The Equipment Assistant repository is archived and no longer maintained. Its ongoing code and issue reports belong in Dustweave.** The other repositories below were not archived as of October 18, 2026, but their releases are not guaranteed to stay synchronized with the built-in versions.
+The original repositories provide standalone source and historical releases; they do not describe the current built-in versions. **The Equipment Assistant and Apostle Defense repositories are archived and no longer maintained. Their ongoing code and issue reports belong in Dustweave.** The other repositories below were not archived as of October 18, 2026, but their releases are not guaranteed to stay synchronized with the built-in versions.
 
 - [Equipment Assistant (archived)](https://github.com/MadestSamurai/bd2-equipment-assistant)
 - [Fishing](https://github.com/MadestSamurai/bd2-fishing) · [Territory](https://github.com/MadestSamurai/bd2-territory)
-- [Sichuan](https://github.com/MadestSamurai/bd2-sichuan) · [Rhythm](https://github.com/MadestSamurai/bd2-rhythm) · [Apostle Defense](https://github.com/MadestSamurai/bd2-apostle-defense)
+- [Sichuan](https://github.com/MadestSamurai/bd2-sichuan) · [Rhythm](https://github.com/MadestSamurai/bd2-rhythm) · [Apostle Defense (archived)](https://github.com/MadestSamurai/bd2-apostle-defense)
 - [SECRET VISION](https://github.com/MadestSamurai/bd2-secret-vision) · [Fiend Hunter](https://github.com/MadestSamurai/bd2-fiend-hunter) · [Infinite Gacha](https://github.com/MadestSamurai/bd2-infinite-gacha)
 
-Equipment Assistant, MANSION RUNAWAY and Pandora are maintained under [`src/Equipment/`](src/Equipment), [`src/Mansion/`](src/Mansion) and [`src/Pandora/`](src/Pandora). The other standalone tools' integrated sources remain under [`standalone/`](standalone). All modules retain their attribution and licenses.
+Equipment Assistant, Apostle Defense, MANSION RUNAWAY and Pandora are maintained under [`src/Equipment/`](src/Equipment), [`src/ApostleDefense/`](src/ApostleDefense), [`src/Mansion/`](src/Mansion) and [`src/Pandora/`](src/Pandora). The other standalone tools' integrated sources remain under [`standalone/`](standalone). All modules retain their attribution and licenses.
 
 </details>
 

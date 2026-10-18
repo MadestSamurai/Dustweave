@@ -28,8 +28,13 @@ public partial class MainWindow
         var view=window.Panel;
         view.ActivityChanged+=()=>{RefreshTools();SetBusy(busy);};
         window.Closed+=(_,_)=>{if(apostleWindow==window)apostleWindow=null;RefreshTools();SetBusy(busy);};
-        WorkspaceTabs.SelectedItem=ToolsTab;window.Show();
-        for(int i=0;i<100&&!preparedAfterPaint;i++)await Task.Delay(50);
+        // Reproduce a busy animated tool starving Background priority. Loading
+        // must start after layout even while input-priority work keeps arriving.
+        bool keepInputBusy=true;
+        void InputWork(){if(keepInputBusy)Dispatcher.BeginInvoke((Action)InputWork,DispatcherPriority.Input);}
+        InputWork();WorkspaceTabs.SelectedItem=ToolsTab;window.Show();
+        try{for(int i=0;i<100&&!preparedAfterPaint;i++)await Task.Delay(50);}
+        finally{keepInputBusy=false;}
         if(!preparedAfterPaint || fake.Writes!=0 || !DailyToolControl.IsOccupied(root))throw new Exception("Preparation must start after painting and reserve control without actions");
         view.CheckLoadingForSmoke();
         if(ConnectButton.IsEnabled || AccountsGrid.IsEnabled || ConnectionGuideButton.IsEnabled || !window.IsEnabled)throw new Exception("Connection conflicts must be locked without freezing the tool window");
@@ -69,8 +74,19 @@ public partial class MainWindow
         var cancelledWindow=new ApostleToolWindow(this,cancelled,()=>true);cancelledWindow.Show();
         await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));cancelledWindow.Panel.CheckLoadingForSmoke();
         if(!await cancelledWindow.CloseSafelyAsync() || cancelled.Starting || cancelled.Occupied || cancelled.Connected)throw new Exception("Closing during preparation must cancel without starting automation");
+        int retries=0,writesBeforeRetry=fake.Writes;
+        using var retry=new ApostleToolSession(root,(_,_)=>++retries==1?throw new IOException("fixture connection failure"):Task.FromResult<IApostleToolPort>(fake));
+        var retryWindow=new ApostleToolWindow(this,retry,()=>true);retryWindow.Show();
+        for(int i=0;i<100&&retryWindow.InitialConnection==null;i++)await Task.Delay(30);
+        await (retryWindow.InitialConnection??throw new Exception("Tool preparation never started"));
+        retryWindow.Panel.CheckDisconnectedForSmoke();
+        await Task.Delay(300);
+        if(retries!=1||retry.Occupied||fake.Writes!=writesBeforeRetry)throw new Exception("Failure must release control without retrying or enabling gameplay");
+        await retryWindow.Panel.ConnectAsync();
+        if(!retry.Connected||retry.Running||retry.Occupied||retries!=2||fake.Writes!=writesBeforeRetry)throw new Exception("Manual retry must connect once without enabling automation");
+        await retryWindow.CloseSafelyAsync();
         if(Application.Current.Windows.Count!=1)throw new Exception("Closed tool windows leaked");
-        DailyJson.Write(Path.Combine(smoke!,"apostle-checks.json"),new{status="passed",ownedWindow=true,preparedAfterPaint,prepares,themeAndLanguagePreserved=true,pausedWithoutClosing=true,connectWithoutAutomation=true,connectionControlsLocked=true,closeCancelsPreparation=true,closeStopsAutomation=true,invalidInputPreserved=true,realGameTouched=false});
+        DailyJson.Write(Path.Combine(smoke!,"apostle-checks.json"),new{status="passed",ownedWindow=true,preparedAfterPaint,prepares,sharedLoadingAnimation=true,busyDispatcherStartsPreparation=true,manualRetryWithoutAutomation=true,themeAndLanguagePreserved=true,pausedWithoutClosing=true,connectWithoutAutomation=true,connectionControlsLocked=true,closeCancelsPreparation=true,closeStopsAutomation=true,invalidInputPreserved=true,realGameTouched=false});
     }
     private sealed class ApostleSmokePort : IApostleToolPort
     {

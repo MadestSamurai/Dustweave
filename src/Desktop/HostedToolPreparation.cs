@@ -22,7 +22,7 @@ internal sealed class HostedToolPreparation
     readonly ProgressBar progress=new(){Height=4,Margin=new Thickness(0,12,0,0)};
     readonly Button action=new(){MinWidth=90,Margin=new Thickness(16,0,0,0),VerticalAlignment=VerticalAlignment.Center};
     CancellationTokenSource? cancellation;
-    bool started, closed, closeRequested;
+    bool closed, closeRequested;
     internal Task? Pending {get;private set;}
     internal bool Preparing=>cancellation!=null;
     internal bool Ready {get;private set;}
@@ -52,21 +52,26 @@ internal sealed class HostedToolPreparation
         // windows, or when a host decorates an already shown tool. Loaded plus
         // the dispatcher render barrier starts once after layout without waiting
         // indefinitely for another native paint notification.
-        window.Loaded+=OnLoaded;
-        window.ContentRendered+=OnRendered;
-        if(window.IsLoaded)QueueLoaded();
+        AfterFirstLayout(window,()=>closed||closeRequested?Task.CompletedTask:StartAsync());
         window.Closing+=OnClosing;
         window.Closed+=(_,_)=>{closed=true;cancellation?.Cancel();};
     }
 
-    void OnLoaded(object sender,RoutedEventArgs args)=>QueueLoaded();
-    void QueueLoaded()=>window.Dispatcher.BeginInvoke(new Action(()=>OnRendered(window,EventArgs.Empty)),DispatcherPriority.Loaded);
-    async void OnRendered(object? sender,EventArgs args)
+    // Shared by the in-process tower window and the other hosted tools. Both
+    // events schedule once below Render priority; Background can starve behind
+    // an animated board, and ContentRendered alone may never arrive off-screen.
+    internal static void AfterFirstLayout(Window window,Func<Task> start)
     {
-        if(started)return;started=true;
-        // At this point layout/render work has run. Do not wait for Background:
-        // a continuously invalidating tool can starve that priority indefinitely.
-        if(!closed&&!closeRequested)await StartAsync();
+        bool queued=false,closed=false;
+        void Queue()
+        {
+            if(queued||closed)return;queued=true;
+            window.Dispatcher.BeginInvoke(new Action(async()=>{if(!closed)await start();}),DispatcherPriority.Loaded);
+        }
+        window.Loaded+=(_,_)=>Queue();
+        window.ContentRendered+=(_,_)=>Queue();
+        window.Closed+=(_,_)=>closed=true;
+        if(window.IsLoaded)Queue();
     }
     internal Task StartAsync()
     {
@@ -136,14 +141,7 @@ internal sealed class HostedToolPreparation
             pid!=game.ProcessId||start!=game.StartTicks)
             throw new InvalidOperationException(DailyLanguage.Current.Get("tools.preparation_game_changed"));
         await host.ConnectAsync(game,report,cancel);
-        report("tools.preparation_identity");
-        for(int i=0;i<20;i++)
-        {
-            cancel.ThrowIfCancellationRequested();
-            if(host.Find()!=game)throw new InvalidOperationException(DailyLanguage.Current.Get("tools.preparation_game_changed"));
-            if(host.ReadSnapshot(game) is {State:"identified"} snapshot &&snapshot.FrameUtcTicks>=DateTime.UtcNow.AddSeconds(-5).Ticks)break;
-            await Task.Delay(250,cancel);
-        }
+        await WaitForIdentityAsync(host,game,report,cancel);
         await DailySuite.ActivateAsync(host,root,id,report,cancel);
         cancel.ThrowIfCancellationRequested();
         if(host.Find()!=game)throw new InvalidOperationException(DailyLanguage.Current.Get("tools.preparation_game_changed"));
@@ -152,5 +150,21 @@ internal sealed class HostedToolPreparation
         // Change only this child, never the desktop process or persistent settings.
         foreach(string key in new[]{"BD2_DAILY_HOSTED_TOOL","BD2_DAILY_GAME_PID","BD2_DAILY_GAME_START","BD2_DAILY_TOOL_FINGERPRINT"})
             Environment.SetEnvironmentVariable(key,environment.Environment[key]);
+    }
+
+    internal static async Task WaitForIdentityAsync(IGameHost host,GameInstance game,Action<string> report,CancellationToken cancel)
+    {
+        report("tools.preparation_identity");
+        for(int i=0;i<20;i++)
+        {
+            cancel.ThrowIfCancellationRequested();
+            if(host.Find()!=game)throw new InvalidOperationException(DailyLanguage.Current.Get("tools.preparation_game_changed"));
+            if(host.ReadSnapshot(game) is {State:"identified"} snapshot &&
+                snapshot.ProcessId==game.ProcessId && snapshot.ProcessStartTicks==game.StartTicks &&
+                snapshot.FrameUtcTicks>=DateTime.UtcNow.AddSeconds(-5).Ticks &&
+                !string.IsNullOrEmpty(snapshot.AccountKey) && !string.IsNullOrEmpty(snapshot.PlayerKey))return;
+            await Task.Delay(250,cancel);
+        }
+        throw new InvalidOperationException("suite.identity-unavailable");
     }
 }
