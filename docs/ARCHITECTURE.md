@@ -1,8 +1,8 @@
 # Repository architecture / 仓库架构
 
-Dustweave 是一个日常应用。源码、账号、连接、配置与验证在同一仓库内维护。装备助手、使徒运气防守、MANSION RUNAWAY 与潘多拉是 `src/` 下的自有模块；其余工具在 `standalone/` 中保留独立项目边界。支持可选插件。
+Dustweave 是一个日常应用。源码、账号、连接、配置与验证在同一仓库内维护。装备助手、使徒运气防守、无限抽抽乐、MANSION RUNAWAY 与潘多拉是 `src/` 下的自有模块；其余工具在 `standalone/` 中保留独立项目边界。支持可选插件。
 
-Dustweave is one daily application. Its accounts, workflows, connection, configuration and verification are maintained together. Equipment Assistant, Apostle Defense, MANSION RUNAWAY and Pandora are owned modules under `src/`; the remaining independent tools retain their boundaries under `standalone/`. Optional plugins are supported.
+Dustweave is one daily application. Its accounts, workflows, connection, configuration and verification are maintained together. Equipment Assistant, Apostle Defense, Infinite Gacha, MANSION RUNAWAY and Pandora are owned modules under `src/`; the remaining independent tools retain their boundaries under `standalone/`. Optional plugins are supported.
 
 ## Dependencies / 依赖方向
 
@@ -14,6 +14,7 @@ Desktop ── Core ── Accounts
     ├── tools/TableExporter + tools/RuntimeCheck
     ├── Equipment/desktop ── Equipment/core ── Equipment/connection
     ├── ApostleDefense/desktop ── ApostleDefense/core ── ApostleDefense/compatibility
+    ├── InfiniteGacha/desktop ── InfiniteGacha/core ── InfiniteGacha/compatibility
     └── standalone tool windows
 
 assets/flows + assets/rules → Core resources and package data
@@ -33,7 +34,7 @@ Runtime sources are compiled by the adapter against the user's client. Shared IP
 | `src/Core` | Stages, scheduling, recovery, trading, optional extension contracts | External plugin implementations |
 | `src/Accounts` | Identity, protected sessions and launching | Copying user credentials into source |
 | `src/Connection`, `Compatibility`, `Runtime`, `Shared` | Adaptation, command delivery, observations and shared IPC | Ad-hoc second connections bypassing host ownership |
-| [`src/Equipment`](../src/Equipment), [`src/ApostleDefense`](../src/ApostleDefense), [`src/Mansion`](../src/Mansion), [`src/Pandora`](../src/Pandora) | Owned tool logic and integration, shipped with Dustweave | Requiring archived standalone downloads or separate releases |
+| [`src/Equipment`](../src/Equipment), [`src/ApostleDefense`](../src/ApostleDefense), [`src/InfiniteGacha`](../src/InfiniteGacha), [`src/Mansion`](../src/Mansion), [`src/Pandora`](../src/Pandora) | Owned tool logic and integration, shipped with Dustweave | Requiring archived standalone downloads or separate releases |
 | `assets` | Flow rules and observation specifications | Captures, inventories or whole client assemblies |
 | `standalone` | Reviewed independent tool updates and host integration | Moving daily business into an unrelated tool |
 | `tools` | Data generation and development/diagnostic entry points | Another user-facing daily application |
@@ -107,3 +108,9 @@ A Windows reinstall can invalidate DPAPI-encrypted observations and account slot
 Saffron farming gathers eligible trees and ore while a planted potato batch grows. A fully mature batch preempts travel only after native gathering and settlement finish; partial maturity does not trigger a return. After the selected potato rounds, a bounded pass finishes remaining resources before replanting and processing saffron. Already gathered targets are not revisited on regrowth, and repeated unreachable resources are reported and skipped without blocking later daily tasks. This runtime path reuses territory navigation, gathering settlement and surplus sales.
 
 MANSION RUNAWAY and equipment open their actual bundled windows before connecting or preparing a module. The child inherits the desktop suite owner, data root and exact game process identity, but receives no usable tool fingerprint until preparation succeeds. A cancellable preparation banner holds the shared activity lease, locks only tool content, and leaves window controls available. Native preparation runs off the UI thread. Failures require an explicit retry; a restarted game requires reopening from the menu. Once ready, the normal hosted activity guard owns inventory reads and automation. Opening a window never starts gameplay or consumes equipment materials. Shared loading indicators animate only while visible and respect the system animation preference.
+
+### Hosted Infinite Gacha / 内置无限抽抽乐
+
+无限抽抽乐直接维护于 `src/InfiniteGacha`。既有双列表和规则窗口先显示，再由 `HostedToolPreparation` 准备连接；取消、失败重试和关闭均走共用生命周期。准备完成前不读取旧组件，成功连接也不开始抽取。`HostedToolPresentation` 同时服务装备助手与无限抽抽乐，统一主题和弹窗；全软件语言由 `HostedToolLocaleBridge` 同步。
+
+The hosted window retains account/pool preferences and existing IPC identities. Shared preparation pins the exact game process and validates its identity before activation. `HostedToolActivity` guards connection/start handlers and releases ownership only when idle. `tool-preparation` renders the actual window in three languages and two themes, checks cancellation/retry/close, verifies no premature transport reads or automatic rolls, and captures loaded results. The tool's own synthetic smoke retains target/filter/stop/notification regression coverage.

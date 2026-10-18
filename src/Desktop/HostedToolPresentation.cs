@@ -4,7 +4,7 @@ using System.Windows.Threading;
 namespace Dustweave.Desktop;
 
 // Reuse the product's actual controls and palette, not a second copy of its styles.
-internal static class EquipmentToolPresentation
+internal static class HostedToolPresentation
 {
     internal static void Install(Application app,bool deferChrome=false)
     {

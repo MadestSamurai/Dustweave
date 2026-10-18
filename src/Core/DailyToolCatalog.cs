@@ -16,7 +16,7 @@ public static class DailyToolCatalog
         new("fiend-hunter", "恶魔猎人", "小游戏", "自动移动、攻击决策和关卡重试。", "bd2-fiend-hunter", "BD2FiendHunter", @"Local\BD2FiendHunterDesktop"),
         new("mansion-runaway", "MANSION RUNAWAY", "小游戏", "收集糖果、预测追兵并连续推进关卡。", "Dustweave", "Dustweave", @"Local\Dustweave.Mansion"),
         new("pandora", "潘多拉大逃脱", "小游戏", "固定关卡循环刷货币，或自动挑战。", "Dustweave", "Dustweave", @"Local\Dustweave.Pandora"),
-        new("infinite-gacha", "无限抽抽乐", "抽取", "A／B 双列表、停止条件和命中提醒。", "bd2-infinite-gacha", "BD2InfiniteGacha", @"Local\BD2InfiniteGacha-v1")
+        new("infinite-gacha", "无限抽抽乐", "抽取", "A／B 双列表、停止条件和命中提醒。", "Dustweave", "BD2InfiniteGacha", @"Local\BD2InfiniteGacha-v1")
     };
     public static DailyToolDefinition Find(string id) => All.SingleOrDefault(t => t.Id == id)
         ?? throw new ArgumentException("未知工具：" + id);

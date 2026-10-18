@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-18T15:04:53.2165474Z",
+  "generatedUtc": "2026-10-18T18:29:32.6854736Z",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -16,6 +16,9 @@
     "src/Equipment/connection/Dustweave.Equipment.Connection.csproj",
     "src/Equipment/core/Dustweave.Equipment.Core.csproj",
     "src/Equipment/desktop/Dustweave.Equipment.Desktop.csproj",
+    "src/InfiniteGacha/compatibility/Dustweave.InfiniteGacha.Compatibility.csproj",
+    "src/InfiniteGacha/core/Dustweave.InfiniteGacha.Core.csproj",
+    "src/InfiniteGacha/desktop/Dustweave.InfiniteGacha.Desktop.csproj",
     "src/Launcher/Dustweave.Launcher.csproj",
     "src/ToolHost/Dustweave.ToolHost.csproj",
     "src/Updater/Dustweave.Updater.csproj",
@@ -25,9 +28,6 @@
     "standalone/bd2-fishing/compatibility/BD2Fishing.Compatibility.csproj",
     "standalone/bd2-fishing/core/BD2Fishing.Core.csproj",
     "standalone/bd2-fishing/desktop/BD2Fishing.Desktop.csproj",
-    "standalone/bd2-infinite-gacha/compatibility/BD2InfiniteGacha.Compatibility.csproj",
-    "standalone/bd2-infinite-gacha/core/BD2InfiniteGacha.Core.csproj",
-    "standalone/bd2-infinite-gacha/desktop/BD2InfiniteGacha.Desktop.csproj",
     "standalone/bd2-rhythm/compatibility/BD2Rhythm.Compatibility.csproj",
     "standalone/bd2-rhythm/core/BD2Rhythm.Core.csproj",
     "standalone/bd2-rhythm/desktop/BD2Rhythm.Desktop.csproj",
@@ -266,11 +266,11 @@
     },
     {
       "path": "docs/DEVELOPMENT.md",
-      "sha256": "7ef85bf294cafc33bfba365d43dcbb6cd44a592708b70a4bafccc56588179916",
+      "sha256": "8e523ca6c33da9b66238117805d7e763031c48470924d1ce64c75b3156014b48",
       "reasons": [
         "build input"
       ],
-      "bytes": 39765
+      "bytes": 39948
     },
     {
       "reasons": [
@@ -2585,11 +2585,11 @@
     },
     {
       "path": "src/Core/DailySuite.cs",
-      "sha256": "857ada44e626a4b77d48e2b97beca351cb21128f92b108a81ef16012bcbbce25",
+      "sha256": "82d43b8fbc56031ebb4400da4e2a4a40f952644394d8a6f126c95ab5d7221b41",
       "reasons": [
         "build input"
       ],
-      "bytes": 7301
+      "bytes": 7321
     },
     {
       "reasons": [
@@ -2625,11 +2625,11 @@
     },
     {
       "path": "src/Core/DailyToolCatalog.cs",
-      "sha256": "6284844aba1250a962bebec1966258687e96bb32301990fb01367a87aca74df5",
+      "sha256": "f4191450832d1f1ac62f0624f85381047ad9e23ed439c5a8cff3f23cdce576cc",
       "reasons": [
         "build input"
       ],
-      "bytes": 3819
+      "bytes": 3810
     },
     {
       "path": "src/Core/DailyTools.cs",
@@ -3337,19 +3337,11 @@
     },
     {
       "path": "src/Desktop/Dustweave.Desktop.csproj",
-      "sha256": "85dab9b8ab066ba709304f03bd22247676f218df3ea429c30e3a86060adf8493",
+      "sha256": "858fd03446056f0ce43b13505ceb50b8086f3a78ad2be4e49ff3b9a6639b20f2",
       "reasons": [
         "build input"
       ],
-      "bytes": 3913
-    },
-    {
-      "path": "src/Desktop/EquipmentToolPresentation.cs",
-      "sha256": "a743616da4bac00108be6df6343843b36a839332e626aa1fb67d0adbf6187fe6",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1687
+      "bytes": 3901
     },
     {
       "path": "src/Desktop/FirstRunWindow.cs",
@@ -3414,6 +3406,14 @@
       "sha256": "13f70ed914846689308943f6e00ded92c0c4c252b600bde5eebac7245949d27b",
       "bytes": 9432,
       "path": "src/Desktop/HostedToolPreparation.cs"
+    },
+    {
+      "path": "src/Desktop/HostedToolPresentation.cs",
+      "sha256": "c4efbd9b65e5def9c1cd9599707d1508c803c8faa8c362dda57f5fbdab30878e",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1684
     },
     {
       "path": "src/Desktop/HostedTraditionalText.cs",
@@ -3723,8 +3723,8 @@
       "reasons": [
         "build input"
       ],
-      "sha256": "93ea43394e99800f03d6b679782ced37c5e46a8a57cfa10b4d91ddb860f76a54",
-      "bytes": 8847,
+      "sha256": "4a58cb14669fa749518a71d6a09d140d5d43bdb3380f83b7680c2e99465c91f1",
+      "bytes": 10605,
       "path": "src/Desktop/MainWindow.ToolPreparationSmoke.cs"
     },
     {
@@ -3889,11 +3889,11 @@
     },
     {
       "path": "src/Desktop/ToolApplicationHost.cs",
-      "sha256": "7c8b4bca465ca9d9283352917a03301a525e3300897adee916d2698c1036cb4d",
+      "sha256": "a46e333b893ded101b258d820cee45fb3f6e7cee44d84f5a0f6f1a87a66b5a37",
       "reasons": [
         "build input"
       ],
-      "bytes": 6020
+      "bytes": 6090
     },
     {
       "path": "src/Desktop/ToolMenuProbe.cs",
@@ -4534,6 +4534,502 @@
         "build input"
       ],
       "bytes": 3763
+    },
+    {
+      "path": "src/InfiniteGacha/compatibility/BindingResolver.cs",
+      "sha256": "20d8ae8cb794d5f615ba336569d1af81d9661de057178b840cd40353eaa68a44",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3730
+    },
+    {
+      "path": "src/InfiniteGacha/compatibility/contract.json",
+      "sha256": "146b34c297a91f139b9545dd712f53a40797d86b0851ebc791a92834f29c1e31",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 301769
+    },
+    {
+      "path": "src/InfiniteGacha/compatibility/Dustweave.InfiniteGacha.Compatibility.csproj",
+      "sha256": "ae3a3502e65bd93861dd50ee9314d0c516e5d0188efe6d14314d0dc31dfa46e5",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1354
+    },
+    {
+      "path": "src/InfiniteGacha/compatibility/HookCompiler.cs",
+      "sha256": "1f230345c4bf01e2814afc7705de9693a3598b909a107388eb89adc16d62be3a",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 8394
+    },
+    {
+      "path": "src/InfiniteGacha/compatibility/MetadataIndex.cs",
+      "sha256": "379efeb0358bb73ed93259690ddd369f1f8c068e8e6908c737a34d5cd395ffdb",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 6066
+    },
+    {
+      "path": "src/InfiniteGacha/compatibility/packages.lock.json",
+      "sha256": "916311fa59822720f456f827a7236f54e67a516beed2411d6e7eb4b483d8a123",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2316
+    },
+    {
+      "path": "src/InfiniteGacha/core/Client.cs",
+      "sha256": "6954a1d6b757337b29cd7361640626f81b79a33af323769402fca2f66d08a5d3",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 10205
+    },
+    {
+      "path": "src/InfiniteGacha/core/Diagnostics.cs",
+      "sha256": "2d1c374e9975f4b0c9d2bc721736a7e75b0970b60698ba16fa12855bc266d52a",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 585
+    },
+    {
+      "path": "src/InfiniteGacha/core/Dustweave.InfiniteGacha.Core.csproj",
+      "sha256": "b50e8f31d41cf74cd8114aeb2eb2deb47abb0bfb8700367444c1d824c95fd184",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 891
+    },
+    {
+      "path": "src/InfiniteGacha/core/Notifications.cs",
+      "sha256": "b0b628d299f32ef3b3b5d9655d0a4103169c6eecc77a75dc08a59b217091370d",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2882
+    },
+    {
+      "path": "src/InfiniteGacha/core/packages.lock.json",
+      "sha256": "5e7c7395179e032b5c7322518c045538b7c1edf1c84a515e7bf2c737fd7128a9",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2226
+    },
+    {
+      "path": "src/InfiniteGacha/core/PoolChoice.cs",
+      "sha256": "77fd5e56d90e9db68a3f4566f91248f839dcf5256f72787885c6ed9e02493596",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1550
+    },
+    {
+      "path": "src/InfiniteGacha/desktop/AddCostumesWindow.xaml",
+      "sha256": "efb9a06e0e7f13053cbc7b343b8bb1464a141f38a844ecee13af7a1666c023c7",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2703
+    },
+    {
+      "path": "src/InfiniteGacha/desktop/AddCostumesWindow.xaml.cs",
+      "sha256": "eebc9583f839b5214fd5a3ebb43717be1f0a2a54d1b920a5c837e624438c06d6",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2600
+    },
+    {
+      "path": "src/InfiniteGacha/desktop/app.manifest",
+      "sha256": "71ba0014549f527defdf66b71036b17a64ac8c709cac5d851bbdf03b69a4ec2b",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 713
+    },
+    {
+      "path": "src/InfiniteGacha/desktop/App.xaml",
+      "sha256": "3940f8c40cdf4a4d543dd9555957232c780d8411af790a9386bf85b9e7bc733c",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 7605
+    },
+    {
+      "path": "src/InfiniteGacha/desktop/App.xaml.cs",
+      "sha256": "aab136ffeac63cc809fdeec92417ef46e54cf98ee52f208b16196d529fc34884",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 4202
+    },
+    {
+      "path": "src/InfiniteGacha/desktop/CompletionNotifications.cs",
+      "sha256": "cb0694c9c7aa98ae870c93a561577d17ff9ac7c8c7f31366635bc6985dafb94f",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 5963
+    },
+    {
+      "path": "src/InfiniteGacha/desktop/DemoPort.cs",
+      "sha256": "b48a13c36192f945c398a900994139029d171576e5d5278c8cbf412b6019c0d0",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1960
+    },
+    {
+      "path": "src/InfiniteGacha/desktop/DistributionNotice.cs",
+      "sha256": "eed2f0cbb4236e4ae950f96a1c392dc8699740eb8639faf433cce7872d33e61f",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 5922
+    },
+    {
+      "path": "src/InfiniteGacha/desktop/Dustweave.InfiniteGacha.Desktop.csproj",
+      "sha256": "43327a158980bdcae102752f7412e23b741ecf3747b71233fd55cc780e678489",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 983
+    },
+    {
+      "path": "src/InfiniteGacha/desktop/MainWindow.xaml",
+      "sha256": "3d74c9e5f551a7f7031b82ed52c23638e53877d2144b2bdd2e3ff4d5046597b6",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 15757
+    },
+    {
+      "path": "src/InfiniteGacha/desktop/MainWindow.xaml.cs",
+      "sha256": "f23fab523a50bdcf02b0d5dce7d6ed45f8020a38b9ee55d6e266e903d8d40f60",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 33574
+    },
+    {
+      "path": "src/InfiniteGacha/desktop/Models.cs",
+      "sha256": "1bd14ebada26f33e4ab0d3529dc9d7ebd7064f9e3f1e41b65f5b7319dd28bd44",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1506
+    },
+    {
+      "path": "src/InfiniteGacha/desktop/packages.lock.json",
+      "sha256": "75e8257637b8509e144780256d168c24431e73f2faace03168fd02c1942b26a9",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2651
+    },
+    {
+      "path": "src/InfiniteGacha/desktop/Ui.cs",
+      "sha256": "aa2b2170f7413d835888b29f22ad095feb004ffc00c3e5ff3bd6711be294aed1",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 229
+    },
+    {
+      "path": "src/InfiniteGacha/desktop/WindowLanguage.cs",
+      "sha256": "4a1de0cbf7628e03b3e6f9af13dab37be63dcf6cafcef14e1e3fa09111affc34",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 5118
+    },
+    {
+      "path": "src/InfiniteGacha/Directory.Build.props",
+      "sha256": "b222a82f5604cfc224c21f2a97f0d6abe95b7faba8b5e42aea602fa92879e6e7",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 360
+    },
+    {
+      "path": "src/InfiniteGacha/Directory.Build.targets",
+      "sha256": "8b0cb9abf58770475f3cf64c39f7fd969536e5d4d9277c8d14cc8307adb49d03",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 297
+    },
+    {
+      "path": "src/InfiniteGacha/hook/Loader.cs",
+      "sha256": "1b86e57b38ab03cc08b6ef8b5fa029d22dde36ab0c3b0e34a0008482d606997d",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3352
+    },
+    {
+      "path": "src/InfiniteGacha/hook/RuntimeEngine.cs",
+      "sha256": "78cb3c495a7603800ef993182cba5935ed1c5e71ad3cf83b1efea769ad5ef836",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 16468
+    },
+    {
+      "path": "src/InfiniteGacha/hook/Storage.cs",
+      "sha256": "05d56f0785ac8fdff8b109926a1e4f6d6f409c49a986d51444ae226c16f72f9a",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2235
+    },
+    {
+      "path": "src/InfiniteGacha/ipc/common/RequestObservation.cs",
+      "sha256": "1da48a63ae6868716b1830251a949a53f6182373facdd93eb8f7be17b49803f7",
+      "reasons": [
+        null
+      ],
+      "bytes": 5010
+    },
+    {
+      "path": "src/InfiniteGacha/ipc/common/Wire.cs",
+      "sha256": "c3cfd4805d3127a7224f110f8ca9db6a349201d1efb74ce8f75709b330a6f9ce",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 4305
+    },
+    {
+      "path": "src/InfiniteGacha/ipc/desktop/DesktopFiles.cs",
+      "sha256": "74c9c404ab39fb69a34b116c6b9471df1d8629d95fa5c75bbd0fa795dab1f68d",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3673
+    },
+    {
+      "path": "src/InfiniteGacha/ipc/desktop/HostedConnection.cs",
+      "sha256": "1c5718c64ce64dba1921efca84c35a8e6587fb95569ddeb61df0dbf3acb20910",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3418
+    },
+    {
+      "path": "src/InfiniteGacha/ipc/desktop/PipeClient.cs",
+      "sha256": "0e2418cb32800a94816efad5951f39d0da08349269af9611f6004773357c4fb6",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 6153
+    },
+    {
+      "path": "src/InfiniteGacha/ipc/runtime/Handoff.cs",
+      "sha256": "768b723b7cfd745f366002ad6aa8cb6f85d3c775821d87cf62513e2ed5a933d3",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 6769
+    },
+    {
+      "path": "src/InfiniteGacha/ipc/runtime/LegacyPilots.cs",
+      "sha256": "52f47d1431e15405fbf46c846ee49299eb65ba6b9bc5c1e7b98e9e21f1e23da8",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1526
+    },
+    {
+      "path": "src/InfiniteGacha/ipc/runtime/MainThread.cs",
+      "sha256": "230f4c3c109bbc280e27bf671f95fbc2248389ffcb9dc7f275a78133d86945da",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2234
+    },
+    {
+      "path": "src/InfiniteGacha/ipc/runtime/NativeNetworkWatch.cs",
+      "sha256": "4a36fa7d0fbcf21e74d4b261a8f304e69ae6818a04d4d35b3612931a2940e7f6",
+      "reasons": [
+        null
+      ],
+      "bytes": 1416
+    },
+    {
+      "path": "src/InfiniteGacha/ipc/runtime/PipeBroker.cs",
+      "sha256": "8f38c6333e74a1a7cf75cb64f92d05443250798953ac042f1941cf876e737ee9",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 23094
+    },
+    {
+      "path": "src/InfiniteGacha/ipc/runtime/RuntimeFiles.cs",
+      "sha256": "c0f438c02e80e654d4cfbba8e96ae91ccdebedd0573a6b086b5690157e91c060",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2772
+    },
+    {
+      "path": "src/InfiniteGacha/LICENSE",
+      "sha256": "4e52e70b106c45f0a14bc058ed8c09bbe16fb2dbbbdd84ebfcc0ccf4016f8f0c",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1089
+    },
+    {
+      "path": "src/InfiniteGacha/localization/en-US.json",
+      "sha256": "abe5e39166f2320a693b6046b57fbb3705b941a64d3f3c2d5754f1e320a08ef9",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 16700
+    },
+    {
+      "path": "src/InfiniteGacha/localization/LanguageCatalog.cs",
+      "sha256": "a199b29459b2d7ef23c203714248b4e543d2b4b8b7518bfd75585cc63e9fa869",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 4027
+    },
+    {
+      "path": "src/InfiniteGacha/localization/zh-CN.json",
+      "sha256": "bab45dd388e98cb1eff54cee513e44afb8c44f9a61a5115d4410bd599c739751",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 16268
+    },
+    {
+      "path": "src/InfiniteGacha/README.en.md",
+      "sha256": "7f966f0092a0a17dc42b52de6ed08c2c67f6e4cbc73d55d0b52561ea12528bc4",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2815
+    },
+    {
+      "path": "src/InfiniteGacha/README.md",
+      "sha256": "ea5824f4abda5118ca01134b09457a3c1f5f25148a8ba34ee973a38aeb4dcb02",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2555
+    },
+    {
+      "path": "src/InfiniteGacha/shared/AutomationMachine.cs",
+      "sha256": "8b665c318aefc28cc7295a39c0c52d1e07defb5f2b4f92f61dd80ca6add8da67",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 4407
+    },
+    {
+      "path": "src/InfiniteGacha/shared/Contracts.cs",
+      "sha256": "df1d8bafe76c92e3942fda791e88c11ca9475e4096b751322ac03eedcdf45d63",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 7587
+    },
+    {
+      "path": "src/InfiniteGacha/shared/PublicationBuffer.cs",
+      "sha256": "d77ae4f5199e8b310d63e5b2ebf4d2096b8e5c2dda2f01eed18dbb57e2e9897e",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 644
+    },
+    {
+      "path": "src/InfiniteGacha/THIRD_PARTY_NOTICES.md",
+      "sha256": "77013259cdff3ea06076a4c9d202a6c3cb7bc496ee07006bc3507004dc470ca2",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 929
+    },
+    {
+      "path": "src/InfiniteGacha/vendor/SharpMonoInjector/Assembler.cs",
+      "sha256": "05e40686107e04570ab362400aa955661e67ba0b9a8cff497603a2a56a59f12f",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 2608
+    },
+    {
+      "path": "src/InfiniteGacha/vendor/SharpMonoInjector/ExportedFunction.cs",
+      "sha256": "6971e487456da1bca2b65f705eaedab54681cd7734e06a45c5e57bab0b8d354b",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 312
+    },
+    {
+      "path": "src/InfiniteGacha/vendor/SharpMonoInjector/Injector.cs",
+      "sha256": "004663b2d96d301ae0054337593fe063ccdb25c29b2691e3a26f9bfcc4c44759",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 16864
+    },
+    {
+      "path": "src/InfiniteGacha/vendor/SharpMonoInjector/InjectorException.cs",
+      "sha256": "0ff5b28977ae646b9e25d894de788c18073ba78f2ed5647f6e275c4f13bad501",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 337
+    },
+    {
+      "path": "src/InfiniteGacha/vendor/SharpMonoInjector/LICENSE.txt",
+      "sha256": "c067c64898a4fdb13ffe0bf9cd20fb006246080f3bf4ac0581466b88410ef9c9",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 1081
+    },
+    {
+      "path": "src/InfiniteGacha/vendor/SharpMonoInjector/Memory.cs",
+      "sha256": "57854c17eab0db74a3ee97e835cf9ff3fb492ebaa91883e1fd5eeed3adea9fb9",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3345
+    },
+    {
+      "path": "src/InfiniteGacha/vendor/SharpMonoInjector/MonoImageOpenStatus.cs",
+      "sha256": "2734fe70aba87c972a2d400f911cfa474f24e723f6a6f0be72473581d2eb12d2",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 221
+    },
+    {
+      "path": "src/InfiniteGacha/vendor/SharpMonoInjector/Native.cs",
+      "sha256": "85cb5423acb6809ae3e0d3c7b81fcc6f5594aca1466a5baf63292db9d6cb5440",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 5110
+    },
+    {
+      "path": "src/InfiniteGacha/vendor/SharpMonoInjector/ProcessUtils.cs",
+      "sha256": "148a2f3bb3059a542976cc74e50be29531697f2fcf5764ff8fa72edeef1deaaa",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3766
     },
     {
       "reasons": [
@@ -6033,502 +6529,6 @@
     },
     {
       "path": "standalone/bd2-fishing/vendor/SharpMonoInjector/ProcessUtils.cs",
-      "sha256": "148a2f3bb3059a542976cc74e50be29531697f2fcf5764ff8fa72edeef1deaaa",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 3766
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/compatibility/BD2InfiniteGacha.Compatibility.csproj",
-      "sha256": "135a810f52354f50266deb208357d3bbc35649fe0b1b9d153b540a21e155105e",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1234
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/compatibility/BindingResolver.cs",
-      "sha256": "20d8ae8cb794d5f615ba336569d1af81d9661de057178b840cd40353eaa68a44",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 3730
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/compatibility/contract.json",
-      "sha256": "146b34c297a91f139b9545dd712f53a40797d86b0851ebc791a92834f29c1e31",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 301769
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/compatibility/HookCompiler.cs",
-      "sha256": "1f230345c4bf01e2814afc7705de9693a3598b909a107388eb89adc16d62be3a",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 8394
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/compatibility/MetadataIndex.cs",
-      "sha256": "379efeb0358bb73ed93259690ddd369f1f8c068e8e6908c737a34d5cd395ffdb",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 6066
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/compatibility/packages.lock.json",
-      "sha256": "916311fa59822720f456f827a7236f54e67a516beed2411d6e7eb4b483d8a123",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2316
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/core/BD2InfiniteGacha.Core.csproj",
-      "sha256": "a99566613ba2e7ee324dd92e31c25edbc5fa945855574cc6ddb2f9f4ff038a03",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 782
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/core/Client.cs",
-      "sha256": "6954a1d6b757337b29cd7361640626f81b79a33af323769402fca2f66d08a5d3",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 10205
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/core/Diagnostics.cs",
-      "sha256": "2d1c374e9975f4b0c9d2bc721736a7e75b0970b60698ba16fa12855bc266d52a",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 585
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/core/Notifications.cs",
-      "sha256": "b0b628d299f32ef3b3b5d9655d0a4103169c6eecc77a75dc08a59b217091370d",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2882
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/core/packages.lock.json",
-      "sha256": "5e7c7395179e032b5c7322518c045538b7c1edf1c84a515e7bf2c737fd7128a9",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2226
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/core/PoolChoice.cs",
-      "sha256": "77fd5e56d90e9db68a3f4566f91248f839dcf5256f72787885c6ed9e02493596",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1550
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/desktop/AddCostumesWindow.xaml",
-      "sha256": "b72913316f3249832f9140cd4019f5f732a4977b70ce125e99374805c13377e4",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2698
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/desktop/AddCostumesWindow.xaml.cs",
-      "sha256": "eebc9583f839b5214fd5a3ebb43717be1f0a2a54d1b920a5c837e624438c06d6",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2600
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/desktop/app.manifest",
-      "sha256": "71ba0014549f527defdf66b71036b17a64ac8c709cac5d851bbdf03b69a4ec2b",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 713
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/desktop/App.xaml",
-      "sha256": "f3922af90aca37f136997084062ef0840de170733611a586aa49c44e4b603842",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 7587
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/desktop/App.xaml.cs",
-      "sha256": "aab136ffeac63cc809fdeec92417ef46e54cf98ee52f208b16196d529fc34884",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 4202
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/desktop/BD2InfiniteGacha.Desktop.csproj",
-      "sha256": "597a2e62833e05fbbccfa0b6c600fa4cbafe9beae99b97481a0e746e719fa9ca",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 976
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/desktop/CompletionNotifications.cs",
-      "sha256": "cb0694c9c7aa98ae870c93a561577d17ff9ac7c8c7f31366635bc6985dafb94f",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 5963
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/desktop/DemoPort.cs",
-      "sha256": "b48a13c36192f945c398a900994139029d171576e5d5278c8cbf412b6019c0d0",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1960
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/desktop/DistributionNotice.cs",
-      "sha256": "511ae8aef64e28aeee7fa71dd133fa77a4fcd116fc1246d06d9f0643411bd49d",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 5573
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/desktop/MainWindow.xaml",
-      "sha256": "75c862df9b64810de980b54e63efcfb57f5168d47a12298e4ff6131b241d3c98",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 15663
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/desktop/MainWindow.xaml.cs",
-      "sha256": "ac128a351ad461a0e818197c29809400bb2c79da2086f3908e8abdc7f93adfa2",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 33077
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/desktop/Models.cs",
-      "sha256": "1bd14ebada26f33e4ab0d3529dc9d7ebd7064f9e3f1e41b65f5b7319dd28bd44",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1506
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/desktop/packages.lock.json",
-      "sha256": "75e8257637b8509e144780256d168c24431e73f2faace03168fd02c1942b26a9",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2651
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/desktop/Ui.cs",
-      "sha256": "aa2b2170f7413d835888b29f22ad095feb004ffc00c3e5ff3bd6711be294aed1",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 229
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/desktop/WindowLanguage.cs",
-      "sha256": "4a1de0cbf7628e03b3e6f9af13dab37be63dcf6cafcef14e1e3fa09111affc34",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 5118
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/Directory.Build.props",
-      "sha256": "56a3a2b434f93f632ee9b010fc00299ff1300d9ee220f25d566f45523f6bce37",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 205
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/Directory.Build.targets",
-      "sha256": "8b0cb9abf58770475f3cf64c39f7fd969536e5d4d9277c8d14cc8307adb49d03",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 297
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/hook/Loader.cs",
-      "sha256": "1b86e57b38ab03cc08b6ef8b5fa029d22dde36ab0c3b0e34a0008482d606997d",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 3352
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/hook/RuntimeEngine.cs",
-      "sha256": "78cb3c495a7603800ef993182cba5935ed1c5e71ad3cf83b1efea769ad5ef836",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 16468
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/hook/Storage.cs",
-      "sha256": "05d56f0785ac8fdff8b109926a1e4f6d6f409c49a986d51444ae226c16f72f9a",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2235
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/ipc/common/RequestObservation.cs",
-      "sha256": "1da48a63ae6868716b1830251a949a53f6182373facdd93eb8f7be17b49803f7",
-      "reasons": [
-        null
-      ],
-      "bytes": 5010
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/ipc/common/Wire.cs",
-      "sha256": "c3cfd4805d3127a7224f110f8ca9db6a349201d1efb74ce8f75709b330a6f9ce",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 4305
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/ipc/desktop/DesktopFiles.cs",
-      "sha256": "74c9c404ab39fb69a34b116c6b9471df1d8629d95fa5c75bbd0fa795dab1f68d",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 3673
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/ipc/desktop/HostedConnection.cs",
-      "sha256": "1c5718c64ce64dba1921efca84c35a8e6587fb95569ddeb61df0dbf3acb20910",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 3418
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/ipc/desktop/PipeClient.cs",
-      "sha256": "0e2418cb32800a94816efad5951f39d0da08349269af9611f6004773357c4fb6",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 6153
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/ipc/runtime/Handoff.cs",
-      "sha256": "768b723b7cfd745f366002ad6aa8cb6f85d3c775821d87cf62513e2ed5a933d3",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 6769
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/ipc/runtime/LegacyPilots.cs",
-      "sha256": "52f47d1431e15405fbf46c846ee49299eb65ba6b9bc5c1e7b98e9e21f1e23da8",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1526
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/ipc/runtime/MainThread.cs",
-      "sha256": "230f4c3c109bbc280e27bf671f95fbc2248389ffcb9dc7f275a78133d86945da",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2234
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/ipc/runtime/NativeNetworkWatch.cs",
-      "sha256": "4a36fa7d0fbcf21e74d4b261a8f304e69ae6818a04d4d35b3612931a2940e7f6",
-      "reasons": [
-        null
-      ],
-      "bytes": 1416
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/ipc/runtime/PipeBroker.cs",
-      "sha256": "8f38c6333e74a1a7cf75cb64f92d05443250798953ac042f1941cf876e737ee9",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 23094
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/ipc/runtime/RuntimeFiles.cs",
-      "sha256": "c0f438c02e80e654d4cfbba8e96ae91ccdebedd0573a6b086b5690157e91c060",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2772
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/LICENSE",
-      "sha256": "4e52e70b106c45f0a14bc058ed8c09bbe16fb2dbbbdd84ebfcc0ccf4016f8f0c",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1089
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/localization/en-US.json",
-      "sha256": "abe5e39166f2320a693b6046b57fbb3705b941a64d3f3c2d5754f1e320a08ef9",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 16700
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/localization/LanguageCatalog.cs",
-      "sha256": "a199b29459b2d7ef23c203714248b4e543d2b4b8b7518bfd75585cc63e9fa869",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 4027
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/localization/zh-CN.json",
-      "sha256": "bab45dd388e98cb1eff54cee513e44afb8c44f9a61a5115d4410bd599c739751",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 16268
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/README.en.md",
-      "sha256": "2b808d77120d21c63efe7f46676a0a36bc6300c11616bc42d19b8aa27690f8ec",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 8904
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/README.md",
-      "sha256": "2fa2162a52e2b587f92d10e4266677e7c28762ea46663babf6b14f348943e2ae",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 7987
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/shared/AutomationMachine.cs",
-      "sha256": "8b665c318aefc28cc7295a39c0c52d1e07defb5f2b4f92f61dd80ca6add8da67",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 4407
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/shared/Contracts.cs",
-      "sha256": "df1d8bafe76c92e3942fda791e88c11ca9475e4096b751322ac03eedcdf45d63",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 7587
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/shared/PublicationBuffer.cs",
-      "sha256": "d77ae4f5199e8b310d63e5b2ebf4d2096b8e5c2dda2f01eed18dbb57e2e9897e",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 644
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/THIRD_PARTY_NOTICES.md",
-      "sha256": "77013259cdff3ea06076a4c9d202a6c3cb7bc496ee07006bc3507004dc470ca2",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 929
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/vendor/SharpMonoInjector/Assembler.cs",
-      "sha256": "05e40686107e04570ab362400aa955661e67ba0b9a8cff497603a2a56a59f12f",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 2608
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/vendor/SharpMonoInjector/ExportedFunction.cs",
-      "sha256": "6971e487456da1bca2b65f705eaedab54681cd7734e06a45c5e57bab0b8d354b",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 312
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/vendor/SharpMonoInjector/Injector.cs",
-      "sha256": "004663b2d96d301ae0054337593fe063ccdb25c29b2691e3a26f9bfcc4c44759",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 16864
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/vendor/SharpMonoInjector/InjectorException.cs",
-      "sha256": "0ff5b28977ae646b9e25d894de788c18073ba78f2ed5647f6e275c4f13bad501",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 337
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/vendor/SharpMonoInjector/LICENSE.txt",
-      "sha256": "c067c64898a4fdb13ffe0bf9cd20fb006246080f3bf4ac0581466b88410ef9c9",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 1081
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/vendor/SharpMonoInjector/Memory.cs",
-      "sha256": "57854c17eab0db74a3ee97e835cf9ff3fb492ebaa91883e1fd5eeed3adea9fb9",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 3345
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/vendor/SharpMonoInjector/MonoImageOpenStatus.cs",
-      "sha256": "2734fe70aba87c972a2d400f911cfa474f24e723f6a6f0be72473581d2eb12d2",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 221
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/vendor/SharpMonoInjector/Native.cs",
-      "sha256": "85cb5423acb6809ae3e0d3c7b81fcc6f5594aca1466a5baf63292db9d6cb5440",
-      "reasons": [
-        "build input"
-      ],
-      "bytes": 5110
-    },
-    {
-      "path": "standalone/bd2-infinite-gacha/vendor/SharpMonoInjector/ProcessUtils.cs",
       "sha256": "148a2f3bb3059a542976cc74e50be29531697f2fcf5764ff8fa72edeef1deaaa",
       "reasons": [
         "build input"
@@ -9539,11 +9539,11 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ToolMenuCases.cs",
-      "sha256": "bcd812d45e56ef71cc6c0bab5cd0a8a4a2458f31453ed04018a1a46b63a89cd0",
+      "sha256": "2553f229649531a0e5b2096e31afbc8fd92a58f7ebadeb8815138ee1385a0bf9",
       "reasons": [
         "build input"
       ],
-      "bytes": 7871
+      "bytes": 8107
     },
     {
       "path": "tests/Dustweave.Tests/Cases/TradeDataCases.cs",
@@ -9611,11 +9611,11 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/UnifiedSuiteCases.cs",
-      "sha256": "7d89a7150593ac9f56705c6d88bb1493d5bd42ea782ed54f86372398bdae364b",
+      "sha256": "e6defa40d8e2984770bcec792e2c38b4799316fa1fba8d8673e7dcfd48cb817f",
       "reasons": [
         "build input"
       ],
-      "bytes": 18786
+      "bytes": 18803
     },
     {
       "path": "tests/Dustweave.Tests/Cases/UpdateDeltaCases.cs",
@@ -9747,11 +9747,11 @@
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
-      "sha256": "ecbb592f0abdaa4359c8afc6133a6c17df7671963df358c7e4915ee817f4356c",
+      "sha256": "df85234ed5b5ecbab84b62895486b110b2e199dc67480cf5b699572436a60f73",
       "reasons": [
         "build input"
       ],
-      "bytes": 2715
+      "bytes": 2771
     },
     {
       "path": "third-party/highs/highs.dll",

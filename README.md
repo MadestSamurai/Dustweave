@@ -73,7 +73,7 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 | 连连看 · 音游 | 盘面求解与续局；读取谱面并自动操作 |
 | [使徒运气防守](src/ApostleDefense) | 采用离线退火优化的策略，自动召唤、合成、培养、布局与阶段重开 |
 | SECRET VISION · 恶魔猎人 | 自动圈地与避让；自动移动与攻击，两者均支持失败重试 |
-| 无限抽抽乐 | 双列表目标、停止条件与命中通知 |
+| [无限抽抽乐](src/InfiniteGacha) | 双列表目标、停止条件与命中通知 |
 | [MANSION RUNAWAY](docs/MANSION_RUNAWAY.md) | 实时寻路、避敌与关卡推进，也可选择刷到 80 连锁后停止 |
 | [潘多拉大逃脱](docs/PANDORA.md) | 指定关卡循环刷货币；挑战模式支持角色选择、武器与辅助道具配对、BOSS 避让及后期生存决策，确认通关后停止 |
 
@@ -82,14 +82,14 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 <details>
 <summary>原独立仓库与维护说明</summary>
 
-原仓库用于查阅独立版源码与历史发行；不能据此判断织尘内置版的功能或更新进度。**装备助手与使徒运气防守原仓库已归档并停止维护，后续代码与反馈统一转到 Dustweave。**其余下列仓库截至 2026-10-18 尚未归档，但与内置版不保证同步发布。
+原仓库用于查阅独立版源码与历史发行；不能据此判断织尘内置版的功能或更新进度。**装备助手、使徒运气防守与无限抽抽乐原仓库已归档并停止维护，后续代码与反馈统一转到 Dustweave。**其余下列仓库截至 2026-10-18 尚未归档，但与内置版不保证同步发布。
 
 - [装备助手（已归档）](https://github.com/MadestSamurai/bd2-equipment-assistant)
 - [自动钓鱼](https://github.com/MadestSamurai/bd2-fishing) · [领地自动化](https://github.com/MadestSamurai/bd2-territory)
 - [连连看](https://github.com/MadestSamurai/bd2-sichuan) · [音游](https://github.com/MadestSamurai/bd2-rhythm) · [使徒运气防守（已归档）](https://github.com/MadestSamurai/bd2-apostle-defense)
-- [SECRET VISION](https://github.com/MadestSamurai/bd2-secret-vision) · [恶魔猎人](https://github.com/MadestSamurai/bd2-fiend-hunter) · [无限抽抽乐](https://github.com/MadestSamurai/bd2-infinite-gacha)
+- [SECRET VISION](https://github.com/MadestSamurai/bd2-secret-vision) · [恶魔猎人](https://github.com/MadestSamurai/bd2-fiend-hunter) · [无限抽抽乐（已归档）](https://github.com/MadestSamurai/bd2-infinite-gacha)
 
-装备助手、使徒运气防守、MANSION RUNAWAY 与潘多拉分别在 [`src/Equipment/`](src/Equipment)、[`src/ApostleDefense/`](src/ApostleDefense)、[`src/Mansion/`](src/Mansion) 和 [`src/Pandora/`](src/Pandora) 维护；其余独立工具的内置源码位于 [`standalone/`](standalone)。各模块保留原有署名与许可证。
+装备助手、使徒运气防守、无限抽抽乐、MANSION RUNAWAY 与潘多拉分别在 [`src/Equipment/`](src/Equipment)、[`src/ApostleDefense/`](src/ApostleDefense)、[`src/InfiniteGacha/`](src/InfiniteGacha)、[`src/Mansion/`](src/Mansion) 和 [`src/Pandora/`](src/Pandora) 维护；其余独立工具的内置源码位于 [`standalone/`](standalone)。各模块保留原有署名与许可证。
 
 </details>
 

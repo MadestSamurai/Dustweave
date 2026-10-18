@@ -24,7 +24,7 @@
     <Style TargetType="Window">
       <Setter Property="FontFamily" Value="Segoe UI, Microsoft YaHei UI" />
       <Setter Property="FontSize" Value="14" />
-      <Setter Property="Foreground" Value="{StaticResource Ink}" />
+      <Setter Property="Foreground" Value="{DynamicResource Ink}" />
       <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
       <Setter Property="UseLayoutRounding" Value="True" />
     </Style>
@@ -32,9 +32,9 @@
     <Style TargetType="Button">
       <Setter Property="MinHeight" Value="34" />
       <Setter Property="Padding" Value="13,6" />
-      <Setter Property="Foreground" Value="{StaticResource Ink}" />
-      <Setter Property="Background" Value="{StaticResource Surface}" />
-      <Setter Property="BorderBrush" Value="{StaticResource LineStrong}" />
+      <Setter Property="Foreground" Value="{DynamicResource Ink}" />
+      <Setter Property="Background" Value="{DynamicResource Surface}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource LineStrong}" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Cursor" Value="Hand" />
@@ -58,7 +58,7 @@
                 <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#7F8A92" />
               </Trigger>
               <Trigger Property="IsKeyboardFocused" Value="True">
-                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource Focus}" />
+                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{DynamicResource Focus}" />
                 <Setter TargetName="ButtonBorder" Property="BorderThickness" Value="2" />
               </Trigger>
               <Trigger Property="IsPressed" Value="True">
@@ -76,8 +76,8 @@
 
     <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
       <Setter Property="Foreground" Value="White" />
-      <Setter Property="Background" Value="{StaticResource Primary}" />
-      <Setter Property="BorderBrush" Value="{StaticResource Primary}" />
+      <Setter Property="Background" Value="{DynamicResource Primary}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Primary}" />
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
@@ -91,11 +91,11 @@
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource PrimaryHover}" />
-                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource PrimaryHover}" />
+                <Setter TargetName="ButtonBorder" Property="Background" Value="{DynamicResource PrimaryHover}" />
+                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{DynamicResource PrimaryHover}" />
               </Trigger>
               <Trigger Property="IsKeyboardFocused" Value="True">
-                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource Focus}" />
+                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{DynamicResource Focus}" />
                 <Setter TargetName="ButtonBorder" Property="BorderThickness" Value="2" />
               </Trigger>
               <Trigger Property="IsPressed" Value="True">
@@ -112,36 +112,36 @@
     </Style>
 
     <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-      <Setter Property="Foreground" Value="{StaticResource Error}" />
+      <Setter Property="Foreground" Value="{DynamicResource Error}" />
       <Setter Property="BorderBrush" Value="#D5AAAA" />
     </Style>
 
     <Style TargetType="TextBox">
       <Setter Property="MinHeight" Value="38" />
       <Setter Property="Padding" Value="10,7" />
-      <Setter Property="Background" Value="{StaticResource Surface}" />
-      <Setter Property="Foreground" Value="{StaticResource Ink}" />
-      <Setter Property="BorderBrush" Value="{StaticResource LineStrong}" />
+      <Setter Property="Background" Value="{DynamicResource Surface}" />
+      <Setter Property="Foreground" Value="{DynamicResource Ink}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource LineStrong}" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
       <Setter Property="FocusVisualStyle" Value="{x:Null}" />
       <Style.Triggers>
         <Trigger Property="IsKeyboardFocused" Value="True">
-          <Setter Property="BorderBrush" Value="{StaticResource Focus}" />
+          <Setter Property="BorderBrush" Value="{DynamicResource Focus}" />
           <Setter Property="BorderThickness" Value="2" />
         </Trigger>
       </Style.Triggers>
     </Style>
 
     <Style x:Key="Panel" TargetType="Border">
-      <Setter Property="Background" Value="{StaticResource Surface}" />
-      <Setter Property="BorderBrush" Value="{StaticResource Line}" />
+      <Setter Property="Background" Value="{DynamicResource Surface}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="CornerRadius" Value="7" />
     </Style>
 
     <Style x:Key="MetaText" TargetType="TextBlock">
-      <Setter Property="Foreground" Value="{StaticResource MutedInk}" />
+      <Setter Property="Foreground" Value="{DynamicResource MutedInk}" />
       <Setter Property="FontSize" Value="12" />
     </Style>
   </Application.Resources>

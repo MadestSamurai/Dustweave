@@ -7,7 +7,7 @@ namespace BD2.Distribution;
 // Presentation only. No network access, game actions, file writes or external processes.
 internal static class DistributionNotice
 {
- internal const string Repository="https://github.com/MadestSamurai/bd2-infinite-gacha";
+ internal const string Repository="https://github.com/MadestSamurai/Dustweave";
  internal static void Attach(Window window,Selector language)
  {
   if(window.Content is not UIElement body)throw new InvalidOperationException("Missing main view");
@@ -15,16 +15,16 @@ internal static class DistributionNotice
   var host=new Grid();host.RowDefinitions.Add(new RowDefinition());host.RowDefinitions.Add(new RowDefinition{Height=GridLength.Auto});host.Children.Add(body);
   var row=new DockPanel{LastChildFill=true,Margin=new Thickness(20,8,20,10)};
   var button=new Button{Name="SourceNoticeButton",Tag="literal",Padding=new Thickness(10,5,10,5),Margin=new Thickness(12,0,0,0),VerticalAlignment=VerticalAlignment.Center};DockPanel.SetDock(button,Dock.Right);row.Children.Add(button);
-  var text=new TextBlock{Name="SourceNoticeText",Tag="literal",FontSize=11,TextWrapping=TextWrapping.Wrap,Foreground=new SolidColorBrush(Color.FromRgb(87,100,116)),VerticalAlignment=VerticalAlignment.Center};row.Children.Add(text);
+  var text=new TextBlock{Name="SourceNoticeText",Tag="literal",FontSize=11,TextWrapping=TextWrapping.Wrap,Foreground=new SolidColorBrush(Color.FromRgb(87,100,116)),VerticalAlignment=VerticalAlignment.Center};text.SetResourceReference(TextBlock.ForegroundProperty,"MutedInk");row.Children.Add(text);
   bool English()=>AppDomain.CurrentDomain.GetData("BD2Daily.HostedLanguage") is string code ? code=="en-US" : language.SelectedIndex==1;
   void Render(){text.Text=Localize(English(),"Free & open source · GitHub: MadestSamurai · Bilibili: MadSamurai","免费开源交流工具 · GitHub：MadestSamurai · B站：MadSamurai");button.Content=Localize(English(),"About & source","来源与说明");}
   button.Click+=(_,_)=>Show(window,English());language.SelectionChanged+=(_,_)=>Render();Render();
-  var border=new Border{BorderBrush=new SolidColorBrush(Color.FromRgb(216,222,231)),BorderThickness=new Thickness(0,1,0,0),Child=row};Grid.SetRow(border,1);host.Children.Add(border);window.Content=host;
+  var border=new Border{BorderBrush=new SolidColorBrush(Color.FromRgb(216,222,231)),BorderThickness=new Thickness(0,1,0,0),Child=row};border.SetResourceReference(Border.BorderBrushProperty,"Line");Grid.SetRow(border,1);host.Children.Add(border);window.Content=host;
  }
  static void Show(Window owner,bool english)
  {
   var dialog=new NoticeWindow{Owner=owner,Title=english?"About & source":"来源与说明",Width=580,Height=560,MinWidth=380,MinHeight=340,WindowStartupLocation=WindowStartupLocation.CenterOwner,Background=Brushes.White,Foreground=new SolidColorBrush(Color.FromRgb(34,44,56)),FontFamily=owner.FontFamily};
-  var panel=new StackPanel{Margin=new Thickness(24)};
+  dialog.SetResourceReference(Window.BackgroundProperty,"Surface");dialog.SetResourceReference(Window.ForegroundProperty,"Ink");var panel=new StackPanel{Margin=new Thickness(24)};
   var repaint=new System.Collections.Generic.List<Action<bool>>();
   void Text(string en,string cn,int size=14){var block=new TextBlock{Tag="literal",FontSize=size,TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,0,0,16)};panel.Children.Add(block);repaint.Add(e=>block.Text=Localize(e,en,cn));}
   Text("Free release from the author","作者发布版免费提供",20);
@@ -37,7 +37,7 @@ internal static class DistributionNotice
   var done=new Button{Content=english?"Close":"关闭",Tag="literal",Padding=new Thickness(16,7,16,7),HorizontalAlignment=HorizontalAlignment.Right,IsCancel=true};done.Click+=(_,_)=>dialog.Close();panel.Children.Add(done);
   dialog.RenderLanguage=code=>{bool e=code=="en-US";dialog.Title=Localize(e,"About & source","来源与说明");done.Content=Localize(e,"Close","关闭");foreach(var paint in repaint)paint(e);};
   dialog.ApplyHostedLanguage(AppDomain.CurrentDomain.GetData("BD2Daily.HostedLanguage") as string ?? (english?"en-US":"zh-CN"));
-  dialog.Content=new ScrollViewer{VerticalScrollBarVisibility=ScrollBarVisibility.Auto,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled,Content=panel};dialog.ShowDialog();
+  dialog.Content=new ScrollViewer{VerticalScrollBarVisibility=ScrollBarVisibility.Auto,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled,Content=panel};if(AppDomain.CurrentDomain.GetData("BD2Daily.ShowModal") is Func<Window,bool?> show)show(dialog);else dialog.ShowDialog();
  }
  static string Localize(bool english,string en,string cn)=>english?en:AppDomain.CurrentDomain.GetData("BD2Daily.HostedLanguage") is "zh-TW" && AppDomain.CurrentDomain.GetData("BD2Daily.TraditionalText") is Func<string,string> traditional?traditional(cn):cn;
  private sealed class NoticeWindow:Window

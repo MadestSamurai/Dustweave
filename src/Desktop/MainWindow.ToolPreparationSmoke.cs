@@ -16,20 +16,28 @@ public partial class MainWindow
         void Check(bool value,string message){if(!value)throw new Exception(message);checks.Add(message);}
         async Task Until(Func<bool> predicate){for(int i=0;i<100&&!predicate();i++)await Task.Delay(25);Check(predicate(),"bounded UI preparation completed");}
         var equipment=Assembly.Load("BD2EquipmentAssistant").GetType("BD2Equipment.MainWindow")!;
+        var gacha=Assembly.Load("BD2InfiniteGacha");
+        var demos=new Dictionary<Window,object>();
+        Window Create(string id){
+            if(id=="mansion-runaway")return new MansionWindow(smoke:true,deferChrome:true);
+            if(id=="equipment")return (Window)Activator.CreateInstance(equipment,BindingFlags.Instance|BindingFlags.NonPublic,null,new object[]{false},null)!;
+            var demo=Activator.CreateInstance(gacha.GetType("BD2InfiniteGacha.Desktop.DemoPort")!)!;
+            var window=(Window)Activator.CreateInstance(gacha.GetType("BD2InfiniteGacha.Desktop.MainWindow")!,demo,Path.Combine(smoke!,"gacha-settings"),false)!;
+            demos[window]=demo;return window;
+        }
         string? prior=Environment.GetEnvironmentVariable("BD2_DAILY_HOSTED_TOOL");
         try
         {
-            foreach(string id in new[]{"mansion-runaway","equipment"})
+            foreach(string id in new[]{"mansion-runaway","equipment","infinite-gacha"})
             foreach(string language in new[]{"zh-CN","zh-TW","en-US"})
             foreach(string appearance in new[]{"light","dark"})
             {
                 L.Select(language);theme.Select(appearance=="light"?DailyAppearance.Light:DailyAppearance.Dark);
                 using var locale=HostedToolLocale.Begin(language);
                 Environment.SetEnvironmentVariable("BD2_DAILY_HOSTED_TOOL",id);
-                var window=id=="mansion-runaway"?new MansionWindow(smoke:true,deferChrome:true):
-                    (Window)Activator.CreateInstance(equipment,BindingFlags.Instance|BindingFlags.NonPublic,null,new object[]{false},null)!;
+                var window=Create(id);
                 window.Owner=this;window.ShowInTaskbar=false;window.ShowActivated=false;window.WindowStartupLocation=WindowStartupLocation.Manual;window.Left=-12000;window.Top=0;
-                window.Width=id=="equipment"?1040:820;window.Height=id=="equipment"?800:700;
+                window.Width=id=="infinite-gacha"?1260:id=="equipment"?1040:820;window.Height=id=="infinite-gacha"?940:id=="equipment"?800:700;
                 int prepares=0,ready=0;bool painted=false,rendered=false;
                 window.ContentRendered+=(_,_)=>rendered=true;
                 var entered=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -67,6 +75,18 @@ public partial class MainWindow
                     Capture($"inventory-{language}-{appearance}",(FrameworkElement)window.Content);
                     equipment.GetMethod("Busy",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(window,new object[]{false});
                 }
+                if(id=="infinite-gacha"){
+                    var demo=demos[window];var snapshot=demo.GetType().GetField("Snapshot")!.GetValue(demo)!;
+                    Check(Convert.ToInt64(snapshot.GetType().GetField("Sequence")!.GetValue(snapshot))==1,"gacha does not poll transport before preparation and explicit connection complete");
+                    ((Button)window.FindName("ConnectButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    Check(Convert.ToInt64(snapshot.GetType().GetField("Sequence")!.GetValue(snapshot))>1,"gacha reads inventory after connection becomes ready");
+                    Check((int)demo.GetType().GetField("Commands")!.GetValue(demo)! == 0,"gacha readiness never rolls automatically");
+                    Check(!((bool)window.GetType().GetProperty("HostedAutomationEnabled")!.GetValue(window)!),"gacha ready window remains idle");
+                    Check(((ListBox)window.FindName("BList")).Background==Application.Current.Resources["Surface"],"gacha target list uses current product surface");
+                    ((Expander)window.FindName("ResultExpander")).IsExpanded=true;
+                    await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    Capture($"ready-{id}-{language}-{appearance}",(FrameworkElement)window.Content);
+                }
                 window.Close();await Until(()=>!window.IsVisible);
             }
             // The hosted app can finish showing before its deferred decorator runs.
@@ -82,10 +102,9 @@ public partial class MainWindow
             DailyDialogs.Prepare(failed);failed.Show();await Until(()=>attempts==1&&!broken.Preparing);await Task.Delay(300);
             Check(attempts==1&&!broken.Body.IsEnabled&&broken.ActionButton.IsEnabled&&!DailyToolControl.IsOccupied(root),"failed setup stays recoverable without reconnecting indefinitely");failed.Close();
             // Closing during preparation waits for cancellation and releases ownership.
-            foreach(string id in new[]{"mansion-runaway","equipment"}){
+            foreach(string id in new[]{"mansion-runaway","equipment","infinite-gacha"}){
                 Environment.SetEnvironmentVariable("BD2_DAILY_HOSTED_TOOL",id);
-                var closing=id=="mansion-runaway"?new MansionWindow(smoke:true,deferChrome:true):
-                    (Window)Activator.CreateInstance(equipment,BindingFlags.Instance|BindingFlags.NonPublic,null,new object[]{false},null)!;
+                var closing=Create(id);
                 closing.ShowActivated=false;closing.ShowInTaskbar=false;closing.WindowStartupLocation=WindowStartupLocation.Manual;closing.Left=-12000;
                 var closingStarted=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
                 var cancelled=new HostedToolPreparation(closing,id,root,async(_,token)=>{closingStarted.SetResult();await Task.Delay(Timeout.Infinite,token);},()=>throw new Exception("Closed setup became ready"));

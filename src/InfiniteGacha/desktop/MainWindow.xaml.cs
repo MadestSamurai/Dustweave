@@ -20,6 +20,9 @@ public partial class MainWindow:Window
     private ListCollectionView? bView,aView;
     private RuleDraft draft=new();private Snapshot? snapshot;private Pool? pool;private string account="",catalogKey="",poolListKey="",resultKey="";private int shownTop,lastActivePool;private bool updating,connecting;private readonly DispatcherTimer timer;
     private readonly CancellationTokenSource lifetime=new();
+    // The host paints the window before compiling/connecting its module. Do not
+    // poll a previous module or discover another game while preparation is pending.
+    private bool connectionReady=Environment.GetEnvironmentVariable("BD2_DAILY_HOSTED_TOOL")!="infinite-gacha";
     private readonly NotificationPreferences notificationPreferences;
     private readonly CompletionNotifications notifications;
     private NotificationOptions notificationOptions=new();
@@ -61,6 +64,7 @@ public partial class MainWindow:Window
     private void Filter_Selection(object sender,SelectionChangedEventArgs e)=>FilterView();
     private void Poll()
     {
+        if(!connectionReady)return;
         try
         {
             var next=port.Read();controller.Poll(next);snapshot=next;
@@ -158,7 +162,7 @@ public partial class MainWindow:Window
         Threshold.BorderBrush=(Brush)FindResource(goodTop||draft.Threshold.Length==0?"LineStrong":"Error");
         string error=pool==null?"":Rules.Validate(draft,pool.Costumes);ValidationText.Text=error;SetEnabled();return error;
     }
-    private bool GameFresh(){try{return ClientController.Fresh(snapshot,port.Find(),DateTime.UtcNow.Ticks);}catch{return false;}}
+    private bool GameFresh(){if(!connectionReady)return false;try{return ClientController.Fresh(snapshot,port.Find(),DateTime.UtcNow.Ticks);}catch{return false;}}
     private void SetEnabled()
     {
         if(StartButton==null||controller==null)return;bool running=controller.Running;
@@ -182,7 +186,8 @@ public partial class MainWindow:Window
     private void Target_KeyDown(object sender,KeyEventArgs e){if(sender is not ListBox list)return;if(e.Key==Key.Delete){ChangeSelected(list,0);e.Handled=true;}else if(e.Key==Key.Enter){ChangeSelected(list,list==BList?1:2);e.Handled=true;}}
     private void AddIds(IEnumerable<int> ids,int group){if(controller.Running||connecting)return;var selected=ids.ToHashSet();updating=true;foreach(var row in costumes.Where(c=>c.Available&&selected.Contains(c.Costume.Id)))row.Group=group;updating=false;ChangedGroups();}
     private void AddCostumes_Click(object sender,RoutedEventArgs e)
-    {if(controller.Running||connecting)return;var picker=new AddCostumesWindow(costumes.Where(c=>c.Available&&c.Group==0),Resources){Owner=this};if(picker.ShowDialog()==true)AddIds(picker.SelectedIds,picker.TargetGroup);}
+    {if(controller.Running||connecting)return;var picker=new AddCostumesWindow(costumes.Where(c=>c.Available&&c.Group==0),Resources){Owner=this};if(ShowModal(picker)==true)AddIds(picker.SelectedIds,picker.TargetGroup);}
+    private static bool? ShowModal(Window window)=>AppDomain.CurrentDomain.GetData("BD2Daily.ShowModal") is Func<Window,bool?> show?show(window):window.ShowDialog();
     private void Unfilled_Click(object sender,RoutedEventArgs e)
     {
         if(snapshot?.InventoryReady!=true)return;updating=true;
@@ -191,7 +196,7 @@ public partial class MainWindow:Window
     }
     private void RemoveFull_Click(object sender,RoutedEventArgs e){updating=true;foreach(var row in costumes.Where(c=>c.Costume.Level>=5))row.Group=0;updating=false;ChangedGroups();}
     private async void Connect_Click(object sender,RoutedEventArgs e)
-    {connecting=true;SetEnabled();try{await port.ConnectAsync(m=>StatusText.Text=m,lifetime.Token);catalogKey="";Poll();}catch(OperationCanceledException){}catch(Exception ex){Error(ex);}finally{connecting=false;SetEnabled();}}
+    {connecting=true;SetEnabled();try{await port.ConnectAsync(m=>StatusText.Text=m,lifetime.Token);connectionReady=true;catalogKey="";Poll();}catch(OperationCanceledException){}catch(Exception ex){Error(ex);}finally{connecting=false;SetEnabled();}}
     private void Start_Click(object sender,RoutedEventArgs e){try{if(snapshot==null||pool==null)return;controller.Start(snapshot,pool,draft);StatusText.Text="开始检查当前结果；达标时不会再刷新。";SetEnabled();}catch(Exception ex){Error(ex);}}
     private void Stop_Click(object sender,RoutedEventArgs e){try{controller.Stop();StatusText.Text="已请求停止；已发出的抽取会正常返回，不再发起下一次。";SetEnabled();}catch(Exception ex){Error(ex);}}
     private void Error(Exception ex){StatusText.Text=ex.Message;StatusText.Foreground=(Brush)FindResource("Error");}
@@ -201,7 +206,7 @@ public partial class MainWindow:Window
         MatchResult? counted=null;
         if(snapshot.Result.Length==10&&pool?.Id==snapshot.PoolId&&active!=null){try{counted=Rules.Count(draft,snapshot.Result,active.Costumes);}catch(InvalidOperationException){}}
         ResultExpander.Header=counted==null?"当前十连结果（可展开）":$"当前十连 · A {counted.A} / B {counted.B}"+(counted.Overflow>0?$" · 溢出 {counted.Overflow} 张不计":"");
-        ResultCards.ItemsSource=snapshot.Result.Select((id,i)=>{data.TryGetValue(id,out var c);int group=pool?.Id==snapshot.PoolId?(draft.A.Contains(id)?1:draft.B.Contains(id)?2:0):0;bool excess=counted?.OverflowSlots.ElementAtOrDefault(i)==true;return new ResultCard((excess?Ui.Text("溢出 · "):group==1?"A · ":group==2?"B · ":"")+(string.IsNullOrWhiteSpace(c?.Character)?Ui.Text("服装 #")+id:c.Character),string.IsNullOrWhiteSpace(c?.Name)?Ui.Text("名称尚未读取"):c.Name,(Brush)new BrushConverter().ConvertFrom(excess?"#F0F2F4":group==1?"#E8F0FA":group==2?"#EAF6F1":"#F0F2F4")!);}).ToArray();
+        ResultCards.ItemsSource=snapshot.Result.Select((id,i)=>{data.TryGetValue(id,out var c);int group=pool?.Id==snapshot.PoolId?(draft.A.Contains(id)?1:draft.B.Contains(id)?2:0):0;bool excess=counted?.OverflowSlots.ElementAtOrDefault(i)==true;return new ResultCard((excess?Ui.Text("溢出 · "):group==1?"A · ":group==2?"B · ":"")+(string.IsNullOrWhiteSpace(c?.Character)?Ui.Text("服装 #")+id:c.Character),string.IsNullOrWhiteSpace(c?.Name)?Ui.Text("名称尚未读取"):c.Name,(Brush)FindResource(!excess&&group>0?"PrimarySoft":"SurfaceMuted"));}).ToArray();
     }
     private async Task SmokeAsync()
     {

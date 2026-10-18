@@ -12,6 +12,9 @@
     <Project Path="src/Equipment/core/Dustweave.Equipment.Core.csproj" />
     <Project Path="src/Equipment/desktop/Dustweave.Equipment.Desktop.csproj" />
     <Project Path="src/ToolHost/Dustweave.ToolHost.csproj" />
+    <Project Path="src/InfiniteGacha/compatibility/Dustweave.InfiniteGacha.Compatibility.csproj" />
+    <Project Path="src/InfiniteGacha/core/Dustweave.InfiniteGacha.Core.csproj" />
+    <Project Path="src/InfiniteGacha/desktop/Dustweave.InfiniteGacha.Desktop.csproj" />
   </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/CompatibilityCli/Dustweave.Compatibility.Cli.csproj" />
@@ -30,9 +33,6 @@
     <Project Path="standalone/bd2-fishing/compatibility/BD2Fishing.Compatibility.csproj" />
     <Project Path="standalone/bd2-fishing/core/BD2Fishing.Core.csproj" />
     <Project Path="standalone/bd2-fishing/desktop/BD2Fishing.Desktop.csproj" />
-    <Project Path="standalone/bd2-infinite-gacha/compatibility/BD2InfiniteGacha.Compatibility.csproj" />
-    <Project Path="standalone/bd2-infinite-gacha/core/BD2InfiniteGacha.Core.csproj" />
-    <Project Path="standalone/bd2-infinite-gacha/desktop/BD2InfiniteGacha.Desktop.csproj" />
     <Project Path="standalone/bd2-rhythm/compatibility/BD2Rhythm.Compatibility.csproj" />
     <Project Path="standalone/bd2-rhythm/core/BD2Rhythm.Core.csproj" />
     <Project Path="standalone/bd2-rhythm/desktop/BD2Rhythm.Desktop.csproj" />

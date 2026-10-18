@@ -20,6 +20,9 @@ $legacyToolAssemblies=@{
  'src/ApostleDefense/compatibility/Dustweave.ApostleDefense.Compatibility.csproj'='BD2ApostleDefense.Compatibility'
  'src/ApostleDefense/core/Dustweave.ApostleDefense.Core.csproj'='BD2ApostleDefense.Core'
  'src/ApostleDefense/desktop/Dustweave.ApostleDefense.Desktop.csproj'='BD2ApostleDefense'
+ 'src/InfiniteGacha/compatibility/Dustweave.InfiniteGacha.Compatibility.csproj'='BD2InfiniteGacha.Compatibility'
+ 'src/InfiniteGacha/core/Dustweave.InfiniteGacha.Core.csproj'='BD2InfiniteGacha.Core'
+ 'src/InfiniteGacha/desktop/Dustweave.InfiniteGacha.Desktop.csproj'='BD2InfiniteGacha'
 }
 foreach($relative in $declared){
  $project=[IO.Path]::GetFullPath((Join-Path $root $relative))
