@@ -18,16 +18,18 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 
 织尘将账号切换、日常与周常、经营和小游戏收进同一个工作台。为每个账号选择需要的环节，查看本次计划，再沿时间线执行；不需要的环节可以关闭，未完成的部分可以单独重跑。
 
-<details>
-<summary><strong>支持开发 · Ko-fi / 微信 / 支付宝</strong></summary>
+## 支持开发
 
 如果织尘帮你省下了时间，欢迎请作者喝杯咖啡，支持持续开发与维护。赞助完全自愿，不影响软件功能或使用权限；反馈问题、完善文档和参与翻译，同样是对项目的支持。
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/D7C1277FLT)
 
-<img src="docs/images/support-dustweave-zh.png" alt="支持织尘：从左至右为 Ko-fi、微信支付和支付宝二维码" width="1040">
-
 电脑端可直接点击上方 Ko-fi 按钮；微信和支付宝请使用对应应用扫码。[查看二维码原图](docs/images/support-dustweave-zh.png)。谢谢你的支持！
+
+<details>
+<summary>展开二维码（Ko-fi / 微信 / 支付宝）</summary>
+
+<img src="docs/images/support-dustweave-zh.png" alt="支持织尘：从左至右为 Ko-fi、微信支付和支付宝二维码" width="1040">
 
 </details>
 

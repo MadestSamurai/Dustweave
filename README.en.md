@@ -18,16 +18,18 @@ A multi-account daily assistant for BrownDust II on Windows
 
 Dustweave brings account switching, daily and weekly tasks, resource management and minigames into one desktop workspace. Set up tasks for each account, review the current plan and follow its progress on a timeline. Disable tasks you do not need or rerun selected unfinished stages.
 
-<details>
-<summary><strong>Support development · Ko-fi / WeChat Pay / Alipay</strong></summary>
+## Support development
 
 If Dustweave saves you time, consider buying the author a coffee to support ongoing development and maintenance. Donations are entirely optional and do not unlock features or change access to the software. Bug reports, documentation improvements and translations are equally welcome.
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/D7C1277FLT)
 
-<img src="docs/images/support-dustweave-en.png" alt="Support Dustweave: Ko-fi, WeChat Pay and Alipay QR codes, from left to right" width="1040">
-
 On desktop, use the Ko-fi button above. For WeChat Pay or Alipay, scan with the matching app. [View the full-size QR image](docs/images/support-dustweave-en.png). Thank you for your support!
+
+<details>
+<summary>Show QR codes (Ko-fi / WeChat Pay / Alipay)</summary>
+
+<img src="docs/images/support-dustweave-en.png" alt="Support Dustweave: Ko-fi, WeChat Pay and Alipay QR codes, from left to right" width="1040">
 
 </details>
 
