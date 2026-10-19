@@ -17,14 +17,14 @@ public static class Client {
  public static readonly JsonSerializerOptions Options=new(){IncludeFields=true};
  public static JsonObject? State(){try{Reader();return JsonNode.Parse(AtomicFiles.Read(Path.Combine(Root,"state.json")))!.AsObject();}catch(Exception e)when(e is IOException or JsonException or TimeoutException && !PipeClient.SessionEnded(e)){return null;}}
  public static bool Fresh(JsonObject? s)=>s!=null&&DateTimeOffset.TryParse((string?)s["AtUtc"],out var t)&&DateTimeOffset.UtcNow-t>=TimeSpan.Zero&&DateTimeOffset.UtcNow-t<TimeSpan.FromSeconds(6);
- public static void Write(string file,object value){Directory.CreateDirectory(Root);string p=Path.Combine(Root,file),text=JsonSerializer.Serialize(value,Options);
+ public static void Write(string file,object value){string p=Path.Combine(Root,file),text=JsonSerializer.Serialize(value,Options);
   for(int i=0;i<12;i++){if(AtomicFiles.TryWrite(p,text))return;Thread.Sleep(25);}
   throw new IOException("控制文件暂时被占用："+file);
  }
- public static async Task Connect(){using var game=HostedConnection.FindGame(n=>string.Equals(n,"BrownDust II",StringComparison.OrdinalIgnoreCase),"检测到多个游戏进程，请只保留一个。")??throw new Exception("请先启动游戏");
+ public static async Task Connect(){ToolStorage.ImportLegacyLogs();using var game=HostedConnection.FindGame(n=>string.Equals(n,"BrownDust II",StringComparison.OrdinalIgnoreCase),"检测到多个游戏进程，请只保留一个。")??throw new Exception("请先启动游戏");
   pipe=DesktopFiles.Connect(Root,game.Id,game.StartTime.ToUniversalTime().Ticks);if(HostedConnection.TryOpen(pipe,game.Id,game.StartTime.ToUniversalTime().Ticks)){acquired=true;return;} var managed=Path.Combine(Path.GetDirectoryName(game.MainModule!.FileName)!,"BrownDust II_Data","Managed");
   var hook=await Task.Run(()=>BD2FiendHunter.Compatibility.HookCompiler.Prepare(managed));
-  Directory.CreateDirectory(Root);File.WriteAllText(Path.Combine(Root,"compatibility.json"),JsonSerializer.Serialize(hook.Report,Options));
+  Directory.CreateDirectory(ToolStorage.Diagnostics);File.WriteAllText(Path.Combine(ToolStorage.Diagnostics,"compatibility.json"),JsonSerializer.Serialize(hook.Report,Options));
   var payload=hook.Payload;
   using var pe=new PEReader(new MemoryStream(payload));var md=pe.GetMetadataReader();var fingerprint=md.GetGuid(md.GetModuleDefinition().Mvid).ToString("N");
   pipe=DesktopFiles.Connect(Root,game.Id,game.StartTime.ToUniversalTime().Ticks);acquired=false;

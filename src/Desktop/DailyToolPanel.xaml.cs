@@ -45,6 +45,7 @@ public partial class DailyToolPanel : UserControl
     private void CloseClicked(object sender, RoutedEventArgs e) { if (!busy) CloseRequested?.Invoke(); }
     private void Render()
     {
+        ToolCount.Text=L.Get("tools.count",DailyToolCatalog.All.Count);
         var category = Category.SelectedItem as ToolCategory;
         string query = SearchBox.Text.Trim();
         var rows = DailyToolCatalog.All.Where(t => query.Length == 0 || (t.Name + " " + t.Repository + " " + L.Get("tool." + t.Id) + " " + L.Get("tool." + t.Id + ".description")).Contains(query, StringComparison.OrdinalIgnoreCase))
@@ -81,6 +82,16 @@ public partial class DailyToolPanel : UserControl
     internal void VerifyFiltersForSmoke()
     {
         if (VisibleTools.Count != DailyToolCatalog.All.Count) throw new InvalidOperationException("工具清单缺失");
+        UpdateLayout();
+        double bottom = double.NegativeInfinity;
+        foreach (var item in ToolsList.Items)
+        {
+            if (ToolsList.ItemContainerGenerator.ContainerFromItem(item) is not FrameworkElement row) throw new InvalidOperationException("工具行未呈现");
+            var origin = row.TranslatePoint(new Point(0,0), ToolsList);
+            if (origin.Y < bottom - .5 || Math.Abs(origin.X) > .5 || row.ActualWidth < ToolsList.ActualWidth - 1)
+                throw new InvalidOperationException("工具清单必须每项独占一行");
+            bottom = origin.Y + row.ActualHeight;
+        }
         SearchBox.Text = "连连看"; if (!VisibleTools.SequenceEqual(new[] { "sichuan" })) throw new InvalidOperationException("中文搜索失败");
         SearchBox.Text = "secret"; if (!VisibleTools.SequenceEqual(new[] { "secret-vision" })) throw new InvalidOperationException("英文搜索失败");
         SearchBox.Text = ""; Category.SelectedValue = "games"; if (VisibleTools.Count != DailyToolCatalog.All.Count(t=>t.Category=="小游戏")) throw new InvalidOperationException("工具分类错误");

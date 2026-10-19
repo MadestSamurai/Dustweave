@@ -13,7 +13,7 @@ public static class DailyToolCatalog
         new("rhythm", "音游", "小游戏", "读取当前谱面并操作，保留随机偏移设置。", "bd2-rhythm", "BD2Rhythm", @"Local\BD2Rhythm.Private.Desktop"),
         new("apostle-defense", "使徒运气防守", "小游戏", "自动召唤、合成、布局与结算续局。", "Dustweave", "BD2ApostleDefense", @"Local\BD2ApostleDefense-v1"),
         new("secret-vision", "SECRET VISION", "小游戏", "自动圈地、避让与失败重试。", "bd2-secret-vision", "BD2SecretVision", @"Local\BD2SecretVisionAssistant"),
-        new("fiend-hunter", "恶魔猎人", "小游戏", "自动移动、攻击决策和关卡重试。", "bd2-fiend-hunter", "BD2FiendHunter", @"Local\BD2FiendHunterDesktop"),
+        new("fiend-hunter", "恶魔猎人", "小游戏", "选择怪物，自动攻击、防御和治疗，结算后停止。", "Dustweave", "BD2FiendHunter", @"Local\BD2FiendHunterDesktop"),
         new("mansion-runaway", "MANSION RUNAWAY", "小游戏", "收集糖果、预测追兵并连续推进关卡。", "Dustweave", "Dustweave", @"Local\Dustweave.Mansion"),
         new("pandora", "潘多拉大逃脱", "小游戏", "固定关卡循环刷货币，或自动挑战。", "Dustweave", "Dustweave", @"Local\Dustweave.Pandora"),
         new("infinite-gacha", "无限抽抽乐", "抽取", "A／B 双列表、停止条件和命中提醒。", "Dustweave", "BD2InfiniteGacha", @"Local\BD2InfiniteGacha-v1")

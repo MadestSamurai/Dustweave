@@ -852,6 +852,15 @@ public partial class MainWindow : Window
                 DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "simple-settings", languages = 3, themes = 2, realGameTouched = false });
                 Application.Current.Shutdown(); return;
             }
+            if(Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE")=="tool-menu")
+            {
+                L.Select("zh-CN"); WorkspaceTabs.SelectedItem=ToolsTab;
+                await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                toolPanel.VerifyFiltersForSmoke();
+                Capture("tools-single-column");
+                DailyJson.Write(Path.Combine(smoke!,"tool-menu-checks.json"),new{status="passed",singleColumn=true,realGameTouched=false});
+                Application.Current.Shutdown();return;
+            }
             if(Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE")=="tool-preparation")
             {
                 await CheckToolPreparationForSmoke();

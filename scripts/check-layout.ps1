@@ -23,6 +23,9 @@ $legacyToolAssemblies=@{
  'src/InfiniteGacha/compatibility/Dustweave.InfiniteGacha.Compatibility.csproj'='BD2InfiniteGacha.Compatibility'
  'src/InfiniteGacha/core/Dustweave.InfiniteGacha.Core.csproj'='BD2InfiniteGacha.Core'
  'src/InfiniteGacha/desktop/Dustweave.InfiniteGacha.Desktop.csproj'='BD2InfiniteGacha'
+ 'src/FiendHunter/compatibility/Dustweave.FiendHunter.Compatibility.csproj'='BD2FiendHunter.Compatibility'
+ 'src/FiendHunter/core/Dustweave.FiendHunter.Core.csproj'='BD2FiendHunter.Core'
+ 'src/FiendHunter/desktop/Dustweave.FiendHunter.Desktop.csproj'='BD2FiendHunter'
 }
 foreach($relative in $declared){
  $project=[IO.Path]::GetFullPath((Join-Path $root $relative))

@@ -3,7 +3,7 @@
   <Grid>
    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
    <DockPanel Margin="0,0,0,14">
-    <TextBlock Text="{l:Tr tools.count}" DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource MutedInk}"/>
+    <TextBlock x:Name="ToolCount" DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource MutedInk}"/>
     <TextBlock Text="{l:Tr tools.hint}" TextWrapping="Wrap" Foreground="{StaticResource MutedInk}" FontSize="12" Margin="0,0,12,0" VerticalAlignment="Center"/>
    </DockPanel>
    <WrapPanel Grid.Row="1" Margin="0,0,0,12">
@@ -13,6 +13,8 @@
    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <StackPanel>
      <ItemsControl x:Name="ToolsList">
+      <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Vertical"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+      <ItemsControl.ItemContainerStyle><Style TargetType="ContentPresenter"><Setter Property="HorizontalAlignment" Value="Stretch"/></Style></ItemsControl.ItemContainerStyle>
       <ItemsControl.ItemTemplate><DataTemplate>
        <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,14">
         <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>

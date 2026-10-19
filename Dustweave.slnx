@@ -27,9 +27,9 @@
     <Project Path="tests/Dustweave.Tests/Dustweave.Tests.csproj" />
   </Folder>
   <Folder Name="/standalone/">
-    <Project Path="standalone/bd2-fiend-hunter/compatibility/BD2FiendHunter.Compatibility.csproj" />
-    <Project Path="standalone/bd2-fiend-hunter/core/BD2FiendHunter.Core.csproj" />
-    <Project Path="standalone/bd2-fiend-hunter/desktop/BD2FiendHunter.Desktop.csproj" />
+    <Project Path="src/FiendHunter/compatibility/Dustweave.FiendHunter.Compatibility.csproj" />
+    <Project Path="src/FiendHunter/core/Dustweave.FiendHunter.Core.csproj" />
+    <Project Path="src/FiendHunter/desktop/Dustweave.FiendHunter.Desktop.csproj" />
     <Project Path="standalone/bd2-fishing/compatibility/BD2Fishing.Compatibility.csproj" />
     <Project Path="standalone/bd2-fishing/core/BD2Fishing.Core.csproj" />
     <Project Path="standalone/bd2-fishing/desktop/BD2Fishing.Desktop.csproj" />

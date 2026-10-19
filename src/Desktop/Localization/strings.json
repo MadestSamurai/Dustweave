@@ -2354,9 +2354,9 @@
     "en-US": "Daily and weekly mission rewards"
   },
   "tools.count": {
-    "zh-CN": "10 个开源工具",
-    "zh-TW": "10 個開源工具",
-    "en-US": "10 open-source tools"
+    "zh-CN": "{0} 个工具",
+    "zh-TW": "{0} 個工具",
+    "en-US": "{0} tools"
   },
   "tools.hint": {
     "zh-CN": "共用连接和语言设置，启用自动化后才占用游戏。",
@@ -2504,9 +2504,9 @@
     "en-US": "Capture territory, avoid attacks and retry failed stages."
   },
   "tool.fiend-hunter.description": {
-    "zh-CN": "自动移动、攻击决策和关卡重试。",
-    "zh-TW": "自動移動、攻擊決策與關卡重試。",
-    "en-US": "Movement, attack decisions and stage retries."
+    "zh-CN": "选择怪物，自动攻击、防御和治疗，结算后停止。",
+    "zh-TW": "選擇怪物，自動攻擊、防禦和治療，結算後停止。",
+    "en-US": "Choose a monster; attack, defend and heal automatically. Stops after settlement."
   },
   "tool.infinite-gacha.description": {
     "zh-CN": "A／B 双列表、停止条件和命中提醒。",

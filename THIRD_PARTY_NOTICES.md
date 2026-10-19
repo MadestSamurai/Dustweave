@@ -33,7 +33,7 @@ The equipment tool also embeds its MIT-licensed HiGHS binary; its source project
 license notice is retained. The applications share the packaged .NET and Roslyn
 dependencies rather than carrying separate copies of their runtime environments.
 
-Equipment Assistant, Apostle Defense and Infinite Gacha are owned modules under [`src/Equipment`](src/Equipment), [`src/ApostleDefense`](src/ApostleDefense) and [`src/InfiniteGacha`](src/InfiniteGacha).
+Equipment Assistant, Apostle Defense, Infinite Gacha and Fiend Hunter are owned modules under [`src/Equipment`](src/Equipment), [`src/ApostleDefense`](src/ApostleDefense), [`src/InfiniteGacha`](src/InfiniteGacha) and [`src/FiendHunter`](src/FiendHunter).
 Their original repositories are archived; the repository names above identify their
 provenance and retained package license filename, not a separate update channel.
-The remaining six tool inputs stay under `standalone/`.
+The remaining five tool inputs stay under `standalone/`.

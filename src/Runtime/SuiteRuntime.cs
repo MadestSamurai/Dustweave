@@ -64,6 +64,7 @@ namespace BD2Daily.Runtime {
   }
   internal static void Start(){
    Initialize();if(!hasBundle)return;
+   AppDomain.CurrentDomain.SetData("BD2.LocalIpc.SuiteDataRoot.v1",LocalStorage.Root);
    ((HashSet<string>)AppDomain.CurrentDomain.GetData(OwnedKey)).Add(typeof(SuiteRuntime).Assembly.FullName);
    status=new SuiteStatus{Available=status.Available,Fingerprints=status.Fingerprints};
    active="";lastRequest="";loadingId="";request=null;ownerPid=0;ownerStart=0;

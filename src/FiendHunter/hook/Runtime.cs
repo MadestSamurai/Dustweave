@@ -35,13 +35,13 @@ public sealed class Engine:MonoBehaviour {
  readonly string session=Guid.NewGuid().ToString("N");readonly Publisher publisher=new Publisher();
  Control control=new Control();bool handingOff,latchedStop,ownsMove;float nextRead,nextWrite,nextObserve,nextAction,nextDodge,nextHeal,waitingSince;string reason="只读观察",lastError="";
  ActionCharPlayer player;ActionCharMonster boss;UIBase[] uis=new UIBase[0];ActionColliderData[] bossBoxes=new ActionColliderData[0];
- int attacks,dodges,heals,guards;float nextDefense,matchingUntil;int defenseSkill;float previousBossTime;long oldHp=-1,oldBossHp=-1;float started;int observedBoss;string oldBossState="";static Engine current;
+ int attacks,dodges,heals,guards;float nextDefense,matchingUntil;int defenseSkill;float defenseImpact;float previousBossTime;long oldHp=-1,oldBossHp=-1;float started;int observedBoss;string oldBossState="";static Engine current;
  readonly Harmony harmony=new Harmony("bd2.fiend-hunter.public1");static readonly Dictionary<MethodBase,string> replies=new Dictionary<MethodBase,string>();int endReplies,networkErrors,networkLost;double lastPacketTicks;bool resultSent;float resultSince;string lastReply="",outcome="";
  ActionGameManager Manager=>ὫὨὪὠὢὨὮὤὩὤὮ.ὢὥὧὠὩὨὦὣὦὧὬ;
  bool Live=>!handingOff&&!latchedStop&&control.Enabled&&control.Valid(session,DateTime.UtcNow.Ticks);
  public void PrepareHandoff(){handingOff=true;control.Enabled=false;Release();}
  public string HandoffBusy(){return "";}
- void Awake(){Directory.CreateDirectory(Root);current=this;NetworkGuard.Install((kind,data)=>Log(kind,data));
+ void Awake(){current=this;NetworkGuard.Install((kind,data)=>Log(kind,data));
   var net=typeof(ὭὪὡὧὮὦὣὫὡὨὩ);
   foreach(var t in net.GetNestedTypes(All).Concat(new[]{net}))foreach(var m in t.GetMethods(All|BindingFlags.DeclaredOnly)){
    var a=m.GetParameters();if(a.Length!=3||a[0].ParameterType!=typeof(byte[])||a[1].ParameterType!=typeof(int)||a[2].ParameterType!=typeof(int)||m.GetMethodBody()==null)continue;
@@ -56,7 +56,7 @@ public sealed class Engine:MonoBehaviour {
  public static void NetworkLost(){var e=current;if(e==null)return;e.networkLost++;e.Log("network-lost",new{LastPacketAge=(DateTime.UtcNow.Ticks-e.lastPacketTicks)/TimeSpan.TicksPerSecond,Status=NetworkConnectivityMonitor.ὪὫὢὨὯὭὦὪὦὨὣ.ὦὩὧὥὬὩὩὥὥὦὠ.ToString(),Stack=Environment.StackTrace});}
  public static void Reply(MethodBase __originalMethod,byte[] __0,int __1,int __2){var e=current;if(e==null)return;string kind=replies[__originalMethod];e.lastReply=kind+":"+__2;e.Log("network-reply",new{Kind=kind,Code=__2,Bytes=__0==null?0:__0.Length});if(__2!=0){e.networkErrors++;e.latchedStop=true;e.Release();}else if(kind=="MiniGameActionEndResponse"){e.endReplies++;try{e.Log("settlement",new{Data=typeof(MiniGameActionEndResponse).GetProperty("Parser").GetValue(null,null).GetType().GetMethod("ParseFrom",new[]{typeof(byte[])}).Invoke(MiniGameActionEndResponse.Parser,new object[]{__0}).ToString()});}catch(Exception ex){e.Log("settlement-parse-error",new{Error=ex.Message});}}}
  void Write(string name,object value){publisher.Write(Path.Combine(Root,name),JsonConvert.SerializeObject(value));}
- internal void Log(string kind,object data){try{var path=Path.Combine(Root,"events.jsonl");if(File.Exists(path)&&new FileInfo(path).Length>8*1024*1024){var prior=Path.Combine(Root,"events-previous.jsonl");if(File.Exists(prior))File.Delete(prior);File.Move(path,prior);}File.AppendAllText(path,JsonConvert.SerializeObject(new{AtUtc=DateTime.UtcNow.ToString("O"),Session=session,Kind=kind,Data=data})+"\n");}catch(IOException){}catch(UnauthorizedAccessException){}}
+ internal void Log(string kind,object data){try{Directory.CreateDirectory(ToolStorage.Diagnostics);var path=Path.Combine(ToolStorage.Diagnostics,"events.jsonl");if(File.Exists(path)&&new FileInfo(path).Length>8*1024*1024){var prior=Path.Combine(ToolStorage.Diagnostics,"events-previous.jsonl");if(File.Exists(prior))File.Delete(prior);File.Move(path,prior);}File.AppendAllText(path,JsonConvert.SerializeObject(new{AtUtc=DateTime.UtcNow.ToString("O"),Session=session,Kind=kind,Data=data})+"\n");}catch(IOException){}catch(UnauthorizedAccessException){}}
  void Update(){try{
   float now=Time.realtimeSinceStartup;
   if(now>=nextRead){nextRead=now+.1f;var b=BD2.LocalIpc.RuntimeFiles.Read(Path.Combine(Root,"control.json"));if(b!=null){var c=JsonConvert.DeserializeObject<Control>(System.Text.Encoding.UTF8.GetString(b));c.Validate();control=c;}Command();}
@@ -77,15 +77,16 @@ public sealed class Engine:MonoBehaviour {
  void Move(Vector3 d){if(player==null)return;d.y=0;d.Normalize();var target=Manager.GetCameraLookAt();if(target!=null&&d!=Vector3.zero){var forward=target.position-player.transform.position;forward.y=0;if(forward.sqrMagnitude>.0001f)d=Quaternion.Inverse(Quaternion.LookRotation(forward,Vector3.up))*d;}player.OnMove(new Vector3(d.x,d.z,0));ownsMove=d!=Vector3.zero;}
  void Tap(int key){player.OnKeyDown((ὮὯὥὦὤὢὢὡὪὥὯ)key);player.OnKeyUp((ὮὯὥὦὤὢὢὡὪὥὯ)key);}
  void Play(){
+  if(endReplies>0){reason="本局已完成服务器结算";control.Enabled=false;Release();return;}
   var errorUi=uis.FirstOrDefault(x=>x.GetType().Name=="ErrorMessagePopupUI"||x.GetType().Name=="MessagePopupUI");
   if(errorUi!=null){var messages=errorUi.GetComponentsInChildren<TMPro.TMP_Text>().Select(x=>x.text).ToArray();if(messages.Any(x=>x.Contains("網路")||x.Contains("网络")||x.IndexOf("network",StringComparison.OrdinalIgnoreCase)>=0)){reason="游戏网络中断，请恢复连接后继续";Log("network-ui",messages);latchedStop=true;Release();return;}}
   var message=uis.OfType<ActionMessagePopupUI>().FirstOrDefault();if(message!=null){reason="等待游戏提示确认："+string.Join(" ",message.GetComponentsInChildren<TMPro.TMP_Text>().Select(x=>x.text).ToArray());latchedStop=true;Release();return;}
   var m=Manager;if(m==null||player==null||boss==null){reason="等待恶魔猎人单人对局";Release();if(waitingSince==0)waitingSince=Time.realtimeSinceStartup;else if(Time.realtimeSinceStartup-waitingSince>45){latchedStop=true;reason="45秒内未进入对局，已暂停；请检查游戏加载或网络提示";}return;}if(m.ὧὦὫὣὭὧὢὦὦὨὠ){reason="首版只操作单人对局";Release();return;}
-  if(endReplies>0){reason="本局已完成服务器结算";control.Enabled=false;Release();return;}
   if(m.ὡὨὥὤὠὧὥὮὡὮὠ||m.ὭὠὩὥὭὨὡὭὢὮὧ){Release();reason=m.ὡὨὥὤὠὧὥὮὡὮὠ?"胜利，等待结算":"本局结束，等待结算";var popup=UnityEngine.Object.FindObjectsOfType<ActionEndPopup>().FirstOrDefault(x=>x.gameObject.activeInHierarchy);if(popup!=null&&!resultSent){if(resultSince==0)resultSince=Time.realtimeSinceStartup;if(Time.realtimeSinceStartup-resultSince>=2){var button=AccessTools.Field(typeof(ActionEndPopup),"_objButtonExit").GetValue(popup) as GameObject;if(button!=null&&button.activeInHierarchy){resultSent=true;outcome=m.ὡὨὥὤὠὧὥὮὡὮὠ?"victory":"defeat";Log("result-exit",new{Outcome=outcome,Player=Unit(player),Boss=Unit(boss),NetworkLost=networkLost});popup.OnClickUI(button);}}}return;}
   if(m.ὭὠὩὥὭὨὡὭὢὮὧ||Hp(player)<=0||Hp(boss)<=0){reason="等待原生胜败结算";Release();return;}
   if(m.ὮὪὬὭὪὧὣὡὠὬὣ.ToString()!="EcsPlaying"){reason="等待战斗开始："+m.ὮὪὬὭὪὧὣὡὠὬὣ;Release();return;}
   if(NetworkGuard.Hold){Release();reason="正在自动战斗";return;}
+  if(player.ὨὤὣὨὯὯὥὮὡὨὭ!=1||boss.ὨὤὣὨὯὯὥὮὡὨὭ!=control.BossGroup*100+3){latchedStop=true;reason="unsupported";Release();return;}
   waitingSince=0;float now=Time.realtimeSinceStartup;var bs=boss.ὣὭὪὥὢὠὠὩὭὩὭ.ὫὥὣὮὧὦὠὯὭὥὬ.ToString();var ps=player.ὣὭὪὥὢὠὠὩὭὩὭ.ὫὥὣὮὧὦὠὯὭὥὬ.ToString();
   if(bs!=oldBossState||Hp(player)!=oldHp||Hp(boss)!=oldBossHp){if(bs!=oldBossState||Hp(player)<oldHp)Log("combat",new{State=bs,Player=Unit(player),Boss=Unit(boss),Reason=reason});oldBossState=bs;oldHp=Hp(player);oldBossHp=Hp(boss);}
   var stat=player.ὩὩὣὬὡὣὠὮὠὥὠ.ὯὢὧὩὦὫὭὤὨὥὨ;double stamina=stat.ὣὨὠὢὦὫὢὫὮὤὠ.ὫὥὣὮὧὦὠὯὭὥὬ;var delta=boss.transform.position-player.transform.position;delta.y=0;float distance=delta.magnitude;var dir=delta.normalized;float melee=distance;
@@ -93,18 +94,19 @@ public sealed class Engine:MonoBehaviour {
   var info=boss.ὧὦὩὠὯὦὡὧὤὫὬ.GetAnimatorStateInfo();var skill=boss.ὮὠὭὢὡὣὥὧὣὮὬ;
   string animation=skill?.ὡὡὡὮὨὥὪὨὩὥὣ??"";int skillId=skill?.ὯὫὪὡὭὤὪὮὫὬὣ??0;
   bool unblockable=skill is ὢὢὠὦὡὮὦὢὨὮὠ hit&&hit.ὦὢὣὠὪὫὠὡὭὯὥ;
-  float impact=AttackTiming.Impact(animation);float eta=(impact-info.normalizedTime)*info.length;
-  bool threat=AttackTiming.Imminent(animation,info.normalizedTime,info.length,distance,bs=="Attack");
+  float impact=AttackTiming.NextImpact(control.BossGroup,animation,info.normalizedTime);float eta=(impact-info.normalizedTime)*info.length;
+  bool threat=bs=="Attack"&&impact>0&&distance<12&&eta<.12f&&eta>-.10f;
   bool invincible=player.ὩὩὣὬὡὣὠὮὠὥὠ.ὩὠὣὤὡὡὦὡὬὫὣ(ὥὧὧὠὠὦὩὯὪὠὯ.ὫὡὥὤὫὧὯὢὠὥὣ.Invincible);
   if(info.normalizedTime<previousBossTime-.3f)defenseSkill=0;previousBossTime=info.normalizedTime;
-  if(control.Defend&&threat&&!invincible&&now>=nextDefense&&defenseSkill!=skillId&&stamina>=(unblockable?20:25)){
+  if(control.Defend&&threat&&!invincible&&now>=nextDefense&&(defenseSkill!=skillId||Math.Abs(defenseImpact-impact)>.01f)&&stamina>=(unblockable?20:25)){
    Move(Vector3.zero);int key=unblockable?3:2;var before=player.ὮὠὭὢὡὣὥὧὣὮὬ;Tap(key);var after=player.ὮὠὭὢὡὣὥὧὣὮὬ;
-   if(!ReferenceEquals(before,after)){defenseSkill=skillId;nextDefense=now+.2f;nextAction=now+.25f;if(unblockable)dodges++;else guards++;Log("defense",new{BossSkill=skillId,Animation=animation,Eta=eta,Key=key,Player=Unit(player),Boss=Unit(boss)});}
+   if(!ReferenceEquals(before,after)){defenseSkill=skillId;defenseImpact=impact;nextDefense=now+.2f;nextAction=now+.25f;if(unblockable)dodges++;else guards++;Log("defense",new{BossSkill=skillId,Animation=animation,Eta=eta,Key=key,Player=Unit(player),Boss=Unit(boss)});}
    reason=unblockable?"迎击时机闪避":"格挡反击";return;
   }
   if(now<nextAction)return;
+  if(bs=="Attack"&&impact>0&&eta>.12f&&eta<.38f&&distance<12){if(ps=="Idle"||ps=="Move")Move(dir);reason="准备迎击";return;}
   if((ps=="Idle"||ps=="Move")&&!threat&&melee<control.AttackRange&&now>=nextAction&&stat.ὬὧὪὮὡὥὯὪὥὡὤ.ὫὥὣὮὧὦὠὯὭὥὬ>=stat.ὬὧὪὮὡὥὯὪὥὡὤ.ὧὬὦὨὠὧὫὤὡὫὪ&&stat.ὬὧὪὮὡὥὯὪὥὡὤ.ὧὬὦὨὠὧὫὤὡὫὪ>0){Move(Vector3.zero);Tap(1);nextAction=now+.3f;reason="释放特殊技能";return;}
-  var decision=CombatPolicy.Choose(new CombatFacts{Hp=Hp(player),MaxHp=stat.ὯὪὬὥὢὯὤὧὩὯὦ.ὧὬὦὨὠὧὫὤὡὫὪ,Stamina=stamina,Heals=stat.ὪὬὩὪὡὤὥὮὬὡὠ.ὫὥὣὮὧὦὠὯὭὥὬ,Threat=false,DodgeReady=now>=nextDodge,HealReady=now>=nextHeal,Idle=ps=="Idle"||ps=="Move"||ps=="Attack",Distance=melee,Facing=Vector3.Dot(player.ὭὡὢὫὭὨὠὭὡὯὡ.ὧὨὡὩὭὣὧὭὫὮὠ.forward,dir)},control);
+  var decision=CombatPolicy.Choose(new CombatFacts{Hp=Hp(player),MaxHp=stat.ὯὪὬὥὢὯὤὧὩὯὦ.ὧὬὦὨὠὧὫὤὡὫὪ,Stamina=stamina,Heals=stat.ὪὬὩὪὡὤὥὮὬὡὠ.ὫὥὣὮὧὦὠὯὭὥὬ,Threat=threat,DodgeReady=now>=nextDodge,HealReady=now>=nextHeal,Idle=ps=="Idle"||ps=="Move"||ps=="Attack",Distance=melee,Facing=Vector3.Dot(player.ὭὡὢὫὭὨὠὭὡὯὡ.ὧὨὡὩὭὣὧὭὫὮὠ.forward,dir)},control);
   switch(decision){
    case CombatChoice.Dodge:Move(-dir+Vector3.Cross(Vector3.up,dir)*.8f);Tap(3);dodges++;nextDodge=now+control.DodgeInterval;nextAction=now+.35f;reason="侧向闪避";break;
    case CombatChoice.Wait:reason="等待当前动作结束";break;
@@ -126,6 +128,10 @@ public sealed class Engine:MonoBehaviour {
    ui.OnClickCharSelectItem(items.Single(x=>x.ὫὪὠὬὤὪὩὭὬὣὦ==ὭὯὩὢὯὡὥὨὪὩὧ.ὦὭὦὪὡὮὫὣὯὬὨ.Playable&&x.ὩὣὥὦὤὣὣὣὪὥὢ==character));
    ui.OnClickTabItem(ὭὯὩὢὯὡὥὨὪὩὧ.ὦὭὦὪὡὮὫὣὯὬὨ.Monster);
    ui.OnClickMonsterSelectItem(items.Single(x=>x.ὫὪὠὬὤὪὩὭὬὣὦ==ὭὯὩὢὯὡὥὨὪὩὧ.ὦὭὦὪὡὮὫὣὯὬὨ.Monster&&x.ὠὢὪὪὠὩὣὣὠὦὦ==bossGroup));ui.OnClickMonsterDifficult(difficulty);
+  }else if(kind=="open-menu"){
+   var field=uis.OfType<GameFieldDefaultUI>().Single();var button=AccessTools.Field(typeof(GameFieldDefaultUI),"_buttonMenu").GetValue(field) as UnityEngine.UI.Button;
+   if(button==null||!button.isActiveAndEnabled||!button.IsInteractable())throw new Exception("Menu is not ready");
+   field.OnClickUI(button.gameObject);
   }else if(kind=="open-fiend"){
    var hub=uis.OfType<MiniGameHubUI>().Single();bool found=false;
    for(int k=0;k<100;k++){var ev=hub.GetScrollMiniGameData(k);if(ev==null)break;var t=ὥὬὢὮὫὯὥὨὬὣὤ.ὡὫὨὬὯὩὦὭὫὠὩ(ev.EventId);if(t==null)continue;string title=ὪὥὦὥὭὠὦὡὠὧὤ.ὬὡὢὧὤὠὦὯὥὥὪ(t.EventNameLocalTextId);Log("hub-entry",new{ev.Id,ev.EventId,Title=title});if(title.Contains("惡魔")||title.Contains("恶魔")||title.Contains("Fiend Hunter")){hub.ClickPlayMiniGame(ev.Id,ev.EventId);found=true;break;}}

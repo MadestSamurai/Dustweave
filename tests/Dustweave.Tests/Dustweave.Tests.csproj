@@ -9,6 +9,7 @@
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../src/FiendHunter/shared/AttackTiming.cs;../../src/FiendHunter/shared/Control.cs;../../src/FiendHunter/shared/CombatPolicy.cs;../../src/FiendHunter/shared/ToolStorage.cs" Link="FiendHunter/%(Filename)%(Extension)" />
     <ProjectReference Include="../../src/Core/Dustweave.Core.csproj" />
     <ProjectReference Include="../../src/ApostleDefense/core/Dustweave.ApostleDefense.Core.csproj" Aliases="apostle" />
     <Compile Include="../../standalone/bd2-territory/shared/SaffronCycle.cs" Link="SaffronCycle.cs" />
