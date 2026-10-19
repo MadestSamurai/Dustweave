@@ -10,11 +10,12 @@ static class WeeklyNpcInteractionCases
         public readonly WorkflowHarness H;
         public readonly DailyWeeklyNpc Npc;
         public JsonObject Row;
+        public JsonArray Wild = new();
+        public long Planned;
         public JsonArray Active = new(O(("id", 10), ("objectId", new JsonArray())));
         public bool Navigating, Ready = true, Unknown;
         public bool NavigationReady = true;
         public double X;
-        public long? TriggerId;
         public long TriggerQuest = 10;
         public int Rejections, Interactions, Lifts, Navs, Held;
         public double AckAt = -1, AckDelay;
@@ -33,6 +34,7 @@ static class WeeklyNpcInteractionCases
             {
                 string command = S(c["Kind"]);
                 if (command == "weekly_npc_query") { query = S(c["Id"]); return; }
+                if (command == "weekly_npc_plan") { Planned = N(c["Value"]); Navigating = false; return; }
                 if (command is "weekly_npc_nav" or "weekly_npc_carry_nav") { Navigating = true; Navs++; return; }
                 if (command == "mainline_cancel_nav") { Navigating = false; return; }
                 if (command is not ("weekly_npc_interact" or "weekly_npc_lift")) throw new Exception("Unexpected NPC command " + command);
@@ -52,10 +54,10 @@ static class WeeklyNpcInteractionCases
         }
         JsonObject Native() => O(("State", "ready"), ("Error", ""), ("Query", query), ("Pack", 1), ("Map", 1),
             ("Week", 500), ("Limit", 3), ("Remaining", 2), ("Completed", 0), ("ActionsSupported", true), ("CanAccept", false),
-            ("Rows", new JsonArray(Row.DeepClone()).ToJsonString()), ("Active", Active.ToJsonString()), ("Posted", new JsonArray()), ("Cleared", new JsonArray()),
+            ("Rows", new JsonArray(Row.DeepClone()).ToJsonString()), ("Active", Active.ToJsonString()), ("Posted", new JsonArray()), ("Cleared", new JsonArray()), ("Wild", Wild), ("NavigationPlannedQuest", Planned),
             ("Navigating", Navigating), ("NavigationLeaseQuest", 10), ("NavigationLeaseUntil", H.Ticks + TimeSpan.TicksPerMinute), ("CarryId", Held),
             ("Position", new[] { X, 0d, 0d }), ("NavigationReady", NavigationReady), ("NavQuest", Navigating ? 10 : 0),
-            ("Objects", Array((Row["magicValue"] as JsonArray)!.Select(value => O(("Quest", TriggerQuest), ("Instance", 200 + N(value)), ("Id", TriggerId ?? N(value)), ("Near", true), ("Ready", Ready))))),
+            ("Objects", Array((Row["magicValue"] as JsonArray)!.Select(value => O(("Quest", TriggerQuest), ("Instance", 200 + N(value)), ("Id", N(value)), ("Near", true), ("Ready", Ready))))),
             ("CarryObjects", new JsonArray(O(("Quest", 10), ("Instance", 400), ("Id", 200), ("Available", true), ("Near", true), ("Ready", Ready), ("Distance", 0)))));
         public async Task Run() { await Npc.Query(1); await Npc.Advance(Row); }
         public void Dispose() => H.Dispose();
@@ -63,17 +65,41 @@ static class WeeklyNpcInteractionCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool value, string name) { if (!value) throw new Exception(name); checks.Add(name); }
-        using (var f = new Fixture(Path.Combine(root, "npc-hunt-trigger"), 1))
+        using (var f = new Fixture(Path.Combine(root, "npc-hunt-guide-blocked"), 1))
         {
-            f.TriggerId = 90001; f.AckDelay = 4;
-            await f.Run();
-            Check(f.Interactions == 1 && f.H.Time < 12, "hunt interacts once with its owned trigger even though MagicValue contains different monster IDs");
-        }
-        using (var f = new Fixture(Path.Combine(root, "npc-foreign-hunt-trigger"), 1))
-        {
-            f.TriggerId = 90001; f.TriggerQuest = 11;
             bool deferred = false; try { await f.Run(); } catch (DailyNpcUnavailable) { deferred = true; }
-            Check(deferred && f.Interactions == 0, "hunt never interacts with another quest's nearby object");
+            Check(deferred && f.Navs == 0 && f.Interactions == 0, "kill steps cannot fall through to native hunting navigation or trigger battles");
+        }
+        using (var f = new Fixture(Path.Combine(root, "npc-wild-route"), 1, 3))
+        {
+            f.Row["mapId"] = 87; f.Navigating = true; f.Active[0]!["value"] = 1;
+            f.Wild.Add(O(("Step",10),("Map",82),("Group",1),("Monster",101),("Count",2),("Available",true)));
+            await f.Npc.Query(1);
+            Check((await f.Npc.Targets(1)).SequenceEqual([82L]) && !f.Navigating && f.Planned == 10,
+                "hunting MapId is replaced by live wild map after clearing pre-existing quest navigation; partial kills count");
+            await f.Npc.Query(1); await f.Npc.Targets(1);
+            Check(f.H.Box.Commands.Count(c=>S(c["Kind"])=="weekly_npc_plan")==1,"unchanged active plan does not repeat cancellation");
+            f.Planned=0; await f.Npc.Query(1); await f.Npc.Targets(1);
+            Check(f.H.Box.Commands.Count(c=>S(c["Kind"])=="weekly_npc_plan")==2,"expired native plan is re-established before further routing");
+            f.Wild[0]!["Available"]=false;
+            await f.Npc.Query(1);
+            bool deferred=false; try { await f.Npc.Targets(1); } catch(DailyNpcUnavailable) { deferred=true; }
+            Check(deferred&&f.Navs==0&&f.Interactions==0,"disappearing wild targets defer locally without switching to the hunting guide");
+            await f.Npc.ReleasePlan();
+            Check(f.Planned==0,"deferring an NPC task releases its guide ownership");
+            f.Wild[0]!["Available"]=true; await f.Npc.Query(1); await f.Npc.Targets(1);
+            f.Active.Clear(); await f.Npc.Query(1);
+            Check((await f.Npc.Targets(1)).Length==0&&f.Planned==0,"finished quest releases navigation before other daily stages");
+        }
+        using (var f = new Fixture(Path.Combine(root, "npc-insufficient-wild-route"), 1, 3))
+        {
+            f.Row["mapId"]=87;
+            f.Wild.Add(O(("Step",10),("Map",82),("Group",1),("Monster",101),("Count",2),("Available",true)));
+            // One monster listed in two regions must not count twice.
+            f.Wild.Add(O(("Step",10),("Map",83),("Group",1),("Monster",101),("Count",2),("Available",true)));
+            await f.Npc.Query(1);
+            bool deferred=false; try { await f.Npc.Targets(1); } catch(DailyNpcUnavailable) { deferred=true; }
+            Check(deferred&&f.Navs==0,"remaining wild count is checked, rather than treating any matching spawn as sufficient");
         }
         foreach (int kind in new[] { 2, 9, 18 })
         using (var f = new Fixture(Path.Combine(root, "npc-arrival-" + kind), kind))

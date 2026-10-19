@@ -35,6 +35,7 @@ namespace BD2Daily.Live {
   [DataMember] public long Week,Now,At;
   [DataMember] public int NavigationLeaseQuest;
   [DataMember] public long NavigationLeaseUntil;
+  [DataMember] public int NavigationPlannedQuest,NavigationBlockedQuest,NavigationBlockedCount;
   [DataMember] public WeeklyNpcBoardTarget[] Boards=new WeeklyNpcBoardTarget[0];
   [DataMember] public WeeklyNpcBoardState Board=new WeeklyNpcBoardState();
   [DataMember] public int[] Posted=new int[0],Cleared=new int[0];
@@ -51,6 +52,7 @@ namespace BD2Daily.Live {
   static bool Matches(Command c){var f=Bridge.CurrentFrame;return f!=null&&c!=null&&f.ProcessId==c.ProcessId&&f.ProcessStartTicks==c.ProcessStartTicks&&f.Instance==c.Instance&&f.AccountKey==c.AccountKey&&f.PlayerKey==c.PlayerKey&&result.Week==Week;}
   static bool Active(int id){return Q.ὨὢὧὪὩὯὣὦὠὠὧ.Any(x=>x.Id==id);}
   internal static string Preflight(Command c,UIBase ui){
+   if(c.Kind=="weekly_npc_plan"&&c.Value==0)return "";
    int pack=Singleton<PackManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ὢὠὮὠὥὥὥὣὡὮὯ;
    if(c.Kind=="weekly_npc_query"){
     var map=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὮὬὬὮὠὮὪὠὧὩὪ;
@@ -66,6 +68,11 @@ namespace BD2Daily.Live {
    // These checks must run before Bridge marks a command as dispatched. A
    // rejected local lease/target has not called a game interaction or sent a request.
    if(c.Kind!="weekly_npc_talk"&&!Active(q.Id))return "npc_step_changed";
+   if(c.Kind=="weekly_npc_nav"){
+    if(q.ConditionType==1)return "npc_hunting_navigation_disabled";
+    var map=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὮὬὬὮὠὮὪὠὧὩὪ;
+    if(map==null||map.Id!=q.MapId||ὧὧὧὪὦὠὭὣὫὡὤ.ὯὠὩὨὯὤὬὬὤὡὫ(map.Id))return "npc_navigation_map_changed";
+   }
    if(new[]{"weekly_npc_interact","weekly_npc_lift","weekly_npc_talk","weekly_npc_auto"}.Contains(c.Kind)
       &&(navQuest!=q.Id||DateTime.UtcNow.Ticks>=navUntil))return "npc_lease_expired";
    if(c.Kind=="weekly_npc_talk"){
@@ -114,6 +121,7 @@ namespace BD2Daily.Live {
    result.Position=player==null?new float[0]:new[]{player.transform.position.x,player.transform.position.y,player.transform.position.z};
    result.NavigationReady=player!=null&&player.ὭὦὫὤὮὧὦὡὨὤὢ.ὠὭὬὪὫὣὠὡὡὠὫ!=MoveController.ὯὣὠὮὤὡὤὯὢὩὯ.DontMove;
    result.NavigationLeaseQuest=navQuest;result.NavigationLeaseUntil=navUntil;
+   result.NavigationPlannedQuest=plannedQuest;result.NavigationBlockedQuest=blockedNavigationQuest;result.NavigationBlockedCount=blockedNavigationCount;
    result.NavQuest=Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ὢὬὧὣὣὣὪὯὬὮὥ;
    var ui=Bridge.Find(typeof(BattleUI_FieldBattle)).Cast<BattleUI_FieldBattle>().SingleOrDefault();
    var battle=BattlePlayManager.ὪὫὢὨὯὭὦὪὦὨὣ;
@@ -199,6 +207,7 @@ namespace BD2Daily.Live {
   }
   static void Finish(WeeklyNpcState next){next.Now=Clock.ὠὥὬὪὮὬὢὨὬὮὫ.UnixTimeStamp();next.At=DateTime.UtcNow.Ticks;next.State="ready";}
   internal static void Dispatch(Command c,UIBase ui){
+   if(c.Kind=="weekly_npc_plan"&&c.Value==0){Stop();return;}
    if(c.Kind=="weekly_npc_query"){Query(c);return;}
    if(!result.ActionsSupported||!CollectionProgressNative.IsStoryField(Singleton<PackManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ὢὠὮὠὥὥὥὣὡὮὯ))throw new InvalidOperationException("NPC actions require an owned story cartridge");
    if(owner==null||!Matches(owner)||result.State!="ready")throw new InvalidOperationException("Fresh NPC quest observation required");
@@ -206,6 +215,7 @@ namespace BD2Daily.Live {
    if(!Tables.ContainsKey(c.Value))throw new InvalidOperationException("Fresh NPC quest observation required");
    var q=Tables[c.Value];int pack=Singleton<PackManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ὢὠὮὠὥὥὥὣὡὮὯ;
    if(pack!=q.PackId||pack!=result.Pack)throw new InvalidOperationException("NPC quest belongs to another cartridge");
+   if(c.Kind=="weekly_npc_plan"){PlanNavigation(c,q);return;}
    if(c.Kind=="weekly_npc_accept"){
     if(DateTime.UtcNow.Ticks-result.At>TimeSpan.FromSeconds(30).Ticks||!result.Posted.Contains(q.Id)||q.PriorQuestId!=0||Q.ὩὣὬὮὪὥὭὨὧὣὡ<1||Active(q.Id)||Q.ὥὫὣὧὩὧὦὮὤὧὠ(q.Id))throw new InvalidOperationException("NPC quest no longer offered or weekly quota exhausted");
     if(Singleton<PackManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ὪὧὣὯὭὨὨὧὫὭὯ.Any(x=>ὨὧὠὡὨὬὣὦὩὣὢ.ὧὩὡὬὦὫὮὢὨὮὢ(x.Id).ὫὣὬὥὪὫὪὤὫὮὧ==0)||Q.ὨὢὧὪὩὯὣὦὠὠὧ.Any(x=>Tables.ContainsKey(x.Id)&&Tables[x.Id].PackId==pack))throw new InvalidOperationException("Finish the current cartridge quest first");
@@ -215,7 +225,7 @@ namespace BD2Daily.Live {
      if(step.ConditionType==1&&c.Items[0]==0&&result.Wild.Where(x=>x.Step==step.Id&&x.Available).GroupBy(x=>x.Monster).Sum(g=>g.First().Count)<step.ConditionCount)throw new InvalidOperationException("Hunting-only NPC quest is disabled");
      step=step.NextQuestId==0?null:Tables[step.NextQuestId];
     }
-    AcceptOnBoard(c,ui);return;
+    PlanNavigation(c,q);AcceptOnBoard(c,ui);return;
    }
    if(c.Kind=="weekly_npc_talk"){
     // Lease was checked before the dispatch marker in this same main-thread tick.
@@ -258,18 +268,21 @@ namespace BD2Daily.Live {
     navUntil=DateTime.UtcNow.AddMinutes(10).Ticks;fieldUi.DoAutoBattle(true);return;
    }
    if(c.Kind=="weekly_npc_nav"){
-    if(q.ConditionType==1&&c.Items[0]==0)throw new InvalidOperationException("Hunting travel not allowed");
+    if(q.ConditionType==1)throw new InvalidOperationException("Hunting travel not allowed");
+    if(plannedQuest!=q.Id)PlanNavigation(c,q);
+    if(!PlannedNavigationAllowed(q.Id))throw new InvalidOperationException("NPC navigation map changed");
     RepairObjectNavigation(q);
     navQuest=q.Id;navUntil=DateTime.UtcNow.AddSeconds(180).Ticks;
     Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.StartQuestNav(q.Id);return;
    }
    throw new InvalidOperationException("Unsupported NPC quest action");
   }
-  internal static void Stop(){
+  internal static void Stop(bool releasePlan=true){
+   if(releasePlan)ReleaseNavigationGuard();
    if(navQuest==0)return;navQuest=0;navUntil=0;
    Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ClearQuestNav(true);
    if(GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὪὨὯὢὫὮὨὩὮὡὬ!=null)GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.SetPlayerMoveState(MoveController.ὯὣὠὮὤὡὤὯὢὩὯ.Stop);
   }
-  internal static void Tick(){if(navQuest!=0&&(!Bridge.CollectionReadAllowed||!Matches(owner)||DateTime.UtcNow.Ticks>navUntil))Stop();}
+  internal static void Tick(){GuardNavigation();if(navQuest!=0&&(!Bridge.CollectionReadAllowed||!Matches(owner)||DateTime.UtcNow.Ticks>navUntil))Stop();}
  }
 }

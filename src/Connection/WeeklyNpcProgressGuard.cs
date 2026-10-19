@@ -4,6 +4,9 @@ namespace BD2Daily.Live {
  // Some TodayQuestInfo replies omit in-step ObjectId/Value already confirmed by
  // QuestUpdate. A read must never roll back that live, same-step native state.
  public static class WeeklyNpcProgressGuard {
+  public static bool AllowPlannedNavigation(int plannedQuest,int requestedQuest,int condition,int currentMap,int targetMap,bool huntingMap,bool active) {
+   return plannedQuest>0&&requestedQuest==plannedQuest&&active&&condition!=1&&currentMap>0&&currentMap==targetMap&&!huntingMap;
+  }
   // Navigation remembers successful pickups separately from QuestDBInfo. A
   // cancelled/reaccepted quest can keep obsolete exclusions for the whole session.
   public static int[] StaleNavigationObjects(int condition, IEnumerable<int> targets, IEnumerable<int> confirmed, IEnumerable<int> navigation) {

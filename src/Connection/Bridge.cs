@@ -321,7 +321,7 @@ namespace BD2Daily.Live {
       target.InteractionFieldObject();
      }
      else if(c.Kind=="mainline_cancel_nav"){
-      WeeklyNpcNative.Stop();
+      WeeklyNpcNative.Stop(false);
       Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ClearQuestNav(true);GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.SetPlayerMoveState(MoveController.ὯὣὠὮὤὡὤὯὢὩὯ.Stop);squareNavUntil=0;mainlineStealthNav=false;approachTarget=null;
      }
      else if(c.Kind=="mainline_approach"){

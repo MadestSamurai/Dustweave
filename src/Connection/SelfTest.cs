@@ -480,7 +480,16 @@ static class SelfTest {
    bool rejected=false;try{ObservationProjection.Capture(projectionRows,"$self",new[]{"id"},limit,Member,Scalar);}catch(InvalidOperationException){rejected=true;}Check(rejected,"projection must reject partial/invalid cap");
   }
   {bool rejected=false;try{ObservationProjection.Capture(new object[]{null!},"$self",new[]{"id"},1,Member,Scalar);}catch(InvalidOperationException){rejected=true;}Check(rejected,"null projection row");}
-  foreach(string kind in new[]{"weekly_npc_query","weekly_npc_accept","weekly_npc_nav","weekly_npc_talk","weekly_npc_auto","weekly_npc_board_nav","weekly_npc_board_open","weekly_npc_board_scroll","weekly_npc_board_select"}){
+  Check(WeeklyNpcProgressGuard.AllowPlannedNavigation(10,10,19,85,85,false,true),"planned local NPC dialogue is allowed");
+  Check(WeeklyNpcProgressGuard.AllowPlannedNavigation(10,10,2,85,85,false,true),"planned local quest pickups are allowed");
+  foreach(var condition in new[]{1,2,9,18,19}){
+   Check(!WeeklyNpcProgressGuard.AllowPlannedNavigation(10,11,condition,85,85,false,true),"old guide cannot hand off to an unplanned quest "+condition);
+   Check(!WeeklyNpcProgressGuard.AllowPlannedNavigation(10,10,condition,82,87,false,true),"native guide cannot substitute cross-map travel "+condition);
+   Check(!WeeklyNpcProgressGuard.AllowPlannedNavigation(10,10,condition,87,87,true,true),"hunting map is never a planned native destination "+condition);
+   Check(!WeeklyNpcProgressGuard.AllowPlannedNavigation(10,10,condition,85,85,false,false),"completed step cannot resume native navigation "+condition);
+  }
+  Check(!WeeklyNpcProgressGuard.AllowPlannedNavigation(10,10,1,82,82,false,true),"kill steps always use host wild suppression");
+  foreach(string kind in new[]{"weekly_npc_query","weekly_npc_plan","weekly_npc_accept","weekly_npc_nav","weekly_npc_talk","weekly_npc_auto","weekly_npc_board_nav","weekly_npc_board_open","weekly_npc_board_scroll","weekly_npc_board_select"}){
    var f=Frame();var c=Command();c.Kind=kind;c.TargetId=0;c.Value=100001;
    f.Surfaces[0].Type=kind=="weekly_npc_accept"?"QuestPopupUI":kind=="weekly_npc_board_scroll"||kind=="weekly_npc_board_select"?"QuestBoardUI":kind=="weekly_npc_talk"?"BalloonScriptUI":kind=="weekly_npc_auto"?"BattleUI_FieldBattle":"GameFieldDefaultUI";
    c.Items=kind=="weekly_npc_accept"||kind=="weekly_npc_nav"||kind=="weekly_npc_auto"?[0]:[];
@@ -491,6 +500,12 @@ static class SelfTest {
    c.Items=[2];Check(LivePolicy.Gate(c,f,now,false)!="","invalid hunt consent rejected "+kind);
    c.Items=[];c.AccountKey="another";Check(LivePolicy.Gate(c,f,now,false)!="","NPC account guard "+kind);
   }
+   {
+    var f=Frame();var c=Command();c.Kind="weekly_npc_plan";c.Value=0;c.TargetId=0;c.Items=[];f.Surfaces[0].Type="GameFieldDefaultUI";
+    Check(LivePolicy.Gate(c,f,now,false)=="","completed or deferred NPC plan can release without an active quest");
+    c.Value=-1;Check(LivePolicy.Gate(c,f,now,false)!="","negative NPC plan is rejected");c.Value=0;
+    f.BridgeVersion=125;Check(LivePolicy.Gate(c,f,now,false)!="","NPC routing requires the new bridge");
+   }
   {
    Check(LivePolicy.HiddenPickupReady(true,2),"valid hidden pickup");
    Check(!LivePolicy.HiddenPickupReady(false,180),"stale cached time cannot activate research");

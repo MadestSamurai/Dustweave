@@ -4812,6 +4812,16 @@
     "zh-TW": "此環節已略過，但執行器未回傳原因。可重新勾選此項；若再次出現，請匯出診斷。",
     "en-US": "This stage was skipped without an explanation from the executor. Select it to retry; export diagnostics if this recurs."
   },
+  "message.普通地图剩余目标不足以完成此任务，已暂缓；不会前往狩猎场，继续其他日常": {
+    "zh-CN": "普通地图剩余目标不足以完成此任务，已暂缓；不会前往狩猎场，继续其他日常",
+    "zh-TW": "普通地圖剩餘目標不足以完成此任務，已暫緩；不會前往狩獵場，繼續其他日常",
+    "en-US": "Too few targets remain on regular maps. This quest is deferred; other dailies will continue without entering hunting grounds."
+  },
+  "message.击杀任务由普通地图压制完成，不启动狩猎场指引": {
+    "zh-CN": "击杀任务由普通地图压制完成，不启动狩猎场指引",
+    "zh-TW": "擊殺任務由普通地圖壓制完成，不啟動狩獵場指引",
+    "en-US": "Kill quests use suppression on regular maps; hunting-ground guidance is disabled."
+  },
   "message.stage_partial_without_reason": {
     "zh-CN": "该环节尚未完成，但执行器未返回原因。请查看游戏是否有断线或弹窗，再补跑此项；若再次出现，请导出诊断。",
     "zh-TW": "此環節尚未完成，但執行器未回傳原因。請查看遊戲是否斷線或有彈窗，再補跑此項；若再次出現，請匯出診斷。",

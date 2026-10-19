@@ -281,6 +281,7 @@ public sealed class DailyWeeklyRoute
             await DailyWeeklyNpcBoard.Close(w);
             await route.FieldReady(15);
             await w.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
+            await npc!.ReleasePlan();
             npc!.ExhaustedPacks.Add(pack);
             Defer("weekly_npc", N(Map(await route.Evidence())["id"]), e.Message);
         }

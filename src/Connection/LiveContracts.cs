@@ -106,7 +106,7 @@ namespace BD2Daily.Live {
    if(f.Surfaces.Any(x=>x.Popup&&x.Id!=u.Id&&!PassiveSurface(x.Type)&&x.Order>=u.Order))return "startup_popup_blocked";
    return "";
   }
-  public static bool WeeklyNpcKind(string k){return new[]{"weekly_npc_board_stop","weekly_npc_board_nav","weekly_npc_board_open","weekly_npc_board_scroll","weekly_npc_board_select","weekly_npc_query","weekly_npc_accept","weekly_npc_nav","weekly_npc_auto","weekly_npc_talk","weekly_npc_interact","weekly_npc_carry_nav","weekly_npc_lift"}.Contains(k);}
+  public static bool WeeklyNpcKind(string k){return new[]{"weekly_npc_board_stop","weekly_npc_board_nav","weekly_npc_board_open","weekly_npc_board_scroll","weekly_npc_board_select","weekly_npc_query","weekly_npc_plan","weekly_npc_accept","weekly_npc_nav","weekly_npc_auto","weekly_npc_talk","weekly_npc_interact","weekly_npc_carry_nav","weekly_npc_lift"}.Contains(k);}
   public static bool QuizKind(string k){return new[]{"quiz_hub","quiz_list","quiz_play","quiz_talk","quiz_leave"}.Contains(k);}
   public static bool RewardKind(string k){return new[]{"reward_select","reward_tab","reward_action"}.Contains(k);}
   public static bool TacticsKind(string k){return new[]{"tactics_select","tactics_priority","tactics_action_open","tactics_burst","tactics_action","tactics_move","tactics_order","tactics_start"}.Contains(k);}
@@ -169,12 +169,13 @@ namespace BD2Daily.Live {
     return f.Surfaces.Any(x=>x.Popup&&x.Id!=ui.Id&&x.Order>=ui.Order&&!PassiveSurface(x.Type))?"notice_popup_blocked":"";
    }
    if(WeeklyNpcKind(c.Kind)){
+    if(c.Kind=="weekly_npc_plan"&&f.BridgeVersion<126)return "weekly_npc_route_bridge_required";
     bool interact=c.Kind=="weekly_npc_interact"||c.Kind=="weekly_npc_carry_nav"||c.Kind=="weekly_npc_lift";
     bool option=c.Kind=="weekly_npc_accept"||c.Kind=="weekly_npc_nav"||c.Kind=="weekly_npc_auto";
     bool board=c.Kind.StartsWith("weekly_npc_board_");string expected=c.Kind=="weekly_npc_accept"?"QuestPopupUI":c.Kind=="weekly_npc_board_scroll"||c.Kind=="weekly_npc_board_select"?"QuestBoardUI":c.Kind=="weekly_npc_query"&&ui.Type=="QuestBoardUI"?"QuestBoardUI":c.Kind=="weekly_npc_talk"?"BalloonScriptUI":c.Kind=="weekly_npc_auto"?"BattleUI_FieldBattle":"GameFieldDefaultUI";
     if((board||c.Kind=="weekly_npc_accept"||expected=="QuestBoardUI")&&f.BridgeVersion<107)return "weekly_npc_board_bridge_required";
     if(c.Kind=="weekly_npc_accept"&&(ui.NativeContext!="weekly_npc_accept:"+c.Value||!f.Surfaces.Any(x=>x.Type=="QuestBoardUI"&&x.NativeContext=="weekly_npc_board")))return "weekly_npc_board_required";
-    if(f.BridgeVersion<100||!GameplayReady(f)||ui.Type!=expected||c.Value<=0||c.TargetId!=0||c.Items==null||c.Items.Length!=((option||interact)?1:0)||option&&(c.Items[0]<0||c.Items[0]>1)||interact&&(f.BridgeVersion<102||c.Items[0]==0))return "weekly_npc_context_rejected";
+    if(f.BridgeVersion<100||!GameplayReady(f)||ui.Type!=expected||(c.Value<=0&&!(c.Kind=="weekly_npc_plan"&&c.Value==0))||c.TargetId!=0||c.Items==null||c.Items.Length!=((option||interact)?1:0)||option&&(c.Items[0]<0||c.Items[0]>1)||interact&&(f.BridgeVersion<102||c.Items[0]==0))return "weekly_npc_context_rejected";
     return f.Surfaces.Any(x=>x.Popup&&x.Id!=ui.Id&&!PassiveSurface(x.Type)&&!(c.Kind=="weekly_npc_accept"&&x.Type=="QuestBoardUI"&&x.NativeContext=="weekly_npc_board"&&x.Order<=ui.Order))?"weekly_npc_popup_blocked":"";
    }
    if(c.Kind=="background_error_ack"){

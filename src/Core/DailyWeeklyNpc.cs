@@ -44,7 +44,10 @@ public sealed record DailyNpcData(JsonObject Native, Dictionary<long, JsonObject
         }
     }
     public JsonObject[] Wild(JsonObject row) => DailyData.Rows(Native["Wild"]).Where(x => N(x["Step"]) == N(row["id"]) && B(x["Available"])).ToArray();
-    public bool RequiresHunting(JsonObject row) => N(row["conditionType"]) == 1 && Wild(row).GroupBy(x => N(x["Monster"])).Sum(g => N(g.First()["Count"])) < N(row["conditionCount"] ?? JsonValue.Create(1));
+    public long RemainingKills(JsonObject row) => Math.Max(0, N(row["conditionCount"] ?? JsonValue.Create(1))
+        - N(Active.FirstOrDefault(a => N(a["id"]) == N(row["id"]))?["value"]));
+    public bool RequiresHunting(JsonObject row) => N(row["conditionType"]) == 1 && Wild(row)
+        .GroupBy(x => (N(x["Group"]), N(x["Monster"]))).Sum(g => N(g.First()["Count"])) < RemainingKills(row);
     public JsonObject? Current(long pack) => Active.Select(a => Rows[N(a["id"])]).FirstOrDefault(r => N(r["packId"]) == pack);
     public static long GoldReward(IEnumerable<JsonObject> steps) => steps.Sum(row =>
     {
@@ -93,6 +96,7 @@ public sealed record DailyNpcData(JsonObject Native, Dictionary<long, JsonObject
 }
 public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
 {
+    private long plannedStep;
     private DailyWorkflow W => route.W;
     public DailyNpcData? Data
     {
@@ -171,15 +175,44 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
     {
         var row = Data?.Current(pack);
         if (row == null)
+        {
+            await ReleasePlan();
             return [];
+        }
+        await PlanStep(row);
         if (N(row["conditionType"]) != 1)
             return [N(row["mapId"])];
         var wild = Data!.Wild(row);
+        if (!allowHunting && Data.RequiresHunting(row))
+            throw new DailyNpcUnavailable("普通地图剩余目标不足以完成此任务，已暂缓；不会前往狩猎场，继续其他日常");
         if (wild.Length > 0)
             return wild.Select(x => N(x["Map"])).Distinct().ToArray();
         if (!allowHunting)
             throw new DailyNpcUnavailable("已接任务的野外目标已不可用，需去狩猎场完成；暂缓此任务，继续其他环节");
         return [N(Map(await route.Evidence())["id"])];
+    }
+    private async Task PlanStep(JsonObject row)
+    {
+        long id = N(row["id"]);
+        if (plannedStep == id && N(Data!.Native["NavigationPlannedQuest"]) == id) return;
+        // Claim the step before travel: the native guide uses its configured map,
+        // which may be a hunting ground even when wild suppression can complete it.
+        await route.FieldReady(settle: 0);
+        await W.Step("GameFieldDefaultUI", operation: "weekly_npc_plan", value: checked((int)id));
+        plannedStep = id;
+        // Cache this acknowledged command until the next native snapshot refresh.
+        // This records guide ownership, never quest completion or monster state.
+        Data!.Native["NavigationPlannedQuest"] = id;
+        W.Driver.Diagnostics.Event("weekly_npc_route_plan", O(("quest", id), ("guide_map", row["mapId"]),
+            ("mode", N(row["conditionType"]) == 1 ? "wild_suppression" : "local_interaction"),
+            ("target_maps", N(row["conditionType"]) == 1 ? Data!.Wild(row).Select(x => N(x["Map"])).Distinct().ToArray() : [N(row["mapId"])])));
+    }
+    internal async Task ReleasePlan()
+    {
+        if (plannedStep == 0 && N(Data?.Native["NavigationPlannedQuest"]) == 0) return;
+        await W.Step("GameFieldDefaultUI", operation: "weekly_npc_plan", value: 0);
+        plannedStep = 0;
+        if (Data != null) Data.Native["NavigationPlannedQuest"] = 0;
     }
     public string Summary() => Data == null ? "等待读取本周任务" : $"本周完成 {N(Data.Native["Completed"])}/{N(Data.Native["Limit"])}" + (Data.Current(N(Data.Native["Pack"])) == null ? "" : " · " + Regex.Replace(S(Data.Native["CurrentName"]), "<[^>]+>", ""));
     public async Task<bool> AtMap(long pack, long map)
@@ -225,6 +258,8 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
     }
     internal async Task Advance(JsonObject row)
     {
+        if (!allowHunting && N(row["conditionType"]) == 1)
+            throw new DailyNpcUnavailable("击杀任务由普通地图压制完成，不启动狩猎场指引");
         for (int attempt = 0; ; attempt++)
         {
             try { await AdvanceAttempt(row); return; }
@@ -245,7 +280,8 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
         }
     }
     internal static bool RecoverableRejection(DailyStepException e) => e.DefinitelyNotDispatched && e.Kind == "rejected"
-        && e.RejectionCode is "npc_lease_expired" or "npc_step_changed" or "npc_target_unavailable" or "npc_carry_changed" or "npc_dialogue_changed";
+        && e.RejectionCode is "npc_lease_expired" or "npc_step_changed" or "npc_target_unavailable" or "npc_carry_changed" or "npc_dialogue_changed"
+            or "npc_navigation_map_changed" or "npc_hunting_navigation_disabled";
     private async Task AdvanceAttempt(JsonObject row)
     {
         long id = N(row["id"]);
@@ -305,6 +341,8 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
             var data = await Observe();
             Data = data;
             string decision = O(("map", data.Native["Map"]), ("navigating", data.Native["Navigating"]),
+                ("planned_quest", data.Native["NavigationPlannedQuest"]), ("blocked_guide", data.Native["NavigationBlockedQuest"]),
+                ("blocked_count", data.Native["NavigationBlockedCount"]),
                 ("lease", data.Native["NavigationLeaseQuest"]), ("carry", data.Native["CarryId"]),
                 ("objects", Array(Rows(data.Native["Objects"] ?? new JsonArray()).Concat(Rows(data.Native["CarryObjects"] ?? new JsonArray()))
                     .Where(x => N(x["Quest"]) == id).Select(x => O(("id", x["Id"]), ("near", x["Near"]), ("ready", x["Ready"]), ("collected", x["Collected"])))))).ToJsonString();
