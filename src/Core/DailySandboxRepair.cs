@@ -16,6 +16,7 @@ public static class DailySandboxRepair
         DailySandbox.RequireHost();
         string state = DailySandbox.StateDirectory(account);
         string installation = DailySandbox.Installation() ?? throw new InvalidOperationException("parallel.install_required");
+        SandboxProcessScope.RequireAvailable();
         var names = SandboxConfiguration.Boxes(installation).Where(DailySandbox.ValidBoxName).Distinct(StringComparer.OrdinalIgnoreCase);
         var candidates = new List<DailySandboxCandidate>();
         foreach (string box in names)

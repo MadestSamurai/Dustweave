@@ -4,9 +4,11 @@
 
 Fiend Hunter is maintained in Dustweave. The archived standalone repository retains historical versions; use [Dustweave](https://github.com/MadestSamurai/Dustweave) for downloads and issues.
 
-Open **Tools → Fiend Hunter** and wait for the shared connection. Choose Berserker or Fiery Tiger, then start a solo Very Hard round with Blade. An ongoing round with the same configuration can be resumed. The tool attacks, guards, dodges and heals, then stops after settlement. Pausing automation leaves the game running.
+Open **Tools → Fiend Hunter** and wait for the shared connection. Choose Blade, Teresse or Granhildr, a monster, and Normal / Hard / Very Hard. An ongoing round with the same configuration can be resumed. The tool attacks, guards, dodges and heals, then stops after settlement. Pausing automation leaves the game running.
 
 The separate window follows Dustweave's language, theme, loading feedback and shared control lock. Opening it never starts combat. No old component is polled during preparation; exiting the game or changing accounts stops input.
+
+The strategy prioritizes clearing the round rather than pursuing optional in-game tasks.
 
 ## Source and storage
 

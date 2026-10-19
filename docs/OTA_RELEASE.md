@@ -1,12 +1,23 @@
 # Dustweave signed updates / 签名更新
 
-> **1.3.0 and later:** use the separate layout-2 channel at `https://bd2.madsam.work/updates/dustweave/v2/updates.json`. See [the current layout](UPDATE_LAYOUT_1.3.md). It serves patches only, supports at most ten preceding releases and has no full-package fallback. The retired layout-1 channel below now serves the **1.2.12 migration notice**, built on the separate maintenance branch. Its installation, account, state and public directory remain independent; do not submit 1.3.x to it. See [the legacy delivery record](releases/1.2.12-deployment.md).
+## Long-term baseline policy · 1.4.7+
+
+From 1.4.7, retain every published baseline at or above 1.4.7. Generate and verify a direct patch from each baseline to each new release; an absent archive fails preparation rather than silently removing support. Eligibility is based on the actual patch size, up to 10 MiB (10,485,760 bytes, displayed as 10 MB), per edition. Layout/runtime compatibility and integrity checks still apply. Do not enforce the ten-release distance limit on these clients. Oversized or incompatible baselines receive a manual-download explanation; reconsider their patches on later releases rather than assuming age makes them unsupported.
+
+For backward compatibility, each release keeps the original `Deltas` array bounded to the recent ten baselines and 8 MiB. Additional eligible 1.4.7+ patches are held in the signed feed-level `BaselineDeltas`, which applies only to the current release. New clients merge it during selection, download, signature verification and installation. Old clients ignore that field. Previous release metadata is not rewritten or filled with historical copies of the extended index.
+
+Publishers must cover the union of recent-ten legacy baselines and every 1.4.7+ baseline. Full baseline ZIPs remain protected, while extracted applications still retain only the current and three previous releases. Client update-cache retention remains unchanged: end users do not need historical ZIPs.
+
+自 1.4.7 起，按每个版本到最新版的直接差分大小判断支持范围，不因超过十版而取消。每种包不超过 10 MB 时提供自动更新；完整性、目录结构与运行库要求不变。发布侧保留 1.4.7 及之后的完整基线，用户本地不需要保留历史安装包。旧版仍沿用最近十版窗口，原有清单字段和旧更新通道保持兼容。
+
+
+> **1.3.0 and later:** use the separate layout-2 channel at `https://bd2.madsam.work/updates/dustweave/v2/updates.json`. See [the current layout](UPDATE_LAYOUT_1.3.md). It serves patches only and has no full-package fallback. Clients before 1.4.7 support at most ten preceding releases; newer clients follow the size-based policy above. The retired layout-1 channel below now serves the **1.2.12 migration notice**, built on the separate maintenance branch. Its installation, account, state and public directory remain independent; do not submit 1.3.x to it. See [the legacy delivery record](releases/1.2.12-deployment.md).
 >
 > **1.3.0 起：**旧用户手动下载完整包并解压到新目录。以下单文件、完整包回退及复制主 EXE 为更新器的描述仅适用于旧版，不适用于 1.3.0。常规发布使用 `dustweave-ota-v2` 的独立客户端配置；首个新版基线单独初始化，之后才生成同结构直接差分。
 
-**Current publication policy:** each release covers all compatible baselines in the preceding ten-release window. Omit `-BasePackageDirectory` to discover signed local archives and download missing GitHub archives, or supply every baseline explicitly. Missing archives/patches fail publication preparation; they cannot silently reduce coverage to the former three-version default. Preserve current plus ten previous full ZIPs even when retaining only four extracted application copies. The withdrawn flat-layout 1.3.0 release requires manual installation. `-VerifyBaselinesOnly` checks baseline availability and hashes without generating patches.
+**Legacy publication policy (before 1.4.7):** each release covers all compatible baselines in the preceding ten-release window. Omit `-BasePackageDirectory` to discover signed local archives and download missing GitHub archives, or supply every baseline explicitly. Missing archives/patches fail publication preparation; they cannot silently reduce coverage to the former three-version default. Preserve current plus ten previous full ZIPs even when retaining only four extracted application copies. The withdrawn flat-layout 1.3.0 release requires manual installation. `-VerifyBaselinesOnly` checks baseline availability and hashes without generating patches.
 
-**当前发布规则：**覆盖前十版窗口内全部兼容版本；默认自动寻找本地已签名基线，缺少的从 GitHub 下载后核对哈希。显式提供基线时必须给全，生成清单前还会检查差分覆盖是否遗漏。完整 ZIP 保留当前及前十版，与只保留四个解压目录的清理规则分开。1.3.0 已撤回，需手动安装。
+**1.4.7 以前的发布规则：**覆盖前十版窗口内全部兼容版本；默认自动寻找本地已签名基线，缺少的从 GitHub 下载后核对哈希。显式提供基线时必须给全，生成清单前还会检查差分覆盖是否遗漏。完整 ZIP 保留当前及前十版，与只保留四个解压目录的清理规则分开。1.3.0 已撤回，需手动安装。
 ## Legacy scope (through 1.2.12) / 旧版范围
 
 The host uses its own updater, with signed differential packages and a full-package fallback. Supported upgrade baselines start at the first public release, 1.0.0-beta; earlier internal versions are no longer maintained for upgrade compatibility. It does not use Velopack. The active source is

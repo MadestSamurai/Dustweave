@@ -5,7 +5,7 @@ namespace Dustweave.Accounts;
 
 public sealed record SandboxInstallationState(string Directory, bool IsManual, string? Error = null);
 
-/// <summary>The launcher and native process-scope API use the same per-user installation.</summary>
+/// <summary>Optional installation used only by explicit sandbox launch/configuration operations.</summary>
 public sealed class SandboxInstallation
 {
     public const string DownloadUrl = "https://sandboxie-plus.com/downloads/";
@@ -15,8 +15,6 @@ public sealed class SandboxInstallation
     private sealed record Preference(int Schema, string? Directory);
     private readonly string file;
     private readonly Func<string?> detect;
-    private static int revision;
-    internal static int Revision => Volatile.Read(ref revision);
 
     public SandboxInstallation(string? directory = null) : this(directory, DetectAutomatic) { }
     internal SandboxInstallation(string? directory, Func<string?> detect)
@@ -53,13 +51,6 @@ public sealed class SandboxInstallation
         if (state.Error != null) throw new SessionManagerException(state.Error);
         return state.Directory;
     }
-    // A broken launcher preference must remain editable. Native process ownership
-    // can still be queried through the registered installation without launching it.
-    internal string? ResolveScopeDirectory()
-    {
-        var state = Read();
-        return state.Error == null ? state.Directory : detect();
-    }
     public void Select(string directory) => Save(new(1, Validate(directory)));
     public void UseAutomatic() => Save(new(1, null));
     private void Save(Preference value)
@@ -76,7 +67,6 @@ public sealed class SandboxInstallation
                 catch (Exception error) when (attempt < 5 && error is IOException or UnauthorizedAccessException && (error.HResult & 0xffff) is 5 or 32 or 33)
                 { Thread.Sleep(20 << attempt); }
             }
-            Interlocked.Increment(ref revision);
         }
         finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }

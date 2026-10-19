@@ -1,5 +1,30 @@
 [
 {
+  "Version": "1.4.7",
+  "Date": "2026-10-19",
+  "Notes": {
+    "zh-CN": [
+      "恶魔猎人新增泰瑞丝、格兰希特与难度选择；修复贴身不攻击，调整突进预判、防御时机及治疗决策。本轮两名角色均已实测打通两种怪物的超困难，策略优先通关，不追求局内任务。",
+      "修复 Sandboxie 已安装但驱动不可用时阻止软件启动的问题；普通启动和普通日常不依赖沙盒，隔离功能不可用时单独提示。",
+      "从 1.4.7 起采用长期 OTA 基线：不再因相差十个版本停止更新；同结构、同运行库的直接差分不超过 10 MB 时可自动下载，超过上限或文件不匹配时提示手动更新。",
+      "此次继续为最近十个兼容旧版本提供直接差分。若 OTA 失败，请从 GitHub Releases 或固定网盘目录手动下载完整软件包。"
+    ],
+    "zh-TW": [
+      "惡魔獵人新增泰瑞絲、格蘭希特與難度選擇；修復貼身不攻擊，調整突進預判、防禦時機及治療決策。本輪兩名角色均已實測打通兩種怪物的超困難，策略優先通關，不追求局內任務。",
+      "修復 Sandboxie 已安裝但驅動程式不可用時阻止軟體啟動的問題；一般啟動與一般日常不依賴沙盒，隔離功能不可用時單獨提示。",
+      "從 1.4.7 起採用長期 OTA 基線：不再因相差十個版本停止更新；相同結構及執行階段的直接差分不超過 10 MB 時可自動下載，超過上限或檔案不符時提示手動更新。",
+      "此次繼續為最近十個相容舊版本提供直接差分。若 OTA 失敗，請從 GitHub Releases 或固定網盤目錄手動下載完整軟體包。"
+    ],
+    "en-US": [
+      "Fiend Hunter adds Teresse, Granhildr and difficulty selection. Fix close-range inactivity and improve dash prediction, defensive timing and damage-aware healing. Both characters cleared both monsters on Very Hard in live trials; the strategy prioritizes clears over in-round missions.",
+      "An installed but unavailable Sandboxie driver no longer blocks application startup. Normal launch and dailies remain independent; isolation failures are reported only for isolation operations.",
+      "Version 1.4.7 starts a long-term OTA baseline. Matching-layout and matching-runtime direct patches up to 10 MB remain eligible beyond ten releases. Larger updates or changed local files require a manual download.",
+      "This release still provides direct patches for the latest ten compatible older releases. If OTA fails, download the complete package from GitHub Releases or the fixed mirror folder."
+    ]
+  }
+},
+
+{
   "Version": "1.4.6",
   "Date": "2026-10-19",
   "Notes": {

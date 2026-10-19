@@ -63,7 +63,7 @@ if($proof.status -ne 'passed'){throw 'Packaged acceptance must pass.'}
 foreach($flavor in @('Lite','Portable')){
  if(!@($proof.cases|Where-Object {$_.case -eq "upgrade-$flavor" -and $_.status -eq 'passed' -and $_.to -eq $release.Version -and $_.baselineHelper}).Count){throw "Missing actual baseline-helper acceptance: $flavor"}
 }
-$uploadAssets=if($release.Layout -eq 1){@($release.Assets)+@($release.Deltas)}else{@($release.Deltas)}
+$uploadAssets=if($release.Layout -eq 1){@($release.Assets)+(@($release.Deltas)+@($feed.BaselineDeltas))}else{(@($release.Deltas)+@($feed.BaselineDeltas))}
 $blobs=@($uploadAssets|Where-Object {$_}|Sort-Object FileName -CaseSensitive|ForEach-Object {[ordered]@{FileName=$_.FileName;Bytes=[long]$_.Bytes;Sha256=$_.Sha256.ToLowerInvariant()}})
 $nonce=[Guid]::NewGuid().ToString('N');$now=[DateTimeOffset]::UtcNow
 $request=[ordered]@{Schema=1;Product='Dustweave';Version=$release.Version;ExpectedFeedSha256=$current.feedSha256;FeedSha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($feedBytes)).ToLowerInvariant();EvidenceSha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($evidenceBytes)).ToLowerInvariant();Nonce=$nonce;IssuedUtc=$now.ToString('O');ExpiresUtc=$now.AddMinutes(15).ToString('O');Files=$blobs}

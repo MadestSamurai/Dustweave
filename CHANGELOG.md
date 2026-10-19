@@ -1,5 +1,11 @@
 # Changelog / 更新记录
 
+## 1.4.7 — 2026-10-19
+
+- 恶魔猎人新增泰瑞丝、格兰希特和难度选择；修复贴身不攻击、突进防御和有药却被重击击败的问题。两名角色分别完成两种怪物的超困难实测通关；不以局内任务为目标。
+- Sandboxie 驱动不可用不再阻止普通启动；沙盒连接与修复保留独立校验。
+- OTA 从 1.4.7 起保留长期基线，用直接差分的 10 MB 大小限制取代十版距离限制；结构或运行库不兼容仍需手动下载。旧客户端继续读取原有格式。
+- Fiend Hunter adds two characters and difficulty selection, with live Very Hard clears against both monsters. Normal startup no longer depends on an available Sandboxie driver. OTA baselines from 1.4.7 onward remain supported by direct-patch size rather than release count.
 ## 1.4.6 — 2026-10-19
 
 - 修复周 NPC 击杀任务明明可在普通地图完成，却被游戏自动指引带往狩猎场的问题；按当前目标进度规划普通地图，阻止旧指引在切图或动画结束后恢复。

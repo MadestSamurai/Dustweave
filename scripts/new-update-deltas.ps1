@@ -30,9 +30,12 @@ if($automaticBaselines){
  $BasePackageDirectory=@($baselineCache)+@(Get-ChildItem -LiteralPath (Join-Path $root 'artifacts/releases') -Directory -ErrorAction SilentlyContinue|ForEach-Object FullName)
 }
 $resolved=[Collections.Generic.List[object]]::new()
+$ordered=@($prior.Releases|Sort-Object {[semver]$_.Version} -Descending)
+$recent=@($ordered|Select-Object -First 10|ForEach-Object Version)
+$supported=@($ordered|Where-Object {$_.Version -in $recent -or [semver]$_.Version -ge [semver]'1.4.7'})
 # Resolve the whole supported window before generating any patch. Missing local
-# archives must not silently turn a ten-version update policy into three versions.
-foreach($release in @($prior.Releases|Sort-Object {[semver]$_.Version} -Descending|Select-Object -First 10)){
+# archives must not silently turn a long-term baseline policy into three versions.
+foreach($release in $supported){
  if([semver]$release.Version -ge [semver]$Version){throw 'Delta publication must advance the version.'}
  if($release.Version -eq '1.3.0'){
   $reports+=@{from=$release.Version;to=$Version;offered=$false;reason='withdrawn_layout';manualDownload=$true}
@@ -49,16 +52,16 @@ foreach($release in @($prior.Releases|Sort-Object {[semver]$_.Version} -Descendi
    if($LASTEXITCODE -ne 0){throw "Cannot obtain supported OTA baseline $($release.Version) $($asset.Flavor)."}
    $old=@(Join-Path $baselineCache $asset.FileName)
   }
-  if(!$old.Count){throw "Missing supported OTA baseline $($release.Version) $($asset.Flavor). Provide every baseline in the ten-release window, or omit BasePackageDirectory for verified discovery/download."}
+  if(!$old.Count){throw "Missing supported OTA baseline $($release.Version) $($asset.Flavor). Provide every baseline in the supported baseline set, or omit BasePackageDirectory for verified discovery/download."}
   if((Get-Item -LiteralPath $old[0]).Length -ne $asset.Bytes -or (Get-FileHash -LiteralPath $old[0]).Hash -ne $asset.Sha256){throw 'Baseline differs from signed release.'}
   $resolved.Add(@{version=$release.Version;flavor=$asset.Flavor;path=$old[0];bytes=$asset.Bytes;sha256=$asset.Sha256})
  }
 }
-$baselineReport=@{status='passed';window=10;target=$Version;baselines=$resolved.ToArray();excluded=$reports}
+$baselineReport=@{status='passed';legacyWindow=10;longTermBaseline='1.4.7';maxDeltaBytes=10MB;target=$Version;baselines=$resolved.ToArray();excluded=$reports}
 $baselineReport|ConvertTo-Json -Depth 6|Set-Content -LiteralPath (Join-Path $folder 'baseline-report.json') -Encoding utf8
 if($VerifyBaselinesOnly){$baselineReport|ConvertTo-Json -Depth 6;return}
-# At most ten baselines per flavor, bounded identically to client validation.
-foreach($release in @($prior.Releases|Sort-Object {[semver]$_.Version} -Descending|Select-Object -First 10)){
+# Legacy clients retain their ten-release window; 1.4.7+ is size bounded.
+foreach($release in $supported){
  if([semver]$release.Version -ge [semver]$Version){throw 'Delta publication must advance the version.'}
  if($release.Version -eq '1.3.0'){continue}
  foreach($flavor in @('Portable','Lite')){
@@ -85,7 +88,7 @@ foreach($release in @($prior.Releases|Sort-Object {[semver]$_.Version} -Descendi
   $name="Dustweave-$Version-$flavor-from-$($release.Version)-win-x64.delta.zip"
   $delta=Get-Content -LiteralPath (Join-Path $folder ($name+'.json')) -Raw|ConvertFrom-Json
   $full=(Get-Item -LiteralPath $next).Length
-  $reports+=@{from=$release.Version;to=$Version;flavor=$flavor;fullBytes=$full;deltaBytes=$delta.Bytes;savingsPercent=[Math]::Round(100*(1-$delta.Bytes/$full),2);offered=($delta.Bytes -le 8MB -and $delta.Bytes -lt $full*0.8)}
+  $reports+=@{from=$release.Version;to=$Version;flavor=$flavor;fullBytes=$full;deltaBytes=$delta.Bytes;savingsPercent=[Math]::Round(100*(1-$delta.Bytes/$full),2);offered=($delta.Bytes -le $(if([semver]$release.Version -ge [semver]'1.4.7'){10MB}else{8MB}) -and ([semver]$release.Version -ge [semver]'1.4.7' -or $delta.Bytes -lt $full*0.8))}
  }
 }
 $reports|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $folder 'delta-report.json') -Encoding utf8

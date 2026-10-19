@@ -19,6 +19,9 @@ public static class SandboxConfiguration
 
     public static string[] Boxes(string installation)
     {
+        // Capture native process scope before loading a query-only SbieDll into
+        // the ordinary host. Installing/reading configuration is not isolation.
+        _ = SandboxProcessScope.CurrentBox;
         string path=Path.GetFullPath(Path.Combine(installation,"SbieDll.dll"));
         EnumBoxes enumerate;
         lock(gate)
@@ -44,6 +47,7 @@ public static class SandboxConfiguration
 
     public static string Read(string installation, string section, string setting)
     {
+        _ = SandboxProcessScope.CurrentBox;
         string path = Path.GetFullPath(Path.Combine(installation, "SbieDll.dll"));
         Query query;
         lock (gate)

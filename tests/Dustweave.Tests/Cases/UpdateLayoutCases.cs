@@ -24,6 +24,19 @@ internal static class UpdateLayoutCases
         Check("runtime changes require full manual package", DailyUpdates.ManualUpdateReason(feed,releases[1] with { RuntimeVersion="8.0.31" },installed)=="updates.manual_runtime");
         Check("oversized delta cannot trigger background full download", DailyUpdates.ManualUpdateReason(feed,releases[1] with { Deltas=[releases[1].Deltas![0] with { Bytes=DailyUpdates.MaxAutomaticDelta+1 }] },installed)=="updates.manual_size");
         Check("missing direct base never chains intermediate downloads",DailyUpdates.ManualUpdateReason(feed,releases[1] with { Deltas=[] },installed)=="updates.manual_delta");
+        var future=Enumerable.Range(7,24).Reverse().Select(i=>new DailyUpdateRelease($"1.4.{i}",i==7?null:$"1.4.{i-1}",2,notes,
+            [new("Lite",$"Dustweave-1.4.{i}-Lite-win-x64.zip",24000000,new('a',64))],[],"8.0.30")).ToArray();
+        var longPatch=new DailyUpdateDelta("Lite","1.4.7",DailyUpdateDeltaPackage.Name("1.4.30","Lite","1.4.7"),10*1024*1024,new('b',64),DailyUpdateDeltaPackage.Algorithm);
+        var longFeed=new DailyUpdateFeed(3,"Dustweave","stable",future,[longPatch]);DailyUpdates.Validate(longFeed);
+        var longInstalled=new DailyUpdatePackage("1.4.7","Lite",Layout:2,RuntimeVersion:"8.0.30");
+        Check("1.4.7 accepts a direct ten MiB patch across 23 releases",DailyUpdates.ManualUpdateReason(longFeed,future[0],longInstalled)==null);
+        Check("latest carries authenticated extended patches into the installer job",DailyUpdates.Latest(longFeed,"1.4.7")!.Deltas!.Single()==longPatch);
+        Check("merging the current baseline index is idempotent",DailyUpdates.WithBaselines(longFeed,DailyUpdates.Latest(longFeed,"1.4.7")!).Deltas!.Length==1);
+        Reject("long term payload above ten MiB is rejected",()=>DailyUpdates.Validate(longFeed with{BaselineDeltas=[longPatch with{Bytes=10*1024*1024+1}]}));
+        Reject("extended patches cannot reuse a legacy baseline",()=>DailyUpdates.Validate(longFeed with{BaselineDeltas=[longPatch with{FromVersion="1.4.6"}]}));
+        Reject("extended patches cannot redirect archive paths",()=>DailyUpdates.Validate(longFeed with{BaselineDeltas=[longPatch with{FileName="other.zip"}]}));
+        Reject("duplicate ordinary and extended patch rejected",()=>DailyUpdates.Validate(longFeed with{Releases=[future[0] with{Deltas=[longPatch]},..future.Skip(1)]}));
+        Check("long term baseline still rejects a different runtime",DailyUpdates.ManualUpdateReason(longFeed,future[0],longInstalled with{RuntimeVersion="8.0.29"})=="updates.manual_runtime");
         Check("split layout allows only package data, not arbitrary executables",DailyUpdates.AllowedFile("app/Dustweave.Core.dll") && DailyUpdates.AllowedFile("support/Dustweave.Updater.exe") && !DailyUpdates.AllowedFile("other.exe") && !DailyUpdates.AllowedFile("plugins/private.dll"));
         string folder=Path.Combine(root,"layout2");Directory.CreateDirectory(folder);
         Check("nested distribution limits payloads and keeps executable at root",DailyUpdates.AllowedFile("app/Dustweave.Core.dll") && DailyUpdates.AllowedFile("app/support/Dustweave.Updater.exe") && !DailyUpdates.AllowedFile("app/Dustweave.exe") && !DailyUpdates.AllowedFile("app/plugins/private.dll") && !DailyUpdates.AllowedFile("app/app/Dustweave.Core.dll") && !DailyUpdates.AllowedFile("app/../outside.dll"));

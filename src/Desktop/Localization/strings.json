@@ -659,14 +659,14 @@
     "en-US": "This version is outside the automatic update window. Please download the complete package."
   },
   "updates.manual_delta": {
-    "zh-CN": "当前版本没有可用的小型更新包，或本地文件与更新基准不一致。请手动下载完整软件包。",
+    "zh-CN": "当前版本没有符合大小限制的更新包，或本地文件与更新基准不一致。请手动下载完整软件包。",
     "zh-TW": "目前版本沒有可用的小型更新包，或本機檔案與更新基準不一致。請手動下載完整軟體包。",
     "en-US": "No small update is available for this version, or local files no longer match its baseline. Please download the complete package."
   },
   "updates.manual_size": {
-    "zh-CN": "此次更新超出小型更新包的大小限制，请手动下载完整软件包。",
-    "zh-TW": "此次更新超出小型更新包的大小限制，請手動下載完整軟體包。",
-    "en-US": "This update exceeds the automatic download size limit. Please download the complete package."
+    "zh-CN": "此次更新超过 10 MB 自动下载上限，请手动下载完整软件包。",
+    "zh-TW": "此次更新超過 10 MB 自動下載上限，請手動下載完整軟體包。",
+    "en-US": "This update exceeds the 10 MB automatic download limit. Please download the complete package."
   },
   "run.recovery_details": {
     "zh-CN": "查看恢复方法",
@@ -907,6 +907,11 @@
     "zh-CN": "无法打开浏览器，请复制上方官网地址手动打开。",
     "zh-TW": "無法開啟瀏覽器，請複製上方官網網址手動開啟。",
     "en-US": "The browser could not open. Copy the official address above and open it manually."
+  },
+  "sandbox.unavailable": {
+    "zh-CN": "Sandboxie 暂不可用，此次隔离操作未执行。普通启动和普通日常仍可使用。需要隔离功能时，请启动或修复 Sandboxie 后重试。",
+    "zh-TW": "Sandboxie 暫不可用，此次隔離操作未執行。一般啟動和一般日常仍可使用。需要隔離功能時，請啟動或修復 Sandboxie 後重試。",
+    "en-US": "Sandboxie is unavailable; this isolation operation was not performed. Normal launch and daily tasks remain available. Start or repair Sandboxie, then retry when you need isolation."
   },
   "sandbox_path.invalid": {
     "zh-CN": "安装文件夹不完整，请选择包含 Start.exe、SbieIni.exe 和 SbieDll.dll 的 Sandboxie 文件夹。",
@@ -2504,9 +2509,9 @@
     "en-US": "Capture territory, avoid attacks and retry failed stages."
   },
   "tool.fiend-hunter.description": {
-    "zh-CN": "选择怪物，自动攻击、防御和治疗，结算后停止。",
-    "zh-TW": "選擇怪物，自動攻擊、防禦和治療，結算後停止。",
-    "en-US": "Choose a monster; attack, defend and heal automatically. Stops after settlement."
+    "zh-CN": "选择角色、怪物与难度，结算后停止。",
+    "zh-TW": "選擇角色、怪物與難度，結算後停止。",
+    "en-US": "Choose a character, monster and difficulty. Stops after settlement."
   },
   "tool.infinite-gacha.description": {
     "zh-CN": "A／B 双列表、停止条件和命中提醒。",

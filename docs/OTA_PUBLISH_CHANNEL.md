@@ -76,3 +76,7 @@ The private local configuration is in the parent workspace at `artifacts/deploym
 ## Legacy retirement notice · 2026-10-15
 
 The separate `maintenance/1.2-migration` branch published **1.2.12** through the original `dustweave-ota` account. This is a migration reminder, not a layout-2 update. The latest six legacy baselines receive direct patches in both editions; older supported public versions use full-package fallback. Prior legacy release metadata is unchanged, v2 remains byte-identical at 1.3.16, and GitHub latest still points to v1.3.16. See [the delivery record](releases/1.2.12-deployment.md). Do not merge the retired application implementation back into main.
+
+## Publisher policy upgrade · 1.4.7
+
+The v2 publisher accepts the signed feed-level BaselineDeltas index for 1.4.7+ and verifies its full upload inventory and 10 MiB limit. Update the administrator-owned executable with scripts/upgrade-update-channel-v2.sh after self-tests, then verify constrained status, denied shell commands and unchanged legacy hashes. The existing signing and transport keys remain unchanged. Ordinary releases use the same constrained publisher. Deployment completion is recorded in the release receipt.

@@ -51,7 +51,12 @@ public static class DailyTransport
     public static void Reader(string root)
     {
         Configure(root);
-        var games = Dustweave.Accounts.SandboxProcessScope.Find("BrownDust II");
+        System.Diagnostics.Process[] games;
+        try { games = Dustweave.Accounts.SandboxProcessScope.Find("BrownDust II"); }
+        // Attaching to an existing endpoint is optional during host construction.
+        // Explicit discovery/connection still reports the scope failure; it must
+        // not prevent the ordinary window (including settings) from opening.
+        catch (Dustweave.Accounts.SandboxScopeException) { return; }
         try
         {
             if (games.Length == 1)

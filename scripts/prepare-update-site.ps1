@@ -31,7 +31,7 @@ foreach($asset in $release.Assets){
  if((Get-Item -LiteralPath $file).Length -ne $asset.Bytes -or (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash -ne $asset.Sha256){throw "Asset verification failed: $expected"}
  # Full packages are verified locally but domestic hosting carries deltas only.
 }
-foreach($delta in @($release.Deltas)){
+foreach($delta in (@($release.Deltas)+@($feed.BaselineDeltas))){
  if(!$delta){continue}
  $expected="Dustweave-$($release.Version)-$($delta.Flavor)-from-$($delta.FromVersion)-win-x64.delta.zip"
  if($delta.Flavor -notin @('Portable','Lite') -or $delta.FromVersion -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$' -or $delta.FileName -ne $expected -or $delta.Algorithm -ne 'dustweave-copy-v2'){throw 'Invalid delta asset name.'}

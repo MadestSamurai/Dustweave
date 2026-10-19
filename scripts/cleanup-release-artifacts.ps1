@@ -3,7 +3,7 @@ param(
  [switch]$Apply,
  [string]$Plan,
  [string]$PackageDirectory,
- # Extracted copies only. Full ZIPs must retain the ten-version OTA window.
+ # Extracted copies only. Keep full ZIPs for the legacy window and every 1.4.7+ baseline.
  [ValidateRange(4,11)][int]$KeepReleases=4
 )
 $ErrorActionPreference='Stop'
@@ -41,7 +41,8 @@ $allPublished=@($feed.Releases|ForEach-Object Version)
 $archiveSafe=@{}
 foreach($release in $feed.Releases){
  $v=$release.Version;$archiveSafe[$v]=$true
- foreach($asset in @($release.Assets)+@($release.Deltas)){
+ $extended=if($v -eq $Version){@($feed.BaselineDeltas)}else{@()}
+ foreach($asset in @($release.Assets)+@($release.Deltas)+$extended){
   if(!$asset){continue}
   $path=if($v -eq $Version){Join-Path $releaseRoot $asset.FileName}else{Join-Path $artifacts ('releases/'+$v+'/'+$asset.FileName)}
   if(!(Test-Path -LiteralPath $path) -or (Get-Item -LiteralPath $path).Length -ne $asset.Bytes -or (Get-FileHash -LiteralPath $path).Hash -ne $asset.Sha256){$archiveSafe[$v]=$false;break}

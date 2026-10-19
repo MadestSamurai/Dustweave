@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-19T06:36:04.4545415Z",
+  "generatedUtc": "2026-10-19T08:19:21.8127047Z",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -495,27 +495,27 @@
     },
     {
       "path": "src/Accounts/SandboxConfiguration.cs",
-      "sha256": "133828a1bcef6b88d71a4068b08c653065427d534f00c40a30402f73c22f4c2b",
+      "sha256": "f672608830cbcf5686b6d4836c5d1fd37213951ffeeab58dc8c83807bac63d63",
       "reasons": [
         "build input"
       ],
-      "bytes": 5090
+      "bytes": 5340
     },
     {
       "path": "src/Accounts/SandboxInstallation.cs",
-      "sha256": "d59ec8ce38246cfd6c93dd649abb87ed3e6998dc2e0fa9cd2901385975fa54cb",
+      "sha256": "22370313ad05b869ffe33eddcd0aa6b85cdfc4102fa45145dfd52f36b918ae22",
       "reasons": [
         "repository build or verification input"
       ],
-      "bytes": 7337
+      "bytes": 6878
     },
     {
       "path": "src/Accounts/SandboxProcessScope.cs",
-      "sha256": "15ba421fd3b6d14bbbce7ed2398008daef1baf253ce92374faa11eb071055ec7",
+      "sha256": "9ff621ce3378d4081ed202b48d700c1fae41d03d97c2a8655248b57fdf06c0a2",
       "reasons": [
         "build input"
       ],
-      "bytes": 3732
+      "bytes": 6650
     },
     {
       "path": "src/Accounts/SessionConstants.cs",
@@ -2457,11 +2457,11 @@
     },
     {
       "path": "src/Core/DailySandbox.cs",
-      "sha256": "47b0aaf046b97c8459b72449fe571b6e8ffa3507bc8232eee99864f5205d10cf",
+      "sha256": "c95ea81b4fb6509598c7f9a81cbb61998809fea738ae54d8befaf92e53c08f9b",
       "reasons": [
         "build input"
       ],
-      "bytes": 27162
+      "bytes": 27258
     },
     {
       "path": "src/Core/DailySandboxRegistration.cs",
@@ -2475,8 +2475,8 @@
       "reasons": [
         "build input"
       ],
-      "sha256": "10bd9fa367c7e5222bb5a66ecb0ea6def9e6d28a76085fc19d26eb360c266a9e",
-      "bytes": 7321,
+      "sha256": "04288c0a06ab4b8437502732f61d392e2f4e563efd0b702a3f3aac177125a310",
+      "bytes": 7369,
       "path": "src/Core/DailySandboxRepair.cs"
     },
     {
@@ -2793,11 +2793,11 @@
     },
     {
       "path": "src/Core/DailyTransport.cs",
-      "sha256": "55c69df370c9232349685166a2172624ca9b2fed7266717bf50d094c6f3ae190",
+      "sha256": "690751a99ce84daa10d1c80b0311b37e232c683ea144e11c6a2ce720dcd31883",
       "reasons": [
         "build input"
       ],
-      "bytes": 2673
+      "bytes": 3038
     },
     {
       "path": "src/Core/DailyTravel.cs",
@@ -3473,11 +3473,11 @@
     },
     {
       "path": "src/Desktop/Localization/strings.json",
-      "sha256": "6a4c2e163c78fb8dc2660e04532079790cdcc67dbc019796550bb7cd349aa99e",
+      "sha256": "8a2d767903bccab2dad8da429851e3080a5ac400e23d6803c7cbcae1c356e9da",
       "reasons": [
         "build input"
       ],
-      "bytes": 344492
+      "bytes": 346752
     },
     {
       "path": "src/Desktop/MainWindow.Accounts.cs",
@@ -3833,11 +3833,11 @@
     },
     {
       "path": "src/Desktop/Program.cs",
-      "sha256": "360cd312beae666bfbbdbca1cbacc3221ed555fa19cb3f29a41ac6b358d68d9a",
+      "sha256": "ea58e587c74c2ce70d17cd7634a14bc62a1f5ec9263852fb5bcbd49fb1fccebf",
       "reasons": [
         "build input"
       ],
-      "bytes": 10764
+      "bytes": 10858
     },
     {
       "path": "src/Desktop/ProgressRingConverter.cs",
@@ -9457,11 +9457,11 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/SandboxInstallationCases.cs",
-      "sha256": "85e7d4a28d233d607ad4e026496b013172751cff1740296517c057d1e213fbe1",
+      "sha256": "832144e282396704cefcf859f72c8beb208e1d722fe7dc047daa8a9a73abe348",
       "reasons": [
         "repository build or verification input"
       ],
-      "bytes": 3169
+      "bytes": 2896
     },
     {
       "path": "tests/Dustweave.Tests/Cases/SchedulingUpdatesCases.cs",
@@ -9761,11 +9761,11 @@
     },
     {
       "path": "tests/Dustweave.Tests/Program.cs",
-      "sha256": "5f1291db08a230e2d8a5b1333928b0339fd74ff2ccd3ce3f76e7159bbf84c90f",
+      "sha256": "a95d72892e17bf58e574fa83718624675058549e7d56d5d1100e3020ff70af9a",
       "reasons": [
         "build input"
       ],
-      "bytes": 13854
+      "bytes": 14094
     },
     {
       "path": "tests/Dustweave.Tests/README.md",
@@ -10062,6 +10062,22 @@
         "build input"
       ],
       "bytes": 1102
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/SandboxScopeCases.cs",
+      "sha256": "b1e714171444db9d635bc815aa5261500f30080c4174adef5f74bbfb23a52652",
+      "reasons": [
+        "synthetic regression"
+      ],
+      "bytes": 9319
+    },
+    {
+      "path": "src/Accounts/SandboxDriverScope.cs",
+      "sha256": "5d95545241a1f7f99b09364a75831941ef44a3b896ed613d19915fa646693035",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 4453
     }
   ],
   "publicReleaseApproved": false,

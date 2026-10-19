@@ -96,6 +96,7 @@ await Group("OutcomeExplanation", () => Sync(() => OutcomeExplanationCases.Run(c
 await Group("ParallelProcess", () => ParallelProcessCases.Run(root, cases));
 await Group("Saffron", async () => { SaffronCases.Run(cases); await SaffronCases.RuntimeLoop(root,cases); });
 await Group("Sandbox", () => SandboxCases.Run(root, cases));
+await Group("SandboxScope", () => SandboxScopeCases.Run(root, cases));
 await Group("AccountOrder", () => AccountOrderCases.Run(root, cases));
 await Group("Guild", () => GuildCases.Run(root, cases));
 await Group("Startup", () => StartupCases.Run(root, cases));

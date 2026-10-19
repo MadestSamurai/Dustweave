@@ -43,7 +43,7 @@ public sealed class DailyUpdateTransport(DailyUpdateTrust trust)
         var valid = results.Where(r => r.Update != null).Select(r => r.Update!).ToArray();
         if (valid.Length == 0) throw new InvalidDataException(results.Any(r => r.Error == "updates.signature_failed") ? "updates.signature_failed" : "updates.unavailable");
         // The same release/flavor must have the same bytes on every signed mirror.
-        foreach (var group in valid.SelectMany(v => v.Feed.Releases).GroupBy(r => r.Version))
+        foreach (var group in valid.SelectMany(v => v.Feed.Releases.Select(r => DailyUpdates.WithBaselines(v.Feed,r))).GroupBy(r => r.Version))
             if (group.Select(r => JsonSerializer.Serialize(new { r.Layout, r.RuntimeVersion, Assets = r.Assets.OrderBy(a => a.Flavor), Deltas = (r.Deltas ?? []).OrderBy(d => d.Flavor).ThenBy(d => d.FromVersion) }, DailyUpdateJson.Options)).Distinct().Count() != 1)
                 throw new InvalidDataException("updates.mirror_conflict");
         var best = valid.OrderByDescending(v => DailyUpdates.VersionOf(v.Feed.Releases[0].Version))
@@ -60,7 +60,7 @@ public sealed class DailyUpdateTransport(DailyUpdateTrust trust)
     {
         using var storage = DailyUpdateHost.AcquireStorage(root);
         var feed = DailyUpdateSignatures.Verify(verified.Signed, trust);
-        var release = feed.Releases.Single(r => r.Version == version);
+        var release = DailyUpdates.WithBaselines(feed, feed.Releases.Single(r => r.Version == version));
         var asset = release.Assets.Single(a => a.Flavor == flavor);
         var installed = installedDirectory == null ? null : DailyUpdateJson.TryRead<DailyUpdatePackage>(Path.Combine(installedDirectory, "update-package.json"));
         string? manual = DailyUpdates.ManualUpdateReason(feed, release, installed);
@@ -77,7 +77,7 @@ public sealed class DailyUpdateTransport(DailyUpdateTrust trust)
         // A direct patch from the exact installed version avoids downloading intermediate releases.
         // Only use deltas with a meaningful size advantage; never substitute Portable for Lite.
         var delta = allowDelta ? release.Deltas?.Where(d => d.Algorithm == DailyUpdateDeltaPackage.Algorithm && d.Flavor == flavor && d.FromVersion == installed?.Version &&
-            installed.Flavor == flavor && d.Bytes < asset.Bytes * .8).OrderBy(d => d.Bytes).FirstOrDefault() : null;
+            installed.Flavor == flavor && (DailyUpdates.VersionOf(installed.Version) >= DailyUpdates.VersionOf(DailyUpdates.LongTermBaseline) || d.Bytes < asset.Bytes * .8)).OrderBy(d => d.Bytes).FirstOrDefault() : null;
         if (delta != null && installedDirectory != null)
         {
             try

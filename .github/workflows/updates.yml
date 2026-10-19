@@ -42,7 +42,8 @@ jobs:
             $signed=Get-Content 'ota/previous.json' -Raw|ConvertFrom-Json
             $prior=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($signed.Payload))|ConvertFrom-Json
             New-Item -ItemType Directory -Path ota/bases | Out-Null
-            foreach($release in @($prior.Releases|Select-Object -First 10)){
+            $recent=@($prior.Releases|Select-Object -First 10|ForEach-Object Version)
+            foreach($release in @($prior.Releases|Where-Object {$_.Version -in $recent -or [semver]$_.Version -ge [semver]'1.4.7'})){
               if($release.Version -eq '1.3.0'){continue} # Withdrawn flat-layout release requires manual installation.
               if($release.Version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$'){throw 'Invalid baseline version.'}
               gh release download ("v"+$release.Version) --pattern 'Dustweave-*-win-x64.zip' --dir ota/bases

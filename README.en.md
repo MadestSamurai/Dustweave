@@ -74,7 +74,7 @@ Open any of these from Dustweave's **Tools** page; no separate installation is n
 | Rhythm | Chart reading and automated input |
 | [Apostle Defense](src/ApostleDefense) | An offline simulated-annealing-tuned policy for summoning, merging, upgrades, positioning and checkpoint restarts |
 | SECRET VISION | Territory capture, evasion and retries after defeat |
-| [Fiend Hunter](src/FiendHunter) | Choose Berserker or Fiery Tiger for solo Very Hard; stop after settlement |
+| [Fiend Hunter](src/FiendHunter) | Choose a character, monster and solo difficulty; stop after settlement |
 | [Infinite Gacha](src/InfiniteGacha) | Two target lists, stop conditions and target notifications |
 | [MANSION RUNAWAY](docs/MANSION_RUNAWAY.md) | Live navigation, enemy avoidance and stage progression, with an optional 80-chain goal |
 | [Pandora Escape](docs/PANDORA.md) | Repeat a selected stage for currency; challenge mode with character selection, weapon/support pairings, boss evasion and late-run survival, stopping on confirmed completion |

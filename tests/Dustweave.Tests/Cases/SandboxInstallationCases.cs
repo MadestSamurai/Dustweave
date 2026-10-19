@@ -29,14 +29,12 @@ internal static class SandboxInstallationCases
         File.Delete(Path.Combine(selected, "SbieDll.dll"));
         Reject(() => store.ResolveOptional(), SandboxInstallation.Invalid, "incomplete explicit path never silently switches to another launcher");
         Check(store.Read().Directory == selected && store.Read().IsManual, "broken choice remains visible for repair");
-        Check(store.ResolveScopeDirectory() == automatic, "broken launcher preference does not block native ownership query or settings repair");
         store.UseAutomatic();
         Check(store.ResolveOptional() == automatic && !store.Read().IsManual, "user can return to automatic discovery");
         var absent = new SandboxInstallation(Path.Combine(root, "absent-sandbox"), () => null);
         Check(absent.ResolveOptional() == null && absent.Read().Error == SandboxInstallation.Missing, "missing optional sandbox does not block ordinary launch");
         File.WriteAllText(Path.Combine(settings, "sandbox-installation.json"), "{\"Schema\":99}");
         Reject(() => store.ResolveOptional(), SandboxInstallation.Unreadable, "unknown configuration is actionable");
-        Check(store.ResolveScopeDirectory() == automatic, "corrupt preference can still use registered native ownership API");
         store.UseAutomatic(); Check(store.ResolveOptional() == automatic, "reset repairs an unreadable preference");
     }
 }

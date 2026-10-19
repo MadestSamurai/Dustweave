@@ -72,6 +72,14 @@ public partial class MainWindow
                     Check(selection.Items.Count==2&&selection.SelectedIndex==0,"fiend hunter defaults to Berserker and offers both monsters");
                     selection.SelectedIndex=1;
                     Check(selection.SelectedIndex==1&&!((Button)window.FindName("StartButton")).IsEnabled,"monster selection never starts a round without a connected session");
+                    var character=(ComboBox)window.FindName("CharacterChoice");var difficulty=(ComboBox)window.FindName("DifficultyChoice");
+                    Check(character.Items.Count==3&&character.SelectedIndex==0&&difficulty.Items.Count==3&&difficulty.SelectedIndex==2,"three characters and three solo difficulties retain legacy defaults");
+                    character.SelectedIndex=2;difficulty.SelectedIndex=0;
+                    window.GetType().GetField("preparing",BindingFlags.Instance|BindingFlags.NonPublic)!.SetValue(window,true);
+                    window.GetType().GetMethod("UpdateControls",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(window,null);
+                    Check(!character.IsEnabled&&!difficulty.IsEnabled&&!selection.IsEnabled,"all round choices lock while preparing");
+                    window.GetType().GetField("preparing",BindingFlags.Instance|BindingFlags.NonPublic)!.SetValue(window,false);
+                    window.GetType().GetMethod("UpdateControls",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(window,null);
                     Check(!((bool)window.GetType().GetProperty("HostedAutomationEnabled")!.GetValue(window)!),"fiend hunter readiness remains idle");
                     Capture($"ready-{id}-{language}-{appearance}",(FrameworkElement)window.Content);
                 }

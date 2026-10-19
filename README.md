@@ -74,7 +74,7 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 | 音游 | 读取谱面并自动操作 |
 | [使徒运气防守](src/ApostleDefense) | 采用离线退火优化的策略，自动召唤、合成、培养、布局与阶段重开 |
 | SECRET VISION | 自动圈地、避让与失败重试 |
-| [恶魔猎人](src/FiendHunter) | 选择巴萨卡或炎虎，自动挑战单人超困难，结算后停止 |
+| [恶魔猎人](src/FiendHunter) | 选择角色、巴萨卡或炎虎及单人难度，结算后停止 |
 | [无限抽抽乐](src/InfiniteGacha) | 双列表目标、停止条件与命中通知 |
 | [MANSION RUNAWAY](docs/MANSION_RUNAWAY.md) | 实时寻路、避敌与关卡推进，也可选择刷到 80 连锁后停止 |
 | [潘多拉大逃脱](docs/PANDORA.md) | 指定关卡循环刷货币；挑战模式支持角色选择、武器与辅助道具配对、BOSS 避让及后期生存决策，确认通关后停止 |

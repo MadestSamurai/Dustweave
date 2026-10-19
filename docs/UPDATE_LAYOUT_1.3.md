@@ -1,5 +1,16 @@
 # 1.3 distribution and updates
 
+## Long-term baseline policy · 1.4.7+
+
+From 1.4.7, retain every published baseline at or above 1.4.7. Generate and verify a direct patch from each baseline to each new release; an absent archive fails preparation rather than silently removing support. Eligibility is based on the actual patch size, up to 10 MiB (10,485,760 bytes, displayed as 10 MB), per edition. Layout/runtime compatibility and integrity checks still apply. Do not enforce the ten-release distance limit on these clients. Oversized or incompatible baselines receive a manual-download explanation; reconsider their patches on later releases rather than assuming age makes them unsupported.
+
+For backward compatibility, each release keeps the original `Deltas` array bounded to the recent ten baselines and 8 MiB. Additional eligible 1.4.7+ patches are held in the signed feed-level `BaselineDeltas`, which applies only to the current release. New clients merge it during selection, download, signature verification and installation. Old clients ignore that field. Previous release metadata is not rewritten or filled with historical copies of the extended index.
+
+Publishers must cover the union of recent-ten legacy baselines and every 1.4.7+ baseline. Full baseline ZIPs remain protected, while extracted applications still retain only the current and three previous releases. Client update-cache retention remains unchanged: end users do not need historical ZIPs.
+
+自 1.4.7 起，按每个版本到最新版的直接差分大小判断支持范围，不因超过十版而取消。每种包不超过 10 MB 时提供自动更新；完整性、目录结构与运行库要求不变。发布侧保留 1.4.7 及之后的完整基线，用户本地不需要保留历史安装包。旧版仍沿用最近十版窗口，原有清单字段和旧更新通道保持兼容。
+
+
 Status: released and deployed on 2026-10-13. See [the deployment receipt](releases/1.3.0-deployment.md) for public verification and legacy-channel isolation. Local measurements below describe the pre-publication acceptance run.
 
 ## Package layout

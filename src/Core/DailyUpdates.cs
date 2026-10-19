@@ -9,7 +9,7 @@ public sealed record DailyReleaseNote(string Version, string Date, Dictionary<st
 public sealed record DailyUpdateAsset(string Flavor, string FileName, long Bytes, string Sha256);
 public sealed record DailyUpdateDelta(string Flavor, string FromVersion, string FileName, long Bytes, string Sha256, string Algorithm);
 public sealed record DailyUpdateRelease(string Version, string? PreviousVersion, int Layout, Dictionary<string, string[]> Notes, DailyUpdateAsset[] Assets, DailyUpdateDelta[]? Deltas = null, string? RuntimeVersion = null);
-public sealed record DailyUpdateFeed(int Schema, string Product, string Channel, DailyUpdateRelease[] Releases);
+public sealed record DailyUpdateFeed(int Schema, string Product, string Channel, DailyUpdateRelease[] Releases, DailyUpdateDelta[]? BaselineDeltas = null);
 public sealed record DailyUpdatePackage(string Version, string Flavor, string[]? Files = null, int Layout = 1, string? RuntimeVersion = null, string[]? BootstrapFiles = null);
 public sealed record DailyUpdateJob(string Directory, string Target, int ParentPid, long ParentStartTicks, DailyUpdateRelease Release, DailyUpdateAsset Asset, string Nonce = "", string OriginalSha256 = "", string? DeltaFileName = null);
 
@@ -17,7 +17,8 @@ public static class DailyUpdates
 {
     public const string FeedUrl = "https://bd2.madsam.work/updates/dustweave/v2/updates.json";
     public const int CurrentLayout = 2, MaxAutomaticSteps = 10;
-    public const long MaxAutomaticDelta = 8L * 1024 * 1024;
+    public const string LongTermBaseline = "1.4.7";
+    public const long MaxAutomaticDelta = 10L * 1024 * 1024;
     public const long MaxArchive = 600L * 1024 * 1024;
     public static DailyVersion VersionOf(string value) => DailyVersion.Parse(value);
     public static void Validate(DailyUpdateFeed feed)
@@ -55,11 +56,28 @@ public static class DailyUpdates
         if (!feed.Releases.Select(r => r.Version).SequenceEqual(sorted.Select(r => r.Version))) throw new InvalidDataException("updates.invalid_feed");
         for (int i = 0; i < sorted.Length - 1; i++)
             if (sorted[i].PreviousVersion != sorted[i + 1].Version) throw new InvalidDataException("updates.broken_chain");
+        var extended = feed.BaselineDeltas ?? [];
+        if (extended.Length > feed.Releases.Length * 2 || (extended.Length > 0 && feed.Schema != 3)) throw new InvalidDataException("updates.invalid_feed");
+        var top = feed.Releases[0];
+        var combined = (top.Deltas ?? []).Concat(extended).ToArray();
+        if (combined.Select(d => (d.Flavor,d.FromVersion)).Distinct().Count() != combined.Length) throw new InvalidDataException("updates.invalid_feed");
+        foreach (var d in extended)
+            if (VersionOf(d.FromVersion) < VersionOf(LongTermBaseline) || VersionOf(d.FromVersion) >= VersionOf(top.Version) ||
+                !feed.Releases.Any(r => r.Version == d.FromVersion && r.Layout == top.Layout && r.RuntimeVersion == top.RuntimeVersion) ||
+                !top.Assets.Any(a => a.Flavor == d.Flavor) || d.Algorithm != DailyUpdateDeltaPackage.Algorithm ||
+                d.FileName != DailyUpdateDeltaPackage.Name(top.Version,d.Flavor,d.FromVersion) || d.Bytes <= 0 || d.Bytes > MaxAutomaticDelta ||
+                d.Sha256.Length != 64 || !d.Sha256.All(Uri.IsHexDigit)) throw new InvalidDataException("updates.invalid_feed");
     }
+    // Extended patches describe only the current target. Historical metadata stays
+    // immutable and old clients continue to read their bounded Deltas arrays.
+    public static DailyUpdateRelease WithBaselines(DailyUpdateFeed feed, DailyUpdateRelease release) =>
+        release.Version == feed.Releases[0].Version && (feed.BaselineDeltas?.Length ?? 0) > 0
+            ? release with { Deltas = (release.Deltas ?? []).Concat(feed.BaselineDeltas!).Distinct().ToArray() } : release;
     public static DailyUpdateRelease? Latest(DailyUpdateFeed feed, string current)
     {
         Validate(feed);
-        return feed.Releases.OrderByDescending(r => VersionOf(r.Version)).FirstOrDefault(r => VersionOf(r.Version) > VersionOf(current));
+        var latest = feed.Releases.FirstOrDefault(r => VersionOf(r.Version) > VersionOf(current));
+        return latest == null ? null : WithBaselines(feed, latest);
     }
     public static string? ManualUpdateReason(DailyUpdateFeed feed, DailyUpdateRelease release, DailyUpdatePackage? installed)
     {
@@ -68,10 +86,11 @@ public static class DailyUpdates
         if (installed.RuntimeVersion != release.RuntimeVersion) return "updates.manual_runtime";
         int target = Array.FindIndex(feed.Releases, r => r.Version == release.Version);
         int previous = Array.FindIndex(feed.Releases, r => r.Version == installed.Version);
-        if (target < 0 || previous <= target || previous - target > MaxAutomaticSteps) return "updates.manual_distance";
+        if (target < 0 || previous <= target || (VersionOf(installed.Version) < VersionOf(LongTermBaseline) && previous - target > MaxAutomaticSteps)) return "updates.manual_distance";
+        release = WithBaselines(feed, release);
         var delta = release.Deltas?.FirstOrDefault(d => d.Flavor == installed.Flavor && d.FromVersion == installed.Version && d.Algorithm == DailyUpdateDeltaPackage.Algorithm);
         if (delta == null) return "updates.manual_delta";
-        if (delta.Bytes > MaxAutomaticDelta || delta.Bytes >= release.Assets.Single(a => a.Flavor == installed.Flavor).Bytes * .8) return "updates.manual_size";
+        if (delta.Bytes > MaxAutomaticDelta || (VersionOf(installed.Version) < VersionOf(LongTermBaseline) && delta.Bytes >= release.Assets.Single(a => a.Flavor == installed.Flavor).Bytes * .8)) return "updates.manual_size";
         return null;
     }
     public static HttpClient Client()

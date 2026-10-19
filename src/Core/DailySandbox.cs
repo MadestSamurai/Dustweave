@@ -112,6 +112,7 @@ public static class DailySandbox
         executable = Path.GetFullPath(executable);
         if (!File.Exists(executable) || !DailyApplication.IsExecutable(executable)) throw new InvalidOperationException("run.account_unavailable");
         string installation = Installation() ?? throw new InvalidOperationException("parallel.install_required");
+        SandboxProcessScope.RequireAvailable();
         await ConfigurationGate.WaitAsync(token);
         try
         {
@@ -150,6 +151,7 @@ public static class DailySandbox
     {
         RequireHost();
         string installation = Installation() ?? throw new InvalidOperationException("parallel.install_required");
+        SandboxProcessScope.RequireAvailable();
         var vault = new SessionVault();
         var saved = SessionService.LatestSameAccount(vault.LoadFixedSlot(account.SlotNumber), vault.TryLoadFixedSlot);
         if (!account.Valid || DailyIdentity.MemberKey(SessionIdentity.GetMemberId(saved) ?? "") != account.AccountKey)

@@ -21,7 +21,8 @@ public static class DailyUpdateEngine
         DailyUpdates.EnsureNoLinks(job.Directory); DailyUpdates.EnsureNoLinks(job.Target);
         var signed = DailyUpdateJson.TryRead<DailySignedUpdate>(Path.Combine(job.Directory, "signed-feed.json")) ?? throw new InvalidDataException("updates.signature_failed");
         var feed = DailyUpdateSignatures.Verify(signed, DailyUpdateTrust.Production());
-        var release = feed.Releases.SingleOrDefault(r => r.Version == job.Release.Version);
+        var found = feed.Releases.SingleOrDefault(r => r.Version == job.Release.Version);
+        var release = found == null ? null : DailyUpdates.WithBaselines(feed,found);
         var asset = release?.Assets.SingleOrDefault(a => a.Flavor == job.Asset.Flavor);
         if (asset != job.Asset || release?.Layout != job.Release.Layout || release?.RuntimeVersion != job.Release.RuntimeVersion) throw new InvalidDataException("updates.signature_failed");
         if (job.DeltaFileName != null && !((release?.Deltas ?? []).Any(d => d.FileName == job.DeltaFileName && d.Flavor == job.Asset.Flavor)))
@@ -162,7 +163,7 @@ public static class DailyUpdateEngine
         retained = null;
         var signed = DailyUpdateJson.TryRead<DailySignedUpdate>(Path.Combine(job.Directory, "signed-feed.json"))!;
         var verified = new DailyVerifiedUpdate(DailyUpdateSignatures.Verify(signed, DailyUpdateTrust.Production()), signed, "");
-        var release = verified.Feed.Releases.Single(r => r.Version == job.Release.Version);
+        var release = DailyUpdates.WithBaselines(verified.Feed, verified.Feed.Releases.Single(r => r.Version == job.Release.Version));
         var asset = release.Assets.Single(a => a.Flavor == job.Asset.Flavor);
         var delta = release.Deltas?.SingleOrDefault(d => d.FileName == job.DeltaFileName);
         if (delta != null)
