@@ -72,6 +72,20 @@ internal static class UpdateSafetyCases
         using var conflict = new HttpClient(new Handler(r => Json(r.RequestUri!.Host == "cn.test" ? signed : different)));
         try { await transport.FetchAsync(conflict, data, default); throw new Exception("conflict accepted"); }
         catch (InvalidDataException e) { Check("conflicting signed mirrors block installation", e.Message == "updates.mirror_conflict"); }
+        DailyUpdateRelease LongRelease(string version, string? previous) => new(version, previous, 2, notes,
+            [asset with { FileName = $"Dustweave-{version}-Lite-win-x64.zip" }], [], "8.0.30");
+        var longBase = LongRelease("1.4.7", null);
+        var longTarget = LongRelease("1.4.30", longBase.Version);
+        var longDelta = new DailyUpdateDelta("Lite", longBase.Version, "Dustweave-1.4.30-Lite-from-1.4.7-win-x64.delta.zip", 400, asset.Sha256, DailyUpdateDeltaPackage.Algorithm);
+        var longFeed = new DailyUpdateFeed(3, "Dustweave", "stable", [longTarget, longBase], [longDelta]);
+        var nextFeed = longFeed with { Releases = [LongRelease("1.4.31", longTarget.Version), longTarget, longBase], BaselineDeltas = [] };
+        var longSigned = DailyUpdateSignatures.Sign(longFeed, "test", key);
+        using var rolling = new HttpClient(new Handler(r => Json(r.RequestUri!.Host == "cn.test" ? longSigned : DailyUpdateSignatures.Sign(nextFeed, "test", key))));
+        var rollingResult = await transport.FetchAsync(rolling, Path.Combine(data, "rolling-index"), default);
+        Check("stale mirror extended index does not conflict with newer immutable history", rollingResult.Feed.Releases[0].Version == "1.4.31");
+        using var indexConflict = new HttpClient(new Handler(r => Json(r.RequestUri!.Host == "cn.test" ? longSigned : DailyUpdateSignatures.Sign(longFeed with { BaselineDeltas = [longDelta with { Sha256 = new string('0', 64) }] }, "test", key))));
+        try { await transport.FetchAsync(indexConflict, Path.Combine(data, "index-conflict"), default); throw new Exception("conflicting index accepted"); }
+        catch (InvalidDataException e) { Check("same-target extended index disagreement blocks installation", e.Message == "updates.mirror_conflict"); }
         using var bad = new HttpClient(new Handler(_ => Json(signed with { Signature = "AA==" })));
         try { await transport.FetchAsync(bad, data, default); throw new Exception("signature accepted"); }
         catch (InvalidDataException e) { Check("invalid signatures remain a status error", e.Message == "updates.signature_failed"); }

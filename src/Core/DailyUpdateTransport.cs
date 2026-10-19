@@ -43,8 +43,13 @@ public sealed class DailyUpdateTransport(DailyUpdateTrust trust)
         var valid = results.Where(r => r.Update != null).Select(r => r.Update!).ToArray();
         if (valid.Length == 0) throw new InvalidDataException(results.Any(r => r.Error == "updates.signature_failed") ? "updates.signature_failed" : "updates.unavailable");
         // The same release/flavor must have the same bytes on every signed mirror.
-        foreach (var group in valid.SelectMany(v => v.Feed.Releases.Select(r => DailyUpdates.WithBaselines(v.Feed,r))).GroupBy(r => r.Version))
+        foreach (var group in valid.SelectMany(v => v.Feed.Releases).GroupBy(r => r.Version))
             if (group.Select(r => JsonSerializer.Serialize(new { r.Layout, r.RuntimeVersion, Assets = r.Assets.OrderBy(a => a.Flavor), Deltas = (r.Deltas ?? []).OrderBy(d => d.Flavor).ThenBy(d => d.FromVersion) }, DailyUpdateJson.Options)).Distinct().Count() != 1)
+                throw new InvalidDataException("updates.mirror_conflict");
+        // Extended indexes belong only to each feed's latest target. A stale
+        // mirror still carries its former target's index, which newer history omits.
+        foreach (var group in valid.GroupBy(v => v.Feed.Releases[0].Version))
+            if (group.Select(v => JsonSerializer.Serialize((v.Feed.BaselineDeltas ?? []).OrderBy(d => d.Flavor).ThenBy(d => d.FromVersion), DailyUpdateJson.Options)).Distinct().Count() != 1)
                 throw new InvalidDataException("updates.mirror_conflict");
         var best = valid.OrderByDescending(v => DailyUpdates.VersionOf(v.Feed.Releases[0].Version))
             .ThenBy(v => v.SourceId == state.Source ? 0 : 1).First();
