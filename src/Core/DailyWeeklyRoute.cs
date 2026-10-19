@@ -57,7 +57,8 @@ public sealed class DailyWeeklyRoute
         w = workflow;
         route = new(w)
         {
-            RecoverEncounters = true
+            RecoverEncounters = true,
+            ProtectWeeklyTravel = true
         };
         this.progress = progress ?? ((_, _) => { });
         route.CanSuppress = map => (active.Contains("weekly_npc") || active.Contains("weekly_mainline")
@@ -200,7 +201,7 @@ public sealed class DailyWeeklyRoute
         nav = new(route, pack, await route.Evidence());
         if (needed)
         {
-            npc ??= new(route, w.Settings.Weekly.NpcHunting);
+            npc ??= new(route, allowHunting: false);
             await RunNpc(() => npc.Prepare(pack));
         }
         return true;
@@ -210,14 +211,6 @@ public sealed class DailyWeeklyRoute
         await CheckAbsorptionQuota();
         var jobs = MapJobs();
         bool npcDeferred = failures["weekly_npc"].Keys.Any(p => p.Pack == pack);
-        if ((!active.Contains("weekly_npc") || npcDeferred) && npc?.Data is DailyNpcData d)
-        {
-            foreach (long id in jobs.GetValueOrDefault("weekly_mainline", []))
-                if (d.Protects(id))
-                    deferred.Add((pack, id));
-            if (jobs.ContainsKey("weekly_mainline"))
-                jobs["weekly_mainline"] = jobs["weekly_mainline"].Where(id => !deferred.Contains((pack, id))).ToArray();
-        }
         if (active.Contains("weekly_npc") && !npcDeferred && npc?.Data != null && N(npc.Data.Native["Pack"]) == pack)
         {
             await RunNpc(async () =>
@@ -227,8 +220,19 @@ public sealed class DailyWeeklyRoute
                 jobs["weekly_npc"] = await npc.Targets(pack);
             });
         }
+        // Evaluate after NPC preparation: accepting/advancing a quest can change
+        // which monsters must be preserved. Navigation and execution use one rule.
+        if (npc?.Data is DailyNpcData d && jobs.TryGetValue("weekly_mainline", out var collection))
+        {
+            deferred.RemoveWhere(p => p.Item1 == pack && !d.Protects(p.Item2));
+            var runnable = RunnableCollection(collection, d);
+            foreach (long id in collection.Except(runnable)) deferred.Add((pack, id));
+            jobs["weekly_mainline"] = runnable;
+        }
         return jobs;
     }
+    internal static long[] RunnableCollection(IEnumerable<long> maps, DailyNpcData data)
+        => maps.Where(id => !data.Protects(id)).ToArray();
     private async Task CheckAbsorptionQuota()
     {
         if (!active.Contains("weekly_mainline") || w.Settings.Weekly.WalkCollect) return;
@@ -300,7 +304,10 @@ public sealed class DailyWeeklyRoute
                 if (stage == "weekly_steal")
                     await new DailyWeeklySteal(route).CollectMap(await route.Checkpoint());
                 else
+                {
+                    route.AbsorptionAlongNpc = active.Contains("weekly_npc") && npc?.Data?.Current(pack) != null;
                     await route.Gather(w.Settings.Weekly.WalkCollect);
+                }
             }
             catch (DailyQuotaExhausted)
             {
@@ -320,7 +327,7 @@ public sealed class DailyWeeklyRoute
                 await route.Progress.Query(pack, [map], cache: false);
                 recoveredAbsorption = true;
             }
-            finally { route.Progress.Steal = oldSteal; route.Progress.OnlySteal = oldOnly; }
+            finally { route.Progress.Steal = oldSteal; route.Progress.OnlySteal = oldOnly; route.AbsorptionAlongNpc = false; }
             await Refresh();
             if (!MapJobs().GetValueOrDefault(stage, []).Contains(map))
                 break;
@@ -410,6 +417,7 @@ public sealed class DailyWeeklyRoute
                 new Dictionary<string, string[]> { ["locations"] = ["PackTable", "MapTable", "NameTextTable"] });
             JsonObject[] Table(string name) => Rows(JsonNode.Parse(File.ReadAllText(display.PathFor("locations/" + name + ".json"))));
             locationLabels = DailyLocationLabels.Build(Table("PackTable"), Table("MapTable"), Table("NameTextTable"));
+            route.LocationLabels = locationLabels;
         }
         catch (Exception error) when (error is IOException or System.Text.Json.JsonException or StageHostException { Kind: "adapter" })
         { w.Driver.Diagnostics.Event("location_names_unavailable", O(("message", error.Message))); }
@@ -426,7 +434,7 @@ public sealed class DailyWeeklyRoute
         var unavailableEvents = route.Catalog.UnavailableEventPacks(evidence);
         if (unavailableEvents.Length > 0)
             w.Driver.Diagnostics.Event("weekly_event_cartridges_unavailable", O(("packs", unavailableEvents), ("reason", "native_event_schedule_closed")));
-        if (active.Contains("weekly_npc")) npc = new(route, w.Settings.Weekly.NpcHunting) { AvailablePacks = packs };
+        if (active.Contains("weekly_npc")) npc = new(route, allowHunting: false) { AvailablePacks = packs };
         foreach (long p in packs)
         {
             if (active.Contains("weekly_mainline")) known["weekly_mainline"].UnionWith(route.Catalog.Maps(p).Select(m => (p, m)));
@@ -484,6 +492,10 @@ public sealed class DailyWeeklyRoute
                     try
                     {
                         var jobs = await Jobs();
+                        nav!.TrackProgress(O(("done", Array(active.Order().Select(s => O(("stage", s),
+                            ("maps", done[s].Where(p => p.Pack == pack).Select(p => p.Map).Order().ToArray()))))),
+                            ("remaining", checkpoint?["maps"]), ("npc", npc?.Data?.Native["Active"]),
+                            ("completed_quests", npc?.Data?.Native["Completed"])));
                         if (!jobs.Values.Any(v => v.Length > 0))
                         {
                             finished = true;

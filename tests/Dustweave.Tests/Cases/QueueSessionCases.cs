@@ -209,6 +209,17 @@ static class QueueSessionCases
         catch (InvalidOperationException e) { startupFailed = e.Message.Contains("test startup rejected"); }
         Check(startupFailed && session.ReadView().Record == source, "failed selected startup preserves prior report and actionable error");
         fake.FailStartup = false;
+        DailyJson.Write(source, new { state = "paused", error = "original network timeout", items = new[] { new { task = "weekly_mainline", state = "recovery_required" } } });
+        DailyJson.Write(session.LastOutput, new { account, record = source });
+        DailyQueueHistory.Remember(root, account, source);
+        string priorRecord = File.ReadAllText(source);
+        fake.ThrowBeforeStart = true;
+        bool preflightRejected = false;
+        try { await session.RunAsync(account, resume: true); }
+        catch (StageHostException) { preflightRejected = true; }
+        Check(preflightRejected && File.ReadAllText(source) == priorRecord && session.ReadView().State == "paused",
+            "rejected resume preserves the original disconnect reason and paused progress");
+        fake.ThrowBeforeStart = false;
         var hold = new TaskCompletionSource<int>();
         fake = new FakeWorker { Prepare = () => hold.Task };
         session = new(root, fake);
@@ -253,7 +264,7 @@ static class QueueSessionCases
     }
     private sealed class FakeWorker : IDailyQueueExecutor
     {
-        public Func<Task<int>> Prepare = () => Task.FromResult(0); public int Executions, Preparations; public string? Resume; public bool WaitForStop, SyncCollection, FailStartup;
+        public Func<Task<int>> Prepare = () => Task.FromResult(0); public int Executions, Preparations; public string? Resume; public bool WaitForStop, SyncCollection, FailStartup, ThrowBeforeStart;
         public IReadOnlyList<string>? Tasks; public string? RetryOf;
         public TaskCompletionSource<bool> Started = new();
         public Task<int> PrepareAsync(Action<string> report)
@@ -269,6 +280,7 @@ static class QueueSessionCases
             Resume = resume;
             SyncCollection = syncCollection;
             Started.TrySetResult(true);
+            if (ThrowBeforeStart) throw new StageHostException("identity", "synthetic resume preflight rejection");
             if (FailStartup)
             {
                 DailyJson.Write(output, new

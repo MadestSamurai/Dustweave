@@ -835,6 +835,23 @@ public partial class MainWindow : Window
         try
         {
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "simple-settings")
+            {
+                L.Audit(); CheckRuntimeLanguagesForSmoke();
+                WorkspaceTabs.SelectedItem = SettingsTab;
+                preferencesPanel.CheckWeeklySettingsForSmoke();
+                foreach (int language in new[] { 0, 1, 2 })
+                foreach (int appearance in new[] { 1, 2 })
+                foreach (var (title, name) in new[] { ("周常制作装备", "craft"), ("周NPC任务", "npc"), ("亲密度咨询", "friendship") })
+                {
+                    LanguageSelector.SelectedIndex = language; ThemeSelector.SelectedIndex = appearance;
+                    preferencesPanel.ShowSimpleSettingForSmoke(title);
+                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                    Capture($"simple-settings-{name}-{language}-{appearance}");
+                }
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "simple-settings", languages = 3, themes = 2, realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
             if(Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE")=="tool-preparation")
             {
                 await CheckToolPreparationForSmoke();

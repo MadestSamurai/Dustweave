@@ -50,6 +50,9 @@ public static class DailyAccountProgress
     {
         if (!DailyProfiles.ValidKey(account)) throw new InvalidDataException("Invalid progress account");
         if (Path.GetFullPath(source).Equals(Path.GetFullPath(target), StringComparison.OrdinalIgnoreCase)) return;
+        try { DailyAbsorptionLog.Copy(source, target, account); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidOperationException or System.Text.Json.JsonException or ArgumentException)
+        { Report(target, e); }
         DailyParallelProgress.Import(target, source, account);
         string history = DailyQueueHistory.Resolve(source, account);
         var context = history.Length > 0 ? DailyJson.TryRead<JsonObject>(history)?["context"] as JsonObject : null;

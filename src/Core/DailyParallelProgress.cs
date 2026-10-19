@@ -34,6 +34,8 @@ public static class DailyParallelProgress
         DailyJson.Write(path, new Entry(account, status.AtUtc, view with { Record = "", Stages = stages, PlanStages = null }) { Observed = times });
     }
     public static QueueView Read(string root, string account, QueueView local, DateTimeOffset? now = null)
+        => DailyAbsorptionLog.Attach(root, ReadCore(root, account, local, now));
+    private static QueueView ReadCore(string root, string account, QueueView local, DateTimeOffset? now)
     {
         if (!DailyProfiles.ValidKey(account) || local.Account != account) return local;
         DailyAccountProgress.ScheduleImport(root, account);

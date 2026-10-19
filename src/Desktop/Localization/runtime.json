@@ -978,9 +978,14 @@
     "en-US": "NPC quest chain not supported"
   },
   "message.Hunting-only NPC quest is disabled": {
-    "zh-CN": "已关闭接取仅能在狩猎场完成的周NPC任务",
-    "zh-TW": "已關閉接取僅能在狩獵場完成的周NPC任務",
-    "en-US": "Hunting-only NPC quest is disabled"
+    "zh-CN": "已跳过只能在狩猎场完成的周NPC任务",
+    "zh-TW": "已略過只能在狩獵場完成的周NPC任務",
+    "en-US": "Skipped a weekly NPC quest requiring a hunting ground"
+  },
+  "message.已接任务的野外目标已不可用，需去狩猎场完成；暂缓此任务，继续其他环节": {
+    "zh-CN": "已接任务的野外目标已不可用，需去狩猎场完成；暂缓此任务，继续其他环节",
+    "zh-TW": "已接任務的野外目標已不可用，需前往狩獵場完成；暫緩此任務，繼續其他環節",
+    "en-US": "The accepted quest's field targets are unavailable and it now requires a hunting ground. Deferred this quest and continued other tasks."
   },
   "message.No active NPC quest dialogue lease": {
     "zh-CN": "当前NPC任务对话已失效，请重新进入对话。",

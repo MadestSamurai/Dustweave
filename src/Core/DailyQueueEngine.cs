@@ -45,16 +45,21 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
             && JsonNode.DeepEquals(a[3], b[3]) && JsonNode.DeepEquals(a[4], b[4])
             && JsonNode.DeepEquals(before["server"], now["server"]) && JsonNode.DeepEquals(before["cycle"], now["cycle"]);
     }
-    // Renew only the observer of the same live game/account/cycle. Unsettled items
-    // stay unsettled until the normal business reconciliation below proves otherwise.
+    // Explicit resume may attach to a restarted game, but never to another role
+    // or reset period. Observe(context) stays strict throughout a running queue.
     internal static bool CanReconnectPausedQueue(JsonObject record, JsonObject current)
     {
         if (Text(record["state"]) is not ("paused" or "partial") || record["items"] is not JsonArray ||
             record["context"] is not JsonObject prior || prior["actor"] is not JsonArray a ||
             current["actor"] is not JsonArray b || a.Count != 5 || b.Count != 5)
             return false;
+        if (b[0] is not JsonValue pid || !long.TryParse(pid.ToJsonString(), out var process) || process <= 0 ||
+            b[1] is not JsonValue started || !long.TryParse(started.ToJsonString(), out var ticks) || ticks <= 0 ||
+            new[] { b[2], b[3], b[4], current["server"], current["cycle"] }
+                .Any(value => value is not JsonValue text || !text.TryGetValue<string>(out var s) || string.IsNullOrWhiteSpace(s)))
+            return false;
         var compare = prior.DeepClone().AsObject();
-        compare["actor"]![2] = b[2]?.DeepClone();
+        for (int field = 0; field < 3; field++) compare["actor"]![field] = b[field]?.DeepClone();
         return JsonNode.DeepEquals(compare, current);
     }
     private static JsonArray RetryItems(JsonObject old, IReadOnlyList<string> names, JsonObject context)
@@ -99,15 +104,18 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
             if (!JsonNode.DeepEquals(context, record["context"]))
             {
                 if (!CanReconnectPausedQueue(record, context))
-                    throw new StageHostException("identity", "原队列的账号、进程或重置周期已变化，请开始新队列。");
+                    throw new StageHostException("identity", "原队列与当前账号、角色或重置周期不一致，请切回原账号；已跨日则开始新队列。");
                 var history = record["connection_history"] as JsonArray ?? new JsonArray();
                 if (record["connection_history"] == null) record["connection_history"] = history;
                 history.Add(new JsonObject { ["previous"] = record["context"]!.DeepClone(), ["at"] = DateTime.UtcNow.Ticks });
                 record["context"] = context.DeepClone();
             }
             foreach (var node in record["items"]!.AsArray())
-                if (Text(node!["state"]) == "running")
+                if (Text(node!["state"]) == "running" || Text(record["state"]) == "paused" &&
+                    Text(node["state"]) == "blocked" && node["recovery"]?["safe"]?.GetValue<bool>() == false)
                 {
+                    // Older versions marked the interrupted group blocked before
+                    // pausing the whole queue. Recover it against live game state.
                     node["state"] = "recovery_required";
                     node["error"] = "上次执行中断，将读取游戏当前进度后继续。";
                 }
@@ -306,7 +314,12 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                             row["recovery"] = recovery.DeepClone();
                         Save();
                         if (recovery["safe"]?.GetValue<bool>() != true)
+                        {
+                            foreach (var row in members.Where(row => Text(row["state"]) == "blocked"))
+                                row["state"] = "recovery_required";
+                            Save();
                             throw new InvalidOperationException("周任务现场未能安全恢复：" + error.Message);
+                        }
                     }
                     finally { activeWeekly.Clear(); }
                     if (members.All(row => Text(row["state"]) is "completed" or "skipped")) evidenceLog.Complete();
@@ -339,6 +352,8 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                     Save();
                     if (recovery["safe"]?.GetValue<bool>() == true)
                         continue;
+                    item["state"] = "recovery_required";
+                    Save();
                     throw new InvalidOperationException("导航未能安全恢复：" + error.Message);
                 }
                 if (paused())

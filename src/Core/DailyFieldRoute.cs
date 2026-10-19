@@ -28,6 +28,9 @@ public sealed partial class DailyFieldRoute
         get; set;
     }
     public Func<long, bool> CanSuppress { get; set; } = _ => true;
+    internal bool ProtectWeeklyTravel { get; set; }
+    internal bool AbsorptionAlongNpc { get; set; }
+    internal IReadOnlyDictionary<string, DailyDisplayName> LocationLabels { get; set; } = new Dictionary<string, DailyDisplayName>();
     private bool recovering; private readonly Dictionary<string, int> encounters = new();
     public DailyFieldRoute(DailyWorkflow workflow)
     {
@@ -62,11 +65,38 @@ public sealed partial class DailyFieldRoute
         var eligible = Talents(e).Where(r => N(r["Group"]) / 100 == kind && S(r["Reason"]) == "").ToArray();
         return eligible.Length > 0 && eligible.All(r => DailyRegionRouter.D(r["Cooldown"]) > 0);
     }
-    public static bool RequiresStealth(JsonObject e) => N(Map(e)["packId"]) is 14 or 1003;
+    private static bool SafeMap(JsonObject e) => Map(e)["mapType"] is JsonValue type && type.TryGetValue<int>(out var value) && value == 0;
+    public static bool RequiresStealth(JsonObject e) => N(Map(e)["packId"]) is 14 or 1003 && TravelThreat(e);
     // Nightmare Winter's native map type distinguishes patrol areas from the
     // safe hub/interiors. Do not infer danger from cartridge or map number alone.
-    public static bool PrefersStealth(JsonObject e) => N(Map(e)["packId"]) == 2002 && N(Map(e)["mapType"]) == 1;
+    public static bool PrefersStealth(JsonObject e) => N(Map(e)["packId"]) == 2002 && N(Map(e)["mapType"]) == 1 && TravelThreat(e);
     public static bool NeedsStealth(JsonObject e) => RequiresStealth(e) || PrefersStealth(e) && Remaining(e, 17) > 0;
+    internal static bool AtWaypoint(JsonObject e) => FieldRows(e, "waypoint").Any(p => B(p[WaypointNear]));
+    // Evaluate the physical segment being walked, not every map in a graph path.
+    // A teleport does not traverse intermediate battle maps. Arrival itself is
+    // not movement either: collection/NPC work gets its suppression opportunity
+    // before the next walk is assessed.
+    internal static bool TravelThreat(JsonObject e)
+    {
+        if (SafeMap(e)) return false;
+        // Only an explicit, current-scene native enumeration can prove an empty
+        // field. Missing rows, old collection records and theft-only projections
+        // cannot prove that patrol/non-suppressible monsters are gone.
+        try
+        {
+            if (B(R(e, "mainline.map", "HasCanOverwhelmMonster()"))) return true;
+            var travel = R(e, "mainline.travel", "$self") as JsonObject;
+            return travel == null || N(travel["Pack"]) != N(Map(e)["packId"]) || N(travel["Map"]) != N(Map(e)["id"])
+                || !B(travel["ThreatsKnown"]) || travel["ThreatsPresent"] is not JsonValue threats
+                || !threats.TryGetValue<bool>(out var value) || value;
+        }
+        catch (Exception error) when (error is InvalidDataException or System.Text.Json.JsonException)
+        {
+            return true; // An unreadable optional risk snapshot is unknown, not an empty field.
+        }
+    }
+    internal bool WeeklyStealthNeeded(JsonObject e, bool walking = false) => ProtectWeeklyTravel && (walking || !AtWaypoint(e)) && TravelThreat(e);
+    private bool MovementNeedsStealth(JsonObject e) => (NeedsStealth(e) || ProtectWeeklyTravel && Remaining(e, 17) > 0) && TravelThreat(e);
     private long unavailableStealthMap;
     internal static bool FieldInputReady(JsonObject frame) => DailyNavigationDecision.MapSceneReady(frame)
         && DailyNavigationDecision.Rows(frame).Any(r => S(r["Type"]) == "GameFieldDefaultUI" && DailyNavigationDecision.ReadyInput(r))
@@ -446,7 +476,14 @@ public sealed partial class DailyFieldRoute
         }
         if (kind is 2 or 17)
             await RecoverExpired(e);
-        var op = await W.Transact("dispatch.start", O(("kind", kind), ("pack", Map(e)["packId"]), ("map", Map(e)["id"]), ("group", selected[SkillPath]!["groupId"])), O(("ui", "QuickMenuUI"), ("operation", "mainline_talent"), ("value", selected["instance"])), 25);
+        var scope = O(("kind", kind), ("pack", Map(e)["packId"]), ("map", Map(e)["id"]), ("group", selected[SkillPath]!["groupId"]));
+        if (kind == 4)
+        {
+            scope["along_npc"] = AbsorptionAlongNpc;
+            scope["pack_name"] = System.Text.Json.JsonSerializer.SerializeToNode(LocationLabels.GetValueOrDefault("p" + N(Map(e)["packId"])));
+            scope["map_name"] = System.Text.Json.JsonSerializer.SerializeToNode(LocationLabels.GetValueOrDefault("m" + N(Map(e)["id"])));
+        }
+        var op = await W.Transact("dispatch.start", scope, O(("ui", "QuickMenuUI"), ("operation", "mainline_talent"), ("value", selected["instance"])), 25);
         await FieldReady(settle: 0);
         if (kind is 2 or 17)
             Require(Remaining(await Evidence(), kind) > 0, "移动天赋未确认生效");
@@ -470,9 +507,16 @@ public sealed partial class DailyFieldRoute
             W.Business.Save(op);
         }
     }
-    public async Task Protection(JsonObject e)
+    public Task Protection(JsonObject e) => Protection(e, walking: false);
+    public async Task Protection(JsonObject e, bool walking)
     {
-        bool required = RequiresStealth(e), preferred = PrefersStealth(e);
+        // An already open destination picker can teleport directly; opening a
+        // field talent here would wait for a field page that cannot appear.
+        if (DailyNavigationDecision.Types(e["Frame"]!.AsObject()).Contains("WayPointUI")) return;
+        // Standing at a usable waypoint is not a walk through its battle map.
+        // In particular, leaving that map for a safe area never needs stealth.
+        if (!walking && AtWaypoint(e)) return;
+        bool required = RequiresStealth(e), preferred = PrefersStealth(e) || WeeklyStealthNeeded(e, walking);
         long map = N(Map(e)["id"]);
         if (map != unavailableStealthMap) unavailableStealthMap = 0;
         if ((required || preferred && unavailableStealthMap == 0) && Remaining(e, 17) <= 5)
@@ -486,6 +530,10 @@ public sealed partial class DailyFieldRoute
             }
             Require(Remaining(await Evidence(), 17) > 5, "巡逻路线藏身不足，已停止移动");
         }
+    }
+    internal async Task ProtectWeeklyMovement()
+    {
+        if (ProtectWeeklyTravel) await Protection(await Evidence(), walking: true);
     }
     public async Task Patrol()
     {

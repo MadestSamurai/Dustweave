@@ -178,7 +178,7 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
         if (wild.Length > 0)
             return wild.Select(x => N(x["Map"])).Distinct().ToArray();
         if (!allowHunting)
-            throw new DailyNpcUnavailable("已接任务的野外目标消失；未开启狩猎场执行");
+            throw new DailyNpcUnavailable("已接任务的野外目标已不可用，需去狩猎场完成；暂缓此任务，继续其他环节");
         return [N(Map(await route.Evidence())["id"])];
     }
     public string Summary() => Data == null ? "等待读取本周任务" : $"本周完成 {N(Data.Native["Completed"])}/{N(Data.Native["Limit"])}" + (Data.Current(N(Data.Native["Pack"])) == null ? "" : " · " + Regex.Replace(S(Data.Native["CurrentName"]), "<[^>]+>", ""));
@@ -218,7 +218,11 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
         }
         finally { route.NpcActing = prior; }
     }
-    private Task<JsonObject> Navigate(long id) => W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "weekly_npc_nav"), ("value", id), ("items", new[] { allowHunting ? 1 : 0 })));
+    private async Task<JsonObject> Navigate(long id)
+    {
+        await route.ProtectWeeklyMovement();
+        return await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "weekly_npc_nav"), ("value", id), ("items", new[] { allowHunting ? 1 : 0 })));
+    }
     internal async Task Advance(JsonObject row)
     {
         for (int attempt = 0; ; attempt++)
@@ -248,7 +252,10 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
         var before = Data!.Active.Single(a => N(a["id"]) == id).DeepClone().AsObject();
         JsonObject? carry = N(row["conditionType"]) == 9 ? (await Observe()).CarrySource(id) : null;
         if (carry != null)
+        {
+            await route.ProtectWeeklyMovement();
             await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "weekly_npc_carry_nav"), ("value", id), ("items", new[] { N(carry["Instance"]) })));
+        }
         else
             await Navigate(id);
         bool liftSent = false, interactionSent = false;
@@ -350,7 +357,10 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
                     carry = N(row["conditionType"]) == 9 ? (await Observe()).CarrySource(id) : null;
                     liftSent = false;
                     if (carry != null)
+                    {
+                        await route.ProtectWeeklyMovement();
                         await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "weekly_npc_carry_nav"), ("value", id), ("items", new[] { N(carry["Instance"]) })));
+                    }
                     else
                         await Navigate(id);
                     end = W.Time + 180;

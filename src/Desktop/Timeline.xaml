@@ -65,6 +65,8 @@
       <Button x:Name="TaskDetails" Content="{Binding TaskDetailsLabel}" Command="{x:Static local:DailyRunPanel.TaskDetailsCommand}" CommandParameter="{Binding}"
               Visibility="Collapsed" HorizontalAlignment="Left" Margin="0,8,0,0"
               MinHeight="30" Padding="10,4" FontSize="12" AutomationProperties.Name="{Binding TaskDetailsAccessibleName}"/>
+      <Button x:Name="AbsorptionDetails" Content="{Binding AbsorptionLabel}" Command="{x:Static local:DailyRunPanel.AbsorptionDetailsCommand}" CommandParameter="{Binding}"
+              Visibility="Collapsed" HorizontalAlignment="Left" Margin="0,8,0,0" MinHeight="30" Padding="10,4" FontSize="12"/>
       <Button x:Name="RecoveryDetails" Content="{Binding RecoveryLabel}" Command="{x:Static local:DailyRunPanel.RecoveryDetailsCommand}" CommandParameter="{Binding}"
               Visibility="Collapsed" HorizontalAlignment="Left" Margin="0,8,0,0" MinHeight="32" Padding="10,5" FontSize="12"
               AutomationProperties.Name="{Binding RecoveryAccessibleName}"/>
@@ -76,6 +78,7 @@
   </Grid>
   <DataTemplate.Triggers><DataTrigger Binding="{Binding Compact}" Value="True"><Setter TargetName="Explanation" Property="Visibility" Value="Collapsed"/></DataTrigger>
    <DataTrigger Binding="{Binding HasTaskDetails}" Value="True"><Setter TargetName="TaskDetails" Property="Visibility" Value="Visible"/></DataTrigger>
+   <DataTrigger Binding="{Binding HasAbsorptions}" Value="True"><Setter TargetName="AbsorptionDetails" Property="Visibility" Value="Visible"/></DataTrigger>
    <DataTrigger Binding="{Binding HasRecovery}" Value="True"><Setter TargetName="RecoveryDetails" Property="Visibility" Value="Visible"/></DataTrigger>
    <DataTrigger Binding="{Binding HasFinishedTime}" Value="True"><Setter TargetName="FinishedTime" Property="Visibility" Value="Visible"/></DataTrigger>
    <DataTrigger Binding="{Binding CompactPlan}" Value="True">

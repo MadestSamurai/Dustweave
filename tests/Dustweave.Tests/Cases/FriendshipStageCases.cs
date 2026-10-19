@@ -8,6 +8,8 @@ static class FriendshipStageCases
     {
         public readonly WorkflowHarness F;
         public readonly DailyFriendshipStage Stage;
+        public readonly DailyPreferences Settings = new();
+        public bool QuickAvailable;
         public int Free = 3, Selected = 1, Claims, Backs;
         public bool Pending, Gift, Freeze, MissingPending;
         public double GiftDelay = 4, Due = double.PositiveInfinity, ReadyAt;
@@ -49,13 +51,13 @@ static class FriendshipStageCases
             var nav = new DailyStageNavigation(() => Task.FromResult(new DailyStageFrame(F.Frame, F.Context)), () => F.Stopped, clock: () => F.Time,
                 delay: t => { F.Time += t.TotalSeconds; return Task.CompletedTask; });
             Stage = new(root, F.Driver, F.Business, nav, () => F.Stopped, () => F.Time,
-                t => { F.Time += t.TotalSeconds; return Task.CompletedTask; }, _ => new DailyPreferences { Friendship = new() { Enabled = true } });
+                t => { F.Time += t.TotalSeconds; return Task.CompletedTask; }, _ => Settings);
             Page();
         }
         JsonObject State()
         {
             var s = O(("Available", true), ("Free", Free), ("DailyLimit", 3), ("Selected", Selected), ("NoticePending", Pending),
-                ("Candidates", Array(Enumerable.Range(1, 3).Select(id => O(("Id", id), ("Costume", 100 + id), ("Level", id + (Remaining[id - 1] == 0 ? 1 : 0)), ("Remaining", Remaining[id - 1]), ("Max", false), ("Quick", false))))));
+                ("Candidates", Array(Enumerable.Range(1, 3).Select(id => O(("Id", id), ("Costume", 100 + id), ("Level", id + (Remaining[id - 1] == 0 ? 1 : 0)), ("Remaining", Remaining[id - 1]), ("Max", false), ("Quick", QuickAvailable))))));
             if (MissingPending) s.Remove("NoticePending");
             return s;
         }
@@ -82,6 +84,15 @@ static class FriendshipStageCases
         async Task<string> Error(Func<Task<JsonObject>> run) { try { await run(); return ""; } catch (StageHostException e) { return e.Kind; } }
         int index = 0;
         Fixture New() => new(Path.Combine(root, "friendship-" + ++index));
+        using (var f = New())
+        {
+            f.Settings.Friendship.Quick = true;
+            f.QuickAvailable = true;
+            await f.Run();
+            Check(f.Claims == 3 && f.F.Box.Commands.Count(c => S(c["Kind"]) == "friendship_complete") == 3 &&
+                f.F.Business.Records(f.F.Context, DailyFriendshipProof.Role).All(o => o["preview_action"] == null),
+                "legacy quick preference and quick-capable characters still use three normal dialogues");
+        }
         foreach (double latency in new[] { .1, 4, 12 })
         using (var f = New())
         {

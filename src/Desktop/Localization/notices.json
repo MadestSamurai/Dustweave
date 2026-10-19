@@ -485,6 +485,16 @@
     "zh-TW": "原隊列的賬號、進程或重置周期已變化，請開始新隊列。",
     "en-US": "The original queue's account, game process or reset period changed. Start a new queue."
   },
+  "notice.queue.resume_context": {
+    "zh-CN": "原队列与当前账号、角色或重置周期不一致，请切回原账号；已跨日则开始新队列。",
+    "zh-TW": "原佇列與目前帳號、角色或重置週期不一致，請切回原帳號；已跨日則開始新佇列。",
+    "en-US": "The current account, character or reset period differs from the original queue. Switch back to the original account, or start a new queue after the daily reset."
+  },
+  "notice.route.cycle_deferred": {
+    "zh-CN": "地图路线反复经过同一入口且待办未变化，已保留路线记录，暂缓此卡带",
+    "zh-TW": "地圖路線反覆經過同一入口且待辦未變化，已保留路線紀錄，暫緩此卡帶",
+    "en-US": "The route repeats the same entrance without task progress. Route details were saved; this cartridge is deferred."
+  },
   "notice.queue.identity": {
     "zh-CN": "账号、角色、进程或重置周期已变化，请开始新队列读取游戏进度。",
     "zh-TW": "賬號、角色、進程或重置周期已變化，請開始新隊列讀取遊戲進度。",

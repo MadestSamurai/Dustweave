@@ -113,6 +113,8 @@ public sealed class DailyFriendshipStage : IDailyManagedStage
     }
     private async Task ConfirmAsync(JsonObject op, JsonObject context)
     {
+        // Recovery only for an already-open, owned preview from an older version.
+        // New consultations always use normal dialogue below.
         var current = await driver.ObserveAsync();
         if (!DailyFriendshipProof.OwnsPreview(op, current))
             throw new StageHostException("pending", "原快速咨询弹窗不属于当前现场，未确认。");
@@ -178,7 +180,7 @@ public sealed class DailyFriendshipStage : IDailyManagedStage
                 Stop();
                 business.RequireResolved(context, DailyFriendshipProof.Role);
                 var current = await driver.EvidenceAsync(["friendship"]);
-                var decision = DailyFriendshipProof.Choose(DailyFriendshipProof.State(current), settings.Friendship.Quick);
+                var decision = DailyFriendshipProof.Choose(DailyFriendshipProof.State(current));
                 if (decision["state"]!.GetValue<string>() != "ready")
                 {
                     await LeaveAsync(context, relay);
@@ -206,30 +208,15 @@ public sealed class DailyFriendshipStage : IDailyManagedStage
                 var refreshed = DailyFriendshipProof.State(before);
                 if (DailyFriendshipProof.Choose(refreshed)["state"]?.GetValue<string>() != "ready" || DailyEvidence.Integer(refreshed["Selected"]) != id || !DailyFriendshipProof.Candidates(refreshed).TryGetValue(id, out var selected) || selected["Max"]!.GetValue<bool>() || DailyEvidence.Integer(selected["Remaining"]) <= 0)
                     throw new StageHostException("adapter", "咨询资格在选择后变化，未提交消费。");
-                bool quick = settings.Friendship.Quick && selected["Quick"]!.GetValue<bool>();
-                var action = quick ? new JsonObject { ["ui"] = "FriendshipCounselingEnterPopupUI", ["field"] = "_okButton", ["absent"] = "FriendshipCounselingEnterPopupUI", ["reason"] = "每日免费快速咨询" } : new JsonObject { ["ui"] = "FriendshipManageUI", ["operation"] = "friendship_complete", ["value"] = checked((int)id), ["reason"] = "每日免费咨询，使用游戏原生正确答复" };
+                var action = new JsonObject { ["ui"] = "FriendshipManageUI", ["operation"] = "friendship_complete", ["value"] = checked((int)id), ["reason"] = "每日免费咨询，使用游戏原生正确答复" };
                 var op = business.Create(context, DailyFriendshipProof.Role, before, new()
                 {
                     ["friendship"] = id,
                     ["free"] = refreshed["Free"]!.DeepClone(),
-                    ["quick"] = quick
+                    ["quick"] = false
                 }, action);
-                if (quick)
-                {
-                    await business.PreviewAsync(op, context, new()
-                    {
-                        ["ui"] = "FriendshipManageUI",
-                        ["field"] = "_quickCounselingButton",
-                        ["expect"] = "FriendshipCounselingEnterPopupUI",
-                        ["reason"] = "预览免费快速咨询"
-                    });
-                    await ConfirmAsync(op, context);
-                }
-                else
-                {
-                    await business.CommitAsync(op, context);
-                    await FinishAsync(op);
-                }
+                await business.CommitAsync(op, context);
+                await FinishAsync(op);
                 completed.Add(op["result"]!.DeepClone());
             }
             await LeaveAsync(context, relay);

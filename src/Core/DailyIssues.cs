@@ -10,6 +10,7 @@ public static class DailyIssues
         string text = raw ?? "";
         bool Has(params string[] words) => words.Any(w => text.Contains(w, StringComparison.OrdinalIgnoreCase));
         if (Has("DPAPI", "无法由当前 Windows 用户解密")) return new("credentials-unreadable", "identity");
+        if (Has("原队列与当前账号、角色或重置周期不一致", "原队列的账号、进程或重置周期已变化")) return new("resume-context", "identity");
         if (text.StartsWith("trade.read.configuration:", StringComparison.Ordinal)) return new("trade-configuration", "connection");
         if (text.StartsWith("trade.read.native:", StringComparison.Ordinal)) return new("trade-read", "game");
         if (Has("管理员连接组件通信中断")) return new("elevation-pipe", "connection");

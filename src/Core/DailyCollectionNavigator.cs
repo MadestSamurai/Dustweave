@@ -9,6 +9,25 @@ public sealed class DailyCollectionNavigator
     private readonly DailyFieldRoute route;
     private readonly long pack;
     private readonly string path;
+    private readonly string tracePath;
+    private readonly JsonArray trace = [];
+    private readonly DailyRouteAttempts attempts = new();
+    private JsonNode? progress;
+    private string goals = "";
+    public void TrackProgress(JsonObject current)
+    {
+        if (!JsonNode.DeepEquals(progress, current)) attempts.Clear();
+        progress = current.DeepClone();
+    }
+    private void Trace(string state, JsonObject detail)
+    {
+        trace.Add(O(("at", route.W.Driver.UtcTicks), ("state", state), ("region", node), ("detail", detail)));
+        while (trace.Count > 48) trace.RemoveAt(0);
+        try { DailyJson.Write(tracePath, O(("pack", pack), ("account", route.W.Context["actor"]![3]),
+            ("cycle", route.W.Context["cycle"]), ("events", trace))); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        { route.W.Driver.Diagnostics.Event("route_trace_unavailable", O(("message", e.Message))); }
+    }
     public DailyRouteAtlas Atlas
     {
         get;
@@ -26,6 +45,7 @@ public sealed class DailyCollectionNavigator
         Evidence = evidence;
         Require(N(Travel(evidence)["Pack"]) == pack, "路线卡带发生变化");
         path = Path.Combine(route.W.Root, "live", "route-atlas", S(route.W.Context["actor"]![3]), pack + ".json");
+        tracePath = Path.Combine(route.W.Root, "live", "travel-diagnostics", "route-" + S(route.W.Context["actor"]![3]) + "-" + pack + ".json");
         var seed = route.W.Asset("route-atlas.json")["packs"]?[pack.ToString()] as JsonObject;
         var saved = DailyJson.TryRead<JsonObject>(path);
         var candidate = S(saved?["account"]) == S(route.W.Context["actor"]![3]) ? saved?["graph"] as JsonObject : seed;
@@ -66,12 +86,14 @@ public sealed class DailyCollectionNavigator
         if (!Excluded.Contains(current))
             forbidden.UnionWith(Excluded);
         var plan = Atlas.Plan(pending, returnMap, teleports, forbidden);
+        goals = O(("pending", plan["pending"]), ("return", returnMap)).ToJsonString();
         plan["chapter"] = pack;
         plan["current"] = current;
         plan["account"] = Copy(route.W.Context["actor"]![3]);
         plan["at"] = route.W.Driver.UtcTicks;
         Save();
         DailyJson.Write(Path.ChangeExtension(path, "-plan.json"), plan);
+        Trace("planned", plan);
         return plan;
     }
     public async Task<bool> Step(JsonObject action)
@@ -81,11 +103,20 @@ public sealed class DailyCollectionNavigator
         string origin = node;
         string planned = S(action["origin"]);
         if (DailyRouteAtlas.MapOf(planned) != current || !planned.StartsWith('?') && planned != origin)
+        {
+            Trace("origin_changed", action);
             return false;
+        }
         double started = route.W.Time;
         JsonObject? gate = null;
         string kind = S(action["kind"]);
         long destination = N(action["destination"]);
+        if (!attempts.TryStep(goals, origin, kind, destination, action["object"]))
+        {
+            Trace("cycle_deferred", action);
+            throw new DailyTravelBlocked("地图路线反复经过同一入口且待办未变化，已保留路线记录，暂缓此卡带");
+        }
+        Trace("moving", action);
         try
         {
             if (kind == "walk")
@@ -107,6 +138,7 @@ public sealed class DailyCollectionNavigator
             if (await route.W.Has("WayPointUI"))
                 await route.W.Step("WayPointUI", back: true, absent: "WayPointUI", reason: "目标传送阵未开放，重新选择已观察路线");
             Atlas.WarpBlocked.Add(destination);
+            Trace("waypoint_unavailable", action);
             return false;
         }
         catch (DailyTravelBlocked)
@@ -115,21 +147,31 @@ public sealed class DailyCollectionNavigator
                 Atlas.Blocked.Add((origin, gate == null ? (action["object"] == null ? null : N(action["object"])) : N(gate[ObjectPath])));
             else
                 Atlas.BlockedPorts.Add(origin);
+            Trace("unreachable", action);
             return false;
+        }
+        catch (Exception error)
+        {
+            Trace("interrupted", O(("action", action), ("error", error.Message)));
+            throw;
         }
         long arrived = await Observe();
         Require(arrived == destination, "路线没有到达预期地图");
-        if (DailyFieldRoute.PrefersStealth(Evidence)) await route.Protection(Evidence);
+        // Do not spend stealth merely for arriving. The next concrete action
+        // may be immediate suppression, absorption at the waypoint, or another
+        // direct teleport. Every actual walking segment protects itself.
         if (kind == "walk")
             Atlas.Reached(origin, N(gate![ObjectPath]), node, route.W.Time - started);
         else
             Atlas.Landing[arrived] = node;
         Save();
+        Trace("arrived", O(("action", action), ("map", arrived)));
         return true;
     }
     public Task WalkTo(long destination, IEnumerable<long>? allowed = null) => GoTo(destination, teleports: false, allowed: allowed);
     public async Task GoTo(long destination, bool teleports = true, IEnumerable<long>? allowed = null)
     {
+        attempts.Clear();
         for (int i = 0; i < 64; i++)
         {
             if (await Observe() == destination)
@@ -160,11 +202,6 @@ public sealed partial class DailyFieldRoute
         JsonArray? walking = null;
         await FieldReady();
         var before = await Evidence();
-        if (PrefersStealth(before))
-        {
-            await Protection(before);
-            before = await Evidence();
-        }
         long map = N(Map(before)["id"]), pack = N(Map(before)["packId"]);
         string week = S(R(before, "mainline.reset", "GetWeeklyResetTime().Ticks"));
         Require(Catalog.Supported(pack) && !Excluded.Contains(map), "地图不在收集范围");
@@ -190,6 +227,7 @@ public sealed partial class DailyFieldRoute
             if (remainingDrops.Count > 0)
             {
                 if (!manual) Quota(e);
+                await Protection(e);
                 await Skill(6);
                 e = await Evidence();
             }

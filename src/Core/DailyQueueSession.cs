@@ -6,6 +6,7 @@ public sealed record QueueStage(string Task, string State, string Detail, bool C
 {
     public IReadOnlyList<QueueRecoveryDetail> Recovery { get; init; } = [];
     public DailyDrawSummary? Draws { get; init; }
+    public DailyAbsorptionDay? Absorptions { get; init; }
     public bool HasNotice { get; init; }
     public Dictionary<string, DailyDisplayName> Locations { get; init; } = [];
 }
@@ -216,9 +217,11 @@ public sealed class DailyQueueSession(string root, IDailyQueueExecutor executor,
         DailyWeeklyMission.RecheckLegacy(normalized);
         value = JsonSerializer.SerializeToElement(normalized);
         string state = value.GetProperty("state").GetString() ?? "";
+        var absorptions = normalized["context"] is System.Text.Json.Nodes.JsonObject context ? DailyAbsorptionLog.Read(root, context) : null;
         var stages = value.GetProperty("items").EnumerateArray().Select(i => new QueueStage(i.GetProperty("task").GetString() ?? "", i.GetProperty("state").GetString() ?? "",
           ReadStageDetail(i), i.TryGetProperty("carried_forward", out var carried) && carried.ValueKind == JsonValueKind.True, ReadFinishedAt(i), DailyPendingTasks.Read(i)) {
               Recovery = QueueRecoveryDetail.Read(i), Draws = DailyDrawSummary.Read(i),
+              Absorptions = i.GetProperty("task").GetString() == "weekly_mainline" ? absorptions : null,
               HasNotice = DailyRunReport.HasNotice(i), Locations = DailyLocationLabels.Read(i)
           }).ToArray();
         var period = DailyQueuePeriod.Read(value);
@@ -255,7 +258,7 @@ public sealed class DailyQueueSession(string root, IDailyQueueExecutor executor,
         if (view.Record.Length == 0)
             return;
         var node = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(view.Record))!;
-        if (node["state"]?.GetValue<string>() is "completed" or "partial")
+        if (node["state"]?.GetValue<string>() is "completed" or "partial" or "paused")
             return;
         node["state"] = "paused";
         node["error"] = message;

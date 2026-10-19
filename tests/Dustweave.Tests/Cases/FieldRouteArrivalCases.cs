@@ -12,6 +12,8 @@ static class FieldRouteArrivalCases
         public readonly DailyFieldRoute Route;
         public long MapId = 9, Destination = 1;
         public bool Near, PortNear, BlockExit, FailCommand;
+        public long? BattleMap;
+        public double StealthSeconds;
         public double GateDistance = 2; public double? FirstCommandAt;
         public int GateInstance = 91;
         public Fixture(string root)
@@ -69,11 +71,13 @@ static class FieldRouteArrivalCases
             };
             var approaches = new List<JsonObject>();
             var rows = new List<JsonObject> {
-                Read("mainline.map",0,(MapPath,O(("id",MapId),("packId",1))),
+                Read("mainline.map",0,(MapPath,O(("id",MapId),("packId",1),("mapType", MapId == BattleMap ? 1 : 0))),
+                    ("HasCanOverwhelmMonster()",MapId == BattleMap),
                     ("ὪὨὯὢὫὮὨὩὮὡὬ.transform.position.x",0), ("ὪὨὯὢὫὮὨὩὮὡὬ.transform.position.y",0), ("ὪὨὯὢὫὮὨὩὮὡὬ.transform.position.z",0)),
                 Read("weekly_npc.native",0,("$self",Native())),
                 Read("navigation.pack",0,(DailyTravel.CurrentPack+".Id",1),(DailyTravel.CurrentPack+".PackType",0))
             };
+            rows.Add(Read("mainline.durations",0,("effects",new JsonArray(O(("Key",17),("Value.ὫὢὢὬὫὫὡὩὪὩὮ",StealthSeconds>0),("Value.ὠὨὠὭὬὤὪὢὫὨὮ",StealthSeconds))))));
             if (MapId is 9 or 1)
             {
                 int instance = MapId == 9 ? GateInstance : 12;
@@ -97,6 +101,47 @@ static class FieldRouteArrivalCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool yes, string message) { if (!yes) throw new Exception(message); checks.Add(message); }
+        var attempts = new DailyRouteAttempts();
+        for (int i = 0; i < 3; i++)
+        {
+            Check(attempts.TryStep("81,82,83", "[81,1]", "teleport", 82, null), "bounded first-to-second departure " + i);
+            Check(attempts.TryStep("81,82,83", "[82,1]", "teleport", 81, null), "bounded second-to-first departure " + i);
+        }
+        Check(!attempts.TryStep("81,82,83", "[81,1]", "teleport", 82, null), "unchanged round trips stop before a fourth identical departure");
+        Check(attempts.TryStep("81,82,83", "[81,2]", "walk", 82, JsonValue.Create(7)), "returning to another region of the same map is not a cycle");
+        attempts.Clear();
+        Check(attempts.TryStep("81,82,83", "[81,1]", "teleport", 82, null), "verified work progress allows legitimate revisits");
+        using (var f = new Fixture(Path.Combine(root, "weekly-risk-per-segment")) { BattleMap = 1 })
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence());
+            var plan = await nav.Plan([1], teleports: false);
+            Check(await nav.Step(Rows(plan["actions"])[0]), "safe segment reaches its battle-map work destination");
+            Check(f.Steps.SequenceEqual(new[] { "mainline_walk" }) && !B(f.H.Box.Commands[0]["RequireStealth"]),
+                "safe approach and arrival leave immediate suppression to the work stage, without premature stealth");
+            f.StealthSeconds = 30;
+            await f.Route.Walk(12, 2);
+            Check(B(f.H.Box.Commands.Last(c => S(c["Kind"]) == "mainline_walk")["RequireStealth"]),
+                "walking out through live enemies reuses active protection for that physical segment");
+        }
+        foreach (bool appearing in new[] { false, true })
+        using (var f = new Fixture(Path.Combine(root, "weekly-risk-changes-" + appearing)) { BattleMap = appearing ? null : 9, StealthSeconds = 30 })
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            int walks = 0;
+            f.H.OnCommand = c =>
+            {
+                if (S(c["Kind"]) == "mainline_cancel_nav") return;
+                Check(S(c["Kind"]) == "mainline_walk", "changed threat reuses live duration instead of casting again");
+                walks++;
+                if (walks == 1) f.BattleMap = appearing ? 9 : null;
+                else { f.MapId = 1; f.Scene(); }
+            };
+            await f.Route.Walk(91, 1);
+            var moves = f.H.Box.Commands.Where(c => S(c["Kind"]) == "mainline_walk").ToArray();
+            Check(moves.Length == 2 && B(moves[0]["RequireStealth"]) == !appearing && B(moves[1]["RequireStealth"]) == appearing,
+                "walking updates the native duration guard when threats appear or disappear: " + appearing);
+        }
         foreach (bool sameMap in new[] { false, true })
         using (var f = new Fixture(Path.Combine(root, "walk-hidden-field-" + sameMap)))
         {
@@ -199,6 +244,30 @@ static class FieldRouteArrivalCases
             f.MapId = 2; f.Scene();
             Check(!await nav.Step(Rows(plan["actions"])[0]) && f.Steps.Length == 0,
                 "route decision is refreshed and discarded after map changes");
+        }
+        using (var f = new Fixture(Path.Combine(root, "route-no-error-export")))
+        {
+            var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence());
+            for (int i = 0; i < 3; i++)
+            {
+                f.MapId = 9; f.Scene();
+                var p = await nav.Plan([1], teleports: false);
+                Check(await nav.Step(Rows(p["actions"])[0]), "unchanged route attempt completes " + i);
+            }
+            string traceFile = Directory.GetFiles(Path.Combine(f.H.Root, "live", "travel-diagnostics"), "route-*.json").Single();
+            var trace = DailyJson.TryRead<JsonObject>(traceFile)!;
+            Check(Rows(trace["events"]).Any(e => S(e["state"]) == "arrived"), "successful travel retains a compact route trace without an exception");
+            var export = await DailyDiagnosticExport.CreateAsync(f.H.Root, Path.Combine(root, "route-no-error.zip"), "manually stopped", "test");
+            using (var zip = System.IO.Compression.ZipFile.OpenRead(export.Path))
+                Check(zip.GetEntry("logs/main/live/travel-diagnostics/" + Path.GetFileName(traceFile)) != null,
+                    "manual diagnostic export includes normal route decisions without requiring an error");
+            f.MapId = 9; f.Scene();
+            var repeat = await nav.Plan([1], teleports: false);
+            bool blocked = false; int commands = f.Steps.Length;
+            try { await nav.Step(Rows(repeat["actions"])[0]); } catch (DailyTravelBlocked) { blocked = true; }
+            Check(blocked && f.Steps.Length == commands, "route repetition defers before another native movement command");
+            nav.TrackProgress(O(("remaining", 1)));
+            Check(await nav.Step(Rows(repeat["actions"])[0]), "verified changed goals clear the route guard");
         }
         using (var f = new Fixture(Path.Combine(root, "route-planning-loading")))
         {

@@ -10,8 +10,11 @@ static class EventCollectionCases
         public readonly WorkflowHarness H;
         public readonly DailyFieldRoute Route;
         public long Pack, MapId;
+        public long? DropMap;
         public int MapType, MenuKind;
-        public bool DropsPending, MonstersPending, Research, Disabled, Missing;
+        public bool DropsPending, MonstersPending, Research, Disabled, Missing, NearWaypoint;
+        public bool ThreatsKnown = true;
+        public int OtherMonsters;
         public double StealthUntil;
         public void ExhaustAbsorption() => counts[4] = 21;
         public readonly List<int> Casts = [];
@@ -30,7 +33,7 @@ static class EventCollectionCases
                 {
                     case "collection_query":
                         network = O(("Query", c["Id"]), ("State", "ready"), ("Error", ""), ("Pack", Pack), ("Maps", c["Items"]), ("Week", 500), ("Now", 100),
-                            ("Drops", new JsonArray(O(("Id", 1001), ("Map", Pack * 10 + 1)))),
+                            ("Drops", new JsonArray(O(("Id", 1001), ("Map", DropMap ?? Pack * 10 + 1)))),
                             ("Rewards", DropsPending ? "[]" : "[{\"id\":1001}]"),
                             ("Targets", new JsonArray(O(("Id", 101), ("Map", Pack * 10 + 2), ("Group", 1)))),
                             ("Monsters", new JsonArray(O(("monsterId", 101), ("groupId", 1), ("activeFlag", true), ("respawnTime", MonstersPending ? 0 : 1000))).ToJsonString()),
@@ -58,7 +61,11 @@ static class EventCollectionCases
             int group = MenuKind * 100 + 5;
             var rows = new List<JsonObject> {
                 WorkflowCases.Reading("mainline.map", (MapPath, O(("id", MapId), ("packId", Pack), ("mapType", MapType))), ("HasCanOverwhelmMonster()", MonstersPending)),
+                WorkflowCases.Reading("mainline.travel", ("$self", O(("Pack", Pack), ("Map", MapId), ("Ground", true),
+                    ("Maps", new JsonArray(O(("Id", MapId), ("Exits", new JsonArray()), ("CanSummon", true)))), ("Approaches", new JsonArray()),
+                    ("ThreatsKnown", ThreatsKnown), ("ThreatsPresent", OtherMonsters > 0 || MonstersPending)))),
                 WorkflowCases.Reading("mainline.reset", ("GetWeeklyResetTime().Ticks", 500)),
+                WorkflowCases.Reading("mainline.waypoint", (WaypointNear, NearWaypoint)),
                 WorkflowCases.Reading("mainline.network", ("$self", network)),
                 WorkflowCases.Reading("mainline.talent_counts", ("Values", Array(counts.Select(c => O(("groupId", c.Key * 100 + 5), ("useCount", c.Value)))))),
                 WorkflowCases.Reading("mainline.research", ("$self", O(("Active", Research), ("Remaining", Research ? 100 : 0)))),
@@ -183,13 +190,113 @@ static class EventCollectionCases
         }
         foreach (string scenario in new[] { "safe", "patrol", "disabled", "missing" })
         using (var f = new Fixture(Path.Combine(root, "event-stealth-" + scenario), 2002, scenario == "safe" ? 20023 : 20021, scenario == "safe" ? 0 : 1)
-            { Disabled = scenario == "disabled", Missing = scenario == "missing" })
+            { Disabled = scenario == "disabled", Missing = scenario == "missing", OtherMonsters = scenario == "safe" ? 0 : 1 })
         {
             await f.Route.Protection(f.H.Evidence());
             await f.Route.Protection(f.H.Evidence());
             Check(scenario == "patrol" ? f.Casts.SequenceEqual(new[] { 17 }) && NeedsStealth(f.H.Evidence()) : f.Casts.Count == 0 && !NeedsStealth(f.H.Evidence()), "event-two stealth respects safe area, active duration and native availability: " + scenario);
             Check(f.H.Box.Commands.Count(c => S(c["Kind"]) == "mainline_menu") <= 1, "unavailable or active stealth does not repeatedly reopen its menu: " + scenario);
             Check(S(f.H.Frame["UiToken"]) == "GameFieldDefaultUI", "stealth probe leaves the field usable: " + scenario);
+        }
+        foreach (string scenario in new[] { "away", "waypoint", "active", "disabled", "missing" })
+        using (var f = new Fixture(Path.Combine(root, "weekly-stealth-" + scenario), 8, 82, 1)
+            { NearWaypoint = scenario == "waypoint", StealthUntil = scenario == "active" ? 100 : 0,
+              Disabled = scenario == "disabled", Missing = scenario == "missing", MonstersPending = true })
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            await f.Route.Protection(f.H.Evidence());
+            await f.Route.Protection(f.H.Evidence());
+            Check(f.Casts.Count == (scenario == "away" ? 1 : 0), "weekly travel protects actual monsters away from an interactable waypoint: " + scenario);
+            Check(f.H.Box.Commands.Count(c => S(c["Kind"]) == "mainline_menu") <= 1, "weekly protection reuses active duration and caches unavailable stealth: " + scenario);
+            if (scenario == "waypoint")
+            {
+                Check(f.H.Box.Commands.Count == 0, "a ready waypoint can be used directly without opening a talent menu");
+                await f.Route.ProtectWeeklyMovement();
+                Check(f.Casts.SequenceEqual(new[] { 17 }), "leaving a waypoint into monsters activates stealth before movement");
+            }
+            if (scenario == "away")
+            {
+                f.H.Time = f.StealthUntil + 1;
+                await f.Route.Protection(f.H.Evidence(), walking: true);
+                Check(f.Casts.SequenceEqual(new[] { 17, 17 }), "expired weekly protection is renewed instead of walking exposed");
+            }
+            Check(S(f.H.Frame["UiToken"]) == "GameFieldDefaultUI", "weekly stealth check leaves no talent popup behind: " + scenario);
+        }
+        using (var f = new Fixture(Path.Combine(root, "weekly-stealth-open-waypoint"), 8, 82))
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            f.H.Page("WayPointUI");
+            await f.Route.Protection(f.H.Evidence());
+            Check(f.H.Box.Commands.Count == 0 && f.H.Time == 0, "an open teleport picker never waits for a field page to cast stealth");
+        }
+        foreach (long pack in new long[] { 8, 14, 1003, 2002 })
+        using (var f = new Fixture(Path.Combine(root, "weekly-safe-walk-" + pack), pack, pack * 10 + 1))
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            await f.Route.Protection(f.H.Evidence());
+            await f.Route.ProtectWeeklyMovement();
+            Check(f.H.Box.Commands.Count == 0, "confirmed safe areas do not inherit cartridge-wide patrol protection: " + pack);
+            f.MapType = 1;
+            await f.Route.ProtectWeeklyMovement();
+            Check(f.H.Box.Commands.Count == 0, "native-confirmed empty battle areas do not inherit cartridge-wide patrol protection: " + pack);
+        }
+        foreach (string risk in new[] { "cleared", "ordinary", "non-suppressible", "unknown", "missing-threats", "wrong-map", "wrong-pack" })
+        using (var f = new Fixture(Path.Combine(root, "weekly-risk-" + risk), 8, 82, 1)
+            { MonstersPending = risk == "ordinary", OtherMonsters = risk == "non-suppressible" ? 1 : 0, ThreatsKnown = risk != "unknown" })
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            var readings = f.H.Readings;
+            f.H.Readings = () => readings().Select(r =>
+            {
+                if (S(r["Id"]) != "mainline.travel") return r;
+                var travel = DailyEvidence.Values(r)["$self"]!.AsObject();
+                if (risk == "missing-threats") travel.Remove("ThreatsPresent");
+                if (risk == "wrong-map") travel["Map"] = 83;
+                if (risk == "wrong-pack") travel["Pack"] = 9;
+                return WorkflowCases.Reading("mainline.travel", ("$self", travel));
+            }).ToArray();
+            await f.Route.ProtectWeeklyMovement();
+            await f.Route.ProtectWeeklyMovement();
+            Check(f.Casts.Count == (risk == "cleared" ? 0 : 1), "fresh scene risk distinguishes cleared fields, non-suppressible enemies and incomplete observations: " + risk);
+            Check(!f.H.Box.Commands.Any(c => S(c["Kind"]) == "collection_query"), "travel risk needs no extra network query: " + risk);
+        }
+        foreach (long pack in new long[] { 8, 14, 1003, 2002 })
+        using (var f = new Fixture(Path.Combine(root, "weekly-waypoint-exit-" + pack), pack, pack * 10 + 2, 1) { NearWaypoint = true, OtherMonsters = 1 })
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            await f.Route.Protection(f.H.Evidence());
+            await f.Route.PrepareTeleport(destination: pack * 10 + 1);
+            Check(f.Casts.Count == 0 && f.H.Box.Commands.Count == 0, "battle-map waypoint exit to a safe destination never opens stealth: " + pack);
+        }
+        foreach (bool drops in new[] { false, true })
+        using (var f = new Fixture(Path.Combine(root, "weekly-suppress-first-" + drops), 8, 82, 1) { MonstersPending = true, DropsPending = drops, DropMap = 82 })
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            var result = await f.Route.Gather();
+            await f.Route.ProtectWeeklyMovement();
+            Check(S(result["state"]) == "completed" && f.Casts.SequenceEqual(drops ? new[] { 3, 6, 4 } : new[] { 3 }),
+                "entry for suppression clears enemies before any stealth or collection action: " + drops);
+        }
+        using (var f = new Fixture(Path.Combine(root, "weekly-protected-quest-target"), 8, 82, 1) { MonstersPending = true })
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            f.Route.CanSuppress = _ => false;
+            await f.Route.ProtectWeeklyMovement();
+            Check(f.Casts.SequenceEqual(new[] { 17 }) && f.MonstersPending, "walking protection preserves future NPC kill targets instead of suppressing them");
+        }
+        using (var f = new Fixture(Path.Combine(root, "weekly-npc-suppress-first"), 8, 82, 1) { MonstersPending = true })
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            await f.Route.PrepareNpcMap(82);
+            await f.Route.ProtectWeeklyMovement();
+            Check(f.Casts.SequenceEqual(new[] { 3 }), "NPC arrival also suppresses first and does not add stealth after the field is clear");
+        }
+        using (var f = new Fixture(Path.Combine(root, "weekly-cleared-no-renewal"), 8, 82, 1) { StealthUntil = 1 })
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            f.H.Time = 2;
+            await f.Route.ProtectWeeklyMovement();
+            Check(f.Casts.Count == 0 && f.H.Box.Commands.Count == 0, "expired stealth is not renewed for a field confirmed clear");
         }
     }
 }

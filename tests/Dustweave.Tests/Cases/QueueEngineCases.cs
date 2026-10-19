@@ -134,14 +134,14 @@ static class QueueEngineCases
         record = await Run(host, root, ["mail", "trade"], pause: () => true);
         string reconnectId = TextForTest(record["id"]);
         host.Context["actor"]![2] = "reloaded-observer";
-        Check(DailyQueueEngine.CanReconnectPausedQueue(record, host.Context), "clean paused queue permits only observer identity renewal");
+        Check(DailyQueueEngine.CanReconnectPausedQueue(record, host.Context), "paused queue permits observer identity renewal");
         var resumed = await Run(host, root, resume: reconnectId);
         Check(State(resumed) == "completed" && TextForTest(resumed["id"]) == reconnectId && resumed["connection_history"] is JsonArray { Count: 1 }, "clean same-game reconnect keeps original queue and records previous connection");
         Check(host.Calls.IndexOf("reconcile:") < host.Calls.IndexOf("execute:mail"), "observer reconnect still reconciles before gameplay");
         foreach (int field in new[] { 0, 1, 3, 4 })
         {
             var changed = host.Context.DeepClone().AsObject(); changed["actor"]![field] = "different";
-            Check(!DailyQueueEngine.CanReconnectPausedQueue(record, changed), "reconnect rejects changed game or account field " + field);
+            Check(!DailyQueueEngine.CanReconnectPausedQueue(record, changed), "reconnect rejects invalid process or changed account field " + field);
         }
         foreach (string field in new[] { "server", "cycle" })
         {
@@ -153,6 +153,39 @@ static class QueueEngineCases
             var uncertain = record.DeepClone().AsObject(); uncertain["items"]![0]!["state"] = state;
             Check(DailyQueueEngine.CanReconnectPausedQueue(uncertain, host.Context) && Stage(uncertain, "mail") == state,
                 "observer renewal preserves " + state + " until business reconciliation");
+        }
+        {
+            string restartRoot = Root(), restartId = Guid.NewGuid().ToString("N");
+            var first = new FakeHost();
+            var interrupted = Old(restartId, first.Context, "mail", "weekly_mainline", "weekly_npc", "trade");
+            interrupted["items"]![0]!["state"] = "completed";
+            foreach (int index in new[] { 1, 2 })
+            {
+                interrupted["items"]![index]!["state"] = "blocked";
+                interrupted["items"]![index]!["recovery"] = new JsonObject { ["safe"] = false };
+            }
+            DailyJson.Write(DailyQueueEngine.RecordPath(restartRoot, restartId), interrupted);
+            var next = new FakeHost(); next.Context["actor"]![0] = 99L; next.Context["actor"]![1] = 100L; next.Context["actor"]![2] = "new-game";
+            var restart = await Run(next, restartRoot, resume: restartId, prefs: new() { Weekly = new() { Mainline = true, Npc = true }, Trade = new() { Enabled = true } });
+            Check(State(restart) == "completed" && next.Members.SequenceEqual(["weekly_mainline", "weekly_npc"])
+                && !next.Executed.Contains("mail") && next.Executed.Contains("trade"),
+                "game restart resumes interrupted legacy weekly rows and later tasks without replaying completed mail");
+            Check(restart["connection_history"] is JsonArray { Count: 1 }
+                && next.Calls.IndexOf("reconcile:") < next.Calls.IndexOf("execute:weekly_mainline"),
+                "new process is recorded and reconciliation precedes resumed weekly actions");
+            foreach (string field in new[] { "server", "cycle" })
+            {
+                var invalid = new FakeHost(); invalid.Context[field] = "other";
+                bool rejected = false;
+                try { await Run(invalid, restartRoot, resume: restartId); }
+                catch (StageHostException) { rejected = true; }
+                Check(rejected && !invalid.Calls.Contains("begin:"), "resume rejects changed " + field + " before any action");
+            }
+            next = new();
+            next.After = (operation, _) => { if (operation == "execute") next.Context["actor"]![0] = 500L; };
+            var changed = await Run(next, Root(), ["mail", "trade"]);
+            Check(State(changed) == "paused" && next.Executed.SequenceEqual(["mail"]),
+                "allowing explicit restarted resume does not allow process changes during execution");
         }
         static string TextForTest(JsonNode? value) => value?.GetValue<string>() ?? "";
         // Import an old Python schema-1 interrupted record and scope recovery to its ledger.
@@ -256,7 +289,9 @@ static class QueueEngineCases
         await Reject(host, root, ["trade"], null, id, "retry cannot cross player identity");
         host = new();
         host.Context["actor"]![0] = 99;
-        await Reject(host, root, null, id, null, "explicit resume cannot cross game process");
+        record = await Run(host, root, resume: id);
+        Check(State(record) == "partial" && host.Executed.Count == 0 && Stage(record, "trade") == "blocked",
+            "explicit restart resume leaves unrelated terminal failures for selected retry");
         await Reject(new(), Root(), ["missing"], null, null, "unknown stage rejected before unpause");
         await Reject(new(), root, ["trade", "trade"], null, id, "duplicate retry rejected before unpause");
         host = new();
@@ -320,6 +355,15 @@ static class QueueEngineCases
         host.Fail["execute:weekly_mainline"] = "transport";
         record = await Run(host, Root(), weekly, prefs: prefs);
         Check(weekly.All(s => Stage(record, s) == "recovery_required"), "interrupted shared execution marks all selected rows uncertain");
+        host = new(); root = Root();
+        host.Fail["execute:weekly_mainline"] = "adapter";
+        record = await Run(host, root, weekly, prefs: prefs);
+        Check(State(record) == "paused" && weekly.All(s => Stage(record, s) == "recovery_required"),
+            "unsafe weekly popup pauses with recoverable rows instead of terminal blocked rows");
+        host = new();
+        record = await Run(host, root, resume: TextForTest(record["id"]), prefs: prefs);
+        Check(State(record) == "completed" && host.Members.SequenceEqual(weekly),
+            "cleared popup resumes all interrupted weekly categories");
         host = new()
         {
             Safe = true,

@@ -81,6 +81,9 @@ public sealed partial class DailyManagedBusiness : IDisposable
         journalHeaders.Remove(path);
         DailyJson.Write(path, op);
         RememberHeader(path, op);
+        try { DailyAbsorptionLog.Record(root, op); }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or InvalidOperationException or ArgumentException)
+        { driver.Diagnostics.Event("absorption_report_unavailable", new JsonObject { ["message"] = error.Message }); }
     }
     public JsonObject Create(JsonObject context, string role, JsonObject before, JsonObject scope, JsonObject action)
     {

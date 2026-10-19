@@ -10,6 +10,22 @@ public sealed class DailyCollectionTargetsRemain(string message, JsonArray? defe
 }
 public sealed class DailyCollectionSyncRequired(string message) : Exception(message);
 
+// A map can contain disconnected regions, so A -> B -> A is not itself a cycle.
+// Bound repeated identical departures only while the actual work is unchanged.
+internal sealed class DailyRouteAttempts
+{
+    private readonly Dictionary<string, int> departures = new(StringComparer.Ordinal);
+    public void Clear() => departures.Clear();
+    public bool TryStep(string goals, string origin, string kind, long destination, JsonNode? gate)
+    {
+        string key = new JsonArray(goals, origin, kind, destination, gate?.DeepClone()).ToJsonString();
+        if (departures.Count >= 256 && !departures.ContainsKey(key)) return false;
+        int count = departures.GetValueOrDefault(key) + 1;
+        departures[key] = count;
+        return count <= 3;
+    }
+}
+
 public sealed class DailyTravelProgress(double now, double timeout = 4)
 {
     private double changed = now; private double[]? anchor;

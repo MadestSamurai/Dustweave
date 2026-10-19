@@ -136,6 +136,9 @@ static class WeeklyIsolationCases
                 WorkflowCases.Reading("mainline.packs", ("Count", 2), ("$items", new JsonArray(O(("Id", 1), ("PackType", 0)), O(("Id", 2), ("PackType", 0))))),
                 WorkflowCases.Reading("mainline.map", (MapPath, O(("id", MapId), ("packId", Pack))), ("HasCanOverwhelmMonster()", MonstersPending.Contains(MapId))),
                 WorkflowCases.Reading("mainline.talent_counts", ("Values", new JsonArray(O(("groupId", 405), ("useCount", Used)), O(("groupId", 305), ("useCount", Suppressed.Count))))),
+                // Route isolation cases run with an existing protection effect;
+                // activation/expiry/waypoint rules are covered by EventCollection.
+                WorkflowCases.Reading("mainline.durations", ("effects", new JsonArray(O(("Key",17),("Value.ὫὢὢὬὫὫὡὩὪὩὮ",true),("Value.ὠὨὠὭὬὤὪὢὫὨὮ",100000-H.Time))))),
                 WorkflowCases.Reading("mainline.research", ("$self", O(("Active", !Restricted), ("Remaining", 100)))),
                 WorkflowCases.Reading("mainline.talent_rows", ("$self", Restricted ? new JsonArray(O(("Kind", 6), ("Group", 605), ("Instance", 605), ("PackRestricted", true), ("Reason", "character_pack_restricted"))) : AbsorbDrops ? new JsonArray(O(("Kind", 4), ("Group", 405), ("Instance", 405), ("PackRestricted", false), ("Reason", ""), ("Cooldown", 0), ("Gate", ""))) : new JsonArray())),
                 WorkflowCases.Reading("mainline.network", ("$self", network)),
@@ -364,6 +367,7 @@ static class WeeklyIsolationCases
         foreach (bool hunting in new[] { false, true })
         using (var f = new Fixture(Path.Combine(root, "weekly-npc-reward-order-" + hunting)) { Pending = false, HuntingOffer = hunting })
         {
+            f.H.Workflow.Settings.Weekly.NpcHunting = true; // A stale in-memory preference must not accept hunting-only offers.
             var r = await f.RunNpc();
             Check(f.Accepted.SequenceEqual([10L, 30L, 40L]) && S(r["state"]) == "completed", "global reward ordering crosses cartridges before accepting a cheaper quest; hunting offer=" + hunting);
             Check(f.H.Box.Commands.Count(c => S(c["Kind"]) == "weekly_npc_accept") == 3, "reward reranking respects three-quest quota; hunting offer=" + hunting);

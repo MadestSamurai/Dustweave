@@ -11,6 +11,7 @@ public sealed partial class DailyRunPanel : UserControl
 {
     private static DailyLanguage L => DailyLanguage.Current;
     public static readonly System.Windows.Input.RoutedUICommand TaskDetailsCommand = new();
+    public static readonly System.Windows.Input.RoutedUICommand AbsorptionDetailsCommand = new();
     public static readonly System.Windows.Input.RoutedUICommand RecoveryDetailsCommand = new();
     internal Func<Window, bool?>? ConfirmRecoveryForSmoke { get; set; }
     private Window? taskDetailsWindow;
@@ -48,6 +49,13 @@ public sealed partial class DailyRunPanel : UserControl
     private readonly Button accounts = new() { Content = "管理账号" };
     public DailyRunPanel(string root)
     {
+        CommandBindings.Add(new System.Windows.Input.CommandBinding(AbsorptionDetailsCommand, (_, e) => {
+            if (e.Parameter is StageRow { Absorptions: { Maps: > 0 } day }) {
+                taskDetailsWindow?.Close();
+                taskDetailsWindow = DailyResultWindow.AbsorptionDetails(day);
+                taskDetailsWindow.Owner = Window.GetWindow(this); taskDetailsWindow.Show();
+            }
+        }, (_, e) => { e.CanExecute = e.Parameter is StageRow { HasAbsorptions: true }; e.Handled = true; }));
         CommandBindings.Add(new System.Windows.Input.CommandBinding(RecoveryDetailsCommand, (_, e) => {
             if (e.Parameter is StageRow row) ShowRecovery(row);
         }, (_, e) => { e.CanExecute = !isBusy && e.Parameter is StageRow { HasRecovery: true }; e.Handled = true; }));
@@ -615,6 +623,8 @@ public sealed partial class DailyRunPanel : UserControl
                     _ => ""
                 } : DailyResultText.Detail(snapshot);
                 if (string.IsNullOrWhiteSpace(snapshot.Detail) && snapshot.Draws is { Draws: > 0 } draw) text = DailyResultText.Draws(draw);
+                if (string.IsNullOrWhiteSpace(snapshot.Detail) && Absorptions is { Maps: > 0 } day)
+                    text += (text.Length > 0 ? "\n" : "") + DailyResultText.Absorptions(day);
                 if (snapshot.State is "blocked" or "failed" or "error" && DailyIssues.Classify(snapshot.Detail).Code != "unknown")
                     text = DailyIssuePresentation.WithAdvice(snapshot.Detail, text);
                 if (HasRecovery) text = (text.Length > 0 ? text + "\n" : "") + L.Get("run.recovery_summary", RecoveryOperations);
@@ -623,6 +633,9 @@ public sealed partial class DailyRunPanel : UserControl
         }
         public IReadOnlyList<QueueTaskDetail> PendingTasks => snapshot.PendingTasks ?? [];
         public DailyDrawSummary? Draws => snapshot.Draws;
+        public DailyAbsorptionDay? Absorptions => snapshot.Absorptions;
+        public bool HasAbsorptions => Absorptions is { Maps: > 0 };
+        public string AbsorptionLabel => L.Get("absorption.button", Absorptions?.Maps ?? 0);
         public bool HasRecovery => snapshot.State == "recovery_required";
         public string RecoveryLabel => L.Get("run.recovery_details");
         public string RecoveryAccessibleName => L.Get("run.recovery_accessible", Name);
@@ -679,7 +692,7 @@ public sealed partial class DailyRunPanel : UserControl
         public void Update(QueueStage stage)
         {
             snapshot = stage;
-            Compact = stage.State == "completed" && string.IsNullOrWhiteSpace(stage.Detail) && !stage.Carried && !HasTaskDetails;
+            Compact = stage.State == "completed" && string.IsNullOrWhiteSpace(stage.Detail) && !stage.Carried && !HasTaskDetails && !HasAbsorptions;
             Active = stage.State == "running";
             NeedsAttention = stage.State is "blocked" or "recovery_required";
             string symbol = stage.State switch

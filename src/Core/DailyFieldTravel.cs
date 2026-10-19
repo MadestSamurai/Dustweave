@@ -8,10 +8,10 @@ public sealed partial class DailyFieldRoute
     {
         await FieldReady();
         var before = await Evidence();
-        await Protection(before);
+        await Protection(before, walking: true);
         before = await Evidence();
         long origin = N(Map(before)["id"]);
-        bool protectedRoute = NeedsStealth(before);
+        bool protectedRoute = MovementNeedsStealth(before);
         double? initial = Rows(Travel(before)["Approaches"]).Where(p => N(p["Instance"]) == target && B(p["Reachable"])).Select(p => (double?)DailyRegionRouter.D(p["Distance"])).FirstOrDefault();
         double start = W.Time, budget = DailyTravelProgress.Budget(initial), end = start + budget, hard = end + 120;
         bool nudged = false;
@@ -80,15 +80,25 @@ public sealed partial class DailyFieldRoute
                         return arrived;
                     }
                 }
-                if (protectedRoute && Remaining(current, 17) <= 4)
+                if (protectedRoute && !TravelThreat(current))
+                {
+                    // Remove the native duration guard as well; otherwise it
+                    // would stop a now-safe walk when the old buff expires.
+                    await W.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
+                    protectedRoute = false;
+                    await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "mainline_walk"), ("value", target), ("require_stealth", false)));
+                }
+                bool newThreat = !protectedRoute && unavailableStealthMap != map
+                    && (ProtectWeeklyTravel || RequiresStealth(current) || PrefersStealth(current)) && TravelThreat(current);
+                if (newThreat || protectedRoute && Remaining(current, 17) <= 4)
                 {
                     await W.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
                     double pause = W.Time;
-                    await Protection(current);
+                    await Protection(current, walking: true);
                     var renewed = await Evidence();
                     Identity(before, renewed);
                     Require(!RequiresStealth(renewed) || Remaining(renewed, 17) > 4, "藏身续用未生效");
-                    protectedRoute = NeedsStealth(renewed);
+                    protectedRoute = MovementNeedsStealth(renewed);
                     long arrived = N(Map(renewed)["id"]);
                     if (destination.HasValue && arrived == destination)
                     {
@@ -150,8 +160,6 @@ public sealed partial class DailyFieldRoute
             // or casting a talent if that traversal already reached the requested map.
             if (destination.HasValue && N(Map(e)["id"]) == destination)
                 return null;
-            await Protection(e);
-            e = await Evidence();
             var map = Map(e);
             var travel = Travel(e);
             string node = Region(e);
@@ -185,10 +193,12 @@ public sealed partial class DailyFieldRoute
                     return null;
                 if (repositioned.Add(node))
                 {
+                    await Protection(e, walking: true);
+                    e = await Evidence();
                     bool sent = true;
                     try
                     {
-                        await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "mainline_reposition"), ("require_stealth", NeedsStealth(e))));
+                        await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "mainline_reposition"), ("require_stealth", MovementNeedsStealth(e))));
                     }
                     catch (Exception ex) when (ex.Message.Contains("travel_unreachable:", StringComparison.Ordinal)) { sent = false; }
                     double end = W.Time + (sent ? 12 : 0);
@@ -219,8 +229,6 @@ public sealed partial class DailyFieldRoute
             }
             catch (DailyTravelBlocked) { await Failure(e, 0, "all_physical_regions_exhausted"); throw; }
             var target = gates.Single(g => N(g[ObjectPath]) == N(choice["object"]));
-            if (RequiresStealth(e))
-                await Patrol();
             try
             {
                 await Walk(I(target["instance"]), N(choice["destination"]));
@@ -355,8 +363,6 @@ public sealed partial class DailyFieldRoute
         Require(Catalog.Supported(chapter) || Owned(await Evidence(), chapter), "卡带不支持或未拥有");
         if (await DailyTravel.Reuse(W, packId: checked((int)chapter), surfaces: ["GameFieldDefaultUI"], extra: ["WayPointUI"]))
         {
-            var current = await Evidence();
-            if (PrefersStealth(current)) await Protection(current);
             return;
         }
         if (chapter is >= 2000 and < 3000)
@@ -373,8 +379,6 @@ public sealed partial class DailyFieldRoute
         }
         Require(await DailyTravel.Reuse(W, packId: checked((int)chapter), surfaces: ["GameFieldDefaultUI"], waitForTarget: true), "卡带切换未完成");
         await FieldReady();
-        var entered = await Evidence();
-        if (PrefersStealth(entered)) await Protection(entered);
         if (leaveInterior && N(Map(await Evidence())["isInsideMap"]) != 0)
             await PrepareTeleport();
     }
@@ -384,12 +388,6 @@ public sealed partial class DailyFieldRoute
         var e = await Evidence();
         long pack = N(Map(e)["packId"]);
         Require(Catalog.Supported(pack) || Owned(e, pack), "卡带不支持门区移动");
-        if (PrefersStealth(e))
-        {
-            await Protection(e);
-            e = await Evidence();
-        }
-        Require(!RequiresStealth(e) || Remaining(e, 17) > 3, "进入巡逻路线前藏身未确认");
         var targets = Reachable(Travel(e), FieldRows(e, "gate").Where(r => S(r["gameObject.name"]).StartsWith("Gate_", StringComparison.Ordinal) && N(r[DestinationPath]) == destination).ToArray());
         foreach (var t in targets)
             try
@@ -409,6 +407,7 @@ public sealed partial class DailyFieldRoute
         {
             await FieldReady();
             // Research can expire while visiting the preceding drops on a large map.
+            await ProtectWeeklyMovement();
             await Skill(6);
             var e = await Evidence();
             var drops = Drops(e);

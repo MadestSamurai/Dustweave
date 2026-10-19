@@ -172,6 +172,9 @@ public sealed class DailyPreferences
     {
         if (Schema != 18 || General == null || Friendship == null || Tactics == null || Events == null || EventBattle == null || Trade == null || Weekly == null || MonsterHunt == null || Hunt == null || Equipment == null || Tasks == null || Stages == null || Mirror == null)
             throw new InvalidDataException("日常偏好版本或字段不完整。");
+        // Keep the legacy JSON fields readable, but never reactivate retired policies.
+        Weekly.NpcHunting = false;
+        Friendship.Quick = false;
         General.Validate();
         if (SaffronPotatoRounds is < 1 or > 3)
             throw new InvalidDataException("藏红花收割后的土豆轮数必须为 1 至 3。");

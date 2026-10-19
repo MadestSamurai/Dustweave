@@ -74,6 +74,7 @@ public sealed class DailyWeeklySteal(DailyFieldRoute route)
             if (!started)
             {
                 Require(B(current["Reachable"]), "偷窃NPC不可达：" + S(current["Reason"]));
+                await route.ProtectWeeklyMovement();
                 await W.Step("GameFieldDefaultUI", operation: "mainline_walk", value: I(current["Instance"]));
                 started = true;
             }

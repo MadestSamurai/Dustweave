@@ -13,8 +13,12 @@ internal static class DailyResultText
     internal static string Detail(QueueStage stage)
     {
         string detail = DailyLocationLabels.Format(L.Describe(stage.Detail), stage.Locations, L.Code);
-        return stage.Draws is { Draws: > 0 } draw ? Draws(draw) + (detail.Length > 0 ? "\n" + detail : "") : detail;
+        if (stage.Draws is { Draws: > 0 } draw) detail = Draws(draw) + (detail.Length > 0 ? "\n" + detail : "");
+        if (stage.Absorptions is { Maps: > 0 } day) detail += (detail.Length > 0 ? "\n" : "") + Absorptions(day);
+        return detail;
     }
+    internal static string Absorptions(DailyAbsorptionDay day) => L.Get("absorption.summary", day.Maps,
+        day.Visits.Where(v => v.AlongNpc).Select(v => (v.Pack, v.Map)).Distinct().Count());
 }
 
 // Reports are read-only modeless windows: finishing one account never blocks the
@@ -72,6 +76,29 @@ internal sealed class DailyResultWindow : Window
         if (summary.Items.Count == 0) window.rows.Children.Add(Text(() => L.Get("draw.no_details"), 14, false, true));
         return window;
     }
+    internal static DailyResultWindow AbsorptionDetails(DailyAbsorptionDay day)
+    {
+        var window = new DailyResultWindow("absorption.title", () => DailyResultText.Absorptions(day) + "\n" + L.Get("absorption.help"));
+        foreach (var group in day.Visits.GroupBy(v => (v.Pack, v.Map)).OrderBy(g => g.Min(v => v.AtUtcTicks)))
+        {
+            var first = group.OrderBy(v => v.AtUtcTicks).First();
+            string Name(DailyDisplayName name, string fallback, long id) => name.In(L.Code) is { Length: > 0 } text ? text : L.Get(fallback, id);
+            var body = new StackPanel();
+            body.Children.Add(Text(() => Name(first.PackName, "absorption.pack", first.Pack) + " · " + Name(first.MapName, "absorption.map", first.Map), 14, true));
+            foreach (var visit in group.OrderBy(v => v.AtUtcTicks))
+                body.Children.Add(Text(() => new DateTime(visit.AtUtcTicks, DateTimeKind.Utc).ToLocalTime().ToString("MM-dd HH:mm:ss")
+                    + " · " + L.Get(visit.AlongNpc ? "absorption.npc" : "absorption.collection"), 12, false, true, new(0, 5, 0, 0)));
+            window.Row(body);
+        }
+        return window;
+    }
+    internal static Button AbsorptionButton(DailyAbsorptionDay day, Window owner)
+    {
+        var button = new Button { HorizontalAlignment = HorizontalAlignment.Left, Margin = new(0, 8, 0, 0), MinHeight = 30, Padding = new(10, 4, 10, 4) };
+        L.Bind(button, ContentControl.ContentProperty, () => L.Get("absorption.button", day.Maps));
+        button.Click += (_, _) => { var popup = AbsorptionDetails(day); popup.Owner = owner; popup.Show(); };
+        return button;
+    }
     internal static DailyResultWindow RunResults(IReadOnlyList<DailyAccountRunResult> accounts)
     {
         int issues = accounts.Sum(a => DailyRunReport.Relevant(a.View).Count(s => s.State != "completed" || s.HasNotice || s.PendingTasks?.Count > 0)
@@ -96,6 +123,7 @@ internal sealed class DailyResultWindow : Window
                         popup.Owner = window; popup.Show();
                     }; body.Children.Add(details);
                 }
+                if (stage.Absorptions is { Maps: > 0 } day) body.Children.Add(AbsorptionButton(day, window));
                 window.Row(body);
             }
             if (account.View.Message.Length > 0) window.Row(Text(() => L.Describe(account.View.Message), 13, false, true));

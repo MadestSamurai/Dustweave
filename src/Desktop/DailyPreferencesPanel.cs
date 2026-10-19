@@ -34,9 +34,9 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly CheckBox mirror = Check("镜中之战"), guild = Check("公会签到"), room = Check("小屋奖励"),
         saffron = Check("藏红花种植与收割"), income = Check("经营一键领取"), guests = Check("餐厅特殊顾客与气泡"), draws = Check("每日免费抽取"),
         dailyRewards = Check("日常任务奖励"), weeklyRewards = Check("周常任务奖励"), mail = Check("邮箱物品");
-    private readonly CheckBox friendship = Check("每日亲密度咨询"), quickFriendship = Check("prefs.friendship_quick");
+    private readonly CheckBox friendship = Check("每日亲密度咨询");
     private readonly CheckBox weeklyBook = Check("周常末日之书"), weeklyCraft = Check("周常制作装备"), weeklySichuan = Check("周常连连看");
-    private readonly CheckBox mainline = Check("周收集"), weeklyNpc = Check("周NPC任务"), npcHunting = Check("允许接取必须去狩猎场的任务"), weeklySteal = Check("每周偷窃"), walkCollect = Check("步行收集（不使用吸收）"), fishing = Check("周常钓鱼"), roomLikes = Check("周常小屋点赞");
+    private readonly CheckBox mainline = Check("周收集"), weeklyNpc = Check("周NPC任务"), weeklySteal = Check("每周偷窃"), walkCollect = Check("步行收集（不使用吸收）"), fishing = Check("周常钓鱼"), roomLikes = Check("周常小屋点赞");
     private readonly CheckBox events = Check("活动奖励"), eventMissions = Check("领取活动任务与活动代币"), roulette = Check("使用免费次数和已有转盘券"), exchange = Check("活动代币最大批量兑换"), quiz = Check("自动完成已开放答题"), dice = Check("自动使用现有活动骰子"), puzzle = Check("拼图板使用现有代币批量翻开");
     private readonly CheckBox trade = Check("自动跑商、料理与120%售卖");
     private readonly CheckBox tradeFavorites = Check("prefs.trade_favorites"), saffronProcessing = Check("prefs.saffron_processing");
@@ -205,7 +205,6 @@ public sealed class DailyPreferencesPanel : UserControl
         Note("prefs.enhance_note");
         section.Children.Add(fallback);
         Stage(weeklyCraft, "周常制作装备", "prefs.craft_hint");
-        Note("prefs.craft_note");
         Stage(refine, "装备精炼", "prefs.refine_hint");
         section.Children.Add(refineChoice);
         section.Children.Add(inventoryState);
@@ -264,13 +263,10 @@ public sealed class DailyPreferencesPanel : UserControl
         Note("prefs.salvation_budget");
         Stage(weeklyBook, "周常末日之书", "prefs.book_hint");
         Stage(friendship, "亲密度咨询", "prefs.friendship_hint");
-        section.Children.Add(quickFriendship);
         Stage(mainline, "周收集", "prefs.collection_hint", expanded: true);
         section.Children.Add(walkCollect);
         Note("prefs.collection_note");
-        Stage(weeklyNpc, "周NPC任务", "prefs.npc_hint", expanded: true);
-        section.Children.Add(npcHunting);
-        Note("prefs.npc_note");
+        Stage(weeklyNpc, "周NPC任务", "prefs.npc_hint");
         Stage(weeklySteal, "每周偷窃", "prefs.steal_hint");
         Stage(roomLikes, "周常小屋点赞", "prefs.likes_hint");
         Stage(fishing, "周常钓鱼", "prefs.fishing_hint");
@@ -333,7 +329,7 @@ public sealed class DailyPreferencesPanel : UserControl
         Content = layout;
         FilterSections();
         accounts.SelectionChanged += ChangedAccount;
-        foreach (var c in new[] { salvation, eventFailureSweep, weeklyBook, weeklyCraft, weeklySichuan, quickFriendship, friendship, tactics, eventBattle, eventChallenge, hunt, gold, slime, stones, recycle, keepSr, fallback, refine, pass, dispatch, goddess, ranking, mirror, guild, room, income, guests, saffron, draws, dailyRewards, weeklyRewards, mail, preserveBloodCocktailMail, mainline, weeklyNpc, npcHunting, weeklySteal, walkCollect, fishing, roomLikes, trade, events, eventMissions, quiz, dice, puzzle, roulette, exchange })
+        foreach (var c in new[] { salvation, eventFailureSweep, weeklyBook, weeklyCraft, weeklySichuan, friendship, tactics, eventBattle, eventChallenge, hunt, gold, slime, stones, recycle, keepSr, fallback, refine, pass, dispatch, goddess, ranking, mirror, guild, room, income, guests, saffron, draws, dailyRewards, weeklyRewards, mail, preserveBloodCocktailMail, mainline, weeklyNpc, weeklySteal, walkCollect, fishing, roomLikes, trade, events, eventMissions, quiz, dice, puzzle, roulette, exchange })
         {
             c.Checked += (_, _) => MarkDirty();
             c.Unchecked += (_, _) => MarkDirty();
@@ -362,6 +358,9 @@ public sealed class DailyPreferencesPanel : UserControl
     }
     public void CheckWeeklySettingsForSmoke()
     {
+        foreach (var toggle in new[] { weeklyCraft, weeklyNpc, friendship })
+            if (!form.Children.OfType<Border>().Any(b => b.Child is StackPanel heading && heading.Children.Contains(toggle)))
+                throw new Exception("A stage without settings still exposes an expansion affordance");
         var previous = mainline.IsChecked;
         try
         {
@@ -647,7 +646,6 @@ public sealed class DailyPreferencesPanel : UserControl
             mainline.IsChecked = loaded.Weekly.Mainline;
             weeklySteal.IsChecked = loaded.Weekly.Steal;
             weeklyNpc.IsChecked = loaded.Weekly.Npc;
-            npcHunting.IsChecked = loaded.Weekly.NpcHunting;
             walkCollect.IsChecked = loaded.Weekly.WalkCollect;
             tactics.IsChecked = loaded.Tactics.Enabled;
             tacticsSearch.SelectedItem = loaded.Tactics.SearchSeconds;
@@ -659,7 +657,6 @@ public sealed class DailyPreferencesPanel : UserControl
             eventFailureSweep.IsChecked = loaded.EventBattle.SweepAfterFailure;
             eventChallenge.IsChecked = loaded.EventBattle.Challenge;
             eventSearch.SelectedItem = loaded.EventBattle.SearchSeconds;
-            quickFriendship.IsChecked = loaded.Friendship.Quick;
             friendship.IsChecked = loaded.Friendship.Enabled;
             trade.IsChecked = loaded.Trade.Enabled;
             tradeFavorites.IsChecked = loaded.Trade.FavoritesOnly;
@@ -784,7 +781,6 @@ public sealed class DailyPreferencesPanel : UserControl
             loaded.Weekly.Mainline = mainline.IsChecked == true;
             loaded.Weekly.Steal = weeklySteal.IsChecked == true;
             loaded.Weekly.Npc = weeklyNpc.IsChecked == true;
-            loaded.Weekly.NpcHunting = npcHunting.IsChecked == true;
             loaded.Weekly.WalkCollect = walkCollect.IsChecked == true;
             loaded.Weekly.Fishing = fishing.IsChecked == true;
             loaded.Weekly.RoomLikes = roomLikes.IsChecked == true;
@@ -810,7 +806,6 @@ public sealed class DailyPreferencesPanel : UserControl
             {
                 loaded.EventBattle.SearchSeconds = eventSearch.SelectedItem is int seconds ? seconds : 15;
             }
-            loaded.Friendship.Quick = quickFriendship.IsChecked == true;
             loaded.Friendship.Enabled = friendship.IsChecked == true;
             loaded.MonsterHunt.Enabled = false;
             loaded.Trade.Enabled = trade.IsChecked == true;
@@ -891,7 +886,7 @@ public sealed class DailyPreferencesPanel : UserControl
     internal void ShowWeeklySettingsForSmoke()
     {
         filter.Text = "周";
-        var exp = form.Children.OfType<Border>().Select(b => b.Child).OfType<Expander>().Single(e => e.Content is StackPanel body && body.Children.Contains(npcHunting));
+        var exp = form.Children.OfType<Border>().Select(b => b.Child).OfType<Expander>().Single(e => e.Content is StackPanel body && body.Children.Contains(walkCollect));
         exp.IsExpanded = true;
         UpdateLayout();
         var first = form.Children.OfType<Border>().Single(b => b.Child is Expander e && e.Header is StackPanel heading && heading.Children.Contains(mainline));
@@ -903,6 +898,15 @@ public sealed class DailyPreferencesPanel : UserControl
             }
         if (!weeklySteal.IsEnabled || !weeklyNpc.IsEnabled)
             throw new Exception("Independent weekly switches are inaccessible");
+    }
+    internal void ShowSimpleSettingForSmoke(string title)
+    {
+        ReviewCategoryForSmoke("all");
+        filter.Text = L.Translate(title);
+        var visible = sections.Where(s => s.View.Visibility == Visibility.Visible).ToArray();
+        if (visible.Length != 1 || visible[0].Title != title || visible[0].View.Child is not StackPanel)
+            throw new Exception("A setting-free task must be searchable without an expander");
+        formScroll.ScrollToTop();
     }
     internal void CheckOptionalSettingsForSmoke()
     {

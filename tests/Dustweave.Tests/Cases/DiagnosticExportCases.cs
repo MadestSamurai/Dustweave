@@ -31,6 +31,7 @@ internal static class DiagnosticExportCases
         string faultDirectory=Path.Combine(failureRoot,"live","diagnostics","failures");
         string equipmentDiagnostics=Path.Combine(failureRoot,"live","diagnostics","equipment");Directory.CreateDirectory(equipmentDiagnostics);
         File.WriteAllText(Path.Combine(equipmentDiagnostics,"step.result.json"),"{\"state\":\"failed\",\"token\":\"equipment-secret\"}");
+        DailyJson.Write(Path.Combine(failureRoot,"live","absorption-history","fixture.json"),new { Maps=2,Visits=new[]{new {Pack=8,Map=81,AlongNpc=true}} });
         DailyJson.Write(Path.Combine(failureRoot, "connection-access.json"), new { phase = "send-request", state = "disconnected", helperExitCode = 1 });
         Check(Directory.GetFiles(faultDirectory).Length==1,"repeated identical failures retain one bounded snapshot");
         foreach (string name in new[] {"pass-claims-latest.json", "mission-inspection-latest.json"})
@@ -39,6 +40,7 @@ internal static class DiagnosticExportCases
         using(var archive=ZipFile.OpenRead(withFault.Path)) {
             using(var equipmentLog=new StreamReader(archive.GetEntry("logs/main/live/diagnostics/equipment/step.result.json")!.Open()))Check(!equipmentLog.ReadToEnd().Contains("equipment-secret"),"integrated equipment evidence is exported and redacted with host diagnostics");
             Check(archive.GetEntry("logs/main/connection-access.json") != null, "elevated handshake phase and helper exit status are exported");
+            Check(archive.GetEntry("logs/main/live/absorption-history/fixture.json") != null, "confirmed absorption map report is included in diagnostic export");
             Check(archive.Entries.Any(e=>e.FullName.StartsWith("logs/main/live/diagnostics/failures/")),"failure snapshot survives observation rotation and is exported");
             Check(new[]{"pass-claims-latest.json", "mission-inspection-latest.json"}.All(n=>archive.GetEntry("logs/main/live/"+n)!=null),"partial pass and mission inspection results survive export");
         }
@@ -52,6 +54,9 @@ internal static class DiagnosticExportCases
             Check(partial.Skipped>=2&&partial.Files==2,"locked and incomplete files do not abort other diagnostics");
         }
         Check(DailyIssues.Classify("suite.owner-exited").Code=="owner-ended","owner exit is not account change");
+        Check(DailyIssues.Classify("原队列与当前账号、角色或重置周期不一致，请切回原账号；已跨日则开始新队列。").Code=="resume-context"
+            && DailyIssues.Classify("原队列的账号、进程或重置周期已变化，请开始新队列。").Code=="resume-context",
+            "current and legacy resume failures explain recovery instead of appearing as unknown issues");
         Check(DailyIssues.Classify(new NullReferenceException()).Code=="internal-error",
             "programming failure is described as an internal error, not failed login or user pause");
         Check(DailyIssues.Classify("Need one observed GameFieldDefaultUI; found 0").Code=="field-transition"

@@ -48,6 +48,7 @@ namespace BD2Daily.Live {
  [DataContract] internal sealed class CollectionTravelState {
   [DataMember] public int Pack,Map;
   [DataMember] public bool Ground;
+  [DataMember] public bool ThreatsKnown,ThreatsPresent;
   [DataMember] public CollectionTravelMap[] Maps;
   [DataMember] public TravelApproach[] Approaches;
  }
@@ -148,7 +149,15 @@ namespace BD2Daily.Live {
      Exits=x.GateId.Where(g=>g>0).Select(g=>ὩὥὫὮὯὥὮὪὨὡὩ.ὨὨὡὫὦὡὥὫὡὤὦ(g)).Distinct().ToArray()
     }).ToArray();travelKey=key;travelAt=DateTime.UtcNow.Ticks;
    }
-   return new CollectionTravelState{Pack=map.PackId,Map=map.Id,Ground=TalentSkillManager.ὪὫὢὨὯὭὦὪὦὨὣ.IsAvailableWayPointMakeOnGround(),Maps=travelMaps,Approaches=Approaches(frame)};
+   var field=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ;
+   // Reuse this observation's scene enumeration, not the ten-second static map
+   // cache. HasCanOverwhelmMonster excludes defeated ordinary monsters even
+   // while their disappearance animation is playing. Separately include active
+   // non-suppressible enemies: neither that predicate nor a missing respawn DB
+   // row proves that a patrol is harmless.
+   bool threatsKnown=field.ὢὩὠὢὫὧὠὣὤὩὫ&&field.ὪὨὯὢὫὮὨὩὮὡὬ!=null;
+   bool threats=threatsKnown&&(field.HasCanOverwhelmMonster()||Bridge.Find(typeof(FieldMonsterController)).Cast<FieldMonsterController>().Any(x=>x!=null&&x.gameObject.activeInHierarchy&&!x.IsCanOverwhelm()));
+   return new CollectionTravelState{Pack=map.PackId,Map=map.Id,Ground=TalentSkillManager.ὪὫὢὨὯὭὦὪὦὨὣ.IsAvailableWayPointMakeOnGround(),ThreatsKnown=threatsKnown,ThreatsPresent=threats,Maps=travelMaps,Approaches=Approaches(frame)};
   }
 
   // Publishing evidence must never enable, warp or move the native agent.

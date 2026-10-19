@@ -21,6 +21,14 @@
   "sandbox.launch_description": { "zh-CN": "为选中账号打开独立的游戏和织尘窗口，可与其他账号分别执行日常。需要安装 Sandboxie-Plus。\n\n每个隔离窗口有自己的控制、日志和缓存；同一账号的已完成任务会与主窗口同步。请勿让同一账号在多个游戏实例中同时登录。", "zh-TW": "為選取的帳號開啟獨立的遊戲和織塵視窗，可與其他帳號分別執行日常。需要安裝 Sandboxie-Plus。\n\n每個隔離視窗有自己的控制、日誌和快取；同一帳號已完成的任務會與主視窗同步。請勿讓同一帳號在多個遊戲執行個體中同時登入。", "en-US": "Open a separate game and Dustweave window for the selected account, so it can run daily tasks independently of other accounts. Requires Sandboxie-Plus.\n\nEach isolated window has its own controls, logs and cache. Completed tasks sync with the main window for the same account. Do not sign in to the same account in multiple game instances at once." },
   "sandbox.remember": { "zh-CN": "今后不再提醒", "zh-TW": "今後不再提醒", "en-US": "Do not remind me again" },
   "sandbox.storage_busy": { "zh-CN": "需要更新此账号的独立日志与缓存设置。请先关闭该隔离空间中的游戏和织尘，再重新隔离启动；其他账号不受影响。", "zh-TW": "需要更新此帳號的獨立日誌與快取設定。請先關閉該隔離空間中的遊戲和織塵，再重新隔離啟動；其他帳號不受影響。", "en-US": "This account needs updated isolated log and cache settings. Close the game and Dustweave in this sandbox, then open it again. Other accounts are unaffected." },
+  "absorption.title": { "zh-CN": "吸收地图", "zh-TW": "吸收地圖", "en-US": "Absorbed maps" },
+  "absorption.button": { "zh-CN": "吸收地图（{0}）", "zh-TW": "吸收地圖（{0}）", "en-US": "Absorbed maps ({0})" },
+  "absorption.summary": { "zh-CN": "本日已吸收 {0} 张地图，其中 {1} 张在 NPC 任务途中顺路完成。", "zh-TW": "本日已吸收 {0} 張地圖，其中 {1} 張在 NPC 任務途中順路完成。", "en-US": "{0} maps absorbed this game day; {1} completed along NPC quest routes." },
+  "absorption.help": { "zh-CN": "顺路吸收已计入收集，并非跳过。仅列出工具确认成功的操作；时间为本机时间，同一游戏日重跑会累计。", "zh-TW": "順路吸收已計入收集，並非跳過。僅列出工具確認成功的操作；時間為本機時間，同一遊戲日重跑會累計。", "en-US": "Collection along NPC quest routes is completed, not skipped. Only confirmed tool actions are listed. Times are local; reruns within the same game day are combined." },
+  "absorption.npc": { "zh-CN": "NPC 任务途中顺路吸收", "zh-TW": "NPC 任務途中順路吸收", "en-US": "Absorbed along an NPC quest route" },
+  "absorption.collection": { "zh-CN": "周收集吸收", "zh-TW": "週收集吸收", "en-US": "Weekly collection" },
+  "absorption.pack": { "zh-CN": "卡带 {0}", "zh-TW": "卡帶 {0}", "en-US": "Cartridge {0}" },
+  "absorption.map": { "zh-CN": "地图 {0}", "zh-TW": "地圖 {0}", "en-US": "Map {0}" },
   "draw.title": { "zh-CN": "抽取详情", "zh-TW": "抽取詳情", "en-US": "Draw results" },
   "draw.summary": { "zh-CN": "本次共 {0} 抽 · 五星服装 {1} 件 · 五星角色 UR 专武 {2} 件", "zh-TW": "本次共 {0} 抽 · 五星服裝 {1} 件 · 五星角色 UR 專武 {2} 件", "en-US": "{0} draws · {1} five-star costumes · {2} UR weapons for five-star characters" },
   "draw.unknown": { "zh-CN": "另有 {0} 项奖励资料未读全，未计入稀有统计。", "zh-TW": "另有 {0} 項獎勵資料未讀全，未計入稀有統計。", "en-US": "Details for {0} rewards are incomplete; they are excluded from rarity counts." },
@@ -1926,9 +1934,19 @@
     "en-US": "Records and more actions"
   },
   "run.resume_help": {
-    "zh-CN": "使用原账号、进程及重置周期继续原队列。重启游戏后，请勾选未完成环节补跑。",
-    "zh-TW": "使用原帳號、程序及重置週期繼續原佇列。重啟遊戲後，請勾選未完成環節補跑。",
-    "en-US": "Resume with the same account, game session and reset period. After restarting the game, select unfinished tasks to retry."
+    "zh-CN": "游戏重启后，重新连接同一账号即可接续。自动检查中断环节的当前进度，保留已完成项目；跨日后请开始新队列。",
+    "zh-TW": "遊戲重啟後，重新連接同一帳號即可接續。自動檢查中斷環節的目前進度，保留已完成項目；跨日後請開始新佇列。",
+    "en-US": "After restarting the game, reconnect the same account to resume. Interrupted tasks check current game progress and completed tasks are retained. Start a new queue after the daily reset."
+  },
+  "issue.reason.resume-context": {
+    "zh-CN": "当前登录信息或每日重置周期与原队列不一致，接续尚未开始。",
+    "zh-TW": "目前登入資訊或每日重置週期與原佇列不一致，接續尚未開始。",
+    "en-US": "The current login or daily reset period does not match the original queue. Resuming has not started."
+  },
+  "issue.action.resume-context": {
+    "zh-CN": "确认游戏登录的是原账号并重新连接；若已经跨日，请从当前计划开始新队列。原记录仍保留。",
+    "zh-TW": "確認遊戲登入的是原帳號並重新連接；若已經跨日，請從目前計畫開始新佇列。原紀錄仍保留。",
+    "en-US": "Log in to the original account and reconnect. After a daily reset, start a new queue from the current plan. The previous record is retained."
   },
   "run.retry_help": {
     "zh-CN": "先核对上次结果，再按当前游戏进度继续；不会重复提交尚未确认的操作。",
@@ -2620,11 +2638,6 @@
     "zh-TW": "週任務未完成時製作一把 N 劍，材料不足則保留待辦",
     "en-US": "Craft one N sword for an unfinished weekly task; defer if materials are missing"
   },
-  "prefs.craft_note": {
-    "zh-CN": "开启装备分解时，也会按其设置处理本次新制作的装备。",
-    "zh-TW": "開啟裝備分解時，也會按其設定處理本次新製作的裝備。",
-    "en-US": "If dismantling is enabled, its settings also apply to this newly crafted item."
-  },
   "prefs.refine_hint": {
     "zh-CN": "有精炼任务时执行一次",
     "zh-TW": "有精煉任務時執行一次",
@@ -2806,14 +2819,9 @@
     "en-US": "Challenge once with the saved team and skip combat"
   },
   "prefs.friendship_hint": {
-    "zh-CN": "补足每日 3 次免费咨询，优先好感度未满角色",
-    "zh-TW": "補足每日 3 次免費諮詢，優先好感度未滿角色",
-    "en-US": "Complete 3 free daily consultations; prioritize unfinished affinity"
-  },
-  "prefs.friendship_quick": {
-    "zh-CN": "使用快速咨询",
-    "zh-TW": "使用快速諮詢",
-    "en-US": "Use quick consultation"
+    "zh-CN": "通过普通对话补足每日 3 次免费咨询，优先好感度未满角色",
+    "zh-TW": "透過一般對話補足每日 3 次免費諮詢，優先好感度未滿角色",
+    "en-US": "Complete 3 free daily consultations through normal dialogue; prioritize characters below max affinity"
   },
   "prefs.monster": {
     "zh-CN": "魔兽快速战斗",
@@ -2841,19 +2849,9 @@
     "en-US": "Resume next day when Absorption runs out; share routes with enabled NPC quests and theft."
   },
   "prefs.npc_hint": {
-    "zh-CN": "每周最多 3 条，先推进任务再压制目标",
-    "zh-TW": "每週最多 3 條，先推進任務再壓制目標",
-    "en-US": "Up to 3 per week; progress quests before suppressing targets"
-  },
-  "prefs.npc_hunt": {
-    "zh-CN": "允许接取必须去狩猎场的任务",
-    "zh-TW": "允許接取必須前往狩獵場的任務",
-    "en-US": "Accept quests that require a hunting ground"
-  },
-  "prefs.npc_note": {
-    "zh-CN": "关闭时不接狩猎场任务；已接任务保留，不自动放弃。",
-    "zh-TW": "關閉時不接狩獵場任務；已接任務保留，不自動放棄。",
-    "en-US": "When off, skip new hunting-ground quests; keep already accepted quests."
+    "zh-CN": "每周最多 3 条，跳过必须去狩猎场的任务",
+    "zh-TW": "每週最多 3 條，略過必須前往狩獵場的任務",
+    "en-US": "Up to 3 per week; skip quests requiring hunting grounds"
   },
   "prefs.steal_hint": {
     "zh-CN": "按游戏冷却补足，与周收集、NPC 任务共用路线",

@@ -11,6 +11,26 @@ static class DailyFeedbackCases
   Check(data.Protects(11)&&!data.Protects(12),"future quest kill targets are protected only on their map");
   var activeKill=data with { Active=[O(("id",2))] };
   Check(!activeKill.Protects(11),"active kill objective allows suppression to credit the quest");
+  var twoProtected=data with { Native=O(("Wild",new JsonArray(O(("Step",2),("Map",11),("Available",true)),O(("Step",2),("Map",12),("Available",true))))) };
+  Check(DailyWeeklyRoute.RunnableCollection([11,12,13],twoProtected).SequenceEqual(new long[]{13}),
+   "routing excludes both protected battle maps instead of visiting maps that execution will refuse");
+  Check(DailyWeeklyRoute.RunnableCollection([11,12,13],twoProtected with {Active=[O(("id",2))]}).SequenceEqual(new long[]{11,12,13}),
+   "advancing the NPC objective immediately restores collection destinations without a persistent blacklist");
+  // Synthetic form of the Blood Rhapsody report: talk in a room first, then
+  // kill targets on either of two adjacent battle maps, then return to the room.
+  var roomQuest=new Dictionary<long,JsonObject>{
+   [1]=O(("id",1),("packId",8),("mapId",85),("conditionType",19),("nextQuestId",2)),
+   [2]=O(("id",2),("packId",8),("mapId",87),("conditionType",1),("nextQuestId",3)),
+   [3]=O(("id",3),("packId",8),("mapId",85),("conditionType",19),("nextQuestId",0))};
+  var roomData=new DailyNpcData(O(("Wild",new JsonArray(O(("Step",2),("Map",82),("Available",true)),O(("Step",2),("Map",83),("Available",true))))),roomQuest,[O(("id",1))]);
+  var atlas=new DailyRouteAtlas([O(("Id",81),("Exits",new[]{82,85})),O(("Id",82),("Exits",new[]{81,83})),O(("Id",83),("Exits",new[]{82})),O(("Id",85),("Exits",new[]{81}))]);
+  atlas.Observe("[82,0]",[O(("object",1),("destination",81),("distance",10)),O(("object",2),("destination",83),("distance",1))],[],true);
+  var pending=DailyWeeklyRoute.RunnableCollection([82,83],roomData).Append(85);
+  var path=Rows(atlas.Plan(pending,teleports:false)["actions"]);
+  Check(path.Select(a=>N(a["destination"])).SequenceEqual(new long[]{81,85}),
+   "room conversation routes away from nearby protected battle maps instead of bouncing between battle one and two");
+  Check(DailyWeeklyRoute.RunnableCollection([82,83],roomData with {Active=[O(("id",2))]}).Length==2,
+   "both battle maps become eligible once the room conversation advances to the kill step");
   var selected=DailyWeeklyRoute.Select(["weekly_npc"],new(){Npc=true,Mainline=false,Steal=false});
   Check(selected.SequenceEqual(new[]{"weekly_npc"}),"NPC-only run does not silently enable weekly collection");
   Check(DailyWeeklyRoute.StageOrder.Where(s=>new[]{"weekly_npc","weekly_mainline"}.Contains(s)).First()=="weekly_mainline","enabled collection clears a shared map before NPC interactions");

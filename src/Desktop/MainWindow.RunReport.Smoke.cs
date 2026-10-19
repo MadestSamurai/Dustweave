@@ -14,10 +14,15 @@ public partial class MainWindow
             new("Costume",102,2,3,"",new("白猫 · 鲁","白貓 · 魯","White Cat · Rou"),false,true),
             new("Equipment",201,1,5,"UR",new("血之吞噬者","血之吞噬者","Blood Devourer"),false,true),
             new("Equipment",202,2,3,"SR",new("魔法杖","魔法杖","Magic Staff"),false,true)]);
+        var absorption = new DailyAbsorptionDay(new string('a',64), "fixture", "test", "639280224000000000", [
+            new("one",8,81,new DateTime(2026,10,19,1,21,17,DateTimeKind.Utc).Ticks,true,
+                new("血之狂想曲","血之狂想曲","Blood Rhapsody"),new("村庄","村莊","Village")),
+            new("two",9,91,new DateTime(2026,10,19,1,23,0,DateTimeKind.Utc).Ticks,false,
+                new("铁假面","鐵假面","Iron Mask"),new("码头","碼頭","Harbor"))]);
         var view = new QueueView("partial","","fixture/run-report.json", [
             new("guild","completed",""), new QueueStage("free_draws","completed",""){Draws=draw},
             new QueueStage("event_battle","completed","event_auto_failed_swept"){HasNotice=true},
-            new QueueStage("weekly_mainline","partial","卡带 6 · 地图 608") { Locations = new() {
+            new QueueStage("weekly_mainline","partial","卡带 6 · 地图 608") { Absorptions = absorption, Locations = new() {
                 ["p6"] = new("异教之塔","異教之塔","Tower of Desire"), ["m608"] = new("第八层","第八層","Eighth Floor") } }], new string('a',64));
         L.Audit(); WorkspaceTabs.SelectedItem=RunTab;
         foreach (int language in new[]{0,1,2}) foreach (int appearance in new[]{1,2})
@@ -28,6 +33,10 @@ public partial class MainWindow
                 throw new Exception("Map names or draw counts did not reach the timeline");
             await Dispatcher.InvokeAsync(()=>{}, DispatcherPriority.ApplicationIdle);
             Capture($"result-timeline-{language}-{appearance}");
+            var absorbed = dailyPanel.OpenAbsorptionDetailsForSmoke();
+            await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+            Capture($"absorption-details-{language}-{appearance}",(FrameworkElement)absorbed.Content);
+            absorbed.Close();
             var report = DailyResultWindow.RunResults([new("Fixture A",view),new("Fixture B",view with {Stages=[new("mail","completed","")]})]); report.Owner=this;
             var details = DailyResultWindow.DrawDetails(draw); details.Owner=this;
             var tasks = dailyPanel.OpenTaskDetailsForSmoke();
@@ -37,7 +46,7 @@ public partial class MainWindow
                 if(language==2) {report.Width=500;report.Height=440;details.Width=500;details.Height=440;}
                 await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
                 if (report.ResultsScroll.ActualHeight<100 || details.ResultsScroll.ActualHeight<100) throw new Exception("Report content is clipped");
-                foreach(var window in new Window[]{report,details,tasks})
+                foreach(var window in new Window[]{report,details,tasks,absorbed})
                     if (!Equals(((SolidColorBrush)window.Background).Color, ((SolidColorBrush)FindResource("Surface")).Color))
                         throw new Exception("Result dialog background differs from shared surface");
                 Capture($"run-results-{language}-{appearance}",(FrameworkElement)report.Content);

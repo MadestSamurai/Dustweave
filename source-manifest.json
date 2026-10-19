@@ -10032,6 +10032,22 @@
         "build input"
       ],
       "bytes": 1102
+    },
+    {
+      "path": "src/Core/DailyAbsorptionLog.cs",
+      "sha256": "edad0700124fe4d5c61461840232624cfc67f4fed8081c6abd5398145b24b761",
+      "bytes": 5329,
+      "reasons": [
+        "build input"
+      ]
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/AbsorptionReportCases.cs",
+      "sha256": "aeec635f817e91ceabc12ce973b9509d2edebcdb042277d35db744f5d84873cf",
+      "bytes": 6735,
+      "reasons": [
+        "build input"
+      ]
     }
   ],
   "publicReleaseApproved": false,

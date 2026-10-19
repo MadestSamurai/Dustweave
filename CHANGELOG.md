@@ -1,5 +1,16 @@
 # Changelog / 更新记录
 
+## 1.4.5 — 2026-10-19
+
+- 修复断线或重启游戏后原队列无法接续的问题；核对同账号、角色及重置周期后，从当前游戏进度恢复。
+- 修复周收集在受 NPC 任务保护的地图之间反复往返，增加无进展诊断；手动停止后也能导出路线记录。
+- 新增今日实际吸收地图明细，显示卡带、地图、时间及 NPC 任务途中顺路吸收，普通与隔离执行共同保留已完成结果。
+- 隐身依据当前步行路线的敌人状态使用；传送点直达安全区、进入地图准备压制及已确认无敌人的路段不额外使用。
+- 不再接取仅能在狩猎场完成的周 NPC 任务，咨询统一使用普通对话，移除没有设置内容的展开项。
+- 装备助手、使徒防守和无限抽抽乐迁入主项目维护，统一工具窗口加载、连接互斥及主题体验；更新工具说明与支持入口。
+- Restores interrupted queues from current game progress, fixes weekly route loops, adds daily absorption details, reduces unnecessary stealth, simplifies task settings, and completes owned tool integration.
+- [完整说明 / Full notes](docs/releases/1.4.5.md)
+
 ## 1.4.4 — 2026-10-18
 
 - 修复活动自动战斗最后一场已结束却等待超时的问题；正确识别活动专用结算返回按钮，恢复流程不重复消耗次数。

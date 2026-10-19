@@ -1,5 +1,38 @@
 [
 {
+  "Version": "1.4.5",
+  "Date": "2026-10-19",
+  "Notes": {
+    "zh-CN": [
+      "修复断线或重启游戏后原队列无法接续；核对同账号、角色及周期后，从当前游戏进度恢复。",
+      "修复周收集在受 NPC 任务保护的地图间反复往返；手动停止后也可导出路线诊断。",
+      "新增今日吸收地图明细，显示卡带、地图和时间，并注明 NPC 任务途中顺路吸收；普通与隔离执行合并记录。",
+      "按实际步行路线判断隐身：传送点直达安全区、准备压制和已确认无敌人的路段不额外使用。",
+      "不再接取狩猎场限定周 NPC 任务，咨询统一使用普通对话，移除没有内容的设置展开项。",
+      "装备助手、使徒防守与无限抽抽乐迁入主项目维护，统一加载、连接互斥与主题，并更新工具说明。",
+      "1.3.13–1.3.17、1.4.0–1.4.4 支持直接差分更新；若 OTA 失败，请手动下载完整软件包。"
+    ],
+    "zh-TW": [
+      "修復斷線或重新啟動遊戲後原佇列無法接續；核對同帳號、角色及週期後，依目前遊戲進度恢復。",
+      "修復每週收集於受 NPC 任務保護的地圖間反覆往返；手動停止後亦可匯出路線診斷。",
+      "新增今日吸收地圖明細，顯示卡帶、地圖與時間，註明 NPC 任務途中順路吸收；一般與隔離執行合併記錄。",
+      "依實際步行路線判斷藏身：傳送點直達安全區、準備壓制及已確認沒有敵人的路段不額外使用。",
+      "不再接取狩獵場限定週 NPC 任務，諮詢統一使用一般對話，移除沒有內容的設定展開項目。",
+      "裝備助手、使徒防守與無限抽抽樂遷入主專案維護，統一載入、連線互斥與主題，並更新工具說明。",
+      "1.3.13–1.3.17、1.4.0–1.4.4 支援直接差分更新；若 OTA 失敗，請手動下載完整軟體包。"
+    ],
+    "en-US": [
+      "Resume interrupted queues after reconnecting or restarting the game, verifying the account, character and reset period against current game progress.",
+      "Fix repeated travel between NPC-protected collection maps. Route diagnostics can also be exported after a manual stop.",
+      "View today's confirmed absorption maps and times, including collection along NPC routes. Ordinary and isolated runs merge completed records.",
+      "Use stealth for actual risky walking segments, without extra casts for direct waypoint travel to safety, suppression or confirmed clear routes.",
+      "Stop accepting hunting-ground-only NPC quests, use normal friendship conversations and remove empty settings expanders.",
+      "Equipment Assistant, Apostle Defense and Infinite Gacha move into the main project with shared loading, connection locks, themes and updated guides.",
+      "Direct patches cover 1.3.13–1.3.17 and 1.4.0–1.4.4. If OTA fails, download the full package manually."
+    ]
+  }
+},
+{
   "Version": "1.4.4",
   "Date": "2026-10-18",
   "Notes": {

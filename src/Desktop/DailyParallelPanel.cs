@@ -92,6 +92,7 @@ public sealed class DailyParallelPanel : ScrollViewer
                     });
                     details.HorizontalAlignment=HorizontalAlignment.Left;details.Margin=new(0,8,0,0);row.Children.Add(details);
                 }
+                if (stage.Absorptions is { Maps: > 0 } day) row.Children.Add(DailyResultWindow.AbsorptionButton(day, Window.GetWindow(this)));
                 body.Children.Add(row);
             }
             if(stages.Count==0)body.Children.Add(Text("parallel.no_steps"));

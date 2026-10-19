@@ -30,6 +30,19 @@ static class PreferenceCases
             throw new Exception(name);
         }
         var p = store.Read(a);
+        var retiredOptions = JsonSerializer.SerializeToNode(p)!.AsObject();
+        retiredOptions["Weekly"]!["NpcHunting"] = true;
+        retiredOptions["Weekly"]!["Npc"] = true;
+        retiredOptions["Friendship"]!["Quick"] = true;
+        retiredOptions["Friendship"]!["Enabled"] = false;
+        var normalized = DailyPreferences.Parse(retiredOptions.ToJsonString());
+        Check(!normalized.Weekly.NpcHunting && !normalized.Friendship.Quick && normalized.Weekly.Npc && !normalized.Friendship.Enabled,
+            "retired hunting and quick consultation policies normalize without changing task selection");
+        normalized.Weekly.NpcHunting = normalized.Friendship.Quick = true;
+        store.Save(b, normalized);
+        var normalizedJson = JsonNode.Parse(File.ReadAllText(store.PathFor(b)))!;
+        Check(!normalizedJson["Weekly"]!["NpcHunting"]!.GetValue<bool>() && !normalizedJson["Friendship"]!["Quick"]!.GetValue<bool>(),
+            "saving legacy retired options cannot reenable them");
         var oldMonster = JsonSerializer.SerializeToNode(p)!.AsObject();
         oldMonster["MonsterHunt"]!["Enabled"] = true;
         var withoutMonster = DailyPreferences.Parse(oldMonster.ToJsonString());

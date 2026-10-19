@@ -194,6 +194,25 @@ public sealed partial class DailyRunPanel
         stages.ScrollIntoView(rows[0]);UpdateLayout();
         CheckViewportForSmoke();
     }
+    internal DailyResultWindow OpenAbsorptionDetailsForSmoke()
+    {
+        var row = rows.Single(r => r.HasAbsorptions);
+        stages.ScrollIntoView(row); UpdateLayout();
+        Button? Find(DependencyObject node)
+        {
+            if (node is Button { Name: "AbsorptionDetails" } button) return button;
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++)
+                if (Find(VisualTreeHelper.GetChild(node, i)) is { } child) return child;
+            return null;
+        }
+        var item = (ListBoxItem)stages.ItemContainerGenerator.ContainerFromItem(row);
+        var action = Find(item) ?? throw new Exception("Absorption map action is missing");
+        if (!action.IsVisible || !action.IsEnabled || !AbsorptionDetailsCommand.CanExecute(row, action)
+            || action.Content?.ToString() != L.Get("absorption.button", row.Absorptions!.Maps))
+            throw new Exception("Absorption map report cannot be opened from the timeline");
+        AbsorptionDetailsCommand.Execute(row, action);
+        return taskDetailsWindow as DailyResultWindow ?? throw new Exception("Absorption action did not open its report");
+    }
     internal DailyTaskDetailsWindow OpenTaskDetailsForSmoke(bool longList=false)
     {
         IReadOnlyList<QueueTaskDetail> tasks=[new("weekly","每日登录",2,5,"pending"),
