@@ -84,14 +84,14 @@ The Pandora challenge strategy has reached 20 minutes in one live trial. Charact
 <details>
 <summary>Original repositories and maintenance</summary>
 
-The original repositories provide standalone source and historical releases; they do not describe the current built-in versions. **The Equipment Assistant, Apostle Defense, Infinite Gacha, Fiend Hunter and Rhythm repositories are archived and no longer maintained. Their ongoing code and issue reports belong in Dustweave.** The other repositories below were not archived as of October 19, 2026, but their releases are not guaranteed to stay synchronized with the built-in versions.
+The original repositories provide standalone source and historical releases; they do not describe the current built-in versions. **The Equipment Assistant, Apostle Defense, Infinite Gacha, Fiend Hunter, Rhythm, SECRET VISION and Sichuan repositories are archived and no longer maintained. Their ongoing code and issue reports belong in Dustweave.** The other repositories below were not archived as of October 20, 2026, but their releases are not guaranteed to stay synchronized with the built-in versions.
 
 - [Equipment Assistant (archived)](https://github.com/MadestSamurai/bd2-equipment-assistant)
 - [Fishing](https://github.com/MadestSamurai/bd2-fishing) · [Territory](https://github.com/MadestSamurai/bd2-territory)
-- [Sichuan](https://github.com/MadestSamurai/bd2-sichuan) · [Rhythm (archived)](https://github.com/MadestSamurai/bd2-rhythm) · [Apostle Defense (archived)](https://github.com/MadestSamurai/bd2-apostle-defense)
-- [SECRET VISION](https://github.com/MadestSamurai/bd2-secret-vision) · [Fiend Hunter (archived)](https://github.com/MadestSamurai/bd2-fiend-hunter) · [Infinite Gacha (archived)](https://github.com/MadestSamurai/bd2-infinite-gacha)
+- [Sichuan (archived)](https://github.com/MadestSamurai/bd2-sichuan) · [Rhythm (archived)](https://github.com/MadestSamurai/bd2-rhythm) · [Apostle Defense (archived)](https://github.com/MadestSamurai/bd2-apostle-defense)
+- [SECRET VISION (archived)](https://github.com/MadestSamurai/bd2-secret-vision) · [Fiend Hunter (archived)](https://github.com/MadestSamurai/bd2-fiend-hunter) · [Infinite Gacha (archived)](https://github.com/MadestSamurai/bd2-infinite-gacha)
 
-Equipment Assistant, Apostle Defense, Infinite Gacha, Fiend Hunter, Rhythm, MANSION RUNAWAY and Pandora are maintained under [`src/Equipment/`](src/Equipment), [`src/ApostleDefense/`](src/ApostleDefense), [`src/InfiniteGacha/`](src/InfiniteGacha), [`src/FiendHunter/`](src/FiendHunter), [`src/Rhythm/`](src/Rhythm), [`src/Mansion/`](src/Mansion) and [`src/Pandora/`](src/Pandora). The other standalone tools' integrated sources remain under [`standalone/`](standalone). All modules retain their attribution and licenses.
+Equipment Assistant, Apostle Defense, Infinite Gacha, Fiend Hunter, Rhythm, MANSION RUNAWAY and Pandora are maintained under [`src/Equipment/`](src/Equipment), [`src/ApostleDefense/`](src/ApostleDefense), [`src/InfiniteGacha/`](src/InfiniteGacha), [`src/FiendHunter/`](src/FiendHunter), [`src/Rhythm/`](src/Rhythm), [`src/Mansion/`](src/Mansion) and [`src/Pandora/`](src/Pandora). SECRET VISION and Sichuan are maintained under [`src/SecretVision/`](src/SecretVision) and [`src/Sichuan/`](src/Sichuan). The other standalone tools' integrated sources remain under [`standalone/`](standalone). All modules retain their attribution and licenses.
 
 </details>
 

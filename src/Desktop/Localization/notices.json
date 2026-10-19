@@ -1674,5 +1674,65 @@
     "zh-CN": "跑商的账号、游戏进程或供货周期已变化；未操作商店。",
     "zh-TW": "跑商的帳號、遊戲程序或供貨週期已變更；未操作商店。",
     "en-US": "The trade account, game process or stock cycle changed. The shop was left untouched."
+  },
+  "message.料理解锁数据未就绪。": {
+    "zh-CN": "料理解锁数据未就绪。",
+    "zh-TW": "料理解鎖資料未就緒。",
+    "en-US": "Recipe unlock data is not ready."
+  },
+  "message.料理解锁数据不完整。": {
+    "zh-CN": "料理解锁数据不完整。",
+    "zh-TW": "料理解鎖資料不完整。",
+    "en-US": "Recipe unlock data is incomplete."
+  },
+  "message.料理天赋数据未就绪。": {
+    "zh-CN": "料理天赋数据未就绪。",
+    "zh-TW": "料理天賦資料未就緒。",
+    "en-US": "Cooking talent data is not ready."
+  },
+  "message.料理天赋数据不完整。": {
+    "zh-CN": "料理天赋数据不完整。",
+    "zh-TW": "料理天賦資料不完整。",
+    "en-US": "Cooking talent data is incomplete."
+  },
+  "message.料理配方数据无效。": {
+    "zh-CN": "料理配方数据无效。",
+    "zh-TW": "料理配方資料無效。",
+    "en-US": "Invalid cooking recipe data."
+  },
+  "message.料理配方数据不完整。": {
+    "zh-CN": "料理配方数据不完整。",
+    "zh-TW": "料理配方資料不完整。",
+    "en-US": "Cooking recipe data is incomplete."
+  },
+  "message.料理当前不可制作，未消耗材料": {
+    "zh-CN": "料理当前不可制作，未消耗材料",
+    "zh-TW": "料理目前無法製作，未消耗材料",
+    "en-US": "This recipe is currently unavailable. No ingredients were consumed."
+  },
+  "message.按当前材料制作，成品已保留": {
+    "zh-CN": "按当前材料制作，成品已保留",
+    "zh-TW": "按目前材料製作，成品已保留",
+    "en-US": "Cooked from current ingredients; all dishes were kept."
+  },
+  "message.配方或天赋未解锁、材料不足、库存已满或天赋药需保留": {
+    "zh-CN": "配方或天赋未解锁、材料不足、库存已满或天赋药需保留",
+    "zh-TW": "配方或天賦未解鎖、材料不足、庫存已滿或天賦藥需保留",
+    "en-US": "Skipped: recipe or talent unavailable, insufficient ingredients, full storage or reserved talent pills."
+  },
+  "message.收藏商品已购完、尚未解锁或未设置收藏；已检查自定义料理": {
+    "zh-CN": "收藏商品已购完、尚未解锁或未设置收藏；已检查自定义料理",
+    "zh-TW": "收藏商品已購完、尚未解鎖或未設定收藏；已檢查自訂料理",
+    "en-US": "No favorite products available; custom cooking was checked."
+  },
+  "message.金币不足以购买当前收藏商品；未购买，已按现有材料检查自定义料理": {
+    "zh-CN": "金币不足以购买当前收藏商品；未购买，已按现有材料检查自定义料理",
+    "zh-TW": "金幣不足以購買目前收藏商品；未購買，已按現有材料檢查自訂料理",
+    "en-US": "Insufficient gold for the favorite basket. Nothing was purchased; custom cooking was checked against current ingredients."
+  },
+  "message.已砍价并购买收藏商品，按顺序检查自定义料理；未售卖，收藏保持不变": {
+    "zh-CN": "已砍价并购买收藏商品，按顺序检查自定义料理；未售卖，收藏保持不变",
+    "zh-TW": "已砍價並購買收藏商品，按順序檢查自訂料理；未出售，收藏保持不變",
+    "en-US": "Bargained and bought favorites, then checked custom recipes in order. No sales or favorite changes."
   }
 }

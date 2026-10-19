@@ -47,6 +47,7 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         try
         {
             first = last = await Observe();
+            if (w.Settings.General.FastTravel) await new DailyFieldRoute(w).PrepareWalking();
             await w.Step("GameFieldDefaultUI", operation: "square_shop_nav", reason:"使用 A* 前往广场商人");
             attempts = 1;
             await DailySquareNavigation.Wait(w,"square_shop_nav",async()=> { last=await Observe(); return DailySquareNavigation.MerchantArrived((await w.Observe()).Frame,B(last["Near"])); });
@@ -226,13 +227,15 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         await Close();
         return O(("bought", count), ("balance", balance), ("cost", cost), ("operation", op["id"]));
     }
-    private async Task<JsonObject> Cook(JsonObject row, JsonObject scope)
+    private async Task<JsonObject> Cook(JsonObject row, JsonObject scope, bool skipUnavailable = false)
     {
         if (await w.Has("CookingUI"))
             await w.Step("CookingUI", "_objBackButton", expect: "CookingSelectUI");
         await Surface("CookingSelectUI");
         await w.Step("CookingSelectUI", operation: "trade_cook_preview", value: I(row["recipe"]), expect: "CookingUI");
         var e = await Evidence();
+        if (skipUnavailable && N(R(e, "trade.cooking_ui", "_craftMaterial.MaxCraftCount")) <= 0)
+            return DailyWorkflow.Skipped("料理当前不可制作，未消耗材料");
         row = DailyTradeProof.Portion(row, Math.Min(N(row["count"]), N(R(e, "trade.cooking_ui", "_craftMaterial.MaxCraftCount"))));
         long packetLimit = N(R(e, "trade.cook_limit", "$self"));
         Require(packetLimit > 0, "Invalid native cooking packet limit");
@@ -240,7 +243,7 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         scope["count"] = Copy(row["count"]);
         await w.Step("CookingUI", operation: "trade_cook_quantity", value: I(row["count"]));
         var delta = new JsonObject(row["materials"]!.AsObject().Select(p => new KeyValuePair<string, JsonNode?>(p.Key, JsonValue.Create(-N(p.Value)))));
-        long outputCount = N(row["count"]) * N(Rows(catalog["recipes"]).Single(r => N(r["id"]) == N(row["recipe"]))["count"]);
+        long outputCount = N(row["count"]) * N((skipUnavailable ? DailyCustomCooking.Recipes(catalog) : Rows(catalog["recipes"])).Single(r => N(r["id"]) == N(row["recipe"]))["count"]);
         delta[S(row["item"])] = outputCount;
         scope["_proof"] = O(("kind", "cook"), ("packets", packets), ("count", row["count"]), ("output_count", outputCount), ("item", row["item"]), ("delta", O(("potions", -N(row["potions"])), ("items", delta))));
         var op = w.Business.Create(w.Context, "trade.cook", await Evidence(), scope, O(("ui", "CookingUI"), ("operation", "trade_cook_confirm"), ("items", new[] { N(row["recipe"]), N(row["count"]) }), ("value", row["potions"])));
@@ -348,15 +351,20 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         var job = O(("id", session), ("state", "running"), ("phase", "purchase"), ("account", w.Context["actor"]![3]),
             ("context", O(("account", w.Context["actor"]![3]), ("player", w.Context["actor"]![4]), ("server", w.Context["server"]), ("cycle", w.Context["cycle"]))));
         using var closeSession = w.Driver.OwnTradeClose(job);
-        async Task Finish()
+        async Task<JsonObject> Finish(string reason, long cost = 0, int products = 0)
         {
             // Called only with no purchase to submit or after Buy has reconciled
             // the purchase. An uncertain confirmation must never reach here.
             job["phase"] = "audit";
             await Close();
+            job["phase"] = "cooking";
+            var cooked = await CookFavorites(session);
+            job["phase"] = "audit";
+            return O(("state", products > 0 || cooked.Any(r => S(r?["state"]) == "completed") ? "completed" : "skipped"),
+                ("reason", reason), ("gold_spent", cost), ("products", products), ("cooking", cooked), ("engine", "dotnet-trade-favorites-v2"));
         }
         var rows = FavoritePurchases(native);
-        if (rows.Length == 0) { await Finish(); return DailyWorkflow.Skipped("收藏商品已购完、尚未解锁或未设置收藏"); }
+        if (rows.Length == 0) return await Finish("收藏商品已购完、尚未解锁或未设置收藏；已检查自定义料理");
         if (!B(R(evidence, "trade.bargain", "$self")))
             await Bargain(O(("trade_session", session), ("action", "bargain")));
         // The pre-bargain quote can both overcharge and incorrectly reject an
@@ -366,14 +374,45 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         native = State(evidence, "trade.native", "$self");
         Require(B(native["BargainActive"]) && B(R(evidence, "trade.bargain", "$self")), "砍价状态已变化，请重新执行跑商");
         rows = FavoritePurchases(native);
-        if (rows.Length == 0) { await Finish(); return DailyWorkflow.Skipped("收藏商品已购完、尚未解锁或未设置收藏"); }
+        if (rows.Length == 0) return await Finish("收藏商品已购完、尚未解锁或未设置收藏；已检查自定义料理");
         long cost = rows.Aggregate(0L, (sum, r) => checked(sum + N(r["count"]) * N(r["price"])));
         if (cost > N(R(evidence, "trade.currency", "Gold")))
-        { await Finish(); return DailyWorkflow.Skipped("金币不足以购买当前收藏商品；未购买，也未卖出任何物品"); }
+            return await Finish("金币不足以购买当前收藏商品；未购买，已按现有材料检查自定义料理");
         var scope = O(("trade_session", session), ("action", "existing-favorites"));
         var op = await Buy(rows, true, scope, existingFavoritesOnly: true);
-        await Finish();
-        return O(("state", "completed"), ("reason", "已砍价并购买收藏商品；未料理、未售卖，收藏保持不变"), ("operation", op["id"]), ("gold_spent", cost), ("products", rows.Length), ("engine", "dotnet-trade-favorites-v1"));
+        var result = await Finish("已砍价并购买收藏商品，按顺序检查自定义料理；未售卖，收藏保持不变", cost, rows.Length);
+        result["operation"] = Copy(op["id"]);
+        return result;
+    }
+    private async Task<JsonArray> CookFavorites(string session)
+    {
+        var results = new JsonArray();
+        foreach (long id in w.Settings.Trade.CookingRecipes)
+        {
+            long made = 0;
+            for (int batch = 0; batch < 100; batch++)
+            {
+                var evidence = await Evidence();
+                var row = DailyCustomCooking.Next(catalog, id, DailyTradeResume.Wallet(evidence), w.Settings.General.TalentPotionReserve,
+                    DailyCustomCooking.Available(catalog, evidence));
+                if (row == null) break;
+                if (!await w.Has("CookingUI") && !await w.Has("CookingSelectUI"))
+                {
+                    await w.Step("GameFieldDefaultUI", operation: "trade_menu", value: 7, expect: "QuickMenuUI");
+                    await Talent(7);
+                    await Surface("CookingSelectUI");
+                }
+                var op = await Cook(row, O(("trade_session", session), ("action", "custom-recipe:" + id + ":" + batch), ("recipe", id)), skipUnavailable: true);
+                if (S(op["state"]) == "skipped") break;
+                made += N(op["scope"]!["count"]);
+            }
+            var recipe = DailyCustomCooking.Recipes(catalog).SingleOrDefault(r => N(r["id"]) == id);
+            string name = S(DailyCustomCooking.Items(catalog).SingleOrDefault(r => N(r["id"]) == N(recipe?["output"]))?["name"]);
+            results.Add(O(("recipe", id), ("name", name), ("state", made > 0 ? "completed" : "skipped"), ("count", made),
+                ("reason", made > 0 ? "按当前材料制作，成品已保留" : "配方或天赋未解锁、材料不足、库存已满或天赋药需保留")));
+        }
+        if (w.Settings.Trade.CookingRecipes.Length > 0) await Close();
+        return results;
     }
     private async Task<JsonObject> RunCore()
     {

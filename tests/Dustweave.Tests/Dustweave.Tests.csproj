@@ -12,6 +12,8 @@
     <Compile Include="../../src/FiendHunter/shared/AttackTiming.cs;../../src/FiendHunter/shared/Control.cs;../../src/FiendHunter/shared/CombatPolicy.cs;../../src/FiendHunter/shared/ToolStorage.cs" Link="FiendHunter/%(Filename)%(Extension)" />
     <ProjectReference Include="../../src/Core/Dustweave.Core.csproj" />
     <ProjectReference Include="../../src/Rhythm/core/Dustweave.Rhythm.Core.csproj" Aliases="rhythm" />
+    <ProjectReference Include="../../src/Sichuan/core/Dustweave.Sichuan.Core.csproj" Aliases="sichuan" />
+    <ProjectReference Include="../../src/SecretVision/core/Dustweave.SecretVision.Core.csproj" Aliases="vision" />
     <ProjectReference Include="../../src/ApostleDefense/core/Dustweave.ApostleDefense.Core.csproj" Aliases="apostle" />
     <Compile Include="../../standalone/bd2-territory/shared/SaffronCycle.cs" Link="SaffronCycle.cs" />
     <Compile Include="../../standalone/bd2-territory/shared/SurplusSales.cs" Link="SurplusSales.cs" />

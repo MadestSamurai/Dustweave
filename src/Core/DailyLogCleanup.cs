@@ -130,6 +130,7 @@ public static class DailyLogCleanup
     static bool DiagnosticJson(string root, string path)
     {
         string relative = Path.GetRelativePath(root, path).Replace('\\', '/');
+        if (relative.StartsWith("tools/sichuan/diagnostics/", StringComparison.Ordinal) || relative.StartsWith("tools/secret-vision/diagnostics/", StringComparison.Ordinal)) return Path.GetExtension(path) is ".json" or ".png";
         return Path.GetExtension(path).Equals(".json", StringComparison.OrdinalIgnoreCase)
             && new[] { "suite/diagnostics/", "live/diagnostics/" }.Concat(EvidenceTrees.Select(t => t + "/")).Any(p => relative.StartsWith(p, StringComparison.Ordinal));
     }
@@ -140,7 +141,7 @@ public static class DailyLogCleanup
         var candidates=new List<DailyLogUnit>();int entriesCount=0,examined=0;
         void Report(){progress?.Report(new(entriesCount,total,examined));}
         // Never include caches, account stores, queues, exported ZIPs or transaction evidence.
-        foreach(var (tree,depth) in new[]{("",0),("suite/diagnostics",1),("live/diagnostics",1),("tools",3),("parallel-workers",2)}.Concat(EvidenceTrees.Select(t => (t,0))))
+        foreach(var (tree,depth) in new[]{("",0),("suite/diagnostics",1),("live/diagnostics",1),("tools",5),("parallel-workers",2)}.Concat(EvidenceTrees.Select(t => (t,0))))
         {
             string folder=Path.Combine(root,tree);
             if(!Directory.Exists(folder) || tree.Length>0 && !Safe(root,folder)) continue;

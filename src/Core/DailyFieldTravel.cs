@@ -408,7 +408,7 @@ public sealed partial class DailyFieldRoute
         {
             await FieldReady();
             // Research can expire while visiting the preceding drops on a large map.
-            await ProtectWeeklyMovement();
+            if (ProtectWeeklyTravel) await Protection(await Evidence(), walking: true, speed: false);
             await Skill(6);
             var e = await Evidence();
             var drops = Drops(e);
@@ -422,6 +422,16 @@ public sealed partial class DailyFieldRoute
             var target = candidates.OrderBy(r => new[] { "x", "z" }.Sum(axis => Math.Pow(DailyRegionRouter.D(r["transform.position." + axis]) - DailyRegionRouter.D(origin["ὪὨὯὢὫὮὨὩὮὡὬ.transform.position." + axis]), 2))).First();
             try
             {
+                if (await PrepareWalking(e))
+                {
+                    var updated = await Evidence();
+                    Identity(e, updated);
+                    if (N(Map(e)["id"]) != N(Map(updated)["id"])) throw new DailyCollectionLocationChanged();
+                    e = updated;
+                    var freshTarget = Drops(e).SingleOrDefault(r => N(r[ObjectPath]) == N(target[ObjectPath]));
+                    if (freshTarget == null) continue;
+                    target = freshTarget;
+                }
                 var op = await WalkPickup(e, target);
                 result.Add(O(("state", "completed"), ("id", op["id"]), ("result", op["result"])));
             }

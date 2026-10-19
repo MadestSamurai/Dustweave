@@ -1,901 +1,967 @@
 [
-{
-  "Version": "1.4.9",
-  "Date": "2026-10-19",
-  "Notes": {
-    "zh-CN": [
-      "音游迁入织尘，统一窗口样式、语言、连接加载与运行互斥；设置和日志纳入主程序管理，原独立仓库归档。",
-      "修复卡带导航因账号状态短暂未刷新而中断合并周任务的问题：确认操作尚未执行后，重新核对账号和当前页面，再有限重试。",
-      "诊断导出补充操作被拒绝时的实际回执和现场，方便区分状态刷新延迟与其他连接问题。"
-    ],
-    "zh-TW": [
-      "音遊遷入織塵，統一視窗樣式、語言、連線載入與執行互斥；設定和日誌納入主程式管理，原獨立倉庫封存。",
-      "修復卡帶導航因帳號狀態短暫未更新而中斷合併週任務的問題：確認操作尚未執行後，重新核對帳號和目前頁面，再有限重試。",
-      "診斷匯出補充操作遭拒絕時的實際回執和現場，方便區分狀態更新延遲與其他連線問題。"
-    ],
-    "en-US": [
-      "Rhythm moves into Dustweave with shared styling, language, window-first connection loading, control ownership and storage. The standalone repository is archived.",
-      "Recover cartridge navigation from temporary account-state observation gaps. After confirming that no input ran, recheck the account and current page before a bounded retry.",
-      "Diagnostic exports now preserve the native rejection receipt and observed state to help distinguish delayed state updates from other connection issues."
-    ]
-  }
-},
-{
-  "Version": "1.4.8",
-  "Date": "2026-10-19",
-  "Notes": {
-    "zh-CN": [
-      "周收集在捕获次数用尽时暂缓仅剩捕获目标的地图，继续其他目标；修复步行拾取隐身校验、停滞恢复及地图切换异常。不可达点有限重试后跳过，补跑仍遵循步行收集设置。",
-      "农田未载入时先接近再核对，确认收割条件前不使用料理；修复连连看停在主菜单及跑商误入末日之书大厅的恢复。",
-      "减少组件准备时无关方法的重复计算，复用有效缓存并记录准备耗时。",
-      "日常显示当前细部动作和地图进度，长环节按工作量计入总进度；单账号跟随当前步骤，多账号在对应账号下显示当前环节和动作。",
-      "若 OTA 失败，请从 GitHub Releases 或固定网盘目录手动下载完整包。"
-    ],
-    "zh-TW": [
-      "週收集在捕獲次數用盡時暫緩僅剩捕獲目標的地圖，繼續其他目標；修復步行拾取隱身校驗、停滯恢復及地圖切換異常。不可達點有限重試後跳過，補跑仍遵循步行收集設定。",
-      "農田未載入時先接近再核對，確認收割條件前不使用料理；修復連連看停在主選單及跑商誤入末日之書大廳的恢復。",
-      "減少元件準備時無關方法的重複計算，重用有效快取並記錄準備耗時。",
-      "日常顯示目前細部動作和地圖進度，長環節按工作量計入總進度；單帳號跟隨目前步驟，多帳號在對應帳號下顯示目前環節與動作。",
-      "若 OTA 失敗，請從 GitHub Releases 或固定網盤目錄手動下載完整包。"
-    ],
-    "en-US": [
-      "Weekly collection defers capture-only maps after the daily limit and continues other targets. Fix stealth checks, stalled walking pickups and map-transition errors. Unreachable points receive bounded retries; reruns respect the walking setting.",
-      "Approach unloaded farm fields before checking harvest conditions, without consuming food first. Recover Sichuan entry and accidental Book of Apocalypse lobby entry during merchant travel.",
-      "Reduce unnecessary component preparation work, reuse valid caches and record preparation timing.",
-      "Show current actions and map counts with workload-aware progress. Follow active single-account steps and show the stage and action for each account in batch runs.",
-      "If OTA fails, download the complete package from GitHub Releases or the fixed mirror folder."
-    ]
-  }
-},
-
-{
-  "Version": "1.4.7",
-  "Date": "2026-10-19",
-  "Notes": {
-    "zh-CN": [
-      "恶魔猎人新增泰瑞丝、格兰希特与难度选择；修复贴身不攻击，调整突进预判、防御时机及治疗决策。本轮两名角色均已实测打通两种怪物的超困难，策略优先通关，不追求局内任务。",
-      "修复 Sandboxie 已安装但驱动不可用时阻止软件启动的问题；普通启动和普通日常不依赖沙盒，隔离功能不可用时单独提示。",
-      "从 1.4.7 起采用长期 OTA 基线：不再因相差十个版本停止更新；同结构、同运行库的直接差分不超过 10 MB 时可自动下载，超过上限或文件不匹配时提示手动更新。",
-      "此次继续为最近十个兼容旧版本提供直接差分。若 OTA 失败，请从 GitHub Releases 或固定网盘目录手动下载完整软件包。"
-    ],
-    "zh-TW": [
-      "惡魔獵人新增泰瑞絲、格蘭希特與難度選擇；修復貼身不攻擊，調整突進預判、防禦時機及治療決策。本輪兩名角色均已實測打通兩種怪物的超困難，策略優先通關，不追求局內任務。",
-      "修復 Sandboxie 已安裝但驅動程式不可用時阻止軟體啟動的問題；一般啟動與一般日常不依賴沙盒，隔離功能不可用時單獨提示。",
-      "從 1.4.7 起採用長期 OTA 基線：不再因相差十個版本停止更新；相同結構及執行階段的直接差分不超過 10 MB 時可自動下載，超過上限或檔案不符時提示手動更新。",
-      "此次繼續為最近十個相容舊版本提供直接差分。若 OTA 失敗，請從 GitHub Releases 或固定網盤目錄手動下載完整軟體包。"
-    ],
-    "en-US": [
-      "Fiend Hunter adds Teresse, Granhildr and difficulty selection. Fix close-range inactivity and improve dash prediction, defensive timing and damage-aware healing. Both characters cleared both monsters on Very Hard in live trials; the strategy prioritizes clears over in-round missions.",
-      "An installed but unavailable Sandboxie driver no longer blocks application startup. Normal launch and dailies remain independent; isolation failures are reported only for isolation operations.",
-      "Version 1.4.7 starts a long-term OTA baseline. Matching-layout and matching-runtime direct patches up to 10 MB remain eligible beyond ten releases. Larger updates or changed local files require a manual download.",
-      "This release still provides direct patches for the latest ten compatible older releases. If OTA fails, download the complete package from GitHub Releases or the fixed mirror folder."
-    ]
-  }
-},
-
-{
-  "Version": "1.4.6",
-  "Date": "2026-10-19",
-  "Notes": {
-    "zh-CN": [
-      "修复周 NPC 任务被游戏指引带往狩猎场的问题：按剩余目标规划普通地图，阻止旧指引恢复；目标不足仅暂缓对应任务。",
-      "恶魔猎人新增巴萨卡、炎虎选择，分别调整攻击预判和闪避；两种怪物均完成一次实机单人超困难通关。",
-      "恶魔猎人迁入主项目，统一主题、语言、连接加载和互斥；日志与缓存由织尘管理，原仓库已归档。",
-      "工具列表统一为一项一行。连接或选择怪物不会自动开战，通关后停止输入并保留结算。",
-      "1.3.14–1.3.17、1.4.0–1.4.5 支持直接差分更新；若 OTA 失败，请手动下载完整软件包。"
-    ],
-    "zh-TW": [
-      "修復週 NPC 任務被遊戲指引帶往狩獵場的問題：依剩餘目標規劃一般地圖，阻止舊指引恢復；目標不足僅暫緩對應任務。",
-      "惡魔獵人新增巴薩卡、炎虎選擇，分別調整攻擊預判與閃避；兩種怪物均完成一次實機單人超困難通關。",
-      "惡魔獵人遷入主專案，統一主題、語言、連線載入與互斥；日誌及快取由織塵管理，原儲存庫已封存。",
-      "工具清單統一為一項一列。連線或選擇怪物不會自動開戰，通關後停止輸入並保留結算。",
-      "1.3.14–1.3.17、1.4.0–1.4.5 支援直接差分更新；若 OTA 失敗，請手動下載完整軟體包。"
-    ],
-    "en-US": [
-      "Keep weekly NPC kill quests on planned ordinary maps, prevent stale hunting-ground guides from resuming, and defer only the affected task when targets are insufficient.",
-      "Choose Berserker or Fiery Tiger in Fiend Hunter, with separate attack prediction and dodge timing. Each monster has one verified live solo Very Hard clear.",
-      "Fiend Hunter moves into the main project with shared themes, language, loading and connection locks. Dustweave manages its logs and cache; the former repository is archived.",
-      "Every tool now occupies one row. Connecting or selecting a monster does not start combat; victory stops input and preserves settlement.",
-      "Direct patches cover 1.3.14–1.3.17 and 1.4.0–1.4.5. If OTA fails, download the full package manually."
-    ]
-  }
-},
-{
-  "Version": "1.4.5",
-  "Date": "2026-10-19",
-  "Notes": {
-    "zh-CN": [
-      "修复断线或重启游戏后原队列无法接续；核对同账号、角色及周期后，从当前游戏进度恢复。",
-      "修复周收集在受 NPC 任务保护的地图间反复往返；手动停止后也可导出路线诊断。",
-      "新增今日吸收地图明细，显示卡带、地图和时间，并注明 NPC 任务途中顺路吸收；普通与隔离执行合并记录。",
-      "按实际步行路线判断隐身：传送点直达安全区、准备压制和已确认无敌人的路段不额外使用。",
-      "不再接取狩猎场限定周 NPC 任务，咨询统一使用普通对话，移除没有内容的设置展开项。",
-      "装备助手、使徒防守与无限抽抽乐迁入主项目维护，统一加载、连接互斥与主题，并更新工具说明。",
-      "1.3.13–1.3.17、1.4.0–1.4.4 支持直接差分更新；若 OTA 失败，请手动下载完整软件包。"
-    ],
-    "zh-TW": [
-      "修復斷線或重新啟動遊戲後原佇列無法接續；核對同帳號、角色及週期後，依目前遊戲進度恢復。",
-      "修復每週收集於受 NPC 任務保護的地圖間反覆往返；手動停止後亦可匯出路線診斷。",
-      "新增今日吸收地圖明細，顯示卡帶、地圖與時間，註明 NPC 任務途中順路吸收；一般與隔離執行合併記錄。",
-      "依實際步行路線判斷藏身：傳送點直達安全區、準備壓制及已確認沒有敵人的路段不額外使用。",
-      "不再接取狩獵場限定週 NPC 任務，諮詢統一使用一般對話，移除沒有內容的設定展開項目。",
-      "裝備助手、使徒防守與無限抽抽樂遷入主專案維護，統一載入、連線互斥與主題，並更新工具說明。",
-      "1.3.13–1.3.17、1.4.0–1.4.4 支援直接差分更新；若 OTA 失敗，請手動下載完整軟體包。"
-    ],
-    "en-US": [
-      "Resume interrupted queues after reconnecting or restarting the game, verifying the account, character and reset period against current game progress.",
-      "Fix repeated travel between NPC-protected collection maps. Route diagnostics can also be exported after a manual stop.",
-      "View today's confirmed absorption maps and times, including collection along NPC routes. Ordinary and isolated runs merge completed records.",
-      "Use stealth for actual risky walking segments, without extra casts for direct waypoint travel to safety, suppression or confirmed clear routes.",
-      "Stop accepting hunting-ground-only NPC quests, use normal friendship conversations and remove empty settings expanders.",
-      "Equipment Assistant, Apostle Defense and Infinite Gacha move into the main project with shared loading, connection locks, themes and updated guides.",
-      "Direct patches cover 1.3.13–1.3.17 and 1.4.0–1.4.4. If OTA fails, download the full package manually."
-    ]
-  }
-},
-{
-  "Version": "1.4.4",
-  "Date": "2026-10-18",
-  "Notes": {
-    "zh-CN": [
-      "修复活动自动战斗结束后停在胜利画面的问题，识别活动专用返回按钮；恢复时不重复消耗战斗次数。",
-      "救赎之塔新增固定次数扫荡模式，可忽略成长是否已满，仍遵守每日钥匙保留下限，不使用付费次数。",
-      "新增保留血之鸡尾酒邮件选项，默认关闭；开启后整封邮件始终留待手动领取，活动补领也遵守。",
-      "修复周收集遇到天赋提示动画或战斗技能演出时中断的问题。",
-      "1.3.12–1.3.17、1.4.0–1.4.3 支持直接差分更新；若 OTA 失败，请手动下载完整软件包。"
-    ],
-    "zh-TW": [
-      "修復活動自動戰鬥結束後停在勝利畫面的問題，辨識活動專用返回按鈕；恢復時不重複消耗戰鬥次數。",
-      "救贖之塔新增固定次數掃蕩模式，可忽略成長是否已滿，仍遵守每日鑰匙保留下限，不使用付費次數。",
-      "新增保留血之雞尾酒郵件選項，預設關閉；開啟後整封郵件始終留待手動領取，活動補領亦遵守。",
-      "修復每週收集遇到天賦提示動畫或戰鬥技能演出時中斷的問題。",
-      "1.3.12–1.3.17、1.4.0–1.4.3 支援直接差分更新；若 OTA 失敗，請手動下載完整軟體包。"
-    ],
-    "en-US": [
-      "Fix event auto-battles waiting on the final victory screen. Recognize the event return button and recover without replaying consumed battles.",
-      "Add optional fixed-count Salvation sweeps regardless of growth completion, while respecting daily-key reserves and excluding paid attempts.",
-      "Add optional Blood Cocktail mail retention, off by default. Entire matching messages remain for manual collection, including activity mailbox visits.",
-      "Fix weekly collection interruptions during talent notices and battle skill animations.",
-      "Direct patches cover 1.3.12–1.3.17 and 1.4.0–1.4.3. If OTA fails, download the full package manually."
-    ]
-  }
-},
-{
-  "Version": "1.4.3",
-  "Date": "2026-10-17",
-  "Notes": {
-    "zh-CN": [
-      "修复圣石库存栏折叠时读取失败：按最少库存选择时自动展开并等待完整数据；指定属性不再依赖五种库存。",
-      "日常装备分解支持分别设置 N、R、SR、UR 的强化等级；旧设置自动沿用，锁定、收藏和穿戴保护保持生效。",
-      "潘多拉挑战根据游戏最终结算识别 20 分钟完成，成功后停止并保留结算画面。",
-      "统一内置工具连接处理：短暂缺少状态时等待恢复，确认游戏退出、账号变化或连接被接管时停止操作。",
-      "进一步降低日志与缓存占用：精简记录格式、在 NTFS 上分批压缩适用的旧文件，按实际磁盘占用统计，并清理过期崩溃转储。",
-      "1.3.11–1.3.17、1.4.0–1.4.2 支持直接差分更新；若 OTA 失败，请下载完整包并解压到新目录，保留 app 文件夹。"
-    ],
-    "zh-TW": [
-      "修復聖石庫存欄摺疊時讀取失敗：依最少庫存選擇時自動展開並等待完整資料；指定屬性不再依賴五種庫存。",
-      "日常裝備分解可分別設定 N、R、SR、UR 的強化等級；舊設定自動沿用，鎖定、收藏及穿戴保護仍然有效。",
-      "潘多拉挑戰依遊戲最終結算辨識 20 分鐘完成，成功後停止並保留結算畫面。",
-      "統一內建工具連線處理：短暫缺少狀態時等待恢復，確認遊戲退出、帳號變更或連線被接管時停止操作。",
-      "進一步降低日誌與快取佔用：精簡記錄格式、於 NTFS 分批壓縮適用的舊檔案，依實際磁碟佔用統計，並清理過期崩潰傾印。",
-      "1.3.11–1.3.17、1.4.0–1.4.2 支援直接差分更新；若 OTA 失敗，請下載完整包並解壓至新目錄，保留 app 資料夾。"
-    ],
-    "en-US": [
-      "Fix Holy Stone reads when the inventory panel is collapsed. Least-owned selection expands it and waits for all balances; a fixed element no longer needs inventory comparison.",
-      "Set separate pre-dismantling enhancement levels for N, R, SR and UR equipment. Existing settings carry over, with locked, kept and equipped items still protected.",
-      "Recognize Pandora's 20-minute challenge completion from the game's final result, stop automation and keep the result screen visible.",
-      "Built-in tools wait through temporary missing observations and stop commands on confirmed game exit, account change or connection takeover.",
-      "Reduce storage with compact records, bounded NTFS compression of eligible older files, actual on-disk accounting and expired crash-dump cleanup.",
-      "Direct patches cover 1.3.11–1.3.17 and 1.4.0–1.4.2. If OTA fails, extract the full package into a new folder and keep the app folder."
-    ]
-  }
-},
-{
-  "Version": "1.4.2",
-  "Date": "2026-10-17",
-  "Notes": {
-    "zh-CN": [
-      "空间统计覆盖隔离账号、迁移后的缓存与旧运行库解压目录，区分总占用和可清理空间。",
-      "补齐隔离队列的日志维护，清理过期组件和构建临时文件；保护账号、游戏文件、正在使用的目录及待恢复记录。",
-      "减少空间扫描重复遍历和大型日志读取；已完成的旧回执保留结果摘要。",
-      "吸收次数耗尽但还有地图未吸收时等待次日；只有全部地图吸收完成后才继续剩余压制。周 NPC 任务与偷窃独立继续。",
-      "1.3.10–1.3.17、1.4.0 和 1.4.1 支持直接差分更新；若 OTA 失败，请下载完整包并解压到新目录，保留 app 文件夹。"
-    ],
-    "zh-TW": [
-      "空間統計涵蓋隔離帳號、遷移後的快取與舊執行階段解壓目錄，區分總佔用與可清理空間。",
-      "補齊隔離佇列的日誌維護，清理過期元件與建置暫存；保護帳號、遊戲檔案、使用中的目錄及待恢復記錄。",
-      "減少空間掃描重複遍歷及大型日誌讀取；已完成的舊回執保留結果摘要。",
-      "吸收次數耗盡但仍有地圖未吸收時等待次日；僅在全部地圖吸收完成後繼續剩餘壓制。週 NPC 任務與偷竊獨立繼續。",
-      "1.3.10–1.3.17、1.4.0 和 1.4.1 支援直接差分更新；若 OTA 失敗，請下載完整包並解壓至新目錄，保留 app 資料夾。"
-    ],
-    "en-US": [
-      "Storage totals include sandbox accounts, relocated caches and obsolete runtime extraction folders, with reclaimable space shown separately.",
-      "Maintain sandbox logs and remove expired components and build scratch files while protecting accounts, game files, active directories and recovery records.",
-      "Reduce repeated scans and large log reads; retain result summaries for completed old receipts.",
-      "When absorption runs out with weekly drops remaining, wait until the next day. Continue suppression only after all weekly absorption targets are complete. NPC tasks and theft remain independent.",
-      "Direct patches cover 1.3.10–1.3.17, 1.4.0 and 1.4.1. If OTA fails, extract the full package into a new folder and keep the app folder."
-    ]
-  }
-},
-{
-  "Version": "1.4.1",
-  "Date": "2026-10-17",
-  "Notes": {
-    "zh-CN": [
-      "潘多拉新增角色选择，切换角色在下一局生效；移除旧的满装备站定开关，采用新的生存决策。",
-      "挑战模式优化武器与辅助配对、BOSS 冲刺和跳跃避让、回血与眩晕使用；15 分钟后优先生存，被困墙角时没有安全退路则站定。",
-      "挑战策略已在一次实测中坚持到 20 分钟；不同角色、养成与随机局的整体胜率仍待验证。",
-      "修复短暂连接读取间隙被误判为账号变化；潘多拉等待新数据恢复后继续，真实账号或游戏进程变化仍会停止操作。",
-      "无法解密的旧账号可以二次确认后删除，无需先重新登录；删除前会核对记录是否已变化。",
-      "1.3.9–1.3.17 和 1.4.0 支持直接差分更新；若 OTA 失败，请下载完整包并解压到新目录，保留 app 文件夹。"
-    ],
-    "zh-TW": [
-      "潘多拉新增角色選擇，切換角色於下一局生效；移除舊的滿裝備站定開關，採用新的生存決策。",
-      "挑戰模式優化武器與輔助配對、BOSS 衝刺和跳躍閃避、回血與暈眩使用；15 分鐘後優先生存，困於牆角且沒有安全退路時站定。",
-      "挑戰策略已在一次實測中堅持至 20 分鐘；不同角色、養成與隨機局的整體勝率仍待驗證。",
-      "修復短暫連線讀取間隙被誤判為帳號變更；潘多拉等待新資料恢復後繼續，真正的帳號或遊戲程序變更仍會停止操作。",
-      "無法解密的舊帳號可經二次確認後刪除，無需先重新登入；刪除前會核對記錄是否已變更。",
-      "1.3.9–1.3.17 和 1.4.0 支援直接差分更新；若 OTA 失敗，請下載完整包並解壓至新目錄，保留 app 資料夾。"
-    ],
-    "en-US": [
-      "Choose a Pandora character for the next round. The new survival decisions replace the old max-equipment standing option.",
-      "Challenge mode improves weapon/support pairing, boss dash and jump avoidance, healing and stun use. After 15 minutes, survival takes priority; hold position when cornered without a safe escape.",
-      "One live challenge trial reached 20 minutes. Overall success rates across characters, upgrades and random runs remain unverified.",
-      "Fix transient connection-read gaps being mistaken for account changes. Pandora waits for fresh data and resumes; actual account or game-process changes still stop commands.",
-      "Unreadable saved accounts can be deleted after confirmation without signing in again. Deletion checks that the saved record has not changed.",
-      "Direct patches cover 1.3.9–1.3.17 and 1.4.0. If OTA fails, extract the full package into a new folder and keep the app folder."
-    ]
-  }
-},
-{
-  "Version": "1.4.0",
-  "Date": "2026-10-16",
-  "Notes": {
-    "zh-CN": [
-      "日常结束后汇总抽取、未完成事项及活动战斗回退情况，支持 Windows 通知、弹窗和声音提醒。",
-      "抽取详情显示五星服装与五星角色 UR 专武；地图详情优先使用卡带和地图名称，统一详情窗口主题。",
-      "修复含暂缓事项的队列自然结束后未按设置退出游戏；暂停、停止及待核对状态保留游戏。",
-      "藏红花流程在等土豆成熟时采矿砍树，成熟后优先收割，完成土豆轮数后收完剩余资源。",
-      "恢复单账号隔离启动及用途说明，隔离日志和运行缓存；重装系统后重新登录同账号可修复原凭据槽位。",
-      "MANSION RUNAWAY 和装备助手先显示窗口及可取消的加载动画，再连接；增大 5 药 N 装选项。",
-      "更新缓存最多保留 2 个版本、最长 7 天，保护正在更新和待恢复的记录。",
-      "修复只购买收藏依赖普通跑商历史文件导致中断，旧错误记录不再阻挡新一轮执行。",
-      "1.3.8–1.3.17 支持直接差分更新；若 OTA 失败，请下载完整包并解压到新目录，保留 app 文件夹。"
-    ],
-    "zh-TW": [
-      "日常結束後彙整抽取、未完成事項及活動戰鬥回退情況，支援 Windows 通知、彈窗和聲音提醒。",
-      "抽取詳情顯示五星服裝與五星角色 UR 專武；地圖詳情優先使用卡帶和地圖名稱，統一詳情視窗主題。",
-      "修復含暫緩事項的佇列自然結束後未依設定退出遊戲；暫停、停止及待核對狀態保留遊戲。",
-      "藏紅花流程在等馬鈴薯成熟時採礦伐木，成熟後優先收割，完成輪數後收完剩餘資源。",
-      "恢復單帳號隔離啟動及用途說明，隔離日誌和執行快取；重灌系統後重新登入同帳號可修復原憑據欄位。",
-      "MANSION RUNAWAY 和裝備助手先顯示視窗及可取消的載入動畫，再連線；加大 5 藥 N 裝選項。",
-      "更新快取最多保留 2 個版本、最長 7 天，保護正在更新和待恢復的記錄。",
-      "修復只購買收藏依賴普通跑商歷史檔案而中斷，舊錯誤記錄不再阻擋新一輪執行。",
-      "1.3.8–1.3.17 支援直接差分更新；若 OTA 失敗，請下載完整包並解壓至新目錄，保留 app 資料夾。"
-    ],
-    "en-US": [
-      "Completion reports highlight draws, unfinished tasks and event-battle fallback sweeps, with Windows, popup and sound notifications.",
-      "Draw details identify five-star costumes and five-star character UR weapons. Map details use cartridge/map names and dialogs share consistent themes.",
-      "Fix optional game exit for naturally finished queues with deferred tasks. Paused, stopped or unresolved queues keep the game open.",
-      "Gather wood and ore while potatoes grow, prioritize mature fields, then finish remaining resources after the configured rounds.",
-      "Restore explained single-account isolated launch, isolate logs and runtime caches, and repair unreadable saved slots after signing back into the same account.",
-      "MANSION RUNAWAY and Equipment Assistant show cancellable loading before connecting. Enlarge the 5-potion N-equipment option.",
-      "Keep update caches for at most two versions and seven days, protecting active updates and unresolved recovery.",
-      "Fix favorites-only trade requiring a normal trade history file. Old errors no longer block fresh runs.",
-      "Direct patches cover 1.3.8–1.3.17. If OTA fails, extract the full package into a new folder and keep the app folder."
-    ]
-  }
-},
-{
-  "Version": "1.3.17",
-  "Date": "2026-10-16",
-  "Notes": {
-    "zh-CN": [
-      "空间管理显示完整数据和缓存占用，新增旧缓存及已结束更新备份清理。",
-      "支持校验后迁移缓存到其他磁盘，保留账号、设置与恢复记录的位置。",
-      "可用空间不足 1 GB 时显示清理和迁移建议；今日忽略按本机早上 8 点刷新，重启后仍有效。",
-      "空间检查与统计在后台按需执行，不因提醒中断日常。",
-      "若 OTA 失败，请下载完整包并解压到新目录，保留 app 文件夹。"
-    ],
-    "zh-TW": [
-      "空間管理顯示完整資料和快取佔用，新增舊快取及已結束更新備份清理。",
-      "支援驗證後將快取遷移至其他磁碟，保留帳號、設定與恢復記錄的位置。",
-      "可用空間不足 1 GB 時顯示清理和遷移建議；今日忽略按本機早上 8 點重設，重新啟動後仍有效。",
-      "空間檢查與統計在背景按需執行，不因提醒中斷日常。",
-      "若 OTA 失敗，請下載完整包並解壓至新目錄，保留 app 資料夾。"
-    ],
-    "en-US": [
-      "Storage management shows complete data/cache usage and cleans obsolete cache and completed update backups.",
-      "Relocate verified cache to another drive while preserving account, settings and recovery locations.",
-      "Below 1 GB free, receive cleanup and migration suggestions. Ignore today survives restarts until the next local 08:00.",
-      "Storage checks run in the background as needed; reminders do not interrupt automation.",
-      "If OTA fails, extract the full package into a new folder and keep the app folder."
-    ]
-  }
-},
-{
-  "Version": "1.3.16",
-  "Date": "2026-10-15",
-  "Notes": {
-    "zh-CN": [
-      "跳过、暂缓和失败显示具体原因及下一步，改善旧记录的提示。",
-      "合并同账号同周期的地图进度，避免未执行或较旧的记录覆盖已完成结果。",
-      "使徒防守保留独立窗口，先显示界面和加载状态再连接，统一主题、语言与日志；策略不变。",
-      "内置工具连接、运行和收尾统一互斥；空闲窗口不占用日常，暂停、设置与关闭保持可用。",
-      "若 OTA 失败，请下载完整包并解压到新目录，保留 app 文件夹。"
-    ],
-    "zh-TW": [
-      "略過、暫緩和失敗顯示具體原因及下一步，改善舊記錄的提示。",
-      "合併同帳號同週期的地圖進度，避免未執行或較舊的記錄覆蓋已完成結果。",
-      "使徒防守保留獨立視窗，先顯示介面和載入狀態再連線，統一主題、語言與日誌；策略不變。",
-      "內建工具連線、執行和收尾統一互斥；閒置視窗不占用日常，暫停、設定與關閉保持可用。",
-      "若 OTA 失敗，請下載完整包並解壓至新目錄，保留 app 資料夾。"
-    ],
-    "en-US": [
-      "Skipped, deferred and failed tasks show relevant reasons and next actions, including older records.",
-      "Map progress merges across execution modes without unstarted or older records replacing completed results.",
-      "Apostle Defense keeps a separate window, opens before connecting, and shares themes, language and diagnostics. Its strategy is unchanged.",
-      "Hosted tools share exclusive control during connection, execution and settlement. Idle windows release control; stop, settings and close remain available.",
-      "If OTA fails, extract the full package into a new folder and keep the app folder."
-    ]
-  }
-},
-{
-  "Version": "1.3.15",
-  "Date": "2026-10-15",
-  "Notes": {
-    "zh-CN": [
-      "内置装备助手自动读取库存并减少重复准备；主按钮依次完成计算规划、确认运行。",
-      "装备助手统一主题、弹窗与筛选，日志纳入织尘诊断和空间管理。",
-      "空闲时自动迁移旧搓粉日志，按保留期限清除过期日志和空目录；保留未完成批次。",
-      "修正当前活动卡带 4、5 的周收集地图；修复运行期间深色设置分类条变白。",
-      "若 OTA 失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
-    ],
-    "zh-TW": [
-      "內建裝備助手自動讀取庫存並減少重複準備；主按鈕依序完成計算規劃、確認執行。",
-      "裝備助手統一主題、對話框與篩選，日誌納入織塵診斷和空間管理。",
-      "閒置時自動遷移舊搓粉日誌，依保留期限清除過期日誌和空目錄；保留未完成批次。",
-      "修正目前活動卡帶 4、5 的每週收集地圖；修復執行期間深色設定分類列變白。",
-      "若 OTA 失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
-    ],
-    "en-US": [
-      "Equipment opens with automatic inventory loading and reuses compatible preparation. One primary action progresses from planning to confirmed execution.",
-      "Equipment uses shared themes, dialogs and filters. Its logs join Dustweave diagnostics and retention.",
-      "Idle maintenance imports old equipment logs and removes expired logs and empty folders, preserving pending batches.",
-      "Corrects weekly collection for current event cartridges 4 and 5 and fixes the white settings strip during dark-mode automation.",
-      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
-    ]
-  }
-},
-{
-  "Version": "1.3.14",
-  "Date": "2026-10-15",
-  "Notes": {
-    "zh-CN": [
-      "藏红花取消收割前巡田，直接抵达首个收割位置；三种料理已生效时可恢复遗漏回调，不重复消耗。",
-      "活动扫荡和自动战斗确认窗消失后，仅在确认未提交、关卡与次数未变化时有限重开。",
-      "潘多拉优化 BOSS 距离、退路和转弯，并改进道具与主动技能时机；本次为离线验证。",
-      "诊断导出优先保留各类近期记录，避免大量旧查询挤掉活动交易现场。",
-      "若 OTA 失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
-    ],
-    "zh-TW": [
-      "藏紅花取消收割前巡田，直接抵達首個收割位置；三種料理已生效時可恢復遺漏回呼，不重複消耗。",
-      "活動掃蕩和自動戰鬥確認視窗消失後，僅在確認未提交、關卡與次數未變化時有限重開。",
-      "潘多拉最佳化 BOSS 距離、退路和轉彎，並改善道具與主動技能時機；本次為離線驗證。",
-      "診斷匯出優先保留各類近期紀錄，避免大量舊查詢擠掉活動交易現場。",
-      "若 OTA 失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
-    ],
-    "en-US": [
-      "Saffron goes directly to the first harvest position. Confirmed food effects recover missed callbacks without consuming food again.",
-      "Lost event previews reopen only when confirmation was not submitted and the stage and AP remain unchanged.",
-      "Improves Pandora boss spacing, escape routes, turns, pickups and skill timing. These changes have offline validation only.",
-      "Diagnostic exports retain recent evidence across categories before bulk historical queries.",
-      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
-    ]
-  }
-},
-{
-  "Version": "1.3.13",
-  "Date": "2026-10-15",
-  "Notes": {
-    "zh-CN": [
-      "普通启动与隔离多开共享同账号日常结果和周收集地图进度，保留较新结果，按游戏周期重置。",
-      "周收集只补查缺失或未完成的地图，不再因地图范围更新而重置整项完成记录。",
-      "吸收次数用完后继续可执行的压制，暂缓剩余物品，不自动开启步行收集。",
-      "修复沙盒专属目录与默认目录并存时的启动、登录信息回收和绑定修复误报。",
-      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
-    ],
-    "zh-TW": [
-      "普通啟動與隔離多開共用同帳號日常結果和每週收集地圖進度，保留較新結果，依遊戲週期重置。",
-      "每週收集只補查缺失或未完成的地圖，不再因地圖範圍更新而重置整項完成紀錄。",
-      "吸收次數用完後繼續可執行的壓制，暫緩剩餘物品，不自動開啟步行收集。",
-      "修復沙盒專屬目錄與預設目錄並存時的啟動、登入資訊回收和綁定修復誤報。",
-      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
-    ],
-    "en-US": [
-      "Shares validated account results and weekly map progress between ordinary and sandbox runs, retaining newer results and respecting game resets.",
-      "Collection rechecks cover missing or unfinished areas without resetting the whole completed stage after catalog updates.",
-      "Continues available suppression when absorption runs out, deferring remaining drops without enabling walking collection.",
-      "Fixes false sandbox directory mismatches during startup, sign-in recovery and binding repair when a per-box path overrides a global default.",
-      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
-    ]
-  }
-},
-{
-  "Version": "1.3.12",
-  "Date": "2026-10-15",
-  "Notes": {
-    "zh-CN": [
-      "活动扫荡一次设置最大可用次数；新增默认关闭的“日常完成后退出游戏”。",
-      "补齐活动卡带 3、4、5 的周收集和压制；活动卡带 2 在非安全区优先使用可用藏身。",
-      "修复镜中汇总与段位窗口的结算衔接，以及救赎之塔首次进入失败。",
-      "修复砍价预览遮挡商店时的跑商中断，避免重复扣药，补充精简报价诊断。",
-      "移除魔兽快速战斗环节，旧预设和队列保留其他任务。",
-      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
-    ],
-    "zh-TW": [
-      "活動掃蕩一次設定最大可用次數；新增預設關閉的「日常完成後退出遊戲」。",
-      "補齊活動卡帶 3、4、5 的每週收集和壓制；活動卡帶 2 在非安全區優先使用可用藏身。",
-      "修復鏡中彙總與段位視窗的結算銜接，以及救贖之塔首次進入失敗。",
-      "修復砍價預覽遮擋商店時的跑商中斷，避免重複扣藥，補充精簡報價診斷。",
-      "移除魔獸快速戰鬥環節，舊預設和佇列保留其他任務。",
-      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
-    ],
-    "en-US": [
-      "Event sweeps set the maximum free batch in one step. Adds opt-in game exit after daily completion.",
-      "Completes weekly collection and suppression coverage for event cartridges 3–5; cartridge 2 uses available stealth outside safe areas.",
-      "Fixes overlapping Mirror result/rank windows and first-entry failures for Tower of Salvation.",
-      "Fixes trading interrupted by bargain previews, avoids duplicate pill spending and adds compact shop diagnostics.",
-      "Removes Fiend Hunt quick battles while retaining other tasks in existing presets and queues.",
-      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
-    ]
-  }
-},
-{
-  "Version": "1.3.11",
-  "Date": "2026-10-15",
-  "Notes": {
-    "zh-CN": [
-      "修复亲密度咨询升级礼物延迟弹出导致中断，等待奖励展示结束后再继续咨询。",
-      "可接续旧版遗留的咨询礼物弹窗，不重复消耗已完成的免费次数。",
-      "修复潘多拉大逃脱 Game Over 后偶发重开受阻，并补充续局诊断。",
-      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
-    ],
-    "zh-TW": [
-      "修復親密度諮詢升級禮物延遲彈出導致中斷，等待獎勵展示結束後再繼續諮詢。",
-      "可接續舊版遺留的諮詢禮物視窗，不重複消耗已完成的免費次數。",
-      "修復潘多拉大逃脫 Game Over 後偶發重新開始受阻，並補充續局診斷。",
-      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
-    ],
-    "en-US": [
-      "Fixes counseling interruptions caused by delayed level-up gifts; counseling continues after reward presentation finishes.",
-      "Resumes counseling gift popups left by older versions without repeating confirmed free attempts.",
-      "Fixes intermittent Pandora Escape restarts after Game Over and improves restart diagnostics.",
-      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
-    ]
-  }
-},
-{
-  "Version": "1.3.10",
-  "Date": "2026-10-14",
-  "Notes": {
-    "zh-CN": [
-      "无插件时使用游戏内活动自动战斗，每日最多尝试 5 次免费战斗；失败后可停止本环节或扫荡此前最高可扫荡关卡。",
-      "新增默认关闭的救赎之塔扫荡，按成长加成缺少的石头与每日钥匙保留数量安排次数，不结束已有挑战。",
-      "修复恶魔城赛季奖励弹窗阻挡，并改进中断恢复。入口与跳过流程已实测，消耗次数后的结算分支仍待实机验证。",
-      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
-    ],
-    "zh-TW": [
-      "無外掛模組時使用遊戲內活動自動戰鬥，每日最多嘗試 5 次免費戰鬥；失敗後可停止本環節或掃蕩先前最高可掃蕩關卡。",
-      "新增預設關閉的救贖之塔掃蕩，依成長加成缺少的石頭與每日鑰匙保留數量安排次數，不結束既有挑戰。",
-      "修復惡魔城賽季獎勵彈窗阻擋，並改善中斷恢復。入口與略過流程已實測，消耗次數後的結算分支仍待實機驗證。",
-      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
-    ],
-    "en-US": [
-      "Without a plugin, event battles use the game's auto battle for up to five free attempts daily. After failure, stop this stage or sweep the highest eligible cleared stage.",
-      "Adds opt-in Tower of Salvation sweeps, limited by growth stones still needed and the daily-key reserve, without ending an existing challenge.",
-      "Handles the Evil Castle season reward popup and improves interruption recovery. Entry and skip paths were tested live; consuming settlement paths still need live validation.",
-      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
-    ]
-  }
-},
-{
-  "Version": "1.3.9",
-  "Date": "2026-10-14",
-  "Notes": {
-    "zh-CN": [
-      "优化内置使徒防守的格位查找与属性评分，减少重复计算和临时内存分配。",
-      "使徒防守加入按阶段评估的重开策略，优先缩短连续尝试的累计通关时间；保留原召唤、培养与换位决策。",
-      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
-    ],
-    "zh-TW": [
-      "優化內建使徒防守的格位查找與屬性評分，減少重複計算和暫存記憶體配置。",
-      "使徒防守加入按階段評估的重開策略，優先縮短連續嘗試的累計通關時間；保留原召喚、培養與換位決策。",
-      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
-    ],
-    "en-US": [
-      "Optimizes board lookups and attribute scoring in built-in Apostle Defense, reducing repeated calculations and temporary allocations.",
-      "Adds an annealed stage-based restart policy to reduce cumulative time to a clear, retaining existing summoning, development and positioning decisions.",
-      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
-    ]
-  }
-},
-{
-  "Version": "1.3.8",
-  "Date": "2026-10-14",
-  "Notes": {
-    "zh-CN": [
-      "修复“只购买收藏商品”跳过砍价的问题：先砍价，再按新的折扣报价购买；已有砍价效果时直接沿用，不重复消耗天赋药。",
-      "继续只购买已有收藏，不制作、不卖出、不修改收藏；没有可购买商品时不消耗砍价用药，遵守日常天赋药保留下限。",
-      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
-    ],
-    "zh-TW": [
-      "修復「只購買收藏商品」略過議價的問題：先議價，再依新的折扣報價購買；已有議價效果時直接沿用，不重複消耗天賦藥。",
-      "繼續只購買既有收藏，不製作、不出售、不修改收藏；沒有可購買商品時不消耗議價用藥，遵守日常天賦藥保留下限。",
-      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
-    ],
-    "en-US": [
-      "Fixes favorites-only trading skipping bargaining. Bargain first, then refresh discounted prices before buying. An active bargain is reused without spending more talent pills.",
-      "Only existing favorites are purchased, without cooking, selling or changing favorites. Empty baskets spend no bargaining pills; the daily pill reserve is respected.",
-      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
-    ]
-  }
-},
-{
-  "Version": "1.3.7",
-  "Date": "2026-10-14",
-  "Notes": {
-    "zh-CN": [
-      "藏红花增产料理优先使用现有份数，再用材料制作，材料不足才购买；土豆默认两轮，可选择自动料理并先出售二、三级藏红花，只用一级制作浓汤、保留一份。已有轮数设置沿用。",
-      "跑商新增默认关闭的“只买收藏”：按当前商店报价购买已有收藏，不自动砍价、不制作或出售物品，也不修改收藏。",
-      "修复管理员游戏连接助手的跨权限通信问题；本机只读数据偶发截断时有限重读，并补充连接阶段诊断。消费指令不会重复发送。",
-      "潘多拉挑战模式可关闭“自动选择装备”，手动选择升级后继续自动游玩，等待选择不会超时；刷货币模式保持自动选择。",
-      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
-    ],
-    "zh-TW": [
-      "藏紅花增產料理優先使用現有份數，再用材料製作，材料不足才購買；馬鈴薯預設兩輪，可選擇自動料理並先出售二、三級藏紅花，只用一級製作濃湯、保留一份。既有輪數設定沿用。",
-      "跑商新增預設關閉的「只買收藏」：依目前商店報價購買既有收藏，不自動議價、不製作或出售物品，也不修改收藏。",
-      "修復系統管理員遊戲連線助手的跨權限通訊問題；本機唯讀資料偶發截斷時有限重讀，並補充連線階段診斷。消耗指令不會重複傳送。",
-      "潘多拉挑戰模式可關閉「自動選擇裝備」，手動選擇升級後繼續自動遊玩，等待選擇不會逾時；刷貨幣模式維持自動選擇。",
-      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
-    ],
-    "en-US": [
-      "Saffron harvest reuses owned buff food, crafts missing portions when materials permit, then buys any remaining types. Potato rounds default to two; existing choices are retained. Optional processing sells grade 2/3 saffron first, uses grade 1 for soup and keeps one portion.",
-      "Adds opt-in favorites-only trading: buy existing favorites at current shop prices without bargaining, cooking, selling or changing favorites.",
-      "Fixes cross-elevation communication with the game connection helper. Truncated local read-only responses receive bounded retries, with connection-stage diagnostics. Consuming commands are never replayed.",
-      "Challenge mode in Pandora can disable automatic equipment choices. Choose upgrades manually and automatic play resumes, without a selection timeout. Currency farming remains automatic.",
-      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
-    ]
-  }
-},
-{
-  "Version": "1.3.6",
-  "Date": "2026-10-14",
-  "Notes": {
-    "zh-CN": [
-      "藏红花收割后改为固定种收 1–3 轮土豆，默认 3 轮；不再依赖加成剩余时间，重跑可接续未完成的一轮。",
-      "新增潘多拉大逃脱：选择关卡循环刷游戏货币，或自动尝试挑战。挑战模式未加入装备数据，目前自动化无法通关。",
-      "沙盒启动前统一提供安装检查、官网下载及位置选择；多账号共用提示，定时任务不会反复弹窗。",
-      "潘多拉已验证普通第一关循环及进入第二关；藏红花固定轮数仍待自然成熟后的完整实机验收。",
-      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
-    ],
-    "zh-TW": [
-      "藏紅花收割後改為固定種收 1–3 輪馬鈴薯，預設 3 輪；不再依賴加成剩餘時間，重跑可接續未完成的一輪。",
-      "新增潘多拉大逃脫：選擇關卡循環刷遊戲貨幣，或自動嘗試挑戰。挑戰模式未加入裝備資料，目前自動化無法通關。",
-      "沙盒啟動前統一提供安裝檢查、官網下載及位置選擇；多帳號共用提示，定時任務不會反覆彈窗。",
-      "潘多拉已驗證普通第一關循環及進入第二關；藏紅花固定輪數仍待自然成熟後的完整實機驗收。",
-      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
-    ],
-    "en-US": [
-      "Saffron harvest now uses 1–3 fixed potato rounds (3 by default), independent of buff duration. Reruns can finish the remaining round.",
-      "Adds Pandora Escape: repeat a selected stage for currency or automatically attempt challenges. Challenge equipment data is not included; automation cannot currently clear challenge mode.",
-      "Sandbox startup offers installation checks, the official download and a folder picker. Multi-account attempts share one prompt; scheduled runs do not repeatedly prompt.",
-      "Pandora was live-tested for normal Stage 1 looping and Stage 2 entry. Fixed-round saffron still needs a complete live harvest after natural maturation.",
-      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
-    ]
-  }
-},
-{
-  "Version": "1.3.5",
-  "Date": "2026-10-14",
-  "Notes": {
-    "zh-CN": [
-      "定时接管改为停止内置工具、等待当前操作完成，再正常重启游戏并执行计划中的日常；默认关闭。",
-      "减少历史记录反复扫描，以及餐厅气泡和周收集的重复等待；首次索引仍需读取历史。",
-      "修复天赋菜单尚未展开就被误判为关闭，并改进周任务遇敌后的退出与恢复。",
-      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
-    ],
-    "zh-TW": [
-      "定時接管改為停止內建工具、等待目前操作完成，再正常重啟遊戲並執行計畫中的日常；預設關閉。",
-      "減少歷史記錄反覆掃描，以及餐廳氣泡和週收集的重複等待；首次索引仍需讀取歷史。",
-      "修復天賦選單尚未展開就被誤判為關閉，並改善週任務遇敵後的退出與恢復。",
-      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
-    ],
-    "en-US": [
-      "Scheduled takeover now stops built-in tools, waits for the current operation, and restarts the game before scheduled dailies. Off by default.",
-      "Reduces repeated history scans and waits between restaurant bubbles and weekly collection steps. Initial indexing still reads history.",
-      "Fixes talent menus being treated as closed before appearing, and improves encounter-exit recovery during weekly tasks.",
-      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
-    ]
-  }
-},
-{
-  "Version": "1.3.4",
-  "Date": "2026-10-14",
-  "Notes": {
-    "zh-CN": [
-      "修复历史成功记录清理后，自动执行日常在登录检查完成时中断的问题，覆盖普通与沙盒账号队列。",
-      "并行队列中断时保留具体原因和恢复入口，不再统一显示为已暂停。",
-      "诊断保留完整错误位置，接续成功后清除过期错误提示；未确认的消耗操作仍按当前游戏状态核对。",
-      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
-    ],
-    "zh-TW": [
-      "修復歷史成功記錄清理後，自動執行日常在登入檢查完成時中斷的問題，涵蓋一般與沙盒帳號佇列。",
-      "並行佇列中斷時保留具體原因及恢復入口，不再統一顯示為已暫停。",
-      "診斷保留完整錯誤位置，接續成功後清除過期錯誤提示；未確認的消耗操作仍依目前遊戲狀態核對。",
-      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
-    ],
-    "en-US": [
-      "Fixes automatic daily runs stopping after sign-in checks when successful historical records have been compacted, including sandbox account queues.",
-      "Interrupted parallel queues retain the specific reason and resume action instead of showing a generic paused status.",
-      "Diagnostics retain the full error location and clear stale errors after a successful resume. Unconfirmed resource-consuming actions still reconcile against the current game state.",
-      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
-    ]
-  }
-},
-{
-  "Version": "1.3.3",
-  "Date": "2026-10-14",
-  "Notes": {
-    "zh-CN": [
-      "新增软件设置页，集中管理外观、语言、启动与关闭、程序位置、更新和日志清理。",
-      "可选登录 Windows 时启动织尘，默认关闭；打开软件后执行日常单独设置。",
-      "精简账号管理；沙盒修复先自动匹配，点击「不是这个」再手动选择。",
-      "日常设置增加分类与跨分类搜索，修正对齐并在输入错误时展开对应选项。",
-      "定时执行合为一份连续计划，保存按钮始终可见，提示尚未保存的修改。",
-      "诊断仅保留连接状态和反馈；启动引导移到顶部，优化三语、深浅色及键盘操作。",
-      "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
-    ],
-    "zh-TW": [
-      "新增軟體設定頁，集中管理外觀、語言、啟動與關閉、程式位置、更新和記錄清理。",
-      "可選登入 Windows 時啟動織塵，預設關閉；開啟軟體後執行日常另行設定。",
-      "精簡帳號管理；沙盒修復先自動配對，按「不是這個」再手動選擇。",
-      "日常設定新增分類及跨分類搜尋，修正對齊，輸入錯誤時展開對應選項。",
-      "排程整合為一份連續計畫，儲存按鈕保持可見，提示尚未儲存的修改。",
-      "診斷僅保留連線狀態與回報；啟動引導移至頂部，改善三語、深淺色及鍵盤操作。",
-      "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
-    ],
-    "en-US": [
-      "New App settings page groups appearance, language, startup and closing, installation paths, updates and log cleanup.",
-      "Optional startup at Windows sign-in is off by default. Running daily tasks when the app opens remains a separate setting.",
-      "Simpler account management. Sandbox repair offers a verified match first; Not this one reveals manual selection.",
-      "Daily settings adds categories and cross-category search, aligned fields and visible validation without losing input.",
-      "Scheduling is one continuous plan with an always-visible save button and clear unsaved-change feedback.",
-      "Diagnostics focuses on connection and reporting. Getting started moves to the header; themes, translations and keyboard controls are refined.",
-      "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
-    ]
-  }
-},
-{
-  "Version": "1.3.2",
-  "Date": "2026-10-14",
-  "Notes": {
-    "zh-CN": [
-      "修复沙盒改名后无法启动账号的问题，保留原数据和登录信息。",
-      "账号管理新增「修复沙盒绑定」，支持自动找回和手动选择并确认。",
-      "补充任务栏身份及图标路径；旧固定项若仍空白，请取消固定后重新固定。",
-      "1.3.1 支持差分升级；若更新失败，可手动下载完整包，账号与设置继续保留。"
-    ],
-    "zh-TW": [
-      "修復沙盒改名後無法啟動帳號的問題，保留原資料與登入資訊。",
-      "帳號管理新增「修復沙盒綁定」，支援自動找回與手動選擇並確認。",
-      "補充工作列身分與圖示路徑；舊釘選項若仍空白，請取消釘選後重新釘選。",
-      "1.3.1 支援差分升級；若更新失敗，可手動下載完整包，帳號與設定繼續保留。"
-    ],
-    "en-US": [
-      "Repairs renamed sandbox associations while preserving data and sign-in.",
-      "Adds automatic and confirmed manual sandbox binding in Accounts.",
-      "Sets explicit taskbar identity and icon metadata. Repin any old shortcut that remains blank.",
-      "Differential upgrade from 1.3.1 is supported. If updating fails, use the complete download; accounts and settings are retained."
-    ]
-  }
-},
-{
-  "Version": "1.3.1",
-  "Date": "2026-10-13",
-  "Notes": {
-    "zh-CN": ["整理安装目录：双击根目录的 Dustweave.exe 即可启动，运行库和组件统一收纳到 app 文件夹。", "1.3.0 已撤回。由于启动文件的位置调整，请手动下载完整 1.3.1 包并解压到新目录；原有账号和设置继续沿用。", "保留独立新版 OTA 与差分更新。后续更新继续复用未变化的运行库；请不要单独移动 EXE 或删除 app 文件夹。"],
-    "zh-TW": ["整理安裝目錄：按兩下根目錄的 Dustweave.exe 即可啟動，執行階段與元件統一收納至 app 資料夾。", "1.3.0 已撤回。由於啟動檔案的位置調整，請手動下載完整 1.3.1 包並解壓至新目錄；既有帳號與設定繼續沿用。", "保留獨立新版 OTA 與差分更新。後續更新繼續重用未變更的執行階段；請勿單獨移動 EXE 或刪除 app 資料夾。"],
-    "en-US": ["A clearer installation folder: launch Dustweave.exe from the root. Runtime files and components are grouped in the app folder.", "1.3.0 has been withdrawn. The startup layout changed: manually download the complete 1.3.1 package into a new folder. Existing accounts and settings are retained.", "The separate OTA channel and differential updates remain enabled. Future updates reuse unchanged runtime files; keep Dustweave.exe together with the app folder."]
-  }
-},
-{
-  "Version": "1.3.0",
-  "Date": "2026-10-13",
-  "Notes": {
-    "zh-CN": [
-      "改为完整目录分发，运行库与共享资源独立保存。请完整解压后启动 Dustweave.exe，不要单独移动 EXE。",
-      "1.2.x 及更早版本请手动下载完整软件包并解压到新目录；已有账号和设置继续沿用。",
-      "采用更小的差分更新：最多跨10次发布，更新包超过8 MiB、运行库改变或缺少适用差分时提示手动下载，不自动回退下载完整包。",
-      "增加独立更新助手与启动恢复入口；更新失败可回退，不重复替换未改变的运行库和资源。"
-    ],
-    "zh-TW": [
-      "改為完整目錄發行，執行階段與共用資源獨立保存。請完整解壓後啟動 Dustweave.exe，不要單獨移動 EXE。",
-      "1.2.x 及更早版本請手動下載完整軟體包並解壓至新目錄；既有帳號與設定繼續沿用。",
-      "採用更小的差分更新：最多跨10次發行，更新包超過8 MiB、執行階段改變或缺少適用差分時提示手動下載，不自動改下載完整包。",
-      "新增獨立更新助手與啟動復原入口；更新失敗可回復，不重複替換未變更的執行階段與資源。"
-    ],
-    "en-US": [
-      "Distribution now uses a complete folder with separate runtime and shared resources. Extract everything and launch Dustweave.exe; do not move the EXE alone.",
-      "Users on 1.2.x or earlier must download the full package into a new folder. Existing accounts and settings are retained.",
-      "Smaller direct deltas cover up to 10 releases. Updates above 8 MiB, runtime changes or missing patches require a manual download instead of an automatic full-package fallback.",
-      "An independent updater and recovery launcher handle interrupted installations. Unchanged runtime and resource files are no longer copied or replaced."
-    ]
-  }
-},
-
-{
-  "Version": "1.2.11",
-  "Date": "2026-10-13",
-  "Notes": {
-    "zh-CN": [
-      "使徒运气防守的50波目标改用离线退火搜索得到的策略；普通盘面也会继续培养，不再仅因前10波没有7／8阶核心而重开。",
-      "按阶段安排召唤、属性升级与低贡献使徒替换，保留换位优化及首领追击。",
-      "离线模型已做随机对照和移植一致性验证；模拟结果不等同于实机胜率。自动更新失败时，请手动下载完整软件包。"
-    ],
-    "zh-TW": [
-      "使徒運氣防守的50波目標改用離線退火搜尋得到的策略；普通盤面也會繼續培養，不再只因前10波沒有7／8階核心而重開。",
-      "依階段安排召喚、屬性升級及低貢獻使徒替換，保留換位最佳化與首領追擊。",
-      "離線模型已做隨機對照及移植一致性驗證；模擬結果不等同於實機勝率。自動更新失敗時，請手動下載完整軟體套件。"
-    ],
-    "en-US": [
-      "The Apostle Defense wave-50 goal now uses a strategy obtained through offline simulated annealing. Ordinary lineups keep developing instead of restarting solely because no tier-7/8 core appeared in the first ten waves.",
-      "Summoning, element upgrades and weak-unit replacement follow a staged policy, with repositioning and boss pursuit.",
-      "Randomized model trials and port-consistency checks passed; simulated results are not live win rates. If automatic updating fails, download the complete package manually."
-    ]
-  }
-},
-{
-  "Version": "1.2.10",
-  "Date": "2026-10-13",
-  "Notes": {
-    "zh-CN": ["旧的中断记录保留为诊断，接续或补跑按游戏当前状态继续，不再永久阻塞队列。", "周收集同时恢复吸收和步行拾取卡点，暂时无法读取的地图保留待办并继续其他地图。", "镜中中断后按当前剩余免费次数继续；修复邮箱、装备环节的旧记录阻塞和藏红花记录保存。"],
-    "zh-TW": ["舊的中斷紀錄保留供診斷，接續或補跑依遊戲目前狀態繼續，不再永久阻塞佇列。", "每週收集同時恢復吸收及步行拾取卡點，暫時無法讀取的地圖保留待辦並繼續其他地圖。", "鏡中中斷後依目前剩餘免費次數繼續；修正信箱、裝備環節的舊紀錄阻塞及藏紅花紀錄儲存。"],
-    "en-US": ["Historical interrupted records remain diagnostic history. Resume and retry use current game state instead of permanently blocking the queue.", "Weekly collection recovers absorption and walking checkpoints, leaving unreadable maps pending while continuing elsewhere.", "Interrupted Mirror batches use remaining free attempts. Fixes mailbox and equipment recovery, and saffron record saving."]
-  }
-},
-{
-  "Version": "1.2.9",
-  "Date": "2026-10-13",
-  "Notes": {
-    "zh-CN": ["周收集吸收中断后，接续或补跑会自动核对卡点地图的最新进度，无需先手动核对。", "已收完的地图不重复吸收；暂时无法读取的地图保留待办，继续其他地图。", "补充恢复方法说明；手动刷新进度增加用途说明和二次确认。"],
-    "zh-TW": ["每週收集吸收中斷後，接續或補跑會自動核對卡點地圖的最新進度，無需先手動核對。", "已收完的地圖不重複吸收；暫時無法讀取的地圖保留待辦，繼續其他地圖。", "補充恢復方法說明；手動重新整理進度增加用途說明與二次確認。"],
-    "en-US": ["Resuming or retrying weekly collection automatically checks current progress on the affected map after an uncertain absorption.", "Completed maps are not absorbed again. Temporarily unreadable maps remain pending while collection continues elsewhere.", "Recovery guidance is clearer. Manual progress refresh explains its scope and asks for confirmation."]
-  }
-},
-{
-  "Version": "1.2.8",
-  "Date": "2026-10-12",
-  "Notes": {
-    "zh-CN": ["修复隔离目录含非ASCII字符时的路径读取，以及周NPC狩猎任务到点后不交互。", "新增默认关闭的藏红花环节：成熟后使用增产料理收割，剩余加成种收土豆，结束后补种并制作售卖。完整成熟收割仍待实机验收。"],
-    "zh-TW": ["修正隔離目錄含非ASCII字元時的路徑讀取，以及每週NPC狩獵任務到點後不互動。", "新增預設關閉的藏紅花環節：成熟後使用增產料理收割，剩餘加成種收馬鈴薯，結束後補種並製作出售。完整成熟收割仍待實機驗收。"],
-    "en-US": ["Fixes Unicode sandbox-path reads and weekly hunt quests failing to interact at their target.", "Adds an opt-in saffron stage with yield foods, potato rounds, replanting, cooking and sales. The complete mature-crop live cycle still needs validation."]
-  }
-},
-{
-  "Version": "1.2.7",
-  "Date": "2026-10-12",
-  "Notes": {
-    "zh-CN": [
-      "周收集按实际可拾取状态和范围寻找落脚点；明确不可达的物品暂缓，继续其他物品及地图。",
-      "修复路径失败后的无效等待、旧步行记录阻塞和连接更新后的队列接续；未收集目标继续保留。",
-      "塔防等待金币或补抽时仍可调整站位和追击Boss，同时保留补位义务及培养预算。",
-      "如果自动更新失败，请手动下载完整软件包。"
-    ],
-    "zh-TW": [
-      "每週收集依實際可拾取狀態及範圍尋找落腳點；明確無法到達的物品暫緩，繼續其他物品及地圖。",
-      "修正路徑失敗後的無效等待、舊步行紀錄阻塞及連線更新後的佇列接續；未收集目標繼續保留。",
-      "塔防等待金幣或補抽時仍可調整站位及追擊Boss，同時保留補位義務及培養預算。",
-      "若自動更新失敗，請手動下載完整軟體套件。"
-    ],
-    "en-US": [
-      "Weekly collection uses native pickup availability and pickup areas; individually unreachable items are deferred while other items and maps continue.",
-      "Fixes idle waits after path rejection, historical walking blockers and queue resume across connection reloads, preserving uncollected targets.",
-      "Apostle Defense keeps positioning and boss pursuit active while waiting for recruitment, without spending reserved gold.",
-      "If automatic updating fails, download the full package manually."
-    ]
-  }
-},
-{
-  "Version": "1.2.6",
-  "Date": "2026-10-12",
-  "Notes": {
-    "zh-CN": [
-      "修复更新连接组件后，已结束的旧步行拾取记录仍阻塞周收集的问题。",
-      "统一接续、补跑与当前计划的恢复检查，避免切图和使用天赋后才发现旧操作阻塞。",
-      "接续原队列支持同一游戏进程的连接更新，保留账号校验与未确认操作保护。"
-    ],
-    "zh-TW": [
-      "修正更新連線元件後，已結束的舊步行拾取紀錄仍阻塞每週收集的問題。",
-      "統一接續、補跑與目前計畫的恢復檢查，避免切換地圖及使用天賦後才發現舊操作阻塞。",
-      "接續原佇列支援同一遊戲程序的連線更新，保留帳號驗證及未確認操作保護。"
-    ],
-    "en-US": [
-      "Fixes settled walking records blocking weekly collection after a connection component update.",
-      "Resume, retry and new plans now reconcile before map travel and talent use.",
-      "Interrupted queues can resume after the observer reloads in the same game process, while retaining account checks and unresolved-operation safeguards."
-    ]
-  }
-},
-{
-  "Version": "1.2.5",
-  "Date": "2026-10-12",
-  "Notes": {
-    "zh-CN": [
-      "修复周收集误把物品类型当作可拾取状态，按游戏实际状态筛选和确认目标。",
-      "途中拾取其他物品后，目标寻路停滞会有限次恢复；未收集目标保留供后续补收。",
-      "已结束的步行拾取记录不再反复阻塞重跑；仍保护没有完整回执的操作。"
-    ],
-    "zh-TW": [
-      "修正每週收集誤將物品類型當作可拾取狀態，依遊戲實際狀態篩選及確認目標。",
-      "途中拾取其他物品後，目標尋路停滯會有限次恢復；未收集目標保留供後續補收。",
-      "已結束的步行拾取紀錄不再反覆阻塞重跑；仍保護沒有完整回執的操作。"
-    ],
-    "en-US": [
-      "Weekly collection now uses native pickup availability instead of immutable object-type flags.",
-      "Walking can resume after incidental pickups interrupt progress, with bounded retries and uncollected targets preserved.",
-      "Settled walking records no longer block future retries. Operations with incomplete responses remain protected."
-    ]
-  }
-},
-{
-  "Version": "1.2.4",
-  "Date": "2026-10-12",
-  "Notes": {
-    "zh-CN": [
-      "修复已被游戏拒绝的拾取记录反复阻塞周收集；步行收集时重新检查探查状态。",
-      "修复旧游戏进程跨日镜中记录阻塞新任务，保留当前战斗和次数校验。",
-      "中断的偷窃仅影响偷窃环节；补充传送窗口的返回路径。",
-      "诊断包优先保留最新队列、地图进度和任务信息。"
-    ],
-    "zh-TW": [
-      "修正已被遊戲拒絕的拾取紀錄反覆阻塞每週收集；步行收集時重新檢查探查狀態。",
-      "修正舊遊戲程序跨日鏡中紀錄阻塞新任務，保留目前戰鬥及次數驗證。",
-      "中斷的偷竊僅影響偷竊環節；補充傳送視窗的返回路徑。",
-      "診斷包優先保留最新佇列、地圖進度及任務資訊。"
-    ],
-    "en-US": [
-      "Server-rejected pickups no longer block future weekly collection. Walking collection rechecks the research talent.",
-      "Old Mirror records from a previous game process and day no longer block fresh tasks, while active battles and ticket checks remain protected.",
-      "Interrupted theft affects only theft. Adds recovery from the waypoint screen.",
-      "Diagnostic exports prioritize the latest queue, map progress and NPC task evidence."
-    ]
-  }
-},
-{
-  "Version": "1.2.3",
-  "Date": "2026-10-12",
-  "Notes": {
-    "zh-CN": [
-      "镜中非战斗期显示原因并继续日常，已提交战斗先完成结算。",
-      "修复列车、陷阱等打断周NPC任务寻路后空等，按实际位移判断并有限次恢复。",
-      "拾取或搬运仍在处理时不打断、不重复执行。",
-      "如果自动更新失败，请手动下载完整软件包。"
-    ],
-    "zh-TW": [
-      "鏡中非戰鬥期顯示原因並繼續日常，已提交戰鬥先完成結算。",
-      "修正列車、陷阱等打斷每週NPC任務尋路後空等，按實際位移判斷並有限次恢復。",
-      "拾取或搬運仍在處理時不打斷、不重複執行。",
-      "若自動更新失敗，請手動下載完整軟體套件。"
-    ],
-    "en-US": [
-      "Skips Mirror outside its battle period after settling submitted battles.",
-      "Recovers interrupted weekly NPC navigation using actual position progress and bounded retries.",
-      "Preserves pending pickup and carry interactions without replaying them.",
-      "If automatic updating fails, download the full package manually."
-    ]
-  }
-},
+  {
+    "Version": "1.4.10",
+    "Date": "2026-10-20",
+    "Notes": {
+      "zh-CN": [
+        "新增实验性快速赶路：日常步行前按需启用飞奔，默认关闭，遵守天赋药保留下限。",
+        "仅收藏购买可配置自定义料理：从完整料理列表选择并排序，采购后按顺序使用现有材料制作；缺料跳过，不额外采购或出售。",
+        "SECRET VISION 与连连看迁入织尘，统一主题、语言、连接加载、运行互斥及日志管理；保留有效旧设置。",
+        "周常连连看等小游戏直接复用日常进程准备组件，减少额外进程启动和固定等待；连接状态仍需核验。"
+      ],
+      "zh-TW": [
+        "新增實驗性快速趕路：日常步行前按需啟用飛奔，預設關閉，遵守天賦藥保留下限。",
+        "僅收藏購買可設定自訂料理：從完整料理清單選擇並排序，採購後按順序使用現有材料製作；缺料跳過，不額外採購或出售。",
+        "SECRET VISION 與連連看遷入織塵，統一主題、語言、連線載入、執行互斥及日誌管理；保留有效舊設定。",
+        "週常連連看等小遊戲直接重用日常程序準備元件，減少額外程序啟動和固定等待；連線狀態仍需核驗。"
+      ],
+      "en-US": [
+        "Adds experimental Fast travel: optionally activate the movement-speed talent before daily walking. Off by default and respects the talent-pill reserve.",
+        "Favorites-only trading supports ordered custom cooking from the full recipe list. Uses current ingredients after purchases, skips unavailable recipes, and never adds purchases or sales.",
+        "SECRET VISION and Sichuan move into Dustweave with shared styling, language, connection loading, control ownership and diagnostics. Valid legacy preferences are retained.",
+        "Weekly minigames reuse the daily process for component preparation, avoiding an extra helper launch and fixed wait while retaining readiness checks."
+      ]
+    }
+  },
+  {
+    "Version": "1.4.9",
+    "Date": "2026-10-19",
+    "Notes": {
+      "zh-CN": [
+        "音游迁入织尘，统一窗口样式、语言、连接加载与运行互斥；设置和日志纳入主程序管理，原独立仓库归档。",
+        "修复卡带导航因账号状态短暂未刷新而中断合并周任务的问题：确认操作尚未执行后，重新核对账号和当前页面，再有限重试。",
+        "诊断导出补充操作被拒绝时的实际回执和现场，方便区分状态刷新延迟与其他连接问题。"
+      ],
+      "zh-TW": [
+        "音遊遷入織塵，統一視窗樣式、語言、連線載入與執行互斥；設定和日誌納入主程式管理，原獨立倉庫封存。",
+        "修復卡帶導航因帳號狀態短暫未更新而中斷合併週任務的問題：確認操作尚未執行後，重新核對帳號和目前頁面，再有限重試。",
+        "診斷匯出補充操作遭拒絕時的實際回執和現場，方便區分狀態更新延遲與其他連線問題。"
+      ],
+      "en-US": [
+        "Rhythm moves into Dustweave with shared styling, language, window-first connection loading, control ownership and storage. The standalone repository is archived.",
+        "Recover cartridge navigation from temporary account-state observation gaps. After confirming that no input ran, recheck the account and current page before a bounded retry.",
+        "Diagnostic exports now preserve the native rejection receipt and observed state to help distinguish delayed state updates from other connection issues."
+      ]
+    }
+  },
+  {
+    "Version": "1.4.8",
+    "Date": "2026-10-19",
+    "Notes": {
+      "zh-CN": [
+        "周收集在捕获次数用尽时暂缓仅剩捕获目标的地图，继续其他目标；修复步行拾取隐身校验、停滞恢复及地图切换异常。不可达点有限重试后跳过，补跑仍遵循步行收集设置。",
+        "农田未载入时先接近再核对，确认收割条件前不使用料理；修复连连看停在主菜单及跑商误入末日之书大厅的恢复。",
+        "减少组件准备时无关方法的重复计算，复用有效缓存并记录准备耗时。",
+        "日常显示当前细部动作和地图进度，长环节按工作量计入总进度；单账号跟随当前步骤，多账号在对应账号下显示当前环节和动作。",
+        "若 OTA 失败，请从 GitHub Releases 或固定网盘目录手动下载完整包。"
+      ],
+      "zh-TW": [
+        "週收集在捕獲次數用盡時暫緩僅剩捕獲目標的地圖，繼續其他目標；修復步行拾取隱身校驗、停滯恢復及地圖切換異常。不可達點有限重試後跳過，補跑仍遵循步行收集設定。",
+        "農田未載入時先接近再核對，確認收割條件前不使用料理；修復連連看停在主選單及跑商誤入末日之書大廳的恢復。",
+        "減少元件準備時無關方法的重複計算，重用有效快取並記錄準備耗時。",
+        "日常顯示目前細部動作和地圖進度，長環節按工作量計入總進度；單帳號跟隨目前步驟，多帳號在對應帳號下顯示目前環節與動作。",
+        "若 OTA 失敗，請從 GitHub Releases 或固定網盤目錄手動下載完整包。"
+      ],
+      "en-US": [
+        "Weekly collection defers capture-only maps after the daily limit and continues other targets. Fix stealth checks, stalled walking pickups and map-transition errors. Unreachable points receive bounded retries; reruns respect the walking setting.",
+        "Approach unloaded farm fields before checking harvest conditions, without consuming food first. Recover Sichuan entry and accidental Book of Apocalypse lobby entry during merchant travel.",
+        "Reduce unnecessary component preparation work, reuse valid caches and record preparation timing.",
+        "Show current actions and map counts with workload-aware progress. Follow active single-account steps and show the stage and action for each account in batch runs.",
+        "If OTA fails, download the complete package from GitHub Releases or the fixed mirror folder."
+      ]
+    }
+  },
+  {
+    "Version": "1.4.7",
+    "Date": "2026-10-19",
+    "Notes": {
+      "zh-CN": [
+        "恶魔猎人新增泰瑞丝、格兰希特与难度选择；修复贴身不攻击，调整突进预判、防御时机及治疗决策。本轮两名角色均已实测打通两种怪物的超困难，策略优先通关，不追求局内任务。",
+        "修复 Sandboxie 已安装但驱动不可用时阻止软件启动的问题；普通启动和普通日常不依赖沙盒，隔离功能不可用时单独提示。",
+        "从 1.4.7 起采用长期 OTA 基线：不再因相差十个版本停止更新；同结构、同运行库的直接差分不超过 10 MB 时可自动下载，超过上限或文件不匹配时提示手动更新。",
+        "此次继续为最近十个兼容旧版本提供直接差分。若 OTA 失败，请从 GitHub Releases 或固定网盘目录手动下载完整软件包。"
+      ],
+      "zh-TW": [
+        "惡魔獵人新增泰瑞絲、格蘭希特與難度選擇；修復貼身不攻擊，調整突進預判、防禦時機及治療決策。本輪兩名角色均已實測打通兩種怪物的超困難，策略優先通關，不追求局內任務。",
+        "修復 Sandboxie 已安裝但驅動程式不可用時阻止軟體啟動的問題；一般啟動與一般日常不依賴沙盒，隔離功能不可用時單獨提示。",
+        "從 1.4.7 起採用長期 OTA 基線：不再因相差十個版本停止更新；相同結構及執行階段的直接差分不超過 10 MB 時可自動下載，超過上限或檔案不符時提示手動更新。",
+        "此次繼續為最近十個相容舊版本提供直接差分。若 OTA 失敗，請從 GitHub Releases 或固定網盤目錄手動下載完整軟體包。"
+      ],
+      "en-US": [
+        "Fiend Hunter adds Teresse, Granhildr and difficulty selection. Fix close-range inactivity and improve dash prediction, defensive timing and damage-aware healing. Both characters cleared both monsters on Very Hard in live trials; the strategy prioritizes clears over in-round missions.",
+        "An installed but unavailable Sandboxie driver no longer blocks application startup. Normal launch and dailies remain independent; isolation failures are reported only for isolation operations.",
+        "Version 1.4.7 starts a long-term OTA baseline. Matching-layout and matching-runtime direct patches up to 10 MB remain eligible beyond ten releases. Larger updates or changed local files require a manual download.",
+        "This release still provides direct patches for the latest ten compatible older releases. If OTA fails, download the complete package from GitHub Releases or the fixed mirror folder."
+      ]
+    }
+  },
+  {
+    "Version": "1.4.6",
+    "Date": "2026-10-19",
+    "Notes": {
+      "zh-CN": [
+        "修复周 NPC 任务被游戏指引带往狩猎场的问题：按剩余目标规划普通地图，阻止旧指引恢复；目标不足仅暂缓对应任务。",
+        "恶魔猎人新增巴萨卡、炎虎选择，分别调整攻击预判和闪避；两种怪物均完成一次实机单人超困难通关。",
+        "恶魔猎人迁入主项目，统一主题、语言、连接加载和互斥；日志与缓存由织尘管理，原仓库已归档。",
+        "工具列表统一为一项一行。连接或选择怪物不会自动开战，通关后停止输入并保留结算。",
+        "1.3.14–1.3.17、1.4.0–1.4.5 支持直接差分更新；若 OTA 失败，请手动下载完整软件包。"
+      ],
+      "zh-TW": [
+        "修復週 NPC 任務被遊戲指引帶往狩獵場的問題：依剩餘目標規劃一般地圖，阻止舊指引恢復；目標不足僅暫緩對應任務。",
+        "惡魔獵人新增巴薩卡、炎虎選擇，分別調整攻擊預判與閃避；兩種怪物均完成一次實機單人超困難通關。",
+        "惡魔獵人遷入主專案，統一主題、語言、連線載入與互斥；日誌及快取由織塵管理，原儲存庫已封存。",
+        "工具清單統一為一項一列。連線或選擇怪物不會自動開戰，通關後停止輸入並保留結算。",
+        "1.3.14–1.3.17、1.4.0–1.4.5 支援直接差分更新；若 OTA 失敗，請手動下載完整軟體包。"
+      ],
+      "en-US": [
+        "Keep weekly NPC kill quests on planned ordinary maps, prevent stale hunting-ground guides from resuming, and defer only the affected task when targets are insufficient.",
+        "Choose Berserker or Fiery Tiger in Fiend Hunter, with separate attack prediction and dodge timing. Each monster has one verified live solo Very Hard clear.",
+        "Fiend Hunter moves into the main project with shared themes, language, loading and connection locks. Dustweave manages its logs and cache; the former repository is archived.",
+        "Every tool now occupies one row. Connecting or selecting a monster does not start combat; victory stops input and preserves settlement.",
+        "Direct patches cover 1.3.14–1.3.17 and 1.4.0–1.4.5. If OTA fails, download the full package manually."
+      ]
+    }
+  },
+  {
+    "Version": "1.4.5",
+    "Date": "2026-10-19",
+    "Notes": {
+      "zh-CN": [
+        "修复断线或重启游戏后原队列无法接续；核对同账号、角色及周期后，从当前游戏进度恢复。",
+        "修复周收集在受 NPC 任务保护的地图间反复往返；手动停止后也可导出路线诊断。",
+        "新增今日吸收地图明细，显示卡带、地图和时间，并注明 NPC 任务途中顺路吸收；普通与隔离执行合并记录。",
+        "按实际步行路线判断隐身：传送点直达安全区、准备压制和已确认无敌人的路段不额外使用。",
+        "不再接取狩猎场限定周 NPC 任务，咨询统一使用普通对话，移除没有内容的设置展开项。",
+        "装备助手、使徒防守与无限抽抽乐迁入主项目维护，统一加载、连接互斥与主题，并更新工具说明。",
+        "1.3.13–1.3.17、1.4.0–1.4.4 支持直接差分更新；若 OTA 失败，请手动下载完整软件包。"
+      ],
+      "zh-TW": [
+        "修復斷線或重新啟動遊戲後原佇列無法接續；核對同帳號、角色及週期後，依目前遊戲進度恢復。",
+        "修復每週收集於受 NPC 任務保護的地圖間反覆往返；手動停止後亦可匯出路線診斷。",
+        "新增今日吸收地圖明細，顯示卡帶、地圖與時間，註明 NPC 任務途中順路吸收；一般與隔離執行合併記錄。",
+        "依實際步行路線判斷藏身：傳送點直達安全區、準備壓制及已確認沒有敵人的路段不額外使用。",
+        "不再接取狩獵場限定週 NPC 任務，諮詢統一使用一般對話，移除沒有內容的設定展開項目。",
+        "裝備助手、使徒防守與無限抽抽樂遷入主專案維護，統一載入、連線互斥與主題，並更新工具說明。",
+        "1.3.13–1.3.17、1.4.0–1.4.4 支援直接差分更新；若 OTA 失敗，請手動下載完整軟體包。"
+      ],
+      "en-US": [
+        "Resume interrupted queues after reconnecting or restarting the game, verifying the account, character and reset period against current game progress.",
+        "Fix repeated travel between NPC-protected collection maps. Route diagnostics can also be exported after a manual stop.",
+        "View today's confirmed absorption maps and times, including collection along NPC routes. Ordinary and isolated runs merge completed records.",
+        "Use stealth for actual risky walking segments, without extra casts for direct waypoint travel to safety, suppression or confirmed clear routes.",
+        "Stop accepting hunting-ground-only NPC quests, use normal friendship conversations and remove empty settings expanders.",
+        "Equipment Assistant, Apostle Defense and Infinite Gacha move into the main project with shared loading, connection locks, themes and updated guides.",
+        "Direct patches cover 1.3.13–1.3.17 and 1.4.0–1.4.4. If OTA fails, download the full package manually."
+      ]
+    }
+  },
+  {
+    "Version": "1.4.4",
+    "Date": "2026-10-18",
+    "Notes": {
+      "zh-CN": [
+        "修复活动自动战斗结束后停在胜利画面的问题，识别活动专用返回按钮；恢复时不重复消耗战斗次数。",
+        "救赎之塔新增固定次数扫荡模式，可忽略成长是否已满，仍遵守每日钥匙保留下限，不使用付费次数。",
+        "新增保留血之鸡尾酒邮件选项，默认关闭；开启后整封邮件始终留待手动领取，活动补领也遵守。",
+        "修复周收集遇到天赋提示动画或战斗技能演出时中断的问题。",
+        "1.3.12–1.3.17、1.4.0–1.4.3 支持直接差分更新；若 OTA 失败，请手动下载完整软件包。"
+      ],
+      "zh-TW": [
+        "修復活動自動戰鬥結束後停在勝利畫面的問題，辨識活動專用返回按鈕；恢復時不重複消耗戰鬥次數。",
+        "救贖之塔新增固定次數掃蕩模式，可忽略成長是否已滿，仍遵守每日鑰匙保留下限，不使用付費次數。",
+        "新增保留血之雞尾酒郵件選項，預設關閉；開啟後整封郵件始終留待手動領取，活動補領亦遵守。",
+        "修復每週收集遇到天賦提示動畫或戰鬥技能演出時中斷的問題。",
+        "1.3.12–1.3.17、1.4.0–1.4.3 支援直接差分更新；若 OTA 失敗，請手動下載完整軟體包。"
+      ],
+      "en-US": [
+        "Fix event auto-battles waiting on the final victory screen. Recognize the event return button and recover without replaying consumed battles.",
+        "Add optional fixed-count Salvation sweeps regardless of growth completion, while respecting daily-key reserves and excluding paid attempts.",
+        "Add optional Blood Cocktail mail retention, off by default. Entire matching messages remain for manual collection, including activity mailbox visits.",
+        "Fix weekly collection interruptions during talent notices and battle skill animations.",
+        "Direct patches cover 1.3.12–1.3.17 and 1.4.0–1.4.3. If OTA fails, download the full package manually."
+      ]
+    }
+  },
+  {
+    "Version": "1.4.3",
+    "Date": "2026-10-17",
+    "Notes": {
+      "zh-CN": [
+        "修复圣石库存栏折叠时读取失败：按最少库存选择时自动展开并等待完整数据；指定属性不再依赖五种库存。",
+        "日常装备分解支持分别设置 N、R、SR、UR 的强化等级；旧设置自动沿用，锁定、收藏和穿戴保护保持生效。",
+        "潘多拉挑战根据游戏最终结算识别 20 分钟完成，成功后停止并保留结算画面。",
+        "统一内置工具连接处理：短暂缺少状态时等待恢复，确认游戏退出、账号变化或连接被接管时停止操作。",
+        "进一步降低日志与缓存占用：精简记录格式、在 NTFS 上分批压缩适用的旧文件，按实际磁盘占用统计，并清理过期崩溃转储。",
+        "1.3.11–1.3.17、1.4.0–1.4.2 支持直接差分更新；若 OTA 失败，请下载完整包并解压到新目录，保留 app 文件夹。"
+      ],
+      "zh-TW": [
+        "修復聖石庫存欄摺疊時讀取失敗：依最少庫存選擇時自動展開並等待完整資料；指定屬性不再依賴五種庫存。",
+        "日常裝備分解可分別設定 N、R、SR、UR 的強化等級；舊設定自動沿用，鎖定、收藏及穿戴保護仍然有效。",
+        "潘多拉挑戰依遊戲最終結算辨識 20 分鐘完成，成功後停止並保留結算畫面。",
+        "統一內建工具連線處理：短暫缺少狀態時等待恢復，確認遊戲退出、帳號變更或連線被接管時停止操作。",
+        "進一步降低日誌與快取佔用：精簡記錄格式、於 NTFS 分批壓縮適用的舊檔案，依實際磁碟佔用統計，並清理過期崩潰傾印。",
+        "1.3.11–1.3.17、1.4.0–1.4.2 支援直接差分更新；若 OTA 失敗，請下載完整包並解壓至新目錄，保留 app 資料夾。"
+      ],
+      "en-US": [
+        "Fix Holy Stone reads when the inventory panel is collapsed. Least-owned selection expands it and waits for all balances; a fixed element no longer needs inventory comparison.",
+        "Set separate pre-dismantling enhancement levels for N, R, SR and UR equipment. Existing settings carry over, with locked, kept and equipped items still protected.",
+        "Recognize Pandora's 20-minute challenge completion from the game's final result, stop automation and keep the result screen visible.",
+        "Built-in tools wait through temporary missing observations and stop commands on confirmed game exit, account change or connection takeover.",
+        "Reduce storage with compact records, bounded NTFS compression of eligible older files, actual on-disk accounting and expired crash-dump cleanup.",
+        "Direct patches cover 1.3.11–1.3.17 and 1.4.0–1.4.2. If OTA fails, extract the full package into a new folder and keep the app folder."
+      ]
+    }
+  },
+  {
+    "Version": "1.4.2",
+    "Date": "2026-10-17",
+    "Notes": {
+      "zh-CN": [
+        "空间统计覆盖隔离账号、迁移后的缓存与旧运行库解压目录，区分总占用和可清理空间。",
+        "补齐隔离队列的日志维护，清理过期组件和构建临时文件；保护账号、游戏文件、正在使用的目录及待恢复记录。",
+        "减少空间扫描重复遍历和大型日志读取；已完成的旧回执保留结果摘要。",
+        "吸收次数耗尽但还有地图未吸收时等待次日；只有全部地图吸收完成后才继续剩余压制。周 NPC 任务与偷窃独立继续。",
+        "1.3.10–1.3.17、1.4.0 和 1.4.1 支持直接差分更新；若 OTA 失败，请下载完整包并解压到新目录，保留 app 文件夹。"
+      ],
+      "zh-TW": [
+        "空間統計涵蓋隔離帳號、遷移後的快取與舊執行階段解壓目錄，區分總佔用與可清理空間。",
+        "補齊隔離佇列的日誌維護，清理過期元件與建置暫存；保護帳號、遊戲檔案、使用中的目錄及待恢復記錄。",
+        "減少空間掃描重複遍歷及大型日誌讀取；已完成的舊回執保留結果摘要。",
+        "吸收次數耗盡但仍有地圖未吸收時等待次日；僅在全部地圖吸收完成後繼續剩餘壓制。週 NPC 任務與偷竊獨立繼續。",
+        "1.3.10–1.3.17、1.4.0 和 1.4.1 支援直接差分更新；若 OTA 失敗，請下載完整包並解壓至新目錄，保留 app 資料夾。"
+      ],
+      "en-US": [
+        "Storage totals include sandbox accounts, relocated caches and obsolete runtime extraction folders, with reclaimable space shown separately.",
+        "Maintain sandbox logs and remove expired components and build scratch files while protecting accounts, game files, active directories and recovery records.",
+        "Reduce repeated scans and large log reads; retain result summaries for completed old receipts.",
+        "When absorption runs out with weekly drops remaining, wait until the next day. Continue suppression only after all weekly absorption targets are complete. NPC tasks and theft remain independent.",
+        "Direct patches cover 1.3.10–1.3.17, 1.4.0 and 1.4.1. If OTA fails, extract the full package into a new folder and keep the app folder."
+      ]
+    }
+  },
+  {
+    "Version": "1.4.1",
+    "Date": "2026-10-17",
+    "Notes": {
+      "zh-CN": [
+        "潘多拉新增角色选择，切换角色在下一局生效；移除旧的满装备站定开关，采用新的生存决策。",
+        "挑战模式优化武器与辅助配对、BOSS 冲刺和跳跃避让、回血与眩晕使用；15 分钟后优先生存，被困墙角时没有安全退路则站定。",
+        "挑战策略已在一次实测中坚持到 20 分钟；不同角色、养成与随机局的整体胜率仍待验证。",
+        "修复短暂连接读取间隙被误判为账号变化；潘多拉等待新数据恢复后继续，真实账号或游戏进程变化仍会停止操作。",
+        "无法解密的旧账号可以二次确认后删除，无需先重新登录；删除前会核对记录是否已变化。",
+        "1.3.9–1.3.17 和 1.4.0 支持直接差分更新；若 OTA 失败，请下载完整包并解压到新目录，保留 app 文件夹。"
+      ],
+      "zh-TW": [
+        "潘多拉新增角色選擇，切換角色於下一局生效；移除舊的滿裝備站定開關，採用新的生存決策。",
+        "挑戰模式優化武器與輔助配對、BOSS 衝刺和跳躍閃避、回血與暈眩使用；15 分鐘後優先生存，困於牆角且沒有安全退路時站定。",
+        "挑戰策略已在一次實測中堅持至 20 分鐘；不同角色、養成與隨機局的整體勝率仍待驗證。",
+        "修復短暫連線讀取間隙被誤判為帳號變更；潘多拉等待新資料恢復後繼續，真正的帳號或遊戲程序變更仍會停止操作。",
+        "無法解密的舊帳號可經二次確認後刪除，無需先重新登入；刪除前會核對記錄是否已變更。",
+        "1.3.9–1.3.17 和 1.4.0 支援直接差分更新；若 OTA 失敗，請下載完整包並解壓至新目錄，保留 app 資料夾。"
+      ],
+      "en-US": [
+        "Choose a Pandora character for the next round. The new survival decisions replace the old max-equipment standing option.",
+        "Challenge mode improves weapon/support pairing, boss dash and jump avoidance, healing and stun use. After 15 minutes, survival takes priority; hold position when cornered without a safe escape.",
+        "One live challenge trial reached 20 minutes. Overall success rates across characters, upgrades and random runs remain unverified.",
+        "Fix transient connection-read gaps being mistaken for account changes. Pandora waits for fresh data and resumes; actual account or game-process changes still stop commands.",
+        "Unreadable saved accounts can be deleted after confirmation without signing in again. Deletion checks that the saved record has not changed.",
+        "Direct patches cover 1.3.9–1.3.17 and 1.4.0. If OTA fails, extract the full package into a new folder and keep the app folder."
+      ]
+    }
+  },
+  {
+    "Version": "1.4.0",
+    "Date": "2026-10-16",
+    "Notes": {
+      "zh-CN": [
+        "日常结束后汇总抽取、未完成事项及活动战斗回退情况，支持 Windows 通知、弹窗和声音提醒。",
+        "抽取详情显示五星服装与五星角色 UR 专武；地图详情优先使用卡带和地图名称，统一详情窗口主题。",
+        "修复含暂缓事项的队列自然结束后未按设置退出游戏；暂停、停止及待核对状态保留游戏。",
+        "藏红花流程在等土豆成熟时采矿砍树，成熟后优先收割，完成土豆轮数后收完剩余资源。",
+        "恢复单账号隔离启动及用途说明，隔离日志和运行缓存；重装系统后重新登录同账号可修复原凭据槽位。",
+        "MANSION RUNAWAY 和装备助手先显示窗口及可取消的加载动画，再连接；增大 5 药 N 装选项。",
+        "更新缓存最多保留 2 个版本、最长 7 天，保护正在更新和待恢复的记录。",
+        "修复只购买收藏依赖普通跑商历史文件导致中断，旧错误记录不再阻挡新一轮执行。",
+        "1.3.8–1.3.17 支持直接差分更新；若 OTA 失败，请下载完整包并解压到新目录，保留 app 文件夹。"
+      ],
+      "zh-TW": [
+        "日常結束後彙整抽取、未完成事項及活動戰鬥回退情況，支援 Windows 通知、彈窗和聲音提醒。",
+        "抽取詳情顯示五星服裝與五星角色 UR 專武；地圖詳情優先使用卡帶和地圖名稱，統一詳情視窗主題。",
+        "修復含暫緩事項的佇列自然結束後未依設定退出遊戲；暫停、停止及待核對狀態保留遊戲。",
+        "藏紅花流程在等馬鈴薯成熟時採礦伐木，成熟後優先收割，完成輪數後收完剩餘資源。",
+        "恢復單帳號隔離啟動及用途說明，隔離日誌和執行快取；重灌系統後重新登入同帳號可修復原憑據欄位。",
+        "MANSION RUNAWAY 和裝備助手先顯示視窗及可取消的載入動畫，再連線；加大 5 藥 N 裝選項。",
+        "更新快取最多保留 2 個版本、最長 7 天，保護正在更新和待恢復的記錄。",
+        "修復只購買收藏依賴普通跑商歷史檔案而中斷，舊錯誤記錄不再阻擋新一輪執行。",
+        "1.3.8–1.3.17 支援直接差分更新；若 OTA 失敗，請下載完整包並解壓至新目錄，保留 app 資料夾。"
+      ],
+      "en-US": [
+        "Completion reports highlight draws, unfinished tasks and event-battle fallback sweeps, with Windows, popup and sound notifications.",
+        "Draw details identify five-star costumes and five-star character UR weapons. Map details use cartridge/map names and dialogs share consistent themes.",
+        "Fix optional game exit for naturally finished queues with deferred tasks. Paused, stopped or unresolved queues keep the game open.",
+        "Gather wood and ore while potatoes grow, prioritize mature fields, then finish remaining resources after the configured rounds.",
+        "Restore explained single-account isolated launch, isolate logs and runtime caches, and repair unreadable saved slots after signing back into the same account.",
+        "MANSION RUNAWAY and Equipment Assistant show cancellable loading before connecting. Enlarge the 5-potion N-equipment option.",
+        "Keep update caches for at most two versions and seven days, protecting active updates and unresolved recovery.",
+        "Fix favorites-only trade requiring a normal trade history file. Old errors no longer block fresh runs.",
+        "Direct patches cover 1.3.8–1.3.17. If OTA fails, extract the full package into a new folder and keep the app folder."
+      ]
+    }
+  },
+  {
+    "Version": "1.3.17",
+    "Date": "2026-10-16",
+    "Notes": {
+      "zh-CN": [
+        "空间管理显示完整数据和缓存占用，新增旧缓存及已结束更新备份清理。",
+        "支持校验后迁移缓存到其他磁盘，保留账号、设置与恢复记录的位置。",
+        "可用空间不足 1 GB 时显示清理和迁移建议；今日忽略按本机早上 8 点刷新，重启后仍有效。",
+        "空间检查与统计在后台按需执行，不因提醒中断日常。",
+        "若 OTA 失败，请下载完整包并解压到新目录，保留 app 文件夹。"
+      ],
+      "zh-TW": [
+        "空間管理顯示完整資料和快取佔用，新增舊快取及已結束更新備份清理。",
+        "支援驗證後將快取遷移至其他磁碟，保留帳號、設定與恢復記錄的位置。",
+        "可用空間不足 1 GB 時顯示清理和遷移建議；今日忽略按本機早上 8 點重設，重新啟動後仍有效。",
+        "空間檢查與統計在背景按需執行，不因提醒中斷日常。",
+        "若 OTA 失敗，請下載完整包並解壓至新目錄，保留 app 資料夾。"
+      ],
+      "en-US": [
+        "Storage management shows complete data/cache usage and cleans obsolete cache and completed update backups.",
+        "Relocate verified cache to another drive while preserving account, settings and recovery locations.",
+        "Below 1 GB free, receive cleanup and migration suggestions. Ignore today survives restarts until the next local 08:00.",
+        "Storage checks run in the background as needed; reminders do not interrupt automation.",
+        "If OTA fails, extract the full package into a new folder and keep the app folder."
+      ]
+    }
+  },
+  {
+    "Version": "1.3.16",
+    "Date": "2026-10-15",
+    "Notes": {
+      "zh-CN": [
+        "跳过、暂缓和失败显示具体原因及下一步，改善旧记录的提示。",
+        "合并同账号同周期的地图进度，避免未执行或较旧的记录覆盖已完成结果。",
+        "使徒防守保留独立窗口，先显示界面和加载状态再连接，统一主题、语言与日志；策略不变。",
+        "内置工具连接、运行和收尾统一互斥；空闲窗口不占用日常，暂停、设置与关闭保持可用。",
+        "若 OTA 失败，请下载完整包并解压到新目录，保留 app 文件夹。"
+      ],
+      "zh-TW": [
+        "略過、暫緩和失敗顯示具體原因及下一步，改善舊記錄的提示。",
+        "合併同帳號同週期的地圖進度，避免未執行或較舊的記錄覆蓋已完成結果。",
+        "使徒防守保留獨立視窗，先顯示介面和載入狀態再連線，統一主題、語言與日誌；策略不變。",
+        "內建工具連線、執行和收尾統一互斥；閒置視窗不占用日常，暫停、設定與關閉保持可用。",
+        "若 OTA 失敗，請下載完整包並解壓至新目錄，保留 app 資料夾。"
+      ],
+      "en-US": [
+        "Skipped, deferred and failed tasks show relevant reasons and next actions, including older records.",
+        "Map progress merges across execution modes without unstarted or older records replacing completed results.",
+        "Apostle Defense keeps a separate window, opens before connecting, and shares themes, language and diagnostics. Its strategy is unchanged.",
+        "Hosted tools share exclusive control during connection, execution and settlement. Idle windows release control; stop, settings and close remain available.",
+        "If OTA fails, extract the full package into a new folder and keep the app folder."
+      ]
+    }
+  },
+  {
+    "Version": "1.3.15",
+    "Date": "2026-10-15",
+    "Notes": {
+      "zh-CN": [
+        "内置装备助手自动读取库存并减少重复准备；主按钮依次完成计算规划、确认运行。",
+        "装备助手统一主题、弹窗与筛选，日志纳入织尘诊断和空间管理。",
+        "空闲时自动迁移旧搓粉日志，按保留期限清除过期日志和空目录；保留未完成批次。",
+        "修正当前活动卡带 4、5 的周收集地图；修复运行期间深色设置分类条变白。",
+        "若 OTA 失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+      ],
+      "zh-TW": [
+        "內建裝備助手自動讀取庫存並減少重複準備；主按鈕依序完成計算規劃、確認執行。",
+        "裝備助手統一主題、對話框與篩選，日誌納入織塵診斷和空間管理。",
+        "閒置時自動遷移舊搓粉日誌，依保留期限清除過期日誌和空目錄；保留未完成批次。",
+        "修正目前活動卡帶 4、5 的每週收集地圖；修復執行期間深色設定分類列變白。",
+        "若 OTA 失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+      ],
+      "en-US": [
+        "Equipment opens with automatic inventory loading and reuses compatible preparation. One primary action progresses from planning to confirmed execution.",
+        "Equipment uses shared themes, dialogs and filters. Its logs join Dustweave diagnostics and retention.",
+        "Idle maintenance imports old equipment logs and removes expired logs and empty folders, preserving pending batches.",
+        "Corrects weekly collection for current event cartridges 4 and 5 and fixes the white settings strip during dark-mode automation.",
+        "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+      ]
+    }
+  },
+  {
+    "Version": "1.3.14",
+    "Date": "2026-10-15",
+    "Notes": {
+      "zh-CN": [
+        "藏红花取消收割前巡田，直接抵达首个收割位置；三种料理已生效时可恢复遗漏回调，不重复消耗。",
+        "活动扫荡和自动战斗确认窗消失后，仅在确认未提交、关卡与次数未变化时有限重开。",
+        "潘多拉优化 BOSS 距离、退路和转弯，并改进道具与主动技能时机；本次为离线验证。",
+        "诊断导出优先保留各类近期记录，避免大量旧查询挤掉活动交易现场。",
+        "若 OTA 失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+      ],
+      "zh-TW": [
+        "藏紅花取消收割前巡田，直接抵達首個收割位置；三種料理已生效時可恢復遺漏回呼，不重複消耗。",
+        "活動掃蕩和自動戰鬥確認視窗消失後，僅在確認未提交、關卡與次數未變化時有限重開。",
+        "潘多拉最佳化 BOSS 距離、退路和轉彎，並改善道具與主動技能時機；本次為離線驗證。",
+        "診斷匯出優先保留各類近期紀錄，避免大量舊查詢擠掉活動交易現場。",
+        "若 OTA 失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+      ],
+      "en-US": [
+        "Saffron goes directly to the first harvest position. Confirmed food effects recover missed callbacks without consuming food again.",
+        "Lost event previews reopen only when confirmation was not submitted and the stage and AP remain unchanged.",
+        "Improves Pandora boss spacing, escape routes, turns, pickups and skill timing. These changes have offline validation only.",
+        "Diagnostic exports retain recent evidence across categories before bulk historical queries.",
+        "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+      ]
+    }
+  },
+  {
+    "Version": "1.3.13",
+    "Date": "2026-10-15",
+    "Notes": {
+      "zh-CN": [
+        "普通启动与隔离多开共享同账号日常结果和周收集地图进度，保留较新结果，按游戏周期重置。",
+        "周收集只补查缺失或未完成的地图，不再因地图范围更新而重置整项完成记录。",
+        "吸收次数用完后继续可执行的压制，暂缓剩余物品，不自动开启步行收集。",
+        "修复沙盒专属目录与默认目录并存时的启动、登录信息回收和绑定修复误报。",
+        "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+      ],
+      "zh-TW": [
+        "普通啟動與隔離多開共用同帳號日常結果和每週收集地圖進度，保留較新結果，依遊戲週期重置。",
+        "每週收集只補查缺失或未完成的地圖，不再因地圖範圍更新而重置整項完成紀錄。",
+        "吸收次數用完後繼續可執行的壓制，暫緩剩餘物品，不自動開啟步行收集。",
+        "修復沙盒專屬目錄與預設目錄並存時的啟動、登入資訊回收和綁定修復誤報。",
+        "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+      ],
+      "en-US": [
+        "Shares validated account results and weekly map progress between ordinary and sandbox runs, retaining newer results and respecting game resets.",
+        "Collection rechecks cover missing or unfinished areas without resetting the whole completed stage after catalog updates.",
+        "Continues available suppression when absorption runs out, deferring remaining drops without enabling walking collection.",
+        "Fixes false sandbox directory mismatches during startup, sign-in recovery and binding repair when a per-box path overrides a global default.",
+        "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+      ]
+    }
+  },
+  {
+    "Version": "1.3.12",
+    "Date": "2026-10-15",
+    "Notes": {
+      "zh-CN": [
+        "活动扫荡一次设置最大可用次数；新增默认关闭的“日常完成后退出游戏”。",
+        "补齐活动卡带 3、4、5 的周收集和压制；活动卡带 2 在非安全区优先使用可用藏身。",
+        "修复镜中汇总与段位窗口的结算衔接，以及救赎之塔首次进入失败。",
+        "修复砍价预览遮挡商店时的跑商中断，避免重复扣药，补充精简报价诊断。",
+        "移除魔兽快速战斗环节，旧预设和队列保留其他任务。",
+        "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+      ],
+      "zh-TW": [
+        "活動掃蕩一次設定最大可用次數；新增預設關閉的「日常完成後退出遊戲」。",
+        "補齊活動卡帶 3、4、5 的每週收集和壓制；活動卡帶 2 在非安全區優先使用可用藏身。",
+        "修復鏡中彙總與段位視窗的結算銜接，以及救贖之塔首次進入失敗。",
+        "修復砍價預覽遮擋商店時的跑商中斷，避免重複扣藥，補充精簡報價診斷。",
+        "移除魔獸快速戰鬥環節，舊預設和佇列保留其他任務。",
+        "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+      ],
+      "en-US": [
+        "Event sweeps set the maximum free batch in one step. Adds opt-in game exit after daily completion.",
+        "Completes weekly collection and suppression coverage for event cartridges 3–5; cartridge 2 uses available stealth outside safe areas.",
+        "Fixes overlapping Mirror result/rank windows and first-entry failures for Tower of Salvation.",
+        "Fixes trading interrupted by bargain previews, avoids duplicate pill spending and adds compact shop diagnostics.",
+        "Removes Fiend Hunt quick battles while retaining other tasks in existing presets and queues.",
+        "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+      ]
+    }
+  },
+  {
+    "Version": "1.3.11",
+    "Date": "2026-10-15",
+    "Notes": {
+      "zh-CN": [
+        "修复亲密度咨询升级礼物延迟弹出导致中断，等待奖励展示结束后再继续咨询。",
+        "可接续旧版遗留的咨询礼物弹窗，不重复消耗已完成的免费次数。",
+        "修复潘多拉大逃脱 Game Over 后偶发重开受阻，并补充续局诊断。",
+        "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+      ],
+      "zh-TW": [
+        "修復親密度諮詢升級禮物延遲彈出導致中斷，等待獎勵展示結束後再繼續諮詢。",
+        "可接續舊版遺留的諮詢禮物視窗，不重複消耗已完成的免費次數。",
+        "修復潘多拉大逃脫 Game Over 後偶發重新開始受阻，並補充續局診斷。",
+        "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+      ],
+      "en-US": [
+        "Fixes counseling interruptions caused by delayed level-up gifts; counseling continues after reward presentation finishes.",
+        "Resumes counseling gift popups left by older versions without repeating confirmed free attempts.",
+        "Fixes intermittent Pandora Escape restarts after Game Over and improves restart diagnostics.",
+        "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+      ]
+    }
+  },
+  {
+    "Version": "1.3.10",
+    "Date": "2026-10-14",
+    "Notes": {
+      "zh-CN": [
+        "无插件时使用游戏内活动自动战斗，每日最多尝试 5 次免费战斗；失败后可停止本环节或扫荡此前最高可扫荡关卡。",
+        "新增默认关闭的救赎之塔扫荡，按成长加成缺少的石头与每日钥匙保留数量安排次数，不结束已有挑战。",
+        "修复恶魔城赛季奖励弹窗阻挡，并改进中断恢复。入口与跳过流程已实测，消耗次数后的结算分支仍待实机验证。",
+        "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+      ],
+      "zh-TW": [
+        "無外掛模組時使用遊戲內活動自動戰鬥，每日最多嘗試 5 次免費戰鬥；失敗後可停止本環節或掃蕩先前最高可掃蕩關卡。",
+        "新增預設關閉的救贖之塔掃蕩，依成長加成缺少的石頭與每日鑰匙保留數量安排次數，不結束既有挑戰。",
+        "修復惡魔城賽季獎勵彈窗阻擋，並改善中斷恢復。入口與略過流程已實測，消耗次數後的結算分支仍待實機驗證。",
+        "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+      ],
+      "en-US": [
+        "Without a plugin, event battles use the game's auto battle for up to five free attempts daily. After failure, stop this stage or sweep the highest eligible cleared stage.",
+        "Adds opt-in Tower of Salvation sweeps, limited by growth stones still needed and the daily-key reserve, without ending an existing challenge.",
+        "Handles the Evil Castle season reward popup and improves interruption recovery. Entry and skip paths were tested live; consuming settlement paths still need live validation.",
+        "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+      ]
+    }
+  },
+  {
+    "Version": "1.3.9",
+    "Date": "2026-10-14",
+    "Notes": {
+      "zh-CN": [
+        "优化内置使徒防守的格位查找与属性评分，减少重复计算和临时内存分配。",
+        "使徒防守加入按阶段评估的重开策略，优先缩短连续尝试的累计通关时间；保留原召唤、培养与换位决策。",
+        "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+      ],
+      "zh-TW": [
+        "優化內建使徒防守的格位查找與屬性評分，減少重複計算和暫存記憶體配置。",
+        "使徒防守加入按階段評估的重開策略，優先縮短連續嘗試的累計通關時間；保留原召喚、培養與換位決策。",
+        "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+      ],
+      "en-US": [
+        "Optimizes board lookups and attribute scoring in built-in Apostle Defense, reducing repeated calculations and temporary allocations.",
+        "Adds an annealed stage-based restart policy to reduce cumulative time to a clear, retaining existing summoning, development and positioning decisions.",
+        "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+      ]
+    }
+  },
+  {
+    "Version": "1.3.8",
+    "Date": "2026-10-14",
+    "Notes": {
+      "zh-CN": [
+        "修复“只购买收藏商品”跳过砍价的问题：先砍价，再按新的折扣报价购买；已有砍价效果时直接沿用，不重复消耗天赋药。",
+        "继续只购买已有收藏，不制作、不卖出、不修改收藏；没有可购买商品时不消耗砍价用药，遵守日常天赋药保留下限。",
+        "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+      ],
+      "zh-TW": [
+        "修復「只購買收藏商品」略過議價的問題：先議價，再依新的折扣報價購買；已有議價效果時直接沿用，不重複消耗天賦藥。",
+        "繼續只購買既有收藏，不製作、不出售、不修改收藏；沒有可購買商品時不消耗議價用藥，遵守日常天賦藥保留下限。",
+        "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+      ],
+      "en-US": [
+        "Fixes favorites-only trading skipping bargaining. Bargain first, then refresh discounted prices before buying. An active bargain is reused without spending more talent pills.",
+        "Only existing favorites are purchased, without cooking, selling or changing favorites. Empty baskets spend no bargaining pills; the daily pill reserve is respected.",
+        "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+      ]
+    }
+  },
+  {
+    "Version": "1.3.7",
+    "Date": "2026-10-14",
+    "Notes": {
+      "zh-CN": [
+        "藏红花增产料理优先使用现有份数，再用材料制作，材料不足才购买；土豆默认两轮，可选择自动料理并先出售二、三级藏红花，只用一级制作浓汤、保留一份。已有轮数设置沿用。",
+        "跑商新增默认关闭的“只买收藏”：按当前商店报价购买已有收藏，不自动砍价、不制作或出售物品，也不修改收藏。",
+        "修复管理员游戏连接助手的跨权限通信问题；本机只读数据偶发截断时有限重读，并补充连接阶段诊断。消费指令不会重复发送。",
+        "潘多拉挑战模式可关闭“自动选择装备”，手动选择升级后继续自动游玩，等待选择不会超时；刷货币模式保持自动选择。",
+        "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+      ],
+      "zh-TW": [
+        "藏紅花增產料理優先使用現有份數，再用材料製作，材料不足才購買；馬鈴薯預設兩輪，可選擇自動料理並先出售二、三級藏紅花，只用一級製作濃湯、保留一份。既有輪數設定沿用。",
+        "跑商新增預設關閉的「只買收藏」：依目前商店報價購買既有收藏，不自動議價、不製作或出售物品，也不修改收藏。",
+        "修復系統管理員遊戲連線助手的跨權限通訊問題；本機唯讀資料偶發截斷時有限重讀，並補充連線階段診斷。消耗指令不會重複傳送。",
+        "潘多拉挑戰模式可關閉「自動選擇裝備」，手動選擇升級後繼續自動遊玩，等待選擇不會逾時；刷貨幣模式維持自動選擇。",
+        "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+      ],
+      "en-US": [
+        "Saffron harvest reuses owned buff food, crafts missing portions when materials permit, then buys any remaining types. Potato rounds default to two; existing choices are retained. Optional processing sells grade 2/3 saffron first, uses grade 1 for soup and keeps one portion.",
+        "Adds opt-in favorites-only trading: buy existing favorites at current shop prices without bargaining, cooking, selling or changing favorites.",
+        "Fixes cross-elevation communication with the game connection helper. Truncated local read-only responses receive bounded retries, with connection-stage diagnostics. Consuming commands are never replayed.",
+        "Challenge mode in Pandora can disable automatic equipment choices. Choose upgrades manually and automatic play resumes, without a selection timeout. Currency farming remains automatic.",
+        "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+      ]
+    }
+  },
+  {
+    "Version": "1.3.6",
+    "Date": "2026-10-14",
+    "Notes": {
+      "zh-CN": [
+        "藏红花收割后改为固定种收 1–3 轮土豆，默认 3 轮；不再依赖加成剩余时间，重跑可接续未完成的一轮。",
+        "新增潘多拉大逃脱：选择关卡循环刷游戏货币，或自动尝试挑战。挑战模式未加入装备数据，目前自动化无法通关。",
+        "沙盒启动前统一提供安装检查、官网下载及位置选择；多账号共用提示，定时任务不会反复弹窗。",
+        "潘多拉已验证普通第一关循环及进入第二关；藏红花固定轮数仍待自然成熟后的完整实机验收。",
+        "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+      ],
+      "zh-TW": [
+        "藏紅花收割後改為固定種收 1–3 輪馬鈴薯，預設 3 輪；不再依賴加成剩餘時間，重跑可接續未完成的一輪。",
+        "新增潘多拉大逃脫：選擇關卡循環刷遊戲貨幣，或自動嘗試挑戰。挑戰模式未加入裝備資料，目前自動化無法通關。",
+        "沙盒啟動前統一提供安裝檢查、官網下載及位置選擇；多帳號共用提示，定時任務不會反覆彈窗。",
+        "潘多拉已驗證普通第一關循環及進入第二關；藏紅花固定輪數仍待自然成熟後的完整實機驗收。",
+        "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+      ],
+      "en-US": [
+        "Saffron harvest now uses 1–3 fixed potato rounds (3 by default), independent of buff duration. Reruns can finish the remaining round.",
+        "Adds Pandora Escape: repeat a selected stage for currency or automatically attempt challenges. Challenge equipment data is not included; automation cannot currently clear challenge mode.",
+        "Sandbox startup offers installation checks, the official download and a folder picker. Multi-account attempts share one prompt; scheduled runs do not repeatedly prompt.",
+        "Pandora was live-tested for normal Stage 1 looping and Stage 2 entry. Fixed-round saffron still needs a complete live harvest after natural maturation.",
+        "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+      ]
+    }
+  },
+  {
+    "Version": "1.3.5",
+    "Date": "2026-10-14",
+    "Notes": {
+      "zh-CN": [
+        "定时接管改为停止内置工具、等待当前操作完成，再正常重启游戏并执行计划中的日常；默认关闭。",
+        "减少历史记录反复扫描，以及餐厅气泡和周收集的重复等待；首次索引仍需读取历史。",
+        "修复天赋菜单尚未展开就被误判为关闭，并改进周任务遇敌后的退出与恢复。",
+        "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+      ],
+      "zh-TW": [
+        "定時接管改為停止內建工具、等待目前操作完成，再正常重啟遊戲並執行計畫中的日常；預設關閉。",
+        "減少歷史記錄反覆掃描，以及餐廳氣泡和週收集的重複等待；首次索引仍需讀取歷史。",
+        "修復天賦選單尚未展開就被誤判為關閉，並改善週任務遇敵後的退出與恢復。",
+        "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+      ],
+      "en-US": [
+        "Scheduled takeover now stops built-in tools, waits for the current operation, and restarts the game before scheduled dailies. Off by default.",
+        "Reduces repeated history scans and waits between restaurant bubbles and weekly collection steps. Initial indexing still reads history.",
+        "Fixes talent menus being treated as closed before appearing, and improves encounter-exit recovery during weekly tasks.",
+        "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+      ]
+    }
+  },
+  {
+    "Version": "1.3.4",
+    "Date": "2026-10-14",
+    "Notes": {
+      "zh-CN": [
+        "修复历史成功记录清理后，自动执行日常在登录检查完成时中断的问题，覆盖普通与沙盒账号队列。",
+        "并行队列中断时保留具体原因和恢复入口，不再统一显示为已暂停。",
+        "诊断保留完整错误位置，接续成功后清除过期错误提示；未确认的消耗操作仍按当前游戏状态核对。",
+        "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+      ],
+      "zh-TW": [
+        "修復歷史成功記錄清理後，自動執行日常在登入檢查完成時中斷的問題，涵蓋一般與沙盒帳號佇列。",
+        "並行佇列中斷時保留具體原因及恢復入口，不再統一顯示為已暫停。",
+        "診斷保留完整錯誤位置，接續成功後清除過期錯誤提示；未確認的消耗操作仍依目前遊戲狀態核對。",
+        "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+      ],
+      "en-US": [
+        "Fixes automatic daily runs stopping after sign-in checks when successful historical records have been compacted, including sandbox account queues.",
+        "Interrupted parallel queues retain the specific reason and resume action instead of showing a generic paused status.",
+        "Diagnostics retain the full error location and clear stale errors after a successful resume. Unconfirmed resource-consuming actions still reconcile against the current game state.",
+        "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+      ]
+    }
+  },
+  {
+    "Version": "1.3.3",
+    "Date": "2026-10-14",
+    "Notes": {
+      "zh-CN": [
+        "新增软件设置页，集中管理外观、语言、启动与关闭、程序位置、更新和日志清理。",
+        "可选登录 Windows 时启动织尘，默认关闭；打开软件后执行日常单独设置。",
+        "精简账号管理；沙盒修复先自动匹配，点击「不是这个」再手动选择。",
+        "日常设置增加分类与跨分类搜索，修正对齐并在输入错误时展开对应选项。",
+        "定时执行合为一份连续计划，保存按钮始终可见，提示尚未保存的修改。",
+        "诊断仅保留连接状态和反馈；启动引导移到顶部，优化三语、深浅色及键盘操作。",
+        "若 OTA 更新失败，请手动下载完整包并解压到新目录，保留 app 文件夹；账号与设置继续沿用。"
+      ],
+      "zh-TW": [
+        "新增軟體設定頁，集中管理外觀、語言、啟動與關閉、程式位置、更新和記錄清理。",
+        "可選登入 Windows 時啟動織塵，預設關閉；開啟軟體後執行日常另行設定。",
+        "精簡帳號管理；沙盒修復先自動配對，按「不是這個」再手動選擇。",
+        "日常設定新增分類及跨分類搜尋，修正對齊，輸入錯誤時展開對應選項。",
+        "排程整合為一份連續計畫，儲存按鈕保持可見，提示尚未儲存的修改。",
+        "診斷僅保留連線狀態與回報；啟動引導移至頂部，改善三語、深淺色及鍵盤操作。",
+        "若 OTA 更新失敗，請手動下載完整包並解壓至新目錄，保留 app 資料夾；帳號與設定繼續沿用。"
+      ],
+      "en-US": [
+        "New App settings page groups appearance, language, startup and closing, installation paths, updates and log cleanup.",
+        "Optional startup at Windows sign-in is off by default. Running daily tasks when the app opens remains a separate setting.",
+        "Simpler account management. Sandbox repair offers a verified match first; Not this one reveals manual selection.",
+        "Daily settings adds categories and cross-category search, aligned fields and visible validation without losing input.",
+        "Scheduling is one continuous plan with an always-visible save button and clear unsaved-change feedback.",
+        "Diagnostics focuses on connection and reporting. Getting started moves to the header; themes, translations and keyboard controls are refined.",
+        "If OTA fails, extract the complete package into a new folder and keep the app folder. Existing accounts and settings are retained."
+      ]
+    }
+  },
+  {
+    "Version": "1.3.2",
+    "Date": "2026-10-14",
+    "Notes": {
+      "zh-CN": [
+        "修复沙盒改名后无法启动账号的问题，保留原数据和登录信息。",
+        "账号管理新增「修复沙盒绑定」，支持自动找回和手动选择并确认。",
+        "补充任务栏身份及图标路径；旧固定项若仍空白，请取消固定后重新固定。",
+        "1.3.1 支持差分升级；若更新失败，可手动下载完整包，账号与设置继续保留。"
+      ],
+      "zh-TW": [
+        "修復沙盒改名後無法啟動帳號的問題，保留原資料與登入資訊。",
+        "帳號管理新增「修復沙盒綁定」，支援自動找回與手動選擇並確認。",
+        "補充工作列身分與圖示路徑；舊釘選項若仍空白，請取消釘選後重新釘選。",
+        "1.3.1 支援差分升級；若更新失敗，可手動下載完整包，帳號與設定繼續保留。"
+      ],
+      "en-US": [
+        "Repairs renamed sandbox associations while preserving data and sign-in.",
+        "Adds automatic and confirmed manual sandbox binding in Accounts.",
+        "Sets explicit taskbar identity and icon metadata. Repin any old shortcut that remains blank.",
+        "Differential upgrade from 1.3.1 is supported. If updating fails, use the complete download; accounts and settings are retained."
+      ]
+    }
+  },
+  {
+    "Version": "1.3.1",
+    "Date": "2026-10-13",
+    "Notes": {
+      "zh-CN": [
+        "整理安装目录：双击根目录的 Dustweave.exe 即可启动，运行库和组件统一收纳到 app 文件夹。",
+        "1.3.0 已撤回。由于启动文件的位置调整，请手动下载完整 1.3.1 包并解压到新目录；原有账号和设置继续沿用。",
+        "保留独立新版 OTA 与差分更新。后续更新继续复用未变化的运行库；请不要单独移动 EXE 或删除 app 文件夹。"
+      ],
+      "zh-TW": [
+        "整理安裝目錄：按兩下根目錄的 Dustweave.exe 即可啟動，執行階段與元件統一收納至 app 資料夾。",
+        "1.3.0 已撤回。由於啟動檔案的位置調整，請手動下載完整 1.3.1 包並解壓至新目錄；既有帳號與設定繼續沿用。",
+        "保留獨立新版 OTA 與差分更新。後續更新繼續重用未變更的執行階段；請勿單獨移動 EXE 或刪除 app 資料夾。"
+      ],
+      "en-US": [
+        "A clearer installation folder: launch Dustweave.exe from the root. Runtime files and components are grouped in the app folder.",
+        "1.3.0 has been withdrawn. The startup layout changed: manually download the complete 1.3.1 package into a new folder. Existing accounts and settings are retained.",
+        "The separate OTA channel and differential updates remain enabled. Future updates reuse unchanged runtime files; keep Dustweave.exe together with the app folder."
+      ]
+    }
+  },
+  {
+    "Version": "1.3.0",
+    "Date": "2026-10-13",
+    "Notes": {
+      "zh-CN": [
+        "改为完整目录分发，运行库与共享资源独立保存。请完整解压后启动 Dustweave.exe，不要单独移动 EXE。",
+        "1.2.x 及更早版本请手动下载完整软件包并解压到新目录；已有账号和设置继续沿用。",
+        "采用更小的差分更新：最多跨10次发布，更新包超过8 MiB、运行库改变或缺少适用差分时提示手动下载，不自动回退下载完整包。",
+        "增加独立更新助手与启动恢复入口；更新失败可回退，不重复替换未改变的运行库和资源。"
+      ],
+      "zh-TW": [
+        "改為完整目錄發行，執行階段與共用資源獨立保存。請完整解壓後啟動 Dustweave.exe，不要單獨移動 EXE。",
+        "1.2.x 及更早版本請手動下載完整軟體包並解壓至新目錄；既有帳號與設定繼續沿用。",
+        "採用更小的差分更新：最多跨10次發行，更新包超過8 MiB、執行階段改變或缺少適用差分時提示手動下載，不自動改下載完整包。",
+        "新增獨立更新助手與啟動復原入口；更新失敗可回復，不重複替換未變更的執行階段與資源。"
+      ],
+      "en-US": [
+        "Distribution now uses a complete folder with separate runtime and shared resources. Extract everything and launch Dustweave.exe; do not move the EXE alone.",
+        "Users on 1.2.x or earlier must download the full package into a new folder. Existing accounts and settings are retained.",
+        "Smaller direct deltas cover up to 10 releases. Updates above 8 MiB, runtime changes or missing patches require a manual download instead of an automatic full-package fallback.",
+        "An independent updater and recovery launcher handle interrupted installations. Unchanged runtime and resource files are no longer copied or replaced."
+      ]
+    }
+  },
+  {
+    "Version": "1.2.11",
+    "Date": "2026-10-13",
+    "Notes": {
+      "zh-CN": [
+        "使徒运气防守的50波目标改用离线退火搜索得到的策略；普通盘面也会继续培养，不再仅因前10波没有7／8阶核心而重开。",
+        "按阶段安排召唤、属性升级与低贡献使徒替换，保留换位优化及首领追击。",
+        "离线模型已做随机对照和移植一致性验证；模拟结果不等同于实机胜率。自动更新失败时，请手动下载完整软件包。"
+      ],
+      "zh-TW": [
+        "使徒運氣防守的50波目標改用離線退火搜尋得到的策略；普通盤面也會繼續培養，不再只因前10波沒有7／8階核心而重開。",
+        "依階段安排召喚、屬性升級及低貢獻使徒替換，保留換位最佳化與首領追擊。",
+        "離線模型已做隨機對照及移植一致性驗證；模擬結果不等同於實機勝率。自動更新失敗時，請手動下載完整軟體套件。"
+      ],
+      "en-US": [
+        "The Apostle Defense wave-50 goal now uses a strategy obtained through offline simulated annealing. Ordinary lineups keep developing instead of restarting solely because no tier-7/8 core appeared in the first ten waves.",
+        "Summoning, element upgrades and weak-unit replacement follow a staged policy, with repositioning and boss pursuit.",
+        "Randomized model trials and port-consistency checks passed; simulated results are not live win rates. If automatic updating fails, download the complete package manually."
+      ]
+    }
+  },
+  {
+    "Version": "1.2.10",
+    "Date": "2026-10-13",
+    "Notes": {
+      "zh-CN": [
+        "旧的中断记录保留为诊断，接续或补跑按游戏当前状态继续，不再永久阻塞队列。",
+        "周收集同时恢复吸收和步行拾取卡点，暂时无法读取的地图保留待办并继续其他地图。",
+        "镜中中断后按当前剩余免费次数继续；修复邮箱、装备环节的旧记录阻塞和藏红花记录保存。"
+      ],
+      "zh-TW": [
+        "舊的中斷紀錄保留供診斷，接續或補跑依遊戲目前狀態繼續，不再永久阻塞佇列。",
+        "每週收集同時恢復吸收及步行拾取卡點，暫時無法讀取的地圖保留待辦並繼續其他地圖。",
+        "鏡中中斷後依目前剩餘免費次數繼續；修正信箱、裝備環節的舊紀錄阻塞及藏紅花紀錄儲存。"
+      ],
+      "en-US": [
+        "Historical interrupted records remain diagnostic history. Resume and retry use current game state instead of permanently blocking the queue.",
+        "Weekly collection recovers absorption and walking checkpoints, leaving unreadable maps pending while continuing elsewhere.",
+        "Interrupted Mirror batches use remaining free attempts. Fixes mailbox and equipment recovery, and saffron record saving."
+      ]
+    }
+  },
+  {
+    "Version": "1.2.9",
+    "Date": "2026-10-13",
+    "Notes": {
+      "zh-CN": [
+        "周收集吸收中断后，接续或补跑会自动核对卡点地图的最新进度，无需先手动核对。",
+        "已收完的地图不重复吸收；暂时无法读取的地图保留待办，继续其他地图。",
+        "补充恢复方法说明；手动刷新进度增加用途说明和二次确认。"
+      ],
+      "zh-TW": [
+        "每週收集吸收中斷後，接續或補跑會自動核對卡點地圖的最新進度，無需先手動核對。",
+        "已收完的地圖不重複吸收；暫時無法讀取的地圖保留待辦，繼續其他地圖。",
+        "補充恢復方法說明；手動重新整理進度增加用途說明與二次確認。"
+      ],
+      "en-US": [
+        "Resuming or retrying weekly collection automatically checks current progress on the affected map after an uncertain absorption.",
+        "Completed maps are not absorbed again. Temporarily unreadable maps remain pending while collection continues elsewhere.",
+        "Recovery guidance is clearer. Manual progress refresh explains its scope and asks for confirmation."
+      ]
+    }
+  },
+  {
+    "Version": "1.2.8",
+    "Date": "2026-10-12",
+    "Notes": {
+      "zh-CN": [
+        "修复隔离目录含非ASCII字符时的路径读取，以及周NPC狩猎任务到点后不交互。",
+        "新增默认关闭的藏红花环节：成熟后使用增产料理收割，剩余加成种收土豆，结束后补种并制作售卖。完整成熟收割仍待实机验收。"
+      ],
+      "zh-TW": [
+        "修正隔離目錄含非ASCII字元時的路徑讀取，以及每週NPC狩獵任務到點後不互動。",
+        "新增預設關閉的藏紅花環節：成熟後使用增產料理收割，剩餘加成種收馬鈴薯，結束後補種並製作出售。完整成熟收割仍待實機驗收。"
+      ],
+      "en-US": [
+        "Fixes Unicode sandbox-path reads and weekly hunt quests failing to interact at their target.",
+        "Adds an opt-in saffron stage with yield foods, potato rounds, replanting, cooking and sales. The complete mature-crop live cycle still needs validation."
+      ]
+    }
+  },
+  {
+    "Version": "1.2.7",
+    "Date": "2026-10-12",
+    "Notes": {
+      "zh-CN": [
+        "周收集按实际可拾取状态和范围寻找落脚点；明确不可达的物品暂缓，继续其他物品及地图。",
+        "修复路径失败后的无效等待、旧步行记录阻塞和连接更新后的队列接续；未收集目标继续保留。",
+        "塔防等待金币或补抽时仍可调整站位和追击Boss，同时保留补位义务及培养预算。",
+        "如果自动更新失败，请手动下载完整软件包。"
+      ],
+      "zh-TW": [
+        "每週收集依實際可拾取狀態及範圍尋找落腳點；明確無法到達的物品暫緩，繼續其他物品及地圖。",
+        "修正路徑失敗後的無效等待、舊步行紀錄阻塞及連線更新後的佇列接續；未收集目標繼續保留。",
+        "塔防等待金幣或補抽時仍可調整站位及追擊Boss，同時保留補位義務及培養預算。",
+        "若自動更新失敗，請手動下載完整軟體套件。"
+      ],
+      "en-US": [
+        "Weekly collection uses native pickup availability and pickup areas; individually unreachable items are deferred while other items and maps continue.",
+        "Fixes idle waits after path rejection, historical walking blockers and queue resume across connection reloads, preserving uncollected targets.",
+        "Apostle Defense keeps positioning and boss pursuit active while waiting for recruitment, without spending reserved gold.",
+        "If automatic updating fails, download the full package manually."
+      ]
+    }
+  },
+  {
+    "Version": "1.2.6",
+    "Date": "2026-10-12",
+    "Notes": {
+      "zh-CN": [
+        "修复更新连接组件后，已结束的旧步行拾取记录仍阻塞周收集的问题。",
+        "统一接续、补跑与当前计划的恢复检查，避免切图和使用天赋后才发现旧操作阻塞。",
+        "接续原队列支持同一游戏进程的连接更新，保留账号校验与未确认操作保护。"
+      ],
+      "zh-TW": [
+        "修正更新連線元件後，已結束的舊步行拾取紀錄仍阻塞每週收集的問題。",
+        "統一接續、補跑與目前計畫的恢復檢查，避免切換地圖及使用天賦後才發現舊操作阻塞。",
+        "接續原佇列支援同一遊戲程序的連線更新，保留帳號驗證及未確認操作保護。"
+      ],
+      "en-US": [
+        "Fixes settled walking records blocking weekly collection after a connection component update.",
+        "Resume, retry and new plans now reconcile before map travel and talent use.",
+        "Interrupted queues can resume after the observer reloads in the same game process, while retaining account checks and unresolved-operation safeguards."
+      ]
+    }
+  },
+  {
+    "Version": "1.2.5",
+    "Date": "2026-10-12",
+    "Notes": {
+      "zh-CN": [
+        "修复周收集误把物品类型当作可拾取状态，按游戏实际状态筛选和确认目标。",
+        "途中拾取其他物品后，目标寻路停滞会有限次恢复；未收集目标保留供后续补收。",
+        "已结束的步行拾取记录不再反复阻塞重跑；仍保护没有完整回执的操作。"
+      ],
+      "zh-TW": [
+        "修正每週收集誤將物品類型當作可拾取狀態，依遊戲實際狀態篩選及確認目標。",
+        "途中拾取其他物品後，目標尋路停滯會有限次恢復；未收集目標保留供後續補收。",
+        "已結束的步行拾取紀錄不再反覆阻塞重跑；仍保護沒有完整回執的操作。"
+      ],
+      "en-US": [
+        "Weekly collection now uses native pickup availability instead of immutable object-type flags.",
+        "Walking can resume after incidental pickups interrupt progress, with bounded retries and uncollected targets preserved.",
+        "Settled walking records no longer block future retries. Operations with incomplete responses remain protected."
+      ]
+    }
+  },
+  {
+    "Version": "1.2.4",
+    "Date": "2026-10-12",
+    "Notes": {
+      "zh-CN": [
+        "修复已被游戏拒绝的拾取记录反复阻塞周收集；步行收集时重新检查探查状态。",
+        "修复旧游戏进程跨日镜中记录阻塞新任务，保留当前战斗和次数校验。",
+        "中断的偷窃仅影响偷窃环节；补充传送窗口的返回路径。",
+        "诊断包优先保留最新队列、地图进度和任务信息。"
+      ],
+      "zh-TW": [
+        "修正已被遊戲拒絕的拾取紀錄反覆阻塞每週收集；步行收集時重新檢查探查狀態。",
+        "修正舊遊戲程序跨日鏡中紀錄阻塞新任務，保留目前戰鬥及次數驗證。",
+        "中斷的偷竊僅影響偷竊環節；補充傳送視窗的返回路徑。",
+        "診斷包優先保留最新佇列、地圖進度及任務資訊。"
+      ],
+      "en-US": [
+        "Server-rejected pickups no longer block future weekly collection. Walking collection rechecks the research talent.",
+        "Old Mirror records from a previous game process and day no longer block fresh tasks, while active battles and ticket checks remain protected.",
+        "Interrupted theft affects only theft. Adds recovery from the waypoint screen.",
+        "Diagnostic exports prioritize the latest queue, map progress and NPC task evidence."
+      ]
+    }
+  },
+  {
+    "Version": "1.2.3",
+    "Date": "2026-10-12",
+    "Notes": {
+      "zh-CN": [
+        "镜中非战斗期显示原因并继续日常，已提交战斗先完成结算。",
+        "修复列车、陷阱等打断周NPC任务寻路后空等，按实际位移判断并有限次恢复。",
+        "拾取或搬运仍在处理时不打断、不重复执行。",
+        "如果自动更新失败，请手动下载完整软件包。"
+      ],
+      "zh-TW": [
+        "鏡中非戰鬥期顯示原因並繼續日常，已提交戰鬥先完成結算。",
+        "修正列車、陷阱等打斷每週NPC任務尋路後空等，按實際位移判斷並有限次恢復。",
+        "拾取或搬運仍在處理時不打斷、不重複執行。",
+        "若自動更新失敗，請手動下載完整軟體套件。"
+      ],
+      "en-US": [
+        "Skips Mirror outside its battle period after settling submitted battles.",
+        "Recovers interrupted weekly NPC navigation using actual position progress and bounded retries.",
+        "Preserves pending pickup and carry interactions without replaying them.",
+        "If automatic updating fails, download the full package manually."
+      ]
+    }
+  },
   {
     "Version": "1.2.2",
     "Date": "2026-10-12",

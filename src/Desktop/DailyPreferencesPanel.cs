@@ -44,6 +44,8 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly TextBox tradeReserve = new(), tradeMaximum = new();
     private readonly TextBox potionReserve = new(), potionTarget = new();
     private readonly CheckBox potionRefill = Check("药不足时自动补药");
+    private readonly CheckBox fastTravel = Check("prefs.fast_travel");
+    private readonly Button cookingButton = LocalButton("cooking.title");
     private readonly CheckBox preserveBloodCocktailMail = Check("prefs.mail_preserve_cocktail");
     private readonly CheckBox tradeBreakEven = Check("购买零收益商品（金币成就）");
     private StackPanel section = new();
@@ -169,6 +171,8 @@ public sealed class DailyPreferencesPanel : UserControl
         var generalTitle = Label("prefs.resources"); generalTitle.FontWeight = FontWeights.SemiBold;
         var general = new Border { BorderBrush = (Brush)Application.Current.FindResource("Line"), BorderThickness = new(0, 0, 0, 1), Child = new Expander { Header = generalTitle, Content = generalBody, IsExpanded = false, Margin = new(0, 8, 0, 8), Style = (Style)Application.Current.FindResource("SettingsExpander") } };
         form.Children.Add(general); sections.Add((general, "整体设置", "天赋药保留下限与自动补药")); section = generalBody;
+        section.Children.Add(fastTravel);
+        Note("prefs.fast_travel_hint");
         Row("天赋药保留下限", potionReserve);
         Note("默认0。只允许消耗保留量以外的天赋药；不足时在队列中说明受限任务，不影响其他可执行任务。仅适用于日常队列。");
         section.Children.Add(potionRefill);
@@ -274,6 +278,15 @@ public sealed class DailyPreferencesPanel : UserControl
         Stage(trade, "跑商、料理与高价售卖", "prefs.trade_hint", expanded: true, editableWhenOff: true);
         section.Children.Add(tradeFavorites);
         Note("prefs.trade_favorites_hint");
+        cookingButton.HorizontalAlignment = HorizontalAlignment.Left;
+        cookingButton.Margin = new(0, 4, 0, 12);
+        cookingButton.Click += (_, _) =>
+        {
+            if (loaded == null || account.Length == 0) return;
+            var dialog = new DailyCookingWindow(loaded.Trade.CookingRecipes) { Owner = Window.GetWindow(this) };
+            if (DailyDialogs.ShowModal(dialog) == true && dialog.Result != null) { loaded.Trade.CookingRecipes = dialog.Result; MarkDirty(); }
+        };
+        section.Children.Add(cookingButton);
         var tradeSection = section;
         section.Children.Add(normalTrade);
         section = normalTrade;
@@ -300,8 +313,8 @@ public sealed class DailyPreferencesPanel : UserControl
         };
         section.Children.Add(bargainButton);
         section = tradeSection;
-        tradeFavorites.Checked += (_, _) => { normalTrade.IsEnabled = false; normalTrade.Opacity = .5; };
-        tradeFavorites.Unchecked += (_, _) => { normalTrade.IsEnabled = true; normalTrade.Opacity = 1; };
+        tradeFavorites.Checked += (_, _) => { normalTrade.IsEnabled = false; normalTrade.Opacity = .5; cookingButton.IsEnabled = true; };
+        tradeFavorites.Unchecked += (_, _) => { normalTrade.IsEnabled = true; normalTrade.Opacity = 1; cookingButton.IsEnabled = false; };
         Stage(events, "活动游戏与领奖", "prefs.events_hint");
         section.Children.Add(eventMissions);
         section.Children.Add(quiz);
@@ -351,7 +364,7 @@ public sealed class DailyPreferencesPanel : UserControl
         potionRefill.Unchecked += (_, _) => MarkDirty();
         tradeBreakEven.Checked += (_, _) => MarkDirty();
         tradeBreakEven.Unchecked += (_, _) => MarkDirty();
-        foreach (var option in new[] { tradeFavorites, saffronProcessing })
+        foreach (var option in new[] { tradeFavorites, saffronProcessing, fastTravel })
         { option.Checked += (_, _) => MarkDirty(); option.Unchecked += (_, _) => MarkDirty(); }
         form.IsEnabled = false;
         WeakEventManager<DailyLanguage, EventArgs>.AddHandler(L, nameof(DailyLanguage.Changed), LanguageChanged);
@@ -612,6 +625,7 @@ public sealed class DailyPreferencesPanel : UserControl
             potionReserve.Text = loaded.General.TalentPotionReserve.ToString(CultureInfo.InvariantCulture);
             potionTarget.Text = loaded.General.TalentPotionTarget.ToString(CultureInfo.InvariantCulture);
             potionRefill.IsChecked = loaded.General.RefillTalentPotions;
+            fastTravel.IsChecked = loaded.General.FastTravel;
             potionTarget.IsEnabled = loaded.General.RefillTalentPotions;
             hunt.IsChecked = loaded.Hunt.Enabled;
             gold.IsChecked = loaded.Hunt.FarmGold;
@@ -660,6 +674,7 @@ public sealed class DailyPreferencesPanel : UserControl
             friendship.IsChecked = loaded.Friendship.Enabled;
             trade.IsChecked = loaded.Trade.Enabled;
             tradeFavorites.IsChecked = loaded.Trade.FavoritesOnly;
+            cookingButton.IsEnabled = loaded.Trade.FavoritesOnly;
             normalTrade.IsEnabled = !loaded.Trade.FavoritesOnly;
             var tradeSettings = DailyTradePlan.ReadSettings(dataRoot, account);
             tradeReserve.Text = DailyData.N(tradeSettings["reserve_gold"]).ToString(CultureInfo.InvariantCulture);
@@ -728,7 +743,7 @@ public sealed class DailyPreferencesPanel : UserControl
             return false;
         try
         {
-            var general = new GeneralPreferences { TalentPotionReserve = PotionAmount(potionReserve), TalentPotionTarget = PotionAmount(potionTarget), RefillTalentPotions = potionRefill.IsChecked == true };
+            var general = new GeneralPreferences { FastTravel = fastTravel.IsChecked == true, TalentPotionReserve = PotionAmount(potionReserve), TalentPotionTarget = PotionAmount(potionTarget), RefillTalentPotions = potionRefill.IsChecked == true };
             try { general.Validate(); }
             catch { RevealField(potionTarget); throw; }
             // Merge the visible fields only: retain existing ingredient reserves and other policy.

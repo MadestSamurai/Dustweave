@@ -1,8 +1,8 @@
 # Repository architecture / 仓库架构
 
-Dustweave 是一个日常应用。源码、账号、连接、配置与验证在同一仓库内维护。装备助手、使徒运气防守、无限抽抽乐、恶魔猎人、音游、MANSION RUNAWAY 与潘多拉是 `src/` 下的自有模块；其余工具在 `standalone/` 中保留独立项目边界。支持可选插件。
+Dustweave 是一个日常应用。源码、账号、连接、配置与验证在同一仓库内维护。装备助手、使徒运气防守、无限抽抽乐、恶魔猎人、音游、SECRET VISION、连连看、MANSION RUNAWAY 与潘多拉是 `src/` 下的自有模块；其余工具在 `standalone/` 中保留独立项目边界。支持可选插件。
 
-Dustweave is one daily application. Its accounts, workflows, connection, configuration and verification are maintained together. Equipment Assistant, Apostle Defense, Infinite Gacha, MANSION RUNAWAY, Pandora, Fiend Hunter and Rhythm are owned modules under `src/`; the remaining independent tools retain their boundaries under `standalone/`. Optional plugins are supported.
+Dustweave is one daily application. Its accounts, workflows, connection, configuration and verification are maintained together. Equipment Assistant, Apostle Defense, Infinite Gacha, MANSION RUNAWAY, Pandora, Fiend Hunter, Rhythm, SECRET VISION and Sichuan are owned modules under `src/`; the remaining independent tools retain their boundaries under `standalone/`. Optional plugins are supported.
 
 ## Dependencies / 依赖方向
 
@@ -10,7 +10,7 @@ Dustweave is one daily application. Its accounts, workflows, connection, configu
 Desktop ── Core ── Accounts
     │         └── Compatibility ── Runtime + Shared/Ipc (embedded source)
     ├── Connection ── Core + Shared/Ipc (bounded helper mode)
-    ├── ToolHost ── standalone fishing / sichuan
+    ├── ToolHost ── standalone fishing / owned Sichuan
     ├── tools/TableExporter + tools/RuntimeCheck
     ├── Equipment/desktop ── Equipment/core ── Equipment/connection
     ├── FiendHunter/desktop ── FiendHunter/core ── FiendHunter/compatibility
@@ -36,7 +36,7 @@ Runtime sources are compiled by the adapter against the user's client. Shared IP
 | `src/Core` | Stages, scheduling, recovery, trading, optional extension contracts | External plugin implementations |
 | `src/Accounts` | Identity, protected sessions and launching | Copying user credentials into source |
 | `src/Connection`, `Compatibility`, `Runtime`, `Shared` | Adaptation, command delivery, observations and shared IPC | Ad-hoc second connections bypassing host ownership |
-| [`src/Equipment`](../src/Equipment), [`src/ApostleDefense`](../src/ApostleDefense), [`src/InfiniteGacha`](../src/InfiniteGacha), [`src/Mansion`](../src/Mansion), [`src/Pandora`](../src/Pandora), [`src/FiendHunter`](../src/FiendHunter), [`src/Rhythm`](../src/Rhythm) | Owned tool logic and integration, shipped with Dustweave | Requiring archived standalone downloads or separate releases |
+| [`src/Equipment`](../src/Equipment), [`src/ApostleDefense`](../src/ApostleDefense), [`src/InfiniteGacha`](../src/InfiniteGacha), [`src/Mansion`](../src/Mansion), [`src/Pandora`](../src/Pandora), [`src/FiendHunter`](../src/FiendHunter), [`src/Rhythm`](../src/Rhythm), [`src/SecretVision`](../src/SecretVision), [`src/Sichuan`](../src/Sichuan) | Owned tool logic and integration, shipped with Dustweave | Requiring archived standalone downloads or separate releases |
 | `assets` | Flow rules and observation specifications | Captures, inventories or whole client assemblies |
 | `standalone` | Reviewed independent tool updates and host integration | Moving daily business into an unrelated tool |
 | `tools` | Data generation and development/diagnostic entry points | Another user-facing daily application |
@@ -118,3 +118,7 @@ MANSION RUNAWAY and equipment open their actual bundled windows before connectin
 The hosted window retains account/pool preferences and existing IPC identities. Shared preparation pins the exact game process and validates its identity before activation. `HostedToolActivity` guards connection/start handlers and releases ownership only when idle. `tool-preparation` renders the actual window in three languages and two themes, checks cancellation/retry/close, verifies no premature transport reads or automatic rolls, and captures loaded results. The tool's own synthetic smoke retains target/filter/stop/notification regression coverage.
 
 Fiend Hunter is owned in `src/FiendHunter`. Its window paints before shared connection preparation, uses the host theme and language, and holds the same activity lease during preparation or automation. Selecting a monster never starts play. Durable settings and bounded combat diagnostics live in `tools/fiend-hunter`; generated components use the host suite cache, including cache relocation. The established named-pipe identity is retained solely for transport, and known old diagnostic files are migrated without importing account or execution state.
+
+### SECRET VISION and Sichuan
+
+Owned modules under src/SecretVision and src/Sichuan retain their runtime pipe identities. Tool windows use shared preparation, theme and locale. Preferences live under tools/<id>; known legacy preferences are imported only when no owned file exists. Diagnostics and captured tile images live under tools/<id>/diagnostics and participate in host export and retention. Weekly minigames prepare the selected suite module directly in the daily process; control ownership and fresh readiness are still required.

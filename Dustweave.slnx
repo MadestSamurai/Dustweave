@@ -1,5 +1,12 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/SecretVision/compatibility/Dustweave.SecretVision.Compatibility.csproj" />
+    <Project Path="src/SecretVision/core/Dustweave.SecretVision.Core.csproj" />
+    <Project Path="src/SecretVision/desktop/Dustweave.SecretVision.Desktop.csproj" />
+    <Project Path="src/Sichuan/compatibility/Dustweave.Sichuan.Compatibility.csproj" />
+    <Project Path="src/Sichuan/core/Dustweave.Sichuan.Core.csproj" />
+    <Project Path="src/Sichuan/desktop/Dustweave.Sichuan.Desktop.csproj" />
+
     <Project Path="src/FiendHunter/compatibility/Dustweave.FiendHunter.Compatibility.csproj" />
     <Project Path="src/FiendHunter/core/Dustweave.FiendHunter.Core.csproj" />
     <Project Path="src/FiendHunter/desktop/Dustweave.FiendHunter.Desktop.csproj" />
@@ -36,12 +43,6 @@
     <Project Path="standalone/bd2-fishing/compatibility/BD2Fishing.Compatibility.csproj" />
     <Project Path="standalone/bd2-fishing/core/BD2Fishing.Core.csproj" />
     <Project Path="standalone/bd2-fishing/desktop/BD2Fishing.Desktop.csproj" />
-    <Project Path="standalone/bd2-secret-vision/compatibility/BD2SecretVision.Compatibility.csproj" />
-    <Project Path="standalone/bd2-secret-vision/core/BD2SecretVision.Core.csproj" />
-    <Project Path="standalone/bd2-secret-vision/desktop/BD2SecretVision.Desktop.csproj" />
-    <Project Path="standalone/bd2-sichuan/compatibility/BD2Sichuan.Compatibility.csproj" />
-    <Project Path="standalone/bd2-sichuan/core/BD2Sichuan.Core.csproj" />
-    <Project Path="standalone/bd2-sichuan/desktop/BD2Sichuan.Desktop.csproj" />
     <Project Path="standalone/bd2-territory/compatibility/BD2Territory.Compatibility.csproj" />
     <Project Path="standalone/bd2-territory/core/BD2Territory.Core.csproj" />
     <Project Path="standalone/bd2-territory/desktop/BD2Territory.Desktop.csproj" />

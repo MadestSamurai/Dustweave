@@ -172,7 +172,7 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
             business.WorkProgress = value => { foreach (string member in progressStages) Progress(member, value); };
             if (operation is "navigate" or "execute")
                 Progress(stage, O(("step", operation == "navigate" ? "enter" : "prepare")));
-            bool favoritesOnly = stage == "trade" && new DailyPreferenceStore(root).Read(S(Bound()["actor"]![3])).Trade.FavoritesOnly;
+            bool favoritesOnly = stage == "trade" && !new DailyPreferenceStore(root).Read(S(Bound()["actor"]![3])).Trade.RequiresCatalog;
             if (stage == "trade" && !favoritesOnly && operation is "navigate" or "execute")
                 tradeData?.AssertReady();
             if (stage == "trade" && operation == "execute")

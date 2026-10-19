@@ -14,11 +14,21 @@ public partial class MainWindow
         L.Audit();
         var checks=new List<string>();
         void Check(bool value,string message){if(!value)throw new Exception(message);checks.Add(message);}
+        var recipeCatalog=System.Text.Json.Nodes.JsonNode.Parse("""{"items":[{"id":1,"name":"苹果 / Apple"},{"id":2,"name":"蜂蜜 / Honey"},{"id":10,"name":"蜂蜜烤苹果 / Honey apple"},{"id":11,"name":"蜂蜜杏仁 / Honey almond"},{"id":12,"name":"三角饭团 / Rice ball"}],"recipes":[{"id":1,"output":10,"materials":{"1":2,"2":1}},{"id":2,"output":11,"materials":{"2":3}},{"id":3,"output":12,"materials":{"1":1}}]}""")!.AsObject();
+        foreach(string locale in new[]{"zh-CN","zh-TW","en-US"}) foreach(string appearance in new[]{"light","dark"})
+        {
+            L.Select(locale);theme.Select(appearance=="light"?DailyAppearance.Light:DailyAppearance.Dark);
+            var dialog=new DailyCookingWindow([2,1],recipeCatalog){Owner=this,ShowActivated=false,ShowInTaskbar=false};
+            DailyDialogs.Prepare(dialog);dialog.Show();await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+            dialog.VerifyForSmoke();Capture($"custom-cooking-{locale}-{appearance}",(FrameworkElement)dialog.Content);dialog.Close();
+        }
         async Task Until(Func<bool> predicate){for(int i=0;i<100&&!predicate();i++)await Task.Delay(25);Check(predicate(),"bounded UI preparation completed");}
         var equipment=Assembly.Load("BD2EquipmentAssistant").GetType("BD2Equipment.MainWindow")!;
         var gacha=Assembly.Load("BD2InfiniteGacha");
         var demos=new Dictionary<Window,object>();
         Window Create(string id){
+            if(id=="sichuan")return (Window)Activator.CreateInstance(Assembly.Load("BD2Sichuan").GetType("BD2Sichuan.Desktop.SichuanWindow")!,new object[]{Path.Combine(smoke!,"sichuan")})!;
+            if(id=="secret-vision")return (Window)Activator.CreateInstance(Assembly.Load("BD2SecretVision").GetType("BD2SecretVision.Desktop.MainWindow")!,new object[]{Path.Combine(smoke!,"secret-vision"),true,false})!;
             if(id=="rhythm")return (Window)Activator.CreateInstance(Assembly.Load("BD2Rhythm").GetType("BD2Rhythm.Desktop.RhythmWindow")!,new object[]{Path.Combine(smoke!,"rhythm")})!;
             if(id=="mansion-runaway")return new MansionWindow(smoke:true,deferChrome:true);
             if(id=="equipment")return (Window)Activator.CreateInstance(equipment,BindingFlags.Instance|BindingFlags.NonPublic,null,new object[]{false},null)!;
@@ -30,7 +40,7 @@ public partial class MainWindow
         string? prior=Environment.GetEnvironmentVariable("BD2_DAILY_HOSTED_TOOL");
         try
         {
-            foreach(string id in new[]{"mansion-runaway","equipment","infinite-gacha","fiend-hunter","rhythm"})
+            foreach(string id in new[]{"mansion-runaway","equipment","infinite-gacha","fiend-hunter","rhythm","sichuan","secret-vision"})
             foreach(string language in new[]{"zh-CN","zh-TW","en-US"})
             foreach(string appearance in new[]{"light","dark"})
             {
@@ -38,7 +48,7 @@ public partial class MainWindow
                 using var locale=HostedToolLocale.Begin(language);
                 Environment.SetEnvironmentVariable("BD2_DAILY_HOSTED_TOOL",id);
                 var window=Create(id);
-                if(id is "fiend-hunter" or "rhythm" &&window.FindName("LanguageBox") is ComboBox languageBox)languageBox.Visibility=Visibility.Collapsed;
+                if(id is "fiend-hunter" or "rhythm" or "sichuan" or "secret-vision" &&(window.FindName("LanguageBox")??window.FindName("LanguageChoice")) is ComboBox languageBox)languageBox.Visibility=Visibility.Collapsed;
                 window.Owner=this;window.ShowInTaskbar=false;window.ShowActivated=false;window.WindowStartupLocation=WindowStartupLocation.Manual;window.Left=-12000;window.Top=0;
                 window.Width=id=="rhythm"?680:id=="fiend-hunter"?620:id=="infinite-gacha"?1260:id=="equipment"?1040:820;window.Height=id=="rhythm"?700:id=="fiend-hunter"?620:id=="infinite-gacha"?940:id=="equipment"?800:700;
                 int prepares=0,ready=0;bool painted=false,rendered=false;
@@ -68,6 +78,11 @@ public partial class MainWindow
                 Check(!loading.Preparing&&!loading.Ready&&!DailyToolControl.IsOccupied(root)&&loading.ActionButton.IsEnabled,id+": cancellation releases lease and permits explicit retry");
                 var retry=loading.StartAsync();await Until(()=>prepares==2);release.TrySetResult();await retry;
                 Check(ready==1&&loading.Ready&&loading.Body.IsEnabled&&!DailyToolControl.IsOccupied(root),id+": retry makes window ready without automation");
+                if(id is "sichuan" or "secret-vision"){
+                    Check(!((bool)window.GetType().GetField("connected",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(window)!),id+": no transport read before explicit connection");
+                    Check(!((Button)window.FindName(id=="sichuan"?"AutoButton":"StartButton")).IsEnabled,id+": offline controls cannot execute");
+                    Capture($"ready-{id}-{language}-{appearance}",(FrameworkElement)window.Content);
+                }
                 if(id=="rhythm"){
                     Check(!((bool)window.GetType().GetField("connected",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(window)!),"rhythm does not read transport before explicit connection");
                     Check(!((Button)window.FindName("StartButton")).IsEnabled&&!((bool)window.GetType().GetProperty("HostedAutomationEnabled")!.GetValue(window)!),"rhythm preparation never enables playback");

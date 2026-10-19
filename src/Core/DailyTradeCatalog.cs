@@ -117,6 +117,26 @@ public static class DailyTradeCatalog
             });
         }
         var talents = tables["TalentTable"].ToDictionary(r => I(r!, "id"), r => r!);
+        // Custom cooking is inventory-only and also includes dishes without a
+        // premium sale quote. Keep these out of the profit optimizer's inputs.
+        var cookingRecipes = new JsonArray();
+        foreach (var r in tables["CookingTable"].Select(n => n!))
+        {
+            int output = I(r, "resultItemId");
+            var materials = A(r, "materialItemId"); var counts = A(r, "materialItemCount");
+            if (!food.ContainsKey(output) || materials.Count != counts.Count || materials.Count == 0)
+                throw new InvalidDataException("料理配方数据不完整。");
+            var parts = new JsonObject();
+            for (int i = 0; i < materials.Count; i++)
+            {
+                int id = materials[i]!.GetValue<int>();
+                if (!food.ContainsKey(id) || parts.ContainsKey(id.ToString()) || counts[i]!.GetValue<int>() <= 0)
+                    throw new InvalidDataException("料理配方数据不完整。");
+                parts[id.ToString()] = counts[i]!.DeepClone();
+            }
+            cookingRecipes.Add(new JsonObject { ["id"] = I(r, "id"), ["output"] = output, ["count"] = I(r, "resultItemCount"),
+                ["potions"] = potions[I(r, "talentLevel")], ["talent_level"] = I(r, "talentLevel"), ["materials"] = parts });
+        }
         var characters = new JsonObject();
         foreach (var node in tables["CharTable"])
         {
@@ -147,6 +167,9 @@ public static class DailyTradeCatalog
             ["database_sha256"] = manifest["databaseSha256"]!.DeepClone(),
             ["assembly_sha256"] = manifest["assemblySha256"]!.DeepClone(),
             ["source_hashes"] = hashes,
+            ["cooking_recipes"] = cookingRecipes,
+            ["cooking_items"] = new JsonArray(food.OrderBy(p => p.Key).Select(p => (JsonNode)new JsonObject {
+                ["id"] = p.Key, ["name"] = aliases.GetValueOrDefault(p.Key, names[I(p.Value, "itemNameTextId")]), ["stack"] = I(p.Value, "stackCount") }).ToArray()),
             ["items"] = new JsonArray(items.OrderBy(r => I(r, "id")).Select(r => (JsonNode)r).ToArray()),
             ["offers"] = new JsonArray(offers.OrderBy(r => I(r, "shop")).ThenBy(r => I(r, "product")).Select(r => (JsonNode)r).ToArray()),
             ["recipes"] = new JsonArray(recipes.OrderBy(r => I(r, "id")).Select(r => (JsonNode)r).ToArray())

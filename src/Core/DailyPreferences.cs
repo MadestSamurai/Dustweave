@@ -176,6 +176,8 @@ public sealed class DailyPreferences
         Weekly.NpcHunting = false;
         Friendship.Quick = false;
         General.Validate();
+        if (Trade.CookingRecipes == null || Trade.CookingRecipes.Length > 300 || Trade.CookingRecipes.Any(id => id <= 0) || Trade.CookingRecipes.Distinct().Count() != Trade.CookingRecipes.Length)
+            throw new InvalidDataException("自定义料理列表包含无效或重复的配方。");
         if (SaffronPotatoRounds is < 1 or > 3)
             throw new InvalidDataException("藏红花收割后的土豆轮数必须为 1 至 3。");
         if (Tactics.SearchSeconds is < 1 or > 120)
@@ -207,6 +209,7 @@ public sealed class DailyPreferences
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed class GeneralPreferences
 {
+    public bool FastTravel { get; set; }
     [JsonRequired] public long TalentPotionReserve { get; set; } = 0;
     [JsonRequired] public bool RefillTalentPotions { get; set; } = false;
     [JsonRequired] public long TalentPotionTarget { get; set; } = 1000;
@@ -394,6 +397,8 @@ public sealed class DailyPreferenceStore(string root)
 public sealed class TradePreferences
 {
     public bool FavoritesOnly { get; set; }
+    public long[] CookingRecipes { get; set; } = [];
+    [JsonIgnore] public bool RequiresCatalog => !FavoritesOnly || CookingRecipes.Length > 0;
     [JsonRequired]
     public bool Enabled
     {

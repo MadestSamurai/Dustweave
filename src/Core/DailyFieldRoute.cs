@@ -98,6 +98,23 @@ public sealed partial class DailyFieldRoute
     internal bool WeeklyStealthNeeded(JsonObject e, bool walking = false) => ProtectWeeklyTravel && (walking || !AtWaypoint(e)) && TravelThreat(e);
     private bool MovementNeedsStealth(JsonObject e) => (NeedsStealth(e) || ProtectWeeklyTravel && Remaining(e, 17) > 0) && TravelThreat(e);
     private long unavailableStealthMap;
+    private double nextDashCheck;
+    internal static bool ShouldDash(GeneralPreferences settings, JsonObject evidence) => settings.FastTravel
+        && FieldInputReady(evidence["Frame"]!.AsObject()) && Remaining(evidence, 2) <= 0 && !Cooling(evidence, 2);
+    public async Task<bool> PrepareWalking(JsonObject? observed = null)
+    {
+        if (!W.Settings.General.FastTravel || W.Time < nextDashCheck) return false;
+        var evidence = observed ?? await Evidence();
+        // Never wait out a speed buff or cooldown. Check only between physical
+        // walks, never during harvesting, pickup commits, or native interaction.
+        if (!ShouldDash(W.Settings.General, evidence)) return false;
+        nextDashCheck = W.Time + 60;
+        var result = await Skill(2, 0, optional: true);
+        if (S(result["reason"]) == "native_disabled")
+            W.Driver.Diagnostics.Event("optional_fast_travel_unavailable", O(("map", Map(evidence)["id"])));
+        else nextDashCheck = 0;
+        return true;
+    }
     internal static bool FieldInputReady(JsonObject frame) => DailyNavigationDecision.MapSceneReady(frame)
         && DailyNavigationDecision.Rows(frame).Any(r => S(r["Type"]) == "GameFieldDefaultUI" && DailyNavigationDecision.ReadyInput(r))
         && DailyNavigationDecision.Types(frame).All(t => t == "GameFieldDefaultUI" || DailyNavigationDecision.PassiveSurface(t));
@@ -437,6 +454,15 @@ public sealed partial class DailyFieldRoute
         }
         if (kind is 2 or 17)
         {
+            if (kind == 2 && optional)
+            {
+                e = await Evidence();
+                if (Remaining(e, kind) > 0 || Cooling(e, kind))
+                {
+                    await W.Step("QuickMenuUI", back: true, absent: "QuickMenuUI");
+                    return DailyWorkflow.Skipped("native_duration_active");
+                }
+            }
             double end = W.Time + Math.Max(0, remaining) + 5;
             while (true)
             {
@@ -516,7 +542,7 @@ public sealed partial class DailyFieldRoute
         }
     }
     public Task Protection(JsonObject e) => Protection(e, walking: false);
-    public async Task Protection(JsonObject e, bool walking)
+    public async Task Protection(JsonObject e, bool walking, bool speed = true)
     {
         // An already open destination picker can teleport directly; opening a
         // field talent here would wait for a field page that cannot appear.
@@ -536,12 +562,14 @@ public sealed partial class DailyFieldRoute
                 W.Driver.Diagnostics.Event("optional_field_stealth_unavailable", O(("pack", Map(e)["packId"]), ("map", map)));
                 return;
             }
-            Require(Remaining(await Evidence(), 17) > 5, "巡逻路线藏身不足，已停止移动");
+            e = await Evidence();
+            Require(Remaining(e, 17) > 5, "巡逻路线藏身不足，已停止移动");
         }
+        if (walking && speed) await PrepareWalking(e);
     }
     internal async Task ProtectWeeklyMovement()
     {
-        if (ProtectWeeklyTravel) await Protection(await Evidence(), walking: true);
+        if (ProtectWeeklyTravel || W.Settings.General.FastTravel) await Protection(await Evidence(), walking: true);
     }
     public async Task Patrol()
     {

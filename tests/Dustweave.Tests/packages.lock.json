@@ -72,6 +72,32 @@
           "BD2Rhythm.Compatibility": "[0.2.3, )"
         }
       },
+      "BD2SecretVision.Compatibility": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.CodeAnalysis.CSharp": "[4.14.0, )",
+          "Mono.Cecil": "[0.11.6, )"
+        }
+      },
+      "BD2SecretVision.Core": {
+        "type": "Project",
+        "dependencies": {
+          "BD2SecretVision.Compatibility": "[0.1.8, )"
+        }
+      },
+      "BD2Sichuan.Compatibility": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.CodeAnalysis.CSharp": "[4.14.0, )",
+          "Mono.Cecil": "[0.11.6, )"
+        }
+      },
+      "BD2Sichuan.Core": {
+        "type": "Project",
+        "dependencies": {
+          "BD2Sichuan.Compatibility": "[0.3.3, )"
+        }
+      },
       "dustweave.accounts": {
         "type": "Project"
       },

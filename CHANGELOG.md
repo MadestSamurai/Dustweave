@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 1.4.10 — 2026-10-20
+
+- 新增默认关闭的实验性快速赶路，日常步行按需使用飞奔，遵守天赋药下限。
+- 仅收藏购买支持按优先顺序制作自定义料理，使用现有材料，缺料跳过，不额外采购或售卖。
+- SECRET VISION、连连看完成源码、界面、连接和存储整合；周常小游戏减少切换开销。
+- Adds opt-in Fast travel, ordered custom cooking and integrated SECRET VISION/Sichuan with faster weekly tool preparation.
+- [完整说明 / Full notes](docs/releases/1.4.10.md)
+
 ## 1.4.9 — 2026-10-19
 
 - 音游源码、界面、设置与日志迁入织尘，统一连接加载、语言、主题及控制权；原独立仓库归档。

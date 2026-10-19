@@ -14,6 +14,13 @@ $references=0;$resources=0
 # These owned projects retain the original assembly names used by the hosted
 # loader, WPF resources and package dependency locks. Do not exempt other names.
 $legacyToolAssemblies=@{
+ 'src/Sichuan/compatibility/Dustweave.Sichuan.Compatibility.csproj'='BD2Sichuan.Compatibility'
+ 'src/Sichuan/core/Dustweave.Sichuan.Core.csproj'='BD2Sichuan.Core'
+ 'src/Sichuan/desktop/Dustweave.Sichuan.Desktop.csproj'='BD2Sichuan'
+ 'src/SecretVision/compatibility/Dustweave.SecretVision.Compatibility.csproj'='BD2SecretVision.Compatibility'
+ 'src/SecretVision/core/Dustweave.SecretVision.Core.csproj'='BD2SecretVision.Core'
+ 'src/SecretVision/desktop/Dustweave.SecretVision.Desktop.csproj'='BD2SecretVision'
+
  'src/Rhythm/compatibility/Dustweave.Rhythm.Compatibility.csproj'='BD2Rhythm.Compatibility'
  'src/Rhythm/core/Dustweave.Rhythm.Core.csproj'='BD2Rhythm.Core'
  'src/Rhythm/desktop/Dustweave.Rhythm.Desktop.csproj'='BD2Rhythm'

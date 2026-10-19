@@ -48,7 +48,9 @@ public static class DailySuite {
    if(state?.RejectedRequest==command.Id)throw new InvalidOperationException(state.RejectedReason);
    if(state?.Request==command.Id){
     if(state.State=="error"||state.State=="paused")throw new InvalidOperationException(state.Error);
-    if(state.State=="ready"&&state.Tool==id){await Task.Delay(600,cancel);return;}
+    // Runtime publishes ready only after the new module has registered its
+    // active handoff entry. Consumers still wait for their own fresh snapshot.
+    if(state.State=="ready"&&state.Tool==id&&state.Owner==Owner&&state.Account==snapshot.AccountKey&&state.Player==snapshot.PlayerKey&&state.At>=DateTime.UtcNow.AddSeconds(-5).Ticks)return;
     progress(string.IsNullOrEmpty(state.Error)?"正在切换功能…":state.Error);
    }
    await Task.Delay(200,cancel);
@@ -77,7 +79,7 @@ public static class DailySuite {
  }
  // Only these tools have a window-first preparation path. A pending launch must
  // never inherit another module's usable transport fingerprint.
- public static bool PreparesInWindow(string id)=>id is "mansion-runaway" or "equipment" or "infinite-gacha" or "fiend-hunter" or "rhythm";
+ public static bool PreparesInWindow(string id)=>id is "mansion-runaway" or "equipment" or "infinite-gacha" or "fiend-hunter" or "rhythm" or "sichuan" or "secret-vision";
  public static void SetPendingToolEnvironment(System.Diagnostics.ProcessStartInfo start,GameInstance? game,string id){
   if(!PreparesInWindow(id))throw new ArgumentException("Unsupported deferred tool",nameof(id));
   start.Environment["BD2_DAILY_HOSTED_TOOL"]=id;

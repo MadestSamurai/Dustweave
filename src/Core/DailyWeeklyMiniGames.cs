@@ -35,6 +35,28 @@ public sealed class DailyMiniGameChannel
         w.Report("正在准备本环节的组件；准备完成后会自动继续，可随时停止。");
         w.StepProgress("component");
         Save();
+        if (DailySuite.Enabled)
+        {
+            using var cancel = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            Task? activation = null;
+            try
+            {
+                string tool = command switch { "connect" => "fishing-daily", "connect-territory" => "territory-daily", "connect-sichuan" => "sichuan-daily", _ => throw new ArgumentException("未知小游戏组件", nameof(command)) };
+                activation = DailySuite.ActivateAsync(new DailyGameHost(w.Root), w.Root, tool, w.Report, cancel.Token);
+                while (!activation.IsCompleted)
+                {
+                    w.Check();
+                    await Task.WhenAny(activation, Task.Delay(150, cancel.Token));
+                    await w.Observe();
+                }
+                await activation;
+                record["state"] = "ready"; record["inProcess"] = true;
+            }
+            catch (Exception e) { cancel.Cancel(); if (activation != null) { try { await activation; } catch { } } record["state"] = "failed"; record["error"] = e.Message; throw; }
+            finally { Save(); }
+            await w.Observe();
+            return;
+        }
         var start = DailyTools.StartInfo(w.Directory, "minigame");
         start.ArgumentList.Add(command);
         using var process = Process.Start(start) ?? throw new IOException("小游戏连接进程未启动");

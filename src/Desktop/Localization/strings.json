@@ -1,79 +1,379 @@
 {
-  "work.sequential_summary": { "zh-CN": "已结束 {0}/{1} 个账号 · 依次执行", "zh-TW": "已結束 {0}/{1} 個帳號 · 依序執行", "en-US": "{0}/{1} accounts finished · sequential run" },
-  "work.component": { "zh-CN": "准备本环节组件，完成后自动继续", "zh-TW": "準備本環節元件，完成後自動繼續", "en-US": "Preparing component · continues automatically" },
-  "run.work_progress_help": { "zh-CN": "已结束 {0}/{1} 个环节。百分比按环节工作量估算，长任务按已核对数量推进，不代表剩余时间。", "zh-TW": "已結束 {0}/{1} 個環節。百分比按環節工作量估算，長任務按已核對數量推進，不代表剩餘時間。", "en-US": "{0}/{1} tasks finished. Progress is weighted by task workload and confirmed units; it is not a time estimate." },
-  "work.maps": { "zh-CN": "已核对 {0}/{1} 张地图", "zh-TW": "已核對 {0}/{1} 張地圖", "en-US": "{0}/{1} maps checked" },
-  "work.quests": { "zh-CN": "已完成 {0}/{1} 个任务", "zh-TW": "已完成 {0}/{1} 個任務", "en-US": "{0}/{1} quests completed" },
-  "work.units": { "zh-CN": "已完成 {0}/{1}", "zh-TW": "已完成 {0}/{1}", "en-US": "{0}/{1} completed" },
-  "work.prepare": { "zh-CN": "准备当前环节", "zh-TW": "準備目前環節", "en-US": "Preparing task" },
-  "work.enter": { "zh-CN": "前往任务入口", "zh-TW": "前往任務入口", "en-US": "Opening task" },
-  "work.execute": { "zh-CN": "执行当前操作", "zh-TW": "執行目前操作", "en-US": "Performing action" },
-  "work.verify": { "zh-CN": "核对操作结果", "zh-TW": "核對操作結果", "en-US": "Checking result" },
-  "work.plan": { "zh-CN": "核对地点与后续路线", "zh-TW": "核對地點與後續路線", "en-US": "Checking location and next route" },
-  "work.travel": { "zh-CN": "前往下一张地图", "zh-TW": "前往下一張地圖", "en-US": "Travelling to the next map" },
-  "work.walk": { "zh-CN": "移动到交互位置", "zh-TW": "移動到互動位置", "en-US": "Moving into interaction range" },
-  "work.suppress": { "zh-CN": "压制当前地图怪物", "zh-TW": "壓制目前地圖怪物", "en-US": "Suppressing monsters" },
-  "work.absorb": { "zh-CN": "吸收当前地图收集物", "zh-TW": "吸收目前地圖收集物", "en-US": "Absorbing map collectibles" },
-  "work.search": { "zh-CN": "使用探查寻找收集物", "zh-TW": "使用探查尋找收集物", "en-US": "Searching for collectibles" },
-  "work.stealth": { "zh-CN": "使用隐身保护行进", "zh-TW": "使用隱身保護行進", "en-US": "Activating stealth for travel" },
-  "work.steal": { "zh-CN": "与NPC交互并偷窃", "zh-TW": "與NPC互動並偷竊", "en-US": "Interacting with NPC to steal" },
-  "work.talent": { "zh-CN": "使用天赋技能", "zh-TW": "使用天賦技能", "en-US": "Using field talent" },
-  "work.bargain": { "zh-CN": "与商人砍价", "zh-TW": "與商人議價", "en-US": "Bargaining with merchant" },
-  "work.buy": { "zh-CN": "购买已规划商品", "zh-TW": "購買已規劃商品", "en-US": "Buying planned items" },
-  "work.sell": { "zh-CN": "出售已规划商品", "zh-TW": "出售已規劃商品", "en-US": "Selling planned items" },
-  "work.craft": { "zh-CN": "制作已规划物品", "zh-TW": "製作已規劃物品", "en-US": "Crafting planned items" },
-  "work.enhance": { "zh-CN": "强化或精炼装备", "zh-TW": "強化或精煉裝備", "en-US": "Enhancing or refining equipment" },
-  "work.recycle": { "zh-CN": "分解已选择装备", "zh-TW": "分解已選擇裝備", "en-US": "Dismantling selected equipment" },
-  "work.battle": { "zh-CN": "战斗中，等待结算", "zh-TW": "戰鬥中，等待結算", "en-US": "Battle in progress · waiting for results" },
-  "work.sweep": { "zh-CN": "执行批量扫荡", "zh-TW": "執行批次掃蕩", "en-US": "Running quick battles" },
-  "work.dispatch": { "zh-CN": "收取并安排派遣", "zh-TW": "收取並安排派遣", "en-US": "Collecting and assigning dispatches" },
-  "work.draw": { "zh-CN": "进行免费抽取", "zh-TW": "進行免費抽取", "en-US": "Performing free draws" },
-  "work.counsel": { "zh-CN": "进行好感度咨询", "zh-TW": "進行好感度諮詢", "en-US": "Counselling characters" },
-  "work.collect": { "zh-CN": "收取经营与餐厅收益", "zh-TW": "收取經營與餐廳收益", "en-US": "Collecting business and restaurant rewards" },
-  "storage.compression": { "zh-CN": "另有 {0} 个历史记录或组件可尝试无损压缩，将在空闲时分批处理。", "zh-TW": "另有 {0} 個歷史記錄或元件可嘗試無損壓縮，將在閒置時分批處理。", "en-US": "Lossless compression is available for {0} older records or components, processed in small batches while idle." },
-  "storage.optimized": { "zh-CN": "已清理 {0} 个文件、压缩 {1} 个文件，释放 {2} MiB；跳过 {3} 项。", "zh-TW": "已清理 {0} 個檔案、壓縮 {1} 個檔案，釋放 {2} MiB；略過 {3} 項。", "en-US": "Removed {0} files and compressed {1}, freeing {2} MiB. Skipped {3} items." },
-  "tools.preparing_window": { "zh-CN": "正在准备工具…", "zh-TW": "正在準備工具…", "en-US": "Preparing tool…" },
-  "tools.preparation_stopping": { "zh-CN": "正在取消连接…", "zh-TW": "正在取消連線…", "en-US": "Cancelling connection…" },
-  "tools.preparation_cancelled": { "zh-CN": "已取消连接。可重试或关闭窗口。", "zh-TW": "已取消連線。可重試或關閉視窗。", "en-US": "Connection cancelled. Retry or close this window." },
-  "tools.preparation_retry": { "zh-CN": "重新连接", "zh-TW": "重新連線", "en-US": "Reconnect" },
-  "tools.preparation_identity": { "zh-CN": "正在读取游戏账号…", "zh-TW": "正在讀取遊戲帳號…", "en-US": "Reading game account…" },
-  "tools.preparation_game_changed": { "zh-CN": "游戏已退出或重启。请关闭此窗口，再从工具页打开。", "zh-TW": "遊戲已結束或重新啟動。請關閉此視窗，再從工具頁開啟。", "en-US": "The game closed or restarted. Close this window and reopen the tool from Dustweave." },
-  "saffron.resource_retry": { "zh-CN": "等待树矿路径重试，土豆成熟后优先收割", "zh-TW": "等待樹礦路徑重試，馬鈴薯成熟後優先採收", "en-US": "Waiting to retry a resource route; ripe potatoes take priority." },
-  "saffron.resource_partial": { "zh-CN": "藏红花流程已结束；部分树矿暂不可达，已跳过，其他日常继续", "zh-TW": "藏紅花流程已結束；部分樹礦暫不可達，已略過，其他日常繼續", "en-US": "The saffron cycle has finished. Some trees or ore could not be reached and were skipped; other daily tasks continue." },
-  "account.recover_credentials": { "zh-CN": "旧凭据无法解密。保存本次登录将更新原账号，保留其位置和日常设置。", "zh-TW": "舊憑據無法解密。儲存本次登入將更新原帳號，保留其位置和日常設定。", "en-US": "The old credentials cannot be decrypted. Saving this login restores the existing account and keeps its position and daily settings." },
-  "issue.reason.credentials-unreadable": { "zh-CN": "旧登录凭据无法由当前 Windows 解密，可能来自重装前的系统。", "zh-TW": "目前 Windows 無法解密舊登入憑據，可能來自重裝前的系統。", "en-US": "Windows cannot decrypt the saved login, which may belong to a previous Windows installation." },
-  "issue.action.credentials-unreadable": { "zh-CN": "请在游戏中重新登录，正常退出游戏后，到账号管理保存账号；会更新原账号，无需删除设置。", "zh-TW": "請在遊戲中重新登入，正常退出遊戲後，到帳號管理儲存帳號；會更新原帳號，無需刪除設定。", "en-US": "Sign in again in the game, close it normally, then save the account in Accounts. Your existing account settings will be kept." },
-  "completion.notice_title": { "zh-CN": "日常完成提醒", "zh-TW": "日常完成提醒", "en-US": "Daily completion alerts" },
-  "completion.windows": { "zh-CN": "Windows 通知", "zh-TW": "Windows 通知", "en-US": "Windows notification" },
-  "completion.popup": { "zh-CN": "结果弹窗", "zh-TW": "結果視窗", "en-US": "Results window" },
-  "completion.sound": { "zh-CN": "声音", "zh-TW": "音效", "en-US": "Sound" },
-  "completion.notification": { "zh-CN": "{0} 个账号的日常已结束，点击查看结果。", "zh-TW": "{0} 個帳號的日常已結束，點擊查看結果。", "en-US": "Daily tasks have finished for {0} accounts. Click to view results." },
-  "completion.notification_failed": { "zh-CN": "部分完成提醒未能送达，日常结果已保存。", "zh-TW": "部分完成提醒未能送達，日常結果已儲存。", "en-US": "Some completion alerts could not be delivered. Your daily results are saved." },
-  "sandbox.launch_description": { "zh-CN": "为选中账号打开独立的游戏和织尘窗口，可与其他账号分别执行日常。需要安装 Sandboxie-Plus。\n\n每个隔离窗口有自己的控制、日志和缓存；同一账号的已完成任务会与主窗口同步。请勿让同一账号在多个游戏实例中同时登录。", "zh-TW": "為選取的帳號開啟獨立的遊戲和織塵視窗，可與其他帳號分別執行日常。需要安裝 Sandboxie-Plus。\n\n每個隔離視窗有自己的控制、日誌和快取；同一帳號已完成的任務會與主視窗同步。請勿讓同一帳號在多個遊戲執行個體中同時登入。", "en-US": "Open a separate game and Dustweave window for the selected account, so it can run daily tasks independently of other accounts. Requires Sandboxie-Plus.\n\nEach isolated window has its own controls, logs and cache. Completed tasks sync with the main window for the same account. Do not sign in to the same account in multiple game instances at once." },
-  "sandbox.remember": { "zh-CN": "今后不再提醒", "zh-TW": "今後不再提醒", "en-US": "Do not remind me again" },
-  "sandbox.storage_busy": { "zh-CN": "需要更新此账号的独立日志与缓存设置。请先关闭该隔离空间中的游戏和织尘，再重新隔离启动；其他账号不受影响。", "zh-TW": "需要更新此帳號的獨立日誌與快取設定。請先關閉該隔離空間中的遊戲和織塵，再重新隔離啟動；其他帳號不受影響。", "en-US": "This account needs updated isolated log and cache settings. Close the game and Dustweave in this sandbox, then open it again. Other accounts are unaffected." },
-  "absorption.title": { "zh-CN": "吸收地图", "zh-TW": "吸收地圖", "en-US": "Absorbed maps" },
-  "absorption.button": { "zh-CN": "吸收地图（{0}）", "zh-TW": "吸收地圖（{0}）", "en-US": "Absorbed maps ({0})" },
-  "absorption.summary": { "zh-CN": "本日已吸收 {0} 张地图，其中 {1} 张在 NPC 任务途中顺路完成。", "zh-TW": "本日已吸收 {0} 張地圖，其中 {1} 張在 NPC 任務途中順路完成。", "en-US": "{0} maps absorbed this game day; {1} completed along NPC quest routes." },
-  "absorption.help": { "zh-CN": "顺路吸收已计入收集，并非跳过。仅列出工具确认成功的操作；时间为本机时间，同一游戏日重跑会累计。", "zh-TW": "順路吸收已計入收集，並非跳過。僅列出工具確認成功的操作；時間為本機時間，同一遊戲日重跑會累計。", "en-US": "Collection along NPC quest routes is completed, not skipped. Only confirmed tool actions are listed. Times are local; reruns within the same game day are combined." },
-  "absorption.npc": { "zh-CN": "NPC 任务途中顺路吸收", "zh-TW": "NPC 任務途中順路吸收", "en-US": "Absorbed along an NPC quest route" },
-  "absorption.collection": { "zh-CN": "周收集吸收", "zh-TW": "週收集吸收", "en-US": "Weekly collection" },
-  "absorption.pack": { "zh-CN": "卡带 {0}", "zh-TW": "卡帶 {0}", "en-US": "Cartridge {0}" },
-  "absorption.map": { "zh-CN": "地图 {0}", "zh-TW": "地圖 {0}", "en-US": "Map {0}" },
-  "draw.title": { "zh-CN": "抽取详情", "zh-TW": "抽取詳情", "en-US": "Draw results" },
-  "draw.summary": { "zh-CN": "本次共 {0} 抽 · 五星服装 {1} 件 · 五星角色 UR 专武 {2} 件", "zh-TW": "本次共 {0} 抽 · 五星服裝 {1} 件 · 五星角色 UR 專武 {2} 件", "en-US": "{0} draws · {1} five-star costumes · {2} UR weapons for five-star characters" },
-  "draw.unknown": { "zh-CN": "另有 {0} 项奖励资料未读全，未计入稀有统计。", "zh-TW": "另有 {0} 項獎勵資料未讀全，未計入稀有統計。", "en-US": "Details for {0} rewards are incomplete; they are excluded from rarity counts." },
-  "draw.costumes": { "zh-CN": "服装", "zh-TW": "服裝", "en-US": "Costumes" },
-  "draw.equipment": { "zh-CN": "装备", "zh-TW": "裝備", "en-US": "Equipment" },
-  "draw.item_unknown": { "zh-CN": "奖励 {0}（名称未读取）", "zh-TW": "獎勵 {0}（名稱未讀取）", "en-US": "Reward {0} (name unavailable)" },
-  "draw.grade_unknown": { "zh-CN": "星级资料未读取", "zh-TW": "星級資料未讀取", "en-US": "Rarity unavailable" },
-  "draw.converted": { "zh-CN": "重复奖励已转化", "zh-TW": "重複獎勵已轉化", "en-US": "Duplicate converted" },
-  "draw.no_details": { "zh-CN": "已确认抽取，当前记录未保留具体奖励。", "zh-TW": "已確認抽取，目前記錄未保留具體獎勵。", "en-US": "Draws are confirmed, but this record has no item details." },
-  "report.title": { "zh-CN": "日常结果", "zh-TW": "日常結果", "en-US": "Daily results" },
-  "report.success": { "zh-CN": "{0} 个账号执行结束，无需处理其他事项。", "zh-TW": "{0} 個帳號執行結束，無需處理其他事項。", "en-US": "{0} accounts finished. Nothing else needs attention." },
-  "report.issues": { "zh-CN": "{0} 个账号执行结束 · 以下 {1} 项请留意", "zh-TW": "{0} 個帳號執行結束 · 以下 {1} 項請留意", "en-US": "{0} accounts finished · {1} items to review" },
-  "report.not_finished": { "zh-CN": "此项未完成，可回到今日任务查看并补跑。", "zh-TW": "此項未完成，可回到今日任務查看並補跑。", "en-US": "This step is unfinished. Review it in Today and retry when ready." },
-  "report.current_account": { "zh-CN": "当前账号", "zh-TW": "目前帳號", "en-US": "Current account" },
+  "work.sequential_summary": {
+    "zh-CN": "已结束 {0}/{1} 个账号 · 依次执行",
+    "zh-TW": "已結束 {0}/{1} 個帳號 · 依序執行",
+    "en-US": "{0}/{1} accounts finished · sequential run"
+  },
+  "work.component": {
+    "zh-CN": "准备本环节组件，完成后自动继续",
+    "zh-TW": "準備本環節元件，完成後自動繼續",
+    "en-US": "Preparing component · continues automatically"
+  },
+  "run.work_progress_help": {
+    "zh-CN": "已结束 {0}/{1} 个环节。百分比按环节工作量估算，长任务按已核对数量推进，不代表剩余时间。",
+    "zh-TW": "已結束 {0}/{1} 個環節。百分比按環節工作量估算，長任務按已核對數量推進，不代表剩餘時間。",
+    "en-US": "{0}/{1} tasks finished. Progress is weighted by task workload and confirmed units; it is not a time estimate."
+  },
+  "work.maps": {
+    "zh-CN": "已核对 {0}/{1} 张地图",
+    "zh-TW": "已核對 {0}/{1} 張地圖",
+    "en-US": "{0}/{1} maps checked"
+  },
+  "work.quests": {
+    "zh-CN": "已完成 {0}/{1} 个任务",
+    "zh-TW": "已完成 {0}/{1} 個任務",
+    "en-US": "{0}/{1} quests completed"
+  },
+  "work.units": {
+    "zh-CN": "已完成 {0}/{1}",
+    "zh-TW": "已完成 {0}/{1}",
+    "en-US": "{0}/{1} completed"
+  },
+  "work.prepare": {
+    "zh-CN": "准备当前环节",
+    "zh-TW": "準備目前環節",
+    "en-US": "Preparing task"
+  },
+  "work.enter": {
+    "zh-CN": "前往任务入口",
+    "zh-TW": "前往任務入口",
+    "en-US": "Opening task"
+  },
+  "work.execute": {
+    "zh-CN": "执行当前操作",
+    "zh-TW": "執行目前操作",
+    "en-US": "Performing action"
+  },
+  "work.verify": {
+    "zh-CN": "核对操作结果",
+    "zh-TW": "核對操作結果",
+    "en-US": "Checking result"
+  },
+  "work.plan": {
+    "zh-CN": "核对地点与后续路线",
+    "zh-TW": "核對地點與後續路線",
+    "en-US": "Checking location and next route"
+  },
+  "work.travel": {
+    "zh-CN": "前往下一张地图",
+    "zh-TW": "前往下一張地圖",
+    "en-US": "Travelling to the next map"
+  },
+  "work.walk": {
+    "zh-CN": "移动到交互位置",
+    "zh-TW": "移動到互動位置",
+    "en-US": "Moving into interaction range"
+  },
+  "work.suppress": {
+    "zh-CN": "压制当前地图怪物",
+    "zh-TW": "壓制目前地圖怪物",
+    "en-US": "Suppressing monsters"
+  },
+  "work.absorb": {
+    "zh-CN": "吸收当前地图收集物",
+    "zh-TW": "吸收目前地圖收集物",
+    "en-US": "Absorbing map collectibles"
+  },
+  "work.search": {
+    "zh-CN": "使用探查寻找收集物",
+    "zh-TW": "使用探查尋找收集物",
+    "en-US": "Searching for collectibles"
+  },
+  "work.stealth": {
+    "zh-CN": "使用隐身保护行进",
+    "zh-TW": "使用隱身保護行進",
+    "en-US": "Activating stealth for travel"
+  },
+  "work.steal": {
+    "zh-CN": "与NPC交互并偷窃",
+    "zh-TW": "與NPC互動並偷竊",
+    "en-US": "Interacting with NPC to steal"
+  },
+  "work.talent": {
+    "zh-CN": "使用天赋技能",
+    "zh-TW": "使用天賦技能",
+    "en-US": "Using field talent"
+  },
+  "work.bargain": {
+    "zh-CN": "与商人砍价",
+    "zh-TW": "與商人議價",
+    "en-US": "Bargaining with merchant"
+  },
+  "work.buy": {
+    "zh-CN": "购买已规划商品",
+    "zh-TW": "購買已規劃商品",
+    "en-US": "Buying planned items"
+  },
+  "work.sell": {
+    "zh-CN": "出售已规划商品",
+    "zh-TW": "出售已規劃商品",
+    "en-US": "Selling planned items"
+  },
+  "work.craft": {
+    "zh-CN": "制作已规划物品",
+    "zh-TW": "製作已規劃物品",
+    "en-US": "Crafting planned items"
+  },
+  "work.enhance": {
+    "zh-CN": "强化或精炼装备",
+    "zh-TW": "強化或精煉裝備",
+    "en-US": "Enhancing or refining equipment"
+  },
+  "work.recycle": {
+    "zh-CN": "分解已选择装备",
+    "zh-TW": "分解已選擇裝備",
+    "en-US": "Dismantling selected equipment"
+  },
+  "work.battle": {
+    "zh-CN": "战斗中，等待结算",
+    "zh-TW": "戰鬥中，等待結算",
+    "en-US": "Battle in progress · waiting for results"
+  },
+  "work.sweep": {
+    "zh-CN": "执行批量扫荡",
+    "zh-TW": "執行批次掃蕩",
+    "en-US": "Running quick battles"
+  },
+  "work.dispatch": {
+    "zh-CN": "收取并安排派遣",
+    "zh-TW": "收取並安排派遣",
+    "en-US": "Collecting and assigning dispatches"
+  },
+  "work.draw": {
+    "zh-CN": "进行免费抽取",
+    "zh-TW": "進行免費抽取",
+    "en-US": "Performing free draws"
+  },
+  "work.counsel": {
+    "zh-CN": "进行好感度咨询",
+    "zh-TW": "進行好感度諮詢",
+    "en-US": "Counselling characters"
+  },
+  "work.collect": {
+    "zh-CN": "收取经营与餐厅收益",
+    "zh-TW": "收取經營與餐廳收益",
+    "en-US": "Collecting business and restaurant rewards"
+  },
+  "storage.compression": {
+    "zh-CN": "另有 {0} 个历史记录或组件可尝试无损压缩，将在空闲时分批处理。",
+    "zh-TW": "另有 {0} 個歷史記錄或元件可嘗試無損壓縮，將在閒置時分批處理。",
+    "en-US": "Lossless compression is available for {0} older records or components, processed in small batches while idle."
+  },
+  "storage.optimized": {
+    "zh-CN": "已清理 {0} 个文件、压缩 {1} 个文件，释放 {2} MiB；跳过 {3} 项。",
+    "zh-TW": "已清理 {0} 個檔案、壓縮 {1} 個檔案，釋放 {2} MiB；略過 {3} 項。",
+    "en-US": "Removed {0} files and compressed {1}, freeing {2} MiB. Skipped {3} items."
+  },
+  "tools.preparing_window": {
+    "zh-CN": "正在准备工具…",
+    "zh-TW": "正在準備工具…",
+    "en-US": "Preparing tool…"
+  },
+  "tools.preparation_stopping": {
+    "zh-CN": "正在取消连接…",
+    "zh-TW": "正在取消連線…",
+    "en-US": "Cancelling connection…"
+  },
+  "tools.preparation_cancelled": {
+    "zh-CN": "已取消连接。可重试或关闭窗口。",
+    "zh-TW": "已取消連線。可重試或關閉視窗。",
+    "en-US": "Connection cancelled. Retry or close this window."
+  },
+  "tools.preparation_retry": {
+    "zh-CN": "重新连接",
+    "zh-TW": "重新連線",
+    "en-US": "Reconnect"
+  },
+  "tools.preparation_identity": {
+    "zh-CN": "正在读取游戏账号…",
+    "zh-TW": "正在讀取遊戲帳號…",
+    "en-US": "Reading game account…"
+  },
+  "tools.preparation_game_changed": {
+    "zh-CN": "游戏已退出或重启。请关闭此窗口，再从工具页打开。",
+    "zh-TW": "遊戲已結束或重新啟動。請關閉此視窗，再從工具頁開啟。",
+    "en-US": "The game closed or restarted. Close this window and reopen the tool from Dustweave."
+  },
+  "saffron.resource_retry": {
+    "zh-CN": "等待树矿路径重试，土豆成熟后优先收割",
+    "zh-TW": "等待樹礦路徑重試，馬鈴薯成熟後優先採收",
+    "en-US": "Waiting to retry a resource route; ripe potatoes take priority."
+  },
+  "saffron.resource_partial": {
+    "zh-CN": "藏红花流程已结束；部分树矿暂不可达，已跳过，其他日常继续",
+    "zh-TW": "藏紅花流程已結束；部分樹礦暫不可達，已略過，其他日常繼續",
+    "en-US": "The saffron cycle has finished. Some trees or ore could not be reached and were skipped; other daily tasks continue."
+  },
+  "account.recover_credentials": {
+    "zh-CN": "旧凭据无法解密。保存本次登录将更新原账号，保留其位置和日常设置。",
+    "zh-TW": "舊憑據無法解密。儲存本次登入將更新原帳號，保留其位置和日常設定。",
+    "en-US": "The old credentials cannot be decrypted. Saving this login restores the existing account and keeps its position and daily settings."
+  },
+  "issue.reason.credentials-unreadable": {
+    "zh-CN": "旧登录凭据无法由当前 Windows 解密，可能来自重装前的系统。",
+    "zh-TW": "目前 Windows 無法解密舊登入憑據，可能來自重裝前的系統。",
+    "en-US": "Windows cannot decrypt the saved login, which may belong to a previous Windows installation."
+  },
+  "issue.action.credentials-unreadable": {
+    "zh-CN": "请在游戏中重新登录，正常退出游戏后，到账号管理保存账号；会更新原账号，无需删除设置。",
+    "zh-TW": "請在遊戲中重新登入，正常退出遊戲後，到帳號管理儲存帳號；會更新原帳號，無需刪除設定。",
+    "en-US": "Sign in again in the game, close it normally, then save the account in Accounts. Your existing account settings will be kept."
+  },
+  "completion.notice_title": {
+    "zh-CN": "日常完成提醒",
+    "zh-TW": "日常完成提醒",
+    "en-US": "Daily completion alerts"
+  },
+  "completion.windows": {
+    "zh-CN": "Windows 通知",
+    "zh-TW": "Windows 通知",
+    "en-US": "Windows notification"
+  },
+  "completion.popup": {
+    "zh-CN": "结果弹窗",
+    "zh-TW": "結果視窗",
+    "en-US": "Results window"
+  },
+  "completion.sound": {
+    "zh-CN": "声音",
+    "zh-TW": "音效",
+    "en-US": "Sound"
+  },
+  "completion.notification": {
+    "zh-CN": "{0} 个账号的日常已结束，点击查看结果。",
+    "zh-TW": "{0} 個帳號的日常已結束，點擊查看結果。",
+    "en-US": "Daily tasks have finished for {0} accounts. Click to view results."
+  },
+  "completion.notification_failed": {
+    "zh-CN": "部分完成提醒未能送达，日常结果已保存。",
+    "zh-TW": "部分完成提醒未能送達，日常結果已儲存。",
+    "en-US": "Some completion alerts could not be delivered. Your daily results are saved."
+  },
+  "sandbox.launch_description": {
+    "zh-CN": "为选中账号打开独立的游戏和织尘窗口，可与其他账号分别执行日常。需要安装 Sandboxie-Plus。\n\n每个隔离窗口有自己的控制、日志和缓存；同一账号的已完成任务会与主窗口同步。请勿让同一账号在多个游戏实例中同时登录。",
+    "zh-TW": "為選取的帳號開啟獨立的遊戲和織塵視窗，可與其他帳號分別執行日常。需要安裝 Sandboxie-Plus。\n\n每個隔離視窗有自己的控制、日誌和快取；同一帳號已完成的任務會與主視窗同步。請勿讓同一帳號在多個遊戲執行個體中同時登入。",
+    "en-US": "Open a separate game and Dustweave window for the selected account, so it can run daily tasks independently of other accounts. Requires Sandboxie-Plus.\n\nEach isolated window has its own controls, logs and cache. Completed tasks sync with the main window for the same account. Do not sign in to the same account in multiple game instances at once."
+  },
+  "sandbox.remember": {
+    "zh-CN": "今后不再提醒",
+    "zh-TW": "今後不再提醒",
+    "en-US": "Do not remind me again"
+  },
+  "sandbox.storage_busy": {
+    "zh-CN": "需要更新此账号的独立日志与缓存设置。请先关闭该隔离空间中的游戏和织尘，再重新隔离启动；其他账号不受影响。",
+    "zh-TW": "需要更新此帳號的獨立日誌與快取設定。請先關閉該隔離空間中的遊戲和織塵，再重新隔離啟動；其他帳號不受影響。",
+    "en-US": "This account needs updated isolated log and cache settings. Close the game and Dustweave in this sandbox, then open it again. Other accounts are unaffected."
+  },
+  "absorption.title": {
+    "zh-CN": "吸收地图",
+    "zh-TW": "吸收地圖",
+    "en-US": "Absorbed maps"
+  },
+  "absorption.button": {
+    "zh-CN": "吸收地图（{0}）",
+    "zh-TW": "吸收地圖（{0}）",
+    "en-US": "Absorbed maps ({0})"
+  },
+  "absorption.summary": {
+    "zh-CN": "本日已吸收 {0} 张地图，其中 {1} 张在 NPC 任务途中顺路完成。",
+    "zh-TW": "本日已吸收 {0} 張地圖，其中 {1} 張在 NPC 任務途中順路完成。",
+    "en-US": "{0} maps absorbed this game day; {1} completed along NPC quest routes."
+  },
+  "absorption.help": {
+    "zh-CN": "顺路吸收已计入收集，并非跳过。仅列出工具确认成功的操作；时间为本机时间，同一游戏日重跑会累计。",
+    "zh-TW": "順路吸收已計入收集，並非跳過。僅列出工具確認成功的操作；時間為本機時間，同一遊戲日重跑會累計。",
+    "en-US": "Collection along NPC quest routes is completed, not skipped. Only confirmed tool actions are listed. Times are local; reruns within the same game day are combined."
+  },
+  "absorption.npc": {
+    "zh-CN": "NPC 任务途中顺路吸收",
+    "zh-TW": "NPC 任務途中順路吸收",
+    "en-US": "Absorbed along an NPC quest route"
+  },
+  "absorption.collection": {
+    "zh-CN": "周收集吸收",
+    "zh-TW": "週收集吸收",
+    "en-US": "Weekly collection"
+  },
+  "absorption.pack": {
+    "zh-CN": "卡带 {0}",
+    "zh-TW": "卡帶 {0}",
+    "en-US": "Cartridge {0}"
+  },
+  "absorption.map": {
+    "zh-CN": "地图 {0}",
+    "zh-TW": "地圖 {0}",
+    "en-US": "Map {0}"
+  },
+  "draw.title": {
+    "zh-CN": "抽取详情",
+    "zh-TW": "抽取詳情",
+    "en-US": "Draw results"
+  },
+  "draw.summary": {
+    "zh-CN": "本次共 {0} 抽 · 五星服装 {1} 件 · 五星角色 UR 专武 {2} 件",
+    "zh-TW": "本次共 {0} 抽 · 五星服裝 {1} 件 · 五星角色 UR 專武 {2} 件",
+    "en-US": "{0} draws · {1} five-star costumes · {2} UR weapons for five-star characters"
+  },
+  "draw.unknown": {
+    "zh-CN": "另有 {0} 项奖励资料未读全，未计入稀有统计。",
+    "zh-TW": "另有 {0} 項獎勵資料未讀全，未計入稀有統計。",
+    "en-US": "Details for {0} rewards are incomplete; they are excluded from rarity counts."
+  },
+  "draw.costumes": {
+    "zh-CN": "服装",
+    "zh-TW": "服裝",
+    "en-US": "Costumes"
+  },
+  "draw.equipment": {
+    "zh-CN": "装备",
+    "zh-TW": "裝備",
+    "en-US": "Equipment"
+  },
+  "draw.item_unknown": {
+    "zh-CN": "奖励 {0}（名称未读取）",
+    "zh-TW": "獎勵 {0}（名稱未讀取）",
+    "en-US": "Reward {0} (name unavailable)"
+  },
+  "draw.grade_unknown": {
+    "zh-CN": "星级资料未读取",
+    "zh-TW": "星級資料未讀取",
+    "en-US": "Rarity unavailable"
+  },
+  "draw.converted": {
+    "zh-CN": "重复奖励已转化",
+    "zh-TW": "重複獎勵已轉化",
+    "en-US": "Duplicate converted"
+  },
+  "draw.no_details": {
+    "zh-CN": "已确认抽取，当前记录未保留具体奖励。",
+    "zh-TW": "已確認抽取，目前記錄未保留具體獎勵。",
+    "en-US": "Draws are confirmed, but this record has no item details."
+  },
+  "report.title": {
+    "zh-CN": "日常结果",
+    "zh-TW": "日常結果",
+    "en-US": "Daily results"
+  },
+  "report.success": {
+    "zh-CN": "{0} 个账号执行结束，无需处理其他事项。",
+    "zh-TW": "{0} 個帳號執行結束，無需處理其他事項。",
+    "en-US": "{0} accounts finished. Nothing else needs attention."
+  },
+  "report.issues": {
+    "zh-CN": "{0} 个账号执行结束 · 以下 {1} 项请留意",
+    "zh-TW": "{0} 個帳號執行結束 · 以下 {1} 項請留意",
+    "en-US": "{0} accounts finished · {1} items to review"
+  },
+  "report.not_finished": {
+    "zh-CN": "此项未完成，可回到今日任务查看并补跑。",
+    "zh-TW": "此項未完成，可回到今日任務查看並補跑。",
+    "en-US": "This step is unfinished. Review it in Today and retry when ready."
+  },
+  "report.current_account": {
+    "zh-CN": "当前账号",
+    "zh-TW": "目前帳號",
+    "en-US": "Current account"
+  },
   "storage.low.title": {
     "zh-CN": "磁盘空间不足",
     "zh-TW": "磁碟空間不足",
@@ -625,9 +925,9 @@
     "en-US": "Special trading: buy favorites only"
   },
   "prefs.trade_favorites_hint": {
-    "zh-CN": "无视跑商策略，先砍价再购买你的收藏商品。不料理、不卖出，不修改收藏。",
-    "zh-TW": "忽略跑商策略，先議價再購買你的收藏商品。不料理、不出售，不修改收藏。",
-    "en-US": "Ignores trading strategy, bargains first, then buys your saved favorites. No cooking, selling or changes to favorites."
+    "zh-CN": "先砍价再购买收藏商品，可按自定义顺序料理。不额外采购、不卖出、不修改收藏。",
+    "zh-TW": "先議價再購買收藏商品，可按自訂順序料理。不額外採購、不出售、不修改收藏。",
+    "en-US": "Bargain and buy favorites, then optionally cook in your chosen order. No extra purchases, sales or changes to favorites."
   },
   "prefs.saffron_processing": {
     "zh-CN": "自动料理／售卖高级藏红花",
@@ -7394,9 +7694,109 @@
     "zh-TW": "目標磁碟空間不足，原快取未變更。請釋放空間或選擇其他磁碟。",
     "en-US": "Not enough space on the destination drive. Free up space or choose another drive; the original cache is unchanged."
   },
-  "account.delete_unreadable_confirm": {"zh-CN":"移除无法读取的账号记录“{0}”（位置 {1}）？\n\n仅删除该位置保存的旧登录凭据，不需要先登录游戏。不会删除游戏账号、其他已保存账号或日常设置。","zh-TW":"移除無法讀取的帳號記錄「{0}」（位置 {1}）？\n\n僅刪除該位置儲存的舊登入憑據，不需要先登入遊戲。不會刪除遊戲帳號、其他已儲存帳號或日常設定。","en-US":"Remove the unreadable account record “{0}” (slot {1})?\n\nOnly the old sign-in credentials in this slot will be deleted. You do not need to sign in first. Your game account, other saved accounts and daily settings will remain."},
-  "account.delete_changed": {"zh-CN":"这条账号记录已变化或恢复可用，未删除。请刷新账号列表后重新选择。","zh-TW":"這筆帳號記錄已變更或恢復可用，未刪除。請重新整理帳號清單後再選擇。","en-US":"This account record has changed or is readable again. Nothing was deleted. Refresh the account list and select it again."},
-  "pandora.state.build-rerolling": {"en-US":"Rerolling upgrades to preserve key equipment slots…","zh-CN":"正在更换升级候选，保留关键配装栏位…","zh-TW":"正在更換升級候選，保留關鍵配裝欄位…"},
-  "pandora.state.build-restarting": {"en-US":"The Challenge build is no longer achievable. Leaving and starting a new round…","zh-CN":"本局无法凑齐挑战配装，正在退出并重开…","zh-TW":"本局無法湊齊挑戰配裝，正在退出並重開…"},
-  "pandora.state.build-restart-blocked": {"en-US":"Could not finish leaving the round. Handle the current game screen, then start again.","zh-CN":"未能完成本局退出，已停止。请处理游戏当前画面后重新开始。","zh-TW":"未能完成本局退出，已停止。請處理遊戲目前畫面後重新開始。"}
+  "account.delete_unreadable_confirm": {
+    "zh-CN": "移除无法读取的账号记录“{0}”（位置 {1}）？\n\n仅删除该位置保存的旧登录凭据，不需要先登录游戏。不会删除游戏账号、其他已保存账号或日常设置。",
+    "zh-TW": "移除無法讀取的帳號記錄「{0}」（位置 {1}）？\n\n僅刪除該位置儲存的舊登入憑據，不需要先登入遊戲。不會刪除遊戲帳號、其他已儲存帳號或日常設定。",
+    "en-US": "Remove the unreadable account record “{0}” (slot {1})?\n\nOnly the old sign-in credentials in this slot will be deleted. You do not need to sign in first. Your game account, other saved accounts and daily settings will remain."
+  },
+  "account.delete_changed": {
+    "zh-CN": "这条账号记录已变化或恢复可用，未删除。请刷新账号列表后重新选择。",
+    "zh-TW": "這筆帳號記錄已變更或恢復可用，未刪除。請重新整理帳號清單後再選擇。",
+    "en-US": "This account record has changed or is readable again. Nothing was deleted. Refresh the account list and select it again."
+  },
+  "pandora.state.build-rerolling": {
+    "en-US": "Rerolling upgrades to preserve key equipment slots…",
+    "zh-CN": "正在更换升级候选，保留关键配装栏位…",
+    "zh-TW": "正在更換升級候選，保留關鍵配裝欄位…"
+  },
+  "pandora.state.build-restarting": {
+    "en-US": "The Challenge build is no longer achievable. Leaving and starting a new round…",
+    "zh-CN": "本局无法凑齐挑战配装，正在退出并重开…",
+    "zh-TW": "本局無法湊齊挑戰配裝，正在退出並重開…"
+  },
+  "pandora.state.build-restart-blocked": {
+    "en-US": "Could not finish leaving the round. Handle the current game screen, then start again.",
+    "zh-CN": "未能完成本局退出，已停止。请处理游戏当前画面后重新开始。",
+    "zh-TW": "未能完成本局退出，已停止。請處理遊戲目前畫面後重新開始。"
+  },
+  "prefs.fast_travel": {
+    "zh-CN": "快速赶路（实验性）",
+    "zh-TW": "快速趕路（實驗性）",
+    "en-US": "Fast travel (experimental)"
+  },
+  "prefs.fast_travel_hint": {
+    "zh-CN": "步行前自动使用飞奔天赋；遵守天赋药保留量，不可用时继续普通步行。",
+    "zh-TW": "步行前自動使用飛奔天賦；遵守天賦藥保留量，不可用時繼續普通步行。",
+    "en-US": "Use the speed talent before walking. Respects the talent-pill reserve; walks normally if unavailable."
+  },
+  "cooking.title": {
+    "zh-CN": "自定义料理",
+    "zh-TW": "自訂料理",
+    "en-US": "Custom cooking"
+  },
+  "cooking.hint": {
+    "zh-CN": "购买收藏商品后，按右侧顺序尽量制作。缺料或未解锁则跳过，成品全部保留。",
+    "zh-TW": "購買收藏商品後，依右側順序盡量製作。缺料或未解鎖則跳過，成品全部保留。",
+    "en-US": "After buying favorites, cook as much as possible in the order on the right. Skip unavailable recipes and keep all results."
+  },
+  "cooking.available": {
+    "zh-CN": "料理目录",
+    "zh-TW": "料理目錄",
+    "en-US": "Recipe catalog"
+  },
+  "cooking.selected": {
+    "zh-CN": "制作顺序 · 从上到下",
+    "zh-TW": "製作順序 · 從上到下",
+    "en-US": "Cooking order · top to bottom"
+  },
+  "cooking.search": {
+    "zh-CN": "搜索料理或材料",
+    "zh-TW": "搜尋料理或材料",
+    "en-US": "Search recipes or ingredients"
+  },
+  "cooking.add": {
+    "zh-CN": "添加 →",
+    "zh-TW": "新增 →",
+    "en-US": "Add →"
+  },
+  "cooking.remove": {
+    "zh-CN": "← 移除",
+    "zh-TW": "← 移除",
+    "en-US": "← Remove"
+  },
+  "cooking.up": {
+    "zh-CN": "上移",
+    "zh-TW": "上移",
+    "en-US": "Move up"
+  },
+  "cooking.down": {
+    "zh-CN": "下移",
+    "zh-TW": "下移",
+    "en-US": "Move down"
+  },
+  "cooking.recipe": {
+    "zh-CN": "料理",
+    "zh-TW": "料理",
+    "en-US": "Recipe"
+  },
+  "cooking.materials": {
+    "zh-CN": "每份材料",
+    "zh-TW": "每份材料",
+    "en-US": "Ingredients per batch"
+  },
+  "cooking.unavailable": {
+    "zh-CN": "当前目录无此配方，执行时跳过",
+    "zh-TW": "目前目錄無此配方，執行時跳過",
+    "en-US": "Unavailable recipe; will be skipped"
+  },
+  "cooking.empty": {
+    "zh-CN": "未选择料理：只购买收藏商品。",
+    "zh-TW": "未選擇料理：只購買收藏商品。",
+    "en-US": "No recipes selected: only buy favorites."
+  },
+  "cooking.count": {
+    "zh-CN": "已选择 {0} 道料理",
+    "zh-TW": "已選擇 {0} 道料理",
+    "en-US": "{0} recipes selected"
+  }
 }

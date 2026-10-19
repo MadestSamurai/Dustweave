@@ -109,7 +109,7 @@ public sealed class DailyWorkflowRegistry
         Add("weekly_fishing", DailyWeeklyFishing.Run);
         Add("territory_saffron", DailySaffron.Run);
         Add("weekly_sichuan", DailyWeeklySichuan.Run);
-        Add("trade", w => new DailyTradeExecution(w, w.Settings.Trade.FavoritesOnly ? new JsonObject() : tradeCatalog() ?? throw new StageHostException("adapter", "跑商数据没有通过当前客户端核对。")).Run(), TradeOwner);
+        Add("trade", w => new DailyTradeExecution(w, !w.Settings.Trade.RequiresCatalog ? new JsonObject() : tradeCatalog() ?? throw new StageHostException("adapter", "跑商数据没有通过当前客户端核对。")).Run(), TradeOwner);
         Add("collection_sync", w => new DailyWeeklyRoute(w).SyncProgress());
         Add("tactics", w => ExtensionFor("tactics")?.ExecuteAsync("tactics", w) ?? Task.FromResult(DailyWorkflow.Skipped("plugin_unavailable")), f => ExtensionFor("tactics")?.CanResume(root, "tactics", f) ?? false);
         Add("event_battle", w => ExtensionFor("event_battle")?.ExecuteAsync("event_battle", w) ?? DailyEventSweep.PublicRun(w), f => ExtensionFor("event_battle")?.CanResume(root, "event_battle", f) ?? business.Records(f.Context, "event.native_batch").Any(op => DailyNativeBattleRecovery.CanResume(op, f)));
