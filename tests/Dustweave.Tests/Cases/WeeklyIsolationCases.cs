@@ -24,6 +24,8 @@ static class WeeklyIsolationCases
         public readonly HashSet<long> Picked = [];
         public readonly List<long> Accepted = [], Cleared = [];
         public readonly HashSet<long> MonstersPending = [];
+        public readonly HashSet<long> CapturesPending = [];
+        public int CaptureUsed = 21;
         public readonly List<long> Suppressed = [];
         readonly Dictionary<long, long> npcActive = [];
         string npcQuery = "prior"; long popup, plannedQuest; bool navigating;
@@ -117,7 +119,7 @@ static class WeeklyIsolationCases
                 }
             };
         }
-        void Scene()
+        public void Scene()
         {
             H.Frame["Scene"] = $"Map{Pack:0000}_{MapId:000}";
             H.Page("GameFieldDefaultUI", "_buttonPackList");
@@ -134,9 +136,11 @@ static class WeeklyIsolationCases
             if (LaterDrop && Pack == 2) targets.Add(O(("Id", 122), ("Map", 22)));
             return O(("State", "ready"), ("Error", ""), ("Query", command["Id"]), ("Pack", Pack),
                 ("Maps", command["Items"]), ("Week", NetworkWeek), ("Now", 100), ("Rewards", "[]"),
-                ("Monsters", Array(MonstersPending.Select(m => O(("monsterId", 9000 + m), ("groupId", 1), ("activeFlag", true), ("respawnTime", 0)))).ToJsonString()),
+                ("Monsters", Array(MonstersPending.Select(m => O(("monsterId", 9000 + m), ("groupId", 1), ("activeFlag", true), ("respawnTime", 0)))
+                    .Concat(CapturesPending.Select(m => O(("monsterId", 4000 + m), ("groupId", 4), ("activeFlag", true), ("respawnTime", 0))))).ToJsonString()),
                 ("Drops", Array(Rows(targets).Where(t => command["Items"]!.AsArray().Any(m => N(m) == N(t["Map"]))))),
-                ("Targets", Array(MonstersPending.Where(m => command["Items"]!.AsArray().Any(id => N(id) == m)).Select(m => O(("Id", 9000 + m), ("Map", m), ("Group", 1))))),
+                ("Targets", Array(MonstersPending.Where(m => command["Items"]!.AsArray().Any(id => N(id) == m)).Select(m => O(("Id", 9000 + m), ("Map", m), ("Group", 1)))
+                    .Concat(CapturesPending.Where(m => command["Items"]!.AsArray().Any(id => N(id) == m)).Select(m => O(("Id", 4000 + m), ("Map", m), ("Group", 4), ("Type", 2)))))),
                 ("StealReady", S(command["Kind"]) == "collection_query_steal"), ("Steals", "[]"), ("StealTargets", new JsonArray()));
         }
         JsonObject[] Readings()
@@ -149,7 +153,7 @@ static class WeeklyIsolationCases
                 WorkflowCases.Reading("mainline.owned_packs", ("Count", 2), ("$items", new JsonArray(O(("Key", 1), ("Value.Id", 1)), O(("Key", 2), ("Value.Id", 2))))),
                 WorkflowCases.Reading("mainline.packs", ("Count", 2), ("$items", new JsonArray(O(("Id", 1), ("PackType", 0)), O(("Id", 2), ("PackType", 0))))),
                 WorkflowCases.Reading("mainline.map", (MapPath, O(("id", MapId), ("packId", Pack))), ("HasCanOverwhelmMonster()", MonstersPending.Contains(MapId))),
-                WorkflowCases.Reading("mainline.talent_counts", ("Values", new JsonArray(O(("groupId", 405), ("useCount", Used)), O(("groupId", 305), ("useCount", Suppressed.Count))))),
+                WorkflowCases.Reading("mainline.talent_counts", ("Values", new JsonArray(O(("groupId", 405), ("useCount", Used)), O(("groupId", 305), ("useCount", Suppressed.Count)), O(("groupId", 2005), ("useCount", CaptureUsed))))),
                 // Route isolation cases run with an existing protection effect;
                 // activation/expiry/waypoint rules are covered by EventCollection.
                 WorkflowCases.Reading("mainline.durations", ("effects", new JsonArray(O(("Key",17),("Value.ὫὢὢὬὫὫὡὩὪὩὮ",true),("Value.ὠὨὠὭὬὤὪὢὫὨὮ",100000-H.Time))))),
@@ -248,6 +252,43 @@ static class WeeklyIsolationCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool yes, string message) { if (!yes) throw new Exception(message); checks.Add(message); }
+        foreach (string page in new[] { "MapRewardInfoPopupUI", "PackListUI", "MenuUI" })
+        {
+            using var f = new Fixture(Path.Combine(root, "collection-overlay-" + page)) { Pending = false };
+            f.H.Page(page, "_objBackButton");
+            var original = f.H.OnCommand;
+            f.H.OnCommand = c => { if (S(f.H.Frame["UiToken"]) == page && S(c["Kind"]) is "back" or "click") f.Scene(); else original!(c); };
+            await new DailyFieldRoute(f.H.Workflow).Progress.Query(1, [1, 2, 3]);
+            Check(f.H.Box.Commands.Count == 2 && S(f.H.Box.Commands[0]["Kind"]) is "back" or "click" && f.Queries.Count == 1,
+                "collection returns from known overlay before its read-only server query: " + page);
+        }
+        using (var f = new Fixture(Path.Combine(root, "collection-map-changed")) { Pending = false })
+        {
+            f.BeforeQuery = () => { f.MapId = 4; f.Scene(); };
+            bool replanned = false;
+            try { await new DailyFieldRoute(f.H.Workflow).Gather(expectedMap: 1); }
+            catch (DailyCollectionLocationChanged) { replanned = true; }
+            Check(replanned && f.H.Box.Commands.All(c => S(c["Kind"]) == "collection_query"),
+                "map change during collection query replans before null lookup or talent use");
+        }
+        using (var f = new Fixture(Path.Combine(root, "collection-unknown-popup")))
+        {
+            f.H.Page("MessagePopupUI", "_buttonOK");
+            bool stopped = false;
+            try { await new DailyFieldRoute(f.H.Workflow).FieldReady(timeout: 1, settle: 0); }
+            catch (StageHostException) { stopped = true; }
+            Check(stopped && f.H.Box.Commands.Count == 0, "collection overlay recovery never confirms an unrelated message");
+        }
+        using (var f = new Fixture(Path.Combine(root, "collection-capture-limit")) { Pending = false })
+        {
+            f.CapturesPending.UnionWith([1L, 2L]); f.MonstersPending.Add(21);
+            var result = await f.Run();
+            var deferred = Rows(result["stages"]?["weekly_mainline"]?["deferred_locations"]);
+            Check(deferred.Length == 2 && deferred.All(d => S(d["metadata"]?["reason"]) == "capture_daily_limit"),
+                "spent capture quota keeps actual targets pending with an explicit next-day reason");
+            Check(f.Suppressed.SequenceEqual([21L]) && !f.Visits.Contains(2) && f.H.Box.Commands.Count(c => S(c["Kind"]) == "mainline_pack") == 1,
+                "spent capture quota skips capture-only travel without preventing later cartridge suppression");
+        }
         using(var f=new Fixture(Path.Combine(root,"weekly-wild-quest-chain"))){
             var result=await f.RunWildQuest();
             Check(S(result["stages"]?["weekly_npc"]?["state"])=="completed"&&f.Cleared.SequenceEqual([12L]),

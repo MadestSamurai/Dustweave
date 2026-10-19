@@ -6,6 +6,7 @@ public sealed partial class DailyFieldRoute
 {
     public async Task<JsonObject?> Walk(int target, long? destination = null, int storyRetries = 0)
     {
+        W.StepProgress("walk");
         await FieldReady();
         var before = await Evidence();
         await Protection(before, walking: true);
@@ -451,11 +452,11 @@ public sealed partial class DailyFieldRoute
         }
         throw new DailyTravelBlocked("步行拾取超过本图目标预算");
     }
-    internal async Task<JsonObject> WalkPickup(JsonObject before, JsonObject target)
+    internal async Task<JsonObject> WalkPickup(JsonObject before, JsonObject target, int preparationAttempts = 0)
     {
         long map = N(Map(before)["id"]), id = N(target[ObjectPath]);
         var op = W.Business.Create(W.Context, "mainline.pickup", before, O(("pack", Map(before)["packId"]), ("map", map), ("object", id)),
-            O(("ui", "GameFieldDefaultUI"), ("operation", "mainline_walk"), ("value", target["instance"])));
+            O(("ui", "GameFieldDefaultUI"), ("operation", "mainline_walk"), ("value", target["instance"]), ("require_stealth", MovementNeedsStealth(before))));
         var progress = new DailyTravelProgress(W.Time);
         int resumed = 0;
         DailyTravelBlocked? stalled = null;
@@ -472,16 +473,42 @@ public sealed partial class DailyFieldRoute
             // A nearby healing object may finish before the chosen drop. Reissue
             // only navigation, and never while a pickup request is unanswered.
             var events = W.Business.Events(op);
-            if (!DailyPickupRecovery.SettledWalk(op, events, frame)) return;
+            if (!DailyPickupRecovery.CanResumeLiveWalk(op, events, frame)) return;
             await W.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
+            // Cancellation is navigation only. Recheck the current target and
+            // event stream after its acknowledgement before choosing a fresh walk.
+            e = await Evidence();
+            if (!DailyPickupRecovery.CanResumeLiveWalk(op, W.Business.Events(op), e["Frame"]!.AsObject()) || N(Map(e)["id"]) != map) return;
+            remaining = Drops(e).SingleOrDefault(r => N(r[ObjectPath]) == id);
+            if (remaining == null) return;
             if (resumed >= 2)
                 throw stalled = new DailyTravelBlocked("本图拾取移动连续受阻；保留未收集目标，继续其他地图，之后可补收。");
-            await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "mainline_walk"), ("value", remaining["instance"])));
+            await Protection(e, walking: true);
+            await Skill(6);
+            e = await Evidence();
+            if (!DailyPickupRecovery.CanResumeLiveWalk(op, W.Business.Events(op), e["Frame"]!.AsObject()) || N(Map(e)["id"]) != map) return;
+            remaining = Drops(e).SingleOrDefault(r => N(r[ObjectPath]) == id);
+            if (remaining == null) return;
+            await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "mainline_walk"), ("value", remaining["instance"]), ("require_stealth", MovementNeedsStealth(e))));
             op["navigation_resumes"] = ++resumed;
             W.Business.Save(op);
             progress = new DailyTravelProgress(W.Time);
         }
         try { await W.Business.CommitAsync(op, W.Context, 65, heartbeat: Heartbeat); }
+        catch (DailyStepException error) when (error.Kind == "rejected" && error.DefinitelyNotDispatched && error.RejectionCode == "travel_unreachable:stealth_expired")
+        {
+            // The component explicitly refused before moving. Refresh protection
+            // and select the current object; never resend an uncertain pickup.
+            if (preparationAttempts >= 2) throw new DailyTravelBlocked("拾取前藏身持续失效，暂缓当前目标，继续其他地点。");
+            var current = await Evidence();
+            Identity(before, current);
+            if (N(Map(current)["id"]) != map) throw new DailyCollectionLocationChanged();
+            await Protection(current, walking: true);
+            current = await Evidence();
+            var fresh = Drops(current).SingleOrDefault(r => N(r[ObjectPath]) == id);
+            if (fresh == null) throw new DailyCollectionTargetsRemain("拾取目标状态已变化，重新核对服务器进度。");
+            return await WalkPickup(current, fresh, preparationAttempts + 1);
+        }
         catch (DailyStepException error) when (DailyPickupRecovery.PathRejected(error))
         {
             throw new DailyTravelBlocked("当前拾取点没有可用路径，暂缓此点：" + error.RejectionCode);
@@ -490,7 +517,7 @@ public sealed partial class DailyFieldRoute
         {
             var frame = (await W.Observe()).Frame;
             var events = W.Business.Events(op);
-            if (DailyPickupRecovery.SettledWalk(op, events, frame))
+            if (DailyPickupRecovery.CanResumeLiveWalk(op, events, frame))
             {
                 op["state"] = "superseded";
                 op["reconciliation"] = O(("method", "settled_walk_stalled"), ("target_collected", false), ("recheck_current_targets", true));

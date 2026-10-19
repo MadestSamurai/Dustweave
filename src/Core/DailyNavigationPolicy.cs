@@ -238,6 +238,18 @@ public static class DailyNavigationDecision
             ["reason"] = "关闭探查失效提示并重新观察；不重放领取或天赋请求"
         };
     }
+    internal static JsonObject? CollectionOverlay(JsonObject f, DailyNavigationPolicy p)
+    {
+        if (!MapSceneReady(f) || Types(f).Any(t => t.StartsWith("BattleUI", StringComparison.Ordinal))) return null;
+        var rows = Rows(f).Where(r => Text(r, "Type") is "MapRewardInfoPopupUI" or "PackListUI" or "MenuUI" or "PackCollectionUI");
+        var row = rows.Where(r => ReadyInput(r) && Blockers(f, Text(r, "Type"), p).Length == 0).OrderByDescending(Order).FirstOrDefault();
+        if (row == null) return null;
+        // Back only: the reward information page also exposes regeneration and
+        // paid actions, none of which belong to collection recovery.
+        var action = Back(Text(row, "Type"), "关闭地图信息或菜单，返回地图继续收集");
+        action["absent"] = Text(row, "Type");
+        return action;
+    }
     public static JsonObject? WeeklyResult(JsonObject f, DailyNavigationPolicy p)
     {
         var rows = Rows(f).Where(r => Text(r, "Type") == "QuestClearPopupUI").ToArray();

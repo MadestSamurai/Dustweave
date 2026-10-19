@@ -23,6 +23,18 @@ public sealed class DailyMiniGameChannel
     public void Text(string name, string value) => pipe.Write(name, Encoding.UTF8.GetBytes(value));
     public static async Task Connect(DailyWorkflow w, string command)
     {
+        var started = w.Driver.UtcTicks;
+        var clock = Stopwatch.StartNew();
+        var record = O(("command", command), ("started", started), ("state", "preparing"));
+        void Save()
+        {
+            record["elapsedMilliseconds"] = clock.ElapsedMilliseconds;
+            try { w.Save("minigame-" + command + ".json", record); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+        }
+        w.Report("正在准备本环节的组件；准备完成后会自动继续，可随时停止。");
+        w.StepProgress("component");
+        Save();
         var start = DailyTools.StartInfo(w.Directory, "minigame");
         start.ArgumentList.Add(command);
         using var process = Process.Start(start) ?? throw new IOException("小游戏连接进程未启动");
@@ -33,9 +45,12 @@ public sealed class DailyMiniGameChannel
             int code = await DailyHelperLifetime.WaitAsync(process, async () => { await w.Observe(); }, TimeSpan.FromSeconds(60));
             string normal = await output, failure = await error;
             Require(code == 0, "小游戏连接失败：" + (failure.Length > 0 ? failure : normal));
+            record["state"] = "ready";
         }
+        catch (Exception e) { record["state"] = "failed"; record["error"] = e.Message; throw; }
         finally
         {
+            Save();
             // Output readers are drained after our helper has exited, even on stop.
             try
             {
@@ -199,16 +214,9 @@ public static class DailyWeeklySichuan
         await w.Step("MiniGameHubUI", back: true, absent: "MiniGameHubUI");
         await DailyTravel.Ready(w, "MenuUI");
     }
-    public static async Task<JsonObject> Run(DailyWorkflow w)
+    internal static async Task EnterLobby(DailyWorkflow w)
     {
-        await w.Refresh();
-        var before = await DailyWeeklyMission.Read(w, DailyWeeklyMission.MiniGame);
         var types = DailyNavigationDecision.Types((await w.Observe()).Frame);
-        if (B(before["complete"]) && !types.Overlaps(["SichuanBoardUI", "SichuanStageClearPopupUI"]))
-            return DailyWeeklyMission.Skipped("weekly_minigame_complete", before);
-        await DailyMiniGameChannel.Connect(w, "connect-sichuan");
-        var channel = new DailyMiniGameChannel("BD2Sichuan", w.Context["actor"]!.AsArray());
-        channel.Acquire();
         if (!types.Overlaps(["SichuanMainUI", "SichuanStagePopupUI", "SichuanBoardUI", "SichuanStageClearPopupUI"]))
         {
             if (!await w.Has("MiniGameHubUI"))
@@ -222,6 +230,22 @@ public static class DailyWeeklySichuan
             await w.Step(O(("ui", "MiniGameHubUI"), ("operation", "sichuan_open"), ("value", hub!["Uid"]), ("items", new JsonArray(Copy(hub["Event"]))), ("expect", "SichuanMainUI")));
             await DailyTravel.Ready(w, "SichuanMainUI");
         }
+    }
+    public static async Task<JsonObject> Run(DailyWorkflow w)
+    {
+        await w.Refresh();
+        var before = await DailyWeeklyMission.Read(w, DailyWeeklyMission.MiniGame);
+        var types = DailyNavigationDecision.Types((await w.Observe()).Frame);
+        if (B(before["complete"]) && !types.Overlaps(["SichuanBoardUI", "SichuanStageClearPopupUI"]))
+            return DailyWeeklyMission.Skipped("weekly_minigame_complete", before);
+        // The daily bridge owns the arcade entry. Show the actual destination
+        // before the optional solver is compiled, without starting a game yet.
+        await EnterLobby(w);
+        await DailyMiniGameChannel.Connect(w, "connect-sichuan");
+        var channel = new DailyMiniGameChannel("BD2Sichuan", w.Context["actor"]!.AsArray());
+        channel.Acquire();
+        // Preparation can span a UI transition or manual navigation.
+        await EnterLobby(w);
         if (await w.Has("SichuanStageClearPopupUI"))
         {
             await Finish(w);

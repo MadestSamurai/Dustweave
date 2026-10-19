@@ -40,6 +40,7 @@ public sealed partial class DailyRunPanel : UserControl
     private QueueView currentView = new("idle", "", "", []); private bool isBusy; private string activeAccount = "";
     private readonly TextBlock status = new() { Text = "未运行", FontSize = 18, FontWeight = FontWeights.SemiBold }, detail = new() { TextWrapping = TextWrapping.Wrap, Margin = new(0, 4, 0, 8) };
     private readonly ListBox stages = new() { BorderThickness = new(0), MinHeight = 120, HorizontalContentAlignment = HorizontalAlignment.Stretch, Padding = new(0) };
+    private string followedStep = "";
     private readonly TextBlock counts = new() { VerticalAlignment = VerticalAlignment.Center, Foreground = (Brush)Application.Current.FindResource("MutedInk") };
     private readonly ProgressBar progress = new() { Maximum = 1, Style = (Style)Application.Current.FindResource("CircularProgress") };
     private readonly Border planIcon = new();
@@ -86,8 +87,12 @@ public sealed partial class DailyRunPanel : UserControl
         L.Bind(stages, System.Windows.Automation.AutomationProperties.NameProperty, "run.timeline_accessible");
         ScrollViewer.SetHorizontalScrollBarVisibility(stages, ScrollBarVisibility.Disabled);
         ScrollViewer.SetVerticalScrollBarVisibility(stages, ScrollBarVisibility.Auto);
-        VirtualizingPanel.SetIsVirtualizing(stages, true);
+        // The bounded daily list has only a few dozen rows. Physical scrolling
+        // keeps trailing follow space outside the viewport's visible content.
+        ScrollViewer.SetCanContentScroll(stages, false);
+        VirtualizingPanel.SetIsVirtualizing(stages, false);
         VirtualizingPanel.SetVirtualizationMode(stages, VirtualizationMode.Recycling);
+        VirtualizingPanel.SetScrollUnit(stages, ScrollUnit.Pixel);
 
         var layout = new DockPanel();
         var top = new StackPanel { Margin = new(0, 0, 0, 12) };
@@ -261,6 +266,7 @@ public sealed partial class DailyRunPanel : UserControl
     public void Busy(bool busy, bool canStop = true)
     {
         isBusy = busy;
+        if (!busy) { followedStep = ""; ClearFollowSpace(); }
         presetSelector.IsEnabled = savePreset.IsEnabled = managePreset.IsEnabled = !busy && DailyProfiles.ValidKey(activeAccount);
         accountSelector.IsEnabled = !busy;
         views.Visibility = busy ? Visibility.Collapsed : Visibility.Visible;
@@ -606,8 +612,12 @@ public sealed partial class DailyRunPanel : UserControl
             get;
         }
         private QueueStage snapshot = new("", "pending", "");
+        public string CurrentStep => DailyResultText.CurrentWork(snapshot);
+        public bool HasCurrentStep => snapshot.Work != null;
+        public bool HasUnitProgress => snapshot.Work is { Total: > 0 };
+        public double UnitPercent => (snapshot.Work?.Fraction ?? 0) * 100;
         public string Name => L.Stage(Task);
-        public string State => L.State(snapshot.State);
+        public string State => L.State(snapshot.Work != null ? "running" : snapshot.State);
         public string AccessibleName => Name + " · " + State + (HasFinishedTime ? " · " + FinishedTimeHelp : "");
         public bool HasFinishedTime => snapshot.State is ("completed" or "skipped") && snapshot.FinishedAt.HasValue;
         public string FinishedTime => HasFinishedTime ? snapshot.FinishedAt!.Value.ToLocalTime().ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture) : "";
@@ -693,9 +703,9 @@ public sealed partial class DailyRunPanel : UserControl
         {
             snapshot = stage;
             Compact = stage.State == "completed" && string.IsNullOrWhiteSpace(stage.Detail) && !stage.Carried && !HasTaskDetails && !HasAbsorptions;
-            Active = stage.State == "running";
+            Active = stage.State == "running" || stage.Work != null;
             NeedsAttention = stage.State is "blocked" or "recovery_required";
-            string symbol = stage.State switch
+            string symbol = (stage.Work != null ? "running" : stage.State) switch
             {
                 "completed" => "Check", "skipped" => "Skip", "running" => "Play",
                 "blocked" or "recovery_required" => "Warning", "partial" => "Partial", "stopped" or "paused" => "Pause",
@@ -738,10 +748,13 @@ public sealed partial class DailyRunPanel : UserControl
     private static string Describe(string text) => L.Describe(text);
     public void Show(QueueView view)
     {
+        // A stopped or historical view must never advertise a live operation.
+        if (!isBusy || view.State != "running" || view.Expired)
+            view = view with { Stages = view.Stages.Select(s => s with { Work = null }).ToArray() };
         L.Bind(status, TextBlock.TextProperty, () => L.State(view.State));
 
         string message = view.Message.Contains("无法保存执行记录") || (view.Message.Contains("WinError 5") && view.Message.Contains("result.json")) ? "执行进度文件保存失败。可在下方勾选未完成环节补跑；完整错误见执行记录。" : view.Message;
-        L.Bind(detail, TextBlock.TextProperty, () => message.Length > 0 ? Describe(message) : L.Get(view.State == "completed" ? "run.finished" : view.State == "partial" ? "run.partial" : "run.stop_hint"));
+        L.Bind(detail, TextBlock.TextProperty, () => message.Length > 0 ? Describe(message) : view.State == "running" ? "" : L.Get(view.State == "completed" ? "run.finished" : view.State == "partial" ? "run.partial" : "run.stop_hint"));
         L.Bind(detail, FrameworkElement.ToolTipProperty, () => L.Diagnostic(view.Message, detail.Text));
         // Preparing/connection errors keep the last readable report on screen.
         if (view.Record.Length > 0 && view.Stages.Count > 0)
@@ -752,8 +765,9 @@ public sealed partial class DailyRunPanel : UserControl
             currentView = view;
             int done = view.Stages.Count(s => s.State is "completed" or "skipped");
             L.Text(counts, "run.complete_count", done, view.Stages.Count);
-            progress.Maximum = Math.Max(1, view.Stages.Count);
-            progress.Value = done;
+            progress.Maximum = 100;
+            progress.Value = DailyWorkProgress.Percent(view.Stages);
+            L.Bind(progress, FrameworkElement.ToolTipProperty, () => L.Get("run.work_progress_help", done, view.Stages.Count));
             if (!same || !rows.Select(r => r.Task).SequenceEqual(view.Stages.Select(r => r.Task)))
             {
                 rows.Clear();
@@ -767,7 +781,46 @@ public sealed partial class DailyRunPanel : UserControl
             else
                 for (int i = 0; i < rows.Count; i++)
                     rows[i].Update(view.Stages[i]);
+            FollowCurrent(view);
         }
         UpdateChoices();
+    }
+    private void FollowCurrent(QueueView view)
+    {
+        if (!isBusy || view.State != "running") { followedStep = ""; ClearFollowSpace(); return; }
+        var currentStage = view.Stages.FirstOrDefault(s => s.Work != null) ?? view.Stages.FirstOrDefault(s => s.State == "running");
+        if (currentStage == null) return;
+        string key = view.Record + "|" + currentStage.Task + "|" + currentStage.Work?.Step + "|" + currentStage.Detail;
+        if (followedStep == key) return;
+        followedStep = key;
+        var row = rows.FirstOrDefault(r => r.Task == currentStage.Task);
+        if (row == null) return;
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+        {
+            if (!isBusy || followedStep != key || !rows.Contains(row)) return;
+            stages.ScrollIntoView(row);
+            stages.UpdateLayout();
+            if (FindVisual<ScrollViewer>(stages) is not { } viewer ||
+                FindVisual<VirtualizingStackPanel>(stages) is not { } panel ||
+                stages.ItemContainerGenerator.ContainerFromItem(row) is not ListBoxItem item) return;
+            panel.Margin = new(0, 0, 0, Math.Max(0, viewer.ViewportHeight - item.ActualHeight));
+            stages.UpdateLayout();
+            if (FindVisual<ScrollContentPresenter>(viewer) is { } viewport)
+                viewer.ScrollToVerticalOffset(viewer.VerticalOffset + item.TranslatePoint(new Point(), viewport).Y);
+        }));
+    }
+    private void ClearFollowSpace()
+    {
+        if (FindVisual<VirtualizingStackPanel>(stages) is { } panel) panel.Margin = new(0);
+    }
+    private static T? FindVisual<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T match) return match;
+            if (FindVisual<T>(child) is { } nested) return nested;
+        }
+        return null;
     }
 }

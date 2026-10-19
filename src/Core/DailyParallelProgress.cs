@@ -24,7 +24,7 @@ public static class DailyParallelProgress
         string path = PathFor(root, account);
         var old = DailyJson.TryRead<Entry>(path);
         if (old?.Account == account && old.AtUtc > status.AtUtc) return;
-        var observed = view.Stages.Select(s => !DailyParallelSession.Occupies(item.State) && s.State == "running" ? s with { State = "stopped" } : s).ToArray();
+        var observed = view.Stages.Select(s => !DailyParallelSession.Occupies(item.State) && s.State == "running" ? s with { State = "stopped", Work = null } : s with { Work = null }).ToArray();
         var stages = old?.Account == account && SamePeriod(old.View.Period, view.Period) ? Combine(old.View.Stages, observed) : observed;
         if (old?.Account == account && old.AtUtc == status.AtUtc && System.Text.Json.JsonSerializer.Serialize(old.View.Stages) == System.Text.Json.JsonSerializer.Serialize(stages)) return;
         var times = old?.Account == account && SamePeriod(old.View.Period, view.Period)
@@ -98,7 +98,7 @@ public static class DailyParallelProgress
             var at = incoming.Observed.GetValueOrDefault(stage.Task, stage.FinishedAt ?? incoming.AtUtc);
             if (rows.TryGetValue(stage.Task, out var existing) && !CanReplace(existing, stage)) continue;
             if (times.TryGetValue(stage.Task, out var prior) && prior >= at) continue;
-            rows[stage.Task] = stage with { State = stage.State == "running" ? "stopped" : stage.State };
+            rows[stage.Task] = stage with { State = stage.State == "running" ? "stopped" : stage.State, Work = null };
             times[stage.Task] = at;
         }
         var result = new Entry(account, same && old!.AtUtc > incoming.AtUtc ? old.AtUtc : incoming.AtUtc,

@@ -81,7 +81,10 @@ static class SelfTest {
    Check(!LiveProtocol.TransitRequiresStealth(pack,false),"normal daily does not require stealth");
    Check(LiveProtocol.TransitRequiresStealth(pack,true),"explicit route test requires stealth");
   }
-  foreach(int pack in new[]{14,1003})Check(LiveProtocol.TransitRequiresStealth(pack,false),"known patrol still requires stealth");
+  foreach(int pack in new[]{14,1003}){
+   Check(!LiveProtocol.TransitRequiresStealth(pack,false),"cleared patrol map does not override host threat assessment");
+   Check(LiveProtocol.TransitRequiresStealth(pack,true),"active patrol protection remains enforced");
+  }
   {
    var f=Frame();var c=Command();c.RequireStealth=true;
    Check(LivePolicy.Gate(c,f,now,false)=="stealth_scope_rejected","test protection cannot change unrelated operation");

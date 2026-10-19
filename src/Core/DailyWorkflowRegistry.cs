@@ -11,6 +11,7 @@ public sealed class DailyWorkflowStage(Func<JsonObject, Func<string, string?, Js
 /// <summary>The complete daily business registry. No process fallback or alternate controller.</summary>
 public sealed class DailyWorkflowRegistry
 {
+    internal Action<JsonObject>? WorkProgress { get; set; }
     private readonly Func<string, string, IReadOnlyDictionary<string, string[]>, Task<DailyRuleData>>? prepareTables;
     private DailyRuleData? rules; private readonly Func<Task<DailyRuleData>>? prepareRules;
     private readonly IDailyExtension? extension; private readonly string root, directory; private readonly DailyCommandDriver driver; private readonly DailyManagedBusiness business; private readonly DailyStageNavigation navigation; private readonly DailyBusinessProof[] proofs; private readonly Func<bool> stopped; private readonly Action<string> report; private readonly Func<JsonObject?> tradeCatalog;
@@ -29,7 +30,7 @@ public sealed class DailyWorkflowRegistry
         this.report = report;
         this.tradeCatalog = tradeCatalog;
     }
-    public DailyWorkflow Create(JsonObject context, Func<string, string?, JsonObject?, Task<JsonObject>> relay) => new(root, directory, context, driver, business, navigation, proofs, stopped, relay, report, rules, prepareTables);
+    public DailyWorkflow Create(JsonObject context, Func<string, string?, JsonObject?, Task<JsonObject>> relay) => new(root, directory, context, driver, business, navigation, proofs, stopped, relay, report, rules, prepareTables) { WorkProgress = WorkProgress };
     public async Task PrepareAsync(string stage)
     {
         if (prepareRules == null || new[] { "salvation", "guild", "room", "mail", "free_draws", "friendship", "trade", "collection_sync" }.Contains(stage))

@@ -14,7 +14,9 @@ namespace BD2Daily.Live {
   public static Surface StoryToolbar(int id,string path,int order,bool ready,Target[] targets){
    return new Surface{Id=id,Type="StorySkipUI",NativeContext="story_skip",Path=path,Popup=false,Order=order,InputReady=ready,Targets=targets};
   }
-  public static bool TransitRequiresStealth(int pack,bool requested){return requested||pack==14||pack==1003;}
+  // The host evaluates the current segment and live threats, including cleared
+  // patrol maps. A cartridge number alone must not override that decision.
+  public static bool TransitRequiresStealth(int pack,bool requested){return requested;}
   public static double NavigationSeconds(double distance){return double.IsNaN(distance)||double.IsInfinity(distance)||distance<0?60:Math.Max(60,Math.Min(300,distance/1.2+20));}
   public const string LiveEntries="runtime.json|snapshot.json|error.json|attached.json|performance.json|command.json|pause|legacy-observation|evidence-config.json|observation-request.json|evidence.json|dice-lease.json|dispatch-recovery.json|events~*|receipts~*";
   public static bool Ready(Frame f,int processId,long startTicks,long now,string previousInstance=null){

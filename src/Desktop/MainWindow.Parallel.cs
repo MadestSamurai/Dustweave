@@ -10,10 +10,19 @@ public partial class MainWindow
     private DailyParallelRuntime? parallelRuntime;
     private IDisposable? parallelControl;
     private readonly DailyParallelPanel parallelPanel=new();
+    private readonly DailyParallelPanel sequentialPanel=new(true);
+    private DailyParallelRun? sequentialRun;
+    private string sequentialAccount="";
     private bool parallelPolling,parallelClosing,parallelWasBusy;
     private bool ParallelBusy=>parallel?.HasWork==true;
     private void InitializeParallel()
     {
+        sequentialPanel.ControlRequested+=(_,action)=> { if(action=="stop") {dailyStopping=true;dailyQueue.Stop();coordinator.Stop();} };
+        sequentialPanel.BackRequested+=()=> {
+            if(busy)return;
+            sequentialRun=null;sequentialAccount="";
+            RunTab.Content=dailyPanel;RefreshTaskAccount();dailyPanel.ShowCurrentPlan();
+        };
         parallelOptions=DailyJson.TryRead<DailyParallelOptions>(Path.Combine(root,"parallel-options.json"))??new();parallelOptions.Validate();
         parallelRuntime=new(Environment.ProcessPath!);
         Closed += (_,_) => { parallelControl?.Dispose(); parallelControl=null; };
@@ -30,6 +39,27 @@ public partial class MainWindow
         // A saved batch provides account progress, not a permanent navigation page.
     }
     private void RefreshParallelMode()=>L.Bind(ExecutionModeButton,ContentControl.ContentProperty,parallelOptions.Enabled?"parallel.mode_parallel":"parallel.mode_sequential");
+    private void StartSequentialProgress(DailyAccount[] accounts)
+    {
+        // Display-only rows. They never enter the sandbox scheduler or persist jobs.
+        sequentialRun=new(Guid.NewGuid().ToString("N"),new(false,1),DateTimeOffset.UtcNow,
+            accounts.Select(a=>new DailyParallelItem(a,new(Guid.NewGuid().ToString("N"),a.AccountKey,a.Name,"",false))).ToArray());
+        RunTab.Content=sequentialPanel;WorkspaceTabs.SelectedItem=RunTab;sequentialPanel.Show(sequentialRun);
+    }
+    private void UpdateSequentialProgress(QueueView? view=null,string state="running",string detail="")
+    {
+        if(sequentialRun==null || sequentialAccount.Length==0 || view is { Account.Length: > 0 } && view.Account!=sequentialAccount)return;
+        sequentialRun=sequentialRun with { Items=sequentialRun.Items.Select(item=>item.Account.AccountKey==sequentialAccount
+            ? item with { State=state,Detail=detail,Status=new(item.Job.Id,item.Account.AccountKey,state,detail,DateTimeOffset.UtcNow,Environment.ProcessId,0,Queue:view??item.Status?.Queue) } : item).ToArray() };
+        sequentialPanel.Show(sequentialRun);
+    }
+    private void FinishSequentialProgress(string state)
+    {
+        if(sequentialRun==null)return;
+        sequentialRun=sequentialRun with { Items=sequentialRun.Items.Select(item=>item.State is "waiting" or "running" or "connecting"
+            ? item with { State=item.State=="waiting"?"stopped":state=="failed"?"failed":"stopped" } : item).ToArray() };
+        sequentialAccount="";sequentialPanel.Show(sequentialRun);
+    }
     private async Task PollParallelAsync()
     {
         if(parallel==null||parallelPolling)return;parallelPolling=true;

@@ -80,6 +80,8 @@ public static class DailyData
 /// <summary>One stage invocation owns a context, settings snapshot and short-lived server progress proof.</summary>
 public sealed class DailyWorkflow
 {
+    public Action<JsonObject>? WorkProgress { get; set; }
+    public void StepProgress(string step) => WorkProgress?.Invoke(DailyData.O(("step", step)));
     private readonly DailyRuleData? ruleData;
     private readonly Func<string, string, IReadOnlyDictionary<string, string[]>, Task<DailyRuleData>>? prepareTables;
     private readonly List<DailyRuleData> extensionRules = [];
@@ -252,7 +254,9 @@ public sealed class DailyWorkflow
             before = await Evidence(p.PrefixesFor(scope));
         var op = Business.Create(Context, role, before, scope, action);
         report("执行：" + p.Stage + " / " + role);
+        StepProgress(DailyWorkProgress.Operation(role, scope));
         await Business.CommitAsync(op, Context, seconds, drive, heartbeat);
+        StepProgress("verify");
         return op;
     }
     public Task Dismiss(string expected, bool wait = false) => Driver.DismissRewardAsync(expected, wait);
@@ -295,6 +299,7 @@ public sealed class DailyWorkflow
     }
     public Task<JsonObject> MailWrite(string name, JsonNode value, string channel = "live") => Driver.HandleAsync(DailyData.O(("operation", "write"), ("channel", channel), ("name", name), ("value", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(value.ToJsonString())))));
     public Task<JsonObject> MailDelete(string name, string channel = "live") => Driver.HandleAsync(DailyData.O(("operation", "delete"), ("channel", channel), ("name", name)));
+    public void Report(string message) => report(message);
     public void Save(string name, object result)
     {
         if (Path.GetFileName(name) != name)

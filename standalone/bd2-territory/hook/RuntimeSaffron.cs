@@ -18,6 +18,43 @@ namespace BD2Territory.Runtime
   private bool saffronHadHarvest,saffronSpent;
   private bool saffronResources;private readonly HashSet<string> saffronFinishedResources=new HashSet<string>();private readonly HashSet<string> saffronSkippedResources=new HashSet<string>();
   private string saffronResourceKey="";
+  private Component saffronAccessTarget;private Vector3 saffronAccessPoint;private long saffronAccessAt,saffronAccessArrived;
+  private string saffronAccessKey="";private readonly HashSet<string> saffronAccessVisited=new HashSet<string>();
+  private bool SaffronAccess(Component target)=>control!=null&&control.SaffronDaily&&saffronOwner==control.OwnerId&&saffron.State=="idle"&&target!=null&&target==saffronAccessTarget;
+  private Vector3 RouteCenter(Component target)=>SaffronAccess(target)?saffronAccessPoint:target is LifeFarmFieldObject farm?farm.GetFieldWorldCenter():target.transform.position;
+  private void SaffronLoadFields(TerritorySnapshot s,long now,int expected)
+  {
+   // Native world placement exists before the camera activates farm objects.
+   // Move normally to a registered field; do not activate objects or consume food.
+   if(saffronAccessAt==0){saffronAccessAt=now;saffronAccessVisited.Clear();saffronAccessTarget=null;saffronAccessKey="";}
+   if(now-saffronAccessAt>TimeSpan.FromSeconds(90).Ticks)throw new InvalidOperationException("接近农田后数据仍未就绪，已停止此环节；未使用新料理");
+   var ground=LayoutGround();var world=B.Read("Inventory.World",null) as IEnumerable<LifeWorldObjectPlaceDBInfo>;
+   s.Reason="正在接近已登记的农田，等待场景载入；暂不使用料理";
+   if(ground==null||world==null||expected==0)return;
+   if(!FootReady(s))return;
+   if(saffronAccessTarget!=null){
+    if(CanGatherAt(saffronAccessTarget,player.transform.position)){
+     if(saffronAccessArrived==0)saffronAccessArrived=now;
+     if(now-saffronAccessArrived<TimeSpan.FromSeconds(2).Ticks)return;
+     saffronAccessVisited.Add(saffronAccessKey);saffronAccessTarget=null;
+    }else if(!Allowed(saffronAccessTarget,now)){saffronAccessVisited.Add(saffronAccessKey);saffronAccessTarget=null;}
+    else {Approach(saffronAccessTarget,saffronAccessPoint,s,now,.7f);return;}
+   }
+   var loaded=new HashSet<string>(farms.Where(f=>CurrentDb(f)!=null&&ReadFarmReadiness(f)!=FarmReadiness.Unknown).Select(FarmKey));
+   var candidates=world.SelectMany(chunk=>chunk.Object.Where(o=>((LifeBuildingObjectTable)B.Invoke("Tables.Building",o.ObjectId))?.FunctionType==3)
+    .Select(o=>new{Key=TerritoryNetwork.Key(chunk.ChunkId,o),Chunk=chunk.ChunkId,Db=o}))
+    .Where(x=>!loaded.Contains(x.Key)&&!saffronAccessVisited.Contains(x.Key)&&ground.FindChunkById(x.Chunk)!=null)
+    .Select(x=>new{ x.Key,Point=ground.GetCellWorldPosition(x.Chunk,x.Db.X,x.Db.Y)})
+    .OrderBy(x=>(x.Point-player.transform.position).sqrMagnitude).ToArray();
+   if(candidates.Length==0)return;
+   // A few loading approaches suffice for a crop cluster. Never tour every field
+   // before consuming timed buffs, and never repeat an unreachable destination.
+   if(saffronAccessVisited.Count>=3)throw new InvalidOperationException("部分农田未载入或无法接近，已停止此环节；未使用新料理");
+   var next=candidates[0];saffronAccessKey=next.Key;saffronAccessPoint=next.Point;saffronAccessTarget=ground;saffronAccessArrived=0;
+   navigation.Reset();ResetLocalRecovery();triedDestinations.Clear();skip.Remove(ground.GetInstanceID());
+   LocalStorage.Log("农田载入接近 key="+next.Key+" loaded="+loaded.Count+"/"+expected+" from="+player.transform.position+" to="+next.Point);
+   Approach(saffronAccessTarget,saffronAccessPoint,s,now,.7f);
+  }
   private long saffronWaitEnd;private int saffronHarvestedBefore;private bool saffronRoundPlanted;private string saffronDecision="",saffronResumeState="";
   private long SaffronNow()=>Convert.ToInt64(B.InvokeOn("Saffron.Now",B.Invoke("Saffron.Clock")));
   private long FoodCount(int id)=>SaleInventory().Where(x=>x.Id==id&&!x.IsDisableSlot&&x.KeepFlag==0).Sum(x=>(long)x.Count);
@@ -139,6 +176,7 @@ namespace BD2Territory.Runtime
    {
     if(c.SaffronPotatoRounds<1||c.SaffronPotatoRounds>3)throw new InvalidOperationException("藏红花收割后的土豆轮数必须为 1 至 3。");
     if(saffronOwner!=owner){saffronOwner=owner;saffron=new SaffronStatus{State="sync"};s.Saffron=saffron;saffronOrder=new LifeGatheringObject[0];saffronHadHarvest=false;saffronSpent=false;saffronFilling=false;saffronRoundPlanted=false;saffronWaitEnd=0;saffronDecision="";
+     saffronAccessTarget=null;saffronAccessAt=saffronAccessArrived=0;saffronAccessKey="";saffronAccessVisited.Clear();
      saffronPath=Path.Combine(LocalStorage.DataRoot,"saffron-"+account+".json");saffronJournal=ReadLayoutFile<SaffronJournal>(saffronPath)??new SaffronJournal{Account=account};
      if(saffronJournal.Account!=account||saffronJournal.Pending==null)throw new InvalidOperationException("藏红花上次操作身份不匹配，未继续执行");
      saffronResumeState=string.IsNullOrEmpty(saffronJournal.WorkState)?saffronJournal.State:saffronJournal.WorkState;saffron.BuffEnd=saffronJournal.BuffEnd;saffron.Harvested=saffronJournal.Harvested;
@@ -190,9 +228,9 @@ namespace BD2Territory.Runtime
      SaffronValidateCatalog();
      int totalFields=worldObjects.Values.Count(o=>((LifeBuildingObjectTable)B.Invoke("Tables.Building",o.ObjectId))?.FunctionType==3);
      if(farms.Length==0||totalFields!=farms.Length||farms.Any(f=>CurrentDb(f)==null||ReadFarmReadiness(f)==FarmReadiness.Unknown)){
-      if(now-saffronStarted<TimeSpan.FromSeconds(20).Ticks){s.Reason="正在同步农田与料理效果，暂不种收或使用料理";return;}
-      throw new InvalidOperationException("农田数据暂时不完整，已保留作物与料理效果；可稍后重跑此环节");
+      SaffronLoadFields(s,now,totalFields);return;
      }
+     saffronAccessTarget=null;saffronAccessAt=0;saffronAccessVisited.Clear();
      saffronFields=farms.Select(FarmKey).OrderBy(x=>x).ToArray();
      long currentTime=SaffronNow();saffron.BuffEnd=SaffronCycle.Foods.Select(FoodEnd).Min();
      bool sameCycle=saffronJournal.BuffEnd>0&&saffronJournal.BuffEnd==saffron.BuffEnd;

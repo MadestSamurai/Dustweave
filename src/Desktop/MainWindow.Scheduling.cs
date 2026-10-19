@@ -177,22 +177,26 @@ public partial class MainWindow
         dailyStopping = false;
         await OperateAsync(async () =>
         {
+            StartSequentialProgress(targets);
             try
             {
                 state = "completed";
                 foreach (var account in targets)
                 {
                     if (dailyStopping) { state = "paused"; break; }
+                    sequentialAccount=account.AccountKey;UpdateSequentialProgress(state:"connecting");
                     await coordinator.InspectAsync([account]); RefreshAccounts();
                     if (dailyStopping) { state = "paused"; break; }
                     var result = await RunDailyQueueAsync(account.AccountKey, execution.CloseGame,
                         () => dailyQueue.RunAsync(account.AccountKey, selection: selections[account.AccountKey]));
                     results.Add(new(account.Name, result));
+                    UpdateSequentialProgress(result, result.State == "completed" ? "completed" : "partial",result.Message);
                     if (result.State == "paused" || result.Stages.Any(s => s.State == "recovery_required")) { state = "paused"; break; }
                     if (result.State is not ("completed" or "skipped")) state = "partial";
                 }
             }
             catch { state = "failed"; throw; }
+            finally { FinishSequentialProgress(state); }
         }, connectsGame: true);
         ShowRunResults(results);
         return state;

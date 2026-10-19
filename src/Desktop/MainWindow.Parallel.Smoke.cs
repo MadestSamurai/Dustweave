@@ -106,10 +106,14 @@ public partial class MainWindow
             var accounts=new[]{new DailyAccount(1,"主账号 / Main",new string('a',64),"",true,false,""),new DailyAccount(2,"副账号 / Second",new string('b',64),"",true,false,""),new DailyAccount(3,"等待账号 / Waiting",new string('c',64),"",true,false,"")};
             var items=accounts.Select((a,i)=>{var job=new DailyParallelJob(Guid.NewGuid().ToString("N"),a.AccountKey,a.Name,System.Text.Json.JsonSerializer.Serialize(new DailyPreferences()),true);string state=i==0?"running":i==1?"paused":"waiting";return new DailyParallelItem(a,job,state,i==1?"parallel.paused":"",new(job.Id,a.AccountKey,state,"",DateTimeOffset.UtcNow,1,1,GameId:i<2?1:0,Queue:i==2?null:new("running","","",[new("management","completed",""),new("mail","running","")],a.AccountKey)));}).ToArray();
             var run=new DailyParallelRun(Guid.NewGuid().ToString("N"),new(true,2),DateTimeOffset.UtcNow,items);
+            run=run with { Items=run.Items.Select((item,i)=>i==0?item with {Status=item.Status! with {Queue=new("running","","fixture/batch.json",
+                [new("management","completed",""),new("weekly_mainline","running","") {Work=new("absorb",12,40,"maps")}],item.Account.AccountKey)}}:item).ToArray() };
             foreach(int language in new[]{0,1,2})foreach(int appearance in new[]{1,2})
             {
                 LanguageSelector.SelectedIndex=language;ThemeSelector.SelectedIndex=appearance;parallelPanel.Show(run);
                 await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);UpdateLayout();
+                Check(Children<TextBlock>(parallelPanel).Any(t=>t.Text.Contains(L.Get("work.absorb"))&&t.Text.Contains("12/40")),"Collapsed account row hides the current fine step");
+                Capture("parallel-live-"+L.Code+"-"+appearance);
                 Check(!Children<TextBlock>(parallelPanel).Any(t=>t.Text.StartsWith("parallel.")),"Parallel panel exposes an untranslated key");
                 var buttons=Children<Button>(parallelPanel).ToArray();Check(buttons.Any(b=>b.Content as string==L.Get("parallel.pause_all")),"Global pause missing");
                 Check(buttons.Any(b=>b.Content as string==L.Get("parallel.resume")&&b.IsEnabled),"Paused account cannot continue");
@@ -162,5 +166,37 @@ public partial class MainWindow
             DailyJson.Write(Path.Combine(smoke!,"parallel-ui.json"),new{status="passed",checks,realGameTouched=false});
         }
         finally{RunTab.Content=original;LanguageSelector.SelectedIndex=0;ThemeSelector.SelectedIndex=1;Width=1180;Height=800;}
+    }
+    private async Task CheckExecutionProgressForSmoke()
+    {
+        int calls=((DemoEnvironment)sessions).Calls.Count;
+        var accounts=new[] {new DailyAccount(1,"主账号 / Main",new string('a',64),"",true,false,""),new DailyAccount(2,"副账号 / Second",new string('b',64),"",true,false,"")};
+        var work=new QueueView("running","","fixture/progress.json",
+            [new("guild","completed",""),new("weekly_mainline","running","") {Work=new("absorb",12,40,"maps")},new("mirror","pending",""),new("trade","pending",""),new("mail","pending","")],accounts[0].AccountKey);
+        foreach(int language in new[]{0,1,2})foreach(int appearance in new[]{1,2})
+        {
+            LanguageSelector.SelectedIndex=language;ThemeSelector.SelectedIndex=appearance;Width=1180;Height=900;
+            RunTab.Content=dailyPanel;WorkspaceTabs.SelectedItem=RunTab;
+            dailyPanel.SetAccount(accounts[0].Name, accounts[0].AccountKey);
+            await dailyPanel.CheckWorkFollowForSmoke();
+            dailyPanel.Busy(true);dailyPanel.Show(work);
+            await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);UpdateLayout();
+            Capture("work-progress-single-"+L.Code+"-"+appearance);
+            dailyPanel.Busy(false);
+            Width=920;Height=650;
+            StartSequentialProgress(accounts);sequentialAccount=accounts[0].AccountKey;UpdateSequentialProgress(work);
+            await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);UpdateLayout();
+            Capture("work-progress-sequential-"+L.Code+"-"+appearance);
+            var before=sequentialRun;
+            UpdateSequentialProgress(work with {Account=accounts[1].AccountKey});
+            if(!ReferenceEquals(before,sequentialRun))throw new Exception("Progress from another account replaced the current account");
+            UpdateSequentialProgress(work with {State="completed",Stages=work.Stages.Select(s=>s with {State="completed",Work=null}).ToArray()},"completed");
+            sequentialAccount=accounts[1].AccountKey;UpdateSequentialProgress(state:"connecting");
+            if(sequentialRun!.Items[0].State!="completed"||sequentialRun.Items[1].Status?.Queue!=null)throw new Exception("Account switch lost completion or reused another account's steps");
+            FinishSequentialProgress("paused");
+        }
+        sequentialRun=null;sequentialAccount="";
+        await CheckParallelForSmoke();
+        if(((DemoEnvironment)sessions).Calls.Count!=calls)throw new Exception("Progress presentation dispatched gameplay");
     }
 }

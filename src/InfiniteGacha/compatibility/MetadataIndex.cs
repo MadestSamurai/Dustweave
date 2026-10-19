@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.RegularExpressions;
+
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -13,7 +13,7 @@ public sealed class MetadataIndex : IDisposable
     public ModuleDefinition Module { get; }
     public TypeDefinition[] Types { get; }
     private readonly Dictionary<string,string> bodies = new();
-    private Dictionary<string,List<string>>? uses;
+    private Dictionary<string,List<(MethodDefinition Caller,int Offset)>>? uses;
     public MetadataIndex(string path)
     {
         var resolver=new DefaultAssemblyResolver();resolver.AddSearchDirectory(Path.GetDirectoryName(path)!);
@@ -22,7 +22,19 @@ public sealed class MetadataIndex : IDisposable
     }
     public static IEnumerable<TypeDefinition> Walk(IEnumerable<TypeDefinition> types) => types.SelectMany(t=>new[]{t}.Concat(Walk(t.NestedTypes)));
     public static bool Obfuscated(string name)=>name.Any(c=>c>='\u0370' && c<='\u1fff');
-    public static string Name(string name)=>Regex.Replace(name,@"[\u0370-\u1fff]+","?");
+    public static string Name(string name)
+    {
+        int start=name.AsSpan().IndexOfAnyInRange('\u0370','\u1fff');
+        if(start<0)return name;
+        var result=new StringBuilder(name.Length).Append(name,0,start);bool run=false;
+        for(int i=start;i<name.Length;i++)
+        {
+            bool hidden=name[i]>='\u0370'&&name[i]<='\u1fff';
+            if(!hidden)result.Append(name[i]);else if(!run)result.Append('?');
+            run=hidden;
+        }
+        return result.ToString();
+    }
     public static string Hash(string text)=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
     public static string TypeShape(TypeReference type)
     {
@@ -61,15 +73,16 @@ public sealed class MetadataIndex : IDisposable
         if(uses!=null)return;uses=new();
         foreach(var m in Types.SelectMany(t=>t.Methods).Where(m=>m.HasBody))
         {
-            string? hash=null;
+
             for(int i=0;i<m.Body.Instructions.Count;i++)
             {
                 if(m.Body.Instructions[i].Operand is not MemberReference member)continue;
                 if(member is not MethodReference && member is not FieldReference)continue;
-                hash??=Body(m);
+
                 if(!uses.TryGetValue(member.FullName,out var list))uses[member.FullName]=list=new();
                 // Include operand position to distinguish same-typed fields in the same method.
-                list.Add(hash+":"+i);
+                // Hash only callers requested by the resolver, not all game methods.
+                list.Add((m,i));
             }
         }
     }
@@ -77,7 +90,7 @@ public sealed class MetadataIndex : IDisposable
     {
         IndexUses();
         var names=m is PropertyDefinition p?new[]{p.GetMethod?.FullName,p.SetMethod?.FullName}:new[]{m.FullName};
-        return names.Where(n=>n!=null).SelectMany(n=>uses!.TryGetValue(n!,out var list)?list:Enumerable.Empty<string>()).Distinct().OrderBy(x=>x,StringComparer.Ordinal).ToArray();
+        return names.Where(n=>n!=null).SelectMany(n=>uses!.TryGetValue(n!,out var list)?list:Enumerable.Empty<(MethodDefinition Caller,int Offset)>()).Select(site=>Body(site.Caller)+":"+site.Offset).Distinct().OrderBy(x=>x,StringComparer.Ordinal).ToArray();
     }
     public TypeDefinition Find(string name)=>Types.Single(t=>t.FullName==name || t.FullName.Replace('/','+')==name);
     public void Dispose()=>Module.Dispose();

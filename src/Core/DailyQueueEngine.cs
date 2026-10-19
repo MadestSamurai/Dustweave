@@ -164,6 +164,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
         var owners = initial["owners"]!.AsArray().Select(Text).ToArray();
         string? priority = owners.Length == 1 && itemsToRun.Any(i => Text(i["task"]) == owners[0] && i["carried_forward"]?.GetValue<bool>() != true && Text(i["state"]) is "pending" or "running" or "recovery_required") && DailyStageCatalog.Enabled(owners[0], settings) ? owners[0] : null;
         HashSet<string> activeWeekly = [];
+        string? activeStage = null;
         void OnProgress(string stage, JsonObject progress)
         {
             if (stage == DailyTalentPotions.Stage)
@@ -179,10 +180,13 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                 else auxiliary["finished"] = DateTime.UtcNow.Ticks;
                 Save(); return;
             }
-            if (!activeWeekly.Contains(stage))
+            if (!activeWeekly.Contains(stage) && activeStage != stage)
                 throw new StageHostException("protocol", "收到未选择环节的进度。");
             var row = itemsToRun.Single(i => Text(i["task"]) == stage);
-            row["progress"] = progress.DeepClone();
+            var merged = row["progress"]?.DeepClone().AsObject() ?? new JsonObject();
+            foreach (var pair in progress) merged[pair.Key] = pair.Value?.DeepClone();
+            if (JsonNode.DeepEquals(row["progress"], merged)) return;
+            row["progress"] = merged;
             Save();
         }
         var progressHost = host as IDailyStageProgressHost;
@@ -218,6 +222,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                 // missing receipts must never veto entering that recovery path.
                 if (Text(item["state"]) == "recovery_required") item["recovered"] = true;
                 item["state"] = "pending";
+                item.Remove("progress");
                 item.Remove("error");
                 item.Remove("recovery_blockers");
             }
@@ -230,6 +235,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                     throw new StageHostException("stopped", "已停止后续操作。");
                 await Observe(context);
                 string stage = Text(item["task"]);
+                activeStage = stage;
                 if (!DailyStageCatalog.Enabled(stage, preferences()))
                 {
                     item["state"] = "skipped";

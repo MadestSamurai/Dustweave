@@ -49,6 +49,14 @@
   ],
   "files": [
     {
+      "path": "src/Core/DailyWorkProgress.cs",
+      "sha256": "1c6f2360ace517e7456d4724ac0e1f9de6ef0ea813f2ba51cdd9de8dbecffe0e",
+      "reasons": [
+        "build input"
+      ],
+      "bytes": 3078
+    },
+    {
       "reasons": [
         "build input"
       ],

@@ -13,6 +13,40 @@ static class TravelTransitionCases
             f.Readings = () => [WorkflowCases.Reading("navigation.pack", (DailyTravel.CurrentPack + ".Id", 3007), (DailyTravel.CurrentPack + ".PackType", 9))];
             return f;
         }
+        foreach (string mode in new[] { "arrival", "repeat", "unknown-modal", "battle", "other-map" })
+        {
+            using var f = New("square-book-" + mode);
+            f.Frame["Scene"] = mode == "other-map" ? "Map3005_001" : "Map3009_001";
+            f.Readings = () => [WorkflowCases.Reading("navigation.pack", (DailyTravel.CurrentPack + ".Id", 3009), (DailyTravel.CurrentPack + ".PackType", 11))];
+            f.Page("TotalWarUI");
+            if (mode == "unknown-modal") f.Frame["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("MessagePopupUI", true, "_buttonOK", 99));
+            if (mode == "battle") f.Frame["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("BattleUI", id: 2));
+            f.OnCommand = _ => f.Page("GameFieldDefaultUI");
+            if (mode == "repeat") f.OnDelay = () => f.Page("TotalWarUI");
+            if (mode is "arrival" or "repeat")
+            {
+                string result;
+                try { result = await DailyTravel.Reuse(f.Workflow, packType: 11, surfaces: ["GameFieldDefaultUI"], seconds: 5) ? "arrived" : "wrong"; }
+                catch (StageHostException e) { result = e.Kind; }
+                Check(mode == "arrival" ? result == "arrived" && f.Box.Commands.Count == 1 : result == "adapter" && f.Box.Commands.Count == 2,
+                    "square travel leaves only idle Book lobby with bounded recovery: " + mode);
+                Check(f.Box.Commands.All(c => S(c["Kind"]) == "back"), "square recovery never starts or retries a Book battle: " + mode);
+            }
+            else Check(!await DailyTravel.LeaveSquareBookLobby(f.Workflow, f.Frame) && f.Box.Commands.Count == 0, "square lobby recovery preserves unknown UI and unrelated scenes: " + mode);
+        }
+        foreach (string entry in new[] { "MenuUI", "MiniGameHubUI", "SichuanMainUI", "SichuanBoardUI" })
+        {
+            using var f = New("sichuan-entry-" + entry);
+            f.Frame["Scene"] = "Map3009_001";
+            f.Page(entry, "_buttonMiniGame");
+            f.Readings = () => [WorkflowCases.Reading("weekly.sichuan", ("$self", O(("Hubs", new JsonArray(O(("Uid", 42), ("Event", 17)))))))];
+            f.OnCommand = _ => f.Page(S(f.Frame["Surfaces"]![0]!["Type"]) == "MenuUI" ? "MiniGameHubUI" : "SichuanMainUI");
+            await DailyWeeklySichuan.EnterLobby(f.Workflow);
+            Check(f.Box.Commands.Count == (entry == "MenuUI" ? 2 : entry == "MiniGameHubUI" ? 1 : 0), "Sichuan opens its lobby before preparing solver and reuses existing play: " + entry);
+            int before = f.Box.Commands.Count;
+            await DailyWeeklySichuan.EnterLobby(f.Workflow);
+            Check(f.Box.Commands.Count == before, "Sichuan rechecks current UI after preparation without reopening: " + entry);
+        }
         foreach (string entry in new[] { "pack-list", "reuse", "ready" })
         {
             using var f = New("delayed-book-record-" + entry);

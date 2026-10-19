@@ -21,6 +21,13 @@ static class QueueEngineCases
         var root = Root();
         var host = new FakeHost();
         {
+            var progressHost = new FakeHost { FineProgress = true };
+            var live = await Run(progressHost, Root(), ["mail"]);
+            var p = live["items"]![0]!["progress"]!;
+            Check(p["step"]?.GetValue<string>() == "verify" && p["completed"]?.GetValue<int>() == 2 && p["total"]?.GetValue<int>() == 3,
+                "normal stages merge step-only updates without dropping verified counters");
+        }
+        {
             var retiredHost = new FakeHost();
             var legacy = new DailyPreferences(); legacy.MonsterHunt.Enabled = true;
             string retiredRoot = Root(), retiredId = Guid.NewGuid().ToString("N");
@@ -429,7 +436,7 @@ static class QueueEngineCases
     static JsonObject Old(string id, JsonObject context, params string[] tasks) => new() { ["schema"] = 1, ["id"] = id, ["context"] = context.DeepClone(), ["state"] = "paused", ["items"] = new JsonArray(tasks.Select(t => (JsonNode)new JsonObject { ["task"] = t, ["state"] = "pending" }).ToArray()) };
     private sealed class FakeHost : IDailyStageHost, IDailyStageProgressHost, IDailyWeeklyCompletionHost
     {
-        public event Action<string, JsonObject>? StageProgress; public List<string> Members = []; public bool PartialCollection, SettledNpc, SettledSteal, Refill, PartialSaffron;
+        public event Action<string, JsonObject>? StageProgress; public List<string> Members = []; public bool PartialCollection, SettledNpc, SettledSteal, Refill, PartialSaffron, FineProgress;
         public Task<JsonObject> SettleWeeklyAsync(IReadOnlyList<string> stages, JsonObject context)
         {
             var result = new JsonObject();
@@ -446,6 +453,11 @@ static class QueueEngineCases
             if (operation == "execute")
                 Executed.Add(stage!);
             After?.Invoke(operation, stage ?? "");
+            if (FineProgress && operation == "execute")
+            {
+                StageProgress?.Invoke(stage!, new() { ["step"] = "collect", ["completed"] = 2, ["total"] = 3 });
+                StageProgress?.Invoke(stage!, new() { ["step"] = "verify" });
+            }
             if (Refill && operation == "execute")
             {
                 StageProgress?.Invoke(DailyTalentPotions.Stage, new() { ["state"] = "running", ["detail"] = "refilling" });

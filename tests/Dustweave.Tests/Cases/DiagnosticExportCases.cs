@@ -33,6 +33,7 @@ internal static class DiagnosticExportCases
         File.WriteAllText(Path.Combine(equipmentDiagnostics,"step.result.json"),"{\"state\":\"failed\",\"token\":\"equipment-secret\"}");
         DailyJson.Write(Path.Combine(failureRoot,"live","absorption-history","fixture.json"),new { Maps=2,Visits=new[]{new {Pack=8,Map=81,AlongNpc=true}} });
         DailyJson.Write(Path.Combine(failureRoot, "connection-access.json"), new { phase = "send-request", state = "disconnected", helperExitCode = 1 });
+        DailyJson.Write(Path.Combine(failureRoot,"live","minigame-connect-sichuan.json"),new{state="ready",elapsedMilliseconds=39000});
         Check(Directory.GetFiles(faultDirectory).Length==1,"repeated identical failures retain one bounded snapshot");
         foreach (string name in new[] {"pass-claims-latest.json", "mission-inspection-latest.json"})
             File.WriteAllText(Path.Combine(failureRoot,"live",name),"{\"state\":\"partial\",\"pass_issues\":[{\"pass_id\":501,\"detail\":\"synthetic incompatible pass\"}]}");
@@ -40,6 +41,7 @@ internal static class DiagnosticExportCases
         using(var archive=ZipFile.OpenRead(withFault.Path)) {
             using(var equipmentLog=new StreamReader(archive.GetEntry("logs/main/live/diagnostics/equipment/step.result.json")!.Open()))Check(!equipmentLog.ReadToEnd().Contains("equipment-secret"),"integrated equipment evidence is exported and redacted with host diagnostics");
             Check(archive.GetEntry("logs/main/connection-access.json") != null, "elevated handshake phase and helper exit status are exported");
+            Check(archive.GetEntry("logs/main/live/minigame-connect-sichuan.json") != null,"component preparation timing survives timeline rotation and is exported");
             Check(archive.GetEntry("logs/main/live/absorption-history/fixture.json") != null, "confirmed absorption map report is included in diagnostic export");
             Check(archive.Entries.Any(e=>e.FullName.StartsWith("logs/main/live/diagnostics/failures/")),"failure snapshot survives observation rotation and is exported");
             Check(new[]{"pass-claims-latest.json", "mission-inspection-latest.json"}.All(n=>archive.GetEntry("logs/main/live/"+n)!=null),"partial pass and mission inspection results survive export");

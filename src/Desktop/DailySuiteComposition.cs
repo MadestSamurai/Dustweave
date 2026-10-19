@@ -48,20 +48,25 @@ internal static class DailySuiteComposition {
   await compiler.WaitAsync(cancel);
   try{
    cancel.ThrowIfCancellationRequested();
+   var timing=System.Diagnostics.Stopwatch.StartNew();
+   void Mark(string phase)=>DailySuiteDiagnostics.Record(DailyIdentity.DataRoot,"module-preparation",new{id,phase,elapsedMilliseconds=timing.ElapsedMilliseconds});
+   Mark("started");
    string tool=id.EndsWith("-daily",StringComparison.Ordinal)?id[..^6]:id;
    string assemblyName=id is "mansion-runaway" or "pandora"?"Dustweave.Compatibility":id=="daily"?"Dustweave.Connection":tool=="equipment"?"BD2Equipment.Connection":prefixes[tool]+".Compatibility";
    var assembly=Assembly.Load(assemblyName);
    string key=DailyIdentity.Hash("module-v1|"+id+"|"+assembly.ManifestModule.ModuleVersionId+"|"+(id=="daily"?DailyPlugin.Current.Fingerprint:""));
    string clientKey=await ClientKey(managed,cancel);
+   Mark("client-identified");
    string directory=Path.Combine(DailyCacheStorage.Area(DailyIdentity.DataRoot,"suite-cache"),"modules",id,key,clientKey);
    Directory.CreateDirectory(directory);
    if(tool=="equipment")await Task.Run(()=>assembly.GetType("BD2Equipment.Live.LiveEntry")!.GetMethod("EnsureEvidenceConfig")!.Invoke(null,[managed,Path.Combine(Environment.GetEnvironmentVariable("BD2_EQUIPMENT_DATA_ROOT")??Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BD2EquipmentAssistant"),"evidence-config.json")]),cancel);
    string cache=Path.Combine(directory,"module.dll"),report=Path.Combine(directory,"module.json");
    if(File.Exists(cache)&&DailyJson.TryRead<ModuleCache>(report) is {} info){
     var bytes=await File.ReadAllBytesAsync(cache,cancel);
-    if(Hash(bytes)==info.Hash){DailyCacheStorage.Touch(report);progress("复用已准备组件 · "+Name(id));return bytes;}
+    if(Hash(bytes)==info.Hash){DailyCacheStorage.Touch(report);Mark("cache-hit");progress("复用已准备组件 · "+Name(id));return bytes;}
    }
    progress("首次准备 · "+Name(id));
+   Mark("compile-started");
    byte[] payload;string? scratch=null;
    if(id=="mansion-runaway"){
     payload=await Task.Run(()=>MansionCompiler.Prepare(managed),cancel);
@@ -84,11 +89,13 @@ internal static class DailySuiteComposition {
     payload=(byte[])prepared!.GetType().GetProperty("Payload")!.GetValue(prepared)!;
    }
    cancel.ThrowIfCancellationRequested();
+   Mark("compiled");
    if(payload.Length==0||payload.Length>8*1024*1024)throw new InvalidDataException("功能组件大小异常，未发送。");
    await Task.Run(()=>ClientInputs.RequireStable(managed,clientKey),cancel);
    await File.WriteAllBytesAsync(cache,payload,cancel);
    DailyJson.Write(report,new ModuleCache(Hash(payload)));
    if(scratch!=null)DailyCacheStorage.DiscardBuild(directory,scratch);
+   Mark("ready");
    return payload;
   }finally{compiler.Release();}
  }

@@ -116,6 +116,7 @@ public partial class MainWindow : Window
         dailyQueue.Progress += v => Dispatcher.Invoke(() =>
         {
             dailyPanel.Show(v);
+            UpdateSequentialProgress(v, v.State == "preparing" ? "connecting" : "running", v.Message);
             DailyUiText.Set(ProgressText, v.Message);
             ProgressText.Foreground = (Brush)FindResource(v.State is "blocked" or "recovery_required" ? "Error" : "Ink");
         });
@@ -759,13 +760,16 @@ public partial class MainWindow : Window
         if (!dailyPanel.SelectedPlanTasks.SequenceEqual(selectedBefore) || !dailyPanel.VisibleTasks.SequenceEqual(rowsBefore) || !dailyPanel.ShowingPlan)
             throw new Exception("Changing appearance changed plan selection");
         Capture("timeline-plan-dark");
+        await dailyPanel.CheckWorkFollowForSmoke();
 
-        var view = new QueueView("running", "正在领取到期派遣，完成后继续下一环节。", "fixture/theme-running.json",
+        var view = new QueueView("running", "", "fixture/theme-running.json",
             [new("guild", "completed", "公会签到已完成", FinishedAt: new DateTimeOffset(DateTime.Today.AddHours(19).AddMinutes(2))), new("management", "completed", "餐厅、鱼笼与领地收益已领取", FinishedAt: new DateTimeOffset(DateTime.Today.AddHours(19).AddMinutes(3))),
-             new("daily_dispatch", "running", "核对派遣结果"), new("mirror", "pending", "使用剩余免费次数"),
+             new("weekly_mainline", "running", "血之骑士 · 晨曦之森") { Work = new("absorb", 12, 40, "maps") }, new("mirror", "pending", "使用剩余免费次数"),
              new("trade", "pending", "购买、料理与售卖"), new("mail", "pending", "最后收取本次奖励")], planKey);
         dailyPanel.Show(view);
         dailyPanel.Busy(true);
+        dailyPanel.Show(view);
+        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
         Capture("timeline-running-dark");
         ThemeSelector.SelectedIndex = 1;
         await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
@@ -835,6 +839,12 @@ public partial class MainWindow : Window
         try
         {
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "work-progress")
+            {
+                await CheckExecutionProgressForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status="passed", scope="work-progress", languages=3, themes=2, realGameTouched=false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "simple-settings")
             {
                 L.Audit(); CheckRuntimeLanguagesForSmoke();

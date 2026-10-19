@@ -1,5 +1,15 @@
 # Changelog / 更新记录
 
+## 1.4.8 — 2026-10-19
+
+- 周收集在捕获次数用尽时明确暂缓仅剩捕获目标的地图，继续其他可执行目标；修复步行拾取的隐身校验冲突、停滞恢复及地图切换时的异常。
+- 收集查询会关闭已知的地图奖励和卡带列表遮挡；步行拾取有限重试后跳过不可达点，不因单点卡住整个路线，也不把未完成目标算作完成。
+- 藏红花流程先接近已登记但尚未载入的农田，再核对收割条件；此阶段不使用料理。修复连连看停在主菜单、跑商入口误进末日之书大厅的恢复。
+- 减少组件适配时无关方法的重复计算，复用有效缓存；记录组件准备耗时，便于定位剩余等待。
+- 日常进度细分到当前动作和地图数量，长环节按工作量展示进度；单账号跟随当前步骤，多账号在对应账号下显示当前环节及动作。
+- Improves weekly collection recovery, farm loading, arcade and square navigation; reduces component preparation overhead and adds detailed, workload-aware progress for single and multi-account runs.
+- [完整说明 / Full notes](docs/releases/1.4.8.md)
+
 ## 1.4.7 — 2026-10-19
 
 - 恶魔猎人新增泰瑞丝、格兰希特和难度选择；修复贴身不攻击、突进防御和有药却被重击击败的问题。两名角色分别完成两种怪物的超困难实测通关；不以局内任务为目标。

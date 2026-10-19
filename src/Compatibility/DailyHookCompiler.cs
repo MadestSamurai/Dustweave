@@ -9,7 +9,7 @@ public sealed record PreparedDailyHook(byte[] Payload,BindingReport Report,Bindi
 public static class DailyHookCompiler
 {
     public static byte[] Resource(string name){using var s=DustweaveSharedResources.Open(typeof(DailyHookCompiler).Assembly,name)??throw new InvalidDataException("Missing resource "+name);using var b=new MemoryStream();s.CopyTo(b);return b.ToArray();}
-    public static string SuiteFingerprint {get;set;}=""; public static string Fingerprint=>SuiteFingerprint.Length>0?MetadataIndex.Hash(BaseFingerprint+"|"+SuiteFingerprint):BaseFingerprint; private static string BaseFingerprint=>MetadataIndex.Hash(typeof(DailyHookCompiler).Module.ModuleVersionId+"|"+string.Join("|",DustweaveSharedResources.Names(typeof(DailyHookCompiler).Assembly).Order().Select(n=>MetadataIndex.Hash(Convert.ToBase64String(Resource(n))))));
+    public static string SuiteFingerprint {get;set;}=""; public static string Fingerprint=>SuiteFingerprint.Length>0?MetadataIndex.Hash(BaseFingerprint+"|"+SuiteFingerprint):BaseFingerprint; private static string BaseFingerprint=>CachedBaseFingerprint.Value; private static readonly System.Lazy<string> CachedBaseFingerprint=new(()=>MetadataIndex.Hash(typeof(DailyHookCompiler).Module.ModuleVersionId+"|"+string.Join("|",DustweaveSharedResources.Names(typeof(DailyHookCompiler).Assembly).Order().Select(n=>MetadataIndex.Hash(Convert.ToBase64String(Resource(n)))))));
     public static BindingContract Generate(string managed)
     {
         using var i=new MetadataIndex(Path.Combine(managed,"Assembly-CSharp.dll"));

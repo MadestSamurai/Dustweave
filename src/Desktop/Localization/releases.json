@@ -1,5 +1,33 @@
 [
 {
+  "Version": "1.4.8",
+  "Date": "2026-10-19",
+  "Notes": {
+    "zh-CN": [
+      "周收集在捕获次数用尽时暂缓仅剩捕获目标的地图，继续其他目标；修复步行拾取隐身校验、停滞恢复及地图切换异常。不可达点有限重试后跳过，补跑仍遵循步行收集设置。",
+      "农田未载入时先接近再核对，确认收割条件前不使用料理；修复连连看停在主菜单及跑商误入末日之书大厅的恢复。",
+      "减少组件准备时无关方法的重复计算，复用有效缓存并记录准备耗时。",
+      "日常显示当前细部动作和地图进度，长环节按工作量计入总进度；单账号跟随当前步骤，多账号在对应账号下显示当前环节和动作。",
+      "若 OTA 失败，请从 GitHub Releases 或固定网盘目录手动下载完整包。"
+    ],
+    "zh-TW": [
+      "週收集在捕獲次數用盡時暫緩僅剩捕獲目標的地圖，繼續其他目標；修復步行拾取隱身校驗、停滯恢復及地圖切換異常。不可達點有限重試後跳過，補跑仍遵循步行收集設定。",
+      "農田未載入時先接近再核對，確認收割條件前不使用料理；修復連連看停在主選單及跑商誤入末日之書大廳的恢復。",
+      "減少元件準備時無關方法的重複計算，重用有效快取並記錄準備耗時。",
+      "日常顯示目前細部動作和地圖進度，長環節按工作量計入總進度；單帳號跟隨目前步驟，多帳號在對應帳號下顯示目前環節與動作。",
+      "若 OTA 失敗，請從 GitHub Releases 或固定網盤目錄手動下載完整包。"
+    ],
+    "en-US": [
+      "Weekly collection defers capture-only maps after the daily limit and continues other targets. Fix stealth checks, stalled walking pickups and map-transition errors. Unreachable points receive bounded retries; reruns respect the walking setting.",
+      "Approach unloaded farm fields before checking harvest conditions, without consuming food first. Recover Sichuan entry and accidental Book of Apocalypse lobby entry during merchant travel.",
+      "Reduce unnecessary component preparation work, reuse valid caches and record preparation timing.",
+      "Show current actions and map counts with workload-aware progress. Follow active single-account steps and show the stage and action for each account in batch runs.",
+      "If OTA fails, download the complete package from GitHub Releases or the fixed mirror folder."
+    ]
+  }
+},
+
+{
   "Version": "1.4.7",
   "Date": "2026-10-19",
   "Notes": {

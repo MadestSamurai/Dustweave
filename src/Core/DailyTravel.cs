@@ -12,6 +12,22 @@ public static class DailyTravel
     // Native menus can stay on Empty indefinitely; only overlays or a missing scene imply transit.
     private static bool InTransit(JsonObject frame) => string.IsNullOrWhiteSpace(S(frame["Scene"])) || DailyNavigationDecision.Types(frame).Overlaps(DailyNavigationDecision.Transitions);
     private static bool UnsentTransition(DailyStepException error) => error.PresentationChanged;
+    internal static bool SquareBookLobby(JsonObject frame) =>
+        S(frame["Scene"]).StartsWith("Map3009_", StringComparison.Ordinal) && !InTransit(frame) &&
+        !DailyNavigationDecision.Types(frame).Any(t => t.StartsWith("BattleUI", StringComparison.Ordinal)) &&
+        DailyNavigationDecision.Rows(frame).Count(r => S(r["Type"]) == "TotalWarUI") == 1 &&
+        DailyNavigationDecision.Rows(frame).Any(r => S(r["Type"]) == "TotalWarUI" && DailyNavigationDecision.ReadyInput(r)) &&
+        DailyNavigationDecision.Blockers(frame, "TotalWarUI", Policy).Length == 0;
+    // Only callers that currently own travel to the square may leave this lobby.
+    // This deliberately does not run in generic presentation/Book recovery.
+    internal static async Task<bool> LeaveSquareBookLobby(DailyWorkflow w, JsonObject frame)
+    {
+        if (!SquareBookLobby(frame)) return false;
+        await w.Step("TotalWarUI", back: true, absent: "TotalWarUI", reason: "退出广场入口自动打开的末日之书大厅，继续原路线");
+        DailyJson.Write(Path.Combine(w.Root, "live", "travel-diagnostics", "square-book-" + w.Driver.UtcTicks + ".json"),
+            O(("reason", "square_book_lobby"), ("at", w.Driver.UtcTicks), ("scene", frame["Scene"]), ("surfaces", new JsonArray(DailyNavigationDecision.Types(frame).Select(t => (JsonNode?)JsonValue.Create(t)).ToArray()))));
+        return true;
+    }
     public static async Task<bool> RecoverPresentation(DailyWorkflow w, JsonObject frame)
     {
         if (await DailyMirror.RecoverRankPresentation(w, frame)) return true;
@@ -81,6 +97,7 @@ public static class DailyTravel
         double end = w.Time + seconds;
         string? stable = null, arrival = null;
         double since = 0, arrivedAt = 0;
+        int bookReturns = 0;
         while (w.Time < end)
         {
             var f = (await w.Observe()).Frame;
@@ -98,7 +115,7 @@ public static class DailyTravel
                 stable = null;
                 continue;
             }
-            if (!types.Overlaps(Fields.Concat(overlays).Concat(surfaces)) && !PackEntries(f).Any())
+            if (!types.Overlaps(Fields.Concat(overlays).Concat(surfaces).Append("TotalWarUI")) && !PackEntries(f).Any())
             {
                 await w.Delay(200);
                 continue;
@@ -121,6 +138,14 @@ public static class DailyTravel
                 string arrivalKey = id + "|" + kind + "|" + S(f["Scene"]);
                 if (arrival != arrivalKey) { arrival = arrivalKey; arrivedAt = w.Time; }
                 if (w.Time - arrivedAt < .3) { await w.Delay(150); continue; }
+                if (kind == 11 && surfaces.Contains("GameFieldDefaultUI") && SquareBookLobby(f))
+                {
+                    if (bookReturns++ >= 2) throw new StageHostException("adapter", "广场入口反复打开末日之书；请离开入口后重试此环节。");
+                    try { await LeaveSquareBookLobby(w, f); }
+                    catch (DailyStepException error) when (UnsentTransition(error)) { await w.Delay(150); }
+                    stable = null;
+                    continue;
+                }
                 var row = DailyNavigationDecision.Rows(f).Where(r => overlays.Contains(S(r["Type"])) && DailyNavigationDecision.ReadyInput(r) && DailyNavigationDecision.Blockers(f, S(r["Type"]), Policy).Length == 0).OrderByDescending(r => N(r["Order"])).FirstOrDefault();
                 if (row != null)
                 {

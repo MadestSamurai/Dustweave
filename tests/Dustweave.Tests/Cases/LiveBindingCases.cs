@@ -11,6 +11,8 @@ static class LiveBindingCases
     {
         void Check(bool condition,string name){if(!condition)throw new Exception(name);cases.Add(name);}
         void Reject(Action action,string name){try{action();}catch(InvalidDataException){cases.Add(name);return;}throw new Exception(name);}
+        foreach(string name in new[]{"", "System.String", "A\u0370\u0371.B\u1fff.C", "\u036f\u0370\u1fff\u2000", "Ω/α+β<T>"})
+            Check(MetadataIndex.Name(name)==System.Text.RegularExpressions.Regex.Replace(name,@"[\u0370-\u1fff]+","?"),"fast metadata normalizer retains exact character boundaries: "+name);
         string directory=Path.Combine(root,"live-bindings");Directory.CreateDirectory(directory);
         string Fixture(string name,bool renamed,bool altered=false)
         {
@@ -37,6 +39,17 @@ static class LiveBindingCases
         }
         string old=Fixture("old",false),current=Fixture("new",true),changed=Fixture("changed",true,true);
         using var baseline=new MetadataIndex(Path.Combine(old,"Assembly-CSharp.dll"));
+        // Reference implementation of the previous eager call-site index. Keep
+        // all caller offsets and property accessor unions exactly unchanged.
+        foreach(var member in baseline.Types.SelectMany(MetadataIndex.Members))
+        {
+            var names=member is PropertyDefinition propertyMember?new[]{propertyMember.GetMethod?.FullName,propertyMember.SetMethod?.FullName}:new[]{member.FullName};
+            var expected=baseline.Types.SelectMany(t=>t.Methods).Where(m=>m.HasBody)
+                .SelectMany(m=>m.Body.Instructions.Select((instruction,offset)=>(m,instruction,offset)))
+                .Where(site=>site.instruction.Operand is MemberReference target&&(target is MethodReference||target is FieldReference)&&names.Contains(target.FullName))
+                .Select(site=>baseline.Body(site.m)+":"+site.offset).Distinct().OrderBy(x=>x,StringComparer.Ordinal).ToArray();
+            Check(expected.SequenceEqual(baseline.Uses(member)),"deferred caller hashing preserves exact compatibility evidence: "+member.FullName);
+        }
         TypeContract Capture(TypeDefinition type,IEnumerable<IMemberDefinition> members)=>new(type.FullName,baseline.Shape(type),[],members.Select(m=>new MemberContract(m.Name,MetadataIndex.Signature(m),baseline.MemberBody(m),baseline.Uses(m))).ToArray());
         var store=baseline.Find("Store");var enumeration=baseline.Find("θ");var property=store.Properties.Single(p=>p.Name=="κ");
         var contract=new LiveBindingContract(new(1,[Capture(store,store.Fields.Cast<IMemberDefinition>().Append(property)),Capture(enumeration,[])],[],new()),

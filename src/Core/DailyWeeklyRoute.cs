@@ -61,6 +61,8 @@ public sealed class DailyWeeklyRoute
             ProtectWeeklyTravel = true
         };
         this.progress = progress ?? ((_, _) => { });
+        // One physical journey updates each selected category, with its own verified counter.
+        w.WorkProgress = value => { foreach (string stage in active) this.progress(stage, value); };
         route.CanSuppress = map => (active.Contains("weekly_npc") || active.Contains("weekly_mainline")
             && (!absorptionQuotaExhausted || AbsorptionComplete)) && CanRun("weekly_mainline", map);
     }
@@ -168,6 +170,11 @@ public sealed class DailyWeeklyRoute
             if (cache && !missing) checkpoint = O(("maps", cachedMaps));
         }
         finally { route.Progress.Steal = oldSteal; route.Progress.OnlySteal = oldOnly; }
+        if (!cache && checkpoint != null && active.Contains("weekly_mainline") && Used(await route.Evidence(), 20) >= 21)
+            foreach (long id in maps["weekly_mainline"].Where(id => !done["weekly_mainline"].Contains((pack, id))
+                && !failures["weekly_mainline"].ContainsKey((pack, id)) && route.Progress.OnlyCaptureRemains(checkpoint, id)))
+                Defer("weekly_mainline", id, "今日捕获次数已用完；物品已收完，剩余捕获目标次日接续",
+                    O(("reason", "capture_daily_limit"), ("waiting_daily_reset", true), ("remaining", checkpoint["maps"]![id.ToString()])));
     }
     private async Task<bool> Prepare(long currentPack)
     {
@@ -297,6 +304,7 @@ public sealed class DailyWeeklyRoute
         {
             JsonArray? deferredPickups = null;
             bool recoveredAbsorption = false;
+            bool captureLimit = false;
             await Guard();
             bool oldSteal = route.Progress.Steal, oldOnly = route.Progress.OnlySteal;
             route.Progress.Steal = route.Progress.OnlySteal = stage == "weekly_steal";
@@ -307,7 +315,7 @@ public sealed class DailyWeeklyRoute
                 else
                 {
                     route.AbsorptionAlongNpc = active.Contains("weekly_npc") && npc?.Data?.Current(pack) != null;
-                    await route.Gather(w.Settings.Weekly.WalkCollect);
+                    await route.Gather(w.Settings.Weekly.WalkCollect, expectedMap: map);
                 }
             }
             catch (DailyQuotaExhausted)
@@ -318,7 +326,8 @@ public sealed class DailyWeeklyRoute
                 await CheckAbsorptionQuota();
                 break;
             }
-            catch (DailyCollectionTargetsRemain error) { deferredPickups = error.DeferredPickups; }
+            catch (DailyCollectionLocationChanged) { await Refresh(); return; }
+            catch (DailyCollectionTargetsRemain error) { deferredPickups = error.DeferredPickups; captureLimit = error.CaptureLimit; }
             catch (StageHostException error) when (error.Kind == "pending" && route.Progress.PendingMaps()
                 .Any(op => DailyCollectionProgress.RecoveryLocation(op) == (pack, map)))
             {
@@ -332,6 +341,11 @@ public sealed class DailyWeeklyRoute
             await Refresh();
             if (!MapJobs().GetValueOrDefault(stage, []).Contains(map))
                 break;
+            if (captureLimit)
+            {
+                Defer(stage, map, "今日捕获次数已用完；物品已收完，剩余捕获目标次日接续", O(("reason", "capture_daily_limit"), ("waiting_daily_reset", true), ("remaining", checkpoint!["maps"]![map.ToString()])));
+                break;
+            }
             if (recoveredAbsorption)
             {
                 if (attempt == 0) continue;
@@ -361,6 +375,8 @@ public sealed class DailyWeeklyRoute
     private void Emit(string stage, string detail, bool running)
     {
         var value = Progress(stage);
+        value["unit"] = stage == "weekly_npc" ? "quests" : "maps";
+        value["step"] = "plan";
         value["detail"] = detail;
         value["location_labels"] = Labels(detail);
         value["active"] = running;

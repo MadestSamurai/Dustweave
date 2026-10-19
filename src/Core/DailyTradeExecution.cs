@@ -18,10 +18,21 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
     private async Task Approach(long npc)
     {
         JsonObject? first = null, last = null;
-        int attempts = 0;
+        int attempts = 0, bookReturns = 0;
         async Task<JsonObject> Observe()
         {
             var f = (await w.Observe()).Frame;
+            if (DailyTravel.SquareBookLobby(f))
+            {
+                if (bookReturns++ >= 2) throw new StageHostException("adapter", "广场入口反复打开末日之书；请离开入口后重试此环节。");
+                await DailyTravel.LeaveSquareBookLobby(w, f);
+                await DailyTravel.Ready(w, "GameFieldDefaultUI");
+                // Recheck the same merchant before resuming only our travel command.
+                var resumed = State(await Evidence(), "trade.navigation", "$self");
+                Require(N(resumed["Npc"]) == npc, "商人目标改变");
+                if (attempts > 0) { await w.Step("GameFieldDefaultUI", operation: "square_shop_nav"); attempts++; }
+                f = (await w.Observe()).Frame;
+            }
             Require(S(f["Scene"]).StartsWith("Map3009_", StringComparison.Ordinal) && DailyNavigationDecision.Blockers(f, "GameFieldDefaultUI", DailyNavigationPolicy.Load()).Length == 0, "商人导航被场景或弹窗中断");
             var row = State(await Evidence(), "trade.navigation", "$self");
             Require(N(row["Npc"]) == npc, "商人目标改变");

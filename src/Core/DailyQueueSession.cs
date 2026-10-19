@@ -4,6 +4,7 @@ namespace Dustweave;
 
 public sealed record QueueStage(string Task, string State, string Detail, bool Carried = false, DateTimeOffset? FinishedAt = null, IReadOnlyList<QueueTaskDetail>? PendingTasks = null)
 {
+    public DailyWorkProgress? Work { get; init; }
     public IReadOnlyList<QueueRecoveryDetail> Recovery { get; init; } = [];
     public DailyDrawSummary? Draws { get; init; }
     public DailyAbsorptionDay? Absorptions { get; init; }
@@ -222,7 +223,7 @@ public sealed class DailyQueueSession(string root, IDailyQueueExecutor executor,
           ReadStageDetail(i), i.TryGetProperty("carried_forward", out var carried) && carried.ValueKind == JsonValueKind.True, ReadFinishedAt(i), DailyPendingTasks.Read(i)) {
               Recovery = QueueRecoveryDetail.Read(i), Draws = DailyDrawSummary.Read(i),
               Absorptions = i.GetProperty("task").GetString() == "weekly_mainline" ? absorptions : null,
-              HasNotice = DailyRunReport.HasNotice(i), Locations = DailyLocationLabels.Read(i)
+              HasNotice = DailyRunReport.HasNotice(i), Locations = DailyLocationLabels.Read(i), Work = DailyWorkProgress.Read(i, state)
           }).ToArray();
         var period = DailyQueuePeriod.Read(value);
         bool expired = DailyQueuePeriod.IsExpired(period, DailyQueuePeriod.Snapshot(root, period?.Server ?? ""), now);
@@ -238,6 +239,7 @@ public sealed class DailyQueueSession(string root, IDailyQueueExecutor executor,
         item.TryGetProperty("result", out var result);
         item.TryGetProperty("progress", out var progress);
         string state = Text(item, "state"), current = Text(progress, "detail");
+        if (state is ("running" or "pending") && Text(progress, "step").Length > 0) return current;
         if (state is ("running" or "pending") && !string.IsNullOrWhiteSpace(current)) return current;
         string detail = DailyOutcomeExplanation.Read(Text(item, "task"), result);
         if (!string.IsNullOrWhiteSpace(detail)) return detail;

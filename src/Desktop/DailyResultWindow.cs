@@ -8,6 +8,15 @@ internal sealed record DailyAccountRunResult(string Name, QueueView View);
 internal static class DailyResultText
 {
     private static DailyLanguage L => DailyLanguage.Current;
+    internal static string CurrentWork(QueueStage stage)
+    {
+        var p = stage.Work;
+        string key = "work." + (string.IsNullOrEmpty(p?.Step) ? "execute" : p.Step);
+        string text = L.Get(key);
+        if (text == key) text = L.Get("work.execute");
+        if (p is { Total: > 0 }) text += " · " + L.Get(p.Unit == "maps" ? "work.maps" : p.Unit == "quests" ? "work.quests" : "work.units", p.Completed, p.Total);
+        return text;
+    }
     internal static string Draws(DailyDrawSummary draw) => L.Get("draw.summary", draw.Draws, draw.FiveStarCostumes, draw.FiveStarUrEquipment)
         + (draw.Unknown > 0 ? "\n" + L.Get("draw.unknown", draw.Unknown) : "");
     internal static string Detail(QueueStage stage)

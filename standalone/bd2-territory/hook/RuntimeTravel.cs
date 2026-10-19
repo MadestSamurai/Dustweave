@@ -103,7 +103,7 @@ namespace BD2Territory.Runtime
   {
    var from=player.transform.position;
    B.InvokeOn("Player.ChangeMoveType",move,B.EnumObject("MoveKind","Navigation"));var agent=NavAgent();
-   Vector3 chosen;double cost;var center=walkTarget is LifeFarmFieldObject farm?farm.GetFieldWorldCenter():walkTarget.transform.position;
+   Vector3 chosen;double cost;var center=RouteCenter(walkTarget);
    if(agent==null||!agent.isActiveAndEnabled||!agent.isOnNavMesh||!FindStand(walkTarget,center,.7f,from,NavFilter(agent),false,out chosen,out cost)||!navigation.Recover(now,cost))
    {SkipWalkTarget(walkTarget,s,now,"dash_replan_unavailable");return;}
    walkDestination=finalDestination=chosen;bypassing=false;lastPathCheck=now;

@@ -13,7 +13,7 @@ public sealed class MetadataIndex : IDisposable
     public ModuleDefinition Module { get; }
     public TypeDefinition[] Types { get; }
     private readonly Dictionary<string,string> bodies = new();
-    private Dictionary<string,List<string>>? uses;
+    private Dictionary<string,List<(MethodDefinition Caller,int Offset)>>? uses;
     public MetadataIndex(string path)
     {
         var resolver=new DefaultAssemblyResolver();resolver.AddSearchDirectory(Path.GetDirectoryName(path)!);
@@ -62,15 +62,15 @@ public sealed class MetadataIndex : IDisposable
         if(uses!=null)return;uses=new();
         foreach(var m in Types.SelectMany(t=>t.Methods).Where(m=>m.HasBody))
         {
-            string? hash=null;
+
             for(int i=0;i<m.Body.Instructions.Count;i++)
             {
                 if(m.Body.Instructions[i].Operand is not MemberReference member)continue;
                 if(member is not MethodReference && member is not FieldReference)continue;
-                hash??=Body(m);
+
                 if(!uses.TryGetValue(member.FullName,out var list))uses[member.FullName]=list=new();
                 // Include operand position to distinguish same-typed fields in the same method.
-                list.Add(hash+":"+i);
+                list.Add((m,i));
             }
         }
     }
@@ -78,7 +78,7 @@ public sealed class MetadataIndex : IDisposable
     {
         IndexUses();
         var names=m is PropertyDefinition p?new[]{p.GetMethod?.FullName,p.SetMethod?.FullName}:new[]{m.FullName};
-        return names.Where(n=>n!=null).SelectMany(n=>uses!.TryGetValue(n!,out var list)?list:Enumerable.Empty<string>()).Distinct().OrderBy(x=>x,StringComparer.Ordinal).ToArray();
+        return names.Where(n=>n!=null).SelectMany(n=>uses!.TryGetValue(n!,out var list)?list:Enumerable.Empty<(MethodDefinition Caller,int Offset)>()).Select(site=>Body(site.Caller)+":"+site.Offset).Distinct().OrderBy(x=>x,StringComparer.Ordinal).ToArray();
     }
     public TypeDefinition Find(string name)=>Types.Single(t=>t.FullName==name || t.FullName.Replace('/','+')==name);
     public void Dispose()=>Module.Dispose();

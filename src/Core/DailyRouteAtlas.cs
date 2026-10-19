@@ -4,10 +4,12 @@ namespace Dustweave;
 
 public sealed class DailyTravelBlocked(string message) : Exception(message);
 public sealed class DailyQuotaExhausted(string message) : Exception(message);
-public sealed class DailyCollectionTargetsRemain(string message, JsonArray? deferredPickups = null) : Exception(message)
+public sealed class DailyCollectionTargetsRemain(string message, JsonArray? deferredPickups = null, bool captureLimit = false) : Exception(message)
 {
     public JsonArray? DeferredPickups { get; } = deferredPickups;
+    public bool CaptureLimit { get; } = captureLimit;
 }
+internal sealed class DailyCollectionLocationChanged() : Exception("收集准备期间地图已变化，重新规划当前地点。");
 public sealed class DailyCollectionSyncRequired(string message) : Exception(message);
 
 // A map can contain disconnected regions, so A -> B -> A is not itself a cycle.

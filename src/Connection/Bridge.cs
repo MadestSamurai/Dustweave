@@ -227,6 +227,11 @@ namespace BD2Daily.Live {
     }
     // A path rejection is a completed preflight, not an uncertain pickup. No
     // movement or reward API has run yet; keep the receipt explicitly unsent.
+    // This guard precedes every movement side effect. Expiry is a known rejected
+    // navigation request, not an unknown consuming operation.
+    if((c.Kind=="mainline_walk"||c.Kind=="mainline_approach"||c.Kind=="mainline_reposition")&&c.RequireStealth&&!TalentSkillManager.ὪὫὢὨὯὭὦὪὦὨὣ.IsTalentSkillDurationing(ὪὯὯὢὨὮὨὠὥὤὬ.Stealth)){
+     r.State="rejected";r.Error="travel_unreachable:stealth_expired";r.MayHaveDispatched=false;Save(r);return;
+    }
     UnityEngine.Vector3 walkDestination=UnityEngine.Vector3.zero;float walkLength=0;
     if(c.Kind=="mainline_walk"){
      try{

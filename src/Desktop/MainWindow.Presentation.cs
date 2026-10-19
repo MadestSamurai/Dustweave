@@ -11,6 +11,28 @@ namespace Dustweave.Desktop;
 
 public sealed partial class DailyRunPanel
 {
+    internal async Task CheckWorkFollowForSmoke()
+    {
+        var tasks = Enumerable.Range(0, 14).Select(i => new QueueStage("fixture_" + i, "completed", "")).ToList();
+        tasks.Add(new("weekly_mainline", "running", "") { Work = new("absorb", 12, 40, "maps") });
+        Busy(true);
+        Show(new("running", "", "fixture/follow.json", tasks));
+        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        UpdateLayout();
+        var viewer = FindVisual<ScrollViewer>(stages) ?? throw new Exception("Timeline viewport missing");
+        var item = stages.ItemContainerGenerator.ContainerFromItem(rows.Last()) as ListBoxItem ?? throw new Exception("Active task not realized");
+        var viewport = FindVisual<ScrollContentPresenter>(viewer)!;
+        double y = item.TranslatePoint(new Point(), viewport).Y;
+        if (Math.Abs(y) > 2) throw new Exception("Final active task did not align with the first row: " + y);
+        if (!rows.Last().CurrentStep.Contains("12/40") || rows.Last().UnitPercent != 30 || progress.Value <= 40)
+            throw new Exception("Timeline lost current action, units or weighted progress");
+        viewer.ScrollToVerticalOffset(0); UpdateLayout();
+        Show(new("running", "", "fixture/follow.json", tasks));
+        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        if (viewer.VerticalOffset > 1) throw new Exception("Unchanged polling fights user scrolling");
+        Busy(false);
+        if (FindVisual<VirtualizingStackPanel>(stages)!.Margin.Bottom != 0) throw new Exception("History retains follow padding");
+    }
     internal static void CheckEmptyAccountForSmoke(string root)
     {
         var panel = new DailyRunPanel(root);

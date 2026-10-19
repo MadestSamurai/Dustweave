@@ -166,6 +166,7 @@ namespace BD2Sichuan.Runtime
         }
         private void AppendJournal<T>(string name,T receipt)
         {
+            Directory.CreateDirectory(root);
             var path=Path.Combine(root,name+".jsonl");
             if(File.Exists(path)&&new FileInfo(path).Length>1000000)
             {

@@ -3,6 +3,27 @@ static class QueueSessionCases
 {
     public static async Task Run(string output, List<string> cases)
     {
+        using (var document = System.Text.Json.JsonDocument.Parse("""
+            {"task":"weekly_mainline","state":"running","progress":{"step":"absorb","completed":12,"total":40,"unit":"maps"}}
+            """))
+        {
+            var work = DailyWorkProgress.Read(document.RootElement, "running");
+            if (work != new DailyWorkProgress("absorb", 12, 40, "maps") || DailyWorkProgress.Read(document.RootElement, "paused") != null)
+                throw new Exception("Live work units were lost or leaked into paused history");
+            QueueStage[] stages = [new("guild", "completed", ""), new("weekly_mainline", "running", "") { Work = work }, new("mail", "pending", "")];
+            double before = DailyWorkProgress.Percent(stages);
+            stages[1] = stages[1] with { Work = work! with { Completed = 24 } };
+            if (before <= 20 || DailyWorkProgress.Percent(stages) <= before) throw new Exception("Long stage did not advance overall progress");
+            stages[1] = stages[1] with { Work = work! with { Completed = 40 } };
+            if (DailyWorkProgress.Percent([stages[1]]) != 99 || DailyWorkProgress.Percent([stages[1] with { State = "completed" }]) != 100)
+                throw new Exception("Progress displayed success before the stage completed");
+            cases.Add("live progress carries verified units, weights long tasks and never certifies completion");
+        }
+        using (var malformed = System.Text.Json.JsonDocument.Parse("""{"state":"running","progress":{"step":3,"completed":"bad","total":-1}}"""))
+        {
+            if (DailyWorkProgress.Read(malformed.RootElement, "running") != new DailyWorkProgress("")) throw new Exception("Optional progress metadata blocks reading old records");
+            cases.Add("optional progress tolerates malformed counters and missing old fields");
+        }
         using (var recovery = System.Text.Json.JsonDocument.Parse("""
             {"recovery_blockers":[{"role":"dispatch.start","talent_kind":4},{"role":"dispatch.start","talent_kind":4},null,23,{"role":"trade.buy","talent_kind":"invalid"}]}
             """))

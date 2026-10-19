@@ -43,6 +43,7 @@ namespace BD2Territory.Runtime
   }
   private bool InInteractionRange(Component target,Vector3 point)
   {
+   if(SaffronAccess(target))return FlatDistance(point,saffronAccessPoint)<=.6f&&Math.Abs(point.y-saffronAccessPoint.y)<=.6f;
    if(target is LifeFarmFieldObject farm)return farm.IsPlayerInInteractionRange(point);
    var sector=target.GetComponent<CircleSectorCollider>();return sector!=null&&sector.IsDetectionInCollisionArea(point);
   }
@@ -72,7 +73,7 @@ namespace BD2Territory.Runtime
    B.InvokeOn("Player.ChangeMoveType",move,B.EnumObject("MoveKind","CharController"));
    var quest=B.Singleton(typeof(QuestNavigationManager));if(quest!=null)B.InvokeOn("Quest.Pause",quest);
    navigation.CancelAttempt();ownsMove=true;walkTarget=target;walkScene=s.Scene;bypassing=false;
-   var center=target is LifeFarmFieldObject farm?farm.GetFieldWorldCenter():target.transform.position;
+   var center=RouteCenter(target);
    var goals=StandCandidates(target,center,.7f,gatheringReposition).Select(Point).ToArray();
    if(goals.Length==0){LocalStorage.Log("局部规划无站位 target="+target.GetInstanceID()+" reason="+reason);return false;}
    localOrigin=player.transform.position;localMoving=true;localPlanAt=now;

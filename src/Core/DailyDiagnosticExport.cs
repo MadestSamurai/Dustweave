@@ -15,7 +15,8 @@ public static class DailyDiagnosticExport
         "live/travel-diagnostics", "live/route-atlas", "live/server-collection", "live/weekly-npc-recovery", "live/weekly-npc-queries", "live/absorption-history"];
     static readonly string[] Singles = ["progress-sync-error.json", "registration-mismatch.json", "registration-recovery.json", "saffron-latest.json", "suite/last-transition.json", "updates/check-error.json", "updates/install-error.json", "login-identity-error.json",
         "live/diagnostics/login-request.json", "live/diagnostics/login-verified.json", "live/diagnostics/login-failed.json", "live/trade-failure.json", "live/trade-navigation-cleanup.json",
-        "live/pass-claims-latest.json", "live/mission-inspection-latest.json", "live/event-preview-recovery.json"];
+        "live/pass-claims-latest.json", "live/mission-inspection-latest.json", "live/event-preview-recovery.json",
+        "live/minigame-connect.json", "live/minigame-connect-sichuan.json", "live/minigame-connect-territory.json"];
     static readonly string[] Rotations = [".1", ".2", ".3", ".previous"];
     static readonly HashSet<string> PrivateNames = new(StringComparer.OrdinalIgnoreCase) { "accounts.json", "preferences.json", "settings.json", "endpoint.json", "session.json", "sessions.json", "command.json" };
     static string Unrotate(string name) => Rotations.FirstOrDefault(s => name.EndsWith(s,StringComparison.OrdinalIgnoreCase)) is { } suffix ? name[..^suffix.Length] : name;

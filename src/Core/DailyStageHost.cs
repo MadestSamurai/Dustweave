@@ -145,6 +145,8 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
         using var diagnostic = operation == "observe" ? null : driver.Diagnostics.Scope(operation + ":" + (stage ?? "queue"));
         var oldGuard = driver.SubmissionGuard;
         bool oldTrade = driver.TradeStageActive;
+        var oldProgress = workflows.WorkProgress;
+        var oldBusinessProgress = business.WorkProgress;
         try
         {
             if (closed)
@@ -164,6 +166,12 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
                 return await Reconcile();
             if (stage == null || !DailyStageCatalog.Adapters.Contains(stage))
                 throw new StageHostException("protocol", "未知日常环节。");
+            workflows.WorkProgress = value => Progress(stage, value);
+            string[] progressStages = DailyStageCatalog.IsWeeklyRoute(stage) && arguments?["stages"] is JsonArray progressMembers
+                ? progressMembers.Select(S).ToArray() : [stage];
+            business.WorkProgress = value => { foreach (string member in progressStages) Progress(member, value); };
+            if (operation is "navigate" or "execute")
+                Progress(stage, O(("step", operation == "navigate" ? "enter" : "prepare")));
             bool favoritesOnly = stage == "trade" && new DailyPreferenceStore(root).Read(S(Bound()["actor"]![3])).Trade.FavoritesOnly;
             if (stage == "trade" && !favoritesOnly && operation is "navigate" or "execute")
                 tradeData?.AssertReady();
@@ -225,7 +233,7 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
             throw translated;
         }
         catch (Exception e) { driver.Diagnostics.Failure("failure", O(("kind", e.GetType().Name), ("message", e.Message), ("exception", e.ToString()))); throw; }
-        finally { driver.SubmissionGuard = oldGuard; driver.TradeStageActive = oldTrade; if (stage == "trade" && operation == "execute") driver.ConfigureTradeResume(null); serial.Release(); }
+        finally { business.WorkProgress = oldBusinessProgress; workflows.WorkProgress = oldProgress; driver.SubmissionGuard = oldGuard; driver.TradeStageActive = oldTrade; if (stage == "trade" && operation == "execute") driver.ConfigureTradeResume(null); serial.Release(); }
     }
     private async Task<JsonObject> ExecuteWeekly(string[] names)
     {

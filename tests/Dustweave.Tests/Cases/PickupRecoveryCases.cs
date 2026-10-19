@@ -135,6 +135,7 @@ static class PickupRecoveryCases
             WorkflowCases.Reading("mainline.map", (DailyFieldRoute.MapPath, O(("id", 23))),
                 ("ὪὨὯὢὫὮὨὩὮὡὬ.transform.position.x", 1), ("ὪὨὯὢὫὮὨὩὮὡὬ.transform.position.y", 0), ("ὪὨὯὢὫὮὨὩὮὡὬ.transform.position.z", 2)),
             WorkflowCases.Reading("mainline.talent_counts", ("Values", new JsonArray(O(("groupId", 405), ("useCount", 4))))),
+            WorkflowCases.Reading("mainline.research", ("$self", O(("Active", true), ("Remaining", 1000)))),
             Drop(201, true, false, available), Drop(226, false, true, true), Drop(227, false, true, false), Drop(33008, false, false, true)
         ];
         Check(DailyFieldRoute.Drops(f.Evidence()).Select(r => N(r[DailyFieldRoute.ObjectPath])).SequenceEqual(new long[] { 201, 226 }),
@@ -186,6 +187,7 @@ static class PickupRecoveryCases
                 case "rejection": bad["events"]![3]!["Accepted"] = false; break;
             }
             Check(!DailyPickupRecovery.SettledWalk(bad, bad["events"]!.AsArray(), frame), "walk recovery retains guard for " + mutation);
+            Check(!DailyPickupRecovery.CanResumeLiveWalk(bad, bad["events"]!.AsArray(), frame), "live navigation resume retains guard for " + mutation);
         }
         int commands = f.Box.Commands.Count;
         // Updating the observation component does not change the live game or account.
@@ -227,6 +229,15 @@ static class PickupRecoveryCases
         catch (DailyTravelBlocked) { blocked = true; }
         Check(blocked && walks == 3 && f.Business.Records(f.Context).All(r => S(r["state"]) != "unknown"),
             "repeated stalled pickup is bounded and leaves the target pending without blocking the entire weekly queue");
+        f.Business.RequireResolved(f.Context, "mainline.pickup");
+        available = true; walks = 0;
+        f.OnCommand = command => { if (S(command["Kind"]) == "mainline_walk") ++walks; };
+        double started = f.Time;
+        blocked = false;
+        try { await route.WalkPickup(f.Evidence(), DailyFieldRoute.Drops(f.Evidence()).Single(r => N(r[DailyFieldRoute.ObjectPath]) == 201)); }
+        catch (DailyTravelBlocked) { blocked = true; }
+        Check(blocked && walks == 3 && f.Time - started < 30 && available,
+            "live walk without any pickup events retries only navigation twice then defers, without a 65-second wait");
         f.Business.RequireResolved(f.Context, "mainline.pickup");
     }
 }

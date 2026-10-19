@@ -58,6 +58,15 @@ public sealed class DailyCollectionProgress(DailyWorkflow workflow)
     private long recentInputRevision;
     private double recentAt = double.NegativeInfinity;
     private string recentScene = "";
+    internal Func<Task>? PrepareRead { get; set; }
+    internal bool OnlyCaptureRemains(JsonObject progress, long map)
+    {
+        if (progress["maps"]?[map.ToString()] is not JsonObject state || state["drops"] is not JsonArray { Count: 0 }
+            || state["monsters"] is not JsonArray { Count: > 0 } remaining || state["story_locked"] is JsonArray { Count: > 0 }
+            || recentNetwork == null) return false;
+        var captures = Rows(recentNetwork["Targets"]).Where(t => N(t["Map"]) == map && N(t["Type"]) == 2).Select(t => N(t["Id"])).ToHashSet();
+        return remaining.All(id => captures.Contains(N(id)));
+    }
     public JsonObject[] PendingAbsorptions() => workflow.Business.MatchingRecords(workflow.Context,
         "dispatch.start", h => DailyManagedBusiness.Pending(h) && N(h["talent_kind"]) == 4)
         .Where(op => DailyFieldTalentProof.AbsorptionLocation(op) != null).ToArray();
@@ -192,6 +201,9 @@ public sealed class DailyCollectionProgress(DailyWorkflow workflow)
     public Task<JsonObject> Query(long pack, long[] maps) => Query(pack, maps, cache: true);
     public async Task<JsonObject> Query(long pack, long[] maps, bool cache)
     {
+        // A query still uses the field's native input surface. Close only known
+        // field overlays before dispatch; never send through a menu left by travel.
+        if (PrepareRead != null) await PrepareRead();
         var observed = await workflow.Observe();
         var pending = PendingMaps();
         // Inner collection and outer route coordination often ask the identical
@@ -208,7 +220,21 @@ public sealed class DailyCollectionProgress(DailyWorkflow workflow)
         // Unity instance ID, including when an old walk crossed into another map.
         if (!OnlySteal && pending.Any(op => DailyPickupRecovery.Location(op) is { } p && p.Pack == pack && maps.Contains(p.Map)))
             await workflow.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
-        var command = await workflow.Step(O(("ui", "GameFieldDefaultUI"), ("operation", Steal ? "collection_query_steal" : "collection_query"), ("value", pack), ("items", maps), ("reason", "读取本卡带服务器收集进度")));
+        JsonObject command;
+        for (int attempt = 0; ; attempt++)
+        {
+            try
+            {
+                command = await workflow.Step(O(("ui", "GameFieldDefaultUI"), ("operation", Steal ? "collection_query_steal" : "collection_query"), ("value", pack), ("items", maps), ("reason", "读取本卡带服务器收集进度")));
+                break;
+            }
+            catch (DailyStepException error) when (PrepareRead != null && error.PresentationChanged)
+            {
+                // Only an explicitly unsent, read-only query may be reselected.
+                if (attempt >= 2) throw new DailyCollectionReadUnavailable("地图界面持续变化，本卡带暂缓读取，继续其他卡带。");
+                await PrepareRead();
+            }
+        }
         JsonObject? data = null;
         try
         {

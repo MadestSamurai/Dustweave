@@ -36,7 +36,7 @@ public sealed partial class DailyFieldRoute
     {
         W = workflow;
         Catalog = new(workflow);
-        Progress = new(workflow);
+        Progress = new(workflow) { PrepareRead = () => FieldReady(settle: 0) };
     }
     public Task<JsonObject> Evidence() => W.Evidence("mainline", "dispatch.talent", "weekly_npc");
     public static JsonObject Map(JsonObject e) => State(e, "mainline.map", MapPath);
@@ -112,6 +112,13 @@ public sealed partial class DailyFieldRoute
             var frame = (await W.Observe()).Frame;
             DailyGameVisibility.EnsureVisible(I(frame["ProcessId"]));
             var types = DailyNavigationDecision.Types(frame);
+            if (DailyNavigationDecision.CollectionOverlay(frame, policy) is { } overlay)
+            {
+                try { await W.Step(overlay); }
+                catch (DailyStepException error) when (error.PresentationChanged) { await W.Delay(100); }
+                stable = null;
+                continue;
+            }
             var popup = DailyHomeDecision.BackgroundErrorAction(frame, policy) ?? DailyNavigationDecision.TalentAction(frame, policy) ?? DailyNavigationDecision.Notice(frame, policy, out _) ?? DailyNavigationDecision.WeeklyResult(frame, policy);
             if (popup != null)
             {
@@ -387,6 +394,7 @@ public sealed partial class DailyFieldRoute
     }
     public async Task<JsonObject> Skill(int kind, double minRemaining = 3, int attempts = 0, bool optional = false)
     {
+        W.StepProgress(DailyWorkProgress.Talent(kind));
         Require(!(Progress.OnlySteal && kind is 3 or 4 or 6 or 20), "单独偷窃不允许使用收集天赋");
         Require(attempts < 3, "遇敌使天赋菜单反复失效");
         await FieldReady(settle: 0);

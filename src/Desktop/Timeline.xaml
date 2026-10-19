@@ -61,6 +61,8 @@
      <StackPanel Margin="0,0,14,0">
       <CheckBox x:Name="Choice" IsChecked="{Binding Selected,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.HelpText="{Binding Detail}" FontWeight="Normal" FontSize="14"><TextBlock Text="{Binding Name}" TextWrapping="Wrap"/></CheckBox>
       <TextBlock x:Name="Label" Text="{Binding Name}" FontWeight="Normal" TextWrapping="Wrap" Visibility="Collapsed"/>
+      <TextBlock x:Name="CurrentStep" Text="{Binding CurrentStep}" Foreground="{DynamicResource Primary}" Margin="0,8,0,0" TextWrapping="Wrap" Visibility="Collapsed"/>
+      <ProgressBar x:Name="UnitProgress" Minimum="0" Maximum="100" Value="{Binding UnitPercent,Mode=OneWay}" Height="3" Margin="0,8,0,2" Visibility="Collapsed" AutomationProperties.Name="{Binding CurrentStep}"/>
       <TextBlock x:Name="Explanation" Text="{Binding Detail}" Foreground="{DynamicResource MutedInk}" Margin="0,6,0,0" FontSize="12" TextWrapping="Wrap"/>
       <Button x:Name="TaskDetails" Content="{Binding TaskDetailsLabel}" Command="{x:Static local:DailyRunPanel.TaskDetailsCommand}" CommandParameter="{Binding}"
               Visibility="Collapsed" HorizontalAlignment="Left" Margin="0,8,0,0"
@@ -77,6 +79,8 @@
    </Border>
   </Grid>
   <DataTemplate.Triggers><DataTrigger Binding="{Binding Compact}" Value="True"><Setter TargetName="Explanation" Property="Visibility" Value="Collapsed"/></DataTrigger>
+   <DataTrigger Binding="{Binding HasCurrentStep}" Value="True"><Setter TargetName="CurrentStep" Property="Visibility" Value="Visible"/></DataTrigger>
+   <DataTrigger Binding="{Binding HasUnitProgress}" Value="True"><Setter TargetName="UnitProgress" Property="Visibility" Value="Visible"/></DataTrigger>
    <DataTrigger Binding="{Binding HasTaskDetails}" Value="True"><Setter TargetName="TaskDetails" Property="Visibility" Value="Visible"/></DataTrigger>
    <DataTrigger Binding="{Binding HasAbsorptions}" Value="True"><Setter TargetName="AbsorptionDetails" Property="Visibility" Value="Visible"/></DataTrigger>
    <DataTrigger Binding="{Binding HasRecovery}" Value="True"><Setter TargetName="RecoveryDetails" Property="Visibility" Value="Visible"/></DataTrigger>

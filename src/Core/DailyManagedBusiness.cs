@@ -21,6 +21,7 @@ public sealed record DailyBusinessProof(string Role, string Stage, string[] Pref
 /// <summary>Managed transactions share one command driver and a durable, account-scoped operation journal.</summary>
 public sealed partial class DailyManagedBusiness : IDisposable
 {
+    internal Action<JsonObject>? WorkProgress { get; set; }
     private readonly Dictionary<string, string> recordPaths = new(StringComparer.Ordinal);
     private readonly HashSet<string> currentOperations = new(StringComparer.Ordinal);
     private readonly string root; private readonly DailyCommandDriver driver; private readonly Func<bool> stopped;
@@ -194,6 +195,7 @@ public sealed partial class DailyManagedBusiness : IDisposable
     }
     public async Task<JsonObject> CommitAsync(JsonObject op, JsonObject context, double seconds = 60, Func<Task>? drive = null, Func<Task>? heartbeat = null)
     {
+        WorkProgress?.Invoke(DailyData.O(("step", DailyWorkProgress.Operation(DailyData.S(op["role"]), op["scope"] as JsonObject ?? new()))));
         if (DailyManagementProof.IsFreeClaim(op["role"]!.GetValue<string>()))
             return await CommitFreeClaimAsync(op, context);
         if (!double.IsFinite(seconds) || seconds <= 0 || seconds > 1800)

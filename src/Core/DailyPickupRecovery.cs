@@ -66,6 +66,15 @@ internal static class DailyPickupRecovery
             DailyFieldRoute.FieldInputReady(current) && OriginalWalkSettled(op, events, current);
     }
 
+    // Only used by the owner of a live walk, after its start was acknowledged.
+    // An empty event stream means there is no pickup to await. This does NOT
+    // retire historical commands, claim a reward or resend a pickup request.
+    internal static bool CanResumeLiveWalk(JsonObject op, JsonArray events, JsonObject current) =>
+        S(op["role"]) == "mainline.pickup" && S(op["action"]?["operation"]) == "mainline_walk" &&
+        op["before"]?["Frame"] is JsonObject actor && DailyEvidence.SameActor(actor, current) &&
+        S(actor["Scene"]) == S(current["Scene"]) && DailyFieldRoute.FieldInputReady(current) &&
+        (events.Count == 0 || OriginalWalkSettled(op, events, current));
+
     // Retiring old navigation is different from issuing movement in the current game.
     // Original replies keep their original observer identity. A replacement observer,
     // later login or different page need not reproduce a historical pickup snapshot.

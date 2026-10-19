@@ -489,6 +489,7 @@ namespace BD2Territory.Runtime
   }
   private void ContinueWalk(TerritorySnapshot s,long now,TerritoryControl c)
   {
+   if(SaffronAccess(walkTarget)&&now-saffronAccessAt>TimeSpan.FromSeconds(90).Ticks){StopMove();throw new InvalidOperationException("接近农田后数据仍未就绪，已停止此环节；未使用新料理");}
    s.Reason=localMoving?"沿实体通路绕行，保持原目标":ownsVehicle?"使用载具赶路":"移动至目标";s.Target=(walkTarget is LifeGatheringObject resource?(Kind(resource)==1?"砍树":"采矿／收获"):"播种")+" · "+navigation.Target;
    if(walkScene!=s.Scene)throw new InvalidOperationException("寻路期间场景发生变化，已停止移动；请确认领地位置后重新开始");
    if(walkTarget==null||(walkTarget is LifeGatheringObject node&&(!Harvestable(node)||!Enabled(Kind(node),c)))||(walkTarget is LifeFarmFieldObject farm&&(!c.Farming||!Empty(farm))))

@@ -98,6 +98,7 @@ public sealed class DailyCollectionNavigator
     }
     public async Task<bool> Step(JsonObject action)
     {
+        route.W.StepProgress("travel");
         // Refresh the planned origin now; the execution branch still waits for stability.
         long current = await Observe(settle: 0);
         string origin = node;
@@ -197,15 +198,19 @@ public sealed partial class DailyFieldRoute
         string week = S(R(e, "mainline.reset", "GetWeeklyResetTime().Ticks"));
         return fresh ? await Progress.Query(pack, maps) : Progress.Cached(pack, maps, week) ?? throw new DailyCollectionSyncRequired("缺少服务器地图记录");
     }
-    public async Task<JsonObject> Gather(bool manual = false)
+    public async Task<JsonObject> Gather(bool manual = false, long? expectedMap = null)
     {
         JsonArray? walking = null;
         await FieldReady();
         var before = await Evidence();
         long map = N(Map(before)["id"]), pack = N(Map(before)["packId"]);
+        if (expectedMap.HasValue && map != expectedMap.Value) throw new DailyCollectionLocationChanged();
         string week = S(R(before, "mainline.reset", "GetWeeklyResetTime().Ticks"));
         Require(Catalog.Supported(pack) && !Excluded.Contains(map), "地图不在收集范围");
         var checkpoint = await Checkpoint();
+        var current = await Evidence();
+        if (N(Map(current)["id"]) != map || N(Map(current)["packId"]) != pack) throw new DailyCollectionLocationChanged();
+        Require(checkpoint["maps"]?[map.ToString()] is JsonObject, "当前地图不在本次服务器收集范围，需重新规划路线。");
         if (checkpoint["completed"]!.AsObject().ContainsKey(map.ToString()))
             return DailyWorkflow.Skipped("server_complete");
         if (Progress.Steal && Rows(checkpoint["maps"]![map.ToString()]!["steals"]).Length > 0)
@@ -248,6 +253,8 @@ public sealed partial class DailyFieldRoute
         var result = await Checkpoint();
         if (!result["completed"]!.AsObject().ContainsKey(map.ToString()))
         {
+            if (Used(after, 20) >= 21 && Progress.OnlyCaptureRemains(result, map))
+                throw new DailyCollectionTargetsRemain("今日捕获次数已用完；本图物品已收完，剩余捕获目标留待次日，不再重进地图。", captureLimit: true);
             if (!manual && result["maps"]![map.ToString()]!["drops"] is JsonArray { Count: > 0 })
                 Quota(after);
             var deferred = Rows(walking ?? new JsonArray()).Where(r => S(r["state"]) == "deferred").ToArray();
@@ -312,9 +319,10 @@ public sealed partial class DailyFieldRoute
                 {
                     try
                     {
-                        await Gather(walkCollect);
+                        await Gather(walkCollect, expectedMap: current);
                     }
-                    catch (DailyCollectionTargetsRemain) { }
+                    catch (DailyCollectionLocationChanged) { continue; }
+                    catch (DailyCollectionTargetsRemain error) when (!error.CaptureLimit) { }
                     checkpoint = Progress.Cached(pack, targets, week)!;
                     if (!checkpoint["completed"]!.AsObject().ContainsKey(current.ToString()))
                     {

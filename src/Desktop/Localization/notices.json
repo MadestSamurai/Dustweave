@@ -1,4 +1,34 @@
 {
+  "notice.saffron.field_access": {
+    "zh-CN": "正在接近已登记的农田，等待场景载入；暂不使用料理",
+    "zh-TW": "正在接近已登記的農田，等待場景載入；暫不使用料理",
+    "en-US": "Approaching registered farmland while the scene loads; no food is being used"
+  },
+  "notice.saffron.field_access_timeout": {
+    "zh-CN": "接近农田后数据仍未就绪，已停止此环节；未使用新料理",
+    "zh-TW": "接近農田後資料仍未就緒，已停止此環節；未使用新料理",
+    "en-US": "Farmland data is still unavailable after approaching it. This stage has stopped; no new food was used"
+  },
+  "notice.saffron.field_access_unavailable": {
+    "zh-CN": "部分农田未载入或无法接近，已停止此环节；未使用新料理",
+    "zh-TW": "部分農田未載入或無法接近，已停止此環節；未使用新料理",
+    "en-US": "Some farmland has not loaded or cannot be reached. This stage has stopped; no new food was used"
+  },
+  "notice.travel.square_book_repeat": {
+    "zh-CN": "广场入口反复打开末日之书；请离开入口后重试此环节。",
+    "zh-TW": "廣場入口反覆開啟末日之書；請離開入口後重試此環節。",
+    "en-US": "The square entrance keeps opening Last Night. Move away from the entrance, then retry this stage."
+  },
+  "notice.travel.square_book_exit": {
+    "zh-CN": "退出广场入口自动打开的末日之书大厅，继续原路线",
+    "zh-TW": "離開廣場入口自動開啟的末日之書大廳，繼續原路線",
+    "en-US": "Leaving Last Night opened by the square entrance and continuing the route"
+  },
+  "notice.minigame.preparing": {
+    "zh-CN": "正在准备本环节的组件；准备完成后会自动继续，可随时停止。",
+    "zh-TW": "正在準備本環節的元件；準備完成後會自動繼續，可隨時停止。",
+    "en-US": "Preparing this stage's component. The task will continue automatically; you can stop at any time."
+  },
   "notice.hunting.expand_inventory": {
     "zh-CN": "展开圣石库存",
     "zh-TW": "展開聖石庫存",
@@ -1594,6 +1624,46 @@
     "parameters": [
       "value"
     ]
+  },
+  "notice.collection.stealth_expired": {
+    "zh-CN": "拾取前藏身持续失效，暂缓当前目标，继续其他地点。",
+    "zh-TW": "拾取前藏身持續失效，暫緩目前目標，繼續其他地點。",
+    "en-US": "Stealth keeps expiring before pickup. Deferring this target and continuing elsewhere."
+  },
+  "notice.collection.target_changed": {
+    "zh-CN": "拾取目标状态已变化，重新核对服务器进度。",
+    "zh-TW": "拾取目標狀態已變化，重新核對伺服器進度。",
+    "en-US": "The pickup target changed. Checking current server progress again."
+  },
+  "notice.collection.capture_limit": {
+    "zh-CN": "今日捕获次数已用完；物品已收完，剩余捕获目标次日接续",
+    "zh-TW": "今日捕獲次數已用完；物品已收完，剩餘捕獲目標次日接續",
+    "en-US": "Today's capture uses are exhausted. Items are collected; remaining capture targets can resume tomorrow."
+  },
+  "notice.collection.capture_limit_detail": {
+    "zh-CN": "今日捕获次数已用完；本图物品已收完，剩余捕获目标留待次日，不再重进地图。",
+    "zh-TW": "今日捕獲次數已用完；本圖物品已收完，剩餘捕獲目標留待次日，不再重進地圖。",
+    "en-US": "Today's capture uses are exhausted. Items on this map are collected; remaining capture targets will wait until tomorrow without re-entering the map."
+  },
+  "notice.collection.location_changed": {
+    "zh-CN": "收集准备期间地图已变化，重新规划当前地点。",
+    "zh-TW": "收集準備期間地圖已變化，重新規劃目前地點。",
+    "en-US": "The map changed while preparing collection. Replanning from the current location."
+  },
+  "notice.collection.map_not_projected": {
+    "zh-CN": "当前地图不在本次服务器收集范围，需重新规划路线。",
+    "zh-TW": "目前地圖不在本次伺服器收集範圍，需重新規劃路線。",
+    "en-US": "The current map is outside this collection query. The route needs to be replanned."
+  },
+  "notice.collection.read_scene_changes": {
+    "zh-CN": "地图界面持续变化，本卡带暂缓读取，继续其他卡带。",
+    "zh-TW": "地圖介面持續變化，本卡帶暫緩讀取，繼續其他卡帶。",
+    "en-US": "The map screen keeps changing. Reading this cartridge is deferred while other cartridges continue."
+  },
+  "notice.collection.close_overlay": {
+    "zh-CN": "关闭地图信息或菜单，返回地图继续收集",
+    "zh-TW": "關閉地圖資訊或選單，返回地圖繼續收集",
+    "en-US": "Closing map information or menus to continue collecting on the map"
   },
   "notice.trade.session_ended": {
     "zh-CN": "当前跑商已结束，未操作商店；请重新执行跑商以读取当前库存。",

@@ -10,7 +10,7 @@ namespace BD2Territory.Compatibility;
 public sealed record PreparedHook(byte[] Payload,BindingReport Report);
 public static class HookCompiler
 {
-    public static string ToolFingerprint => MetadataIndex.Hash(typeof(HookCompiler).Module.ModuleVersionId+"|"+string.Join("|",DustweaveSharedResources.Names(typeof(HookCompiler).Assembly).OrderBy(n=>n,StringComparer.Ordinal).Select(n=>MetadataIndex.Hash(Convert.ToBase64String(Resource(n))))));
+    public static string ToolFingerprint => CachedToolFingerprint.Value; private static readonly System.Lazy<string> CachedToolFingerprint=new(()=> MetadataIndex.Hash(typeof(HookCompiler).Module.ModuleVersionId+"|"+string.Join("|",DustweaveSharedResources.Names(typeof(HookCompiler).Assembly).OrderBy(n=>n,StringComparer.Ordinal).Select(n=>MetadataIndex.Hash(Convert.ToBase64String(Resource(n)))))));
     public static byte[] Resource(string name)
     {using var s=DustweaveSharedResources.Open(typeof(HookCompiler).Assembly,name)??throw new InvalidDataException("Missing embedded resource: "+name);using var b=new MemoryStream();s.CopyTo(b);return b.ToArray();}
     public static BindingContract Contract()=>JsonSerializer.Deserialize<BindingContract>(Resource("BD2Territory.Contract.json"))!;
