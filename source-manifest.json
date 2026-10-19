@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-10-19T05:35:40.8924316Z",
+  "generatedUtc": "2026-10-19T06:36:04.4545415Z",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -242,15 +242,15 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "1a2a035f9db902248a90d70cc44655b0fb4d4a6e51dcc9a7bd5c96c33138db1b",
+      "sha256": "81a85cd2936649897685f4bb80be4355fef1b8afb4f53ad04291b01a8cd599b9",
       "reasons": [
         "release notes"
       ],
-      "bytes": 45342
+      "bytes": 47363
     },
     {
       "path": "Directory.Build.props",
-      "sha256": "cc6328ce00c5f5a55c5ab6f1df01a6799609b421abf001376253b754f2cb9248",
+      "sha256": "28f776d5dbf99bc9b161016dc6be3d96f1d10ab709f32f1ce21d1d725a9ee816",
       "reasons": [
         "build input"
       ],
@@ -3457,11 +3457,11 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "7a0e356e1d5e062ff9feaaa03482b3e8945ebfd017a2e41686a3296c23fbf851",
+      "sha256": "fd8ed8ee6db7b15800a8a9b923ef7cd003912a9fe3d67d45def0f2c3a57ed36c",
       "reasons": [
         "build input"
       ],
-      "bytes": 118150
+      "bytes": 123517
     },
     {
       "path": "src/Desktop/Localization/runtime.json",

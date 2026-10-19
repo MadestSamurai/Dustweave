@@ -1,5 +1,14 @@
 # Changelog / 更新记录
 
+## 1.4.6 — 2026-10-19
+
+- 修复周 NPC 击杀任务明明可在普通地图完成，却被游戏自动指引带往狩猎场的问题；按当前目标进度规划普通地图，阻止旧指引在切图或动画结束后恢复。
+- 恶魔猎人新增巴萨卡、炎虎选择，分别调整攻击预判与闪避时序；两种怪物均完成一次实机单人超困难通关验证。
+- 恶魔猎人源码、界面、日志与缓存迁入主项目，统一主题、语言、连接加载及运行互斥；原独立仓库已归档。
+- 工具列表统一为一项一行，改善入口辨识和窗口加载体验。
+- Fixes weekly NPC quests being redirected into hunting grounds; integrates Fiend Hunter with both monsters, shared UI/storage and a single-column tool list.
+- [完整说明 / Full notes](docs/releases/1.4.6.md)
+
 ## 1.4.5 — 2026-10-19
 
 - 修复断线或重启游戏后原队列无法接续的问题；核对同账号、角色及重置周期后，从当前游戏进度恢复。

@@ -1,5 +1,32 @@
 [
 {
+  "Version": "1.4.6",
+  "Date": "2026-10-19",
+  "Notes": {
+    "zh-CN": [
+      "修复周 NPC 任务被游戏指引带往狩猎场的问题：按剩余目标规划普通地图，阻止旧指引恢复；目标不足仅暂缓对应任务。",
+      "恶魔猎人新增巴萨卡、炎虎选择，分别调整攻击预判和闪避；两种怪物均完成一次实机单人超困难通关。",
+      "恶魔猎人迁入主项目，统一主题、语言、连接加载和互斥；日志与缓存由织尘管理，原仓库已归档。",
+      "工具列表统一为一项一行。连接或选择怪物不会自动开战，通关后停止输入并保留结算。",
+      "1.3.14–1.3.17、1.4.0–1.4.5 支持直接差分更新；若 OTA 失败，请手动下载完整软件包。"
+    ],
+    "zh-TW": [
+      "修復週 NPC 任務被遊戲指引帶往狩獵場的問題：依剩餘目標規劃一般地圖，阻止舊指引恢復；目標不足僅暫緩對應任務。",
+      "惡魔獵人新增巴薩卡、炎虎選擇，分別調整攻擊預判與閃避；兩種怪物均完成一次實機單人超困難通關。",
+      "惡魔獵人遷入主專案，統一主題、語言、連線載入與互斥；日誌及快取由織塵管理，原儲存庫已封存。",
+      "工具清單統一為一項一列。連線或選擇怪物不會自動開戰，通關後停止輸入並保留結算。",
+      "1.3.14–1.3.17、1.4.0–1.4.5 支援直接差分更新；若 OTA 失敗，請手動下載完整軟體包。"
+    ],
+    "en-US": [
+      "Keep weekly NPC kill quests on planned ordinary maps, prevent stale hunting-ground guides from resuming, and defer only the affected task when targets are insufficient.",
+      "Choose Berserker or Fiery Tiger in Fiend Hunter, with separate attack prediction and dodge timing. Each monster has one verified live solo Very Hard clear.",
+      "Fiend Hunter moves into the main project with shared themes, language, loading and connection locks. Dustweave manages its logs and cache; the former repository is archived.",
+      "Every tool now occupies one row. Connecting or selecting a monster does not start combat; victory stops input and preserves settlement.",
+      "Direct patches cover 1.3.14–1.3.17 and 1.4.0–1.4.5. If OTA fails, download the full package manually."
+    ]
+  }
+},
+{
   "Version": "1.4.5",
   "Date": "2026-10-19",
   "Notes": {
