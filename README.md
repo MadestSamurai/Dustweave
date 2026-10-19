@@ -71,7 +71,7 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 | 领地自动化 | 种植、采集、料理、库存出售与布局 |
 | [装备助手](src/Equipment) | 搓粉规划与批量精炼，确认预算后执行 |
 | 连连看 | 盘面求解与续局 |
-| 音游 | 读取谱面并自动操作 |
+| [音游](src/Rhythm) | 读取谱面并自动操作 |
 | [使徒运气防守](src/ApostleDefense) | 采用离线退火优化的策略，自动召唤、合成、培养、布局与阶段重开 |
 | SECRET VISION | 自动圈地、避让与失败重试 |
 | [恶魔猎人](src/FiendHunter) | 选择角色、巴萨卡或炎虎及单人难度，结算后停止 |
@@ -84,14 +84,14 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 <details>
 <summary>原独立仓库与维护说明</summary>
 
-原仓库用于查阅独立版源码与历史发行；不能据此判断织尘内置版的功能或更新进度。**装备助手、使徒运气防守、无限抽抽乐与恶魔猎人原仓库已归档并停止维护，后续代码与反馈统一转到 Dustweave。**其余下列仓库截至 2026-10-19 尚未归档，但与内置版不保证同步发布。
+原仓库用于查阅独立版源码与历史发行；不能据此判断织尘内置版的功能或更新进度。**装备助手、使徒运气防守、无限抽抽乐、恶魔猎人与音游原仓库已归档并停止维护，后续代码与反馈统一转到 Dustweave。**其余下列仓库截至 2026-10-19 尚未归档，但与内置版不保证同步发布。
 
 - [装备助手（已归档）](https://github.com/MadestSamurai/bd2-equipment-assistant)
 - [自动钓鱼](https://github.com/MadestSamurai/bd2-fishing) · [领地自动化](https://github.com/MadestSamurai/bd2-territory)
-- [连连看](https://github.com/MadestSamurai/bd2-sichuan) · [音游](https://github.com/MadestSamurai/bd2-rhythm) · [使徒运气防守（已归档）](https://github.com/MadestSamurai/bd2-apostle-defense)
+- [连连看](https://github.com/MadestSamurai/bd2-sichuan) · [音游（已归档）](https://github.com/MadestSamurai/bd2-rhythm) · [使徒运气防守（已归档）](https://github.com/MadestSamurai/bd2-apostle-defense)
 - [SECRET VISION](https://github.com/MadestSamurai/bd2-secret-vision) · [恶魔猎人（已归档）](https://github.com/MadestSamurai/bd2-fiend-hunter) · [无限抽抽乐（已归档）](https://github.com/MadestSamurai/bd2-infinite-gacha)
 
-装备助手、使徒运气防守、无限抽抽乐、恶魔猎人、MANSION RUNAWAY 与潘多拉分别在 [`src/Equipment/`](src/Equipment)、[`src/ApostleDefense/`](src/ApostleDefense)、[`src/InfiniteGacha/`](src/InfiniteGacha)、[`src/FiendHunter/`](src/FiendHunter)、[`src/Mansion/`](src/Mansion) 和 [`src/Pandora/`](src/Pandora) 维护；其余独立工具的内置源码位于 [`standalone/`](standalone)。各模块保留原有署名与许可证。
+装备助手、使徒运气防守、无限抽抽乐、恶魔猎人、音游、MANSION RUNAWAY 与潘多拉分别在 [`src/Equipment/`](src/Equipment)、[`src/ApostleDefense/`](src/ApostleDefense)、[`src/InfiniteGacha/`](src/InfiniteGacha)、[`src/FiendHunter/`](src/FiendHunter)、[`src/Rhythm/`](src/Rhythm)、[`src/Mansion/`](src/Mansion) 和 [`src/Pandora/`](src/Pandora) 维护；其余独立工具的内置源码位于 [`standalone/`](standalone)。各模块保留原有署名与许可证。
 
 </details>
 

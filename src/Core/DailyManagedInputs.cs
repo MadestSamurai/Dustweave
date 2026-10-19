@@ -17,7 +17,7 @@ public sealed partial class DailyCommandDriver
         try { return await SendObservedCoreAsync(action, ownedFrame, false); }
         catch (Exception e)
         {
-            Diagnostics.Failure("input_failed", DailyData.O(("action", action), ("error", e.Message), ("submitted", e is DailyStepException step && step.Submitted), ("may_have_dispatched", e is DailyStepException fault ? fault.MayHaveDispatched : (bool?)null), ("last_observed", lastDiagnosticFrame)));
+            Diagnostics.Failure("input_failed", DailyData.O(("action", action), ("error", e.Message), ("submitted", e is DailyStepException step && step.Submitted), ("may_have_dispatched", e is DailyStepException fault ? fault.MayHaveDispatched : (bool?)null), ("last_observed", lastDiagnosticFrame), ("native_receipt", (e as DailyStepException)?.NativeReceipt)));
             throw;
         }
     }

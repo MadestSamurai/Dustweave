@@ -10,6 +10,7 @@ static class CommandDriverCases
     {
         public Dictionary<string, byte[]> Values = new(); public List<JsonObject> Commands = []; public HashSet<string> Opened = [];
         public Action<JsonObject>? AfterCommand; public Action<string, string, byte[]>? AfterWrite;
+        public JsonObject? Before;
         public string State = "observed_after_dispatch", Error = "screen_changed"; public bool? Dispatched = true; public bool Revoked, ThrowCreate, Tamper;
         public void Acquire(string channel)
         {
@@ -40,6 +41,7 @@ static class CommandDriverCases
                 if (Tamper)
                     attached["AccountKey"] = "other";
                 var receipt = new JsonObject { ["Command"] = attached, ["State"] = State, ["Error"] = Error };
+                if (Before != null) receipt["Before"] = Before.DeepClone();
                 if (Dispatched != null)
                     receipt["MayHaveDispatched"] = Dispatched.Value;
                 Values["live:receipts~" + command["Id"]!.GetValue<string>() + ".json"] = JsonSerializer.SerializeToUtf8Bytes(receipt);

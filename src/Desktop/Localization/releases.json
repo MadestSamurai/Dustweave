@@ -1,5 +1,26 @@
 [
 {
+  "Version": "1.4.9",
+  "Date": "2026-10-19",
+  "Notes": {
+    "zh-CN": [
+      "音游迁入织尘，统一窗口样式、语言、连接加载与运行互斥；设置和日志纳入主程序管理，原独立仓库归档。",
+      "修复卡带导航因账号状态短暂未刷新而中断合并周任务的问题：确认操作尚未执行后，重新核对账号和当前页面，再有限重试。",
+      "诊断导出补充操作被拒绝时的实际回执和现场，方便区分状态刷新延迟与其他连接问题。"
+    ],
+    "zh-TW": [
+      "音遊遷入織塵，統一視窗樣式、語言、連線載入與執行互斥；設定和日誌納入主程式管理，原獨立倉庫封存。",
+      "修復卡帶導航因帳號狀態短暫未更新而中斷合併週任務的問題：確認操作尚未執行後，重新核對帳號和目前頁面，再有限重試。",
+      "診斷匯出補充操作遭拒絕時的實際回執和現場，方便區分狀態更新延遲與其他連線問題。"
+    ],
+    "en-US": [
+      "Rhythm moves into Dustweave with shared styling, language, window-first connection loading, control ownership and storage. The standalone repository is archived.",
+      "Recover cartridge navigation from temporary account-state observation gaps. After confirming that no input ran, recheck the account and current page before a bounded retry.",
+      "Diagnostic exports now preserve the native rejection receipt and observed state to help distinguish delayed state updates from other connection issues."
+    ]
+  }
+},
+{
   "Version": "1.4.8",
   "Date": "2026-10-19",
   "Notes": {

@@ -46,7 +46,7 @@
           "System.Collections.Immutable": "9.0.0"
         }
       },
-      "bd2rhythm.compatibility": {
+      "BD2Rhythm.Compatibility": {
         "type": "Project",
         "dependencies": {
           "Microsoft.CodeAnalysis.CSharp": "[4.14.0, )",

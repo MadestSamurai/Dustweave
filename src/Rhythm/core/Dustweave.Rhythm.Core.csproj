@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><TargetFramework>net8.0-windows</TargetFramework><PlatformTarget>x64</PlatformTarget><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+  <PropertyGroup><AssemblyName>BD2Rhythm.Core</AssemblyName><RootNamespace>BD2Rhythm.Core</RootNamespace><TargetFramework>net8.0-windows</TargetFramework><PlatformTarget>x64</PlatformTarget><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><DefineConstants>DESKTOP</DefineConstants></PropertyGroup>
   <ItemGroup>
     <Compile Include="../shared/*.cs" Link="Shared/%(Filename)%(Extension)" />
     <Compile Include="../vendor/SharpMonoInjector/*.cs" Link="Injector/%(Filename)%(Extension)" />
-    <ProjectReference Include="../compatibility/BD2Rhythm.Compatibility.csproj" />
+    <ProjectReference Include="../compatibility/Dustweave.Rhythm.Compatibility.csproj" />
     <Compile Include="../localization/*.cs" Link="Localization/%(Filename)%(Extension)" />
     <EmbeddedResource Include="../localization/*.json" LogicalName="Locale.%(Filename)%(Extension)" />
   </ItemGroup>

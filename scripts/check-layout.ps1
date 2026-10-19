@@ -14,6 +14,9 @@ $references=0;$resources=0
 # These owned projects retain the original assembly names used by the hosted
 # loader, WPF resources and package dependency locks. Do not exempt other names.
 $legacyToolAssemblies=@{
+ 'src/Rhythm/compatibility/Dustweave.Rhythm.Compatibility.csproj'='BD2Rhythm.Compatibility'
+ 'src/Rhythm/core/Dustweave.Rhythm.Core.csproj'='BD2Rhythm.Core'
+ 'src/Rhythm/desktop/Dustweave.Rhythm.Desktop.csproj'='BD2Rhythm'
  'src/Equipment/connection/Dustweave.Equipment.Connection.csproj'='BD2Equipment.Connection'
  'src/Equipment/core/Dustweave.Equipment.Core.csproj'='BD2Equipment.Core'
  'src/Equipment/desktop/Dustweave.Equipment.Desktop.csproj'='BD2EquipmentAssistant'

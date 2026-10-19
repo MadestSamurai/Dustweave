@@ -6,7 +6,7 @@ static class UiLabels { public static readonly Dictionary<string,string> All=new
 {"Label4","开启自动演奏"},
 {"Label5","停止"},
 {"Label6","等待连接"},
-{"Label7","请先启动 BrownDust II，再点击连接游戏。"},
+{"Label7","连接就绪后开启演奏，再到游戏中选曲。"},
 {"Label8","曲目：尚未识别"},
 {"Label9","等待歌曲时间轴"},
 {"Label10","已操作 0　跳过 0　完成 0 曲"},

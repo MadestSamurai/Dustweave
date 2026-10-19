@@ -6,14 +6,16 @@ public static class RhythmJson {
 }
 public sealed class RhythmSettings{public int JitterMs{get;set;}=50;public int OffsetMs{get;set;}}
 public sealed class RhythmControlLink:IDisposable {
- readonly object gate=new();readonly Timer timer;readonly string root;readonly RhythmControl control=new();bool disposed;public string Error{get;private set;}="";
- public bool Enabled{get{lock(gate)return control.Enabled;}}public string OwnerId{get{lock(gate)return control.OwnerId;}}
- public RhythmControlLink(string root){this.root=root;BD2.LocalIpc.DesktopFiles.Configure(root,RhythmIdentity.LiveEntries);timer=new(_=>Pulse(),null,500,500);}
+ readonly object gate=new();readonly Timer timer;readonly string root,settingsRoot;readonly RhythmControl control=new();bool disposed;public string Error{get;private set;}="";
+ // UI reads must never wait behind a timed pipe write. Mutations remain serialized.
+ public bool Enabled=>control.Enabled;public string OwnerId=>control.OwnerId;
+ public RhythmControlLink(string root):this(root,RhythmStorage.Data){}
+ public RhythmControlLink(string root,string settingsRoot){this.root=root;this.settingsRoot=settingsRoot;BD2.LocalIpc.DesktopFiles.Configure(root,RhythmIdentity.LiveEntries);timer=new(_=>Pulse(),null,500,500);}
  void Pulse(){lock(gate){if(!disposed&&control.Enabled)try{Write();}catch(Exception e){Error=e.Message;if(BD2.LocalIpc.PipeClient.SessionEnded(e))control.Enabled=false;}}}
- public void Configure(RhythmSettings s){if(!RhythmControl.ValidSettings(s.JitterMs,s.OffsetMs))throw new ArgumentException("随机偏移为0–200ms，整体校准为-500–500ms。");lock(gate){control.JitterMs=s.JitterMs;control.OffsetMs=s.OffsetMs;RhythmJson.Write(Path.Combine(root,"settings.json"),s);if(control.Enabled)Write();}}
+ public void Configure(RhythmSettings s){if(!RhythmControl.ValidSettings(s.JitterMs,s.OffsetMs))throw new ArgumentException("随机偏移为0–200ms，整体校准为-500–500ms。");lock(gate){control.JitterMs=s.JitterMs;control.OffsetMs=s.OffsetMs;RhythmJson.Write(Path.Combine(settingsRoot,"settings.json"),s);if(control.Enabled)Write();}}
  public void Start(int pid){lock(gate){if(disposed)throw new ObjectDisposedException(nameof(RhythmControlLink));control.OwnerId=Guid.NewGuid().ToString("N");control.ProcessId=pid;control.Enabled=true;try{Write();}catch{control.Enabled=false;throw;}}}
  public void Stop(){lock(gate){control.Enabled=false;Write();}}
  void Write(){control.UntilUtcTicks=control.Enabled?DateTime.UtcNow.AddSeconds(5).Ticks:0;RhythmJson.Write(Path.Combine(root,"control.json"),control);Error="";}
- public void Dispose(){lock(gate){if(disposed)return;disposed=true;timer.Dispose();try{Stop();}catch(Exception e){Error=e.Message;}}}
+ public void Dispose(){lock(gate){if(disposed)return;disposed=true;timer.Dispose();try{if(control.Enabled)Stop();}catch(Exception e){Error=e.Message;}}}
  public static bool Fresh(RhythmSnapshot? s,DateTime now)=>s!=null&&s.Schema==1&&s.Runtime==RhythmIdentity.RuntimeName&&s.ProcessId>0&&s.CapturedUtcTicks>=now.AddSeconds(-3).Ticks&&s.CapturedUtcTicks<=now.AddSeconds(2).Ticks;
 }

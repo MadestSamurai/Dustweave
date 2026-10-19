@@ -164,6 +164,7 @@ await Group("PackagedUtility", () => Sync(() => PackagedUtilityCases.Run(root, c
 await Group("Plugin", () => Sync(() => PluginCases.Run(root, cases)));
 await Group("PluginStore", () => PluginStoreCases.Run(root, cases));
 await Group("ToolMenu", () => Sync(() => ToolMenuCases.Run(root, cases)));
+await Group("Rhythm", () => Sync(() => RhythmCases.Run(root,cases)));
 await Group("FiendHunter", () => Sync(() => FiendHunterCases.Run(cases)));
 await Group("ApostleIntegrated", () => ApostleIntegratedCases.Run(root, cases));
 await Group("ActivityLease", () => Sync(() => ActivityLeaseCases.Run(root, cases)));

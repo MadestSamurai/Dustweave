@@ -19,6 +19,7 @@ public partial class MainWindow
         var gacha=Assembly.Load("BD2InfiniteGacha");
         var demos=new Dictionary<Window,object>();
         Window Create(string id){
+            if(id=="rhythm")return (Window)Activator.CreateInstance(Assembly.Load("BD2Rhythm").GetType("BD2Rhythm.Desktop.RhythmWindow")!,new object[]{Path.Combine(smoke!,"rhythm")})!;
             if(id=="mansion-runaway")return new MansionWindow(smoke:true,deferChrome:true);
             if(id=="equipment")return (Window)Activator.CreateInstance(equipment,BindingFlags.Instance|BindingFlags.NonPublic,null,new object[]{false},null)!;
             if(id=="fiend-hunter")return (Window)Activator.CreateInstance(Assembly.Load("BD2FiendHunter").GetType("BD2FiendHunter.Desktop.MainWindow")!,new object[]{true})!;
@@ -29,7 +30,7 @@ public partial class MainWindow
         string? prior=Environment.GetEnvironmentVariable("BD2_DAILY_HOSTED_TOOL");
         try
         {
-            foreach(string id in new[]{"mansion-runaway","equipment","infinite-gacha","fiend-hunter"})
+            foreach(string id in new[]{"mansion-runaway","equipment","infinite-gacha","fiend-hunter","rhythm"})
             foreach(string language in new[]{"zh-CN","zh-TW","en-US"})
             foreach(string appearance in new[]{"light","dark"})
             {
@@ -37,9 +38,9 @@ public partial class MainWindow
                 using var locale=HostedToolLocale.Begin(language);
                 Environment.SetEnvironmentVariable("BD2_DAILY_HOSTED_TOOL",id);
                 var window=Create(id);
-                if(id=="fiend-hunter"&&window.FindName("LanguageBox") is ComboBox languageBox)languageBox.Visibility=Visibility.Collapsed;
+                if(id is "fiend-hunter" or "rhythm" &&window.FindName("LanguageBox") is ComboBox languageBox)languageBox.Visibility=Visibility.Collapsed;
                 window.Owner=this;window.ShowInTaskbar=false;window.ShowActivated=false;window.WindowStartupLocation=WindowStartupLocation.Manual;window.Left=-12000;window.Top=0;
-                window.Width=id=="fiend-hunter"?620:id=="infinite-gacha"?1260:id=="equipment"?1040:820;window.Height=id=="fiend-hunter"?620:id=="infinite-gacha"?940:id=="equipment"?800:700;
+                window.Width=id=="rhythm"?680:id=="fiend-hunter"?620:id=="infinite-gacha"?1260:id=="equipment"?1040:820;window.Height=id=="rhythm"?700:id=="fiend-hunter"?620:id=="infinite-gacha"?940:id=="equipment"?800:700;
                 int prepares=0,ready=0;bool painted=false,rendered=false;
                 window.ContentRendered+=(_,_)=>rendered=true;
                 var entered=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -67,6 +68,12 @@ public partial class MainWindow
                 Check(!loading.Preparing&&!loading.Ready&&!DailyToolControl.IsOccupied(root)&&loading.ActionButton.IsEnabled,id+": cancellation releases lease and permits explicit retry");
                 var retry=loading.StartAsync();await Until(()=>prepares==2);release.TrySetResult();await retry;
                 Check(ready==1&&loading.Ready&&loading.Body.IsEnabled&&!DailyToolControl.IsOccupied(root),id+": retry makes window ready without automation");
+                if(id=="rhythm"){
+                    Check(!((bool)window.GetType().GetField("connected",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(window)!),"rhythm does not read transport before explicit connection");
+                    Check(!((Button)window.FindName("StartButton")).IsEnabled&&!((bool)window.GetType().GetProperty("HostedAutomationEnabled")!.GetValue(window)!),"rhythm preparation never enables playback");
+                    Check(((TextBox)window.FindName("JitterBox")).Text=="50"&&((TextBox)window.FindName("OffsetBox")).Text=="0","rhythm retains timing defaults");
+                    Capture($"ready-{id}-{language}-{appearance}",(FrameworkElement)window.Content);
+                }
                 if(id=="fiend-hunter"){
                     var selection=(ComboBox)window.FindName("BossChoice");
                     Check(selection.Items.Count==2&&selection.SelectedIndex==0,"fiend hunter defaults to Berserker and offers both monsters");
@@ -120,7 +127,7 @@ public partial class MainWindow
             DailyDialogs.Prepare(failed);failed.Show();await Until(()=>attempts==1&&!broken.Preparing);await Task.Delay(300);
             Check(attempts==1&&!broken.Body.IsEnabled&&broken.ActionButton.IsEnabled&&!DailyToolControl.IsOccupied(root),"failed setup stays recoverable without reconnecting indefinitely");failed.Close();
             // Closing during preparation waits for cancellation and releases ownership.
-            foreach(string id in new[]{"mansion-runaway","equipment","infinite-gacha"}){
+            foreach(string id in new[]{"mansion-runaway","equipment","infinite-gacha","rhythm"}){
                 Environment.SetEnvironmentVariable("BD2_DAILY_HOSTED_TOOL",id);
                 var closing=Create(id);
                 closing.ShowActivated=false;closing.ShowInTaskbar=false;closing.WindowStartupLocation=WindowStartupLocation.Manual;closing.Left=-12000;

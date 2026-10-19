@@ -46,17 +46,30 @@
           "System.Collections.Immutable": "9.0.0"
         }
       },
-      "bd2apostledefense.compatibility": {
+      "BD2ApostleDefense.Compatibility": {
         "type": "Project",
         "dependencies": {
           "Microsoft.CodeAnalysis.CSharp": "[4.14.0, )",
           "Mono.Cecil": "[0.11.6, )"
         }
       },
-      "bd2apostledefense.core": {
+      "BD2ApostleDefense.Core": {
         "type": "Project",
         "dependencies": {
           "BD2ApostleDefense.Compatibility": "[0.3.8, )"
+        }
+      },
+      "BD2Rhythm.Compatibility": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.CodeAnalysis.CSharp": "[4.14.0, )",
+          "Mono.Cecil": "[0.11.6, )"
+        }
+      },
+      "BD2Rhythm.Core": {
+        "type": "Project",
+        "dependencies": {
+          "BD2Rhythm.Compatibility": "[0.2.3, )"
         }
       },
       "dustweave.accounts": {

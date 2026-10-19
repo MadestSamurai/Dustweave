@@ -11,7 +11,8 @@ public static class DailyTravel
     private static readonly DailyNavigationPolicy Policy = DailyNavigationPolicy.Load();
     // Native menus can stay on Empty indefinitely; only overlays or a missing scene imply transit.
     private static bool InTransit(JsonObject frame) => string.IsNullOrWhiteSpace(S(frame["Scene"])) || DailyNavigationDecision.Types(frame).Overlaps(DailyNavigationDecision.Transitions);
-    private static bool UnsentTransition(DailyStepException error) => error.PresentationChanged;
+    private static bool UnsentTransition(DailyStepException error, ref int observationRetries) =>
+        error.PresentationChanged || error.ObservationPending && ++observationRetries <= 3;
     internal static bool SquareBookLobby(JsonObject frame) =>
         S(frame["Scene"]).StartsWith("Map3009_", StringComparison.Ordinal) && !InTransit(frame) &&
         !DailyNavigationDecision.Types(frame).Any(t => t.StartsWith("BattleUI", StringComparison.Ordinal)) &&
@@ -97,7 +98,7 @@ public static class DailyTravel
         double end = w.Time + seconds;
         string? stable = null, arrival = null;
         double since = 0, arrivedAt = 0;
-        int bookReturns = 0;
+        int bookReturns = 0, observationRetries = 0;
         while (w.Time < end)
         {
             var f = (await w.Observe()).Frame;
@@ -142,7 +143,7 @@ public static class DailyTravel
                 {
                     if (bookReturns++ >= 2) throw new StageHostException("adapter", "广场入口反复打开末日之书；请离开入口后重试此环节。");
                     try { await LeaveSquareBookLobby(w, f); }
-                    catch (DailyStepException error) when (UnsentTransition(error)) { await w.Delay(150); }
+                    catch (DailyStepException error) when (UnsentTransition(error, ref observationRetries)) { await w.Delay(150); }
                     stable = null;
                     continue;
                 }
@@ -151,9 +152,10 @@ public static class DailyTravel
                 {
                     string ui = S(row["Type"]);
                     try { await w.Step(ui, ui == "PackInfoUI" ? "_objBackButton" : null, back: ui != "PackInfoUI", absent: ui, reason: "复用当前已加载卡带"); }
-                    catch (DailyStepException error) when (UnsentTransition(error))
+                    catch (DailyStepException error) when (UnsentTransition(error, ref observationRetries))
                     {
-                        // Only rejected, definitely unsent navigation may be reconsidered.
+                        // Re-read bound identity and the current destination before selecting
+                        // navigation again. Never reuse the rejected command or weaken its gate.
                         arrival = null;
                         await w.Delay(200);
                     }
@@ -212,6 +214,7 @@ public static class DailyTravel
     {
         double end = w.Time + seconds;
         var visited = new HashSet<string>();
+        int observationRetries = 0;
         string lastScene = "", lastPages = "";
         while (w.Time < end)
         {
@@ -249,9 +252,9 @@ public static class DailyTravel
                     await w.Step(ui, ui == "PackInfoUI" ? "_objBackButton" : null, back: ui != "PackInfoUI", absent: ui, reason: "返回当前场景的卡带切换入口");
                 }
             }
-            catch (DailyStepException error) when (UnsentTransition(error))
+            catch (DailyStepException error) when (UnsentTransition(error, ref observationRetries))
             {
-                // Nothing was submitted; resolve the new page instead of failing all downstream stages.
+                // No native input ran; resolve the new page instead of failing downstream stages.
                 visited.Clear();
             }
             await w.Delay(150);

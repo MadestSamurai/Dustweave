@@ -17,7 +17,7 @@ namespace BD2Rhythm.Runtime
         }
         internal static void Log(string message)
         {
-            try{Directory.CreateDirectory(DataRoot);var path=Path.Combine(DataRoot,"runtime.log");lock(typeof(LocalStorage))
+            try{Directory.CreateDirectory(RhythmStorage.Diagnostics);var path=Path.Combine(RhythmStorage.Diagnostics,"runtime.log");lock(typeof(LocalStorage))
             {if(File.Exists(path)&&new FileInfo(path).Length>1000000){var old=path+".previous";if(File.Exists(old))File.Delete(old);File.Move(path,old);}File.AppendAllText(path,DateTime.UtcNow.ToString("O")+" "+message+Environment.NewLine,Encoding.UTF8);}}catch{}
         }
     }

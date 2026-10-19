@@ -1,5 +1,11 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/FiendHunter/compatibility/Dustweave.FiendHunter.Compatibility.csproj" />
+    <Project Path="src/FiendHunter/core/Dustweave.FiendHunter.Core.csproj" />
+    <Project Path="src/FiendHunter/desktop/Dustweave.FiendHunter.Desktop.csproj" />
+    <Project Path="src/Rhythm/compatibility/Dustweave.Rhythm.Compatibility.csproj" />
+    <Project Path="src/Rhythm/core/Dustweave.Rhythm.Core.csproj" />
+    <Project Path="src/Rhythm/desktop/Dustweave.Rhythm.Desktop.csproj" />
     <Project Path="src/ApostleDefense/compatibility/Dustweave.ApostleDefense.Compatibility.csproj" />
     <Project Path="src/ApostleDefense/core/Dustweave.ApostleDefense.Core.csproj" />
     <Project Path="src/ApostleDefense/desktop/Dustweave.ApostleDefense.Desktop.csproj" />
@@ -27,15 +33,9 @@
     <Project Path="tests/Dustweave.Tests/Dustweave.Tests.csproj" />
   </Folder>
   <Folder Name="/standalone/">
-    <Project Path="src/FiendHunter/compatibility/Dustweave.FiendHunter.Compatibility.csproj" />
-    <Project Path="src/FiendHunter/core/Dustweave.FiendHunter.Core.csproj" />
-    <Project Path="src/FiendHunter/desktop/Dustweave.FiendHunter.Desktop.csproj" />
     <Project Path="standalone/bd2-fishing/compatibility/BD2Fishing.Compatibility.csproj" />
     <Project Path="standalone/bd2-fishing/core/BD2Fishing.Core.csproj" />
     <Project Path="standalone/bd2-fishing/desktop/BD2Fishing.Desktop.csproj" />
-    <Project Path="standalone/bd2-rhythm/compatibility/BD2Rhythm.Compatibility.csproj" />
-    <Project Path="standalone/bd2-rhythm/core/BD2Rhythm.Core.csproj" />
-    <Project Path="standalone/bd2-rhythm/desktop/BD2Rhythm.Desktop.csproj" />
     <Project Path="standalone/bd2-secret-vision/compatibility/BD2SecretVision.Compatibility.csproj" />
     <Project Path="standalone/bd2-secret-vision/core/BD2SecretVision.Core.csproj" />
     <Project Path="standalone/bd2-secret-vision/desktop/BD2SecretVision.Desktop.csproj" />

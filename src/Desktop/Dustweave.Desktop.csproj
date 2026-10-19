@@ -22,7 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="../../standalone/bd2-fishing/desktop/BD2Fishing.Desktop.csproj" Aliases="toolBD2Fishing" />
     <ProjectReference Include="../../standalone/bd2-sichuan/desktop/BD2Sichuan.Desktop.csproj" Aliases="toolBD2Sichuan" />
-    <ProjectReference Include="../../standalone/bd2-rhythm/desktop/BD2Rhythm.Desktop.csproj" Aliases="toolBD2Rhythm" />
+    <ProjectReference Include="../Rhythm/desktop/Dustweave.Rhythm.Desktop.csproj" Aliases="toolBD2Rhythm" />
     <ProjectReference Include="../../standalone/bd2-territory/desktop/BD2Territory.Desktop.csproj" Aliases="toolBD2Territory" />
     <ProjectReference Include="../Equipment/desktop/Dustweave.Equipment.Desktop.csproj" Aliases="toolBD2EquipmentAssistant" />
     <ProjectReference Include="../ApostleDefense/desktop/Dustweave.ApostleDefense.Desktop.csproj" Aliases="toolBD2ApostleDefense" />

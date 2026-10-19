@@ -10,7 +10,7 @@ public static class DailyToolCatalog
         new("territory", "领地自动化", "经营与装备", "种植、采集、料理、库存出售和布局。", "bd2-territory", "BD2Territory", @"Local\BD2Territory.Desktop"),
         new("equipment", "装备助手", "经营与装备", "规划搓粉与批量精炼，确认预算后执行。", "Dustweave", "BD2EquipmentAssistant", @"Local\BD2EquipmentAssistant-v1"),
         new("sichuan", "连连看", "小游戏", "自动识别盘面、求解和续局，可调操作间隔。", "bd2-sichuan", "BD2Sichuan", @"Local\BD2Sichuan.Desktop"),
-        new("rhythm", "音游", "小游戏", "读取当前谱面并操作，保留随机偏移设置。", "bd2-rhythm", "BD2Rhythm", @"Local\BD2Rhythm.Private.Desktop"),
+        new("rhythm", "音游", "小游戏", "读取当前谱面并操作，保留随机偏移设置。", "Dustweave", "BD2Rhythm", @"Local\BD2Rhythm.Private.Desktop"),
         new("apostle-defense", "使徒运气防守", "小游戏", "自动召唤、合成、布局与结算续局。", "Dustweave", "BD2ApostleDefense", @"Local\BD2ApostleDefense-v1"),
         new("secret-vision", "SECRET VISION", "小游戏", "自动圈地、避让与失败重试。", "bd2-secret-vision", "BD2SecretVision", @"Local\BD2SecretVisionAssistant"),
         new("fiend-hunter", "恶魔猎人", "小游戏", "选择怪物，自动攻击、防御和治疗，结算后停止。", "Dustweave", "BD2FiendHunter", @"Local\BD2FiendHunterDesktop"),

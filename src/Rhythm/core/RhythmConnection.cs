@@ -25,7 +25,7 @@ public sealed class RhythmConnection
     public string Connect(Action<string>? progress=null)
     {
         using var game=FindGame();int pid=game.Id;long start=game.StartTime.ToUniversalTime().Ticks;
-        string fingerprint=HookCompiler.ToolFingerprint;var path=Path.Combine(root,"connection.json");
+        string fingerprint=HookCompiler.ToolFingerprint;var path=Path.Combine(RhythmStorage.Diagnostics,"connection.json");
         var pipe=BD2.LocalIpc.DesktopFiles.Connect(root,pid,start); if(BD2.LocalIpc.HostedConnection.TryOpen(pipe,pid,start))return "已使用日常助手的统一连接";
         try
         {
@@ -44,9 +44,9 @@ public sealed class RhythmConnection
         var client=Path.Combine(Path.GetDirectoryName(exe)!,Path.GetFileNameWithoutExtension(exe)+"_Data","Managed","Assembly-CSharp.dll");
         progress?.Invoke("正在识别音游接口并生成适配组件，首次连接可能需要数秒…");
         PreparedHook prepared;
-        try { prepared=HookCompiler.Prepare(Path.GetDirectoryName(client)!);RhythmJson.Write(Path.Combine(root,"compatibility.json"),prepared.Report); }
-        catch(CompatibilityException ex) { RhythmJson.Write(Path.Combine(root,"compatibility.json"),ex.Report);throw; }
-        catch(Exception ex) { RhythmJson.Write(Path.Combine(root,"compatibility.json"),new{Status="unsupported",Error=ex.Message,Injection=false});throw; }
+        try { prepared=HookCompiler.Prepare(Path.GetDirectoryName(client)!);RhythmJson.Write(Path.Combine(RhythmStorage.Diagnostics,"compatibility.json"),prepared.Report); }
+        catch(CompatibilityException ex) { RhythmJson.Write(Path.Combine(RhythmStorage.Diagnostics,"compatibility.json"),ex.Report);throw; }
+        catch(Exception ex) { RhythmJson.Write(Path.Combine(RhythmStorage.Diagnostics,"compatibility.json"),new{Status="unsupported",Error=ex.Message,Injection=false});throw; }
         var payload=prepared.Payload;string sha=Convert.ToHexString(SHA256.HashData(payload));
         if(game.HasExited || game.StartTime.ToUniversalTime().Ticks!=start)throw new InvalidOperationException("游戏进程已变化，请重新连接。");
         progress?.Invoke("接口检查通过，正在连接独立音游组件…");
@@ -73,7 +73,7 @@ public sealed class RhythmConnection
         } catch(Exception ex) {
             state.LastError=ex.GetBaseException().Message;
             RhythmJson.Write(path,state);
-            RhythmJson.Write(Path.Combine(root,"connection-error.json"),new{state.ProcessId,state.Phase,state.AttemptUtc,Error=ex.ToString(),AtUtc=DateTime.UtcNow.ToString("O")});
+            RhythmJson.Write(Path.Combine(RhythmStorage.Diagnostics,"connection-error.json"),new{state.ProcessId,state.Phase,state.AttemptUtc,Error=ex.ToString(),AtUtc=DateTime.UtcNow.ToString("O")});
             throw;
         }
     }

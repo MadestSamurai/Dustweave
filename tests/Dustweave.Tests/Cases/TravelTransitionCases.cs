@@ -252,6 +252,70 @@ static class TravelTransitionCases
             await DailyTravel.PackList(f.Workflow, 3);
             Check(f.Box.Commands.Count == 0, "pack list re-observes a disappeared menu before dispatch");
         }
+        foreach (string mode in new[] { "reuse", "pack-list", "replaced", "persistent", "identity", "unknown", "other-error", "missing-before", "wrong-protocol" })
+        {
+            using var f = New("observation-gap-" + mode);
+            f.Page(mode == "pack-list" ? "GameFieldDefaultUI" : "PackListUI", "_buttonPackList");
+            f.Box.State = "rejected"; f.Box.Error = "observation_unavailable"; f.Box.Dispatched = mode == "unknown";
+            if (mode != "missing-before")
+            {
+                f.Box.Before = f.Frame.DeepClone().AsObject();
+                f.Box.Before["Protocol"] = mode == "wrong-protocol" ? 2 : 1;
+                f.Box.Before["Error"] = mode == "other-error" ? "Unexpected native failure" : "Waiting for fresh account identity";
+            }
+            f.OnDelay = () =>
+            {
+                if (f.Box.Commands.Count != 1) return;
+                if (mode == "identity") f.Context["actor"]![4] = new string('c', 64);
+                if (mode is "reuse" or "pack-list" or "replaced")
+                {
+                    f.Box.State = "observed_after_dispatch"; f.Box.Error = ""; f.Box.Dispatched = true;
+                    if (mode == "replaced") f.Page("GameFieldDefaultUI");
+                }
+            };
+            f.OnCommand = _ => { if (mode != "unknown") f.Page(mode == "pack-list" ? "PackListUI" : "GameFieldDefaultUI"); };
+            string outcome = "";
+            try
+            {
+                if (mode == "pack-list") { await DailyTravel.PackList(f.Workflow, 8); outcome = "arrived"; }
+                else outcome = await DailyTravel.Reuse(f.Workflow, packType: 9, seconds: 8) ? "arrived" : "wrong";
+            }
+            catch (DailyStepException e) { outcome = e.Kind; }
+            catch (StageHostException e) { outcome = e.Kind; }
+            if (mode is "reuse" or "pack-list")
+                Check(outcome == "arrived" && f.Box.Commands.Count == 2 && !JsonNode.DeepEquals(f.Box.Commands[0]["Id"], f.Box.Commands[1]["Id"]), "fresh identity lets cartridge navigation select a new command: " + mode);
+            else if (mode == "replaced")
+                Check(outcome == "arrived" && f.Box.Commands.Count == 1, "observation recovery does not close a replacement page");
+            else if (mode == "persistent")
+                Check(outcome == "rejected" && f.Box.Commands.Count == 4 && f.Time < 8, "persistent observation gaps stop after three navigation retries");
+            else
+                Check(outcome == (mode == "identity" ? "identity" : mode == "unknown" ? "pending" : "rejected") && f.Box.Commands.Count == 1, "observation recovery retains rejection boundary: " + mode);
+
+            if (mode == "reuse")
+            {
+                var failure = Directory.GetFiles(Path.Combine(f.Root, "live", "diagnostics", "failures"), "*.json").Single();
+                var detail = JsonNode.Parse(File.ReadAllText(failure))!["detail"]!;
+                Check(S(detail["last_observed"]?["Error"]) == "" && S(detail["native_receipt"]?["Before"]?["Error"]) == "Waiting for fresh account identity"
+                    && JsonNode.DeepEquals(detail["native_receipt"]?["Command"], f.Box.Commands[0]), "failure retains actual rejected frame alongside the earlier healthy host frame");
+                string archivePath = Path.Combine(f.Root, "diagnostic-proof.zip");
+                DailyDiagnosticExport.Create(f.Root, archivePath, "synthetic", "1.4.8");
+                using var archive = System.IO.Compression.ZipFile.OpenRead(archivePath);
+                var entry = archive.Entries.Single(e => e.FullName.EndsWith("/" + Path.GetFileName(failure), StringComparison.Ordinal));
+                using var reader = new StreamReader(entry.Open());
+                var exported = JsonNode.Parse(reader.ReadToEnd())!;
+                Check(S(exported["detail"]?["native_receipt"]?["Before"]?["Error"]) == "Waiting for fresh account identity", "diagnostic export retains native rejection proof after timeline rotation");
+            }
+        }
+        using (var f = New("observation-gap-ordinary-step"))
+        {
+            f.Page("QuickMenuUI", "_buttonUse");
+            f.Box.State = "rejected"; f.Box.Error = "observation_unavailable"; f.Box.Dispatched = false;
+            f.Box.Before = O(("Protocol", 1), ("Error", "Waiting for fresh account identity"));
+            DailyStepException? rejected = null;
+            try { await f.Workflow.Step("QuickMenuUI", "_buttonUse", reason: "synthetic resource action"); }
+            catch (DailyStepException e) { rejected = e; }
+            Check(rejected?.ObservationPending == true && f.Box.Commands.Count == 1, "ordinary steps do not automatically replay an observation-gap rejection");
+        }
         using (var f = New("pack-submitted-unknown"))
         {
             f.Page("MenuUI"); f.Box.ThrowCreate = true;

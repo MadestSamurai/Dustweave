@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 1.4.9 — 2026-10-19
+
+- 音游源码、界面、设置与日志迁入织尘，统一连接加载、语言、主题及控制权；原独立仓库归档。
+- 修复未执行的卡带导航因短暂账号观察缺口而中断周任务的问题，并补充实际拒绝现场。
+- Integrates Rhythm and improves bounded weekly navigation recovery and diagnostics.
+- [完整说明 / Full notes](docs/releases/1.4.9.md)
+
 ## 1.4.8 — 2026-10-19
 
 - 周收集在捕获次数用尽时明确暂缓仅剩捕获目标的地图，继续其他可执行目标；修复步行拾取的隐身校验冲突、停滞恢复及地图切换时的异常。

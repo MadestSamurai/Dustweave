@@ -15,6 +15,12 @@ public sealed class DailyStepException(string kind, string message, bool submitt
     public bool MayHaveDispatched { get; init; } = submitted;
     public bool DefinitelyNotDispatched => !MayHaveDispatched;
     public bool PresentationChanged => Kind == "rejected" && DefinitelyNotDispatched && RejectionCode is "scene_changed" or "screen_changed" or "ui_not_ready" or "target_unavailable" or "target_missing" or "surface_missing";
+    // A matched native receipt can prove a transient identity-observation gap.
+    // Keep this separate from PresentationChanged: consuming workflows must not replay it.
+    public bool ObservationPending => Kind == "rejected" && Submitted && DefinitelyNotDispatched && RejectionCode == "observation_unavailable"
+        && NativeReceipt?["Before"] is JsonObject before && DailyData.N(before["Protocol"]) == 1
+        && DailyData.S(before["Error"]) == "Waiting for fresh account identity";
+    public JsonObject? NativeReceipt { get; init; }
     public string RejectionCode { get; init; } = "";
     public JsonObject? Command
     {
@@ -411,10 +417,10 @@ public sealed partial class DailyCommandDriver : IDisposable
                         string message = limit?.Message ?? (rejection.StartsWith("potion_cost_unavailable:", StringComparison.Ordinal)
                             ? "未能读取本次操作的天赋药消耗，尚未执行；请重新连接后补跑，若仍出现请导出诊断。"
                             : "rejected: " + rejection);
-                        throw new DailyStepException("rejected", message, true) { MayHaveDispatched = false, RejectionCode = rejection, PotionLimit = limit };
+                        throw new DailyStepException("rejected", message, true) { MayHaveDispatched = false, RejectionCode = rejection, PotionLimit = limit, NativeReceipt = receipt.DeepClone().AsObject() };
                     }
                     if (state is "rejected" or "unknown")
-                        throw new DailyStepException("pending", state + ": " + Text(receipt, "Error"), true);
+                        throw new DailyStepException("pending", state + ": " + Text(receipt, "Error"), true) { NativeReceipt = receipt.DeepClone().AsObject() };
                     if (state == "observed_after_dispatch")
                     {
                         if (!Flag(receipt, "MayHaveDispatched"))
