@@ -29,7 +29,7 @@ The default invocation only creates a plan. Apply rechecks the signed release fe
 
 | Files | Retention |
 | --- | --- |
-| Original full ZIPs and differential ZIPs | Keep the current release and ten preceding published releases, plus full packages needed by other active delta baselines; older local versions may be retired after an audited preview |
+| Original full ZIPs and differential ZIPs | Keep every full baseline from 1.4.7 onward, the current release and ten preceding published releases, and other active delta baselines; older pre-1.4.7 local versions may be retired after an audited preview |
 | Hashes, signed feeds, release receipts and input manifests | Preserve the release identity and evidence, including when the local package is retired |
 | Extracted application folders | Keep the current release and three preceding releases for rollback and delta tests |
 | Duplicate static-site staging | Remove only after verifying the original archives against the signed feed |
@@ -40,7 +40,7 @@ The default invocation only creates a plan. Apply rechecks the signed release fe
 
 Packaging seeds its compiler cache with at most two generations per component, instead of copying every historical generation. The compiler still validates assembly identity, client inputs and hashes; an omitted entry is rebuilt normally. The shared cache is not deleted by this script.
 
-The workspace cleanup script above removes reproducible copies; it does not automatically retire complete historical releases. Retirement is a separate, reviewed operation: preserve metadata outside the version folder, protect current packages and active delta baselines, verify paths, source tracking, links and running processes, then remove the exact retired version directory. Do not rewrite signed release history or delete remote downloads as part of local retirement. The next delta build uses the retained full packages; unavailable older local baselines are already skipped by `new-update-deltas.ps1`.
+The workspace cleanup script above removes reproducible copies; it does not automatically retire complete historical releases. Retirement is a separate, reviewed operation: preserve metadata outside the version folder, protect all 1.4.7+ full baselines, current packages and other active delta baselines, verify paths, source tracking, links and running processes, then remove the exact retired version directory. Do not rewrite signed release history or delete remote downloads as part of local retirement. The next delta build uses the retained full packages; missing required baselines are retrieved and hash-verified, or preparation fails instead of silently dropping support.
 
 Do not run cleanup concurrently with packaging or updater acceptance. The process check is a guard against existing users of a path, not a filesystem transaction or a lock on future processes. The plan's byte total is logical file size; measure free disk space before and after to report actual reclaimed storage.
 
@@ -52,7 +52,7 @@ Do not run cleanup concurrently with packaging or updater acceptance. The proces
 
 ## 发布后的固定步骤
 
-每次 GitHub 与 OTA 发布验收完成后，生成并核对清理清单，再执行清理并记录结果。不永久保留全部历史发行包：完整 ZIP 和差分包保留当前及前十个已发布版本，解压目录保留当前及前三版，并额外保护仍在使用的差分基线。超出十版窗口的版本可在单独核对清单后退役，发布清单、哈希、签名更新清单和验收记录迁出留档。现有脚本仍只清理可重建副本，历史整版退役需单独计划，不能假定已自动执行。失败检查、原始采集、账号数据和签名凭据不参与清理。
+每次 GitHub 与 OTA 发布验收完成后，生成并核对清理清单，再执行清理并记录结果。1.4.7 及之后的完整基线长期保留；同时保留当前及前十个已发布版本的完整 ZIP 和差分包，并额外保护仍在使用的差分基线。解压目录只保留当前及前三版。早于 1.4.7 且超出受保护范围的版本可在单独核对清单后退役，发布清单、哈希、签名更新清单和验收记录迁出留档。现有脚本仍只清理可重建副本，历史整版退役需单独计划，不能假定已自动执行。失败检查、原始采集、账号数据和签名凭据不参与清理。
 
 2026-10-12 首轮清理保留了 1.2.0、1.1.10-beta、1.1.9-beta、1.1.8-beta。后续发布按「当前及前三个版本」滚动保留，并重新核对差分基线。线上 GitHub 与 OTA 文件保持原样，本地退役不会改变用户已有的下载和更新地址。
 
