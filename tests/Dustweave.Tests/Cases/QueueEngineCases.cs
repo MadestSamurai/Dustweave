@@ -317,6 +317,16 @@ static class QueueEngineCases
         Check(!host.Executed.Contains("weekly_steal") && Stage(record, "weekly_steal") == "skipped", "default-off theft remains a selectable normal stage");
         Check(!record["items"]!.AsArray().Any(i => i!["task"]!.GetValue<string>() == "tactics"), "default queue omits unavailable optional tasks");
         var weekly = new[] { "weekly_mainline", "weekly_npc", "weekly_steal" };
+        {
+            var supplyHost = new FakeHost();
+            var supplyPrefs = new DailyPreferences { Weekly = new() { Mainline = true, Npc = true, Steal = true }, Trade = new() { Enabled = true } };
+            var supplyRun = await Run(supplyHost, Root(), prefs: supplyPrefs);
+            string[] tail = ["rewards", "event_rewards", "weekly_mainline", "weekly_npc", "weekly_steal", "trade", "mail"];
+            Check(supplyRun["items"]!.AsArray().TakeLast(tail.Length).Select(r => TextForTest(r!["task"])).SequenceEqual(tail),
+                "new daily queues claim supplies before the contiguous weekly route, then trade and mail");
+            Check(supplyHost.Executed.Where(tail.Contains).SequenceEqual(["rewards", "event_rewards", "weekly_mainline", "trade", "mail"])
+                && supplyHost.Members.SequenceEqual(weekly), "reward-first daily order still dispatches the three weekly categories only once");
+        }
         for (int mask = 1; mask < 8; mask++)
         {
             var chosen = weekly.Where((_, i) => (mask & (1 << i)) != 0).ToArray();

@@ -22,6 +22,7 @@ public sealed record DailyBusinessProof(string Role, string Stage, string[] Pref
 public sealed partial class DailyManagedBusiness : IDisposable
 {
     internal Action<JsonObject>? WorkProgress { get; set; }
+    internal event Action<JsonObject, JsonArray, JsonObject>? WorkObserved;
     private readonly Dictionary<string, string> recordPaths = new(StringComparer.Ordinal);
     private readonly HashSet<string> currentOperations = new(StringComparer.Ordinal);
     private readonly string root; private readonly DailyCommandDriver driver; private readonly Func<bool> stopped;
@@ -244,6 +245,7 @@ public sealed partial class DailyManagedBusiness : IDisposable
                 var after = await driver.EvidenceAsync(proofs[role].PrefixesFor(op["scope"]));
                 op["events"] = events.DeepClone();
                 op["last_observation"] = after.DeepClone();
+                WorkObserved?.Invoke(op, events, after);
                 if (DailyPickupRecovery.Rejection(op, events) is { } pickupRejection)
                 {
                     op["state"] = "server_rejected";
@@ -526,7 +528,17 @@ public sealed partial class DailyManagedBusiness : IDisposable
                     Save(op);
                     return true;
                 }
-                catch (Exception e) when (e is InvalidDataException or InvalidOperationException or System.Text.Json.JsonException) { last = e.Message; return false; }
+                catch (Exception e) when (e is InvalidDataException or InvalidOperationException or System.Text.Json.JsonException or NullReferenceException)
+                {
+                    // An incomplete old proof belongs to its owning stage. It must
+                    // not crash queue preflight before current-state recovery runs.
+                    // Preserve the failure; never convert it into confirmed success.
+                    last = e is NullReferenceException
+                        ? "旧操作回执字段不完整，结果尚未确认；对应环节将按游戏当前状态重新检查。"
+                        : e.Message;
+                    if (e is NullReferenceException) op["recovery_error_detail"] = e.ToString();
+                    return false;
+                }
             }
             foreach (string key in new[] { "after", "last_observation" })
                 if (op[key] is JsonObject saved && Try(saved))

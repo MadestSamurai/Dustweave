@@ -82,6 +82,8 @@ public sealed class DailyWorkflow
 {
     public Action<JsonObject>? WorkProgress { get; set; }
     public void StepProgress(string step) => WorkProgress?.Invoke(DailyData.O(("step", step)));
+    internal void WorkUnits(string step, int completed, int total, string unit = "")
+        => WorkProgress?.Invoke(new DailyWorkProgress(step, Math.Clamp(completed, 0, Math.Max(0, total)), Math.Max(0, total), unit).ToJson());
     private readonly DailyRuleData? ruleData;
     private readonly Func<string, string, IReadOnlyDictionary<string, string[]>, Task<DailyRuleData>>? prepareTables;
     private readonly List<DailyRuleData> extensionRules = [];

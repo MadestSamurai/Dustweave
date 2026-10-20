@@ -14,7 +14,11 @@ internal static class DailyResultText
         string key = "work." + (string.IsNullOrEmpty(p?.Step) ? "execute" : p.Step);
         string text = L.Get(key);
         if (text == key) text = L.Get("work.execute");
-        if (p is { Total: > 0 }) text += " · " + L.Get(p.Unit == "maps" ? "work.maps" : p.Unit == "quests" ? "work.quests" : "work.units", p.Completed, p.Total);
+        if (p is { Total: > 0 }) text += " · " + L.Get(p.Unit switch
+        {
+            "maps" => "work.maps", "quests" => "work.quests", "absorptions" => "work.absorptions",
+            "tickets" => "work.tickets", "potatoes" => "work.potatoes", _ => "work.units"
+        }, p.Completed, p.Total);
         return text;
     }
     internal static string Draws(DailyDrawSummary draw) => L.Get("draw.summary", draw.Draws, draw.FiveStarCostumes, draw.FiveStarUrEquipment)

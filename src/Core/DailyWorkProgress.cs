@@ -9,13 +9,54 @@ public sealed record DailyWorkProgress(string Step, int Completed = 0, int Total
     public static DailyWorkProgress? Read(JsonElement item, string queueState)
     {
         if (queueState != "running" || !item.TryGetProperty("state", out var state)
-            || state.GetString() is not ("running" or "pending")
-            || !item.TryGetProperty("progress", out var p) || p.ValueKind != JsonValueKind.Object) return null;
+            || state.GetString() is not ("running" or "pending")) return null;
+        return ReadRecorded(item);
+    }
+    public static DailyWorkProgress? ReadRecorded(JsonElement item)
+    {
+        if (!item.TryGetProperty("progress", out var p) || p.ValueKind != JsonValueKind.Object) return null;
         string Text(string key) => p.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() ?? "" : "";
         int Count(string key) => p.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetInt32(out int n) ? Math.Max(0, n) : 0;
         int total = Count("total");
         return new(Text("step"), Math.Min(Count("completed"), total), total, Text("unit"));
     }
+
+    // The budget starts when this run begins. Previously spent uses and work
+    // that needs a future reset are not part of today's denominator.
+    public static DailyWorkProgress Allowance(int start, int current, int limit, string unit, int remaining = int.MaxValue)
+    {
+        int budget = Math.Max(0, limit - Math.Max(0, start));
+        int completed = (int)Math.Clamp((long)current - start, 0, budget);
+        int total = (int)Math.Min(budget, (long)completed + Math.Max(0, remaining));
+        return new("plan", completed, total, unit);
+    }
+    public JsonObject ToJson() => new() { ["step"] = Step, ["completed"] = Completed, ["total"] = Total, ["unit"] = Unit };
+    internal static IDisposable Observe(DailyManagedBusiness business, Action<JsonObject, JsonArray, JsonObject> observer)
+        => new Observation(business, observer);
+    private sealed class Observation : IDisposable
+    {
+        private readonly DailyManagedBusiness business;
+        private readonly Action<JsonObject, JsonArray, JsonObject> observer;
+        public Observation(DailyManagedBusiness business, Action<JsonObject, JsonArray, JsonObject> observer)
+        { this.business = business; this.observer = observer; business.WorkObserved += observer; }
+        public void Dispose() => business.WorkObserved -= observer;
+    }
+    internal static int Responses(JsonObject operation, JsonArray events, JsonObject after, string role)
+    {
+        if (operation["before"]?["Frame"] is not JsonObject before || after["Frame"] is not JsonObject frame
+            || !DailyEvidence.SameActor(before, frame)) return 0;
+        return events.OfType<JsonObject>().Where(e => DailyData.S(e["Role"]) == role && DailyData.S(e["Kind"]) == "response"
+            && DailyData.B(e["Accepted"]) && DailyData.N(e["Sequence"]) > 0
+            && e["Frame"] is JsonObject actor && DailyEvidence.SameActor(before, actor))
+            .Select(e => DailyData.N(e["Sequence"])).Distinct().Count();
+    }
+
+    // A handled stage is not necessarily a successful game objective. Keep
+    // business states, warnings and retry eligibility entirely independent.
+    public static bool Handled(QueueStage stage) => stage.State is "completed" or "skipped" or "partial" or "blocked" or "failed" or "error"
+        || stage.State == "recovery_required" && stage.FinishedAt.HasValue;
+    public static int Count(IReadOnlyList<QueueStage> stages) => stages.Count(s => s.State != "skipped");
+    public static int HandledCount(IReadOnlyList<QueueStage> stages) => stages.Count(s => s.State != "skipped" && Handled(s));
 
     // Coarse effort weights keep a multi-map journey from counting like one click.
     // These are not elapsed-time predictions. Only confirmed units advance a running stage.
@@ -28,9 +69,10 @@ public sealed record DailyWorkProgress(string Step, int Completed = 0, int Total
     public static double Percent(IReadOnlyList<QueueStage> stages)
     {
         if (stages.Count == 0) return 0;
-        if (stages.All(s => s.State is "completed" or "skipped")) return 100;
-        double done = stages.Sum(s => Weight(s.Task) * (s.State is "completed" or "skipped" ? 1d : s.Work?.Fraction ?? 0));
-        return Math.Min(99, 100 * done / stages.Sum(s => Weight(s.Task)));
+        var work = stages.Where(s => s.State != "skipped").ToArray();
+        if (work.All(Handled)) return 100;
+        double done = work.Sum(s => Weight(s.Task) * (Handled(s) ? 1d : (s.Work ?? s.RecordedWork)?.Fraction ?? 0));
+        return Math.Min(99, 100 * done / work.Sum(s => Weight(s.Task)));
     }
 
     public static string Operation(string role, JsonObject scope) => role switch

@@ -54,7 +54,7 @@ public sealed class DailyParallelPanel : ScrollViewer
         stop.IsEnabled=items.Any(x=>DailyParallelSession.Occupies(x.State)||x.State is "waiting" or "held");
         back.IsEnabled=!stop.IsEnabled;
         L.Bind(back,FrameworkElement.ToolTipProperty,back.IsEnabled?"parallel.return_help":"parallel.return_busy");
-        string key=string.Join("|",items.Select(x=>x.Job.Id+x.State+x.Detail+string.Join(',',x.Status?.Queue?.Stages.Select(s=>s.Task+s.State+DailyResultText.Detail(s)+s.Work+(s.PendingTasks?.Count??0))??[])))+selected+L.Code;
+        string key=string.Join("|",items.Select(x=>x.Job.Id+x.State+x.Detail+string.Join(',',x.Status?.Queue?.Stages.Select(s=>s.Task+s.State+DailyResultText.Detail(s)+s.Work+s.RecordedWork+(s.PendingTasks?.Count??0))??[])))+selected+L.Code;
         if(renderKey==key)return;renderKey=key;rows.Children.Clear();
         foreach(var item in items)AddRow(item);
     }
@@ -68,8 +68,8 @@ public sealed class DailyParallelPanel : ScrollViewer
                 if(item.Status is {} final && !DailyParallelSession.Occupies(item.State) && item.State is not ("waiting" or "held"))
         {state.Text += "  ·  " + final.AtUtc.LocalDateTime.ToString("HH:mm");state.ToolTip=final.AtUtc.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss");}
         header.Children.Add(title);header.Children.Add(state);body.Children.Add(header);
-        var stages=item.Status?.Queue?.Stages??[];int done=stages.Count(s=>s.State is "completed" or "skipped");
-        header.Children.Add(new ProgressBar { Width=52,Height=52,Style=(Style)Application.Current.FindResource("CircularProgress"),Minimum=0,Maximum=100,Value=DailyWorkProgress.Percent(stages),Margin=new(0,0,12,0),ToolTip=L.Get("run.work_progress_help",done,stages.Count) });
+        var stages=item.Status?.Queue?.Stages??[];int done=DailyWorkProgress.HandledCount(stages);
+        header.Children.Add(new ProgressBar { Width=52,Height=52,Style=(Style)Application.Current.FindResource("CircularProgress"),Minimum=0,Maximum=100,Value=DailyWorkProgress.Percent(stages),Margin=new(0,0,12,0),ToolTip=L.Get("run.work_progress_help",done,DailyWorkProgress.Count(stages)) });
         if (item.State == "running" && stages.FirstOrDefault(s => s.Work != null || s.State == "running") is { } current)
         {
             var live = new StackPanel { Margin=new(64,8,0,10) };

@@ -384,6 +384,16 @@ public static class DailyMirror
         }
         var rounds = new JsonArray();
         int initial = I(Tickets(await w.Evidence("mirror"))["free"]);
+        int settledUses = 0;
+        w.WorkUnits("battle", 0, initial, "tickets");
+        // Reuse the transaction's existing observations, including each battle
+        // inside a native batch. No extra polling and no change to settlement.
+        using var progress = DailyWorkProgress.Observe(w.Business, (op, events, after) =>
+        {
+            if (S(op["role"]) != "mirror.end") return;
+            int count = Math.Min(BatchCount(op), DailyWorkProgress.Responses(op, events, after, "mirror.end"));
+            w.WorkUnits("battle", settledUses + count * I(op["scope"]!["multiplier"]), initial, "tickets");
+        });
         if (initial > 0)
             await Enter(w);
         while (true)
@@ -403,6 +413,8 @@ public static class DailyMirror
             var after = Tickets(await w.Evidence("mirror"));
             Debit(before, after, total);
             rounds.Add(O(("cost", total), ("multiplier", cost), ("repetitions", repetitions), ("remaining_free", after["free"]), ("receipt", op["id"])));
+            settledUses += total;
+            w.WorkUnits("verify", settledUses, initial, "tickets");
             Require(rounds.Count <= initial, "Mirror free budget unexpectedly increased");
             await Cleanup(w, N(after["free"]) > 0);
         }

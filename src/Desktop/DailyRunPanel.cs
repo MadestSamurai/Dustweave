@@ -591,8 +591,8 @@ public sealed partial class DailyRunPanel : UserControl
 
         if (hasReport)
         {
-            int done = currentView.Stages.Count(s => s.State is "completed" or "skipped");
-            L.Text(counts, currentView.Account != activeAccount ? "run.other_count" : "run.complete_count", done, currentView.Stages.Count);
+            int done = DailyWorkProgress.HandledCount(currentView.Stages);
+            L.Text(counts, currentView.Account != activeAccount ? "run.other_count" : "run.complete_count", done, DailyWorkProgress.Count(currentView.Stages));
         }
         choices.Visibility = !isBusy && (!showingReport || hasReport && !currentView.Expired) ? Visibility.Visible : Visibility.Collapsed;
         foreach (var r in rows)
@@ -619,7 +619,7 @@ public sealed partial class DailyRunPanel : UserControl
         public string Name => L.Stage(Task);
         public string State => L.State(snapshot.Work != null ? "running" : snapshot.State);
         public string AccessibleName => Name + " · " + State + (HasFinishedTime ? " · " + FinishedTimeHelp : "");
-        public bool HasFinishedTime => snapshot.State is ("completed" or "skipped") && snapshot.FinishedAt.HasValue;
+        public bool HasFinishedTime => DailyWorkProgress.Handled(snapshot) && snapshot.FinishedAt.HasValue;
         public string FinishedTime => HasFinishedTime ? snapshot.FinishedAt!.Value.ToLocalTime().ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture) : "";
         public string FinishedTimeHelp => HasFinishedTime ? L.Get("run.finished_at", snapshot.FinishedAt!.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss zzz", System.Globalization.CultureInfo.InvariantCulture)) : "";
         public string Detail
@@ -750,11 +750,12 @@ public sealed partial class DailyRunPanel : UserControl
     {
         // A stopped or historical view must never advertise a live operation.
         if (!isBusy || view.State != "running" || view.Expired)
-            view = view with { Stages = view.Stages.Select(s => s with { Work = null }).ToArray() };
-        L.Bind(status, TextBlock.TextProperty, () => L.State(view.State));
+            view = view with { Stages = view.Stages.Select(s => s with { RecordedWork = s.Work ?? s.RecordedWork, Work = null }).ToArray() };
+        bool handled = view.Stages.Count > 0 && view.Stages.All(DailyWorkProgress.Handled);
+        L.Bind(status, TextBlock.TextProperty, () => view.State == "partial" && handled ? L.Get("run.handled") : L.State(view.State));
 
         string message = view.Message.Contains("无法保存执行记录") || (view.Message.Contains("WinError 5") && view.Message.Contains("result.json")) ? "执行进度文件保存失败。可在下方勾选未完成环节补跑；完整错误见执行记录。" : view.Message;
-        L.Bind(detail, TextBlock.TextProperty, () => message.Length > 0 ? Describe(message) : view.State == "running" ? "" : L.Get(view.State == "completed" ? "run.finished" : view.State == "partial" ? "run.partial" : "run.stop_hint"));
+        L.Bind(detail, TextBlock.TextProperty, () => message.Length > 0 ? Describe(message) : view.State == "running" ? "" : L.Get(view.State == "completed" ? "run.finished" : view.State == "partial" ? handled ? "run.partial" : "run.unhandled" : "run.stop_hint"));
         L.Bind(detail, FrameworkElement.ToolTipProperty, () => L.Diagnostic(view.Message, detail.Text));
         // Preparing/connection errors keep the last readable report on screen.
         if (view.Record.Length > 0 && view.Stages.Count > 0)
@@ -763,11 +764,11 @@ public sealed partial class DailyRunPanel : UserControl
             showingReport = true;
             rowsAreReport = true;
             currentView = view;
-            int done = view.Stages.Count(s => s.State is "completed" or "skipped");
-            L.Text(counts, "run.complete_count", done, view.Stages.Count);
+            int done = DailyWorkProgress.HandledCount(view.Stages);
+            L.Text(counts, "run.complete_count", done, DailyWorkProgress.Count(view.Stages));
             progress.Maximum = 100;
             progress.Value = DailyWorkProgress.Percent(view.Stages);
-            L.Bind(progress, FrameworkElement.ToolTipProperty, () => L.Get("run.work_progress_help", done, view.Stages.Count));
+            L.Bind(progress, FrameworkElement.ToolTipProperty, () => L.Get("run.work_progress_help", done, DailyWorkProgress.Count(view.Stages)));
             if (!same || !rows.Select(r => r.Task).SequenceEqual(view.Stages.Select(r => r.Task)))
             {
                 rows.Clear();

@@ -1,5 +1,15 @@
 # Changelog / 更新记录
 
+## 1.4.11 — 2026-10-20
+
+- 调整新队列：先领取日常／周常／通行证奖励和活动奖励，再合并执行周收集、周 NPC 与偷窃，随后跑商，最后领取邮箱。
+- 日常进度按今天可执行的次数细分，已处理环节计入执行进度，暂缓和失败仍单独说明；暂停与跨窗口恢复保留已确认进度。
+- 修复偷窃记录混入其他天赋回执导致反复“已暂停”的问题，无法判定的旧记录不会让整个核对流程异常退出。
+- 自定义料理及材料名称跟随软件语言，使用游戏当前名称，支持跨语言搜索。
+- 更新提醒不再阻挡定时日常；到点先执行队列，实际安装仍需空闲并由用户确认。
+- Reorders rewards before weekly field tasks and trading, shows today's executable progress, fixes interrupted theft recovery and localized recipe names, and prevents update notices from blocking scheduled runs.
+- [完整说明 / Full notes](docs/releases/1.4.11.md)
+
 ## 1.4.10 — 2026-10-20
 
 - 新增默认关闭的实验性快速赶路，日常步行按需使用飞奔，遵守天赋药下限。

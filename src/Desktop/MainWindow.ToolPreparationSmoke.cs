@@ -9,19 +9,25 @@ namespace Dustweave.Desktop;
 
 public partial class MainWindow
 {
-    async Task CheckToolPreparationForSmoke()
+    async Task CheckCookingForSmoke()
     {
-        L.Audit();
-        var checks=new List<string>();
-        void Check(bool value,string message){if(!value)throw new Exception(message);checks.Add(message);}
-        var recipeCatalog=System.Text.Json.Nodes.JsonNode.Parse("""{"items":[{"id":1,"name":"苹果 / Apple"},{"id":2,"name":"蜂蜜 / Honey"},{"id":10,"name":"蜂蜜烤苹果 / Honey apple"},{"id":11,"name":"蜂蜜杏仁 / Honey almond"},{"id":12,"name":"三角饭团 / Rice ball"}],"recipes":[{"id":1,"output":10,"materials":{"1":2,"2":1}},{"id":2,"output":11,"materials":{"2":3}},{"id":3,"output":12,"materials":{"1":1}}]}""")!.AsObject();
+        var recipeCatalog=System.Text.Json.Nodes.JsonNode.Parse("""{"cooking_items":[{"id":1,"name":"苹果","name_tw":"蘋果","name_en":"Apple"},{"id":2,"name":"蜂蜜","name_tw":"蜂蜜","name_en":"Honey"},{"id":10,"name":"烤蜂蜜苹果","name_tw":"烤蜂蜜蘋果","name_en":"Baked Honey Apple"},{"id":11,"name":"蜂蜜黄油杏仁","name_tw":"蜂蜜奶油杏仁","name_en":"Honey Butter Almond"},{"id":12,"name":"三角美乃滋饭团","name_tw":"三角美乃滋飯糰","name_en":"Triangle Mayo Rice Ball"}],"cooking_recipes":[{"id":1,"output":10,"materials":{"1":2,"2":1}},{"id":2,"output":11,"materials":{"2":3}},{"id":3,"output":12,"materials":{"1":1}}]}""")!.AsObject();
         foreach(string locale in new[]{"zh-CN","zh-TW","en-US"}) foreach(string appearance in new[]{"light","dark"})
         {
             L.Select(locale);theme.Select(appearance=="light"?DailyAppearance.Light:DailyAppearance.Dark);
             var dialog=new DailyCookingWindow([2,1],recipeCatalog){Owner=this,ShowActivated=false,ShowInTaskbar=false};
             DailyDialogs.Prepare(dialog);dialog.Show();await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
-            dialog.VerifyForSmoke();Capture($"custom-cooking-{locale}-{appearance}",(FrameworkElement)dialog.Content);dialog.Close();
+            dialog.VerifyForSmoke(locale switch { "en-US" => "Honey Butter Almond", "zh-TW" => "蜂蜜奶油杏仁", _ => "蜂蜜黄油杏仁" },
+                locale == "en-US" ? "Honey ×3" : "蜂蜜 ×3");
+            Capture($"custom-cooking-{locale}-{appearance}",(FrameworkElement)dialog.Content);dialog.Close();
         }
+    }
+    async Task CheckToolPreparationForSmoke()
+    {
+        L.Audit();
+        var checks=new List<string>();
+        void Check(bool value,string message){if(!value)throw new Exception(message);checks.Add(message);}
+        await CheckCookingForSmoke();
         async Task Until(Func<bool> predicate){for(int i=0;i<100&&!predicate();i++)await Task.Delay(25);Check(predicate(),"bounded UI preparation completed");}
         var equipment=Assembly.Load("BD2EquipmentAssistant").GetType("BD2Equipment.MainWindow")!;
         var gacha=Assembly.Load("BD2InfiniteGacha");

@@ -369,8 +369,13 @@ public sealed partial class DailyFieldRoute
         {
             var scope = op["scope"]!;
             var before = op["before"]!.AsObject();
-            var result = Response("dispatch.start", es, before, after)!;
-            var info = result["TalentNpcInfo"]!;
+            var selected = DailyFieldTalentProof.MatchingSkillEvents(op, es);
+            Require(selected.Count > 0, "尚未收到所选偷窃技能的回执；其他天赋或自动派遣的结果不计入本次偷窃。");
+            var result = Response("dispatch.start", selected, before, after)!;
+            Require(N(result["TalentSkillInfo"]?["groupId"]) == N(scope["group"]), "天赋回执不属于所选偷窃技能，尚未确认本次偷窃结果。");
+            var info = result["TalentNpcInfo"] as JsonObject
+                ?? throw new InvalidDataException("偷窃回执缺少NPC结果；保留记录，再次执行将按游戏当前偷窃进度重新检查。");
+            Require(result["IsSuccess"] is JsonValue success && success.TryGetValue<bool>(out _), "偷窃回执缺少成功状态。");
             Require(N(info["npcId"]) == N(scope["npc"]) && N(info["groupId"]) == N(scope["group"]) && N(info["endTime"]) > N(scope["server_now"]), "偷窃回执与NPC、技能或冷却不一致");
             foreach (var e in new[] { before, after })
                 Require(N(Map(e)["id"]) == N(scope["map"]) && S(R(e, "mainline.reset", "GetWeeklyResetTime().Ticks")) == S(scope["week"]), "偷窃地图或周周期改变");

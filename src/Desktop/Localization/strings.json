@@ -10,9 +10,24 @@
     "en-US": "Preparing component · continues automatically"
   },
   "run.work_progress_help": {
-    "zh-CN": "已结束 {0}/{1} 个环节。百分比按环节工作量估算，长任务按已核对数量推进，不代表剩余时间。",
-    "zh-TW": "已結束 {0}/{1} 個環節。百分比按環節工作量估算，長任務按已核對數量推進，不代表剩餘時間。",
-    "en-US": "{0}/{1} tasks finished. Progress is weighted by task workload and confirmed units; it is not a time estimate."
+    "zh-CN": "已处理 {0}/{1} 个环节，跳过项不计入。进度按本轮可用次数和工作量计算；100%表示本轮已处理完，未完成目标和异常仍会列出。",
+    "zh-TW": "已處理 {0}/{1} 個環節，跳過項不計入。進度按本輪可用次數與工作量計算；100%表示本輪已處理完，未完成目標與異常仍會列出。",
+    "en-US": "{0}/{1} tasks handled; skipped tasks are excluded. Progress uses this run’s available allowance and workload. 100% means the run is finished; unmet goals and issues are still reported."
+  },
+  "work.absorptions": {
+    "zh-CN": "本轮吸收 {0}/{1} 次",
+    "zh-TW": "本輪吸收 {0}/{1} 次",
+    "en-US": "{0}/{1} absorptions this run"
+  },
+  "work.tickets": {
+    "zh-CN": "本轮免费次数已用 {0}/{1}",
+    "zh-TW": "本輪免費次數已用 {0}/{1}",
+    "en-US": "{0}/{1} uses spent this run"
+  },
+  "work.potatoes": {
+    "zh-CN": "本轮土豆已种收 {0}/{1} 轮",
+    "zh-TW": "本輪土豆已種收 {0}/{1} 輪",
+    "en-US": "{0}/{1} potato rounds planted and harvested this run"
   },
   "work.maps": {
     "zh-CN": "已核对 {0}/{1} 张地图",
@@ -2315,14 +2330,14 @@
     "en-US": "{0} of {1} tasks selected"
   },
   "run.complete_count": {
-    "zh-CN": "{0} / {1} 环节完成",
-    "zh-TW": "{0} / {1} 環節完成",
-    "en-US": "{0} of {1} tasks complete"
+    "zh-CN": "已处理 {0} / {1} 个环节",
+    "zh-TW": "已處理 {0} / {1} 個環節",
+    "en-US": "{0} of {1} tasks handled"
   },
   "run.other_count": {
-    "zh-CN": "{0} / {1} 环节完成 · 其他账号记录",
-    "zh-TW": "{0} / {1} 環節完成 · 其他帳號紀錄",
-    "en-US": "{0} of {1} tasks complete · Another account"
+    "zh-CN": "已处理 {0} / {1} 个环节 · 其他账号记录",
+    "zh-TW": "已處理 {0} / {1} 個環節 · 其他帳號紀錄",
+    "en-US": "{0} of {1} tasks handled · Another account"
   },
   "run.select_all": {
     "zh-CN": "全选",
@@ -2405,9 +2420,19 @@
     "en-US": "Selected tasks are complete."
   },
   "run.partial": {
-    "zh-CN": "已完成可执行环节；请查看下方未完成原因。",
-    "zh-TW": "已完成可執行環節；請查看下方未完成原因。",
-    "en-US": "Available tasks are complete. See unfinished tasks below for details."
+    "zh-CN": "本轮已处理完；仍有未完成目标或异常，请查看下方说明。",
+    "zh-TW": "本輪已處理完；仍有未完成目標或異常，請查看下方說明。",
+    "en-US": "This run has finished. See below for unmet goals or issues."
+  },
+  "run.handled": {
+    "zh-CN": "本轮已结束",
+    "zh-TW": "本輪已結束",
+    "en-US": "Run finished"
+  },
+  "run.unhandled": {
+    "zh-CN": "本轮尚未处理完；已保留进度，请查看下方说明后继续。",
+    "zh-TW": "本輪尚未處理完；已保留進度，請查看下方說明後繼續。",
+    "en-US": "This run is unfinished. Progress is saved; see below before continuing."
   },
   "run.stop_hint": {
     "zh-CN": "停止会阻止后续操作；已发送的请求会先记录结算。",
@@ -4638,6 +4663,26 @@
     "zh-TW": "新版本 {0} 已下載並驗證。現在重新啟動 Dustweave 完成更新嗎？遊戲不會重新啟動，帳號與設定會保留。",
     "en-US": "Version {0} is downloaded and verified. Restart Dustweave to update now? The game stays open; accounts and settings are preserved.",
     "zh-CN": "新版本 {0} 已下载并校验。现在重启 Dustweave 完成更新吗？游戏不会被重启，账号和设置会保留。"
+  },
+  "updates.title": {
+    "zh-CN": "软件更新",
+    "zh-TW": "軟體更新",
+    "en-US": "Software update"
+  },
+  "updates.later": {
+    "zh-CN": "稍后更新",
+    "zh-TW": "稍後更新",
+    "en-US": "Update later"
+  },
+  "updates.nonblocking": {
+    "zh-CN": "定时任务会照常执行。任务结束后，可在版本更新页面重启更新。",
+    "zh-TW": "定時任務會照常執行。任務結束後，可在版本更新頁面重新啟動更新。",
+    "en-US": "Scheduled tasks will run as usual. After they finish, you can restart from the Updates page."
+  },
+  "updates.schedule_first": {
+    "zh-CN": "定时任务已到点，优先执行任务。结束后可重启更新。",
+    "zh-TW": "定時任務已到時間，優先執行任務。結束後可重新啟動更新。",
+    "en-US": "A scheduled run is due and takes priority. You can restart to update after it finishes."
   },
   "updates.whats_new": {
     "zh-TW": "{0} 有哪些更新",

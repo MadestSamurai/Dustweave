@@ -33,10 +33,9 @@ public static class DailyTradeCatalog
         foreach (var pair in tables)
             if (manifest["tables"]?[pair.Key]?.GetValue<int>() != pair.Value.Count)
                 throw new InvalidDataException("跑商导出覆盖不完整：" + pair.Key);
-        var names = tables["NameTextTable"].ToDictionary(r => I(r!, "id"), r => r!["textCn"]!.GetValue<string>());
+        var names = tables["NameTextTable"].ToDictionary(r => I(r!, "id"), r => DailyDisplayName.From(r!.AsObject()));
         var food = tables["FoodTable"].ToDictionary(r => I(r!, "id"), r => r!);
         var shops = tables["ShopTable"].Select(r => I(r!, "id")).ToHashSet();
-        var aliases = new Dictionary<int, string> { { 1003, "淡水虾" }, { 1055, "闪烁的粉末" }, { 3003, "闪耀西班牙蒜味虾" }, { 3024, "橄榄油意大利面" } };
         var items = new List<JsonObject>();
         foreach (var node in tables["SellItemTable"])
         {
@@ -50,7 +49,7 @@ public static class DailyTradeCatalog
             items.Add(new()
             {
                 ["id"] = id,
-                ["name"] = aliases.GetValueOrDefault(id, names[I(f, "itemNameTextId")]),
+                ["name"] = names[I(f, "itemNameTextId")].Cn,
                 ["sale"] = checked(I(r, "priceCount") * 120) / 100,
                 ["stack"] = I(f, "stackCount"),
                 ["day"] = I(r, "highPremiumDay"),
@@ -168,8 +167,11 @@ public static class DailyTradeCatalog
             ["assembly_sha256"] = manifest["assemblySha256"]!.DeepClone(),
             ["source_hashes"] = hashes,
             ["cooking_recipes"] = cookingRecipes,
-            ["cooking_items"] = new JsonArray(food.OrderBy(p => p.Key).Select(p => (JsonNode)new JsonObject {
-                ["id"] = p.Key, ["name"] = aliases.GetValueOrDefault(p.Key, names[I(p.Value, "itemNameTextId")]), ["stack"] = I(p.Value, "stackCount") }).ToArray()),
+            ["cooking_items"] = new JsonArray(food.OrderBy(p => p.Key).Select(p => {
+                var name = names[I(p.Value, "itemNameTextId")];
+                return (JsonNode)new JsonObject { ["id"] = p.Key, ["name"] = name.Cn,
+                    ["name_tw"] = name.Tw, ["name_en"] = name.En, ["stack"] = I(p.Value, "stackCount") };
+            }).ToArray()),
             ["items"] = new JsonArray(items.OrderBy(r => I(r, "id")).Select(r => (JsonNode)r).ToArray()),
             ["offers"] = new JsonArray(offers.OrderBy(r => I(r, "shop")).ThenBy(r => I(r, "product")).Select(r => (JsonNode)r).ToArray()),
             ["recipes"] = new JsonArray(recipes.OrderBy(r => I(r, "id")).Select(r => (JsonNode)r).ToArray())

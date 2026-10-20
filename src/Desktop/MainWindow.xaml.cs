@@ -877,6 +877,12 @@ public partial class MainWindow : Window
                 DailyJson.Write(Path.Combine(smoke!,"smoke.json"),new{status="passed",scope="tool-preparation",languages=3,themes=2,realGameTouched=false});
                 Application.Current.Shutdown();return;
             }
+            if(Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE")=="cooking")
+            {
+                await CheckCookingForSmoke();
+                DailyJson.Write(Path.Combine(smoke!,"smoke.json"),new{status="passed",scope="cooking",languages=3,themes=2,realGameTouched=false});
+                Application.Current.Shutdown();return;
+            }
             if(Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE")=="run-report")
             {
                 await CheckRunReportForSmoke();

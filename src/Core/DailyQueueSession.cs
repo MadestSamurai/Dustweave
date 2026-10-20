@@ -5,6 +5,9 @@ namespace Dustweave;
 public sealed record QueueStage(string Task, string State, string Detail, bool Carried = false, DateTimeOffset? FinishedAt = null, IReadOnlyList<QueueTaskDetail>? PendingTasks = null)
 {
     public DailyWorkProgress? Work { get; init; }
+    // Retain confirmed units when paused/history is shown, without displaying a
+    // live operation or granting any authority to resume an old transaction.
+    public DailyWorkProgress? RecordedWork { get; init; }
     public IReadOnlyList<QueueRecoveryDetail> Recovery { get; init; } = [];
     public DailyDrawSummary? Draws { get; init; }
     public DailyAbsorptionDay? Absorptions { get; init; }
@@ -223,7 +226,8 @@ public sealed class DailyQueueSession(string root, IDailyQueueExecutor executor,
           ReadStageDetail(i), i.TryGetProperty("carried_forward", out var carried) && carried.ValueKind == JsonValueKind.True, ReadFinishedAt(i), DailyPendingTasks.Read(i)) {
               Recovery = QueueRecoveryDetail.Read(i), Draws = DailyDrawSummary.Read(i),
               Absorptions = i.GetProperty("task").GetString() == "weekly_mainline" ? absorptions : null,
-              HasNotice = DailyRunReport.HasNotice(i), Locations = DailyLocationLabels.Read(i), Work = DailyWorkProgress.Read(i, state)
+              HasNotice = DailyRunReport.HasNotice(i), Locations = DailyLocationLabels.Read(i), Work = DailyWorkProgress.Read(i, state),
+              RecordedWork = DailyWorkProgress.ReadRecorded(i)
           }).ToArray();
         var period = DailyQueuePeriod.Read(value);
         bool expired = DailyQueuePeriod.IsExpired(period, DailyQueuePeriod.Snapshot(root, period?.Server ?? ""), now);

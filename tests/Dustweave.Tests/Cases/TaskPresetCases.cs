@@ -10,6 +10,21 @@ static class TaskPresetCases
         void Reject(Action action, string name) { try { action(); } catch (InvalidDataException) { cases.Add(name); return; } throw new Exception(name); }
         var preferences = new DailyPreferences();
         {
+            string legacyRoot = Path.Combine(output, "reward-order-presets"), id = Guid.NewGuid().ToString("N");
+            string[] oldOrder = ["weekly_mainline", "weekly_npc", "weekly_steal", "trade", "event_rewards", "rewards", "mail"];
+            string[] newOrder = ["rewards", "event_rewards", "weekly_mainline", "weekly_npc", "weekly_steal", "trade", "mail"];
+            DailyJson.Write(Path.Combine(legacyRoot, "task-presets.json"),
+                new DailyTaskPresetData(1, [new(id, "Saved before reordering", oldOrder)], new() { [a] = id, [b] = id }));
+            var selectionPrefs = new DailyPreferences { Weekly = new() { Mainline = true, Npc = true, Steal = true }, Trade = new() { Enabled = true } };
+            var legacy = new DailyTaskPresetStore(legacyRoot);
+            Check(new QueuePlanRequest(a, oldOrder).Validate(a, selectionPrefs).SequenceEqual(newOrder),
+                "single-account selection applies supply-first order regardless of old click order");
+            Check(legacy.Selection(a, selectionPrefs)!.Tasks.SequenceEqual(newOrder)
+                && legacy.Selection(b, selectionPrefs)!.Tasks.SequenceEqual(newOrder)
+                && legacy.Read().Presets.Single().Tasks.SequenceEqual(oldOrder),
+                "both account presets use the new order without rewriting saved selections or completion records");
+        }
+        {
             string legacyRoot = Path.Combine(output, "retired-presets"), oldId = Guid.NewGuid().ToString("N"), onlyId = Guid.NewGuid().ToString("N");
             DailyJson.Write(Path.Combine(legacyRoot, "task-presets.json"), new DailyTaskPresetData(1,
                 [new(oldId, "Old daily", ["monster_hunt", "mail"]), new(onlyId, "Old boss only", ["monster_hunt"])], new() { [a] = oldId, [b] = onlyId }));

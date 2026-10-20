@@ -25,13 +25,13 @@ static class TradeDataCases
         var fixtures = new Dictionary<string, string>
         {
             ["CookingTable"] = "[{\"id\":1,\"resultItemId\":2,\"resultItemCount\":1,\"talentLevel\":1,\"materialItemId\":[1],\"materialItemCount\":[2]}]",
-            ["FoodTable"] = "[{\"id\":1,\"itemNameTextId\":1,\"stackCount\":999},{\"id\":2,\"itemNameTextId\":2,\"stackCount\":999}]",
+            ["FoodTable"] = "[{\"id\":1,\"itemNameTextId\":1,\"stackCount\":999},{\"id\":2,\"itemNameTextId\":2,\"stackCount\":999},{\"id\":3003,\"itemNameTextId\":3,\"stackCount\":999},{\"id\":3024,\"itemNameTextId\":4,\"stackCount\":999}]",
             ["ProductTable"] = "[{\"id\":1,\"groupId\":1,\"elementId\":1,\"elementType\":5,\"elementCount\":1,\"priceType\":4,\"priceCount\":100,\"buyMaxCount\":100,\"noBargain\":0,\"reputationType\":0,\"discountRate\":0,\"premiumRate\":0}]",
             ["SellItemTable"] = "[{\"id\":1,\"elementId\":1,\"elementType\":5,\"elementCount\":1,\"priceType\":4,\"priceCount\":100,\"highPremiumDay\":1,\"highPremiumRate\":20,\"highPremiumshopId\":1},{\"id\":2,\"elementId\":2,\"elementType\":5,\"elementCount\":1,\"priceType\":4,\"priceCount\":300,\"highPremiumDay\":2,\"highPremiumRate\":20,\"highPremiumshopId\":1}]",
             ["ShopTable"] = "[{\"id\":1}]",
             ["TalentSkillTable"] = "[{\"id\":1,\"groupId\":11,\"classType\":7,\"catalystValue\":3,\"valueList\":[100,60]}]",
             ["TalentTable"] = "[{\"id\":11,\"classType\":7,\"talentSkillGroupId\":11}]",
-            ["NameTextTable"] = "[{\"id\":1,\"textCn\":\"原料😀\"},{\"id\":2,\"textCn\":\"料理\"}]",
+            ["NameTextTable"] = """[{"id":1,"textCn":"原料😀","textTw":"材料😀","textEn":"Ingredient😀"},{"id":2,"textCn":"料理","textTw":"繁中料理","textEn":"Dish"},{"id":3,"textCn":"当前料理甲","textTw":"目前料理甲","textEn":"Current dish A"},{"id":4,"textCn":"当前料理乙"}]""",
             ["CharTable"] = "[{\"id\":100,\"talentId\":11}]"
         };
         var counts = new JsonObject();
@@ -46,6 +46,17 @@ static class TradeDataCases
         var original = DailyTradeCatalog.Build(folder, client);
         Check(original["items"]!.AsArray().Count == 2 && original["offers"]!.AsArray().Count == 1 && original["recipes"]![0]!["potions"]!.GetValue<int>() == 3 && original["characters"]!["100"]!["kind"]!.GetValue<int>() == 7, ".NET trade catalog includes complete formulas and character talents");
         Check(original["items"]![0]!["sale"]!.GetValue<int>() == 120 && original["items"]![0]!["name"]!.GetValue<string>() == "原料😀", ".NET trade catalog preserves integer valuation and Unicode");
+        var cookingItems = DailyCustomCooking.Items(original).ToDictionary(r => r["id"]!.GetValue<int>());
+        Check(cookingItems[3003]["name"]!.GetValue<string>() == "当前料理甲" && cookingItems[3024]["name"]!.GetValue<string>() == "当前料理乙",
+            "custom recipe names use game text rather than historical aliases");
+        foreach (var (language, dish, ingredient) in new[] { ("zh-CN", "料理", "原料😀"), ("zh-TW", "繁中料理", "材料😀"), ("en-US", "Dish", "Ingredient😀") })
+        {
+            var choice = DailyCustomCooking.Choices(original, language).Single();
+            Check(choice.Id == 1 && choice.Name == dish && choice.Materials == ingredient + " ×2",
+                "exported recipe and ingredient names match game locale " + language);
+            Check(choice.SearchText.Contains("繁中料理") && choice.SearchText.Contains("Dish") && choice.SearchText.Contains("原料😀"),
+                "custom recipe search retains other official locales in " + language);
+        }
         string canonical = "{\"a\":1,\"z\":\"中文😀\"}";
         string expected = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(canonical))).ToLowerInvariant();
         Check(DailyTradeCatalog.Fingerprint(new JsonObject { ["z"] = "中文😀", ["a"] = 1 }) == expected, "trade catalog fingerprint retains the original canonical Unicode protocol");

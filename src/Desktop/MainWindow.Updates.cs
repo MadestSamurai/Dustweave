@@ -84,6 +84,7 @@ public partial class MainWindow
     private readonly DailyUpdatePanel updatePanel = new();
     private readonly CancellationTokenSource updateLifetime = new();
     private bool updateChecking, updateInstalling, updatePromptShown, releaseDialogOpen;
+    private Window? updateNotice;
     private DailyUpdateJob? readyUpdate;
     private string? manualUpdateVersion, manualUpdateReason;
     private DateTime nextUpdateCheck = DateTime.UtcNow.AddHours(6);
@@ -101,14 +102,20 @@ public partial class MainWindow
     private void ShowReleaseNotes()
     {
         if (smoke != null || !DailyReleaseHistory.ShouldShow(root, DailyProductVersion.Current) || Unavailable) return;
-        // Scheduled starts show notes when the run has finished, never in front of the queue.
-        releaseDialogOpen = true;
-        try
-        {
-            DailyDialogs.ShowModal(CreateReleaseNotesWindow());
-        }
-        finally { releaseDialogOpen = false; }
+        ShowUpdateNotice(CreateReleaseNotesWindow());
     }
+    private void ShowUpdateNotice(Window dialog)
+    {
+        // Informational updates must never occupy the queue or enter a nested modal loop.
+        CloseUpdateNotice();
+        updateNotice = dialog;
+        dialog.ShowActivated = false;
+        dialog.ShowInTaskbar = false;
+        dialog.Closed += (_, _) => { if (ReferenceEquals(updateNotice, dialog)) updateNotice = null; };
+        DailyDialogs.Prepare(dialog);
+        dialog.Show();
+    }
+    private void CloseUpdateNotice() => updateNotice?.Close();
     private Window CreateReleaseNotesWindow()
     {
             var panel = new StackPanel { Margin = new(24) };
@@ -167,14 +174,29 @@ public partial class MainWindow
     }
     private void UpdateUpdateControls() => updatePanel.Busy(updateChecking, readyUpdate != null, Unavailable || updateInstalling || scheduleChecking);
     private sealed record ManualUpdateNotice(string Version);
-    private async Task OfferUpdateAsync()
+    private Task OfferUpdateAsync()
     {
-        if (IsSandboxWindow || smoke != null || updateChecking || updatePromptShown || Unavailable || scheduleChecking || releaseDialogOpen || DailyDialogs.ModalDepth > 0 || updateInstalling) return;
+        OfferUpdateNotice();
+        return Task.CompletedTask;
+    }
+    private void OfferUpdateNotice()
+    {
+        if (IsSandboxWindow || smoke != null || finalClose || updateChecking || updatePromptShown || Unavailable || scheduleChecking || releaseDialogOpen || DailyDialogs.ModalDepth > 0 || updateInstalling) return;
+        if (manualUpdateVersion == null && readyUpdate == null || HasPendingScheduledRun(DateTimeOffset.UtcNow)) return;
         if (manualUpdateVersion != null)
         {
             string seen = Path.Combine(root, "updates", "manual-notice.json");
             if (DailyJson.TryRead<ManualUpdateNotice>(seen)?.Version == manualUpdateVersion) return;
             DailyJson.Write(seen, new ManualUpdateNotice(manualUpdateVersion));
+            ShowUpdateNotice(CreateManualUpdateWindow());
+            return;
+        }
+        if (readyUpdate == null) return;
+        updatePromptShown = true;
+        ShowUpdateNotice(CreateUpdateReadyWindow(readyUpdate.Release.Version));
+    }
+    private Window CreateManualUpdateWindow()
+    {
             var panel = new StackPanel { Margin = new(24) };
             var text = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 0, 0, 20) };
             L.Text(text, manualUpdateReason ?? "updates.manual_layout"); panel.Children.Add(text);
@@ -183,15 +205,43 @@ public partial class MainWindow
             L.Bind(button, ContentControl.ContentProperty, "updates.got_it"); panel.Children.Add(button);
             var dialog = new Window { Owner = this, Width = 560, SizeToContent = SizeToContent.Height, ResizeMode = ResizeMode.NoResize, WindowStartupLocation = WindowStartupLocation.CenterOwner, Content = panel };
             L.Bind(dialog, Window.TitleProperty, "updates.manual_title"); button.Click += (_, _) => dialog.Close();
-            DailyDialogs.Prepare(dialog); DailyDialogs.ShowModal(dialog); return;
-        }
-        if (readyUpdate == null) return;
-        updatePromptShown = true;
-        if (Confirm(L.Get("updates.confirm", readyUpdate.Release.Version))) await InstallUpdateAsync();
+            DailyDialogs.Prepare(dialog); return dialog;
+    }
+    private Window CreateUpdateReadyWindow(string version)
+    {
+        var panel = new StackPanel { Margin = new(24) };
+        var text = new TextBlock { TextWrapping = TextWrapping.Wrap };
+        L.Text(text, "updates.confirm", version); panel.Children.Add(text);
+        var hint = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 12, 0, 0) };
+        L.Text(hint, "updates.nonblocking"); hint.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk"); panel.Children.Add(hint);
+        var actions = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Right, Margin = new(0, 24, 0, 0) };
+        var later = new Button { IsDefault = true, Margin = new(0, 0, 10, 0) };
+        var install = new Button { Style = (Style)FindResource("PrimaryButton") };
+        L.Bind(later, ContentControl.ContentProperty, "updates.later"); L.Bind(install, ContentControl.ContentProperty, "updates.install");
+        actions.Children.Add(later); actions.Children.Add(install); panel.Children.Add(actions);
+        var dialog = new Window { Owner = this, Width = 560, MaxHeight = Math.Max(300, SystemParameters.WorkArea.Height - 80), SizeToContent = SizeToContent.Height, ResizeMode = ResizeMode.NoResize, WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto } };
+        L.Bind(dialog, Window.TitleProperty, "updates.title");
+        later.Click += (_, _) => dialog.Close();
+        install.Click += async (_, _) =>
+        {
+            dialog.Close();
+            // A background check may have replaced the version named in this notice.
+            if (readyUpdate?.Release.Version == version) await InstallUpdateAsync();
+        };
+        DailyDialogs.Prepare(dialog); return dialog;
     }
     private async Task InstallUpdateAsync()
     {
         if (IsSandboxWindow || smoke != null || readyUpdate == null || Unavailable || scheduleChecking || updateInstalling || !preferencesPanel.SavePending()) return;
+        // A click just before the next timer tick must not let installation overtake a due run.
+        if (HasPendingScheduledRun(DateTimeOffset.UtcNow))
+        {
+            updatePanel.Status("updates.schedule_first");
+            nextScheduleCheck = DateTime.MinValue;
+            await CheckScheduleAsync();
+            return;
+        }
         string helperSource = Path.Combine(AppContext.BaseDirectory, "support", "Dustweave.Updater.exe");
         if (DailyJson.TryRead<DailyUpdatePackage>(Path.Combine(DailyUpdateHost.InstallRoot, "update-package.json"))?.Layout != DailyUpdates.CurrentLayout || !File.Exists(helperSource)) { updatePanel.Status("updates.packaged_only"); return; }
         updateInstalling = true; UpdateUpdateControls();

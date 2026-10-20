@@ -2,11 +2,28 @@ using System.Text.Json.Nodes;
 using static Dustweave.DailyData;
 namespace Dustweave;
 
+public sealed record DailyCookingChoice(long Id, string Name, string Materials, string SearchText);
+
 /// <summary>Ordered, inventory-only cooking. No future purchases or sale assumptions.</summary>
 public static class DailyCustomCooking
 {
     public static JsonObject[] Recipes(JsonObject catalog) => Rows(catalog["cooking_recipes"] ?? catalog["recipes"]);
     public static JsonObject[] Items(JsonObject catalog) => Rows(catalog["cooking_items"] ?? catalog["items"]);
+    // Display projection only: recipe IDs and ingredient quantities stay independent
+    // of language, filtering and the user's chosen cooking order.
+    public static DailyCookingChoice[] Choices(JsonObject catalog, string language)
+    {
+        var names = Items(catalog).ToDictionary(r => N(r["id"]),
+            r => new DailyDisplayName(S(r["name"]), S(r["name_tw"]), S(r["name_en"])));
+        DailyDisplayName Name(long id) => names.GetValueOrDefault(id) ?? new("#" + id, "", "");
+        return Recipes(catalog).Select(r => {
+            var name = Name(N(r["output"]));
+            var materials = r["materials"]!.AsObject().Select(p => (Name: Name(long.Parse(p.Key)), Count: N(p.Value))).ToArray();
+            return new DailyCookingChoice(N(r["id"]), name.In(language),
+                string.Join(" · ", materials.Select(p => p.Name.In(language) + " ×" + p.Count)),
+                string.Join(" ", materials.Select(p => p.Name).Prepend(name).SelectMany(n => new[] { n.Cn, n.Tw, n.En })));
+        }).ToArray();
+    }
     public static long[] Available(JsonObject catalog, JsonObject evidence)
     {
         var learned = R(evidence, "trade.recipes", "$self") as JsonArray ?? throw new InvalidDataException("料理解锁数据未就绪。");

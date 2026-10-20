@@ -183,20 +183,21 @@ public partial class MainWindow
                 var notice = CreateReleaseNotesWindow();
                 notice.ShowActivated = false; notice.ShowInTaskbar = false;
                 notice.WindowStartupLocation = WindowStartupLocation.Manual; notice.Left = -12000; notice.Top = 0;
-                using (DailyDialogs.Dim(this))
+                ShowUpdateNotice(notice);
+                try
                 {
-                    notice.Show();
                     await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
                     notice.UpdateLayout();
-                    Check(DailyDialogs.ModalDepth == 1 && System.Windows.Shell.WindowChrome.GetWindowChrome(notice)?.CaptionHeight == 48, "Release notice has no modal shade/custom chrome");
+                    Check(DailyDialogs.ModalDepth == 0 && IsEnabled && !releaseDialogOpen && System.Windows.Shell.WindowChrome.GetWindowChrome(notice)?.CaptionHeight == 48, "Release notice blocks the host or lost custom chrome");
                     Check(ReferenceEquals(notice.Background, FindResource("Surface")), "Release notice ignores theme");
                     Capture("release-owner-" + language + "-" + appearance, this);
                     Capture("release-notice-" + language + "-" + appearance, (FrameworkElement)notice.Content);
                     Check(notice.ActualHeight <= SystemParameters.WorkArea.Height && Descendants<Button>(notice).All(b => b.ActualHeight >= 36), "Dialog action clipped or too small");
-                    notice.Close();
                 }
-                Check(DailyDialogs.ModalDepth == 0, "Modal shade leaked after close");
+                finally { CloseUpdateNotice(); }
+                Check(DailyDialogs.ModalDepth == 0 && updateNotice == null, "Update notice leaked after close");
             }
+            await CheckUpdateSchedulePriorityForSmoke(Check, Descendants<Button>);
             // Exercise real ShowDialog nested dispatch, default/cancel result and shade cleanup.
             foreach (bool accept in new[] { false, true })
             {
@@ -217,6 +218,80 @@ public partial class MainWindow
             Check(!DailyReleaseHistory.ShouldShow(root, DailyProductVersion.Current), "Rolling back repeated already read notes");
             DailyJson.Write(Path.Combine(smoke!, "scheduling-updates.json"), new { status = "passed", checks, gameCommands = 0, simulatedRestartCommands = 1, windowsTasksRegistered = 0, realGameTouched = false });
         }
-        finally { ThemeSelector.SelectedIndex = (int)initialAppearance; L.Select(locale); Width = width; Height = height; WorkspaceTabs.SelectedItem = RunTab; updatePanel.Busy(false, false, false); }
+        finally { CloseUpdateNotice(); ThemeSelector.SelectedIndex = (int)initialAppearance; L.Select(locale); Width = width; Height = height; WorkspaceTabs.SelectedItem = RunTab; updatePanel.Busy(false, false, false); }
+    }
+
+    private async Task CheckUpdateSchedulePriorityForSmoke(Action<bool, string> check, Func<DependencyObject, IEnumerable<Button>> buttons)
+    {
+        var originalStore = scheduleStore;
+        var originalChecking = updateChecking;
+        var originalBusy = busy;
+        var originalReason = manualUpdateReason;
+        var fixture = (DemoEnvironment)host;
+        int calls = fixture.Calls.Count;
+        var now = DateTimeOffset.UtcNow;
+        var local = TimeZoneInfo.ConvertTime(now, TimeZoneInfo.Local);
+        // A missing synthetic identity stops just after the scheduling gates, before any game action.
+        var plan = new DailySchedulePlan { Enabled = true, Hour = local.Hour, Minute = local.Minute,
+            Accounts = [new string('f', 64)], SavedUtc = now.AddDays(-1) };
+        try
+        {
+            foreach (string kind in new[] { "ready", "manual", "notes", "downloading" })
+            {
+                scheduleStore = new(Path.Combine(root, "update-schedule-probe", kind));
+                scheduleStore.Save(plan);
+                check(HasPendingScheduledRun(now), "Due schedule does not take priority over installation");
+                check(!HasPendingScheduledRun(now.AddMinutes(-2)), "Future schedule blocks an idle update");
+                manualUpdateReason = "updates.manual_layout";
+                var notice = kind switch { "manual" => CreateManualUpdateWindow(), "notes" => CreateReleaseNotesWindow(), _ => CreateUpdateReadyWindow("99.0.0") };
+                notice.WindowStartupLocation = WindowStartupLocation.Manual; notice.Left = -12000; notice.Top = 0;
+                ShowUpdateNotice(notice);
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                check(notice.IsVisible && IsEnabled && DailyDialogs.ModalDepth == 0 && !releaseDialogOpen, kind + " notice blocks scheduled execution");
+                if (kind == "ready")
+                {
+                    foreach (var appearance in new[] { DailyAppearance.Light, DailyAppearance.Dark })
+                    foreach (string language in DailyLanguage.Codes)
+                    {
+                        ThemeSelector.SelectedIndex = (int)appearance; L.Select(language);
+                        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                        Capture("update-ready-" + language + "-" + appearance, (FrameworkElement)notice.Content);
+                        check(buttons(notice).Any(b => b.Content?.ToString() == L.Get("updates.later") && b.IsDefault), "Update prompt lost its safe default");
+                        check(notice.ActualHeight <= SystemParameters.WorkArea.Height, "Update prompt exceeds the screen");
+                    }
+                }
+                updateChecking = kind == "downloading";
+                await CheckScheduleCoreAsync(now);
+                check(!notice.IsVisible && updateNotice == null, kind + " notice was not dismissed at scheduled time");
+                check(scheduleStore.Last is { State: "failed", Detail: "schedule.account_missing" }, kind + " stopped the scheduler before identity validation");
+                check(!HasPendingScheduledRun(now), "Claimed occurrence keeps blocking updates");
+            }
+            // A user-owned modal and a running queue remain protected. Only update notices yield.
+            foreach (bool userModal in new[] { true, false })
+            {
+                scheduleStore = new(Path.Combine(root, "update-schedule-probe", userModal ? "user-modal" : "queue"));
+                scheduleStore.Save(plan);
+                using (userModal ? DailyDialogs.Dim(this) : null)
+                {
+                    busy = !userModal;
+                    await CheckScheduleCoreAsync(now);
+                    check(scheduleStore.Last?.State == "waiting" && HasPendingScheduledRun(now), "Scheduled work interrupted a user operation");
+                }
+                busy = false;
+                await CheckScheduleCoreAsync(now.AddSeconds(10));
+                check(scheduleStore.Last?.Detail == "schedule.account_missing", "Schedule did not resume after user operation");
+            }
+            var later = CreateUpdateReadyWindow("99.0.0");
+            later.WindowStartupLocation = WindowStartupLocation.Manual; later.Left = -12000; later.Top = 0;
+            ShowUpdateNotice(later);
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            buttons(later).Single(b => b.Content?.ToString() == L.Get("updates.later")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            check(updateNotice == null && !updateInstalling && IsEnabled, "Deferring an update starts installation or leaves the host disabled");
+            check(fixture.Calls.Count == calls, "Update/scheduling regression touched the game");
+        }
+        finally
+        {
+            CloseUpdateNotice(); scheduleStore = originalStore; updateChecking = originalChecking; busy = originalBusy; manualUpdateReason = originalReason;
+        }
     }
 }

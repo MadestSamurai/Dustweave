@@ -14,6 +14,8 @@ static class WeeklyIsolationCases
         public int Used;
         public bool Pending = true, Restricted, Reachable = true, MapOnePending = true, MapTwoPending = true, LaterDrop;
         public readonly List<long> Queries = [], Visits = [];
+        public readonly List<(string Stage, JsonObject Value)> Progress = [];
+        private DailyWeeklyRoute Runner() => new(H.Workflow, (stage, value) => Progress.Add((stage, value.DeepClone().AsObject())));
         public Action? BeforeQuery;
         public bool NpcEnabled, RejectNpc, HuntingOffer, QueryFailsFirst;
         public bool WildQuestChain;
@@ -230,14 +232,14 @@ static class WeeklyIsolationCases
         public Task<JsonObject> RunNpc()
         {
             NpcEnabled = true; H.Workflow.Settings.Weekly.Npc = true; H.Workflow.Settings.Weekly.Steal = true;
-            return new DailyWeeklyRoute(H.Workflow).Run(["weekly_mainline", "weekly_npc", "weekly_steal"]);
+            return Runner().Run(["weekly_mainline", "weekly_npc", "weekly_steal"]);
         }
         public Task<JsonObject> RunWildQuest(){
             NpcEnabled=WildQuestChain=true;Pending=false;npcActive[1]=10;MonstersPending.Add(2);
             H.Workflow.Settings.Weekly.Npc=true;
             return new DailyWeeklyRoute(H.Workflow).Run(["weekly_npc"]);
         }
-        public Task<JsonObject> Run() => new DailyWeeklyRoute(H.Workflow).Run(["weekly_mainline"]);
+        public Task<JsonObject> Run() => Runner().Run(["weekly_mainline"]);
         public JsonObject InterruptedAbsorption(bool newProcess = true)
         {
             var op = H.Business.Create(H.Context, "dispatch.start", H.Evidence(), O(("kind", 4), ("pack", 1), ("map", 1), ("group", 405)),
@@ -499,6 +501,9 @@ static class WeeklyIsolationCases
             f.MonstersPending.UnionWith([2L, 21L]);
             var r = await f.Run();
             Check(f.Used == 21 && f.Suppressed.Order().SequenceEqual(new long[] { 2, 21 }) && S(r["state"]) == "completed", "last absorption does not interrupt remaining suppression-only maps");
+            var counts = f.Progress.Where(p => p.Stage == "weekly_mainline" && S(p.Value["unit"]) == "absorptions").Select(p => p.Value).ToArray();
+            Check(counts.Length > 1 && N(counts[0]["completed"]) == 0 && counts.All(p => N(p["total"]) == 1)
+                && N(counts[^1]["completed"]) == 1, "weekly progress budgets only the last available use, retaining it through suppression tail");
             int casts=f.Suppressed.Count,queries=f.Queries.Count;
             f.Used=0;f.MonstersPending.UnionWith([2L,21L]);
             var tomorrow=await f.Run();

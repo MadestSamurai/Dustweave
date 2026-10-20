@@ -24,6 +24,39 @@ static class QueueSessionCases
             if (DailyWorkProgress.Read(malformed.RootElement, "running") != new DailyWorkProgress("")) throw new Exception("Optional progress metadata blocks reading old records");
             cases.Add("optional progress tolerates malformed counters and missing old fields");
         }
+        {
+            var exhausted = new QueueStage("weekly_mainline", "partial", "absorption_exhausted", FinishedAt: DateTimeOffset.UtcNow)
+                { RecordedWork = new("absorb", 21, 21, "absorptions") };
+            var fallback = new QueueStage("event_battle", "partial", "fallback_sweep_completed") { HasNotice = true };
+            QueueStage[] handledRun = [new("guild", "completed", ""), exhausted, fallback, new("weekly_book", "skipped", "already_completed")];
+            if (DailyWorkProgress.Percent(handledRun) != 100 || DailyWorkProgress.Count(handledRun) != 3
+                || DailyWorkProgress.HandledCount(handledRun) != 3 || exhausted.State != "partial" || !fallback.HasNotice)
+                throw new Exception("Finished daily allowance lost progress or concealed unmet goals");
+            var pending = new QueueStage("mail", "pending", "");
+            if (DailyWorkProgress.Percent([..handledRun, pending]) >= 100
+                || DailyWorkProgress.Percent([pending, new("weekly_mainline", "skipped", "")]) != 0)
+                throw new Exception("Skipped weekly work inflated progress or unstarted tasks counted as handled");
+            var interrupted = new QueueStage("weekly_mainline", "recovery_required", "connection_lost")
+                { RecordedWork = new("absorb", 2, 5, "absorptions") };
+            if (DailyWorkProgress.Percent([interrupted]) != 40 || DailyWorkProgress.Handled(interrupted)
+                || DailyWorkProgress.Percent([interrupted with { FinishedAt = DateTimeOffset.UtcNow }]) != 100)
+                throw new Exception("Interrupted work was discarded or confused with a handled failure");
+            if (DailyWorkProgress.Percent([]) != 0 || DailyWorkProgress.Percent([new("mail", "skipped", "")]) != 100)
+                throw new Exception("Empty plan and fully checked no-op run were confused");
+            cases.Add("execution progress reaches 100 after handling available work, preserves warnings and excludes skipped stages");
+        }
+        {
+            if (DailyWorkProgress.Allowance(16, 18, 21, "absorptions") != new DailyWorkProgress("plan", 2, 5, "absorptions")
+                || DailyWorkProgress.Allowance(0, 1, 21, "absorptions", 2).Total != 3
+                || DailyWorkProgress.Allowance(2, 2, 3, "quests").Total != 1
+                || DailyWorkProgress.Allowance(21, 21, 21, "absorptions").Total != 0)
+                throw new Exception("Run budget includes previous uses, future quota or nonexistent targets");
+            using var paused = System.Text.Json.JsonDocument.Parse("""{"state":"recovery_required","progress":{"step":"absorb","completed":2,"total":5,"unit":"absorptions"}}""");
+            if (DailyWorkProgress.Read(paused.RootElement, "paused") != null
+                || DailyWorkProgress.ReadRecorded(paused.RootElement)?.Fraction != .4)
+                throw new Exception("Saved counters were lost or shown as a live action after interruption");
+            cases.Add("today's budgets cap work by remaining quota and targets, retaining paused counters without a live operation");
+        }
         using (var recovery = System.Text.Json.JsonDocument.Parse("""
             {"recovery_blockers":[{"role":"dispatch.start","talent_kind":4},{"role":"dispatch.start","talent_kind":4},null,23,{"role":"trade.buy","talent_kind":"invalid"}]}
             """))

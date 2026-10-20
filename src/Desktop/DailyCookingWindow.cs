@@ -11,7 +11,7 @@ namespace Dustweave.Desktop;
 internal sealed class DailyCookingWindow : Window
 {
     private static DailyLanguage L => DailyLanguage.Current;
-    internal sealed record Recipe(long Id, string Name, string Materials);
+    internal sealed record Recipe(long Id, string Name, string Materials, string SearchText = "");
     private readonly ObservableCollection<Recipe> chosen = [];
     private Recipe[] catalog = [];
     private readonly DataGrid available = Table(), selected = Table();
@@ -72,8 +72,8 @@ internal sealed class DailyCookingWindow : Window
             try
             {
                 var data = fixture ?? await Task.Run(() => DailyTradeCatalog.Read(DailyTradeData.CatalogPath(AppContext.BaseDirectory)));
-                var items = DailyCustomCooking.Items(data).ToDictionary(r => N(r["id"]), r => S(r["name"]));
-                catalog = DailyCustomCooking.Recipes(data).Select(r => new Recipe(N(r["id"]), items.GetValueOrDefault(N(r["output"]), "#" + S(r["output"])), string.Join(" · ", r["materials"]!.AsObject().Select(p => items.GetValueOrDefault(long.Parse(p.Key), "#" + p.Key) + " ×" + N(p.Value))))).OrderBy(r => r.Name).ToArray();
+                catalog = DailyCustomCooking.Choices(data, L.Code).Select(r => new Recipe(r.Id, r.Name, r.Materials, r.SearchText))
+                    .OrderBy(r => r.Name, StringComparer.Create(System.Globalization.CultureInfo.GetCultureInfo(L.Code), true)).ToArray();
                 foreach (long id in current) chosen.Add(catalog.SingleOrDefault(r => r.Id == id) ?? new(id, "#" + id, L["cooking.unavailable"]));
                 save.IsEnabled = true; Filter(); search.Focus();
             }
@@ -83,17 +83,22 @@ internal sealed class DailyCookingWindow : Window
     private void Filter()
     {
         var ids = chosen.Select(r => r.Id).ToHashSet(); string term = search.Text.Trim();
-        available.ItemsSource = catalog.Where(r => !ids.Contains(r.Id) && (r.Name.Contains(term, StringComparison.CurrentCultureIgnoreCase) || r.Materials.Contains(term, StringComparison.CurrentCultureIgnoreCase))).ToArray();
+        available.ItemsSource = catalog.Where(r => !ids.Contains(r.Id) && (r.Name.Contains(term, StringComparison.CurrentCultureIgnoreCase) || r.Materials.Contains(term, StringComparison.CurrentCultureIgnoreCase) || r.SearchText.Contains(term, StringComparison.OrdinalIgnoreCase))).ToArray();
         L.Bind(status, TextBlock.TextProperty, () => chosen.Count == 0 ? L["cooking.empty"] : L.Get("cooking.count", chosen.Count)); Controls();
     }
     private void Add() { foreach (Recipe row in available.SelectedItems.Cast<Recipe>().ToArray()) if (!chosen.Any(r => r.Id == row.Id)) chosen.Add(row); Filter(); }
     private void Remove() { foreach (Recipe row in selected.SelectedItems.Cast<Recipe>().ToArray()) chosen.Remove(row); Filter(); }
     private void Move(int delta) { int i = selected.SelectedIndex; if (selected.SelectedItems.Count != 1 || i + delta < 0 || i + delta >= chosen.Count) return; var row = chosen[i]; chosen.Move(i, i + delta); selected.SelectedItem = row; selected.ScrollIntoView(row); Controls(); }
     private void Controls() { add.IsEnabled = available.SelectedItems.Count > 0; remove.IsEnabled = selected.SelectedItems.Count > 0; up.IsEnabled = selected.SelectedItems.Count == 1 && selected.SelectedIndex > 0; down.IsEnabled = selected.SelectedItems.Count == 1 && selected.SelectedIndex < chosen.Count - 1; }
-    internal void VerifyForSmoke()
+    internal void VerifyForSmoke(string expectedName, string expectedMaterials)
     {
         if (!save.IsEnabled || catalog.Length < 3) throw new Exception("Recipe catalog did not load");
+        var translated = catalog.Single(r => r.Id == 2);
+        if (translated.Name != expectedName || translated.Materials != expectedMaterials) throw new Exception("Recipe or ingredient locale was lost");
         var old = chosen.ToArray(); chosen.Clear(); Filter();
+        search.Text = "蜂蜜奶油杏仁";
+        if (available.Items.Count != 1 || ((Recipe)available.Items[0]).Id != 2) throw new Exception("Cross-language recipe search lost identity");
+        search.Clear();
         available.SelectedItems.Add(available.Items[0]); available.SelectedItems.Add(available.Items[1]); Add();
         if (chosen.Count != 2 || available.Items.Count != catalog.Length - 2) throw new Exception("Recipe transfer duplicated or lost rows");
         var first = chosen[0]; selected.SelectedItem = chosen[1]; Move(-1);

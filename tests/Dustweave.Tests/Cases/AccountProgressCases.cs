@@ -20,6 +20,19 @@ static class AccountProgressCases
             File.SetLastWriteTimeUtc(path, at.UtcDateTime); DailyQueueHistory.Remember(dir, account, path); return path;
         }
         string Cache(string dir, long pack, string week = "500") => Path.Combine(dir, "live", "server-collection", account, week, pack + ".json");
+        string interruptedRoot = Path.Combine(root, "progress-interrupted");
+        string interruptedPath = Queue(interruptedRoot, "weekly_mainline", "recovery_required", now);
+        var interrupted = DailyJson.TryRead<JsonObject>(interruptedPath)!;
+        interrupted["state"] = "paused";
+        var interruptedItem = interrupted["items"]![0]!.AsObject();
+        interruptedItem.Remove("finished");
+        interruptedItem["progress"] = O(("step", "absorb"), ("completed", 2), ("total", 5), ("unit", "absorptions"));
+        DailyJson.Write(interruptedPath, interrupted);
+        DailyParallelProgress.Capture(interruptedRoot, account);
+        var savedWork = DailyParallelProgress.Read(interruptedRoot, account, new("idle", "", "", [], account), now);
+        Check(savedWork.Stages.Single().Work == null && savedWork.Stages.Single().RecordedWork?.Fraction == .4
+            && DailyWorkProgress.Percent(savedWork.Stages) == 40,
+            "account progress retains interrupted confirmed units without importing a live action or claiming completion");
         JsonObject Snapshot(long pack, double at, bool complete = true) => O(("schema", 1), ("source", "FieldObjectInfoResponse+MonsterInfoResponse"), ("account", account), ("player", "player"), ("at", at),
             ("network", O(("State", "ready"), ("Error", ""), ("Pack", pack), ("Week", 500), ("Now", 100), ("Maps", new JsonArray(pack * 10 + 1)),
             ("Drops", new JsonArray(O(("Id", 10), ("Map", pack * 10 + 1)))), ("Rewards", complete ? "[{\"id\":10}]" : "[]"), ("Targets", new JsonArray()), ("Monsters", "[]"))));

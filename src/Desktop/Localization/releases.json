@@ -1,5 +1,32 @@
 [
   {
+    "Version": "1.4.11",
+    "Date": "2026-10-20",
+    "Notes": {
+      "zh-CN": [
+        "新队列先领取日常／周常／通行证与活动奖励，再执行周收集、周 NPC、偷窃和跑商，邮箱最后收尾；接续旧队列保留原顺序。",
+        "进度按今天可执行的次数细分，已处理环节计入执行进度；暂缓、失败与战斗回退继续单独汇报，暂停及跨窗口恢复保留已确认进度。",
+        "修复偷窃记录混入其他天赋回执后反复暂停、重连仍无法继续的问题；不明确的记录保留现场，不盲目重做。",
+        "自定义料理与材料名称使用游戏当前译名，跟随软件语言并支持跨语言搜索；保留已有选择与顺序。",
+        "更新提醒不再阻挡定时日常，到点优先执行队列；实际安装仍需空闲和确认。"
+      ],
+      "zh-TW": [
+        "新佇列先領取日常／週常／通行證與活動獎勵，再執行週收集、週 NPC、偷竊和跑商，信箱最後收尾；接續舊佇列保留原順序。",
+        "進度按今天可執行的次數細分，已處理環節計入執行進度；暫緩、失敗與戰鬥退回掃蕩繼續個別回報，暫停及跨視窗恢復保留已確認進度。",
+        "修復偷竊紀錄混入其他天賦回執後反覆暫停、重新連線仍無法繼續的問題；不明確的紀錄保留現場，不盲目重做。",
+        "自訂料理與材料名稱使用遊戲目前譯名，跟隨軟體語言並支援跨語言搜尋；保留既有選擇與順序。",
+        "更新提醒不再阻擋定時日常，到點優先執行佇列；實際安裝仍需閒置和確認。"
+      ],
+      "en-US": [
+        "New queues collect daily, weekly, pass and event rewards before weekly collection, NPC quests, theft and trading, with mail last. Resumed queues retain their original order.",
+        "Progress reflects today's executable allowances and handled stages. Deferred objectives, failures and battle fallbacks remain in the report; confirmed counters survive pauses and window transfers.",
+        "Fixes unrelated talent replies breaking theft reconciliation and repeatedly pausing the queue. Uncertain records retain evidence without blindly repeating actions.",
+        "Custom recipe and ingredient names follow the selected language and current game translations, with cross-language search. Saved selections and order are preserved.",
+        "Update notices no longer block scheduled runs. Due queues take priority; installation still requires an idle application and confirmation."
+      ]
+    }
+  },
+  {
     "Version": "1.4.10",
     "Date": "2026-10-20",
     "Notes": {

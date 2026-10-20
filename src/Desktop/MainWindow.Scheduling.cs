@@ -39,14 +39,32 @@ public partial class MainWindow
             finally { schedulePanel.Busy(false); }
         };
     }
-    private async Task CheckScheduleAsync()
+    private Task CheckScheduleAsync()
     {
-        if (IsSandboxWindow || smoke != null || scheduleChecking || DateTime.UtcNow < nextScheduleCheck || finalClose) return;
-        nextScheduleCheck = DateTime.UtcNow.AddSeconds(10); scheduleChecking = true;
+        if (IsSandboxWindow || smoke != null || scheduleChecking || DateTime.UtcNow < nextScheduleCheck || finalClose) return Task.CompletedTask;
+        nextScheduleCheck = DateTime.UtcNow.AddSeconds(10);
+        return CheckScheduleCoreAsync(DateTimeOffset.UtcNow);
+    }
+    private bool HasPendingScheduledRun(DateTimeOffset now)
+    {
+        try
+        {
+            var due = DailyScheduleClock.Due(scheduleStore.Read(), now, TimeZoneInfo.Local);
+            return due != null && !scheduleStore.IsClaimed(due.Value);
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            // Invalid schedules are reported by the scheduler, not an update reminder.
+            return false;
+        }
+    }
+    private async Task CheckScheduleCoreAsync(DateTimeOffset now)
+    {
+        scheduleChecking = true;
         DateTimeOffset? due = null;
         try
         {
-            var plan = scheduleStore.Read(); var now = DateTimeOffset.UtcNow;
+            var plan = scheduleStore.Read();
             if (!plan.IsDaily)
             {
                 schedulePanel.Busy(true);
@@ -75,8 +93,9 @@ public partial class MainWindow
                 return;
             }
             if (scheduleStore.IsClaimed(due.Value)) return;
+            CloseUpdateNotice();
             // A running tool is the one optional handoff. Never interrupt another daily queue,
-            // an update, onboarding or a user's modal operation.
+            // an actual update installation, onboarding or a user's modal operation.
             if (onboardingOpen || busy || toolChanging || updateInstalling || ParallelBusy || pluginChanging || releaseDialogOpen || DailyDialogs.ModalDepth > 0 || softwareSandboxPath.Preparing)
             {
                 scheduleStore.Record(new(due.Value.ToString("O"), "waiting", now)); return;

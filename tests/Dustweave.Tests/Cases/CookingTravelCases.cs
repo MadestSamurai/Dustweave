@@ -31,6 +31,13 @@ static class CookingTravelCases
         Check(!DailyFieldRoute.ShouldDash(new(){FastTravel=true},e),"fast travel never opens another menu during an interaction");
         Check(!await new DailyFieldRoute(h.Workflow).PrepareWalking()&&h.Box.Commands.Count==0,"default walking sends no speed talent command or observation");
         var catalog=JsonNode.Parse("""{"items":[{"id":3,"stack":9999},{"id":4,"stack":9999}],"recipes":[{"id":10,"output":3,"count":2,"potions":2,"materials":{"1":3,"2":2}},{"id":20,"output":4,"count":1,"potions":1,"materials":{"1":2}}]}""")!.AsObject();
+        var labels = JsonNode.Parse("""{"cooking_items":[{"id":1,"name":"原料","name_tw":"材料","name_en":"Ingredient"},{"id":3,"name":"简中料理","name_tw":"繁中料理","name_en":"Dish"},{"id":4,"name":"旧目录料理"}],"cooking_recipes":[{"id":20,"output":4,"materials":{"1":2}},{"id":10,"output":3,"materials":{"1":3,"999":2}}]}""")!.AsObject();
+        string labelsBefore = labels.ToJsonString();
+        var choices = DailyCustomCooking.Choices(labels, "en-US");
+        Check(choices.Select(c=>c.Id).SequenceEqual(new long[]{20,10}) && choices[1].Name=="Dish" && choices[1].Materials=="Ingredient ×3 · #999 ×2",
+            "custom cooking display resolves output ID without confusing recipe ID or missing ingredient");
+        Check(choices[0].Name=="旧目录料理" && labels.ToJsonString()==labelsBefore,
+            "legacy labels fall back without changing saved recipe IDs or planning catalog");
         var wallet=O(("potions",100),("items",O(("1",20),("2",10))),("protected",new JsonObject()));
         var first=DailyCustomCooking.Next(catalog,10,wallet,0,[10,20])!;
         Check(N(first["count"])==5&&N(first["potions"])==10&&N(first["materials"]!["1"])==15,"custom cooking respects multi-ingredient amounts and output yields");

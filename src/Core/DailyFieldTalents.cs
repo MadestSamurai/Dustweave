@@ -5,6 +5,43 @@ namespace Dustweave;
 /// <summary>Native field talent activation, evidence and read-only recovery.</summary>
 public static class DailyFieldTalentProof
 {
+    // Several native skills (including automatic dispatch) share this response
+    // type. Only discard a complete, successful pair proven to be another skill;
+    // overlapping requests, missing identity and unreadable replies stay ambiguous.
+    // Keep the original journal events intact for diagnostics and recovery.
+    internal static JsonArray MatchingSkillEvents(JsonObject op, JsonArray events)
+    {
+        long group = DailyData.N(op["scope"]?["group"]);
+        if (group <= 0 || op["before"]?["Frame"] is not JsonObject frame) return events;
+        var rows = events.OfType<JsonObject>().Where(e => DailyData.S(e["Role"]) == "dispatch.start")
+            .OrderBy(e => DailyData.N(e["Sequence"])).ToArray();
+        if (rows.Length % 2 != 0 || rows.Select(e => DailyData.N(e["Sequence"])).Distinct().Count() != rows.Length) return events;
+        for (int i = 0; i < rows.Length; i += 2)
+            if (DailyData.S(rows[i]["Kind"]) != "request" || DailyData.S(rows[i + 1]["Kind"]) != "response"
+                || rows[i]["Frame"] is not JsonObject requestFrame || !DailyEvidence.SameActor(frame, requestFrame)
+                || rows[i + 1]["Frame"] is not JsonObject responseFrame || !DailyEvidence.SameActor(frame, responseFrame))
+                return events;
+        var result = new JsonArray();
+        for (int i = 0; i < rows.Length; i += 2)
+        {
+            bool other = false;
+            var request = rows[i]; var reply = rows[i + 1];
+            try
+            {
+                var values = DailyEvidence.Values(reply);
+                long received = DailyData.N(values["TalentSkillInfo"]?["groupId"]);
+                other = received > 0 && received != group && DailyData.B(values["IsSuccess"])
+                    && DailyData.B(reply["Accepted"]) && DailyData.S(reply["Error"]) == "" && DailyData.N(reply["ErrorCode"]) == 0
+                    && DailyData.S(request["Error"]) == "" && DailyData.N(request["ErrorCode"]) == 0
+                    && (values["TalentNpcInfo"] == null || values["TalentNpcInfo"] is JsonObject npc
+                        && DailyData.N(npc["groupId"]) == received && DailyData.N(npc["npcId"]) > 0);
+            }
+            catch (Exception error) when (error is InvalidDataException or InvalidOperationException or System.Text.Json.JsonException) { }
+            if (other) continue;
+            result.Add(request.DeepClone()); result.Add(reply.DeepClone());
+        }
+        return result;
+    }
     public static JsonArray ResearchWindowEvents(JsonObject op, JsonArray events)
     {
         if (op["last_observation"] is not JsonObject last)
@@ -89,6 +126,7 @@ public static class DailyFieldTalentProof
     {
         if (!Owns(op))
             throw new InvalidDataException("Unsupported field talent proof");
+        events = MatchingSkillEvents(op, events);
         var before = op["before"]!.AsObject();
         var frame = before["Frame"]!.AsObject();
         int kind = (int)Numeric(op["scope"]!["kind"]), group = (int)Numeric(op["scope"]!["group"]);
@@ -121,6 +159,7 @@ public static class DailyFieldTalentProof
         try
         {
             if (!Owns(op) || Numeric(op["scope"]?["kind"]) is not (3 or 4 or 20)) return null;
+            events = MatchingSkillEvents(op, events);
             var before = op["before"]!.AsObject();
             var frame = before["Frame"]!.AsObject();
             if (before["Error"]?.GetValue<string>() != "" || frame["Error"]?.GetValue<string>() is { Length: > 0 }

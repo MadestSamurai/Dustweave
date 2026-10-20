@@ -28,6 +28,10 @@ public sealed class DailyWeeklyRoute
     private readonly HashSet<(long Pack, long Map)> absorptionObserved = [], absorptionPending = [];
     private readonly HashSet<long> freshAbsorptionPacks = [];
     private bool absorptionQuotaExhausted;
+    private int? absorptionStart, npcStart;
+    private int absorptionUsed;
+    private bool absorptionWork;
+    private readonly Dictionary<string, HashSet<(long Pack, long Map)>> initialDone = new();
     private bool AbsorptionComplete => known["weekly_mainline"].Count > 0
         && known["weekly_mainline"].IsSubsetOf(absorptionObserved) && absorptionPending.Count == 0;
     private bool FreshAbsorptionPending => absorptionPending.Any(p => freshAbsorptionPacks.Contains(p.Pack));
@@ -76,12 +80,36 @@ public sealed class DailyWeeklyRoute
     {
         var e = await route.Evidence();
         Require(S(R(e, "mainline.reset", "GetWeeklyResetTime().Ticks")) == week, "合并周任务期间周期改变");
+        ObserveAbsorptionUsage(e);
     }
     private JsonObject Progress(string stage)
     {
         if (stage == "weekly_npc" && npc?.Data != null)
-            return O(("completed", npc.Data.Native["Completed"]), ("total", npc.Data.Native["Limit"]));
-        return O(("completed", done[stage].Count), ("total", known[stage].Count));
+        {
+            int completed = I(npc.Data.Native["Completed"]);
+            npcStart ??= completed;
+            return DailyWorkProgress.Allowance(npcStart.Value, completed, I(npc.Data.Native["Limit"]), "quests").ToJson();
+        }
+        if (stage == "weekly_mainline" && !w.Settings.Weekly.WalkCollect && absorptionStart.HasValue)
+        {
+            int pending = absorptionPending.Union(known[stage].Except(absorptionObserved)).Except(storyLocked).Count();
+            // Keep the same unit during the final suppression/return journey.
+            absorptionWork |= pending > 0 && absorptionStart < 21;
+            if (absorptionWork)
+                return DailyWorkProgress.Allowance(absorptionStart.Value, absorptionUsed, 21, "absorptions", pending).ToJson();
+        }
+        var previous = initialDone.GetValueOrDefault(stage) ?? [];
+        int total = known[stage].Except(previous).Count();
+        return new DailyWorkProgress("plan", Math.Min(total, done[stage].Except(previous).Count()), total, "maps").ToJson();
+    }
+    private void ObserveAbsorptionUsage(JsonObject evidence)
+    {
+        // Presentation consumes the observation already used by the route;
+        // it never adds a game query or changes the route's quota decision.
+        if (!active.Contains("weekly_mainline") || w.Settings.Weekly.WalkCollect
+            || !Readings(evidence, "mainline.talent_counts").Any()) return;
+        absorptionUsed = (int)Math.Clamp(Used(evidence, 4), 0, 21);
+        absorptionStart ??= absorptionUsed;
     }
     private string Summary(string stage) => stage == "weekly_npc" ? npc?.Summary() ?? "等待读取周NPC任务" : $"{Names[stage]}已核对 {done[stage].Count}/{known[stage].Count} 张地图";
     private Dictionary<string, long[]> Maps() => new() { { "weekly_mainline", active.Contains("weekly_mainline") ? route.Catalog.Maps(pack) : [] }, { "weekly_steal", active.Contains("weekly_steal") ? route.Catalog.StealMaps(pack) : [] } };
@@ -243,7 +271,9 @@ public sealed class DailyWeeklyRoute
     private async Task CheckAbsorptionQuota()
     {
         if (!active.Contains("weekly_mainline") || w.Settings.Weekly.WalkCollect) return;
-        absorptionQuotaExhausted = Used(await route.Evidence(), 4) >= 21;
+        var evidence = await route.Evidence();
+        ObserveAbsorptionUsage(evidence);
+        absorptionQuotaExhausted = Used(evidence, 4) >= 21;
         // Running out of today's uses is not completion of this week's collection.
         // Do not turn the rest of the route into a daily suppression sweep.
         if (absorptionQuotaExhausted && FreshAbsorptionPending)
@@ -375,7 +405,6 @@ public sealed class DailyWeeklyRoute
     private void Emit(string stage, string detail, bool running)
     {
         var value = Progress(stage);
-        value["unit"] = stage == "weekly_npc" ? "quests" : "maps";
         value["step"] = "plan";
         value["detail"] = detail;
         value["location_labels"] = Labels(detail);
@@ -443,6 +472,7 @@ public sealed class DailyWeeklyRoute
         foreach (string s in requested.Except(selected))
             result[s] = O(("state", "skipped"), ("reason", "disabled"), ("detail", "已关闭"));
         var evidence = await route.Evidence();
+        ObserveAbsorptionUsage(evidence);
         // Read absorption usage in Prepare/Jobs only when collection is active;
         // catalog progress and independent weekly tasks do not require talent data.
         week = S(R(evidence, "mainline.reset", "GetWeeklyResetTime().Ticks"));
@@ -461,6 +491,7 @@ public sealed class DailyWeeklyRoute
         // Restore each selected category before reporting progress. Missing theft
         // observations must not make verified collection appear to start from zero.
         foreach (long p in packs) { pack = p; await Refresh(true); }
+        foreach (string s in selected) initialDone[s] = new(done[s]);
         if (active.Count > 0) await RecoverInterruptedMaps(packs);
         void EmitAll(string place)
         {

@@ -23,6 +23,7 @@ public static class DailySaffron
         Require(!B(prior["Enabled"])||N(prior["UntilUtcTicks"])<=now,"领地已有运行中的控制器，未接管");
         string owner=Guid.NewGuid().ToString("N");int pid=I(w.Context["actor"]![0]);var command=Command(owner,pid,now,w.Settings.SaffronPotatoRounds,w.Settings.SaffronProcessing);
         JsonObject state=new();double end=w.Time+36*60, unavailableSince=double.NaN, lastProgress=w.Time, naturalWaitEnd=0;long waitStamp=0;string last="",progress="";bool started=false;
+        int? initialPotatoRounds = null;
         JsonObject Partial(string reason) => O(("state","partial"),("reason",reason),("saffron",state["Saffron"]),("territory",state));
         try
         {
@@ -51,6 +52,10 @@ public static class DailySaffron
                     if(signature!=last){last=signature;w.Driver.Diagnostics.Event("saffron_phase",O(("cycle",cycle),("reason",state["Reason"])));}
                     if(S(cycle["State"]) is "completed" or "skipped" or "partial")
                         return O(("state",cycle["State"]),("reason",cycle["Reason"]),("saffron",cycle));
+                    int rounds = I(cycle["PotatoRounds"]);
+                    initialPotatoRounds ??= rounds;
+                    var budget = DailyWorkProgress.Allowance(initialPotatoRounds.Value, rounds, w.Settings.SaffronPotatoRounds, "potatoes");
+                    w.WorkUnits("collect", budget.Completed, budget.Total, budget.Unit);
                     string next=string.Join("|",S(cycle["State"]),S(cycle["Harvested"]),S(cycle["PotatoRounds"]),S(state["GatherReplies"]),S(state["Spent"]),S(state["Cooked"]),S(state["SoldItems"]),S(state["EmptyFields"]));
                     if(next!=progress){progress=next;lastProgress=w.Time;}
                     long remaining=N(cycle["WaitUntil"])-N(cycle["ServerNow"]);

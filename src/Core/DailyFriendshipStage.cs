@@ -175,6 +175,7 @@ public sealed class DailyFriendshipStage : IDailyManagedStage
                 else if (state["NoticePending"]?.GetValue<bool>() == true)
                     throw new StageHostException("adapter", "游戏仍在准备咨询礼物，请领取礼物后继续；未提交新咨询。");
             }
+            int startCompleted = completed.Count, workBudget = 0;
             for (int attempt = 0; attempt < 3; attempt++)
             {
                 Stop();
@@ -192,6 +193,10 @@ public sealed class DailyFriendshipStage : IDailyManagedStage
                         ["engine"] = "dotnet-friendship-v1"
                     };
                 }
+                int available = (int)Math.Min(DailyData.N(decision["remaining"]), DailyFriendshipProof.Candidates(DailyFriendshipProof.State(current))
+                    .Values.Where(r => !DailyData.B(r["Max"])).Sum(r => DailyData.N(r["Remaining"])));
+                workBudget = completed.Count - startCompleted + available;
+                business.WorkProgress?.Invoke(new DailyWorkProgress("counsel", completed.Count - startCompleted, workBudget, "quests").ToJson());
                 var target = decision["target"]!.AsObject();
                 long id = DailyEvidence.Integer(target["Id"]);
                 var frame = (await driver.ObserveAsync()).Frame;
@@ -218,6 +223,7 @@ public sealed class DailyFriendshipStage : IDailyManagedStage
                 await business.CommitAsync(op, context);
                 await FinishAsync(op);
                 completed.Add(op["result"]!.DeepClone());
+                business.WorkProgress?.Invoke(new DailyWorkProgress("verify", completed.Count - startCompleted, workBudget, "quests").ToJson());
             }
             await LeaveAsync(context, relay);
             return new()

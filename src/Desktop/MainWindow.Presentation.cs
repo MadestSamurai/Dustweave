@@ -11,6 +11,15 @@ namespace Dustweave.Desktop;
 
 public sealed partial class DailyRunPanel
 {
+    internal void CheckHandledProgressForSmoke(QueueView view)
+    {
+        Busy(false); Show(view); UpdateLayout();
+        if (progress.Value != 100 || counts.Text != L.Get("run.complete_count", 3, 3)
+            || status.Text != L.Get("run.handled") || detail.Text != L.Get("run.partial") || rows.Count(r => r.Completed) != 1
+            || !rows.Single(r => r.Task == "weekly_mainline").HasFinishedTime
+            || rows.Any(r => r.HasCurrentStep))
+            throw new Exception("Handled progress concealed outcome warnings, retained a live step or lost its completion time");
+    }
     internal async Task CheckWorkFollowForSmoke()
     {
         var tasks = Enumerable.Range(0, 14).Select(i => new QueueStage("fixture_" + i, "completed", "")).ToList();

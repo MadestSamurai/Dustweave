@@ -13,7 +13,6 @@ public static class DailyStageCatalog
         new("free_draws","每日免费抽取",p=>p.Stages.FreeDraws),
         new("equipment","装备分解与精炼",p=>p.Equipment.Enabled||p.Equipment.RefineEnabled),
         new("weekly_equipment","周常制作装备",p=>p.Weekly.EquipmentCraft),
-        new("weekly_mainline","周收集",p=>p.Weekly.Mainline),new("weekly_npc","周NPC任务",p=>p.Weekly.Npc),new("weekly_steal","每周偷窃",p=>p.Weekly.Steal),
         new("hunting","普通与圣石狩猎",p=>p.Hunt.Enabled||p.Hunt.StonesEnabled),
         new("mirror","镜中免费战斗",p=>p.Mirror.Enabled),new("daily_dispatch","每日派遣",p=>p.Tasks.Dispatch),
         new("square","广场奖励",p=>p.Tasks.Goddess||p.Tasks.SquareRanking),
@@ -21,8 +20,12 @@ public static class DailyStageCatalog
         new("tactics","战术教材",p=>DailyPlugin.Current.Supports("tactics")&&p.Tactics.Enabled),new("event_battle","活动战斗",p=>p.EventBattle.Enabled),
         new("salvation","救赎之塔扫荡",p=>p.Salvation.Enabled),
         new("weekly_room_likes","周常小屋点赞",p=>p.Weekly.RoomLikes),new("weekly_fishing","周常钓鱼",p=>p.Weekly.Fishing),new("weekly_sichuan","周常连连看",p=>p.Weekly.Sichuan),
-        new("trade","跑商／料理／高价售卖",p=>p.Trade.Enabled),new("event_rewards","活动任务／转盘／代币兑换",p=>p.Events.Enabled),
+        // Claim today's supplies before the shared field route and shopping.
+        // Keep NPC quests before trade so their town discount is available.
         new("rewards","日常／周常／通行证奖励",p=>p.Stages.DailyRewards||p.Stages.WeeklyRewards||p.Tasks.Pass),
+        new("event_rewards","活动任务／转盘／代币兑换",p=>p.Events.Enabled),
+        new("weekly_mainline","周收集",p=>p.Weekly.Mainline),new("weekly_npc","周NPC任务",p=>p.Weekly.Npc),new("weekly_steal","每周偷窃",p=>p.Weekly.Steal),
+        new("trade","跑商／料理／高价售卖",p=>p.Trade.Enabled),
         new("mail","邮箱收尾",p=>p.Stages.Mail)
     ];
     // Preserve aliases used by existing schema-1 queues and explicit diagnostic commands.

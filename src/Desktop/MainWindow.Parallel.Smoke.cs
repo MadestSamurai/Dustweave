@@ -172,7 +172,7 @@ public partial class MainWindow
         int calls=((DemoEnvironment)sessions).Calls.Count;
         var accounts=new[] {new DailyAccount(1,"主账号 / Main",new string('a',64),"",true,false,""),new DailyAccount(2,"副账号 / Second",new string('b',64),"",true,false,"")};
         var work=new QueueView("running","","fixture/progress.json",
-            [new("guild","completed",""),new("weekly_mainline","running","") {Work=new("absorb",12,40,"maps")},new("mirror","pending",""),new("trade","pending",""),new("mail","pending","")],accounts[0].AccountKey);
+            [new("guild","completed",""),new("weekly_mainline","running","") {Work=new("absorb",9,21,"absorptions")},new("mirror","pending",""),new("trade","pending",""),new("mail","pending","")],accounts[0].AccountKey);
         foreach(int language in new[]{0,1,2})foreach(int appearance in new[]{1,2})
         {
             LanguageSelector.SelectedIndex=language;ThemeSelector.SelectedIndex=appearance;Width=1180;Height=900;
@@ -183,6 +183,15 @@ public partial class MainWindow
             await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);UpdateLayout();
             Capture("work-progress-single-"+L.Code+"-"+appearance);
             dailyPanel.Busy(false);
+            var handled = work with { State = "partial", Stages = [
+                new("guild", "completed", ""),
+                new("weekly_mainline", "partial", "吸收次数用完，仍有地图待收集；本次周收集已暂停，次日接续", FinishedAt: DateTimeOffset.UtcNow)
+                    { RecordedWork = new("absorb",21,21,"absorptions") },
+                new("event_battle", "partial", "event_auto_failed_swept") { HasNotice = true },
+                new("weekly_book", "skipped", "disabled")] };
+            dailyPanel.CheckHandledProgressForSmoke(handled);
+            await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);UpdateLayout();
+            Capture("work-progress-handled-"+L.Code+"-"+appearance);
             Width=920;Height=650;
             StartSequentialProgress(accounts);sequentialAccount=accounts[0].AccountKey;UpdateSequentialProgress(work);
             await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);UpdateLayout();

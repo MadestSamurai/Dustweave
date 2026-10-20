@@ -11,6 +11,7 @@ static class MirrorStageCases
         public bool FreeOnly, Skip, Hold, StopAfterMatch;
         public readonly List<int> Batches = [];
         public readonly List<int> BatchRepeats = [];
+        public readonly List<JsonObject> Progress = [];
         public int Settled;
         public double SecondsPerBattle = 2;
         public string Period = "ScheduleSeason";
@@ -24,6 +25,7 @@ static class MirrorStageCases
             F = new(root, [DailyMirror.Proof()]);
             F.Frame["Scene"] = "Map3001_001";
             F.Workflow.Settings.Mirror.Multiplier = 15;
+            F.Workflow.WorkProgress = p => Progress.Add(p.DeepClone().AsObject());
             F.Readings = Readings;
             F.OnCommand = Command;
             F.OnDelay = () => { if (pending > 0 && !Hold && F.Time >= settleAt) Settle(); };
@@ -202,6 +204,10 @@ static class MirrorStageCases
         {
             var result = await DailyMirror.Run(s.F.Workflow);
             Check(s.Batches.SequenceEqual(new[] {15,10}) && s.BatchRepeats.SequenceEqual(new[] {2,1}) && s.Free == 0 && s.Paid == 7 && N(result["free_spent"]) == 40, "Mirror drains 40 free tickets with native 15x2 then 10x1 without paid tickets");
+            var progress = s.Progress.Where(p => S(p["unit"]) == "tickets").Select(p => I(p["completed"])).ToArray();
+            Check(progress.Contains(15) && progress.Contains(30) && progress[^1] == 40
+                && progress.Zip(progress.Skip(1)).All(p => p.First <= p.Second),
+                "native batch progress advances after each reply across batches without another game query or a backwards jump");
             Check(s.F.Time >= 6 && s.F.Business.Records(s.F.Context).Count(r => S(r["state"]) == "completed") == 2 && s.Settled == 3, "Mirror waits for all three native results across exactly two durable batches");
             Check(DailyNavigationDecision.Types(s.F.Frame).SetEquals(["MenuUI"]), "Mirror returns after the final confirmed settlement");
             var ops = s.F.Business.Records(s.F.Context).OrderBy(r => N(r["at"])).ToArray();
