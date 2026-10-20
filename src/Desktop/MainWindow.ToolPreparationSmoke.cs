@@ -27,12 +27,14 @@ public partial class MainWindow
         L.Audit();
         var checks=new List<string>();
         void Check(bool value,string message){if(!value)throw new Exception(message);checks.Add(message);}
+        CheckOwnedStorageForSmoke(Check);
         await CheckCookingForSmoke();
         async Task Until(Func<bool> predicate){for(int i=0;i<100&&!predicate();i++)await Task.Delay(25);Check(predicate(),"bounded UI preparation completed");}
         var equipment=Assembly.Load("BD2EquipmentAssistant").GetType("BD2Equipment.MainWindow")!;
         var gacha=Assembly.Load("BD2InfiniteGacha");
         var demos=new Dictionary<Window,object>();
         Window Create(string id){
+            if(id is "fishing" or "territory"){var name=id=="fishing"?"Fishing":"Territory";return (Window)Activator.CreateInstance(Assembly.Load("BD2"+name).GetType("BD2"+name+".Desktop."+name+"Window")!,new object[]{Path.Combine(smoke!,id)})!;}
             if(id=="sichuan")return (Window)Activator.CreateInstance(Assembly.Load("BD2Sichuan").GetType("BD2Sichuan.Desktop.SichuanWindow")!,new object[]{Path.Combine(smoke!,"sichuan")})!;
             if(id=="secret-vision")return (Window)Activator.CreateInstance(Assembly.Load("BD2SecretVision").GetType("BD2SecretVision.Desktop.MainWindow")!,new object[]{Path.Combine(smoke!,"secret-vision"),true,false})!;
             if(id=="rhythm")return (Window)Activator.CreateInstance(Assembly.Load("BD2Rhythm").GetType("BD2Rhythm.Desktop.RhythmWindow")!,new object[]{Path.Combine(smoke!,"rhythm")})!;
@@ -46,7 +48,7 @@ public partial class MainWindow
         string? prior=Environment.GetEnvironmentVariable("BD2_DAILY_HOSTED_TOOL");
         try
         {
-            foreach(string id in new[]{"mansion-runaway","equipment","infinite-gacha","fiend-hunter","rhythm","sichuan","secret-vision"})
+            foreach(string id in new[]{"mansion-runaway","equipment","infinite-gacha","fiend-hunter","rhythm","sichuan","secret-vision","fishing","territory"})
             foreach(string language in new[]{"zh-CN","zh-TW","en-US"})
             foreach(string appearance in new[]{"light","dark"})
             {
@@ -54,7 +56,7 @@ public partial class MainWindow
                 using var locale=HostedToolLocale.Begin(language);
                 Environment.SetEnvironmentVariable("BD2_DAILY_HOSTED_TOOL",id);
                 var window=Create(id);
-                if(id is "fiend-hunter" or "rhythm" or "sichuan" or "secret-vision" &&(window.FindName("LanguageBox")??window.FindName("LanguageChoice")) is ComboBox languageBox)languageBox.Visibility=Visibility.Collapsed;
+                if(id is "fishing" or "territory" or "fiend-hunter" or "rhythm" or "sichuan" or "secret-vision" &&(window.FindName("LanguageBox")??window.FindName("LanguageChoice")) is ComboBox languageBox)languageBox.Visibility=Visibility.Collapsed;
                 window.Owner=this;window.ShowInTaskbar=false;window.ShowActivated=false;window.WindowStartupLocation=WindowStartupLocation.Manual;window.Left=-12000;window.Top=0;
                 window.Width=id=="rhythm"?680:id=="fiend-hunter"?620:id=="infinite-gacha"?1260:id=="equipment"?1040:820;window.Height=id=="rhythm"?700:id=="fiend-hunter"?620:id=="infinite-gacha"?940:id=="equipment"?800:700;
                 int prepares=0,ready=0;bool painted=false,rendered=false;
@@ -84,7 +86,7 @@ public partial class MainWindow
                 Check(!loading.Preparing&&!loading.Ready&&!DailyToolControl.IsOccupied(root)&&loading.ActionButton.IsEnabled,id+": cancellation releases lease and permits explicit retry");
                 var retry=loading.StartAsync();await Until(()=>prepares==2);release.TrySetResult();await retry;
                 Check(ready==1&&loading.Ready&&loading.Body.IsEnabled&&!DailyToolControl.IsOccupied(root),id+": retry makes window ready without automation");
-                if(id is "sichuan" or "secret-vision"){
+                if(id is "sichuan" or "secret-vision" or "fishing" or "territory"){
                     Check(!((bool)window.GetType().GetField("connected",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(window)!),id+": no transport read before explicit connection");
                     Check(!((Button)window.FindName(id=="sichuan"?"AutoButton":"StartButton")).IsEnabled,id+": offline controls cannot execute");
                     Capture($"ready-{id}-{language}-{appearance}",(FrameworkElement)window.Content);
@@ -148,7 +150,7 @@ public partial class MainWindow
             DailyDialogs.Prepare(failed);failed.Show();await Until(()=>attempts==1&&!broken.Preparing);await Task.Delay(300);
             Check(attempts==1&&!broken.Body.IsEnabled&&broken.ActionButton.IsEnabled&&!DailyToolControl.IsOccupied(root),"failed setup stays recoverable without reconnecting indefinitely");failed.Close();
             // Closing during preparation waits for cancellation and releases ownership.
-            foreach(string id in new[]{"mansion-runaway","equipment","infinite-gacha","rhythm"}){
+            foreach(string id in new[]{"mansion-runaway","equipment","infinite-gacha","rhythm","fishing","territory"}){
                 Environment.SetEnvironmentVariable("BD2_DAILY_HOSTED_TOOL",id);
                 var closing=Create(id);
                 closing.ShowActivated=false;closing.ShowInTaskbar=false;closing.WindowStartupLocation=WindowStartupLocation.Manual;closing.Left=-12000;

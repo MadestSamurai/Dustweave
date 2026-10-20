@@ -52,7 +52,7 @@ function Pass([string]$path){
  if($value.status -ne 'passed'){throw "Verification did not pass: $path"}
 }
 function SourceState {
- $files=@(foreach($folder in @('src','tools','tests','assets','third-party','licenses','standalone','scripts','docs','.github')){
+ $files=@(foreach($folder in @('src','tools','tests','assets','third-party','licenses','scripts','docs','.github')){
   Get-ChildItem -LiteralPath (Join-Path $root $folder) -Recurse -File | Where-Object {$_.FullName -notmatch '[\\/](bin|obj)[\\/]'}
  })+@(Get-ChildItem -LiteralPath $root -File -Force)
  $rows=$files|ForEach-Object {[ordered]@{path=[IO.Path]::GetRelativePath($root,$_.FullName);hash=(Get-FileHash -LiteralPath $_.FullName).Hash}}
@@ -138,7 +138,7 @@ foreach($flavor in $Flavors){
  Copy-Item -LiteralPath (Join-Path $root 'THIRD_PARTY_NOTICES.md') -Destination $bundle
  Copy-Item -LiteralPath (Join-Path $root 'LICENSE') -Destination $bundle
  foreach($repository in $tools){
-  $sourceDirectory=switch($repository){'bd2-equipment-assistant'{'src/Equipment'} 'bd2-apostle-defense'{'src/ApostleDefense'} 'bd2-infinite-gacha'{'src/InfiniteGacha'} 'bd2-fiend-hunter'{'src/FiendHunter'} 'bd2-rhythm'{'src/Rhythm'} 'bd2-sichuan'{'src/Sichuan'} 'bd2-secret-vision'{'src/SecretVision'} default{'standalone/'+$repository}}
+  $sourceDirectory=switch($repository){'bd2-fishing'{'src/Fishing'} 'bd2-territory'{'src/Territory'} 'bd2-equipment-assistant'{'src/Equipment'} 'bd2-apostle-defense'{'src/ApostleDefense'} 'bd2-infinite-gacha'{'src/InfiniteGacha'} 'bd2-fiend-hunter'{'src/FiendHunter'} 'bd2-rhythm'{'src/Rhythm'} 'bd2-sichuan'{'src/Sichuan'} 'bd2-secret-vision'{'src/SecretVision'} default{'standalone/'+$repository}}
   $module=Join-Path $root $sourceDirectory;$guide=Join-Path $bundle ('docs/tools/'+$repository);[IO.Directory]::CreateDirectory($guide)|Out-Null
   foreach($name in @('README.md','README.en.md','README_EN.md','THIRD_PARTY_NOTICES.md')){if(Test-Path -LiteralPath (Join-Path $module $name)){Copy-Item -LiteralPath (Join-Path $module $name) -Destination $guide}}
   Copy-Item -LiteralPath (Join-Path $module 'LICENSE') -Destination (Join-Path $bundle ('licenses/'+$repository+'-MIT.txt'))

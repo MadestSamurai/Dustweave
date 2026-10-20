@@ -83,7 +83,8 @@
    <DataTrigger Binding="{Binding HasUnitProgress}" Value="True"><Setter TargetName="UnitProgress" Property="Visibility" Value="Visible"/></DataTrigger>
    <DataTrigger Binding="{Binding HasTaskDetails}" Value="True"><Setter TargetName="TaskDetails" Property="Visibility" Value="Visible"/></DataTrigger>
    <DataTrigger Binding="{Binding HasAbsorptions}" Value="True"><Setter TargetName="AbsorptionDetails" Property="Visibility" Value="Visible"/></DataTrigger>
-   <DataTrigger Binding="{Binding HasRecovery}" Value="True"><Setter TargetName="RecoveryDetails" Property="Visibility" Value="Visible"/></DataTrigger>
+   <DataTrigger Binding="{Binding HasRecoveryAction}" Value="True"><Setter TargetName="RecoveryDetails" Property="Visibility" Value="Visible"/></DataTrigger>
+   <DataTrigger Binding="{Binding Detail}" Value=""><Setter TargetName="Explanation" Property="Visibility" Value="Collapsed"/></DataTrigger>
    <DataTrigger Binding="{Binding HasFinishedTime}" Value="True"><Setter TargetName="FinishedTime" Property="Visibility" Value="Visible"/></DataTrigger>
    <DataTrigger Binding="{Binding CompactPlan}" Value="True">
     <Setter TargetName="FinishedTime" Property="Visibility" Value="Collapsed"/>

@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 1.4.12 — 2026-10-20
+
+- 自动钓鱼、领地自动化迁入主项目，统一连接加载、主题语言、日志导出与清理，保留旧设置和未确认业务记录。
+- 周收集读取当前账号的实际天赋次数，修复低于固定次数时继续换图的问题。
+- 批量进度改为账号内时间线；单账号执行不再进入批量页，移除重复保存预设按钮。
+- Fishing and Territory join the owned modules; account-specific absorption limits, clearer batch timelines and single-account execution routing.
+- [完整说明 / Full notes](docs/releases/1.4.12.md)
+
 ## 1.4.11 — 2026-10-20
 
 - 调整新队列：先领取日常／周常／通行证奖励和活动奖励，再合并执行周收集、周 NPC 与偷窃，随后跑商，最后领取邮箱。

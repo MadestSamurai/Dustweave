@@ -1,5 +1,32 @@
 [
   {
+    "Version": "1.4.12",
+    "Date": "2026-10-20",
+    "Notes": {
+      "zh-CN": [
+        "自动钓鱼与领地自动化迁入织尘，窗口先显示加载进度，支持取消和重试，统一主题、语言与日志管理。",
+        "有效旧设置自动沿用，保留鱼类规则和未确认的种植、料理及售卖记录。",
+        "周收集按当前账号实际天赋次数安排，不再假设所有账号都有相同吸收次数。",
+        "批量执行改为账号内时间线；只选一个账号时使用单账号视图，包括定时与启动执行。",
+        "今日任务移除重复保存预设入口，更新中英文使用说明和模块链接。"
+      ],
+      "zh-TW": [
+        "自動釣魚與領地自動化遷入織塵，視窗先顯示載入進度，支援取消和重試，統一主題、語言與日誌管理。",
+        "沿用有效舊設定，保留魚類規則和未確認的種植、料理及販售紀錄。",
+        "週收集依目前帳號的實際天賦次數安排，不再假設所有帳號都有相同吸收次數。",
+        "批次執行改為帳號內時間軸；僅選一個帳號時使用單帳號畫面，包含排程與啟動執行。",
+        "今日任務移除重複儲存預設入口，更新中英文說明與模組連結。"
+      ],
+      "en-US": [
+        "Fishing and Territory now use owned modules, window-first loading, cancellation and retry, shared themes, language and diagnostics.",
+        "Existing valid settings and pending planting, cooking and sale records are preserved.",
+        "Weekly collection reads the actual talent allowance for each account instead of assuming fixed absorption uses.",
+        "Multi-account progress uses per-account timelines. Single-account manual, scheduled and startup runs use the single-account view.",
+        "Removes the duplicate save-preset action and refreshes the READMEs and source links."
+      ]
+    }
+  },
+  {
     "Version": "1.4.11",
     "Date": "2026-10-20",
     "Notes": {

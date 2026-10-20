@@ -28,7 +28,7 @@ internal static class ToolApplicationHost
             _ = new HostedToolActivity(window,id);
             if(window.FindName("ConnectButton") is System.Windows.Controls.Button button){
                 if(id=="equipment"){button.SetResourceReference(System.Windows.Controls.ContentControl.ContentProperty,"SuiteRefresh");Application.Current.Resources["SuiteRefresh"]=DailyLanguage.Current.Get("tools.refresh_inventory");}
-                _ = ConnectWhenIdle(window,button,id is not ("equipment" or "infinite-gacha" or "fiend-hunter" or "rhythm" or "sichuan" or "secret-vision"));
+                _ = ConnectWhenIdle(window,button,id is not ("fishing" or "territory" or "equipment" or "infinite-gacha" or "fiend-hunter" or "rhythm" or "sichuan" or "secret-vision"));
             }
     }
     internal static async Task ConnectWhenIdle(Window window,System.Windows.Controls.Button button,bool hideAfterConnect, string? dataRoot=null)
@@ -44,7 +44,7 @@ internal static class ToolApplicationHost
             await Task.Delay(50);
         }
     }
-    internal static string Version(DailyToolDefinition tool) => tool.Id is "equipment" or "apostle-defense" or "infinite-gacha" or "mansion-runaway" or "pandora" or "fiend-hunter" or "rhythm" or "sichuan" or "secret-vision" ? DailyProductVersion.Current : Assembly.Load(new AssemblyName(tool.AssemblyName)).GetName().Version!.ToString(3);
+    internal static string Version(DailyToolDefinition tool) => tool.Id is "fishing" or "territory" or "equipment" or "apostle-defense" or "infinite-gacha" or "mansion-runaway" or "pandora" or "fiend-hunter" or "rhythm" or "sichuan" or "secret-vision" ? DailyProductVersion.Current : Assembly.Load(new AssemblyName(tool.AssemblyName)).GetName().Version!.ToString(3);
     public static int CheckClient(string id, string managed, string output)
     {
         Directory.CreateDirectory(output);
@@ -76,7 +76,7 @@ internal static class ToolApplicationHost
             var entry = assembly.GetType(typeName)!.GetMethod("RunHosted", BindingFlags.Public | BindingFlags.Static)
                 ?? throw new MissingMethodException("工具缺少统一启动入口，请使用完整版本。");
             Action<Application>? setup=!helper&&!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BD2_DAILY_HOSTED_TOOL")) ? app=>ConfigureWindow(app,id) : null;
-            if(id is "equipment" or "infinite-gacha" or "fiend-hunter" or "rhythm" or "sichuan" or "secret-vision") { var activitySetup=setup; setup=app=>{HostedToolPresentation.Install(app,deferChrome:activitySetup!=null);activitySetup?.Invoke(app);}; }
+            if(id is "fishing" or "territory" or "equipment" or "infinite-gacha" or "fiend-hunter" or "rhythm" or "sichuan" or "secret-vision") { var activitySetup=setup; setup=app=>{HostedToolPresentation.Install(app,deferChrome:activitySetup!=null);activitySetup?.Invoke(app);}; }
             return (int)entry.Invoke(null, new object?[] { arguments,setup })!;
         }
         catch (Exception error)

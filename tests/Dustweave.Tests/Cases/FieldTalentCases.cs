@@ -36,6 +36,26 @@ static class FieldTalentCases
                 throw new Exception(name);
             cases.Add(name);
         }
+        JsonObject QuotaEvidence(string limits, string counts) => new()
+        {
+            ["Readings"] = new JsonArray(
+                Reading("mainline.talent_limits", "$self", JsonNode.Parse(limits)),
+                Reading("mainline.talent_counts", "Values", JsonNode.Parse(counts)))
+        };
+        var quota = QuotaEvidence("""[{"Kind":4,"Group":401,"Limit":7},{"Kind":4,"Group":402,"Limit":7},{"Kind":20,"Group":2001,"Limit":7}]""",
+            """[{"groupId":401,"useCount":7},{"groupId":402,"useCount":7}]""");
+        Check(DailyFieldRoute.TalentAllowance(quota, 4) == (14, 14, 0), "two owned absorption talents exhaust at 14, without opening their menu");
+        Check(DailyFieldRoute.TalentAllowance(quota, 20) == (0, 7, 7), "absorption usage does not exhaust capture");
+        quota = QuotaEvidence("""[{"Kind":4,"Group":401,"Limit":3},{"Kind":4,"Group":401,"Limit":7},{"Kind":4,"Group":402,"Limit":5}]""",
+            """[{"groupId":401,"useCount":9},{"groupId":401,"useCount":7},{"groupId":402,"useCount":1},{"groupId":403,"useCount":7}]""");
+        Check(DailyFieldRoute.TalentAllowance(quota, 4) == (8, 12, 4), "different talent levels deduplicate groups and ignore unrelated historical uses");
+        Check(DailyFieldRoute.TalentAllowance(QuotaEvidence("[]", "[]"), 4) == (0, 0, 0), "verified empty ownership is zero allowance");
+        foreach (var unavailable in new[] { Evidence(), QuotaEvidence("null", "[]"), QuotaEvidence("""[{"Kind":4,"Group":401}]""", "[]") })
+        {
+            bool rejected = false;
+            try { DailyFieldRoute.TalentAllowance(unavailable, 4); } catch (InvalidDataException) { rejected = true; }
+            Check(rejected, "missing talent limits never fall back to 21 or assume exhaustion");
+        }
         var op = Op(new string('c', 32));
         var command = DailyCommandDriver.BuildCommand(Frame(), Frame()["Surfaces"]![0]!.AsObject(), 0, Action(new string('c', 32)), 100000000, new string('d', 32), "business:" + new string('c', 32) + "|test");
         op["command_id"] = new string('d', 32);

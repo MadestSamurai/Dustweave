@@ -3429,6 +3429,21 @@
     "zh-TW": "將依序執行 {0} 個帳號已開啟的日常環節。切換帳號時會正常關閉並重新啟動遊戲。請先結束進行中的戰鬥。",
     "en-US": "Run enabled daily tasks for {0} accounts in order. The game will close and restart between accounts. Finish any ongoing battle first."
   },
+  "run.single_confirm": {
+    "zh-CN": "启动「{0}」并执行该账号预设中的日常。需要切换账号时，会先正常关闭当前游戏。",
+    "zh-TW": "啟動「{0}」並執行該帳號預設中的日常。需要切換帳號時，會先正常關閉目前遊戲。",
+    "en-US": "Start {0} and run its daily task preset. If an account switch is needed, the current game will close first."
+  },
+  "run.start_account": {
+    "zh-CN": "启动并执行日常",
+    "zh-TW": "啟動並執行日常",
+    "en-US": "Start and run daily tasks"
+  },
+  "schedule.single_mode": {
+    "zh-CN": "单账号执行",
+    "zh-TW": "單帳號執行",
+    "en-US": "Single-account run"
+  },
   "run.stop_requested": {
     "zh-CN": "已请求停止，等待当前请求结算。",
     "zh-TW": "已請求停止，等待目前請求結算。",

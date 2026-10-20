@@ -605,7 +605,7 @@ public sealed partial class DailyRunPanel : UserControl
         retry.IsEnabled = available && SelectedTasks.Count > 0;
         resume.IsEnabled = canResume;
     }
-    private sealed class StageRow : INotifyPropertyChanged
+    internal sealed class StageRow : INotifyPropertyChanged
     {
         public string Task
         {
@@ -647,6 +647,7 @@ public sealed partial class DailyRunPanel : UserControl
         public bool HasAbsorptions => Absorptions is { Maps: > 0 };
         public string AbsorptionLabel => L.Get("absorption.button", Absorptions?.Maps ?? 0);
         public bool HasRecovery => snapshot.State == "recovery_required";
+        public bool HasRecoveryAction => HasRecovery && !Overview;
         public string RecoveryLabel => L.Get("run.recovery_details");
         public string RecoveryAccessibleName => L.Get("run.recovery_accessible", Name);
         public string RecoveryOperations => string.Join(L.Code == "en-US" ? ", " : "、", snapshot.Recovery.Select(r =>
@@ -659,6 +660,7 @@ public sealed partial class DailyRunPanel : UserControl
         public string TaskDetailsAccessibleName => L.Get("run.details_accessible",Name);
         public string DiagnosticDetail => L.Diagnostic(snapshot.Detail, Detail);
         public bool IsPlan { get; init; }
+        public bool Overview { get; }
         public bool CompactPlan => IsPlan && snapshot.State is "pending" or "waiting";
         public void RefreshLanguage() => Changed("");
         public bool Completed => snapshot.State == "completed";
@@ -693,16 +695,17 @@ public sealed partial class DailyRunPanel : UserControl
                 Changed(nameof(CanEdit));
             }
         }
-        public StageRow(QueueStage stage, bool isPlan = false)
+        public StageRow(QueueStage stage, bool isPlan = false, bool overview = false)
         {
             Task = stage.Task;
             IsPlan = isPlan;
+            Overview = overview;
             Update(stage);
         }
         public void Update(QueueStage stage)
         {
             snapshot = stage;
-            Compact = stage.State == "completed" && string.IsNullOrWhiteSpace(stage.Detail) && !stage.Carried && !HasTaskDetails && !HasAbsorptions;
+            Compact = stage.State == "completed" && (Overview && !stage.HasNotice || string.IsNullOrWhiteSpace(stage.Detail) && !stage.Carried) && !HasTaskDetails && !HasAbsorptions;
             Active = stage.State == "running" || stage.Work != null;
             NeedsAttention = stage.State is "blocked" or "recovery_required";
             string symbol = (stage.Work != null ? "running" : stage.State) switch

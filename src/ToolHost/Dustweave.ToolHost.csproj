@@ -1,4 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0-windows</TargetFramework><PlatformTarget>x64</PlatformTarget><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
-  <ItemGroup><ProjectReference Include="../../standalone/bd2-fishing/core/BD2Fishing.Core.csproj" /><ProjectReference Include="../../src/Sichuan/core/Dustweave.Sichuan.Core.csproj" Aliases="sichuan" /><ProjectReference Include="../../src/Sichuan/compatibility/Dustweave.Sichuan.Compatibility.csproj" Aliases="sichuan" /></ItemGroup>
+  <ItemGroup><ProjectReference Include="../../src/Fishing/core/Dustweave.Fishing.Core.csproj" /><ProjectReference Include="../../src/Sichuan/core/Dustweave.Sichuan.Core.csproj" Aliases="sichuan" /><ProjectReference Include="../../src/Sichuan/compatibility/Dustweave.Sichuan.Compatibility.csproj" Aliases="sichuan" /></ItemGroup>
 </Project>

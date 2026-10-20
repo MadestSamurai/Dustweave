@@ -16,7 +16,7 @@ foreach($project in $manifest.projects){
  $name=$definition.SelectSingleNode('//AssemblyName')
  [void]$ownedAssemblies.Add($(if($name){$name.InnerText}else{[IO.Path]::GetFileNameWithoutExtension($project)}))
 }
-$sourceFiles=@(foreach($folder in @('src','tools','tests','assets','third-party','licenses','standalone')){
+$sourceFiles=@(foreach($folder in @('src','tools','tests','assets','third-party','licenses')){
  Get-ChildItem -LiteralPath (Join-Path $root $folder) -File -Recurse | Where-Object {$_.FullName -notmatch '[\\/](bin|obj)[\\/]'}
 })
 $errors=[Collections.Generic.List[string]]::new()

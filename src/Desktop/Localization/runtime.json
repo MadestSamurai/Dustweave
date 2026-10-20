@@ -1,4 +1,6 @@
 {
+  "message.未能读取当前账号的天赋次数，请重新连接后重试周收集。": {"zh-CN":"未能读取当前账号的天赋次数，请重新连接后重试周收集。","zh-TW":"未能讀取目前帳號的天賦次數，請重新連線後重試每週收集。","en-US":"Unable to read this account's Ability uses. Reconnect and retry weekly collection."},
+  "message.当前账号没有可用的吸收天赋，请启用天赋或在设置中选择步行收集。": {"zh-CN":"当前账号没有可用的吸收天赋，请启用天赋或在设置中选择步行收集。","zh-TW":"目前帳號沒有可用的吸收天賦，請啟用天賦或在設定中選擇步行收集。","en-US":"This account has no enabled Absorption Ability. Enable it or select walking collection in settings."},
   "message.mail_selection_rejected": { "zh-CN": "本次邮箱选择已失效，未继续领取。请重新连接后重试。", "zh-TW": "本次信箱選擇已失效，未繼續領取。請重新連線後重試。", "en-US": "The mail selection is no longer valid. Reconnect and retry." },
   "message.mail_selection_changed": { "zh-CN": "所选邮件已变化，未继续领取。请重新读取邮箱后重试。", "zh-TW": "所選郵件已變化，未繼續領取。請重新讀取信箱後重試。", "en-US": "The selected mail changed. Read the mailbox again before retrying." },
   "message.砍价预览与当前广场商人不一致，未操作。": {"zh-CN":"砍价预览与当前广场商人不一致，未操作。","zh-TW":"砍價預覽與目前廣場商人不一致，未操作。","en-US":"The bargain preview does not match the current plaza merchant. No action was taken."},

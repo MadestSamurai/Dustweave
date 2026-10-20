@@ -68,6 +68,7 @@ static class EventCollectionCases
                 WorkflowCases.Reading("mainline.waypoint", (WaypointNear, NearWaypoint)),
                 WorkflowCases.Reading("mainline.network", ("$self", network)),
                 WorkflowCases.Reading("mainline.talent_counts", ("Values", Array(counts.Select(c => O(("groupId", c.Key * 100 + 5), ("useCount", c.Value)))))),
+                WorkflowCases.Reading("mainline.talent_limits", ("$self", new JsonArray(O(("Kind", 4), ("Group", 405), ("Limit", 21)), O(("Kind", 20), ("Group", 2005), ("Limit", 21))))),
                 WorkflowCases.Reading("mainline.research", ("$self", O(("Active", Research), ("Remaining", Research ? 100 : 0)))),
                 WorkflowCases.Reading("mainline.durations", ("effects", new JsonArray(O(("Key", 17), ("Value.ὫὢὢὬὫὫὡὩὪὩὮ", StealthUntil > H.Time), ("Value.ὠὨὠὭὬὤὪὢὫὨὮ", Math.Max(0, StealthUntil - H.Time)))))),
                 WorkflowCases.Reading("mainline.talent_rows", ("$self", Missing ? new JsonArray() : new JsonArray(O(("Instance", group), ("Kind", MenuKind), ("Group", group), ("Cooldown", 0), ("Gate", ""), ("PackRestricted", false), ("Reason", Disabled ? "character_dead" : "")))))

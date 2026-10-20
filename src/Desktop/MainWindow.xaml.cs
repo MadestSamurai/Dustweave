@@ -84,7 +84,7 @@ public partial class MainWindow : Window
         SettingsTab.Content = preferencesPanel;
         InitializeSoftwareSettings(); InitializeSchedules(); InitializeUpdates(); InitializeSandboxPresentation(); InitializeLogCleanup(); InitializeStorageWarning();
         dailyPanel = new DailyRunPanel(root);
-        dailyQueue = new(root, new PackagedDailyQueueExecutor(AppContext.BaseDirectory));
+        dailyQueue = new(root, smoke != null && host is DemoEnvironment demo ? demo : new PackagedDailyQueueExecutor(AppContext.BaseDirectory));
         RunTab.Content = dailyPanel; InitializeParallel(); InitializeDesktopBehavior();
         dailyPanel.PresetsChanged += RefreshAccountPresets;
         toolSession = new(root, Environment.ProcessPath!);
@@ -354,7 +354,8 @@ public partial class MainWindow : Window
         L.Text(SelectionText, "account.selected", count);
         UpdateAccountPresentation();
         RunAccountsButton.IsEnabled = !Unavailable && count > 0;
-        L.Bind(RunAccountsButton, ContentControl.ContentProperty, "account.run_queue_count", count);
+        L.Bind(RunAccountsButton, ContentControl.ContentProperty, count == 1 ? "run.start_account" : "account.run_queue_count", count);
+        ExecutionModeButton.Visibility = !IsSandboxWindow && count > 1 ? Visibility.Visible : Visibility.Collapsed;
 
         RunAccountsButton.Visibility = busy || ParallelBusy ? Visibility.Collapsed : Visibility.Visible;
     }
@@ -839,6 +840,12 @@ public partial class MainWindow : Window
         try
         {
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "single-account-routing")
+            {
+                await CheckSingleAccountRoutingForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status="passed", scope="single-account-routing", realGameTouched=false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "work-progress")
             {
                 await CheckExecutionProgressForSmoke();

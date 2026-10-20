@@ -6,6 +6,135 @@ namespace Dustweave.Desktop;
 
 public partial class MainWindow
 {
+    private async Task CheckSingleAccountRoutingForSmoke()
+    {
+        var fixture = (DemoEnvironment)host;
+        var first = fixture.Accounts[0]; var second = fixture.Accounts[1];
+        var presets = new DailyTaskPresetStore(root);
+        var mail = presets.Save("Mail", ["mail"]); presets.Assign(first.AccountKey, mail.Id);
+        var guildPreset = presets.Save("Guild", ["guild"]); presets.Assign(second.AccountKey, guildPreset.Id);
+        var previousOptions = parallelOptions; var previousSchedule = scheduleStore;
+        int checks = 0, executions = 0;
+        bool expectBatch = false, stopDuringQueue = false;
+        void Check(bool value, string reason) { if (!value) throw new InvalidOperationException(reason); checks++; }
+        static IEnumerable<T> Find<T>(DependencyObject node) where T : DependencyObject
+        {
+            for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(node); i++)
+            {
+                var child = System.Windows.Media.VisualTreeHelper.GetChild(node, i);
+                if (child is T match) yield return match;
+                foreach (var next in Find<T>(child)) yield return next;
+            }
+        }
+        void SelectAccount(DailyAccount account)
+        {
+            RefreshAccounts();
+            foreach (var row in rows) row.Selected = row.Account.AccountKey == account.AccountKey;
+            UpdateSelection();
+        }
+        void CloseResults() { runResultsWindow?.Close(); runResultsWindow = null; }
+        fixture.QueueExecuting = (account, tasks) => Dispatcher.Invoke(() =>
+        {
+            executions++;
+            Check(ReferenceEquals(RunTab.Content, expectBatch ? sequentialPanel : dailyPanel), "Incorrect execution view");
+            Check(expectBatch || sequentialRun == null && sequentialAccount.Length == 0, "Single account retained batch state");
+            Check(fixture.CurrentKey == account && TaskAccountKey == account, "Queue account differs from the displayed/connected account");
+            Check(tasks?.SequenceEqual(account == first.AccountKey ? ["mail"] : ["guild"]) == true, "Account preset was lost");
+            Check(busy && !ConnectButton.IsEnabled, "Single-account routing lost execution ownership");
+            if (stopDuringQueue) { dailyStopping = true; dailyQueue.Stop(); }
+        });
+        try
+        {
+            parallelOptions = new(true, 2, false);
+            Check(!UseParallelAccounts([first], parallelOptions) && UseParallelAccounts([first, second], parallelOptions),
+                "Parallel routing ignores the number of accounts");
+            // Exercise the same checked-account entry used by the account page.
+            SelectAccount(first);
+            WorkspaceTabs.SelectedItem = AccountsTab;
+            Check(ExecutionModeButton.Visibility == Visibility.Collapsed && RunAccountsButton.Content?.ToString() == L.Get("run.start_account"),
+                "A single checked account still advertises batch execution");
+            Dispatcher.BeginInvoke(() =>
+            {
+                var confirmation = OwnedWindows.Cast<Window>().Single(w => w.IsVisible);
+                Check(Find<TextBlock>(confirmation).Any(t => t.Text.Contains(first.Name)), "Single-account confirmation omits the account");
+                Find<Button>(confirmation).Single(b => b.IsDefault).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            }, DispatcherPriority.ApplicationIdle);
+            await RunCheckedAccountsAsync(); CloseResults();
+            Check(executions == 1 && dailyQueue.ReadView(first.AccountKey).State == "completed", "Checked account did not execute to completion");
+            Check(!fixture.Calls.Any(x => x.StartsWith("launch:") || x == "close"), "Already-connected single account unnecessarily restarted");
+
+            // A saved parallel schedule with one identity must not probe/install Sandboxie.
+            var now = DateTimeOffset.UtcNow;
+            var local = now.LocalDateTime;
+            scheduleStore = new(Path.Combine(root, "single-schedule"));
+            var plan = new DailySchedulePlan { Enabled = true, Hour = local.Hour, Minute = local.Minute,
+                Accounts = [second.AccountKey], Execution = new(true, 2, true), SavedUtc = now.AddDays(-1) };
+            scheduleStore.Save(plan);
+            schedulePanel.Show(plan, null);
+            schedulePanel.SetAccounts(fixture.Accounts);
+            WorkspaceTabs.SelectedItem = ScheduleTab;
+            foreach (string language in DailyLanguage.Codes)
+            foreach (var appearance in new[] { DailyAppearance.Light, DailyAppearance.Dark })
+            {
+                L.Select(language); theme.Select(appearance);
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                Check(Find<TextBlock>(schedulePanel).Any(t => t.IsVisible && t.Text == L.Get("schedule.single_mode")),
+                    "One-account schedule mode is not visible");
+                Check(!Find<ComboBox>(schedulePanel).Any(c => c.IsVisible), "One-account schedule still exposes parallel controls");
+                Capture("schedule-single-" + language + "-" + appearance);
+            }
+            schedulePanel.Show(plan with { Accounts = [first.AccountKey, second.AccountKey] }, null);
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            Check(Find<ComboBox>(schedulePanel).Any(c => c.IsVisible && c.SelectedIndex == 1),
+                "Adding a second account lost the saved parallel mode");
+            schedulePanel.Show(plan, null);
+            await CheckScheduleCoreAsync(now); CloseResults();
+            Check(executions == 2 && scheduleStore.Last?.State == "completed", "One-account parallel schedule did not run normally");
+            Check(fixture.CurrentKey == second.AccountKey && fixture.Game == null, "Schedule did not switch account and honor close-after-run");
+            Check(ReferenceEquals(RunTab.Content, dailyPanel) && dailyQueue.ReadView(second.AccountKey).State == "completed",
+                "Scheduled completion lost the single-account view/history");
+            await CheckScheduleCoreAsync(now.AddSeconds(1));
+            Check(executions == 2, "The same scheduled occurrence ran twice");
+
+            SelectAccount(first);
+            (new DailyDesktopBehavior(RunOnOpen: true)).Save(root);
+            await RunOnOpenAsync(false); CloseResults();
+            Check(executions == 3 && fixture.Game != null && fixture.CurrentKey == first.AccountKey,
+                "Startup execution did not use the selected single account");
+            stopDuringQueue = true;
+            Check(await ExecuteAccountQueue([first], new(true, 2, true)) == "paused", "Single-account stop did not pause");
+            CloseResults();
+            Check(fixture.Game != null && !busy, "Stopping closed the game or kept the UI locked");
+            stopDuringQueue = false;
+            fixture.QueueOutcome = "partial";
+            Check(await ExecuteAccountQueue([first], new(true, 2, false)) == "partial", "Single-account partial results were hidden");
+            CloseResults(); fixture.QueueOutcome = "completed";
+
+            // Returning from an earlier batch and selecting one account must clear its view.
+            expectBatch = true;
+            Check(await ExecuteAccountQueue([first, second], new(false, 1, false)) == "completed", "Sequential batch regressed");
+            CloseResults();
+            Check(sequentialRun?.Items.All(i => i.State == "completed") == true, "Sequential batch lost account progress");
+            expectBatch = false;
+            await ExecuteAccountQueue([first], new(true, 2, false)); CloseResults();
+            Check(sequentialRun == null && ReferenceEquals(RunTab.Content, dailyPanel), "Single-account run reopened old batch");
+
+            // A connection failure must never run another account's preset.
+            int before = executions;
+            fixture.FailConnectKey = second.AccountKey;
+            Check(await ExecuteAccountQueue([second], new(true, 2, false)) == "failed" && executions == before,
+                "Failed account connection still started daily tasks");
+            Check(!busy && ReferenceEquals(RunTab.Content, dailyPanel), "Failed connection left batch/locked UI");
+            Check(parallel == null, "Isolated test created a real sandbox session");
+            DailyJson.Write(Path.Combine(smoke!, "single-account-routing.json"), new { status = "passed", checks, executions, realGameTouched = false });
+        }
+        finally
+        {
+            CloseResults(); fixture.QueueExecuting = null; fixture.FailConnectKey = null; fixture.QueueOutcome = "completed";
+            parallelOptions = previousOptions; scheduleStore = previousSchedule; (new DailyDesktopBehavior()).Save(root);
+        }
+    }
+
     private async Task CheckSchedulingForSmoke()
     {
         static IEnumerable<T> Descendants<T>(DependencyObject node) where T : DependencyObject

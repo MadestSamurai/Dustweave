@@ -44,10 +44,29 @@ public sealed partial class DailyFieldRoute
     public static JsonObject[] FieldRows(JsonObject e, string name) => Rows(e["Readings"]).Where(r => S(r["Id"]) == "mainline." + name && S(r["Error"]) == "").Select(r => { var v = DailyEvidence.Values(r); v["instance"] = Copy(r["InstanceId"]); return v; }).ToArray();
     public static JsonObject[] Counts(JsonObject e) => Rows(R(e, "mainline.talent_counts", "Values"));
     public static long Used(JsonObject e, int kind) => Counts(e).Where(r => N(r["groupId"]) / 100 == kind).Sum(r => N(r["useCount"]));
+    public static (int Used, int Limit, int Remaining) TalentAllowance(JsonObject e, int kind)
+    {
+        const string unavailable = "未能读取当前账号的天赋次数，请重新连接后重试周收集。";
+        var limits = Readings(e, "mainline.talent_limits").Select(r => r["$self"]).OfType<JsonArray>().SingleOrDefault();
+        Require(limits != null && Readings(e, "mainline.talent_counts").Any(), unavailable);
+        var groups = Rows(limits).Where(r => N(r["Kind"]) == kind).ToArray();
+        Require(groups.All(r => N(r["Group"]) > 0 && r["Limit"] != null && N(r["Limit"]) >= 0), unavailable);
+        var counts = Counts(e).GroupBy(r => N(r["groupId"])).ToDictionary(g => g.Key, g => g.Max(r => N(r["useCount"])));
+        int limit = 0, used = 0;
+        // Uses belong to a talent group, not to a fixed number of characters.
+        // An exhausted group must not consume another group's allowance.
+        foreach (var group in groups.GroupBy(r => N(r["Group"])))
+        {
+            int maximum = checked((int)group.Max(r => N(r["Limit"])));
+            limit = checked(limit + maximum);
+            used = checked(used + (int)Math.Clamp(counts.GetValueOrDefault(group.Key), 0, maximum));
+        }
+        return (used, limit, limit - used);
+    }
     public static JsonObject[] Talents(JsonObject e) => Rows(R(e, "mainline.talent_rows", "$self"));
     public void Quota(JsonObject e)
     {
-        if (!Progress.OnlySteal && Used(e, 4) >= 21)
+        if (!Progress.OnlySteal && TalentAllowance(e, 4).Remaining == 0)
             throw new DailyQuotaExhausted("吸收次数已用完，次日接续");
     }
     public static double Remaining(JsonObject e, int kind)
@@ -437,7 +456,7 @@ public sealed partial class DailyFieldRoute
             if (remaining > minRemaining)
                 return DailyWorkflow.Skipped("research_active");
         }
-        if (kind is 4 or 20 && Used(e, kind) >= 21)
+        if (kind is 4 or 20 && TalentAllowance(e, kind).Remaining == 0)
             return DailyWorkflow.Skipped("daily_limit");
         JsonObject opened;
         try

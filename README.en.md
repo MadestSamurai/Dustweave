@@ -67,13 +67,13 @@ Open any of these from Dustweave's **Tools** page; no separate installation is n
 
 | Tool | Main features |
 | --- | --- |
-| Fishing | Fishing, bait management, keep rules and inventory sales |
-| Territory | Planting, gathering, cooking, inventory sales and layout |
+| [Fishing](src/Fishing) | Fishing, bait management, keep rules and inventory sales |
+| [Territory](src/Territory) | Planting, gathering, cooking, inventory sales and layout |
 | [Equipment Assistant](src/Equipment) | Powder planning and batch refinement with budget confirmation |
-| Sichuan | Board solving and repeat play |
+| [Sichuan](src/Sichuan) | Board solving and repeat play |
 | [Rhythm](src/Rhythm) | Chart reading and automated input |
 | [Apostle Defense](src/ApostleDefense) | An offline simulated-annealing-tuned policy for summoning, merging, upgrades, positioning and checkpoint restarts |
-| SECRET VISION | Territory capture, evasion and retries after defeat |
+| [SECRET VISION](src/SecretVision) | Territory capture, evasion and retries after defeat |
 | [Fiend Hunter](src/FiendHunter) | Choose a character, monster and solo difficulty; stop after settlement |
 | [Infinite Gacha](src/InfiniteGacha) | Two target lists, stop conditions and target notifications |
 | [MANSION RUNAWAY](docs/MANSION_RUNAWAY.md) | Live navigation, enemy avoidance and stage progression, with an optional 80-chain goal |
@@ -84,14 +84,14 @@ The Pandora challenge strategy has reached 20 minutes in one live trial. Charact
 <details>
 <summary>Original repositories and maintenance</summary>
 
-The original repositories provide standalone source and historical releases; they do not describe the current built-in versions. **The Equipment Assistant, Apostle Defense, Infinite Gacha, Fiend Hunter, Rhythm, SECRET VISION and Sichuan repositories are archived and no longer maintained. Their ongoing code and issue reports belong in Dustweave.** The other repositories below were not archived as of October 20, 2026, but their releases are not guaranteed to stay synchronized with the built-in versions.
+All integrated tools are maintained and released with Dustweave. The original repositories are archived for historical reference; please report current issues here.
 
 - [Equipment Assistant (archived)](https://github.com/MadestSamurai/bd2-equipment-assistant)
-- [Fishing](https://github.com/MadestSamurai/bd2-fishing) · [Territory](https://github.com/MadestSamurai/bd2-territory)
+- [Fishing (archived)](https://github.com/MadestSamurai/bd2-fishing) · [Territory (archived)](https://github.com/MadestSamurai/bd2-territory)
 - [Sichuan (archived)](https://github.com/MadestSamurai/bd2-sichuan) · [Rhythm (archived)](https://github.com/MadestSamurai/bd2-rhythm) · [Apostle Defense (archived)](https://github.com/MadestSamurai/bd2-apostle-defense)
 - [SECRET VISION (archived)](https://github.com/MadestSamurai/bd2-secret-vision) · [Fiend Hunter (archived)](https://github.com/MadestSamurai/bd2-fiend-hunter) · [Infinite Gacha (archived)](https://github.com/MadestSamurai/bd2-infinite-gacha)
 
-Equipment Assistant, Apostle Defense, Infinite Gacha, Fiend Hunter, Rhythm, MANSION RUNAWAY and Pandora are maintained under [`src/Equipment/`](src/Equipment), [`src/ApostleDefense/`](src/ApostleDefense), [`src/InfiniteGacha/`](src/InfiniteGacha), [`src/FiendHunter/`](src/FiendHunter), [`src/Rhythm/`](src/Rhythm), [`src/Mansion/`](src/Mansion) and [`src/Pandora/`](src/Pandora). SECRET VISION and Sichuan are maintained under [`src/SecretVision/`](src/SecretVision) and [`src/Sichuan/`](src/Sichuan). The other standalone tools' integrated sources remain under [`standalone/`](standalone). All modules retain their attribution and licenses.
+Equipment Assistant, Apostle Defense, Infinite Gacha, Fiend Hunter, Rhythm, MANSION RUNAWAY and Pandora are maintained under [`src/Equipment/`](src/Equipment), [`src/ApostleDefense/`](src/ApostleDefense), [`src/InfiniteGacha/`](src/InfiniteGacha), [`src/FiendHunter/`](src/FiendHunter), [`src/Rhythm/`](src/Rhythm), [`src/Mansion/`](src/Mansion) and [`src/Pandora/`](src/Pandora). SECRET VISION and Sichuan are maintained under [`src/SecretVision/`](src/SecretVision) and [`src/Sichuan/`](src/Sichuan). Fishing and Territory are maintained under [`src/Fishing/`](src/Fishing) and [`src/Territory/`](src/Territory). All modules retain their attribution and licenses.
 
 </details>
 
@@ -111,7 +111,7 @@ Both packages have the same features. Download a complete package from the [late
 3. Explore the pages with the highlight tour. Use **Play** in Accounts for future launches, avoiding permission differences from desktop shortcuts or accelerator launch buttons.
 4. Configure tasks by category in **Daily settings**, choose the account in **Today**, then use the launch button at the top. It connects directly if the game is already running. For multiple accounts, select them in **Accounts** and run the queue.
 
-Start with a few familiar stages. [Getting started](docs/GETTING_STARTED.en.md) covers updates, data locations and common questions. Compatible automatic updates use small direct patches across up to 10 releases. Patches above 8 MiB, runtime changes or a larger version gap require a manual download. If automatic updating fails, extract the full package into a new folder; existing accounts and settings are retained. The 1.2 series and withdrawn 1.3.0 require a full manual download and cannot reach the current version through the legacy channel.
+Start with a few familiar stages. [Getting started](docs/GETTING_STARTED.en.md) covers updates, data locations and common questions. Compatible automatic updates use direct patches. Baselines from 1.4.7 remain supported until a patch exceeds 10 MiB or the runtime becomes incompatible. Earlier baselines use a rolling 10-release window; unsupported upgrades require a manual download. If automatic updating fails, extract the full package into a new folder; existing accounts and settings are retained. The 1.2 series and withdrawn 1.3.0 require a full manual download and cannot reach the current version through the legacy channel.
 
 For a custom game installation, open **App settings → Game & sandbox locations → Change location** and select `BrownDust II.exe`. The choice is saved automatically and shared by all accounts and scheduled runs. You can restore auto-detection or change the Sandboxie installation location here.
 

@@ -20,10 +20,10 @@
     <ProjectReference Include="../../tools/TableExporter/Dustweave.TableExporter.csproj" Aliases="exportUtility" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../../standalone/bd2-fishing/desktop/BD2Fishing.Desktop.csproj" Aliases="toolBD2Fishing" />
+    <ProjectReference Include="../../src/Fishing/desktop/Dustweave.Fishing.Desktop.csproj" Aliases="toolBD2Fishing" />
     <ProjectReference Include="../../src/Sichuan/desktop/Dustweave.Sichuan.Desktop.csproj" Aliases="toolBD2Sichuan" />
     <ProjectReference Include="../Rhythm/desktop/Dustweave.Rhythm.Desktop.csproj" Aliases="toolBD2Rhythm" />
-    <ProjectReference Include="../../standalone/bd2-territory/desktop/BD2Territory.Desktop.csproj" Aliases="toolBD2Territory" />
+    <ProjectReference Include="../../src/Territory/desktop/Dustweave.Territory.Desktop.csproj" Aliases="toolBD2Territory" />
     <ProjectReference Include="../Equipment/desktop/Dustweave.Equipment.Desktop.csproj" Aliases="toolBD2EquipmentAssistant" />
     <ProjectReference Include="../ApostleDefense/desktop/Dustweave.ApostleDefense.Desktop.csproj" Aliases="toolBD2ApostleDefense" />
     <ProjectReference Include="../InfiniteGacha/desktop/Dustweave.InfiniteGacha.Desktop.csproj" Aliases="toolBD2InfiniteGacha" />

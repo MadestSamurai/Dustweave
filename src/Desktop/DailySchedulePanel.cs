@@ -15,6 +15,8 @@ public sealed class DailySchedulePanel : UserControl
     private readonly CheckBox takeover = new(), closeGame = new();
     private readonly ComboBox mode = new() { MinWidth = 180 }, maximum = new() { Width = 80, ItemsSource = new[] { 1, 2, 3, 4 } };
     private readonly WrapPanel parallelSettings = new() { Margin = new(0, 10, 0, 0) };
+    private readonly StackPanel multipleAccountOptions = new();
+    private readonly TextBlock singleAccountMode = Text("schedule.single_mode");
     private readonly TextBox time = new() { Width = 105, MaxLength = 5 };
     private readonly DailyScheduleAccounts accountList = new();
     private readonly TextBlock next = new() { FontSize = 14, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap };
@@ -47,22 +49,26 @@ public sealed class DailySchedulePanel : UserControl
         foreach (string key in new[] { "schedule.serial", "schedule.parallel" })
         { var item = new ComboBoxItem(); L.Bind(item, ContentControl.ContentProperty, key); mode.Items.Add(item); }
         mode.Margin = new(0, 12, 0, 0); mode.HorizontalAlignment = HorizontalAlignment.Left;
-        L.Bind(mode, System.Windows.Automation.AutomationProperties.NameProperty, "schedule.execution"); execution.Children.Add(mode);
+        L.Bind(mode, System.Windows.Automation.AutomationProperties.NameProperty, "schedule.execution"); multipleAccountOptions.Children.Add(mode);
         var limit = Text("parallel.maximum"); limit.VerticalAlignment = VerticalAlignment.Center; limit.Margin = new(0, 0, 12, 0);
         parallelSettings.Children.Add(limit); parallelSettings.Children.Add(maximum);
         L.Bind(maximum, System.Windows.Automation.AutomationProperties.NameProperty, "parallel.maximum");
-        execution.Children.Add(parallelSettings);
+        multipleAccountOptions.Children.Add(parallelSettings);
+        singleAccountMode.Margin = new(0, 12, 0, 0);
+        singleAccountMode.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk");
+        execution.Children.Add(singleAccountMode);
+        execution.Children.Add(multipleAccountOptions);
         closeGame.Margin = new(0, 16, 0, 0);
         L.Bind(closeGame, ContentControl.ContentProperty, "completion.close_game"); execution.Children.Add(closeGame);
         L.Bind(closeGame, ToolTipProperty, "completion.schedule_help");
         var setup = new Button { HorizontalAlignment = HorizontalAlignment.Left, Margin = new(0, 10, 0, 0) };
         L.Bind(setup, ContentControl.ContentProperty, "sandbox_setup.help");
-        setup.Click += (_, _) => SandboxSetupRequested?.Invoke(); execution.Children.Add(setup);
+        setup.Click += (_, _) => SandboxSetupRequested?.Invoke(); multipleAccountOptions.Children.Add(setup);
         mode.SelectionChanged += (_, _) => setup.Visibility = parallelSettings.Visibility = mode.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
         takeover.Margin = new(0, 16, 0, 0); L.Bind(takeover, ContentControl.ContentProperty, "schedule.takeover"); execution.Children.Add(takeover);
         var takeoverHint = Text("schedule.takeover_hint", 12); takeoverHint.Margin = new(24, 6, 0, 0); takeoverHint.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk"); execution.Children.Add(takeoverHint);
         content.Children.Add(execution);
-        var executionHint=Text("schedule.mode_hint",12);executionHint.Margin=new(0,6,0,0);executionHint.SetResourceReference(TextBlock.ForegroundProperty,"MutedInk");execution.Children.Insert(2,executionHint);
+        var executionHint=Text("schedule.mode_hint",12);executionHint.Margin=new(0,6,0,0);executionHint.SetResourceReference(TextBlock.ForegroundProperty,"MutedInk");multipleAccountOptions.Children.Insert(1,executionHint);
         L.Bind(save, ContentControl.ContentProperty, "schedule.save"); save.Style = (Style)Application.Current.FindResource("PrimaryButton");save.Margin=new(0);
         var footer=new DockPanel();DockPanel.SetDock(save,Dock.Right);footer.Children.Add(save);result.FontSize=12;result.SetResourceReference(TextBlock.ForegroundProperty,"MutedInk");result.Margin=new(0,0,16,0);result.VerticalAlignment=VerticalAlignment.Center;footer.Children.Add(result);
         var footerBody=new StackPanel();footerBody.Children.Add(footer);feedback.Visibility=Visibility.Collapsed;footerBody.Children.Add(feedback);
@@ -92,9 +98,15 @@ public sealed class DailySchedulePanel : UserControl
         accountList.Select(plan.Accounts);
         RefreshStatus(plan, last);
         }
-        finally { showing = false; }
+        finally { showing = false; RefreshExecutionMode(); }
     }
-    private void DraftChanged() { if (!showing) Feedback("schedule.unsaved"); }
+    private void RefreshExecutionMode()
+    {
+        bool single = accountList.SelectedKeys.Length == 1;
+        singleAccountMode.Visibility = single ? Visibility.Visible : Visibility.Collapsed;
+        multipleAccountOptions.Visibility = single ? Visibility.Collapsed : Visibility.Visible;
+    }
+    private void DraftChanged() { RefreshExecutionMode(); if (!showing) Feedback("schedule.unsaved"); }
     public void RefreshStatus(DailySchedulePlan plan, DailyScheduleRun? last)
     {
         var upcoming = DailyScheduleClock.Next(plan, DateTimeOffset.UtcNow, TimeZoneInfo.Local);

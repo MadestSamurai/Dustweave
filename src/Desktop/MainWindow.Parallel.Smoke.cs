@@ -107,13 +107,50 @@ public partial class MainWindow
             var items=accounts.Select((a,i)=>{var job=new DailyParallelJob(Guid.NewGuid().ToString("N"),a.AccountKey,a.Name,System.Text.Json.JsonSerializer.Serialize(new DailyPreferences()),true);string state=i==0?"running":i==1?"paused":"waiting";return new DailyParallelItem(a,job,state,i==1?"parallel.paused":"",new(job.Id,a.AccountKey,state,"",DateTimeOffset.UtcNow,1,1,GameId:i<2?1:0,Queue:i==2?null:new("running","","",[new("management","completed",""),new("mail","running","")],a.AccountKey)));}).ToArray();
             var run=new DailyParallelRun(Guid.NewGuid().ToString("N"),new(true,2),DateTimeOffset.UtcNow,items);
             run=run with { Items=run.Items.Select((item,i)=>i==0?item with {Status=item.Status! with {Queue=new("running","","fixture/batch.json",
-                [new("management","completed",""),new("weekly_mainline","running","") {Work=new("absorb",12,40,"maps")}],item.Account.AccountKey)}}:item).ToArray() };
+                [new("management","completed","全部领取完成",FinishedAt:DateTimeOffset.Now.AddMinutes(-2)),
+                    new("weekly_mainline","running","卡带 6 · 地图 605") {Work=new("absorb",12,40,"maps")},
+                    new("weekly_npc","pending",""),new("weekly_steal","pending",""),new("mirror","pending",""),
+                    new("trade","pending",""),new("mail","pending","")],item.Account.AccountKey)}}:item).ToArray() };
             foreach(int language in new[]{0,1,2})foreach(int appearance in new[]{1,2})
             {
-                LanguageSelector.SelectedIndex=language;ThemeSelector.SelectedIndex=appearance;parallelPanel.Show(run);
+                LanguageSelector.SelectedIndex=language;ThemeSelector.SelectedIndex=appearance;parallelPanel.Show(run);parallelPanel.ScrollToTop();
                 await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);UpdateLayout();
                 Check(Children<TextBlock>(parallelPanel).Any(t=>t.Text.Contains(L.Get("work.absorb"))&&t.Text.Contains("12/40")),"Collapsed account row hides the current fine step");
+                var timelines=Children<ListBox>(parallelPanel).ToArray();
+                Check(timelines.Length==3 && timelines.Take(2).All(t=>t.IsVisible && ReferenceEquals(t.ItemTemplate,FindResource("DailyTimelineItem"))
+                    && ReferenceEquals(t.ItemContainerStyle,FindResource("TimelineContainer"))),"Batch progress does not reuse the single-account timeline");
+                Check(!Children<CheckBox>(parallelPanel).Any(c=>c.IsVisible),"Batch progress exposes editable task checkboxes");
+                Check(timelines[1].Items.OfType<DailyRunPanel.StageRow>().Any(r=>r.State==L.State("paused"))
+                    && !timelines[1].Items.OfType<DailyRunPanel.StageRow>().Any(r=>r.Active),"Paused account still displays a running task");
+                var pollTarget=timelines[0];
+                var sameRows=pollTarget.Items.Cast<object>().ToArray();
+                var toggleButtons=Children<Button>(parallelPanel).Where(b=>b.Content as string==L.Get("parallel.hide_details")).ToArray();
+                toggleButtons[0].Focus();
+                parallelPanel.Show(run);UpdateLayout();
+                Check(ReferenceEquals(Children<ListBox>(parallelPanel).First(),pollTarget)
+                    && sameRows.SequenceEqual(pollTarget.Items.Cast<object>()) && toggleButtons[0].IsKeyboardFocused,
+                    "Polling replaces timeline rows or steals keyboard focus");
+                toggleButtons[0].RaiseEvent(new RoutedEventArgs(Button.ClickEvent));UpdateLayout();
+                Check(!timelines[0].IsVisible && timelines[1].IsVisible,"Collapsing one account changed another account's timeline");
+                parallelPanel.Show(run);UpdateLayout();
+                Check(!timelines[0].IsVisible,"Polling overrides the account's expansion choice");
+                toggleButtons[0].RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);UpdateLayout();
+                parallelPanel.ScrollToTop();
+                await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);UpdateLayout();
+                double overviewOffset=parallelPanel.VerticalOffset;
+                var shifted=run with {Items=run.Items.Select((item,i)=>i==0?item with {Status=item.Status! with {Queue=item.Status.Queue! with {
+                    Stages=item.Status.Queue.Stages.Select(s=>s.Task=="weekly_mainline"?s with {State="completed",Work=null}:s.Task=="mirror"?s with {State="running"}:s).ToArray()}}}:item).ToArray()};
+                parallelPanel.Show(shifted);
+                await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);UpdateLayout();
+                Check(Math.Abs(parallelPanel.VerticalOffset-overviewOffset)<1,"Following an account task scrolls the whole overview away from its header");
+                parallelPanel.Show(run);
+                await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);UpdateLayout();
                 Capture("parallel-live-"+L.Code+"-"+appearance);
+                Width=1180;Height=900;
+                await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);UpdateLayout();
+                Capture("parallel-live-wide-"+L.Code+"-"+appearance);
+                Width=920;Height=650;UpdateLayout();
                 Check(!Children<TextBlock>(parallelPanel).Any(t=>t.Text.StartsWith("parallel.")),"Parallel panel exposes an untranslated key");
                 var buttons=Children<Button>(parallelPanel).ToArray();Check(buttons.Any(b=>b.Content as string==L.Get("parallel.pause_all")),"Global pause missing");
                 Check(buttons.Any(b=>b.Content as string==L.Get("parallel.resume")&&b.IsEnabled),"Paused account cannot continue");

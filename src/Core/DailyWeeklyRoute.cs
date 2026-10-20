@@ -29,7 +29,7 @@ public sealed class DailyWeeklyRoute
     private readonly HashSet<long> freshAbsorptionPacks = [];
     private bool absorptionQuotaExhausted;
     private int? absorptionStart, npcStart;
-    private int absorptionUsed;
+    private int absorptionUsed, absorptionLimit;
     private bool absorptionWork;
     private readonly Dictionary<string, HashSet<(long Pack, long Map)>> initialDone = new();
     private bool AbsorptionComplete => known["weekly_mainline"].Count > 0
@@ -94,9 +94,9 @@ public sealed class DailyWeeklyRoute
         {
             int pending = absorptionPending.Union(known[stage].Except(absorptionObserved)).Except(storyLocked).Count();
             // Keep the same unit during the final suppression/return journey.
-            absorptionWork |= pending > 0 && absorptionStart < 21;
+            absorptionWork |= pending > 0 && absorptionStart < absorptionLimit;
             if (absorptionWork)
-                return DailyWorkProgress.Allowance(absorptionStart.Value, absorptionUsed, 21, "absorptions", pending).ToJson();
+                return DailyWorkProgress.Allowance(absorptionStart.Value, absorptionUsed, absorptionLimit, "absorptions", pending).ToJson();
         }
         var previous = initialDone.GetValueOrDefault(stage) ?? [];
         int total = known[stage].Except(previous).Count();
@@ -107,8 +107,10 @@ public sealed class DailyWeeklyRoute
         // Presentation consumes the observation already used by the route;
         // it never adds a game query or changes the route's quota decision.
         if (!active.Contains("weekly_mainline") || w.Settings.Weekly.WalkCollect
-            || !Readings(evidence, "mainline.talent_counts").Any()) return;
-        absorptionUsed = (int)Math.Clamp(Used(evidence, 4), 0, 21);
+            || !Readings(evidence, "mainline.talent_counts").Any() || !Readings(evidence, "mainline.talent_limits").Any()) return;
+        var allowance = TalentAllowance(evidence, 4);
+        absorptionUsed = allowance.Used;
+        absorptionLimit = allowance.Limit;
         absorptionStart ??= absorptionUsed;
     }
     private string Summary(string stage) => stage == "weekly_npc" ? npc?.Summary() ?? "等待读取周NPC任务" : $"{Names[stage]}已核对 {done[stage].Count}/{known[stage].Count} 张地图";
@@ -198,7 +200,7 @@ public sealed class DailyWeeklyRoute
             if (cache && !missing) checkpoint = O(("maps", cachedMaps));
         }
         finally { route.Progress.Steal = oldSteal; route.Progress.OnlySteal = oldOnly; }
-        if (!cache && checkpoint != null && active.Contains("weekly_mainline") && Used(await route.Evidence(), 20) >= 21)
+        if (!cache && checkpoint != null && active.Contains("weekly_mainline") && TalentAllowance(await route.Evidence(), 20).Remaining == 0)
             foreach (long id in maps["weekly_mainline"].Where(id => !done["weekly_mainline"].Contains((pack, id))
                 && !failures["weekly_mainline"].ContainsKey((pack, id)) && route.Progress.OnlyCaptureRemains(checkpoint, id)))
                 Defer("weekly_mainline", id, "今日捕获次数已用完；物品已收完，剩余捕获目标次日接续",
@@ -273,12 +275,17 @@ public sealed class DailyWeeklyRoute
         if (!active.Contains("weekly_mainline") || w.Settings.Weekly.WalkCollect) return;
         var evidence = await route.Evidence();
         ObserveAbsorptionUsage(evidence);
-        absorptionQuotaExhausted = Used(evidence, 4) >= 21;
+        var allowance = TalentAllowance(evidence, 4);
+        absorptionQuotaExhausted = allowance.Remaining == 0;
         // Running out of today's uses is not completion of this week's collection.
         // Do not turn the rest of the route into a daily suppression sweep.
+        if (absorptionQuotaExhausted && FreshAbsorptionPending && allowance.Limit == 0)
+            throw new DailyWeeklyCategoryStop("weekly_mainline", "当前账号没有可用的吸收天赋，请启用天赋或在设置中选择步行收集。",
+                O(("reason", "absorption_unavailable"), ("waiting_daily_reset", false), ("source", "game_network")));
         if (absorptionQuotaExhausted && FreshAbsorptionPending)
             throw new DailyWeeklyCategoryStop("weekly_mainline", "吸收次数用完，仍有地图待收集；本次周收集已暂停，次日接续",
-                O(("reason", "absorption_exhausted"), ("waiting_daily_reset", true), ("source", "game_network")));
+                O(("reason", "absorption_exhausted"), ("waiting_daily_reset", true), ("source", "game_network"),
+                    ("talent_used", allowance.Used), ("talent_limit", allowance.Limit)));
     }
     public static readonly string[] StageOrder = ["weekly_mainline", "weekly_npc", "weekly_steal"];
     private async Task RecoverInterruptedMaps(long[] availablePacks)

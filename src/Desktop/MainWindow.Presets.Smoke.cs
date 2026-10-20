@@ -38,12 +38,22 @@ public partial class MainWindow
                 }
             }
             RefreshAccounts(); WorkspaceTabs.SelectedItem = RunTab; ViewAccountTasks(a); dailyPanel.ShowCurrentPlan();
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            Check(Find<Button>(dailyPanel).Count(b => b.IsVisible && b.Content?.ToString() == L.Get("presets.save")) == 1,
+                "Daily task selection has duplicate save buttons");
+            Check(!Find<Button>(dailyPanel).Any(b => b.IsVisible && b.ToolTip?.ToString() == L.Get("presets.manage")),
+                "Empty presets expose a redundant management/save menu");
             var p = store.Save("Mail only", ["mail"]); var q = store.Save("Mirror + Mail", ["mirror", "mail"]);
             store.Assign(a, p.Id); store.Assign(b, q.Id); RefreshAccountPresets(); dailyPanel.RefreshPresets(true);
             Check(dailyPanel.SelectedPlanTasks.SequenceEqual(["mail"]), "Saved selection was not applied to the visible account");
             var selector = Find<ComboBox>(dailyPanel).Single(c => c.SelectedValuePath == "Id");
             selector.SelectedValue = q.Id;
             Check(store.Read().Accounts[a] == q.Id && dailyPanel.SelectedPlanTasks.ToHashSet().SetEquals(["mirror", "mail"]), "Daily dropdown does not apply and persist the selected preset");
+            var manage = Find<Button>(dailyPanel).Single(b => b.ToolTip?.ToString() == L.Get("presets.manage"));
+            manage.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Check(manage.ContextMenu.Items.OfType<MenuItem>().All(i => i.Header?.ToString() != L.Get("presets.save")),
+                "Preset management repeats the visible save action");
+            manage.ContextMenu.IsOpen = false;
             WorkspaceTabs.SelectedItem = AccountsTab;
             var row = rows.Single(r => r.Account.AccountKey == a); row.PresetId = p.Id;
             Check(store.Read().Accounts[a] == p.Id && store.Read().Accounts[b] == q.Id, "Account preset edit affected the wrong identity");

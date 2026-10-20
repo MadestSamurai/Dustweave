@@ -21,7 +21,7 @@ public sealed partial class DailyRunPanel
 {
     private DailyTaskPresetStore presetStore = null!;
     private readonly ComboBox presetSelector = new() { Width = 180, DisplayMemberPath = nameof(TaskPresetChoice.Label), SelectedValuePath = nameof(TaskPresetChoice.Id), Margin = new(0, 0, 8, 0) };
-    private readonly Button savePreset = new(), managePreset = new() { Content = "···", MinWidth = 34, Padding = new(8, 4, 8, 4) };
+    private readonly Button savePreset = new(), managePreset = new() { Content = "···", MinWidth = 34, Padding = new(8, 4, 8, 4), Visibility = Visibility.Collapsed };
     private bool refreshingPresets;
     private string presetAccount = "", appliedPreset = "";
     public event Action? PresetsChanged;
@@ -56,7 +56,6 @@ public sealed partial class DailyRunPanel
                     } catch (Exception error) { ShowOperationError(DailyUserText.Error(error, L.Translate)); }
                 });
             }
-            else Item("presets.save", () => SavePreset(false));
             var unused = presetStore.Read();
             foreach (var preset in unused.Presets.Where(p => !unused.Accounts.ContainsValue(p.Id)))
             {
@@ -90,6 +89,8 @@ public sealed partial class DailyRunPanel
             foreach (var stage in DailyStageCatalog.All) planChoices[stage.Id] = wanted.Contains(stage.Id);
             if (!isBusy) ShowCurrentPlan();
         }
+        managePreset.Visibility = id.Length > 0 || data.Presets.Any(p => !data.Accounts.ContainsValue(p.Id))
+            ? Visibility.Visible : Visibility.Collapsed;
         presetSelector.IsEnabled = savePreset.IsEnabled = managePreset.IsEnabled = !isBusy && DailyProfiles.ValidKey(activeAccount);
     }
     private void SavePreset(bool replace, bool renameOnly = false)

@@ -61,14 +61,14 @@ internal static class UnifiedSuiteCases {
   string? priorOwner=Environment.GetEnvironmentVariable("BD2_DAILY_SUITE_OWNER");
   try {
    Environment.SetEnvironmentVariable("BD2_DAILY_SUITE_OWNER","helper-owner");
-   foreach(string id in new[]{"mansion-runaway","equipment","infinite-gacha","fiend-hunter","rhythm"}){
+   foreach(string id in new[]{"mansion-runaway","equipment","infinite-gacha","fiend-hunter","rhythm","sichuan","secret-vision","fishing","territory"}){
     var deferred=new ProcessStartInfo();deferred.Environment["BD2_DAILY_TOOL_FINGERPRINT"]="old-module";deferred.Environment["BD2_DAILY_DATA_ROOT"]="isolated-root";
     DailySuite.SetPendingToolEnvironment(deferred,new GameInstance(42,123,"game.exe"),id);
     Check(DailySuite.PreparesInWindow(id)&&deferred.Environment["BD2_DAILY_HOSTED_TOOL"]==id,"window-first tool keeps its identity: "+id);
     Check(!deferred.Environment.ContainsKey("BD2_DAILY_TOOL_FINGERPRINT")&&deferred.Environment["BD2_DAILY_GAME_PID"]=="42"&&deferred.Environment["BD2_DAILY_GAME_START"]=="123","deferred launch pins game but cannot reuse stale transport: "+id);
     Check(deferred.Environment["BD2_DAILY_DATA_ROOT"]=="isolated-root","deferred launch preserves isolated storage: "+id);
    }
-   Check(!DailySuite.PreparesInWindow("fishing"),"unmigrated tools retain existing preparation contract");
+   Check(!DailySuite.PreparesInWindow("fishing-daily"),"headless daily fishing retains its host-managed preparation contract");
    foreach(string id in new[]{"fishing-daily","sichuan-daily","territory-daily"}){
     var launch=new ProcessStartInfo();launch.Environment.Remove("BD2_DAILY_DATA_ROOT");
     var state=new SuiteStatus{State="ready",Tool=id,Owner="helper-owner",Fingerprints=new[]{id+"|helper-fingerprint"}};

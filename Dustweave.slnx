@@ -1,5 +1,12 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Fishing/compatibility/Dustweave.Fishing.Compatibility.csproj" />
+    <Project Path="src/Fishing/core/Dustweave.Fishing.Core.csproj" />
+    <Project Path="src/Fishing/desktop/Dustweave.Fishing.Desktop.csproj" />
+    <Project Path="src/Territory/compatibility/Dustweave.Territory.Compatibility.csproj" />
+    <Project Path="src/Territory/core/Dustweave.Territory.Core.csproj" />
+    <Project Path="src/Territory/desktop/Dustweave.Territory.Desktop.csproj" />
+
     <Project Path="src/SecretVision/compatibility/Dustweave.SecretVision.Compatibility.csproj" />
     <Project Path="src/SecretVision/core/Dustweave.SecretVision.Core.csproj" />
     <Project Path="src/SecretVision/desktop/Dustweave.SecretVision.Desktop.csproj" />
@@ -39,14 +46,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Dustweave.Tests/Dustweave.Tests.csproj" />
   </Folder>
-  <Folder Name="/standalone/">
-    <Project Path="standalone/bd2-fishing/compatibility/BD2Fishing.Compatibility.csproj" />
-    <Project Path="standalone/bd2-fishing/core/BD2Fishing.Core.csproj" />
-    <Project Path="standalone/bd2-fishing/desktop/BD2Fishing.Desktop.csproj" />
-    <Project Path="standalone/bd2-territory/compatibility/BD2Territory.Compatibility.csproj" />
-    <Project Path="standalone/bd2-territory/core/BD2Territory.Core.csproj" />
-    <Project Path="standalone/bd2-territory/desktop/BD2Territory.Desktop.csproj" />
-  </Folder>
+
   <Project Path="src/Launcher/Dustweave.Launcher.csproj" />
   <Project Path="src/Updater/Dustweave.Updater.csproj" />
 </Solution>

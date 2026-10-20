@@ -130,7 +130,7 @@ public static class DailyLogCleanup
     static bool DiagnosticJson(string root, string path)
     {
         string relative = Path.GetRelativePath(root, path).Replace('\\', '/');
-        if (relative.StartsWith("tools/sichuan/diagnostics/", StringComparison.Ordinal) || relative.StartsWith("tools/secret-vision/diagnostics/", StringComparison.Ordinal)) return Path.GetExtension(path) is ".json" or ".png";
+        if (relative.StartsWith("tools/fishing/diagnostics/", StringComparison.Ordinal) || relative.StartsWith("tools/territory/diagnostics/", StringComparison.Ordinal) || relative.StartsWith("tools/sichuan/diagnostics/", StringComparison.Ordinal) || relative.StartsWith("tools/secret-vision/diagnostics/", StringComparison.Ordinal)) return Path.GetExtension(path) is ".json" or ".png";
         return Path.GetExtension(path).Equals(".json", StringComparison.OrdinalIgnoreCase)
             && new[] { "suite/diagnostics/", "live/diagnostics/" }.Concat(EvidenceTrees.Select(t => t + "/")).Any(p => relative.StartsWith(p, StringComparison.Ordinal));
     }

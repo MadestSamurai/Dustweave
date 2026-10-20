@@ -105,7 +105,7 @@ public partial class MainWindow
             var targets = plan.Accounts.Select(key => catalogNow.Accounts.SingleOrDefault(a => a.Valid && a.AccountKey == key)
                 ?? throw new InvalidDataException("schedule.account_missing")).ToArray();
             if (!preferencesPanel.SavePending()) throw new InvalidDataException("schedule.unsaved_settings");
-            if (plan.Execution.Enabled && !await softwareSandboxPath.EnsureReadyAsync(scheduled: true))
+            if (UseParallelAccounts(targets, plan.Execution) && !await softwareSandboxPath.EnsureReadyAsync(scheduled: true))
             {
                 // Claim this occurrence so the ten-second poll cannot reopen setup.
                 // Validate before stopping tools, switching accounts or creating workers.
@@ -180,12 +180,16 @@ public partial class MainWindow
     {
         scheduleToolDraining = false; scheduleToolNeedsSettlement = false; scheduleToolGame = null;
     }
+    private bool UseParallelAccounts(DailyAccount[] targets, DailyParallelOptions execution) =>
+        targets.Length > 1 && execution.Enabled && !IsSandboxWindow;
+
     private async Task<string> ExecuteAccountQueue(DailyAccount[] targets, DailyParallelOptions? execution = null)
     {
+        if (targets.Length == 0) throw new InvalidOperationException("desktop.select_accounts");
         var presets = new DailyTaskPresetStore(root);
         var selections = targets.ToDictionary(a => a.AccountKey, a => presets.Selection(a.AccountKey, new DailyPreferenceStore(root).Read(a.AccountKey)));
         execution ??= parallelOptions with { CloseGame = DailyDesktopBehavior.Read(root).CloseGameAfterRun };
-        if (execution.Enabled && !IsSandboxWindow)
+        if (UseParallelAccounts(targets, execution))
         {
             if (!await StartParallelAsync(targets, execution)) return "failed";
             while (ParallelBusy) await Task.Delay(500);
@@ -193,18 +197,30 @@ public partial class MainWindow
         }
         string state = "failed";
         var results = new List<DailyAccountRunResult>();
+        bool multiple = targets.Length > 1;
+        if (!multiple)
+        {
+            // A one-account schedule/selection is the normal daily view, even
+            // when the user previously chose parallel execution for a batch.
+            sequentialRun = null; sequentialAccount = "";
+            viewedAccount = targets[0].AccountKey;
+            RunTab.Content = dailyPanel; WorkspaceTabs.SelectedItem = RunTab;
+            RefreshTaskAccount(); dailyPanel.ShowCurrentPlan();
+        }
         dailyStopping = false;
         await OperateAsync(async () =>
         {
-            StartSequentialProgress(targets);
+            if (multiple) StartSequentialProgress(targets);
             try
             {
                 state = "completed";
                 foreach (var account in targets)
                 {
                     if (dailyStopping) { state = "paused"; break; }
-                    sequentialAccount=account.AccountKey;UpdateSequentialProgress(state:"connecting");
-                    await coordinator.InspectAsync([account]); RefreshAccounts();
+                    if (multiple) { sequentialAccount=account.AccountKey;UpdateSequentialProgress(state:"connecting"); }
+                    if (multiple) await coordinator.InspectAsync([account]);
+                    else await ConnectTaskAccountAsync(account.AccountKey);
+                    RefreshAccounts();
                     if (dailyStopping) { state = "paused"; break; }
                     var result = await RunDailyQueueAsync(account.AccountKey, execution.CloseGame,
                         () => dailyQueue.RunAsync(account.AccountKey, selection: selections[account.AccountKey]));
@@ -215,18 +231,26 @@ public partial class MainWindow
                 }
             }
             catch { state = "failed"; throw; }
-            finally { FinishSequentialProgress(state); }
+            finally { if (multiple) FinishSequentialProgress(state); }
         }, connectsGame: true);
         ShowRunResults(results);
         return state;
     }
     private async void RunAccounts_Click(object sender, RoutedEventArgs e)
     {
-        if (smoke != null || Unavailable || !preferencesPanel.SavePending()) return;
+        if (smoke != null) return;
+        await RunCheckedAccountsAsync();
+    }
+    private async Task RunCheckedAccountsAsync()
+    {
+        if (Unavailable || !preferencesPanel.SavePending()) return;
         var targets = rows.Where(r => r.Selected && r.Account.Valid).Select(r => r.Account).ToArray();
-        if (targets.Length == 0 || !Confirm(L.Get(parallelOptions.Enabled ? "parallel.confirm" : "run.multi_confirm", targets.Length))) return;
+        if (targets.Length == 0) return;
+        string confirmation = targets.Length == 1 ? L.Get("run.single_confirm", targets[0].Name)
+            : L.Get(UseParallelAccounts(targets, parallelOptions) ? "parallel.confirm" : "run.multi_confirm", targets.Length);
+        if (!Confirm(confirmation)) return;
         WorkspaceTabs.SelectedItem = RunTab;
-        try { if (parallelOptions.Enabled && !IsSandboxWindow) await StartParallelAsync(targets); else await ExecuteAccountQueue(targets); }
+        try { await ExecuteAccountQueue(targets); }
         catch (Exception error) { ShowError(error); }
     }
 }

@@ -14,6 +14,13 @@ $references=0;$resources=0
 # These owned projects retain the original assembly names used by the hosted
 # loader, WPF resources and package dependency locks. Do not exempt other names.
 $legacyToolAssemblies=@{
+ 'src/Fishing/core/Dustweave.Fishing.Core.csproj'='BD2Fishing.Core'
+ 'src/Fishing/compatibility/Dustweave.Fishing.Compatibility.csproj'='BD2Fishing.Compatibility'
+ 'src/Fishing/desktop/Dustweave.Fishing.Desktop.csproj'='BD2Fishing'
+ 'src/Territory/core/Dustweave.Territory.Core.csproj'='BD2Territory.Core'
+ 'src/Territory/compatibility/Dustweave.Territory.Compatibility.csproj'='BD2Territory.Compatibility'
+ 'src/Territory/desktop/Dustweave.Territory.Desktop.csproj'='BD2Territory'
+
  'src/Sichuan/compatibility/Dustweave.Sichuan.Compatibility.csproj'='BD2Sichuan.Compatibility'
  'src/Sichuan/core/Dustweave.Sichuan.Core.csproj'='BD2Sichuan.Core'
  'src/Sichuan/desktop/Dustweave.Sichuan.Desktop.csproj'='BD2Sichuan'

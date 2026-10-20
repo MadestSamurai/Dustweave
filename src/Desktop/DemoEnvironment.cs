@@ -1,8 +1,29 @@
 using System.IO;
 namespace Dustweave.Desktop;
 // Isolated fixtures for packaged UI smoke checks. Never constructs the real session service or injector.
-public sealed class DemoEnvironment : IAccountSessions, IGameHost
+public sealed class DemoEnvironment : IAccountSessions, IGameHost, IDailyQueueExecutor
 {
+    public Action<string, IReadOnlyList<string>?>? QueueExecuting;
+    public string QueueOutcome = "completed";
+    public Task<int> PrepareAsync(Action<string> report)
+    {
+        if (QueueExecuting == null) throw new InvalidOperationException("No isolated queue scenario is configured.");
+        return Task.FromResult(0);
+    }
+    public Task<int> ExecuteAsync(string dataRoot, string account, string output, string? resume,
+        Action<string> report, bool syncCollection = false, IReadOnlyList<string>? tasks = null, string? retryOf = null)
+    {
+        QueueExecuting!(account, tasks);
+        string state = File.Exists(Path.Combine(dataRoot, "queue-stop")) ? "paused" : QueueOutcome;
+        string record = Path.Combine(dataRoot, "live", "queues", Guid.NewGuid().ToString("N"), "result.json");
+        DailyJson.Write(record, new {
+            state, context = new { actor = new object[] { 100, 1, "fixture", account, "player" } },
+            items = (tasks ?? ["mail"]).Select(task => new { task, state = state == "paused" ? "pending" : state, finished = DateTime.UtcNow.Ticks }).ToArray()
+        });
+        DailyJson.Write(output, new { account, record, state });
+        DailyQueueHistory.Remember(dataRoot, account, record);
+        return Task.FromResult(state == "completed" ? 0 : 1);
+    }
     public readonly List<DailyAccount> Accounts = new(); public readonly List<string> Calls = new();
     public string CurrentKey; public GameInstance? Game; public string? ForcedKey; public string? FailConnectKey;
     public bool StartupRecoverySucceeds; public int StartupRecoveryCalls;

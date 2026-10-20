@@ -12,6 +12,7 @@ static class WeeklyIsolationCases
         public readonly WorkflowHarness H;
         public long Pack = 1, MapId = 1;
         public int Used;
+        public int AbsorptionLimit = 21, CaptureLimit = 21;
         public bool Pending = true, Restricted, Reachable = true, MapOnePending = true, MapTwoPending = true, LaterDrop;
         public readonly List<long> Queries = [], Visits = [];
         public readonly List<(string Stage, JsonObject Value)> Progress = [];
@@ -156,6 +157,7 @@ static class WeeklyIsolationCases
                 WorkflowCases.Reading("mainline.packs", ("Count", 2), ("$items", new JsonArray(O(("Id", 1), ("PackType", 0)), O(("Id", 2), ("PackType", 0))))),
                 WorkflowCases.Reading("mainline.map", (MapPath, O(("id", MapId), ("packId", Pack))), ("HasCanOverwhelmMonster()", MonstersPending.Contains(MapId))),
                 WorkflowCases.Reading("mainline.talent_counts", ("Values", new JsonArray(O(("groupId", 405), ("useCount", Used)), O(("groupId", 305), ("useCount", Suppressed.Count)), O(("groupId", 2005), ("useCount", CaptureUsed))))),
+                WorkflowCases.Reading("mainline.talent_limits", ("$self", new JsonArray(O(("Kind", 4), ("Group", 405), ("Limit", AbsorptionLimit)), O(("Kind", 20), ("Group", 2005), ("Limit", CaptureLimit))))),
                 // Route isolation cases run with an existing protection effect;
                 // activation/expiry/waypoint rules are covered by EventCollection.
                 WorkflowCases.Reading("mainline.durations", ("effects", new JsonArray(O(("Key",17),("Value.ὫὢὢὬὫὫὡὩὪὩὮ",true),("Value.ὠὨὠὭὬὤὪὢὫὨὮ",100000-H.Time))))),
@@ -185,7 +187,7 @@ static class WeeklyIsolationCases
             if (AbsorbDrops)
             {
                 var talent = WorkflowCases.Reading("dispatch.talent", ("ὬὩὬὡὯὮὨὣὩὦὡ", "FieldRewardAbsorb"),
-                    (SkillPath, O(("id", 4055), ("groupId", 405), ("valueList", new JsonArray(21, 0)), ("catalystValue", 0))), ("_objDisableImage.activeSelf", false));
+                    (SkillPath, O(("id", 4055), ("groupId", 405), ("valueList", new JsonArray(AbsorptionLimit, 0)), ("catalystValue", 0))), ("_objDisableImage.activeSelf", false));
                 talent["InstanceId"] = 405; rows.Add(talent);
                 if (MapId == 1 && (MapOnePending || StaleDrop))
                 {
@@ -479,6 +481,50 @@ static class WeeklyIsolationCases
             var r = await f.Run();
             Check(f.Queries.Last() == 2 && S(r["state"]) == "partial", "proven cartridge talent restrictions continue the next cartridge");
             Check(!f.H.Box.Commands.Any(c => S(c["Kind"]) == "mainline_talent") && r["stages"]!["weekly_mainline"]!["deferred_locations"]!.AsArray().Count == 2, "restricted cartridge defers without talent consumption or false completion");
+        }
+        foreach (int limit in new[] { 7, 14, 21, 28 })
+        {
+            using (var f = new Fixture(Path.Combine(root, $"weekly-account-quota-{limit}")) { Used = limit, AbsorptionLimit = limit })
+            {
+                var r = await f.RunNpc();
+                var stage = r["stages"]!["weekly_mainline"]!;
+                Check(B(stage["waiting_daily_reset"]) && N(stage["talent_used"]) == limit && N(stage["talent_limit"]) == limit
+                    && f.Suppressed.Count == 0 && f.Visits.Count == 0,
+                    $"account cap {limit} stops unfinished absorption without visiting collection maps");
+                Check(S(r["stages"]!["weekly_npc"]!["state"]) == "completed" && S(r["stages"]!["weekly_steal"]!["state"]) == "completed",
+                    $"account cap {limit} does not block other weekly categories");
+            }
+            using (var f = new Fixture(Path.Combine(root, $"weekly-last-account-use-{limit}")) { Used = limit - 1, AbsorptionLimit = limit, AbsorbDrops = true, MapTwoPending = false })
+            {
+                f.MonstersPending.UnionWith([2L, 21L]);
+                var r = await f.Run();
+                Check(f.Used == limit && S(r["state"]) == "completed" && f.Suppressed.Order().SequenceEqual(new long[] { 2, 21 }),
+                    $"last use at cap {limit} finishes the proven suppression tail");
+                var counts = f.Progress.Where(p => p.Stage == "weekly_mainline" && S(p.Value["unit"]) == "absorptions").Select(p => p.Value).ToArray();
+                Check(counts.Length > 1 && counts.All(p => N(p["total"]) == 1) && N(counts[^1]["completed"]) == 1,
+                    $"account cap {limit} drives progress from the one remaining absorption");
+            }
+        }
+        using (var f = new Fixture(Path.Combine(root, "weekly-account-quota-reached")) { Used = 13, AbsorptionLimit = 14, AbsorbDrops = true })
+        {
+            var r = await f.Run();
+            Check(f.Used == 14 && B(r["stages"]!["weekly_mainline"]!["waiting_daily_reset"]) && f.Visits.Count == 0 && !f.Queries.Contains(2),
+                "14th absorption leaves pending maps for tomorrow without moving, reentering or surveying another cartridge");
+        }
+        using (var f = new Fixture(Path.Combine(root, "weekly-account-capture-cap")) { Pending = false, CaptureUsed = 14, CaptureLimit = 14 })
+        {
+            f.CapturesPending.UnionWith([1L, 2L, 21L]);
+            var r = await f.Run();
+            Check(f.Visits.Count == 0 && !f.H.Box.Commands.Any(c => S(c["Kind"]) == "mainline_talent")
+                && r["stages"]!["weekly_mainline"]!["deferred_locations"]!.AsArray().Count == 3,
+                "capture also respects a 14-use account cap without visiting unavailable targets");
+        }
+        using (var f = new Fixture(Path.Combine(root, "weekly-no-absorption")) { AbsorptionLimit = 0 })
+        {
+            var r = await f.Run();
+            Check(S(r["stages"]!["weekly_mainline"]!["reason"]) == "absorption_unavailable"
+                && !B(r["stages"]!["weekly_mainline"]!["waiting_daily_reset"]) && f.Visits.Count == 0,
+                "an account without absorption gets an actionable reason instead of a false next-day reset");
         }
         using (var f = new Fixture(Path.Combine(root, "weekly-quota-stop")) { Used = 21 })
         {

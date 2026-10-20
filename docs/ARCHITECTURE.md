@@ -1,8 +1,8 @@
 # Repository architecture / 仓库架构
 
-Dustweave 是一个日常应用。源码、账号、连接、配置与验证在同一仓库内维护。装备助手、使徒运气防守、无限抽抽乐、恶魔猎人、音游、SECRET VISION、连连看、MANSION RUNAWAY 与潘多拉是 `src/` 下的自有模块；其余工具在 `standalone/` 中保留独立项目边界。支持可选插件。
+Dustweave 是一个日常应用。源码、账号、连接、配置与验证在同一仓库内维护。装备助手、使徒运气防守、无限抽抽乐、恶魔猎人、音游、SECRET VISION、连连看、MANSION RUNAWAY 与潘多拉是 `src/` 下的自有模块；自动钓鱼和领地自动化也分别位于 `src/Fishing`、`src/Territory`。支持可选插件。
 
-Dustweave is one daily application. Its accounts, workflows, connection, configuration and verification are maintained together. Equipment Assistant, Apostle Defense, Infinite Gacha, MANSION RUNAWAY, Pandora, Fiend Hunter, Rhythm, SECRET VISION and Sichuan are owned modules under `src/`; the remaining independent tools retain their boundaries under `standalone/`. Optional plugins are supported.
+Dustweave is one daily application. Its accounts, workflows, connection, configuration and verification are maintained together. Equipment Assistant, Apostle Defense, Infinite Gacha, MANSION RUNAWAY, Pandora, Fiend Hunter, Rhythm, SECRET VISION and Sichuan are owned modules under `src/`; Fishing and Territory are also owned modules under `src/Fishing` and `src/Territory`. Optional plugins are supported.
 
 ## Dependencies / 依赖方向
 
@@ -10,14 +10,14 @@ Dustweave is one daily application. Its accounts, workflows, connection, configu
 Desktop ── Core ── Accounts
     │         └── Compatibility ── Runtime + Shared/Ipc (embedded source)
     ├── Connection ── Core + Shared/Ipc (bounded helper mode)
-    ├── ToolHost ── standalone fishing / owned Sichuan
+    ├── ToolHost ── owned Fishing / Sichuan
     ├── tools/TableExporter + tools/RuntimeCheck
     ├── Equipment/desktop ── Equipment/core ── Equipment/connection
     ├── FiendHunter/desktop ── FiendHunter/core ── FiendHunter/compatibility
     ├── ApostleDefense/desktop ── ApostleDefense/core ── ApostleDefense/compatibility
     ├── InfiniteGacha/desktop ── InfiniteGacha/core ── InfiniteGacha/compatibility
     ├── Rhythm/desktop ── Rhythm/core ── Rhythm/compatibility
-    └── standalone tool windows
+    └── hosted tool windows
 
 assets/flows + assets/rules → Core resources and package data
 assets/specs               → package connection/specs
@@ -38,7 +38,7 @@ Runtime sources are compiled by the adapter against the user's client. Shared IP
 | `src/Connection`, `Compatibility`, `Runtime`, `Shared` | Adaptation, command delivery, observations and shared IPC | Ad-hoc second connections bypassing host ownership |
 | [`src/Equipment`](../src/Equipment), [`src/ApostleDefense`](../src/ApostleDefense), [`src/InfiniteGacha`](../src/InfiniteGacha), [`src/Mansion`](../src/Mansion), [`src/Pandora`](../src/Pandora), [`src/FiendHunter`](../src/FiendHunter), [`src/Rhythm`](../src/Rhythm), [`src/SecretVision`](../src/SecretVision), [`src/Sichuan`](../src/Sichuan) | Owned tool logic and integration, shipped with Dustweave | Requiring archived standalone downloads or separate releases |
 | `assets` | Flow rules and observation specifications | Captures, inventories or whole client assemblies |
-| `standalone` | Reviewed independent tool updates and host integration | Moving daily business into an unrelated tool |
+| [`src/Fishing`](../src/Fishing), [`src/Territory`](../src/Territory) | Hosted fishing and territory windows, settings and diagnostics | Replaying or deleting pending planting/sale journals during migration |
 | `tools` | Data generation and development/diagnostic entry points | Another user-facing daily application |
 
 All integrated automation participates in the host's ownership and enabled-state rules. Directory isolation does not authorize concurrent gameplay automation. Main-window language remains the single language setting for hosted tools.

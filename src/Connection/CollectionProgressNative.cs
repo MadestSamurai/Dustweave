@@ -61,6 +61,7 @@ namespace BD2Daily.Live {
   [DataMember] public RouteProbePoint[] Points;
  }
  [DataContract] internal sealed class TalentRowState { [DataMember] public int Instance,Group,Kind; [DataMember] public long Character; [DataMember] public double Cooldown; [DataMember] public string Reason,Gate; [DataMember] public bool PackRestricted; }
+ [DataContract] internal sealed class TalentLimitState { [DataMember] public int Group,Kind,Limit; }
  [DataContract] internal sealed class RouteCollider { [DataMember] public int Id,Layer; [DataMember] public string Name,Type,Tag,Owner; [DataMember] public bool Enabled,Trigger; [DataMember] public float[] Center,Size,Rotation,LocalSize; }
  [DataContract] internal sealed class GateContactState { [DataMember] public int Object,Instance; [DataMember] public bool Contact; [DataMember] public float Depth; [DataMember] public RouteCollider Gate,Body; [DataMember] public RouteCollider[] Nearby; }
  internal static class CollectionProgressNative {
@@ -94,6 +95,23 @@ namespace BD2Daily.Live {
     var c=g.ὣὥὥὮὣὧὢὠὡὨὬ;Vector3 direction;float depth=0;bool hit=c!=null&&body!=null&&Physics.ComputePenetration(body,body.transform.position,body.transform.rotation,c,c.transform.position,c.transform.rotation,out direction,out depth);
     return new GateContactState{Object=g.ὪὬὣὧὥὨὦὯὨὮὬ,Instance=g.GetInstanceID(),Contact=hit,Depth=depth,Gate=Shape(c),Body=Shape(body),Nearby=Physics.OverlapSphere(g.transform.position,2).Take(64).Select(Shape).ToArray()};
    }).ToArray();
+  }
+  // Account-owned talent levels determine daily allowances, even with the menu
+  // closed. HP, map restrictions and cooldowns affect availability, not the cap.
+  internal static object TalentLimits(){
+   var result=new List<TalentLimitState>();
+   foreach(var ch in ὣὡὧὡὦὣὣὬὨὪὫ.ὨὯὯὪὢὯὡὪὡὫὯ){
+    var character=ὢὭὤὣὠὦὥὠὢὣὩ.ὣὢὨὠὦὥὯὢὥὠὪ(ch.Id);
+    if(character==null)throw new InvalidOperationException("talent_character_table_missing");
+    var talent=ὯὤὮὦὮὬὨὢὩὪὦ.ὮὠὯὦὥὤὣὯὣὥὭ(character.TalentId);
+    if(talent==null||ch.TalentLevel<=0)continue;
+    var skill=ὯὤὮὦὮὬὨὢὩὪὦ.ὩὫὩὤὤὤὢὣὥὤὨ(talent.TalentSkillGroupId,ch.TalentLevel);
+    if(skill==null)throw new InvalidOperationException("talent_level_table_missing");
+    if(skill.ClassType!=4&&skill.ClassType!=20)continue;
+    if(skill.ValueList.Count==0||skill.ValueList[0]<0)throw new InvalidOperationException("talent_limit_missing");
+    result.Add(new TalentLimitState{Group=skill.GroupId,Kind=skill.ClassType,Limit=(int)skill.ValueList[0]});
+   }
+   return result.ToArray();
   }
   // Mirror the character/resource gates of the native talent row without clicking.
   internal static object TalentRows(){

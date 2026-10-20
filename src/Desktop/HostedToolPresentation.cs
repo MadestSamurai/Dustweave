@@ -11,6 +11,7 @@ internal static class HostedToolPresentation
         var controls = new ResourceDictionary { Source = new Uri("/Dustweave;component/SharedControls.xaml", UriKind.Relative) };
         foreach (var key in controls.Keys) app.Resources[key] = controls[key];
         var theme = new DailyTheme(DailyIdentity.DataRoot);
+        foreach(var pair in new[]{("BackgroundBrush","AppBackground"),("SurfaceBrush","Surface"),("PrimaryBrush","Primary"),("TextBrush","Ink"),("MutedBrush","MutedInk")})app.Resources[pair.Item1]=app.Resources[pair.Item2];
         var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         timer.Tick += (_, _) => { var setting = DailyTheme.ReadPreference(DailyIdentity.DataRoot); if (theme.Preference != setting) theme.Select(setting); };
         timer.Start();

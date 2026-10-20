@@ -253,7 +253,7 @@ public sealed partial class DailyFieldRoute
         var result = await Checkpoint();
         if (!result["completed"]!.AsObject().ContainsKey(map.ToString()))
         {
-            if (Used(after, 20) >= 21 && Progress.OnlyCaptureRemains(result, map))
+            if (Progress.OnlyCaptureRemains(result, map) && TalentAllowance(after, 20).Remaining == 0)
                 throw new DailyCollectionTargetsRemain("今日捕获次数已用完；本图物品已收完，剩余捕获目标留待次日，不再重进地图。", captureLimit: true);
             if (!manual && result["maps"]![map.ToString()]!["drops"] is JsonArray { Count: > 0 })
                 Quota(after);
@@ -311,7 +311,7 @@ public sealed partial class DailyFieldRoute
                 var pending = targets.Where(id => !checkpoint["completed"]!.AsObject().ContainsKey(id.ToString())).ToArray();
                 if (pending.Length == 0 && (returnMap == null || current == returnMap))
                     return;
-                if (pending.Length > 0 && !walkCollect && Used(nav.Evidence, 4) >= 21)
+                if (pending.Length > 0 && !walkCollect && TalentAllowance(nav.Evidence, 4).Remaining == 0)
                 {
                     if (targets.Any(id => checkpoint["maps"]![id.ToString()]!["drops"] is JsonArray { Count: > 0 })) Quota(nav.Evidence);
                 }

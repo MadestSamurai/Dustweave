@@ -15,12 +15,12 @@
     <ProjectReference Include="../../src/Sichuan/core/Dustweave.Sichuan.Core.csproj" Aliases="sichuan" />
     <ProjectReference Include="../../src/SecretVision/core/Dustweave.SecretVision.Core.csproj" Aliases="vision" />
     <ProjectReference Include="../../src/ApostleDefense/core/Dustweave.ApostleDefense.Core.csproj" Aliases="apostle" />
-    <Compile Include="../../standalone/bd2-territory/shared/SaffronCycle.cs" Link="SaffronCycle.cs" />
-    <Compile Include="../../standalone/bd2-territory/shared/SurplusSales.cs" Link="SurplusSales.cs" />
+    <Compile Include="../../src/Territory/shared/SaffronCycle.cs" Link="SaffronCycle.cs" />
+    <Compile Include="../../src/Territory/shared/SurplusSales.cs" Link="SurplusSales.cs" />
     <Compile Include="../../src/Desktop/DemoEnvironment.cs" Link="DemoEnvironment.cs" />
     <Compile Include="../../src/Desktop/StartupDiagnostics.cs" Link="StartupDiagnostics.cs" />
     <Compile Include="../../src/Desktop/ApostleToolSession.cs" Link="ApostleToolSession.cs" />
-    <Compile Include="../../standalone/bd2-territory/ipc/desktop/HostedConnection.cs" Link="Unified/HostedConnection.cs" />
+    <Compile Include="../../src/Territory/ipc/desktop/HostedConnection.cs" Link="Unified/HostedConnection.cs" />
     <Compile Include="../../src/Runtime/SuiteRuntime.cs" Link="Unified/SuiteRuntime.cs" />
     <Compile Include="../../src/Shared/Ipc/runtime/Handoff.cs" Link="Unified/Handoff.cs" />
     <Compile Include="../../src/Runtime/SdkIdentity.cs" Link="SdkIdentity.cs" />
@@ -31,7 +31,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="../../src/Connection/LiveContracts.cs" Link="LiveContracts.cs"/><Compile Include="../../src/Connection/SquareApproach.cs" Link="SquareApproach.cs" />
-    <Compile Include="../../standalone/bd2-territory/shared/LocalRoute.cs;../../standalone/bd2-territory/shared/LocalNavigationCache.cs;../../standalone/bd2-territory/shared/RouteGeometry.cs" Link="SquareGeometry/%(Filename)%(Extension)" />
+    <Compile Include="../../src/Territory/shared/LocalRoute.cs;../../src/Territory/shared/LocalNavigationCache.cs;../../src/Territory/shared/RouteGeometry.cs" Link="SquareGeometry/%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup><Using Include="BD2Daily" /></ItemGroup>
   <ItemGroup><Compile Include="../../src/Packaging/SharedResources.cs" Link="Packaging/SharedResources.cs" /></ItemGroup>

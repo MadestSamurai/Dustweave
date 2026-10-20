@@ -67,13 +67,13 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 
 | 工具 | 主要功能 |
 | --- | --- |
-| 自动钓鱼 | 钓鱼、鱼饵管理、保留规则与背包出售 |
-| 领地自动化 | 种植、采集、料理、库存出售与布局 |
+| [自动钓鱼](src/Fishing) | 钓鱼、鱼饵管理、保留规则与背包出售 |
+| [领地自动化](src/Territory) | 种植、采集、料理、库存出售与布局 |
 | [装备助手](src/Equipment) | 搓粉规划与批量精炼，确认预算后执行 |
-| 连连看 | 盘面求解与续局 |
+| [连连看](src/Sichuan) | 盘面求解与续局 |
 | [音游](src/Rhythm) | 读取谱面并自动操作 |
 | [使徒运气防守](src/ApostleDefense) | 采用离线退火优化的策略，自动召唤、合成、培养、布局与阶段重开 |
-| SECRET VISION | 自动圈地、避让与失败重试 |
+| [SECRET VISION](src/SecretVision) | 自动圈地、避让与失败重试 |
 | [恶魔猎人](src/FiendHunter) | 选择角色、巴萨卡或炎虎及单人难度，结算后停止 |
 | [无限抽抽乐](src/InfiniteGacha) | 双列表目标、停止条件与命中通知 |
 | [MANSION RUNAWAY](docs/MANSION_RUNAWAY.md) | 实时寻路、避敌与关卡推进，也可选择刷到 80 连锁后停止 |
@@ -84,14 +84,14 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 <details>
 <summary>原独立仓库与维护说明</summary>
 
-原仓库用于查阅独立版源码与历史发行；不能据此判断织尘内置版的功能或更新进度。**装备助手、使徒运气防守、无限抽抽乐、恶魔猎人、音游、SECRET VISION 与连连看原仓库已归档并停止维护，后续代码与反馈统一转到 Dustweave。**其余下列仓库截至 2026-10-20 尚未归档，但与内置版不保证同步发布。
+所有内置工具均随 Dustweave 维护和发布，原独立仓库已归档，仅作为历史来源。请在本仓库反馈问题。
 
 - [装备助手（已归档）](https://github.com/MadestSamurai/bd2-equipment-assistant)
-- [自动钓鱼](https://github.com/MadestSamurai/bd2-fishing) · [领地自动化](https://github.com/MadestSamurai/bd2-territory)
+- [自动钓鱼（已归档）](https://github.com/MadestSamurai/bd2-fishing) · [领地自动化（已归档）](https://github.com/MadestSamurai/bd2-territory)
 - [连连看（已归档）](https://github.com/MadestSamurai/bd2-sichuan) · [音游（已归档）](https://github.com/MadestSamurai/bd2-rhythm) · [使徒运气防守（已归档）](https://github.com/MadestSamurai/bd2-apostle-defense)
 - [SECRET VISION（已归档）](https://github.com/MadestSamurai/bd2-secret-vision) · [恶魔猎人（已归档）](https://github.com/MadestSamurai/bd2-fiend-hunter) · [无限抽抽乐（已归档）](https://github.com/MadestSamurai/bd2-infinite-gacha)
 
-装备助手、使徒运气防守、无限抽抽乐、恶魔猎人、音游、MANSION RUNAWAY 与潘多拉分别在 [`src/Equipment/`](src/Equipment)、[`src/ApostleDefense/`](src/ApostleDefense)、[`src/InfiniteGacha/`](src/InfiniteGacha)、[`src/FiendHunter/`](src/FiendHunter)、[`src/Rhythm/`](src/Rhythm)、[`src/Mansion/`](src/Mansion) 和 [`src/Pandora/`](src/Pandora) 维护；SECRET VISION 与连连看分别在 [`src/SecretVision/`](src/SecretVision) 和 [`src/Sichuan/`](src/Sichuan) 维护；其余独立工具的内置源码位于 [`standalone/`](standalone)。各模块保留原有署名与许可证。
+装备助手、使徒运气防守、无限抽抽乐、恶魔猎人、音游、MANSION RUNAWAY 与潘多拉分别在 [`src/Equipment/`](src/Equipment)、[`src/ApostleDefense/`](src/ApostleDefense)、[`src/InfiniteGacha/`](src/InfiniteGacha)、[`src/FiendHunter/`](src/FiendHunter)、[`src/Rhythm/`](src/Rhythm)、[`src/Mansion/`](src/Mansion) 和 [`src/Pandora/`](src/Pandora) 维护；SECRET VISION 与连连看分别在 [`src/SecretVision/`](src/SecretVision) 和 [`src/Sichuan/`](src/Sichuan) 维护；自动钓鱼与领地自动化分别在 [`src/Fishing/`](src/Fishing) 和 [`src/Territory/`](src/Territory) 维护。各模块保留原有署名与许可证。
 
 </details>
 
@@ -111,7 +111,7 @@ BrownDust II 多账号日常助手 · Windows 桌面应用
 3. 通过高亮导览了解各个分页；以后在账号列表点击**进入游戏**，避免桌面快捷方式或加速器启动造成权限差异。
 4. 在**日常设置**按分类配置环节，再到**今日任务**选好账号，点击顶部的启动按钮；游戏已运行时会直接连接。多账号在**账号管理**勾选账号并执行队列。
 
-首次使用建议先选择少量熟悉的环节。[完整入门](docs/GETTING_STARTED.md)包含更新、数据位置和常见问题。兼容版本优先使用小型差分更新，最多跨 10 次发布；差分包超过 8 MiB、需要更换运行库或版本跨度过大时，提示手动下载。自动更新失败也可完整解压到新目录，已有账号与设置会沿用。1.2 系列及已撤回的 1.3.0 须手动换用完整包，不能沿旧通道升级到当前版本。
+首次使用建议先选择少量熟悉的环节。[完整入门](docs/GETTING_STARTED.md)包含更新、数据位置和常见问题。兼容版本优先使用差分更新。从 1.4.7 起保留直接升级支持，直到差分包超过 10 MiB 或运行库不再兼容；更早版本保留最近 10 次发布的自动更新范围，超出时提示手动下载。自动更新失败也可完整解压到新目录，已有账号与设置会沿用。1.2 系列及已撤回的 1.3.0 须手动换用完整包，不能沿旧通道升级到当前版本。
 
 游戏不在默认位置时，打开 **软件设置 → 游戏与沙盒位置 → 更改位置**，选择游戏本体 `BrownDust II.exe`。位置自动保存，所有账号和定时执行共用；也可恢复自动查找。Sandboxie 的安装位置也在这里修改。
 

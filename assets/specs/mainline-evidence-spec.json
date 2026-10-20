@@ -271,6 +271,11 @@
       "MaxItems": 150
     },
     {
+      "Id": "mainline.talent_limits",
+      "Type": "QuickMenuTalentSkillLoopScrollItem",
+      "Paths": ["$self"]
+    },
+    {
       "Id": "mainline.talent_rows",
       "Type": "QuickMenuUI",
       "Paths": [

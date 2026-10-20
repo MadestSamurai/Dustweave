@@ -6,8 +6,8 @@ public static class DailyToolCatalog
 {
     public static IReadOnlyList<DailyToolDefinition> All { get; } = new DailyToolDefinition[]
     {
-        new("fishing", "自动钓鱼", "经营与装备", "钓鱼、鱼饵、背包出售和地图往返。", "bd2-fishing", "BD2Fishing", @"Local\BD2Fishing.Desktop"),
-        new("territory", "领地自动化", "经营与装备", "种植、采集、料理、库存出售和布局。", "bd2-territory", "BD2Territory", @"Local\BD2Territory.Desktop"),
+        new("fishing", "自动钓鱼", "经营与装备", "钓鱼、鱼饵、背包出售和地图往返。", "Dustweave", "BD2Fishing", @"Local\BD2Fishing.Desktop"),
+        new("territory", "领地自动化", "经营与装备", "种植、采集、料理、库存出售和布局。", "Dustweave", "BD2Territory", @"Local\BD2Territory.Desktop"),
         new("equipment", "装备助手", "经营与装备", "规划搓粉与批量精炼，确认预算后执行。", "Dustweave", "BD2EquipmentAssistant", @"Local\BD2EquipmentAssistant-v1"),
         new("sichuan", "连连看", "小游戏", "自动识别盘面、求解和续局，可调操作间隔。", "Dustweave", "BD2Sichuan", @"Local\BD2Sichuan.Desktop"),
         new("rhythm", "音游", "小游戏", "读取当前谱面并操作，保留随机偏移设置。", "Dustweave", "BD2Rhythm", @"Local\BD2Rhythm.Private.Desktop"),
