@@ -1,0 +1,127 @@
+[
+  {
+    "source": "NameTextTable/264",
+    "names": { "zh-CN": "天赋神药", "zh-TW": "天賦特效藥", "en-US": "Ability Pill" },
+    "aliases": { "zh-CN": ["天赋药", "天赋特效药"], "zh-TW": ["天賦藥", "天賦神藥"], "en-US": ["Talent Pill", "Talent pill", "talent pill", "talent-pill", "Ability pill", "ability pill", "Talent potion", "talent potion"] }
+  },
+  {
+    "source": "NameTextTable/264 (English plural)",
+    "names": { "en-US": "Ability Pills" },
+    "aliases": { "en-US": ["Talent Pills", "Talent pills", "talent pills", "talent-pills", "Ability pills", "ability pills", "Talent potions", "talent potions"] }
+  },
+  {
+    "source": "NameTextTable/25003",
+    "names": { "zh-CN": "制伏", "zh-TW": "壓制", "en-US": "Overpower" },
+    "aliases": { "zh-CN": ["压制"], "zh-TW": ["制伏"], "en-US": ["Suppression", "suppression", "Suppress", "suppress"] }
+  },
+  {
+    "source": "NameTextTable/25006",
+    "names": { "zh-CN": "探查", "zh-TW": "搜索" },
+    "aliases": { "zh-TW": ["探查"] }
+  },
+  {
+    "source": "NameTextTable/25017",
+    "names": { "zh-CN": "隐身", "zh-TW": "藏身" },
+    "aliases": { "zh-CN": ["藏身"], "zh-TW": ["隱身"] }
+  },
+  {
+    "source": "NameTextTable/25016",
+    "names": { "zh-TW": "討價還價" },
+    "aliases": { "zh-TW": ["砍價"] }
+  },
+  {
+    "source": "LocalTextTable/1,18,19,20",
+    "names": { "zh-CN": "游戏卡", "zh-TW": "遊戲卡帶", "en-US": "Pack" },
+    "aliases": { "zh-CN": ["游戏卡带", "卡带"], "zh-TW": ["卡帶"], "en-US": ["Cartridge", "cartridge"] }
+  },
+  {
+    "source": "LocalTextTable/1 (English plural)",
+    "names": { "en-US": "Packs" },
+    "aliases": { "en-US": ["Cartridges", "cartridges"] }
+  },
+  {
+    "source": "NameTextTable/673",
+    "names": { "zh-CN": "鲜血鸡尾酒", "zh-TW": "血之雞尾酒" },
+    "aliases": { "zh-CN": ["血之鸡尾酒"], "zh-TW": ["鮮血雞尾酒"] }
+  },
+  {
+    "source": "NameTextTable/7811",
+    "names": { "zh-CN": "精炼粉末", "zh-TW": "強化粉末", "en-US": "Refining Powder" },
+    "aliases": { "zh-CN": ["精炼粉"], "zh-TW": ["精煉粉末", "精煉粉"], "en-US": ["Refinement powder", "refinement powder", "Refining powder", "refining powder"] }
+  },
+  {
+    "source": "LocalTextTable/2371",
+    "names": { "zh-TW": "煉製" },
+    "aliases": { "zh-TW": ["精煉", "煉制"] }
+  },
+  {
+    "source": "LocalTextTable/485,1584",
+    "names": { "zh-CN": "极难", "zh-TW": "超困難" },
+    "aliases": { "zh-CN": ["超困难", "超难"], "zh-TW": ["極難", "超難"] }
+  },
+  {
+    "source": "LocalTextTable/125616,1540004",
+    "names": { "zh-CN": "使徒运气防守", "zh-TW": "使者運氣防守", "en-US": "Apostle Random Defense" },
+    "aliases": { "zh-TW": ["使徒運氣防守"], "en-US": ["Apostle defense", "Apostle Defense"] }
+  },
+  {
+    "source": "NameTextTable/10100082; LocalTextTable/125616",
+    "names": { "zh-TW": "使者" },
+    "aliases": { "zh-TW": ["使徒"] }
+  },
+  {
+    "source": "LocalTextTable/2705",
+    "names": { "en-US": "Infinite Draw" },
+    "aliases": { "en-US": ["Infinite draws", "Infinite Draws", "Infinite draw"] }
+  },
+  {
+    "source": "LocalTextTable/17068",
+    "names": { "zh-TW": "潘朵拉" },
+    "aliases": { "zh-TW": ["潘多拉"] }
+  },
+  {
+    "source": "NameTextTable/30704",
+    "names": { "zh-TW": "番紅花" },
+    "aliases": { "zh-TW": ["藏紅花"] }
+  },
+  {
+    "source": "NameTextTable/30403",
+    "names": { "zh-TW": "馬鈴薯" },
+    "aliases": { "zh-TW": ["土豆"] }
+  },
+  {
+    "source": "NameTextTable/1710025",
+    "names": { "zh-TW": "雙峰炒飯" },
+    "aliases": { "zh-TW": ["魅惑炒飯"] }
+  },
+  {
+    "source": "NameTextTable/1710030",
+    "names": { "zh-TW": "魅影濃湯" },
+    "aliases": { "zh-TW": ["愛欲濃湯", "愛慾濃湯"] }
+  },
+  {
+    "source": "NameTextTable/47516",
+    "names": { "zh-CN": "泰瑞丝派", "zh-TW": "泰瑞絲派" },
+    "aliases": { "zh-CN": ["泰瑞斯派"], "zh-TW": ["泰瑞斯派"] }
+  },
+  {
+    "source": "NameTextTable/47311",
+    "names": { "zh-CN": "蜂蜜黄油杏仁", "zh-TW": "蜂蜜奶油杏仁" },
+    "aliases": { "zh-CN": ["蜂蜜奶油杏仁"], "zh-TW": ["蜂蜜黃油杏仁"] }
+  },
+  {
+    "source": "NameTextTable/81022",
+    "names": { "zh-TW": "葛蘭西特" },
+    "aliases": { "zh-TW": ["格蘭希特"] }
+  },
+  {
+    "source": "NameTextTable/32111-32115,30040002",
+    "names": { "en-US": "Magic Crystal" },
+    "aliases": { "en-US": ["Ability stone", "ability stone"] }
+  },
+  {
+    "source": "NameTextTable/32111-32115 (English plural)",
+    "names": { "en-US": "Magic Crystals" },
+    "aliases": { "en-US": ["Ability stones", "ability stones"] }
+  }
+]

@@ -79,7 +79,7 @@ public static class DailySuite {
  }
  // Only these tools have a window-first preparation path. A pending launch must
  // never inherit another module's usable transport fingerprint.
- public static bool PreparesInWindow(string id)=>id is "fishing" or "territory" or "mansion-runaway" or "equipment" or "infinite-gacha" or "fiend-hunter" or "rhythm" or "sichuan" or "secret-vision";
+ public static bool PreparesInWindow(string id)=>id is "fishing" or "territory" or "mansion-runaway" or "pandora" or "equipment" or "infinite-gacha" or "fiend-hunter" or "rhythm" or "sichuan" or "secret-vision";
  public static void SetPendingToolEnvironment(System.Diagnostics.ProcessStartInfo start,GameInstance? game,string id){
   if(!PreparesInWindow(id))throw new ArgumentException("Unsupported deferred tool",nameof(id));
   start.Environment["BD2_DAILY_HOSTED_TOOL"]=id;

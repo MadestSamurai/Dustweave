@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 
@@ -63,6 +64,25 @@ public partial class MainWindow
             WorkspaceTabs.SelectedItem = RunTab; ViewAccountTasks(b); WorkspaceTabs.SelectedItem = SettingsTab;
             preferencesPanel.SelectAccount(b);
             Check(preferences.Read(b).Mirror.Multiplier == 4 && preferences.Read(a).Mirror.Multiplier == 1, "Account scoped settings lost the requested mirror multiplier");
+            store.Save(new string('长', 60), ["mail"]);
+            void DeleteFromMenu(bool accept, string expectedName, bool capture = false)
+            {
+                manage.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                var delete = manage.ContextMenu.Items.OfType<MenuItem>().Single(i => i.Header?.ToString() == L.Get("presets.delete"));
+                manage.ContextMenu.IsOpen = false;
+                Dispatcher.BeginInvoke(new Action(() => {
+                    var dialog = OwnedWindows.Cast<Window>().Single(w => w.Title == L.Get("presets.delete"));
+                    dialog.UpdateLayout();
+                    Check(Find<TextBlock>(dialog).Any(t => t.Text.Contains(expectedName, StringComparison.Ordinal)),
+                        "Preset deletion confirmation does not name its selected target");
+                    var confirm = Find<Button>(dialog).Single(button => button.Content?.ToString() == L.Get("presets.delete"));
+                    Check(!confirm.IsDefault && Find<Button>(dialog).Any(button => button.IsCancel && button.IsDefault),
+                        "Preset deletion should default to cancellation");
+                    if (capture) Capture("presets-delete-" + L.Code + "-" + ThemeSelector.SelectedIndex, (FrameworkElement)dialog.Content);
+                    if (accept) confirm.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); else dialog.Close();
+                }), DispatcherPriority.ApplicationIdle);
+                delete.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+            }
             foreach (int language in new[] {0, 1, 2}) foreach (int appearance in new[] {1, 2}) {
                 LanguageSelector.SelectedIndex = language; ThemeSelector.SelectedIndex = appearance;
                 Width = 1180; Height = 900; WorkspaceTabs.SelectedItem = AccountsTab;
@@ -72,7 +92,46 @@ public partial class MainWindow
                 WorkspaceTabs.SelectedItem = RunTab; ViewAccountTasks(a); dailyPanel.ShowCurrentPlan();
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); UpdateLayout(); Capture("presets-tasks-" + L.Code + "-" + appearance);
                 Check(dailyPanel.SelectedPlanTasks.SequenceEqual(["mail"]), "Language/theme refresh overwrote the preset selection");
+                Activate();
+                manage.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                var menu = manage.ContextMenu;
+                Check(menu.IsOpen && menu.Style == FindResource("ActionMenu") && menu.Background == FindResource("Surface"),
+                    "Preset menu did not adopt the shared theme");
+                Check(menu.Items.OfType<Separator>().Count() == 1 && menu.ActualWidth <= 360 && menu.ActualHeight <= 400,
+                    "Preset menu grouping or long-name bounds are incorrect");
+                var items = menu.Items.OfType<MenuItem>().ToArray();
+                Check(items[0].Header?.ToString() == L.Get("presets.replace") && items.Where(i => i.Tag?.ToString() == "destructive").All(i => i.Foreground == FindResource("Error")),
+                    "Preset actions lost their language or destructive styling");
+                Capture("presets-menu-" + L.Code + "-" + appearance, menu);
+                Check(items[0].Focus(), $"The themed menu item cannot receive keyboard focus: focusable={items[0].Focusable}, enabled={items[0].IsEnabled}, visible={items[0].IsVisible}, active={IsActive}");
+                items[0].RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(menu), 0, Key.Down)
+                    { RoutedEvent = Keyboard.KeyDownEvent });
+                Check(items[1].IsKeyboardFocused, "The themed menu lost arrow-key navigation");
+                var menuClosed = new TaskCompletionSource();
+                menu.Closed += (_, _) => menuClosed.TrySetResult();
+                items[1].RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(menu), 0, Key.Escape)
+                    { RoutedEvent = Keyboard.KeyDownEvent });
+                await menuClosed.Task.WaitAsync(TimeSpan.FromSeconds(3));
+                Check(!menu.IsOpen && manage.ReadLocalValue(Control.BackgroundProperty) == DependencyProperty.UnsetValue,
+                    $"Escape did not dismiss the menu and restore its trigger: open={menu.IsOpen}, background={manage.ReadLocalValue(Control.BackgroundProperty)}");
+                DeleteFromMenu(false, p.Name, capture: true);
+                Check(store.Read().Presets.Any(x => x.Id == p.Id) && store.Read().Accounts[a] == p.Id &&
+                    dailyPanel.SelectedPlanTasks.SequenceEqual(["mail"]), "Cancelled deletion changed selected preset or tasks");
             }
+            store.Assign(b, p.Id); RefreshAccountPresets();
+            DeleteFromMenu(true, p.Name);
+            Check(store.Read().Presets.All(x => x.Id != p.Id) && selector.SelectedValue?.ToString() == "" &&
+                dailyPanel.SelectedPlanTasks.ToHashSet().SetEquals(DailyStageCatalog.Selectable.Where(s => s.Enabled(preferences.Read(a))).Select(s => s.Id)),
+                "Deleting the current preset requires switching away or does not select all enabled tasks");
+            Check(rows.Where(r => r.Account.AccountKey == a || r.Account.AccountKey == b).All(r =>
+                r.PresetId == "" && r.SelectedPreset?.Label == L.Get("presets.default")),
+                "Account preset selectors do not return to the default");
+            ViewAccountTasks(b); dailyPanel.ShowCurrentPlan();
+            Check(dailyPanel.SelectedPlanTasks.ToHashSet().SetEquals(DailyStageCatalog.Selectable.Where(s => s.Enabled(preferences.Read(b))).Select(s => s.Id)) &&
+                new DailyTaskPresetStore(root).Selection(b, preferences.Read(b)) == null,
+                "Switching account or restarting restores the deleted preset's stale selections");
+            ViewAccountTasks(a); dailyPanel.ShowCurrentPlan();
             SetBusy(true); Check(!selector.IsEnabled, "Preset may change during queue execution"); SetBusy(false);
             Width = 920; Height = 650; UpdateLayout(); dailyPanel.CheckViewportForSmoke(); Capture("presets-compact");
             LanguageSelector.SelectedIndex = 0; ThemeSelector.SelectedIndex = 2;

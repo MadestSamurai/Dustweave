@@ -15,14 +15,10 @@ internal sealed class ApostleToolWindow : Window
         Owner=owner; Width=1020; Height=880; MinWidth=860; MinHeight=650;
         WindowStartupLocation=WindowStartupLocation.CenterOwner;
         Icon=owner.Icon;
-        DailyLanguage.Current.Bind(this,TitleProperty,()=>"Dustweave · "+DailyLanguage.Current.Get("tool.apostle-defense"));
-        Panel=new(session,canStart) { Margin=new Thickness(24,16,24,16) };
+        Panel=new(session,canStart) { Margin=new Thickness(24,0,24,24) };
         Content=Panel;
         DailyDialogs.Prepare(this,toolWindow:true);
         DesktopWindowIdentity.Initialize(this);
-        void UpdateInsets(object? sender,EventArgs args)=>MainWindow.UpdateWindowInsets(this,(FrameworkElement)Content);
-        SourceInitialized+=UpdateInsets;StateChanged+=UpdateInsets;
-        SizeChanged+=(_,_)=>MainWindow.UpdateWindowInsets(this,(FrameworkElement)Content);
         HostedToolPreparation.AfterFirstLayout(this,ConnectAfterLayoutAsync);
         Closing+=OnClosing;
         Closed+=(_,_)=>{finished=true;Panel.Dispose();};

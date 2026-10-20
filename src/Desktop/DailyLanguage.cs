@@ -35,6 +35,17 @@ public sealed partial class DailyLanguage : INotifyPropertyChanged
         LoadNotices();
         sourceKeys = strings.Where(p => !p.Value["zh-CN"].Contains('{'))
             .GroupBy(p => p.Value["zh-CN"], StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First().Key, StringComparer.Ordinal);
+        // Older receipts retain their original wording. Resolve these labels without rewriting evidence.
+        foreach (var alias in new Dictionary<string,string>
+        {
+            ["恶魔猎人"]="tool.fiend-hunter",
+            ["镜中免费战斗"]="stage.mirror",
+            ["进行好感度咨询"]="work.counsel",
+            ["压制当前地图怪物"]="work.suppress"
+        }) sourceKeys.TryAdd(alias.Key,alias.Value);
+        // Keep source matchers intact, then prepare each display template once.
+        foreach (var entry in strings.Values)
+            foreach (var code in Codes) entry[code]=GameTerminology.Template(entry[code],code);
     }
     public void Initialize(string dataRoot)
     {

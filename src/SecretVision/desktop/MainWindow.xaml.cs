@@ -49,14 +49,14 @@ public partial class MainWindow : Window
 
     private void ApplyLanguage()
     {
-        Title=language["title"];Subtitle.Text=language["subtitle"];
+        Title=language["title"];
         ConnectButton.Content=language["connect"];StartButton.Content=language["start"];StopButton.Content=language["stop"];
         BoardTitle.Text=language["board"];EmptyBoard.Text=language["empty"];
         ClaimedLegend.Text=language["claimed"];PlayerLegend.Text=language["player"];EnemyLegend.Text=language["enemy"];ItemLegend.Text=language["item"];
         StagesTitle.Text=language["stages"];StagesHelp.Text=language["stages-help"];TargetTitle.Text=language["target"];
         Target100.Content=language["target100"];Target80.Content=language["target80"];Retry.Content=language["retry"];
         AttemptsTitle.Text=language["attempts"];AttemptsHelp.Text=language["attempts-help"];OperationTitle.Text=language["operation"];OperationHelp.Text=language["operation-help"];
-        Diagnostics.Header=language["diagnostics"];DiagnosticHelp.Text=language["diagnostic-help"];Attribution.Text=language["attribution"];AboutButton.Content=language["about"];
+        Diagnostics.Header=language["diagnostics"];DiagnosticHelp.Text=language["diagnostic-help"];
         System.Windows.Automation.AutomationProperties.SetName(MaxAttempts,language["attempts"]);
         System.Windows.Automation.AutomationProperties.SetName(Target,language["target"]);
         System.Windows.Automation.AutomationProperties.SetName(Board,language["board"]);
@@ -143,18 +143,6 @@ public partial class MainWindow : Window
         try{await currentTask;}catch{}
         closeAllowed=true;Close();
     }
-    private Window AboutWindow()
-    {
-        var body=new StackPanel{Margin=new Thickness(22)};
-        body.Children.Add(new TextBlock{Text=language["attribution"],FontWeight=FontWeights.SemiBold,TextWrapping=TextWrapping.Wrap});
-        body.Children.Add(new TextBlock{Text=language["notice"],TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,12,0,14)});
-        body.Children.Add(new TextBox{Text="https://github.com/MadestSamurai/bd2-secret-vision",IsReadOnly=true});
-        body.Children.Add(new TextBox{Text="https://github.com/MadestSamurai/bd2-secret-vision/releases",IsReadOnly=true,Margin=new Thickness(0,6,0,0)});
-        var window=new Window{Owner=this,Title=language["about"],Width=560,SizeToContent=SizeToContent.Height,WindowStartupLocation=WindowStartupLocation.CenterOwner,Content=body,Background=(Brush)FindResource("Surface"),ResizeMode=ResizeMode.NoResize};
-        var button=new Button{Content=language["close"],HorizontalAlignment=HorizontalAlignment.Right,Margin=new Thickness(0,16,0,0)};button.Click+=(_,_)=>window.Close();body.Children.Add(button);return window;
-    }
-    private void AboutClick(object sender,RoutedEventArgs e)=>AboutWindow().ShowDialog();
-
     private async Task SmokeAsync()
     {
         var checks=new List<string>();void Check(bool value,string name){if(!value)throw new Exception(name);checks.Add(name);}
@@ -174,7 +162,6 @@ public partial class MainWindow : Window
                 await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture(code+"-running");
                 running=false;Width=920;Height=720;Render();await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture(code+"-compact");
                 Check(Board.ActualWidth>200&&Board.ActualHeight>200,"board remains usable at minimum size "+code);
-                var about=AboutWindow();about.Show();await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture(code+"-about",(FrameworkElement)about.Content);about.Close();
                 Width=1100;Height=860;
             }
             ShowError(new LocalFileException("publish file",Path.Combine(root,"control.json"),new UnauthorizedAccessException("denied")));

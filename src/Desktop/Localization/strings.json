@@ -1,4 +1,8 @@
 {
+  "tools.action_start": { "zh-CN": "开始", "zh-TW": "開始", "en-US": "Start" },
+  "tools.action_stop": { "zh-CN": "停止", "zh-TW": "停止", "en-US": "Stop" },
+  "tools.action_connect": { "zh-CN": "连接游戏", "zh-TW": "連接遊戲", "en-US": "Connect game" },
+  "tools.action_round": { "zh-CN": "开始本局", "zh-TW": "開始本局", "en-US": "Start round" },
   "work.sequential_summary": {
     "zh-CN": "已结束 {0}/{1} 个账号 · 依次执行",
     "zh-TW": "已結束 {0}/{1} 個帳號 · 依序執行",
@@ -80,9 +84,9 @@
     "en-US": "Moving into interaction range"
   },
   "work.suppress": {
-    "zh-CN": "压制当前地图怪物",
+    "zh-CN": "制伏当前地图怪物",
     "zh-TW": "壓制目前地圖怪物",
-    "en-US": "Suppressing monsters"
+    "en-US": "Using Overpower on this map"
   },
   "work.absorb": {
     "zh-CN": "吸收当前地图收集物",
@@ -160,9 +164,9 @@
     "en-US": "Performing free draws"
   },
   "work.counsel": {
-    "zh-CN": "进行好感度咨询",
-    "zh-TW": "進行好感度諮詢",
-    "en-US": "Counselling characters"
+    "zh-CN": "进行亲密度咨询",
+    "zh-TW": "進行親密度諮詢",
+    "en-US": "Consulting for Rapport"
   },
   "work.collect": {
     "zh-CN": "收取经营与餐厅收益",
@@ -488,11 +492,6 @@
     "zh-CN": "塔防正在连接；暂不能切换账号或启动其他自动化。可在工具窗口取消。",
     "zh-TW": "塔防正在連接；暫不能切換帳號或啟動其他自動化。可在工具視窗取消。",
     "en-US": "Defense is connecting. Account switching and other automation are unavailable until it finishes. You can cancel in the tool window."
-  },
-  "apostle.open": {
-    "zh-CN": "打开塔防",
-    "zh-TW": "開啟塔防",
-    "en-US": "Open defense"
   },
   "apostle.start": {
     "zh-CN": "开始自动化",
@@ -1040,7 +1039,7 @@
     "en-US": "the last action in {0}"
   },
   "run.recovery_talent_2": {
-    "en-US": "Sprint",
+    "en-US": "Rush",
     "zh-CN": "飞奔",
     "zh-TW": "飛奔"
   },
@@ -2522,7 +2521,7 @@
   "stage.room": {
     "zh-CN": "小屋奖励",
     "zh-TW": "小屋獎勵",
-    "en-US": "Home rewards"
+    "en-US": "My Room rewards"
   },
   "stage.management": {
     "zh-CN": "经营与餐厅",
@@ -2562,11 +2561,11 @@
   "stage.hunting": {
     "zh-CN": "普通与圣石狩猎",
     "zh-TW": "普通與聖石狩獵",
-    "en-US": "Hunting and ability stones"
+    "en-US": "Hunting and Magic Crystal Cave"
   },
   "stage.mirror": {
-    "zh-CN": "镜中免费战斗",
-    "zh-TW": "鏡中免費戰鬥",
+    "zh-CN": "镜中之战免费战斗",
+    "zh-TW": "鏡中之戰免費戰鬥",
     "en-US": "Free Mirror Wars battles"
   },
   "stage.daily_dispatch": {
@@ -2587,7 +2586,7 @@
   "stage.friendship": {
     "zh-CN": "亲密度咨询",
     "zh-TW": "親密度諮詢",
-    "en-US": "Affinity consultations"
+    "en-US": "Rapport consultations"
   },
   "stage.tactics": {
     "zh-CN": "战术教材",
@@ -2607,7 +2606,7 @@
   "stage.weekly_room_likes": {
     "zh-CN": "周常小屋点赞",
     "zh-TW": "每週小屋按讚",
-    "en-US": "Weekly home likes"
+    "en-US": "Weekly My Room likes"
   },
   "stage.weekly_fishing": {
     "zh-CN": "周常钓鱼",
@@ -2682,7 +2681,7 @@
   "stage.stones": {
     "zh-CN": "圣石狩猎",
     "zh-TW": "聖石狩獵",
-    "en-US": "Ability stone hunting"
+    "en-US": "Magic Crystal Cave"
   },
   "stage.goddess": {
     "zh-CN": "女神像奖励",
@@ -2780,9 +2779,9 @@
     "en-US": "Switch tool"
   },
   "tools.close": {
-    "zh-CN": "关闭工具，返回日常",
-    "zh-TW": "關閉工具，返回日常",
-    "en-US": "Close tool and return"
+    "zh-CN": "关闭工具",
+    "zh-TW": "關閉工具",
+    "en-US": "Close tool"
   },
   "tool.fishing": {
     "zh-CN": "自动钓鱼",
@@ -2820,9 +2819,9 @@
     "en-US": "SECRET VISION"
   },
   "tool.fiend-hunter": {
-    "zh-CN": "恶魔猎人",
-    "zh-TW": "惡魔獵人",
-    "en-US": "Fiend hunter"
+    "zh-CN": "恶魔猎人：怒火边缘",
+    "zh-TW": "惡魔獵人：怒火邊緣",
+    "en-US": "Fiend Hunter: Edge of Fury"
   },
   "tool.infinite-gacha": {
     "zh-CN": "无限抽抽乐",
@@ -3180,9 +3179,9 @@
     "en-US": "Challenge once with the saved team and skip combat"
   },
   "prefs.friendship_hint": {
-    "zh-CN": "通过普通对话补足每日 3 次免费咨询，优先好感度未满角色",
-    "zh-TW": "透過一般對話補足每日 3 次免費諮詢，優先好感度未滿角色",
-    "en-US": "Complete 3 free daily consultations through normal dialogue; prioritize characters below max affinity"
+    "zh-CN": "通过普通对话补足每日 3 次免费咨询，优先亲密度未满角色",
+    "zh-TW": "透過普通對話補足每日 3 次免費諮詢，優先親密度未滿角色",
+    "en-US": "Complete 3 free daily consultations through regular dialogue, prioritizing characters below maximum Rapport"
   },
   "prefs.monster": {
     "zh-CN": "魔兽快速战斗",
@@ -3877,7 +3876,7 @@
   "scene.friendship": {
     "zh-CN": "亲密度管理",
     "zh-TW": "親密度管理",
-    "en-US": "Affinity management"
+    "en-US": "Rapport"
   },
   "scene.title": {
     "zh-CN": "标题页",
@@ -4625,14 +4624,34 @@
     "zh-CN": "已超过 15 分钟，本次跳过"
   },
   "updates.help": {
-    "zh-CN": "后台下载，空闲时确认重启更新。账号、设置和插件保留。",
-    "zh-TW": "背景下載，閒置時確認重新啟動更新。帳號、設定和套件保留。",
-    "en-US": "Downloads in the background; confirm restart when idle. Keeps accounts, settings and plugins."
+    "zh-CN": "始终检查新版本，可选择是否自动下载。空闲时确认重启更新，账号、设置和插件保留。",
+    "zh-TW": "一律檢查新版本，可選擇是否自動下載。閒置時確認重新啟動更新，帳號、設定和套件保留。",
+    "en-US": "Always checks for updates; automatic downloads are optional. Confirm restart when idle. Accounts, settings and plugins are kept."
   },
   "updates.automatic": {
-    "zh-TW": "自動檢查並在背景下載更新",
-    "en-US": "Check and download updates automatically",
-    "zh-CN": "自动检查并在后台下载更新"
+    "zh-TW": "自動在背景下載更新",
+    "en-US": "Download updates automatically in the background",
+    "zh-CN": "自动在后台下载更新"
+  },
+  "updates.available_badge": {
+    "zh-CN": "有更新",
+    "zh-TW": "有更新",
+    "en-US": "Update"
+  },
+  "updates.available_hint": {
+    "zh-CN": "发现新版本 {0}，查看更新",
+    "zh-TW": "發現新版本 {0}，查看更新",
+    "en-US": "Version {0} is available. View updates."
+  },
+  "updates.available": {
+    "zh-CN": "发现新版本 {0}，可选择下载更新。",
+    "zh-TW": "發現新版本 {0}，可選擇下載更新。",
+    "en-US": "Version {0} is available to download."
+  },
+  "updates.download": {
+    "zh-CN": "下载更新",
+    "zh-TW": "下載更新",
+    "en-US": "Download update"
   },
   "updates.check": {
     "zh-TW": "檢查更新",
@@ -4785,9 +4804,9 @@
     "zh-CN": "上次更新未完成，请查看诊断记录；可重新检查更新或手动安装。"
   },
   "updates.version_link": {
-    "en-US": "{0} · Updates",
-    "zh-TW": "{0} · 版本更新",
-    "zh-CN": "{0} · 版本更新"
+    "en-US": "{0}",
+    "zh-TW": "{0}",
+    "zh-CN": "{0}"
   },
   "schedule.timezone": {
     "zh-CN": "本机时区（{0}）",
@@ -6370,9 +6389,14 @@
     "en-US": "Delete preset"
   },
   "presets.delete_confirm": {
-    "zh-CN": "删除此预设？使用中的预设需先从账号取消指定。",
-    "zh-TW": "刪除此預設？使用中的預設需先從帳號取消指定。",
-    "en-US": "Delete this preset? Unassign it from accounts first."
+    "zh-CN": "确定删除预设「{0}」？",
+    "zh-TW": "確定刪除預設「{0}」？",
+    "en-US": "Delete the preset “{0}”?"
+  },
+  "presets.delete_reset": {
+    "zh-CN": "{0} 个账号正在使用此预设。删除后将恢复为「全部已启用环节」，定时执行也使用该默认范围。",
+    "zh-TW": "{0} 個帳號正在使用此預設。刪除後將恢復為「全部已啟用環節」，定時執行也使用此預設範圍。",
+    "en-US": "{0} account(s) use this preset. They will return to “All enabled tasks”, including for scheduled runs."
   },
   "presets.name": {
     "zh-CN": "预设名称",
@@ -6408,11 +6432,6 @@
     "zh-CN": "最多保存100个预设，请先删除不用的预设。",
     "zh-TW": "最多儲存100個預設，請先刪除不用的預設。",
     "en-US": "You can save up to 100 presets. Delete an unused preset first."
-  },
-  "presets.in_use": {
-    "zh-CN": "此预设仍被账号使用，请先为这些账号选择其他预设。",
-    "zh-TW": "此預設仍被帳號使用，請先為這些帳號選擇其他預設。",
-    "en-US": "This preset is assigned to an account. Choose another preset for that account first."
   },
   "presets.none_enabled": {
     "zh-CN": "预设中的环节在此账号均未启用，请调整设置或预设。",

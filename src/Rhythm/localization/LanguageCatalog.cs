@@ -20,14 +20,16 @@ public sealed class LanguageCatalog
         using var stream=typeof(LanguageCatalog).Assembly.GetManifestResourceStream("Locale."+language+".json")??throw new InvalidOperationException("Missing language catalog: "+language);
         return JsonSerializer.Deserialize<Dictionary<string,string>>(stream)??throw new InvalidOperationException("Empty language catalog");
     }
+    private static string Display(string template,string language)=>AppDomain.CurrentDomain.GetData("BD2Daily.GameText") is Func<string,string,string> terms?terms(template,language):template;
     public string Text(string source)
     {
         if(Language=="zh-TW" && AppDomain.CurrentDomain.GetData("BD2Daily.TraditionalText") is Func<string,string> traditional)return traditional(source);
-        if(Language=="zh-CN" || string.IsNullOrEmpty(source))return source;
-        if(English.Value.TryGetValue(source,out var exact))return exact;
+        if(string.IsNullOrEmpty(source))return source;
+        if(Language=="zh-CN")return English.Value.ContainsKey(source)?Display(source,Language):source;
+        if(English.Value.TryGetValue(source,out var exact))return Display(exact,Language);
         if(cache.TryGetValue(source,out var translated))return translated;
         // Longest literal wins in one pass. Never recursively translate the result or change evidence files.
-        translated=Fragments.Value.Replace(source,m=>English.Value[m.Value]);
+        translated=Fragments.Value.Replace(source,m=>Display(English.Value[m.Value],Language));
         if(cache.Count>=512)cache.Clear();
         cache[source]=translated;return translated;
     }

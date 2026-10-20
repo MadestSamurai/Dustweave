@@ -22,6 +22,13 @@ public partial class BattleBoard : UserControl
  private bool fresh = true;
  private static readonly string[] Fills = { "#E8F1FC", "#FCECE6", "#E7F3EA", "#FCF3D6", "#F0EAF9" };
  private static readonly string[] Inks = { "#234E7E", "#8B3923", "#245D38", "#755409", "#654186" };
+ private static readonly string[] DarkFills = { "#23354C", "#493129", "#243D30", "#443C23", "#3C2F4C" };
+ private static readonly string[] DarkInks = { "#B7D8FF", "#FFD2BE", "#B9E9C9", "#F5DDA3", "#DCC4F4" };
+ private Brush ThemeBrush(string key) => (Brush)FindResource(key);
+ private bool Dark => ThemeBrush("Surface") is SolidColorBrush brush && brush.Color.R < 128;
+ private Brush ElementBrush(int element, bool foreground) => SystemParameters.HighContrast
+  ? ThemeBrush(foreground ? "Ink" : "Surface")
+  : Paint((foreground ? Dark ? DarkInks : Inks : Dark ? DarkFills : Fills)[element]);
  internal int TileCount => tiles.Count;
  internal int? SelectedGrid => selectedGrid;
  internal string SelectedTitle => SelectionTitle.Text;
@@ -55,7 +62,7 @@ public partial class BattleBoard : UserControl
   state = s; action = pending; SetFresh(true);
   // Geometry and catalog can change without a unit mutation. Do not rely on BoardKey alone.
   string newGeometry = string.Join(";", s.Boards.Cast<GamePoint>().Concat(s.Path).Select(p => $"{p.Id}:{p.X:R}:{p.Y:R}:{p.Z:R}"));
-  string newContents = Guards.BoardKey(s) + "|" + s.MyView + "|" + string.Join(";", s.Catalog.Units.Select(d => $"{d.Id}:{d.Element}:{d.Grade}:{d.Range:R}:{d.Name}"));
+  string newContents = Guards.BoardKey(s) + "|" + s.MyView + "|" + Dark + "|" + SystemParameters.HighContrast + "|" + string.Join(";", s.Catalog.Units.Select(d => $"{d.Id}:{d.Element}:{d.Grade}:{d.Range:R}:{d.Name}"));
   bool redraw = geometry != newGeometry || contents != newContents;
   if (geometry != newGeometry) coverage = new();
   geometry = newGeometry; contents = newContents;
@@ -108,11 +115,11 @@ public partial class BattleBoard : UserControl
    double cov = d == null ? 0 : coverage.Coverage(d, b, state.Path);
    var label = d == null ? (u == null ? Ui.Text("空") : "?") : Ui.English ? $"{Ui.ShortElement(d.Element)}{d.Grade}" : $"{Names.Element(d.Element)}·{d.Grade}";
    var content = new Grid();
-   content.Children.Add(new TextBlock { Text = b.Id.ToString(), FontSize = Math.Clamp(tileSize * .22, 9, 11), Foreground = Paint(d == null ? "#5B6670" : Inks[el]), Margin = new(4, 1, 0, 0), HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top });
-   content.Children.Add(new TextBlock { Text = label, FontWeight = FontWeights.SemiBold, FontSize = Ui.English ? Math.Clamp(tileSize * .28, 9, 16) : Math.Clamp(tileSize * .36, 12, 20), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Bottom, Margin = new(0, 0, 0, Math.Max(2, tileSize * .10)), Foreground = Paint(d == null ? "#65717A" : Inks[el]) });
+   content.Children.Add(new TextBlock { Text = b.Id.ToString(), FontSize = Math.Clamp(tileSize * .22, 9, 11), Foreground = d == null ? ThemeBrush("MutedInk") : ElementBrush(el,true), Margin = new(4, 1, 0, 0), HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top });
+   content.Children.Add(new TextBlock { Text = label, FontWeight = FontWeights.SemiBold, FontSize = Ui.English ? Math.Clamp(tileSize * .28, 9, 16) : Math.Clamp(tileSize * .36, 12, 20), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Bottom, Margin = new(0, 0, 0, Math.Max(2, tileSize * .10)), Foreground = d == null ? ThemeBrush("MutedInk") : ElementBrush(el,true) });
    if (d != null && state.Path.Length > 1 && cov <= 1e-6 && GapToggle.IsChecked == true)
-    content.Children.Add(new TextBlock { Text = "!", FontWeight = FontWeights.Bold, FontSize = 12, Foreground = Paint("#8B5600"), Margin = new(0, 0, 4, 0), HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top });
-   var tile = new Button { Style = (Style)FindResource("BoardTile"), Width = tileSize, Height = tileSize, Tag = b.Id, Content = content, Background = Paint(d == null ? "#F2F5F7" : Fills[el]), BorderBrush = Paint("#BBC9D1") };
+    content.Children.Add(new TextBlock { Text = "!", FontWeight = FontWeights.Bold, FontSize = 12, Foreground = ThemeBrush("Warning"), Margin = new(0, 0, 4, 0), HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top });
+   var tile = new Button { Style = (Style)FindResource("BoardTile"), Width = tileSize, Height = tileSize, Tag = b.Id, Content = content, Background = d == null ? ThemeBrush("SurfaceMuted") : ElementBrush(el,false), BorderBrush = ThemeBrush("LineStrong") };
    string description = Ui.English ? (d != null ? $"Cell {b.Id}, {Label(d)}, unit #{u!.Index}, range {d.Range:0.##}, estimated route coverage {cov:P0}" : $"Cell {b.Id}, {(u==null?"empty":"unit details pending")}") : d != null ? $"格 {b.Id}，{Label(d)}，实例 {u!.Index}，射程 {d.Range:0.##}，路线覆盖估计 {cov:P0}" : u == null ? $"格 {b.Id}，空位" : $"格 {b.Id}，使徒资料待同步";
    AutomationProperties.SetName(tile, description); tile.ToolTip = description; ToolTipService.SetInitialShowDelay(tile, 350);
    tile.Click += (_, _) => SelectGrid(b.Id); tile.PreviewKeyDown += Navigate;
@@ -143,7 +150,7 @@ public partial class BattleBoard : UserControl
   if (selectionKey == key) return;
   selectionKey = key;
   RangeLayer.Children.Clear();
-  foreach (var tile in tiles) { tile.Value.BorderThickness = new(tile.Key == selectedGrid ? 3 : 1); tile.Value.BorderBrush = Paint(tile.Key == selectedGrid ? "#176B57" : "#BBC9D1"); }
+  foreach (var tile in tiles) { tile.Value.BorderThickness = new(tile.Key == selectedGrid ? 3 : 1); tile.Value.BorderBrush = ThemeBrush(tile.Key == selectedGrid ? "Primary" : "LineStrong"); }
   var b = state?.MyView == true ? state.Boards.FirstOrDefault(b => b.Id == selectedGrid) : null;
   var u = b == null ? null : Occupant(b.Id); var d = Definition(u);
   if (b == null) { SelectionTitle.Text = Ui.Text("点选一个使徒"); SelectionIdentity.Text = ""; SelectionStats.Text = "在盘面上查看射程，了解它能攻击哪段路线。"; CoverageText.Text = "射程与覆盖为位置示意；覆盖比例不是伤害占比。"; CoverageText.SetResourceReference(TextBlock.ForegroundProperty,"MutedInk"); return; }
@@ -156,14 +163,14 @@ public partial class BattleBoard : UserControl
   CoverageText.SetResourceReference(TextBlock.ForegroundProperty,state.Path.Length > 1 && cov <= 1e-6 ? "Warning" : "MutedInk");
   if (RangeToggle.IsChecked != true || tiles.Count == 0) return;
   var center = Map(b); double radius = Math.Max(0, d.Range * scale);
-  var disk = new Ellipse { Width = radius * 2, Height = radius * 2, Stroke = Paint("#176B57"), StrokeThickness = 1.5, StrokeDashArray = new() { 4, 3 }, Fill = Paint("#10176B57") };
+  var disk = new Ellipse { Width = radius * 2, Height = radius * 2, Stroke = ThemeBrush("Primary"), StrokeThickness = 1.5, StrokeDashArray = new() { 4, 3 }, Fill = Brushes.Transparent };
   Canvas.SetLeft(disk, center.X - radius); Canvas.SetTop(disk, center.Y - radius); RangeLayer.Children.Add(disk);
   for (int i = 0; i < state.Path.Length; i++)
   {
    var a = state.Path[i]; var z = state.Path[(i + 1) % state.Path.Length]; int steps = Math.Max(8, (int)Math.Ceiling(Planner.Distance(a, z) * 12));
    GamePoint Along(double t) => new() { X = a.X + (z.X - a.X) * t, Y = a.Y + (z.Y - a.Y) * t, Z = a.Z + (z.Z - a.Z) * t };
    for (int n = 0; n < steps; n++) if (Planner.Distance(Along((n + .5) / steps), b) <= d.Range)
-   { var start = Map(Along((double)n / steps)); var end = Map(Along((double)(n + 1) / steps)); RangeLayer.Children.Add(new Line { X1 = start.X, Y1 = start.Y, X2 = end.X, Y2 = end.Y, Stroke = Paint("#176B57"), StrokeThickness = 6 }); }
+   { var start = Map(Along((double)n / steps)); var end = Map(Along((double)(n + 1) / steps)); RangeLayer.Children.Add(new Line { X1 = start.X, Y1 = start.Y, X2 = end.X, Y2 = end.Y, Stroke = ThemeBrush("Primary"), StrokeThickness = 6 }); }
   }
  }
  private void RenderLive()
@@ -171,14 +178,14 @@ public partial class BattleBoard : UserControl
   LiveLayer.Children.Clear(); ActionText.Visibility = Visibility.Hidden;
   if (state == null || !state.MyView || tiles.Count == 0 || !fresh) return;
   foreach (var enemy in state.Enemies.Where(e => e.Hp > 0))
-  { var at = Map(enemy); var dot = new Ellipse { Width = 7, Height = 7, Fill = Paint("#963B47"), Stroke = Brushes.White, StrokeThickness = 1 }; Canvas.SetLeft(dot, at.X - 3.5); Canvas.SetTop(dot, at.Y - 3.5); LiveLayer.Children.Add(dot); }
+  { var at = Map(enemy); var dot = new Ellipse { Width = 7, Height = 7, Fill = ThemeBrush("Error"), Stroke = ThemeBrush("Surface"), StrokeThickness = 1 }; Canvas.SetLeft(dot, at.X - 3.5); Canvas.SetTop(dot, at.Y - 3.5); LiveLayer.Children.Add(dot); }
   if (action?.Kind != "move") return;
   var source = state.Boards.FirstOrDefault(b => b.Id == action.Grid); var destination = state.Boards.FirstOrDefault(b => b.Id == action.TargetGrid);
   if (source == null || destination == null) return;
   var a = Map(source); var z = Map(destination); var vector = z - a; if (vector.Length < 1) return; vector.Normalize(); var normal = new Vector(-vector.Y, vector.X); z -= vector * (tileSize / 2 + 3); a += vector * (tileSize / 2 + 2);
-  LiveLayer.Children.Add(new Line { X1 = a.X, Y1 = a.Y, X2 = z.X, Y2 = z.Y, Stroke = Brushes.White, StrokeThickness = 7 });
-  LiveLayer.Children.Add(new Line { X1 = a.X, Y1 = a.Y, X2 = z.X, Y2 = z.Y, Stroke = Paint("#176B57"), StrokeThickness = 3 });
-  LiveLayer.Children.Add(new Polygon { Points = new() { z, z - vector * 10 + normal * 5, z - vector * 10 - normal * 5 }, Fill = Paint("#176B57") });
+  LiveLayer.Children.Add(new Line { X1 = a.X, Y1 = a.Y, X2 = z.X, Y2 = z.Y, Stroke = ThemeBrush("Surface"), StrokeThickness = 7 });
+  LiveLayer.Children.Add(new Line { X1 = a.X, Y1 = a.Y, X2 = z.X, Y2 = z.Y, Stroke = ThemeBrush("Primary"), StrokeThickness = 3 });
+  LiveLayer.Children.Add(new Polygon { Points = new() { z, z - vector * 10 + normal * 5, z - vector * 10 - normal * 5 }, Fill = ThemeBrush("Primary") });
   ActionText.Text = (action.Policy==BossChase.Policy?"BOSS追击 · ":"")+$"正在{(action.TargetIndex >= 0 ? "交换" : "移动")}：格 {action.Grid} → 格 {action.TargetGrid} · 等待游戏确认"; ActionText.Visibility = Visibility.Visible;
  }
 }

@@ -1,6 +1,6 @@
 # Dustweave desktop interface
 
-Updated: 2026-10-19. The interface is a WPF desktop workspace for players watching multi-account tasks beside the game. Preserve the timeline, restrained green accent and light/dark/system themes. Source: `src/Desktop/App.xaml`, `DailyTheme.cs`, `Timeline.xaml` and the page views.
+Updated: 2026-10-20. The interface is a WPF desktop workspace for players watching multi-account tasks beside the game. Preserve the timeline, restrained green accent and light/dark/system themes. Source: `src/Desktop/App.xaml`, `DailyTheme.cs`, `Timeline.xaml` and the page views.
 
 ## Shared rules
 
@@ -24,6 +24,21 @@ Updated: 2026-10-19. The interface is a WPF desktop workspace for players watchi
 - **Timeline rail:** draw its full height in the item container, behind the node and content. The keyboard focus border is a separate overlay; its inset must never shorten the rail. Negative margins inside a data template do not reliably bridge container boundaries at fractional DPI.
 - **Diagnostics:** show current connection status, a concrete next step and problem-report export. Do not display historical operation dumps, guild experiments, timeline shortcuts or disk management. Refresh uses existing read-only observations and waits for the read to finish. Reports and task errors remain distinct; status summaries exclude account identifiers.
 - **Tools:** use the same page padding, control geometry and theme resources. Do not reserve a second footer-sized gap inside sidebar navigation. Scrollbar tracks retain their native available hit area, with a narrow visual thumb that highlights on hover/drag.
+
+## Tool windows
+
+All eleven integrated tools use one window heading, provided by `DailyDialogs`: 26 DIP semibold, a 24 DIP left inset and an 80 DIP header. Minimize, maximize/restore and close share the main window's caption styles and align to the heading's vertical center. Long headings may ellipsize with a full tooltip; they must not overlap the buttons. Native resizing, dragging, taskbar identity and maximized work-area insets remain available.
+
+- Do not repeat the heading or a promotional subtitle inside the tool. Keep live connection/account information and necessary setting help in the body. Language and appearance follow Dustweave, without another selector.
+- Keep primary execution at the right of the persistent bottom action area, with Stop immediately before it. Controls stay in place when disabled. Use shared Start, Stop and Connect game labels; preserve meaningful exceptions such as equipment's Calculate plan → Run and tile matching's Start round / Play next pair.
+- Opening a tool paints its window before preparation; show shared progress, cancellation and retry while locking only the content that is not ready. Pandora follows the same preparation path. Connecting must never start gameplay.
+- Closing a tool releases its automation ownership and keeps the currently selected host page. Prepare the daily component when the user actually starts a daily operation. Escape belongs to dropdowns, editors and board selection; it must not close the tool.
+- Board-oriented tools prioritize the live board and keep configuration scrollable independently from the bottom actions. Board selection, coverage and neutral tiles follow theme resources; categorical element colors have separate light/dark palettes and a high-contrast fallback.
+- Standalone source banners and obsolete About/download dialogs do not appear inside integrated tools. Product attribution and original licenses remain in the repository's license and notice files.
+
+Validation uses actual WPF windows with synthetic ports and isolated preferences. Cover all tools in three languages and both themes, minimum sizes, live language changes, loading/cancellation/retry, aligned caption controls and visible primary actions. The tower check additionally exercises an active board, maximization and closing during execution without changing the host page. These checks do not start or control the game.
+
+The 2026-10-20 unification pass built successfully, passed 2,374 focused preparation/presentation assertions for ten hosted tools and the separate live-board tower UI smoke, plus 89 unified-session checks. Actual light/dark and compact renders were inspected, including Pandora loading and the tower's running board. Source-boundary validation covers 1,254 inputs. This is local UI verification, not a game-play or release acceptance run.
 
 ## Visual alignment
 
@@ -84,6 +99,12 @@ The 2026-10-20 allowance-progress pass validated 476 targeted Core checks (475 i
 ## Application settings and scheduling
 
 App settings owns appearance, language, Windows startup, run-on-open, closing behavior, installation locations, updates and log retention. Windows startup is an independent, per-user opt-in. A shared setting must not silently change task selection. Paths are concise rows that open focused editors. Errors are local and actionable.
+
+The sidebar version entry shows only the installed version until a verified feed reports a newer release. Then an accent “有更新” / “Update” badge opens the update page; it remains through transient network failures and disappears after a successful up-to-date check. Startup and periodic discovery do not depend on the automatic-download preference. With downloads disabled, the update page offers an explicit download action. Discovery stays non-modal and does not block schedules or daily tasks.
+
+Preset overflow actions use the shared flat `ActionMenu` styles: themed surface, rounded rows, explicit keyboard focus and a separated destructive group. Anchor the popup to the trigger's trailing edge; keep long preset names bounded with a full-text tooltip. The trigger stays highlighted only while the menu is open. Preserve native arrow-key and Escape behavior.
+
+Delete acts directly on the selected preset. The confirmation names it and states how many accounts use it, with Cancel as the default action. As requested, deleting a shared preset returns those accounts to “All enabled tasks”, including scheduled execution after restart. Clear their cached selections as well so the daily list and account selectors agree. The confirmation explains this reset before deletion.
 
 Schedules is one plan, with sections separated by spacing and rules rather than independent cards. Keep the save action visible beneath the scroll region. The next occurrence is explicitly the saved plan; edits show an unsaved notice. Keep account-card ordering and the existing execution guards.
 

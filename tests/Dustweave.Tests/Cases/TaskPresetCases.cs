@@ -42,11 +42,32 @@ static class TaskPresetCases
         Reject(() => store.Save("short DAILY", tasks), "preset names are unique without case sensitivity");
         Reject(() => store.Save("Empty", []), "empty presets cannot silently expand to all tasks");
         Reject(() => store.Save("Unknown", ["invented"]), "unknown task IDs are rejected");
-        Reject(() => store.Delete(first.Id), "deletion cannot broaden an assigned unattended queue");
         var renamed = store.Save("Renamed", [tasks[1]], first.Id);
         Check(renamed.Id == first.Id && restarted.Selection(a, preferences)!.Tasks.SequenceEqual([tasks[1]]) && restarted.Selection(b, preferences)!.Tasks.SequenceEqual(tasks), "editing a preset preserves account references and other presets");
         store.Assign(a, null); store.Delete(first.Id);
         Check(store.Selection(a, preferences) == null && store.Read().Presets.Single().Id == second.Id, "unassign and delete restores only the chosen account default");
+        {
+            string deleteRoot = Path.Combine(output, "delete-active-preset"), c = new('c', 64);
+            var deleteStore = new DailyTaskPresetStore(deleteRoot);
+            var shared = deleteStore.Save("Shared selection", [tasks[0]]);
+            var other = deleteStore.Save("Other selection", [tasks[1]]);
+            deleteStore.Assign(a, shared.Id); deleteStore.Assign(b, shared.Id); deleteStore.Assign(c, other.Id);
+            deleteStore.Delete(shared.Id);
+            var afterDelete = new DailyTaskPresetStore(deleteRoot);
+            Check(afterDelete.Read().Presets.All(p => p.Id != shared.Id) &&
+                !afterDelete.Read().Accounts.ContainsKey(a) && !afterDelete.Read().Accounts.ContainsKey(b),
+                "delete selected preset directly detaches every assigned account");
+            Check(afterDelete.Selection(a, preferences) == null && afterDelete.Selection(b, preferences) == null &&
+                afterDelete.Selection(c, preferences)!.Tasks.SequenceEqual([tasks[1]]),
+                "deleted shared preset returns assigned queues to defaults across restart without changing unrelated accounts");
+            afterDelete.Assign(a, other.Id);
+            Check(afterDelete.Selection(a, preferences)!.Tasks.SequenceEqual([tasks[1]]) && afterDelete.Selection(b, preferences) == null,
+                "accounts can select another preset after deletion without changing others");
+            string beforeRejectedDelete = File.ReadAllText(Path.Combine(deleteRoot, "task-presets.json"));
+            Reject(() => afterDelete.Delete(shared.Id), "stale delete does not remove a different preset");
+            Check(File.ReadAllText(Path.Combine(deleteRoot, "task-presets.json")) == beforeRejectedDelete,
+                "rejected stale deletion preserves preset file");
+        }
         var behavior = DailyDesktopBehavior.Read(root);
         Check(behavior.CompletionNotice.Windows&&behavior.CompletionNotice.Popup&&!behavior.CompletionNotice.Sound&&!behavior.HideIsolationReminder,"completion notifications preserve result popup and isolation explanation defaults");
         var delivered=new List<string>();

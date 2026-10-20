@@ -1,11 +1,8 @@
 <Window x:Class="BD2FiendHunter.Desktop.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="{DynamicResource title}" Width="620" Height="620" MinWidth="490" MinHeight="570" WindowStartupLocation="CenterScreen" Background="{DynamicResource AppBackground}" Foreground="{DynamicResource Ink}">
- <Grid Margin="24">
+ <Grid Margin="24,0,24,24">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-  <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-   <StackPanel><TextBlock Text="{DynamicResource title}" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="{DynamicResource subtitle}" Foreground="{DynamicResource MutedInk}" Margin="0,6,0,0"/></StackPanel>
-   <ComboBox Grid.Column="1" x:Name="LanguageBox" MinWidth="110" VerticalAlignment="Top" SelectionChanged="LanguageChanged" AutomationProperties.Name="Language"><ComboBoxItem Content="简体中文" Tag="zh-CN"/><ComboBoxItem Content="English" Tag="en-US"/></ComboBox>
-  </Grid>
-  <Grid Grid.Row="1" Margin="0,24,0,20">
+  <ComboBox x:Name="LanguageBox" Visibility="Collapsed" SelectionChanged="LanguageChanged"><ComboBoxItem Content="简体中文" Tag="zh-CN"/><ComboBoxItem Content="English" Tag="en-US"/></ComboBox>
+  <Grid Grid.Row="1" Margin="0,0,0,20">
    <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
    <StackPanel><TextBlock Text="{DynamicResource select-character}" Margin="0,0,0,8"/><ComboBox x:Name="CharacterChoice" SelectedIndex="0" SelectionChanged="SelectionChanged" AutomationProperties.Name="{DynamicResource select-character}"><ComboBoxItem Content="{DynamicResource character-1}"/><ComboBoxItem Content="{DynamicResource character-2}"/><ComboBoxItem Content="{DynamicResource character-3}"/></ComboBox></StackPanel>
    <StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource select-boss}" Margin="0,0,0,8"/><ComboBox x:Name="BossChoice" SelectedIndex="0" SelectionChanged="SelectionChanged" AutomationProperties.Name="{DynamicResource select-boss}"><ComboBoxItem Content="{DynamicResource boss-1}"/><ComboBoxItem Content="{DynamicResource boss-2}"/></ComboBox></StackPanel>

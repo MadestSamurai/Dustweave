@@ -56,6 +56,7 @@ public partial class MainWindow
             await session.PollAsync();view.Render();
             await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
             view.CheckForSmoke();
+            CheckToolChromeForSmoke(window,"apostle-defense",(value,message)=>{if(!value)throw new Exception(message);});
             if(!session.Running || prepares!=1 || session.LoadSettings().IntervalMs!=350)throw new Exception("Appearance change modified execution/preferences");
             if(Application.Current.Windows.Count!=2 || window.Owner!=this)throw new Exception("Tool must keep its own owned window");
             Capture($"apostle-{language}-{appearance}",(FrameworkElement)window.Content);
@@ -68,7 +69,10 @@ public partial class MainWindow
         view.CheckForSmoke();
         view.CheckInvalidSettingsForSmoke();
         await session.StartAsync(session.LoadSettings());
+        WorkspaceTabs.SelectedItem=ToolsTab;
         if(!await window.CloseSafelyAsync() || session.Running || DailyToolControl.IsOccupied(root))throw new Exception("Closing active window must stop and release safely");
+        await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+        if(WorkspaceTabs.SelectedItem!=ToolsTab)throw new Exception("Closing a tool unexpectedly changed the selected host page");
         var entered=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         using var cancelled=new ApostleToolSession(root,async(_,token)=>{entered.SetResult();await Task.Delay(Timeout.Infinite,token);return fake;});
         var cancelledWindow=new ApostleToolWindow(this,cancelled,()=>true);cancelledWindow.Show();

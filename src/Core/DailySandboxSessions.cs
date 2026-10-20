@@ -68,8 +68,33 @@ public static class DailySandboxSessions
         catch (UnauthorizedAccessException) { }
     }
 
-    internal static void Collect(string account, SessionVault vault, string executable)
-        => CollectAsync(account,vault,executable,CancellationToken.None).GetAwaiter().GetResult();
+    internal static void CollectForHost(string account, SessionVault vault, string executable)
+    {
+        DailySandbox.RequireHost();
+        CollectForHost(DailySandbox.StateDirectory(account), new SandboxInstallation(),
+            () => DailySandbox.RequireAccountAvailable(account),
+            () => CollectAsync(account,vault,executable,CancellationToken.None).GetAwaiter().GetResult(),
+            reason => WriteAudit(account, "collection-skipped-sandbox-unavailable", reason, "host-saved-session"));
+    }
+
+    internal static void CollectForHost(string stateDirectory, SandboxInstallation installation,
+        Action requireAccountAvailable, Action collect, Action<string> recordSkipped)
+    {
+        // Uninstalling Sandboxie does not remove account directories or a manually
+        // selected installation path. Those remnants must not turn ordinary launch
+        // into an isolated launch dependency. Leave their credentials untouched.
+        requireAccountAvailable();
+        if (!Directory.Exists(stateDirectory)) return;
+        var installed = installation.Read();
+        if (installed.Error != null)
+        {
+            recordSkipped(installed.Error);
+            return;
+        }
+        // With Sandboxie available, keep the full ownership/token handoff checks.
+        // Explicit isolated launches call CollectAsync directly and stay strict.
+        collect();
+    }
 
     internal static async Task CollectAsync(string account, SessionVault vault, string executable, CancellationToken token)
     {

@@ -492,17 +492,17 @@
   "message.friendship_unavailable": {
     "zh-CN": "当前无法读取亲密度咨询状态",
     "zh-TW": "當前無法讀取親密度咨詢狀態",
-    "en-US": "Affinity consultation status is unavailable."
+    "en-US": "Rapport consultation status is unavailable."
   },
   "message.daily_three_completed": {
     "zh-CN": "今日3次亲密度咨询已完成",
     "zh-TW": "今日3次親密度咨詢已完成",
-    "en-US": "Today's three affinity consultations are complete."
+    "en-US": "Today's three Rapport consultations are complete."
   },
   "message.no_nonmax_counseling_target": {
     "zh-CN": "没有可咨询且亲密度未满的角色",
     "zh-TW": "沒有可咨詢且親密度未滿的角色",
-    "en-US": "No eligible character below maximum affinity."
+    "en-US": "No eligible character below maximum Rapport."
   },
   "message.plugin_unavailable": {
     "zh-CN": "插件未就绪，本环节暂不可用。",
@@ -2627,7 +2627,7 @@
   "message.friendship_complete": {
     "zh-CN": "亲密度咨询已完成",
     "zh-TW": "親密度咨詢已完成",
-    "en-US": "Affinity consultations completed."
+    "en-US": "Rapport consultations completed."
   },
   "message.insufficient_catalyst": {
     "zh-CN": "天赋药不足",

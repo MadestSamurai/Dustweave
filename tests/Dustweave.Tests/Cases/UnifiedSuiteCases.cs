@@ -61,7 +61,7 @@ internal static class UnifiedSuiteCases {
   string? priorOwner=Environment.GetEnvironmentVariable("BD2_DAILY_SUITE_OWNER");
   try {
    Environment.SetEnvironmentVariable("BD2_DAILY_SUITE_OWNER","helper-owner");
-   foreach(string id in new[]{"mansion-runaway","equipment","infinite-gacha","fiend-hunter","rhythm","sichuan","secret-vision","fishing","territory"}){
+   foreach(string id in new[]{"mansion-runaway","pandora","equipment","infinite-gacha","fiend-hunter","rhythm","sichuan","secret-vision","fishing","territory"}){
     var deferred=new ProcessStartInfo();deferred.Environment["BD2_DAILY_TOOL_FINGERPRINT"]="old-module";deferred.Environment["BD2_DAILY_DATA_ROOT"]="isolated-root";
     DailySuite.SetPendingToolEnvironment(deferred,new GameInstance(42,123,"game.exe"),id);
     Check(DailySuite.PreparesInWindow(id)&&deferred.Environment["BD2_DAILY_HOSTED_TOOL"]==id,"window-first tool keeps its identity: "+id);

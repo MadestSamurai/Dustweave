@@ -10,7 +10,7 @@ internal sealed class HostedTraditionalText
     {
         if(string.IsNullOrEmpty(text))return text;
         if(rendered.TryGetValue(text,out var found))return found;
-        string value=Convert(text,0x04000000).Replace("游戲","遊戲",StringComparison.Ordinal);
+        string value=GameTerminology.Template(Convert(text,0x04000000).Replace("游戲","遊戲",StringComparison.Ordinal),"zh-TW");
         if(rendered.Count>=4096){rendered.Clear();sources.Clear();}
         rendered[text]=value;sources.TryAdd(value,text);return value;
     }

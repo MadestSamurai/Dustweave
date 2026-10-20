@@ -1,10 +1,10 @@
-# Fiend Hunter · Dustweave
+# Fiend Hunter: Edge of Fury · Dustweave
 
 [简体中文](README.md) · English · [Back to Dustweave](../../README.en.md)
 
-Fiend Hunter is maintained in Dustweave. The archived standalone repository retains historical versions; use [Dustweave](https://github.com/MadestSamurai/Dustweave) for downloads and issues.
+Fiend Hunter: Edge of Fury is maintained in Dustweave. The archived standalone repository retains historical versions; use [Dustweave](https://github.com/MadestSamurai/Dustweave) for downloads and issues.
 
-Open **Tools → Fiend Hunter** and wait for the shared connection. Choose Blade, Teresse or Granhildr, a monster, and Normal / Hard / Very Hard. An ongoing round with the same configuration can be resumed. The tool attacks, guards, dodges and heals, then stops after settlement. Pausing automation leaves the game running.
+Open **Tools → Fiend Hunter: Edge of Fury** and wait for the shared connection. Choose Blade, Teresse or Granhildr, a monster, and Normal / Hard / Very Hard. An ongoing round with the same configuration can be resumed. The tool attacks, guards, dodges and heals, then stops after settlement. Pausing automation leaves the game running.
 
 The separate window follows Dustweave's language, theme, loading feedback and shared control lock. Opening it never starts combat. No old component is polled during preparation; exiting the game or changing accounts stops input.
 

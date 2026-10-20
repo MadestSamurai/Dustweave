@@ -34,7 +34,7 @@ internal static class PandoraTool
             app.Exit += (_, _) => single.Dispose();
             if (!first) { MessageBox.Show(DailyLanguage.Current.Get("pandora.already_open"), "PANDORA ESCAPE"); app.Shutdown(); return; }
         }
-        var window = new PandoraWindow(smoke); app.MainWindow = window; window.Show();
+        var window = new PandoraWindow(smoke,deferChrome:!smoke); app.MainWindow = window; window.Show();
         if (!smoke) return;
         app.Dispatcher.BeginInvoke(new Action(() =>
         {

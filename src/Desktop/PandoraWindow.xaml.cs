@@ -28,11 +28,11 @@ public partial class PandoraWindow : Window
     public bool HostedAutomationEnabled => client?.Enabled == true || connecting || starting;
     static DailyLanguage L => DailyLanguage.Current;
 
-    public PandoraWindow(bool smoke = false)
+    public PandoraWindow(bool smoke = false, bool deferChrome = false)
     {
         this.smoke = smoke;
         InitializeComponent();
-        DailyDialogs.Prepare(this);
+        if (!deferChrome) DailyDialogs.Prepare(this, toolWindow: true);
         ShowInTaskbar = true;
         if (!smoke && DailyJson.TryRead<Preferences>(PreferencesPath)is { } preferences)
         {
@@ -278,6 +278,9 @@ public partial class PandoraWindow : Window
         AutoEquipment.IsEnabled = !active && !polling;
         ConnectButton.IsEnabled = !active && !polling;
         ConnectButton.Visibility = !smoke && status == "disconnected" ? Visibility.Visible : Visibility.Collapsed;
+        LoadingProgress.Visibility = connecting ? Visibility.Visible : Visibility.Collapsed;
+        LoadingProgress.IsIndeterminate = connecting && SystemParameters.ClientAreaAnimation;
+        LoadingProgress.Value = connecting ? 50 : 0;
         bool hasChallenge = nativeStages?.Any(s => s?["Unlocked"]?.GetValue<bool>() == true && s?["Challenge"]?.GetValue<bool>() == true) == true;
         bool characterAvailable = CharacterBox.SelectedItem is CharacterOption { Available: true };
         StartButton.IsEnabled = client != null && !active && !polling && characterAvailable && (challenge ? hasChallenge : StageBox.SelectedItem != null);

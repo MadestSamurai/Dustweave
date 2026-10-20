@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 
 namespace Dustweave.Desktop;
 
@@ -42,32 +43,45 @@ public sealed partial class DailyRunPanel
         };
         savePreset.Click += (_, _) => SavePreset(false);
         managePreset.Click += (_, _) => {
-            var menu = new ContextMenu();
-            void Item(string key, Action action) { var item = new MenuItem { Header = L.Get(key) }; item.Click += (_, _) => action(); menu.Items.Add(item); }
+            var menu = new ContextMenu
+            {
+                Style = (Style)FindResource("ActionMenu"),
+                Placement = PlacementMode.Custom,
+                CustomPopupPlacementCallback = (popup, target, _) =>
+                [
+                    new(new Point(target.Width - popup.Width, target.Height + 6), PopupPrimaryAxis.Vertical),
+                    new(new Point(target.Width - popup.Width, -popup.Height - 6), PopupPrimaryAxis.Vertical)
+                ]
+            };
+            L.Bind(menu, System.Windows.Automation.AutomationProperties.NameProperty, "presets.manage");
+            void Item(string key, Action action)
+            {
+                var item = new MenuItem { Tag = key == "presets.delete" ? "destructive" : null };
+                L.Bind(item, HeaderedItemsControl.HeaderProperty, key);
+                item.Click += (_, _) => action(); menu.Items.Add(item);
+            }
             if (presetSelector.SelectedValue is string { Length: > 0 } id)
             {
                 Item("presets.replace", () => SavePreset(true));
                 Item("presets.rename", () => SavePreset(true, renameOnly: true));
-                Item("presets.delete", () => {
-                    try {
-                        var owner = Window.GetWindow(this);
-                        if (DailyDialogs.ShowModal(DailyDialogs.Message(owner, L.Get("presets.delete"), L.Get("presets.delete_confirm"), true)) != true) return;
-                        presetStore.Delete(id); RefreshPresets(false); PresetsChanged?.Invoke();
-                    } catch (Exception error) { ShowOperationError(DailyUserText.Error(error, L.Translate)); }
-                });
+                menu.Items.Add(new Separator { Style = (Style)FindResource("ActionMenuSeparator") });
+                Item("presets.delete", () => DeletePreset(id));
             }
             var unused = presetStore.Read();
             foreach (var preset in unused.Presets.Where(p => !unused.Accounts.ContainsValue(p.Id)))
             {
-                var remove = new MenuItem { Header = L.Get("presets.delete") + " · " + preset.Name };
-                remove.Click += (_, _) => {
-                    try {
-                        if (DailyDialogs.ShowModal(DailyDialogs.Message(Window.GetWindow(this), L.Get("presets.delete"), L.Get("presets.delete_confirm"), true)) != true) return;
-                        presetStore.Delete(preset.Id); RefreshPresets(); PresetsChanged?.Invoke();
-                    } catch (Exception error) { ShowOperationError(DailyUserText.Error(error, L.Translate)); }
-                };
+                var remove = new MenuItem { Tag = "destructive" };
+                L.Bind(remove, HeaderedItemsControl.HeaderProperty, () => L.Get("presets.delete") + " · " + preset.Name);
+                remove.Click += (_, _) => DeletePreset(preset.Id);
                 menu.Items.Add(remove);
             }
+            menu.Closed += (_, _) =>
+            {
+                managePreset.ClearValue(Control.BackgroundProperty);
+                managePreset.ClearValue(Control.BorderBrushProperty);
+            };
+            managePreset.SetResourceReference(Control.BackgroundProperty, "PrimarySoft");
+            managePreset.SetResourceReference(Control.BorderBrushProperty, "Primary");
             managePreset.ContextMenu = menu; menu.PlacementTarget = managePreset; menu.IsOpen = true;
         };
         return bar;
@@ -89,9 +103,27 @@ public sealed partial class DailyRunPanel
             foreach (var stage in DailyStageCatalog.All) planChoices[stage.Id] = wanted.Contains(stage.Id);
             if (!isBusy) ShowCurrentPlan();
         }
-        managePreset.Visibility = id.Length > 0 || data.Presets.Any(p => !data.Accounts.ContainsValue(p.Id))
+        managePreset.Visibility = data.Presets.Any(p => p.Id == id || !data.Accounts.ContainsValue(p.Id))
             ? Visibility.Visible : Visibility.Collapsed;
         presetSelector.IsEnabled = savePreset.IsEnabled = managePreset.IsEnabled = !isBusy && DailyProfiles.ValidKey(activeAccount);
+    }
+    private void DeletePreset(string id)
+    {
+        if (isBusy || showingReport || !DailyProfiles.ValidKey(activeAccount)) return;
+        try
+        {
+            var data = presetStore.Read();
+            var preset = data.Presets.SingleOrDefault(p => p.Id == id) ?? throw new InvalidOperationException("presets.missing");
+            var accounts = data.Accounts.Where(p => p.Value == id).Select(p => p.Key).ToArray();
+            string text = L.Get("presets.delete_confirm", preset.Name);
+            if (accounts.Length > 0) text += "\n\n" + L.Get("presets.delete_reset", accounts.Length);
+            if (DailyDialogs.ShowModal(DailyDialogs.Message(Window.GetWindow(this), L.Get("presets.delete"), text,
+                    true, "presets.delete", safeDefault: true)) != true) return;
+            presetStore.Delete(id);
+            foreach (var account in accounts) accountChoices.Remove(account);
+            RefreshPresets(accounts.Contains(activeAccount)); PresetsChanged?.Invoke();
+        }
+        catch (Exception error) { ShowOperationError(DailyUserText.Error(error, L.Translate)); }
     }
     private void SavePreset(bool replace, bool renameOnly = false)
     {

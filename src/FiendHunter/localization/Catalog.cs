@@ -4,7 +4,7 @@ namespace BD2FiendHunter.Localization;
 public sealed class Catalog {
  public string Language{get;private set;} public Dictionary<string,string> Messages{get;private set;}
  public Catalog(string language){Language=language;Messages=Read(language);}
- public static Dictionary<string,string> Read(string language){if(language=="zh-TW" && AppDomain.CurrentDomain.GetData("BD2Daily.TraditionalText") is Func<string,string> traditional)return Read("zh-CN").ToDictionary(p=>p.Key,p=>traditional(p.Value));using var s=typeof(Catalog).Assembly.GetManifestResourceStream("Language."+language+".json")??throw new InvalidDataException("Unknown language");return JsonSerializer.Deserialize<Dictionary<string,string>>(s)!;}
+ public static Dictionary<string,string> Read(string language){if(language=="zh-TW" && AppDomain.CurrentDomain.GetData("BD2Daily.TraditionalText") is Func<string,string> traditional)return Read("zh-CN").ToDictionary(p=>p.Key,p=>traditional(p.Value));using var s=typeof(Catalog).Assembly.GetManifestResourceStream("Language."+language+".json")??throw new InvalidDataException("Unknown language");var catalog=JsonSerializer.Deserialize<Dictionary<string,string>>(s)!;return AppDomain.CurrentDomain.GetData("BD2Daily.GameText") is Func<string,string,string> terms?catalog.ToDictionary(p=>p.Key,p=>terms(p.Value,language)):catalog;}
  public void Select(string language){var next=Read(language);Language=language;Messages=next;}
  public string this[string key]=>Messages.TryGetValue(key,out var value)?value:Messages["error"];
  public string Reason(string reason)=>Messages.TryGetValue("reason:"+reason,out var text)?text:reason.StartsWith("等待战斗开始")?this["waiting"]:this["running"];

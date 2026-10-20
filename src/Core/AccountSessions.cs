@@ -126,7 +126,7 @@ public sealed class AccountSessions : IAccountSessions, IDisposable
         if (Dustweave.Accounts.SandboxProcessScope.CurrentBox.Length == 0)
         {
             service.SynchronizeCurrentSlot();
-            DailySandboxSessions.Collect(expectedKey, vault, Environment.ProcessPath!);
+            DailySandboxSessions.CollectForHost(expectedKey, vault, Environment.ProcessPath!);
         }
         service.UseSlotAndLaunch(slot);
     }

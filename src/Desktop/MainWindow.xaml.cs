@@ -207,7 +207,9 @@ public partial class MainWindow : Window
     {
         if (smoke != null || busy || toolChanging || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true) return;
         toolChanging = true; toolMessage = null; SetBusy(busy);
-        try { if (await CloseToolWindowsAsync()) { if(host.Find()!=null)await DailySuite.ActivateAsync(host,root,"daily",m=>toolMessage=m,CancellationToken.None);WorkspaceTabs.SelectedItem = RunTab; } }
+        // Closing releases the tool; the next requested operation prepares its own component.
+        // Neither closing the child nor this explicit action changes the user's current page.
+        try { await CloseToolWindowsAsync(); }
         catch (Exception e) { toolMessage = e.Message; }
         finally { toolChanging = false; RefreshTools(); SetBusy(busy); }
     }
@@ -229,7 +231,7 @@ public partial class MainWindow : Window
         bool running=ToolRunning;
         toolPanel.Refresh(busy || toolChanging || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true, id, ToolConnecting ? "apostle.connection_lock" : running ? "tools.active_notice" : toolMessage ?? (busy ? "日常正在执行；工具设置窗口可以保留。" : toolSession.Message),running);
         if(previousRunning!=running){previousRunning=running;SetBusy(busy);}
-        if(previousTool!=id){bool returnToDaily=previousTool!=null&&id==null&&!toolChanging;previousTool=id;SetBusy(busy);if(returnToDaily)_=CloseTool();}
+        if(previousTool!=id){previousTool=id;SetBusy(busy);}
     }
     private string viewedAccount = "";
     private string TaskAccountKey => viewedAccount.Length > 0 ? viewedAccount : catalog?.CurrentKey ?? "";
@@ -840,6 +842,12 @@ public partial class MainWindow : Window
         try
         {
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "update-discovery")
+            {
+                await CheckUpdateDiscoveryForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status="passed", scope="update-discovery", languages=3, themes=2, realGameTouched=false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "single-account-routing")
             {
                 await CheckSingleAccountRoutingForSmoke();

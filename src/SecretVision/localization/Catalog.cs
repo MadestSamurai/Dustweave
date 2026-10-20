@@ -10,7 +10,7 @@ public sealed class Catalog
     {
         if(language=="zh-TW" && AppDomain.CurrentDomain.GetData("BD2Daily.TraditionalText") is Func<string,string> traditional)return Read("zh-CN").ToDictionary(p=>p.Key,p=>traditional(p.Value));
         using var stream=typeof(Catalog).Assembly.GetManifestResourceStream("Language."+language+".json")??throw new InvalidOperationException("Missing language: "+language);
-        return JsonSerializer.Deserialize<Dictionary<string,string>>(stream)!;
+        var catalog=JsonSerializer.Deserialize<Dictionary<string,string>>(stream)!;return AppDomain.CurrentDomain.GetData("BD2Daily.GameText") is Func<string,string,string> terms?catalog.ToDictionary(p=>p.Key,p=>terms(p.Value,language)):catalog;
     }
     public string this[string key]=>messages.TryGetValue(key,out var text)?text:messages["failure"];
     public string Format(string key,params object[] args)=>string.Format(this[key],args);

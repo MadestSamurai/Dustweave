@@ -1,7 +1,7 @@
 <Window x:Class="Dustweave.Desktop.PandoraWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:l="clr-namespace:Dustweave.Desktop" Title="PANDORA ESCAPE · Dustweave" Width="650" Height="650" MinWidth="580" MinHeight="540" WindowStartupLocation="CenterScreen">
- <Grid Margin="24,8,24,24">
+ <Grid Margin="24,0,24,24">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-  <StackPanel Margin="0,0,0,22"><TextBlock Text="{l:Tr pandora.title}" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="{l:Tr pandora.entry}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" Margin="0,6,0,0"/></StackPanel>
+
   <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
    <StackPanel>
     <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
@@ -33,6 +33,7 @@
      </Grid>
     </Border>
     <TextBlock x:Name="StatusText" Text="{l:Tr pandora.state.ready}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,18,0,0"/>
+    <ProgressBar x:Name="LoadingProgress" Height="4" Margin="0,10,0,0" Visibility="Collapsed" AutomationProperties.Name="{l:Tr pandora.state.connecting}"/>
    </StackPanel>
   </ScrollViewer>
   <Grid Grid.Row="2" Margin="0,22,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>

@@ -1,5 +1,32 @@
 [
   {
+    "Version": "1.4.13",
+    "Date": "2026-10-20",
+    "Notes": {
+      "zh-CN": [
+        "修复卸载 Sandboxie 后普通账号启动被旧沙盒目录、失效安装位置或损坏设置拦住的问题；隔离启动仍独立核验。",
+        "统一所有内置工具的大标题、顶部按钮、操作控件和深浅主题；列表统一显示“打开工具”，关闭后留在工具页。",
+        "可直接删除当前预设，确认后任务选择及关联账号回到“全部已启用环节”。",
+        "有新版时在版本入口显示醒目标识；关闭自动下载仍会检查，最新版不显示标识。",
+        "依据游戏文本校对简中、繁中和英文术语，保留账号名称、设置与兼容标识。"
+      ],
+      "zh-TW": [
+        "修復移除 Sandboxie 後，一般帳號啟動被舊沙盒目錄、失效安裝位置或損壞設定阻擋的問題；隔離啟動仍獨立驗證。",
+        "統一所有內建工具的大標題、頂部按鈕、操作控制項及深淺主題；清單統一顯示「開啟工具」，關閉後留在工具頁。",
+        "可直接刪除目前預設，確認後任務選擇及關聯帳號回到全部已啟用環節。",
+        "有新版時在版本入口顯示醒目標示；關閉自動下載仍會檢查，最新版不顯示標示。",
+        "依據遊戲文字校對簡中、繁中和英文用詞，保留帳號名稱、設定與相容識別。"
+      ],
+      "en-US": [
+        "Fixes ordinary account launch blocked by retained sandbox folders or unavailable sandbox settings after Sandboxie removal. Isolated launches retain their own checks.",
+        "Unifies integrated tool headings, window controls, actions and themes. Tool buttons use Open tool, and closing a tool keeps the Tools page selected.",
+        "Delete the active preset directly. After confirmation, task selection and affected accounts return to all enabled stages.",
+        "Shows a prominent badge only for a verified newer version. Update checks also run when automatic downloads are disabled.",
+        "Aligns Simplified Chinese, Traditional Chinese and English terminology with game text while preserving account names, preferences and compatibility identifiers."
+      ]
+    }
+  },
+  {
     "Version": "1.4.12",
     "Date": "2026-10-20",
     "Notes": {

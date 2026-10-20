@@ -21,21 +21,22 @@ internal static class DailyDialogs
         if ((bool)window.GetValue(PreparedProperty)) return;
         window.SetValue(PreparedProperty, true);
         window.Style = (Style)Application.Current.FindResource(typeof(Window));
-        window.SetResourceReference(Window.BackgroundProperty, "Surface");
+        window.SetResourceReference(Window.BackgroundProperty, toolWindow ? "AppBackground" : "Surface");
         window.SetResourceReference(Window.ForegroundProperty, "Ink");
         window.ShowInTaskbar = toolWindow;
         WindowChrome.SetWindowChrome(window, new WindowChrome {
-            CaptionHeight = 48, ResizeBorderThickness = new Thickness(window.ResizeMode == ResizeMode.NoResize ? 0 : 6),
+            CaptionHeight = toolWindow ? 80 : 48, ResizeBorderThickness = new Thickness(window.ResizeMode == ResizeMode.NoResize ? 0 : 6),
             GlassFrameThickness = new Thickness(0), CornerRadius = new CornerRadius(8), UseAeroCaptionButtons = false
         });
         var body = window.Content; window.Content = null;
         var layout = new DockPanel();
-        var header = new DockPanel { LastChildFill = true, Margin = new Thickness(20, 6, 8, 6) };
-        var close = new Button { Width = 36, Height = 36, MinWidth = 36, Padding = new Thickness(0),
-            Background = Brushes.Transparent, BorderThickness = new Thickness(0) };
+        var header = new DockPanel { Name = "WindowHeader", LastChildFill = true,
+            Height = toolWindow ? 80 : 48, Margin = new Thickness(toolWindow ? 24 : 20, 0, 12, 0) };
+        var close = new Button { Name = "WindowClose", Style = (Style)Application.Current.FindResource("CloseCaptionButton"),
+            VerticalAlignment = VerticalAlignment.Center, TabIndex = 2 };
         var glyph = new System.Windows.Shapes.Path { Data = Geometry.Parse("M 4,4 L 12,12 M 12,4 L 4,12"),
             Width = 16, Height = 16, StrokeThickness = 1.5, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round };
-        glyph.SetResourceReference(System.Windows.Shapes.Shape.StrokeProperty, "Ink"); close.Content = glyph;
+        glyph.SetBinding(System.Windows.Shapes.Shape.StrokeProperty, new Binding(nameof(Control.Foreground)) { Source = close }); close.Content = glyph;
         DailyLanguage.Current.Bind(close, ToolTipService.ToolTipProperty, "window.close");
         DailyLanguage.Current.Bind(close, AutomationProperties.NameProperty, "window.close");
         WindowChrome.SetIsHitTestVisibleInChrome(close, true); close.Click += (_, _) => window.Close();
@@ -44,9 +45,11 @@ internal static class DailyDialogs
         {
             Button Caption(string key, string path, Action action)
             {
-                var button = new Button { Width=36, Height=36, MinWidth=36, Padding=new Thickness(0), Background=Brushes.Transparent, BorderThickness=new Thickness(0) };
+                var button = new Button { Name = key == "window.maximize" ? "WindowMaximize" : "WindowMinimize",
+                    Style = (Style)Application.Current.FindResource("CaptionButton"), VerticalAlignment = VerticalAlignment.Center,
+                    TabIndex = key == "window.maximize" ? 1 : 0 };
                 var icon = new System.Windows.Shapes.Path { Data=Geometry.Parse(path), Width=16, Height=16, StrokeThickness=1.2 };
-                icon.SetResourceReference(System.Windows.Shapes.Shape.StrokeProperty,"Ink"); button.Content=icon;
+                icon.SetBinding(System.Windows.Shapes.Shape.StrokeProperty,new Binding(nameof(Control.Foreground)){Source=button}); button.Content=icon;
                 DailyLanguage.Current.Bind(button,ToolTipService.ToolTipProperty,key);
                 DailyLanguage.Current.Bind(button,AutomationProperties.NameProperty,key);
                 WindowChrome.SetIsHitTestVisibleInChrome(button,true);button.Click+=(_,_)=>action();
@@ -59,19 +62,37 @@ internal static class DailyDialogs
                 string key=window.WindowState==WindowState.Maximized?"window.restore":"window.maximize";
                 DailyLanguage.Current.Bind(maximize,ToolTipService.ToolTipProperty,key);
                 DailyLanguage.Current.Bind(maximize,AutomationProperties.NameProperty,key);
+                ((System.Windows.Shapes.Path)maximize.Content).Data = Geometry.Parse(window.WindowState == WindowState.Maximized
+                    ? "M 5,3 L 13,3 13,11 M 3,5 L 11,5 11,13 3,13 Z" : "M 3,3 L 13,3 13,13 3,13 Z");
             };
+            maximize.IsEnabled = window.ResizeMode is ResizeMode.CanResize or ResizeMode.CanResizeWithGrip;
             Caption("window.minimize","M 3,8 L 13,8",()=>SystemCommands.MinimizeWindow(window));
         }
-        var title = new TextBlock { VerticalAlignment = VerticalAlignment.Center, FontWeight = FontWeights.SemiBold,
+        var title = new TextBlock { Name = "WindowHeading", FontSize = toolWindow ? 26 : 14,
+            VerticalAlignment = VerticalAlignment.Center, FontWeight = FontWeights.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(0, 0, 12, 0) };
-        title.SetBinding(TextBlock.TextProperty, new Binding(nameof(Window.Title)) { Source = window });
+        if (toolWindow && ToolWindowDesign.Id(window) is { } id)
+        {
+            DailyLanguage.Current.Bind(title, TextBlock.TextProperty, "tool." + id);
+            ToolWindowDesign.ApplyActions(window);
+        }
+        else title.SetBinding(TextBlock.TextProperty, new Binding(nameof(Window.Title)) { Source = window });
+        title.SetBinding(ToolTipService.ToolTipProperty, new Binding(nameof(TextBlock.Text)) { Source = title });
         header.Children.Add(title); DockPanel.SetDock(header, Dock.Top); layout.Children.Add(header);
         layout.Children.Add(new ContentPresenter { Content = body });
         var frame = new Border { Child = layout, BorderThickness = new Thickness(1) };
         frame.SetResourceReference(Border.BorderBrushProperty, "Line");
-        frame.SetResourceReference(Border.BackgroundProperty, "Surface");
+        frame.SetResourceReference(Border.BackgroundProperty, toolWindow ? "AppBackground" : "Surface");
         window.Content = frame;
-        window.PreviewKeyDown += (_, e) => { if (e.Key == Key.Escape) { e.Handled = true; window.Close(); } };
+        if (toolWindow)
+        {
+            void Insets(object? sender, EventArgs args) => MainWindow.UpdateWindowInsets(window, frame);
+            window.SourceInitialized += Insets;
+            window.StateChanged += Insets;
+            window.SizeChanged += (_, _) => MainWindow.UpdateWindowInsets(window, frame);
+        }
+        // Escape belongs to a tool's dropdown or editor, and must not terminate automation.
+        if (!toolWindow) window.PreviewKeyDown += (_, e) => { if (e.Key == Key.Escape) { e.Handled = true; window.Close(); } };
     }
 
     internal static IDisposable Dim(Window owner)

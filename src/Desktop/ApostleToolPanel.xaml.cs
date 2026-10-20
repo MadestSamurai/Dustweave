@@ -67,6 +67,7 @@ public partial class ApostleToolPanel : UserControl, IDisposable
         if(!disposed){ActivityChanged?.Invoke();Render();}
     }
     async void PauseClicked(object sender, RoutedEventArgs e) => await StopAsync();
+    async void ConnectClicked(object sender, RoutedEventArgs e) => await ConnectAsync();
     internal async Task<bool> StopAsync()
     {
         if (stopping) return false;
@@ -85,13 +86,10 @@ public partial class ApostleToolPanel : UserControl, IDisposable
     });
     internal void Render()
     {
-        StartButton.IsEnabled = !stopping && !session.Occupied && !session.Starting && canStart();
+        ConnectButton.IsEnabled = !stopping && !session.Occupied && !session.Starting && canStart();
+        StartButton.IsEnabled = ConnectButton.IsEnabled && session.Connected;
         PauseButton.IsEnabled = !stopping && (session.Starting || session.Occupied);
-        StartButton.Visibility = session.Running ? Visibility.Collapsed : Visibility.Visible;
-        PauseButton.Visibility = session.Occupied || session.Starting ? Visibility.Visible : Visibility.Collapsed;
-        PauseButton.Style = (Style)FindResource(session.Running ? "PrimaryButton" : typeof(Button));
-        StartButton.Content = L.Get(session.Starting ? "apostle.preparing" : session.Connected ? "apostle.start" : "apostle.connect");
-        PauseButton.Content = L.Get(session.Starting ? "apostle.cancel_connection" : "apostle.pause");
+        PauseButton.Content = L.Get(session.Starting ? "apostle.cancel_connection" : "tools.action_stop");
         StatusText.Text = L.Get(stopping ? "apostle.stopping" : session.Starting ? "apostle.preparing" : session.Running ? "apostle.running" : session.Occupied ? "apostle.settling" : session.Connected ? "apostle.connected" : "apostle.disconnected");
         bool loading=session.Starting || stopping;
         ConnectionProgress.Visibility=loading?Visibility.Visible:Visibility.Collapsed;
@@ -145,8 +143,8 @@ public partial class ApostleToolPanel : UserControl, IDisposable
     internal void CheckDisconnectedForSmoke()
     {
         Render();
-        if(!StartButton.IsEnabled||StartButton.Content.ToString()!=L.Get("apostle.connect")||
-            PauseButton.IsVisible||ConnectionProgress.IsVisible||string.IsNullOrWhiteSpace(DecisionText.Text))
+        if(!ConnectButton.IsEnabled||StartButton.IsEnabled||PauseButton.IsEnabled||
+            ConnectionProgress.IsVisible||string.IsNullOrWhiteSpace(DecisionText.Text))
             throw new Exception("Connection failure must show a reason and an available reconnect action");
     }
 }

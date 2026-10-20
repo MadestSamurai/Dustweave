@@ -1,4 +1,29 @@
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework">
+  <Style x:Key="CaptionButton" TargetType="Button">
+   <Setter Property="Width" Value="42"/><Setter Property="Height" Value="36"/><Setter Property="MinWidth" Value="42"/><Setter Property="MinHeight" Value="36"/>
+   <Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="2,0"/><Setter Property="Background" Value="Transparent"/>
+   <Setter Property="Foreground" Value="{DynamicResource MutedInk}"/><Setter Property="BorderBrush" Value="Transparent"/>
+   <Setter Property="FocusVisualStyle" Value="{x:Null}"/><Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+   <Setter Property="AutomationProperties.Name" Value="{Binding ToolTip,RelativeSource={RelativeSource Self}}"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
+    <Border x:Name="Face" CornerRadius="8" BorderThickness="1" BorderBrush="{TemplateBinding BorderBrush}" Background="{TemplateBinding Background}">
+     <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    </Border>
+    <ControlTemplate.Triggers>
+     <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Face" Property="BorderBrush" Value="{DynamicResource Focus}"/></Trigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+   <Style.Triggers>
+    <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource SurfaceMuted}"/><Setter Property="Foreground" Value="{DynamicResource Ink}"/></Trigger>
+    <Trigger Property="IsPressed" Value="True"><Setter Property="Background" Value="{DynamicResource Line}"/></Trigger>
+   </Style.Triggers>
+  </Style>
+  <Style x:Key="CloseCaptionButton" TargetType="Button" BasedOn="{StaticResource CaptionButton}">
+   <Style.Triggers>
+    <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource ErrorSoft}"/><Setter Property="Foreground" Value="{DynamicResource Error}"/></Trigger>
+    <Trigger Property="IsPressed" Value="True"><Setter Property="Background" Value="{DynamicResource ErrorSoft}"/><Setter Property="Foreground" Value="{DynamicResource Error}"/></Trigger>
+   </Style.Triggers>
+  </Style>
     <BooleanToVisibilityConverter x:Key="BooleanToVisibility" />
 
     <SolidColorBrush x:Key="AppBackground" Color="#F5F6F8" />
@@ -235,6 +260,48 @@
    </ControlTemplate.Triggers>
   </ControlTemplate></Setter.Value></Setter>
  </Style>
+ <!-- Flat action menus share the app palette without a native icon gutter. -->
+ <Style x:Key="ActionMenuItem" TargetType="MenuItem">
+  <Setter Property="Foreground" Value="{DynamicResource Ink}"/>
+  <Setter Property="Background" Value="Transparent"/>
+  <Setter Property="Padding" Value="12,8"/><Setter Property="MinHeight" Value="36"/>
+  <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+  <Setter Property="ToolTip" Value="{Binding Header,RelativeSource={RelativeSource Self}}"/>
+  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="MenuItem">
+   <Border x:Name="Face" CornerRadius="6" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" BorderBrush="Transparent" BorderThickness="1">
+    <TextBlock Text="{TemplateBinding Header}" Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+   </Border>
+   <ControlTemplate.Triggers>
+    <Trigger Property="Tag" Value="destructive"><Setter Property="Foreground" Value="{DynamicResource Error}"/></Trigger>
+    <Trigger Property="IsHighlighted" Value="True"><Setter TargetName="Face" Property="Background" Value="{DynamicResource PrimarySoft}"/></Trigger>
+    <MultiTrigger><MultiTrigger.Conditions><Condition Property="Tag" Value="destructive"/><Condition Property="IsHighlighted" Value="True"/></MultiTrigger.Conditions><Setter TargetName="Face" Property="Background" Value="{DynamicResource ErrorSoft}"/></MultiTrigger>
+    <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Face" Property="BorderBrush" Value="{DynamicResource Focus}"/></Trigger>
+    <Trigger Property="IsEnabled" Value="False"><Setter Property="Foreground" Value="{DynamicResource MutedInk}"/><Setter TargetName="Face" Property="Background" Value="Transparent"/></Trigger>
+   </ControlTemplate.Triggers>
+  </ControlTemplate></Setter.Value></Setter>
+ </Style>
+ <Style x:Key="ActionMenuSeparator" TargetType="Separator">
+  <Setter Property="Margin" Value="8,5"/>
+  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Separator"><Border Height="1" Background="{DynamicResource Line}"/></ControlTemplate></Setter.Value></Setter>
+ </Style>
+ <Style x:Key="ActionMenu" TargetType="ContextMenu">
+  <Style.Resources>
+   <Style TargetType="MenuItem" BasedOn="{StaticResource ActionMenuItem}"/>
+  </Style.Resources>
+  <Setter Property="FontFamily" Value="Segoe UI Variable, Segoe UI, Microsoft YaHei UI"/>
+  <Setter Property="FontSize" Value="14"/><Setter Property="Foreground" Value="{DynamicResource Ink}"/>
+  <Setter Property="Background" Value="{DynamicResource Surface}"/><Setter Property="BorderBrush" Value="{DynamicResource LineStrong}"/>
+  <Setter Property="MinWidth" Value="220"/><Setter Property="MaxWidth" Value="360"/><Setter Property="MaxHeight" Value="400"/>
+  <Setter Property="Padding" Value="5"/><Setter Property="HasDropShadow" Value="False"/>
+  <Setter Property="UseLayoutRounding" Value="True"/>
+  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ContextMenu">
+   <Border x:Name="MenuSurface" CornerRadius="8" BorderThickness="1" BorderBrush="{TemplateBinding BorderBrush}" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+    <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+     <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle"/>
+    </ScrollViewer>
+   </Border>
+  </ControlTemplate></Setter.Value></Setter>
+ </Style>
  <Style TargetType="ComboBox">
   <Setter Property="MinHeight" Value="36"/><Setter Property="Foreground" Value="{DynamicResource Ink}"/>
   <Setter Property="HorizontalContentAlignment" Value="Left"/><Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -308,6 +375,12 @@
  </Style>
  <Style TargetType="Expander">
   <Setter Property="Foreground" Value="{DynamicResource Ink}"/>
+ </Style>
+ <Style x:Key="ToolSeparator" TargetType="Separator">
+  <Setter Property="Height" Value="1"/><Setter Property="IsTabStop" Value="False"/>
+  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Separator">
+   <Border Background="{DynamicResource Line}" Height="1"/>
+  </ControlTemplate></Setter.Value></Setter>
  </Style>
  <Style x:Key="SettingsExpander" TargetType="Expander" BasedOn="{StaticResource {x:Type Expander}}">
   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Expander">

@@ -43,8 +43,10 @@ public sealed class DailyTaskPresetStore(string root)
     public void Delete(string id)
     {
         var data = Read();
-        // Never silently broaden an unattended account's task scope on deletion.
-        if (data.Accounts.ContainsValue(id)) throw new InvalidDataException("presets.in_use");
+        if (!data.Presets.Any(p => p.Id == id)) throw new InvalidDataException("presets.missing");
+        // The confirmation explains that assigned accounts return to all enabled tasks.
+        foreach (var account in data.Accounts.Where(p => p.Value == id).Select(p => p.Key).ToArray())
+            data.Accounts.Remove(account);
         DailyJson.Write(PathName, data with { Presets = data.Presets.Where(p => p.Id != id).ToArray() });
     }
     public QueuePlanRequest? Selection(string account, DailyPreferences preferences)

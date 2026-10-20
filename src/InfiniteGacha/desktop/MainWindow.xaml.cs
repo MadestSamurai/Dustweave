@@ -29,7 +29,7 @@ public partial class MainWindow:Window
     private readonly List<NotificationChannel> smokeNotifications=new();
     public MainWindow(IClientPort port,string root,bool smoke)
     {
-        InitializeComponent();BD2.Distribution.DistributionNotice.Attach(this,LanguageChoice);language=new WindowLanguage(this,LanguagePreference.Read(root));Ui.Catalog=language.Catalog;LanguageChoice.SelectedIndex=language.Catalog.Language=="zh-CN"?0:1;this.port=port;this.root=root;this.smoke=smoke;controller=new(port,record:(state,message)=>Diagnostics.Write(root,"desktop",state,message));preferences=new(root);controller.Stop();
+        InitializeComponent();language=new WindowLanguage(this,LanguagePreference.Read(root));Ui.Catalog=language.Catalog;LanguageChoice.SelectedIndex=language.Catalog.Language=="zh-CN"?0:1;this.port=port;this.root=root;this.smoke=smoke;controller=new(port,record:(state,message)=>Diagnostics.Write(root,"desktop",state,message));preferences=new(root);controller.Stop();
         notificationPreferences=new(root);notifications=new(this);
         try{notificationOptions=notificationPreferences.Load();}catch(Exception e){Error(e);}
         NotifyWindows.IsChecked=notificationOptions.Windows;NotifyPopup.IsChecked=notificationOptions.Popup;NotifySound.IsChecked=notificationOptions.Sound;TestNotification.IsEnabled=notificationOptions.Any;

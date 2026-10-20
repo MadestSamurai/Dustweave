@@ -52,6 +52,7 @@ internal sealed class HostedToolLocaleBridge : IDisposable
                 selector.SelectedIndex=locale.Code=="en-US"?1:locale.Code=="zh-TW"?2:0;
             }
             else window.GetType().GetMethod("ApplyHostedLanguage")?.Invoke(window,[locale.Code]);
+            ToolWindowDesign.ApplyActions(window);
             applied[window]=locale.Code;
         }
         foreach(var closed in applied.Keys.Where(w=>!app.Windows.Cast<Window>().Contains(w)).ToArray())applied.Remove(closed);

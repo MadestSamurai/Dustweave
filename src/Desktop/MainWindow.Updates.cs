@@ -11,10 +11,12 @@ public sealed class DailyUpdatePanel : ScrollViewer
     private static DailyLanguage L => DailyLanguage.Current;
     private readonly TextBlock status = new() { TextWrapping = TextWrapping.Wrap, Margin = new(0, 10, 0, 0) };
     private readonly Button install = new() { Margin = new(0, 0, 10, 6), Visibility = Visibility.Collapsed };
+    private readonly Button download = new() { Margin = new(0, 0, 10, 6), Visibility = Visibility.Collapsed };
     private readonly Button check = new() { Margin = new(0, 0, 10, 6) };
     private readonly CheckBox automatic = new() { Margin = new(0, 12, 0, 12) };
     private readonly StackPanel notes = new();
     public event Action? CheckRequested;
+    public event Action? DownloadRequested;
     public event Action? InstallRequested;
     public event Action<bool>? AutomaticChanged;
     public bool Automatic { get => automatic.IsChecked == true; set => automatic.IsChecked = value; }
@@ -26,16 +28,25 @@ public sealed class DailyUpdatePanel : ScrollViewer
         var help = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 8, 0, 0) }; L.Text(help, "updates.help"); help.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk"); card.Children.Add(help);
         L.Bind(automatic, ContentControl.ContentProperty, "updates.automatic"); card.Children.Add(automatic);
         var actions = new WrapPanel(); L.Bind(check, ContentControl.ContentProperty, "updates.check"); actions.Children.Add(check);
+        L.Bind(download, ContentControl.ContentProperty, "updates.download"); download.Style = (Style)Application.Current.FindResource("PrimaryButton"); actions.Children.Add(download);
         L.Bind(install, ContentControl.ContentProperty, "updates.install"); install.Style = (Style)Application.Current.FindResource("PrimaryButton"); actions.Children.Add(install); card.Children.Add(actions); card.Children.Add(status);
         stack.Children.Add(new Border { Style = (Style)Application.Current.FindResource("Panel"), Padding = new(20), Margin = new(0, 0, 0, 16), Child = card });
         stack.Children.Add(DailyDownloadLinks.Create()); stack.Children.Add(notes);
         var layout=new Grid();layout.ColumnDefinitions.Add(new ColumnDefinition {MaxWidth=880});layout.Children.Add(stack);Content = layout;
         check.Click += (_, _) => CheckRequested?.Invoke(); install.Click += (_, _) => InstallRequested?.Invoke();
+        download.Click += (_, _) => DownloadRequested?.Invoke();
         automatic.Click += (_, _) => AutomaticChanged?.Invoke(Automatic);
         L.Text(status, "updates.idle");
     }
     public void Status(string key, params object?[] args) => L.Text(status, key, args);
-    public void Busy(bool network, bool ready, bool occupied) { check.IsEnabled = !network; install.Visibility = ready ? Visibility.Visible : Visibility.Collapsed; install.IsEnabled = ready && !occupied && !network; }
+    public void Busy(bool network, bool ready, bool occupied, bool available = false)
+    {
+        check.IsEnabled = !network;
+        download.Visibility = available && !ready ? Visibility.Visible : Visibility.Collapsed;
+        download.IsEnabled = !network;
+        install.Visibility = ready ? Visibility.Visible : Visibility.Collapsed;
+        install.IsEnabled = ready && !occupied && !network;
+    }
     public void ShowNotes(IEnumerable<DailyReleaseNote> releases)
     {
         notes.Children.Clear();
@@ -86,6 +97,7 @@ public partial class MainWindow
     private bool updateChecking, updateInstalling, updatePromptShown, releaseDialogOpen;
     private Window? updateNotice;
     private DailyUpdateJob? readyUpdate;
+    private string? availableUpdateVersion;
     private string? manualUpdateVersion, manualUpdateReason;
     private DateTime nextUpdateCheck = DateTime.UtcNow.AddHours(6);
     private void Updates_Click(object sender, RoutedEventArgs e) { if (!IsSandboxWindow) WorkspaceTabs.SelectedItem = UpdatesTab; else L.Text(ProgressText, "sandbox.host_only"); }
@@ -94,8 +106,13 @@ public partial class MainWindow
         UpdatesTab.Content = updatePanel;
         updatePanel.Automatic = DailyJson.TryRead<DailyUpdatePreference>(Path.Combine(root, "updates-preference.json"))?.Automatic ?? true;
         updatePanel.ShowNotes(DailyReleaseHistory.Read());
-        updatePanel.AutomaticChanged += value => { if (smoke == null) DailyJson.Write(Path.Combine(root, "updates-preference.json"), new DailyUpdatePreference(value)); };
-        updatePanel.CheckRequested += async () => await CheckUpdatesAsync(true);
+        updatePanel.AutomaticChanged += async value =>
+        {
+            if (smoke == null) DailyJson.Write(Path.Combine(root, "updates-preference.json"), new DailyUpdatePreference(value));
+            if (value && availableUpdateVersion != null && readyUpdate == null) await CheckUpdatesAsync();
+        };
+        updatePanel.CheckRequested += async () => await CheckUpdatesAsync();
+        updatePanel.DownloadRequested += async () => await CheckUpdatesAsync(download: true);
         updatePanel.InstallRequested += async () => await InstallUpdateAsync();
         Closed += (_, _) => updateLifetime.Cancel();
     }
@@ -135,31 +152,70 @@ public partial class MainWindow
             DailyDialogs.Prepare(dialog);
             return dialog;
     }
-    private async Task CheckUpdatesAsync(bool manual = false)
+    private async Task CheckUpdatesAsync(bool download = false)
     {
-        if (IsSandboxWindow || smoke != null || cacheChanging || updateChecking || updateInstalling || !manual && !updatePanel.Automatic) return;
+        if (IsSandboxWindow || smoke != null || cacheChanging || updateChecking || updateInstalling) return;
+        using var client = DailyUpdates.Client();
+        var transport = DailyUpdateTransport.Production();
+        await CheckUpdatesCoreAsync(download,
+            () => transport.FetchAsync(client, root, updateLifetime.Token),
+            async (verified, release, progress) =>
+            {
+                var installed = DailyJson.TryRead<DailyUpdatePackage>(Path.Combine(DailyUpdateHost.InstallRoot, "update-package.json"));
+                string flavor = installed?.Flavor ?? throw new InvalidDataException("updates.packaged_only");
+                string? reason = DailyUpdates.ManualUpdateReason(verified.Feed, release, installed);
+                if (reason != null) throw new InvalidDataException(reason);
+                var asset = release.Assets.SingleOrDefault(a => a.Flavor == flavor) ?? throw new InvalidDataException("updates.flavor_missing");
+                string directory = await transport.DownloadAsync(client, verified, release.Version, flavor, root, progress, updateLifetime.Token, DailyUpdateHost.InstallRoot);
+                using var process = Process.GetCurrentProcess();
+                return new DailyUpdateJob(directory, Environment.ProcessPath!, process.Id, process.StartTime.ToUniversalTime().Ticks, release, asset,
+                    DeltaFileName: DailyJson.TryRead<DailyUpdateDownload>(Path.Combine(directory, "download-choice.json"))?.DeltaFileName);
+            });
+    }
+    private async Task CheckUpdatesCoreAsync(bool download, Func<Task<DailyVerifiedUpdate>> fetch,
+        Func<DailyVerifiedUpdate, DailyUpdateRelease, IProgress<int>, Task<DailyUpdateJob>> prepare)
+    {
         nextUpdateCheck = DateTime.UtcNow.AddHours(6);
-        readyUpdate = null; manualUpdateVersion = null; updatePromptShown = false; updateChecking = true; updatePanel.Status("updates.checking"); UpdateUpdateControls();
+        updateChecking = true; updatePanel.Status("updates.checking"); UpdateUpdateControls();
         string? availableVersion = null;
         try
         {
-            using var client = DailyUpdates.Client();
-            var transport = DailyUpdateTransport.Production();
-            var verified = await transport.FetchAsync(client, root, updateLifetime.Token);
+            // Discovery is independent of automatic downloads. Keep the last verified
+            // update visible during network failures; only a successful check clears it.
+            var verified = await fetch();
             var feed = verified.Feed;
             var release = DailyUpdates.Latest(feed, DailyProductVersion.Current);
-            if (release == null) { updatePanel.Status("updates.current"); return; }
-            availableVersion = release.Version;
             updatePanel.ShowNotes(feed.Releases.OrderByDescending(r => DailyUpdates.VersionOf(r.Version)).Select(r => new DailyReleaseNote(r.Version, "", r.Notes)));
-            var installed = DailyJson.TryRead<DailyUpdatePackage>(Path.Combine(DailyUpdateHost.InstallRoot, "update-package.json"));
-            string flavor = installed?.Flavor ?? throw new InvalidDataException("updates.packaged_only");
-            manualUpdateReason = DailyUpdates.ManualUpdateReason(feed, release, installed);
-            if (manualUpdateReason != null) { manualUpdateVersion = release.Version; updatePanel.Status(manualUpdateReason); return; }
-            var asset = release.Assets.SingleOrDefault(a => a.Flavor == flavor) ?? throw new InvalidDataException("updates.flavor_missing");
+            if (release == null)
+            {
+                if (availableUpdateVersion != null) CloseUpdateNotice();
+                availableUpdateVersion = null; readyUpdate = null; manualUpdateVersion = null; manualUpdateReason = null;
+                updatePromptShown = false;
+                updatePanel.Status("updates.current"); return;
+            }
+            availableVersion = release.Version;
+            if (availableUpdateVersion != release.Version)
+            {
+                if (availableUpdateVersion != null) CloseUpdateNotice();
+                readyUpdate = null; manualUpdateVersion = null; manualUpdateReason = null;
+                updatePromptShown = false;
+            }
+            availableUpdateVersion = release.Version;
+            UpdateUpdateControls();
+            if (readyUpdate != null && File.Exists(Path.Combine(readyUpdate.Directory, "signed-feed.json")))
+            {
+                updatePanel.Status("updates.ready", release.Version); return;
+            }
+            readyUpdate = null;
+            if (!download && !updatePanel.Automatic)
+            {
+                if (manualUpdateReason != null) updatePanel.Status(manualUpdateReason);
+                else updatePanel.Status("updates.available", release.Version);
+                return;
+            }
+            manualUpdateVersion = null; manualUpdateReason = null;
             var progress = new Progress<int>(p => updatePanel.Status("updates.downloading", release.Version, p));
-            string directory = await transport.DownloadAsync(client, verified, release.Version, flavor, root, progress, updateLifetime.Token, DailyUpdateHost.InstallRoot);
-            using var process = Process.GetCurrentProcess();
-            readyUpdate = new(directory, Environment.ProcessPath!, process.Id, process.StartTime.ToUniversalTime().Ticks, release, asset, DeltaFileName: DailyJson.TryRead<DailyUpdateDownload>(Path.Combine(directory, "download-choice.json"))?.DeltaFileName);
+            readyUpdate = await prepare(verified, release, progress);
             updatePanel.Status("updates.ready", release.Version); updatePromptShown = false;
             nextLogCleanup = DateTime.UtcNow; // Retire superseded downloads at the next idle interval.
         }
@@ -172,7 +228,17 @@ public partial class MainWindow
         }
         finally { updateChecking = false; UpdateUpdateControls(); }
     }
-    private void UpdateUpdateControls() => updatePanel.Busy(updateChecking, readyUpdate != null, Unavailable || updateInstalling || scheduleChecking);
+    private void UpdateUpdateControls()
+    {
+        updatePanel.Busy(updateChecking || updateInstalling, readyUpdate != null, Unavailable || updateInstalling || scheduleChecking,
+            availableUpdateVersion != null && manualUpdateVersion == null);
+        UpdateAvailableBadge.Visibility = availableUpdateVersion != null ? Visibility.Visible : Visibility.Collapsed;
+        string description() => availableUpdateVersion != null
+            ? L.Get("updates.available_hint", availableUpdateVersion)
+            : L.Get("nav.updates");
+        L.Bind(VersionButton, ToolTipProperty, description);
+        L.Bind(VersionButton, System.Windows.Automation.AutomationProperties.NameProperty, description);
+    }
     private sealed record ManualUpdateNotice(string Version);
     private Task OfferUpdateAsync()
     {
@@ -253,7 +319,7 @@ public partial class MainWindow
             {
                 readyUpdate = null;
                 updateInstalling = false;
-                await CheckUpdatesAsync(manual: true);
+                await CheckUpdatesAsync(download: true);
                 return;
             }
             if (DailySandbox.HasIsolatedWindows()) { updatePanel.Status("updates.isolated_open"); return; }
