@@ -43,13 +43,25 @@ foreach($flavor in @('Lite','Portable')){
   Start-Sleep -Milliseconds 250
  }
  if(!$complete){throw "Native repair did not complete: $folder"}
+ # Require the real application's startup acknowledgement before teardown,
+ # rather than inferring success from a repaired descriptor or window title.
+ $startup=Get-Content (Join-Path $data 'startup-state.json') -Raw|ConvertFrom-Json
+ if($startup.stage -ne 'main-window-visible' -or $startup.version -ne $version){throw "Repaired application did not start: $folder"}
+ $readyFiles=@(Get-ChildItem -LiteralPath (Join-Path $cache 'attempts') -Filter ready.json -Recurse -File)
+ if(!@($readyFiles|Where-Object { $ready=Get-Content -LiteralPath $_.FullName -Raw|ConvertFrom-Json; $ready.Version -eq $version -and $ready.ProcessId -eq $startup.processId }).Count){throw "Missing repair startup acknowledgement: $folder"}
  $descriptor=Get-Content (Join-Path $Packages "$flavor/update-package.json") -Raw|ConvertFrom-Json
  foreach($name in $descriptor.Files){if((Get-FileHash -LiteralPath (Join-Path $install $name)).Hash -ne (Get-FileHash -LiteralPath (Join-Path $Packages "$flavor/$name")).Hash){throw "Wrong repair bytes: $name"}}
  if((Get-Content (Join-Path $data 'account.keep')) -ne 'preserve' -or (Get-Content (Join-Path $install 'plugins/acceptance.keep')) -ne 'preserve'){throw 'User sentinel changed'}
  foreach($child in @(Get-Process Dustweave,Dustweave.Updater -ErrorAction SilentlyContinue)){
-  if($child.Path -and $child.Path.StartsWith($folder+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){[void]$child.CloseMainWindow();if(!$child.WaitForExit(15000)){throw "Test process remains $($child.Id)"}}
+  if($child.Path -and $child.Path.StartsWith($folder+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){
+   # All update/startup assertions are complete. Fixture teardown does not
+   # test the close button and must not depend on interactive window state.
+   $child.Kill()
+   if(!$child.WaitForExit(10000)){throw "Test process remains $($child.Id)"}
+   J (Join-Path $folder ("teardown-"+$child.Id+".json")) @{processId=$child.Id;method='terminate-isolated-fixture-after-assertions';atUtc=[DateTimeOffset]::UtcNow.ToString('O')}
+  }
  }
- $results+=@{case="native-repair-$flavor";status='passed';to=$version;confirmations=1;missingDescriptor=$true;brokenHelper=$true;brokenManagedHost=$true;verifiedCachedPayloads=$true;allFilesVerified=$true}
+ $results+=@{case="native-repair-$flavor";status='passed';to=$version;confirmations=1;missingDescriptor=$true;brokenHelper=$true;brokenManagedHost=$true;verifiedCachedPayloads=$true;allFilesVerified=$true;startupAcknowledged=$true;teardown='isolated-process-disposal';computerUse=$false}
  Write-Host "Passed native-repair-$flavor"
 }
 J (Join-Path $Output 'results.json') @{status='passed';cases=$results;realGameTouched=$false;published=$false}

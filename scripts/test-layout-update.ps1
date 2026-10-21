@@ -33,9 +33,27 @@ function StartIsolated($exe,$arguments,$data){
  return [Diagnostics.Process]::Start($info)
 }
 function WaitProcess($process,$seconds=150){if(!$process.WaitForExit($seconds*1000)){throw "Acceptance process still active: $($process.Id)."}}
-function CloseInstalled($target){
+function StopInstalledFixture($target){
+ if(![IO.Path]::GetFullPath($target).StartsWith($outputRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Test process is outside this fixture'}
+ $install=Split-Path -Parent $target
+ $startupPath=Join-Path (Split-Path -Parent $install) 'data/startup-state.json'
+ $expectedVersion=(Get-Content (Join-Path $install 'update-package.json') -Raw|ConvertFrom-Json).Version
+ $deadline=[DateTime]::UtcNow.AddSeconds(30);$started=$false
+ while([DateTime]::UtcNow -lt $deadline){
+  if(Test-Path -LiteralPath $startupPath){
+   $startup=Get-Content -LiteralPath $startupPath -Raw|ConvertFrom-Json
+   if($startup.stage -eq 'main-window-visible' -and $startup.version -eq $expectedVersion){$started=$true;break}
+  }
+  Start-Sleep -Milliseconds 100
+ }
+ if(!$started){throw "Restored or updated application did not start: $target"}
  foreach($process in @(Get-Process Dustweave -ErrorAction SilentlyContinue|Where-Object {[string]::Equals($_.Path,$target,[StringComparison]::OrdinalIgnoreCase)})){
-  [void]$process.CloseMainWindow();if(!$process.WaitForExit(15000)){throw "Test window did not close: $($process.Id)"}
+  # Assertions have already verified the updater result and every installed
+  # byte. Fixture teardown is not a UI-close test: dispose only this exact
+  # child executable, without focus, clicks, tray preferences or child trees.
+  $process.Kill()
+  if(!$process.WaitForExit(10000)){throw "Test process was not disposed: $($process.Id)"}
+  WriteJson (Join-Path (Split-Path -Parent $target) 'acceptance-teardown.json') @{processId=$process.Id;method='terminate-isolated-fixture-after-assertions';atUtc=[DateTimeOffset]::UtcNow.ToString('O')}
  }
 }
 function VerifyInstall($folder,$expected){
@@ -48,7 +66,12 @@ function CheckPreserved($test){
  if(Test-Path -LiteralPath (Join-Path $test.targetFolder '.dustweave-update.json')){throw 'Recovery marker remains'}
 }
 $release=$feed.Releases[0]
-$baselineVersion=(Get-Content -LiteralPath (Join-Path $Baseline 'Lite/update-package.json') -Raw|ConvertFrom-Json).Version
+$baselineDescriptor=Get-Content -LiteralPath (Join-Path $Baseline 'Lite/update-package.json') -Raw|ConvertFrom-Json
+$baselineVersion=$baselineDescriptor.Version
+# Native protocol-2 entries can dispatch the durable recovery helper before
+# loading managed files. First migration from a managed entry has its own
+# bridge/inventory acceptance; do not impose that ordering on native deltas.
+if($capable -and $baselineDescriptor.InstallerProtocol -ne 2){throw 'Use bridge acceptance for the first protocol-2 migration.'}
 $oldRelease=$release|ConvertTo-Json -Depth 40|ConvertFrom-Json
 $oldRelease.Version=$baselineVersion;$oldRelease.PreviousVersion=$null;$oldRelease.Deltas=@()
 $oldRelease.Assets=@(foreach($flavor in @('Lite','Portable')){
@@ -96,8 +119,7 @@ foreach($flavor in @('Lite','Portable')){
  VerifyInstall $test.targetFolder (Join-Path $Packages $flavor);CheckPreserved $test
  $journal=Get-Content -LiteralPath (Join-Path $test.attempt 'backup/transaction.json') -Raw|ConvertFrom-Json
  if(!$capable -and ($journal.Files.Name -contains 'Dustweave.exe' -or $journal.Files.Name -contains 'app/coreclr.dll')){throw 'Stable bootstrap/runtime was replaced'}
- if($capable -and $journal.Files.Name -contains 'Dustweave.exe' -and $journal.Files[0].Name -ne 'Dustweave.exe'){throw 'Recovery entry must be installed before managed components'}
- CloseInstalled $test.target
+ StopInstalledFixture $test.target
  $reports.Add(@{case="upgrade-$flavor";status='passed';delta=$true;baselineHelper=$true;to=$release.Version;startupAcknowledged=$true;changedFiles=$journal.Files.Count;deltaBytes=$test.delta.Bytes;allFilesVerified=$true})
  Write-Host "Passed upgrade-$flavor"
 }
@@ -123,7 +145,7 @@ $test.job.Release=$faultFeed.Releases[0];$test.job.Asset=$faultAsset;WriteJson $
 $process=StartIsolated $test.helper @('--apply-update',$test.jobPath) $test.data;WaitProcess $process
 $result=Get-Content -LiteralPath (Join-Path $test.data 'update-result.json') -Raw|ConvertFrom-Json
 if($result.State -ne 'rolled_back'){throw "Startup failure was not recovered: $($test.folder)"}
-Start-Sleep -Seconds 3;VerifyInstall $test.targetFolder (Join-Path $Baseline $flavor);CheckPreserved $test;CloseInstalled $test.target
+Start-Sleep -Seconds 3;VerifyInstall $test.targetFolder (Join-Path $Baseline $flavor);CheckPreserved $test;StopInstalledFixture $test.target
 $reports.Add(@{case=$(if($flavor -eq 'Lite'){'startup-failure'}else{'startup-failure-Portable'});flavor=$flavor;status='passed';previousPackageRestored=$true;brokenBusinessAssembly=$true})
 Write-Host "Passed startup-failure-$flavor"
 }
@@ -133,7 +155,7 @@ foreach($flavor in @('Lite','Portable')){
  $typedRelease=Typed $release ([type][Dustweave.DailyUpdateRelease]);$typedAsset=Typed $test.asset ([type][Dustweave.DailyUpdateAsset])
  $stage=Join-Path $test.attempt 'staging';$backup=Join-Path $test.attempt 'backup'
  $names=[Dustweave.DailyUpdateDeltaPackage]::Extract((Join-Path $test.cache $test.delta.FileName),$test.targetFolder,$stage,$typedRelease,$typedAsset,$test.delta,[Threading.CancellationToken]::None,$true)
- $journal=[Dustweave.DailyUpdateTransaction]::Prepare($stage,$test.targetFolder,$backup,$names,$null,$true,$capable,$null)
+ $journal=[Dustweave.DailyUpdateTransaction]::Prepare($stage,$test.targetFolder,$backup,$names,$null)
  if($journal.Files.Name -notcontains 'app/Dustweave.dll'){throw 'Business DLL is not covered by recovery backup'}
  WriteJson (Join-Path $test.targetFolder '.dustweave-update.json') @{JobPath=$test.jobPath;Nonce=$test.job.Nonce;HelperSha256=(Get-FileHash -LiteralPath $test.helper).Hash}
  try{[void][Dustweave.DailyUpdateTransaction]::Apply($journal,[Action[int]]{param($count) if($count -eq 1){throw 'Injected interruption'}})}catch{if($_.Exception.ToString() -notmatch 'Injected interruption'){throw}}
@@ -144,7 +166,7 @@ foreach($flavor in @('Lite','Portable')){
  if(!(Test-Path -LiteralPath $resultPath)){throw 'Recovery result was not written'}
  $result=Get-Content -LiteralPath $resultPath -Raw|ConvertFrom-Json
  if($result.State -ne 'rolled_back'){throw "Bootstrap recovery failed: $($test.folder)"}
- Start-Sleep -Seconds 3;VerifyInstall $test.targetFolder (Join-Path $Baseline $flavor);CheckPreserved $test;CloseInstalled $test.target
+ Start-Sleep -Seconds 3;VerifyInstall $test.targetFolder (Join-Path $Baseline $flavor);CheckPreserved $test;StopInstalledFixture $test.target
  $reports.Add(@{case=if($flavor -eq 'Lite'){'bootstrap-recovery'}else{'bootstrap-recovery-Portable'};status='passed';realProcessRestart=$true;physicalPowerCut=$false;allFilesVerified=$true})
  Write-Host "Passed bootstrap-recovery-$flavor"
 }

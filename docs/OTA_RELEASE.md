@@ -123,6 +123,19 @@ No DNS, Nginx or production files are modified by the client build scripts.
 Synthetic coverage includes altered signatures, untrusted keys, stale/conflicting sources, retry/fallback, Range resume/ignore, hash failures, durable interrupted replacements, repeated rollback, retired files, and account/plugin preservation.
 Packaged acceptance and public HTTPS deployment are separate results. An injected interruption is not a claim of a physical power-cut test.
 
+Run packaged acceptance with the repository scripts, without interactive
+computer-use intervention. Verify durable updater results, real startup
+acknowledgements, installed bytes and preservation sentinels before fixture
+teardown. A window-close race must not be reported as an update failure or fixed
+by manually clicking through the test. After assertions, dispose only processes
+whose executable paths belong to that exact isolated fixture; record teardown
+separately. This is test cleanup, not a claim that normal user shutdown was tested.
+Keep failed/aborted runs and do not reuse their output directories.
+
+发布验收使用可重复脚本，不通过 computer use 点击测试窗口救场。先核对更新回执、
+实际启动确认、文件和保留数据，再清理本次隔离测试进程；测试清理与产品正常退出
+属于不同验证项，分别记录。窗口退出问题不能改写更新结果，失败现场必须保留。
+
 ### Verified locally · 2026-10-07 / 本机验证
 
 Both Portable and Lite single-file candidates completed replacement and the real application's startup acknowledgement. A deliberately unlaunchable signed test package restored 0.8.17, and a persisted interruption recovered through the actual executable bootstrap. Test profiles had automatic checks disabled, no game connection and no real scheduled tasks. Backup and package checks preserved account/plugin sentinel files.
