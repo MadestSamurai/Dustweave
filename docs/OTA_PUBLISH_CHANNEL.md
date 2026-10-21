@@ -1,5 +1,22 @@
 # Signed OTA publishing channel
 
+## Protocol-2 publication (1.4.15+)
+
+The capability-aware v2 publisher maintains `updates-v3.json` and a separate
+`capable/` operation state. Use `-Capable` for its signed publication and repair
+commands. Existing clients retain `updates.json`; its migration bridge must be
+activated only after the exact final target and signed inventories are available.
+The initial administrator upgrade uses `scripts/upgrade-update-capabilities.sh`;
+it replaces the publisher and adds the no-cache manifest route without changing
+existing feeds. See [update evolution](UPDATE_EVOLUTION.md) for the full sequence.
+
+Protocol-2 publication requires version-matched native repair acceptance for both
+editions, in addition to real baseline-helper upgrade, rollback and recovery.
+Reuse prepared signed inventory envelopes with `-RepairDirectory`; immutable
+published manifests must not be replaced by separately re-signed equivalents.
+Capable clients can rebuild from signed blocks when a delta is unavailable or its
+base is damaged. Legacy patch size limits still apply only to the legacy index.
+
 This is a separate channel from the simulator deployment service. It publishes only Dustweave static update files and never executes uploaded scripts, starts game components, changes website configuration or deploys simulator code.
 
 The channel consists of the repository-owned .NET tool in `tools/OtaChannel`, an administrator-only installation script, and `scripts/publish-update-signed.ps1`. It does not require Python or a server-side .NET installation: publish the server tool as a self-contained Linux x64 executable.

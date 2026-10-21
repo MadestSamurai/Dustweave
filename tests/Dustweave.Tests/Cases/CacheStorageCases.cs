@@ -88,6 +88,22 @@ internal static class CacheStorageCases
         Check(plan.Units.Any(u=>u.Files.Any(f=>f.Path==late)),"retired external locations remain visible and reclaimable after repeated migration");
         await DailyCacheStorage.CleanAsync(root);
         Check(!File.Exists(late)&&Directory.Exists(Path.Combine(second,"rules")),"retired source cleanup does not touch the active cache");
+        // Complete inventory transactions stage at the version root, not inside
+        // the individual attempt. Terminal repair journals must remain cleanable.
+        foreach(bool repair in new[]{true,false})
+        {
+            string version=repair?"1.4.15-Lite":"1.4.16-Lite",nonce=new string('b',32);
+            string directory=Path.Combine(root,"updates",version),attempt=Path.Combine(directory,"attempts",nonce);
+            string target=Path.Combine(output,"inventory-install","Dustweave.exe");Directory.CreateDirectory(Path.Combine(attempt,"backup"));
+            var asset=new DailyUpdateAsset("Lite","package.zip",50,new string('0',64));
+            var release=new DailyUpdateRelease(version[..^5],null,2,[],[asset]);
+            DailyJson.Write(Path.Combine(attempt,"job.json"),new DailyUpdateJob(directory,target,int.MaxValue,0,release,asset,nonce){Repair=repair,InventoryUpgrade=!repair});
+            string journalPath=Path.Combine(attempt,"backup","transaction.json");
+            var journal=new DailyUpdateJournal(Path.GetDirectoryName(target)!,Path.Combine(attempt,"backup"),Path.Combine(directory,"repair-staging"),[],"awaiting_start");
+            var unit=new DailyCacheUnit(directory,[]){UpdateAttempts=[attempt]};
+            DailyJson.Write(journalPath,journal);Check(!UpdateCacheRetention.CanClean(unit),"pending inventory recovery remains protected");
+            DailyJson.Write(journalPath,journal with {State="completed"});Check(UpdateCacheRetention.CanClean(unit),"completed inventory recovery follows retention limits");
+        }
     }
     private sealed class CancelProgress(CancellationTokenSource source):IProgress<long>{public void Report(long value)=>source.Cancel();}
 }

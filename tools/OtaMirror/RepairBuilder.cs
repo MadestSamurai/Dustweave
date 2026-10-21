@@ -9,7 +9,7 @@ static class RepairBuilder
     {
         var trust = Rules.Read<Trust>(File.ReadAllBytes(trustPath));
         var feedBytes = File.ReadAllBytes(Path.Combine(packages, "updates.json"));
-        var feed = Rules.VerifyFeed(feedBytes, new("", "", trust.Keys, 2));
+        var feed = Rules.VerifyFeed(feedBytes, new("", "", trust.Keys, 2, Capable:true));
         var release = feed.Releases[0];
         Directory.CreateDirectory(output);
         string objects = Path.Combine(output, "repair", "objects"), metadata = Path.Combine(output, "repair", "v" + release.Version);

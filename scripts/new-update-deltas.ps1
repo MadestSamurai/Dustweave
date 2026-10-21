@@ -22,7 +22,7 @@ try{
  if(!$key.VerifyData($bytes,[Convert]::FromBase64String($envelope.Signature),[Security.Cryptography.HashAlgorithmName]::SHA256,[Security.Cryptography.DSASignatureFormat]::IeeeP1363FixedFieldConcatenation)){throw 'Previous feed signature failed.'}
  $prior=[Text.Encoding]::UTF8.GetString($bytes)|ConvertFrom-Json
 }finally{$key.Dispose()}
-if($Version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$' -or $prior.Product -ne 'Dustweave' -or $prior.Schema -ne 3){throw 'Invalid release identity.'}
+if($Version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$' -or $prior.Product -ne 'Dustweave' -or $prior.Schema -notin @(3,4)){throw 'Invalid release identity.'}
 $reports=@()
 $automaticBaselines=!$BasePackageDirectory.Count
 $baselineCache=Join-Path $root 'artifacts/update-baselines'
@@ -33,6 +33,12 @@ $resolved=[Collections.Generic.List[object]]::new()
 $ordered=@($prior.Releases|Sort-Object {[semver]$_.Version} -Descending)
 $recent=@($ordered|Select-Object -First 10|ForEach-Object Version)
 $supported=@($ordered|Where-Object {$_.Version -in $recent -or [semver]$_.Version -ge [semver]'1.4.7'})
+if([semver]$Version -ge [semver]'1.4.15'){
+ $minimum=if($Version -eq '1.4.15'){'1.4.15-bridge.1'}else{'1.4.15'}
+ # Older capable clients reconstruct signed blocks without requiring every old
+ # archive. The internal bridge always finishes at 1.4.15, never a later release.
+ $supported=@($ordered|Where-Object {[semver]$_.Version -ge [semver]$minimum}|Select-Object -First 10)
+}
 # Resolve the whole supported window before generating any patch. Missing local
 # archives must not silently turn a long-term baseline policy into three versions.
 foreach($release in $supported){
@@ -76,7 +82,7 @@ foreach($release in $supported){
    try{$reader=[IO.StreamReader]::new($zip.GetEntry('update-package.json').Open());try{return $reader.ReadToEnd()|ConvertFrom-Json}finally{$reader.Dispose()}}finally{$zip.Dispose()}
   }
   $before=ReadPackage $old[0];$after=ReadPackage $next
-  if($before.Layout -ne $after.Layout -or $before.RuntimeVersion -ne $after.RuntimeVersion -or (@($before.BootstrapFiles|Sort-Object) -join "`n") -cne (@($after.BootstrapFiles|Sort-Object) -join "`n")){
+  if($before.Layout -ne $after.Layout -or $after.InstallerProtocol -ne 2 -and ($before.RuntimeVersion -ne $after.RuntimeVersion -or (@($before.BootstrapFiles|Sort-Object) -join "`n") -cne (@($after.BootstrapFiles|Sort-Object) -join "`n"))){
    $reports+=@{from=$release.Version;to=$Version;flavor=$flavor;offered=$false;reason='manual_layout'}
    continue
   }
@@ -88,7 +94,9 @@ foreach($release in $supported){
   $name="Dustweave-$Version-$flavor-from-$($release.Version)-win-x64.delta.zip"
   $delta=Get-Content -LiteralPath (Join-Path $folder ($name+'.json')) -Raw|ConvertFrom-Json
   $full=(Get-Item -LiteralPath $next).Length
-  $reports+=@{from=$release.Version;to=$Version;flavor=$flavor;fullBytes=$full;deltaBytes=$delta.Bytes;savingsPercent=[Math]::Round(100*(1-$delta.Bytes/$full),2);offered=($delta.Bytes -le $(if([semver]$release.Version -ge [semver]'1.4.7'){10MB}else{8MB}) -and ([semver]$release.Version -ge [semver]'1.4.7' -or $delta.Bytes -lt $full*0.8))}
+  $capable=$after.InstallerProtocol -eq 2 -and $delta.Algorithm -eq 'dustweave-copy-v3'
+  $offered=if($capable){$delta.Bytes -lt $full}else{$delta.Bytes -le $(if([semver]$release.Version -ge [semver]'1.4.7'){10MB}else{8MB}) -and ([semver]$release.Version -ge [semver]'1.4.7' -or $delta.Bytes -lt $full*0.8)}
+  $reports+=@{from=$release.Version;to=$Version;flavor=$flavor;fullBytes=$full;deltaBytes=$delta.Bytes;savingsPercent=[Math]::Round(100*(1-$delta.Bytes/$full),2);offered=$offered}
  }
 }
 $reports|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $folder 'delta-report.json') -Encoding utf8

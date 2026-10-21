@@ -150,6 +150,7 @@ await Group("TradeEntry", () => TradeEntryCases.Run(root, cases));
 await Group("SchedulingUpdates", () => SchedulingUpdatesCases.Run(root, cases));
 await Group("UpdateSafety", () => UpdateSafetyCases.Run(root, cases));
 await Group("UpdateRepair", () => UpdateRepairCases.Run(root, cases));
+await Group("UpdateInventory", () => UpdateInventoryCases.Run(root, cases));
 await Group("UpdateDelta", () => UpdateDeltaCases.Run(root, cases));
 await Group("UpdateLayout", () => UpdateLayoutCases.Run(root, cases));
 await Group("Storage", () => StorageCases.Run(root, cases));

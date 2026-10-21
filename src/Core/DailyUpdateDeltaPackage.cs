@@ -15,6 +15,9 @@ public sealed record DailyDeltaManifest(int Schema, string FromVersion, string V
 public static class DailyUpdateDeltaPackage
 {
     public const string Algorithm = "dustweave-copy-v2";
+    public const string InventoryAlgorithm = "dustweave-copy-v3";
+    public static bool Supports(DailyUpdateRelease release, DailyUpdateDelta delta) =>
+        delta.Algorithm == Algorithm || release.InstallerProtocol == 2 && delta.Algorithm == InventoryAlgorithm;
     private const int MinChunk = 2048, MaxChunk = 32768;
     private const long MaxExpanded = 2L * 1024 * 1024 * 1024;
     private static readonly ulong[] Gear = Enumerable.Range(0, 256).Select(i =>
@@ -147,10 +150,11 @@ public static class DailyUpdateDeltaPackage
         DailyUpdatePackage Metadata(ZipArchive zip) => JsonSerializer.Deserialize<DailyUpdatePackage>(
             ReadEntry(zip.GetEntry("update-package.json") ?? throw new InvalidDataException("Missing descriptor"), 1024 * 1024), DailyUpdateJson.Options)!;
         var before = Metadata(oldZip); var after = Metadata(nextZip);
-        if (before.Layout != after.Layout || before.RuntimeVersion != after.RuntimeVersion || before.Flavor != after.Flavor || DailyUpdates.VersionOf(before.Version) >= DailyUpdates.VersionOf(after.Version))
+        bool inventory = after.InstallerProtocol == 2 && before.Layout == 2 && DailyUpdates.VersionOf(before.Version) >= DailyUpdates.VersionOf(DailyUpdateInventory.BridgeVersion);
+        if (before.Layout != after.Layout || !inventory && before.RuntimeVersion != after.RuntimeVersion || before.Flavor != after.Flavor || DailyUpdates.VersionOf(before.Version) >= DailyUpdates.VersionOf(after.Version))
             throw new InvalidDataException("updates.invalid_package");
-        if (!(before.BootstrapFiles ?? []).Order().SequenceEqual((after.BootstrapFiles ?? []).Order())) throw new InvalidDataException("updates.manual_layout");
-        foreach (var stable in before.BootstrapFiles ?? [])
+        if (!inventory && !(before.BootstrapFiles ?? []).Order().SequenceEqual((after.BootstrapFiles ?? []).Order())) throw new InvalidDataException("updates.manual_layout");
+        foreach (var stable in inventory ? [] : before.BootstrapFiles ?? [])
         {
             var old = oldZip.GetEntry(stable); var next = nextZip.GetEntry(stable);
             if (old == null || next == null || !Same(Hash(ReadEntry(old)), Hash(ReadEntry(next)))) throw new InvalidDataException("updates.manual_runtime");
@@ -189,11 +193,11 @@ public static class DailyUpdateDeltaPackage
             using var metadata = zip.CreateEntry("delta.json", CompressionLevel.Optimal).Open();
             JsonSerializer.Serialize(metadata, manifest, DailyUpdateJson.Options);
         }
-        return new(after.Flavor, before.Version, name, new FileInfo(result).Length, DailyUpdateTransaction.Hash(result), Algorithm);
+        return new(after.Flavor, before.Version, name, new FileInfo(result).Length, DailyUpdateTransaction.Hash(result), inventory ? InventoryAlgorithm : Algorithm);
     }
     public static DailyDeltaManifest Read(string path, DailyUpdateRelease release, DailyUpdateAsset asset, DailyUpdateDelta delta)
     {
-        if (delta.Algorithm != Algorithm || delta.Flavor != asset.Flavor) throw new InvalidDataException("updates.invalid_package");
+        if (!Supports(release, delta) || delta.Flavor != asset.Flavor) throw new InvalidDataException("updates.invalid_package");
         if (!VerifyFile(path, delta.Bytes, delta.Sha256)) throw new InvalidDataException("updates.hash_failed");
         using var zip = ZipFile.OpenRead(path);
         var entry = zip.GetEntry("delta.json") ?? throw new InvalidDataException("updates.invalid_package");
@@ -240,7 +244,8 @@ public static class DailyUpdateDeltaPackage
         var manifest = Read(path, release, asset, delta);
         if (!CanApply(installed, manifest, token)) throw new InvalidDataException("updates.delta_base_changed");
         var installedPackage = DailyUpdateJson.TryRead<DailyUpdatePackage>(PathOf(installed, "update-package.json"))!;
-        if ((installedPackage.BootstrapFiles ?? []).Any(name => !manifest.Files.Any(f => f.Name == name && f.Mode == "copy")))
+        bool inventory = release.InstallerProtocol == 2 && delta.Algorithm == InventoryAlgorithm;
+        if (!inventory && (installedPackage.BootstrapFiles ?? []).Any(name => !manifest.Files.Any(f => f.Name == name && f.Mode == "copy")))
             throw new InvalidDataException("updates.manual_runtime");
         DailyUpdates.EnsureNoLinks(staging);
         using var zip = ZipFile.OpenRead(path);
@@ -266,7 +271,8 @@ public static class DailyUpdateDeltaPackage
         var metadata = DailyUpdateJson.TryRead<DailyUpdatePackage>(PathOf(staging, "update-package.json"));
         string[] names = manifest.Files.Select(f => f.Name).ToArray();
         if (metadata?.Version != release.Version || metadata.Flavor != asset.Flavor || metadata.Layout != release.Layout || metadata.RuntimeVersion != release.RuntimeVersion || metadata.Files == null ||
-            !(metadata.BootstrapFiles ?? []).Order().SequenceEqual((installedPackage.BootstrapFiles ?? []).Order()) ||
+            metadata.InstallerProtocol != release.InstallerProtocol ||
+            !inventory && !(metadata.BootstrapFiles ?? []).Order().SequenceEqual((installedPackage.BootstrapFiles ?? []).Order()) ||
             !metadata.Files.Order().SequenceEqual(names.Order())) throw new InvalidDataException("updates.invalid_package");
         return names;
     }

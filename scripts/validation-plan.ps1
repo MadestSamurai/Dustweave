@@ -57,6 +57,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     # Update-only finalization reuses unchanged game components, not updater acceptance.
     # Actual package UI/tool gates still run; signed publication also requires real upgrade/recovery evidence.
     $updates='^(source-manifest\.json|package\.ps1|scripts/(validation-plan|publish-layout|test-update-packages|test-layout-update|build-update-acceptance|new-update-deltas|new-update-feed|prepare-update-site|publish-update-signed)\.ps1)$|^docs/|^src/Desktop/MainWindow\.Updates\.cs$|^src/Core/DailySuiteDiagnostics\.cs$|^src/Launcher/Program\.cs$|^tools/OtaChannel/(Rules|Program|SelfTest)\.cs$|^\.github/workflows/updates\.yml$'
+    $updates+='|^src/Bootstrap/((Program|Recovery|RepairBootstrap)\.cs|Dustweave\.Bootstrap\.csproj)$|^scripts/test-(bridge-update|native-repair)\.ps1$'
     if($Scope -in @('Auto','Updates') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $updates}).Count){$selectedScope='Updates';$outside=@()}
     $full.changed=$changed
     $reason='Changes outside the account validation boundary: '+($outside -join ', ')
@@ -71,7 +72,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
      if($evidenceValid){
       $groups=@('ProductIdentity','Startup','LoginIdentity','Sandbox','Parallel','ParallelProcess','AccountOrder','AccountIdentity','AccountRestart','QueueSession','QueuePeriod')
       if($selectedScope -eq 'Trading'){$groups=@('ProductIdentity','TradeOptimizer','TradeData','TradeReplan','TradeQuote','TradeResume','TalentPotion','BargainTraining','UserText')}
-      if($selectedScope -eq 'Updates'){$groups=@('ProductIdentity','UpdateLayout','UpdateDelta','UpdateSafety','UpdateRepair','SchedulingUpdates','UnifiedSuite','SuiteOwnerProbe','UserText')}
+      if($selectedScope -eq 'Updates'){$groups=@('ProductIdentity','UpdateLayout','UpdateDelta','UpdateSafety','UpdateRepair','UpdateInventory','CacheStorage','SchedulingUpdates','UnifiedSuite','SuiteOwnerProbe','UserText')}
       if($selectedScope -eq 'Weekly'){$groups=@('ProductIdentity','WeeklyIsolation','WeeklyGoal','CollectionReadiness','FieldTalent','WeeklyNpcBoard','WeeklyNpcQuery','WeeklyNpcInteraction','CommandDriver','ManagedInputs','QueueSession','QueueEngine','QueuePeriod','QueueExecutionThread','PickupRecovery','BusinessJournal','BusinessScope','MirrorStage','FreeDrawStage','DispatchRecovery','ManagementStage','TradeResume','TravelTransition','UserText')}
       if($selectedScope -in @('Navigation','Rewards')){$groups+=@('HomeNavigation','HomeRecovery','TravelTransition','WeeklyGoal','CollectionReadiness','CafeteriaRecovery','CommandDriver','ManagedInputs','PassiveUi','UserText')}
       if($selectedScope -eq 'Rewards'){$groups+=@('LiveBindings','Workflow','Preference','RuleData','EvidenceReadiness','UserText')}

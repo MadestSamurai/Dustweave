@@ -8,10 +8,15 @@ namespace Dustweave;
 public sealed record DailyReleaseNote(string Version, string Date, Dictionary<string, string[]> Notes);
 public sealed record DailyUpdateAsset(string Flavor, string FileName, long Bytes, string Sha256);
 public sealed record DailyUpdateDelta(string Flavor, string FromVersion, string FileName, long Bytes, string Sha256, string Algorithm);
-public sealed record DailyUpdateRelease(string Version, string? PreviousVersion, int Layout, Dictionary<string, string[]> Notes, DailyUpdateAsset[] Assets, DailyUpdateDelta[]? Deltas = null, string? RuntimeVersion = null);
+public sealed record DailyUpdateRelease(string Version, string? PreviousVersion, int Layout, Dictionary<string, string[]> Notes, DailyUpdateAsset[] Assets, DailyUpdateDelta[]? Deltas = null, string? RuntimeVersion = null, int InstallerProtocol = 1);
 public sealed record DailyUpdateFeed(int Schema, string Product, string Channel, DailyUpdateRelease[] Releases, DailyUpdateDelta[]? BaselineDeltas = null);
-public sealed record DailyUpdatePackage(string Version, string Flavor, string[]? Files = null, int Layout = 1, string? RuntimeVersion = null, string[]? BootstrapFiles = null);
-public sealed record DailyUpdateJob(string Directory, string Target, int ParentPid, long ParentStartTicks, DailyUpdateRelease Release, DailyUpdateAsset Asset, string Nonce = "", string OriginalSha256 = "", string? DeltaFileName = null) { public bool Repair { get; init; } }
+public sealed record DailyUpdatePackage(string Version, string Flavor, string[]? Files = null, int Layout = 1, string? RuntimeVersion = null, string[]? BootstrapFiles = null, int InstallerProtocol = 1);
+public sealed record DailyUpdateJob(string Directory, string Target, int ParentPid, long ParentStartTicks, DailyUpdateRelease Release, DailyUpdateAsset Asset, string Nonce = "", string OriginalSha256 = "", string? DeltaFileName = null)
+{
+    public bool Repair { get; init; }
+    public bool InventoryUpgrade { get; init; }
+    public string? FromVersion { get; init; }
+}
 
 public static class DailyUpdates
 {
@@ -23,7 +28,7 @@ public static class DailyUpdates
     public static DailyVersion VersionOf(string value) => DailyVersion.Parse(value);
     public static void Validate(DailyUpdateFeed feed)
     {
-        if (feed.Schema is not (2 or 3) || feed.Product != "Dustweave" || feed.Channel != "stable" || feed.Releases.Length is < 1 or > 300)
+        if (feed.Schema is not (2 or 3 or 4) || feed.Product != "Dustweave" || feed.Channel != "stable" || feed.Releases.Length is < 1 or > 300)
             throw new InvalidDataException("updates.invalid_feed");
         var versions = new HashSet<DailyVersion>();
         foreach (var release in feed.Releases)
@@ -32,6 +37,8 @@ public static class DailyUpdates
             if (!versions.Add(version) || (feed.Schema == 2 ? release.Layout != 1 : release.Layout is < 2 or > 32) || release.Assets.Length is < 1 or > 2 || release.Assets.Select(a => a.Flavor).Distinct().Count() != release.Assets.Length)
                 throw new InvalidDataException("updates.invalid_feed");
             if (release.Layout >= 2 && (release.RuntimeVersion == null || !System.Version.TryParse(release.RuntimeVersion, out _))) throw new InvalidDataException("updates.invalid_feed");
+            if (release.InstallerProtocol is < 1 or > 2 || release.InstallerProtocol == 2 && (feed.Schema != 4 || release.Layout != CurrentLayout))
+                throw new InvalidDataException("updates.invalid_feed");
             if (release.PreviousVersion != null && VersionOf(release.PreviousVersion) >= version) throw new InvalidDataException("updates.invalid_feed");
             if (new[] { "zh-CN", "zh-TW", "en-US" }.Any(c => !release.Notes.TryGetValue(c, out var notes) || notes.Length is < 1 or > 100 || notes.Any(n => string.IsNullOrWhiteSpace(n) || n.Length > 4000))) throw new InvalidDataException("updates.invalid_feed");
             if (release.Notes.Values.Select(n => n.Length).Distinct().Count() != 1) throw new InvalidDataException("updates.invalid_feed");
@@ -41,7 +48,7 @@ public static class DailyUpdates
             foreach (var delta in release.Deltas ?? [])
                 if (!release.Assets.Any(a => a.Flavor == delta.Flavor) || VersionOf(delta.FromVersion) >= version ||
                     delta.FileName != DailyUpdateDeltaPackage.Name(release.Version, delta.Flavor, delta.FromVersion) ||
-                    string.IsNullOrWhiteSpace(delta.Algorithm) || delta.Algorithm.Length > 64 || delta.Bytes <= 0 || delta.Bytes > MaxArchive ||
+                    string.IsNullOrWhiteSpace(delta.Algorithm) || delta.Algorithm.Length > 64 || delta.Algorithm == DailyUpdateDeltaPackage.InventoryAlgorithm && release.InstallerProtocol != 2 || delta.Bytes <= 0 || delta.Bytes > MaxArchive ||
                     delta.Sha256.Length != 64 || !delta.Sha256.All(Uri.IsHexDigit))
                     throw new InvalidDataException("updates.invalid_feed");
             foreach (var asset in release.Assets)
@@ -57,14 +64,14 @@ public static class DailyUpdates
         for (int i = 0; i < sorted.Length - 1; i++)
             if (sorted[i].PreviousVersion != sorted[i + 1].Version) throw new InvalidDataException("updates.broken_chain");
         var extended = feed.BaselineDeltas ?? [];
-        if (extended.Length > feed.Releases.Length * 2 || (extended.Length > 0 && feed.Schema != 3)) throw new InvalidDataException("updates.invalid_feed");
+        if (extended.Length > feed.Releases.Length * 2 || (extended.Length > 0 && feed.Schema is not (3 or 4))) throw new InvalidDataException("updates.invalid_feed");
         var top = feed.Releases[0];
         var combined = (top.Deltas ?? []).Concat(extended).ToArray();
         if (combined.Select(d => (d.Flavor,d.FromVersion)).Distinct().Count() != combined.Length) throw new InvalidDataException("updates.invalid_feed");
         foreach (var d in extended)
             if (VersionOf(d.FromVersion) < VersionOf(LongTermBaseline) || VersionOf(d.FromVersion) >= VersionOf(top.Version) ||
-                !feed.Releases.Any(r => r.Version == d.FromVersion && r.Layout == top.Layout && r.RuntimeVersion == top.RuntimeVersion) ||
-                !top.Assets.Any(a => a.Flavor == d.Flavor) || d.Algorithm != DailyUpdateDeltaPackage.Algorithm ||
+                !feed.Releases.Any(r => r.Version == d.FromVersion && r.Layout == top.Layout && (top.InstallerProtocol == 2 || r.RuntimeVersion == top.RuntimeVersion)) ||
+                !top.Assets.Any(a => a.Flavor == d.Flavor) || !DailyUpdateDeltaPackage.Supports(top, d) ||
                 d.FileName != DailyUpdateDeltaPackage.Name(top.Version,d.Flavor,d.FromVersion) || d.Bytes <= 0 || d.Bytes > MaxAutomaticDelta ||
                 d.Sha256.Length != 64 || !d.Sha256.All(Uri.IsHexDigit)) throw new InvalidDataException("updates.invalid_feed");
     }
@@ -83,6 +90,11 @@ public static class DailyUpdates
     {
         if (release.Layout == 1) return installed?.Layout > 1 ? "updates.manual_layout" : null; // Legacy fixtures/archives remain readable, never a 1.3 migration path.
         if (installed == null || installed.Layout != CurrentLayout || release.Layout != CurrentLayout) return "updates.manual_layout";
+        if (release.InstallerProtocol == DailyUpdateInventory.Protocol)
+        {
+            try { DailyUpdateInventory.Validate(feed, release, installed.Version, installed.Flavor); return null; }
+            catch (InvalidDataException) { return "updates.manual_distance"; }
+        }
         if (installed.RuntimeVersion != release.RuntimeVersion) return "updates.manual_runtime";
         int target = Array.FindIndex(feed.Releases, r => r.Version == release.Version);
         int previous = Array.FindIndex(feed.Releases, r => r.Version == installed.Version);

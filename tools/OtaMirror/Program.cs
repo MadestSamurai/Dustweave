@@ -44,13 +44,13 @@ static class Program
         string packages = Path.GetFullPath(args[2]);
         var trust = Rules.Read<Trust>(File.ReadAllBytes(args[3]));
         string publicBase = connection.PublicBaseUrl.TrimEnd('/') + "/dustweave/ota/v2";
-        var config = new Config("", "", trust.Keys, 2, publicBase);
+        var config = new Config("", "", trust.Keys, 2, publicBase, Capable:true);
         var feedBytes = File.ReadAllBytes(Path.Combine(packages, "updates.json"));
         var feed = Rules.VerifyFeed(feedBytes, config);
         string version = feed.Releases[0].Version;
         var files = repair ? RepairBuilder.Inventory(packages, config) :
             Rules.Patches(feed).Select(d => new Blob(d.FileName, d.Bytes, d.Sha256.ToLowerInvariant())).OrderBy(b => b.FileName).ToArray();
-        Rules.Need(files.Length > 0 && files.Select(f => f.FileName).Distinct().Count() == files.Length, "Empty or duplicate inventory");
+        Rules.Need((files.Length > 0 || !repair && feed.Releases[0].InstallerProtocol == 2) && files.Select(f => f.FileName).Distinct().Count() == files.Length, "Empty or duplicate inventory");
         // Validate the complete set before sending any credential or object.
         foreach (var file in files) { if (!repair) _ = Mirror.FileUri(config, version, file); Rules.CheckArchive(Path.Combine(packages, file.FileName), file); }
         using var s3 = new AmazonS3Client(new BasicAWSCredentials(connection.AccessKey, connection.SecretKey),

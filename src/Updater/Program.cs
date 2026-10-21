@@ -15,6 +15,9 @@ if (args.Length == 2 && args[0] == "--repair-ui-smoke")
     catch (Exception error) { File.WriteAllText(args[1], error.ToString()); return 1; }
 }
 if (args.Length == 2 && args[0] == "--repair-install") return StandaloneRepair.Run(args[1]);
+if (args.Length == 2 && args[0] == "--repair-approved") return StandaloneRepair.Run(args[1], approved: true);
+if (args.Length == 4 && args[0] == "--repair-approved") return StandaloneRepair.Run(args[1], approved: true, expectedVersion: args[2], expectedFlavor: args[3]);
+if (args.Length == 2 && args[0] == "--continue-upgrade") return BridgeUpgrade.Run(args[1]);
 if (args.Length == 0 && new DirectoryInfo(AppContext.BaseDirectory) is { Name: "support", Parent: { Name: "app", Parent: { } installation } })
     return StandaloneRepair.Run(installation.FullName);
 if (args.Length == 2 && args[0] is "--apply-update" or "--recover-update")

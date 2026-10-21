@@ -24,9 +24,18 @@ public static class DailyUpdateEngine
         var found = feed.Releases.SingleOrDefault(r => r.Version == job.Release.Version);
         var release = found == null ? null : DailyUpdates.WithBaselines(feed,found);
         var asset = release?.Assets.SingleOrDefault(a => a.Flavor == job.Asset.Flavor);
-        if (asset != job.Asset || release?.Layout != job.Release.Layout || release?.RuntimeVersion != job.Release.RuntimeVersion) throw new InvalidDataException("updates.signature_failed");
+        if (asset != job.Asset || release?.Layout != job.Release.Layout || release?.RuntimeVersion != job.Release.RuntimeVersion ||
+            release?.InstallerProtocol != job.Release.InstallerProtocol) throw new InvalidDataException("updates.signature_failed");
         if (job.DeltaFileName != null && !((release?.Deltas ?? []).Any(d => d.FileName == job.DeltaFileName && d.Flavor == job.Asset.Flavor)))
             throw new InvalidDataException("updates.signature_failed");
+        if (job.InventoryUpgrade)
+        {
+            // Acknowledgement/recovery see the target descriptor. Source identity
+            // is checked separately, immediately before the first target write.
+            DailyUpdateInventory.ValidateJob(job, feed);
+            _ = DailyUpdateInventory.ReadSource(job, feed);
+            _ = DailyUpdateRepair.ReadVerified(job.Directory, release!, asset!);
+        }
         if (job.Repair)
         {
             if (job.DeltaFileName != null) throw new InvalidDataException("updates.invalid_package");
@@ -91,10 +100,18 @@ public static class DailyUpdateEngine
                         var installed = DailyUpdateJson.TryRead<DailyUpdatePackage>(Path.Combine(target, "update-package.json")) ?? throw new InvalidDataException("updates.flavor_missing");
                         if (installed.Flavor != job.Asset.Flavor || DailyUpdates.VersionOf(installed.Version) >= DailyUpdates.VersionOf(job.Release.Version))
                             throw new InvalidDataException("updates.target_changed");
-                        if (job.Release.Layout >= 2 && (installed.Layout != job.Release.Layout || installed.RuntimeVersion != job.Release.RuntimeVersion || job.DeltaFileName == null)) throw new InvalidDataException("updates.manual_layout");
+                        if (job.InventoryUpgrade)
+                        {
+                            var signed = DailyUpdateJson.TryRead<DailySignedUpdate>(Path.Combine(job.Directory, "signed-feed.json")) ?? throw new InvalidDataException("updates.signature_failed");
+                            DailyUpdateInventory.ValidateSource(job, DailyUpdateSignatures.Verify(signed, DailyUpdateTrust.Production()), installed);
+                        }
+                        else if (job.Release.Layout >= 2 && (installed.Layout != job.Release.Layout || installed.RuntimeVersion != job.Release.RuntimeVersion || job.DeltaFileName == null)) throw new InvalidDataException("updates.manual_layout");
                     }
                     string[] names = ExtractPayload(job, target, ref staging, out var retained);
-                    journal = DailyUpdateTransaction.Prepare(staging, target, Path.Combine(attempt, "backup"), names, retained, removeObsolete: !job.Repair);
+                    journal = DailyUpdateTransaction.Prepare(staging, target, Path.Combine(attempt, "backup"), names, retained, removeObsolete: !job.Repair,
+                        installRecoveryEntryFirst: job.InventoryUpgrade || job.Repair,
+                        previousFiles: job.InventoryUpgrade ? DailyUpdateInventory.ReadSource(job,
+                            DailyUpdateSignatures.Verify(DailyUpdateJson.TryRead<DailySignedUpdate>(Path.Combine(job.Directory, "signed-feed.json"))!, DailyUpdateTrust.Production())).Files.Select(f => f.Name).ToArray() : null);
                     var marker = new DailyUpdateMarker(Path.GetFullPath(jobPath), job.Nonce, DailyUpdateTransaction.Hash(Environment.ProcessPath!));
                     DailyUpdateJson.Write(markerPath, marker);
                     journal = DailyUpdateTransaction.Apply(journal);
@@ -129,7 +146,7 @@ public static class DailyUpdateEngine
             }
             DailyUpdateJson.Write(Path.Combine(DailyUpdateHost.DataRoot, "update-result.json"), new Result(journal.State == "completed" ? "completed" : "rolled_back", job.Release.Version, DateTimeOffset.UtcNow));
             instance.ReleaseMutex(); ownInstance = false; instance.Dispose(); instance = null;
-            Start(job.Target, "--desktop-session");
+            StartAfterRecovery(job.Target, journal.State == "rolled_back" ? job.Release.Version : null);
             return 0;
         }
         catch (Exception error)
@@ -155,7 +172,7 @@ public static class DailyUpdateEngine
             instance?.Dispose(); instance = null;
             if (job != null && parentExited && mayRestart && state != "recovery_required")
             {
-                try { Start(job.Target, "--desktop-session"); } catch { }
+                try { StartAfterRecovery(job.Target, job.Release.Version); } catch { }
             }
             return 1;
         }
@@ -174,7 +191,7 @@ public static class DailyUpdateEngine
         var verified = new DailyVerifiedUpdate(DailyUpdateSignatures.Verify(signed, DailyUpdateTrust.Production()), signed, "");
         var release = DailyUpdates.WithBaselines(verified.Feed, verified.Feed.Releases.Single(r => r.Version == job.Release.Version));
         var asset = release.Assets.Single(a => a.Flavor == job.Asset.Flavor);
-        if (job.Repair)
+        if (job.Repair || job.InventoryUpgrade)
         {
             var repair = DailyUpdateRepair.ReadVerified(job.Directory, release, asset);
             staging = DailyUpdateRepair.Staging(job.Directory);
@@ -211,6 +228,13 @@ public static class DailyUpdateEngine
     {
         var info = new ProcessStartInfo(path) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = Path.GetDirectoryName(path)! };
         foreach (var arg in args) info.ArgumentList.Add(arg);
+        return Process.Start(info) ?? throw new IOException("updates.start_failed");
+    }
+    private static Process StartAfterRecovery(string path, string? failedVersion)
+    {
+        var info = new ProcessStartInfo(path) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = Path.GetDirectoryName(path)! };
+        info.ArgumentList.Add("--desktop-session");
+        if (failedVersion != null) info.Environment["DUSTWEAVE_UPDATE_ROLLBACK"] = failedVersion;
         return Process.Start(info) ?? throw new IOException("updates.start_failed");
     }
     public sealed record Ready(int ProcessId, string Version, string Nonce);

@@ -30,7 +30,7 @@ static class Mirror
         Rules.Need(System.Text.RegularExpressions.Regex.IsMatch(blob.FileName,
             @"^Dustweave-[0-9A-Za-z.-]+-(?:Lite|Portable)-from-[0-9A-Za-z.-]+-win-x64\.delta\.zip$") &&
             blob.FileName.StartsWith("Dustweave-" + version + "-", StringComparison.Ordinal) &&
-            blob.Bytes is > 0 and <= 10485760 && Rules.IsHash(blob.Sha256), "Invalid mirror patch");
+            blob.Bytes > 0 && blob.Bytes <= (c.Capable ? 629145600 : 10485760) && Rules.IsHash(blob.Sha256), "Invalid mirror patch");
         return new(BaseUrl(c) + "/v" + version + "/" + blob.FileName);
     }
     static Blob[] Inventory(Feed feed) => Rules.Patches(feed).Select(d => new Blob(d.FileName, d.Bytes, d.Sha256.ToLowerInvariant()))
@@ -96,7 +96,7 @@ static class Mirror
         var feed = Rules.VerifyFeed(signedFeed, c);
         string version = feed.Releases[0].Version;
         Blob[] files = Inventory(feed);
-        Rules.Need(files.Length > 0, "No signed patches to mirror");
+        Rules.Need(files.Length > 0 || feed.Releases[0].InstallerProtocol == 2, "No signed patches to mirror");
         foreach (var file in files)
         {
             Rules.CheckArchive(Path.Combine(c.Public, "v" + version, file.FileName), file);
@@ -131,13 +131,13 @@ static class Mirror
         try
         {
             string baseUrl = BaseUrl(c);
-            var feedBytes = File.ReadAllBytes(Path.Combine(c.Public, "updates.json"));
+            var feedBytes = File.ReadAllBytes(Rules.FeedPath(c));
             var feed = Rules.VerifyFeed(feedBytes, c);
             version = feed.Releases[0].Version;
             string receiptPath = Receipt(c, version); Rules.NoLinks(receiptPath);
             var receipt = Rules.Read<MirrorReceipt>(File.ReadAllBytes(receiptPath));
             var files = Inventory(feed);
-            Rules.Need(files.Length > 0 && receipt.Version == version && receipt.BaseUrl == baseUrl &&
+            Rules.Need((files.Length > 0 || feed.Releases[0].InstallerProtocol == 2) && receipt.Version == version && receipt.BaseUrl == baseUrl &&
                 receipt.FeedSha256 == Rules.Hash(feedBytes) && receipt.Files.SequenceEqual(files), "Mirror not prepared for the current signed feed");
             foreach (var file in files)
             {
@@ -147,7 +147,7 @@ static class Mirror
             await Parallel.ForEachAsync(files, new ParallelOptions { MaxDegreeOfParallelism = 4, CancellationToken = token },
                 async (file, cancellation) => await VerifyRemote(c, version, file, client, false, cancellation));
             // A publication that changed while probing must not inherit old health.
-            Rules.Need(Rules.HashFile(Path.Combine(c.Public, "updates.json")) == receipt.FeedSha256, "Feed changed during mirror health check");
+            Rules.Need(Rules.HashFile(Rules.FeedPath(c)) == receipt.FeedSha256, "Feed changed during mirror health check");
             Rules.Atomic(Enabled(c), Rules.Bytes(new { version, checkedUtc = DateTimeOffset.UtcNow }));
             Record(c, new("cdn", DateTimeOffset.UtcNow, version));
             return true;

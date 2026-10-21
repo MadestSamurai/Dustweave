@@ -24,12 +24,15 @@ function VerifyEnvelope($envelope) {
 }
 $history=@(Get-Content -LiteralPath (Join-Path $root 'src/Desktop/Localization/releases.json') -Raw|ConvertFrom-Json)
 $note=$history|Where-Object Version -eq $Version|Select-Object -First 1
+if($Version -eq '1.4.15-bridge.1'){
+ $note=[pscustomobject]@{Notes=@{'zh-CN'=@('升级至 1.4.15；重启后自动完成必要的更新组件升级，再进入新版。');'zh-TW'=@('升級至 1.4.15；重新啟動後自動完成必要的更新元件升級，再進入新版。');'en-US'=@('Upgrade to 1.4.15. After restarting, the updater completes the required component upgrade automatically before opening the new version.')}}
+}
 if(!$note){throw 'Add release notes in all three languages before creating the OTA feed.'}
 foreach($language in @('zh-CN','zh-TW','en-US')){if(!@($note.Notes.$language).Count){throw "Missing release notes: $language"}}
 $prior=@()
 if($PreviousFeed){
  $feed=VerifyEnvelope (Get-Content -LiteralPath $PreviousFeed -Raw|ConvertFrom-Json)
- if($feed.Schema -ne 3 -or $feed.Product -ne 'Dustweave' -or $feed.Channel -ne 'stable'){throw 'Invalid previous update feed.'}
+ if($feed.Schema -notin @(3,4) -or $feed.Product -ne 'Dustweave' -or $feed.Channel -ne 'stable'){throw 'Invalid previous update feed.'}
  if(@($feed.Releases|Where-Object {[semver]$_.Version -ge [semver]$Version}).Count){throw 'Publishing must advance the version. Never silently replace a published version.'}
  $prior=@($feed.Releases|Sort-Object {[semver]$_.Version} -Descending)
  if(@($prior|Group-Object Version|Where-Object Count -gt 1).Count){throw 'Duplicate historical versions.'}
@@ -45,7 +48,9 @@ foreach($flavor in @('Portable','Lite')){
   if(!$metadata -or !$archive.GetEntry('Dustweave.exe')){throw "Package has no OTA descriptor: $name"}
   $reader=[IO.StreamReader]::new($metadata.Open())
   try{$info=$reader.ReadToEnd()|ConvertFrom-Json}finally{$reader.Dispose()}
-  if($info.Layout -ne 2 -or $info.RuntimeVersion -ne '8.0.30' -or $info.Version -ne $Version -or $info.Flavor -ne $flavor){throw "Package descriptor mismatch: $name"}
+  $runtimeValue=$null
+  if($info.Layout -ne 2 -or ![Version]::TryParse([string]$info.RuntimeVersion,[ref]$runtimeValue) -or ($info.InstallerProtocol -ne 2 -and $info.RuntimeVersion -ne '8.0.30') -or $info.Version -ne $Version -or $info.Flavor -ne $flavor){throw "Package descriptor mismatch: $name"}
+  if($runtime -and $runtime -ne $info.RuntimeVersion){throw 'Package editions have different runtime versions.'}
   $members=@($archive.Entries|Where-Object {!$_.FullName.EndsWith('/')}|ForEach-Object FullName|Sort-Object)
   if(!$info.Files -or (Compare-Object $members @($info.Files|Sort-Object))){throw 'Package inventory must match the ZIP exactly.'}
  }finally{$archive.Dispose()}
@@ -60,7 +65,7 @@ foreach($sidecar in Get-ChildItem -LiteralPath $folder -Filter "Dustweave-$Versi
  $delta=Get-Content -LiteralPath $sidecar.FullName -Raw|ConvertFrom-Json
  $asset=$assets|Where-Object Flavor -eq $delta.Flavor
  $expected="Dustweave-$Version-$($delta.Flavor)-from-$($delta.FromVersion)-win-x64.delta.zip"
- if(!$asset -or $delta.Algorithm -ne 'dustweave-copy-v2' -or $delta.FileName -ne $expected -or !@($prior|Where-Object Version -eq $delta.FromVersion).Count){throw 'Invalid delta descriptor.'}
+ if(!$asset -or $delta.Algorithm -notin @('dustweave-copy-v2','dustweave-copy-v3') -or $delta.FileName -ne $expected -or !@($prior|Where-Object Version -eq $delta.FromVersion).Count){throw 'Invalid delta descriptor.'}
  $path=Join-Path $folder $expected
  if((Get-Item -LiteralPath $path).Length -ne $delta.Bytes -or (Get-FileHash -LiteralPath $path).Hash -ne $delta.Sha256){throw 'Delta package hash mismatch.'}
  $zip=[IO.Compression.ZipFile]::OpenRead($path)
@@ -69,7 +74,8 @@ foreach($sidecar in Get-ChildItem -LiteralPath $folder -Filter "Dustweave-$Versi
   try{$metadata=$reader.ReadToEnd()|ConvertFrom-Json}finally{$reader.Dispose()}
   if($metadata.Schema -ne 1 -or $metadata.Version -ne $Version -or $metadata.FromVersion -ne $delta.FromVersion -or $metadata.Flavor -ne $delta.Flavor -or $metadata.TargetArchiveSha256 -ne $asset.Sha256){throw 'Delta targets a different full package.'}
  }finally{$zip.Dispose()}
- if($delta.Bytes -le 8MB -and $delta.Bytes -lt $asset.Bytes*0.8 -and $delta.FromVersion -in $recent){$deltas+=$delta}
+ if($info.InstallerProtocol -eq 2 -and $delta.Algorithm -eq 'dustweave-copy-v3' -and $delta.Bytes -lt $asset.Bytes -and $delta.FromVersion -in $recent){$deltas+=$delta}
+ elseif($delta.Bytes -le 8MB -and $delta.Bytes -lt $asset.Bytes*0.8 -and $delta.FromVersion -in $recent){$deltas+=$delta}
  elseif([semver]$delta.FromVersion -ge [semver]'1.4.7' -and $delta.Bytes -le 10MB){$baselineDeltas+=$delta}
 }
 if($deltas.Count -gt 20 -or @($deltas|Group-Object Flavor,FromVersion|Where-Object Count -gt 1).Count){throw 'Duplicate or excessive delta baselines.'}
@@ -77,7 +83,7 @@ if($deltas.Count -gt 20 -or @($deltas|Group-Object Flavor,FromVersion|Where-Obje
 # A partial local archive selection is not permission to shorten OTA support.
 $deltaReportPath=Join-Path $folder 'delta-report.json'
 $deltaReport=if(Test-Path -LiteralPath $deltaReportPath){@(Get-Content -LiteralPath $deltaReportPath -Raw|ConvertFrom-Json)}else{@()}
-foreach($baseline in @($supported|Where-Object Version -ne '1.3.0')){
+foreach($baseline in @($supported|Where-Object {$_.Version -ne '1.3.0' -and $info.InstallerProtocol -ne 2})){
  foreach($flavor in @('Portable','Lite')){
   if(!@($baseline.Assets|Where-Object Flavor -eq $flavor).Count){continue}
   if(@(($deltas+$baselineDeltas)|Where-Object {$_.FromVersion -eq $baseline.Version -and $_.Flavor -eq $flavor}).Count){continue}
@@ -89,6 +95,7 @@ foreach($baseline in @($supported|Where-Object Version -ne '1.3.0')){
 $previous=if($prior.Count){$prior[0].Version}else{$null}
 $current=[ordered]@{Version=$Version;PreviousVersion=$previous;Layout=2;RuntimeVersion=$runtime;Notes=$note.Notes;Assets=$assets;Deltas=$deltas}
 $feed=[ordered]@{Schema=3;Product='Dustweave';Channel='stable';Releases=@($current)+$prior;BaselineDeltas=$baselineDeltas}
+if($info.InstallerProtocol -eq 2){$current.InstallerProtocol=2;$feed.Schema=4}
 $key=[Security.Cryptography.ECDsa]::Create()
 try {
  # CI may supply the PKCS#8 key as a secret; local publishing uses a current-user DPAPI file.

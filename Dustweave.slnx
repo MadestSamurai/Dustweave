@@ -49,5 +49,6 @@
   </Folder>
 
   <Project Path="src/Launcher/Dustweave.Launcher.csproj" />
+  <Project Path="src/Bootstrap/Dustweave.Bootstrap.csproj" />
   <Project Path="src/Updater/Dustweave.Updater.csproj" />
 </Solution>

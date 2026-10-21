@@ -3,12 +3,16 @@ using Dustweave;
 
 internal static class StandaloneRepair
 {
+    private static string ProductVersion => typeof(StandaloneRepair).Assembly.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+        .Cast<System.Reflection.AssemblyInformationalVersionAttribute>().Single().InformationalVersion.Split('+')[0];
     private static string T(string cn, string tw, string en) => RepairDialog.Text(cn, tw, en);
-    public static int Run(string installRoot)
+    public static int Run(string installRoot, bool approved = false, string? expectedVersion = null, string? expectedFlavor = null)
     {
         try
         {
             DailyUpdateHost.RequireHost();
+            if (expectedVersion != null && expectedVersion != ProductVersion || expectedFlavor != null && expectedFlavor is not ("Lite" or "Portable"))
+                throw new InvalidDataException("updates.invalid_package");
             installRoot = Path.GetFullPath(installRoot).TrimEnd(Path.DirectorySeparatorChar);
             DailyUpdates.EnsureNoLinks(installRoot);
             if (!Directory.Exists(Path.Combine(installRoot, "app"))) throw new InvalidDataException("Not a packaged Dustweave directory.");
@@ -20,10 +24,13 @@ internal static class StandaloneRepair
                 if (!owned) throw new IOException(T("请先从托盘完全退出织尘。", "請先從系統匣完全退出織塵。", "Exit Dustweave from the system tray first."));
                 instance.ReleaseMutex();
             }
-            if (!RepairDialog.Confirm(T("检查并修复以下安装？\n账号、设置和插件会保留。\n\n", "檢查並修復以下安裝？\n帳號、設定和外掛會保留。\n\n",
+            if (!approved && !RepairDialog.Confirm(T("检查并修复以下安装？\n账号、设置和插件会保留。\n\n", "檢查並修復以下安裝？\n帳號、設定和外掛會保留。\n\n",
                 "Check and repair this installation?\nAccounts, settings and plugins will be preserved.\n\n") + installRoot)) return 0;
             var installed = DailyUpdateJson.TryRead<DailyUpdatePackage>(Path.Combine(installRoot, "update-package.json"));
-            string? version = installed?.Version, flavor = installed?.Flavor;
+            // The independently running helper identifies its own release.
+            // Damaged local metadata never silently selects another version.
+            string version = expectedVersion ?? ProductVersion;
+            string? flavor = expectedFlavor ?? installed?.Flavor;
             // Conflicting/missing descriptors require an explicit edition choice.
             if (flavor is not ("Lite" or "Portable"))
             {
@@ -35,25 +42,30 @@ internal static class StandaloneRepair
             var plan = RepairDialog.Run(T("检查安装文件", "檢查安裝檔案", "Check installation"), async (progress, token) =>
             {
                 using var client = DailyUpdates.Client();
-                var verified = await DailyUpdateTransport.Production().FetchAsync(client, DailyUpdateHost.DataRoot, token);
-                if (!verified.Feed.Releases.Any(r => r.Version == version)) version = verified.Feed.Releases[0].Version;
-                return await DailyUpdateRepair.Production().InspectAsync(client, verified, version!, flavor, installRoot, DailyUpdateHost.DataRoot, progress, token);
+                var trust = DailyUpdateTrust.Production();
+                DailyVerifiedUpdate? verified = null;
+                var cached = DailyUpdateJson.TryRead<DailySignedUpdate>(Path.Combine(DailyUpdateHost.DataRoot, "updates", version + "-" + flavor, "signed-feed.json"));
+                if (cached != null)
+                {
+                    try
+                    {
+                        var feed = DailyUpdateSignatures.Verify(cached, trust);
+                        if (feed.Releases.Any(r => r.Version == version)) verified = new(feed, cached, "");
+                    }
+                    catch (InvalidDataException) { }
+                }
+                verified ??= await new DailyUpdateTransport(trust).FetchAsync(client, DailyUpdateHost.DataRoot, token);
+                if (!verified.Feed.Releases.Any(r => r.Version == version)) throw new InvalidDataException("updates.repair_unavailable");
+                return await DailyUpdateRepair.Production().InspectAsync(client, verified, version, flavor, installRoot, DailyUpdateHost.DataRoot, progress, token);
             });
             if (plan.Problems.Length == 0)
             { RepairDialog.Notify(T("安装文件完整，无需修复。", "安裝檔案完整，無需修復。", "Installation verified. No repairs needed.")); return 0; }
-            string summary = $"{plan.Manifest.Version} · {plan.Manifest.Flavor}\n{plan.Problems.Length} " +
-                T("个文件 · 预计下载 ", "個檔案 · 預計下載 ", "files · Estimated download ") + $"{plan.DownloadBytes / 1048576d:0.##} MB\n\n";
-            if (!RepairDialog.Confirm(summary + T("下载所需文件，完成后再确认重启修复？", "下載所需檔案，完成後再確認重新啟動修復？",
-                "Download the required files? You will confirm again before restarting to apply them."))) return 0;
             RepairDialog.Run(T("下载并准备修复", "下載並準備修復", "Download and prepare repairs"), async (progress, token) =>
             {
                 using var client = DailyUpdates.Client();
                 await DailyUpdateRepair.Production().PrepareAsync(client, plan, DailyUpdateHost.DataRoot, progress, token);
                 return true;
             });
-            if (!RepairDialog.Confirm(T("修复文件已验证。现在替换文件并启动织尘？\n如果启动失败，将还原本次更改。",
-                "修復檔案已驗證。現在替換檔案並啟動織塵？\n如果啟動失敗，將還原本次變更。",
-                "Repairs verified. Replace files and start Dustweave now?\nChanges will be rolled back if startup fails."))) return 0;
             using var storage = DailyUpdateHost.AcquireStorage(DailyUpdateHost.DataRoot);
             string nonce = Guid.NewGuid().ToString("N"), attempt = Path.Combine(plan.Directory, "attempts", nonce);
             DailyUpdates.EnsureNoLinks(attempt); Directory.CreateDirectory(attempt);

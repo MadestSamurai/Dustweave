@@ -1,5 +1,14 @@
 # Release artifact retention
 
+## Protocol-2 baselines (1.4.15+)
+
+The current protocol is described in [update evolution](UPDATE_EVOLUTION.md).
+Preserve the immutable 1.4.15 bridge/final archives, feeds and repair inventories
+while legacy clients need the transition. Future capable releases produce up to
+ten recent direct patches; older capable clients use signed block reconstruction.
+The historical rules below continue to protect legacy archives and must not be
+used to prune a bridge dependency. This does not enlarge end-user cache retention.
+
 ## Long-term baseline policy · 1.4.7+
 
 From 1.4.7, retain every published baseline at or above 1.4.7. Generate and verify a direct patch from each baseline to each new release; an absent archive fails preparation rather than silently removing support. Eligibility is based on the actual patch size, up to 10 MiB (10,485,760 bytes, displayed as 10 MB), per edition. Layout/runtime compatibility and integrity checks still apply. Do not enforce the ten-release distance limit on these clients. Oversized or incompatible baselines receive a manual-download explanation; reconsider their patches on later releases rather than assuming age makes them unsupported.

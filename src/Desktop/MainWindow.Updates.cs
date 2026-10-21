@@ -180,7 +180,11 @@ public partial class MainWindow
                 string directory = await transport.DownloadAsync(client, verified, release.Version, flavor, root, progress, updateLifetime.Token, DailyUpdateHost.InstallRoot);
                 using var process = Process.GetCurrentProcess();
                 return new DailyUpdateJob(directory, Environment.ProcessPath!, process.Id, process.StartTime.ToUniversalTime().Ticks, release, asset,
-                    DeltaFileName: DailyJson.TryRead<DailyUpdateDownload>(Path.Combine(directory, "download-choice.json"))?.DeltaFileName);
+                    DeltaFileName: DailyJson.TryRead<DailyUpdateDownload>(Path.Combine(directory, "download-choice.json"))?.DeltaFileName)
+                {
+                    InventoryUpgrade = release.InstallerProtocol == DailyUpdateInventory.Protocol,
+                    FromVersion = installed!.Version
+                };
             });
     }
     private async Task CheckUpdatesCoreAsync(bool download, Func<Task<DailyVerifiedUpdate>> fetch,
@@ -408,7 +412,7 @@ public partial class MainWindow
             string? pluginBlock = await Task.Run(() => DailyPlugin.HostUpdateBlockReason(root, installation.Release.Version));
             if (pluginBlock != null) { UpdateInstallStatus(pluginBlock); return; }
             if (ToolOpen && !await CloseToolWindowsAsync()) { UpdateInstallStatus("updates.tool_open"); return; }
-            if (installation.Repair)
+            if (installation.Repair || installation.InventoryUpgrade)
             {
                 helperSource = await Task.Run(() =>
                 {

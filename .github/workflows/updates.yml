@@ -23,13 +23,16 @@ jobs:
         run: |
           $ErrorActionPreference='Stop'
           if($env:RELEASE_TAG -notmatch '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$'){throw 'A semantic release tag is required.'}
+          $version=$env:RELEASE_TAG.Substring(1)
+          if($version -eq '1.4.15'){throw 'Initial 1.4.15 migration uses the reviewed bridge/final publication bundle. See docs/UPDATE_EVOLUTION.md.'}
           New-Item -ItemType Directory -Path ota | Out-Null
           gh release download $env:RELEASE_TAG --pattern 'Dustweave-*-win-x64.zip' --dir ota
           if($LASTEXITCODE -ne 0){throw 'Both tested release packages are required.'}
           try {
-            Invoke-WebRequest 'https://bd2.madsam.work/updates/dustweave/v2/updates.json' -OutFile ota/previous.json
+            $index=if([semver]$version -ge [semver]'1.4.15'){'updates-v3.json'}else{'updates.json'}
+            Invoke-WebRequest ("https://bd2.madsam.work/updates/dustweave/v2/"+$index) -OutFile ota/previous.json
           } catch {
-            if([int]$_.Exception.Response.StatusCode -ne 404){throw}
+            if([int]$_.Exception.Response.StatusCode -ne 404 -or [semver]$version -ge [semver]'1.4.15'){throw}
           }
       - uses: actions/setup-dotnet@v4
         with:
@@ -43,7 +46,9 @@ jobs:
             $prior=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($signed.Payload))|ConvertFrom-Json
             New-Item -ItemType Directory -Path ota/bases | Out-Null
             $recent=@($prior.Releases|Select-Object -First 10|ForEach-Object Version)
-            foreach($release in @($prior.Releases|Where-Object {$_.Version -in $recent -or [semver]$_.Version -ge [semver]'1.4.7'})){
+            $baselines=@($prior.Releases|Where-Object {$_.Version -in $recent -or [semver]$_.Version -ge [semver]'1.4.7'})
+            if([semver]$env:RELEASE_TAG.Substring(1) -gt [semver]'1.4.15'){$baselines=@($prior.Releases|Where-Object {[semver]$_.Version -ge [semver]'1.4.15'}|Select-Object -First 10)}
+            foreach($release in $baselines){
               if($release.Version -eq '1.3.0'){continue} # Withdrawn flat-layout release requires manual installation.
               if($release.Version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$'){throw 'Invalid baseline version.'}
               gh release download ("v"+$release.Version) --pattern 'Dustweave-*-win-x64.zip' --dir ota/bases

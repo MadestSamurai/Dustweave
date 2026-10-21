@@ -1,136 +1,53 @@
-# Update evolution after 1.4.14
+# 1.4.15 update and recovery protocol
 
-Status: design direction, not a claim that bridge updates already ship.
+Status: implemented and accepted locally; see [1.4.15 preparation](releases/1.4.15-preparation.md) for exact packages and evidence. Publication is a separate operation. 1.4.14 remains an immutable published baseline.
 
-The requirement is to preserve new capabilities through an automatic bridge
-upgrade, not permanently freeze components for compatibility. One user approval
-covers the complete upgrade path. A bridge is a technical intermediate step,
-not a second manual download or a second confirmation.
+## User flow
 
-## Compatibility boundary today
+An existing installation approves one update. Its original updater installs `1.4.15-bridge.1`, which immediately continues to final `1.4.15`. The bridge never opens daily automation, connects to the game or runs a schedule. There is no second approval or download-size confirmation. Canceling or losing the network during preparation leaves a resumable bridge: reopen Dustweave to continue. Final startup failure restores the bridge without automatically retrying the failed installation in a loop.
 
-Layout-2 differential updates require the same runtime version, bootstrap file
-list and byte-identical bootstrap files. Published old helpers enforce that
-boundary themselves. Changing only the feed or delta generator cannot safely
-teach those helpers a new installation protocol.
+Final 1.4.15 can replace its launcher, runtime and managed components. Small deltas remain preferred; a damaged base falls back to verified target blocks under the same approval. Healthy local blocks are reused. Updating all logical components does not imply downloading a complete ZIP. Future protocol-2 releases update directly, without another 1.4.15 bridge.
 
-1.4.14 therefore retains the published launcher and runtime. Its new desktop
-repair entry and independent `app/support/Dustweave.Updater.exe` repair the
-selected release using signed file inventories and content-addressed blocks.
-Same-version repair is not permission to silently upgrade the runtime or convert
-editions. No launcher auto-prompt or `Dustweave.exe --repair` is shipped.
+The root `Dustweave.exe` is native and independent of .NET. It offers repair if the managed application cannot start; `Dustweave.exe --repair` opens the same recovery path. Repair preserves accounts, settings, plugins and unowned files. The native entry pins its edition, version and repair-helper digest. Missing or damaged repair helpers can be restored from signed inventories. Repair never silently selects a newer version because local metadata is damaged. If the root executable itself is deleted, use `app/support/Dustweave.Updater.exe` or restore the official package. A deleted executable cannot repair itself.
 
-## Target behavior
+Critical startup dependencies are checked before entering the CLR: an invalid entry assembly can terminate the process without returning an exception to the native caller. The native entry also uses the Common Controls v6 activation manifest needed by its independent repair progress dialog. These two failure paths are part of packaged repair acceptance.
 
-1. Prefer a direct delta when the installed inventory matches a supported base.
-2. For changed or missing files, offer repair followed by the pending update;
-   later allow reconstruction of the target release directly from verified
-   healthy local blocks and downloaded blocks.
-3. Permit a complete target installation, including launcher and runtime, through
-   an independent transactional helper. A full logical replacement does not
-   require downloading a full ZIP if most blocks already exist locally.
-4. When the installed helper lacks a required capability, first install a
-   compatible bridge that adds it, then automatically continue to the requested
-   target. Show both steps and resume the remaining step after a restart. Do not
-   force all users through every intervening release.
-5. Restore the launcher capability to offer independent repair when the main
-   window cannot load through that bridge path. Compatibility is a delivery
-   constraint, not a reason to drop the feature.
+## Compatibility and authority
 
-## Delivery and capability design
+- Original 1.4.7–1.4.14 updaters keep their schema-3 feed at `updates.json`. Its eventual current release is the compatible bridge, with byte-identical bootstrap/runtime files copied from verified original 1.4.14 archives.
+- Bridge and final clients read `updates-v3.json`. Both indexes share the existing signing keys and immutable payload base, with separate publication state, receipts and current indexes.
+- Signed feed schema 4 explicitly sets `InstallerProtocol: 2` on capable targets. Signed inventories describe bytes; the signed release feed separately authorizes source version, target version, edition and protocol. Repair signatures alone do not authorize unrelated upgrades.
+- `dustweave-copy-v3` deltas can replace bootstrap/runtime files. Legacy v2 deltas retain their original constraints. Failed delta reconstruction falls through to signed inventory reconstruction, not unchecked copying.
+- The bridge pins its final target to 1.4.15. A later release cannot change an already approved second-stage target. Keep bridge and final inventories available while legacy clients still need them.
+- Policy/signatures remain at the origin. Immutable blocks and patches use Qicaiyun with verified origin fallback. No storage credentials ship to users.
 
-- Legacy clients cannot discover a bridge just by adding an unknown field to a
-  feed whose newest release they cannot install. Keep their existing endpoint
-  serving a compatible, signed bridge as its eligible current release. The
-  bridge switches to a capability-specific signed feed for the final target.
-  Both feeds remain on the origin and use the existing trust roots; historical
-  release metadata stays immutable. Do not rely on server-side version guessing
-  when old requests do not send their installed version.
-- Record the original update approval and intended channel in the bridge
-  handoff. The second stage revalidates the signed target and required capability
-  before installation, then continues without another approval dialog. An
-  unavailable target leaves the bridge usable and the update pending; it must
-  not start game automation between stages or silently claim completion.
-- Extend signed metadata with minimum helper capability, package/layout/runtime
-  compatibility and an optional explicit bridge target. Unknown capabilities
-  must remain ineligible for legacy clients; keep their signed feed compatible.
-- Preserve the existing direct-delta path for 1.4.7+ while patches remain within
-  its size limit. A new protocol must have its own eligibility path, not weaken
-  old clients' checks or rewrite immutable release metadata.
-- Legacy clients retain their existing eligibility rules. Capable clients select
-  the verified direct or bridge path under the same update approval. Download
-  bytes belong in ordinary progress reporting; there is no additional size-based
-  confirmation or second-stage confirmation in this design.
-- Bind target inventory, edition, helper hash, protocol and source constraints
-  into the signed update authorization. Do not use a repair signature alone as
-  authorization for an unannounced version change.
-- Keep policy/signatures at the origin and immutable payload blocks on Qicaiyun,
-  with verified origin fallback. Never ship storage or publication credentials.
-- Prepare a supported independent helper outside the installation tree before
-  any application exit. Updating the helper inside `app/support` is insufficient
-  if it will be locked by the repair process; the transaction runs from a copied,
-  verified attempt directory.
-- A full bootstrap/runtime replacement must not depend on that same runtime for
-  recovery. Use a self-contained external helper for both editions; account for
-  its separate download/storage cost and reuse by hash.
+## Transaction and recovery
 
-## Installation and recovery gates
+Before replacement, verify signatures, all target bytes, installed source/edition, paths, free space including backup, idle automation and ownership locks. Copy the verified self-contained helper outside the installation and wait for its parent to exit. Both Lite and Portable use this independent helper.
 
-Before replacement, verify all target bytes, required free space including
-rollback, path ownership, no reparse redirects, idle automation, closed tools,
-the main instance and isolated workers. A queued scheduled run must not race the
-installation or start game automation during bridge handoff.
+All replacements use flushed temporary files and atomic file replacement with a durable backup/journal. Install the native root recovery entry first, before changing the CLR or managed launcher. Before that first replacement, the old entry/runtime remain intact and can dispatch the external helper. Restore the root entry last during rollback. Normal startup checks unfinished journals before loading managed code. A healthy main window explicitly acknowledges startup before the updater completes.
 
-Keep a durable journal and a verified previous installation until the new
-application explicitly acknowledges a healthy start. Handle new/removed files
-as well as replacements. Account data, credentials, preferences, private plugins
-and other unowned files remain outside the transaction.
+The bridge resumes before desktop initialization. Completed inventory transactions obey the same two-version/seven-day cache retention rules; unfinished recovery stays protected. Cached signed inventories and verified staged bytes permit offline continuation.
 
-Current in-place bootstrap recovery is insufficient if power is lost while the
-launcher or its runtime is being replaced. Before enabling these replacements,
-select and validate either versioned installation directories with an atomic
-activation pointer, or an external recovery entry that survives damage to the
-active bootstrap. Preserve the normal user-facing entry point. Do not describe
-ordinary per-file rollback alone as complete power-loss protection.
+Process interruption and replacement faults can be tested locally; they are not a physical power-loss test or protection against hardware failure. A Lite installation still needs its external .NET Desktop Runtime. Repair restores program files, not Windows prerequisites.
 
-Only advance the signed feed after the intended published old client has passed
-the complete path. Keep the bridge release and recovery payload available while
-clients can still require them; cancelation after the first step leaves a usable
-bridge version with a visible pending second step.
+## Acceptance
 
-## Required acceptance matrix
+`scripts/test-bridge-update.ps1` extracts original published archives and runs their actual helpers for Lite and Portable of 1.4.7 and 1.4.14. It checks automatic second-stage installation, every final file, account/plugin sentinels, startup failure rollback and normal-entry recovery with a broken Portable CLR. Payloads are pre-staged in this process test. Transport corruption, resume, source fallback and signature rejection are separate synthetic gates.
 
-- Real 1.4.7, current previous release and bridge-client installations; Lite and
-  Portable. Validate eligibility as well as actual file replacement.
-- Clean installation, user-overwritten files, missing descriptor, missing
-  launcher, same-size corruption, extra user files, changed runtime and edition
-  mismatch. Never infer authorization from an untrusted local descriptor alone.
-- Interrupted download, offline CDN and origin fallback, invalid signatures,
-  low disk space, antivirus/file locks and parent process failing to exit.
-- Terminate at every durable transaction boundary, particularly between
-  bootstrap/runtime file replacements and between bridge stages. Restart using
-  the same entry point a user will use, not only an already-running test helper.
-- Startup failure, lost acknowledgement, successful startup followed by helper
-  loss, rollback interruption, canceled second-stage update and scheduled-run
-  contention. Preserve account/plugin sentinels throughout.
+`scripts/test-native-repair.ps1` verifies the native prompt and automatic repair with damaged startup files, helpers and descriptors, including a missing Portable host and foreign runtime files overlaid into Lite. `scripts/test-repair-packages.ps1` retains the independent repair engine's earlier fault matrix. `UpdateInventoryCases` exercises replacement boundaries and damaged-delta fallback. Publisher capability tests cover independent indexes, inventory prerequisites and immutable history. Protocol-2 publication additionally requires version-matched native repair results for both editions. Canonical packages retain source, localization, actual UI/tool and binary-boundary checks. Keep dated evidence and exact package hashes; local success is not a publication receipt.
 
-## Phased rollout
+## Publication order
 
-**1.4.14:** direct deltas with the stable bootstrap; signed same-version repair
-and independent recovery UI. This is the published compatibility baseline.
+1. Finish exact-package validation and prepare final/bridge archives, deltas, signed inventories and repair blocks.
+2. Deploy the capability-aware v2 publisher and exact no-cache nginx rule for `updates-v3.json`, preserving current indexes and the legacy v1 channel.
+3. Publish and verify repair blocks/inventories for final and bridge releases.
+4. Publish final schema-4 index with the constrained `capable` commands. Check public signatures, editions, payloads and repair availability.
+5. Publish the compatible bridge to schema-3 index last. The server rejects activation unless final 1.4.15 and its bridge identity are ready in the capable index. Old clients must not arrive at a dead end.
+6. Publish the ordinary GitHub release as final 1.4.15. The bridge is delivery infrastructure, not a second manual application download.
 
-**Next implementation:** deliver bridge selection/continuation and an independent
-helper capable of the target replacement through the current compatible path.
-1.4.14 is the existing baseline; it must not be described as already containing
-this bridge capability. Include restart continuation without starting a due game
-queue between the two update stages.
+Use `-Capable` with `publish-update-signed.ps1` and `publish-repair-signed.ps1` for the new index. Deployment/publication requires its own authorization. Acceptance scripts never upload test fixtures or modify public feeds.
 
-**Target release:** change the launcher and restore its startup-failure repair
-prompt. The bridge automatically installs it under the original update approval.
-Validate the recovery architecture above before enabling bootstrap or runtime
-replacement. Runtime changes follow the same supported path when needed.
+Pass the canonical prepared `-RepairDirectory` to `publish-update-signed.ps1` when those inventories were uploaded in advance. Reuse their signed bytes: separately re-signing an identical payload can produce a different envelope, which immutable publication correctly rejects.
 
-**Payload optimization:** target-release block reconstruction and reuse of healthy
-local blocks reduce transfers independently of the bridge mechanism. An upgrade
-covering all components does not imply downloading the entire ZIP, and payload
-optimization must not delay delivery of the bridge capability itself.
+The initial 1.4.15 migration uses the reviewed local bridge/final bundle. From 1.4.16 onward, the update preparation workflow reads `updates-v3.json` and creates patches from at most ten recent capable releases. Older capable versions remain eligible for signed-block reconstruction; the internal bridge always finishes at 1.4.15 and does not need a public GitHub release or a new patch for every future release.

@@ -4,7 +4,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 namespace Dustweave;
 
-public sealed record DailyUpdateDownload(string? DeltaFileName);
+public sealed record DailyUpdateDownload(string? DeltaFileName, bool InventoryUpgrade = false);
 public sealed record DailyUpdateNetworkState(string? Source = null, string? HighestVersion = null);
 public sealed record DailyUpdateAttempt(string Source, string Operation, string? Error);
 public sealed class DailyUpdateTransport(DailyUpdateTrust trust)
@@ -44,7 +44,7 @@ public sealed class DailyUpdateTransport(DailyUpdateTrust trust)
         if (valid.Length == 0) throw new InvalidDataException(results.Any(r => r.Error == "updates.signature_failed") ? "updates.signature_failed" : "updates.unavailable");
         // The same release/flavor must have the same bytes on every signed mirror.
         foreach (var group in valid.SelectMany(v => v.Feed.Releases).GroupBy(r => r.Version))
-            if (group.Select(r => JsonSerializer.Serialize(new { r.Layout, r.RuntimeVersion, Assets = r.Assets.OrderBy(a => a.Flavor), Deltas = (r.Deltas ?? []).OrderBy(d => d.Flavor).ThenBy(d => d.FromVersion) }, DailyUpdateJson.Options)).Distinct().Count() != 1)
+            if (group.Select(r => JsonSerializer.Serialize(new { r.Layout, r.RuntimeVersion, r.InstallerProtocol, Assets = r.Assets.OrderBy(a => a.Flavor), Deltas = (r.Deltas ?? []).OrderBy(d => d.Flavor).ThenBy(d => d.FromVersion) }, DailyUpdateJson.Options)).Distinct().Count() != 1)
                 throw new InvalidDataException("updates.mirror_conflict");
         // Extended indexes belong only to each feed's latest target. A stale
         // mirror still carries its former target's index, which newer history omits.
@@ -70,6 +70,14 @@ public sealed class DailyUpdateTransport(DailyUpdateTrust trust)
         var installed = installedDirectory == null ? null : DailyUpdateJson.TryRead<DailyUpdatePackage>(Path.Combine(installedDirectory, "update-package.json"));
         string? manual = DailyUpdates.ManualUpdateReason(feed, release, installed);
         if (manual != null) throw new InvalidDataException(manual);
+        if (release.InstallerProtocol == DailyUpdateInventory.Protocol && installedDirectory != null && installed != null)
+        {
+            var detail = progress == null ? null : new Progress<DailyRepairProgress>(p => progress.Report(p.Total > 0 ? p.Completed * 100 / p.Total : 0));
+            var plan = await DailyUpdateInventory.PrepareAsync(trust, client, verified, release,
+                installed.Version, flavor, installedDirectory, root, detail, token);
+            DailyUpdateJson.Write(Path.Combine(plan.Directory, "download-choice.json"), new DailyUpdateDownload(null, true));
+            return plan.Directory;
+        }
         if (release.Layout >= 2 && !allowDelta) throw new InvalidDataException("updates.manual_delta");
         string directory = Path.Combine(root, "updates", version + "-" + flavor);
         DailyUpdates.EnsureNoLinks(directory); Directory.CreateDirectory(directory);

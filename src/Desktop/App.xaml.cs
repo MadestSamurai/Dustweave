@@ -258,6 +258,9 @@ public partial class App : Application
     }
     internal static void ShowStartupFailure(Exception error, string diagnostic)
     {
+        // The native entry offers independent repair after the managed host
+        // exits. Do not put a blocking error dialog in front of that recovery.
+        if (Environment.GetEnvironmentVariable("DUSTWEAVE_NATIVE_BOOTSTRAP") == "2") return;
         string text, title;
         try
         {

@@ -2,6 +2,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType><TargetFramework>net8.0-windows</TargetFramework><RuntimeIdentifier>win-x64</RuntimeIdentifier><PlatformTarget>x64</PlatformTarget>
     <AssemblyName>Dustweave.Updater</AssemblyName><Version>1.0.0</Version>
+    <InformationalVersion>$(DustweaveVersion)</InformationalVersion>
     <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
     <SelfContained>true</SelfContained><RuntimeFrameworkVersion>$(DustweaveRuntimeVersion)</RuntimeFrameworkVersion>
     <PublishSingleFile>true</PublishSingleFile><EnableCompressionInSingleFile>true</EnableCompressionInSingleFile><IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>

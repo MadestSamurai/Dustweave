@@ -12,7 +12,14 @@ public sealed record DailyUpdateTrust(Dictionary<string, string> Keys, DailyUpda
     public static DailyUpdateTrust Production()
     {
         using var stream = typeof(DailyUpdateTrust).Assembly.GetManifestResourceStream("Dustweave.update-trust.json")!;
-        return JsonSerializer.Deserialize<DailyUpdateTrust>(stream, DailyUpdateJson.Options)!;
+        var trust = JsonSerializer.Deserialize<DailyUpdateTrust>(stream, DailyUpdateJson.Options)!;
+        // Legacy clients read updates.json (the bridge). Capable clients use a
+        // separate signed index while sharing the same package/object storage.
+        return trust with { Sources = trust.Sources.Select(s => s with
+        {
+            FeedUrl = s.FeedUrl.EndsWith("/updates.json", StringComparison.Ordinal)
+                ? s.FeedUrl[..^"updates.json".Length] + "updates-v3.json" : s.FeedUrl
+        }).ToArray() };
     }
 }
 public sealed record DailySignedUpdate(int Schema, string KeyId, string Algorithm, string Payload, string Signature);

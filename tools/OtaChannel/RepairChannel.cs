@@ -72,7 +72,7 @@ static class RepairChannel
         byte[] bytes = new byte[length]; await input.ReadExactlyAsync(bytes, token);
         var header = Rules.Read<RepairHeader>(bytes);
         var (request, manifests, blocks) = Validate(header, config, DateTimeOffset.UtcNow);
-        string liveFeed = Path.Combine(config.Public, "updates.json");
+        string liveFeed = Rules.FeedPath(config);
         using var gate = new FileStream(Path.Combine(config.State, "publish.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
         Rules.Need(Rules.HashFile(liveFeed) == request.ExpectedFeedSha256, "Current release changed");
         var current = Rules.VerifyFeed(File.ReadAllBytes(liveFeed), config);

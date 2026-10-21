@@ -28,7 +28,8 @@ internal static class Program
             string folder = Path.Combine(DataRoot, "startup");
             try { Directory.CreateDirectory(folder); File.WriteAllText(Path.Combine(folder, "launcher-error.txt"), DateTimeOffset.UtcNow + "\n" + error); } catch { }
             string message = "织尘未能启动。请解压完整软件包后重试；账号设置不会被删除。\nDustweave could not start. Extract the complete package and try again. Your saved accounts are retained.\n\n" + error.Message;
-            if (args.Length == 0 || args[0] is "--desktop-session") MessageBox(0, message, "Dustweave", 0x10);
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_NATIVE_BOOTSTRAP") != "2" &&
+                (args.Length == 0 || args[0] is "--desktop-session")) MessageBox(0, message, "Dustweave", 0x10);
             return 1;
         }
     }

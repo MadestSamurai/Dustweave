@@ -69,6 +69,7 @@ Run 'dotnet' @('build',$entry,'-c','Release','-r','win-x64','-p:SelfContained=fa
 foreach($component in @('tools/TradeData','tools/CompatibilityCli','tests/Dustweave.Tests','src/Launcher','src/Updater')){
  Run 'dotnet' @('build',(Join-Path $root $component),'-c','Release','-r','win-x64','-p:SelfContained=false',$packageImport,('-p:DustweavePackageLockRoot='+ (Join-Path $work 'locks/build')),'--nologo') ('build-'+($component -replace '/','-'))
 }
+Run 'dotnet' @('build',(Join-Path $root 'src/Bootstrap'),'-c','Release','-r','win-x64','--nologo') 'build-bootstrap'
 & (Join-Path $root 'check-source.ps1') -AfterBuild
 if($SyntheticEvidence){
  $proof=Get-Content -LiteralPath $SyntheticEvidence -Raw|ConvertFrom-Json
@@ -79,9 +80,14 @@ if($SyntheticEvidence){
  $changed=@(@($old.Keys)+@($current.Keys)|Sort-Object -Unique|Where-Object {$_ -match '^(src|tools|tests|assets|standalone|third-party)/|^Directory.Build.props$|^global.json$' -and $old[$_] -ne $current[$_]})
  # These UI sources are not compiled into Dustweave.Tests. Full package gates rerun
  # the host's localization checks for every flavor and each listed tool's actual UI smoke.
- $artifactRechecks=@($changed|Where-Object {$_ -in @('src/Desktop/MainWindow.Localization.cs','src/Fishing/desktop/Smoke.cs','src/Rhythm/desktop/Smoke.cs','src/Sichuan/desktop/SichuanWindow.xaml.cs','src/InfiniteGacha/desktop/MainWindow.xaml.cs')})
+ # Native entry sources are not compiled into synthetic tests. Actual package
+ # startup/UI gates run again; native recovery also has its own acceptance.
+ $publisherRechecks=@($changed|Where-Object {$_ -match '^tools/OtaChannel/(Rules|Mirror|CapabilitySelfTest)\.cs$'})
+ $artifactRechecks=@($changed|Where-Object {$_ -in $publisherRechecks -or $_ -match '^src/Bootstrap/(Program|Recovery|RepairBootstrap)\.cs$' -or $_ -in @('src/Desktop/MainWindow.Localization.cs','src/Fishing/desktop/Smoke.cs','src/Rhythm/desktop/Smoke.cs','src/Sichuan/desktop/SichuanWindow.xaml.cs','src/InfiniteGacha/desktop/MainWindow.xaml.cs')})
  $syntheticChanges=@($changed|Where-Object {$_ -notin $artifactRechecks})
  if($syntheticChanges.Count){throw ('Synthetic baseline inputs changed: '+($syntheticChanges -join ', '))}
+ # Publisher sources are outside Dustweave.Tests and have their own executable gate.
+ if($publisherRechecks.Count){Run 'dotnet' @('run','--project',(Join-Path $root 'tools/OtaChannel'),'-c','Release','--','self-test') 'ota-channel-self-test'}
  $validation.syntheticEvidence=[IO.Path]::GetFullPath($SyntheticEvidence)
  $validation.syntheticInputs=[IO.Path]::GetFullPath($SyntheticInputs)
  $validation.artifactRechecks=$artifactRechecks
@@ -206,7 +212,7 @@ foreach($flavor in $Flavors){
   }
  }
  $inventory=@(Get-ChildItem -LiteralPath $bundle -File -Recurse|ForEach-Object {[IO.Path]::GetRelativePath($bundle,$_.FullName).Replace([IO.Path]::DirectorySeparatorChar,[char]47)})+@('update-package.json')
- [ordered]@{Version=$Version;Flavor=$flavor;Layout=2;RuntimeVersion='8.0.30';BootstrapFiles=(Get-Content -LiteralPath (Join-Path $bundle 'app/package-components.json') -Raw|ConvertFrom-Json).bootstrapFiles;Files=@($inventory|Sort-Object -Unique)}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $bundle 'update-package.json') -Encoding utf8
+ [ordered]@{Version=$Version;Flavor=$flavor;Layout=2;InstallerProtocol=$(if($Version -eq '1.4.15-bridge.1'){1}else{2});RuntimeVersion='8.0.30';BootstrapFiles=(Get-Content -LiteralPath (Join-Path $bundle 'app/package-components.json') -Raw|ConvertFrom-Json).bootstrapFiles;Files=@($inventory|Sort-Object -Unique)}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $bundle 'update-package.json') -Encoding utf8
  $files=@(Get-ChildItem -LiteralPath $bundle -File -Recurse)
  if(@($files|Where-Object Extension -eq '.exe').Count -ne 2 -or !(Test-Path -LiteralPath (Join-Path $bundle 'app/support/Dustweave.Updater.exe'))){throw 'Expected launcher plus independent updater.'}
  if(@(Get-ChildItem -LiteralPath $bundle -File|Where-Object Name -notin @('Dustweave.exe','README.md','README.en.md','LICENSE','update-package.json')).Count -or @(Get-ChildItem -LiteralPath $bundle -Directory|Where-Object Name -ne 'app').Count){throw 'Package root must expose only the launcher, guides, license and update inventory.'}

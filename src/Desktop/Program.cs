@@ -62,6 +62,7 @@ public static class Program
         bool ordinaryHost = Dustweave.Accounts.SandboxProcessScope.CurrentBox.Length == 0;
         StartupDiagnostics.Mark("update-recovery");
         if (ordinaryHost && DailyUpdateInstaller.RecoverBeforeStartup(DailyDesktopLaunch.Normalize(args))) return 0;
+        if (ordinaryHost && DailyUpdateBridge.ContinueBeforeStartup(DailyProductVersion.Current, DailyDesktopLaunch.Normalize(args))) return 0;
         if (DailyDesktopLaunch.NeedsRelay(args)) { StartupDiagnostics.Mark("explicit-desktop-relay"); DailyDesktopLaunch.Start(Environment.ProcessPath ?? throw new InvalidOperationException("无法定位日常助手"), args); return 0; }
         args = DailyDesktopLaunch.Normalize(args);
         if (args.Length==2 && args[0] is "--check-tool-languages" or "--check-tool-language-ui")

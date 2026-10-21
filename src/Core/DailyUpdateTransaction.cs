@@ -36,17 +36,21 @@ public static class DailyUpdateTransaction
         { throw new IOException($"Cannot replace {target} (0x{error.HResult:X8})", error); }
         finally { if (File.Exists(temp)) File.Delete(temp); }
     }
-    public static DailyUpdateJournal Prepare(string staging, string target, string backup, string[] names, IReadOnlyDictionary<string, string>? retainedFiles = null, bool removeObsolete = true)
+    public static DailyUpdateJournal Prepare(string staging, string target, string backup, string[] names, IReadOnlyDictionary<string, string>? retainedFiles = null, bool removeObsolete = true, bool installRecoveryEntryFirst = false, string[]? previousFiles = null)
     {
         foreach (var path in new[] { staging, target, backup }) DailyUpdates.EnsureNoLinks(path);
         if (Directory.Exists(backup)) throw new IOException("updates.backup_exists");
         var previous = DailyUpdateJson.TryRead<DailyUpdatePackage>(Path.Combine(target, "update-package.json"));
-        string[] obsolete = removeObsolete ? (previous?.Files ?? []).Except(names, StringComparer.OrdinalIgnoreCase).ToArray() : [];
+        string[] obsolete = removeObsolete ? (previousFiles ?? previous?.Files ?? []).Except(names, StringComparer.OrdinalIgnoreCase).ToArray() : [];
         var all = names.Concat(obsolete).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         if (all.Length > 10000 || all.Any(n => !DailyUpdates.AllowedFile(n))) throw new InvalidDataException("updates.invalid_package");
+        EnsureSpace(staging, target, backup, all.Where(n => retainedFiles?.ContainsKey(n) != true));
         Directory.CreateDirectory(backup);
         var files = new List<DailyUpdateBackupFile>();
-        foreach (var name in all.OrderBy(n => n == "Dustweave.exe" ? 1 : 0))
+        // The first protocol-2 upgrade installs its runtime-independent entry
+        // atomically BEFORE touching the old CLR/managed launcher. Until then
+        // the old entry still has its intact runtime and can read the journal.
+        foreach (var name in all.OrderBy(n => n == "Dustweave.exe" ? installRecoveryEntryFirst ? -1 : 1 : 0))
         {
             string destination = Path.Combine(target, name), saved = Path.Combine(backup, name);
             DailyUpdates.EnsureNoLinks(destination);
@@ -105,6 +109,24 @@ public static class DailyUpdateTransaction
         journal = journal with { State = "rolled_back" }; Save(journal); return journal;
     }
     public static void Save(DailyUpdateJournal journal) => DailyUpdateJson.Write(Path.Combine(journal.Backup, "transaction.json"), journal);
+    private static void EnsureSpace(string staging, string target, string backup, IEnumerable<string> names)
+    {
+        long saved = 0, growth = 0, largest = 0;
+        foreach (string name in names)
+        {
+            string oldPath = Path.Combine(target,name), newPath = Path.Combine(staging,name);
+            long before = File.Exists(oldPath) ? new FileInfo(oldPath).Length : 0;
+            long after = File.Exists(newPath) ? new FileInfo(newPath).Length : 0;
+            if (before == after && before > 0 && Hash(oldPath) == Hash(newPath)) continue;
+            saved += before; growth += Math.Max(0, after-before); largest = Math.Max(largest, after);
+        }
+        string backupDrive = Path.GetPathRoot(Path.GetFullPath(backup))!, targetDrive = Path.GetPathRoot(Path.GetFullPath(target))!;
+        const long reserve = 16 * 1024 * 1024;
+        if (backupDrive.Equals(targetDrive,StringComparison.OrdinalIgnoreCase))
+        { if (new DriveInfo(targetDrive).AvailableFreeSpace < saved+growth+largest+reserve) throw new IOException("updates.disk_space"); }
+        else if (new DriveInfo(backupDrive).AvailableFreeSpace < saved+reserve || new DriveInfo(targetDrive).AvailableFreeSpace < growth+largest+reserve)
+            throw new IOException("updates.disk_space");
+    }
     public static DailyUpdateJournal Read(string backup, string target)
     {
         var journal = DailyUpdateJson.TryRead<DailyUpdateJournal>(Path.Combine(backup, "transaction.json")) ?? throw new IOException("updates.recovery_required");

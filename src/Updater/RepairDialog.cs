@@ -44,7 +44,7 @@ internal static class RepairDialog
             Size = (uint)Marshal.SizeOf<Config>(), Flags = 8 | 0x200 | 0x800 | 0x8000,
             CommonButtons = 8, Title = "Dustweave", Instruction = title,
             Content = Text("正在准备…", "正在準備…", "Preparing…"),
-            Footer = Text("确认重启之前，不会修改安装文件。", "確認重新啟動之前，不會修改安裝檔案。", "Installation files stay unchanged until you confirm the restart."),
+            Footer = Text("准备完成后自动继续；可取消并在下次打开时重试。", "準備完成後自動繼續；可取消並在下次開啟時重試。", "Continues automatically when ready. Cancel to retry next time."),
             Callback = callback, Width = 320
         };
         int result = TaskDialogIndirect(ref config, out _, out _, out _);

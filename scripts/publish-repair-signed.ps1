@@ -4,6 +4,7 @@ param(
  [Parameter(Mandatory)][string]$Operation,
  [string]$CloudConfig,
  [switch]$RefreshOrigin,
+ [switch]$Capable,
  [string]$PrivateKeyFile=(Join-Path $env:LOCALAPPDATA 'DustweavePublisher/update-signing.dpapi')
 )
 $ErrorActionPreference='Stop'
@@ -12,6 +13,7 @@ $settings=Get-Content -LiteralPath $Config -Raw|ConvertFrom-Json
 if($settings.Host -notmatch '^[a-zA-Z0-9.-]+$' -or $settings.User -ne 'dustweave-ota-v2'){throw 'Repair requires the constrained v2 publishing account.'}
 if(Test-Path -LiteralPath $Operation){throw 'Operation exists. Query its saved nonce with the normal status command before retrying.'}
 function InvokeRepairChannel([string]$command,[byte[]]$header=$null,[object[]]$files=@()){
+ if($Capable){$command=$command.Replace('dustweave-ota ','dustweave-ota capable ')}
  $info=[Diagnostics.ProcessStartInfo]::new('ssh');$info.UseShellExecute=$false;$info.CreateNoWindow=$true;$info.WindowStyle='Hidden'
  $info.RedirectStandardInput=$true;$info.RedirectStandardOutput=$true;$info.RedirectStandardError=$true
  foreach($arg in @('-i',$settings.IdentityFile,'-o','BatchMode=yes','-o','IdentitiesOnly=yes','-o','ConnectTimeout=8','-o','ServerAliveInterval=15','-o','ServerAliveCountMax=3',"$($settings.User)@$($settings.Host)",$command)){$info.ArgumentList.Add($arg)}

@@ -43,8 +43,23 @@ public sealed class DailyUpdateRepair(DailyUpdateTrust trust)
         progress?.Report(new("checking", 0, 1));
         DailyRepairManifest? manifest = null;
         byte[]? envelope = null;
+        // Versioned inventories are immutable and authenticated against this
+        // release's archive hash. A verified cached copy survives network loss.
+        string cachedManifest = ManifestPath(directory);
+        if (File.Exists(cachedManifest))
+        {
+            try
+            {
+                DailyUpdates.EnsureNoLinks(cachedManifest);
+                if (new FileInfo(cachedManifest).Length > DailyUpdateRepairManifest.MaxEnvelopeBytes) throw new InvalidDataException("updates.repair_manifest");
+                envelope = File.ReadAllBytes(cachedManifest);
+                manifest = DailyUpdateRepairManifest.Verify(envelope, trust.Keys); Bind(manifest, release, asset);
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException) { manifest = null; envelope = null; }
+        }
         foreach (var source in trust.Sources.OrderBy(s => s.Id == verified.SourceId ? 0 : 1))
         {
+            if (manifest != null) break;
             token.ThrowIfCancellationRequested();
             try
             {

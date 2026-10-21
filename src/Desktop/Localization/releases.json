@@ -1,5 +1,29 @@
 [
   {
+    "Version": "1.4.15",
+    "Date": "2026-10-21",
+    "Notes": {
+      "zh-CN": [
+        "更新组件升级：旧版确认一次更新后自动完成过渡与最终安装，期间不会启动游戏或执行定时任务。",
+        "更新时自动处理被覆盖、缺失或损坏的程序文件；优先使用差分与健康文件，仅补齐所需数据。",
+        "新增不依赖程序运行库的启动恢复入口。主窗口无法打开时可检查并修复，账号、设置和插件会保留。",
+        "启动器和运行库也可以更新；替换中断或新版启动失败时保留恢复与回退路径。"
+      ],
+      "zh-TW": [
+        "更新元件升級：舊版確認一次更新後自動完成過渡與最終安裝，期間不會啟動遊戲或執行定時工作。",
+        "更新時自動處理被覆蓋、缺少或損壞的程式檔案；優先使用差分與健康檔案，僅補齊所需資料。",
+        "新增不依賴程式執行階段的啟動恢復入口。主視窗無法開啟時可檢查並修復，帳號、設定和外掛會保留。",
+        "啟動器和執行階段也可以更新；替換中斷或新版啟動失敗時保留恢復與回退路徑。"
+      ],
+      "en-US": [
+        "One update approval now completes the required updater migration and final installation. Game launches and scheduled runs remain paused between stages.",
+        "Updates automatically handle overwritten, missing or damaged program files, preferring small patches and healthy local files before downloading missing data.",
+        "Adds a startup recovery entry independent of the application's runtime. If the main window cannot open, check and repair program files while preserving accounts, settings and plugins.",
+        "The launcher and runtime can now be updated, with recovery and rollback paths for interrupted replacements or failed startup."
+      ]
+    }
+  },
+  {
     "Version": "1.4.14",
     "Date": "2026-10-21",
     "Notes": {

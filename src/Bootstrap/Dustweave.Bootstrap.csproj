@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType><TargetFramework>net8.0-windows</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier><PlatformTarget>x64</PlatformTarget>
+    <AssemblyName>Dustweave.Bootstrap</AssemblyName><Version>2.0.0</Version>
+    <PublishAot>true</PublishAot><SelfContained>true</SelfContained>
+    <RuntimeFrameworkVersion>$(DustweaveRuntimeVersion)</RuntimeFrameworkVersion>
+    <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
+    <OptimizationPreference>Size</OptimizationPreference><StripSymbols>true</StripSymbols>
+    <DebugType>None</DebugType><DebugSymbols>false</DebugSymbols>
+    <ApplicationManifest>../Updater/updater.manifest</ApplicationManifest>
+    <ApplicationIcon>../../assets/branding/Dustweave.ico</ApplicationIcon>
+    <Product>Dustweave</Product><Description>Dustweave startup and independent recovery</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="../../assets/updates/trust.json" LogicalName="Dustweave.update-trust.json" />
+    <EmbeddedResource Include="$(DustweaveBootstrapInfo)" LogicalName="Dustweave.bootstrap-info.json" Condition="'$(DustweaveBootstrapInfo)' != ''" />
+    <Compile Include="../Updater/RepairDialog.cs" Link="RepairDialog.cs" />
+  </ItemGroup>
+</Project>

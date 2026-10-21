@@ -60,7 +60,8 @@ public static class UpdateCacheRetention
             }
             var journal = Read<DailyUpdateJournal>(Path.Combine(backup, "transaction.json"));
             if (journal == null) return (Exists(backup), false);
-            if (!Same(journal.Target, target) || !Same(journal.Backup, backup) || !Within(journal.Staging, attempt)) return (true, false);
+            bool inventoryStage = (job.Repair || job.InventoryUpgrade) && Same(journal.Staging, Path.Combine(versionPath, "repair-staging"));
+            if (!Same(journal.Target, target) || !Same(journal.Backup, backup) || !(Within(journal.Staging, attempt) || inventoryStage)) return (true, false);
             bool terminal = journal.State is "completed" or "rolled_back";
             return (!terminal, terminal);
         }

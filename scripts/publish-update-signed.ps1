@@ -6,7 +6,9 @@ param(
  [string]$ExpectedCurrent,
  [string]$Operation,
  [switch]$Wait,
+ [switch]$Capable,
  [string]$MirrorConfig,
+ [string]$RepairDirectory,
  [string]$PrivateKeyFile=(Join-Path $env:LOCALAPPDATA 'DustweavePublisher/update-signing.dpapi')
 )
 $ErrorActionPreference='Stop'
@@ -14,6 +16,7 @@ $root=Split-Path -Parent $PSScriptRoot
 $settings=Get-Content -LiteralPath $Config -Raw|ConvertFrom-Json
 if($settings.Host -notmatch '^[a-zA-Z0-9.-]+$' -or $settings.User -notin @('dustweave-ota','dustweave-ota-v2')){throw 'Invalid constrained publisher endpoint.'}
 function InvokeChannel([string]$command,[byte[]]$header=$null,[object[]]$files=@()){
+ if($Capable){$command=$command.Replace('dustweave-ota ','dustweave-ota capable ')}
  $info=[Diagnostics.ProcessStartInfo]::new('ssh');$info.UseShellExecute=$false;$info.CreateNoWindow=$true;$info.WindowStyle='Hidden'
  $info.RedirectStandardInput=$true;$info.RedirectStandardOutput=$true;$info.RedirectStandardError=$true;$info.WorkingDirectory=(Get-Location).Path
  foreach($arg in @('-i',$settings.IdentityFile,'-o','BatchMode=yes','-o','IdentitiesOnly=yes','-o','ConnectTimeout=8','-o','ServerAliveInterval=15','-o','ServerAliveCountMax=3',"$($settings.User)@$($settings.Host)",$command)){$info.ArgumentList.Add($arg)}
@@ -64,6 +67,7 @@ $proof=[Text.Encoding]::UTF8.GetString($evidenceBytes)|ConvertFrom-Json
 if($proof.status -ne 'passed'){throw 'Packaged acceptance must pass.'}
 foreach($flavor in @('Lite','Portable')){
  if(!@($proof.cases|Where-Object {$_.case -eq "upgrade-$flavor" -and $_.status -eq 'passed' -and $_.to -eq $release.Version -and $_.baselineHelper}).Count){throw "Missing actual baseline-helper acceptance: $flavor"}
+ if($release.InstallerProtocol -eq 2 -and !@($proof.cases|Where-Object {$_.case -eq "native-repair-$flavor" -and $_.status -eq 'passed' -and $_.to -eq $release.Version}).Count){throw "Missing native repair acceptance: $flavor"}
 }
 $uploadAssets=if($release.Layout -eq 1){@($release.Assets)+(@($release.Deltas)+@($feed.BaselineDeltas))}else{(@($release.Deltas)+@($feed.BaselineDeltas))}
 $blobs=@($uploadAssets|Where-Object {$_}|Sort-Object FileName -CaseSensitive|ForEach-Object {[ordered]@{FileName=$_.FileName;Bytes=[long]$_.Bytes;Sha256=$_.Sha256.ToLowerInvariant()}})
@@ -75,9 +79,9 @@ if($MirrorConfig){
  & (Join-Path $PSScriptRoot 'publish-update-mirror.ps1') -Config $MirrorConfig -PackageDirectory $folder -Receipt ($Operation+'.mirror.json')
  # Prepare repair objects before switching the feed. The server accepts only
  # manifests bound to this signed release; existing origin blocks are reused.
- $repairDirectory=Join-Path (Split-Path -Parent ([IO.Path]::GetFullPath($Operation))) ('repair-'+$release.Version)
+ $repairDirectory=if($RepairDirectory){[IO.Path]::GetFullPath($RepairDirectory)}else{Join-Path (Split-Path -Parent ([IO.Path]::GetFullPath($Operation))) ('repair-'+$release.Version)}
  & (Join-Path $PSScriptRoot 'prepare-repair-package.ps1') -PackageDirectory $folder -OutputDirectory $repairDirectory -PrivateKeyFile $PrivateKeyFile
- & (Join-Path $PSScriptRoot 'publish-repair-signed.ps1') -Config $Config -RepairDirectory $repairDirectory -Operation ($Operation+'.repair.json') -CloudConfig $MirrorConfig -PrivateKeyFile $PrivateKeyFile
+ & (Join-Path $PSScriptRoot 'publish-repair-signed.ps1') -Config $Config -RepairDirectory $repairDirectory -Operation ($Operation+'.repair.json') -CloudConfig $MirrorConfig -PrivateKeyFile $PrivateKeyFile -Capable:$Capable
 }
 $nonce=[Guid]::NewGuid().ToString('N');$now=[DateTimeOffset]::UtcNow
 $request=[ordered]@{Schema=1;Product='Dustweave';Version=$release.Version;ExpectedFeedSha256=$current.feedSha256;FeedSha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($feedBytes)).ToLowerInvariant();EvidenceSha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($evidenceBytes)).ToLowerInvariant();Nonce=$nonce;IssuedUtc=$now.ToString('O');ExpiresUtc=$now.AddMinutes(15).ToString('O');Files=$blobs}
@@ -97,4 +101,4 @@ WriteJson $Operation @{nonce=$nonce;version=$release.Version;expectedCurrent=$cu
 $paths=@($blobs|ForEach-Object {@{Path=Join-Path $folder $_.FileName}})
 try{$result=InvokeChannel 'dustweave-ota submit' $header $paths;$result|ConvertTo-Json -Depth 20}
 catch{throw "Submission result is uncertain. Query -Action status -Operation '$Operation' before retrying. $($_.Exception.Message)"}
-if($Wait){& $PSCommandPath -Action status -Config $Config -Operation $Operation -Wait}
+if($Wait){& $PSCommandPath -Action status -Config $Config -Operation $Operation -Wait -Capable:$Capable}

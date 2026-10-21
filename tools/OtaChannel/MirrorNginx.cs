@@ -12,6 +12,12 @@ static class MirrorNginx
         Rules.Need(c.Public == "/home/nginx/dustweave-updates-v2", "Unexpected production web mount");
         string block = $$"""
         {{Begin}}
+        location = /updates/dustweave/v2/updates-v3.json {
+            alias /usr/share/nginx/dustweave-updates-v2/updates-v3.json;
+            add_header Cache-Control "no-store" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            limit_except GET { deny all; }
+        }
         location ^~ /updates/dustweave/v2/.mirror/ { return 404; }
         location ^~ /updates/dustweave/v2/ {
             alias /usr/share/nginx/dustweave-updates-v2/;
