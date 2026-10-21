@@ -72,10 +72,55 @@ static class BusinessScopeCases
         Reject(dispatch, "dispatch reply cannot confirm a theft even though both use TalentSkillUseResponse");
         Check(N(definition.Verify(op, Pair(114, Npc()), f.Evidence())["npc"]) == 5,
             "matching theft keeps its NPC, group, map and week proof");
+        // A successful weekly theft can omit the shared talent-counter update.
+        // Its NPC cooldown still identifies the used group (and the attempt).
+        var npcOnly = Pair(114, Npc());
+        npcOnly[1]!["Values"]![1]!["Json"] = "null";
+        Check(N(definition.Verify(op, npcOnly, f.Evidence())["npc"]) == 5,
+            "successful theft with null TalentSkillInfo uses its matching NPC cooldown receipt");
+        foreach (string mutation in new[] { "wrong-group", "wrong-npc", "expired", "missing-npc", "conflicting-skill", "malformed-skill", "missing-success", "foreign-player", "rejected" })
+        {
+            var es = npcOnly.DeepClone().AsArray();
+            switch (mutation)
+            {
+                case "wrong-group": es[1]!["Values"]![2]!["Json"] = Npc(group: 125).ToJsonString(); break;
+                case "wrong-npc": es[1]!["Values"]![2]!["Json"] = Npc(npc: 6).ToJsonString(); break;
+                case "expired": es[1]!["Values"]![2]!["Json"] = O(("npcId", 5), ("groupId", 114), ("endTime", "1000")).ToJsonString(); break;
+                case "missing-npc": es[1]!["Values"]![2]!["Json"] = "null"; break;
+                case "conflicting-skill": es[1]!["Values"]![1]!["Json"] = O(("groupId", 1805)).ToJsonString(); break;
+                case "malformed-skill": es[1]!["Values"]![1]!["Json"] = "{}"; break;
+                case "missing-success": es[1]!["Values"]![0]!["Json"] = "null"; break;
+                case "foreign-player": es[1]!["Frame"]!["PlayerKey"] = "foreign"; break;
+                case "rejected": es[1]!["Accepted"] = false; break;
+            }
+            Reject(es, "NPC-only theft proof still rejects " + mutation);
+        }
+        using (var recovered = new WorkflowHarness(Path.Combine(output, "theft-npc-only-recovery"), [definition]))
+        {
+            recovered.Page("StealInfoPopupUI", "_objButtonOk");
+            recovered.Readings = f.Readings;
+            var savedTheft = op.DeepClone().AsObject();
+            savedTheft["state"] = "unknown";
+            savedTheft["events"] = Copy(npcOnly);
+            savedTheft["last_observation"] = f.Evidence();
+            recovered.Business.Save(savedTheft);
+            var reconciled = await recovered.Business.ReconcileAsync(recovered.Context);
+            Check(reconciled["completed"]!.AsArray().Count == 1 && reconciled["unresolved"]!.AsArray().Count == 0
+                && recovered.Box.Commands.Count == 0,
+                "legacy successful NPC-only theft reconciles without another consuming input");
+        }
         var mixed = dispatch.DeepClone().AsArray();
         foreach (var e in Pair(114, Npc(), 3)) mixed.Add(Copy(e));
         Check(N(definition.Verify(op, mixed, f.Evidence())["npc"]) == 5,
             "settled unrelated talent pair does not hide a later matching theft reply");
+        var otherNpc = Pair(125, Npc(group: 125));
+        otherNpc[1]!["Values"]![1]!["Json"] = "null";
+        foreach (var e in Pair(114, Npc(), 3)) otherNpc.Add(Copy(e));
+        Check(N(definition.Verify(op, otherNpc, f.Evidence())["group"]) == 114,
+            "NPC-only response from another settled skill does not block the selected theft");
+        var contradictory = otherNpc.DeepClone().AsArray();
+        contradictory[1]!["Values"]![1]!["Json"] = O(("groupId", 1805)).ToJsonString();
+        Reject(contradictory, "conflicting skill and NPC identities remain ambiguous rather than being discarded");
         foreach (string mutation in new[] { "npc", "npc-group", "missing-group", "rejected-other", "foreign-actor", "duplicate", "overlap", "orphan" })
         {
             var es = mixed.DeepClone().AsArray();
@@ -125,7 +170,7 @@ static class BusinessScopeCases
             if (delivered) return;
             delivered = true;
             live.Event("dispatch.start", "request");
-            live.Event("dispatch.start", "response", ("IsSuccess", true), ("TalentSkillInfo", O(("groupId", 114))), ("TalentNpcInfo", Npc()));
+            live.Event("dispatch.start", "response", ("IsSuccess", true), ("TalentSkillInfo", null), ("TalentNpcInfo", Npc()));
         };
         var committed = await live.Business.CommitAsync(current, live.Context, 2);
         Check(S(committed["state"]) == "completed" && live.Box.Commands.Count == 1 && delivered

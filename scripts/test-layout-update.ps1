@@ -11,7 +11,9 @@ if($outputRoot -notmatch '[\\/]artifacts[\\/]' -or (Test-Path -LiteralPath $outp
 Add-Type -Path $CoreAssembly
 $signed=Get-Content -LiteralPath (Join-Path $Packages 'updates.json') -Raw|ConvertFrom-Json
 $feed=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($signed.Payload))|ConvertFrom-Json
-if($feed.Schema -ne 3 -or $feed.Releases[0].Layout -ne 2){throw 'Expected layout 2 packages.'}
+if($feed.Schema -notin @(3,4) -or $feed.Releases[0].Layout -ne 2){throw 'Expected layout 2 packages.'}
+$capable=$feed.Releases[0].InstallerProtocol -eq 2
+if($capable -and $feed.Schema -ne 4){throw 'Protocol 2 acceptance requires the capable feed.'}
 $reports=[Collections.Generic.List[object]]::new()
 function WriteJson($path,$value){[IO.Directory]::CreateDirectory((Split-Path -Parent $path))|Out-Null;[IO.File]::WriteAllText($path,($value|ConvertTo-Json -Depth 40),[Text.UTF8Encoding]::new($false))}
 function Sign($value){
@@ -93,13 +95,15 @@ foreach($flavor in @('Lite','Portable')){
  if($process.ExitCode -ne 0 -or $result.State -ne 'completed'){throw "Packaged upgrade failed: $($test.folder)"}
  VerifyInstall $test.targetFolder (Join-Path $Packages $flavor);CheckPreserved $test
  $journal=Get-Content -LiteralPath (Join-Path $test.attempt 'backup/transaction.json') -Raw|ConvertFrom-Json
- if($journal.Files.Name -contains 'Dustweave.exe' -or $journal.Files.Name -contains 'app/coreclr.dll'){throw 'Stable bootstrap/runtime was replaced'}
+ if(!$capable -and ($journal.Files.Name -contains 'Dustweave.exe' -or $journal.Files.Name -contains 'app/coreclr.dll')){throw 'Stable bootstrap/runtime was replaced'}
+ if($capable -and $journal.Files.Name -contains 'Dustweave.exe' -and $journal.Files[0].Name -ne 'Dustweave.exe'){throw 'Recovery entry must be installed before managed components'}
  CloseInstalled $test.target
  $reports.Add(@{case="upgrade-$flavor";status='passed';delta=$true;baselineHelper=$true;to=$release.Version;startupAcknowledged=$true;changedFiles=$journal.Files.Count;deltaBytes=$test.delta.Bytes;allFilesVerified=$true})
  Write-Host "Passed upgrade-$flavor"
 }
-# Make a valid signed patch whose business DLL cannot start. The stable launcher must remain intact.
-$test=Setup 'startup-failure' 'Lite'
+# Make valid signed patches whose business DLL cannot start, then verify both editions restore every baseline file.
+foreach($flavor in @('Lite','Portable')){
+$test=Setup ("startup-failure-"+$flavor) $flavor
 $faultZip=Join-Path $test.folder 'fault.zip'
 Copy-Item -LiteralPath (Join-Path $Packages $test.asset.FileName) -Destination $faultZip
 $archive=[IO.Compression.ZipFile]::Open($faultZip,[IO.Compression.ZipArchiveMode]::Update)
@@ -108,27 +112,28 @@ try{
  $writer=[IO.StreamWriter]::new($archive.CreateEntry('app/Dustweave.dll').Open());try{$writer.Write('Deliberately invalid business assembly.')}finally{$writer.Dispose()}
 }finally{$archive.Dispose()}
 $faultFolder=Join-Path $test.folder 'patch';[IO.Directory]::CreateDirectory($faultFolder)|Out-Null
-$faultDelta=[Dustweave.DailyUpdateDeltaPackage]::Create((Join-Path $Baseline "Dustweave-$baselineVersion-Lite-win-x64.zip"),$faultZip,$faultFolder)
+$faultDelta=[Dustweave.DailyUpdateDeltaPackage]::Create((Join-Path $Baseline "Dustweave-$baselineVersion-$flavor-win-x64.zip"),$faultZip,$faultFolder)
 $faultFeed=$feed|ConvertTo-Json -Depth 40|ConvertFrom-Json
-$faultAsset=$faultFeed.Releases[0].Assets|Where-Object Flavor -eq 'Lite'
+$faultAsset=$faultFeed.Releases[0].Assets|Where-Object Flavor -eq $flavor
 $faultAsset.Bytes=(Get-Item -LiteralPath $faultZip).Length;$faultAsset.Sha256=(Get-FileHash -LiteralPath $faultZip).Hash
-$faultFeed.Releases[0].Deltas=@($faultFeed.Releases[0].Deltas|Where-Object Flavor -ne 'Lite')+@($faultDelta)
+$faultFeed.Releases[0].Deltas=@($faultFeed.Releases[0].Deltas|Where-Object Flavor -ne $flavor)+@($faultDelta)
 WriteJson (Join-Path $test.cache 'signed-feed.json') (Sign $faultFeed)
 Copy-Item -LiteralPath (Join-Path $faultFolder $faultDelta.FileName) -Destination $test.cache -Force
 $test.job.Release=$faultFeed.Releases[0];$test.job.Asset=$faultAsset;WriteJson $test.jobPath $test.job
 $process=StartIsolated $test.helper @('--apply-update',$test.jobPath) $test.data;WaitProcess $process
 $result=Get-Content -LiteralPath (Join-Path $test.data 'update-result.json') -Raw|ConvertFrom-Json
 if($result.State -ne 'rolled_back'){throw "Startup failure was not recovered: $($test.folder)"}
-Start-Sleep -Seconds 3;VerifyInstall $test.targetFolder (Join-Path $Baseline 'Lite');CheckPreserved $test;CloseInstalled $test.target
-$reports.Add(@{case='startup-failure';status='passed';previousPackageRestored=$true;brokenBusinessAssembly=$true})
-Write-Host 'Passed startup-failure'
+Start-Sleep -Seconds 3;VerifyInstall $test.targetFolder (Join-Path $Baseline $flavor);CheckPreserved $test;CloseInstalled $test.target
+$reports.Add(@{case=$(if($flavor -eq 'Lite'){'startup-failure'}else{'startup-failure-Portable'});flavor=$flavor;status='passed';previousPackageRestored=$true;brokenBusinessAssembly=$true})
+Write-Host "Passed startup-failure-$flavor"
+}
 # Interrupt a replacement, then corrupt a backed-up business DLL. Normal entry must recover before loading it.
 foreach($flavor in @('Lite','Portable')){
  $test=Setup ('bootstrap-recovery-'+$flavor) $flavor
  $typedRelease=Typed $release ([type][Dustweave.DailyUpdateRelease]);$typedAsset=Typed $test.asset ([type][Dustweave.DailyUpdateAsset])
  $stage=Join-Path $test.attempt 'staging';$backup=Join-Path $test.attempt 'backup'
  $names=[Dustweave.DailyUpdateDeltaPackage]::Extract((Join-Path $test.cache $test.delta.FileName),$test.targetFolder,$stage,$typedRelease,$typedAsset,$test.delta,[Threading.CancellationToken]::None,$true)
- $journal=[Dustweave.DailyUpdateTransaction]::Prepare($stage,$test.targetFolder,$backup,$names,$null)
+ $journal=[Dustweave.DailyUpdateTransaction]::Prepare($stage,$test.targetFolder,$backup,$names,$null,$true,$capable,$null)
  if($journal.Files.Name -notcontains 'app/Dustweave.dll'){throw 'Business DLL is not covered by recovery backup'}
  WriteJson (Join-Path $test.targetFolder '.dustweave-update.json') @{JobPath=$test.jobPath;Nonce=$test.job.Nonce;HelperSha256=(Get-FileHash -LiteralPath $test.helper).Hash}
  try{[void][Dustweave.DailyUpdateTransaction]::Apply($journal,[Action[int]]{param($count) if($count -eq 1){throw 'Injected interruption'}})}catch{if($_.Exception.ToString() -notmatch 'Injected interruption'){throw}}

@@ -5,13 +5,30 @@ namespace Dustweave;
 /// <summary>Native field talent activation, evidence and read-only recovery.</summary>
 public static class DailyFieldTalentProof
 {
+    // Shared TalentSkillUseResponse carries either a general talent update, an
+    // NPC cooldown, or both. Missing identity is unknown, never "another skill".
+    // Conflicting/malformed identities must stay in the journal for reconciliation.
+    internal static long ResponseGroup(JsonObject values)
+    {
+        long skill = 0, npc = 0;
+        if (values["TalentSkillInfo"] is JsonNode skillInfo)
+        {
+            if (skillInfo is not JsonObject row || (skill = DailyData.N(row["groupId"])) <= 0) return 0;
+        }
+        if (values["TalentNpcInfo"] is JsonNode npcInfo)
+        {
+            if (npcInfo is not JsonObject row || DailyData.N(row["npcId"]) <= 0
+                || (npc = DailyData.N(row["groupId"])) <= 0 || DailyData.N(row["endTime"]) <= 0) return 0;
+        }
+        return skill > 0 && npc > 0 && skill != npc ? 0 : skill > 0 ? skill : npc;
+    }
     // Several native skills (including automatic dispatch) share this response
     // type. Only discard a complete, successful pair proven to be another skill;
     // overlapping requests, missing identity and unreadable replies stay ambiguous.
     // Keep the original journal events intact for diagnostics and recovery.
-    internal static JsonArray MatchingSkillEvents(JsonObject op, JsonArray events)
+    internal static JsonArray MatchingSkillEvents(JsonObject op, JsonArray events, long group = 0)
     {
-        long group = DailyData.N(op["scope"]?["group"]);
+        if (group <= 0) group = DailyData.N(op["scope"]?["group"]);
         if (group <= 0 || op["before"]?["Frame"] is not JsonObject frame) return events;
         var rows = events.OfType<JsonObject>().Where(e => DailyData.S(e["Role"]) == "dispatch.start")
             .OrderBy(e => DailyData.N(e["Sequence"])).ToArray();
@@ -29,12 +46,10 @@ public static class DailyFieldTalentProof
             try
             {
                 var values = DailyEvidence.Values(reply);
-                long received = DailyData.N(values["TalentSkillInfo"]?["groupId"]);
+                long received = ResponseGroup(values);
                 other = received > 0 && received != group && DailyData.B(values["IsSuccess"])
                     && DailyData.B(reply["Accepted"]) && DailyData.S(reply["Error"]) == "" && DailyData.N(reply["ErrorCode"]) == 0
-                    && DailyData.S(request["Error"]) == "" && DailyData.N(request["ErrorCode"]) == 0
-                    && (values["TalentNpcInfo"] == null || values["TalentNpcInfo"] is JsonObject npc
-                        && DailyData.N(npc["groupId"]) == received && DailyData.N(npc["npcId"]) > 0);
+                    && DailyData.S(request["Error"]) == "" && DailyData.N(request["ErrorCode"]) == 0;
             }
             catch (Exception error) when (error is InvalidDataException or InvalidOperationException or System.Text.Json.JsonException) { }
             if (other) continue;
@@ -68,7 +83,14 @@ public static class DailyFieldTalentProof
                 try
                 {
                     var values = DailyEvidence.Values(e);
-                    other = DailyEvidence.SameActor(request["Frame"]!.AsObject(), e["Frame"]!.AsObject()) && e["Error"]?.GetValue<string>() == "" && Numeric(e["ErrorCode"]) == 0 && e["Accepted"]?.GetValue<bool>() == true && values["IsSuccess"]?.GetValue<bool>() == true && Numeric(values["TalentSkillInfo"]?["groupId"]) != group;
+                    long received = ResponseGroup(values);
+                    other = received > 0 && received != group
+                        && DailyEvidence.SameActor(op["before"]!["Frame"]!.AsObject(), request["Frame"]!.AsObject())
+                        && DailyEvidence.SameActor(request["Frame"]!.AsObject(), e["Frame"]!.AsObject())
+                        && Numeric(request["Sequence"]) < Numeric(e["Sequence"])
+                        && DailyData.S(request["Error"]) == "" && Numeric(request["ErrorCode"]) == 0
+                        && e["Error"]?.GetValue<string>() == "" && Numeric(e["ErrorCode"]) == 0
+                        && e["Accepted"]?.GetValue<bool>() == true && values["IsSuccess"]?.GetValue<bool>() == true;
                 }
                 catch (Exception error) when (error is InvalidDataException or InvalidOperationException or NullReferenceException or System.Text.Json.JsonException) { other = false; }
             }

@@ -36,9 +36,9 @@ public static class DailyBargainProof
     public static JsonObject Verify(JsonObject op,JsonArray events,JsonObject after)
     {
         var before=op["before"]!.AsObject();var scope=op["scope"]!.AsObject();
-        var response=Response("dispatch.start",events,before,after)!;
         long id=N(scope["character"]);
         var a=Character(before,id);var b=Character(after,id);a.AssertSameTier(b);
+        var response=Response("dispatch.start",DailyFieldTalentProof.MatchingSkillEvents(op,events,a.Group),before,after)!;
         Require(a.Level<a.MaxLevel&&a.Experience<a.Target,"bargain.upgrade");
         Require(N(response["TalentSkillInfo"]?["groupId"])==a.Group,"bargain.response_changed");
         long gain=N(response["AddTalentExp"]),actual=b.Experience-a.Experience;

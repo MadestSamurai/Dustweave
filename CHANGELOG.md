@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 1.4.16 — 2026-10-21
+
+- 修复每周偷窃成功后因可选字段为空而中断周流程的问题，重新执行可核对原有有效回执，无需删除记录或重复偷窃。
+- 改进探查旧记录恢复与砍价训练的共享回执识别；身份不明或矛盾的结果仍保留核对。
+- Fixes weekly theft confirmation, research recovery and interleaved talent responses during bargaining training.
+- [完整说明 / Full notes](docs/releases/1.4.16.md)
+
 ## 1.4.13 — 2026-10-20
 
 - 修复卸载 Sandboxie 后，旧沙盒账号目录或失效安装路径阻止普通账号启动的问题；隔离启动继续独立核验。

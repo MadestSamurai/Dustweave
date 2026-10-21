@@ -69,6 +69,25 @@ static class FieldTalentCases
         lateResponse["Values"]![1]!["Json"] = "{\"groupId\":1815}";
         var lateEvents = new JsonArray(lateRequest, lateResponse);
         Check(DailyFieldTalentProof.ResearchWindowEvents(op, lateEvents).Count == 0, "later confirmed daily dispatch pair is not assigned to an earlier research click");
+        foreach (string mutation in new[] { "null-group", "empty-group", "request-error", "foreign-pair", "reverse-order" })
+        {
+            var uncertain = lateEvents.DeepClone().AsArray();
+            switch (mutation)
+            {
+                case "null-group": uncertain[1]!["Values"]![1]!["Json"] = "null"; break;
+                case "empty-group": uncertain[1]!["Values"]![1]!["Json"] = "{}"; break;
+                case "request-error": uncertain[0]!["Error"] = "unreadable"; break;
+                case "foreign-pair": foreach (var e in uncertain) e!["Frame"]!["PlayerKey"] = "other"; break;
+                case "reverse-order": uncertain[0]!["Sequence"] = 79; break;
+            }
+            Check(DailyFieldTalentProof.ResearchWindowEvents(op, uncertain).Count == 2,
+                "research recovery retains uncertain late evidence: " + mutation);
+        }
+        var laterTheft = lateEvents.DeepClone().AsArray();
+        laterTheft[1]!["Values"]![1]!["Json"] = "null";
+        laterTheft[1]!["Values"]!.AsArray().Add(new JsonObject { ["Path"] = "TalentNpcInfo", ["Error"] = "", ["Json"] = "{\"npcId\":5,\"groupId\":114,\"endTime\":\"2000\"}" });
+        Check(DailyFieldTalentProof.ResearchWindowEvents(op, laterTheft).Count == 0,
+            "confirmed later NPC-only theft is distinguishable from earlier research");
         lateEvents[1]!["Values"]![1]!["Json"] = "{\"groupId\":605}";
         Check(DailyFieldTalentProof.ResearchWindowEvents(op, lateEvents).Count == 2, "late response for original research remains unresolved evidence");
         lateEvents[1]!["Values"]![1]!["Json"] = "{\"groupId\":1815}";

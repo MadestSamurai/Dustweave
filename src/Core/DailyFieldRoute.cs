@@ -457,7 +457,11 @@ public sealed partial class DailyFieldRoute
             var selected = DailyFieldTalentProof.MatchingSkillEvents(op, es);
             Require(selected.Count > 0, "尚未收到所选偷窃技能的回执；其他天赋或自动派遣的结果不计入本次偷窃。");
             var result = Response("dispatch.start", selected, before, after)!;
-            Require(N(result["TalentSkillInfo"]?["groupId"]) == N(scope["group"]), "天赋回执不属于所选偷窃技能，尚未确认本次偷窃结果。");
+            // Theft is identified by TalentNpcInfo. TalentSkillInfo is an
+            // optional counter update and is legitimately null on successful
+            // weekly steals. If present, it must still agree with the NPC group.
+            Require(result["TalentSkillInfo"] == null || result["TalentSkillInfo"] is JsonObject skill
+                && N(skill["groupId"]) == N(scope["group"]), "天赋回执不属于所选偷窃技能，尚未确认本次偷窃结果。");
             var info = result["TalentNpcInfo"] as JsonObject
                 ?? throw new InvalidDataException("偷窃回执缺少NPC结果；保留记录，再次执行将按游戏当前偷窃进度重新检查。");
             Require(result["IsSuccess"] is JsonValue success && success.TryGetValue<bool>(out _), "偷窃回执缺少成功状态。");

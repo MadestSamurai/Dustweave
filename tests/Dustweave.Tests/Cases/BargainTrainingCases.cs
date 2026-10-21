@@ -133,6 +133,13 @@ static class BargainTrainingCases
             Check(N(DailyBargainProof.Verify(op,Events(),after)["gain"])==5,"response plus character exp and catalyst proof");
             Check(N(DailyBargainProof.Verify(op,Events(5,false),after)["gain"])==5,"failed discount with experience continues");
             Check(N(DailyBargainProof.Verify(op,Events(0,false),E(c,990))["gain"])==0,"no growth is settled and stops");
+            var shared=Events(group:1805);var own=Events();own[0]!["Sequence"]=3;own[1]!["Sequence"]=4;
+            foreach(var item in own)shared.Add(item!.DeepClone());
+            Check(N(DailyBargainProof.Verify(op,shared,after)["gain"])==5,"training ignores only a settled foreign talent pair and checks its own XP and debit");
+            var unidentified=shared.DeepClone().AsArray();unidentified[1]!["Values"]![0]!["Json"]="null";
+            Reject(()=>DailyBargainProof.Verify(op,unidentified,after),"training keeps unidentified shared response ambiguous");
+            var noIdentity=Events();noIdentity[1]!["Values"]![0]!["Json"]="null";
+            Reject(()=>DailyBargainProof.Verify(op,noIdentity,after),"training cannot borrow theft-only nullable identity rules");
             Reject(()=>DailyBargainProof.Verify(op,Events(group:606),after),"wrong skill response");
             Reject(()=>DailyBargainProof.Verify(op,Events(),E(c,990)),"another character gaining exp cannot count");
             Reject(()=>DailyBargainProof.Verify(op,Events(),E(c with{Experience=160},980)),"unexpected catalyst cost");

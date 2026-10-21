@@ -1,5 +1,26 @@
 [
   {
+    "Version": "1.4.16",
+    "Date": "2026-10-21",
+    "Notes": {
+      "zh-CN": [
+        "修复每周偷窃已经成功，却误报回执不匹配并中断合并周流程的问题。",
+        "重新执行时，可核对已有的有效偷窃回执并接续，无需删除记录，也不会为补确认而重复偷窃。",
+        "改进探查恢复与砍价训练的回执识别，避免缺少可选字段或夹杂其他天赋结果时误判。"
+      ],
+      "zh-TW": [
+        "修復每週偷竊已經成功，卻誤報回執不符並中斷合併週流程的問題。",
+        "重新執行時，可核對既有的有效偷竊回執並接續，無需刪除紀錄，也不會為補確認而重複偷竊。",
+        "改善探查恢復與議價訓練的回執辨識，避免缺少選填欄位或混入其他天賦結果時誤判。"
+      ],
+      "en-US": [
+        "Fixes successful weekly theft being reported as an unmatched response and interrupting the combined weekly route.",
+        "Rerunning can reconcile existing valid theft responses and continue without deleting records or repeating a theft just to confirm it.",
+        "Improves research recovery and bargaining training when optional response fields are absent or other talent results are interleaved."
+      ]
+    }
+  },
+  {
     "Version": "1.4.15",
     "Date": "2026-10-21",
     "Notes": {
