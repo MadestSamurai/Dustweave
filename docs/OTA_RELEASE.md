@@ -1,5 +1,9 @@
 # Dustweave signed updates / 签名更新
 
+The current protocol remains below. See [the planned update evolution](UPDATE_EVOLUTION.md)
+for target-release reconstruction, bridge updates and transactional launcher/runtime
+replacement. Those planned capabilities must pass separate acceptance before use.
+
 ## Long-term baseline policy · 1.4.7+
 
 From 1.4.7, retain every published baseline at or above 1.4.7. Generate and verify a direct patch from each baseline to each new release; an absent archive fails preparation rather than silently removing support. Eligibility is based on the actual patch size, up to 10 MiB (10,485,760 bytes, displayed as 10 MB), per edition. Layout/runtime compatibility and integrity checks still apply. Do not enforce the ten-release distance limit on these clients. Oversized or incompatible baselines receive a manual-download explanation; reconsider their patches on later releases rather than assuming age makes them unsupported.
