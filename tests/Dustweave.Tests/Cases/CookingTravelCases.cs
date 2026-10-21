@@ -21,15 +21,45 @@ static class CookingTravelCases
         h.Frame["Scene"]="Map0001_001";h.Page("GameFieldDefaultUI");
         var e=h.Evidence();
         e["Readings"]=new JsonArray(Read("mainline.talent_rows","$self",new JsonArray(O(("Group",201),("Reason",""),("Cooldown",0)))));
-        Check(!DailyFieldRoute.ShouldDash(new(),e)&&DailyFieldRoute.ShouldDash(new(){FastTravel=true},e),"walking speed talent requires explicit preference and controllable field");
+        double longWalk = DailyFieldRoute.MinimumDashDistance;
+        Check(!DailyFieldRoute.ShouldDash(new(),e,longWalk)&&DailyFieldRoute.ShouldDash(new(){FastTravel=true},e,longWalk),"walking speed talent requires explicit preference, sufficient distance and controllable field");
+        foreach (double? distance in new double?[] { null, -1, 0, 2, longWalk - .1, double.NaN, double.PositiveInfinity })
+            Check(!DailyFieldRoute.ShouldDash(new(){FastTravel=true},e,distance),"short or unknown walking distance never spends dash potions: "+distance);
+        Check(DailyFieldRoute.TargetDistance(O(("Near",true),("Distance",100)))==0
+            && DailyFieldRoute.TargetDistance(O(("Reachable",false),("Distance",100)))==null
+            && DailyFieldRoute.TargetDistance(new())==null,"in-range, unreachable and missing merchant/NPC distances do not trigger dash");
+        Check(DailyFieldRoute.TargetDistance(O(("Distance",400)),squared:true)==20
+            && !DailyFieldRoute.WorthDashing(DailyFieldRoute.TargetDistance(O(("Distance",400)),squared:true)),
+            "NPC squared distance is converted before deciding whether a walk is long");
+        var routeEvidence=e.DeepClone().AsObject();
+        routeEvidence["Readings"]!.AsArray().Add(Read("mainline.map",DailyFieldRoute.MapPath,O(("id",11),("packId",1))));
+        var approaches=new JsonArray(O(("Instance",10),("Reachable",true),("Distance",80)),
+            O(("Instance",20),("Reachable",true),("Distance",3)),
+            O(("Instance",30),("Reachable",false),("Distance",100)));
+        routeEvidence["Readings"]!.AsArray().Add(Read("mainline.travel","$self",O(("Pack",1),("Map",11),("Approaches",approaches))));
+        Check(DailyFieldRoute.WalkingDistance(routeEvidence,10)==80 && DailyFieldRoute.WalkingDistance(routeEvidence,20)==3
+            && DailyFieldRoute.WalkingDistance(routeEvidence,30)==null && DailyFieldRoute.WalkingDistance(routeEvidence,999)==null,
+            "distance uses the selected reachable route, not a different far-away gate");
+        routeEvidence["Readings"]=new JsonArray(
+            O(("Id","mainline.map"),("Error",""),("Values",new JsonArray(
+                O(("Path","ὪὨὯὢὫὮὨὩὮὡὬ.transform.position.x"),("Error",""),("Json","0")),
+                O(("Path","ὪὨὯὢὫὮὨὩὮὡὬ.transform.position.z"),("Error",""),("Json","0"))))),
+            O(("Id","mainline.reward"),("Error",""),("InstanceId",40),("Values",new JsonArray(
+                O(("Path","transform.position.x"),("Error",""),("Json","3")),
+                O(("Path","transform.position.y"),("Error",""),("Json","100")),
+                O(("Path","transform.position.z"),("Error",""),("Json","4"))))));
+        Check(DailyFieldRoute.WalkingDistance(routeEvidence,40)==5,"a high reward next to the player does not count as a long horizontal walk");
         var active=Read("mainline.durations","$self",new JsonArray(O(("Key","FastDash"),("Value.ὫὢὢὬὫὫὡὩὪὩὮ",true),("Value.ὠὨὠὭὬὤὪὢὫὨὮ",1))));
         e["Readings"]!.AsArray().Add(active);
-        Check(!DailyFieldRoute.ShouldDash(new(){FastTravel=true},e),"even one second of active dash never waits for recast");
+        Check(!DailyFieldRoute.ShouldDash(new(){FastTravel=true},e,longWalk),"even one second of active dash never waits for recast");
         e["Readings"]=new JsonArray(Read("mainline.talent_rows","$self",new JsonArray(O(("Group",201),("Reason",""),("Cooldown",9)))));
-        Check(!DailyFieldRoute.ShouldDash(new(){FastTravel=true},e),"dash cooldown preserves normal walking");
+        Check(!DailyFieldRoute.ShouldDash(new(){FastTravel=true},e,longWalk),"dash cooldown preserves normal walking");
         h.Page("QuickMenuUI");e["Frame"]=h.Frame.DeepClone();
-        Check(!DailyFieldRoute.ShouldDash(new(){FastTravel=true},e),"fast travel never opens another menu during an interaction");
-        Check(!await new DailyFieldRoute(h.Workflow).PrepareWalking()&&h.Box.Commands.Count==0,"default walking sends no speed talent command or observation");
+        Check(!DailyFieldRoute.ShouldDash(new(){FastTravel=true},e,longWalk),"fast travel never opens another menu during an interaction");
+        Check(!await new DailyFieldRoute(h.Workflow).PrepareWalking(longWalk)&&h.Box.Commands.Count==0,"default walking sends no speed talent command or observation");
+        h.Workflow.Settings.General.FastTravel=true;
+        Check(!await new DailyFieldRoute(h.Workflow).PrepareWalking(3)&&!await new DailyFieldRoute(h.Workflow).PrepareWalking(null)
+            && h.Box.Commands.Count==0&&h.Time==0,"enabled fast travel leaves short and unmeasured walks alone without opening a menu or waiting");
         var catalog=JsonNode.Parse("""{"items":[{"id":3,"stack":9999},{"id":4,"stack":9999}],"recipes":[{"id":10,"output":3,"count":2,"potions":2,"materials":{"1":3,"2":2}},{"id":20,"output":4,"count":1,"potions":1,"materials":{"1":2}}]}""")!.AsObject();
         var labels = JsonNode.Parse("""{"cooking_items":[{"id":1,"name":"原料","name_tw":"材料","name_en":"Ingredient"},{"id":3,"name":"简中料理","name_tw":"繁中料理","name_en":"Dish"},{"id":4,"name":"旧目录料理"}],"cooking_recipes":[{"id":20,"output":4,"materials":{"1":2}},{"id":10,"output":3,"materials":{"1":3,"999":2}}]}""")!.AsObject();
         string labelsBefore = labels.ToJsonString();

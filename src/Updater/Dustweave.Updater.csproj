@@ -6,7 +6,7 @@
     <SelfContained>true</SelfContained><RuntimeFrameworkVersion>$(DustweaveRuntimeVersion)</RuntimeFrameworkVersion>
     <PublishSingleFile>true</PublishSingleFile><EnableCompressionInSingleFile>true</EnableCompressionInSingleFile><IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <DebugType>None</DebugType><DebugSymbols>false</DebugSymbols><IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
-    <ApplicationManifest>../Desktop/app.manifest</ApplicationManifest>
+    <ApplicationManifest>updater.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Core/DailyUpdate*.cs;../Core/DailyVersion.cs;../Core/DailyApplication.cs" Link="Shared/%(Filename)%(Extension)" />

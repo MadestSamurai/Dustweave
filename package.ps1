@@ -77,9 +77,14 @@ if($SyntheticEvidence){
  $current=@{};foreach($row in ($before|ConvertFrom-Json)){$current[$row.path.Replace('\','/')]=[string]$row.hash}
  # Package-only targets are exercised by actual artifact gates below; synthetic builds do not enable shared resources.
  $changed=@(@($old.Keys)+@($current.Keys)|Sort-Object -Unique|Where-Object {$_ -match '^(src|tools|tests|assets|standalone|third-party)/|^Directory.Build.props$|^global.json$' -and $old[$_] -ne $current[$_]})
- if($changed.Count){throw ('Synthetic baseline inputs changed: '+($changed -join ', '))}
+ # These UI sources are not compiled into Dustweave.Tests. Full package gates rerun
+ # the host's localization checks for every flavor and each listed tool's actual UI smoke.
+ $artifactRechecks=@($changed|Where-Object {$_ -in @('src/Desktop/MainWindow.Localization.cs','src/Fishing/desktop/Smoke.cs','src/Rhythm/desktop/Smoke.cs','src/Sichuan/desktop/SichuanWindow.xaml.cs','src/InfiniteGacha/desktop/MainWindow.xaml.cs')})
+ $syntheticChanges=@($changed|Where-Object {$_ -notin $artifactRechecks})
+ if($syntheticChanges.Count){throw ('Synthetic baseline inputs changed: '+($syntheticChanges -join ', '))}
  $validation.syntheticEvidence=[IO.Path]::GetFullPath($SyntheticEvidence)
  $validation.syntheticInputs=[IO.Path]::GetFullPath($SyntheticInputs)
+ $validation.artifactRechecks=$artifactRechecks
  Copy-Item -LiteralPath $SyntheticEvidence -Destination (Join-Path $work 'reused-synthetic-results.json')
 }else{& (Join-Path $root 'test.ps1') -NoBuild -Groups $validation.groups}
 Run 'dotnet' @('run','--project',(Join-Path $root 'tools/CompatibilityCli'),'-c','Release','-r','win-x64','--no-build','--','client-inputs',$managed,(Join-Path $work 'client-before.json')) 'client-before'

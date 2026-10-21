@@ -330,9 +330,14 @@ namespace BD2Daily.Live {
    return f!=null&&f.ProcessId==c.ProcessId&&f.ProcessStartTicks==c.ProcessStartTicks&&f.Instance==c.Instance&&f.AccountKey==c.AccountKey&&f.PlayerKey==c.PlayerKey&&Singleton<PackManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ὢὠὮὠὥὥὥὣὡὮὯ==c.Value;
   }
   static bool Accept(CollectionNetworkState state,Command c,int error){
-   if(!object.ReferenceEquals(state,result))return false;
+   if(!object.ReferenceEquals(state,result)||state.State!="pending")return false;
    if(error!=0||!Matches(c)||!Bridge.CollectionReadAllowed||state.Week!=ὫὨὪὠὢὨὮὤὩὤὮ.ὠὥὬὪὮὬὢὨὬὮὫ.GetWeeklyResetTime().Ticks){state.State="failed";state.Error="Collection read rejected or context changed: "+error;return false;}
    return true;
+  }
+  internal static void TimeoutRead(){
+   if(owner!=null&&Matches(owner)&&result.State=="pending"){
+    result.State="failed";result.Error="Collection read timed out";
+   }
   }
   internal static void Query(Command c){
    if(!Matches(c)||BattlePlayManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὨὢὤὪὪὢὩὢὬὠὦ.ToString()!="BMT_NONE")throw new InvalidOperationException("Collection query requires current idle cartridge");

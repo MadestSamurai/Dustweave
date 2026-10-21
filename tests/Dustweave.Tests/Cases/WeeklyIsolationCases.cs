@@ -256,6 +256,27 @@ static class WeeklyIsolationCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool yes, string message) { if (!yes) throw new Exception(message); checks.Add(message); }
+        using (var f = new Fixture(Path.Combine(root, "weekly-completed-categories")) { Pending = false })
+        {
+            f.Cleared.AddRange([10L, 20L, 30L]);
+            f.MonstersPending.UnionWith([1L, 2L, 21L]);
+            var result = await f.RunNpc();
+            Check(f.H.Box.Commands.Count(c => S(c["Kind"]) == "weekly_npc_query") == 1
+                && f.Accepted.Count == 0 && S(result["stages"]?["weekly_npc"]?["state"]) == "completed",
+                "live full NPC quota stops per-map queries without accepting more quests");
+            Check(f.Suppressed.SequenceEqual([1L, 2L, 21L])
+                && S(result["stages"]?["weekly_mainline"]?["state"]) == "completed",
+                "completed NPC quota still allows all remaining collection maps to run");
+            Check(f.H.Box.Commands.Count(c => S(c["Kind"]) == "collection_query_steal") == 2
+                && S(result["stages"]?["weekly_steal"]?["state"]) == "completed",
+                "live completed theft is checked once per cartridge instead of after every collection action");
+            var commands = f.H.Box.Commands.ToArray();
+            var suppression = commands.Select((c, i) => (c, i)).Where(x => S(x.c["Kind"]) == "mainline_talent" && N(x.c["Value"]) == 305);
+            Check(suppression.All(x => commands.Skip(x.i + 1)
+                .TakeWhile(c => S(c["Kind"]) is not ("mainline_walk" or "mainline_pack"))
+                .Count(c => S(c["Kind"]).StartsWith("collection_query", StringComparison.Ordinal)) == 1),
+                "combined route reuses each collection post-action reply instead of querying it again");
+        }
         foreach (string page in new[] { "MapRewardInfoPopupUI", "PackListUI", "MenuUI" })
         {
             using var f = new Fixture(Path.Combine(root, "collection-overlay-" + page)) { Pending = false };

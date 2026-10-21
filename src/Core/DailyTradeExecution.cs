@@ -47,7 +47,8 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         try
         {
             first = last = await Observe();
-            if (w.Settings.General.FastTravel) await new DailyFieldRoute(w).PrepareWalking();
+            if (B(first["Near"])) return;
+            if (w.Settings.General.FastTravel) await new DailyFieldRoute(w).PrepareWalking(DailyFieldRoute.TargetDistance(first));
             await w.Step("GameFieldDefaultUI", operation: "square_shop_nav", reason:"使用 A* 前往广场商人");
             attempts = 1;
             await DailySquareNavigation.Wait(w,"square_shop_nav",async()=> { last=await Observe(); return DailySquareNavigation.MerchantArrived((await w.Observe()).Frame,B(last["Near"])); });

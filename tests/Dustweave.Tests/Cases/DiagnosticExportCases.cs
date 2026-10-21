@@ -137,27 +137,46 @@ internal static class DiagnosticExportCases
         string bytePressure=Path.Combine(output,"diagnostic-byte-pressure");
         string business=Path.Combine(bytePressure,"live","managed-business");Directory.CreateDirectory(business);
         string body="{\"state\":\"completed\",\"evidence\":\""+new string('a',7*1024*1024)+"\"}";
-        for(int i=0;i<10;i++)File.WriteAllText(Path.Combine(business,i+".json"),body);
+        for(int i=0;i<20;i++)File.WriteAllText(Path.Combine(business,i+".json"),body);
         string[] essentials=["live/queues/latest/result.json","live/server-collection/account/week/1.json","live/weekly-npc-queries/latest.json"];
         foreach(string rel in essentials){string path=Path.Combine(bytePressure,rel);Directory.CreateDirectory(Path.GetDirectoryName(path)!);File.WriteAllText(path,"{\"state\":\"pending\"}");File.SetLastWriteTimeUtc(path,DateTime.UtcNow.AddDays(-1));}
         var capped=await DailyDiagnosticExport.CreateAsync(bytePressure,Path.Combine(output,"byte-pressure.zip"),"","fixture");
         using(var archive=ZipFile.OpenRead(capped.Path)) {
-            Check(capped.Skipped>0&&capped.Bytes<=64*1024*1024&&essentials.All(p=>archive.GetEntry("logs/main/"+p)!=null),"latest queue, server collection and NPC state survive 70 MiB of newer historical business evidence");
+            Check(capped.Skipped>0&&capped.Bytes>64*1024*1024&&capped.Bytes<=128*1024*1024&&essentials.All(p=>archive.GetEntry("logs/main/"+p)!=null),"expanded export retains more than 64 MiB while protecting latest queue, collection and NPC state within 128 MiB under 140 MiB pressure");
             using var manifest=JsonDocument.Parse(archive.GetEntry("manifest.json")!.Open());var coverage=manifest.RootElement.GetProperty("coverage")[0];
+            var limits=manifest.RootElement.GetProperty("limits");
+            Check(limits.GetProperty("uncompressedLogBytes").GetInt64()==128L*1024*1024&&limits.GetProperty("files").GetInt32()==2000,"manifest records the uncompressed budget and independent file limit");
             Check(coverage.GetProperty("queueResults").GetBoolean()&&coverage.GetProperty("npcQueries").GetBoolean(),"manifest distinguishes queue/NPC coverage from journal coverage");
         }
         string npcPressure=Path.Combine(output,"diagnostic-npc-pressure");
         Directory.CreateDirectory(Path.Combine(npcPressure,"live","weekly-npc-queries"));
-        for(int i=0;i<10;i++)File.WriteAllText(Path.Combine(npcPressure,"live","weekly-npc-queries",i+".json"),body);
+        for(int i=0;i<20;i++)File.WriteAllText(Path.Combine(npcPressure,"live","weekly-npc-queries",i+".json"),body);
         string latestBusiness=Path.Combine(npcPressure,"live","managed-business","event-sweep.json");
         Directory.CreateDirectory(Path.GetDirectoryName(latestBusiness)!);
         File.WriteAllText(latestBusiness,"{\"role\":\"event.sweep\",\"state\":\"rejected\"}");
         File.SetLastWriteTimeUtc(latestBusiness,DateTime.UtcNow.AddHours(-1));
         File.WriteAllText(Path.Combine(npcPressure,"live","event-preview-recovery.json"),"{\"confirmation_not_submitted\":true}");
+        string[] toolEvidence=["tools/fishing/diagnostics/runtime.log","tools/fishing/diagnostics/runtime.log.previous",
+            "tools/fishing/diagnostics/connection.log","tools/fishing/diagnostics/last-interruption.json",
+            "tools/fishing-identity-error.json","tools/fishing-activity-error.json",
+            "tools/territory/diagnostics/connection.log","tools/equipment/diagnostics/connection.log"];
+        foreach(string rel in toolEvidence) {
+            string path=Path.Combine(npcPressure,rel);Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllText(path,rel.EndsWith(".json")?"{\"error\":\"test interruption\"}":"test interruption");
+            File.SetLastWriteTimeUtc(path,DateTime.UtcNow.AddHours(-2));
+        }
+        string connectionLog=Path.Combine(npcPressure,"tools/fishing/diagnostics/connection.log");
+        File.WriteAllText(connectionLog,new string('x',512*1024)+"\nlast connection failure token=hidden-fish-secret\n");
         var npcCapped=await DailyDiagnosticExport.CreateAsync(npcPressure,Path.Combine(output,"npc-byte-pressure.zip"),"","fixture");
-        using(var archive=ZipFile.OpenRead(npcCapped.Path))Check(npcCapped.Skipped>0&&npcCapped.Bytes<=64*1024*1024
+        using(var archive=ZipFile.OpenRead(npcCapped.Path)) {
+          Check(npcCapped.Skipped>0&&npcCapped.Bytes>64*1024*1024&&npcCapped.Bytes<=128*1024*1024
             &&archive.GetEntry("logs/main/live/managed-business/event-sweep.json")!=null
             &&archive.GetEntry("logs/main/live/event-preview-recovery.json")!=null,
             "Historical NPC queries cannot consume the entire export budget before event transaction and recovery evidence");
+          Check(toolEvidence.All(p=>archive.GetEntry("logs/main/"+p)!=null),"each tool's interruption, identity, connection and runtime rotation survive newer NPC evidence");
+          using var r=new StreamReader(archive.GetEntry("logs/main/tools/fishing/diagnostics/connection.log")!.Open());
+          string tail=r.ReadToEnd();
+          Check(tail.Contains("last connection failure")&&!tail.Contains("hidden-fish-secret")&&tail.Length<256*1024,"prioritized connection tails remain bounded and redacted");
+        }
     }
 }

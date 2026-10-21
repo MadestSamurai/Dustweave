@@ -53,12 +53,15 @@ public sealed class LiveEquipment:IEquipmentGame
  JsonObject Evidence(JsonObject? before=null){string id=Ensure();var timer=Stopwatch.StartNew();while(true){var e=Read(P("evidence.json"));if(S(e["ObservationRequest"])!=id||S(e["Error"]).StartsWith("System.IO.IOException:")){if(timer.Elapsed.TotalSeconds>=3)throw new InvalidOperationException("库存观察尚未就绪");Thread.Sleep(100);continue;}long age=DateTime.UtcNow.Ticks-N(e["AtUtcTicks"]);if(S(e["Error"])!=""||age<0||age>TimeSpan.FromSeconds(3).Ticks)throw new InvalidOperationException("库存观察未就绪："+S(e["Error"]));if(before!=null&&LiveEvidence.Actor(before)!=LiveEvidence.Actor(e["Frame"]!))throw new InvalidOperationException("观察账号或游戏进程改变");return e;}}
  public JsonObject Capture(){var timer=Stopwatch.StartNew();RefreshCatalog();long catalogMs=timer.ElapsedMilliseconds;var e=Evidence(Snapshot());Write(Path.Combine(Diagnostics,"capture-evidence.json"),e);var stock=EquipmentPlanner.Normalize(e);var details=new JsonObject{["equipment"]=LiveEvidence.Reading(e,"equipment.details","$items"),["characters"]=LiveEvidence.Reading(e,"trade.characters","$items")};if(A(details["equipment"]).Count()!=A(stock["equipment"]).Count())throw new InvalidOperationException("装备详情读取不完整");Write(Path.Combine(Data,"inventory.json"),stock);Write(Path.Combine(Data,"display-inventory.json"),details);var view=GearView.Build(stock,details);var resume=EquipmentExecution.Resumable(stock);return new(){["stock"]=stock,["gear"]=view,["resume"]=resume,["timings"]=new JsonObject{["catalogMs"]=catalogMs,["captureMs"]=timer.ElapsedMilliseconds,["gearCount"]=view.Count}};}
  static string CatalogActor(JsonObject f)=>S(f["ProcessId"])+"|"+S(f["ProcessStartTicks"])+"|"+S(f["Instance"])+"|"+S(f["AccountKey"])+"|"+S(f["PlayerKey"]);
- public void RefreshCatalog(){
+ public void RefreshCatalog(bool forExecution=false){
+  // Reading inventory must remain available after Stop, including on a cold
+  // catalog cache. Keep the marker intact: it still guards consuming actions.
+  Stopped(forExecution);
   var before=Snapshot();string actor=CatalogActor(before);if(TryActivateCatalog(before))return;string id=Guid.NewGuid().ToString("N");
   Write(P("catalog-request.json"),new JsonObject{["Id"]=id,["ExpiresUtcTicks"]=DateTime.UtcNow.AddSeconds(60).Ticks,["Part"]=-1});
   var timer=Stopwatch.StartNew();
   try{while(timer.Elapsed.TotalSeconds<45){
-   if(CatalogActor(Snapshot())!=actor)throw new InvalidOperationException("Account changed during equipment table refresh");
+   Stopped(forExecution);if(CatalogActor(Snapshot())!=actor)throw new InvalidOperationException("Account changed during equipment table refresh");
    if(BD2.LocalIpc.DesktopFiles.Exists(P("catalog.json"))){var raw=Read(P("catalog.json"));if(S(raw["id"])==id){
     if(S(raw["error"])!=""||S(raw["actor"])!=actor)throw new InvalidOperationException("Current equipment tables unavailable: "+S(raw["error"]));
     if(N(raw["format"])!=2)throw new InvalidDataException("Reconnect to update the segmented equipment catalog transport");
@@ -67,7 +70,7 @@ public sealed class LiveEquipment:IEquipmentGame
      Write(P("catalog-request.json"),new JsonObject{["Id"]=id,["Part"]=part,["ExpiresUtcTicks"]=DateTime.UtcNow.AddSeconds(15).Ticks});
      var deadline=Stopwatch.StartNew();bool received=false;
      while(deadline.Elapsed.TotalSeconds<10){
-      Stopped();if(CatalogActor(Snapshot())!=actor)throw new InvalidOperationException("Account changed during catalog transfer");
+      Stopped(forExecution);if(CatalogActor(Snapshot())!=actor)throw new InvalidOperationException("Account changed during catalog transfer");
       var chunk=Read(P("catalog-part.json"));
       if(S(chunk["id"])==id&&N(chunk["index"],-1)==part){
        if(S(chunk["error"])!="")throw new InvalidDataException("Equipment catalog part failed: "+S(chunk["error"]));
@@ -91,7 +94,7 @@ public sealed class LiveEquipment:IEquipmentGame
  }
  public static void ActivateCurrent(){if(!TryActivateCatalog(Snapshot()))throw new InvalidOperationException("Please refresh inventory after changing game/account");}
  public JsonObject Stock(){var frame=Snapshot();if(activeCatalogActor!=CatalogActor(frame))throw new InvalidOperationException("Refresh current inventory before execution");return EquipmentPlanner.Normalize(Evidence(frame));}
- public static void Stopped(){if(File.Exists(Stop))throw new StepRejected("已停止；当前已提交的批次仍会完成核账");}
+ public static void Stopped(bool forExecution=true){if(forExecution&&File.Exists(Stop))throw new StepRejected("已停止；当前已提交的批次仍会完成核账");}
  static void PauseGuard(){Stopped();if(BD2.LocalIpc.DesktopFiles.Exists(P("pause")))throw new StepRejected("已暂停，未提交下一步操作");}
  public static string[] Blockers(JsonObject f,string type){var background=A(Policy["background_surfaces"]).Select(v=>S(v)).ToHashSet();var matches=A(f["Surfaces"]).Where(u=>S(u["Type"])==type).ToArray();JsonNode? target=matches.Length==1?matches[0]:null;
   return A(f["Surfaces"]).Where(u=>B(u["Popup"])&&S(u["Type"])!=type&&!background.Contains(S(u["Type"]))&&!(target!=null&&S(target["Path"]).StartsWith(S(u["Path"],"\0")+"/"))&&!(target!=null&&S(target["Type"])=="ItemGetPopupUI"&&S(u["Type"])=="EquipmentInfoPopupUI"&&S(u["Path"]).StartsWith(S(target["Path"],"\0")+"/"))&&!(target!=null&&B(target["Popup"])&&target["Order"]!=null&&u["Order"]!=null&&N(u["Order"])<N(target["Order"]))).Select(u=>S(u["Type"])).ToArray();

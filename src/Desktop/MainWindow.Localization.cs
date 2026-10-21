@@ -50,20 +50,19 @@ public partial class MainWindow
                 ThemeSelector.SelectedIndex = language == 1 ? 1 : 2;
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
                 Capture("locale-" + L.Code + "-plan");
-                if (language == 2)
-                {
-                    WorkspaceTabs.SelectedItem = SettingsTab;
-                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-                    Capture("locale-en-settings");
-                    Width = 920; Height = 650;
-                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-                    Capture("locale-en-settings-compact");
-                    WorkspaceTabs.SelectedItem = ToolsTab;
-                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-                    Capture("locale-en-tools-compact");
-                    Width = 1180; Height = 800;
-                }
             }
+            // Entering Settings intentionally resets its view to All. Keep navigation
+            // separate from the invariant that a language change preserves the current filter.
+            WorkspaceTabs.SelectedItem = SettingsTab;
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            Capture("locale-en-settings");
+            Width = 920; Height = 650;
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            Capture("locale-en-settings-compact");
+            WorkspaceTabs.SelectedItem = ToolsTab;
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            Capture("locale-en-tools-compact");
+            Width = 1180; Height = 800;
             dailyPanel.Show(new QueueView("running", "", "fixture/language-running.json",
                 [new("guild","completed",""),new("mirror","running",""),new("mail","pending","")],new string('a',64)));
             dailyPanel.Busy(true);
@@ -157,9 +156,21 @@ public partial class MainWindow
         using var reader = new StreamReader(input);
         var rows = reader.ReadToEnd().Replace("\r","").Split('\n').Where(s => s.Length > 0 && !s.StartsWith('#'))
             .Select(s => { int i=s.IndexOf('='); return (Code:s[..i].Trim(),Chinese:s[(i+1)..].Trim()); }).ToArray();
+        var raw = new Dictionary<string, Dictionary<string, string>>();
+        foreach (var name in new[] { "strings", "plugin-strings", "runtime" })
+        {
+            using var translations = typeof(DailyLanguage).Assembly.GetManifestResourceStream("Dustweave.UI."+name+".json")!;
+            foreach (var pair in JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(translations)!)
+                raw.Add(pair.Key,pair.Value);
+        }
         LanguageSelector.SelectedIndex=0;
         foreach (var row in rows)
-            if (L.Get("message."+row.Code)!=row.Chinese) throw new Exception("Runtime source translation drift: "+row.Code);
+        {
+            if (raw["message."+row.Code]["zh-CN"]!=row.Chinese)
+                throw new Exception("Runtime source translation drift: "+row.Code);
+            if (L.Get("message."+row.Code)!=GameTerminology.Template(row.Chinese,"zh-CN"))
+                throw new Exception("Runtime display terminology drift: "+row.Code);
+        }
         LanguageSelector.SelectedIndex=2;
         foreach (var row in rows)
         {
@@ -176,7 +187,8 @@ public partial class MainWindow
         foreach (var row in rows)
         {
             string value=L.Get("message."+row.Code);
-            if(value.Length!=row.Chinese.Length || value.Any(c => char.IsSurrogate(c) || c=='\uFFFD' || (char.IsControl(c) && c!='\n' && c!='\r')))
+            if(string.IsNullOrWhiteSpace(value) || value!=GameTerminology.Template(raw["message."+row.Code]["zh-TW"],"zh-TW")
+                || value.Any(c => char.IsSurrogate(c) || c=='\uFFFD' || (char.IsControl(c) && c!='\n' && c!='\r')))
                 throw new Exception("Invalid Traditional Chinese resource: "+row.Code);
         }
         if(L.Get("message.preparing")!="正在準備") throw new Exception("Traditional preparation label differs");

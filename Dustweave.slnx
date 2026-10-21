@@ -40,6 +40,7 @@
     <Project Path="tools/CompatibilityCli/Dustweave.Compatibility.Cli.csproj" />
     <Project Path="tools/RuntimeCheck/Dustweave.RuntimeCheck.csproj" />
     <Project Path="tools/OtaChannel/Dustweave.OtaChannel.csproj" />
+    <Project Path="tools/OtaMirror/Dustweave.OtaMirror.csproj" />
     <Project Path="tools/TableExporter/Dustweave.TableExporter.csproj" />
     <Project Path="tools/TradeData/Dustweave.TradeData.csproj" />
   </Folder>

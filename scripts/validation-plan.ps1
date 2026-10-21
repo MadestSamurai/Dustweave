@@ -71,7 +71,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
      if($evidenceValid){
       $groups=@('ProductIdentity','Startup','LoginIdentity','Sandbox','Parallel','ParallelProcess','AccountOrder','AccountIdentity','AccountRestart','QueueSession','QueuePeriod')
       if($selectedScope -eq 'Trading'){$groups=@('ProductIdentity','TradeOptimizer','TradeData','TradeReplan','TradeQuote','TradeResume','TalentPotion','BargainTraining','UserText')}
-      if($selectedScope -eq 'Updates'){$groups=@('ProductIdentity','UpdateLayout','UpdateDelta','UpdateSafety','SchedulingUpdates','UnifiedSuite','SuiteOwnerProbe','UserText')}
+      if($selectedScope -eq 'Updates'){$groups=@('ProductIdentity','UpdateLayout','UpdateDelta','UpdateSafety','UpdateRepair','SchedulingUpdates','UnifiedSuite','SuiteOwnerProbe','UserText')}
       if($selectedScope -eq 'Weekly'){$groups=@('ProductIdentity','WeeklyIsolation','WeeklyGoal','CollectionReadiness','FieldTalent','WeeklyNpcBoard','WeeklyNpcQuery','WeeklyNpcInteraction','CommandDriver','ManagedInputs','QueueSession','QueueEngine','QueuePeriod','QueueExecutionThread','PickupRecovery','BusinessJournal','BusinessScope','MirrorStage','FreeDrawStage','DispatchRecovery','ManagementStage','TradeResume','TravelTransition','UserText')}
       if($selectedScope -in @('Navigation','Rewards')){$groups+=@('HomeNavigation','HomeRecovery','TravelTransition','WeeklyGoal','CollectionReadiness','CafeteriaRecovery','CommandDriver','ManagedInputs','PassiveUi','UserText')}
       if($selectedScope -eq 'Rewards'){$groups+=@('LiveBindings','Workflow','Preference','RuleData','EvidenceReadiness','UserText')}

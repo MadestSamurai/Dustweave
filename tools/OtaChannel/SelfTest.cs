@@ -130,6 +130,8 @@ static class SelfTest
         Channel.Worker(layoutConfig,layoutRequest.Nonce);
         Pass("layout2-publishes-patches-only",Directory.GetFiles(Path.Combine(layoutConfig.Public,"v1.3.1")).All(p=>p.EndsWith(".delta.zip",StringComparison.Ordinal)));
         Pass("layout2-feed-switched",Rules.VerifyFeed(File.ReadAllBytes(Path.Combine(layoutConfig.Public,"updates.json")),layoutConfig).Releases[0].Version=="1.3.1");
+        await MirrorSelfTest.Run(folder,checks);
+        await RepairSelfTest.Run(folder,checks);
         var report=new{status="passed",checks=checks.Count,cases=checks,gameTouched=false,serverTouched=false};
         File.WriteAllBytes(Path.Combine(folder,"results.json"),Rules.Bytes(report));Console.WriteLine($"{checks.Count} OTA channel checks passed: {folder}");
     }

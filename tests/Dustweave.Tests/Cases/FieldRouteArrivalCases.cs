@@ -101,6 +101,60 @@ static class FieldRouteArrivalCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool yes, string message) { if (!yes) throw new Exception(message); checks.Add(message); }
+        using (var f = new Fixture(Path.Combine(root, "field-settle-adjacent")))
+        {
+            await f.Route.FieldReady();
+            double settled = f.H.Time;
+            Check(settled >= 1, "first field readiness check retains its full settle");
+            int observed = 0;
+            f.H.OnRead = () => observed++;
+            await f.Route.FieldReady();
+            await f.Route.FieldReady(settle: 0);
+            await f.Route.FieldReady();
+            Check(f.H.Time == settled && observed >= 3,
+                "adjacent readiness calls inspect live frames without repeating a completed settle");
+            f.H.Time += 1.5;
+            await f.Route.FieldReady();
+            f.H.Time += .6;
+            double expired = f.H.Time;
+            await f.Route.FieldReady();
+            Check(f.H.Time - expired >= 1,
+                "reuse never extends the original readiness proof beyond its two-second lifetime");
+            double longer = f.H.Time;
+            await f.Route.FieldReady(settle: 2);
+            Check(f.H.Time - longer >= 2, "a short completed settle cannot replace a longer requested settle");
+        }
+        foreach (string change in new[] { "command", "scene", "surface", "not-ready", "popup", "timeout" })
+        using (var f = new Fixture(Path.Combine(root, "field-settle-invalidated-" + change)))
+        {
+            await f.Route.FieldReady();
+            switch (change)
+            {
+                case "command":
+                    await f.H.Workflow.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
+                    break;
+                case "scene": f.MapId = 1; f.Scene(); break;
+                case "surface": f.H.Frame["UiToken"] = "changed-field-surface"; break;
+                case "not-ready":
+                    f.H.Frame["Surfaces"]![0]!["InputReady"] = false;
+                    f.H.OnDelay = () => { f.H.OnDelay = null; f.Scene(); };
+                    break;
+                case "popup": f.H.Page("QuickMenuUI"); break;
+                case "timeout":
+                    f.H.Page("UnrelatedPopupUI");
+                    bool failed = false;
+                    try { await f.Route.FieldReady(timeout: .2); }
+                    catch (StageHostException) { failed = true; }
+                    Check(failed && f.H.Box.Commands.Count == 0,
+                        "unknown popup still stops without confirmation despite a recent field settle");
+                    f.Scene();
+                    break;
+            }
+            double start = f.H.Time;
+            await f.Route.FieldReady();
+            Check(f.H.Time - start >= 1 - .000001,
+                "field readiness repeats its full settle after " + change);
+        }
         var attempts = new DailyRouteAttempts();
         for (int i = 0; i < 3; i++)
         {

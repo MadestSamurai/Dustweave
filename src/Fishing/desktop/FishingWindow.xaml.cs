@@ -117,7 +117,7 @@ public partial class FishingWindow:Window
    return;
   }
   var s=snapshot!;
-  if(link.Enabled && s.OwnerId==link.OwnerId && s.Error.Length>0){_ = StopAsync();StatusText.Text="自动钓鱼已暂停";}
+  if(link.Enabled && s.OwnerId==link.OwnerId && s.Error.Length>0){FishingDiagnostics.Interrupted(root,s);_ = StopAsync();StatusText.Text="自动钓鱼已暂停";}
   else StatusText.Text=link.Enabled?"自动钓鱼运行中":s.Ready?"钓点已识别":"等待进入钓点";
   ReasonText.Text=s.Error.Length>0?s.Error:link.Error.Length>0?link.Error:link.Enabled?s.Reason:s.Ready?"准备好后点击「开始钓鱼」。":"请进入钓鱼地图。";
   StatsText.Text=$"鱼：{(s.FishId>0?s.FishId.ToString():"未上钩")}　血量：{s.FishHp:0}　剩余：{s.TimeRemaining:0} 秒　确认收获：{s.Catches}";

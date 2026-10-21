@@ -80,3 +80,168 @@ The separate `maintenance/1.2-migration` branch published **1.2.12** through the
 ## Publisher policy upgrade · 1.4.7
 
 The v2 publisher accepts the signed feed-level BaselineDeltas index for 1.4.7+ and verifies its full upload inventory and 10 MiB limit. Update the administrator-owned executable with scripts/upgrade-update-channel-v2.sh after self-tests, then verify constrained status, denied shell commands and unchanged legacy hashes. The existing signing and transport keys remain unchanged. Ordinary releases use the same constrained publisher. Deployment completion is recorded in the release receipt.
+
+## Optional Qicaiyun file delivery
+
+The origin continues to serve the signed `updates.json`, enforce update policy and
+own the original file URLs. Verified layout-2 differential files can be delivered
+by Qicaiyun through temporary, non-cacheable redirects. This requires no feed
+schema or signature change and preserves existing client URLs. The retired
+layout-1 channel is not modified.
+
+The local uploader is `tools/OtaMirror`; its AWS SDK dependency belongs only to
+the publishing tool, not the application. Store its private JSON configuration
+outside the repository, packages and diagnostic folders:
+
+- `Endpoint`: `https://s3.7caiyun.com`
+- `Region`: `us-west`
+- `Bucket`: the real bucket identifier
+- `PublicBaseUrl`: `https://<bucket>.cdn.7caiyun.com`
+- `AccessKey`, `SecretKey`: credentials limited to the required bucket
+
+No storage credentials are deployed to the origin. It stores only the public
+`MirrorBaseUrl`, ending in `/dustweave/ota/v2`. Objects have immutable names
+`dustweave/ota/v2/v<version>/<signed-delta-filename>`.
+
+```powershell
+./scripts/publish-update-mirror.ps1 -Config <private-storage.json> `
+  -PackageDirectory <original-tested-release> -Receipt <upload-receipt.json>
+```
+
+The uploader verifies the signed feed and every local patch first, refuses to
+overwrite a different object, and verifies each public download's complete length
+and SHA-256. It uses single-object uploads, not multipart completion. The current
+automatic-update policy caps each patch at 10 MiB. This operation neither uploads
+full installation archives nor changes the live version.
+
+For subsequent releases, add `MirrorConfig` to the protected local publishing
+client configuration, or pass `-MirrorConfig` to `publish-update-signed.ps1`.
+Cloud verification completes before the publication request's 15-minute validity
+window starts. The normal signed submission still sends and verifies the same
+files at the origin. The origin retains them as fallback; CDN migration is not
+permission to remove rollback files.
+
+### One-time origin installation
+
+Build and test the self-contained Linux publisher, then review and run
+`scripts/install-update-mirror.sh <executable> <sha256> <public-mirror-base>`
+with temporary administrator access. The restricted release channel cannot
+change nginx, its executable or system services. The installer:
+
+1. Saves the previous executable, protected configuration and nginx configuration.
+2. Prepares routes only after every cloud body matches the signed live feed.
+3. Changes only the v2 file location; the manifest stays at the origin.
+4. Installs a bounded availability check once per minute.
+5. Verifies that the current feed and all legacy-channel hashes are unchanged.
+6. Restores the old executable/configuration and nginx on installation failure.
+
+Inspect the live web mount and run nginx's configuration test before reload.
+Revoke temporary administrator credentials after deployment verification.
+Per-file route markers and the health flag live under `.mirror`, which is denied
+over HTTP. A file redirects only when both checks exist. Failed health checks
+remove the flag, making the unchanged original URLs serve their local files.
+`?origin=1` explicitly bypasses cloud delivery. Redirects carry `no-store` so a
+previously cached redirect cannot prevent an origin rollback.
+
+Old clients follow HTTP redirects using their existing downloader. A cloud
+outage can still affect them until the next health check, and a network failure
+specific to one user is not detectable by the origin. The updated transport uses
+its existing second-attempt allowance to request `?origin=1` when configured with
+`OriginFallback`; it still requires the original signature, size and hash.
+This client improvement takes effect only after a new application build.
+
+Hosting-only migrations reuse the original signed feed and package acceptance.
+Verify public redirect, origin fallback, Range/resume, and real published client
+download/reconstruction separately; do not claim a new application version or
+re-run game automation for a routing-only change. The desktop repair feature is
+separate from this routing migration; already published applications retain their
+existing behavior until they install a version containing the repair UI/helper.
+
+### Migration validation · 2026-10-21
+
+The initial cloud copy contains the 20 original, signed 1.4.13 patches for
+1.4.3–1.4.12 in both editions: 40,072,636 bytes (38.22 MiB). Every public object
+was downloaded and verified against the unchanged signed manifest.
+
+The original 1.4.7 and 1.4.12 `Dustweave.Core` binaries each downloaded both
+editions from the cloud with a 65,536-byte partial file, received HTTP 206, and
+reconstructed all 221 Lite / 677 Portable files with matching hashes. The
+installation directories were isolated test copies; the application and game
+were not started.
+
+Additional evidence includes 87 publishing-channel checks on Windows and Linux,
+10 real nginx routing tests, and the affected update safety/delta/layout checks.
+Evidence is retained outside the public repository in the parent workspace under
+`artifacts/research/dustweave-qicaiyun-20261020/`.
+
+**OTA delivery switched and verified on 2026-10-21.** The live v2 feed remains 1.4.13,
+SHA-256 `6170e8ada51c5fe61eb5a3ec0d7fedd8155464aeb945213bbf402edcd59741c8`.
+Twenty-four live checks verified the source redirects, origin byte ranges and
+hidden route-state directory. The same published-client checks also passed through
+the actual source URLs. The original publishing lane and feed are unchanged.
+
+### Installation repair
+
+The repair endpoint is separate from immutable delta directories:
+
+- `/repair/vVERSION/Dustweave-VERSION-FLAVOR-repair.json` stays on the origin.
+- `/repair/objects/SHA256.bin` redirects to the verified cloud object. The original
+  bytes remain available with `?origin=1`.
+- Every repair manifest has a domain-separated P-256 signature and binds its
+  version, edition, runtime and full-archive digest to the signed release feed.
+- Files are divided into at most 2 MiB blocks, deduplicated across both editions.
+  Clients reuse healthy local blocks and validate the complete reconstructed file.
+
+`prepare-repair-package.ps1` uses the original signed release archives and the
+existing protected publisher key. `publish-repair-signed.ps1` verifies/uploads the
+cloud objects, submits a short-lived signed request through the v2 account and
+records its nonce. `dustweave-ota repair-index` exposes only immutable object names
+and sizes; omitted origin objects are rehashed by the receiver. The publisher
+checks both editions, stores all origin objects, verifies cloud bodies and exposes
+the manifests last. It never changes `updates.json`.
+
+Normal `publish-update-signed.ps1` publication with `MirrorConfig` now prepares
+repair data before switching the release feed. A repair failure stops that switch;
+query the saved repair nonce with the existing status command before retrying.
+No shell, arbitrary path or arbitrary file-upload command is granted to the
+publishing account.
+
+See [INSTALLATION_REPAIR.md](INSTALLATION_REPAIR.md) for client behavior and recovery.
+
+### Repair service deployment · 2026-10-21
+
+The signed inventories for the original 1.4.13 Lite and Portable archives are
+available. All 741 shared content blocks (278,241,699 bytes) passed both local
+public-download verification and an independent origin-side download/hash check.
+All 741 routes use cloud delivery with an origin fallback. No application
+release or feed metadata was changed.
+
+The final v2 publisher SHA-256 is
+`632394d9529e67320cbeed91c0d062fd5a36653deba9420497972f9dc4a57799`.
+Its previous executable and web configuration are retained by the scoped upgrade
+procedure. The final Windows and Linux channel suite passed 108 checks; real
+nginx validation passed 12 checks, and all 24 original live routing checks passed
+again after deployment. The temporary administrator key was revoked and a fresh
+connection with that key was denied. The restricted publication/status channel
+remains operational and continues to reject arbitrary commands.
+
+Actual 1.4.13 installation copies were damaged and repaired through the live
+origin URLs using the new independent helper:
+
+| Edition | Verified files | Damaged files | Downloaded bytes | Result |
+| --- | ---: | ---: | ---: | --- |
+| Lite | 221 | 3 | 2,711,809 | Repaired and startup acknowledged |
+| Portable | 677 | 3 | 2,742,743 | Repaired and startup acknowledged |
+
+Both cases resumed a partial block. The Lite case additionally injected a CDN
+failure and verified recovery through the real origin. Account and plugin
+sentinels survived. Separate packaged tests passed startup-failure rollback and
+interrupted-transaction recovery; no game was connected or operated.
+
+The client implementation also passed 241 targeted update, repair, scheduling
+and user-text checks, plus light/dark UI checks in all three languages. It is
+implemented in source but **not included in the already published 1.4.13
+application**. A subsequent client release must publish its own signed repair
+inventories before switching the feed; the normal publishing script now performs
+that step. Do not distribute a modified client under the existing 1.4.13 version
+or overwrite its immutable archives.

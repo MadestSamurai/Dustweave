@@ -11,7 +11,7 @@ public sealed record DailyUpdateDelta(string Flavor, string FromVersion, string 
 public sealed record DailyUpdateRelease(string Version, string? PreviousVersion, int Layout, Dictionary<string, string[]> Notes, DailyUpdateAsset[] Assets, DailyUpdateDelta[]? Deltas = null, string? RuntimeVersion = null);
 public sealed record DailyUpdateFeed(int Schema, string Product, string Channel, DailyUpdateRelease[] Releases, DailyUpdateDelta[]? BaselineDeltas = null);
 public sealed record DailyUpdatePackage(string Version, string Flavor, string[]? Files = null, int Layout = 1, string? RuntimeVersion = null, string[]? BootstrapFiles = null);
-public sealed record DailyUpdateJob(string Directory, string Target, int ParentPid, long ParentStartTicks, DailyUpdateRelease Release, DailyUpdateAsset Asset, string Nonce = "", string OriginalSha256 = "", string? DeltaFileName = null);
+public sealed record DailyUpdateJob(string Directory, string Target, int ParentPid, long ParentStartTicks, DailyUpdateRelease Release, DailyUpdateAsset Asset, string Nonce = "", string OriginalSha256 = "", string? DeltaFileName = null) { public bool Repair { get; init; } }
 
 public static class DailyUpdates
 {
@@ -104,25 +104,7 @@ public static class DailyUpdates
         using var file = File.OpenRead(path);
         return file.Length == asset.Bytes && Convert.ToHexString(SHA256.HashData(file)).Equals(asset.Sha256, StringComparison.OrdinalIgnoreCase);
     }
-    public static bool AllowedFile(string name)
-    {
-        if (string.IsNullOrWhiteSpace(name) || name.Contains('\\') || name.Contains(':') || name.StartsWith('/') || name.Split('/').Any(s => s is "" or "." or ".." || s.EndsWith('.') || s.EndsWith(' '))) return false;
-        if (name.StartsWith("app/", StringComparison.Ordinal))
-        {
-            var inner = name[4..];
-            return inner is not ("Dustweave.exe" or "update-package.json") && !inner.StartsWith("app/", StringComparison.Ordinal) && AllowedFile(inner);
-        }
-        return name is "Dustweave.exe" or "utility-host.json" or "tools.json" or "update-package.json" or "README.md" or "README.en.md" or "THIRD_PARTY_NOTICES.md" or "LICENSE"
-            or "package-components.json" or "support/Dustweave.Updater.exe"
-            || !name.Contains('/') && (name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) || (name.StartsWith("Dustweave", StringComparison.Ordinal) || name.StartsWith("BD2", StringComparison.Ordinal)) && (name.EndsWith(".deps.json", StringComparison.Ordinal) || name.EndsWith(".runtimeconfig.json", StringComparison.Ordinal)))
-            || System.Text.RegularExpressions.Regex.IsMatch(name, @"^[a-z]{2}(?:-[A-Za-z]+)?/[A-Za-z0-9._-]+\.resources\.dll$")
-            || System.Text.RegularExpressions.Regex.IsMatch(name, @"^resources/shared/[A-Fa-f0-9]{64}\.bin$")
-            || name.StartsWith("data/", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal)
-            || name.StartsWith("flows/", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal)
-            || name.StartsWith("connection/specs/", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal)
-            || name.StartsWith("licenses/", StringComparison.Ordinal)
-            || name.StartsWith("docs/", StringComparison.Ordinal) && name.EndsWith(".md", StringComparison.Ordinal);
-    }
+    public static bool AllowedFile(string name) => DailyUpdateRepairManifest.AllowedFile(name);
     public static string[] Extract(string zipPath, string staging, DailyUpdateRelease release, DailyUpdateAsset asset)
     {
         if (!Verify(zipPath, asset)) throw new InvalidDataException("updates.hash_failed");

@@ -29,14 +29,24 @@ static class Channel
     }
     public static string ParseCommand(string command)
     {
-        if(command is "dustweave-ota submit" or "dustweave-ota status") return command;
+        if(command is "dustweave-ota submit" or "dustweave-ota status" or "dustweave-ota repair" or "dustweave-ota repair-index") return command;
         if(command.StartsWith("dustweave-ota status ",StringComparison.Ordinal) && Rules.IsNonce(command["dustweave-ota status ".Length..])) return command;
-        throw new InvalidDataException("Only dustweave-ota submit/status are permitted");
+        throw new InvalidDataException("Only dustweave-ota submit/repair/status are permitted");
     }
     public static object Status(Config c,string? nonce=null)
     {
         if(nonce!=null)
         {
+            var repairResult=Path.Combine(c.State,"repairs",nonce,"result.json");
+            if(File.Exists(repairResult)) { Rules.NoLinks(repairResult);return Rules.Read<JsonElement>(File.ReadAllBytes(repairResult)); }
+            var repairHeader=Path.Combine(c.State,"repairs",nonce,"header.json");
+            if(File.Exists(repairHeader))
+            {
+                Rules.NoLinks(repairHeader);
+                if(File.GetLastWriteTimeUtc(repairHeader)<DateTime.UtcNow.AddMinutes(-20))
+                    return new {state="needs_attention",nonce,error="Repair publication stopped reporting. Inspect the saved receipt before preparing another request."};
+                return new {state="receiving",nonce};
+            }
             var folder=Folder(c,nonce); var status=Path.Combine(folder,"status.json");
             if(!File.Exists(status)) return new {state=File.Exists(Path.Combine(c.State,"claims",nonce))?"receiving":"not_found",nonce};
             var state=Rules.Read<Operation>(File.ReadAllBytes(status));
@@ -52,7 +62,7 @@ static class Channel
         }
         var feedPath=Path.Combine(c.Public,"updates.json");
         var feed=Rules.VerifyFeed(File.ReadAllBytes(feedPath),c);
-        return new {product="Dustweave",version=feed.Releases[0].Version,feedSha256=Rules.HashFile(feedPath),protocol=1,layout=c.Layout};
+        return new {product="Dustweave",version=feed.Releases[0].Version,feedSha256=Rules.HashFile(feedPath),protocol=1,layout=c.Layout,mirror=Mirror.Status(c)};
     }
     public static async Task<object> Submit(Config c,Stream input,bool startWorker=true)
     {
@@ -126,6 +136,9 @@ static class Channel
             // Version contents are immutable; the only mutable public file is switched last.
             CheckCurrent(c,r,feed); Rules.Atomic(liveFeed,feed);fault?.Invoke("feed-switched");
             CheckPublished(target,r);Rules.Need(Rules.HashFile(liveFeed)==r.FeedSha256,"Public feed verification failed");
+            // Mirror setup never invalidates a healthy signed publication. Until
+            // all CDN files verify, the unchanged origin URLs serve local bytes.
+            Mirror.TryPrepareAndProbe(c,feed);
             Record(folder,new("completed",nonce,r.Version,DateTimeOffset.UtcNow));
         }
         catch(Exception e)
@@ -155,13 +168,40 @@ static class Program
             {
                 var c=Rules.Read<Config>(File.ReadAllBytes(args[1])); Console.WriteLine(JsonSerializer.Serialize(Channel.Status(c),Rules.Json));return 0;
             }
+            if(args.Length==4 && args[0]=="mirror-nginx")
+            {
+                var c=Rules.Read<Config>(File.ReadAllBytes(args[3]));
+                File.WriteAllText(args[2],MirrorNginx.Patch(File.ReadAllText(args[1]),c));return 0;
+            }
+            if(args.Length==4 && args[0]=="mirror-config")
+            {
+                var c=Rules.Read<Config>(File.ReadAllBytes(args[1])) with { MirrorBaseUrl=args[3] };
+                _=Mirror.BaseUrl(c);
+                Rules.Atomic(args[2],Rules.Bytes(c));return 0;
+            }
             var configPath=Channel.ConfigPathForAccount(Environment.UserName);
             Rules.NoLinks(configPath);var config=Rules.Read<Config>(File.ReadAllBytes(configPath));
             Rules.NoLinks(config.State);Rules.NoLinks(config.Public);
+            if(args.SequenceEqual(new[]{"mirror-prepare"}))
+            {
+                using var gate=new FileStream(Path.Combine(config.State,"publish.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None);
+                using var client=Mirror.Client();
+                await Mirror.Prepare(config,File.ReadAllBytes(Path.Combine(config.Public,"updates.json")),client);
+                Rules.Need(await Mirror.Probe(config,client),"Mirror health verification failed");
+                Console.WriteLine(JsonSerializer.Serialize(Mirror.Status(config),Rules.Json));return 0;
+            }
+            if(args.SequenceEqual(new[]{"mirror-health"}))
+            {
+                using var client=Mirror.Client();
+                await Mirror.Probe(config,client);
+                Console.WriteLine(JsonSerializer.Serialize(Mirror.Status(config),Rules.Json));return 0;
+            }
             if(args.Length==2 && args[0]=="worker") { Channel.Worker(config,args[1]);return 0; }
             Rules.Need(args.SequenceEqual(new[]{"serve"}),"Invalid invocation");
             var command=Channel.ParseCommand(Environment.GetEnvironmentVariable("SSH_ORIGINAL_COMMAND")??"");
-            object result=command=="dustweave-ota submit" ? await Channel.Submit(config,Console.OpenStandardInput()) :
+            object result=command=="dustweave-ota repair-index" ? RepairChannel.Index(config) :
+                command=="dustweave-ota repair" ? await RepairChannel.Submit(config,Console.OpenStandardInput()) :
+                command=="dustweave-ota submit" ? await Channel.Submit(config,Console.OpenStandardInput()) :
                 Channel.Status(config,command.Length>"dustweave-ota status ".Length?command["dustweave-ota status ".Length..]:null);
             Console.WriteLine(JsonSerializer.Serialize(result,Rules.Json));return 0;
         }

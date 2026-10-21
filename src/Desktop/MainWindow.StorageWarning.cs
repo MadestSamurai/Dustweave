@@ -30,7 +30,7 @@ public partial class MainWindow
             var volumes = await Task.Run(ReadSpace, storageWarningLifetime.Token);
             if (volumes.Length == 0) { storageReminderDay = null; return; }
             // Do not cover an existing dialog. The advisory itself is modeless so running/scheduled work continues.
-            bool CanShow() => !storageWindowClosed && IsVisible && WindowState != WindowState.Minimized && !onboardingOpen && !cacheChanging && !updateInstalling && DailyDialogs.ModalDepth == 0;
+            bool CanShow() => !storageWindowClosed && IsVisible && WindowState != WindowState.Minimized && !onboardingOpen && !cacheChanging && !UpdateRestarting && DailyDialogs.ModalDepth == 0;
             if (!CanShow()) { nextStorageCheck = DateTime.UtcNow.AddSeconds(30); return; }
             var report = await new DailyStorageMaintenance(root).ScanAsync(logPolicy, storageWarningLifetime.Token);
             if (!CanShow() || DailyStorageWarning.IsIgnored(root, DateTime.Now)) return;

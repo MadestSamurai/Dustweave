@@ -65,7 +65,22 @@ namespace BD2Daily.Live {
   private static DataContractJsonSerializer Serializer(Type type){DataContractJsonSerializer s;if(!serializers.TryGetValue(type,out s))serializers[type]=s=new DataContractJsonSerializer(type);return s;}
   private static ObservationRequest Request(){var bytes=BD2.LocalIpc.RuntimeFiles.Read(Path.Combine(root,"observation-request.json"));if(bytes==null)return null;using(var memory=new MemoryStream(bytes))return(ObservationRequest)new DataContractJsonSerializer(typeof(ObservationRequest)).ReadObject(memory);}
   private static readonly Dictionary<string,int> inFlight=new Dictionary<string,int>();
+  private static readonly DailyHandoffQuiescence handoffQuiet=new DailyHandoffQuiescence();
   internal static bool Waiting{get{lock(queue)return inFlight.Any(p=>p.Value>0&&p.Key!="missions.event_query"&&p.Key!="missions.query"&&p.Key!="rewards.dice_query");}}
+  internal static string HandoffPending(){
+   bool pending=Waiting;bool? networkBusy=null;
+   if(pending)try{
+    // The game's getter observes its actual request queue. Missing/changed
+    // metadata remains unknown, never equivalent to an idle network.
+    object network=ὫὨὪὠὢὨὮὤὩὤὮ.ὩὮὠὠὩὭὭὠὥὬὪ;
+    var method=network.GetType().GetMethod("get_IsRequesting",BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance,null,Type.EmptyTypes,null);
+    if(method!=null&&method.ReturnType==typeof(bool))networkBusy=(bool)method.Invoke(network,null);
+   }catch{}
+   lock(queue){
+    if(!handoffQuiet.Waiting(pending,networkBusy,DateTime.UtcNow.Ticks))return "";
+    return "daily request awaiting response: "+string.Join(", ",inFlight.Where(p=>p.Value>0).OrderBy(p=>p.Key).Select(p=>p.Key+"="+p.Value).ToArray())+"; network="+(networkBusy.HasValue?(networkBusy.Value?"busy":"idle"):"unknown");
+   }
+  }
 
   private static string root,last="",error="";private static long seq;
   private static Frame frame;private static Harmony harmony;private static EvidenceConfig config;
@@ -76,7 +91,7 @@ namespace BD2Daily.Live {
    // A retired assembly can be resumed in the same game. Its old configuration
    // is not evidence that the Harmony subscriptions still exist.
    config=null;last="";error="";
-   lock(queue){inFlight.Clear();}
+   lock(queue){inFlight.Clear();handoffQuiet.Reset();}
   }
   private static string Scalar(object value){
    if(value==null)return "null";
@@ -145,14 +160,14 @@ namespace BD2Daily.Live {
   }
   private static void Before(MethodBase __originalMethod){
    try{TapRule rule;if(!requests.TryGetValue(__originalMethod,out rule))return;
-    lock(queue){int n;inFlight.TryGetValue(rule.Role,out n);inFlight[rule.Role]=n+1;queue.Enqueue(new EvidenceEvent{AtUtcTicks=DateTime.UtcNow.Ticks,Role=rule.Role,Kind="request",Frame=frame,Sequence=++seq});}
+    lock(queue){handoffQuiet.Reset();int n;inFlight.TryGetValue(rule.Role,out n);inFlight[rule.Role]=n+1;queue.Enqueue(new EvidenceEvent{AtUtcTicks=DateTime.UtcNow.Ticks,Role=rule.Role,Kind="request",Frame=frame,Sequence=++seq});}
    }catch{}
   }
   private static void After(MethodBase __originalMethod,byte[] __0,int __2,bool __result){
    try{TapRule rule;if(!responses.TryGetValue(__originalMethod,out rule))return;
     var e=new EvidenceEvent{AtUtcTicks=DateTime.UtcNow.Ticks,Role=rule.Role,Kind="response",Frame=frame,ErrorCode=__2,Accepted=__result,Sequence=++seq};
     try{if(__0!=null){var type=typeof(UIBase).Assembly.GetType(rule.ResponseType,true);var parser=type.GetProperty("Parser").GetValue(null,null);var parse=parser.GetType().GetMethod("ParseFrom",new[]{typeof(byte[])});e.Values=Values(parse.Invoke(parser,new object[]{__0}),rule.Paths);}}catch(Exception ex){e.Error=ex.GetBaseException().Message;}
-    lock(queue){int n;inFlight.TryGetValue(rule.Role,out n);inFlight[rule.Role]=Math.Max(0,n-1);queue.Enqueue(e);}
+    lock(queue){handoffQuiet.Reset();int n;inFlight.TryGetValue(rule.Role,out n);inFlight[rule.Role]=Math.Max(0,n-1);queue.Enqueue(e);}
    }catch{}
   }
   internal static void Tick(Frame current){

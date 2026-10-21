@@ -5,6 +5,69 @@ using static Dustweave.DailyData;
 
 static class NativeDailyBattleCases
 {
+    public static async Task SweepBatches(string root, List<string> checks)
+    {
+        void Check(bool ok, string name) { if (!ok) throw new Exception(name); checks.Add(name); }
+        foreach (var test in new (string Name, int Free, int Reserve, int Fixed, int Cost, int Expected, bool Applied)[] {
+            ("one", 20, 0, 1, 1, 1, true),
+            ("many", 100, 0, 40, 1, 40, true),
+            ("reserve", 20, 3, 40, 1, 17, true),
+            ("multi-key", 20, 3, 40, 2, 8, true),
+            ("growth", 20, 0, 0, 1, 3, true),
+            ("max", 1000, 1, 999, 1, 999, true),
+            ("not-applied", 20, 3, 17, 1, 17, false) })
+        using (var h = new WorkflowHarness(Path.Combine(root, "salvation-batch-" + test.Name), [DailySalvation.Definition()]))
+        {
+            h.Workflow.Settings.Salvation = new() { Enabled = true, ReserveKeys = test.Reserve, UseFixedCount = test.Fixed > 0, SweepCount = Math.Max(1, test.Fixed) };
+            var state = O(("Ready", true), ("Idle", true), ("Unlocked", true), ("Season", true), ("Level", 12), ("Selected", 12),
+                ("Free", test.Free), ("Paid", 99), ("Stones", 80), ("RemainingCost", 100), ("Reward", 9), ("Cost", test.Cost),
+                ("Count", 1), ("Popup", false), ("FreeOnly", false), ("PopupLevel", 12), ("PopupCost", test.Cost));
+            h.Page("RogueLikeLobbyUI");
+            h.Readings = () => [WorkflowCases.Reading("salvation.native", ("$self", state))];
+            int selected = 0, submitted = 0;
+            h.OnCommand = c =>
+            {
+                h.Time += .01;
+                string kind = S(c["Kind"]);
+                var surface = Rows(h.Frame["Surfaces"]).Single(r => N(r["Id"]) == N(c["SurfaceId"]));
+                string ui = S(surface["Type"]);
+                string field = Rows(surface["Targets"]).Where(t => N(t["Id"]) == N(c["TargetId"])).Select(t => S(t["Field"])).SingleOrDefault() ?? "";
+                if (kind == "salvation_select") return;
+                if (kind == "salvation_popup") { state["Popup"] = true; h.Page("RogueLikeSkipPopupUI", "_buttonFreeOnly._objectRoot"); return; }
+                if (field == "_buttonFreeOnly._objectRoot") { state["FreeOnly"] = true; return; }
+                if (kind == "salvation_count")
+                {
+                    selected++;
+                    Check(N(c["Value"]) == test.Expected && N(c["Items"]![1]) == test.Reserve && B(state["FreeOnly"]), "Direct tower count retains policy: " + test.Name);
+                    if (test.Applied) state["Count"] = I(c["Value"]);
+                    return;
+                }
+                if (kind == "salvation_confirm")
+                {
+                    Check(test.Applied && N(state["Count"]) == test.Expected && N(c["Value"]) == test.Expected, "Tower submits only the verified selected batch: " + test.Name);
+                    submitted++;
+                    h.Event("salvation.sweep", "request");
+                    state["Free"] = test.Free - test.Expected * test.Cost; state["Stones"] = 80 + test.Expected * 9; state["Popup"] = false;
+                    h.Event("salvation.sweep", "response", ("ScoreInfo", O(("obsidian", test.Expected * 9))));
+                    h.Page("RogueLikeTotalScoreUI", "_objBackButton"); return;
+                }
+                if (ui == "RogueLikeTotalScoreUI" && field == "_objBackButton") { h.Page("RogueLikeLobbyUI"); return; }
+                if (ui == "RogueLikeLobbyUI" && kind == "back") { h.Page("EvilCastleEnterUI"); return; }
+                if (ui == "EvilCastleEnterUI" && kind == "back") { h.Page("GameFieldDefaultUI"); return; }
+                throw new Exception("Unexpected tower batch action: " + kind + "/" + field);
+            };
+            bool rejected = false;
+            try
+            {
+                var result = await DailySalvation.Run(h.Workflow);
+                Check(test.Applied && S(result["state"]) == "completed" && N(result["result"]?["count"]) == test.Expected, "Tower batch settles the actual quantity: " + test.Name);
+            }
+            catch (StageHostException) when (!test.Applied) { rejected = true; }
+            Check(selected == 1 && submitted == (test.Applied ? 1 : 0), "Tower uses exactly one count command and at most one sweep: " + test.Name);
+            Check(test.Applied ? N(state["Free"]) >= test.Reserve && N(state["Paid"]) == 99 : rejected && N(state["Free"]) == test.Free,
+                "Unapplied counts never consume keys and successful batches retain reserve: " + test.Name);
+        }
+    }
     public static void Run(List<string> checks)
     {
         void Check(bool ok, string name) { if (!ok) throw new Exception(name); checks.Add(name); }

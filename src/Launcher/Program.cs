@@ -20,6 +20,7 @@ internal static class Program
     {
         try
         {
+            if (args.SequenceEqual(new[] { "--repair" })) { StartRepair(); return 0; }
             if (Recover(args)) return 0;
             return LoadApplication(args);
         }
@@ -28,12 +29,30 @@ internal static class Program
             string folder = Path.Combine(DataRoot, "startup");
             try { Directory.CreateDirectory(folder); File.WriteAllText(Path.Combine(folder, "launcher-error.txt"), DateTimeOffset.UtcNow + "\n" + error); } catch { }
             string message = "织尘未能启动。请解压完整软件包后重试；账号设置不会被删除。\nDustweave could not start. Extract the complete package and try again. Your saved accounts are retained.\n\n" + error.Message;
-            if (args.Length == 0 || args[0] is "--desktop-session") MessageBox(0, message, "Dustweave", 0x10);
+            if (args.Length == 0 || args[0] is "--desktop-session")
+            {
+                string helper = Path.Combine(InstallRoot, "app", "support", "Dustweave.Updater.exe");
+                if (File.Exists(helper) && !File.Exists(Path.Combine(InstallRoot, ".dustweave-update.json")))
+                {
+                    string prompt = "是否打开独立修复工具？\nOpen the independent repair tool?\n\n" + error.Message;
+                    if (MessageBox(0, prompt, "Dustweave", 0x24 | 0x100) == 6)
+                    { try { StartRepair(); } catch { MessageBox(0, message, "Dustweave", 0x10); } }
+                }
+                else MessageBox(0, message, "Dustweave", 0x10);
+            }
             return 1;
         }
     }
     private static string DataRoot => Environment.GetEnvironmentVariable("BD2_DAILY_DATA_ROOT") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BD2DailyAssistant");
     private static string InstallRoot => Path.GetDirectoryName(Environment.ProcessPath!)!;
+    private static void StartRepair()
+    {
+        string helper = Path.Combine(InstallRoot, "app", "support", "Dustweave.Updater.exe");
+        NoLinks(helper);
+        var start = new ProcessStartInfo(helper) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = InstallRoot };
+        start.ArgumentList.Add("--repair-install"); start.ArgumentList.Add(InstallRoot);
+        using var process = Process.Start(start) ?? throw new IOException("Repair tool could not start.");
+    }
     private static string Hash(string path) { using var stream = File.OpenRead(path); return Convert.ToHexString(SHA256.HashData(stream)); }
     private static string Text(JsonElement root, string name) => root.GetProperty(name).GetString() ?? throw new InvalidDataException("Invalid recovery record");
     private static bool SamePath(string a, string b) => Path.TrimEndingDirectorySeparator(Path.GetFullPath(a)).Equals(Path.TrimEndingDirectorySeparator(Path.GetFullPath(b)), StringComparison.OrdinalIgnoreCase);

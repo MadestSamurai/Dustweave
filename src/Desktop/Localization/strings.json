@@ -1004,9 +1004,9 @@
     "en-US": "This version is outside the automatic update window. Please download the complete package."
   },
   "updates.manual_delta": {
-    "zh-CN": "当前版本没有符合大小限制的更新包，或本地文件与更新基准不一致。请手动下载完整软件包。",
-    "zh-TW": "目前版本沒有可用的小型更新包，或本機檔案與更新基準不一致。請手動下載完整軟體包。",
-    "en-US": "No small update is available for this version, or local files no longer match its baseline. Please download the complete package."
+    "zh-CN": "更新包不可用，或本地文件与更新基准不一致。如果曾覆盖程序文件，请先检查与修复，再重试更新；仍无法更新时，请下载完整软件包。",
+    "zh-TW": "更新包無法使用，或本機檔案與更新基準不一致。如果曾覆蓋程式檔案，請先檢查與修復，再重試更新；仍無法更新時，請下載完整軟體包。",
+    "en-US": "The update is unavailable, or local files no longer match its baseline. If you overwrote program files, check and repair them, then retry the update. If it still fails, download the complete package."
   },
   "updates.manual_size": {
     "zh-CN": "此次更新超过 10 MB 自动下载上限，请手动下载完整软件包。",
@@ -4713,6 +4713,41 @@
     "zh-TW": "定時任務會照常執行。任務結束後，可在版本更新頁面重新啟動更新。",
     "en-US": "Scheduled tasks will run as usual. After they finish, you can restart from the Updates page."
   },
+  "updates.restart_preparing": {
+    "zh-CN": "正在准备重启更新，请稍候…",
+    "zh-TW": "正在準備重新啟動更新，請稍候…",
+    "en-US": "Preparing to restart and update…"
+  },
+  "updates.restart_waiting": {
+    "zh-CN": "已收到重启请求，正在等待后台检查结束；完成后会自动继续。",
+    "zh-TW": "已收到重新啟動要求，正在等待背景檢查結束；完成後會自動繼續。",
+    "en-US": "Restart requested. Waiting for the background check to finish; the update will then continue automatically."
+  },
+  "updates.restart_check_timeout": {
+    "zh-CN": "后台检查暂未结束，本次未重启。请稍后再点“重启并更新”。",
+    "zh-TW": "背景檢查尚未結束，本次未重新啟動。請稍後再按「重新啟動並更新」。",
+    "en-US": "The background check has not finished. No restart occurred. Try Restart and update again shortly."
+  },
+  "updates.restart_busy": {
+    "zh-CN": "当前任务或设置操作尚未结束，暂不能重启。请先完成或停止该操作，再点“重启并更新”。",
+    "zh-TW": "目前任務或設定操作尚未結束，暫時無法重新啟動。請先完成或停止該操作，再按「重新啟動並更新」。",
+    "en-US": "A task or settings operation is still active. Finish or stop it, then choose Restart and update again."
+  },
+  "updates.restart_changed": {
+    "zh-CN": "更新包或目标版本已变化，本次未重启。请在“版本更新”重新检查并下载。",
+    "zh-TW": "更新套件或目標版本已變更，本次未重新啟動。請在「版本更新」重新檢查並下載。",
+    "en-US": "The update package or target version has changed. No restart occurred. Check and download again on the Updates page."
+  },
+  "updates.restart_settings": {
+    "zh-CN": "日常设置尚未保存，未重启。请修正设置页的提示后重试。",
+    "zh-TW": "日常設定尚未儲存，未重新啟動。請修正設定頁的提示後重試。",
+    "en-US": "Daily settings could not be saved. Resolve the highlighted settings, then retry. No restart occurred."
+  },
+  "updates.restart_cancelled": {
+    "zh-CN": "已取消重启更新，软件文件未替换。可稍后重新操作。",
+    "zh-TW": "已取消重新啟動更新，軟體檔案未替換。可稍後重新操作。",
+    "en-US": "Restart cancelled. Application files were not replaced. You can try again later."
+  },
   "updates.schedule_first": {
     "zh-CN": "定时任务已到点，优先执行任务。结束后可重启更新。",
     "zh-TW": "定時任務已到時間，優先執行任務。結束後可重新啟動更新。",
@@ -6039,9 +6074,9 @@
     "en-US": "Export logs and get help"
   },
   "diagnostics.export.body": {
-    "zh-CN": "导出最近 7 天记录，最多 64 MB。不含登录凭据、插件或密钥，不会自动上传。",
-    "zh-TW": "匯出最近 7 天記錄，最多 64 MB。不含登入憑證、套件或金鑰，不會自動上傳。",
-    "en-US": "Export up to 64 MB from the last 7 days. Excludes credentials, plugins and keys; nothing is uploaded automatically."
+    "zh-CN": "导出最近 7 天记录，压缩前最多 128 MiB，优先保留故障记录。不含登录凭据、插件或密钥，不会自动上传。",
+    "zh-TW": "匯出最近 7 天記錄，壓縮前最多 128 MiB，優先保留故障記錄。不含登入憑證、套件或金鑰，不會自動上傳。",
+    "en-US": "Export up to 128 MiB before compression from the last 7 days, prioritizing failure records. Excludes credentials, plugins and keys; nothing is uploaded automatically."
   },
   "diagnostics.export.privacy": {
     "zh-CN": "日志可能包含角色名、任务内容和本机路径，请私下发送给开发者。",
@@ -7873,6 +7908,29 @@
     "zh-TW": "未選擇料理：只購買收藏商品。",
     "en-US": "No recipes selected: only buy favorites."
   },
+  "repair.title": { "zh-CN": "检查与修复", "zh-TW": "檢查與修復", "en-US": "Check and repair" },
+  "repair.goto": { "zh-CN": "前往检查与修复", "zh-TW": "前往檢查與修復", "en-US": "Open check and repair" },
+  "repair.help": { "zh-CN": "适用于覆盖文件后更新失败、文件缺失或程序异常。只修复当前版本的程序文件，保留账号、设置和插件。", "zh-TW": "適用於覆蓋檔案後更新失敗、檔案遺失或程式異常。只修復目前版本的程式檔案，保留帳號、設定和外掛。", "en-US": "For failed updates after overwriting files, missing files or application errors. Repairs program files for this version and preserves accounts, settings and plugins." },
+  "repair.idle": { "zh-CN": "先检查安装文件，再下载需要修复的部分。", "zh-TW": "先檢查安裝檔案，再下載需要修復的部分。", "en-US": "Check the installation first, then download only the parts that need repair." },
+  "repair.check": { "zh-CN": "检查安装文件", "zh-TW": "檢查安裝檔案", "en-US": "Check installation" },
+  "repair.download": { "zh-CN": "下载修复文件", "zh-TW": "下載修復檔案", "en-US": "Download repairs" },
+  "repair.restart": { "zh-CN": "重启并修复", "zh-TW": "重新啟動並修復", "en-US": "Restart and repair" },
+  "repair.cancel": { "zh-CN": "取消", "zh-TW": "取消", "en-US": "Cancel" },
+  "repair.details": { "zh-CN": "查看受影响的文件", "zh-TW": "查看受影響的檔案", "en-US": "View affected files" },
+  "repair.checking": { "zh-CN": "正在检查文件 · {0}/{1}", "zh-TW": "正在檢查檔案 · {0}/{1}", "en-US": "Checking files · {0}/{1}" },
+  "repair.preparing": { "zh-CN": "正在准备修复 · {0}/{1}", "zh-TW": "正在準備修復 · {0}/{1}", "en-US": "Preparing repairs · {0}/{1}" },
+  "repair.file_missing": { "zh-CN": "缺失 · {0}", "zh-TW": "遺失 · {0}", "en-US": "Missing · {0}" },
+  "repair.file_changed": { "zh-CN": "与正式版本不一致 · {0}", "zh-TW": "與正式版本不一致 · {0}", "en-US": "Differs from the release · {0}" },
+  "repair.healthy": { "zh-CN": "安装文件完整，无需修复。", "zh-TW": "安裝檔案完整，無需修復。", "en-US": "Installation verified. No repairs needed." },
+  "repair.found": { "zh-CN": "发现 {0} 个文件需要修复，预计下载 {1} MB。下载不会中断当前任务。", "zh-TW": "發現 {0} 個檔案需要修復，預計下載 {1} MB。下載不會中斷目前任務。", "en-US": "{0} files need repair. Estimated download: {1} MB. Downloading will not interrupt your tasks." },
+  "repair.ready": { "zh-CN": "修复文件已校验。空闲时重启即可修复；如启动失败，会还原本次更改。", "zh-TW": "修復檔案已驗證。閒置時重新啟動即可修復；如啟動失敗，會還原本次變更。", "en-US": "Repairs verified. Restart when idle to apply them. Changes will be rolled back if startup fails." },
+  "repair.idle_required": { "zh-CN": "请先停止当前任务并关闭工具窗口，再重启修复。定时任务优先执行。", "zh-TW": "請先停止目前任務並關閉工具視窗，再重新啟動修復。定時任務優先執行。", "en-US": "Stop the current task and close tool windows before restarting to repair. Scheduled tasks take priority." },
+  "repair.cancelled": { "zh-CN": "已取消，安装文件未更改；重新操作可复用已下载的数据。", "zh-TW": "已取消，安裝檔案未變更；重新操作可重用已下載的資料。", "en-US": "Cancelled. Installation unchanged; downloaded data can be reused." },
+  "repair.failed": { "zh-CN": "未能完成修复准备，安装文件未更改。请检查网络后重试，或下载完整软件包。", "zh-TW": "未能完成修復準備，安裝檔案未變更。請檢查網路後重試，或下載完整軟體包。", "en-US": "Could not prepare repairs. Installation unchanged. Check your connection and retry, or download the full package." },
+  "updates.repair_signature": { "zh-CN": "修复清单未通过签名校验，已停止。请稍后重试或从正式下载页获取完整包。", "zh-TW": "修復清單未通過簽章驗證，已停止。請稍後重試或從正式下載頁取得完整包。", "en-US": "Repair signature verification failed. Nothing was changed. Retry later or download the official full package." },
+  "updates.repair_manifest": { "zh-CN": "修复清单与当前版本不匹配，未修改文件。请重新检查或下载完整包。", "zh-TW": "修復清單與目前版本不符，未修改檔案。請重新檢查或下載完整包。", "en-US": "The repair inventory does not match this release. Nothing was changed. Check again or download the full package." },
+  "updates.repair_unavailable": { "zh-CN": "暂时无法获取当前版本的修复清单。请稍后重试，或下载完整软件包。", "zh-TW": "暫時無法取得目前版本的修復清單。請稍後重試，或下載完整軟體包。", "en-US": "The repair inventory for this version is unavailable. Retry later or download the full package." },
+  "updates.repair_changed": { "zh-CN": "安装文件或修复缓存已变化，请重新检查后再修复。", "zh-TW": "安裝檔案或修復快取已變更，請重新檢查後再修復。", "en-US": "Installation files or cached repairs changed. Check again before repairing." },
   "cooking.count": {
     "zh-CN": "已选择 {0} 道料理",
     "zh-TW": "已選擇 {0} 道料理",

@@ -9,6 +9,9 @@ public sealed record DailyDiagnosticExportResult(string Path, int Files, int Ski
 public static class DailyDiagnosticExport
 {
     public const string WeChat = "SuJakads0133", QQ = "1104563414";
+    // Budget applies to redacted log contents before ZIP compression, not archive size.
+    public const long MaxLogBytes = 128L * 1024 * 1024;
+    public const int MaxFiles = 2000;
     static readonly HashSet<string> Top = new(StringComparer.OrdinalIgnoreCase) { "ui-operation-error.json", "software-settings-error.json", "schedule-error.json", "startup-state.json", "startup-error.json", "queue-worker.log", "queue-ui.json", "connection-watchdog.json", "connection-access.json", "connection.json", "compatibility.json", "guild-compatibility.json", "startup-compatibility.json", "run.json", "run-error.json", "sandbox-error.json", "parallel-worker-error.json", "plugin-error.json", "runtime.log", "connection.log", "connection-cleanup.log" };
     static readonly string[] Trees = ["suite/diagnostics", "live/diagnostics", "live/queue-bootstrap", "live/queues", "queue-history", "parallel-progress", "tools", "parallel-workers", "live/steps", "live/business", "live/managed-business", "live/step-recovery",
         "live/trade-quote-reads", "live/trade-closes", "trade/diagnostics", "trade/data-preflights", "trade/capture", "trade/executions", "trade/plans",
@@ -21,7 +24,20 @@ public static class DailyDiagnosticExport
     static readonly HashSet<string> PrivateNames = new(StringComparer.OrdinalIgnoreCase) { "accounts.json", "preferences.json", "settings.json", "endpoint.json", "session.json", "sessions.json", "command.json" };
     static string Unrotate(string name) => Rotations.FirstOrDefault(s => name.EndsWith(s,StringComparison.OrdinalIgnoreCase)) is { } suffix ? name[..^suffix.Length] : name;
     static bool LogName(string name) => Unrotate(name).EndsWith(".log",StringComparison.OrdinalIgnoreCase) || Unrotate(name).EndsWith(".jsonl",StringComparison.OrdinalIgnoreCase);
-    static int Priority(string relative) => Top.Contains(Unrotate(relative)) || Singles.Contains(relative,StringComparer.OrdinalIgnoreCase) || relative.StartsWith("suite/diagnostics/",StringComparison.OrdinalIgnoreCase) ? 0
+    static bool ToolControlEvidence(string relative) => relative.StartsWith("tools/",StringComparison.OrdinalIgnoreCase)
+        && (relative.EndsWith("-activity-error.json",StringComparison.OrdinalIgnoreCase)
+            || relative.EndsWith("-identity-error.json",StringComparison.OrdinalIgnoreCase)
+            || new[]{"connection.log","connection-cleanup.log","last-interruption.json"}.Contains(Unrotate(Path.GetFileName(relative)),StringComparer.OrdinalIgnoreCase));
+    static string? EvidenceFamily(string relative)
+    {
+        if(relative.StartsWith("tools/",StringComparison.OrdinalIgnoreCase)) {
+            var parts=relative.Split('/');
+            // Preserve each tool independently, including its current and previous runtime log.
+            if(parts.Length>=3)return "tools/"+parts[1]+(Unrotate(parts[^1]).Equals("runtime.log",StringComparison.OrdinalIgnoreCase)?"/"+parts[^1]:"");
+        }
+        return Trees.FirstOrDefault(t=>relative.StartsWith(t+"/",StringComparison.OrdinalIgnoreCase));
+    }
+    static int Priority(string relative) => ToolControlEvidence(relative) || Top.Contains(Unrotate(relative)) || Singles.Contains(relative,StringComparer.OrdinalIgnoreCase) || relative.StartsWith("suite/diagnostics/",StringComparison.OrdinalIgnoreCase) ? 0
         : relative.StartsWith("live/steps/",StringComparison.OrdinalIgnoreCase) ? 4
         : new[]{"live/queues/","live/queue-bootstrap/","live/server-collection/","live/weekly-npc-queries/","live/travel-diagnostics/","live/diagnostics/failures/","live/weekly-npc-recovery/"}.Any(p=>relative.StartsWith(p,StringComparison.OrdinalIgnoreCase)) ? 1
         : new[]{"live/business/","live/managed-business/","live/trade-quote-reads/","trade/diagnostics/"}.Any(p=>relative.StartsWith(p,StringComparison.OrdinalIgnoreCase)) ? 2 : 3;
@@ -142,7 +158,7 @@ public static class DailyDiagnosticExport
         // Keep one recent record from every evidence family before taking its
         // history. Repeated NPC queries must not evict every consuming journal.
         var familyHeads=files.Where(f=>f.File.LastWriteTimeUtc>=DateTime.UtcNow.AddDays(-7)&&f.File.Length<=8*1024*1024)
-            .GroupBy(f=>(f.Prefix,Family:Trees.FirstOrDefault(t=>Path.GetRelativePath(f.Root,f.File.FullName).Replace('\\','/').StartsWith(t+"/",StringComparison.OrdinalIgnoreCase))))
+            .GroupBy(f=>(f.Prefix,Family:EvidenceFamily(Path.GetRelativePath(f.Root,f.File.FullName).Replace('\\','/'))))
             .Where(g=>g.Key.Family!=null).Select(g=>g.OrderByDescending(f=>f.File.LastWriteTimeUtc).First().File.FullName).ToHashSet(StringComparer.OrdinalIgnoreCase);
         try {
             using(var output=new FileStream(temporary,FileMode.CreateNew,FileAccess.Write,FileShare.None)) {
@@ -153,14 +169,17 @@ public static class DailyDiagnosticExport
                         token.ThrowIfCancellationRequested();string rel=source.Prefix+"/"+Path.GetRelativePath(root,file.FullName).Replace('\\','/');
                         if(file.LastWriteTimeUtc<DateTime.UtcNow.AddDays(-7)){skipped.Add(new{path=rel,reason="older-than-7-days"});continue;}
                         bool log=LogName(file.Name);
-                        if(count>=2000||total>=64*1024*1024||file.Length>8*1024*1024&&!log){skipped.Add(new{path=rel,reason="size-limit"});continue;}
+                        if(count>=MaxFiles||total>=MaxLogBytes||file.Length>8*1024*1024&&!log){skipped.Add(new{path=rel,reason="size-limit"});continue;}
                         try {
                             if(!SafePath(file.FullName))throw new IOException("link");
                             using var stream=new FileStream(file.FullName,FileMode.Open,FileAccess.Read,FileShare.ReadWrite|FileShare.Delete);
-                            long originalBytes=stream.Length;bool truncated=originalBytes>8*1024*1024;
+                            // Connection diagnostics need a recent bounded tail, not several
+                            // megabytes of successful polls ahead of other tools' failures.
+                            bool controlLog=log&&ToolControlEvidence(Path.GetRelativePath(root,file.FullName).Replace('\\','/'));
+                            long originalBytes=stream.Length;bool truncated=originalBytes>(controlLog?256*1024:8*1024*1024);
                             if(truncated) {
                                 if(!log)throw new IOException("size-limit");
-                                stream.Seek(-2*1024*1024,SeekOrigin.End);
+                                stream.Seek(-(controlLog?256*1024:2*1024*1024),SeekOrigin.End);
                                 // Start at a complete UTF-8 line; never expose a partial JSON record.
                                 int next;do{next=stream.ReadByte();}while(next!=-1&&next!='\n');
                             }
@@ -168,7 +187,7 @@ public static class DailyDiagnosticExport
                             var buffer=new char[8192];var text=new StringBuilder();int read;
                             while((read=reader.Read(buffer,0,buffer.Length))>0){token.ThrowIfCancellationRequested();if(text.Length+read>8*1024*1024)throw new IOException("size-limit");text.Append(buffer,0,read);}
                             string data=Redact(text.ToString(),file.Extension.Equals(".json",StringComparison.OrdinalIgnoreCase));
-                            int bytes=Encoding.UTF8.GetByteCount(data);if(total+bytes>64*1024*1024){skipped.Add(new{path=rel,reason="size-limit"});continue;}
+                            int bytes=Encoding.UTF8.GetByteCount(data);if(total+bytes>MaxLogBytes){skipped.Add(new{path=rel,reason="size-limit"});continue;}
                             Add("logs/"+rel,data);total+=bytes;count++;included.Add(rel);inventory.Add(new{path=rel,bytes,originalBytes,truncated,atUtc=file.LastWriteTimeUtc});
                             if(rel.Equals("main/ui-operation-error.json",StringComparison.OrdinalIgnoreCase)) {
                                 using var record=JsonDocument.Parse(data);var operation=record.RootElement;
@@ -187,7 +206,7 @@ public static class DailyDiagnosticExport
                         businessJournal=HasTree(label,"live/business")||HasTree(label,"live/managed-business"),tradeCapture=HasTree(label,"trade/capture"),tradeDiagnostics=HasTree(label,"trade/diagnostics"),tradeExecution=HasTree(label,"trade/executions"),tradeQuote=HasTree(label,"live/trade-quote-reads"),
                         queueResults=included.Any(p=>p.StartsWith(label+"/live/queues/",StringComparison.OrdinalIgnoreCase)&&p.EndsWith("/result.json",StringComparison.OrdinalIgnoreCase)),
                         npcQueries=HasTree(label,"live/weekly-npc-queries"),travelDiagnostics=HasTree(label,"live/travel-diagnostics"),routeAtlas=HasTree(label,"live/route-atlas"),serverCollection=HasTree(label,"live/server-collection")});
-                    Add("manifest.json",JsonSerializer.Serialize(new{schema=2,version,atUtc=DateTimeOffset.UtcNow,files=count,bytes=total,days=7,sources=sources.Keys,coverage,inventory,skipped,automaticallyUploaded=false},DailyJson.Options));
+                    Add("manifest.json",JsonSerializer.Serialize(new{schema=2,version,atUtc=DateTimeOffset.UtcNow,files=count,bytes=total,days=7,limits=new{uncompressedLogBytes=MaxLogBytes,files=MaxFiles},sources=sources.Keys,coverage,inventory,skipped,automaticallyUploaded=false},DailyJson.Options));
                 }
                 output.Flush(true);
             }

@@ -211,6 +211,10 @@ public partial class MainWindow:Window
     private async Task SmokeAsync()
     {
         var checks=new List<string>();void Check(bool pass,string name){if(!pass)throw new Exception(name);checks.Add(name);}
+        string DisplayLabel(DependencyObject target,DependencyProperty property,string standalone,string cn,string tw,string en){
+            var host=System.Windows.Data.BindingOperations.GetBinding(target,property)?.Source;
+            return host?.GetType().GetProperty("Code")?.GetValue(host) as string switch {"zh-CN"=>cn,"zh-TW"=>tw,"en-US"=>en,_=>standalone};
+        }
         try{
             LanguageChoice.SelectedIndex=0;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
             Check(costumes.Count==10&&conditions.Count==0,"initial pool and progressive conditions");
@@ -254,7 +258,7 @@ public partial class MainWindow:Window
             ((DemoPort)port).Snapshot.Pools.Single(p=>p.Id==55).EndTimeUnixMilliseconds+=TimeSpan.FromDays(40).Ticks/TimeSpan.TicksPerMillisecond;Poll();
             Check(pool!.Id==55&&Pools.Items.Cast<PoolChoice>().First().Pool.Id==55&&draft.A.SequenceEqual(savedTargets)&&controller.Running&&((DemoPort)port).Last.Owner==owner,"updated end date reorders without changing rules or active owner");
             LanguageChoice.SelectedIndex=1;Check(controller.Running&&((DemoPort)port).Last.Owner==owner&&((DemoPort)port).Commands==writes,"language switch preserves active command");
-            Check(Title=="BD2 Infinite Gacha"&&StartButton.Content.ToString()=="Start rerolling"&&BHeading.Text=="B · Secondary targets","English static UI");
+            Check(Title==DisplayLabel(this,TitleProperty,"BD2 Infinite Gacha","无限抽抽乐 · Dustweave","無限抽抽樂 · Dustweave","Infinite Draw · Dustweave")&&StartButton.Content.ToString()==DisplayLabel(StartButton,ContentControl.ContentProperty,"Start rerolling","开始","開始","Start")&&BHeading.Text=="B · Secondary targets","static UI follows the owning window language");
             Check(costumes[0].LevelLabel=="+5"&&costumes[5].LevelLabel=="Not owned"&&conditions[0].Label.Contains("at least"),"English bound model labels");
             Check(((PoolChoice)Pools.SelectedItem).Title.StartsWith("Ends ")&&((PoolChoice)Pools.SelectedItem).Subtitle.Contains("Current result"),"English date labels update during active run");
             Check(NotifyWindows.Content.ToString()=="Windows notification"&&NotifyPopup.Content.ToString()=="Popup"&&TestNotification.Content.ToString()=="Test alerts","English alert controls");
@@ -266,7 +270,7 @@ public partial class MainWindow:Window
             var englishPicker=new AddCostumesWindow(costumes.Where(c=>c.Available&&c.Group==0),Resources){Owner=this};
             englishPicker.Loaded+=(_,_)=>englishPicker.Dispatcher.BeginInvoke(()=>{Check(englishPicker.Title=="Add costumes","English picker title");englishPicker.Close();});englishPicker.ShowDialog();
             Width=1060;Height=760;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture("english-compact");
-            LanguageChoice.SelectedIndex=0;Check(Title=="BD2 无限抽抽乐助手"&&StartButton.Content.ToString()=="开始刷新","Chinese round trip");
+            LanguageChoice.SelectedIndex=0;Check(Title==DisplayLabel(this,TitleProperty,"BD2 无限抽抽乐助手","无限抽抽乐 · Dustweave","無限抽抽樂 · Dustweave","Infinite Draw · Dustweave")&&StartButton.Content.ToString()==DisplayLabel(StartButton,ContentControl.ContentProperty,"开始刷新","开始","開始","Start"),"Chinese round trip");
             Check(!controller.Running,"language switch does not auto-start");
             Start_Click(this,new());var demo=(DemoPort)port;demo.Snapshot.Owner=demo.Last.Owner;demo.Snapshot.State="matched";
             Poll();Check(!controller.Running&&!demo.Last.Enabled&&smokeNotifications.Count==3,"matched result stops then alerts once");

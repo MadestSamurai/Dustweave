@@ -6,6 +6,7 @@ param(
  [string]$ExpectedCurrent,
  [string]$Operation,
  [switch]$Wait,
+ [string]$MirrorConfig,
  [string]$PrivateKeyFile=(Join-Path $env:LOCALAPPDATA 'DustweavePublisher/update-signing.dpapi')
 )
 $ErrorActionPreference='Stop'
@@ -37,8 +38,9 @@ if($Action -eq 'status'){
  if($Operation){$saved=Get-Content -LiteralPath $Operation -Raw|ConvertFrom-Json;if($saved.nonce -notmatch '^[0-9a-f]{32}$'){throw 'Invalid operation ID.'};$command+=" $($saved.nonce)"}
  do {
   $status=InvokeChannel $command;$status|ConvertTo-Json -Depth 20
-  if($status.State -in @('failed','error','needs_attention')){throw "Publication requires attention: $($status.Error)"}
-  if(!$Wait -or !$Operation -or $status.State -notin @('receiving','accepted','publishing')){break}
+  $phase=if($status.State){$status.State}else{$status.status}
+  if($phase -in @('failed','error','needs_attention')){throw "Publication requires attention: $($status.Error)"}
+  if(!$Wait -or !$Operation -or $phase -notin @('receiving','accepted','publishing')){break}
   Start-Sleep -Seconds 3
  }while($true)
  exit
@@ -65,6 +67,18 @@ foreach($flavor in @('Lite','Portable')){
 }
 $uploadAssets=if($release.Layout -eq 1){@($release.Assets)+(@($release.Deltas)+@($feed.BaselineDeltas))}else{(@($release.Deltas)+@($feed.BaselineDeltas))}
 $blobs=@($uploadAssets|Where-Object {$_}|Sort-Object FileName -CaseSensitive|ForEach-Object {[ordered]@{FileName=$_.FileName;Bytes=[long]$_.Bytes;Sha256=$_.Sha256.ToLowerInvariant()}})
+# Upload and verify cloud objects before creating the short-lived signed publication.
+# A missing mirror configuration intentionally retains ordinary origin publication.
+if(!$MirrorConfig -and $settings.MirrorConfig){$MirrorConfig=$settings.MirrorConfig}
+if($MirrorConfig){
+ if($release.Layout -ne 2){throw 'Cloud delivery is restricted to the v2 lane.'}
+ & (Join-Path $PSScriptRoot 'publish-update-mirror.ps1') -Config $MirrorConfig -PackageDirectory $folder -Receipt ($Operation+'.mirror.json')
+ # Prepare repair objects before switching the feed. The server accepts only
+ # manifests bound to this signed release; existing origin blocks are reused.
+ $repairDirectory=Join-Path (Split-Path -Parent ([IO.Path]::GetFullPath($Operation))) ('repair-'+$release.Version)
+ & (Join-Path $PSScriptRoot 'prepare-repair-package.ps1') -PackageDirectory $folder -OutputDirectory $repairDirectory -PrivateKeyFile $PrivateKeyFile
+ & (Join-Path $PSScriptRoot 'publish-repair-signed.ps1') -Config $Config -RepairDirectory $repairDirectory -Operation ($Operation+'.repair.json') -CloudConfig $MirrorConfig -PrivateKeyFile $PrivateKeyFile
+}
 $nonce=[Guid]::NewGuid().ToString('N');$now=[DateTimeOffset]::UtcNow
 $request=[ordered]@{Schema=1;Product='Dustweave';Version=$release.Version;ExpectedFeedSha256=$current.feedSha256;FeedSha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($feedBytes)).ToLowerInvariant();EvidenceSha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($evidenceBytes)).ToLowerInvariant();Nonce=$nonce;IssuedUtc=$now.ToString('O');ExpiresUtc=$now.AddMinutes(15).ToString('O');Files=$blobs}
 $payload=[Text.Encoding]::UTF8.GetBytes(($request|ConvertTo-Json -Depth 10 -Compress));$key=[Security.Cryptography.ECDsa]::Create()

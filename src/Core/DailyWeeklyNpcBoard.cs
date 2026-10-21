@@ -40,7 +40,15 @@ public static class DailyWeeklyNpcBoard
                 throw new DailyNpcUnavailable("暂时无法到达公告板所在地图，保留待办：" + ex.Message);
             }
         }
-        await route.ProtectWeeklyMovement();
+        if (route.ProtectWeeklyTravel || w.Settings.General.FastTravel)
+        {
+            var observed = await route.Evidence();
+            var current = Readings(observed, "weekly_npc.native").Select(r => r["$self"]).OfType<JsonObject>().FirstOrDefault();
+            double? distance = Rows(current?["Boards"] ?? new JsonArray())
+                .Where(b => N(b["Map"]) == N(Map(observed)["id"]) && N(b["Instance"]) != 0)
+                .Select(b => TargetDistance(b)).DefaultIfEmpty(null).Min();
+            await route.Protection(observed, walking: true, walkingDistance: distance);
+        }
         var frame = (await w.Observe()).Frame;
         string scene = S(frame["Scene"]);
         await w.Step("GameFieldDefaultUI", operation: "weekly_npc_board_nav", value: checked((int)pack));

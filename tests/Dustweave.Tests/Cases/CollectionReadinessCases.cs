@@ -145,6 +145,7 @@ static class CollectionReadinessCases
         await ReusedScopeCase(output, cases);
         await FirstAppearanceCases(output, cases);
         await DelayedMenuCases(output, cases);
+        await QueryTimeoutCases(output, cases);
         foreach (bool restricted in new[] { false, true })
         {
             string path = Path.Combine(output, "collection-readiness-" + restricted);
@@ -187,6 +188,62 @@ static class CollectionReadinessCases
                 var proof = await driver.TakeCollectionDeferralAsync();
                 Check(proof != null && Directory.EnumerateFiles(Path.Combine(path, "live", "collection-deferrals")).Count() == 1 && await driver.TakeCollectionDeferralAsync() == null, "managed cartridge deferral is durable and can only be consumed once");
             }
+        }
+    }
+    static async Task QueryTimeoutCases(string output, List<string> cases)
+    {
+        foreach (string scenario in new[] { "recovered", "persistent", "unknown", "late_reply" })
+        {
+            using var h = new WorkflowHarness(Path.Combine(output, "collection-query-timeout-" + scenario), []);
+            h.Frame["Scene"] = "Map0018_003";
+            h.Page("GameFieldDefaultUI");
+            int reads = 0, acknowledgements = 0;
+            double readyAt = 0;
+            string first = "", current = "";
+            JsonObject network = new();
+            JsonObject Ready(string query) => new()
+            {
+                ["Query"] = query, ["State"] = "ready", ["Error"] = "", ["Pack"] = 18,
+                ["Maps"] = new JsonArray(181), ["Week"] = 500, ["Now"] = 1000,
+                ["Rewards"] = "[]", ["Monsters"] = "[]", ["Drops"] = new JsonArray(), ["Targets"] = new JsonArray()
+            };
+            h.Readings = () => [WorkflowCases.Reading("mainline.network", ("$self", network))];
+            h.OnCommand = command =>
+            {
+                string kind = DailyData.S(command["Kind"]);
+                if (kind == "collection_query")
+                {
+                    reads++; current = DailyData.S(command["Id"]); if (reads == 1) first = current;
+                    network = new() { ["Query"] = current, ["State"] = "pending" };
+                    if (reads == 1 || scenario == "persistent")
+                    {
+                        h.Page("MessagePopupUI", "_buttonOK");
+                        h.Frame["Surfaces"]![0]!["NativeContext"] = scenario == "unknown" ? "" : "request_timeout_ack_only";
+                        h.Frame["Surfaces"]![0]!["Text"] = new JsonArray("连线请求超时，请检查网络连接状态。");
+                    }
+                    else if (scenario == "late_reply") { network = Ready(first); readyAt = h.Time + 1; }
+                    else network = Ready(current);
+                }
+                else if (kind == "background_error_ack")
+                {
+                    acknowledgements++; network["State"] = "failed"; network["Error"] = "Collection read timed out";
+                    h.Page("GameFieldDefaultUI");
+                }
+                else throw new Exception("Read-only timeout recovery submitted unexpected input: " + kind);
+            };
+            h.OnDelay = () => { if (scenario == "late_reply" && reads == 2 && h.Time >= readyAt) network = Ready(current); };
+            bool unavailable = false; JsonObject? result = null;
+            try { result = await new DailyCollectionProgress(h.Workflow).Query(18, [181]); }
+            catch (DailyCollectionReadUnavailable) { unavailable = true; }
+            bool success = scenario is "recovered" or "late_reply";
+            if (unavailable == success || (success && result?["completed"]?["181"] == null)
+                || reads != (success ? 2 : scenario == "persistent" ? 3 : 1)
+                || acknowledgements != (success ? 1 : scenario == "persistent" ? 3 : 0))
+                throw new Exception("Collection query timeout recovery violated its bounded read/ack contract: " + scenario);
+            if (scenario == "persistent" && DailyData.S(h.Frame["Surfaces"]![0]!["Type"]) != "GameFieldDefaultUI")
+                throw new Exception("Exhausted read retries left the acknowledged timeout blocking the next cartridge");
+            if (scenario == "late_reply" && h.Time < readyAt) throw new Exception("Late reply from old query completed the new one");
+            cases.Add("collection timeout " + scenario + " preserves progress and only retries verified read-only queries");
         }
     }
     static async Task ReusedScopeCase(string output, List<string> cases)

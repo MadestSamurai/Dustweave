@@ -257,6 +257,10 @@ public partial class SichuanWindow : Window
         foreach(var size in new[]{(1050d,800d),(720d,640d)}){Width=size.Item1;Height=size.Item2;UpdateLayout();await Task.Delay(100);var bitmap=new RenderTargetBitmap((int)ActualWidth,(int)ActualHeight,96,96,PixelFormats.Pbgra32);bitmap.Render(this);var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(bitmap));using var f=File.Create(System.IO.Path.Combine(output,$"sichuan-{size.Item1}.png"));encoder.Save(f);}
         var assertions=new List<string>();
         void Check(bool ok,string label){if(!ok)throw new InvalidOperationException(label);assertions.Add(label);}
+        string ActionLabel(System.Windows.Controls.Button button,string standalone,string cn,string tw,string en){
+            var host=System.Windows.Data.BindingOperations.GetBinding(button,System.Windows.Controls.ContentControl.ContentProperty)?.Source;
+            return host?.GetType().GetProperty("Code")?.GetValue(host) as string switch {"zh-CN"=>cn,"zh-TW"=>tw,"en-US"=>en,_=>standalone};
+        }
         Check(IntervalBox.Text=="1000"&&files.IntervalMilliseconds==1000,"fresh standalone default is 1000ms");
         IntervalBox.Text="250";Check(await ApplyInterval()&&files.IntervalMilliseconds==250,"custom interval applied");
         Check(SichuanSettings.Read(settingsPath).IntervalMilliseconds==250,"interval survives settings reload");
@@ -288,7 +292,10 @@ public partial class SichuanWindow : Window
             var text=new FormattedText(t.Text,System.Globalization.CultureInfo.InvariantCulture,FlowDirection.LeftToRight,new Typeface(t.FontFamily,t.FontStyle,t.FontWeight,t.FontStretch),t.FontSize,t.Foreground,1.0);
             return t.Text.Contains('\n') && text.WidthIncludingTrailingWhitespace<=t.Width && text.Height+t.Padding.Top<=t.Height;
         }),"English fallback tile category and identifier fit without clipping");
-        Check(ConnectButton.Content.ToString()=="Connect game" && AutoButton.Content.ToString()=="Auto-play round","English action labels");
+        // The legacy localizer explicitly refreshes Connect; Auto is owned by the host action bar.
+        var expectedConnect="Connect game";
+        var expectedAuto=ActionLabel(AutoButton,"Auto-play round","开始本局","開始本局","Start round");
+        Check(ConnectButton.Content.ToString()==expectedConnect && AutoButton.Content.ToString()==expectedAuto,"action labels follow the owning window language: "+ConnectButton.Content+" / "+AutoButton.Content+"; expected "+expectedConnect+" / "+expectedAuto);
         Check(AutomationText.Text.Contains("continues automatically") && automation.Active && automation.OwnerId==ownerBeforeLanguage,"live language switch preserves active run and translates pause");
         Check(LanguagePreference.Read(files.Root)=="en-US" && files.IntervalMilliseconds==1000,"language preference saved independently of interval");
         foreach(var size in new[]{(1050d,800d),(720d,640d)}){Width=size.Item1;Height=size.Item2;UpdateLayout();await Task.Delay(100);var bitmap=new RenderTargetBitmap((int)ActualWidth,(int)ActualHeight,96,96,PixelFormats.Pbgra32);bitmap.Render(this);var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(bitmap));using var f=File.Create(System.IO.Path.Combine(output,$"sichuan-en-{size.Item1}.png"));encoder.Save(f);}

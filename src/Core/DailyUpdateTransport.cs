@@ -118,8 +118,9 @@ public sealed class DailyUpdateTransport(DailyUpdateTrust trust)
         return directory;
     }
 
-    private async Task DownloadPayload(HttpClient client, DailyVerifiedUpdate verified, string version, string root,
-        string directory, string fileName, string destination, long bytes, string hash, IProgress<int>? progress, CancellationToken token)
+    internal async Task DownloadPayload(HttpClient client, DailyVerifiedUpdate verified, string version, string root,
+        string directory, string fileName, string destination, long bytes, string hash, IProgress<int>? progress, CancellationToken token,
+        string? relativePath = null)
     {
         DailyUpdates.EnsureNoLinks(destination);
         if (File.Exists(destination) && await Task.Run(() => DailyUpdateDeltaPackage.VerifyFile(destination, bytes, hash), token)) return;
@@ -140,7 +141,10 @@ public sealed class DailyUpdateTransport(DailyUpdateTrust trust)
                     { File.Move(partial, destination, true); return; }
                     if (offset == bytes) { File.Delete(partial); offset = 0; }
                     using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token); timeout.CancelAfter(TimeSpan.FromMinutes(20));
-                    using var request = new HttpRequestMessage(HttpMethod.Get, Https(source.PackageBaseUrl.TrimEnd('/') + "/v" + version + "/" + fileName));
+                    // Keep the existing two-attempt budget. The second attempt can
+                    // bypass the optional CDN without trusting a different manifest.
+                    string origin = attempt > 0 && source.OriginFallback ? "?origin=1" : "";
+                    using var request = new HttpRequestMessage(HttpMethod.Get, Https(source.PackageBaseUrl.TrimEnd('/') + "/" + (relativePath ?? "v" + version + "/" + fileName) + origin));
                     if (offset > 0) request.Headers.Range = new RangeHeaderValue(offset, null);
                     using var headers = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token); headers.CancelAfter(TimeSpan.FromSeconds(15));
                     using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, headers.Token);

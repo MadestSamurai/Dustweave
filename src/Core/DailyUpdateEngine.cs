@@ -27,6 +27,11 @@ public static class DailyUpdateEngine
         if (asset != job.Asset || release?.Layout != job.Release.Layout || release?.RuntimeVersion != job.Release.RuntimeVersion) throw new InvalidDataException("updates.signature_failed");
         if (job.DeltaFileName != null && !((release?.Deltas ?? []).Any(d => d.FileName == job.DeltaFileName && d.Flavor == job.Asset.Flavor)))
             throw new InvalidDataException("updates.signature_failed");
+        if (job.Repair)
+        {
+            if (job.DeltaFileName != null) throw new InvalidDataException("updates.invalid_package");
+            _ = DailyUpdateRepair.ReadVerified(job.Directory, release!, asset!);
+        }
     }
     public static void Acknowledge(string nonce, string productVersion)
     {
@@ -79,13 +84,17 @@ public static class DailyUpdateEngine
                 using (var activity = DailyUpdateHost.AcquireControl(DailyUpdateHost.DataRoot))
                 {
                     if (DailyUpdateHost.HasIsolatedWindows()) throw new IOException("updates.isolated_open");
-                    if (DailyUpdateTransaction.Hash(job.Target) != job.OriginalSha256) throw new InvalidDataException("updates.target_changed");
-                    var installed = DailyUpdateJson.TryRead<DailyUpdatePackage>(Path.Combine(target, "update-package.json")) ?? throw new InvalidDataException("updates.flavor_missing");
-                    if (installed.Flavor != job.Asset.Flavor || DailyUpdates.VersionOf(installed.Version) >= DailyUpdates.VersionOf(job.Release.Version))
+                    if (File.Exists(job.Target) ? DailyUpdateTransaction.Hash(job.Target) != job.OriginalSha256 : !job.Repair || job.OriginalSha256 != "")
                         throw new InvalidDataException("updates.target_changed");
-                    if (job.Release.Layout >= 2 && (installed.Layout != job.Release.Layout || installed.RuntimeVersion != job.Release.RuntimeVersion || job.DeltaFileName == null)) throw new InvalidDataException("updates.manual_layout");
+                    if (!job.Repair)
+                    {
+                        var installed = DailyUpdateJson.TryRead<DailyUpdatePackage>(Path.Combine(target, "update-package.json")) ?? throw new InvalidDataException("updates.flavor_missing");
+                        if (installed.Flavor != job.Asset.Flavor || DailyUpdates.VersionOf(installed.Version) >= DailyUpdates.VersionOf(job.Release.Version))
+                            throw new InvalidDataException("updates.target_changed");
+                        if (job.Release.Layout >= 2 && (installed.Layout != job.Release.Layout || installed.RuntimeVersion != job.Release.RuntimeVersion || job.DeltaFileName == null)) throw new InvalidDataException("updates.manual_layout");
+                    }
                     string[] names = ExtractPayload(job, target, ref staging, out var retained);
-                    journal = DailyUpdateTransaction.Prepare(staging, target, Path.Combine(attempt, "backup"), names, retained);
+                    journal = DailyUpdateTransaction.Prepare(staging, target, Path.Combine(attempt, "backup"), names, retained, removeObsolete: !job.Repair);
                     var marker = new DailyUpdateMarker(Path.GetFullPath(jobPath), job.Nonce, DailyUpdateTransaction.Hash(Environment.ProcessPath!));
                     DailyUpdateJson.Write(markerPath, marker);
                     journal = DailyUpdateTransaction.Apply(journal);
@@ -165,6 +174,14 @@ public static class DailyUpdateEngine
         var verified = new DailyVerifiedUpdate(DailyUpdateSignatures.Verify(signed, DailyUpdateTrust.Production()), signed, "");
         var release = DailyUpdates.WithBaselines(verified.Feed, verified.Feed.Releases.Single(r => r.Version == job.Release.Version));
         var asset = release.Assets.Single(a => a.Flavor == job.Asset.Flavor);
+        if (job.Repair)
+        {
+            var repair = DailyUpdateRepair.ReadVerified(job.Directory, release, asset);
+            staging = DailyUpdateRepair.Staging(job.Directory);
+            var names = DailyUpdateRepair.VerifyStaging(repair, target, staging, out var keep);
+            retained = keep;
+            return names;
+        }
         var delta = release.Deltas?.SingleOrDefault(d => d.FileName == job.DeltaFileName);
         if (delta != null)
         {

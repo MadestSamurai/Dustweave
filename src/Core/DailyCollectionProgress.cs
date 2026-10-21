@@ -220,27 +220,59 @@ public sealed class DailyCollectionProgress(DailyWorkflow workflow)
         // Unity instance ID, including when an old walk crossed into another map.
         if (!OnlySteal && pending.Any(op => DailyPickupRecovery.Location(op) is { } p && p.Pack == pack && maps.Contains(p.Map)))
             await workflow.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
-        JsonObject command;
-        for (int attempt = 0; ; attempt++)
+        JsonObject? data = null;
+        for (int readAttempt = 0; ; readAttempt++)
         {
+            JsonObject command;
+            for (int attempt = 0; ; attempt++)
+            {
+                try
+                {
+                    command = await workflow.Step(O(("ui", "GameFieldDefaultUI"), ("operation", Steal ? "collection_query_steal" : "collection_query"), ("value", pack), ("items", maps), ("reason", "读取本卡带服务器收集进度")));
+                    break;
+                }
+                catch (DailyStepException error) when (PrepareRead != null && error.PresentationChanged)
+                {
+                    // Only an explicitly unsent, read-only query may be reselected.
+                    if (attempt >= 2) throw new DailyCollectionReadUnavailable("地图界面持续变化，本卡带暂缓读取，继续其他卡带。");
+                    await PrepareRead();
+                }
+            }
             try
             {
-                command = await workflow.Step(O(("ui", "GameFieldDefaultUI"), ("operation", Steal ? "collection_query_steal" : "collection_query"), ("value", pack), ("items", maps), ("reason", "读取本卡带服务器收集进度")));
+                await workflow.WaitEvidence(["mainline.network"], e =>
+                {
+                    var f = e["Frame"]!.AsObject();
+                    if (DailyNavigationDecision.Rows(f).Any(r => S(r["Type"]) == "MessagePopupUI" && S(r["NativeContext"]) == "request_timeout_ack_only"))
+                        throw new StageHostException("adapter", "服务器收集进度未返回；未使用本地执行记录代替");
+                    var n = State(e, "mainline.network", "$self");
+                    if (S(n["Query"]) != S(command["id"])) return false;
+                    if (S(n["State"]) == "failed") throw new StageHostException("adapter", S(n["Error"]));
+                    if (S(n["State"]) != "ready") return false;
+                    Classify(n, pack, maps, Steal, OnlySteal); data = n; return true;
+                }, 35, "服务器收集进度未返回；未使用本地执行记录代替");
                 break;
             }
-            catch (DailyStepException error) when (PrepareRead != null && error.PresentationChanged)
+            catch (StageHostException error) when (error.Kind == "adapter")
             {
-                // Only an explicitly unsent, read-only query may be reselected.
-                if (attempt >= 2) throw new DailyCollectionReadUnavailable("地图界面持续变化，本卡带暂缓读取，继续其他卡带。");
-                await PrepareRead();
+                var frame = (await workflow.Observe()).Frame;
+                var action = DailyHomeDecision.BackgroundErrorAction(frame, DailyNavigationPolicy.Load());
+                if (action != null && DailyNavigationDecision.Rows(frame).Any(r => S(r["Type"]) == "MessagePopupUI" && S(r["NativeContext"]) == "request_timeout_ack_only"))
+                {
+                    // The native handler verifies that OK has no retry/restart
+                    // callback, and invalidates only this abandoned read. Never
+                    // replay collection/absorption or treat a timeout as success.
+                    await workflow.Step(action);
+                    workflow.Driver.Diagnostics.Event("collection_query_timeout", O(("pack", pack), ("maps", maps), ("query", command["id"]), ("attempt", readAttempt + 1), ("retry", readAttempt < 2)));
+                    if (readAttempt < 2)
+                    {
+                        if (PrepareRead != null) await PrepareRead();
+                        continue;
+                    }
+                }
+                throw new DailyCollectionReadUnavailable(error.Message);
             }
         }
-        JsonObject? data = null;
-        try
-        {
-            await workflow.WaitEvidence(["mainline.network"], e => { var n = State(e, "mainline.network", "$self"); if (S(n["Query"]) != S(command["id"])) return false; if (S(n["State"]) == "failed") throw new StageHostException("adapter", S(n["Error"])); if (S(n["State"]) != "ready") return false; data = n; Classify(n, pack, maps, Steal, OnlySteal); return true; }, 35, "服务器收集进度未返回；未使用本地执行记录代替");
-        }
-        catch (StageHostException e) when (e.Kind == "adapter") { throw new DailyCollectionReadUnavailable(e.Message); }
         var result = Classify(data!, pack, maps, Steal, OnlySteal);
         await RecoverAbsorptions(pack, maps, data!, result);
         // `cache: false` forces a new server request; its confirmed response is

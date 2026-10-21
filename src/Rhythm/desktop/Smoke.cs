@@ -8,6 +8,10 @@ namespace BD2Rhythm.Desktop;
 public partial class RhythmWindow {
  public async Task SmokeAsync(string output){
   timer.Stop();TestTransport.Start(root,RhythmIdentity.LiveEntries);var checks=new List<string>();void Check(bool ok,string name){if(!ok)throw new Exception(name);checks.Add(name);}
+  string ActionLabel(System.Windows.Controls.Button button,string standalone,string cn,string tw,string en){
+   var host=System.Windows.Data.BindingOperations.GetBinding(button,System.Windows.Controls.ContentControl.ContentProperty)?.Source;
+   return host?.GetType().GetProperty("Code")?.GetValue(host) as string switch {"zh-CN"=>cn,"zh-TW"=>tw,"en-US"=>en,_=>standalone};
+  }
   async Task Settled(){for(int i=0;i<100&&(connecting||refreshing);i++)await Task.Delay(25);Check(!connecting&&!refreshing,"bounded asynchronous operation");}
   LanguageBox.SelectedIndex=0;Show();await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
   Check(JitterBox.Text=="50"&&OffsetBox.Text=="0","default jitter and calibration");Check(!StartButton.IsEnabled&&!connected,"no transport polling or start before preparation");
@@ -18,7 +22,7 @@ public partial class RhythmWindow {
   TestTransport.Publish(Path.Combine(root,"latest.json"),s);await RefreshAsync();UpdateLayout();Check(StateText.Text=="正在演奏"&&SongText.Text.Contains("Hard"),"Chinese playing status");Capture("window-zh-CN.png");
   string owner=link.OwnerId;LanguageBox.SelectedIndex=1;UpdateLayout();
   Check(StateText.Text=="Playing"&&ReasonText.Text=="Playing the song chart","English dynamic status");
-  Check((string)ConnectButton.Content=="Connect"&&(string)StartButton.Content=="Enable auto-play","English actions");
+  Check((string)ConnectButton.Content==ActionLabel(ConnectButton,"Connect","连接游戏","連接遊戲","Connect game")&&(string)StartButton.Content==ActionLabel(StartButton,"Enable auto-play","开始","開始","Start"),"actions follow the owning window language");
   Check(LanguagePreference.Read(data)=="en-US"&&link.Enabled&&link.OwnerId==owner,"persist language without resetting playback");
   Check(JitterBox.Text=="50"&&OffsetBox.Text=="0","switch retains settings");Capture("window-en-US.png");
   s.State="paused";s.Reason="游戏暂停或倒计时，等待继续";s.CapturedUtcTicks=DateTime.UtcNow.Ticks;TestTransport.Publish(Path.Combine(root,"latest.json"),s);await RefreshAsync();Check(link.Enabled&&StopButton.IsEnabled&&StateText.Text=="Game paused","pause preserves enabled stop");

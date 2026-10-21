@@ -3,7 +3,10 @@ using System.Text.Json;
 
 namespace Dustweave;
 
-public sealed record DailyUpdateSource(string Id, string FeedUrl, string PackageBaseUrl);
+public sealed record DailyUpdateSource(string Id, string FeedUrl, string PackageBaseUrl)
+{
+    public bool OriginFallback { get; init; }
+}
 public sealed record DailyUpdateTrust(Dictionary<string, string> Keys, DailyUpdateSource[] Sources)
 {
     public static DailyUpdateTrust Production()

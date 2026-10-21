@@ -90,15 +90,23 @@ namespace BD2Daily.Live {
     var row=page.GetComponentsInChildren<RogueLikeLevelScrollItem>().Single(x=>(int)Get(x,"ὪὥὧὮὫὤὮὧὪὣὪ")==index);
     row.OnClickItem(row.gameObject);return;
    }
-   if(c.Kind=="salvation_confirm"){
+   if(c.Kind=="salvation_confirm"||c.Kind=="salvation_count"){
     var s=Salvation();Require(s.Ready&&s.Idle&&s.Unlocked&&s.Season&&s.Popup&&s.FreeOnly,"Salvation sweep is not ready");
     Require(c.Items[0]==s.Level&&s.Selected==s.Level&&s.PopupLevel==s.Level&&c.Items[2]==s.Free&&c.Items[3]==s.Stones&&c.Items[4]==s.RemainingCost,"Salvation plan changed");
     Require(s.Cost>0&&s.PopupCost==s.Cost&&s.Reward>0,"Salvation resource data unavailable");
     bool fixedCount=c.Items.Length==6;
     Require(fixedCount||s.RemainingCost>s.Stones,"Salvation growth is already funded");
     long needed=fixedCount?c.Items[5]:(s.RemainingCost-s.Stones-1)/s.Reward+1;
-    Require(c.Value==s.Count&&c.Value>0&&c.Value<=needed&&(long)c.Value*s.Cost<=s.Free-c.Items[1],"Salvation sweep exceeds free key budget");
-    var popup=(RogueLikeSkipPopupUI)ui;Require(!(bool)Get(popup,"ὮὩὪὪὦὤὯὯὧὨὪ"),"Salvation popup is closing");popup.OnClickUI((GameObject)Get(popup,"_buttonBattle"));return;
+    Require(c.Value>0&&c.Value<=needed&&(long)c.Value*s.Cost<=s.Free-c.Items[1],"Salvation sweep exceeds free key budget");
+    var popup=(RogueLikeSkipPopupUI)ui;Require(!(bool)Get(popup,"ὮὩὪὪὦὤὯὯὧὨὪ"),"Salvation popup is closing");
+    if(c.Kind=="salvation_count"){
+     // Let the native slider notify the popup and refresh its price/count together.
+     var slider=(SliderSelectCount)Get(popup,"_sliderAutoCount");
+     slider.SetCountByMinMax(c.Value);
+     Require(slider.ὮὢὥὯὥὧὤὭὨὨὪ==c.Value&&(int)Get(popup,"ὭὮὭὢὮὫὬὦὣὣὧ")==c.Value,"Salvation count was clamped or not applied");return;
+    }
+    Require(c.Value==s.Count,"Salvation sweep count changed");
+    popup.OnClickUI((GameObject)Get(popup,"_buttonBattle"));return;
    }
    if(c.Kind=="event_native_select"){
     var lobby=(EventBattleUI)ui;int id=checked((int)c.Items[2]);

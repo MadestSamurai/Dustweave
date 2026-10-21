@@ -57,7 +57,7 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly TextBox filter = new() { MinWidth = 240, ToolTip = "按环节名称或说明筛选", Margin = new(8, 0, 0, 0) };
     private readonly List<(Border View, string Title, string Summary)> sections = new();
     private readonly ListBox categories = new() { BorderThickness=new(0), Background=Brushes.Transparent, Padding=new(0), Margin=new(0,0,0,12) };
-    private string category = "daily";
+    private string category = "all";
     private readonly TextBlock filterCount = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new(12, 0, 0, 0) };
     private DailyPreferences? loaded;
     private string account = "";
@@ -150,7 +150,7 @@ public sealed class DailyPreferencesPanel : UserControl
         {
             var item=new ListBoxItem { Tag=key };L.Bind(item,ContentControl.ContentProperty,"prefs.category."+key);categories.Items.Add(item);
         }
-        categories.SelectedIndex=1;
+        categories.SelectedIndex=0;
         categories.SelectionChanged += (_, _) => { category = (categories.SelectedItem as ListBoxItem)?.Tag as string ?? "all"; FilterSections(); formScroll.ScrollToTop(); };
         DockPanel.SetDock(categories,Dock.Top);layout.Children.Add(categories);
         filter.TextChanged += (_, _) => {
@@ -425,6 +425,13 @@ public sealed class DailyPreferencesPanel : UserControl
         form.Children.Add(border);
         sections.Add((border, title, summary));
         section = body;
+    }
+    internal void ShowAllSettings()
+    {
+        filter.Clear();
+        categories.SelectedIndex = 0;
+        FilterSections();
+        formScroll.ScrollToTop();
     }
     private void FilterSections()
     {

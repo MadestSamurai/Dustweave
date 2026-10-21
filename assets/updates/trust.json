@@ -6,7 +6,8 @@
     {
       "Id": "cn",
       "FeedUrl": "https://bd2.madsam.work/updates/dustweave/v2/updates.json",
-      "PackageBaseUrl": "https://bd2.madsam.work/updates/dustweave/v2"
+      "PackageBaseUrl": "https://bd2.madsam.work/updates/dustweave/v2",
+      "OriginFallback": true
     }
   ]
 }

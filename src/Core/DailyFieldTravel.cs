@@ -9,7 +9,7 @@ public sealed partial class DailyFieldRoute
         W.StepProgress("walk");
         await FieldReady();
         var before = await Evidence();
-        await Protection(before, walking: true);
+        await Protection(before, walking: true, walkingDistance: WalkingDistance(before, target));
         before = await Evidence();
         long origin = N(Map(before)["id"]);
         bool protectedRoute = MovementNeedsStealth(before);
@@ -95,7 +95,7 @@ public sealed partial class DailyFieldRoute
                 {
                     await W.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
                     double pause = W.Time;
-                    await Protection(current, walking: true);
+                    await Protection(current, walking: true, walkingDistance: WalkingDistance(current, target));
                     var renewed = await Evidence();
                     Identity(before, renewed);
                     Require(!RequiresStealth(renewed) || Remaining(renewed, 17) > 4, "藏身续用未生效");
@@ -422,7 +422,7 @@ public sealed partial class DailyFieldRoute
             var target = candidates.OrderBy(r => new[] { "x", "z" }.Sum(axis => Math.Pow(DailyRegionRouter.D(r["transform.position." + axis]) - DailyRegionRouter.D(origin["ὪὨὯὢὫὮὨὩὮὡὬ.transform.position." + axis]), 2))).First();
             try
             {
-                if (await PrepareWalking(e))
+                if (await PrepareWalking(WalkingDistance(e, I(target["instance"])), e))
                 {
                     var updated = await Evidence();
                     Identity(e, updated);
@@ -493,7 +493,7 @@ public sealed partial class DailyFieldRoute
             if (remaining == null) return;
             if (resumed >= 2)
                 throw stalled = new DailyTravelBlocked("本图拾取移动连续受阻；保留未收集目标，继续其他地图，之后可补收。");
-            await Protection(e, walking: true);
+            await Protection(e, walking: true, walkingDistance: WalkingDistance(e, I(remaining["instance"])));
             await Skill(6);
             e = await Evidence();
             if (!DailyPickupRecovery.CanResumeLiveWalk(op, W.Business.Events(op), e["Frame"]!.AsObject()) || N(Map(e)["id"]) != map) return;
@@ -513,7 +513,7 @@ public sealed partial class DailyFieldRoute
             var current = await Evidence();
             Identity(before, current);
             if (N(Map(current)["id"]) != map) throw new DailyCollectionLocationChanged();
-            await Protection(current, walking: true);
+            await Protection(current, walking: true, walkingDistance: WalkingDistance(current, I(target["instance"])));
             current = await Evidence();
             var fresh = Drops(current).SingleOrDefault(r => N(r[ObjectPath]) == id);
             if (fresh == null) throw new DailyCollectionTargetsRemain("拾取目标状态已变化，重新核对服务器进度。");

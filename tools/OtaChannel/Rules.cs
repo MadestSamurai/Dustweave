@@ -11,7 +11,7 @@ sealed record Request(int Schema, string Product, string Version, string Expecte
     string EvidenceSha256, string Nonce, DateTimeOffset IssuedUtc, DateTimeOffset ExpiresUtc, Blob[] Files);
 sealed record Envelope(int Schema, string KeyId, string Algorithm, string Payload, string Signature);
 sealed record Header(Envelope Request, string Feed, string Evidence);
-sealed record Config(string State, string Public, Dictionary<string,string> Keys, int Layout = 1);
+sealed record Config(string State, string Public, Dictionary<string,string> Keys, int Layout = 1, string? MirrorBaseUrl = null);
 sealed record Asset(string Flavor, string FileName, long Bytes, string Sha256);
 sealed record Delta(string Flavor, string FromVersion, string FileName, long Bytes, string Sha256, string Algorithm);
 sealed record Release(string Version, string? PreviousVersion, int Layout, Dictionary<string,string[]> Notes, Asset[] Assets, Delta[]? Deltas, string? RuntimeVersion = null);

@@ -83,7 +83,7 @@ namespace BD2Daily.Live {
   static void Status(string state,string error){if(state=="active"&&handoff!=null&&handoff.IsActive)BD2.LocalIpc.RuntimeFiles.Activate();Write(Path.Combine(live,"runtime.json"),new ComponentStatus{State=state,Error=error,AtUtcTicks=DateTime.UtcNow.Ticks});}
   static void Pause(){SquareRoutePilot.Cancel("组件交接");retiring=true;BD2.LocalIpc.RuntimeFiles.Revoke();DispatchRecoveryNative.Cancel();MiniGamesNative.StopDice();WeeklyNpcNative.Stop();
    if(squareNavUntil>0){Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ClearQuestNav(true);GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.SetPlayerMoveState(MoveController.ὯὣὠὮὤὡὤὯὢὩὯ.Stop);squareNavUntil=0;mainlineStealthNav=false;approachTarget=null;}}
-  static string HandoffBusy(){if(busy||pending!=null)return "command observation";if(Evidence.Waiting)return "daily request awaiting response";if(EquipmentToolsNative.Busy())return "native refinement";return "";}
+  static string HandoffBusy(){if(busy||pending!=null)return "command observation";if(EquipmentToolsNative.Busy())return "native refinement";return Evidence.HandoffPending();}
   public static void Unload(){BD2.LocalIpc.MainThread.Drain(()=>{if(handoff!=null)handoff.Unload();},Status);}
   [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
   private static void Start(){lock(typeof(Bridge)){
@@ -549,6 +549,7 @@ namespace BD2Daily.Live {
    var button=(Button)typeof(MessagePopupUI).GetField("_buttonOK",Flags).GetValue(ui);
    if(button==null||!button.gameObject.activeInHierarchy||!button.interactable)throw new InvalidOperationException("Background notification is not ready");
    ui.OnClickUI(button.gameObject);
+   if(context==BackgroundErrorPolicy.RequestContext)CollectionProgressNative.TimeoutRead();
   }
  }
 }

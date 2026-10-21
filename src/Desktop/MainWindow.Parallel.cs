@@ -62,7 +62,7 @@ public partial class MainWindow
     }
     private async Task PollParallelAsync()
     {
-        if(parallel==null||parallelPolling)return;parallelPolling=true;
+        if(parallel==null||parallelPolling||UpdateRestarting)return;parallelPolling=true;
         try
         {
             await Task.Run(() => parallel.TickAsync());parallelPanel.Show(parallel.Current);

@@ -7,5 +7,5 @@
     <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers><PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
-  <ItemGroup><Compile Include="../../src/Core/DailyVersion.cs" Link="DailyVersion.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../../src/Core/DailyVersion.cs" Link="DailyVersion.cs" /><Compile Include="../../src/Core/DailyUpdateRepairManifest.cs" Link="DailyUpdateRepairManifest.cs" /></ItemGroup>
 </Project>

@@ -27,6 +27,12 @@ public sealed class DailyWeeklyRoute
     private readonly HashSet<(long Pack, long Map)> storyLocked = [];
     private readonly HashSet<(long Pack, long Map)> absorptionObserved = [], absorptionPending = [];
     private readonly HashSet<long> freshAbsorptionPacks = [];
+    // Completion here comes only from this run's server response, never a disk
+    // checkpoint. Completed weekly theft cannot become available again this week.
+    private readonly HashSet<long> freshCompletedStealPacks = [];
+    private bool NpcComplete => npc?.Data is { } data && S(data.Native["Week"]) == week
+        && N(data.Native["Limit"]) > 0 && N(data.Native["Completed"]) == N(data.Native["Limit"])
+        && data.Active.Length == 0;
     private bool absorptionQuotaExhausted;
     private int? absorptionStart, npcStart;
     private int absorptionUsed, absorptionLimit;
@@ -161,7 +167,15 @@ public sealed class DailyWeeklyRoute
             return;
         }
         bool oldSteal = route.Progress.Steal, oldOnly = route.Progress.OnlySteal;
-        route.Progress.Steal = maps["weekly_steal"].Length > 0;
+        bool readSteal = maps["weekly_steal"].Length > 0 && !freshCompletedStealPacks.Contains(pack);
+        // Once theft is confirmed complete, use the same collection scope as
+        // Gather so its fresh post-action response also serves this outer loop.
+        if (!cache && !readSteal)
+        {
+            all = maps["weekly_mainline"];
+            if (all.Length == 0) return;
+        }
+        route.Progress.Steal = readSteal;
         route.Progress.OnlySteal = false;
         try
         {
@@ -169,6 +183,7 @@ public sealed class DailyWeeklyRoute
             var cachedMaps = new JsonObject(); bool missing = false;
             foreach (var pair in maps.Where(p => p.Value.Length > 0))
             {
+                if (!cache && pair.Key == "weekly_steal" && !readSteal) continue;
                 JsonObject? observed = checkpoint;
                 if (cache)
                 {
@@ -197,6 +212,8 @@ public sealed class DailyWeeklyRoute
                         if (observed["maps"]![id.ToString()]![key] is JsonNode value) state[key] = Copy(value);
                 }
             }
+            if (!cache && readSteal && maps["weekly_steal"].All(id => done["weekly_steal"].Contains((pack, id))))
+                freshCompletedStealPacks.Add(pack);
             if (cache && !missing) checkpoint = O(("maps", cachedMaps));
         }
         finally { route.Progress.Steal = oldSteal; route.Progress.OnlySteal = oldOnly; }
@@ -221,7 +238,7 @@ public sealed class DailyWeeklyRoute
         // block manual progress made in the game. Re-read only that cartridge.
         bool checkAbsorption = active.Contains("weekly_mainline") && absorptionQuotaExhausted
             && absorptionPending.Any(p => p.Pack == pack) && !freshAbsorptionPacks.Contains(pack);
-        bool needed = active.Contains("weekly_npc") && !failures["weekly_npc"].Keys.Any(p => p.Pack == pack);
+        bool needed = active.Contains("weekly_npc") && !NpcComplete && !failures["weekly_npc"].Keys.Any(p => p.Pack == pack);
         if (npc?.Data is DailyNpcData d)
         {
             needed = needed && (d.Native["Posted"]!.AsArray().Select(N).Any(id => d.Rows.TryGetValue(id, out var row) && N(row["packId"]) == pack) || d.Current(pack) != null);
@@ -248,7 +265,7 @@ public sealed class DailyWeeklyRoute
         await CheckAbsorptionQuota();
         var jobs = MapJobs();
         bool npcDeferred = failures["weekly_npc"].Keys.Any(p => p.Pack == pack);
-        if (active.Contains("weekly_npc") && !npcDeferred && npc?.Data != null && N(npc.Data.Native["Pack"]) == pack)
+        if (active.Contains("weekly_npc") && !NpcComplete && !npcDeferred && npc?.Data != null && N(npc.Data.Native["Pack"]) == pack)
         {
             await RunNpc(async () =>
             {
@@ -406,7 +423,7 @@ public sealed class DailyWeeklyRoute
             if (!MapJobs().GetValueOrDefault(stage, []).Contains(map))
                 break;
         }
-        if (npc != null && active.Contains("weekly_npc") && !failures["weekly_npc"].Keys.Any(p => p.Pack == pack))
+        if (npc != null && active.Contains("weekly_npc") && !NpcComplete && !failures["weekly_npc"].Keys.Any(p => p.Pack == pack))
             await RunNpc(async () => { await npc.Query(pack); });
     }
     private void Emit(string stage, string detail, bool running)

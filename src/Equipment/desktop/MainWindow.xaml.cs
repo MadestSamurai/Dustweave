@@ -57,6 +57,13 @@ public partial class MainWindow:Window
  void StopClick(object sender,RoutedEventArgs e){Directory.CreateDirectory(WorkerClient.Data);File.WriteAllText(WorkerClient.StopPath,"stop");StatusText.Text=L.T("已请求停止，等待当前批次核账，不再提交下一批。");StopButton.IsEnabled=false;}
  void WindowClosing(object? sender,CancelEventArgs e){if(!busy)return;e.Cancel=true;if(executing)StopClick(this,new());else StatusText.Text=L.T("正在完成读取或计算，请稍后关闭。");}
  internal async Task Smoke(string folder){worker.OfflineChecks=true;Directory.CreateDirectory(folder);var bridge=await Task.Run(()=>WorkerClient.Invoke(["self-test"]));
+  // Reproduce the persistent Stop left by a previous run, including a reopened window.
+  Directory.CreateDirectory(WorkerClient.Data);File.WriteAllText(WorkerClient.StopPath,"stop");
+  BD2Equipment.Core.LiveEquipment.Stopped(forExecution:false);
+  if(!File.Exists(WorkerClient.StopPath))throw new Exception("Inventory reads cleared another operation's stop request");
+  bool executionStopped=false;try{BD2Equipment.Core.LiveEquipment.Stopped();}catch(BD2Equipment.Core.StepRejected){executionStopped=true;}
+  if(!executionStopped)throw new Exception("Stop no longer prevents consuming actions");
+  File.Delete(WorkerClient.StopPath);
   string legacy=Path.Combine(WorkerClient.Data,"jobs","migration-fixture.json"),journal=Path.Combine(WorkerClient.Data,"recovery-fixture.json");Directory.CreateDirectory(Path.GetDirectoryName(legacy)!);File.WriteAllText(legacy,"{\"fixture\":true}");File.WriteAllText(journal,"{\"state\":\"pending\"}");
   var result=await worker.Run(new(){["operation"]="self_test"});if(S(result["status"])!="passed")throw new Exception("Worker smoke failed");
   if(BD2.LocalIpc.HostedConnection.Enabled&&(File.Exists(legacy)||!File.Exists(journal)||!Directory.GetFiles(BD2Equipment.Core.J.Diagnostics,"legacy-*-migration-fixture.json").Any()))throw new Exception("Host diagnostic migration lost recovery state or missed old logs");

@@ -11,6 +11,26 @@ public partial class FishingWindow
  {
   LanguageBox.SelectedIndex=0;language!.Select("zh-CN");
   TestTransport.Start(root,FishingIdentity.LiveEntries);smoke=true;timer.Stop();var checks=new List<string>();void Check(bool value,string name){if(!value)throw new Exception(name);checks.Add(name);}
+  string ActionLabel(System.Windows.Controls.Button button,string standalone,string cn,string tw,string en)
+  {
+   var host=System.Windows.Data.BindingOperations.GetBinding(button,System.Windows.Controls.ContentControl.ContentProperty)?.Source;
+   return host?.GetType().GetProperty("Code")?.GetValue(host) as string switch {"zh-CN"=>cn,"zh-TW"=>tw,"en-US"=>en,_=>standalone};
+  }
+  Check(FishingSettlement.SelectPopup(["AvatarFishingLevelUpPopupUI","AvatarFishingGetPopupUI"])==0,"level-up overlapping result closes the top known popup");
+  Check(FishingSettlement.SelectPopup(["AvatarFishingGetPopupUI","AvatarFishingLevelUpPopupUI"])==0,"popup order follows the actual game layers");
+  Check(FishingSettlement.SelectPopup(["ConfirmPopupUI","AvatarFishingLevelUpPopupUI"])<0&&FishingSettlement.SelectPopup([])<0,"unknown confirmation and empty popup stack never auto-close");
+  var policy=new FishingPolicy();long now=DateTime.UtcNow.Ticks;
+  var lease=new FishingControl{OwnerId="settlement-test",Enabled=true,ProcessId=17,UntilUtcTicks=now+TimeSpan.FromSeconds(15).Ticks,NextCastMilliseconds=0};
+  var settling=new FishingSnapshot{ProcessId=17,Ready=false,State="Caught",ResultPopup=true,CanClosePopup=true,PopupId=1};
+  Check(policy.Next(settling,lease,now)==FishingAction.ClosePopup,"settlement closes while fishing controls rebuild");
+  settling.ResultPopup=false;settling.LevelPopup=true;settling.PopupId=2;settling.CanClosePopup=false;
+  Check(policy.Next(settling,lease,now+TimeSpan.FromSeconds(1).Ticks)==FishingAction.None,"level-up opening animation waits without latching a failure");
+  settling.CanClosePopup=true;
+  Check(policy.Next(settling,lease,now+TimeSpan.FromSeconds(2).Ticks)==FishingAction.ClosePopup,"level-up continues once native close is available");
+  settling.LevelPopup=false;settling.Ready=true;settling.CanCast=true;settling.State="None";
+  Check(policy.Next(settling,lease,now+TimeSpan.FromSeconds(3).Ticks)==FishingAction.CastPress&&policy.Fault=="","next cast resumes after result and level-up");
+  settling.LevelPopup=true;settling.BlockReason="unrelated confirmation";
+  Check(policy.Next(settling,lease,now+TimeSpan.FromSeconds(4).Ticks)==FishingAction.None,"settlement does not dismiss an unrelated confirmation");
   Show();await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
   Check(!StartButton.IsEnabled,"start disabled before snapshot");Check(IntervalBox.Text=="1000"&&CastBox.Text=="90","defaults");Check(AutoSellBox.IsChecked==true,"automatic sale default visible");Check(AutoBaitBox.IsChecked==true,"automatic bait default visible");
   Check(AutoMapBox.IsChecked==true,"map renewal default visible");
@@ -77,13 +97,13 @@ public partial class FishingWindow
   Check(ContentScroll.ScrollableHeight>0 && baitPoint.Y>=0 && baitPoint.Y+AutoMapBox.ActualHeight<=ContentScroll.ActualHeight,"small window scroll reaches map switch");Capture("window-small-settings.png");
   var ownerBeforeLanguage=link.OwnerId;var retainedBeforeLanguage=Settings().Retention.Fingerprint();
   LanguageBox.SelectedIndex=1;await RefreshAsync();UpdateLayout();
-  Check(StartButton.Content.ToString()=="Start fishing" && StopButton.Content.ToString()=="Stop fishing","English action labels");
+  Check(StartButton.Content.ToString()==ActionLabel(StartButton,"Start fishing","开始","開始","Start") && StopButton.Content.ToString()==ActionLabel(StopButton,"Stop fishing","停止","停止","Stop"),"action labels follow the owning window language");
   Check(ReasonText.Text.All(ch=>ch<0x4E00 || ch>0x9FFF) && BaitText.Text.Contains("Buff time left: 115 s"),"live evidence displayed in English: "+ReasonText.Text+" / "+BaitText.Text);
   Check(link.Enabled && link.OwnerId==ownerBeforeLanguage && Settings().Retention.Fingerprint()==retainedBeforeLanguage,"live language switch preserves active owner and retention");
   Check(LanguagePreference.Read(root)=="en-US" && SizeModeBox.Items.Cast<string>().Contains("MAX and MIN"),"English preference and MAX MIN choices");
   Width=790;Height=850;ContentScroll.ScrollToTop();UpdateLayout();Capture("window-en.png");
   Width=650;Height=540;UpdateLayout();Capture("window-en-small.png");ContentScroll.ScrollToBottom();await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);UpdateLayout();Capture("window-en-small-settings.png");
-  LanguageBox.SelectedIndex=0;await RefreshAsync();Check(StartButton.Content.ToString()=="开始钓鱼" && link.OwnerId==ownerBeforeLanguage,"switch back restores Chinese without restarting");
+  LanguageBox.SelectedIndex=0;await RefreshAsync();Check(StartButton.Content.ToString()==ActionLabel(StartButton,"开始钓鱼","开始","開始","Start") && link.OwnerId==ownerBeforeLanguage,"switch back restores Chinese without restarting");
   s.MapChangePending=true;s.Reason="确认收获；昼夜切换排队，先完成本竿";s.CapturedUtcTicks=DateTime.UtcNow.Ticks;TestTransport.Publish(Path.Combine(root,"latest.json"),s);await RefreshAsync();Check(link.Enabled && ReasonText.Text.Contains("昼夜切换排队"),"queued day/night keeps automation and explains settlement");
   s.MapChangePending=false;s.Busy=true;s.State="None";s.Reason="等待场景切换";TestTransport.Publish(Path.Combine(root,"latest.json"),s);await RefreshAsync();Check(link.Enabled && StopButton.IsEnabled,"scene loading keeps lease and stop available");
   s.Busy=false;s.Reason="准备下一竿";TestTransport.Publish(Path.Combine(root,"latest.json"),s);await RefreshAsync();Check(link.Enabled && ReasonText.Text=="准备下一竿","scene completion shows automatic continuation");
@@ -97,6 +117,8 @@ public partial class FishingWindow
   Check(link.Enabled&&StopButton.IsEnabled&&ReasonText.Text=="准备下一竿","network recovery automatically returns to normal running");
   s.Error="出售后保护鱼缺失";TestTransport.Publish(Path.Combine(root,"latest.json"),s);await RefreshAsync();await controlQueue;
   Check(!link.Enabled,"authoritative inventory mismatch still stops consuming actions");
+  using var interruption=System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(FishingStorage.DiagnosticRoot(root),"last-interruption.json")));
+  Check(interruption.RootElement.GetProperty("snapshot").GetProperty("Error").GetString()=="出售后保护鱼缺失","terminal diagnostic preserves the reason before Stop replaces the live state");
   await controlQueue;Close();await shutdownTask;c=FishingJson.Read<FishingControl>(Path.Combine(root,"control.json"))!;Check(!c.Enabled&&c.UntilUtcTicks==0,"close revokes lease");
   FishingJson.Write(Path.Combine(evidence,"results.json"),new{status="pass",assertions=checks});
   void Capture(string name){var bitmap=new RenderTargetBitmap((int)ActualWidth,(int)ActualHeight,96,96,PixelFormats.Pbgra32);bitmap.Render(this);var png=new PngBitmapEncoder();png.Frames.Add(BitmapFrame.Create(bitmap));using var file=File.Create(Path.Combine(evidence,name));png.Save(file);}

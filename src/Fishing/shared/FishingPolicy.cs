@@ -53,7 +53,7 @@ namespace BD2Fishing
                 if(Holding){Holding=false;return FishingAction.HoldRelease;}
                 return travel;
             }
-            if (Fault.Length>0 || !s.Ready || s.Busy || s.MapTravelBusy || s.BlockReason.Length>0)
+            if (Fault.Length>0 || (!s.Ready && !s.ResultPopup && !s.LevelPopup) || s.Busy || s.MapTravelBusy || s.BlockReason.Length>0)
             {
                 Reason=Fault.Length>0?Fault:s.BlockReason.Length>0?s.BlockReason:!s.Ready?"请进入钓鱼地点并面向可钓区域":"等待场景切换";
                 if(Holding) {Holding=false;return FishingAction.HoldRelease;}

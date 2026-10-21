@@ -17,11 +17,11 @@ Incomplete local sign-in data does not imply an in-game logout. Connecting verif
 ## Export boundary / 导出范围
 
 - Last 7 days of allowlisted run, connection, task, diagnostic and owned isolated-account logs; known integrated-tool log directories are included when present.
-- Maximum 64 MiB of uncompressed log contents, 8 MiB per file and 2,000 files. Recent files take precedence. Missing, busy, invalid or over-limit files are skipped; `manifest.json` lists omissions.
+- Maximum 128 MiB of uncompressed log contents and 2,000 files. The ZIP size depends on compression. Latest queue results, critical connection/failure records and recent evidence from each tool or task family precede bulk history. Individual files are limited to 8 MiB; oversized text logs retain a 2 MiB tail, and prioritized tool connection logs retain a 256 KiB tail. Missing, busy, invalid or over-limit files are skipped; `manifest.json` records the limits, retained files, truncation and omissions.
 - Saved login/session stores, plugins, executable payloads and signing keys are excluded. Structured secret fields and common credential formats are redacted. Character names, task details and local paths may remain; the archive is for private support, not public posting.
 - The export performs no game actions and uploads nothing. Closing the export dialog cancels an ongoing export. Existing ZIP files are preserved; select a different filename to export again.
 
-最近 7 天、最多 64 MiB，优先保留新日志。文件被占用或未写完不会阻断其他日志导出；遗漏清单随包保存。账号登录存储、插件和密钥不纳入，常见敏感字段会过滤，但角色名与任务信息可能仍在，请勿公开上传。导出不操作游戏、不自动上传；已有 ZIP 不会被覆盖。
+最近 7 天、压缩前最多 128 MiB、最多 2,000 个文件；ZIP 实际大小取决于压缩效果。优先保留最新队列、关键连接与故障记录，以及各工具和任务类别的近期证据，再补入历史记录。单文件上限 8 MiB，超大文本日志保留末尾 2 MiB，优先导出的工具连接日志保留末尾 256 KiB。文件被占用或未写完不会阻断其他日志导出；容量限制、截断和遗漏清单随包保存。账号登录存储、插件和密钥不纳入，常见敏感字段会过滤，但角色名与任务信息可能仍在，请勿公开上传。导出不操作游戏、不自动上传；已有 ZIP 不会被覆盖。
 
 ## Developer checks
 

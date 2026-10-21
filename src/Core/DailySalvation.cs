@@ -83,15 +83,11 @@ public static class DailySalvation
         if (!B(StateOf(await w.Evidence(Prefixes))["FreeOnly"]))
             await w.Step("RogueLikeSkipPopupUI", "_buttonFreeOnly._objectRoot");
         await w.WaitEvidence(Prefixes, e => B(StateOf(e)["FreeOnly"]));
-        await w.Step("RogueLikeSkipPopupUI", "_sliderAutoCount._objMinusMaxButton");
-        await w.WaitEvidence(Prefixes, e => N(StateOf(e)["Count"]) == 1);
-        for (int count = 2; count <= N(plan["count"]); count++)
-        {
-            await w.Step("RogueLikeSkipPopupUI", "_sliderAutoCount._objPlusButton");
-            await w.WaitEvidence(Prefixes, e => N(StateOf(e)["Count"]) == count);
-        }
         var items = new JsonArray(Copy(plan["level"]), Copy(plan["reserve"]), Copy(plan["free"]), Copy(plan["stones"]), Copy(plan["remainingCost"]));
         if (I(plan["fixedCount"]) > 0) items.Add(Copy(plan["fixedCount"]));
+        await w.Step(O(("ui", "RogueLikeSkipPopupUI"), ("operation", "salvation_count"),
+            ("items", items), ("value", plan["count"])));
+        await w.WaitEvidence(Prefixes, e => B(StateOf(e)["Popup"]) && B(StateOf(e)["FreeOnly"]) && N(StateOf(e)["Count"]) == N(plan["count"]));
         var op = await w.Transact("salvation.sweep", plan, O(("ui", "RogueLikeSkipPopupUI"), ("operation", "salvation_confirm"),
             ("items", items), ("value", plan["count"])), 60);
         await w.Wait(f => DailyNavigationDecision.Types(f.Frame).Contains("RogueLikeTotalScoreUI"), 30);

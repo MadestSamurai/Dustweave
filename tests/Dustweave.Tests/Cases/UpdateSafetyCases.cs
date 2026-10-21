@@ -116,6 +116,32 @@ internal static class UpdateSafetyCases
         catch (InvalidDataException e) { Check("matching length cannot bypass package digest", e.Message == "updates.hash_failed"); }
         Check("corrupt download never becomes ready", !File.Exists(Path.Combine(corrupt, "updates/0.9.1-Lite/package.zip")));
 
+        var originTrust = trust with { Sources = [sources[0] with { OriginFallback = true }] };
+        Check("production trust enables origin fallback without changing old source constructor",
+            DailyUpdateTrust.Production().Sources.Single(s => s.Id == "cn").OriginFallback);
+        var originTransport = new DailyUpdateTransport(originTrust);
+        foreach (bool damaged in new[] { false, true })
+        {
+            int calls = 0;
+            using var unavailableCloud = new HttpClient(new Handler(r =>
+            {
+                calls++;
+                bool origin = r.RequestUri!.Query == "?origin=1";
+                Check("cloud fallback keeps original authority " + damaged + "/" + calls, r.RequestUri.Host == "cn.test");
+                return origin ? new(HttpStatusCode.OK) { Content = new ByteArrayContent(package) }
+                    : damaged ? new(HttpStatusCode.OK) { Content = new ByteArrayContent(new byte[package.Length]) }
+                    : new(HttpStatusCode.ServiceUnavailable);
+            }));
+            string recovered = await originTransport.DownloadAsync(unavailableCloud, discovered with { SourceId = "cn" },
+                "0.9.1", "Lite", Path.Combine(data, "origin-" + damaged), null, default);
+            Check("unavailable or corrupt CDN retries origin once " + damaged, calls == 2 && DailyUpdates.Verify(Path.Combine(recovered, "package.zip"), asset));
+        }
+        int badOrigins = 0;
+        using var bothBad = new HttpClient(new Handler(_ =>
+        { badOrigins++; return new(HttpStatusCode.OK) { Content = new ByteArrayContent(new byte[package.Length]) }; }));
+        try { await originTransport.DownloadAsync(bothBad, discovered, "0.9.1", "Lite", Path.Combine(data, "both-bad"), null, default); throw new Exception("Bad origin accepted"); }
+        catch (InvalidDataException e) { Check("origin fallback cannot bypass digest or retry budget", e.Message == "updates.hash_failed" && badOrigins == 2); }
+
         string target = Path.Combine(data, "install"), staging = Path.Combine(data, "staging"), backup = Path.Combine(data, "backup");
         Directory.CreateDirectory(Path.Combine(staging, "flows")); Directory.CreateDirectory(Path.Combine(staging, "connection/specs"));
         File.WriteAllText(Path.Combine(staging, "Dustweave.exe"), "new binary");

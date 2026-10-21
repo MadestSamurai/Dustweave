@@ -93,6 +93,10 @@ public sealed record DailyNpcData(JsonObject Native, Dictionary<long, JsonObject
         }
         return sources.Where(x => B(x["Available"])).OrderBy(x => DailyRegionRouter.D(x["Distance"])).ThenBy(x => N(x["Id"])).FirstOrDefault() ?? throw new DailyNpcUnavailable("搬运任务没有可用物品来源");
     }
+    internal double? WalkingDistance(long id) => DailyData.Rows(Native["Objects"] ?? new JsonArray())
+        .Where(x => N(x["Quest"]) == id && B(x["Available"]) && !B(x["Collected"]))
+        // WeeklyNpcObject.Distance is squared in the native observation.
+        .Select(x => DailyFieldRoute.TargetDistance(x, squared: true)).DefaultIfEmpty(null).Min();
 }
 public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
 {
@@ -253,7 +257,7 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
     }
     private async Task<JsonObject> Navigate(long id)
     {
-        await route.ProtectWeeklyMovement();
+        await route.ProtectWeeklyMovement(W.Settings.General.FastTravel ? (await Observe()).WalkingDistance(id) : null);
         return await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "weekly_npc_nav"), ("value", id), ("items", new[] { allowHunting ? 1 : 0 })));
     }
     internal async Task Advance(JsonObject row)
@@ -289,7 +293,7 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
         JsonObject? carry = N(row["conditionType"]) == 9 ? (await Observe()).CarrySource(id) : null;
         if (carry != null)
         {
-            await route.ProtectWeeklyMovement();
+            await route.ProtectWeeklyMovement(TargetDistance(carry, squared: true));
             await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "weekly_npc_carry_nav"), ("value", id), ("items", new[] { N(carry["Instance"]) })));
         }
         else
@@ -396,7 +400,7 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
                     liftSent = false;
                     if (carry != null)
                     {
-                        await route.ProtectWeeklyMovement();
+                        await route.ProtectWeeklyMovement(TargetDistance(carry, squared: true));
                         await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "weekly_npc_carry_nav"), ("value", id), ("items", new[] { N(carry["Instance"]) })));
                     }
                     else

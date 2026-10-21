@@ -32,6 +32,9 @@ public sealed partial class DailyFieldRoute
     internal bool AbsorptionAlongNpc { get; set; }
     internal IReadOnlyDictionary<string, DailyDisplayName> LocationLabels { get; set; } = new Dictionary<string, DailyDisplayName>();
     private bool recovering; private readonly Dictionary<string, int> encounters = new();
+    private JsonObject? settledField;
+    private long settledRevision;
+    private double settledAt, settledFor;
     public DailyFieldRoute(DailyWorkflow workflow)
     {
         W = workflow;
@@ -118,15 +121,51 @@ public sealed partial class DailyFieldRoute
     private bool MovementNeedsStealth(JsonObject e) => (NeedsStealth(e) || ProtectWeeklyTravel && Remaining(e, 17) > 0) && TravelThreat(e);
     private long unavailableStealthMap;
     private double nextDashCheck;
-    internal static bool ShouldDash(GeneralPreferences settings, JsonObject evidence) => settings.FastTravel
-        && FieldInputReady(evidence["Frame"]!.AsObject()) && Remaining(evidence, 2) <= 0 && !Cooling(evidence, 2);
-    public async Task<bool> PrepareWalking(JsonObject? observed = null)
+    // About ten seconds at the ordinary field speed (5 units/second). Opening
+    // and settling the talent menu costs several seconds; short walks lose out.
+    internal const double MinimumDashDistance = 50;
+    internal static bool WorthDashing(double? distance) => distance is double d && double.IsFinite(d) && d >= MinimumDashDistance;
+    internal static double? TargetDistance(JsonObject? target, bool squared = false)
     {
-        if (!W.Settings.General.FastTravel || W.Time < nextDashCheck) return false;
+        if (target == null) return null;
+        if (B(target["Near"])) return 0;
+        if (target["Reachable"] is JsonValue reachable && reachable.TryGetValue<bool>(out var canReach) && !canReach) return null;
+        if (target["Distance"] is not JsonValue value || !value.TryGetValue<double>(out var distance) || !double.IsFinite(distance) || distance < 0) return null;
+        return squared ? Math.Sqrt(distance) : distance;
+    }
+    internal static double? WalkingDistance(JsonObject evidence, int target)
+    {
+        if (FieldRows(evidence, "waypoint").Any(r => N(r["instance"]) == target && B(r[WaypointNear]))) return 0;
+        var map = FieldRows(evidence, "map").FirstOrDefault();
+        var definition = map?[MapPath] as JsonObject;
+        var travel = Readings(evidence, "mainline.travel").Select(r => r["$self"]).OfType<JsonObject>().FirstOrDefault();
+        if (travel != null && definition != null && N(travel["Map"]) == N(definition["id"]) && N(travel["Pack"]) == N(definition["packId"]))
+        {
+            var approach = Rows(travel["Approaches"] ?? new JsonArray()).FirstOrDefault(r => N(r["Instance"]) == target);
+            if (approach != null) return TargetDistance(approach);
+        }
+        // Ordinary collection uses horizontal reach; height alone is not a walk.
+        var drop = FieldRows(evidence, "reward").FirstOrDefault(r => N(r["instance"]) == target);
+        if (drop == null || map == null) return null;
+        double squared = 0;
+        foreach (string axis in new[] { "x", "z" })
+        {
+            if (drop["transform.position." + axis] is not JsonValue to || !to.TryGetValue<double>(out var end)
+                || map["ὪὨὯὢὫὮὨὩὮὡὬ.transform.position." + axis] is not JsonValue from || !from.TryGetValue<double>(out var start)
+                || !double.IsFinite(end) || !double.IsFinite(start)) return null;
+            squared += Math.Pow(end - start, 2);
+        }
+        return Math.Sqrt(squared);
+    }
+    internal static bool ShouldDash(GeneralPreferences settings, JsonObject evidence, double? distance) => settings.FastTravel && WorthDashing(distance)
+        && FieldInputReady(evidence["Frame"]!.AsObject()) && Remaining(evidence, 2) <= 0 && !Cooling(evidence, 2);
+    public async Task<bool> PrepareWalking(double? distance, JsonObject? observed = null)
+    {
+        if (!W.Settings.General.FastTravel || !WorthDashing(distance) || W.Time < nextDashCheck) return false;
         var evidence = observed ?? await Evidence();
         // Never wait out a speed buff or cooldown. Check only between physical
         // walks, never during harvesting, pickup commits, or native interaction.
-        if (!ShouldDash(W.Settings.General, evidence)) return false;
+        if (!ShouldDash(W.Settings.General, evidence, distance)) return false;
         nextDashCheck = W.Time + 60;
         var result = await Skill(2, 0, optional: true);
         if (S(result["reason"]) == "native_disabled")
@@ -142,11 +181,16 @@ public sealed partial class DailyFieldRoute
         double end = W.Time + timeout;
         double? stable = null;
         string? storySeen = null;
+        var prior = settledField;
+        // A failed or interrupted readiness check must not leave a reusable proof.
+        settledField = null;
         var policy = DailyNavigationPolicy.Load();
         while (W.Time < end)
         {
             var frame = (await W.Observe()).Frame;
             DailyGameVisibility.EnsureVisible(I(frame["ProcessId"]));
+            bool ready = FieldInputReady(frame);
+            if (!ready) prior = null;
             var types = DailyNavigationDecision.Types(frame);
             if (DailyNavigationDecision.CollectionOverlay(frame, policy) is { } overlay)
             {
@@ -190,15 +234,37 @@ public sealed partial class DailyFieldRoute
                 await W.Step("QuickMenuUI", back: true, absent: "QuickMenuUI");
                 continue;
             }
-            bool ready = FieldInputReady(frame);
             if (ready)
             {
+                // Still inspect the live frame and handle overlays above. Reuse
+                // only a recent completed settle, with no intervening command.
+                if (prior != null && W.Driver.InputRevision == settledRevision && settledFor >= settle
+                    && W.Time - settledAt is >= 0 and <= 2
+                    && DailyEvidence.SameActor(prior, frame)
+                    && S(frame["Scene"]).Length > 0 && JsonNode.DeepEquals(prior["Scene"], frame["Scene"])
+                    && S(frame["UiToken"]).Length > 0 && JsonNode.DeepEquals(prior["UiToken"], frame["UiToken"]))
+                {
+                    settledField = prior;
+                    return;
+                }
                 stable ??= W.Time;
                 if (W.Time - stable >= settle)
+                {
+                    if (settle > 0)
+                    {
+                        settledField = frame.DeepClone().AsObject();
+                        settledRevision = W.Driver.InputRevision;
+                        settledAt = W.Time;
+                        settledFor = W.Time - stable.Value;
+                    }
                     return;
+                }
             }
             else
+            {
                 stable = null;
+                prior = null;
+            }
             await W.Delay(200);
         }
         throw new StageHostException("adapter", "field.not-ready: 地图操作界面仍未恢复，已保留收集进度；请回到可移动的地图界面后接续任务。");
@@ -566,7 +632,7 @@ public sealed partial class DailyFieldRoute
         }
     }
     public Task Protection(JsonObject e) => Protection(e, walking: false);
-    public async Task Protection(JsonObject e, bool walking, bool speed = true)
+    public async Task Protection(JsonObject e, bool walking, bool speed = true, double? walkingDistance = null)
     {
         // An already open destination picker can teleport directly; opening a
         // field talent here would wait for a field page that cannot appear.
@@ -589,11 +655,11 @@ public sealed partial class DailyFieldRoute
             e = await Evidence();
             Require(Remaining(e, 17) > 5, "巡逻路线藏身不足，已停止移动");
         }
-        if (walking && speed) await PrepareWalking(e);
+        if (walking && speed) await PrepareWalking(walkingDistance, e);
     }
-    internal async Task ProtectWeeklyMovement()
+    internal async Task ProtectWeeklyMovement(double? walkingDistance = null)
     {
-        if (ProtectWeeklyTravel || W.Settings.General.FastTravel) await Protection(await Evidence(), walking: true);
+        if (ProtectWeeklyTravel || W.Settings.General.FastTravel) await Protection(await Evidence(), walking: true, walkingDistance: walkingDistance);
     }
     public async Task Patrol()
     {

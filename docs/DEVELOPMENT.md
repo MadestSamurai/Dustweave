@@ -18,6 +18,10 @@ Run root scripts from this repository, or invoke them by full path while retaini
 
 `Dustweave.slnx` lists every project for IDE navigation. RID-specific command-line builds use project entry points because MSBuild does not accept `-r` at solution scope. Owned projects and managed host assemblies use `Dustweave.*`; the desktop assembly and executable are `Dustweave` / `Dustweave.exe`.
 
+### Restarting for updates
+
+An update-ready notice stays open while the restart request is validated and the helper is prepared. Every rejected request reports its reason in that notice and on Updates. Fixed startup connection/account observations are read-only; they neither gate the restart nor refresh the UI once it is reserved. An in-flight update or schedule check may finish within a bounded 15-second wait; the request then revalidates the package version and due schedule. Closing the notice cancels a waiting request. Active automation, mutable settings operations and due scheduled runs retain their guards. The `update-discovery` desktop smoke exercises real buttons with synthetic checks and an injected helper boundary; it does not install a release or touch the game.
+
 ## Naming and compatibility / 命名与兼容
 
 | Layer | Name |

@@ -87,7 +87,7 @@ namespace BD2Fishing.Runtime
                 if(c.Valid(now,pid) && observedOwner!=c.OwnerId){observedOwner=c.OwnerId;network.AcknowledgeError();inventory.AcknowledgeError();bait.AcknowledgeError();}
                 if(!holdPhase)network.Reconcile(now);
                 network.Fill(s);inventory.Fill(s,now,c);bait.Fill(ui,s,now);
-                if(!holdPhase&&c.Valid(now,pid)&&s.Ready&&s.State=="None"&&s.BlockReason.Length==0&&!s.Busy&&!s.MapTravelBusy
+                if(!holdPhase&&c.Valid(now,pid)&&s.Ready&&s.State=="None"&&!s.ResultPopup&&!s.LevelPopup&&s.BlockReason.Length==0&&!s.Busy&&!s.MapTravelBusy
                     &&(inventory.NeedsRefresh(now)||bait.NeedsRefresh(now))){network.RefreshInventory(now);network.Reconcile(now);network.Fill(s);}
                 if(!holdPhase)navigation.Reconcile(s,c,now,policy.Fault.Length>0);
                 var action=policy.Next(s,c,now,holdPhase);
@@ -102,7 +102,9 @@ namespace BD2Fishing.Runtime
             }
             catch(Exception e)
             {
-                var error=e.GetBaseException().Message;policy.Fail(error);
+                var error=e.GetBaseException().Message;
+                if(policy.Fault!=error)LogDiagnostic("runtime_fault state="+latest.State+" layers="+lastUiLayers+" action="+lastAction+" exception="+e);
+                policy.Fail(error);
                 try{ReleaseHold();navigation?.Stop();}catch{}
                 latest=new FishingSnapshot{ProcessId=pid,CapturedUtcTicks=DateTime.UtcNow.Ticks,OwnerId=control?.OwnerId??"",Error=error,Reason="钓鱼已暂停："+error};
             }
@@ -114,10 +116,11 @@ namespace BD2Fishing.Runtime
             var open=activePopups.Where(FishingPopupClassifier.IsBlockingPopup).OrderByDescending(v=>FishingBindings.Num(v,"ὤὩὪὬὬὤὪὮὣὩὩ")).ToArray();
             s.UiLayers=string.Join("; ",activePopups.Select(v=>v.GetType().Name+"["+FishingBindings.Get(v,"ὧὨὦὯὣὣὡὣὪὮὨ")+"]="+(FishingPopupClassifier.IsBlockingPopup(v)?"popup":"hud")).OrderBy(v=>v));
             if(s.UiLayers!=lastUiLayers){lastUiLayers=s.UiLayers;if(diagnostics.Count<256)diagnostics.Enqueue("ui_layers "+lastUiLayers);}
-            popup=open.FirstOrDefault(v=>v is AvatarFishingGetPopupUI || v is AvatarFishingLevelUpPopupUI);
+            int popupIndex=FishingSettlement.SelectPopup(open.Select(FishingPopupClassifier.SettlementType).ToArray());
+            popup=popupIndex>=0?open[popupIndex]:null;
             s.ResultPopup=popup is AvatarFishingGetPopupUI;s.LevelPopup=popup is AvatarFishingLevelUpPopupUI;
             if(popup!=null){s.CanClosePopup=popup.CanCloseUI();s.PopupId=popup.GetInstanceID();}
-            var other=open.FirstOrDefault(v=>v!=popup);
+            var other=open.FirstOrDefault(v=>!FishingSettlement.Known(FishingPopupClassifier.SettlementType(v)));
             if(other!=null)s.BlockReason="等待关闭游戏弹窗："+other.GetType().Name;
             if(FishingBindings.Active(ui))mapManager=FishingBindings.Get(ui,"ὢὨὠὩὤὬὠὧὬὠὬ");
             FishingMap.Read(mapManager,s);
@@ -130,6 +133,9 @@ namespace BD2Fishing.Runtime
             ReadMapTransition(manager,s);
             var transition=s.Scene+" pending="+s.MapChangePending+" active="+s.Busy;
             if(transition!=lastMapTransition){lastMapTransition=transition;LogDiagnostic("map_transition "+transition+" fishing="+s.State);}
+            // Settlement has its own native close callbacks. Fishing controls
+            // can be rebuilding at level-up and are not needed to close it.
+            if(s.ResultPopup||s.LevelPopup)return s;
             var charger=(FishingCastingCharger)FishingBindings.Get(ui,"_castingCharger");
             s.CanCast=FishingBindings.Flag(charger,"ὩὯὪὩὯὫὮὤὭὧὢ");s.CastRunning=FishingBindings.Flag(charger,"ὩὡὣὢὬὦὥὧὥὭὦ");
             s.BagFull=(bool)FishingBindings.Call(ui,"ὬὣὦὫὬὯὧὮὣὣὡ");s.Gauge=charger.GetNormalizeValue();

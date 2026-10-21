@@ -113,7 +113,7 @@ namespace BD2Daily.Live {
   public static bool RewardKind(string k){return new[]{"reward_select","reward_tab","reward_action"}.Contains(k);}
   public static bool TacticsKind(string k){return new[]{"tactics_select","tactics_priority","tactics_action_open","tactics_burst","tactics_action","tactics_move","tactics_order","tactics_start"}.Contains(k);}
   public static bool ExtensionKind(string k){return TacticsKind(k)||(EventKind(k)&&k!="event_sweep_select"&&k!="event_sweep_confirm"&&k!="event_sweep_count");}
-  public static bool NativeBattleKind(string k){return new[]{"salvation_open","salvation_walk","salvation_select","salvation_popup","salvation_confirm","event_native_select","event_native_confirm","event_native_exit"}.Contains(k);}
+  public static bool NativeBattleKind(string k){return new[]{"salvation_open","salvation_walk","salvation_select","salvation_popup","salvation_count","salvation_confirm","event_native_select","event_native_confirm","event_native_exit"}.Contains(k);}
   public static bool EventKind(string k){return new[]{"event_select","event_sweep_select","event_sweep_confirm","event_sweep_count","event_action_open","event_action","event_move","event_order","event_start","event_bench","event_replace"}.Contains(k);}
   public static bool TradeKind(string k){return new[]{"trade_menu","trade_talent","trade_favorite_preview","trade_favorite_confirm","trade_buy_preview","trade_buy_confirm","trade_sell_preview","trade_sell_confirm","trade_cook_preview","trade_cook_quantity","trade_cook_confirm"}.Contains(k);}
   public static bool PowderKind(string kind){return kind=="powder_recipe"||kind=="powder_options";}
@@ -157,13 +157,13 @@ namespace BD2Daily.Live {
     return f.Surfaces.Any(x=>x.Id!=ui.Id&&!PassiveSurface(x.Type)&&x.Type!="GameFieldDefaultUI"&&!(x.Type=="ScriptUI"&&x.NativeContext=="story_dialogue")&&!(f.BridgeVersion>=102&&x.Type=="BalloonScriptUI"&&!x.Popup&&!string.IsNullOrEmpty(x.Path)&&ui.Path==x.Path+"/StorySkipUI"))?"story_popup_blocked":"";
    }
    if(NativeBattleKind(c.Kind)){
-    if(f.BridgeVersion<118||!GameplayReady(f)||c.TargetId!=0||c.Items==null)return "native_battle_context_rejected";
-    string expected=c.Kind=="salvation_open"?"MenuUI":c.Kind=="salvation_walk"?"GameFieldDefaultUI":c.Kind=="salvation_confirm"?"RogueLikeSkipPopupUI":c.Kind.StartsWith("salvation_")?"RogueLikeLobbyUI":c.Kind=="event_native_select"?"EventBattleUI":c.Kind=="event_native_exit"?"BattleResultUI":"BattleSkipPopupUI";
+    if(f.BridgeVersion<(c.Kind=="salvation_count"?128:118)||!GameplayReady(f)||c.TargetId!=0||c.Items==null)return "native_battle_context_rejected";
+    string expected=c.Kind=="salvation_open"?"MenuUI":c.Kind=="salvation_walk"?"GameFieldDefaultUI":c.Kind=="salvation_confirm"||c.Kind=="salvation_count"?"RogueLikeSkipPopupUI":c.Kind.StartsWith("salvation_")?"RogueLikeLobbyUI":c.Kind=="event_native_select"?"EventBattleUI":c.Kind=="event_native_exit"?"BattleResultUI":"BattleSkipPopupUI";
     if(ui.Type!=expected||f.Surfaces.Any(x=>x.Popup&&x.Id!=ui.Id&&x.Order>=ui.Order&&!PassiveSurface(x.Type)))return "native_battle_surface_rejected";
     if(c.Kind=="salvation_open"||c.Kind=="event_native_exit")return c.Value==0&&c.Items.Length==0?"":"native_battle_input_rejected";
     if(c.Kind=="salvation_walk")return c.Value>=0&&c.Value<=1&&c.Items.Length==0?"":"native_battle_input_rejected";
     if(c.Kind=="salvation_select"||c.Kind=="salvation_popup")return c.Items.Length==1&&c.Items[0]>0&&c.Items[0]<=int.MaxValue&&c.Value>=0&&c.Value<=1?"":"native_battle_input_rejected";
-    if(c.Kind=="salvation_confirm")return c.Value>0&&(c.Items.Length==5||(c.Items.Length==6&&f.BridgeVersion>=124&&c.Items[5]>=1&&c.Items[5]<=999&&c.Value<=c.Items[5]))&&c.Items[0]>0&&c.Items[0]<=int.MaxValue&&c.Items[1]>=0&&c.Items[1]<=999&&c.Items.Skip(2).All(x=>x>=0)?"":"native_battle_budget_rejected";
+    if(c.Kind=="salvation_confirm"||c.Kind=="salvation_count")return c.Value>0&&(c.Items.Length==5||(c.Items.Length==6&&f.BridgeVersion>=124&&c.Items[5]>=1&&c.Items[5]<=999&&c.Value<=c.Items[5]))&&c.Items[0]>0&&c.Items[0]<=int.MaxValue&&c.Items[1]>=0&&c.Items[1]<=999&&c.Items.Skip(2).All(x=>x>=0)?"":"native_battle_budget_rejected";
     return c.Items.Length==3&&c.Items.All(x=>x>0&&x<=int.MaxValue)&&(c.Kind=="event_native_select"?c.Value>=0&&c.Value<=1:c.Value>=1&&c.Value<=5)?"":"native_battle_input_rejected";
    }
    if(c.Kind=="notice_suppress"){
@@ -383,10 +383,23 @@ namespace BD2Daily.Live {
  public static class BackgroundErrorPolicy {
   public const string Context="billing_region_unavailable_ack_only";
   public const string RequestContext="request_timeout_ack_only";
-  public static bool RequestTimeout(System.Collections.Generic.IEnumerable<string> texts){return texts!=null&&texts.Any(t=>t=="網路請求超時請檢查網路連接狀態。"||t=="网络请求超时请检查网络连接状态。");}
+  public static bool RequestTimeout(System.Collections.Generic.IEnumerable<string> texts){return texts!=null&&texts.Any(t=>t=="網路請求超時請檢查網路連接狀態。"||t=="网络请求超时请检查网络连接状态。"||t=="连线请求超时，请检查网络连接状态。"||t=="連線請求超時，請檢查網路連接狀態。");}
   public static bool Matches(string context,System.Collections.Generic.IEnumerable<string> texts){return context==Context&&RegionLookupTimeout(texts)||context==RequestContext&&RequestTimeout(texts);}
   public static bool RegionLookupTimeout(System.Collections.Generic.IEnumerable<string> texts){
    return texts!=null&&texts.Any(t=>t!=null&&t.Contains("Neo.Unity.Http.NeoNetworkException:/api/billing/mycard/check/mycard/nation, 0, ConnectionError, Request timeout"));
+  }
+ }
+ // A missing response tap is not proof that the native network queue is still
+ // running. This releases only component ownership after observed quiescence;
+ // it never settles a business operation or authorizes replaying its request.
+ public sealed class DailyHandoffQuiescence {
+  long quietSince;
+  public void Reset(){quietSince=0;}
+  public bool Waiting(bool pending,bool? networkBusy,long now){
+   if(!pending){Reset();return false;}
+   if(networkBusy!=false){Reset();return true;}
+   if(quietSince==0||now<quietSince)quietSince=now;
+   return now-quietSince<TimeSpan.FromSeconds(2).Ticks;
   }
  }
 }

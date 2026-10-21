@@ -9,6 +9,7 @@ namespace BD2Daily.Live {
  [DataContract] internal sealed class WeeklyNpcBoardTarget {
   [DataMember] public int Map,Npc,Instance;
   [DataMember] public bool Near;
+  [DataMember] public float Distance=-1;
  }
  [DataContract] internal sealed class WeeklyNpcBoardState {
   [DataMember] public int Ui,PopupQuest;
@@ -37,6 +38,8 @@ namespace BD2Daily.Live {
     var npc=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.GetNPCController(target.Npc);
     bool here=target.Map==result.Map&&IsBoard(npc);
     target.Instance=here?npc.GetInstanceID():0;target.Near=here&&npc.ὩὤὨὮὥὦὫὭὫὭὨ;
+    var player=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὪὨὯὢὫὮὨὩὮὡὬ;
+    target.Distance=here&&player!=null?Vector3.Distance(player.transform.position,npc.ὩὬὧὢὧὬὠὡὦὥὧ):-1;
    }
    var board=CurrentBoard();var popup=CurrentQuestPopup();
    return new WeeklyNpcBoardState{Ui=board==null?0:board.GetInstanceID(),PopupQuest=PopupQuest(popup),PopupCanAccept=PopupAccept(popup),VisibleQuests=board==null?new int[0]:board.GetComponentsInChildren<QuestBoardLoopScrollItem>(false).Where(x=>x.gameObject.activeInHierarchy).Select(x=>BoardField<int>(x,"ὠὥὠὠὣὡὨὪὭὤὩ")).ToArray()};

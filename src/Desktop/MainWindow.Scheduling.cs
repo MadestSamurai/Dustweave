@@ -41,7 +41,7 @@ public partial class MainWindow
     }
     private Task CheckScheduleAsync()
     {
-        if (IsSandboxWindow || smoke != null || scheduleChecking || DateTime.UtcNow < nextScheduleCheck || finalClose) return Task.CompletedTask;
+        if (IsSandboxWindow || smoke != null || scheduleChecking || UpdateRestarting || DateTime.UtcNow < nextScheduleCheck || finalClose) return Task.CompletedTask;
         nextScheduleCheck = DateTime.UtcNow.AddSeconds(10);
         return CheckScheduleCoreAsync(DateTimeOffset.UtcNow);
     }
@@ -93,10 +93,10 @@ public partial class MainWindow
                 return;
             }
             if (scheduleStore.IsClaimed(due.Value)) return;
-            CloseUpdateNotice();
+            if (!updateRestartPending) CloseUpdateNotice();
             // A running tool is the one optional handoff. Never interrupt another daily queue,
             // an actual update installation, onboarding or a user's modal operation.
-            if (onboardingOpen || busy || toolChanging || updateInstalling || ParallelBusy || pluginChanging || releaseDialogOpen || DailyDialogs.ModalDepth > 0 || softwareSandboxPath.Preparing)
+            if (onboardingOpen || busy || toolChanging || UpdateRestarting || ParallelBusy || pluginChanging || releaseDialogOpen || DailyDialogs.ModalDepth > 0 || softwareSandboxPath.Preparing)
             {
                 scheduleStore.Record(new(due.Value.ToString("O"), "waiting", now)); return;
             }

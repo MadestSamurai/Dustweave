@@ -36,12 +36,12 @@ public static class DailyUpdateTransaction
         { throw new IOException($"Cannot replace {target} (0x{error.HResult:X8})", error); }
         finally { if (File.Exists(temp)) File.Delete(temp); }
     }
-    public static DailyUpdateJournal Prepare(string staging, string target, string backup, string[] names, IReadOnlyDictionary<string, string>? retainedFiles = null)
+    public static DailyUpdateJournal Prepare(string staging, string target, string backup, string[] names, IReadOnlyDictionary<string, string>? retainedFiles = null, bool removeObsolete = true)
     {
         foreach (var path in new[] { staging, target, backup }) DailyUpdates.EnsureNoLinks(path);
         if (Directory.Exists(backup)) throw new IOException("updates.backup_exists");
         var previous = DailyUpdateJson.TryRead<DailyUpdatePackage>(Path.Combine(target, "update-package.json"));
-        string[] obsolete = (previous?.Files ?? []).Except(names, StringComparer.OrdinalIgnoreCase).ToArray();
+        string[] obsolete = removeObsolete ? (previous?.Files ?? []).Except(names, StringComparer.OrdinalIgnoreCase).ToArray() : [];
         var all = names.Concat(obsolete).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         if (all.Length > 10000 || all.Any(n => !DailyUpdates.AllowedFile(n))) throw new InvalidDataException("updates.invalid_package");
         Directory.CreateDirectory(backup);

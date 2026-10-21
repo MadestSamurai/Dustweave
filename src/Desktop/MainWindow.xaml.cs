@@ -140,7 +140,12 @@ public partial class MainWindow : Window
         Closing += OnClosing;
         WorkspaceTabs.SelectedItem = RunTab;
         WorkspaceTabs.SelectionChanged += (_, e) => { if (smoke == null && e.Source == WorkspaceTabs && WorkspaceTabs.SelectedItem == RunTab && !busy && preferencesPanel.SavePending()) RefreshDailyHistory(refreshPlan: true); };
-        WorkspaceTabs.SelectionChanged += (_, e) => { if (e.Source == WorkspaceTabs && WorkspaceTabs.SelectedItem == SettingsTab && !busy && DailyProfiles.ValidKey(TaskAccountKey)) preferencesPanel.SelectAccount(TaskAccountKey); };
+        WorkspaceTabs.SelectionChanged += (_, e) =>
+        {
+            if (e.Source != WorkspaceTabs || WorkspaceTabs.SelectedItem != SettingsTab) return;
+            preferencesPanel.ShowAllSettings();
+            if (!busy && DailyProfiles.ValidKey(TaskAccountKey)) preferencesPanel.SelectAccount(TaskAccountKey);
+        };
     }
     private void OnLanguageChanged(object? sender, EventArgs e) { bool ready=appearanceReady;appearanceReady=false;LanguageSelector.SelectedIndex=Array.IndexOf(DailyLanguage.Codes,L.Code);appearanceReady=ready;foreach (var row in rows) row.RefreshLanguage(); }
     private void Language_Changed(object sender, SelectionChangedEventArgs e)
@@ -163,10 +168,10 @@ public partial class MainWindow : Window
     private bool ToolOpen => apostleWindow != null || toolSession.Current != null;
     private bool ToolConnecting => apostleWindow?.Panel.Connecting == true;
     private bool ToolRunning => !busy && parallelControl == null && DailyToolControl.IsOccupied(root);
-    private bool Unavailable => onboardingOpen || busy || cacheChanging || toolChanging || ToolRunning || updateInstalling || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true;
+    private bool Unavailable => onboardingOpen || busy || cacheChanging || toolChanging || ToolRunning || UpdateRestarting || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true;
     private async Task OpenTool(string id)
     {
-        if (smoke != null || busy || toolChanging || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true) return;
+        if (smoke != null || busy || toolChanging || UpdateRestarting || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true) return;
         toolChanging = true; SetBusy(busy);
         try {
             if(id=="apostle-defense" && apostleWindow!=null){apostleWindow.BringForward();return;}
@@ -205,7 +210,7 @@ public partial class MainWindow : Window
     }
     private async Task CloseTool()
     {
-        if (smoke != null || busy || toolChanging || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true) return;
+        if (smoke != null || busy || toolChanging || UpdateRestarting || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true) return;
         toolChanging = true; toolMessage = null; SetBusy(busy);
         // Closing releases the tool; the next requested operation prepares its own component.
         // Neither closing the child nor this explicit action changes the user's current page.
@@ -290,14 +295,14 @@ public partial class MainWindow : Window
     private bool readingAccounts;
     private async Task RefreshAccountIdentityAsync()
     {
-        if (readingAccounts || busy || toolChanging || finalClose || DateTime.UtcNow < nextAccountRefresh) return;
+        if (readingAccounts || busy || toolChanging || UpdateRestarting || finalClose || DateTime.UtcNow < nextAccountRefresh) return;
         nextAccountRefresh = DateTime.UtcNow.AddSeconds(5);
         readingAccounts = true;
         try
         {
             // Reading/decrypting the saved directory is never performed on the UI thread.
             var current = await Task.Run(sessions.Read);
-            if (!busy && !toolChanging && !finalClose && !DailyAccountIdentity.SameCatalog(catalog, current))
+            if (!busy && !toolChanging && !UpdateRestarting && !finalClose && !DailyAccountIdentity.SameCatalog(catalog, current))
                 RefreshAccounts(current);
         }
         catch (Exception e) { DailyUiText.Error(ProgressText, e, "账号目录暂时无法刷新："); }
@@ -365,11 +370,11 @@ public partial class MainWindow : Window
     private Task connectionUpdate = Task.CompletedTask;
     private void UpdateConnection()
     {
-        if (connectionUpdate.IsCompleted) connectionUpdate = ReadConnectionAsync();
+        if (!UpdateRestarting && connectionUpdate.IsCompleted) connectionUpdate = ReadConnectionAsync();
     }
     private async Task ReadConnectionAsync()
     {
-        if (connectionReading || finalClose) return;
+        if (connectionReading || UpdateRestarting || finalClose) return;
         if (ParallelBusy)
         {
             L.Text(ConnectionText,"parallel.connection");ConnectionText.ToolTip=ConnectionText.Text;
@@ -387,7 +392,7 @@ public partial class MainWindow : Window
             connectionReading = true;
             (GameInstance? game, DailySnapshot? s) Read() { var found = host.Find(); return (found, host.ReadSnapshot(found)); }
             var (game, s) = smoke != null ? Read() : await Task.Run(Read);
-            if (finalClose || ParallelBusy) return;
+            if (finalClose || UpdateRestarting || ParallelBusy) return;
             L.Bind(ConnectionText, TextBlock.TextProperty, () => game == null ? L.Get("connection.closed") : s != null && s.ProcessId == game.ProcessId && s.ProcessStartTicks == game.StartTicks && s.FrameUtcTicks > DateTimeOffset.UtcNow.AddSeconds(-5).UtcTicks
                 ? L.Get("connection.ready", s.State == "identified" ? s.PlayerName : L.Get("connection.login"), L.Translate(DailyUserText.Scene(s.Scene)))
                 : L.Get("connection.loading"));

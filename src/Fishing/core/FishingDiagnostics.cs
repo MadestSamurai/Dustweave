@@ -23,6 +23,16 @@ public static class FishingDiagnostics
   lock(sync){var key=root+"|"+stage;var now=Environment.TickCount64;if(recent.TryGetValue(key,out var last)&&now-last<15000)return;recent[key]=now;}
   Write(root,stage,error:error);
  }
+ public static void Interrupted(string root,FishingSnapshot snapshot)
+ {
+  // Keep a small final record even when per-hit runtime logging has rotated.
+  // Capture before sending Stop so the original error is not replaced by "stopped".
+  Write(root,"automation.interrupted",snapshot.Error);
+  lock(sync)try {
+   FishingJson.Write(System.IO.Path.Combine(FishingStorage.DiagnosticRoot(root),"last-interruption.json"),
+    new { atUtc=DateTime.UtcNow, stage="automation.interrupted", snapshot });
+  }catch(IOException){}catch(UnauthorizedAccessException){}
+ }
 }
 
 public sealed class FishingConnectionTrace:IDisposable

@@ -15,6 +15,7 @@ public sealed class DailyUpdatePanel : ScrollViewer
     private readonly Button check = new() { Margin = new(0, 0, 10, 6) };
     private readonly CheckBox automatic = new() { Margin = new(0, 12, 0, 12) };
     private readonly StackPanel notes = new();
+    public DailyRepairPanel Repair { get; } = new();
     public event Action? CheckRequested;
     public event Action? DownloadRequested;
     public event Action? InstallRequested;
@@ -31,7 +32,7 @@ public sealed class DailyUpdatePanel : ScrollViewer
         L.Bind(download, ContentControl.ContentProperty, "updates.download"); download.Style = (Style)Application.Current.FindResource("PrimaryButton"); actions.Children.Add(download);
         L.Bind(install, ContentControl.ContentProperty, "updates.install"); install.Style = (Style)Application.Current.FindResource("PrimaryButton"); actions.Children.Add(install); card.Children.Add(actions); card.Children.Add(status);
         stack.Children.Add(new Border { Style = (Style)Application.Current.FindResource("Panel"), Padding = new(20), Margin = new(0, 0, 0, 16), Child = card });
-        stack.Children.Add(DailyDownloadLinks.Create()); stack.Children.Add(notes);
+        stack.Children.Add(DailyDownloadLinks.Create()); stack.Children.Add(Repair); stack.Children.Add(notes);
         var layout=new Grid();layout.ColumnDefinitions.Add(new ColumnDefinition {MaxWidth=880});layout.Children.Add(stack);Content = layout;
         check.Click += (_, _) => CheckRequested?.Invoke(); install.Click += (_, _) => InstallRequested?.Invoke();
         download.Click += (_, _) => DownloadRequested?.Invoke();
@@ -95,6 +96,15 @@ public partial class MainWindow
     private readonly DailyUpdatePanel updatePanel = new();
     private readonly CancellationTokenSource updateLifetime = new();
     private bool updateChecking, updateInstalling, updatePromptShown, releaseDialogOpen;
+    private bool updateRestartPending;
+    private bool UpdateRestarting => updateRestartPending || updateInstalling;
+    private event Action<string, object?[]>? UpdateInstallStatusChanged;
+    private event Action? UpdateInstallControlsChanged;
+    private void UpdateInstallStatus(string key, params object?[] args)
+    {
+        updatePanel.Status(key, args);
+        UpdateInstallStatusChanged?.Invoke(key, args);
+    }
     private Window? updateNotice;
     private DailyUpdateJob? readyUpdate;
     private string? availableUpdateVersion;
@@ -114,6 +124,7 @@ public partial class MainWindow
         updatePanel.CheckRequested += async () => await CheckUpdatesAsync();
         updatePanel.DownloadRequested += async () => await CheckUpdatesAsync(download: true);
         updatePanel.InstallRequested += async () => await InstallUpdateAsync();
+        InitializeRepair();
         Closed += (_, _) => updateLifetime.Cancel();
     }
     private void ShowReleaseNotes()
@@ -154,7 +165,7 @@ public partial class MainWindow
     }
     private async Task CheckUpdatesAsync(bool download = false)
     {
-        if (IsSandboxWindow || smoke != null || cacheChanging || updateChecking || updateInstalling) return;
+        if (IsSandboxWindow || smoke != null || cacheChanging || updateChecking || UpdateRestarting) return;
         using var client = DailyUpdates.Client();
         var transport = DailyUpdateTransport.Production();
         await CheckUpdatesCoreAsync(download,
@@ -188,7 +199,7 @@ public partial class MainWindow
             updatePanel.ShowNotes(feed.Releases.OrderByDescending(r => DailyUpdates.VersionOf(r.Version)).Select(r => new DailyReleaseNote(r.Version, "", r.Notes)));
             if (release == null)
             {
-                if (availableUpdateVersion != null) CloseUpdateNotice();
+                if (availableUpdateVersion != null && !updateRestartPending) CloseUpdateNotice();
                 availableUpdateVersion = null; readyUpdate = null; manualUpdateVersion = null; manualUpdateReason = null;
                 updatePromptShown = false;
                 updatePanel.Status("updates.current"); return;
@@ -196,7 +207,7 @@ public partial class MainWindow
             availableVersion = release.Version;
             if (availableUpdateVersion != release.Version)
             {
-                if (availableUpdateVersion != null) CloseUpdateNotice();
+                if (availableUpdateVersion != null && !updateRestartPending) CloseUpdateNotice();
                 readyUpdate = null; manualUpdateVersion = null; manualUpdateReason = null;
                 updatePromptShown = false;
             }
@@ -230,9 +241,10 @@ public partial class MainWindow
     }
     private void UpdateUpdateControls()
     {
-        updatePanel.Busy(updateChecking || updateInstalling, readyUpdate != null, Unavailable || updateInstalling || scheduleChecking,
+        updatePanel.Busy(updateChecking || UpdateRestarting, readyUpdate != null, Unavailable || scheduleChecking,
             availableUpdateVersion != null && manualUpdateVersion == null);
         UpdateAvailableBadge.Visibility = availableUpdateVersion != null ? Visibility.Visible : Visibility.Collapsed;
+        UpdateInstallControlsChanged?.Invoke();
         string description() => availableUpdateVersion != null
             ? L.Get("updates.available_hint", availableUpdateVersion)
             : L.Get("nav.updates");
@@ -266,6 +278,18 @@ public partial class MainWindow
             var panel = new StackPanel { Margin = new(24) };
             var text = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 0, 0, 20) };
             L.Text(text, manualUpdateReason ?? "updates.manual_layout"); panel.Children.Add(text);
+            if (manualUpdateReason == "updates.manual_delta")
+            {
+                var repair = new Button { HorizontalAlignment = HorizontalAlignment.Left, Margin = new(0, 0, 0, 16) };
+                L.Bind(repair, ContentControl.ContentProperty, "repair.goto");
+                repair.Click += (_, _) =>
+                {
+                    CloseUpdateNotice();
+                    WorkspaceTabs.SelectedItem = UpdatesTab;
+                    updatePanel.Repair.BringIntoView();
+                };
+                panel.Children.Add(repair);
+            }
             panel.Children.Add(DailyDownloadLinks.Create());
             var button = new Button { HorizontalAlignment = HorizontalAlignment.Right, Margin = new(0, 20, 0, 0), IsDefault = true };
             L.Bind(button, ContentControl.ContentProperty, "updates.got_it"); panel.Children.Add(button);
@@ -273,13 +297,15 @@ public partial class MainWindow
             L.Bind(dialog, Window.TitleProperty, "updates.manual_title"); button.Click += (_, _) => dialog.Close();
             DailyDialogs.Prepare(dialog); return dialog;
     }
-    private Window CreateUpdateReadyWindow(string version)
+    private Window CreateUpdateReadyWindow(string version, Func<string, CancellationToken, Task>? requestRestart = null)
     {
         var panel = new StackPanel { Margin = new(24) };
         var text = new TextBlock { TextWrapping = TextWrapping.Wrap };
         L.Text(text, "updates.confirm", version); panel.Children.Add(text);
         var hint = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 12, 0, 0) };
         L.Text(hint, "updates.nonblocking"); hint.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk"); panel.Children.Add(hint);
+        var feedback = new TextBlock { Name = "UpdateRestartFeedback", TextWrapping = TextWrapping.Wrap, Margin = new(0, 16, 0, 0), Visibility = Visibility.Collapsed };
+        panel.Children.Add(feedback);
         var actions = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Right, Margin = new(0, 24, 0, 0) };
         var later = new Button { IsDefault = true, Margin = new(0, 0, 10, 0) };
         var install = new Button { Style = (Style)FindResource("PrimaryButton") };
@@ -288,60 +314,125 @@ public partial class MainWindow
         var dialog = new Window { Owner = this, Width = 560, MaxHeight = Math.Max(300, SystemParameters.WorkArea.Height - 80), SizeToContent = SizeToContent.Height, ResizeMode = ResizeMode.NoResize, WindowStartupLocation = WindowStartupLocation.CenterOwner,
             Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto } };
         L.Bind(dialog, Window.TitleProperty, "updates.title");
+        var lifetime = new CancellationTokenSource();
+        void Report(string key, object?[] args) { L.Text(feedback, key, args); feedback.Visibility = Visibility.Visible; }
+        void Refresh() => install.IsEnabled = !UpdateRestarting;
+        UpdateInstallStatusChanged += Report;
+        UpdateInstallControlsChanged += Refresh;
+        dialog.Closed += (_, _) => { lifetime.Cancel(); UpdateInstallStatusChanged -= Report; UpdateInstallControlsChanged -= Refresh; lifetime.Dispose(); };
         later.Click += (_, _) => dialog.Close();
         install.Click += async (_, _) =>
         {
-            dialog.Close();
-            // A background check may have replaced the version named in this notice.
-            if (readyUpdate?.Release.Version == version) await InstallUpdateAsync();
+            // Keep feedback visible until the updater has actually been started.
+            if (requestRestart != null) await requestRestart(version, lifetime.Token);
+            else await InstallUpdateAsync(expectedVersion: version, cancellation: lifetime.Token);
         };
         DailyDialogs.Prepare(dialog); return dialog;
     }
-    private async Task InstallUpdateAsync()
+    private async Task InstallUpdateAsync(DailyUpdateJob? repair = null, string? expectedVersion = null, CancellationToken cancellation = default)
     {
-        if (IsSandboxWindow || smoke != null || readyUpdate == null || Unavailable || scheduleChecking || updateInstalling || !preferencesPanel.SavePending()) return;
-        // A click just before the next timer tick must not let installation overtake a due run.
-        if (HasPendingScheduledRun(DateTimeOffset.UtcNow))
-        {
-            updatePanel.Status("updates.schedule_first");
-            nextScheduleCheck = DateTime.MinValue;
-            await CheckScheduleAsync();
-            return;
-        }
-        string helperSource = Path.Combine(AppContext.BaseDirectory, "support", "Dustweave.Updater.exe");
-        if (DailyJson.TryRead<DailyUpdatePackage>(Path.Combine(DailyUpdateHost.InstallRoot, "update-package.json"))?.Layout != DailyUpdates.CurrentLayout || !File.Exists(helperSource)) { updatePanel.Status("updates.packaged_only"); return; }
-        updateInstalling = true; UpdateUpdateControls();
+        if (smoke != null) return;
+        await RequestUpdateInstallCoreAsync(repair ?? readyUpdate, expectedVersion, StartUpdateInstallerAsync, cancellation);
+    }
+    private async Task RequestUpdateInstallCoreAsync(DailyUpdateJob? installation, string? expectedVersion,
+        Func<DailyUpdateJob, CancellationToken, Task> startInstaller, CancellationToken cancellation = default)
+    {
+        if (UpdateRestarting) return; // The accepted request owns the pending transition.
+        if (IsSandboxWindow) { UpdateInstallStatus("updates.isolated_open"); return; }
+        if (installation == null || expectedVersion != null && installation.Release.Version != expectedVersion)
+        { UpdateInstallStatus("updates.restart_changed"); return; }
+        bool ActiveWork() => onboardingOpen || busy || cacheChanging || toolChanging || ToolRunning || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true || releaseDialogOpen || DailyDialogs.ModalDepth > 0;
+        if (ActiveWork()) { UpdateInstallStatus("updates.restart_busy"); return; }
+        using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellation, updateLifetime.Token);
+        bool scheduledFirst = false;
+        updateRestartPending = true;
         try
+        {
+            SetBusy(busy);
+            UpdateInstallStatus("updates.restart_preparing");
+            // A background update/schedule check may already be in flight. Preserve
+            // this click while it finishes; do not start new background work meanwhile.
+            // Connection/account observations are read-only and never gate a restart.
+            var wait = Stopwatch.StartNew();
+            if (updateChecking || scheduleChecking) UpdateInstallStatus("updates.restart_waiting");
+            while (updateChecking || scheduleChecking)
+            {
+                if (wait.Elapsed > TimeSpan.FromSeconds(15)) { UpdateInstallStatus("updates.restart_check_timeout"); return; }
+                await Task.Delay(50, lifetime.Token);
+            }
+            lifetime.Token.ThrowIfCancellationRequested();
+            if (ActiveWork()) { UpdateInstallStatus("updates.restart_busy"); return; }
+            if (!installation.Repair && readyUpdate?.Release.Version != installation.Release.Version)
+            { UpdateInstallStatus("updates.restart_changed"); return; }
+            if (!preferencesPanel.SavePending()) { UpdateInstallStatus("updates.restart_settings"); return; }
+            // A due schedule still has priority; it cannot silently swallow the request.
+            if (HasPendingScheduledRun(DateTimeOffset.UtcNow))
+            { UpdateInstallStatus("updates.schedule_first"); scheduledFirst = true; return; }
+            updateInstalling = true; SetBusy(busy); UpdateInstallStatus("updates.restart_preparing");
+            await startInstaller(installation, lifetime.Token);
+        }
+        catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { UpdateInstallStatus("updates.restart_cancelled"); }
+        catch (Exception e)
+        {
+            UpdateInstallStatus(e is UnauthorizedAccessException ? "updates.permission" : "updates.start_failed");
+            try { DailyJson.Write(Path.Combine(root, "updates", "install-error.json"), new { error = e.ToString() }); }
+            catch (Exception diagnosticError) when (diagnosticError is IOException or UnauthorizedAccessException) { /* Keep the on-screen failure and retry usable. */ }
+        }
+        finally
+        {
+            updateInstalling = false; updateRestartPending = false;
+            if (!finalClose) SetBusy(busy);
+            if (scheduledFirst)
+            {
+                WorkspaceTabs.SelectedItem = UpdatesTab;
+                nextScheduleCheck = DateTime.MinValue;
+                await CheckScheduleAsync();
+            }
+        }
+    }
+    private async Task StartUpdateInstallerAsync(DailyUpdateJob installation, CancellationToken cancellation)
+    {
+        string helperSource = Path.Combine(AppContext.BaseDirectory, "support", "Dustweave.Updater.exe");
+        if (!installation.Repair && (DailyJson.TryRead<DailyUpdatePackage>(Path.Combine(DailyUpdateHost.InstallRoot, "update-package.json"))?.Layout != DailyUpdates.CurrentLayout || !File.Exists(helperSource))) { UpdateInstallStatus("updates.packaged_only"); return; }
         {
             using var storage = DailyUpdateHost.AcquireStorage(root);
             // A manual download can expire while this window stays open for days.
-            if (!File.Exists(Path.Combine(readyUpdate.Directory, "signed-feed.json")))
+            if (!File.Exists(Path.Combine(installation.Directory, "signed-feed.json")))
             {
+                if (installation.Repair) throw new InvalidDataException("updates.repair_changed");
                 readyUpdate = null;
-                updateInstalling = false;
-                await CheckUpdatesAsync(download: true);
+                UpdateInstallStatus("updates.restart_changed");
                 return;
             }
-            if (DailySandbox.HasIsolatedWindows()) { updatePanel.Status("updates.isolated_open"); return; }
-            string? pluginBlock = await Task.Run(() => DailyPlugin.HostUpdateBlockReason(root, readyUpdate.Release.Version));
-            if (pluginBlock != null) { updatePanel.Status(pluginBlock); return; }
-            if (ToolOpen && !await CloseToolWindowsAsync()) { updatePanel.Status("updates.tool_open"); return; }
-            string probe = Path.Combine(Path.GetDirectoryName(readyUpdate.Target)!, ".dustweave-write-" + Guid.NewGuid().ToString("N"));
+            if (DailySandbox.HasIsolatedWindows()) { UpdateInstallStatus("updates.isolated_open"); return; }
+            string? pluginBlock = await Task.Run(() => DailyPlugin.HostUpdateBlockReason(root, installation.Release.Version));
+            if (pluginBlock != null) { UpdateInstallStatus(pluginBlock); return; }
+            if (ToolOpen && !await CloseToolWindowsAsync()) { UpdateInstallStatus("updates.tool_open"); return; }
+            if (installation.Repair)
+            {
+                helperSource = await Task.Run(() =>
+                {
+                    var manifest = DailyUpdateRepair.ReadVerified(installation.Directory, installation.Release, installation.Asset);
+                    string verifiedHelper = DailyUpdateRepair.VerifiedHelper(manifest, DailyUpdateHost.InstallRoot, DailyUpdateRepair.Staging(installation.Directory));
+                    DailyUpdateRepair.VerifyStaging(manifest, DailyUpdateHost.InstallRoot, DailyUpdateRepair.Staging(installation.Directory), out _);
+                    return verifiedHelper;
+                });
+            }
+            string probe = Path.Combine(Path.GetDirectoryName(installation.Target)!, ".dustweave-write-" + Guid.NewGuid().ToString("N"));
             using (File.Create(probe)) { } File.Delete(probe);
             string nonce = Guid.NewGuid().ToString("N");
-            string attempt = Path.Combine(readyUpdate.Directory, "attempts", nonce);
+            string attempt = Path.Combine(installation.Directory, "attempts", nonce);
             DailyUpdates.EnsureNoLinks(attempt); Directory.CreateDirectory(attempt);
             string helper = Path.Combine(attempt, "Dustweave.Updater.exe"), job = Path.Combine(attempt, "job.json");
-            readyUpdate = readyUpdate with { Nonce = nonce, OriginalSha256 = await Task.Run(() => DailyUpdateTransaction.Hash(Environment.ProcessPath!)) };
+            installation = installation with { Nonce = nonce, OriginalSha256 = await Task.Run(() => DailyUpdateTransaction.Hash(Environment.ProcessPath!)) };
             await Task.Run(() => DailyUpdateTransaction.CopyDurable(helperSource, helper));
-            DailyJson.Write(job, readyUpdate);
-            DailyUpdateInstaller.ValidateJob(readyUpdate, job);
-            var start = new ProcessStartInfo(helper) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = readyUpdate.Directory };
+            cancellation.ThrowIfCancellationRequested();
+            DailyJson.Write(job, installation);
+            DailyUpdateInstaller.ValidateJob(installation, job);
+            var start = new ProcessStartInfo(helper) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = installation.Directory };
             start.ArgumentList.Add("--apply-update"); start.ArgumentList.Add(job);
             _ = Process.Start(start) ?? throw new IOException("updates.start_failed");
             finalClose = true; timer.Stop(); Close();
         }
-        catch (Exception e) { updatePanel.Status(e is UnauthorizedAccessException ? "updates.permission" : "updates.start_failed"); DailyJson.Write(Path.Combine(root, "updates", "install-error.json"), new { error = e.ToString() }); }
-        finally { updateInstalling = false; UpdateUpdateControls(); }
     }
 }

@@ -33,8 +33,25 @@ static class SelfTest {
   {
    var f=Frame();var c=Command();var u=f.Surfaces[0];u.Type="MessagePopupUI";u.NativeContext=BackgroundErrorPolicy.RequestContext;u.Text=new[]{"網路請求超時請檢查網路連接狀態。"};u.Targets[0].Field="_buttonOK";c.Kind="background_error_ack";c.TargetId=0;
    Check(LivePolicy.Gate(c,f,now,false)=="","callback-free network acknowledgement accepted");
+   foreach(var text in new[]{"连线请求超时，请检查网络连接状态。","連線請求超時，請檢查網路連接狀態。"}){
+    u.Text=new[]{text};Check(LivePolicy.Gate(c,f,now,false)=="","current client timeout acknowledgement accepted: "+text);
+   }
    u.NativeContext="";Check(LivePolicy.Gate(c,f,now,false)!="","network text cannot authorize a retry callback");
    u.NativeContext=BackgroundErrorPolicy.RequestContext;u.Text=new[]{"Unknown confirmation"};Check(LivePolicy.Gate(c,f,now,false)!="","unknown confirmation still blocked");
+  }
+  {
+   var quiet=new DailyHandoffQuiescence();long second=TimeSpan.TicksPerSecond;
+   Check(!quiet.Waiting(false,null,now),"no pending request needs no network-idle proof");
+   Check(quiet.Waiting(true,true,now),"native request in flight blocks handoff");
+   Check(quiet.Waiting(true,null,now+60*second),"missing native network state never times out into idle");
+   Check(quiet.Waiting(true,false,now+61*second),"orphaned tap waits for stable native idle");
+   Check(quiet.Waiting(true,false,now+62*second),"idle grace does not release early");
+   Check(!quiet.Waiting(true,false,now+63*second),"stable native idle releases ownership despite orphaned tap");
+   Check(quiet.Waiting(true,true,now+64*second),"new native activity revokes previous idle proof");
+   Check(quiet.Waiting(true,false,now+65*second),"fresh quiet interval required after activity");
+   quiet.Reset();Check(quiet.Waiting(true,false,now+70*second),"observed request or response resets quiet interval");
+   Check(quiet.Waiting(true,false,now+60*second),"clock rollback cannot release ownership");
+   Check(!quiet.Waiting(true,false,now+62*second),"quiet can recover after clock rollback");
   }
   foreach(var scene in new[]{"Map0001_001","Map0006_008","Map1003_001","Map30090_001","",null})
    Check(!LiveProtocol.IsSquareScene(scene),"A* never handles cartridge or unknown scene: "+scene);
@@ -66,6 +83,18 @@ static class SelfTest {
     c.Items[1]=-1;Check(LivePolicy.Gate(c,f,now,false)=="native_battle_budget_rejected","negative reserve cannot bypass free budget");c.Items[1]=0;
     f.Surfaces=[f.Surfaces[0],new(){Id=45,Type="MessagePopupUI",Popup=true,Order=100}];
     Check(LivePolicy.Gate(c,f,now,false)=="native_battle_surface_rejected","tower purchase or confirmation overlay blocks dispatch");
+   }
+   {
+    var f=Frame();f.PluginAvailable=false;f.Surfaces[0].Type="RogueLikeSkipPopupUI";
+    var c=Command();c.Kind="salvation_count";c.TargetId=0;c.Items=[12,3,20,80,100,17];c.Value=17;
+    Check(LivePolicy.Gate(c,f,now,false)=="","tower selects the whole fixed batch without a plugin");
+    f.BridgeVersion=127;Check(LivePolicy.Gate(c,f,now,false)=="native_battle_context_rejected","old tower bridge cannot receive direct count commands");f.BridgeVersion=128;
+    c.Value=18;Check(LivePolicy.Gate(c,f,now,false)=="native_battle_budget_rejected","direct tower count cannot exceed requested fixed count");c.Value=0;
+    Check(LivePolicy.Gate(c,f,now,false)=="native_battle_budget_rejected","zero tower batch rejected");c.Value=17;
+    c.Items[1]=-1;Check(LivePolicy.Gate(c,f,now,false)=="native_battle_budget_rejected","direct count keeps reserve validation");c.Items[1]=3;
+    f.Surfaces[0].Type="RogueLikeLobbyUI";Check(LivePolicy.Gate(c,f,now,false)=="native_battle_surface_rejected","tower count requires the actual sweep popup");f.Surfaces[0].Type="RogueLikeSkipPopupUI";
+    f.Surfaces=[f.Surfaces[0],new(){Id=45,Type="MessagePopupUI",Popup=true,Order=100}];
+    Check(LivePolicy.Gate(c,f,now,false)=="native_battle_surface_rejected","direct count cannot bypass an overlay");
    }
   {
    var f=Frame();var ui=f.Surfaces[0];ui.Type="MessagePopupUI";ui.Path="Root/ErrorMessagePopupUI";ui.Text=new[]{"error : 112003"};ui.Targets[0].Field="_buttonOK";ui.Targets[0].Route="ui";

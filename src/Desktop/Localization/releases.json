@@ -1,5 +1,41 @@
 [
   {
+    "Version": "1.4.14",
+    "Date": "2026-10-21",
+    "Notes": {
+      "zh-CN": [
+        "修复周收集遇到连线超时后卡住、接续仍被旧请求等待状态拦住的问题；保留已确认地图进度，只对安全的只读查询有限重试。",
+        "修复钓鱼升级与收获弹窗叠加时中断，以及装备助手读取库存误报“操作已停止”；停止仍会拦截消耗操作。",
+        "救赎之塔扫荡直接设置整批次数，继续遵守每日钥匙保留与成长目标，不再逐次点击加号。",
+        "新增程序完整性检查与修复，只下载缺失或损坏文件所需的数据；主窗口无法启动时也可使用独立修复入口。",
+        "更新文件接入国内下载托管并保留源站回退；修复启动连接检测导致“重启更新”失效的问题。",
+        "减少周收集、NPC 与偷窃已确认状态的重复读取；快速赶路按距离判断，短距离不再反复开启飞奔。",
+        "诊断导出增加工具连接、结算与异常现场覆盖，未压缩日志预算提高至 128 MiB，仍保留敏感信息过滤。",
+        "进入日常设置默认展示全部设置。"
+      ],
+      "zh-TW": [
+        "修復週收集遇到連線逾時後卡住、接續仍被舊請求等待狀態阻擋的問題；保留已確認地圖進度，僅有限重試安全的唯讀查詢。",
+        "修復釣魚升級與收穫彈窗重疊時中斷，以及裝備助手讀取庫存誤報「操作已停止」；停止仍會攔截消耗操作。",
+        "救贖之塔掃蕩直接設定整批次數，仍遵守每日鑰匙保留與成長目標，不再逐次點擊加號。",
+        "新增程式完整性檢查與修復，僅下載缺少或損壞檔案所需資料；主視窗無法啟動時亦可使用獨立修復入口。",
+        "更新檔案接入國內下載託管並保留來源站備援；修復啟動連線檢查導致「重新啟動更新」失效的問題。",
+        "減少週收集、NPC 與偷竊已確認狀態的重複讀取；快速趕路依距離判斷，短距離不再反覆開啟飛奔。",
+        "診斷匯出增加工具連線、結算與異常現場覆蓋，未壓縮日誌預算提高至 128 MiB，仍保留敏感資訊過濾。",
+        "進入日常設定預設顯示全部設定。"
+      ],
+      "en-US": [
+        "Fixes weekly collection blocked by connection timeouts and stale request waits during resume. Confirmed map progress is preserved; only safe read-only queries receive bounded retries.",
+        "Fixes fishing interruptions when level-up and catch dialogs overlap, and inventory reads incorrectly reporting Operation stopped. Stop still blocks consuming actions.",
+        "Sets the entire Tower of Salvation sweep count at once while preserving daily-key reserves and growth targets.",
+        "Adds installation verification and repair, downloading only the data needed for missing or changed files. An independent repair entry is available when the main window cannot start.",
+        "Delivers update files through domestic hosting with origin fallback and fixes startup connection checks preventing a requested update restart.",
+        "Reduces repeated checks of confirmed weekly collection, NPC and theft progress. Fast travel considers walking distance and avoids activating sprint for short trips.",
+        "Expands diagnostic coverage for tool connections, settlement and failures, with a 128 MiB uncompressed log budget and sensitive-data filtering.",
+        "Daily settings now opens with all settings selected."
+      ]
+    }
+  },
+  {
     "Version": "1.4.13",
     "Date": "2026-10-20",
     "Notes": {
