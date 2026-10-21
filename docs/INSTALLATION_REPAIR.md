@@ -24,9 +24,9 @@ helper recheck it before modifying anything.
 
 ## When the main window cannot open
 
-The stable launcher offers to open the independent repair tool when application
-loading fails. It is also available with `Dustweave.exe --repair`, or by opening
-`app/support/Dustweave.Updater.exe` directly. Close all Dustweave windows first.
+Open `app/support/Dustweave.Updater.exe` directly. Close all Dustweave windows
+first. The stable launcher remains byte-identical to previous layout-2 releases
+so existing updaters can continue to apply differential updates.
 The helper shows the installation location, identifies affected files and asks
 again before replacing them. It has a cancellable progress window and does not
 load application DLLs to perform the repair.
@@ -64,5 +64,4 @@ see the [Microsoft Task Dialog reference](https://learn.microsoft.com/en-us/wind
 
 The live service and end-to-end acceptance record are documented in
 [the OTA deployment record](OTA_PUBLISH_CHANNEL.md#repair-service-deployment--2026-10-21).
-The new desktop entry and independent repair helper require a subsequent client
-release; the existing 1.4.13 application has not been replaced.
+The desktop entry and independent repair helper are included in 1.4.14.
