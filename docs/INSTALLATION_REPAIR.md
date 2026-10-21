@@ -14,7 +14,8 @@ runtime determines Portable versus Lite.
    stop automation and close tool windows; a due scheduled run takes priority.
    The independent updater backs up affected files, applies the transaction and
    waits for startup acknowledgement. A failed startup restores the previous
-   files. The stable launcher recovers an interrupted replacement.
+   files. The native launcher recovers an interrupted replacement before loading
+   the application runtime.
 
 This is a repair of the selected version, not an implicit upgrade. After repair,
 normal update checks can prepare a newer release. Accounts, preferences, plugins
@@ -24,18 +25,22 @@ helper recheck it before modifying anything.
 
 ## When the main window cannot open
 
-Open `app/support/Dustweave.Updater.exe` directly. Close all Dustweave windows
-first. The stable launcher remains byte-identical to previous layout-2 releases
-so existing updaters can continue to apply differential updates.
-The helper shows the installation location, identifies affected files and asks
-again before replacing them. It has a cancellable progress window and does not
-load application DLLs to perform the repair.
+From **1.4.15**, `Dustweave.exe` is a native entry independent of the application
+runtime. It checks critical startup files before loading the CLR and can offer
+repair if startup fails. `Dustweave.exe --repair` opens recovery directly. Close
+all Dustweave windows first; one repair approval covers preparation and replacement.
 
-If the package descriptor is missing, the helper asks which edition to repair.
-If its version cannot be found in the signed feed, the preview names the current
-published version before any download or replacement. A missing .NET installation
-still prevents a Lite helper from running; use Portable in that case. If both the
-launcher and independent helper are damaged, extract an official full package.
+The native entry pins the installed edition, version and independent helper hash.
+It can restore a missing or damaged helper from a signed inventory, even when the
+package descriptor is corrupt. Repair never silently chooses a different version.
+Both editions include a self-contained helper with cancellable progress.
+
+If the root executable is missing, open `app/support/Dustweave.Updater.exe`
+directly; without a pinned edition it may ask which edition to repair. If both
+entries are damaged, extract an official full package. Lite's main application
+still requires .NET 8 Windows Desktop Runtime: repairing program files does not
+install that Windows prerequisite. Original 1.4.14 retains its older launcher and
+helper behavior until the automatic bridge installs 1.4.15.
 
 ## Trust and storage
 
@@ -64,4 +69,6 @@ see the [Microsoft Task Dialog reference](https://learn.microsoft.com/en-us/wind
 
 The live service and end-to-end acceptance record are documented in
 [the OTA deployment record](OTA_PUBLISH_CHANNEL.md#repair-service-deployment--2026-10-21).
-The desktop entry and independent repair helper are included in 1.4.14.
+The desktop entry and independent repair helper first shipped in 1.4.14; native
+startup recovery and the self-contained Lite helper ship in 1.4.15. See
+[update evolution](UPDATE_EVOLUTION.md) for acceptance and publication details.

@@ -1,6 +1,6 @@
 # 1.4.15 update and recovery protocol
 
-Status: implemented and accepted locally; see [1.4.15 preparation](releases/1.4.15-preparation.md) for exact packages and evidence. Publication is a separate operation. 1.4.14 remains an immutable published baseline.
+Status: published and verified online; see [the 1.4.15 deployment receipt](releases/1.4.15-deployment.md). [Local preparation](releases/1.4.15-preparation.md) retains the original package and acceptance evidence. 1.4.14 remains an immutable published baseline.
 
 ## User flow
 

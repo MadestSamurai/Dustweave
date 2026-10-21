@@ -1,8 +1,10 @@
 # Dustweave signed updates / 签名更新
 
-The current protocol remains below. See [the planned update evolution](UPDATE_EVOLUTION.md)
-for target-release reconstruction, bridge updates and transactional launcher/runtime
-replacement. Those planned capabilities must pass separate acceptance before use.
+For **1.4.15 and later**, follow [the current update protocol](UPDATE_EVOLUTION.md)
+for target-release reconstruction, automatic bridge updates and transactional
+launcher/runtime replacement. The sections below document the older protocols
+and remain relevant to legacy baselines; their patch-size and immutable-bootstrap
+restrictions do not apply to capable clients.
 
 ## Long-term baseline policy · 1.4.7+
 
