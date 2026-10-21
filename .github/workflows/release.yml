@@ -25,6 +25,10 @@ jobs:
         run: |
           ./build.ps1
           ./test.ps1 -NoBuild
+          dotnet restore tools/OtaMirror/Dustweave.OtaMirror.csproj --locked-mode
+          if($LASTEXITCODE -ne 0){throw 'OTA mirror restore failed'}
+          dotnet run --project tools/OtaMirror/Dustweave.OtaMirror.csproj -c Release --no-restore -- self-test
+          if($LASTEXITCODE -ne 0){throw 'OTA mirror verification failed'}
           ./check-source.ps1 -AfterBuild
       - name: Validate candidate and publish normal release
         shell: pwsh
