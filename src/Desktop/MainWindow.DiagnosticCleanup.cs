@@ -12,8 +12,11 @@ public partial class MainWindow
     private bool logCleanupRunning;
     private bool compressionPending;
     private DateTime lastRetentionUtc=DateTime.MinValue;
-    private bool cacheChanging;
-    private void SetCacheChanging(bool value){cacheChanging=value;SetBusy(busy);}
+    private bool manualCacheChanging, automaticCacheChanging;
+    private bool cacheChanging => manualCacheChanging || automaticCacheChanging;
+    private Task logCleanupCompletion = Task.CompletedTask;
+    private void SetCacheChanging(bool value){manualCacheChanging=value;SetBusy(busy);}
+    private void SetAutomaticCacheChanging(bool value){automaticCacheChanging=value;SetBusy(busy);}
     private sealed record LogCleanupRun(DateTime At, int Files, long Bytes, int Skipped, string? Version = null, bool MoreWork = false, int CompressedFiles = 0, DateTime? RetentionAt = null);
     private string? LegacyEquipmentLogRoot => smoke == null
         ? Environment.GetEnvironmentVariable("BD2_EQUIPMENT_DATA_ROOT") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BD2EquipmentAssistant")
@@ -39,33 +42,42 @@ public partial class MainWindow
     }
     private async Task CheckLogCleanupAsync()
     {
+        // Maintenance yields to an accepted restart, including while it owns
+        // the storage/control leases. It must not cancel itself for those leases.
+        if(UpdateRestarting || finalClose){logCleanupCancellation?.Cancel();return;}
         if(cacheChanging)return;
         if(Unavailable || dailyQueue.IsRunning || scheduleChecking || DailyDialogs.ModalDepth>0)
         { logCleanupCancellation?.Cancel();return; }
         bool retentionDue=logPolicy.Automatic&&DateTime.UtcNow>=nextLogCleanup;
         if(logCleanupRunning || !retentionDue && (DateTime.UtcNow<nextEvidenceCleanup || !DailyLogEvidence.HasPending(root)))return;
-        logCleanupRunning=true;nextEvidenceCleanup=DateTime.UtcNow.AddMinutes(1);
+        nextEvidenceCleanup=DateTime.UtcNow.AddMinutes(1);
         if(retentionDue)nextLogCleanup=DateTime.UtcNow.AddMinutes(5);
-        using var lifetime=new CancellationTokenSource(TimeSpan.FromSeconds(30));logCleanupCancellation=lifetime;
-        try {
-            await DailyLogEvidence.FlushAsync(root,lifetime.Token);
+        await RunAutomaticMaintenanceAsync(async token => {
+            await DailyLogEvidence.FlushAsync(root,token);
             if(!retentionDue)return;
             bool continuing=compressionPending&&lastRetentionUtc>DateTime.UtcNow.AddHours(-12)&&lastRetentionUtc<=DateTime.UtcNow;
-            if(!continuing&&LegacyEquipmentLogRoot is { } legacy)await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(root,legacy,lifetime.Token);
+            if(!continuing&&LegacyEquipmentLogRoot is { } legacy)await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(root,legacy,token);
             if(Unavailable || dailyQueue.IsRunning || scheduleChecking || DailyDialogs.ModalDepth>0 || updateChecking || updateInstalling)return;
             // The ownership lock protects active tools; an idle tool window is not a running task.
-            SetCacheChanging(true);
+            SetAutomaticCacheChanging(true);
             DailyLogCleanupResult result;
             try {
                 var maintenance=new DailyStorageMaintenance(root);
-                result=continuing?await maintenance.ContinueCompressionAsync(lifetime.Token):await maintenance.CleanAsync(logPolicy,lifetime.Token);
+                result=continuing?await maintenance.ContinueCompressionAsync(token):await maintenance.CleanAsync(logPolicy,token);
             }
-            finally {SetCacheChanging(false);}
+            finally {SetAutomaticCacheChanging(false);}
             SaveLogCleanupResult(result,!continuing);
-        }
+        });
+    }
+    private async Task RunAutomaticMaintenanceAsync(Func<CancellationToken,Task> maintain)
+    {
+        var completed=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        logCleanupRunning=true;logCleanupCompletion=completed.Task;
+        using var lifetime=new CancellationTokenSource(TimeSpan.FromSeconds(30));logCleanupCancellation=lifetime;
+        try { await maintain(lifetime.Token); }
         catch(OperationCanceledException) { }
         catch(Exception e) when(e is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or InvalidOperationException) { /* Never stop automation for retention. Retry on the next idle interval. */ }
-        finally {logCleanupCancellation=null;logCleanupRunning=false;}
+        finally {logCleanupCancellation=null;logCleanupRunning=false;completed.TrySetResult();}
     }
     private void CleanupDiagnostics_Click(object sender,RoutedEventArgs e)
     {

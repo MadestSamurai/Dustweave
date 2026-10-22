@@ -225,7 +225,7 @@ namespace BD2Daily.Live {
     if(f.Surfaces.Any(x=>x.Popup&&x.Id!=ui.Id&&!PassiveSurface(x.Type)))return "reward_popup_blocked";
     if(c.Kind=="reward_select")return c.Value>0&&c.Items.Length==0?"":"reward_selection_invalid";
     if(c.Items.Length!=1||c.Items[0]<=0)return "reward_selection_invalid";
-    return c.Kind=="reward_tab" ? (c.Value<100?"":"reward_tab_invalid") : (c.Value>=1&&c.Value<=(f.BridgeVersion>=113?9:f.BridgeVersion>=105?8:f.BridgeVersion>=47?7:5)?"":"reward_action_invalid");
+    return c.Kind=="reward_tab" ? (c.Value<100?"":"reward_tab_invalid") : (c.Value>=1&&c.Value<=(f.BridgeVersion>=130?10:f.BridgeVersion>=113?9:f.BridgeVersion>=105?8:f.BridgeVersion>=47?7:5)?"":"reward_action_invalid");
    }
    if(TacticsKind(c.Kind)){
     if(f.BridgeVersion<57||!GameplayReady(f)||c.TargetId!=0||c.Items==null)return "tactics_context_rejected";
@@ -350,7 +350,7 @@ namespace BD2Daily.Live {
     if(!GameplayReady(f)||f.BridgeVersion<16||c.TargetId!=0)return "mainline_context_rejected";
     if(f.Surfaces.Any(x=>x.Popup&&x.Id!=ui.Id&&x.Order>=ui.Order&&!PassiveSurface(x.Type)))return "mainline_popup_blocked";
     if(c.Kind=="mainline_pack")return ui.Type=="PackListUI"&&((f.BridgeVersion>=84&&((c.Value>=1&&c.Value<100)||(c.Value>=1001&&c.Value<2000)))||(c.Value>=1&&c.Value<=(f.BridgeVersion>=29?19:f.BridgeVersion>=26?15:8))||(f.BridgeVersion>=29&&c.Value>=1001&&c.Value<=(f.BridgeVersion>=42?1007:1003))||(f.BridgeVersion>=42&&LiveProtocol.CollectionEventPack(c.Value)&&(f.BridgeVersion>=121||c.Value!=2003&&c.Value!=2004)))?"":"mainline_chapter_rejected";
-    if(ui.Type!="GameFieldDefaultUI"||((c.Kind=="mainline_walk"||c.Kind=="mainline_interact")?c.Value==0:!(new[]{3,4,6,15,20}.Contains(c.Value)||(f.BridgeVersion>=26&&new[]{2,17}.Contains(c.Value)))))return "mainline_talent_rejected";
+    if(ui.Type!="GameFieldDefaultUI"||((c.Kind=="mainline_walk"||c.Kind=="mainline_interact")?c.Value==0:!(new[]{3,4,6,15,20}.Contains(c.Value)||(f.BridgeVersion>=26&&new[]{2,17}.Contains(c.Value))||(f.BridgeVersion>=129&&c.Value==13))))return "mainline_talent_rejected";
     if(f.Surfaces.Any(x=>x.Id!=ui.Id&&!PassiveSurface(x.Type)))return "mainline_popup_blocked";
     return "";
    }

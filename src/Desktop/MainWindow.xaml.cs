@@ -61,7 +61,7 @@ public partial class MainWindow : Window
     private readonly ObservableCollection<AccountRow> rows = new(); private readonly DispatcherTimer timer;
     private readonly DailyPreferencesPanel preferencesPanel;
     private readonly DailyRunPanel dailyPanel; private readonly DailyQueueSession dailyQueue; private bool dailyStopping;
-    private Task? operation; private bool busy; private bool finalClose; private DailyAccountCatalog? catalog;
+    private Task? operation; private CancellationTokenSource? operationPreparation; private bool busy; private bool finalClose; private DailyAccountCatalog? catalog;
     public MainWindow(IAccountSessions sessions, IGameHost host, string root, string? smoke, bool automatedSmoke = true)
     {
         DailyLanguage.Current.Initialize(root);
@@ -130,12 +130,18 @@ public partial class MainWindow : Window
         coordinator.Progress += p => Dispatcher.Invoke(() => { if (dailyQueue.IsRunning || WorkspaceTabs.SelectedItem == RunTab && busy) dailyPanel.Show(new("preparing", p.Message, "", [])); DailyUiText.Set(ProgressText, p.Message); ProgressText.Foreground = (Brush)FindResource(p.State == "error" ? "Error" : "Ink"); });
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         timer.Tick += (_, _) => { _ = PollParallelAsync(); L.RefreshFromDisk(); RefreshTools(); UpdateConnection(); if (smoke == null && !busy) { _ = RefreshAccountIdentityAsync(); RefreshDailyHistory(); } if (smoke == null) { _ = CheckLogCleanupAsync(); _ = CheckStorageWarningAsync(); _ = CheckScheduleAsync(); _ = OfferUpdateAsync(); if (DateTime.UtcNow >= nextUpdateCheck) { nextUpdateCheck = DateTime.UtcNow.AddHours(6); _ = CheckUpdatesAsync(); } } };
-        Loaded += async (_, _) => { RefreshAccounts(); var last = DailyJson.TryRead<DailyRunStatus>(Path.Combine(root, "run.json")); if (last != null) { DailyUiText.History(ProgressText, "history.previous", last.AtUtc.LocalDateTime, last.Progress.Message); } if (smoke == null) { var previous = ReadTaskHistory(TaskAccountKey); dailyPanel.LoadHistory(previous); } timer.Start(); if (smoke != null && automatedSmoke) await SmokeAsync();  };
-        bool startupShown = false;
-        ContentRendered += async (_, _) => { if (startupShown || smoke != null) return; startupShown = true;
-            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ContextIdle);
-            try { await InitializeStartupFeaturesAsync(); } catch (Exception error) { ShowError(error); }
+        Loaded += async (_, _) => {
+            // Loaded proves the real WPF shell/resources constructed successfully.
+            // Commit before optional account/game reads and background maintenance.
+            // ContentRendered/ContextIdle may never arrive for a minimized or
+            // occluded window; that must not roll a healthy installation back.
+            if (!AcknowledgeUpdateStartup()) return;
+            RefreshAccounts(); var last = DailyJson.TryRead<DailyRunStatus>(Path.Combine(root, "run.json")); if (last != null) { DailyUiText.History(ProgressText, "history.previous", last.AtUtc.LocalDateTime, last.Progress.Message); } if (smoke == null) { var previous = ReadTaskHistory(TaskAccountKey); dailyPanel.LoadHistory(previous); } timer.Start(); if (smoke != null && automatedSmoke) await SmokeAsync();
         };
+        HostedToolPreparation.AfterFirstLayout(this, async () => {
+            if (smoke != null || updateStartupFailed) return;
+            try { await InitializeStartupFeaturesAsync(); } catch (Exception error) { ShowError(error); }
+        });
         WeakEventManager<DailyLanguage, EventArgs>.AddHandler(L, nameof(DailyLanguage.Changed), OnLanguageChanged);
         Closing += OnClosing;
         WorkspaceTabs.SelectedItem = RunTab;
@@ -178,9 +184,11 @@ public partial class MainWindow : Window
             if(toolSession.Current?.ToolId==id){toolSession.Show();return;}
             using var activityLease=DailyToolControl.Acquire(root);
             if(!await CloseToolWindowsAsync())return;
+            await host.PrepareAccessAsync(m=>toolMessage=m,CancellationToken.None);
             if(id=="apostle-defense")
             {
                 var session=new ApostleToolSession(root,async (progress,cancel)=>{
+                    await host.PrepareAccessAsync(progress,cancel);
                     var selected=host.Find()??throw new InvalidOperationException("请先启动游戏。");
                     await host.ConnectAsync(selected,progress,cancel);
                     await HostedToolPreparation.WaitForIdentityAsync(host,selected,progress,cancel);
@@ -440,19 +448,31 @@ public partial class MainWindow : Window
         RunTab.Content = dailyPanel; dailyPanel.ClearOperationError();
         SetBusy(true);
         ReportPreparation("正在连接并核对当前账号…");
+        using var preparation = new CancellationTokenSource();
+        operationPreparation = preparation;
         try
         {
             using var toolsLease = DailyToolControl.Acquire(root);
             if(!connectsGame && smoke==null && host.Find() is {} currentGame && host.ReadSnapshot() is {} snapshot && snapshot.State=="identified" && snapshot.AccountKey.Length>0 && snapshot.PlayerKey.Length>0 && snapshot.ProcessId==currentGame.ProcessId && snapshot.FrameUtcTicks>DateTime.UtcNow.AddSeconds(-5).Ticks)
-                await DailySuite.ActivateAsync(host,root,"daily",ReportPreparation,CancellationToken.None);
+                await DailySuite.ActivateAsync(host,root,"daily",ReportPreparation,preparation.Token);
+            preparation.Token.ThrowIfCancellationRequested();
             operation = action();
             await operation;
         }
+        catch (OperationCanceledException e) { ShowOperationStopped(e is DailyGameExitedException ? e.Message : "已停止。保留游戏当前账号和已完成的检查记录。"); }
         catch (Exception e) { ShowError(e); }
-        finally { operation = null; SetBusy(false); RefreshAccounts(); }
+        finally { operationPreparation = null; operation = null; SetBusy(false); RefreshAccounts(); }
+    }
+    private void ShowOperationStopped(string message)
+    {
+        dailyPanel.ClearOperationError();
+        dailyPanel.Show(new("stopped", message, "", []));
+        DailyUiText.Set(ProgressText, message);
+        ProgressText.Foreground = (Brush)FindResource("MutedInk");
     }
     private void ShowError(Exception e)
     {
+        if (e is DailyGameExitedException) { ShowOperationStopped(e.Message); return; }
         if (RunTab.Content == parallelPanel) parallelPanel.Feedback(e.Message);
         if (WorkspaceTabs.SelectedItem == RunTab)
             dailyPanel.ShowOperationError(e.Message, DailyUserText.Error(e));
@@ -484,6 +504,7 @@ public partial class MainWindow : Window
     {
         if (ParallelBusy) { parallel!.Control("", "pause"); _ = PollParallelAsync(); return; }
         dailyStopping = true;
+        operationPreparation?.Cancel();
         try
         {
             if (dailyQueue.IsRunning)
@@ -617,6 +638,7 @@ public partial class MainWindow : Window
             try
             {
                 dailyStopping = true;
+                operationPreparation?.Cancel();
                 dailyQueue.Stop();
                 guild.Stop();
                 coordinator.Stop();
@@ -661,6 +683,7 @@ public partial class MainWindow : Window
     private async Task ConnectTaskAccountAsync(string targetKey)
     {
         DailySandbox.RequireBoundAccount(targetKey);
+        await host.PrepareAccessAsync(ReportPreparation, CancellationToken.None);
         var before = sessions.Read();
         if (!DailyProfiles.ValidKey(targetKey)) throw new InvalidOperationException("run.account_unavailable");
         if (before.CurrentKey != targetKey || host.Find() == null)

@@ -20,7 +20,7 @@ static class CookingTravelCases
         using var h=new WorkflowHarness(Path.Combine(root,"dash"),[]);
         h.Frame["Scene"]="Map0001_001";h.Page("GameFieldDefaultUI");
         var e=h.Evidence();
-        e["Readings"]=new JsonArray(Read("mainline.talent_rows","$self",new JsonArray(O(("Group",201),("Reason",""),("Cooldown",0)))));
+        e["Readings"]=new JsonArray(Read("mainline.talent_rows","$self",new JsonArray(O(("Group",1305),("Reason",""),("Cooldown",0)))));
         double longWalk = DailyFieldRoute.MinimumDashDistance;
         Check(!DailyFieldRoute.ShouldDash(new(),e,longWalk)&&DailyFieldRoute.ShouldDash(new(){FastTravel=true},e,longWalk),"walking speed talent requires explicit preference, sufficient distance and controllable field");
         foreach (double? distance in new double?[] { null, -1, 0, 2, longWalk - .1, double.NaN, double.PositiveInfinity })
@@ -49,17 +49,51 @@ static class CookingTravelCases
                 O(("Path","transform.position.y"),("Error",""),("Json","100")),
                 O(("Path","transform.position.z"),("Error",""),("Json","4"))))));
         Check(DailyFieldRoute.WalkingDistance(routeEvidence,40)==5,"a high reward next to the player does not count as a long horizontal walk");
-        var active=Read("mainline.durations","$self",new JsonArray(O(("Key","FastDash"),("Value.ὫὢὢὬὫὫὡὩὪὩὮ",true),("Value.ὠὨὠὭὬὤὪὢὫὨὮ",1))));
+        var active=Read("mainline.durations","$self",new JsonArray(O(("Key","MoveSpeedUp"),("Value.ὫὢὢὬὫὫὡὩὪὩὮ",true),("Value.ὠὨὠὭὬὤὪὢὫὨὮ",1))));
         e["Readings"]!.AsArray().Add(active);
         Check(!DailyFieldRoute.ShouldDash(new(){FastTravel=true},e,longWalk),"even one second of active dash never waits for recast");
-        e["Readings"]=new JsonArray(Read("mainline.talent_rows","$self",new JsonArray(O(("Group",201),("Reason",""),("Cooldown",9)))));
+        e["Readings"]=new JsonArray(Read("mainline.talent_rows","$self",new JsonArray(O(("Group",1305),("Reason",""),("Cooldown",9)))));
         Check(!DailyFieldRoute.ShouldDash(new(){FastTravel=true},e,longWalk),"dash cooldown preserves normal walking");
+        e["Readings"]=new JsonArray(Read("mainline.talent_rows","$self",new JsonArray(O(("Group",205),("Reason",""),("Cooldown",9)))),
+            Read("mainline.durations","$self",new JsonArray(O(("Key","FastDash"),("Value.ὫὢὢὬὫὫὡὩὪὩὮ",true),("Value.ὠὨὠὭὬὤὪὢὫὨὮ",20)))));
+        Check(DailyFieldRoute.MovementSpeedTalent==13 && DailyFieldRoute.Kinds[13]=="MoveSpeedUp"
+            && DailyFieldRoute.ShouldDash(new(){FastTravel=true},e,longWalk),"unlimited sprint activity and cooldown are not movement-speed evidence");
+        JsonObject Talent(int instance,int kind,int group,double speed,double duration,int cost) => O(("instance",instance),
+            (DailyFieldRoute.SkillPath,O(("classType",kind),("groupId",group),("id",5),("valueList",new JsonArray(speed,duration,0)),("catalystValue",cost))));
+        var speedTalents=new[]{Talent(1,2,205,.95,20,10),Talent(2,13,1315,.25,30,5),Talent(3,13,1305,.75,10,10),Talent(4,13,1325,.75,40,30)};
+        var statuses=speedTalents.ToDictionary(r=>N(r["instance"]),r=>O(("Reason",""),("Cooldown",0)));
+        JsonObject? Choose(long? potions=null) => DailyFieldRoute.SelectTalent(13,speedTalents,statuses,new Dictionary<long,long>(),potions);
+        Check(N(Choose()?["instance"])==4,"movement speed takes priority, then duration among equally fast talents");
+        statuses[4]["Reason"]="character_pack_restricted";
+        Check(N(Choose()?["instance"])==3,"unavailable fastest character falls back to another speed talent, never unlimited sprint");
+        statuses[3]["Cooldown"]=9;
+        Check(N(Choose()?["instance"])==2,"fast talent cooldown falls back to the slower usable speed talent");
+        statuses[2]["Reason"]="character_dead";
+        Check(Choose()==null,"unlimited sprint is never used when all walking-speed talents are unavailable");
+        foreach(var state in statuses.Values){state["Reason"]="";state["Cooldown"]=0;}
+        Check(N(Choose(10)?["instance"])==3 && N(Choose(5)?["instance"])==2 && Choose(4)==null,
+            "speed selection honors the spendable potion balance after reserve before choosing a slower affordable talent");
+        speedTalents[3]["_objDisableImage.activeSelf"]=true;
+        Check(N(Choose()?["instance"])==3,"disabled speed rows are excluded");
+        speedTalents[2][DailyFieldRoute.SkillPath]!["valueList"]=new JsonArray(0,10,0);
+        Check(N(Choose()?["instance"])==2,"missing positive movement bonus cannot outrank a usable speed talent");
+        var speedIntent=O(("role","dispatch.start"),("action",O(("operation","mainline_talent"))),("scope",O(("kind",13))));
+        Check(DailyFieldTalentProof.Owns(speedIntent),"movement-speed activations use the ordinary talent receipt and recovery path");
         h.Page("QuickMenuUI");e["Frame"]=h.Frame.DeepClone();
         Check(!DailyFieldRoute.ShouldDash(new(){FastTravel=true},e,longWalk),"fast travel never opens another menu during an interaction");
         Check(!await new DailyFieldRoute(h.Workflow).PrepareWalking(longWalk)&&h.Box.Commands.Count==0,"default walking sends no speed talent command or observation");
         h.Workflow.Settings.General.FastTravel=true;
         Check(!await new DailyFieldRoute(h.Workflow).PrepareWalking(3)&&!await new DailyFieldRoute(h.Workflow).PrepareWalking(null)
             && h.Box.Commands.Count==0&&h.Time==0,"enabled fast travel leaves short and unmeasured walks alone without opening a menu or waiting");
+        h.Page("GameFieldDefaultUI");
+        h.Readings=()=>[Read("mainline.map",DailyFieldRoute.MapPath,O(("id",11),("packId",1))),
+            Read("mainline.talent_rows","$self",new JsonArray()),Read("mainline.talent_counts","Values",new JsonArray())];
+        h.OnCommand=command=>{if(S(command["Kind"])=="mainline_menu")h.Page("QuickMenuUI","_objBackButton");else if(S(command["Kind"])=="back")h.Page("GameFieldDefaultUI");};
+        Check(await new DailyFieldRoute(h.Workflow).PrepareWalking(longWalk),"long walk attempts the optional movement-speed menu");
+        Check(h.Box.Commands.Any(c=>S(c["Kind"])=="mainline_menu"&&N(c["Value"])==13)
+            && !h.Box.Commands.Any(c=>S(c["Kind"])=="mainline_talent"||S(c["Kind"])=="mainline_menu"&&N(c["Value"])==2)
+            && DailyNavigationDecision.Types(h.Frame).Contains("GameFieldDefaultUI"),
+            "production walking workflow opens only MoveSpeedUp and returns to ordinary walking if no talent is usable");
         var catalog=JsonNode.Parse("""{"items":[{"id":3,"stack":9999},{"id":4,"stack":9999}],"recipes":[{"id":10,"output":3,"count":2,"potions":2,"materials":{"1":3,"2":2}},{"id":20,"output":4,"count":1,"potions":1,"materials":{"1":2}}]}""")!.AsObject();
         var labels = JsonNode.Parse("""{"cooking_items":[{"id":1,"name":"原料","name_tw":"材料","name_en":"Ingredient"},{"id":3,"name":"简中料理","name_tw":"繁中料理","name_en":"Dish"},{"id":4,"name":"旧目录料理"}],"cooking_recipes":[{"id":20,"output":4,"materials":{"1":2}},{"id":10,"output":3,"materials":{"1":3,"999":2}}]}""")!.AsObject();
         string labelsBefore = labels.ToJsonString();

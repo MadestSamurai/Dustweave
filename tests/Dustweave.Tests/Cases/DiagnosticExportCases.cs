@@ -33,12 +33,14 @@ internal static class DiagnosticExportCases
         File.WriteAllText(Path.Combine(equipmentDiagnostics,"step.result.json"),"{\"state\":\"failed\",\"token\":\"equipment-secret\"}");
         DailyJson.Write(Path.Combine(failureRoot,"live","absorption-history","fixture.json"),new { Maps=2,Visits=new[]{new {Pack=8,Map=81,AlongNpc=true}} });
         DailyJson.Write(Path.Combine(failureRoot, "connection-access.json"), new { phase = "send-request", state = "disconnected", helperExitCode = 1 });
+        DailyJson.Write(Path.Combine(failureRoot, "updates", "restart-state.json"), new { events = new[] { new { state = "updates.restart_maintenance", automaticCacheChanging = true } } });
         DailyJson.Write(Path.Combine(failureRoot,"live","minigame-connect-sichuan.json"),new{state="ready",elapsedMilliseconds=39000});
         Check(Directory.GetFiles(faultDirectory).Length==1,"repeated identical failures retain one bounded snapshot");
         foreach (string name in new[] {"pass-claims-latest.json", "mission-inspection-latest.json"})
             File.WriteAllText(Path.Combine(failureRoot,"live",name),"{\"state\":\"partial\",\"pass_issues\":[{\"pass_id\":501,\"detail\":\"synthetic incompatible pass\"}]}");
         var withFault=await DailyDiagnosticExport.CreateAsync(failureRoot,Path.Combine(output,"with-failure.zip"),"","test");
         using(var archive=ZipFile.OpenRead(withFault.Path)) {
+            Check(archive.GetEntry("logs/main/updates/restart-state.json") != null, "restart blockers are available even when no installer process was started");
             using(var equipmentLog=new StreamReader(archive.GetEntry("logs/main/live/diagnostics/equipment/step.result.json")!.Open()))Check(!equipmentLog.ReadToEnd().Contains("equipment-secret"),"integrated equipment evidence is exported and redacted with host diagnostics");
             Check(archive.GetEntry("logs/main/connection-access.json") != null, "elevated handshake phase and helper exit status are exported");
             Check(archive.GetEntry("logs/main/live/minigame-connect-sichuan.json") != null,"component preparation timing survives timeline rotation and is exported");
@@ -50,6 +52,31 @@ internal static class DiagnosticExportCases
         Check(rejected&&before.SequenceEqual(File.ReadAllBytes(destination)),"existing export is preserved");
         using(var cancelled=new CancellationTokenSource()){cancelled.Cancel();try{await DailyDiagnosticExport.CreateAsync(root,Path.Combine(output,"cancelled.zip"),"","1.1.0-beta",cancelled.Token);}catch(OperationCanceledException){}Check(!File.Exists(Path.Combine(output,"cancelled.zip")),"cancelled export leaves no archive");}
         Check(!DailyDiagnosticExport.Allowed("../accounts.json")&&!DailyDiagnosticExport.Allowed("tools/password.json")&&!DailyDiagnosticExport.Allowed("tools/runtime.dll"),"traversal credentials and binaries are excluded");
+        string otaRoot = Path.Combine(output, "update-diagnostics");
+        string attempt = "updates/1.4.17-Lite/attempts/" + Guid.NewGuid().ToString("N");
+        void Evidence(string relative, string text) { string p = Path.Combine(otaRoot, relative); Directory.CreateDirectory(Path.GetDirectoryName(p)!); File.WriteAllText(p, text); }
+        Evidence("update-result.json", "{\"state\":\"rolled_back\",\"version\":\"1.4.17\"}");
+        Evidence("startup-error.json", "{\"error\":\"failed new startup\"}");
+        Evidence("startup/launcher-error.txt", "native launcher failure before managed entry");
+        DailyUpdateEngine.PreserveStartupEvidence(otaRoot, Path.Combine(otaRoot, attempt));
+        Evidence("startup-error.json", "{\"error\":\"later old startup\"}");
+        Evidence(attempt + "/updater-state.json", "{\"phase\":\"await-startup-acknowledgement\"}");
+        Evidence(attempt + "/backup/transaction.json", "{\"state\":\"rolled_back\"}");
+        Evidence(attempt + "/job.json", "{\"private\":\"not-exported\"}");
+        Evidence(attempt + "/backup/app/not-a-log.json", "{\"private\":\"not-exported\"}");
+        Evidence(attempt + "/staging/payload.json", "{\"private\":\"not-exported\"}");
+        var ota = await DailyDiagnosticExport.CreateAsync(otaRoot, Path.Combine(output, "update-diagnostics.zip"), "", "1.4.17");
+        using (var zip = ZipFile.OpenRead(ota.Path))
+        {
+            Check(zip.GetEntry("logs/main/update-result.json") != null && zip.GetEntry("logs/main/" + attempt + "/backup/transaction.json") != null,
+                "export contains final updater outcome and durable transaction state");
+            using var failed = new StreamReader(zip.GetEntry("logs/main/" + attempt + "/startup/startup-error.json")!.Open());
+            Check(failed.ReadToEnd().Contains("failed new startup"), "rollback restart cannot overwrite the failed version's evidence");
+            Check(zip.GetEntry("logs/main/startup/launcher-error.txt") != null && zip.GetEntry("logs/main/" + attempt + "/startup/launcher-error.txt") != null,
+                "native launcher errors are collected from their actual startup subdirectory and preserved per attempt");
+            Check(!zip.Entries.Any(e => e.FullName.EndsWith("job.json") || e.FullName.Contains("/staging/") || e.FullName.Contains("/backup/app/")),
+                "update diagnostics exclude jobs, backup payloads and staging");
+        }
         File.WriteAllText(Path.Combine(root,"startup-error.json"),"{incomplete");
         using(var locked=new FileStream(Path.Combine(root,"ui-operation-error.json"),FileMode.Open,FileAccess.Read,FileShare.None)){
             var partial=await DailyDiagnosticExport.CreateAsync(root,Path.Combine(output,"partial.zip"),"","1.1.0-beta");

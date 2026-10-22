@@ -185,6 +185,7 @@ await Group("PandoraBuild", () => Sync(() => PandoraBuildCases.Run(root, cases))
 await Group("PandoraKiting", () => Sync(() => PandoraKitingCases.Run(root, cases)));
 await Group("PandoraTactics", () => Sync(() => PandoraTacticsCases.Run(root, cases)));
 await Group("UnifiedSuite", () => Sync(() => UnifiedSuiteCases.Run(cases)));
+await Group("GamePreparation", () => GamePreparationCases.Run(root, cases));
 await Group("SuiteOwnerProbe", () => SuiteOwnerProbeCases.Run(cases));
 await Group("Workflow", () => Sync(() => WorkflowCases.Run(cases)));
 await Group("PassRecovery", () => PassRecoveryCases.Run(root, cases));

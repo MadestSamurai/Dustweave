@@ -73,22 +73,20 @@ public static class DailyEventSweep
     public static JsonObject Verify(JsonObject op, JsonArray events, JsonObject after)
     {
         var before = op["before"]!.AsObject();
+        Identity(before, after);
         var plan = op["scope"]!.AsObject();
         var target = plan.DeepClone().AsObject();
         target.Remove("count");
         Require(JsonNode.DeepEquals(PopupPlan(before, target), plan), "Sweep confirmation plan differs");
-        int packets = checked((int)((N(plan["count"]) + 99) / 100));
-        var responses = Responses("event.sweep", events, before, after, packets, packets);
-        Require(responses.All(r => r["RewardBundle"] is JsonObject b && b.Count > 0), "Sweep rewards missing");
         long spent = checked(N(plan["count"]) * N(plan["cost"]));
         Require(N(R(before, "event.currency", "EventApFree")) - N(R(after, "event.currency", "EventApFree")) == spent, "Sweep free AP debit differs");
         Require(JsonNode.DeepEquals(R(before, "event.currency", "EventApStack"), R(after, "event.currency", "EventApStack")), "Stored AP was changed");
         var result = plan.DeepClone().AsObject();
         result["spent"] = spent;
-        result["rewards"] = Array(responses);
+        result["completion_source"] = "current_free_attempts";
         return result;
     }
-    public static DailyBusinessProof Definition() => new("event.sweep", "event_battle", Prefixes, Verify);
+    public static DailyBusinessProof Definition() => new("event.sweep", "event_battle", Prefixes, Verify, []);
     public static int Remaining(DailyWorkflow w, long eventId)
     {
         long used = 0;
@@ -160,6 +158,10 @@ public static class DailyEventSweep
     }
     public static async Task<JsonObject> Run(DailyWorkflow w, JsonObject lobby, JsonObject? fixedTarget = null, int? budget = null)
     {
+        long free = N(R(await w.Evidence(Prefixes), "event.currency", "EventApFree"));
+        Require(free >= 0, "Event free attempts unavailable");
+        if (free == 0)
+            return O(("state", "completed"), ("reason", "free_attempts_exhausted"), ("count", 0), ("remaining", 0));
         var target = budget != null ? fixedTarget?.DeepClone().AsObject() : Highest(lobby);
         if (budget != null)
         {
@@ -176,7 +178,7 @@ public static class DailyEventSweep
         }
         if (target == null)
             return DailyWorkflow.Partial("no_fully_cleared_sweep_stage");
-        long free = N(R(await w.Evidence(Prefixes), "event.currency", "EventApFree"));
+        free = N(R(await w.Evidence(Prefixes), "event.currency", "EventApFree"));
         if (free < N(target["cost"]))
             return O(("state", "completed"), ("reason", "free_attempts_exhausted"), ("count", 0), ("remaining", free), ("target", target));
         if (N(lobby["Selected"]) != N(target["stage"]))

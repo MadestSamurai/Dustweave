@@ -230,6 +230,7 @@ public partial class MainWindow
                     if (result.State is not ("completed" or "skipped")) state = "partial";
                 }
             }
+            catch (OperationCanceledException) { state = "paused"; throw; }
             catch { state = "failed"; throw; }
             finally { if (multiple) FinishSequentialProgress(state); }
         }, connectsGame: true);

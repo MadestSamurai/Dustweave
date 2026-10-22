@@ -3,7 +3,9 @@ namespace Dustweave;
 public sealed record DailyIssue(string Code, string Category);
 public static class DailyIssues
 {
-    public static DailyIssue Classify(Exception error) => error is OperationCanceledException ? new("cancelled", "stopped")
+    public static DailyIssue Classify(Exception error) => error is DailyGameExitedException ? new("game-ended", "stopped")
+        : error is OperationCanceledException ? new("cancelled", "stopped")
+        : error.Message == "connection.scope_permission" ? new("access", "permission")
         : error.Message.StartsWith("管理员连接组件通信中断", StringComparison.Ordinal) ? new("elevation-pipe", "connection") : Classify(error.GetBaseException().Message);
     public static DailyIssue Classify(string raw)
     {

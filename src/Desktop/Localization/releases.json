@@ -1,5 +1,35 @@
 [
   {
+    "Version": "1.4.17",
+    "Date": "2026-10-22",
+    "Notes": {
+      "zh-CN": [
+        "适配新版游戏连接与换期提示；游戏关闭后及时停止连接准备。",
+        "改进普通启动的沙盒兼容性；隔离启动同步本机更新后的程序与设计表，保留独立登录信息。",
+        "活动免费次数用尽后正常结束；支持按玩法识别的宾果批量操作及自动换板。",
+        "跑商按当前游戏数据更新商品、价格与配方，减少同机制换期时的读取限制。",
+        "改进重启更新的后台任务交接、启动确认和回退说明，修正实验性赶路天赋选择。",
+        "若旧版本更新失败，可手动下载完整包并解压到新目录。"
+      ],
+      "zh-TW": [
+        "適配新版遊戲連線與換期提示；遊戲關閉後及時停止連線準備。",
+        "改善一般啟動的沙盒相容性；隔離啟動同步本機更新後的程式與設計表，保留獨立登入資訊。",
+        "活動免費次數用盡後正常結束；支援依玩法辨識的賓果批次操作及自動換板。",
+        "跑商依目前遊戲資料更新商品、價格與配方，減少相同機制換期時的讀取限制。",
+        "改善重新啟動更新的背景工作交接、啟動確認和回復說明，修正實驗性趕路天賦選擇。",
+        "若舊版本更新失敗，可手動下載完整套件並解壓縮至新目錄。"
+      ],
+      "en-US": [
+        "Updates connection and season-transition handling; closing the game promptly stops connection preparation.",
+        "Improves normal launch with optional sandbox components and synchronizes isolated game files and design tables while preserving separate logins.",
+        "Ends event battles normally when free attempts are exhausted; adds mechanics-based bulk Bingo handling and automatic board renewal.",
+        "Trading refreshes validated products, prices and recipes from current game data across compatible updates.",
+        "Improves update handoff, startup acknowledgement and rollback explanations; corrects experimental travel talent selection.",
+        "If updating from an older release fails, download the full package and extract it to a new directory."
+      ]
+    }
+  },
+  {
     "Version": "1.4.16",
     "Date": "2026-10-21",
     "Notes": {

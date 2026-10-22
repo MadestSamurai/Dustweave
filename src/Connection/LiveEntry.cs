@@ -15,8 +15,9 @@ namespace Dustweave.Connection;
 public static class LiveEntry
 {
  public static string Fingerprint=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(typeof(LiveEntry).Module.ModuleVersionId.ToString()+"|plugin-v2|"+DailyPlugin.Current.Fingerprint)));
- public static async Task RunAsync(string[] args,bool configureConsole=true,Func<string[],Task>? invokeUtility=null,string evidenceSpec="daily-evidence-spec.json")
+ public static async Task RunAsync(string[] args,bool configureConsole=true,Func<string[],Task>? invokeUtility=null,string evidenceSpec="daily-evidence-spec.json",CancellationToken cancellation=default)
  {
+cancellation.ThrowIfCancellationRequested();
 if(configureConsole)Console.OutputEncoding=new UTF8Encoding(false);
 var root=Path.Combine(DailyIdentity.DataRoot,"live");Directory.CreateDirectory(root);BD2.LocalIpc.DesktopFiles.Configure(root,LiveProtocol.LiveEntries);
 try {
@@ -130,11 +131,12 @@ try {
    sources=sources.Concat(LiveClientBindings.Adapt(managed,original.Where(t=>t.FilePath.StartsWith("Plugin.",StringComparison.Ordinal)),contract,Path.Combine(output,"plugin-bindings.json"),resolution));
   }else using(var resource=DustweaveSharedResources.Open(assembly,"Live.BindingContract.json")!)
    sources=LiveClientBindings.Adapt(managed,sources,JsonSerializer.Deserialize<LiveBindingContract>(resource)!,Path.Combine(output,"bindings.json"),resolution);
-  var refs=new List<MetadataReference>();foreach(var file in Directory.EnumerateFiles(managed,"*.dll")){try{refs.Add(MetadataReference.CreateFromFile(file));}catch(BadImageFormatException){}}
+  var refs=new List<MetadataReference>();foreach(var file in Directory.EnumerateFiles(managed,"*.dll")){cancellation.ThrowIfCancellationRequested();try{refs.Add(MetadataReference.CreateFromFile(file));}catch(BadImageFormatException){}}
   refs.Add(MetadataReference.CreateFromImage(DailyHookCompiler.Resource("BD2Daily.Harmony.dll")));
   var compilation=CSharpCompilation.Create("BD2Daily.LiveBridge"+LiveProtocol.BridgeVersion+".Hot."+Fingerprint.Substring(0,12),sources,refs,new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,optimizationLevel:OptimizationLevel.Release,platform:Platform.X64,deterministic:true));
-  using var bytes=new MemoryStream();var result=compilation.Emit(bytes,manifestResources:new[]{new ResourceDescription("BD2Daily.Harmony.dll",()=>new MemoryStream(DailyHookCompiler.Resource("BD2Daily.Harmony.dll")),true)});
+  using var bytes=new MemoryStream();var result=compilation.Emit(bytes,manifestResources:new[]{new ResourceDescription("BD2Daily.Harmony.dll",()=>new MemoryStream(DailyHookCompiler.Resource("BD2Daily.Harmony.dll")),true)},cancellationToken:cancellation);
   if(!result.Success)throw new Exception(string.Join("\n",result.Diagnostics.Where(d=>d.Severity==DiagnosticSeverity.Error)));
+  cancellation.ThrowIfCancellationRequested();
   File.WriteAllBytes(Path.Combine(output,"bridge.dll"),bytes.ToArray());
   using var module=Mono.Cecil.ModuleDefinition.ReadModule(Path.Combine(managed,"Assembly-CSharp.dll"));
   DailyJson.Write(Path.Combine(output,"bridge.json"),new{sha256=Convert.ToHexString(SHA256.HashData(bytes.ToArray())),clientMvid=module.Mvid.ToString(),protocol=1});Console.WriteLine("Prepared passive live bridge, game untouched.");return;

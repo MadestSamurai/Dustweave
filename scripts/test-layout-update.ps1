@@ -2,7 +2,11 @@ param(
  [Parameter(Mandatory)][string]$Packages,
  [Parameter(Mandatory)][string]$Baseline,
  [Parameter(Mandatory)][string]$Output,
- [Parameter(Mandatory)][string]$CoreAssembly
+ [Parameter(Mandatory)][string]$CoreAssembly,
+ [ValidateSet('Lite','Portable')][string[]]$Flavors=@('Lite','Portable'),
+ [switch]$ObserveInstanceMutex,
+ [switch]$UpgradeOnly,
+ [switch]$ExpectStartupRollback
 )
 $ErrorActionPreference='Stop'
 $outputRoot=[IO.Path]::GetFullPath($Output)
@@ -111,10 +115,30 @@ function Setup($name,$flavor){
  [IO.File]::WriteAllText((Join-Path $data 'account-preservation.keep'),'account sentinel')
  return @{folder=$folder;targetFolder=$targetFolder;target=$target;data=$data;cache=$cache;attempt=$attempt;helper=$helper;job=$job;jobPath=$jobPath;asset=$asset;delta=$delta}
 }
-foreach($flavor in @('Lite','Portable')){
+foreach($flavor in $Flavors){
  $test=Setup ("upgrade-"+$flavor) $flavor
- $process=StartIsolated $test.helper @('--apply-update',$test.jobPath) $test.data;WaitProcess $process
+ $observer=$null
+ try {
+  if($ObserveInstanceMutex){$observer=[Threading.Mutex]::new($false,'Local\BD2DailyAssistant-v1')}
+  $process=StartIsolated $test.helper @('--apply-update',$test.jobPath) $test.data
+  if($observer){
+   # Keep an unowned handle through managed startup. This is not permission to
+   # bypass a live owner: the updater and app must still acquire the real mutex.
+   $deadline=[DateTime]::UtcNow.AddSeconds(40);$startupPath=Join-Path $test.data 'startup-state.json'
+   while(!(Test-Path -LiteralPath $startupPath) -and !$process.HasExited -and [DateTime]::UtcNow -lt $deadline){Start-Sleep -Milliseconds 100}
+   Start-Sleep -Seconds 2
+   if(Test-Path -LiteralPath $startupPath){Copy-Item -LiteralPath $startupPath -Destination (Join-Path $test.folder 'startup-with-unowned-mutex.json')}
+   $observer.Dispose();$observer=$null
+  }
+  WaitProcess $process
+ }finally{if($observer){$observer.Dispose()}}
  $result=Get-Content -LiteralPath (Join-Path $test.data 'update-result.json') -Raw|ConvertFrom-Json
+ if($ExpectStartupRollback){
+  if(!$ObserveInstanceMutex -or $result.State -ne 'rolled_back'){throw 'Expected old-startup failure did not reproduce'}
+  VerifyInstall $test.targetFolder (Join-Path $Baseline $flavor);CheckPreserved $test;StopInstalledFixture $test.target
+  $reports.Add(@{case="unowned-mutex-rollback-$flavor";status='reproduced';baselineHelper=$true;oldVersionRestored=$true;result=$result})
+  continue
+ }
  if($process.ExitCode -ne 0 -or $result.State -ne 'completed'){throw "Packaged upgrade failed: $($test.folder)"}
  VerifyInstall $test.targetFolder (Join-Path $Packages $flavor);CheckPreserved $test
  $journal=Get-Content -LiteralPath (Join-Path $test.attempt 'backup/transaction.json') -Raw|ConvertFrom-Json
@@ -123,8 +147,9 @@ foreach($flavor in @('Lite','Portable')){
  $reports.Add(@{case="upgrade-$flavor";status='passed';delta=$true;baselineHelper=$true;to=$release.Version;startupAcknowledged=$true;changedFiles=$journal.Files.Count;deltaBytes=$test.delta.Bytes;allFilesVerified=$true})
  Write-Host "Passed upgrade-$flavor"
 }
+if($UpgradeOnly){WriteJson (Join-Path $outputRoot 'results.json') @{status=if($ExpectStartupRollback){'reproduced'}else{'passed'};baseline=$baselineVersion;target=$release.Version;cases=$reports.ToArray();realGameTouched=$false;published=$false};return}
 # Make valid signed patches whose business DLL cannot start, then verify both editions restore every baseline file.
-foreach($flavor in @('Lite','Portable')){
+foreach($flavor in $Flavors){
 $test=Setup ("startup-failure-"+$flavor) $flavor
 $faultZip=Join-Path $test.folder 'fault.zip'
 Copy-Item -LiteralPath (Join-Path $Packages $test.asset.FileName) -Destination $faultZip
@@ -150,7 +175,7 @@ $reports.Add(@{case=$(if($flavor -eq 'Lite'){'startup-failure'}else{'startup-fai
 Write-Host "Passed startup-failure-$flavor"
 }
 # Interrupt a replacement, then corrupt a backed-up business DLL. Normal entry must recover before loading it.
-foreach($flavor in @('Lite','Portable')){
+foreach($flavor in $Flavors){
  $test=Setup ('bootstrap-recovery-'+$flavor) $flavor
  $typedRelease=Typed $release ([type][Dustweave.DailyUpdateRelease]);$typedAsset=Typed $test.asset ([type][Dustweave.DailyUpdateAsset])
  $stage=Join-Path $test.attempt 'staging';$backup=Join-Path $test.attempt 'backup'

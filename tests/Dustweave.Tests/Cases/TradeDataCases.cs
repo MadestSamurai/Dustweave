@@ -65,13 +65,23 @@ static class TradeDataCases
         compatible["source_hashes"]!["NameTextTable"] = new string('d', 64);
         compatible["character_sha256"] = new string('e', 64);
         Check(DailyTradeCatalog.Changes(original, compatible).Length == 0, "database and unrelated source changes require equivalent regenerated trade rules");
+        var newClient = compatible.DeepClone().AsObject();
+        newClient["client"] = Guid.NewGuid().ToString();
+        newClient["assembly_sha256"] = new string('a',64);
+        Check(DailyTradeCatalog.RuleChanges(original,newClient).Length == 0 && DailyTradeCatalog.Changes(original,newClient).Contains("client"), "a verified new client can rebind identical business rules without relabeling the old catalog");
+        foreach (string field in new[] { "schema", "characters", "items", "offers", "recipes", "cooking_items", "cooking_recipes" })
+        {
+            var changed = newClient.DeepClone().AsObject();
+            changed[field] = JsonValue.Create("changed");
+            Check(DailyTradeCatalog.RuleChanges(original,changed).SequenceEqual(new[]{field}), "catalog diagnostics report changed business field " + field);
+        }
         foreach (string field in new[] { "schema", "client", "assembly_sha256", "characters", "items", "offers", "recipes" })
         {
             var changed = original.DeepClone().AsObject();
             changed[field] = field == "schema" ? JsonValue.Create(2) : JsonValue.Create("changed");
             Check(DailyTradeCatalog.Changes(original, changed).SequenceEqual(new[] { field }), "trade compatibility rejects changed " + field);
         }
-        foreach (var (table, key, value) in new[] { ("SellItemTable", "priceType", 5), ("SellItemTable", "highPremiumRate", 30), ("ProductTable", "noBargain", 1), ("ProductTable", "elementCount", 2), ("ProductTable", "reputationType", 1) })
+        foreach (var (table, key, value) in new[] { ("SellItemTable", "priceType", 5), ("SellItemTable", "highPremiumRate", -1), ("ProductTable", "noBargain", 1), ("ProductTable", "elementCount", 2), ("ProductTable", "reputationType", 1), ("ProductTable", "priceCount", -1), ("CookingTable", "resultItemCount", 0) })
         {
             var rows = JsonNode.Parse(fixtures[table])!.AsArray();
             rows[0]![key] = value;
@@ -79,6 +89,34 @@ static class TradeDataCases
             Reject(() => DailyTradeCatalog.Build(folder, client), "trade catalog rejects unsupported " + table + " " + key);
             File.WriteAllText(Path.Combine(folder, table + ".json"), fixtures[table]);
         }
+        foreach (var (table, key, value, section, outputKey, expectedValue) in new[] {
+            ("SellItemTable", "priceCount", 200, "items", "sale", 240),
+            ("SellItemTable", "highPremiumRate", 30, "items", "sale", 130),
+            ("SellItemTable", "highPremiumDay", 28, "items", "day", 28),
+            ("SellItemTable", "highPremiumDay", 31, "items", "day", 31),
+            ("ProductTable", "priceCount", 99, "offers", "base_price", 99),
+            ("ProductTable", "buyMaxCount", 75, "offers", "limit", 75),
+            ("CookingTable", "resultItemCount", 2, "recipes", "count", 2) })
+        {
+            var rows = JsonNode.Parse(fixtures[table])!.AsArray(); rows[0]![key] = value;
+            DailyJson.Write(Path.Combine(folder, table + ".json"), rows);
+            var next = DailyTradeCatalog.Build(folder, Guid.NewGuid().ToString());
+            Check(next[section]![0]![outputKey]!.GetValue<int>() == expectedValue && DailyTradeCatalog.RuleChanges(original, next).Contains(section),
+                "Current game inputs update without a release: " + key);
+            File.WriteAllText(Path.Combine(folder, table + ".json"), fixtures[table]);
+        }
+        string cacheBundle = Path.Combine(output, "catalog-cache"), cacheProof = Path.Combine(output, "catalog-proof.json"), cacheDb = Path.Combine(output, "catalog-db");
+        File.WriteAllText(cacheDb, "synthetic database");
+        string cacheAssembly = typeof(DailyTradeData).Assembly.Location;
+        var cacheCatalog = original.DeepClone().AsObject();
+        cacheCatalog["client"] = DailyTradeCatalog.Mvid(cacheAssembly); cacheCatalog["assembly_sha256"] = DailyTradeCatalog.Hash(cacheAssembly); cacheCatalog["database_sha256"] = DailyTradeCatalog.Hash(cacheDb);
+        DailyJson.Write(DailyTradeData.CatalogPath(cacheBundle), cacheCatalog);
+        DailyJson.Write(cacheProof, new JsonObject { ["state"] = "current_rules_loaded", ["catalog_sha256"] = DailyTradeCatalog.Hash(DailyTradeData.CatalogPath(cacheBundle)) });
+        Check(DailyTradeData.TryCached(cacheBundle, cacheProof, cacheAssembly, cacheDb, out _), "Matching validated data reuses the catalog without a repeated export");
+        File.AppendAllText(cacheDb, "updated");
+        Check(!DailyTradeData.TryCached(cacheBundle, cacheProof, cacheAssembly, cacheDb, out _), "Updated database rebuilds its cached catalog");
+        File.WriteAllText(cacheDb, "synthetic database"); File.AppendAllText(DailyTradeData.CatalogPath(cacheBundle), " ");
+        Check(!DailyTradeData.TryCached(cacheBundle, cacheProof, cacheAssembly, cacheDb, out _), "Damaged catalog is rebuilt without trading on unvalidated data");
         var cooking = JsonNode.Parse(fixtures["CookingTable"])!.AsArray();
         cooking[0]!["materialItemCount"] = new JsonArray();
         DailyJson.Write(Path.Combine(folder, "CookingTable.json"), cooking);

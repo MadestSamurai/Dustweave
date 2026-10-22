@@ -49,7 +49,9 @@ public static class DailyUpdateEngine
         var marker = DailyUpdateJson.TryRead<DailyUpdateMarker>(markerPath) ?? throw new IOException("updates.recovery_required");
         var job = DailyUpdateJson.TryRead<DailyUpdateJob>(marker.JobPath) ?? throw new IOException("updates.recovery_required");
         ValidateJob(job, marker.JobPath);
-        if (nonce != job.Nonce || job.Release.Version != productVersion) throw new InvalidDataException("updates.invalid_package");
+        if (nonce != job.Nonce || job.Release.Version != productVersion ||
+            !Path.GetFullPath(job.Target).Equals(Path.GetFullPath(target), StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("updates.invalid_package");
         // Commit is durable before the acknowledgement. A lost helper/ack must not undo a healthy start.
         var journal = DailyUpdateTransaction.Read(Path.Combine(Attempt(job), "backup"), Path.GetDirectoryName(target)!);
         if (journal.State != "awaiting_start") throw new IOException("updates.recovery_required");
@@ -59,16 +61,37 @@ public static class DailyUpdateEngine
     public static int Run(string jobPath, bool recovery = false)
     {
         DailyUpdateJob? job = null; DailyUpdateJournal? journal = null;
-        bool parentExited = false, ownInstance = false, ownUpdate = false, mayRestart = false;
+        bool parentExited = false, ownInstance = false, ownUpdate = false, mayRestart = false, validated = false;
         Mutex? updateMutex = null, instance = null;
         Process? next = null;
         IDisposable? storage = null;
         string? markerPath = null;
+        string phase = "validate", previousVersion = "";
+        void Phase(string value)
+        {
+            phase = value;
+            try { if (validated && job != null) DailyUpdateJson.Write(Path.Combine(Attempt(job), "updater-state.json"),
+                new { phase, atUtc = DateTimeOffset.UtcNow, target = job.Target, from = previousVersion, to = job.Release.Version,
+                    helperPid = Environment.ProcessId, targetPid = next?.Id }); }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
+        }
+        void Finish(string state, Exception? error = null)
+        {
+            var installed = !validated || job == null ? null : DailyUpdateJson.TryRead<DailyUpdatePackage>(Path.Combine(Path.GetDirectoryName(job.Target)!, "update-package.json"));
+            var result = new Result(state, job?.Release.Version ?? "", DateTimeOffset.UtcNow, error?.ToString(), phase,
+                job?.Target, previousVersion, installed?.Version, job?.Nonce);
+            DailyUpdateJson.Write(Path.Combine(DailyUpdateHost.DataRoot, "update-result.json"), result);
+            try { if (validated && job != null) DailyUpdateJson.Write(Path.Combine(Attempt(job), "update-result.json"), result); }
+            catch (Exception writeError) when (writeError is IOException or UnauthorizedAccessException) { }
+        }
         try
         {
             storage = DailyUpdateHost.AcquireStorage(DailyUpdateHost.DataRoot);
             job = DailyUpdateJson.TryRead<DailyUpdateJob>(jobPath) ?? throw new InvalidDataException("updates.invalid_package");
             ValidateJob(job, jobPath);
+            validated = true;
+            previousVersion = DailyUpdateJson.TryRead<DailyUpdatePackage>(Path.Combine(Path.GetDirectoryName(job.Target)!, "update-package.json"))?.Version ?? "";
+            Phase("wait-parent");
             string target = Path.GetDirectoryName(job.Target)!, attempt = Attempt(job);
             markerPath = Path.Combine(target, DailyUpdateTransaction.MarkerName);
             updateMutex = new Mutex(false, MutexName(job.Target));
@@ -107,6 +130,7 @@ public static class DailyUpdateEngine
                         }
                         else if (job.Release.Layout >= 2 && (installed.Layout != job.Release.Layout || installed.RuntimeVersion != job.Release.RuntimeVersion || job.DeltaFileName == null)) throw new InvalidDataException("updates.manual_layout");
                     }
+                    Phase("prepare-files");
                     string[] names = ExtractPayload(job, target, ref staging, out var retained);
                     journal = DailyUpdateTransaction.Prepare(staging, target, Path.Combine(attempt, "backup"), names, retained, removeObsolete: !job.Repair,
                         installRecoveryEntryFirst: job.InventoryUpgrade || job.Repair,
@@ -114,10 +138,13 @@ public static class DailyUpdateEngine
                             DailyUpdateSignatures.Verify(DailyUpdateJson.TryRead<DailySignedUpdate>(Path.Combine(job.Directory, "signed-feed.json"))!, DailyUpdateTrust.Production())).Files.Select(f => f.Name).ToArray() : null);
                     var marker = new DailyUpdateMarker(Path.GetFullPath(jobPath), job.Nonce, DailyUpdateTransaction.Hash(Environment.ProcessPath!));
                     DailyUpdateJson.Write(markerPath, marker);
+                    Phase("replace-files");
                     journal = DailyUpdateTransaction.Apply(journal);
                 }
                 instance.ReleaseMutex(); ownInstance = false; instance.Dispose(); instance = null;
+                Phase("start-updated");
                 next = Start(job.Target, "--updated", job.Nonce);
+                Phase("await-startup-acknowledgement");
                 var watch = Stopwatch.StartNew();
                 while (watch.Elapsed < TimeSpan.FromMinutes(2))
                 {
@@ -126,7 +153,7 @@ public static class DailyUpdateEngine
                     if (persisted.State == "completed" && (ready == null || ready.Nonce == job.Nonce))
                     {
                         File.Delete(markerPath);
-                        DailyUpdateJson.Write(Path.Combine(DailyUpdateHost.DataRoot, "update-result.json"), new Result("completed", job.Release.Version, DateTimeOffset.UtcNow));
+                        Finish("completed");
                         return 0;
                     }
                     if (next.HasExited) break;
@@ -144,20 +171,24 @@ public static class DailyUpdateEngine
                 if (journal.State != "completed") journal = DailyUpdateTransaction.Restore(journal);
                 File.Delete(markerPath);
             }
-            DailyUpdateJson.Write(Path.Combine(DailyUpdateHost.DataRoot, "update-result.json"), new Result(journal.State == "completed" ? "completed" : "rolled_back", job.Release.Version, DateTimeOffset.UtcNow));
+            Phase("recover-interrupted");
+            Finish(journal.State == "completed" ? "completed" : "rolled_back");
             instance.ReleaseMutex(); ownInstance = false; instance.Dispose(); instance = null;
             StartAfterRecovery(job.Target, journal.State == "rolled_back" ? job.Release.Version : null);
             return 0;
         }
         catch (Exception error)
         {
+            // Preserve the failed new process's startup evidence before the old
+            // version overwrites startup-state/error during the rollback restart.
+            if (validated && job != null) PreserveStartupEvidence(DailyUpdateHost.DataRoot, Attempt(job));
             string state = "failed";
             if (job != null && journal != null)
             {
                 try
                 {
                     var persisted = DailyUpdateTransaction.Read(journal.Backup, journal.Target);
-                    if (persisted.State == "completed") { if (markerPath != null) File.Delete(markerPath); return 0; }
+                    if (persisted.State == "completed") { if (markerPath != null) File.Delete(markerPath); Finish("completed"); return 0; }
                     if (next != null && !next.HasExited) { next.Kill(); if (!next.WaitForExit(10000)) throw new IOException("updates.app_busy"); }
                     if (!ownInstance) { instance ??= new Mutex(false, DailyApplication.InstanceMutex); if (!(ownInstance = Acquire(instance))) throw new IOException("updates.app_busy"); }
                     using var activity = DailyUpdateHost.AcquireControl(DailyUpdateHost.DataRoot);
@@ -167,7 +198,7 @@ public static class DailyUpdateEngine
                 }
                 catch (Exception rollback) { error = new AggregateException(error, rollback); state = "recovery_required"; }
             }
-            DailyUpdateJson.Write(Path.Combine(DailyUpdateHost.DataRoot, "update-result.json"), new Result(state, job?.Release.Version ?? "", DateTimeOffset.UtcNow, error.ToString()));
+            Finish(state, error);
             if (ownInstance) { instance!.ReleaseMutex(); ownInstance = false; }
             instance?.Dispose(); instance = null;
             if (job != null && parentExited && mayRestart && state != "recovery_required")
@@ -182,6 +213,22 @@ public static class DailyUpdateEngine
             if (ownInstance) instance!.ReleaseMutex(); instance?.Dispose();
             if (ownUpdate) updateMutex!.ReleaseMutex(); updateMutex?.Dispose();
             storage?.Dispose();
+        }
+    }
+    internal static void PreserveStartupEvidence(string data, string attempt)
+    {
+        foreach (string name in new[] { "startup-state.json", "startup-error.json", "launcher-error.txt", "bootstrap-error.txt" })
+        {
+            try
+            {
+                string source = Path.Combine(data, name);
+                if (name is "launcher-error.txt" or "bootstrap-error.txt")
+                    source = Path.Combine(data, "startup", name);
+                if (!File.Exists(source) || new FileInfo(source).Length > 1024 * 1024) continue;
+                DailyUpdates.EnsureNoLinks(source);
+                DailyUpdateTransaction.CopyDurable(source, Path.Combine(attempt, "startup", name));
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException) { /* Keep the original updater failure. */ }
         }
     }
     private static string[] ExtractPayload(DailyUpdateJob job, string target, ref string staging, out Dictionary<string, string>? retained)
@@ -238,5 +285,6 @@ public static class DailyUpdateEngine
         return Process.Start(info) ?? throw new IOException("updates.start_failed");
     }
     public sealed record Ready(int ProcessId, string Version, string Nonce);
-    public sealed record Result(string State, string Version, DateTimeOffset AtUtc, string? Error = null);
+    public sealed record Result(string State, string Version, DateTimeOffset AtUtc, string? Error = null,
+        string? Phase = null, string? Target = null, string? PreviousVersion = null, string? InstalledVersion = null, string? Attempt = null);
 }

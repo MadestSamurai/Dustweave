@@ -917,3 +917,6 @@ idle_no_visible_bubble=餐厅暂时没有可领取的气泡，已结束本次等
 time_budget_reached=本次领取等待已结束，剩余奖励可稍后补跑
 stage_skipped_without_reason=该环节已跳过，但执行器未返回原因。可重新勾选此项；若再次出现，请导出诊断。
 stage_partial_without_reason=该环节尚未完成，但执行器未返回原因。请查看游戏是否有断线或弹窗，再补跑此项；若再次出现，请导出诊断。
+connection.scope_permission=Windows 不允许读取游戏进程。请点击连接并允许连接组件的权限提示，或关闭游戏后通过织尘重新启动；无需安装或重装沙盒。
+connection.scope_check=正在核对游戏进程，请允许连接组件的 Windows 权限提示；主窗口保持普通权限。
+connection.scope_changed=游戏进程在核对期间已改变，请重新连接。

@@ -10,6 +10,8 @@ public static class DailyEventNative
     public static JsonObject? Plan(JsonObject lobby, long free, int maximum = 5)
     {
         Require(maximum is >= 1 and <= 5, "Invalid event auto budget");
+        Require(free >= 0, "Event free attempts unavailable");
+        if (free == 0) return null;
         if (!B(lobby["Eligible"])) return null;
         var rows = Rows(lobby["Stages"]).OrderBy(r => N(r["Id"])).ToArray();
         var frontier = rows.FirstOrDefault(r => DailyEventStageData.Progress(lobby, r) == null);
@@ -31,21 +33,19 @@ public static class DailyEventNative
     {
         var before = op["before"]!.AsObject(); var scope = op["scope"]!.AsObject(); var state = Native(after);
         Identity(before, after);
-        Require(B(state["Result"]) && !B(state["Continuing"]) && N(state["Total"]) == N(scope["count"]), "Event auto batch has not finished");
-        var responses = Responses("event.end", events, before, after, 1, I(scope["count"]));
-        for (int i = 0; i < responses.Length; i++)
-        {
-            var p = responses[i]["PackEventBattleInfo"] as JsonObject;
-            if (p == null || p.Count == 0) { Require(B(state["Lost"]) && i == responses.Length - 1, "Event win progress missing"); continue; }
-            long id = N(p["id"] ?? p["Id"]);
-            Require(N(p["eventUid"] ?? p["EventUid"]) == N(scope["event"]) && N(p["groupId"] ?? p["GroupId"]) == N(scope["group"]) && id == N(scope["stage"]) + i, "Event auto result belongs to another stage");
-        }
+        bool exhausted = N(R(after, "event.currency", "EventApFree")) == 0;
+        Require(B(state["Result"]) && !B(state["Continuing"]) && (exhausted || N(state["Total"]) == N(scope["count"])), "Event auto batch has not finished");
+        // The game's terminal batch state is authoritative. A long native batch
+        // can outlive the bounded receipt buffer; missing receipts must not keep
+        // an already finished fight (especially zero remaining free AP) pending.
+        int count = B(state["Lost"]) ? Math.Clamp(I(state["Current"]), 1, I(scope["count"])) : I(scope["count"]);
         long spent = N(R(before, "event.currency", "EventApFree")) - N(R(after, "event.currency", "EventApFree"));
-        Require(spent >= (responses.Length - (B(state["Lost"]) ? 1 : 0)) * N(scope["cost"]) && spent <= responses.Length * N(scope["cost"]) && JsonNode.DeepEquals(R(before, "event.currency", "EventApStack"), R(after, "event.currency", "EventApStack")), "Event auto changed stored AP or exceeded its budget");
-        Require(B(state["Lost"]) || responses.Length == N(scope["count"]), "Event auto stopped without a terminal result");
-        return O(("count", responses.Length), ("lost", state["Lost"]), ("spent", spent));
+        return O(("count", count), ("lost", state["Lost"]), ("spent", spent), ("completion_source", "current_game_result"),
+            ("free_exhausted", exhausted),
+            ("currency_changed_unexpectedly", spent < 0 || spent > count * N(scope["cost"]) ||
+                !JsonNode.DeepEquals(R(before, "event.currency", "EventApStack"), R(after, "event.currency", "EventApStack"))));
     }
-    public static DailyBusinessProof Definition() => new("event.native_batch", "event_battle", Prefixes, Verify, ["event.enter", "event.end"], CanResume: DailyNativeBattleRecovery.CanResume);
+    public static DailyBusinessProof Definition() => new("event.native_batch", "event_battle", Prefixes, Verify, [], CanResume: DailyNativeBattleRecovery.CanResume);
     public static async Task WaitBatch(DailyWorkflow w)
     {
         await w.WaitEvidence(Prefixes, e => B(Native(e)["Result"]) && !B(Native(e)["Continuing"]), 900, "活动自动战斗尚未结束；保留当前战斗，未重复开始。");
@@ -74,16 +74,29 @@ public static class DailyEventNative
         {
             var owned = w.Business.Records(w.Context, "event.native_batch").LastOrDefault(op =>
                 JsonNode.DeepEquals(op["cycle"], w.Context["cycle"]) && DailyEvidence.SameActor(op["before"]!["Frame"]!.AsObject(), frame) && (DailyManagedBusiness.Pending(op) || S(op["state"]) == "completed"));
-            if (owned == null) return DailyWorkflow.Skipped("extension_in_progress");
-            await WaitBatch(w); await w.Business.ReconcileAsync(w.Context);
-            owned = w.Business.Records(w.Context, "event.native_batch").Single(x => S(x["id"]) == S(owned["id"]));
-            if (DailyManagedBusiness.Pending(owned)) throw new StageHostException("pending", "event_native_result_pending");
-            failed = B(Native(await w.Evidence(Prefixes))["Lost"]); used = I(owned["scope"]?["count"]);
+            if (owned == null)
+            {
+                var current = await w.Evidence(Prefixes); var native = Native(current);
+                // A finished event with no free attempts has nothing left to
+                // dispatch. Returning from its native result needs no old log.
+                if (!B(native["Battle"]) || !B(native["Result"]) || B(native["Continuing"]) || N(R(current, "event.currency", "EventApFree")) != 0)
+                    return DailyWorkflow.Skipped("extension_in_progress");
+                used = 5; failed = B(native["Lost"]);
+            }
+            else
+            {
+                await WaitBatch(w); await w.Business.ReconcileAsync(w.Context);
+                owned = w.Business.Records(w.Context, "event.native_batch").Single(x => S(x["id"]) == S(owned["id"]));
+                if (DailyManagedBusiness.Pending(owned)) throw new StageHostException("pending", "event_native_result_pending");
+                failed = B(Native(await w.Evidence(Prefixes))["Lost"]); used = I(owned["scope"]?["count"]);
+            }
             await w.Step("BattleResultUI", operation: "event_native_exit", expect: "EventBattleUI");
         }
         var lobby = await Lobby(w, false);
         await DailyNativeBattleRecovery.Replan(w, "event.native_batch");
         used = Math.Max(used, BudgetUsed(w.Business.Records(w.Context, "event.native_batch"), w.Context, N(lobby["Event"])));
+        if (N(R(await w.Evidence(Prefixes), "event.currency", "EventApFree")) == 0)
+            return await FinishExhausted(w, results, failed);
         // Normal stages must finish before challenge stages can be attempted.
         if (Rows(lobby["Stages"]).All(r => DailyEventStageData.Progress(lobby, r) != null) && w.Settings.EventBattle.Challenge)
             lobby = await Lobby(w, true);
@@ -100,7 +113,10 @@ public static class DailyEventNative
                     ("items", new JsonArray(Copy(plan["event"]), Copy(plan["group"]), Copy(plan["stage"]))), ("value", plan["count"])), evidence, 30, drive: () => WaitBatch(w)));
             results.Add(Copy(op["result"])); used += I(op["result"]?["count"]); failed = B(op["result"]?["lost"]);
             await w.Step("BattleResultUI", operation: "event_native_exit", expect: "EventBattleUI");
-            lobby = DailyEventSweep.Lobby(await w.Evidence(DailyEventSweep.Prefixes));
+            var settled = await w.Evidence(DailyEventSweep.Prefixes);
+            if (N(R(settled, "event.currency", "EventApFree")) == 0)
+                return await FinishExhausted(w, results, failed);
+            lobby = DailyEventSweep.Lobby(settled);
             if (!failed && S(lobby["Category"]) == "Battle" && Rows(lobby["Stages"]).All(r => DailyEventStageData.Progress(lobby, r) != null) && w.Settings.EventBattle.Challenge)
                 lobby = await Lobby(w, true);
             else break;
@@ -123,6 +139,13 @@ public static class DailyEventNative
         await DailyEventSweep.Leave(w);
         bool swept = S(sweep["state"]) == "completed";
         return O(("state", failed && !swept ? "partial" : results.Count > 0 || swept ? "completed" : "skipped"), ("reason", failed ? swept ? "event_auto_failed_swept" : "event_auto_failed_no_sweep" : "event_native_finished"), ("batches", results), ("sweep", sweep));
+    }
+    private static async Task<JsonObject> FinishExhausted(DailyWorkflow w, JsonArray results, bool failed)
+    {
+        await DailyEventSweep.Leave(w);
+        // No further target lookup or challenge navigation can produce free work.
+        // Keep a failed battle visible in the summary without blocking the queue.
+        return O(("state", "completed"), ("reason", failed ? "event_auto_failed_no_sweep" : "free_attempts_exhausted"), ("batches", results));
     }
     internal static int BudgetUsed(IEnumerable<JsonObject> records, JsonObject context, long eventId) => (int)Math.Min(5, records.Where(op =>
         JsonNode.DeepEquals(op["cycle"], context["cycle"]) && N(op["scope"]?["event"]) == eventId && S(op["state"]) is "completed" or "superseded")

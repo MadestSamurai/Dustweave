@@ -15,7 +15,7 @@ namespace BD2Daily.Live {
   [DataMember] public string Kind="",Table="",Group="",Cache="",Schedule="",Currency="";
   [DataMember] public int TableId,EventId,Tab,Unlocked,Page,Received,Total,Batch,Cost;
   [DataMember] public long Balance;
-  [DataMember] public bool Ready,Claim,Free,Renew,AllowedCurrency,Auto,Single;
+  [DataMember] public bool Ready,Claim,Free,Renew,AllowedCurrency,Auto,Single,Complete;
  }
  [DataContract] internal sealed class PassDefinition {
   [DataMember] public int PassId;
@@ -65,7 +65,10 @@ namespace BD2Daily.Live {
    int idx=ui.ὫὬὮὫὪὢὠὯὥὮὡ;if(idx<0||idx>=rows.Length)return r;
    var t=rows[idx];r.TableId=t.Id;r.EventId=t.EventId;r.Table=Json(t);
    var p=ui.ὥὮὬὣὢὦὢὯὪὪὭ;if(p==null||!p.gameObject.activeInHierarchy)return r;
-   r.Kind=p.GetType().Name;r.Ready=!p.IsBlockOtherTouch();
+   // Seasonal skins/subclasses retain the same mechanics. Report the supported
+   // base page contract rather than a season-specific class or prefab name.
+   r.Kind=p is EventMissionUI?nameof(EventMissionUI):p is MiniGameRouletteUI?nameof(MiniGameRouletteUI):p is MiniGameDiceUI?nameof(MiniGameDiceUI):p is MiniGamePuzzleUI?nameof(MiniGamePuzzleUI):p is MiniGameBingoUI?nameof(MiniGameBingoUI):p is EventExchangeUI?nameof(EventExchangeUI):p.GetType().Name;
+   r.Ready=!p.IsBlockOtherTouch();
    var schedule=ὧὫὫὠὪὫὯὢὩὮὤ.ὬὯὭὠὧὠὣὭὤὯὥ((Define_EventType)t.EventType,t.EventId);r.Schedule=Json(schedule);
    if(p is EventMissionUI){
     if(Get<int>(p,"ὡὨὨὠὬὡὪὨὤὪὦ")!=t.EventId){r.Ready=false;return r;}
@@ -105,6 +108,23 @@ namespace BD2Daily.Live {
     r.Batch=checked((int)Math.Min(r.Balance/r.Cost,r.Total-r.Received));
     r.Claim=Enabled(p,"_buttonPlayAll");r.Renew=Enabled(p,"_buttonRenewal");
     r.Ready=r.Ready&&Json(Get<MiniPuzzleDBInfo>(p,"ὯὭὩὩὭὡὪὤὦὡὣ"))==r.Cache;
+   }else if(p is MiniGameBingoUI){
+    if(Get<int>(p,"ὦὠὧὠὯὯὢὮὡὥὬ")!=t.EventId){r.Ready=false;return r;}
+    var actual=Get<EventScheduleDBInfo>(p,"ὭὦὬὬὮὭὡὧὣὨὭ");
+    if(schedule==null||actual==null||actual.Id!=schedule.Id){r.Ready=false;return r;}
+    var g=ὦὬὫὥὫὠὨὬὧὫὬ.ὩὢὩὬὨὣὭὮὤὬὡ(t.EventId);
+    MiniGameBingoDBInfo info;
+    bool exists=ὡὭὦὭὣὥὭὯὤὡὩ.ὦὬὨὨὯὦὠὦὣὨὨ(schedule.Id,out info);
+    // A new event has no board until its first ordinary Play request.
+    if(g==null||exists&&info.EventScheduleId!=schedule.Id){r.Ready=false;return r;}
+    r.Group=Json(g);r.Cache=Json(info);r.Cost=g.ItemCount;
+    r.AllowedCurrency=Token(g.ItemType,g.ItemId);r.Currency=((ὥὯὯὠὣὪὦὢὫὠὮ)g.ItemType).ToString();
+    r.Balance=ὣὡὧὡὦὣὣὬὨὪὫ.ὧὮὢὬὢὬὠὥὡὡὬ((ὥὯὯὠὣὪὦὢὫὠὮ)g.ItemType,g.ItemId);
+    r.Page=info==null?0:info.ClearCount;r.Total=checked(g.ColumnCount*g.ColumnCount);r.Received=info==null?0:info.OpenBingoBoardIndex.Count;
+    if(r.Cost<=0||r.Total<=0||r.Received>r.Total)throw new InvalidOperationException("Bingo board or token cost is invalid");
+    r.Complete=info!=null&&info.ClearCount>ὦὬὫὥὫὠὨὬὧὫὬ.ὠὬὨὪὪὭὤὡὪὤὢ(g.BingoRewardGroupId);
+    r.Batch=r.Complete?0:checked((int)Math.Min(r.Balance/r.Cost,r.Total-r.Received));
+    r.Claim=Enabled(p,"_buttonPlayAll");
    }else if(p is EventExchangeUI){
     int id=Get<int>(p,"ὥὠὦὢὮὬὨὤὠὤὭ");if(id!=t.EventId){r.Ready=false;return r;}
     var g=ὣὮὢὠὩὬὨὯὤὬὧ.ὭὭὢὡὤὤὢὫὯὭὬ(id);r.Group=Json(g);
@@ -122,7 +142,7 @@ namespace BD2Daily.Live {
    if(c.Kind=="reward_select"){
     if(!ui.HasEvent(c.Value))throw new InvalidOperationException("Event no longer active");
     var t=ὠὩὩὦὢὭὤὩὦὧὯ.ὬὡὢὭὤὬὫὤὡὦὠ(c.Value);
-    if(!new[]{4,7,12,17,19}.Contains(t.EventType))throw new InvalidOperationException("Unsupported reward category");
+    if(!new[]{4,7,12,13,17,19}.Contains(t.EventType))throw new InvalidOperationException("Unsupported reward category");
     if(ui.ὥὮὬὣὢὦὢὯὪὪὭ!=null&&ui.ὥὮὬὣὢὦὢὯὪὪὭ.IsBlockOtherTouch())throw new InvalidOperationException("Previous event busy");
     ui.SetByEvent(c.Value);return;
    }
@@ -141,6 +161,9 @@ namespace BD2Daily.Live {
    string button=null;
    if(p is MiniGamePuzzleUI&&state.AllowedCurrency){
     if(c.Value==9&&state.Claim&&state.Batch>0&&state.Cost>0&&state.Balance>=(long)state.Batch*state.Cost)button="_buttonPlayAll";
+   }
+   if(p is MiniGameBingoUI&&state.AllowedCurrency){
+    if(c.Value==10&&!state.Complete&&state.Claim&&state.Batch>0&&state.Cost>0&&state.Balance>=(long)state.Batch*state.Cost)button="_buttonPlayAll";
    }
    if(c.Value==1&&p is EventMissionUI&&state.Claim)button="_recievAllButton";
    if(p is MiniGameRouletteUI){

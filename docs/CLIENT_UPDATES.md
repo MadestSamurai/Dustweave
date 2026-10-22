@@ -6,6 +6,21 @@ This checklist covers Dustweave's host and integrated tools. Run it once for a c
 
 ## Current update / 本次更新
 
+- 2026-10-22：离线核对客户端 `20261016000`，MVID `fd0d770c-6f10-4faf-b14d-e22668d15b70`，主程序集 SHA256 `4EF1573B4BE8D26737F34F00136F063C40CD7DDB586DAF221BA9D7A3356379BC`，数据库 SHA256 `6E8583DA355CBC81462FC3767AD94C29E2E1BE8DA235C5FB12CF46A915FB6BD1`。
+- 公共观察组件、15个按需模块及全部11份 evidence spec 通过当前客户端离线生成。日常、钓鱼、连连看、领地、音游、塔防、抽抽乐、SECRET VISION、恶魔猎人、装备、MANSION RUNAWAY、潘多拉及日常复用模块均覆盖。没有将全量准备加入正常启动。
+- 导出29张日常/跑商表；新跑商目录含119项食材/商品、309条报价配置、50个交易配方。与1.4.16目录相比，交易规则、制作配方和角色天赋能力映射不变，只有客户端身份及来源摘要变化。
+- 修复跑商因安装包旧程序集身份而提前阻断：先确认观察中的进程及MVID与当前游戏一致，再只读导出当前表，验证来源、完整性和支持的公式后启用独立缓存。价格、溢价比例、限购、配方和角色天赋数值从当前表读取，变化不再要求发布新版本。相同输入复用已校验缓存；不复用旧计划或重放交易。新增不支持的货币／计价机制仍需适配。
+- 302项定向跑商回归通过；使用1.4.16实际包的导出器和本机新版客户端文件，完成离线重新绑定验证，原包哈希未变。进程身份为合成测试数据，没有连接/启动游戏。新版主程序编译及源码边界检查通过。
+- 活动批量战斗改以游戏当前终局状态为准；免费次数用尽后退出并继续队列，历史回执截断不再造成等待或接续死锁。扫荡读取当前免费次数变化。角色／进程身份与免费次数消费入口保持限制。
+- 宾果接入游戏原生批量按钮，读取当前活动周期、棋盘、代币及结束状态；和拼图共用设置、邮箱补领依赖及盘面核对。支持首板无缓存、整板自动刷新和最终奖励耗尽，无固定活动编号。未知未来活动类型进入诊断与未完成说明，不再静默忽略。
+- 隔离启动自动配置游戏程序与资源的只读本机映射。用户关闭所有游戏后，只需在普通官方启动器更新一次；后续隔离启动忽略旧的程序覆盖副本，登录信息、渠道配置和可写缓存仍然独立。首次迁移仅在该隔离空间空闲时进行，不删除任何旧数据。
+- 沙盒更新同时核对 `LocalLow/Gamfs/BrownDust II/Data/t` 中的设计表覆盖副本：只替换游戏文件清单列出的、比本机下载旧的表，保留一个旧副本供恢复。文件复制后校验摘要并再次确认空间空闲，再原子替换；较新的沙盒热更新、用户数据库、账号、登录信息和其他缓存均不覆盖。只有安装目录版本一致不足以证明资源已更新。
+- **尚未实机验证**：本次新流程没有连接、启动或操作游戏；当前客户端日常桥接编译通过，真实登录／普通与隔离连接／宾果动画与奖励过程仍需实际验收。没有发布织尘新版本。
+
+English: the October 22 client passes offline compilation of all 15 on-demand modules and all 11 evidence specifications. Trading validates current table structure and supported formulas, then replans with current prices, recipes and limits; compatible value changes no longer require a release. Native event completion follows current game state rather than historical receipt completeness. Bingo uses current schedules, boards, tokens and native bulk actions, including first-board creation and automatic renewal. Unknown future mechanics are reported. Offline compatibility and synthetic validation do not substitute for live flow acceptance; no game was launched or controlled and no release was published.
+
+### Previous update / 上次更新（2026-10-08）
+
 - 2026-10-08 新客户端已安装并开服。242 个 Managed DLL 中主程序集发生变化，登录 SDK／框架保持相同；新 MVID 为 `132cda4f-d57f-4991-8b09-6310f09b7fe5`。
 - 0.9.6 增加日常执行源码与证据配置的共同绑定契约，离线确认 407 类型／824 成员及完整日常配置的 164 项读取规则。证据路径与集合列名保留业务协议名称，反射时才转换成当前游戏名称。
 - 普通启动已实测到 TOUCH TO START；两个隔离实例同时启动、各自连接观察组件，均停在 `AgreementPopupUI`，未确认协议、未进入游戏。没有发送日常操作；主机 14 个账号槽位文件哈希保持不变。
@@ -30,7 +45,8 @@ English: close the host and all games, update once using the normal official lau
 - 组件缓存使用全部 Managed DLL 的文件名、长度和内容 SHA256；登录 SDK 或框架单独变更也会失效。主程序集 MVID 另外保留用于诊断。
 - 编译结束和注入前再次核对输入，防止边下载边编译；已知连接记录中的同一游戏进程若对应旧输入则停止重连，提示正常关闭旧进程后再开。没有历史记录时，磁盘指纹本身不能证明进程加载了哪个版本，因此仍要求更新前关闭所有游戏。
 - 隔离启动在写入账号登录状态、启动游戏之前，比对主机与沙箱所见的全部 Managed DLL、游戏 EXE、UnityPlayer 和 Mono。发现旧覆盖文件时报告原因，不删除账号、不清空整个沙箱。检查结果保留在该隔离实例的 `client-update-check.json`。
-- 不一致需要定向检查沙箱中的旧程序覆盖文件；确认具体路径及没有运行实例后再处理，不能把整箱清理作为自动恢复。
+- 归属与根目录确认后，空闲隔离空间自动加入 Sandboxie `ReadFilePath`：游戏 EXE、UnityPlayer、崩溃处理器、`BrownDust II_Data` 和 `MonoBleedingEdge`。该机制忽略旧覆盖文件并禁止隔离游戏改写本机程序；不包括 `launcher.settings`、注册表、LocalLow、账号、日志或缓存。规则已齐全时直接复用；中断后只补缺失规则。首次配置时空间仍在运行则提示关闭该账号的窗口并重试。
+- 不一致仍会在账号导入与游戏启动前拦截。提示用户完成本机更新、关闭旧进程并从主窗口重试；保留账号与旧覆盖文件供诊断，不清空整个沙箱。只读路径不代替客户端身份检查。
 - 指纹不覆盖所有资源包、热更新表或服务器行为；这些仍按表身份和现场证据单独验证。检查仅在准备／连接／启动时进行，不进入实时观察轮询。
 - 每次打包记录客户端程序输入，在结束时再次核对；构建过程中游戏更新会使打包失败，防止交付混合版本。
 - 日常执行与只读配置共享 `src/Connection/live-binding-contract.json`。生成契约必须使用与嵌入源码匹配的基线程序集；使用 `live generate-live-contract <baseline Managed> <output>` 显式生成，不能在新程序解析失败时把错误绑定反过来当作基线。只保存接口结构、引用关联和单向摘要，不提交游戏程序集或反编译正文。
@@ -38,7 +54,7 @@ English: close the host and all games, update once using the normal official lau
 - 隔离启动使用与普通启动相同的渠道准备逻辑；备份位于各自环境，更新重置渠道后不需要先启动一次普通游戏才能运行隔离实例。
 - 发布检查必须逐个生成所有 evidence spec，不能只确认桥接 DLL 编译通过。别名往返、集合列名、枚举漂移和被移除的 UI 入口由合成回归覆盖。
 
-The cache includes all managed compiler references. Isolated startup checks native code as well, before importing sign-in state. This detects stale code overlays without deleting account data; it does not certify asset bundles, server behavior or an unobserved running process.
+The cache includes all managed compiler references. Owned idle sandboxes use Sandboxie's read-only host view for immutable game code and resources, ignoring obsolete overlays while leaving account data and launcher channel settings private. Users update once through the normal launcher with all games closed. Isolated startup still compares managed and native inputs before importing sign-in state. It does not certify server behavior or an unobserved running process. See [Sandboxie ReadFilePath](https://sandboxie-plus.github.io/sandboxie-docs/Content/ReadFilePath/).
 
 ## Sources and outputs / 来源与目标
 

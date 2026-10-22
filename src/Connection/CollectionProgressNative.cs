@@ -143,9 +143,9 @@ namespace BD2Daily.Live {
    if((bool)animation.GetType().GetMethod("get_IsPlayTalentAnimation").Invoke(animation,null))return "talent_wait:animation";
    if((bool)manager.GetType().GetField("_isAlreadyTalentSkillAttempted",flags).GetValue(manager))return "talent_wait:attempt_latch";
    if(table.ClassType==6&&manager.IsTalentSkillReseaching(ὪὯὯὢὨὮὨὠὥὤὬ.FieldRewardResearch))return "talent_wait:research_active";
-   if((table.ClassType==2||table.ClassType==17)&&manager.IsTalentSkillDurationing((ὪὯὯὢὨὮὨὠὥὤὬ)table.ClassType))return "talent_wait:duration_active";
+   if((table.ClassType==2||table.ClassType==13||table.ClassType==17)&&manager.IsTalentSkillDurationing((ὪὯὯὢὨὮὨὠὥὤὬ)table.ClassType))return "talent_wait:duration_active";
    // The research/duration cached row can outlive its manager entry for one frame.
-   string cache=table.ClassType==6?"ὪὮὣὤὩὯὦὭὧὬὬ":table.ClassType==2||table.ClassType==17?"ὯὭὭὩὤὥὨὫὣὬὠ":"";
+   string cache=table.ClassType==6?"ὪὮὣὤὩὯὦὭὧὬὬ":table.ClassType==2||table.ClassType==13||table.ClassType==17?"ὯὭὭὩὤὥὨὫὣὬὠ":"";
    if(cache.Length>0){var data=row.GetType().GetField(cache,flags).GetValue(row);if(data!=null&&(bool)typeof(ὩὠὠὧὭὠὬὪὩὮὫ).GetField("ὫὢὢὬὫὫὡὩὪὩὮ",flags).GetValue(data))return "talent_wait:cached_effect";}
    long character=(long)row.GetType().GetField("ὣὥὠὭὣὯὤὧὮὡὦ",flags).GetValue(row);var ch=ὣὡὧὡὦὣὣὬὨὪὫ.ὣὢὨὠὦὥὯὢὥὠὪ(character);
    if(ch==null||ch.Hp<=0||ὢὭὤὣὠὦὥὠὢὣὩ.ὬὧὣὮὧὣὭὩὪὪὬ(ch))return "talent_reject:character_unavailable";

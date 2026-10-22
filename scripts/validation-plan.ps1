@@ -46,7 +46,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     $selectedScope='Accounts'
     $navigation='^src/Connection/(Bridge|LiveContracts|SelfTest)\.cs$|^src/Core/(DailyHomeNavigation|DailyTravel)\.cs$|^tests/Dustweave.Tests/Cases/(HomeNavigation|TravelTransition)Cases\.cs$'
     if($outside.Count -and $Scope -ne 'Accounts' -and !@($outside|Where-Object {$_ -notmatch $navigation}).Count){$selectedScope='Navigation';$outside=@()}
-    $rewards='^assets/specs/(policy|daily)-evidence-spec\.json$|^src/Connection/(EvidenceBindings|TapManifest|RewardNative)\.cs$|^src/Connection/live-binding-contract\.json$|^src/Shared/DailyBridgeVersion\.cs$|^src/Core/(DailyMissions|DailyPreferences|DailyEventRewards|DailyHunting)\.cs$|^src/Desktop/DailyPreferencesPanel\.cs$|^tests/Dustweave.Tests/Cases/(LiveBinding|Workflow|Preference)Cases\.cs$'
+    $rewards='^assets/specs/(policy|daily)-evidence-spec\.json$|^src/Connection/(EvidenceBindings|TapManifest|RewardNative)\.cs$|^src/Connection/live-binding-contract\.json$|^src/Shared/DailyBridgeVersion\.cs$|^src/Core/(DailyMissions|DailyPreferences|DailyEventRewards|DailyEventNative|DailyEventSweep|DailyTradeData|DailyTradeCatalog|DailyHunting)\.cs$|^src/Desktop/DailyPreferencesPanel\.cs$|^src/Desktop/Localization/notices\.json$|^tests/Dustweave.Tests/Cases/(LiveBinding|Workflow|Preference|NativeDailyBattle|EventTradeBoundary|BattleArrivalRecovery|TradeData)Cases\.cs$'
     if($outside.Count -and $Scope -notin @('Accounts','Navigation') -and !@($outside|Where-Object {$_ -notmatch $navigation -and $_ -notmatch $rewards}).Count){$selectedScope='Rewards';$outside=@()}
     # Trading-only changes reuse component/client gates; every modified runtime input is explicit.
     $trading='^(Directory\.Build\.props|source-manifest\.json|CHANGELOG\.md|package\.ps1|scripts/validation-plan\.ps1)$|^docs/|^src/Core/DailyTrade(Optimizer|Forecast|Plan|DropForecast|Drops|Execution)\.cs$|^src/Desktop/Localization/(releases|strings)\.json$|^tests/Dustweave.Tests/Cases/Trade(Optimizer|Replan)Cases\.cs$'
@@ -75,7 +75,12 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
       if($selectedScope -eq 'Updates'){$groups=@('ProductIdentity','UpdateLayout','UpdateDelta','UpdateSafety','UpdateRepair','UpdateInventory','CacheStorage','SchedulingUpdates','UnifiedSuite','SuiteOwnerProbe','UserText')}
       if($selectedScope -eq 'Weekly'){$groups=@('ProductIdentity','WeeklyIsolation','WeeklyGoal','CollectionReadiness','FieldTalent','WeeklyNpcBoard','WeeklyNpcQuery','WeeklyNpcInteraction','CommandDriver','ManagedInputs','QueueSession','QueueEngine','QueuePeriod','QueueExecutionThread','PickupRecovery','BusinessJournal','BusinessScope','MirrorStage','FreeDrawStage','DispatchRecovery','ManagementStage','TradeResume','TravelTransition','UserText')}
       if($selectedScope -in @('Navigation','Rewards')){$groups+=@('HomeNavigation','HomeRecovery','TravelTransition','WeeklyGoal','CollectionReadiness','CafeteriaRecovery','CommandDriver','ManagedInputs','PassiveUi','UserText')}
-      if($selectedScope -eq 'Rewards'){$groups+=@('LiveBindings','Workflow','Preference','RuleData','EvidenceReadiness','UserText')}
+      if($selectedScope -eq 'Rewards'){
+       $groups+=@('LiveBindings','Workflow','Preference','RuleData','EvidenceReadiness','UserText','NativeDailyBattle','EventTradeBoundary','BattleArrivalRecovery','BusinessJournal')
+       if($changed -match '^src/Core/DailyTrade(Data|Catalog)\.cs$|^tests/Dustweave.Tests/Cases/TradeDataCases\.cs$'){
+        $groups+=@('TradeData','TradeOptimizer','TradeReplan','TradeQuote','TradeResume')
+       }
+      }
       return [ordered]@{schema=1;scope=$selectedScope;buildSettingsHash=$settings;baseline=$BaselineDirectory;baselineInputsHash=(Get-FileHash -LiteralPath $inputsPath).Hash;groups=$groups;changed=$changed;reason='Mapped host changes; unchanged tool validation reused from a completed full baseline.'}
      }
     }

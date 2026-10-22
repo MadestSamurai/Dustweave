@@ -12,6 +12,10 @@ public static class DailySuite {
  static readonly System.Collections.Concurrent.ConcurrentDictionary<string,string> LastStatus=new();
  public static string Owner=>Environment.GetEnvironmentVariable("BD2_DAILY_SUITE_OWNER")??throw new InvalidOperationException("统一会话缺少控制器身份。");
  public static async Task ActivateAsync(IGameHost host,string root,string id,Action<string> progress,CancellationToken cancel){
+  try{await ActivateCoreAsync(host,root,id,progress,cancel);}
+  catch(GameSessionEndedException){throw new DailyGameExitedException();}
+ }
+ private static async Task ActivateCoreAsync(IGameHost host,string root,string id,Action<string> progress,CancellationToken cancel){
   var game=host.Find()??throw new InvalidOperationException("请先启动游戏，并在日常助手连接一次。");
   var snapshot=host.ReadSnapshot();
   if(snapshot==null||snapshot.ProcessId!=game.ProcessId||snapshot.ProcessStartTicks!=game.StartTicks||snapshot.FrameUtcTicks<DateTime.UtcNow.AddSeconds(-5).Ticks)
@@ -24,9 +28,9 @@ public static class DailySuite {
   if(previous?.Available.Contains(id)!=true){
    var prepare=PrepareModule??throw new InvalidOperationException("功能准备器未就绪。");
    string managed=Path.Combine(Path.GetDirectoryName(game.Executable)!,Path.GetFileNameWithoutExtension(game.Executable)+"_Data","Managed");
-   payload=await prepare(managed,id,progress,cancel);
+   payload=await DailyGamePreparation.RunAsync(host,game,(report,token)=>prepare(managed,id,report,token),progress,cancel);
    cancel.ThrowIfCancellationRequested();
-   if(host.Find()!=game)throw new InvalidOperationException("准备功能期间游戏已退出或重启，未启用组件。");
+   if(host.Find()!=game)throw new DailyGameExitedException();
    var current=host.ReadSnapshot();
    if(current==null||current.ProcessId!=game.ProcessId||current.ProcessStartTicks!=game.StartTicks||current.FrameUtcTicks<DateTime.UtcNow.AddSeconds(-5).Ticks||current.AccountKey!=snapshot.AccountKey||current.PlayerKey!=snapshot.PlayerKey)
     throw new InvalidOperationException("准备功能期间账号或连接变化，未启用组件。");
@@ -39,11 +43,12 @@ public static class DailySuite {
   if(ownerCheck.Problem.Length!=0)throw new InvalidOperationException(ownerCheck.Problem);
   if(payload!=null){command.ModulePayload=Convert.ToBase64String(payload);command.ModuleHash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(payload));}
   cancel.ThrowIfCancellationRequested();
+  DailyGamePreparation.RequireRunning(host,game);
   pipe.Write("command.json",JsonSerializer.SerializeToUtf8Bytes(command,Json));
   var until=DateTime.UtcNow.AddSeconds(35);
   while(DateTime.UtcNow<until){
    cancel.ThrowIfCancellationRequested();
-   if(host.Find()!=game)throw new InvalidOperationException("游戏已退出或重启，功能切换已停止。");
+   if(host.Find()!=game)throw new DailyGameExitedException();
    var state=Read(root,game);
    if(state?.RejectedRequest==command.Id)throw new InvalidOperationException(state.RejectedReason);
    if(state?.Request==command.Id){

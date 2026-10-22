@@ -14,7 +14,25 @@ static class BattleArrivalRecoveryCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool ok, string name) { if (!ok) throw new Exception(name); checks.Add(name); }
-        foreach (string timing in new[] { "terminal", "hud-gone", "continuing" })
+        foreach (string mode in new[] { "auto", "sweep" })
+        using (var h = new WorkflowHarness(Path.Combine(root, "event-exhausted-" + mode), [DailyEventNative.Definition(), DailyEventSweep.Definition()]))
+        {
+            h.Workflow.Settings.EventBattle.Enabled = true; h.Workflow.Settings.EventBattle.Challenge = true;
+            var lobby = O(("Category", "Battle"), ("Eligible", true), ("Event", 100));
+            h.Readings = () => [WorkflowCases.Reading("event.currency", ("EventApFree", 0), ("EventApStack", 7)),
+                WorkflowCases.Reading("event.lobby", ("$self", lobby))];
+            h.Page("EventBattleUI");
+            h.OnCommand = c =>
+            {
+                if (S(c["Kind"]) == "back" && DailyNavigationDecision.Types(h.Frame).Contains("EventBattleUI")) { h.Page("EventMainUI"); return; }
+                if (S(c["Kind"]) == "back" && DailyNavigationDecision.Types(h.Frame).Contains("EventMainUI")) { h.Page("MenuUI"); return; }
+                throw new Exception("No free attempts may trigger new navigation or combat");
+            };
+            var done = mode == "auto" ? await DailyEventNative.Run(h.Workflow) : await DailyEventSweep.Run(h.Workflow, lobby);
+            Check(S(done["state"]) == "completed" && S(done["reason"]) == "free_attempts_exhausted" && h.Time < 5,
+                "Zero free attempts finish before missing stage data, challenge selection or journal checks: " + mode);
+        }
+        foreach (string timing in new[] { "terminal", "hud-gone", "continuing", "tail-only", "no-receipts", "no-journal" })
         using (var h = new WorkflowHarness(Path.Combine(root, "event-result-" + timing), [DailyEventNative.Definition(), DailyEventSweep.Definition()]))
         {
             h.Workflow.Settings.EventBattle.Enabled = true; h.Workflow.Settings.EventBattle.Challenge = false;
@@ -32,15 +50,19 @@ static class BattleArrivalRecoveryCases
                         ("Continuing", continuing), ("Lost", false), ("Current", 5), ("Total", 5), ("ExitField", exit))))];
             };
             h.Page("BattleSkipPopupUI");
+            if (timing != "no-journal")
+            {
             var op = h.Business.Create(h.Context, "event.native_batch", h.Evidence(),
                 O(("event", 100), ("group", 10), ("stage", 9), ("count", 5), ("cost", 1), ("category", "Battle")),
                 O(("ui", "BattleSkipPopupUI"), ("operation", "event_native_confirm")));
             op["state"] = "unknown"; op["error"] = "Event auto batch has not finished"; h.Business.Save(op);
+            }
             free = 0; atResult = true;
             var result = HomeNavigationCases.Surface("BattleResultUI", field: "_goWinSafeArea", id: 700);
             Page(h, timing == "hud-gone" ? [result] : [result, HomeNavigationCases.Surface("BattleUI_EventBattle", id: 50)]);
             for (int i = 9; i <= 13; i++)
             {
+                if (timing is "no-receipts" or "no-journal" || timing == "tail-only" && i < 11) continue;
                 h.Event("event.end", "request");
                 h.Event("event.end", "response", ("PackEventBattleInfo", O(("eventUid", 100), ("groupId", 10), ("id", i))));
             }
@@ -56,8 +78,8 @@ static class BattleArrivalRecoveryCases
                 throw new Exception("Unexpected post-batch command: " + S(c["Kind"]));
             };
             var done = await DailyEventNative.Run(h.Workflow);
-            var settled = h.Business.Records(h.Context, "event.native_batch").Single();
-            Check(S(done["state"]) == "completed" && exits == 1 && S(settled["state"]) == "completed" && N(settled["result"]?["count"]) == 5,
+            var settled = h.Business.Records(h.Context, "event.native_batch").SingleOrDefault();
+            Check(S(done["state"]) == "completed" && exits == 1 && (timing == "no-journal" ? settled == null : S(settled?["state"]) == "completed" && N(settled?["result"]?["count"]) == 5),
                 "Native event result reconciles five victories and exits once: " + timing);
             Check(h.Time < 10 && h.Box.Commands.All(c => S(c["Kind"]) is "event_native_exit" or "back"),
                 "Result recovery never repeats a paid action or waits fifteen minutes: " + timing);

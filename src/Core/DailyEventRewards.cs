@@ -8,16 +8,21 @@ namespace Dustweave;
 public static class DailyEventRewards
 {
     public static readonly string[] Prefixes = ["rewards", "pass.cache", "minigames", "trade.inventory"];
-    private static readonly Dictionary<int, string> Kinds = new() { { 4, "EventMissionUI" }, { 19, "MiniGameRouletteUI" }, { 7, "EventExchangeUI" }, { 12, "MiniGameDiceUI" }, { 17, "MiniGamePuzzleUI" } };
+    private static readonly Dictionary<int, string> Kinds = new() { { 4, "EventMissionUI" }, { 19, "MiniGameRouletteUI" }, { 7, "EventExchangeUI" }, { 12, "MiniGameDiceUI" }, { 13, "MiniGameBingoUI" }, { 17, "MiniGamePuzzleUI" } };
     public static JsonObject Parse(JsonNode? raw) => JsonNode.Parse(string.IsNullOrWhiteSpace(S(raw)) ? "{}" : S(raw))?.AsObject() ?? new();
     public static JsonObject Page(JsonObject state) => State(state, "rewards.native", "$self");
     public static JsonObject[] Select(JsonObject page, EventRewardPreferences settings)
     {
-        var enabled = new Dictionary<int, bool> { { 4, settings.Missions }, { 12, settings.Dice }, { 19, settings.Roulette }, { 7, settings.Exchange }, { 17, settings.Puzzle } };
+        var enabled = new Dictionary<int, bool> { { 4, settings.Missions }, { 12, settings.Dice }, { 19, settings.Roulette }, { 7, settings.Exchange }, { 13, settings.Puzzle }, { 17, settings.Puzzle } };
         var rows = page["Catalog"]!.AsArray().Select(Parse).ToArray();
         Require(rows.Select(r => N(r["id"])).Distinct().Count() == rows.Length, "Duplicate active event identity");
-        return rows.Where(r => enabled.GetValueOrDefault(I(r["eventType"])) && !(I(r["eventType"]) == 7 && N(r["eventSubType"]) != 0)).OrderBy(r => I(r["eventType"]) switch { 4 => 0, 12 => 1, 17 => 2, 19 => 3, _ => 4 }).ThenBy(r => N(r["sortId"])).ThenBy(r => N(r["id"])).ToArray();
+        return rows.Where(r => enabled.GetValueOrDefault(I(r["eventType"])) && !(I(r["eventType"]) == 7 && N(r["eventSubType"]) != 0)).OrderBy(r => I(r["eventType"]) switch { 4 => 0, 12 => 1, 13 or 17 => 2, 19 => 3, _ => 4 }).ThenBy(r => N(r["sortId"])).ThenBy(r => N(r["id"])).ToArray();
     }
+    // Known tabs owned by other daily stages, or informational/paid/manual tabs.
+    // New categories must remain visible in diagnostics instead of disappearing
+    // behind the list of currently executable mechanics.
+    internal static JsonArray Unsupported(JsonObject page) => Array(page["Catalog"]!.AsArray().Select(Parse)
+        .Where(r => !Kinds.ContainsKey(I(r["eventType"])) && I(r["eventType"]) is not (0 or 1 or 3 or 5 or 6 or 8 or 9 or 10 or 11 or 14 or 15 or 16 or 18 or 20 or 21 or 22 or 23 or 24 or 25)));
     public static async Task<JsonObject> WaitPage(DailyWorkflow w, long? tid = null, long? tab = null)
     {
         string? previous = null;
@@ -92,20 +97,21 @@ public static class DailyEventRewards
             "EventMissionUI" => B(p["Claim"]) ? 1 : 0,
             "MiniGameRouletteUI" => B(p["Free"]) && N(Parse(p["Cache"])["freeApCount"]) > 0 ? 2 : enough ? 3 : 0,
             "MiniGamePuzzleUI" => enough && N(p["Total"]) > N(p["Received"]) ? 9 : 0,
+            "MiniGameBingoUI" => enough && !B(p["Complete"]) && N(p["Total"]) > N(p["Received"]) ? 10 : 0,
             "EventExchangeUI" => B(p["AllowedCurrency"]) && N(p["Total"]) > 0 && N(p["Received"]) >= N(p["Total"]) ? B(p["Renew"]) ? 5 : 0 : enough ? 4 : 0,
             _ => 0
         };
     }
     public static IEnumerable<DailyBusinessProof> Proofs()
     {
-        foreach (int i in new[] { 1, 2, 3, 4, 5, 8, 9 })
+        foreach (int i in new[] { 1, 2, 3, 4, 5, 8, 9, 10 })
         {
             int action = i;
             string role = Role(action);
-            yield return new("event_rewards." + action, "event_rewards", Prefixes, (op, es, after) => Verify(op["before"]!.AsObject(), es, after, action), [role], ["event_rewards", "rewards"], OwnsPreview);
+            yield return new("event_rewards." + action, "event_rewards", Prefixes, (op, es, after) => Verify(op["before"]!.AsObject(), es, after, action), action is 9 or 10 ? [] : [role], ["event_rewards", "rewards"], OwnsPreview);
         }
     }
-    private static string Role(int action) => action switch { 1 => "missions.clear", 2 or 3 or 8 => "rewards.roulette", 4 => "rewards.exchange", 5 => "rewards.exchange_page", 9 => "rewards.puzzle", _ => throw new ArgumentException("Unsupported event action") };
+    private static string Role(int action) => action switch { 1 => "missions.clear", 2 or 3 or 8 => "rewards.roulette", 4 => "rewards.exchange", 5 => "rewards.exchange_page", 9 => "rewards.puzzle", 10 => "rewards.bingo", _ => throw new ArgumentException("Unsupported event action") };
     public static bool OwnsPreview(JsonObject op, DailyStageFrame current)
     {
         var preview = op["preview_frame"] as JsonObject;
@@ -119,11 +125,11 @@ public static class DailyEventRewards
     {
         var b = Page(before);
         var a = Page(after);
+        Identity(before, after);
         Require(JsonNode.DeepEquals(b["TableId"], a["TableId"]) && JsonNode.DeepEquals(b["Schedule"], a["Schedule"]), "Event identity changed");
+        if (action is 9 or 10) return VerifyBoard(b, a, action);
         string role = Role(action);
         var responses = Responses(role, events, before, after, 1, 200);
-        if (action == 9)
-            return VerifyPuzzle(b, a, responses);
         if (action == 1)
         {
             Require(JsonNode.DeepEquals(b["Tab"], a["Tab"]), "Event tab changed");
@@ -152,17 +158,16 @@ public static class DailyEventRewards
         Require(N(a["Page"]) > N(b["Page"]), "Exchange page did not advance");
         return O(("page", a["Page"]), ("responses", responses.Length));
     }
-    private static JsonObject VerifyPuzzle(JsonObject before, JsonObject after, JsonObject[] replies)
+    private static JsonObject VerifyBoard(JsonObject before, JsonObject after, int action)
     {
-        Require(Action(before) == 9 && replies.Length == 1, "拼图批量请求与当前计划不一致");
+        Require(Action(before) == action && S(before["Kind"]) == S(after["Kind"]), "拼图批量请求与当前计划不一致");
         var prior = Parse(before["Cache"]);
         var current = Parse(after["Cache"]);
-        var reply = replies[0];
-        Require(JsonNode.DeepEquals(reply["BeforePuzzleInfo"], prior) && JsonNode.DeepEquals(reply["MiniPuzzleInfo"], current), "拼图服务器进度与当前盘面不一致");
         long schedule = N(Parse(before["Schedule"])["id"]);
-        Require(schedule > 0 && N(prior["eventScheduleId"]) == schedule && N(current["eventScheduleId"]) == schedule, "拼图活动周期已改变");
+        Require(schedule > 0 && (action == 10 && prior.Count == 0 || N(prior["eventScheduleId"]) == schedule) && N(current["eventScheduleId"]) == schedule, "拼图活动周期已改变");
         long total = N(before["Total"]), count = N(before["Batch"]), cost = N(before["Cost"]);
-        long[] Open(JsonObject info) => (info["puzzleOpen"] as JsonArray ?? new()).Select(N).ToArray();
+        string openKey = action == 10 ? "openBingoBoardIndex" : "puzzleOpen", boardKey = action == 10 ? "bingoBoard" : "puzzle";
+        long[] Open(JsonObject info) => (info[openKey] as JsonArray ?? new()).Select(N).ToArray();
         var oldOpen = Open(prior); var newOpen = Open(current);
         Require(oldOpen.Distinct().Count() == oldOpen.Length && newOpen.Distinct().Count() == newOpen.Length && oldOpen.Length == N(before["Received"]), "拼图已翻开格数不一致");
         Require(count == Math.Min(N(before["Balance"]) / cost, total - oldOpen.Length) && count > 0, "拼图批量次数超过剩余格数或代币");
@@ -170,12 +175,12 @@ public static class DailyEventRewards
         // Completing a board advances and resets it in the same native response.
         // Never click manual renewal, which could discard unopened cells.
         Require(pageDelta == 0
-            ? newOpen.Length == oldOpen.Length + count && oldOpen.All(newOpen.Contains) && JsonNode.DeepEquals(prior["puzzle"], current["puzzle"])
-            : pageDelta == 1 && oldOpen.Length + count == total && newOpen.Length == 0,
+            ? newOpen.Length == oldOpen.Length + count && oldOpen.All(newOpen.Contains) && (prior.Count == 0 || JsonNode.DeepEquals(prior[boardKey], current[boardKey]))
+            : pageDelta == 1 && oldOpen.Length + count == total && (newOpen.Length == 0 || B(after["Complete"]) && newOpen.Length == total),
             "拼图批量结果未对应到翻格或整板自动刷新");
         long spent = checked(count * cost);
-        Require(N(before["Balance"]) - N(after["Balance"]) == spent && reply["OpenReward"] is JsonObject, "拼图代币消耗或奖励不一致");
-        return O(("opened", count), ("spent", spent), ("boards_completed", pageDelta), ("page", current["clearCount"]), ("responses", 1), ("rewards", Array(replies)));
+        Require(N(before["Balance"]) - N(after["Balance"]) == spent, "拼图代币消耗或奖励不一致");
+        return O(("opened", count), ("spent", spent), ("boards_completed", pageDelta), ("page", current["clearCount"]), ("completion_source", "current_game_board"));
     }
     public static Task<JsonObject> Perform(DailyWorkflow w, JsonObject p) => PerformCore(w, p, Action(p));
     public static Task<JsonObject> SingleRoulette(DailyWorkflow w, JsonObject p)
@@ -241,8 +246,9 @@ public static class DailyEventRewards
     public static void RequireExhausted(JsonObject p)
     {
         string kind = S(p["Kind"]);
-        if (kind is not ("MiniGameRouletteUI" or "EventExchangeUI" or "MiniGameDiceUI" or "MiniGamePuzzleUI")) return;
+        if (kind is not ("MiniGameRouletteUI" or "EventExchangeUI" or "MiniGameDiceUI" or "MiniGamePuzzleUI" or "MiniGameBingoUI")) return;
         Require(B(p["Ready"]), "活动仍在动画或结算中，不能记为完成");
+        if (kind == "MiniGameBingoUI" && B(p["Complete"])) return;
         if (kind == "MiniGameRouletteUI")
             Require(N(Parse(p["Cache"])["freeApCount"]) == 0, "转盘仍有免费次数，按钮未就绪，不能记为完成");
         if (kind is "EventExchangeUI" or "MiniGamePuzzleUI" && N(p["Total"]) > 0 && N(p["Received"]) >= N(p["Total"]) && !B(p["Renew"])) return;
@@ -327,10 +333,11 @@ public static class DailyEventRewards
         var state = await w.Evidence(Prefixes);
         var data = Data(state);
         var rows = Select(Page(state), settings);
-        var mail = new DailyEventMailDependency(rows.Any(r => N(r["eventType"]) is 12 or 17 or 19 or 7));
+        var unsupported = Unsupported(Page(state));
+        var mail = new DailyEventMailDependency(rows.Any(r => N(r["eventType"]) is 12 or 13 or 17 or 19 or 7));
         var pendingDice = w.Business.Records(w.Context, "rewards.dice").Where(DailyManagedBusiness.Pending).Select(op => N(op["scope"]?["event"])).ToHashSet();
         bool quiz = settings.Quiz && DailyMiniGames.Pending(DailyQuizRecovery.Page(state)).Length > 0;
-        if (!mail.Required && pendingDice.Count == 0 && JsonNode.DeepEquals(visits["catalog"], Array(rows)) && S(visits["cycle"]) == cycle && S(visits["settings"]) == settingsKey && !quiz && rows.All(r => !Needed(entries[S(r["id"])] as JsonObject, cycle, data.Missions, data.Balances)))
+        if (unsupported.Count == 0 && !mail.Required && pendingDice.Count == 0 && JsonNode.DeepEquals(visits["catalog"], Array(rows)) && S(visits["cycle"]) == cycle && S(visits["settings"]) == settingsKey && !quiz && rows.All(r => !Needed(entries[S(r["id"])] as JsonObject, cycle, data.Missions, data.Balances)))
             return O(("state", "skipped"), ("reason", "server_event_progress_unchanged"), ("actions", 0), ("pending_tasks", Pending(rows.Select(r => entries[S(r["id"])]!.AsObject()), data.Missions)), ("engine", "dotnet"));
         if (!await w.Has("EventUI"))
         {
@@ -343,7 +350,7 @@ public static class DailyEventRewards
         visits["policy"] = 2;
         DailyJson.Write(path, visits);
         var results = new JsonArray();
-        var output = O(("state", "running"), ("events", results), ("actions", 0), ("engine", "dotnet"));
+        var output = O(("state", "running"), ("events", results), ("actions", 0), ("engine", "dotnet"), ("unsupported_events", unsupported), ("catalog", Page(state)["Catalog"]));
         results = output["events"]!.AsArray();
         try
         {
@@ -424,7 +431,7 @@ public static class DailyEventRewards
                                         mission["title"] = S(text?["textCn"]).Length > 0 ? S(text!["textCn"]) : S(text?["textEn"]);
                                         entry["missions"]!.AsArray().Add(mission);
                                     }
-                                Require(!(S(p["Kind"]) is "MiniGameRouletteUI" or "EventExchangeUI" or "MiniGameDiceUI" or "MiniGamePuzzleUI") || N(p["Cost"]) <= 0 || N(p["Balance"]) < N(p["Cost"]) || B(p["AllowedCurrency"]), "Event currency unsupported; balance retained");
+                                Require(!(S(p["Kind"]) is "MiniGameRouletteUI" or "EventExchangeUI" or "MiniGameDiceUI" or "MiniGamePuzzleUI" or "MiniGameBingoUI") || N(p["Cost"]) <= 0 || N(p["Balance"]) < N(p["Cost"]) || B(p["AllowedCurrency"]), "Event currency unsupported; balance retained");
                                 RequireExhausted(p);
                                 tabDone = true;
                                 break;
@@ -458,7 +465,8 @@ public static class DailyEventRewards
             Require(settled, "Event rewards still changing after four sweeps; progress retained");
             visits["cycle"] = cycle;
             DailyJson.Write(path, visits);
-            output["state"] = Rows(results).Any(e => S(e["state"]) == "skipped") ? "partial" : "completed";
+            output["state"] = unsupported.Count > 0 || Rows(results).Any(e => S(e["state"]) == "skipped") ? "partial" : "completed";
+            if (unsupported.Count > 0) output["reason"] = "event_reward_unsupported";
             output["pending_tasks"] = Pending(entries.Select(p => p.Value!.AsObject()), Data(await w.Evidence(Prefixes)).Missions);
             w.Save("event-rewards-latest.json", output);
             await w.Step("EventUI", "_objBackButton", expect: "MenuUI");

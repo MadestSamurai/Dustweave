@@ -93,7 +93,7 @@ static class WorkflowCases
         Check(DailyEventRewards.Action(fullPuzzle) == 0, "puzzle never clicks manual refresh even if native renewal is enabled");
         Reject(() => DailyEventRewards.RequireExhausted(fullPuzzle), "pending automatic refresh is not mistaken for completion");
         Reject(() => DailyEventRewards.Verify(State(puzzle), puzzleEvents, State(Change(puzzleNext, "Balance", 15)), 9), "puzzle incorrect token debit rejected");
-        Reject(() => DailyEventRewards.Verify(State(puzzle), new JsonArray(puzzleEvents[0]!.DeepClone()), State(puzzleNext), 9), "puzzle missing response cannot authorize another batch");
+        Check(N(DailyEventRewards.Verify(State(puzzle), [], State(puzzleNext), 9)["opened"]) == 3, "Current server board and token balance confirm puzzle progress without historic receipts");
         var partialPuzzle = Change(puzzle, "Balance", 4); partialPuzzle["Batch"] = 2;
         var partialCurrent = PuzzleInfo(0, 1,2,3,4,5,6,7,8);
         var partialNext = Change(partialPuzzle, "Cache", partialCurrent.ToJsonString()); partialNext["Balance"] = 0; partialNext["Received"] = 8;
@@ -104,6 +104,66 @@ static class WorkflowCases
         Reject(() => DailyEventRewards.Verify(State(puzzle), PuzzleEvents(puzzlePrior, wrongPage), State(Change(puzzleNext, "Cache", wrongPage.ToJsonString())), 9), "puzzle unexplained page jump rejected");
         var puzzleCatalog = O(("Catalog", new JsonArray("{\"id\":901,\"eventType\":17}")));
         Check(DailyEventRewards.Select(puzzleCatalog, new()).Length == 1 && DailyEventRewards.Select(puzzleCatalog, new(){Puzzle=false}).Length == 0, "puzzle selection follows event type and account preference, not seasonal ID");
+        var bingoCatalog = O(("Catalog", new JsonArray("{\"id\":9017,\"eventType\":13}", "{\"id\":9917,\"eventType\":13}", "{\"id\":90,\"eventType\":99}")));
+        Check(DailyEventRewards.Select(bingoCatalog, new()).Length == 2 && DailyEventRewards.Select(bingoCatalog, new(){Puzzle=false}).Length == 0, "Bingo selection supports future event IDs under the board-game preference");
+        Check(N(DailyEventRewards.Unsupported(bingoCatalog).Single()!["id"]) == 90, "Unknown future event mechanics stay visible instead of silently completing");
+        var bingo = Change(puzzle, "Kind", "MiniGameBingoUI");
+        bingo["Received"] = 0; bingo["Batch"] = 9; bingo["Cache"] = "null";
+        Check(DailyEventRewards.Action(bingo) == 10, "Bingo first board uses native maximum count");
+        // Exercise the planner's actual operation through the transport policy;
+        // a valid plan must not be rejected by an outdated command range.
+        long gateTime = DateTime.UtcNow.Ticks;
+        var eventFrame = new BD2Daily.Live.Frame { ProcessId = 7, ProcessStartTicks = 8, Instance = "i", AtUtcTicks = gateTime,
+            Scene = "home", AccountKey = "a", PlayerKey = "p", UiToken = "ui", Surfaces = [new() { Id = 42, Type = "EventUI" }] };
+        foreach (var eventPage in new[] { bingo, puzzle, roulette, p })
+        {
+            int operation = DailyEventRewards.Action(eventPage);
+            if (operation == 0) continue;
+            var eventCommand = new BD2Daily.Live.Command { Id = Guid.NewGuid().ToString("N"), Kind = "reward_action", ProcessId = 7, ProcessStartTicks = 8,
+                Instance = "i", Scene = "home", AccountKey = "a", PlayerKey = "p", UiToken = "ui", ObservedUtcTicks = gateTime,
+                ExpiresUtcTicks = gateTime + TimeSpan.TicksPerSecond, SurfaceId = 42, Items = [N(eventPage["TableId"])], Value = operation };
+            string gateError = BD2Daily.Live.LivePolicy.Gate(eventCommand, eventFrame, gateTime, false);
+            Check(gateError == "", "Planned reward action reaches native validation: " + operation + " " + gateError);
+        }
+        foreach (int eventId in new[] { 575, 1703, 9001 })
+        foreach (int side in new[] { 3, 4, 5 })
+        foreach (int cost in new[] { 1, 2, 5 })
+        {
+            var next = bingo.DeepClone().AsObject();
+            next["TableId"] = eventId; next["EventId"] = eventId + 1;
+            next["Schedule"] = O(("id", eventId + 2), ("eventId", eventId + 1)).ToJsonString();
+            next["Total"] = side * side; next["Batch"] = side * side; next["Cost"] = cost;
+            next["Balance"] = side * side * cost;
+            var rotated = O(("Catalog", new JsonArray(O(("id", eventId), ("eventId", eventId + 1), ("eventType", 13),
+                ("name", "Future Bingo " + eventId)).ToJsonString())));
+            var chosen = DailyEventRewards.Select(rotated, new()).Single();
+            var command = new BD2Daily.Live.Command { Id = Guid.NewGuid().ToString("N"), Kind = "reward_action", ProcessId = 7,
+                ProcessStartTicks = 8, Instance = "i", Scene = "home", AccountKey = "a", PlayerKey = "p", UiToken = "ui",
+                ObservedUtcTicks = gateTime, ExpiresUtcTicks = gateTime + TimeSpan.TicksPerSecond, SurfaceId = 42,
+                Items = [N(chosen["id"])], Value = DailyEventRewards.Action(next) };
+            var afterBoard = next.DeepClone().AsObject();
+            afterBoard["Balance"] = 0; afterBoard["Page"] = 1;
+            afterBoard["Cache"] = O(("eventScheduleId", eventId + 2), ("clearCount", 1), ("openBingoBoardIndex", new JsonArray())).ToJsonString();
+            Check(command.Value == 10 && BD2Daily.Live.LivePolicy.Gate(command, eventFrame, gateTime, false) == ""
+                && N(DailyEventRewards.Verify(State(next), [], State(afterBoard), command.Value)["opened"]) == side * side,
+                $"Bingo rotation keeps selection, dispatch and completion generic: {eventId}/{side}/{cost}");
+            DailyEventRewards.RequireExhausted(afterBoard);
+        }
+        var bingoDone = bingo.DeepClone().AsObject();
+        bingoDone["Cache"] = O(("eventScheduleId", 1), ("clearCount", 1), ("openBingoBoardIndex", new JsonArray())).ToJsonString();
+        bingoDone["Page"] = 1; bingoDone["Balance"] = 2;
+        Check(N(DailyEventRewards.Verify(State(bingo), [], State(bingoDone), 10)["opened"]) == 9, "First Bingo batch may create and refresh a board without any historic receipts");
+        var partialBingo = Change(bingo, "Balance", 4); partialBingo["Batch"] = 2;
+        var partialBingoAfter = Change(partialBingo, "Balance", 0); partialBingoAfter["Received"] = 2;
+        partialBingoAfter["Cache"] = O(("eventScheduleId", 1), ("openBingoBoardIndex", new[]{0,4}), ("bingoBoard", new[]{1,2,3,4,5,6,7,8,9})).ToJsonString();
+        Check(N(DailyEventRewards.Verify(State(partialBingo), [], State(partialBingoAfter), 10)["opened"]) == 2, "Bingo partial first board consumes only available event tokens");
+        DailyEventRewards.RequireExhausted(partialBingoAfter);
+        var completedBingo = Change(bingoDone, "Complete", true);
+        Check(DailyEventRewards.Action(completedBingo) == 0, "Completed Bingo stops even with remaining tokens");
+        DailyEventRewards.RequireExhausted(completedBingo);
+        Check(DailyEventRewards.Action(Change(bingo, "AllowedCurrency", false)) == 0, "Bingo does not use unsupported currency");
+        Reject(() => DailyEventRewards.Verify(State(bingo), [], State(Change(bingoDone, "Balance", 1)), 10), "Bingo cannot start a next batch until current game balance reflects the consumed count");
+        Reject(() => DailyEventRewards.Verify(State(bingo), [], State(Change(bingoDone, "Schedule", "{\"id\":2}")), 10), "Bingo cycle changes do not inherit old actions");
         var after = State(Change(p, "Balance", 110));
         var es = new JsonArray(Event("rewards.exchange", "request", 1), Event("rewards.exchange", "response", 2, ("ChangeExchangeRewardInfo", new JsonArray(O(("id", 1))))));
         Check(N(DailyEventRewards.Verify(before, es, after, 4)["spent"]) == 100, "exchange exact server debit accepted");

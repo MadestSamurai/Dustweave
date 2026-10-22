@@ -222,11 +222,14 @@ public partial class App : Application
                 new MainWindow(fixture, fixture, smoke, smoke) { ShowActivated = false, ShowInTaskbar = false, WindowStartupLocation = WindowStartupLocation.Manual, Left = -12000, Top = 0 }.Show();
                 return;
             }
-            DailyLanguage.Current.Initialize(DailyIdentity.DataRoot); instance = new Mutex(true, DailyApplication.InstanceMutex, out bool first);
-            if (!first)
+            DailyLanguage.Current.Initialize(DailyIdentity.DataRoot); instance = new Mutex(false, DailyApplication.InstanceMutex);
+            bool acquired;
+            try { acquired = instance.WaitOne(0); } catch (AbandonedMutexException) { acquired = true; }
+            if (!acquired)
             {
-                if (!scheduled) MessageBox.Show(DailyLanguage.Current.Get("startup.already_open"), "Dustweave");
-                Shutdown();
+                if (!scheduled && !updated) MessageBox.Show(DailyLanguage.Current.Get("startup.already_open"), "Dustweave");
+                if (updated) StartupDiagnostics.Fail(new IOException("updates.app_busy"));
+                Shutdown(updated ? 1 : 0);
                 return;
             }
             StartupDiagnostics.Mark("main-window");

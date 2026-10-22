@@ -43,14 +43,15 @@ public static class DailyTradeCatalog
             int id = I(r, "elementId");
             if (I(r, "elementType") != 5 || !food.ContainsKey(id) || I(r, "highPremiumDay") == 0)
                 continue;
-            if (I(r, "priceType") != 4 || I(r, "elementCount") != 1 || I(r, "highPremiumRate") != 20)
+            // The game compares this value with the calendar day, not day of week.
+            if (I(r, "priceType") != 4 || I(r, "elementCount") != 1 || I(r, "highPremiumRate") < 0 || I(r, "priceCount") <= 0 || I(r, "highPremiumDay") is < 1 or > 31)
                 throw new InvalidDataException("不支持的新售卖公式。");
             var f = food[id];
             items.Add(new()
             {
                 ["id"] = id,
                 ["name"] = names[I(f, "itemNameTextId")].Cn,
-                ["sale"] = checked(I(r, "priceCount") * 120) / 100,
+                ["sale"] = checked(I(r, "priceCount") * checked(100 + I(r, "highPremiumRate"))) / 100,
                 ["stack"] = I(f, "stackCount"),
                 ["day"] = I(r, "highPremiumDay"),
                 ["shop"] = I(r, "highPremiumshopId")
@@ -65,7 +66,7 @@ public static class DailyTradeCatalog
             var p = node!;
             if (I(p, "elementType") != 5 || I(p, "priceType") != 4 || !shops.Contains(I(p, "groupId")))
                 continue;
-            if (!ids.Contains(I(p, "elementId")) || I(p, "elementCount") != 1 || new[] { "noBargain", "reputationType", "discountRate", "premiumRate" }.Any(k => I(p, k) != 0))
+            if (!ids.Contains(I(p, "elementId")) || I(p, "elementCount") != 1 || I(p, "priceCount") < 0 || I(p, "buyMaxCount") < 0 || new[] { "noBargain", "reputationType", "discountRate", "premiumRate" }.Any(k => I(p, k) != 0))
                 throw new InvalidDataException("不支持的新食材报价公式。");
             offers.Add(new()
             {
@@ -93,6 +94,8 @@ public static class DailyTradeCatalog
             var r = node!;
             if (!ids.Contains(I(r, "resultItemId")))
                 continue;
+            if (I(r, "resultItemCount") <= 0 || potions[I(r, "talentLevel")] < 0)
+                throw new InvalidDataException("料理产出或药耗无效。");
             var materials = A(r, "materialItemId");
             var counts = A(r, "materialItemCount");
             if (materials.Count != counts.Count)
@@ -178,6 +181,9 @@ public static class DailyTradeCatalog
         };
     }
     public static string[] Changes(JsonObject old, JsonObject current) => new[] { "schema", "client", "assembly_sha256", "characters", "items", "offers", "recipes" }.Where(k => !JsonNode.DeepEquals(old[k], current[k])).ToArray();
+    // A newly prepared connection and freshly exported catalog already bind
+    // the installed assembly. Compare business data separately from identity.
+    public static string[] RuleChanges(JsonObject old, JsonObject current) => new[] { "schema", "characters", "items", "offers", "recipes", "cooking_items", "cooking_recipes" }.Where(k => !JsonNode.DeepEquals(old[k], current[k])).ToArray();
     public static string Fingerprint(JsonNode node)
     {
         // Match the unchanged oracle's UTF-8 canonical JSON, including non-BMP

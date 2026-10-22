@@ -34,7 +34,7 @@ internal static class DailySuiteComposition {
    }
    progress("准备公共连接组件");
    // An empty manifest enables the module host without compiling or loading any business tool.
-   var result=await Task.Run(()=>DailyHookCompiler.Prepare(managed,suite:new Dictionary<string,byte[]>(),manifest:""),cancel);
+   var result=await Task.Run(()=>DailyHookCompiler.Prepare(managed,suite:new Dictionary<string,byte[]>(),manifest:"",cancellation:cancel),cancel);
    await Task.Run(()=>ClientInputs.RequireStable(managed,clientKey),cancel);
    await File.WriteAllBytesAsync(cache,result.Payload,cancel);
    DailyJson.Write(report,new CacheInfo(Hash(result.Payload),result.Report,result.GuildReport,result.StartupReport));
@@ -46,6 +46,7 @@ internal static class DailySuiteComposition {
   if(SuiteRules.ModuleEntry(id).Length==0)throw new ArgumentException("未知功能："+id);
   using var storage=DailyCacheStorage.Lease(DailyIdentity.DataRoot);
   await compiler.WaitAsync(cancel);
+  string? scratch=null;string? buildDirectory=null;
   try{
    cancel.ThrowIfCancellationRequested();
    var timing=System.Diagnostics.Stopwatch.StartNew();
@@ -67,7 +68,7 @@ internal static class DailySuiteComposition {
    }
    progress("首次准备 · "+Name(id));
    Mark("compile-started");
-   byte[] payload;string? scratch=null;
+   byte[] payload;buildDirectory=directory;
    if(id=="mansion-runaway"){
     payload=await Task.Run(()=>MansionCompiler.Prepare(managed),cancel);
    }else if(id=="pandora"){
@@ -75,7 +76,7 @@ internal static class DailySuiteComposition {
    }else if(id=="daily"){
     string target=Path.Combine(directory,"build-"+Guid.NewGuid().ToString("N"));scratch=target;
     // Adaptation and compilation are CPU-heavy even before RunAsync's first await.
-    await Task.Run(()=>liveUtility::Dustweave.Connection.LiveEntry.RunAsync(["prepare",managed,target],false),cancel);
+    await Task.Run(()=>liveUtility::Dustweave.Connection.LiveEntry.RunAsync(["prepare",managed,target],false,cancellation:cancel),cancel);
     if(!File.Exists(Path.Combine(target,"bridge.dll")))throw new InvalidDataException("日常执行组件编译失败，尚未启用。");
     payload=await File.ReadAllBytesAsync(Path.Combine(target,"bridge.dll"),cancel);
    }else if(tool=="equipment"){
@@ -94,10 +95,12 @@ internal static class DailySuiteComposition {
    await Task.Run(()=>ClientInputs.RequireStable(managed,clientKey),cancel);
    await File.WriteAllBytesAsync(cache,payload,cancel);
    DailyJson.Write(report,new ModuleCache(Hash(payload)));
-   if(scratch!=null)DailyCacheStorage.DiscardBuild(directory,scratch);
    Mark("ready");
    return payload;
-  }finally{compiler.Release();}
+  }finally{
+   try{if(scratch!=null&&buildDirectory!=null)DailyCacheStorage.DiscardBuild(buildDirectory,scratch);}
+   finally{compiler.Release();}
+  }
  }
  private static string Name(string id)=>id=="mansion-runaway"?"MANSION RUNAWAY":id=="daily"?"日常执行":DailyToolCatalog.Find(id.EndsWith("-daily",StringComparison.Ordinal)?id[..^6]:id).Name;
  private static string Hash(byte[] bytes)=>Convert.ToHexString(SHA256.HashData(bytes));

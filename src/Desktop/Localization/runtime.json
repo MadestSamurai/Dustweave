@@ -1,4 +1,44 @@
 {
+  "message.无法确认游戏进程是否仍在运行": {
+    "zh-CN": "无法确认游戏进程是否仍在运行",
+    "zh-TW": "無法確認遊戲程序是否仍在執行",
+    "en-US": "Could not determine whether the game process is still running"
+  },
+  "message.游戏已关闭或重新启动，本次连接已停止。可以重新启动游戏后连接。": {
+    "zh-CN": "游戏已关闭或重新启动，本次连接已停止。可以重新启动游戏后连接。",
+    "zh-TW": "遊戲已關閉或重新啟動，本次連接已停止。可以重新啟動遊戲後連接。",
+    "en-US": "The game closed or restarted, so this connection was stopped. You can start the game and connect again."
+  },
+  "message.Bingo board or token cost is invalid": {
+    "zh-CN": "宾果盘面或代币数量尚未就绪，本次没有使用代币。",
+    "zh-TW": "賓果盤面或代幣數量尚未就緒，本次沒有使用代幣。",
+    "en-US": "The Bingo board or token count is not ready. No tokens were used."
+  },
+  "message.料理产出或药耗无效。": {
+    "zh-CN": "游戏中的料理产出或天赋药数据无效，请重新读取。",
+    "zh-TW": "遊戲中的料理產出或天賦藥資料無效，請重新讀取。",
+    "en-US": "The game recipe output or potion cost is invalid. Read the game data again."
+  },
+  "message.event_reward_unsupported": {
+    "zh-CN": "已处理可用活动；发现尚未支持的活动类型，已保留其代币并继续后续日常。",
+    "zh-TW": "已處理可用活動；發現尚未支援的活動類型，已保留其代幣並繼續後續日常。",
+    "en-US": "Supported events were handled. A new event type needs support; its tokens were retained and the daily queue can continue."
+  },
+  "message.connection.scope_permission": {
+    "zh-CN": "Windows 不允许读取游戏进程。请点击连接并允许连接组件的权限提示，或关闭游戏后通过织尘重新启动；无需安装或重装沙盒。",
+    "zh-TW": "Windows 不允許讀取遊戲程序。請點擊連接並允許連接元件的權限提示，或關閉遊戲後透過織塵重新啟動；無需安裝或重裝沙盒。",
+    "en-US": "Windows denied access to the game process. Connect and approve the connection helper, or close the game and launch it through Dustweave. No Sandboxie installation or reinstall is needed."
+  },
+  "message.connection.scope_check": {
+    "zh-CN": "正在核对游戏进程，请允许连接组件的 Windows 权限提示；主窗口保持普通权限。",
+    "zh-TW": "正在核對遊戲程序，請允許連接元件的 Windows 權限提示；主視窗保持一般權限。",
+    "en-US": "Checking the game process. Approve the connection helper's Windows permission prompt; the main window stays unelevated."
+  },
+  "message.connection.scope_changed": {
+    "zh-CN": "游戏进程在核对期间已改变，请重新连接。",
+    "zh-TW": "遊戲程序在核對期間已改變，請重新連接。",
+    "en-US": "The game process changed during verification. Reconnect."
+  },
   "message.未能读取当前账号的天赋次数，请重新连接后重试周收集。": {"zh-CN":"未能读取当前账号的天赋次数，请重新连接后重试周收集。","zh-TW":"未能讀取目前帳號的天賦次數，請重新連線後重試每週收集。","en-US":"Unable to read this account's Ability uses. Reconnect and retry weekly collection."},
   "message.当前账号没有可用的吸收天赋，请启用天赋或在设置中选择步行收集。": {"zh-CN":"当前账号没有可用的吸收天赋，请启用天赋或在设置中选择步行收集。","zh-TW":"目前帳號沒有可用的吸收天賦，請啟用天賦或在設定中選擇步行收集。","en-US":"This account has no enabled Absorption Ability. Enable it or select walking collection in settings."},
   "message.mail_selection_rejected": { "zh-CN": "本次邮箱选择已失效，未继续领取。请重新连接后重试。", "zh-TW": "本次信箱選擇已失效，未繼續領取。請重新連線後重試。", "en-US": "The mail selection is no longer valid. Reconnect and retry." },

@@ -4,6 +4,28 @@
     "zh-TW": "正在接近已登記的農田，等待場景載入；暫不使用料理",
     "en-US": "Approaching registered farmland while the scene loads; no food is being used"
   },
+  "notice.trade.updated_rules_check": {
+    "zh-CN": "正在核对游戏更新后的跑商规则；没有下单。",
+    "zh-TW": "正在核對遊戲更新後的跑商規則；沒有下單。",
+    "en-US": "Checking trading rules after the game update. No purchases have been made."
+  },
+  "notice.trade.process_rules_mismatch": {
+    "zh-CN": "跑商规则与当前游戏进程不一致，请重新连接当前游戏。",
+    "zh-TW": "跑商規則與目前遊戲程序不一致，請重新連接目前遊戲。",
+    "en-US": "Trading data does not match the connected game. Reconnect to the current game."
+  },
+  "notice.trade.updated_rules_changed": {
+    "parameters": ["value"],
+    "zh-CN": "游戏更新改变了跑商规则（{0}）；请更新工具。没有替换旧交易目录。",
+    "zh-TW": "遊戲更新改變了跑商規則（{0}）；請更新工具。沒有替換舊交易資料。",
+    "en-US": "The game update changed trading rules ({0}). Update Dustweave; the previous trading data has been preserved."
+  },
+  "notice.trade.rules_rebound": {
+    "sourceKeys": ["跑商规则一致，已启用绑定当前数据库的独立目录；原安装包和交易记录保留。"],
+    "zh-CN": "已读取当前游戏的商品、价格与料理配方，将按现有库存重新规划。",
+    "zh-TW": "已讀取目前遊戲的商品、價格與料理配方，將按現有庫存重新規劃。",
+    "en-US": "Current game products, prices and recipes are loaded. Trading will be replanned from the current inventory."
+  },
   "notice.saffron.field_access_timeout": {
     "zh-CN": "接近农田后数据仍未就绪，已停止此环节；未使用新料理",
     "zh-TW": "接近農田後資料仍未就緒，已停止此環節；未使用新料理",
@@ -699,6 +721,11 @@
     "zh-CN": "巡逻路线藏身不足，已停止移动",
     "zh-TW": "巡邏路線藏身不足，已停止移動",
     "en-US": "Stealth is insufficient for this patrol route. Movement stopped."
+  },
+  "notice.route.stealth_speed": {
+    "zh-CN": "巡逻路线藏身和加速未就绪",
+    "zh-TW": "巡邏路線藏身和加速未就緒",
+    "en-US": "Stealth and movement speed are not ready for this patrol route"
   },
   "notice.route.stealth_dash": {
     "zh-CN": "巡逻路线藏身和飞奔未就绪",

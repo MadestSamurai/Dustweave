@@ -1,8 +1,39 @@
 {
-  "tools.action_start": { "zh-CN": "开始", "zh-TW": "開始", "en-US": "Start" },
-  "tools.action_stop": { "zh-CN": "停止", "zh-TW": "停止", "en-US": "Stop" },
-  "tools.action_connect": { "zh-CN": "连接游戏", "zh-TW": "連接遊戲", "en-US": "Connect game" },
-  "tools.action_round": { "zh-CN": "开始本局", "zh-TW": "開始本局", "en-US": "Start round" },
+  "updates.rollback_title": {
+    "zh-CN": "更新未完成",
+    "zh-TW": "更新未完成",
+    "en-US": "Update did not complete"
+  },
+  "updates.rollback_body": {
+    "zh-CN": "未能完成更新到 {0}。当前运行的是 {1}，本次没有自动执行日常。账号与设置仍保留。请到版本更新页面检查或修复安装；若再次失败，请导出诊断日志。也可以下载完整包解压到新目录使用。",
+    "zh-TW": "未能完成更新至 {0}。目前執行的是 {1}，本次沒有自動執行日常。帳號與設定仍保留。請到版本更新頁面檢查或修復安裝；若再次失敗，請匯出診斷日誌。也可以下載完整包解壓縮至新目錄使用。",
+    "en-US": "The update to {0} did not complete. You are running {1}; daily tasks were not started automatically. Accounts and settings are preserved. Open Updates to check or repair the installation. Export diagnostics if it fails again. You can also extract a full download into a new folder."
+  },
+  "updates.rollback_review": {
+    "zh-CN": "前往版本更新",
+    "zh-TW": "前往版本更新",
+    "en-US": "Open Updates"
+  },
+  "tools.action_start": {
+    "zh-CN": "开始",
+    "zh-TW": "開始",
+    "en-US": "Start"
+  },
+  "tools.action_stop": {
+    "zh-CN": "停止",
+    "zh-TW": "停止",
+    "en-US": "Stop"
+  },
+  "tools.action_connect": {
+    "zh-CN": "连接游戏",
+    "zh-TW": "連接遊戲",
+    "en-US": "Connect game"
+  },
+  "tools.action_round": {
+    "zh-CN": "开始本局",
+    "zh-TW": "開始本局",
+    "en-US": "Start round"
+  },
   "work.sequential_summary": {
     "zh-CN": "已结束 {0}/{1} 个账号 · 依次执行",
     "zh-TW": "已結束 {0}/{1} 個帳號 · 依序執行",
@@ -269,9 +300,9 @@
     "en-US": "Some completion alerts could not be delivered. Your daily results are saved."
   },
   "sandbox.launch_description": {
-    "zh-CN": "为选中账号打开独立的游戏和织尘窗口，可与其他账号分别执行日常。需要安装 Sandboxie-Plus。\n\n每个隔离窗口有自己的控制、日志和缓存；同一账号的已完成任务会与主窗口同步。请勿让同一账号在多个游戏实例中同时登录。",
-    "zh-TW": "為選取的帳號開啟獨立的遊戲和織塵視窗，可與其他帳號分別執行日常。需要安裝 Sandboxie-Plus。\n\n每個隔離視窗有自己的控制、日誌和快取；同一帳號已完成的任務會與主視窗同步。請勿讓同一帳號在多個遊戲執行個體中同時登入。",
-    "en-US": "Open a separate game and Dustweave window for the selected account, so it can run daily tasks independently of other accounts. Requires Sandboxie-Plus.\n\nEach isolated window has its own controls, logs and cache. Completed tasks sync with the main window for the same account. Do not sign in to the same account in multiple game instances at once."
+    "zh-CN": "为选中账号打开独立的游戏和织尘窗口，可与其他账号分别执行日常。需要安装 Sandboxie-Plus。\n\n每个隔离窗口有自己的控制、日志和缓存；同一账号的已完成任务会与主窗口同步。请勿让同一账号在多个游戏实例中同时登录。\n\n游戏更新：关闭所有游戏，在本机官方启动器更新一次即可；下次隔离启动自动使用新版程序，登录数据保持独立。",
+    "zh-TW": "為選取的帳號開啟獨立的遊戲和織塵視窗，可與其他帳號分別執行日常。需要安裝 Sandboxie-Plus。\n\n每個隔離視窗有自己的控制、日誌和快取；同一帳號已完成的任務會與主視窗同步。請勿讓同一帳號在多個遊戲執行個體中同時登入。\n\n遊戲更新：關閉所有遊戲，在本機官方啟動器更新一次即可；下次隔離啟動自動使用新版程式，登入資料保持獨立。",
+    "en-US": "Open a separate game and Dustweave window for the selected account, so it can run daily tasks independently of other accounts. Requires Sandboxie-Plus.\n\nEach isolated window has its own controls, logs and cache. Completed tasks sync with the main window for the same account. Do not sign in to the same account in multiple game instances at once.\n\nGame updates: close all games and update once with the normal official launcher. The next isolated launch uses the updated program files while keeping sign-in data separate."
   },
   "sandbox.remember": {
     "zh-CN": "今后不再提醒",
@@ -4728,6 +4759,46 @@
     "zh-TW": "背景檢查尚未結束，本次未重新啟動。請稍後再按「重新啟動並更新」。",
     "en-US": "The background check has not finished. No restart occurred. Try Restart and update again shortly."
   },
+  "updates.restart_maintenance": {
+    "zh-CN": "正在暂停后台缓存清理，释放文件后自动重启更新，无需再次点击。",
+    "zh-TW": "正在暫停背景快取清理，釋放檔案後自動重新啟動更新，無須再次點擊。",
+    "en-US": "Pausing background cache maintenance. The update will restart automatically once its files are released."
+  },
+  "updates.restart_maintenance_timeout": {
+    "zh-CN": "后台缓存清理尚未释放文件，本次未重启。可稍后重试；若持续出现，请导出诊断日志。",
+    "zh-TW": "背景快取清理尚未釋放檔案，本次未重新啟動。可稍後重試；若持續出現，請匯出診斷記錄。",
+    "en-US": "Background cache maintenance has not released its files. No restart occurred. Retry shortly, or export diagnostics if this persists."
+  },
+  "updates.restart_handoff": {
+    "zh-CN": "更新器已启动，正在关闭织尘。",
+    "zh-TW": "更新器已啟動，正在關閉織塵。",
+    "en-US": "The updater has started. Closing Dustweave."
+  },
+  "updates.restart_task": {
+    "zh-CN": "日常队列正在执行，请完成或停止队列后重启更新。",
+    "zh-TW": "日常佇列正在執行，請完成或停止佇列後重新啟動更新。",
+    "en-US": "A daily or account operation is active. Finish or stop it before restarting to update."
+  },
+  "updates.restart_storage": {
+    "zh-CN": "正在手动清理或迁移缓存，请完成此操作后重启更新。",
+    "zh-TW": "正在手動清理或遷移快取，請完成此操作後重新啟動更新。",
+    "en-US": "Manual cache cleanup or migration is active. Let it finish before restarting to update."
+  },
+  "updates.restart_tool_connecting": {
+    "zh-CN": "工具正在连接或切换组件，请完成或关闭工具后重启更新。",
+    "zh-TW": "工具正在連線或切換元件，請完成或關閉工具後重新啟動更新。",
+    "en-US": "A tool is connecting or switching components. Let it finish or close it before restarting to update."
+  },
+  "updates.restart_tool_running": {
+    "zh-CN": "内置工具正在运行或结算，请停止工具并等结算完成后重启更新。",
+    "zh-TW": "內建工具正在執行或結算，請停止工具並等結算完成後重新啟動更新。",
+    "en-US": "A tool is running or settling an operation. Stop it and let settlement finish before restarting to update."
+  },
+  "updates.restart_settings_open": {
+    "zh-CN": "启动引导或设置操作尚未结束，请先完成或关闭对应窗口，再重启更新。",
+    "zh-TW": "啟動導覽或設定操作尚未結束，請先完成或關閉對應視窗，再重新啟動更新。",
+    "en-US": "An onboarding or settings operation is open. Finish or close it before restarting to update."
+  },
   "updates.restart_busy": {
     "zh-CN": "当前任务或设置操作尚未结束，暂不能重启。请先完成或停止该操作，再点“重启并更新”。",
     "zh-TW": "目前任務或設定操作尚未結束，暫時無法重新啟動。請先完成或停止該操作，再按「重新啟動並更新」。",
@@ -5424,9 +5495,9 @@
     "en-US": "Game files changed while preparing the component. Wait for the update to finish, then try again."
   },
   "client_update.isolated_mismatch": {
-    "zh-CN": "隔离实例看到的游戏文件与普通安装不一致，未启动游戏。请关闭实例，检查隔离目录里的旧游戏文件；保留账号、设置和记录。",
-    "zh-TW": "隔離實例看到的遊戲檔案與一般安裝不一致，未啟動遊戲。請關閉實例，檢查隔離目錄中的舊遊戲檔案；保留帳號、設定及紀錄。",
-    "en-US": "The isolated client differs from the normal installation. No game was started. Close this instance and inspect its old game-file overlay; retain accounts, settings and history."
+    "en-US": "The isolated game files differ from the host installation. No game was started. Close all games and this isolated window, update once with the normal official launcher, then relaunch the account from Dustweave. Do not empty the sandbox. Export diagnostics if this persists.",
+    "zh-CN": "隔离窗口看到的游戏版本与本机不一致，尚未启动游戏。请关闭所有游戏和此隔离窗口，使用本机官方启动器完成更新，再从织尘重新启动账号；不要清空沙盒。若仍失败，请导出诊断。",
+    "zh-TW": "隔離視窗看到的遊戲版本與本機不一致，尚未啟動遊戲。請關閉所有遊戲和此隔離視窗，使用本機官方啟動器完成更新，再從織塵重新啟動帳號；不要清空沙盒。若仍失敗，請匯出診斷。"
   },
   "client_update.running_changed": {
     "zh-CN": "磁盘上的游戏已经更新，但当前仍是更新前连接过的游戏进程。请正常退出并重新启动游戏，再连接。",
@@ -5434,9 +5505,9 @@
     "en-US": "Installed game files have changed, but this is still the previously connected process. Close and relaunch the game before reconnecting."
   },
   "prefs.event_puzzle": {
-    "zh-CN": "拼图板使用现有代币批量翻开",
-    "zh-TW": "拼圖板使用現有代幣批量翻開",
-    "en-US": "Reveal puzzle tiles in bulk using existing tokens"
+    "zh-CN": "拼图／宾果使用现有代币批量翻开",
+    "zh-TW": "拼圖／賓果使用現有代幣批量翻開",
+    "en-US": "Play puzzle and Bingo boards in bulk using existing tokens"
   },
   "tool.mansion-runaway": {
     "zh-TW": "MANSION RUNAWAY",
@@ -7839,9 +7910,9 @@
     "en-US": "Fast travel (experimental)"
   },
   "prefs.fast_travel_hint": {
-    "zh-CN": "步行前自动使用飞奔天赋；遵守天赋药保留量，不可用时继续普通步行。",
-    "zh-TW": "步行前自動使用飛奔天賦；遵守天賦藥保留量，不可用時繼續普通步行。",
-    "en-US": "Use the speed talent before walking. Respects the talent-pill reserve; walks normally if unavailable."
+    "zh-CN": "长距离步行前使用提升移动速度的天赋，优先选择加速更快的角色；遵守天赋药保留量，不可用时普通步行。",
+    "zh-TW": "長距離步行前使用提升移動速度的天賦，優先選擇加速更快的角色；遵守天賦藥保留量，不可用時普通步行。",
+    "en-US": "Use a movement-speed talent before long walks, preferring the faster available character. Respects the talent-pill reserve; walks normally if unavailable."
   },
   "cooking.title": {
     "zh-CN": "自定义料理",
@@ -7908,32 +7979,154 @@
     "zh-TW": "未選擇料理：只購買收藏商品。",
     "en-US": "No recipes selected: only buy favorites."
   },
-  "repair.title": { "zh-CN": "检查与修复", "zh-TW": "檢查與修復", "en-US": "Check and repair" },
-  "repair.goto": { "zh-CN": "前往检查与修复", "zh-TW": "前往檢查與修復", "en-US": "Open check and repair" },
-  "repair.help": { "zh-CN": "适用于覆盖文件后更新失败、文件缺失或程序异常。只修复当前版本的程序文件，保留账号、设置和插件。", "zh-TW": "適用於覆蓋檔案後更新失敗、檔案遺失或程式異常。只修復目前版本的程式檔案，保留帳號、設定和外掛。", "en-US": "For failed updates after overwriting files, missing files or application errors. Repairs program files for this version and preserves accounts, settings and plugins." },
-  "repair.idle": { "zh-CN": "先检查安装文件，再下载需要修复的部分。", "zh-TW": "先檢查安裝檔案，再下載需要修復的部分。", "en-US": "Check the installation first, then download only the parts that need repair." },
-  "repair.check": { "zh-CN": "检查安装文件", "zh-TW": "檢查安裝檔案", "en-US": "Check installation" },
-  "repair.download": { "zh-CN": "下载修复文件", "zh-TW": "下載修復檔案", "en-US": "Download repairs" },
-  "repair.restart": { "zh-CN": "重启并修复", "zh-TW": "重新啟動並修復", "en-US": "Restart and repair" },
-  "repair.cancel": { "zh-CN": "取消", "zh-TW": "取消", "en-US": "Cancel" },
-  "repair.details": { "zh-CN": "查看受影响的文件", "zh-TW": "查看受影響的檔案", "en-US": "View affected files" },
-  "repair.checking": { "zh-CN": "正在检查文件 · {0}/{1}", "zh-TW": "正在檢查檔案 · {0}/{1}", "en-US": "Checking files · {0}/{1}" },
-  "repair.preparing": { "zh-CN": "正在准备修复 · {0}/{1}", "zh-TW": "正在準備修復 · {0}/{1}", "en-US": "Preparing repairs · {0}/{1}" },
-  "repair.file_missing": { "zh-CN": "缺失 · {0}", "zh-TW": "遺失 · {0}", "en-US": "Missing · {0}" },
-  "repair.file_changed": { "zh-CN": "与正式版本不一致 · {0}", "zh-TW": "與正式版本不一致 · {0}", "en-US": "Differs from the release · {0}" },
-  "repair.healthy": { "zh-CN": "安装文件完整，无需修复。", "zh-TW": "安裝檔案完整，無需修復。", "en-US": "Installation verified. No repairs needed." },
-  "repair.found": { "zh-CN": "发现 {0} 个文件需要修复，预计下载 {1} MB。下载不会中断当前任务。", "zh-TW": "發現 {0} 個檔案需要修復，預計下載 {1} MB。下載不會中斷目前任務。", "en-US": "{0} files need repair. Estimated download: {1} MB. Downloading will not interrupt your tasks." },
-  "repair.ready": { "zh-CN": "修复文件已校验。空闲时重启即可修复；如启动失败，会还原本次更改。", "zh-TW": "修復檔案已驗證。閒置時重新啟動即可修復；如啟動失敗，會還原本次變更。", "en-US": "Repairs verified. Restart when idle to apply them. Changes will be rolled back if startup fails." },
-  "repair.idle_required": { "zh-CN": "请先停止当前任务并关闭工具窗口，再重启修复。定时任务优先执行。", "zh-TW": "請先停止目前任務並關閉工具視窗，再重新啟動修復。定時任務優先執行。", "en-US": "Stop the current task and close tool windows before restarting to repair. Scheduled tasks take priority." },
-  "repair.cancelled": { "zh-CN": "已取消，安装文件未更改；重新操作可复用已下载的数据。", "zh-TW": "已取消，安裝檔案未變更；重新操作可重用已下載的資料。", "en-US": "Cancelled. Installation unchanged; downloaded data can be reused." },
-  "repair.failed": { "zh-CN": "未能完成修复准备，安装文件未更改。请检查网络后重试，或下载完整软件包。", "zh-TW": "未能完成修復準備，安裝檔案未變更。請檢查網路後重試，或下載完整軟體包。", "en-US": "Could not prepare repairs. Installation unchanged. Check your connection and retry, or download the full package." },
-  "updates.repair_signature": { "zh-CN": "修复清单未通过签名校验，已停止。请稍后重试或从正式下载页获取完整包。", "zh-TW": "修復清單未通過簽章驗證，已停止。請稍後重試或從正式下載頁取得完整包。", "en-US": "Repair signature verification failed. Nothing was changed. Retry later or download the official full package." },
-  "updates.repair_manifest": { "zh-CN": "修复清单与当前版本不匹配，未修改文件。请重新检查或下载完整包。", "zh-TW": "修復清單與目前版本不符，未修改檔案。請重新檢查或下載完整包。", "en-US": "The repair inventory does not match this release. Nothing was changed. Check again or download the full package." },
-  "updates.repair_unavailable": { "zh-CN": "暂时无法获取当前版本的修复清单。请稍后重试，或下载完整软件包。", "zh-TW": "暫時無法取得目前版本的修復清單。請稍後重試，或下載完整軟體包。", "en-US": "The repair inventory for this version is unavailable. Retry later or download the full package." },
-  "updates.repair_changed": { "zh-CN": "安装文件或修复缓存已变化，请重新检查后再修复。", "zh-TW": "安裝檔案或修復快取已變更，請重新檢查後再修復。", "en-US": "Installation files or cached repairs changed. Check again before repairing." },
+  "repair.title": {
+    "zh-CN": "检查与修复",
+    "zh-TW": "檢查與修復",
+    "en-US": "Check and repair"
+  },
+  "repair.goto": {
+    "zh-CN": "前往检查与修复",
+    "zh-TW": "前往檢查與修復",
+    "en-US": "Open check and repair"
+  },
+  "repair.help": {
+    "zh-CN": "适用于覆盖文件后更新失败、文件缺失或程序异常。只修复当前版本的程序文件，保留账号、设置和插件。",
+    "zh-TW": "適用於覆蓋檔案後更新失敗、檔案遺失或程式異常。只修復目前版本的程式檔案，保留帳號、設定和外掛。",
+    "en-US": "For failed updates after overwriting files, missing files or application errors. Repairs program files for this version and preserves accounts, settings and plugins."
+  },
+  "repair.idle": {
+    "zh-CN": "先检查安装文件，再下载需要修复的部分。",
+    "zh-TW": "先檢查安裝檔案，再下載需要修復的部分。",
+    "en-US": "Check the installation first, then download only the parts that need repair."
+  },
+  "repair.check": {
+    "zh-CN": "检查安装文件",
+    "zh-TW": "檢查安裝檔案",
+    "en-US": "Check installation"
+  },
+  "repair.download": {
+    "zh-CN": "下载修复文件",
+    "zh-TW": "下載修復檔案",
+    "en-US": "Download repairs"
+  },
+  "repair.restart": {
+    "zh-CN": "重启并修复",
+    "zh-TW": "重新啟動並修復",
+    "en-US": "Restart and repair"
+  },
+  "repair.cancel": {
+    "zh-CN": "取消",
+    "zh-TW": "取消",
+    "en-US": "Cancel"
+  },
+  "repair.details": {
+    "zh-CN": "查看受影响的文件",
+    "zh-TW": "查看受影響的檔案",
+    "en-US": "View affected files"
+  },
+  "repair.checking": {
+    "zh-CN": "正在检查文件 · {0}/{1}",
+    "zh-TW": "正在檢查檔案 · {0}/{1}",
+    "en-US": "Checking files · {0}/{1}"
+  },
+  "repair.preparing": {
+    "zh-CN": "正在准备修复 · {0}/{1}",
+    "zh-TW": "正在準備修復 · {0}/{1}",
+    "en-US": "Preparing repairs · {0}/{1}"
+  },
+  "repair.file_missing": {
+    "zh-CN": "缺失 · {0}",
+    "zh-TW": "遺失 · {0}",
+    "en-US": "Missing · {0}"
+  },
+  "repair.file_changed": {
+    "zh-CN": "与正式版本不一致 · {0}",
+    "zh-TW": "與正式版本不一致 · {0}",
+    "en-US": "Differs from the release · {0}"
+  },
+  "repair.healthy": {
+    "zh-CN": "安装文件完整，无需修复。",
+    "zh-TW": "安裝檔案完整，無需修復。",
+    "en-US": "Installation verified. No repairs needed."
+  },
+  "repair.found": {
+    "zh-CN": "发现 {0} 个文件需要修复，预计下载 {1} MB。下载不会中断当前任务。",
+    "zh-TW": "發現 {0} 個檔案需要修復，預計下載 {1} MB。下載不會中斷目前任務。",
+    "en-US": "{0} files need repair. Estimated download: {1} MB. Downloading will not interrupt your tasks."
+  },
+  "repair.ready": {
+    "zh-CN": "修复文件已校验。空闲时重启即可修复；如启动失败，会还原本次更改。",
+    "zh-TW": "修復檔案已驗證。閒置時重新啟動即可修復；如啟動失敗，會還原本次變更。",
+    "en-US": "Repairs verified. Restart when idle to apply them. Changes will be rolled back if startup fails."
+  },
+  "repair.idle_required": {
+    "zh-CN": "请先停止当前任务并关闭工具窗口，再重启修复。定时任务优先执行。",
+    "zh-TW": "請先停止目前任務並關閉工具視窗，再重新啟動修復。定時任務優先執行。",
+    "en-US": "Stop the current task and close tool windows before restarting to repair. Scheduled tasks take priority."
+  },
+  "repair.cancelled": {
+    "zh-CN": "已取消，安装文件未更改；重新操作可复用已下载的数据。",
+    "zh-TW": "已取消，安裝檔案未變更；重新操作可重用已下載的資料。",
+    "en-US": "Cancelled. Installation unchanged; downloaded data can be reused."
+  },
+  "repair.failed": {
+    "zh-CN": "未能完成修复准备，安装文件未更改。请检查网络后重试，或下载完整软件包。",
+    "zh-TW": "未能完成修復準備，安裝檔案未變更。請檢查網路後重試，或下載完整軟體包。",
+    "en-US": "Could not prepare repairs. Installation unchanged. Check your connection and retry, or download the full package."
+  },
+  "updates.repair_signature": {
+    "zh-CN": "修复清单未通过签名校验，已停止。请稍后重试或从正式下载页获取完整包。",
+    "zh-TW": "修復清單未通過簽章驗證，已停止。請稍後重試或從正式下載頁取得完整包。",
+    "en-US": "Repair signature verification failed. Nothing was changed. Retry later or download the official full package."
+  },
+  "updates.repair_manifest": {
+    "zh-CN": "修复清单与当前版本不匹配，未修改文件。请重新检查或下载完整包。",
+    "zh-TW": "修復清單與目前版本不符，未修改檔案。請重新檢查或下載完整包。",
+    "en-US": "The repair inventory does not match this release. Nothing was changed. Check again or download the full package."
+  },
+  "updates.repair_unavailable": {
+    "zh-CN": "暂时无法获取当前版本的修复清单。请稍后重试，或下载完整软件包。",
+    "zh-TW": "暫時無法取得目前版本的修復清單。請稍後重試，或下載完整軟體包。",
+    "en-US": "The repair inventory for this version is unavailable. Retry later or download the full package."
+  },
+  "updates.repair_changed": {
+    "zh-CN": "安装文件或修复缓存已变化，请重新检查后再修复。",
+    "zh-TW": "安裝檔案或修復快取已變更，請重新檢查後再修復。",
+    "en-US": "Installation files or cached repairs changed. Check again before repairing."
+  },
   "cooking.count": {
     "zh-CN": "已选择 {0} 道料理",
     "zh-TW": "已選擇 {0} 道料理",
     "en-US": "{0} recipes selected"
+  },
+  "client_update.syncing": {
+    "en-US": "Syncing the isolated game version…",
+    "zh-CN": "正在同步隔离游戏版本…",
+    "zh-TW": "正在同步隔離遊戲版本…"
+  },
+  "client_update.sync_tables": {
+    "zh-CN": "正在更新隔离空间中的旧游戏数据表，账号与登录信息保持独立…",
+    "zh-TW": "正在更新隔離空間中的舊遊戲資料表，帳號與登入資訊保持獨立…",
+    "en-US": "Updating outdated game tables in the isolated workspace; account and login data remain private…"
+  },
+  "client_update.sync_changed": {
+    "zh-CN": "同步时游戏数据或隔离空间状态发生变化，尚未启动游戏。请等待游戏更新完成，并关闭该账号的隔离窗口后重试。",
+    "zh-TW": "同步時遊戲資料或隔離空間狀態發生變化，尚未啟動遊戲。請等待遊戲更新完成，並關閉該帳號的隔離視窗後重試。",
+    "en-US": "Game data or the isolated workspace changed during synchronization. The game was not started. Finish the game update and close this account's isolated windows, then retry."
+  },
+  "client_update.sync_busy": {
+    "en-US": "This account needs a game-version sync. Close its isolated game and Dustweave window, then launch it again. Sync is automatic and account data is retained.",
+    "zh-CN": "需要同步此账号的游戏版本。请关闭该账号的隔离游戏和织尘窗口，然后重新启动；会自动处理，账号数据保留。",
+    "zh-TW": "需要同步此帳號的遊戲版本。請關閉該帳號的隔離遊戲和織塵視窗，然後重新啟動；會自動處理，帳號資料保留。"
+  },
+  "client_update.sync_failed": {
+    "en-US": "The isolated game sync settings could not be saved. Check that Sandboxie is running, then retry. The game was not started; account data is retained.",
+    "zh-CN": "隔离游戏版本同步设置未能保存。请确认 Sandboxie 服务正常后重试；未启动游戏，账号数据保留。",
+    "zh-TW": "隔離遊戲版本同步設定未能儲存。請確認 Sandboxie 服務正常後重試；未啟動遊戲，帳號資料保留。"
+  },
+  "client_update.sync_path": {
+    "en-US": "The game path contains characters Sandboxie rules cannot represent. In app settings, select a game path without commas, percent signs or wildcards.",
+    "zh-CN": "游戏位置包含沙盒路径规则不支持的字符。请在软件设置中选择不含逗号、百分号或通配符的游戏路径。",
+    "zh-TW": "遊戲位置包含沙盒路徑規則不支援的字元。請在軟體設定中選擇不含逗號、百分號或萬用字元的遊戲路徑。"
   }
 }

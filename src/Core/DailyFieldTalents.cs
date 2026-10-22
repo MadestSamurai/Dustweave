@@ -107,7 +107,7 @@ public static class DailyFieldTalentProof
             result.Add(request.DeepClone());
         return result;
     }
-    public static bool Owns(JsonObject op) => op["role"]?.GetValue<string>() == "dispatch.start" && op["action"]?["operation"]?.GetValue<string>() == "mainline_talent" && op["scope"]?["kind"] is JsonValue kind && kind.TryGetValue<int>(out int n) && n is 2 or 3 or 4 or 6 or 17 or 20;
+    public static bool Owns(JsonObject op) => op["role"]?.GetValue<string>() == "dispatch.start" && op["action"]?["operation"]?.GetValue<string>() == "mainline_talent" && op["scope"]?["kind"] is JsonValue kind && kind.TryGetValue<int>(out int n) && n is 2 or 3 or 4 or 6 or 13 or 17 or 20;
     // The location is routing metadata, not proof that the old cast succeeded.
     // An absorption can be replanned from a fresh map query even with no old reply.
     public static (long Pack, long Map)? AbsorptionLocation(JsonObject op)

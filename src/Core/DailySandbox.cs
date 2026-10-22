@@ -238,6 +238,17 @@ public static class DailySandbox
         }
         foreach(string path in missingPrivatePaths)
             await Run(installation,"SbieIni.exe",["append",box,"WriteFilePath",path],token);
+        // Ownership/root checks above also apply to this one-time migration.
+        // ReadFilePath ignores old program overlays without deleting any box data.
+        await DailySandboxGameFiles.EnsureAsync(request.GameExecutable,
+            () => Run(installation,"SbieIni.exe",["query",box,"ReadFilePath"],token),
+            async () => (await Run(installation,"Start.exe",["/box:"+box,"/listpids"],token)).Trim()=="0",
+            async rule => { await Run(installation,"SbieIni.exe",["append",box,"ReadFilePath",rule],token); }, progress, token);
+        // Tables live outside the installation directory. Repair only recognized
+        // stale design-table overlays, before a worker or game starts in this box.
+        await DailySandboxGameData.SynchronizeAsync(DailySandboxGameData.HostTables,
+            DailySandboxGameData.BoxTables(root), Path.Combine(StateDirectory(account.AccountKey), "game-table-recovery"),
+            async () => (await Run(installation,"Start.exe",["/box:"+box,"/listpids"],token)).Trim()=="0", progress, token);
         token.ThrowIfCancellationRequested();
         await Task.Run(() =>
         {

@@ -3,11 +3,45 @@ using Dustweave;
 
 static class SandboxCases
 {
-    public static Task Run(string output, List<string> cases)
+    public static async Task Run(string output, List<string> cases)
     {
+        await SandboxGameDataCases.Run(output, cases);
         void Check(bool value, string name) { if (!value) throw new InvalidOperationException(name); cases.Add(name); }
         void Reject(Action action, string name) { try { action(); } catch (ArgumentException) { cases.Add(name); return; } catch (InvalidDataException) { cases.Add(name); return; } throw new InvalidOperationException(name); }
         string a = new('a', 64), b = new('b', 64);
+        string game = @"C:\游戏安装\BrownDust II.exe";
+        string[] codeRules = DailySandboxGameFiles.Rules(game);
+        Check(codeRules.Length == 5 && codeRules.Contains(@"C:\游戏安装\BrownDust II_Data\*") &&
+            codeRules.Contains(@"C:\游戏安装\MonoBleedingEdge\*"), "game inputs use Unicode paths and directory boundaries");
+        Check(!codeRules.Any(r => r.Contains("launcher.settings") || r.Contains("LocalLow") || r.EndsWith(@"安装\*")),
+            "game sharing leaves channel settings and login data private instead of sharing the installation root");
+        foreach (string path in new[] { "BrownDust II.exe", @"C:\Other.exe", @"C:\unsafe,*\BrownDust II.exe", @"C:\%GAME%\BrownDust II.exe" })
+            Reject(() => DailySandboxGameFiles.Rules(path), "ambiguous read-only rule rejected: " + path);
+        var configuredRules = new List<string> { @"C:\Unrelated\*" };
+        int idleChecks = 0, notifications = 0;
+        Task<string> ReadRules() => Task.FromResult(string.Join('\n', configuredRules));
+        Task AddRule(string rule) { configuredRules.Add(rule); return Task.CompletedTask; }
+        await DailySandboxGameFiles.EnsureAsync(game, ReadRules, () => { idleChecks++; return Task.FromResult(true); }, AddRule, _ => notifications++, default);
+        Check(configuredRules.Count == 6 && idleChecks == 1 && notifications == 1, "idle owned box receives code rules once without removing unrelated configuration");
+        configuredRules = configuredRules.Select(r => r.ToUpperInvariant()).ToList();
+        await DailySandboxGameFiles.EnsureAsync(game, ReadRules, () => throw new Exception("idle check repeated"), _ => throw new Exception("duplicate write"), _ => throw new Exception("repeated progress"), default);
+        cases.Add("configured box needs no rewrite or idle restriction on subsequent launches");
+        configuredRules.Clear();
+        bool busyBlocked = false;
+        try { await DailySandboxGameFiles.EnsureAsync(game, ReadRules, () => Task.FromResult(false), AddRule, _ => { }, default); }
+        catch (InvalidOperationException e) when(e.Message == "client_update.sync_busy") { busyBlocked = true; }
+        Check(busyBlocked && configuredRules.Count == 0, "running old box is not reconfigured beneath its processes");
+        configuredRules.Add(codeRules[0]);
+        await DailySandboxGameFiles.EnsureAsync(game, ReadRules, () => Task.FromResult(true), AddRule, _ => { }, default);
+        Check(configuredRules.SequenceEqual(codeRules), "interrupted rule installation resumes only missing entries");
+        bool lostWrite = false;
+        try { await DailySandboxGameFiles.EnsureAsync(game, () => Task.FromResult(""), () => Task.FromResult(true), _ => Task.CompletedTask, _ => { }, default); }
+        catch (IOException e) when(e.Message == "client_update.sync_failed") { lostWrite = true; }
+        Check(lostWrite, "driver configuration write failure is reported before importing credentials or launching game");
+        bool cancelled = false;
+        try { await DailySandboxGameFiles.EnsureAsync(game, () => throw new Exception("read after cancel"), () => Task.FromResult(true), AddRule, _ => { }, new CancellationToken(true)); }
+        catch (OperationCanceledException) { cancelled = true; }
+        Check(cancelled, "cancelled configuration does not touch the sandbox");
         string unicodeRoot = @"C:\Users\测试用户\隔离空间\root";
         var reads = new List<uint>();
         string queried = SandboxConfiguration.ReadSetting((section, setting, index, text, bytes) => {
@@ -245,6 +279,5 @@ static class SandboxCases
             "explicit save from a credential-only host preserves same-age returned consent");
         Check(SessionService.LatestSameAccount(nextHost, n => n == 1 ? capturedConsent with {Entries=original.Entries} : null).Agreement == null,
             "consent from different credentials is not attached to another login");
-        return Task.CompletedTask;
     }
 }

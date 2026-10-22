@@ -57,7 +57,18 @@ static class SandboxScopeCases
         Unavailable(() => _ = brokenIsolated.CurrentBox, "unverified injected host never falls back to host registry");
         var unreadable = new SandboxScopeResolver(host, pid => pid == host ? false : throw new Win32Exception(5),
             _ => throw new IOException("driver unavailable"));
-        Unavailable(() => unreadable.BoxOf(ordinaryGame), "unreadable target is never assumed ordinary");
+        try { unreadable.BoxOf(ordinaryGame); throw new Exception("unreadable target accepted"); }
+        catch (SandboxScopeAccessException e) { Check(e.ProcessId == ordinaryGame && e.Message == "connection.scope_permission", "access denial reaches permission recovery instead of blaming Sandboxie"); }
+        long generation = 10;
+        var verified = new VerifiedProcessScopes(_ => generation);
+        verified.Remember(ordinaryGame, generation, "");
+        Check(verified.Read(ordinaryGame) == "", "authenticated ordinary scope can be reused for the same process");
+        generation++;
+        Check(verified.Read(ordinaryGame) == null, "PID reuse invalidates elevated scope proof");
+        verified.Remember(boxedGame, generation, "另一账号");
+        Check(verified.Read(boxedGame) == "另一账号", "verified foreign sandbox is never converted to ordinary host");
+        try { verified.Remember(ordinaryGame, generation - 1, ""); throw new Exception("stale proof accepted"); }
+        catch (IOException) { cases.Add("stale elevation reply is rejected before caching"); }
         var exited = new SandboxScopeResolver(host, pid => pid == host ? false : throw new ArgumentException("exited"),
             _ => throw new IOException("driver unavailable"));
         try { exited.BoxOf(ordinaryGame); throw new Exception("exited process accepted"); }

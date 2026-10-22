@@ -4,6 +4,65 @@ using System.Text.Json;
 using static Dustweave.DailyData;
 static class ManagedInputsCases
 {
+    private static async Task TacticsSeasonNotice(string root, List<string> cases)
+    {
+        const string lobby = "TarosTacticsBingoUI", notice = "TarosTacticsSeasonFinishUI";
+        foreach (string mode in new[] { "arrival", "resume", "opening", "disabled", "unknown", "stopped", "identity", "never-ready", "stuck" })
+        {
+            using var h = new WorkflowHarness(Path.Combine(root, "tactics-season-" + mode), []);
+            var popup = HomeNavigationCases.Surface(notice, true, "_btnBack", 2);
+            void ShowLobby()
+            {
+                h.Page(lobby);
+                h.Frame["Surfaces"]!.AsArray().Add(popup);
+                if (mode == "unknown") h.Frame["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("MessagePopupUI", true, "_buttonOK", 9));
+                h.Frame["UiToken"] = "season-notice";
+            }
+            if (mode is "opening" or "never-ready" or "stopped" or "identity") popup["InputReady"] = false;
+            if (mode == "disabled") popup["Targets"]![0]!["Enabled"] = false;
+            if (mode == "arrival") h.Page("MenuUI", "_btnTarosTactics"); else ShowLobby();
+            h.OnDelay = () => {
+                if (h.Time < .3) return;
+                if (mode == "opening") popup["InputReady"] = true;
+                if (mode == "disabled") popup["Targets"]![0]!["Enabled"] = true;
+                if (mode == "stopped") h.Stopped = true;
+                if (mode == "identity") h.Frame["AccountKey"] = "changed";
+            };
+            int acknowledgements = 0, selections = 0;
+            h.OnCommand = c => {
+                if (S(c["Kind"]) == "tactics_select")
+                {
+                    if (DailyNavigationDecision.Types(h.Frame).Contains(notice)) throw new Exception("Selection went through season notice");
+                    selections++; h.Page("TarosTacticsBingoBattleInfoPopupUI");
+                }
+                else if (N(c["SurfaceId"]) == 2 && N(c["TargetId"]) == 102)
+                {
+                    acknowledgements++;
+                    if (mode != "stuck") h.Page(lobby);
+                    else h.Time += 25; // Original acknowledgement must not be replayed.
+                }
+                else if (mode == "arrival" && S(c["Kind"]) == "click") ShowLobby();
+                else throw new Exception("Unexpected tactics navigation: " + c);
+            };
+            Exception? failure = null;
+            try
+            {
+                if (mode == "arrival")
+                {
+                    await h.Workflow.Step("MenuUI", "_btnTarosTactics", expect: lobby);
+                    if (DailyNavigationDecision.Types(h.Frame).Contains(notice)) throw new Exception("Arrival returned behind the season notice");
+                }
+                await h.Workflow.Step(O(("ui", lobby), ("operation", "tactics_select"), ("value", 1),
+                    ("items", new JsonArray(1732, 9)), ("expect", "TarosTacticsBingoBattleInfoPopupUI"), ("timeout", 2)));
+            }
+            catch (Exception e) { failure = e; }
+            bool success = mode is "arrival" or "resume" or "opening" or "disabled";
+            if (success ? failure != null || selections != 1 || acknowledgements != 1
+                : failure == null || selections != 0 || acknowledgements != (mode == "stuck" ? 1 : 0))
+                throw new Exception("Tactics season handling failed: " + mode, failure);
+            cases.Add("Tactics new-season presentation uses shared driver without replay: " + mode);
+        }
+    }
     private static async Task OpeningTalentNotice(string root, List<string> cases)
     {
         foreach (string mode in new[] { "opens", "disabled-button", "never-ready", "unknown", "changes", "account", "stopped" })
@@ -181,6 +240,7 @@ static class ManagedInputsCases
         await MailRecovery(output, cases);
         await ProtectedMail(output, cases);
         await OpeningTalentNotice(output, cases);
+        await TacticsSeasonNotice(output, cases);
         void Check(bool value, string name)
         {
             if (!value)

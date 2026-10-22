@@ -19,8 +19,9 @@ public static class DailyHookCompiler
         TypeContract Capture(TypeDefinition t,IMemberDefinition m)=>new(t.FullName,i.Shape(t),t.Methods.Where(m=>m.HasBody&&m.Body.Instructions.Count>=10).OrderByDescending(m=>m.Body.Instructions.Count).Take(8).Select(i.Body).ToArray(),new[]{new MemberContract(m.Name,MetadataIndex.Signature(m),i.MemberBody(m),i.Uses(m))});
         return new(1,new[]{Capture(player,data),Capture(camera,pump)},new[]{new ApiContract("Player.Data",player.FullName,data.Name,-1,MetadataIndex.Signature(data)),new ApiContract("Frame.Pump",camera.FullName,pump.Name,0,MetadataIndex.Signature(pump))},new());
     }
-    public static PreparedDailyHook Prepare(string managed,BindingContract? contract=null,IReadOnlyDictionary<string,byte[]>? suite=null,string manifest="")
+    public static PreparedDailyHook Prepare(string managed,BindingContract? contract=null,IReadOnlyDictionary<string,byte[]>? suite=null,string manifest="",CancellationToken cancellation=default)
     {
+        cancellation.ThrowIfCancellationRequested();
         using var i=new MetadataIndex(Path.Combine(managed,"Assembly-CSharp.dll"));
         contract??=JsonSerializer.Deserialize<BindingContract>(Resource("BD2Daily.Contract.json"))!;
         var r=BindingResolver.Resolve(i,contract);if(r.Report.Status!="compatible")throw new InvalidOperationException(string.Join("; ",r.Report.Errors));
@@ -38,10 +39,10 @@ public static class DailyHookCompiler
         sources.Add(CSharpSyntaxTree.ParseText(GuildHookContract.Source(i,out var guildReport),path:"GuildBindings.cs"));
         sources.Add(CSharpSyntaxTree.ParseText(StartupHookContract.Source(i,out var startupReport),path:"StartupBindings.cs"));
         sources.Add(CSharpSyntaxTree.ParseText("namespace BD2.LocalIpc { public static class Build { public const string Fingerprint="+Cs(Fingerprint)+"; } }"));
-        var refs=new List<MetadataReference>();foreach(var file in Directory.EnumerateFiles(managed,"*.dll")){try{refs.Add(MetadataReference.CreateFromFile(file));}catch(BadImageFormatException){}}
+        var refs=new List<MetadataReference>();foreach(var file in Directory.EnumerateFiles(managed,"*.dll")){cancellation.ThrowIfCancellationRequested();try{refs.Add(MetadataReference.CreateFromFile(file));}catch(BadImageFormatException){}}
         refs.Add(MetadataReference.CreateFromImage(Resource("BD2Daily.Harmony.dll")));
         var compilation=CSharpCompilation.Create("BD2Daily.Runtime4.Hot."+Fingerprint.Substring(0,12),sources,refs,new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,optimizationLevel:OptimizationLevel.Release,platform:Platform.X64,deterministic:true));
-        var resources=new List<ResourceDescription>{new("BD2Daily.Harmony.dll",()=>new MemoryStream(Resource("BD2Daily.Harmony.dll")),true)}; if(suite!=null){foreach(var item in suite){var bytes=item.Value;resources.Add(new("Suite."+item.Key+".dll",()=>new MemoryStream(bytes),true));}resources.Add(new("Suite.manifest",()=>new MemoryStream(Encoding.UTF8.GetBytes(manifest)),true));} using var b=new MemoryStream();var result=compilation.Emit(b,manifestResources:resources);
+        var resources=new List<ResourceDescription>{new("BD2Daily.Harmony.dll",()=>new MemoryStream(Resource("BD2Daily.Harmony.dll")),true)}; if(suite!=null){foreach(var item in suite){var bytes=item.Value;resources.Add(new("Suite."+item.Key+".dll",()=>new MemoryStream(bytes),true));}resources.Add(new("Suite.manifest",()=>new MemoryStream(Encoding.UTF8.GetBytes(manifest)),true));} using var b=new MemoryStream();var result=compilation.Emit(b,manifestResources:resources,cancellationToken:cancellation);
         if(!result.Success)throw new InvalidOperationException("Component compilation failed before injection: "+string.Join("\n",result.Diagnostics.Where(d=>d.Severity==DiagnosticSeverity.Error).Take(20)));
         return new(b.ToArray(),r.Report,guildReport,startupReport);
     }

@@ -1,5 +1,14 @@
 # Changelog / 更新记录
 
+## 1.4.17 — 2026-10-22
+
+- 适配更新后的游戏连接与活动流程；活动免费次数用尽后正常结束，追加按玩法识别的宾果批量处理。
+- 修复普通启动受到沙盒状态干扰、隔离游戏沿用旧资源的问题，关闭游戏后及时停止连接准备。
+- 跑商按当前游戏数据验证并更新商品、价格和配方，减少同机制换期时的版本限制。
+- 改进更新重启交接、启动确认与失败说明，修正实验性赶路天赋的选择。
+- Updates client compatibility, sandbox resource synchronization, native events and trading data; improves update restart reliability and travel talents.
+- [完整说明 / Full notes](docs/releases/1.4.17.md)
+
 ## 1.4.16 — 2026-10-21
 
 - 修复每周偷窃成功后因可选字段为空而中断周流程的问题，重新执行可核对原有有效回执，无需删除记录或重复偷窃。

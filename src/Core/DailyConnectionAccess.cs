@@ -14,14 +14,54 @@ using SharpMonoInjector;
 
 namespace Dustweave;
 
-// Only the initial observer injection can require elevation. The GUI, accounts,
+// Inspecting an inaccessible elevated game and initial observer injection can
+// require elevation. The GUI, accounts,
 // cache and all subsequent module/command traffic stay with the original user.
 public static class DailyConnectionAccess
 {
     public const string HelperSwitch = "--daily-connect-elevated";
     private const string PipePrefix = DailyApplication.ElevationPipePrefix;
-    internal sealed record Request(string Nonce, GameInstance Game, string Fingerprint, string PayloadSha);
-    internal sealed record Reply(string Nonce, string State, long Address = 0, string Error = "");
+    internal sealed record Request(string Nonce, GameInstance Game, string Fingerprint, string PayloadSha, bool ScopeOnly = false);
+    internal sealed record Reply(string Nonce, string State, long Address = 0, string Error = "", string? Box = null);
+
+    // Called only by an explicit connection/run/tool action, never the passive
+    // connection indicator. Resolve elevated games before strict discovery;
+    // otherwise discovery prevents the existing elevation path from being reached.
+    public static async Task PrepareScopeAsync(Action<string> progress, CancellationToken token)
+    {
+        var games = Process.GetProcessesByName("BrownDust II");
+        try
+        {
+            var inaccessible = new List<int>();
+            foreach (var process in games)
+            {
+                token.ThrowIfCancellationRequested();
+                // An inaccessible foreign process must not prompt when a valid
+                // game in this scope is already available.
+                try { if (SandboxProcessScope.Contains(process.Id)) return; }
+                catch (SandboxScopeAccessException) { inaccessible.Add(process.Id); }
+                catch (SandboxScopeException) { } // Strict discovery retains this error.
+                catch (ArgumentException) { }
+            }
+            foreach (int pid in inaccessible)
+            {
+                token.ThrowIfCancellationRequested();
+                try
+                {
+                    var game = Describe(pid);
+                    var caller = DesktopGameLaunch.ReadToken(Environment.ProcessId);
+                    var target = DesktopGameLaunch.ReadToken(pid);
+                    if (!NeedsElevation(caller.Elevated, target.Elevated, caller.User == target.User, caller.Session == target.Session))
+                        throw new IOException("connection.scope_permission");
+                    progress("connection.scope_check");
+                    await ElevateAsync(game, [], token, null, scopeOnly: true);
+                    if (SandboxProcessScope.Contains(pid)) return;
+                }
+                catch (ArgumentException) { } // Exited during enumeration.
+            }
+        }
+        finally { foreach (var process in games) process.Dispose(); }
+    }
 
     internal static NamedPipeServerStream CreateElevationServer(string name)
     {
@@ -62,6 +102,23 @@ public static class DailyConnectionAccess
     {
         if (!sameUser || !sameSession) throw new InvalidOperationException("游戏与工具不属于同一 Windows 用户或登录会话，已停止连接。");
         return gameElevated && !callerElevated;
+    }
+
+    // The preparation watchdog only checks the already selected PID/generation.
+    // Do not enumerate sandboxes, read modules, or ask for elevation each tick.
+    internal static bool IsRunning(GameInstance expected)
+    {
+        using var handle = OpenProcess(0x1000, false, expected.ProcessId);
+        if (handle.IsInvalid)
+        {
+            int error = Marshal.GetLastWin32Error();
+            if (error is 87 or 1168) return false;
+            throw new Win32Exception(error, "无法确认游戏进程是否仍在运行");
+        }
+        if (!GetProcessTimes(handle, out long created, out long exited, out _, out _) ||
+            !GetExitCodeProcess(handle, out uint code))
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "无法确认游戏进程是否仍在运行");
+        return exited == 0 && code == 259 && DateTime.FromFileTimeUtc(created).Ticks == expected.StartTicks;
     }
 
     internal static void RequireGame(GameInstance expected)
@@ -106,7 +163,7 @@ public static class DailyConnectionAccess
         return injector.Inject(payload, "BD2Daily.Runtime", "Loader", "Load").ToInt64();
     }
 
-    private static async Task<long> ElevateAsync(GameInstance game, byte[] payload, CancellationToken token, Action<object>? diagnostic)
+    private static async Task<long> ElevateAsync(GameInstance game, byte[] payload, CancellationToken token, Action<object>? diagnostic, bool scopeOnly = false)
     {
         string executable = Environment.ProcessPath ?? throw new InvalidOperationException("无法定位连接组件");
         if (!DailyApplication.IsExecutable(executable))
@@ -150,7 +207,16 @@ public static class DailyConnectionAccess
             if (!elevated.Elevated || elevated.User != original.User || elevated.Session != original.Session)
                 throw new InvalidOperationException("请使用当前 Windows 用户允许连接，不支持切换到另一个管理员账号。");
             phase = "send-request"; Report("progress");
-            await Send(pipe, new Request(nonce, game, DailyHookCompiler.Fingerprint, Convert.ToHexString(SHA256.HashData(payload))), timeout.Token);
+            await Send(pipe, new Request(nonce, game, DailyHookCompiler.Fingerprint, Convert.ToHexString(SHA256.HashData(payload)), scopeOnly), timeout.Token);
+            if (scopeOnly)
+            {
+                phase = "inspect-process-scope";
+                var proof = await Receive<Reply>(pipe, timeout.Token); RequireReply(proof, nonce, "scoped");
+                if (proof.Box == null || Describe(game.ProcessId) != game) throw new IOException("connection.scope_changed");
+                SandboxProcessScope.RememberVerified(game.ProcessId, game.StartTicks, proof.Box);
+                Report("scope-verified");
+                return 0;
+            }
             phase = "prepare-observer"; Report("progress");
             var ready = await Receive<Reply>(pipe, timeout.Token); RequireReply(ready, nonce, "ready");
             token.ThrowIfCancellationRequested(); RequireGame(game);
@@ -189,6 +255,17 @@ public static class DailyConnectionAccess
             if (!GetNamedPipeServerProcessId(pipe.SafePipeHandle, out uint server) || server != parentPid) return 2;
             var request = await Receive<Request>(pipe, timeout.Token);
             if (request.Nonce != args[2] || request.Fingerprint != DailyHookCompiler.Fingerprint) throw new InvalidDataException("连接请求版本或身份不匹配。");
+            if (request.ScopeOnly)
+            {
+                if (Path.GetFileName(request.Game.Executable) != "BrownDust II.exe" || Describe(request.Game.ProcessId) != request.Game)
+                    throw new IOException("connection.scope_changed");
+                var gameToken = DesktopGameLaunch.ReadToken(request.Game.ProcessId);
+                NeedsElevation(selfToken.Elevated, gameToken.Elevated, gameToken.User == selfToken.User, gameToken.Session == selfToken.Session);
+                string box = SandboxProcessScope.BoxOf(request.Game.ProcessId);
+                if (Describe(request.Game.ProcessId) != request.Game || Describe(parentPid) != parent) throw new IOException("connection.scope_changed");
+                await Send(pipe, new Reply(request.Nonce, "scoped", Box: box), timeout.Token);
+                return 0; // No observer compilation, injection, game or account writes.
+            }
             RequireGame(request.Game);
             var target = DesktopGameLaunch.ReadToken(request.Game.ProcessId);
             NeedsElevation(selfToken.Elevated, target.Elevated, target.User == selfToken.User, target.Session == selfToken.Session);
@@ -233,6 +310,7 @@ public static class DailyConnectionAccess
         return JsonSerializer.Deserialize<T>(bytes) ?? throw new InvalidDataException("连接消息为空。");
     }
     [DllImport("kernel32.dll", SetLastError = true)] private static extern SafeProcessHandle OpenProcess(uint access, bool inherit, int pid);
+    [DllImport("kernel32.dll", SetLastError = true)] private static extern bool GetExitCodeProcess(SafeProcessHandle handle, out uint exitCode);
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] private static extern bool QueryFullProcessImageName(SafeProcessHandle handle, uint flags, StringBuilder path, ref int length);
     [DllImport("kernel32.dll", SetLastError = true)] private static extern bool GetProcessTimes(SafeProcessHandle handle, out long created, out long exited, out long kernel, out long user);
     [DllImport("kernel32.dll", SetLastError = true)] private static extern bool GetNamedPipeClientProcessId(SafePipeHandle handle, out uint pid);

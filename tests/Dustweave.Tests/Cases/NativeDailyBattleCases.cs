@@ -134,6 +134,7 @@ static class NativeDailyBattleCases
         var plan = DailyEventNative.Plan(lobby, 5)!;
         Check(N(plan["stage"]) == 2 && N(plan["count"]) == 1, "Native battle starts at the first uncleared stage and caps at the final stage");
         Check(DailyEventNative.Plan(lobby, 0) == null, "No free AP never starts a native batch");
+        Check(DailyEventNative.Plan(new JsonObject(), 0) == null, "Exhausted free attempts do not require stage-list bookkeeping");
         lobby["Stages"] = new JsonArray(Enumerable.Range(1, 10).Select(i => (JsonNode)EventTradeBoundaryCases.Stage(i, i == 1)).ToArray());
         Check(N(DailyEventNative.Plan(lobby, 20)!["count"]) == 5, "Native batch cannot exceed five even with stored AP");
         Check(N(DailyEventNative.Plan(lobby, 20, 2)!["count"]) == 2, "Second difficulty receives only remaining batch budget");
@@ -158,10 +159,15 @@ static class NativeDailyBattleCases
         var eventReplies = new JsonArray(Event("event.end", "request", 1), Event("event.end", "response", 2, ("PackEventBattleInfo", O(("eventUid", 100), ("groupId", 10), ("id", 2)))),
             Event("event.end", "request", 3), Event("event.end", "response", 4, ("PackEventBattleInfo", O(("eventUid", 100), ("groupId", 10), ("id", 3)))));
         Check(N(DailyEventNative.Verify(eventOp, eventReplies, EventAfter(3, 10))["count"]) == 2, "Native auto settles ordered server progress and free AP debit");
-        Reject(() => DailyEventNative.Verify(eventOp, eventReplies, EventAfter(3, 9)), "Stored AP change cannot be confirmed as free auto play");
-        Reject(() => DailyEventNative.Verify(eventOp, eventReplies, EventAfter(5, 10)), "Winning receipts without their AP debit are not accepted");
+        Check(B(DailyEventNative.Verify(eventOp, eventReplies, EventAfter(3, 9))["currency_changed_unexpectedly"]), "Unexpected currency changes are diagnostic and do not trap a terminal result");
+        Check(S(DailyEventNative.Verify(eventOp, [], EventAfter(5, 10))["completion_source"]) == "current_game_result", "The native terminal result is authoritative even without historic receipts");
         Reject(() => DailyEventNative.Verify(eventOp, eventReplies, EventAfter(3, 10, continuing: true)), "Intermediate auto result cannot finish batch");
-        Check(DailyEventNative.Definition().EventRoles.Contains("event.end"), "Native batch subscribes to actual game result role");
+        Check(DailyEventNative.Definition().EventRoles.Length == 0, "Native completion does not require receipt capture to be available");
+        Check(B(DailyEventNative.Verify(eventOp, [], EventAfter(0, 10))["free_exhausted"]), "Exhausted free attempts finish without any receipts");
+        var tailOnly = new JsonArray(eventReplies[2]!.DeepClone(), eventReplies[3]!.DeepClone());
+        Check(N(DailyEventNative.Verify(eventOp, tailOnly, EventAfter(0, 10))["count"]) == 2, "Truncated receipt tails cannot invalidate the finished game batch");
+        var otherAccount = EventAfter(0, 10); otherAccount["Frame"]!["AccountKey"] = "other";
+        Reject(() => DailyEventNative.Verify(eventOp, [], otherAccount), "Game-state completion still preserves account identity");
         var defeat = new JsonArray(Event("event.end", "request", 1), Event("event.end", "response", 2, ("PackEventBattleInfo", null)));
         Check(B(DailyEventNative.Verify(eventOp, defeat, EventAfter(5, 10, lost: true))["lost"]), "Native defeat can finish early without fabricated clear progress");
 

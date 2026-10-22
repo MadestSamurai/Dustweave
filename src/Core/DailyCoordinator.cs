@@ -71,6 +71,7 @@ public sealed class DailyCoordinator
         {
             string root = Path.GetDirectoryName(leasePath)!;
             bool ipc = BD2.LocalIpc.DesktopFiles.Handles(leasePath);
+            if (ipc && !BD2.LocalIpc.DesktopFiles.HasLease(root)) return;
             var current = ipc ? game.Find() : null;
             if (ipc && (!DailyTransport.Refresh(root, current) || !BD2.LocalIpc.DesktopFiles.HasLease(root)))
                 return;
@@ -202,7 +203,7 @@ public sealed class DailyCoordinator
         {
             token.ThrowIfCancellationRequested();
             if (game.Find() != instance)
-                throw new InvalidOperationException("游戏进程已退出或改变，本次检查停止。");
+                throw new DailyGameExitedException();
             var report = game.ReadStatus();
             if (report?.ProcessId == instance.ProcessId && report.ProcessStartTicks == instance.StartTicks && report.State == "error")
                 throw new InvalidOperationException("组件启动失败：" + report.Error);
@@ -329,10 +330,12 @@ public sealed class DailyCoordinator
         runId = Guid.NewGuid().ToString("N");
         try
         {
+            await game.PrepareAccessAsync(m => Report("connecting", m), active.Token);
             Revoke();
             Report("starting", "开始本次账号检查");
             await action(active.Token);
         }
+        catch (DailyGameExitedException e) { Report("stopped", e.Message); throw; }
         catch (OperationCanceledException) { Report("stopped", "已停止。保留游戏当前账号和已完成的检查记录。"); }
         catch (Exception e) { DailyJson.Write(Path.Combine(Path.GetDirectoryName(runPath)!, "run-error.json"), new { atUtc = DateTimeOffset.UtcNow, runId, error = e.ToString() }); Report("error", e.Message); throw; }
         finally { try { Revoke(); } finally { active.Dispose(); active = null; gate.Release(); } }

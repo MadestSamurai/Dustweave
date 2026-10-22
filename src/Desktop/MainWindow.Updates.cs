@@ -100,10 +100,38 @@ public partial class MainWindow
     private bool UpdateRestarting => updateRestartPending || updateInstalling;
     private event Action<string, object?[]>? UpdateInstallStatusChanged;
     private event Action? UpdateInstallControlsChanged;
+    private readonly Queue<object> updateRestartEvents = new();
     private void UpdateInstallStatus(string key, params object?[] args)
     {
         updatePanel.Status(key, args);
         UpdateInstallStatusChanged?.Invoke(key, args);
+        // One bounded, non-sensitive trace survives a later successful update.
+        // A generic busy flag alone cannot identify the startup task involved.
+        try
+        {
+            updateRestartEvents.Enqueue(new { atUtc = DateTimeOffset.UtcNow, state = key,
+                version = DailyProductVersion.Current, target = readyUpdate?.Release.Version,
+                busy, manualCacheChanging, automaticCacheChanging, logCleanupRunning,
+                updateChecking, scheduleChecking, connectionReading, readingAccounts,
+                toolChanging, toolRunning = ToolRunning, parallel = ParallelBusy,
+                pluginChanging, onboardingOpen, modalDepth = DailyDialogs.ModalDepth });
+            while (updateRestartEvents.Count > 32) updateRestartEvents.Dequeue();
+            DailyJson.Write(Path.Combine(root, "updates", "restart-state.json"), new { events = updateRestartEvents.ToArray() });
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
+    }
+    private string? UpdateRestartBlockReason(bool drainingMaintenance = false)
+    {
+        if (busy || ParallelBusy) return "updates.restart_task";
+        if (manualCacheChanging) return "updates.restart_storage";
+        if (toolChanging) return "updates.restart_tool_connecting";
+        if (onboardingOpen || pluginChanging || softwareSandboxPath?.Preparing == true || releaseDialogOpen || DailyDialogs.ModalDepth > 0)
+            return "updates.restart_settings_open";
+        // Automatic retention owns the same control lease as a tool. Drain it
+        // before deciding whether an actual tool is running; never ignore that
+        // lease at installer handoff.
+        if (!drainingMaintenance && ToolRunning) return "updates.restart_tool_running";
+        return null;
     }
     private Window? updateNotice;
     private DailyUpdateJob? readyUpdate;
@@ -245,7 +273,7 @@ public partial class MainWindow
     }
     private void UpdateUpdateControls()
     {
-        updatePanel.Busy(updateChecking || UpdateRestarting, readyUpdate != null, Unavailable || scheduleChecking,
+        updatePanel.Busy(updateChecking || UpdateRestarting, readyUpdate != null, UpdateRestartBlockReason(logCleanupRunning) != null || scheduleChecking,
             availableUpdateVersion != null && manualUpdateVersion == null);
         UpdateAvailableBadge.Visibility = availableUpdateVersion != null ? Visibility.Visible : Visibility.Collapsed;
         UpdateInstallControlsChanged?.Invoke();
@@ -263,7 +291,7 @@ public partial class MainWindow
     }
     private void OfferUpdateNotice()
     {
-        if (IsSandboxWindow || smoke != null || finalClose || updateChecking || updatePromptShown || Unavailable || scheduleChecking || releaseDialogOpen || DailyDialogs.ModalDepth > 0 || updateInstalling) return;
+        if (IsSandboxWindow || smoke != null || finalClose || updateChecking || updatePromptShown || UpdateRestarting || UpdateRestartBlockReason(logCleanupRunning) != null || scheduleChecking) return;
         if (manualUpdateVersion == null && readyUpdate == null || HasPendingScheduledRun(DateTimeOffset.UtcNow)) return;
         if (manualUpdateVersion != null)
         {
@@ -345,8 +373,7 @@ public partial class MainWindow
         if (IsSandboxWindow) { UpdateInstallStatus("updates.isolated_open"); return; }
         if (installation == null || expectedVersion != null && installation.Release.Version != expectedVersion)
         { UpdateInstallStatus("updates.restart_changed"); return; }
-        bool ActiveWork() => onboardingOpen || busy || cacheChanging || toolChanging || ToolRunning || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true || releaseDialogOpen || DailyDialogs.ModalDepth > 0;
-        if (ActiveWork()) { UpdateInstallStatus("updates.restart_busy"); return; }
+        if (UpdateRestartBlockReason(logCleanupRunning) is {} initialBlock) { UpdateInstallStatus(initialBlock); return; }
         using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellation, updateLifetime.Token);
         bool scheduledFirst = false;
         updateRestartPending = true;
@@ -354,6 +381,15 @@ public partial class MainWindow
         {
             SetBusy(busy);
             UpdateInstallStatus("updates.restart_preparing");
+            if (logCleanupRunning)
+            {
+                UpdateInstallStatus("updates.restart_maintenance");
+                logCleanupCancellation?.Cancel();
+                // Cancellation is cooperative: do not hand the updater files
+                // while the maintenance worker still owns its write locks.
+                try { await logCleanupCompletion.WaitAsync(TimeSpan.FromSeconds(30), lifetime.Token); }
+                catch (TimeoutException) { UpdateInstallStatus("updates.restart_maintenance_timeout"); return; }
+            }
             // A background update/schedule check may already be in flight. Preserve
             // this click while it finishes; do not start new background work meanwhile.
             // Connection/account observations are read-only and never gate a restart.
@@ -365,7 +401,7 @@ public partial class MainWindow
                 await Task.Delay(50, lifetime.Token);
             }
             lifetime.Token.ThrowIfCancellationRequested();
-            if (ActiveWork()) { UpdateInstallStatus("updates.restart_busy"); return; }
+            if (UpdateRestartBlockReason() is {} finalBlock) { UpdateInstallStatus(finalBlock); return; }
             if (!installation.Repair && readyUpdate?.Release.Version != installation.Release.Version)
             { UpdateInstallStatus("updates.restart_changed"); return; }
             if (!preferencesPanel.SavePending()) { UpdateInstallStatus("updates.restart_settings"); return; }
@@ -428,7 +464,10 @@ public partial class MainWindow
             string attempt = Path.Combine(installation.Directory, "attempts", nonce);
             DailyUpdates.EnsureNoLinks(attempt); Directory.CreateDirectory(attempt);
             string helper = Path.Combine(attempt, "Dustweave.Updater.exe"), job = Path.Combine(attempt, "job.json");
-            installation = installation with { Nonce = nonce, OriginalSha256 = await Task.Run(() => DailyUpdateTransaction.Hash(Environment.ProcessPath!)) };
+            using var parent = Process.GetCurrentProcess();
+            installation = installation with { Nonce = nonce, Target = Environment.ProcessPath!, ParentPid = parent.Id,
+                ParentStartTicks = parent.StartTime.ToUniversalTime().Ticks,
+                OriginalSha256 = await Task.Run(() => DailyUpdateTransaction.Hash(Environment.ProcessPath!)) };
             await Task.Run(() => DailyUpdateTransaction.CopyDurable(helperSource, helper));
             cancellation.ThrowIfCancellationRequested();
             DailyJson.Write(job, installation);
@@ -436,6 +475,7 @@ public partial class MainWindow
             var start = new ProcessStartInfo(helper) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = installation.Directory };
             start.ArgumentList.Add("--apply-update"); start.ArgumentList.Add(job);
             _ = Process.Start(start) ?? throw new IOException("updates.start_failed");
+            UpdateInstallStatus("updates.restart_handoff");
             finalClose = true; timer.Stop(); Close();
         }
     }

@@ -419,6 +419,8 @@ static class SelfTest {
    c.Kind="mainline_menu";f.Surfaces[0].Type="GameFieldDefaultUI";
    foreach(var talent in new[]{2,3,4,6,15,17,20}){c.Value=talent;Check(LivePolicy.Gate(c,f,now,false)=="","mainline gathering talents");}
    c.Value=18;Check(LivePolicy.Gate(c,f,now,false)!="","reject unrelated talent");
+   c.Value=13;f.BridgeVersion=128;Check(LivePolicy.Gate(c,f,now,false)!="","old component rejects walking-speed menu");
+   f.BridgeVersion=129;Check(LivePolicy.Gate(c,f,now,false)=="","current component opens MoveSpeedUp rather than FastDash");
   }
   {
    var c=Command();c.Kind="mainline_talent";c.TargetId=0;c.Value=123;var f=Frame();f.BridgeVersion=21;f.Surfaces[0].Type="QuickMenuUI";
@@ -467,7 +469,13 @@ static class SelfTest {
    qf.Surfaces=new[]{qf.Surfaces[0],toolbar,popup};Check(LivePolicy.Gate(qc,qf,now,false)=="story_popup_blocked","native story touch preserves confirmation");
    var df=Frame();df.Surfaces[0].Type="EventUI";var dc=Command();dc.Kind="reward_action";dc.TargetId=0;dc.Value=6;dc.Items=new long[]{560};
    dc.Value=8;Check(LivePolicy.Gate(dc,df,now,false)=="","roulette explicit single draw");df.BridgeVersion=104;Check(LivePolicy.Gate(dc,df,now,false)!="","old bridge refuses explicit single draw");df.BridgeVersion=LiveProtocol.BridgeVersion;dc.Value=6;
-   dc.Value=9;Check(LivePolicy.Gate(dc,df,now,false)=="","puzzle bulk open uses current scoped event");df.BridgeVersion=112;Check(LivePolicy.Gate(dc,df,now,false)!="","old bridge refuses puzzle batch");df.BridgeVersion=LiveProtocol.BridgeVersion;dc.Value=10;Check(LivePolicy.Gate(dc,df,now,false)!="","manual puzzle renewal is not exposed");dc.Value=6;
+   dc.Value=9;Check(LivePolicy.Gate(dc,df,now,false)=="","puzzle bulk open uses current scoped event");df.BridgeVersion=112;Check(LivePolicy.Gate(dc,df,now,false)!="","old bridge refuses puzzle batch");df.BridgeVersion=LiveProtocol.BridgeVersion;
+   dc.Value=10;Check(LivePolicy.Gate(dc,df,now,false)=="","bingo bulk open reaches native event validation");
+   df.BridgeVersion=129;Check(LivePolicy.Gate(dc,df,now,false)=="reward_action_invalid","old bridge refuses bingo batch");df.BridgeVersion=LiveProtocol.BridgeVersion;
+   dc.Value=11;Check(LivePolicy.Gate(dc,df,now,false)=="reward_action_invalid","unknown reward operation is not exposed");dc.Value=10;
+   dc.Items=new long[0];Check(LivePolicy.Gate(dc,df,now,false)=="reward_selection_invalid","bingo requires a selected event identity");dc.Items=new long[]{560};
+   df.Surfaces=[df.Surfaces[0],new(){Id=55,Type="MessagePopupUI",Popup=true,Order=9999}];Check(LivePolicy.Gate(dc,df,now,false)=="reward_popup_blocked","bingo preserves unrelated confirmations");df.Surfaces=[df.Surfaces[0]];
+   df.Surfaces[0].Type="ShopUI";Check(LivePolicy.Gate(dc,df,now,false)=="reward_context_rejected","bingo is restricted to the event page");df.Surfaces[0].Type="EventUI";dc.Value=6;
    Check(LivePolicy.Gate(dc,df,now,false)=="","dice scoped start");df.BridgeVersion=46;Check(LivePolicy.Gate(dc,df,now,false)!="","old bridge refuses dice command");
   }
   {

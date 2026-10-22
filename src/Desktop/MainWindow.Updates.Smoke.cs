@@ -143,6 +143,22 @@ public partial class MainWindow
             updatePanel.Repair.Problems([]); updatePanel.Repair.State("repair.idle", "repair.check", false);
             await CheckUpdateSchedulePriorityForSmoke(Check, Find<Button>);
             await CheckUpdateRestartForSmoke(Check, Find<Button>, Find<TextBlock>);
+            foreach (string language in DailyLanguage.Codes)
+            foreach (var appearance in new[] { DailyAppearance.Light, DailyAppearance.Dark })
+            {
+                L.Select(language); theme.Select(appearance);
+                var failure = new DailyUpdateEngine.Result("rolled_back", "99.0.3", DateTimeOffset.UtcNow, "synthetic startup failure");
+                DailyJson.Write(Path.Combine(root, "update-result.json"), failure);
+                Check(ShowUpdateFailure() && updateNotice != null, "Rollback must be explained without running daily tasks");
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                Check(Find<TextBlock>(updateNotice!).Any(t => t.Text.Contains("99.0.3") && t.Text.Contains(DailyProductVersion.Current)), "Rollback notice must distinguish requested and running versions");
+                Check(DailyDialogs.ModalDepth == 0, "Rollback notice must not block the dispatcher");
+                Capture("update-rollback-" + language + "-" + appearance, updateNotice);
+                Find<Button>(updateNotice!).Single(b => b.Content?.ToString() == L.Get("updates.rollback_review")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                Check(WorkspaceTabs.SelectedItem == UpdatesTab && !ShowUpdateFailure(), "Acknowledged rollback is shown once and leads to update recovery");
+            }
+            File.Delete(Path.Combine(root, "update-result.json"));
+            File.Delete(Path.Combine(root, "update-failure-seen.json"));
             Check(fixture.Calls.Count == calls && DailyDialogs.ModalDepth == 0, "Discovery touched the game or opened a modal");
             DailyJson.Write(Path.Combine(smoke!, "update-discovery.json"), new { status = "passed", checks, fetches, downloads, realGameTouched = false });
         }
@@ -207,7 +223,7 @@ public partial class MainWindow
             CloseUpdateNotice();
 
             busy = true; notice = Show(); Restart(notice).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); await request!;
-            check(starts == 1 && notice.IsVisible && Feedback(notice) == L.Get("updates.restart_busy"),
+            check(starts == 1 && notice.IsVisible && Feedback(notice) == L.Get("updates.restart_task"),
                 "A real task was interrupted or its restart block was silent");
             busy = false; CloseUpdateNotice();
 
@@ -251,12 +267,90 @@ public partial class MainWindow
                 Capture("update-restart-failure-" + language + "-" + appearance, (FrameworkElement)notice.Content);
             }
             CloseUpdateNotice();
+            await CheckUpdateMaintenanceForSmoke(check, job);
         }
         finally
         {
             CloseUpdateNotice(); readyUpdate = previousUpdate; scheduleStore = previousStore;
             connectionUpdate = previousConnection; connectionReading = previousReading; readingAccounts = previousAccounts;
             updateChecking = previousChecking; busy = previousBusy; updateInstalling = updateRestartPending = false; SetBusy(busy);
+        }
+    }
+
+    private async Task CheckUpdateMaintenanceForSmoke(Action<bool, string> check, DailyUpdateJob job)
+    {
+        int starts = 0;
+        var cancelled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        string? status = null;
+        void Report(string key, object?[] args) => status = key;
+        UpdateInstallStatusChanged += Report;
+        Task Start(DailyUpdateJob selected, CancellationToken token)
+        {
+            // Use real fixture file leases, not just simulated busy flags.
+            using var control = DailyUpdateHost.AcquireControl(root);
+            using var storage = DailyUpdateHost.AcquireStorage(root, exclusive: true);
+            check(!logCleanupRunning && !cacheChanging && UpdateRestarting,
+                "Updater launched before background maintenance released its files");
+            starts++; return Task.CompletedTask;
+        }
+        Task? maintenance = null;
+        try
+        {
+            readyUpdate = job;
+            maintenance = RunAutomaticMaintenanceAsync(async token =>
+            {
+                SetAutomaticCacheChanging(true);
+                try
+                {
+                    using var control = DailyUpdateHost.AcquireControl(root);
+                    using var storage = DailyUpdateHost.AcquireStorage(root, exclusive: true);
+                    try { await Task.Delay(Timeout.Infinite, token); }
+                    catch (OperationCanceledException) { cancelled.TrySetResult(); await release.Task; throw; }
+                }
+                finally { SetAutomaticCacheChanging(false); }
+            });
+            check(ToolRunning && cacheChanging && UpdateRestartBlockReason(true) == null,
+                "Automatic cleanup is incorrectly presented as a running tool");
+            var request = RequestUpdateInstallCoreAsync(job, job.Release.Version, Start);
+            await cancelled.Task.WaitAsync(TimeSpan.FromSeconds(3));
+            check(UpdateRestarting && starts == 0 && !request.IsCompleted && status == "updates.restart_maintenance",
+                "Cleanup swallowed the restart click or did not receive cancellation");
+            var pending = logCleanupCompletion;
+            nextLogCleanup = DateTime.MinValue;
+            await CheckLogCleanupAsync();
+            await RequestUpdateInstallCoreAsync(job, job.Release.Version, Start);
+            check(ReferenceEquals(pending, logCleanupCompletion) && starts == 0,
+                "A restart allowed new maintenance or duplicate installation");
+            release.TrySetResult();
+            await request.WaitAsync(TimeSpan.FromSeconds(3));
+            await maintenance;
+            check(starts == 1 && !UpdateRestarting, "Restart did not automatically continue after cleanup stopped");
+
+            // An unrelated tool may own the shared lease while maintenance is
+            // still flushing evidence. Recheck that lease after the drain.
+            using (DailyUpdateHost.AcquireControl(root))
+            {
+                maintenance = RunAutomaticMaintenanceAsync(token => Task.Delay(Timeout.Infinite, token));
+                await RequestUpdateInstallCoreAsync(job, job.Release.Version, Start);
+                await maintenance;
+                check(starts == 1 && status == "updates.restart_tool_running", "Maintenance cancellation bypassed a real tool's lease");
+            }
+            SetCacheChanging(true);
+            await RequestUpdateInstallCoreAsync(job, job.Release.Version, Start);
+            check(starts == 1 && status == "updates.restart_storage", "Update interrupted a user's cache migration");
+            SetCacheChanging(false);
+            await RequestUpdateInstallCoreAsync(job, job.Release.Version, Start);
+            check(starts == 2, "Host did not recover after maintenance blocking conditions ended");
+            string trace = File.ReadAllText(Path.Combine(root, "updates", "restart-state.json"));
+            check(trace.Contains("updates.restart_maintenance") && trace.Contains("updates.restart_tool_running") && trace.Contains("updates.restart_storage"),
+                "Restart diagnostics do not distinguish automatic maintenance, actual tools and manual storage changes");
+        }
+        finally
+        {
+            release.TrySetResult(); logCleanupCancellation?.Cancel();
+            if (maintenance != null) await maintenance;
+            SetCacheChanging(false); UpdateInstallStatusChanged -= Report;
         }
     }
 }

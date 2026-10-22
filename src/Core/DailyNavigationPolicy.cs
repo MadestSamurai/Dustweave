@@ -310,6 +310,10 @@ public static class DailyNavigationDecision
         string ui = Text(surface, "Type");
         if (ui == "EvilCastleSeasonTotalRewardPopupUI")
             return HasTarget(surface, "_objBackButton") ? Click(ui, "_objBackButton", "关闭已发放的恶魔城赛季奖励") : null;
+        // This native button only closes the new-season acknowledgement. Handle
+        // it on arrival and resumed inputs, not only when navigating back home.
+        if (ui == "TarosTacticsSeasonFinishUI")
+            return HasTarget(surface, "_btnBack") ? Click(ui, "_btnBack", "确认已开启的新战术教材，继续当前环节") : null;
         if (ui == "GameQuitPopupUI")
             return HasTarget(surface, "_objCloseButton") ? Click(ui, "_objCloseButton", "取消退出游戏确认，继续当前日常") : null;
         if (Suppressible.Contains(ui))

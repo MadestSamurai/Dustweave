@@ -104,6 +104,7 @@ internal sealed class HostedToolPreparation
             // command guard. The subsequent read/connect click takes its own lease.
             body.IsEnabled=true;ready();Ready=true;banner.Visibility=Visibility.Collapsed;
         }
+        catch(DailyGameExitedException error){SetStatus(error.Message);}
         catch(OperationCanceledException) when(cancel.IsCancellationRequested){SetStatus("tools.preparation_cancelled");}
         catch(Exception error)
         {
@@ -135,6 +136,7 @@ internal sealed class HostedToolPreparation
     internal static async Task PrepareAsync(string id,string root,Action<string> report,CancellationToken cancel)
     {
         var host=new DailyGameHost(root);
+        await host.PrepareAccessAsync(report,cancel);
         var game=host.Find()??throw new InvalidOperationException("请先启动游戏。");
         if(!int.TryParse(Environment.GetEnvironmentVariable("BD2_DAILY_GAME_PID"),out int pid)||
             !long.TryParse(Environment.GetEnvironmentVariable("BD2_DAILY_GAME_START"),out long start)||
@@ -144,7 +146,7 @@ internal sealed class HostedToolPreparation
         await WaitForIdentityAsync(host,game,report,cancel);
         await DailySuite.ActivateAsync(host,root,id,report,cancel);
         cancel.ThrowIfCancellationRequested();
-        if(host.Find()!=game)throw new InvalidOperationException(DailyLanguage.Current.Get("tools.preparation_game_changed"));
+        if(host.Find()!=game)throw new DailyGameExitedException();
         var state=DailySuite.Read(root,game)??throw new InvalidOperationException("统一会话未就绪。");
         var environment=new ProcessStartInfo();DailySuite.SetToolEnvironment(environment,state,game,id);
         // Change only this child, never the desktop process or persistent settings.
@@ -158,7 +160,7 @@ internal sealed class HostedToolPreparation
         for(int i=0;i<20;i++)
         {
             cancel.ThrowIfCancellationRequested();
-            if(host.Find()!=game)throw new InvalidOperationException(DailyLanguage.Current.Get("tools.preparation_game_changed"));
+            if(host.Find()!=game)throw new DailyGameExitedException();
             if(host.ReadSnapshot(game) is {State:"identified"} snapshot &&
                 snapshot.ProcessId==game.ProcessId && snapshot.ProcessStartTicks==game.StartTicks &&
                 snapshot.FrameUtcTicks>=DateTime.UtcNow.AddSeconds(-5).Ticks &&

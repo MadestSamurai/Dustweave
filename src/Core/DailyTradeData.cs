@@ -4,7 +4,7 @@ using System.Text;
 using System.Text.Json.Nodes;
 namespace Dustweave;
 
-/// <summary>Rebind only proven unchanged trade rules. Never edits the installed bundle or a transaction.</summary>
+/// <summary>Build current trade inputs from validated game tables, never reuse old plans.</summary>
 public sealed class DailyTradeData
 {
     public string Directory { get; private set; } = "";
@@ -73,9 +73,10 @@ public sealed class DailyTradeData
             result.Proof["assembly_sha256"] = dll;
             result.Proof["original_catalog_sha256"] = originalHash;
             result.Proof["context"] = frame.Context.DeepClone();
-            if (!string.Equals(dll, result.catalog["assembly_sha256"]?.GetValue<string>(), StringComparison.OrdinalIgnoreCase) || client != result.catalog["client"]?.GetValue<string>() || client != frame.Daily?.Guild?.ClientMvid)
-                throw new InvalidDataException("游戏程序集已变化，需更新跑商适配器；没有沿用旧规则。");
-            if (string.Equals(db, result.catalog["database_sha256"]?.GetValue<string>(), StringComparison.OrdinalIgnoreCase))
+            if (client != frame.Daily?.Guild?.ClientMvid || DailyData.N(frame.Frame["ProcessId"]) != game.ProcessId || DailyData.N(frame.Frame["ProcessStartTicks"]) != game.StartTicks)
+                throw new InvalidDataException("跑商规则与当前游戏进程不一致，请重新连接当前游戏。");
+            bool sameClient = string.Equals(dll, result.catalog["assembly_sha256"]?.GetValue<string>(), StringComparison.OrdinalIgnoreCase) && client == result.catalog["client"]?.GetValue<string>();
+            if (sameClient && string.Equals(db, result.catalog["database_sha256"]?.GetValue<string>(), StringComparison.OrdinalIgnoreCase))
             {
                 result.Proof["state"] = "current";
                 DailyTradeCatalog.ValidateFiles(result.catalog, result.assembly, result.database);
@@ -84,12 +85,22 @@ public sealed class DailyTradeData
             if (!DailyTools.Available(package, "exporter"))
                 throw new InvalidDataException("缺少.NET跑商表读取组件，请使用完整新版安装包。");
             // Cache only the catalog. Planning executes inside this .NET build.
-            string key = typeof(DailyTradeOptimizer).Assembly.ManifestModule.ModuleVersionId.ToString() + originalHash + db;
+            string key = typeof(DailyTradeOptimizer).Assembly.ManifestModule.ModuleVersionId.ToString() + originalHash + dll + db;
             string cache = Path.Combine(DailyCacheStorage.Area(root, "trade/catalogs"), Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(key))).ToLowerInvariant());
             System.IO.Directory.CreateDirectory(cache);
             using var lease = new FileStream(Path.Combine(cache, "prepare.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            string bundle = Path.Combine(cache, "bundle");
+            if (TryCached(bundle, Path.Combine(cache, "proof.json"), result.assembly, result.database, out var cached))
+            {
+                Stop();
+                result.Directory = bundle;
+                result.catalog = cached;
+                result.Proof["state"] = "current_cached_rules";
+                result.Proof["catalog_sha256"] = DailyTradeCatalog.Hash(CatalogPath(bundle));
+                return result;
+            }
             string tables = Path.Combine(cache, "tables");
-            report("正在用.NET只读核对热更新后的跑商规则；没有下单。");
+            report("正在核对游戏更新后的跑商规则；没有下单。");
             var start = DailyTools.StartInfo(package, "exporter");
             foreach (string arg in new[] { "--game-root", Path.GetDirectoryName(game.Executable)!, "--tables", string.Join(',', DailyTradeCatalog.Tables), "--simulator-compatible", "--output", tables })
                 start.ArgumentList.Add(arg);
@@ -122,30 +133,46 @@ public sealed class DailyTradeData
             DailyTradeCatalog.ValidateFiles(next, result.assembly, result.database);
             if (!string.Equals(next["database_sha256"]!.GetValue<string>(), db, StringComparison.OrdinalIgnoreCase) || !string.Equals(next["assembly_sha256"]!.GetValue<string>(), dll, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidDataException("导出期间游戏数据已再次更新；本次目录未启用。");
-            string[] changed = DailyTradeCatalog.Changes(result.catalog, next);
+            string[] changed = DailyTradeCatalog.RuleChanges(result.catalog, next);
+            result.Proof["client_rebound"] = !sameClient;
             result.Proof["changed_rules"] = new JsonArray(changed.Select(n => (JsonNode)JsonValue.Create(n)!).ToArray());
-            if (changed.Length > 0)
-                throw new InvalidDataException("热更新改变了跑商规则（" + string.Join('、', changed) + "）；请更新工具。没有替换旧交易目录。");
+            // Build validates the supported formulas and complete cross-table
+            // references. Prices, recipes, limits and character values are INPUTS
+            // to the optimizer, not a version allowlist. Always replan with them.
             // Current tables are validated above; old plans are not reused.
-            string bundle = Path.Combine(cache, "bundle");
             DailyJson.Write(CatalogPath(bundle), next);
             // Current tables are validated above; old plans are not reused.
             DailyTradeCatalog.ValidateFiles(next, result.assembly, result.database);
             Stop();
             result.Directory = bundle;
             result.catalog = next;
-            result.Proof["state"] = "compatible_rebound";
+            result.Proof["state"] = changed.Length == 0 ? "compatible_rebound" : "current_rules_loaded";
             result.Proof["source_hashes"] = next["source_hashes"]!.DeepClone();
             result.Proof["character_sha256"] = next["character_sha256"]!.DeepClone();
             result.Proof["catalog_sha256"] = DailyTradeCatalog.Hash(CatalogPath(bundle));
             DailyJson.Write(Path.Combine(cache, "proof.json"), result.Proof);
-            report("跑商规则一致，已启用绑定当前数据库的独立目录；原安装包和交易记录保留。");
+            report("已读取当前游戏的商品、价格与料理配方，将按现有库存重新规划。");
         }
         catch (StageHostException) { throw; }
         catch (Exception error) when (error is IOException or InvalidDataException or InvalidOperationException or System.Text.Json.JsonException or ArgumentException or KeyNotFoundException or OverflowException or FormatException or UnauthorizedAccessException) { result.Error = error.Message; result.Proof["state"] = "blocked"; result.Proof["detail"] = error.Message; DailyJson.Write(Path.Combine(root, "trade", "data-preflights", Guid.NewGuid().ToString("N") + ".json"), result.Proof); report("跑商数据准备：" + error.Message); }
         return result;
     }
     private (long Length, long Write) assemblyStamp, databaseStamp;
+    internal static bool TryCached(string bundle, string proofPath, string assembly, string database, out JsonObject? catalog)
+    {
+        catalog = null;
+        try
+        {
+            var proof = DailyTradeCatalog.Read(proofPath);
+            if (proof["state"]?.GetValue<string>() is not ("compatible_rebound" or "current_rules_loaded") ||
+                !string.Equals(proof["catalog_sha256"]?.GetValue<string>(), DailyTradeCatalog.Hash(CatalogPath(bundle)), StringComparison.OrdinalIgnoreCase)) return false;
+            var candidate = DailyTradeCatalog.Read(CatalogPath(bundle));
+            DailyTradeCatalog.ValidateFiles(candidate, assembly, database);
+            catalog = candidate;
+            return true;
+        }
+        catch (Exception e) when (e is IOException or InvalidDataException or UnauthorizedAccessException or System.Text.Json.JsonException or InvalidOperationException or ArgumentException) { return false; }
+    }
     private static (long, long) Stamp(string path)
     {
         var file = new FileInfo(path);

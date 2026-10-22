@@ -6,7 +6,8 @@ public sealed partial class DailyFieldRoute
 {
     public const string MapPath = "ὮὬὬὮὠὮὪὠὧὩὪ", SkillPath = "ὣὡὪὭὤὨὭὣὪὧὩ", ObjectPath = "ὪὬὣὧὥὨὦὯὨὮὬ", DestinationPath = "ὤὦὨὨὭὮὯὡὧὤὯ", WaypointNear = "ὩὤὨὮὥὦὫὭὫὭὨ";
     public static readonly HashSet<long> Excluded = [609, 610, 611, 612, 613, 619, 620, 621, 622, 623, 624, 625, 626, 627, 628, 630, 631];
-    public static readonly Dictionary<int, string> Kinds = new() { { 2, "FastDash" }, { 17, "Stealth" }, { 3, "Overwhelm" }, { 4, "FieldRewardAbsorb" }, { 6, "FieldRewardResearch" }, { 15, "WaypointMake" }, { 20, "FieldMonsterSummon" } };
+    internal const int MovementSpeedTalent = 13;
+    public static readonly Dictionary<int, string> Kinds = new() { { 2, "FastDash" }, { MovementSpeedTalent, "MoveSpeedUp" }, { 17, "Stealth" }, { 3, "Overwhelm" }, { 4, "FieldRewardAbsorb" }, { 6, "FieldRewardResearch" }, { 15, "WaypointMake" }, { 20, "FieldMonsterSummon" } };
     public DailyWorkflow W
     {
         get;
@@ -158,7 +159,7 @@ public sealed partial class DailyFieldRoute
         return Math.Sqrt(squared);
     }
     internal static bool ShouldDash(GeneralPreferences settings, JsonObject evidence, double? distance) => settings.FastTravel && WorthDashing(distance)
-        && FieldInputReady(evidence["Frame"]!.AsObject()) && Remaining(evidence, 2) <= 0 && !Cooling(evidence, 2);
+        && FieldInputReady(evidence["Frame"]!.AsObject()) && Remaining(evidence, MovementSpeedTalent) <= 0 && !Cooling(evidence, MovementSpeedTalent);
     public async Task<bool> PrepareWalking(double? distance, JsonObject? observed = null)
     {
         if (!W.Settings.General.FastTravel || !WorthDashing(distance) || W.Time < nextDashCheck) return false;
@@ -167,7 +168,7 @@ public sealed partial class DailyFieldRoute
         // walks, never during harvesting, pickup commits, or native interaction.
         if (!ShouldDash(W.Settings.General, evidence, distance)) return false;
         nextDashCheck = W.Time + 60;
-        var result = await Skill(2, 0, optional: true);
+        var result = await Skill(MovementSpeedTalent, 0, optional: true);
         if (S(result["reason"]) == "native_disabled")
             W.Driver.Diagnostics.Event("optional_fast_travel_unavailable", O(("map", Map(evidence)["id"])));
         else nextDashCheck = 0;
@@ -503,6 +504,28 @@ public sealed partial class DailyFieldRoute
         Require(replies.Count > 0, "缺少拾取回执");
         return O(("target", target), ("rewards", Array(replies)));
     }
+    internal static JsonObject? SelectTalent(int kind, JsonObject[] candidates, IReadOnlyDictionary<long, JsonObject> status,
+        IReadOnlyDictionary<long, long> used, long? spendablePotions = null)
+    {
+        // MoveSpeedUp changes walking speed. FastDash changes sprinting and is
+        // never a substitute, even when its displayed percentage is higher.
+        var eligible = candidates.Where(r => status.TryGetValue(N(r["instance"]), out var st)
+            && S(st["Reason"]) == "" && DailyRegionRouter.D(st["Cooldown"]) <= 0 && !B(r["_objDisableImage.activeSelf"])
+            && (!(kind is 3 or 4 or 20) || used.GetValueOrDefault(N(r[SkillPath]!["groupId"])) < N(r[SkillPath]!["valueList"]![0])));
+        if (kind == MovementSpeedTalent)
+            return eligible.Where(r => r[SkillPath] is JsonObject skill && N(skill["classType"]) == MovementSpeedTalent
+                    && skill["valueList"] is JsonArray values && values.Count >= 2
+                    && double.IsFinite(DailyRegionRouter.D(values[0])) && DailyRegionRouter.D(values[0]) > 0
+                    && double.IsFinite(DailyRegionRouter.D(values[1])) && DailyRegionRouter.D(values[1]) > 0
+                    && skill["catalystValue"] != null && N(skill["catalystValue"]) >= 0
+                    && (spendablePotions == null || N(skill["catalystValue"]) <= spendablePotions))
+                .OrderByDescending(r => DailyRegionRouter.D(r[SkillPath]!["valueList"]![0]))
+                .ThenByDescending(r => DailyRegionRouter.D(r[SkillPath]!["valueList"]![1]))
+                .ThenBy(r => N(r[SkillPath]!["catalystValue"]))
+                .ThenBy(r => N(r["instance"])).FirstOrDefault();
+        return eligible.OrderByDescending(r => kind is 2 or 17 ? DailyRegionRouter.D(r[SkillPath]!["valueList"]![1]) : 0)
+            .ThenByDescending(r => N(r[SkillPath]!["id"])).ThenBy(r => N(r[SkillPath]!["catalystValue"])).FirstOrDefault();
+    }
     public async Task<JsonObject> Skill(int kind, double minRemaining = 3, int attempts = 0, bool optional = false)
     {
         W.StepProgress(DailyWorkProgress.Talent(kind));
@@ -513,7 +536,7 @@ public sealed partial class DailyFieldRoute
         if (kind == 3 && !B(R(e, "mainline.map", "HasCanOverwhelmMonster()")))
             return DailyWorkflow.Skipped("no_suppressible_monsters");
         double remaining = 0;
-        if (kind is 2 or 17)
+        if (kind is 2 or MovementSpeedTalent or 17)
         {
             remaining = Remaining(e, kind);
             if (remaining > minRemaining)
@@ -546,9 +569,9 @@ public sealed partial class DailyFieldRoute
                 await W.Delay(100);
             }
         }
-        if (kind is 2 or 17)
+        if (kind is 2 or MovementSpeedTalent or 17)
         {
-            if (kind == 2 && optional)
+            if (kind is 2 or MovementSpeedTalent && optional)
             {
                 e = await Evidence();
                 if (Remaining(e, kind) > 0 || Cooling(e, kind))
@@ -573,7 +596,13 @@ public sealed partial class DailyFieldRoute
         e = await W.WaitEvidence(["mainline", "dispatch.talent"], state => { if (N(state["Frame"]!["Sequence"]) < N(opened["Sequence"]) || !DailyNavigationDecision.Rows(state["Frame"]!.AsObject()).Any(r => S(r["Type"]) == "QuickMenuUI" && JsonNode.DeepEquals(r["Id"], menu["Id"]) && DailyNavigationDecision.ReadyInput(r))) return false; candidates = Rows(state["Readings"]).Where(r => S(r["Id"]) == "dispatch.talent" && S(r["Error"]) == "").Select(r => { var v = DailyEvidence.Values(r); v["instance"] = Copy(r["InstanceId"]); return v; }).Where(r => S(r["ὬὩὬὡὯὮὨὣὩὦὡ"]) == Kinds[kind]).ToArray(); return candidates.Length > 0 || optional && W.Time - menuStarted >= 3; }, 4, "原生天赋列表尚未就绪");
         var status = Talents(e).ToDictionary(r => N(r["Instance"]));
         var used = Counts(e).ToDictionary(r => N(r["groupId"]), r => N(r["useCount"]));
-        var selected = candidates.Where(r => status.TryGetValue(N(r["instance"]), out var st) && S(st["Reason"]) == "" && DailyRegionRouter.D(st["Cooldown"]) <= 0 && !B(r["_objDisableImage.activeSelf"]) && (!(kind is 3 or 4 or 20) || used.GetValueOrDefault(N(r[SkillPath]!["groupId"])) < N(r[SkillPath]!["valueList"]![0]))).OrderByDescending(r => kind is 2 or 17 ? DailyRegionRouter.D(r[SkillPath]!["valueList"]![1]) : 0).ThenByDescending(r => N(r[SkillPath]!["id"])).ThenBy(r => N(r[SkillPath]!["catalystValue"])).FirstOrDefault();
+        long? spendablePotions = null;
+        if (kind == MovementSpeedTalent && W.Driver.PotionPolicy is { } potionPolicy)
+        {
+            var currency = await W.Evidence("dispatch.currency");
+            spendablePotions = Math.Max(0, N(R(currency, "dispatch.currency", "Catalyst")) - potionPolicy().TalentPotionReserve);
+        }
+        var selected = SelectTalent(kind, candidates, status, used, spendablePotions);
         if (selected == null)
         {
             var shortage = candidates.Where(r => status.TryGetValue(N(r["instance"]), out var st) && S(st["Reason"]) == "catalyst_insufficient")
@@ -602,7 +631,7 @@ public sealed partial class DailyFieldRoute
             await W.Step("QuickMenuUI", operation: "mainline_talent", value: I(selected["instance"]), expect: "WayPointUI");
             return O(("state", "waypoint_selection"));
         }
-        if (kind is 2 or 17)
+        if (kind is 2 or MovementSpeedTalent or 17)
             await RecoverExpired(e);
         var scope = O(("kind", kind), ("pack", Map(e)["packId"]), ("map", Map(e)["id"]), ("group", selected[SkillPath]!["groupId"]));
         if (kind == 4)
@@ -613,13 +642,13 @@ public sealed partial class DailyFieldRoute
         }
         var op = await W.Transact("dispatch.start", scope, O(("ui", "QuickMenuUI"), ("operation", "mainline_talent"), ("value", selected["instance"])), 25);
         await FieldReady(settle: 0);
-        if (kind is 2 or 17)
+        if (kind is 2 or MovementSpeedTalent or 17)
             Require(Remaining(await Evidence(), kind) > 0, "移动天赋未确认生效");
         return O(("state", "completed"), ("id", op["id"]), ("result", op["result"]));
     }
     internal async Task RecoverExpired(JsonObject current)
     {
-        foreach (var op in W.Business.MatchingRecords(W.Context, "dispatch.start", DailyManagedBusiness.Pending).Where(op => N(op["scope"]?["kind"]) is 2 or 17).ToArray())
+        foreach (var op in W.Business.MatchingRecords(W.Context, "dispatch.start", DailyManagedBusiness.Pending).Where(op => N(op["scope"]?["kind"]) is 2 or MovementSpeedTalent or 17).ToArray())
         {
             if (!JsonNode.DeepEquals(op["cycle"], W.Context["cycle"]) || !DailyHomeProof.SameGameAccount(op["before"]!["Frame"]!.AsObject(), current["Frame"]!.AsObject()) || N(current["AtUtcTicks"]) - N(op["at"]) < 600_000_000 || W.Business.Events(op).Count > 0)
                 continue;
@@ -670,9 +699,9 @@ public sealed partial class DailyFieldRoute
         if (!Progress.OnlySteal)
             await Skill(6);
         await Skill(17, 12);
-        await Skill(2, 5);
+        await Skill(MovementSpeedTalent, 5);
         var e = await Evidence();
-        Require(Remaining(e, 17) > 5 && Remaining(e, 2) > 1, "巡逻路线藏身和飞奔未就绪");
+        Require(Remaining(e, 17) > 5 && Remaining(e, MovementSpeedTalent) > 1, "巡逻路线藏身和加速未就绪");
     }
     public async Task WaitMap(long map, double timeout = 60)
     {

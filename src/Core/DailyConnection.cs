@@ -8,7 +8,9 @@ public sealed record GameInstance(int ProcessId, long StartTicks, string Executa
 public sealed record DailyIdentityRead(DailySnapshot? Snapshot, string Problem = "", string Detail = "");
 public interface IGameHost
 {
+    Task PrepareAccessAsync(Action<string> progress, CancellationToken cancellation) => Task.CompletedTask;
     GameInstance? Find();
+    bool IsRunning(GameInstance expected) => Find() == expected;
     Task CloseAsync(GameInstance instance, CancellationToken cancellation);
     Task ConnectAsync(GameInstance instance, Action<string> progress, CancellationToken cancellation);
     Task<bool> RecoverStartupAsync(string account, Action<string> progress, CancellationToken cancellation) => Task.FromResult(false);
@@ -40,6 +42,8 @@ public sealed class DailyConnectionState
 }
 public sealed class DailyGameHost : IGameHost
 {
+    public bool IsRunning(GameInstance expected) => DailyConnectionAccess.IsRunning(expected);
+    public Task PrepareAccessAsync(Action<string> progress, CancellationToken cancellation) => DailyConnectionAccess.PrepareScopeAsync(progress, cancellation);
     private readonly string root;
     public DailyGameHost(string? root = null)
     {
@@ -114,9 +118,15 @@ public sealed class DailyGameHost : IGameHost
     }
     public async Task ConnectAsync(GameInstance instance, Action<string> progress, CancellationToken cancellation)
     {
+        try { await ConnectCoreAsync(instance, progress, cancellation); }
+        catch (BD2.LocalIpc.GameSessionEndedException) { throw new DailyGameExitedException(); }
+    }
+    private async Task ConnectCoreAsync(GameInstance instance, Action<string> progress, CancellationToken cancellation)
+    {
         var path = Path.Combine(root, "connection.json");
         var managed = Path.Combine(Path.GetDirectoryName(instance.Executable)!, Path.GetFileNameWithoutExtension(instance.Executable) + "_Data", "Managed");
-        var inputs = await Task.Run(() => ClientInputs.ReadManaged(managed), cancellation);
+        var inputs = await DailyGamePreparation.RunAsync(this, instance,
+            (_, token) => Task.Run(() => ClientInputs.ReadManaged(managed), token), progress, cancellation);
         var prior = DailyJson.TryRead<DailyConnectionState>(path);
         if (prior != null) ClientInputs.RequireRunning(prior.ClientKey,prior.ProcessId,prior.StartTicks,inputs.Key,instance.ProcessId,instance.StartTicks);
         var pipe = DailyTransport.Bind(root, instance);
@@ -132,13 +142,15 @@ public sealed class DailyGameHost : IGameHost
         catch (IOException) { }
         catch (TimeoutException) { }
         progress("检查本机接口并准备账户识别组件");
-        var prepared = DailySuite.Prepare!=null ? await DailySuite.Prepare(managed,progress,cancellation) : await Task.Run(() => DailyHookCompiler.Prepare(managed), cancellation);
+        var prepared = await DailyGamePreparation.RunAsync(this, instance,
+            (report, token) => DailySuite.Prepare!=null ? DailySuite.Prepare(managed,report,token)
+                : Task.Run(() => DailyHookCompiler.Prepare(managed, cancellation: token), token), progress, cancellation);
         DailyJson.Write(Path.Combine(root, "compatibility.json"), prepared.Report);
         DailyJson.Write(Path.Combine(root, "guild-compatibility.json"), prepared.GuildReport);
         DailyJson.Write(Path.Combine(root, "startup-compatibility.json"), prepared.StartupReport);
         cancellation.ThrowIfCancellationRequested();
         if (Find() != instance)
-            throw new InvalidOperationException("准备组件期间游戏进程已变化。");
+            throw new DailyGameExitedException();
         await Task.Run(() => ClientInputs.RequireStable(managed, inputs.Key), cancellation);
         var state = new DailyConnectionState { ClientKey = inputs.Key, ProcessId = instance.ProcessId, StartTicks = instance.StartTicks, Fingerprint = DailyHookCompiler.Fingerprint, PayloadSha = Convert.ToHexString(SHA256.HashData(prepared.Payload)) };
         DailyJson.Write(path, state);
@@ -149,7 +161,8 @@ public sealed class DailyGameHost : IGameHost
         while (DateTimeOffset.UtcNow < ready)
         {
             cancellation.ThrowIfCancellationRequested();
-            var status = ReadStatus();
+            DailyGamePreparation.RequireRunning(this, instance);
+            var status = ReadStatus(instance);
             if (status?.State == "error")
                 throw new InvalidOperationException(status.Error);
             try

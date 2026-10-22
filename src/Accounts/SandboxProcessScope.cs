@@ -11,9 +11,12 @@ public static class SandboxProcessScope
     [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode)]
     private delegate int QueryProcess(nint pid, StringBuilder box, nint image, nint sid, nint session);
     private static readonly SandboxScopeResolver scope = new(Environment.ProcessId, HasSandboxModule, QueryBox);
+    private static readonly VerifiedProcessScopes verified = new(pid => { using var process = Process.GetProcessById(pid); return process.StartTime.ToUniversalTime().Ticks; });
+    internal static void RememberVerified(int pid, long started, string box) => verified.Remember(pid, started, box);
     public static string CurrentBox => scope.CurrentBox;
     public static string BoxOf(int pid)
     {
+        if (verified.Read(pid) is { } box) return box;
         return scope.BoxOf(pid);
     }
     // Only explicit isolation operations require a working installation/driver.
@@ -96,7 +99,36 @@ public static class SandboxProcessScope
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] private static extern nint GetModuleHandle(string name);
 }
 
-internal sealed class SandboxScopeException(Exception inner) : IOException("sandbox.unavailable", inner);
+internal class SandboxScopeException : IOException
+{
+    internal SandboxScopeException(Exception inner) : this("sandbox.unavailable", inner) { }
+    protected SandboxScopeException(string message, Exception inner) : base(message, inner) { }
+}
+internal sealed class SandboxScopeAccessException(int pid, Exception inner) : SandboxScopeException("connection.scope_permission", inner)
+{
+    internal int ProcessId { get; } = pid;
+}
+
+// Only a reply from our authenticated read-only elevation helper can populate
+// this cache. A PID alone is never proof: recheck the exact process generation.
+internal sealed class VerifiedProcessScopes(Func<int, long> started)
+{
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<int, (long Started, string Box)> values = new();
+    internal void Remember(int pid, long generation, string box)
+    {
+        if (pid <= 0 || generation <= 0 || box.Length > 32 || box.Any(char.IsControl) || started(pid) != generation)
+            throw new IOException("connection.scope_changed");
+        values[pid] = (generation, box);
+    }
+    internal string? Read(int pid)
+    {
+        if (!values.TryGetValue(pid, out var proof)) return null;
+        try { if (started(pid) == proof.Started) return proof.Box; }
+        catch (ArgumentException) { }
+        catch (InvalidOperationException) { }
+        values.TryRemove(pid, out _); return null;
+    }
+}
 
 // Dependencies are explicit so disabled/broken Sandboxie can be tested without
 // changing the user's driver, services, accounts or running games.
@@ -116,6 +148,8 @@ internal sealed class SandboxScopeResolver(int currentPid, Func<int, bool> hasMo
         catch (Exception error) when (IsQueryFailure(error))
         {
             try { if (!hasModule(pid)) return ""; }
+            catch (System.ComponentModel.Win32Exception inspection) when (inspection.NativeErrorCode == 5)
+            { throw new SandboxScopeAccessException(pid, new AggregateException(error, inspection)); }
             catch (Exception inspection) when (inspection is System.ComponentModel.Win32Exception or IOException or UnauthorizedAccessException)
             { throw new SandboxScopeException(new AggregateException(error, inspection)); }
             throw new SandboxScopeException(error);

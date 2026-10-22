@@ -84,6 +84,9 @@ if($SyntheticEvidence){
  # startup/UI gates run again; native recovery also has its own acceptance.
  $publisherRechecks=@($changed|Where-Object {$_ -match '^tools/OtaChannel/(Rules|Mirror|CapabilitySelfTest)\.cs$'})
  $artifactRechecks=@($changed|Where-Object {$_ -in $publisherRechecks -or $_ -match '^src/Bootstrap/(Program|Recovery|RepairBootstrap)\.cs$' -or $_ -in @('src/Desktop/MainWindow.Localization.cs','src/Fishing/desktop/Smoke.cs','src/Rhythm/desktop/Smoke.cs','src/Sichuan/desktop/SichuanWindow.xaml.cs','src/InfiniteGacha/desktop/MainWindow.xaml.cs')})
+ # These WPF host sources are not compiled into Dustweave.Tests. The actual
+ # Portable/Lite startup and UI gates below exercise them on every package.
+ $artifactRechecks+=@($changed|Where-Object {$_ -in @('src/Desktop/MainWindow.xaml.cs','src/Desktop/MainWindow.Updates.Smoke.cs','src/Desktop/Localization/runtime.json','src/Desktop/Localization/notices.json')})
  $syntheticChanges=@($changed|Where-Object {$_ -notin $artifactRechecks})
  if($syntheticChanges.Count){throw ('Synthetic baseline inputs changed: '+($syntheticChanges -join ', '))}
  # Publisher sources are outside Dustweave.Tests and have their own executable gate.
