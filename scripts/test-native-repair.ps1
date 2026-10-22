@@ -45,8 +45,19 @@ foreach($flavor in @('Lite','Portable')){
  if(!$complete){throw "Native repair did not complete: $folder"}
  # Require the real application's startup acknowledgement before teardown,
  # rather than inferring success from a repaired descriptor or window title.
- $startup=Get-Content (Join-Path $data 'startup-state.json') -Raw|ConvertFrom-Json
- if($startup.stage -ne 'main-window-visible' -or $startup.version -ne $version){throw "Repaired application did not start: $folder"}
+ # Loaded acknowledges the durable transaction before Show returns. Wait for
+ # the subsequent visible-window record instead of racing that acknowledgement.
+ $startup=$null;$visible=$false;$deadline=[DateTime]::UtcNow.AddSeconds(30)
+ while([DateTime]::UtcNow -lt $deadline){
+  $startupPath=Join-Path $data 'startup-state.json'
+  if(Test-Path -LiteralPath $startupPath){
+   $startup=Get-Content -LiteralPath $startupPath -Raw|ConvertFrom-Json
+   if($startup.stage -eq 'main-window-visible' -and $startup.version -eq $version){$visible=$true;break}
+   if($startup.status -eq 'failed'){break}
+  }
+  Start-Sleep -Milliseconds 100
+ }
+ if(!$visible){throw "Repaired application did not start: $folder"}
  $readyFiles=@(Get-ChildItem -LiteralPath (Join-Path $cache 'attempts') -Filter ready.json -Recurse -File)
  if(!@($readyFiles|Where-Object { $ready=Get-Content -LiteralPath $_.FullName -Raw|ConvertFrom-Json; $ready.Version -eq $version -and $ready.ProcessId -eq $startup.processId }).Count){throw "Missing repair startup acknowledgement: $folder"}
  $descriptor=Get-Content (Join-Path $Packages "$flavor/update-package.json") -Raw|ConvertFrom-Json
