@@ -6,7 +6,7 @@
 
 - Windows x64，已正常安装并登录的 BrownDust II 原生 PC 客户端。
 - 完整解压的 Dustweave 包：Portable 包含运行时；Lite 需要 .NET 8 Desktop Runtime x64。
-- 首次安装或手动升级请从 [GitHub Releases](https://github.com/MadestSamurai/Dustweave/releases) 获取完整包。国内线路仅作为软件内 OTA 更新入口。GitHub 的 Source code 压缩包不是安装包。
+- 首次安装或手动升级请从 [GitHub Releases](https://github.com/MadestSamurai/Dustweave/releases) 获取完整包。GitHub 的 Source code 压缩包不是安装包。
 
 启动 `Dustweave.exe`。请保留根目录的 `Dustweave.exe` 和 `app` 文件夹；主程序和工具依赖已打包在 EXE 中，数据与说明在 `app` 中。源代码构建输出仅供开发，不等于完整用户包。
 
@@ -37,7 +37,9 @@ Windows 桌面本身使用管理员权限时，织尘会在同一用户和登录
 
 ## 更新与数据
 
-1.5 使用独立更新源，在「版本更新」管理。默认自动检查并后台下载差分包，空闲时确认重启，由主程序临时副本完成替换；账号、设置与插件保留，失败时恢复旧版。1.4 及更早版本需要手动下载 1.5 完整包并解压到新目录，更新快捷方式，并重新保存开机启动及定时设置。普通软件更新不要求重启游戏。
+在「版本更新」检查新版。默认自动检查并在后台下载更新，空闲时确认重启即可安装；账号、设置与插件保留，失败时恢复旧版。普通软件更新不要求重启游戏。
+
+从 1.4 及更早版本升级到 1.5，需要手动下载完整包并解压到新目录，更新快捷方式，并重新保存开机启动及定时设置。自动更新无法应用或程序损坏时，也请从 [GitHub](https://github.com/MadestSamurai/Dustweave/releases/latest) 或[夸克](https://pan.quark.cn/s/0ee553c60c0d?pwd=5AgC)（提取码 **5AgC**）重新下载完整包。
 
 日常数据默认位于 `%LOCALAPPDATA%\BD2DailyAssistant`，账号会话位于 `%LOCALAPPDATA%\BD2AccountSessionManager`；自定义数据目录的使用者以自己的设置为准。更换软件解压目录不会自动清空这些数据。
 

@@ -17,7 +17,7 @@ Exit the previous Dustweave from the system tray before upgrading. Accounts, pre
 
 ## Moving from 1.4 to 1.5
 
-Version 1.5 bundles the main application and its dependencies. Download its full package once and extract it into a new folder. The 1.4 and 1.5 update feeds are separate; older versions do not upgrade across this boundary automatically.
+Upgrading from 1.4 or earlier to 1.5 requires one manual download of the complete package into a new folder. Accounts and settings are retained.
 
 - [Latest GitHub release](https://github.com/MadestSamurai/Dustweave/releases/latest)
 - [Quark download folder](https://pan.quark.cn/s/0ee553c60c0d?pwd=5AgC), access code: `5AgC`
@@ -26,7 +26,7 @@ Launch `Dustweave.exe` from the new folder and update any shortcuts you created.
 
 ## Updates and repair
 
-The update page in software settings offers update checks, differential downloads and manual download links. Updates request a restart while idle and do not interrupt a running queue. From 1.5 onward, the application downloads and verifies a delta, then uses a temporary copy to replace files with rollback and interruption recovery. A local test build is not necessarily available through OTA.
+The update page in software settings offers update checks and manual download links. Automatic updates download only changed content and request a restart while idle, without interrupting a running queue. Failed updates can roll back, and interrupted updates can recover. A local test build is not necessarily available through automatic updates.
 
 If a 1.5 delta is unavailable or program files are damaged, download the full package from GitHub or Quark and extract into a new directory. Accounts and settings are retained. Version 1.4.18 retains its old independent repair entry.
 

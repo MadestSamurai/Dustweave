@@ -1,5 +1,3 @@
-For 1.5.0, download the complete package into a new folder once. Accounts and preferences are retained; save Windows startup and schedules again to point to the new path. Subsequent 1.5 updates use a separate signed differential feed and the application's own temporary copy, with rollback and interruption recovery. See [current distribution](ALL_IN_ONE_DISTRIBUTION.md).
-
 # Getting started with Dustweave
 
 [简体中文](GETTING_STARTED.md) · [Home](../README.en.md)
@@ -8,7 +6,7 @@ For 1.5.0, download the complete package into a new folder once. Accounts and pr
 
 - Windows x64 with a working native BrownDust II PC client and a normal game login.
 - A complete Dustweave package. Portable includes the runtime; Lite requires .NET 8 Desktop Runtime x64.
-- Source is MIT licensed: [Dustweave](https://github.com/MadestSamurai/Dustweave). First installations and manual upgrades use complete packages from [GitHub Releases](https://github.com/MadestSamurai/Dustweave/releases). The domestic route is reserved for in-app OTA. GitHub's Source code archive is not an application package.
+- Source is MIT licensed: [Dustweave](https://github.com/MadestSamurai/Dustweave). First installations and manual upgrades use complete packages from [GitHub Releases](https://github.com/MadestSamurai/Dustweave/releases). GitHub's Source code archive is not an application package.
 
 Run `Dustweave.exe`. Keep the root `Dustweave.exe` and its `app` folder together; the executable bundles the application, while `app` retains supporting data and notices. A source-build output folder is for development and is not a complete distribution.
 
@@ -41,7 +39,9 @@ If the Windows desktop itself is elevated, Dustweave uses the caller's existing 
 
 ## Updates and local data
 
-Version 1.5.0 starts a separate differential update channel, available from Updates. Verified deltas download in the background and require confirmation to restart while idle. Accounts, settings and plugins are preserved; failed updates restore the previous version. Versions 1.4 and earlier remain on their original channel and require a one-time manual migration: exit the old app and extract the current complete package into a new folder. Ordinary UI updates do not require restarting the game; follow specific component instructions if shown.
+Use **Updates** to check for a new version. By default, updates are checked and downloaded in the background, then installed after you confirm a restart while idle. Accounts, settings and plugins are preserved; failed updates restore the previous version. Ordinary UI updates do not require restarting the game; follow specific component instructions if shown.
+
+Upgrading from 1.4 or earlier to 1.5 requires one manual download: exit the old app, extract the complete package into a new folder, update your shortcuts, and save Windows startup and schedule settings again to use the new location. If an automatic update cannot be applied or program files are damaged, download the complete package again from [GitHub](https://github.com/MadestSamurai/Dustweave/releases/latest) or [Quark](https://pan.quark.cn/s/0ee553c60c0d?pwd=5AgC) (code **5AgC**).
 
 Daily data defaults to `%LOCALAPPDATA%\BD2DailyAssistant`; protected account sessions use `%LOCALAPPDATA%\BD2AccountSessionManager`. An explicit custom data directory overrides the default. Changing the application folder does not automatically erase this data.
 

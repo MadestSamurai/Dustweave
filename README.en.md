@@ -104,14 +104,16 @@ For **Windows x64 and the native BrownDust II PC client**. Python is not require
 | **Portable** | You want an extract-and-run package | Includes the .NET 8 desktop runtime |
 | **Lite** | You already have the runtime and prefer a smaller download | [.NET 8 Desktop Runtime x64](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) |
 
-Both packages have the same features. Download a complete package from the [latest GitHub release](https://github.com/MadestSamurai/Dustweave/releases/latest) or the [author's Quark download folder](https://pan.quark.cn/s/0ee553c60c0d?pwd=5AgC) (code **5AgC**). The domestic update server is reserved for in-app OTA rather than first-install downloads. Then:
+Both packages have the same features. Download a complete package from the [latest GitHub release](https://github.com/MadestSamurai/Dustweave/releases/latest) or the [author's Quark download folder](https://pan.quark.cn/s/0ee553c60c0d?pwd=5AgC) (code **5AgC**). Then:
 
-1. **Extract the entire folder** and run `Dustweave.exe`. Keep the `app` folder beside the executable; it contains the runtime, resources and components.
+1. **Extract the entire folder** and run `Dustweave.exe`. Keep the `app` folder beside the executable; it contains data, documentation and licenses.
 2. Follow **Getting started** to check the game location, launch and enter the main menu. After character detection, exit normally and save the account. Setup is skippable and can be reopened from the window header.
 3. Explore the pages with the highlight tour. Use **Play** in Accounts for future launches, avoiding permission differences from desktop shortcuts or accelerator launch buttons.
 4. Configure tasks by category in **Daily settings**, choose the account in **Today**, then use the launch button at the top. It connects directly if the game is already running. For multiple accounts, select them in **Accounts** and run the queue.
 
-Start with a few familiar stages. [Getting started](docs/GETTING_STARTED.en.md) covers updates, data locations and common questions. **Version 1.5.0 requires one manual full download into a new folder.** Accounts and settings are retained; save Windows startup and schedule settings again to use the new location. Its independent feed delivers verified deltas only, installed by a temporary copy of the main executable with rollback and interruption recovery. If a delta cannot be applied or files are damaged, download the full package from GitHub or Quark. Version 1.4.18 is the final old-channel release, with the completed shared fixes and migration instructions. See [update and recovery details](docs/ALL_IN_ONE_DISTRIBUTION.md).
+Start with a few familiar stages. [Getting started](docs/GETTING_STARTED.en.md) covers updates, data locations and common questions.
+
+**Upgrading from 1.4 or earlier to 1.5.0 requires a manual download of the complete package into a new folder.** Accounts and settings are retained; save Windows startup and schedule settings again to use the new location. You can then check for future updates within the application. If an automatic update cannot be applied or files are damaged, download the complete package from GitHub or Quark.
 
 For a custom game installation, open **App settings → Game & sandbox locations → Change location** and select `BrownDust II.exe`. The choice is saved automatically and shared by all accounts and scheduled runs. You can restore auto-detection or change the Sandboxie installation location here.
 
