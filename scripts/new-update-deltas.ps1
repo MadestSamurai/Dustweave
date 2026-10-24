@@ -33,7 +33,9 @@ $resolved=[Collections.Generic.List[object]]::new()
 $ordered=@($prior.Releases|Sort-Object {[semver]$_.Version} -Descending)
 $recent=@($ordered|Select-Object -First 10|ForEach-Object Version)
 $supported=@($ordered|Where-Object {$_.Version -in $recent -or [semver]$_.Version -ge [semver]'1.4.7'})
-if([semver]$Version -ge [semver]'1.4.15'){
+if([semver]$Version -ge [semver]'1.5.0'){
+ $supported=@($ordered|Where-Object {$_.Layout -eq 3})
+}elseif([semver]$Version -ge [semver]'1.4.15'){
  $minimum=if($Version -eq '1.4.15'){'1.4.15-bridge.1'}else{'1.4.15'}
  # Older capable clients reconstruct signed blocks without requiring every old
  # archive. The internal bridge always finishes at 1.4.15, never a later release.

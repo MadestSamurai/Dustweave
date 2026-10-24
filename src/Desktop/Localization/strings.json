@@ -8249,6 +8249,16 @@
     "zh-TW": "前往檢查與修復",
     "en-US": "Open check and repair"
   },
+  "repair.manual_title": {
+    "zh-CN": "重新下载",
+    "zh-TW": "重新下載",
+    "en-US": "Download a fresh copy"
+  },
+  "repair.manual_help": {
+    "zh-CN": "程序损坏或差分无法更新时，请从 GitHub 或夸克下载完整包。退出织尘后解压到新目录，账号与设置会继续沿用。",
+    "zh-TW": "程式損壞或差分無法更新時，請從 GitHub 或夸克下載完整套件。退出織塵後解壓縮至新目錄，帳號與設定會繼續沿用。",
+    "en-US": "If the application is damaged or a delta cannot be applied, download the full package from GitHub or Quark. Exit Dustweave and extract into a new folder. Accounts and settings are retained."
+  },
   "repair.help": {
     "zh-CN": "适用于覆盖文件后更新失败、文件缺失或程序异常。只修复当前版本的程序文件，保留账号、设置和插件。",
     "zh-TW": "適用於覆蓋檔案後更新失敗、檔案遺失或程式異常。只修復目前版本的程式檔案，保留帳號、設定和外掛。",

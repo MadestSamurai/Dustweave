@@ -26,9 +26,9 @@ Launch `Dustweave.exe` from the new folder and update any shortcuts you created.
 
 ## Updates and repair
 
-The update page in software settings offers checking, downloading and repair. Updates request a restart while idle and do not interrupt a running queue. From 1.5 onward, the application downloads and verifies a full archive, then uses a temporary copy to replace files with rollback and interruption recovery. A local test build is not necessarily available through OTA.
+The update page in software settings offers update checks, differential downloads and manual download links. Updates request a restart while idle and do not interrupt a running queue. From 1.5 onward, the application downloads and verifies a delta, then uses a temporary copy to replace files with rollback and interruption recovery. A local test build is not necessarily available through OTA.
 
-Version 1.5 repairs distributed files using the same full archive, preserving accounts, settings and plugins. If the main executable is damaged and cannot open, download and extract the full package into a new directory. Version 1.4.18 retains its old independent repair entry.
+If a 1.5 delta is unavailable or program files are damaged, download the full package from GitHub or Quark and extract into a new directory. Accounts and settings are retained. Version 1.4.18 retains its old independent repair entry.
 
 ## Accounts and schedules
 

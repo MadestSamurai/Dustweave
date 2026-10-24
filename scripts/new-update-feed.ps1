@@ -85,7 +85,7 @@ if($deltas.Count -gt 20 -or @($deltas|Group-Object Flavor,FromVersion|Where-Obje
 # A partial local archive selection is not permission to shorten OTA support.
 $deltaReportPath=Join-Path $folder 'delta-report.json'
 $deltaReport=if(Test-Path -LiteralPath $deltaReportPath){@(Get-Content -LiteralPath $deltaReportPath -Raw|ConvertFrom-Json)}else{@()}
-foreach($baseline in @($supported|Where-Object {$_.Version -ne '1.3.0' -and $info.InstallerProtocol -ne 2 -and $info.Layout -eq 2})){
+foreach($baseline in @($supported|Where-Object {$_.Version -ne '1.3.0' -and $info.InstallerProtocol -ne 2 -and $info.Layout -in @(2,3)})){
  foreach($flavor in @('Portable','Lite')){
   if(!@($baseline.Assets|Where-Object Flavor -eq $flavor).Count){continue}
   if(@(($deltas+$baselineDeltas)|Where-Object {$_.FromVersion -eq $baseline.Version -and $_.Flavor -eq $flavor}).Count){continue}

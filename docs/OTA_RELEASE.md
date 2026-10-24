@@ -1,4 +1,4 @@
-**1.5.0 onward:** the separate layout-3 channel uses full archives and a temporary copy of the main executable. The block-repair/native-updater rules below apply only to 1.4 and earlier. See [current distribution and acceptance](ALL_IN_ONE_DISTRIBUTION.md).
+**1.5.0 onward:** the separate layout-3 channel uses differential OTA only and a temporary copy of the main executable. The block-repair/native-updater rules below apply only to 1.4 and earlier. See [current distribution and acceptance](ALL_IN_ONE_DISTRIBUTION.md).
 
 # Dustweave signed updates / 签名更新
 

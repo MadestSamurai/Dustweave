@@ -7943,14 +7943,6 @@
       "bytes": 514,
       "path": "scripts/update-lane.ps1",
       "sha256": "2dc64bb54495dfc9eb67d7523c101fd0d6e6b72a76b71278a563e7ddbe91753b"
-    },
-    {
-      "bytes": 1566,
-      "reasons": [
-        "build input"
-      ],
-      "path": "src/Core/DailyFullPackageRepair.cs",
-      "sha256": "9da2df6533b8a74d0dfd41ca1c6de51708fa28de2e02d4aee7bc14fb8ffd3f54"
     }
   ],
   "publicReleaseApproved": false,

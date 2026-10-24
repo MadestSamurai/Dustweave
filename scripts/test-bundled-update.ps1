@@ -3,7 +3,7 @@ param(
  [Parameter(Mandatory)][string]$Baseline,
  [Parameter(Mandatory)][string]$CoreAssembly,
  [Parameter(Mandatory)][string]$Output,
- [ValidateSet('upgrade','rollback','interrupt-host','interrupt-helper','repair')][string[]]$Cases=@('upgrade','rollback','interrupt-host','interrupt-helper','repair')
+ [ValidateSet('upgrade','rollback','interrupt-host','interrupt-helper','damaged-base')][string[]]$Cases=@('upgrade','rollback','interrupt-host','interrupt-helper','damaged-base')
 )
 $ErrorActionPreference='Stop'
 $repo=Split-Path -Parent $PSScriptRoot
@@ -38,25 +38,34 @@ function StartIsolated($exe,$arguments,$data){
  return [Diagnostics.Process]::Start($i)
 }
 $old=Release $Baseline;$next=Release $Packages;$next.PreviousVersion=$old.Version
+$patches=Join-Path $out 'patches';[IO.Directory]::CreateDirectory($patches)|Out-Null
+foreach($flavor in @('Lite','Portable')){
+ $oldZip=Join-Path $Baseline ($old.Assets|Where-Object Flavor -eq $flavor).FileName
+ $newZip=Join-Path $Packages ($next.Assets|Where-Object Flavor -eq $flavor).FileName
+ $delta=[Dustweave.DailyUpdateDeltaPackage]::Create($oldZip,$newZip,$patches)
+ if($delta.Bytes -gt 10MB){throw 'Acceptance delta exceeds production limit'}
+ $next.Deltas+=($delta|ConvertTo-Json|ConvertFrom-Json)
+}
 $feed=@{Schema=3;Product='Dustweave';Channel='stable';Releases=@($next,$old)}
 [Dustweave.DailyUpdates]::Validate((Typed $feed ([type][Dustweave.DailyUpdateFeed])))
 $signed=Sign $feed;WriteJson (Join-Path $out 'feed.json') $signed
-function Setup($name,$flavor,$repair=$false){
+function Setup($name,$flavor){
  $folder=Join-Path $out "$name-$flavor";$install=Join-Path $folder 'install';$data=Join-Path $folder 'data'
- CopyTree (Join-Path $(if($repair){$Packages}else{$Baseline}) $flavor) $install
+ CopyTree (Join-Path $Baseline $flavor) $install
  foreach($r in @(@('updates-preference.json',@{Automatic=$false}),@('seen-release.json',@{Version=$next.Version;SeenVersions=@($old.Version,$next.Version)}),@('schedule.json',@{Enabled=$false}),@('desktop-behavior.json',@{CloseAction='exit';RunOnOpen=$false}),@('first-run.json',@{Revision=1;State='completed';TourIndex=0}))){WriteJson (Join-Path $data $r[0]) $r[1]}
  [IO.Directory]::CreateDirectory((Join-Path $install 'plugins'))|Out-Null
  [IO.File]::WriteAllText((Join-Path $install 'plugins/acceptance.keep'),'plugin sentinel');[IO.File]::WriteAllText((Join-Path $data 'account-preservation.keep'),'account sentinel')
  $cache=Join-Path $data "updates/$($next.Version)-$flavor";[IO.Directory]::CreateDirectory($cache)|Out-Null
  WriteJson (Join-Path $cache 'signed-feed.json') $signed
- Copy-Item (Join-Path $Packages ($next.Assets|Where-Object Flavor -eq $flavor).FileName) (Join-Path $cache 'package.zip')
+ $delta=$next.Deltas|Where-Object Flavor -eq $flavor
+ Copy-Item (Join-Path $patches $delta.FileName) (Join-Path $cache $delta.FileName)
  $nonce=[Guid]::NewGuid().ToString('N');$attempt=Join-Path $cache "attempts/$nonce";[IO.Directory]::CreateDirectory($attempt)|Out-Null
  $helper=Join-Path $attempt 'Dustweave.Updater.exe'
- Copy-Item (Join-Path $(if($repair){$Packages}else{$Baseline}) "$flavor/Dustweave.exe") $helper
+ Copy-Item (Join-Path $Baseline "$flavor/Dustweave.exe") $helper
  $target=Join-Path $install 'Dustweave.exe'
- $job=@{Directory=$cache;Target=$target;ParentPid=[int]::MaxValue;ParentStartTicks=0;Release=$next;Asset=($next.Assets|Where-Object Flavor -eq $flavor);Nonce=$nonce;OriginalSha256=(Get-FileHash $target).Hash;Repair=$repair;FromVersion=$old.Version}
+ $job=@{Directory=$cache;Target=$target;ParentPid=[int]::MaxValue;ParentStartTicks=0;Release=$next;Asset=($next.Assets|Where-Object Flavor -eq $flavor);Nonce=$nonce;OriginalSha256=(Get-FileHash $target).Hash;DeltaFileName=$delta.FileName;Repair=$false;FromVersion=$old.Version}
  $jobPath=Join-Path $attempt 'job.json';WriteJson $jobPath $job
- return @{folder=$folder;install=$install;target=$target;data=$data;cache=$cache;attempt=$attempt;helper=$helper;job=$job;jobPath=$jobPath;flavor=$flavor}
+ return @{folder=$folder;install=$install;target=$target;data=$data;cache=$cache;attempt=$attempt;helper=$helper;job=$job;jobPath=$jobPath;flavor=$flavor;delta=$delta}
 }
 function Verify($t,$expected){
  $descriptor=Get-Content (Join-Path $expected 'update-package.json') -Raw|ConvertFrom-Json
@@ -92,19 +101,23 @@ function Finish($t,$name,$state,$expected){
  WriteJson (Join-Path $out 'results.json') @{status='running';cases=$reports.ToArray()};Write-Host "Passed $name-$($t.flavor)"
 }
 function FaultTarget($t){
- $zip=[IO.Compression.ZipFile]::Open((Join-Path $t.cache 'package.zip'),[IO.Compression.ZipArchiveMode]::Update)
+ $badZip=Join-Path $t.folder 'bad-target.zip'
+ Copy-Item (Join-Path $Packages ($next.Assets|Where-Object Flavor -eq $t.flavor).FileName) $badZip
+ $zip=[IO.Compression.ZipFile]::Open($badZip,[IO.Compression.ZipArchiveMode]::Update)
  try{$zip.GetEntry('Dustweave.exe').Delete();$stream=$zip.CreateEntry('Dustweave.exe').Open();try{$stream.Write([Text.Encoding]::UTF8.GetBytes('Invalid executable: startup rollback fixture'))}finally{$stream.Dispose()}}finally{$zip.Dispose()}
  $faultFeed=$feed|ConvertTo-Json -Depth 70|ConvertFrom-Json;$asset=$faultFeed.Releases[0].Assets|Where-Object Flavor -eq $t.flavor
- $asset.Bytes=(Get-Item (Join-Path $t.cache 'package.zip')).Length;$asset.Sha256=(Get-FileHash (Join-Path $t.cache 'package.zip')).Hash
+ $asset.Bytes=(Get-Item $badZip).Length;$asset.Sha256=(Get-FileHash $badZip).Hash
+ $delta=[Dustweave.DailyUpdateDeltaPackage]::Create((Join-Path $Baseline ($old.Assets|Where-Object Flavor -eq $t.flavor).FileName),$badZip,(Join-Path $t.folder 'bad-patch'))
+ Copy-Item (Join-Path $t.folder "bad-patch/$($delta.FileName)") (Join-Path $t.cache $delta.FileName) -Force
+ $faultFeed.Releases[0].Deltas=@($faultFeed.Releases[0].Deltas|Where-Object Flavor -ne $t.flavor)+@($delta)
  WriteJson (Join-Path $t.cache 'signed-feed.json') (Sign $faultFeed)
  $t.job.Release=$faultFeed.Releases[0];$t.job.Asset=$asset;WriteJson $t.jobPath $t.job
 }
 foreach($flavor in @('Lite','Portable')){foreach($case in $Cases){
- $t=Setup $case $flavor ($case -eq 'repair')
+ $t=Setup $case $flavor
  switch($case){
   'upgrade'{
-   # Wrong local bytes cannot prevent complete target installation.
-   [IO.File]::WriteAllText($t.target,'Damaged original bundle');$t.job.OriginalSha256=(Get-FileHash $t.target).Hash;WriteJson $t.jobPath $t.job
+
    $p=StartIsolated $t.helper @('--apply-update',$t.jobPath) $t.data
    Finish $t $case 'completed' (Join-Path $Packages $flavor)
   }
@@ -114,7 +127,7 @@ foreach($flavor in @('Lite','Portable')){foreach($case in $Cases){
   }
   {$_ -in @('interrupt-host','interrupt-helper')}{
    $stage=Join-Path $t.attempt 'staging'
-   $names=[Dustweave.DailyUpdates]::Extract((Join-Path $t.cache 'package.zip'),$stage,(Typed $t.job.Release ([type][Dustweave.DailyUpdateRelease])),(Typed $t.job.Asset ([type][Dustweave.DailyUpdateAsset])))
+   $names=[Dustweave.DailyUpdateDeltaPackage]::Extract((Join-Path $t.cache $t.delta.FileName),$t.install,$stage,(Typed $t.job.Release ([type][Dustweave.DailyUpdateRelease])),(Typed $t.job.Asset ([type][Dustweave.DailyUpdateAsset])),(Typed $t.delta ([type][Dustweave.DailyUpdateDelta])),[Threading.CancellationToken]::None,$true)
    $journal=[Dustweave.DailyUpdateTransaction]::Prepare($stage,$t.install,(Join-Path $t.attempt 'backup'),$names)
    WriteJson (Join-Path $t.install '.dustweave-update.json') @{JobPath=$t.jobPath;Nonce=$t.job.Nonce;HelperSha256=(Get-FileHash $t.helper).Hash}
    try{[void][Dustweave.DailyUpdateTransaction]::Apply($journal,[Action[int]]{param($n) if($n -eq 1){throw 'Injected interruption'}})}catch{if($_.Exception.ToString() -notmatch 'Injected interruption'){throw}}
@@ -124,16 +137,20 @@ foreach($flavor in @('Lite','Portable')){foreach($case in $Cases){
    }else{$p=StartIsolated $t.target @('--desktop-session') $t.data}
    Finish $t $case 'rolled_back' (Join-Path $Baseline $flavor)
   }
-  'repair'{
-   # A verified archive supplies the helper even when the installed root is damaged.
-   $repairExe=[Dustweave.DailyFullPackageRepair]::PrepareExecutable($t.cache,(Typed $t.job.Release ([type][Dustweave.DailyUpdateRelease])),(Typed $t.job.Asset ([type][Dustweave.DailyUpdateAsset])))
-   Copy-Item -LiteralPath $repairExe -Destination $t.helper -Force
-   Remove-Item -LiteralPath $t.target
-   $t.job.OriginalSha256='';WriteJson $t.jobPath $t.job
+  'damaged-base'{
+   [IO.File]::WriteAllText($t.target,'Damaged original bundle')
+   $t.job.OriginalSha256=(Get-FileHash $t.target).Hash;WriteJson $t.jobPath $t.job
+   $before=@{};Get-ChildItem -LiteralPath $t.install -Recurse -File|ForEach-Object {$before[$_.FullName]=(Get-FileHash $_.FullName).Hash}
    $p=StartIsolated $t.helper @('--apply-update',$t.jobPath) $t.data
-   Finish $t $case 'completed' (Join-Path $Packages $flavor)
+   WaitResult $t 'failed'
+   $result=Get-Content (Join-Path $t.data 'update-result.json') -Raw
+   if($result -notmatch 'updates.manual_delta'){throw 'Expected manual download guidance'}
+   foreach($name in $before.Keys){if((Get-FileHash $name).Hash -ne $before[$name]){throw 'Damaged installation was modified'}}
+   if(Test-Path (Join-Path $t.install '.dustweave-update.json')){throw 'Failed delta left a transaction marker'}
+   $reports.Add(@{case="damaged-base-$flavor";status='passed';to=$next.Version;manualDownload=$true;installationUnchanged=$true;fullPackageDownloaded=$false})
+   Write-Host "Passed damaged-base-$flavor"
   }
  }
  if(!$p.WaitForExit(10000)){throw "Helper is still active: $($p.Id)"}
 }}
-WriteJson (Join-Path $out 'results.json') @{status='passed';baseline=$old.Version;target=$next.Version;cases=$reports.ToArray();preparedPayloads=$true;physicalPowerCut=$false;realGameTouched=$false;published=$false}
+WriteJson (Join-Path $out 'results.json') @{status='passed';baseline=$old.Version;target=$next.Version;assets=$next.Assets;cases=$reports.ToArray();preparedPayloads=$true;physicalPowerCut=$false;realGameTouched=$false;published=$false}

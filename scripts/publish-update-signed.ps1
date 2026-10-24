@@ -69,7 +69,7 @@ foreach($flavor in @('Lite','Portable')){
  if(!@($proof.cases|Where-Object {$_.case -eq "upgrade-$flavor" -and $_.status -eq 'passed' -and $_.to -eq $release.Version -and $_.baselineHelper}).Count){throw "Missing actual baseline-helper acceptance: $flavor"}
  if($release.InstallerProtocol -eq 2 -and !@($proof.cases|Where-Object {$_.case -eq "native-repair-$flavor" -and $_.status -eq 'passed' -and $_.to -eq $release.Version}).Count){throw "Missing native repair acceptance: $flavor"}
 }
-$uploadAssets=if($release.Layout -ne 2){@($release.Assets)+(@($release.Deltas)+@($feed.BaselineDeltas))}else{(@($release.Deltas)+@($feed.BaselineDeltas))}
+$uploadAssets=if($release.Layout -eq 1){@($release.Assets)+(@($release.Deltas)+@($feed.BaselineDeltas))}else{(@($release.Deltas)+@($feed.BaselineDeltas))}
 $blobs=@($uploadAssets|Where-Object {$_}|Sort-Object FileName -CaseSensitive|ForEach-Object {[ordered]@{FileName=$_.FileName;Bytes=[long]$_.Bytes;Sha256=$_.Sha256.ToLowerInvariant()}})
 # Upload and verify cloud objects before creating the short-lived signed publication.
 # A missing mirror configuration intentionally retains ordinary origin publication.

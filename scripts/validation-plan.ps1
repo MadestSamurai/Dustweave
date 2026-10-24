@@ -58,6 +58,8 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     # Actual package UI/tool gates still run; signed publication also requires real upgrade/recovery evidence.
     $updates='^(source-manifest\.json|package\.ps1|scripts/(validation-plan|publish-layout|test-update-packages|test-layout-update|build-update-acceptance|new-update-deltas|new-update-feed|prepare-update-site|publish-update-signed)\.ps1)$|^docs/|^src/Desktop/MainWindow\.Updates\.cs$|^src/Core/DailySuiteDiagnostics\.cs$|^src/Launcher/Program\.cs$|^tools/OtaChannel/(Rules|Program|SelfTest)\.cs$|^\.github/workflows/updates\.yml$'
     $updates+='|^src/Bootstrap/((Program|Recovery|RepairBootstrap)\.cs|Dustweave\.Bootstrap\.csproj)$|^scripts/test-(bridge-update|native-repair)\.ps1$'
+    # Layout-3 differential finalization changes only the distribution/update boundary.
+    $updates+='|^README(?:\.en)?\.md$|^src/Core/(DailyUpdates|DailyUpdateTransport|DailyUpdateEngine|DailyFullPackageRepair)\.cs$|^src/Desktop/MainWindow\.Repair\.cs$|^src/Desktop/Localization/(releases|strings)\.json$|^scripts/test-bundled-update\.ps1$|^tests/Dustweave.Tests/Cases/UpdateLayoutCases\.cs$|^tools/OtaChannel/(Mirror|MirrorNginx)\.cs$|^tools/OtaMirror/Program\.cs$'
     if($Scope -in @('Auto','Updates') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $updates}).Count){$selectedScope='Updates';$outside=@()}
     $full.changed=$changed
     $reason='Changes outside the account validation boundary: '+($outside -join ', ')

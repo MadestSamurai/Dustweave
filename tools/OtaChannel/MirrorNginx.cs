@@ -25,7 +25,8 @@ static class MirrorNginx
             autoindex off;
             set $dw_aio_relative "";
             set $dw_aio_mirror "";
-            if ($uri ~ "^/updates/dustweave/all-in-one/(v[0-9A-Za-z.-]+/Dustweave-[0-9A-Za-z.-]+-(?:Lite|Portable)-win-x64[.]zip)$") { set $dw_aio_relative $1; }
+            if ($uri ~ "^/updates/dustweave/all-in-one/(v[0-9A-Za-z.-]+/Dustweave-[0-9A-Za-z.-]+-(?:Lite|Portable)-from-[0-9A-Za-z.-]+-win-x64[.]delta[.]zip)$") { set $dw_aio_relative $1; }
+            if ($dw_aio_relative = "") { return 404; }
             if (-f /usr/share/nginx/dustweave-updates-aio/.mirror/enabled) { set $dw_aio_mirror "1"; }
             if (-f /usr/share/nginx/dustweave-updates-aio/.mirror/routes/$dw_aio_relative) { set $dw_aio_mirror "${dw_aio_mirror}1"; }
             if ($arg_origin = "1") { set $dw_aio_mirror ""; }

@@ -216,10 +216,11 @@ static class Program
                 var c=Rules.Read<Config>(File.ReadAllBytes(args[1]));
                 var feed=Rules.VerifyFeed(File.ReadAllBytes(Path.Combine(args[2],"updates.json")),c);
                 Rules.Need(c.Layout==3 && feed.Releases.Length==1 && feed.Releases[0].Version=="1.5.0","Expected initial public bundle");
-                foreach(var a in feed.Releases[0].Assets) Rules.CheckArchive(Path.Combine(args[2],a.FileName),new(a.FileName,a.Bytes,a.Sha256));
+                Rules.Need(Rules.Patches(feed).Length==0,"Initial baseline must not publish synthetic patches");
                 using var proof=JsonDocument.Parse(File.ReadAllBytes(args[3]));
                 Rules.Need(proof.RootElement.GetProperty("status").GetString()=="passed","Initial package acceptance failed");
-                foreach(var flavor in new[]{"Lite","Portable"}) foreach(var scenario in new[]{"upgrade-","rollback-","interrupt-host-","interrupt-helper-","repair-"})
+                Rules.CheckBundleAssets(proof.RootElement,feed.Releases[0]);
+                foreach(var flavor in new[]{"Lite","Portable"}) foreach(var scenario in new[]{"upgrade-","rollback-","interrupt-host-","interrupt-helper-","damaged-base-"})
                     Rules.Need(proof.RootElement.GetProperty("cases").EnumerateArray().Any(x=>x.GetProperty("case").GetString()==scenario+flavor && x.GetProperty("status").GetString()=="passed" && x.GetProperty("to").GetString()=="1.5.0"),"Missing initial bundle acceptance");
                 Console.WriteLine("Initial bundle verified");return 0;
             }

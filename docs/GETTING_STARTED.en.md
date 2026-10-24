@@ -1,4 +1,4 @@
-For 1.5.0, download the complete package into a new folder once. Accounts and preferences are retained; save Windows startup and schedules again to point to the new path. Subsequent 1.5 updates use a separate signed full-package feed and the application's own temporary copy, with rollback and interruption recovery. See [current distribution](ALL_IN_ONE_DISTRIBUTION.md).
+For 1.5.0, download the complete package into a new folder once. Accounts and preferences are retained; save Windows startup and schedules again to point to the new path. Subsequent 1.5 updates use a separate signed differential feed and the application's own temporary copy, with rollback and interruption recovery. See [current distribution](ALL_IN_ONE_DISTRIBUTION.md).
 
 # Getting started with Dustweave
 
@@ -41,7 +41,7 @@ If the Windows desktop itself is elevated, Dustweave uses the caller's existing 
 
 ## Updates and local data
 
-Version 1.5.0 starts a separate full-package update channel, available from Updates. Verified complete packages download in the background and require confirmation to restart while idle. Accounts, settings and plugins are preserved; failed updates restore the previous version. Versions 1.4 and earlier remain on their original channel and require a one-time manual migration: exit the old app and extract the current complete package into a new folder. Ordinary UI updates do not require restarting the game; follow specific component instructions if shown.
+Version 1.5.0 starts a separate differential update channel, available from Updates. Verified deltas download in the background and require confirmation to restart while idle. Accounts, settings and plugins are preserved; failed updates restore the previous version. Versions 1.4 and earlier remain on their original channel and require a one-time manual migration: exit the old app and extract the current complete package into a new folder. Ordinary UI updates do not require restarting the game; follow specific component instructions if shown.
 
 Daily data defaults to `%LOCALAPPDATA%\BD2DailyAssistant`; protected account sessions use `%LOCALAPPDATA%\BD2AccountSessionManager`. An explicit custom data directory overrides the default. Changing the application folder does not automatically erase this data.
 

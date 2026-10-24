@@ -28,12 +28,12 @@ static class Mirror
     {
         _ = DailyVersion.Parse(version);
         Rules.Need(System.Text.RegularExpressions.Regex.IsMatch(blob.FileName,
-            c.Layout == 3 ? @"^Dustweave-[0-9A-Za-z.-]+-(?:Lite|Portable)-win-x64\.zip$" : @"^Dustweave-[0-9A-Za-z.-]+-(?:Lite|Portable)-from-[0-9A-Za-z.-]+-win-x64\.delta\.zip$") &&
+            @"^Dustweave-[0-9A-Za-z.-]+-(?:Lite|Portable)-from-[0-9A-Za-z.-]+-win-x64\.delta\.zip$") &&
             blob.FileName.StartsWith("Dustweave-" + version + "-", StringComparison.Ordinal) &&
-            blob.Bytes > 0 && blob.Bytes <= (c.Capable || c.Layout == 3 ? 629145600 : 10485760) && Rules.IsHash(blob.Sha256), "Invalid mirror payload");
+            blob.Bytes > 0 && blob.Bytes <= (c.Capable ? 629145600 : 10485760) && Rules.IsHash(blob.Sha256), "Invalid mirror payload");
         return new(BaseUrl(c) + "/v" + version + "/" + blob.FileName);
     }
-    static Blob[] Inventory(Feed feed) => (feed.Releases[0].Layout == 3 ? feed.Releases[0].Assets.Select(a=>new Blob(a.FileName,a.Bytes,a.Sha256.ToLowerInvariant())) : Rules.Patches(feed).Select(d => new Blob(d.FileName, d.Bytes, d.Sha256.ToLowerInvariant())))
+    static Blob[] Inventory(Feed feed) => Rules.Patches(feed).Select(d => new Blob(d.FileName, d.Bytes, d.Sha256.ToLowerInvariant()))
         .OrderBy(b => b.FileName, StringComparer.Ordinal).ToArray();
     static string Routes(Config c, string version) => Path.Combine(Root(c), "routes", "v" + DailyVersion.Parse(version));
     static string Receipt(Config c, string version) => Path.Combine(Root(c), "verified", "v" + DailyVersion.Parse(version) + ".json");
@@ -96,7 +96,7 @@ static class Mirror
         var feed = Rules.VerifyFeed(signedFeed, c);
         string version = feed.Releases[0].Version;
         Blob[] files = Inventory(feed);
-        Rules.Need(files.Length > 0 || feed.Releases[0].InstallerProtocol == 2, "No signed patches to mirror");
+        Rules.Need(files.Length > 0 || c.Layout == 3 || feed.Releases[0].InstallerProtocol == 2, "No signed patches to mirror");
         foreach (var file in files)
         {
             Rules.CheckArchive(Path.Combine(c.Public, "v" + version, file.FileName), file);
@@ -137,7 +137,7 @@ static class Mirror
             string receiptPath = Receipt(c, version); Rules.NoLinks(receiptPath);
             var receipt = Rules.Read<MirrorReceipt>(File.ReadAllBytes(receiptPath));
             var files = Inventory(feed);
-            Rules.Need((files.Length > 0 || feed.Releases[0].InstallerProtocol == 2) && receipt.Version == version && receipt.BaseUrl == baseUrl &&
+            Rules.Need((files.Length > 0 || c.Layout == 3 || feed.Releases[0].InstallerProtocol == 2) && receipt.Version == version && receipt.BaseUrl == baseUrl &&
                 receipt.FeedSha256 == Rules.Hash(feedBytes) && receipt.Files.SequenceEqual(files), "Mirror not prepared for the current signed feed");
             foreach (var file in files)
             {

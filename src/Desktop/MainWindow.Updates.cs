@@ -310,7 +310,7 @@ public partial class MainWindow
             var panel = new StackPanel { Margin = new(24) };
             var text = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 0, 0, 20) };
             L.Text(text, manualUpdateReason ?? "updates.manual_layout"); panel.Children.Add(text);
-            if (manualUpdateReason == "updates.manual_delta")
+            if (manualUpdateReason == "updates.manual_delta" && !DailyUpdateHost.SelfUpdating)
             {
                 var repair = new Button { HorizontalAlignment = HorizontalAlignment.Left, Margin = new(0, 0, 0, 16) };
                 L.Bind(repair, ContentControl.ContentProperty, "repair.goto");
@@ -450,8 +450,7 @@ public partial class MainWindow
             string? pluginBlock = await Task.Run(() => DailyPlugin.HostUpdateBlockReason(root, installation.Release.Version));
             if (pluginBlock != null) { UpdateInstallStatus(pluginBlock); return; }
             if (ToolOpen && !await CloseToolWindowsAsync()) { UpdateInstallStatus("updates.tool_open"); return; }
-            if (selfUpdate && installation.Repair)
-                helperSource = await Task.Run(() => DailyFullPackageRepair.PrepareExecutable(installation.Directory, installation.Release, installation.Asset), cancellation);
+            if (selfUpdate && installation.Repair) throw new InvalidDataException("updates.manual_delta");
             if (!selfUpdate && (installation.Repair || installation.InventoryUpgrade))
             {
                 helperSource = await Task.Run(() =>

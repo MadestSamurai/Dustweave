@@ -29,7 +29,7 @@ foreach($asset in $release.Assets){
  if($asset.Flavor -notin @('Portable','Lite') -or $asset.FileName -ne $expected){throw 'Invalid asset name.'}
  $file=Join-Path $source $expected
  if((Get-Item -LiteralPath $file).Length -ne $asset.Bytes -or (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash -ne $asset.Sha256){throw "Asset verification failed: $expected"}
- if(!$VerifyOnly -and $release.Layout -eq 3){Copy-Item -LiteralPath $file -Destination $target}
+
 }
 foreach($delta in (@($release.Deltas)+@($feed.BaselineDeltas))){
  if(!$delta){continue}

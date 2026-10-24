@@ -24,10 +24,10 @@ public sealed class DailyRepairPanel : StackPanel
         actions.Children.Add(action); actions.Children.Add(cancel);
         DockPanel.SetDock(actions, Dock.Right); heading.Children.Add(actions);
         var title = new TextBlock { FontSize = 18, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
-        L.Text(title, "repair.title"); heading.Children.Add(title); Children.Add(heading);
+        L.Text(title, DailyUpdateHost.SelfUpdating ? "repair.manual_title" : "repair.title"); heading.Children.Add(title); Children.Add(heading);
         var description = new TextBlock { Margin = new(0, 8, 0, 0), TextWrapping = TextWrapping.Wrap };
         description.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk");
-        L.Text(description, "repair.help"); Children.Add(description);
+        L.Text(description, DailyUpdateHost.SelfUpdating ? "repair.manual_help" : "repair.help"); Children.Add(description);
         Children.Add(status);
         details = new Expander { Style = (Style)Application.Current.FindResource("DisclosureExpander"),
             Content = new ScrollViewer { MaxHeight = 180, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Content = files },
@@ -37,6 +37,11 @@ public sealed class DailyRepairPanel : StackPanel
         action.Click += (_, _) => Requested?.Invoke();
         cancel.Click += (_, _) => CancelRequested?.Invoke();
         State("repair.idle", "repair.check", false);
+        if (DailyUpdateHost.SelfUpdating)
+        {
+            actions.Visibility = Visibility.Collapsed; status.Visibility = Visibility.Collapsed;
+            var links = DailyDownloadLinks.Create(); links.Margin = new(0, 12, 0, 0); Children.Add(links);
+        }
     }
     public void State(string message, string button, bool busy, params object?[] args)
     {
@@ -74,7 +79,7 @@ public partial class MainWindow
     internal void OpenRepairPage() => WorkspaceTabs.SelectedItem = UpdatesTab;
     private async Task RepairActionAsync()
     {
-        if (IsSandboxWindow || smoke != null || updateChecking || UpdateRestarting || cacheChanging || repairCancellation != null) return;
+        if (DailyUpdateHost.SelfUpdating || IsSandboxWindow || smoke != null || updateChecking || UpdateRestarting || cacheChanging || repairCancellation != null) return;
         if (readyRepair != null)
         {
             if (Unavailable || scheduleChecking || HasPendingScheduledRun(DateTimeOffset.UtcNow))
@@ -101,26 +106,6 @@ public partial class MainWindow
         try
         {
             using var client = DailyUpdates.Client();
-            if (DailyUpdateHost.SelfUpdating)
-            {
-                var transport = DailyUpdateTransport.Production();
-                var verified = await transport.FetchAsync(client, root, token);
-                var release = verified.Feed.Releases.SingleOrDefault(r => r.Version == DailyProductVersion.Current && r.Layout == DailyUpdates.BundledLayout)
-                    ?? throw new InvalidDataException("updates.repair_unavailable");
-                var asset = release.Assets.Single(a => a.Flavor == flavor);
-                var download = new Progress<int>(p => updatePanel.Repair.State("updates.downloading", "repair.check", true, release.Version, p));
-                string directory = await transport.DownloadAsync(client, verified, release.Version, flavor, root, download, token, installRoot, allowDelta: false, fullRepair: true);
-                var problems = await Task.Run(() => DailyFullPackageRepair.Inspect(directory, installRoot, release, asset, token), token);
-                updatePanel.Repair.Problems(problems);
-                if (problems.Length == 0) updatePanel.Repair.State("repair.healthy", "repair.check", false);
-                else
-                {
-                    using var process = Process.GetCurrentProcess();
-                    readyRepair = new(directory, Environment.ProcessPath!, process.Id, process.StartTime.ToUniversalTime().Ticks, release, asset) { Repair = true };
-                    updatePanel.Repair.State("repair.ready", "repair.restart", false);
-                }
-                return;
-            }
             var repair = DailyUpdateRepair.Production();
             var progress = new Progress<DailyRepairProgress>(updatePanel.Repair.Progress);
             if (repairPlan == null)

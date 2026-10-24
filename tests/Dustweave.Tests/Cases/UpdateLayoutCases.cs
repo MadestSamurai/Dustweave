@@ -86,29 +86,38 @@ internal static class UpdateLayoutCases
         Check("new layout never requests full archive on delta failure",handler.Paths.Count>0 && handler.Paths.All(p=>p.EndsWith(".delta.zip")));
         File.WriteAllBytes(Path.Combine(installation,"app/coreclr.dll"),[0]);
         Reject("retained file mutation between extraction and prepare is rejected",()=>DailyUpdateTransaction.Prepare(stage,installation,Path.Combine(folder,"mutated-backup"),names,retained));
+        string bundleBaseZip = Zip("1.5.0", new() { ["Dustweave.exe"]=original, ["app/docs/test.md"]=[9] }, 3);
         var bundledBase = new DailyUpdateRelease("1.5.0", null, 3, notes,
-            [new("Lite", "Dustweave-1.5.0-Lite-win-x64.zip", 1000, new('a',64))], [], "8.0.30");
-        string bundleZip = Zip("1.5.1", new() { ["Dustweave.exe"]=[3,4], ["app/docs/test.md"]=[9] }, 3);
+            [new("Lite", "Dustweave-1.5.0-Lite-win-x64.zip", new FileInfo(bundleBaseZip).Length, DailyUpdateTransaction.Hash(bundleBaseZip))], [], "8.0.30");
+        string bundleZip = Zip("1.5.1", new() { ["Dustweave.exe"]=original[..13001].Concat(new byte[]{3,4}).Concat(original[13001..]).ToArray(), ["app/docs/test.md"]=[9] }, 3);
         var bundleAsset = new DailyUpdateAsset("Lite", "Dustweave-1.5.1-Lite-win-x64.zip", new FileInfo(bundleZip).Length, DailyUpdateTransaction.Hash(bundleZip));
-        var bundleNext = bundledBase with { Version="1.5.1", PreviousVersion="1.5.0", Assets=[bundleAsset] };
+        var bundleDelta = DailyUpdateDeltaPackage.Create(bundleBaseZip,bundleZip,Path.Combine(folder,"bundle-patch"));
+        var bundleNext = bundledBase with { Version="1.5.1", PreviousVersion="1.5.0", Assets=[bundleAsset], Deltas=[bundleDelta] };
         var bundleFeed = new DailyUpdateFeed(3,"Dustweave","stable",[bundleNext,bundledBase]);
         DailyUpdates.Validate(bundleFeed);
-        Check("bundled full updates have no distance or delta prerequisite", DailyUpdates.ManualUpdateReason(bundleFeed,bundleNext,installed with {Layout=3, Version="1.5.0", RuntimeVersion="8.0.29"}) == null);
+        var bundleInstalled = installed with {Layout=3,Version="1.5.0"};
+        Check("bundled updates accept matching small deltas",DailyUpdates.ManualUpdateReason(bundleFeed,bundleNext,bundleInstalled)==null);
+        Check("bundled runtime change requires manual download",DailyUpdates.ManualUpdateReason(bundleFeed,bundleNext,bundleInstalled with {RuntimeVersion="8.0.29"})=="updates.manual_runtime");
+        Check("bundled missing delta requires manual download",DailyUpdates.ManualUpdateReason(bundleFeed,bundleNext with {Deltas=[]},bundleInstalled)=="updates.manual_delta");
+        Check("bundled delta over ten MiB requires manual download",DailyUpdates.ManualUpdateReason(bundleFeed,bundleNext with {Deltas=[bundleDelta with {Bytes=DailyUpdates.MaxAutomaticDelta+1}]},bundleInstalled)=="updates.manual_size");
         Check("old installations cannot enter bundled feed automatically", DailyUpdates.ManualUpdateReason(bundleFeed,bundleNext,installed) == "updates.manual_layout");
         Reject("bundled feed cannot add block reconstruction protocol",()=>DailyUpdates.Validate(bundleFeed with {Releases=[bundleNext with {InstallerProtocol=2},bundledBase]}));
-        Reject("bundled feed cannot add differential dependency",()=>DailyUpdates.Validate(bundleFeed with {Releases=[bundleNext with {Deltas=[delta]},bundledBase]}));
-        string bundleInstall=Path.Combine(folder,"bundle-install"); Directory.CreateDirectory(bundleInstall);
-        DailyUpdateJson.Write(Path.Combine(bundleInstall,"update-package.json"),installed with {Layout=3,Version="1.5.0"});
-        var fullHandler = new FullArchive(File.ReadAllBytes(bundleZip)); using var fullClient = new HttpClient(fullHandler);
+        string bundleInstall=Path.Combine(folder,"bundle-install"); ZipFile.ExtractToDirectory(bundleBaseZip,bundleInstall);
+        var fullHandler = new FullArchive(File.ReadAllBytes(Path.Combine(folder,"bundle-patch",bundleDelta.FileName))); using var fullClient = new HttpClient(fullHandler);
         var fullSigned = DailyUpdateSignatures.Sign(bundleFeed,"test",key);
-        string downloaded = await new DailyUpdateTransport(trust).DownloadAsync(fullClient,new(bundleFeed,fullSigned,"test"),"1.5.1","Lite",Path.Combine(folder,"bundle-data"),null,default,bundleInstall,allowDelta:false);
-        Check("bundled download requests only the signed full archive",fullHandler.Paths.SequenceEqual(["/v1.5.1/"+bundleAsset.FileName]) && DailyUpdates.Verify(Path.Combine(downloaded,"package.zip"),bundleAsset));
-        Check("full repair identifies missing files without block manifests",DailyFullPackageRepair.Inspect(downloaded,bundleInstall,bundleNext,bundleAsset,default).Any(p=>p.Name=="Dustweave.exe" && p.Missing));
-        DailyUpdates.Extract(bundleZip,bundleInstall,bundleNext,bundleAsset);
-        Check("full repair finds a byte-exact install healthy",DailyFullPackageRepair.Inspect(downloaded,bundleInstall,bundleNext,bundleAsset,default).Length==0);
-        File.WriteAllBytes(Path.Combine(bundleInstall,"Dustweave.exe"),[0,0]);
+        var transport = new DailyUpdateTransport(trust);
+        string downloaded = await transport.DownloadAsync(fullClient,new(bundleFeed,fullSigned,"test"),"1.5.1","Lite",Path.Combine(folder,"bundle-data"),null,default,bundleInstall);
+        Check("bundled download requests only the signed patch",fullHandler.Paths.SequenceEqual(["/v1.5.1/"+bundleDelta.FileName]) && !File.Exists(Path.Combine(downloaded,"package.zip")));
+        File.Copy(bundleZip,Path.Combine(downloaded,"package.zip")); // Stale full caches must not bypass the policy.
         File.WriteAllText(Path.Combine(bundleInstall,"user.keep"),"keep");
-        Check("full repair detects overwritten same-size executable and ignores user files",DailyFullPackageRepair.Inspect(downloaded,bundleInstall,bundleNext,bundleAsset,default) is [{Name:"Dustweave.exe",Missing:false}]);
+        foreach (var damage in new[]{"changed","missing","disabled"})
+        {
+            if(damage=="changed") File.WriteAllBytes(Path.Combine(bundleInstall,"Dustweave.exe"),new byte[original.Length]);
+            if(damage=="missing") File.Delete(Path.Combine(bundleInstall,"Dustweave.exe"));
+            try { await transport.DownloadAsync(fullClient,new(bundleFeed,fullSigned,"test"),"1.5.1","Lite",Path.Combine(folder,"bundle-data"),null,default,bundleInstall,allowDelta:damage!="disabled");throw new Exception("Damaged base accepted"); }
+            catch(InvalidDataException e){Check("bundled "+damage+" base requires manual download",e.Message=="updates.manual_delta");}
+        }
+        Check("bundled failure never requests a full archive or edits user files",fullHandler.Paths.All(p=>p.EndsWith(".delta.zip")) && File.ReadAllText(Path.Combine(bundleInstall,"user.keep"))=="keep");
     }
     private sealed class Missing : HttpMessageHandler
     {

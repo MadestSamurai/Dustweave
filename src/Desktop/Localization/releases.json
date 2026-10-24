@@ -5,8 +5,8 @@
     "Notes": {
       "zh-TW": [
         "主程式與內建工具合併為標準單檔，Portable 包含執行階段，減少分散檔案與啟動層級。",
-        "恢復主程式自更新：下載並驗證完整套件，退出後由暫存副本替換；保留失敗回復與中斷恢復，不再附帶獨立更新器。",
-        "完整性修復使用同一份完整套件。1.5 使用獨立更新通道，1.4 與更早版本請手動下載並解壓縮至新目錄。",
+        "恢復主程式自更新：下載並驗證差分套件，退出後由暫存副本替換；保留失敗回復與中斷恢復，不再附帶獨立更新器。",
+        "七彩雲僅提供差分 OTA；差分無法套用或程式損壞時，請從 GitHub／夸克手動下載完整套件。1.4 與更早版本需手動遷移至新目錄。",
         "改善一般與隔離啟動的身分識別、Touch to Start 和小屋入口恢復。",
         "新增沙盒管理與全域相容啟動方式，支援重建、重新綁定並同步主機更新後的遊戲檔案。",
         "週收集可選擇有收集物的地圖；改善回執監聽、任務進度讀取與連線準備。",
@@ -14,8 +14,8 @@
       ],
       "en-US": [
         "The host and built-in tools now use a standard single-file bundle. Portable includes the runtime, with fewer loose files and startup layers.",
-        "The application updates itself from a verified full archive using a temporary copy. Failed-start rollback and interruption recovery remain; there is no separate updater.",
-        "Integrity repair uses the same full archive. The 1.5 feed is independent; users of 1.4 and earlier must download and extract into a new folder.",
+        "The application updates itself from a verified delta using a temporary copy. Failed-start rollback and interruption recovery remain; there is no separate updater.",
+        "Qicaiyun serves deltas only. Unavailable deltas or damaged files require a manual full download from GitHub or Quark. Users of 1.4 and earlier must migrate to a new folder.",
         "Improved identity detection, Touch to Start and home-entry recovery for ordinary and isolated launches.",
         "Added sandbox management and a global compatibility mode, with rebuilding, rebinding and synchronization of updated host game files.",
         "Weekly collection supports selecting maps with collectibles; improved response observation, mission progress and connection preparation.",
@@ -23,8 +23,8 @@
       ],
       "zh-CN": [
         "主程序与内置工具合并为标准单文件，Portable 包含运行库，减少散落文件和启动层级。",
-        "恢复主程序自更新：下载并校验完整包，退出后由临时副本替换；保留失败回退和中断恢复，不再分发独立更新器。",
-        "完整性修复使用同一份完整包。1.5 使用独立更新通道，1.4 及更早版本请手动下载并解压到新目录。",
+        "恢复主程序自更新：下载并校验差分包，退出后由临时副本替换；保留失败回退和中断恢复，不再分发独立更新器。",
+        "七彩云仅提供差分 OTA；差分不可用或程序损坏时，请从 GitHub／夸克手动下载完整包。1.4 及更早版本需手动迁移到新目录。",
         "改进普通与隔离启动的身份识别、Touch to Start 和小屋入口恢复。",
         "新增沙盒管理与全局兼容启动方式，支持重建、重新绑定并同步主机更新后的游戏文件。",
         "周收集可选择有收集物的地图；改进回执监听、任务进度读取与连接准备。",
@@ -39,7 +39,7 @@
       "zh-TW": [
         "這是 1.4 更新通道的最後一個相容版本。1.5.0 改用整合主程式與相依元件的新建置，需要手動下載一次完整套件。",
         "請從下方 GitHub 或夸克連結下載 1.5.0，退出舊版後解壓縮至新目錄，使用新目錄的 Dustweave.exe；不要覆蓋混用舊檔案。",
-        "帳號與設定繼續沿用。若啟用開機啟動或定時執行，請在新版中重新儲存，使其使用新位置。1.5 的後續更新與修復使用獨立更新來源。",
+        "帳號與設定繼續沿用。若啟用開機啟動或定時執行，請在新版中重新儲存，使其使用新位置。1.5 的後續差分更新使用獨立更新來源；檔案損壞請重新下載完整套件。",
         "改善一般與隔離啟動的身分識別、Touch to Start 和小屋入口恢復。",
         "新增沙盒管理與全域相容啟動方式，支援重建、重新綁定並同步主機更新後的遊戲檔案。",
         "週收集可選擇有收集物的地圖；改善回執監聽、任務進度讀取與連線準備。",
@@ -48,7 +48,7 @@
       "en-US": [
         "This is the final compatible release on the 1.4 update channel. Version 1.5.0 bundles the main application and its dependencies and requires one manual full-package download.",
         "Download 1.5.0 using the GitHub or Quark links below. Exit the old version, extract into a new folder and use its Dustweave.exe. Do not overlay old files.",
-        "Accounts and settings are reused. If Windows startup or scheduled runs are enabled, save those settings again in the new version to use its location. Future 1.5 updates and repairs use a separate feed.",
+        "Accounts and settings are reused. If Windows startup or scheduled runs are enabled, save those settings again in the new version to use its location. Future 1.5 differential updates use a separate feed; damaged files require a fresh full download.",
         "Improved identity detection, Touch to Start and home-entry recovery for ordinary and isolated launches.",
         "Added sandbox management and a global compatibility mode, with rebuilding, rebinding and synchronization of updated host game files.",
         "Weekly collection supports selecting maps with collectibles; improved response observation, mission progress and connection preparation.",
@@ -57,7 +57,7 @@
       "zh-CN": [
         "这是 1.4 更新通道的最后一个兼容版本。1.5.0 改用集成主程序与依赖的新构建，需要手动下载一次完整包。",
         "请从下方 GitHub 或夸克链接下载 1.5.0，退出旧版后解压到新目录，使用新目录的 Dustweave.exe；不要覆盖混用旧文件。",
-        "账号和设置继续沿用。若启用开机启动或定时执行，请在新版中重新保存，使其使用新位置。1.5 的后续更新与修复使用独立更新源。",
+        "账号和设置继续沿用。若启用开机启动或定时执行，请在新版中重新保存，使其使用新位置。1.5 的后续差分更新使用独立更新源；文件损坏请重新下载完整包。",
         "改进普通与隔离启动的身份识别、Touch to Start 和小屋入口恢复。",
         "新增沙盒管理与全局兼容启动方式，支持重建、重新绑定并同步主机更新后的游戏文件。",
         "周收集可选择有收集物的地图；改进回执监听、任务进度读取与连接准备。",

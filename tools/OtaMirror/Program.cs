@@ -52,9 +52,10 @@ static class Program
         var config = new Config("", "", trust.Keys, bundled ? 3 : 2, publicBase, Capable:!bundled);
         var feed = Rules.VerifyFeed(feedBytes, config);
         string version = feed.Releases[0].Version;
-        var files = bundled ? feed.Releases[0].Assets.Select(a=>new Blob(a.FileName,a.Bytes,a.Sha256.ToLowerInvariant())).OrderBy(b=>b.FileName).ToArray() : repair ? RepairBuilder.Inventory(packages, config) :
+        Rules.Need(!bundled || !repair, "Bundled channel permits differential OTA only");
+        var files = repair ? RepairBuilder.Inventory(packages, config) :
             Rules.Patches(feed).Select(d => new Blob(d.FileName, d.Bytes, d.Sha256.ToLowerInvariant())).OrderBy(b => b.FileName).ToArray();
-        Rules.Need((files.Length > 0 || !repair && feed.Releases[0].InstallerProtocol == 2) && files.Select(f => f.FileName).Distinct().Count() == files.Length, "Empty or duplicate inventory");
+        Rules.Need((files.Length > 0 || !repair && (bundled || feed.Releases[0].InstallerProtocol == 2)) && files.Select(f => f.FileName).Distinct().Count() == files.Length, "Empty or duplicate inventory");
         // Validate the complete set before sending any credential or object.
         foreach (var file in files) { if (!repair) _ = Mirror.FileUri(config, version, file); Rules.CheckArchive(Path.Combine(packages, file.FileName), file); }
         using var s3 = new AmazonS3Client(new BasicAWSCredentials(connection.AccessKey, connection.SecretKey),
@@ -84,6 +85,7 @@ static class Program
             catch (AmazonS3Exception e) when (e.StatusCode == HttpStatusCode.NotFound) { }
             if (!exists)
             {
+                Console.WriteLine($"Uploading {file.FileName} ({file.Bytes} bytes)");
                 using var input = File.OpenRead(Path.Combine(packages, file.FileName));
                 var put = new PutObjectRequest
                 {

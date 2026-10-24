@@ -36,7 +36,7 @@ public static class DailyUpdateEngine
             _ = DailyUpdateInventory.ReadSource(job, feed);
             _ = DailyUpdateRepair.ReadVerified(job.Directory, release!, asset!);
         }
-        if (job.Release.Layout == DailyUpdates.BundledLayout && (job.InventoryUpgrade || job.DeltaFileName != null))
+        if (job.Release.Layout == DailyUpdates.BundledLayout && (job.InventoryUpgrade || job.Repair || job.DeltaFileName == null))
             throw new InvalidDataException("updates.invalid_package");
         if (job.Repair && job.Release.Layout != DailyUpdates.BundledLayout)
         {
@@ -130,8 +130,7 @@ public static class DailyUpdateEngine
                             var signed = DailyUpdateJson.TryRead<DailySignedUpdate>(Path.Combine(job.Directory, "signed-feed.json")) ?? throw new InvalidDataException("updates.signature_failed");
                             DailyUpdateInventory.ValidateSource(job, DailyUpdateSignatures.Verify(signed, DailyUpdateTrust.Production()), installed);
                         }
-                        else if (job.Release.Layout == DailyUpdates.BundledLayout ? installed.Layout != DailyUpdates.BundledLayout :
-                            job.Release.Layout >= 2 && (installed.Layout != job.Release.Layout || installed.RuntimeVersion != job.Release.RuntimeVersion || job.DeltaFileName == null)) throw new InvalidDataException("updates.manual_layout");
+                        else if (job.Release.Layout >= 2 && (installed.Layout != job.Release.Layout || installed.RuntimeVersion != job.Release.RuntimeVersion || job.DeltaFileName == null)) throw new InvalidDataException("updates.manual_layout");
                     }
                     Phase("prepare-files");
                     string[] names = ExtractPayload(job, target, ref staging, out var retained);
