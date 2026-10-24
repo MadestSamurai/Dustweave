@@ -50,7 +50,7 @@ public partial class MainWindow
                     LoginAccountText.Text == L.Get("account.not_signed_in"), "Missing sign-in or backup offers an invalid action.");
                 RefreshAccounts(before);
                 AccountsGrid.SelectedItem = rows[1];
-                Check(SandboxRepairButton.IsEnabled && SandboxRepairButton.Visibility == Visibility.Visible && (string)SandboxRepairButton.Content == L.Get("sandbox.repair.title"), "Isolated launch must follow the highlighted saved account in every language.");
+                Check(SandboxRepairButton.IsEnabled && SandboxRepairButton.Visibility == Visibility.Visible && (string)SandboxRepairButton.Content == L.Get("sandbox.manage.title"), "Isolated launch must follow the highlighted saved account in every language.");
                 var selections = rows.Select(r => r.Selected).ToArray();
                 AccountsGrid.SelectedItem = rows[2];
                 Check(rows.Select(r => r.Selected).SequenceEqual(selections), "Highlighting an account changed its daily queue selection.");

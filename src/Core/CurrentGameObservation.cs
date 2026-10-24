@@ -22,10 +22,11 @@ public static class CurrentGameObservation
             token.ThrowIfCancellationRequested();
             if (host.Find() != game)
                 throw new InvalidOperationException("连接期间游戏进程已改变，请重新连接。");
-            var status = host.ReadStatus();
+            var status = host.ReadStatus(game);
             if (status?.ProcessId == game.ProcessId && status.ProcessStartTicks == game.StartTicks && status.State == "error")
                 throw new InvalidOperationException("组件启动失败：" + status.Error);
-            var snapshot = host.ReadSnapshot();
+            var read = host.ReadIdentity(game);
+            var snapshot = read.Snapshot;
             var now = DateTimeOffset.UtcNow;
             DailyLoginReadiness.Check(snapshot, game, now.UtcTicks);
             var local = sessions.Read().CurrentKey;
@@ -42,7 +43,7 @@ public static class CurrentGameObservation
                 return key;
             }
             if (DateTimeOffset.UtcNow >= deadline)
-                throw new TimeoutException("connection.login_identity_unavailable");
+                throw new TimeoutException("connection.login_identity_unavailable: " + DailyLoginDiagnostics.WaitReason(read, game, now));
             await Task.Delay(interval ?? TimeSpan.FromMilliseconds(250), token);
         }
     }

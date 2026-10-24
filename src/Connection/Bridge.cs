@@ -21,6 +21,7 @@ namespace BD2Daily.Live {
   private static bool installed,busy,retiring,resolver;private static BD2.LocalIpc.Handoff handoff;private static BD2.LocalIpc.MainThread pump;private static long next,sequence,start;private static int pid;
   private static int lastFrame=-1,renderFrames,slowFrames;private static double maxFrameMs;
   private static long profileAt;private static int profileCount;private static double observeMs,evidenceMs,writeMs,maxMs;
+  private static Identity commonIdentity;
   internal static bool LegacyObservation;
   private static MonoBehaviour[] sceneComponents;
   internal static IEnumerable<UnityEngine.Object> Find(Type type){
@@ -62,10 +63,12 @@ namespace BD2Daily.Live {
   [DataContract] private sealed class Identity {
    [DataMember] public int ProcessId;[DataMember] public long ProcessStartTicks,FrameUtcTicks;
    [DataMember] public string AccountKey,PlayerKey,State,Scene;
+   [DataMember] public double ObserverMaxMs,ObserverIdentityMs,ObserverControlMs,ObserverStartupMs,ObserverGuildMs,ObserverWriteMs;
   }
   [DataContract] private sealed class Performance {
    [DataMember]public long AtUtcTicks;[DataMember]public int Count,TargetFps,RenderFrames,SlowFrames;[DataMember]public double MaxFrameMs;
    [DataMember]public double ObserveMs,EvidenceMs,WriteMs,MaxMs,FrameDeltaMs,TimeScale;
+   [DataMember]public double CommonMaxMs,CommonIdentityMs,CommonControlMs,CommonStartupMs,CommonGuildMs,CommonWriteMs;
    [DataMember]public bool Legacy,Focused;[DataMember]public string[] Reads;
   }
   [DataContract] private sealed class Lease {[DataMember]public long ExpiresUtcTicks;[DataMember]public string Owner;}
@@ -135,6 +138,7 @@ namespace BD2Daily.Live {
   private static Frame Observe(){
    var f=new Frame{ProcessId=pid,ProcessStartTicks=start,Instance=instance,AtUtcTicks=DateTime.UtcNow.Ticks,Sequence=++sequence,PluginAvailable=PluginHost.Available,PluginFingerprint=BD2.LocalIpc.Build.PluginFingerprint,Scene=SceneManager.GetActiveScene().name??""};
    var identity=Read<Identity>(Path.Combine(root,"snapshot.json"));
+   commonIdentity=identity!=null&&identity.ProcessId==pid&&identity.ProcessStartTicks==start?identity:null;
    if(identity!=null&&identity.ProcessId==pid&&identity.ProcessStartTicks==start&&identity.State=="identified"&&identity.Scene==f.Scene&&identity.FrameUtcTicks>DateTime.UtcNow.AddSeconds(-3).Ticks){f.AccountKey=identity.AccountKey;f.PlayerKey=identity.PlayerKey;}
    else f.Error="Waiting for fresh account identity";
    sceneComponents=null;uis.Clear();targets.Clear();var surfaces=new List<Surface>();
@@ -174,12 +178,19 @@ namespace BD2Daily.Live {
    return (BD2.LocalIpc.PipeBroker.ReadCurrent(root,"guild-command.json")!=null);
   }
   private static void Tick(){
+   if(BD2.LocalIpc.LoadingTrace.Paused)return;
+   long trace=BD2.LocalIpc.LoadingTrace.Begin("daily.frame");
+   try{TickCore();}finally{BD2.LocalIpc.LoadingTrace.End("daily.frame",trace);}
+  }
+  private static void TickCore(){
    if(!installed)return;
    if(UnityEngine.Time.frameCount!=lastFrame){lastFrame=UnityEngine.Time.frameCount;renderFrames++;var ms=UnityEngine.Time.unscaledDeltaTime*1000;maxFrameMs=Math.Max(maxFrameMs,ms);if(ms>50)slowFrames++;}
    TickApproach();SquareRoutePilot.Tick(frame,CollectionReadAllowed);
    if(busy||DateTime.UtcNow.Ticks<next)return;busy=true;next=DateTime.UtcNow.AddMilliseconds((BD2.LocalIpc.RuntimeFiles.Read(Path.Combine(live,"pause"))!=null)&&!LegacyObservation?1000:500).Ticks;
    try{
-    LegacyObservation=(BD2.LocalIpc.RuntimeFiles.Read(Path.Combine(live,"legacy-observation"))!=null);var timer=Stopwatch.StartNew();frame=Observe();MiniGamesNative.GuardDice(frame,live);WeeklyNpcNative.Tick();
+    LegacyObservation=(BD2.LocalIpc.RuntimeFiles.Read(Path.Combine(live,"legacy-observation"))!=null);var timer=Stopwatch.StartNew();frame=Observe();
+    if(BD2.LocalIpc.LoadingTrace.Enabled)BD2.LocalIpc.LoadingTrace.Note("daily-surfaces",frame.Scene+":"+string.Join(",",frame.Surfaces.Select(s=>s.Type).ToArray()));
+    MiniGamesNative.GuardDice(frame,live);WeeklyNpcNative.Tick();
     if(squareNavUntil>0&&((BD2.LocalIpc.RuntimeFiles.Read(Path.Combine(live,"pause"))!=null)||DateTime.UtcNow.Ticks>squareNavUntil||frame.Scene!=squareNavScene||(mainlineStealthNav&&!TalentSkillManager.ὪὫὢὨὯὭὦὪὦὨὣ.IsTalentSkillDurationing(ὪὯὯὢὨὮὨὠὥὤὬ.Stealth)))){
      Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ClearQuestNav(true);GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.SetPlayerMoveState(MoveController.ὯὣὠὮὤὡὤὯὢὩὯ.Stop);squareNavUntil=0;mainlineStealthNav=false;approachTarget=null;
     }var observed=timer.Elapsed.TotalMilliseconds;
@@ -187,7 +198,9 @@ namespace BD2Daily.Live {
     Write(Path.Combine(live,"snapshot.json"),frame,false);var total=timer.Elapsed.TotalMilliseconds;
     observeMs+=observed;evidenceMs+=evidenced-observed;writeMs+=total-evidenced;maxMs=Math.Max(maxMs,total);profileCount++;
     if(DateTime.UtcNow.Ticks>=profileAt){
-     Write(Path.Combine(live,"performance.json"),new Performance{AtUtcTicks=DateTime.UtcNow.Ticks,Count=profileCount,ObserveMs=observeMs/profileCount,EvidenceMs=evidenceMs/profileCount,WriteMs=writeMs/profileCount,MaxMs=maxMs,Legacy=LegacyObservation,FrameDeltaMs=UnityEngine.Time.unscaledDeltaTime*1000,TimeScale=UnityEngine.Time.timeScale,Focused=Application.isFocused,TargetFps=Application.targetFrameRate,Reads=Evidence.Costs,RenderFrames=renderFrames,SlowFrames=slowFrames,MaxFrameMs=maxFrameMs});
+     var common=commonIdentity??new Identity();
+     Write(Path.Combine(live,"performance.json"),new Performance{AtUtcTicks=DateTime.UtcNow.Ticks,Count=profileCount,ObserveMs=observeMs/profileCount,EvidenceMs=evidenceMs/profileCount,WriteMs=writeMs/profileCount,MaxMs=maxMs,Legacy=LegacyObservation,FrameDeltaMs=UnityEngine.Time.unscaledDeltaTime*1000,TimeScale=UnityEngine.Time.timeScale,Focused=Application.isFocused,TargetFps=Application.targetFrameRate,Reads=Evidence.Costs,RenderFrames=renderFrames,SlowFrames=slowFrames,MaxFrameMs=maxFrameMs,
+      CommonMaxMs=common.ObserverMaxMs,CommonIdentityMs=common.ObserverIdentityMs,CommonControlMs=common.ObserverControlMs,CommonStartupMs=common.ObserverStartupMs,CommonGuildMs=common.ObserverGuildMs,CommonWriteMs=common.ObserverWriteMs});
      profileAt=DateTime.UtcNow.AddSeconds(10).Ticks;profileCount=0;renderFrames=slowFrames=0;maxFrameMs=0;observeMs=evidenceMs=writeMs=maxMs=0;
     }
     if(pending!=null){pending.After=frame;pending.State="observed_after_dispatch";Save(pending);pending=null;}

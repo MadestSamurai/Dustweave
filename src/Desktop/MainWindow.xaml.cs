@@ -129,7 +129,7 @@ public partial class MainWindow : Window
         CollectionViewSource.GetDefaultView(rows).Filter = MatchesSearch;
         coordinator.Progress += p => Dispatcher.Invoke(() => { if (dailyQueue.IsRunning || WorkspaceTabs.SelectedItem == RunTab && busy) dailyPanel.Show(new("preparing", p.Message, "", [])); DailyUiText.Set(ProgressText, p.Message); ProgressText.Foreground = (Brush)FindResource(p.State == "error" ? "Error" : "Ink"); });
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        timer.Tick += (_, _) => { _ = PollParallelAsync(); L.RefreshFromDisk(); RefreshTools(); UpdateConnection(); if (smoke == null && !busy) { _ = RefreshAccountIdentityAsync(); RefreshDailyHistory(); } if (smoke == null) { _ = CheckLogCleanupAsync(); _ = CheckStorageWarningAsync(); _ = CheckScheduleAsync(); _ = OfferUpdateAsync(); if (DateTime.UtcNow >= nextUpdateCheck) { nextUpdateCheck = DateTime.UtcNow.AddHours(6); _ = CheckUpdatesAsync(); } } };
+        timer.Tick += (_, _) => { _ = PollParallelAsync(); L.RefreshFromDisk(); RefreshTools(); UpdateConnection(); if (smoke == null && !busy) { _ = RefreshAccountIdentityAsync(); RefreshDailyHistory(); } CheckCaptureLifetime(); if (smoke == null && CaptureSessionId.Length == 0) { _ = CheckLogCleanupAsync(); _ = CheckStorageWarningAsync(); _ = CheckScheduleAsync(); _ = OfferUpdateAsync(); if (DateTime.UtcNow >= nextUpdateCheck) { nextUpdateCheck = DateTime.UtcNow.AddHours(6); _ = CheckUpdatesAsync(); } } };
         Loaded += async (_, _) => {
             // Loaded proves the real WPF shell/resources constructed successfully.
             // Commit before optional account/game reads and background maintenance.
@@ -905,6 +905,23 @@ public partial class MainWindow : Window
                 DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "simple-settings", languages = 3, themes = 2, realGameTouched = false });
                 Application.Current.Shutdown(); return;
             }
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "collection-maps")
+            {
+                L.Audit();
+                WorkspaceTabs.SelectedItem = SettingsTab;
+                string directory = Environment.GetEnvironmentVariable("DUSTWEAVE_UI_MAP_CATALOG") ?? AppContext.BaseDirectory;
+                int maps = 0;
+                foreach (int language in new[] { 0, 1, 2 })
+                foreach (int appearance in new[] { 1, 2 })
+                {
+                    LanguageSelector.SelectedIndex = language; ThemeSelector.SelectedIndex = appearance;
+                    maps = preferencesPanel.CheckCollectionMapsForSmoke(directory);
+                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                    Capture($"collection-maps-{language}-{appearance}");
+                }
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "collection-maps", maps, languages = 3, themes = 2, realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
             if(Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE")=="tool-menu")
             {
                 L.Select("zh-CN"); WorkspaceTabs.SelectedItem=ToolsTab;
@@ -958,6 +975,12 @@ public partial class MainWindow : Window
                     Capture($"outcome-explanations-{language}-{appearance}");
                 }
                 DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "outcomes", languages = 3, themes = 2, realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "sandbox-management")
+            {
+                await CheckSandboxManagementForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "sandbox-management", realGameTouched = false });
                 Application.Current.Shutdown(); return;
             }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "sandbox-setup")

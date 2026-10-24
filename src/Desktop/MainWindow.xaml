@@ -156,7 +156,7 @@
        </DockPanel>
        <WrapPanel Grid.Row="3" HorizontalAlignment="Right" Margin="0,8,0,0">
         <Button x:Name="SandboxLaunchButton" Content="{l:Tr sandbox.launch}" Click="SandboxLaunch_Click" Margin="0,0,8,0" ToolTip="{l:Tr sandbox.launch_help}"/>
-        <Button x:Name="SandboxRepairButton" Content="{l:Tr sandbox.repair.title}" Click="SandboxRepair_Click" ToolTip="{l:Tr sandbox.repair.selected_help}"/>
+        <Button x:Name="SandboxRepairButton" Content="{l:Tr sandbox.manage.title}" Click="SandboxRepair_Click" ToolTip="{l:Tr sandbox.manage.selected_help}"/>
        </WrapPanel>
        <TextBlock x:Name="SandboxHelpText" Grid.Row="4" Visibility="Collapsed" Text="{l:Tr sandbox.help}" FontSize="12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,12,0,0"/>
       </Grid>
@@ -208,6 +208,9 @@
       <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Margin="0,16,0,22"/>
       <TextBlock Text="{l:Tr software.locations}" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,16"/>
       <StackPanel x:Name="SoftwarePaths"/>
+      <CheckBox x:Name="SandboxCompatibility" Content="{l:Tr software.sandbox_compat}" Click="SandboxCompatibility_Click" Margin="0,14,0,6"/>
+      <TextBlock Text="{l:Tr software.sandbox_compat_help}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" FontSize="12" Margin="0,0,0,4"/>
+      <TextBlock x:Name="SandboxModeStatus" TextWrapping="Wrap" FontSize="12" Margin="0,4,0,0" Visibility="Collapsed"/>
       <TextBlock Text="{l:Tr software.maintenance}" FontSize="17" FontWeight="SemiBold" Margin="0,8,0,16"/>
       <WrapPanel><Button Content="{l:Tr nav.updates}" Click="Updates_Click" Margin="0,0,8,8"/><Button x:Name="LogCleanupButton" Content="{l:Tr logs.title}" Click="CleanupDiagnostics_Click" Margin="0,0,8,8"/></WrapPanel>
      </StackPanel></Grid>

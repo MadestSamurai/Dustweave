@@ -15,7 +15,37 @@ public static class SandboxConfiguration
     [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet=CharSet.Unicode)]
     private delegate int EnumBoxes(int index,StringBuilder name,[MarshalAs(UnmanagedType.U1)]bool allSessions);
     private static readonly Dictionary<string, EnumBoxes> enumerators = new(StringComparer.OrdinalIgnoreCase);
+    [UnmanagedFunctionPointer(CallingConvention.StdCall,CharSet=CharSet.Unicode)]
+    private delegate int EnumProcesses(string box,[MarshalAs(UnmanagedType.U1)]bool allSessions,uint session,[Out]int[] pids,nint count);
+    private static readonly Dictionary<string,EnumProcesses> processEnumerators=new(StringComparer.OrdinalIgnoreCase);
     private static readonly object gate = new();
+
+    public static int[] Processes(string installation,string box)
+    {
+        if(string.IsNullOrEmpty(box)||box.Length>32||box.Any(c=>!char.IsAsciiLetterOrDigit(c)&&c!='_'))throw new ArgumentException("Invalid sandbox name");
+        _=SandboxProcessScope.CurrentBox;
+        string path=Path.GetFullPath(Path.Combine(installation,"SbieDll.dll"));
+        EnumProcesses enumerate;
+        lock(gate) {
+            if(!processEnumerators.TryGetValue(path,out enumerate!)) {
+                var library=LoadLibraryEx(path,0,0x100|0x800);
+                if(library==0)throw new IOException("sandbox.manage.process_unknown");
+                enumerate=Marshal.GetDelegateForFunctionPointer<EnumProcesses>(NativeLibrary.GetExport(library,"SbieApi_EnumProcessEx"));
+                processEnumerators.Add(path,enumerate);
+            }
+        }
+        // Sandboxie's supported legacy buffer: count at [0], up to 511 PIDs.
+        // No Start.exe startup, plugin discovery, redirected pipes or wait timer.
+        return ReadProcesses(buffer=>enumerate(box,true,uint.MaxValue,buffer,0));
+    }
+    internal static int[] ReadProcesses(Func<int[],int> query)
+    {
+        var buffer=new int[512];int status=query(buffer),count=buffer[0];
+        if(status!=0||count<0||count>=511)throw new IOException("sandbox.manage.process_unknown");
+        var pids=buffer.Skip(1).Take(count).ToArray();
+        if(pids.Any(pid=>pid<=0)||pids.Distinct().Count()!=count)throw new IOException("sandbox.manage.process_unknown");
+        return pids;
+    }
 
     public static string[] Boxes(string installation)
     {
@@ -45,7 +75,7 @@ public static class SandboxConfiguration
         throw new IOException("Sandboxie 配置条目超出读取范围，未修改隔离空间。");
     }
 
-    public static string Read(string installation, string section, string setting)
+    public static string Read(string installation, string section, string setting, bool includeTemplates = false)
     {
         _ = SandboxProcessScope.CurrentBox;
         string path = Path.GetFullPath(Path.Combine(installation, "SbieDll.dll"));
@@ -61,17 +91,17 @@ public static class SandboxConfiguration
                 queries.Add(path, query);
             }
         }
-        return ReadSetting(query, section, setting);
+        return ReadSetting(query, section, setting, includeTemplates);
     }
 
-    internal static string ReadSetting(Query query, string section, string setting)
+    internal static string ReadSetting(Query query, string section, string setting, bool includeTemplates = false)
     {
         // Box_InitPaths uses Conf_Get(box, "FileRootPath", 0): the first
         // effective entry wins, including template/global fallback. Enumerating
         // and joining roots would turn a valid override plus a global default
         // into one invalid path. Keep raw Unicode for managed absolute roots.
         bool singleRoot = setting.Equals("FileRootPath", StringComparison.OrdinalIgnoreCase);
-        uint flags = NoExpand | (singleRoot ? 0 : NoTemplates);
+        uint flags = NoExpand | (singleRoot || includeTemplates ? 0 : NoTemplates);
         var values = new List<string>();
         for (uint index = 0; index < 4096; index++)
         {

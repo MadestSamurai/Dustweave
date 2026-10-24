@@ -19,7 +19,7 @@ public static class DailyAccountProgress
         if (!scheduled.TryAdd(key, 0)) return;
         _ = Task.Run(() => { try { ImportSandbox(root, account, force); } catch (Exception e) when (Recoverable(e)) { Report(root, e); } finally { scheduled.TryRemove(key, out _); } });
     }
-    public static void ImportSandbox(string root, string account, bool force = false)
+    public static void ImportSandbox(string root, string account, bool force = false, bool requireSuccess = false)
     {
         // Isolated tests/custom data roots must never discover real account files.
         string ordinary = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BD2DailyAssistant");
@@ -31,8 +31,8 @@ public static class DailyAccountProgress
             imported[account] = DateTimeOffset.UtcNow;
             var marker = DailyJson.TryRead<DailySandboxRequest>(Path.Combine(DailySandbox.StateDirectory(account), "instance.json"));
             if (marker?.Account != account) return;
-            try { Copy(SandboxRoot(account), root, account); }
-            catch (Exception e) when (Recoverable(e)) { Report(root, e); }
+            try { Copy(SandboxRoot(account), root, account,requireSuccess); }
+            catch (Exception e) when (Recoverable(e) && !requireSuccess) { Report(root, e); }
         }
     }
     public static void ExportSandbox(string root, string account)
@@ -46,12 +46,12 @@ public static class DailyAccountProgress
         try { DailyJson.Write(Path.Combine(root, "progress-sync-error.json"), new { at = DateTimeOffset.UtcNow, message = e.Message }); }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException) { }
     }
-    public static void Copy(string source, string target, string account)
+    public static void Copy(string source, string target, string account,bool requireSuccess=false)
     {
         if (!DailyProfiles.ValidKey(account)) throw new InvalidDataException("Invalid progress account");
         if (Path.GetFullPath(source).Equals(Path.GetFullPath(target), StringComparison.OrdinalIgnoreCase)) return;
         try { DailyAbsorptionLog.Copy(source, target, account); }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidOperationException or System.Text.Json.JsonException or ArgumentException)
+        catch (Exception e) when (!requireSuccess && e is IOException or UnauthorizedAccessException or InvalidOperationException or System.Text.Json.JsonException or ArgumentException)
         { Report(target, e); }
         DailyParallelProgress.Import(target, source, account);
         string history = DailyQueueHistory.Resolve(source, account);

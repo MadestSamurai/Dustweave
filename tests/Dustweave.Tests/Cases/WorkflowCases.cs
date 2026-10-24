@@ -187,6 +187,27 @@ static class WorkflowCases
         Check(!DailyEventRewards.Needed(entry, "today", cache, balances), "finished one-time event remains skipped across reset only with server proof");
         cache.Clear();
         Check(DailyEventRewards.Needed(entry, "today", cache, balances), "absent server cache cannot prove one-time completion");
+        JsonObject MissionVisit(long table, long eventId, string title) => O(("event", table), ("event_id", eventId), ("kind", "EventMissionUI"),
+            ("missions", new JsonArray(O(("id", 1), ("title", title), ("required", 5), ("progress", 5), ("status", "claimed")))));
+        var oldVisit = MissionVisit(10, 28, "Expired login");
+        var liveVisit = MissionVisit(20, 29, "Current battle");
+        var reusedVisit = MissionVisit(20, 28, "Previous event under reused tab");
+        var activeEvents = new[] { O(("id", 20), ("eventId", 29), ("eventType", 4)) };
+        cache[(29, 1)] = O(("Value", 3), ("IsComplete", false));
+        var currentTasks = DailyEventRewards.Pending([oldVisit, liveVisit, reusedVisit], activeEvents, cache);
+        Check(currentTasks.Count == 1 && S(currentTasks[0]!["title"]) == "Current battle" && N(currentTasks[0]!["progress"]) == 3,
+            "rotated event visits cannot resurrect completed tasks at zero progress or cross a reused tab identity");
+        cache[(29, 1)]["IsComplete"] = true;
+        Check(DailyEventRewards.Pending([oldVisit, liveVisit], activeEvents, cache).Count == 0, "current claimed missions disappear from the unfinished report");
+        cache.Clear();
+        Check(N(DailyEventRewards.Pending([oldVisit, liveVisit], activeEvents, cache).Single()!["progress"]) == 0,
+            "missing current-event counter still follows the game zero default after a reset");
+        Check(DailyEventRewards.Pending([oldVisit, liveVisit], [], cache).Count == 0, "empty active catalogue has no historical pending missions");
+        var visits = O(("10", oldVisit), ("20", liveVisit));
+        DailyEventRewards.RetainCurrentEntries(visits, activeEvents);
+        Check(visits.Count == 1 && visits.ContainsKey("20"), "visit cache retains only the current game catalogue");
+        visits["20"] = reusedVisit.DeepClone(); DailyEventRewards.RetainCurrentEntries(visits, activeEvents);
+        Check(visits.Count == 0, "reused event tab cannot reuse an obsolete completion shortcut");
         var token = O(("state", "completed"), ("kind", "MiniGameRouletteUI"), ("cycle", "today"), ("currency_key", "6:1"), ("balance", 100), ("cost", 1));
         Check(DailyEventRewards.Needed(token, "today", cache, balances), "unchanged usable tokens must not be skipped");
         balances["6:1"] = 101;

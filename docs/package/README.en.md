@@ -2,37 +2,40 @@
 
 Your daily routine, woven into one timeline.
 
-**1.3.1 · Windows x64 · 简体中文 / 繁體中文 / English**
+**Windows x64 · 简体中文 / 繁體中文 / English**
 
 | Package | Requirements |
 | --- | --- |
-| Portable | Includes the .NET 8 desktop runtime; extract and run |
+| Portable | Includes the .NET desktop runtime; extract and run |
 | Lite | Smaller download; requires .NET Desktop Runtime 8 x64 |
 
 ## Get started
 
-Extract the complete package into a new folder and run `Dustweave.exe`. Keep the app folder alongside it; it contains the runtime and all components. The EXE alone is not the complete distribution. Do not mix old and new program files. Tasks do not start automatically on first launch.
+Extract the complete package into a new folder and run `Dustweave.exe`. Keep the adjacent `app` folder: it contains data, documentation and licenses. Do not copy only the EXE or mix files from different releases.
 
-Close the previous Dustweave before upgrading. Saved accounts, settings, plugin registrations and history are reused without migration. Updating the host does not require restarting the game. Integrated tools follow the host language and appearance.
+Exit the previous Dustweave from the system tray before upgrading. Accounts, preferences and history reuse the current Windows user's data folder. Built-in tools follow the host language and theme.
 
-## What's new
+## Moving from 1.4 to 1.5
 
-- Launch the clearly visible Dustweave.exe at the top level; application files are grouped in app.
-- Version 1.3.0 has been withdrawn. Extract the complete 1.3.1 package into a new folder; existing accounts and settings are reused.
-- The new OTA channel remains independent. This startup-layout change needs one manual download; future compatible updates use direct patches.
+Version 1.5 bundles the main application and its dependencies. Download its full package once and extract it into a new folder. The 1.4 and 1.5 update feeds are separate; older versions do not upgrade across this boundary automatically.
 
-## Accounts, schedules and updates
+- [Latest GitHub release](https://github.com/MadestSamurai/Dustweave/releases/latest)
+- [Quark download folder](https://pan.quark.cn/s/0ee553c60c0d?pwd=5AgC), access code: `5AgC`
 
-Run multiple accounts from Accounts. Isolated execution requires the official Sandboxie-Plus installation. Avoid launching isolated instances during game updates. Scheduled tasks require a powered-on, awake computer and a signed-in Windows session, and are disabled by default.
+Launch `Dustweave.exe` from the new folder and update any shortcuts you created. If Windows startup or scheduled runs are enabled, save those settings again in the new application so they use the new location.
 
-Updates at the bottom left offers checks and downloads. Domestic hosting serves in-app OTA only. Signed direct patches ask to restart while idle and never interrupt a queue. A locally delivered build may not yet be available through OTA.
+## Updates and repair
 
-## Attribution and notes
+The update page in software settings offers checking, downloading and repair. Updates request a restart while idle and do not interrupt a running queue. From 1.5 onward, the application downloads and verifies a full archive, then uses a temporary copy to replace files with rollback and interruption recovery. A local test build is not necessarily available through OTA.
 
-Provided free by **MadSamurai** on Bilibili / **MadestSamurai** on GitHub. Source is MIT licensed: [Dustweave](https://github.com/MadestSamurai/Dustweave). Integrated tool licenses and sources are in `app/licenses`, `app/docs/tools` and `app/THIRD_PARTY_NOTICES.md`.
+Version 1.5 repairs distributed files using the same full archive, preserving accounts, settings and plugins. If the main executable is damaged and cannot open, download and extract the full package into a new directory. Version 1.4.18 retains its old independent repair entry.
 
-This is an unofficial project. Automation can carry account and operational risks; decide whether to use it accordingly. Packaging includes offline verification. New plugin behavior in actual game tasks still needs validation during normal use.
+## Accounts and schedules
 
-## Updating to 1.3.1
+Manage multiple accounts on the Accounts page. Isolated execution requires official Sandboxie-Plus; ordinary single-account use does not. Stop isolated instances before updating the game on the host, then launch them through Dustweave.
 
-Keep the complete `app` folder. Users on 1.3.0 or earlier must extract this complete package into a new folder. Saved accounts and settings remain available. Automatic updates cover up to 10 releases with a direct patch no larger than 8 MiB. A changed runtime or missing compatible patch requires a manual download; the app does not silently download a full package.
+Scheduled tasks require a powered-on, awake computer and a signed-in Windows session. They are disabled by default.
+
+## Attribution and license
+
+Provided free by **MadSamurai** on Bilibili / **MadestSamurai** on GitHub. Source is MIT licensed: [Dustweave](https://github.com/MadestSamurai/Dustweave). Built-in tool licenses and sources are in `app/licenses`, `app/docs/tools` and `app/THIRD_PARTY_NOTICES.md`.

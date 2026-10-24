@@ -4,6 +4,69 @@ using System.Text.Json;
 using static Dustweave.DailyData;
 static class ManagedInputsCases
 {
+    private static async Task CostumeTicketNotice(string root, List<string> cases)
+    {
+        const string ui = "CostumeSelectNoticePopupUI";
+        foreach (string mode in new[] { "mail", "event", "resume", "opening", "disabled", "unknown", "stopped", "identity", "never-ready", "stuck" })
+        {
+            using var h = new WorkflowHarness(Path.Combine(root, "costume-ticket-" + mode), []);
+            string destination = mode == "event" ? "EventUI" : "MailUI";
+            h.Page(destination);
+            var popup = HomeNavigationCases.Surface(ui, true, "_cancelBtn", 2);
+            popup["Targets"]!.AsArray().Add(O(("Id", 103), ("Field", "_okBtn"), ("Enabled", true), ("Route", "ui")));
+            if (mode is "opening" or "never-ready" or "stopped" or "identity") popup["InputReady"] = false;
+            if (mode == "disabled") popup["Targets"]![0]!["Enabled"] = false;
+            h.Frame["Surfaces"]!.AsArray().Add(popup);
+            if (mode == "unknown") h.Frame["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("MessagePopupUI", true, "_buttonOK", 99));
+            h.Frame["UiToken"] = "ticket-notice";
+            h.OnDelay = () => {
+                if (h.Time < .3) return;
+                if (mode == "opening") popup["InputReady"] = true;
+                if (mode == "disabled") popup["Targets"]![0]!["Enabled"] = true;
+                if (mode == "stopped") h.Stopped = true;
+                if (mode == "identity") h.Frame["AccountKey"] = "changed";
+            };
+            int cancellations = 0, exits = 0;
+            h.OnCommand = c => {
+                if (S(c["Kind"]) == "click" && N(c["SurfaceId"]) == 2 && N(c["TargetId"]) == 102)
+                {
+                    cancellations++;
+                    if (mode != "stuck") h.Page(destination);
+                    else h.Time += 45;
+                }
+                else if (mode == "resume" && S(c["Kind"]) == "back" && !DailyNavigationDecision.Types(h.Frame).Contains(ui))
+                { exits++; h.Page("MenuUI"); }
+                else throw new Exception("Unexpected ticket use or repeated business operation: " + c);
+            };
+            Exception? failure = null;
+            try
+            {
+                if (mode == "resume") await h.Workflow.Step(O(("ui", destination), ("back", true), ("expect", "MenuUI"), ("timeout", 3)));
+                else await h.Driver.DismissRewardAsync(destination, true);
+            }
+            catch (Exception e) { failure = e; }
+            bool success = mode is "mail" or "event" or "resume" or "opening" or "disabled";
+            if (success ? failure != null || cancellations != 1 || exits != (mode == "resume" ? 1 : 0)
+                : failure == null || cancellations != (mode == "stuck" ? 1 : 0) || exits != 0)
+                throw new Exception("Costume ticket shared recovery failed: " + mode, failure);
+            if (h.Time > 75) throw new Exception("Ticket cancellation exceeded its bounded deadline");
+            cases.Add("costume ticket preserves inventory during reward cleanup and resumed input: " + mode);
+        }
+        foreach (string mode in new[] { "confirm", "back", "native", "operation", "pointer" })
+        {
+            using var h = new WorkflowHarness(Path.Combine(root, "costume-ticket-reject-" + mode), []);
+            h.Page(ui, "_cancelBtn", "_okBtn");
+            var action = O(("ui", ui), ("field", mode == "confirm" ? "_okBtn" : "_cancelBtn"));
+            if (mode is "back" or "native") action[mode] = true;
+            if (mode == "operation") action["operation"] = "story_advance";
+            if (mode == "pointer") h.Frame["Surfaces"]![0]!["Targets"]![0]!["Route"] = "pointer";
+            bool rejected = false;
+            try { await h.Driver.SendObservedAsync(action); }
+            catch (DailyStepException e) when (e.Kind == "rejected") { rejected = true; }
+            if (!rejected || h.Box.Commands.Count != 0) throw new Exception("Unsafe ticket operation dispatched: " + mode);
+            cases.Add("costume ticket submission only allows native cancellation: " + mode);
+        }
+    }
     private static async Task TacticsSeasonNotice(string root, List<string> cases)
     {
         const string lobby = "TarosTacticsBingoUI", notice = "TarosTacticsSeasonFinishUI";
@@ -107,7 +170,7 @@ static class ManagedInputsCases
         {
             using var f=new WorkflowHarness(Path.Combine(root,"mail-current-state-"+remaining),[],["mail.collect"]);
             f.Page("MailUI","_objAllReceiveButton");
-            string tab="normal";bool claimable=remaining;int claims=0;
+            string tab="normal";bool claimable=remaining;int claims=0, ticketCancellations=0;
             f.Readings=()=>[
                 WorkflowCases.Reading("mail.ui",("ὭὯὫὫὮὡὠὮὤὬὨ",tab)),
                 WorkflowCases.Reading("mail.normal",("Count",claimable?1:0),("$items",claimable?new JsonArray(O(("InvenIndex",42))):new JsonArray())),
@@ -126,13 +189,19 @@ static class ManagedInputsCases
                 if(S(c["Kind"])=="mail_tab")tab=N(c["Value"])==0?"normal":"cash";
                 else if(S(c["Kind"])=="back")f.Page("MenuUI");
                 else if(S(c["Kind"])=="click"){
+                    if (N(c["SurfaceId"]) == 2 && N(c["TargetId"]) == 102)
+                    {
+                        ticketCancellations++; f.Page("MailUI", "_objAllReceiveButton"); return;
+                    }
                     if(!claimable||tab!="normal")throw new Exception("Unexpected repeated mail claim");
                     claims++;f.Event("mail.collect","request");claimable=false;f.Event("mail.collect","response",("RewardInfoBundle",new JsonObject()));
+                    f.Frame["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("CostumeSelectNoticePopupUI", true, "_cancelBtn", 2));
+                    f.Frame["UiToken"] = "claimed-ticket-notice";
                 }else throw new Exception("Unexpected mail action: "+c);
             };
             var stage=new DailyMailStage(f.Root,f.Driver,()=>false,()=>f.Time,t=>{f.Time+=t.TotalSeconds;return Task.CompletedTask;});
             var result=await stage.ExecuteAsync(f.Context,(_,_,_)=>throw new Exception("Unexpected mail relay"));
-            if(claims!=(remaining?1:0)||S(result["state"])!=(remaining?"completed":"skipped")||
+            if(claims!=(remaining?1:0)||ticketCancellations!=claims||S(result["state"])!=(remaining?"completed":"skipped")||
                 oldPaths.Any(p=>S(DailyJson.TryRead<JsonObject>(p)!["state"])!="superseded"))throw new Exception("Old mail receipt blocked fresh mailbox state");
             cases.Add("both interrupted mailbox tabs recover from native remaining IDs, claims="+claims);
         }
@@ -237,6 +306,7 @@ static class ManagedInputsCases
     }
     public static async Task Run(string output, List<string> cases)
     {
+        await CostumeTicketNotice(output, cases);
         await MailRecovery(output, cases);
         await ProtectedMail(output, cases);
         await OpeningTalentNotice(output, cases);
@@ -262,7 +332,8 @@ static class ManagedInputsCases
             using var f = new WorkflowHarness(Path.Combine(output, "room-rerun-" + mode), [], ["room.info"], (frame, ctx) => {
                 string player = DailyIdentity.PlayerKey(frame["AccountKey"]!.GetValue<string>(), 42);
                 frame["PlayerKey"] = player; ctx["actor"]![4] = player;
-            });
+                frame["Scene"] = "Empty";
+            }, observeIdentity: true);
             f.Page("MenuUI", "_buttonMyRoom");
             f.Readings = () => [WorkflowCases.Reading("room.cache", ("OwnerIndex", mode == "wrong-owner" ? 43 : 42))];
             string id = Guid.NewGuid().ToString("N"), oldPath = Path.Combine(f.Root, "live", "business", id + ".json");

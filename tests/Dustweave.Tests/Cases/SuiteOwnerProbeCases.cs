@@ -20,6 +20,7 @@ internal static class SuiteOwnerProbeCases
         void Check(bool ok,string label){if(!ok)throw new Exception(label);cases.Add("suite-owner-probe: "+label);}
         Check(SuiteOwnerProbe.Read(0,0).Problem=="suite.owner-missing","missing identity is distinct from an exited process");
         Check(SuiteOwnerProbe.Read(int.MaxValue,1).Problem=="suite.owner-exited","invalid PID is confirmed absent");
+        await Monitor(cases);
         foreach(string mode in new[]{"limited","denied"})
         {
             var start=new ProcessStartInfo(Environment.ProcessPath!){UseShellExecute=false,CreateNoWindow=true,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true};
@@ -46,6 +47,54 @@ internal static class SuiteOwnerProbeCases
             }
             finally {if(!child.HasExited){await child.StandardInput.WriteLineAsync("stop");await child.StandardInput.FlushAsync();await child.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(20));}}
         }
+    }
+    private static async Task Monitor(List<string> cases)
+    {
+        void Check(bool ok,string label){if(!ok)throw new Exception(label);cases.Add("suite-owner-monitor: "+label);}
+        long now=DateTime.UtcNow.Ticks;var jobs=new Queue<Action>();int calls=0;
+        using(var monitor=new SuiteOwnerMonitor((pid,start)=>{calls++;return new(){ProcessId=pid,ExpectedStartTicks=start,ObservedStartTicks=start,CheckedUtcTicks=now,State="alive"};},()=>now,jobs.Enqueue))
+        {
+            Check(monitor.Read(10,20).State=="checking"&&calls==0,"first frame queues proof without querying the OS or declaring readiness");
+            for(int i=0;i<1000;i++)monitor.Read(10,20);
+            Check(jobs.Count==1,"slow process inspection cannot create an unbounded worker backlog");
+            jobs.Dequeue()();
+            Check(monitor.Read(10,20).State=="alive","completed proof permits the same process generation");
+            now+=TimeSpan.FromMilliseconds(600).Ticks;monitor.Read(10,20);
+            now+=TimeSpan.FromSeconds(4).Ticks;
+            Check(monitor.Read(10,20).State=="stale"&&monitor.Read(10,20).Problem!="","blocked refresh expires authority instead of keeping automation alive indefinitely");
+            Check(monitor.Read(11,21).State=="checking","changing owners never reuses a previous owner's proof");
+            jobs.Dequeue()();
+            Check(monitor.Read(11,21).State=="checking"&&jobs.Count==1,"late result from the old owner is discarded before scheduling the new owner");
+            jobs.Dequeue()();Check(monitor.Read(11,21).ProcessId==11&&monitor.Read(11,21).State=="alive","new owner requires its own successful proof");
+            now+=TimeSpan.FromSeconds(1).Ticks;monitor.Read(11,21);monitor.Dispose();jobs.Dequeue()();
+            Check(monitor.Read(11,21).State=="unreadable"&&jobs.Count==0,"unloading a module prevents a late worker from reviving it");
+        }
+        using var entered=new ManualResetEventSlim();using var release=new ManualResetEventSlim();
+        using var finished=new ManualResetEventSlim();int blockedCalls=0;
+        using var blocked=new SuiteOwnerMonitor((pid,start)=>{
+            Interlocked.Increment(ref blockedCalls);entered.Set();
+            try{if(!release.Wait(TimeSpan.FromSeconds(5)))throw new TimeoutException("fixture not released");return new(){ProcessId=pid,ExpectedStartTicks=start,CheckedUtcTicks=DateTime.UtcNow.Ticks,State="alive"};}
+            finally{finished.Set();}
+        },()=>DateTime.UtcNow.Ticks,a=>ThreadPool.QueueUserWorkItem(_=>a()));
+        try
+        {
+            blocked.Read(10,20);Check(entered.Wait(TimeSpan.FromSeconds(2)),"blocking inspection fixture runs on its worker");
+            var watch=Stopwatch.StartNew();for(int i=0;i<1000;i++)CheckPending(blocked.Read(10,20));watch.Stop();
+            Check(watch.ElapsedMilliseconds<500&&blockedCalls==1,"1,000 frame reads remain nonblocking during a stalled native query ("+watch.ElapsedMilliseconds+" ms)");
+        }
+        finally {release.Set();await Task.Run(()=>finished.Wait(TimeSpan.FromSeconds(2)));}
+        using(var monitor=new SuiteOwnerMonitor())
+        using(var self=Process.GetCurrentProcess())
+        {
+            long start=self.StartTime.ToUniversalTime().Ticks;
+            monitor.Read(self.Id,start);
+            // No simulated frame callback for longer than the authority lifetime.
+            await Task.Delay(3300);
+            var resumed=monitor.Read(self.Id,start);
+            Check(resumed.State=="alive"&&DateTime.UtcNow.Ticks-resumed.CheckedUtcTicks<TimeSpan.FromSeconds(2).Ticks,
+                "background proof stays fresh across a game loading pause without falsely revoking the owner");
+        }
+        static void CheckPending(SuiteOwnerObservation value){if(value.State!="checking"||value.Problem=="")throw new Exception("Blocked native query granted authority");}
     }
     static SuiteOwnerObservation ReadWithoutPrivileges(int pid,long ticks)
     {

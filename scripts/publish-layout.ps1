@@ -20,7 +20,7 @@ function Complete-DustweaveLayout {
   Copy-Item -LiteralPath $entry -Destination (Join-Path $destinationRoot 'Dustweave.exe') -Force
   $script:DustweaveNativeEntries.Remove($destinationRoot)
  }
- if(!$components.nativeEntry){
+ if(!$components.nativeEntry -and !$components.bundled){
  $sdkVersion=(& dotnet --version).Trim()
  $dotnetRoot=Split-Path -Parent (Get-Command dotnet).Source
  Add-Type -Path (Join-Path $dotnetRoot "sdk/$sdkVersion/Microsoft.NET.HostModel.dll")
@@ -63,6 +63,25 @@ function Publish-DustweaveLayout {
  function Publish-Project([string]$project,[string]$output,[string[]]$extra,[string]$name) {
   & dotnet publish (Join-Path $Root $project) @common @extra -o $output > (Join-Path $Work ($Flavor+'-'+$name+'.log')) 2>&1
   if($LASTEXITCODE -ne 0){throw "Publish failed: $Flavor-$name. See $Work"}
+ }
+ # A clean 1.5 baseline uses the standard .NET bundle. Historical 1.4 builds
+ # keep their old layout so the final migration notice remains installable.
+ if([Version]($Version.Split('-')[0]) -ge [Version]'1.5.0'){
+  $common+=('-p:DustweaveUpdateTrustFile='+ (Join-Path $Root 'assets/updates/trust-aio.json'))
+  $destinationRoot=[IO.Path]::GetFullPath($Destination).TrimEnd('\')
+  if(!$destinationRoot.StartsWith((Join-Path ([IO.Path]::GetFullPath($Root)) 'artifacts')+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'Bundle output must remain under repository artifacts.'}
+  Publish-Project 'src/Desktop/Dustweave.Desktop.csproj' $Destination @('-p:PublishSingleFile=true','-p:IncludeNativeLibrariesForSelfExtract=true',('-p:EnableCompressionInSingleFile='+$self),'-p:PublishTrimmed=false','-p:DustweaveSharedResources=false',('-p:DustweavePackageFlavor='+$Flavor),'-p:DustweaveSelfUpdate=true',('-p:DustweaveVersion='+$Version)) 'application'
+  # Embedded tools re-enter Dustweave.exe; their old apphost settings are not
+  # consumed. Only files emitted by this publish under the checked output move.
+  foreach($file in Get-ChildItem -LiteralPath $destinationRoot -File){
+   if($file.Name -ne 'Dustweave.exe' -and ($file.Name -match '^(BD2|Dustweave\.).*\.runtimeconfig\.json$' -or $file.Extension -eq '.exe')){
+    if($file.Attributes.HasFlag([IO.FileAttributes]::ReparsePoint)){throw 'Linked bundle output.'}
+    Remove-Item -LiteralPath $file.FullName
+   }
+  }
+  if(Get-ChildItem -LiteralPath $destinationRoot -File -Filter '*.dll'){throw 'Bundled publish left loose dependency assemblies.'}
+  [ordered]@{layout=3;runtime=$runtime;bootstrapFiles=@();launcher='bundled';updater='self';bridge=$false;nativeEntry=$false;bundled=$true;flavor=$Flavor;sharedResources=@()}|ConvertTo-Json -Depth 6|Set-Content -LiteralPath (Join-Path $Destination 'package-components.json') -Encoding utf8
+  return
  }
  Publish-Project 'src/Desktop/Dustweave.Desktop.csproj' $Destination @('-p:PublishSingleFile=false','-p:EnableCompressionInSingleFile=false','-p:DustweaveSharedResources=true',('-p:DustweaveResourceCatalog='+$catalog),('-p:DustweaveVersion='+$Version)) 'application'
  $launcher=Join-Path $Work ('launcher-'+$Flavor)

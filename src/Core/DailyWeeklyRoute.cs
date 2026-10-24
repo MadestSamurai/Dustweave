@@ -56,6 +56,11 @@ public sealed class DailyWeeklyRoute
             if (complete)
             {
                 result[stage] = Finish(stage);
+                if (stage == "weekly_mainline")
+                {
+                    result[stage]!["selected_collection_maps"] = w.Settings.Weekly.CollectionMaps == null ? null : Array(w.Settings.Weekly.CollectionMaps.Select(id => (JsonNode)JsonValue.Create(id)!));
+                    if (w.Settings.Weekly.CollectionMaps != null) result[stage]!["reason"] = "selected_collection_verified";
+                }
                 result[stage]!["week"] = week;
                 result[stage]!["verified_maps"] = Array(done[stage].OrderBy(p => p.Pack).ThenBy(p => p.Map).Select(p => (JsonNode)new JsonArray(p.Pack, p.Map)));
             }
@@ -71,9 +76,10 @@ public sealed class DailyWeeklyRoute
             ProtectWeeklyTravel = true
         };
         this.progress = progress ?? ((_, _) => { });
+        route.CollectionMapScope = p => route.Catalog.SelectedMaps(p, w.Settings.Weekly);
         // One physical journey updates each selected category, with its own verified counter.
         w.WorkProgress = value => { foreach (string stage in active) this.progress(stage, value); };
-        route.CanSuppress = map => (active.Contains("weekly_npc") || active.Contains("weekly_mainline")
+        route.CanSuppress = map => (active.Contains("weekly_npc") || active.Contains("weekly_mainline") && w.Settings.Weekly.IncludesCollectionMap(map)
             && (!absorptionQuotaExhausted || AbsorptionComplete)) && CanRun("weekly_mainline", map);
     }
     public static string[] Select(IEnumerable<string> stages, WeeklyPreferences settings)
@@ -120,7 +126,7 @@ public sealed class DailyWeeklyRoute
         absorptionStart ??= absorptionUsed;
     }
     private string Summary(string stage) => stage == "weekly_npc" ? npc?.Summary() ?? "等待读取周NPC任务" : $"{Names[stage]}已核对 {done[stage].Count}/{known[stage].Count} 张地图";
-    private Dictionary<string, long[]> Maps() => new() { { "weekly_mainline", active.Contains("weekly_mainline") ? route.Catalog.Maps(pack) : [] }, { "weekly_steal", active.Contains("weekly_steal") ? route.Catalog.StealMaps(pack) : [] } };
+    private Dictionary<string, long[]> Maps() => new() { { "weekly_mainline", active.Contains("weekly_mainline") ? route.Catalog.SelectedMaps(pack, w.Settings.Weekly) : [] }, { "weekly_steal", active.Contains("weekly_steal") ? route.Catalog.StealMaps(pack) : [] } };
     private Dictionary<string, long[]> MapJobs() => Maps().Where(p => active.Contains(p.Key)).ToDictionary(p => p.Key, p => p.Value.Where(id => !done[p.Key].Contains((pack, id)) && !failures[p.Key].ContainsKey((pack, id)) && (p.Key != "weekly_mainline" || !storyLocked.Contains((pack, id)) && (!absorptionQuotaExhausted || AbsorptionComplete))).ToArray());
     private void Defer(string stage, long map, string reason, JsonObject? metadata = null)
     {
@@ -307,7 +313,9 @@ public sealed class DailyWeeklyRoute
     public static readonly string[] StageOrder = ["weekly_mainline", "weekly_npc", "weekly_steal"];
     private async Task RecoverInterruptedMaps(long[] availablePacks)
     {
-        var locations = route.Progress.PendingMaps().Select(op => DailyCollectionProgress.RecoveryLocation(op)!.Value).Distinct().ToArray();
+        if (!active.Contains("weekly_mainline")) return;
+        var locations = route.Progress.PendingMaps().Select(op => DailyCollectionProgress.RecoveryLocation(op)!.Value)
+            .Where(p => route.Catalog.Supported(p.Pack) && route.Catalog.SelectedMaps(p.Pack, w.Settings.Weekly).Contains(p.Map)).Distinct().ToArray();
         foreach (var group in locations.GroupBy(p => p.Pack))
         {
             await Guard();
@@ -460,6 +468,8 @@ public sealed class DailyWeeklyRoute
     }
     private JsonObject Finish(string stage)
     {
+        if (stage == "weekly_mainline" && known[stage].Count == 0)
+            return O(("state", "skipped"), ("reason", "no_selected_collection_maps"), ("detail", "所选收集地图当前均不可进入，已跳过周收集。"));
         if (stage == "weekly_npc")
         {
             if (npc?.Data == null)
@@ -481,6 +491,13 @@ public sealed class DailyWeeklyRoute
     {
         var selected = Select(requested, w.Settings.Weekly);
         active = selected.ToHashSet();
+        var result = new JsonObject();
+        foreach (string s in requested.Except(selected))
+            result[s] = O(("state", "skipped"), ("reason", "disabled"), ("detail", "已关闭"));
+        if (w.Settings.Weekly.CollectionMaps is { Length: 0 } && active.Remove("weekly_mainline"))
+            result["weekly_mainline"] = O(("state", "skipped"), ("reason", "no_selected_collection_maps"), ("detail", "未选择收集地图，已跳过周收集。"));
+        if (active.Count == 0)
+            return O(("state", "completed"), ("stages", result), ("engine", "dotnet-weekly-route-v1"));
         try
         {
             var display = await w.PrepareTables("location-labels", Path.Combine(w.Directory, "data", "locations"),
@@ -492,9 +509,6 @@ public sealed class DailyWeeklyRoute
         catch (Exception error) when (error is IOException or System.Text.Json.JsonException or StageHostException { Kind: "adapter" })
         { w.Driver.Diagnostics.Event("location_names_unavailable", O(("message", error.Message))); }
         if (active.Count > 0) await DailyWeeklyNpcBoard.Close(w);
-        var result = new JsonObject();
-        foreach (string s in requested.Except(selected))
-            result[s] = O(("state", "skipped"), ("reason", "disabled"), ("detail", "已关闭"));
         var evidence = await route.Evidence();
         ObserveAbsorptionUsage(evidence);
         // Read absorption usage in Prepare/Jobs only when collection is active;
@@ -508,7 +522,7 @@ public sealed class DailyWeeklyRoute
         if (active.Contains("weekly_npc")) npc = new(route, allowHunting: false) { AvailablePacks = packs };
         foreach (long p in packs)
         {
-            if (active.Contains("weekly_mainline")) known["weekly_mainline"].UnionWith(route.Catalog.Maps(p).Select(m => (p, m)));
+            if (active.Contains("weekly_mainline")) known["weekly_mainline"].UnionWith(route.Catalog.SelectedMaps(p, w.Settings.Weekly).Select(m => (p, m)));
             if (active.Contains("weekly_steal")) known["weekly_steal"].UnionWith(route.Catalog.StealMaps(p).Select(m => (p, m)));
         }
         catalogReady = true;
@@ -637,6 +651,12 @@ public sealed class DailyWeeklyRoute
         foreach (string s in selected)
         {
             result[s] ??= Finish(s);
+            if (s == "weekly_mainline")
+            {
+                result[s]!["selected_collection_maps"] = w.Settings.Weekly.CollectionMaps == null ? null : Array(w.Settings.Weekly.CollectionMaps.Select(id => (JsonNode)JsonValue.Create(id)!));
+                if (w.Settings.Weekly.CollectionMaps != null && S(result[s]!["state"]) == "completed")
+                    result[s]!["reason"] = "selected_collection_verified";
+            }
             IncludeDeferrals(s, result[s]!.AsObject());
             if (unavailableEvents.Length > 0)
             {
@@ -655,6 +675,7 @@ public sealed class DailyWeeklyRoute
         route.Progress.Steal = settings.Steal;
         foreach (long p in route.Catalog.AvailablePacks(await route.Evidence()))
         {
+            if (route.StandardMaps(p).Length == 0) continue;
             await route.Enter(p);
             var checkpoint = await route.Checkpoint();
             completed.Add(O(("pack", p), ("result", checkpoint)));

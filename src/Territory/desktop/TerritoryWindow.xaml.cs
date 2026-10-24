@@ -27,8 +27,7 @@ public partial class TerritoryWindow : Window
  {
   root=dataRoot??TerritoryIdentity.DataRoot;if(dataRoot==null)TerritoryStorage.ImportSettings(root);link=new(root);InitializeComponent();InitializeLanguage();
   VersionText.Visibility=Visibility.Collapsed;
-  var settings=TerritoryJson.Read<TerritorySettings>(Path.Combine(TerritoryStorage.Preferences(root),"settings.json"))??new();
-  if(!settings.ValidSettings())settings=new();
+  var settings=TerritoryPreferences.Load(root);
   selectedTreeStage=settings.MinimumTreeStage;RefreshTreeStages();
   selectedSeed=settings.FixedSeedId;PlantingModeBox.SelectedIndex=settings.FixedCrop?1:0;
   if(selectedSeed>0){FixedSeedBox.ItemsSource=new[]{new RecipeOption{Id=selectedSeed,Name=ui.Language.Text("作物 ")+selectedSeed,Available=true}};FixedSeedBox.SelectedValue=selectedSeed;}

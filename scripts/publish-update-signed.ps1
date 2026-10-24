@@ -14,7 +14,7 @@ param(
 $ErrorActionPreference='Stop'
 $root=Split-Path -Parent $PSScriptRoot
 $settings=Get-Content -LiteralPath $Config -Raw|ConvertFrom-Json
-if($settings.Host -notmatch '^[a-zA-Z0-9.-]+$' -or $settings.User -notin @('dustweave-ota','dustweave-ota-v2')){throw 'Invalid constrained publisher endpoint.'}
+if($settings.Host -notmatch '^[a-zA-Z0-9.-]+$' -or $settings.User -notin @('dustweave-ota','dustweave-ota-v2','dustweave-ota-aio')){throw 'Invalid constrained publisher endpoint.'}
 function InvokeChannel([string]$command,[byte[]]$header=$null,[object[]]$files=@()){
  if($Capable){$command=$command.Replace('dustweave-ota ','dustweave-ota capable ')}
  $info=[Diagnostics.ProcessStartInfo]::new('ssh');$info.UseShellExecute=$false;$info.CreateNoWindow=$true;$info.WindowStyle='Hidden'
@@ -60,7 +60,7 @@ $feedEnvelope=[Text.Encoding]::UTF8.GetString($feedBytes)|ConvertFrom-Json
 $feed=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($feedEnvelope.Payload))|ConvertFrom-Json
 $release=$feed.Releases[0]
 if($current.layout -ne $release.Layout){throw 'Publishing endpoint is not configured for this package layout. Configure the v2 lane first; the old feed must remain unchanged.'}
-if(($release.Layout -eq 2) -ne ($settings.User -eq 'dustweave-ota-v2')){throw 'Package layout and dedicated publishing account differ.'}
+if(($release.Layout -eq 2) -ne ($settings.User -eq 'dustweave-ota-v2') -or ($release.Layout -eq 3) -ne ($settings.User -eq 'dustweave-ota-aio')){throw 'Package layout and dedicated publishing account differ.'}
 if([semver]$release.Version -le [semver]$current.version){throw 'Release must advance.'}
 $evidenceBytes=[IO.File]::ReadAllBytes([IO.Path]::GetFullPath($Evidence))
 $proof=[Text.Encoding]::UTF8.GetString($evidenceBytes)|ConvertFrom-Json
@@ -69,19 +69,21 @@ foreach($flavor in @('Lite','Portable')){
  if(!@($proof.cases|Where-Object {$_.case -eq "upgrade-$flavor" -and $_.status -eq 'passed' -and $_.to -eq $release.Version -and $_.baselineHelper}).Count){throw "Missing actual baseline-helper acceptance: $flavor"}
  if($release.InstallerProtocol -eq 2 -and !@($proof.cases|Where-Object {$_.case -eq "native-repair-$flavor" -and $_.status -eq 'passed' -and $_.to -eq $release.Version}).Count){throw "Missing native repair acceptance: $flavor"}
 }
-$uploadAssets=if($release.Layout -eq 1){@($release.Assets)+(@($release.Deltas)+@($feed.BaselineDeltas))}else{(@($release.Deltas)+@($feed.BaselineDeltas))}
+$uploadAssets=if($release.Layout -ne 2){@($release.Assets)+(@($release.Deltas)+@($feed.BaselineDeltas))}else{(@($release.Deltas)+@($feed.BaselineDeltas))}
 $blobs=@($uploadAssets|Where-Object {$_}|Sort-Object FileName -CaseSensitive|ForEach-Object {[ordered]@{FileName=$_.FileName;Bytes=[long]$_.Bytes;Sha256=$_.Sha256.ToLowerInvariant()}})
 # Upload and verify cloud objects before creating the short-lived signed publication.
 # A missing mirror configuration intentionally retains ordinary origin publication.
 if(!$MirrorConfig -and $settings.MirrorConfig){$MirrorConfig=$settings.MirrorConfig}
 if($MirrorConfig){
- if($release.Layout -ne 2){throw 'Cloud delivery is restricted to the v2 lane.'}
+ if($release.Layout -notin @(2,3)){throw 'Unsupported cloud delivery lane.'}
  & (Join-Path $PSScriptRoot 'publish-update-mirror.ps1') -Config $MirrorConfig -PackageDirectory $folder -Receipt ($Operation+'.mirror.json')
  # Prepare repair objects before switching the feed. The server accepts only
  # manifests bound to this signed release; existing origin blocks are reused.
+ if($release.Layout -eq 2){
  $repairDirectory=if($RepairDirectory){[IO.Path]::GetFullPath($RepairDirectory)}else{Join-Path (Split-Path -Parent ([IO.Path]::GetFullPath($Operation))) ('repair-'+$release.Version)}
  & (Join-Path $PSScriptRoot 'prepare-repair-package.ps1') -PackageDirectory $folder -OutputDirectory $repairDirectory -PrivateKeyFile $PrivateKeyFile
  & (Join-Path $PSScriptRoot 'publish-repair-signed.ps1') -Config $Config -RepairDirectory $repairDirectory -Operation ($Operation+'.repair.json') -CloudConfig $MirrorConfig -PrivateKeyFile $PrivateKeyFile -Capable:$Capable
+ }
 }
 $nonce=[Guid]::NewGuid().ToString('N');$now=[DateTimeOffset]::UtcNow
 $request=[ordered]@{Schema=1;Product='Dustweave';Version=$release.Version;ExpectedFeedSha256=$current.feedSha256;FeedSha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($feedBytes)).ToLowerInvariant();EvidenceSha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($evidenceBytes)).ToLowerInvariant();Nonce=$nonce;IssuedUtc=$now.ToString('O');ExpiresUtc=$now.AddMinutes(15).ToString('O');Files=$blobs}

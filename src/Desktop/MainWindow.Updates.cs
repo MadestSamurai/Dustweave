@@ -432,8 +432,10 @@ public partial class MainWindow
     }
     private async Task StartUpdateInstallerAsync(DailyUpdateJob installation, CancellationToken cancellation)
     {
-        string helperSource = Path.Combine(AppContext.BaseDirectory, "support", "Dustweave.Updater.exe");
-        if (!installation.Repair && (DailyJson.TryRead<DailyUpdatePackage>(Path.Combine(DailyUpdateHost.InstallRoot, "update-package.json"))?.Layout != DailyUpdates.CurrentLayout || !File.Exists(helperSource))) { UpdateInstallStatus("updates.packaged_only"); return; }
+        bool selfUpdate = DailyUpdateHost.SelfUpdating;
+        string helperSource = selfUpdate ? Environment.ProcessPath! : Path.Combine(AppContext.BaseDirectory, "support", "Dustweave.Updater.exe");
+        if (selfUpdate && installation.Release.Layout != DailyUpdates.BundledLayout) throw new InvalidDataException("updates.manual_layout");
+        if (!installation.Repair && (DailyJson.TryRead<DailyUpdatePackage>(Path.Combine(DailyUpdateHost.InstallRoot, "update-package.json"))?.Layout != (selfUpdate ? DailyUpdates.BundledLayout : DailyUpdates.CurrentLayout) || !File.Exists(helperSource))) { UpdateInstallStatus("updates.packaged_only"); return; }
         {
             using var storage = DailyUpdateHost.AcquireStorage(root);
             // A manual download can expire while this window stays open for days.
@@ -448,7 +450,9 @@ public partial class MainWindow
             string? pluginBlock = await Task.Run(() => DailyPlugin.HostUpdateBlockReason(root, installation.Release.Version));
             if (pluginBlock != null) { UpdateInstallStatus(pluginBlock); return; }
             if (ToolOpen && !await CloseToolWindowsAsync()) { UpdateInstallStatus("updates.tool_open"); return; }
-            if (installation.Repair || installation.InventoryUpgrade)
+            if (selfUpdate && installation.Repair)
+                helperSource = await Task.Run(() => DailyFullPackageRepair.PrepareExecutable(installation.Directory, installation.Release, installation.Asset), cancellation);
+            if (!selfUpdate && (installation.Repair || installation.InventoryUpgrade))
             {
                 helperSource = await Task.Run(() =>
                 {

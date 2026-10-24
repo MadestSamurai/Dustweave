@@ -13,7 +13,7 @@
     <Product>Dustweave</Product><Description>Dustweave startup and independent recovery</Description>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="../../assets/updates/trust.json" LogicalName="Dustweave.update-trust.json" />
+    <EmbeddedResource Include="$(DustweaveUpdateTrustFile)" LogicalName="Dustweave.update-trust.json" />
     <EmbeddedResource Include="$(DustweaveBootstrapInfo)" LogicalName="Dustweave.bootstrap-info.json" Condition="'$(DustweaveBootstrapInfo)' != ''" />
     <Compile Include="../Updater/RepairDialog.cs" Link="RepairDialog.cs" />
   </ItemGroup>

@@ -11,6 +11,38 @@ static class StageProtocolCases
             cases.Add(name);
         }
         Check(new BD2Daily.Live.Frame().BridgeVersion == DailyStageObservation.BridgeVersion, "native frame version matches desktop acceptance contract");
+        {
+            var frame=CommandDriverCases.Frame();frame["Protocol"]=1;frame["BridgeVersion"]=DailyStageObservation.BridgeVersion;frame["Scene"]="Empty";
+            var identity=new DailySnapshot {ProcessId=7,ProcessStartTicks=10,AccountKey=new string('a',64),PlayerKey=new string('b',64),State="identified",Loading=true,FrameUtcTicks=100000000,Guild=new(){ServerKey="server",CycleKey="today"}};
+            var loading=new DailyStageObservation(identity.AccountKey,()=>frame,()=>identity,now:()=>100000000,timeout:TimeSpan.Zero);
+            string reason="";
+            Check((await loading.ReadFrameAsync()).Daily!.Loading,"read-only observation retains actual loading state without falsely reporting lost identity");
+            identity.Loading=false;frame["Scene"]="Map";
+            Check((await loading.ReadFrameAsync()).Context["cycle"]!.GetValue<string>()=="today","same game resumes directly after loading without discarding its cycle");
+            identity.Scene="Empty";identity.MainMenuReady=true;frame["Scene"]="Empty";
+            Check((await loading.ReadFrameAsync()).Frame["Scene"]!.GetValue<string>()=="Empty","confirmed native home menu starts daily observation without loading a map first");
+            frame["Surfaces"]!.AsArray().Add(new JsonObject{["Type"]="LoadingUI"});
+            Check(DailyHomeDecision.Inspect((await loading.ReadFrameAsync()).Frame,DailyNavigationPolicy.Load()).Kind=="waiting",
+                "loading frame reaches navigation which waits without authorizing input");
+            frame["Surfaces"]!.AsArray().RemoveAt(1);identity.MainMenuReady=false;
+            foreach(string page in new[]{"MyRoomUI","MailUI","GuildUI","GachaUI","EventUI","FutureFeatureUI"}){
+                frame["Surfaces"]![0]!["Type"]=page;
+                Check(DailyNavigationDecision.Types((await loading.ReadFrameAsync()).Frame).Contains(page),"read-only Empty observation supports child page without MenuUI: "+page);
+            }
+            frame["Surfaces"]!.AsArray().Clear();
+            Check(DailyNavigationDecision.Types((await loading.ReadFrameAsync()).Frame).Count==0 &&
+                DailyHomeDecision.Inspect(frame,DailyNavigationPolicy.Load()).Kind=="waiting", "no visible UI is observable but cannot authorize a navigation action");
+            frame["Surfaces"]!.AsArray().Add(new JsonObject{["Type"]="IntroUI"});
+            Check(DailyHomeDecision.Inspect((await loading.ReadFrameAsync()).Frame,DailyNavigationPolicy.Load()).Kind=="blocked",
+                "navigation rejects login page even before the common identity observer catches up");
+            frame["Surfaces"]![0]!["Type"]="EntranceBackgroundCoverUI";frame["Scene"]="Map";
+            Check(DailyHomeDecision.Inspect((await loading.ReadFrameAsync()).Frame,DailyNavigationPolicy.Load()).Kind=="waiting",
+                "navigation waits for actual transition cover on every scene");
+            frame["Surfaces"]![0]!["Type"]="MyRoomUI";
+            identity.AccountKey=new string('c',64);reason="";try{await loading.ReadFrameAsync();}catch(StageHostException e){reason=e.Message;}
+            Check(reason.Contains("识别已变化"),"loading recovery still rejects changed account identity");
+            Check(DailyDiagnosticExport.Allowed("live/observation-failures/loading.json"),"observation failure includes both live and identity evidence in diagnostic export");
+        }
         using var f = new FreeDrawStageCases.Fixture(Path.Combine(output, "managed-stage-boundary"));
         f.Current["BridgeVersion"] = DailyStageObservation.BridgeVersion;
         var calls = new List<int>();

@@ -189,7 +189,12 @@ public sealed class DailyCollectionNavigator
 
 public sealed partial class DailyFieldRoute
 {
-    public long[] StandardMaps(long pack) => Progress.Steal ? (Progress.OnlySteal ? Catalog.StealMaps(pack) : Catalog.Maps(pack).Concat(Catalog.StealMaps(pack)).Distinct().ToArray()) : Catalog.Maps(pack);
+    public Func<long, long[]>? CollectionMapScope { get; set; }
+    public long[] StandardMaps(long pack)
+    {
+        var collection = CollectionMapScope?.Invoke(pack) ?? Catalog.Maps(pack);
+        return Progress.Steal ? (Progress.OnlySteal ? Catalog.StealMaps(pack) : collection.Concat(Catalog.StealMaps(pack)).Distinct().ToArray()) : collection;
+    }
     public async Task<JsonObject> Checkpoint(bool fresh = true)
     {
         var e = await Evidence();

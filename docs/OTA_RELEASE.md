@@ -1,4 +1,13 @@
+**1.5.0 onward:** the separate layout-3 channel uses full archives and a temporary copy of the main executable. The block-repair/native-updater rules below apply only to 1.4 and earlier. See [current distribution and acceptance](ALL_IN_ONE_DISTRIBUTION.md).
+
 # Dustweave signed updates / 签名更新
+
+The **1.5.0 all-in-one boundary** uses a separate release history and update
+source. Do not append 1.5.0 to any 1.4 feed or generate cross-boundary patches.
+The final legacy 1.4.18 carries manual-download instructions. See
+[the all-in-one distribution plan](ALL_IN_ONE_DISTRIBUTION.md) for local acceptance
+and the remaining first-deployment requirements. The historical support promises
+below apply within their original channels.
 
 For **1.4.15 and later**, follow [the current update protocol](UPDATE_EVOLUTION.md)
 for target-release reconstruction, automatic bridge updates and transactional

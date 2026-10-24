@@ -2,11 +2,13 @@ using System.Text.Json.Nodes;
 using static Dustweave.DailyData;
 namespace Dustweave;
 
-public sealed class DailyCollectionCatalog(DailyWorkflow workflow)
+public sealed class DailyCollectionCatalog(JsonObject collection, JsonObject steal)
 {
+    public DailyCollectionCatalog(DailyWorkflow workflow) : this(workflow.Asset("collection-catalog.json"), workflow.Asset("steal-catalog.json")) { }
     public const int CoverageRevision = 3;
-    private readonly Dictionary<long, JsonObject> cartridges = Rows(workflow.Asset("collection-catalog.json")["cartridges"]).ToDictionary(r => N(r["id"]));
-    private readonly Dictionary<long, JsonObject> steals = Rows(workflow.Asset("steal-catalog.json")["packs"]).ToDictionary(r => N(r["id"]));
+    private readonly Dictionary<long, JsonObject> cartridges = Rows(collection["cartridges"]).ToDictionary(r => N(r["id"]));
+    private readonly Dictionary<long, JsonObject> steals = Rows(steal["packs"]).ToDictionary(r => N(r["id"]));
+    public long[] SelectedMaps(long pack, WeeklyPreferences settings) => Maps(pack).Where(settings.IncludesCollectionMap).ToArray();
     public bool Supported(long pack) => pack is >= 1 and <= 19 || cartridges.ContainsKey(pack);
     public long[] Packs() => Enumerable.Range(1, 19).Select(id => (long)id)
         .Concat(cartridges.Where(p => (S(p.Value["kind"]) is "character" or "event") && p.Value["maps"] is JsonArray { Count: > 0 }).Select(p => p.Key).Order())

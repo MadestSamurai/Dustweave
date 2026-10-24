@@ -38,6 +38,8 @@ namespace BD2Daily.Runtime {
     if(g.InGuild){g.GuildKey=DailyIdentity.Hash("guild|"+member.Id);g.GuildName=guild.Name??"";}
     var network=Read("Services.Network");var server=(string)Read("Network.Server",network);if(!string.IsNullOrEmpty(server))g.ServerKey=DailyIdentity.Hash("server|"+server);
     var timer=(gamfs.Thread.TimerManager)Read("Services.Timer");g.ServerTicks=timer.Now().Ticks;g.ResetTicks=timer.GetDailyResetTime().Ticks;g.CycleKey=g.ResetTicks.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    // Scene loading suspends UI/actions, not the already identified server clock.
+    if(snapshot.Loading){g.Supported=false;g.BlockReason="等待游戏加载完成";return g;}
     if(!includeSurfaces)return g;
     var app=(AppManager)Read("Services.App");var uis=Uis();g.ActiveUis=uis.Select(u=>u.GetType().Name).Distinct().OrderBy(n=>n).ToArray();
     var menu=uis.OfType<MenuUI>().FirstOrDefault();var button=menu==null?null:(GameObject)Field("Menu.Guild",menu);
@@ -45,7 +47,7 @@ namespace BD2Daily.Runtime {
     g.GuildVisible=uis.Any(u=>u is GuildUI);
     g.AttendancePopup=uis.OfType<GuildJoinAttendancePopupUI>().Any(p=>((GameObject)Field("Popup.Attendance",p)).activeInHierarchy);
     var foreign=uis.Where(u=>(bool)Field("UI.Popup",u)&&!(bool)((MethodInfo)GuildBindings.Get("UI.IsHud")).Invoke(null,new object[]{u})&&!(u is GuildUI)&&!(u is MenuUI)&&!(u is GuildJoinAttendancePopupUI)).Select(u=>u.GetType().Name).ToArray();
-    if(app.IsActiveUILoading()||app.IsPlayAnimUILoading())g.BlockReason="等待游戏加载完成";
+    if(app.IsActiveUILoading())g.BlockReason="等待游戏加载完成";
     else if(foreign.Length>0)g.BlockReason="请先处理游戏弹窗："+string.Join("、",foreign);
     else if(g.ActiveUis.Any(n=>n.Contains("Battle")||n.Contains("Login")))g.BlockReason="请先回到游戏主菜单";
     else if(uis.OfType<GuildJoinAttendancePopupUI>().Any()&&!g.AttendancePopup)g.BlockReason="入会弹窗需要手动处理";

@@ -12,12 +12,30 @@ public static class DailyPendingTasks
     private static long? Number(JsonElement row, string key) => row.ValueKind == JsonValueKind.Object
         && row.TryGetProperty(key, out var value) && value.ValueKind == JsonValueKind.Number
         && value.TryGetInt64(out long number) && number >= 0 ? number : null;
+    private static HashSet<(long Table, long Event)>? ActiveEvents(JsonElement result)
+    {
+        if (!result.TryGetProperty("catalog", out var catalog) || catalog.ValueKind != JsonValueKind.Array) return null;
+        var active = new HashSet<(long, long)>();
+        foreach (var item in catalog.EnumerateArray())
+        {
+            try
+            {
+                using var parsed = item.ValueKind == JsonValueKind.String ? JsonDocument.Parse(item.GetString()!) : null;
+                var row = parsed?.RootElement ?? item;
+                if (Number(row, "id") is not long id || Number(row, "eventId") is not long eventId) return null;
+                active.Add((id, eventId));
+            }
+            catch (JsonException) { return null; }
+        }
+        return active;
+    }
     public static IReadOnlyList<QueueTaskDetail> Read(JsonElement item)
     {
         if (item.ValueKind != JsonValueKind.Object || !item.TryGetProperty("result", out var result)
             || result.ValueKind != JsonValueKind.Object || !result.TryGetProperty("pending_tasks", out var tasks)
             || tasks.ValueKind != JsonValueKind.Array) return [];
         var output = new List<QueueTaskDetail>();
+        var activeEvents = ActiveEvents(result);
         foreach (var row in tasks.EnumerateArray())
         {
             if (row.ValueKind != JsonValueKind.Object) continue;
@@ -28,6 +46,11 @@ public static class DailyPendingTasks
                 : key.StartsWith("MG_DAILY:", StringComparison.Ordinal) ? "daily"
                 : Number(row, "event_id").HasValue ? "event" : "other";
             if (group is not ("daily" or "weekly" or "pass" or "event")) group = "other";
+            // Repair presentation of older reports using their own observed event
+            // catalogue. Never rewrite the journal or infer completion from names.
+            if (group == "event" && activeEvents != null && key.Split(':') is ["event", var table, _]
+                && long.TryParse(table, out long tableId) && Number(row, "event_id") is long eventId
+                && !activeEvents.Contains((tableId, eventId))) continue;
             string reason = Text(row, "detail");
             if (string.IsNullOrWhiteSpace(reason)) reason = Text(row, "reason");
             string source = Text(row, group == "pass" ? "pass_title" : "event_title");

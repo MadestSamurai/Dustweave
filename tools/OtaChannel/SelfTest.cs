@@ -31,6 +31,21 @@ static class SelfTest
         Header HeaderOf(Request r) => new(Sign(r,Rules.Domain),Convert.ToBase64String(feed),Convert.ToBase64String(evidence));
         MemoryStream Frame(Header h,bool truncate=false,bool trailing=false) { var bytes=Rules.Bytes(h);var m=new MemoryStream();byte[] p=new byte[4];BinaryPrimitives.WriteInt32BigEndian(p,bytes.Length);m.Write(p);m.Write(bytes);m.Write(new byte[]{1,2,3,4,1,2,3,4},0,truncate?5:8);if(trailing)m.WriteByte(0);m.Position=0;return m; }
         var c=Setup("normal");var r=NewRequest();var h=HeaderOf(r);
+        Pass("bundled-account-separate-config",Channel.ConfigPathForAccount("dustweave-ota-aio")=="/etc/dustweave-ota-channel-aio/config.json");
+        var bundled=ReleaseOf("1.5.0",null) with{Layout=3,RuntimeVersion="8.0.30"};
+        var bundledConfig=Setup("bundled") with{Layout=3,MirrorBaseUrl="https://dustweave-test.cdn.7caiyun.com/dustweave/ota/all-in-one"};
+        var bundledFeed=Rules.Bytes(Sign(new Feed(3,"Dustweave","stable",[bundled])));
+        Pass("bundled-feed-independent",Rules.VerifyFeed(bundledFeed,bundledConfig).Releases.Single().Version=="1.5.0");
+        Reject("old-lane-rejects-bundle",()=>Rules.VerifyFeed(bundledFeed,c));
+        Reject("bundle-rejects-old-lane",()=>Rules.VerifyFeed(old,bundledConfig));
+        Reject("bundle-rejects-block-protocol",()=>Rules.VerifyFeed(Rules.Bytes(Sign(new Feed(3,"Dustweave","stable",[bundled with{InstallerProtocol=2}]))),bundledConfig));
+        var bundledProof=Rules.Bytes(new{status="passed",cases=new[]{"upgrade-Lite","upgrade-Portable","startup-failure","bootstrap-recovery","rollback-Lite","rollback-Portable","interrupt-host-Lite","interrupt-host-Portable","interrupt-helper-Lite","interrupt-helper-Portable","repair-Lite","repair-Portable"}.Select(n=>new{@case=n,status="passed",to=bundled.Version,baselineHelper=true}).ToArray()});
+        var bundledRequest=r with{Version=bundled.Version,FeedSha256=Rules.Hash(bundledFeed),EvidenceSha256=Rules.Hash(bundledProof),Files=bundled.Assets.Select(a=>new Blob(a.FileName,a.Bytes,a.Sha256)).OrderBy(a=>a.FileName,StringComparer.Ordinal).ToArray()};
+        var bundledHeader=new Header(Sign(bundledRequest,Rules.Domain),Convert.ToBase64String(bundledFeed),Convert.ToBase64String(bundledProof));
+        Pass("bundled-full-upload-inventory",Rules.Validate(bundledHeader,bundledConfig,DateTimeOffset.UtcNow).Request.Files.Length==2);
+        Reject("bundled-cannot-omit-archive",()=>Rules.Validate(bundledHeader with{Request=Sign(bundledRequest with{Files=[]},Rules.Domain)},bundledConfig,DateTimeOffset.UtcNow));
+        Pass("bundled-mirror-separate-prefix",Mirror.FileUri(bundledConfig,"1.5.0",bundledRequest.Files[0]).AbsolutePath.StartsWith("/dustweave/ota/all-in-one/"));
+        Reject("bundled-mirror-cannot-use-v2-prefix",()=>Mirror.BaseUrl(bundledConfig with{MirrorBaseUrl="https://dustweave-test.cdn.7caiyun.com/dustweave/ota/v2"}));
         Pass("valid-signed-request",Rules.Validate(h,c,DateTimeOffset.UtcNow).Request==r || Rules.Validate(h,c,DateTimeOffset.UtcNow).Request.Nonce==r.Nonce);
         Reject("tampered-signature",()=>Rules.Validate(h with{Request=h.Request with{Signature=Convert.ToBase64String(new byte[64])}},c,DateTimeOffset.UtcNow));
         Reject("wrong-domain",()=>Rules.Validate(h with{Request=Sign(r)},c,DateTimeOffset.UtcNow));

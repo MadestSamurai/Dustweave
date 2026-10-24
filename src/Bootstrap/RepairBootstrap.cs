@@ -1,10 +1,13 @@
 using System.Net.Http;
+using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
+#if !DUSTWEAVE_MANAGED_RECOVERY
 namespace Dustweave { public sealed record DailyRepairProgress(string Stage, int Completed, int Total, string? File = null); }
+#endif
 namespace Dustweave.Bootstrap
 {
 internal static class RepairBootstrap

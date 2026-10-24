@@ -43,12 +43,16 @@ static class Program
         Validate(connection);
         string packages = Path.GetFullPath(args[2]);
         var trust = Rules.Read<Trust>(File.ReadAllBytes(args[3]));
-        string publicBase = connection.PublicBaseUrl.TrimEnd('/') + "/dustweave/ota/v2";
-        var config = new Config("", "", trust.Keys, 2, publicBase, Capable:true);
         var feedBytes = File.ReadAllBytes(Path.Combine(packages, "updates.json"));
+        // Unverified layout selects only a strict validator and fixed prefix;
+        // the signature and lane are verified before any upload.
+        var hint = Rules.Read<Feed>(Convert.FromBase64String(Rules.Read<Envelope>(feedBytes).Payload));
+        bool bundled = hint.Releases.FirstOrDefault()?.Layout == 3;
+        string publicBase = connection.PublicBaseUrl.TrimEnd('/') + (bundled ? "/dustweave/ota/all-in-one" : "/dustweave/ota/v2");
+        var config = new Config("", "", trust.Keys, bundled ? 3 : 2, publicBase, Capable:!bundled);
         var feed = Rules.VerifyFeed(feedBytes, config);
         string version = feed.Releases[0].Version;
-        var files = repair ? RepairBuilder.Inventory(packages, config) :
+        var files = bundled ? feed.Releases[0].Assets.Select(a=>new Blob(a.FileName,a.Bytes,a.Sha256.ToLowerInvariant())).OrderBy(b=>b.FileName).ToArray() : repair ? RepairBuilder.Inventory(packages, config) :
             Rules.Patches(feed).Select(d => new Blob(d.FileName, d.Bytes, d.Sha256.ToLowerInvariant())).OrderBy(b => b.FileName).ToArray();
         Rules.Need((files.Length > 0 || !repair && feed.Releases[0].InstallerProtocol == 2) && files.Select(f => f.FileName).Distinct().Count() == files.Length, "Empty or duplicate inventory");
         // Validate the complete set before sending any credential or object.
@@ -66,7 +70,7 @@ static class Program
         await Parallel.ForEachAsync(files, new ParallelOptions { MaxDegreeOfParallelism = repair ? 8 : 1 }, async (file, cancellation) =>
         {
             string relative = repair ? file.FileName : $"v{version}/{file.FileName}";
-            string key = "dustweave/ota/v2/" + relative;
+            string key = (bundled ? "dustweave/ota/all-in-one/" : "dustweave/ota/v2/") + relative;
             bool exists = false;
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
             timeout.CancelAfter(TimeSpan.FromMinutes(8));

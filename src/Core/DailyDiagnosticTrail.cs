@@ -6,13 +6,15 @@ namespace Dustweave;
 
 // Desktop-only observation journal. No extra game reads, hooks or packet collection.
 // Bounded history complements the full before/receipt/final evidence in live/steps.
-public sealed class DailyDiagnosticTrail(string root, Func<double> clock, Func<long> now, long maxBytes = 2 * 1024 * 1024)
+public sealed class DailyDiagnosticTrail(string root, Func<double> clock, Func<long> now, long maxBytes = 2 * 1024 * 1024, Func<JsonObject?>? readPerformance = null)
 {
     readonly string path = Path.Combine(root, "live", "diagnostics", "timeline.jsonl");
     readonly string session = Guid.NewGuid().ToString("N");
     readonly object sync = new();
     string scope = "", key = "";
     double observedAt = double.NegativeInfinity;
+    double performanceReadAt = double.NegativeInfinity;
+    long performanceTicks;
     long sequence;
     JsonObject? latestFrame;
     readonly Dictionary<string, double> savedFailures = new();
@@ -43,6 +45,7 @@ public sealed class DailyDiagnosticTrail(string root, Func<double> clock, Func<l
     }
     public void Observe(JsonObject frame, string phase = "observe", JsonObject? detail = null)
     {
+        PreservePerformance(frame);
         latestFrame = frame.DeepClone().AsObject();
         double at = clock();
         if (at - observedAt < .25) return;
@@ -66,23 +69,64 @@ public sealed class DailyDiagnosticTrail(string root, Func<double> clock, Func<l
         }));
         Write(snapshot);
     }
-    void Write(JsonObject row)
+    void PreservePerformance(JsonObject frame)
+    {
+        // The bridge already measures these values. Reading its existing IPC value
+        // does not request another game observation or run work on the game thread.
+        if (readPerformance == null || clock() - performanceReadAt < 10) return;
+        performanceReadAt = clock();
+        var row = O(("kind", "performance"), ("scene", frame["Scene"]),
+            ("frame_at", frame["AtUtcTicks"]), ("frame_sequence", frame["Sequence"]),
+            ("process", frame["ProcessId"]), ("process_start", frame["ProcessStartTicks"]),
+            ("instance", frame["Instance"]),
+            ("loading", DailyNavigationDecision.Types(frame).Contains("LoadingUI")));
+        try
+        {
+            var sample = readPerformance();
+            long ticks = sample?["AtUtcTicks"]?.GetValue<long>() ?? 0;
+            if (sample == null) row["state"] = "unavailable";
+            else if (ticks <= 0 || ticks > DateTime.MaxValue.Ticks || ticks - now() > TimeSpan.FromSeconds(2).Ticks)
+                row["state"] = "invalid_timestamp";
+            else
+            {
+                if (ticks == performanceTicks) return;
+                row["state"] = "sampled";
+                // Deliberately allowlist metrics: never persist arbitrary new game
+                // payloads or account fields through this small diagnostic stream.
+                var metrics = O(("AtUtcTicks", ticks));
+                foreach (string name in new[] { "Count", "TargetFps", "RenderFrames", "SlowFrames", "MaxFrameMs", "ObserveMs", "EvidenceMs", "WriteMs", "MaxMs", "FrameDeltaMs", "TimeScale", "CommonMaxMs", "CommonIdentityMs", "CommonControlMs", "CommonStartupMs", "CommonGuildMs", "CommonWriteMs" })
+                    if (sample[name] is JsonValue value && value.TryGetValue<double>(out double number) && double.IsFinite(number)) metrics[name] = number;
+                foreach (string name in new[] { "Legacy", "Focused" })
+                    if (sample[name] is JsonValue value && value.TryGetValue<bool>(out bool flag)) metrics[name] = flag;
+                row["metrics"] = metrics;
+                performanceTicks = ticks;
+            }
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidOperationException or JsonException or FormatException or TimeoutException or StageHostException)
+        {
+            // Loss of optional timing evidence must never interrupt navigation.
+            row["state"] = "read_failed"; row["error_type"] = error.GetType().Name;
+        }
+        Write(row, Path.Combine(root, "live", "diagnostics", "performance.jsonl"), 256 * 1024);
+    }
+    void Write(JsonObject row) => Write(row, path, maxBytes);
+    void Write(JsonObject row, string destination, long limit)
     {
         lock (sync)
         {
             try
             {
                 row["session"] = session; row["sequence"] = ++sequence; row["utc_ticks"] = now(); row["scope"] = scope; row["version"] = typeof(DailyDiagnosticTrail).Assembly.GetName().Version?.ToString();
-                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-                if (File.Exists(path) && new FileInfo(path).Length >= maxBytes)
+                Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+                if (File.Exists(destination) && new FileInfo(destination).Length >= limit)
                 {
                     for (int i = 3; i >= 1; i--)
                     {
-                        string source = i == 1 ? path : path + "." + (i - 1);
-                        if (File.Exists(source)) File.Move(source, path + "." + i, true);
+                        string source = i == 1 ? destination : destination + "." + (i - 1);
+                        if (File.Exists(source)) File.Move(source, destination + "." + i, true);
                     }
                 }
-                File.AppendAllText(path, row.ToJsonString() + "\n", new UTF8Encoding(false));
+                File.AppendAllText(destination, row.ToJsonString() + "\n", new UTF8Encoding(false));
                 LastError = "";
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException)

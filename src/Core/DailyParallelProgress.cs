@@ -99,7 +99,16 @@ public static class DailyParallelProgress
         {
             var at = incoming.Observed.GetValueOrDefault(stage.Task, stage.FinishedAt ?? incoming.AtUtc);
             if (rows.TryGetValue(stage.Task, out var existing) && !CanReplace(existing, stage)) continue;
-            if (times.TryGetValue(stage.Task, out var prior) && prior >= at) continue;
+            if (times.TryGetValue(stage.Task, out var prior) && prior >= at)
+            {
+                // Re-reading the same durable outcome can improve its display
+                // projection after an update (e.g. remove obsolete event tasks).
+                // It must not change completion, progress or retry authority.
+                if (prior == at && existing != null && existing.State == stage.State
+                    && existing.FinishedAt.HasValue && existing.FinishedAt == stage.FinishedAt && stage.PendingTasks != null)
+                    rows[stage.Task] = existing with { PendingTasks = stage.PendingTasks };
+                continue;
+            }
             rows[stage.Task] = stage with { State = stage.State == "running" ? "stopped" : stage.State, RecordedWork = stage.Work ?? stage.RecordedWork, Work = null };
             times[stage.Task] = at;
         }

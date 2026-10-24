@@ -16,8 +16,10 @@ internal static class StandaloneRepair
             installRoot = Path.GetFullPath(installRoot).TrimEnd(Path.DirectorySeparatorChar);
             DailyUpdates.EnsureNoLinks(installRoot);
             if (!Directory.Exists(Path.Combine(installRoot, "app"))) throw new InvalidDataException("Not a packaged Dustweave directory.");
-            if (File.Exists(Path.Combine(installRoot, DailyUpdateTransaction.MarkerName)))
-                throw new IOException(T("上次替换尚未恢复。请先启动 Dustweave.exe 完成回退。", "上次替換尚未恢復。請先啟動 Dustweave.exe 完成回復。", "An interrupted replacement needs recovery. Start Dustweave.exe first."));
+            // The main bundle may itself be missing or corrupt. The separately
+            // bundled helper can dispatch the verified durable recovery without
+            // requiring that broken program to start first.
+            if (Dustweave.Bootstrap.Recovery.TryRun([], Path.Combine(installRoot, "Dustweave.exe"), DailyUpdateHost.DataRoot)) return 0;
             using (var instance = new Mutex(false, DailyApplication.InstanceMutex))
             {
                 bool owned; try { owned = instance.WaitOne(0); } catch (AbandonedMutexException) { owned = true; }

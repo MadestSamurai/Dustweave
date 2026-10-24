@@ -94,6 +94,19 @@ static class AccountProgressCases
         DailyAccountProgress.Copy(box, host, account);
         Check(DailyParallelProgress.Read(host, account, new("idle", "", "", [], account), now).Stages.Single(s => s.Task == "mail").State == "completed",
             "later unstarted sandbox queue cannot erase completed ordinary progress");
+        string eventQueue = Queue(box, "event_rewards", "completed", now);
+        var eventRecord = DailyJson.TryRead<JsonObject>(eventQueue)!;
+        eventRecord["items"]![0]!["result"] = O(("pending_tasks", new JsonArray(O(("group", "event"), ("key", "event:10:1"), ("event_id", 28), ("title", "Old event"), ("status", "pending")))));
+        DailyJson.Write(eventQueue, eventRecord); File.SetLastWriteTimeUtc(eventQueue, now.UtcDateTime);
+        DailyAccountProgress.Copy(box, host, account);
+        Check(DailyParallelProgress.Read(host, account, new("idle", "", "", [], account), now).Stages.Single(s => s.Task == "event_rewards").PendingTasks!.Count == 1,
+            "legacy projection without an observed catalogue stays visible instead of guessing event expiry");
+        eventRecord["items"]![0]!["result"]!["catalog"] = new JsonArray();
+        DailyJson.Write(eventQueue, eventRecord); File.SetLastWriteTimeUtc(eventQueue, now.UtcDateTime);
+        DailyAccountProgress.Copy(box, host, account);
+        var repaired = DailyParallelProgress.Read(host, account, new("idle", "", "", [], account), now).Stages.Single(s => s.Task == "event_rewards");
+        Check(repaired.PendingTasks!.Count == 0 && repaired.State == "completed" && repaired.FinishedAt == now,
+            "same-timestamp projection refresh reaches the ordinary host without rerunning a completed sandbox task");
         string unavailable = Path.Combine(root, "progress-summary-unavailable");
         string durable = Queue(unavailable, "mail", "completed", now);
         File.WriteAllText(Path.Combine(unavailable, "parallel-progress"), "blocked directory");

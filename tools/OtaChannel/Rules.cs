@@ -21,7 +21,7 @@ static class Rules
 {
     public static string FeedPath(Config c, bool writing = false)
     {
-        string path = Path.Combine(c.Public, c.Capable ? "updates-v3.json" : "updates.json");
+        string path = Path.Combine(c.Public, c.Layout == 3 ? "releases.json" : c.Capable ? "updates-v3.json" : "updates.json");
         // The first capable publication is compare-and-swapped against the
         // legacy feed. It never writes that feed or changes its assets.
         return writing || File.Exists(path) ? path : Path.Combine(c.Public, "updates.json");
@@ -59,7 +59,7 @@ static class Rules
     public static Feed VerifyFeed(byte[] bytes, Config config)
     {
         var feed=Read<Feed>(Verify(Read<Envelope>(bytes),config,""));
-        Need((feed.Schema==config.Layout+1 || config.Capable && feed.Schema==4) && feed.Product=="Dustweave" && feed.Channel=="stable" && feed.Releases.Length is >0 and <=300,"Invalid feed");
+        Need((feed.Schema==(config.Layout == 3 ? 3 : config.Layout+1) || config.Capable && feed.Schema==4) && feed.Product=="Dustweave" && feed.Channel=="stable" && feed.Releases.Length is >0 and <=300,"Invalid feed");
         var versions=new HashSet<string>(StringComparer.Ordinal);
         for(int i=0;i<feed.Releases.Length;i++)
         {
@@ -71,6 +71,7 @@ static class Rules
             if(i+1<feed.Releases.Length) Need(r.PreviousVersion==feed.Releases[i+1].Version && version>DailyVersion.Parse(feed.Releases[i+1].Version),"Broken release chain");
             foreach(var a in r.Assets) Need(a.FileName==$"Dustweave-{r.Version}-{a.Flavor}-win-x64.zip" && a.Bytes is >0 and <=629145600 && IsHash(a.Sha256),"Invalid asset");
             var deltas=r.Deltas??[];
+            if(config.Layout==3) Need(r.InstallerProtocol==1 && deltas.Length==0 && version>=DailyVersion.Parse("1.5.0-alpha"),"Bundled lane requires full self-updates");
             Need(deltas.Length<=(config.Layout == 1 ? 12 : 20) && deltas.Select(d=>(d.Flavor,d.FromVersion)).Distinct().Count()==deltas.Length,"Too many or duplicate patches");
             foreach(var d in deltas) Need(d.Flavor is "Lite" or "Portable" && (d.Algorithm==(config.Layout == 1 ? "dustweave-cdc-v1" : "dustweave-copy-v2") || r.InstallerProtocol == 2 && d.Algorithm == "dustweave-copy-v3") && DailyVersion.Parse(d.FromVersion)<version &&
                 d.FileName==$"Dustweave-{r.Version}-{d.Flavor}-from-{d.FromVersion}-win-x64.delta.zip" && d.Bytes > 0 &&
@@ -105,17 +106,21 @@ static class Rules
             Need(index>0,"Missing patch baseline");
             if(config.Layout>=2) Need((index<=10 || DailyVersion.Parse(d.FromVersion)>=DailyVersion.Parse("1.4.7")) && (top.InstallerProtocol==2 || feed.Releases[index].RuntimeVersion==top.RuntimeVersion) && (DailyVersion.Parse(d.FromVersion)>=DailyVersion.Parse("1.4.7") || d.Bytes<top.Assets.Single(a=>a.Flavor==d.Flavor).Bytes*0.8),"Patch exceeds automatic update policy");
         }
-        var expected=(config.Layout == 1 ? top.Assets : []).Select(a=>new Blob(a.FileName,a.Bytes,a.Sha256.ToLowerInvariant())).Concat(Patches(feed).Select(d=>new Blob(d.FileName,d.Bytes,d.Sha256.ToLowerInvariant()))).OrderBy(f=>f.FileName,StringComparer.Ordinal).ToArray();
+        var expected=(config.Layout != 2 ? top.Assets : []).Select(a=>new Blob(a.FileName,a.Bytes,a.Sha256.ToLowerInvariant())).Concat(Patches(feed).Select(d=>new Blob(d.FileName,d.Bytes,d.Sha256.ToLowerInvariant()))).OrderBy(f=>f.FileName,StringComparer.Ordinal).ToArray();
         Need(r.Files.SequenceEqual(expected) && r.Files.Sum(f=>f.Bytes)<=1073741824,"Archive inventory differs from signed feed");
         using var doc=JsonDocument.Parse(evidence); var root=doc.RootElement;
         Need(root.GetProperty("status").GetString()=="passed","Package acceptance did not pass");
         var cases=root.GetProperty("cases").EnumerateArray().ToArray();
-        foreach(var name in new[]{"upgrade-Lite","upgrade-Portable","startup-failure","bootstrap-recovery"})
+        foreach(var name in (config.Layout == 3 ? new[]{"upgrade-Lite","upgrade-Portable"} : new[]{"upgrade-Lite","upgrade-Portable","startup-failure","bootstrap-recovery"}))
             Need(cases.Any(c=>c.GetProperty("case").GetString()==name && c.GetProperty("status").GetString()=="passed" &&
                 (!name.StartsWith("upgrade-") || c.GetProperty("to").GetString()==r.Version && c.GetProperty("baselineHelper").GetBoolean())),"Missing packaged acceptance: "+name);
         if(top.InstallerProtocol==2)
             foreach(var flavor in new[]{"Lite","Portable"})
                 Need(cases.Any(c=>c.GetProperty("case").GetString()=="native-repair-"+flavor && c.GetProperty("status").GetString()=="passed" && c.TryGetProperty("to",out var repairVersion) && repairVersion.GetString()==r.Version),"Missing native repair acceptance: "+flavor);
+        if(config.Layout==3)
+            foreach(var flavor in new[]{"Lite","Portable"})
+                foreach(var scenario in new[]{"rollback-","interrupt-host-","interrupt-helper-","repair-"})
+                    Need(cases.Any(c=>c.GetProperty("case").GetString()==scenario+flavor && c.GetProperty("status").GetString()=="passed" && c.GetProperty("to").GetString()==r.Version),"Missing self-update acceptance: "+scenario+flavor);
         return (r,feedBytes,evidence);
     }
     public static void CheckArchive(string path,Blob blob)

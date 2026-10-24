@@ -13,6 +13,9 @@ public sealed class DailyOptions
 public sealed class DailyIdentityGuard
 {
     private DailySnapshot? previous;
+    // A page/scene transition does not log the account out. Navigation and the
+    // native input executor decide when a target can be used; identity checks
+    // must remain available so observation and recovery can continue.
     public static bool Ready(DailySnapshot? s, GameInstance game, DateTimeOffset now)
         => s != null && s.Runtime == DailyIdentity.RuntimeName && s.ProcessId == game.ProcessId && s.ProcessStartTicks == game.StartTicks
             && s.FrameUtcTicks >= now.UtcTicks - TimeSpan.FromSeconds(5).Ticks && s.FrameUtcTicks <= now.UtcTicks + TimeSpan.FromSeconds(2).Ticks
@@ -129,7 +132,9 @@ public sealed class DailyCoordinator
         }
         Report("completed", "当前账号身份已核对。可继续保存账号，或选择多个账号进行登录检查。", 1, 1);
     });
-    public Task InspectAsync(IEnumerable<DailyAccount> selected) => RunAsync(async token =>
+    public Task InspectAsync(IEnumerable<DailyAccount> selected) => InspectCoreAsync(selected,false);
+    public Task InspectFreshAsync(IEnumerable<DailyAccount> selected) => InspectCoreAsync(selected,true);
+    private Task InspectCoreAsync(IEnumerable<DailyAccount> selected,bool requireFreshGame) => RunAsync(async token =>
     {
         var targets = selected.ToArray();
         if (targets.Length == 0)
@@ -147,6 +152,7 @@ public sealed class DailyCoordinator
             Revoke();
             var catalog = sessions.Read();
             var instance = game.Find();
+            if(requireFreshGame&&instance!=null)throw new InvalidOperationException("检测到已有游戏，未切换或关闭它。请关闭游戏后重新开始实验。");
             if (instance != null && catalog.CurrentKey != target.AccountKey)
             {
                 Report("closing", $"{done + 1}/{targets.Length} · 正常关闭游戏，准备切换到 {target.Name}", done, targets.Length);
@@ -188,6 +194,21 @@ public sealed class DailyCoordinator
     }
     private async Task VerifyAsync(DailyAccount target, GameInstance instance, CancellationToken token, bool connected = false)
     {
+        string root = Path.GetDirectoryName(runPath)!;
+        var catalog = sessions.Read();
+        DailyIdentityRead last = new(null, "not-read"); DailyRuntimeStatus? status = null;
+        void Record(string phase) => DailyLoginDiagnostics.Record(root, phase, catalog, instance, last.Snapshot, last.Problem, last.Detail, status);
+        Record("request");
+        try
+        {
+            await VerifyCoreAsync(target, instance, token, connected, (read, runtime) => { last = read; status = runtime; });
+            Record("verified");
+        }
+        catch { Record("failed"); throw; }
+    }
+    private async Task VerifyCoreAsync(DailyAccount target, GameInstance instance, CancellationToken token, bool connected,
+        Action<DailyIdentityRead, DailyRuntimeStatus?> observe)
+    {
         token.ThrowIfCancellationRequested();
         var profile = DailyAccountOrder.ProfileFor(target, profiles.Read());
         if (!connected) await game.ConnectAsync(instance, m => Report("connecting", $"{target.Name} · {m}"), token);
@@ -204,11 +225,13 @@ public sealed class DailyCoordinator
             token.ThrowIfCancellationRequested();
             if (game.Find() != instance)
                 throw new DailyGameExitedException();
-            var report = game.ReadStatus();
+            var report = game.ReadStatus(instance);
+            var read = game.ReadIdentity(instance);
+            observe(read, report);
             if (report?.ProcessId == instance.ProcessId && report.ProcessStartTicks == instance.StartTicks && report.State == "error")
                 throw new InvalidOperationException("组件启动失败：" + report.Error);
             var now = DateTimeOffset.UtcNow;
-            var snapshot = game.ReadSnapshot();
+            var snapshot = read.Snapshot;
             DailyLoginReadiness.Check(snapshot, instance, now.UtcTicks);
             if (snapshot?.State == "waiting_sdk" && startupMessage != "waiting_sdk") { startupMessage = "waiting_sdk"; Report("waiting_sdk", target.Name + " · 等待登录 SDK 初始化"); }
             if (snapshot != null && snapshot.ProcessId == instance.ProcessId && snapshot.ProcessStartTicks == instance.StartTicks && StartupPolicy.Fresh(snapshot, now.UtcTicks) && snapshot.Startup?.Visible == true)
@@ -318,7 +341,7 @@ public sealed class DailyCoordinator
                 }
             }
             if (now >= deadline)
-                throw new TimeoutException("未能确认游戏登录身份。请检查启动页、登录弹窗、网络连接或组件状态；已停止队列，不会跳到其他账号。");
+                throw new TimeoutException("connection.login_identity_unavailable: " + DailyLoginDiagnostics.WaitReason(read, instance, now));
             await Task.Delay(options.PollInterval, token);
         }
     }

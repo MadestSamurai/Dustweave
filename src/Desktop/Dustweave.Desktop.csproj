@@ -8,10 +8,17 @@
     <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
     <PublishTrimmed>false</PublishTrimmed><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
     <AssemblyName>Dustweave</AssemblyName><RootNamespace>Dustweave.Desktop</RootNamespace>
+    <DefineConstants>$(DefineConstants);DUSTWEAVE_MANAGED_RECOVERY</DefineConstants>
     <ApplicationManifest>app.manifest</ApplicationManifest><ApplicationIcon>../../assets/branding/Dustweave.ico</ApplicationIcon><Product>Dustweave</Product>
     <Version Condition="'$(DustweaveVersion)' != ''">$(DustweaveVersion)</Version><Company>MadSamurai</Company><Description>多账号登录与日常任务工作台</Description>
   </PropertyGroup>
   <ItemGroup><ProjectReference Include="../Core/Dustweave.Core.csproj" /></ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Bootstrap/Recovery.cs" Link="Startup/Recovery.cs" />
+    <AssemblyMetadata Include="Dustweave.SelfUpdate" Value="true" Condition="'$(DustweaveSelfUpdate)' == 'true'" />
+    <AssemblyMetadata Include="Dustweave.PackageFlavor" Value="$(DustweavePackageFlavor)" Condition="'$(DustweavePackageFlavor)' != ''" />
+    <EmbeddedResource Include="$(DustweaveUpdateTrustFile)" LogicalName="Dustweave.update-trust.json" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../ApostleDefense/core/Dustweave.ApostleDefense.Core.csproj" Aliases="apostle" />
     <ProjectReference Include="../Connection/Dustweave.Connection.csproj" Aliases="liveUtility" />

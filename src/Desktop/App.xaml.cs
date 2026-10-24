@@ -55,7 +55,10 @@ public partial class App : Application
         }
         if (args.Length == 2 && args[0] == "--identity")
         {
-            File.WriteAllText(args[1], $"Dustweave {DailyProductVersion.Current}\nProtocol baseline {DailyIdentity.Version}\n{DailyIdentity.RuntimeName}\n");
+            string flavor=typeof(App).Assembly.GetCustomAttributes(typeof(System.Reflection.AssemblyMetadataAttribute),false)
+                .Cast<System.Reflection.AssemblyMetadataAttribute>().SingleOrDefault(a=>a.Key=="Dustweave.PackageFlavor")?.Value??"development";
+            File.WriteAllText(args[1], $"Dustweave {DailyProductVersion.Current}\nProtocol baseline {DailyIdentity.Version}\n{DailyIdentity.RuntimeName}\nPackage {flavor}\n"+
+                string.Join("\n",DailyUpdateTrust.Production().Sources.Select(s=>"Update feed "+s.FeedUrl))+"\n");
             Shutdown();
             return;
         }
@@ -204,18 +207,24 @@ public partial class App : Application
         }
         bool scheduled = args.Length == 1 && args[0] == "--scheduled";
         bool updated = args.Length == 2 && args[0] == "--updated";
+        bool repairRequested = args is ["--repair"] && DailyUpdateHost.SelfUpdating;
         string? smoke = args.Length == 2 && args[0] == "--smoke" ? Path.GetFullPath(args[1]) : null;
         string? runSelected = args.Length == 2 && args[0] == "--run-selected" ? Path.GetFullPath(args[1]) : null;
         string? viewAccount = args.Length == 2 && args[0] == "--view-account" && DailyProfiles.ValidKey(args[1]) ? args[1] : null;
         string? inspectAccount = args.Length == 2 && args[0] == "--inspect-account" && DailyProfiles.ValidKey(args[1]) ? args[1] : null;
+        string inspectCaptureId="";
+        if(args.Length==3&&args[0]==DailyLoadingExperimentLaunch.InspectSwitch&&DailyProfiles.ValidKey(args[1])&&Guid.TryParseExact(args[2],"N",out _)){inspectAccount=args[1];inspectCaptureId=args[2];}
         string? resumeAccount = args.Length == 2 && args[0] == "--resume-account" && DailyProfiles.ValidKey(args[1]) ? args[1] : null;
-        if (args.Length > 0 && smoke == null && runSelected == null && viewAccount == null && inspectAccount == null && resumeAccount == null && !scheduled && !updated)
+        string? captureLaunch=args.Length==2&&args[0]==DailyLoadingExperimentLaunch.WindowSwitch?Path.GetFullPath(args[1]):null;
+        if (args.Length > 0 && smoke == null && runSelected == null && viewAccount == null && inspectAccount == null && resumeAccount == null && captureLaunch==null && !scheduled && !updated && !repairRequested)
         {
             Shutdown(2);
             return;
         }
         try
         {
+            if(captureLaunch!=null)_=DailyLoadingExperimentLaunch.Read(captureLaunch);
+            DailyLoadingExperimentLaunch.RequireIsolatedSession(inspectCaptureId);
             if (smoke != null)
             {
                 var fixture = new DemoEnvironment(smoke);
@@ -227,6 +236,7 @@ public partial class App : Application
             try { acquired = instance.WaitOne(0); } catch (AbandonedMutexException) { acquired = true; }
             if (!acquired)
             {
+                if(captureLaunch!=null)DailyLoadingExperimentLaunch.TryFail(captureLaunch,new IOException("旧版织尘仍在运行，请从托盘退出后重新开始一组采集。"));
                 if (!scheduled && !updated) MessageBox.Show(DailyLanguage.Current.Get("startup.already_open"), "Dustweave");
                 if (updated) StartupDiagnostics.Fail(new IOException("updates.app_busy"));
                 Shutdown(updated ? 1 : 0);
@@ -235,7 +245,10 @@ public partial class App : Application
             StartupDiagnostics.Mark("main-window");
             var gameHost = new DailyGameHost();
             sessions = new AccountSessions(gameHost);
-            var window = new MainWindow(sessions, gameHost, DailyIdentity.DataRoot, null) { ScheduledStartup = scheduled, UpdatedStartup = updated, DirectedStartup = args.Length > 0, UpdateNonce = updated ? args[1] : "" };
+            string captureId=captureLaunch!=null?DailyLoadingExperimentLaunch.Read(captureLaunch).SessionId:inspectCaptureId;
+            var window = new MainWindow(sessions, gameHost, DailyIdentity.DataRoot, null) { ScheduledStartup = scheduled, UpdatedStartup = updated, DirectedStartup = args.Length > 0, UpdateNonce = updated ? args[1] : "",CaptureSessionId=captureId,ShowActivated=captureId.Length==0 };
+            if(captureLaunch!=null)window.Loaded+=async(_,_)=>await window.StartLoadingExperimentAsync(captureLaunch);
+            if (repairRequested) window.Loaded += (_, _) => window.OpenRepairPage();
             if (viewAccount != null) { DailySandbox.RequireBoundAccount(viewAccount); window.Loaded += (_, _) => { try { window.ViewAccountTasks(viewAccount); } catch (Exception error) { window.ShowTaskNavigationError(error); } }; }
             if (inspectAccount != null) window.Loaded += async (_, _) => await window.InspectAccountAsync(inspectAccount);
             if (resumeAccount != null) window.Loaded += async (_, _) => await window.ResumeQueueAsync(resumeAccount);
@@ -250,6 +263,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
+            if(captureLaunch!=null)DailyLoadingExperimentLaunch.TryFail(captureLaunch,ex);
             if (smoke != null)
             {
                 DailyJson.Write(Path.Combine(smoke, "smoke.json"), new { status = "failed", error = ex.ToString(), realGameTouched = false });

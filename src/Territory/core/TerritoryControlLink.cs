@@ -7,6 +7,23 @@ public static class TerritoryJson
  public static void Write<T>(string path,T value)
  {var bytes=JsonSerializer.SerializeToUtf8Bytes(value);if(BD2.LocalIpc.DesktopFiles.Write(path,bytes))return;AtomicSettingsFile.Write(path,bytes);}
 }
+public static class TerritoryPreferences
+{
+ public static TerritorySettings Load(string root)
+ {
+  string path=Path.Combine(TerritoryStorage.Preferences(root),"settings.json");
+  var settings=TerritoryJson.Read<TerritorySettings>(path);
+  if(settings==null||!settings.ValidSettings())return new(){PlantingBudgetDefaultsApplied=true};
+  if(settings.PlantingBudgetDefaultsApplied)return settings;
+  // Old files did not distinguish the default 1400 from a manually entered 1400.
+  // Migrate that legacy value once; future explicit limits must survive reopening.
+  if(settings.PlantingBudget==1400)settings.PlantingBudget=0;
+  settings.PlantingBudgetDefaultsApplied=true;
+  try{TerritoryJson.Write(path,settings);}
+  catch(Exception e)when(e is IOException or UnauthorizedAccessException){TerritoryDiagnostics.Write(root,"settings.budget-migration.failed",error:e);}
+  return settings;
+ }
+}
 public sealed class TerritoryControlLink:IDisposable
 {
  private readonly object sync=new(),sendSync=new();private readonly Timer timer;private readonly string root;
@@ -22,6 +39,7 @@ public sealed class TerritoryControlLink:IDisposable
   lock(sendSync)
   {
    lock(sync)if(disposed)throw new ObjectDisposedException(nameof(TerritoryControlLink));
+   s.PlantingBudgetDefaultsApplied=true;
    TerritoryJson.Write(Path.Combine(TerritoryStorage.Preferences(root),"settings.json"),s);
    bool publish;lock(sync){command.AutoSell=s.AutoSell;command.SellThreshold=s.SellThreshold;command.FixedCrop=s.FixedCrop;command.FixedSeedId=s.FixedSeedId;command.Cooking=s.Cooking;command.SellCookingBatches=s.SellCookingBatches;command.CookingSaleBatch=s.CookingSaleBatch;command.SellCookingForPlanting=s.SellCookingForPlanting;command.CookingBatch=s.CookingBatch;command.RecipeId=s.RecipeId;command.Logging=s.Logging;command.MinimumTreeStage=s.MinimumTreeStage;command.Mining=s.Mining;command.Farming=s.Farming;command.DashRecovery=s.DashRecovery;command.UseVehicle=s.UseVehicle;command.UseNavMesh=s.UseNavMesh;command.IntervalMs=s.IntervalMs;command.PlantingBudget=s.PlantingBudget;revision++;publish=command.Enabled;}
    publish=publish||BD2.LocalIpc.DesktopFiles.HasLease(root);

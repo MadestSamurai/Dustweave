@@ -10,8 +10,17 @@ public static class Program
     public static int Main(string[] args)
     {
         bool window = args.Length == 0 || args[0] is "--desktop-session" or "--launch-desktop"
-            or "--view-account" or "--inspect-account" or "--resume-account" or "--run-selected" or "--scheduled" or "--updated";
-        try { if (window) StartupDiagnostics.Begin(); return MainCore(args); }
+            or "--view-account" or "--inspect-account" or "--resume-account" or "--run-selected" or "--scheduled" or "--updated" or "--repair";
+        try
+        {
+            // The bundle recovers before account probing, WPF or game components.
+            // Its temporary self-copy also enters apply/recovery before the UI.
+            string dataRoot = Environment.GetEnvironmentVariable("BD2_DAILY_DATA_ROOT") ??
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BD2DailyAssistant");
+            if (Dustweave.Bootstrap.Recovery.TryRun(args, Environment.ProcessPath!, dataRoot)) return 0;
+            if (window) StartupDiagnostics.Begin();
+            return MainCore(args);
+        }
         catch (Exception error)
         {
             string diagnostic = StartupDiagnostics.Fail(error);
@@ -25,6 +34,16 @@ public static class Program
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     private static int MainCore(string[] args)
     {
+        if(args.Length==2&&args[0]=="--loading-experiment-analyze"){DailyLoadingComparison.Analyze(args[1]);return 0;}
+        if(args.Length==2&&args[0]=="--loading-experiment-accounts"){DailyLoadingExperimentLaunch.WriteAccounts(args[1]);return 0;}
+        if(args.Length==2&&args[0]=="--loading-experiment-recoveries"){DailyLoadingExperiment.WriteRecoveries(args[1]);return 0;}
+        if(args.Length==3&&args[0]=="--loading-experiment-open"){
+            string? request=null;try{request=DailyLoadingExperimentLaunch.Prepare(args[1],args[2]);DailyDesktopLaunch.Start(Environment.ProcessPath!,[DailyLoadingExperimentLaunch.WindowSwitch,request]);return 0;}
+            catch(Exception error){if(request!=null)DailyLoadingExperimentLaunch.TryFail(request,error);else if(Directory.Exists(args[1]))DailyLoadingExperimentLaunch.Report(args[1],"failed",error.Message);return 1;}
+        }
+        if(args.Length==4&&args[0]=="--loading-experiment")return DailyLoadingExperiment.RunAsync(args[1],args[2],args[3]=="deep").GetAwaiter().GetResult();
+        if(args.Length==2&&args[0]=="--loading-experiment-finish"){try{DailyLoadingExperimentLaunch.FinishAsync(args[1]).GetAwaiter().GetResult();try{DailyJson.Write(Path.Combine(args[1],"finish-result.json"),new{state="restored",atUtc=DateTimeOffset.UtcNow});}catch(IOException){Console.Error.WriteLine("C 组已经恢复，但采集输出目录暂时不可写；原始记录未删除。");}catch(UnauthorizedAccessException){Console.Error.WriteLine("C 组已经恢复，但采集输出目录暂时不可写；原始记录未删除。");}return 0;}catch(LoadingExperimentBusyException error){DailyJson.Write(Path.Combine(args[1],"finish-result.json"),new{state="waiting-for-exit",error=error.Message});return 2;}catch(Exception error){DailyJson.Write(Path.Combine(args[1],"finish-result.json"),new{state="failed",error=error.ToString()});return 1;}}
+        if(args.Length==2&&args[0]=="--loading-experiment-restore"){try{DailyLoadingExperiment.RestoreAsync(args[1]).GetAwaiter().GetResult();DailyJson.Write(Path.Combine(args[1],"restore-result.json"),new{state="restored"});return 0;}catch(LoadingExperimentBusyException error){DailyJson.Write(Path.Combine(args[1],"restore-result.json"),new{state="waiting-for-game-exit",error=error.Message});return 2;}catch(Exception error){DailyJson.Write(Path.Combine(args[1],"restore-result.json"),new{state="failed",error=error.ToString()});return 1;}}
         if (args.Length == 3 && args[0] == DailySandboxSessions.ExportSwitch)
         {
             try { DailySandboxSessions.Export(args[1],args[2]); return 0; }
@@ -52,7 +71,7 @@ public static class Program
                     start.CreateNoWindow = true; start.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
                     start.ArgumentList.Add("--parallel-worker"); start.ArgumentList.Add(Path.Combine(DailyParallelRuntime.WorkerDirectory(DailyIdentity.DataRoot, job.Id), "job.json"));
                 }
-                else { start.ArgumentList.Add(DailyDesktopLaunch.ChildSwitch); start.ArgumentList.Add("--inspect-account"); start.ArgumentList.Add(binding.Account); }
+                else { start.ArgumentList.Add(DailyDesktopLaunch.ChildSwitch); start.ArgumentList.Add(request.CaptureSessionId.Length>0?DailyLoadingExperimentLaunch.InspectSwitch:"--inspect-account"); start.ArgumentList.Add(binding.Account);if(request.CaptureSessionId.Length>0)start.ArgumentList.Add(request.CaptureSessionId); }
                 using var child = System.Diagnostics.Process.Start(start) ?? throw new IOException("隔离窗口未启动。");
                 return 0;
             }
@@ -62,7 +81,7 @@ public static class Program
         bool ordinaryHost = Dustweave.Accounts.SandboxProcessScope.CurrentBox.Length == 0;
         StartupDiagnostics.Mark("update-recovery");
         if (ordinaryHost && DailyUpdateInstaller.RecoverBeforeStartup(DailyDesktopLaunch.Normalize(args))) return 0;
-        if (ordinaryHost && DailyUpdateBridge.ContinueBeforeStartup(DailyProductVersion.Current, DailyDesktopLaunch.Normalize(args))) return 0;
+        if (ordinaryHost && !DailyUpdateHost.SelfUpdating && DailyUpdateBridge.ContinueBeforeStartup(DailyProductVersion.Current, DailyDesktopLaunch.Normalize(args))) return 0;
         if (DailyDesktopLaunch.NeedsRelay(args)) { StartupDiagnostics.Mark("explicit-desktop-relay"); DailyDesktopLaunch.Start(Environment.ProcessPath ?? throw new InvalidOperationException("无法定位日常助手"), args); return 0; }
         args = DailyDesktopLaunch.Normalize(args);
         if (args.Length==2 && args[0] is "--check-tool-languages" or "--check-tool-language-ui")
@@ -96,7 +115,7 @@ public static class Program
                 Console.SetError(new StreamWriter(Console.OpenStandardError(), new System.Text.UTF8Encoding(false)) { AutoFlush = true });
                 return RunUtility(args.Skip(1).ToArray()).GetAwaiter().GetResult();
             }
-            catch (Exception error) { Console.Error.WriteLine(error); return 1; }
+            catch (Exception error) { Console.Error.WriteLine(error); Console.Error.WriteLine(DailyHelperFailure.Encode(error)); return 1; }
         }
         StartupDiagnostics.Mark("application-resources");
         var app = new App { StartupArguments = args };
@@ -112,6 +131,7 @@ public static class Program
         if (squareCheck)
         {
             var squareHost = new DailyGameHost();
+            await squareHost.PrepareAccessAsync(Console.WriteLine,CancellationToken.None);
             var squareGame = squareHost.Find() ?? throw new InvalidOperationException("游戏未运行，未启动或切换账号。");
             await squareHost.ConnectAsync(squareGame,Console.WriteLine,CancellationToken.None);
             await DailySuite.ActivateAsync(squareHost,DailyIdentity.DataRoot,"daily",Console.WriteLine,CancellationToken.None);

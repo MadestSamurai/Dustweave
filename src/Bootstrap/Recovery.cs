@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -23,22 +24,23 @@ internal static class Recovery
         if (stream.Length > 4 * 1024 * 1024) throw new InvalidDataException("Oversized recovery record.");
         return JsonDocument.Parse(stream);
     }
-    internal static bool TryRun(string[] args)
+    internal static bool TryRun(string[] args, string target, string dataRoot)
     {
-        string target = Environment.ProcessPath!, markerPath = Path.Combine(Program.InstallRoot, ".dustweave-update.json");
+        string installRoot = Path.GetDirectoryName(Path.GetFullPath(target))!;
+        string markerPath = Path.Combine(installRoot, ".dustweave-update.json");
         if (!File.Exists(markerPath)) return false;
         using var markerDocument = Read(markerPath); var marker = markerDocument.RootElement;
         string jobPath = Text(marker, "JobPath"), nonce = Text(marker, "Nonce"), digest = Text(marker, "HelperSha256");
         if (nonce.Length != 32 || !nonce.All(Uri.IsHexDigit) || digest.Length != 64 || !digest.All(Uri.IsHexDigit)) throw new InvalidDataException("Invalid recovery identity.");
-        string prefix = Path.GetFullPath(Path.Combine(Program.DataRoot, "updates")) + Path.DirectorySeparatorChar;
+        string prefix = Path.GetFullPath(Path.Combine(dataRoot, "updates")) + Path.DirectorySeparatorChar;
         if (!Path.GetFullPath(jobPath).StartsWith(prefix, StringComparison.OrdinalIgnoreCase) || Path.GetFileName(jobPath) != "job.json") throw new InvalidDataException("Invalid recovery ownership.");
         using var jobDocument = Read(jobPath); var job = jobDocument.RootElement;
         string directory = Text(job, "Directory"), version = Text(job.GetProperty("Release"), "Version"), flavor = Text(job.GetProperty("Asset"), "Flavor");
         if (version.Length is < 5 or > 100 || version.Any(c => !char.IsAsciiLetterOrDigit(c) && c is not ('.' or '-')) || flavor is not ("Lite" or "Portable")) throw new InvalidDataException("Invalid recovery version.");
-        string attempt = Path.Combine(Program.DataRoot, "updates", version + "-" + flavor, "attempts", nonce);
-        if (!Same(target, Text(job, "Target")) || Text(job, "Nonce") != nonce || !Same(directory, Path.Combine(Program.DataRoot, "updates", version + "-" + flavor)) || !Same(jobPath, Path.Combine(attempt, "job.json"))) throw new InvalidDataException("Invalid recovery ownership.");
+        string attempt = Path.Combine(dataRoot, "updates", version + "-" + flavor, "attempts", nonce);
+        if (!Same(target, Text(job, "Target")) || Text(job, "Nonce") != nonce || !Same(directory, Path.Combine(dataRoot, "updates", version + "-" + flavor)) || !Same(jobPath, Path.Combine(attempt, "job.json"))) throw new InvalidDataException("Invalid recovery ownership.");
         using var journalDocument = Read(Path.Combine(attempt, "backup", "transaction.json")); var journal = journalDocument.RootElement;
-        if (!Same(Text(journal, "Target"), Program.InstallRoot) || !Same(Text(journal, "Backup"), Path.Combine(attempt, "backup"))) throw new InvalidDataException("Invalid recovery journal.");
+        if (!Same(Text(journal, "Target"), installRoot) || !Same(Text(journal, "Backup"), Path.Combine(attempt, "backup"))) throw new InvalidDataException("Invalid recovery journal.");
         string state = Text(journal, "State");
         if (state is "completed" or "rolled_back") { File.Delete(markerPath); return false; }
         if (state is not ("prepared" or "replacing" or "awaiting_start" or "rolling_back")) throw new InvalidDataException("Unknown recovery state.");

@@ -31,7 +31,8 @@ public partial class MainWindow
                 var repairBounds=SandboxRepairButton.TransformToAncestor(this).TransformBounds(new Rect(SandboxRepairButton.RenderSize));
                 if(!SandboxRepairButton.IsVisible || repairBounds.Right>ActualWidth || repairBounds.Bottom>ActualHeight)throw new Exception("Account binding entry clipped");
                 Capture($"sandbox-accounts-{language}-{appearance}");
-                var bindingDialog=CreateSandboxRepairWindow(new string('a',64),"Example account",[
+                var bindingDialog=new SandboxManagementWindow(this,new DailyAccount(1,"Example account",new string('a',64),"…1234",true,false,""),
+                    new("Dustweave_Test",@"C:\Sandbox\Test",true,"sandbox.repair.required",[]),[
                     new("MyRenamedBox",@"C:\Users\Example\AppData\Local\Dustweave\instances\Dustweave_aaaaaaaaaaaaaaaaaaaa\root",""),
                     new("OtherBox",@"C:\Sandbox\Other","sandbox.repair.other_root")]);
                 bindingDialog.Show();

@@ -41,7 +41,7 @@ Windows x64 only. Both editions have the same features. Each EXE works on its ow
 1. Start the game and enter your own Fantasia Territory. Keep one game instance and use the same Windows privileges for both programs.
 2. Select **Connect / update** and wait for “Territory detected”.
 3. Choose activities and a recipe. The list shows **actual dish names and ingredient ratios**; unavailable recipes explain why they are locked.
-4. Set the planting budget and select **Start automation**. Defaults: budget 1400, interval 500ms. A budget of 0 is unlimited.
+4. Set the planting budget and select **Start automation**. Defaults: budget 0 (unlimited), interval 500ms. Legacy settings of 1400 are migrated to 0 once; other custom budgets are preserved, and you can set a limit again afterwards.
 5. Select **Pause** or close the tool to stop further operations. Submitted actions still finish normally.
 
 Pause and close the previous tool, then open this version and connect. Standalone tools that support component handoff can switch within the same game process; older components without handoff support may require one normal game restart. Opening the EXE does not connect or start automation.

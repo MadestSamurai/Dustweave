@@ -22,7 +22,8 @@ namespace BD2Territory
   public int RecipeId{get;set;}=3;public bool Cooking{get;set;}=false;public int CookingBatch{get;set;}=100;
   public bool SellCookingBatches{get;set;}=true;public int CookingSaleBatch{get;set;}=100;
   public bool SellCookingForPlanting{get;set;}=true;
-  public int IntervalMs{get;set;}=500;public long PlantingBudget{get;set;}=1400;
+  public int IntervalMs{get;set;}=500;public long PlantingBudget{get;set;}=0;
+  public bool PlantingBudgetDefaultsApplied{get;set;}
   public bool ValidSettings()=>MinimumTreeStage>=0&&SurplusSales.ValidThreshold(SellThreshold)&&CookingSales.ValidBatch(CookingSaleBatch)&&FixedSeedId>=0&&CookingBatch>=1&&CookingBatch<=1000&&RecipeId>0&&IntervalMs>=100&&IntervalMs<=60000&&PlantingBudget>=0&&PlantingBudget<=10000000;
  }
  public sealed class TerritoryControl:TerritorySettings

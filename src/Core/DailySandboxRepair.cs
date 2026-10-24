@@ -57,8 +57,8 @@ public static class DailySandboxRepair
         // must be idle; checking only the newly selected name permits duplicate login.
         foreach (var candidate in candidates.Where(c=>SandboxConfiguration.SameRoot(c.Root,selected.Root)))
         {
-            string pids = (await DailySandbox.Run(installation,"Start.exe",["/box:"+candidate.Box,"/listpids"],token).ConfigureAwait(false)).Trim();
-            if (pids != "0") throw new InvalidOperationException("sandbox.repair.running");
+            if ((await DailySandboxProcesses.ReadAsync(installation,candidate.Box,token).ConfigureAwait(false)).Length != 0)
+                throw new InvalidOperationException("sandbox.repair.running");
         }
         foreach (string setting in new[]{"OpenKeyPath","OpenIpcPath","OpenPipePath","OpenFilePath","BreakoutProcess","BreakoutFolder","BreakoutDocument"})
             if (!string.IsNullOrWhiteSpace(await DailySandbox.Run(installation,"SbieIni.exe",["query",box,setting],token).ConfigureAwait(false)))

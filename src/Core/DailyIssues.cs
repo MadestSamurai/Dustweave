@@ -3,14 +3,20 @@ namespace Dustweave;
 public sealed record DailyIssue(string Code, string Category);
 public static class DailyIssues
 {
-    public static DailyIssue Classify(Exception error) => error is DailyGameExitedException ? new("game-ended", "stopped")
+    public static DailyIssue Classify(Exception error) => error is DailyHelperException helper ? helper.Failure.Issue
+        : error is DailyGameExitedException ? new("game-ended", "stopped")
         : error is OperationCanceledException ? new("cancelled", "stopped")
-        : error.Message == "connection.scope_permission" ? new("access", "permission")
+        : error.ToString().Contains("connection.scope_permission", StringComparison.Ordinal) ? new("scope-permission", "permission")
         : error.Message.StartsWith("管理员连接组件通信中断", StringComparison.Ordinal) ? new("elevation-pipe", "connection") : Classify(error.GetBaseException().Message);
     public static DailyIssue Classify(string raw)
     {
         string text = raw ?? "";
         bool Has(params string[] words) => words.Any(w => text.Contains(w, StringComparison.OrdinalIgnoreCase));
+        if (Has("connection.scope_permission")) return new("scope-permission", "permission");
+        if (Has("connection.scope_changed")) return new("identity-changed", "identity");
+        if (Has("connection.preparation_failed")) return new("preparation", "connection");
+        if (Has("日常网络回执监听未恢复", "日常连接组件报告异常", "游戏观察数据未及时更新", "日常回执监听配置尚未生效", "尚未收到日常连接组件的数据")) return new("preparation", "connection");
+        if (Has("已取消管理员连接授权")) return new("cancelled", "stopped");
         if (Has("DPAPI", "无法由当前 Windows 用户解密")) return new("credentials-unreadable", "identity");
         if (Has("原队列与当前账号、角色或重置周期不一致", "原队列的账号、进程或重置周期已变化")) return new("resume-context", "identity");
         if (text.StartsWith("trade.read.configuration:", StringComparison.Ordinal)) return new("trade-configuration", "connection");
@@ -35,4 +41,36 @@ public static class DailyIssues
         if (Has("timed out", "timeout", "超时", "连接已失效", "连接已过期")) return new("timeout", "connection");
         return new("unknown", "unknown");
     }
+}
+
+// A helper's exit code and final stack-trace line cannot explain a preparation
+// failure. Preserve a bounded structured error alongside the complete stderr.
+public sealed record DailyHelperFailure(int Schema, string Message, DailyIssue Issue, string ExceptionType, int HResult)
+{
+    public const string Prefix = "DUSTWEAVE_HELPER_ERROR:";
+    public static string Encode(Exception error)
+    {
+        string message = error.ToString().Contains("connection.scope_permission", StringComparison.Ordinal)
+            ? "connection.scope_permission" : error.Message;
+        if (message.Length > 2048) message = message[..2048];
+        return Prefix + System.Text.Json.JsonSerializer.Serialize(new DailyHelperFailure(1, message,
+            DailyIssues.Classify(error), error.GetType().FullName ?? error.GetType().Name, error.HResult));
+    }
+    public static DailyHelperFailure? Read(string line)
+    {
+        if (!line.StartsWith(Prefix, StringComparison.Ordinal) || line.Length > 16384) return null;
+        try
+        {
+            var value = System.Text.Json.JsonSerializer.Deserialize<DailyHelperFailure>(line[Prefix.Length..]);
+            return value is { Schema: 1, Message.Length: > 0 and <= 2048, Issue.Code.Length: > 0 and <= 80,
+                Issue.Category.Length: > 0 and <= 80, ExceptionType.Length: > 0 and <= 256 } ? value : null;
+        }
+        catch (System.Text.Json.JsonException) { return null; }
+    }
+    public Exception ToException() => new DailyHelperException(this);
+}
+
+public sealed class DailyHelperException(DailyHelperFailure failure) : InvalidOperationException(failure.Message)
+{
+    public DailyHelperFailure Failure { get; } = failure;
 }

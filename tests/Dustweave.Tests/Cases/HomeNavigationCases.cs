@@ -22,6 +22,36 @@ static class HomeNavigationCases
             cases.Add(label);
         }
         var policy = DailyNavigationPolicy.Load();
+        var ticket = Surface("CostumeSelectNoticePopupUI", true, "_cancelBtn", 2);
+        ticket["Targets"]!.AsArray().Add(new JsonObject { ["Id"] = 103, ["Field"] = "_okBtn", ["Enabled"] = true, ["Route"] = "ui" });
+        foreach (string text in new[] { "获得推荐5★服装选择券，是否立即使用？", "是否立即使用其他服裝選擇券？", "Use the costume selection ticket now?", "" })
+        {
+            ticket["Text"] = new JsonArray(text);
+            var f = Frame(Surface("MailUI"), ticket, Surface("NoticeUI"));
+            var action = DailyHomeDecision.Inspect(f, policy).Action;
+            Check(action?["field"]?.GetValue<string>() == "_cancelBtn" && action?["absent"]?.GetValue<string>() == "CostumeSelectNoticePopupUI"
+                && JsonNode.DeepEquals(action, DailyNavigationDecision.Home(f, policy)), "ticket notice cancels through shared navigation independent of text: " + text);
+        }
+        foreach (string mode in new[] { "opening", "missing-readiness", "disabled", "missing-cancel", "duplicate-target", "pointer" })
+        {
+            var row = ticket.DeepClone().AsObject();
+            if (mode == "opening") row["InputReady"] = false;
+            if (mode == "missing-readiness") row.Remove("InputReady");
+            if (mode == "disabled") row["Targets"]![0]!["Enabled"] = false;
+            if (mode == "missing-cancel") row["Targets"]!.AsArray().RemoveAt(0);
+            if (mode == "duplicate-target") row["Targets"]!.AsArray().Add(row["Targets"]![0]!.DeepClone());
+            if (mode == "pointer") row["Targets"]![0]!["Route"] = "pointer";
+            var f = Frame(Surface("MailUI"), row);
+            Check(DailyHomeDecision.Inspect(f, policy).Kind == "waiting" && DailyNavigationDecision.Home(f, policy) == null,
+                "ticket notice never substitutes OK or Back when cancellation unavailable: " + mode);
+        }
+        var duplicateTickets = Frame(ticket, ticket);
+        Check(DailyHomeDecision.Inspect(duplicateTickets, policy).Kind == "blocked" && DailyNavigationDecision.Notice(duplicateTickets, policy, out _) == null,
+            "duplicate ticket notices cannot select an arbitrary surface");
+        Check(DailyHomeDecision.Inspect(Frame(ticket, Surface("PurchaseConfirmationUI", true, "_buttonOK", 99)), policy).Kind == "blocked",
+            "ticket recovery never clicks through another foreground confirmation");
+        Check(DailyHomeDecision.Inspect(Frame(Surface("CostumeSelectUI", true, "_okBtn")), policy).Kind == "blocked",
+            "ticket-use selection screen is not treated as a dismissible notification");
         var castleReward = Surface("EvilCastleSeasonTotalRewardPopupUI", false, "_objBackButton");
         Check(DailyNavigationDecision.Notice(Frame(castleReward), policy, out _)?["field"]?.GetValue<string>() == "_objBackButton", "Castle season reward closes the native acknowledgement even without popup flag");
         castleReward["InputReady"] = false;

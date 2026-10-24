@@ -1,3 +1,5 @@
+**1.5.0 onward:** the separate layout-3 channel uses full archives and a temporary copy of the main executable. The block-repair/native-updater rules below apply only to 1.4 and earlier. See [current distribution and acceptance](ALL_IN_ONE_DISTRIBUTION.md).
+
 # 1.4.15 update and recovery protocol
 
 Status: published and verified online; see [the 1.4.15 deployment receipt](releases/1.4.15-deployment.md). [Local preparation](releases/1.4.15-preparation.md) retains the original package and acceptance evidence. 1.4.14 remains an immutable published baseline.

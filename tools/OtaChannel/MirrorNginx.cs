@@ -4,6 +4,46 @@ namespace Dustweave.Ota;
 
 static class MirrorNginx
 {
+    public static string BundlePatch(string original, Config c)
+    {
+        Rules.Need(c.Layout == 3 && c.Public == "/home/nginx/dustweave-updates-aio", "Unexpected bundled web mount");
+        string url = Mirror.BaseUrl(c);
+        int anchor = original.IndexOf(Begin, StringComparison.Ordinal);
+        Rules.Need(anchor >= 0 && original.IndexOf(Begin, anchor + Begin.Length, StringComparison.Ordinal) < 0 &&
+            !original.Contains("/updates/dustweave/all-in-one/",StringComparison.Ordinal),"Inspect existing bundled web configuration before installation");
+        string block = $$"""
+        # BEGIN DUSTWEAVE AIO
+        location = /updates/dustweave/all-in-one/releases.json {
+            alias /usr/share/nginx/dustweave-updates-aio/releases.json;
+            add_header Cache-Control "no-store" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            limit_except GET { deny all; }
+        }
+        location ^~ /updates/dustweave/all-in-one/.mirror/ { return 404; }
+        location ^~ /updates/dustweave/all-in-one/ {
+            alias /usr/share/nginx/dustweave-updates-aio/;
+            autoindex off;
+            set $dw_aio_relative "";
+            set $dw_aio_mirror "";
+            if ($uri ~ "^/updates/dustweave/all-in-one/(v[0-9A-Za-z.-]+/Dustweave-[0-9A-Za-z.-]+-(?:Lite|Portable)-win-x64[.]zip)$") { set $dw_aio_relative $1; }
+            if (-f /usr/share/nginx/dustweave-updates-aio/.mirror/enabled) { set $dw_aio_mirror "1"; }
+            if (-f /usr/share/nginx/dustweave-updates-aio/.mirror/routes/$dw_aio_relative) { set $dw_aio_mirror "${dw_aio_mirror}1"; }
+            if ($arg_origin = "1") { set $dw_aio_mirror ""; }
+            if ($dw_aio_mirror = "11") {
+                add_header Cache-Control "no-store" always;
+                add_header X-Dustweave-Delivery "qicaiyun" always;
+                return 302 {{url}}/$dw_aio_relative;
+            }
+            add_header Cache-Control "public, max-age=31536000, immutable";
+            add_header X-Dustweave-Delivery "origin" always;
+            limit_rate 2m;
+            limit_except GET { deny all; }
+        }
+        # END DUSTWEAVE AIO
+
+        """;
+        return original[..anchor] + block + original[anchor..];
+    }
     const string Begin = "# BEGIN DUSTWEAVE OTA CDN";
     const string End = "# END DUSTWEAVE OTA CDN";
     public static string Patch(string original, Config c)

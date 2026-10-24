@@ -16,11 +16,15 @@ public static class DailySuite {
   catch(GameSessionEndedException){throw new DailyGameExitedException();}
  }
  private static async Task ActivateCoreAsync(IGameHost host,string root,string id,Action<string> progress,CancellationToken cancel){
+  // Every helper has its own process-scope cache. A successful parent connection
+  // is not authority for this process to skip access preparation. Reuse an
+  // existing local proof, or let the authenticated read-only helper verify it.
+  // Keep this before Find, including already-active module reuse.
+  cancel.ThrowIfCancellationRequested();
+  await host.PrepareAccessAsync(progress,cancel);
+  cancel.ThrowIfCancellationRequested();
   var game=host.Find()??throw new InvalidOperationException("请先启动游戏，并在日常助手连接一次。");
-  var snapshot=host.ReadSnapshot();
-  if(snapshot==null||snapshot.ProcessId!=game.ProcessId||snapshot.ProcessStartTicks!=game.StartTicks||snapshot.FrameUtcTicks<DateTime.UtcNow.AddSeconds(-5).Ticks)
-   throw new InvalidOperationException("游戏连接已失效，请在日常助手重新连接。");
-  if(snapshot.State!="identified"||string.IsNullOrEmpty(snapshot.AccountKey)||string.IsNullOrEmpty(snapshot.PlayerKey))throw new InvalidOperationException("suite.identity-unavailable" );
+  var snapshot=await DailyGamePreparation.WaitForIdentityAsync(host,game,null,progress,cancel,root);
   var pipe=new PipeClient(Path.Combine(root,"suite"),game.ProcessId,game.StartTicks);
   var previous=Read(root,game);
   if(previous?.Tool==id&&previous.State=="ready"&&previous.Owner==Owner&&previous.Account==snapshot.AccountKey&&previous.Player==snapshot.PlayerKey&&previous.At>=DateTime.UtcNow.AddSeconds(-5).Ticks)return;
@@ -30,10 +34,8 @@ public static class DailySuite {
    string managed=Path.Combine(Path.GetDirectoryName(game.Executable)!,Path.GetFileNameWithoutExtension(game.Executable)+"_Data","Managed");
    payload=await DailyGamePreparation.RunAsync(host,game,(report,token)=>prepare(managed,id,report,token),progress,cancel);
    cancel.ThrowIfCancellationRequested();
-   if(host.Find()!=game)throw new DailyGameExitedException();
-   var current=host.ReadSnapshot();
-   if(current==null||current.ProcessId!=game.ProcessId||current.ProcessStartTicks!=game.StartTicks||current.FrameUtcTicks<DateTime.UtcNow.AddSeconds(-5).Ticks||current.AccountKey!=snapshot.AccountKey||current.PlayerKey!=snapshot.PlayerKey)
-    throw new InvalidOperationException("准备功能期间账号或连接变化，未启用组件。");
+   if(!host.IsRunning(game))throw new DailyGameExitedException();
+   await DailyGamePreparation.WaitForIdentityAsync(host,game,snapshot,progress,cancel,root);
   }
   pipe.Open(DailyHookCompiler.Fingerprint);
   var command=new SuiteCommand {Id=Guid.NewGuid().ToString("N"),Tool=id,Owner=Owner,ProcessId=game.ProcessId,StartTicks=game.StartTicks,Account=snapshot.AccountKey,Player=snapshot.PlayerKey,Expires=DateTime.UtcNow.AddSeconds(40).Ticks,
@@ -48,7 +50,7 @@ public static class DailySuite {
   var until=DateTime.UtcNow.AddSeconds(35);
   while(DateTime.UtcNow<until){
    cancel.ThrowIfCancellationRequested();
-   if(host.Find()!=game)throw new DailyGameExitedException();
+   if(!host.IsRunning(game))throw new DailyGameExitedException();
    var state=Read(root,game);
    if(state?.RejectedRequest==command.Id)throw new InvalidOperationException(state.RejectedReason);
    if(state?.Request==command.Id){

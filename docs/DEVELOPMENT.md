@@ -115,6 +115,8 @@ The Rewards scope also covers event puzzle batches, hunting policy and per-accou
 
 普通双击、账号检查、选中队列及计划启动直接进入当前进程的界面入口，不依赖 Explorer COM 再启动一次自身。保留显式开发入口 --launch-desktop 和既有 --desktop-session 参数；游戏启动仍由 Accounts/DesktopGameLaunch 校验 Windows 用户、会话与沙箱归属，连接组件按需要单独提权。
 
+从开发执行环境打开真实主窗口时，必须使用成品 `Dustweave.exe --launch-desktop`，不能直接 `Start-Process` 成品主窗口。2026-10-23 的实机复现确认：开发环境与 Windows 桌面可在相同 SID、相同 HKCU 路径下读到不同登录数据；工具写入和回读成功，并不代表桌面启动的游戏读到了同一份数据。账号槽位没有损坏，此时应正常退出织尘，再经桌面入口打开。显式账号检查应通过 `DesktopGameLaunch` 转交 `--desktop-session --inspect-account <account-key>`，只核对所选账号，不运行日常。不要放宽账号校验，也不要把普通用户的双击启动重新改为强制依赖 Explorer。合成测试窗口继续使用隔离测试环境。
+
 主界面前的托管启动阶段记录到用户数据目录的 startup-state.json；失败写入 startup-error.json，并显示记录路径。主目录不可写时尝试当前用户临时目录的 Dustweave-startup。日志不记录命令行、环境变量内容或账号凭据。Windows 拒绝执行和 .NET 宿主尚未进入托管入口的失败仍需系统事件／宿主诊断。
 
 Normal, account-check, selected-queue and scheduled launches open the UI in the current process without an Explorer COM relaunch. Keep the explicit developer relay and legacy child switch. Game launch identity/sandbox validation and separately elevated connection helpers are unchanged. Managed startup stages and failures are recorded before the window opens, with a user-temp fallback; OS blocks and failures before managed entry still require OS/host diagnostics.

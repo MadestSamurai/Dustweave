@@ -66,7 +66,7 @@ public static class DailyTradeDropForecast
      var network=record["network"]!.AsObject();
      if(S(network["State"])!="ready"||S(network["Error"])!=""||N(network["Pack"])!=pack)continue;
      foreach(var observed in DailyCollectionCache.CollectionNetworks(record)){
-      long map=N(observed["Maps"]![0]);if(!route.Maps(pack).Contains(map))continue;
+      long map=N(observed["Maps"]![0]);if(!route.SelectedMaps(pack,workflow.Settings.Weekly).Contains(map))continue;
       var active=ActiveMonsters(observed);
       maps.Add((pack,map,Rows(observed["Targets"]).Where(t=>N(t["Map"])==map && active.Contains(N(t["Id"]))).Select(t=>N(t["Id"])).ToHashSet()));
      }

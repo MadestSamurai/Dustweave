@@ -1,5 +1,245 @@
 {
-  "updates.rollback_title": {
+  "prefs.maps_title": {
+    "zh-CN": "收集地图",
+    "zh-TW": "收集地圖",
+    "en-US": "Collection maps"
+  },
+  "prefs.maps_default": {
+    "zh-CN": "收集地图 · 全部",
+    "zh-TW": "收集地圖 · 全部",
+    "en-US": "Collection maps · All"
+  },
+  "prefs.maps_selected": {
+    "zh-CN": "收集地图 · 已选 {0} 张",
+    "zh-TW": "收集地圖 · 已選 {0} 張",
+    "en-US": "Collection maps · {0} selected"
+  },
+  "prefs.maps_all": {
+    "zh-CN": "全选",
+    "zh-TW": "全選",
+    "en-US": "Select all"
+  },
+  "prefs.maps_none": {
+    "zh-CN": "清空",
+    "zh-TW": "清空",
+    "en-US": "Clear"
+  },
+  "prefs.maps_loading": {
+    "zh-CN": "正在读取地图…",
+    "zh-TW": "正在讀取地圖…",
+    "en-US": "Loading maps…"
+  },
+  "prefs.maps_unavailable": {
+    "zh-CN": "地图资料未能读取，原选择已保留。请检查软件文件完整性后重新展开。",
+    "zh-TW": "地圖資料未能讀取，原選擇已保留。請檢查軟體檔案完整性後重新展開。",
+    "en-US": "Could not read map data. Your selection is kept. Check app file integrity, then reopen this section."
+  },
+  "prefs.maps_hint": {
+    "zh-CN": "仅列出有收集物的地图；未解锁或未开放的卡带会自动跳过。",
+    "zh-TW": "僅列出有收集物的地圖；未解鎖或未開放的卡帶會自動跳過。",
+    "en-US": "Only maps with collectibles are listed. Locked or closed cartridges are skipped."
+  },
+  "prefs.maps_empty": {
+    "zh-CN": "未选择地图，本次将跳过周收集。",
+    "zh-TW": "未選擇地圖，本次將略過週收集。",
+    "en-US": "No maps selected. Weekly collection will be skipped."
+  },
+  "sandbox.manage.binding_help": {
+    "zh-CN": "原沙盒绑定需要修复，请在下方确认匹配结果。已有数据保留。",
+    "zh-TW": "原沙盒綁定需要修復，請在下方確認配對結果。既有資料保留。",
+    "en-US": "Confirm the match below to repair this account's sandbox binding. Existing data is preserved."
+  },
+  "software.sandbox_compat_help": {
+  "zh-CN": "所有账号统一使用，下次隔离启动时生效。默认使用同步模式；遇到游戏加载异常时可开启兼容模式。两种模式都会跟随本机游戏更新。",
+  "zh-TW": "所有帳號統一使用，下次隔離啟動時生效。預設使用同步模式；遇到遊戲載入異常時可開啟相容模式。兩種模式都會跟隨本機遊戲更新。",
+  "en-US": "Applies to all accounts on their next isolated launch. Synchronized mode is the default; enable compatibility mode if game loading is unreliable. Both modes follow host game updates."
+},
+  "software.sandbox_compat": {
+  "zh-CN": "沙盒兼容模式",
+  "zh-TW": "沙盒相容模式",
+  "en-US": "Sandbox compatibility mode"
+},
+  "sandbox.manage.slow": {
+  "zh-CN": "读取沙盒状态超时。可以重试，或在软件设置中检查沙盒工具位置。",
+  "zh-TW": "讀取沙盒狀態逾時。可以重試，或在軟體設定中檢查沙盒工具位置。",
+  "en-US": "Reading sandbox status timed out. Retry, or check the Sandboxie location in Software settings."
+},
+  "sandbox.manage.bound": {
+  "zh-CN": "绑定已修复。",
+  "zh-TW": "綁定已修復。",
+  "en-US": "Sandbox binding repaired."
+},
+  "sandbox.manage.rebuild_prompt": {
+  "zh-CN": "沙盒已移除，账号和设置已保留。需要重新创建吗？也可以稍后隔离启动时自动创建。",
+  "zh-TW": "沙盒已移除，帳號與設定已保留。需要重新建立嗎？也可以稍後隔離啟動時自動建立。",
+  "en-US": "Sandbox removed. Your account and settings are kept. Create a new sandbox now, or let your next isolated launch create one."
+},
+  "sandbox.manage.rebuild": {
+  "zh-CN": "重新创建沙盒",
+  "zh-TW": "重新建立沙盒",
+  "en-US": "Create a new sandbox"
+},
+"sandbox.manage.title": {
+    "zh-CN": "管理沙盒",
+    "zh-TW": "管理沙盒",
+    "en-US": "Manage sandbox"
+  },
+  "sandbox.manage.selected_help": {
+  "zh-CN": "管理选中账号的沙盒",
+  "zh-TW": "管理所選帳號的沙盒",
+  "en-US": "Manage the selected account's sandbox"
+},
+  "sandbox.manage.mode": {
+    "zh-CN": "沙盒启动方式",
+    "zh-TW": "沙盒啟動方式",
+    "en-US": "Sandbox launch mode"
+  },
+  "sandbox.manage.sync": {
+    "zh-CN": "同步模式（推荐）",
+    "zh-TW": "同步模式（建議）",
+    "en-US": "Synchronized (recommended)"
+  },
+  "sandbox.manage.sync_help": {
+    "zh-CN": "使用本机最新游戏程序，账号和可写缓存保持隔离。",
+    "zh-TW": "使用本機最新遊戲程式，帳號與可寫入快取維持隔離。",
+    "en-US": "Uses the current host game files, with separate account data and writable caches."
+  },
+  "sandbox.manage.compat": {
+    "zh-CN": "兼容模式",
+    "zh-TW": "相容模式",
+    "en-US": "Compatible"
+  },
+  "sandbox.manage.compat_help": {
+    "zh-CN": "使用常规文件隔离。若同步模式加载异常，可尝试此方式；本机游戏更新后会自动处理旧程序副本。",
+    "zh-TW": "使用一般檔案隔離。若同步模式載入異常，可嘗試此方式；本機遊戲更新後會自動處理舊程式副本。",
+    "en-US": "Uses standard file isolation. Try this if loading is slow in Synchronized mode. Stale program copies are handled after host game updates."
+  },
+  "sandbox.manage.create": {
+    "zh-CN": "创建沙盒",
+    "zh-TW": "建立沙盒",
+    "en-US": "Create sandbox"
+  },
+  "sandbox.manage.open": {
+    "zh-CN": "查看文件",
+    "zh-TW": "查看檔案",
+    "en-US": "Open folder"
+  },
+  "sandbox.manage.remove": {
+    "zh-CN": "移除沙盒",
+    "zh-TW": "移除沙盒",
+    "en-US": "Remove sandbox"
+  },
+  "sandbox.manage.confirm_remove": {
+    "zh-CN": "移除“{0}”的沙盒？\n\n将删除此沙盒中的游戏缓存、本地登录环境和隔离窗口数据。织尘会先收回最新登录信息和日常进度；保存的账号及主窗口设置会保留。之后可重新创建。",
+    "zh-TW": "要移除「{0}」的沙盒嗎？\n\n將刪除此沙盒中的遊戲快取、本機登入環境與隔離視窗資料。織塵會先收回最新登入資訊與日常進度；已儲存帳號及主視窗設定會保留。之後可重新建立。",
+    "en-US": "Remove the sandbox for “{0}”?\n\nThis deletes its game cache, local sign-in environment and isolated window data. Dustweave first retrieves the latest login and daily progress. Your saved account and main-window settings are kept. You can create a new sandbox later."
+  },
+  "sandbox.manage.loading": {
+    "zh-CN": "正在读取沙盒状态…",
+    "zh-TW": "正在讀取沙盒狀態…",
+    "en-US": "Reading sandbox status…"
+  },
+  "sandbox.manage.unavailable": {
+    "zh-CN": "暂时无法读取沙盒，请查看下方原因。",
+    "zh-TW": "暫時無法讀取沙盒，請查看下方原因。",
+    "en-US": "Sandbox status is unavailable. See the reason below."
+  },
+  "sandbox.manage.empty": {
+  "zh-CN": "尚未创建沙盒。可在这里创建，首次隔离启动也会自动创建。",
+  "zh-TW": "尚未建立沙盒。可在此建立，首次隔離啟動也會自動建立。",
+  "en-US": "No sandbox yet. Create one here, or let the first isolated launch create it automatically."
+},
+  "sandbox.manage.ready": {
+    "zh-CN": "沙盒已就绪。创建和管理沙盒不会启动游戏。",
+    "zh-TW": "沙盒已就緒。建立與管理沙盒不會啟動遊戲。",
+    "en-US": "Sandbox ready. Creating or managing it does not start the game."
+  },
+  "sandbox.manage.running": {
+    "zh-CN": "此账号的沙盒仍有程序运行。请退出对应游戏及织尘隔离窗口，再重试。",
+    "zh-TW": "此帳號的沙盒仍有程式執行中。請退出對應遊戲與織塵隔離視窗，再重試。",
+    "en-US": "Programs are still running in this account's sandbox. Exit its game and isolated Dustweave window, then retry."
+  },
+  "sandbox.manage.mode_saved": {
+  "zh-CN": "已保存，所有账号下次隔离启动时生效，包括批量和定时执行。",
+  "zh-TW": "已儲存，所有帳號下次隔離啟動時生效，包含批次與排程執行。",
+  "en-US": "Saved for every account's next isolated launch, including batch and scheduled runs."
+},
+  "sandbox.manage.created": {
+    "zh-CN": "沙盒已创建，尚未启动游戏。",
+    "zh-TW": "沙盒已建立，尚未啟動遊戲。",
+    "en-US": "Sandbox created. The game has not been started."
+  },
+  "sandbox.manage.removed": {
+    "zh-CN": "沙盒已移除，保存的账号和主窗口设置仍保留。",
+    "zh-TW": "沙盒已移除，已儲存帳號與主視窗設定仍保留。",
+    "en-US": "Sandbox removed. Your saved account and main-window settings are kept."
+  },
+  "sandbox.manage.collecting": {
+    "zh-CN": "正在保存此沙盒的最新登录信息和进度…",
+    "zh-TW": "正在儲存此沙盒的最新登入資訊與進度…",
+    "en-US": "Retrieving the latest sign-in information and progress…"
+  },
+  "sandbox.manage.removing": {
+    "zh-CN": "正在移除沙盒，请稍候…",
+    "zh-TW": "正在移除沙盒，請稍候…",
+    "en-US": "Removing the sandbox…"
+  },
+  "sandbox.manage.canceling": {
+    "zh-CN": "正在取消，请等待当前操作安全结束。",
+    "zh-TW": "正在取消，請等待目前操作安全結束。",
+    "en-US": "Canceling. Waiting for the current operation to finish safely."
+  },
+  "sandbox.manage.canceled": {
+    "zh-CN": "操作已取消，已完成的修改会保留。",
+    "zh-TW": "操作已取消，已完成的修改會保留。",
+    "en-US": "Canceled. Changes already completed are kept."
+  },
+  "sandbox.manage.mode_invalid": {
+  "zh-CN": "沙盒启动方式记录无法读取。请在软件设置中重新设置“沙盒兼容模式”。",
+  "zh-TW": "無法讀取沙盒啟動方式記錄。請在軟體設定中重新設定「沙盒相容模式」。",
+  "en-US": "The saved sandbox mode could not be read. Set Sandbox compatibility mode again in Software settings."
+},
+  "sandbox.manage.process_unknown": {
+    "zh-CN": "未能确认沙盒中正在运行的程序。请刷新状态，仍失败时检查 Sandboxie 是否正常运行。",
+    "zh-TW": "無法確認沙盒中執行的程式。請重新整理狀態，若仍失敗，請檢查 Sandboxie 是否正常運作。",
+    "en-US": "Could not verify running sandbox programs. Refresh the status; if this persists, check that Sandboxie is working."
+  },
+  "sandbox.manage.not_owned": {
+    "zh-CN": "无法确认这个沙盒属于所选账号。未删除任何内容，请先修复沙盒绑定。",
+    "zh-TW": "無法確認此沙盒屬於所選帳號。未刪除任何內容，請先修復沙盒綁定。",
+    "en-US": "Could not verify that this sandbox belongs to the selected account. Nothing was deleted. Repair its binding first."
+  },
+  "sandbox.manage.alias": {
+    "zh-CN": "多个沙盒名称指向同一目录。请先在 Sandboxie 中整理重复绑定，再移除。",
+    "zh-TW": "多個沙盒名稱指向同一資料夾。請先在 Sandboxie 整理重複綁定，再移除。",
+    "en-US": "Multiple sandbox names point to this folder. Resolve the duplicate bindings in Sandboxie before removing it."
+  },
+  "sandbox.manage.recovery_pending": {
+    "zh-CN": "此沙盒仍有待恢复的文件。请先完成上次文件恢复，再移除沙盒。",
+    "zh-TW": "此沙盒仍有待還原的檔案。請先完成上次檔案還原，再移除沙盒。",
+    "en-US": "This sandbox has a pending file recovery. Complete that recovery before removing it."
+  },
+  "sandbox.manage.removal_pending": {
+    "zh-CN": "上次移除尚未完成。请在“管理沙盒”中再次点击“移除沙盒”完成清理。",
+    "zh-TW": "上次移除尚未完成。請在「管理沙盒」再次點選「移除沙盒」完成清理。",
+    "en-US": "Sandbox removal is incomplete. Select Remove sandbox again in Manage sandbox to finish."
+  },
+  "sandbox.manage.custom_delete": {
+    "zh-CN": "这个沙盒配置了自定义删除操作，请在 Sandboxie 中移除，织尘未执行这些操作。",
+    "zh-TW": "此沙盒設定了自訂刪除動作，請在 Sandboxie 移除，織塵未執行這些動作。",
+    "en-US": "This sandbox has custom deletion actions. Remove it in Sandboxie; Dustweave has not run those actions."
+  },
+  "sandbox.manage.remove_incomplete": {
+    "zh-CN": "沙盒尚未完全移除，已保留清理记录。请关闭占用程序后再次点击“移除沙盒”。",
+    "zh-TW": "沙盒尚未完全移除，已保留清理記錄。請關閉佔用程式後再次點選「移除沙盒」。",
+    "en-US": "Sandbox removal is incomplete. Close programs using it, then select Remove sandbox again."
+  },
+  "client_update.sync_programs": {
+    "zh-CN": "正在处理游戏更新后的旧程序副本…",
+    "zh-TW": "正在處理遊戲更新後的舊程式副本…",
+    "en-US": "Updating stale sandbox program copies…"
+  },
+"updates.rollback_title": {
     "zh-CN": "更新未完成",
     "zh-TW": "更新未完成",
     "en-US": "Update did not complete"
@@ -3225,9 +3465,9 @@
     "en-US": "Use the highest quick-battle level for both current and rerun bosses"
   },
   "prefs.collection_hint": {
-    "zh-CN": "按游戏进度收集已拥有卡带，默认使用吸收",
-    "zh-TW": "按遊戲進度收集已擁有卡帶，預設使用吸收",
-    "en-US": "Collect owned packs from game progress, using Absorption by default"
+    "zh-CN": "收集勾选的地图，默认使用吸收",
+    "zh-TW": "收集勾選的地圖，預設使用吸收",
+    "en-US": "Collect selected maps, using Absorb by default"
   },
   "prefs.walk": {
     "zh-CN": "步行收集（不使用吸收）",
@@ -6033,6 +6273,26 @@
     "zh-CN": "检查更新后重新连接；若仍失败，请导出日志，不必反复重启游戏。",
     "zh-TW": "檢查更新後重新連線；若仍失敗，請匯出記錄，不必反覆重啟遊戲。",
     "en-US": "Check for updates and reconnect. If it still fails, export logs instead of repeatedly restarting the game."
+  },
+  "issue.reason.scope-permission": {
+    "zh-CN": "执行组件未获得核对游戏进程所需的访问权限。",
+    "zh-TW": "執行元件未取得核對遊戲程序所需的存取權限。",
+    "en-US": "The execution component could not obtain access to verify the game process."
+  },
+  "issue.action.scope-permission": {
+    "zh-CN": "重新连接并允许连接组件的 Windows 权限提示，或关闭游戏后通过织尘启动。若仍失败，请导出诊断；无需重装沙盒。",
+    "zh-TW": "重新連線並允許連線元件的 Windows 權限提示，或關閉遊戲後透過織塵啟動。若仍失敗，請匯出診斷；無需重裝沙盒。",
+    "en-US": "Reconnect and approve the connection helper's Windows prompt, or close the game and launch it through Dustweave. Export diagnostics if it still fails; reinstalling Sandboxie is not required."
+  },
+  "issue.reason.preparation": {
+    "zh-CN": "日常准备组件未能完成启动，任务尚未开始。",
+    "zh-TW": "日常準備元件未能完成啟動，任務尚未開始。",
+    "en-US": "The daily preparation component did not finish starting. Tasks have not started."
+  },
+  "issue.action.preparation": {
+    "zh-CN": "重新连接后重试；若仍失败，请导出诊断日志，里面保留了准备组件的退出信息。",
+    "zh-TW": "重新連線後重試；若仍失敗，請匯出診斷記錄，裡面保留了準備元件的結束資訊。",
+    "en-US": "Reconnect and retry. If it still fails, export diagnostics, which include the preparation component's exit details."
   },
   "issue.reason.access": {
     "zh-CN": "Windows 拒绝访问所需文件或进程。",

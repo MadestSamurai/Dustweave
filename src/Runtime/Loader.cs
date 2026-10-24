@@ -11,10 +11,18 @@ namespace BD2Daily.Runtime
         private static Assembly harmonyAssembly;
         private static Handoff handoff;
         private static MainThread frame;
+        private static int processId;
+        private static long processStart;
         public static void Load()
         {
             lock(typeof(Loader))
             {
+                // Query once outside frame callbacks. A transient access error
+                // may be retried by Load; it must not poison a type initializer.
+                if(processStart==0)using(var process=System.Diagnostics.Process.GetCurrentProcess()){
+                    long started=process.StartTime.ToUniversalTime().Ticks;
+                    processId=process.Id;processStart=started;
+                }
                 // Resolve before scheduling callbacks: Mono may bind field types before Start runs.
                 if(!resolver){AppDomain.CurrentDomain.AssemblyResolve+=Resolve;resolver=true;}
                 LoadHarmony();
@@ -46,7 +54,7 @@ namespace BD2Daily.Runtime
             MainThread.Drain(()=>{if(handoff!=null)handoff.Unload();},WriteStatus);
         }
         internal static void WriteStatus(string state,string error)
-        {if(state=="active"&&handoff!=null&&handoff.IsActive)RuntimeFiles.Activate();try{using(var p=System.Diagnostics.Process.GetCurrentProcess())LocalStorage.Write("runtime.json",new DailyRuntimeStatus{State=state,Error=error,ProcessId=p.Id,ProcessStartTicks=p.StartTime.ToUniversalTime().Ticks,AtUtcTicks=DateTime.UtcNow.Ticks});}catch{}}
+        {if(state=="active"&&handoff!=null&&handoff.IsActive)RuntimeFiles.Activate();try{LocalStorage.Write("runtime.json",new DailyRuntimeStatus{State=state,Error=error,ProcessId=processId,ProcessStartTicks=processStart,AtUtcTicks=DateTime.UtcNow.Ticks});}catch{}}
         private static Assembly Resolve(object sender,ResolveEventArgs args)
         {return new AssemblyName(args.Name).Name=="0Harmony"?LoadHarmony():null;}
         private static Assembly LoadHarmony()

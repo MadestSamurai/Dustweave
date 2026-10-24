@@ -5,6 +5,61 @@ namespace Dustweave;
 
 public static class DailyEvidence
 {
+    // Count actual fresh game observations, not host polling attempts. A stalled
+    // render thread has not had a chance to apply its queued configuration.
+    public sealed class PreparationWindow
+    {
+        private long lastSample;
+        private int advancingFrames;
+        public bool Expired(JsonObject health, double seconds)
+        {
+            string state = health["state"]?.GetValue<string>() ?? "missing";
+            if (state == "ready") return false;
+            if (state is "component-error" or "invalid-payload" or "invalid-timestamp" || seconds >= 60) return true;
+            long sample = health["sampleAtUtcTicks"]?.GetValue<long>() ?? 0;
+            double age = health["ageMs"]?.GetValue<double>() ?? double.PositiveInfinity;
+            if (sample > lastSample && age is >= 0 and <= 3000)
+            { lastSample = sample; advancingFrames++; }
+            return advancingFrames >= 20;
+        }
+    }
+    // Preparing the listener does not require any gameplay or network request.
+    // Retain only its health/configuration, never the Readings or response data.
+    public static JsonObject PreparationStatus(JsonObject? evidence, string expectedHash, IEnumerable<string> expectedRoles, long now)
+    {
+        var result = new JsonObject { ["state"] = "missing", ["ready"] = false, ["atUtcTicks"] = now };
+        if (evidence == null) return result;
+        try
+        {
+            string error = evidence["Error"]!.GetValue<string>();
+            result["error"] = error.Length > 4096 ? error[..4096] : error;
+            long ticks = Integer(evidence["AtUtcTicks"]);
+            result["sampleAtUtcTicks"] = ticks;
+            bool validTime = ticks > 0 && ticks <= DateTime.MaxValue.Ticks && ticks <= now + TimeSpan.TicksPerSecond * 2;
+            if (validTime) result["ageMs"] = (now - ticks) / (double)TimeSpan.TicksPerMillisecond;
+            if (error.Length > 0) { result["state"] = "component-error"; return result; }
+            string hash = evidence["Config"]!.GetValue<string>();
+            var actual = evidence["Taps"]!.AsArray().Select(x => x!.GetValue<string>()).ToHashSet(StringComparer.Ordinal);
+            var expected = expectedRoles.ToHashSet(StringComparer.Ordinal);
+            result["configMatches"] = hash == expectedHash;
+            result["missingRoles"] = new JsonArray(expected.Except(actual).Order().Select(x => JsonValue.Create(x)).ToArray());
+            result["unexpectedRoles"] = new JsonArray(actual.Except(expected).Order().Select(x => JsonValue.Create(x)).ToArray());
+            string state = !validTime ? "invalid-timestamp" : hash != expectedHash ? "config-pending"
+                : !expected.SetEquals(actual) ? "roles-pending"
+                : ticks <= now - TimeSpan.TicksPerSecond * 3 ? "stale" : "ready";
+            result["state"] = state; result["ready"] = state == "ready";
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or InvalidDataException or FormatException or NullReferenceException)
+        { result["state"] = "invalid-payload"; }
+        return result;
+    }
+    public static string PreparationMessage(string state) => state switch
+    {
+        "component-error" or "invalid-payload" or "invalid-timestamp" => "日常连接组件报告异常，尚未开始执行。请导出诊断包并联系开发者。",
+        "stale" => "游戏观察数据未及时更新，日常尚未开始。请等待游戏加载完成后重新连接；反复出现时请导出诊断包。",
+        "config-pending" or "roles-pending" => "日常回执监听配置尚未生效，尚未开始执行。请重新连接；反复出现时请导出诊断包。",
+        _ => "尚未收到日常连接组件的数据，尚未开始执行。请确认游戏已加载后重新连接；反复出现时请导出诊断包。"
+    };
     public static bool SameActor(JsonObject a, JsonObject b) => new[] { "ProcessId", "ProcessStartTicks", "Instance", "AccountKey", "PlayerKey" }.All(k => a[k] != null && b[k] != null && JsonNode.DeepEquals(a[k], b[k]));
     public static long Integer(JsonNode? node)
     {

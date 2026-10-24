@@ -46,6 +46,13 @@ internal static class StorageMaintenanceCases
         string newExtract2=Put(net,"Dustweave/dddddddddddd/runtime.dll",100,0);
         string unknownExtract=Put(net,"Dustweave/user-notes/keep.txt");
         string otherApp=Put(net,"OtherApp/aaaaaaaaaaaa/runtime.dll");
+        string nativePath=Path.GetDirectoryName(oldExtract)!+Path.DirectorySeparatorChar;
+        Check(!DailyStorageMaintenance.MayCleanExtraction(Path.GetDirectoryName(oldExtract)!,nativePath,true),"bundled host protects its active generation even after seven days");
+        Check(DailyStorageMaintenance.MayCleanExtraction(Path.GetDirectoryName(thirdExtract)!,nativePath,true),"bundled host permits cleanup of other inactive generations");
+        Check(!DailyStorageMaintenance.MayCleanExtraction(Path.GetDirectoryName(oldExtract)!,null,true),"unknown bundled runtime location defers cleanup");
+        var bundled=new DailyStorageMaintenance(root,null,net,_=>true,()=>true,extractionSafe:d=>DailyStorageMaintenance.MayCleanExtraction(d,nativePath,true));
+        var bundledScan=await bundled.ScanAsync(new());
+        Check(bundledScan.Scopes.Single(s=>s.Kind=="extraction").ReclaimableBytes==new FileInfo(thirdExtract).Length,"reclaimable count excludes the active generation rather than the entire cache");
         long Sum(string dir)=>Directory.EnumerateFiles(dir,"*",SearchOption.AllDirectories).Sum(p=>new FileInfo(p).Length);
         var before=await service.ScanAsync(new());
         Check(before.TotalBytes==Sum(root)+Sum(instances)+Sum(Path.Combine(net,"Dustweave")),"overview counts main, complete sandboxes and own extraction trees exactly once");

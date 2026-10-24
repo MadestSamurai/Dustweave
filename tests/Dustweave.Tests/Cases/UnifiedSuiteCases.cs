@@ -91,6 +91,10 @@ internal static class UnifiedSuiteCases {
    modules[id]=type.CreateType()!;
   }
   var channel=new RuntimeChannel();Set("channel",channel);Set("initialized",true);Set("hasBundle",true);
+  // Deterministic native proof for state-machine tests. Blocking/threaded query
+  // behavior is exercised separately by SuiteOwnerProbeCases.
+  void OwnerMonitor(){Get<SuiteOwnerMonitor>("ownerMonitor").Dispose();Set("ownerMonitor",new SuiteOwnerMonitor(SuiteOwnerProbe.Read,()=>DateTime.UtcNow.Ticks,a=>a()));}
+  OwnerMonitor();
   Set("status",new SuiteStatus());Set("active","");Set("lastRequest","");Set("loadingId","");Set("request",null!);
   using var owner=Process.GetCurrentProcess();
   var identity=new DailySnapshot{State="identified",ProcessId=42,ProcessStartTicks=900,AccountKey="account",PlayerKey="player"};
@@ -173,7 +177,7 @@ internal static class UnifiedSuiteCases {
   SuiteFixtureBus.Waiting.Clear();SuiteRuntime.Dispose();
   Check(!SuiteFixtureBus.Flows.Values.Any(f=>f.IsActive),"host unload drains every child");
   Check(!owned.Contains(Runtime.Assembly.FullName!),"retired suite relinquishes cooperative ownership");
-  SuiteRuntime.Start();channel=Get<RuntimeChannel>("channel");Send(Command("daily"));Finish();Check(State().State=="ready","reconnect reuses loaded modules with a fresh host channel");SuiteRuntime.Dispose();
+  SuiteRuntime.Start();OwnerMonitor();channel=Get<RuntimeChannel>("channel");Send(Command("daily"));Finish();Check(State().State=="ready","reconnect reuses loaded modules with a fresh host channel");SuiteRuntime.Dispose();
   var standalone=new Handoff("standalone-a","a","a",false,()=>{},()=>{},()=>"",()=>{},(_,_)=>{});
   standalone.Request(DateTime.UtcNow);for(int i=0;i<5;i++)standalone.Tick(DateTime.UtcNow.AddSeconds(i));
   var second=new Handoff("standalone-b","b","b",false,()=>{},()=>{},()=>"",()=>{},(_,_)=>{});

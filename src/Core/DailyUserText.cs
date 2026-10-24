@@ -12,6 +12,8 @@ public static class DailyUserText
     private static readonly Regex ExceptionPrefix = new(@"^(?:[\w.]+\.)?\w*(?:Exception|Error):\s*(.+)$", RegexOptions.CultureInvariant);
     private static readonly (string Source, string Chinese)[] Prefixes =
     [
+        ("connection.login_identity_unavailable: ", "未能确认游戏身份："),
+        ("suite.identity-unavailable: ", "游戏身份尚未就绪："),
         (".NET queue: ", "日常队列："),
         ("Progress read: ", "读取运行进度："),
         ("Command outcome is uncertain; no replay: ", "操作结果尚未确认，未重复提交："),
@@ -82,6 +84,7 @@ public static class DailyUserText
         ["UpdateUI"] = "更新介绍", ["MiniGameDiceUI"] = "骰子活动", ["EventMainUI"] = "活动大厅",
         ["EventBattleUI"] = "活动战斗", ["TarosTacticsBingoUI"] = "战术教材大厅",
         ["TarosTacticsSeasonFinishUI"] = "战术教材赛季提示", ["TotalWarUI"] = "公会战大厅",
+        ["CostumeSelectNoticePopupUI"] = "服装选择券使用提示",
         ["FriendshipManageUI"] = "亲密度管理", ["FriendshipUI"] = "亲密度咨询",
         ["Title"] = "标题页", ["TitleScene"] = "标题页", ["Lobby"] = "大厅", ["LobbyScene"] = "大厅",
         ["Field"] = "地图", ["FieldScene"] = "地图", ["Battle"] = "战斗", ["BattleScene"] = "战斗",

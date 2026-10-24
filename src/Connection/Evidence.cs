@@ -159,16 +159,18 @@ namespace BD2Daily.Live {
    Aliases=new EvidenceAliases(next.Aliases??new ClientAlias[0]);config=next;last=text;error="";
   }
   private static void Before(MethodBase __originalMethod){
+   long trace=BD2.LocalIpc.LoadingTrace.Begin("evidence.request."+__originalMethod.MetadataToken);
    try{TapRule rule;if(!requests.TryGetValue(__originalMethod,out rule))return;
     lock(queue){handoffQuiet.Reset();int n;inFlight.TryGetValue(rule.Role,out n);inFlight[rule.Role]=n+1;queue.Enqueue(new EvidenceEvent{AtUtcTicks=DateTime.UtcNow.Ticks,Role=rule.Role,Kind="request",Frame=frame,Sequence=++seq});}
-   }catch{}
+   }catch{}finally{BD2.LocalIpc.LoadingTrace.End("evidence.request."+__originalMethod.MetadataToken,trace);}
   }
   private static void After(MethodBase __originalMethod,byte[] __0,int __2,bool __result){
+   long trace=BD2.LocalIpc.LoadingTrace.Begin("evidence.response."+__originalMethod.MetadataToken);
    try{TapRule rule;if(!responses.TryGetValue(__originalMethod,out rule))return;
     var e=new EvidenceEvent{AtUtcTicks=DateTime.UtcNow.Ticks,Role=rule.Role,Kind="response",Frame=frame,ErrorCode=__2,Accepted=__result,Sequence=++seq};
     try{if(__0!=null){var type=typeof(UIBase).Assembly.GetType(rule.ResponseType,true);var parser=type.GetProperty("Parser").GetValue(null,null);var parse=parser.GetType().GetMethod("ParseFrom",new[]{typeof(byte[])});e.Values=Values(parse.Invoke(parser,new object[]{__0}),rule.Paths);}}catch(Exception ex){e.Error=ex.GetBaseException().Message;}
     lock(queue){handoffQuiet.Reset();int n;inFlight.TryGetValue(rule.Role,out n);inFlight[rule.Role]=Math.Max(0,n-1);queue.Enqueue(e);}
-   }catch{}
+   }catch{}finally{BD2.LocalIpc.LoadingTrace.End("evidence.response."+__originalMethod.MetadataToken,trace);}
   }
   internal static void Tick(Frame current){
    frame=current;

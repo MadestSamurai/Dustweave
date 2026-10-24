@@ -161,6 +161,15 @@ internal static class StartupCases
                 Check(StartupPolicy.Decide(f.s, f.p, DateTime.UtcNow.Ticks) != "click_download", condition);
             });
         Case("a populated player DTO on title is not login completion", () => { var f = Input(); f.s.State = "identified"; var instance = new GameInstance(f.s.ProcessId, f.s.ProcessStartTicks, "fake"); var g = new DailyIdentityGuard(); Check(!g.Observe(f.s, instance, f.s.AccountKey, "", DateTimeOffset.UtcNow), "title accepted"); f.s.Sequence++; f.s.FrameUtcTicks++; Check(!g.Observe(f.s, instance, f.s.AccountKey, "", DateTimeOffset.UtcNow), "advancing title accepted"); });
+        Case("scene loading does not log out an already identified account", () =>
+        {
+            var env = new DemoEnvironment(NewRoot()); var snapshot = env.ReadSnapshot()!;
+            var game = new GameInstance(snapshot.ProcessId, snapshot.ProcessStartTicks, "fake");
+            Check(DailyIdentityGuard.Ready(snapshot, game, DateTimeOffset.UtcNow), "fixture must start ready");
+            snapshot.Loading = true;Check(DailyIdentityGuard.Ready(snapshot, game, DateTimeOffset.UtcNow), "loading incorrectly invalidated identity");
+            snapshot.Loading = false;snapshot.Scene = "Empty";Check(DailyIdentityGuard.Ready(snapshot, game, DateTimeOffset.UtcNow), "Empty child page incorrectly invalidated identity");
+            snapshot.Scene = "Map3001_001";Check(DailyIdentityGuard.Ready(snapshot, game, DateTimeOffset.UtcNow), "completed transition remained blocked");
+        });
         await Async("transient login credentials recover without restarting or clicking early", async () =>
         {
             var f = Fixture(); bool observedWaiting = false;
@@ -251,6 +260,8 @@ internal static class StartupCases
         await Async("stop prevents later readiness from clicking", async () => { var f = Fixture(); f.env.TitleBlock = "modal"; var pending = f.run.ConnectCurrentAsync(); await Task.Delay(15); f.run.Stop(); await pending; f.env.TitleBlock = ""; f.env.ReadSnapshot(); Check(f.env.TitleClicks == 0, "clicked after stop"); });
         await Async("wrong SDK account does not enter or switch onward", async () => { var f = Fixture(); f.env.ForcedKey = DailyIdentity.MemberKey("999"); await Reject(f.run.InspectAsync(f.env.Accounts)); Check(f.env.TitleClicks == 0 && !f.env.Calls.Any(c => c.StartsWith("launch:")), "wrong account side effect"); });
         await Async("opening a coordinator does not grant startup", async () => { var f = Fixture(); await Task.Delay(5); f.env.ReadSnapshot(); Check(f.env.TitleClicks == 0 && !File.Exists(Path.Combine(f.path, "startup-permit.json")), "auto started"); });
+        await Async("experiment fresh launch preserves an existing game",async()=>{var f=Fixture();var before=f.env.Game;await Reject(f.run.InspectFreshAsync([f.env.Accounts[1]]));Check(f.env.Game==before&&!f.env.Calls.Any(c=>c=="close"||c.StartsWith("launch:")||c=="connect"),"experiment reused or closed a running game");});
+        await Async("experiment fresh launch selects and verifies only the chosen account",async()=>{var f=Fixture();f.env.Game=null;await f.run.InspectFreshAsync([f.env.Accounts[1]]);Check(f.env.CurrentKey==f.env.Accounts[1].AccountKey&&f.env.Calls.Count(c=>c.StartsWith("launch:"))==1&&f.env.Calls.Contains("launch:2")&&!f.env.Calls.Contains("close"),"experiment did not launch exactly the requested account");});
         await Async("stop and startup renewal remain serialized", async () => { for (int i = 0; i < 20; i++) { var f = Fixture(); f.env.TitleBlock = "modal"; var pending = f.run.ConnectCurrentAsync(); await Task.Delay(5); f.run.Stop(); await pending; Check(DailyJson.TryRead<StartupPermit>(Path.Combine(f.path, "startup-permit.json"))!.Owner == "", "renewed after stop"); } });
     }
 }

@@ -86,6 +86,7 @@ internal static class ConnectionAccessCases
         Check(await InterruptedReply("read",2)==3,"read-only reconnect is limited to two retries");
         Check(await InterruptedReply("write",1)==1,"mutating mailbox request is sent exactly once");
         await CheckBrokerContinuity(cases);
+        await CheckSharedPreparation(cases);
 
         // Real asynchronous pipe framing, split messages, cancellation, and bounded allocation.
         string name = "BD2Daily.Test." + Guid.NewGuid().ToString("N");
@@ -128,12 +129,67 @@ internal static class ConnectionAccessCases
         Check(bounded, "invalid frame size rejected before allocating payload");
         await invalidSend;
     }
+    static async Task CheckSharedPreparation(List<string> cases)
+    {
+        // Reproduce a fresh child's empty permission cache independently of the
+        // parent's successful connection. No real game or elevation is used.
+        foreach (string id in new[] { "daily", "fishing-daily", "territory-daily", "sichuan-daily",
+            "fishing", "territory", "mansion-runaway", "pandora", "equipment", "infinite-gacha",
+            "fiend-hunter", "rhythm", "sichuan", "secret-vision", "apostle-defense" })
+        {
+            var host = new FreshScopeHost();
+            try { await DailySuite.ActivateAsync(host, "unused-fixture", id, _ => { }, default); }
+            catch (InvalidOperationException error) when (error.Message == "请先启动游戏，并在日常助手连接一次。")
+            {
+                if (host.AccessChecks != 1 || host.Discoveries != 1) throw new Exception("access ordering: " + id);
+                cases.Add("connection: fresh helper prepares access before discovery: " + id);
+                continue;
+            }
+            throw new Exception("Shared preparation did not preserve game discovery: " + id);
+        }
+        var denied = new FreshScopeHost { Denied = true };
+        try { await DailySuite.ActivateAsync(denied, "unused-fixture", "daily", _ => { }, default); throw new Exception("denial ignored"); }
+        catch (IOException error) when (error.Message == "connection.scope_permission")
+        {
+            if (denied.Discoveries != 0) throw new Exception("Discovery after denied preparation");
+            cases.Add("connection: denied preparation propagates before discovery or activation");
+        }
+        var cancelled = new FreshScopeHost();
+        try { await DailySuite.ActivateAsync(cancelled, "unused-fixture", "daily", _ => { }, new CancellationToken(true)); throw new Exception("cancellation ignored"); }
+        catch (OperationCanceledException)
+        {
+            if (cancelled.AccessChecks != 0 || cancelled.Discoveries != 0) throw new Exception("Cancelled helper requested access");
+            cases.Add("connection: cancelled shared preparation cannot request permission or discover games");
+        }
+    }
+    private sealed class FreshScopeHost : IGameHost
+    {
+        public int AccessChecks, Discoveries;
+        public bool Denied;
+        private bool accessible;
+        public async Task PrepareAccessAsync(Action<string> progress, CancellationToken token)
+        {
+            AccessChecks++; await Task.Yield(); token.ThrowIfCancellationRequested();
+            if (Denied) throw new IOException("connection.scope_permission");
+            accessible = true;
+        }
+        public GameInstance? Find()
+        {
+            if (!accessible) throw new System.ComponentModel.Win32Exception(5);
+            Discoveries++; return null;
+        }
+        public Task CloseAsync(GameInstance game, CancellationToken token) => throw new Exception("Unexpected game close");
+        public Task ConnectAsync(GameInstance game, Action<string> progress, CancellationToken token) => throw new Exception("Unexpected injection");
+        public DailySnapshot? ReadSnapshot() => throw new Exception("Unexpected observation");
+        public DailyRuntimeStatus? ReadStatus() => throw new Exception("Unexpected observation");
+    }
     static async Task CheckBrokerContinuity(List<string> cases)
     {
         // Exercise the actual embedded broker in this test process. Pausing its
         // acceptor after dispatch reproduces normal thread-preemption ordering.
         string source=System.Text.Encoding.UTF8.GetString(Dustweave.Compatibility.DailyHookCompiler.Resource("Hook.Ipc.PipeBroker.cs"));
         string wire=System.Text.Encoding.UTF8.GetString(Dustweave.Compatibility.DailyHookCompiler.Resource("Hook.Ipc.Wire.cs"));
+        string trace=System.Text.Encoding.UTF8.GetString(Dustweave.Compatibility.DailyHookCompiler.Resource("Hook.Ipc.LoadingTrace.cs"));
         const string enqueue="ThreadPool.QueueUserWorkItem(_ => {try{Serve(connected);}finally{lock(transportSync)serving.Remove(connected);}});";
         if(!source.Contains(enqueue))throw new Exception("Broker acceptor fixture needs updating");
         source=source.Replace(enqueue,enqueue+"Thread.Sleep(35);");
@@ -152,7 +208,7 @@ internal static class ConnectionAccessCases
                 tree=(Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree)tree.WithRootAndOptions(Microsoft.CodeAnalysis.SyntaxNodeExtensions.ReplaceNode(root,statement,statement.WithFinally(null)),tree.Options);
             }
             var compilation=Microsoft.CodeAnalysis.CSharp.CSharpCompilation.Create("BrokerFixture"+Guid.NewGuid().ToString("N"),
-                new[]{tree,Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree.ParseText(wire)},references,
+                new[]{tree,Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree.ParseText(wire),Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree.ParseText(trace)},references,
                 new Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions(Microsoft.CodeAnalysis.OutputKind.DynamicallyLinkedLibrary));
             using var buffer=new MemoryStream();var emitted=compilation.Emit(buffer);
             if(!emitted.Success)throw new Exception(string.Join("\n",emitted.Diagnostics.Where(d=>d.Severity==Microsoft.CodeAnalysis.DiagnosticSeverity.Error)));

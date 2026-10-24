@@ -6,12 +6,13 @@ static class SandboxCases
     public static async Task Run(string output, List<string> cases)
     {
         await SandboxGameDataCases.Run(output, cases);
+        await SandboxProductionCases.Run(output,cases);
         void Check(bool value, string name) { if (!value) throw new InvalidOperationException(name); cases.Add(name); }
         void Reject(Action action, string name) { try { action(); } catch (ArgumentException) { cases.Add(name); return; } catch (InvalidDataException) { cases.Add(name); return; } throw new InvalidOperationException(name); }
         string a = new('a', 64), b = new('b', 64);
         string game = @"C:\游戏安装\BrownDust II.exe";
         string[] codeRules = DailySandboxGameFiles.Rules(game);
-        Check(codeRules.Length == 5 && codeRules.Contains(@"C:\游戏安装\BrownDust II_Data\*") &&
+        Check(codeRules.Length > 5 && !codeRules.Contains(@"C:\游戏安装\BrownDust II_Data\*") &&
             codeRules.Contains(@"C:\游戏安装\MonoBleedingEdge\*"), "game inputs use Unicode paths and directory boundaries");
         Check(!codeRules.Any(r => r.Contains("launcher.settings") || r.Contains("LocalLow") || r.EndsWith(@"安装\*")),
             "game sharing leaves channel settings and login data private instead of sharing the installation root");
@@ -22,7 +23,7 @@ static class SandboxCases
         Task<string> ReadRules() => Task.FromResult(string.Join('\n', configuredRules));
         Task AddRule(string rule) { configuredRules.Add(rule); return Task.CompletedTask; }
         await DailySandboxGameFiles.EnsureAsync(game, ReadRules, () => { idleChecks++; return Task.FromResult(true); }, AddRule, _ => notifications++, default);
-        Check(configuredRules.Count == 6 && idleChecks == 1 && notifications == 1, "idle owned box receives code rules once without removing unrelated configuration");
+        Check(configuredRules.Count == codeRules.Length+1 && idleChecks == 1 && notifications == 1, "idle owned box receives code rules once without removing unrelated configuration");
         configuredRules = configuredRules.Select(r => r.ToUpperInvariant()).ToList();
         await DailySandboxGameFiles.EnsureAsync(game, ReadRules, () => throw new Exception("idle check repeated"), _ => throw new Exception("duplicate write"), _ => throw new Exception("repeated progress"), default);
         cases.Add("configured box needs no rewrite or idle restriction on subsequent launches");
@@ -50,6 +51,9 @@ static class SandboxCases
             text.Append(unicodeRoot); return 0;
         }, "Dustweave_fixture", "FileRootPath");
         Check(queried == unicodeRoot && reads.SequenceEqual(new uint[] { 0x20000000 }), "sandbox root preserves Unicode and reads only the first effective value including template fallback");
+        reads.Clear();
+        string inheritedDelete=SandboxConfiguration.ReadSetting((s,k,i,t,n)=>{reads.Add(i);if((i&0xffff)>0)return unchecked((int)0xC000008B);t.Append("custom-command");return 0;},"Dustweave_fixture","DeleteCommand",includeTemplates:true);
+        Check(inheritedDelete=="custom-command"&&reads.All(i=>(i&0x10000000)==0),"Removal checks include template/global deletion hooks");
         SandboxConfiguration.Query Values(params string[] values) => (section, setting, index, text, bytes) => {
             uint position = index & 0x0fffffff;
             if (position >= values.Length) return unchecked((int)0xC000008B);

@@ -203,6 +203,21 @@ static class QueueSessionCases
         Check(pendingTasks[5].Progress==null && pendingTasks[5].Required==null && pendingTasks[5].Status=="locked"
             && pendingView.Stages[1].PendingTasks!.Count==0, "missing or malformed details remain unknown without breaking the timeline");
         Check(File.ReadAllText(detailPath)==beforeDetails,"opening task details does not mutate the saved execution record");
+        DailyJson.Write(detailPath, System.Text.Json.Nodes.JsonNode.Parse("""
+        {"state":"completed","items":[{"task":"event_rewards","state":"completed","result":{
+          "catalog":["{\"id\":20,\"eventId\":29,\"eventType\":4}"],
+          "pending_tasks":[
+            {"group":"event","key":"event:10:1","event_id":28,"title":"Expired login","progress":0,"required":1,"status":"pending"},
+            {"group":"event","key":"event:20:1","event_id":28,"title":"Reused tab","progress":0,"required":1,"status":"pending"},
+            {"group":"event","key":"event:20:1","event_id":29,"title":"Current battle","progress":3,"required":5,"status":"pending"},
+            {"group":"weekly","key":"MG_WEEKLY:1","title":"Weekly","progress":2,"required":5,"status":"pending"}
+          ]}}]}
+        """));
+        string oldReport = File.ReadAllText(detailPath);
+        var repairedTasks = detailSession.ReadView().Stages.Single().PendingTasks!;
+        Check(repairedTasks.Count == 2 && repairedTasks[0].Title == "Current battle" && repairedTasks[0].Progress == 3 && repairedTasks[1].Group == "weekly",
+            "historic pending display excludes obsolete event identities using its recorded catalogue without hiding current or weekly tasks");
+        Check(File.ReadAllText(detailPath) == oldReport, "obsolete-event presentation repair leaves original execution evidence unchanged");
         var source = Path.Combine(root, "live", "queues", new string('c', 32), "result.json");
         DailyJson.Write(source, new
         {
@@ -308,6 +323,26 @@ static class QueueSessionCases
         catch (InvalidOperationException) { failed = true; }
         Check(failed && fake.Executions == 0, "failed preparation dispatches no daily action");
         root = NewRoot();
+        var cause = new IOException("connection.scope_permission", new System.ComponentModel.Win32Exception(5));
+        fake = new FakeWorker { Prepare = () => Task.FromResult(1), PreparationLines = [
+            "System.IO.IOException: connection.scope_permission", DailyHelperFailure.Encode(cause), "   at helper.Main()"] };
+        session = new(root, fake);
+        try { await session.RunAsync(account); throw new Exception("preparation error lost"); }
+        catch (DailyHelperException error)
+        {
+            Check(error.Message == "connection.scope_permission" && DailyIssues.Classify(error).Code == "scope-permission"
+                && error.Failure.HResult == cause.HResult && fake.Executions == 0,
+                "helper access error survives a trailing stack trace and keeps daily actions blocked");
+        }
+        Check(File.ReadAllText(Path.Combine(root, "queue-worker.log")).Contains("Daily preparation exit code: 1"),
+            "preparation failure preserves helper exit code in diagnostic log");
+        Check(DailyHelperFailure.Read(DailyHelperFailure.Prefix + "{broken}") == null
+            && DailyHelperFailure.Read(DailyHelperFailure.Prefix + "null") == null
+            && DailyHelperFailure.Read(DailyHelperFailure.Prefix + "{\"Schema\":1,\"Message\":\"bad\"}") == null,
+            "malformed helper records cannot replace a useful failure");
+        var cancelledFailure = DailyHelperFailure.Read(DailyHelperFailure.Encode(new OperationCanceledException("已取消管理员连接授权；游戏与日常任务均未改动。")))!;
+        Check(DailyIssues.Classify(cancelledFailure.ToException()).Code == "cancelled", "helper cancellation retains its category");
+        root = NewRoot();
         DailyJson.Write(Path.Combine(root, "queue-ui.json"), new
         {
             record = Path.Combine(output, "external.json"),
@@ -318,12 +353,14 @@ static class QueueSessionCases
     }
     private sealed class FakeWorker : IDailyQueueExecutor
     {
+        public string[] PreparationLines = [];
         public Func<Task<int>> Prepare = () => Task.FromResult(0); public int Executions, Preparations; public string? Resume; public bool WaitForStop, SyncCollection, FailStartup, ThrowBeforeStart;
         public IReadOnlyList<string>? Tasks; public string? RetryOf;
         public TaskCompletionSource<bool> Started = new();
         public Task<int> PrepareAsync(Action<string> report)
         {
             Preparations++;
+            foreach (string line in PreparationLines) report(line);
             return Prepare();
         }
         public async Task<int> ExecuteAsync(string root, string account, string output, string? resume, Action<string> report, bool syncCollection = false, IReadOnlyList<string>? tasks = null, string? retryOf = null)

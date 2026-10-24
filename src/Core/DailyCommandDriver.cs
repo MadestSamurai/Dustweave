@@ -72,7 +72,11 @@ public sealed partial class DailyCommandDriver : IDisposable
         this.clock = clock ?? (() => Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency);
         this.delay = delay ?? (t => Task.Delay(t));
         this.policy = policy ?? DailyNavigationPolicy.Load();
-        Diagnostics = new(root, this.clock, this.now);
+        Diagnostics = new(root, this.clock, this.now, readPerformance: () =>
+        {
+            var bytes = mailbox.Read("live", "performance.json");
+            return bytes is { Length: > 0 and <= 65536 } ? JsonNode.Parse(bytes) as JsonObject : null;
+        });
     }
     public void Bind(JsonObject value)
     {
@@ -333,6 +337,8 @@ public sealed partial class DailyCommandDriver : IDisposable
         string ui = Text(action, "ui"), field = Text(action, "field");
         if (ui == "GameQuitPopupUI" && (field != "_objCloseButton" || Flag(action, "back") || Text(action, "operation").Length > 0 || Flag(action, "native")))
             throw new DailyStepException("rejected", "日常流程只能取消退出游戏确认，不能确认退出。");
+        if (ui == "CostumeSelectNoticePopupUI" && (field != "_cancelBtn" || Flag(action, "back") || Text(action, "operation").Length > 0 || Flag(action, "native")))
+            throw new DailyStepException("rejected", "日常流程只能关闭服装选择券使用提示，选择券保留在背包供手动使用。");
         if (ownedFrame != null && !DailyTradePreview.Matches(action, ownedFrame, before))
             throw new DailyStepException("rejected", "Owned confirmation changed before dispatch; no command sent");
         if (requiredFrame != null && !DailyEvidence.SameActor(before, requiredFrame))
@@ -358,6 +364,8 @@ public sealed partial class DailyCommandDriver : IDisposable
             target = checked((int)Number(targets[0], "Id"));
             route = Text(targets[0], "Route");
         }
+        if (ui == "CostumeSelectNoticePopupUI" && route != "ui")
+            throw new DailyStepException("rejected", "日常流程只能关闭服装选择券使用提示，选择券保留在背包供手动使用。");
         string reason = Text(action, "reason");
         GuildGuard(action, observed, ref reason);
         var refreshed = await ReadBound();

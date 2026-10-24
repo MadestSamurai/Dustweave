@@ -74,7 +74,7 @@
   "操作间隔，毫秒": "Action interval in milliseconds",
   "每次启动的播种预算": "Planting budget per run",
   "播种预算，零表示不限": "Planting budget; zero means unlimited",
-  "预算 0 表示不限；默认 1400 可完成一轮 5:3:2 基础播种。": "0 means unlimited. The default budget of 1400 covers one basic 5:3:2 planting cycle.",
+  "默认预算为 0（不限）；设置上限后，额度用尽只停止播种。": "The default budget is 0 (unlimited). If you set a limit, reaching it stops planting only.",
   "配方种植": "Recipe-based farming",
   "自动种植配方": "Farming recipe",
   "开启后显示当前批次": "Start to view the current batch",

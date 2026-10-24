@@ -53,7 +53,7 @@ public sealed class DailyStageObservation
         DesktopFiles.Connect(liveRoot, game.ProcessId, game.StartTicks);
         JsonObject? ReadLive()
         {
-            if (host.Find() != game)
+            if (!host.IsRunning(game))
                 throw new StageHostException("identity", "游戏进程已变化，请开始新队列。");
             return DailyJson.TryRead<JsonObject>(Path.Combine(liveRoot, "snapshot.json"));
         }
@@ -149,6 +149,10 @@ public sealed class DailyStageObservation
                             && identity.FrameUtcTicks > 0 && at - identity.FrameUtcTicks >= 0 && at - identity.FrameUtcTicks <= TimeSpan.FromSeconds(3).Ticks)
                         {
                             var guild = identity.Guild;
+                            // Reading a page is not authorization to click it.
+                            // Do not hide child pages or transition frames here:
+                            // navigation, proof recovery and the native executor
+                            // need the actual frame to make their own decision.
                             if (string.IsNullOrEmpty(guild?.ServerKey) || string.IsNullOrEmpty(guild.CycleKey))
                                 waitingReason = "等待当前服务器与每日重置周期恢复超时；未派发后续操作。";
                             else

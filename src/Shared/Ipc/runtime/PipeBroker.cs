@@ -14,7 +14,7 @@ namespace BD2.LocalIpc
     public static class PipeBroker
     {
         const string Key = "BD2.LocalIpc.Broker.v1";
-        const int Revision = 7; // Increment when changing the in-process broker implementation.
+        const int Revision = 8; // Adds opt-in timing; wire and ownership contracts are unchanged.
         const int MaximumEntries = 2048, MaximumBytes = 64 * 1024 * 1024;
         sealed class Entry { internal byte[] Value; internal DateTime At; }
         sealed class ChannelState
@@ -51,6 +51,7 @@ namespace BD2.LocalIpc
             volatile bool stopping;
             internal Broker(object saved = null)
             {
+                LoadingTrace.Start();
                 using (var p = Process.GetCurrentProcess()) endpoint = Wire.Endpoint(p.Id, p.StartTime.ToUniversalTime().Ticks);
                 // Create the first instance synchronously: do not report success if another process owns the name.
                 if(saved!=null)Import(saved);
@@ -100,10 +101,12 @@ namespace BD2.LocalIpc
                 using (pipe)
                 using (var deadline = new Timer(_ => { try { pipe.Dispose(); } catch { } }, null, Wire.TimeoutMilliseconds, Timeout.Infinite))
                 {
-                    try { var request = Wire.ReadFrame(pipe); Wire.WriteFrame(pipe, Dispatch("request", "", request)); }
-                    catch (Exception) { /* Per-connection failure; the listener and other clients remain usable. */ }
+                    long trace=LoadingTrace.Begin("ipc.serve");
+                    try { long read=LoadingTrace.Begin("ipc.read");var request = Wire.ReadFrame(pipe);LoadingTrace.End("ipc.read",read);var reply=Dispatch("request", "", request);long write=LoadingTrace.Begin("ipc.write");Wire.WriteFrame(pipe,reply);LoadingTrace.End("ipc.write",write); }
+                    catch (Exception e) { LoadingTrace.Note("ipc-failure",e.GetType().Name); /* Listener remains usable. */ }
                     finally
                     {
+                        LoadingTrace.End("ipc.serve",trace);
                         // A fast reply can finish before the acceptor creates its next
                         // instance. Keep the endpoint present before closing this one;
                         // otherwise WaitNamedPipe may report FILE_NOT_FOUND mid-run.
@@ -117,6 +120,12 @@ namespace BD2.LocalIpc
                 }
             }
             internal byte[] Dispatch(string operation, string channel, byte[] input)
+            {
+                long trace=LoadingTrace.Begin("ipc.dispatch."+operation);
+                try{return DispatchCore(operation,channel,input);}
+                finally{LoadingTrace.End("ipc.dispatch."+operation,trace);}
+            }
+            byte[] DispatchCore(string operation, string channel, byte[] input)
             {
                 lock (sync)
                 {
@@ -222,6 +231,7 @@ namespace BD2.LocalIpc
         {
             get
             {
+                LoadingTrace.Start();
                 lock (AppDomain.CurrentDomain)
                 {
                     var existing = AppDomain.CurrentDomain.GetData(Key) as Func<string, string, byte[], byte[]>;

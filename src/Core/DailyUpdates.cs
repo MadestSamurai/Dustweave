@@ -21,7 +21,7 @@ public sealed record DailyUpdateJob(string Directory, string Target, int ParentP
 public static class DailyUpdates
 {
     public const string FeedUrl = "https://bd2.madsam.work/updates/dustweave/v2/updates.json";
-    public const int CurrentLayout = 2, MaxAutomaticSteps = 10;
+    public const int CurrentLayout = 2, BundledLayout = 3, MaxAutomaticSteps = 10;
     public const string LongTermBaseline = "1.4.7";
     public const long MaxAutomaticDelta = 10L * 1024 * 1024;
     public const long MaxArchive = 600L * 1024 * 1024;
@@ -38,6 +38,8 @@ public static class DailyUpdates
                 throw new InvalidDataException("updates.invalid_feed");
             if (release.Layout >= 2 && (release.RuntimeVersion == null || !System.Version.TryParse(release.RuntimeVersion, out _))) throw new InvalidDataException("updates.invalid_feed");
             if (release.InstallerProtocol is < 1 or > 2 || release.InstallerProtocol == 2 && (feed.Schema != 4 || release.Layout != CurrentLayout))
+                throw new InvalidDataException("updates.invalid_feed");
+            if (release.Layout == BundledLayout && (release.InstallerProtocol != 1 || (release.Deltas?.Length ?? 0) != 0 || VersionOf(release.Version) < VersionOf("1.5.0-alpha")))
                 throw new InvalidDataException("updates.invalid_feed");
             if (release.PreviousVersion != null && VersionOf(release.PreviousVersion) >= version) throw new InvalidDataException("updates.invalid_feed");
             if (new[] { "zh-CN", "zh-TW", "en-US" }.Any(c => !release.Notes.TryGetValue(c, out var notes) || notes.Length is < 1 or > 100 || notes.Any(n => string.IsNullOrWhiteSpace(n) || n.Length > 4000))) throw new InvalidDataException("updates.invalid_feed");
@@ -88,6 +90,8 @@ public static class DailyUpdates
     }
     public static string? ManualUpdateReason(DailyUpdateFeed feed, DailyUpdateRelease release, DailyUpdatePackage? installed)
     {
+        if (release.Layout == BundledLayout)
+            return installed?.Layout == BundledLayout ? null : "updates.manual_layout";
         if (release.Layout == 1) return installed?.Layout > 1 ? "updates.manual_layout" : null; // Legacy fixtures/archives remain readable, never a 1.3 migration path.
         if (installed == null || installed.Layout != CurrentLayout || release.Layout != CurrentLayout) return "updates.manual_layout";
         if (release.InstallerProtocol == DailyUpdateInventory.Protocol)
@@ -128,7 +132,7 @@ public static class DailyUpdates
         using (var stream = descriptor.Open())
         {
             var metadata = JsonSerializer.Deserialize<DailyUpdatePackage>(stream, DailyUpdateJson.Options);
-            if (metadata?.Version != release.Version || metadata.Flavor != asset.Flavor || metadata.Layout != release.Layout || metadata.RuntimeVersion != release.RuntimeVersion || !files.Any(e => e.FullName == "Dustweave.exe") || metadata.Layout >= 2 && (metadata.Files == null || !metadata.Files.Order().SequenceEqual(files.Select(f => f.FullName).Order()))) throw new InvalidDataException("updates.invalid_package");
+            if (metadata?.Version != release.Version || metadata.Flavor != asset.Flavor || metadata.Layout != release.Layout || metadata.RuntimeVersion != release.RuntimeVersion || metadata.InstallerProtocol != release.InstallerProtocol || !files.Any(e => e.FullName == "Dustweave.exe") || metadata.Layout >= 2 && (metadata.Files == null || !metadata.Files.Order().SequenceEqual(files.Select(f => f.FullName).Order()))) throw new InvalidDataException("updates.invalid_package");
         }
         EnsureNoLinks(staging);
         foreach (var entry in files)

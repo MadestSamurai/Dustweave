@@ -5,12 +5,14 @@ internal static class DailyIssuePresentation
     public static string Describe(Exception error)
     {
         var issue = DailyIssues.Classify(error);
-        string reason = issue.Code == "unknown" ? DailyUserText.Error(error, L.Translate) : L.Get("issue.reason." + issue.Code);
+        string reason = issue.Code == "unknown" || HasIdentityDetail(error.Message) ? DailyUserText.Error(error, L.Translate) : L.Get("issue.reason." + issue.Code);
         return reason + "\n" + L.Get("issue.action." + issue.Code);
     }
     public static string WithAdvice(string raw, string translated)
     {
         var issue = DailyIssues.Classify(raw);
-        return (issue.Code == "unknown" ? translated : L.Get("issue.reason." + issue.Code)) + "\n" + L.Get("issue.action." + issue.Code);
+        return (issue.Code == "unknown" || HasIdentityDetail(raw) ? translated : L.Get("issue.reason." + issue.Code)) + "\n" + L.Get("issue.action." + issue.Code);
     }
+    private static bool HasIdentityDetail(string raw) => raw.Contains("connection.login_identity_unavailable: ", StringComparison.Ordinal)
+        || raw.Contains("suite.identity-unavailable: ", StringComparison.Ordinal);
 }

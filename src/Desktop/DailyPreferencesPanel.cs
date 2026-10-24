@@ -14,6 +14,7 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly bool extensionEvents = DailyPlugin.Current.Supports("event_battle");
     private readonly DailyPreferenceStore store;
     private readonly string dataRoot;
+    private readonly DailyCollectionMapPicker collectionMaps = new();
     private readonly ComboBox accounts = new() { MinWidth = 230, DisplayMemberPath = "Name", SelectedValuePath = "AccountKey" };
     private readonly CheckBox eventBattle = Check("活动战斗"), eventChallenge = Check("普通全部通关后继续挑战战斗");
     private readonly CheckBox eventFailureSweep = Check("prefs.event_failure_sweep"), salvation = Check("stage.salvation");
@@ -269,6 +270,8 @@ public sealed class DailyPreferencesPanel : UserControl
         Stage(friendship, "亲密度咨询", "prefs.friendship_hint");
         Stage(mainline, "周收集", "prefs.collection_hint", expanded: true);
         section.Children.Add(walkCollect);
+        section.Children.Add(collectionMaps);
+        collectionMaps.Changed += (_, _) => MarkDirty();
         Note("prefs.collection_note");
         Stage(weeklyNpc, "周NPC任务", "prefs.npc_hint");
         Stage(weeklySteal, "每周偷窃", "prefs.steal_hint");
@@ -381,8 +384,8 @@ public sealed class DailyPreferencesPanel : UserControl
             if (!weeklySteal.IsEnabled || !weeklyNpc.IsEnabled)
                 throw new Exception("Independent weekly tasks are locked when collection is disabled");
             mainline.IsChecked = true;
-            if (walkCollect.Parent is not StackPanel body || body.Children.OfType<Control>().Single() != walkCollect || !walkCollect.IsEnabled)
-                throw new Exception("Weekly collection should expose only its walking preference");
+            if (walkCollect.Parent is not StackPanel body || !body.Children.Contains(collectionMaps) || !walkCollect.IsEnabled || !collectionMaps.IsEnabled)
+                throw new Exception("Weekly collection should expose walking and map selection");
             if (loaded == null || walkCollect.IsChecked != loaded.Weekly.WalkCollect)
                 throw new Exception("Walking collection choice differs from saved account preference");
         }
@@ -668,6 +671,7 @@ public sealed class DailyPreferencesPanel : UserControl
             weeklySteal.IsChecked = loaded.Weekly.Steal;
             weeklyNpc.IsChecked = loaded.Weekly.Npc;
             walkCollect.IsChecked = loaded.Weekly.WalkCollect;
+            collectionMaps.SetSelection(loaded.Weekly.CollectionMaps);
             tactics.IsChecked = loaded.Tactics.Enabled;
             tacticsSearch.SelectedItem = loaded.Tactics.SearchSeconds;
             eventBattle.IsChecked = loaded.EventBattle.Enabled;
@@ -804,6 +808,7 @@ public sealed class DailyPreferencesPanel : UserControl
             loaded.Weekly.Steal = weeklySteal.IsChecked == true;
             loaded.Weekly.Npc = weeklyNpc.IsChecked == true;
             loaded.Weekly.WalkCollect = walkCollect.IsChecked == true;
+            loaded.Weekly.CollectionMaps = collectionMaps.Selection;
             loaded.Weekly.Fishing = fishing.IsChecked == true;
             loaded.Weekly.RoomLikes = roomLikes.IsChecked == true;
             if (extensionTasks)
@@ -920,6 +925,25 @@ public sealed class DailyPreferencesPanel : UserControl
             }
         if (!weeklySteal.IsEnabled || !weeklyNpc.IsEnabled)
             throw new Exception("Independent weekly switches are inaccessible");
+    }
+    internal int CheckCollectionMapsForSmoke(string directory)
+    {
+        if (allowGame || loaded == null) throw new InvalidOperationException("Isolated preferences required");
+        var choices = DailyCollectionMapPicker.ReadCatalog(directory);
+        if (choices.Length < 50 || choices.Any(m => DailyFieldRoute.Excluded.Contains(m.Map)))
+            throw new Exception("Collection map picker lost its catalog or included excluded maps");
+        collectionMaps.CheckForSmoke(choices);
+        var original = loaded.Weekly.CollectionMaps;
+        collectionMaps.SetSelection([choices[0].Map]);
+        if (!Save() || store.Read(account).Weekly.CollectionMaps is not { Length: 1 } selected || selected[0] != choices[0].Map)
+            throw new Exception("Map selection was not saved with account preferences");
+        collectionMaps.SetSelection(original);
+        if (!Save()) throw new Exception("Map preference fixture could not be restored");
+        mainline.IsChecked = true;
+        ReviewCategoryForSmoke("all");
+        ShowWeeklySettingsForSmoke();
+        CheckWeeklySettingsForSmoke();
+        return choices.Length;
     }
     internal void ShowSimpleSettingForSmoke(string title)
     {

@@ -16,6 +16,11 @@ internal static class DesktopWindowIdentity
         SetCurrentProcessExplicitAppUserModelID(AppId);
         window.SourceInitialized += (_,_) =>
         {
+            // Sandboxie reports SBIE2205 before returning E_NOTIMPL for this
+            // optional shell service. Catching COMException cannot prevent the
+            // warning. Keep the WPF icon/process identity; don't request a host
+            // taskbar property store from an isolated window.
+            if(SandboxProcessScope.CurrentBox.Length!=0)return;
             try
             {
                 var store=Open(new WindowInteropHelper(window).Handle);

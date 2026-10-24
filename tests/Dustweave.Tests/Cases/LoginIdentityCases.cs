@@ -88,7 +88,7 @@ internal static class LoginIdentityCases
             var coordinator = new DailyCoordinator(env, env, path, new DailyOptions { PollInterval = TimeSpan.FromMilliseconds(2), LoginTimeout = TimeSpan.FromMilliseconds(40) });
             string error = "";
             try { await coordinator.ConnectCurrentAsync(); } catch (TimeoutException ex) { error = ex.Message; }
-            Check(error == "connection.login_identity_unavailable", "missing live identity has actionable diagnosis " + title);
+            Check(error.StartsWith("connection.login_identity_unavailable: ") && error.Contains(title ? "游戏尚未完成登录" : "尚未收到游戏身份数据"), "missing live identity has actionable diagnosis " + title);
             Check(new DailyProfiles(path).Read().Count == 0 && env.TitleClicks == 0, "title or missing frames never authorize account " + title);
             Check(File.Exists(Path.Combine(path, "live", "diagnostics", "login-failed.json")), "failed discovery retains bounded evidence " + title);
         }

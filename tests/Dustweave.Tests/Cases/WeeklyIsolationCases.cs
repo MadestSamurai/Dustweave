@@ -256,6 +256,61 @@ static class WeeklyIsolationCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool yes, string message) { if (!yes) throw new Exception(message); checks.Add(message); }
+        using (var f = new Fixture(Path.Combine(root, "collection-map-empty")))
+        {
+            f.H.Workflow.Settings.Weekly.CollectionMaps = [];
+            f.InterruptedAbsorption();
+            var result = await f.Run();
+            Check(S(result["stages"]?["weekly_mainline"]?["state"]) == "skipped" && f.H.Box.Commands.Count == 0,
+                "empty selection skips collection without queries, travel or pending-operation recovery");
+        }
+        using (var f = new Fixture(Path.Combine(root, "collection-map-excluded-recovery")))
+        {
+            f.H.Workflow.Settings.Weekly.CollectionMaps = [21];
+            f.InterruptedAbsorption();
+            var result = await f.Run();
+            Check(S(result["stages"]?["weekly_mainline"]?["state"]) == "completed" && f.Used == 0 && !f.Queries.Contains(1)
+                && f.QueryMaps.All(m => m.SequenceEqual([21L])) && !f.Visits.Contains(1),
+                "unchecked pending map cannot pull selection back into another cartridge");
+            Check(S(result["stages"]?["weekly_mainline"]?["detail"]).Contains("1/1"),
+                "collection progress counts only selected accessible maps");
+        }
+        using (var f = new Fixture(Path.Combine(root, "collection-map-unowned")))
+        {
+            f.H.Workflow.Settings.Weekly.CollectionMaps = [10011];
+            var result = await f.Run();
+            Check(S(result["stages"]?["weekly_mainline"]?["state"]) == "skipped" && f.Queries.Count == 0 && f.Visits.Count == 0,
+                "unowned map selection does not expand to owned unselected cartridges");
+        }
+        using (var f = new Fixture(Path.Combine(root, "collection-map-absorb")) { AbsorbDrops = true })
+        {
+            f.H.Workflow.Settings.Weekly.CollectionMaps = [1];
+            var result = await f.Run();
+            Check(f.Used == 1 && !f.Visits.Contains(2) && !f.Queries.Contains(2)
+                && f.QueryMaps.All(m => m.SequenceEqual([1L])) && S(result["stages"]?["weekly_mainline"]?["state"]) == "completed",
+                "absorption and post-action queries stay within selected maps");
+            f.H.Workflow.Settings.Weekly.CollectionMaps = [1, 2];
+            f.MapTwoPending = false;
+            await f.Run();
+            Check(f.QueryMaps.Any(m => m.Contains(2)), "expanding map selection reads the newly included map after a completed run");
+        }
+        using (var f = new Fixture(Path.Combine(root, "collection-map-walk")) { WalkingBlocked = true, MapOnePending = false })
+        {
+            f.H.Workflow.Settings.Weekly.WalkCollect = true;
+            f.H.Workflow.Settings.Weekly.CollectionMaps = [1];
+            var result = await f.Run();
+            Check(f.Picked.Contains(103) && !f.Visits.Contains(2) && !f.Queries.Contains(2) && f.Used == 0
+                && S(result["stages"]?["weekly_mainline"]?["state"]) == "completed",
+                "walking collection collects selected targets without spending absorption or visiting unchecked maps");
+        }
+        using (var f = new Fixture(Path.Combine(root, "collection-map-independent-weeklies")) { Pending = false })
+        {
+            f.H.Workflow.Settings.Weekly.CollectionMaps = [];
+            var result = await f.RunNpc();
+            Check(S(result["stages"]?["weekly_mainline"]?["state"]) == "skipped" && f.Accepted.Count > 0
+                && S(result["stages"]?["weekly_steal"]?["state"]) == "completed",
+                "empty collection selection preserves independent NPC and theft execution");
+        }
         using (var f = new Fixture(Path.Combine(root, "weekly-completed-categories")) { Pending = false })
         {
             f.Cleared.AddRange([10L, 20L, 30L]);

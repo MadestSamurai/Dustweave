@@ -15,11 +15,11 @@ namespace BD2ApostleDefense.Runtime
  internal sealed class RuntimeEngine
  {
   private sealed class UiNotReadyException:Exception {internal UiNotReadyException(string message):base(message){}}
-  private static RuntimeEngine current;
+  private static volatile RuntimeEngine current;
   private readonly SettlementTracker settlement=new SettlementTracker();
   private readonly OpeningRestart restart=new OpeningRestart();
   private readonly Harmony patch=new Harmony("bd2.apostle-defense.inputs");
-  private Timer timer; private int ioBusy; private bool stopped;
+  private Timer timer; private int ioBusy; private volatile bool stopped;private bool ticking,handingOff;
   private readonly int pid=System.Diagnostics.Process.GetCurrentProcess().Id;
   private readonly long processStart=System.Diagnostics.Process.GetCurrentProcess().StartTime.ToUniversalTime().Ticks;
   private volatile Control control=new Control(); private volatile Snapshot latest=new Snapshot();
@@ -30,16 +30,26 @@ namespace BD2ApostleDefense.Runtime
   private volatile ActionEvidence evidence;private ActionEvidence savedEvidence;
   private readonly ConcurrentQueue<FlowEvidence> flow=new ConcurrentQueue<FlowEvidence>();private string flowKey="";
   private bool achievementsKnown,achievementRequest; private int clearProgress,rareProgress,clearGroup,rareGroup,clearTarget,rareTarget;
+  private int achievementSerial;
+  private readonly ConcurrentQueue<int> achievementReplies=new ConcurrentQueue<int>();
   internal void Start()
   {
    if(timer!=null)return; B.ValidateCompiledClient();B.Validate();current=this;
    try{NetworkGuard.Install();var pump=typeof(GameCameraManager).GetMethod("LateUpdate",BindingFlags.NonPublic|BindingFlags.Instance);if(pump==null)throw new MissingMethodException("GameCameraManager.LateUpdate");patch.Patch(pump,postfix:new HarmonyMethod(typeof(RuntimeEngine),nameof(Frame)));timer=new Timer(_=>IO(),null,0,100);Loader.Status("active","");}catch{Stop();throw;}
   }
   internal void StartProbe(){B.ValidateCompiledClient();Storage.Write("probe.json",new Snapshot{State="compatible",Message=B.Validate()+" interfaces",At=DateTime.UtcNow.Ticks});}
-  internal void PrepareHandoff(){control=new Control();restart.Clear();CancelSelection();}
+  internal void PrepareHandoff(){handingOff=true;achievementSerial++;control=new Control();restart.Clear();CancelSelection();}
   internal string HandoffBusy()=>ioBusy!=0?"snapshot writer":latest.Exiting?"native exit awaiting reply":"";
-  internal void Stop(){CancelSelection();stopped=true;NetworkGuard.Remove();timer?.Dispose();timer=null;patch.Unpatch(typeof(GameCameraManager).GetMethod("LateUpdate",BindingFlags.NonPublic|BindingFlags.Instance),HarmonyPatchType.All,patch.Id);current=null;}
-  private static void Frame(){current?.Tick();}
+  internal void Stop(){stopped=true;if(current==this)current=null;CancelSelection();timer?.Dispose();timer=null;try{NetworkGuard.Remove();}finally{patch.Unpatch(typeof(GameCameraManager).GetMethod("LateUpdate",BindingFlags.NonPublic|BindingFlags.Instance),HarmonyPatchType.All,patch.Id);}}
+  private static void Frame()
+  {
+   var engine=current;if(engine==null||engine.stopped||engine.ticking)return;engine.ticking=true;
+   try{engine.Tick();}catch(Exception error){engine.fault=error.GetBaseException().Message;engine.CallbackFailure("frame",error);}
+   finally{engine.ticking=false;}
+  }
+  private readonly ConcurrentQueue<Tuple<string,Exception>> callbackErrors=new ConcurrentQueue<Tuple<string,Exception>>();
+  private void CallbackFailure(string operation,Exception error)
+  {try{callbackErrors.Enqueue(Tuple.Create(operation,error));Tuple<string,Exception> drop;while(callbackErrors.Count>8)callbackErrors.TryDequeue(out drop);}catch{}}
   private void IO()
   {
    if(Interlocked.Exchange(ref ioBusy,1)!=0)return;
@@ -49,12 +59,14 @@ namespace BD2ApostleDefense.Runtime
     // A failed evidence/log write must not suppress commands, snapshots or the heartbeat.
     IoDiagnostics.Attempt(Identity.Root,"control-read","control.json",()=>{var c=Storage.Read<Control>("control.json");if(c!=null)control=c;});
     var snapshot=latest;
+    Tuple<string,Exception> callbackError;while(callbackErrors.TryDequeue(out callbackError))IoDiagnostics.Record(Identity.Root,callbackError.Item1,"runtime-callback",callbackError.Item2);
     IoDiagnostics.Attempt(Identity.Root,"snapshot-write","snapshot.json",()=>Storage.Write("snapshot.json",snapshot));
     var e=evidence;if(e!=null&&e!=savedEvidence&&IoDiagnostics.Attempt(Identity.Root,"action-write","last-action.json",()=>Storage.Write("last-action.json",e)))savedEvidence=e;
     IoDiagnostics.Attempt(Identity.Root,"flow-append","flow-current.jsonl",()=>{FlowEvidence entry;while(flow.TryPeek(out entry)){Storage.AppendFlow(entry);flow.TryDequeue(out entry);}});
     IoDiagnostics.Attempt(Identity.Root,"network-append","network-current.jsonl",()=>NetworkGuard.Flush());
     IoDiagnostics.Attempt(Identity.Root,"heartbeat-write","runtime.json",()=>Loader.Status("active",""));
    }
+   catch(Exception error){IoDiagnostics.Record(Identity.Root,"runtime-io","runtime-callback",error);}
    finally{Interlocked.Exchange(ref ioBusy,0);}
   }
   private static int N(string role,object o)=>Convert.ToInt32(B.Read(role,o)??0);
@@ -71,12 +83,18 @@ namespace BD2ApostleDefense.Runtime
    {
     if(now-lastScan>TimeSpan.FromMilliseconds(400).Ticks){surfaces=UnityEngine.Object.FindObjectsOfType<UIBase>().Where(B.Active).ToArray();lastScan=now;}
     Read(s);settlement.Observe(s);restart.Observe(s,control,now);NetworkGuard.Pump(s);NetworkGuard.Apply(s);observed=s;
-    if(s.Account!=account){account=s.Account;achievementsKnown=false;achievementRequest=false;clearProgress=rareProgress=0;catalog=null;fault="";}
+    if(s.Account!=account){account=s.Account;achievementSerial++;achievementsKnown=false;achievementRequest=false;clearProgress=rareProgress=0;catalog=null;fault="";}
+    // The game's completion delegate may be invoked on a network worker. It only
+    // signals completion; all inventory/achievement reads stay on this frame thread.
+    int reply;while(achievementReplies.TryDequeue(out reply))if(reply==achievementSerial&&!handingOff){
+     achievementRequest=false;var cleared=B.Invoke("Achievement.Read",clearGroup,1) as AchievementDBInfo;var rare=B.Invoke("Achievement.Read",rareGroup,1) as AchievementDBInfo;
+     clearProgress=cleared==null?0:(int)Math.Max(cleared.Value,cleared.MaxClearId>=1001?clearTarget:0);rareProgress=rare==null?0:(int)Math.Max(rare.Value,rare.MaxClearId>=1001?rareTarget:0);achievementsKnown=true;
+    }
     // A complete native result must be settled before refreshing the server-backed counters.
     if(s.Stage=="lobby"&&lastStage!="lobby")achievementsKnown=false;
     lastStage=s.Stage;s.AchievementsKnown=achievementsKnown;s.ClearProgress=clearProgress;s.RareProgress=rareProgress;s.ClearTarget=clearTarget;s.RareTarget=rareTarget;
     var c=control;
-    if(c==null||!c.Enabled||c.Expires<now||c.ProcessId!=pid||c.ProcessStart!=processStart){if(pending!=null)Finish(pending,"rejected","操作租约中断，恢复后按实际盘面重新决策");s.State="idle";s.Message="自动操作已暂停";Publish(s);return;}
+    if(handingOff||c==null||!c.Enabled||c.Expires<now||c.ProcessId!=pid||c.ProcessStart!=processStart){if(pending!=null)Finish(pending,"rejected","操作租约中断，恢复后按实际盘面重新决策");s.State="idle";s.Message="自动操作已暂停";Publish(s);return;}
     if(c.Owner!=owner){CancelSelection();pending=null;owner=c.Owner;handled=ack=0;fault="";ackMessage=ackResult="";}
     s.Owner=owner;
     if(fault.Length>0){s.State="error";s.Message=fault;Publish(s);return;}
@@ -98,7 +116,7 @@ namespace BD2ApostleDefense.Runtime
     if(pending==null&&s.Blocker.Length>0){s.State="waiting-popup";s.Message="等待关闭游戏弹窗："+s.Blocker;}
    }
    catch(UiNotReadyException e){if(pending!=null)Finish(pending,"retry",e.Message);s.State="ready";s.Message=e.Message;}
-   catch(Exception e){fault=e.GetBaseException().Message;s.State="error";s.Message=fault;CancelSelection();if(pending!=null)Finish(pending,"error",fault);}
+   catch(Exception e){CallbackFailure("frame-operation",e);fault=e.GetBaseException().Message;s.State="error";s.Message=fault;CancelSelection();if(pending!=null)Finish(pending,"error",fault);}
    Publish(s);
   }
   private void Publish(Snapshot s)
@@ -196,8 +214,8 @@ namespace BD2ApostleDefense.Runtime
     case "refresh":
      if(s.Stage!="lobby")throw new UiNotReadyException("等待大厅读取成就");
      if(achievementRequest)break; // Reattach to an outstanding read; never duplicate it.
-     achievementRequest=true;achievementsKnown=false;string requestedAccount=s.Account;
-     B.Invoke("Achievement.Refresh",false,(Action)(()=>{achievementRequest=false;if(account!=requestedAccount)return;var c=B.Invoke("Achievement.Read",clearGroup,1) as AchievementDBInfo;var r=B.Invoke("Achievement.Read",rareGroup,1) as AchievementDBInfo;clearProgress=c==null?0:(int)Math.Max(c.Value,c.MaxClearId>=1001?clearTarget:0);rareProgress=r==null?0:(int)Math.Max(r.Value,r.MaxClearId>=1001?rareTarget:0);achievementsKnown=true;}));break;
+     achievementRequest=true;achievementsKnown=false;int requestedSerial=++achievementSerial;
+     B.Invoke("Achievement.Refresh",false,(Action)(()=>{try{if(!stopped&&current==this)achievementReplies.Enqueue(requestedSerial);}catch(Exception error){CallbackFailure("achievement-reply",error);}}));break;
     case "start":if(s.Stage!="lobby"||!s.AchievementsKnown)throw new InvalidOperationException("尚未核对成就");Click(Surface<DefenseMainUI>(),"_goQuickStartButton");break;
     case "retry":if(s.Stage!="match-failed")throw new InvalidOperationException("匹配状态已变化");Click(Surface<DefenseMatchingFailPopupUI>(),"_goOKButton");break;
     case "match-start":if(s.Stage!="matching"||!s.CanStartMatch)throw new InvalidOperationException("等待原生匹配开始按钮");Click(Surface<DefenseQuickMatchingPopupUI>(),"_goGameStartButton");break;

@@ -17,23 +17,23 @@ static class Mirror
 
     public static string BaseUrl(Config c)
     {
-        Rules.Need(c.Layout == 2 && Uri.TryCreate(c.MirrorBaseUrl, UriKind.Absolute, out _), "Mirror requires layout 2 and an HTTPS address");
+        Rules.Need(c.Layout is 2 or 3 && Uri.TryCreate(c.MirrorBaseUrl, UriKind.Absolute, out _), "Mirror requires a supported layout and an HTTPS address");
         var uri = new Uri(c.MirrorBaseUrl!);
         Rules.Need(uri.Scheme == "https" && uri.IsDefaultPort && uri.UserInfo == "" && uri.Query == "" && uri.Fragment == "" &&
             System.Text.RegularExpressions.Regex.IsMatch(uri.Host, @"^[a-z0-9-]+\.cdn\.7caiyun\.com$") &&
-            uri.AbsolutePath.TrimEnd('/') == "/dustweave/ota/v2", "Unexpected mirror host or prefix");
+            uri.AbsolutePath.TrimEnd('/') == (c.Layout == 3 ? "/dustweave/ota/all-in-one" : "/dustweave/ota/v2"), "Unexpected mirror host or prefix");
         return uri.GetLeftPart(UriPartial.Path).TrimEnd('/');
     }
     public static Uri FileUri(Config c, string version, Blob blob)
     {
         _ = DailyVersion.Parse(version);
         Rules.Need(System.Text.RegularExpressions.Regex.IsMatch(blob.FileName,
-            @"^Dustweave-[0-9A-Za-z.-]+-(?:Lite|Portable)-from-[0-9A-Za-z.-]+-win-x64\.delta\.zip$") &&
+            c.Layout == 3 ? @"^Dustweave-[0-9A-Za-z.-]+-(?:Lite|Portable)-win-x64\.zip$" : @"^Dustweave-[0-9A-Za-z.-]+-(?:Lite|Portable)-from-[0-9A-Za-z.-]+-win-x64\.delta\.zip$") &&
             blob.FileName.StartsWith("Dustweave-" + version + "-", StringComparison.Ordinal) &&
-            blob.Bytes > 0 && blob.Bytes <= (c.Capable ? 629145600 : 10485760) && Rules.IsHash(blob.Sha256), "Invalid mirror patch");
+            blob.Bytes > 0 && blob.Bytes <= (c.Capable || c.Layout == 3 ? 629145600 : 10485760) && Rules.IsHash(blob.Sha256), "Invalid mirror payload");
         return new(BaseUrl(c) + "/v" + version + "/" + blob.FileName);
     }
-    static Blob[] Inventory(Feed feed) => Rules.Patches(feed).Select(d => new Blob(d.FileName, d.Bytes, d.Sha256.ToLowerInvariant()))
+    static Blob[] Inventory(Feed feed) => (feed.Releases[0].Layout == 3 ? feed.Releases[0].Assets.Select(a=>new Blob(a.FileName,a.Bytes,a.Sha256.ToLowerInvariant())) : Rules.Patches(feed).Select(d => new Blob(d.FileName, d.Bytes, d.Sha256.ToLowerInvariant())))
         .OrderBy(b => b.FileName, StringComparer.Ordinal).ToArray();
     static string Routes(Config c, string version) => Path.Combine(Root(c), "routes", "v" + DailyVersion.Parse(version));
     static string Receipt(Config c, string version) => Path.Combine(Root(c), "verified", "v" + DailyVersion.Parse(version) + ".json");

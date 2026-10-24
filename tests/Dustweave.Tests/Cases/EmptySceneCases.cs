@@ -16,6 +16,40 @@ static class EmptySceneCases
             Check(DailyNavigationDecision.Ready(menu, stage, policy), "Empty menu can prepare stage: " + stage);
         foreach (string ui in new[] { "MailUI", "GuildUI", "MyRoomUI", "PackListUI" })
             Check(DailyHomeDecision.Inspect(Empty(Surface(ui)), policy).Kind == "action", "known page remains navigable on Empty: " + ui);
+        foreach (bool interrupted in new[] { false, true })
+        {
+            using var f = new WorkflowHarness(Path.Combine(output, "empty-room-identity-" + interrupted), [], ["room.info"], (frame, context) => {
+                frame["Scene"] = "Empty";
+                string player = DailyIdentity.PlayerKey(frame["AccountKey"]!.GetValue<string>(), 42);
+                frame["PlayerKey"] = player; context["actor"]![4] = player;
+            }, observeIdentity: true);
+            f.Page("MenuUI", "_buttonMyRoom");
+            f.Readings = () => [WorkflowCases.Reading("room.cache", ("OwnerIndex", 42))];
+            f.OnCommand = _ => {
+                if (DailyNavigationDecision.Types(f.Frame).Contains("MenuUI")) {
+                    f.Event("room.info", "request"); f.Page("MyRoomUI", "_objBackButton");
+                    f.Event("room.info", "response", ("RoomInfo.OwnerIndex", 42));
+                    if (interrupted) f.Stopped = true;
+                } else f.Page("MenuUI", "_buttonMyRoom");
+            };
+            var stage = new DailyRoomStage(f.Root, f.Driver, () => f.Stopped, () => f.Time, t => { f.Time += t.TotalSeconds; return Task.CompletedTask; });
+            Task<JsonObject> Relay(string op, string? name, JsonObject? args) => throw new Exception("Unexpected room relay");
+            if (interrupted)
+            {
+                try { await stage.ExecuteAsync(f.Context, Relay); throw new Exception("Expected interruption"); }
+                catch (StageHostException) { }
+                f.Stopped = false;
+                var restored = await new DailyManagedReconciliation(f.Root, f.Driver, ["room.info"], () => false).RunAsync(f.Context);
+                Check(restored["completed"]!.AsArray().Count == 1 && restored["unresolved"]!.AsArray().Count == 0 && f.Box.Commands.Count == 1,
+                    "room accepted response interrupted by observer is reconciled in place without another visit");
+                Check(stage.CanResume(await f.Driver.ObserveAsync()), "reconciled room resumes while still inside MyRoomUI");
+            }
+            var result = await stage.ExecuteAsync(f.Context, Relay);
+            Check(result["state"]!.GetValue<string>() == "completed" && f.Box.Commands.Count == 2 &&
+                DailyNavigationDecision.Types((await f.Driver.ObserveAsync()).Frame).Contains("MenuUI"),
+                "production identity observation supports entire Empty menu-room-response-return flow, interrupted=" + interrupted);
+            Check(DailyNavigationDecision.Ready((await f.Driver.ObserveAsync()).Frame, "mail", policy), "room completion leaves next stage usable");
+        }
         foreach (string ui in DailyTravel.Fields)
         {
             var field = Empty(Surface(ui, field: "_buttonMenu"));

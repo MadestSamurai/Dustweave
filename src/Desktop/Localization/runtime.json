@@ -1,4 +1,199 @@
 {
+  "message.selected_collection_verified": {
+    "zh-CN": "所选收集地图已完成",
+    "zh-TW": "所選收集地圖已完成",
+    "en-US": "Selected collection maps completed"
+  },
+  "message.no_selected_collection_maps": {
+    "zh-CN": "未选择当前可进入的收集地图",
+    "zh-TW": "未選擇目前可進入的收集地圖",
+    "en-US": "No currently accessible collection maps selected"
+  },
+  "message.identity_wait_prefix": {
+    "zh-CN": "未能确认游戏身份：",
+    "zh-TW": "未能確認遊戲身分：",
+    "en-US": "Game identity could not be confirmed: "
+  },
+  "message.identity_prepare_prefix": {
+    "zh-CN": "游戏身份尚未就绪：",
+    "zh-TW": "遊戲身分尚未就緒：",
+    "en-US": "Game identity is not ready: "
+  },
+  "message.identity_wait_transport": {
+    "zh-CN": "身份数据连接暂时不可用，请点击重新连接；未更改账号或沙盒。",
+    "zh-TW": "身分資料連線暫時無法使用，請點擊重新連線；未變更帳號或沙箱。",
+    "en-US": "The identity data connection is unavailable. Reconnect; your account and sandbox have not been changed."
+  },
+  "message.identity_wait_invalid": {
+    "zh-CN": "收到的身份数据无法读取，请重新连接；反复出现时请导出诊断。",
+    "zh-TW": "收到的身分資料無法讀取，請重新連線；反覆出現時請匯出診斷。",
+    "en-US": "The received identity data could not be read. Reconnect and export diagnostics if this recurs."
+  },
+  "message.identity_wait_process": {
+    "zh-CN": "游戏进程已变化，请重新连接。",
+    "zh-TW": "遊戲程序已變更，請重新連線。",
+    "en-US": "The game process has changed. Please reconnect."
+  },
+  "message.identity_wait_missing": {
+    "zh-CN": "连接组件已就绪，但尚未收到游戏身份数据。请重新连接；反复出现时请导出诊断，无需删除账号或沙盒。",
+    "zh-TW": "連線元件已就緒，但尚未收到遊戲身分資料。請重新連線；反覆出現時請匯出診斷，無需刪除帳號或沙箱。",
+    "en-US": "The connector is ready, but game identity data has not arrived. Reconnect and export diagnostics if this recurs. Do not delete your account or sandbox."
+  },
+  "message.identity_wait_stale": {
+    "zh-CN": "游戏身份数据已停止刷新，请重新连接；未判定账号失效。",
+    "zh-TW": "遊戲身分資料已停止更新，請重新連線；未判定帳號失效。",
+    "en-US": "Game identity data has stopped updating. Reconnect; this does not indicate that your login has expired."
+  },
+  "message.identity_wait_loading": {
+    "zh-CN": "游戏仍在加载场景，请等加载完成后重试。",
+    "zh-TW": "遊戲仍在載入場景，請等待載入完成後重試。",
+    "en-US": "The game is still loading a scene. Retry after loading finishes."
+  },
+  "message.identity_wait_sdk": {
+    "zh-CN": "游戏登录服务尚未初始化，请等待游戏完成启动后重试。",
+    "zh-TW": "遊戲登入服務尚未初始化，請等待遊戲完成啟動後重試。",
+    "en-US": "The game's login service is not initialized. Retry after the game finishes starting."
+  },
+  "message.identity_wait_read": {
+    "zh-CN": "读取游戏身份或启动状态失败，请重新连接；反复出现时请导出诊断。",
+    "zh-TW": "讀取遊戲身分或啟動狀態失敗，請重新連線；反覆出現時請匯出診斷。",
+    "en-US": "Reading game identity or startup state failed. Reconnect and export diagnostics if this recurs."
+  },
+  "message.identity_wait_login": {
+    "zh-CN": "游戏尚未完成登录，请在游戏内处理启动页或登录弹窗后重试。",
+    "zh-TW": "遊戲尚未完成登入，請在遊戲內處理啟動頁或登入彈窗後重試。",
+    "en-US": "Game login is incomplete. Finish the title screen or login dialog in the game, then retry."
+  },
+  "message.identity_wait_player": {
+    "zh-CN": "登录服务已就绪，角色信息尚未加载，请进入游戏后重试。",
+    "zh-TW": "登入服務已就緒，角色資訊尚未載入，請進入遊戲後重試。",
+    "en-US": "The login service is ready, but character data has not loaded. Enter the game, then retry."
+  },
+  "message.identity_wait_ack": {
+    "zh-CN": "已读到游戏身份，但未能完成连接确认，请重新连接；未更改登录账号。",
+    "zh-TW": "已讀到遊戲身分，但未能完成連線確認，請重新連線；未變更登入帳號。",
+    "en-US": "Game identity was received, but connection confirmation did not finish. Reconnect; the login account has not been changed."
+  },
+  "message.costume_ticket_notice": {
+    "zh-CN": "服装选择券使用提示",
+    "zh-TW": "服裝選擇券使用提示",
+    "en-US": "Costume selection ticket prompt"
+  },
+  "message.costume_ticket_notice_deferred": {
+    "zh-CN": "暂不使用服装选择券，保留在背包并继续日常",
+    "zh-TW": "暫不使用服裝選擇券，保留在背包並繼續日常",
+    "en-US": "Keep the costume selection ticket in the inventory and continue daily tasks"
+  },
+  "message.costume_ticket_notice_cancel_only": {
+    "zh-CN": "日常流程只能关闭服装选择券使用提示，选择券保留在背包供手动使用。",
+    "zh-TW": "日常流程只能關閉服裝選擇券使用提示，選擇券保留在背包供手動使用。",
+    "en-US": "Daily automation can only dismiss this prompt. The costume selection ticket stays in the inventory for manual use."
+  },
+  "message.collection.maps_selected_verified": {
+    "zh-CN": "所选收集地图已完成",
+    "zh-TW": "所選收集地圖已完成",
+    "en-US": "Selected collection maps completed"
+  },
+  "message.collection.maps_not_selected": {
+    "zh-CN": "未选择当前可进入的收集地图",
+    "zh-TW": "未選擇目前可進入的收集地圖",
+    "en-US": "No currently accessible collection maps selected"
+  },
+  "message.collection.maps_invalid": {
+    "zh-CN": "周收集地图列表包含无效或重复的地图。",
+    "zh-TW": "週收集地圖清單包含無效或重複的地圖。",
+    "en-US": "The weekly collection map list contains invalid or duplicate maps."
+  },
+  "message.collection.maps_unavailable": {
+    "zh-CN": "所选收集地图当前均不可进入，已跳过周收集。",
+    "zh-TW": "所選收集地圖目前均無法進入，已略過週收集。",
+    "en-US": "None of the selected collection maps are currently accessible. Weekly collection was skipped."
+  },
+  "message.collection.maps_empty": {
+    "zh-CN": "未选择收集地图，已跳过周收集。",
+    "zh-TW": "未選擇收集地圖，已略過週收集。",
+    "en-US": "No collection maps selected. Weekly collection was skipped."
+  },
+"message.client_update.sync_programs": {
+    "zh-CN": "正在处理游戏更新后的旧程序副本…",
+    "zh-TW": "正在處理遊戲更新後的舊程式副本…",
+    "en-US": "Updating stale sandbox program copies…"
+  },
+  "message.sandbox.manage.alias": {
+    "zh-CN": "多个沙盒名称指向同一目录。请先在 Sandboxie 中整理重复绑定，再移除。",
+    "zh-TW": "多個沙盒名稱指向同一資料夾。請先在 Sandboxie 整理重複綁定，再移除。",
+    "en-US": "Multiple sandbox names point to this folder. Resolve the duplicate bindings in Sandboxie before removing it."
+  },
+  "message.sandbox.manage.collecting": {
+    "zh-CN": "正在保存此沙盒的最新登录信息和进度…",
+    "zh-TW": "正在儲存此沙盒的最新登入資訊與進度…",
+    "en-US": "Retrieving the latest sign-in information and progress…"
+  },
+  "message.sandbox.manage.custom_delete": {
+    "zh-CN": "这个沙盒配置了自定义删除操作，请在 Sandboxie 中移除，织尘未执行这些操作。",
+    "zh-TW": "此沙盒設定了自訂刪除動作，請在 Sandboxie 移除，織塵未執行這些動作。",
+    "en-US": "This sandbox has custom deletion actions. Remove it in Sandboxie; Dustweave has not run those actions."
+  },
+  "message.sandbox.manage.mode_invalid": {
+  "zh-CN": "沙盒启动方式记录无法读取。请在软件设置中重新设置“沙盒兼容模式”。",
+  "zh-TW": "無法讀取沙盒啟動方式記錄。請在軟體設定中重新設定「沙盒相容模式」。",
+  "en-US": "The saved sandbox mode could not be read. Set Sandbox compatibility mode again in Software settings."
+},
+  "message.sandbox.manage.not_owned": {
+    "zh-CN": "无法确认这个沙盒属于所选账号。未删除任何内容，请先修复沙盒绑定。",
+    "zh-TW": "無法確認此沙盒屬於所選帳號。未刪除任何內容，請先修復沙盒綁定。",
+    "en-US": "Could not verify that this sandbox belongs to the selected account. Nothing was deleted. Repair its binding first."
+  },
+  "message.sandbox.manage.process_unknown": {
+    "zh-CN": "未能确认沙盒中正在运行的程序。请刷新状态，仍失败时检查 Sandboxie 是否正常运行。",
+    "zh-TW": "無法確認沙盒中執行的程式。請重新整理狀態，若仍失敗，請檢查 Sandboxie 是否正常運作。",
+    "en-US": "Could not verify running sandbox programs. Refresh the status; if this persists, check that Sandboxie is working."
+  },
+  "message.sandbox.manage.recovery_pending": {
+    "zh-CN": "此沙盒仍有待恢复的文件。请先完成上次文件恢复，再移除沙盒。",
+    "zh-TW": "此沙盒仍有待還原的檔案。請先完成上次檔案還原，再移除沙盒。",
+    "en-US": "This sandbox has a pending file recovery. Complete that recovery before removing it."
+  },
+  "message.sandbox.manage.removal_pending": {
+    "zh-CN": "上次移除尚未完成。请在“管理沙盒”中再次点击“移除沙盒”完成清理。",
+    "zh-TW": "上次移除尚未完成。請在「管理沙盒」再次點選「移除沙盒」完成清理。",
+    "en-US": "Sandbox removal is incomplete. Select Remove sandbox again in Manage sandbox to finish."
+  },
+  "message.sandbox.manage.remove_incomplete": {
+    "zh-CN": "沙盒尚未完全移除，已保留清理记录。请关闭占用程序后再次点击“移除沙盒”。",
+    "zh-TW": "沙盒尚未完全移除，已保留清理記錄。請關閉佔用程式後再次點選「移除沙盒」。",
+    "en-US": "Sandbox removal is incomplete. Close programs using it, then select Remove sandbox again."
+  },
+  "message.sandbox.manage.removing": {
+    "zh-CN": "正在移除沙盒，请稍候…",
+    "zh-TW": "正在移除沙盒，請稍候…",
+    "en-US": "Removing the sandbox…"
+  },
+  "message.sandbox.manage.running": {
+    "zh-CN": "此账号的沙盒仍有程序运行。请退出对应游戏及织尘隔离窗口，再重试。",
+    "zh-TW": "此帳號的沙盒仍有程式執行中。請退出對應遊戲與織塵隔離視窗，再重試。",
+    "en-US": "Programs are still running in this account's sandbox. Exit its game and isolated Dustweave window, then retry."
+  },
+"message.日常连接组件报告异常，尚未开始执行。请导出诊断包并联系开发者。": {
+    "zh-CN": "日常连接组件报告异常，尚未开始执行。请导出诊断包并联系开发者。",
+    "zh-TW": "日常連接元件回報異常，尚未開始執行。請匯出診斷包並聯絡開發者。",
+    "en-US": "The daily connection component reported an error before execution started. Export diagnostics and contact the developer."
+  },
+  "message.游戏观察数据未及时更新，日常尚未开始。请等待游戏加载完成后重新连接；反复出现时请导出诊断包。": {
+    "zh-CN": "游戏观察数据未及时更新，日常尚未开始。请等待游戏加载完成后重新连接；反复出现时请导出诊断包。",
+    "zh-TW": "遊戲觀察資料未及時更新，日常尚未開始。請等待遊戲載入完成後重新連接；反覆出現時請匯出診斷包。",
+    "en-US": "Game observations stopped updating before dailies started. Wait for the game to finish loading, then reconnect. Export diagnostics if this persists."
+  },
+  "message.日常回执监听配置尚未生效，尚未开始执行。请重新连接；反复出现时请导出诊断包。": {
+    "zh-CN": "日常回执监听配置尚未生效，尚未开始执行。请重新连接；反复出现时请导出诊断包。",
+    "zh-TW": "日常回執監聽設定尚未生效，尚未開始執行。請重新連接；反覆出現時請匯出診斷包。",
+    "en-US": "The daily response listener configuration has not taken effect. Nothing has started. Reconnect, and export diagnostics if this persists."
+  },
+  "message.尚未收到日常连接组件的数据，尚未开始执行。请确认游戏已加载后重新连接；反复出现时请导出诊断包。": {
+    "zh-CN": "尚未收到日常连接组件的数据，尚未开始执行。请确认游戏已加载后重新连接；反复出现时请导出诊断包。",
+    "zh-TW": "尚未收到日常連接元件的資料，尚未開始執行。請確認遊戲已載入後重新連接；反覆出現時請匯出診斷包。",
+    "en-US": "No data has arrived from the daily connection component. Nothing has started. Confirm the game has loaded and reconnect; export diagnostics if this persists."
+  },
   "message.无法确认游戏进程是否仍在运行": {
     "zh-CN": "无法确认游戏进程是否仍在运行",
     "zh-TW": "無法確認遊戲程序是否仍在執行",
@@ -23,6 +218,16 @@
     "zh-CN": "已处理可用活动；发现尚未支持的活动类型，已保留其代币并继续后续日常。",
     "zh-TW": "已處理可用活動；發現尚未支援的活動類型，已保留其代幣並繼續後續日常。",
     "en-US": "Supported events were handled. A new event type needs support; its tokens were retained and the daily queue can continue."
+  },
+  "message.connection.preparation_failed": {
+    "zh-CN": "日常准备组件未能启动，尚未执行任务。请重新连接后重试；若仍失败，请导出诊断日志。",
+    "zh-TW": "日常準備元件未能啟動，尚未執行任務。請重新連線後重試；若仍失敗，請匯出診斷記錄。",
+    "en-US": "Daily preparation failed before any tasks started. Reconnect and retry; if it fails again, export diagnostics."
+  },
+  "message.connection.scope_changed": {
+    "zh-CN": "核对权限时游戏进程发生变化，尚未执行任务。请连接当前游戏后重试。",
+    "zh-TW": "核對權限時遊戲程序發生變化，尚未執行任務。請連線目前的遊戲後重試。",
+    "en-US": "The game process changed during the access check. No tasks started. Connect to the current game and retry."
   },
   "message.connection.scope_permission": {
     "zh-CN": "Windows 不允许读取游戏进程。请点击连接并允许连接组件的权限提示，或关闭游戏后通过织尘重新启动；无需安装或重装沙盒。",

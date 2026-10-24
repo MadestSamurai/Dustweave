@@ -86,11 +86,40 @@ internal static class UpdateLayoutCases
         Check("new layout never requests full archive on delta failure",handler.Paths.Count>0 && handler.Paths.All(p=>p.EndsWith(".delta.zip")));
         File.WriteAllBytes(Path.Combine(installation,"app/coreclr.dll"),[0]);
         Reject("retained file mutation between extraction and prepare is rejected",()=>DailyUpdateTransaction.Prepare(stage,installation,Path.Combine(folder,"mutated-backup"),names,retained));
+        var bundledBase = new DailyUpdateRelease("1.5.0", null, 3, notes,
+            [new("Lite", "Dustweave-1.5.0-Lite-win-x64.zip", 1000, new('a',64))], [], "8.0.30");
+        string bundleZip = Zip("1.5.1", new() { ["Dustweave.exe"]=[3,4], ["app/docs/test.md"]=[9] }, 3);
+        var bundleAsset = new DailyUpdateAsset("Lite", "Dustweave-1.5.1-Lite-win-x64.zip", new FileInfo(bundleZip).Length, DailyUpdateTransaction.Hash(bundleZip));
+        var bundleNext = bundledBase with { Version="1.5.1", PreviousVersion="1.5.0", Assets=[bundleAsset] };
+        var bundleFeed = new DailyUpdateFeed(3,"Dustweave","stable",[bundleNext,bundledBase]);
+        DailyUpdates.Validate(bundleFeed);
+        Check("bundled full updates have no distance or delta prerequisite", DailyUpdates.ManualUpdateReason(bundleFeed,bundleNext,installed with {Layout=3, Version="1.5.0", RuntimeVersion="8.0.29"}) == null);
+        Check("old installations cannot enter bundled feed automatically", DailyUpdates.ManualUpdateReason(bundleFeed,bundleNext,installed) == "updates.manual_layout");
+        Reject("bundled feed cannot add block reconstruction protocol",()=>DailyUpdates.Validate(bundleFeed with {Releases=[bundleNext with {InstallerProtocol=2},bundledBase]}));
+        Reject("bundled feed cannot add differential dependency",()=>DailyUpdates.Validate(bundleFeed with {Releases=[bundleNext with {Deltas=[delta]},bundledBase]}));
+        string bundleInstall=Path.Combine(folder,"bundle-install"); Directory.CreateDirectory(bundleInstall);
+        DailyUpdateJson.Write(Path.Combine(bundleInstall,"update-package.json"),installed with {Layout=3,Version="1.5.0"});
+        var fullHandler = new FullArchive(File.ReadAllBytes(bundleZip)); using var fullClient = new HttpClient(fullHandler);
+        var fullSigned = DailyUpdateSignatures.Sign(bundleFeed,"test",key);
+        string downloaded = await new DailyUpdateTransport(trust).DownloadAsync(fullClient,new(bundleFeed,fullSigned,"test"),"1.5.1","Lite",Path.Combine(folder,"bundle-data"),null,default,bundleInstall,allowDelta:false);
+        Check("bundled download requests only the signed full archive",fullHandler.Paths.SequenceEqual(["/v1.5.1/"+bundleAsset.FileName]) && DailyUpdates.Verify(Path.Combine(downloaded,"package.zip"),bundleAsset));
+        Check("full repair identifies missing files without block manifests",DailyFullPackageRepair.Inspect(downloaded,bundleInstall,bundleNext,bundleAsset,default).Any(p=>p.Name=="Dustweave.exe" && p.Missing));
+        DailyUpdates.Extract(bundleZip,bundleInstall,bundleNext,bundleAsset);
+        Check("full repair finds a byte-exact install healthy",DailyFullPackageRepair.Inspect(downloaded,bundleInstall,bundleNext,bundleAsset,default).Length==0);
+        File.WriteAllBytes(Path.Combine(bundleInstall,"Dustweave.exe"),[0,0]);
+        File.WriteAllText(Path.Combine(bundleInstall,"user.keep"),"keep");
+        Check("full repair detects overwritten same-size executable and ignores user files",DailyFullPackageRepair.Inspect(downloaded,bundleInstall,bundleNext,bundleAsset,default) is [{Name:"Dustweave.exe",Missing:false}]);
     }
     private sealed class Missing : HttpMessageHandler
     {
         public List<string> Paths {get;}=[];
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,CancellationToken cancellationToken)
         { Paths.Add(request.RequestUri!.AbsolutePath);return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound)); }
+    }
+    private sealed class FullArchive(byte[] payload) : HttpMessageHandler
+    {
+        public List<string> Paths {get;}=[];
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,CancellationToken cancellationToken)
+        { Paths.Add(request.RequestUri!.AbsolutePath); return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK){Content=new ByteArrayContent(payload)}); }
     }
 }

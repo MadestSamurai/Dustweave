@@ -1,11 +1,77 @@
 using System.IO.Compression;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Dustweave;
 internal static class DiagnosticExportCases
 {
+    static async Task PerformanceHistory(string output, Action<bool, string> check)
+    {
+        string root = Path.Combine(output, "loading-performance");
+        string file = Path.Combine(root, "live", "diagnostics", "performance.jsonl");
+        double clock = 0; long origin = DateTime.UtcNow.Ticks, sampleAt = origin;
+        int reads = 0; bool unavailable = false; Exception? error = null;
+        var frame = CommandDriverCases.Frame();
+        frame["Surfaces"] = new JsonArray(new JsonObject { ["Type"] = "LoadingUI", ["Id"] = 1 });
+        var trail = new DailyDiagnosticTrail(root, () => clock, () => origin + (long)(clock * TimeSpan.TicksPerSecond), readPerformance: () =>
+        {
+            reads++; if (error != null) throw error; if (unavailable) return null;
+            return JsonNode.Parse(JsonSerializer.Serialize(new
+            {
+                AtUtcTicks = sampleAt, Count = 20, ObserveMs = 1.5, EvidenceMs = 2.5, WriteMs = .2,
+                MaxMs = 6.0, MaxFrameMs = 8200.0, RenderFrames = 12, SlowFrames = 8,
+                CommonMaxMs = 8400.0, CommonControlMs = 8300.0,
+                Focused = false, TargetFps = 60, TimeScale = 1.0, Credentials = "must-not-persist"
+            }))!.AsObject();
+        });
+        JsonObject[] Records() => File.ReadAllLines(file).Select(s => JsonNode.Parse(s)!.AsObject()).ToArray();
+        trail.Observe(frame);
+        var first = Records().Single();
+        check(first["loading"]!.GetValue<bool>() && first["metrics"]!["MaxFrameMs"]!.GetValue<double>() == 8200
+            && first["metrics"]!["ObserveMs"]!.GetValue<double>() == 1.5,
+            "game loading and frame stalls remain distinct from short component observation costs");
+        check(!File.ReadAllText(file).Contains("must-not-persist"), "performance capture persists only numeric and boolean allowlisted metrics");
+        check(first["metrics"]!["CommonControlMs"]!.GetValue<double>() == 8300 && first["metrics"]!["CommonMaxMs"]!.GetValue<double>() == 8400,
+            "common observer costs cannot hide behind the separate daily bridge timer");
+        for (int i = 1; i < 100; i++) { clock = i / 10.0; trail.Observe(frame); }
+        check(reads == 1, "frequent UI observations do not increase performance IPC sampling above one read per ten seconds");
+        clock = 10; trail.Observe(frame);
+        check(reads == 2 && Records().Length == 1, "a stalled bridge sample is not falsely recorded as another measurement");
+        clock = 20; sampleAt = origin + TimeSpan.FromSeconds(20).Ticks; trail.Observe(frame);
+        check(Records().Length == 2, "new performance samples survive even when loading UI has not changed");
+        clock = 30; error = new TimeoutException("private exception detail"); trail.Observe(frame);
+        check(Records().Last()["state"]!.GetValue<string>() == "read_failed" && !File.ReadAllText(file).Contains("private exception detail"),
+            "optional performance IPC failure is bounded and does not stop normal observation");
+        clock = 40; error = null; unavailable = true; trail.Observe(frame);
+        check(Records().Last()["state"]!.GetValue<string>() == "unavailable", "missing performance is not reported as a zero-cost healthy game");
+        clock = 50; unavailable = false; sampleAt = long.MaxValue; trail.Observe(frame);
+        check(Records().Last()["state"]!.GetValue<string>() == "invalid_timestamp", "invalid sample timestamps do not interrupt navigation");
+        for (int i = 6; i < 2000; i++)
+        {
+            clock = i * 10; sampleAt = origin + TimeSpan.FromSeconds(clock).Ticks; trail.Observe(frame);
+        }
+        var retained = Directory.GetFiles(Path.GetDirectoryName(file)!, "performance.jsonl*");
+        check(retained.Length == 4 && retained.Sum(f => new FileInfo(f).Length) <= 4 * (256 * 1024 + 4096),
+            "long-running performance history rotates independently and stays within approximately one MiB");
+        var export = await DailyDiagnosticExport.CreateAsync(root, Path.Combine(output, "loading-performance.zip"), "", "fixture");
+        using (var archive = ZipFile.OpenRead(export.Path))
+        {
+            check(archive.GetEntry("logs/main/live/diagnostics/performance.jsonl") != null
+                && archive.GetEntry("logs/main/live/diagnostics/performance.jsonl.3") != null,
+                "loading performance and bounded rotations are included in user diagnostic exports after the game exits");
+        }
+        var box = new CommandDriverCases.Mailbox();
+        box.Values["live:performance.json"] = System.Text.Encoding.UTF8.GetBytes("{\"AtUtcTicks\":" + origin + ",\"ObserveMs\":3.0}");
+        string driverRoot = Path.Combine(output, "performance-driver");
+        using var driver = new DailyCommandDriver(driverRoot, box, () => Task.FromResult(new DailyStageFrame(frame, CommandDriverCases.Context())), () => false, () => origin, () => 0);
+        driver.Diagnostics.Observe(frame);
+        check(File.ReadAllText(Path.Combine(driverRoot, "live", "diagnostics", "performance.jsonl")).Contains("ObserveMs")
+            && box.Commands.Count == 0 && box.Opened.Count == 0,
+            "the real driver diagnostic path reads existing timing without acquiring a writer or sending game commands");
+    }
     public static async Task Run(string output,List<string> cases)
     {
         void Check(bool ok,string label){if(!ok)throw new Exception(label);cases.Add("diagnostic-export: "+label);}
+        await PerformanceHistory(output, Check);
         string root=Path.Combine(output,"diagnostic-source");Directory.CreateDirectory(Path.Combine(root,"live","diagnostics"));
         File.WriteAllText(Path.Combine(root,"ui-operation-error.json"),"{\"error\":\"suite.owner-exited\",\"accessToken\":\"secret-value\",\"nested\":{\"password\":\"pw-value\"}}");
         File.WriteAllText(Path.Combine(root,"live","diagnostics","timeline.jsonl"),"{\"kind\":\"start\",\"session_token\":\"token-value\"}\n{\"bad\":");
@@ -95,6 +161,7 @@ internal static class DiagnosticExportCases
         Check(DailyIssues.Classify("尚未找到完整登录会话，请先在游戏内登录。").Code == "local-login-incomplete", "legacy session precheck is not unknown or expired login");
         Check(DailyIssues.Classify("connection.login_identity_unavailable").Code == "live-login-unavailable", "live identity timeout differs from local credential readiness");
         Check(DailyDiagnosticExport.Allowed("live/diagnostics/login-failed.json") && DailyDiagnosticExport.Allowed("login-identity-error.json"), "identity evidence is exportable without the credential store");
+        Check(new[]{"launch-mode.json","sandbox-processes.json","game-program-recovery/last-sync.json","game-table-recovery/last-sync.json"}.All(DailyDiagnosticExport.Allowed)&&!DailyDiagnosticExport.Allowed("game-program-recovery/UnityPlayer.dll"),"Sandbox mode and migration diagnostics export without program backups");
         Check(DailyIssues.Classify("UI observation interrupted after dispatch; no replay: timeout").Code=="uncertain","uncertain dispatch has priority over timeout retry guidance");
         Check(DailyIssues.Classify(new OperationCanceledException()).Code=="cancelled","user cancellation is not a connection failure");
         Check(DailyIssues.Classify("会话已停止，请在日常助手重新选择功能。").Code=="legacy-session","old generic message does not invent a root cause");
@@ -145,7 +212,7 @@ internal static class DiagnosticExportCases
         File.WriteAllText(Path.Combine(pressure,"ui-operation-error.json"),"{\"error\":\"critical evidence\"}");File.SetLastWriteTimeUtc(Path.Combine(pressure,"ui-operation-error.json"),DateTime.UtcNow.AddDays(-1));
         string[] important = ["live/managed-business/pending.json", "live/business/legacy.json", "live/trade-quote-reads/failed.json", "trade/diagnostics/capture.json", "trade/capture/sample.evidence.json", "trade/executions/account/day/execution.json",
             "live/travel-diagnostics/failed.json", "live/route-atlas/account/2002.json", "live/server-collection/account/week/2002.json",
-            "live/weekly-npc-recovery/failed.json", "live/weekly-npc-queries/failed.json"];
+            "live/weekly-npc-recovery/failed.json", "live/weekly-npc-queries/failed.json", "live/diagnostics/preparation-latest.json"];
         foreach (var relative in important) { string path=Path.Combine(pressure,relative); Directory.CreateDirectory(Path.GetDirectoryName(path)!); File.WriteAllText(path,"{\"error\":\"native stock failure\",\"token\":\"hidden-trade-secret\"}"); File.SetLastWriteTimeUtc(path,DateTime.UtcNow.AddDays(-1)); }
         var pressured=await DailyDiagnosticExport.CreateAsync(pressure,Path.Combine(output,"pressure.zip"),"","fixture",additionalSources:new Dictionary<string,string>{{"tool-fixture",tool}});
         using(var archive=ZipFile.OpenRead(pressured.Path))Check(pressured.Files==2000&&pressured.Skipped>0&&archive.GetEntry("logs/main/ui-operation-error.json")!=null&&archive.GetEntry("logs/tool-fixture/runtime.log")!=null,"old critical evidence and other tool logs survive a large step archive");

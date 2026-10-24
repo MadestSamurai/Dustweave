@@ -10,6 +10,8 @@ public partial class MainWindow
     private SandboxInstallationPanel softwareSandboxPath = null!;
     private DailyWindowsStartup windowsStartup = null!;
     private bool softwareSettingsReady;
+    private bool sandboxModeReading=true,sandboxModeSaving;
+    private bool? savedSandboxCompatible;
     private void InitializeSoftwareSettings()
     {
         softwareGamePath = new(new Accounts.GameInstallation(smoke == null ? null : Path.Combine(root, "game-path-preview")), IsSandboxWindow);
@@ -30,15 +32,46 @@ public partial class MainWindow
         catch (Exception error) { SoftwareSettingsError(error); }
         softwareSettingsReady = true;
         UpdateSoftwareSettingsAvailability();
+        ContentRendered+=async(_,_)=>await ReadSandboxModeAsync();
     }
     private void UpdateSoftwareSettingsAvailability()
     {
         if (!softwareSettingsReady) return;
         bool editable = !Unavailable && !IsSandboxWindow;
         softwareGamePath.IsEnabled = softwareSandboxPath.IsEnabled = StartWithWindows.IsEnabled = editable;
+        SandboxCompatibility.IsEnabled=editable&&!sandboxModeReading&&!sandboxModeSaving;
         CloseActionChoice.IsEnabled = RunOnOpen.IsEnabled = CloseGameAfterRun.IsEnabled = editable && desktopBehaviorValid;
         CompletionNoticeChoices.IsEnabled = !Unavailable && desktopBehaviorValid;
         ConnectionGuideButton.IsEnabled = !Unavailable && !IsSandboxWindow;
+    }
+    private async Task ReadSandboxModeAsync()
+    {
+        if(IsSandboxWindow)return;
+        sandboxModeReading=true;UpdateSoftwareSettingsAvailability();
+        try {
+            var preference=await Task.Run(()=>DailySandboxPreferences.Read(root,smoke==null?null:Path.Combine(root,"fixture-instances")));
+            savedSandboxCompatible=preference.Mode==DailySandboxFileMode.Compatible;
+            SandboxCompatibility.IsChecked=savedSandboxCompatible;
+            SandboxModeStatus.Visibility=Visibility.Collapsed;
+        } catch(Exception error){SandboxModeError(error);}
+        finally{sandboxModeReading=false;UpdateSoftwareSettingsAvailability();}
+    }
+    private async void SandboxCompatibility_Click(object sender,RoutedEventArgs e)=>await SaveSandboxModeAsync();
+    private async Task SaveSandboxModeAsync()
+    {
+        if(!softwareSettingsReady||IsSandboxWindow||Unavailable||sandboxModeReading||sandboxModeSaving)return;
+        bool compatible=SandboxCompatibility.IsChecked==true;sandboxModeSaving=true;UpdateSoftwareSettingsAvailability();
+        try {
+            await Task.Run(()=>new DailySandboxPreferences(Mode:compatible?DailySandboxFileMode.Compatible:DailySandboxFileMode.Synchronized).Save(root));
+            savedSandboxCompatible=compatible;SandboxModeStatus.SetResourceReference(TextBlock.ForegroundProperty,"MutedInk");
+            L.Text(SandboxModeStatus,"sandbox.manage.mode_saved");SandboxModeStatus.Visibility=Visibility.Visible;
+        }catch(Exception error){SandboxCompatibility.IsChecked=savedSandboxCompatible??false;SandboxModeError(error);}
+        finally{sandboxModeSaving=false;UpdateSoftwareSettingsAvailability();}
+    }
+    private void SandboxModeError(Exception error)
+    {
+        SandboxModeStatus.SetResourceReference(TextBlock.ForegroundProperty,"Error");
+        SandboxModeStatus.Text=DailyUserText.Error(error,L.Translate);SandboxModeStatus.Visibility=Visibility.Visible;
     }
     private void RefreshCloseAction()
     {

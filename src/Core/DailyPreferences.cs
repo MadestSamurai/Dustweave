@@ -176,6 +176,8 @@ public sealed class DailyPreferences
         Weekly.NpcHunting = false;
         Friendship.Quick = false;
         General.Validate();
+        if (Weekly.CollectionMaps is { } maps && (maps.Length > 4096 || maps.Any(id => id <= 0) || maps.Distinct().Count() != maps.Length))
+            throw new InvalidDataException("周收集地图列表包含无效或重复的地图。");
         if (Trade.CookingRecipes == null || Trade.CookingRecipes.Length > 300 || Trade.CookingRecipes.Any(id => id <= 0) || Trade.CookingRecipes.Distinct().Count() != Trade.CookingRecipes.Length)
             throw new InvalidDataException("自定义料理列表包含无效或重复的配方。");
         if (SaffronPotatoRounds is < 1 or > 3)
@@ -310,6 +312,9 @@ public sealed class MirrorPreferences
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed class WeeklyPreferences
 {
+    // Null preserves the default route, including future catalog additions. Empty means none.
+    public long[]? CollectionMaps { get; set; }
+    public bool IncludesCollectionMap(long map) => CollectionMaps == null || CollectionMaps.Contains(map);
     [JsonRequired] public bool Sichuan { get; set; } = true;
     [JsonRequired] public bool Book { get; set; } = true;
     [JsonRequired] public bool EquipmentCraft { get; set; } = true;

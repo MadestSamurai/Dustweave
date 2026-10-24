@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection;
 using Dustweave.Accounts;
 namespace Dustweave;
 
@@ -6,6 +7,8 @@ namespace Dustweave;
 // deliberately identical to the existing account and automation ownership locks.
 public static class DailyUpdateHost
 {
+    public static bool SelfUpdating => System.Reflection.Assembly.GetEntryAssembly()?.GetCustomAttributes<System.Reflection.AssemblyMetadataAttribute>()
+        .Any(a => a.Key == "Dustweave.SelfUpdate" && a.Value == "true") == true;
     public static string InstallRoot => Path.GetDirectoryName(Environment.ProcessPath!)!;
     public static string DataRoot => Environment.GetEnvironmentVariable("BD2_DAILY_DATA_ROOT") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BD2DailyAssistant");
     // Shared with cache maintenance; hold across downloads and the whole update/recovery transaction.

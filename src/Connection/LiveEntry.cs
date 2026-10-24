@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -54,12 +55,51 @@ try {
   }
   // In-process prepare/attach can replace DesktopFiles' routed client. Open the
   // client that subsequent writes actually use, rather than the pre-attach handle.
-  if(host.Find()!=game)throw new InvalidOperationException("连接准备期间游戏进程已变化，请重新连接。");
+  if(!host.IsRunning(game))throw new InvalidOperationException("连接准备期间游戏进程已变化，请重新连接。");
   pipe=BD2.LocalIpc.DesktopFiles.Connect(root,game.ProcessId,game.StartTicks);
   // Opening a new writer clears pending mailbox inputs. Check before ownership
   // changes, including manual read-only preparation outside a daily queue.
   if(BD2.LocalIpc.DesktopFiles.Exists(Path.Combine(root,"command.json")))throw new Exception("Another operation is in flight");
   pipe.Open(Fingerprint);BD2.LocalIpc.DesktopFiles.Write(Path.Combine(root,"pause"),new byte[0]);
+  var preparationClock=Stopwatch.StartNew();
+  JsonObject? DiagnosticRead(string name){
+   try{return DailyJson.TryRead<JsonObject>(Path.Combine(root,name));}
+   catch(Exception e)when(e is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException or TimeoutException){return null;}
+  }
+  var trail=new DailyDiagnosticTrail(DailyIdentity.DataRoot,()=>preparationClock.Elapsed.TotalSeconds,()=>DateTime.UtcNow.Ticks,
+   readPerformance:()=>DiagnosticRead("performance.json"));
+  using var preparationScope=trail.Scope("connection-preparation");
+  double sampledAt=double.NegativeInfinity;
+  JsonObject? preparationFrame=null;
+  void SamplePreparation(bool force=false){
+   if(!force&&preparationClock.Elapsed.TotalSeconds-sampledAt<1)return;
+   sampledAt=preparationClock.Elapsed.TotalSeconds;
+   preparationFrame=DiagnosticRead("snapshot.json");
+   trail.Observe(preparationFrame??new JsonObject(),"preparing-listener");
+  }
+  void SavePreparation(JsonObject status){
+   try{
+    var record=status.DeepClone().AsObject();
+    record["version"]=DailyIdentity.Version;record["elapsedMs"]=preparationClock.Elapsed.TotalMilliseconds;
+    record["processId"]=game.ProcessId;record["processStartTicks"]=game.StartTicks;
+    var frameInfo=new JsonObject();
+    foreach(string key in new[]{"AtUtcTicks","Sequence","Scene","ProcessId","ProcessStartTicks","BridgeVersion"})
+     frameInfo[key]=preparationFrame?[key]?.DeepClone();
+    frameInfo["surfaces"]=new JsonArray((preparationFrame?["Surfaces"] as JsonArray??new JsonArray()).OfType<JsonObject>()
+     .Select(s=>s["Type"]?.GetValue<string>()).Where(s=>s!=null).Take(32).Select(s=>JsonValue.Create(s)).ToArray());
+    record["frame"]=frameInfo;
+    var bridgeError=DiagnosticRead("error.json");
+    if(bridgeError!=null){
+     var detail=new JsonObject();
+     foreach(string key in new[]{"AtUtcTicks","ProcessId","ProcessStartTicks"})detail[key]=bridgeError[key]?.DeepClone();
+     string message=bridgeError["Error"]?.GetValue<string>()??"";detail["error"]=message.Length>4096?message[..4096]:message;
+     record["bridgeError"]=detail;
+    }
+    // This small latest record is exported ahead of historical step captures.
+    DailyJson.Write(Path.Combine(root,"diagnostics","preparation-latest.json"),record);
+   }catch(Exception e)when(e is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException or TimeoutException){}
+  }
+  SamplePreparation(true);
   await Invoke("taps",managed,DailyTools.EvidenceSpec(AppContext.BaseDirectory,evidenceSpec),Path.Combine(output,"evidence-config.json"));
   // The GUI never starts ready concurrently with a daily worker. Refuse other owners too.
   if(BD2.LocalIpc.DesktopFiles.Exists(Path.Combine(root,"command.json")))throw new Exception("Another operation is in flight");
@@ -69,17 +109,19 @@ try {
   string expectedHash=Convert.ToBase64String(SHA256.HashData(configBytes!));
   using var expectedConfig=JsonDocument.Parse(configBytes!);
   var expectedRoles=expectedConfig.RootElement.GetProperty("Taps").EnumerateArray().Select(x=>x.GetProperty("Role").GetString()!).ToHashSet();
-  bool evidenceReady=false;
-  for(int i=0;i<50;i++){
-   using var observed=DailyJson.TryRead<JsonDocument>(Path.Combine(root,"evidence.json"));
-   if(observed!=null){var e=observed.RootElement;
-    if(e.TryGetProperty("Config",out var hash)&&hash.GetString()==expectedHash&&e.GetProperty("Error").GetString()==""&&
-       e.GetProperty("AtUtcTicks").GetInt64()>DateTime.UtcNow.AddSeconds(-3).Ticks&&
-       expectedRoles.SetEquals(e.GetProperty("Taps").EnumerateArray().Select(x=>x.GetString()!))){evidenceReady=true;break;}
-   }
-   await Task.Delay(200);
+  bool evidenceReady=false;JsonObject health=new(){["state"]="missing",["ready"]=false};
+  var readinessClock=Stopwatch.StartNew();var readinessWindow=new DailyEvidence.PreparationWindow();
+  while(true){
+   cancellation.ThrowIfCancellationRequested();
+   if(!host.IsRunning(game))throw new DailyGameExitedException();
+   health=DailyEvidence.PreparationStatus(DailyJson.TryRead<JsonObject>(Path.Combine(root,"evidence.json")),expectedHash,expectedRoles,DateTime.UtcNow.Ticks);
+   if(health["ready"]!.GetValue<bool>()){evidenceReady=true;break;}
+   if(readinessWindow.Expired(health,readinessClock.Elapsed.TotalSeconds))break;
+   SamplePreparation();
+   await Task.Delay(200,cancellation);
   }
-  if(!evidenceReady)throw new Exception("日常网络回执监听未恢复；保持暂停，尚未开始日常操作，请重新连接。");
+  SamplePreparation(true);SavePreparation(health);trail.Event("listener-health",health);
+  if(!evidenceReady)throw new InvalidOperationException(DailyEvidence.PreparationMessage(health["state"]!.GetValue<string>()));
   Console.WriteLine("Daily execution connection ready");return;
  }
  if(args.Length==1&&args[0]=="connect-observer"){

@@ -254,10 +254,21 @@ public static class DailyEventRewards
         if (kind is "EventExchangeUI" or "MiniGamePuzzleUI" && N(p["Total"]) > 0 && N(p["Received"]) >= N(p["Total"]) && !B(p["Renew"])) return;
         Require(N(p["Cost"]) > 0 && N(p["Balance"]) < N(p["Cost"]), "活动仍有可用代币，但原生按钮不可用；保留剩余次数，不能记为完成");
     }
-    public static JsonArray Pending(IEnumerable<JsonObject> entries, Dictionary<(long Event, long Id), JsonObject>? cache = null)
+    private static bool MatchesEvent(JsonObject entry, JsonObject row) => N(entry["event"]) == N(row["id"])
+        && N(entry["event_id"]) == N(row["eventId"]) && Kinds.GetValueOrDefault(I(row["eventType"])) == S(entry["kind"]);
+    internal static void RetainCurrentEntries(JsonObject entries, IEnumerable<JsonObject> catalog)
     {
+        var active = catalog.ToDictionary(r => S(r["id"]));
+        foreach (string key in entries.Select(p => p.Key).ToArray())
+            if (entries[key] is not JsonObject entry || !active.TryGetValue(key, out var row) || !MatchesEvent(entry, row)) entries.Remove(key);
+    }
+    public static JsonArray Pending(IEnumerable<JsonObject> entries, IEnumerable<JsonObject> catalog, Dictionary<(long Event, long Id), JsonObject>? cache = null)
+    {
+        // Visit history spans event rotations. An absent cache row only means zero
+        // for a current event, never that an expired/completed event was reset.
+        var active = catalog.ToDictionary(r => N(r["id"]));
         var latest = new Dictionary<(long, long), JsonObject>();
-        foreach (var entry in entries)
+        foreach (var entry in entries.Where(e => active.TryGetValue(N(e["event"]), out var row) && MatchesEvent(e, row)))
             foreach (var row in Rows(entry["missions"] ?? new JsonArray()))
             {
                 var m = row.DeepClone().AsObject();
@@ -269,6 +280,7 @@ public static class DailyEventRewards
                 }
                 m["group"] = "event";
                 m["event_id"] = Copy(entry["event_id"]);
+                m["event_title"] = Copy(entry["event_title"]);
                 m["key"] = "event:" + N(entry["event"]) + ":" + N(m["id"]);
                 latest[(N(entry["event"]), N(m["id"]))] = m;
             }
@@ -333,18 +345,20 @@ public static class DailyEventRewards
         var state = await w.Evidence(Prefixes);
         var data = Data(state);
         var rows = Select(Page(state), settings);
+        RetainCurrentEntries(entries, rows);
         var unsupported = Unsupported(Page(state));
         var mail = new DailyEventMailDependency(rows.Any(r => N(r["eventType"]) is 12 or 13 or 17 or 19 or 7));
         var pendingDice = w.Business.Records(w.Context, "rewards.dice").Where(DailyManagedBusiness.Pending).Select(op => N(op["scope"]?["event"])).ToHashSet();
         bool quiz = settings.Quiz && DailyMiniGames.Pending(DailyQuizRecovery.Page(state)).Length > 0;
         if (unsupported.Count == 0 && !mail.Required && pendingDice.Count == 0 && JsonNode.DeepEquals(visits["catalog"], Array(rows)) && S(visits["cycle"]) == cycle && S(visits["settings"]) == settingsKey && !quiz && rows.All(r => !Needed(entries[S(r["id"])] as JsonObject, cycle, data.Missions, data.Balances)))
-            return O(("state", "skipped"), ("reason", "server_event_progress_unchanged"), ("actions", 0), ("pending_tasks", Pending(rows.Select(r => entries[S(r["id"])]!.AsObject()), data.Missions)), ("engine", "dotnet"));
+            return O(("state", "skipped"), ("reason", "server_event_progress_unchanged"), ("actions", 0), ("pending_tasks", Pending(entries.Select(p => p.Value!.AsObject()), rows, data.Missions)), ("catalog", Page(state)["Catalog"]), ("engine", "dotnet"));
         if (!await w.Has("EventUI"))
         {
             await w.Home("event_rewards");
             await w.Step("MenuUI", "_buttonEvent", expect: "EventUI");
         }
         rows = Select(Page(await WaitPage(w)), settings);
+        RetainCurrentEntries(entries, rows);
         visits["catalog"] = Array(rows);
         visits["settings"] = settingsKey;
         visits["policy"] = 2;
@@ -404,6 +418,8 @@ public static class DailyEventRewards
                         pendingDice.Remove(id);
                     }
                     var entry = O(("event", id), ("event_id", row["eventId"]), ("kind", p["Kind"]), ("sweep", sweep), ("operations", new JsonArray()), ("missions", new JsonArray()));
+                    if (w.Index("missions/LocalTextTable.json").TryGetValue(N(row["bannerFontLocalTextId"]), out var eventText))
+                        entry["event_title"] = S(eventText["textCn"]).Length > 0 ? S(eventText["textCn"]) : S(eventText["textEn"]);
                     results.Add(entry);
                     if (S(p["Kind"]) != Kinds[I(row["eventType"])])
                     {
@@ -467,7 +483,10 @@ public static class DailyEventRewards
             DailyJson.Write(path, visits);
             output["state"] = unsupported.Count > 0 || Rows(results).Any(e => S(e["state"]) == "skipped") ? "partial" : "completed";
             if (unsupported.Count > 0) output["reason"] = "event_reward_unsupported";
-            output["pending_tasks"] = Pending(entries.Select(p => p.Value!.AsObject()), Data(await w.Evidence(Prefixes)).Missions);
+            var finalEvidence = await w.Evidence(Prefixes);
+            var finalCatalog = Select(Page(finalEvidence), settings);
+            output["catalog"] = Copy(Page(finalEvidence)["Catalog"]);
+            output["pending_tasks"] = Pending(entries.Select(p => p.Value!.AsObject()), finalCatalog, Data(finalEvidence).Missions);
             w.Save("event-rewards-latest.json", output);
             await w.Step("EventUI", "_objBackButton", expect: "MenuUI");
             return output;

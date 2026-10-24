@@ -6,7 +6,7 @@ using Dustweave.Compatibility;
 using Microsoft.Win32;
 namespace Dustweave;
 
-public sealed record DailySandboxRequest(string Box, int Slot, string Account, string Name, string GameExecutable, DateTimeOffset CreatedUtc) { public DailyParallelJob? Worker { get; init; } public string ClientKey { get; init; } = ""; }
+public sealed record DailySandboxRequest(string Box, int Slot, string Account, string Name, string GameExecutable, DateTimeOffset CreatedUtc) { public DailyParallelJob? Worker { get; init; } public string ClientKey { get; init; } = ""; public string CaptureSessionId { get; init; } = ""; public DailySandboxFileMode FileMode { get; init; } }
 public sealed record DailySandboxError(DateTimeOffset AtUtc,string Request,string Message,string Error);
 public sealed record DailySandboxBinding(string Box, string Account, string Name, int Slot)
 {
@@ -15,7 +15,7 @@ public sealed record DailySandboxBinding(string Box, string Account, string Name
 
 // Each instance keeps the established single-game pipeline inside one OS sandbox.
 // Session bytes never enter the launch request or command line.
-public static class DailySandbox
+public static partial class DailySandbox
 {
     public const string LaunchSwitch = "--sandbox-account";
     public static void RequireHost()
@@ -69,6 +69,11 @@ public static class DailySandbox
         var binding = Current;
         if (binding?.Account == account) return binding.Box;
         var registered = DailyJson.TryRead<DailySandboxRequest>(Path.Combine(StateDirectory(account), "instance.json"));
+        if(registered==null) {
+            var removing=DailyJson.TryRead<RemovalIntent>(Path.Combine(StateDirectory(account),"removal.json"));
+            if(removing?.Schema==1 && removing.Account==account && removing.Owner?.Account==account
+                && removing.Owner.Box==removing.Box && SandboxConfiguration.SameRoot(removing.Root,Path.Combine(StateDirectory(account),"root")))registered=removing.Owner;
+        }
         return registered?.Account == account && ValidBoxName(registered.Box) ? registered.Box : canonical;
     }
     // The data directory belongs to the account and never follows a display/configuration rename.
@@ -93,16 +98,17 @@ public static class DailySandbox
     }
     internal static void Validate(DailySandboxRequest request)
     {
+        if(!Enum.IsDefined(request.FileMode))throw new InvalidDataException("sandbox.manage.mode_invalid");
         if (!string.Equals(request.Box, BoxName(request.Account), StringComparison.OrdinalIgnoreCase) || request.Slot is < 1 or > 100 || string.IsNullOrWhiteSpace(request.Name))
             throw new InvalidDataException("隔离实例请求不完整。");
         if (!Path.IsPathFullyQualified(request.GameExecutable) || !Path.GetFileName(request.GameExecutable).Equals("BrownDust II.exe",StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("游戏路径不符合预期。");
     }
     internal static readonly SemaphoreSlim ConfigurationGate = new(1, 1);
-    public static async Task<string> LaunchAsync(DailyAccount account, string executable, Action<string> progress, CancellationToken token, DailyParallelJob? worker = null)
+    public static async Task<string> LaunchAsync(DailyAccount account, string executable, Action<string> progress, CancellationToken token, DailyParallelJob? worker = null,string captureSessionId="")
     {
         await ConfigurationGate.WaitAsync(token);
-        try { return await LaunchCoreAsync(account, executable, progress, token, worker); }
+        try { return await LaunchCoreAsync(account, executable, progress, token, worker,captureSessionId); }
         finally { ConfigurationGate.Release(); }
     }
     // Open the existing account workspace only. No credential import, bootstrap or game launch.
@@ -147,9 +153,11 @@ public static class DailySandbox
         }
         finally { ConfigurationGate.Release(); }
     }
-    private static async Task<string> LaunchCoreAsync(DailyAccount account, string executable, Action<string> progress, CancellationToken token, DailyParallelJob? worker)
+    private static async Task<string> LaunchCoreAsync(DailyAccount account, string executable, Action<string> progress, CancellationToken token, DailyParallelJob? worker,string captureSessionId)
     {
         RequireHost();
+        DailyLoadingExperimentLaunch.RequireIsolatedSession(captureSessionId);
+        RequireNotRemoving(StateDirectory(account.AccountKey));
         string installation = Installation() ?? throw new InvalidOperationException("parallel.install_required");
         SandboxProcessScope.RequireAvailable();
         var vault = new SessionVault();
@@ -168,87 +176,11 @@ public static class DailySandbox
         string state = StateDirectory(account.AccountKey); Directory.CreateDirectory(state);
         string root = Path.Combine(state,"root");
         string marker = Path.Combine(state,"instance.json");
-        var request = new DailySandboxRequest(box,account.SlotNumber,account.AccountKey,account.Name,GameLauncher.ResolveExecutable(),DateTimeOffset.UtcNow) { Worker = worker };
+        var request = new DailySandboxRequest(box,account.SlotNumber,account.AccountKey,account.Name,GameLauncher.ResolveExecutable(),DateTimeOffset.UtcNow) { Worker = worker,CaptureSessionId=captureSessionId,FileMode=DailySandboxPreferences.Read().Mode };
         request = request with { ClientKey = await Task.Run(() => ClientInputs.ReadGame(request.GameExecutable), token) };
         Validate(request);
         if (worker != null) { worker.Validate(); if (worker.Account != account.AccountKey) throw new InvalidDataException("parallel.identity_changed"); }
-        // A previously registered box is never silently reconfigured while running.
-        bool configured = SandboxConfiguration.Boxes(installation).Contains(box,StringComparer.OrdinalIgnoreCase);
-        if (configured)
-        {
-            var owned = DailyJson.TryRead<DailySandboxRequest>(marker);
-
-            string actual = (await Run(installation,"SbieIni.exe",["query",box,"FileRootPath"],token)).Trim();
-            if(actual.Length==0)
-            {
-                var pids=(await Run(installation,"Start.exe",["/box:"+box,"/listpids"],token)).Split(['\r','\n'],StringSplitOptions.RemoveEmptyEntries);
-                if(pids.Length!=1||pids[0].Trim()!="0")throw new InvalidOperationException("隔离空间尚未配置完整，但仍有程序运行，请先关闭该空间中的程序。");
-                configured=false;
-            }
-            else
-            {
-                if (owned == null || owned.Account != request.Account || !string.Equals(owned.Box, box, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("同名沙箱不是由此账号登记的，未修改它。");
-                if (!SandboxConfiguration.SameRoot(actual,root)) throw new InvalidOperationException("隔离目录已被修改，请先检查 Sandboxie 设置。");
-            }
-        }
-        if(!configured)
-        {
-            // Record ownership before configuration so an interrupted setup is repairable.
-            DailyJson.Write(marker,request);
-            progress("准备独立账号空间…");
-            var settings = new Dictionary<string,string> {
-                ["Enabled"]="y", ["ConfigLevel"]="10", ["FileRootPath"]=root,
-                ["AutoDelete"]="n", ["BoxNameTitle"]="y", ["HideOtherBoxes"]="y", ["HideNonSystemProcesses"]="y", ["BorderColor"]="#748FA5,ttl"
-            };
-            foreach (var pair in settings) await Run(installation,"SbieIni.exe",["set",box,pair.Key,pair.Value],token);
-            // Keep normal game preferences through copy-on-write. The bootstrap writes
-            // and verifies all account fields before any game is allowed to start.
-            string low=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),"AppData","LocalLow","Gamfs","BrownDust II");
-            foreach(var child in new[]{"Vuplex.WebView","Neo","args.info"})
-                await Run(installation,"SbieIni.exe",["append",box,"WriteFilePath",Path.Combine(low,child)],token);
-            DailyJson.Write(marker,request);
-        }
-        foreach(string setting in new[]{"OpenKeyPath","OpenIpcPath","OpenPipePath","OpenFilePath","BreakoutProcess","BreakoutFolder","BreakoutDocument"})
-            if(!string.IsNullOrWhiteSpace(await Run(installation,"SbieIni.exe",["query",box,setting],token)))
-                throw new InvalidOperationException("隔离空间包含额外的共享或退出隔离设置，请先移除它们："+setting);
-        // Keep unrelated host/box processes out of the isolated desktop. Integrated
-        // tools also validate the exact game lifetime supplied by their parent.
-        foreach(string setting in new[]{"HideOtherBoxes","HideNonSystemProcesses"})
-            if((await Run(installation,"SbieIni.exe",["query",box,setting],token)).Trim()!="y")
-                await Run(installation,"SbieIni.exe",["set",box,setting,"y"],token);
-        // MacType also hooks CreateProcessInternalW; its delayed injection can retain
-        // a stale Sandboxie trampoline. Restrict this compatibility exclusion to our
-        // executable in this box, preserving the user's global font settings.
-        var closed=(await Run(installation,"SbieIni.exe",["query",box,"ClosedFilePath"],token)).Split(['\r','\n'],StringSplitOptions.RemoveEmptyEntries);
-        foreach(var dll in new[]{"MacType64.dll","MacType.dll"})
-        {
-            string rule=Path.GetFileName(executable)+",*\\"+dll;
-            if(!closed.Contains(rule,StringComparer.OrdinalIgnoreCase))await Run(installation,"SbieIni.exe",["append",box,"ClosedFilePath",rule],token);
-        }
-        // The host owns its automation lock while scheduling. A fresh sandbox must
-        // create its own lock instead of attempting to copy the host's open file.
-        string controlLock = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BD2DailyAssistant", "tools", "control.lock");
-        var privateFiles = (await Run(installation,"SbieIni.exe",["query",box,"WriteFilePath"],token)).Split(['\r','\n'],StringSplitOptions.RemoveEmptyEntries);
-        var missingPrivatePaths = DailySandboxStorage.Paths(DailyIdentity.DataRoot).Append(controlLock)
-            .Except(privateFiles,StringComparer.OrdinalIgnoreCase).ToArray();
-        if(configured && missingPrivatePaths.Length>0)
-        {
-            var pids=(await Run(installation,"Start.exe",["/box:"+box,"/listpids"],token)).Split(['\r','\n'],StringSplitOptions.RemoveEmptyEntries);
-            if(pids.Length!=1||pids[0].Trim()!="0")throw new InvalidOperationException("sandbox.storage_busy");
-        }
-        foreach(string path in missingPrivatePaths)
-            await Run(installation,"SbieIni.exe",["append",box,"WriteFilePath",path],token);
-        // Ownership/root checks above also apply to this one-time migration.
-        // ReadFilePath ignores old program overlays without deleting any box data.
-        await DailySandboxGameFiles.EnsureAsync(request.GameExecutable,
-            () => Run(installation,"SbieIni.exe",["query",box,"ReadFilePath"],token),
-            async () => (await Run(installation,"Start.exe",["/box:"+box,"/listpids"],token)).Trim()=="0",
-            async rule => { await Run(installation,"SbieIni.exe",["append",box,"ReadFilePath",rule],token); }, progress, token);
-        // Tables live outside the installation directory. Repair only recognized
-        // stale design-table overlays, before a worker or game starts in this box.
-        await DailySandboxGameData.SynchronizeAsync(DailySandboxGameData.HostTables,
-            DailySandboxGameData.BoxTables(root), Path.Combine(StateDirectory(account.AccountKey), "game-table-recovery"),
-            async () => (await Run(installation,"Start.exe",["/box:"+box,"/listpids"],token)).Trim()=="0", progress, token);
+        await PrepareSpaceAsync(request,executable,progress,token);
         token.ThrowIfCancellationRequested();
         await Task.Run(() =>
         {
@@ -260,7 +192,7 @@ public static class DailySandbox
         string sessionPath = Path.ChangeExtension(requestPath, ".bd2slot");
 
         progress("正在打开独立窗口…");
-        try { vault.WriteLaunchSnapshot(saved, sessionPath); await Run(installation,"Start.exe",["/box:"+box,"/silent","/wait",Path.GetFullPath(executable),LaunchSwitch,requestPath],token); }
+        try { DailyLoadingExperimentLaunch.RequireIsolatedSession(captureSessionId);vault.WriteLaunchSnapshot(saved, sessionPath); await Run(installation,"Start.exe",["/box:"+box,"/silent","/wait",Path.GetFullPath(executable),LaunchSwitch,requestPath],token); }
         catch (Exception) when (!token.IsCancellationRequested)
         {
             string errorPath=Path.Combine(root,"user","current","AppData","Local","BD2DailyAssistant","sandbox-error.json");
@@ -283,6 +215,7 @@ public static class DailySandbox
     private static DailySandboxBinding BootstrapCore(string requestPath)
     {
         var request=JsonSerializer.Deserialize<DailySandboxRequest>(File.ReadAllText(requestPath))??throw new InvalidDataException("隔离启动请求无法读取。"); Validate(request);
+        DailyLoadingExperimentLaunch.RequireIsolatedSession(request.CaptureSessionId);
         SandboxProcessScope.Require(request.Box);
         if(DateTimeOffset.UtcNow-request.CreatedUtc>TimeSpan.FromMinutes(10)||request.CreatedUtc>DateTimeOffset.UtcNow.AddMinutes(1))throw new InvalidDataException("隔离启动请求已过期，请从主窗口重新打开。");
         if (request.Worker != null)
@@ -349,11 +282,16 @@ public static class DailySandbox
                 // an actual same-client record bound to the selected account.
                 SessionRegistry.RestoreAgreement(saved);
                 if(SessionRegistry.HasPendingLauncherToken())throw new InvalidOperationException("仍有启动器登录请求，已停止隔离启动。");
+                DailyLoadingExperimentLaunch.RequireIsolatedSession(request.CaptureSessionId);
                 DailySandboxSessions.WriteAudit(request.Account, "bootstrap", SessionRegistry.ReadAuthenticationIdentity().Stamp, SessionRegistry.AuthenticationStamp(saved));
                 GameLauncher.ValidateLaunchContext(request.GameExecutable);
                 // Updates can restore the Google Play channel. Prepare the
                 // direct-PC channel inside this box, with its own exact backup.
-                GameLauncher.LaunchDirect(request.GameExecutable);
+                int launchedPid=GameLauncher.LaunchDirect(request.GameExecutable);
+                if(request.CaptureSessionId.Length>0){
+                    using var launched=Process.GetProcessById(launchedPid);
+                    DailyJson.Write(Path.Combine(DailyIdentity.DataRoot,"loading-experiment-game.json"),new{id=request.CaptureSessionId,pid=launchedPid,start=launched.StartTime.ToUniversalTime().Ticks,box=request.Box,executable=request.GameExecutable});
+                }
             }
         }
         finally { foreach(var game in games)game.Dispose(); }
@@ -366,7 +304,7 @@ public static class DailySandbox
     internal static bool ShouldImportSession(DailySandboxBinding? binding, DateTimeOffset incomingUtc, bool complete, string current, string expected)
         => binding == null || !complete || current != expected || incomingUtc > binding.ImportedSessionUtc;
 
-    internal static async Task<string> Run(string installation,string file,IEnumerable<string> args,CancellationToken token)
+    internal static async Task<string> Run(string installation,string file,IEnumerable<string> args,CancellationToken token,TimeSpan? timeout=null)
     {
         string[] arguments = args.ToArray();
         if (file.Equals("SbieIni.exe", StringComparison.OrdinalIgnoreCase) && arguments is ["query", var section, var setting])
@@ -380,7 +318,7 @@ public static class DailySandbox
         foreach(var arg in arguments)start.ArgumentList.Add(arg);
         using var process=Process.Start(start)??throw new IOException("Sandboxie 未启动。");
         var output=process.StandardOutput.ReadToEndAsync(); var error=process.StandardError.ReadToEndAsync();
-        try { await process.WaitForExitAsync(token).WaitAsync(TimeSpan.FromSeconds(20),token).ConfigureAwait(false); }
+        try { await process.WaitForExitAsync(token).WaitAsync(timeout??TimeSpan.FromSeconds(20),token).ConfigureAwait(false); }
         catch { if(!process.HasExited)process.Kill();throw; }
         string text=await output.ConfigureAwait(false), detail=await error.ConfigureAwait(false);
         if(process.ExitCode!=0)throw new IOException($"Sandboxie 操作失败（{process.ExitCode}）：{detail.Trim()}");

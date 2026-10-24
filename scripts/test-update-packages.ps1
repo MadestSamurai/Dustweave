@@ -14,6 +14,10 @@ if($UseDelta -and $UseBaselineHelper){
 }
 $repo=[IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $layout=Get-Content -LiteralPath (Join-Path $Packages 'Lite/update-package.json') -Raw|ConvertFrom-Json
+if([Version]($layout.Version.Split('-')[0]) -ge [Version]'1.5.0'){
+ & (Join-Path $PSScriptRoot 'test-bundled-update.ps1') -Packages $Packages -Baseline $Baseline -Output $Output -CoreAssembly (Join-Path $repo 'src/Desktop/bin/Release/net8.0-windows/win-x64/Dustweave.Core.dll')
+ return
+}
 if($layout.Layout -eq 2){
  & (Join-Path $PSScriptRoot 'test-layout-update.ps1') -Packages $Packages -Baseline $Baseline -Output $Output -CoreAssembly (Join-Path $repo 'src/Desktop/bin/Release/net8.0-windows/win-x64/Dustweave.Core.dll')
  return

@@ -33,6 +33,11 @@ namespace BD2Daily
         [DataMember] public string PlayerKey="";
         [DataMember] public string PlayerName="";
         [DataMember] public string Scene="";
+        [DataMember] public bool Loading;
+        [DataMember] public bool MainMenuReady;
+        // Lifetime maxima of the common observer, excluding the optional daily
+        // module. Scalars only: no additional game reads or disk writes.
+        [DataMember] public double ObserverMaxMs,ObserverIdentityMs,ObserverControlMs,ObserverStartupMs,ObserverGuildMs,ObserverWriteMs;
         [DataMember] public string State="waiting_frame";
         [DataMember] public string ErrorCode="";
         [DataMember] public string LeaseOwner="";

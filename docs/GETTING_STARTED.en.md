@@ -1,3 +1,5 @@
+For 1.5.0, download the complete package into a new folder once. Accounts and preferences are retained; save Windows startup and schedules again to point to the new path. Subsequent 1.5 updates use a separate signed full-package feed and the application's own temporary copy, with rollback and interruption recovery. See [current distribution](ALL_IN_ONE_DISTRIBUTION.md).
+
 # Getting started with Dustweave
 
 [简体中文](GETTING_STARTED.md) · [Home](../README.en.md)
@@ -8,7 +10,7 @@
 - A complete Dustweave package. Portable includes the runtime; Lite requires .NET 8 Desktop Runtime x64.
 - Source is MIT licensed: [Dustweave](https://github.com/MadestSamurai/Dustweave). First installations and manual upgrades use complete packages from [GitHub Releases](https://github.com/MadestSamurai/Dustweave/releases). The domestic route is reserved for in-app OTA. GitHub's Source code archive is not an application package.
 
-Run `Dustweave.exe`. Keep the root `Dustweave.exe` and its `app` folder together; runtime files, resources and components are inside `app`. A source-build output folder is for development and is not a complete distribution.
+Run `Dustweave.exe`. Keep the root `Dustweave.exe` and its `app` folder together; the executable bundles the application, while `app` retains supporting data and notices. A source-build output folder is for development and is not a complete distribution.
 
 ## First run
 
@@ -39,7 +41,7 @@ If the Windows desktop itself is elevated, Dustweave uses the caller's existing 
 
 ## Updates and local data
 
-Versions 1.3.1 and later use the separate new OTA channel, available from Updates at the bottom left. Signed differential packages download in the background and require confirmation to restart while idle. Accounts, settings and plugins are preserved; failed updates restore the previous version. For older versions, download the current complete package and extract it into a new folder after exiting the old app. Ordinary UI updates do not require restarting the game; follow specific component instructions if shown.
+Version 1.5.0 starts a separate full-package update channel, available from Updates. Verified complete packages download in the background and require confirmation to restart while idle. Accounts, settings and plugins are preserved; failed updates restore the previous version. Versions 1.4 and earlier remain on their original channel and require a one-time manual migration: exit the old app and extract the current complete package into a new folder. Ordinary UI updates do not require restarting the game; follow specific component instructions if shown.
 
 Daily data defaults to `%LOCALAPPDATA%\BD2DailyAssistant`; protected account sessions use `%LOCALAPPDATA%\BD2AccountSessionManager`. An explicit custom data directory overrides the default. Changing the application folder does not automatically erase this data.
 

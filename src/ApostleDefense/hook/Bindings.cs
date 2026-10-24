@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Linq;
 using UnityEngine;
@@ -10,9 +11,11 @@ namespace BD2ApostleDefense.Runtime
     internal static class Bindings
     {
         private const BindingFlags Flags=BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance|BindingFlags.Static;
-        private static readonly Dictionary<string,MemberInfo> cache=new Dictionary<string,MemberInfo>();
-        private static readonly Dictionary<string,MemberInfo> apiCache=new Dictionary<string,MemberInfo>();
-        private static readonly Dictionary<string,Type> typeCache=new Dictionary<string,Type>();
+        // Native packet callbacks and frame observation can resolve different keys
+        // concurrently. A Dictionary resize must never race a socket-thread read.
+        private static readonly ConcurrentDictionary<string,MemberInfo> cache=new ConcurrentDictionary<string,MemberInfo>();
+        private static readonly ConcurrentDictionary<string,MemberInfo> apiCache=new ConcurrentDictionary<string,MemberInfo>();
+        private static readonly ConcurrentDictionary<string,Type> typeCache=new ConcurrentDictionary<string,Type>();
         internal static MemberInfo Member(Type t,string name)
         {
             var key=t.FullName+"|"+name;

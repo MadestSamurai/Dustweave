@@ -18,6 +18,36 @@ internal static class GamePreparationCases
             throw new Exception("Expected a stopped preparation");
         }
         TaskCompletionSource<T> Signal<T>() => new(TaskCreationOptions.RunContinuationsAsynchronously);
+        {
+            var host = new Host(); var selected = host.Current!; int reads = 0;
+            host.Mutate = value => { value.Scene = ++reads < 3 ? "Empty" : "Map3001_001"; value.Loading = reads < 3; };
+            var messages = new List<string>();
+            var ready = await DailyGamePreparation.WaitForIdentityAsync(host, selected, null, messages.Add, CancellationToken.None);
+            Check(ready.Scene == "Map3001_001" && reads == 3 && messages.Count == 1, "loading identity waits between polls without repeatedly preparing a module");
+            Check(host.Discoveries == 0 && host.TargetedReads == 3, "preparation observes only the selected PID instead of enumerating all processes every poll");
+            var expected = ready;
+            host.Mutate = value => { value.Scene = "Empty"; value.MainMenuReady = true; };
+            var home = await DailyGamePreparation.WaitForIdentityAsync(host, selected, expected, _ => {}, CancellationToken.None);
+            Check(home.Scene == "Empty" && home.MainMenuReady, "native Empty home menu prepares modules without entering a map");
+            host.Mutate = value => value.Scene = "Empty";
+            var child = await DailyGamePreparation.WaitForIdentityAsync(host, selected, expected, _ => {}, CancellationToken.None);
+            Check(child.Scene == "Empty" && !child.MainMenuReady, "authenticated child pages prepare modules without requiring MenuUI");
+            host.Mutate = value => { value.Scene = "Empty"; value.Loading = true; };
+            Check(await Failure(DailyGamePreparation.WaitForIdentityAsync(host, selected, expected, _ => {}, CancellationToken.None, timeout:TimeSpan.Zero)) is TimeoutException,
+                "actual loading remains blocked independently of the scene name");
+            host.Mutate = value => value.Startup = new() { Visible = true };
+            Check(await Failure(DailyGamePreparation.WaitForIdentityAsync(host, selected, expected, _ => {}, CancellationToken.None, timeout:TimeSpan.Zero)) is TimeoutException,
+                "visible login page cannot prepare components even if cached identity remains identified");
+            host.Mutate = value => { value.Loading = true; value.AccountKey = "changed"; };
+            Check(await Failure(DailyGamePreparation.WaitForIdentityAsync(host, selected, expected, _ => {}, CancellationToken.None)) is InvalidOperationException,
+                "an actual account change during loading is still rejected immediately");
+            host.Mutate = value => value.FrameUtcTicks = DateTime.UtcNow.AddSeconds(-13).Ticks;
+            using var cancel = new CancellationTokenSource();
+            var pending = DailyGamePreparation.WaitForIdentityAsync(host, selected, expected, _ => {}, cancel.Token);cancel.Cancel();
+            Check(await Failure(pending) is OperationCanceledException, "stale frame recovery remains immediately cancellable");
+            pending = DailyGamePreparation.WaitForIdentityAsync(host, selected, expected, _ => {}, CancellationToken.None);host.Current = null;
+            Check(await Failure(pending) is DailyGameExitedException, "game exit ends a loading wait without rediscovering or launching a different game");
+        }
         foreach (string reason in new[] { "closed", "restarted", "pid-reused", "user-stop" })
         {
             var host = new Host(); var selected = host.Current!;
@@ -144,18 +174,66 @@ internal static class GamePreparationCases
             finally { if (!child.HasExited) child.Kill(); }
         }
         Check(DailyIssues.Classify(new DailyGameExitedException()) == new DailyIssue("game-ended", "stopped"), "diagnostics distinguishes game closure from compiler failure");
+        {
+            var host = new Host { ReadFailure = "transport-timeout" };
+            string directory = Path.Combine(root, "identity-read-failure");
+            var error = await Failure(DailyGamePreparation.WaitForIdentityAsync(host, host.Current!, null, _ => {}, CancellationToken.None,
+                directory, TimeSpan.Zero));
+            Check(error is TimeoutException && error.Message.Contains("身份数据连接暂时不可用"), "module preparation explains transport failure instead of implying lost login");
+            string relative = "live/diagnostics/login-preparation-failed.json";
+            using var report = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(directory, relative)));
+            Check(report.RootElement.GetProperty("readError").GetString() == "transport-timeout", "failed preparation preserves its actual read cause");
+            Check(DailyDiagnosticExport.Allowed(relative), "failed identity preparation is included in diagnostic export");
+            host.ReadFailure = null; host.Mutate = snapshot => snapshot.Loading = true;
+            error = await Failure(DailyGamePreparation.WaitForIdentityAsync(host, host.Current!, null, _ => {}, CancellationToken.None, directory, TimeSpan.Zero));
+            Check(error.Message.Contains("仍在加载场景"), "a fresh loading frame is distinguished from a missing transport");
+            using var loading = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(directory, relative)));
+            Check(loading.RootElement.GetProperty("observed").GetProperty("Loading").GetBoolean(), "native loading flag survives bounded failure capture");
+        }
+        {
+            string directory = Path.Combine(root, "parallel-login-diagnostics");
+            var environment = new DemoEnvironment(directory);
+            var host = new MissingIdentityHost(environment);
+            var coordinator = new DailyCoordinator(environment, host, directory, new() { LoginTimeout = TimeSpan.FromMilliseconds(20), PollInterval = TimeSpan.FromMilliseconds(1) });
+            var error = await Failure(coordinator.InspectAsync([environment.Accounts[0]]));
+            Check(error is TimeoutException && error.Message.Contains("尚未收到游戏身份数据"), "batch login distinguishes active heartbeat from main-thread identity");
+            using var report = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(directory, "live/diagnostics/login-failed.json")));
+            Check(report.RootElement.GetProperty("readError").GetString() == "snapshot-missing" && report.RootElement.GetProperty("status").GetProperty("State").GetString() == "active",
+                "batch verification now records missing snapshot alongside healthy heartbeat");
+            Check(!environment.Calls.Any(c => c.StartsWith("save:") || c.StartsWith("launch:") || c == "close") && new DailyProfiles(directory).Read().Count == 0,
+                "missing identity never changes login data or binds the saved account as live proof");
+        }
+    }
+
+    sealed class MissingIdentityHost(DemoEnvironment inner) : IGameHost
+    {
+        public GameInstance? Find() => inner.Find();
+        public Task CloseAsync(GameInstance game, CancellationToken token) => inner.CloseAsync(game, token);
+        public Task ConnectAsync(GameInstance game, Action<string> progress, CancellationToken token) => inner.ConnectAsync(game, progress, token);
+        public DailySnapshot? ReadSnapshot() => null;
+        public DailyRuntimeStatus? ReadStatus() => new() { ProcessId = inner.Game!.ProcessId, ProcessStartTicks = inner.Game.StartTicks, State = "active" };
     }
 
     sealed class Host : IGameHost
     {
         public GameInstance? Current = new(999999, 1234567, @"C:\fixture\BrownDust II.exe");
         public Exception? ProbeError;
-        public GameInstance? Find() => Current;
+        public Action<DailySnapshot>? Mutate;
+        public int Discoveries, TargetedReads;
+        public string? ReadFailure;
+        public DailyIdentityRead ReadIdentity(GameInstance expected) => ReadFailure == null ? new(ReadSnapshot(expected)) : new(null, ReadFailure, "fixture");
+        public GameInstance? Find() { Discoveries++; return Current; }
         public bool IsRunning(GameInstance expected) => ProbeError == null ? Current == expected : throw ProbeError;
         public Task CloseAsync(GameInstance instance, CancellationToken cancellation) => throw new NotSupportedException();
         public Task ConnectAsync(GameInstance instance, Action<string> progress, CancellationToken cancellation) => throw new NotSupportedException();
         public DailyRuntimeStatus? ReadStatus() => null;
-        public DailySnapshot? ReadSnapshot() => Current is {} game ? new() { ProcessId = game.ProcessId,
-            ProcessStartTicks = game.StartTicks, FrameUtcTicks = DateTime.UtcNow.Ticks, State = "identified", AccountKey = "fixture", PlayerKey = "fixture" } : null;
+        public DailySnapshot? ReadSnapshot(GameInstance? expected) { TargetedReads++; return expected == Current ? ReadSnapshot() : null; }
+        public DailySnapshot? ReadSnapshot()
+        {
+            if (Current is not {} game) return null;
+            var value = new DailySnapshot { ProcessId = game.ProcessId, ProcessStartTicks = game.StartTicks,
+                FrameUtcTicks = DateTime.UtcNow.Ticks, InstanceId = "fixture", Sequence = 1, State = "identified", AccountKey = "fixture", PlayerKey = "fixture" };
+            Mutate?.Invoke(value); return value;
+        }
     }
 }

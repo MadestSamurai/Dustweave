@@ -29,6 +29,11 @@ static class PassRecoveryCases
         void Reject(Action action, string name) { try { action(); } catch (InvalidDataException) { cases.Add(name); return; } throw new Exception(name); }
         var initial = Pass(claimable: true);
         Check(N(DailyPasses.Report(initial, JsonValue.Create("today")!)["claimable"]) == 1, "guide pass without UsePass uses native table/group relationship");
+        var unnamed = DailyPasses.Report(initial, JsonValue.Create("today")!);
+        unnamed["missions"]![0]!["title_id"] = 77;
+        var named = DailyPasses.WithTitles(unnamed, new() { [77] = O(("textCn", "完成任务")) });
+        Check(S(named["missions"]![0]!["title"]) == "完成任务" && S(unnamed["missions"]![0]!["title"]) == "701"
+            && N(named["missions"]![0]!["progress"]) == 1, "post-claim pass report restores names without changing verified progress or the transaction proof");
         Reject(() => DailyPasses.Report(Pass(broken: true), JsonValue.Create("today")!), "guide pass still rejects a mismatched mission group");
         var op = O(("before", initial), ("cycle", "today"));
         var events = new JsonArray(Event("missions.clear", "request", 1), Event("missions.clear", "response", 2), Event("pass.reward", "request", 3), Event("pass.reward", "response", 4, ("NewbiePassStep", 7)));

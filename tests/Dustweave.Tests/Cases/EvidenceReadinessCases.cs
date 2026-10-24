@@ -49,6 +49,37 @@ static class EvidenceReadinessCases
     public static async Task Run(string root, List<string> cases)
     {
         void Check(bool value, string label) { if (!value) throw new Exception(label); cases.Add(label); }
+        long preparationNow = 638948160000000000L;
+        JsonObject listener = new() { ["Error"] = "", ["Config"] = "expected", ["AtUtcTicks"] = preparationNow,
+            ["Taps"] = new JsonArray("a", "b"), ["Readings"] = new JsonArray("private-response-must-not-persist") };
+        JsonObject Status(JsonObject? sample) => DailyEvidence.PreparationStatus(sample, "expected", ["a", "b"], preparationNow);
+        Check(Status(null)["state"]!.GetValue<string>() == "missing", "prepare distinguishes absent listener from a network failure");
+        Check(Status(listener)["ready"]!.GetValue<bool>() && !Status(listener).ToJsonString().Contains("private-response"), "prepare accepts fresh matching subscriptions without retaining response payloads");
+        var changed = listener.DeepClone().AsObject(); changed["Config"] = "old";
+        Check(Status(changed)["state"]!.GetValue<string>() == "config-pending", "prepare distinguishes unapplied configuration");
+        changed = listener.DeepClone().AsObject(); changed["Taps"] = new JsonArray("a", "c");
+        var mismatch = Status(changed);
+        Check(mismatch["state"]!.GetValue<string>() == "roles-pending" && mismatch["missingRoles"]![0]!.GetValue<string>() == "b" && mismatch["unexpectedRoles"]![0]!.GetValue<string>() == "c", "prepare reports exact missing and extra listener roles");
+        changed = listener.DeepClone().AsObject(); changed["AtUtcTicks"] = preparationNow - TimeSpan.TicksPerSecond * 8;
+        Check(Status(changed)["state"]!.GetValue<string>() == "stale" && Status(changed)["ageMs"]!.GetValue<double>() == 8000, "prepare separates stale game observations from missing subscriptions");
+        changed["AtUtcTicks"] = long.MaxValue;
+        Check(Status(changed)["state"]!.GetValue<string>() == "invalid-timestamp", "prepare rejects invalid future timestamps without overflow");
+        changed = new JsonObject { ["Error"] = "MissingMethodException: SomeMethod", ["AtUtcTicks"] = preparationNow };
+        Check(Status(changed)["state"]!.GetValue<string>() == "component-error" && Status(changed)["error"]!.GetValue<string>().Contains("SomeMethod"), "prepare preserves actual component error even when config and taps are absent");
+        Check(Status(new JsonObject())["state"]!.GetValue<string>() == "invalid-payload", "prepare identifies malformed health payloads");
+        var preparationWindow = new DailyEvidence.PreparationWindow();
+        var stalled = new JsonObject { ["state"] = "config-pending", ["sampleAtUtcTicks"] = preparationNow, ["ageMs"] = 12573d };
+        Check(Enumerable.Range(0, 100).All(i => !preparationWindow.Expired(stalled, 12.573)), "100 polls of the user's 12-second-old loading frame are not 100 failed configuration attempts");
+        for (int i=0;i<19;i++)
+        {
+            stalled["sampleAtUtcTicks"] = preparationNow + i + 1; stalled["ageMs"] = 10d;
+            Check(!preparationWindow.Expired(stalled, 13 + i), "listener waits for real frame opportunity " + i);
+        }
+        stalled["sampleAtUtcTicks"] = preparationNow + 20;
+        Check(preparationWindow.Expired(stalled, 32), "continuously fresh but incompatible listener fails within 20 game observations");
+        Check(new DailyEvidence.PreparationWindow().Expired(new JsonObject { ["state"] = "missing" }, 60), "a frozen game cannot wait indefinitely");
+        Check(new DailyEvidence.PreparationWindow().Expired(new JsonObject { ["state"] = "component-error" }, .1), "native component exception fails immediately instead of waiting a longer timeout");
+        Check(new[] { "missing", "stale", "config-pending", "roles-pending", "component-error" }.All(s => DailyIssues.Classify(DailyEvidence.PreparationMessage(s)).Code == "preparation"), "all listener failures retain actionable connection categories across helper propagation");
         async Task<string> Error(Fixture f)
         {
             try { await f.Driver.EvidenceAsync(["mirror"]); return ""; }

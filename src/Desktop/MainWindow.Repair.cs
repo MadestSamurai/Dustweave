@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -70,6 +71,7 @@ public partial class MainWindow
         updatePanel.Repair.CancelRequested += () => repairCancellation?.Cancel();
         Closed += (_, _) => repairCancellation?.Cancel();
     }
+    internal void OpenRepairPage() => WorkspaceTabs.SelectedItem = UpdatesTab;
     private async Task RepairActionAsync()
     {
         if (IsSandboxWindow || smoke != null || updateChecking || UpdateRestarting || cacheChanging || repairCancellation != null) return;
@@ -85,8 +87,13 @@ public partial class MainWindow
         string installRoot = DailyUpdateHost.InstallRoot;
         if (!File.Exists(Path.Combine(installRoot, "Dustweave.exe")) || !Directory.Exists(Path.Combine(installRoot, "app")))
         { updatePanel.Repair.State("updates.packaged_only", "repair.check", false); return; }
-        string runtime = Path.GetFullPath(typeof(object).Assembly.Location);
-        string flavor = runtime.StartsWith(Path.Combine(installRoot, "app") + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ? "Portable" : "Lite";
+        // Bundled runtime assemblies have no Location. The edition compiled
+        // into this host cannot be changed by overlaying package metadata.
+        string? packagedFlavor = typeof(MainWindow).Assembly.GetCustomAttributes<System.Reflection.AssemblyMetadataAttribute>()
+            .SingleOrDefault(a => a.Key == "Dustweave.PackageFlavor")?.Value;
+        string flavor = packagedFlavor is "Portable" or "Lite" ? packagedFlavor :
+            typeof(object).Assembly.Location.Length == 0 || Path.GetFullPath(typeof(object).Assembly.Location)
+                .StartsWith(Path.Combine(installRoot, "app") + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ? "Portable" : "Lite";
         repairCancellation = CancellationTokenSource.CreateLinkedTokenSource(updateLifetime.Token);
         updateChecking = true; UpdateUpdateControls();
         updatePanel.Repair.State(repairPlan == null ? "repair.checking" : "repair.preparing", "repair.check", true, 0, 0);
@@ -94,6 +101,26 @@ public partial class MainWindow
         try
         {
             using var client = DailyUpdates.Client();
+            if (DailyUpdateHost.SelfUpdating)
+            {
+                var transport = DailyUpdateTransport.Production();
+                var verified = await transport.FetchAsync(client, root, token);
+                var release = verified.Feed.Releases.SingleOrDefault(r => r.Version == DailyProductVersion.Current && r.Layout == DailyUpdates.BundledLayout)
+                    ?? throw new InvalidDataException("updates.repair_unavailable");
+                var asset = release.Assets.Single(a => a.Flavor == flavor);
+                var download = new Progress<int>(p => updatePanel.Repair.State("updates.downloading", "repair.check", true, release.Version, p));
+                string directory = await transport.DownloadAsync(client, verified, release.Version, flavor, root, download, token, installRoot, allowDelta: false, fullRepair: true);
+                var problems = await Task.Run(() => DailyFullPackageRepair.Inspect(directory, installRoot, release, asset, token), token);
+                updatePanel.Repair.Problems(problems);
+                if (problems.Length == 0) updatePanel.Repair.State("repair.healthy", "repair.check", false);
+                else
+                {
+                    using var process = Process.GetCurrentProcess();
+                    readyRepair = new(directory, Environment.ProcessPath!, process.Id, process.StartTime.ToUniversalTime().Ticks, release, asset) { Repair = true };
+                    updatePanel.Repair.State("repair.ready", "repair.restart", false);
+                }
+                return;
+            }
             var repair = DailyUpdateRepair.Production();
             var progress = new Progress<DailyRepairProgress>(updatePanel.Repair.Progress);
             if (repairPlan == null)

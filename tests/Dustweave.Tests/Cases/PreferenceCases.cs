@@ -30,6 +30,23 @@ static class PreferenceCases
             throw new Exception(name);
         }
         var p = store.Read(a);
+        var oldMaps = JsonSerializer.SerializeToNode(p)!.AsObject();
+        oldMaps["Weekly"]!.AsObject().Remove("CollectionMaps");
+        Check(DailyPreferences.Parse(oldMaps.ToJsonString()).Weekly.CollectionMaps == null,
+            "older weekly preferences retain all collection maps");
+        var mapSettings = new DailyPreferences();
+        mapSettings.Weekly.CollectionMaps = [1, 21, 10011]; store.Save(a, mapSettings);
+        Check(store.Read(a).Weekly.CollectionMaps!.SequenceEqual([1L, 21L, 10011L]) && store.Read(b).Weekly.CollectionMaps == null,
+            "collection map selection is isolated by account");
+        mapSettings.Weekly.CollectionMaps = []; store.Save(a, mapSettings);
+        Check(store.Read(a).Weekly.CollectionMaps is { Length: 0 } && !store.Read(a).Weekly.IncludesCollectionMap(1),
+            "empty map selection stays empty after persistence");
+        foreach (var invalid in new long[][] { [0], [-1], [1, 1] })
+        {
+            mapSettings.Weekly.CollectionMaps = invalid;
+            Reject(mapSettings.Validate, "invalid collection map preference rejected: " + string.Join(',', invalid));
+        }
+        store.Save(a, p);
         var retiredOptions = JsonSerializer.SerializeToNode(p)!.AsObject();
         retiredOptions["Weekly"]!["NpcHunting"] = true;
         retiredOptions["Weekly"]!["Npc"] = true;

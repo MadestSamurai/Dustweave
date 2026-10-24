@@ -32,6 +32,7 @@ public partial class MainWindow
     }
     private async Task InitializeStartupFeaturesAsync()
     {
+        if(CaptureSessionId.Length>0)return;
         if (scheduleStore.Last is { State: "running" } previous)
             scheduleStore.Record(previous with { State = "interrupted", AtUtc = DateTimeOffset.UtcNow });
         if (ShowUpdateFailure()) { _ = CheckUpdatesAsync(); return; }

@@ -25,14 +25,16 @@ public sealed class DailyStorageMaintenance
     readonly string? instances, extraction, crashes;
     readonly Func<string,bool> boxIdle;
     readonly Func<bool> extractionIdle;
+    readonly Func<string,bool> extractionSafe;
     static readonly string[] ExtractionNames=["Dustweave","Dustweave.Updater","BD2DailyAssistant","BD2DailyAssistant.Updater"];
     sealed record Box(string Directory,string Data,string Name,string Account);
     public DailyStorageMaintenance(string root) : this(root, Shared(root)?DailySandbox.Store:null,
         Shared(root)?Path.Combine(Path.GetTempPath(),".net"):null, BoxIdle, ExtractionIdle,
-        Shared(root)?Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"CrashDumps"):null) { }
+        Shared(root)?Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"CrashDumps"):null,
+        directory=>MayCleanExtraction(directory,AppContext.GetData("NATIVE_DLL_SEARCH_DIRECTORIES") as string,typeof(object).Assembly.Location.Length==0)) { }
     // Explicit locations/probes keep synthetic checks entirely outside real user storage.
-    public DailyStorageMaintenance(string root,string? instances,string? extraction,Func<string,bool> boxIdle,Func<bool> extractionIdle,string? crashes=null)
-    { this.root=Path.GetFullPath(root);this.instances=instances;this.extraction=extraction;this.boxIdle=boxIdle;this.extractionIdle=extractionIdle;this.crashes=crashes; }
+    public DailyStorageMaintenance(string root,string? instances,string? extraction,Func<string,bool> boxIdle,Func<bool> extractionIdle,string? crashes=null,Func<string,bool>? extractionSafe=null)
+    { this.root=Path.GetFullPath(root);this.instances=instances;this.extraction=extraction;this.boxIdle=boxIdle;this.extractionIdle=extractionIdle;this.crashes=crashes;this.extractionSafe=extractionSafe??(_=>true); }
     static bool Shared(string root) => Accounts.SandboxProcessScope.CurrentBox.Length==0 &&
         Accounts.SandboxConfiguration.SameRoot(root,Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BD2DailyAssistant"));
     static bool Expected(Exception e) => e is IOException or UnauthorizedAccessException or InvalidOperationException or JsonException or ArgumentException or System.ComponentModel.Win32Exception;
@@ -55,8 +57,8 @@ public sealed class DailyStorageMaintenance
     }
     static bool ExtractionIdle()
     {
-        // Old single-file hosts may lazily load more files from their extraction directory.
-        if(typeof(DailyStorageMaintenance).Assembly.Location.Length==0)return false;
+        // Other hosts may still load native files lazily. The current host's
+        // precise extraction generation is excluded separately.
         foreach(string name in ExtractionNames)
         {
             var processes=Process.GetProcessesByName(name);
@@ -65,6 +67,21 @@ public sealed class DailyStorageMaintenance
             finally{foreach(var p in processes)p.Dispose();}
         }
         return true;
+    }
+    internal static bool MayCleanExtraction(string directory,string? nativePaths,bool bundledRuntime)
+    {
+        if(string.IsNullOrWhiteSpace(nativePaths))return !bundledRuntime;
+        try
+        {
+            string basis=Path.TrimEndingDirectorySeparator(Path.GetFullPath(directory));
+            foreach(string value in nativePaths.Split(Path.PathSeparator,StringSplitOptions.RemoveEmptyEntries))
+            {
+                string path=Path.TrimEndingDirectorySeparator(Path.GetFullPath(value));
+                if(path.Equals(basis,StringComparison.OrdinalIgnoreCase)||path.StartsWith(basis+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase))return false;
+            }
+            return true;
+        }
+        catch(Exception error) when(Expected(error)){return false;}
     }
     Box? ReadBox(string directory)
     {
@@ -161,7 +178,7 @@ public sealed class DailyStorageMaintenance
             int skipped=0;var files=DailyCacheStorage.Files(folder,token,ref skipped).ToArray();
             var measured=files.Where(f=>counted.Add(f.Path)).ToArray();var included=measured.Select(f=>f.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
             scopes.Add(new("extraction",folder,measured.Sum(f=>f.DiskBytes),measured.Sum(f=>f.DiskBytes),0,
-                canExtract?ExtractionPlan(folder,files,DateTime.UtcNow).Sum(u=>u.Files.Where(f=>included.Contains(f.Path)).Sum(f=>f.DiskBytes)):0,skipped));
+                canExtract?ExtractionPlan(folder,files,DateTime.UtcNow).Where(u=>extractionSafe(u.Path)).Sum(u=>u.Files.Where(f=>included.Contains(f.Path)).Sum(f=>f.DiskBytes)):0,skipped));
         }
         if(crashes!=null)
         {
@@ -228,7 +245,7 @@ public sealed class DailyStorageMaintenance
         {
             token.ThrowIfCancellationRequested();
             int skipped=0;var files=DailyCacheStorage.Files(folder,token,ref skipped).ToArray();
-            var cleaned=DailyCacheStorage.DeleteUnits(ExtractionPlan(folder,files,DateTime.UtcNow),token,extractionIdle);
+            var cleaned=DailyCacheStorage.DeleteUnits(ExtractionPlan(folder,files,DateTime.UtcNow).Where(u=>extractionSafe(u.Path)).ToArray(),token,extractionIdle);
             Add(cleaned with {Skipped=cleaned.Skipped+skipped});
         }
         return result;

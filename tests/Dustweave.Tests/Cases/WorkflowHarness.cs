@@ -30,9 +30,10 @@ sealed class WorkflowHarness : IDisposable
     public long Ticks => 638948160000000000L + (long)(Time * TimeSpan.TicksPerSecond);
     private long sequence;
     private readonly string[] taps;
-    public WorkflowHarness(string root, DailyBusinessProof[] proofs, string[]? extraTaps = null, Action<JsonObject, JsonObject>? configureIdentity = null, string? assetDirectory = null)
+    public WorkflowHarness(string root, DailyBusinessProof[] proofs, string[]? extraTaps = null, Action<JsonObject, JsonObject>? configureIdentity = null, string? assetDirectory = null, bool observeIdentity = false)
     {
         Root = root;
+        Frame["Protocol"] = 1;
         Frame["BridgeVersion"] = DailyStageObservation.BridgeVersion;
         configureIdentity?.Invoke(Frame, Context);
         taps = proofs.SelectMany(p => p.EventRoles).Concat(extraTaps ?? []).Distinct().ToArray();
@@ -43,6 +44,16 @@ sealed class WorkflowHarness : IDisposable
             OnRead?.Invoke();
             Frame["AtUtcTicks"] = Ticks;
             Publish();
+            if (observeIdentity)
+            {
+                var identity = new DailySnapshot { ProcessId = (int)DailyEvidence.Integer(Frame["ProcessId"]), ProcessStartTicks = DailyEvidence.Integer(Frame["ProcessStartTicks"]),
+                    InstanceId = Frame["Instance"]!.GetValue<string>(), Sequence = 1, FrameUtcTicks = Ticks, State = "identified",
+                    AccountKey = Frame["AccountKey"]!.GetValue<string>(), PlayerKey = Frame["PlayerKey"]!.GetValue<string>(), Scene = Frame["Scene"]!.GetValue<string>(),
+                    MainMenuReady = DailyNavigationDecision.Types(Frame).Contains("MenuUI"),
+                    Guild = new() { ServerKey = Context["server"]!.GetValue<string>(), CycleKey = Context["cycle"]!.GetValue<string>() } };
+                return new DailyStageObservation(identity.AccountKey, () => Frame, () => identity,
+                    stopped: () => Stopped, now: () => Ticks, timeout: TimeSpan.Zero).ReadFrameAsync();
+            }
             return Task.FromResult(new DailyStageFrame(Frame.DeepClone().AsObject(), Context.DeepClone().AsObject()));
         }
         Driver = new(root, Box, Read, () => Stopped, () => Ticks, () => Time, delay => { Time += delay.TotalSeconds; OnDelay?.Invoke(); Publish(); return Task.CompletedTask; });

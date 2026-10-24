@@ -311,12 +311,14 @@ public sealed class DailyQueueSession(string root, IDailyQueueExecutor executor,
         string log = Path.Combine(root, "queue-worker.log");
         using var stream = new StreamWriter(new FileStream(log, FileMode.Create, FileAccess.Write, FileShare.Read)) { AutoFlush = true };
         string lastReport = "";
+        DailyHelperFailure? preparationFailure = null;
         var sync = new object();
         void Report(string line)
         {
             lock (sync)
             {
                 lastReport = line;
+                if (DailyHelperFailure.Read(line) is { } failure) preparationFailure = failure;
                 stream.WriteLine(line);
             }
         }
@@ -328,7 +330,10 @@ public sealed class DailyQueueSession(string root, IDailyQueueExecutor executor,
             if (stopped)
                 return new("paused", "已停止，未开始日常操作。", "", []);
             if (prepared != 0)
-                throw new InvalidOperationException("日常连接未就绪，请查看执行日志；未开始日常操作。");
+            {
+                Report("Daily preparation exit code: " + prepared);
+                throw preparationFailure?.ToException() ?? new InvalidOperationException("connection.preparation_failed");
+            }
             DailyJson.Write(LastOutput, new
             {
                 state = "preparing",

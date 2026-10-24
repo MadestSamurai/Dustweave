@@ -13,7 +13,18 @@ public partial class TerritoryWindow {
   var checks=new List<string>();void Check(bool ok,string label){if(!ok)throw new InvalidOperationException(label);checks.Add(label);}
   Check(!link.Enabled&&!StartButton.IsEnabled&&TerritoryJson.Read<TerritoryControl>(Path.Combine(root,"control.json"))?.Enabled!=true,"启动不自动操作游戏");
   Check(LoggingBox.IsChecked==true&&MiningBox.IsChecked==true&&FarmingBox.IsChecked==true,"默认三个项目可见并选中");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
-  Check(IntervalBox.Text=="500"&&BudgetBox.Text=="1400","默认间隔与预算");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  Check(IntervalBox.Text=="500"&&BudgetBox.Text=="0","默认间隔与不限播种预算");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  var migrationRoot=Path.Combine(output,"budget-migration");Directory.CreateDirectory(migrationRoot);
+  var migrationPath=Path.Combine(migrationRoot,"settings.json");
+  Check(TerritoryPreferences.Load(migrationRoot).PlantingBudget==0,"新用户默认不限播种预算");
+  File.WriteAllText(migrationPath,"{\"PlantingBudget\":1400,\"IntervalMs\":750,\"MinimumTreeStage\":2,\"RecipeId\":4}");
+  var migrated=TerritoryPreferences.Load(migrationRoot);
+  Check(migrated.PlantingBudget==0&&migrated.PlantingBudgetDefaultsApplied&&migrated.IntervalMs==750&&migrated.MinimumTreeStage==2&&migrated.RecipeId==4,"旧默认1400迁移为不限且保留其他设置");
+  Check(TerritoryJson.Read<TerritorySettings>(migrationPath)?.PlantingBudgetDefaultsApplied==true&&TerritoryPreferences.Load(migrationRoot).PlantingBudget==0,"迁移立即保存且重开不恢复旧预算");
+  File.WriteAllText(migrationPath,"{\"PlantingBudget\":2500}");
+  Check(TerritoryPreferences.Load(migrationRoot).PlantingBudget==2500,"旧自定义预算不变");
+  using(var migrationLink=new TerritoryControlLink(migrationRoot))migrationLink.Configure(new TerritorySettings{PlantingBudget=1400});
+  Check(TerritoryPreferences.Load(migrationRoot).PlantingBudget==1400,"用户重新设置1400后不再迁移");
   Check(TreeStageBox.SelectedValue is int initialStage&&initialStage==0,"默认仅砍完全成熟的树");
   Check(VehicleBox.IsChecked==true&&DashBox.IsChecked==true,"默认开启载具赶路与冲刺脱困");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
   Check(NavMeshBox.IsChecked==false,"默认不启用 NavMesh，使用 A* 寻路");await controlQueue;await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);

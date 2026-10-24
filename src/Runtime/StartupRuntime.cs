@@ -8,17 +8,35 @@ namespace BD2Daily.Runtime {
   private int attemptedTitle,attemptedDownload,downloadTitle;private string action="";
   private static object Field(string role,object obj){return ((FieldInfo)StartupBindings.Get(role)).GetValue(obj);}
   private static object Read(string role,object obj=null){return ((MethodInfo)StartupBindings.Get(role)).Invoke(obj,null);}
-  internal void Tick(DailySnapshot s){
+  internal void Tick(DailySnapshot s,bool allowActions=true){
    var t=new StartupObservation{Supported=StartupBindings.Supported,Action=action};s.Startup=t;
    if(!t.Supported){t.BlockReason="本机启动页接口未匹配，请手动点击 TOUCH TO START";return;}
    try{
-    var titles=UnityEngine.Object.FindObjectsOfType<IntroUI>().Where(x=>x!=null&&x.isActiveAndEnabled&&x.gameObject.activeInHierarchy).ToArray();
+    var app=(AppManager)Read("Services.App");
+    // The closing animator state can outlive its hidden GameObject. Only the
+    // live loading surface is a loading signal.
+    s.Loading=app.IsActiveUILoading();s.MainMenuReady=false;
+    // Global Unity object searches can contend with scene activation. The
+    // loading flag is enough here; there is no clickable title during loading.
+    if(s.Loading){t.BlockReason="等待游戏加载完成";return;}
+    // Empty also hosts room/mail/draw pages. MainMenuReady is diagnostic only;
+    // no page-specific state may invalidate a fresh account identity. Observe
+    // transition/title surfaces in every scene and even while a tool owns input.
+    var surfaces=UnityEngine.Object.FindObjectsOfType<UIBase>().Where(u=>u!=null&&u.isActiveAndEnabled&&u.gameObject.activeInHierarchy).ToArray();
+    s.Loading=surfaces.Any(u=>u is LoadingUI||u is EntranceBackgroundCoverUI);
+    s.MainMenuReady=!s.Loading&&surfaces.Count(u=>u is MenuUI)==1;
+    if(s.Loading){t.BlockReason="等待游戏加载完成";return;}
+    // IntroUI and IntroMessagePopupUI inherit UIObjectBase, not UIBase.
+    // Query their actual types; the ordinary page list cannot contain them.
+    var titles=UnityEngine.Object.FindObjectsOfType<IntroUI>().Where(u=>u!=null&&u.isActiveAndEnabled&&u.gameObject.activeInHierarchy).ToArray();
+    t.Visible=titles.Length>0;
+    if(!allowActions)return;
     if(titles.Length!=1){if(titles.Length>1)t.BlockReason="检测到多个启动页，等待界面稳定";return;}
     var title=titles[0];t.Visible=true;t.TitleInstanceId=title.GetInstanceID();t.Attempted=attemptedTitle==t.TitleInstanceId;
     t.Stage=Field("Title.State",title).ToString();var enter=(GameObject)Field("Title.Enter",title);
     t.Ready=t.Stage=="IntroWorkFinished"&&enter!=null&&enter.activeInHierarchy;
     t.ClickEnabled=(bool)Read("Title.Enabled",title);
-    var downloads=UnityEngine.Object.FindObjectsOfType<DownloadPopupUI>().Where(u=>u!=null&&u.gameObject.activeInHierarchy).ToArray();
+    var downloads=surfaces.OfType<DownloadPopupUI>().ToArray();
     DownloadPopupUI download=downloads.Length==1?downloads[0]:null;GameObject downloadButton=null;
     t.DownloadInProgress=downloadTitle==t.TitleInstanceId&&t.Stage=="CheckDownload";
     if(download!=null){
@@ -26,13 +44,12 @@ namespace BD2Daily.Runtime {
      t.DownloadVisible=true;t.DownloadInstanceId=download.GetInstanceID();t.DownloadAttempted=attemptedDownload==t.DownloadInstanceId;
      t.DownloadReady=downloadButton!=null&&downloadButton.activeInHierarchy&&selectable!=null&&selectable.isActiveAndEnabled&&selectable.IsInteractable();
     }
-    var app=(AppManager)Read("Services.App");
-    var modal=UnityEngine.Object.FindObjectsOfType<UIBase>().Where(u=>u!=null&&u.gameObject.activeInHierarchy&&(bool)Field("UI.Popup",u)).Select(u=>u.GetType().Name).ToList();
-    if(UnityEngine.Object.FindObjectsOfType<IntroMessagePopupUI>().Any(u=>u.gameObject.activeInHierarchy))modal.Add("IntroMessagePopupUI");
-    if(UnityEngine.Object.FindObjectsOfType<IntroExitPopupUI>().Any(u=>u.gameObject.activeInHierarchy))modal.Add("IntroExitPopupUI");
+    var modal=surfaces.Where(u=>(bool)Field("UI.Popup",u)).Select(u=>u.GetType().Name).ToList();
+    if(UnityEngine.Object.FindObjectsOfType<IntroMessagePopupUI>().Any(u=>u!=null&&u.gameObject.activeInHierarchy))modal.Add("IntroMessagePopupUI");
+    if(surfaces.OfType<IntroExitPopupUI>().Any())modal.Add("IntroExitPopupUI");
     if(download!=null)modal.Remove("DownloadPopupUI");
     if(modal.Count>0)t.BlockReason="请先处理启动页弹窗："+string.Join("、",modal.Distinct().ToArray());
-    else if(app.IsActiveUILoading()||app.IsPlayAnimUILoading())t.BlockReason="等待游戏加载完成";
+    else if(app.IsActiveUILoading())t.BlockReason="等待游戏加载完成";
     if(string.IsNullOrEmpty(s.ErrorCode))s.State=t.Ready?"waiting_start":"starting_game";
     var permit=LocalStorage.Read<StartupPermit>("startup-permit.json");
     string decision=StartupPolicy.Decide(s,permit,DateTime.UtcNow.Ticks);
@@ -52,7 +69,7 @@ namespace BD2Daily.Runtime {
     if(StartupPolicy.Decide(s,LocalStorage.Read<StartupPermit>("startup-permit.json"),DateTime.UtcNow.Ticks)!="click_start")return;
     attemptedTitle=t.TitleInstanceId;t.Attempted=true;action="已点击 TOUCH TO START，等待进入游戏";t.Action=action;
     ((MethodInfo)StartupBindings.Get("Title.Click")).Invoke(title,null);
-   }catch(Exception e){t.BlockReason="启动页读取／操作异常："+e.GetBaseException().Message;}
+   }catch(Exception e){s.State="read_error";s.ErrorCode="startup-observation";t.BlockReason="启动页读取／操作异常："+e.GetBaseException().Message;}
   }
  }
 }

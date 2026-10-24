@@ -25,7 +25,7 @@ internal static class Program
         bool interactive = args.Length == 0 || args.Length == 1 && args[0] is "--desktop-session" or "--repair";
         try
         {
-            if (Recovery.TryRun(args)) return 0;
+            if (Recovery.TryRun(args, Environment.ProcessPath!, DataRoot)) return 0;
             if (args is ["--repair"]) return LaunchRepair();
             int result = RunApplication(args);
             if (result == 0 || !interactive) return result;

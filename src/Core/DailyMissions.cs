@@ -201,10 +201,24 @@ public static class DailyPasses
             long progress = N(stored?["Value"]), required = N(def["conditionValue"]);
             string status = B(stored?["IsComplete"]) ? "claimed" : locked.Contains(id) ? "locked" : progress >= required ? "claimable" : "pending";
             string title = texts != null && texts.TryGetValue(N(def["titleLocalTextId"]), out var text) ? S(text["textCn"]) : id.ToString();
-            missions.Add(O(("key", "pass:" + pid + ":" + eventId + ":" + id), ("id", id), ("pass_id", pid), ("event_id", eventId), ("cycle", cycle), ("progress", progress), ("required", required), ("status", status), ("condition_type", N(def["conditionType"])), ("condition_subtype", N(def["conditionSubType"])), ("params", def["conditionSubTypeParams"] ?? new JsonArray()), ("title", title)));
+            missions.Add(O(("key", "pass:" + pid + ":" + eventId + ":" + id), ("id", id), ("pass_id", pid), ("event_id", eventId), ("cycle", cycle), ("progress", progress), ("required", required), ("status", status), ("condition_type", N(def["conditionType"])), ("condition_subtype", N(def["conditionSubType"])), ("params", def["conditionSubTypeParams"] ?? new JsonArray()), ("title_id", def["titleLocalTextId"]), ("title", title)));
         }
         Require(missions.Count == missions.Select(m => S(m!["key"])).Distinct().Count(), "Duplicate pass mission identity");
         return O(("missions", missions), ("total", missions.Count), ("claimable", Rows(missions).Count(r => S(r["status"]) == "claimable")), ("pending", Rows(missions).Count(r => S(r["status"]) == "pending")), ("active_pass_ids", activeIds), ("selected_pass_id", pid), ("pass_title", native["Title"]), ("schedule", native["Schedule"]), ("cycle", cycle));
+    }
+    internal static JsonObject WithTitles(JsonObject report, Dictionary<long, JsonObject> texts)
+    {
+        // Transaction verification intentionally has no presentation tables. Its
+        // post-claim report must regain names before replacing the visible report.
+        var result = report.DeepClone().AsObject();
+        foreach (var mission in Rows(result["missions"]))
+            if (texts.TryGetValue(N(mission["title_id"]), out var text))
+            {
+                string title = S(text["textCn"]);
+                if (title.Length == 0) title = S(text["textEn"]);
+                if (title.Length > 0) mission["title"] = title;
+            }
+        return result;
     }
     private static HashSet<(long Id, string Kind)> Rewards(JsonObject e, long pid)
     {
@@ -350,7 +364,7 @@ public static class DailyPasses
         {
             var previous = reports.OfType<JsonObject>().FirstOrDefault(r => N(r["selected_pass_id"]) == N(report["selected_pass_id"]));
             if (previous != null) reports.Remove(previous);
-            reports.Add(report.DeepClone());
+            reports.Add(WithTitles(report, w.Index("missions/LocalTextTable.json")));
         }
         // Read the catalogue independently of any one prefab. A new/expired
         // pass, or a newbie step advancing, must not poison every other page.

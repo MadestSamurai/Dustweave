@@ -303,11 +303,19 @@ public static class DailyNavigationDecision
             surface = null;
             return null;
         }
-        return ReadyInput(surface) ? NoticeAction(surface) : null;
+        string ui = Text(surface, "Type");
+        return Rows(f).Count(r => Text(r, "Type") == ui) == 1 && ReadyInput(surface) ? NoticeAction(surface) : null;
     }
     private static JsonObject? NoticeAction(JsonObject surface)
     {
         string ui = Text(surface, "Type");
+        // The ticket notice's native cancel branch only calls CloseUI. Its OK
+        // branch dispatches UseCostumeTicket; never use a generic confirm/back.
+        // Match the stable control, independent of ticket name or game language.
+        if (ui == "CostumeSelectNoticePopupUI")
+            return ReadyInput(surface, false) && Targets(surface).Count(t => Text(t, "Field") == "_cancelBtn" && Enabled(t)) == 1
+                && Targets(surface).Any(t => Text(t, "Field") == "_cancelBtn" && Enabled(t) && Text(t, "Route") == "ui")
+                ? Click(ui, "_cancelBtn", "暂不使用服装选择券，保留在背包并继续日常") : null;
         if (ui == "EvilCastleSeasonTotalRewardPopupUI")
             return HasTarget(surface, "_objBackButton") ? Click(ui, "_objBackButton", "关闭已发放的恶魔城赛季奖励") : null;
         // This native button only closes the new-season acknowledgement. Handle
@@ -347,6 +355,8 @@ public static class DailyNavigationDecision
         var types = Types(f);
         StageHostException Fault(string message) => new("adapter", message);
         JsonObject One(string name) => rows.First(r => Text(r, "Type") == name);
+        if (types.Contains("CostumeSelectNoticePopupUI"))
+            return Notice(f, p, out _);
         if (types.Contains("QuickMenuUI"))
         {
             if (Blockers(f, "QuickMenuUI", p).Length > 0)

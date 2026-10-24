@@ -61,7 +61,7 @@ public sealed class DailyUpdateTransport(DailyUpdateTrust trust)
     }
 
     public async Task<string> DownloadAsync(HttpClient client, DailyVerifiedUpdate verified, string version, string flavor,
-        string root, IProgress<int>? progress, CancellationToken token, string? installedDirectory = null, bool allowDelta = true)
+        string root, IProgress<int>? progress, CancellationToken token, string? installedDirectory = null, bool allowDelta = true, bool fullRepair = false)
     {
         using var storage = DailyUpdateHost.AcquireStorage(root);
         var feed = DailyUpdateSignatures.Verify(verified.Signed, trust);
@@ -69,7 +69,7 @@ public sealed class DailyUpdateTransport(DailyUpdateTrust trust)
         var asset = release.Assets.Single(a => a.Flavor == flavor);
         var installed = installedDirectory == null ? null : DailyUpdateJson.TryRead<DailyUpdatePackage>(Path.Combine(installedDirectory, "update-package.json"));
         string? manual = DailyUpdates.ManualUpdateReason(feed, release, installed);
-        if (manual != null) throw new InvalidDataException(manual);
+        if (manual != null && !(fullRepair && release.Layout == DailyUpdates.BundledLayout)) throw new InvalidDataException(manual);
         if (release.InstallerProtocol == DailyUpdateInventory.Protocol && installedDirectory != null && installed != null)
         {
             var detail = progress == null ? null : new Progress<DailyRepairProgress>(p => progress.Report(p.Total > 0 ? p.Completed * 100 / p.Total : 0));
@@ -78,14 +78,14 @@ public sealed class DailyUpdateTransport(DailyUpdateTrust trust)
             DailyUpdateJson.Write(Path.Combine(plan.Directory, "download-choice.json"), new DailyUpdateDownload(null, true));
             return plan.Directory;
         }
-        if (release.Layout >= 2 && !allowDelta) throw new InvalidDataException("updates.manual_delta");
+        if (release.Layout == DailyUpdates.CurrentLayout && !allowDelta) throw new InvalidDataException("updates.manual_delta");
         string directory = Path.Combine(root, "updates", version + "-" + flavor);
         DailyUpdates.EnsureNoLinks(directory); Directory.CreateDirectory(directory);
         using var lease = new FileStream(Path.Combine(directory, "download.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
         DailyUpdateJson.Write(Path.Combine(directory, "signed-feed.json"), verified.Signed);
         string choice = Path.Combine(directory, "download-choice.json");
         string full = Path.Combine(directory, "package.zip");
-        if (release.Layout == 1 && File.Exists(full) && await Task.Run(() => DailyUpdates.Verify(full, asset), token))
+        if (release.Layout != DailyUpdates.CurrentLayout && File.Exists(full) && await Task.Run(() => DailyUpdates.Verify(full, asset), token))
         { DailyUpdateJson.Write(choice, new DailyUpdateDownload(null)); return directory; }
         // A direct patch from the exact installed version avoids downloading intermediate releases.
         // Only use deltas with a meaningful size advantage; never substitute Portable for Lite.
@@ -114,12 +114,12 @@ public sealed class DailyUpdateTransport(DailyUpdateTrust trust)
             {
                 token.ThrowIfCancellationRequested();
                 DailyUpdateJson.Write(Path.Combine(directory, "delta-fallback.json"), new { atUtc = DateTimeOffset.UtcNow, error = error.ToString() });
-                if (release.Layout >= 2) throw new InvalidDataException("updates.manual_delta", error);
+                if (release.Layout == DailyUpdates.CurrentLayout) throw new InvalidDataException("updates.manual_delta", error);
                 // A missing/mismatched local base, unavailable patch or failed reconstruction falls
                 // back within this check, instead of breaking automation or requiring another click.
             }
         }
-        if (release.Layout >= 2) throw new InvalidDataException("updates.manual_delta");
+        if (release.Layout == DailyUpdates.CurrentLayout) throw new InvalidDataException("updates.manual_delta");
         await DownloadPayload(client, verified, version, root, directory, asset.FileName, full,
             asset.Bytes, asset.Sha256, progress, token);
         DailyUpdateJson.Write(choice, new DailyUpdateDownload(null));

@@ -11,7 +11,8 @@ static class Channel
 {
     // The OS account fixes the lane; SSH requests cannot select another configuration.
     public static string ConfigPathForAccount(string account) => account == "dustweave-ota-v2"
-        ? "/etc/dustweave-ota-channel-v2/config.json" : "/etc/dustweave-ota-channel/config.json";
+        ? "/etc/dustweave-ota-channel-v2/config.json" : account == "dustweave-ota-aio"
+        ? "/etc/dustweave-ota-channel-aio/config.json" : "/etc/dustweave-ota-channel/config.json";
     static string Folder(Config c,string nonce) { Rules.Need(Rules.IsNonce(nonce),"Invalid operation ID"); return Path.Combine(c.State,"operations",nonce); }
     static void Record(string folder,Operation state) => Rules.Atomic(Path.Combine(folder,"status.json"),Rules.Bytes(state));
     static void CheckCurrent(Config c,Request r,byte[] nextFeed)
@@ -204,6 +205,23 @@ static class Program
             {
                 var c=Rules.Read<Config>(File.ReadAllBytes(args[3]));
                 File.WriteAllText(args[2],MirrorNginx.Patch(File.ReadAllText(args[1]),c));return 0;
+            }
+            if(args.Length==4 && args[0]=="bundle-nginx")
+            {
+                var c=Rules.Read<Config>(File.ReadAllBytes(args[3]));
+                File.WriteAllText(args[2],MirrorNginx.BundlePatch(File.ReadAllText(args[1]),c));return 0;
+            }
+            if(args.Length==4 && args[0]=="verify-initial-bundle")
+            {
+                var c=Rules.Read<Config>(File.ReadAllBytes(args[1]));
+                var feed=Rules.VerifyFeed(File.ReadAllBytes(Path.Combine(args[2],"updates.json")),c);
+                Rules.Need(c.Layout==3 && feed.Releases.Length==1 && feed.Releases[0].Version=="1.5.0","Expected initial public bundle");
+                foreach(var a in feed.Releases[0].Assets) Rules.CheckArchive(Path.Combine(args[2],a.FileName),new(a.FileName,a.Bytes,a.Sha256));
+                using var proof=JsonDocument.Parse(File.ReadAllBytes(args[3]));
+                Rules.Need(proof.RootElement.GetProperty("status").GetString()=="passed","Initial package acceptance failed");
+                foreach(var flavor in new[]{"Lite","Portable"}) foreach(var scenario in new[]{"upgrade-","rollback-","interrupt-host-","interrupt-helper-","repair-"})
+                    Rules.Need(proof.RootElement.GetProperty("cases").EnumerateArray().Any(x=>x.GetProperty("case").GetString()==scenario+flavor && x.GetProperty("status").GetString()=="passed" && x.GetProperty("to").GetString()=="1.5.0"),"Missing initial bundle acceptance");
+                Console.WriteLine("Initial bundle verified");return 0;
             }
             if(args.Length==4 && args[0]=="mirror-config")
             {
