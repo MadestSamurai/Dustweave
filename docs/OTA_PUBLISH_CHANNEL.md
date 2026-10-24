@@ -33,6 +33,27 @@ The channel consists of the repository-owned .NET tool in `tools/OtaChannel`, an
 
 This is a trusted publisher capability, not a sandbox for an untrusted signing-key holder. Keep both the transport key and signing key outside Git, packages and diagnostic exports. Key rotation and channel maintenance require administrator access; ordinary releases do not.
 
+### Correcting published release notes
+
+GitHub descriptions, embedded changelogs and the live signed OTA notes are separate
+surfaces. Editing the first two does not refresh the OTA page. Check all three when
+correcting user-facing release copy; keep storage providers and deployment details
+in maintainer documentation.
+
+The normal publisher deliberately rejects rewriting an existing release. An
+explicitly authorized notes-only correction requires maintenance access: verify
+the current signed feed, replace only the selected release's localized `Notes`,
+and prove every other field is unchanged before re-signing. Preserve the original
+feed and atomically replace the live index under its publication lock with an
+expected-current digest check. Do not rebuild archives, change versions, alter
+patches or rewrite historical acceptance evidence for a text correction.
+
+Refresh the delivery receipts bound to the feed digest before revoking temporary
+access. Verify the public signature, all languages, unchanged download routes and
+fallback, then revoke the key and confirm a fresh login is denied. Record the new
+feed digest separately. Future publication must use the corrected live feed as its
+history, not the original package's older signed index.
+
 ## Prepare and install once
 
 1. Complete the normal package, differential generation and actual prior-version updater acceptance. See [OTA release procedure](OTA_RELEASE.md).
