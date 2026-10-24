@@ -11,6 +11,7 @@ $out=[IO.Path]::GetFullPath($Output);$Packages=[IO.Path]::GetFullPath($Packages)
 if(!$out.StartsWith((Join-Path $repo 'artifacts')+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase) -or (Test-Path -LiteralPath $out)){throw 'Use a new isolated artifacts directory.'}
 [IO.Directory]::CreateDirectory($out)|Out-Null
 Add-Type -Path ([IO.Path]::GetFullPath($CoreAssembly))
+Add-Type -AssemblyName UIAutomationClient,UIAutomationTypes
 $trust=Get-Content (Join-Path $repo 'assets/updates/trust-aio.json') -Raw|ConvertFrom-Json
 $reports=[Collections.Generic.List[object]]::new()
 function WriteJson($path,$value){[IO.Directory]::CreateDirectory((Split-Path -Parent $path))|Out-Null;[IO.File]::WriteAllText($path,($value|ConvertTo-Json -Depth 70),[Text.UTF8Encoding]::new($false))}
@@ -89,6 +90,18 @@ function Finish($t,$name,$state,$expected){
  while([DateTime]::UtcNow -lt $deadline){
   $path=Join-Path $t.data 'startup-state.json'
   if(Test-Path $path){$v=Get-Content $path -Raw|ConvertFrom-Json;if($v.stage -eq 'main-window-visible' -and $v.version -eq $version){$visible=$true;break}}
+  # A rollback notice can enter WPF's modal loop before Show() returns and
+  # writes its diagnostic marker. Observe the real shell/version without
+  # clicking through or dismissing the notice.
+  foreach($shell in @(Get-Process Dustweave -ErrorAction SilentlyContinue|Where-Object {[string]::Equals($_.Path,$t.target,[StringComparison]::OrdinalIgnoreCase)})){
+   if($shell.MainWindowHandle -eq 0){continue}
+   $element=[System.Windows.Automation.AutomationElement]::FromHandle($shell.MainWindowHandle)
+   $id=[System.Windows.Automation.AutomationElement]::AutomationIdProperty
+   $tabs=$element.FindFirst([System.Windows.Automation.TreeScope]::Descendants,[System.Windows.Automation.PropertyCondition]::new($id,'WorkspaceTabs'))
+   $label=$element.FindFirst([System.Windows.Automation.TreeScope]::Descendants,[System.Windows.Automation.PropertyCondition]::new($id,'VersionText'))
+   if($tabs -and $label -and $label.Current.Name -eq $version){$visible=$true;break}
+  }
+  if($visible){break}
   Start-Sleep -Milliseconds 200
  }
  if(!$visible){throw 'Expected package never reached its window'}
