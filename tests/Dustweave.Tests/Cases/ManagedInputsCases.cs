@@ -544,5 +544,77 @@ static class ManagedInputsCases
             Check(complete["state"]!.GetValue<string>() == "completed" && box.Commands.Count==2, "full guild refresh traverses workflow, managed input and original-receipt guard: restart=" + restarted);
             Check(store.Receipt(original.Id)!.State == original.State && DailyJson.TryRead<JsonObject>(managedPath)!["entry_status"]!.GetValue<string>()=="superseded", "guild old response is preserved separately from new completion: restart=" + restarted);
         }
+        // Reproduce entry -> successful native response -> attendance UI loading.
+        // Both the current and legacy observer shape must finish without a second entry.
+        foreach (string mode in new[] { "loading", "legacy-loading", "loading-timeout", "identity-during-loading", "resume" })
+        {
+            long baseline = DateTime.UtcNow.Ticks; time = 0;
+            long Now() => baseline + (long)(time * TimeSpan.TicksPerSecond);
+            daily.State = "identified"; daily.Loading = false; daily.Guild.Supported = daily.Guild.InGuild = true;
+            daily.Guild.AttendancePopup = false; daily.Guild.MenuVisible = true; daily.Guild.GuildVisible = false;
+            daily.Guild.ServerTicks = baseline; daily.Guild.ResetTicks = baseline + TimeSpan.FromHours(2).Ticks;
+            string testRoot = Path.Combine(output, "guild-attendance-" + mode);
+            var store = new GuildStore(testRoot);
+            GuildReceipt? granted = null;
+            int entries = 0, closes = 0, backs = 0;
+            double enteredAt = -1;
+            current = Page("MenuUI", "_buttonGuild");
+            void Grant()
+            {
+                granted = GuildStore.Intent(Guid.NewGuid().ToString("N"), daily);
+                granted.StartedUtcTicks = Now(); granted.State = "completed"; granted.RequestCount = 1;
+                granted.AttendanceGranted = granted.ResponseSeen = granted.CallbackMatched = granted.MemberMatched = granted.CacheMatched = granted.MayHaveDispatched = true;
+                store.Save(granted);
+            }
+            void Popup()
+            {
+                current = Page("GuildUI");
+                current["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("GuildJoinAttendancePopupUI", true, "_buttonBackground", 99));
+                current["UiToken"] = "attendance";
+                daily.Guild.AttendancePopup = daily.Guild.GuildVisible = true; daily.Guild.MenuVisible = false;
+            }
+            if (mode == "resume")
+            {
+                Grant(); Popup();
+                string oldId = Guid.NewGuid().ToString("N");
+                DailyJson.Write(Path.Combine(testRoot, "live", "managed-guild", oldId + ".json"), new JsonObject {
+                    ["schema"] = 1, ["id"] = oldId, ["context"] = context.DeepClone(), ["guild_key"] = guildKey,
+                    ["entry_status"] = "unknown", ["started"] = Now() - TimeSpan.TicksPerSecond });
+            }
+            Task<DailyStageFrame> ReadAttendance()
+            {
+                if (enteredAt >= 0 && closes == 0)
+                {
+                    daily.Loading = mode == "loading-timeout" || time - enteredAt < 1;
+                    daily.Guild.Supported = !(daily.Loading && mode == "legacy-loading");
+                    if (!daily.Loading) Popup();
+                }
+                daily.FrameUtcTicks = Now(); current["AtUtcTicks"] = Now(); current["ProcessStartTicks"] = daily.ProcessStartTicks;
+                var observedContext = context.DeepClone().AsObject();
+                if (mode == "identity-during-loading" && daily.Loading) observedContext["server"] = "changed";
+                return Task.FromResult(new DailyStageFrame(current.DeepClone().AsObject(), observedContext, daily));
+            }
+            Task DelayAttendance(TimeSpan t) { time += t.TotalSeconds; return Task.CompletedTask; }
+            var stage = new DailyGuildStage(testRoot, ReadAttendance, () => false, now: Now, clock: () => time, delay: DelayAttendance);
+            string fault = ""; JsonObject? finished = null;
+            try
+            {
+                finished = await stage.ExecuteAsync(context, (_, _, args) => {
+                    var action = args!["action"]!.AsObject();
+                    if (daily.Loading) throw new Exception("Guild input during loading");
+                    if (action["allow_guild"]?.GetValue<bool>() == true) { entries++; Grant(); enteredAt = time; current = Page("GuildUI"); }
+                    else if (action["ui"]!.GetValue<string>() == "GuildJoinAttendancePopupUI") { closes++; daily.Guild.AttendancePopup = false; current = Page("GuildUI"); }
+                    else { backs++; daily.Guild.GuildVisible = false; daily.Guild.MenuVisible = true; current = Page("MenuUI", "_buttonGuild"); }
+                    return Task.FromResult(new JsonObject { ["id"] = Guid.NewGuid().ToString("N") });
+                });
+            }
+            catch (StageHostException e) { fault = e.Kind; }
+            bool succeeds = mode is "loading" or "legacy-loading" or "resume";
+            Check(succeeds ? finished?["state"]?.GetValue<string>() == "completed" && closes == 1 && backs == 1
+                : fault == (mode == "identity-during-loading" ? "identity" : "pending") && closes == 0 && backs == 0,
+                "guild attendance transition handles " + mode);
+            Check(entries == (mode == "resume" ? 0 : 1) && granted != null && GuildPolicy.Outcome(granted) == "completed",
+                "guild attendance " + mode + " preserves granted reward and never resubmits entry");
+        }
     }
 }

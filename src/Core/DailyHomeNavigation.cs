@@ -31,6 +31,9 @@ public static class DailyHomeDecision
     private static readonly IReadOnlyDictionary<string, string?> Results = new Dictionary<string, string?>
     {
         ["ItemGetPopupUI"] = "_objBackButton",
+        // This native button only closes the already-created guild result and
+        // invokes its presentation callback; it does not join or claim again.
+        ["GuildJoinAttendancePopupUI"] = "_buttonBackground",
         ["EquipmentUpgradeResultPopupUI"] = "_objOKButton",
         ["EquipmentBatchUpgradeResultPopupUI"] = null,
         ["SichuanStageClearPopupUI"] = "_buttonExit"

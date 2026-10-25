@@ -69,7 +69,12 @@ namespace BD2Daily.Runtime {
     if(StartupPolicy.Decide(s,LocalStorage.Read<StartupPermit>("startup-permit.json"),DateTime.UtcNow.Ticks)!="click_start")return;
     attemptedTitle=t.TitleInstanceId;t.Attempted=true;action="已点击 TOUCH TO START，等待进入游戏";t.Action=action;
     ((MethodInfo)StartupBindings.Get("Title.Click")).Invoke(title,null);
-   }catch(Exception e){s.State="read_error";s.ErrorCode="startup-observation";t.BlockReason="启动页读取／操作异常："+e.GetBaseException().Message;}
+   }catch(Exception e){
+    // Startup UI observation is independent of the authenticated account read.
+    // Keep any observed title visible, but do not authorize an input from a partial read.
+    t.Ready=false;t.ClickEnabled=false;t.DownloadReady=false;
+    t.BlockReason="启动页读取／操作异常："+e.GetBaseException().Message;
+   }
   }
  }
 }

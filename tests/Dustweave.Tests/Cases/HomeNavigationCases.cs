@@ -107,17 +107,23 @@ static class HomeNavigationCases
         Check(DailyHomeDecision.Inspect(Frame(harbor, Surface("FishingGameFieldDefaultUI")), policy).Kind == "blocked", "active fishing retains ownership even with a harbor page present");
         Check(DailyHomeDecision.Inspect(Frame(harbor, harbor.DeepClone().AsObject()), policy).Kind == "blocked", "duplicate fishing harbors cannot select a home button");
         Check(DailyHomeDecision.Inspect(Frame(harbor, Surface("GameFieldDefaultUI", false, "_buttonMenu")), policy).Kind == "blocked", "two native menu owners remain ambiguous including the harbor");
-        foreach (string ui in new[] { "ItemGetPopupUI", "EquipmentUpgradeResultPopupUI", "EquipmentBatchUpgradeResultPopupUI", "SichuanStageClearPopupUI" })
+        foreach (string ui in new[] { "ItemGetPopupUI", "GuildJoinAttendancePopupUI", "EquipmentUpgradeResultPopupUI", "EquipmentBatchUpgradeResultPopupUI", "SichuanStageClearPopupUI" })
         {
             string? field = ui switch
             {
                 "ItemGetPopupUI" => "_objBackButton",
+                "GuildJoinAttendancePopupUI" => "_buttonBackground",
                 "EquipmentUpgradeResultPopupUI" => "_objOKButton",
                 "SichuanStageClearPopupUI" => "_buttonExit",
                 _ => null
             };
             Check(DailyHomeDecision.Inspect(Frame(Surface(ui, true, field)), policy).Kind == "action", "startup closes existing presentation " + ui);
         }
+        var guildAttendance = Surface("GuildJoinAttendancePopupUI", true, "_buttonBackground", 2);
+        guildAttendance["InputReady"] = false;
+        Check(DailyHomeDecision.Inspect(Frame(Surface("GuildUI"), guildAttendance), policy).Kind == "waiting", "guild attendance waits for its own input readiness");
+        guildAttendance["InputReady"] = true;
+        Check(DailyHomeDecision.Inspect(Frame(Surface("GuildUI"), guildAttendance, Surface("UnknownPopupUI", true, null, 99)), policy).Kind == "blocked", "guild attendance does not dismiss another foreground popup");
         foreach (string ui in new[] { "BattleUI_FieldBattle", "BattleResultUI", "SichuanBoardUI", "SichuanStageFailedPopupUI", "FishingGameFieldDefaultUI", "MiniGameDiceUI", "UnknownPopupUI" })
             Check(DailyHomeDecision.Inspect(Frame(Surface(ui, true)), policy).Kind == "blocked", "startup preserves active or unknown state " + ui);
         Check(DailyHomeDecision.Inspect(Frame(Surface("MiniEventMainUI"), Surface("MiniGameDiceUI", false, null, 2)), policy).Kind == "blocked", "active dice cannot be closed through its enclosing mini-event hub");
@@ -203,6 +209,11 @@ static class HomeNavigationCases
         await Route("first guild stage advances field story", Frame(script), f => { f.OnAction = a => f.Current = a["operation"]?.GetValue<string>() == "story_advance" ? Field() : Menu(); f.Inspect = () => Check(f.Actions.First()["operation"]?.GetValue<string>() == "story_advance" && f.Actions.Count == 2, "non-field first stage uses managed story recovery"); });
         var quest = Surface("QuestClearPopupUI", true, "_objTodayBackButton");
         await Route("first stage closes weekly result", Frame(quest), f => { f.OnAction = a => f.Current = a["ui"]?.GetValue<string>() == "QuestClearPopupUI" ? Field() : Menu(); });
+        await Route("existing guild attendance closes without repeating attendance", Frame(Surface("GuildUI"), guildAttendance), f => {
+            f.OnAction = a => f.Current = a["ui"]?.GetValue<string>() == "GuildJoinAttendancePopupUI" ? Frame(Surface("GuildUI")) : Menu();
+            f.Inspect = () => Check(f.Actions.Count == 2 && f.Actions[0]["field"]?.GetValue<string>() == "_buttonBackground"
+                && f.Actions.All(a => a["allow_guild"]?.GetValue<bool>() != true), "guild presentation recovery only dismisses result and returns home");
+        });
         var ad = Surface("NewsPopupEventUI", true, null, 2);
         ad["NoticeSuppression"] = "unchecked";
         await Route("multipage ad suppression and login notices", Frame(Surface("MenuUI"), ad), f => { int closed = 0; f.OnAction = a => { if (a["operation"]?.GetValue<string>() == "notice_suppress") f.Current["Surfaces"]![1]!["NoticeSuppression"] = "checked"; else if (++closed == 1) f.Current["Surfaces"]![1]!["Text"] = new JsonArray("second page"); else f.Current = Menu(); }; f.Inspect = () => Check(f.Actions.Count == 3, "one checkbox confirmation precedes two distinct notice pages"); });

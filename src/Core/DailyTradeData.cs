@@ -18,7 +18,7 @@ public sealed class DailyTradeData
         string name = Convert.ToHexString(SHA1.HashData(Encoding.UTF8.GetBytes("common_v1")));
         return new[] { Path.Combine(root, "t", name), Path.Combine(root, name) }.FirstOrDefault(File.Exists) ?? throw new InvalidDataException("未找到当前游戏数据库；跑商未派发。");
     }
-    public static string CatalogPath(string package) => Path.Combine(package, "data", "trade-catalog.json");
+    public static string CatalogPath(string package) => Path.Combine(DailyTools.PackageDirectory(package), "data", "trade-catalog.json");
     public static void CheckTransactions(string root, JsonObject context, JsonObject? verifiedCatalog = null)
     {
         string account = context["actor"]![3]!.GetValue<string>(), cycle = context["cycle"]!.GetValue<string>();
@@ -54,6 +54,7 @@ public sealed class DailyTradeData
     }
     public static async Task<DailyTradeData> PrepareAsync(string package, string root, GameInstance game, DailyStageFrame frame, Func<bool> stopped, Action<string> report, bool allowCompleted = true)
     {
+        package = DailyTools.PackageDirectory(package);
         using var storage = DailyCacheStorage.Lease(root);
         var result = new DailyTradeData { Directory = package };
         try

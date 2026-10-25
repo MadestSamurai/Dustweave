@@ -29,7 +29,7 @@ public sealed class DailyFreeDrawData
     public static async Task<DailyFreeDrawData> PrepareAsync(string package, string root, GameInstance game, Func<Task<DailyStageFrame>> read, Func<bool> stopped, Action<string> report)
     {
         var data = await DailyRuleData.PrepareSetAsync(package, root, game, read, stopped, report,
-            "free-draws", Path.Combine(package, "data", "daily"),
+            "free-draws", Path.Combine(DailyTools.PackageDirectory(package), "data", "daily"),
             new Dictionary<string, string[]> {
                 ["gacha"] = ["GachaTable", "GachaGroupTable"],
                 // Keep display data in its own group: existing packages contain

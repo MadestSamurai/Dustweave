@@ -44,13 +44,40 @@ public sealed class DailyGuildStage : IDailyManagedStage
         var daily = observed.Daily;
         var frame = observed.Frame;
         if (daily != null && (daily.FrameUtcTicks > now() || now() - daily.FrameUtcTicks > 3 * TimeSpan.TicksPerSecond))
-            throw new StageHostException("identity", "Guild observer frame is stale");
-        if (daily == null || daily.Guild == null || !daily.Guild.Supported || !daily.Guild.InGuild)
-            throw new StageHostException("adapter", "Guild state unavailable or not a member");
+            throw new StageHostException("identity", "公会状态更新暂时中断，请重新连接当前游戏后继续。");
+        if (daily == null || daily.Guild == null)
+            throw new StageHostException("adapter", "尚未读到公会状态，请等待游戏加载完成后继续。");
         if (daily.Guild.ServerKey != observed.Context["server"]?.GetValue<string>() || daily.Guild.CycleKey != observed.Context["cycle"]?.GetValue<string>())
             throw new StageHostException("identity", "Guild server or cycle differs from the observed context");
         if (daily.ProcessId != frame["ProcessId"]?.GetValue<int>() || daily.ProcessStartTicks != frame["ProcessStartTicks"]?.GetValue<long>() || daily.AccountKey != frame["AccountKey"]?.GetValue<string>() || daily.PlayerKey != frame["PlayerKey"]?.GetValue<string>())
             throw new StageHostException("identity", "Guild observer identity is stale or changed");
+        // Older observers also reported Supported=false while loading. Keep the
+        // identity checks above, but never interpret that transient state as leaving a guild.
+        if (daily.Loading && daily.State == "identified" && string.IsNullOrEmpty(daily.Guild.Error))
+            return;
+        if (!daily.Guild.Supported)
+        {
+            string reason = !string.IsNullOrWhiteSpace(daily.Guild.Error) ? daily.Guild.Error : daily.Guild.BlockReason;
+            throw new StageHostException("adapter", "暂时无法读取公会状态：" + (string.IsNullOrWhiteSpace(reason) ? "公会连接组件尚未就绪，请重新连接当前游戏。" : reason));
+        }
+        if (!daily.Guild.InGuild)
+            throw new StageHostException("adapter", "当前角色尚未读到有效公会成员信息，请在游戏中确认已加入公会后继续。");
+    }
+    private async Task<DailyStageFrame> ReadReady(JsonObject context, double end)
+    {
+        while (clock() < end)
+        {
+            if (stopped())
+                throw new StageHostException("stopped", "公会流程已停止，原业务回执保留。");
+            var observed = await read();
+            if (!JsonNode.DeepEquals(observed.Context, context))
+                throw new StageHostException("identity", "公会流程期间账号、连接或刷新周期变化。");
+            Validate(observed);
+            if (!observed.Daily!.Loading && !DailyHomeDecision.Transitioning(observed.Frame))
+                return observed;
+            await delay(TimeSpan.FromMilliseconds(200));
+        }
+        throw new StageHostException("adapter", "公会页面仍在加载，本次已停止等待；加载完成后可接续，已领取的签到奖励不会重复领取。");
     }
     internal static void ValidateConfirmed(GuildReceipt? receipt)
     {
@@ -156,10 +183,8 @@ public sealed class DailyGuildStage : IDailyManagedStage
     {
         if (stopped())
             throw new StageHostException("stopped", "公会流程已停止，未提交新输入。");
-        var initial = await read();
-        if (!JsonNode.DeepEquals(initial.Context, context))
-            throw new StageHostException("identity", "公会现场与原队列不一致。");
-        Validate(initial);
+        double end = clock() + policy.TotalSeconds;
+        var initial = await ReadReady(context, end);
         var existing = prior(initial.Daily!);
         ValidateConfirmed(existing);
         CheckPriorAttempts(context, initial.Daily!, existing);
@@ -167,7 +192,6 @@ public sealed class DailyGuildStage : IDailyManagedStage
         var actions = new JsonArray();
         var record = new JsonObject { ["schema"] = 1, ["engine"] = "dotnet-guild-v1", ["version"] = DailyIdentity.Version, ["policy_fingerprint"] = policy.Fingerprint, ["recipe_fingerprint"] = DailyIdentity.Hash(recipe.ToJsonString()), ["before"] = initial.Frame.DeepClone(), ["id"] = id, ["context"] = context.DeepClone(), ["guild_key"] = initial.Daily!.Guild.GuildKey, ["state"] = "running", ["entry_status"] = "none", ["actions"] = actions, ["started"] = now() };
         Save(record);
-        double end = clock() + policy.TotalSeconds;
         string? stable = null;
         double stableAt = clock();
         bool entry = false;
@@ -178,10 +202,7 @@ public sealed class DailyGuildStage : IDailyManagedStage
             {
                 if (stopped())
                     throw new StageHostException("stopped", "公会流程已停止，原业务回执保留。");
-                var observed = await read();
-                if (!JsonNode.DeepEquals(observed.Context, context))
-                    throw new StageHostException("identity", "公会流程期间账号、连接或刷新周期变化。");
-                Validate(observed);
+                var observed = await ReadReady(context, end);
                 var frame = observed.Frame;
                 var daily = observed.Daily!;
                 if (daily.Guild.GuildKey != record["guild_key"]!.GetValue<string>())

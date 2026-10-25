@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 1.5.1 — 2026-10-25
+
+- 修复公会签到在加载中误报失败，以及签到结果弹窗阻挡后续日常的问题。
+- 修复单文件版本读取 `app` 下流程、地图、日常规则、抽取数据与料理列表的路径。
+- 启动页读取异常不再使已确认的账号身份失效。
+- Fixes guild attendance recovery, packaged resource paths and connection interruptions caused by startup-page observation errors.
+- [完整说明 / Full notes](docs/releases/1.5.1.md)
+
 ## 1.4.17 — 2026-10-22
 
 - 适配更新后的游戏连接与活动流程；活动免费次数用尽后正常结束，追加按玩法识别的宾果批量处理。

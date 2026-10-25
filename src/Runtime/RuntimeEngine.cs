@@ -53,7 +53,11 @@ namespace BD2Daily.Runtime
             double mark=watch.Elapsed.TotalMilliseconds;maxIdentity=Math.Max(maxIdentity,mark);
             double control=watch.Elapsed.TotalMilliseconds;
             frameStage="startup-observation";
-            try{if(startup!=null)startup.Tick(snapshot,!SuiteRuntime.ToolActive);}catch(Exception ex){snapshot.State="read_error";snapshot.ErrorCode="startup-observation";snapshot.Startup=new StartupObservation{BlockReason=ex.GetBaseException().Message};}
+            try{if(startup!=null)startup.Tick(snapshot,!SuiteRuntime.ToolActive);}catch(Exception ex){
+                if(snapshot.Startup==null)snapshot.Startup=new StartupObservation();
+                snapshot.Startup.Ready=false;snapshot.Startup.ClickEnabled=false;snapshot.Startup.DownloadReady=false;
+                snapshot.Startup.BlockReason="启动页读取／操作异常："+ex.GetBaseException().Message;
+            }
             double title=watch.Elapsed.TotalMilliseconds;maxStartup=Math.Max(maxStartup,title-control);
             try{if(guild!=null&&snapshot.State!="waiting_sdk"&&snapshot.State!="read_error")guild.Tick(snapshot,!SuiteRuntime.ToolActive);}catch(Exception ex){snapshot.Guild=new GuildObservation{Error=ex.GetBaseException().Message};}
             double observed=watch.Elapsed.TotalMilliseconds;maxGuild=Math.Max(maxGuild,observed-title);

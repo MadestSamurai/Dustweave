@@ -55,7 +55,7 @@ public sealed class DailyRuleData
         return hashes;
     }
     public static Task<DailyRuleData> PrepareAsync(string package, string root, GameInstance game, Func<Task<DailyStageFrame>> read, Func<bool> stopped, Action<string> report)
-        => PrepareSetAsync(package, root, game, read, stopped, report, "daily", Path.Combine(package, "data", "daily"), Groups);
+        => PrepareSetAsync(package, root, game, read, stopped, report, "daily", Path.Combine(DailyTools.PackageDirectory(package), "data", "daily"), Groups);
     public static async Task<DailyRuleData> PrepareSetAsync(string package, string root, GameInstance game, Func<Task<DailyStageFrame>> read, Func<bool> stopped, Action<string> report, string area, string source, IReadOnlyDictionary<string, string[]> groups)
     {
         Require(System.Text.RegularExpressions.Regex.IsMatch(area, "^[a-z][a-z0-9-]{0,63}$"), "Invalid rules namespace");

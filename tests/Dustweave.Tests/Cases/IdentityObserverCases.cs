@@ -58,12 +58,12 @@ public class GachaUI:UIBase {}
 public class FutureFeatureUI:UIBase {}
 public class LoadingUI:UIBase {}
 public class EntranceBackgroundCoverUI:UIBase {}
-public class IntroUI:UIObjectBase {public string State="IntroWorkFinished";public UnityEngine.GameObject Enter=new UnityEngine.GameObject();public int Clicks;public bool Clickable=true;public bool Enabled(){return Clickable;}public void Click(){Clicks++;}}
+public class IntroUI:UIObjectBase {public string State="IntroWorkFinished";public UnityEngine.GameObject Enter=new UnityEngine.GameObject();public int Clicks;public bool Clickable=true,FailRead;public bool Enabled(){if(FailRead)throw new InvalidOperationException("fixture title read failure");return Clickable;}public void Click(){Clicks++;}}
 public class DownloadPopupUI:UIBase {public UnityEngine.GameObject Button=new UnityEngine.GameObject();public int Clicks;public void OnClickUI(UnityEngine.GameObject button){Clicks++;}}
 public class IntroMessagePopupUI:UIObjectBase {}
 public class IntroExitPopupUI:UIBase {}
 public class AppManager {
- public static AppManager Instance=new AppManager();public static AppManager Get(){return Instance;}
+ public static AppManager Instance=new AppManager();public static bool FailRead;public static AppManager Get(){if(FailRead)throw new InvalidOperationException("fixture startup service failure");return Instance;}
  public bool Active,Closing=true;public int AnimatorReads;
  public bool IsActiveUILoading(){return Active;}
  public bool IsPlayAnimUILoading(){AnimatorReads++;return Closing;}
@@ -95,6 +95,10 @@ public static class Runner {
   var guard=new DailyIdentityGuard();Check(!guard.Observe(menu,game,menu.AccountKey,menu.PlayerKey,DateTimeOffset.UtcNow),"home menu still requires two advancing identity frames",checks);
   var second=Frame();second.Sequence=2;second.FrameUtcTicks=Math.Max(second.FrameUtcTicks,menu.FrameUtcTicks+1);observer.Tick(second);
   Check(guard.Observe(second,game,second.AccountKey,second.PlayerKey,DateTimeOffset.UtcNow),"second home-menu frame completes identity verification",checks);
+  AppManager.FailRead=true;var serviceFailure=Frame();observer.Tick(serviceFailure);
+  Check(DailyIdentityGuard.Ready(serviceFailure,game,DateTimeOffset.UtcNow)&&serviceFailure.Startup.BlockReason.Contains("fixture startup service failure")&&!serviceFailure.Startup.Ready&&!serviceFailure.Startup.ClickEnabled,"startup service failure reports its cause without discarding authenticated identity",checks);
+  var identityFailure=Frame();identityFailure.State="read_error";identityFailure.ErrorCode="identity-fixture";observer.Tick(identityFailure);
+  Check(!DailyIdentityGuard.Ready(identityFailure,game,DateTimeOffset.UtcNow)&&identityFailure.ErrorCode=="identity-fixture","startup failure never clears an actual identity error",checks);AppManager.FailRead=false;
   AppManager.Instance.Active=true;var active=Frame();observer.Tick(active);
   Check(active.Loading&&!active.MainMenuReady&&DailyIdentityGuard.Ready(active,game,DateTimeOffset.UtcNow),"native loading is reported without invalidating logged-in identity",checks);
   AppManager.Instance.Active=false;
@@ -129,6 +133,8 @@ public static class Runner {
   var nativeTitle=new IntroUI();UnityEngine.Object.Surfaces=new UnityEngine.Object[]{nativeTitle};
   observer=new StartupRuntime();var ready=Frame();ready.Scene="Splash";
   LocalStorage.Permit=new StartupPermit{Owner="test",AccountKey=ready.AccountKey,InstanceId=ready.InstanceId,ProcessId=ready.ProcessId,ProcessStartTicks=ready.ProcessStartTicks,ExpiresUtcTicks=DateTime.UtcNow.AddSeconds(10).Ticks};
+  nativeTitle.FailRead=true;observer.Tick(ready);
+  Check(ready.Startup.Visible&&!DailyIdentityGuard.Ready(ready,game,DateTimeOffset.UtcNow)&&!ready.Startup.Ready&&!ready.Startup.ClickEnabled&&nativeTitle.Clicks==0,"partial title read keeps the login page visible and cannot click it",checks);nativeTitle.FailRead=false;
   UnityEngine.Object.Surfaces=new UnityEngine.Object[]{nativeTitle,new IntroMessagePopupUI()};observer.Tick(ready);
   Check(ready.Startup.Visible&&ready.Startup.BlockReason.Contains("IntroMessagePopupUI")&&nativeTitle.Clicks==0,"native UIObjectBase message popup blocks title input",checks);
   UnityEngine.Object.Surfaces=new UnityEngine.Object[]{nativeTitle};ready=Frame();observer.Tick(ready,false);
@@ -220,7 +226,7 @@ public static class Runner {
   StartupRuntime.Loading=false;StartupRuntime.Visible=true;Tick(engine);
   Check(!DailyIdentityGuard.Ready(LocalStorage.Last,game,DateTimeOffset.UtcNow),"visible title still blocks identity confirmation",checks);
   StartupRuntime.Visible=false;StartupRuntime.Fail=true;Tick(engine);
-  Check(LocalStorage.Last.State=="read_error"&&!DailyIdentityGuard.Ready(LocalStorage.Last,game,DateTimeOffset.UtcNow),"failed startup observation cannot masquerade as a ready game",checks);
+  Check(DailyIdentityGuard.Ready(LocalStorage.Last,game,DateTimeOffset.UtcNow)&&LocalStorage.Last.Startup.BlockReason.Contains("fixture startup failure")&&!LocalStorage.Last.Startup.Ready,"failed startup observer does not invalidate unrelated account and guild observations",checks);
   StartupRuntime.Fail=false;SuiteRuntime.Fail=false;LocalStorage.FailWrite=true;Tick(engine);Heartbeat(engine);
   Check(Loader.State=="error"&&Loader.Error.Contains("identity-publish"),"heartbeat preserves failed identity publication",checks);
   LocalStorage.FailWrite=false;Tick(engine);Heartbeat(engine);

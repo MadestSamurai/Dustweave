@@ -163,7 +163,7 @@ await Group("FirstRun", () => FirstRunCases.Run(root, cases));
 await Group("TalentPotion", () => TalentPotionCases.Run(root, cases));
 await Group("Preference", () => Sync(() => PreferenceCases.Run(root, cases)));
 await Group("TaskPresets", () => Sync(() => TaskPresetCases.Run(root, cases)));
-await Group("PackagedUtility", () => Sync(() => PackagedUtilityCases.Run(root, cases)));
+await Group("PackagedUtility", () => PackagedUtilityCases.Run(root, cases));
 await Group("Plugin", () => Sync(() => PluginCases.Run(root, cases)));
 await Group("PluginStore", () => PluginStoreCases.Run(root, cases));
 await Group("ToolMenu", () => Sync(() => ToolMenuCases.Run(root, cases)));

@@ -1,5 +1,29 @@
 [
   {
+    "Version": "1.5.1",
+    "Date": "2026-10-25",
+    "Notes": {
+      "zh-CN": [
+        "修复公会签到在页面加载时误报失败的问题；已领取奖励的结果弹窗可正常关闭并接续后续日常。",
+        "修复 1.5.0 部分功能找不到流程和数据文件的问题，涉及周收集地图选择、日常规则、免费抽取和跑商料理列表。",
+        "启动页的短暂读取异常不再连带中断已确认账号的正常连接；仍会提示实际登录与操作异常。",
+        "1.5.0 可在软件内检查更新。1.4 及更早版本需手动下载完整包并解压到新目录；请保留 Dustweave.exe 旁的 app 文件夹。更新无法应用时，请从 GitHub／夸克下载完整包。"
+      ],
+      "zh-TW": [
+        "修復公會簽到在頁面載入時誤報失敗的問題；已領取獎勵的結果視窗可正常關閉並接續後續日常。",
+        "修復 1.5.0 部分功能找不到流程與資料檔案的問題，涉及週收集地圖選擇、日常規則、免費抽取與跑商料理清單。",
+        "啟動頁的短暫讀取異常不再連帶中斷已確認帳號的正常連線；仍會提示實際登入與操作異常。",
+        "1.5.0 可在軟體內檢查更新。1.4 與更早版本需手動下載完整套件並解壓縮至新目錄；請保留 Dustweave.exe 旁的 app 資料夾。無法套用更新時，請從 GitHub／夸克下載完整套件。"
+      ],
+      "en-US": [
+        "Fixed guild attendance reporting a failure during page loading. Reward result dialogs now close normally so daily tasks can continue.",
+        "Fixed missing flow and data files in some 1.5.0 features, including weekly map selection, daily rules, free draws and trading recipe lists.",
+        "Temporary startup-page read errors no longer invalidate an already verified account connection. Actual login and input errors are still reported.",
+        "Users of 1.5.0 can check for updates in the application. Users of 1.4 or earlier must download the complete package into a new folder. Keep the app folder beside Dustweave.exe. If an update cannot be applied, download the complete package from GitHub or Quark."
+      ]
+    }
+  },
+  {
     "Version": "1.5.0",
     "Date": "2026-10-25",
     "Notes": {

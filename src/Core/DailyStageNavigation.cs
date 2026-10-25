@@ -73,7 +73,7 @@ public sealed class DailyStageNavigation
             throw new StageHostException("adapter", "navigation_no_progress：原输入后页面没有推进，未重发。");
         return true;
     }
-    private static bool Presentation(JsonObject action, DailyNavigationPolicy policy) => DailyNavigationDecision.Text(action, "ui") is "GameQuitPopupUI" or "MessagePopupUI" or "ScriptUI" or "StorySkipUI" or "StoryPopupUI" or "QuestClearPopupUI" or "ItemGetPopupUI" or "EquipmentUpgradeResultPopupUI" or "EquipmentBatchUpgradeResultPopupUI" or "UpdateUI"
+    private static bool Presentation(JsonObject action, DailyNavigationPolicy policy) => DailyNavigationDecision.Text(action, "ui") is "GameQuitPopupUI" or "MessagePopupUI" or "ScriptUI" or "StorySkipUI" or "StoryPopupUI" or "QuestClearPopupUI" or "ItemGetPopupUI" or "GuildJoinAttendancePopupUI" or "EquipmentUpgradeResultPopupUI" or "EquipmentBatchUpgradeResultPopupUI" or "UpdateUI"
         || policy.SafeDismiss.Contains(DailyNavigationDecision.Text(action, "ui"));
     private JsonObject Ready(string stage, JsonObject frame, List<string> route)
     {

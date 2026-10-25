@@ -3,7 +3,7 @@ using System.Text.Json.Nodes;
 using Dustweave;
 using BD2.LocalIpc;
 
-if(args.Length!=2||args[0] is not ("observe" or "home" or "harbor-cycle" or "stages" or "resume-stages" or "weekly-retry" or "talent-audit" or "npc-query" or "trade-data-audit" or "trade-retry" or "trade-menu-audit" or "cafeteria-recover" or "roulette-single" or "square-crossing" or "square-inspect" or "square-merchant"))throw new ArgumentException("observe|home|harbor-cycle|stages|resume-stages|weekly-retry|talent-audit|npc-query|trade-data-audit|trade-retry|trade-menu-audit|cafeteria-recover <evidence-directory>");
+if(args.Length!=2||args[0] is not ("observe" or "guild" or "home" or "harbor-cycle" or "stages" or "resume-stages" or "weekly-retry" or "talent-audit" or "npc-query" or "trade-data-audit" or "trade-retry" or "trade-menu-audit" or "cafeteria-recover" or "roulette-single" or "square-crossing" or "square-inspect" or "square-merchant"))throw new ArgumentException("observe|guild|home|harbor-cycle|stages|resume-stages|weekly-retry|talent-audit|npc-query|trade-data-audit|trade-retry|trade-menu-audit|cafeteria-recover <evidence-directory>");
 string output=Path.GetFullPath(args[1]);
 if(Directory.Exists(output)&&Directory.EnumerateFileSystemEntries(output).Any())throw new InvalidOperationException("Evidence directory must be new or empty; previous observations are preserved.");
 Directory.CreateDirectory(output);
@@ -45,14 +45,14 @@ try{
     var observation=new DailyStageObservation(account,()=>Read(livePipe,"snapshot.json"),ReadDaily,()=>stop,expectedGame:game);
     var bound=await observation.ReadFrameAsync();
     if(args[0]=="trade-data-audit"){
-        string package=DailyTools.Unified(AppContext.BaseDirectory)?AppContext.BaseDirectory:Directory.GetParent(Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory))!.FullName;
+        string package=DailyTools.PackageDirectory(AppContext.BaseDirectory);
         var data=await DailyTradeData.PrepareAsync(package,root,game,bound,()=>stop,Console.WriteLine);
         if(!JsonNode.DeepEquals(bound.Context,(await observation.ReadFrameAsync()).Context))throw new InvalidOperationException("Identity changed during read-only trade data audit.");
         DailyJson.Write(Path.Combine(output,"trade-data-proof.json"),new JsonObject{["directory"]=data.Directory,["error"]=data.Error,["proof"]=data.Proof.DeepClone(),["game_input"]=false});
         data.AssertReady();return;
     }
     if(args[0] is "stages" or "resume-stages" or "weekly-retry" or "trade-retry"){
-        string package=DailyTools.Unified(AppContext.BaseDirectory)?AppContext.BaseDirectory:Directory.GetParent(Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory))!.FullName;
+        string package=DailyTools.PackageDirectory(AppContext.BaseDirectory);
         if(!File.Exists(Path.Combine(package,DailyApplication.ExecutableName))||!DailyTools.Available(package,"live"))throw new InvalidOperationException("Stages verification requires a complete package's diagnostics directory.");
         using var sessions=new AccountSessions();
         if(sessions.Read().CurrentKey!=account)throw new InvalidOperationException("Current saved account differs from the running game; no switch or input.");
@@ -85,7 +85,7 @@ try{
             throw new InvalidOperationException("Recovery requires the already loaded cafeteria; no account or cartridge switch.");
         activity=DailyToolControl.Acquire(root);
     }
-    if(args[0]=="roulette-single") activity=DailyToolControl.Acquire(root);
+    if(args[0] is "roulette-single" or "guild") activity=DailyToolControl.Acquire(root);
     var mailbox=new DailyPipeMailbox(root,game);
     driver=new(root,mailbox,observation.ReadFrameAsync,()=>stop);driver.Bind(bound.Context);driver.Acquire("live");
     if(mailbox.Read("live","command.json")!=null)throw new InvalidOperationException("Existing input pending; preserved.");
@@ -102,10 +102,18 @@ try{
         JsonObject result=op switch{
             "navigation_step"=>await driver.NavigationAsync(action??throw new InvalidOperationException("Missing action.")),
             "home_recovery"=>await driver.HomeRecoveryAsync(values?["kind"]?.GetValue<string>()??""),
+            "guild_step" when args[0]=="guild"=>await driver.GuildAsync(action??throw new InvalidOperationException("Missing action."),values!["guild_key"]!.GetValue<string>()),
             _=>throw new InvalidOperationException("Runtime check cannot execute business: "+op)};
         DailyJson.Write(Path.Combine(output,"steps",(++step).ToString("D3")+".json"),new JsonObject{
             ["operation"]=op,["arguments"]=values?.DeepClone(),["result"]=result.DeepClone()});
         return result;
+    }
+    if(args[0]=="guild"){
+        var guild=new DailyGuildStage(root,observation.ReadFrameAsync,()=>stop);
+        var entered=await navigation.EnterAsync("guild",bound.Context,Relay,guild.CanResume);
+        var completed=await guild.ExecuteAsync(bound.Context,Relay);
+        DailyJson.Write(Path.Combine(output,"result.json"),new JsonObject{["entry"]=entered,["guild"]=completed,["otherDailyTasksExecuted"]=false});
+        Console.WriteLine(completed.ToJsonString());return;
     }
     if(args[0] is "square-crossing" or "square-inspect" or "square-merchant"){
         if(!DailySuite.Enabled)throw new InvalidOperationException("广场诊断必须使用完整日常工具和统一控制锁。");

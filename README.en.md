@@ -113,7 +113,7 @@ Both packages have the same features. Download a complete package from the [late
 
 Start with a few familiar stages. [Getting started](docs/GETTING_STARTED.en.md) covers updates, data locations and common questions.
 
-**Upgrading from 1.4 or earlier to 1.5.0 requires a manual download of the complete package into a new folder.** Accounts and settings are retained; save Windows startup and schedule settings again to use the new location. You can then check for future updates within the application. If an automatic update cannot be applied or files are damaged, download the complete package from GitHub or Quark.
+**Upgrading from 1.4 or earlier to the 1.5 series requires a manual download of the complete package into a new folder.** Accounts and settings are retained; save Windows startup and schedule settings again to use the new location. You can then check for future updates within the application. If an automatic update cannot be applied or files are damaged, download the complete package from GitHub or Quark.
 
 For a custom game installation, open **App settings → Game & sandbox locations → Change location** and select `BrownDust II.exe`. The choice is saved automatically and shared by all accounts and scheduled runs. You can restore auto-detection or change the Sandboxie installation location here.
 

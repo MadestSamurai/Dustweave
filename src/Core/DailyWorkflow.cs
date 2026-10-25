@@ -133,7 +133,7 @@ public sealed class DailyWorkflow
         this.prepareTables = prepareTables;
         this.ruleData = ruleData;
         Root = root;
-        Directory = directory;
+        Directory = DailyTools.PackageDirectory(directory);
         Context = context.DeepClone().AsObject();
         Driver = driver;
         Business = business;

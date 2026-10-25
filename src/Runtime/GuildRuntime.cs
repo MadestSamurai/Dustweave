@@ -39,7 +39,7 @@ namespace BD2Daily.Runtime {
     var network=Read("Services.Network");var server=(string)Read("Network.Server",network);if(!string.IsNullOrEmpty(server))g.ServerKey=DailyIdentity.Hash("server|"+server);
     var timer=(gamfs.Thread.TimerManager)Read("Services.Timer");g.ServerTicks=timer.Now().Ticks;g.ResetTicks=timer.GetDailyResetTime().Ticks;g.CycleKey=g.ResetTicks.ToString(System.Globalization.CultureInfo.InvariantCulture);
     // Scene loading suspends UI/actions, not the already identified server clock.
-    if(snapshot.Loading){g.Supported=false;g.BlockReason="等待游戏加载完成";return g;}
+    if(snapshot.Loading){g.BlockReason="等待游戏加载完成";return g;}
     if(!includeSurfaces)return g;
     var app=(AppManager)Read("Services.App");var uis=Uis();g.ActiveUis=uis.Select(u=>u.GetType().Name).Distinct().OrderBy(n=>n).ToArray();
     var menu=uis.OfType<MenuUI>().FirstOrDefault();var button=menu==null?null:(GameObject)Field("Menu.Guild",menu);
@@ -59,6 +59,9 @@ namespace BD2Daily.Runtime {
    if(!s.Guild.Supported||!allowActions)return;
    try{
     lock(responses){while(responses.Count>0)ApplyResponse(responses.Dequeue());}
+    // Loading suspends input, not compatibility or an already received result.
+    // In particular, entering GuildUI can load its attendance presentation.
+    if(s.Loading)return;
     if(receipt!=null&&!GuildPolicy.Terminal(receipt.State))Advance();
     ReceiveCommand();
    }catch(Exception e){failure="操作记录或状态异常："+e.GetBaseException().Message;s.Guild.Error=failure;s.Guild.BlockReason=failure;

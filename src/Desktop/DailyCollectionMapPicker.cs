@@ -68,6 +68,7 @@ internal sealed class DailyCollectionMapPicker : UserControl
 
     internal static MapChoice[] ReadCatalog(string directory)
     {
+        directory = DailyTools.PackageDirectory(directory);
         var catalog = new DailyCollectionCatalog(JsonNode.Parse(File.ReadAllText(Path.Combine(directory, "flows", "collection-catalog.json")))!.AsObject(), new JsonObject { ["packs"] = new JsonArray() });
         JsonObject[] Table(string name) => Rows(JsonNode.Parse(File.ReadAllText(Path.Combine(directory, "data", "locations", "locations", name + ".json"))));
         var maps = Table("MapTable");

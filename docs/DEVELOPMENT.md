@@ -18,6 +18,12 @@ Run root scripts from this repository, or invoke them by full path while retaini
 
 `Dustweave.slnx` lists every project for IDE navigation. RID-specific command-line builds use project entry points because MSBuild does not accept `-r` at solution scope. Owned projects and managed host assemblies use `Dustweave.*`; the desktop assembly and executable are `Dustweave` / `Dustweave.exe`.
 
+### Installed resource paths and observations
+
+The single-file executable is at the installation root; shipped `flows`, `data`, `connection/specs` and other content live under `app`. Resolve these through `DailyTools.PackageDirectory` at resource-reader boundaries. Do not treat `AppContext.BaseDirectory` as the content root or fall back to stale sibling files. Development assets and verified cache bundles retain their own roots. Plugin discovery, user data and self-update executable paths have separate contracts and must not be redirected to `app`. `PackagedUtility` exercises actual flow, rule, free-draw and trade readers with both layouts, including stale root files.
+
+Authenticated account observations, startup UI observations and input readiness are separate. A transient loading frame or startup UI read error must not discard a freshly read account identity or an attendance receipt. Wait within the stage deadline; keep observed login pages and input errors blocking their own actions. The guild attendance popup is a presentation-only close action, and recovery must not re-enter or claim attendance again. Cover these boundaries with `IdentityObserver`, `ManagedInputs` and `HomeNavigation`.
+
 ### Restarting for updates
 
 An update-ready notice stays open while the restart request is validated and the helper is prepared. Every rejected request reports its reason in that notice and on Updates. Fixed startup connection/account observations are read-only; they neither gate the restart nor refresh the UI once it is reserved. An in-flight update or schedule check may finish within a bounded 15-second wait; the request then revalidates the package version and due schedule. Closing the notice cancels a waiting request. Active automation, mutable settings operations and due scheduled runs retain their guards. The `update-discovery` desktop smoke exercises real buttons with synthetic checks and an injected helper boundary; it does not install a release or touch the game.
