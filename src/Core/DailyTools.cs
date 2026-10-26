@@ -72,6 +72,11 @@ public static class DailyTools
             if (!File.Exists(start.FileName))
                 throw new FileNotFoundException("缺少日常执行组件，请使用完整解压的新版工具。", start.FileName);
         }
+        // Plugin changes apply after the host restarts. Preparation helpers must
+        // use that host's pinned selection, not re-read a newer disk selection
+        // and reject the daily module the still-running host just activated.
+        var plugin = DailyPlugin.Current;
+        start.Environment["DUSTWEAVE_PLUGIN"] = plugin.Available ? plugin.Root : "none";
         return start;
     }
     public static string EvidenceSpec(string directory, string name)

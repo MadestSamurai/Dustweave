@@ -93,7 +93,20 @@ internal static class PluginStoreCases
         Check(UpdateBlock(nextHost) == "plugins.incompatible_host", "actual enabled incompatible plugin still blocks host update");
         Check(UpdateBlock(nextHost, "none") == null, "explicit no-plugin mode overrides installed plugin during host update");
         string pinned = store.SelectedRoot();
-        using var preparedTwo = store.Prepare(Package("1.1.0")); var second = store.Install(preparedTwo);
+        string secondZip = Package("1.1.0");
+        using var preparedTwo = store.Prepare(secondZip); var second = store.Install(preparedTwo);
+        foreach (bool initiallyEnabled in new[] { false, true })
+        {
+            string sessionRoot = Path.Combine(root, "session-" + initiallyEnabled);
+            Directory.CreateDirectory(sessionRoot);
+            string input = Path.Combine(sessionRoot, "input.json");
+            DailyJson.Write(input, new { firstZip, secondZip, initiallyEnabled, root = sessionRoot });
+            var child = new System.Diagnostics.ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false, CreateNoWindow = true };
+            child.ArgumentList.Add("--plugin-session-parent"); child.ArgumentList.Add(input);
+            using var process = System.Diagnostics.Process.Start(child)!;
+            await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(30));
+            Check(process.ExitCode == 0, "helpers keep the running session during plugin changes; initially enabled=" + initiallyEnabled);
+        }
         bool failed = false;
         try { await store.ActivateAsync(second.Fingerprint, (_, _) => throw new IOException("probe failed")); } catch (IOException) { failed = true; }
         Check(failed && store.Read().Active == first.Fingerprint, "failed probe preserves active version");
@@ -140,5 +153,48 @@ internal static class PluginStoreCases
         Check(store.SelectedRoot() == "", "null identity in a corrupt registry cannot crash base startup");
         File.WriteAllText(Path.Combine(root, "user", "extensions", "selection.json"), "{");
         Check(store.SelectedRoot() == "" && DailyPluginStore.HasSelection(Path.Combine(root, "user")), "corrupt registry fails closed without reviving local plugin");
+    }
+    public static async Task SessionChild(string input)
+    {
+        var config = DailyJson.TryRead<JsonObject>(input)!;
+        string root = config["root"]!.GetValue<string>();
+        Environment.SetEnvironmentVariable("BD2_DAILY_DATA_ROOT", Path.Combine(root, "user"));
+        Environment.SetEnvironmentVariable("DUSTWEAVE_PLUGIN", null);
+        var store = new DailyPluginStore(Path.Combine(root, "user"));
+        using var firstPackage = store.Prepare(config["firstZip"]!.GetValue<string>());
+        using var secondPackage = store.Prepare(config["secondZip"]!.GetValue<string>());
+        var first = store.Install(firstPackage); var second = store.Install(secondPackage);
+        Task Probe(DailyPluginInfo _, CancellationToken __) => Task.CompletedTask;
+        if (config["initiallyEnabled"]!.GetValue<bool>()) await store.ActivateAsync(first.Fingerprint, Probe);
+        else store.Disable();
+        var pinned = DailyPlugin.Current;
+        string package = Path.Combine(root, "package"); Directory.CreateDirectory(package);
+        File.WriteAllText(Path.Combine(package, "Dustweave.exe"), "synthetic");
+        DailyJson.Write(Path.Combine(package, DailyTools.Marker), new JsonObject { ["protocol"] = DailyTools.Protocol });
+        async Task CheckHelper(string phase, bool inherit, string expected)
+        {
+            var start = DailyTools.StartInfo(package, "live");
+            start.FileName = Environment.ProcessPath!;
+            start.ArgumentList.Clear();
+            string result = Path.Combine(root, phase + "-" + inherit + ".json");
+            start.ArgumentList.Add("--plugin-session-read"); start.ArgumentList.Add(result);
+            // A restarted host intentionally resolves the newly selected version.
+            if (!inherit) start.Environment.Remove("DUSTWEAVE_PLUGIN");
+            using var child = System.Diagnostics.Process.Start(start)!;
+            await child.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));
+            if (child.ExitCode != 0 || DailyJson.TryRead<JsonObject>(result)?["Fingerprint"]?.GetValue<string>() != expected)
+                throw new Exception("Plugin session changed in helper: " + phase + ", inherit=" + inherit);
+        }
+        await store.ActivateAsync(second.Fingerprint, Probe);
+        await CheckHelper("updated", true, pinned.Fingerprint);
+        await CheckHelper("updated", false, second.Fingerprint);
+        store.Disable();
+        await CheckHelper("disabled", true, pinned.Fingerprint);
+        await CheckHelper("disabled", false, "");
+        store.Remove(first.Fingerprint);
+        await CheckHelper("removed", true, pinned.Fingerprint);
+        foreach (string tool in new[] { "live", "minigame", "exporter", "diagnostics" })
+            if (DailyTools.StartInfo(package, tool).Environment["DUSTWEAVE_PLUGIN"] != (pinned.Available ? pinned.Root : "none"))
+                throw new Exception("Utility did not inherit session: " + tool);
     }
 }

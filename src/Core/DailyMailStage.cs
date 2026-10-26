@@ -318,6 +318,7 @@ public sealed partial class DailyCommandDriver
         bool seen = false;
         double readySince = -1;
         string readyToken = "";
+        string waitingFor = "Reward destination is not ready";
         while (clock() < end)
         {
             if (stopped() || mailbox.Read("live", "pause") != null)
@@ -329,14 +330,21 @@ public sealed partial class DailyCommandDriver
             var rows = DailyNavigationDecision.Rows(frame).Where(r => Text(r, "Type") == "RewardReceivePopupUI").ToArray();
             if (rows.Length == 0)
             {
+                // This helper also runs before a claim. An unready destination
+                // must not imply that a reward was shown or a receipt exists.
+                waitingFor = seen ? "Reward presentation closed but destination is not ready" : "Reward destination is not ready";
                 bool destinationReady = DailyNavigationDecision.Rows(frame).Any(r => expectedSurfaces.Contains(Text(r, "Type")) && (r["InputReady"]?.GetValue<bool>() ?? true) && DailyNavigationDecision.Blockers(frame, Text(r, "Type"), policy).Length == 0);
                 // A verified transaction may resume after its result popup was already closed.
                 // Stable native destination proves presentation cleanup, never a new reward claim.
                 string token = Text(frame, "UiToken") + "|" + expected;
-                if (destinationReady && (destinationSettled == null || await destinationSettled()))
+                bool destinationStateReady = destinationReady && (destinationSettled == null || await destinationSettled());
+                if (destinationReady && !destinationStateReady)
+                    waitingFor = "Reward destination state has not refreshed";
+                if (destinationStateReady)
                 {
                     if (seen || !waitForReward)
                         return;
+                    waitingFor = "Reward destination is still changing";
                     if (readySince < 0 || readyToken != token)
                     {
                         readySince = clock();
@@ -352,6 +360,7 @@ public sealed partial class DailyCommandDriver
             }
             readySince = -1;
             seen = true;
+            waitingFor = "Reward presentation is still open";
             if (rows.Length != 1 || DailyNavigationDecision.Blockers(frame, "RewardReceivePopupUI", policy).Length > 0)
                 throw new StageHostException("adapter", "Reward result is covered by another popup");
             var evidence = await EvidenceAsync(["reward.presentation"]);
@@ -367,6 +376,6 @@ public sealed partial class DailyCommandDriver
             else
                 await delay(TimeSpan.FromMilliseconds(100));
         }
-        throw new StageHostException("adapter", "Reward presentation did not close; business receipt preserved");
+        throw new StageHostException("adapter", waitingFor);
     }
 }

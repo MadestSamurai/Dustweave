@@ -244,12 +244,13 @@ static class ManagementStageCases
             Check(result["state"]?.GetValue<string>() == "completed" && f.Claims == 1 && result["retries"]?.GetValue<int>() == 0,
                 "lost transport receipt with successful native claim and reward does not trigger a second claim");
         }
+        foreach (int bannerIndex in new[] { 2, 3, 12 })
         foreach (bool reversed in new[] { false, true })
         using (var f = Create())
         {
             var first = f.Current["Surfaces"]![0]!["Targets"]![0]!.DeepClone().AsObject();
             first["Field"] = "$pointer/UIRoot/Mask/Object- Left/ButtonLayout/Management/ScrollRect/Viewport/Content1";
-            var second = first.DeepClone().AsObject(); second["Id"] = 12; second["Field"] = "$pointer/UIRoot/Mask/Object- Left/ButtonLayout/Management/ScrollRect/Viewport/Content2";
+            var second = first.DeepClone().AsObject(); second["Id"] = 12; second["Field"] = "$pointer/UIRoot/Mask/Object- Left/ButtonLayout/Management/ScrollRect/Viewport/Content" + bannerIndex;
             f.Current["Surfaces"]![0]!["Targets"] = reversed ? new JsonArray(second, first) : new JsonArray(first, second);
             var result = await f.Stage.ExecuteAsync(f.Context, NoRelay);
             Check(f.Claims == 1 && result["state"]!.GetValue<string>() == "completed", "rotating settlement banners share a single native entry regardless of observation order");

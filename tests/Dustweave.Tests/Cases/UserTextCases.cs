@@ -7,6 +7,10 @@ internal static class UserTextCases
     public static void Run(List<string> cases)
     {
         void Check(string name, bool condition) { if (!condition) throw new Exception(name); cases.Add(name); }
+        Check("missing button explains recovery rather than translation fallback", DailyUserText.Describe("Need one enabled observed field _objButton; found 0") == "游戏操作按钮暂不可用，请确认游戏画面后接续。");
+        Check("ambiguous button does not claim it is absent", DailyUserText.Describe("Need one enabled observed field _objButton; found 2").Contains("多个"));
+        Check("target raw field remains in details", DailyUserText.Details("Need one enabled observed field _objButton; found 0").Contains("_objButton; found 0"));
+        Check("reward destination failure does not claim a reward is open", !DailyUserText.Describe("Reward destination is not ready").Contains("未能关闭"));
         Check("weekly completion is meaningful Chinese", DailyUserText.Describe("weekly_fishing_complete") == "本周钓鱼任务已完成");
         Check("normal skip is not presented as an error", DailyUserText.Describe("mailbox_empty") == "邮箱没有可领取的奖励");
         Check("partial result explains sweep prerequisite", DailyUserText.Describe("no_fully_cleared_sweep_stage").Contains("全部通关条件"));

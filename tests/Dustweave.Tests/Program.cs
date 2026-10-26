@@ -1,6 +1,12 @@
 using Dustweave;
 
 if (args.Length == 2 && args[0] == "--suite-owner-child") { await SuiteOwnerProbeCases.Child(args[1]); return; }
+if (args.Length == 2 && args[0] == "--plugin-session-parent") { await PluginStoreCases.SessionChild(args[1]); return; }
+if (args.Length == 2 && args[0] == "--plugin-session-read")
+{
+    var info = DailyPlugin.Current;
+    DailyJson.Write(args[1], new { info.Available, info.Fingerprint }); return;
+}
 
 // Only the existing synthetic cases are linked. Captured account fixtures stay in the parent repo.
 if (args.Length == 2 && args[0] == "--desktop-launch-child")

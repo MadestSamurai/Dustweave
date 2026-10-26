@@ -1,4 +1,28 @@
 [
+{
+  "Version": "1.5.3",
+  "Date": "2026-10-26",
+  "Notes": {
+    "zh-CN": [
+      "紧急修复 1.5.2 新增检查错误拦截正常日常入口的问题；教材奖励列表的加载保护不再影响其他页面。",
+      "修复餐厅收益入口、教材奖励列表状态识别，以及安装或更新插件后子工具使用不同插件版本导致的连接失败。插件变更在重新启动软件后统一生效。",
+      "区分奖励展示未结束、后续页面未就绪与状态未刷新，补全操作按钮不可用的提示。",
+      "更新后请接续或重新勾选此前失败的环节。1.5.0–1.5.2 可在软件内更新；旧版或更新失败时请从 GitHub／夸克下载完整包到新目录，并保留 app 文件夹。"
+    ],
+    "zh-TW": [
+      "緊急修復 1.5.2 新增檢查錯誤攔截正常日常入口的問題；教材獎勵清單的載入保護不再影響其他頁面。",
+      "修復餐廳收益入口、教材獎勵清單狀態辨識，以及安裝或更新插件後子工具使用不同插件版本造成的連線失敗。插件變更在重新啟動軟體後統一生效。",
+      "區分獎勵展示未結束、後續頁面未就緒與狀態未刷新，補齊操作按鈕不可用的提示。",
+      "更新後請接續或重新勾選先前失敗的環節。1.5.0–1.5.2 可在軟體內更新；舊版或更新失敗時請從 GitHub／夸克下載完整套件至新目錄，並保留 app 資料夾。"
+    ],
+    "en-US": [
+      "Hotfix for normal daily-task buttons incorrectly blocked by new checks in 1.5.2. The additional loading checks now apply only to the tactical-training reward list.",
+      "Fixed restaurant entry detection, reward-list readiness and mixed plugin versions between the application and child tools. Plugin changes take effect together after restarting.",
+      "Reward display, destination readiness and state-refresh failures now have distinct messages. Unavailable-button messages are clearer.",
+      "Resume or select previously failed tasks after updating. Versions 1.5.0–1.5.2 can update in the application. For older versions or failed updates, download the complete package from GitHub or Quark into a new folder and keep the app folder."
+    ]
+  }
+},
   {
     "Version": "1.5.2",
     "Date": "2026-10-26",

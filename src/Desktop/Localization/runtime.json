@@ -4209,6 +4209,51 @@
     "zh-TW": "獎勵界面未能關閉，已保留結算記錄。",
     "en-US": "Reward presentation did not close; business receipt preserved"
   },
+  "message.Reward presentation is still open": {
+    "zh-CN": "奖励展示仍未结束，请确认游戏画面后接续。",
+    "zh-TW": "獎勵展示仍未結束，請確認遊戲畫面後接續。",
+    "en-US": "The reward display is still open. Check the game screen, then resume."
+  },
+  "message.游戏操作按钮暂不可用，请确认游戏画面后接续。": {
+    "zh-CN": "游戏操作按钮暂不可用，请确认游戏画面后接续。",
+    "zh-TW": "遊戲操作按鈕暫不可用，請確認遊戲畫面後接續。",
+    "en-US": "The game button is unavailable. Check the game screen, then resume."
+  },
+  "message.发现多个匹配的游戏按钮，无法确定操作目标；请确认游戏画面后接续。": {
+    "zh-CN": "发现多个匹配的游戏按钮，无法确定操作目标；请确认游戏画面后接续。",
+    "zh-TW": "發現多個符合的遊戲按鈕，無法確定操作目標；請確認遊戲畫面後接續。",
+    "en-US": "Multiple game buttons match this action. Check the game screen, then resume."
+  },
+  "message.地图操作界面": {
+    "zh-CN": "地图操作界面",
+    "zh-TW": "地圖操作介面",
+    "en-US": "Field controls"
+  },
+  "message.教材奖励列表": {
+    "zh-CN": "教材奖励列表",
+    "zh-TW": "教材獎勵清單",
+    "en-US": "Tactical training rewards"
+  },
+  "message.Reward presentation closed but destination is not ready": {
+    "zh-CN": "奖励展示已消失，但后续页面尚未准备好；请稍后接续。",
+    "zh-TW": "獎勵展示已消失，但後續頁面尚未準備好；請稍後接續。",
+    "en-US": "The reward display has closed, but the next page is not ready. Resume shortly."
+  },
+  "message.Reward destination is not ready": {
+    "zh-CN": "目标页面尚未准备好，暂时无法继续；请确认游戏画面后接续。",
+    "zh-TW": "目標頁面尚未準備好，暫時無法繼續；請確認遊戲畫面後接續。",
+    "en-US": "The target page is not ready. Check the game screen, then resume."
+  },
+  "message.Reward destination state has not refreshed": {
+    "zh-CN": "页面已恢复，但奖励相关状态尚未刷新；请稍后接续。",
+    "zh-TW": "頁面已恢復，但獎勵相關狀態尚未刷新；請稍後接續。",
+    "en-US": "The page is ready, but its reward state has not refreshed. Resume shortly."
+  },
+  "message.Reward destination is still changing": {
+    "zh-CN": "奖励后的页面仍在刷新，请稍后接续。",
+    "zh-TW": "獎勵後的頁面仍在刷新，請稍後接續。",
+    "en-US": "The page is still refreshing after reward cleanup. Resume shortly."
+  },
   "message.Room like cache differs": {
     "zh-CN": "小屋点赞结果与游戏状态不一致",
     "zh-TW": "小屋點贊結果與游戲狀態不一致",

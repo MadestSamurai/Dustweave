@@ -61,6 +61,11 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     # Layout-3 differential finalization changes only the distribution/update boundary.
     $updates+='|^README(?:\.en)?\.md$|^src/Core/(DailyUpdates|DailyUpdateTransport|DailyUpdateEngine|DailyFullPackageRepair)\.cs$|^src/Desktop/MainWindow\.Repair\.cs$|^src/Desktop/Localization/(releases|strings)\.json$|^scripts/test-bundled-update\.ps1$|^tests/Dustweave.Tests/Cases/UpdateLayoutCases\.cs$|^tools/OtaChannel/(Mirror|MirrorNginx)\.cs$|^tools/OtaMirror/Program\.cs$'
     if($Scope -in @('Auto','Updates') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $updates}).Count){$selectedScope='Updates';$outside=@()}
+    # Additional UI-readiness gates and utility plugin handoff affect the daily
+    # host boundary, not unchanged minigame strategies. Keep this scope explicit
+    # and reuse only a passed full baseline with identical game/build inputs.
+    $uiReadiness='^(Directory\.Build\.props|CHANGELOG\.md|package\.ps1|scripts/validation-plan\.ps1|test\.ps1)$|^docs/|^src/Connection/UiInteractionReadiness\.cs$|^src/Shared/DailyBridgeVersion\.cs$|^src/Core/(DailyManagementEntry|DailyTools|DailyMailStage|DailyUserText)\.cs$|^src/Core/Localization/Messages\.zh-CN\.txt$|^src/Desktop/Localization/(runtime|releases)\.json$|^tests/Dustweave.Tests/(Program\.cs|Cases/(UiInteractionReadiness|ManagementStage|PluginStore|ManagedInputs|UserText)Cases\.cs)$'
+    if($Scope -in @('Auto','UiReadiness') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $uiReadiness}).Count){$selectedScope='UiReadiness';$outside=@()}
     $full.changed=$changed
     $reason='Changes outside the account validation boundary: '+($outside -join ', ')
     if(!$outside.Count){
@@ -75,6 +80,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
       $groups=@('ProductIdentity','Startup','LoginIdentity','Sandbox','Parallel','ParallelProcess','AccountOrder','AccountIdentity','AccountRestart','QueueSession','QueuePeriod')
       if($selectedScope -eq 'Trading'){$groups=@('ProductIdentity','TradeOptimizer','TradeData','TradeReplan','TradeQuote','TradeResume','TalentPotion','BargainTraining','UserText')}
       if($selectedScope -eq 'Updates'){$groups=@('ProductIdentity','UpdateLayout','UpdateDelta','UpdateSafety','UpdateRepair','UpdateInventory','CacheStorage','SchedulingUpdates','UnifiedSuite','SuiteOwnerProbe','UserText')}
+      if($selectedScope -eq 'UiReadiness'){$groups=@('ProductIdentity','UiInteractionReadiness','ManagementStage','ManagedInputs','CommandDriver','Workflow','MirrorStage','DispatchRecovery','BattleArrivalRecovery','HomeNavigation','HomeRecovery','PackagedUtility','PluginStore','UnifiedSuite','UserText')}
       if($selectedScope -eq 'Weekly'){$groups=@('ProductIdentity','WeeklyIsolation','WeeklyGoal','CollectionReadiness','FieldTalent','WeeklyNpcBoard','WeeklyNpcQuery','WeeklyNpcInteraction','CommandDriver','ManagedInputs','QueueSession','QueueEngine','QueuePeriod','QueueExecutionThread','PickupRecovery','BusinessJournal','BusinessScope','MirrorStage','FreeDrawStage','DispatchRecovery','ManagementStage','TradeResume','TravelTransition','UserText')}
       if($selectedScope -in @('Navigation','Rewards')){$groups+=@('HomeNavigation','HomeRecovery','TravelTransition','WeeklyGoal','CollectionReadiness','CafeteriaRecovery','CommandDriver','ManagedInputs','PassiveUi','UserText')}
       if($selectedScope -eq 'Rewards'){
@@ -89,7 +95,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
    }
   }
  }
- if($Scope -in @('Accounts','Navigation','Rewards','Trading','Weekly','Updates')){throw "Scoped validation cannot reuse this baseline: $reason"}
+ if($Scope -in @('Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness')){throw "Scoped validation cannot reuse this baseline: $reason"}
  $full.reason=$reason
  return $full
 }

@@ -8,13 +8,19 @@ internal static class UiInteractionReadinessCases
   using var stream=typeof(UiInteractionReadinessCases).Assembly.GetManifestResourceStream("Tests.UiInteractionReadiness.cs")!;
   using var reader=new StreamReader(stream);
   var references=((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator).Select(p=>MetadataReference.CreateFromFile(p));
-  var compilation=CSharpCompilation.Create("UiLifecycle"+Guid.NewGuid().ToString("N"),
-   new[]{CSharpSyntaxTree.ParseText(reader.ReadToEnd()),CSharpSyntaxTree.ParseText(Fixture)},references,
-   new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-  using var buffer=new MemoryStream();var result=compilation.Emit(buffer);
-  if(!result.Success)throw new Exception(string.Join("\n",result.Diagnostics));
-  var runner=Assembly.Load(buffer.ToArray()).GetType("Runner")!;
-  cases.AddRange((string[])runner.GetMethod("Run")!.Invoke(null,null)!);
+  string source=reader.ReadToEnd();
+  // The client's mission row is a struct. Reflection boxes the list entry and
+  // the copied cell binding separately; a class-only fixture hid that mismatch.
+  foreach(string model in new[]{"class","struct"})
+  {
+   var compilation=CSharpCompilation.Create("UiLifecycle"+Guid.NewGuid().ToString("N"),
+    new[]{CSharpSyntaxTree.ParseText(source),CSharpSyntaxTree.ParseText(Fixture.Replace("public class MissionData", "public "+model+" MissionData"))},references,
+    new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+   using var buffer=new MemoryStream();var result=compilation.Emit(buffer);
+   if(!result.Success)throw new Exception(string.Join("\n",result.Diagnostics));
+   var runner=Assembly.Load(buffer.ToArray()).GetType("Runner")!;
+   cases.AddRange(((string[])runner.GetMethod("Run")!.Invoke(null,null)!).Select(label=>model+": "+label));
+  }
  }
  const string Fixture="""
 using System;
@@ -43,11 +49,12 @@ namespace UnityEngine {
  }
 }
 namespace UnityEngine.UI {
+ public class ScrollRect:UnityEngine.Component {}
  public class ScrollData {public LoopScrollItemBase _originItem;}
  public class LoopScrollRect:UnityEngine.Component {public ScrollData scrollData=new();public int totalCount;}
 }
 public class UIBase:UnityEngine.Component {public bool CloseAllowed=true;public bool CanCloseUI()=>CloseAllowed;}
-public class MissionData {}
+public class MissionData {public int Id;}
 public class TarosTacticsMissionPopupUI:UIBase {
  private UnityEngine.UI.LoopScrollRect _scrollMission;
  public List<MissionData> Rows {get;set;}
@@ -77,7 +84,7 @@ var origin=scroll.gameObject.Child().Add(new TarosTacticsMissionPopupUIScrollIte
 origin.BindOwner(popup,scroll);scroll.scrollData._originItem=origin;
 Check(!UiInteractionReadiness.TargetReady(popup,origin.gameObject),"active template is not a target");
 Check(!UiInteractionReadiness.MissionReady(popup),"created popup without model is not ready");
-popup.Rows=new(){new(),new(),new()};
+popup.Rows=new(){new(){Id=1},new(){Id=2},new(){Id=3}};
 Check(!UiInteractionReadiness.MissionReady(popup),"model exists before delayed AddItem");
 scroll.totalCount=3;
 Check(!UiInteractionReadiness.MissionReady(popup),"template alone does not prove list rendered");
@@ -104,7 +111,7 @@ Check(UiInteractionReadiness.MissionReady(popup),"native open animation ended");
 int clicks=0;
 foreach(int phase in Enumerable.Range(0,5)){
  if(phase==0)scroll.totalCount=0;
- if(phase==3){scroll.totalCount=3;row.Bind(null);}
+ if(phase==3){scroll.totalCount=3;row.Bind(default);}
  if(phase==4)row.Bind(popup.Rows[0]);
  if(UiInteractionReadiness.MissionReady(popup))clicks++;
  if(phase<4)Check(clicks==0,"no claim/close during deferred refresh phase "+phase);
@@ -114,14 +121,26 @@ popup.Rows.Clear();scroll.totalCount=0;row.gameObject.activeInHierarchy=false;
 Check(UiInteractionReadiness.MissionReady(popup),"legitimate initialized empty list can close");
 Check(UiInteractionReadiness.TargetReady(popup,root.Child()),"ordinary non-list controls unaffected");
 Check(UiInteractionReadiness.MissionReady(new UIBase()),"unrelated UI unchanged");
-// The common target guard also covers non-tactics pooled lists.
+// The tactics-specific binding contract must not disable unrelated controls.
+// Fixed banners, independently routed talent rows and manually populated
+// lists have different native initialization/ownership contracts.
 var other=new GameObject().Add(new UIBase());
 var otherScroll=other.gameObject.Child().Add(new LoopScrollRect());
-var otherRow=otherScroll.gameObject.Child().Add(new LoopScrollItemBase());otherRow.BindOwner(other,otherScroll);
-otherScroll.scrollData._originItem=otherRow;
-Check(!UiInteractionReadiness.TargetReady(other,otherRow.gameObject),"other mission/item templates excluded");
-otherScroll.scrollData._originItem=null;
-Check(UiInteractionReadiness.TargetReady(other,otherRow.gameObject),"other bound rows remain usable");
+var otherRow=otherScroll.gameObject.Child().Add(new LoopScrollItemBase());
+foreach(bool pooled in new[]{false,true})foreach(bool loaded in new[]{false,true})foreach(bool bound in new[]{false,true}){
+ otherRow.IsPooled=pooled;otherRow.LoadComplete=loaded;
+ otherRow.BindOwner(bound?other:null,bound?otherScroll:null);
+ otherScroll.scrollData._originItem=otherRow;
+ Check(UiInteractionReadiness.TargetReady(other,otherRow.gameObject.Child()),"unrelated row keeps native input rules: "+pooled+"/"+loaded+"/"+bound);
+}
+var banner=other.gameObject.Child().Add(new LoopScrollItemBase());
+Check(UiInteractionReadiness.TargetReady(other,banner.gameObject),"fixed management/event banner remains clickable");
+Check(UiInteractionReadiness.TargetReady(other,banner.gameObject.Child()),"fixed banner descendant remains clickable");
+Check(!UiInteractionReadiness.TargetReady(popup,banner.gameObject),"tactics does not accept foreign or unbound rows");
+var ordinaryScroll=other.gameObject.Child().Add(new ScrollRect());
+var craft=ordinaryScroll.gameObject.Child().Add(new LoopScrollItemBase());
+Check(UiInteractionReadiness.TargetReady(other,craft.gameObject),"manually populated equipment list keeps native input rules");
+Check(UiInteractionReadiness.TargetReady(other,other.gameObject.Child()),"ordinary close control is independent of item readiness");
 return checks.ToArray();
 
 } }

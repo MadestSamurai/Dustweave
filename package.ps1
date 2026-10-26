@@ -3,7 +3,7 @@ param(
  [Parameter(Mandatory)][string]$GameManagedDir,
  [ValidateSet('Portable','Lite')][string[]]$Flavors=@('Portable','Lite'),
  [string]$PreparedCacheDirectory='',
- [ValidateSet('Auto','Accounts','Navigation','Rewards','Trading','Weekly','Updates','Full')][string]$ValidationScope='Auto',
+ [ValidateSet('Auto','Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Full')][string]$ValidationScope='Auto',
  [string]$ValidationBaseline='',
  [string]$SyntheticEvidence='',
  [string]$SyntheticInputs='',
@@ -184,7 +184,7 @@ foreach($flavor in $Flavors){
  if($validation.scope -in @('Full','Updates')){Pass (Join-Path $checks 'check-tool-languages/result.json');Pass (Join-Path $checks 'check-tool-language-ui/result.json')}
  Run $exe @('--utility','live','self-test') ($flavor+'-live-self-test')
  Run $exe @('--tool-catalog',(Join-Path $bundle 'app/tools.json')) ($flavor+'-tool-catalog')
- if($flavor -eq $Flavors[0] -and $validation.scope -in @('Navigation','Rewards')){
+ if($flavor -eq $Flavors[0] -and $validation.scope -in @('Navigation','Rewards','UiReadiness')){
   Run $exe @('--utility','live','prepare',$managed,(Join-Path $checks 'live-client')) 'live-client'
   if($validation.scope -eq 'Rewards'){
    Run $exe @('--utility','live','taps-all',$managed,(Join-Path $root 'assets/specs'),(Join-Path $checks 'evidence')) 'evidence-configs'

@@ -5,8 +5,15 @@ namespace Dustweave;
 public static class DailyManagementEntry
 {
     private const string Prefix = "$pointer/UIRoot/Mask/Object- Left/ButtonLayout/Management/";
-    private static bool SettlementBanner(JsonObject target) => DailyNavigationDecision.Text(target, "Field") is
-        Prefix + "ScrollRect/Viewport/Content1" or Prefix + "ScrollRect/Viewport/Content2";
+    private static bool SettlementBanner(JsonObject target)
+    {
+        const string itemPrefix = Prefix + "ScrollRect/Viewport/Content";
+        string field = DailyNavigationDecision.Text(target, "Field");
+        // Native layouts can expose any numbered banner, including Content3
+        // when income is capped. Descendants and unrelated controls are not equivalent.
+        return field.StartsWith(itemPrefix, StringComparison.Ordinal) && field.Length > itemPrefix.Length &&
+            field.AsSpan(itemPrefix.Length).IndexOfAnyExceptInRange('0', '9') < 0;
+    }
 
     public static JsonObject? Select(JsonObject frame)
     {

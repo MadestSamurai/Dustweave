@@ -14,6 +14,10 @@ namespace BD2Daily.Live {
   // A scroll's origin item is an authoring template, not a bound mission/item.
   // Active clones can also still belong to the pool or be loading their data.
   internal static bool TargetReady(UIBase owner,GameObject target){
+   // This additional binding contract belongs to the tactics mission list.
+   // Other native controls reuse the row base with different initialization
+   // and ownership rules; retain their existing active/interactable checks.
+   if(!(owner is TarosTacticsMissionPopupUI))return true;
    var row=target.GetComponentInParent<LoopScrollItemBase>();
    if(row==null)return true;
    var scroll=Field(row,"_loopScrollRect") as LoopScrollRect;
@@ -39,7 +43,10 @@ namespace BD2Daily.Live {
      if(!TargetReady(ui,row.gameObject))return false;
      var binding=row.GetType().GetFields(Flags).SingleOrDefault(f=>f.FieldType==dataType);
      var item=binding==null?null:binding.GetValue(row);
-     if(item==null||!data.Cast<object>().Any(value=>ReferenceEquals(value,item)))return false;
+     // Native mission models are structs copied into the cell by UpdateData.
+     // Reflection boxes each copy separately, so reference identity can never
+     // match. Compare value models by value; keep identity for reference models.
+     if(item==null||!data.Cast<object>().Any(value=>dataType.IsValueType?Equals(value,item):ReferenceEquals(value,item)))return false;
     }
     return true;
    }catch(Exception){return false;}

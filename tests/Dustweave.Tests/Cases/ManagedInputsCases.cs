@@ -4,6 +4,50 @@ using System.Text.Json;
 using static Dustweave.DailyData;
 static class ManagedInputsCases
 {
+    private static async Task RewardCleanupState(string root, List<string> cases)
+    {
+        foreach (string mode in new[] { "ready", "opening", "unready", "missing", "covered", "state-pending", "changing", "reward-open", "reward-closed", "reward-complete" })
+        {
+            using var h = new WorkflowHarness(Path.Combine(root, "reward-cleanup-" + mode), []);
+            const string destination = "MailUI";
+            h.Page(destination);
+            if (mode is "opening" or "unready") h.Frame["Surfaces"]![0]!["InputReady"] = false;
+            if (mode == "missing") h.Page("MenuUI");
+            if (mode == "covered") h.Frame["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("UnknownPopupUI", true, "_close", 2));
+            bool hasReward = mode.StartsWith("reward-", StringComparison.Ordinal);
+            if (hasReward) h.Frame["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("RewardReceivePopupUI", true, "", 2));
+            h.Readings = () => [WorkflowCases.Reading("reward.presentation",
+                ("ὣὤὥὦὯὦὩὤὨὠὪ", mode != "reward-open"), ("ὪὯὣὥὬὫὬὩὠὮὠ", true),
+                ("ὮὬὧὦὣὠὠὤὮὦὧ", true), ("ὦὡὮὫὧὠὮὡὭὭὬ", false))];
+            h.OnDelay = () => {
+                if (mode == "opening" && h.Time >= .3) h.Frame["Surfaces"]![0]!["InputReady"] = true;
+                if (mode == "changing") h.Frame["UiToken"] = "refresh-" + h.Time;
+            };
+            int closes = 0;
+            h.OnCommand = c => {
+                if (!hasReward || S(c["Kind"]) != "back" || N(c["SurfaceId"]) != 2)
+                    throw new Exception("Reward cleanup dispatched an unrelated operation");
+                closes++;
+                h.Page(destination);
+                if (mode == "reward-closed") h.Frame["Surfaces"]![0]!["InputReady"] = false;
+            };
+            string error = "";
+            try { await h.Driver.DismissRewardAsync([destination], true, () => Task.FromResult(mode != "state-pending")); }
+            catch (StageHostException e) { error = e.Message; }
+            string expected = mode switch {
+                "ready" or "opening" or "reward-complete" => "",
+                "reward-open" => "Reward presentation is still open",
+                "reward-closed" => "Reward presentation closed but destination is not ready",
+                "state-pending" => "Reward destination state has not refreshed",
+                "changing" => "Reward destination is still changing",
+                _ => "Reward destination is not ready"
+            };
+            if (error != expected || closes != (mode is "reward-closed" or "reward-complete" ? 1 : 0))
+                throw new Exception($"Reward cleanup state {mode}: expected '{expected}', got '{error}', closes={closes}");
+            if (expected.Length > 0 && (h.Time < 40 || h.Time > 41)) throw new Exception("Reward cleanup changed its existing timeout");
+            cases.Add("reward cleanup distinguishes presentation, destination and refreshed state without replay: " + mode);
+        }
+    }
     private static async Task CostumeTicketNotice(string root, List<string> cases)
     {
         const string ui = "CostumeSelectNoticePopupUI";
@@ -306,6 +350,7 @@ static class ManagedInputsCases
     }
     public static async Task Run(string output, List<string> cases)
     {
+        await RewardCleanupState(output, cases);
         await CostumeTicketNotice(output, cases);
         await MailRecovery(output, cases);
         await ProtectedMail(output, cases);

@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 1.5.3 — 2026-10-26
+
+- 紧急修复 1.5.2 新增检查误拦截正常日常入口的问题；教材奖励列表的加载保护不再影响其他页面。
+- 修复餐厅收益入口、教材奖励列表状态识别，以及安装或更新插件后子工具使用不同插件版本导致的连接失败。
+- 区分奖励展示未结束与后续页面未就绪，补全操作按钮不可用的提示。
+- Hotfix for overly broad UI checks introduced in 1.5.2, reward-list readiness and plugin handoff; clarifies reward and button errors.
+- [完整说明 / Full notes](docs/releases/1.5.3.md)
+
 ## 1.5.2 — 2026-10-26
 
 - 寻路加入商店、告示牌等实际可用的快捷移动落点，减少路线计算、换图后起步和重复读取的等待。

@@ -77,7 +77,7 @@ public static class DailyUserText
     ];
     private static readonly FrozenDictionary<string, string> Surfaces = new Dictionary<string, string>(StringComparer.Ordinal)
     {
-        ["MenuUI"] = "主菜单", ["MessagePopupUI"] = "游戏提示框", ["EventPopupUI"] = "活动弹窗",
+        ["MenuUI"] = "主菜单", ["GameFieldDefaultUI"] = "地图操作界面", ["TarosTacticsMissionPopupUI"] = "教材奖励列表", ["MessagePopupUI"] = "游戏提示框", ["EventPopupUI"] = "活动弹窗",
         ["PackListUI"] = "卡带选择", ["QuickMenuUI"] = "快捷菜单", ["CurrencyUI"] = "货币界面",
         ["SichuanBoardUI"] = "连连看盘面", ["RewardReceivePopupUI"] = "奖励领取弹窗",
         ["RewardUI"] = "奖励界面", ["RewardPopupUI"] = "奖励弹窗", ["PVPClassUpUI"] = "镜中段位提示",
@@ -124,6 +124,11 @@ public static class DailyUserText
         if (localized != text) return localized;
         if (Messages.TryGetValue(text, out var chinese)) return translate(chinese);
         if (Surfaces.TryGetValue(text, out chinese)) return translate(chinese);
+        var targetFailure = Regex.Match(text, @"^Need one enabled observed field .+; found (\d+)$", RegexOptions.CultureInvariant);
+        if (targetFailure.Success)
+            return translate(targetFailure.Groups[1].Value == "0"
+                ? "游戏操作按钮暂不可用，请确认游戏画面后接续。"
+                : "发现多个匹配的游戏按钮，无法确定操作目标；请确认游戏画面后接续。");
         var exception = ExceptionPrefix.Match(text);
         if (exception.Success) return Describe(exception.Groups[1].Value, depth + 1, translate);
         foreach (var (source, translated) in Prefixes)
