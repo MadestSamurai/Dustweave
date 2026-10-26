@@ -113,10 +113,19 @@ public partial class MainWindow
             manualUpdateReason = "updates.manual_delta";
             var repairNotice = CreateManualUpdateWindow();
             ShowUpdateNotice(repairNotice);
-            Find<Button>(repairNotice).Single(b => b.Content?.ToString() == L.Get("repair.goto"))
-                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            if (DailyUpdateHost.SelfUpdating)
+            {
+                Check(!Find<Button>(repairNotice).Any(b => b.Content?.ToString() == L.Get("repair.goto")) &&
+                    Find<Button>(repairNotice).Any(b => b.Tag?.ToString() == DailyDownloadLinks.Release && b.IsVisible) &&
+                    Find<Button>(repairNotice).Any(b => b.Tag?.ToString() == DailyDownloadLinks.Mirror && b.IsVisible),
+                    "Single-file recovery must offer complete downloads instead of the retired block repair");
+                Find<Button>(repairNotice).Single(b => b.Content?.ToString() == L.Get("updates.got_it"))
+                    .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            }
+            else Find<Button>(repairNotice).Single(b => b.Content?.ToString() == L.Get("repair.goto"))
+                    .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Check(updateNotice == null && WorkspaceTabs.SelectedItem == UpdatesTab,
-                "A damaged update baseline did not lead back to installation repair");
+                "A recovery notice did not return to the update page");
             feed = Feed(DailyProductVersion.Current); downloadError = null;
             await CheckUpdatesCoreAsync(false, Fetch, Prepare);
             Check(availableUpdateVersion == null && UpdateAvailableBadge.Visibility == Visibility.Collapsed && readyUpdate == null && manualUpdateVersion == null,
@@ -129,6 +138,19 @@ public partial class MainWindow
             foreach (var appearance in new[] { DailyAppearance.Light, DailyAppearance.Dark })
             {
                 L.Select(language); theme.Select(appearance);
+                if (DailyUpdateHost.SelfUpdating)
+                {
+                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                    Check(Find<TextBlock>(updatePanel.Repair).Any(t => t.Text == L.Get("repair.manual_title")) &&
+                        Find<TextBlock>(updatePanel.Repair).Any(t => t.Text == L.Get("repair.manual_help")),
+                        "Single-file recovery instructions did not localize");
+                    Check(Find<Button>(updatePanel.Repair).Any(b => b.Tag?.ToString() == DailyDownloadLinks.Release && b.IsVisible) &&
+                        Find<Button>(updatePanel.Repair).Any(b => b.Tag?.ToString() == DailyDownloadLinks.Mirror && b.IsVisible) &&
+                        !Find<Button>(updatePanel.Repair).Any(b => b.Content?.ToString() == L.Get("repair.check") && b.IsVisible),
+                        "Single-file recovery must expose manual downloads without a legacy repair action");
+                    Capture("repair-manual-" + language + "-" + appearance);
+                    continue;
+                }
                 updatePanel.Repair.Problems([new("app/Dustweave.Core.dll", false, 4000000), new("app/coreclr.dll", true, 5000000)]);
                 updatePanel.Repair.State("repair.found", "repair.download", false, 2, "2.13");
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
@@ -136,11 +158,14 @@ public partial class MainWindow
                 Check(Find<TextBlock>(updatePanel.Repair).All(t => !t.Text.StartsWith("repair.")), "Raw repair key displayed");
                 Capture("repair-found-" + language + "-" + appearance);
             }
-            updatePanel.Repair.State("repair.preparing", "repair.check", true, 12, 600);
-            Check(Find<Button>(updatePanel.Repair).Any(b => b.Content?.ToString() == L.Get("repair.cancel") && b.IsVisible), "Repair cancellation missing");
-            updatePanel.Repair.State("repair.ready", "repair.restart", false);
-            Check(Find<Button>(updatePanel.Repair).Any(b => b.Content?.ToString() == L.Get("repair.restart") && b.IsEnabled), "Repair restart action missing");
-            updatePanel.Repair.Problems([]); updatePanel.Repair.State("repair.idle", "repair.check", false);
+            if (!DailyUpdateHost.SelfUpdating)
+            {
+                updatePanel.Repair.State("repair.preparing", "repair.check", true, 12, 600);
+                Check(Find<Button>(updatePanel.Repair).Any(b => b.Content?.ToString() == L.Get("repair.cancel") && b.IsVisible), "Repair cancellation missing");
+                updatePanel.Repair.State("repair.ready", "repair.restart", false);
+                Check(Find<Button>(updatePanel.Repair).Any(b => b.Content?.ToString() == L.Get("repair.restart") && b.IsEnabled), "Repair restart action missing");
+                updatePanel.Repair.Problems([]); updatePanel.Repair.State("repair.idle", "repair.check", false);
+            }
             await CheckUpdateSchedulePriorityForSmoke(Check, Find<Button>);
             await CheckUpdateRestartForSmoke(Check, Find<Button>, Find<TextBlock>);
             foreach (string language in DailyLanguage.Codes)
