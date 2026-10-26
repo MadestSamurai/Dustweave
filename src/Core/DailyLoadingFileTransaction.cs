@@ -62,10 +62,9 @@ internal static class DailyLoadingFileTransaction
     static void Atomic(string file, object value)
     {
         DailyCacheStorage.NoLinks(file); Directory.CreateDirectory(Path.GetDirectoryName(file)!);
-        string temp = file + ".writing";
-        using (var stream = new FileStream(temp, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
-        { JsonSerializer.Serialize(stream, value, DailyJson.Options); stream.Flush(true); }
-        File.Move(temp, file, true);
+        // Reuse durable atomic replacement and its bounded sharing-lock retry.
+        // A transient reader must not abort preservation/restoration halfway.
+        DailyJson.Write(file, value);
     }
     static void Save(Journal j)
     {

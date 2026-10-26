@@ -44,7 +44,7 @@ internal static class LoadingExperimentCases
             string copy=Path.Combine(destination,"runtime","fixture","loading-experiment",id,"runtime.jsonl");
             var timer=Stopwatch.StartNew();while((!File.Exists(copy)||new FileInfo(copy).Length<130L*1024*1024)&&timer.Elapsed<TimeSpan.FromSeconds(25))await Task.Delay(100);
             Check(File.Exists(copy)&&new FileInfo(copy).Length==130L*1024*1024,"selected directory preserves runtime trace beyond normal 128 MiB export budget");
-            using(var viewer=new FileStream(copy,FileMode.Open,FileAccess.Read,FileShare.Read)){
+            using(var viewer=await ReadLock(copy)){
                 File.AppendAllText(spool,"tail-during-temporary-output-lock\n");
                 await Task.Delay(4500);
                 Check(!job.IsCompleted&&DailyLoadingExperiment.Active()?.Id==id,"temporary destination read lock does not stop recording or expire the game observation lease");
@@ -129,6 +129,18 @@ internal static class LoadingExperimentCases
         }finally{
             if(!job.IsCompleted){File.WriteAllText(Path.Combine(destination,"STOP"),"cleanup");await job;}
             if(previous==null){if(File.Exists(DailyLoadingExperiment.ControlPath))File.Delete(DailyLoadingExperiment.ControlPath);}else File.WriteAllBytes(DailyLoadingExperiment.ControlPath,previous);
+        }
+    }
+
+    static async Task<FileStream> ReadLock(string path)
+    {
+        // Seeing the final length does not mean the collector has closed its
+        // writer. Acquire the intended test lock only after that write finishes.
+        var watch=Stopwatch.StartNew();
+        while(true)
+        {
+            try{return new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.Read);}
+            catch(IOException e)when((e.HResult&0xffff) is 32 or 33 && watch.Elapsed<TimeSpan.FromSeconds(3)){await Task.Delay(20);}
         }
     }
 
