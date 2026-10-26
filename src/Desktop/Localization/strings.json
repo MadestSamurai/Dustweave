@@ -404,6 +404,11 @@
     "zh-TW": "製作已規劃物品",
     "en-US": "Crafting planned items"
   },
+  "work.craft_recipe": {
+    "zh-CN": "选择可制作的 N 装配方",
+    "zh-TW": "選擇可製作的 N 裝配方",
+    "en-US": "Choosing an available N-grade equipment recipe"
+  },
   "work.enhance": {
     "zh-CN": "强化或精炼装备",
     "zh-TW": "強化或精煉裝備",
@@ -8165,9 +8170,9 @@
     "zh-TW": "未能完成本局退出，已停止。請處理遊戲目前畫面後重新開始。"
   },
   "prefs.fast_travel": {
-    "zh-CN": "快速赶路（实验性）",
-    "zh-TW": "快速趕路（實驗性）",
-    "en-US": "Fast travel (experimental)"
+    "zh-CN": "快速赶路",
+    "zh-TW": "快速趕路",
+    "en-US": "Fast travel"
   },
   "prefs.fast_travel_hint": {
     "zh-CN": "长距离步行前使用提升移动速度的天赋，优先选择加速更快的角色；遵守天赋药保留量，不可用时普通步行。",

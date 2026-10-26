@@ -68,7 +68,7 @@ static class HomeNavigationCases
         Check(DailyHomeDecision.Inspect(Frame(record, record), policy).Kind == "blocked", "duplicate Book record screens never select an arbitrary target");
         Check(DailyHomeDecision.Inspect(Frame(record, Surface("MessagePopupUI", true, "_buttonOK", 99)), policy).Kind == "blocked", "Book record cleanup preserves an unknown modal");
         Check(DailyHomeDecision.Inspect(Frame(record, Surface("BattleUI_TotalWar")), policy).Kind == "blocked", "Book record cleanup cannot exit an active Book battle");
-        var pages = new Dictionary<string, string?>(DailyNavigationDecision.Closeable) { ["MyRoomUI"] = null, ["GuildUI"] = null, ["EventUI"] = null, ["ShopUI"] = null, ["EquipmentMakingUI"] = null, ["EquipmentUpgradePopupUI"] = null, ["SichuanStagePopupUI"] = null, ["HuntDispatchPopupUI"] = null, ["TarosTacticsBingoUI"] = "_objBackButton", ["EventBattleUI"] = null, ["EventMainUI"] = null, ["TarosTacticsSeasonFinishUI"] = "_btnBack", ["PVPClassUpUI"] = "_objCancelButton" };
+        var pages = new Dictionary<string, string?>(DailyNavigationDecision.Closeable) { ["MyRoomUI"] = null, ["GuildUI"] = null, ["EventUI"] = null, ["ShopUI"] = null, ["EquipmentMakingUI"] = null, ["EquipmentMakingSelectUI"] = null, ["EquipmentUpgradePopupUI"] = null, ["SichuanStagePopupUI"] = null, ["HuntDispatchPopupUI"] = null, ["TarosTacticsBingoUI"] = "_objBackButton", ["EventBattleUI"] = null, ["EventMainUI"] = null, ["TarosTacticsSeasonFinishUI"] = "_btnBack", ["PVPClassUpUI"] = "_objCancelButton" };
         foreach (var page in pages)
         {
             var row = Surface(page.Key, false, page.Value);
@@ -83,6 +83,9 @@ static class HomeNavigationCases
             f = Frame(row, row);
             Check(DailyHomeDecision.Inspect(f, policy).Kind == "blocked", "startup refuses duplicate " + page.Key);
         }
+        var stoppedCraft = DailyHomeDecision.Inspect(Frame(Surface("EquipmentMakingSelectUI"), Surface("CurrencyManageUI", true, null, 2), Surface("NoticeUI", true, null, 3)), policy);
+        Check(stoppedCraft.Kind == "action" && stoppedCraft.Action?["ui"]?.GetValue<string>() == "EquipmentMakingSelectUI",
+            "legacy N sword failure with currency/notice overlays can return from crafting selection");
         var update = Surface("UpdateUI", true, "_objBackButton");
         var entrance = Surface("EntranceBackgroundCoverUI", true, null, 2);
         Check(DailyHomeDecision.Inspect(Frame(update, entrance), policy).Action?["ui"]?.GetValue<string>() == "UpdateUI", "update slideshow is actionable through its native entrance cover");

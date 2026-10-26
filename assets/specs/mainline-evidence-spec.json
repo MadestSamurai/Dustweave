@@ -28,6 +28,7 @@
     }
   ],
   "Reads": [
+    {"Id":"route.quick","Type":"GameFieldManager","Paths":["$self"]},
     {
       "Id": "mainline.talent_counts",
       "Type": "ὧὥὩὣὭὯὧὫὫὥὠ",
@@ -190,6 +191,12 @@
       "Paths": [
         "ὪὨὯὢὫὮὨὩὮὡὬ.ὯὧὨὨὡὭὡὭὧὥὧ.ὥὦὧὪὠὡὧὯὫὢὩ"
       ]
+    },
+    {
+      "Id": "mainline.movement",
+      "Type": "TalentSkillManager",
+      "StaticMember": "ὪὫὢὨὯὭὦὪὦὨὣ",
+      "Paths": ["GetTalentMoveSpeedUpValue()"]
     },
     {
       "Id": "mainline.durations",

@@ -15,7 +15,7 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         Require(merchants.Length == 1, "广场商人缺失或不唯一");
         return merchants[0];
     }
-    private async Task Approach(long npc)
+    internal async Task Approach(long npc)
     {
         JsonObject? first = null, last = null;
         int attempts = 0, bookReturns = 0;
@@ -28,13 +28,15 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
                 await DailyTravel.LeaveSquareBookLobby(w, f);
                 await DailyTravel.Ready(w, "GameFieldDefaultUI");
                 // Recheck the same merchant before resuming only our travel command.
-                var resumed = State(await Evidence(), "trade.navigation", "$self");
+                var resumed = State(await w.Evidence("trade.navigation"), "trade.navigation", "$self");
                 Require(N(resumed["Npc"]) == npc, "商人目标改变");
                 if (attempts > 0) { await w.Step("GameFieldDefaultUI", operation: "square_shop_nav"); attempts++; }
                 f = (await w.Observe()).Frame;
             }
             Require(S(f["Scene"]).StartsWith("Map3009_", StringComparison.Ordinal) && DailyNavigationDecision.Blockers(f, "GameFieldDefaultUI", DailyNavigationPolicy.Load()).Length == 0, "商人导航被场景或弹窗中断");
-            var row = State(await Evidence(), "trade.navigation", "$self");
+            // Movement needs the merchant/path state, not the entire inventory,
+            // recipes and dispatch tables on every navigation poll.
+            var row = State(await w.Evidence("trade.navigation"), "trade.navigation", "$self");
             Require(N(row["Npc"]) == npc, "商人目标改变");
             return row;
         }
@@ -48,13 +50,26 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         {
             first = last = await Observe();
             if (B(first["Near"])) return;
+            if (!B(first["Reachable"]) || DailyRegionRouter.D(first["Distance"]) / DailyRouteAtlas.WalkSpeed > DailyQuickTravel.SameMapTransitionSeconds)
+            {
+                var quick = await w.Evidence("route.quick");
+                var shortcut = DailyQuickTravel.Targets(quick).FirstOrDefault(t => N(t["Npc"]) == npc);
+                if (shortcut != null && !B(shortcut["AtTarget"]) && await DailyQuickTravel.TryMove(w, npc, N(shortcut["Map"])))
+                {
+                    first = last = await Observe();
+                    if (B(first["Near"])) return;
+                }
+            }
             if (w.Settings.General.FastTravel) await new DailyFieldRoute(w).PrepareWalking(DailyFieldRoute.TargetDistance(first));
-            await w.Step("GameFieldDefaultUI", operation: "square_shop_nav", reason:"使用 A* 前往广场商人");
             attempts = 1;
+            await w.Step("GameFieldDefaultUI", operation: "square_shop_nav", reason:"使用 A* 前往广场商人");
             await DailySquareNavigation.Wait(w,"square_shop_nav",async()=> { last=await Observe(); return DailySquareNavigation.MerchantArrived((await w.Observe()).Frame,B(last["Near"])); });
         }
         catch (Exception e) { DailyJson.Write(Path.Combine(w.Root, "live", "travel-diagnostics", "trade-" + w.Driver.UtcTicks + ".json"), O(("reason", e.Message), ("npc", npc), ("initial", first), ("last", last), ("attempts", attempts))); throw; }
-        finally { try { await Stop(); } catch (Exception e) { w.Save("trade-navigation-cleanup.json", O(("error", e.Message), ("at", w.Driver.UtcTicks))); } }
+        // A nearby merchant or a completed native shortcut has no walking
+        // command to cancel. Keep cleanup for every attempted walk, including
+        // a lost reply after the game may already have started moving.
+        finally { if (attempts > 0) try { await Stop(); } catch (Exception e) { w.Save("trade-navigation-cleanup.json", O(("error", e.Message), ("at", w.Driver.UtcTicks))); } }
     }
     private async Task OpenMerchant(long expected)
     {

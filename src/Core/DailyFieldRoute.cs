@@ -168,7 +168,10 @@ public sealed partial class DailyFieldRoute
         // walks, never during harvesting, pickup commits, or native interaction.
         if (!ShouldDash(W.Settings.General, evidence, distance)) return false;
         nextDashCheck = W.Time + 60;
+        double started = W.Time;
         var result = await Skill(MovementSpeedTalent, 0, optional: true);
+        W.Driver.Diagnostics.Event("optional_fast_travel", O(("map", Map(evidence)["id"]),
+            ("distance", distance), ("seconds", W.Time - started), ("result", result)));
         if (S(result["reason"]) == "native_disabled")
             W.Driver.Diagnostics.Event("optional_fast_travel_unavailable", O(("map", Map(evidence)["id"])));
         else nextDashCheck = 0;
@@ -581,7 +584,9 @@ public sealed partial class DailyFieldRoute
                 }
             }
             double end = W.Time + Math.Max(0, remaining) + 5;
-            while (true)
+            // Optional speed already checked a fresh post-menu observation.
+            // Do not read it again or wait for cooldown before ordinary walking.
+            while (!(kind is 2 or MovementSpeedTalent && optional))
             {
                 e = await Evidence();
                 if (Remaining(e, kind) <= 0 && !Cooling(e, kind))
@@ -632,7 +637,10 @@ public sealed partial class DailyFieldRoute
             return O(("state", "waypoint_selection"));
         }
         if (kind is 2 or MovementSpeedTalent or 17)
+        {
+            using var recoveryTiming = W.Driver.Diagnostics.Scope("travel_talent_recovery");
             await RecoverExpired(e);
+        }
         var scope = O(("kind", kind), ("pack", Map(e)["packId"]), ("map", Map(e)["id"]), ("group", selected[SkillPath]!["groupId"]));
         if (kind == 4)
         {
@@ -640,7 +648,10 @@ public sealed partial class DailyFieldRoute
             scope["pack_name"] = System.Text.Json.JsonSerializer.SerializeToNode(LocationLabels.GetValueOrDefault("p" + N(Map(e)["packId"])));
             scope["map_name"] = System.Text.Json.JsonSerializer.SerializeToNode(LocationLabels.GetValueOrDefault("m" + N(Map(e)["id"])));
         }
-        var op = await W.Transact("dispatch.start", scope, O(("ui", "QuickMenuUI"), ("operation", "mainline_talent"), ("value", selected["instance"])), 25);
+        var action = O(("ui", "QuickMenuUI"), ("operation", "mainline_talent"), ("value", selected["instance"]));
+        var op = kind == MovementSpeedTalent
+            ? await W.TransactObserved("dispatch.start", scope, action, e, 25)
+            : await W.Transact("dispatch.start", scope, action, 25);
         await FieldReady(settle: 0);
         if (kind is 2 or MovementSpeedTalent or 17)
             Require(Remaining(await Evidence(), kind) > 0, "移动天赋未确认生效");
@@ -654,6 +665,13 @@ public sealed partial class DailyFieldRoute
                 continue;
             var receipt = DailyJson.TryRead<JsonObject>(Path.Combine(W.Root, "live", "steps", S(op["command_id"]), "result.json"))?["receipt"] as JsonObject
                 ?? DailyJson.TryRead<JsonObject>(Path.Combine(W.Root, "live", "step-recovery", S(op["command_id"]) + ".json"))?["receipt"] as JsonObject;
+            if (receipt != null && DailyFieldTalentProof.LegacySpeedRejected(op, receipt))
+            {
+                op["state"] = "superseded";
+                op["reconciliation"] = O(("at", W.Driver.UtcTicks), ("method", "legacy_speed_guard_rejected_before_click"), ("actions", 0));
+                W.Business.Save(op);
+                continue;
+            }
             if (receipt == null || S(receipt["State"]) != "observed_after_dispatch" || S(receipt["Error"]) != "" || S(receipt["Command"]?["Id"]) != S(op["command_id"]) || S(receipt["Command"]?["Kind"]) != "mainline_talent" || !JsonNode.DeepEquals(receipt["Command"]?["Value"], op["action"]?["value"]) || !DailyEvidence.SameActor(receipt["Before"]!.AsObject(), op["before"]!["Frame"]!.AsObject()) || !DailyNavigationDecision.Types(receipt["After"]!.AsObject()).Contains("QuickMenuUI"))
                 continue;
             var rows = Talents(current).Where(r => N(r["Group"]) == N(op["scope"]!["group"])).ToArray();

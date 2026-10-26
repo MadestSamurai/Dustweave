@@ -64,6 +64,14 @@ internal static class UserTextCases
         Check("default locale remains unchanged after alternate rendering", DailyUserText.Describe("rejected: screen_changed") == "操作未被接受：游戏页面已变化，请重新确认当前界面。");
 
         var core = Path.Combine(TestPaths.SourceRoot, "src", "Core");
+        using var uiStrings = JsonDocument.Parse(File.ReadAllText(Path.Combine(TestPaths.SourceRoot, "src", "Desktop", "Localization", "strings.json")));
+        var progressSteps = new Regex("\\bStepProgress\\(\"([^\"]+)\"");
+        foreach (var step in Directory.EnumerateFiles(core, "*.cs").SelectMany(f => progressSteps.Matches(File.ReadAllText(f)).Select(m => m.Groups[1].Value)).Distinct())
+        {
+            bool registered = uiStrings.RootElement.TryGetProperty("work." + step, out var translations);
+            Check("workflow progress has translations: " + step, registered && new[] { "zh-CN", "zh-TW", "en-US" }
+                .All(code => translations.TryGetProperty(code, out var text) && !string.IsNullOrWhiteSpace(text.GetString())));
+        }
         var reasons = new Regex("(?:DailyWorkflow|DailyWeeklyMission)\\.(?:Skipped|Partial)\\(\"([^\"]+)\"");
         foreach (var code in Directory.EnumerateFiles(core, "*.cs").SelectMany(f => reasons.Matches(File.ReadAllText(f)).Select(m => m.Groups[1].Value)).Distinct().Where(code => !Regex.IsMatch(code, @"\p{IsCJKUnifiedIdeographs}")))
             Check("workflow result has Chinese explanation: " + code, DailyUserText.Describe(code) != code && DailyUserText.Describe(code) != DailyUserText.Untranslated);

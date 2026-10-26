@@ -35,7 +35,7 @@ static class TalentPotionCases
         var old = JsonSerializer.SerializeToNode(new DailyPreferences())!.AsObject(); old["Schema"] = 16; old.Remove("General");
         old["Stages"]!["Guild"] = false;
         var migrated = DailyPreferences.Parse(old.ToJsonString());
-        Check(migrated.Schema == 18 && !migrated.Stages.Guild && migrated.General.TalentPotionReserve == 0 && !migrated.General.RefillTalentPotions, "schema migration leaves existing task choices and no-buy defaults intact");
+        Check(migrated.Schema == 19 && !migrated.Stages.Guild && migrated.General.TalentPotionReserve == 0 && !migrated.General.RefillTalentPotions, "schema migration leaves existing task choices and no-buy defaults intact");
         var store = new DailyPreferenceStore(Path.Combine(output, "potion-settings"));
         string a = new('a', 64), b = new('b', 64); migrated.General = new() { TalentPotionReserve = 500, RefillTalentPotions = true, TalentPotionTarget = 2000 }; store.Save(a, migrated);
         Check(store.Read(a).General.TalentPotionTarget == 2000 && store.Read(b).General.TalentPotionReserve == 0, "potion policy isolated by account");

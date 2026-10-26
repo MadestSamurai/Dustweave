@@ -11,6 +11,7 @@ static class WeeklyNpcInteractionCases
         public readonly DailyWeeklyNpc Npc;
         public JsonObject Row;
         public JsonArray Wild = new();
+        public Func<JsonArray>? SceneObjects;
         public long Planned;
         public JsonArray Active = new(O(("id", 10), ("objectId", new JsonArray())));
         public bool Navigating, Ready = true, Unknown;
@@ -48,7 +49,7 @@ static class WeeklyNpcInteractionCases
                 if (command == "weekly_npc_lift") { Lifts++; Held = 200; return; }
                 if (kind == 9 && Held != 200) throw new Exception("Delivery before lifting");
                 Interactions++;
-                if (Interactions < count) { Active[0]!["objectId"]!.AsArray().Add(99 + Interactions); Held = 0; return; }
+                if (Interactions < count) { Active[0]!["objectId"]!.AsArray().Add(N(c["Items"]![0]) - 200); Held = 0; return; }
                 if (AckDelay > 0) AckAt = H.Time + AckDelay; else Active.Clear();
             };
         }
@@ -57,7 +58,7 @@ static class WeeklyNpcInteractionCases
             ("Rows", new JsonArray(Row.DeepClone()).ToJsonString()), ("Active", Active.ToJsonString()), ("Posted", new JsonArray()), ("Cleared", new JsonArray()), ("Wild", Wild), ("NavigationPlannedQuest", Planned),
             ("Navigating", Navigating), ("NavigationLeaseQuest", 10), ("NavigationLeaseUntil", H.Ticks + TimeSpan.TicksPerMinute), ("CarryId", Held),
             ("Position", new[] { X, 0d, 0d }), ("NavigationReady", NavigationReady), ("NavQuest", Navigating ? 10 : 0),
-            ("Objects", Array((Row["magicValue"] as JsonArray)!.Select(value => O(("Quest", TriggerQuest), ("Instance", 200 + N(value)), ("Id", N(value)), ("Near", true), ("Ready", Ready))))),
+            ("Objects", SceneObjects?.Invoke() ?? Array((Row["magicValue"] as JsonArray)!.Select(value => O(("Quest", TriggerQuest), ("Instance", 200 + N(value)), ("Id", N(value)), ("Available", true), ("Eligible", Ready), ("Near", true), ("Ready", Ready))))),
             ("CarryObjects", new JsonArray(O(("Quest", 10), ("Instance", 400), ("Id", 200), ("Available", true), ("Near", true), ("Ready", Ready), ("Distance", 0)))));
         public async Task Run() { await Npc.Query(1); await Npc.Advance(Row); }
         public void Dispose() => H.Dispose();
@@ -107,6 +108,66 @@ static class WeeklyNpcInteractionCases
             await f.Run();
             Check(f.Interactions == 1 && f.H.Time < 10, "NPC interacts in range while navigation mode remains active: " + kind);
             Check(f.Lifts == (kind == 9 ? 1 : 0), "carry source is lifted exactly once before delivery: " + kind);
+        }
+        foreach (int kind in new[] { 2, 9, 18 })
+        using (var f = new Fixture(Path.Combine(root, "npc-runtime-object-" + kind), kind, 2))
+        {
+            JsonObject Obj(int id, bool ready, int quest = 10) => O(("Id", id), ("Instance", 200 + id),
+                ("Quest", quest), ("Available", true), ("Eligible", ready), ("Near", true), ("Ready", ready));
+            // The game's current scene offers a third target, outside the static
+            // MagicValue list. After its acknowledgement another target becomes
+            // eligible. Unrelated and not-yet-eligible props remain untouched.
+            f.SceneObjects = () => new JsonArray(Obj(99, true, 11), Obj(100, f.Interactions > 0),
+                Obj(101, false), Obj(102, true));
+            await f.Run();
+            Check(f.Interactions == 2 && f.H.Box.Commands.Where(c => S(c["Kind"]) == "weekly_npc_interact")
+                    .Select(c => N(c["Items"]![0])).SequenceEqual([302L, 300L]),
+                "scene-owned ready targets outside MagicValue finish in-step without picking unrelated or ineligible objects: " + kind);
+            Check(f.Lifts == (kind == 9 ? 2 : 0) && f.H.Box.Commands.Count(c => S(c["Kind"]) == "weekly_npc_query") == 1,
+                "runtime target selection preserves carry ownership and confirmed pickup progress: " + kind);
+        }
+        foreach (int kind in new[] { 2, 9, 18 })
+        using (var f = new Fixture(Path.Combine(root, "npc-area-marker-" + kind), kind, 2))
+        {
+            // Two real pickups hide their quest icons; the visible area guide
+            // has IsDisableInteraction=1. This is the 101352 failure topology.
+            JsonObject Prop(int id, bool marker) => O(("Id", id), ("Instance", 200 + id), ("Quest", 10),
+                ("Available", true), ("Eligible", !marker), ("QuestMark", marker), ("Near", true), ("Ready", !marker));
+            f.SceneObjects = () => new JsonArray(Prop(99, true), Prop(100, false), Prop(101, false));
+            await f.Run();
+            Check(f.Interactions == 2 && f.H.Box.Commands.Where(c => S(c["Kind"]) == "weekly_npc_interact")
+                    .Select(c => N(c["Items"]![0])).SequenceEqual([300L, 301L]),
+                "hidden-mark props complete without interacting with the visible non-interactive area guide: " + kind);
+            Check(f.H.Box.Commands.Count(c => S(c["Kind"]) == "weekly_npc_query") == 1,
+                "area-guide fix retains acknowledged progress without intermediate server rereads: " + kind);
+        }
+        using (var f = new Fixture(Path.Combine(root, "npc-server-reject")))
+        {
+            int acknowledgements = 0;
+            var original = f.H.OnCommand;
+            f.H.OnCommand = c =>
+            {
+                if (S(c["Kind"]) == "weekly_npc_interact")
+                {
+                    f.Interactions++;
+                    f.H.Page("MessagePopupUI", "_buttonOK");
+                    f.H.Frame["Surfaces"]![0]!["NativeContext"] = "weekly_npc_rejected_ack_only";
+                    f.H.Frame["Surfaces"]![0]!["Text"] = new JsonArray("無法在伺服器找到任務資訊。, error:100011");
+                    return;
+                }
+                if (S(c["Kind"]) == "background_error_ack") { acknowledgements++; f.H.Page("GameFieldDefaultUI"); return; }
+                original!(c);
+            };
+            string reason = ""; try { await f.Run(); } catch (DailyNpcUnavailable e) { reason = e.Message; }
+            Check(reason.Contains("100011") && acknowledgements == 1 && f.Interactions == 1 && f.H.Time < 10
+                && DailyNavigationDecision.Types(f.H.Frame).Contains("GameFieldDefaultUI") && f.Active.Count == 1,
+                "explicit server rejection closes safely and defers without waiting three minutes, replaying or inventing completion");
+            f.H.Page("MessagePopupUI", "_buttonOK");
+            Check(DailyWeeklyNpc.RejectedQuestAction(f.H.Frame, DailyNavigationPolicy.Load()) == null,
+                "unowned popups are not dismissed as NPC server rejection");
+            f.H.Frame["Surfaces"]![0]!["NativeContext"] = "weekly_npc_rejected_ack_only";
+            Check(DailyHomeDecision.BackgroundErrorAction(f.H.Frame, DailyNavigationPolicy.Load()) == null,
+                "generic navigation cannot swallow an NPC rejection and lose its failure reason");
         }
         foreach (bool activeFlag in new[] { true, false })
         using (var f = new Fixture(Path.Combine(root, "npc-hazard-" + activeFlag)))

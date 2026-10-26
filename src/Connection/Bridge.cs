@@ -131,6 +131,7 @@ namespace BD2Daily.Live {
 
    if(!u.ὣὤὥὦὯὦὩὤὨὠὪ||!u.ὪὯὣὥὬὫὬὩὠὮὠ||(u.ὫὥὧὬὭὫὡὠὠὪὠ&&u.ὦὡὮὫὧὠὮὡὭὭὬ))return false;
    if(!CollectionProgressNative.StealTalkInputReady(u))return false;
+   if(!UiInteractionReadiness.MissionReady(u))return false;
    if(u is EventMainUI && !(bool)Fields(u.GetType()).Single(x=>x.Name=="ὬὯὤὣὮὧὧὩὦὪὫ").GetValue(u))return false;
    if(u is HuntDispatchPopupUI){var field=Fields(u.GetType()).First(x=>x.Name=="ὣὭὠὤὧὠὡὮὣὢὦ");if((bool)field.GetValue(u))return false;}
    return true;
@@ -151,7 +152,7 @@ namespace BD2Daily.Live {
      var go=link.Value;if(!go.activeInHierarchy)continue;var button=go.GetComponent<Selectable>();
      // Only click-like serialized references become targets; never arbitrary child objects.
      if(button==null&&link.Key.IndexOf("button",StringComparison.OrdinalIgnoreCase)<0&&!(u is BattlePauseUI&&link.Key=="_objectRun"))continue;
-     bool enabled=button==null||(button.isActiveAndEnabled&&button.IsInteractable());
+     bool enabled=(button==null||(button.isActiveAndEnabled&&button.IsInteractable()))&&UiInteractionReadiness.TargetReady(u,go);
      targets[go.GetInstanceID()]=go;choices.Add(new Target{Id=go.GetInstanceID(),Field=Evidence.Aliases.Original(link.Key),Path=PathOf(go.transform),Enabled=enabled});
     }
     foreach(var component in u.GetComponentsInChildren<MonoBehaviour>()){
@@ -159,7 +160,7 @@ namespace BD2Daily.Live {
      var go=component.gameObject;var button=go.GetComponent<Selectable>();
      if(choices.Any(t=>t.Id==go.GetInstanceID()&&t.Route=="pointer"))continue;
      targets[go.GetInstanceID()]=go;
-     choices.Add(new Target{Id=go.GetInstanceID(),Route="pointer",Field="$pointer/"+(go==u.gameObject?"$self":PathOf(go.transform).Substring(PathOf(u.transform).Length+1)),Path=PathOf(go.transform),Enabled=button==null||button.IsInteractable()});
+     choices.Add(new Target{Id=go.GetInstanceID(),Route="pointer",Field="$pointer/"+(go==u.gameObject?"$self":PathOf(go.transform).Substring(PathOf(u.transform).Length+1)),Path=PathOf(go.transform),Enabled=(button==null||button.IsInteractable())&&UiInteractionReadiness.TargetReady(u,go)});
     }
     sf.Targets=choices.ToArray();
     sf.Text=u.GetComponentsInChildren<TMPro.TMP_Text>().Where(t=>t!=null&&t.isActiveAndEnabled&&!string.IsNullOrWhiteSpace(t.text)).Select(t=>t.text).Concat(u.GetComponentsInChildren<Text>().Where(t=>t!=null&&t.isActiveAndEnabled&&!string.IsNullOrWhiteSpace(t.text)).Select(t=>t.text)).Take(80).Select(t=>t.Length>400?t.Substring(0,400):t).ToArray();
@@ -220,8 +221,16 @@ namespace BD2Daily.Live {
     if(c.Kind=="mainline_talent"||c.Kind=="weekly_steal_talent"){
      try{var row=Find(typeof(QuickMenuTalentSkillLoopScrollItem)).Cast<QuickMenuTalentSkillLoopScrollItem>().SingleOrDefault(x=>x.GetInstanceID()==c.Value);
       reason=CollectionProgressNative.TalentGate(row,uis[c.SurfaceId] as QuickMenuUI);
+      if(reason.Length==0&&c.Kind=="mainline_talent"){
+       var table=(Proto.Design.common.TalentSkillTable)Fields(row.GetType()).Single(x=>x.Name=="ὣὡὪὭὤὨὭὣὪὧὩ").GetValue(row);
+       if(!LiveProtocol.FieldTalentClass(table.ClassType))reason="talent_reject:unsupported_field_skill";
+      }
      }catch(Exception ex){reason="talent_reject:unreadable_gate:"+ex.GetType().Name;}
      // This is before the dispatch marker and before OnClick's quest/latch side effects.
+     if(reason.Length>0){r.State="rejected";r.Error=reason;r.MayHaveDispatched=false;Save(r);return;}
+    }
+    if(c.Kind=="field_quick_travel"){
+     try{reason=QuickTravelNative.Preflight(c);}catch(Exception){reason="quick_travel_unavailable";}
      if(reason.Length>0){r.State="rejected";r.Error=reason;r.MayHaveDispatched=false;Save(r);return;}
     }
     if(c.Kind=="mainline_pack"){
@@ -232,6 +241,13 @@ namespace BD2Daily.Live {
     if(LivePolicy.WeeklyNpcKind(c.Kind)){
      try{reason=WeeklyNpcNative.Preflight(c,uis[c.SurfaceId]);}catch(Exception ex){reason="npc_preflight_unavailable:"+ex.GetType().Name;}
      if(reason.Length>0){r.State="rejected";r.Error=reason;r.MayHaveDispatched=false;Save(r);return;}
+    }
+    if(c.Kind=="click"||c.Kind=="pointer"||c.Kind=="back"){
+     UIBase inputUi;GameObject inputTarget;
+     if(!uis.TryGetValue(c.SurfaceId,out inputUi)||!UiInteractionReadiness.MissionReady(inputUi)||
+      (c.TargetId!=0&&(!targets.TryGetValue(c.TargetId,out inputTarget)||!UiInteractionReadiness.TargetReady(inputUi,inputTarget)))){
+      r.State="rejected";r.Error="任务列表仍在加载或刷新，本次未操作；请稍后接续。";r.MayHaveDispatched=false;Save(r);return;
+     }
     }
     if(LiveProtocol.RequiresMirrorPeriod(c,frame)){
      try{var period=RewardNative.MirrorPeriod();reason=period.Ready&&period.State=="ScheduleSeason"?"":period.Ready&&new[]{"ScheduleOffSeason","ScheduleCalculate","ScheduleComingSoon","ScheduleTraining"}.Contains(period.State)?"mirror_period_closed":"mirror_period_unavailable";}
@@ -297,6 +313,7 @@ namespace BD2Daily.Live {
       Singleton<FieldEncountManager>.ὪὫὢὨὯὭὦὪὦὨὣ.SetPVPEncountData(point);
       field.EnterPVPMap(ὮὧὥὮὣὭὧὬὦὢὪ.BMT_PVP_READY,point);
      }
+     else if(c.Kind=="field_quick_travel")QuickTravelNative.Execute(c);
      else if(c.Kind=="dispatch_recover")DispatchRecoveryNative.Execute(c);
      else if(c.Kind=="dispatch_collect_all"){
       if(BattlePlayManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὨὢὤὪὪὢὩὢὬὠὦ.ToString()!="BMT_NONE")throw new InvalidOperationException("Dispatch collection requires field idle");
@@ -329,7 +346,7 @@ namespace BD2Daily.Live {
        int npc=(int)fs.Single(x=>x.Name=="ὣὧὢὨὭὦὠὬὪὢὭ").GetValue(target);
        if(table.ClassType!=1||table.ResetType!=2||npc!=c.Items[0]||table.GroupId!=c.Items[1])throw new InvalidOperationException("Weekly steal talent does not match NPC");
       }
-      else if(!new[]{2,3,4,6,15,17,20}.Contains(table.ClassType))throw new InvalidOperationException("Only mainline gathering talents allowed");
+      else if(!LiveProtocol.FieldTalentClass(table.ClassType))throw new InvalidOperationException("Only mainline gathering talents allowed");
       foreach(var name in new[]{"_objDisableImage","_goBlock"})if(((GameObject)fs.Single(x=>x.Name==name).GetValue(target)).activeSelf)throw new InvalidOperationException("Native talent row disabled");
       target.OnClick();
      }
@@ -497,8 +514,7 @@ namespace BD2Daily.Live {
       }else if(c.Kind=="equipment_craft_menu")EquipmentMakingSelectUI.Open(false);
       else if(c.Kind=="equipment_craft_preview"){
        var menu=(EquipmentMakingSelectUI)u;
-       var recipe=menu.EquipmentMakingDatas.Single(x=>x.ὫὮὩὬὤὫὮὨὢὯὬ.Id==1);
-       menu.OnEquipmentMakingUI(recipe);
+    EquipmentToolsNative.PreviewCraft(menu,c.Value==0?1:c.Value);
       }else{
        var items=c.Items.Select(id=>ὡὩὩὤὡὯὩὡὧὥὦ.ὥὯὬὦὠὪὭὢὪὯὩ(id)).ToList();
        if(items.Any(x=>x==null))throw new InvalidOperationException("Equipment no longer exists");
@@ -550,15 +566,16 @@ namespace BD2Daily.Live {
     var type=typeof(MessagePopupUI);var label=type.GetField("_textMessage",Flags).GetValue(ui) as TMPro.TMP_Text;
     var cancel=type.GetField("_buttonCancel",Flags).GetValue(ui) as Button;
     if(label==null||cancel!=null&&cancel.gameObject.activeInHierarchy)return "";
-    string context=BackgroundErrorPolicy.RegionLookupTimeout(new[]{label.text})?BackgroundErrorPolicy.Context:BackgroundErrorPolicy.RequestTimeout(new[]{label.text})?BackgroundErrorPolicy.RequestContext:"";
+    string context=BackgroundErrorPolicy.RegionLookupTimeout(new[]{label.text})?BackgroundErrorPolicy.Context:BackgroundErrorPolicy.RequestTimeout(new[]{label.text})?BackgroundErrorPolicy.RequestContext:
+     WeeklyNpcNative.OwnsQuestError()&&BackgroundErrorPolicy.QuestRejected(new[]{label.text})?BackgroundErrorPolicy.QuestContext:"";
     if(context.Length==0)return "";
     foreach(var field in type.GetFields(Flags).Where(f=>typeof(Delegate).IsAssignableFrom(f.FieldType)))
-     if(context==BackgroundErrorPolicy.RequestContext?field.GetValue(ui)!=null:!EmptyClose(field.GetValue(ui) as Delegate))return "";
+     if(context!=BackgroundErrorPolicy.Context?field.GetValue(ui)!=null:!EmptyClose(field.GetValue(ui) as Delegate))return "";
     return context;
    }catch{return "";}
   }
   internal static void Acknowledge(UIBase ui){
-   var context=Context(ui);if(context!=BackgroundErrorPolicy.Context&&context!=BackgroundErrorPolicy.RequestContext)throw new InvalidOperationException("Background notification changed; no input sent");
+   var context=Context(ui);if(context!=BackgroundErrorPolicy.Context&&context!=BackgroundErrorPolicy.RequestContext&&context!=BackgroundErrorPolicy.QuestContext)throw new InvalidOperationException("Background notification changed; no input sent");
    var button=(Button)typeof(MessagePopupUI).GetField("_buttonOK",Flags).GetValue(ui);
    if(button==null||!button.gameObject.activeInHierarchy||!button.interactable)throw new InvalidOperationException("Background notification is not ready");
    ui.OnClickUI(button.gameObject);

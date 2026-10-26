@@ -94,7 +94,7 @@ public sealed record DailyNpcData(JsonObject Native, Dictionary<long, JsonObject
         return sources.Where(x => B(x["Available"])).OrderBy(x => DailyRegionRouter.D(x["Distance"])).ThenBy(x => N(x["Id"])).FirstOrDefault() ?? throw new DailyNpcUnavailable("搬运任务没有可用物品来源");
     }
     internal double? WalkingDistance(long id) => DailyData.Rows(Native["Objects"] ?? new JsonArray())
-        .Where(x => N(x["Quest"]) == id && B(x["Available"]) && !B(x["Collected"]))
+        .Where(x => N(x["Quest"]) == id && B(x["Available"]) && B(x["Eligible"]) && !B(x["Collected"]))
         // WeeklyNpcObject.Distance is squared in the native observation.
         .Select(x => DailyFieldRoute.TargetDistance(x, squared: true)).DefaultIfEmpty(null).Min();
 }
@@ -286,6 +286,17 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
     internal static bool RecoverableRejection(DailyStepException e) => e.DefinitelyNotDispatched && e.Kind == "rejected"
         && e.RejectionCode is "npc_lease_expired" or "npc_step_changed" or "npc_target_unavailable" or "npc_carry_changed" or "npc_dialogue_changed"
             or "npc_navigation_map_changed" or "npc_hunting_navigation_disabled";
+    internal static JsonObject? RejectedQuestAction(JsonObject frame, DailyNavigationPolicy policy)
+    {
+        var popups = DailyNavigationDecision.Rows(frame).Where(r => S(r["Type"]) == "MessagePopupUI").ToArray();
+        if (popups.Length != 1 || S(popups[0]["NativeContext"]) != "weekly_npc_rejected_ack_only"
+            || !DailyNavigationDecision.ReadyInput(popups[0], false)
+            || !Rows(popups[0]["Targets"]).Any(t => S(t["Field"]) == "_buttonOK" && B(t["Enabled"]))
+            || DailyNavigationDecision.Blockers(frame, "MessagePopupUI", policy).Length != 0) return null;
+        // The bridge verifies both the server error and that OK has no retry,
+        // restart or other callback. Only the owning NPC workflow handles it.
+        return O(("ui", "MessagePopupUI"), ("operation", "background_error_ack"), ("absent", "MessagePopupUI"));
+    }
     private async Task AdvanceAttempt(JsonObject row)
     {
         long id = N(row["id"]);
@@ -312,6 +323,14 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
         {
             var f = (await W.Observe()).Frame;
             var types = DailyNavigationDecision.Types(f);
+            var rejected = RejectedQuestAction(f, policy);
+            if (rejected != null)
+            {
+                SaveRecovery("quest_update_rejected_100011", row, Data!);
+                W.Driver.Diagnostics.Event("weekly_npc_server_rejected", O(("quest", id), ("object", pendingObject), ("error", 100011)));
+                await W.Step(rejected);
+                throw new DailyNpcUnavailable("游戏服务器未接受任务物品交互（100011），未计为完成；本次暂缓该卡带的NPC任务，继续其他日常");
+            }
             if (types.Any(t => t.StartsWith("BattleUI", StringComparison.Ordinal)))
             {
                 if (N(row["conditionType"]) != 1 && await route.Encounter(f))
@@ -433,9 +452,9 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
             }
             if (carry == null && !interactionSent && (huntStep || objectStep && collected.Count < N(row["conditionCount"])) && types.Contains("GameFieldDefaultUI"))
             {
-                // Hunt MagicValue contains monster IDs, not the ID of the quest
-                // trigger. The scene object's own active quest is authoritative.
-                var target = Rows(data.Native["Objects"] ?? new JsonArray()).Where(x => N(x["Quest"]) == id && !B(x["Collected"]) && !collected.Contains(N(x["Id"])) && (huntStep || (row["magicValue"] as JsonArray ?? new()).Select(N).Contains(N(x["Id"]))) && B(x["Near"]) && B(x["Ready"])).OrderBy(x => N(x["Id"])).FirstOrDefault();
+                // An area's quest mark is not a collectible. Native eligibility
+                // comes from the object's interaction rules, not icon visibility.
+                var target = Rows(data.Native["Objects"] ?? new JsonArray()).Where(x => N(x["Quest"]) == id && !B(x["Collected"]) && !collected.Contains(N(x["Id"])) && B(x["Near"]) && B(x["Ready"])).OrderBy(x => N(x["Id"])).FirstOrDefault();
                 if (target != null)
                 {
                     await W.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "weekly_npc_interact"), ("value", id), ("items", new[] { N(target["Instance"]) })));
@@ -453,7 +472,7 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
                 lastProgress = W.Time;
                 movement = new(W.Time, 6);
             }
-            bool nativeInteraction = Rows(data.Native["Objects"] ?? new JsonArray()).Any(x => N(x["Quest"]) == id && B(x["Near"])
+            bool nativeInteraction = Rows(data.Native["Objects"] ?? new JsonArray()).Any(x => N(x["Quest"]) == id && B(x["Eligible"]) && B(x["Near"])
                 && (S(x["State"]) is not ("" or "Idle") || S(x["Interaction"]) is not ("" or "None")));
             bool awaitingInteraction = interactionSent || nativeInteraction || carry != null && liftSent || objectStep && collected.Count >= N(row["conditionCount"]);
             var point = (data.Native["Position"] as JsonArray)?.Select(DailyRegionRouter.D).ToArray();

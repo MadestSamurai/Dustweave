@@ -16,7 +16,7 @@ namespace BD2Daily.Live {
  }
  [DataContract] internal sealed class WeeklyNpcObject {
   [DataMember] public int Instance,Id,Quest;
-  [DataMember] public bool Near,Ready,Available,Collected,Eligible;
+  [DataMember] public bool Near,Ready,Available,Collected,Eligible,QuestMark;
   [DataMember] public string State="",Interaction="";
   [DataMember] public float Distance;
  }
@@ -45,6 +45,18 @@ namespace BD2Daily.Live {
  internal static partial class WeeklyNpcNative {
   static WeeklyNpcState result=new WeeklyNpcState();static Command owner;static int navQuest;static long navUntil;
   static Dictionary<int,TodayQuestTable> tables;
+  static int objectTablePack;
+  static Dictionary<int,Proto.Design.pack1.FieldQuestObjectTable> objectTables;
+  static bool ObjectEligible(FieldQuestObjectController target){
+   int pack=Singleton<PackManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ὢὠὮὠὥὥὥὣὡὮὯ;
+   if(objectTables==null||objectTablePack!=pack){
+    objectTables=Singleton<RawDataManager>.ὪὫὢὨὯὭὦὪὦὨὣ.GetTableList<Proto.Design.pack1.FieldQuestObjectTable>(ὯὭὣὩὩὦὬὢὯὩὪ.DB_PACK,"FieldQuestObjectTable",pack).ToDictionary(x=>x.Id);
+    objectTablePack=pack;
+   }
+   Proto.Design.pack1.FieldQuestObjectTable row;
+   return objectTables.TryGetValue(target.ὪὬὣὧὥὨὦὯὨὮὬ,out row)&&row.QuestRange.Contains(target.ὦὣὣὧὭὭὣὬὭὤὨ)
+    &&WeeklyNpcProgressGuard.ManualObject(true,row.IsDisableInteraction,row.IsAutoInteraction);
+  }
   static Dictionary<int,TodayQuestTable> Tables {
    get { return tables??(tables=Singleton<RawDataManager>.ὪὫὢὨὯὭὦὪὦὨὣ.GetTableList<TodayQuestTable>(ὯὭὣὩὩὦὬὢὯὩὪ.DB_COMMON,"TodayQuestTable").Where(x=>x.Type==2).ToDictionary(x=>x.Id)); }
   }
@@ -90,7 +102,7 @@ namespace BD2Daily.Live {
    if(c.Kind=="weekly_npc_interact"){
     if(!new[]{1,2,9,18}.Contains(q.ConditionType))return "npc_step_changed";
     var target=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὫὢὬὢὧὫὭὧὫὡὡ.OfType<FieldQuestObjectController>().SingleOrDefault(x=>x!=null&&x.GetInstanceID()==c.Items[0]);
-    if(target==null||target.ὦὣὣὧὭὭὣὬὭὤὨ!=q.Id||q.ConditionType!=1&&!q.MagicValue.Contains(target.ὪὬὣὧὥὨὦὯὨὮὬ)||!ObjectReady(target))return "npc_target_unavailable";
+    if(target==null||!WeeklyNpcProgressGuard.CanInteractObject(q.ConditionType,q.Id,target.ὦὣὣὧὭὭὣὬὭὤὨ,ObjectReady(target)))return "npc_target_unavailable";
     if(q.ConditionType==9){var action=Singleton<FieldActionManager>.ὪὫὢὨὯὭὦὪὦὨὣ;
      if(!action.IsInActionWithFieldItem()||!GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὫὢὬὢὧὫὭὧὫὡὡ.OfType<FieldActionObjectController>().Any(x=>x!=null&&OwnsCarry(x,q)&&x.ὪὬὣὧὥὨὦὯὨὮὬ==action.ὪὮὫὯὯὯὠὬὯὬὤ.ὯὫὪὡὭὤὪὮὫὬὣ))return "npc_carry_changed";
     }
@@ -110,13 +122,13 @@ namespace BD2Daily.Live {
    var activeIds=new HashSet<int>(Q.ὨὢὧὪὩὯὣὦὠὠὧ.Where(x=>Tables.ContainsKey(x.Id)&&Tables[x.Id].PackId==result.Pack).Select(x=>x.Id));
    result.Objects=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὫὢὬὢὧὫὭὧὫὡὡ.OfType<FieldQuestObjectController>()
     .Where(x=>x!=null&&activeIds.Contains(x.ὦὣὣὧὭὭὣὬὭὤὨ))
-    .Select(x=>new WeeklyNpcObject{Instance=x.GetInstanceID(),Id=x.ὪὬὣὧὥὨὦὯὨὮὬ,Quest=x.ὦὣὣὧὭὭὣὬὭὤὨ,Near=x.ὩὤὨὮὥὦὫὭὫὭὨ,Ready=ObjectReady(x),Available=x.gameObject.activeInHierarchy,Collected=Singleton<PackManager>.ὪὫὢὨὯὭὦὪὦὨὣ.IsClearQuestObject(x.ὦὣὣὧὭὭὣὬὭὤὨ,x.ὪὬὣὧὥὨὦὯὨὮὬ),Eligible=x.ὨὧὨὦὦὢὦὢὫὥὪ,State=x.ὣὩὪὯὣὡὩὨὦὤὦ.ToString(),Interaction=x.ὨὪὨὩὥὠὡὮὮὠὬ.ToString(),Distance=(x.ὩὬὧὢὧὬὠὡὦὥὧ-GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὪὨὯὢὫὮὨὩὮὡὬ.transform.position).sqrMagnitude}).ToArray();
+    .Select(x=>new WeeklyNpcObject{Instance=x.GetInstanceID(),Id=x.ὪὬὣὧὥὨὦὯὨὮὬ,Quest=x.ὦὣὣὧὭὭὣὬὭὤὨ,Near=x.ὩὤὨὮὥὦὫὭὫὭὨ,Ready=ObjectReady(x),Available=x.gameObject.activeInHierarchy,Collected=Singleton<PackManager>.ὪὫὢὨὯὭὦὪὦὨὣ.IsClearQuestObject(x.ὦὣὣὧὭὭὣὬὭὤὨ,x.ὪὬὣὧὥὨὦὯὨὮὬ),Eligible=ObjectEligible(x),QuestMark=x.ὨὧὨὦὦὢὦὢὫὥὪ,State=x.ὣὩὪὯὣὡὩὨὦὤὦ.ToString(),Interaction=x.ὨὪὨὩὥὠὡὮὮὠὬ.ToString(),Distance=(x.ὩὬὧὢὧὬὠὡὦὥὧ-GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὪὨὯὢὫὮὨὩὮὡὬ.transform.position).sqrMagnitude}).ToArray();
    var action=Singleton<FieldActionManager>.ὪὫὢὨὯὭὦὪὦὨὣ;
    result.CarryId=action.IsInActionWithFieldItem()?action.ὪὮὫὯὯὯὠὬὯὬὤ.ὯὫὪὡὭὤὪὮὫὬὣ:0;
    result.CarryObjects=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὫὢὬὢὧὫὭὧὫὡὡ.OfType<FieldActionObjectController>()
     .Where(x=>x!=null&&activeIds.Any(id=>OwnsCarry(x,Tables[id])))
     .Select(x=>new WeeklyNpcObject{Instance=x.GetInstanceID(),Id=x.ὪὬὣὧὥὨὦὯὨὮὬ,Quest=activeIds.Single(id=>OwnsCarry(x,Tables[id])),Near=x.ὩὤὨὮὥὦὫὭὫὭὨ,Ready=CarryReady(x),Available=x.gameObject.activeInHierarchy&&!action.CheckFieldItemBeforeInteract(x.ὪὬὣὧὥὨὦὯὨὮὬ),Distance=(x.ὩὬὧὢὧὬὠὡὦὥὧ-GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὪὨὯὢὫὮὨὩὮὡὬ.transform.position).sqrMagnitude}).ToArray();
-   result.Navigating=Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ὤὬὪὨὠὢὢὭὧὫὨ;
+   result.Navigating=objectNavigation!=null||Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ὤὬὪὨὠὢὢὭὧὫὨ;
    var player=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὪὨὯὢὫὮὨὩὮὡὬ;
    result.Position=player==null?new float[0]:new[]{player.transform.position.x,player.transform.position.y,player.transform.position.z};
    result.NavigationReady=player!=null&&player.ὭὦὫὤὮὧὦὡὨὤὢ.ὠὭὬὪὫὣὠὡὡὠὫ!=MoveController.ὯὣὠὮὤὡὤὯὢὩὯ.DontMove;
@@ -139,7 +151,7 @@ namespace BD2Daily.Live {
    return target.gameObject.activeInHierarchy&&target.ὩὤὨὮὥὦὫὭὫὭὨ&&target.ὡὪὬὬὤὠὩὥὦὯὧ.ὫὣὬὥὪὫὪὤὫὮὧ==1&&!action.IsInActionWithFieldItem()&&!action.CheckFieldItemBeforeInteract(target.ὪὬὣὧὥὨὦὯὨὮὬ);
   }
   static bool ObjectReady(FieldQuestObjectController target){
-   return !Singleton<PackManager>.ὪὫὢὨὯὭὦὪὦὨὣ.IsClearQuestObject(target.ὦὣὣὧὭὭὣὬὭὤὨ,target.ὪὬὣὧὥὨὦὯὨὮὬ)&&target.gameObject.activeInHierarchy&&target.ὨὧὨὦὦὢὦὢὫὥὪ&&target.ὩὤὨὮὥὦὫὭὫὭὨ&&target.ὣὩὪὯὣὡὩὨὦὤὦ==FieldQuestObjectController.ὢὠὣὠὡὭὥὣὨὦὦ.Idle&&target.ὨὪὨὩὥὠὡὮὮὠὬ.ToString()=="None";
+   return ObjectEligible(target)&&!Singleton<PackManager>.ὪὫὢὨὯὭὦὪὦὨὣ.IsClearQuestObject(target.ὦὣὣὧὭὭὣὬὭὤὨ,target.ὪὬὣὧὥὨὦὯὨὮὬ)&&target.gameObject.activeInHierarchy&&target.ὩὤὨὮὥὦὫὭὫὭὨ&&target.ὣὩὪὯὣὡὩὨὦὤὦ==FieldQuestObjectController.ὢὠὣὠὡὭὥὣὨὦὦ.Idle&&target.ὨὪὨὩὥὠὡὮὮὠὬ.ToString()=="None";
   }
   static bool Accept(WeeklyNpcState next,Command c,int error){
    if(!ReferenceEquals(result,next))return false;
@@ -246,21 +258,21 @@ namespace BD2Daily.Live {
      // Arrival is proved by the target's own interaction range, not by the
      // navigation-mode flag. Cancel its auto callback before our single pickup.
      Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ClearQuestNav(true);
-     source.InteractionFieldObject();return;
+     StopObjectNavigation();source.InteractionFieldObject();return;
     }
     navQuest=q.Id;navUntil=DateTime.UtcNow.AddSeconds(180).Ticks;
-    Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.StartFieldObjectNav(source.ὪὬὣὧὥὨὦὯὨὮὬ,ὢὩὭὬὪὪὬὩὫὪὬ.ActionObject,false);return;
+    NavigateObject(source);return;
    }
    if(c.Kind=="weekly_npc_interact"){
     if(!new[]{1,2,9,18}.Contains(q.ConditionType))throw new InvalidOperationException("Unsupported NPC object quest");
     var target=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὫὢὬὢὧὫὭὧὫὡὡ.OfType<FieldQuestObjectController>().Single(x=>x!=null&&x.GetInstanceID()==c.Items[0]);
-    if(target.ὦὣὣὧὭὭὣὬὭὤὨ!=q.Id||!ObjectReady(target))throw new InvalidOperationException("NPC quest object changed, busy or out of range");
+    if(!WeeklyNpcProgressGuard.CanInteractObject(q.ConditionType,q.Id,target.ὦὣὣὧὭὭὣὬὭὤὨ,ObjectReady(target)))throw new InvalidOperationException("NPC quest object changed, busy or out of range");
     if(q.ConditionType==9){
      var action=Singleton<FieldActionManager>.ὪὫὢὨὯὭὦὪὦὨὣ;
      if(!action.IsInActionWithFieldItem()||!GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὫὢὬὢὧὫὭὧὫὡὡ.OfType<FieldActionObjectController>().Any(x=>x!=null&&OwnsCarry(x,q)&&x.ὪὬὣὧὥὨὦὯὨὮὬ==action.ὪὮὫὯὯὯὠὬὯὬὤ.ὯὫὪὡὭὤὪὮὫὬὣ))throw new InvalidOperationException("Carry quest requires its own held object");
     }
     Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ClearQuestNav(true);
-    target.InteractionFieldObject();return;
+    StopObjectNavigation();target.InteractionFieldObject();return;
    }
    if(c.Kind=="weekly_npc_auto"){
     var battle=BattlePlayManager.ὪὫὢὨὯὭὦὪὦὨὣ;var fieldUi=(BattleUI_FieldBattle)ui;
@@ -273,16 +285,30 @@ namespace BD2Daily.Live {
     if(!PlannedNavigationAllowed(q.Id))throw new InvalidOperationException("NPC navigation map changed");
     RepairObjectNavigation(q);
     navQuest=q.Id;navUntil=DateTime.UtcNow.AddSeconds(180).Ticks;
+    if(q.ConditionType==2||q.ConditionType==9||q.ConditionType==18){
+     // The quest guide may intentionally stop at a non-interactive area marker.
+     // Navigate to a real remaining prop instead; the host owns its one interaction.
+     var field=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ;
+     var packManager=Singleton<PackManager>.ὪὫὢὨὯὭὦὪὦὨὣ;
+     var target=QuestObjects(q.Id).Where(x=>x.gameObject.activeInHierarchy
+       &&!packManager.IsClearQuestObject(q.Id,x.ὪὬὣὧὥὨὦὯὨὮὬ))
+      .OrderBy(x=>(x.ὩὬὧὢὧὬὠὡὦὥὧ-field.ὪὨὯὢὫὮὨὩὮὡὬ.transform.position).sqrMagnitude).FirstOrDefault();
+     if(target!=null){
+      NavigateObject(target);
+      return;
+     }
+    }
     Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.StartQuestNav(q.Id);return;
    }
    throw new InvalidOperationException("Unsupported NPC quest action");
   }
   internal static void Stop(bool releasePlan=true){
+   StopObjectNavigation();
    if(releasePlan)ReleaseNavigationGuard();
    if(navQuest==0)return;navQuest=0;navUntil=0;
    Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ClearQuestNav(true);
    if(GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὪὨὯὢὫὮὨὩὮὡὬ!=null)GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.SetPlayerMoveState(MoveController.ὯὣὠὮὤὡὤὯὢὩὯ.Stop);
   }
-  internal static void Tick(){GuardNavigation();if(navQuest!=0&&(!Bridge.CollectionReadAllowed||!Matches(owner)||DateTime.UtcNow.Ticks>navUntil))Stop();}
+  internal static void Tick(){GuardNavigation();if(navQuest!=0&&(!Bridge.CollectionReadAllowed||!Matches(owner)||DateTime.UtcNow.Ticks>navUntil))Stop();else TickObjectNavigation();}
  }
 }

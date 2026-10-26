@@ -1,10 +1,45 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Collections.Generic;
+using System.Runtime.Serialization;
+using Proto.Design.common;
+using gamfs;
 using UnityEngine;
 using UnityEngine.UI;
 namespace BD2Daily.Live {
+ [DataContract] internal sealed class DailyCraftRecipe {
+  [DataMember] public int Id;
+  [DataMember] public int[] Equipment;
+ }
  internal static class EquipmentToolsNative {
+  static Dictionary<int,DailyCraftRecipe> normalRecipes;
+  static Dictionary<int,DailyCraftRecipe> NormalRecipes(){
+   if(normalRecipes!=null)return normalRecipes;
+   var data=Singleton<RawDataManager>.ὪὫὢὨὯὭὦὪὦὨὣ;
+   var recipes=data.GetTableList<EquipmentMakingTable>(ὯὭὣὩὩὦὬὢὯὩὪ.DB_COMMON,"EquipmentMakingTable");
+   var boxes=data.GetTableList<RandomBoxTable>(ὯὭὣὩὩὦὬὢὯὩὪ.DB_COMMON,"RandomBoxTable").ToDictionary(x=>x.Id);
+   var rewards=data.GetTableList<RewardGroupTable>(ὯὭὣὩὩὦὬὢὯὩὪ.DB_COMMON,"RewardGroupTable").ToDictionary(x=>x.Id);
+   var equipment=data.GetTableList<EquipmentTable>(ὯὭὣὩὩὦὬὢὯὩὪ.DB_COMMON,"EquipmentTable").ToDictionary(x=>x.Id);
+   var result=new Dictionary<int,DailyCraftRecipe>();
+   foreach(var recipe in recipes){
+    RandomBoxTable box;RewardGroupTable reward;
+    if(recipe.ResultItemType!=9||recipe.ResultItemCount!=1||!boxes.TryGetValue(recipe.ResultItemId,out box)||!rewards.TryGetValue(box.RewardGroupId,out reward))continue;
+    if(reward.ItemId.Count==0||reward.ItemId.Count!=reward.ItemType.Count||reward.ItemType.Any(t=>t!=10)||reward.ItemId.Any(id=>!equipment.ContainsKey(id)||equipment[id].Grade!=1))continue;
+    result.Add(recipe.Id,new DailyCraftRecipe{Id=recipe.Id,Equipment=reward.ItemId.Distinct().ToArray()});
+   }
+   return normalRecipes=result; // Client definitions are immutable; never cache account/material availability.
+  }
+  public static DailyCraftRecipe[] CraftRecipes(){
+   var menu=UnityEngine.Object.FindObjectsOfType<EquipmentMakingSelectUI>().SingleOrDefault(ui=>ui.gameObject.activeInHierarchy);
+   if(menu==null)return null;
+   var recipes=NormalRecipes();
+   return menu.EquipmentMakingDatas.Select(x=>x.ὫὮὩὬὤὫὮὨὢὯὬ.Id).Distinct().Where(recipes.ContainsKey).OrderBy(id=>id).Select(id=>recipes[id]).ToArray();
+  }
+  public static void PreviewCraft(EquipmentMakingSelectUI menu,int id){
+   Require(NormalRecipes().ContainsKey(id),"Only N equipment recipes are supported");
+   menu.OnEquipmentMakingUI(menu.EquipmentMakingDatas.Single(x=>x.ὫὮὩὬὤὫὮὨὢὯὬ.Id==id));
+  }
   const BindingFlags Flags=BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic;
   static object Get(object o,string n){var t=o.GetType();while(t!=null){var f=t.GetField(n,Flags);if(f!=null)return f.GetValue(o);var p=t.GetProperty(n,Flags);if(p!=null)return p.GetValue(o,null);t=t.BaseType;}throw new MissingFieldException(n);}
   static void Require(bool b,string message){if(!b)throw new InvalidOperationException(message);}

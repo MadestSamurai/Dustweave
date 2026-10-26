@@ -1,5 +1,35 @@
 [
   {
+    "Version": "1.5.2",
+    "Date": "2026-10-26",
+    "Notes": {
+      "zh-CN": [
+        "快速赶路已移除实验性标记，并为所有账号开启（包括原先关闭的账号）。可在“日常设置 → 全体设置”关闭，之后不会反复开启；仍遵守天赋药保留量。寻路纳入商店、告示牌等可用快捷移动，减少路线计算和换图后起步等待；快捷抵达告示牌附近不再额外开隐身。",
+        "修复快速赶路技能被错误拦截，复用剩余加速效果并按距离规划，减少重复开技能。",
+        "修复周 NPC 任务道具识别、拾取与搬运导航；已知任务错误说明原因并暂缓对应任务，避免阻挡后续日常。",
+        "周常制作装备在缺料时继续尝试其他可制作的 N 装，补全相关提示。",
+        "改进奖励任务列表加载、刷新期间的操作判断；战术教材私有插件需配套更新，偶发闪退尚未复现。更新页移除重复下载行。",
+        "1.5.0／1.5.1 可在软件内更新。1.4 及更早版本请手动下载完整包至新目录，保留 app 文件夹。更新失败时可从 GitHub／夸克重新下载。"
+      ],
+      "zh-TW": [
+        "快速趕路已移除實驗性標記，並為所有帳號開啟（包括原先關閉的帳號）。可在「日常設定 → 整體設定」關閉，之後不會反覆啟用；仍遵守天賦藥保留量。尋路納入商店、告示牌等可用快捷移動，減少路線計算與換圖後起步等待；快捷抵達告示牌附近不再額外開隱身。",
+        "修復快速趕路技能被錯誤攔截，沿用剩餘加速效果並依距離規劃，減少重複施放。",
+        "修復週 NPC 任務道具辨識、拾取與搬運導航；已知任務錯誤會說明並暫緩對應任務，避免阻擋後續日常。",
+        "週常製作裝備在缺料時繼續嘗試其他可製作的 N 裝，補齊相關提示。",
+        "改善獎勵任務清單載入、刷新期間的操作判斷；戰術教材私有插件需配套更新，偶發閃退尚未重現。更新頁移除重複下載行。",
+        "1.5.0／1.5.1 可在軟體內更新。1.4 與更早版本請手動下載完整套件至新目錄，保留 app 資料夾。更新失敗時可從 GitHub／夸克重新下載。"
+      ],
+      "en-US": [
+        "Fast travel is no longer experimental and is now enabled for all accounts, including previously disabled ones. Turn it off under Daily settings → General if preferred; that choice will be retained. The talent-pill reserve still applies. Routing considers available native shop and quest-board shortcuts, reducing planning and movement-start delays. Nearby board shortcuts no longer trigger unnecessary stealth.",
+        "Fixed rejected movement-speed talents. Reuses active effects and considers walking distance to avoid repeated casts.",
+        "Fixed weekly NPC quest prop selection, collection and carrying navigation. Known task errors are explained and deferred without blocking subsequent daily tasks.",
+        "Weekly equipment crafting tries other craftable N items when materials are insufficient, with clearer messages.",
+        "Improved reward-list handling during loading and refresh. The private tactical-training plugin needs its companion update; the intermittent crash has not been reproduced. Removed duplicate download links.",
+        "Users of 1.5.0 or 1.5.1 can update in the application. Users of 1.4 or earlier should download the complete package into a new folder and keep the app folder. If updating fails, download again from GitHub or Quark."
+      ]
+    }
+  },
+  {
     "Version": "1.5.1",
     "Date": "2026-10-25",
     "Notes": {

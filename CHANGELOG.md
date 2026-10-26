@@ -1,5 +1,15 @@
 # Changelog / 更新记录
 
+## 1.5.2 — 2026-10-26
+
+- 寻路加入商店、告示牌等实际可用的快捷移动落点，减少路线计算、换图后起步和重复读取的等待。
+- 快速赶路移除实验性标记，默认开启，并为旧账号一次性开启；可在全体设置关闭。复用尚未结束的移动加速效果，按距离及剩余时长规划；修复技能执行被错误拦截的问题。
+- 修复周 NPC 任务道具筛选、拾取和搬运导航，以及已知任务错误弹窗阻挡后续日常的问题。
+- 周常制作装备在材料不足时尝试其他可制作的 N 装，并补全相关提示。
+- 改进奖励任务列表加载、刷新期间的操作判断；版本更新页保留一组清晰的重新下载入口。
+- Improves shortcut routing, movement readiness and speed-buff reuse; fixes weekly quest interactions and material-aware N equipment crafting, and guards reward-list refreshes.
+- [完整说明 / Full notes](docs/releases/1.5.2.md)
+
 ## 1.5.1 — 2026-10-25
 
 - 修复公会签到在加载中误报失败，以及签到结果弹窗阻挡后续日常的问题。

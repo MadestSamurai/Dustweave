@@ -12,7 +12,7 @@ static class CookingTravelCases
     {
         void Check(bool ok,string text){if(!ok)throw new Exception(text);cases.Add(text);}
         var prefs = new DailyPreferences();
-        Check(!prefs.General.FastTravel && prefs.Trade.CookingRecipes.Length == 0,"fast travel and custom recipes remain opt-in");
+        Check(prefs.General.FastTravel && prefs.Trade.CookingRecipes.Length == 0,"fast travel defaults on while custom recipes remain opt-in");
         prefs.General.FastTravel=true; prefs.Trade.FavoritesOnly=true;prefs.Trade.CookingRecipes=[20,10];
         var restored=DailyPreferences.Parse(JsonSerializer.Serialize(prefs));
         Check(restored.General.FastTravel&&restored.Trade.CookingRecipes.SequenceEqual(new long[]{20,10})&&restored.Trade.RequiresCatalog,"ordered recipe choices and fast travel survive preference round trip");
@@ -22,7 +22,7 @@ static class CookingTravelCases
         var e=h.Evidence();
         e["Readings"]=new JsonArray(Read("mainline.talent_rows","$self",new JsonArray(O(("Group",1305),("Reason",""),("Cooldown",0)))));
         double longWalk = DailyFieldRoute.MinimumDashDistance;
-        Check(!DailyFieldRoute.ShouldDash(new(),e,longWalk)&&DailyFieldRoute.ShouldDash(new(){FastTravel=true},e,longWalk),"walking speed talent requires explicit preference, sufficient distance and controllable field");
+        Check(!DailyFieldRoute.ShouldDash(new(){FastTravel=false},e,longWalk)&&DailyFieldRoute.ShouldDash(new(){FastTravel=true},e,longWalk),"walking speed talent respects opt out, sufficient distance and controllable field");
         foreach (double? distance in new double?[] { null, -1, 0, 2, longWalk - .1, double.NaN, double.PositiveInfinity })
             Check(!DailyFieldRoute.ShouldDash(new(){FastTravel=true},e,distance),"short or unknown walking distance never spends dash potions: "+distance);
         Check(DailyFieldRoute.TargetDistance(O(("Near",true),("Distance",100)))==0
@@ -79,6 +79,20 @@ static class CookingTravelCases
         Check(N(Choose()?["instance"])==2,"missing positive movement bonus cannot outrank a usable speed talent");
         var speedIntent=O(("role","dispatch.start"),("action",O(("operation","mainline_talent"))),("scope",O(("kind",13))));
         Check(DailyFieldTalentProof.Owns(speedIntent),"movement-speed activations use the ordinary talent receipt and recovery path");
+        var legacySpeed=speedIntent.DeepClone().AsObject();
+        legacySpeed["before"]=O(("Frame",h.Frame)); legacySpeed["before"]!["Frame"]!["BridgeVersion"]=131;
+        legacySpeed["command_id"]=new string('a',32); legacySpeed["action"]!["value"]=42;
+        var rejectedSpeed=O(("State","unknown"),("Error","System.InvalidOperationException: Only mainline gathering talents allowed\r\n at Bridge.TickCore()"),
+            ("Before",legacySpeed["before"]!["Frame"]),("Command",O(("Id",new string('a',32)),("Kind","mainline_talent"),("Value",42))));
+        Check(DailyFieldTalentProof.LegacySpeedRejected(legacySpeed,rejectedSpeed),"old speed whitelist rejection is proven before native click");
+        foreach(var mutation in new Action<JsonObject>[] {
+            x=>x["Error"]="System.TimeoutException: no reply", x=>x["Command"]!["Value"]=43,
+            x=>x["Command"]!["Id"]=new string('b',32), x=>x["Before"]!["AccountKey"]="other" }){
+            var other=rejectedSpeed.DeepClone().AsObject();mutation(other);
+            Check(!DailyFieldTalentProof.LegacySpeedRejected(legacySpeed,other),"unrelated or mismatched talent failure cannot authorize replay");
+        }
+        legacySpeed["before"]!["Frame"]!["BridgeVersion"]=132;
+        Check(!DailyFieldTalentProof.LegacySpeedRejected(legacySpeed,rejectedSpeed),"legacy speed recovery is restricted to affected component versions");
         h.Page("QuickMenuUI");e["Frame"]=h.Frame.DeepClone();
         Check(!DailyFieldRoute.ShouldDash(new(){FastTravel=true},e,longWalk),"fast travel never opens another menu during an interaction");
         Check(!await new DailyFieldRoute(h.Workflow).PrepareWalking(longWalk)&&h.Box.Commands.Count==0,"default walking sends no speed talent command or observation");

@@ -21,6 +21,14 @@ static class SelfTest {
   }
   Check(LiveProtocol.IsSquareScene("Map3009_001"),"plaza routes permit A*");
   {
+   var f=Frame();var c=Command();f.BridgeVersion=134;f.Surfaces[0].Type="EquipmentMakingSelectUI";c.Kind="equipment_craft_preview";c.TargetId=0;c.Value=2;
+   Check(LivePolicy.Gate(c,f,now,false)=="","daily N craft can select an alternate native recipe");
+   f.BridgeVersion=133;Check(LivePolicy.Gate(c,f,now,false)!="","old component cannot ignore alternate recipe and reopen the sword");
+   c.Value=0;Check(LivePolicy.Gate(c,f,now,false)=="","legacy default sword preview remains compatible");
+   f.BridgeVersion=134;c.Value=-1;Check(LivePolicy.Gate(c,f,now,false)!="","negative equipment recipe rejected");
+   c.Value=2;f.Surfaces[0].Type="InventoryManageUI";Check(LivePolicy.Gate(c,f,now,false)!="","recipe preview cannot run from another screen");
+  }
+  {
    var f=Frame();var c=Command();var u=f.Surfaces[0];f.Scene=c.Scene="Map0001_001";f.BridgeVersion=123;u.Type="MailUI";c.TargetId=0;c.Kind="mail_collect_filtered";c.Items=new long[]{1,2};
    Check(LivePolicy.Gate(c,f,now,false)=="","selected mail batch accepted");
    c.Items=new long[]{1,1};Check(LivePolicy.Gate(c,f,now,false)!="","duplicate mail rejected");
@@ -421,6 +429,8 @@ static class SelfTest {
    c.Value=18;Check(LivePolicy.Gate(c,f,now,false)!="","reject unrelated talent");
    c.Value=13;f.BridgeVersion=128;Check(LivePolicy.Gate(c,f,now,false)!="","old component rejects walking-speed menu");
    f.BridgeVersion=129;Check(LivePolicy.Gate(c,f,now,false)=="","current component opens MoveSpeedUp rather than FastDash");
+   foreach(var talent in new[]{2,3,4,6,13,15,17,20})Check(LiveProtocol.FieldTalentClass(talent),"menu and native execution share supported field talent classes");
+   foreach(var talent in new[]{0,1,5,12,14,18,99})Check(!LiveProtocol.FieldTalentClass(talent),"unrelated field talents remain excluded");
   }
   {
    var c=Command();c.Kind="mainline_talent";c.TargetId=0;c.Value=123;var f=Frame();f.BridgeVersion=21;f.Surfaces[0].Type="QuickMenuUI";
@@ -529,6 +539,32 @@ static class SelfTest {
    Check(!WeeklyNpcProgressGuard.AllowPlannedNavigation(10,10,condition,85,85,false,false),"completed step cannot resume native navigation "+condition);
   }
   Check(!WeeklyNpcProgressGuard.AllowPlannedNavigation(10,10,1,82,82,false,true),"kill steps always use host wild suppression");
+  foreach(int condition in new[]{1,2,9,18}){
+   Check(WeeklyNpcProgressGuard.CanInteractObject(condition,10,10,true),"ready scene-owned quest object is eligible without a static ID whitelist "+condition);
+   Check(!WeeklyNpcProgressGuard.CanInteractObject(condition,10,11,true),"another quest's ready object is not eligible "+condition);
+   Check(!WeeklyNpcProgressGuard.CanInteractObject(condition,10,10,false),"busy, unavailable or distant quest object remains ineligible "+condition);
+  }
+  Check(!WeeklyNpcProgressGuard.CanInteractObject(19,10,10,true),"dialogue is not treated as an object interaction");
+  Check(WeeklyNpcProgressGuard.ManualObject(true,0,0),"manual quest ore remains eligible without a quest mark");
+  Check(!WeeklyNpcProgressGuard.ManualObject(true,1,0),"visible area marker cannot be clicked as a quest pickup");
+  Check(!WeeklyNpcProgressGuard.ManualObject(true,0,1),"automatic proximity trigger is not manually submitted");
+  Check(!WeeklyNpcProgressGuard.ManualObject(false,0,0),"missing object data does not authorize interaction");
+  Check(WeeklyNpcProgressGuard.WouldRegress(0,new[]{100,101},0,new[]{100}),"partial server read cannot erase an acknowledged pickup");
+  Check(WeeklyNpcProgressGuard.WouldRegress(2,new int[0],1,new int[0]),"partial server read cannot lower acknowledged quest count");
+  Check(!WeeklyNpcProgressGuard.WouldRegress(0,new[]{100},0,new[]{100,101}),"newer server progress remains accepted");
+  {
+   var f=Frame();var c=Command();var u=f.Surfaces[0];u.Type="MessagePopupUI";u.NativeContext=BackgroundErrorPolicy.QuestContext;
+   u.Text=new[]{"無法在伺服器找到任務資訊。, error:100011"};u.Targets[0].Field="_buttonOK";c.Kind="background_error_ack";c.TargetId=0;
+   Check(LivePolicy.Gate(c,f,now,false)=="","owned callback-free quest rejection can close before deferring");
+   u.NativeContext="";Check(LivePolicy.Gate(c,f,now,false)!="","quest error text without workflow ownership is not acknowledged");
+   u.NativeContext=BackgroundErrorPolicy.QuestContext;u.Text=new[]{"error:1000110"};Check(LivePolicy.Gate(c,f,now,false)!="","partial error code cannot match another server error");
+   u.Text=new[]{"error:100011"};u.Targets=u.Targets.Append(new Target{Field="_buttonCancel",Enabled=true}).ToArray();
+   Check(LivePolicy.Gate(c,f,now,false)!="","quest confirmation with choices is never treated as acknowledgement-only");
+  }
+  foreach(int condition in new[]{2,9}){
+   Check(WeeklyNpcProgressGuard.StaleNavigationObjects(condition,new[]{100,101,102},new[]{100},new[]{100,102,999}).SequenceEqual(new[]{102}),"scene target outside static MagicValue can be unblocked without clearing confirmed or unrelated targets "+condition);
+   Check(WeeklyNpcProgressGuard.StaleNavigationObjects(condition,new[]{100,101,102},new[]{100,102},new[]{100,102,999}).Length==0,"confirmed runtime target is never restored for a duplicate pickup "+condition);
+  }
   foreach(string kind in new[]{"weekly_npc_query","weekly_npc_plan","weekly_npc_accept","weekly_npc_nav","weekly_npc_talk","weekly_npc_auto","weekly_npc_board_nav","weekly_npc_board_open","weekly_npc_board_scroll","weekly_npc_board_select"}){
    var f=Frame();var c=Command();c.Kind=kind;c.TargetId=0;c.Value=100001;
    f.Surfaces[0].Type=kind=="weekly_npc_accept"?"QuestPopupUI":kind=="weekly_npc_board_scroll"||kind=="weekly_npc_board_select"?"QuestBoardUI":kind=="weekly_npc_talk"?"BalloonScriptUI":kind=="weekly_npc_auto"?"BattleUI_FieldBattle":"GameFieldDefaultUI";

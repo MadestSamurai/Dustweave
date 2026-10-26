@@ -7,10 +7,15 @@ public sealed partial class DailyFieldRoute
     public async Task<JsonObject?> Walk(int target, long? destination = null, int storyRetries = 0)
     {
         W.StepProgress("walk");
-        await FieldReady();
+        // Native field/input readiness is the start condition for movement.
+        // Do not add a fixed second after every map arrival.
+        await FieldReady(settle: 0);
         var before = await Evidence();
+        long revision = W.Driver.InputRevision;
         await Protection(before, walking: true, walkingDistance: WalkingDistance(before, target));
-        before = await Evidence();
+        // Protection often does nothing (safe/cleared map, active talent, short
+        // distance). Do not repeat the full map observation without any input.
+        if (W.Driver.InputRevision != revision) before = await Evidence();
         long origin = N(Map(before)["id"]);
         bool protectedRoute = MovementNeedsStealth(before);
         double? initial = Rows(Travel(before)["Approaches"]).Where(p => N(p["Instance"]) == target && B(p["Reachable"])).Select(p => (double?)DailyRegionRouter.D(p["Distance"])).FirstOrDefault();
@@ -21,7 +26,7 @@ public sealed partial class DailyFieldRoute
         async Task<JsonObject?> Resume(string reason)
         {
             var logical = new[] { "gate", "waypoint" }.SelectMany(kind => FieldRows(before, kind).Where(r => N(r["instance"]) == target).Select(r => (Kind: kind, Object: N(r[ObjectPath])))).ToArray();
-            try { await FieldReady(); }
+            try { await FieldReady(settle: 0); }
             catch (StageHostException ex) when (ex.Kind == "adapter")
             {
                 await Failure(current, target, "field_transition_not_ready", O(("destination", destination), ("trigger", reason), ("attempt", storyRetries), ("error", ex.Message)));
@@ -68,7 +73,7 @@ public sealed partial class DailyFieldRoute
                 long map = N(Map(current)["id"]);
                 if (destination.HasValue && map == destination)
                 {
-                    await FieldReady();
+                    await FieldReady(settle: 0);
                     return null;
                 }
                 Require(map == origin, "导航期间地图改变，未重发旧场景操作");
@@ -103,7 +108,7 @@ public sealed partial class DailyFieldRoute
                     long arrived = N(Map(renewed)["id"]);
                     if (destination.HasValue && arrived == destination)
                     {
-                        await FieldReady();
+                        await FieldReady(settle: 0);
                         return null;
                     }
                     Require(arrived == origin, "补藏身期间地图改变");

@@ -82,6 +82,16 @@ public sealed partial class DailyLanguage : INotifyPropertyChanged
         : TryFormatNotice(original, out var translated) ? translated : TranslateToolMessage(original);
     public string Stage(string id) => id == "event_battle" && DailyPlugin.Current.Supports(id) ? Get("prefs.event_battle")
         : strings.ContainsKey("stage." + id) ? Get("stage." + id) : Get("stage.unknown", id);
+    public string WorkStep(string? step)
+    {
+        string key = "work." + step;
+        if (strings.ContainsKey(key)) return Get(key);
+        // Older progress records may contain the display text instead of its ID.
+        // Unknown presentation metadata must not interrupt queue rendering.
+        if (step != null && sourceKeys.TryGetValue(step, out key) && key.StartsWith("work.", StringComparison.Ordinal))
+            return Get(key);
+        return Get("work.execute");
+    }
     public string State(string code) => strings.ContainsKey("state." + code) ? Get("state." + code) : Translate(DailyUserText.State(code));
     public string Describe(string raw)
     {

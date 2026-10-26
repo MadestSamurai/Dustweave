@@ -15,6 +15,7 @@ static class EventCollectionCases
         public bool DropsPending, MonstersPending, Research, Disabled, Missing, NearWaypoint;
         public bool ThreatsKnown = true;
         public int OtherMonsters;
+        public bool Capturable;
         public double StealthUntil;
         public void ExhaustAbsorption() => counts[4] = 21;
         public readonly List<int> Casts = [];
@@ -45,6 +46,7 @@ static class EventCollectionCases
                         int kind = I(c["Value"]) / 100;
                         Casts.Add(kind); counts[kind] = counts.GetValueOrDefault(kind) + 1;
                         if (kind == 3) MonstersPending = false;
+                        if (kind == 20 && Capturable) { OtherMonsters--; Capturable = false; }
                         if (kind == 4) DropsPending = false;
                         if (kind == 6) Research = true;
                         if (kind == 17) StealthUntil = H.Time + 30;
@@ -79,6 +81,8 @@ static class EventCollectionCases
                     (SkillPath, O(("id", group * 10), ("groupId", group), ("classType", MenuKind), ("valueList", new JsonArray(21, 30)), ("catalystValue", 0))), ("_objDisableImage.activeSelf", Disabled));
                 talent["InstanceId"] = group; rows.Add(talent);
             }
+            if (Capturable)
+                rows.Add(WorkflowCases.Reading("mainline.monster", ("ὭὫὠὯὯὭὧὬὣὨὨ.ὫὣὬὥὪὫὪὤὫὮὧ", 2)));
             if (DropsPending)
             {
                 var reward = WorkflowCases.Reading("mainline.reward", (ObjectPath, 1001), (DropAvailablePath, true), ("ὯὩὮὩὮὣὯὫὮὡὧ", true), ("ὦὫὧὯὥὫὦὪὣὦὪ", false));
@@ -277,6 +281,16 @@ static class EventCollectionCases
             await f.Route.ProtectWeeklyMovement();
             Check(S(result["state"]) == "completed" && f.Casts.SequenceEqual(drops ? new[] { 3, 6, 4 } : new[] { 3 }),
                 "entry for suppression clears enemies before any stealth or collection action: " + drops);
+        }
+        foreach (bool patrol in new[] { false, true })
+        using (var f = new Fixture(Path.Combine(root, "weekly-suppress-capture-" + patrol), 8, 82, 1)
+            { MonstersPending = true, DropsPending = true, DropMap = 82, Capturable = true, OtherMonsters = patrol ? 2 : 1 })
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            await f.Route.Gather();
+            await f.Route.ProtectWeeklyMovement();
+            Check(f.Casts.SequenceEqual(patrol ? new[] { 3, 20, 17, 6, 4 } : new[] { 3, 20, 6, 4 }),
+                "post-capture risk replaces the old snapshot while preserving any surviving patrol: " + patrol);
         }
         using (var f = new Fixture(Path.Combine(root, "weekly-protected-quest-target"), 8, 82, 1) { MonstersPending = true })
         {

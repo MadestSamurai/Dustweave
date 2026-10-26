@@ -5,6 +5,22 @@ namespace Dustweave;
 /// <summary>Native field talent activation, evidence and read-only recovery.</summary>
 public static class DailyFieldTalentProof
 {
+    // Bridges 129-131 opened MoveSpeedUp but their execution allowlist rejected
+    // it before OnClick. The old receipt marked that guard as possibly dispatched.
+    // Only this exact guard/command pair proves that no skill was attempted.
+    internal static bool LegacySpeedRejected(JsonObject op, JsonObject receipt)
+    {
+        if (!Owns(op) || DailyData.N(op["scope"]?["kind"]) != 13
+            || op["before"]?["Frame"] is not JsonObject before
+            || DailyData.N(before["BridgeVersion"]) is < 129 or > 131
+            || receipt["Before"] is not JsonObject received || !DailyEvidence.SameActor(before, received)) return false;
+        return DailyData.S(receipt["State"]) == "unknown"
+            && DailyData.S(receipt["Error"]).StartsWith("System.InvalidOperationException: Only mainline gathering talents allowed", StringComparison.Ordinal)
+            && DailyData.S(op["command_id"]).Length == 32
+            && DailyData.S(receipt["Command"]?["Id"]) == DailyData.S(op["command_id"])
+            && DailyData.S(receipt["Command"]?["Kind"]) == "mainline_talent"
+            && JsonNode.DeepEquals(receipt["Command"]?["Value"], op["action"]?["value"]);
+    }
     // Shared TalentSkillUseResponse carries either a general talent update, an
     // NPC cooldown, or both. Missing identity is unknown, never "another skill".
     // Conflicting/malformed identities must stay in the journal for reconciliation.

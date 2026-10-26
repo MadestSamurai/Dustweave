@@ -67,8 +67,25 @@ public sealed class DailyCollectionNavigator
         var ports = FieldRows(e, "waypoint").Where(p => paths.ContainsKey(N(p["instance"]))).Select(p => DailyRegionRouter.D(paths[N(p["instance"])]["Distance"])).ToArray();
         Evidence = e;
         node = Region(e);
-        Atlas.Observe(node, exits, ports, B(travel["Ground"]));
+        Atlas.Observe(node, exits, ports, B(travel["Ground"]), DailyRegionRouter.D(map["maxSpeed"]));
+        double speedRemaining = Remaining(e, MovementSpeedTalent);
+        Atlas.ObserveSpeed(speedRemaining, speedRemaining > 0 ? MovementSpeedBonus(e) : 0);
+        Atlas.ObserveQuick(Rows(travel["QuickTargets"] ?? new JsonArray()));
         return N(map["id"]);
+    }
+    internal static double MovementSpeedBonus(JsonObject evidence)
+    {
+        // This optional observation refines ETA only. An unavailable native
+        // getter must leave ordinary walking usable rather than block a route.
+        var readings = Rows(evidence["Readings"]).Where(r => S(r["Id"]) == "mainline.movement").ToArray();
+        if (readings.Length != 1 || S(readings[0]["Error"]) != "") return 0;
+        try
+        {
+            double value = DailyRegionRouter.D(DailyEvidence.Reading(evidence, "mainline.movement", "GetTalentMoveSpeedUpValue()"));
+            return double.IsFinite(value) && value > 0 ? value : 0;
+        }
+        catch (Exception error) when (error is InvalidDataException or InvalidOperationException or System.Text.Json.JsonException or FormatException)
+        { return 0; }
     }
     public Task<long> Observe() => Observe(settle: 1);
     private async Task<long> Observe(double settle)
@@ -127,6 +144,16 @@ public sealed class DailyCollectionNavigator
                     throw new DailyTravelBlocked("规划中的入口已经不可达");
                 await route.Walk(I(gate["instance"]), destination);
             }
+            else if (kind == "quick")
+            {
+                await route.FieldReady(settle: 0);
+                if (!await DailyQuickTravel.TryMove(route.W, N(action["object"]), destination))
+                {
+                    Atlas.BlockedQuick.Add((origin, N(action["object"])));
+                    Trace("quick_unavailable", action);
+                    return false;
+                }
+            }
             else
             {
                 Require(kind == "teleport", "未知路线动作");
@@ -146,6 +173,8 @@ public sealed class DailyCollectionNavigator
         {
             if (kind == "walk")
                 Atlas.Blocked.Add((origin, gate == null ? (action["object"] == null ? null : N(action["object"])) : N(gate[ObjectPath])));
+            else if (kind == "quick")
+                Atlas.BlockedQuick.Add((origin, N(action["object"])));
             else
                 Atlas.BlockedPorts.Add(origin);
             Trace("unreachable", action);
@@ -156,13 +185,15 @@ public sealed class DailyCollectionNavigator
             Trace("interrupted", O(("action", action), ("error", error.Message)));
             throw;
         }
-        long arrived = await Observe();
+        long arrived = await Observe(settle: 0);
         Require(arrived == destination, "路线没有到达预期地图");
         // Do not spend stealth merely for arriving. The next concrete action
         // may be immediate suppression, absorption at the waypoint, or another
         // direct teleport. Every actual walking segment protects itself.
         if (kind == "walk")
             Atlas.Reached(origin, N(gate![ObjectPath]), node, route.W.Time - started);
+        else if (kind == "quick")
+            Atlas.ReachedQuick(N(action["object"]), node, route.W.Time - started, sameMap: current == arrived);
         else
             Atlas.Landing[arrived] = node;
         Save();
@@ -175,9 +206,10 @@ public sealed class DailyCollectionNavigator
         attempts.Clear();
         for (int i = 0; i < 64; i++)
         {
-            if (await Observe() == destination)
-                return;
             var p = await Plan([destination], teleports: teleports, allowed: allowed);
+            // Plan already observes the live origin. A second complete map read
+            // before it added latency without any intervening action.
+            if (N(p["current"]) == destination) return;
             var actions = Rows(p["actions"]);
             if (actions.Length == 0)
                 throw new DailyTravelBlocked("目的地图没有可用路线");
@@ -231,7 +263,12 @@ public sealed partial class DailyFieldRoute
                 await Skill(3);
             e = await Evidence();
             if (FieldRows(e, "monster").Any(r => N(r["ὭὫὠὯὯὭὧὬὣὨὨ.ὫὣὬὥὪὫὪὤὫὮὧ"]) == 2))
+            {
                 await Skill(20);
+                // Capture removes the remaining special monsters. Do not cast
+                // stealth using the pre-capture threat snapshot below.
+                e = await Evidence();
+            }
             // The live object cache can lag after reconnecting. Already-collected
             // server targets must not spend another absorption use.
             if (remainingDrops.Count > 0)

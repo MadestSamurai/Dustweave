@@ -7,7 +7,7 @@ namespace Dustweave;
 public sealed class DailyPreferences
 {
     [JsonRequired]
-    public int Schema { get; set; } = 18;
+    public int Schema { get; set; } = 19;
     [JsonRequired] public GeneralPreferences General { get; set; } = new();
     [JsonRequired] public FriendshipPreferences Friendship { get; set; } = new();
     [JsonRequired]
@@ -162,6 +162,13 @@ public sealed class DailyPreferences
             node["Stages"]!["Saffron"] = false;
             node["Schema"] = 18;
         }
+        if (node["Schema"]?.GetValue<int>() == 18)
+        {
+            var general = node["General"] as JsonObject ?? throw new InvalidDataException("日常偏好版本或字段不完整。");
+            // One-time 1.5.2 default migration. Later explicit opt-outs use schema 19.
+            general["FastTravel"] = true;
+            node["Schema"] = 19;
+        }
         var value = node.Deserialize<DailyPreferences>(DailyJson.Options) ?? throw new InvalidDataException("日常设置不能为空。");
         // Retain the legacy field for old profile compatibility only.
         if (value.MonsterHunt != null) value.MonsterHunt.Enabled = false;
@@ -170,7 +177,7 @@ public sealed class DailyPreferences
     }
     public void Validate()
     {
-        if (Schema != 18 || General == null || Friendship == null || Tactics == null || Events == null || EventBattle == null || Trade == null || Weekly == null || MonsterHunt == null || Hunt == null || Equipment == null || Tasks == null || Stages == null || Mirror == null)
+        if (Schema != 19 || General == null || Friendship == null || Tactics == null || Events == null || EventBattle == null || Trade == null || Weekly == null || MonsterHunt == null || Hunt == null || Equipment == null || Tasks == null || Stages == null || Mirror == null)
             throw new InvalidDataException("日常偏好版本或字段不完整。");
         // Keep the legacy JSON fields readable, but never reactivate retired policies.
         Weekly.NpcHunting = false;
@@ -211,7 +218,7 @@ public sealed class DailyPreferences
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed class GeneralPreferences
 {
-    public bool FastTravel { get; set; }
+    public bool FastTravel { get; set; } = true;
     [JsonRequired] public long TalentPotionReserve { get; set; } = 0;
     [JsonRequired] public bool RefillTalentPotions { get; set; } = false;
     [JsonRequired] public long TalentPotionTarget { get; set; } = 1000;

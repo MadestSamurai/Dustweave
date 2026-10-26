@@ -19,6 +19,7 @@ public static class DailyHomeDecision
         ["EventUI"] = null,
         ["ShopUI"] = null,
         ["EquipmentMakingUI"] = null,
+        ["EquipmentMakingSelectUI"] = null,
         ["EquipmentUpgradePopupUI"] = null,
         ["SichuanStagePopupUI"] = null,
         ["HuntDispatchPopupUI"] = null,

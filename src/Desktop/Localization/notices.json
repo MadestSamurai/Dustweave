@@ -1,4 +1,29 @@
 {
+  "notice.weekly_npc.server_rejected": {
+    "zh-CN": "游戏服务器未接受任务物品交互（100011），未计为完成；本次暂缓该卡带的NPC任务，继续其他日常",
+    "zh-TW": "遊戲伺服器未接受任務物品互動（100011），未計為完成；本次暫緩該卡帶的NPC任務，繼續其他日常",
+    "en-US": "The game server rejected the quest object interaction (100011); it was not counted as completed. Deferring NPC quests in this cartridge and continuing other daily tasks."
+  },
+  "notice.equipment.craft_unavailable": {
+    "zh-CN": "所有 N 装配方目前均无法制作（材料、天赋药或制作条件不足），本次已跳过，继续后续日常。",
+    "zh-TW": "目前所有 N 裝配方皆無法製作（材料、天賦藥或製作條件不足），本次已略過，繼續後續日常。",
+    "en-US": "No N-grade recipe can currently be crafted (materials, talent pills or crafting requirements are insufficient). Skipping this task and continuing daily tasks."
+  },
+  "notice.equipment.choose_craft": {
+    "zh-CN": "选择可制作的 N 装配方",
+    "zh-TW": "選擇可製作的 N 裝配方",
+    "en-US": "Selecting an available N-grade equipment recipe"
+  },
+  "notice.equipment.preview_craft": {
+    "zh-CN": "预览一件 N 装；缺料时改用其他 N 装配方",
+    "zh-TW": "預覽一件 N 裝；缺料時改用其他 N 裝配方",
+    "en-US": "Previewing one N-grade item; trying other N-grade recipes if materials are insufficient"
+  },
+  "notice.equipment.single_craft": {
+    "zh-CN": "仅为未完成任务制作一件 N 装",
+    "zh-TW": "僅為未完成任務製作一件 N 裝",
+    "en-US": "Crafting one N-grade item for the unfinished task"
+  },
   "notice.saffron.field_access": {
     "zh-CN": "正在接近已登记的农田，等待场景载入；暂不使用料理",
     "zh-TW": "正在接近已登記的農田，等待場景載入；暫不使用料理",

@@ -12,6 +12,9 @@ static class FieldRouteArrivalCases
         public readonly DailyFieldRoute Route;
         public long MapId = 9, Destination = 1;
         public bool Near, PortNear, BlockExit, FailCommand;
+        public bool QuickEnabled, QuickOutsideOnly, QuickNear, QuickLandNear = true, QuickLandNearby = true, QuickFails;
+        public long QuickNpc = 999, QuickPack = 1;
+        private string quickState = "idle";
         public long? BattleMap;
         public double StealthSeconds;
         public double GateDistance = 2; public double? FirstCommandAt;
@@ -43,6 +46,12 @@ static class FieldRouteArrivalCases
                     case "mainline_cancel_nav": break;
                     case "mainline_interact": H.Page("WayPointUI", "_objMapNextButton"); break;
                     case "back": Scene(); break;
+                    case "field_quick_travel":
+                        if (N(c["Value"]) != 999 || N(c["Items"]?[0]) != Destination) throw new Exception("Shortcut targets another NPC");
+                        if (QuickFails) { quickState = "failed"; break; }
+                        MapId = Destination; Near = QuickLandNear; QuickNear = QuickLandNearby; quickState = "arrived";
+                        Scene();
+                        break;
                     case "weekly_npc_board_nav":
                         if (MapId != Destination) throw new Exception("Board navigation on wrong map");
                         Near = true;
@@ -78,6 +87,9 @@ static class FieldRouteArrivalCases
                 Read("navigation.pack",0,(DailyTravel.CurrentPack+".Id",1),(DailyTravel.CurrentPack+".PackType",0))
             };
             rows.Add(Read("mainline.durations",0,("effects",new JsonArray(O(("Key",17),("Value.ὫὢὢὬὫὫὡὩὪὩὮ",StealthSeconds>0),("Value.ὠὨὠὭὬὤὪὢὫὨὮ",StealthSeconds))))));
+            rows.Add(Read("route.quick",0,("$self",O(("Pack",QuickPack),("Map",MapId),("Npc",QuickNpc),("State",quickState),
+                ("Targets", QuickEnabled && (!QuickOutsideOnly || MapId != 9)
+                    ? new JsonArray(O(("Npc",QuickNpc),("Map",Destination),("Name","Board"),("AtTarget",QuickNear))) : new JsonArray())))));
             if (MapId is 9 or 1)
             {
                 int instance = MapId == 9 ? GateInstance : 12;
@@ -101,6 +113,20 @@ static class FieldRouteArrivalCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool yes, string message) { if (!yes) throw new Exception(message); checks.Add(message); }
+        using (var f = new Fixture(Path.Combine(root, "ready-walk-no-fixed-settle")))
+        {
+            await f.Route.Walk(91, 1);
+            Check(f.MapId == 1 && f.FirstCommandAt < .2 && f.H.Time < .5,
+                "ready field starts walking without a fixed settle before departure or after arrival");
+        }
+        using (var f = new Fixture(Path.Combine(root, "loading-walk-native-readiness")))
+        {
+            f.H.Frame["Surfaces"]![0]!["InputReady"] = false;
+            f.H.OnDelay = () => { if (f.H.Time >= .8) f.Scene(); };
+            await f.Route.Walk(91, 1);
+            Check(f.MapId == 1 && f.FirstCommandAt >= .8 && f.FirstCommandAt < 1.1,
+                "walking still waits for actual input readiness, then departs without an extra second");
+        }
         using (var f = new Fixture(Path.Combine(root, "field-settle-adjacent")))
         {
             await f.Route.FieldReady();
@@ -221,11 +247,11 @@ static class FieldRouteArrivalCases
         }
         using (var f = new Fixture(Path.Combine(root, "walk-cancel-ui-race")))
         {
-            bool changed = false; double changedAt = 0;
-            f.H.OnCommand = c => { if (S(c["Kind"]) != "mainline_walk") throw new Exception("Unexpected movement during transition"); };
+            bool changed = false; double changedAt = 0, departedAt = 0;
+            f.H.OnCommand = c => { if (S(c["Kind"]) != "mainline_walk") throw new Exception("Unexpected movement during transition"); departedAt = f.H.Time; };
             f.H.Driver.SubmissionGuard = () =>
             {
-                if (!changed && f.Steps.Length == 1 && f.H.Time >= 5)
+                if (!changed && f.Steps.Length == 1 && f.H.Time >= departedAt + 4)
                 { changed = true; changedAt = f.H.Time; f.H.Page("OverheadManageUI"); }
             };
             f.H.OnDelay = () => { if (changed && f.H.Time >= changedAt + .6) { f.MapId = 1; f.Scene(); } };
@@ -288,8 +314,8 @@ static class FieldRouteArrivalCases
             var plan = await nav.Plan([1], teleports: false);
             Check(f.H.Time == 0 && f.Steps.Length == 0, "ready-map route planning performs no fixed settle or movement");
             Check(await nav.Step(Rows(plan["actions"])[0]) && f.MapId == 1
-                && f.FirstCommandAt >= 1 && f.FirstCommandAt < 1.3,
-                "planned walking keeps one full stable-field gate before movement");
+                && f.FirstCommandAt < .2,
+                "planned walking starts from current ready input without another fixed settle");
         }
         using (var f = new Fixture(Path.Combine(root, "route-planning-stale-origin")))
         {
@@ -365,6 +391,68 @@ static class FieldRouteArrivalCases
                 "board visit walks out of tavern and opens town board without waypoint detour");
             Check(Directory.GetFiles(Path.Combine(f.H.Root, "live", "route-atlas"), "*json", SearchOption.AllDirectories).Length > 0,
                 "board travel persists geometry through shared route atlas");
+        }
+        foreach (bool sameMap in new[] { false, true })
+        foreach (bool interactionNear in new[] { false, true })
+        using (var f = new Fixture(Path.Combine(root, $"board-shortcut-{sameMap}-{interactionNear}"))
+            { MapId = sameMap ? 1 : 9, BattleMap = 1, QuickEnabled = true, QuickLandNear = interactionNear })
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            f.Route.W.Settings.General.FastTravel = true;
+            f.Scene();
+            await f.Board();
+            string[] expected = interactionNear ? ["field_quick_travel", "weekly_npc_board_open"]
+                : ["field_quick_travel", "weekly_npc_board_nav", "weekly_npc_board_stop", "weekly_npc_board_open"];
+            Check(f.MapId == 1 && f.Steps.SequenceEqual(expected),
+                $"board shortcut avoids stealth and speed talents, including native nearby final approach: sameMap={sameMap}, near={interactionNear}");
+        }
+        using (var f = new Fixture(Path.Combine(root, "board-shortcut-leaves-threats")) { BattleMap = 9, QuickEnabled = true })
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            await f.Board();
+            Check(f.Steps.SequenceEqual(new[] { "field_quick_travel", "weekly_npc_board_open" }),
+                "direct board shortcut leaves a threatening origin without first casting stealth");
+        }
+        foreach (bool near in new[] { false, true })
+        using (var f = new Fixture(Path.Combine(root, "board-already-near-" + near))
+            { MapId = 1, BattleMap = 1, Near = near, QuickEnabled = !near, QuickNear = true })
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            f.Route.W.Settings.General.FastTravel = true;
+            f.Scene();
+            await f.Board();
+            Check(f.Steps.SequenceEqual(near ? ["weekly_npc_board_open"]
+                : new[] { "weekly_npc_board_nav", "weekly_npc_board_stop", "weekly_npc_board_open" }),
+                "existing board proximity skips redundant teleport and talent preparation: " + near);
+        }
+        using (var f = new Fixture(Path.Combine(root, "board-shortcut-after-interior"))
+            { QuickEnabled = true, QuickOutsideOnly = true, BattleMap = 1 })
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            await f.Board();
+            Check(f.Steps.SequenceEqual(new[] { "mainline_walk", "field_quick_travel", "weekly_npc_board_open" }),
+                "board shortcut is reconsidered after leaving an interior, before walking across the destination");
+        }
+        foreach (string mode in new[] { "unavailable", "other-npc", "other-pack", "failed", "outside-nearby-area" })
+        using (var f = new Fixture(Path.Combine(root, "board-walking-protection-" + mode))
+            { MapId = 1, BattleMap = 1, QuickEnabled = mode != "unavailable", QuickNpc = mode == "other-npc" ? 4 : 999,
+                QuickPack = mode == "other-pack" ? 2 : 1, QuickNear = mode == "other-npc", QuickFails = mode == "failed",
+                QuickLandNear = false, QuickLandNearby = false })
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            f.Scene();
+            bool protectedWalk = false;
+            var onCommand = f.H.OnCommand;
+            f.H.OnCommand = c =>
+            {
+                if (S(c["Kind"]) == "mainline_menu" && N(c["Value"]) == 17)
+                { protectedWalk = true; throw new InvalidOperationException("test: reached real stealth preparation"); }
+                onCommand!(c);
+            };
+            try { await f.Board(); }
+            catch (DailyStepException error) when (protectedWalk && error.Message.Contains("test: reached real stealth preparation", StringComparison.Ordinal)) { }
+            Check(protectedWalk && !f.Steps.Contains("weekly_npc_board_nav") && !f.Steps.Contains("weekly_npc_board_open"),
+                "ordinary threatened board walk still prepares stealth when shortcut is " + mode);
         }
         using (var f = new Fixture(Path.Combine(root, "teleport-arrived-during-preparation")))
         {

@@ -61,6 +61,7 @@ public static class DailyResults
 public static class DailyEquipment
 {
     private static readonly string[] Prefixes = ["equipment", "policy", "missions.cache"];
+    public const string CraftUnavailable = "所有 N 装配方目前均无法制作（材料、天赋药或制作条件不足），本次已跳过，继续后续日常。";
     private const string Level = "ὬὠὬὡὫὤὮὨὦὤὥ", Auto = "ὬὭὪὣὣὨὭὭὩὯὨ", Ids = "ὢὧὣὨὨὦὠὭὬὠὫ";
     public static IEnumerable<DailyBusinessProof> Proofs()
     {
@@ -118,7 +119,9 @@ public static class DailyEquipment
         var info = infos[0];
         string id = S(info["invenIndex"]);
         var definition = Rows(op["scope"]!["equipment_definitions"]).Single(r => N(r["id"]) == N(info["baseInfo"]!["id"]));
-        Require(N(definition["grade"]) == 1 && N(definition["slotType"]) == 0, "Crafted item is not an N sword");
+        Require(N(definition["grade"]) == 1, "Crafted item is not N equipment");
+        if (op["scope"]?["recipe_outputs"] is JsonArray outputs)
+            Require(outputs.Any(x => N(x) == N(info["baseInfo"]!["id"])), "Crafted item differs from selected N recipe");
         var old = Gear(op["before"]!.AsObject());
         var current = Gear(after);
         Require(current.Keys.Except(old.Keys).SequenceEqual([id]) && !old.Keys.Except(current.Keys).Any() && old.All(p => JsonNode.DeepEquals(p.Value, current[p.Key])), "Craft inventory delta differs");
@@ -133,20 +136,46 @@ public static class DailyEquipment
         }
         return result;
     }
-    public static async Task<string[]> Craft(DailyWorkflow w, long? mission = null)
+    public static async Task<JsonObject> Craft(DailyWorkflow w, long? mission = null)
     {
         await w.Home("weekly_equipment");
         await w.Step("MenuUI", operation: "equipment_craft_menu", expect: "EquipmentMakingSelectUI", reason: "打开原生装备制作");
-        await w.Step("EquipmentMakingSelectUI", operation: "equipment_craft_preview", expect: "EquipmentMakingUI", reason: "预览任务需要的一把N剑");
-        var e = await w.WaitEvidence(Prefixes, x => N(R(x, "equipment.craft_ui", "_craftMaterial.craftCount")) == 1);
-        if (w.Driver.PotionPolicy != null) await w.Driver.RequirePotionsAsync(N(R(e, "equipment.craft_ui", "_craftButton.UseResourceCount")));
-        Require(N(R(e, "equipment.craft_ui", "ὤὭὠὥὤὠὡὣὣὠὣ.ὫὮὩὬὤὫὮὨὢὯὬ.Id")) == 1 && !B(R(e, "equipment.craft_ui", "_craftButton.objDisableButton.activeSelf")), "N sword recipe unavailable");
-        var scope = O(("recipe", 1), ("count", 1), ("mission", mission), ("equipment_definitions", w.Table("policy/EquipmentTable.json").Where(r => N(r["grade"]) == 1 && N(r["slotType"]) == 0).ToArray()));
-        if (mission.HasValue)
-            scope["mission_definitions"] = Array(w.Table("policy/MissionTable.json").Where(r => N(r["id"]) == mission));
-        var op = await w.Transact("equipment.craft", scope, O(("ui", "EquipmentMakingUI"), ("field", "$pointer/UIRoot/Mask/EquipInfoParent/Button - Make"), ("reason", "仅为未完成任务制作一把N剑")));
-        await DailyResults.Cleanup(w, expectedResult: "ItemGetPopupUI");
-        return op["result"]!["instances"]!.AsArray().Select(S).ToArray();
+        var catalog = await w.WaitEvidence(["equipment.craft_recipes"], x => R(x, "equipment.craft_recipes", "$self") is JsonArray);
+        var recipes = Rows(R(catalog, "equipment.craft_recipes", "$self")).OrderBy(r => N(r["Id"])).ToArray();
+        Require(recipes.All(r => N(r["Id"]) > 0) && recipes.Select(r => N(r["Id"])).Distinct().Count() == recipes.Length, "Invalid N equipment recipe list");
+        var definitions = w.Table("policy/EquipmentTable.json").ToDictionary(r => N(r["id"]));
+        var unavailable = new List<long>();
+        foreach (var recipe in recipes)
+        {
+            long id = N(recipe["Id"]);
+            var outputs = recipe["Equipment"]!.AsArray().Select(N).ToArray();
+            Require(outputs.Length > 0 && outputs.All(i => definitions.TryGetValue(i, out var d) && N(d["grade"]) == 1), "Recipe may produce non-N equipment");
+            w.StepProgress("craft_recipe");
+            await w.Step(O(("ui", "EquipmentMakingSelectUI"), ("operation", "equipment_craft_preview"), ("value", id), ("expect", "EquipmentMakingUI"), ("reason", "预览一件 N 装；缺料时改用其他 N 装配方")));
+            var e = await w.WaitEvidence(Prefixes, x => N(R(x, "equipment.craft_ui", "_craftMaterial.craftCount")) == 1
+                && N(R(x, "equipment.craft_ui", "ὤὭὠὥὤὠὡὣὣὠὣ.ὫὮὩὬὤὫὮὨὢὯὬ.Id")) == id
+                && R(x, "equipment.craft_ui", "_craftButton.objDisableButton.activeSelf") is JsonValue);
+            // A disabled native preview has not submitted anything. Try each other N
+            // recipe once; never switch recipes after a submitted/uncertain craft.
+            if (B(R(e, "equipment.craft_ui", "_craftButton.objDisableButton.activeSelf")))
+            {
+                unavailable.Add(id);
+                await w.Step("EquipmentMakingUI", back: true, expect: "EquipmentMakingSelectUI");
+                continue;
+            }
+            if (w.Driver.PotionPolicy != null) await w.Driver.RequirePotionsAsync(N(R(e, "equipment.craft_ui", "_craftButton.UseResourceCount")));
+            var scope = O(("recipe", id), ("count", 1), ("mission", mission), ("recipe_outputs", outputs), ("equipment_definitions", outputs.Select(i => definitions[i]).ToArray()));
+            if (mission.HasValue)
+                scope["mission_definitions"] = Array(w.Table("policy/MissionTable.json").Where(r => N(r["id"]) == mission));
+            var op = await w.Transact("equipment.craft", scope, O(("ui", "EquipmentMakingUI"), ("field", "$pointer/UIRoot/Mask/EquipInfoParent/Button - Make"), ("reason", "仅为未完成任务制作一件 N 装")));
+            await DailyResults.Cleanup(w, expectedResult: "ItemGetPopupUI");
+            return O(("state", "completed"), ("instances", op["result"]!["instances"]), ("recipe", id), ("unavailable_recipes", unavailable));
+        }
+        await DailyResults.Cleanup(w);
+        var result = DailyWorkflow.Partial(CraftUnavailable);
+        result["unavailable_recipes"] = Array(unavailable.Select(id => (JsonNode?)JsonValue.Create(id)));
+        result["instances"] = new JsonArray();
+        return result;
     }
     public static async Task<JsonObject> Recycle(DailyWorkflow w, string[] ids, int level, string source)
     {
@@ -356,11 +385,14 @@ public static class DailyEquipment
             var progress = await DailyWeeklyMission.Read(w, DailyWeeklyMission.Equipment);
             if (B(progress["complete"]))
                 return DailyWeeklyMission.Skipped("本周制作装备任务已完成", progress);
-            var ids = await Craft(w, N(progress["id"]));
+            var craft = await Craft(w, N(progress["id"]));
+            if (S(craft["state"]) != "completed") { craft["mission"] = progress.DeepClone(); return craft; }
+            var ids = craft["instances"]!.AsArray().Select(S).ToArray();
             var mission = await DailyWeeklyMission.Confirm(w, DailyWeeklyMission.Equipment);
             var result = DailyWorkflow.Completed(mission);
             result["mission"] = mission.DeepClone();
             result["instances"] = Array(ids.Select(id => (JsonNode?)JsonValue.Create(id)));
+            result["craft"] = craft;
             if (w.Settings.Equipment.Enabled)
             {
                 await w.Step("MenuUI", "_buttonInventory", expect: "InventoryManageUI");
@@ -394,8 +426,10 @@ public static class DailyEquipment
             operations.Add(await ExecuteAction(w, action));
         if (operations.Count > 0)
             await DailyResults.Cleanup(w);
-        var summary = O(("state", S(inspection["state"]) == "partial" || plan["pending"]!.AsArray().Count > 0 ? "partial" : operations.Count > 0 ? "completed" : "skipped"), ("operations", operations), ("plan", plan), ("inspection", inspection), ("engine", "dotnet-equipment-v1"));
+        bool unavailableCraft = operations.Any(op => S(op?["state"]) == "partial");
+        var summary = O(("state", unavailableCraft || S(inspection["state"]) == "partial" || plan["pending"]!.AsArray().Count > 0 ? "partial" : operations.Count > 0 ? "completed" : "skipped"), ("operations", operations), ("plan", plan), ("inspection", inspection), ("engine", "dotnet-equipment-v1"));
         if (S(inspection["state"]) == "partial") summary["reason"] = "已处理可确认的装备任务；部分通行证任务待检查";
+        if (unavailableCraft) summary["reason"] = CraftUnavailable;
         return summary;
     }
     public static async Task<JsonObject> ExecuteAction(DailyWorkflow w, JsonObject action)
@@ -405,7 +439,13 @@ public static class DailyEquipment
         int level = task == "equipment.refine" ? 0 : action["enhance_level"]?.GetValue<int>()
             ?? throw new InvalidDataException("分解前强化等级必须为 0 至 9。");
         Require(level is >= 0 and <= 9, "Invalid enhancement target");
-        string[]? ids = task == "equipment.craft_recycle" ? await Craft(w) : null;
+        string[]? ids = null;
+        if (task == "equipment.craft_recycle")
+        {
+            var craft = await Craft(w);
+            if (S(craft["state"]) != "completed") return craft;
+            ids = craft["instances"]!.AsArray().Select(S).ToArray();
+        }
         if (!await w.Has("InventoryManageUI"))
             await w.Step("MenuUI", "_buttonInventory", expect: "InventoryManageUI");
         return task == "equipment.refine" ? await Refine(w, S(action["instance"]))

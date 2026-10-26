@@ -51,6 +51,7 @@ namespace BD2Daily.Live {
   [DataMember] public bool ThreatsKnown,ThreatsPresent;
   [DataMember] public CollectionTravelMap[] Maps;
   [DataMember] public TravelApproach[] Approaches;
+  [DataMember] public QuickTravelTarget[] QuickTargets;
  }
  [DataContract] internal sealed class RouteProbePoint {
   [DataMember] public int Id;
@@ -175,7 +176,7 @@ namespace BD2Daily.Live {
    // row proves that a patrol is harmless.
    bool threatsKnown=field.ὢὩὠὢὫὧὠὣὤὩὫ&&field.ὪὨὯὢὫὮὨὩὮὡὬ!=null;
    bool threats=threatsKnown&&(field.HasCanOverwhelmMonster()||Bridge.Find(typeof(FieldMonsterController)).Cast<FieldMonsterController>().Any(x=>x!=null&&x.gameObject.activeInHierarchy&&!x.IsCanOverwhelm()));
-   return new CollectionTravelState{Pack=map.PackId,Map=map.Id,Ground=TalentSkillManager.ὪὫὢὨὯὭὦὪὦὨὣ.IsAvailableWayPointMakeOnGround(),ThreatsKnown=threatsKnown,ThreatsPresent=threats,Maps=travelMaps,Approaches=Approaches(frame)};
+   return new CollectionTravelState{Pack=map.PackId,Map=map.Id,Ground=TalentSkillManager.ὪὫὢὨὯὭὦὪὦὨὣ.IsAvailableWayPointMakeOnGround(),ThreatsKnown=threatsKnown,ThreatsPresent=threats,Maps=travelMaps,Approaches=Approaches(frame),QuickTargets=QuickTravelNative.Capture().Targets};
   }
 
   // Publishing evidence must never enable, warp or move the native agent.

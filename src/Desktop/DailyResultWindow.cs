@@ -11,9 +11,7 @@ internal static class DailyResultText
     internal static string CurrentWork(QueueStage stage)
     {
         var p = stage.Work;
-        string key = "work." + (string.IsNullOrEmpty(p?.Step) ? "execute" : p.Step);
-        string text = L.Get(key);
-        if (text == key) text = L.Get("work.execute");
+        string text = L.WorkStep(p?.Step);
         if (p is { Total: > 0 }) text += " · " + L.Get(p.Unit switch
         {
             "maps" => "work.maps", "quests" => "work.quests", "absorptions" => "work.absorptions",

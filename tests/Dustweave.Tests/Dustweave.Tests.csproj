@@ -35,4 +35,5 @@
   </ItemGroup>
   <ItemGroup><Using Include="BD2Daily" /></ItemGroup>
   <ItemGroup><Compile Include="../../src/Packaging/SharedResources.cs" Link="Packaging/SharedResources.cs" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="../../src/Connection/UiInteractionReadiness.cs" LogicalName="Tests.UiInteractionReadiness.cs" /></ItemGroup>
 </Project>

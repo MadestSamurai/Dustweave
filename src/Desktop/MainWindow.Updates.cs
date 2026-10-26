@@ -32,7 +32,8 @@ public sealed class DailyUpdatePanel : ScrollViewer
         L.Bind(download, ContentControl.ContentProperty, "updates.download"); download.Style = (Style)Application.Current.FindResource("PrimaryButton"); actions.Children.Add(download);
         L.Bind(install, ContentControl.ContentProperty, "updates.install"); install.Style = (Style)Application.Current.FindResource("PrimaryButton"); actions.Children.Add(install); card.Children.Add(actions); card.Children.Add(status);
         stack.Children.Add(new Border { Style = (Style)Application.Current.FindResource("Panel"), Padding = new(20), Margin = new(0, 0, 0, 16), Child = card });
-        stack.Children.Add(DailyDownloadLinks.Create()); stack.Children.Add(Repair); stack.Children.Add(notes);
+        if (!DailyUpdateHost.SelfUpdating) stack.Children.Add(DailyDownloadLinks.Create());
+        stack.Children.Add(Repair); stack.Children.Add(notes);
         var layout=new Grid();layout.ColumnDefinitions.Add(new ColumnDefinition {MaxWidth=880});layout.Children.Add(stack);Content = layout;
         check.Click += (_, _) => CheckRequested?.Invoke(); install.Click += (_, _) => InstallRequested?.Invoke();
         download.Click += (_, _) => DownloadRequested?.Invoke();

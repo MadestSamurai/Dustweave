@@ -7,6 +7,29 @@ static class TradeEntryCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool ok, string name) { if (!ok) throw new Exception(name); checks.Add(name); }
+        foreach (string scenario in new[] { "already-near", "walk", "walk-error" })
+        using (var h = new WorkflowHarness(Path.Combine(root, "merchant-approach-" + scenario), []))
+        {
+            h.Frame["Scene"] = "Map3009_003";
+            h.Page("GameFieldDefaultUI");
+            bool near = scenario == "already-near";
+            h.Readings = () => [WorkflowCases.Reading("trade.navigation", ("$self", O(("Npc", 2), ("Near", near), ("Reachable", true), ("Distance", 1))))];
+            h.OnCommand = c => {
+                if (S(c["Kind"]) == "square_shop_nav")
+                {
+                    if (scenario == "walk-error") throw new DailyStepException("uncertain", "lost navigation receipt", true);
+                    near = true;
+                    h.Frame["SquareNavigation"] = O(("Kind", "square_shop_nav"), ("State", "arrived")); h.Publish();
+                }
+            };
+            bool failed = false;
+            try { await new DailyTradeExecution(h.Workflow, new()).Approach(2); }
+            catch (DailyStepException) when (scenario == "walk-error") { failed = true; }
+            var steps = h.Box.Commands.Select(c => S(c["Kind"])).ToArray();
+            Check(scenario == "already-near" ? steps.Length == 0 : steps.SequenceEqual(new[] { "square_shop_nav", "square_cancel_nav" }),
+                "merchant only cancels a walk it attempted, including an uncertain reply: " + scenario);
+            Check(failed == (scenario == "walk-error"), "merchant cleanup preserves the original walking failure: " + scenario);
+        }
         foreach (string scenario in new[] { "preview", "settlement", "wrong-merchant", "pending", "old-pending", "unknown-popup" })
         using (var h = new WorkflowHarness(Path.Combine(root, "trade-entry-" + scenario), DailyWorkflowRegistry.Proofs().Where(p => p.Role == "dispatch.start").ToArray()))
         {

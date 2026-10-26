@@ -179,6 +179,11 @@
       ]
     },
     {
+      "Id": "equipment.craft_recipes",
+      "Type": "EquipmentMakingSelectUI",
+      "Paths": ["$self"]
+    },
+    {
       "Id": "equipment.craft_ui",
       "Type": "EquipmentMakingUI",
       "Paths": [
