@@ -2090,7 +2090,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/SaffronCases.cs",
-      "sha256": "5327a2808aaed56490caa733ed89353a4ed6f00d0fdb7c68750b0fb30eabf0ef",
+      "sha256": "721c7af0770f4db242ba1e9eac1395fbbafb451d56a0d77f8ea62eba8e0c4825",
       "bytes": 18027,
       "reasons": "build input"
     },
@@ -2300,7 +2300,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/FieldRouteArrivalCases.cs",
-      "sha256": "f60fae440d4390e7612efde8b06bc9c02d1f40fe2c53f4143528752cc0ddc151",
+      "sha256": "a45c34f99bb146f06fa31ff953970de18cd43b50531ae76e8a02be9af850b46d",
       "bytes": 28052,
       "reasons": "build input"
     },
@@ -2822,7 +2822,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/WeeklyNpcInteractionCases.cs",
-      "sha256": "b46bc713ab3f51950198d6bd9b92e94a770d7a2a1ca766fa302c8a68666886f5",
+      "sha256": "4cfeae1313b0eb8850050e17884d0f2313cc3f4dfa3079ae038d54b57b4ded8e",
       "bytes": 14385,
       "reasons": "build input"
     },
@@ -2870,7 +2870,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/WeeklyNpcBoardCases.cs",
-      "sha256": "184f9ec51d8512b0f83ae63ec6b0cd2b6e5703c82e7749d2cae7401b5299b2ad",
+      "sha256": "74b4f89630f0f01b90a7b0780c342704a389e3e013466b0c0abb3fca140e5043",
       "bytes": 7525,
       "reasons": "build input"
     },

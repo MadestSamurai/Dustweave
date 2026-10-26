@@ -25,6 +25,8 @@ static class WeeklyNpcInteractionCases
         {
             Row = O(("id", 10), ("packId", 1), ("mapId", 1), ("conditionType", kind), ("conditionCount", count), ("magicValue", Enumerable.Range(100, count).ToArray()));
             H = new(path, []);
+            // These fixtures isolate prop interaction; talent activation is covered separately.
+            H.Workflow.Settings.General.FastTravel = false;
             H.Frame["Scene"] = "Map0001_001";
             H.Page("GameFieldDefaultUI");
             H.Readings = () => [WorkflowCases.Reading("weekly_npc.native", ("$self", Native())),

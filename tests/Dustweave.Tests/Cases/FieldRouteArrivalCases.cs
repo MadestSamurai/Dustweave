@@ -27,6 +27,8 @@ static class FieldRouteArrivalCases
             foreach (string name in new[] { "collection-catalog.json", "steal-catalog.json", "route-atlas.json" })
                 File.Copy(Path.Combine(TestPaths.SourceRoot, "assets", "flows", name), Path.Combine(assets, "flows", name), true);
             var w = new DailyWorkflow(root, assets, H.Context, H.Driver, H.Business, H.Workflow.Navigation, [], () => H.Stopped, H.Workflow.Relay);
+            // Route fixtures opt out of talents unless a case explicitly tests them.
+            w.Settings.General.FastTravel = false;
             Route = new(w);
             Scene();
             H.Readings = Readings;

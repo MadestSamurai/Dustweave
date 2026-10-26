@@ -61,6 +61,7 @@ static class WeeklyNpcBoardCases
                 continue;
             }
             var workflow=new DailyWorkflow(h.Root,assets,h.Context,h.Driver,h.Business,h.Workflow.Navigation,[],()=>h.Stopped,h.Workflow.Relay);var route=new DailyFieldRoute(workflow);var npc=new DailyWeeklyNpc(route,false);
+            workflow.Settings.General.FastTravel=false; // This fixture isolates board interactions.
             bool failed=false;
             try{await npc.Prepare(1);}catch(Exception ex) when(ex is DailyNpcUnavailable or DailyStepException){failed=true;}
             Check(failed==(mode is "wrong-confirmation" or "unreachable" or "native-stopped" or "lost-confirmation"),"board result "+mode);

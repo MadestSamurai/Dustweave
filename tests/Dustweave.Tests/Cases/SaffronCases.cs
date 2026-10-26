@@ -47,7 +47,7 @@ static class SaffronCases
         Check(!settings.Stages.Saffron&&!DailyStageCatalog.Enabled("territory_saffron",settings),"saffron is opt-in for new accounts");
         var old=JsonSerializer.SerializeToNode(settings)!.AsObject();old["Schema"]=17;old["Stages"]!.AsObject().Remove("Saffron");old["Stages"]!["Guild"]=false;
         var migrated=DailyPreferences.Parse(old.ToJsonString());
-        Check(migrated.Schema==18&&!migrated.Stages.Saffron&&!migrated.Stages.Guild,"schema 17 keeps existing task choices and never enables crop purchases");
+        Check(migrated.Schema==19&&!migrated.Stages.Saffron&&!migrated.Stages.Guild,"schema 17 keeps existing task choices and never enables crop purchases");
         settings.Stages.Saffron=true;
         Check(DailyPreferences.Parse(JsonSerializer.Serialize(settings)).Stages.Saffron&&DailyStageCatalog.Enabled("territory_saffron",settings),"saffron selection survives account preference round trip");
         Check(DailyNavigationDecision.FieldStages.Contains("territory_saffron"),"saffron can reuse the already-open territory cartridge");
