@@ -118,6 +118,13 @@ static class SelfTest {
    Check(!LiveProtocol.TransitRequiresStealth(pack,false),"normal daily does not require stealth");
    Check(LiveProtocol.TransitRequiresStealth(pack,true),"explicit route test requires stealth");
   }
+  foreach(int kind in new[]{2,3})foreach(bool suppressible in new[]{false,true})
+   Check(!LiveProtocol.FieldTravelThreat(true,true,kind,suppressible,true,0),"capture and breakable objects never require stealth");
+  Check(LiveProtocol.FieldTravelThreat(true,true,4,false,false,0),"patrol without a respawn record remains a threat");
+  Check(LiveProtocol.FieldTravelThreat(true,true,1,true,true,0),"remaining ordinary enemy requires protection");
+  Check(!LiveProtocol.FieldTravelThreat(true,true,1,true,false,0),"suppressed ordinary enemy does not require protection");
+  Check(!LiveProtocol.FieldTravelThreat(true,true,1,false,true,20),"defeated enemy waiting to respawn is not a threat");
+  Check(!LiveProtocol.FieldTravelThreat(false,true,4,false,false,0)&&!LiveProtocol.FieldTravelThreat(true,false,0,false,false,0),"inactive and uninitialized objects are not threats");
   foreach(int pack in new[]{14,1003}){
    Check(!LiveProtocol.TransitRequiresStealth(pack,false),"cleared patrol map does not override host threat assessment");
    Check(LiveProtocol.TransitRequiresStealth(pack,true),"active patrol protection remains enforced");

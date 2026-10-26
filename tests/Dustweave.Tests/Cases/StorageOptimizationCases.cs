@@ -46,6 +46,12 @@ internal static class StorageOptimizationCases
             var logPlan=await DailyLogCleanup.ScanAsync(root,new());
             Check(logPlan.ManagedBytes<Directory.EnumerateFiles(Path.Combine(root,"live"),"*",SearchOption.AllDirectories).Sum(p=>new FileInfo(p).Length),"log budget also uses stored bytes");
             Check(!DailyStorageCompression.Plan(root,all,DateTime.UtcNow).Any(f=>f.Path==record),"already compressed files are not processed again");
+            string longRecord=Put("live/diagnostics/"+string.Join('/',Enumerable.Repeat(new string('x',70),4))+"/result.json");
+            byte[] longHash=SHA256.HashData(File.ReadAllBytes(longRecord));
+            DateTime longWritten=File.GetLastWriteTimeUtc(longRecord);
+            var longResult=DailyStorageCompression.Apply(DailyStorageCompression.Plan(root,[Item(longRecord)],DateTime.UtcNow));
+            Check(longRecord.Length>260&&longResult.CompressedFiles==1&&Item(longRecord).DiskBytes<Item(longRecord).Bytes,"deep sandbox paths compress and report actual stored bytes beyond MAX_PATH");
+            Check(SHA256.HashData(File.ReadAllBytes(longRecord)).SequenceEqual(longHash)&&File.GetLastWriteTimeUtc(longRecord)==longWritten,"long-path compression preserves recovery content and retention age");
             var zip=await DailyDiagnosticExport.CreateAsync(root,Path.Combine(output,"compressed-diagnostics.zip"),"compression fixture","test");
             using(var archive=ZipFile.OpenRead(zip.Path))
             {var entry=archive.GetEntry("logs/main/"+Path.GetRelativePath(root,record).Replace('\\','/'));Check(entry!=null,"existing diagnostics exporter includes compressed records");using var reader=new StreamReader(entry!.Open());Check(JsonNode.DeepEquals(JsonNode.Parse(reader.ReadToEnd()),JsonNode.Parse(compact)),"diagnostic export reconstructs all original recovery data");}

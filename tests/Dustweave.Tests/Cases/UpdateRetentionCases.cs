@@ -117,6 +117,15 @@ internal static class UpdateRetentionCases
         Age(early.Directory,12);await DailyCacheStorage.CleanAsync(root);
         Check(File.Exists(early.Helper),"live parent handing over to updater blocks expiry");
 
+        foreach(string state in new[]{"completed","rolled_back"})
+        {
+            root=Area("terminal-parent-"+state);complete=Install(root,"1.0.0",state,12);
+            job=DailyUpdateJson.TryRead<DailyUpdateJob>(complete.Job)!;
+            using(var self=Process.GetCurrentProcess())DailyUpdateJson.Write(complete.Job,job with{ParentPid=self.Id,ParentStartTicks=self.StartTime.ToUniversalTime().Ticks});
+            Age(complete.Directory,12);await DailyCacheStorage.CleanAsync(root);
+            Check(!Directory.Exists(complete.Directory),"cleared "+state+" transaction does not depend on historical parent PID");
+        }
+
         root=Area("locking");old=Download(root,"1.0.0",12);
         using(var download=new FileStream(Path.Combine(old,"download.lock"),FileMode.Open,FileAccess.ReadWrite,FileShare.None))
         {

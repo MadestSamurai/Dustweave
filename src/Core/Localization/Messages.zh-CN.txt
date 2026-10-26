@@ -66,6 +66,7 @@ daily_limit_reached=今日次数已用完
 square_not_available_in_native_travel=当前传送列表中没有可前往的广场
 no_suppressible_monsters=当前地图没有可压制的怪物
 native_duration_active=天赋效果仍在持续，无需重复使用。
+native_threats_cleared=当前地图已无战斗威胁，无需使用藏身。
 research_active=探查效果仍在持续
 native_research_active=游戏确认探查效果仍在持续
 daily_limit=今日天赋次数已用完

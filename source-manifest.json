@@ -4531,6 +4531,12 @@
       "reasons": "build input"
     },
     {
+      "path": "src/Core/DailyHistoricalCache.cs",
+      "sha256": "35176d969070dc5e8a851ada0b6ebb5fa8bd12fd2bd8ed12967faed3017953c4",
+      "bytes": 3658,
+      "reasons": "build input"
+    },
+    {
       "path": "src/Core/DailyStorageMaintenance.cs",
       "sha256": "8a747fca86f89cc715ebeaef5218cb3d4418721f7808d554eedbd2cb2909c860",
       "bytes": 15611,

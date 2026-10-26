@@ -789,6 +789,11 @@
     "zh-TW": "天賦效果仍在持續，無需重復使用。",
     "en-US": "The talent is still active. No repeat use is needed."
   },
+  "message.native_threats_cleared": {
+    "zh-CN": "当前地图已无战斗威胁，无需使用藏身。",
+    "zh-TW": "當前地圖已無戰鬥威脅，無需使用藏身。",
+    "en-US": "No combat threats remain on this map. Stealth is unnecessary."
+  },
   "message.research_active": {
     "zh-CN": "探查效果仍在持续",
     "zh-TW": "探查效果仍在持續",

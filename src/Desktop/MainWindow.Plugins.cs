@@ -129,7 +129,7 @@ public partial class MainWindow
     {
         if (smoke != null || Unavailable || IsSandboxWindow) return;
         pluginChanging = true; SetBusy(busy);
-        try { await change(); await RefreshPluginsAsync(); }
+        try { await PauseAutomaticMaintenanceAsync(); if(finalClose || UpdateRestarting)return; await change(); await RefreshPluginsAsync(); }
         catch (Exception error) { await RefreshPluginsAsync(); PluginError(error); }
         finally { pluginChanging = false; SetBusy(busy); }
     }
@@ -152,6 +152,8 @@ public partial class MainWindow
         pluginChanging = true; SetBusy(busy);
         try
         {
+            await PauseAutomaticMaintenanceAsync();
+            if(finalClose || UpdateRestarting)return;
             if (DailySandbox.HasIsolatedWindows()) throw new IOException("plugins.isolated_open");
             if (ToolOpen && !await CloseToolWindowsAsync()) throw new IOException("plugins.tool_open");
             using var process = Process.GetCurrentProcess();

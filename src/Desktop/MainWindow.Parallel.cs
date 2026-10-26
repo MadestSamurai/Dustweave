@@ -96,6 +96,8 @@ public partial class MainWindow
             return false;
         }
         if (finalClose || Unavailable) return false;
+        await PauseAutomaticMaintenanceAsync();
+        if (finalClose || Unavailable) return false;
         parallelPanel.Feedback("");
         parallelControl=DailyToolControl.Acquire(root);
         try { await parallel.StartAsync(targets,execution ?? parallelOptions with { CloseGame = DailyDesktopBehavior.Read(root).CloseGameAfterRun },new DailyPreferenceStore(root).Read, new DailyTaskPresetStore(root).Selection); }

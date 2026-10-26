@@ -96,7 +96,7 @@ public partial class MainWindow
             if (!updateRestartPending) CloseUpdateNotice();
             // A running tool is the one optional handoff. Never interrupt another daily queue,
             // an actual update installation, onboarding or a user's modal operation.
-            if (onboardingOpen || busy || toolChanging || UpdateRestarting || ParallelBusy || pluginChanging || releaseDialogOpen || DailyDialogs.ModalDepth > 0 || softwareSandboxPath.Preparing)
+            if (onboardingOpen || busy || manualCacheChanging || maintenanceYielding || toolChanging || UpdateRestarting || ParallelBusy || pluginChanging || releaseDialogOpen || DailyDialogs.ModalDepth > 0 || softwareSandboxPath.Preparing)
             {
                 scheduleStore.Record(new(due.Value.ToString("O"), "waiting", now)); return;
             }
@@ -115,6 +115,8 @@ public partial class MainWindow
                 schedulePanel.Feedback("sandbox_setup.schedule_missing", true);
                 return;
             }
+            await PauseAutomaticMaintenanceAsync();
+            if(finalClose || UpdateRestarting)return;
             if (ToolRunning || scheduleToolDraining || plan.TakeOverTools)
             {
                 scheduleStore.Record(new(due.Value.ToString("O"), "waiting", now,

@@ -767,6 +767,16 @@
     "zh-TW": "移動天賦未確認生效",
     "en-US": "The movement talent has not been confirmed active"
   },
+  "notice.route.stealth_activation_pending": {
+    "zh-CN": "藏身已提交，但效果尚未就绪；已停止移动，可重试当前环节。",
+    "zh-TW": "藏身已提交，但效果尚未就緒；已停止移動，可重試目前環節。",
+    "en-US": "Stealth was requested, but its effect is not ready. Movement stopped; retry this step."
+  },
+  "notice.route.speed_activation_pending": {
+    "zh-CN": "加速天赋已提交，但效果尚未就绪；可重试当前环节。",
+    "zh-TW": "加速天賦已提交，但效果尚未就緒；可重試目前環節。",
+    "en-US": "The speed talent was requested, but its effect is not ready. Retry this step."
+  },
   "notice.route.talent_menu": {
     "zh-CN": "原生天赋列表尚未就绪",
     "zh-TW": "原生天賦列表尚未就緒",

@@ -6,6 +6,112 @@ using System.Windows.Threading;
 namespace Dustweave.Desktop;
 public partial class MainWindow
 {
+    private async Task CheckMaintenancePriorityForSmoke()
+    {
+        if(smoke==null || host is not DemoEnvironment demo)throw new InvalidOperationException("Isolated fixture required");
+        var checks=new List<string>();
+        void Check(bool ok,string label){if(!ok)throw new Exception(label);checks.Add(label);}
+        int calls=demo.Calls.Count,starts=0;
+        timer.Stop();
+        try
+        {
+            foreach(bool stop in new[]{false,true})
+            {
+                var cancelled=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                var release=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                int before=starts;
+                var maintenance=RunAutomaticMaintenanceAsync(async token=>
+                {
+                    SetAutomaticCacheChanging(true);
+                    try
+                    {
+                        using var control=DailyToolControl.AcquireMaintenance(root);
+                        using var storage=DailyUpdateHost.AcquireStorage(root,exclusive:true);
+                        try {await Task.Delay(Timeout.Infinite,token);}
+                        catch(OperationCanceledException){cancelled.TrySetResult();await release.Task;throw;}
+                    }
+                    finally {SetAutomaticCacheChanging(false);}
+                });
+                Task? request=null;
+                try
+                {
+                    SetBusy(false);
+                    Check(cacheChanging && !Unavailable && !ToolRunning && ConnectButton.IsEnabled && preferencesPanel.IsEnabled && AccountsGrid.IsEnabled,
+                        "Background maintenance leaves host controls available");
+                    var pending=logCleanupCompletion;
+                    await CheckLogCleanupAsync();
+                    Check(!cancelled.Task.IsCompleted && ReferenceEquals(pending,logCleanupCompletion),
+                        "An idle timer neither cancels nor duplicates its own maintenance");
+                    request=OperateAsync(()=>
+                    {
+                        using var storage=DailyUpdateHost.AcquireStorage(root,exclusive:true);
+                        Check(!logCleanupRunning && !DailyToolControl.IsMaintenanceOwner(root) && DailyToolControl.IsOccupied(root),
+                            "Foreground operation owns the real control lease only after maintenance releases its files");
+                        starts++;return Task.CompletedTask;
+                    });
+                    await cancelled.Task.WaitAsync(TimeSpan.FromSeconds(3));
+                    Check(starts==before && !request.IsCompleted && maintenanceYielding && busy,
+                        "A foreground click is queued while an in-flight cleanup operation drains");
+                    await OperateAsync(()=>{starts++;return Task.CompletedTask;});
+                    Check(starts==before,"Repeated clicks cannot bypass the maintenance handoff");
+                    if(stop)
+                    {
+                        Stop_Click(this,new RoutedEventArgs());
+                        await request.WaitAsync(TimeSpan.FromSeconds(3));
+                        Check(starts==before && !maintenanceYielding && !busy,
+                            "Stop cancels a queued operation without waiting for a slow cleanup file");
+                    }
+                    release.TrySetResult();
+                    await request.WaitAsync(TimeSpan.FromSeconds(3));
+                    await maintenance.WaitAsync(TimeSpan.FromSeconds(3));
+                    Check(starts==before+(stop?0:1) && !Unavailable && ConnectButton.IsEnabled && !DailyToolControl.IsOccupied(root),
+                        "Host controls recover and an accepted operation starts exactly once");
+                }
+                finally
+                {
+                    release.TrySetResult();logCleanupCancellation?.Cancel();
+                    await maintenance;
+                    if(request!=null)await request;
+                    dailyStopping=false;
+                }
+            }
+            using(DailyToolControl.Acquire(root))
+            {
+                SetBusy(false);int before=starts;
+                await OperateAsync(()=>{starts++;return Task.CompletedTask;});
+                Check(ToolRunning && Unavailable && !ConnectButton.IsEnabled && starts==before,
+                    "A genuine tool still excludes host automation");
+            }
+            SetCacheChanging(true);
+            Check(Unavailable && !ConnectButton.IsEnabled,"Manual cache maintenance remains exclusive");
+            SetCacheChanging(false);
+            using(var session=new ApostleToolSession(root,(_,_)=>throw new Exception("No game connection expected")))
+            {
+                var window=new ApostleToolWindow(this,session,()=>Unavailable);
+                apostleWindow=window;
+                try
+                {
+                    nextLogCleanup=DateTime.MinValue;
+                    await CheckLogCleanupAsync();
+                    Check(!logCleanupRunning && nextLogCleanup==DateTime.MinValue,
+                        "Maintenance is deferred while an independently operable tool window is open");
+                }
+                finally {await window.CloseSafelyAsync();apostleWindow=null;}
+            }
+            Check(demo.Calls.Count==calls,"No game operation was needed for maintenance validation");
+            var owned=new Window{Owner=this};
+            try
+            {
+                nextLogCleanup=DateTime.MinValue;
+                await CheckLogCleanupAsync();
+                Check(!logCleanupRunning && nextLogCleanup==DateTime.MinValue,
+                    "Modeless settings tools also defer background maintenance");
+            }
+            finally {owned.Close();}
+            DailyJson.Write(Path.Combine(smoke,"maintenance-priority.json"),new{status="passed",count=checks.Count,checks,realGameTouched=false});
+        }
+        finally {SetCacheChanging(false);SetBusy(false);nextLogCleanup=DateTime.UtcNow.AddMinutes(5);timer.Start();}
+    }
     private async Task CheckSupportForSmoke()
     {
         if(smoke==null||host is not DemoEnvironment demo)throw new InvalidOperationException("Isolated fixture required");

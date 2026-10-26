@@ -303,14 +303,14 @@ public partial class MainWindow
                 SetAutomaticCacheChanging(true);
                 try
                 {
-                    using var control = DailyUpdateHost.AcquireControl(root);
+                    using var control = DailyToolControl.AcquireMaintenance(root);
                     using var storage = DailyUpdateHost.AcquireStorage(root, exclusive: true);
                     try { await Task.Delay(Timeout.Infinite, token); }
                     catch (OperationCanceledException) { cancelled.TrySetResult(); await release.Task; throw; }
                 }
                 finally { SetAutomaticCacheChanging(false); }
             });
-            check(ToolRunning && cacheChanging && UpdateRestartBlockReason(true) == null,
+            check(!ToolRunning && cacheChanging && !Unavailable && UpdateRestartBlockReason(true) == null,
                 "Automatic cleanup is incorrectly presented as a running tool");
             var request = RequestUpdateInstallCoreAsync(job, job.Release.Version, Start);
             await cancelled.Task.WaitAsync(TimeSpan.FromSeconds(3));

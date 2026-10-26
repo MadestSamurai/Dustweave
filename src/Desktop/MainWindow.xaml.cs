@@ -80,7 +80,7 @@ public partial class MainWindow : Window
         this.host = host;
         this.root = root;
         this.smoke = smoke;
-        preferencesPanel = new DailyPreferencesPanel(root, allowGame: smoke == null);
+        preferencesPanel = new DailyPreferencesPanel(root, allowGame: smoke == null) { BeforeGameToolOpen=PrepareSettingsToolAsync };
         SettingsTab.Content = preferencesPanel;
         InitializeSoftwareSettings(); InitializeSchedules(); InitializeUpdates(); InitializeSandboxPresentation(); InitializeLogCleanup(); InitializeStorageWarning();
         dailyPanel = new DailyRunPanel(root);
@@ -173,15 +173,17 @@ public partial class MainWindow : Window
     private string? ActiveToolId => apostleWindow != null ? "apostle-defense" : toolSession.Current?.ToolId;
     private bool ToolOpen => apostleWindow != null || toolSession.Current != null;
     private bool ToolConnecting => apostleWindow?.Panel.Connecting == true;
-    private bool ToolRunning => !busy && parallelControl == null && DailyToolControl.IsOccupied(root);
-    private bool Unavailable => onboardingOpen || busy || cacheChanging || toolChanging || ToolRunning || UpdateRestarting || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true;
+    private bool ToolRunning => !busy && parallelControl == null && DailyToolControl.IsAutomationOccupied(root);
+    private bool Unavailable => onboardingOpen || busy || manualCacheChanging || maintenanceYielding || toolChanging || ToolRunning || UpdateRestarting || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true;
     private async Task OpenTool(string id)
     {
-        if (smoke != null || busy || toolChanging || UpdateRestarting || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true) return;
+        if (smoke != null || busy || manualCacheChanging || maintenanceYielding || toolChanging || UpdateRestarting || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true) return;
         toolChanging = true; SetBusy(busy);
         try {
             if(id=="apostle-defense" && apostleWindow!=null){apostleWindow.BringForward();return;}
             if(toolSession.Current?.ToolId==id){toolSession.Show();return;}
+            await PauseAutomaticMaintenanceAsync();
+            if(finalClose || UpdateRestarting)return;
             using var activityLease=DailyToolControl.Acquire(root);
             if(!await CloseToolWindowsAsync())return;
             await host.PrepareAccessAsync(m=>toolMessage=m,CancellationToken.None);
@@ -431,7 +433,7 @@ public partial class MainWindow : Window
         RefreshButton.IsEnabled = !unavailable;
         ConnectButton.IsEnabled = !unavailable;
         StopButton.IsEnabled = value || ParallelBusy; L.Bind(StopButton,ContentControl.ContentProperty,ParallelBusy?"parallel.pause_all":"common.stop_operation");
-        toolPanel.Refresh(value || toolChanging || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true, ActiveToolId, ToolConnecting ? "apostle.connection_lock" : ToolRunning ? "工具自动化正在运行或等待结算；停止后释放，无需关闭窗口。" : toolMessage ?? (value ? "日常正在执行；工具设置窗口可以保留。" : toolSession.Message),ToolRunning);
+        toolPanel.Refresh(value || manualCacheChanging || maintenanceYielding || toolChanging || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true, ActiveToolId, ToolConnecting ? "apostle.connection_lock" : ToolRunning ? "工具自动化正在运行或等待结算；停止后释放，无需关闭窗口。" : toolMessage ?? (value ? "日常正在执行；工具设置窗口可以保留。" : toolSession.Message),ToolRunning);
         SelectAll.IsEnabled = !unavailable;
         UpdateSelection();
         UpdateConnection();
@@ -452,6 +454,9 @@ public partial class MainWindow : Window
         operationPreparation = preparation;
         try
         {
+            await PauseAutomaticMaintenanceAsync(preparation.Token);
+            preparation.Token.ThrowIfCancellationRequested();
+            if(finalClose || UpdateRestarting)return;
             using var toolsLease = DailyToolControl.Acquire(root);
             if(!connectsGame && smoke==null && host.Find() is {} currentGame && host.ReadSnapshot() is {} snapshot && snapshot.State=="identified" && snapshot.AccountKey.Length>0 && snapshot.PlayerKey.Length>0 && snapshot.ProcessId==currentGame.ProcessId && snapshot.FrameUtcTicks>DateTime.UtcNow.AddSeconds(-5).Ticks)
                 await DailySuite.ActivateAsync(host,root,"daily",ReportPreparation,preparation.Token);
@@ -870,6 +875,13 @@ public partial class MainWindow : Window
         try
         {
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "maintenance-priority")
+            {
+                await CheckMaintenancePriorityForSmoke();
+                await CheckUpdateDiscoveryForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status="passed", scope="maintenance-priority", realGameTouched=false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "update-discovery")
             {
                 await CheckUpdateDiscoveryForSmoke();

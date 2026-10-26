@@ -169,13 +169,14 @@ namespace BD2Daily.Live {
     }).ToArray();travelKey=key;travelAt=DateTime.UtcNow.Ticks;
    }
    var field=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ;
-   // Reuse this observation's scene enumeration, not the ten-second static map
-   // cache. HasCanOverwhelmMonster excludes defeated ordinary monsters even
-   // while their disappearance animation is playing. Separately include active
-   // non-suppressible enemies: neither that predicate nor a missing respawn DB
-   // row proves that a patrol is harmless.
+   // Reuse the current scene enumeration, not the static map cache. Capture
+   // objects and breakables also use FieldMonsterController; being impossible
+   // to suppress does not make them combat threats. Keep actual patrol guards.
    bool threatsKnown=field.ὢὩὠὢὫὧὠὣὤὩὫ&&field.ὪὨὯὢὫὮὨὩὮὡὬ!=null;
-   bool threats=threatsKnown&&(field.HasCanOverwhelmMonster()||Bridge.Find(typeof(FieldMonsterController)).Cast<FieldMonsterController>().Any(x=>x!=null&&x.gameObject.activeInHierarchy&&!x.IsCanOverwhelm()));
+   bool suppressionPending=threatsKnown&&field.HasCanOverwhelmMonster();
+   bool threats=threatsKnown&&Bridge.Find(typeof(FieldMonsterController)).Cast<FieldMonsterController>().Any(x=>x!=null&&LiveProtocol.FieldTravelThreat(
+    x.gameObject.activeInHierarchy,x.ὭὫὠὯὯὭὧὬὣὨὨ!=null,x.ὭὫὠὯὯὭὧὬὣὨὨ==null?0:x.ὭὫὠὯὯὭὧὬὣὨὨ.ὫὣὬὥὪὫὪὤὫὮὧ,
+    x.IsCanOverwhelm(),suppressionPending,x.GetRemainRespawnTime().TotalSeconds));
    return new CollectionTravelState{Pack=map.PackId,Map=map.Id,Ground=TalentSkillManager.ὪὫὢὨὯὭὦὪὦὨὣ.IsAvailableWayPointMakeOnGround(),ThreatsKnown=threatsKnown,ThreatsPresent=threats,Maps=travelMaps,Approaches=Approaches(frame),QuickTargets=QuickTravelNative.Capture().Targets};
   }
 

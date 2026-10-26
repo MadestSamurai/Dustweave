@@ -107,7 +107,8 @@ public sealed partial class DailyFieldRoute
         // cannot prove that patrol/non-suppressible monsters are gone.
         try
         {
-            if (B(R(e, "mainline.map", "HasCanOverwhelmMonster()"))) return true;
+            // The native classification distinguishes combat from capture and
+            // breakable objects; the aggregate suppression flag does not.
             var travel = R(e, "mainline.travel", "$self") as JsonObject;
             return travel == null || N(travel["Pack"]) != N(Map(e)["packId"]) || N(travel["Map"]) != N(Map(e)["id"])
                 || !B(travel["ThreatsKnown"]) || travel["ThreatsPresent"] is not JsonValue threats
@@ -536,6 +537,8 @@ public sealed partial class DailyFieldRoute
         Require(attempts < 3, "遇敌使天赋菜单反复失效");
         await FieldReady(settle: 0);
         var e = await Evidence();
+        if (kind == 17 && !TravelThreat(e))
+            return DailyWorkflow.Skipped("native_threats_cleared");
         if (kind == 3 && !B(R(e, "mainline.map", "HasCanOverwhelmMonster()")))
             return DailyWorkflow.Skipped("no_suppressible_monsters");
         double remaining = 0;
@@ -616,6 +619,11 @@ public sealed partial class DailyFieldRoute
             await W.Step("QuickMenuUI", back: true, absent: "QuickMenuUI");
             return DailyWorkflow.Skipped("native_disabled");
         }
+        if (kind == 17 && !TravelThreat(e))
+        {
+            await W.Step("QuickMenuUI", back: true, absent: "QuickMenuUI");
+            return DailyWorkflow.Skipped("native_threats_cleared");
+        }
         if (kind == 6)
         {
             var research = State(e, "mainline.research", "$self");
@@ -654,7 +662,9 @@ public sealed partial class DailyFieldRoute
             : await W.Transact("dispatch.start", scope, action, 25);
         await FieldReady(settle: 0);
         if (kind is 2 or MovementSpeedTalent or 17)
-            Require(Remaining(await Evidence(), kind) > 0, "移动天赋未确认生效");
+            await W.WaitEvidence(["mainline"], current => Remaining(current, kind) > 0, 3,
+                kind == 17 ? "藏身已提交，但效果尚未就绪；已停止移动，可重试当前环节。"
+                : "加速天赋已提交，但效果尚未就绪；可重试当前环节。");
         return O(("state", "completed"), ("id", op["id"]), ("result", op["result"]));
     }
     internal async Task RecoverExpired(JsonObject current)
@@ -704,7 +714,7 @@ public sealed partial class DailyFieldRoute
                 return;
             }
             e = await Evidence();
-            Require(Remaining(e, 17) > 5, "巡逻路线藏身不足，已停止移动");
+            Require(!TravelThreat(e) || Remaining(e, 17) > 5, "巡逻路线藏身不足，已停止移动");
         }
         if (walking && speed) await PrepareWalking(walkingDistance, e);
     }

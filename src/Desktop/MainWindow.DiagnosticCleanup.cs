@@ -13,10 +13,36 @@ public partial class MainWindow
     private bool compressionPending;
     private DateTime lastRetentionUtc=DateTime.MinValue;
     private bool manualCacheChanging, automaticCacheChanging;
+    private bool maintenanceYielding;
+    private bool MaintenanceWindowOpen => ToolOpen || OwnedWindows.Count > 0;
     private bool cacheChanging => manualCacheChanging || automaticCacheChanging;
     private Task logCleanupCompletion = Task.CompletedTask;
     private void SetCacheChanging(bool value){manualCacheChanging=value;SetBusy(busy);}
     private void SetAutomaticCacheChanging(bool value){automaticCacheChanging=value;SetBusy(busy);}
+    private async Task PauseAutomaticMaintenanceAsync(CancellationToken token=default)
+    {
+        // Reserve a quiet interval before awaiting: no timer may start a second
+        // maintenance pass between cancellation and the foreground lease.
+        var retry=DateTime.UtcNow.AddMinutes(5);
+        if(nextLogCleanup<retry)nextLogCleanup=retry;
+        nextEvidenceCleanup=DateTime.UtcNow.AddMinutes(1);
+        token.ThrowIfCancellationRequested();
+        if(!logCleanupRunning)return;
+        maintenanceYielding=true;SetBusy(busy);
+        L.Text(ProgressText,"logs.yielding");
+        try
+        {
+            logCleanupCancellation?.Cancel();
+            await logCleanupCompletion.WaitAsync(token);
+        }
+        finally {maintenanceYielding=false;SetBusy(busy);}
+    }
+    private async Task<bool> PrepareSettingsToolAsync()
+    {
+        if(Unavailable || finalClose)return false;
+        await PauseAutomaticMaintenanceAsync();
+        return !finalClose && !Unavailable;
+    }
     private sealed record LogCleanupRun(DateTime At, int Files, long Bytes, int Skipped, string? Version = null, bool MoreWork = false, int CompressedFiles = 0, DateTime? RetentionAt = null);
     private string? LegacyEquipmentLogRoot => smoke == null
         ? Environment.GetEnvironmentVariable("BD2_EQUIPMENT_DATA_ROOT") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BD2EquipmentAssistant")
@@ -45,11 +71,11 @@ public partial class MainWindow
         // Maintenance yields to an accepted restart, including while it owns
         // the storage/control leases. It must not cancel itself for those leases.
         if(UpdateRestarting || finalClose){logCleanupCancellation?.Cancel();return;}
-        if(cacheChanging)return;
-        if(Unavailable || dailyQueue.IsRunning || scheduleChecking || DailyDialogs.ModalDepth>0)
+        if(Unavailable || MaintenanceWindowOpen || dailyQueue.IsRunning || scheduleChecking || DailyDialogs.ModalDepth>0)
         { logCleanupCancellation?.Cancel();return; }
+        if(logCleanupRunning)return;
         bool retentionDue=logPolicy.Automatic&&DateTime.UtcNow>=nextLogCleanup;
-        if(logCleanupRunning || !retentionDue && (DateTime.UtcNow<nextEvidenceCleanup || !DailyLogEvidence.HasPending(root)))return;
+        if(!retentionDue && (DateTime.UtcNow<nextEvidenceCleanup || !DailyLogEvidence.HasPending(root)))return;
         nextEvidenceCleanup=DateTime.UtcNow.AddMinutes(1);
         if(retentionDue)nextLogCleanup=DateTime.UtcNow.AddMinutes(5);
         await RunAutomaticMaintenanceAsync(async token => {
@@ -57,8 +83,9 @@ public partial class MainWindow
             if(!retentionDue)return;
             bool continuing=compressionPending&&lastRetentionUtc>DateTime.UtcNow.AddHours(-12)&&lastRetentionUtc<=DateTime.UtcNow;
             if(!continuing&&LegacyEquipmentLogRoot is { } legacy)await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(root,legacy,token);
-            if(Unavailable || dailyQueue.IsRunning || scheduleChecking || DailyDialogs.ModalDepth>0 || updateChecking || updateInstalling)return;
-            // The ownership lock protects active tools; an idle tool window is not a running task.
+            if(Unavailable || MaintenanceWindowOpen || dailyQueue.IsRunning || scheduleChecking || DailyDialogs.ModalDepth>0 || updateChecking || updateInstalling)return;
+            // Open tool windows may start independently of the host. Defer
+            // maintenance until they close, while retaining the real file locks.
             SetAutomaticCacheChanging(true);
             DailyLogCleanupResult result;
             try {
@@ -79,10 +106,10 @@ public partial class MainWindow
         catch(Exception e) when(e is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or InvalidOperationException) { /* Never stop automation for retention. Retry on the next idle interval. */ }
         finally {logCleanupCancellation=null;logCleanupRunning=false;completed.TrySetResult();}
     }
-    private void CleanupDiagnostics_Click(object sender,RoutedEventArgs e)
+    private async void CleanupDiagnostics_Click(object sender,RoutedEventArgs e)
     {
-        logCleanupCancellation?.Cancel();
-        DailyDialogs.ShowModal(CreateLogCleanupWindow());
+        try { await PauseAutomaticMaintenanceAsync(); if(!finalClose)DailyDialogs.ShowModal(CreateLogCleanupWindow()); }
+        catch(Exception error){ShowError(error);}
     }
     private Window CreateLogCleanupWindow(bool moveWhenReady = false)
     {

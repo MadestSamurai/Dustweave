@@ -18,6 +18,12 @@ namespace BD2Daily.Live {
   // The host evaluates the current segment and live threats, including cleared
   // patrol maps. A cartridge number alone must not override that decision.
   public static bool TransitRequiresStealth(int pack,bool requested){return requested;}
+  // Native kinds 2 (capture) and 3 (breakable) use collection interactions,
+  // not combat. A missing respawn record is common for patrol guards, so use
+  // a positive remaining respawn time to exclude defeated objects instead.
+  public static bool FieldTravelThreat(bool active,bool defined,int kind,bool suppressible,bool suppressionPending,double respawnSeconds){
+   return active&&defined&&kind!=2&&kind!=3&&respawnSeconds<=0&&(!suppressible||suppressionPending);
+  }
   public static double NavigationSeconds(double distance){return double.IsNaN(distance)||double.IsInfinity(distance)||distance<0?60:Math.Max(60,Math.Min(300,distance/1.2+20));}
   public const string LiveEntries="runtime.json|snapshot.json|error.json|attached.json|performance.json|command.json|pause|legacy-observation|evidence-config.json|observation-request.json|evidence.json|dice-lease.json|dispatch-recovery.json|events~*|receipts~*";
   public static bool Ready(Frame f,int processId,long startTicks,long now,string previousInstance=null){

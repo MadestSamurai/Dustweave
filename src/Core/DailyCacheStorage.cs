@@ -9,6 +9,7 @@ public sealed record DailyStorageItem(string Path, long Bytes, DateTime Written)
 public sealed record DailyCacheUnit(string Path, DailyStorageItem[] Files)
 {
     public string[]? UpdateAttempts { get; init; }
+    internal string? CaptureControlPath { get; init; }
 }
 public sealed record DailyStorageReport(long TotalBytes, long CacheBytes, long ReclaimableBytes, int Skipped, DailyCacheUnit[] Units)
 {
@@ -83,22 +84,24 @@ public static class DailyCacheStorage
     public static Task<DailyStorageReport> ScanAsync(string root, CancellationToken cancel = default) => Task.Run(() => Scan(root, cancel), cancel);
     public static DailyStorageReport Scan(string root, CancellationToken cancel = default) => Scan(root, cancel, true);
     internal static DailyStorageReport ScanIsolated(string root, CancellationToken cancel, IReadOnlyList<DailyStorageItem>? inventory = null) => Scan(root, cancel, true, true, inventory);
-    private static DailyStorageReport Scan(string root, CancellationToken cancel, bool includeOtherData, bool fixedRoot = false, IReadOnlyList<DailyStorageItem>? scannedFiles = null)
+    internal static DailyStorageReport ScanRetention(string root, DailyLogPolicy policy, CancellationToken cancel, bool fixedRoot=false, IReadOnlyList<DailyStorageItem>? inventory=null, string? captureControl=null) => Scan(root,cancel,true,fixedRoot,inventory,policy,captureControl);
+    private static DailyStorageReport Scan(string root, CancellationToken cancel, bool includeOtherData, bool fixedRoot = false, IReadOnlyList<DailyStorageItem>? scannedFiles = null, DailyLogPolicy? policy=null, string? captureControl=null)
     {
         root = Path.GetFullPath(root); string cache = fixedRoot ? root : Location(root); int skipped = 0;
+        int days=(policy??DailyLogCleanup.Load(root)).Normalize().Days;
         string[] roots=fixedRoot ? [root] : Roots(root);
         var all = new List<DailyStorageItem>();
         if(scannedFiles!=null) all.AddRange(scannedFiles.Where(f=>Within(f.Path,root)));
         else if(includeOtherData) all.AddRange(Files(root, cancel, ref skipped));
-        else { foreach(string area in Areas.Append("updates")) all.AddRange(Files(Path.Combine(root,area),cancel,ref skipped)); }
+        else { foreach(string area in Areas.Append("updates").Concat(DailyHistoricalCache.Areas)) all.AddRange(Files(Path.Combine(root,area),cancel,ref skipped)); }
         foreach(string basis in roots.Where(r=>!Same(r,root))) foreach(string area in Areas) all.AddRange(Files(Path.Combine(basis,area),cancel,ref skipped));
         var inventory=all.DistinctBy(f=>f.Path,StringComparer.OrdinalIgnoreCase).ToArray();
         long totalBytes=inventory.Sum(f=>f.DiskBytes);
         string updates = Path.Combine(root, "updates");
-        var managed=roots.SelectMany(r=>Areas.Select(a=>Path.Combine(r,a))).Append(updates).ToArray();
+        var managed=roots.SelectMany(r=>Areas.Select(a=>Path.Combine(r,a))).Append(updates).Concat(DailyHistoricalCache.Areas.Select(a=>Path.Combine(root,a))).ToArray();
         // Historical queues/receipts contribute to the total, not to cache-generation planning.
         all=inventory.Where(f=>managed.Any(p=>Within(f.Path,p))).ToList();
-        var units = new List<DailyCacheUnit>(); var cut = DateTime.UtcNow.AddDays(-1); var expires = DateTime.UtcNow.AddDays(-7);
+        var units = new List<DailyCacheUnit>(); var cut = DateTime.UtcNow.AddDays(-1); var expires = DateTime.UtcNow.AddDays(-days);
         // Keep two recently used generations per component, not two across all tools.
         void Generations(string parent)
         {
@@ -134,7 +137,7 @@ public static class DailyCacheStorage
             Generations(Path.Combine(basis, "live", "prepared"));
             var ruleRoot = Path.Combine(basis, "rules");
             foreach (string area in all.Where(f => Within(f.Path, ruleRoot)).Select(f => Path.GetRelativePath(ruleRoot, f.Path).Split(Path.DirectorySeparatorChar)[0]).Distinct()) Generations(Path.Combine(ruleRoot, area));
-            foreach (var file in all.Where(f => Within(f.Path, Path.Combine(basis, "live", "binding-cache")) && f.Written < DateTime.UtcNow.AddDays(-7))) units.Add(new(file.Path, [file]));
+            foreach (var file in all.Where(f => Within(f.Path, Path.Combine(basis, "live", "binding-cache")) && f.Written < expires)) units.Add(new(file.Path, [file]));
             // Client variants and compiler scratch data must not grow inside a retained generation.
             foreach (var group in all.Where(f=>Within(f.Path,suite)).GroupBy(f=>Path.GetDirectoryName(f.Path)!))
             {
@@ -152,7 +155,8 @@ public static class DailyCacheStorage
                     if(files.Length>0 && files.Max(f=>f.Written)<cut) units.Add(new(folder,files));
                 }
         }
-        units.AddRange(UpdateCacheRetention.Plan(updates, all.Where(f => Within(f.Path, updates)).ToArray(), DateTime.UtcNow, cancel));
+        units.AddRange(UpdateCacheRetention.Plan(updates, all.Where(f => Within(f.Path, updates)).ToArray(), DateTime.UtcNow, cancel, days));
+        units.AddRange(DailyHistoricalCache.Plan(root,all,DateTime.UtcNow,days,captureControl));
         long cacheBytes = all.Sum(f => f.DiskBytes);
         // Parent expiry supersedes nested scratch/legacy units; count and delete each file once.
         var distinct=new List<DailyCacheUnit>();
@@ -172,10 +176,10 @@ public static class DailyCacheStorage
         if (!Directory.EnumerateFileSystemEntries(root).Any()) Directory.Delete(root);
     }
     public static Task<DailyLogCleanupResult> CleanAsync(string root, CancellationToken cancel = default) => CleanLocalAsync(root, false, cancel);
-    internal static Task<DailyLogCleanupResult> CleanLocalAsync(string root, bool fixedRoot, CancellationToken cancel) => Task.Run(() =>
+    internal static Task<DailyLogCleanupResult> CleanLocalAsync(string root, bool fixedRoot, CancellationToken cancel, DailyLogPolicy? policy=null, string? captureControl=null) => Task.Run(() =>
     {
         using var lease = Lease(root, true);
-        var plan = Scan(root, cancel, false, fixedRoot);
+        var plan = Scan(root, cancel, false, fixedRoot, policy:policy,captureControl:captureControl);
         var result = DeleteUnits(plan.Units, cancel);
         return result with { Skipped = result.Skipped + plan.Skipped };
     }, cancel);
@@ -187,6 +191,7 @@ public static class DailyCacheStorage
             cancel.ThrowIfCancellationRequested();
             try
             {
+                using var capture=DailyHistoricalCache.AcquireCapture(unit);
                 if (available?.Invoke()==false || !UpdateCacheRetention.CanClean(unit)) { skipped++; continue; }
                 // A newer download/compilation or a new recovery file invalidates the entire unit.
                 int ignored = 0;

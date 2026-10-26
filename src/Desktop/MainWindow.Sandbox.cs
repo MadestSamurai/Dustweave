@@ -48,13 +48,19 @@ public partial class MainWindow
         if(remember)try{(DailyDesktopBehavior.Read(root) with {HideIsolationReminder=true}).Save(root);}catch(Exception error){ShowError(error);return false;}
         return true;
     }
-    private void SandboxRepair_Click(object sender, RoutedEventArgs e)
+    private async void SandboxRepair_Click(object sender, RoutedEventArgs e)
     {
         if (smoke != null || IsSandboxWindow || Unavailable || Selected is not { Account.Valid:true } row) return;
         // Paint first. Read-only management neither prepares a connection nor
         // refreshes all task/tool panels through SetBusy. The modal owns input.
-        var window=new SandboxManagementWindow(this,row.Account);
-        DailyDialogs.ShowModal(window);
-        if(window.OpenSoftwareSettings)WorkspaceTabs.SelectedItem=SoftwareSettingsTab;
+        try
+        {
+            await PauseAutomaticMaintenanceAsync();
+            if(finalClose || Unavailable)return;
+            var window=new SandboxManagementWindow(this,row.Account);
+            DailyDialogs.ShowModal(window);
+            if(window.OpenSoftwareSettings)WorkspaceTabs.SelectedItem=SoftwareSettingsTab;
+        }
+        catch(Exception error){ShowError(error);}
     }
 }

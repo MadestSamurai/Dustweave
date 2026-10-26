@@ -26,6 +26,7 @@ public sealed class DailyStorageMaintenance
     readonly Func<string,bool> boxIdle;
     readonly Func<bool> extractionIdle;
     readonly Func<string,bool> extractionSafe;
+    internal string? CaptureControlPath { get; init; }
     static readonly string[] ExtractionNames=["Dustweave","Dustweave.Updater","BD2DailyAssistant","BD2DailyAssistant.Updater"];
     sealed record Box(string Directory,string Data,string Name,string Account);
     public DailyStorageMaintenance(string root) : this(root, Shared(root)?DailySandbox.Store:null,
@@ -40,20 +41,14 @@ public sealed class DailyStorageMaintenance
     static bool Expected(Exception e) => e is IOException or UnauthorizedAccessException or InvalidOperationException or JsonException or ArgumentException or System.ComponentModel.Win32Exception;
     static bool BoxIdle(string box)
     {
-        // Query the driver, not a saved process ID. Errors defer cleanup, never authorize it.
-        var processes=Process.GetProcesses();
+        // Ask the driver for this box only. An unrelated protected Windows process
+        // must not prevent every idle sandbox from being maintained.
         try
         {
-            foreach(var p in processes)
-            {
-                if(p.Id<=0)continue;
-                try { if(Accounts.SandboxProcessScope.BoxOf(p.Id).Equals(box,StringComparison.OrdinalIgnoreCase))return false; }
-                catch(IOException) when(p.HasExited) { }
-            }
-            return true;
+            return DailySandbox.Installation() is {} installation &&
+                Accounts.SandboxConfiguration.Processes(installation,box).Length==0;
         }
         catch(Exception e) when(Expected(e)){return false;}
-        finally{foreach(var p in processes)p.Dispose();}
     }
     static bool ExtractionIdle()
     {
@@ -127,18 +122,18 @@ public sealed class DailyStorageMaintenance
             if(Directory.Exists(folder))yield return folder;
         }
     }
-    internal static DailyCacheUnit[] ExtractionPlan(string folder,DailyStorageItem[] files,DateTime now)
+    internal static DailyCacheUnit[] ExtractionPlan(string folder,DailyStorageItem[] files,DateTime now,int days=7)
     {
         return files.GroupBy(f=>Path.GetRelativePath(folder,f.Path).Split(Path.DirectorySeparatorChar)[0])
             .Where(g=>g.Key.Length==12 && g.Key.All(c=>char.IsAsciiLetterOrDigit(c)||c is '_' or '-') && Directory.Exists(Path.Combine(folder,g.Key)))
             .OrderByDescending(g=>g.Max(f=>f.Written)).Select((g,i)=>(Group:g,Index:i))
-            .Where(v=>v.Group.Max(f=>f.Written)<now.AddDays(-7) || v.Index>=2&&v.Group.Max(f=>f.Written)<now.AddDays(-1))
+            .Where(v=>v.Group.Max(f=>f.Written)<now.AddDays(-Math.Clamp(days,2,7)) || v.Index>=2&&v.Group.Max(f=>f.Written)<now.AddDays(-1))
             .Select(v=>new DailyCacheUnit(Path.Combine(folder,v.Group.Key),v.Group.ToArray())).ToArray();
     }
     public Task<DailyStorageOverview> ScanAsync(DailyLogPolicy policy,CancellationToken token=default)=>Task.Run(()=>
     {
         var scopes=new List<DailyStorageScope>();
-        var storage=DailyCacheStorage.Scan(root,token);
+        var storage=DailyCacheStorage.ScanRetention(root,policy,token,captureControl:CaptureControlPath);
         var logs=DailyLogCleanup.Scan(root,policy,DateTime.UtcNow,token);
         var counted=storage.AllFiles.Select(f=>f.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
         scopes.Add(new("main",root,storage.TotalBytes,storage.CacheBytes,logs.ManagedBytes,storage.ReclaimableBytes+logs.ReclaimableBytes,storage.Skipped+logs.Skipped)
@@ -156,7 +151,7 @@ public sealed class DailyStorageMaintenance
             {
                 if(ReadBox(directory) is {} box && Directory.Exists(box.Data))
                 {
-                    var s=DailyCacheStorage.ScanIsolated(box.Data,token,files);var l=DailyLogCleanup.Scan(box.Data,policy,DateTime.UtcNow,token);
+                    var s=DailyCacheStorage.ScanRetention(box.Data,policy,token,true,files,CaptureControlPath);var l=DailyLogCleanup.Scan(box.Data,policy,DateTime.UtcNow,token);
                     cache=s.CacheFiles.Where(f=>included.Contains(f.Path)).Sum(f=>f.DiskBytes);log=l.ManagedBytes;skipped+=s.Skipped+l.Skipped;
                     string dumpFolder=Path.Combine(Path.GetDirectoryName(box.Data)!,"CrashDumps");
                     log+=files.Where(f=>Path.GetDirectoryName(f.Path)==dumpFolder&&DailyCrashStorage.Own(f.Path)&&included.Contains(f.Path)).Sum(f=>f.DiskBytes);
@@ -178,7 +173,7 @@ public sealed class DailyStorageMaintenance
             int skipped=0;var files=DailyCacheStorage.Files(folder,token,ref skipped).ToArray();
             var measured=files.Where(f=>counted.Add(f.Path)).ToArray();var included=measured.Select(f=>f.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
             scopes.Add(new("extraction",folder,measured.Sum(f=>f.DiskBytes),measured.Sum(f=>f.DiskBytes),0,
-                canExtract?ExtractionPlan(folder,files,DateTime.UtcNow).Where(u=>extractionSafe(u.Path)).Sum(u=>u.Files.Where(f=>included.Contains(f.Path)).Sum(f=>f.DiskBytes)):0,skipped));
+                canExtract?ExtractionPlan(folder,files,DateTime.UtcNow,policy.Days).Where(u=>extractionSafe(u.Path)).Sum(u=>u.Files.Where(f=>included.Contains(f.Path)).Sum(f=>f.DiskBytes)):0,skipped));
         }
         if(crashes!=null)
         {
@@ -191,15 +186,17 @@ public sealed class DailyStorageMaintenance
     static DailyStorageItem[] CompressionPlan(string root,IEnumerable<DailyStorageItem> files,bool fixedRoot=false) =>
         (fixedRoot?new[]{root}:new[]{root,DailyCacheStorage.Location(root)}).Distinct(StringComparer.OrdinalIgnoreCase)
             .SelectMany(basis=>DailyStorageCompression.Plan(basis,files,DateTime.UtcNow)).DistinctBy(f=>f.Path,StringComparer.OrdinalIgnoreCase).ToArray();
-    public static async Task<DailyLogCleanupResult> MaintainLocalAsync(string root,DailyLogPolicy policy,bool fixedRoot,CancellationToken token)
+    public static Task<DailyLogCleanupResult> MaintainLocalAsync(string root,DailyLogPolicy policy,bool fixedRoot,CancellationToken token)
+        =>MaintainLocalAsync(root,policy,fixedRoot,token,null);
+    static async Task<DailyLogCleanupResult> MaintainLocalAsync(string root,DailyLogPolicy policy,bool fixedRoot,CancellationToken token,string? captureControl)
     {
         DailyCacheStorage.NoLinks(root);
-        using var control=DailyUpdateHost.AcquireControl(root);
+        using var control=DailyToolControl.AcquireMaintenance(root);
         await DailyLogEvidence.FlushAsync(root,token);
         await DailyLogEvidence.MaintainAsync(root,token);
         var plan=await DailyLogCleanup.ScanAsync(root,policy,token);
         var logs=await DailyLogCleanup.ApplyAsync(plan,token);
-        var cache=await DailyCacheStorage.CleanLocalAsync(root,fixedRoot,token);
+        var cache=await DailyCacheStorage.CleanLocalAsync(root,fixedRoot,token,policy,captureControl);
         return logs.Add(cache).Add(CompressLocal(root,fixedRoot,token));
     }
     static DailyLogCleanupResult CompressLocal(string root,bool fixedRoot,CancellationToken token)
@@ -211,7 +208,7 @@ public sealed class DailyStorageMaintenance
     static DailyLogCleanupResult ContinueLocal(string root,bool fixedRoot,CancellationToken token)
     {
         DailyCacheStorage.NoLinks(root);
-        using var control=DailyUpdateHost.AcquireControl(root);
+        using var control=DailyToolControl.AcquireMaintenance(root);
         return CompressLocal(root,fixedRoot,token);
     }
     public Task<DailyLogCleanupResult> CleanAsync(DailyLogPolicy policy,CancellationToken token=default)=>Task.Run(()=>CleanCoreAsync(policy,token),token);
@@ -219,7 +216,7 @@ public sealed class DailyStorageMaintenance
     public Task<DailyLogCleanupResult> ContinueCompressionAsync(CancellationToken token=default)=>Task.Run(()=>CleanCoreAsync(new(),token,true),token);
     async Task<DailyLogCleanupResult> CleanCoreAsync(DailyLogPolicy policy,CancellationToken token,bool compressionOnly=false)
     {
-        var result=compressionOnly?ContinueLocal(root,false,token):await MaintainLocalAsync(root,policy,false,token);
+        var result=compressionOnly?ContinueLocal(root,false,token):await MaintainLocalAsync(root,policy,false,token,CaptureControlPath);
         void Add(DailyLogCleanupResult r)=>result=result.Add(r);
         // Serialize with host-initiated sandbox launches/rebinding, then lock each data root separately.
         await DailySandbox.ConfigurationGate.WaitAsync(token);
@@ -232,7 +229,7 @@ public sealed class DailyStorageMaintenance
                 try
                 {
                     if(ReadBox(directory) is not {} box || !Directory.Exists(box.Data) || !CanClean(box)){Add(new(0,0,1));continue;}
-                    Add(compressionOnly?ContinueLocal(box.Data,true,token):await MaintainLocalAsync(box.Data,policy,true,token));
+                    Add(compressionOnly?ContinueLocal(box.Data,true,token):await MaintainLocalAsync(box.Data,policy,true,token,CaptureControlPath));
                     if(!compressionOnly)Add(CleanDumps(Path.Combine(Path.GetDirectoryName(box.Data)!,"CrashDumps"),policy,token,()=>CanClean(box)));
                 }
                 catch(Exception e) when(Expected(e)){Add(new(0,0,1));}
@@ -245,7 +242,7 @@ public sealed class DailyStorageMaintenance
         {
             token.ThrowIfCancellationRequested();
             int skipped=0;var files=DailyCacheStorage.Files(folder,token,ref skipped).ToArray();
-            var cleaned=DailyCacheStorage.DeleteUnits(ExtractionPlan(folder,files,DateTime.UtcNow).Where(u=>extractionSafe(u.Path)).ToArray(),token,extractionIdle);
+            var cleaned=DailyCacheStorage.DeleteUnits(ExtractionPlan(folder,files,DateTime.UtcNow,policy.Days).Where(u=>extractionSafe(u.Path)).ToArray(),token,extractionIdle);
             Add(cleaned with {Skipped=cleaned.Skipped+skipped});
         }
         return result;

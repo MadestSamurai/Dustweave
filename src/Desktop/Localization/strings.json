@@ -1565,9 +1565,9 @@
     "en-US": "Automatically clean logs and caches when idle"
   },
   "logs.days": {
-    "zh-CN": "日志保留时间",
-    "zh-TW": "日誌保留時間",
-    "en-US": "Keep logs for"
+    "zh-CN": "日志与历史缓存保留时间",
+    "zh-TW": "日誌與歷史快取保留時間",
+    "en-US": "Keep logs and historical caches for"
   },
   "logs.days.value": {
     "zh-CN": "{0} 天",
@@ -1585,9 +1585,9 @@
     "en-US": "{0} MB"
   },
   "logs.protection": {
-    "zh-CN": "日志按期限和空间目标清理。更新缓存最多保留 2 版、最长 7 天，任一超出即清理；正在更新或需要恢复的文件受保护。账号、任务进度和已导出的压缩包不会删除。",
-    "zh-TW": "日誌依期限及空間目標清理。更新快取最多保留 2 版、最長 7 天，任一超出即清理；正在更新或需要復原的檔案受保護。帳號、任務進度及已匯出的壓縮檔不會刪除。",
-    "en-US": "Logs follow the age and size limits. Update caches keep at most 2 versions for up to 7 days; either limit triggers cleanup. Active updates and recovery files are protected. Accounts, task progress and exported ZIPs are retained."
+    "zh-CN": "日志与历史缓存按所选天数清理，包括已结束采集的临时文件。更新缓存还受最多 2 版限制。使用中的文件、更新恢复数据、账号、任务进度和已导出记录会保留。",
+    "zh-TW": "日誌與歷史快取依所選天數清理，包括已結束採集的暫存檔。更新快取另有最多 2 版限制。使用中的檔案、更新復原資料、帳號、任務進度及已匯出紀錄會保留。",
+    "en-US": "Logs and historical caches expire after the selected number of days, including temporary files from ended captures. Update caches also keep at most 2 versions. Files in use, update recovery data, accounts, task progress and exported records are retained."
   },
   "logs.scope": {
     "zh-CN": "包括主数据目录、迁移缓存、隔离账号空间和程序解压缓存。运行中的沙盒及需要恢复的数据会保留。",
@@ -1628,6 +1628,11 @@
     "zh-CN": "请在当前任务停止后清理日志。",
     "zh-TW": "請在目前任務停止後清理日誌。",
     "en-US": "Wait until the current task has stopped before cleaning up."
+  },
+  "logs.yielding": {
+    "zh-CN": "正在结束后台维护，随后继续你的操作…",
+    "zh-TW": "正在結束背景維護，隨後繼續你的操作…",
+    "en-US": "Finishing background maintenance, then continuing your action…"
   },
   "logs.cleaning": {
     "zh-CN": "正在清理，近期与待核对记录会保留…",

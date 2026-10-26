@@ -17,6 +17,7 @@ static class EventCollectionCases
         public int OtherMonsters;
         public bool Capturable;
         public double StealthUntil;
+        public double StealthDelay, StealthReadyAt;
         public void ExhaustAbsorption() => counts[4] = 21;
         public readonly List<int> Casts = [];
         readonly Dictionary<int, int> counts = [];
@@ -49,7 +50,7 @@ static class EventCollectionCases
                         if (kind == 20 && Capturable) { OtherMonsters--; Capturable = false; }
                         if (kind == 4) DropsPending = false;
                         if (kind == 6) Research = true;
-                        if (kind == 17) StealthUntil = H.Time + 30;
+                        if (kind == 17) { StealthUntil = H.Time + 30; StealthReadyAt = H.Time + StealthDelay; }
                         H.Event("dispatch.start", "request");
                         H.Event("dispatch.start", "response", ("IsSuccess", true), ("TalentSkillInfo", O(("groupId", kind * 100 + 5), ("useCount", counts[kind]))));
                         H.Time += .01; Field(); break;
@@ -65,14 +66,14 @@ static class EventCollectionCases
                 WorkflowCases.Reading("mainline.map", (MapPath, O(("id", MapId), ("packId", Pack), ("mapType", MapType))), ("HasCanOverwhelmMonster()", MonstersPending)),
                 WorkflowCases.Reading("mainline.travel", ("$self", O(("Pack", Pack), ("Map", MapId), ("Ground", true),
                     ("Maps", new JsonArray(O(("Id", MapId), ("Exits", new JsonArray()), ("CanSummon", true)))), ("Approaches", new JsonArray()),
-                    ("ThreatsKnown", ThreatsKnown), ("ThreatsPresent", OtherMonsters > 0 || MonstersPending)))),
+                    ("ThreatsKnown", ThreatsKnown), ("ThreatsPresent", OtherMonsters > (Capturable ? 1 : 0) || MonstersPending)))),
                 WorkflowCases.Reading("mainline.reset", ("GetWeeklyResetTime().Ticks", 500)),
                 WorkflowCases.Reading("mainline.waypoint", (WaypointNear, NearWaypoint)),
                 WorkflowCases.Reading("mainline.network", ("$self", network)),
                 WorkflowCases.Reading("mainline.talent_counts", ("Values", Array(counts.Select(c => O(("groupId", c.Key * 100 + 5), ("useCount", c.Value)))))),
                 WorkflowCases.Reading("mainline.talent_limits", ("$self", new JsonArray(O(("Kind", 4), ("Group", 405), ("Limit", 21)), O(("Kind", 20), ("Group", 2005), ("Limit", 21))))),
                 WorkflowCases.Reading("mainline.research", ("$self", O(("Active", Research), ("Remaining", Research ? 100 : 0)))),
-                WorkflowCases.Reading("mainline.durations", ("effects", new JsonArray(O(("Key", 17), ("Value.ὫὢὢὬὫὫὡὩὪὩὮ", StealthUntil > H.Time), ("Value.ὠὨὠὭὬὤὪὢὫὨὮ", Math.Max(0, StealthUntil - H.Time)))))),
+                WorkflowCases.Reading("mainline.durations", ("effects", new JsonArray(O(("Key", 17), ("Value.ὫὢὢὬὫὫὡὩὪὩὮ", StealthUntil > H.Time && H.Time >= StealthReadyAt), ("Value.ὠὨὠὭὬὤὪὢὫὨὮ", Math.Max(0, StealthUntil - H.Time)))))),
                 WorkflowCases.Reading("mainline.talent_rows", ("$self", Missing ? new JsonArray() : new JsonArray(O(("Instance", group), ("Kind", MenuKind), ("Group", group), ("Cooldown", 0), ("Gate", ""), ("PackRestricted", false), ("Reason", Disabled ? "character_dead" : "")))))
             };
             if (MenuKind > 0 && !Missing)
@@ -244,6 +245,43 @@ static class EventCollectionCases
             f.MapType = 1;
             await f.Route.ProtectWeeklyMovement();
             Check(f.H.Box.Commands.Count == 0, "native-confirmed empty battle areas do not inherit cartridge-wide patrol protection: " + pack);
+        }
+        foreach (bool patrol in new[] { false, true })
+        using (var f = new Fixture(Path.Combine(root, "capture-only-stealth-" + patrol), 12, 122, 1)
+            { Capturable = true, OtherMonsters = patrol ? 2 : 1 })
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            await f.Route.ProtectWeeklyMovement();
+            await f.Route.ProtectWeeklyMovement();
+            Check(f.Casts.SequenceEqual(patrol ? new[] { 17 } : System.Array.Empty<int>()),
+                "Black Feather capture object does not cast or renew stealth; a surviving patrol still does: " + patrol);
+        }
+        foreach (bool duringMenu in new[] { false, true })
+        using (var f = new Fixture(Path.Combine(root, "stealth-threat-cleared-" + duringMenu), 11, 1102, 1) { OtherMonsters = 1 })
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            var old = f.H.Evidence();
+            if (duringMenu)
+            {
+                var onCommand = f.H.OnCommand;
+                f.H.OnCommand = c => { onCommand!(c); if (S(c["Kind"]) == "mainline_menu") f.OtherMonsters = 0; };
+            }
+            else f.OtherMonsters = 0;
+            await f.Route.Protection(old, walking: true);
+            Check(f.Casts.Count == 0 && S(f.H.Frame["UiToken"]) == "GameFieldDefaultUI",
+                "threat cleared before casting does not spend a stealth potion or block travel: " + duringMenu);
+        }
+        foreach (double activationDelay in new[] { 0d, .6, 30d })
+        using (var f = new Fixture(Path.Combine(root, "stealth-activation-" + activationDelay), 14, 142, 1)
+            { OtherMonsters = 1, StealthDelay = activationDelay })
+        {
+            string error = "";
+            try { await f.Route.Skill(17); }
+            catch (StageHostException ex) { error = ex.Message; }
+            Check(f.Casts.SequenceEqual(new[] { 17 }), "effect observation never repeats the consuming skill: " + activationDelay);
+            Check(activationDelay < 3 ? error == "" : error.StartsWith("藏身已提交", StringComparison.Ordinal),
+                "short native effect delay is refreshed, persistent absence remains an explicit stealth failure: " + activationDelay);
+            Check(f.H.Time < 4, "effect refresh is bounded and adds no fixed success delay: " + activationDelay);
         }
         foreach (string risk in new[] { "cleared", "ordinary", "non-suppressible", "unknown", "missing-threats", "wrong-map", "wrong-pack" })
         using (var f = new Fixture(Path.Combine(root, "weekly-risk-" + risk), 8, 82, 1)

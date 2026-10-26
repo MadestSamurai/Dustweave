@@ -24,12 +24,14 @@ public partial class MainWindow
         return true;
     }
     private void ConnectionGuide_Click(object sender, RoutedEventArgs e) => ShowConnectionGuide();
-    private void ShowConnectionGuide()
+    private async void ShowConnectionGuide()
     {
         if (Unavailable || IsSandboxWindow) return;
         onboardingOpen = true; SetBusy(busy);
         try
         {
+            await PauseAutomaticMaintenanceAsync();
+            if(finalClose || UpdateRestarting)return;
             using (DailyToolControl.Acquire(root))
             {
                 DailyJson.Write(FirstRunPath, new FirstRunRecord());

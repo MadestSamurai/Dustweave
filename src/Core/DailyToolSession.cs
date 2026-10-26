@@ -6,6 +6,40 @@ namespace Dustweave;
 /// <summary>A process-lifetime file lease; release is thread independent and survives no crash.</summary>
 public static class DailyToolControl
 {
+    private static readonly object maintenanceGate = new();
+    private static readonly HashSet<string> maintenanceOwners = new(StringComparer.OrdinalIgnoreCase);
+    private static string Key(string root) => Path.TrimEndingDirectorySeparator(Path.GetFullPath(root));
+    public static bool IsMaintenanceOwner(string root) { lock(maintenanceGate) return maintenanceOwners.Contains(Key(root)); }
+    public static bool IsAutomationOccupied(string root)
+    {
+        // Classify under the same gate as acquisition, so a maintenance pass
+        // cannot appear between the ownership check and the file-lock probe.
+        lock(maintenanceGate)return !maintenanceOwners.Contains(Key(root)) && IsOccupied(root);
+    }
+    public static IDisposable AcquireMaintenance(string root)
+    {
+        string key = Key(root);
+        lock(maintenanceGate)
+        {
+            var control = Acquire(root); // Keep the same cross-process exclusion as automation.
+            maintenanceOwners.Add(key);
+            return new MaintenanceLease(key, control);
+        }
+    }
+    private sealed class MaintenanceLease(string key, IDisposable control) : IDisposable
+    {
+        private bool disposed;
+        public void Dispose()
+        {
+            lock(maintenanceGate)
+            {
+                if(disposed)return;
+                disposed=true;
+                try { control.Dispose(); }
+                finally { maintenanceOwners.Remove(key); }
+            }
+        }
+    }
     public static bool IsOccupied(string root) { try { using var lease=Acquire(root); return false; } catch(InvalidOperationException) { return true; } }
     public static IDisposable Acquire(string root)
     {

@@ -58,11 +58,19 @@ public static class DailyStorageCompression
 
     // Ordinary files retain the existing logical-size convention. Compressed/sparse
     // files must use their stored size, otherwise cleanup appears to save nothing.
+    static string NativePath(string path)
+    {
+        string full=Path.GetFullPath(path);
+        if(full.StartsWith(@"\\?\",StringComparison.Ordinal))return full;
+        return full.StartsWith(@"\\",StringComparison.Ordinal)?@"\\?\UNC\"+full[2..]:@"\\?\"+full;
+    }
     public static long StoredBytes(string path, long length, FileAttributes attributes)
     {
         if (!OperatingSystem.IsWindows() || (attributes & (FileAttributes.Compressed | FileAttributes.SparseFile)) == 0) return length;
         Marshal.SetLastPInvokeError(0);
-        uint low = GetCompressedFileSizeW(path, out uint high);
+        // Sandbox account/hash directories often exceed MAX_PATH. Unlike managed
+        // file APIs these Win32 calls need an extended path explicitly.
+        uint low = GetCompressedFileSizeW(NativePath(path), out uint high);
         if (low == uint.MaxValue && Marshal.GetLastPInvokeError() != 0) return length;
         ulong value = ((ulong)high << 32) | low;
         return value <= long.MaxValue ? (long)value : length;
@@ -111,7 +119,7 @@ public static class DailyStorageCompression
                 if (file.Bytes < MinimumBytes || file.Bytes > MaximumFileBytes || file.Written >= DateTime.UtcNow.AddDays(-1)
                     || !EligibleAttributes(file.Path) || info.Length != file.Bytes || info.LastWriteTimeUtc != file.Written) { skipped++; continue; }
                 // A reader/writer which cannot coexist defers this file; never wait on it.
-                using var handle = Open(file.Path, 0xC0000000, 1, IntPtr.Zero, 3, 0x00200000, IntPtr.Zero);
+                using var handle = Open(NativePath(file.Path), 0xC0000000, 1, IntPtr.Zero, 3, 0x00200000, IntPtr.Zero);
                 if(handle.IsInvalid || !GetFileInformationByHandle(handle,out var native)
                     || native.Links!=1 || (native.Attributes & ((uint)FileAttributes.ReparsePoint | (uint)FileAttributes.Directory))!=0) { skipped++; continue; }
                 long written = (long)(uint)native.Written.dwHighDateTime << 32 | (uint)native.Written.dwLowDateTime;

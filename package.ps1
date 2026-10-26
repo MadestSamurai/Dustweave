@@ -175,7 +175,7 @@ foreach($flavor in $Flavors){
  }
  Pass (Join-Path $checks 'smoke/smoke.json')
  if($validation.scope -in @('Full','Updates')){
-  foreach($scope in @('outcomes','apostle','tool-activity','run-report','tool-preparation')){
+  foreach($scope in @('outcomes','apostle','tool-activity','run-report','tool-preparation','maintenance-priority')){
    $check=Join-Path $checks ('smoke-'+$scope)
    Run $exe @('--smoke',$check) ($flavor+'-smoke-'+$scope) 180 $scope
    Pass (Join-Path $check 'smoke.json')

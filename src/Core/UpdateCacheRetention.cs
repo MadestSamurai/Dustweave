@@ -50,7 +50,6 @@ public static class UpdateCacheRetention
                 !Same(job.Directory, versionPath) || Path.GetFileName(versionPath) != job.Release.Version + "-" + job.Asset.Flavor ||
                 job.Nonce != Path.GetFileName(attempt) || job.Nonce.Length != 32 || !job.Nonce.All(Uri.IsHexDigit)) return (true, false);
             DailyCacheStorage.NoLinks(job.Target);
-            if (ParentRunning(job)) return (true, false);
             string target = Path.GetDirectoryName(job.Target)!, markerPath = Path.Combine(target, DailyUpdateTransaction.MarkerName);
             if (Exists(markerPath))
             {
@@ -59,7 +58,10 @@ public static class UpdateCacheRetention
                 if (marker == null || Same(marker.JobPath, jobPath)) return (true, false);
             }
             var journal = Read<DailyUpdateJournal>(Path.Combine(backup, "transaction.json"));
-            if (journal == null) return (Exists(backup), false);
+            // Only the pre-transaction handoff still depends on the original host.
+            // A completed transaction with no marker must not be pinned forever
+            // when Windows reuses its historical PID for an inaccessible process.
+            if (journal == null) return (Exists(backup) || ParentRunning(job), false);
             bool inventoryStage = (job.Repair || job.InventoryUpgrade) && Same(journal.Staging, Path.Combine(versionPath, "repair-staging"));
             if (!Same(journal.Target, target) || !Same(journal.Backup, backup) || !(Within(journal.Staging, attempt) || inventoryStage)) return (true, false);
             bool terminal = journal.State is "completed" or "rolled_back";
@@ -72,6 +74,8 @@ public static class UpdateCacheRetention
     public static bool CanClean(DailyCacheUnit unit) => (unit.UpdateAttempts ?? []).All(a => !State(a).Protected);
 
     public static DailyCacheUnit[] Plan(string updates, DailyStorageItem[] files, DateTime utcNow, CancellationToken cancel = default)
+        => Plan(updates,files,utcNow,cancel,MaximumDays);
+    internal static DailyCacheUnit[] Plan(string updates, DailyStorageItem[] files, DateTime utcNow, CancellationToken cancel, int days)
     {
         var versions = new List<VersionCache>();
         foreach (var group in files.GroupBy(f => Path.GetRelativePath(updates, f.Path).Split(Path.DirectorySeparatorChar)[0]))
@@ -82,7 +86,7 @@ public static class UpdateCacheRetention
             catch (InvalidDataException) { }
         }
         var recent = versions.Select(v => v.Version).Distinct().OrderByDescending(v => v).Take(MaximumVersions).ToHashSet();
-        DateTime cutoff = utcNow.AddDays(-MaximumDays);
+        DateTime cutoff = utcNow.AddDays(-Math.Clamp(days,2,MaximumDays));
         var units = new List<DailyCacheUnit>();
         foreach (var version in versions)
         {

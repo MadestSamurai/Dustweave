@@ -10,6 +10,13 @@ public sealed class DailyPreferencesPanel : UserControl
 {
     private static DailyLanguage L => DailyLanguage.Current;
     private readonly bool allowGame;
+    internal Func<Task<bool>>? BeforeGameToolOpen {get;init;}
+    private async Task OpenGameToolAsync(Action open)
+    {
+        if(account.Length==0 || !SavePending())return;
+        try {if(BeforeGameToolOpen==null || await BeforeGameToolOpen())open();}
+        catch(Exception error){DailyUiText.Error(status,error);}
+    }
     private readonly bool extensionTasks = DailyPlugin.Current.Supports("tactics");
     private readonly bool extensionEvents = DailyPlugin.Current.Supports("event_battle");
     private readonly DailyPreferenceStore store;
@@ -302,18 +309,17 @@ public sealed class DailyPreferencesPanel : UserControl
         Note("trade.break_even_hint");
         Note("prefs.trade_note");
         var tradeButton = LocalButton("预览跑商计划"); tradeButton.HorizontalAlignment = HorizontalAlignment.Left;
-        tradeButton.Click += (_, _) => { if (account.Length == 0 || !Save()) return; var trade = new Window { Title = L.Translate("跑商计划"), Width = 1060, Height = 780, MinWidth = 760, MinHeight = 560, Owner = Window.GetWindow(this), Content = new TradePlanPanel(dataRoot, account, allowGame), WindowStartupLocation = WindowStartupLocation.CenterOwner }; DailyDialogs.Prepare(trade); trade.Show(); };
+        tradeButton.Click += async (_, _) => await OpenGameToolAsync(() => { var trade = new Window { Title = L.Translate("跑商计划"), Width = 1060, Height = 780, MinWidth = 760, MinHeight = 560, Owner = Window.GetWindow(this), Content = new TradePlanPanel(dataRoot, account, allowGame), WindowStartupLocation = WindowStartupLocation.CenterOwner }; DailyDialogs.Prepare(trade); trade.Show(); });
         L.Bind(tradeButton, FrameworkElement.ToolTipProperty, "prefs.trade_preview_help");
         section.Children.Add(tradeButton);
         var bargainButton = LocalButton("bargain.title");
         bargainButton.HorizontalAlignment = HorizontalAlignment.Left;
         bargainButton.Margin = new(0, 8, 0, 0);
-        bargainButton.Click += (_, _) =>
+        bargainButton.Click += async (_, _) => await OpenGameToolAsync(() =>
         {
-            if (account.Length == 0 || !SavePending()) return;
             var dialog = new DailyBargainWindow(dataRoot, account, allowGame) { Owner = Window.GetWindow(this) };
             DailyDialogs.ShowModal(dialog);
-        };
+        });
         section.Children.Add(bargainButton);
         section = tradeSection;
         tradeFavorites.Checked += (_, _) => { normalTrade.IsEnabled = false; normalTrade.Opacity = .5; cookingButton.IsEnabled = true; };
