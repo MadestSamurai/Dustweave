@@ -40,10 +40,15 @@ internal static class SuiteOwnerProbeCases
                     Check(check.Operation=="confirmed"&&check.CheckedUtcTicks>0&&check.NativeError==0,"successful proof includes query result and timestamp");
                 }
                 else Check(check.State=="unreadable"&&check.Problem=="suite.owner-unreadable"&&check.NativeError==5,"access denied is never reported as owner exit (state="+check.State+", operation="+check.Operation+", nativeError="+check.NativeError+")");
+                using var retained=new SuiteOwnerMonitor();
+                var until=DateTime.UtcNow.AddSeconds(3);
+                while(retained.Read(child.Id,ticks).State=="checking"&&DateTime.UtcNow<until)await Task.Delay(10);
+                if(mode=="limited")Check(retained.Read(child.Id,ticks).State=="alive","native monitor acquires the live child's exact lifetime");
                 await child.StandardInput.WriteLineAsync("stop");await child.StandardInput.FlushAsync();
                 await child.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(8));
                 Check(child.ExitCode==0,"synthetic child stops normally: "+mode);
                 if(mode=="limited")Check(SuiteOwnerProbe.Read(child.Id,ticks).Problem=="suite.owner-exited","actual owner exit remains protected");
+                if(mode=="limited")Check(retained.Read(child.Id,ticks).Problem=="suite.owner-exited","retained lifetime detects actual exit immediately without a background refresh");
             }
             finally {if(!child.HasExited){await child.StandardInput.WriteLineAsync("stop");await child.StandardInput.FlushAsync();await child.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(20));}}
         }
@@ -87,12 +92,23 @@ internal static class SuiteOwnerProbeCases
         using(var self=Process.GetCurrentProcess())
         {
             long start=self.StartTime.ToUniversalTime().Ticks;
-            monitor.Read(self.Id,start);
-            // No simulated frame callback for longer than the authority lifetime.
+            var until=DateTime.UtcNow.AddSeconds(3);
+            while(monitor.Read(self.Id,start).State=="checking"&&DateTime.UtcNow<until)await Task.Delay(10);
+            Check(monitor.Read(self.Id,start).State=="alive","initial owner proof succeeds before scheduling-stall replay");
+            // Replay the reported 3-second stale-owner failure: neither game
+            // frames nor the background refresher run until after that deadline.
+            ((Timer)typeof(SuiteOwnerMonitor).GetField("refresher",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!.GetValue(monitor)!).Change(Timeout.Infinite,Timeout.Infinite);
             await Task.Delay(3300);
             var resumed=monitor.Read(self.Id,start);
             Check(resumed.State=="alive"&&DateTime.UtcNow.Ticks-resumed.CheckedUtcTicks<TimeSpan.FromSeconds(2).Ticks,
-                "background proof stays fresh across a game loading pause without falsely revoking the owner");
+                "live owner survives both frame and background-worker stalls without relying on cached proof");
+            var watch=Stopwatch.StartNew();for(int i=0;i<1000;i++)if(monitor.Read(self.Id,start).State!="alive")throw new Exception("live lifetime lost");watch.Stop();
+            Check(watch.ElapsedMilliseconds<500,"1,000 exact lifetime checks remain nonblocking ("+watch.ElapsedMilliseconds+" ms)");
+            var replaced=monitor.Read(self.Id,start+1);
+            until=DateTime.UtcNow.AddSeconds(3);
+            while(replaced.State=="checking"&&DateTime.UtcNow<until){await Task.Delay(10);replaced=monitor.Read(self.Id,start+1);}
+            Check(replaced.Problem=="suite.owner-replaced","a changed start time invalidates the retained handle and requires fresh identity proof");
+            monitor.Dispose();Check(monitor.Read(self.Id,start).State=="unreadable","disposed retained lifetime cannot revive automation");
         }
         static void CheckPending(SuiteOwnerObservation value){if(value.State!="checking"||value.Problem=="")throw new Exception("Blocked native query granted authority");}
     }

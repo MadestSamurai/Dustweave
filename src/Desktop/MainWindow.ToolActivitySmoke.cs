@@ -58,6 +58,16 @@ public partial class MainWindow
                 state.Owner=DailySuite.Owner;state.State="preparing";
                 bool pending=false;try{writeGuard(profile,"control.json",System.Text.Encoding.UTF8.GetBytes("{\"Enabled\":true}"));}catch(DailyObservationPendingException){pending=true;}
                 Check(pending,tool.Id+": same owner preparing defers writes without declaring disconnect");
+                state.State="switching";state.Tool="";
+                pending=false;try{writeGuard(profile,"control.json",System.Text.Encoding.UTF8.GetBytes("{\"Enabled\":true}"));}catch(DailyObservationPendingException){pending=true;}
+                Check(pending,tool.Id+": temporarily empty tool during handoff does not declare a changed session");
+                state.Owner="other-owner";
+                bool replacedDuringSwitch=false;try{writeGuard(profile,"control.json",System.Text.Encoding.UTF8.GetBytes("{\"Enabled\":true}"));}catch(DailyToolSessionChangedException){replacedDuringSwitch=true;}
+                Check(replacedDuringSwitch,tool.Id+": another owner remains terminal even during handoff");
+                state.Owner=DailySuite.Owner;state.State="ready";state.Tool="other-tool";
+                bool replacedTool=false;try{writeGuard(profile,"control.json",System.Text.Encoding.UTF8.GetBytes("{\"Enabled\":true}"));}catch(DailyToolSessionChangedException){replacedTool=true;}
+                Check(replacedTool,tool.Id+": another ready tool remains terminal");
+                state.Tool=tool.Id;
                 state.State="ready";state.Owner="other-owner";
                 bool changed=false;try{writeGuard(profile,"control.json",System.Text.Encoding.UTF8.GetBytes("{\"Enabled\":true}"));}catch(DailyToolSessionChangedException){changed=true;}
                 Check(changed,tool.Id+": positively replaced owner stops rather than waiting forever");

@@ -6,6 +6,7 @@
       "zh-CN": [
         "修复周收集把捕获对象、可破坏物误判为敌人，导致无必要地使用或续期隐身的问题；施放前重新确认威胁，仍有巡逻守卫时保留保护。",
         "改进隐身和加速天赋的效果确认，短暂读不到效果时重新读取，避免立即中断；不会因此重复施放或再次消耗天赋药，失败提示明确区分技能。",
+        "修复后台检查延迟时误判主程序不可用，导致领地等内置工具中断的问题；组件交接期间的短暂空状态不再被当作连接已更换。",
         "修复启动后后台清理造成按钮长时间变灰的问题。连接、执行日常和打开工具时，后台维护会暂停让行。",
         "历史缓存按设置的保留天数清理，并兼顾版本数量限制；纳入程序内部遗留的测试记录，改进沙盒长路径的空间统计。正在使用的缓存和用户自行导出的采集文件不会被自动删除。",
         "1.5 系列可在软件内检查更新。旧版或更新失败时，请从 GitHub／夸克下载完整包至新目录，保留 app 文件夹。"
@@ -13,6 +14,7 @@
       "zh-TW": [
         "修復週收集將捕獲對象、可破壞物誤判為敵人，造成不必要地使用或延續隱身的問題；施放前重新確認威脅，仍有巡邏守衛時保留保護。",
         "改善隱身與加速天賦的效果確認，暫時讀不到效果時重新讀取，避免立即中斷；不會因此重複施放或再次消耗天賦藥，失敗提示明確區分技能。",
+        "修復背景檢查延遲時誤判主程式無法使用，導致領地等內建工具中斷的問題；元件交接期間的短暫空狀態不再被當作連線已更換。",
         "修復啟動後背景清理造成按鈕長時間變灰的問題。連線、執行日常與開啟工具時，背景維護會暫停讓行。",
         "歷史快取依設定的保留天數清理，並兼顧版本數量限制；納入程式內部遺留的測試紀錄，改善沙盒長路徑的空間統計。使用中的快取與使用者自行匯出的採集檔案不會被自動刪除。",
         "1.5 系列可在軟體內檢查更新。舊版或更新失敗時，請從 GitHub／夸克下載完整套件至新目錄，保留 app 資料夾。"
@@ -20,6 +22,7 @@
       "en-US": [
         "Fixed weekly collection treating capture targets and breakable objects as enemies, causing unnecessary Stealth casts and renewals. Threats are checked again before casting; protection remains for active patrol guards.",
         "Stealth and movement-speed effects are read again when temporarily missing instead of immediately stopping the task. This never repeats the cast or spends another talent pill. Failure messages identify the affected talent.",
+        "Fixed delayed background checks incorrectly stopping Territory and other built-in tools while the application is still running. A briefly empty component state during handoff no longer counts as a replaced connection.",
         "Fixed background cleanup leaving controls disabled after startup. Maintenance now yields when connecting, starting daily tasks or opening tools.",
         "Historical caches follow the configured retention period as well as version-count limits. Cleanup includes leftover internal test records, and sandbox storage accounting handles long paths correctly. Active caches and user-exported captures are preserved.",
         "Check for updates in the application on the 1.5 series. For older versions or failed updates, download the complete package from GitHub or Quark into a new folder and keep the app folder."
