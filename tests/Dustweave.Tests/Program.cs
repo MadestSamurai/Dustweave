@@ -75,6 +75,7 @@ async Task Group(string name, Func<Task> run)
     Console.WriteLine($"PASS {name}: {cases.Count - before}");
 }
 Task Sync(Action run) { run(); return Task.CompletedTask; }
+await Group("LegacyMigration", () => Sync(() => LegacyMigrationCases.Run(root,cases)));
 await Group("ProductIdentity", () => Sync(() => ProductIdentityCases.Run(cases)));
 await Group("BargainTraining", () => BargainTrainingCases.Run(root, cases));
 await Group("EquipmentRecycling", () => EquipmentRecyclingCases.Run(root, cases));

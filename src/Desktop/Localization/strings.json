@@ -1,4 +1,95 @@
 {
+"migration.title": {
+    "zh-CN": "织尘 · 旧版更新提醒",
+    "zh-TW": "織塵 · 舊版更新提醒",
+    "en-US": "Dustweave · Legacy version notice"
+  },
+  "migration.heading": {
+    "zh-CN": "请手动下载新版织尘",
+    "zh-TW": "請手動下載新版織塵",
+    "en-US": "Download the new Dustweave"
+  },
+  "migration.intro": {
+    "zh-CN": "1.5 起采用全新的软件结构。当前 1.4 系列无法自动迁移，请下载最新版完整软件包。",
+    "zh-TW": "1.5 起採用全新的軟體結構。目前 1.4 系列無法自動遷移，請下載最新版完整軟體套件。",
+    "en-US": "Version 1.5 introduced a new application layout. The 1.4 series cannot migrate automatically. Please download the latest complete package."
+  },
+  "migration.warning": {
+    "zh-CN": "1.5 新版发布已超过 48 小时，1.4 系列已停止跟进后续修复与新功能。继续使用可能遇到新版已解决的漏洞或流程错误，强烈建议立即更新。",
+    "zh-TW": "1.5 新版發布已超過 48 小時，1.4 系列已停止跟進後續修復與新功能。繼續使用可能遇到新版已解決的漏洞或流程錯誤，強烈建議立即更新。",
+    "en-US": "Version 1.5 was released over 48 hours ago. The 1.4 series no longer receives ongoing fixes or new features. Continuing may encounter defects or workflow failures already fixed in newer versions. Updating now is strongly recommended."
+  },
+  "migration.download_heading": {
+    "zh-CN": "下载最新版",
+    "zh-TW": "下載最新版",
+    "en-US": "Get the latest version"
+  },
+  "migration.github": {
+    "zh-CN": "GitHub 最新发布",
+    "zh-TW": "GitHub 最新發行",
+    "en-US": "Latest GitHub release"
+  },
+  "migration.quark": {
+    "zh-CN": "夸克网盘 · 5AgC",
+    "zh-TW": "夸克網盤 · 5AgC",
+    "en-US": "Quark mirror · 5AgC"
+  },
+  "migration.copy_code": {
+    "zh-CN": "复制提取码",
+    "zh-TW": "複製提取碼",
+    "en-US": "Copy access code"
+  },
+  "migration.install": {
+    "zh-CN": "退出旧版，将最新版完整解压到新目录，保留 app 文件夹，从新目录的 Dustweave.exe 启动。账号和设置继续沿用；如有开机启动或定时执行，请在新版中重新保存这些设置。",
+    "zh-TW": "結束舊版，將最新版完整解壓縮到新目錄，保留 app 資料夾，從新目錄的 Dustweave.exe 啟動。帳號與設定繼續沿用；如有開機啟動或定時執行，請在新版中重新儲存這些設定。",
+    "en-US": "Exit this version and extract the complete latest package into a new folder. Keep the app folder and start its Dustweave.exe. Accounts and settings are retained. Re-save Windows startup and schedules in the new version if you use them."
+  },
+  "migration.continue_heading": {
+    "zh-CN": "仍要继续使用 1.4？",
+    "zh-TW": "仍要繼續使用 1.4？",
+    "en-US": "Still want to use 1.4?"
+  },
+  "migration.instruction": {
+    "zh-CN": "请在下方输入“我不需要更新”六个字，再继续使用。也接受英文 I do not need an update。",
+    "zh-TW": "請在下方輸入「我不需要更新」六個字，再繼續使用。也接受英文 I do not need an update。",
+    "en-US": "Type I do not need an update below to continue. The Chinese phrase 我不需要更新 is also accepted."
+  },
+  "migration.continue": {
+    "zh-CN": "继续使用旧版",
+    "zh-TW": "繼續使用舊版",
+    "en-US": "Continue with old version"
+  },
+  "migration.exit": {
+    "zh-CN": "退出软件",
+    "zh-TW": "結束軟體",
+    "en-US": "Exit Dustweave"
+  },
+  "migration.session_only": {
+    "zh-CN": "确认仅限本次启动。关闭此弹窗将退出软件；确认前不会启动游戏、日常或工具。",
+    "zh-TW": "確認僅限本次啟動。關閉此視窗將結束軟體；確認前不會啟動遊戲、日常或工具。",
+    "en-US": "Confirmation applies only to this launch. Closing this notice exits Dustweave. Game launch, daily tasks and tools stay blocked until you confirm."
+  },
+  "migration.browser_opened": {
+    "zh-CN": "已在浏览器打开下载页面。",
+    "zh-TW": "已在瀏覽器開啟下載頁面。",
+    "en-US": "The download page opened in your browser."
+  },
+  "migration.open_failed": {
+    "zh-CN": "无法打开浏览器，请复制此地址访问：",
+    "zh-TW": "無法開啟瀏覽器，請複製此網址開啟：",
+    "en-US": "Could not open a browser. Visit this address:"
+  },
+  "migration.copied": {
+    "zh-CN": "已复制提取码：5AgC",
+    "zh-TW": "已複製提取碼：5AgC",
+    "en-US": "Access code copied: 5AgC"
+  },
+  "migration.copy_failed": {
+    "zh-CN": "复制失败，请手动输入提取码 5AgC。",
+    "zh-TW": "複製失敗，請手動輸入提取碼 5AgC。",
+    "en-US": "Could not copy. Enter the access code 5AgC manually."
+  },
+
   "prefs.maps_title": {
     "zh-CN": "收集地图",
     "zh-TW": "收集地圖",

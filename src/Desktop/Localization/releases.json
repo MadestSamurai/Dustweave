@@ -1,4 +1,29 @@
 [
+{
+  "Version": "1.4.19",
+  "Date": "2026-10-27",
+  "Notes": {
+    "zh-CN": [
+      "1.5 新版发布已超过 48 小时，1.4 系列不再跟进后续修复与新功能，请从 GitHub 或夸克手动下载最新版完整包。",
+      "退出旧版后将完整包解压到新目录，保留 app 文件夹，从新目录的 Dustweave.exe 启动；账号和设置继续沿用。启用开机启动或定时执行的用户，请在新版中重新保存这些设置。",
+      "启动提醒可切换简中、繁中或英文。关闭弹窗会退出软件；输入“我不需要更新”或“I do not need an update”后才能继续本次使用，确认前不会启动游戏、日常或工具。",
+      "本版以 1.4.18 为基础，仅追加迁移提醒，不包含 1.5 后续修复。已经使用 1.5 的用户无需安装。"
+    ],
+    "zh-TW": [
+      "1.5 新版發布已超過 48 小時，1.4 系列不再跟進後續修復與新功能，請從 GitHub 或夸克手動下載最新版完整套件。",
+      "結束舊版後將完整套件解壓縮到新目錄，保留 app 資料夾，從新目錄的 Dustweave.exe 啟動；帳號與設定繼續沿用。啟用開機啟動或定時執行的使用者，請在新版中重新儲存這些設定。",
+      "啟動提醒可切換簡中、繁中或英文。關閉視窗會結束軟體；輸入「我不需要更新」或「I do not need an update」後才能繼續本次使用，確認前不會啟動遊戲、每日日常或工具。",
+      "本版以 1.4.18 為基礎，僅追加遷移提醒，不包含 1.5 後續修復。已經使用 1.5 的使用者無需安裝。"
+    ],
+    "en-US": [
+      "Version 1.5 was released over 48 hours ago. The 1.4 series no longer receives ongoing fixes or new features. Download the latest complete package from GitHub or Quark.",
+      "Exit the old version, extract into a new folder, keep the app folder and start its Dustweave.exe. Accounts and settings are retained. Re-save Windows startup and schedules in the new version if enabled.",
+      "The startup notice supports Simplified Chinese, Traditional Chinese and English. Closing it exits Dustweave. Type I do not need an update or 我不需要更新 to continue this launch; game launch, daily tasks and tools stay blocked until confirmation.",
+      "This notice release is based on 1.4.18 and does not include subsequent 1.5 fixes. Users already on 1.5 do not need this release."
+    ]
+  }
+},
+
   {
     "Version": "1.5.0",
     "Date": "2026-10-25",

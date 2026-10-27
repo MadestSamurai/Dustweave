@@ -50,6 +50,10 @@
     "src/Bootstrap/Dustweave.Bootstrap.csproj"
   ],
   "files": [
+    {"path":"tests/Dustweave.Tests/Cases/LegacyMigrationCases.cs","sha256":"a1f4c0fb10508bc3d32de55b7f90d67e755189f77724b2ecb259730ea6888247","bytes":2138,"reasons":"build input"},
+    {"path":"src/Desktop/LegacyMigrationWindow.cs","sha256":"f198f2a5ce1f2dff9a090e9a32358d15bb7e71392bce48d875c1d1a79c9811e7","bytes":9258,"reasons":"build input"},
+    {"path":"src/Desktop/LegacyMigrationStartup.cs","sha256":"dd4acaf204536cfe7819e40e1cbfc23dea825e11d69f937a616fd23225b6e3d3","bytes":4378,"reasons":"build input"},
+    {"path":"src/Core/DailyLegacyMigration.cs","sha256":"5ea9ed5155a0e054ae4c1ac12b6028467dbda6aa58674b7a22faf955f3112b78","bytes":2264,"reasons":"build input"},
     {
       "path": "tests/Dustweave.Tests/Cases/IdentityObserverCases.cs",
       "sha256": "e3edec07c0e94eb113d2b75552affeb9fda1e3cb38b01962e448fd125cc55bb5",
@@ -3548,8 +3552,8 @@
     },
     {
       "path": "tests/Dustweave.Tests/Program.cs",
-      "sha256": "239c9e819db6a821a31cfeb9311e46311645812efec90088697bf8ee67bf8d7d",
-      "bytes": 14521,
+      "sha256": "79951934946715f629945251dbcb6737f5c320e779ee789c31755cea93e85d3b",
+      "bytes": 14893,
       "reasons": "build input"
     },
     {
@@ -7052,8 +7056,8 @@
     },
     {
       "path": "src/Desktop/App.xaml.cs",
-      "sha256": "793cb569eafce90361a5783fd24ecb2c2387aedb44d2969efa9c6dc797dc47cd",
-      "bytes": 16743,
+      "sha256": "3afad648d4eb6a072904a5a0bca6670b87155e5c4aa7cfe85d11208bc3451b0a",
+      "bytes": 20355,
       "reasons": "build input"
     },
     {
@@ -7148,8 +7152,8 @@
     },
     {
       "path": "src/Desktop/Localization/strings.json",
-      "sha256": "86d449f01698a15f63816fcd9fb7d27d912d47d354ab3e9874c61e8fb35a0365",
-      "bytes": 382757,
+      "sha256": "694ca71312663c4eeee9c32e53c1310094b87e6412c8c3c89306c09243733434",
+      "bytes": 394956,
       "reasons": "build input"
     },
     {
@@ -7160,8 +7164,8 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "4a0071e2212ec8e3fef5348caf472740cf77a11ae64c0e03610afcaa0d1fcbcf",
-      "bytes": 149727,
+      "sha256": "f484bae1d4a980d050dec2960c312d753f0f685899e15102028563c119e7fea2",
+      "bytes": 158745,
       "reasons": "build input"
     },
     {
@@ -7460,8 +7464,8 @@
     },
     {
       "path": "src/Desktop/MainWindow.StartupFeatures.cs",
-      "sha256": "5c4f0b844de7aeee8becaee1238cf18daa96ab50f6c2d85eb47025a348aace15",
-      "bytes": 3758,
+      "sha256": "06c1610fa8b431d3f3f294a23e1489c98f19d379e0be4f14ada4131c14fd5179",
+      "bytes": 3858,
       "reasons": "build input"
     },
     {
@@ -7478,8 +7482,8 @@
     },
     {
       "path": "src/Desktop/Program.cs",
-      "sha256": "35c623d8c7138fbbb127b801c9a628e0de6aec9abbb5ad31718891b9a74e41b4",
-      "bytes": 11003,
+      "sha256": "fa112f0dc2c0dd2305b1f9d96cb603402b228a04da59d49c8933fd32c18cc125",
+      "bytes": 14863,
       "reasons": "build input"
     },
     {

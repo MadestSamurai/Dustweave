@@ -15,7 +15,7 @@ public partial class MainWindow
         try
         {
             StartupDiagnostics.Mark("update-acknowledgement");
-            DailyUpdateInstaller.Acknowledge(UpdateNonce);
+            if (!LegacyMigrationStartup.UpdateAcknowledged) DailyUpdateInstaller.Acknowledge(UpdateNonce);
             updateStartupAcknowledged = true;
             StartupDiagnostics.Mark("update-acknowledged");
             return true;

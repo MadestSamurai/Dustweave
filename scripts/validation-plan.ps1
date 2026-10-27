@@ -60,6 +60,9 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     $updates+='|^src/Bootstrap/((Program|Recovery|RepairBootstrap)\.cs|Dustweave\.Bootstrap\.csproj)$|^scripts/test-(bridge-update|native-repair)\.ps1$'
     # Layout-3 differential finalization changes only the distribution/update boundary.
     $updates+='|^README(?:\.en)?\.md$|^src/Core/(DailyUpdates|DailyUpdateTransport|DailyUpdateEngine|DailyFullPackageRepair)\.cs$|^src/Desktop/MainWindow\.Repair\.cs$|^src/Desktop/Localization/(releases|strings)\.json$|^scripts/test-bundled-update\.ps1$|^tests/Dustweave.Tests/Cases/UpdateLayoutCases\.cs$|^tools/OtaChannel/(Mirror|MirrorNginx)\.cs$|^tools/OtaMirror/Program\.cs$'
+    # The retired-lane notice changes startup gating only. Both package editions
+    # render the notice; actual upgrade and isolated process gates remain required.
+    $updates+='|^Directory\.Build\.props$|^src/Core/DailyLegacyMigration\.cs$|^src/Desktop/(Program|App\.xaml|LegacyMigrationStartup|LegacyMigrationWindow|MainWindow\.StartupFeatures)\.cs$|^tests/Dustweave.Tests/(Program\.cs|Cases/LegacyMigrationCases\.cs)$'
     if($Scope -in @('Auto','Updates') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $updates}).Count){$selectedScope='Updates';$outside=@()}
     $full.changed=$changed
     $reason='Changes outside the account validation boundary: '+($outside -join ', ')
@@ -74,7 +77,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
      if($evidenceValid){
       $groups=@('ProductIdentity','Startup','LoginIdentity','Sandbox','Parallel','ParallelProcess','AccountOrder','AccountIdentity','AccountRestart','QueueSession','QueuePeriod')
       if($selectedScope -eq 'Trading'){$groups=@('ProductIdentity','TradeOptimizer','TradeData','TradeReplan','TradeQuote','TradeResume','TalentPotion','BargainTraining','UserText')}
-      if($selectedScope -eq 'Updates'){$groups=@('ProductIdentity','UpdateLayout','UpdateDelta','UpdateSafety','UpdateRepair','UpdateInventory','CacheStorage','SchedulingUpdates','UnifiedSuite','SuiteOwnerProbe','UserText')}
+      if($selectedScope -eq 'Updates'){$groups=@('ProductIdentity','LegacyMigration','Startup','UpdateLayout','UpdateDelta','UpdateSafety','UpdateRepair','UpdateInventory','CacheStorage','SchedulingUpdates','UnifiedSuite','SuiteOwnerProbe','UserText')}
       if($selectedScope -eq 'Weekly'){$groups=@('ProductIdentity','WeeklyIsolation','WeeklyGoal','CollectionReadiness','FieldTalent','WeeklyNpcBoard','WeeklyNpcQuery','WeeklyNpcInteraction','CommandDriver','ManagedInputs','QueueSession','QueueEngine','QueuePeriod','QueueExecutionThread','PickupRecovery','BusinessJournal','BusinessScope','MirrorStage','FreeDrawStage','DispatchRecovery','ManagementStage','TradeResume','TravelTransition','UserText')}
       if($selectedScope -in @('Navigation','Rewards')){$groups+=@('HomeNavigation','HomeRecovery','TravelTransition','WeeklyGoal','CollectionReadiness','CafeteriaRecovery','CommandDriver','ManagedInputs','PassiveUi','UserText')}
       if($selectedScope -eq 'Rewards'){

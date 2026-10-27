@@ -54,7 +54,7 @@ function Pass([string]$path){
 function SourceState {
  $files=@(foreach($folder in @('src','tools','tests','assets','third-party','licenses','scripts','docs','.github')){
   Get-ChildItem -LiteralPath (Join-Path $root $folder) -Recurse -File | Where-Object {$_.FullName -notmatch '[\\/](bin|obj)[\\/]'}
- })+@(Get-ChildItem -LiteralPath $root -File -Force)
+ })+@(Get-ChildItem -LiteralPath $root -File -Force | Where-Object Name -ne '.git')
  $rows=$files|ForEach-Object {[ordered]@{path=[IO.Path]::GetRelativePath($root,$_.FullName);hash=(Get-FileHash -LiteralPath $_.FullName).Hash}}
  $rows | Sort-Object path | ConvertTo-Json -Depth 4 -Compress
 }
@@ -174,6 +174,9 @@ foreach($flavor in $Flavors){
   Run $exe @(('--'+$mode),$check) ($flavor+'-'+$mode)
  }
  Pass (Join-Path $checks 'smoke/smoke.json')
+ $migration=Join-Path $checks 'migration'
+ Run $exe @('--check-migration-gate',$migration) ($flavor+'-migration')
+ Pass (Join-Path $migration 'result.json')
  if($validation.scope -in @('Full','Updates')){
   foreach($scope in @('outcomes','apostle','tool-activity','run-report','tool-preparation')){
    $check=Join-Path $checks ('smoke-'+$scope)
