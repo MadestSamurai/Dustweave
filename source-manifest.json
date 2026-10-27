@@ -50,10 +50,10 @@
     "src/Bootstrap/Dustweave.Bootstrap.csproj"
   ],
   "files": [
-    {"path":"tests/Dustweave.Tests/Cases/LegacyMigrationCases.cs","sha256":"a1f4c0fb10508bc3d32de55b7f90d67e755189f77724b2ecb259730ea6888247","bytes":2138,"reasons":"build input"},
+    {"path":"tests/Dustweave.Tests/Cases/LegacyMigrationCases.cs","sha256":"efc013d67e29791e40ddd1417c0e137f9416bdf81f8c582f0aa5e960f6234ebf","bytes":2362,"reasons":"build input"},
     {"path":"src/Desktop/LegacyMigrationWindow.cs","sha256":"f198f2a5ce1f2dff9a090e9a32358d15bb7e71392bce48d875c1d1a79c9811e7","bytes":9258,"reasons":"build input"},
     {"path":"src/Desktop/LegacyMigrationStartup.cs","sha256":"dd4acaf204536cfe7819e40e1cbfc23dea825e11d69f937a616fd23225b6e3d3","bytes":4378,"reasons":"build input"},
-    {"path":"src/Core/DailyLegacyMigration.cs","sha256":"5ea9ed5155a0e054ae4c1ac12b6028467dbda6aa58674b7a22faf955f3112b78","bytes":2264,"reasons":"build input"},
+    {"path":"src/Core/DailyLegacyMigration.cs","sha256":"40dfaacce7ea9bf3572c1b3e948d462baecd80b99877aa6ad255aa95a45919e9","bytes":2554,"reasons":"build input"},
     {
       "path": "tests/Dustweave.Tests/Cases/IdentityObserverCases.cs",
       "sha256": "e3edec07c0e94eb113d2b75552affeb9fda1e3cb38b01962e448fd125cc55bb5",

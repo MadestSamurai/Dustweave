@@ -25,6 +25,9 @@ public static class DailyLegacyMigration
         if (args.Length == 3 && args[0] is "--check-client" or "--check-suite" or "--replay" or "--trade-smoke" or "--tool-menu-probe") return false;
         if (args.Length == 4 && args[0] is "--check-tool-client" or "--create-update-delta") return false;
         if (args.Length == 4 && args[0] == "--tool" && args[2] == "--smoke") return false;
+        if (args.Length == 2 && args[0] == "--connection" && args[1] == "self-test") return false;
+        if (args.Length == 4 && args[0] == "--connection" && args[1] == "prepare") return false;
+        if (args.Length == 5 && args[0] == "--connection" && args[1] == "taps") return false;
         if (args.Length >= 2 && args[0] == "--utility")
         {
             if (args[1] == "exporter") return false;
