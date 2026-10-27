@@ -118,12 +118,15 @@ public sealed class DailyWeeklyRoute
     {
         // Presentation consumes the observation already used by the route;
         // it never adds a game query or changes the route's quota decision.
-        if (!active.Contains("weekly_mainline") || w.Settings.Weekly.WalkCollect
-            || !Readings(evidence, "mainline.talent_counts").Any() || !Readings(evidence, "mainline.talent_limits").Any()) return;
-        var allowance = TalentAllowance(evidence, 4);
-        absorptionUsed = allowance.Used;
-        absorptionLimit = allowance.Limit;
-        absorptionStart ??= absorptionUsed;
+        if (!active.Contains("weekly_mainline") || w.Settings.Weekly.WalkCollect) return;
+        try
+        {
+            var allowance = TalentAllowance(evidence, 4);
+            absorptionUsed = allowance.Used;
+            absorptionLimit = allowance.Limit;
+            absorptionStart ??= absorptionUsed;
+        }
+        catch (DailyTalentReadUnavailable) { /* The collection action handles unavailable quota; progress must not stop other tasks. */ }
     }
     private string Summary(string stage) => stage == "weekly_npc" ? npc?.Summary() ?? "等待读取周NPC任务" : $"{Names[stage]}已核对 {done[stage].Count}/{known[stage].Count} 张地图";
     private Dictionary<string, long[]> Maps() => new() { { "weekly_mainline", active.Contains("weekly_mainline") ? route.Catalog.SelectedMaps(pack, w.Settings.Weekly) : [] }, { "weekly_steal", active.Contains("weekly_steal") ? route.Catalog.StealMaps(pack) : [] } };
@@ -223,11 +226,15 @@ public sealed class DailyWeeklyRoute
             if (cache && !missing) checkpoint = O(("maps", cachedMaps));
         }
         finally { route.Progress.Steal = oldSteal; route.Progress.OnlySteal = oldOnly; }
-        if (!cache && checkpoint != null && active.Contains("weekly_mainline") && TalentAllowance(await route.Evidence(), 20).Remaining == 0)
-            foreach (long id in maps["weekly_mainline"].Where(id => !done["weekly_mainline"].Contains((pack, id))
-                && !failures["weekly_mainline"].ContainsKey((pack, id)) && route.Progress.OnlyCaptureRemains(checkpoint, id)))
-                Defer("weekly_mainline", id, "今日捕获次数已用完；物品已收完，剩余捕获目标次日接续",
-                    O(("reason", "capture_daily_limit"), ("waiting_daily_reset", true), ("remaining", checkpoint["maps"]![id.ToString()])));
+        if (!cache && checkpoint != null && active.Contains("weekly_mainline"))
+        {
+            var captures = maps["weekly_mainline"].Where(id => !done["weekly_mainline"].Contains((pack, id))
+                && !failures["weekly_mainline"].ContainsKey((pack, id)) && route.Progress.OnlyCaptureRemains(checkpoint, id)).ToArray();
+            if (captures.Length > 0 && TalentAllowance(await route.Evidence(), 20).Remaining == 0)
+                foreach (long id in captures)
+                    Defer("weekly_mainline", id, "今日捕获次数已用完；物品已收完，剩余捕获目标次日接续",
+                        O(("reason", "capture_daily_limit"), ("waiting_daily_reset", true), ("remaining", checkpoint["maps"]![id.ToString()])));
+        }
     }
     private async Task<bool> Prepare(long currentPack)
     {
@@ -547,6 +554,13 @@ public sealed class DailyWeeklyRoute
                 r[pair.Key] = Copy(pair.Value);
             result[e.Stage] = r;
         }
+        void StopCollection(DailyTalentReadUnavailable error)
+        {
+            const string detail = "天赋次数暂时无法读取，周收集未完成；可重新连接后补跑，其他已选周任务继续执行。";
+            w.Driver.Diagnostics.Failure("weekly_talent_read_unavailable", error.Observation);
+            Stop(new DailyWeeklyCategoryStop("weekly_mainline", detail,
+                O(("reason", "talent_data_unavailable"), ("waiting_daily_reset", false), ("talent_observation", error.Observation))));
+        }
         var pendingPacks = packs.ToList();
         bool suppressionTailQueued = false;
         while (pendingPacks.Count > 0)
@@ -568,6 +582,8 @@ public sealed class DailyWeeklyRoute
                         break;
                     }
                     catch (DailyWeeklyCategoryStop e) { Stop(e); EmitAll("卡带 " + current); }
+                    catch (DailyTalentReadUnavailable e) when (active.Contains("weekly_mainline"))
+                    { StopCollection(e); EmitAll("继续其他已选项目"); }
                 }
                 if (!prepared)
                     continue;
@@ -612,6 +628,8 @@ public sealed class DailyWeeklyRoute
                         await nav.Step(actions[0]);
                     }
                     catch (DailyWeeklyCategoryStop e) { Stop(e); EmitAll("继续其他已选项目"); if (active.Count == 0) { finished = true; break; } }
+                    catch (DailyTalentReadUnavailable e) when (active.Contains("weekly_mainline"))
+                    { StopCollection(e); EmitAll("继续其他已选项目"); if (active.Count == 0) { finished = true; break; } }
                 }
                 if (!finished) throw new DailyTravelBlocked("共享周路线超过恢复次数，已保留分项进度");
                 await FinishPack();

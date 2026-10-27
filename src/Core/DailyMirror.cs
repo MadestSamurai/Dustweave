@@ -63,7 +63,25 @@ public static class DailyMirror
         return DailyNavigationDecision.Rows(current.Frame).Any(r => S(r["Type"]) is "MenuUI" or "GameFieldDefaultUI" or "BattleUI_PVP" &&
             DailyNavigationDecision.ReadyInput(r, false) && DailyNavigationDecision.Blockers(current.Frame, S(r["Type"]), DailyNavigationPolicy.Load()).Length == 0);
     }
-    private static double BatchTimeout(int repetitions) => Math.Min(1800, 120d * repetitions + 30);
+    // A slow but advancing batch has no fixed wall-clock cutoff. Only new,
+    // accepted replies for this actor extend its bounded inactivity window.
+    internal sealed class BatchWait(JsonObject operation, double started)
+    {
+        internal const double IdleSeconds = 300;
+        private double lastProgress = started;
+        private int matching, settled;
+        internal int Total => BatchCount(operation);
+        internal void Observe(JsonArray events, JsonObject after, double now)
+        {
+            var accepted = Array(Rows(events).Where(e => S(e["Error"]) == "" && N(e["ErrorCode"]) == 0));
+            int matches = Math.Min(Total, DailyWorkProgress.Responses(operation, accepted, after, "mirror.matching"));
+            int ends = Math.Min(Total, DailyWorkProgress.Responses(operation, accepted, after, "mirror.end"));
+            if (matches > matching || ends > settled) lastProgress = now;
+            matching = Math.Max(matching, matches); settled = Math.Max(settled, ends);
+        }
+        internal bool Expired(double now) => now - lastProgress >= IdleSeconds;
+        internal StageHostException Timeout() => new("pending", $"mirror.batch_stalled: {settled}/{Total}") { HoldQueue = true };
+    }
     public static JsonObject Tickets(JsonObject e) => O(("free", R(e, "mirror.currency", "PvpTicket")), ("paid", R(e, "mirror.currency", "PvpTicketStack")));
     public static int Allocation(int multiplier, int free)
     {
@@ -322,8 +340,8 @@ public static class DailyMirror
     }
     private static async Task Recover(DailyWorkflow w)
     {
-        int repetitions = w.Business.Records(w.Context, "mirror.end").Where(DailyManagedBusiness.Pending).Select(BatchCount).DefaultIfEmpty(1).Max();
-        double end = w.Time + BatchTimeout(repetitions);
+        var waits = new Dictionary<string, BatchWait>();
+        double idleSince = w.Time;
         while (true)
         {
             var frame = await w.Observe();
@@ -331,16 +349,25 @@ public static class DailyMirror
             var pending = w.Business.Records(w.Context, "mirror.end").Where(DailyManagedBusiness.Pending).ToArray();
             if (pending.Length > 0)
             {
+                idleSince = w.Time;
                 await w.Business.ReconcileAsync(w.Context);
                 pending = w.Business.Records(w.Context, "mirror.end").Where(DailyManagedBusiness.Pending).ToArray();
+                foreach (var op in pending)
+                {
+                    string id = S(op["id"]);
+                    if (!waits.TryGetValue(id, out var wait)) waits[id] = wait = new BatchWait(op, w.Time);
+                    if (op["events"] is JsonArray events)
+                        wait.Observe(events, O(("Frame", frame.Frame)), w.Time);
+                    if (wait.Expired(w.Time)) throw wait.Timeout();
+                }
             }
             if (phase != "owned_battle" && pending.Length == 0)
             {
                 return;
             }
             Require(w.Business.Records(w.Context, "mirror.end").Any(r => S(r["state"]) is "dispatching" or "unknown" or "completed" && DailyEvidence.SameActor(r["before"]!["Frame"]!.AsObject(), frame.Frame)), "Active Mirror battle has no owned journal");
-            if (w.Time >= end)
-                throw new StageHostException("pending", "原镜中战斗仍在结算，保留现场。");
+            if (pending.Length == 0 && w.Time - idleSince >= BatchWait.IdleSeconds)
+                throw new StageHostException("pending", "原镜中战斗仍在结算，保留现场。") { HoldQueue = true };
             await w.Delay(500);
         }
     }
@@ -409,7 +436,7 @@ public static class DailyMirror
             await Prepare(w, cost, repetitions);
             await RequireOpen(w);
             var t = await Target(w, Auto, field: "_currencyButtonOK");
-            var op = await w.Transact("mirror.end", O(("multiplier", cost), ("repetitions", repetitions), ("free_only", true)), O(("ui", Auto), ("field", t["Field"]), ("target_id", t["Id"]), ("native", true), ("reason", "使用已核对的免费镜中次数")), BatchTimeout(repetitions));
+            var op = await w.Transact("mirror.end", O(("multiplier", cost), ("repetitions", repetitions), ("free_only", true)), O(("ui", Auto), ("field", t["Field"]), ("target_id", t["Id"]), ("native", true), ("reason", "使用已核对的免费镜中次数")), BatchWait.IdleSeconds);
             var after = Tickets(await w.Evidence("mirror"));
             Debit(before, after, total);
             rounds.Add(O(("cost", total), ("multiplier", cost), ("repetitions", repetitions), ("remaining_free", after["free"]), ("receipt", op["id"])));

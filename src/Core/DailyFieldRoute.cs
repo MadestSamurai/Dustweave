@@ -2,6 +2,17 @@ using System.Text.Json.Nodes;
 using static Dustweave.DailyData;
 namespace Dustweave;
 
+public sealed class DailyTalentReadUnavailable(int kind, JsonObject evidence, Exception cause)
+    : IOException("未能读取当前账号的天赋次数，请重新连接后重试周收集。", cause)
+{
+    // Keep the failing observations, including native errors, without copying
+    // unrelated inventory or a complete UI frame into the weekly result.
+    public JsonObject Observation { get; } = O(("kind", kind), ("at", evidence["AtUtcTicks"]),
+        ("config", evidence["Config"]), ("error", cause.Message),
+        ("readings", Array((evidence["Readings"] as JsonArray ?? new()).OfType<JsonObject>()
+            .Where(r => S(r["Id"]) is "mainline.talent_limits" or "mainline.talent_counts"))));
+}
+
 public sealed partial class DailyFieldRoute
 {
     public const string MapPath = "ὮὬὬὮὠὮὪὠὧὩὪ", SkillPath = "ὣὡὪὭὤὨὭὣὪὧὩ", ObjectPath = "ὪὬὣὧὥὨὦὯὨὮὬ", DestinationPath = "ὤὦὨὨὭὮὯὡὧὤὯ", WaypointNear = "ὩὤὨὮὥὦὫὭὫὭὨ";
@@ -50,22 +61,25 @@ public sealed partial class DailyFieldRoute
     public static long Used(JsonObject e, int kind) => Counts(e).Where(r => N(r["groupId"]) / 100 == kind).Sum(r => N(r["useCount"]));
     public static (int Used, int Limit, int Remaining) TalentAllowance(JsonObject e, int kind)
     {
-        const string unavailable = "未能读取当前账号的天赋次数，请重新连接后重试周收集。";
-        var limits = Readings(e, "mainline.talent_limits").Select(r => r["$self"]).OfType<JsonArray>().SingleOrDefault();
-        Require(limits != null && Readings(e, "mainline.talent_counts").Any(), unavailable);
-        var groups = Rows(limits).Where(r => N(r["Kind"]) == kind).ToArray();
-        Require(groups.All(r => N(r["Group"]) > 0 && r["Limit"] != null && N(r["Limit"]) >= 0), unavailable);
-        var counts = Counts(e).GroupBy(r => N(r["groupId"])).ToDictionary(g => g.Key, g => g.Max(r => N(r["useCount"])));
-        int limit = 0, used = 0;
-        // Uses belong to a talent group, not to a fixed number of characters.
-        // An exhausted group must not consume another group's allowance.
-        foreach (var group in groups.GroupBy(r => N(r["Group"])))
+        try
         {
-            int maximum = checked((int)group.Max(r => N(r["Limit"])));
-            limit = checked(limit + maximum);
-            used = checked(used + (int)Math.Clamp(counts.GetValueOrDefault(group.Key), 0, maximum));
+            var groups = Rows(R(e, "mainline.talent_limits", "$self")).Where(r => N(r["Kind"]) == kind).ToArray();
+            Require(groups.All(r => N(r["Group"]) > 0 && r["Limit"] != null && N(r["Limit"]) >= 0), "Invalid talent limits");
+            var counts = Counts(e).GroupBy(r => N(r["groupId"])).ToDictionary(g => g.Key, g => g.Max(r => N(r["useCount"])));
+            int limit = 0, used = 0;
+            // Uses belong to a talent group, not to a fixed number of characters.
+            // An exhausted group must not consume another group's allowance.
+            foreach (var group in groups.GroupBy(r => N(r["Group"])))
+            {
+                int maximum = checked((int)group.Max(r => N(r["Limit"])));
+                limit = checked(limit + maximum);
+                used = checked(used + (int)Math.Clamp(counts.GetValueOrDefault(group.Key), 0, maximum));
+            }
+            return (used, limit, limit - used);
         }
-        return (used, limit, limit - used);
+        catch (Exception error) when (error is InvalidDataException or InvalidOperationException or System.Text.Json.JsonException
+            or NullReferenceException or FormatException or OverflowException)
+        { throw new DailyTalentReadUnavailable(kind, e, error); }
     }
     public static JsonObject[] Talents(JsonObject e) => Rows(R(e, "mainline.talent_rows", "$self"));
     public void Quota(JsonObject e)

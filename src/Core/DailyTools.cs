@@ -43,13 +43,20 @@ public static class DailyTools
     public static string PackageDirectory(string directory)
     {
         var current = Path.GetFullPath(directory);
-        if (Unified(current))
-            return current;
-        if (Unified(Path.Combine(current, "app")))
-            return Path.Combine(current, "app");
+        string? Resolve(string root)
+        {
+            // Installing over an older flat package can leave its marker and
+            // specifications beside the executable. The current app payload
+            // must win, including when called from an old connection directory.
+            string payload = Path.Combine(root, "app");
+            if (Unified(payload)) return payload;
+            return Unified(root) ? root : null;
+        }
+        if (Resolve(current) is { } found)
+            return found;
         var parent = Directory.GetParent(Path.TrimEndingDirectorySeparator(current));
-        if (parent != null && Unified(parent.FullName))
-            return parent.FullName;
+        if (parent != null && Resolve(parent.FullName) is { } inherited)
+            return inherited;
         return current;
     }
     public static ProcessStartInfo StartInfo(string package, string tool)

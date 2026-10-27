@@ -12,6 +12,10 @@ public static class DailyUserText
     private static readonly Regex ExceptionPrefix = new(@"^(?:[\w.]+\.)?\w*(?:Exception|Error):\s*(.+)$", RegexOptions.CultureInvariant);
     private static readonly (string Source, string Chinese)[] Prefixes =
     [
+        ("storage.path_unavailable: ", "无法访问数据目录的链接目标，请检查该目录是否仍可用："),
+        ("storage.link: ", "操作目录内部包含链接，已跳过以保护其他文件："),
+        ("updates.linked_folder: ", "更新操作路径包含链接，请使用实际安装目录："),
+        ("mirror.batch_stalled: ", "镜中自动战斗已连续5分钟没有新的匹配或结算进度，后续日常已暂停；请检查游戏后接续，已结算场数："),
         ("connection.login_identity_unavailable: ", "未能确认游戏身份："),
         ("suite.identity-unavailable: ", "游戏身份尚未就绪："),
         (".NET queue: ", "日常队列："),

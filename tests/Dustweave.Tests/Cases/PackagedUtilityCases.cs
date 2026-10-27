@@ -63,6 +63,7 @@ static class PackagedUtilityCases
                 File.WriteAllText(Path.Combine(install, "Dustweave.exe"), "offline-not-executable");
                 DailyJson.Write(Path.Combine(resources, DailyTools.Marker), O(("protocol", DailyTools.Protocol)));
                 DailyJson.Write(Path.Combine(resources, "flows", "fixture.json"), O(("loaded", "current")));
+                DailyJson.Write(Path.Combine(resources, "connection", "specs", "fixture.json"), O(("loaded", "current")));
                 var groups = DailyRuleData.Groups.ToDictionary(p => p.Key, p => p.Value);
                 groups["draw-report"] = ["CostumeTable", "CharTable", "EquipmentTable", "NameTextTable"];
                 foreach (var group in groups)
@@ -83,11 +84,15 @@ static class PackagedUtilityCases
                 DailyJson.Write(Path.Combine(resources, "data", "trade-catalog.json"), O(("assembly_sha256", dllHash), ("database_sha256", dbHash), ("client", mvid)));
                 if (nested)
                 {
+                    DailyJson.Write(Path.Combine(install, DailyTools.Marker), O(("protocol", DailyTools.Protocol)));
                     DailyJson.Write(Path.Combine(install, "flows", "fixture.json"), O(("loaded", "stale")));
                     DailyJson.Write(Path.Combine(install, "data", "trade-catalog.json"), O(("client", "stale")));
+                    DailyJson.Write(Path.Combine(install, "connection", "specs", "fixture.json"), O(("loaded", "stale")));
                 }
-                foreach (string entry in new[] { install, resources, Path.Combine(resources, "connection") }.Distinct())
+                foreach (string entry in new[] { install, resources, Path.Combine(resources, "connection"), Path.Combine(install, "connection") }.Distinct())
                 {
+                    Check(S(JsonNode.Parse(File.ReadAllText(DailyTools.EvidenceSpec(entry, "fixture.json")))!["loaded"]) == "current",
+                        "evidence uses current specifications despite a retained flat marker: " + entry);
                     string session = Path.Combine(root, Guid.NewGuid().ToString("N"));
                     using var f = new WorkflowHarness(session, [], assetDirectory: entry);
                     Check(S(f.Workflow.Asset("fixture.json")["loaded"]) == "current" && N(f.Workflow.Table("gacha/GachaTable.json")[0]["id"]) == 50,

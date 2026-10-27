@@ -11,7 +11,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Bootstrap/Recovery.cs" Link="Shared/Recovery.cs" />
-    <Compile Include="../Core/DailyUpdate*.cs;../Core/DailyVersion.cs;../Core/DailyApplication.cs" Link="Shared/%(Filename)%(Extension)" />
+    <Compile Include="../Core/DailyUpdate*.cs;../Core/DailyStoragePath.cs;../Core/DailyVersion.cs;../Core/DailyApplication.cs" Link="Shared/%(Filename)%(Extension)" />
     <ProjectReference Include="../Accounts/Dustweave.Accounts.csproj" />
     <EmbeddedResource Include="$(DustweaveUpdateTrustFile)" LogicalName="Dustweave.update-trust.json" />
   </ItemGroup>

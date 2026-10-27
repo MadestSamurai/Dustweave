@@ -107,6 +107,14 @@
         <Button x:Name="RecoverButton" Content="{l:Tr account.recover}" Click="Recover_Click" ToolTipService.ShowOnDisabled="True"/>
        </StackPanel>
        <TextBlock x:Name="LoginHintText" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" FontSize="12" Margin="0,8,0,0"/>
+       <StackPanel x:Name="LoginRecoveryPanel" Visibility="Collapsed" Margin="0,12,0,0">
+        <TextBlock x:Name="LoginRecoveryText" TextWrapping="Wrap"/>
+        <CheckBox x:Name="LoginRecoveryIsolation" Content="{l:Tr account.relogin.retry_isolated}" Margin="0,10,0,10"/>
+        <WrapPanel>
+         <Button x:Name="FinishLoginRecoveryButton" Content="{l:Tr account.relogin.save_retry}" Click="FinishLoginRecovery_Click" Style="{StaticResource PrimaryButton}" Margin="0,0,8,0"/>
+         <Button x:Name="CancelLoginRecoveryButton" Content="{l:Tr common.cancel}" Click="CancelLoginRecovery_Click"/>
+        </WrapPanel>
+       </StackPanel>
       </StackPanel>
      </Border>
      <Border Grid.Row="1" Style="{StaticResource Panel}" Padding="16,8">
@@ -155,6 +163,7 @@
         </StackPanel>
        </DockPanel>
        <WrapPanel Grid.Row="3" HorizontalAlignment="Right" Margin="0,8,0,0">
+        <Button x:Name="ReloginButton" Content="{l:Tr account.relogin.action}" Click="Relogin_Click" Margin="0,0,8,0" ToolTip="{l:Tr account.relogin.help}"/>
         <Button x:Name="SandboxLaunchButton" Content="{l:Tr sandbox.launch}" Click="SandboxLaunch_Click" Margin="0,0,8,0" ToolTip="{l:Tr sandbox.launch_help}"/>
         <Button x:Name="SandboxRepairButton" Content="{l:Tr sandbox.manage.title}" Click="SandboxRepair_Click" ToolTip="{l:Tr sandbox.manage.selected_help}"/>
        </WrapPanel>

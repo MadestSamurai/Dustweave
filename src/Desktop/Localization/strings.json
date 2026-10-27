@@ -1,4 +1,39 @@
 {
+  "account.relogin.action": {
+    "zh-CN": "重新登录",
+    "zh-TW": "重新登入",
+    "en-US": "Sign in again"
+  },
+  "account.relogin.help": {
+    "zh-CN": "重新登录所选账号，保留已保存账号和沙盒。",
+    "zh-TW": "重新登入所選帳號，保留已儲存帳號和沙盒。",
+    "en-US": "Sign in again to the selected account. Saved accounts and its sandbox are preserved."
+  },
+  "account.relogin.confirm": {
+    "zh-CN": "重新登录「{0}」？\n\n将备份本机当前登录状态，并打开普通游戏窗口供你手动登录。进入主菜单后，保持自动登录开启，正常关闭游戏，不要退出账号。回到这里点击「保存并重试」。\n\n原账号和沙盒均会保留。",
+    "zh-TW": "重新登入「{0}」？\n\n將備份本機目前登入狀態，並開啟一般遊戲視窗供你手動登入。進入主選單後，保持自動登入開啟，正常關閉遊戲，不要登出帳號。回到這裡點擊「儲存並重試」。\n\n原帳號和沙盒均會保留。",
+    "en-US": "Sign in again to {0}?\n\nYour current local sign-in will be backed up, and a normal game window will open for manual sign-in. Reach the main menu, keep automatic sign-in enabled, then close the game normally without logging out. Return here and click Save and retry.\n\nYour saved account and sandbox will be preserved."
+  },
+  "account.relogin.pending": {
+    "zh-CN": "正在恢复「{0}」。在游戏中登录此账号并进入主菜单，保持自动登录开启，正常关闭游戏（不要退出账号），然后保存并重试。",
+    "zh-TW": "正在恢復「{0}」。在遊戲中登入此帳號並進入主選單，保持自動登入開啟，正常關閉遊戲（不要登出帳號），然後儲存並重試。",
+    "en-US": "Recovering {0}. Sign in to this account and reach the main menu. Keep automatic sign-in enabled, then close the game normally without logging out and select Save and retry."
+  },
+  "account.relogin.pending_wrong": {
+    "zh-CN": "当前登录的不是「{0}」，未覆盖已保存账号。请登录正确账号，或取消本次恢复。",
+    "zh-TW": "目前登入的不是「{0}」，未覆寫已儲存帳號。請登入正確帳號，或取消本次恢復。",
+    "en-US": "The current sign-in is not {0}. Your saved account has not been overwritten. Sign in to the intended account or cancel recovery."
+  },
+  "account.relogin.retry_isolated": {
+    "zh-CN": "保存后以隔离窗口启动",
+    "zh-TW": "儲存後以隔離視窗啟動",
+    "en-US": "Open isolated after saving"
+  },
+  "account.relogin.save_retry": {
+    "zh-CN": "保存并重试",
+    "zh-TW": "儲存並重試",
+    "en-US": "Save and retry"
+  },
   "prefs.maps_title": {
     "zh-CN": "收集地图",
     "zh-TW": "收集地圖",

@@ -1,4 +1,59 @@
 {
+  "message.account.relogin.collection_failed": {
+    "zh-CN": "未能收回隔离窗口的登录状态。可在账号管理中选中此账号，点击「重新登录」以恢复普通启动；这不代表游戏拒绝了账号密码。",
+    "zh-TW": "未能取回隔離視窗的登入狀態。可在帳號管理中選取此帳號，點擊「重新登入」以恢復一般啟動；這不代表遊戲拒絕了帳號密碼。",
+    "en-US": "The isolated sign-in could not be retrieved. Select this account in Accounts and choose Sign in again to restore normal launch. This does not mean the game rejected your password."
+  },
+  "message.account.relogin.required": {
+    "zh-CN": "隔离窗口的登录状态无法恢复。请在账号管理中选中这个账号，点击「重新登录」；无需删除账号或沙盒。",
+    "zh-TW": "隔離視窗的登入狀態無法恢復。請在帳號管理中選取此帳號，點擊「重新登入」；無需刪除帳號或沙盒。",
+    "en-US": "The isolated sign-in could not be restored. Select this account in Accounts and choose Sign in again. You do not need to delete the account or sandbox."
+  },
+  "message.account.relogin.disabled": {
+    "zh-CN": "隔离窗口中的自动登录已关闭。请在账号管理中选中这个账号，点击「重新登录」，保持游戏自动登录开启，关闭游戏时不要退出账号。",
+    "zh-TW": "隔離視窗中的自動登入已關閉。請在帳號管理中選取此帳號，點擊「重新登入」，保持遊戲自動登入開啟，關閉遊戲時不要登出帳號。",
+    "en-US": "Automatic sign-in is disabled in the isolated window. Select this account in Accounts and choose Sign in again. Keep automatic sign-in enabled and close the game without logging out."
+  },
+  "message.account.relogin.incomplete": {
+    "zh-CN": "隔离窗口中的登录信息不完整。请在账号管理中选中这个账号，点击「重新登录」后保存；这不代表账号密码错误。",
+    "zh-TW": "隔離視窗中的登入資訊不完整。請在帳號管理中選取此帳號，點擊「重新登入」後儲存；這不代表帳號密碼錯誤。",
+    "en-US": "The isolated window has incomplete sign-in information. Select this account in Accounts, choose Sign in again, then save. This does not mean your password is incorrect."
+  },
+  "message.account.relogin.wrong_account": {
+    "zh-CN": "当前登录账号与待恢复账号不同，未覆盖任何账号。请登录正确账号后再保存。",
+    "zh-TW": "目前登入帳號與待恢復帳號不同，未覆寫任何帳號。請登入正確帳號後再儲存。",
+    "en-US": "The signed-in account does not match the account being recovered. Nothing was overwritten. Sign in to the intended account before saving."
+  },
+  "message.account.relogin.unchanged": {
+    "zh-CN": "还没有读到新的登录信息。请完成游戏登录、进入主菜单，再正常关闭游戏后保存；不要退出账号。",
+    "zh-TW": "尚未讀到新的登入資訊。請完成遊戲登入、進入主選單，再正常關閉遊戲後儲存；不要登出帳號。",
+    "en-US": "No refreshed sign-in information was found. Complete sign-in, reach the main menu, then close the game normally before saving. Do not log out."
+  },
+  "message.account.relogin.no_pending": {
+    "zh-CN": "没有待恢复的登录。请先选择账号并点击「重新登录」。",
+    "zh-TW": "沒有待恢復的登入。請先選擇帳號並點擊「重新登入」。",
+    "en-US": "No sign-in recovery is in progress. Select an account and choose Sign in again."
+  },
+  "prefix.mirror.batch_stalled: ": {
+    "zh-CN": "镜中自动战斗已连续5分钟没有新的匹配或结算进度，后续日常已暂停；请检查游戏后接续，已结算场数：",
+    "zh-TW": "鏡中自動戰鬥已連續5分鐘沒有新的配對或結算進度，後續日常已暫停；請檢查遊戲後接續，已結算場數：",
+    "en-US": "Mirror auto-battle has made no new matchmaking or settlement progress for 5 minutes. The queue is paused; check the game, then resume. Battles settled: "
+  },
+  "prefix.storage.path_unavailable: ": {
+    "zh-CN": "无法访问数据目录的链接目标，请检查该目录是否仍可用：",
+    "zh-TW": "無法存取資料目錄的連結目標，請檢查該目錄是否仍可用：",
+    "en-US": "The redirected data folder is unavailable. Check its destination: "
+  },
+  "prefix.storage.link: ": {
+    "zh-CN": "操作目录内部包含链接，已跳过以保护其他文件：",
+    "zh-TW": "操作目錄內部包含連結，已略過以保護其他檔案：",
+    "en-US": "A link inside the operation folder was skipped to protect other files: "
+  },
+  "prefix.updates.linked_folder: ": {
+    "zh-CN": "更新操作路径包含链接，请使用实际安装目录：",
+    "zh-TW": "更新操作路徑包含連結，請使用實際安裝目錄：",
+    "en-US": "The update path contains a link. Use the actual installation folder: "
+  },
   "message.selected_collection_verified": {
     "zh-CN": "所选收集地图已完成",
     "zh-TW": "所選收集地圖已完成",
@@ -245,6 +300,7 @@
     "en-US": "The game process changed during verification. Reconnect."
   },
   "message.未能读取当前账号的天赋次数，请重新连接后重试周收集。": {"zh-CN":"未能读取当前账号的天赋次数，请重新连接后重试周收集。","zh-TW":"未能讀取目前帳號的天賦次數，請重新連線後重試每週收集。","en-US":"Unable to read this account's Ability uses. Reconnect and retry weekly collection."},
+  "message.天赋次数暂时无法读取，周收集未完成；可重新连接后补跑，其他已选周任务继续执行。": {"zh-CN":"天赋次数暂时无法读取，周收集未完成；可重新连接后补跑，其他已选周任务继续执行。","zh-TW":"暫時無法讀取天賦次數，每週收集尚未完成；可重新連線後補跑，其他已選每週任務會繼續執行。","en-US":"Ability uses could not be read, so weekly collection is unfinished. Reconnect and retry it; other selected weekly tasks will continue."},
   "message.当前账号没有可用的吸收天赋，请启用天赋或在设置中选择步行收集。": {"zh-CN":"当前账号没有可用的吸收天赋，请启用天赋或在设置中选择步行收集。","zh-TW":"目前帳號沒有可用的吸收天賦，請啟用天賦或在設定中選擇步行收集。","en-US":"This account has no enabled Absorption Ability. Enable it or select walking collection in settings."},
   "message.mail_selection_rejected": { "zh-CN": "本次邮箱选择已失效，未继续领取。请重新连接后重试。", "zh-TW": "本次信箱選擇已失效，未繼續領取。請重新連線後重試。", "en-US": "The mail selection is no longer valid. Reconnect and retry." },
   "message.mail_selection_changed": { "zh-CN": "所选邮件已变化，未继续领取。请重新读取邮箱后重试。", "zh-TW": "所選郵件已變化，未繼續領取。請重新讀取信箱後重試。", "en-US": "The selected mail changed. Read the mailbox again before retrying." },

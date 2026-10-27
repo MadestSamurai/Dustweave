@@ -65,6 +65,17 @@ internal static class UpdateSafetyCases
         await transport.DownloadAsync(client, discovered, "0.9.1", "Lite", data, null, default);
         Check("verified cached package avoids repeat downloads", downloads == before);
         Check("successful download route is remembered", DailyJson.TryRead<DailyUpdateNetworkState>(Path.Combine(data, "updates/network.json"))?.Source == "cn");
+        string dataAlias = StoragePathCases.Junction(Path.Combine(root, "update-alias"), data);
+        try
+        {
+            var viaAlias = await transport.FetchAsync(client, dataAlias, default);
+            string sameReady = await transport.DownloadAsync(client, viaAlias, "0.9.1", "Lite", dataAlias, null, default);
+            Check("redirected data root shares signed feed, network journal and verified download", sameReady == ready && downloads == before);
+            string rawPayload = Path.Combine(ready, "inventory-delta.zip");
+            await transport.DownloadPayload(client, viaAlias, "0.9.1", dataAlias, ready, asset.FileName, rawPayload, asset.Bytes, asset.Sha256, null, default);
+            Check("inventory payload download also writes its network journal through the physical root", DailyUpdates.Verify(rawPayload, asset));
+        }
+        finally { Directory.Delete(dataAlias); }
         using var stale = new HttpClient(new Handler(_ => Json(oldSigned)));
         try { await transport.FetchAsync(stale, data, default); throw new Exception("stale accepted"); }
         catch (InvalidDataException e) { Check("previously seen version cannot silently disappear", e.Message == "updates.stale_feed"); }

@@ -103,6 +103,35 @@ static class MirrorStageCases
         await MirrorArrivalCases.Run(Path.Combine(root, "mirror-arrival"), cases);
         void Check(bool ok, string name) { if (!ok) throw new Exception(name); cases.Add(name); }
         void Reject(Action action, string name) { try { action(); } catch (InvalidDataException) { cases.Add(name); return; } throw new Exception(name); }
+        foreach (int seconds in new[] { 60, 180 })
+        using (var slow = new Scenario(Path.Combine(root, "mirror-slow-" + seconds)) { SecondsPerBattle = seconds })
+        {
+            slow.F.Workflow.Settings.Mirror.Multiplier = 1;
+            var tick = slow.F.OnDelay;
+            slow.F.OnDelay = () => { slow.F.Time += 30; tick?.Invoke(); };
+            await DailyMirror.Run(slow.F.Workflow);
+            Check(slow.F.Time > 1800 && slow.Settled == 40 && slow.Batches.Count == 1 && slow.Paid == 7,
+                "slow native 40-battle batch progresses beyond 30 minutes without resubmission: " + seconds);
+        }
+        using (var stalled = new Scenario(Path.Combine(root, "mirror-stalled")) { Hold = true })
+        {
+            stalled.F.Workflow.Settings.Mirror.Multiplier = 1;
+            var tick = stalled.F.OnDelay;
+            stalled.F.OnDelay = () => { stalled.F.Time += 30; tick?.Invoke(); };
+            StageHostException? error = null;
+            try { await DailyMirror.Run(stalled.F.Workflow); } catch (StageHostException e) { error = e; }
+            Check(error is { HoldQueue: true, Kind: "pending" } && error.Message.EndsWith("0/40") && stalled.Batches.Count == 1 && stalled.F.Time < 450,
+                "stalled Mirror pauses the queue with settled count without replaying the batch");
+            var op = stalled.F.Business.Records(stalled.F.Context).Single();
+            var wait = new DailyMirror.BatchWait(op, 0);
+            wait.Observe(op["events"]!.AsArray(), op["before"]!.AsObject(), 5);
+            wait.Observe(op["events"]!.AsArray(), op["before"]!.AsObject(), 299);
+            Check(wait.Expired(306), "repeated identical Mirror replies cannot extend the inactivity window");
+            stalled.Hold = false; stalled.SecondsPerBattle = 180;
+            await DailyMirror.Run(stalled.F.Workflow);
+            Check(stalled.Settled == 40 && stalled.Batches.Count == 1 && stalled.Paid == 7 && stalled.F.Time > 7000,
+                "resumed slow batch completes without resubmission or a 30-minute recovery cutoff");
+        }
         var command = new BD2Daily.Live.Command { Kind = "native_click", SurfaceId = 1, TargetId = 2 };
         var native = new BD2Daily.Live.Frame { Scene = "Map3001_001", Surfaces = [new() { Id = 1, Type = "BattleAutoSettingPopupUI", Targets = [new() { Id = 2, Field = "_currencyButtonOK" }] }] };
         Check(BD2Daily.Live.LiveProtocol.RequiresMirrorPeriod(command, native), "Mirror auto confirmation is checked before native dispatch");

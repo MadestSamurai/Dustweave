@@ -50,6 +50,24 @@ public partial class MainWindow
                     LoginAccountText.Text == L.Get("account.not_signed_in"), "Missing sign-in or backup offers an invalid action.");
                 RefreshAccounts(before);
                 AccountsGrid.SelectedItem = rows[1];
+                Check(!ReloginButton.IsEnabled, "Manual sign-in recovery must not replace a running game's login.");
+                var selectedAccount = rows[1].Account;
+                RefreshAccounts(before with { GameRunning = false });
+                Check(ReloginButton.IsEnabled, "Closed game must offer a recovery route independent of sandbox export.");
+                fixture.LoginRecovery = new(selectedAccount.SlotNumber, selectedAccount.AccountKey, selectedAccount.Name, new string('c', 64), DateTimeOffset.UtcNow);
+                RefreshAccounts(before with { GameRunning = false, CurrentKey = selectedAccount.AccountKey });
+                Check(LoginRecoveryPanel.IsVisible && FinishLoginRecoveryButton.IsEnabled && !SaveAccountButton.IsEnabled && !LoginNewButton.IsEnabled,
+                    "Recovery must expose the selected-account save flow without an ambiguous second save action.");
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                Capture("accounts-login-recovery-" + L.Code);
+                RefreshAccounts(before with { GameRunning = false, CurrentKey = new string('f', 64) });
+                Check(!FinishLoginRecoveryButton.IsEnabled && LoginRecoveryText.Text == L.Get("account.relogin.pending_wrong", selectedAccount.Name),
+                    "Wrong-account recovery must explain why saving is unavailable.");
+                RefreshAccounts(before with { GameRunning = true, CurrentKey = selectedAccount.AccountKey });
+                Check(!FinishLoginRecoveryButton.IsEnabled, "Recovery must wait for normal game exit before saving.");
+                fixture.LoginRecovery = null;
+                RefreshAccounts(before);
+                AccountsGrid.SelectedItem = rows[1];
                 Check(SandboxRepairButton.IsEnabled && SandboxRepairButton.Visibility == Visibility.Visible && (string)SandboxRepairButton.Content == L.Get("sandbox.manage.title"), "Isolated launch must follow the highlighted saved account in every language.");
                 var selections = rows.Select(r => r.Selected).ToArray();
                 AccountsGrid.SelectedItem = rows[2];
@@ -161,6 +179,7 @@ public partial class MainWindow
         }
         finally
         {
+            fixture.LoginRecovery = null;
             Search.Clear();
             DailyJson.Write(Path.Combine(root, "accounts.json"), saved);
             RefreshAccounts(before);

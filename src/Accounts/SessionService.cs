@@ -242,6 +242,25 @@ internal sealed class SessionService
         return GameLauncher.LaunchDirect(executable);
     }
 
+    // Manual recovery is independent of sandbox export and does not allocate a
+    // new slot. Preserve the ordinary session before asking the game to sign in.
+    internal void PrepareManualLogin()
+    {
+        string executable = GameLauncher.ResolveExecutable();
+        GameLauncher.ValidateLaunchContext(executable);
+        var status = SessionRegistry.GetStatus();
+        if (status.GameRunning || status.StarterRunning)
+            throw new SessionManagerException("游戏或启动器仍在运行，无需重复启动。");
+        if (SessionRegistry.HasPendingLauncherToken())
+            throw new SessionManagerException("检测到尚未被游戏消费的启动器登录令牌，请先完成启动器登录。");
+        if (status.Complete)
+        {
+            var current = SessionRegistry.Capture("manual-login-recovery");
+            SynchronizeCaptured(current);
+            SessionSwitcher.PrepareLogin(_vault, current);
+        }
+    }
+
     internal ActivationResult RecoverPreviousSession(bool launch)
     {
         string? executable = launch ? GameLauncher.ResolveExecutable() : null;

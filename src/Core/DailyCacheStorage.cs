@@ -23,8 +23,8 @@ public static class DailyCacheStorage
 {
     public static IReadOnlyList<string> Areas { get; } = Array.AsReadOnly(new[] { "suite-cache", "trade/catalogs", "rules", "live/prepared", "live/binding-cache" });
     private static string Configuration(string root) => Path.Combine(root, "cache-location.json");
-    public static string Location(string root) => Accounts.SandboxProcessScope.CurrentBox.Length == 0 && DailyJson.TryRead<DailyCacheLocation>(Configuration(root)) is { Path.Length: > 0 } value ? Path.GetFullPath(value.Path) : Path.GetFullPath(root);
-    private static string[] Roots(string root) => Accounts.SandboxProcessScope.CurrentBox.Length != 0 ? [Path.GetFullPath(root)] : new[] { Path.GetFullPath(root), Location(root) }.Concat(DailyJson.TryRead<DailyCacheLocation>(Configuration(root))?.Retired ?? []).Select(Path.GetFullPath).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+    public static string Location(string root) => DailyStoragePath.ResolveRoot(Accounts.SandboxProcessScope.CurrentBox.Length == 0 && DailyJson.TryRead<DailyCacheLocation>(Configuration(root)) is { Path.Length: > 0 } value ? value.Path : root);
+    private static string[] Roots(string root) => Accounts.SandboxProcessScope.CurrentBox.Length != 0 ? [DailyStoragePath.ResolveRoot(root)] : new[] { root, Location(root) }.Concat(DailyJson.TryRead<DailyCacheLocation>(Configuration(root))?.Retired ?? []).Select(DailyStoragePath.ResolveRoot).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
     public static string Area(string root, string name)
     {
         if (!Areas.Contains(name)) throw new ArgumentException("Unknown cache area", nameof(name));
@@ -50,8 +50,7 @@ public static class DailyCacheStorage
     }
     public static void NoLinks(string path)
     {
-        for (string? part = Path.GetFullPath(path); part != null; part = Path.GetDirectoryName(part))
-            if ((File.Exists(part) || Directory.Exists(part)) && (File.GetAttributes(part) & FileAttributes.ReparsePoint) != 0) throw new IOException("storage.link");
+        DailyStoragePath.RequireNoLinks(path);
     }
     internal static List<DailyStorageItem> Files(string root, CancellationToken cancel, ref int skipped)
     {
@@ -87,7 +86,7 @@ public static class DailyCacheStorage
     internal static DailyStorageReport ScanRetention(string root, DailyLogPolicy policy, CancellationToken cancel, bool fixedRoot=false, IReadOnlyList<DailyStorageItem>? inventory=null, string? captureControl=null) => Scan(root,cancel,true,fixedRoot,inventory,policy,captureControl);
     private static DailyStorageReport Scan(string root, CancellationToken cancel, bool includeOtherData, bool fixedRoot = false, IReadOnlyList<DailyStorageItem>? scannedFiles = null, DailyLogPolicy? policy=null, string? captureControl=null)
     {
-        root = Path.GetFullPath(root); string cache = fixedRoot ? root : Location(root); int skipped = 0;
+        root = DailyStoragePath.ResolveRoot(root); string cache = fixedRoot ? root : Location(root); int skipped = 0;
         int days=(policy??DailyLogCleanup.Load(root)).Normalize().Days;
         string[] roots=fixedRoot ? [root] : Roots(root);
         var all = new List<DailyStorageItem>();
@@ -178,6 +177,7 @@ public static class DailyCacheStorage
     public static Task<DailyLogCleanupResult> CleanAsync(string root, CancellationToken cancel = default) => CleanLocalAsync(root, false, cancel);
     internal static Task<DailyLogCleanupResult> CleanLocalAsync(string root, bool fixedRoot, CancellationToken cancel, DailyLogPolicy? policy=null, string? captureControl=null) => Task.Run(() =>
     {
+        root = DailyStoragePath.ResolveRoot(root);
         using var lease = Lease(root, true);
         var plan = Scan(root, cancel, false, fixedRoot, policy:policy,captureControl:captureControl);
         var result = DeleteUnits(plan.Units, cancel);
@@ -225,7 +225,7 @@ public static class DailyCacheStorage
     }
     public static Task<DailyCacheMove> MoveAsync(string root, string destination, CancellationToken cancel = default, IProgress<long>? progress = null) => Task.Run(() =>
     {
-        root = Path.GetFullPath(root); destination = Path.GetFullPath(destination);
+        root = DailyStoragePath.ResolveRoot(root); destination = DailyStoragePath.ResolveRoot(destination);
         using var lease = Lease(root, true);
         string previous = Location(root);
         var roots=Roots(root);

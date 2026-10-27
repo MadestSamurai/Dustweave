@@ -1,4 +1,11 @@
 idle=未运行
+account.relogin.collection_failed=未能收回隔离窗口的登录状态。可在账号管理中选中此账号，点击「重新登录」以恢复普通启动；这不代表游戏拒绝了账号密码。
+account.relogin.required=隔离窗口的登录状态无法恢复。请在账号管理中选中这个账号，点击「重新登录」；无需删除账号或沙盒。
+account.relogin.disabled=隔离窗口中的自动登录已关闭。请在账号管理中选中这个账号，点击「重新登录」，保持游戏自动登录开启，关闭游戏时不要退出账号。
+account.relogin.incomplete=隔离窗口中的登录信息不完整。请在账号管理中选中这个账号，点击「重新登录」后保存；这不代表账号密码错误。
+account.relogin.wrong_account=当前登录账号与待恢复账号不同，未覆盖任何账号。请登录正确账号后再保存。
+account.relogin.unchanged=还没有读到新的登录信息。请完成游戏登录、进入主菜单，再正常关闭游戏后保存；不要退出账号。
+account.relogin.no_pending=没有待恢复的登录。请先选择账号并点击「重新登录」。
 no_selected_collection_maps=未选择当前可进入的收集地图
 selected_collection_verified=所选收集地图已完成
 preparing=正在准备

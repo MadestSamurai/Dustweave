@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 1.5.5 — 2026-10-27
+
+- 镜中之战按实际进展等待，取消固定 30 分钟上限；长时间无进展时暂停队列并保留接续状态。
+- 新增账号重新登录、保存并重试的恢复入口，支持数据与缓存根目录的合法重定向。
+- 修复天赋读取异常中断其他周任务、领地绕行放松碰撞检查，以及覆盖安装误用旧资源的问题。
+- Fixes long Mirror Battle batches, sign-in recovery, redirected storage roots, weekly task isolation, Territory obstacle routing and stale package resources.
+- [完整说明 / Full notes](docs/releases/1.5.5.md)
+
 ## 1.5.3 — 2026-10-26
 
 - 紧急修复 1.5.2 新增检查误拦截正常日常入口的问题；教材奖励列表的加载保护不再影响其他页面。

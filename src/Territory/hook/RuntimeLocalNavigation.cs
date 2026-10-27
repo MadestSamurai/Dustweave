@@ -9,7 +9,7 @@ namespace BD2Territory.Runtime
  internal sealed partial class RuntimeEngine
  {
   private AdaptiveLocalRoute localSearch;private Vector3[] localRoute=new Vector3[0];private int localIndex,localTarget;
-  private bool localMoving,localFine,localTrial;private Vector3 localOrigin;private long localPlanAt;private readonly LocalMotionProgress localMotion=new LocalMotionProgress();
+  private bool localMoving,localFine,localRescanned;private Vector3 localOrigin;private long localPlanAt;private readonly LocalMotionProgress localMotion=new LocalMotionProgress();
   private readonly LocalRecoveryBudget localBudget=new LocalRecoveryBudget();private readonly LocalObstructionMemory localBlocked=new LocalObstructionMemory();
   private static RoutePoint Point(Vector3 p)=>new RoutePoint(p.x,p.y,p.z);
   private static Vector3 Vector(RoutePoint p)=>new Vector3((float)p.X,(float)p.Y,(float)p.Z);
@@ -17,20 +17,20 @@ namespace BD2Territory.Runtime
   private RoutePoint? LocalSample(RoutePoint p)
   {
    var ground=CachedGround(p);if(!ground.HasValue)return null;var point=Vector(ground.Value);
-   if(!localBlocked.SampleAllowed(Point(localOrigin),Point(point))||!localTrial&&!CachedTraversalClear(point))return null;
+   if(!localBlocked.SampleAllowed(Point(localOrigin),Point(point))||!CachedTraversalClear(point))return null;
    return ground;
   }
   private bool LocalEdge(RoutePoint a,RoutePoint b)
   {
-   return localBlocked.EdgeAllowed(a,b)&&StaticLocalEdge(a,b,false,localTrial);
+   return localBlocked.EdgeAllowed(a,b)&&StaticLocalEdge(a,b,false);
   }
   private bool PlanEdge(RoutePoint a,RoutePoint b)
   {
    // Recovery exclusions belong to this attempt; never memoize them as permanent terrain.
    if(!localBlocked.EdgeAllowed(a,b))return false;
-   return localTrial?StaticLocalEdge(a,b,true,true):localEdges.Get(new RouteEdgeKey(a,b),DateTime.UtcNow.Ticks,()=>StaticLocalEdge(a,b,true,false));
+   return localEdges.Get(new RouteEdgeKey(a,b),DateTime.UtcNow.Ticks,()=>StaticLocalEdge(a,b,true));
   }
-  private bool StaticLocalEdge(RoutePoint a,RoutePoint b,bool cached,bool trial)
+  private bool StaticLocalEdge(RoutePoint a,RoutePoint b,bool cached)
   {
    var from=Vector(a);var to=Vector(b);if(!SurfaceSegmentAllowed(from,to))return false;
    int steps=Math.Max(1,(int)Math.Ceiling(FlatDistance(from,to)/.1f));var previous=from;
@@ -38,7 +38,7 @@ namespace BD2Territory.Runtime
    {var wanted=Vector3.Lerp(from,to,(float)i/steps);wanted.y=previous.y;Vector3 ground;
     if(cached){var found=CachedGround(Point(wanted));if(!found.HasValue)return false;ground=Vector(found.Value);}
     else if(!GroundPoint(wanted,out ground,false))return false;
-    if(!TraversalRules.SurfaceChange(ground.y-previous.y,FlatDistance(previous,ground),StepHeight,SlopeLimit,Skin)||!trial&&(!TraversalClear(ground)||Obstacle(previous,ground)!=null))return false;previous=ground;}
+    if(!TraversalRules.SurfaceChange(ground.y-previous.y,FlatDistance(previous,ground),StepHeight,SlopeLimit,Skin)||!TraversalClear(ground)||Obstacle(previous,ground)!=null)return false;previous=ground;}
    return Math.Abs(previous.y-to.y)<=Math.Max(.12f,Skin+.03f);
   }
   private bool InInteractionRange(Component target,Vector3 point)
@@ -61,8 +61,16 @@ namespace BD2Territory.Runtime
     yield return p;
    }
   }
-  private void ResetLocalRecovery(){localBudget.Reset();localBlocked.Clear();localTarget=0;localFine=false;localTrial=false;}
+  private void ResetLocalRecovery(){localBudget.Reset();localBlocked.Clear();localTarget=0;localFine=false;localRescanned=false;}
   private void ClearLocalMotion(){localSearch=null;localMoving=false;localRoute=new Vector3[0];localIndex=0;}
+  private bool RescanLocalRoute(TerritorySnapshot s,long now,string reason)
+  {
+   if(localRescanned)return false;localRescanned=true;
+   // A failed prediction can mean stale/unloaded geometry. Retry fresh, with the
+   // wider search area, but never remove capsule clearance or wall sweeps.
+   localGround.Clear();localClear.Clear();localEdges.Clear();localPaths.Clear();
+   return BeginLocalRoute(walkTarget,s,now,reason);
+  }
   private bool BeginLocalRoute(Component target,TerritorySnapshot s,long now,string reason)
   {
    if(target==null||player==null||move==null)return false;
@@ -89,7 +97,7 @@ namespace BD2Territory.Runtime
   {localRoute=path.Select(Vector).ToArray();finalDestination=localRoute.Last();localIndex=1;localMotion.Begin(now,Point(player.transform.position));}
   private void RetryLocal(TerritorySnapshot s,long now,string reason,Vector3 blocked,bool stalled=false)
   {
-   move.ClearMove();move.StopMove();InvalidateLocalArea(blocked);localPaths.Forget(localTarget);if(stalled){localBlocked.Record(Point(blocked));localTrial=false;}
+   move.ClearMove();move.StopMove();InvalidateLocalArea(blocked);localPaths.Forget(localTarget);if(stalled)localBlocked.Record(Point(blocked));
    LocalStorage.Log("路线重算 reason="+reason+" observedStall="+stalled+" from="+player.transform.position.ToString("F3")+" point="+blocked.ToString("F3")+" motion="+localMotion+" exclusions="+localBlocked);CaptureFailure(reason);
    if(!BeginLocalRoute(walkTarget,s,now,reason))SkipWalkTarget(walkTarget,s,now,reason);
   }
@@ -102,14 +110,14 @@ namespace BD2Territory.Runtime
    if(state=="DontMove"||state=="Anchored"){move.ClearMove();localMotion.Begin(now,Point(player.transform.position));s.Reason="等待游戏恢复角色移动";return;}
    if(localSearch!=null)
    {
-    if(now-localPlanAt>TimeSpan.FromSeconds(15).Ticks){if(!localTrial){localTrial=true;if(BeginLocalRoute(walkTarget,s,now,"native_probe_after_prediction_timeout"))return;}SkipWalkTarget(walkTarget,s,now,"local_planning_budget");return;}
+    if(now-localPlanAt>TimeSpan.FromSeconds(15).Ticks){if(RescanLocalRoute(s,now,"rescan_after_prediction_timeout"))return;SkipWalkTarget(walkTarget,s,now,"local_planning_budget");return;}
     // A slow wide detour is not evidence of a narrow passage. Keep the coarse
     // frontier until it is exhausted; restarting at 0.1 m multiplies area by 16.
     // Authored bridge guides cover narrow crossings without refining the whole map.
     var status=localSearch.Step(256,6);localFine=localSearch.Cell<.4;s.Reason=(localFine?"细化窄路网格 · ":"扫描地面和碰撞体 · ")+localSearch.Expanded+" 个路点";
     if(status==RouteSearchState.Searching)return;
     if(status==RouteSearchState.Exhausted)
-    {if(!localTrial){localTrial=true;if(BeginLocalRoute(walkTarget,s,now,"native_traversal_probe"))return;}int count=localSearch.Expanded;LocalStorage.Log("实体局部规划未找到通路 target="+walkTarget.GetInstanceID()+" expanded="+count);if(localBudget.Plans<2&&BeginLocalRoute(walkTarget,s,now,"expand_local_area"))return;SkipWalkTarget(walkTarget,s,now,"local_route_exhausted");return;}
+    {int count=localSearch.Expanded;if(RescanLocalRoute(s,now,"rescan_after_route_exhausted"))return;LocalStorage.Log("实体局部规划未找到通路 target="+walkTarget.GetInstanceID()+" expanded="+count);SkipWalkTarget(walkTarget,s,now,"local_route_exhausted");return;}
     var path=localSearch.Path;localPaths.Save(localTarget,now,path);SetLocalRoute(path,now);
     LocalStorage.Log("实体局部路线就绪 target="+walkTarget.GetInstanceID()+" points="+localRoute.Length+" goal="+localRoute.Last()+" planMs="+((now-localPlanAt)/TimeSpan.TicksPerMillisecond)+" expanded="+localSearch.Expanded+" cell="+localSearch.Cell+" floorCache="+localGround.Hits+"/"+localGround.Misses+" edgeCache="+localEdges.Hits+"/"+localEdges.Misses);localSearch=null;
    }
@@ -124,7 +132,7 @@ namespace BD2Territory.Runtime
    var dest=localRoute[localIndex];var delta=dest-from;delta.y=0;
    var ahead=from+Vector3.ClampMagnitude(delta,.7f);
    var obstacle=Obstacle(from,ahead);
-   if(obstacle!=null){blockingCollider=obstacle;s.Reason="预测存在接触，按游戏正常移动验证通行";}else blockingCollider=null;
+   if(obstacle!=null){blockingCollider=obstacle;RetryLocal(s,now,"local_obstacle_changed",ahead);return;}else blockingCollider=null;
    double remaining=FlatDistance(from,dest);for(int i=localIndex+1;i<localRoute.Length;i++)remaining+=FlatDistance(localRoute[i-1],localRoute[i]);
    if(localMotion.Stalled(now,Point(from),remaining))
    {
@@ -134,7 +142,7 @@ namespace BD2Territory.Runtime
     if(TryEscape(s,now,c,blockingCollider))return;
     RetryLocal(s,now,"local_motion_stalled",from+delta.normalized*.35f,true);return;
    }
-   if(!localBlocked.EdgeAllowed(Point(from),Point(dest))||!StaticLocalEdge(Point(from),Point(dest),false,true)){RetryLocal(s,now,"local_ground_changed",dest);return;}
+   if(!LocalEdge(Point(from),Point(dest))){RetryLocal(s,now,"local_passage_changed",dest);return;}
    // Mounting changes speed, not the movement controller. A* keeps steering via CharController.
    UpdateVehicle(now,c,remaining);
    if(vehiclePending){move.StopMove();localMotion.Begin(now,Point(player.transform.position));return;}

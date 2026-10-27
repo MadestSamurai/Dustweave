@@ -12,8 +12,9 @@ public static class DailySandboxSessions
         public string AuthenticationStamp { get; init; } = "";
         public DateTimeOffset ObservedUtc { get; init; }
         public int Schema { get; init; }
+        public string LoginState { get; init; } = "";
     }
-    internal const string RenewLoginMessage = "这个隔离账号的自动登录已失效或关闭，未重新写入旧凭据。请在普通窗口重新登录并保存此账号，再打开隔离窗口。";
+    internal const string RenewLoginMessage = "account.relogin.required";
 
     internal static void RequireFreshReplacement(SessionSlot replacement, string disabledStamp, DateTimeOffset observedUtc)
     {
@@ -50,6 +51,7 @@ public static class DailySandboxSessions
         if (observed != null && DailyIdentity.MemberKey(SessionIdentity.GetMemberId(observed) ?? "") != account) observed = null;
         DailyJson.Write(Path.Combine(TransferDirectory,nonce+".json"),new ExportResult(account,nonce,complete) {
             Schema = 2,
+            LoginState = status.Complete ? "complete" : status.Entries.Any(e => e.Enabled == false) ? "disabled" : "incomplete",
             AuthenticationStamp = identity.Stamp.Length > 0 ? identity.Stamp : observed == null ? "" : SessionRegistry.AuthenticationStamp(observed),
             ObservedUtc = observed?.CapturedAtUtc ?? binding.ImportedSessionUtc
         });
@@ -119,7 +121,7 @@ public static class DailySandboxSessions
         {
             await DailySandbox.Run(installation,"Start.exe",["/box:"+box,"/silent","/wait",Path.GetFullPath(executable),ExportSwitch,account,nonce],token).ConfigureAwait(false);
             var result=DailyJson.TryRead<ExportResult>(resultPath);
-            if(result?.Account!=account || result.Nonce!=nonce) throw new IOException("未收到隔离登录状态，已停止启动，避免使用旧凭据。");
+            if(result?.Account!=account || result.Nonce!=nonce) throw new IOException("account.relogin.collection_failed");
             if (!result.Complete)
             {
                 if (result.Schema != 2) throw new InvalidOperationException(RenewLoginMessage);
@@ -127,7 +129,12 @@ public static class DailySandboxSessions
                 if (replacement == null || DailyIdentity.MemberKey(SessionIdentity.GetMemberId(replacement) ?? "") != account)
                     throw new InvalidOperationException(RenewLoginMessage);
                 replacement = SessionService.LatestSameAccount(replacement, vault.TryLoadFixedSlot);
-                RequireFreshReplacement(replacement, result.AuthenticationStamp, result.ObservedUtc);
+                try { RequireFreshReplacement(replacement, result.AuthenticationStamp, result.ObservedUtc); }
+                catch (InvalidOperationException)
+                {
+                    throw new InvalidOperationException(result.LoginState == "disabled" ? "account.relogin.disabled" :
+                        result.LoginState == "incomplete" ? "account.relogin.incomplete" : RenewLoginMessage);
+                }
                 WriteAudit(account, "disabled-replaced-by-new-login", result.AuthenticationStamp, SessionRegistry.AuthenticationStamp(replacement));
                 return;
             }

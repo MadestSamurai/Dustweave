@@ -18,6 +18,7 @@ static class WeeklyIsolationCases
         public readonly List<(string Stage, JsonObject Value)> Progress = [];
         private DailyWeeklyRoute Runner() => new(H.Workflow, (stage, value) => Progress.Add((stage, value.DeepClone().AsObject())));
         public Action? BeforeQuery;
+        public Action<List<JsonObject>>? ChangeReadings;
         public bool NpcEnabled, RejectNpc, HuntingOffer, QueryFailsFirst;
         public bool WildQuestChain;
         public bool WalkingBlocked;
@@ -204,6 +205,7 @@ static class WeeklyIsolationCases
                         ("transform.position.x", id - 100), ("transform.position.y", 0), ("transform.position.z", 0));
                     reward["InstanceId"] = id + 1000; rows.Add(reward);
                 }
+            ChangeReadings?.Invoke(rows);
             return rows.ToArray();
         }
         JsonObject NpcState()
@@ -652,6 +654,57 @@ static class WeeklyIsolationCases
             var r=await f.RunNpc();
             Check(B(r["stages"]!["weekly_mainline"]!["waiting_daily_reset"])&&S(r["stages"]!["weekly_npc"]!["state"])=="completed"
                 &&S(r["stages"]!["weekly_steal"]!["state"])=="completed", "absorption stop does not cancel NPC quests or theft in the shared route");
+        }
+        foreach (string failure in new[] { "missing-limits", "missing-counts", "native-error", "invalid-json", "invalid-limit", "late-counts", "after-absorption" })
+        using (var f = new Fixture(Path.Combine(root, "weekly-talent-" + failure)))
+        {
+            void BreakReadings(List<JsonObject> readings)
+            {
+                if (failure == "after-absorption" && f.Used == 0) return;
+                var limits = readings.Single(r => S(r["Id"]) == "mainline.talent_limits");
+                switch (failure)
+                {
+                    case "missing-limits": readings.Remove(limits); break;
+                    case "missing-counts": case "late-counts": readings.RemoveAll(r => S(r["Id"]) == "mainline.talent_counts"); break;
+                    case "native-error": case "after-absorption": limits["Error"] = "TalentSkill unavailable: fixture"; break;
+                    case "invalid-json": limits["Values"]![0]!["Json"] = "{"; break;
+                    case "invalid-limit": limits["Values"]![0]!["Json"] = "[{\"Kind\":4,\"Group\":405}]"; break;
+                }
+            }
+            if (failure == "after-absorption") f.AbsorbDrops = true;
+            if (failure == "late-counts") f.BeforeQuery = () => f.ChangeReadings = BreakReadings;
+            else f.ChangeReadings = BreakReadings;
+            var result = await f.RunNpc();
+            var collection = result["stages"]!["weekly_mainline"]!;
+            Check(S(collection["state"]) == "partial" && S(collection["reason"]) == "talent_data_unavailable"
+                && !B(collection["waiting_daily_reset"]) && collection["pending_maps"]!.AsArray().Count > 0
+                && collection["talent_observation"] is JsonObject,
+                "unavailable talent data retains collection pending state and specific observations: " + failure);
+            Check(S(result["stages"]!["weekly_npc"]!["state"]) == "completed" && f.Cleared.Count == 3
+                && S(result["stages"]!["weekly_steal"]!["state"]) == "completed"
+                && f.H.Box.Commands.Count(c => S(c["Kind"]) == "mainline_talent" && N(c["Value"]) / 100 is 4 or 20) == (failure == "after-absorption" ? 1 : 0),
+                "talent read failure does not cancel NPC/theft or spend unknown allowance: " + failure);
+            f.ChangeReadings = null; f.BeforeQuery = null; f.AbsorbDrops = true; f.MapTwoPending = false;
+            var retry = await f.Run();
+            Check(S(retry["stages"]!["weekly_mainline"]!["state"]) == "completed" && f.Used == 1,
+                "restored readings allow collection to run without clearing the previous failure: " + failure);
+        }
+        using (var f = new Fixture(Path.Combine(root, "weekly-walking-no-talent-data")) { Pending = false })
+        {
+            f.H.Workflow.Settings.Weekly.WalkCollect = true;
+            f.ChangeReadings = rows => rows.RemoveAll(r => S(r["Id"]) is "mainline.talent_counts" or "mainline.talent_limits");
+            var r = await f.Run();
+            Check(S(r["state"]) == "completed", "walking collection without capture targets does not require unused talent allowance");
+        }
+        using (var f = new Fixture(Path.Combine(root, "weekly-capture-data-unavailable")) { Pending = false })
+        {
+            f.H.Workflow.Settings.Weekly.WalkCollect = true; f.CapturesPending.Add(1);
+            f.ChangeReadings = rows => rows.RemoveAll(r => S(r["Id"]) == "mainline.talent_limits");
+            var r = await f.RunNpc();
+            Check(S(r["stages"]!["weekly_mainline"]!["reason"]) == "talent_data_unavailable"
+                && N(r["stages"]!["weekly_mainline"]!["talent_observation"]!["kind"]) == 20
+                && S(r["stages"]!["weekly_npc"]!["state"]) == "completed" && S(r["stages"]!["weekly_steal"]!["state"]) == "completed",
+                "walking capture quota failure remains local to collection");
         }
         using (var f = new Fixture(Path.Combine(root, "weekly-deferred-then-quota")))
         {

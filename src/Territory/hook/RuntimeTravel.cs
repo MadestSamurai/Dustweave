@@ -61,7 +61,7 @@ namespace BD2Territory.Runtime
     if(localMoving||!c.UseNavMesh)
     {
      Vector3 end,landing;
-     if(!GroundPoint(p,out end)||!StaticLocalEdge(Point(from),Point(end),false,false)||!GroundPoint(from+direction*1.2f,out landing))continue;
+     if(!GroundPoint(p,out end)||!StaticLocalEdge(Point(from),Point(end),false)||!GroundPoint(from+direction*1.2f,out landing))continue;
      cost=FlatDistance(landing,finalDestination);
     }
     else

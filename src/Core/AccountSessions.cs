@@ -24,6 +24,10 @@ public interface IAccountSessions
     void LaunchCurrent() => throw new NotSupportedException();
     void LoginNew();
     void Recover();
+    DailyLoginRecovery? LoginRecovery => null;
+    void BeginLoginRecovery(int slot, string key) => throw new NotSupportedException();
+    DailyLoginRecovery FinishLoginRecovery(bool launchOrdinary = false) => throw new NotSupportedException();
+    void CancelLoginRecovery() => throw new NotSupportedException();
 }
 // Reuses the original session service and vault. No session bytes leave this adapter.
 public sealed class AccountSessions : IAccountSessions, IDisposable
@@ -177,6 +181,38 @@ public sealed class AccountSessions : IAccountSessions, IDisposable
         DailySandbox.RequireHost();
         Own();
         service.RecoverPreviousSession(launch: false);
+    }
+    public DailyLoginRecovery? LoginRecovery => DailyLoginRecovery.Read(DailyIdentity.DataRoot);
+    public void BeginLoginRecovery(int slot, string key)
+    {
+        DailySandbox.RequireHost(); Own(); RequireIdentity(slot, key);
+        DailySandbox.RequireAccountAvailable(key);
+        var saved = SessionService.LatestSameAccount(vault.LoadFixedSlot(slot), vault.TryLoadFixedSlot);
+        service.PrepareManualLogin();
+        DailyJson.Write(DailyLoginRecovery.PathFor(DailyIdentity.DataRoot), new DailyLoginRecovery(slot, key,
+            saved.Alias, SessionRegistry.AuthenticationStamp(saved), DateTimeOffset.UtcNow));
+        // No collection/import of the disabled sandbox session in this route.
+        service.LaunchPreparedLogin();
+    }
+    public DailyLoginRecovery FinishLoginRecovery(bool launchOrdinary = false)
+    {
+        DailySandbox.RequireHost(); Own();
+        var recovery = LoginRecovery ?? throw new InvalidOperationException("account.relogin.no_pending");
+        RequireIdentity(recovery.Slot, recovery.Account);
+        DailySandbox.RequireAccountAvailable(recovery.Account);
+        var current = SessionRegistry.Capture("manual-login-recovery");
+        recovery.ValidateReplacement(current);
+        service.SaveCurrentToSlot(recovery.Slot, recovery.Name, SessionIdentity.GetMemberId(current));
+        // This explicit, freshly authenticated retry must not depend on the
+        // sandbox exporter that caused the user to enter recovery in the first place.
+        if (launchOrdinary) service.UseSlotAndLaunch(recovery.Slot);
+        File.Delete(DailyLoginRecovery.PathFor(DailyIdentity.DataRoot));
+        return recovery;
+    }
+    public void CancelLoginRecovery()
+    {
+        DailySandbox.RequireHost(); Own();
+        File.Delete(DailyLoginRecovery.PathFor(DailyIdentity.DataRoot));
     }
     public void Dispose()
     {

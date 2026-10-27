@@ -21,6 +21,13 @@ static class QueueEngineCases
         var root = Root();
         var host = new FakeHost();
         {
+            var stalled = new FakeHost();
+            stalled.After = (operation, stage) => { if (operation == "execute" && stage == "mirror") throw new StageHostException("pending", "mirror.batch_stalled: 35/40") { HoldQueue = true }; };
+            var held = await Run(stalled, Root(), ["mirror", "daily_dispatch"]);
+            Check(State(held) == "paused" && Stage(held, "mirror") == "recovery_required" && !stalled.Executed.Contains("daily_dispatch"),
+                "Mirror inactivity never dispatches another stage into the still-running battle");
+        }
+        {
             var progressHost = new FakeHost { FineProgress = true };
             var live = await Run(progressHost, Root(), ["mail"]);
             var p = live["items"]![0]!["progress"]!;

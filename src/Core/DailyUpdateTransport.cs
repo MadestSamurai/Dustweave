@@ -18,6 +18,7 @@ public sealed class DailyUpdateTransport(DailyUpdateTrust trust)
 
     public async Task<DailyVerifiedUpdate> FetchAsync(HttpClient client, string root, CancellationToken token)
     {
+        root = DailyStoragePath.ResolveRoot(root);
         var state = DailyUpdateJson.TryRead<DailyUpdateNetworkState>(Path.Combine(root, "updates", "network.json")) ?? new();
         var attempts = new List<DailyUpdateAttempt>();
         // Only small manifests are probed. Compare versions so a stale mirror cannot win a race.
@@ -63,6 +64,7 @@ public sealed class DailyUpdateTransport(DailyUpdateTrust trust)
     public async Task<string> DownloadAsync(HttpClient client, DailyVerifiedUpdate verified, string version, string flavor,
         string root, IProgress<int>? progress, CancellationToken token, string? installedDirectory = null, bool allowDelta = true)
     {
+        root = DailyStoragePath.ResolveRoot(root);
         using var storage = DailyUpdateHost.AcquireStorage(root);
         var feed = DailyUpdateSignatures.Verify(verified.Signed, trust);
         var release = DailyUpdates.WithBaselines(feed, feed.Releases.Single(r => r.Version == version));
@@ -130,6 +132,7 @@ public sealed class DailyUpdateTransport(DailyUpdateTrust trust)
         string directory, string fileName, string destination, long bytes, string hash, IProgress<int>? progress, CancellationToken token,
         string? relativePath = null)
     {
+        root = DailyStoragePath.ResolveRoot(root);
         DailyUpdates.EnsureNoLinks(destination);
         if (File.Exists(destination) && await Task.Run(() => DailyUpdateDeltaPackage.VerifyFile(destination, bytes, hash), token)) return;
         string partial = destination + ".partial";

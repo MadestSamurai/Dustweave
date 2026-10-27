@@ -3,6 +3,7 @@ namespace Dustweave;
 
 public sealed class StageHostException(string kind, string message) : Exception(message)
 {
+    public bool HoldQueue { get; init; }
     public string Kind { get; } = kind;
     public DailyPotionLimit? PotionLimit { get; init; }
 }
@@ -398,6 +399,12 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                     if (error.Data["stage_result"] is JsonObject confirmed) item["result"] = confirmed.DeepClone();
                     item["state"] = error.Kind == "pending" ? "recovery_required" : "blocked";
                     item["error"] = error.Message;
+                    if (error.HoldQueue)
+                    {
+                        item["finished"] = DateTime.UtcNow.Ticks;
+                        Save();
+                        throw;
+                    }
                 }
                 item["finished"] = DateTime.UtcNow.Ticks;
                 Save();

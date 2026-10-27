@@ -478,6 +478,8 @@ public partial class MainWindow : Window
     private void ShowError(Exception e)
     {
         if (e is DailyGameExitedException) { ShowOperationStopped(e.Message); return; }
+        if (e.Message.StartsWith("account.relogin.", StringComparison.Ordinal) && !IsSandboxWindow)
+            WorkspaceTabs.SelectedItem = AccountsTab;
         if (RunTab.Content == parallelPanel) parallelPanel.Feedback(e.Message);
         if (WorkspaceTabs.SelectedItem == RunTab)
             dailyPanel.ShowOperationError(e.Message, DailyUserText.Error(e));
@@ -503,7 +505,10 @@ public partial class MainWindow : Window
         if (Unavailable || sender is not Button { DataContext: AccountRow { Account.Valid: true } row })
             return;
         if (Confirm(L.Get("account.enter_confirm", row.Name)))
+        {
+            AccountsGrid.SelectedItem = row;
             await OperateAsync(() => coordinator.InspectAsync([row.Account]), connectsGame: true);
+        }
     }
     private void Stop_Click(object sender, RoutedEventArgs e)
     {
@@ -1120,6 +1125,10 @@ public partial class MainWindow : Window
             await CheckThemesForSmoke();
             await CheckLanguagesForSmoke();
             await CheckPresentationForSmoke();
+            // The preceding checks leave another tab selected. Materialize the
+            // account page before asserting visibility of its recovery controls.
+            WorkspaceTabs.SelectedItem = AccountsTab;
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             await CheckAccountsForSmoke(); await CheckSchedulingForSmoke(); await CheckParallelForSmoke();
             await CheckPresetsForSmoke();
             Capture("normal");

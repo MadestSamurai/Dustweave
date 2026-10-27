@@ -56,6 +56,7 @@ public sealed class DemoEnvironment : IAccountSessions, IGameHost, IDailyQueueEx
     public void ActivateAndLaunch(int slot, string expectedKey)
     {
         Calls.Add("launch:" + slot);
+        if (FailOrdinaryLaunch) throw new InvalidOperationException("account.relogin.required");
         var a = Accounts.Single(a => a.SlotNumber == slot);
         if (a.AccountKey != expectedKey)
             throw new Exception("slot changed");
@@ -68,6 +69,21 @@ public sealed class DemoEnvironment : IAccountSessions, IGameHost, IDailyQueueEx
     public void DeleteUnreadable(int slot, string expectedRevision) => Calls.Add("delete-unreadable:" + slot + ":" + expectedRevision);
     public void LaunchCurrent() { Calls.Add("launch-current"); Game = new(150, DateTimeOffset.UtcNow.UtcTicks, "demo-game.exe"); }
     public void LoginNew() => Calls.Add("new"); public void Recover() => Calls.Add("recover");
+    public DailyLoginRecovery? LoginRecovery { get; set; }
+    public bool FailOrdinaryLaunch;
+    public DailyLoginRecovery FinishLoginRecovery(bool launchOrdinary = false)
+    {
+        var recovery = LoginRecovery ?? throw new InvalidOperationException("account.relogin.no_pending");
+        if (Game != null || CurrentKey != recovery.Account) throw new InvalidOperationException("account.relogin.wrong_account");
+        Calls.Add("save-recovered:" + recovery.Slot);
+        if (launchOrdinary)
+        {
+            Calls.Add("launch-recovered:" + recovery.Slot);
+            Game = new(100 + recovery.Slot, DateTimeOffset.UtcNow.UtcTicks, "demo-game.exe");
+        }
+        LoginRecovery = null;
+        return recovery;
+    }
     public GameInstance? Find() => Game;
     public Task CloseAsync(GameInstance instance, CancellationToken cancellation)
     {

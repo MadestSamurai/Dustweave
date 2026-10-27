@@ -122,6 +122,23 @@ static class SandboxCases
         var original=Credentials("synthetic-original",0);
         var hostRefreshed=Credentials("synthetic-host-renewed",1);
         var boxRefreshed=Credentials("synthetic-box-renewed",2);
+        var recovery = new DailyLoginRecovery(1, DailyIdentity.MemberKey("1000001"), "Main", SessionRegistry.AuthenticationStamp(original), original.CapturedAtUtc.AddSeconds(1));
+        recovery.ValidateReplacement(hostRefreshed);
+        Check(true, "manual recovery accepts a fresh login for the selected account");
+        foreach (var (value, code) in new[] {
+            (Credentials("different-user", 2, "1000002"), "account.relogin.wrong_account"),
+            (original with { CapturedAtUtc = DateTimeOffset.UtcNow }, "account.relogin.unchanged"),
+            (Credentials("changed-but-old", -1), "account.relogin.unchanged") })
+        {
+            bool blocked = false;
+            try { recovery.ValidateReplacement(value); } catch (InvalidOperationException error) { blocked = error.Message == code; }
+            Check(blocked, "manual recovery rejects " + code + " before account save");
+        }
+        string intentRoot = Path.Combine(output, "manual-login-intent");
+        DailyJson.Write(DailyLoginRecovery.PathFor(intentRoot), recovery);
+        Check(DailyLoginRecovery.Read(intentRoot) == recovery, "manual login intent survives application restart without storing credentials");
+        File.Delete(DailyLoginRecovery.PathFor(intentRoot));
+        Check(DailyLoginRecovery.Read(intentRoot) == null, "cancelled login intent does not require deleting a saved account");
         var hostVault=new SessionVault(Path.Combine(output,"host-vault"));
         var damagedVault=new SessionVault(Path.Combine(output,"damaged-observation-vault"));
         damagedVault.RememberObserved(original);

@@ -32,6 +32,7 @@ public sealed class DailyUpdateRepair(DailyUpdateTrust trust)
     public async Task<DailyRepairPlan> InspectAsync(HttpClient client, DailyVerifiedUpdate verified, string version,
         string flavor, string installRoot, string root, IProgress<DailyRepairProgress>? progress, CancellationToken token)
     {
+        root = DailyStoragePath.ResolveRoot(root);
         using var storage = DailyUpdateHost.AcquireStorage(root);
         var feed = DailyUpdateSignatures.Verify(verified.Signed, trust);
         var release = feed.Releases.SingleOrDefault(r => r.Version == version) ?? throw new InvalidDataException("updates.repair_unavailable");
@@ -121,6 +122,7 @@ public sealed class DailyUpdateRepair(DailyUpdateTrust trust)
     public async Task PrepareAsync(HttpClient client, DailyRepairPlan plan, string root,
         IProgress<DailyRepairProgress>? progress, CancellationToken token)
     {
+        root = DailyStoragePath.ResolveRoot(root);
         using var storage = DailyUpdateHost.AcquireStorage(root);
         using var lease = new FileStream(Path.Combine(plan.Directory, "download.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
         // The plan is only a preview. Recheck every byte during staging, including

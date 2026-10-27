@@ -132,6 +132,7 @@ public sealed class DailyStorageMaintenance
     }
     public Task<DailyStorageOverview> ScanAsync(DailyLogPolicy policy,CancellationToken token=default)=>Task.Run(()=>
     {
+        string root=DailyStoragePath.ResolveRoot(this.root);
         var scopes=new List<DailyStorageScope>();
         var storage=DailyCacheStorage.ScanRetention(root,policy,token,captureControl:CaptureControlPath);
         var logs=DailyLogCleanup.Scan(root,policy,DateTime.UtcNow,token);
@@ -190,8 +191,9 @@ public sealed class DailyStorageMaintenance
         =>MaintainLocalAsync(root,policy,fixedRoot,token,null);
     static async Task<DailyLogCleanupResult> MaintainLocalAsync(string root,DailyLogPolicy policy,bool fixedRoot,CancellationToken token,string? captureControl)
     {
-        DailyCacheStorage.NoLinks(root);
+        DailyCacheStorage.NoLinks(DailyStoragePath.ResolveRoot(root));
         using var control=DailyToolControl.AcquireMaintenance(root);
+        root=DailyStoragePath.ResolveRoot(root);
         await DailyLogEvidence.FlushAsync(root,token);
         await DailyLogEvidence.MaintainAsync(root,token);
         var plan=await DailyLogCleanup.ScanAsync(root,policy,token);
@@ -201,13 +203,14 @@ public sealed class DailyStorageMaintenance
     }
     static DailyLogCleanupResult CompressLocal(string root,bool fixedRoot,CancellationToken token)
     {
+        root=DailyStoragePath.ResolveRoot(root);
         using var storage=DailyCacheStorage.Lease(root,true);
         var inventory=fixedRoot?DailyCacheStorage.ScanIsolated(root,token):DailyCacheStorage.Scan(root,token);
         return DailyStorageCompression.Apply(CompressionPlan(root,inventory.AllFiles,fixedRoot),token,root);
     }
     static DailyLogCleanupResult ContinueLocal(string root,bool fixedRoot,CancellationToken token)
     {
-        DailyCacheStorage.NoLinks(root);
+        DailyCacheStorage.NoLinks(DailyStoragePath.ResolveRoot(root));
         using var control=DailyToolControl.AcquireMaintenance(root);
         return CompressLocal(root,fixedRoot,token);
     }

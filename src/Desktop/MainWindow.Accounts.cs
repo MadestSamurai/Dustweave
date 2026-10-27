@@ -51,6 +51,20 @@ public partial class MainWindow
             (row.Account.Valid || row.Account.UnreadableRevision.Length == 64);
         MoveUpButton.IsEnabled = idle && row != null && rows.IndexOf(row) > 0;
         MoveDownButton.IsEnabled = idle && row != null && rows.IndexOf(row) < rows.Count - 1;
+        ReloginButton.Visibility = IsSandboxWindow ? Visibility.Collapsed : Visibility.Visible;
+        ReloginButton.IsEnabled = idle && closed && row?.Account.Valid == true;
+        var recovery = IsSandboxWindow ? null : sessions.LoginRecovery;
+        LoginRecoveryPanel.Visibility = recovery == null ? Visibility.Collapsed : Visibility.Visible;
+        if (recovery != null)
+        {
+            L.Text(LoginRecoveryText, "account.relogin.pending", recovery.Name);
+            FinishLoginRecoveryButton.IsEnabled = idle && closed && identified && catalog.CurrentKey == recovery.Account;
+            CancelLoginRecoveryButton.IsEnabled = idle;
+            LoginRecoveryIsolation.IsEnabled = idle;
+            SaveAccountButton.IsEnabled = LoginNewButton.IsEnabled = false;
+            if (closed && identified && catalog.CurrentKey != recovery.Account)
+                L.Text(LoginRecoveryText, "account.relogin.pending_wrong", recovery.Name);
+        }
         var visible = rows.Where(r => r.Account.Valid && MatchesSearch(r)).ToArray();
         SelectAll.IsEnabled = idle && visible.Length > 0;
         SelectAll.IsChecked = visible.Length == 0 || visible.All(r => !r.Selected) ? false :

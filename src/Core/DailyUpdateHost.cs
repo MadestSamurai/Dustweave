@@ -10,12 +10,13 @@ public static class DailyUpdateHost
     public static bool SelfUpdating => System.Reflection.Assembly.GetEntryAssembly()?.GetCustomAttributes<System.Reflection.AssemblyMetadataAttribute>()
         .Any(a => a.Key == "Dustweave.SelfUpdate" && a.Value == "true") == true;
     public static string InstallRoot => Path.GetDirectoryName(Environment.ProcessPath!)!;
-    public static string DataRoot => Environment.GetEnvironmentVariable("BD2_DAILY_DATA_ROOT") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BD2DailyAssistant");
+    public static string DataRoot => DailyStoragePath.ResolveRoot(Environment.GetEnvironmentVariable("BD2_DAILY_DATA_ROOT") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BD2DailyAssistant"));
     // Shared with cache maintenance; hold across downloads and the whole update/recovery transaction.
     public static IDisposable AcquireStorage(string root, bool exclusive = false)
     {
+        root = DailyStoragePath.ResolveRoot(root);
         string path = Path.Combine(root, "cache-storage.lock");
-        DailyUpdates.EnsureNoLinks(path);
+        DailyStoragePath.RequireNoLinks(path);
         Directory.CreateDirectory(root);
         return new FileStream(path, FileMode.OpenOrCreate, FileAccess.Read, exclusive ? FileShare.None : FileShare.Read);
     }

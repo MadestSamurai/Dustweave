@@ -235,8 +235,9 @@ public sealed partial class DailyManagedBusiness : IDisposable
             if (drive != null)
                 await drive();
             double end = clock() + seconds;
+            var mirrorWait = role == "mirror.end" ? new DailyMirror.BatchWait(op, clock()) : null;
             string last = "No native response";
-            while (clock() < end)
+            while (mirrorWait != null ? !mirrorWait.Expired(clock()) : clock() < end)
             {
                 Stop();
                 if (heartbeat != null)
@@ -245,6 +246,7 @@ public sealed partial class DailyManagedBusiness : IDisposable
                 var after = await driver.EvidenceAsync(proofs[role].PrefixesFor(op["scope"]));
                 op["events"] = events.DeepClone();
                 op["last_observation"] = after.DeepClone();
+                mirrorWait?.Observe(events, after, clock());
                 WorkObserved?.Invoke(op, events, after);
                 if (DailyPickupRecovery.Rejection(op, events) is { } pickupRejection)
                 {
@@ -280,7 +282,7 @@ public sealed partial class DailyManagedBusiness : IDisposable
                 catch (InvalidDataException e) { last = e.Message; op["verification_wait"] = last; Save(op); }
                 await delay(TimeSpan.FromMilliseconds(250));
             }
-            throw new StageHostException("pending", last);
+            throw mirrorWait?.Timeout() ?? new StageHostException("pending", last);
         }
         catch (Exception error)
         {
@@ -293,7 +295,10 @@ public sealed partial class DailyManagedBusiness : IDisposable
             if (op["confirmation_not_submitted"]?.GetValue<bool>() == true && !DailyTradePreview.IsConfirmation(op["action"]!.AsObject()))
                 await CancelRejectedPreviewAsync(op, context);
             if (op["state"]?.GetValue<string>() == "unknown")
+            {
+                if (error is StageHostException { Kind: "pending" }) throw;
                 throw new StageHostException("pending", error.Message);
+            }
             throw;
         }
     }

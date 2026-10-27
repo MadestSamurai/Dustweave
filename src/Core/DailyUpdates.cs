@@ -144,7 +144,7 @@ public static class DailyUpdates
     }
     public static void EnsureNoLinks(string path)
     {
-        for (string? p = Path.GetFullPath(path); p != null; p = Path.GetDirectoryName(p))
-            if ((File.Exists(p) || Directory.Exists(p)) && (File.GetAttributes(p) & FileAttributes.ReparsePoint) != 0) throw new InvalidDataException("updates.linked_folder");
+        try { DailyStoragePath.RequireNoLinks(path, "updates.linked_folder"); }
+        catch (IOException error) { throw new InvalidDataException(error.Message, error); }
     }
 }

@@ -53,9 +53,16 @@ static class FieldTalentCases
         foreach (var unavailable in new[] { Evidence(), QuotaEvidence("null", "[]"), QuotaEvidence("""[{"Kind":4,"Group":401}]""", "[]") })
         {
             bool rejected = false;
-            try { DailyFieldRoute.TalentAllowance(unavailable, 4); } catch (InvalidDataException) { rejected = true; }
+            try { DailyFieldRoute.TalentAllowance(unavailable, 4); } catch (DailyTalentReadUnavailable) { rejected = true; }
             Check(rejected, "missing talent limits never fall back to 21 or assume exhaustion");
         }
+        var nativeError = QuotaEvidence("[]", "[]");
+        nativeError["Readings"]![0]!["Error"] = "TalentSkill level unavailable: fixture";
+        DailyTalentReadUnavailable? readError = null;
+        try { DailyFieldRoute.TalentAllowance(nativeError, 4); } catch (DailyTalentReadUnavailable error) { readError = error; }
+        Check(readError != null && readError.Observation["readings"]![0]!["Error"]!.GetValue<string>() == "TalentSkill level unavailable: fixture"
+            && readError.Observation["error"]!.GetValue<string>().Contains("mainline.talent_limits"),
+            "talent failure retains the native error and missing reading without requiring a full UI capture");
         var op = Op(new string('c', 32));
         var command = DailyCommandDriver.BuildCommand(Frame(), Frame()["Surfaces"]![0]!.AsObject(), 0, Action(new string('c', 32)), 100000000, new string('d', 32), "business:" + new string('c', 32) + "|test");
         op["command_id"] = new string('d', 32);

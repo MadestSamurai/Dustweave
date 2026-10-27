@@ -134,7 +134,8 @@ public sealed class DailyCoordinator
     });
     public Task InspectAsync(IEnumerable<DailyAccount> selected) => InspectCoreAsync(selected,false);
     public Task InspectFreshAsync(IEnumerable<DailyAccount> selected) => InspectCoreAsync(selected,true);
-    private Task InspectCoreAsync(IEnumerable<DailyAccount> selected,bool requireFreshGame) => RunAsync(async token =>
+    public Task InspectRecoveredAsync(DailyAccount selected) => InspectCoreAsync([selected],true,true);
+    private Task InspectCoreAsync(IEnumerable<DailyAccount> selected,bool requireFreshGame,bool finishLoginRecovery=false) => RunAsync(async token =>
     {
         var targets = selected.ToArray();
         if (targets.Length == 0)
@@ -164,7 +165,14 @@ public sealed class DailyCoordinator
                 token.ThrowIfCancellationRequested();
                 Preflight([target]);
                 Report("launching", $"{done + 1}/{targets.Length} · 切换并启动 {target.Name}", done, targets.Length);
-                sessions.ActivateAndLaunch(target.SlotNumber, target.AccountKey);
+                if (finishLoginRecovery)
+                {
+                    var recovery = sessions.LoginRecovery;
+                    if (recovery?.Slot != target.SlotNumber || recovery.Account != target.AccountKey)
+                        throw new InvalidOperationException("account.relogin.no_pending");
+                    sessions.FinishLoginRecovery(launchOrdinary: true);
+                }
+                else sessions.ActivateAndLaunch(target.SlotNumber, target.AccountKey);
                 var deadline = DateTimeOffset.UtcNow + options.LoginTimeout;
                 while ((instance = game.Find()) == null)
                 {

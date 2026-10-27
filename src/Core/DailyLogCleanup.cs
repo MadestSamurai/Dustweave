@@ -137,7 +137,7 @@ public static class DailyLogCleanup
     public static Task<DailyLogPlan> ScanAsync(string root, DailyLogPolicy policy, CancellationToken token = default, IProgress<DailyLogScanProgress>? progress = null) => Task.Run(()=>Scan(root,policy,DateTime.UtcNow,token,progress),token);
     public static DailyLogPlan Scan(string root, DailyLogPolicy policy, DateTime now, CancellationToken token = default, IProgress<DailyLogScanProgress>? progress = null)
     {
-        root=Path.GetFullPath(root);DailyCacheStorage.NoLinks(root);policy=policy.Normalize();long total=0;int skipped=0;
+        root=DailyStoragePath.ResolveRoot(root);DailyCacheStorage.NoLinks(root);policy=policy.Normalize();long total=0;int skipped=0;
         var candidates=new List<DailyLogUnit>();int entriesCount=0,examined=0;
         void Report(){progress?.Report(new(entriesCount,total,examined));}
         // Never include caches, account stores, queues, exported ZIPs or transaction evidence.

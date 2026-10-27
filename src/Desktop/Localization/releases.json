@@ -1,5 +1,35 @@
 [
   {
+    "Version": "1.5.5",
+    "Date": "2026-10-27",
+    "Notes": {
+      "zh-CN": [
+        "镜中之战取消整批固定 30 分钟上限；持续完成匹配或结算时继续等待，连续 5 分钟无新进展才暂停队列。接续时先检查游戏状态，不重复提交整批战斗。",
+        "账号管理新增重新登录、保存并重试的恢复流程，避免普通启动再次被旧的隔离登录状态拦住。正常关闭游戏时应保留登录状态，不要退出账号。",
+        "支持用户数据和缓存根目录的合法目录重定向，修复连接准备、缓存维护及更新记录被误拦的问题；损坏的链接会显示具体路径。",
+        "周收集暂时读不到天赋次数时记录未完成并继续其他已选周任务；进度展示及不需要的捕获次数检查不再中断整个周任务流程。",
+        "领地局部寻路失败后重新扫描并绕行，保留房屋、墙体和角色通行空间检查，避免朝障碍物继续移动。",
+        "覆盖安装时优先使用当前 app 目录资源，避免旧版根目录残留的工具和流程文件被误用。"
+      ],
+      "zh-TW": [
+        "鏡中之戰取消整批固定 30 分鐘上限；持續完成配對或結算時繼續等待，連續 5 分鐘無新進展才暫停佇列。接續時先檢查遊戲狀態，不重複提交整批戰鬥。",
+        "帳號管理新增重新登入、儲存並重試的恢復流程，避免普通啟動再次被舊的隔離登入狀態攔住。正常關閉遊戲時應保留登入狀態，不要登出帳號。",
+        "支援使用者資料與快取根目錄的合法目錄重新導向，修復連線準備、快取維護及更新紀錄被誤攔的問題；損壞的連結會顯示具體路徑。",
+        "週收集暫時讀不到天賦次數時記錄未完成並繼續其他已選週任務；進度顯示及不需要的捕獲次數檢查不再中斷整個週任務流程。",
+        "領地局部尋路失敗後重新掃描並繞行，保留房屋、牆體與角色通行空間檢查，避免朝障礙物繼續移動。",
+        "覆蓋安裝時優先使用目前 app 目錄資源，避免舊版根目錄殘留的工具與流程檔案被誤用。"
+      ],
+      "en-US": [
+        "Mirror Battle batches no longer stop at a fixed 30-minute limit. New matchmaking or settlement progress keeps the wait active. Five minutes without progress pauses the queue; resuming checks the current game state without submitting the batch again.",
+        "Accounts now offers a sign-in, save and retry recovery flow, so ordinary launch is not blocked again by an old isolated sign-in state. Close the game normally without logging out when saving sign-in details.",
+        "Supported redirects of the user data and cache roots no longer block connection preparation, cache maintenance or update records. Broken links identify the affected path.",
+        "When talent usage cannot be read, weekly collection reports its incomplete state while other selected weekly tasks continue. Progress display and unnecessary capture-limit checks no longer interrupt the whole weekly route.",
+        "Territory rescans and replans failed local routes while retaining building, wall and character clearance checks, rather than continuing toward an obstacle.",
+        "Installing over an older version now prioritizes the current app resources over leftover tools and flow files in the root directory."
+      ]
+    }
+  },
+{
     "Version": "1.5.4",
     "Date": "2026-10-26",
     "Notes": {
