@@ -8,10 +8,14 @@ namespace Dustweave.Desktop;
 internal static class LegacyMigrationStartup
 {
     private const string ScopeVariable = "DUSTWEAVE_LEGACY_STARTUP_SCOPE";
+    private const string UpdateDialogVariable = "DUSTWEAVE_LEGACY_UPDATE_DIALOG";
     internal const int AcceptedExitCode = 42;
     private static string? ownedScope;
     internal static bool UpdateAcknowledged { get; private set; }
     internal sealed record Scope(int Pid, long Started, string Executable, string Version, bool Accepted);
+
+    internal static string? UpdateDialogRequest(string[] args) => args is ["--updated", _] &&
+        Environment.GetEnvironmentVariable(UpdateDialogVariable) is { Length: > 0 } request ? request : null;
 
     private static bool OwnerAlive(Scope scope)
     {
@@ -45,7 +49,18 @@ internal static class LegacyMigrationStartup
         var ready = Path.Combine(directory, "visible.json");
         DailyJson.Write(request, scope);
         var start = new ProcessStartInfo(scope.Executable) { UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden };
-        start.ArgumentList.Add("--legacy-migration-gate"); start.ArgumentList.Add(request);
+        if (args is ["--updated", var updateNonce])
+        {
+            // The native entry must retain the real update nonce while its helper
+            // owns recovery. A different entry is correctly stopped by recovery.
+            // Only this child receives the UI role; its live owner is checked again.
+            start.ArgumentList.Add("--updated"); start.ArgumentList.Add(updateNonce);
+            start.Environment[UpdateDialogVariable] = request;
+        }
+        else
+        {
+            start.ArgumentList.Add("--legacy-migration-gate"); start.ArgumentList.Add(request);
+        }
         try
         {
             using var dialog = Process.Start(start) ?? throw new IOException("Migration notice did not start.");

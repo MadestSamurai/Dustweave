@@ -52,7 +52,7 @@
   "files": [
     {"path":"tests/Dustweave.Tests/Cases/LegacyMigrationCases.cs","sha256":"efc013d67e29791e40ddd1417c0e137f9416bdf81f8c582f0aa5e960f6234ebf","bytes":2362,"reasons":"build input"},
     {"path":"src/Desktop/LegacyMigrationWindow.cs","sha256":"f198f2a5ce1f2dff9a090e9a32358d15bb7e71392bce48d875c1d1a79c9811e7","bytes":9258,"reasons":"build input"},
-    {"path":"src/Desktop/LegacyMigrationStartup.cs","sha256":"dd4acaf204536cfe7819e40e1cbfc23dea825e11d69f937a616fd23225b6e3d3","bytes":4378,"reasons":"build input"},
+    {"path":"src/Desktop/LegacyMigrationStartup.cs","sha256":"622671deef61992b8a2b8b316cff1fd9e65a9788ec0050f9f24d7c71c17af92e","bytes":5174,"reasons":"build input"},
     {"path":"src/Core/DailyLegacyMigration.cs","sha256":"40dfaacce7ea9bf3572c1b3e948d462baecd80b99877aa6ad255aa95a45919e9","bytes":2554,"reasons":"build input"},
     {
       "path": "tests/Dustweave.Tests/Cases/IdentityObserverCases.cs",
@@ -7482,8 +7482,8 @@
     },
     {
       "path": "src/Desktop/Program.cs",
-      "sha256": "fa112f0dc2c0dd2305b1f9d96cb603402b228a04da59d49c8933fd32c18cc125",
-      "bytes": 14863,
+      "sha256": "9ac1684eef0fe58f1f1d5bc183f7701f4c6cff31a5cb7d35c585c17838cfe4d5",
+      "bytes": 15190,
       "reasons": "build input"
     },
     {

@@ -9,8 +9,8 @@ public static class Program
     [STAThread]
     public static int Main(string[] args)
     {
-        bool window = args.Length == 0 || args[0] is "--desktop-session" or "--launch-desktop"
-            or "--view-account" or "--inspect-account" or "--resume-account" or "--run-selected" or "--scheduled" or "--updated" or "--repair";
+        bool window = LegacyMigrationStartup.UpdateDialogRequest(args) is null && (args.Length == 0 || args[0] is "--desktop-session" or "--launch-desktop"
+            or "--view-account" or "--inspect-account" or "--resume-account" or "--run-selected" or "--scheduled" or "--updated" or "--repair");
         try
         {
             // The bundle recovers before account probing, WPF or game components.
@@ -35,6 +35,11 @@ public static class Program
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     private static int MainCore(string[] args)
     {
+        if (LegacyMigrationStartup.UpdateDialogRequest(args) is string migrationDialogRequest)
+        {
+            LegacyMigrationStartup.RequireOwner(migrationDialogRequest);
+            args = ["--legacy-migration-gate", migrationDialogRequest];
+        }
         if (args.Length == 2 && args[0] is "--legacy-migration-gate" or "--check-migration-gate")
         {
             var noticeApp = new App { StartupArguments = args };
