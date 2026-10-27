@@ -7704,14 +7704,14 @@
     },
     {
       "path": "tools/OtaChannel/RepairChannel.cs",
-      "sha256": "c5bd3730f42c86c65c02b26f01dc3003d468db1a22fd95e08977eb117229c7e8",
-      "bytes": 12422,
+      "sha256": "e239e6a8bb8898dc1bcaa727896256016656c0b29c4b3768ec631e63ba5164b6",
+      "bytes": 13511,
       "reasons": "build input"
     },
     {
       "path": "tools/OtaChannel/RepairSelfTest.cs",
-      "sha256": "a5e68553a71014f4b6c58ce7b4cabf1a1d82d2a557e45fde131fa4f5a180c32d",
-      "bytes": 7420,
+      "sha256": "05c0d04faf4a4b7e1e427b5594c1dab40e061309abcad03ed4e79ba673205d8b",
+      "bytes": 9397,
       "reasons": "build input"
     },
     {

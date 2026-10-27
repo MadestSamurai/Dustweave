@@ -69,6 +69,23 @@ static class RepairSelfTest
         await Reject("omitted existing block still reverified", () => RepairChannel.Submit(config, Frame(Header(Request() with { Files = [] }), [])));
         await RepairChannel.Submit(config, Frame(Header(Request())));
         Pass("signed resend repairs a corrupt origin object", Rules.HashFile(Path.Combine(config.Public, "repair", "objects", hash + ".bin")) == hash);
+        foreach (string mode in new[] { "valid", "corrupt", "stalled" })
+        {
+            var mirrored = Setup("mirror-" + mode) with { MirrorBaseUrl = "https://test.cdn.7caiyun.com/dustweave/ota/v2" };
+            var handler = new RepairMirrorHandler(mode, block);
+            using var client = new HttpClient(handler);
+            var publication = Request();
+            var timer = System.Diagnostics.Stopwatch.StartNew();
+            await RepairChannel.Submit(mirrored, Frame(Header(publication)), client, TimeSpan.FromMilliseconds(250));
+            Pass("repair optional mirror " + mode + " keeps verified origin usable", handler.Called &&
+                Directory.GetFiles(Path.Combine(mirrored.Public, "repair", "v1.4.13")).Length == 2 &&
+                Rules.HashFile(Path.Combine(mirrored.Public, "repair", "objects", hash + ".bin")) == hash &&
+                Rules.HashFile(Path.Combine(mirrored.Public, "updates.json")) == Rules.Hash(feed) &&
+                System.Text.Json.JsonSerializer.Serialize(Channel.Status(mirrored, publication.Nonce)).Contains("completed"));
+            Pass("repair optional mirror " + mode + " only redirects verified bodies",
+                File.Exists(Path.Combine(mirrored.Public, ".mirror", "routes", "repair", "objects", hash + ".bin")) == (mode == "valid"));
+            if (mode == "stalled") Pass("repair stalled mirror is globally bounded", timer.Elapsed < TimeSpan.FromSeconds(5));
+        }
         var stopped = Request();
         string pendingHeader = Path.Combine(config.State, "repairs", stopped.Nonce, "header.json");
         Directory.CreateDirectory(Path.GetDirectoryName(pendingHeader)!);
@@ -76,5 +93,16 @@ static class RepairSelfTest
         Pass("active repair submission reports receiving", System.Text.Json.JsonSerializer.Serialize(Channel.Status(config, stopped.Nonce)).Contains("receiving"));
         File.SetLastWriteTimeUtc(pendingHeader, DateTime.UtcNow.AddMinutes(-25));
         Pass("lost repair process does not report receiving forever", System.Text.Json.JsonSerializer.Serialize(Channel.Status(config, stopped.Nonce)).Contains("needs_attention"));
+    }
+
+    sealed class RepairMirrorHandler(string mode, byte[] body) : HttpMessageHandler
+    {
+        public bool Called { get; private set; }
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken token)
+        {
+            Called = true;
+            if (mode == "stalled") await Task.Delay(Timeout.Infinite, token);
+            return new(System.Net.HttpStatusCode.OK) { Content = new ByteArrayContent(mode == "corrupt" ? [9, 9, 9] : body) };
+        }
     }
 }

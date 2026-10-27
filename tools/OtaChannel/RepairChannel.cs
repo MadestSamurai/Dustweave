@@ -63,7 +63,7 @@ static class RepairChannel
             request.Files.All(f => blocks.TryGetValue(f.FileName, out var expected) && f == expected), "Unexpected repair payload");
         return (request, manifests.ToArray(), blocks);
     }
-    public static async Task<object> Submit(Config config, Stream input)
+    public static async Task<object> Submit(Config config, Stream input, HttpClient? verificationClient = null, TimeSpan? mirrorBudget = null)
     {
         using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(15)); var token = timeout.Token;
         byte[] prefix = new byte[4]; await input.ReadExactlyAsync(prefix, token);
@@ -125,27 +125,41 @@ static class RepairChannel
             // optional: a failed verification leaves this object on the origin.
             if (config.MirrorBaseUrl != null)
             {
-                using var client = Mirror.Client();
-                await Parallel.ForEachAsync(blocks.Values, new ParallelOptions { MaxDegreeOfParallelism = 4, CancellationToken = token }, async (blob, ct) =>
+                using var ownedClient = verificationClient == null ? Mirror.Client() : null;
+                var client = verificationClient ?? ownedClient!;
+                // Origin integrity is mandatory and already verified above. An
+                // unavailable optional mirror must not consume the publication's
+                // entire deadline, especially for origin-only repair releases.
+                using var optionalMirror = CancellationTokenSource.CreateLinkedTokenSource(token);
+                optionalMirror.CancelAfter(mirrorBudget ?? TimeSpan.FromSeconds(30));
+                try
                 {
-                    string marker = Path.Combine(mirrorRoutes, blob.FileName);
-                    try
+                    await Parallel.ForEachAsync(blocks.Values, new ParallelOptions { MaxDegreeOfParallelism = 4, CancellationToken = optionalMirror.Token }, async (blob, ct) =>
                     {
-                        using var bounded = CancellationTokenSource.CreateLinkedTokenSource(ct); bounded.CancelAfter(TimeSpan.FromSeconds(45));
-                        using var response = await client.GetAsync(Mirror.BaseUrl(config) + "/repair/objects/" + blob.FileName, HttpCompletionOption.ResponseHeadersRead, bounded.Token);
-                        response.EnsureSuccessStatusCode();
-                        Rules.Need(response.Content.Headers.ContentLength == blob.Bytes, "CDN repair block length differs");
-                        using var stream = await response.Content.ReadAsStreamAsync(bounded.Token);
-                        using var digest = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-                        byte[] buffer = new byte[65536]; long total = 0; int read;
-                        while ((read = await stream.ReadAsync(buffer, bounded.Token)) > 0)
-                        { total += read; Rules.Need(total <= blob.Bytes, "CDN repair block too large"); digest.AppendData(buffer, 0, read); }
-                        Rules.Need(total == blob.Bytes && Convert.ToHexString(digest.GetHashAndReset()).Equals(blob.Sha256, StringComparison.OrdinalIgnoreCase), "CDN repair block hash differs");
-                        Rules.Atomic(marker, Rules.Bytes(blob));
-                    }
-                    catch (Exception error) when (error is HttpRequestException or IOException or InvalidDataException or OperationCanceledException)
-                    { if (File.Exists(marker)) File.Delete(marker); }
-                });
+                        string marker = Path.Combine(mirrorRoutes, blob.FileName);
+                        try
+                        {
+                            using var bounded = CancellationTokenSource.CreateLinkedTokenSource(ct); bounded.CancelAfter(TimeSpan.FromSeconds(45));
+                            using var response = await client.GetAsync(Mirror.BaseUrl(config) + "/repair/objects/" + blob.FileName, HttpCompletionOption.ResponseHeadersRead, bounded.Token);
+                            response.EnsureSuccessStatusCode();
+                            Rules.Need(response.Content.Headers.ContentLength == blob.Bytes, "CDN repair block length differs");
+                            using var stream = await response.Content.ReadAsStreamAsync(bounded.Token);
+                            using var digest = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+                            byte[] buffer = new byte[65536]; long total = 0; int read;
+                            while ((read = await stream.ReadAsync(buffer, bounded.Token)) > 0)
+                            { total += read; Rules.Need(total <= blob.Bytes, "CDN repair block too large"); digest.AppendData(buffer, 0, read); }
+                            Rules.Need(total == blob.Bytes && Convert.ToHexString(digest.GetHashAndReset()).Equals(blob.Sha256, StringComparison.OrdinalIgnoreCase), "CDN repair block hash differs");
+                            Rules.Atomic(marker, Rules.Bytes(blob));
+                        }
+                        catch (Exception error) when (error is HttpRequestException or IOException or InvalidDataException or OperationCanceledException)
+                        { if (File.Exists(marker)) File.Delete(marker); }
+                    });
+                }
+                catch (OperationCanceledException) when (optionalMirror.IsCancellationRequested && !token.IsCancellationRequested)
+                {
+                    // Only bodies fully verified above receive redirect markers.
+                    // Unverified content remains available from the verified origin.
+                }
             }
             Rules.Need(Rules.HashFile(liveFeed) == request.ExpectedFeedSha256, "Current release changed");
             string metadata = Path.Combine(config.Public, "repair", "v" + request.Version); Rules.NoLinks(metadata); Directory.CreateDirectory(metadata);
