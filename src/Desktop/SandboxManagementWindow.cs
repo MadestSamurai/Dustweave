@@ -15,6 +15,7 @@ internal sealed partial class SandboxManagementWindow : Window
     private readonly TextBlock path=new(){TextWrapping=TextWrapping.Wrap,Margin=new(0,0,0,12)};
     private readonly Button create=new(){Name="SandboxSpaceCreate"},remove=new(){Name="SandboxSpaceRemove"},refresh=new(){Name="SandboxSpaceRefresh"},fix=new(){Name="SandboxSpaceRepair"},browse=new(){Name="SandboxSpaceBrowse"};
     private readonly Button settings=new(){Name="SandboxSpaceSettings",Visibility=Visibility.Collapsed};
+    private readonly Button preferences=new(){Name="SandboxSpacePreferences"};
     private readonly CancellationTokenSource lifetime=new();
     private Task<DailySandboxInfo>? inspection;
     private DailySandboxInfo? info;
@@ -33,7 +34,7 @@ internal sealed partial class SandboxManagementWindow : Window
         L.Text(status,"sandbox.manage.loading");body.Children.Add(status);
         path.SetResourceReference(TextBlock.ForegroundProperty,"MutedInk");body.Children.Add(path);
         var actions=new WrapPanel();
-        foreach(var pair in new[]{(create,"sandbox.manage.create"),(fix,"sandbox.repair.title"),(browse,"sandbox.manage.open"),(refresh,"common.refresh")}) {
+        foreach(var pair in new[]{(create,"sandbox.manage.create"),(fix,"sandbox.repair.title"),(preferences,"sandbox.preferences.title"),(browse,"sandbox.manage.open"),(refresh,"common.refresh")}) {
             pair.Item1.Margin=new(0,0,8,8);L.Bind(pair.Item1,ContentControl.ContentProperty,pair.Item2);actions.Children.Add(pair.Item1);
         }
         create.Style=(Style)Application.Current.FindResource("PrimaryButton");body.Children.Add(actions);
@@ -46,6 +47,14 @@ internal sealed partial class SandboxManagementWindow : Window
         var close=new Button{Name="SandboxSpaceClose",IsCancel=true,HorizontalAlignment=HorizontalAlignment.Right};L.Bind(close,ContentControl.ContentProperty,"window.close");close.Click+=(_,_)=>Close();footer.Children.Add(close);body.Children.Add(footer);
         Content=new ScrollViewer{Content=body,VerticalScrollBarVisibility=ScrollBarVisibility.Auto};
         refresh.Click+=async(_,_)=>await RefreshAsync();
+        preferences.Click+=async(_,_)=>{
+            if(Working||fixture!=null)return;
+            try {
+                var dialog=new GamePreferenceSyncWindow(this,account);DailyDialogs.ShowModal(dialog);
+                if(dialog.Completed)DailySandboxPreferenceTransfer.DismissSuggestion(account.AccountKey);
+            }catch(Exception error){ShowError(error);}
+            await RefreshAsync();
+        };
         create.Click+=async(_,_)=>await Change(()=>DailySandbox.CreateSpaceAsync(account,Environment.ProcessPath!,Progress,lifetime.Token),"sandbox.manage.created");
         fix.Click+=async(_,_)=>await ReadBindingsAsync();
         browse.Click+=(_,_)=>{if(info==null||!System.IO.Directory.Exists(info.Root))return;try{Process.Start(new ProcessStartInfo(info.Root){UseShellExecute=true});}catch(Exception error){ShowError(error);}};
@@ -110,6 +119,7 @@ internal sealed partial class SandboxManagementWindow : Window
     {
         bool idle=!Working;
         refresh.IsEnabled=idle;settings.IsEnabled=idle;
+        preferences.IsEnabled=idle&&account.Valid&&info is{Running:false,Issue:""};
         create.IsEnabled=idle&&info is{Exists:false,Issue:""}&&account.Valid;
         create.Visibility=info?.Exists==true?Visibility.Collapsed:Visibility.Visible;
         fix.IsEnabled=idle&&info is{Exists:true,Running:false,Issue:not "sandbox.manage.removal_pending"};

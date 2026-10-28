@@ -101,6 +101,22 @@ public static class HookCompiler
         if(nav.IsStatic||nav.ReturnType.FullName!="System.Boolean"||!nav.HasBody||!nav.Body.Instructions.Any(i=>i.Operand is MethodReference m&&m.DeclaringType.Name=="MoveController"&&m.Name=="SetMoveNav"))throw new InvalidOperationException("角色寻路入口缺少原生完整路径检查");
 
     }
+    private static string[] JumpSpeedFields(ResolvedBindings r)
+    {
+        // A changed optional movement predictor must not disable farming or walking.
+        try{return ResolveJumpSpeedFields(r);}catch(InvalidOperationException){return Array.Empty<string>();}
+    }
+    private static string[] ResolveJumpSpeedFields(ResolvedBindings r)
+    {
+        var type=r.Types["MoveController"];
+        FieldDefinition Stored(MethodDefinition m)=>m.Body.Instructions.Where(i=>i.OpCode.Code==Mono.Cecil.Cil.Code.Stfld)
+            .Select(i=>(FieldReference)i.Operand).Where(f=>f.FieldType.FullName=="System.Double").Select(f=>f.Resolve()).Distinct().Single();
+        var current=type.Properties.Single(p=>p.SetMethod?.HasBody==true&&p.SetMethod.Body.Instructions.Any(i=>i.Operand is MethodReference m&&m.DeclaringType.FullName=="UnityEngine.AI.NavMeshAgent"&&m.Name=="set_speed"));
+        var max=Stored(type.Methods.Single(m=>m.Name=="SetMaxSpeed"));
+        var acceleration=type.Properties.Where(p=>p.PropertyType.FullName=="System.Double"&&p.SetMethod?.HasBody==true&&p.SetMethod.Body.Instructions.Any(i=>i.Operand is MethodReference m&&m.DeclaringType.FullName=="System.Math"&&m.Name=="Max"))
+            .Select(p=>Stored(p.SetMethod)).Where(f=>f.FullName!=max.FullName).Single();
+        return new[]{Stored(current.SetMethod).Name,max.Name,acceleration.Name};
+    }
     public static void ValidateObservers(MetadataIndex index,ResolvedBindings r)
     {
         foreach(var response in new[]{"LifeWorldObjectGatheringResponse","LifeSeedingResponse","LifeWorldObjectPlaceSaveResponse","LifeWorldObjectPositionSaveResponse","LifeCookingResponse","LifeShopSellResponse","LifeInfoResponse"})
@@ -130,7 +146,7 @@ public static class HookCompiler
         apiEntries=apiEntries.Concat(SalesBindings.Resolve(r).Select(pair=>"{"+Q(pair.Key)+",new[]{"+Q(pair.Value.DeclaringType.FullName.Replace('/','+'))+","+Q(pair.Value.MetadataToken.ToInt32().ToString())+","+Q("method")+"}}"));
         if(daily)apiEntries=apiEntries.Concat(SaffronBindings.Resolve(r).Select(pair=>"{"+Q(pair.Key)+",new[]{"+Q(pair.Value.DeclaringType.FullName.Replace('/','+'))+","+Q(pair.Value.MetadataToken.ToInt32().ToString())+","+Q("method")+"}}"));
         string Dictionary(Dictionary<string,string> d)=>"new System.Collections.Generic.Dictionary<string,string>{"+string.Join(",",d.Select(x=>"{"+Q(x.Key)+","+Q(x.Value)+"}"))+"}";
-        return "namespace BD2Territory.Runtime { internal static class TerritoryClient { internal const string NormalStepFieldName="+Q(NormalStepField(r).Name)+"; internal const string CompiledMvid="+Q(r.Report.ClientMvid)+"; internal static readonly System.Collections.Generic.Dictionary<string,string> TypeNames="+Dictionary(types)+"; internal static readonly System.Collections.Generic.Dictionary<string,string> MemberNames="+Dictionary(names)+"; internal static readonly System.Collections.Generic.Dictionary<string,string[]> Apis=new System.Collections.Generic.Dictionary<string,string[]>{"+string.Join(",",apiEntries)+"}; }}";
+        return "namespace BD2Territory.Runtime { internal static class TerritoryClient { internal static readonly string[] JumpSpeedFields=new string[]{"+string.Join(",",JumpSpeedFields(r).Select(Q))+"}; internal const string NormalStepFieldName="+Q(NormalStepField(r).Name)+"; internal const string CompiledMvid="+Q(r.Report.ClientMvid)+"; internal static readonly System.Collections.Generic.Dictionary<string,string> TypeNames="+Dictionary(types)+"; internal static readonly System.Collections.Generic.Dictionary<string,string> MemberNames="+Dictionary(names)+"; internal static readonly System.Collections.Generic.Dictionary<string,string[]> Apis=new System.Collections.Generic.Dictionary<string,string[]>{"+string.Join(",",apiEntries)+"}; }}";
     }
 }
 public sealed class CompatibilityException : Exception

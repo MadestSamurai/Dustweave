@@ -1,5 +1,19 @@
 # Isolated instances / 隔离实例
 
+## Manual game settings / 手动同步游戏设置
+
+账号页选中账号后，通过「管理沙盒 → 同步游戏设置」选择「本机 → 沙盒」或「沙盒 → 本机」。同步仅在点击按钮后执行一次；可以分别选择个人偏好（收藏、筛选、编队和展示）、语言画面声音、操作战斗设置。以来源为准覆盖勾选内容，来源已删除的收藏也会从目标端清除。语言和画面等通用设置会影响目标端的其他账号。同步前正常关闭普通游戏及该账号的隔离窗口，保留登录状态。
+
+首次手动隔离启动会建议同步一次，可以跳过；首次手动并发执行通过一个弹窗切换账号。定时任务和自动启动不弹窗、不代替用户同步。日常设置及执行摘要仍沿用原有交换规则，与这里的游戏设置独立。
+
+Select an account, then open **Manage sandbox → Copy game settings**. Choose **This PC → This account's sandbox** or the reverse direction and the preference groups to copy. Copying runs once when requested; it never enables background synchronization. Selected destination settings are replaced, including removed favorites. Shared settings such as language and display affect other accounts in that destination too. Close the normal game and the account's isolated window without logging out before copying.
+
+The first attended isolated launch offers a skippable suggestion. A manual parallel queue uses one account selector instead of a sequence of popups. Scheduled and automatic runs do not wait for this dialog or copy settings on the user's behalf.
+
+Implementation: `GamePreferenceCodec` reads the installed client's format metadata without executing its code; no client binary or database password is bundled. `DailyGamePreferenceStore` copies an explicit table/key whitelist and matches the account's verified player identity. Other owners, login keys, inventory, progress and resource caches are excluded. The destination database is prepared and checked off to the side, then replaced atomically; registry failure restores the database and the old selected values. Original encrypted data and selected settings remain in the destination's private `BD2DailyAssistant/game-preferences/backups` folder. The relay enters through the same executable and the exact driver-confirmed account sandbox; it does not launch a game or queue.
+
+Verification: `GamePreferences` covers account boundaries, cleared lists, codec round trips, schema mismatch, pre-commit interruption, commit rollback and credential preservation with synthetic data. `Sandbox` covers the shared instance rules; the `game-preferences` UI smoke exercises all three languages, both themes and compact windows. Actual game preference transfer and in-game readback require a separately authorized live test.
+
 Status: experimental feature included in private release 0.9.13. Live acceptance limits below still apply.
 状态：实验性功能已纳入私有 0.9.13 发行版；下述实机验收范围仍然适用。
 

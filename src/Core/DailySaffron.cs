@@ -6,7 +6,7 @@ public static class DailySaffron
 {
     internal static JsonObject Command(string owner, int pid, long now, int potatoRounds=2, bool processing=true) => O(("OwnerId",owner),("ProcessId",pid),("Enabled",true),("UntilUtcTicks",now+TimeSpan.TicksPerSecond*3),("SaffronPotatoRounds",potatoRounds),("SaffronProcessing",processing),
         ("SaffronDaily",true),("Logging",true),("Mining",true),("Farming",true),("Cooking",processing),("FixedCrop",true),("FixedSeedId",15),("RecipeId",7),
-        ("IntervalMs",100),("PlantingBudget",0),("CookingBatch",1000),("UseNavMesh",false),("UseVehicle",false),("DashRecovery",true),
+        ("IntervalMs",100),("PlantingBudget",0),("CookingBatch",1000),("UseNavMesh",false),("UseVehicle",true),("DashRecovery",true),
         ("SellThreshold",9900),("CookingSaleBatch",100),("SellCookingBatches",false),("SellCookingForPlanting",false));
     public static async Task<JsonObject> Run(DailyWorkflow w)
     {

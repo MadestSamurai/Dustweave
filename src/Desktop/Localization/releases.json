@@ -1,4 +1,31 @@
 [
+{
+  "Version": "1.5.6",
+  "Date": "2026-10-28",
+  "Notes": {
+    "zh-CN": [
+      "恶梦之冬等危险地图优先快捷移动到安全区，在传送阵旁准备隐身后再传送；隐身被打断时回到安全区处理，避免原地反复施放和危险区域步行拾取。",
+      "领地提前规划可跨越的低障碍，跳跃时持续前进，房屋等高障碍绕行；修复部分坡面误判和反复选择暂时无法播种地块的问题。",
+      "日常藏红花支持交通工具赶路；计划跳跃前提前下车，落地后按剩余距离决定是否继续骑乘。",
+      "账号管理的管理沙盒新增手动同步游戏设置，可选择本机到沙盒或反向复制，并分别选择个人偏好（含商店收藏）、语言画面声音、操作战斗设置。",
+      "首次手动隔离启动提供可跳过的同步建议；定时和自动启动不弹窗、不自动同步。同步前正常关闭相关游戏并保留登录状态，选中内容以来源覆盖目标。"
+    ],
+    "zh-TW": [
+      "惡夢之冬等危險地圖優先快捷移動至安全區，在傳送陣旁準備隱身後再傳送；隱身被打斷時回到安全區處理，避免原地反覆施放及危險區域步行拾取。",
+      "領地預先規劃可跨越的低障礙，跳躍時持續前進，房屋等高障礙繞行；修復部分坡面誤判及反覆選擇暫時無法播種地塊的問題。",
+      "日常藏紅花支援交通工具趕路；計畫跳躍前提前下車，落地後依剩餘距離決定是否繼續騎乘。",
+      "帳號管理的管理沙盒新增手動同步遊戲設定，可選擇本機到沙盒或反向複製，並分別選擇個人偏好（含商店收藏）、語言畫面聲音、操作戰鬥設定。",
+      "首次手動隔離啟動提供可略過的同步建議；定時與自動啟動不彈窗、不自動同步。同步前正常關閉相關遊戲並保留登入狀態，選取內容以來源覆蓋目標。"
+    ],
+    "en-US": [
+      "Hazardous maps use a safe-area shortcut and portals where available. Stealth is prepared at the safe portal; lost protection is handled from safety instead of repeated casts or walking pickups near hazards.",
+      "Territory plans validated jumps over low obstacles, keeps moving through the jump, and routes around high obstacles. Fixes slope checks and repeated selection of temporarily unavailable planting plots.",
+      "Daily saffron travel can use vehicles, dismount before planned jumps, and resume riding according to the remaining distance.",
+      "Accounts → Manage sandbox → Copy game settings adds a one-time copy in either direction. Select personal preferences including shop favorites, language/display/audio, and gameplay settings separately.",
+      "The first manual isolated launch offers a skippable suggestion. Scheduled and automatic runs do not wait or copy settings. Close affected games without logging out before copying; selected destination settings are replaced."
+    ]
+  }
+},
   {
     "Version": "1.5.5",
     "Date": "2026-10-27",

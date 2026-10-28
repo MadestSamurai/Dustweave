@@ -51,9 +51,9 @@ public sealed class DailyCollectionNavigator
         var candidate = S(saved?["account"]) == S(route.W.Context["actor"]![3]) ? saved?["graph"] as JsonObject : seed;
         try
         {
-            Atlas = new(Rows(Travel(evidence)["Maps"]), candidate);
+            Atlas = new(Rows(Travel(evidence)["Maps"]), candidate, pack);
         }
-        catch (Exception e) when (e is InvalidDataException or InvalidOperationException or ArgumentException) { Atlas = new(Rows(Travel(evidence)["Maps"]), seed); }
+        catch (Exception e) when (e is InvalidDataException or InvalidOperationException or ArgumentException) { Atlas = new(Rows(Travel(evidence)["Maps"]), seed, pack); }
         Observe(evidence);
     }
     public long Observe(JsonObject e)
@@ -129,6 +129,9 @@ public sealed class DailyCollectionNavigator
         JsonObject? gate = null;
         string kind = S(action["kind"]);
         long destination = N(action["destination"]);
+        // A saved/previously planned walk is not permission to cross a hazard.
+        if (kind == "walk" && (Hazardous(Evidence) || Hazardous(Evidence, destination)))
+            kind = "teleport";
         if (!attempts.TryStep(goals, origin, kind, destination, action["object"]))
         {
             Trace("cycle_deferred", action);
@@ -242,6 +245,11 @@ public sealed partial class DailyFieldRoute
         var before = await Evidence();
         long map = N(Map(before)["id"]), pack = N(Map(before)["packId"]);
         if (expectedMap.HasValue && map != expectedMap.Value) throw new DailyCollectionLocationChanged();
+        if (await PrepareHazardCollection(before))
+        {
+            before = await Evidence();
+            if (N(Map(before)["id"]) != map) throw new DailyCollectionLocationChanged();
+        }
         string week = S(R(before, "mainline.reset", "GetWeeklyResetTime().Ticks"));
         Require(Catalog.Supported(pack) && !Excluded.Contains(map), "地图不在收集范围");
         var checkpoint = await Checkpoint();

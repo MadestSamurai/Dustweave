@@ -13,6 +13,7 @@ namespace BD2Territory.Runtime
   }
   private void ContinueRoute(TerritorySnapshot s,long now,TerritoryControl c)
   {
+   if(jumping){ContinueJump(s,now,c);return;}
    // Disabling NavMesh retires its current route (including an in-flight recovery dash).
    // Enabling it finishes a current A* route and applies to the next approach.
    if(!c.UseNavMesh&&!localMoving)

@@ -252,6 +252,13 @@ public partial class MainWindow
         string confirmation = targets.Length == 1 ? L.Get("run.single_confirm", targets[0].Name)
             : L.Get(UseParallelAccounts(targets, parallelOptions) ? "parallel.confirm" : "run.multi_confirm", targets.Length);
         if (!Confirm(confirmation)) return;
+        // Only an attended, manual queue gets the first-use suggestion. Timers,
+        // startup queues and workers continue without waiting for any dialog.
+        if(UseParallelAccounts(targets,parallelOptions)) {
+            if(!await softwareSandboxPath.EnsureReadyAsync()||finalClose||Unavailable)return;
+            SuggestGamePreferences(targets);
+            if(finalClose||Unavailable)return;
+        }
         WorkspaceTabs.SelectedItem = RunTab;
         try { await ExecuteAccountQueue(targets); }
         catch (Exception error) { ShowError(error); }

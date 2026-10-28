@@ -11,6 +11,16 @@ public sealed partial class DailyFieldRoute
         // Do not add a fixed second after every map arrival.
         await FieldReady(settle: 0);
         var before = await Evidence();
+        if (Hazardous(before) || destination.HasValue && Hazardous(before, destination))
+        {
+            if (destination.HasValue) { await Teleport(destination.Value, force: destination == N(Map(before)["id"]), recovery: true); return null; }
+            var portal = FieldRows(before, "waypoint").SingleOrDefault(p => N(p["instance"]) == target);
+            if (portal == null) throw new DailyTravelBlocked("危险地图不使用步行路线；请通过安全区传送阵前往目标。");
+            if (B(portal[WaypointNear])) return portal;
+            long waypoint = N(portal[ObjectPath]);
+            await Teleport(N(Map(before)["id"]), waypoint, force: true, recovery: true);
+            return FieldRows(await Evidence(), "waypoint").Single(p => N(p[ObjectPath]) == waypoint && B(p[WaypointNear]));
+        }
         long revision = W.Driver.InputRevision;
         await Protection(before, walking: true, walkingDistance: WalkingDistance(before, target));
         // Protection often does nothing (safe/cleared map, active talent, short
@@ -162,6 +172,13 @@ public sealed partial class DailyFieldRoute
         {
             await FieldReady();
             var e = await Evidence();
+            if (Hazardous(e))
+            {
+                var present = FieldRows(e, "waypoint").FirstOrDefault(p => B(p[WaypointNear]));
+                if (present != null) return present;
+                await ReachSafeHub(e);
+                continue;
+            }
             // Preparing a teleport can traverse doors. Stop before walking to a portal
             // or casting a talent if that traversal already reached the requested map.
             if (destination.HasValue && N(Map(e)["id"]) == destination)
@@ -317,6 +334,14 @@ public sealed partial class DailyFieldRoute
     {
         Require(!Excluded.Contains(map) || recovery, "地图不属于日常收集范围");
         var e = await Evidence();
+        if (!force && N(Map(e)["id"]) == map) return null;
+        if (Hazardous(e) || Hazardous(e, map)) return await TeleportViaSafeHub(map, waypoint, recovery);
+        return await TeleportDirect(map, waypoint, force, recovery, nativeOnly);
+    }
+    private async Task<string?> TeleportDirect(long map, long? waypoint = null, bool force = false, bool recovery = false, bool nativeOnly = false)
+    {
+        Require(!Excluded.Contains(map) || recovery, "地图不属于日常收集范围");
+        var e = await Evidence();
         if (!force && N(Map(e)["id"]) == map)
             return null;
         var prepared = await OpenTeleport(map, nativeOnly, force);
@@ -347,6 +372,7 @@ public sealed partial class DailyFieldRoute
         var icon = icons[0];
         var target = await W.Pointer("WayPointUI", r => N(r["Id"]) == N(icon["gameObject.GetInstanceID()"]));
         var action = O(("ui", "WayPointUI"), ("field", target["Field"]), ("target_id", target["Id"]));
+        if (Hazardous(e, map) && Remaining(await Evidence(), 17) <= 5) throw new HazardStealthExpired();
         JsonObject op;
         if (native != null)
             op = await W.Transact("mainline.waypoint_use", O(("destination", map)), action, 30);
@@ -469,6 +495,7 @@ public sealed partial class DailyFieldRoute
     }
     internal async Task<JsonObject> WalkPickup(JsonObject before, JsonObject target, int preparationAttempts = 0)
     {
+        if (Hazardous(before)) throw new DailyTravelBlocked("伤害机关地图不步行补收；本图通过探查和吸收完成，剩余目标保留待补。");
         long map = N(Map(before)["id"]), id = N(target[ObjectPath]);
         var op = W.Business.Create(W.Context, "mainline.pickup", before, O(("pack", Map(before)["packId"]), ("map", map), ("object", id)),
             O(("ui", "GameFieldDefaultUI"), ("operation", "mainline_walk"), ("value", target["instance"]), ("require_stealth", MovementNeedsStealth(before))));

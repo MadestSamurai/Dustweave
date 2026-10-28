@@ -23,10 +23,22 @@ public partial class MainWindow
         if (smoke != null || IsSandboxWindow || Unavailable || Selected is not { Account.Valid:true } row) return;
         if (ReadDesktopBehavior()?.HideIsolationReminder != true && !ConfirmIsolation()) return;
         if (!await softwareSandboxPath.EnsureReadyAsync() || finalClose || Unavailable) return;
+        SuggestGamePreferences(row.Account);
+        if(finalClose||Unavailable)return;
         // Launch follows the highlighted account, independent of queue checkboxes.
         await OperateAsync(async () => {
             await DailySandbox.LaunchAsync(row.Account,Environment.ProcessPath!,message=>Dispatcher.Invoke(()=>ProgressText.Text=L.Translate(message)),CancellationToken.None);
         });
+    }
+    private void SuggestGamePreferences(params DailyAccount[] accounts)
+    {
+        if(smoke!=null||IsSandboxWindow)return;
+        try {
+            var pending=accounts.Where(a=>DailySandboxPreferenceTransfer.ShouldSuggest(a.AccountKey)).ToArray();
+            if(pending.Length==0)return;
+            DailyDialogs.ShowModal(new GamePreferenceSyncWindow(this,pending[0],firstUse:true,choices:pending));
+            foreach(var account in pending)DailySandboxPreferenceTransfer.DismissSuggestion(account.AccountKey);
+        }catch(Exception error){ShowError(error);} // An optional suggestion must never prevent launching.
     }
     internal Window IsolationReminderWindow(Action<bool> accepted)
     {

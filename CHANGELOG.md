@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 1.5.6 — 2026-10-28
+
+- 危险地图优先通过安全区与传送阵通行，避免地图伤害打断隐身后在原地反复施放。
+- 领地提前规划低障碍跳跃并持续前进，高障碍绕行；日常藏红花支持交通工具及跳跃前下车。
+- 新增本机与指定沙盒之间手动同步游戏收藏、个人偏好、语言画面声音和操作设置，首次手动隔离启动提供可跳过的提示。
+- Improves hazard-map travel and Territory movement, and adds optional, directional copying of game preferences between this PC and an account's sandbox.
+- [完整说明 / Full notes](docs/releases/1.5.6.md)
+
 ## 1.5.5 — 2026-10-27
 
 - 镜中之战按实际进展等待，取消固定 30 分钟上限；长时间无进展时暂停队列并保留接续状态。

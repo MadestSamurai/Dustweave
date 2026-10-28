@@ -35,8 +35,8 @@ namespace BD2Daily.Live {
   [DataMember] public int[] Maps=new int[0];
  }
  [DataContract] internal sealed class CollectionTravelMap {
-  [DataMember] public int Id;
-  [DataMember] public bool CanSummon,HasWaypoint,Inside,Hunting;
+  [DataMember] public int Id,MapType;
+  [DataMember] public bool CanSummon,HasWaypoint,Inside,Hunting,EnvironmentalHazard;
   [DataMember] public int[] Exits;
  }
  [DataContract] internal sealed class TravelApproach {
@@ -52,6 +52,7 @@ namespace BD2Daily.Live {
   [DataMember] public CollectionTravelMap[] Maps;
   [DataMember] public TravelApproach[] Approaches;
   [DataMember] public QuickTravelTarget[] QuickTargets;
+  [DataMember] public string HazardObservationError="";
  }
  [DataContract] internal sealed class RouteProbePoint {
   [DataMember] public int Id;
@@ -156,14 +157,29 @@ namespace BD2Daily.Live {
    foreach(string name in new[]{"_objDisableImage","_goBlock"})if(((GameObject)row.GetType().GetField(name,flags).GetValue(row)).activeSelf)return "talent_reject:row_disabled";
    return "";
   }
-  static string travelKey="";static long travelAt;static CollectionTravelMap[] travelMaps;
+  static string travelKey="",hazardError="";static long travelAt;static CollectionTravelMap[] travelMaps;
   internal static CollectionTravelState Travel(Frame frame){
    var map=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὮὬὬὮὠὮὪὠὧὩὪ;
    if(map==null)throw new InvalidOperationException("Current field map is unavailable");
    string key=frame.AccountKey+"|"+frame.PlayerKey+"|"+map.PackId;
    if(travelMaps==null||travelKey!=key||DateTime.UtcNow.Ticks-travelAt>TimeSpan.FromSeconds(10).Ticks){
     bool hasTable=ὢὯὩὦὣὮὩὥὦὡὧ.ὡὨὦὯὩὭὣὢὪὫὣ();
+    // Damage traps end Stealth in TrapDamageResponse, independently of monsters.
+    // Read the whole cartridge once per map-cache refresh, including destinations
+    // not loaded yet. Healing buffs and ordinary breakables are not hazards.
+    var raw=Singleton<RawDataManager>.ὪὫὢὨὯὭὦὪὦὨὣ;
+    var hazardMaps=new HashSet<int>();hazardError="";
+    try{
+     var damageBuffs=new HashSet<int>(raw.GetTableList<Proto.Design.common.FieldBuffTable>(ὯὭὣὩὩὦὬὢὯὩὪ.DB_COMMON,"FieldBuffTable")
+      .Where(x=>(x.BuffType==4||x.BuffType==5)&&x.Value>0).Select(x=>x.Id));
+     hazardMaps.UnionWith(raw.GetTableList<FieldTrapTable>(ὯὭὣὩὩὦὬὢὯὩὪ.DB_PACK,"FieldTrapTable",map.PackId)
+      .Where(x=>damageBuffs.Contains(x.FieldBuffId)).Select(x=>x.MapId));
+    }catch(Exception error){
+     hazardError=error.GetType().Name+": "+error.Message;
+     if(travelKey==key&&travelMaps!=null)hazardMaps.UnionWith(travelMaps.Where(x=>x.EnvironmentalHazard).Select(x=>x.Id));
+    }
     travelMaps=ὩὥὫὮὯὥὮὪὨὡὩ.ὫὣὪὯὭὦὩὬὫὥὭ().Where(x=>x.PackId==map.PackId).Select(x=>new CollectionTravelMap{
+     MapType=x.MapType,EnvironmentalHazard=hazardMaps.Contains(x.Id),
      Id=x.Id,Inside=x.IsInsideMap==1,Hunting=ὧὧὧὪὦὠὭὣὫὡὤ.ὯὠὩὨὯὤὬὬὤὡὫ(x.Id),HasWaypoint=hasTable&&ὢὯὩὦὣὮὩὥὦὡὧ.ὯὬὮὮὪὤὧὮὬὧὦ(x.Id),CanSummon=hasTable&&x.IsInsideMap!=1&&ὢὯὩὦὣὮὩὥὦὡὧ.ὯὬὮὮὪὤὧὮὬὧὦ(x.Id),
      Exits=x.GateId.Where(g=>g>0).Select(g=>ὩὥὫὮὯὥὮὪὨὡὩ.ὨὨὡὫὦὡὥὫὡὤὦ(g)).Distinct().ToArray()
     }).ToArray();travelKey=key;travelAt=DateTime.UtcNow.Ticks;
@@ -177,7 +193,7 @@ namespace BD2Daily.Live {
    bool threats=threatsKnown&&Bridge.Find(typeof(FieldMonsterController)).Cast<FieldMonsterController>().Any(x=>x!=null&&LiveProtocol.FieldTravelThreat(
     x.gameObject.activeInHierarchy,x.ὭὫὠὯὯὭὧὬὣὨὨ!=null,x.ὭὫὠὯὯὭὧὬὣὨὨ==null?0:x.ὭὫὠὯὯὭὧὬὣὨὨ.ὫὣὬὥὪὫὪὤὫὮὧ,
     x.IsCanOverwhelm(),suppressionPending,x.GetRemainRespawnTime().TotalSeconds));
-   return new CollectionTravelState{Pack=map.PackId,Map=map.Id,Ground=TalentSkillManager.ὪὫὢὨὯὭὦὪὦὨὣ.IsAvailableWayPointMakeOnGround(),ThreatsKnown=threatsKnown,ThreatsPresent=threats,Maps=travelMaps,Approaches=Approaches(frame),QuickTargets=QuickTravelNative.Capture().Targets};
+   return new CollectionTravelState{Pack=map.PackId,Map=map.Id,Ground=TalentSkillManager.ὪὫὢὨὯὭὦὪὦὨὣ.IsAvailableWayPointMakeOnGround(),ThreatsKnown=threatsKnown,ThreatsPresent=threats,Maps=travelMaps,Approaches=Approaches(frame),QuickTargets=QuickTravelNative.Capture().Targets,HazardObservationError=hazardError};
   }
 
   // Publishing evidence must never enable, warp or move the native agent.

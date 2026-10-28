@@ -19,10 +19,15 @@ namespace BD2Territory
   }
  }
  public enum RouteSearchState { Searching, Found, Exhausted }
+ public struct RouteJump
+ {
+  public RoutePoint Landing;public double InputX,InputZ;
+  public RouteJump(RoutePoint landing,double x,double z){Landing=landing;InputX=x;InputZ=z;}
+ }
  // Incremental A*: actual terrain/capsule queries supplied by the main-thread adapter, no NavMesh dependency.
  public sealed class LocalRouteSearch
  {
-  private sealed class Node { public int X,Z;public bool Anchor;public RoutePoint P;public double Cost;public Node Parent; }
+  private sealed class Node { public int X,Z;public bool Anchor;public RoutePoint P;public double Cost;public Node Parent;public RouteJump? Jump; }
   private sealed class Entry {public Node Node;public double Cost,Score;public long Order;}
   private readonly SortedSet<Entry> open=new SortedSet<Entry>(Comparer<Entry>.Create((a,b)=>{int c=a.Score.CompareTo(b.Score);return c!=0?c:a.Order.CompareTo(b.Order);}));
   private struct GridKey : IEquatable<GridKey>
@@ -34,15 +39,17 @@ namespace BD2Territory
   }
   private readonly Dictionary<GridKey,Node> nodes=new Dictionary<GridKey,Node>();private readonly Dictionary<RouteSampleKey,RoutePoint?> samples=new Dictionary<RouteSampleKey,RoutePoint?>();
   private readonly Func<RoutePoint,RoutePoint?> sample;private readonly Func<RoutePoint,RoutePoint,bool> clear;
+  private readonly Func<RoutePoint,IEnumerable<RouteJump>> jumps;private readonly Dictionary<RouteSampleKey,Node> jumpNodes=new Dictionary<RouteSampleKey,Node>();
+  public Dictionary<int,RouteJump> PathJumps{get;private set;}=new Dictionary<int,RouteJump>();
   private readonly RoutePoint[] anchors;private readonly Dictionary<GridKey,Node> anchorNodes=new Dictionary<GridKey,Node>();
   private readonly RoutePoint origin,center;private readonly RoutePoint[] goals;private readonly double step,radius,minX,maxX,minZ,maxZ;private readonly int limit;private long serial;
   public RouteSearchState State{get;private set;}public RoutePoint[] Path{get;private set;}=new RoutePoint[0];public int Expanded{get;private set;}
   public override string ToString()=>"state="+State+" expanded="+Expanded+" open="+open.Count+" samples="+samples.Count+" goals="+goals.Length+" path="+Path.Length;
 
-  public LocalRouteSearch(RoutePoint start,RoutePoint[] destinations,Func<RoutePoint,RoutePoint?> samplePoint,Func<RoutePoint,RoutePoint,bool> edgeClear,double cell=.4,double margin=8,int maxNodes=18000,bool worldAligned=false,RoutePoint[] guides=null)
+  public LocalRouteSearch(RoutePoint start,RoutePoint[] destinations,Func<RoutePoint,RoutePoint?> samplePoint,Func<RoutePoint,RoutePoint,bool> edgeClear,double cell=.4,double margin=8,int maxNodes=18000,bool worldAligned=false,RoutePoint[] guides=null,Func<RoutePoint,IEnumerable<RouteJump>> jumpLinks=null)
   {
    if(cell<=0||margin<0||maxNodes<1)throw new ArgumentException("Invalid local route bounds");
-   anchors=guides??new RoutePoint[0];
+   anchors=guides??new RoutePoint[0];jumps=jumpLinks;
    origin=worldAligned?new RoutePoint(Math.Round(start.X/cell)*cell,start.Y,Math.Round(start.Z/cell)*cell):start;goals=destinations;sample=samplePoint;clear=edgeClear;step=cell;limit=maxNodes;
    if(goals.Length==0){State=RouteSearchState.Exhausted;return;}
    center=new RoutePoint(goals.Average(p=>p.X),start.Y,goals.Average(p=>p.Z));radius=goals.Max(p=>RoutePoint.Distance(p,center));
@@ -59,8 +66,20 @@ namespace BD2Territory
    {
     var entry=open.Min;open.Remove(entry);var n=entry.Node;if(entry.Cost!=n.Cost)continue;used++;Expanded++;
     foreach(var goal in goals)if(RoutePoint.Distance(n.P,goal)<=step*1.8&&clear(n.P,goal))
-    {var path=new List<RoutePoint>{goal};for(var back=n;back!=null;back=back.Parent)path.Add(back.P);path.Reverse();Path=path.ToArray();State=RouteSearchState.Found;return State;}
+    {var path=new List<Node>();for(var back=n;back!=null;back=back.Parent)path.Add(back);path.Reverse();Path=path.Select(v=>v.P).Concat(new[]{goal}).ToArray();
+     for(int i=1;i<path.Count;i++)if(path[i].Jump.HasValue)PathJumps[i]=path[i].Jump.Value;State=RouteSearchState.Found;return State;}
     if(Expanded>=limit){State=RouteSearchState.Exhausted;return State;}
+    // Optional, physically validated links compete with walking in the same search.
+    // Their extra cost accounts for stopping/dismounting, so small detours stay on foot.
+    if(jumps!=null)foreach(var jump in jumps(n.P))
+    {
+     var p=jump.Landing;double distance=RoutePoint.Distance(n.P,p);
+     if(distance<.6||p.X<minX||p.X>maxX||p.Z<minZ||p.Z>maxZ)continue;
+     var key=new RouteSampleKey(p);double cost=n.Cost+distance+1.5;
+     if(jumpNodes.TryGetValue(key,out var next)&&next.Cost<=cost)continue;
+     if(next==null){next=new Node{Anchor=true,X=(int)Math.Round((p.X-origin.X)/step),Z=(int)Math.Round((p.Z-origin.Z)/step)};jumpNodes[key]=next;}
+     next.P=p;next.Cost=cost;next.Parent=n;next.Jump=jump;Push(next);
+    }
     // Native bridge centre lines are sparse extra vertices, not permission to cross water.
     // Validate every connector with the same ground / water / capsule rules as grid edges.
     for(int i=0;i<anchors.Length;i++)

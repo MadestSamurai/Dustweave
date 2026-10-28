@@ -51,6 +51,42 @@
   ],
   "files": [
     {
+      "path": "src/Compatibility/GamePreferenceCodec.cs",
+      "sha256": "ec2f1ea228786ef4a2b5bad68218b83ef570519c61c9415fc61429cb48fdb11e",
+      "bytes": 4582,
+      "reasons": "build input"
+    },
+    {
+      "path": "src/Core/DailyGamePreferenceStore.cs",
+      "sha256": "6cf1ca559afd0fb3a8256a95754f275c47ab5f0c370e485b85e5d28a950d379b",
+      "bytes": 15797,
+      "reasons": "build input"
+    },
+    {
+      "path": "src/Core/DailySandboxPreferenceTransfer.cs",
+      "sha256": "c21a048d914751523399b67ae6336d67cb3beaa61766e9561a7f8afe8be5667b",
+      "bytes": 13121,
+      "reasons": "build input"
+    },
+    {
+      "path": "src/Desktop/GamePreferenceSyncWindow.cs",
+      "sha256": "6dea6158f711557bf65c99fdefa2b0918bab9ddf7ea09c7a6c63db382bdbf413",
+      "bytes": 7248,
+      "reasons": "build input"
+    },
+    {
+      "path": "src/Desktop/MainWindow.GamePreferences.Smoke.cs",
+      "sha256": "176e936c7fb15a9f25762fd529dcfc13f0cb4a8f63edb4fdb20f55d712ab8da5",
+      "bytes": 4226,
+      "reasons": "build input"
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/GamePreferenceCases.cs",
+      "sha256": "b7e9e807e131cef28d7e633fd1b4afa1fb65ca05454936a2f6ee813405aa8d87",
+      "bytes": 12344,
+      "reasons": "build input"
+    },
+    {
       "path": "tests/Dustweave.Tests/Cases/IdentityObserverCases.cs",
       "sha256": "804a0f6c06a31367834f68349392b76de083d37c9dd81bb9b7210f78a41b02f9",
       "bytes": 21340,
@@ -8022,6 +8058,30 @@
       "path": "tests/Dustweave.Tests/Cases/LoginRecoveryCases.cs",
       "sha256": "76c7ce52e48c055a10ec13b664a85e39e46ea2110403f1e62ba5d8258db59744",
       "bytes": 2945,
+      "reasons": "build input"
+    },
+    {
+      "path": "src/Territory/hook/RuntimeJump.cs",
+      "sha256": "a8ce3b9ee25de480b99ed4539d137b44c91c51bdd52c82d0af2840d0550ebf6b",
+      "bytes": 5831,
+      "reasons": "build input"
+    },
+    {
+      "path": "src/Territory/shared/JumpTrajectory.cs",
+      "sha256": "a629b03a3fda89e39a5a7fc38cae4192f304031012bdde98d0a5815a59e82d27",
+      "bytes": 700,
+      "reasons": "build input"
+    },
+    {
+      "path": "src/Core/DailyHazardTravel.cs",
+      "sha256": "459f9b3eb1b682b779fae1f19c5dc3ba56b51ad6a78f47de77a193804516b331",
+      "bytes": 6417,
+      "reasons": "build input"
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/HazardTravelCases.cs",
+      "sha256": "5f2756a425efa69050d19b2b17ef1a0a29dc100c560418c4b6a8be42c3518df3",
+      "bytes": 11250,
       "reasons": "build input"
     }
   ],

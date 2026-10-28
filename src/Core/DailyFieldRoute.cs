@@ -544,14 +544,16 @@ public sealed partial class DailyFieldRoute
         return eligible.OrderByDescending(r => kind is 2 or 17 ? DailyRegionRouter.D(r[SkillPath]!["valueList"]![1]) : 0)
             .ThenByDescending(r => N(r[SkillPath]!["id"])).ThenBy(r => N(r[SkillPath]!["catalystValue"])).FirstOrDefault();
     }
-    public async Task<JsonObject> Skill(int kind, double minRemaining = 3, int attempts = 0, bool optional = false)
+    public async Task<JsonObject> Skill(int kind, double minRemaining = 3, int attempts = 0, bool optional = false, long? hazardDestination = null)
     {
         W.StepProgress(DailyWorkProgress.Talent(kind));
         Require(!(Progress.OnlySteal && kind is 3 or 4 or 6 or 20), "单独偷窃不允许使用收集天赋");
         Require(attempts < 3, "遇敌使天赋菜单反复失效");
         await FieldReady(settle: 0);
         var e = await Evidence();
-        if (kind == 17 && !TravelThreat(e))
+        if (kind == 17 && Hazardous(e)) throw new DailyTravelBlocked("伤害机关会解除隐身；需先快捷移动至安全区，再准备隐身。");
+        if (hazardDestination.HasValue) Require(kind == 17 && SafeStealthPreparation(e, hazardDestination.Value), "安全区隐身准备条件已变化。");
+        if (kind == 17 && !hazardDestination.HasValue && !TravelThreat(e))
             return DailyWorkflow.Skipped("native_threats_cleared");
         if (kind == 3 && !B(R(e, "mainline.map", "HasCanOverwhelmMonster()")))
             return DailyWorkflow.Skipped("no_suppressible_monsters");
@@ -576,7 +578,7 @@ public sealed partial class DailyFieldRoute
         {
             opened = (await W.Step("GameFieldDefaultUI", operation: "mainline_menu", value: kind, expect: "QuickMenuUI"))["after"]!.AsObject();
         }
-        catch (Exception ex) when (ex is DailyStepException or StageHostException) { if (!await Encounter((await W.Observe()).Frame)) throw; return await Skill(kind, minRemaining, attempts + 1, optional); }
+        catch (Exception ex) when (ex is DailyStepException or StageHostException) { if (!await Encounter((await W.Observe()).Frame)) throw; return await Skill(kind, minRemaining, attempts + 1, optional, hazardDestination); }
         if (kind == 6 && remaining > 0)
         {
             double end = W.Time + remaining + 2;
@@ -633,7 +635,8 @@ public sealed partial class DailyFieldRoute
             await W.Step("QuickMenuUI", back: true, absent: "QuickMenuUI");
             return DailyWorkflow.Skipped("native_disabled");
         }
-        if (kind == 17 && !TravelThreat(e))
+        if (hazardDestination.HasValue) Require(SafeStealthPreparation(e, hazardDestination.Value), "安全区隐身准备条件已变化。");
+        if (kind == 17 && !hazardDestination.HasValue && !TravelThreat(e))
         {
             await W.Step("QuickMenuUI", back: true, absent: "QuickMenuUI");
             return DailyWorkflow.Skipped("native_threats_cleared");
@@ -712,9 +715,15 @@ public sealed partial class DailyFieldRoute
         // An already open destination picker can teleport directly; opening a
         // field talent here would wait for a field page that cannot appear.
         if (DailyNavigationDecision.Types(e["Frame"]!.AsObject()).Contains("WayPointUI")) return;
-        // Standing at a usable waypoint is not a walk through its battle map.
-        // In particular, leaving that map for a safe area never needs stealth.
+        // Immediate departure from an interactable portal needs no talent,
+        // particularly when leaving a battle map for a safe destination.
         if (!walking && AtWaypoint(e)) return;
+        if (Hazardous(e))
+        {
+            if (walking) throw new DailyTravelBlocked("伤害机关地图不步行赶路；请经安全区传送阵中转。");
+            await PrepareHazardCollection(e);
+            return;
+        }
         bool required = RequiresStealth(e), preferred = PrefersStealth(e) || WeeklyStealthNeeded(e, walking);
         long map = N(Map(e)["id"]);
         if (map != unavailableStealthMap) unavailableStealthMap = 0;

@@ -559,7 +559,7 @@ namespace BD2Territory.Runtime
   }
   private void StopMove()
   {
-   ClearLocalMotion();StopEscape();CancelVehicle();
+   jumping=false;ClearLocalMotion();StopEscape();CancelVehicle();
    if(ownsMove&&move!=null)
    {
     move.ClearMove();move.StopMove();var agent=NavAgent();if(agent!=null&&agent.isActiveAndEnabled&&agent.isOnNavMesh)agent.ResetPath();

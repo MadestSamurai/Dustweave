@@ -94,10 +94,12 @@ namespace BD2Territory
  {
   private LocalRouteSearch search;private int previous;private readonly RoutePoint start;private readonly RoutePoint[] goals,guides;
   private readonly Func<RoutePoint,RoutePoint?> sample;private readonly Func<RoutePoint,RoutePoint,bool> edge;private readonly double margin;
+  private readonly Func<RoutePoint,IEnumerable<RouteJump>> jumps;
+  public Dictionary<int,RouteJump> PathJumps=>search.PathJumps;
   public double Cell{get;private set;}public int Expanded=>previous+search.Expanded;public RoutePoint[] Path=>search.Path;public RouteSearchState State=>search.State;
-  public AdaptiveLocalRoute(RoutePoint start,RoutePoint[] goals,Func<RoutePoint,RoutePoint?> sample,Func<RoutePoint,RoutePoint,bool> edge,bool fine=false,double margin=8,RoutePoint[] guides=null)
-  {this.start=start;this.goals=goals;this.sample=sample;this.edge=edge;this.margin=margin;this.guides=guides;Cell=fine?.1:.4;Begin();}
-  private void Begin(){search=new LocalRouteSearch(start,goals,sample,edge,Cell,margin,Cell>.1?4000:18000,true,guides);}
+  public AdaptiveLocalRoute(RoutePoint start,RoutePoint[] goals,Func<RoutePoint,RoutePoint?> sample,Func<RoutePoint,RoutePoint,bool> edge,bool fine=false,double margin=8,RoutePoint[] guides=null,Func<RoutePoint,IEnumerable<RouteJump>> jumpLinks=null)
+  {this.start=start;this.goals=goals;this.sample=sample;this.edge=edge;this.margin=margin;this.guides=guides;this.jumps=jumpLinks;Cell=fine?.1:.4;Begin();}
+  private void Begin(){search=new LocalRouteSearch(start,goals,sample,edge,Cell,margin,Cell>.1?4000:18000,true,guides,jumps);}
   public bool Refine(){if(Cell<=.1)return false;previous+=search.Expanded;Cell=.1;Begin();return true;}
   public RouteSearchState Step(int nodes,double ms=6)
   {

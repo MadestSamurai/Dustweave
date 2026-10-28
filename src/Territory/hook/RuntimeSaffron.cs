@@ -69,7 +69,7 @@ namespace BD2Territory.Runtime
   // Called only after AwaitGathering has settled the current native action.
   private void SaffronReturnForMaturePotatoes()
   {
-   if(!saffronResources||!(saffron.State=="potatoes"||saffron.State=="drain"))return;
+   if(jumping||!saffronResources||!(saffron.State=="potatoes"||saffron.State=="drain"))return;
    var planted=farms.Where(f=>FieldSeed(f)==SaffronCycle.Potato&&!Empty(f)).ToArray();
    if(!SaffronCycle.ReturnToPotatoes(planted.Length,planted.Count(f=>FieldCrop(f)!=null&&Harvestable(FieldCrop(f))),farms.All(f=>CurrentDb(f)!=null&&ReadFarmReadiness(f)!=FarmReadiness.Unknown),network.NativeBusy||network.Waiting||SalesBusy()||CookingBusy()))return;
    StopMotion();targetNode=null;saffronResources=false;navigation.Reset();triedDestinations.Clear();
@@ -159,8 +159,9 @@ namespace BD2Territory.Runtime
    SaffronSetSeed(c,seed);var crop=crops.Single();RecipeBatchPlanner.Choose(progress,crops);
    if(SaleCurrency()<(long)crop.Price*farms.Count(Empty))throw new InvalidOperationException("种植预算不足，未继续种植");
    if(!PlantingTransaction.WithinBudget(progress,owner,c.PlantingBudget,crop.Price,farms.Count(Empty)))throw new InvalidOperationException("种植预算不足，未继续种植");
-   targetFarm=farms.Where(Empty).OrderBy(f=>(f.GetFieldWorldCenter()-player.transform.position).sqrMagnitude).FirstOrDefault();
+   targetFarm=farms.Where(f=>Empty(f)&&Allowed(f,now)).OrderBy(f=>(f.GetFieldWorldCenter()-player.transform.position).sqrMagnitude).FirstOrDefault();
    if(targetFarm!=null)Plant(s,crop,now);
+   else s.Reason="等待暂不可达农田的重试间隔";
   }
   private void SaffronDecision(TerritorySnapshot s,string action,long serverNow,int empty,int grown)
   {

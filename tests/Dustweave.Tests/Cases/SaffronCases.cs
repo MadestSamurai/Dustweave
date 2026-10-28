@@ -52,6 +52,7 @@ static class SaffronCases
         Check(DailyPreferences.Parse(JsonSerializer.Serialize(settings)).Stages.Saffron&&DailyStageCatalog.Enabled("territory_saffron",settings),"saffron selection survives account preference round trip");
         Check(DailyNavigationDecision.FieldStages.Contains("territory_saffron"),"saffron can reuse the already-open territory cartridge");
         var command=DailySaffron.Command("test-owner",123,1000);
+        Check(B(command["UseVehicle"]),"daily saffron permits native vehicles on useful walking segments");
         Check(command["SaffronDaily"]!.GetValue<bool>()&&command["Logging"]!.GetValue<bool>()&&command["Mining"]!.GetValue<bool>(),"saffron controller permits trees and ore during potato waits and its final resource pass");
         Check(command["UntilUtcTicks"]!.GetValue<long>()==1000+TimeSpan.TicksPerSecond*3,"crop control expires if daily supervision disappears");
         Check(!SaffronCycle.CanBuff(100,false,true,true,true,600),"unripe crop state cannot authorize food use regardless of elapsed desktop time");

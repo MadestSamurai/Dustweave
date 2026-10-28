@@ -34,6 +34,7 @@ public static class Program
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     private static int MainCore(string[] args)
     {
+        if(args.Length==3&&args[0]==DailySandboxPreferenceTransfer.HelperSwitch){DailySandboxPreferenceTransfer.RunHelper(args[1],args[2]);return 0;}
         if(args.Length==2&&args[0]=="--loading-experiment-analyze"){DailyLoadingComparison.Analyze(args[1]);return 0;}
         if(args.Length==2&&args[0]=="--loading-experiment-accounts"){DailyLoadingExperimentLaunch.WriteAccounts(args[1]);return 0;}
         if(args.Length==2&&args[0]=="--loading-experiment-recoveries"){DailyLoadingExperiment.WriteRecoveries(args[1]);return 0;}

@@ -106,6 +106,7 @@ await Group("Saffron", async () => { SaffronCases.Run(cases); await SaffronCases
 await Group("TerritoryNavigation", () => Sync(() => TerritoryNavigationCases.Run(cases)));
 await Group("Sandbox", () => SandboxCases.Run(root, cases));
 await Group("SandboxScope", () => SandboxScopeCases.Run(root, cases));
+await Group("GamePreferences", () => GamePreferenceCases.Run(root, cases));
 await Group("AccountOrder", () => AccountOrderCases.Run(root, cases));
 await Group("Guild", () => GuildCases.Run(root, cases));
 await Group("Startup", () => StartupCases.Run(root, cases));

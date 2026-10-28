@@ -9,6 +9,7 @@ namespace BD2Territory.Runtime
  internal sealed partial class RuntimeEngine
  {
   private AdaptiveLocalRoute localSearch;private Vector3[] localRoute=new Vector3[0];private int localIndex,localTarget;
+  private Dictionary<int,RouteJump> localJumps=new Dictionary<int,RouteJump>();
   private bool localMoving,localFine,localRescanned;private Vector3 localOrigin;private long localPlanAt;private readonly LocalMotionProgress localMotion=new LocalMotionProgress();
   private readonly LocalRecoveryBudget localBudget=new LocalRecoveryBudget();private readonly LocalObstructionMemory localBlocked=new LocalObstructionMemory();
   private static RoutePoint Point(Vector3 p)=>new RoutePoint(p.x,p.y,p.z);
@@ -61,8 +62,8 @@ namespace BD2Territory.Runtime
     yield return p;
    }
   }
-  private void ResetLocalRecovery(){localBudget.Reset();localBlocked.Clear();localTarget=0;localFine=false;localRescanned=false;}
-  private void ClearLocalMotion(){localSearch=null;localMoving=false;localRoute=new Vector3[0];localIndex=0;}
+  private void ResetLocalRecovery(){localBudget.Reset();localBlocked.Clear();jumpAttempts.Clear();localTarget=0;localFine=false;localRescanned=false;}
+  private void ClearLocalMotion(){localSearch=null;localMoving=false;localRoute=new Vector3[0];localIndex=0;localJumps.Clear();}
   private bool RescanLocalRoute(TerritorySnapshot s,long now,string reason)
   {
    if(localRescanned)return false;localRescanned=true;
@@ -76,6 +77,7 @@ namespace BD2Territory.Runtime
    if(target==null||player==null||move==null)return false;
    if(localTarget!=target.GetInstanceID()){ResetLocalRecovery();localTarget=target.GetInstanceID();}
    if(!localBudget.Plan(now))return false;
+   ResetJumpPlanning();localJumps.Clear();
    CancelVehicle();if(player.IsGetOnVehicle())player.GetOffVehicle();
    move.ClearMove();move.StopMove();var agent=NavAgent();if(agent!=null&&agent.isActiveAndEnabled&&agent.isOnNavMesh)agent.ResetPath();
    B.InvokeOn("Player.ChangeMoveType",move,B.EnumObject("MoveKind","CharController"));
@@ -88,7 +90,7 @@ namespace BD2Territory.Runtime
    var saved=localPaths.Reuse(target.GetInstanceID(),now,Point(localOrigin),p=>goals.Any(g=>RoutePoint.Distance(g,p)<.06)&&CanGatherAt(target,Vector(p)),LocalEdge);
    if(saved==null)saved=localPaths.ReuseCorridor(Point(localOrigin),goals,LocalEdge);
    if(saved!=null){localSearch=null;SetLocalRoute(saved,now);s.Reason="复用已检测通路，实时核对障碍";LocalStorage.Log("实体路线缓存命中 target="+target.GetInstanceID()+" points="+saved.Length);return true;}
-   localSearch=new AdaptiveLocalRoute(Point(localOrigin),goals,LocalSample,PlanEdge,false,localBudget.Plans==1?8:14,BridgeRouteGuides());
+   localSearch=new AdaptiveLocalRoute(Point(localOrigin),goals,LocalSample,PlanEdge,false,localBudget.Plans==1?8:14,BridgeRouteGuides(),PlanJumps);
    localRoute=new Vector3[0];localIndex=0;
    LocalStorage.Log("实体局部规划 target="+target.GetInstanceID()+" reason="+reason+" plan="+localBudget.Plans+" goals="+goals.Length+" from="+player.transform.position);
    s.Reason="检测周围障碍，规划普通移动绕行";return true;
@@ -110,41 +112,45 @@ namespace BD2Territory.Runtime
    if(state=="DontMove"||state=="Anchored"){move.ClearMove();localMotion.Begin(now,Point(player.transform.position));s.Reason="等待游戏恢复角色移动";return;}
    if(localSearch!=null)
    {
-    if(now-localPlanAt>TimeSpan.FromSeconds(15).Ticks){if(RescanLocalRoute(s,now,"rescan_after_prediction_timeout"))return;SkipWalkTarget(walkTarget,s,now,"local_planning_budget");return;}
+    if(now-localPlanAt>TimeSpan.FromSeconds(15).Ticks){if(RescanLocalRoute(s,now,"rescan_after_prediction_timeout"))return;if(TryJumpRecovery(s,now,c,RouteCenter(walkTarget)))return;SkipWalkTarget(walkTarget,s,now,"local_planning_budget");return;}
     // A slow wide detour is not evidence of a narrow passage. Keep the coarse
     // frontier until it is exhausted; restarting at 0.1 m multiplies area by 16.
     // Authored bridge guides cover narrow crossings without refining the whole map.
     var status=localSearch.Step(256,6);localFine=localSearch.Cell<.4;s.Reason=(localFine?"细化窄路网格 · ":"扫描地面和碰撞体 · ")+localSearch.Expanded+" 个路点";
     if(status==RouteSearchState.Searching)return;
     if(status==RouteSearchState.Exhausted)
-    {int count=localSearch.Expanded;if(RescanLocalRoute(s,now,"rescan_after_route_exhausted"))return;LocalStorage.Log("实体局部规划未找到通路 target="+walkTarget.GetInstanceID()+" expanded="+count);SkipWalkTarget(walkTarget,s,now,"local_route_exhausted");return;}
-    var path=localSearch.Path;localPaths.Save(localTarget,now,path);SetLocalRoute(path,now);
-    LocalStorage.Log("实体局部路线就绪 target="+walkTarget.GetInstanceID()+" points="+localRoute.Length+" goal="+localRoute.Last()+" planMs="+((now-localPlanAt)/TimeSpan.TicksPerMillisecond)+" expanded="+localSearch.Expanded+" cell="+localSearch.Cell+" floorCache="+localGround.Hits+"/"+localGround.Misses+" edgeCache="+localEdges.Hits+"/"+localEdges.Misses);localSearch=null;
+    {int count=localSearch.Expanded;if(RescanLocalRoute(s,now,"rescan_after_route_exhausted"))return;if(TryJumpRecovery(s,now,c,RouteCenter(walkTarget)))return;LocalStorage.Log("实体局部规划未找到通路 target="+walkTarget.GetInstanceID()+" expanded="+count);SkipWalkTarget(walkTarget,s,now,"local_route_exhausted");return;}
+    var path=localSearch.Path;localJumps=new Dictionary<int,RouteJump>(localSearch.PathJumps);if(localJumps.Count==0)localPaths.Save(localTarget,now,path);SetLocalRoute(path,now);
+    LocalStorage.Log("实体局部路线就绪 target="+walkTarget.GetInstanceID()+" points="+localRoute.Length+" jumps="+localJumps.Count+" goal="+localRoute.Last()+" planMs="+((now-localPlanAt)/TimeSpan.TicksPerMillisecond)+" expanded="+localSearch.Expanded+" cell="+localSearch.Cell+" floorCache="+localGround.Hits+"/"+localGround.Misses+" edgeCache="+localEdges.Hits+"/"+localEdges.Misses);localSearch=null;
    }
    var from=player.transform.position;
    bool detected=walkTarget is LifeGatheringObject resource&&Detected(Kind(resource)).Contains(resource);
    if(GatherStandReached(walkTarget,from,localIndex>=localRoute.Length,detected))
    {int id=walkTarget.GetInstanceID();LocalStorage.Log("实体站位到达 target="+id+" recovery="+gatheringReposition+" actual="+from.ToString("F3")+" goal="+finalDestination.ToString("F3"));StopMove();ResetLocalRecovery();navigation.Reset();interaction.Select(id);interaction.Arrived(now);gatheringReposition=false;s.Reason="绕行已到位，准备采集";return;}
-   while(localIndex<localRoute.Length&&FlatDistance(from,localRoute[localIndex])<.10f&&(localIndex<localRoute.Length-1||CanGatherAt(walkTarget,from)))localIndex++;
+   while(localIndex<localRoute.Length&&!localJumps.ContainsKey(localIndex)&&FlatDistance(from,localRoute[localIndex])<.10f&&(localIndex<localRoute.Length-1||CanGatherAt(walkTarget,from)))localIndex++;
+   if(localJumps.TryGetValue(localIndex,out var plannedJump)){ContinuePlannedJump(s,now,c,plannedJump);return;}
    if(localIndex>=localRoute.Length){if(!CanGatherAt(walkTarget,from))RetryLocal(s,now,"local_arrival_outside_range",from);else move.StopMove();return;}
    // Follow a visible corridor, not every grid corner. Recheck against live colliders before steering.
-   for(int j=Math.Min(localRoute.Length-1,localIndex+4);j>localIndex;j--)if(FlatDistance(from,localRoute[j])<=1.4f&&LocalEdge(Point(from),Point(localRoute[j]))){localIndex=j;break;}
+   int walkingEnd=localJumps.Keys.Where(i=>i>=localIndex).DefaultIfEmpty(localRoute.Length).Min()-1;
+   for(int j=Math.Min(walkingEnd,localIndex+4);j>localIndex;j--)if(FlatDistance(from,localRoute[j])<=1.4f&&LocalEdge(Point(from),Point(localRoute[j]))){localIndex=j;break;}
    var dest=localRoute[localIndex];var delta=dest-from;delta.y=0;
-   var ahead=from+Vector3.ClampMagnitude(delta,.7f);
-   var obstacle=Obstacle(from,ahead);
-   if(obstacle!=null){blockingCollider=obstacle;RetryLocal(s,now,"local_obstacle_changed",ahead);return;}else blockingCollider=null;
+   // Use the same ground-following segments as the planner. A horizontal sweep
+   // at the old foot height incorrectly rejects a legal slope/step before moving.
+   blockingCollider=null;
    double remaining=FlatDistance(from,dest);for(int i=localIndex+1;i<localRoute.Length;i++)remaining+=FlatDistance(localRoute[i-1],localRoute[i]);
    if(localMotion.Stalled(now,Point(from),remaining))
    {
     // A near-goal collision is a bad interaction stand, not evidence that the whole road is blocked.
     if(FlatDistance(from,finalDestination)<.3f)
     {triedDestinations.Add(finalDestination);RetryLocal(s,now,"local_stand_unreachable",finalDestination);return;}
+    if(TryJumpRecovery(s,now,c,finalDestination))return;
     if(TryEscape(s,now,c,blockingCollider))return;
     RetryLocal(s,now,"local_motion_stalled",from+delta.normalized*.35f,true);return;
    }
    if(!LocalEdge(Point(from),Point(dest))){RetryLocal(s,now,"local_passage_changed",dest);return;}
    // Mounting changes speed, not the movement controller. A* keeps steering via CharController.
-   UpdateVehicle(now,c,remaining);
+   double rideDistance=FlatDistance(from,dest);for(int i=localIndex+1;i<=walkingEnd;i++)rideDistance+=FlatDistance(localRoute[i-1],localRoute[i]);
+   UpdateVehicle(now,c,rideDistance);
    if(vehiclePending){move.StopMove();localMotion.Begin(now,Point(player.transform.position));return;}
    if(player.IsGetOnVehicle())s.Reason="使用载具沿实体通路行进";
    B.InvokeOn("Player.Face",player,delta.normalized*Mathf.Clamp(delta.magnitude/.65f,.1f,1f));B.InvokeOn("Player.StartMove",player);lastInput=now;

@@ -96,6 +96,7 @@ static class EventCollectionCases
     }
     public static async Task Run(string root, List<string> checks)
     {
+        await HazardTravelCases.Run(root, checks);
         void Check(bool value, string label) { if (!value) throw new Exception(label); checks.Add(label); }
         using (var f = new Fixture(Path.Combine(root, "event-coverage"), 2003, 20031))
         {
@@ -198,10 +199,11 @@ static class EventCollectionCases
         using (var f = new Fixture(Path.Combine(root, "event-stealth-" + scenario), 2002, scenario == "safe" ? 20023 : 20021, scenario == "safe" ? 0 : 1)
             { Disabled = scenario == "disabled", Missing = scenario == "missing", OtherMonsters = scenario == "safe" ? 0 : 1 })
         {
-            await f.Route.Protection(f.H.Evidence());
-            await f.Route.Protection(f.H.Evidence());
-            Check(scenario == "patrol" ? f.Casts.SequenceEqual(new[] { 17 }) && NeedsStealth(f.H.Evidence()) : f.Casts.Count == 0 && !NeedsStealth(f.H.Evidence()), "event-two stealth respects safe area, active duration and native availability: " + scenario);
-            Check(f.H.Box.Commands.Count(c => S(c["Kind"]) == "mainline_menu") <= 1, "unavailable or active stealth does not repeatedly reopen its menu: " + scenario);
+            bool blocked = false;
+            try { await f.Route.Skill(17); } catch (DailyTravelBlocked) { blocked = true; }
+            Check(blocked == (scenario != "safe") && f.Casts.Count == 0,
+                "damage-prone event fields never renew stealth in place, including when the talent is unavailable: " + scenario);
+            Check(f.H.Box.Commands.Count == 0, "damage-prone field cannot open the talent menu: " + scenario);
             Check(S(f.H.Frame["UiToken"]) == "GameFieldDefaultUI", "stealth probe leaves the field usable: " + scenario);
         }
         foreach (string scenario in new[] { "away", "waypoint", "active", "disabled", "missing" })
@@ -243,8 +245,10 @@ static class EventCollectionCases
             await f.Route.ProtectWeeklyMovement();
             Check(f.H.Box.Commands.Count == 0, "confirmed safe areas do not inherit cartridge-wide patrol protection: " + pack);
             f.MapType = 1;
-            await f.Route.ProtectWeeklyMovement();
-            Check(f.H.Box.Commands.Count == 0, "native-confirmed empty battle areas do not inherit cartridge-wide patrol protection: " + pack);
+            bool refused = false;
+            try { await f.Route.ProtectWeeklyMovement(); } catch (DailyTravelBlocked) { refused = true; }
+            Check(refused == (pack == 2002) && f.H.Box.Commands.Count == 0,
+                "cleared ordinary maps remain walkable, but empty monster lists do not prove damage traps absent: " + pack);
         }
         foreach (bool patrol in new[] { false, true })
         using (var f = new Fixture(Path.Combine(root, "capture-only-stealth-" + patrol), 12, 122, 1)

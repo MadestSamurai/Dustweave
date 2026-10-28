@@ -9,7 +9,7 @@ static class TerritoryNavigationCases
         // Run the production planner and movement adapter. Only native world queries
         // and movement are replaced by a deterministic world; no game is connected.
         var paths = new[] { "hook/RuntimeLocalNavigation.cs", "shared/LocalRoute.cs",
-            "shared/LocalNavigationCache.cs", "shared/RouteGeometry.cs", "shared/TraversalRules.cs" };
+            "shared/LocalNavigationCache.cs", "shared/RouteGeometry.cs", "shared/TraversalRules.cs", "shared/JumpTrajectory.cs" };
         var sources = paths.Select(p => CSharpSyntaxTree.ParseText(File.ReadAllText(
             Path.Combine(TestPaths.SourceRoot, "src/Territory", p)), path: p)).Append(CSharpSyntaxTree.ParseText(Fixture));
         var references = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator)
@@ -82,6 +82,7 @@ namespace BD2Territory.Runtime {
   private readonly RouteMemo<RouteSampleKey,bool> localClear=new RouteMemo<RouteSampleKey,bool>(65536);
   private readonly RouteMemo<RouteEdgeKey,bool> localEdges=new RouteMemo<RouteEdgeKey,bool>(131072);
   private readonly LocalRouteMemory localPaths=new LocalRouteMemory();
+  private readonly List<Vector3> jumpAttempts=new List<Vector3>();
   private Func<Vector3,bool> clear=p=>true,land=p=>true;
   private Func<Vector3,Vector3> floor=p=>p;
   private Func<Vector3,Vector3,bool> segment=null;
@@ -107,6 +108,14 @@ namespace BD2Territory.Runtime {
   private IEnumerable<LifeGatheringObject> Detected(int kind)=>new LifeGatheringObject[0]; private int Kind(LifeGatheringObject c)=>1;
   private void StopMove(){arrivals++;ClearLocalMotion();move.StopMove();}
   private bool TryEscape(TerritorySnapshot s,long now,TerritoryControl c,Collider hit)=>false;
+  private Vector3? attemptedJumpGoal;
+  private bool TryJumpRecovery(TerritorySnapshot s,long now,TerritoryControl c,Vector3 goal){attemptedJumpGoal=goal;return false;}
+  private Func<RoutePoint,IEnumerable<RouteJump>> jumpLinks;
+  private int plannedJumpsExecuted;
+  private void ResetJumpPlanning(){}
+  private IEnumerable<RouteJump> PlanJumps(RoutePoint p)=>jumpLinks==null?new RouteJump[0]:jumpLinks(p);
+  private void ContinuePlannedJump(TerritorySnapshot s,long now,TerritoryControl c,RouteJump plan)
+  {player.transform.position=Vector(plan.Landing);localJumps.Remove(localIndex);localIndex++;plannedJumpsExecuted++;localMotion.Begin(now,Point(player.transform.position));}
   private void UpdateVehicle(long now,TerritoryControl c,double remaining){}
   private TerritorySnapshot snapshot=new TerritorySnapshot(); private long time=100000000;
   private void Start(Vector3 target){walkTarget=new LifeFarmFieldObject();walkTarget.transform.position=target;if(!BeginLocalRoute(walkTarget,snapshot,time,"fixture"))throw new Exception("fixture route start failed");}
@@ -114,9 +123,23 @@ namespace BD2Territory.Runtime {
   private void Follow(){for(int i=0;i<800&&localMoving;i++){int before=player.Starts;Tick();if(player.Starts>before){var dest=localRoute[localIndex];var next=player.transform.position+Vector3.ClampMagnitude(dest-player.transform.position,.16f);if(!Along(player.transform.position,next,clear))throw new Exception("movement crossed a physical wall");player.transform.position=floor(next);}}}
   public static string[] Exercise(){
    var checks=new List<string>();void Check(bool pass,string name){if(!pass)throw new Exception(name);checks.Add(name);}
+   var arc=JumpTrajectory.Samples(0,3,15,1,1.0/60).ToArray();
+   Check(arc.Max(p=>p.Y)>.75&&arc.Max(p=>p.Y)<.86&&arc.Last().Y<0,"native jump arc uses discrete gravity and returns below its starting floor");
+   Check(arc.Last().X>1.5&&JumpTrajectory.Samples(0,3,15,.6,1.0/60).Last().X<arc.Last().X,"jump prediction includes horizontal acceleration and actual movement input");
+   Check(JumpTrajectory.Samples(0,3,15,1,1.0/30).Max(p=>p.Y)<arc.Max(p=>p.Y),"lower frame rate conservatively reduces the native jump height");
    RuntimeEngine House(){var e=new RuntimeEngine();e.clear=p=>p.x<1||p.x>3||Math.Abs(p.z)>1.2f;return e;}
    var e=House();e.Start(new Vector3(4,0,0));e.Follow();
    Check(e.arrivals==1&&e.skipped=="","ordinary planning walks around a house to the farm");
+   e=new RuntimeEngine();e.Start(new Vector3(4,0,0));while(e.localSearch!=null)e.Tick();var originalDestination=e.finalDestination;
+   for(int i=0;i<40&&!e.attemptedJumpGoal.HasValue;i++)e.Tick();
+   Check(e.attemptedJumpGoal.HasValue&&Vector3.Distance(e.attemptedJumpGoal.Value,originalDestination)<.001f,"stalled movement evaluates a jump toward the destination rather than the adjacent grid corner");
+   e=new RuntimeEngine();e.clear=p=>p.x<1||p.x>1.3f||Math.Abs(p.z)>4;
+   e.jumpLinks=p=>p.X>.3&&p.X<.9&&Math.Abs(p.Z)<.2?new[]{new RouteJump(new RoutePoint(2,0,0),1,0)}:new RouteJump[0];
+   e.Start(new Vector3(4,0,0));e.Follow();
+   Check(e.arrivals==1&&e.plannedJumpsExecuted==1&&!e.attemptedJumpGoal.HasValue,"walking and jumping are planned together and execute before any stall recovery");
+   Check(e.localPaths.ReuseCorridor(new RoutePoint(0,0,0),new[]{new RoutePoint(4,0,0)},(a,b)=>true)==null,"jump corridors cannot be reused as ordinary walkable paths");
+   e=new RuntimeEngine();e.jumpLinks=p=>p.X==0?new[]{new RouteJump(new RoutePoint(2,0,0),1,0)}:new RouteJump[0];e.Start(new Vector3(4,0,0));e.Follow();
+   Check(e.arrivals==1&&e.plannedJumpsExecuted==0,"a clear walking route wins over an unnecessary stop and jump");
    e=House();e.Start(new Vector3(4,0,0));e.time+=TimeSpan.FromSeconds(16).Ticks;e.Tick();
    Check(!e.LocalSample(new RoutePoint(2,0,0)).HasValue&&!e.PlanEdge(new RoutePoint(0,0,0),new RoutePoint(4,0,0)),"planning timeout never disables house clearance or wall sweeps");
    e.Follow();Check(e.arrivals==1&&e.skipped=="","planning timeout still permits a real detour around the house");
@@ -143,6 +166,10 @@ namespace BD2Territory.Runtime {
    Check(!e.PlanEdge(new RoutePoint(0,0,0),new RoutePoint(2,1.5,0)),"a house-height rise cannot become a walkable step");
    e=new RuntimeEngine();e.Start(new Vector3(4,0,0));e.Follow();
    Check(e.arrivals==1,"nonblocking crops and decorative floor tiles do not prevent travel");
+   e=new RuntimeEngine();e.floor=p=>new Vector3(p.x,Math.Min(.35f,Math.Max(0,p.x))*.7f,p.z);
+   e.segment=(a,b)=>Vector3.Distance(a,b)<.16f||b.y>a.y+.01f;
+   e.Start(new Vector3(4,.245f,0));e.Follow();
+   Check(e.arrivals==1&&e.skipped=="","ground-following steps are not rejected by a second horizontal sweep at the old foot height");
    e=new RuntimeEngine();e.clear=p=>p.x<1||p.x>3||Math.Abs(p.z)<.28f;e.Start(new Vector3(4,0,0));e.Follow();
    Check(e.arrivals==1,"a narrow legal passage between buildings stays usable");
    e=new RuntimeEngine();e.land=p=>p.x<1||p.x>3||Math.Abs(p.z-.19f)<.17f;
