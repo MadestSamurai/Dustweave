@@ -129,8 +129,8 @@ public sealed class DailyCollectionNavigator
         JsonObject? gate = null;
         string kind = S(action["kind"]);
         long destination = N(action["destination"]);
-        // A saved/previously planned walk is not permission to cross a hazard.
-        if (kind == "walk" && (Hazardous(Evidence) || Hazardous(Evidence, destination)))
+        // Cached geometry must still obey Nightmare Winter's safe-hub policy.
+        if (kind == "walk" && (RequiresSafeHub(Evidence) || RequiresSafeHub(Evidence, destination)))
             kind = "teleport";
         if (!attempts.TryStep(goals, origin, kind, destination, action["object"]))
         {

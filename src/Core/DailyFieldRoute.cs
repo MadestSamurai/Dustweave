@@ -551,7 +551,7 @@ public sealed partial class DailyFieldRoute
         Require(attempts < 3, "遇敌使天赋菜单反复失效");
         await FieldReady(settle: 0);
         var e = await Evidence();
-        if (kind == 17 && Hazardous(e)) throw new DailyTravelBlocked("伤害机关会解除隐身；需先快捷移动至安全区，再准备隐身。");
+        if (kind == 17 && RequiresSafeHub(e)) throw new DailyTravelBlocked("伤害机关会解除隐身；需先快捷移动至安全区，再准备隐身。");
         if (hazardDestination.HasValue) Require(kind == 17 && SafeStealthPreparation(e, hazardDestination.Value), "安全区隐身准备条件已变化。");
         if (kind == 17 && !hazardDestination.HasValue && !TravelThreat(e))
             return DailyWorkflow.Skipped("native_threats_cleared");
@@ -718,7 +718,7 @@ public sealed partial class DailyFieldRoute
         // Immediate departure from an interactable portal needs no talent,
         // particularly when leaving a battle map for a safe destination.
         if (!walking && AtWaypoint(e)) return;
-        if (Hazardous(e))
+        if (RequiresSafeHub(e))
         {
             if (walking) throw new DailyTravelBlocked("伤害机关地图不步行赶路；请经安全区传送阵中转。");
             await PrepareHazardCollection(e);

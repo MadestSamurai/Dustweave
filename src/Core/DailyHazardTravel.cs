@@ -4,13 +4,13 @@ namespace Dustweave;
 
 internal static class DailyHazardTravelPolicy
 {
-    internal static bool Hazardous(JsonObject row, long pack = 0) => B(row["EnvironmentalHazard"])
-        // Nightmare Winter also combines patrol cameras and moving damage traps.
-        // Keep this observed policy when an older component lacks trap metadata.
-        || pack == 2002 && row["MapType"] != null && N(row["MapType"]) == 1;
+    // Only Nightmare Winter's patrol fields require this special route. Damage
+    // objects alone neither justify stealth nor prohibit ordinary walking.
+    internal static bool RequiresSafeHub(JsonObject row, long pack) => pack == 2002
+        && row["MapType"] != null && N(row["MapType"]) == 1;
 
     internal static bool SafeHub(JsonObject row) => row["MapType"] != null && N(row["MapType"]) == 0
-        && !Hazardous(row) && !B(row["Hunting"]) && B(row["HasWaypoint"]);
+        && !B(row["EnvironmentalHazard"]) && !B(row["Hunting"]) && B(row["HasWaypoint"]);
 }
 
 public sealed partial class DailyFieldRoute
@@ -25,12 +25,12 @@ public sealed partial class DailyFieldRoute
         if (travel != null && (N(travel["Pack"]) != N(Map(e)["packId"]) || N(travel["Map"]) != N(Map(e)["id"]))) travel = null;
         var row = Rows(travel?["Maps"] ?? new JsonArray()).FirstOrDefault(r => N(r["Id"]) == id)?.DeepClone().AsObject() ?? O(("Id", id));
         if (N(Map(e)["id"]) == id && Map(e)["mapType"] != null) row["MapType"] = Copy(Map(e)["mapType"]);
-        row["EnvironmentalHazard"] = DailyHazardTravelPolicy.Hazardous(row, N(Map(e)["packId"]));
         return row;
     }
-    internal static bool Hazardous(JsonObject e, long? id = null) => DailyHazardTravelPolicy.Hazardous(TravelMap(e, id ?? N(Map(e)["id"])));
+    internal static bool RequiresSafeHub(JsonObject e, long? id = null) => DailyHazardTravelPolicy.RequiresSafeHub(
+        TravelMap(e, id ?? N(Map(e)["id"])), N(Map(e)["packId"]));
     private static bool SafeHub(JsonObject e) => DailyHazardTravelPolicy.SafeHub(TravelMap(e, N(Map(e)["id"])));
-    private static bool SafeStealthPreparation(JsonObject e, long destination) => SafeHub(e) && Hazardous(e, destination)
+    private static bool SafeStealthPreparation(JsonObject e, long destination) => SafeHub(e) && RequiresSafeHub(e, destination)
         && B(TravelMap(e, destination)["HasWaypoint"]) && AtWaypoint(e);
 
     private async Task ReachSafeHub(JsonObject e)
@@ -79,7 +79,7 @@ public sealed partial class DailyFieldRoute
             if (!B(port[WaypointNear])) await Walk(I(port["instance"]));
             var ready = await Evidence();
             Require(SafeHub(ready) && AtWaypoint(ready), "安全区传送阵位置已变化，重新规划路线。");
-            bool hazard = Hazardous(ready, destination);
+            bool hazard = RequiresSafeHub(ready, destination);
             if (hazard)
             {
                 await Skill(17, 12, hazardDestination: destination);
@@ -103,7 +103,7 @@ public sealed partial class DailyFieldRoute
 
     private async Task<bool> PrepareHazardCollection(JsonObject e)
     {
-        if (!Hazardous(e) || AtWaypoint(e) && Remaining(e, 17) > 5) return false;
+        if (!RequiresSafeHub(e) || AtWaypoint(e) && Remaining(e, 17) > 5) return false;
         // A cartridge can reopen anywhere, including directly on a traffic lane.
         // Re-enter at its portal before research/absorption, even on the same map.
         await TeleportViaSafeHub(N(Map(e)["id"]), null, recovery: true);

@@ -106,7 +106,7 @@ static class HazardTravelCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool yes, string message) { if (!yes) throw new Exception(message); checks.Add("HazardTravel: " + message); }
-        var atlas = new DailyRouteAtlas(Maps());
+        var atlas = new DailyRouteAtlas(Maps(), pack: 2002);
         atlas.Observe("[20021,[]]", [O(("object", 1), ("destination", 20022), ("distance", .1))], [0], true);
         atlas.ObserveQuick([Quick()]);
         var plan = Rows(atlas.Plan([20022])["actions"]);
@@ -115,7 +115,7 @@ static class HazardTravelCases
         var old = atlas.Export();
         foreach (bool quick in new[] { false, true })
         {
-            var copy = new DailyRouteAtlas(Maps(), old);
+            var copy = new DailyRouteAtlas(Maps(), old, pack: 2002);
             copy.Observe("[20021,[]]", [O(("object", 1), ("destination", 20022), ("distance", .1))], [0], true);
             copy.ObserveQuick(quick ? [Quick()] : []);
             if (quick) copy.BlockedQuick.Add(("[20021,[]]", 900));
@@ -123,8 +123,40 @@ static class HazardTravelCases
             Check(blocked, "unavailable shortcut cannot fall back to a cached walk, nearby portal or summon: " + quick);
         }
         Check(!DailyHazardTravelPolicy.SafeHub(O(("HasWaypoint", true))), "missing map type cannot be used as a safe hub");
-        Check(DailyHazardTravelPolicy.Hazardous(O(("EnvironmentalHazard", true)), 99), "native damage trap metadata works outside Nightmare Winter");
-        Check(!DailyHazardTravelPolicy.Hazardous(O(("MapType", 1)), 99), "ordinary combat maps are not environmental hazards");
+        Check(DailyHazardTravelPolicy.RequiresSafeHub(O(("MapType", 1)), 2002), "Nightmare Winter patrol fields retain safe-hub routing without trap metadata");
+        Check(!DailyHazardTravelPolicy.RequiresSafeHub(O(("MapType", 0), ("EnvironmentalHazard", true)), 2002), "Nightmare Winter safe areas do not become patrol fields because of damage objects");
+        var noPortalMaps = new[] {
+            O(("Id", 20051), ("MapType", 0), ("Exits", new[] { 20052, 20053 }), ("HasWaypoint", false), ("CanSummon", false)),
+            O(("Id", 20052), ("MapType", 1), ("Exits", new[] { 20051 }), ("HasWaypoint", false), ("CanSummon", false), ("EnvironmentalHazard", true)),
+            O(("Id", 20053), ("MapType", 0), ("Exits", new[] { 20051 }), ("HasWaypoint", false), ("CanSummon", false)) };
+        var noPortals = new DailyRouteAtlas(noPortalMaps, pack: 2005);
+        noPortals.Observe("[20051,[]]", [
+            O(("object", 1), ("destination", 20052), ("distance", 108)),
+            O(("object", 11), ("destination", 20052), ("distance", 5)),
+            O(("object", 12), ("destination", 20053), ("distance", 54))], [], true);
+        noPortals.ObserveQuick([O(("Npc", 2), ("Map", 20051), ("AtTarget", false))]);
+        var sectorRoute = Rows(noPortals.Plan([20052])["actions"]);
+        Check(sectorRoute.Length == 1 && S(sectorRoute[0]["kind"]) == "walk" && N(sectorRoute[0]["object"]) == 11,
+            "Memory's Edge Sector 4 with damage objects and no portals remains reachable through the nearest observed gate");
+        foreach (long pack in new long[] { 8, 14, 1003, 2003 })
+        {
+            Check(!DailyHazardTravelPolicy.RequiresSafeHub(O(("MapType", 1), ("EnvironmentalHazard", true)), pack),
+                "damage objects outside Nightmare Winter do not activate safe-hub routing: " + pack);
+            // Reuse a graph saved under the old, broad hazard policy. Live pack
+            // identity must determine routing without asking users to clear caches.
+            var ordinary = new DailyRouteAtlas(Maps(), old, pack);
+            ordinary.Observe("[20021,[]]", [O(("object", 1), ("destination", 20022), ("distance", .1))], [0], true);
+            ordinary.ObserveQuick([Quick()]);
+            var direct = Rows(ordinary.Plan([20022])["actions"]);
+            Check(direct.Length == 1 && S(direct[0]["kind"]) == "walk", "damage-only maps keep the short walking route despite old cached hazard flags: " + pack);
+            ordinary.Blocked.Add(("[20021,[]]", 1));
+            direct = Rows(ordinary.Plan([20022])["actions"]);
+            Check(direct.Length == 1 && S(direct[0]["kind"]) == "teleport", "ordinary map can use its current portal without a safe-area detour: " + pack);
+            ordinary.ObserveQuick([O(("Npc", 901), ("Map", 20022), ("AtTarget", false))]);
+            ordinary.BlockedPorts.Add("[20021,[]]");
+            direct = Rows(ordinary.Plan([20022])["actions"]);
+            Check(direct.Length == 1 && S(direct[0]["kind"]) == "quick", "damage metadata does not disable a direct destination shortcut: " + pack);
+        }
         foreach (string mode in new[] { "arbitrary-origin", "already-portal", "same-map", "expired", "already-safe", "active", "no-quick", "failed-quick", "disabled", "locked", "slow-load", "stale-walk", "stale-walk-same", "collection-origin", "expire-picker" })
         using (var f = new Fixture(Path.Combine(root, "hazard-" + mode)))
         {

@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -10,6 +12,7 @@ internal static class UpdateSafetyCases
 {
     public static async Task Run(string root, List<string> cases)
     {
+        CheckExitingWindows(cases);
         void Check(string name, bool value) { if (!value) throw new Exception(name); cases.Add(name); }
         void Reject(string name, Action action) { try { action(); } catch (InvalidDataException) { cases.Add(name); return; } throw new Exception(name); }
         var beta = DailyUpdates.VersionOf("1.0.0-beta");
@@ -182,6 +185,55 @@ internal static class UpdateSafetyCases
         File.WriteAllText(Path.Combine(backup + "-retry", "Dustweave.exe"), "damaged");
         Reject("recovery checks backup integrity before changing target", () => DailyUpdateTransaction.Restore(retry));
         Check("damaged backup cannot partly roll back installation", File.ReadAllText(Path.Combine(target, "Dustweave.exe")) == "new binary");
+    }
+    private static void CheckExitingWindows(List<string> cases)
+    {
+        void Check(string name, bool value) { if (!value) throw new Exception(name); cases.Add(name); }
+        using var live = Process.GetCurrentProcess();
+        Check("update accepts an ordinary live window", !DailyUpdateHost.HasIsolatedWindows([live], _ => ""));
+        Check("update detects a live isolated window", DailyUpdateHost.HasIsolatedWindows([live], _ => "Dustweave_fixture"));
+        var failures = new Exception[] {
+            new ArgumentException("Process with the enumerated Id is not running."),
+            new InvalidOperationException("Process exited during module inspection."),
+            new IOException("Sandboxie process query failed."),
+            new Win32Exception(299)
+        };
+        foreach (var failure in failures.Append(new UnauthorizedAccessException("Access denied.")))
+        {
+            bool refused = false;
+            try { DailyUpdateHost.HasIsolatedWindows([live], _ => throw failure); }
+            catch (Exception error) when (ReferenceEquals(error, failure)) { refused = true; }
+            Check("update preserves live process inspection failure: " + failure.GetType().Name, refused);
+        }
+        foreach (var failure in failures)
+        {
+            var start = new ProcessStartInfo(Environment.ProcessPath!) {
+                UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden
+            };
+            start.ArgumentList.Add("--watchdog-child");
+            using var child = Process.Start(start) ?? throw new Exception("Could not start synthetic process.");
+            try
+            {
+                int queries = 0;
+                bool isolated = DailyUpdateHost.HasIsolatedWindows([child, live], pid => {
+                    queries++;
+                    if (pid == live.Id) return "Dustweave_fixture";
+                    // Reproduce exit between enumeration and scope inspection,
+                    // including GetProcessById's ArgumentException from the report.
+                    child.Kill();
+                    if (!child.WaitForExit(10000)) throw new TimeoutException("Synthetic process did not exit.");
+                    throw failure;
+                });
+                Check("update skips exiting process and still detects remaining isolation: " + failure.GetType().Name,
+                    isolated && queries == 2);
+                Check("update accepts an already exited process without querying it: " + failure.GetType().Name,
+                    !DailyUpdateHost.HasIsolatedWindows([child], _ => throw new Exception("Exited process was queried.")));
+            }
+            finally
+            {
+                if (!child.HasExited) { child.Kill(); child.WaitForExit(10000); }
+            }
+        }
     }
     private static HttpResponseMessage Json(DailySignedUpdate envelope) => new(HttpStatusCode.OK) { Content = new ByteArrayContent(JsonSerializer.SerializeToUtf8Bytes(envelope, DailyJson.Options)) };
     private sealed class Handler(Func<HttpRequestMessage, HttpResponseMessage> run) : HttpMessageHandler

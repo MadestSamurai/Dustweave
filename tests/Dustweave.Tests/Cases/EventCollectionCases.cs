@@ -15,7 +15,7 @@ static class EventCollectionCases
         public bool DropsPending, MonstersPending, Research, Disabled, Missing, NearWaypoint;
         public bool ThreatsKnown = true;
         public int OtherMonsters;
-        public bool Capturable;
+        public bool Capturable, EnvironmentalHazard;
         public double StealthUntil;
         public double StealthDelay, StealthReadyAt;
         public void ExhaustAbsorption() => counts[4] = 21;
@@ -65,7 +65,7 @@ static class EventCollectionCases
             var rows = new List<JsonObject> {
                 WorkflowCases.Reading("mainline.map", (MapPath, O(("id", MapId), ("packId", Pack), ("mapType", MapType))), ("HasCanOverwhelmMonster()", MonstersPending)),
                 WorkflowCases.Reading("mainline.travel", ("$self", O(("Pack", Pack), ("Map", MapId), ("Ground", true),
-                    ("Maps", new JsonArray(O(("Id", MapId), ("Exits", new JsonArray()), ("CanSummon", true)))), ("Approaches", new JsonArray()),
+                    ("Maps", new JsonArray(O(("Id", MapId), ("Exits", new JsonArray()), ("CanSummon", true), ("EnvironmentalHazard", EnvironmentalHazard)))), ("Approaches", new JsonArray()),
                     ("ThreatsKnown", ThreatsKnown), ("ThreatsPresent", OtherMonsters > (Capturable ? 1 : 0) || MonstersPending)))),
                 WorkflowCases.Reading("mainline.reset", ("GetWeeklyResetTime().Ticks", 500)),
                 WorkflowCases.Reading("mainline.waypoint", (WaypointNear, NearWaypoint)),
@@ -249,6 +249,19 @@ static class EventCollectionCases
             try { await f.Route.ProtectWeeklyMovement(); } catch (DailyTravelBlocked) { refused = true; }
             Check(refused == (pack == 2002) && f.H.Box.Commands.Count == 0,
                 "cleared ordinary maps remain walkable, but empty monster lists do not prove damage traps absent: " + pack);
+        }
+        foreach (long pack in new long[] { 8, 14, 1003, 2003 })
+        foreach (bool patrol in new[] { false, true })
+        using (var f = new Fixture(Path.Combine(root, "damage-only-stealth-" + pack + "-" + patrol), pack, pack * 10 + 2, 1)
+            { EnvironmentalHazard = true, OtherMonsters = patrol ? 1 : 0 })
+        {
+            f.Route.ProtectWeeklyTravel = true;
+            await f.Route.Protection(f.H.Evidence());
+            await f.Route.ProtectWeeklyMovement();
+            await f.Route.Skill(17);
+            Check(f.Casts.SequenceEqual(patrol ? new[] { 17 } : System.Array.Empty<int>()),
+                "damage-only map never casts stealth; an actual patrol uses ordinary in-place protection: " + pack + "/" + patrol);
+            if (!patrol) Check(f.H.Box.Commands.Count == 0, "damage-only protection opens no menu and takes no safe-hub detour: " + pack);
         }
         foreach (bool patrol in new[] { false, true })
         using (var f = new Fixture(Path.Combine(root, "capture-only-stealth-" + patrol), 12, 122, 1)

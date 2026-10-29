@@ -28,16 +28,26 @@ public static class DailyUpdateHost
     {
         RequireHost();
         var processes = Process.GetProcessesByName("Dustweave");
-        try
-        {
-            foreach (var process in processes)
-            {
-                try { if (SandboxProcessScope.BoxOf(process.Id).Length != 0) return true; }
-                catch (IOException) when (process.HasExited) { }
-            }
-            return false;
-        }
+        try { return HasIsolatedWindows(processes, SandboxProcessScope.BoxOf); }
         finally { foreach (var process in processes) process.Dispose(); }
+    }
+    internal static bool HasIsolatedWindows(IEnumerable<Process> processes, Func<int, string> boxOf)
+    {
+        foreach (var process in processes)
+        {
+            try
+            {
+                if (process.HasExited) continue;
+                if (boxOf(process.Id).Length != 0) return true;
+            }
+            // The outgoing host can disappear after enumeration or during the
+            // fallback module query. Ignore inspection errors only when this
+            // process has exited; unreadable live windows still block updating.
+            catch (Exception error) when (
+                (error is ArgumentException or InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
+                && process.HasExited) { }
+        }
+        return false;
     }
     public static IDisposable AcquireControl(string root)
     {

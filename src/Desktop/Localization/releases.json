@@ -1,5 +1,29 @@
 [
 {
+  "Version": "1.5.7",
+  "Date": "2026-10-29",
+  "Notes": {
+    "zh-CN": [
+      "安全区开隐身再传送的特殊路线仅用于恶梦之冬巡逻区域；其他地图按实际怪物情况判断隐身，不再仅因伤害性物件而禁止步行或绕行。",
+      "修复周收集将记忆边缘第4区误判为无法到达的问题；没有传送阵时可使用实际可达的地图入口，已完成进度保留，可接续补跑。",
+      "修复更新前检查已退出进程导致更新中断、重新打开旧版的问题；正在运行的隔离窗口仍需正常退出。",
+      "旧版本若仍在重启更新后显示旧版，请手动下载完整包到新目录，保留 Dustweave.exe 旁的 app 文件夹，并从新目录启动；无需删除账号或沙盒。"
+    ],
+    "zh-TW": [
+      "安全區開隱身再傳送的特殊路線僅用於夢靨冬季巡邏區域；其他地圖依實際怪物情況判斷隱身，不再僅因傷害性物件而禁止步行或繞行。",
+      "修復週收集將記憶邊緣第4區誤判為無法抵達的問題；沒有傳送陣時可使用實際可達的地圖入口，已完成進度保留，可接續補跑。",
+      "修復更新前檢查已結束程序導致更新中斷、重新開啟舊版的問題；仍在執行的隔離視窗仍需正常關閉。",
+      "舊版本若仍在重新啟動更新後顯示舊版，請手動下載完整包到新目錄，保留 Dustweave.exe 旁的 app 資料夾，並從新目錄啟動；無需刪除帳號或沙盒。"
+    ],
+    "en-US": [
+      "The safe-area stealth and portal detour now applies only to Nightmare Winter patrol fields. Other maps use actual enemy checks and are no longer forced to detour or avoid walking just because damaging objects exist.",
+      "Fixes weekly collection incorrectly treating Memory's Edge Sector 4 as unreachable. Observed walkable gates remain available on maps without portals; completed progress is preserved for resuming.",
+      "Fixes updates being interrupted by checks on an already exited process, causing the old version to reopen. Running isolated windows must still be closed normally.",
+      "If an older version still reopens without updating, download the complete package into a new folder, keep the app folder beside Dustweave.exe, and launch from the new folder. Accounts and sandboxes do not need to be deleted."
+    ]
+  }
+},
+{
   "Version": "1.5.6",
   "Date": "2026-10-28",
   "Notes": {

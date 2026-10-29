@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 1.5.7 — 2026-10-29
+
+- 收窄安全区隐身中转规则，仅用于恶梦之冬巡逻区域；其他地图不再仅因伤害性物件而开隐身、禁止步行或绕行。
+- 修复记忆边缘第4区明明有可达入口，却因没有传送阵被周收集暂缓的问题；保留已有进度，可接续补跑。
+- 修复更新前检查已退出进程导致更新中断、重新打开旧版的问题。旧版本若仍无法完成更新，请下载完整包到新目录。
+- Limits safe-area stealth detours to Nightmare Winter patrol fields, restores weekly access to Memory's Edge Sector 4, and fixes exited-process checks interrupting updates.
+- [完整说明 / Full notes](docs/releases/1.5.7.md)
+
 ## 1.5.6 — 2026-10-28
 
 - 危险地图优先通过安全区与传送阵通行，避免地图伤害打断隐身后在原地反复施放。

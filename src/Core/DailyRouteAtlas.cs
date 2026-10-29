@@ -140,6 +140,7 @@ public sealed class DailyRegionRouter
 public sealed class DailyRouteAtlas
 {
     public const double WalkSpeed = 3, SummonPenalty = 45;
+    private readonly long packId;
     public Dictionary<long, JsonObject> Maps
     {
         get;
@@ -204,9 +205,8 @@ public sealed class DailyRouteAtlas
     public static bool PreferPortal(double distance) => distance / WalkSpeed <= SummonPenalty;
     public DailyRouteAtlas(JsonObject[] maps, JsonObject? seed = null, long pack = 0)
     {
+        packId = pack;
         Maps = maps.ToDictionary(r => N(r["Id"]), r => r.DeepClone().AsObject());
-        foreach (var row in Maps.Values)
-            row["EnvironmentalHazard"] = DailyHazardTravelPolicy.Hazardous(row, pack);
         if (seed == null)
             return;
         var old = Rows(seed["maps"] ?? new JsonArray()).ToDictionary(r => N(r["Id"]));
@@ -265,14 +265,14 @@ public sealed class DailyRouteAtlas
     {
         long mid = MapOf(node);
         var row = Maps[mid];
-        bool hazardous = DailyHazardTravelPolicy.Hazardous(row);
+        bool hazardous = DailyHazardTravelPolicy.RequiresSafeHub(row, packId);
         var region = Regions.GetValueOrDefault(node);
         var exits = region != null ? Rows(region["exits"]) : row["Exits"]!.AsArray().Select(id => O(("object", null), ("destination", id), ("seconds", 18))).ToArray();
         foreach (var e in exits)
         {
             long dest = N(e["destination"]);
             long? obj = e["object"] == null ? null : N(e["object"]);
-            if (hazardous || !Maps.ContainsKey(dest) || DailyHazardTravelPolicy.Hazardous(Maps[dest]) || forbidden.Contains(dest) || B(Maps[dest]["Hunting"]) || Blocked.Contains((node, obj)))
+            if (hazardous || !Maps.ContainsKey(dest) || DailyHazardTravelPolicy.RequiresSafeHub(Maps[dest], packId) || forbidden.Contains(dest) || B(Maps[dest]["Hunting"]) || Blocked.Contains((node, obj)))
                 continue;
             string target = S(e["target"]);
             if (!Regions.ContainsKey(target) || MapOf(target) != dest)
@@ -289,7 +289,7 @@ public sealed class DailyRouteAtlas
         foreach (var shortcut in quickTargets)
         {
             long dest = N(shortcut["Map"]), npc = N(shortcut["Npc"]);
-            if (DailyHazardTravelPolicy.Hazardous(Maps[dest]) || hazardous && !DailyHazardTravelPolicy.SafeHub(Maps[dest])) continue;
+            if (DailyHazardTravelPolicy.RequiresSafeHub(Maps[dest], packId) || hazardous && !DailyHazardTravelPolicy.SafeHub(Maps[dest])) continue;
             string target = QuickNode(dest, npc);
             if (target == node || forbidden.Contains(dest) || B(Maps[dest]["Hunting"]) || B(row["Hunting"])
                 || BlockedQuick.Contains((node, npc)) || node == Current && B(shortcut["AtTarget"])) continue;
@@ -299,7 +299,7 @@ public sealed class DailyRouteAtlas
             yield return (target, O(("kind", "quick"), ("origin", node), ("target", target), ("map", mid),
                 ("destination", dest), ("object", npc), ("seconds", seconds), ("casts", 0), ("walking_distance", 0)));
         }
-        // Never walk to a portal, summon, or renew stealth on a damaging field.
+        // In Nightmare Winter's patrol fields, never walk to a portal or summon.
         // Quick travel to a verified safe hub is the only outgoing route here.
         if (hazardous) yield break;
         if (BlockedPorts.Contains(node))
@@ -315,7 +315,7 @@ public sealed class DailyRouteAtlas
         foreach (var p in Maps)
         {
             long dest = p.Key;
-            if (DailyHazardTravelPolicy.Hazardous(p.Value) && !DailyHazardTravelPolicy.SafeHub(row)) continue;
+            if (DailyHazardTravelPolicy.RequiresSafeHub(p.Value, packId) && !DailyHazardTravelPolicy.SafeHub(row)) continue;
             if (dest == mid || forbidden.Contains(dest) || WarpBlocked.Contains(dest) || B(p.Value["Hunting"]) || !B(p.Value["HasWaypoint"]))
                 continue;
             string target = Destination(dest);
