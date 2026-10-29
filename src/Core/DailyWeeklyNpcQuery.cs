@@ -47,6 +47,7 @@ public sealed partial class DailyCommandDriver
         var sent = await SubmitRawAsync(action, bound);
         string path = Path.Combine(root, "live", "weekly-npc-queries", sent["id"]!.GetValue<string>() + ".json");
         double end = clock() + 45;
+        using var waiting = DailyObservationWindow.Begin(45, clock);
         JsonObject? after = null;
         string last = "Waiting for native NPC progress response";
         while (clock() < end)

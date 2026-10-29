@@ -20,6 +20,7 @@ static class FreeDrawStageCases
                 await action();
             }
             catch (StageHostException e) { kind = e.Kind; }
+            catch (DailyStepException e) { kind = e.Kind; }
             Check(kind == expected, name + " (" + kind + ")");
         }
         int number = 0;
@@ -114,7 +115,7 @@ static class FreeDrawStageCases
         using (var f = Create())
         {
             f.ChangeIdentity = true;
-            await Reject(() => f.Stage.ExecuteAsync(f.Context, NoRelay), "pending", "identity loss after draw confirmation remains pending");
+            await Reject(() => f.Stage.ExecuteAsync(f.Context, NoRelay), "identity", "identity loss after draw confirmation stops immediately with the original operation preserved");
             Check(f.Confirmations == 1 && f.Records().Single()["state"]!.GetValue<string>() == "unknown", "identity loss never makes the consumed draw retryable");
         }
         using (var f = Create())

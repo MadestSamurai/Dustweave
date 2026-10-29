@@ -57,6 +57,7 @@ public static class DailyTravel
     }
     public static async Task Ready(DailyWorkflow w, string ui, double seconds = 60, IEnumerable<string>? absent = null)
     {
+        using var waiting = DailyObservationWindow.Begin(seconds, () => w.Time);
         var excluded = (absent ?? []).Append("LoadingUI").Append("EntranceBackgroundCoverUI").ToHashSet();
         double end = w.Time + seconds;
         string? prior = null;
@@ -91,6 +92,7 @@ public static class DailyTravel
     }
     public static async Task<bool> Reuse(DailyWorkflow w, int? packId = null, int? packType = null, string[]? surfaces = null, string[]? extra = null, bool waitForTarget = false, double seconds = 60)
     {
+        using var waiting = DailyObservationWindow.Begin(seconds, () => w.Time);
         if (packId == null && packType == null)
             throw new ArgumentException("Target cartridge required");
         surfaces ??= Fields;
@@ -196,6 +198,7 @@ public static class DailyTravel
             return false;
         await w.Step("PackInfoUI", "_objPackTouchRewardButton", reason: "完成当前目标的原生卡带插入动画");
         double end = w.Time + 4;
+        using var waiting = DailyObservationWindow.Begin(4, () => w.Time);
         while (w.Time < end)
         {
             if (!await w.Has("PackInfoUI"))
@@ -212,6 +215,7 @@ public static class DailyTravel
     private static IEnumerable<JsonObject> PackEntries(JsonObject frame) => DailyNavigationDecision.Rows(frame).Where(r => DailyNavigationDecision.MapSceneReady(frame) && !B(r["Popup"]) && S(r["Type"]) != "FishingGameFieldDefaultUI" && !S(r["Type"]).StartsWith("BattleUI", StringComparison.Ordinal) && DailyNavigationDecision.ReadyInput(r, false) && (r["Targets"] as JsonArray)?.OfType<JsonObject>().Count(t => S(t["Field"]) == "_buttonPackList" && B(t["Enabled"])) == 1 && DailyNavigationDecision.Blockers(frame, S(r["Type"]), Policy).Length == 0);
     public static async Task PackList(DailyWorkflow w, double seconds = 30)
     {
+        using var waiting = DailyObservationWindow.Begin(seconds, () => w.Time);
         double end = w.Time + seconds;
         var visited = new HashSet<string>();
         int observationRetries = 0;

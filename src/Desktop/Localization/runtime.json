@@ -1,4 +1,9 @@
 {
+  "message.等待游戏数据更新超时；已保留当前环节和已提交操作，请待游戏加载完成后接续。": {
+    "zh-CN": "等待游戏数据更新超时；已保留当前环节和已提交操作，请待游戏加载完成后接续。",
+    "zh-TW": "等待遊戲資料更新逾時；已保留目前環節和已提交操作，請待遊戲載入完成後接續。",
+    "en-US": "Timed out waiting for fresh game data. The current step and submitted actions have been preserved. Resume after the game finishes loading."
+  },
   "message.account.relogin.collection_failed": {
     "zh-CN": "未能收回隔离窗口的登录状态。可在账号管理中选中此账号，点击「重新登录」以恢复普通启动；这不代表游戏拒绝了账号密码。",
     "zh-TW": "未能取回隔離視窗的登入狀態。可在帳號管理中選取此帳號，點擊「重新登入」以恢復一般啟動；這不代表遊戲拒絕了帳號密碼。",

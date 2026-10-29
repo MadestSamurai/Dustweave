@@ -12,6 +12,7 @@ sealed class WorkflowHarness : IDisposable
     public JsonObject Frame = CommandDriverCases.Frame();
     public Func<JsonObject[]> Readings = () => [];
     public Action<JsonObject>? OnCommand;
+    public Action<JsonObject>? ChangeEvidence;
     public Action? OnDelay, OnRead;
     public DailyCommandDriver Driver
     {
@@ -78,6 +79,7 @@ sealed class WorkflowHarness : IDisposable
         var request = JsonNode.Parse(bytes)!;
         var evidence = Evidence();
         evidence["ObservationRequest"] = Copy(request["Id"]);
+        ChangeEvidence?.Invoke(evidence);
         Box.Values["live:evidence.json"] = JsonSerializer.SerializeToUtf8Bytes(evidence);
     }
     public void Event(string role, string kind, params (string Key, object? Value)[] values)

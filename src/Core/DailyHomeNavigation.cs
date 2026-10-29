@@ -131,6 +131,8 @@ public static class DailyHomeDecision
             return Block("尚未完成账号登录或资源下载，请先完成日常连接。");
         if (Transitioning(frame))
             return Wait("等待原生加载或进场遮罩结束");
+        if (types.Contains("SubSkillCutSceneUI"))
+            return Wait("等待技能演出结束，保持当前页面");
         var duplicates = rows.Where(r => !policy.Background.Contains(Text(r, "Type"))).GroupBy(r => Text(r, "Type")).Where(g => g.Count() > 1).Select(g => g.Key).ToArray();
         if (duplicates.Length > 0)
             return Block("页面不唯一，保留现场：" + string.Join("、", duplicates));

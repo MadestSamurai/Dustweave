@@ -65,6 +65,7 @@ public sealed partial class DailyCommandDriver
         // then stays unchanged through readiness, row selection and casting.
         // Its new request ID prevents reuse of the cached pre-open frame.
         double started = clock(), end = started + 45, lastReport = double.NegativeInfinity;
+        using var waiting = DailyObservationWindow.Begin(45, clock);
         string lastGates = "";
         bool menuSeen = false;
         JsonNode? menuId = null;

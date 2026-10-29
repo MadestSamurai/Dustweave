@@ -100,6 +100,7 @@ public sealed class DailyFreeDrawStage : IDailyManagedStage
     }
     private async Task FinishResultAsync(JsonObject op)
     {
+        using var waiting = DailyObservationWindow.Begin(120, clock);
         double end = clock() + 120, last = -2;
         int actions = 0;
         bool resultSeen = op["presentation_seen"]?.GetValue<bool>() == true ||

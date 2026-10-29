@@ -75,6 +75,17 @@ public static class SandboxConfiguration
         throw new IOException("Sandboxie 配置条目超出读取范围，未修改隔离空间。");
     }
 
+    public static string ReadRegisteredRoot(string installation, string box) =>
+        ReadRegisteredRoot(box, () => Boxes(installation), () => Read(installation, box, "FileRootPath"));
+
+    internal static string ReadRegisteredRoot(string box, Func<string[]> boxes, Func<string> readRoot)
+    {
+        // QueryConf can return GlobalSettings for a section that does not exist.
+        // A fallback root is ownership evidence only after the box is registered.
+        // Enumeration/query failures must propagate, never authorize creation.
+        return boxes().Contains(box, StringComparer.OrdinalIgnoreCase) ? readRoot().Trim() : "";
+    }
+
     public static string Read(string installation, string section, string setting, bool includeTemplates = false)
     {
         _ = SandboxProcessScope.CurrentBox;

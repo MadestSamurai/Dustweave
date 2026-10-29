@@ -14,8 +14,9 @@ internal static class DailySandboxRegistration
         string state = DailySandbox.StateDirectory(account);
         if (!Directory.Exists(state)) return null;
         string installation = DailySandbox.Installation() ?? throw new InvalidOperationException("无法找到 Sandboxie，尚未核对隔离空间。");
-        string actual = (await DailySandbox.Run(installation,"SbieIni.exe",["query",DailySandbox.BoxName(account),"FileRootPath"],token).ConfigureAwait(false)).Trim();
         string box = DailySandbox.BoxName(account);
+        token.ThrowIfCancellationRequested();
+        string actual = await Task.Run(()=>SandboxConfiguration.ReadRegisteredRoot(installation,box),token).ConfigureAwait(false);
         var binding = DailyJson.TryRead<DailySandboxBinding>(Path.Combine(state,"root","user","current","AppData","Local","BD2DailyAssistant","sandbox-binding.json"));
         if (!SandboxConfiguration.SameRoot(actual,Path.Combine(state,"root")) || (binding != null && !string.Equals(binding.Box,box,StringComparison.OrdinalIgnoreCase)))
         {

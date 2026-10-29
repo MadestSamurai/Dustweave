@@ -75,7 +75,7 @@ public sealed class DailyManagementStage : IDailyManagedStage
                     return result;
                 reason = "经营收益仍可领取，重新检查当前窗口与可领取状态";
             }
-            catch (Exception error) when (error is StageHostException { Kind: "adapter" or "pending" } or
+            catch (Exception error) when (error is StageHostException { Kind: "adapter" or "pending", HoldQueue: false } or
                 DailyStepException { Kind: "rejected" or "pending" })
             {
                 Stop();
@@ -137,6 +137,7 @@ public sealed class DailyManagementStage : IDailyManagedStage
             op["presentation_after"] = (await driver.ObserveAsync()).Frame.DeepClone();
             business.Save(op);
         }
+        catch (StageHostException error) when (error.HoldQueue || error.Kind is "identity" or "stopped") { throw; }
         catch (Exception error) { op["presentation_error"] = error.Message; business.Save(op); throw new StageHostException("adapter", "经营收益已确认，奖励展示尚未结束；不重复领取：" + error.Message); }
     }
     private async Task ReturnAsync() => await driver.SendObservedAsync(new() { ["ui"] = "ManagementRewardPopupUI", ["field"] = "_cancelButton", ["absent"] = "ManagementRewardPopupUI", ["expect"] = "MenuUI", ["reason"] = "经营收益检查完成" });

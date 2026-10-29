@@ -936,6 +936,7 @@ connection.scope_permission=Windows 不允许读取游戏进程。请点击连�
 connection.scope_check=正在核对游戏进程，请允许连接组件的 Windows 权限提示；主窗口保持普通权限。
 connection.scope_changed=游戏进程在核对期间已改变，请重新连接。
 client_update.sync_programs=正在处理游戏更新后的旧程序副本…
+sandbox.repair.required=无法确认此账号原沙盒的绑定，已保留原数据。请在「账号管理」中选择此账号，打开「管理沙盒」检查绑定。
 sandbox.manage.alias=多个沙盒名称指向同一目录。请先在 Sandboxie 中整理重复绑定，再移除。
 sandbox.manage.collecting=正在保存此沙盒的最新登录信息和进度…
 sandbox.manage.custom_delete=这个沙盒配置了自定义删除操作，请在 Sandboxie 中移除，织尘未执行这些操作。

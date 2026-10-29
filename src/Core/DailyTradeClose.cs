@@ -112,6 +112,7 @@ public sealed partial class DailyCommandDriver
             DailyJson.Write(path, proof);
             bool sent = false;
             double until = clock() + 15;
+            using var waiting = DailyObservationWindow.Begin(15, clock);
             double? absentAt = null;
             while (clock() < until)
             {

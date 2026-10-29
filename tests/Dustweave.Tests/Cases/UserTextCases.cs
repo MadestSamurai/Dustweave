@@ -7,6 +7,8 @@ internal static class UserTextCases
     public static void Run(List<string> cases)
     {
         void Check(string name, bool condition) { if (!condition) throw new Exception(name); cases.Add(name); }
+        Check("sandbox binding failure has a specific task error category",DailyIssues.Classify(new InvalidDataException("sandbox.repair.required"))==new DailyIssue("sandbox-binding","identity"));
+        Check("sandbox binding error explains the current management entry",DailyUserText.Error(new InvalidDataException("sandbox.repair.required")).Contains("管理沙盒"));
         Check("missing button explains recovery rather than translation fallback", DailyUserText.Describe("Need one enabled observed field _objButton; found 0") == "游戏操作按钮暂不可用，请确认游戏画面后接续。");
         Check("ambiguous button does not claim it is absent", DailyUserText.Describe("Need one enabled observed field _objButton; found 2").Contains("多个"));
         Check("target raw field remains in details", DailyUserText.Details("Need one enabled observed field _objButton; found 0").Contains("_objButton; found 0"));

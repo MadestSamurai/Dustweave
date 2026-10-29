@@ -30,10 +30,12 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
     private void Progress(string stage, JsonObject value) => StageProgress?.Invoke(stage, value);
     private JsonObject Bound() => context ?? throw new StageHostException("protocol", "日常队列尚未绑定身份。");
     private DailyWorkflow Workflow() => workflows.Create(Bound(), Relay);
-    public async Task<JsonObject> SettleWeeklyAsync(IReadOnlyList<string> stages, JsonObject expected)
+    public async Task<JsonObject> SettleWeeklyAsync(IReadOnlyList<string> stages, JsonObject expected, bool refresh = true)
     {
         if (context == null || !JsonNode.DeepEquals(context, expected))
             return new();
+        if (!refresh)
+            return new JsonObject(verifiedWeekly.Where(p => stages.Contains(p.Key)).Select(p => new KeyValuePair<string, JsonNode?>(p.Key, Copy(p.Value))));
         try
         {
             var evidence = await driver.EvidenceAsync(["weekly_npc.native", "mainline.reset"]);
@@ -248,7 +250,7 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
         {
             parts = remaining.Length == 0 ? new() : (await route.Run(remaining))["stages"]!.AsObject();
         }
-        catch (Exception error) when (error is StageHostException { Kind: "adapter" } or DailyStepException { Kind: "deferred" })
+        catch (Exception error) when (error is StageHostException { Kind: "adapter", HoldQueue: false } or DailyStepException { Kind: "deferred" })
         {
             var proof = await driver.TakeCollectionDeferralAsync();
             if (proof == null || !remaining.Contains("weekly_mainline"))

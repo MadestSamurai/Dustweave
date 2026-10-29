@@ -303,7 +303,7 @@ static class MirrorStageCases
         {
             string error = "";
             try { await DailyMirror.Run(s.F.Workflow); } catch (StageHostException e) { error = e.Kind; }
-            Check(error == "pending" && s.Batches.Count == 1 && s.F.Business.Records(s.F.Context).Single()["state"]!.GetValue<string>() == "unknown", "Mirror stopped after matching preserves a pending journal instead of matching again");
+            Check(error == "stopped" && s.Batches.Count == 1 && s.F.Business.Records(s.F.Context).Single()["state"]!.GetValue<string>() == "unknown", "Mirror stopped after matching preserves a pending journal instead of matching again");
             s.F.Stopped = false;
             s.Settle();
             var reconcile = await s.F.Business.ReconcileAsync(s.F.Context);

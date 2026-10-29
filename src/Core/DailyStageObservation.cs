@@ -87,6 +87,7 @@ public sealed class DailyStageObservation
     public async Task<DailyStageFrame> ReadFrameAsync()
     {
         var elapsed = Stopwatch.StartNew();
+        var waiting = DailyObservationWindow.Current;
         (long Pid, long Start, string Instance)? connection = null;
         string? player = null;
         JsonObject? lastFrame = null; DailySnapshot? lastIdentity = null;
@@ -169,10 +170,10 @@ public sealed class DailyStageObservation
             }
             catch (StageHostException e) { Diagnose(e.Message); throw; }
             catch (Exception e) when (e is InvalidOperationException or FormatException or System.Text.Json.JsonException) { Diagnose(e.Message); throw Fault("观察数据格式无效：" + e.Message); }
-            if (elapsed.Elapsed >= timeout)
+            if (waiting != null ? waiting.Remaining <= 0 : elapsed.Elapsed >= timeout)
             {
                 Diagnose(waitingReason);
-                throw Fault(waitingReason);
+                throw DailyObservationWindow.Timeout(waitingReason);
             }
             await delay(interval);
         }

@@ -4,6 +4,7 @@ namespace Dustweave;
 public sealed class StageHostException(string kind, string message) : Exception(message)
 {
     public bool HoldQueue { get; init; }
+    public bool ObservationTimedOut { get; init; }
     public string Kind { get; } = kind;
     public DailyPotionLimit? PotionLimit { get; init; }
 }
@@ -298,14 +299,14 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                     {
                         foreach (var row in members)
                         {
-                            row["state"] = error.Kind == "pending" ? "recovery_required" : "blocked";
+                            row["state"] = error.Kind == "pending" || error.HoldQueue ? "recovery_required" : "blocked";
                             row["error"] = error.Message;
                             row["finished"] = DateTime.UtcNow.Ticks;
                         }
                         Save();
                         if (host is IDailyWeeklyCompletionHost completion)
                         {
-                            var settled = await completion.SettleWeeklyAsync(members.Select(i => Text(i["task"])).ToArray(), context);
+                            var settled = await completion.SettleWeeklyAsync(members.Select(i => Text(i["task"])).ToArray(), context, refresh: !error.HoldQueue);
                             foreach (var row in members)
                                 if (settled[Text(row["task"])] is JsonObject part && Text(part["state"]) == "completed")
                                 {
@@ -315,6 +316,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                                 }
                             Save();
                         }
+                        if (error.HoldQueue) throw;
                         await Observe(context);
                         var recovery = await host.CallAsync("recover", stage, new JsonObject { ["error"] = error.Message, ["context"] = context.DeepClone() });
                         foreach (var row in members)
@@ -342,6 +344,15 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                 }
                 catch (StageHostException error) when (error.Kind == "adapter")
                 {
+                    if (error.HoldQueue)
+                    {
+                        item["state"] = "recovery_required";
+                        item["phase"] = "navigation";
+                        item["error"] = error.Message;
+                        item["finished"] = DateTime.UtcNow.Ticks;
+                        Save();
+                        throw;
+                    }
                     if (paused())
                         throw;
                     await Observe(context);
@@ -397,7 +408,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                 catch (StageHostException error) when (error.Kind is "adapter" or "pending" or "reconciled")
                 {
                     if (error.Data["stage_result"] is JsonObject confirmed) item["result"] = confirmed.DeepClone();
-                    item["state"] = error.Kind == "pending" ? "recovery_required" : "blocked";
+                    item["state"] = error.Kind == "pending" || error.HoldQueue ? "recovery_required" : "blocked";
                     item["error"] = error.Message;
                     if (error.HoldQueue)
                     {
@@ -429,7 +440,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                 {
                     try
                     {
-                        var settled = await completion.SettleWeeklyAsync(running.Select(i => Text(i["task"])).ToArray(), context);
+                        var settled = await completion.SettleWeeklyAsync(running.Select(i => Text(i["task"])).ToArray(), context, refresh: error is not StageHostException { HoldQueue: true });
                         foreach (var row in running)
                             if (settled[Text(row["task"])] is JsonObject part && Text(part["state"]) == "completed")
                             { row["state"] = "completed"; row["result"] = part.DeepClone(); row["finished"] = DateTime.UtcNow.Ticks; row.Remove("error"); }

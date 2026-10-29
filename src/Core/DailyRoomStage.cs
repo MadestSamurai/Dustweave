@@ -191,7 +191,7 @@ public sealed class DailyRoomStage : IDailyManagedStage
             DailyJson.Write(flowPath, flow);
             return flow;
         }
-        catch (Exception error) { flow["state"] = "paused"; flow["error"] = error.Message; DailyJson.Write(flowPath, flow); if (op?["state"]?.GetValue<string>() == "completed") throw new StageHostException("adapter", "小屋访问已确认，收尾未完成：" + error.Message); throw; }
+        catch (Exception error) { flow["state"] = "paused"; flow["error"] = error.Message; DailyJson.Write(flowPath, flow); if (error is StageHostException { HoldQueue: true } or StageHostException { Kind: "identity" or "stopped" } or DailyStepException { Kind: "identity" or "stopped" }) throw; if (op?["state"]?.GetValue<string>() == "completed") throw new StageHostException("adapter", "小屋访问已确认，收尾未完成：" + error.Message); throw; }
     }
 }
 

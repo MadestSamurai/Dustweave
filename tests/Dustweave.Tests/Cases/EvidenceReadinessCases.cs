@@ -112,7 +112,7 @@ static class EvidenceReadinessCases
         using (var f = new Fixture(Path.Combine(root, "evidence-permanent-wait")))
         {
             f.ChangeEvidence = Waiting;
-            Check(await Error(f) == "adapter" && f.Time >= 3 && f.Time < 3.2 && f.Box.Commands.Count == 0, "permanently incomplete evidence stops with bounded diagnostic and no input");
+            Check(await Error(f) == "adapter" && f.Time >= 60 && f.Time < 60.2 && f.Box.Commands.Count == 0, "permanently incomplete evidence stops within the default readiness budget without input");
         }
         foreach (bool pause in new[] { false, true })
         using (var f = new Fixture(Path.Combine(root, "evidence-stop-" + pause)))
@@ -129,7 +129,9 @@ static class EvidenceReadinessCases
         using (var f = new Fixture(Path.Combine(root, "evidence-ready-aged-during-guard")))
         {
             f.OnRead = s => { if (s.Reads == 3) s.Time += 4; };
-            Check(await Error(f) == "adapter", "evidence that ages out while validating context is never returned");
+            var fresh = await f.Driver.EvidenceAsync(["mirror"]);
+            Check(f.Time >= 4 && f.Ticks - DailyEvidence.Integer(fresh["AtUtcTicks"]) <= 3 * TimeSpan.TicksPerSecond,
+                "evidence that ages out during context validation is refreshed within the original deadline");
         }
         foreach (string kind in new[] { "outer-stale", "frame-stale", "old-request", "io" })
         using (var f = new Fixture(Path.Combine(root, "evidence-fresh-" + kind)))

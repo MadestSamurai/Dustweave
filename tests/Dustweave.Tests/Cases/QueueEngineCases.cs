@@ -20,6 +20,31 @@ static class QueueEngineCases
         async Task<JsonObject> Run(FakeHost host, string root, string[]? tasks = null, string? resume = null, string? retry = null, DailyPreferences? prefs = null, Func<bool>? pause = null) => await new DailyQueueEngine(host, pause ?? (() => false), () => prefs ?? new DailyPreferences { Trade = new() { Enabled = true } }).RunAsync(new(root, Account, Path.Combine(root, "queue-ui.json"), resume, false, tasks, retry));
         var root = Root();
         var host = new FakeHost();
+        foreach (string stage in new[] { "event_battle", "daily_dispatch", "mail", "trade", "weekly_mainline" })
+        {
+            var waitingHost = new FakeHost();
+            waitingHost.After = (operation, current) => { if (operation == "execute" && current == stage) throw DailyObservationWindow.Timeout("game observations stalled"); };
+            var enabled = new DailyPreferences { Trade = new() { Enabled = true }, Weekly = new() { Mainline = true } }; enabled.EventBattle.Enabled = true;
+            var held = await Run(waitingHost, Root(), [stage, "free_draws"], prefs: enabled);
+            Check(State(held) == "paused" && Stage(held, stage) == "recovery_required" && !waitingHost.Executed.Contains("free_draws"),
+                "Expired shared observation retains original stage instead of navigating to the next one: " + stage);
+        }
+        {
+            var waitingHost = new FakeHost();
+            waitingHost.After = (operation, stage) => { if (operation == "navigate" && stage == "mail") throw DailyObservationWindow.Timeout("loading"); };
+            var held = await Run(waitingHost, Root(), ["mail", "free_draws"]);
+            Check(State(held) == "paused" && Stage(held, "mail") == "recovery_required" && waitingHost.Executed.Count == 0 && !waitingHost.Calls.Any(c => c.StartsWith("recover:")),
+                "navigation observation timeout cannot trigger home recovery or the following stage");
+        }
+        {
+            var waitingHost = new FakeHost { SettledNpc = true, SettledSteal = true };
+            waitingHost.After = (operation, stage) => { if (operation == "execute" && stage == "weekly_mainline") throw DailyObservationWindow.Timeout("loading"); };
+            var enabled = new DailyPreferences { Weekly = new() { Mainline = true, Npc = true, Steal = true } };
+            var held = await Run(waitingHost, Root(), ["weekly_mainline", "weekly_npc", "weekly_steal"], prefs: enabled);
+            Check(State(held) == "paused" && Stage(held, "weekly_npc") == "completed" && Stage(held, "weekly_steal") == "completed" && Stage(held, "weekly_mainline") == "recovery_required"
+                && waitingHost.SettlementRefreshes.Count > 0 && waitingHost.SettlementRefreshes.All(refresh => !refresh),
+                "expired shared wait settles confirmed weekly progress without a new observation wait");
+        }
         {
             var stalled = new FakeHost();
             stalled.After = (operation, stage) => { if (operation == "execute" && stage == "mirror") throw new StageHostException("pending", "mirror.batch_stalled: 35/40") { HoldQueue = true }; };
@@ -454,8 +479,10 @@ static class QueueEngineCases
     private sealed class FakeHost : IDailyStageHost, IDailyStageProgressHost, IDailyWeeklyCompletionHost
     {
         public event Action<string, JsonObject>? StageProgress; public List<string> Members = []; public bool PartialCollection, SettledNpc, SettledSteal, Refill, PartialSaffron, FineProgress;
-        public Task<JsonObject> SettleWeeklyAsync(IReadOnlyList<string> stages, JsonObject context)
+        public List<bool> SettlementRefreshes = [];
+        public Task<JsonObject> SettleWeeklyAsync(IReadOnlyList<string> stages, JsonObject context, bool refresh = true)
         {
+            SettlementRefreshes.Add(refresh);
             var result = new JsonObject();
             if (SettledNpc && stages.Contains("weekly_npc")) result["weekly_npc"] = new JsonObject { ["state"] = "completed", ["source"] = "TodayQuestInfoResponse" };
             if (SettledSteal && stages.Contains("weekly_steal")) result["weekly_steal"] = new JsonObject { ["state"] = "completed", ["source"] = "game_network" };

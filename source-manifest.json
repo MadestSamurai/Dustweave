@@ -51,6 +51,12 @@
   ],
   "files": [
     {
+      "path": "tests/Dustweave.Tests/Cases/ObservationWaitCases.cs",
+      "sha256": "1ad6795aea75c64eabc8428b70ffbc2e03f1f1e673174c7a97422dc0f21f5700",
+      "bytes": 9444,
+      "reasons": "build input"
+    },
+    {
       "path": "src/Compatibility/GamePreferenceCodec.cs",
       "sha256": "ec2f1ea228786ef4a2b5bad68218b83ef570519c61c9415fc61429cb48fdb11e",
       "bytes": 4582,

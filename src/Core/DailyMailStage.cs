@@ -99,6 +99,7 @@ public sealed class DailyMailStage : IDailyManagedStage
             await driver.SendObservedAsync(new() { ["ui"] = "MailUI", ["operation"] = "mail_page", ["value"] = value,
                 ["items"] = new JsonArray(cursor), ["reason"] = "读取剩余邮件附件" });
             double end = clock() + 25;
+            using var waiting = DailyObservationWindow.Begin(25, clock);
             bool progressed = false;
             while (clock() < end)
             {
@@ -139,6 +140,7 @@ public sealed class DailyMailStage : IDailyManagedStage
     }
     private async Task WaitTab(string tab)
     {
+        using var waiting = DailyObservationWindow.Begin(25, clock);
         double end = clock() + 25;
         while (clock() < end)
         {
@@ -241,6 +243,7 @@ public sealed class DailyMailStage : IDailyManagedStage
                         catch (DailyStepException e) { op["ui_error"] = e.Message; if (e.Command != null) op["command_id"] = e.Command["Id"]!.DeepClone(); }
                         DailyJson.Write(path, op);
                         double end = clock() + 60;
+                        using var waiting = DailyObservationWindow.Begin(60, clock);
                         string last = "No response";
                         while (clock() < end)
                         {
@@ -269,6 +272,7 @@ public sealed class DailyMailStage : IDailyManagedStage
                             op["state"] = op["state"]?.GetValue<string>() == "prepared" ? "rejected" : "unknown";
                         op["error"] = error.Message;
                         DailyJson.Write(path, op);
+                        if (error is StageHostException { HoldQueue: true } or StageHostException { Kind: "identity" or "stopped" } or DailyStepException { Kind: "identity" or "stopped" }) throw;
                         if (op["state"]?.GetValue<string>() == "unknown")
                             throw new StageHostException("pending", error.Message);
                         throw;
@@ -280,6 +284,7 @@ public sealed class DailyMailStage : IDailyManagedStage
                     {
                         await driver.DismissRewardAsync("MailUI", true);
                     }
+                    catch (StageHostException error) when (error.HoldQueue || error.Kind is "identity" or "stopped") { throw; }
                     catch (Exception error) { throw new StageHostException("adapter", "邮箱领取已确认，奖励展示待收尾；不重新领取：" + error.Message); }
                 }
                 if (!drained)
@@ -315,6 +320,7 @@ public sealed partial class DailyCommandDriver
     public async Task DismissRewardAsync(string[] expectedSurfaces, bool waitForReward, Func<Task<bool>>? destinationSettled)
     {
         double end = clock() + 40;
+        using var waiting = DailyObservationWindow.Begin(40, clock);
         bool seen = false;
         double readySince = -1;
         string readyToken = "";

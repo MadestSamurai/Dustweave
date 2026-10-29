@@ -60,6 +60,18 @@ static class SandboxCases
             text.Append(values[position]); return 0;
         };
         string globalRoot = @"C:\Sandbox\%SANDBOX%";
+        Check(SandboxConfiguration.ReadRegisteredRoot("Dustweave_fixture",()=>["OtherBox"],()=>throw new Exception("queried an absent box"))=="",
+            "unregistered box cannot inherit a global root or block first creation");
+        Check(SandboxConfiguration.ReadRegisteredRoot("Dustweave_fixture",()=>["dustweave_FIXTURE"],()=>globalRoot)==globalRoot,
+            "registered box retains global-only root for ownership rejection");
+        bool enumerationFailed=false;
+        try { SandboxConfiguration.ReadRegisteredRoot("Dustweave_fixture",()=>throw new IOException("unavailable"),()=>unicodeRoot); }
+        catch(IOException){enumerationFailed=true;}
+        Check(enumerationFailed,"failed box enumeration does not authorize new sandbox creation");
+        bool registeredQueryFailed=false;
+        try { SandboxConfiguration.ReadRegisteredRoot("Dustweave_fixture",()=>["Dustweave_fixture"],()=>throw new IOException("unavailable")); }
+        catch(IOException){registeredQueryFailed=true;}
+        Check(registeredQueryFailed,"registered root query failure is not mistaken for a new account");
         string effectiveRoot = SandboxConfiguration.ReadSetting(Values(unicodeRoot, globalRoot), "Dustweave_fixture", "FileRootPath");
         Check(effectiveRoot == unicodeRoot && SandboxConfiguration.SameRoot(effectiveRoot, unicodeRoot), "per-box root plus inherited global default does not become a multiline path");
         Check(SandboxConfiguration.ReadSetting(Values(globalRoot), "Dustweave_fixture", "FileRootPath") == globalRoot, "global-only root is retained for ownership rejection instead of treated as an unconfigured sandbox");
@@ -206,6 +218,26 @@ static class SandboxCases
         Directory.CreateDirectory(registrationState);
         string GamePath()=>@"C:\Game\BrownDust II.exe";
         Check(DailySandboxRegistration.Resolve(registrationAccount,registrationState,"",GamePath)==null,"unused sandbox folder does not block ordinary account launch");
+        string notice=Path.Combine(registrationState,"game-preferences-notice.json");
+        DailyJson.Write(notice,new{schema=1,atUtc=DateTimeOffset.UtcNow});
+        var noticeBytes=File.ReadAllBytes(notice);
+        Reject(()=>DailySandboxRegistration.Resolve(registrationAccount,registrationState,
+            SandboxConfiguration.ReadSetting(Values(globalRoot),registrationBox,"FileRootPath"),GamePath),
+            "regression fixture reproduces false ownership failure when a missing box inherits the global root");
+        string NewAccountRoot()=>SandboxConfiguration.ReadRegisteredRoot(registrationBox,()=>["AnOlderAccount"],
+            ()=>SandboxConfiguration.ReadSetting(Values(globalRoot),registrationBox,"FileRootPath"));
+        Check(DailySandboxRegistration.Resolve(registrationAccount,registrationState,NewAccountRoot(),GamePath)==null,
+            "dismissed first-use settings notice plus global fallback does not block Play or first isolated launch");
+        Directory.CreateDirectory(registrationRoot);
+        Check(DailySandboxRegistration.Resolve(registrationAccount,registrationState,NewAccountRoot(),GamePath)==null,
+            "empty root left by first setup still permits manual sandbox creation");
+        Check(File.ReadAllBytes(notice).SequenceEqual(noticeBytes)&&!File.Exists(Path.Combine(registrationState,"instance.json")),
+            "checking a new account preserves its settings notice without inventing an owner");
+        string unowned=Path.Combine(registrationRoot,"existing-data.bin");File.WriteAllText(unowned,"preserve");
+        Reject(()=>DailySandboxRegistration.Resolve(registrationAccount,registrationState,NewAccountRoot(),GamePath),
+            "missing registration with real sandbox data still requires ownership recovery");
+        Check(File.ReadAllText(unowned)=="preserve","unregistered sandbox contents are preserved");
+        File.Delete(unowned);
         Reject(()=>DailySandboxRegistration.Resolve(registrationAccount,registrationState,registrationRoot,GamePath),"sandbox name alone is insufficient ownership proof");
         string registrationLocal=Path.Combine(registrationRoot,"user","current","AppData","Local");
         string bindingFile=Path.Combine(registrationLocal,"BD2DailyAssistant","sandbox-binding.json");

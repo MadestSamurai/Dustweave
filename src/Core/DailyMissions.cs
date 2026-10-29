@@ -408,7 +408,7 @@ public static class DailyPasses
                     SaveReport(op["result"]!["report"]!.AsObject());
                 }
             }
-            catch (Exception error) when (!submitted && (error is InvalidDataException || error is StageHostException { Kind: "adapter" }))
+            catch (Exception error) when (!submitted && (error is InvalidDataException || error is StageHostException { Kind: "adapter", HoldQueue: false }))
             {
                 var issue = O(("pass_id", id), ("state", "needs_attention"), ("reason", "该通行证暂无法读取，已保留待检查；其他任务继续"), ("detail", error.Message));
                 issues.Add(issue);

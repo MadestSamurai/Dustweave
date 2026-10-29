@@ -59,6 +59,7 @@ public sealed class DailyFriendshipStage : IDailyManagedStage
     }
     private async Task<JsonObject> WaitSelectedAsync(long id)
     {
+        using var waiting = DailyObservationWindow.Begin(25, clock);
         double end = clock() + 25;
         while (clock() < end)
         {
@@ -97,7 +98,7 @@ public sealed class DailyFriendshipStage : IDailyManagedStage
             op.Remove("presentation_error");
             business.Save(op);
         }
-        catch (StageHostException e) when (e.Kind == "stopped") { throw; }
+        catch (StageHostException e) when (e.HoldQueue || e.Kind is "identity" or "stopped") { throw; }
         catch (Exception error) { op["presentation_error"] = error.Message; business.Save(op); throw new StageHostException("adapter", "咨询已确认，奖励展示尚未结束；不重复咨询：" + error.Message); }
     }
     private static bool MatchesResult(JsonObject op, JsonObject state) =>

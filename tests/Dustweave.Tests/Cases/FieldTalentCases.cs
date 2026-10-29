@@ -344,8 +344,10 @@ static class FieldTalentCases
                 Check(error == "" && box.Commands.Count == 1 && time >= 1, "delayed talent RPC is reconciled without a duplicate input");
             else if (scenario == "race")
                 Check(error == "rejected" && box.Commands.Count == 1, "unclassified native rejection does not replay even when readiness changed");
-            else if (scenario is "pending" or "duplicate" or "stop-after")
+            else if (scenario is "pending" or "duplicate")
                 Check(error == "pending" && box.Commands.Count == 1, "talent " + scenario + " preserves one original command without replay");
+            else if (scenario == "stop-after")
+                Check(error == "stopped" && box.Commands.Count == 1 && DailyJson.TryRead<JsonObject>(Path.Combine(path, "live", "business", id + ".json"))?["state"]?.GetValue<string>() == "unknown", "stopping after talent dispatch preserves the original operation without replay");
             else
                 Check(error.Length > 0 && box.Commands.Count == 0, "talent preflight " + scenario + " submits no input");
             if (scenario == "busy")

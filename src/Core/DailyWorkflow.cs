@@ -200,6 +200,7 @@ public sealed class DailyWorkflow
     public async Task<bool> Has(string ui) => DailyNavigationDecision.Types((await Observe()).Frame).Contains(ui);
     public async Task Wait(Func<DailyStageFrame, bool> ready, double seconds = 25, string error = "页面没有推进")
     {
+        using var waiting = DailyObservationWindow.Begin(seconds, () => Time);
         using var diagnostic = Driver.Diagnostics.Scope("wait", DailyData.O(("reason", error), ("seconds", seconds)));
         double end = Time + seconds;
         while (Time < end)
@@ -213,13 +214,20 @@ public sealed class DailyWorkflow
     }
     public async Task<JsonObject> WaitEvidence(string[] prefixes, Func<JsonObject, bool> ready, double seconds = 25, string error = "原生状态没有推进")
     {
+        using var waiting = DailyObservationWindow.Begin(seconds, () => Time);
         using var diagnostic = Driver.Diagnostics.Scope("wait", DailyData.O(("reason", error), ("seconds", seconds), ("prefixes", prefixes)));
         double end = Time + seconds;
         string last = "";
         JsonObject? lastEvidence = null;
         while (Time < end)
         {
-            var e = await Evidence(prefixes);
+            JsonObject e;
+            try { e = await Evidence(prefixes); }
+            catch (StageHostException ex) when (ex.ObservationTimedOut)
+            {
+                Driver.Diagnostics.Event("evidence_timeout", DailyData.O(("reason", error), ("prefixes", prefixes), ("last_error", ex.Message)));
+                throw DailyObservationWindow.Timeout(error + "：" + ex.Message);
+            }
             lastEvidence = e;
             try
             {
@@ -328,6 +336,7 @@ public sealed class DailyWorkflow
         long at = Driver.UtcTicks;
         await Step(ui, operation: dice ? "dice_query" : "reward_refresh", reason: "读取服务器的最新任务进度");
         double end = Time + 20;
+        using var waiting = DailyObservationWindow.Begin(20, () => Time);
         while (Time < end)
         {
             var after = await Evidence("pass", "missions", "rewards");

@@ -513,7 +513,7 @@ public sealed class DailyWeeklyRoute
             locationLabels = DailyLocationLabels.Build(Table("PackTable"), Table("MapTable"), Table("NameTextTable"));
             route.LocationLabels = locationLabels;
         }
-        catch (Exception error) when (error is IOException or System.Text.Json.JsonException or StageHostException { Kind: "adapter" })
+        catch (Exception error) when (error is IOException or System.Text.Json.JsonException or StageHostException { Kind: "adapter", HoldQueue: false })
         { w.Driver.Diagnostics.Event("location_names_unavailable", O(("message", error.Message))); }
         if (active.Count > 0) await DailyWeeklyNpcBoard.Close(w);
         var evidence = await route.Evidence();

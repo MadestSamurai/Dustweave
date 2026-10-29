@@ -140,7 +140,7 @@ public sealed partial class DailyCommandDriver
         // Compare the actual mailbox too: a stage change must not leave a child waiting for an obsolete ID.
         var currentBytes = mailbox.Read("live", "observation-request.json");
         var current = currentBytes == null ? null : JsonNode.Parse(currentBytes)?.AsObject();
-        if (demand == null || !JsonNode.DeepEquals(demand["Prefixes"], array) || DailyEvidence.Integer(demand["ExpiresUtcTicks"]) - now() < 5 * TimeSpan.TicksPerSecond || current?["Id"]?.GetValue<string>() != demand["Id"]?.GetValue<string>())
+        if (demand == null || !JsonNode.DeepEquals(demand["Prefixes"], array) || DailyEvidence.Integer(demand["ExpiresUtcTicks"]) <= now() || current?["Id"]?.GetValue<string>() != demand["Id"]?.GetValue<string>())
         {
             demand = new()
             {
@@ -148,6 +148,12 @@ public sealed partial class DailyCommandDriver
                 ["Prefixes"] = array,
                 ["ExpiresUtcTicks"] = now() + 15 * TimeSpan.TicksPerSecond
             };
+            mailbox.Write("live", "observation-request.json", JsonSerializer.SerializeToUtf8Bytes(demand));
+        }
+        else if (DailyEvidence.Integer(demand["ExpiresUtcTicks"]) - now() < 5 * TimeSpan.TicksPerSecond)
+        {
+            // Keep an in-flight sample useful while a slow render thread catches up.
+            demand["ExpiresUtcTicks"] = now() + 15 * TimeSpan.TicksPerSecond;
             mailbox.Write("live", "observation-request.json", JsonSerializer.SerializeToUtf8Bytes(demand));
         }
         return demand.DeepClone().AsObject();
@@ -164,13 +170,16 @@ public sealed partial class DailyCommandDriver
     }
     public async Task<JsonObject> EvidenceAsync(IEnumerable<string> prefixes)
     {
+        using var waiting = DailyObservationWindow.Inherit(60, clock);
+        double started = clock();
         var scope = prefixes.ToArray();
         var bound = await ReadBound();
         var request = await DemandAsync(scope);
-        double started = clock(), end = started + 3;
+        double nextIdentityCheck = clock() + 1;
         JsonObject? firstWaiting = null, last = null;
         string outcome = "ready";
         bool resynchronized = false;
+        bool firstSample = true;
         void CheckStop()
         {
             if (stopped() || mailbox.Read("live", "pause") != null)
@@ -178,9 +187,22 @@ public sealed partial class DailyCommandDriver
         }
         try
         {
-            while (clock() < end)
+            // A delayed await may finish after the deadline with fresh data.
+            // Allow that final read-only sample; the deadline limits further waiting.
+            while (firstSample || waiting.Remaining > 0)
             {
+                bool finalSample = firstSample;
+                firstSample = false;
                 CheckStop();
+                if (clock() >= nextIdentityCheck)
+                {
+                    await ReadBound();
+                    nextIdentityCheck = clock() + 1;
+                }
+                if (DailyEvidence.Integer(request["ExpiresUtcTicks"]) - now() < 5 * TimeSpan.TicksPerSecond)
+                    request = await DemandAsync(scope);
+                CheckStop();
+                if (!finalSample && waiting.Remaining <= 0) break;
                 var bytes = mailbox.Read("live", "evidence.json");
                 if (bytes != null)
                 {
@@ -217,16 +239,13 @@ public sealed partial class DailyCommandDriver
                                 await ReadBound();
                                 CheckStop();
                                 request = await DemandAsync(scope); // Renew a scope that expired during scene loading.
-                                end = clock() + 3;
                             }
                         }
                     }
                 }
-                await delay(TimeSpan.FromMilliseconds(100));
+                if (waiting.Remaining > 0) await delay(TimeSpan.FromMilliseconds(100));
             }
-            throw new StageHostException("adapter", resynchronized
-                ? "切场后证据仍未就绪，已保留进度且未重发操作；可仅重跑本环节。"
-                : "Scoped observation did not become ready");
+            throw DailyObservationWindow.Timeout("等待游戏数据更新超时；已保留当前环节和已提交操作，请待游戏加载完成后接续。");
         }
         catch (Exception error) { outcome = error.Message; throw; }
         finally

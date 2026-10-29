@@ -145,6 +145,7 @@ public sealed partial class DailyCommandDriver
     private async Task<JsonObject> DismissStartupRewardAsync(JsonObject bound)
     {
         double end = clock() + 40;
+        using var waiting = DailyObservationWindow.Begin(40, clock);
         while (clock() < end)
         {
             if (stopped() || mailbox.Read("live", "pause") != null)

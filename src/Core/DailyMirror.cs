@@ -80,6 +80,7 @@ public static class DailyMirror
             matching = Math.Max(matching, matches); settled = Math.Max(settled, ends);
         }
         internal bool Expired(double now) => now - lastProgress >= IdleSeconds;
+        internal double Remaining(double now) => Math.Max(0, lastProgress + IdleSeconds - now);
         internal StageHostException Timeout() => new("pending", $"mirror.batch_stalled: {settled}/{Total}") { HoldQueue = true };
     }
     public static JsonObject Tickets(JsonObject e) => O(("free", R(e, "mirror.currency", "PvpTicket")), ("paid", R(e, "mirror.currency", "PvpTicketStack")));

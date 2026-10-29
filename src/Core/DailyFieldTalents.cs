@@ -312,6 +312,7 @@ public sealed partial class DailyCommandDriver
         var waits = new JsonArray();
         while (clock() < end)
         {
+            using var waiting = DailyObservationWindow.Begin(Math.Max(0, end - clock()), clock);
             if (stopped() || mailbox.Read("live", "pause") != null)
                 throw new StageHostException("stopped", "Stopped before field talent dispatch");
             var frame = (await ReadBound()).Frame;
@@ -354,6 +355,7 @@ public sealed partial class DailyCommandDriver
         op["managed_engine"] = "dotnet-field-talents-v1";
         DailyJson.Write(businessPath!, op);
         double proofEnd = clock() + 25;
+        using var proofWaiting = DailyObservationWindow.Begin(25, clock);
         JsonArray events = new();
         JsonObject? after = null;
         string last = "Native request not yet observed";
@@ -398,6 +400,9 @@ public sealed partial class DailyCommandDriver
             op["events"] = log["events"]!.DeepClone();
             op["last_observation"] = log["last_observation"]?.DeepClone();
             DailyJson.Write(businessPath!, op);
+            if (error is StageHostException { ObservationTimedOut: true })
+                throw new StageHostException("pending", "Talent result requires reconciliation; original command preserved: " + error.Message) { HoldQueue = true, ObservationTimedOut = true };
+            if (error is StageHostException { HoldQueue: true } or StageHostException { Kind: "identity" or "stopped" } or DailyStepException { Kind: "identity" or "stopped" }) throw;
             throw new DailyStepException("pending", "Talent result requires reconciliation; original command preserved: " + error.Message, true) { Command = sent["command"]!.DeepClone().AsObject() };
         }
     }

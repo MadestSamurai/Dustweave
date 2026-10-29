@@ -353,7 +353,7 @@ static class CollectionReadinessCases
             if (box.Commands.Count != 1 || box.Commands[0]["Kind"]?.GetValue<string>() != "mainline_menu")
                 throw new Exception("collection first appearance repeated input: " + scenario);
             cases.Add("collection first appearance " + scenario + " never repeats opening or casts a talent");
-            if (failure is DailyStepException)
+            if (failure is DailyStepException or StageHostException { ObservationTimedOut: true })
             {
                 var snapshot = Directory.GetFiles(Path.Combine(path, "live", "diagnostics", "failures"), "*.json")
                     .Select(file => JsonNode.Parse(File.ReadAllText(file))!.AsObject())

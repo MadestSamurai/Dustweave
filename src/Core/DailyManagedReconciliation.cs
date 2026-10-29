@@ -116,7 +116,8 @@ public sealed class DailyManagedReconciliation
                     {
                         fresh = await driver.EvidenceAsync(rows.Select(r => r.Record["role"]!.GetValue<string>() == "room.info" ? "room" : "mail"));
                     }
-                    catch (Exception error) when (error is StageHostException or DailyStepException or IOException or System.Text.Json.JsonException) { report["observation_error"] = error.Message; }
+                    catch (Exception error) when (error is StageHostException { HoldQueue: false, Kind: not ("identity" or "stopped") }
+                        or DailyStepException { Kind: not ("identity" or "stopped") } or IOException or System.Text.Json.JsonException) { report["observation_error"] = error.Message; }
                 }
                 if (fresh != null && JsonNode.DeepEquals(op["day_cycle"] ?? op["cycle"], context["cycle"]) && DailyEvidence.SameActor(fresh["Frame"]!.AsObject(), original["Frame"]!.AsObject()) && JsonNode.DeepEquals(fresh["Config"], original["Config"]))
                     ok = Try(fresh);

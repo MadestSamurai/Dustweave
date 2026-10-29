@@ -3,7 +3,7 @@ namespace Dustweave;
 
 public interface IDailyWeeklyCompletionHost
 {
-    Task<JsonObject> SettleWeeklyAsync(IReadOnlyList<string> stages, JsonObject context);
+    Task<JsonObject> SettleWeeklyAsync(IReadOnlyList<string> stages, JsonObject context, bool refresh = true);
 }
 public static class DailyWeeklyCompletion
 {

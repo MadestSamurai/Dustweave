@@ -255,7 +255,7 @@ public sealed class DailyCollectionProgress(DailyWorkflow workflow)
                 }, 35, "服务器收集进度未返回；未使用本地执行记录代替");
                 break;
             }
-            catch (StageHostException error) when (error.Kind == "adapter")
+            catch (StageHostException error) when (error.Kind == "adapter" && !error.HoldQueue)
             {
                 var frame = (await workflow.Observe()).Frame;
                 var action = DailyHomeDecision.BackgroundErrorAction(frame, DailyNavigationPolicy.Load());

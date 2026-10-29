@@ -239,6 +239,7 @@ public sealed partial class DailyManagedBusiness : IDisposable
             string last = "No native response";
             while (mirrorWait != null ? !mirrorWait.Expired(clock()) : clock() < end)
             {
+                using var waiting = DailyObservationWindow.Begin(mirrorWait?.Remaining(clock()) ?? Math.Max(0, end - clock()), clock);
                 Stop();
                 if (heartbeat != null)
                     await heartbeat();
@@ -296,8 +297,10 @@ public sealed partial class DailyManagedBusiness : IDisposable
                 await CancelRejectedPreviewAsync(op, context);
             if (op["state"]?.GetValue<string>() == "unknown")
             {
-                if (error is StageHostException { Kind: "pending" }) throw;
-                throw new StageHostException("pending", error.Message);
+                if (error is StageHostException { Kind: "identity" or "stopped" } or DailyStepException { Kind: "identity" or "stopped" }) throw;
+                bool hold = drive != null || error is StageHostException { HoldQueue: true };
+                if (error is StageHostException { Kind: "pending" } pending && (!hold || pending.HoldQueue)) throw;
+                throw new StageHostException("pending", error.Message) { HoldQueue = hold, ObservationTimedOut = error is StageHostException { ObservationTimedOut: true } };
             }
             throw;
         }
@@ -377,6 +380,7 @@ public sealed partial class DailyManagedBusiness : IDisposable
             if (e.Kind == "rejected") { op["state"] = "rejected"; Save(op); throw; }
         }
         double end = clock() + 8;
+        using var waiting = DailyObservationWindow.Begin(8, clock);
         while (clock() < end)
         {
             Stop();
@@ -557,7 +561,8 @@ public sealed partial class DailyManagedBusiness : IDisposable
                 {
                     ok = Try(await driver.EvidenceAsync(proofs[role].PrefixesFor(op["scope"])));
                 }
-                catch (Exception e) when (e is StageHostException or DailyStepException or IOException) { last = e.Message; }
+                catch (Exception e) when (e is StageHostException { HoldQueue: false, Kind: not ("identity" or "stopped") }
+                    or DailyStepException { Kind: not ("identity" or "stopped") } or IOException) { last = e.Message; }
             }
             if (ok)
                 completed.Add(entry);

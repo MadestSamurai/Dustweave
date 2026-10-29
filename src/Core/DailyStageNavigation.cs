@@ -15,7 +15,7 @@ public sealed class DailyStageNavigation
     private string? lastInputSignature, lastInputAction;
     private double lastInputAt;
     public DailyStageNavigation(Func<Task<DailyStageFrame>> read, Func<bool> stopped, DailyNavigationPolicy? policy = null,
-        Func<double>? clock = null, Func<TimeSpan, Task>? delay = null, double recoverySeconds = 25)
+        Func<double>? clock = null, Func<TimeSpan, Task>? delay = null, double recoverySeconds = 60)
     {
         this.read = read;
         this.stopped = stopped;
@@ -92,6 +92,7 @@ public sealed class DailyStageNavigation
     public async Task<JsonObject> EnterAsync(string stage, JsonObject context, Func<string, string?, JsonObject?, Task<JsonObject>> relay, Func<DailyStageFrame, bool>? owns = null)
     {
         ValidateStage(stage);
+        using var waiting = DailyObservationWindow.Begin(policy.TotalSeconds, clock);
         double end = clock() + policy.TotalSeconds;
         var route = new List<string>();
         int changed = 0, steps = 0;
@@ -235,6 +236,7 @@ public sealed class DailyStageNavigation
     public async Task<JsonObject> RecoverAsync(string stage, JsonObject context, string error, Func<string, string?, JsonObject?, Task<JsonObject>> relay)
     {
         ValidateStage(stage);
+        using var waiting = DailyObservationWindow.Begin(recoverySeconds, clock);
         double end = clock() + recoverySeconds;
         var actions = new List<string>();
         int changed = 0;

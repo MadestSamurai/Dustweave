@@ -7515,9 +7515,19 @@
     "en-US": "Different data directory"
   },
   "sandbox.repair.required": {
-    "zh-CN": "未找到可确认归属的原沙盒。请在账号管理中选择此账号，打开「修复沙盒绑定」。原数据已保留。",
-    "zh-TW": "找不到可確認歸屬的原沙盒。請在帳號管理中選擇此帳號，開啟「修復沙盒綁定」。原資料已保留。",
-    "en-US": "The original sandbox could not be verified. Select this account in Accounts and open Repair sandbox binding. Existing data is preserved."
+    "zh-CN": "无法确认此账号原沙盒的绑定，已保留原数据。请在「账号管理」中选择此账号，打开「管理沙盒」检查绑定。",
+    "zh-TW": "無法確認此帳號原沙盒的綁定，已保留原資料。請在「帳號管理」中選擇此帳號，開啟「管理沙盒」檢查綁定。",
+    "en-US": "The original sandbox binding could not be verified. Existing data is preserved. Select this account in Accounts and open Manage sandbox to check the binding."
+  },
+  "issue.reason.sandbox-binding": {
+    "zh-CN": "无法确认此账号原沙盒的绑定，已保留原数据。",
+    "zh-TW": "無法確認此帳號原沙盒的綁定，已保留原資料。",
+    "en-US": "The original sandbox binding could not be verified. Existing data is preserved."
+  },
+  "issue.action.sandbox-binding": {
+    "zh-CN": "在「账号管理」中选择此账号，打开「管理沙盒」检查绑定；若仍失败，请导出诊断包。",
+    "zh-TW": "在「帳號管理」中選擇此帳號，開啟「管理沙盒」檢查綁定；若仍失敗，請匯出診斷套件。",
+    "en-US": "Select this account in Accounts and open Manage sandbox to check the binding. If it still fails, export diagnostics."
   },
   "sandbox.repair.running": {
     "zh-CN": "请先关闭此账号沙盒内的游戏及工具窗口，再修复绑定；不需要删除沙盒。",

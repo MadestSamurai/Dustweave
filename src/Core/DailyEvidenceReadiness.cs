@@ -1,6 +1,30 @@
 using System.Text.Json.Nodes;
 namespace Dustweave;
 
+// Readiness checks share the enclosing operation's deadline. A nested read may
+// wait for fresh data, but cannot restart or extend that operation's budget.
+internal sealed class DailyObservationWindow : IDisposable
+{
+    private static readonly AsyncLocal<DailyObservationWindow?> current = new();
+    private readonly DailyObservationWindow? parent;
+    private readonly Func<double> clock;
+    private readonly double end;
+    internal static DailyObservationWindow? Current => current.Value;
+    internal double Remaining => Math.Max(0, Math.Min(end - clock(), parent?.Remaining ?? double.PositiveInfinity));
+    internal static DailyObservationWindow Begin(double seconds, Func<double> clock) => new(seconds, clock);
+    internal static DailyObservationWindow Inherit(double fallbackSeconds, Func<double> clock) => new(Current?.Remaining ?? fallbackSeconds, clock);
+    private DailyObservationWindow(double seconds, Func<double> clock)
+    {
+        if (!double.IsFinite(seconds) || seconds < 0) throw new ArgumentOutOfRangeException(nameof(seconds));
+        this.clock = clock;
+        end = clock() + seconds;
+        parent = current.Value;
+        current.Value = this;
+    }
+    public void Dispose() => current.Value = parent;
+    internal static StageHostException Timeout(string message) => new("adapter", message) { HoldQueue = true, ObservationTimedOut = true };
+}
+
 public sealed partial class DailyCommandDriver
 {
     // Evidence is published before the UI snapshot. A known identity-sync frame is not a new actor.
