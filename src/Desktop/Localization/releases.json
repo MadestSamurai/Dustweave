@@ -1,5 +1,35 @@
 [
 {
+  "Version": "1.5.9",
+  "Date": "2026-10-31",
+  "Notes": {
+    "zh-CN": [
+      "跑商策略重要更新：全自动用户无需操作，升级后自动采用 11.16 料理改价的过渡方案与新价策略，恢复自动料理与售卖。仅购买收藏和自定义料理模式不变。",
+      "新增插件市场和公开战术教材插件，默认每关最多计算 60 秒。首次安装选择仅本地计算，或同时参与解法下载复用与通关后自动分享；更新保留选择，可随时修改。",
+      "按每个账号的库存、金币和高价日决定采购、保留、料理及售卖，兼顾改价收益与周转资金；不再一律囤货，也不提前花药制作暂不需要出售的料理。",
+      "已有跑商总开关、保留金币和采购上限继续生效。公告新价用于规划，实际售卖核对游戏报价；不把预计回款当作今天可花的金币。",
+      "首次保存第二个账号后，可选择依次或同时运行；单账号引导不涉及沙盒。仅选择同时运行时引导安装沙盒工具，选择“以后再说”后不再重复提示。",
+      "修复传送失败或落点变化后角色反复往返的问题。按实际位置重新寻路，保留未完成任务和已确认进度，继续遵守接任务、压制及隐身的顺序。"
+    ],
+    "zh-TW": [
+      "交易策略重要更新：全自動使用者無需操作，升級後自動採用 11.16 料理改價的過渡方案與新價策略，恢復自動料理與販售。僅購買收藏和自訂料理模式不變。",
+      "新增套件市場與公開戰術教材套件，預設每關最多計算 60 秒。首次安裝選擇僅本機計算，或同時參與解法下載重用與通關後自動分享；更新保留選擇，可隨時修改。",
+      "依各帳號的庫存、金幣和高價日決定採購、保留、料理及販售，兼顧改價收益與週轉資金；不再一律囤貨，也不提前花藥製作暫不需要出售的料理。",
+      "既有交易總開關、保留金幣和採購上限繼續生效。公告新價用於規劃，實際販售核對遊戲報價；不把預計回款當作今天可用的金幣。",
+      "首次儲存第二個帳號後，可選擇依序或同時執行；單帳號引導不涉及沙盒。僅選擇同時執行時引導安裝沙盒工具，選擇「稍後再說」後不再重複提示。",
+      "修復傳送失敗或落點改變後角色反覆往返的問題。依實際位置重新尋路，保留未完成任務與已確認進度，繼續遵守接任務、壓制及隱身的順序。"
+    ],
+    "en-US": [
+      "Important trading update: no action is needed for automatic mode. Upgrading restores automatic cooking and selling and applies the transition and new-price strategies for November 16. Favorites-only and custom recipes are unchanged.",
+      "Adds a plugin marketplace and Tactical textbook plugin, with a default 60-second calculation limit per stage. At installation choose local-only calculation or both solution downloads and automatic sharing after clearing a stage. Updates retain your choice; it can be changed later.",
+      "Purchases, retained stock, cooking and sales now account for each account's inventory, gold and premium dates, balancing higher future prices against working capital. Stockpiling is selective and cooking is delayed when early spending is unnecessary.",
+      "Your trading master switch, gold reserve and spending cap remain in effect. Announced prices guide forecasts; actual sales require matching in-game quotes. Future receipts cannot fund today's orders.",
+      "After saving a second account for the first time, choose to run accounts one at a time or together. Single-account setup does not include sandbox installation. Only parallel mode guides you through installing Sandboxie; choosing Not now dismisses further prompts.",
+      "Fixes repeated travel after failed teleports or unexpected arrivals. Routes are recalculated from the actual location, preserving unfinished tasks and confirmed progress while respecting quest prerequisites, suppression and stealth."
+    ]
+  }
+},
+{
   "Version": "1.5.8",
   "Date": "2026-10-29",
   "Notes": {

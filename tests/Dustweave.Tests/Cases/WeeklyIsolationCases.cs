@@ -379,6 +379,45 @@ static class WeeklyIsolationCases
             Check(f.H.Box.Commands.Where(c=>S(c["Kind"])=="weekly_npc_nav").Select(c=>N(c["Value"])).SequenceEqual([10L,12L]),
                 "native navigation handles only the two local dialogue steps, never the intervening kill guide");
         }
+        foreach (bool arrivedDuringFailure in new[] { false, true })
+        using (var f = new Fixture(Path.Combine(root, "weekly-recovery-quest-priority-" + arrivedDuringFailure)))
+        {
+            bool rejected = false; string quickState = "idle";
+            JsonArray Shortcuts() => new(O(("Npc", 700), ("Map", 2), ("Name", "test safe landing"), ("AtTarget", f.MapId == 2)));
+            f.ChangeReadings = rows =>
+            {
+                var travelValue = Rows(rows.Single(r => S(r["Id"]) == "mainline.travel")["Values"]).Single(v => S(v["Path"]) == "$self");
+                var travel = JsonNode.Parse(S(travelValue["Json"]))!.AsObject(); travel["QuickTargets"] = Shortcuts();
+                travelValue["Json"] = travel.ToJsonString();
+                rows.Add(WorkflowCases.Reading("route.quick", ("$self", O(("Pack", f.Pack), ("Map", f.MapId),
+                    ("Npc", 700), ("State", quickState), ("Targets", Shortcuts())))));
+            };
+            var normal = f.H.OnCommand;
+            f.H.OnCommand = command =>
+            {
+                if (S(command["Kind"]) == "mainline_walk" && N(command["Value"]) == 2 && !rejected)
+                {
+                    rejected = true;
+                    if (arrivedDuringFailure) { f.MapId = 2; f.Visits.Add(2); f.Scene(); }
+                    f.H.Box.Values["live:receipts~" + S(command["Id"]) + ".json"] = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(
+                        O(("Command", command), ("State", "rejected"), ("Error", "travel_unreachable:path_incomplete"), ("MayHaveDispatched", false)));
+                    return;
+                }
+                if (S(command["Kind"]) == "field_quick_travel")
+                { f.MapId = 2; f.Visits.Add(2); quickState = "arrived"; f.Scene(); return; }
+                normal!(command);
+            };
+            var result = await f.RunWildQuest();
+            var commands = f.H.Box.Commands;
+            int dialogue = commands.FindIndex(c => S(c["Kind"]) == "weekly_npc_talk");
+            int suppression = commands.FindIndex(c => S(c["Kind"]) == "mainline_talent" && N(c["Value"]) == 305);
+            Check(rejected && S(result["stages"]?["weekly_npc"]?["state"]) == "completed" && f.Cleared.SequenceEqual([12L])
+                && f.Suppressed.SequenceEqual([2L]) && dialogue >= 0 && suppression > dialogue,
+                "failed travel still completes dialogue prerequisite, permitted suppression and return dialogue in order: " + arrivedDuringFailure);
+            Check(commands.Count(c => S(c["Kind"]) == "field_quick_travel") == (arrivedDuringFailure ? 0 : 1)
+                && !commands.Any(c => S(c["Kind"]) == "mainline_menu" && N(c["Value"]) == 17),
+                "recovery hands arrival back to the NPC job before considering unnecessary movement or stealth: " + arrivedDuringFailure);
+        }
         using (var f = new Fixture(Path.Combine(root, "weekly-cache-no-global-recheck")) { Pending = false, Used = 21 })
         {
             await f.Run();

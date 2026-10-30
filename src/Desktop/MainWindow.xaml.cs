@@ -584,15 +584,21 @@ public partial class MainWindow : Window
         }
         catch (Exception e) { ShowError(e); }
     }
-    private void Save_Click(object sender, RoutedEventArgs e) => Manage(() =>
+    private async void Save_Click(object sender, RoutedEventArgs e)
     {
-        var plan = DailyAccountIdentity.SavePlan(sessions.Read());
-        string? name = Prompt(L.Get(plan.Existing ? "account.slot_update" : "account.slot_save", plan.SlotNumber),
-            plan.ReplacesUnreadable ? "account.recover_credentials" : plan.Existing ? "account.update_hint" : "为这个账号取一个容易区分的名字。", plan.Name);
-        if (name == null) return;
-        sessions.Save(plan.SlotNumber, name, plan.AccountKey);
-        L.Text(ProgressText, plan.Existing ? "account.updated" : "account.new_saved", name);
-    });
+        bool offer = false;
+        Manage(() =>
+        {
+            var before = sessions.Read(); var plan = DailyAccountIdentity.SavePlan(before);
+            string? name = Prompt(L.Get(plan.Existing ? "account.slot_update" : "account.slot_save", plan.SlotNumber),
+                plan.ReplacesUnreadable ? "account.recover_credentials" : plan.Existing ? "account.update_hint" : "为这个账号取一个容易区分的名字。", plan.Name);
+            if (name == null) return;
+            sessions.Save(plan.SlotNumber, name, plan.AccountKey);
+            L.Text(ProgressText, plan.Existing ? "account.updated" : "account.new_saved", name);
+            offer = DailyMultiAccountSetup.AfterSave(root, SavedAccountCount(before), SavedAccountCount(sessions.Read()), !plan.Existing);
+        });
+        if (offer) await ShowMultiAccountSetupAsync();
+    }
     private void Rename_Click(object sender, RoutedEventArgs e) => Manage(() => { if (Selected is not { } row) return; string? name = Prompt("重命名账号", "别名只保存在本机，不会修改游戏角色名称。", row.Name); if (name != null) sessions.Rename(row.Account.SlotNumber, name, row.Account.AccountKey); });
     private void Delete_Click(object sender, RoutedEventArgs e) => Manage(() => { if (Selected is { } row) DeleteAccount(row.Account, Confirm); });
     private void LoginNew_Click(object sender, RoutedEventArgs e) => Manage(() => { if (Confirm("登录新账号前，请正常退出游戏和启动器。当前登录账号必须已经保存。\n\n接下来会备份当前登录会话，并启动游戏供你登录新账号；登录完成后退出游戏，再保存到空槽位。")) sessions.LoginNew(); });
@@ -1013,6 +1019,12 @@ public partial class MainWindow : Window
                 DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "sandbox-setup", realGameTouched = false });
                 Application.Current.Shutdown(); return;
             }
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "multi-account-setup")
+            {
+                await CheckMultiAccountSetupForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "multi-account-setup", realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "recovery")
             {
                 L.Audit();
@@ -1084,6 +1096,12 @@ public partial class MainWindow : Window
                 DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "accounts", realGameTouched = false });
                 Application.Current.Shutdown(); return;
             }
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "plugins")
+            {
+                L.Audit(); await SmokePluginsAsync();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "plugins", realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "ux")
             {
                 L.Audit();
@@ -1129,6 +1147,7 @@ public partial class MainWindow : Window
                 Application.Current.Shutdown(); return;
             }
             await CheckThemesForSmoke();
+            await CheckMultiAccountSetupForSmoke();
             await CheckLanguagesForSmoke();
             await CheckPresentationForSmoke();
             // The preceding checks leave another tab selected. Materialize the

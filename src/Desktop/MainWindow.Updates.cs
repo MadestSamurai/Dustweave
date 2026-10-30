@@ -181,7 +181,8 @@ public partial class MainWindow
             foreach (var release in DailyReleaseHistory.Read().Where(r => r.Version == DailyProductVersion.Current))
                 foreach (var i in Enumerable.Range(0, release.Notes["zh-CN"].Length))
                 {
-                    var text = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 10, 0, 0), FontSize = 14 };
+                    var text = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 10, 0, 0), FontSize = 14,
+                        FontWeight = i == 0 ? FontWeights.SemiBold : FontWeights.Normal };
                     L.Bind(text, TextBlock.TextProperty, () => "• " + release.Notes[L.Code][i]); panel.Children.Add(text);
                 }
             var button = new Button { Style = (Style)FindResource("PrimaryButton"), HorizontalAlignment = HorizontalAlignment.Right, Margin = new(0, 24, 0, 0), IsDefault = true }; L.Bind(button, ContentControl.ContentProperty, "updates.got_it"); panel.Children.Add(button);

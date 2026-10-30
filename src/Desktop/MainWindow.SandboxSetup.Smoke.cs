@@ -50,9 +50,16 @@ public partial class MainWindow
                 window.Show(); await window.RefreshAsync();
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
                 Check(window.DownloadVisible && window.CanChoose && window.ActualHeight < window.MaxHeight, "Setup contents overflow or lack recovery actions");
-                var buttons = SandboxButtons(window).Where(b => b.Name.StartsWith("Sandbox")).ToArray();
+                var buttons = SandboxButtons(window).Where(b => b.Name.StartsWith("Sandbox") && b.IsVisible).ToArray();
                 Check(buttons.Length == 5 && buttons.All(b => b.ActualWidth > 30 && b.ActualHeight >= 30 && !b.Content.ToString()!.StartsWith("sandbox_")), "Missing or untranslated setup actions");
+                Check(buttons.Single(b => b.Name == "SandboxDownload").IsDefault && buttons.Single(b => b.Name == "SandboxDownload").Style == FindResource("PrimaryButton")
+                    && !buttons.Single(b => b.Name == "SandboxVerify").IsDefault, "Missing installation did not prioritize downloading");
                 CaptureSandboxDialog(window, "sandbox-setup-" + code + "-" + mode);
+                var details = SandboxElements<Expander>(window).Single();
+                details.IsExpanded = false;
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                Check(SandboxButtons(window).Count(b => b.Name.StartsWith("Sandbox") && b.IsVisible) == 3, "Manual paths did not collapse behind the installed option");
+                CaptureSandboxDialog(window, "sandbox-setup-simple-" + code + "-" + mode);
                 window.Close(); Check(!await window.Completion, "Preview close authorized a launch");
             }
 
@@ -71,6 +78,7 @@ public partial class MainWindow
                     Check(store.Read().Directory == installed, "Invalid edit overwrote saved path");
                     File.WriteAllText(component, "fixture; never execute");
                     await window.SelectAsync(installed);
+                    Check(!window.DownloadVisible && SandboxButtons(window).Single(b => b.Name == "SandboxVerify").IsDefault, "Detected installation did not restore Continue as primary");
                     Check(!window.Completion.IsCompleted, "Selecting a folder started the queue without confirmation");
                     await window.VerifyAsync();
                     exercised.TrySetResult(true);
@@ -107,10 +115,11 @@ public partial class MainWindow
         encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
         using var stream = File.Create(Path.Combine(smoke!, name + ".png")); encoder.Save(stream);
     }
-    private static IEnumerable<Button> SandboxButtons(DependencyObject node)
+    private static IEnumerable<Button> SandboxButtons(DependencyObject node) => SandboxElements<Button>(node);
+    private static IEnumerable<T> SandboxElements<T>(DependencyObject node) where T : DependencyObject
     {
-        if (node is Button button) yield return button;
+        if (node is T element) yield return element;
         for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(node); i++)
-            foreach (var child in SandboxButtons(System.Windows.Media.VisualTreeHelper.GetChild(node, i))) yield return child;
+            foreach (var child in SandboxElements<T>(System.Windows.Media.VisualTreeHelper.GetChild(node, i))) yield return child;
     }
 }

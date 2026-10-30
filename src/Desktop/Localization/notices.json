@@ -1,4 +1,39 @@
 {
+  "message.本轮售卖报价核对未通过，未生成售卖订单": {
+    "zh-CN": "本轮售卖报价核对未通过，未生成售卖订单",
+    "zh-TW": "本輪販售報價核對未通過，未產生販售訂單",
+    "en-US": "The sale quote could not be verified. No sale orders were generated."
+  },
+  "message.本轮跑商的金币或天赋药核对未通过，未下单": {
+    "zh-CN": "本轮跑商的金币或天赋药核对未通过，未下单",
+    "zh-TW": "本輪交易的金幣或天賦藥核對未通過，未下單",
+    "en-US": "The plan's gold or talent pill balance could not be verified. No orders were submitted."
+  },
+  "message.本轮采购数量超过当前可购数量，未下单": {
+    "zh-CN": "本轮采购数量超过当前可购数量，未下单",
+    "zh-TW": "本輪採購數量超過目前可購數量，未下單",
+    "en-US": "Planned purchases exceed current availability. No orders were submitted."
+  },
+  "message.本轮采购或料理可能超过库存容量，未下单": {
+    "zh-CN": "本轮采购或料理可能超过库存容量，未下单",
+    "zh-TW": "本輪採購或料理可能超過庫存容量，未下單",
+    "en-US": "Planned purchases or cooking could exceed storage capacity. No orders were submitted."
+  },
+  "message.本次未能完成跑商日期规划，未生成采购、料理或售卖订单；库存已保留，可稍后重新预览。": {
+    "zh-CN": "本次未能完成跑商日期规划，未生成采购、料理或售卖订单；库存已保留，可稍后重新预览。",
+    "zh-TW": "本次未能完成交易日期規劃，未產生採購、料理或販售訂單；庫存已保留，可稍後重新預覽。",
+    "en-US": "The dated trade plan could not be completed. No purchase, cooking or sale orders were generated. Stock was kept; preview again later."
+  },
+  "message.料理改价尚未在当前游戏数据中确认，受影响料理暂不出售；其他已确认交易照常规划。": {
+    "zh-CN": "料理改价尚未在当前游戏数据中确认，受影响料理暂不出售；其他已确认交易照常规划。",
+    "zh-TW": "料理改價尚未在目前遊戲資料中確認，受影響料理暫不販售；其他已確認交易照常規劃。",
+    "en-US": "The food price change is not yet confirmed in current game data. Affected dishes are retained; other verified trades are planned normally."
+  },
+  "message.采购已完成；自动料理与售卖未开启，食材与料理已保留": {
+    "zh-CN": "采购已完成；自动料理与售卖未开启，食材与料理已保留",
+    "zh-TW": "採購已完成；自動料理與販售未開啟，食材與料理已保留",
+    "en-US": "Purchases completed. Automatic cooking and selling is off; ingredients and dishes were kept."
+  },
   "notice.weekly_npc.server_rejected": {
     "zh-CN": "游戏服务器未接受任务物品交互（100011），未计为完成；本次暂缓该卡带的NPC任务，继续其他日常",
     "zh-TW": "遊戲伺服器未接受任務物品互動（100011），未計為完成；本次暫緩該卡帶的NPC任務，繼續其他日常",
@@ -706,6 +741,11 @@
     "zh-CN": "规划中的实体传送阵已不可达",
     "zh-TW": "規劃中的實體傳送陣已不可達",
     "en-US": "The planned waypoint is no longer reachable"
+  },
+  "notice.route.summon_unavailable": {
+    "zh-CN": "传送天赋当前不可用，重新选择其他入口。",
+    "zh-TW": "傳送天賦目前無法使用，重新選擇其他入口。",
+    "en-US": "Waypoint creation is currently unavailable. Choosing another entrance."
   },
   "notice.route.entry_unreachable": {
     "zh-CN": "规划中的入口已经不可达",

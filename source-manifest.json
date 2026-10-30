@@ -51,6 +51,36 @@
   ],
   "files": [
     {
+      "path": "src/Core/DailyTradeCalendar.cs",
+      "sha256": "1dfe235505bc1a3f8574daf781d332da4b694ea648ec47f1cb0ba6deed2d9fff",
+      "bytes": 20338,
+      "reasons": "build input"
+    },
+    {
+      "path": "src/Core/DailyTradePriceChange.cs",
+      "sha256": "d6d6c182565e0b423031db35a308acdfa927b3c42a0183fa4fc28ec8b19317a1",
+      "bytes": 2636,
+      "reasons": "build input"
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/TradeCalendarCases.cs",
+      "sha256": "0afd56d14679ecb804ab1233d573373f6124be9116d81d324d31b10528b6ec1f",
+      "bytes": 7792,
+      "reasons": "build input"
+    },
+    {
+      "path": "docs/TRADE_PRICE_TRANSITION.md",
+      "sha256": "ffa15a84721030da4daa46d7e998b9c94737af0714892cfa129acf600a8fe6e2",
+      "bytes": 4481,
+      "reasons": "documentation"
+    },
+    {
+      "path": "docs/releases/1.5.9.md",
+      "sha256": "4fc60ed85080673687fa8900f70773e6271349698630cd178970d0ad6a7450ff",
+      "bytes": 2154,
+      "reasons": "documentation"
+    },
+    {
       "path": "tests/Dustweave.Tests/Cases/ObservationWaitCases.cs",
       "sha256": "1ad6795aea75c64eabc8428b70ffbc2e03f1f1e673174c7a97422dc0f21f5700",
       "bytes": 9444,
@@ -8088,6 +8118,66 @@
       "path": "tests/Dustweave.Tests/Cases/HazardTravelCases.cs",
       "sha256": "5f2756a425efa69050d19b2b17ef1a0a29dc100c560418c4b6a8be42c3518df3",
       "bytes": 11250,
+      "reasons": "build input"
+    },
+    {
+      "path": "src/Core/DailyMultiAccountSetup.cs",
+      "sha256": "bf39704999d483829efaf99e09e3e559d4e91b915f38bcafdf20fdbc09373675",
+      "bytes": 1039,
+      "reasons": "build input"
+    },
+    {
+      "path": "src/Desktop/MultiAccountSetupWindow.cs",
+      "sha256": "bdd74dd2660f9a04015b215bc5596c7fd42a549a750ea4ccbfa1fc011e77d0fe",
+      "bytes": 6164,
+      "reasons": "build input"
+    },
+    {
+      "path": "src/Desktop/MainWindow.MultiAccountSetup.cs",
+      "sha256": "0a9e946a59d8f063be4baf55aa84ed61a3a7c1b5b0f73795608632e491b63ccd",
+      "bytes": 1244,
+      "reasons": "build input"
+    },
+    {
+      "path": "src/Desktop/MainWindow.MultiAccountSetup.Smoke.cs",
+      "sha256": "44b854f44e41e2c6f0339b6239bb1da865ce1fe869a087dfcdbb6325694c3363",
+      "bytes": 10836,
+      "reasons": "build input"
+    },
+    {
+      "path": "src/Core/DailyPluginMarket.cs",
+      "sha256": "68a3603294d74212e6908748b57712fe6bf9dfe14dcede65609f49380b739740",
+      "bytes": 12013,
+      "reasons": "build input"
+    },
+    {
+      "path": "src/Desktop/MainWindow.PluginMarket.cs",
+      "sha256": "2db9925b3ba0caf808c982d1ca6284ef012badcefa3819a71c8c56df69026966",
+      "bytes": 8919,
+      "reasons": "build input"
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/PluginMarketCases.cs",
+      "sha256": "78af1300a4e4a11b17f55880a0b11f9dee8597c6560ac5f61de6fbb81dbc87f7",
+      "bytes": 7840,
+      "reasons": "build input"
+    },
+    {
+      "path": "src/Core/DailyPluginSharing.cs",
+      "sha256": "6ccdd26824c2871eb78d1b62e1ec8471594aeb291eae01b1e5812ec9251a79ce",
+      "bytes": 1394,
+      "reasons": "build input"
+    },
+    {
+      "path": "src/Desktop/PluginSharingWindow.cs",
+      "sha256": "5991d211e861c722a2f7c6c9da15f9dcc911c36d47dacc235bed4a80c5c41a3b",
+      "bytes": 3263,
+      "reasons": "build input"
+    },
+    {
+      "path": "src/Desktop/MainWindow.PluginMarket.Smoke.cs",
+      "sha256": "fba9cb2eab3dc43b7b7d4019d744b44b0fe8b54670af039718ae5bf22a458cfe",
+      "bytes": 3791,
       "reasons": "build input"
     }
   ],

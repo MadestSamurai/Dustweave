@@ -82,9 +82,12 @@ public sealed class TradePlanPanel : UserControl
         long keep = DailyData.N(settings["reserve_gold"]);
         long? max = settings["max_spend"] == null ? null : DailyData.N(settings["max_spend"]);
         bool breakEven = DailyData.B(settings["include_break_even_resales"]);
+        bool purchaseOnly = expectedAccount != null && DailyProfiles.ValidKey(expectedAccount)
+            && !new DailyPreferenceStore(root).Read(expectedAccount).Trade.AutoCookAndSell;
         L.Bind(settingsSummary, TextBlock.TextProperty, () => L.Get("trade.settings_summary", keep,
             max is {} amount ? amount.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) : L.Get("trade.no_limit"),
-            L.Get(breakEven ? "trade.strategy_on" : "trade.strategy_off")) + "\n" + L.Get("trade.settings_location"));
+            L.Get(breakEven ? "trade.strategy_on" : "trade.strategy_off")) + "\n" + L.Get("trade.settings_location")
+            + (purchaseOnly ? "\n" + L.Get("trade.purchase_only_preview") : ""));
     }
     private static TextBlock Text(string value)
     { var text = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 3, 0, 5) }; L.Literal(text, value); return text; }
@@ -237,6 +240,7 @@ public sealed class TradePlanPanel : UserControl
             using var lease = new FileStream(Path.Combine(scope, "planning.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
             File.WriteAllText(input, snapshot.Value.GetRawText());
             var state = System.Text.Json.Nodes.JsonNode.Parse(snapshot.Value.GetRawText())!.AsObject();
+            state["processing_enabled"] = new DailyPreferenceStore(root).Read(account).Trade.AutoCookAndSell;
             await Task.Run(() => DailyTradePlan.Generate(catalog, state, preferences, output, account));
             Display(output);
             export.IsEnabled = true;
@@ -258,22 +262,24 @@ public sealed class TradePlanPanel : UserControl
         using var doc = JsonDocument.Parse(File.ReadAllText(path));
         var p = doc.RootElement;
         var s = p.GetProperty("summary");
+        bool calendar = p.GetProperty("solver").TryGetProperty("scope", out var model) && model.GetString() == "dated_cash_inventory";
         if (snapshot != null && p.GetProperty("context").GetProperty("account").GetString() != snapshot.Value.GetProperty("context").GetProperty("account").GetString())
             throw new InvalidDataException("计划账号不匹配。");
         if (p.TryGetProperty("settings", out var planSettings))
             ShowSettings(DailyTradeOptimizer.Preferences(System.Text.Json.Nodes.JsonNode.Parse(planSettings.GetRawText())!.AsObject()));
         object?[] amounts = [s.GetProperty("incremental_profit").GetInt64(), s.GetProperty("cash_required").GetInt64(), s.GetProperty("eventual_sale_value").GetInt64(), s.GetProperty("cash_remaining").GetInt64(), s.GetProperty("potions_used").GetInt64(), s.GetProperty("potions_to_buy").GetInt64()];
+        if (calendar) amounts[0] = s.GetProperty("carryover_estimated_value").GetInt64();
         bool breakEvenEnabled = p.TryGetProperty("settings", out var settings) && settings.TryGetProperty("include_break_even_resales", out var enabled) && enabled.GetBoolean();
         long breakEvenCount = s.TryGetProperty("break_even_count", out var count) ? count.GetInt64() : 0;
         long breakEvenValue = s.TryGetProperty("break_even_value", out var value) ? value.GetInt64() : 0;
-        L.Bind(totals, TextBlock.TextProperty, () => L.Get("trade.totals", amounts) + (breakEvenEnabled ? "\n" + L.Get("trade.break_even_totals", breakEvenCount, breakEvenValue) : ""));
+        L.Bind(totals, TextBlock.TextProperty, () => L.Get(calendar ? "trade.calendar_totals" : "trade.totals", amounts) + (breakEvenEnabled ? "\n" + L.Get("trade.break_even_totals", breakEvenCount, breakEvenValue) : ""));
         buys.ItemsSource = p.GetProperty("purchases").EnumerateArray().Select(r => new { 物品 = r.GetProperty("name").GetString(), 数量 = r.GetProperty("count").GetInt64(), 单价 = r.GetProperty("price").GetInt64(), 金额 = r.GetProperty("cost").GetInt64(), 商店 = r.GetProperty("shop").GetInt32(), 商品 = r.GetProperty("product").GetInt32() }).ToArray();
         cooks.ItemsSource = p.GetProperty("cooking").EnumerateArray().Select(r => new { 料理 = r.GetProperty("name").GetString(), 份数 = r.GetProperty("count").GetInt64(), 天赋药 = r.GetProperty("potions").GetInt64(), 预计售日 = r.GetProperty("sale_date").GetString() }).ToArray();
         var sales = p.GetProperty("sales").EnumerateArray().Select(r => new { 物品 = r.GetProperty("name").GetString(), 数量 = r.GetProperty("count").GetInt64(), 单价 = r.GetProperty("price").GetInt64(), 商店 = r.GetProperty("shop").GetInt32(), 预计售日 = r.GetProperty("date").GetString(), 今日报价已确认 = r.GetProperty("today_quote_confirmed").GetBoolean() }).ToArray();
         today.ItemsSource = sales.Where(r => r.今日报价已确认).ToArray();
         future.ItemsSource = sales.Where(r => !r.今日报价已确认).ToArray();
         bool optimal = p.GetProperty("solver").GetProperty("optimal").GetBoolean();
-        L.Bind(status, TextBlock.TextProperty, () => L.Get(optimal ? "trade.optimal" : "trade.best") + " " + L.Get("trade.quantity_note"));
+        L.Bind(status, TextBlock.TextProperty, () => L.Get(calendar ? "trade.calendar_plan" : optimal ? "trade.optimal" : "trade.best") + " " + L.Get("trade.quantity_note"));
         output = path;
     }
     internal Action LanguageProbeForSmoke()

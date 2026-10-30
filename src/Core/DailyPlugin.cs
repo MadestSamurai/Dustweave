@@ -11,6 +11,7 @@ public sealed record DailyPluginInfo(bool Available, string State, string Root, 
     public string MinHostVersion { get; init; } = "";
     public string MaxHostVersion { get; init; } = "";
     public string BindingContract { get; init; } = "";
+    public bool SupportsSolutionSharing { get; init; }
     public Dictionary<string, string> Names { get; init; } = new();
     public string Name(string language) => Names.GetValueOrDefault(language) ?? Names.GetValueOrDefault("en-US") ?? Id;
     public bool Supports(string stage) => Available && (Capabilities?.Contains(stage, StringComparer.Ordinal) ?? false);
@@ -92,6 +93,7 @@ public static class DailyPlugin
                 ? JsonSerializer.Deserialize<Dictionary<string, string>>(nameValue.GetRawText()) ?? new() : new();
             return new(true, "ready", root, version, Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(), hooks.Select(p => File.ReadAllText(files[p], System.Text.Encoding.UTF8)).ToArray(), entry, type, capabilities)
             { Id = id, Names = names, MinHostVersion = min, MaxHostVersion = max, BindingContract = bindings,
+              SupportsSolutionSharing = manifest.TryGetProperty("solutionSharing", out var sharing) && sharing.GetBoolean(),
               Publisher = manifest.TryGetProperty("publisher", out var publisher) ? publisher.GetString() ?? "" : "" };
         }
         catch (Exception e) when (e is InvalidDataException or IOException or UnauthorizedAccessException or JsonException or InvalidOperationException or KeyNotFoundException or ArgumentException or NotSupportedException or FormatException or OverflowException)

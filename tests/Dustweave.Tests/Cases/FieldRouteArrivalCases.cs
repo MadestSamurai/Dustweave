@@ -11,7 +11,8 @@ static class FieldRouteArrivalCases
         public readonly WorkflowHarness H;
         public readonly DailyFieldRoute Route;
         public long MapId = 9, Destination = 1;
-        public bool Near, PortNear, BlockExit, FailCommand;
+        public long? DisplayedWaypointMap;
+        public bool Near, PortNear, AlternativePort, AlternativePortNear, BlockExit, FailCommand;
         public bool QuickEnabled, QuickOutsideOnly, QuickNear, QuickLandNear = true, QuickLandNearby = true, QuickFails;
         public long QuickNpc = 999, QuickPack = 1;
         private string quickState = "idle";
@@ -19,6 +20,7 @@ static class FieldRouteArrivalCases
         public double StealthSeconds;
         public double GateDistance = 2; public double? FirstCommandAt;
         public int GateInstance = 91;
+        public Func<JsonObject[], JsonObject[]>? ChangeMaps;
         public Fixture(string root)
         {
             H = new(root, [new DailyBusinessProof("dispatch.start", "collection", [], (_, _, _) => new())]);
@@ -42,11 +44,12 @@ static class FieldRouteArrivalCases
                         if (N(c["Value"]) == 91) MapId = 1;
                         else if (N(c["Value"]) == 12) MapId = 2;
                         else if (N(c["Value"]) == 10) PortNear = true;
+                        else if (N(c["Value"]) == 20 && AlternativePort) AlternativePortNear = true;
                         else throw new Exception("Unexpected navigation target");
                         Scene();
                         break;
                     case "mainline_cancel_nav": break;
-                    case "mainline_interact": H.Page("WayPointUI", "_objMapNextButton"); break;
+                    case "mainline_interact": H.Page("WayPointUI", "_objMapNextButton", "_objMapPrevButton"); break;
                     case "back": Scene(); break;
                     case "field_quick_travel":
                         if (N(c["Value"]) != 999 || N(c["Items"]?[0]) != Destination) throw new Exception("Shortcut targets another NPC");
@@ -80,6 +83,8 @@ static class FieldRouteArrivalCases
                 O(("Id",1),("Exits",new[]{9,2}),("HasWaypoint",true),("CanSummon",false)),
                 O(("Id",2),("Exits",new[]{1}),("HasWaypoint",true),("CanSummon",false))
             };
+            foreach (var map in maps) map["MapType"] = N(map["Id"]) == BattleMap ? 1 : 0;
+            maps = ChangeMaps?.Invoke(maps) ?? maps;
             var approaches = new List<JsonObject>();
             var rows = new List<JsonObject> {
                 Read("mainline.map",0,(MapPath,O(("id",MapId),("packId",1),("mapType", MapId == BattleMap ? 1 : 0))),
@@ -103,18 +108,230 @@ static class FieldRouteArrivalCases
             {
                 rows.Add(Read("mainline.waypoint",10,(ObjectPath,1),(WaypointNear,PortNear),("ὡὩὫὦὧὢὡὬὡὥὥ","WayPoint_Enable")));
                 approaches.Add(O(("Instance",10),("Reachable",true),("Distance",PortNear?0:5),("Kind","waypoint")));
+                if (AlternativePort)
+                {
+                    rows.Add(Read("mainline.waypoint",20,(ObjectPath,2),(WaypointNear,AlternativePortNear),("ὡὩὫὦὧὢὡὬὡὥὥ","WayPoint_Enable")));
+                    approaches.Add(O(("Instance",20),("Reachable",true),("Distance",AlternativePortNear?0:10),("Kind","waypoint")));
+                }
             }
             if (S(H.Frame["UiToken"]) == "WayPointUI")
-                rows.Add(Read("mainline.waypoint_ui",20,("_fieldMiniMap.CurrentMap",O(("id",Destination)))));
-            rows.Add(Read("mainline.travel",0,("$self",O(("Pack",1),("Map",MapId),("Maps",Array(maps)),("Approaches",Array(approaches)),("Ground",true)))));
+                rows.Add(Read("mainline.waypoint_ui",20,("_fieldMiniMap.CurrentMap",O(("id",DisplayedWaypointMap ?? Destination)))));
+            rows.Add(Read("mainline.travel",0,("$self",O(("Pack",1),("Map",MapId),("Maps",Array(maps)),("Approaches",Array(approaches)),("Ground",true),
+                ("QuickTargets", QuickEnabled ? new JsonArray(O(("Npc",QuickNpc),("Map",Destination),("AtTarget",MapId == Destination && QuickNear))) : new JsonArray())))));
             return rows.ToArray();
         }
         public Task Board() => DailyWeeklyNpcBoard.Open(Route, new(Native(), [], []), 1);
         public void Dispose() => H.Dispose();
     }
+    private static async Task Recovery(string root, List<string> checks)
+    {
+        void Check(bool ok, string message) { if (!ok) throw new Exception(message); checks.Add("Route recovery: " + message); }
+        Check(typeof(DailyTravelBlocked).GetConstructor([typeof(string)]) != null
+            && typeof(DailyFieldRoute).GetMethod("Teleport", [typeof(long), typeof(long?), typeof(bool), typeof(bool), typeof(bool)]) != null,
+            "existing binary signatures remain available to independently built plugins");
+        void Reject(Fixture f, JsonObject command) => f.H.Box.Values["live:receipts~" + S(command["Id"]) + ".json"] =
+            System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(O(("Command", command), ("State", "rejected"),
+                ("Error", "travel_unreachable:path_incomplete"), ("MayHaveDispatched", false)));
+        foreach (long arrival in new long[] { 1, 2 })
+        using (var f = new Fixture(Path.Combine(root, "unexpected-arrival-" + arrival)))
+        {
+            var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence());
+            var plan = await nav.Plan([1], teleports: false);
+            f.H.OnCommand = _ => { f.MapId = arrival; f.Scene(); };
+            bool result = await nav.Step(Rows(plan["actions"])[0]);
+            Check(result == (arrival == 1) && N(Map(nav.Evidence)["id"]) == arrival
+                && nav.State == DailyCollectionNavigator.NavigationState.ReadyForWork && f.Steps.Length == 1,
+                "arrival on map " + arrival + " returns to job selection without a second movement or talent");
+            Check(nav.Atlas.Blocked.Count == 0 && nav.Atlas.WarpBlocked.Count == 0
+                && Rows((await nav.Plan([arrival]))["actions"]).Length == 0,
+                "a changed arrival neither bans the old map nor continues from stale coordinates");
+        }
+        foreach (long arrival in new long[] { 9, 2 })
+        using (var f = new Fixture(Path.Combine(root, "standalone-teleport-preparation-" + arrival)) { MapId = 1 })
+        {
+            f.Scene(); f.H.OnCommand = command =>
+            {
+                Check(S(command["Kind"]) == "mainline_walk" && N(command["Value"]) == 10,
+                    "standalone preparation never sends an old-map gate or talent after relocation");
+                f.MapId = arrival; f.Scene();
+            };
+            bool blocked = false; JsonObject? result = null;
+            try { result = await f.Route.PrepareTeleport(false, destination: 9); } catch (DailyTravelBlocked) { blocked = true; }
+            Check(f.Steps.Length == 1 && (arrival == 9 ? !blocked && result == null : blocked),
+                "non-planner teleport callers also refresh all movement decisions after an unexpected map change: " + arrival);
+        }
+        using (var f = new Fixture(Path.Combine(root, "rejected-door-alternate-shortcut")) { QuickEnabled = true })
+        {
+            var original = f.H.OnCommand;
+            f.H.OnCommand = c => { if (S(c["Kind"]) == "mainline_walk") Reject(f, c); else original!(c); };
+            var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence());
+            var first = Rows((await nav.Plan([1]))["actions"])[0];
+            Check(S(first["kind"]) == "walk" && !await nav.Step(first), "known rejected door is observed again before replanning");
+            var next = Rows((await nav.Plan([1]))["actions"])[0];
+            Check(S(next["kind"]) == "quick" && await nav.Step(next) && f.MapId == 1
+                && f.Steps.SequenceEqual(new[] { "mainline_walk", "field_quick_travel" }),
+                "a failed door preserves the native shortcut to the same destination");
+        }
+        using (var f = new Fixture(Path.Combine(root, "rejected-portal-alternate-door")) { MapId = 1, Destination = 2, GateDistance = 200 })
+        {
+            f.Scene(); var original = f.H.OnCommand;
+            f.H.OnCommand = c => { if (S(c["Kind"]) == "mainline_walk" && N(c["Value"]) == 10) Reject(f, c); else original!(c); };
+            var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence());
+            var first = Rows((await nav.Plan([2]))["actions"])[0];
+            Check(S(first["mode"]) == "native" && !await nav.Step(first)
+                && nav.Atlas.BlockedNativePorts.Count == 1 && nav.Atlas.WarpBlocked.Count == 0,
+                "an unsuccessful physical-portal approach rejects the approach, not its destination");
+            var next = Rows((await nav.Plan([2]))["actions"])[0];
+            Check(S(next["kind"]) == "walk" && await nav.Step(next) && f.MapId == 2,
+                "the map remains reachable through its door after the portal approach fails");
+        }
+        using (var f = new Fixture(Path.Combine(root, "arrival-topology-changed")))
+        {
+            f.ChangeMaps = maps => { if (f.MapId == 1) maps.Single(m => N(m["Id"]) == 9)["Exits"] = new JsonArray(); return maps; };
+            var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence());
+            Check(await nav.Step(Rows((await nav.Plan([1], teleports: false))["actions"])[0]) && f.MapId == 1,
+                "invalidating origin geometry during arrival cannot turn successful movement into a cache exception");
+        }
+        foreach (string failure in new[] { "page-cycle", "page-timeout", "locked-destination" })
+        using (var f = new Fixture(Path.Combine(root, "waypoint-" + failure)) { MapId = 1, Destination = 2, GateDistance = 200 })
+        {
+            f.ChangeMaps = maps => { maps.Single(m => N(m["Id"]) == 9)["HasWaypoint"] = true; return maps; };
+            f.DisplayedWaypointMap = failure == "locked-destination" ? 2 : 1;
+            f.Scene(); var original = f.H.OnCommand;
+            f.H.OnCommand = command =>
+            {
+                if (S(command["Kind"]) == "click")
+                { if (failure == "page-cycle") f.DisplayedWaypointMap = f.DisplayedWaypointMap == 1 ? 3 : 1; return; }
+                original!(command);
+            };
+            var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence());
+            Check(!await nav.Step(Rows((await nav.Plan([2]))["actions"])[0])
+                && nav.Atlas.WarpBlocked.Contains(2) == (failure == "locked-destination")
+                && nav.Atlas.BlockedNativePorts.Count == 0 && S(f.H.Frame["UiToken"]) == "GameFieldDefaultUI",
+                failure + " closes only the owned picker and does not label unrelated portal destinations unavailable");
+            Check(S(Rows((await nav.Plan([9]))["actions"])[0]["mode"]) == "native",
+                failure + " preserves native portal access to another map");
+            var walk = Rows((await nav.Plan([2], teleports: false))["actions"])[0];
+            Check(S(walk["kind"]) == "walk" && await nav.Step(walk) && f.MapId == 2,
+                failure + " leaves an ordinary walking route to the same map usable");
+        }
+        using (var f = new Fixture(Path.Combine(root, "strict-summon-does-not-retry-native")) { MapId = 1, Destination = 2, GateDistance = 200 })
+        {
+            f.ChangeMaps = maps => { maps.Single(m => N(m["Id"]) == 1)["CanSummon"] = true; return maps; };
+            f.Scene(); bool reachedSummon = false; var original = f.H.OnCommand;
+            f.H.OnCommand = c =>
+            {
+                if (S(c["Kind"]) == "mainline_walk" && N(c["Value"]) == 10) { Reject(f, c); return; }
+                if (S(c["Kind"]) == "mainline_menu" && N(c["Value"]) == 15)
+                { reachedSummon = true; throw new InvalidOperationException("test: reached native waypoint talent"); }
+                original!(c);
+            };
+            var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence());
+            await nav.Step(Rows((await nav.Plan([2]))["actions"])[0]);
+            var summon = Rows((await nav.Plan([2]))["actions"])[0];
+            Check(S(summon["mode"]) == "talent" && B(summon["summon_only"]), "failed physical approach leaves the independent summoning option");
+            try { await nav.Step(summon); }
+            catch (DailyStepException error) when (reachedSummon && error.Message.Contains("test: reached native waypoint talent", StringComparison.Ordinal)) { }
+            Check(reachedSummon && f.Steps.Count(s => s == "mainline_walk") == 1 && !f.Steps.Contains("mainline_interact"),
+                "planned summoning invokes the talent without silently walking back to the failed native portal");
+        }
+        using (var f = new Fixture(Path.Combine(root, "alternate-physical-portal")) { MapId = 1, Destination = 2, GateDistance = 200, AlternativePort = true })
+        {
+            f.Scene(); var original = f.H.OnCommand;
+            f.H.OnCommand = c => { if (S(c["Kind"]) == "mainline_walk" && N(c["Value"]) == 10) Reject(f, c); else original!(c); };
+            var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence());
+            await nav.Step(Rows((await nav.Plan([2]))["actions"])[0]);
+            Check(f.H.Box.Commands.Where(c => S(c["Kind"]) == "mainline_walk").Select(c => N(c["Value"])).SequenceEqual(new long[] { 10, 20 })
+                && f.Steps.Contains("mainline_interact") && nav.Atlas.BlockedNativePorts.Count == 0,
+                "one blocked physical portal does not suppress another reachable portal on the same map");
+        }
+        using (var f = new Fixture(Path.Combine(root, "partial-route-keeps-work")))
+        {
+            f.ChangeMaps = maps => { foreach (var m in maps.Where(m => N(m["Id"]) != 9)) { m["Exits"] = new JsonArray(); m["HasWaypoint"] = false; } return maps; };
+            var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence());
+            var plan = await nav.Plan([1, 2]);
+            Check(B(plan["partial_route"]) && plan["pending"]!.AsArray().Select(N).SequenceEqual(new long[] { 1, 2 })
+                && await nav.Step(Rows(plan["actions"])[0]) && f.MapId == 1,
+                "missing route evidence for one goal does not discard another reachable goal or erase outstanding work");
+        }
+        using (var f = new Fixture(Path.Combine(root, "safe-hub-fresh-doors")) { BlockExit = true, QuickEnabled = true })
+        {
+            f.ChangeMaps = maps =>
+            {
+                foreach (var m in maps) { m["HasWaypoint"] = false; m["Exits"] = new JsonArray(); }
+                if (f.MapId == 1) { maps.Single(m => N(m["Id"]) == 1)["Exits"] = new JsonArray(2); f.BlockExit = false; }
+                return maps;
+            };
+            var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence());
+            var probe = await nav.Plan([2]);
+            Check(B(probe["recovery_probe"]) && N(probe["pending"]![0]) == 2 && await nav.Step(Rows(probe["actions"])[0]),
+                "a native safe hub is visited to refresh missing routes without marking the original goal complete");
+            var route = await nav.Plan([2]);
+            Check(!B(route["recovery_probe"]) && S(Rows(route["actions"])[0]["kind"]) == "walk"
+                && await nav.Step(Rows(route["actions"])[0]) && f.MapId == 2,
+                "fresh safe-hub doors replace incomplete map observations and finish the journey");
+        }
+        using (var f = new Fixture(Path.Combine(root, "safe-hub-bounded")) { BlockExit = true, QuickEnabled = true, QuickFails = true })
+        {
+            f.ChangeMaps = maps => { foreach (var m in maps) { m["Exits"] = new JsonArray(); m["HasWaypoint"] = false; } return maps; };
+            var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence());
+            Check(!await nav.Step(Rows((await nav.Plan([2]))["actions"])[0]), "failed safe-hub discovery returns to planning");
+            bool stopped = false;
+            try { await nav.Plan([2]); } catch (DailyTravelBlocked) { stopped = true; }
+            Check(stopped && f.Steps.Length == 1 && nav.Atlas.WarpBlocked.Count == 0
+                && nav.State == DailyCollectionNavigator.NavigationState.Paused,
+                "a failed discovery does not loop, ban destination maps, or invent collection completion");
+        }
+        foreach (string interruption in new[] { "loading-arrival", "identity", "unknown-popup", "stop" })
+        using (var f = new Fixture(Path.Combine(root, "rejected-door-" + interruption)))
+        {
+            var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence());
+            var first = Rows((await nav.Plan([1], teleports: false))["actions"])[0];
+            f.H.OnCommand = c =>
+            {
+                Reject(f, c); f.H.Page(interruption == "unknown-popup" ? "UnknownPaymentPopupUI" : "LoadingUI");
+                if (interruption == "stop") f.H.Stopped = true;
+            };
+            f.H.OnDelay = () =>
+            {
+                if (f.H.Time < .8 || interruption is "unknown-popup" or "stop") return;
+                if (interruption == "identity") f.H.Frame["AccountKey"] = "different-account";
+                f.MapId = 1; f.Scene();
+            };
+            bool paused = false, arrived = false;
+            try { arrived = await nav.Step(first); }
+            catch (Exception error) when (error is InvalidDataException or StageHostException or DailyStepException) { paused = true; }
+            Check(f.Steps.Length == 1 && nav.Atlas.Blocked.Count == 0 && nav.Atlas.WarpBlocked.Count == 0,
+                "recovery does not submit another command or mutate route failures during " + interruption);
+            Check(interruption == "loading-arrival" ? arrived && !paused && f.H.Time >= .8
+                && nav.State == DailyCollectionNavigator.NavigationState.ReadyForWork
+                : paused && nav.State == DailyCollectionNavigator.NavigationState.Paused,
+                "recovery honors live loading, identity, popup and stop boundaries: " + interruption);
+        }
+        using (var f = new Fixture(Path.Combine(root, "unknown-movement-receipt")) { FailCommand = true })
+        {
+            var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence()); bool paused = false;
+            try { await nav.Step(Rows((await nav.Plan([1]))["actions"])[0]); } catch (DailyStepException) { paused = true; }
+            Check(paused && f.Steps.Length == 1 && nav.Atlas.Blocked.Count == 0
+                && nav.State == DailyCollectionNavigator.NavigationState.Paused,
+                "an unanswered command cannot become a local route failure or a retry");
+        }
+        using (var f = new Fixture(Path.Combine(root, "successful-cycle-alternate")) { QuickEnabled = true })
+        {
+            var nav = new DailyCollectionNavigator(f.Route, 1, f.H.Evidence());
+            for (int i = 0; i < 3; i++) { f.MapId = 9; f.Scene(); await nav.Step(Rows((await nav.Plan([1]))["actions"])[0]); }
+            f.MapId = 9; f.Scene();
+            Check(!await nav.Step(Rows((await nav.Plan([1]))["actions"])[0]) && f.Steps.Length == 3,
+                "a fourth unchanged departure is reconsidered before input");
+            var alternative = Rows((await nav.Plan([1]))["actions"])[0];
+            Check(S(alternative["kind"]) == "quick" && await nav.Step(alternative) && f.MapId == 1,
+                "loop rejection leaves alternative entry methods to the same map available");
+        }
+    }
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool yes, string message) { if (!yes) throw new Exception(message); checks.Add(message); }
+        await Recovery(Path.Combine(root, "recovery"), checks);
         using (var f = new Fixture(Path.Combine(root, "ready-walk-no-fixed-settle")))
         {
             await f.Route.Walk(91, 1);
@@ -345,9 +562,10 @@ static class FieldRouteArrivalCases
                     "manual diagnostic export includes normal route decisions without requiring an error");
             f.MapId = 9; f.Scene();
             var repeat = await nav.Plan([1], teleports: false);
-            bool blocked = false; int commands = f.Steps.Length;
-            try { await nav.Step(Rows(repeat["actions"])[0]); } catch (DailyTravelBlocked) { blocked = true; }
-            Check(blocked && f.Steps.Length == commands, "route repetition defers before another native movement command");
+            int commands = f.Steps.Length;
+            Check(!await nav.Step(Rows(repeat["actions"])[0]) && f.Steps.Length == commands
+                && nav.State == DailyCollectionNavigator.NavigationState.ReadyForWork,
+                "route repetition excludes only that departure and returns to work selection without another command");
             nav.TrackProgress(O(("remaining", 1)));
             Check(await nav.Step(Rows(repeat["actions"])[0]), "verified changed goals clear the route guard");
         }

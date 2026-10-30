@@ -139,6 +139,7 @@ await Group("CollectionReadiness", () => CollectionReadinessCases.Run(root, case
 await Group("EventCollection", () => EventCollectionCases.Run(root, cases));
 await Group("WeeklyIsolation", () => WeeklyIsolationCases.Run(root, cases));
 await Group("TradeOptimizer", () => TradeOptimizerCases.Run(root,cases));
+await Group("TradeCalendar", () => TradeCalendarCases.Run(root,cases));
 await Group("TradeData", () => TradeDataCases.Run(root, cases));
 await Group("TradeResume", () => TradeResumeCases.Run(root, cases));
 await Group("ManagedInputs", () => ManagedInputsCases.Run(root, cases));
@@ -178,6 +179,7 @@ await Group("TaskPresets", () => Sync(() => TaskPresetCases.Run(root, cases)));
 await Group("PackagedUtility", () => PackagedUtilityCases.Run(root, cases));
 await Group("Plugin", () => Sync(() => PluginCases.Run(root, cases)));
 await Group("PluginStore", () => PluginStoreCases.Run(root, cases));
+await Group("PluginMarket", () => PluginMarketCases.Run(root, cases));
 await Group("ToolMenu", () => Sync(() => ToolMenuCases.Run(root, cases)));
 await Group("Rhythm", () => Sync(() => RhythmCases.Run(root,cases)));
 await Group("CookingTravel", () => CookingTravelCases.Run(root,cases));

@@ -138,6 +138,7 @@ public partial class MainWindow
                 window.Height = language == 2 ? 780 : 840;
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
                 verifyPreferences();
+                preferences.CheckTradeProcessingForSmoke((name, view) => Capture(name, view));
                 Capture("locale-"+L.Code+"-trade-settings", surface);
                 preferences.ShowFavoritesForSmoke(true);
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);

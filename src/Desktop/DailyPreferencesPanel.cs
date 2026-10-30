@@ -46,7 +46,8 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly CheckBox weeklyBook = Check("周常末日之书"), weeklyCraft = Check("周常制作装备"), weeklySichuan = Check("周常连连看");
     private readonly CheckBox mainline = Check("周收集"), weeklyNpc = Check("周NPC任务"), weeklySteal = Check("每周偷窃"), walkCollect = Check("步行收集（不使用吸收）"), fishing = Check("周常钓鱼"), roomLikes = Check("周常小屋点赞");
     private readonly CheckBox events = Check("活动奖励"), eventMissions = Check("领取活动任务与活动代币"), roulette = Check("使用免费次数和已有转盘券"), exchange = Check("活动代币最大批量兑换"), quiz = Check("自动完成已开放答题"), dice = Check("自动使用现有活动骰子"), puzzle = Check("拼图／宾果使用现有代币批量翻开");
-    private readonly CheckBox trade = Check("自动跑商、料理与120%售卖");
+    private readonly CheckBox trade = Check("prefs.trade_purchase");
+    private readonly CheckBox tradeProcessing = Check("prefs.trade_processing");
     private readonly CheckBox tradeFavorites = Check("prefs.trade_favorites"), saffronProcessing = Check("prefs.saffron_processing");
     private readonly StackPanel normalTrade = new();
     private readonly TextBox tradeReserve = new(), tradeMaximum = new();
@@ -285,7 +286,7 @@ public sealed class DailyPreferencesPanel : UserControl
         Stage(roomLikes, "周常小屋点赞", "prefs.likes_hint");
         Stage(fishing, "周常钓鱼", "prefs.fishing_hint");
         Stage(weeklySichuan, "周常连连看", "prefs.tiles_hint");
-        Stage(trade, "跑商、料理与高价售卖", "prefs.trade_hint", expanded: true, editableWhenOff: true);
+        Stage(trade, "自动跑商采购", "prefs.trade_hint", expanded: true, editableWhenOff: true);
         section.Children.Add(tradeFavorites);
         Note("prefs.trade_favorites_hint");
         cookingButton.HorizontalAlignment = HorizontalAlignment.Left;
@@ -300,6 +301,8 @@ public sealed class DailyPreferencesPanel : UserControl
         var tradeSection = section;
         section.Children.Add(normalTrade);
         section = normalTrade;
+        section.Children.Add(tradeProcessing);
+        Note("prefs.trade_processing_hint");
         Row("保留金币", tradeReserve);
         Row("本轮最多垫资", tradeMaximum);
         L.Bind(tradeReserve, System.Windows.Automation.AutomationProperties.NameProperty, "trade.reserve");
@@ -373,6 +376,8 @@ public sealed class DailyPreferencesPanel : UserControl
         potionRefill.Unchecked += (_, _) => MarkDirty();
         tradeBreakEven.Checked += (_, _) => MarkDirty();
         tradeBreakEven.Unchecked += (_, _) => MarkDirty();
+        tradeProcessing.Checked += (_, _) => MarkDirty();
+        tradeProcessing.Unchecked += (_, _) => MarkDirty();
         foreach (var option in new[] { tradeFavorites, saffronProcessing, fastTravel })
         { option.Checked += (_, _) => MarkDirty(); option.Unchecked += (_, _) => MarkDirty(); }
         form.IsEnabled = false;
@@ -472,7 +477,7 @@ public sealed class DailyPreferencesPanel : UserControl
     }
     private static string CategoryFor(string title) => title switch
     {
-        "整体设置" or "跑商、料理与高价售卖" or "藏红花种植与收割" => "resources",
+        "整体设置" or "自动跑商采购" or "藏红花种植与收割" => "resources",
         "普通狩猎与奖励日" or "圣石狩猎" or "镜中之战" or "战术教材" or "活动战斗" or "活动每日挑战15" or "救赎之塔扫荡" => "battle",
         "周收集" or "周NPC任务" or "每周偷窃" or "周常末日之书" or "周常制作装备" or "周常小屋点赞" or "周常钓鱼" or "周常连连看" or "周常任务奖励" => "weekly",
         _ => "daily"
@@ -690,6 +695,7 @@ public sealed class DailyPreferencesPanel : UserControl
             eventSearch.SelectedItem = loaded.EventBattle.SearchSeconds;
             friendship.IsChecked = loaded.Friendship.Enabled;
             trade.IsChecked = loaded.Trade.Enabled;
+            tradeProcessing.IsChecked = loaded.Trade.AutoCookAndSell;
             tradeFavorites.IsChecked = loaded.Trade.FavoritesOnly;
             cookingButton.IsEnabled = loaded.Trade.FavoritesOnly;
             normalTrade.IsEnabled = !loaded.Trade.FavoritesOnly;
@@ -842,6 +848,7 @@ public sealed class DailyPreferencesPanel : UserControl
             loaded.Friendship.Enabled = friendship.IsChecked == true;
             loaded.MonsterHunt.Enabled = false;
             loaded.Trade.Enabled = trade.IsChecked == true;
+            loaded.Trade.AutoCookAndSell = tradeProcessing.IsChecked == true;
             loaded.Trade.FavoritesOnly = tradeFavorites.IsChecked == true;
             loaded.Events.Enabled = events.IsChecked == true;
             loaded.Events.Missions = eventMissions.IsChecked == true;
@@ -1081,6 +1088,20 @@ public sealed class DailyPreferencesPanel : UserControl
     }
     public bool SavePending() => !dirty || Save();
     internal void ShowFavoritesForSmoke(bool enabled) { tradeFavorites.IsChecked = enabled; UpdateLayout(); }
+    internal void CheckTradeProcessingForSmoke(Action<string, FrameworkElement> capture)
+    {
+        if (allowGame) throw new Exception("Processing smoke requires an isolated panel");
+        bool original = tradeProcessing.IsChecked == true;
+        tradeProcessing.IsChecked = false;
+        tradeProcessing.IsChecked = true;
+        if (Application.Current.Windows.OfType<Window>().Any(w => w.Title == L.Get("prefs.trade_processing")))
+            throw new Exception("Automatic strategy must not ask users to opt in again");
+        capture("trade-strategy-" + L.Code, this);
+        ShowFavoritesForSmoke(true);
+        if (tradeProcessing.IsEnabled || !cookingButton.IsEnabled) throw new Exception("Favorites must retain custom cooking independently of automatic processing");
+        ShowFavoritesForSmoke(false);
+        tradeProcessing.IsChecked = original;
+    }
     internal void CheckMirrorAccountForSmoke(string first, string second)
     {
         SelectAccount(first); multiplier.SelectedItem = 1;

@@ -223,5 +223,165 @@
     "zh-CN": "未找到本机游戏文件，无法检查插件连接组件。请先设置游戏路径。",
     "zh-TW": "找不到本機遊戲檔案，無法檢查套件連線元件。請先設定遊戲路徑。",
     "en-US": "Game files were not found. Set the game path before checking this plugin's connection component."
+  },
+  "plugins.market": {
+    "zh-CN": "插件市场",
+    "zh-TW": "套件市場",
+    "en-US": "Plugin market"
+  },
+  "plugins.installed_tab": {
+    "zh-CN": "已安装",
+    "zh-TW": "已安裝",
+    "en-US": "Installed"
+  },
+  "plugins.market_ready": {
+    "zh-CN": "从市场安装插件，或在已安装页导入本地文件。",
+    "zh-TW": "從市場安裝套件，或在已安裝頁匯入本機檔案。",
+    "en-US": "Install from the market, or import a local file under Installed."
+  },
+  "plugins.market_refresh": {
+    "zh-CN": "刷新市场",
+    "zh-TW": "重新整理市場",
+    "en-US": "Refresh market"
+  },
+  "plugins.market_cancel": {
+    "zh-CN": "取消",
+    "zh-TW": "取消",
+    "en-US": "Cancel"
+  },
+  "plugins.market_loading": {
+    "zh-CN": "正在读取插件市场…",
+    "zh-TW": "正在讀取套件市場…",
+    "en-US": "Loading the plugin market…"
+  },
+  "plugins.market_cached": {
+    "zh-CN": "当前显示上次获取的列表。",
+    "zh-TW": "目前顯示上次取得的清單。",
+    "en-US": "Showing the last saved catalog."
+  },
+  "plugins.market_updated": {
+    "zh-CN": "列表已更新。",
+    "zh-TW": "清單已更新。",
+    "en-US": "Catalog updated."
+  },
+  "plugins.market_empty": {
+    "zh-CN": "暂时没有可安装的插件。",
+    "zh-TW": "暫時沒有可安裝的套件。",
+    "en-US": "No plugins are available yet."
+  },
+  "plugins.market_details": {
+    "zh-CN": "版本 {0} · {1} · {2} MB",
+    "zh-TW": "版本 {0} · {1} · {2} MB",
+    "en-US": "Version {0} · {1} · {2} MB"
+  },
+  "plugins.market_requires_host": {
+    "zh-CN": "需要织尘 {0} 或更高版本。",
+    "zh-TW": "需要織塵 {0} 或更新版本。",
+    "en-US": "Requires Dustweave {0} or later."
+  },
+  "plugins.market_view_installed": {
+    "zh-CN": "查看已安装",
+    "zh-TW": "查看已安裝",
+    "en-US": "View installed"
+  },
+  "plugins.market_install": {
+    "zh-CN": "安装并启用",
+    "zh-TW": "安裝並啟用",
+    "en-US": "Install and enable"
+  },
+  "plugins.market_install_confirm": {
+    "zh-CN": "安装 {0} {1}。启用后将在下次重启织尘时生效；如果已有其他插件，它将被停用。",
+    "zh-TW": "安裝 {0} {1}。啟用後將在下次重新啟動織塵時生效；如有其他套件，它將被停用。",
+    "en-US": "Install {0} {1}. It will take effect after restarting Dustweave and replace any other active plugin."
+  },
+  "plugins.market_downloading": {
+    "zh-CN": "正在下载插件… {0}%",
+    "zh-TW": "正在下載套件… {0}%",
+    "en-US": "Downloading plugin… {0}%"
+  },
+  "plugins.market_cancelled": {
+    "zh-CN": "已取消，原插件保持不变。",
+    "zh-TW": "已取消，原套件保持不變。",
+    "en-US": "Cancelled. Your previous plugin selection is unchanged."
+  },
+  "plugins.market_offline": {
+    "zh-CN": "暂时无法连接市场。已安装的插件仍可使用，可以稍后重试或导入本地插件包。",
+    "zh-TW": "暫時無法連線市場。已安裝的套件仍可使用，可以稍後重試或匯入本機套件。",
+    "en-US": "The market is unavailable. Installed plugins still work. Retry later or import a local package."
+  },
+  "plugins.market_cached_offline": {
+    "zh-CN": "暂时无法刷新，正在显示上次获取的列表。",
+    "zh-TW": "暫時無法重新整理，正在顯示上次取得的清單。",
+    "en-US": "Cannot refresh right now. Showing the last saved catalog."
+  },
+  "plugins.market_now_busy": {
+    "zh-CN": "下载已完成，但当前任务仍在运行。请结束任务后重新安装，原插件保持不变。",
+    "zh-TW": "下載已完成，但目前任務仍在執行。請結束任務後重新安裝，原套件保持不變。",
+    "en-US": "Download finished, but a task is now running. Finish it before installing. Your previous plugin is unchanged."
+  },
+  "plugins.market_invalid": {
+    "zh-CN": "插件目录无效或已过期，请刷新后重试。",
+    "zh-TW": "套件目錄無效或已過期，請重新整理後再試。",
+    "en-US": "The plugin catalog is invalid or expired. Refresh and retry."
+  },
+  "plugins.market_signature": {
+    "zh-CN": "无法验证插件目录的来源，请稍后刷新。",
+    "zh-TW": "無法驗證套件目錄來源，請稍後重新整理。",
+    "en-US": "The plugin catalog signature could not be verified. Refresh later."
+  },
+  "plugins.market_rollback": {
+    "zh-CN": "收到的插件目录早于本机记录，已保留原列表。",
+    "zh-TW": "收到的套件目錄早於本機紀錄，已保留原清單。",
+    "en-US": "The received catalog is older than the saved copy. The saved catalog was retained."
+  },
+  "plugins.market_package_mismatch": {
+    "zh-CN": "下载的插件与市场记录不一致，未启用。请刷新后重试。",
+    "zh-TW": "下載的套件與市場紀錄不符，未啟用。請重新整理後再試。",
+    "en-US": "The downloaded plugin does not match the catalog. It was not enabled. Refresh and retry."
+  },
+  "plugins.sharing_settings": {
+    "zh-CN": "解法共享设置",
+    "zh-TW": "解法共享設定",
+    "en-US": "Solution sharing"
+  },
+  "plugins.sharing_local": {
+    "zh-CN": "仅本地计算",
+    "zh-TW": "僅本機計算",
+    "en-US": "Calculate locally only"
+  },
+  "plugins.sharing_local_help": {
+    "zh-CN": "使用本机求解器和自己保存的解法，不上传或下载共享解法。",
+    "zh-TW": "使用本機求解器與自己儲存的解法，不上傳或下載共享解法。",
+    "en-US": "Use the local solver and your own saved solutions. No shared solutions are uploaded or downloaded."
+  },
+  "plugins.sharing_community": {
+    "zh-CN": "参与解法共享",
+    "zh-TW": "參與解法共享",
+    "en-US": "Share and reuse solutions"
+  },
+  "plugins.sharing_community_help": {
+    "zh-CN": "优先下载已有解法并在本机复核。自己算出并通关后，自动查重并上传缺少的题目和解法；数据会压缩，不包含账号或登录信息。服务器不可用时仍可本地计算。",
+    "zh-TW": "優先下載已有解法並在本機複核。自行算出並通關後，自動查重並上傳缺少的題目與解法；資料會壓縮，不含帳號或登入資訊。伺服器無法連線時仍可本機計算。",
+    "en-US": "Download existing solutions and verify them locally. After solving and clearing a stage, automatically share its compressed puzzle data and solution if missing. No account or sign-in information is sent. Local calculation remains available offline."
+  },
+  "plugins.sharing_install_note": {
+    "zh-CN": "可随时在已安装页面修改。安装后需重启织尘生效；当前启用的其他插件将被停用。",
+    "zh-TW": "可隨時在已安裝頁面修改。安裝後需重新啟動織塵生效；目前啟用的其他套件將被停用。",
+    "en-US": "You can change this under Installed. Restart Dustweave to apply the plugin; any other active plugin will be disabled."
+  },
+  "plugins.sharing_change_note": {
+    "zh-CN": "关闭共享后不再上传或下载解法；此前已分享的解法仍可供其他人使用。",
+    "zh-TW": "關閉共享後不再上傳或下載解法；先前已分享的解法仍可供其他人使用。",
+    "en-US": "Turning sharing off stops uploads and downloads. Previously shared solutions remain available to others."
+  },
+  "plugins.sharing_save": {
+    "zh-CN": "保存选择",
+    "zh-TW": "儲存選擇",
+    "en-US": "Save choice"
+  },
+  "plugins.sharing_saved": {
+    "zh-CN": "解法共享选择已保存。",
+    "zh-TW": "解法共享選擇已儲存。",
+    "en-US": "Solution sharing preference saved."
   }
 }

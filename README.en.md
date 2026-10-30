@@ -61,6 +61,10 @@ Screenshots use fictional accounts in the application's isolated demo mode. The 
 
 Some stages require unlocked account content, an active event or a compatible game version. Optional plugins are supported; the interface shows available features.
 
+Install the Tactical textbook plugin from the plugin marketplace, with a default 60-second calculation limit per stage. Choose local-only calculation or solution sharing at installation. Sharing includes both reuse and automatic contributions after clearing stages. Updates retain this choice; change it under Installed. Restart Dustweave to apply an installation; previous plugins remain available for rollback.
+
+Automatic trading now handles the November 16 food-price transition using your inventory, available gold and premium sale dates. No manual stockpiling or date-based switch is needed. Upgrading restores automatic cooking and selling from the temporary pause in automatic mode; the trading master switch, gold reserve and spending cap stay unchanged. Favorites-only purchases and custom recipes retain your selections. You can still turn cooking and selling off afterward to keep purchases only.
+
 ### Toolbox
 
 Open any of these from Dustweave's **Tools** page; no separate installation is needed. Built-in versions are maintained here and updated with Dustweave. Connection setup, active automation and settlement share control coordination so tools do not operate the game simultaneously.

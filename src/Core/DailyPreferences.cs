@@ -169,6 +169,13 @@ public sealed class DailyPreferences
             general["FastTravel"] = true;
             node["Schema"] = 19;
         }
+        // The dated strategy replaces the temporary pre-price-change pause. Migrate
+        // automatic mode once; a later deliberate opt-out remains account-specific.
+        if (node["Trade"] is JsonObject trade && !trade.ContainsKey("StrategyRevision"))
+        {
+            if (trade["FavoritesOnly"]?.GetValue<bool>() != true) trade["AutoCookAndSell"] = true;
+            trade["StrategyRevision"] = 1;
+        }
         var value = node.Deserialize<DailyPreferences>(DailyJson.Options) ?? throw new InvalidDataException("日常设置不能为空。");
         // Retain the legacy field for old profile compatibility only.
         if (value.MonsterHunt != null) value.MonsterHunt.Enabled = false;
@@ -409,6 +416,8 @@ public sealed class DailyPreferenceStore(string root)
 public sealed class TradePreferences
 {
     public bool FavoritesOnly { get; set; }
+    public int StrategyRevision { get; set; } = 1;
+    public bool AutoCookAndSell { get; set; } = true;
     public long[] CookingRecipes { get; set; } = [];
     [JsonIgnore] public bool RequiresCatalog => !FavoritesOnly || CookingRecipes.Length > 0;
     [JsonRequired]
@@ -460,5 +469,5 @@ public sealed class TacticsPreferences
     {
         get; set;
     }
-    [JsonRequired] public int SearchSeconds { get; set; } = 45;
+    [JsonRequired] public int SearchSeconds { get; set; } = 60;
 }

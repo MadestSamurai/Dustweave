@@ -16,6 +16,18 @@ internal static class FirstRunCases
         Check(!DailyFirstRun.ShouldOffer(new(State: "skipped"), false), "skipping is remembered");
         Check(!DailyFirstRun.ShouldOffer(new(State: "completed"), true), "completion is remembered");
         Check(DailyFirstRun.ShouldOffer(new(State: "tour", TourIndex: 3), true), "unfinished tour resumes after saving an account");
+        Check(!DailyMultiAccountSetup.ShouldOffer(null, 0, 1, true), "first account does not offer sandbox setup");
+        Check(DailyMultiAccountSetup.ShouldOffer(null, 1, 2, true), "adding a second account offers execution choices");
+        Check(!DailyMultiAccountSetup.ShouldOffer(null, 1, 2, false), "updating credentials does not offer execution choices");
+        Check(!DailyMultiAccountSetup.ShouldOffer(null, 2, 2, false) && !DailyMultiAccountSetup.ShouldOffer(null, 2, 3, true), "later saves and added accounts do not repeat the prompt");
+        foreach (string state in new[] { "pending", "completed", "dismissed" })
+            Check(!DailyMultiAccountSetup.ShouldOffer(new(state), 1, 2, true), "remembered multi-account choice suppresses repeat: " + state);
+        string setupRoot = System.IO.Path.Combine(root, "multi-account-trigger");
+        Check(!DailyMultiAccountSetup.AfterSave(setupRoot, 0, 1, true) && DailyMultiAccountSetup.Read(setupRoot) == null, "single account does not create a setup record");
+        Check(DailyMultiAccountSetup.AfterSave(setupRoot, 1, 2, true) && DailyMultiAccountSetup.Pending(setupRoot, 2), "pending second-account setup survives restart");
+        Check(!DailyMultiAccountSetup.Pending(setupRoot, 1), "removing the second account suppresses pending setup");
+        DailyMultiAccountSetup.Write(setupRoot, new("dismissed"));
+        Check(!DailyMultiAccountSetup.Pending(setupRoot, 2) && !DailyMultiAccountSetup.AfterSave(setupRoot, 1, 2, true), "not now stays dismissed across restart and re-adding an account");
         var demo = new DemoEnvironment(root);
         demo.Game = null;
         var flow = new DailyFirstRun(demo, demo, root);

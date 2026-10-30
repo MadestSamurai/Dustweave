@@ -17,6 +17,7 @@ public partial class MainWindow
     private bool ShowInitialConnectionGuide()
     {
         if (smoke != null || ScheduledStartup || IsSandboxWindow || Unavailable || catalog == null) return false;
+        if (DailyMultiAccountSetup.Pending(root, SavedAccountCount(catalog))) { _ = ShowMultiAccountSetupAsync(); return true; }
         var state = DailyJson.TryRead<FirstRunRecord>(FirstRunPath);
         if (!DailyFirstRun.ShouldOffer(state, catalog.Accounts.Any(a => a.Valid))) return false;
         if (state?.State == "tour" && catalog.Accounts.Any(a => a.Valid)) BeginPageTour(state.TourIndex);
@@ -34,10 +35,13 @@ public partial class MainWindow
             if(finalClose || UpdateRestarting)return;
             using (DailyToolControl.Acquire(root))
             {
+                var before = sessions.Read();
                 DailyJson.Write(FirstRunPath, new FirstRunRecord());
                 var window = CreateConnectionGuideWindow();
                 DailyDialogs.ShowModal(window);
                 RefreshAccounts();
+                if (window.Saved && catalog != null && DailyMultiAccountSetup.AfterSave(root, SavedAccountCount(before), SavedAccountCount(catalog),
+                    !before.Accounts.Any(a => a.AccountKey == catalog.CurrentKey))) PresentMultiAccountSetup();
                 if (!window.Saved || DailyJson.TryRead<FirstRunRecord>(FirstRunPath)?.State != "tour") return;
             }
             BeginPageTour(0);

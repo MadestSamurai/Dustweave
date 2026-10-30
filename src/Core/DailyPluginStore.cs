@@ -183,7 +183,7 @@ public sealed class DailyPluginStore
     internal static bool ValidRelativePath(string value) => !string.IsNullOrWhiteSpace(value) && !Path.IsPathRooted(value) && !value.Contains('\\') &&
         value.Split('/').All(part => part.Length > 0 && part is not "." and not ".." && !part.EndsWith('.') && !part.EndsWith(' ') && !part.Any(c => char.IsControl(c) || "<>:\"|?*".Contains(c)) &&
             !new[] { "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9" }.Contains(part.Split('.')[0], StringComparer.OrdinalIgnoreCase));
-    private static void NoLinks(string path)
+    internal static void NoLinks(string path)
     {
         for (string? current = Path.GetFullPath(path); current != null; current = Path.GetDirectoryName(current))
             if ((Directory.Exists(current) || File.Exists(current)) && (File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)

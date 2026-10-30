@@ -93,6 +93,57 @@ Sandbox root lookup follows `Box_InitPaths` / `Conf_Get(box, "FileRootPath", 0)`
 
 Weekly catalog updates preserve historical queue completion. Selected routes compare owned map coverage with individual server snapshots; only missing or unfinished cartridges need fresh reads. Exhausting absorption pauses collection if any weekly drops remain; it must not turn into a daily suppression sweep. Remaining suppression may continue only after all collection maps have confirmed empty drop lists. Unknown cartridges can be inspected once, with suppression held until coverage is complete; already verified cartridges are not rechecked. NPC quests and theft remain independent. No fallback enables walking collection when it is disabled.
 
+### Field route recovery / 地图路线恢复
+
+`DailyCollectionNavigator` executes one planned movement at a time. Its observed state follows
+`ReadyForWork → Planning → ReadyToMove → Moving → ReadyForWork`; a known movement failure goes through
+`Recovering → ReadyForWork`. The weekly work selector then rereads the current map's jobs before another
+departure. Identity changes, unresolved command receipts, unrelated popups and cancellation propagate as
+`Paused`; they do not authorize a replacement movement. These state names are also written to the bounded
+travel trace. They describe execution phases, not additional readiness waits.
+
+恢复顺序固定为：等待已有加载结束，核对既有账号／进程身份，读取实际地图、可达入口和快捷落点，
+更新路线，再交回周任务选择器。失败时可能已经到达目标，也可能到了第三张地图，不能沿用出发前的
+实例编号。到达本身不发动隐身；接任务、压制、吸收、拾取及下一段步行各自沿用现有顺序和保护规则。
+NPC 前置未完成时不能抢先压制任务怪，压制后仍有巡逻的实际步行继续检查隐身。噩梦之冬仍走既有安全区策略，
+不因普通地图的传送故障扩大其适用范围。
+
+| Evidence | Temporary routing effect | Independent routes retained |
+| --- | --- | --- |
+| A particular door approach failed without moving | Exclude that origin and logical door | Other doors, native shortcuts and teleport methods |
+| Every observed physical portal approach at this origin failed | Exclude native portal departures at this origin | Summoning, shortcuts and walking |
+| Planned summoning is unavailable | Exclude summoning at this origin; do not silently walk back to the failed portal | Physical portals, shortcuts and walking |
+| Waypoint page selection failed or cycled | Exclude the exact departure, without claiming the destination is locked | Other portal destinations, summoning, shortcuts and walking |
+| The selected map has no unlocked waypoint | Exclude teleport arrival at that map | Ordinary doors and native shortcuts to the same map |
+| A failed departure changed the actual map or region | Reobserve first; exclude the original unsuccessful departure only | Every valid route from the actual new location |
+| The same departure repeats with unchanged work | After three attempts, exclude that departure and replan | Other departures; unfinished work remains pending |
+
+Failure exclusions are session-local and never become saved map geometry or task completion. Exact-departure
+cycle exclusions reset on actual work progress. Changes in native map connectivity or shortcut anchors invalidate
+the corresponding geometry and failure entries. A shortcut landing retains its physical region identity and
+verified door destinations across observations; legacy cached shortcut copies without that identity are relearned.
+Native shortcut availability always comes from the current account's live list.
+
+If one destination lacks a complete observed route, reachable unfinished work can proceed while the full pending
+ledger is retained. When no such route is available, the navigator may visit one untried native safe-hub shortcut
+to obtain fresh entrance observations. It never invents a hub or guesses success. Explicit hunting/map exclusions
+and walking-only requests remain effective. A disconnected observation graph is reported as missing route
+evidence, not proof that the game's whole map is unreachable.
+
+The planner keeps physical portals and summoning as separate candidates. Expired movement buffs merge equivalent
+search states so a missing destination cannot expand indefinitely through summoning cycles. The public five-argument
+`DailyFieldRoute.Teleport` method and one-argument `DailyTravelBlocked` constructor remain binary-compatible for
+external plugins; exact planned movement uses an internal entry point.
+
+Targeted offline checks: `QuickTravel`, `WeeklyNpcBoard`, `EventCollection`, `CookingTravel`, `WeeklyIsolation`,
+`WeeklyNpcQuery`, `WeeklyNpcInteraction`, `TravelTransition`, and the existing hazard/talent/command groups.
+Synthetic mailbox cases exercise actual workflow methods for changed arrivals, stale scene instances, picker
+failures, alternative entrances, NPC ordering, loading, cancellation and unknown receipts. A deterministic
+240-world fault test checks completion against independently connected ordinary-door graphs, including cold/warm
+caches and expiring speed effects. Public chapter 15/16 topology is also checked with every teleport disabled.
+These tests verify routing decisions and recovery boundaries; they do not substitute for native scene geometry
+or an authorized game run.
+
 ### Concurrent queues / 集中并行队列
 
 `DailyParallelSession` owns bounded dispatch and persists the host overview. `DailyParallelRuntime` launches account-bound Sandboxie workers; `DailyParallelWorker` reuses the normal coordinator and queue instead of duplicating daily logic. A per-account command lease stops orphan workers; process/start identity gates Show Game and optional end-of-queue cleanup. Host and worker control ownership prevents conflicting tool execution. Setup, failure handling and pending runtime acceptance are documented in [parallel execution](PARALLEL_EXECUTION.md).

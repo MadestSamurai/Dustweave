@@ -1,4 +1,10 @@
 {
+  "multiaccount.title": {"zh-CN":"选择多账号运行方式","zh-TW":"選擇多帳號執行方式","en-US":"Choose how to run multiple accounts"},
+  "multiaccount.body": {"zh-CN":"新账号已保存。你可以让各账号依次完成日常，也可以同时运行。","zh-TW":"新帳號已儲存。你可以讓各帳號依序完成日常，也可以同時執行。","en-US":"Your new account has been saved. You can run daily tasks one account at a time or run accounts together."},
+  "multiaccount.sequential_help": {"zh-CN":"完成一个账号后，再开始下一个。无需安装其他工具。","zh-TW":"完成一個帳號後，再開始下一個。無需安裝其他工具。","en-US":"Finish one account before starting the next. No extra tools needed."},
+  "multiaccount.later_help": {"zh-CN":"这里只保存执行方式，不会开始日常。以后可在账号管理中更改。","zh-TW":"這裡只儲存執行方式，不會開始日常。之後可在帳號管理中更改。","en-US":"This only saves your run mode; daily tasks will not start now. You can change it later on the Accounts page."},
+  "multiaccount.later": {"zh-CN":"以后再说","zh-TW":"稍後再說","en-US":"Not now"},
+  "multiaccount.add_second": {"zh-CN":"此账号已保存。要添加第二个账号，可点「登录新账号」；完成登录后正常关闭游戏（不要退出账号），再回来保存。","zh-TW":"此帳號已儲存。若要新增第二個帳號，可點「登入新帳號」；完成登入後正常關閉遊戲（不要登出帳號），再回來儲存。","en-US":"This account is saved. To add a second account, select Sign in to another. Sign in, close the game without logging out, then return here to save it."},
   "sandbox.preferences.title": {"zh-CN":"同步游戏设置","zh-TW":"同步遊戲設定","en-US":"Copy game settings"},
   "sandbox.preferences.first": {"zh-CN":"建议首次使用沙盒前同步一次游戏设置。你也可以跳过，之后从「管理沙盒」打开。","zh-TW":"建議首次使用沙盒前同步一次遊戲設定。你也可以略過，之後從「管理沙盒」開啟。","en-US":"Consider copying your game settings before first using this sandbox. You can skip this and open Copy game settings from Manage sandbox later."},
   "sandbox.preferences.manual": {"zh-CN":"选择来源和要覆盖的内容。本次操作只执行一次，不会开启自动同步。","zh-TW":"選擇來源及要覆寫的內容。本次操作只執行一次，不會開啟自動同步。","en-US":"Choose the source and what to replace. This copies settings once; it does not enable automatic syncing."},
@@ -1545,9 +1551,19 @@
     "en-US": "This scheduled run did not start because Sandboxie was unavailable. Running tools were left running. After setup, start the queue manually or wait for the next scheduled run."
   },
   "sandbox_setup.install_help": {
-    "zh-CN": "尚未安装？从官网下载 Sandboxie-Plus 的 Windows x64 稳定版，完成安装后重新检测。无需手动创建沙盒。",
-    "zh-TW": "尚未安裝？從官網下載 Sandboxie-Plus 的 Windows x64 穩定版，完成安裝後重新偵測。無需手動建立沙盒。",
-    "en-US": "Not installed? Download the stable Windows x64 build of Sandboxie-Plus from its official site, install it, then check again. You do not need to create sandboxes yourself."
+    "zh-CN": "1. 点击下方按钮，从官网下载 Windows x64 稳定安装版。\n2. 运行安装程序，按提示完成安装；若提示重启，请先重启电脑。\n3. 返回织尘，重新检测安装结果。\n\n织尘会自动创建各账号的沙盒，无需手动配置。",
+    "zh-TW": "1. 點選下方按鈕，從官網下載 Windows x64 穩定安裝版。\n2. 執行安裝程式，依提示完成安裝；若提示重新啟動，請先重新啟動電腦。\n3. 返回織塵，重新偵測安裝結果。\n\n織塵會自動建立各帳號的沙盒，無需手動設定。",
+    "en-US": "1. Use the button below to download the stable Windows x64 installer from the official site.\n2. Run the installer and follow its instructions. Restart Windows if requested.\n3. Return to Dustweave and check the installation again.\n\nDustweave creates each account’s sandbox automatically. No manual sandbox configuration is needed."
+  },
+  "sandbox_setup.onboarding_help": {
+    "zh-CN": "同时运行多个账号需要先安装 Sandboxie-Plus。安装只需完成一次，这一步不会启动游戏或日常。",
+    "zh-TW": "同時執行多個帳號需要先安裝 Sandboxie-Plus。只需安裝一次，這一步不會啟動遊戲或日常。",
+    "en-US": "Running accounts at the same time requires Sandboxie-Plus. You only need to install it once. This step does not start the game or daily tasks."
+  },
+  "sandbox_setup.existing": {
+    "zh-CN": "已安装？检查或选择安装位置",
+    "zh-TW": "已安裝？檢查或選擇安裝位置",
+    "en-US": "Already installed? Check or choose its folder"
   },
   "sandbox_setup.download": {
     "zh-CN": "官网下载 Sandboxie-Plus",
@@ -1803,6 +1819,31 @@
     "zh-CN": "账号已准备好",
     "zh-TW": "帳號已準備好",
     "en-US": "Your account is ready"
+  },
+  "onboarding.execution_sequential": {
+    "zh-CN": "依次运行账号（推荐）",
+    "zh-TW": "依序執行帳號（推薦）",
+    "en-US": "Run accounts one at a time (recommended)"
+  },
+  "onboarding.execution_parallel": {
+    "zh-CN": "同时运行多个账号",
+    "zh-TW": "同時執行多個帳號",
+    "en-US": "Run multiple accounts at the same time"
+  },
+  "onboarding.execution_parallel_help": {
+    "zh-CN": "需要安装 Sandboxie-Plus。继续后会检测安装情况，未安装时提供下载与安装引导。",
+    "zh-TW": "需要安裝 Sandboxie-Plus。繼續後會偵測安裝狀態，未安裝時提供下載與安裝引導。",
+    "en-US": "Requires Sandboxie-Plus. Continue to check the installation and get download and setup instructions if needed."
+  },
+  "onboarding.execution_continue": {
+    "zh-CN": "确认并继续",
+    "zh-TW": "確認並繼續",
+    "en-US": "Confirm and continue"
+  },
+  "onboarding.execution_cancelled": {
+    "zh-CN": "运行方式尚未更改。可以稍后继续安装，或选择依次运行账号。",
+    "zh-TW": "執行方式尚未更改。可以稍後繼續安裝，或選擇依序執行帳號。",
+    "en-US": "Your run mode has not changed. You can resume setup later or choose to run accounts one at a time."
   },
   "onboarding.saved_body": {
     "zh-CN": "「{0}」已保存。以后请在织尘的账号管理里点击「进入游戏」，避免通过桌面快捷方式或加速器启动。接下来带你看看各个分页。",
@@ -3584,15 +3625,45 @@
     "zh-TW": "交易、料理與高價販售",
     "en-US": "Trading, cooking and premium sales"
   },
+  "prefs.trade_purchase": {
+    "zh-CN": "自动跑商采购",
+    "zh-TW": "自動跑商採購",
+    "en-US": "Automatic trading purchases"
+  },
+  "prefs.trade_processing": {
+    "zh-CN": "自动料理与售卖",
+    "zh-TW": "自動料理與販售",
+    "en-US": "Automatic cooking and selling"
+  },
+  "prefs.trade_processing_hint": {
+    "zh-CN": "跑商策略已更新：全自动模式会自行安排 11.16 改价前后的采购、料理与售卖，兼顾周转资金，无需手动囤货或切换策略。已有金币保留额继续生效；收藏购买与自定义料理不变。",
+    "zh-TW": "交易策略已更新：全自動模式會自行安排 11.16 改價前後的採購、料理與販售，兼顧週轉資金，無需手動囤貨或切換策略。既有金幣保留額繼續生效；收藏購買與自訂料理不變。",
+    "en-US": "Trading strategy updated: automatic mode handles purchases, cooking and sales around the November 16 price change while keeping funds available. No manual stockpiling or strategy switch is needed. Your gold reserve, favorites and custom recipes are preserved."
+  },
+  "prefs.trade_processing_confirm": {
+    "zh-CN": "自动安排采购、料理和高价售卖，按当前库存与金币选择过渡方案；改价后以游戏实际报价为准。金币保留额继续生效。",
+    "zh-TW": "自動安排採購、料理和高價販售，依目前庫存與金幣選擇過渡方案；改價後以遊戲實際報價為準。金幣保留額繼續生效。",
+    "en-US": "Automatically plans purchases, cooking and premium sales using your stock and gold. After the price change, sales use verified in-game quotes. Your gold reserve remains in effect."
+  },
+  "prefs.trade_processing_enable": {
+    "zh-CN": "开启",
+    "zh-TW": "開啟",
+    "en-US": "Enable"
+  },
+  "trade.purchase_only_preview": {
+    "zh-CN": "当前仅自动采购；下方料理、售卖和相关收益为预估，不会执行料理、售卖或为料理补药。",
+    "zh-TW": "目前僅自動採購；下方料理、販售及相關收益為預估，不會執行料理、販售或為料理補藥。",
+    "en-US": "Only purchases run automatically. Cooking, sales and their returns below are estimates; no cooking, selling or pill purchases for cooking will run."
+  },
   "prefs.trade_hint": {
     "zh-CN": "按策略跑商，或只购买收藏商品",
     "zh-TW": "按策略跑商，或只購買收藏商品",
     "en-US": "Trade by strategy, or buy saved favorites only"
   },
   "prefs.trade_note": {
-    "zh-CN": "约 30 天周转，少于 1000 万金币时会提醒。装备、制作材料与属性石不出售。",
-    "zh-TW": "約 30 天週轉，少於 1000 萬金幣時會提醒。裝備、製作材料與屬性石不出售。",
-    "en-US": "Allow about 30 days for returns; a warning appears below 10M gold. Gear, crafting materials and elemental stones are never sold."
+    "zh-CN": "开启自动料理与售卖时，预计约 30 天周转；关闭时仅采购并保留库存。少于 1000 万金币时会提醒，装备、制作材料与属性石不出售。",
+    "zh-TW": "開啟自動料理與販售時，預計約 30 天週轉；關閉時僅採購並保留庫存。少於 1000 萬金幣時會提醒，裝備、製作材料與屬性石不出售。",
+    "en-US": "With automatic cooking and selling enabled, allow about 30 days for returns. Otherwise, purchases stay in inventory. A warning appears below 10M gold. Gear, crafting materials and elemental stones are never sold."
   },
   "prefs.trade_open": {
     "zh-CN": "预览跑商计划",
@@ -3870,9 +3941,9 @@
     "en-US": "Include break-even resales (gold achievements)"
   },
   "trade.break_even_hint": {
-    "zh-CN": "用剩余预算买入折后买价＝120%卖价的商品，等高价日售卖；不计砍价费。",
-    "zh-TW": "用剩餘預算買入折後買價＝120%賣價的商品，等高價日販售；不計砍價費。",
-    "en-US": "Use spare funds when the discounted price equals the 120% sale price, excluding bargaining costs. Sell on the high-price day."
+    "zh-CN": "用剩余预算买入折后买价＝120%卖价的商品，不计砍价费。只有开启自动料理与售卖后，才会在高价日自动卖出。",
+    "zh-TW": "用剩餘預算買入折後買價＝120%賣價的商品，不計砍價費。只有開啟自動料理與販售後，才會在高價日自動賣出。",
+    "en-US": "Use spare funds when the discounted price equals the 120% sale price, excluding bargaining costs. Sales on the high-price day require automatic cooking and selling to be enabled."
   },
   "trade.break_even_totals": {
     "zh-CN": "金币成就：额外零收益商品 {0:N0} 个 · 垫资／预计回款 {1:N0}（已含在上方总额中）",
@@ -4038,6 +4109,16 @@
     "zh-CN": "预计增益 {0:N0} 金币   ·   本轮垫资 {1:N0}   ·   未来回款 {2:N0}\n垫资后余额 {3:N0}   ·   消耗天赋药 {4:N0}（需补买 {5:N0}）",
     "zh-TW": "預計收益 {0:N0} 金幣   ·   本輪墊資 {1:N0}   ·   未來回款 {2:N0}\n墊資後餘額 {3:N0}   ·   消耗天賦藥 {4:N0}（需補買 {5:N0}）",
     "en-US": "Estimated profit {0:N0} gold · Upfront {1:N0} · Future sales {2:N0}\nRemaining balance {3:N0} · Ability pills {4:N0} ({5:N0} to buy)"
+  },
+  "trade.calendar_plan": {
+    "zh-CN": "已按高价日、改价和资金周转生成本轮方案。保留库存及未来周转预测见导出明细；预计收益不等于已到账金币。",
+    "zh-TW": "已依高價日、改價和資金週轉產生本輪方案。保留庫存及未來週轉預測見匯出明細；預計收益不等於已入帳金幣。",
+    "en-US": "This run accounts for premium sale dates, the price change and available funds. Export details for retained stock and cash-flow forecasts; projected value is not cash received."
+  },
+  "trade.calendar_totals": {
+    "zh-CN": "本轮垫资 {1:N0} 金币   ·   今日预计回款 {2:N0}   ·   垫资后余额 {3:N0}\n保留库存估值 {0:N0}（未到账）   ·   消耗天赋药 {4:N0}（需补买 {5:N0}）",
+    "zh-TW": "本輪墊資 {1:N0} 金幣   ·   今日預計回款 {2:N0}   ·   墊資後餘額 {3:N0}\n保留庫存估值 {0:N0}（未入帳）   ·   消耗天賦藥 {4:N0}（需補買 {5:N0}）",
+    "en-US": "Upfront {1:N0} gold · Today's expected receipts {2:N0} · Balance after spending {3:N0}\nRetained stock value {0:N0} (not cash) · Talent pills {4:N0} ({5:N0} to buy)"
   },
   "trade.optimal": {
     "zh-CN": "已证明当前供货与预付预算范围内最优。",

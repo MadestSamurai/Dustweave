@@ -6,7 +6,7 @@ using Microsoft.Win32;
 
 namespace Dustweave.Desktop;
 
-internal enum SandboxSetupPurpose { Settings, Launch, Schedule }
+internal enum SandboxSetupPurpose { Settings, Launch, Schedule, Onboarding }
 
 // One editor is shared by installation settings and launch preflight. Downloading
 // never counts as installation, and closing never authorizes a pending launch.
@@ -20,6 +20,8 @@ internal sealed class SandboxSetupWindow : Window
     private readonly TextBox path = new() { IsReadOnly = true, Margin = new(0, 6, 0, 0) };
     private readonly TextBlock state = new() { TextWrapping = TextWrapping.Wrap, Margin = new(0, 10, 0, 0) };
     private readonly StackPanel installHelp = new() { Margin = new(0, 0, 0, 20) };
+    private readonly Expander locationDetails = new() { Margin = new(0, 6, 0, 0) };
+    private readonly Button download = new() { Name = "SandboxDownload", HorizontalAlignment = HorizontalAlignment.Left };
     private readonly Button browse = new() { Name = "SandboxChoose", Margin = new(0, 0, 8, 8) };
     private readonly Button automatic = new() { Name = "SandboxAutomatic", Margin = new(0, 0, 0, 8) };
     private readonly Button verify = new() { Name = "SandboxVerify", IsDefault = true };
@@ -29,6 +31,7 @@ internal sealed class SandboxSetupWindow : Window
     internal bool DownloadVisible => installHelp.Visibility == Visibility.Visible;
     internal string DisplayedPath => path.Text;
     internal bool CanChoose => browse.IsEnabled;
+    private bool ContinuesSetup => purpose is SandboxSetupPurpose.Launch or SandboxSetupPurpose.Onboarding;
 
     internal SandboxSetupWindow(Window owner, SandboxInstallation store, SandboxSetupPurpose purpose, bool readOnly = false)
     {
@@ -41,12 +44,12 @@ internal sealed class SandboxSetupWindow : Window
         var help = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 0, 0, 14) };
         L.Text(help, readOnly ? "sandbox_path.inherited" : purpose switch {
             SandboxSetupPurpose.Launch => "sandbox_setup.launch_help",
+            SandboxSetupPurpose.Onboarding => "sandbox_setup.onboarding_help",
             SandboxSetupPurpose.Schedule => "sandbox_setup.schedule_help",
             _ => "sandbox_path.help"
         }); body.Children.Add(help);
         var install = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 0, 0, 10) };
         L.Text(install, "sandbox_setup.install_help"); installHelp.Children.Add(install);
-        var download = new Button { Name = "SandboxDownload", HorizontalAlignment = HorizontalAlignment.Left };
         L.Bind(download, ContentControl.ContentProperty, "sandbox_setup.download");
         download.ToolTip = SandboxInstallation.DownloadUrl;
         download.Click += (_, _) => {
@@ -59,14 +62,18 @@ internal sealed class SandboxSetupWindow : Window
         url.SetResourceReference(ForegroundProperty, "MutedInk");
         L.Bind(url, System.Windows.Automation.AutomationProperties.NameProperty, "sandbox_setup.download");
         installHelp.Children.Add(url); body.Children.Add(installHelp);
+        L.Bind(locationDetails, HeaderedContentControl.HeaderProperty, "sandbox_setup.existing");
+        locationDetails.SetResourceReference(Control.ForegroundProperty, "Ink");
+        var locationBody = new StackPanel { Margin = new(0, 10, 0, 0) };
         var pathTitle = new TextBlock { FontWeight = FontWeights.SemiBold };
-        L.Text(pathTitle, "sandbox_path.title"); body.Children.Add(pathTitle); body.Children.Add(path);
+        L.Text(pathTitle, "sandbox_path.title"); locationBody.Children.Add(pathTitle); locationBody.Children.Add(path);
         L.Bind(path, System.Windows.Automation.AutomationProperties.NameProperty, "sandbox_path.title");
         path.TextChanged += (_, _) => path.ToolTip = path.Text;
         var choices = new WrapPanel { Margin = new(0, 12, 0, 0) };
         L.Bind(browse, ContentControl.ContentProperty, "sandbox_setup.choose");
         L.Bind(automatic, ContentControl.ContentProperty, "sandbox_path.auto");
-        choices.Children.Add(browse); choices.Children.Add(automatic); body.Children.Add(choices); body.Children.Add(state);
+        choices.Children.Add(browse); choices.Children.Add(automatic); locationBody.Children.Add(choices);
+        locationDetails.Content = locationBody; body.Children.Add(locationDetails); body.Children.Add(state);
         browse.Click += async (_, _) => {
             if (working || readOnly || !canEdit) return;
             var picker = new OpenFolderDialog { Title = L.Get("sandbox_path.choose"), Multiselect = false };
@@ -75,10 +82,10 @@ internal sealed class SandboxSetupWindow : Window
         automatic.Click += async (_, _) => await ChangeAsync(store.UseAutomatic);
         var actions = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Right, Margin = new(0, 22, 0, 0) };
         var cancel = new Button { Name = "SandboxCancel", Margin = new(0, 0, 10, 0) };
-        L.Bind(cancel, ContentControl.ContentProperty, purpose == SandboxSetupPurpose.Launch ? "common.cancel" : "window.close");
+        L.Bind(cancel, ContentControl.ContentProperty, ContinuesSetup ? "common.cancel" : "window.close");
         cancel.Click += (_, _) => Close(); actions.Children.Add(cancel);
         verify.Style = (Style)Application.Current.FindResource("PrimaryButton");
-        L.Bind(verify, ContentControl.ContentProperty, purpose == SandboxSetupPurpose.Launch ? "sandbox_setup.continue" : "sandbox_setup.recheck");
+        L.Bind(verify, ContentControl.ContentProperty, ContinuesSetup ? "sandbox_setup.continue" : "sandbox_setup.recheck");
         verify.Click += async (_, _) => await VerifyAsync(); actions.Children.Add(verify); body.Children.Add(actions);
         Content = new ScrollViewer { Content = body, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
         Closed += (_, _) => { closed = true; completion.TrySetResult(Ready); };
@@ -120,9 +127,13 @@ internal sealed class SandboxSetupWindow : Window
         if (closed) return;
         path.Text = value.Directory;
         installHelp.Visibility = value.Error != null ? Visibility.Visible : Visibility.Collapsed;
+        download.Style = (Style)Application.Current.FindResource("PrimaryButton");
+        verify.Style = value.Error == null ? (Style)Application.Current.FindResource("PrimaryButton") : (Style)Application.Current.FindResource(typeof(Button));
+        download.IsDefault = value.Error != null && !readOnly; verify.IsDefault = !download.IsDefault;
+        if (value.IsManual && value.Error != null) locationDetails.IsExpanded = true;
         L.Bind(state, TextBlock.TextProperty, () => value.Error != null ? L.Describe(value.Error) : L.Get(value.IsManual ? "sandbox_path.manual" : "sandbox_path.detected"));
         state.SetResourceReference(TextBlock.ForegroundProperty, value.Error != null ? "Error" : "MutedInk");
-        L.Bind(verify, ContentControl.ContentProperty, purpose == SandboxSetupPurpose.Launch ? "sandbox_setup.continue"
+        L.Bind(verify, ContentControl.ContentProperty, ContinuesSetup ? "sandbox_setup.continue"
             : value.Error == null ? "sandbox_setup.done" : "sandbox_setup.recheck");
     }
     private void PresentError(Exception error)
@@ -133,7 +144,7 @@ internal sealed class SandboxSetupWindow : Window
     }
     private void SetWorking(bool value)
     {
-        working = value; browse.IsEnabled = automatic.IsEnabled = !value && !readOnly && canEdit; verify.IsEnabled = !value;
+        working = value; browse.IsEnabled = automatic.IsEnabled = download.IsEnabled = !value && !readOnly && canEdit; verify.IsEnabled = !value;
     }
     internal void SetCanEdit(bool value) { canEdit = value; SetWorking(working); }
 }

@@ -86,7 +86,7 @@ public sealed partial class DailyFieldRoute
                     await FieldReady(settle: 0);
                     return null;
                 }
-                Require(map == origin, "导航期间地图改变，未重发旧场景操作");
+                if (map != origin) throw new DailyTravelBlocked("field.route-interrupted: 地图或入口已经改变，需要重新观察路线。");
                 if (destination == null)
                 {
                     var arrived = FieldRows(current, "waypoint").SingleOrDefault(r => N(r["instance"]) == target && B(r[WaypointNear]));
@@ -199,6 +199,7 @@ public sealed partial class DailyFieldRoute
             double closest = reachable.Length == 0 ? double.PositiveInfinity : reachable.Min(p => distances[N(p["instance"])]);
             if (allowSummon && B(here["CanSummon"]) && B(travel["Ground"]) && !DailyRouteAtlas.PreferPortal(closest))
                 return null;
+            bool refresh = false;
             foreach (var port in reachable)
             {
                 var key = (node, N(port[ObjectPath]));
@@ -208,8 +209,11 @@ public sealed partial class DailyFieldRoute
                 {
                     return await Walk(I(port["instance"]));
                 }
-                catch (DailyTravelBlocked) { failedPorts.Add(key); }
+                catch (DailyTravelBlocked) { failedPorts.Add(key); refresh = true; break; }
             }
+            // Even callers outside the weekly planner must discard old-scene
+            // gates and summon eligibility after a failed physical approach.
+            if (refresh) continue;
             if (allowSummon && B(here["CanSummon"]))
             {
                 if (B(travel["Ground"]))
@@ -289,7 +293,7 @@ public sealed partial class DailyFieldRoute
         }
         await W.Step("GameFieldDefaultUI", operation: "mainline_interact", value: instance, expect: "WayPointUI");
     }
-    private async Task<(bool Arrived, JsonObject? Port)> OpenTeleport(long map, bool nativeOnly, bool force)
+    private async Task<(bool Arrived, JsonObject? Port)> OpenTeleport(long map, bool nativeOnly, bool force, bool summonOnly)
     {
         async Task<bool> Arrived() => !force && N(Map(await Evidence())["id"]) == map;
         if (await Arrived()) return (true, null);
@@ -297,17 +301,43 @@ public sealed partial class DailyFieldRoute
         if (nativeOnly)
         {
             var e = await Evidence();
-            var ports = Reachable(Travel(e), FieldRows(e, "waypoint"));
-            var near = FieldRows(e, "waypoint").FirstOrDefault(p => B(p[WaypointNear]));
-            if (near == null && ports.Length == 0)
-                throw new DailyTravelBlocked("规划中的实体传送阵已不可达");
-            port = near ?? await Walk(I(ports[0]["instance"]));
-            if (await Arrived()) return (true, null);
-            Require(port != null, "实体传送阵到达未确认");
-            await OpenWaypoint(port!);
-            return (false, port);
+            long origin = N(Map(e)["id"]);
+            var failed = new HashSet<long>();
+            for (int attempt = 0; attempt < 16; attempt++)
+            {
+                var ports = Reachable(Travel(e), FieldRows(e, "waypoint"));
+                var near = FieldRows(e, "waypoint").FirstOrDefault(p => B(p[WaypointNear]) && !failed.Contains(N(p[ObjectPath])));
+                var next = ports.FirstOrDefault(p => !failed.Contains(N(p[ObjectPath])));
+                if (near == null && next == null) break;
+                try { port = near ?? await Walk(I(next!["instance"])); }
+                catch (DailyTravelBlocked)
+                {
+                    failed.Add(N(next![ObjectPath]));
+                    await FieldReady(settle: 0);
+                    var fresh = await Evidence(); Identity(e, fresh); e = fresh;
+                    if (!force && N(Map(e)["id"]) == map) return (true, null);
+                    // Return a changed map to the outer work selector. Within
+                    // the same map, try other observed physical portals before
+                    // excluding this departure's native-portal option.
+                    if (N(Map(e)["id"]) != origin) throw;
+                    continue;
+                }
+                if (await Arrived()) return (true, null);
+                Require(port != null, "实体传送阵到达未确认");
+                await OpenWaypoint(port!);
+                return (false, port);
+            }
+            throw new DailyTravelBlocked("规划中的实体传送阵已不可达");
         }
-        port = await PrepareTeleport(destination: force ? null : map);
+        if (summonOnly)
+        {
+            var e = await Evidence();
+            var travel = Travel(e);
+            if (!B(travel["Ground"]) || !Rows(travel["Maps"]).Any(r => N(r["Id"]) == N(Map(e)["id"]) && B(r["CanSummon"])))
+                throw new DailyTravelBlocked("传送天赋当前不可用，重新选择其他入口。");
+            port = null;
+        }
+        else port = await PrepareTeleport(destination: force ? null : map);
         if (await Arrived()) return (true, null);
         if (port == null)
         {
@@ -323,6 +353,9 @@ public sealed partial class DailyFieldRoute
             }
             else
                 Require(S(result["state"]) == "skipped" && S(result["reason"]) == "native_disabled", "传送天赋结果未知，未重复尝试");
+            // A route chosen because the native approach failed must not silently
+            // retry that same approach when summoning is unavailable.
+            if (summonOnly) throw new DailyTravelBlocked("传送天赋当前不可用，重新选择其他入口。");
             port = await PrepareTeleport(false, destination: force ? null : map);
             if (await Arrived()) return (true, null);
             Require(port != null, "实体传送恢复没有返回传送阵");
@@ -330,21 +363,26 @@ public sealed partial class DailyFieldRoute
         await OpenWaypoint(port!);
         return (false, port);
     }
-    public async Task<string?> Teleport(long map, long? waypoint = null, bool force = false, bool recovery = false, bool nativeOnly = false)
+    // Preserve the existing public signature for independently built plugins.
+    public Task<string?> Teleport(long map, long? waypoint = null, bool force = false, bool recovery = false, bool nativeOnly = false)
+        => TeleportCore(map, waypoint, force, recovery, nativeOnly, summonOnly: false);
+    internal Task<string?> TeleportPlanned(long map, bool nativeOnly, bool summonOnly)
+        => TeleportCore(map, null, false, true, nativeOnly, summonOnly);
+    private async Task<string?> TeleportCore(long map, long? waypoint, bool force, bool recovery, bool nativeOnly, bool summonOnly)
     {
         Require(!Excluded.Contains(map) || recovery, "地图不属于日常收集范围");
         var e = await Evidence();
         if (!force && N(Map(e)["id"]) == map) return null;
         if (RequiresSafeHub(e) || RequiresSafeHub(e, map)) return await TeleportViaSafeHub(map, waypoint, recovery);
-        return await TeleportDirect(map, waypoint, force, recovery, nativeOnly);
+        return await TeleportDirect(map, waypoint, force, recovery, nativeOnly, summonOnly);
     }
-    private async Task<string?> TeleportDirect(long map, long? waypoint = null, bool force = false, bool recovery = false, bool nativeOnly = false)
+    private async Task<string?> TeleportDirect(long map, long? waypoint = null, bool force = false, bool recovery = false, bool nativeOnly = false, bool summonOnly = false)
     {
         Require(!Excluded.Contains(map) || recovery, "地图不属于日常收集范围");
         var e = await Evidence();
         if (!force && N(Map(e)["id"]) == map)
             return null;
-        var prepared = await OpenTeleport(map, nativeOnly, force);
+        var prepared = await OpenTeleport(map, nativeOnly, force, summonOnly);
         if (prepared.Arrived) return null;
         var native = prepared.Port;
         var seen = new HashSet<long>();
@@ -368,7 +406,7 @@ public sealed partial class DailyFieldRoute
             throw new DailyTravelBlocked("Waypoint map not available");
         var icons = FieldRows(await Evidence(), "waypoint_icon").Where(r => B(r["_objWayPointClickable.activeSelf"]) && B(r["_objWayPointEnable.activeSelf"]) && (!waypoint.HasValue || N(r["ὦὠὣὧὥὯὤὮὧὫὬ"]) == waypoint)).OrderBy(r => N(r["ὦὠὣὧὥὯὤὮὧὫὬ"])).ToArray();
         if (icons.Length == 0)
-            throw new DailyTravelBlocked("No unlocked waypoint on selected map");
+            throw new DailyTravelBlocked("No unlocked waypoint on selected map") { UnavailableWaypoint = map };
         var icon = icons[0];
         var target = await W.Pointer("WayPointUI", r => N(r["Id"]) == N(icon["gameObject.GetInstanceID()"]));
         var action = O(("ui", "WayPointUI"), ("field", target["Field"]), ("target_id", target["Id"]));
@@ -424,10 +462,19 @@ public sealed partial class DailyFieldRoute
         foreach (var t in targets)
             try
             {
-                await Walk(I(t["instance"]), destination);
+                var fresh = Reachable(Travel(e), FieldRows(e, "gate").Where(g => N(g[ObjectPath]) == N(t[ObjectPath]) && N(g[DestinationPath]) == destination).ToArray()).FirstOrDefault();
+                if (fresh == null) continue;
+                await Walk(I(fresh["instance"]), destination);
                 return;
             }
-            catch (DailyTravelBlocked) { }
+            catch (DailyTravelBlocked)
+            {
+                await FieldReady(settle: 0);
+                var fresh = await Evidence(); Identity(e, fresh);
+                if (N(Map(fresh)["id"]) == destination) return;
+                if (N(Map(fresh)["id"]) != N(Map(e)["id"])) throw;
+                e = fresh;
+            }
         throw new DailyTravelBlocked("所有可见入口均未到达目标地图");
     }
     public async Task<JsonArray> WalkDrops()

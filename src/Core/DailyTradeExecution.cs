@@ -7,6 +7,8 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
 {
     private const string NpcPath = "ὠὫὥὧὭὭὥὠὭὤὣ.ὯὫὪὡὭὤὪὮὫὬὣ", MenuKind = "ὫὠὫὯὠὢὥὧὢὥὥ", ShopId = "ὭὩὪὯὯὬὧὠὠὬὠ", ShopNpc = "ὩὤὬὪὤὦὧὭὣὥὠ.ὯὫὪὡὭὤὪὮὫὬὣ", ShopMode = "ὯὣὡὫὨὫὡὧὩὬὠ";
     private Task<JsonObject> Evidence() => w.Evidence("trade", "dispatch");
+    internal static long RequiredPotions(JsonObject plan, TradePreferences preferences) =>
+        preferences.AutoCookAndSell ? N(plan["summary"]!["potions_used"]) : N(plan["bargain"]!["potions"]);
     private Task Surface(string name, double seconds = 30) => w.Wait(f => DailyNavigationDecision.Rows(f.Frame).Any(r => S(r["Type"]) == name && DailyNavigationDecision.ReadyInput(r)), seconds, "等待原生页面：" + name);
     private Task SettleShop() => w.Wait(f => !DailyNavigationDecision.Types(f.Frame).Overlaps(new[] { "ShopPopupUI", "BuyFavoritePopupUI", "RewardReceivePopupUI" }), 20, "成交已确认，等待原生弹窗结束");
     public static JsonObject Merchant(JsonObject e)
@@ -454,10 +456,18 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
             DailyJson.Write(Path.Combine(directory, "planning-catalog.json"), catalog);
             DailyJson.Write(Path.Combine(directory, "planning-settings.json"), settings);
             var planningState = w.Driver.PotionPolicy == null ? state : DailyTalentPotions.PlanningState(state, w.Settings.General, State(await Evidence(), "trade.native", "$self"));
+            planningState = planningState.DeepClone().AsObject();
+            planningState["processing_enabled"] = w.Settings.Trade.AutoCookAndSell;
             var plan = await Task.Run(() => DailyTradePlan.Generate(catalog, planningState, settings, Path.Combine(directory, "plan.json"), account, w.Check));
+            long requiredPotions = RequiredPotions(plan, w.Settings.Trade);
+            // The optimizer still estimates future processing value for procurement.
+            // Only fund the actions this run is allowed to perform.
+            plan["execution"] = O(("auto_cook_and_sell", w.Settings.Trade.AutoCookAndSell),
+                ("potions_required", requiredPotions), ("potions_to_buy", w.Settings.Trade.AutoCookAndSell
+                    ? N(plan["summary"]!["potions_to_buy"]) : Math.Max(0, requiredPotions - N(planningState["potions"]))));
             long potionBudget = N(planningState["potions"]) + N(planningState["potion_buy_limit"]);
-            plan["daily_potion_budget_reached"] = w.Driver.PotionPolicy != null &&
-                N(plan["summary"]?["potions_used"]) >= potionBudget &&
+            plan["daily_potion_budget_reached"] = w.Settings.Trade.AutoCookAndSell && w.Driver.PotionPolicy != null &&
+                requiredPotions >= potionBudget &&
                 potionBudget < N(state["potions"]) + N(state["potion_buy_limit"]);
             await w.Observe();
             var e = await Evidence();
@@ -492,12 +502,12 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
             if (S(job["phase"]) == "purchase")
             {
                 await w.Observe();
-                long potionBuy = N(planData["summary"]!["potions_to_buy"]);
+                long potionBuy = N(planData["execution"]!["potions_to_buy"]);
                 if (potionBuy > 0 && !Done("potions"))
                 {
                     if (w.Driver.PotionPolicy != null)
                     {
-                        await w.Driver.RequirePotionsAsync(N(planData["summary"]!["potions_used"]));
+                        await w.Driver.RequirePotionsAsync(N(planData["execution"]!["potions_required"]));
                         throw new DailyTradeReplanRequired("天赋药余额变化，按当前库存重新规划。");
                     }
                     var n = State(await Evidence(), "trade.native", "$self");
@@ -523,52 +533,7 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
                         Record(await Buy([partial[i]], false, Scope("partial:" + i)));
                 Phase("cooking");
             }
-            if (S(job["phase"]) == "cooking")
-            {
-                await w.Observe();
-                if (Rows(planData["cooking"]).Length > 0)
-                {
-                    if (!await w.Has("CookingUI") && !await w.Has("CookingSelectUI"))
-                    {
-                        await Close();
-                        await w.Step("GameFieldDefaultUI", operation: "trade_menu", value: 7, expect: "QuickMenuUI");
-                        await Talent(7);
-                        await Surface("CookingSelectUI");
-                    }
-                    foreach (var row in DailyTradeProof.CookingOrder(planData, catalog))
-                    {
-                        long completed = operations.Where(o => S(o["role"]) == "trade.cook" && N(o["scope"]?["recipe"]) == N(row["recipe"])).Sum(o => N(o["scope"]?["count"]));
-                        while (completed < N(row["count"]))
-                        {
-                            var scope = Scope("recipe:" + S(row["recipe"]) + ":" + completed);
-                            scope["recipe"] = Copy(row["recipe"]);
-                            var op = await Cook(DailyTradeProof.Portion(row, N(row["count"]) - completed), scope);
-                            Record(op);
-                            completed += N(op["scope"]!["count"]);
-                        }
-                    }
-                }
-                Phase("sale");
-            }
-            if (S(job["phase"]) == "sale")
-            {
-                await w.Observe();
-                if (!await w.Has("ShopUI"))
-                {
-                    await Close();
-                    await OpenMerchant(N(job["npc"]));
-                }
-                if (S(R(await Evidence(), "trade.shop_ui", ShopMode)) != "Sell")
-                    await w.Step("ShopUI", "_sellButton.root");
-                string salePath = Path.Combine(directory, "sales-" + S(job["id"]) + ".json");
-                if (!File.Exists(salePath))
-                    DailyJson.Write(salePath, DailyTradeProof.SaleStacks(planData, DailyTradeResume.Wallet(await Evidence()), catalog));
-                var sales = Rows(JsonNode.Parse(File.ReadAllText(salePath)));
-                for (int i = 0; i < sales.Length; i++)
-                    if (!Done("sale:" + i))
-                        Record(await Sell(sales[i], Scope("sale:" + i)));
-                Phase("audit");
-            }
+            await ProcessStock(planData, job, directory, operations);
             await w.Observe();
             var final = await Evidence();
             job["final"] = DailyTradeResume.Wallet(final);
@@ -579,9 +544,74 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
             DailyJson.Write(path, job);
             DailyJson.Write(Path.Combine(directory, "final.evidence.json"), final);
             await Close();
-            return O(("state", "completed"), ("reason", "采购、烹饪及今日120%售卖已核账"), ("record", path), ("gold_delta", job["gold_delta"]), ("potions_used", job["potions_used"]), ("operations", operations.Count), ("warnings", planData["warnings"]), ("daily_potion_budget_reached", planData["daily_potion_budget_reached"]), ("engine", "dotnet-trade-v1"));
+            return O(("state", "completed"), ("reason", w.Settings.Trade.AutoCookAndSell ? "采购、烹饪及今日120%售卖已核账" : "采购已完成；自动料理与售卖未开启，食材与料理已保留"), ("record", path), ("gold_delta", job["gold_delta"]), ("potions_used", job["potions_used"]), ("operations", operations.Count), ("warnings", planData["warnings"]), ("daily_potion_budget_reached", planData["daily_potion_budget_reached"]), ("engine", "dotnet-trade-v1"));
         }
         catch (Exception e) { if (S(job["state"]) != "completed") job["state"] = "stopped"; job["error"] = e.Message; DailyJson.Write(path, job); throw; }
+    }
+    internal async Task ProcessStock(JsonObject planData, JsonObject job, string directory, List<JsonObject> operations)
+    {
+        string path = Path.Combine(directory, "execution.json");
+        void Phase(string phase) { job["phase"] = phase; DailyJson.Write(path, job); }
+        if (!w.Settings.Trade.AutoCookAndSell)
+        {
+            job["automatic_processing"] = "disabled";
+            Phase("audit");
+            return;
+        }
+        bool Done(string key) => operations.Any(o => S(o["scope"]?["action"]) == key);
+        JsonObject Scope(string key) => O(("trade_session", job["id"]), ("action", key));
+        void Record(JsonObject op)
+        {
+            operations.Add(op);
+            job["operations"] = Array(operations.Select(o => o["id"]));
+            DailyJson.Write(path, job);
+        }
+        if (S(job["phase"]) == "cooking")
+        {
+            await w.Observe();
+            if (Rows(planData["cooking"]).Length > 0)
+            {
+                if (!await w.Has("CookingUI") && !await w.Has("CookingSelectUI"))
+                {
+                    await Close();
+                    await w.Step("GameFieldDefaultUI", operation: "trade_menu", value: 7, expect: "QuickMenuUI");
+                    await Talent(7);
+                    await Surface("CookingSelectUI");
+                }
+                foreach (var row in DailyTradeProof.CookingOrder(planData, catalog))
+                {
+                    long completed = operations.Where(o => S(o["role"]) == "trade.cook" && N(o["scope"]?["recipe"]) == N(row["recipe"])).Sum(o => N(o["scope"]?["count"]));
+                    while (completed < N(row["count"]))
+                    {
+                        var scope = Scope("recipe:" + S(row["recipe"]) + ":" + completed);
+                        scope["recipe"] = Copy(row["recipe"]);
+                        var op = await Cook(DailyTradeProof.Portion(row, N(row["count"]) - completed), scope);
+                        Record(op);
+                        completed += N(op["scope"]!["count"]);
+                    }
+                }
+            }
+            Phase("sale");
+        }
+        if (S(job["phase"]) == "sale")
+        {
+            await w.Observe();
+            if (!await w.Has("ShopUI"))
+            {
+                await Close();
+                await OpenMerchant(N(job["npc"]));
+            }
+            if (S(R(await Evidence(), "trade.shop_ui", ShopMode)) != "Sell")
+                await w.Step("ShopUI", "_sellButton.root");
+            string salePath = Path.Combine(directory, "sales-" + S(job["id"]) + ".json");
+            if (!File.Exists(salePath))
+                DailyJson.Write(salePath, DailyTradeProof.SaleStacks(planData, DailyTradeResume.Wallet(await Evidence()), catalog));
+            var sales = Rows(JsonNode.Parse(File.ReadAllText(salePath)));
+            for (int i = 0; i < sales.Length; i++)
+                if (!Done("sale:" + i))
+                    Record(await Sell(sales[i], Scope("sale:" + i)));
+            Phase("audit");
+        }
     }
 }
 

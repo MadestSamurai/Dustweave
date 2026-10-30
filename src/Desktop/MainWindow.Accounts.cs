@@ -26,7 +26,8 @@ public partial class MainWindow
         bool hasSlot = catalog.OccupiedSlots.Concat(catalog.Accounts.Select(a => a.SlotNumber)).Distinct().Count() < 100;
         string hint = !closed ? "account.login_running" :
             !identified ? "account.login_needed" :
-            current == null ? "account.login_unsaved" : "account.login_saved";
+            current == null ? "account.login_unsaved" :
+            !IsSandboxWindow && sessions.LoginRecovery == null && SavedAccountCount(catalog) == 1 ? "multiaccount.add_second" : "account.login_saved";
         L.Bind(LoginAccountText, TextBlock.TextProperty, () => current?.Name ?? L.Get(identified ? "account.unsaved" : "account.not_signed_in"));
         L.Text(LoginHintText, hint);
         L.Bind(SaveAccountButton, ContentControl.ContentProperty, current == null ? "account.save" : "account.update_saved");

@@ -61,7 +61,10 @@ public static class DailyTradePlan
     {
         var b = new StringBuilder("# 跑商计划\n\n");
         var s = p["summary"]!;
-        b.AppendLine($"游戏日期：{S(p["game_date"])}；快照：{S(p["captured_utc"])}。").AppendLine().AppendLine("本轮增益按120%原料卖价核账，扣除采购与药耗；保留食材不追加虚拟溢价。未来29天供货与掉落单独预测，不计入今日可用库存或垫资。两者都不是已到账金币。").AppendLine().AppendLine("|指标|金币／数量|\n|---|---:|");
+        bool calendar = S(p["solver"]?["scope"]) == "dated_cash_inventory";
+        b.AppendLine($"游戏日期：{S(p["game_date"])}；快照：{S(p["captured_utc"])}。").AppendLine()
+            .AppendLine(calendar ? "按未来62天的采购、料理、高价日和金币余额共同分配。11月16日前的新价仅用于预测，实际出售必须核对游戏报价。优先保留周转资金，没有当日售卖或近期满仓压力时延后料理。下方订单只含本次可执行数量，预测表不作为订单。" : "本轮增益按120%原料卖价核账，扣除采购与药耗；保留食材不追加虚拟溢价。未来29天供货与掉落单独预测，不计入今日可用库存或垫资。两者都不是已到账金币。")
+            .AppendLine().AppendLine("|指标|金币／数量|\n|---|---:|");
         foreach (var (key, name) in new[] { ("incremental_profit", "本轮加工与交易增益"), ("eventual_sale_value", "预计回款"), ("cash_required", "本轮垫资"), ("cash_remaining", "垫资后金币"), ("potion_unit_price", "天赋药单价"), ("potions_used", "天赋药总消耗"), ("potions_to_buy", "其中需补买") })
             b.AppendLine($"|{name}|{N(s[key]):N0}|");
         b.AppendLine();
@@ -74,7 +77,7 @@ public static class DailyTradePlan
             b.AppendLine("预测窗口末尾不足一份配方的食材，会按已知后续供给估计用途；该估值只用于分配，不加入本轮增益或金币余额。每次以当前库存重新计算，不依赖历史保留记录。");
         foreach (var warning in Rows(p["warnings"]))
             b.AppendLine(S(warning["message"]));
-        b.AppendLine(B(p["solver"]!["optimal"]) ? "当前库存与29天供给预测模型已求到最优；这不代表全年或随机掉落下的最优保证。" : "当前可行方案，尚未证明最优。");
+        b.AppendLine(calendar ? "未来供货、掉落和价格可能变化，未来料理数量允许小数近似；期末库存单列估值，不是已到账现金。每天按当前库存和金币重算，不保证跨周期全局最优。" : B(p["solver"]!["optimal"]) ? "当前库存与29天供给预测模型已求到最优；这不代表全年或随机掉落下的最优保证。" : "当前可行方案，尚未证明最优。");
         void Table(string title, string[] headers, IEnumerable<object?[]> rows)
         {
             b.AppendLine().AppendLine("## " + title).AppendLine().AppendLine("|" + string.Join('|', headers) + "|").AppendLine("|" + string.Join('|', headers.Select(_ => "---")) + "|");
@@ -85,6 +88,8 @@ public static class DailyTradePlan
         Table("料理分配", ["料理", "份数", "天赋药", "预计售日"], Rows(p["cooking"]).Select(r => new object?[] { S(r["name"]), N(r["count"]), N(r["potions"]), S(r["sale_date"]) }));
         Table("售卖分配", ["物品", "数量", "单价", "商店", "预计售日", "今日报价确认"], Rows(p["sales"]).Select(r => new object?[] { S(r["name"]), N(r["count"]), N(r["price"]), N(r["shop"]), S(r["date"]), B(r["today_quote_confirmed"]) ? "是" : "否" }));
         Table("后续料理保留", ["食材", "数量", "原料120%卖价"], Rows(p["holds"]).Select(r => new object?[] { S(r["name"]), N(r["count"]), N(r["price"]) }));
+        if(calendar) Table("周转预测（不执行）", ["日期", "扣除保留额后的预测金币", "采购数量", "料理份数", "售出数量"],
+            Rows(p["forecast"]?["calendar"]).Select(r => new object?[] { S(r["date"]), r["cash_above_reserve"], r["purchases"], r["cooking"], r["sales"] }));
         b.AppendLine().AppendLine("表中包含尚未买入或制作的数量。执行前仍须重读库存并保留已分配食材。").AppendLine($"输入校验值：`{S(p["input_hash"])}`。").AppendLine($"数据表校验值：`{S(p["catalog_hash"])}`。");
         return b.ToString();
     }

@@ -1,5 +1,16 @@
 # Changelog / 更新记录
 
+## 1.5.9 — 2026-10-31
+
+- 新增插件市场和公开战术教材插件，默认每关最多计算 60 秒。首次安装选择仅本地计算或参与解法共享；共享同时包含下载复用与通关后自动贡献，更新保留选择。
+- Adds the plugin marketplace and a compact Tactical textbook plugin, with local calculation and optional two-way solution sharing chosen at installation.
+- 首次保存第二个账号后，可选择依次或同时运行；单账号引导不再涉及沙盒。仅选择同时运行时引导安装沙盒工具，选择“以后再说”后不再重复提示。
+- 修复传送失败或落点变化后角色反复往返的问题；按实际地图重新寻路，保留待办与进度，继续遵守任务、压制及隐身顺序。
+- 全自动跑商自动接入 11.16 料理改价前后的策略，用户无需手动囤货或到期切换；收藏购买和自定义料理模式不变。
+- 按高价日、库存和可用金币选择采购与回款时机，延后没有近期用途的料理，继续遵守保留金币及采购上限。
+- Automatic trading now plans the November 16 price transition without manual intervention, while preserving gold reserves, spending limits and custom modes.
+- [完整说明 / Full notes](docs/releases/1.5.9.md)
+
 ## 1.5.7 — 2026-10-29
 
 - 收窄安全区隐身中转规则，仅用于恶梦之冬巡逻区域；其他地图不再仅因伤害性物件而开隐身、禁止步行或绕行。

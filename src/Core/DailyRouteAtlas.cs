@@ -2,7 +2,10 @@ using System.Text.Json.Nodes;
 using static Dustweave.DailyData;
 namespace Dustweave;
 
-public sealed class DailyTravelBlocked(string message) : Exception(message);
+public sealed class DailyTravelBlocked(string message) : Exception(message)
+{
+    public long? UnavailableWaypoint { get; init; }
+}
 public sealed class DailyQuotaExhausted(string message) : Exception(message);
 public sealed class DailyCollectionTargetsRemain(string message, JsonArray? deferredPickups = null, bool captureLimit = false) : Exception(message)
 {
@@ -147,7 +150,18 @@ public sealed class DailyRouteAtlas
     }
     public Dictionary<string, JsonObject> Regions { get; } = new(); public Dictionary<long, string> Landing { get; } = new();
     public HashSet<(string Origin, long? Object)> Blocked { get; } = []; public HashSet<long> WarpBlocked { get; } = []; public HashSet<string> BlockedPorts { get; } = [];
+    public HashSet<string> BlockedNativePorts { get; } = []; public HashSet<string> BlockedSummons { get; } = [];
+    // A failed departure that relocated the player, or a successful but
+    // unproductive loop, is not proof of an inaccessible map. Exclude that
+    // departure only while the work ledger is unchanged.
+    private readonly HashSet<(string Origin, string Kind, long Destination, long? Object, string Mode)> rejectedDepartures = [];
+    private static (string, string, long, long?, string) Departure(JsonObject action) =>
+        (S(action["origin"]), S(action["kind"]), N(action["destination"]), action["object"] == null ? null : N(action["object"]), S(action["mode"]));
+    public void RejectDeparture(JsonObject action) => rejectedDepartures.Add(Departure(action));
+    public void ClearRejectedDepartures() => rejectedDepartures.Clear();
     private JsonObject[] quickTargets = [];
+    private string physicalCurrent = "";
+    private long preferredQuick;
     private double speedRemaining, speedBonus;
     // Per-observation effect, never persisted into reusable map geometry.
     public void ObserveSpeed(double remaining, double bonus)
@@ -166,13 +180,35 @@ public sealed class DailyRouteAtlas
     public void ObserveQuick(IEnumerable<JsonObject> targets)
     {
         // Availability comes from this account's live list, never a saved atlas.
+        var previousTargets = quickTargets.ToDictionary(t => N(t["Npc"]));
         quickTargets = targets.Where(t => N(t["Npc"]) > 0 && Maps.ContainsKey(N(t["Map"])))
             .GroupBy(t => N(t["Npc"])).Select(g => g.First().DeepClone().AsObject()).ToArray();
         foreach (var target in quickTargets)
         {
-            string key = QuickNode(N(target["Map"]), N(target["Npc"]));
-            if (Regions.TryGetValue(key, out var old) && !JsonNode.DeepEquals(old["anchor"], Anchor(target))) Regions.Remove(key);
+            long npc = N(target["Npc"]);
+            string key = QuickNode(N(target["Map"]), npc);
+            previousTargets.TryGetValue(npc, out var priorTarget);
+            if (Regions.TryGetValue(key, out var old) && !JsonNode.DeepEquals(old["anchor"], Anchor(target))
+                || priorTarget != null && !JsonNode.DeepEquals(Anchor(priorTarget), Anchor(target)))
+            {
+                var changed = new HashSet<string> { key };
+                if (priorTarget != null) changed.Add(QuickNode(N(priorTarget["Map"]), npc));
+                foreach (string region in changed) Regions.Remove(region);
+                foreach (long map in Landing.Keys.Where(id => changed.Contains(Landing[id])).ToArray()) Landing.Remove(map);
+                Blocked.RemoveWhere(p => changed.Contains(p.Origin));
+                BlockedQuick.RemoveWhere(p => changed.Contains(p.Origin) || p.Npc == npc);
+                foreach (var blocked in new[] { BlockedPorts, BlockedNativePorts, BlockedSummons }) blocked.RemoveWhere(changed.Contains);
+                rejectedDepartures.RemoveWhere(p => changed.Contains(p.Origin) || p.Kind == "quick" && p.Object == npc);
+            }
         }
+        // The physical signature describes connectivity, not position. After a
+        // shortcut, keep the verified landing as the current node; otherwise a
+        // replan can keep selecting that same shortcut instead of its next edge.
+        if (physicalCurrent.Length == 0 || !Regions.ContainsKey(physicalCurrent)) return;
+        Current = physicalCurrent;
+        var here = quickTargets.Where(t => N(t["Map"]) == MapOf(physicalCurrent) && B(t["AtTarget"]))
+            .OrderBy(t => N(t["Npc"]) == preferredQuick ? 0 : 1).ThenBy(t => N(t["Npc"])).FirstOrDefault();
+        if (here != null) LearnQuick(here, physicalCurrent);
     }
     private static JsonObject Anchor(JsonObject target) => O(("npc", target["Npc"]), ("map", target["Map"]), ("x", target["X"]), ("y", target["Y"]), ("z", target["Z"]));
     public void ReachedQuick(long npc, string region, double seconds, bool sameMap = false)
@@ -182,14 +218,33 @@ public sealed class DailyRouteAtlas
         // losing an optional learning sample must not interrupt the route.
         if (target == null) return;
         Require(MapOf(region) == N(target["Map"]), "Quick travel arrived on another map");
+        string key = LearnQuick(target, region);
+        Regions[key][sameMap ? "sameMapSeconds" : "crossMapSeconds"] = Math.Clamp(seconds, 1, 60);
+    }
+    private string LearnQuick(JsonObject target, string region)
+    {
         var row = Regions[region].DeepClone().AsObject();
-        string key = QuickNode(MapOf(region), npc);
+        string key = QuickNode(MapOf(region), N(target["Npc"]));
         var prior = Regions.GetValueOrDefault(key);
         foreach (string cost in new[] { "sameMapSeconds", "crossMapSeconds" })
             if (prior?[cost] != null) row[cost] = prior[cost]!.DeepClone();
+        // Keep verified gate landings from this shortcut. Copying the generic
+        // region on every observation used to forget the observed return edge,
+        // making the planner rediscover the same dead end on every visit.
+        if (prior != null)
+        {
+            var learned = Rows(prior["exits"]).ToDictionary(e => N(e["object"]));
+            foreach (var exit in Rows(row["exits"]))
+                if (learned.TryGetValue(N(exit["object"]), out var old) && N(exit["destination"]) == N(old["destination"])
+                    && old["target"] != null && Regions.ContainsKey(S(old["target"])))
+                    exit["target"] = old["target"]!.DeepClone();
+        }
         row["anchor"] = Anchor(target);
-        row[sameMap ? "sameMapSeconds" : "crossMapSeconds"] = Math.Clamp(seconds, 1, 60);
+        row["physicalRegion"] = row["physicalRegion"]?.DeepClone() ?? JsonValue.Create(region);
         Regions[key] = row;
+        Current = key;
+        preferredQuick = N(target["Npc"]);
+        return key;
     }
     public string? Current
     {
@@ -216,6 +271,10 @@ public sealed class DailyRouteAtlas
             var r = pair.Value!.AsObject();
             if (!valid.Contains(N(r["map"])))
                 continue;
+            // Old shortcut copies did not retain a physical landing identity.
+            // Relearn those from an actual arrival rather than treating them as
+            // independent portals that bypass a failed approach.
+            if (r["anchor"] != null && r["physicalRegion"] == null) continue;
             var row = r.DeepClone().AsObject();
             row["exits"] = Array(Rows(row["exits"]).Where(e => valid.Contains(N(e["destination"])) && Maps[N(row["map"])]["Exits"]!.AsArray().Any(id => N(id) == N(e["destination"]))));
             Regions[pair.Key] = row;
@@ -223,6 +282,32 @@ public sealed class DailyRouteAtlas
         foreach (var pair in seed["landing"] as JsonObject ?? new())
             if (Regions.ContainsKey(S(pair.Value)))
                 Landing[long.Parse(pair.Key, System.Globalization.CultureInfo.InvariantCulture)] = S(pair.Value);
+    }
+    public void RefreshMaps(JsonObject[] maps)
+    {
+        var fresh = maps.ToDictionary(r => N(r["Id"]));
+        var removed = Maps.Keys.Except(fresh.Keys).ToArray();
+        var changed = removed.ToHashSet();
+        foreach (var pair in fresh)
+        {
+            // Most observations have identical metadata. Keep their existing
+            // objects without reserializing signatures or cloning every map.
+            if (Maps.TryGetValue(pair.Key, out var old))
+            {
+                if (JsonNode.DeepEquals(old, pair.Value)) continue;
+                if (Signature(old) != Signature(pair.Value)) changed.Add(pair.Key);
+            }
+            else changed.Add(pair.Key);
+            Maps[pair.Key] = pair.Value.DeepClone().AsObject();
+        }
+        foreach (long id in removed) Maps.Remove(id);
+        foreach (var key in Regions.Keys.Where(k => changed.Contains(MapOf(k))).ToArray()) Regions.Remove(key);
+        foreach (long id in Landing.Keys.Where(id => changed.Contains(id) || !Regions.ContainsKey(Landing[id])).ToArray()) Landing.Remove(id);
+        Blocked.RemoveWhere(p => changed.Contains(MapOf(p.Origin)));
+        BlockedQuick.RemoveWhere(p => changed.Contains(MapOf(p.Origin)));
+        foreach (var blocked in new[] { BlockedPorts, BlockedNativePorts, BlockedSummons }) blocked.RemoveWhere(k => changed.Contains(MapOf(k)));
+        WarpBlocked.RemoveWhere(changed.Contains);
+        rejectedDepartures.RemoveWhere(p => changed.Contains(MapOf(p.Origin)) || changed.Contains(p.Destination));
     }
     public string Observe(string node, JsonObject[] exits, double[] ports, bool ground, double walkingSpeed = WalkSpeed)
     {
@@ -249,18 +334,41 @@ public sealed class DailyRouteAtlas
         }
         Regions[node] = O(("map", map), ("exits", edges), ("portal", ports.Length > 0), ("portalDistance", ports.Length == 0 ? 0 : ports.Min()), ("walkingSpeed", walkingSpeed));
         Current = node;
+        physicalCurrent = node;
         CurrentGround = ground;
         return node;
     }
     public void Reached(string origin, long obj, string target, double seconds)
     {
-        var edge = Rows(Regions[origin]["exits"]).Single(r => N(r["object"]) == obj);
+        // Live topology can change during arrival. Learning is optional and
+        // must not turn a confirmed successful move into a cache exception.
+        if (!Regions.TryGetValue(origin, out var previous)) return;
+        var edge = Rows(previous["exits"]).SingleOrDefault(r => N(r["object"]) == obj);
+        if (edge == null) return;
         edge["target"] = target;
         edge["seconds"] = Math.Clamp(seconds, 1, 300);
         Blocked.Remove((origin, obj));
     }
     public JsonObject Export() => O(("maps", Array(Maps.Values)), ("regions", new JsonObject(Regions.Select(p => new KeyValuePair<string, JsonNode?>(p.Key, p.Value.DeepClone())))), ("landing", new JsonObject(Landing.Select(p => new KeyValuePair<string, JsonNode?>(p.Key.ToString(), JsonValue.Create(p.Value))))));
     public string Destination(long id) => Landing.TryGetValue(id, out var landed) ? landed : Regions.Where(p => N(p.Value["map"]) == id && B(p.Value["portal"])).Select(p => p.Key).Order(StringComparer.Ordinal).FirstOrDefault() ?? Abstract(id);
+    public JsonObject? SafeHubProbe(HashSet<long> forbidden, HashSet<long> tried)
+    {
+        // Missing paths are an observation problem, not proof that a map is
+        // disconnected. A verified native safe destination gives us a new
+        // observation point without walking through unexamined enemies.
+        if (Current == null || B(Maps[MapOf(Current)]["Hunting"])) return null;
+        var target = quickTargets.Where(t => !B(t["AtTarget"]) && !tried.Contains(N(t["Npc"]))
+            && !forbidden.Contains(N(t["Map"])) && !BlockedQuick.Contains((Current!, N(t["Npc"]))))
+            .Where(t => Maps[N(t["Map"])]["MapType"] != null && N(Maps[N(t["Map"])]["MapType"]) == 0
+                && !B(Maps[N(t["Map"])]["EnvironmentalHazard"]) && !B(Maps[N(t["Map"])]["Hunting"]))
+            .OrderBy(t => N(t["Map"]) == MapOf(Current!) ? 1 : 0).ThenBy(t => N(t["Npc"])).FirstOrDefault();
+        if (target == null) return null;
+        long map = MapOf(Current!), destination = N(target["Map"]), npc = N(target["Npc"]);
+        double seconds = map == destination ? DailyQuickTravel.SameMapTransitionSeconds : DailyQuickTravel.TransitionSeconds;
+        return O(("kind", "quick"), ("origin", Current), ("target", QuickNode(destination, npc)),
+            ("map", map), ("destination", destination), ("object", npc), ("seconds", seconds),
+            ("walking_distance", 0), ("casts", 0), ("recovery_probe", true));
+    }
     private IEnumerable<(string Target, JsonObject Action)> Edges(string node, bool teleports, HashSet<long> forbidden)
     {
         long mid = MapOf(node);
@@ -304,7 +412,8 @@ public sealed class DailyRouteAtlas
         if (hazardous) yield break;
         if (BlockedPorts.Contains(node))
             yield break;
-        bool portal = region != null ? B(region["portal"]) : B(row["HasWaypoint"]), summon = B(row["CanSummon"]) && (node != Current || CurrentGround);
+        bool portal = !BlockedNativePorts.Contains(node) && (region != null ? B(region["portal"]) : B(row["HasWaypoint"]));
+        bool summon = !BlockedSummons.Contains(node) && B(row["CanSummon"]) && (node != Current || CurrentGround);
         if (!portal && !summon)
             yield break;
         double speed = region == null ? WalkSpeed : DailyRegionRouter.D(region["walkingSpeed"]);
@@ -320,11 +429,13 @@ public sealed class DailyRouteAtlas
                 continue;
             string target = Destination(dest);
             double walking = region != null && portal ? DailyRegionRouter.D(region["portalDistance"]) / speed : 0;
-            yield return (target, O(("kind", "teleport"), ("mode", mode), ("origin", node), ("target", target), ("map", mid), ("destination", dest), ("seconds", cost), ("walking_seconds", mode == "native" ? walking : 0), ("casts", mode == "talent" ? 1 : 0)));
-            // An active speed effect can make walking to a portal preferable
-            // even when its ordinary cost would favour summoning one.
-            if (mode == "talent" && portal && speedRemaining > 0 && speedBonus > 0)
+            yield return (target, O(("kind", "teleport"), ("mode", mode), ("summon_only", mode == "talent"), ("origin", node), ("target", target), ("map", mid), ("destination", dest), ("seconds", cost), ("walking_seconds", mode == "native" ? walking : 0), ("casts", mode == "talent" ? 1 : 0)));
+            // Keep independent means available even when one is more expensive.
+            // Exact-departure exclusions and active speed can change which wins.
+            if (mode == "talent" && portal)
                 yield return (target, O(("kind", "teleport"), ("mode", "native"), ("origin", node), ("target", target), ("map", mid), ("destination", dest), ("seconds", free), ("walking_seconds", walking), ("casts", 0)));
+            else if (mode == "native" && summon)
+                yield return (target, O(("kind", "teleport"), ("mode", "talent"), ("summon_only", true), ("origin", node), ("target", target), ("map", mid), ("destination", dest), ("seconds", 10), ("walking_seconds", 0), ("casts", 1)));
         }
     }
     public JsonObject Plan(IEnumerable<long> targets, long? returnMap = null, bool teleports = true, IEnumerable<long>? forbiddenMaps = null)
@@ -354,6 +465,7 @@ public sealed class DailyRouteAtlas
         (string Target, JsonObject Action, double Seconds, int Casts, int Mask)[] Outgoing(string node)
         {
             if (!adjacency.TryGetValue(node, out var edges)) adjacency[node] = edges = Edges(node, teleports, forbidden)
+                .Where(e => !rejectedDepartures.Contains(Departure(e.Action)))
                 .Select(e => (e.Target, e.Action, DailyRegionRouter.D(e.Action["seconds"]),
                     I(e.Action["casts"]), bits.GetValueOrDefault(MapId(e.Target)))).ToArray();
             return edges;
@@ -382,7 +494,11 @@ public sealed class DailyRouteAtlas
                 // Equal summoning counts have equal penalties, so earliest
                 // arrival dominates. Keep differing counts separate while an
                 // effect is active: its expiry follows elapsed time, not cost.
-                var next = (target, state.Mask | mask, timedSpeed ? weight.Casts + casts : 0);
+                double arrival = weight.Cost - weight.Casts * SummonPenalty + effective;
+                // Once the effect has expired, distinct summoning counts no
+                // longer change future walking costs. Merge those states so an
+                // unreachable goal cannot generate endless casting cycles.
+                var next = (target, state.Mask | mask, timedSpeed ? arrival >= speedRemaining ? -1 : weight.Casts + casts : 0);
                 var score = (Cost: weight.Cost + effective + casts * SummonPenalty, Casts: weight.Casts + casts, Hops: weight.Hops + 1);
                 if (!distance.TryGetValue(next, out var old) || score.CompareTo(old) < 0)
                 {

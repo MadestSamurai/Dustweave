@@ -7,7 +7,7 @@ using Microsoft.Win32;
 
 namespace Dustweave.Desktop;
 
-public sealed class DailyPluginPanel : ScrollViewer
+public sealed partial class DailyPluginPanel : ScrollViewer
 {
     private static DailyLanguage L => DailyLanguage.Current;
     private readonly StackPanel cards = new();
@@ -21,6 +21,7 @@ public sealed class DailyPluginPanel : ScrollViewer
     public event Action<string>? RemoveRequested;
     public event Action? DisableRequested;
     public event Action? RestartRequested;
+    public event Action<string, string>? SharingRequested;
     public DailyPluginPanel()
     {
         VerticalScrollBarVisibility = ScrollBarVisibility.Auto; HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
@@ -30,7 +31,8 @@ public sealed class DailyPluginPanel : ScrollViewer
         var actions = new WrapPanel { Margin = new(0, 16, 0, 0) };
         import.Style = (Style)Application.Current.FindResource("PrimaryButton");
         actions.Children.Add(import); actions.Children.Add(disable); actions.Children.Add(restart); overview.Children.Add(actions); overview.Children.Add(status);
-        overview.Margin=new(0,0,0,24);content.Children.Add(overview); content.Children.Add(cards);
+        overview.Children.Remove(status);
+        InitializeMarket(content, overview, cards, status);
         var layout=new Grid();layout.ColumnDefinitions.Add(new ColumnDefinition{MaxWidth=880});layout.Children.Add(content);Content=layout;
         import.Click += (_, _) => ImportRequested?.Invoke(null); disable.Click += (_, _) => DisableRequested?.Invoke(); restart.Click += (_, _) => RestartRequested?.Invoke();
         AllowDrop = true;
@@ -38,9 +40,10 @@ public sealed class DailyPluginPanel : ScrollViewer
         Drop += (_, e) => { if (!occupied && e.Data.GetData(DataFormats.FileDrop) is string[] { Length: 1 } paths) ImportRequested?.Invoke(paths[0]); e.Handled = true; };
     }
     public void Status(string key, params object?[] args) => L.Text(status, key, args);
-    public void Busy(bool value) { occupied = value; import.IsEnabled = disable.IsEnabled = restart.IsEnabled = cards.IsEnabled = !value; }
+    public void Busy(bool value) { occupied = value; import.IsEnabled = disable.IsEnabled = restart.IsEnabled = cards.IsEnabled = !value; MarketBusy(value); }
     public void Refresh(DailyPluginSelection state, Dictionary<string, DailyPluginInfo> inspected, DailyPluginInfo current)
     {
+        marketSelection = state;
         cards.Children.Clear();
         bool external = Environment.GetEnvironmentVariable("DUSTWEAVE_PLUGIN") != null;
         string selected = state.OverrideLocal ? state.Active ?? "" : current.Fingerprint;
@@ -60,6 +63,11 @@ public sealed class DailyPluginPanel : ScrollViewer
             if (!info.Available) body.Children.Add(Text("plugins." + info.State));
             else body.Children.Add(Text("plugins.details", info.Publisher.Length == 0 ? record.Id : info.Publisher, info.MinHostVersion.Length == 0 ? "—" : info.MinHostVersion, info.MaxHostVersion.Length == 0 ? "—" : info.MaxHostVersion));
             var actions = new WrapPanel { Margin = new(0, 12, 0, 0) };
+            if (info.Available && info.SupportsSolutionSharing)
+            {
+                var sharing = ActionButton("plugins.sharing_settings");
+                sharing.Click += (_, _) => SharingRequested?.Invoke(info.Id, info.Name(L.Code)); actions.Children.Add(sharing);
+            }
             if (info.Available && record.Fingerprint != selected)
             {
                 var enable = ActionButton(record.Fingerprint == state.Previous ? "plugins.rollback" : "plugins.enable");
@@ -74,6 +82,7 @@ public sealed class DailyPluginPanel : ScrollViewer
         }
         if (state.Installed.Length == 0 && !current.Available) cards.Children.Add(Card(Text("plugins.empty")));
         Busy(occupied);
+        RenderMarket();
     }
     private static Button ActionButton(string key) { var button = new Button { Margin = new(0, 0, 10, 6) }; L.Bind(button, ContentControl.ContentProperty, key); return button; }
     private static TextBlock Text(string key, params object?[] args) { var text = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 8, 0, 0) }; text.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk"); L.Text(text, key, args); return text; }
@@ -97,9 +106,11 @@ public partial class MainWindow
             }
             pluginPanel.Status("plugins.checking");
             using var package = await Task.Run(() => PluginStore.Prepare(path));
-            if (!PluginConfirm("plugins.import", L.Get("plugins.trust", package.Info.Name(L.Code), package.Info.Version, package.Info.Publisher.Length == 0 ? "—" : package.Info.Publisher))) return;
+            var choice = ConfirmPluginInstall(package.Info.Name(L.Code), package.Info.Version, package.Info.Publisher, package.Info.Id, package.Info.SupportsSolutionSharing);
+            if (!choice.Confirmed) return;
             var installed = await Task.Run(() => PluginStore.Install(package));
             await PluginStore.ActivateAsync(installed.Fingerprint, ProbePluginAsync);
+            if (choice.Share is { } share) DailyPluginSharing.Write(root, package.Info.Id, share);
         });
         pluginPanel.EnableRequested += async fingerprint => await ChangePluginAsync(async () =>
         {
@@ -113,6 +124,15 @@ public partial class MainWindow
             return Task.CompletedTask;
         });
         pluginPanel.RestartRequested += async () => await RestartForPluginsAsync();
+        pluginPanel.SharingRequested += (id, name) =>
+        {
+            if (smoke != null || IsSandboxWindow) return;
+            var choice = new PluginSharingWindow(this, name, DailyPluginSharing.Enabled(root, id), false);
+            if (DailyDialogs.ShowModal(choice) != true) return;
+            try { DailyPluginSharing.Write(root, id, choice.SharingEnabled); pluginPanel.Status("plugins.sharing_saved"); }
+            catch (Exception error) { PluginError(error); }
+        };
+        InitializePluginMarket();
         _ = RefreshPluginsAsync();
     }
     private async Task RefreshPluginsAsync()
@@ -130,6 +150,7 @@ public partial class MainWindow
         if (smoke != null || Unavailable || IsSandboxWindow) return;
         pluginChanging = true; SetBusy(busy);
         try { await PauseAutomaticMaintenanceAsync(); if(finalClose || UpdateRestarting)return; await change(); await RefreshPluginsAsync(); }
+        catch (OperationCanceledException) when (marketCancellation?.IsCancellationRequested == true) { await RefreshPluginsAsync(); pluginPanel.Status("plugins.market_cancelled"); }
         catch (Exception error) { await RefreshPluginsAsync(); PluginError(error); }
         finally { pluginChanging = false; SetBusy(busy); }
     }
@@ -167,6 +188,15 @@ public partial class MainWindow
         finally { pluginChanging = false; SetBusy(busy); }
     }
     private bool PluginConfirm(string key, string message) => DailyDialogs.ShowModal(DailyDialogs.Message(this, L.Get(key), message, true)) == true;
+    private (bool Confirmed, bool? Share) ConfirmPluginInstall(string name, string version, string publisher, string id, bool sharing)
+    {
+        if (sharing && DailyPluginSharing.Read(root, id) == null)
+        {
+            var dialog = new PluginSharingWindow(this, name + "  " + version + " · " + publisher, false, true);
+            return (DailyDialogs.ShowModal(dialog) == true, dialog.SharingEnabled);
+        }
+        return (PluginConfirm("plugins.market_install", L.Get("plugins.trust", name, version, publisher) + "\n\n" + L.Get("plugins.market_install_confirm", name, version)), null);
+    }
     private async Task SmokePluginsAsync()
     {
         WorkspaceTabs.SelectedItem = PluginsTab;
@@ -181,6 +211,7 @@ public partial class MainWindow
             { Id = first.Id, Publisher = "Example", MinHostVersion = "0.9.12", MaxHostVersion = "0.9.99", Names = new() { ["zh-CN"] = "示例扩展", ["zh-TW"] = "範例擴充", ["en-US"] = "Example extension" } };
             var state = new DailyPluginSelection(1, first.Fingerprint, old.Fingerprint, [first, old]);
             pluginPanel.Refresh(state, new() { [first.Fingerprint] = info, [old.Fingerprint] = info with { Version = old.Version, Fingerprint = old.Fingerprint } }, info);
+            pluginPanel.SelectMarket(false);
             foreach (var code in DailyLanguage.Codes)
             {
                 L.Select(code);
@@ -195,6 +226,7 @@ public partial class MainWindow
             // Disabled page actions must not be re-enabled by a theme or language refresh.
             pluginPanel.Refresh(state, new() { [first.Fingerprint] = info, [old.Fingerprint] = info with { Version = old.Version, Fingerprint = old.Fingerprint } }, info);
             pluginPanel.Busy(false);
+            await CheckPluginMarketForSmoke();
         }
         finally { Environment.SetEnvironmentVariable("DUSTWEAVE_PLUGIN", prior); L.Select(language); await RefreshPluginsAsync(); }
     }

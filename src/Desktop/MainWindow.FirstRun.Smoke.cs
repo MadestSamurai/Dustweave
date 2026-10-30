@@ -77,6 +77,7 @@ public partial class MainWindow
                     Check(window.CanContinue, "Closing the game did not unlock saving");
                     window.SaveAccount();
                     Check(window.Saved && window.Stage == 3 && DailyJson.TryRead<FirstRunRecord>(Path.Combine(local, "first-run.json"))?.State == "tour", "Saved account did not lead to the tour");
+                    Check(!Descendants<RadioButton>(window).Any() && !File.Exists(Path.Combine(local, "parallel-options.json")) && DailyMultiAccountSetup.Read(local) == null, "Single-account guide introduced sandbox setup or changed execution mode");
                     Capture("onboarding-saved-" + code + "-" + mode, (FrameworkElement)window.Content);
                     Descendants<Button>(window).Single(x => x.IsDefault).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                     Check(!window.IsVisible, "Continue did not return to the main app");

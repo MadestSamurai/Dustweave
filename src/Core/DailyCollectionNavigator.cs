@@ -12,16 +12,19 @@ public sealed class DailyCollectionNavigator
     private readonly string tracePath;
     private readonly JsonArray trace = [];
     private readonly DailyRouteAttempts attempts = new();
+    private readonly HashSet<long> recoveryHubs = [];
+    internal enum NavigationState { ReadyForWork, Planning, ReadyToMove, Moving, Recovering, Paused }
+    internal NavigationState State { get; private set; }
     private JsonNode? progress;
     private string goals = "";
     public void TrackProgress(JsonObject current)
     {
-        if (!JsonNode.DeepEquals(progress, current)) attempts.Clear();
+        if (!JsonNode.DeepEquals(progress, current)) { attempts.Clear(); recoveryHubs.Clear(); Atlas.ClearRejectedDepartures(); }
         progress = current.DeepClone();
     }
     private void Trace(string state, JsonObject detail)
     {
-        trace.Add(O(("at", route.W.Driver.UtcTicks), ("state", state), ("region", node), ("detail", detail)));
+        trace.Add(O(("at", route.W.Driver.UtcTicks), ("state", state), ("navigation_state", State.ToString()), ("region", node), ("detail", detail)));
         while (trace.Count > 48) trace.RemoveAt(0);
         try { DailyJson.Write(tracePath, O(("pack", pack), ("account", route.W.Context["actor"]![3]),
             ("cycle", route.W.Context["cycle"]), ("events", trace))); }
@@ -58,6 +61,7 @@ public sealed class DailyCollectionNavigator
     }
     public long Observe(JsonObject e)
     {
+        Identity(Evidence, e);
         var map = Map(e);
         var travel = Travel(e);
         Require(N(map["packId"]) == pack && N(travel["Pack"]) == pack && N(travel["Map"]) == N(map["id"]), "原生地图与路线卡带不一致");
@@ -67,10 +71,12 @@ public sealed class DailyCollectionNavigator
         var ports = FieldRows(e, "waypoint").Where(p => paths.ContainsKey(N(p["instance"]))).Select(p => DailyRegionRouter.D(paths[N(p["instance"])]["Distance"])).ToArray();
         Evidence = e;
         node = Region(e);
+        Atlas.RefreshMaps(Rows(travel["Maps"]));
         Atlas.Observe(node, exits, ports, B(travel["Ground"]), DailyRegionRouter.D(map["maxSpeed"]));
         double speedRemaining = Remaining(e, MovementSpeedTalent);
         Atlas.ObserveSpeed(speedRemaining, speedRemaining > 0 ? MovementSpeedBonus(e) : 0);
         Atlas.ObserveQuick(Rows(travel["QuickTargets"] ?? new JsonArray()));
+        node = Atlas.Current!;
         return N(map["id"]);
     }
     internal static double MovementSpeedBonus(JsonObject evidence)
@@ -90,8 +96,12 @@ public sealed class DailyCollectionNavigator
     public Task<long> Observe() => Observe(settle: 1);
     private async Task<long> Observe(double settle)
     {
-        await route.FieldReady(settle: settle);
-        return Observe(await route.Evidence());
+        try
+        {
+            await route.FieldReady(settle: settle);
+            return Observe(await route.Evidence());
+        }
+        catch { State = NavigationState.Paused; throw; }
     }
     public void Save() => DailyJson.Write(path, O(("schema", 1), ("account", route.W.Context["actor"]![3]), ("graph", Atlas.Export())));
     public async Task<JsonObject> Plan(IEnumerable<long> pending, long? returnMap = null, bool teleports = true, IEnumerable<long>? allowed = null)
@@ -102,14 +112,41 @@ public sealed class DailyCollectionNavigator
         var forbidden = allowed == null ? new HashSet<long>() : Atlas.Maps.Keys.Except(allowed).ToHashSet();
         if (!Excluded.Contains(current))
             forbidden.UnionWith(Excluded);
-        var plan = Atlas.Plan(pending, returnMap, teleports, forbidden);
-        goals = O(("pending", plan["pending"]), ("return", returnMap)).ToJsonString();
+        State = NavigationState.Planning;
+        long[] wanted = pending.Distinct().Order().ToArray();
+        goals = O(("pending", wanted), ("return", returnMap)).ToJsonString();
+        JsonObject plan;
+        try { plan = Atlas.Plan(wanted, returnMap, teleports, forbidden); }
+        catch (DailyTravelBlocked)
+        {
+            // One temporarily unreadable destination must not abandon the other
+            // jobs in this pack. Keep every original goal in the work ledger.
+            var alternatives = new List<JsonObject>();
+            foreach (long target in wanted.Where(id => id != current))
+                try { alternatives.Add(Atlas.Plan([target], teleports: teleports, forbiddenMaps: forbidden)); }
+                catch (DailyTravelBlocked) { }
+            if (alternatives.Count > 0)
+            {
+                plan = alternatives.OrderBy(p => DailyRegionRouter.D(p["weighted_cost"])).First();
+                plan["partial_route"] = true;
+            }
+            else
+            {
+                var probe = teleports ? Atlas.SafeHubProbe(forbidden, recoveryHubs) : null;
+                if (probe == null) { State = NavigationState.Paused; throw; }
+                plan = O(("actions", new JsonArray(probe)), ("estimated_seconds", probe["seconds"]),
+                    ("weighted_cost", probe["seconds"]), ("summon_casts", 0), ("recovery_probe", true));
+            }
+            plan["pending"] = Array(wanted.Select(id => (JsonNode)JsonValue.Create(id)!));
+            plan["return_map"] = returnMap;
+        }
         plan["chapter"] = pack;
         plan["current"] = current;
         plan["account"] = Copy(route.W.Context["actor"]![3]);
         plan["at"] = route.W.Driver.UtcTicks;
         Save();
         DailyJson.Write(Path.ChangeExtension(path, "-plan.json"), plan);
+        State = NavigationState.ReadyToMove;
         Trace("planned", plan);
         return plan;
     }
@@ -122,6 +159,7 @@ public sealed class DailyCollectionNavigator
         string planned = S(action["origin"]);
         if (DailyRouteAtlas.MapOf(planned) != current || !planned.StartsWith('?') && planned != origin)
         {
+            State = NavigationState.ReadyForWork;
             Trace("origin_changed", action);
             return false;
         }
@@ -132,11 +170,16 @@ public sealed class DailyCollectionNavigator
         // Cached geometry must still obey Nightmare Winter's safe-hub policy.
         if (kind == "walk" && (RequiresSafeHub(Evidence) || RequiresSafeHub(Evidence, destination)))
             kind = "teleport";
-        if (!attempts.TryStep(goals, origin, kind, destination, action["object"]))
+        if (!attempts.TryStep(goals, origin, kind == "teleport" ? kind + ":" + S(action["mode"]) : kind, destination, action["object"]))
         {
-            Trace("cycle_deferred", action);
-            throw new DailyTravelBlocked("地图路线反复经过同一入口且待办未变化，已保留路线记录，暂缓此卡带");
+            var repeated = action.DeepClone().AsObject(); repeated["origin"] = origin;
+            Atlas.RejectDeparture(repeated);
+            State = NavigationState.ReadyForWork;
+            Trace("cycle_replanned", repeated);
+            return false;
         }
+        State = NavigationState.Moving;
+        if (kind == "quick") recoveryHubs.Add(N(action["object"]));
         Trace("moving", action);
         try
         {
@@ -152,61 +195,101 @@ public sealed class DailyCollectionNavigator
                 await route.FieldReady(settle: 0);
                 if (!await DailyQuickTravel.TryMove(route.W, N(action["object"]), destination))
                 {
-                    Atlas.BlockedQuick.Add((origin, N(action["object"])));
-                    Trace("quick_unavailable", action);
-                    return false;
+                    return await Recover("quick_unavailable", "Native shortcut did not arrive");
                 }
             }
             else
             {
                 Require(kind == "teleport", "未知路线动作");
                 await route.FieldReady();
-                await route.Teleport(destination, recovery: true, nativeOnly: S(action["mode"]) == "native");
+                await route.TeleportPlanned(destination, nativeOnly: S(action["mode"]) == "native", summonOnly: B(action["summon_only"]));
             }
         }
         catch (Exception ex) when (kind == "teleport" && new[] { "Waypoint page cycle", "Waypoint map not available", "No unlocked waypoint", "Requested waypoint is not unlocked" }.Any(s => ex.Message.Contains(s, StringComparison.Ordinal)))
         {
             if (await route.W.Has("WayPointUI"))
                 await route.W.Step("WayPointUI", back: true, absent: "WayPointUI", reason: "目标传送阵未开放，重新选择已观察路线");
-            Atlas.WarpBlocked.Add(destination);
-            Trace("waypoint_unavailable", action);
-            return false;
+            return await Recover("waypoint_unavailable", ex.Message,
+                destinationLocked: ex is DailyTravelBlocked blocked && blocked.UnavailableWaypoint == destination, departureOnly: true);
         }
-        catch (DailyTravelBlocked)
+        catch (DailyTravelBlocked error)
         {
-            if (kind == "walk")
-                Atlas.Blocked.Add((origin, gate == null ? (action["object"] == null ? null : N(action["object"])) : N(gate[ObjectPath])));
-            else if (kind == "quick")
-                Atlas.BlockedQuick.Add((origin, N(action["object"])));
-            else
-                Atlas.BlockedPorts.Add(origin);
-            Trace("unreachable", action);
-            return false;
+            return await Recover("replan", error.Message);
         }
         catch (Exception error)
         {
+            State = NavigationState.Paused;
             Trace("interrupted", O(("action", action), ("error", error.Message)));
             throw;
         }
         long arrived = await Observe(settle: 0);
-        Require(arrived == destination, "路线没有到达预期地图");
+        if (arrived != destination) return await Recover("arrival_changed", "Settled on another map", observe: false);
         // Do not spend stealth merely for arriving. The next concrete action
         // may be immediate suppression, absorption at the waypoint, or another
         // direct teleport. Every actual walking segment protects itself.
         if (kind == "walk")
             Atlas.Reached(origin, N(gate![ObjectPath]), node, route.W.Time - started);
         else if (kind == "quick")
+        {
             Atlas.ReachedQuick(N(action["object"]), node, route.W.Time - started, sameMap: current == arrived);
+            node = Atlas.Current!;
+        }
         else
             Atlas.Landing[arrived] = node;
         Save();
+        State = NavigationState.ReadyForWork;
         Trace("arrived", O(("action", action), ("map", arrived)));
         return true;
+
+        async Task<bool> Recover(string state, string reason, bool destinationLocked = false, bool observe = true, bool departureOnly = false)
+        {
+            State = NavigationState.Recovering;
+            Trace("recovering", O(("action", action), ("error", reason)));
+            // A failed approach may have crossed a gate or a native recovery may
+            // have moved the player. Settle and read the live field before any
+            // route mutation. Loading, identity loss and uncertain transactions
+            // propagate: they are not permission to send another movement.
+            long actual;
+            try { actual = observe ? await Observe(settle: 0) : N(Map(Evidence)["id"]); }
+            catch (Exception error)
+            {
+                State = NavigationState.Paused;
+                Trace("recovery_interrupted", O(("action", action), ("error", error.Message)));
+                throw;
+            }
+            bool arrived = actual == destination && current != destination;
+            if (!arrived && destinationLocked) Atlas.WarpBlocked.Add(destination);
+            if (!arrived && !destinationLocked && !departureOnly && actual == current && node == origin)
+            {
+                if (kind == "walk") Atlas.Blocked.Add((origin, gate == null ? (action["object"] == null ? null : N(action["object"])) : N(gate[ObjectPath])));
+                else if (kind == "quick") Atlas.BlockedQuick.Add((origin, N(action["object"])));
+                else if (S(action["mode"]) == "native") Atlas.BlockedNativePorts.Add(origin);
+                else Atlas.BlockedSummons.Add(origin);
+            }
+            else if (!arrived && !destinationLocked)
+            {
+                // A failed preparation can relocate the player. Do not poison
+                // the new origin; remember the original unsuccessful departure
+                // so returning through a safe hub cannot restart the same loop.
+                var rejected = action.DeepClone().AsObject(); rejected["origin"] = origin;
+                Atlas.RejectDeparture(rejected);
+            }
+            Save();
+            State = NavigationState.ReadyForWork;
+            Trace(arrived ? "recovered_arrival" : state, O(("action", action), ("error", reason),
+                ("previous_region", origin), ("actual_map", actual), ("actual_region", node),
+                ("next", "refresh_jobs_then_replan")));
+            // Return to the weekly work selector even if recovery reached an
+            // intermediate map. It owns NPC prerequisites and suppression order.
+            return arrived;
+        }
     }
     public Task WalkTo(long destination, IEnumerable<long>? allowed = null) => GoTo(destination, teleports: false, allowed: allowed);
     public async Task GoTo(long destination, bool teleports = true, IEnumerable<long>? allowed = null)
     {
         attempts.Clear();
+        recoveryHubs.Clear();
+        Atlas.ClearRejectedDepartures();
         for (int i = 0; i < 64; i++)
         {
             var p = await Plan([destination], teleports: teleports, allowed: allowed);

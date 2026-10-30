@@ -51,7 +51,17 @@ public static class DailyLinearOptimizer
     public sealed record Result(double[] Values, double[] RowDual, double Objective, double? Bound, bool Optimal, int Status);
     public static Result? Solve(double[] objective, double[] upper, IReadOnlyList<double[]> rows, IReadOnlyList<double> lower, IReadOnlyList<double> caps, bool integer, double seconds = 15, Action? check = null, int? integerColumns = null, int[]? extraIntegerColumns = null, double[]? initial = null)
     {
-        if (objective.Length != upper.Length || rows.Count != lower.Count || rows.Count != caps.Count || rows.Any(r => r.Length != objective.Length) || !double.IsFinite(seconds) || seconds <= 0 || seconds > 300)
+        if (rows.Any(r => r.Length != objective.Length)) throw new ArgumentException("Invalid optimization model");
+        return SolveSparse(objective, upper, rows.Select(r => (IReadOnlyDictionary<int, double>)r
+            .Select((value, column) => (value, column)).Where(p => p.value != 0).ToDictionary(p => p.column, p => p.value)).ToArray(),
+            lower, caps, integer, seconds, check, integerColumns, extraIntegerColumns, initial);
+    }
+
+    // Calendar inventories are sparse: allocating a dense day/item/offer matrix
+    // would otherwise use gigabytes. Keep the same native solver and audits.
+    public static Result? SolveSparse(double[] objective, double[] upper, IReadOnlyList<IReadOnlyDictionary<int, double>> rows, IReadOnlyList<double> lower, IReadOnlyList<double> caps, bool integer, double seconds = 15, Action? check = null, int? integerColumns = null, int[]? extraIntegerColumns = null, double[]? initial = null)
+    {
+        if (objective.Length != upper.Length || rows.Count != lower.Count || rows.Count != caps.Count || rows.Any(r => r.Any(p => p.Key < 0 || p.Key >= objective.Length || !double.IsFinite(p.Value))) || !double.IsFinite(seconds) || seconds <= 0 || seconds > 300)
             throw new ArgumentException("Invalid optimization model");
         if (integerColumns is < 0 || integerColumns > objective.Length || extraIntegerColumns?.Any(j => j < 0 || j >= objective.Length) == true) throw new ArgumentException("Invalid integer column count");
         check?.Invoke();
@@ -82,11 +92,11 @@ public static class DailyLinearOptimizer
                 for (int i = 0; i < m; i++)
                 {
                     starts[i] = indices.Count;
-                    for (int j = 0; j < n; j++)
-                        if (rows[i][j] != 0)
+                    foreach (var coefficient in rows[i])
+                        if (coefficient.Value != 0)
                         {
-                            indices.Add(j);
-                            coefficients.Add(rows[i][j]);
+                            indices.Add(coefficient.Key);
+                            coefficients.Add(coefficient.Value);
                         }
                 }
                 var hi = upper.Select(x => double.IsPositiveInfinity(x) ? Infinity : x).ToArray();
@@ -142,7 +152,7 @@ public static class DailyLinearOptimizer
                     throw new InvalidDataException("规划变量超限");
                 for (int i = 0; i < m; i++)
                 {
-                    double v = rows[i].Select((a, j) => a * x[j]).Sum();
+                    double v = rows[i].Sum(p => p.Value * x[p.Key]);
                     // Mixed forecasts can combine large gold coefficients with fractional expected supply.
                     double tolerance = integerColumns < n ? Math.Max(1e-5, Math.Abs(v) * 1e-10) : 1e-5;
                     if (v < lo[i] - tolerance || v > cap[i] + tolerance)

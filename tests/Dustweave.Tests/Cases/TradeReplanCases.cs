@@ -7,6 +7,46 @@ static class TradeReplanCases
     {
         void Check(bool ok, string name) { if (!ok) throw new Exception(name); cases.Add(name); }
         var settings = new DailyPreferences();
+        Check(settings.Trade.AutoCookAndSell, "automatic mode uses dated cooking and selling strategy by default");
+        foreach (bool favorites in new[] { false, true })
+        foreach (bool enabled in new[] { false, true })
+        {
+            var old = System.Text.Json.JsonSerializer.SerializeToNode(new DailyPreferences())!.AsObject();
+            old["Trade"]!.AsObject().Remove("StrategyRevision");
+            old["Trade"]!["AutoCookAndSell"] = false;
+            old["Trade"]!["Enabled"] = enabled; old["Trade"]!["FavoritesOnly"] = favorites;
+            old["Trade"]!["CookingRecipes"] = new JsonArray(20, 10);
+            var migrated = DailyPreferences.Parse(old.ToJsonString());
+            Check(migrated.Trade.AutoCookAndSell == !favorites && migrated.Trade.Enabled == enabled && migrated.Trade.FavoritesOnly == favorites
+                && migrated.Trade.CookingRecipes.SequenceEqual(new long[] { 20, 10 }),
+                "automatic mode adopts dated strategy while favorites and custom recipes remain unchanged: " + favorites + "/" + enabled);
+            migrated.Trade.AutoCookAndSell = false;
+            var store = new DailyPreferenceStore(Path.Combine(output, "trade-processing-preferences-" + favorites + "-" + enabled));
+            store.Save(new string('a',64), migrated);
+            Check(!store.Read(new string('a',64)).Trade.AutoCookAndSell && store.Read(new string('b',64)).Trade.AutoCookAndSell,
+                "later explicit processing opt-out persists only for its account: " + favorites + "/" + enabled);
+        }
+        var processingPlan = O(("summary", O(("potions_used", 410), ("potions_to_buy", 400))), ("bargain", O(("potions", 10))),
+            ("cooking", new[] { O(("recipe", 20), ("count", 100), ("potions", 400)) }),
+            ("sales", new[] { O(("item", 100), ("count", 500), ("today_quote_confirmed", true)) }));
+        Check(DailyTradeExecution.RequiredPotions(processingPlan, new() { AutoCookAndSell = false }) == 10
+            && DailyTradeExecution.RequiredPotions(processingPlan, new() { AutoCookAndSell = true }) == 410,
+            "purchase-only potion needs exclude all planned cooking while opt-in retains full processing");
+        foreach (string phase in new[] { "cooking", "sale" })
+        using (var stopped = new WorkflowHarness(Path.Combine(output, "trade-processing-off-" + phase), DailyWorkflowRegistry.Proofs()))
+        {
+            stopped.Workflow.Settings.Trade.Enabled = true;
+            stopped.Workflow.Settings.Trade.AutoCookAndSell = false;
+            stopped.OnCommand = _ => throw new Exception("Disabled processing must not submit any game operation");
+            var job = O(("id", "old-plan"), ("phase", phase));
+            var operations = new List<JsonObject>();
+            string processingDirectory = Path.Combine(stopped.Workflow.Root, "trade-job");
+            Directory.CreateDirectory(processingDirectory);
+            // Even a prior plan with recipe and sale rows cannot authorize new processing.
+            await new DailyTradeExecution(stopped.Workflow, new()).ProcessStock(processingPlan, job, processingDirectory, operations);
+            Check(S(job["phase"]) == "audit" && S(job["automatic_processing"]) == "disabled" && operations.Count == 0 && stopped.Box.Commands.Count == 0,
+                "disabled processing skips both new and resumed plans without game actions: " + phase);
+        }
         Check(!settings.Trade.FavoritesOnly,"favorites-only trading is off by default");
         settings.Trade.FavoritesOnly=true;
         Check(DailyPreferences.Parse(System.Text.Json.JsonSerializer.Serialize(settings)).Trade.FavoritesOnly,"favorites-only preference survives account serialization");
