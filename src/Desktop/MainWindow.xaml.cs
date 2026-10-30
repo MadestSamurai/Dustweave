@@ -1396,10 +1396,19 @@ public partial class MainWindow : Window
     }
     private void CheckPlanSelectionForSmoke(QueueView history)
     {
+        // Earlier UI cases deliberately edit the demo accounts' draft selections.
+        // A fresh-plan assertion needs identities those cases have never visited.
+        var originalHistory = history;
+        string firstAccount = new('8', 64), secondAccount = new('9', 64);
+        history = history with { Account = firstAccount };
         var defaults = new DailyPreferences();
+        dailyPanel.SetAccount("Fresh plan fixture", firstAccount);
+        dailyPanel.ShowPlan(defaults);
+        dailyPanel.ShowCurrentPlan();
+        UpdateLayout();
         var enabled = DailyStageCatalog.All.Where(s => s.Enabled(defaults)).Select(s => s.Id).ToArray();
         if (!dailyPanel.SelectedPlanTasks.SequenceEqual(enabled) || !dailyPanel.StartEnabled)
-            throw new Exception("Fresh plan must select configured stages by default");
+            throw new Exception($"Fresh plan must select configured stages by default: enabled=[{string.Join(',', enabled)}]; selected=[{string.Join(',', dailyPanel.SelectedPlanTasks)}]; start={dailyPanel.StartEnabled}");
         dailyPanel.ToggleFirstPlanCheckboxForSmoke();
         if (dailyPanel.SelectedPlanTasks.Contains(enabled[0]))
             throw new Exception("Rendered checkbox cannot deselect a planned stage");
@@ -1433,7 +1442,7 @@ public partial class MainWindow : Window
                 throw new Exception("Busy plan can be edited or dispatched");
             dailyPanel.Busy(false);
             dailyPanel.StartCurrentSelection();
-            if (sent?.Account != new string('a', 64) || !sent.Tasks.SequenceEqual(new[] { "free_draws", "mail" }))
+            if (sent?.Account != firstAccount || !sent.Tasks.SequenceEqual(new[] { "free_draws", "mail" }))
                 throw new Exception("Plan event lost account or subset");
             sent = null;
             // Identical row IDs across plan/history must still have separate checkbox state.
@@ -1461,13 +1470,13 @@ public partial class MainWindow : Window
             dailyPanel.LoadHistory(history);
             if (dailyPanel.SelectedPlanTasks.Count != 0 || dailyPanel.StartEnabled)
                 throw new Exception("Refresh reversed manual clear-all");
-            dailyPanel.SetAccount("其他账号", new string('b', 64));
+            dailyPanel.SetAccount("其他账号", secondAccount);
             dailyPanel.ShowPlan(new DailyPreferences());
             if (!dailyPanel.SelectedPlanTasks.SequenceEqual(enabled))
                 throw new Exception("Temporary plan leaked between accounts");
-            dailyPanel.SetAccount("冒烟测试账号", new string('a', 64));
+            dailyPanel.SetAccount("冒烟测试账号", originalHistory.Account);
             dailyPanel.ShowPlan(new DailyPreferences());
-            dailyPanel.LoadHistory(history);
+            dailyPanel.LoadHistory(originalHistory);
             dailyPanel.ShowCurrentPlan();
         }
         finally { dailyPanel.PlanRequested -= CapturePlan; }
