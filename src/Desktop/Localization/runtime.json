@@ -5185,6 +5185,26 @@
     "zh-TW": "擊殺任務由普通地圖壓制完成，不啟動狩獵場指引",
     "en-US": "Kill quests use suppression on regular maps; hunting-ground guidance is disabled."
   },
+  "message.Calendar sale quote audit failed": {
+    "zh-CN": "本轮售卖报价核对未通过，未生成售卖订单",
+    "zh-TW": "本輪售賣報價核對未通過，未產生售賣訂單",
+    "en-US": "The current sale price could not be verified. No sale order was created."
+  },
+  "message.Calendar current resource audit failed": {
+    "zh-CN": "本轮跑商的金币或天赋药核对未通过，未下单",
+    "zh-TW": "本輪跑商的金幣或天賦藥核對未通過，未下單",
+    "en-US": "Gold or Ability Pills could not be verified for this trade. No order was placed."
+  },
+  "message.Calendar current stock audit failed": {
+    "zh-CN": "本轮采购数量超过当前可购数量，未下单",
+    "zh-TW": "本輪採購數量超過目前可購數量，未下單",
+    "en-US": "The planned purchase exceeds the available stock. No order was placed."
+  },
+  "message.Calendar current capacity audit failed": {
+    "zh-CN": "本轮采购或料理可能超过库存容量，未下单",
+    "zh-TW": "本輪採購或料理可能超過庫存容量，未下單",
+    "en-US": "The planned purchases or cooking may exceed inventory capacity. No order was placed."
+  },
   "message.stage_partial_without_reason": {
     "zh-CN": "该环节尚未完成，但执行器未返回原因。请查看游戏是否有断线或弹窗，再补跑此项；若再次出现，请导出诊断。",
     "zh-TW": "此環節尚未完成，但執行器未回傳原因。請查看遊戲是否斷線或有彈窗，再補跑此項；若再次出現，請匯出診斷。",
