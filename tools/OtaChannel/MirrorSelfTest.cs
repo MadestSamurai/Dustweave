@@ -77,6 +77,100 @@ static class MirrorSelfTest
         File.Delete(receipt);
         Pass("mirror-missing-receipt-falls-back", !await Mirror.Probe(config, valid) && !File.Exists(Mirror.Enabled(config)));
 
+        Config Setup(string name, int layout = 2)
+        {
+            var c = config with { State = Path.Combine(parent, name, "state"), Public = Path.Combine(parent, name, "public"), Layout = layout,
+                MirrorBaseUrl = layout == 3 ? "https://test.cdn.7caiyun.com/dustweave/ota/all-in-one" : config.MirrorBaseUrl };
+            Directory.CreateDirectory(c.State); Directory.CreateDirectory(c.Public);
+            File.WriteAllBytes(Rules.FeedPath(c, writing: true), signed);
+            Directory.CreateDirectory(Path.Combine(c.Public, "v1.4.13"));
+            foreach (var delta in deltas) File.WriteAllBytes(Path.Combine(c.Public, "v1.4.13", delta.FileName), [1, 2, 3, 4]);
+            return c;
+        }
+        MirrorFailure FailureOf(Config c) => Rules.Read<MirrorFailure>(File.ReadAllBytes(Path.Combine(Mirror.Root(c), "failures/v1.4.13.json")));
+        var resumeConfig = Setup("mirror-resume");
+        var gets = new List<string>(); int failedRequests = 0;
+        using var partial = new HttpClient(new Handler(r =>
+        {
+            if (r.Method == HttpMethod.Get) gets.Add(r.RequestUri!.Segments.Last());
+            if (r.RequestUri!.AbsolutePath.Contains("Portable"))
+            { failedRequests++; return new(HttpStatusCode.ServiceUnavailable); }
+            return Response(r);
+        }));
+        Pass("mirror-maintenance-partial-outage-keeps-origin", !await Mirror.Maintain(resumeConfig, partial) && !File.Exists(Mirror.Enabled(resumeConfig)));
+        Pass("mirror-transient-download-retries-bounded", failedRequests == 3);
+        var progress = Rules.Read<MirrorProgress>(File.ReadAllBytes(Path.Combine(Mirror.Root(resumeConfig), "progress/v1.4.13.json")));
+        Pass("mirror-partial-preparation-saves-only-verified-body", progress.Files.Length == 1 && progress.Files[0].FileName.Contains("Lite"));
+        var firstFailure = FailureOf(resumeConfig);
+        Pass("mirror-preparation-error-identifies-file-and-status", firstFailure.FirstStage == "prepare" && firstFailure.FirstError.Contains("Portable") && firstFailure.FirstError.Contains("503"));
+        await Mirror.Probe(resumeConfig, valid);
+        Pass("mirror-later-probe-preserves-original-failure", FailureOf(resumeConfig).FirstError == firstFailure.FirstError && FailureOf(resumeConfig).LastStage == "probe");
+        gets.Clear();
+        using var resumed = new HttpClient(new Handler(r => { if (r.Method == HttpMethod.Get) gets.Add(r.RequestUri!.Segments.Last()); return Response(r); }));
+        Pass("mirror-timer-recovers-missing-receipt", await Mirror.Maintain(resumeConfig, resumed) && File.Exists(Mirror.Enabled(resumeConfig)));
+        Pass("mirror-resume-skips-only-exact-verified-body", gets.Count == 1 && gets[0].Contains("Portable"));
+        Pass("mirror-recovery-preserves-error-history", FailureOf(resumeConfig).RecoveredUtc != null && FailureOf(resumeConfig).FirstError == firstFailure.FirstError);
+        gets.Clear();
+        Pass("mirror-healthy-timer-uses-head-only", await Mirror.Maintain(resumeConfig, resumed) && gets.Count == 0);
+        using (var occupied = new FileStream(Path.Combine(resumeConfig.State, "publish.lock"), FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            Pass("mirror-busy-publication-does-not-disable-current-routes", !await Mirror.Maintain(resumeConfig, resumed) && File.Exists(Mirror.Enabled(resumeConfig)) && gets.Count == 0);
+
+        var rejectConfig = Setup("mirror-reject-body"); int corruptRequests = 0;
+        using var bodyMismatch = new HttpClient(new Handler(_ => { corruptRequests++; return new(HttpStatusCode.OK) { Content = new ByteArrayContent([9, 2, 3, 4]) }; }));
+        Pass("mirror-integrity-error-not-retried-or-enabled", !await Mirror.Maintain(rejectConfig, bodyMismatch) && corruptRequests == 1 && !File.Exists(Mirror.Enabled(rejectConfig)));
+        Pass("mirror-corrupt-body-never-checkpointed", !File.Exists(Path.Combine(Mirror.Root(rejectConfig), "progress/v1.4.13.json")));
+        Pass("mirror-corrupt-body-can-recover-with-correct-download", await Mirror.Maintain(rejectConfig, valid));
+
+        var canceledConfig = Setup("mirror-cancel-resume");
+        using var cancel = new CancellationTokenSource();
+        using var stalled = new HttpClient(new AsyncHandler(async (r, token) =>
+        {
+            if (r.RequestUri!.AbsolutePath.Contains("Portable")) { cancel.Cancel(); await Task.Delay(Timeout.Infinite, token); }
+            return Response(r);
+        }));
+        Pass("mirror-canceled-run-stops-with-origin", !await Mirror.Maintain(canceledConfig, stalled, cancel.Token) && !File.Exists(Mirror.Enabled(canceledConfig)));
+        Pass("mirror-timeout-error-keeps-file-identity", FailureOf(canceledConfig).FirstError.Contains("Portable"));
+        gets.Clear();
+        Pass("mirror-next-timer-resumes-canceled-run", await Mirror.Maintain(canceledConfig, resumed) && gets.Count == 1 && gets[0].Contains("Portable"));
+
+        foreach (var mismatch in new[] { "feed", "endpoint", "blob" })
+        {
+            var c = Setup("mirror-checkpoint-" + mismatch);
+            string p = Path.Combine(Mirror.Root(c), "progress/v1.4.13.json"); Directory.CreateDirectory(Path.GetDirectoryName(p)!);
+            var changed = progress with { Files = deltas.Select(d => new Blob(d.FileName, d.Bytes, d.Sha256)).ToArray() };
+            changed = mismatch switch
+            {
+                "feed" => changed with { FeedSha256 = new string('0', 64) },
+                "endpoint" => changed with { BaseUrl = "https://other.cdn.7caiyun.com/dustweave/ota/v2" },
+                _ => changed with { Files = [changed.Files[0] with { Sha256 = new string('0', 64) }] }
+            };
+            File.WriteAllBytes(p, Rules.Bytes(changed)); gets.Clear();
+            Pass("mirror-checkpoint-mismatch-rechecks-" + mismatch, await Mirror.Maintain(c, resumed) && gets.Count == 2);
+        }
+        var localCorrupt = Setup("mirror-local-corrupt");
+        await Mirror.Prepare(localCorrupt, signed, valid);
+        File.WriteAllBytes(Path.Combine(localCorrupt.Public, "v1.4.13", deltas[0].FileName), [1, 2, 3, 5]);
+        File.Delete(Path.Combine(Mirror.Root(localCorrupt), "verified/v1.4.13.json"));
+        Pass("mirror-resume-still-rehashes-origin-files", !await Mirror.Maintain(localCorrupt, valid) && !File.Exists(Mirror.Enabled(localCorrupt)));
+
+        var changedFeed = Setup("mirror-feed-change");
+        using var changeDuringCheck = new HttpClient(new Handler(r =>
+        {
+            if (r.Method == HttpMethod.Head) File.WriteAllBytes(Rules.FeedPath(changedFeed), Sign(feed with { Releases = [current with { Notes = notes.ToDictionary(p => p.Key, _ => new[] { "updated notes" }) }] }));
+            return Response(r);
+        }));
+        Pass("mirror-feed-change-during-health-never-enables-stale-routes", !await Mirror.Maintain(changedFeed, changeDuringCheck) && !File.Exists(Mirror.Enabled(changedFeed)));
+
+        var aio = Setup("mirror-aio-recovery", 3);
+        var aioDeltas = deltas.Select(d => d with { FromVersion = "1.5.0", FileName = $"Dustweave-1.5.1-{d.Flavor}-from-1.5.0-win-x64.delta.zip" }).ToArray();
+        var aioRelease = current with { Version = "1.5.1", Layout = 3, Deltas = aioDeltas,
+            Assets = assets.Select(a => a with { FileName = $"Dustweave-1.5.1-{a.Flavor}-win-x64.zip" }).ToArray() };
+        File.WriteAllBytes(Rules.FeedPath(aio, writing: true), Sign(feed with { Releases = [aioRelease] }));
+        Directory.CreateDirectory(Path.Combine(aio.Public, "v1.5.1"));
+        foreach (var d in aioDeltas) File.WriteAllBytes(Path.Combine(aio.Public, "v1.5.1", d.FileName), [1, 2, 3, 4]);
+        using var aioClient = new HttpClient(new Handler(r => { Rules.Need(r.RequestUri!.AbsolutePath.StartsWith("/dustweave/ota/all-in-one/"), "Wrong AIO lane"); return new(HttpStatusCode.OK) { Content = new ByteArrayContent([1, 2, 3, 4]) }; }));
+        Pass("mirror-aio-first-maintenance-prepares-current-signed-lane", await Mirror.Maintain(aio, aioClient));
+
         const string original = """
         server {
             location = /updates/dustweave/v2/updates.json { alias /origin/updates.json; }
@@ -104,5 +198,9 @@ static class MirrorSelfTest
     sealed class Handler(Func<HttpRequestMessage, HttpResponseMessage> send) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) => Task.FromResult(send(request));
+    }
+    sealed class AsyncHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> send) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) => send(request, cancellationToken);
     }
 }

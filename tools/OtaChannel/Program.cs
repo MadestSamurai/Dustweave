@@ -235,16 +235,14 @@ static class Program
             Rules.NoLinks(config.State);Rules.NoLinks(config.Public);
             if(args.SequenceEqual(new[]{"mirror-prepare"}))
             {
-                using var gate=new FileStream(Path.Combine(config.State,"publish.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None);
                 using var client=Mirror.Client();
-                await Mirror.Prepare(config,File.ReadAllBytes(Rules.FeedPath(config)),client);
-                Rules.Need(await Mirror.Probe(config,client),"Mirror health verification failed");
+                Rules.Need(await Mirror.Maintain(config,client),"Mirror preparation incomplete or busy; inspect status and retry maintenance");
                 Console.WriteLine(JsonSerializer.Serialize(Mirror.Status(config),Rules.Json));return 0;
             }
             if(args.SequenceEqual(new[]{"mirror-health"}))
             {
                 using var client=Mirror.Client();
-                await Mirror.Probe(config,client);
+                await Mirror.Maintain(config,client);
                 Console.WriteLine(JsonSerializer.Serialize(Mirror.Status(config),Rules.Json));return 0;
             }
             if(args.Length==2 && args[0]=="worker") { Channel.Worker(config,args[1]);return 0; }

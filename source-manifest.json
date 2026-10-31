@@ -8183,6 +8183,14 @@
       "sha256": "fba9cb2eab3dc43b7b7d4019d744b44b0fe8b54670af039718ae5bf22a458cfe",
       "bytes": 3791,
       "reasons": "build input"
+    },
+    {
+      "path": "scripts/upgrade-update-aio-mirror.sh",
+      "sha256": "ae1e6e62fe6e5fb65326e541525c456c2f7dc8214a8e41ff8ca8c5a9a38810f2",
+      "bytes": 3809,
+      "reasons": [
+        "server maintenance input"
+      ]
     }
   ],
   "publicReleaseApproved": false,

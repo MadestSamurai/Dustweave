@@ -183,6 +183,31 @@ remove the flag, making the unchanged original URLs serve their local files.
 `?origin=1` explicitly bypasses cloud delivery. Redirects carry `no-store` so a
 previously cached redirect cannot prevent an origin rollback.
 
+### Recovering incomplete mirror preparation
+
+The recovery-capable publisher makes `mirror-health` resume missing preparation
+under the lane's publication lock. Each attempt has a four-minute budget; the AIO
+service override allows five minutes before systemd terminates it. Completed
+whole-body checks are saved atomically and reused only for the exact signed-feed
+digest, version, endpoint and blob metadata. Origin files are still hashed before
+checkpoint reuse. No redirect is enabled until the entire inventory and the fresh
+health check pass. A healthy timer run uses HEAD requests only.
+
+Transient HTTP/network failures receive up to three attempts per file; signature,
+length, redirect and digest failures are not accepted as transient success. A
+failed run leaves origin delivery available and the next timer invocation resumes
+its verified progress. `mirror-prepare` uses the same recovery path for explicit
+maintenance. Status includes progress plus the first and latest failure; a later
+missing-receipt check does not erase the initial preparation failure.
+
+`scripts/upgrade-update-aio-mirror.sh` installs this server-only fix, verifies the
+old/new executable hashes and current signed-feed digest, preserves rollback
+copies, and changes only the AIO publisher and its service timeout override. It
+does not alter nginx, signed feeds, archives, accounts or the SSH command allowlist.
+The existing constrained publication key cannot install this executable; use
+temporary administrator access and revoke it after public route verification.
+See [the repair record](releases/1.5.10-mirror-recovery.md) for deployment status.
+
 Old clients follow HTTP redirects using their existing downloader. A cloud
 outage can still affect them until the next health check, and a network failure
 specific to one user is not detectable by the origin. The updated transport uses
