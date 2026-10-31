@@ -29,7 +29,8 @@ internal static class TradeQuoteCases
                 O(("Shop", 1), ("Product", 1), ("Item", 0), ("Type", 12), ("PriceType", 4), ("NoBargain", 1), ("BasePrice", 50), ("Rate", 100), ("ReputationDiscount", 10), ("Price", 45), ("Limit", 99999), ("Remaining", 99999)),
                 O(("Shop", 1), ("Product", 2), ("Item", 1013), ("Type", 5), ("PriceType", 4), ("NoBargain", 0), ("BasePrice", 27), ("Rate", 100), ("ReputationDiscount", 10), ("Price", 10), ("Limit", 400), ("Remaining", 400)) }));
         var readings = new[] {
-            Reading("trade.native", ("$self", native)), Reading("trade.bargain", ("$self", true)), Reading("trade.currency", ("Gold", 1000000), ("Catalyst", 1000)),
+            Reading("trade.native", ("$self", native)), Reading("trade.bargain", ("$self", true)), Reading("trade.currency", ("Gold", 1000000), ("Catalyst", 1000), ("InvenSlot",100)),
+            Reading("trade.storage", ("Count",20)),
             Reading("trade.available_shops", ("$items", new[] { O(("Id", 1)) }), ("ὫὨὧὫὯὭὨὢὦὬὪ.Count", 1)),
             Reading("trade.inventory", ("Count", 1), ("$items", new[] { O(("Key", "Food"), ("Value.Count", 0), ("Value.Values", new JsonArray())) })),
             Reading("trade.characters", ("Count", 1), ("$items", new[] { O(("Id", 10), ("TalentLevel", 5), ("Temporary", false)) })),

@@ -63,8 +63,15 @@
       "StaticMember": "ὬὯὧὣὪὢὡὬὬὯὦ",
       "Paths": [
         "Gold",
-        "Catalyst"
+        "Catalyst",
+        "InvenSlot"
       ]
+    },
+    {
+      "Id": "trade.storage",
+      "Type": "ὣὡὧὡὦὣὣὬὨὪὫ",
+      "StaticMember": "ὨὤὪὨὡὫὡὨὬὧὨ",
+      "Paths": [ "Count" ]
     },
     {
       "Id": "trade.inventory",

@@ -127,6 +127,11 @@ static class CookingTravelCases
         Check(DailyCustomCooking.Next(catalog,20,wallet,10,[20])==null,"custom cooking never spends reserved talent pills");
         Check(DailyCustomCooking.Next(catalog,20,wallet,0,[10])==null&&DailyCustomCooking.Next(catalog,999,wallet,0,[999])==null,"unlearned and removed recipes are skipped");
         wallet["items"]!["4"]=9999;Check(DailyCustomCooking.Next(catalog,20,wallet,0,[20])==null,"full output inventory is skipped without consuming materials");
+        wallet["storage"]=O(("slots",4),("used",3),("stacks",new JsonArray(O(("id",4),("count",9999)))));
+        Check(N(DailyCustomCooking.Next(catalog,20,wallet,0,[20])?["count"])==2,"custom cooking creates a second output stack when a shared slot is free");
+        wallet["storage"]!["slots"]=3;
+        Check(DailyCustomCooking.Next(catalog,20,wallet,0,[20])==null,"custom cooking cannot borrow slots from ingredients not consumed yet");
+        wallet.Remove("storage");
         Check(DailySuite.PreparesInWindow("sichuan")&&DailySuite.PreparesInWindow("secret-vision")&&DailyToolCatalog.Find("sichuan").Repository=="Dustweave","both owned tools use deferred shared preparation");
         Check(DailyDiagnosticExport.Allowed("tools/secret-vision/diagnostics/progress.json")&&!DailyDiagnosticExport.Allowed("tools/secret-vision/settings.json")&&!DailyDiagnosticExport.Allowed("tools/secret-vision/private-key.json"),"SECRET VISION evidence is exportable without exposing settings or secrets");
         catalog["cooking_recipes"] = new JsonArray(O(("id",99),("output",5),("count",1),("potions",1),("materials",O(("1",1)))));

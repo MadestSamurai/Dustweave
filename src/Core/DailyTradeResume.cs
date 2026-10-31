@@ -40,6 +40,7 @@ public static class DailyTradeResume
             ["potions"] = potions,
             ["items"] = items,
             ["stacks"] = stacks.DeepClone(),
+            ["storage"] = DailyData.Rows(evidence["Readings"]).Any(r=>DailyData.S(r["Id"])=="trade.storage") ? DailyTradeStorage.Capture(evidence,stacks) : null,
             ["other"] = DailyTradeCatalog.Fingerprint(new JsonArray(groups.Where(g => g?["Key"]?.GetValue<string>() != "Food").Select(g => g!.DeepClone()).ToArray())),
             ["protected"] = kept
         };

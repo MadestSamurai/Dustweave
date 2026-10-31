@@ -4567,6 +4567,10 @@
       "reasons": "build input"
     },
     {
+      "path": "src/Core/DailyTradeStorage.cs",
+      "reasons": "build input"
+    },
+    {
       "path": "src/Core/DailyTradeSnapshot.cs",
       "sha256": "861bbc92f42d8eb0127e96a8febbaae926f2f1812a73bd93d2e8ceb0baaa036d",
       "bytes": 10549,

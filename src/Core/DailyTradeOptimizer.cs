@@ -186,7 +186,7 @@ public static class DailyTradeOptimizer
         var settings = Preferences(inputSettings);
         bool includeBreakEven = B(settings["include_break_even_resales"]);
         Require(double.IsFinite(timeLimit) && timeLimit > 0 && timeLimit <= 300, "Invalid time limit");
-        if (DailyTradePriceChange.UseCalendar(catalog, DateOnly.ParseExact(S(state["game_date"]), "yyyy-MM-dd", CultureInfo.InvariantCulture)))
+        if (state["storage"] is JsonObject || DailyTradePriceChange.UseCalendar(catalog, DateOnly.ParseExact(S(state["game_date"]), "yyyy-MM-dd", CultureInfo.InvariantCulture)))
             return DailyTradeCalendar.Plan(catalog, state, settings, catalogHash, timeLimit, check);
         var stock = Quantities(state["items"]);
         var reserved = Quantities(settings["reserve_items"]);

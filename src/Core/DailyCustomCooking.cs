@@ -45,7 +45,10 @@ public static class DailyCustomCooking
             .GroupBy(p => S(p["id"])).ToDictionary(g => g.Key, g => g.Sum(p => N(p["count"])));
         long amount = materials.Min(p => Math.Max(0, N(wallet["items"]?[p.Key]) - protectedItems.GetValueOrDefault(p.Key)) / N(p.Value));
         long output = N(recipe["output"]), stack = N(Items(catalog).Single(r => N(r["id"]) == output)["stack"]);
-        amount = Math.Min(amount, Math.Max(0, stack - N(wallet["items"]?[output.ToString()])) / N(recipe["count"]));
+        if(wallet["storage"] is JsonObject storage)
+            amount = Math.Min(amount, new DailyTradeStorage(storage).Additional(output,stack) / N(recipe["count"]));
+        else // Older offline snapshots have no proof of free slots.
+            amount = Math.Min(amount, Math.Max(0,stack-N(wallet["items"]?[output.ToString()])) / N(recipe["count"]));
         if (N(recipe["potions"]) > 0) amount = Math.Min(amount, Math.Max(0, N(wallet["potions"]) - reserve) / N(recipe["potions"]));
         amount = Math.Min(amount, int.MaxValue);
         if (amount <= 0) return null;

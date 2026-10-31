@@ -6,7 +6,8 @@ static class ManagedInputsCases
 {
     private static async Task RewardCleanupState(string root, List<string> cases)
     {
-        foreach (string mode in new[] { "ready", "opening", "unready", "missing", "covered", "state-pending", "changing", "reward-open", "reward-closed", "reward-complete" })
+        foreach (string mode in new[] { "ready", "opening", "unready", "missing", "covered", "state-pending", "changing", "reward-open", "reward-closed", "reward-complete",
+            "reward-cover-closing", "reward-covered", "reward-cover-stopped", "reward-cover-identity" })
         {
             using var h = new WorkflowHarness(Path.Combine(root, "reward-cleanup-" + mode), []);
             const string destination = "MailUI";
@@ -16,17 +17,28 @@ static class ManagedInputsCases
             if (mode == "covered") h.Frame["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("UnknownPopupUI", true, "_close", 2));
             bool hasReward = mode.StartsWith("reward-", StringComparison.Ordinal);
             if (hasReward) h.Frame["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("RewardReceivePopupUI", true, "", 2));
+            if (mode.StartsWith("reward-cover", StringComparison.Ordinal))
+                h.Frame["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("UnknownPopupUI", true, "_close", 3));
             h.Readings = () => [WorkflowCases.Reading("reward.presentation",
                 ("ὣὤὥὦὯὦὩὤὨὠὪ", mode != "reward-open"), ("ὪὯὣὥὬὫὬὩὠὮὠ", true),
                 ("ὮὬὧὦὣὠὠὤὮὦὧ", true), ("ὦὡὮὫὧὠὮὡὭὭὬ", false))];
             h.OnDelay = () => {
                 if (mode == "opening" && h.Time >= .3) h.Frame["Surfaces"]![0]!["InputReady"] = true;
                 if (mode == "changing") h.Frame["UiToken"] = "refresh-" + h.Time;
+                if (h.Time >= .3)
+                {
+                    if (mode == "reward-cover-closing" && h.Frame["Surfaces"]!.AsArray().Count == 3)
+                        h.Frame["Surfaces"]!.AsArray().RemoveAt(2);
+                    if (mode == "reward-cover-stopped") h.Stopped = true;
+                    if (mode == "reward-cover-identity") h.Context["account"] = "changed";
+                }
             };
             int closes = 0;
             h.OnCommand = c => {
                 if (!hasReward || S(c["Kind"]) != "back" || N(c["SurfaceId"]) != 2)
                     throw new Exception("Reward cleanup dispatched an unrelated operation");
+                if (DailyNavigationDecision.Types(h.Frame).Contains("UnknownPopupUI"))
+                    throw new Exception("Reward cleanup clicked through an overlay");
                 closes++;
                 h.Page(destination);
                 if (mode == "reward-closed") h.Frame["Surfaces"]![0]!["InputReady"] = false;
@@ -34,15 +46,24 @@ static class ManagedInputsCases
             string error = "";
             try { await h.Driver.DismissRewardAsync([destination], true, () => Task.FromResult(mode != "state-pending")); }
             catch (StageHostException e) { error = e.Message; }
+            catch (DailyStepException e) when (mode == "reward-cover-identity" && e.Kind == "identity") { error = "identity changed"; }
+            if (mode is "reward-cover-stopped" or "reward-cover-identity")
+            {
+                if (closes != 0 || h.Time > 1 || error != (mode == "reward-cover-stopped" ? "Paused during reward cleanup" : "identity changed"))
+                    throw new Exception("Covered reward ignored stop or identity change: " + mode + ": " + error);
+                cases.Add("covered reward wait preserves stop and account binding: " + mode);
+                continue;
+            }
             string expected = mode switch {
-                "ready" or "opening" or "reward-complete" => "",
+                "ready" or "opening" or "reward-complete" or "reward-cover-closing" => "",
+                "reward-covered" => "Reward result is covered by another popup",
                 "reward-open" => "Reward presentation is still open",
                 "reward-closed" => "Reward presentation closed but destination is not ready",
                 "state-pending" => "Reward destination state has not refreshed",
                 "changing" => "Reward destination is still changing",
                 _ => "Reward destination is not ready"
             };
-            if (error != expected || closes != (mode is "reward-closed" or "reward-complete" ? 1 : 0))
+            if (error != expected || closes != (mode is "reward-closed" or "reward-complete" or "reward-cover-closing" ? 1 : 0))
                 throw new Exception($"Reward cleanup state {mode}: expected '{expected}', got '{error}', closes={closes}");
             if (expected.Length > 0 && (h.Time < 40 || h.Time > 41)) throw new Exception("Reward cleanup changed its existing timeout");
             cases.Add("reward cleanup distinguishes presentation, destination and refreshed state without replay: " + mode);

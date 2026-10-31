@@ -1,5 +1,26 @@
 [
 {
+  "Version": "1.5.10",
+  "Date": "2026-10-31",
+  "Notes": {
+    "zh-CN": [
+      "修复跑商将单个堆叠上限误当作同类食材总容量的问题，避免库存较多时少买食材或过早料理。现在按已有堆叠和背包共用空格规划采购与料理。",
+      "自定义料理支持同一种成品占用多个堆叠，并按实际剩余背包空间限制制作数量。保留金币、采购上限和受保护食材的设置继续生效。",
+      "修复装备分解已经完成后，因原窗口尚未退场而误报奖励窗口被遮挡、继而中断日常的问题。"
+    ],
+    "zh-TW": [
+      "修復交易將單一堆疊上限誤當作同類食材總容量的問題，避免庫存較多時少買食材或過早料理。現在依既有堆疊與背包共用空格規劃採購及料理。",
+      "自訂料理支援同一種成品占用多個堆疊，並依實際剩餘背包空間限制製作數量。保留金幣、採購上限及受保護食材的設定繼續生效。",
+      "修復裝備分解已完成後，因原視窗尚未退場而誤報獎勵視窗被遮擋、進而中斷日常的問題。"
+    ],
+    "en-US": [
+      "Fixes trading treating a single stack limit as the total capacity for an ingredient, which could reduce purchases or trigger cooking too early. Planning now accounts for existing stacks and shared inventory slots.",
+      "Custom cooking supports multiple stacks of the same dish and limits quantities to available inventory space. Gold reserves, spending caps and protected ingredients remain respected.",
+      "Fixes daily tasks stopping after successful equipment dismantling when the closing preview briefly covers the reward window."
+    ]
+  }
+},
+{
   "Version": "1.5.9",
   "Date": "2026-10-31",
   "Notes": {

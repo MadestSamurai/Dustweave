@@ -70,6 +70,29 @@ static class TradeCalendarCases
         s=State(c); s["items"]=O(("77",50)); s["available_shops"]=new JsonArray(1);
         p=Plan(c,s);
         Check(!Rows(p["sales"]).Any(r=>N(r["item"])==77) && Rows(p["holds"]).Any(r=>N(r["item"])==77 && N(r["price"])==0),"unavailable merchants cannot fund current or future trading");
+        c=Catalog(); c["items"]![0]!["stack"]=10; c["items"]![0]!["sale"]=20;
+        c["offers"]![0]!["limit"]=30;
+        s=State(c); s["recipes"]=new JsonArray(); s["items"]=O(("1",16));
+        s["today_quotes"]=new JsonArray(O(("item",1),("shop",1),("rate",120),("price",20)));
+        s["storage"]=O(("slots",10),("used",10),("stacks",new JsonArray(O(("id",1),("count",9)),O(("id",1),("count",7)))));
+        p=Plan(c,s);
+        Check(Count(p,"purchases",1)==4,"full bag fills both existing partial stacks even above one-stack total");
+        s["storage"]!["slots"]=11; p=Plan(c,s);
+        Check(Count(p,"purchases",1)==14,"one free slot permits one further stack plus existing headroom");
+        c["items"]!.AsArray().Add(Item(2,30,31)); c["items"]![2]!["stack"]=10;
+        c["offers"]!.AsArray().Add(O(("shop",1),("product",2),("item",2),("base_price",5),("limit",10)));
+        s["offers"]!.AsArray().Add(O(("shop",1),("product",2),("remaining",10),("price",5),("bargain_price",2)));
+        s["today_quotes"]!.AsArray().Add(O(("item",2),("shop",1),("rate",120),("price",30)));
+        p=Plan(c,s);
+        Check(Count(p,"purchases",2)==10 && Count(p,"purchases",1)==4,"two products compete for the same final slot by value rather than each claiming it");
+        s["storage"]!["slots"]=10; s["today_quotes"]=new JsonArray(O(("item",1),("shop",1),("rate",120),("price",20)));
+        p=Plan(c,s);
+        Check(Count(p,"purchases",2)==0,"planned later sales cannot fund earlier purchase storage");
+        var bag=new DailyTradeStorage(s["storage"]!.AsObject());
+        Check(bag.Additional(1,10)==4 && bag.Additional(2,10)==0,"unknown non-food slots remain occupied");
+        c=Catalog(); s=State(c); s["items"]=O(("1",300000)); s["potions"]=10000; s["potion_buy_limit"]=0;
+        p=Plan(c,s);
+        Check(Count(p,"cooking",2002)==0,"large multi-stack stock alone no longer forces early cooking");
         return Task.CompletedTask;
     }
 }

@@ -367,8 +367,17 @@ public sealed partial class DailyCommandDriver
             readySince = -1;
             seen = true;
             waitingFor = "Reward presentation is still open";
-            if (rows.Length != 1 || DailyNavigationDecision.Blockers(frame, "RewardReceivePopupUI", policy).Length > 0)
+            if (rows.Length != 1)
                 throw new StageHostException("adapter", "Reward result is covered by another popup");
+            if (DailyNavigationDecision.Blockers(frame, "RewardReceivePopupUI", policy).Length > 0)
+            {
+                // A response can open the reward before the submitting preview's
+                // close animation finishes. Observe the handoff within this same
+                // deadline; never dismiss the covering window or replay the claim.
+                waitingFor = "Reward result is covered by another popup";
+                await delay(TimeSpan.FromMilliseconds(100));
+                continue;
+            }
             var evidence = await EvidenceAsync(["reward.presentation"]);
             bool ready = (rows[0]["InputReady"]?.GetValue<bool>() ?? true) && new[] { "ὣὤὥὦὯὦὩὤὨὠὪ", "ὪὯὣὥὬὫὬὩὠὮὠ", "ὮὬὧὦὣὠὠὤὮὦὧ" }.All(p => DailyEvidence.Reading(evidence, "reward.presentation", p)?.GetValue<bool>() == true) && DailyEvidence.Reading(evidence, "reward.presentation", "ὦὡὮὫὧὠὮὡὭὭὬ")?.GetValue<bool>() == false;
             if (ready)

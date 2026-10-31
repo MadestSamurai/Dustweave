@@ -46,8 +46,7 @@ internal static class DailyTradeCalendar
         foreach (var p in Quantities(state["protected_items"])) reserved[p.Key] = Math.Max(reserved.GetValueOrDefault(p.Key), p.Value);
         var available = keys.Select(k => Math.Max(0, stock.GetValueOrDefault(k) - reserved.GetValueOrDefault(k))).ToArray();
         var limits = Quantities(state["capacity_limits"]);
-        var capacity = items.Select((i,j) => Math.Max(available[j],
-            limits.GetValueOrDefault(keys[j], N(i["stack"])) - Math.Min(stock.GetValueOrDefault(keys[j]), reserved.GetValueOrDefault(keys[j])))).ToArray();
+        var storage = state["storage"] is JsonObject bag ? new DailyTradeStorage(bag) : null;
         var supply = DailyTradeDropForecast.Supply(catalog, state);
         var visible = Rows(state["offers"]).ToDictionary(p => (N(p["shop"]), N(p["product"])));
         var catalogOffers = Rows(catalog["offers"]).Where(p => visible.ContainsKey((N(p["shop"]),N(p["product"])))).ToArray();
@@ -57,6 +56,17 @@ internal static class DailyTradeCalendar
         bool bargain = B(state["can_bargain"]) || B(state["bargain_active"]);
         var futureOffers = catalogOffers.GroupBy(p => (Item:N(p["item"]), Price:N(p["base_price"]) * (bargain ? 40 : 100) / 100))
             .Select(g => new Offer(g.Key.Item, g.Sum(p => N(p["limit"])), g.Key.Price)).ToArray();
+        // Finite resource bounds, independent of the number of units in one stack.
+        // Recipes consume ingredients only (validated by the catalog), so their
+        // horizon bounds cannot recursively manufacture inventory.
+        var reachable = keys.ToDictionary(k=>k,k=>checked(stock.GetValueOrDefault(k)+
+            Days*futureOffers.Where(o=>o.Item==k).Sum(o=>o.Limit)+(long)Math.Ceiling(Days*supply.GetValueOrDefault(k)/29d)));
+        foreach(var r in recipes)
+            reachable[N(r["output"])]+=Quantities(r["materials"]).Min(p=>reachable[p.Key]/p.Value)*N(r["count"]);
+        var capacity=items.Select((i,j)=>Math.Max(available[j],
+            Math.Min(limits.GetValueOrDefault(keys[j],long.MaxValue),reachable[keys[j]])-
+            Math.Min(stock.GetValueOrDefault(keys[j]),reserved.GetValueOrDefault(keys[j])))).ToArray();
+        double forecastSlots=storage?.ForecastSlots(items,stock,reserved)??0;
         long Price(int i, DateOnly date) => date >= DailyTradePriceChange.EffectiveDate && expectedPrices.TryGetValue(keys[i], out long price) ? price : N(items[i]["sale"]);
         bool TodaySale(int i) => processing && !DailyTradePriceChange.AwaitingPrice(catalog,keys[i],today) &&
             N(items[i]["sale"]) > 0 && I(items[i]["day"]) == today.Day && Rows(state["today_quotes"]).Any(q =>
@@ -75,10 +85,13 @@ internal static class DailyTradeCalendar
                 var date = today.AddDays(t); bool now = t == 0;
                 var dayOffers = now ? offers : futureOffers;
                 var buy = dayOffers.Select(o => model.Variable(o.Limit, now)).ToArray();
+                bool slotPressure=storage!=null && keys.Sum(k=>storage.NewSlots(k,N(items[index[k]]["stack"]),
+                    offers.Where(o=>o.Item==k).Sum(o=>o.Limit)+futureOffers.Where(o=>o.Item==k).Sum(o=>o.Limit)+
+                    (long)Math.Ceiling(supply.GetValueOrDefault(k)/29d)))>storage.Free;
                 // Without a sale today or imminent ingredient overflow, cooking a
                 // day earlier has no benefit. Deferring is safe even if every
                 // available product is bought tomorrow and keeps pills liquid.
-                bool CookNow(int j) => processing && (TodaySale(index[N(recipes[j]["output"])]) || materials[j].Any(p =>
+                bool CookNow(int j) => processing && (slotPressure || TodaySale(index[N(recipes[j]["output"])]) || materials[j].Any(p =>
                     available[index[p.Key]] + offers.Where(o=>o.Item==p.Key).Sum(o=>o.Limit) +
                     futureOffers.Where(o=>o.Item==p.Key).Sum(o=>o.Limit) + supply.GetValueOrDefault(p.Key)/29d > capacity[index[p.Key]]));
                 var cook = recipes.Select((r,j) => model.Variable(now && !CookNow(j) ? 0 :
@@ -123,6 +136,7 @@ internal static class DailyTradeCalendar
                         model.Row(new() { [pills]=1,[refill]=owned },double.NegativeInfinity,owned);
                     }
                 }
+                var sharedSlots=new Dictionary<int,double>(); double forecastDropSlots=0;
                 for(int i=0;i<keys.Length;i++)
                 {
                     var flow = new Dictionary<int,double> { [end[i]]=1, [sell[i]]=1 };
@@ -141,8 +155,28 @@ internal static class DailyTradeCalendar
                         if(N(recipes[j]["output"])==keys[i]) { Add(flow,cook[j],-N(recipes[j]["count"])); Add(output,cook[j],N(recipes[j]["count"])); }
                     }
                     model.Row(output,double.NegativeInfinity,capacity[i]-initial-drop);
+                    if(storage!=null)
+                    {
+                        long size=N(items[i]["stack"]);
+                        if(now)
+                        {
+                            int slots=model.Variable(storage.Free,true);
+                            Add(sharedSlots,slots,1);
+                            var allocation=new Dictionary<int,double>(output);
+                            Add(allocation,slots,-size);
+                            model.Row(allocation,double.NegativeInfinity,storage.Headroom(keys[i],size));
+                        }
+                        else
+                        {
+                            foreach(var p in output) Add(sharedSlots,p.Key,p.Value/size);
+                            // Drop is a constant term of the pre-cooking peak.
+                            forecastDropSlots+=drop/size;
+                        }
+                    }
                     model.Row(flow,initial+drop,initial+drop);
                 }
+                if(storage!=null) model.Row(sharedSlots,double.NegativeInfinity,
+                    now?storage.Free:forecastSlots-forecastDropSlots);
             }
             var last = days[^1];
             model.Objective[last.Cash]=-1; model.Objective[last.Potions]=-potionPrice;
@@ -224,6 +258,13 @@ internal static class DailyTradeCalendar
             long made=Rows(cooking).Where(o=>N(o["item"])==k).Sum(o=>N(o["count"])*N(recipes.Single(r=>N(r["id"])==N(o["recipe"]))["count"]));
             Require(available[index[k]]+bought+made<=capacity[index[k]],"Calendar current capacity audit failed");
         }
+        if(storage!=null)
+        {
+            long slots=keys.Sum(k=>storage.NewSlots(k,N(items[index[k]]["stack"]),
+                Rows(purchases).Where(o=>N(o["item"])==k).Sum(o=>N(o["count"]))+
+                Rows(cooking).Where(o=>N(o["item"])==k).Sum(o=>N(o["count"])*N(recipes.Single(r=>N(r["id"])==N(o["recipe"]))["count"]))));
+            Require(slots<=storage.Free,"Calendar shared inventory slot audit failed");
+        }
         var warnings=new JsonArray();
         if(N(state["gold"])<DailyTradeOptimizer.LowFunds)warnings.Add(O(("code","low_working_capital"),("message",DailyTradeOptimizer.Warning)));
         if(best==null)warnings.Add(O(("code","calendar_no_solution"),("message","本次未能完成跑商日期规划，未生成采购、料理或售卖订单；库存已保留，可稍后重新预览。")));
@@ -252,6 +293,7 @@ internal static class DailyTradeCalendar
             ("purchases",purchases),("cooking",cooking),("sales",sales),("holds",holds),
             ("forecast",O(("days",Days-1),("net_value",forecast),("calendar",timeline),("future_orders_executable",false),
                 ("future_recipes_relaxed",true),("effective_date",DailyTradePriceChange.EffectiveDate.ToString("yyyy-MM-dd")),
+                ("storage_model",storage==null?"historical_snapshot_no_slot_data":"shared_slots"),("future_slots_relaxed",storage!=null),
                 ("announced_prices",expectedPrices.Count),("processing_enabled_today",processing))),
             ("drop_forecast",state["future_supply"]),("resources_spent",false));
     }

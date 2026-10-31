@@ -73,6 +73,8 @@ static class EquipmentRecyclingCases
         Check(fixture.Inventory.Keys.Order().SequenceEqual(new[] { "10", "6", "7", "8", "9" }), "native transaction proof preserves all unselected gear");
         var records = fixture.H.Business.Records(fixture.H.Context, "equipment.recycle").Concat(fixture.H.Business.Records(fixture.H.Context, "equipment.break")).ToArray();
         Check(records.Length == 3 && records.All(r => S(r["state"]) == "completed" && B(r["result"]?["inventory_matched"])), "each rarity batch has independently confirmed inventory evidence");
+        Check(fixture.RewardCloses == 1 && fixture.BreakTransitionObserved,
+            "confirmed direct dismantle waits for closing preview before dismissing its reward exactly once");
         int count = fixture.H.Box.Commands.Count;
         try { await DailyEquipment.ExecuteAction(fixture.H.Workflow, O(("task", "equipment.craft_recycle"))); throw new Exception("Missing target accepted"); }
         catch (InvalidDataException) { }
@@ -87,6 +89,9 @@ static class EquipmentRecyclingCases
         public readonly List<(int Level, string[] Ids)> Submitted = [];
         int level = 9;
         bool auto;
+        double breakCloseAt;
+        public int RewardCloses;
+        public bool BreakTransitionObserved;
         string[] selected = [];
         public Fixture(string root)
         {
@@ -95,8 +100,20 @@ static class EquipmentRecyclingCases
             H.Readings = () => [
                 WorkflowCases.Reading("policy.equipment", ("Count", Inventory.Count), ("$items", Inventory.Values.ToArray())),
                 WorkflowCases.Reading("equipment.upgrade_ui", ("ὬὠὬὡὫὤὮὨὦὤὥ", level), ("ὬὭὪὣὣὨὭὭὩὯὨ", auto), ("ὢὧὣὨὨὦὠὭὬὠὫ", selected)),
-                WorkflowCases.Reading("equipment.break_ui", ("ὫὮὪὪὬὩὤὯὦὠὬ", selected))
+                WorkflowCases.Reading("equipment.break_ui", ("ὫὮὪὪὬὩὤὯὦὠὬ", selected)),
+                WorkflowCases.Reading("reward.presentation", ("ὣὤὥὦὯὦὩὤὨὠὪ", true), ("ὪὯὣὥὬὫὬὩὠὮὠ", true),
+                    ("ὮὬὧὦὣὠὠὤὮὦὧ", true), ("ὦὡὮὫὧὠὮὡὭὭὬ", false))
             ];
+            H.OnDelay = () =>
+            {
+                if (breakCloseAt <= 0) return;
+                BreakTransitionObserved = true;
+                if (H.Time < breakCloseAt) return;
+                breakCloseAt = 0;
+                H.Frame["Surfaces"]!.AsArray().RemoveAt(2);
+                H.Frame["Surfaces"]![1]!["InputReady"] = true;
+                H.Frame["UiToken"] = "dismantle-reward-ready";
+            };
             H.OnCommand = c =>
             {
                 H.Time += .01;
@@ -108,6 +125,12 @@ static class EquipmentRecyclingCases
                     else H.Page("EquipmentBreakPopupUI", "_objBreakButton");
                 }
                 else if (kind == "back" && ui == "EquipmentBatchUpgradeResultPopupUI") H.Page("InventoryManageUI");
+                else if (kind == "back" && N(c["SurfaceId"]) == 2)
+                {
+                    if (breakCloseAt > 0) throw new Exception("Reward clicked through closing dismantle preview");
+                    RewardCloses++;
+                    H.Page("InventoryManageUI");
+                }
                 else if (ui == "EquipmentUpgradePopupUI" && I(c["TargetId"]) == 10) level++;
                 else if (ui == "EquipmentUpgradePopupUI" && I(c["TargetId"]) == 11) level--;
                 else if (ui == "EquipmentUpgradePopupUI" && I(c["TargetId"]) == 12) auto = !auto;
@@ -120,6 +143,19 @@ static class EquipmentRecyclingCases
                     foreach (string id in selected) if (!Inventory.Remove(id)) throw new Exception("Item recycled twice");
                     H.Event(role, "response");
                     H.Page(enhance ? "EquipmentBatchUpgradeResultPopupUI" : "InventoryManageUI");
+                    if (!enhance)
+                    {
+                        // The receipt arrives before the native preview's close animation ends.
+                        // Match the reported overlap: reward order 749, closing preview order 999.
+                        var reward = HomeNavigationCases.Surface("RewardReceivePopupUI", true, "", 2);
+                        reward["Order"] = 749; reward["InputReady"] = false;
+                        var preview = HomeNavigationCases.Surface("EquipmentBreakPopupUI", true, "_objBreakButton", 3);
+                        preview["Order"] = 999; preview["InputReady"] = false;
+                        H.Frame["Surfaces"]!.AsArray().Add(reward);
+                        H.Frame["Surfaces"]!.AsArray().Add(preview);
+                        H.Frame["UiToken"] = "dismantle-reward-opening";
+                        breakCloseAt = H.Time + .5;
+                    }
                 }
                 else throw new Exception("Unexpected equipment command: " + c.ToJsonString());
             };
