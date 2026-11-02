@@ -7,14 +7,35 @@ internal static class StoragePathCases
     // the user's directories, registry or game.
     internal static string Junction(string path, string target)
     {
-        var start = new ProcessStartInfo("powershell.exe") { UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden, RedirectStandardOutput = true, RedirectStandardError = true };
+        path = Path.GetFullPath(path); target = Path.GetFullPath(target);
+        // mklink is a cmd built-in: creating a fixture must not depend on a
+        // Windows PowerShell cold start. Disable AutoRun and delayed expansion,
+        // and pass literal paths through quoted environment values.
+        var start = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "cmd.exe"))
+        {
+            Arguments = "/d /v:off /c mklink /J \"%DUSTWEAVE_TEST_LINK%\" \"%DUSTWEAVE_TEST_TARGET%\"",
+            UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden,
+            RedirectStandardOutput = true, RedirectStandardError = true
+        };
         start.Environment["DUSTWEAVE_TEST_LINK"] = path;
         start.Environment["DUSTWEAVE_TEST_TARGET"] = target;
-        foreach (string arg in new[] { "-NoProfile", "-NonInteractive", "-Command", "$ErrorActionPreference='Stop'; New-Item -ItemType Junction -Path $env:DUSTWEAVE_TEST_LINK -Target $env:DUSTWEAVE_TEST_TARGET | Out-Null" }) start.ArgumentList.Add(arg);
         using var child = Process.Start(start)!;
         var stdout = child.StandardOutput.ReadToEndAsync(); var stderr = child.StandardError.ReadToEndAsync();
-        if (!child.WaitForExit(15000)) throw new Exception("Fixture junction creation did not finish.");
-        if (child.ExitCode != 0) throw new Exception(stderr.GetAwaiter().GetResult());
+        if (!child.WaitForExit(15000))
+        {
+            string error = $"Fixture junction creation timed out: {path} -> {target}; owned PID {child.Id}.";
+            Console.Error.WriteLine(error);
+            // Record failure before disposing only this fixture-owned process.
+            try { child.Kill(entireProcessTree: true); child.WaitForExit(5000); }
+            catch (InvalidOperationException) { }
+            throw new TimeoutException(error);
+        }
+        if (child.ExitCode != 0)
+            throw new IOException($"Fixture junction creation failed ({child.ExitCode}): {path} -> {target}\n{stdout.GetAwaiter().GetResult()}\n{stderr.GetAwaiter().GetResult()}");
+        var link = new DirectoryInfo(path);
+        if (!link.Attributes.HasFlag(FileAttributes.ReparsePoint) ||
+            !string.Equals(link.ResolveLinkTarget(false)?.FullName, target, StringComparison.OrdinalIgnoreCase))
+            throw new IOException($"Fixture junction does not resolve to its requested target: {path} -> {target}");
         return path;
     }
     public static async Task Run(string output, List<string> cases)
@@ -22,6 +43,27 @@ internal static class StoragePathCases
         void Check(bool value, string label) { if (!value) throw new Exception(label); cases.Add("storage-path: " + label); }
         string basis = Path.Combine(output, "redirected-storage"), physical = Path.Combine(basis, "physical"), alias = Path.Combine(basis, "alias");
         Directory.CreateDirectory(physical);
+        string? oldSentinel = Environment.GetEnvironmentVariable("DUSTWEAVE_JUNCTION_SENTINEL");
+        Environment.SetEnvironmentVariable("DUSTWEAVE_JUNCTION_SENTINEL", "must-not-expand");
+        try
+        {
+            foreach (string name in new[] { "space 中文", "literal & (parens) !bang! ^", "literal %DUSTWEAVE_JUNCTION_SENTINEL%" })
+            {
+                string target = Path.Combine(basis, "target-" + name), path = Path.Combine(basis, "alias-" + name);
+                Directory.CreateDirectory(target); File.WriteAllText(Path.Combine(target, "keep.txt"), name);
+                Junction(path, target);
+                Check(File.ReadAllText(Path.Combine(path, "keep.txt")) == name, "junction fixture preserves literal paths: " + name);
+                Directory.Delete(path); // Unlink only this fixture; keep its target.
+            }
+        }
+        finally { Environment.SetEnvironmentVariable("DUSTWEAVE_JUNCTION_SENTINEL", oldSentinel); }
+        string occupied = Path.Combine(basis, "occupied"); Directory.CreateDirectory(occupied);
+        string sentinel = Path.Combine(occupied, "keep.txt"); File.WriteAllText(sentinel, "preserve");
+        bool refused = false;
+        try { Junction(occupied, physical); }
+        catch (IOException error) { refused = error.Message.Contains(occupied) && error.Message.Contains(physical); }
+        Check(refused && File.ReadAllText(sentinel) == "preserve" && !File.GetAttributes(occupied).HasFlag(FileAttributes.ReparsePoint),
+            "failed fixture creation explains its paths and preserves an existing directory");
         Junction(alias, physical);
         string root = Path.Combine(physical, "data"), redirected = Path.Combine(alias, "data");
         Directory.CreateDirectory(root);
