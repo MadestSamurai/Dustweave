@@ -60,6 +60,9 @@ function Publish-DustweaveLayout {
  $catalog=Join-Path $Work ('resources-'+$Flavor)
  [IO.Directory]::CreateDirectory($catalog)|Out-Null
  $common=@('-c','Release','-r','win-x64','--self-contained',$self,('-p:SelfContained='+$self),('-p:PublishSelfContained='+$self),'-p:DebugType=None','-p:DebugSymbols=false','-p:IncludeSourceRevisionInInformationalVersion=false',('-p:RuntimeFrameworkVersion='+$framework),('-p:CustomAfterMicrosoftCommonTargets='+ (Join-Path $Root 'Package.Build.targets')),('-p:DustweavePackageLockRoot='+ (Join-Path $Work ('locks/'+$Flavor))),'--nologo')
+ # The host and Soul both reference the connection executable. Serialize publish
+ # targets so their project instances cannot replace the same generated apphost.
+ $common+=@('-m:1','-p:BuildInParallel=false')
  function Publish-Project([string]$project,[string]$output,[string[]]$extra,[string]$name) {
   & dotnet publish (Join-Path $Root $project) @common @extra -o $output > (Join-Path $Work ($Flavor+'-'+$name+'.log')) 2>&1
   if($LASTEXITCODE -ne 0){throw "Publish failed: $Flavor-$name. See $Work"}
