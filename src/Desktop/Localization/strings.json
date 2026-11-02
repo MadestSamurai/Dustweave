@@ -1,10 +1,10 @@
 {
-"死魂之盘": {
+"tool.soul": {
     "zh-TW": "死魂之盤",
     "zh-CN": "死魂之盘",
     "en-US": "Soul challenge"
   },
-  "自动规划成长阵容，连续挑战全部五关。": {
+  "tool.soul.description": {
     "zh-TW": "自動規劃成長陣容，連續挑戰全部五關。",
     "zh-CN": "自动规划成长阵容，连续挑战全部五关。",
     "en-US": "Plan growing teams and challenge all five dungeons."

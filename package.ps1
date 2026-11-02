@@ -87,8 +87,16 @@ if($SyntheticEvidence){
  # These WPF host sources are not compiled into Dustweave.Tests. The actual
  # Portable/Lite startup and UI gates below exercise them on every package.
  $artifactRechecks+=@($changed|Where-Object {$_ -in @('src/Desktop/MainWindow.xaml.cs','src/Desktop/MainWindow.Updates.Smoke.cs','src/Desktop/Localization/runtime.json','src/Desktop/Localization/notices.json')})
+ # UI strings are not compiled into the synthetic runner. Re-run their source
+ # readers and tool contracts, then exercise the real localized host per flavor.
+ $uiStringsChanged='src/Desktop/Localization/strings.json' -in $changed
+ if($uiStringsChanged){$artifactRechecks+='src/Desktop/Localization/strings.json'}
  $syntheticChanges=@($changed|Where-Object {$_ -notin $artifactRechecks})
  if($syntheticChanges.Count){throw ('Synthetic baseline inputs changed: '+($syntheticChanges -join ', '))}
+ if($uiStringsChanged){
+  $validation.syntheticRechecks=@('UserText','ToolMenu')
+  & (Join-Path $root 'test.ps1') -NoBuild -Groups $validation.syntheticRechecks
+ }
  # Publisher sources are outside Dustweave.Tests and have their own executable gate.
  if($publisherRechecks.Count){Run 'dotnet' @('run','--project',(Join-Path $root 'tools/OtaChannel'),'-c','Release','--','self-test') 'ota-channel-self-test'}
  $validation.syntheticEvidence=[IO.Path]::GetFullPath($SyntheticEvidence)
