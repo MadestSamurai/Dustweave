@@ -87,6 +87,8 @@ if($SyntheticEvidence){
  # These WPF host sources are not compiled into Dustweave.Tests. The actual
  # Portable/Lite startup and UI gates below exercise them on every package.
  $artifactRechecks+=@($changed|Where-Object {$_ -in @('src/Desktop/MainWindow.xaml.cs','src/Desktop/MainWindow.Updates.Smoke.cs','src/Desktop/Localization/runtime.json','src/Desktop/Localization/notices.json')})
+ # These executable probes run from each newly published host below.
+ $artifactRechecks+=@($changed|Where-Object {$_ -in @('src/Desktop/HostedToolLocaleProbe.cs','src/Desktop/SuiteHostProbe.cs')})
  # UI strings are not compiled into the synthetic runner. Re-run their source
  # readers and tool contracts, then exercise the real localized host per flavor.
  $uiStringsChanged='src/Desktop/Localization/strings.json' -in $changed

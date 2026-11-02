@@ -10,6 +10,21 @@ internal static class SuiteHostProbe {
   try{
    Environment.SetEnvironmentVariable(names[1],"42");Environment.SetEnvironmentVariable(names[2],"100");
    foreach(var tool in DailyToolCatalog.All){
+    if(tool.Id=="soul"){
+     // Soul is an owned session in the host, not a legacy executable adapter.
+     // Exercise its actual entry while another operation owns the control lease.
+     string fixture=Path.Combine(output,"soul-control");
+     var session=new Dustweave.Soul.SoulSession(fixture);var states=new List<string>();
+     session.Changed+=s=>states.Add(s.State);
+     using(DailyToolControl.Acquire(fixture)){
+      session.StartAsync().GetAwaiter().GetResult();
+      if(session.Running||session.Status.State!="error"||!states.SequenceEqual(new[]{"error"})||!DailyToolControl.IsOccupied(fixture))
+       throw new Exception("Soul bypasses the shared control lease or starts a connection while occupied");
+      session.StopAsync().GetAwaiter().GetResult();
+     }
+     using(DailyToolControl.Acquire(fixture))checks.Add("soul: actual session rejects before connection, preserves the existing owner and leaves control reusable");
+     continue;
+    }
     Environment.SetEnvironmentVariable(names[0],tool.Id);
     var assembly=Assembly.Load(tool.Id=="equipment"?"BD2Equipment.Connection":tool.AssemblyName+".Core");
     bool rejected=false;
