@@ -47,7 +47,7 @@ public partial class MainWindow
                 if (language == 2 && (previous.Text == chinese || !previous.Text.StartsWith("Previous run")))
                     throw new Exception("History text did not switch language");
                 if (local.Text != L.Get("history.local", at, L.Describe("screen_changed"))
-                    || toolText.Text != L.Get("tools.shared_ready", L.Get("tool.fishing")))
+                    || toolText.Text != L.Get(cases[0].Key, L.Get(cases[0].Name)))
                     throw new Exception("Dynamic WPF binding was not refreshed");
                 if (language == 2 && (HasHan(local.Text) || HasHan(failure.Text)))
                     throw new Exception("Local history or error prefix remains Chinese");
