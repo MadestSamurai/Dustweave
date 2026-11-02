@@ -4,7 +4,7 @@ using System.Text.Json.Nodes;
 
 namespace Dustweave.Soul;
 
-public sealed record SoulStatus(string State,string Message,string Player,int Dungeon,int Wave,int WaveCount,int Life,int Coins,int Completed,int Wins,int Losses,double Seconds,string Folder,double? SimulatedWinRate=null,int PlannedUnits=0,bool RiskyPlan=false,int Attempt=1,string DecisionPhase="",int EvaluatedPlans=0,double DecisionSeconds=0,int BuyCount=0,int UpgradeCount=0,int PlannedSpend=0,int CoinsAfter=0,int RefreshCount=0,int RefreshPrice=0);
+public sealed record SoulStatus(string State,string Message,string Player,int Dungeon,int Wave,int WaveCount,int Life,int Coins,int Completed,int Wins,int Losses,double Seconds,string Folder,double? SimulatedWinRate=null,int PlannedUnits=0,bool RiskyPlan=false,int Attempt=1,string DecisionPhase="",int EvaluatedPlans=0,double DecisionSeconds=0,int BuyCount=0,int UpgradeCount=0,int PlannedSpend=0,int CoinsAfter=0,int RefreshCount=0,int RefreshPrice=0,int[]? CompletedDungeons=null,int[]? Dungeons=null);
 
 public sealed class SoulSession
 {
@@ -34,7 +34,7 @@ public sealed class SoulSession
             decision?["recommendation"]?["battle"]?["winRate"]?.GetValue<double>(),N(decision?["recommendation"]?["deployedUnits"]),decision?["status"]?.ToString()=="best_available",1+campaign.FailedAttempts.GetValueOrDefault(d),decisionPhase,evaluatedPlans,decisionSeconds,
             decision?["recommendation"]?["path"]?.AsArray().Count(p=>p?["kind"]?.ToString()=="buy")??0,
             decision?["recommendation"]?["path"]?.AsArray().Where(p=>p?["kind"]?.ToString()=="upgrade").Select(p=>p!["inventoryIndex"]!.ToString()).Distinct().Count()??0,
-            N(decision?["recommendation"]?["cost"]),N(decision?["recommendation"]?["coinAfter"]),N(latest?["play"]?["shopReloadCount"]),N(latest?["progress"]?["RefreshPrice"]));
+            N(decision?["recommendation"]?["cost"]),N(decision?["recommendation"]?["coinAfter"]),N(latest?["play"]?["shopReloadCount"]),N(latest?["progress"]?["RefreshPrice"]),campaign.Completed.ToArray(),campaign.Dungeons.ToArray());
         if(folder.Length>0){File.WriteAllText(Path.Combine(folder,"status.json"),JsonSerializer.Serialize(Status));File.AppendAllText(Path.Combine(folder,"timeline.jsonl"),JsonSerializer.Serialize(Status)+"\n");}
         Changed?.Invoke(Status);
     }
@@ -73,7 +73,6 @@ public sealed class SoulSession
             else campaign=new();
             if(campaign.Dungeons.Length>0&&(campaign.AccountKey!=account||campaign.PlayerKey!=identity.PlayerKey))throw new InvalidDataException("Saved challenge belongs to another account.");
             File.WriteAllText(pointer,JsonSerializer.Serialize(new{folder}));
-            if(campaign.PendingDungeon!=0)throw new InvalidOperationException("上次战斗结算待核对，请保留现场与诊断。 / Previous battle settlement needs review.");
             if(campaign.Status=="defeated"){campaign.RetryDefeatedDungeon();campaign.Save(folder);}
             string managed=Path.Combine(Path.GetDirectoryName(game.Executable)!,Path.GetFileNameWithoutExtension(game.Executable)+"_Data","Managed");
             SoulAssets.Prepare(root,Path.Combine(managed,"Assembly-CSharp.dll"));
@@ -81,11 +80,11 @@ public sealed class SoulSession
             Report("connecting");await SoulHookCompiler.Prepare(bridge);planning.Token.ThrowIfCancellationRequested();
             await SoulHookCompiler.Attach(bridge,game,host,account);attached=true;
             var mailbox=new DailyPipeMailbox(root,game);
-            var observation=DailyStageObservation.Attach(root,account,()=>false);
-            using var driver=new DailyCommandDriver(root,mailbox,observation.ReadFrameAsync,()=>false);
+            var observation=DailyStageObservation.Attach(root,account,()=>pause);
+            using var driver=new DailyCommandDriver(root,mailbox,observation.ReadFrameAsync,()=>pause);
             driver.SubmissionGuard=()=>{
                 var current=host.ReadIdentity(game).Snapshot;
-                if(host.Find()!=game||current?.AccountKey!=account||current.PlayerKey!=identity.PlayerKey||current.FrameUtcTicks<DateTime.UtcNow.AddSeconds(-5).Ticks)throw new InvalidOperationException("Game account/process changed or became stale.");
+                SoulResume.CheckIdentity(host.Find()==game,account,identity.PlayerKey,current?.AccountKey,current?.PlayerKey);
             };
             var first=await observation.ReadFrameAsync();await new DailyManagedBootstrap(root,driver,observation.ReadFrameAsync,()=>false).BeginAsync(first.Context);
             string Id()=>DateTime.UtcNow.ToString("yyyyMMdd-HHmmssfff")+"-"+Guid.NewGuid().ToString("N")[..6];
@@ -94,12 +93,62 @@ public sealed class SoulSession
             JsonObject Click(string ui,string field)=>new(){["ui"]=ui,["field"]=field,["timeout"]=20,["reason"]="soul-five-dungeon-challenge"};
             JsonArray Guard(JsonObject state)=>new(new[]{"season","dungeonId","stageId","coin"}.Select(k=>(JsonNode)JsonValue.Create(N(state["play"]![k]))!).ToArray());
             JsonObject Action(string kind,JsonArray items,int value=0,string ui="InventoryBattleStageUI")=>new(){["ui"]=ui,["operation"]=kind,["target_id"]=0,["value"]=value,["items"]=items,["timeout"]=20,["reason"]="soul-five-dungeon-challenge"};
-            DateTime waiting=DateTime.UtcNow;bool openingCartridge=false;
+            DateTime waiting=DateTime.UtcNow;bool openingCartridge=false,syncGameProgress=resume;DateTime? recoveringUntil=null,activeUntil=null,returningUntil=null;
             while(!pause)
             {
                 if(File.Exists(Path.Combine(folder,"pause.request"))){pause=true;break;}
-                driver.SubmissionGuard();
+                try
+                {
                 var frame=(await driver.ObserveAsync()).Frame;var surfaces=frame["Surfaces"]!.AsArray();
+                if(returningUntil.HasValue){
+                    if(surfaces.Any(s=>s?["Type"]?.ToString()=="InventoryBattleLobbyUI")||!surfaces.Any(s=>s?["Type"]?.ToString()=="InventoryBattleStageUI"))returningUntil=null;
+                    else{
+                        if(DateTime.UtcNow>=returningUntil)throw new TimeoutException("游戏尚未完成返回关卡列表；等待游戏恢复后点「继续游戏进度」。 / Wait for the dungeon list to finish loading, then Resume game progress.");
+                        await Task.Delay(200,planning.Token);continue;
+                    }
+                }
+                if(syncGameProgress&&SoulResume.InBattle(frame)){
+                    activeUntil??=DateTime.UtcNow.AddSeconds(240);
+                    if(DateTime.UtcNow>=activeUntil)throw new TimeoutException("请等待游戏当前战斗结束后继续。 / Wait for the current battle to finish, then Resume.");
+                    Report("battling");await SoulEvidence.Capture(mailbox,driver,folder,Id(),battle:true,waitBattleOnly:true);continue;
+                }
+                if(campaign.PendingDungeon!=0&&!syncGameProgress){
+                    if(SoulResume.InBattle(frame)){
+                        activeUntil??=DateTime.UtcNow.AddSeconds(240);
+                        if(DateTime.UtcNow>=activeUntil)throw new TimeoutException("游戏战斗仍在进行，请等待结束后点「继续游戏进度」。 / Wait for the current battle to finish, then Resume game progress.");
+                        Report("battling");await SoulEvidence.Capture(mailbox,driver,folder,Id(),battle:true,waitBattleOnly:true);continue;
+                    }
+                    var surface=surfaces.FirstOrDefault(s=>s?["Type"]?.ToString() is "InventoryBattleResultUI")
+                        ??surfaces.FirstOrDefault(s=>s?["Type"]?.ToString() is "InventoryBattleLobbyUI" or "InventoryBattleStageUI");
+                    if(surface is not null){
+                        Report("reconnecting");
+                        await Send(Action("soul_progress",new JsonArray(),ui:surface["Type"]!.ToString()));
+                        var response=JsonNode.Parse(File.ReadAllText(Path.Combine(folder,"last-progress-response.json")))!.AsObject();
+                        var previous=JsonSerializer.SerializeToNode(campaign);
+                        var recovered=JsonSerializer.Deserialize<SoulCampaign>(previous!.ToJsonString())!;
+                        string settlementFile=Path.Combine(folder,"last-battle-response.json");
+                        var settlement=File.Exists(settlementFile)?JsonNode.Parse(File.ReadAllText(settlementFile))!.AsObject():null;
+                        string outcome=recovered.Reconcile(response,settlement);
+                        if(outcome=="active"){
+                            activeUntil??=DateTime.UtcNow.AddSeconds(120);
+                            if(DateTime.UtcNow>=activeUntil)throw new TimeoutException("游戏仍显示战斗未结束。请在游戏中完成或恢复当前战斗，再点「继续游戏进度」；已完成关卡保留。 / Finish or resume the active battle in the game, then Resume game progress. Completed dungeons are kept.");
+                            if(surface["Type"]!.ToString()=="InventoryBattleLobbyUI"){
+                                // Re-enter the game's existing run; do not wait
+                                // on the lobby for a battle it has not reopened.
+                                var state=latest!;
+                                await Send(Action("soul_enter",new JsonArray(N(state["progress"]!["RegularSeason"]),N(state["play"]!["dungeonId"]),N(state["play"]!["stageId"]),N(state["play"]!["coin"])),campaign.PendingDungeon,"InventoryBattleLobbyUI"));
+                                waiting=DateTime.UtcNow;continue;
+                            }
+                            Report("battling");await Task.Delay(2000,planning.Token);continue;
+                        }
+                        DailyJson.Write(Path.Combine(folder,Id()+"-battle-recovery.json"),new{outcome,previous,response,gameplayReplayed=false});
+                        recovered.Save(folder);campaign=recovered;activeUntil=null;recoveringUntil=null;waiting=DateTime.UtcNow;
+                        Report(outcome=="current_progress"?"resumed":outcome);
+                        // Refresh surfaces after the read; never act on the
+                        // frame from before the recovery request.
+                        continue;
+                    }
+                }
                 var result=surfaces.SingleOrDefault(s=>s?["Type"]?.ToString()=="InventoryBattleResultUI");
                 if(result is not null)
                 {
@@ -111,6 +160,17 @@ public sealed class SoulSession
                 else if(surfaces.Any(s=>s?["Type"]?.ToString()=="InventoryBattleLobbyUI"))
                 {
                     var state=await Read();
+                    if(syncGameProgress){
+                        Report("reconnecting");
+                        await Send(Action("soul_progress",new JsonArray(),ui:"InventoryBattleLobbyUI"));state=latest!;
+                        var response=JsonNode.Parse(File.ReadAllText(Path.Combine(folder,"last-progress-response.json")))!.AsObject();
+                        string settlementFile=Path.Combine(folder,"last-battle-response.json");
+                        var settled=File.Exists(settlementFile)?JsonNode.Parse(File.ReadAllText(settlementFile))!.AsObject():null;
+                        var resumed=campaign.ResumeFromGame(state,response,account,identity.PlayerKey,settled);
+                        DailyJson.Write(Path.Combine(folder,Id()+"-game-progress-resume.json"),new{previous=campaign,resumed,response,gameplayReplayed=false});
+                        resumed.Save(folder);campaign=resumed;syncGameProgress=false;activeUntil=null;recoveringUntil=null;
+                        Report("entering");
+                    }
                     if(campaign.Dungeons.Length==0&&N(state["play"]!["dungeonId"])>0){Report("retrying");await SoulRecovery.Restart(mailbox,driver,folder,Id(),freshStart:true);continue;}
                     campaign.Initialize(state,account,identity.PlayerKey);
                     if(campaign.Target==0){campaign.Status="complete";campaign.Save(folder);Report("complete");return;}
@@ -123,7 +183,17 @@ public sealed class SoulSession
                 }
                 else if(surfaces.Any(s=>s?["Type"]?.ToString()=="InventoryBattleStageUI"))
                 {
+                    if(syncGameProgress){
+                        // Native Back preserves the active run and opens the
+                        // season list. Unlike GiveUp, it spends/resets nothing.
+                        await SoulSubmit.Send(driver,Click("InventoryBattleStageUI","_objBackButton"));waiting=DateTime.UtcNow;returningUntil=waiting.AddSeconds(60);continue;
+                    }
                     var state=await Read();
+                    if(N(state["play"]!["dungeonId"])==0&&!state["play"]!["isStageEnter"]!.GetValue<bool>()){
+                        // The server cleared the run while the old preparation
+                        // page was still open. Leave that page, not the campaign.
+                        await SoulSubmit.Send(driver,Click("InventoryBattleStageUI","_objBackButton"));waiting=DateTime.UtcNow;returningUntil=waiting.AddSeconds(60);continue;
+                    }
                     if(campaign.Dungeons.Length==0){Report("retrying");await SoulRecovery.Restart(mailbox,driver,folder,Id(),freshStart:true);continue;}
                     if(N(state["play"]!["dungeonId"])!=campaign.Target)throw new InvalidOperationException("Dungeon differs from this challenge.");
                     if(state["play"]!["isStageEnter"]!.GetValue<bool>())throw new InvalidOperationException("A battle is already active; wait for its result.");
@@ -180,7 +250,7 @@ public sealed class SoulSession
                     Report("applying");await NativePlanExecutor.Run(mailbox,driver,folder,Id(),planFile);
                     if(pause)break;
                     var before=await Read();int life=N(before["play"]!["life"]);
-                    campaign.BeginBattle(dungeon,wave);campaign.Save(folder);Report("battling");
+                    campaign.BeginBattle(dungeon,wave,before);campaign.Save(folder);Report("battling");
                     await SoulEvidence.Capture(mailbox,driver,folder,Id(),battle:true);
                     var after=await Read();var evt=JsonNode.Parse(File.ReadAllText(Path.Combine(folder,"last-battle-response.json")))!;
                     var response=JsonNode.Parse(evt["Values"]![0]!["Json"]!.GetValue<string>())!;
@@ -215,10 +285,20 @@ public sealed class SoulSession
                     else if(DateTime.UtcNow-waiting>TimeSpan.FromSeconds(30))throw new InvalidOperationException("请打开死魂之盘关卡列表后开始。 / Open the Soul dungeon list, then start.");
                 }
                 await Task.Delay(400);
+                recoveringUntil=null;
+                }
+                catch(Exception error) when(!pause&&SoulResume.Transient(error)){
+                    recoveringUntil??=DateTime.UtcNow.AddSeconds(120);
+                    if(DateTime.UtcNow>=recoveringUntil)throw new TimeoutException("等待自动重连超时。恢复网络并进入原账号后，点「继续游戏进度」即可重新读取进度；无需从第一关开始。 / Reconnection timed out. Restore the connection and original account, then Resume game progress; you do not need to start over.",error);
+                    Report("reconnecting");openingCartridge=false;waiting=DateTime.UtcNow;
+                    await Task.Delay(500,planning.Token);
+                }
             }
             campaign.Status="paused";campaign.Save(folder);Report("paused");
         }
         catch(OperationCanceledException) when(pause){campaign.Status="paused";if(folder.Length>0)campaign.Save(folder);Report("paused");}
+        catch(StageHostException) when(pause){campaign.Status="paused";if(folder.Length>0)campaign.Save(folder);Report("paused");}
+        catch(DailyStepException) when(pause){campaign.Status="paused";if(folder.Length>0)campaign.Save(folder);Report("paused");}
         catch(Exception error){campaign.Status="needs_attention";if(folder.Length>0){campaign.Save(folder);File.WriteAllText(Path.Combine(folder,"error.txt"),error.ToString());}Report("error",error.Message);}
         finally
         {

@@ -90,14 +90,14 @@
     "en-US": "Soul challenge is open. Start in its window."
   },
   "soul.ready_hint": {
-    "zh-TW": "自動購買、升級、排布與戰鬥。從第一關開始會重置目前關卡；繼續上次挑戰會保留進度。",
-    "zh-CN": "自动购买、升级、排布与战斗。从第一关开始会重置当前关卡；继续上次挑战会保留进度。",
-    "en-US": "Automatically buy, upgrade, arrange and battle. Starting all five resets the current dungeon; Resume keeps your progress."
+    "zh-TW": "自動購買、升級、排布與戰鬥。繼續遊戲進度會接續目前關卡並跳過已通關內容，包含手動進度；從第一關開始會重置目前關卡。",
+    "zh-CN": "自动购买、升级、排布与战斗。继续游戏进度会接续当前关卡并跳过已通关内容，包括手动进度；从第一关开始会重置当前关卡。",
+    "en-US": "Automatically buy, upgrade, arrange and battle. Resume game progress continues the current dungeon and skips cleared ones, including manual progress. Start all five resets the current dungeon."
   },
   "soul.resume": {
-    "zh-TW": "繼續上次挑戰",
-    "zh-CN": "继续上次挑战",
-    "en-US": "Resume challenge"
+    "zh-TW": "繼續遊戲進度",
+    "zh-CN": "继续游戏进度",
+    "en-US": "Resume game progress"
   },
   "soul.start": {
     "zh-TW": "從第一關開始",
@@ -133,6 +133,16 @@
     "zh-TW": "正在連線目前遊戲",
     "zh-CN": "正在连接当前游戏",
     "en-US": "Connecting to the game"
+  },
+  "soul.state.reconnecting": {
+    "zh-TW": "等待連線恢復並讀取目前進度",
+    "zh-CN": "等待连接恢复并读取当前进度",
+    "en-US": "Restoring connection and reading current progress"
+  },
+  "soul.state.resumed": {
+    "zh-TW": "已按遊戲進度恢復；未確認的上一場結果不計入勝負",
+    "zh-CN": "已按游戏进度恢复；未确认的上一场结果不计入胜负",
+    "en-US": "Resumed from game progress; the unconfirmed battle is not counted as a win or loss"
   },
   "soul.state.entering": {
     "zh-TW": "正在進入下一關",

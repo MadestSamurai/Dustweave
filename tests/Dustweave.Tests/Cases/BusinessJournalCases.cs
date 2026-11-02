@@ -57,6 +57,7 @@ static class BusinessJournalCases
         EquipmentSources(output, cases);
         LargeHistory(output, cases);
         IncompletePickupHistory(output, cases);
+        await IncompleteObservationHistory(output, cases);
         await Replan(output, cases);
     }
     private static void LargeHistory(string output, List<string> cases)
@@ -137,6 +138,28 @@ static class BusinessJournalCases
         if (!guarded || f.Box.Commands.Count != 0 || !DailyManagedBusiness.Pending(f.Business.Records(f.Context).Single()))
             throw new Exception("Incomplete pending pickup was silently accepted or replayed");
         cases.Add("incomplete pending pickup stays guarded without crashing metadata reads or replaying input");
+    }
+    private static async Task IncompleteObservationHistory(string root, List<string> cases)
+    {
+        foreach (string missing in new[] { "before", "Frame" })
+        {
+            var proof = new DailyBusinessProof("equipment.refine", "equipment", ["equipment"], (_, _, _) => throw new Exception("Incomplete history must not claim proof"));
+            using var f = new WorkflowHarness(Path.Combine(root, "journal-missing-" + missing), [proof]);
+            var old = f.Business.Create(f.Context, proof.Role, f.Evidence(), new(), new());
+            old["state"] = "unknown";
+            if (missing == "before") old.Remove("before"); else old["before"]!.AsObject().Remove("Frame");
+            f.Business.Save(old); f.Business.BeginAttempt();
+            var report = await f.Business.ReconcileAsync(f.Context);
+            if (report["completed"]!.AsArray().Count != 0 || report["unresolved"]!.AsArray().Count != 1 || f.Box.Commands.Count != 0)
+                throw new Exception("Incomplete old observation must remain unknown without blocking queue reconciliation");
+            f.Page("GameFieldDefaultUI");
+            await f.Business.ReplanInterruptedAsync(f.Context, "equipment");
+            var saved = f.Business.Records(f.Context).Single();
+            var next = f.Business.Create(f.Context, proof.Role, f.Evidence(), new(), new());
+            if (S(saved["state"]) != "superseded" || saved["result"] != null || S(next["id"]) == S(saved["id"]) || f.Box.Commands.Count != 0)
+                throw new Exception("Current stage must accept a fresh plan, preserving the unknown old result without replaying it");
+            cases.Add("missing old " + missing + " does not crash queue preflight or prevent a fresh stage plan");
+        }
     }
     private static async Task Replan(string root, List<string> cases)
     {

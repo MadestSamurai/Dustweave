@@ -1,5 +1,7 @@
 using Dustweave;
 using Dustweave.Desktop;
+using System.Text.Json.Nodes;
+using static Dustweave.DailyData;
 internal static class StartupCases
 {
     public static async Task Run(string root, List<string> cases)
@@ -30,6 +32,46 @@ internal static class StartupCases
             throw new Exception("Expected rejected startup");
         }
         string NewRoot() => Path.Combine(root, "startup-" + Guid.NewGuid().ToString("N"));
+        Case("startup retry preflight rejection does not leave a permanent pending record", () =>
+        {
+            var record = O(("pending_retry", O(("frame", CommandDriverCases.Frame()))));
+            DailyStartupRecovery.RecordRetryFailure(record, new DailyStepException("rejected", "UI changed; no command"), 100000000);
+            Check(record["pending_retry"] == null && record["retry_recovery"]!.AsArray().Count == 1, "undispatched retry blocked continuation");
+            Check(DailyStartupRecovery.ReconcilePendingRetry(record, CommandDriverCases.Frame(), null, 100000000), "retired retry did not permit continuation");
+        });
+        foreach (string mode in new[] { "same-popup", "late-rejection", "wrong-receipt", "new-popup", "stale", "wrong-account", "wrong-process", "wrong-instance", "missing-token" })
+            Case("startup pending retry recovery: " + mode, () =>
+            {
+                const long at = 100000000;
+                var before = CommandDriverCases.Frame(); before["AtUtcTicks"] = at; before["UiToken"] = "old-popup";
+                var command = O(("Id", new string('a',32)), ("Kind", "click"));
+                var record = O(("pending_retry", O(("frame",before))), ("retries",new JsonArray()));
+                DailyStartupRecovery.RecordRetryFailure(record, new DailyStepException("pending", "transport lost", true) { Command = command }, at);
+                // Reloading the journal represents closing/reopening the coordinator.
+                record = JsonNode.Parse(record.ToJsonString())!.AsObject();
+                Check(record["pending_retry"] != null, "unknown submission was forgotten");
+                var current = before.DeepClone().AsObject();
+                JsonObject? receipt = null;
+                if (mode is "late-rejection" or "wrong-receipt")
+                {
+                    receipt = O(("Command",command),("State","rejected"),("MayHaveDispatched",false));
+                    if(mode=="wrong-receipt")receipt["Command"]!["Id"]=new string('b',32);
+                }
+                if(mode is "new-popup" or "stale" or "wrong-account" or "wrong-process" or "wrong-instance") current["UiToken"]="new-popup";
+                if(mode=="stale")current["AtUtcTicks"]=at-60000000;
+                if(mode=="wrong-account")current["AccountKey"]="other";
+                if(mode=="wrong-process")current["ProcessStartTicks"]=999;
+                if(mode=="wrong-instance")current["Instance"]="other";
+                if(mode=="missing-token")current.Remove("UiToken");
+                bool expected = mode is "late-rejection" or "new-popup";
+                Check(DailyStartupRecovery.ReconcilePendingRetry(record,current,receipt,at)==expected,"incorrect retry recovery decision");
+                Check((record["pending_retry"]==null)==expected && record["retries"]!.AsArray().Count==0,"recovery lost pending action or invented success");
+                if(expected)
+                {
+                    Check(DailyStartupRecovery.ReconcilePendingRetry(record,current,receipt,at),"second recovery blocked");
+                    Check(record["retry_recovery"]!.AsArray().Count==1,"repeated recovery duplicated history");
+                }
+            });
         Case("packaged CLI startup recovery resolves GUI package root", () =>
         {
             var dir = NewRoot();

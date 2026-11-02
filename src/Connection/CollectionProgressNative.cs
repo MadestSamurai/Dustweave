@@ -53,6 +53,7 @@ namespace BD2Daily.Live {
   [DataMember] public TravelApproach[] Approaches;
   [DataMember] public QuickTravelTarget[] QuickTargets;
   [DataMember] public string HazardObservationError="";
+  [DataMember] public FieldRoutePilot.State Pilot;
  }
  [DataContract] internal sealed class RouteProbePoint {
   [DataMember] public int Id;
@@ -67,6 +68,65 @@ namespace BD2Daily.Live {
  [DataContract] internal sealed class RouteCollider { [DataMember] public int Id,Layer; [DataMember] public string Name,Type,Tag,Owner; [DataMember] public bool Enabled,Trigger; [DataMember] public float[] Center,Size,Rotation,LocalSize; }
  [DataContract] internal sealed class GateContactState { [DataMember] public int Object,Instance; [DataMember] public bool Contact; [DataMember] public float Depth; [DataMember] public RouteCollider Gate,Body; [DataMember] public RouteCollider[] Nearby; }
  internal static class CollectionProgressNative {
+  [DataContract] internal sealed class HazardShape {
+   [DataMember] public string Type,Name;
+   [DataMember] public bool Enabled,Trigger;
+   [DataMember] public float[] Center,Size;
+  }
+  [DataContract] internal sealed class HazardObject {
+   [DataMember] public int Instance,Id,Kind,AIState;
+   [DataMember] public string Type,Name,Error;
+   [DataMember] public bool Active,Suppressible,Enabled,Paused;
+   [DataMember] public double Respawn;
+   [DataMember] public float[] Position,Direction;
+   [DataMember] public float ContactRadius,ContactAngle,DetectRadius,DetectAngle,PatrolSpeed,ChaseSpeed;
+   [DataMember] public HazardShape[] Shapes;
+  }
+  [DataContract] internal sealed class HazardObservation {
+   [DataMember] public int Pack,Map;
+   [DataMember] public long At;
+   [DataMember] public float[] Player;
+   [DataMember] public HazardObject[] Objects;
+   [DataMember] public FieldRoutePilot.State Pilot;
+   [DataMember] public long DamageEvents;
+   [DataMember] public string DamageSource;
+  }
+  static HarmonyLib.Harmony hazardTrace;static long hazardTraceUntil,damageEvents;static string damageSource="";
+  static void DamageObserved(){if(DateTime.UtcNow.Ticks<hazardTraceUntil){damageEvents++;damageSource=string.Join(" > ",new System.Diagnostics.StackTrace().GetFrames().Take(8).Select(f=>{var m=f.GetMethod();return m.DeclaringType.Name+"."+m.Name;}));}}
+  internal static void StopHazardTrace(){if(hazardTrace==null)return;hazardTrace.Unpatch(typeof(GameFieldManager).GetMethod("FieldCharacterDamagedDirecting"),HarmonyLib.HarmonyPatchType.All,hazardTrace.Id);hazardTrace=null;hazardTraceUntil=0;}
+  static float[] XYZ(Vector3 v){return new[]{v.x,v.y,v.z};}
+  // Explicit diagnostics only. These native getters are inspected read-only
+  // accessors; this does not change AI, physics, timers or encounter immunity.
+  static object ReadGetter(object value,string name){if(value==null)return null;var m=value.GetType().GetMethod("get_"+name,System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.NonPublic);return m==null?null:m.Invoke(value,null);}
+  static float AiNumber(object info,string name){if(info==null)return 0;var f=info.GetType().GetField(name,System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.NonPublic);return f==null?0:Convert.ToSingle(f.GetValue(info));}
+  internal static object Hazards(bool research=false){
+   if(research){
+    hazardTraceUntil=DateTime.UtcNow.AddSeconds(2).Ticks;
+    if(hazardTrace==null){hazardTrace=new HarmonyLib.Harmony("bd2.daily.field.research");hazardTrace.Patch(typeof(GameFieldManager).GetMethod("FieldCharacterDamagedDirecting"),prefix:new HarmonyLib.HarmonyMethod(typeof(CollectionProgressNative).GetMethod("DamageObserved",System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.NonPublic)));}
+   }
+   var field=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ;var map=field.ὮὬὬὮὠὮὪὠὧὩὪ;var player=field.ὪὨὯὢὫὮὨὩὮὡὬ;
+   var result=new List<HazardObject>();
+   foreach(var m in Bridge.Find(typeof(FieldMonsterController)).Cast<FieldMonsterController>()){
+    var item=new HazardObject{Instance=m.GetInstanceID(),Type=m.GetType().Name,Name=m.gameObject.name,Position=XYZ(m.transform.position),Active=m.gameObject.activeInHierarchy,Error=""};
+    try{
+     item.Id=m.ὯὪὧὫὢὣὢὩὠὢὭ;item.Kind=m.ὭὫὠὯὯὭὧὬὣὨὨ.ὫὣὬὥὪὫὪὤὫὮὧ;item.Suppressible=m.IsCanOverwhelm();item.Respawn=m.GetRemainRespawnTime().TotalSeconds;
+     var aiField=m.GetType().GetFields(System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.NonPublic).FirstOrDefault(f=>f.FieldType==typeof(AIController));var ai=aiField==null?null:aiField.GetValue(m);
+     if(ai!=null){var info=ai.GetType().GetField("_aiMoveInfo",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.NonPublic).GetValue(ai);
+      item.AIState=Convert.ToInt32(ReadGetter(ai,"CurrentAIState"));item.Paused=Convert.ToBoolean(ReadGetter(ai,"IsPauseAI"));item.Enabled=Convert.ToBoolean(ReadGetter(ai,"IsPlayingAI"));
+      item.ContactRadius=AiNumber(info,"encountDistance");item.ContactAngle=AiNumber(info,"encountAngle");item.DetectRadius=AiNumber(info,"detectionDistance");item.DetectAngle=AiNumber(info,"detectionAngle");item.PatrolSpeed=AiNumber(info,"patrolSpeed");item.ChaseSpeed=AiNumber(info,"chaseSpeed");
+      var move=ReadGetter(ai,"MoveController");var direction=ReadGetter(move,"MoveDir");if(direction is Vector3)item.Direction=XYZ((Vector3)direction);
+     }
+    }catch(Exception e){item.Error=e.GetBaseException().Message;}
+    result.Add(item);
+   }
+   foreach(var t in Bridge.Find(typeof(FieldTrapControllerBase)).Cast<FieldTrapControllerBase>()){
+    var item=new HazardObject{Instance=t.GetInstanceID(),Type=t.GetType().Name,Name=t.gameObject.name,Position=XYZ(t.transform.position),Active=t.gameObject.activeInHierarchy,Error=""};
+    try{item.Id=Convert.ToInt32(ReadGetter(t,"TableId"));item.Enabled=Convert.ToBoolean(ReadGetter(t,"IsEnabled"));item.Paused=Convert.ToBoolean(ReadGetter(t,"IsPaused"));
+     item.Shapes=t.GetComponentsInChildren<Collider>(false).Take(48).Select(c=>new HazardShape{Type=c.GetType().Name,Name=c.name,Enabled=c.enabled,Trigger=c.isTrigger,Center=XYZ(c.bounds.center),Size=XYZ(c.bounds.size)}).ToArray();
+    }catch(Exception e){item.Error=e.GetBaseException().Message;}result.Add(item);
+   }
+   return new HazardObservation{At=DateTime.UtcNow.Ticks,Pack=map.PackId,Map=map.Id,Player=XYZ(player.transform.position),Objects=result.ToArray(),Pilot=FieldRoutePilot.Capture(),DamageEvents=damageEvents,DamageSource=damageSource};
+  }
   [DataContract] internal sealed class PackAccess {
    [DataMember] public int Id;
    [DataMember] public bool Scheduled,Available;
@@ -193,7 +253,7 @@ namespace BD2Daily.Live {
    bool threats=threatsKnown&&Bridge.Find(typeof(FieldMonsterController)).Cast<FieldMonsterController>().Any(x=>x!=null&&LiveProtocol.FieldTravelThreat(
     x.gameObject.activeInHierarchy,x.ὭὫὠὯὯὭὧὬὣὨὨ!=null,x.ὭὫὠὯὯὭὧὬὣὨὨ==null?0:x.ὭὫὠὯὯὭὧὬὣὨὨ.ὫὣὬὥὪὫὪὤὫὮὧ,
     x.IsCanOverwhelm(),suppressionPending,x.GetRemainRespawnTime().TotalSeconds));
-   return new CollectionTravelState{Pack=map.PackId,Map=map.Id,Ground=TalentSkillManager.ὪὫὢὨὯὭὦὪὦὨὣ.IsAvailableWayPointMakeOnGround(),ThreatsKnown=threatsKnown,ThreatsPresent=threats,Maps=travelMaps,Approaches=Approaches(frame),QuickTargets=QuickTravelNative.Capture().Targets,HazardObservationError=hazardError};
+   return new CollectionTravelState{Pack=map.PackId,Map=map.Id,Ground=TalentSkillManager.ὪὫὢὨὯὭὦὪὦὨὣ.IsAvailableWayPointMakeOnGround(),ThreatsKnown=threatsKnown,ThreatsPresent=threats,Maps=travelMaps,Approaches=Approaches(frame),QuickTargets=QuickTravelNative.Capture().Targets,HazardObservationError=hazardError,Pilot=FieldRoutePilot.Capture()};
   }
 
   // Publishing evidence must never enable, warp or move the native agent.
@@ -235,9 +295,9 @@ namespace BD2Daily.Live {
    foreach(float y in new[]{start.y,center.y})foreach(float scale in new[]{.5f,.85f})for(int i=0;i<16;i++){
     float a=i*Mathf.PI/8;candidates.Add(new Vector3(center.x+Mathf.Cos(a)*radius*scale,y,center.z+Mathf.Sin(a)*radius*scale));
    }
-   var seen=new HashSet<string>();
+   var seen=new HashSet<string>();var elites=FieldRoutePilot.Elites();
    foreach(var candidate in candidates){
-    NavMeshHit hit;if(!NavMesh.SamplePosition(candidate,out hit,height*2,mask)||!circle.IsDetectionInCollisionArea(hit.position))continue;
+    NavMeshHit hit;if(!NavMesh.SamplePosition(candidate,out hit,height*2,mask)||!circle.IsDetectionInCollisionArea(hit.position)||!FieldRoutePilot.SafeEndpoint(hit.position,elites))continue;
     string key=hit.position.x.ToString("R",System.Globalization.CultureInfo.InvariantCulture)+"|"+hit.position.y.ToString("R",System.Globalization.CultureInfo.InvariantCulture)+"|"+hit.position.z.ToString("R",System.Globalization.CultureInfo.InvariantCulture);
     if(!seen.Add(key))continue;
     var path=new NavMeshPath();if(!NavMesh.CalculatePath(start,hit.position,mask,path)||path.status!=NavMeshPathStatus.PathComplete)continue;
@@ -330,11 +390,11 @@ namespace BD2Daily.Live {
    var p=state.Points.Single(x=>x.Id==command.Items[0]);var target=new Vector3(p.X,p.Y,p.Z);
    var field=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ;var player=field.ὪὨὯὢὫὮὨὩὮὡὬ;var move=player.ὭὦὫὤὮὧὦὡὨὤὢ;
    if(BattlePlayManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὨὢὤὪὪὢὩὢὬὠὦ.ToString()!="BMT_NONE"||!IsStoryField(state.Pack))throw new InvalidOperationException("Probe requires non-event idle field");
-   if(field.ὮὬὬὮὠὮὪὠὧὩὪ.MapType==1&&!TalentSkillManager.ὪὫὢὨὯὭὦὪὦὨὣ.IsTalentSkillDurationing(ὪὯὯὢὨὮὨὠὥὤὬ.Stealth))throw new InvalidOperationException("Probe in battle field requires active stealth");
+   var risk=Travel(frame);
+   if(field.ὮὬὬὮὠὮὪὠὧὩὪ.MapType==1&&(!risk.ThreatsKnown||risk.ThreatsPresent)&&!TalentSkillManager.ὪὫὢὨὯὭὦὪὦὨὣ.IsTalentSkillDurationing(ὪὯὯὢὨὮὨὠὥὤὬ.Stealth))throw new InvalidOperationException("Probe in occupied battle field requires active stealth");
    if(!move.CanNavReach(target))throw new InvalidOperationException("travel_unreachable:probe_native_check");
    Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ClearQuestNav(true);move.ChangeMoveType(MoveController.ὧὮὧὠὢὢὦὪὭὢὨ.Navigation);player.SetMoveStart();
-   if(!move.SetMoveNav(target,null,true)){field.SetPlayerMoveState(MoveController.ὯὣὠὮὤὡὤὯὢὩὯ.Stop);throw new InvalidOperationException("travel_unreachable:probe_start");}
-   return p.Distance;
+   return FieldRoutePilot.Start(target,risk.ThreatsPresent&&TalentSkillManager.ὪὫὢὨὯὭὦὪὦὨὣ.IsTalentSkillDurationing(ὪὯὯὢὨὮὨὠὥὤὬ.Stealth));
   }
 
   static CollectionNetworkState result=new CollectionNetworkState();

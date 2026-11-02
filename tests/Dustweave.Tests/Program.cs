@@ -20,6 +20,11 @@ if (args.Length == 2 && args[0] == "--check-plugin")
 {
     if (Environment.GetEnvironmentVariable("DUSTWEAVE_TEST_PROBE") == "hang") { await Task.Delay(60000); return; }
     if (Environment.GetEnvironmentVariable("DUSTWEAVE_TEST_PROBE") == "fail") { Environment.ExitCode = 1; return; }
+    if (Environment.GetEnvironmentVariable("DUSTWEAVE_TEST_PROBE") == "fail-report")
+    {
+        DailyJson.Write(args[1], new { status = "failed", error = "Synthetic plugin interface mismatch", realGameTouched = false });
+        Environment.ExitCode = 1; return;
+    }
     var info = DailyPlugin.Current;
     var extension = DailyExtensionLoader.Load(info) ?? throw new Exception("No extension");
     DailyJson.Write(args[1], new { status = "passed", info, api = extension.ApiVersion, realGameTouched = false }); return;
@@ -126,6 +131,7 @@ await Group("EventPreview", () => EventPreviewCases.Run(root, cases));
 await Group("QueueExecutionThread", () => QueueExecutionThreadCases.Run(root, cases));
 await Group("RuleData", () => RuleDataCases.Run(root, cases));
 await Group("TravelTransition", () => TravelTransitionCases.Run(root, cases));
+await Group("FieldAvoidance", () => Sync(() => FieldAvoidanceCases.Run(cases)));
 await Group("CafeteriaRecovery", () => CafeteriaRecoveryCases.Run(root, cases));
 await Group("QueuePeriod", () => QueuePeriodCases.Run(root, cases));
 await Group("AccountRestart", () => AccountRestartCases.Run(root, cases));

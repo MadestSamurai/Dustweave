@@ -48,6 +48,18 @@ Managed extensions targeting 0.8.15 use API 4 and must be rebuilt against the re
 
 ## Normal change / 常规修改
 
+### Recovery review / 恢复逻辑评审
+
+新增或修改检查、超时、重试、暂停、待确认记录时，必须按 [核心要求](../AGENTS.md) 审查其可恢复性。错误过保护属于功能缺陷，不能以“更安全”作为无证据扩大限制的理由。
+
+1. 写清检查防止的真实问题与证据；区分暂时观察不到和已确认失败，确认游戏现有数据是否已经足够。
+2. 列出等待／暂停／待确认状态的进入条件、恢复条件、时限与退出路径；本地持久化标记也必须有恢复出口。
+3. 验证条件恢复后实际继续，不只是验证触发了阻断。重复点继续和程序重启后也必须能重新核对，不能被旧标记直接挡回。
+4. 确认不会重复提交未知结果的消耗动作，不会抹去已完成进度，不会因局部问题禁用无关功能。
+5. 无法自动恢复时提供具体、可执行且不会破坏账号和记录的处理入口；诊断导出用于研究，不能代替恢复设计。明确离线验证与实机验证的边界。
+
+只运行改动涉及的恢复与共享边界测试；不得以此要求为由扩大每次本地修改的全量验收范围。
+
 ### Cache and sandbox relocation
 
 `DailyStorageMigration` moves the existing cache allowlist plus the complete owned sandbox store. Host account indexes, IPC/control locks, logs, runtime extraction and OTA journals stay at their existing paths. The stable `storage-location.json` record redirects cache and sandbox lookups together; isolated processes continue using private caches inside their relocated sandbox. Missing destinations fail explicitly rather than creating empty replacement sandboxes. Previously moved cache-only installations remain supported.
@@ -180,7 +192,23 @@ The task account is a browsing choice, separate from the signed-in game account.
 
 Use `DUSTWEAVE_UI_SMOKE_SCOPE=task-navigation` with the desktop `--smoke` entry for focused UI verification: account history, separate draft selections, refresh, targeted startup, three languages, both themes and parallel-row routing. The fixture never operates a real game. Related core groups: `QueueSession`, `Parallel`, `Sandbox`, `AccountIdentity`.
 
+## Account list scrolling / 账号列表滚动
+
+The account grid retains recycling virtualization and uses pixel scrolling. Its row-selection handler accepts only events originating from the grid itself: recycled preset ComboBoxes emit bubbling selection events even when the user only scrolls. Their two-way bindings handle actual preset edits independently. Do not route those events through whole-page account presentation, login recovery reads or control-lock probes.
+
+Use desktop smoke scope `accounts-scroll` with an isolated data root for 100 accounts with alternating presets, 198 scroll steps, unchanged highlighted/checked accounts and persisted settings, editable presets, real row selection, pixel scrolling and bounded realized rows. The `accounts` smoke includes this regression. It writes timings but does not use hardware-sensitive timing thresholds. On 2026-11-02 the local comparison reduced whole-page refreshes from 191 to 0 and median step time from 15.13 ms to 6.86 ms (11.65 ms on the final repeat); these are synthetic WPF measurements, not a guarantee for every user's machine. The timers are paused only in the synthetic scrolling measurement; production polling and action ownership checks remain enabled.
+
 ## Session diagnostics / 会话诊断
+
+### Recoverability audit (2026-11-02)
+
+Shared hosted tools validate identity and suite readiness within a rollbackable activity-lease entry. If validation fails before dispatch, release only a newly acquired lease. Never release existing ownership that may cover an unsettled action. A missing identity observation does not consume the automatic handoff attempt; an actual activation does. Explicit Connect permits another attempt, while the automatic Connect event must not reset the latch into a reconnect loop.
+
+Startup download retries distinguish rejected-before-dispatch from uncertain dispatch. Preserve uncertain retries until an exact native rejection or a fresh changed presentation from the same actor resolves the old presentation; do not infer successful download. Three retries apply to each explicit connection attempt, not the entire lifetime of a saved journal. Pending command-mailbox and active-coordinator checks remain in force.
+
+Mail cleanup waits for MenuUI as well as disappearance of MailUI, without repeating the confirmed claim. Old business records missing their original observation remain unknown and are reported to the owning stage, rather than crashing queue preflight. A fresh usable stage can build a new plan; no saved action is replayed or marked successful. Room visits preserve the response window for a possibly active request, including incomplete historical observations, and can perform a fresh read-only visit afterwards.
+
+Focused verification: `Startup,ActivityLease,ManagedInputs,CommandDriver,ObservationWait`, `BusinessJournal,BusinessScope`, and isolated desktop `tool-activity`. Cover failure, restored evidence, actual continuation, repeated polling, no duplicate consuming input, existing ownership, and missing historical observations. Account changes, uncertain consuming transactions, active foreign ownership and unsafe update/storage targets remain real boundaries; never clear their flags merely to make a button succeed. This audit is offline/synthetic and does not claim all game/network failures have been reproduced.
 
 Normal desktop, updated and isolated-worker processes own a fresh control identity. Only explicit hosted tool/utility/connection-helper entry points inherit the parent owner. Module activation requires a fresh, identified, nonempty account and player. Runtime revocation keeps separate owner-exit, unreadable-owner, missing-identity, actual-account-change and handoff codes; pending receipts retain their original stop reason until drained.
 
@@ -318,5 +346,9 @@ Validation: `Rhythm,UnifiedSuite,ToolMenu,ActivityLease,TravelTransition,Command
 ### Owned Soul challenge integration
 
 `src/Soul` owns the five-dungeon coordinator, native execution adapter, bounded planner, battle kernel and compressed whole-dungeon growth library. `SoulToolWindow` opens from the host Tools list. Start and Resume share `SoulSession` with the real-game verification entry; neither uses screen coordinates or computer-use automation. Purchases immediately enter native storage, upgrades update their original views, and layout application verifies view uniqueness before starting battle. See `src/Soul/README.md` for the calibrated client/model identities and native pool recovery boundary.
+
+Resume explicitly adopts the game's current season and cleared dungeons, even without a tool record. An active manual run/rechallenge takes priority; new manual progress replaces stale local assumptions. All-clear ends immediately. On the preparation page, native Back calls `ReturnToLobbyPublic` → `SaveCurrentDeck`, preserving the manual layout before the season/progress read; wait for that navigation instead of repeatedly clicking Back. Resume never calls GiveUp. A current season change creates a new campaign while the previous record is retained in the resume journal. These semantics are distinct from explicit Start all five, which deliberately replays historical clears. Render completed chapter IDs, not just the first N checkmarks, because manual progress can be nonsequential.
+
+Soul reconnect recovery must not reject Resume merely because `PendingDungeon` exists. Transient identity gaps use the shared fresh-observation preflight and a bounded recovery loop; actual account/process changes still require reconnecting the intended session. An existing battle is observed without clicking Start again. At a Soul lobby, preparation or result page, `soul_progress` sends the native read-only `IbMainInfo` request; it does not reload shop/deck objects or send a battle transaction. Its accepted response reconciles the saved attempt, including legacy records. The native callback treats absent `PlayInfo` as no active dungeon, not a malformed response. A current settlement or advanced progress can establish the result; otherwise an idle server state permits replanning from current progress while preserving the unknown result in the recovery journal, without fabricating a win/loss. Historical clears do not prove that a replay's final wave succeeded. Completed campaign dungeons remain intact. Validate failure → reconnect → next decision, repeated Resume, persistence, active battle, null PlayInfo and old-receipt rejection with `Soul,ObservationWait,StageProtocol`.
 
 Affected synthetic groups are `Soul,ToolMenu`. `--tool soul --check-client <Managed> <output>` compiles against the current client without connecting; `--tool soul --smoke <output>` renders three languages and two themes offline. `--soul-verify-launch <saved account name> <output>` is an explicitly authorized live test: it uses the validated desktop relay, preserves the single-instance/control locks, can switch to the named saved account, and runs the same five-dungeon tool. Never use that entry as an offline build check.

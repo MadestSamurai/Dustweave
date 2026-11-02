@@ -9,6 +9,13 @@ internal static class SoulCases
         cases.Add("soul: failed wave retains its dungeon and next transition");
         cases.Add("soul: repeated defeated-dungeon retries preserve clears, resume once and advance only after clearing");
         cases.Add("soul: account/player binding and unresolved battle prevent replay");
+        cases.Add("soul: temporary missing identity waits; confirmed different account/process still stops");
+        cases.Add("soul: persisted pending battle resumes from accepted server progress; repeated Continue settles once and can fight the next wave");
+        cases.Add("soul: idle unknown and legacy pending results preserve history without inventing wins or permanently locking the run");
+        cases.Add("soul: final victory uses the current receipt, not historical clears; active battles and changed seasons are not replayed");
+        cases.Add("soul: Resume adopts manual game progress without a local record and preserves existing resources, layout and completed dungeons");
+        cases.Add("soul: active dungeon takes priority over earlier incomplete ones; all-clear ends and an active rechallenge is retained");
+        cases.Add("soul: newer manual progress supersedes stale local pending state; season changes adopt a fresh campaign and account changes remain rejected");
         cases.Add("soul: layout validity and stale economic state guards");
         cases.Add("soul: duplicate/missing owned views, duplicate shop slots and orphan shop views reject battle start");
         cases.Add("soul: bounded dispatch recovery distinguishes explicit rejection from unknown outcome");

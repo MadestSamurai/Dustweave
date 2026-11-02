@@ -20,7 +20,7 @@ namespace BD2Daily.Live {
   private static readonly string instance=Guid.NewGuid().ToString("N");
   private static bool installed,busy,retiring,resolver;private static BD2.LocalIpc.Handoff handoff;private static BD2.LocalIpc.MainThread pump;private static long next,sequence,start;private static int pid;
   private static int lastFrame=-1,renderFrames,slowFrames;private static double maxFrameMs;
-  private static long profileAt;private static int profileCount;private static double observeMs,evidenceMs,writeMs,maxMs;
+  private static long profileAt,workCheckAt;private static int profileCount;private static double observeMs,evidenceMs,writeMs,maxMs;
   private static Identity commonIdentity;
   internal static bool LegacyObservation;
   private static MonoBehaviour[] sceneComponents;
@@ -84,7 +84,7 @@ namespace BD2Daily.Live {
   private static Assembly LoadHarmony(){if(harmonyAssembly!=null)return harmonyAssembly;using(var s=typeof(Bridge).Assembly.GetManifestResourceStream("BD2Daily.Harmony.dll"))using(var b=new MemoryStream()){if(s==null)throw new InvalidDataException("日常执行组件缺少内置依赖，请更新完整工具包。");s.CopyTo(b);return harmonyAssembly=Assembly.Load(b.ToArray());}}
   [DataContract] sealed class ComponentStatus{[DataMember]public string State,Error;[DataMember]public long AtUtcTicks;}
   static void Status(string state,string error){if(state=="active"&&handoff!=null&&handoff.IsActive)BD2.LocalIpc.RuntimeFiles.Activate();Write(Path.Combine(live,"runtime.json"),new ComponentStatus{State=state,Error=error,AtUtcTicks=DateTime.UtcNow.Ticks});}
-  static void Pause(){SquareRoutePilot.Cancel("组件交接");retiring=true;BD2.LocalIpc.RuntimeFiles.Revoke();DispatchRecoveryNative.Cancel();MiniGamesNative.StopDice();WeeklyNpcNative.Stop();
+  static void Pause(){FieldRoutePilot.Cancel("component_handoff");SquareRoutePilot.Cancel("组件交接");retiring=true;BD2.LocalIpc.RuntimeFiles.Revoke();DispatchRecoveryNative.Cancel();MiniGamesNative.StopDice();WeeklyNpcNative.Stop();
    if(squareNavUntil>0){Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ClearQuestNav(true);GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.SetPlayerMoveState(MoveController.ὯὣὠὮὤὡὤὯὢὩὯ.Stop);squareNavUntil=0;mainlineStealthNav=false;approachTarget=null;}}
   static string HandoffBusy(){if(busy||pending!=null)return "command observation";if(EquipmentToolsNative.Busy())return "native refinement";return Evidence.HandoffPending();}
   public static void Unload(){BD2.LocalIpc.MainThread.Drain(()=>{if(handoff!=null)handoff.Unload();},Status);}
@@ -98,7 +98,7 @@ namespace BD2Daily.Live {
    UnityEngine.Canvas.willRenderCanvases+=Tick;installed=true;Evidence.Start(live);TalentSafetyNative.Start();
    Write(Path.Combine(live,"attached.json"),new Frame{ProcessId=pid,ProcessStartTicks=start,Instance=instance,AtUtcTicks=DateTime.UtcNow.Ticks});
   }}
-  private static void Stop(){SquareRoutePilot.Cancel("组件卸载");if(resolver){AppDomain.CurrentDomain.AssemblyResolve-=Resolve;resolver=false;}DispatchRecoveryNative.Cancel();MiniGamesNative.StopDice();WeeklyNpcNative.Stop();TalentSafetyNative.Stop();Evidence.Stop();UnityEngine.Canvas.willRenderCanvases-=Tick;installed=false;uis.Clear();targets.Clear();}
+  private static void Stop(){FieldRoutePilot.Cancel("component_unloaded");SquareRoutePilot.Cancel("组件卸载");if(resolver){AppDomain.CurrentDomain.AssemblyResolve-=Resolve;resolver=false;}DispatchRecoveryNative.Cancel();MiniGamesNative.StopDice();WeeklyNpcNative.Stop();TalentSafetyNative.Stop();Evidence.Stop();UnityEngine.Canvas.willRenderCanvases-=Tick;installed=false;uis.Clear();targets.Clear();}
   private static T Read<T>(string file)where T:class{
    try{if(BD2.LocalIpc.RuntimeFiles.Handles(file)){var bytes=BD2.LocalIpc.RuntimeFiles.Read(file);if(bytes==null)return null;using(var memory=new MemoryStream(bytes))return(T)new DataContractJsonSerializer(typeof(T)).ReadObject(memory);}if(Path.GetDirectoryName(file)==root){var bytes=BD2.LocalIpc.PipeBroker.ReadCurrent(root,Path.GetFileName(file));if(bytes==null)return null;using(var memory=new MemoryStream(bytes))return(T)new DataContractJsonSerializer(typeof(T)).ReadObject(memory);}using(var f=new FileStream(file,FileMode.Open,FileAccess.Read,FileShare.Read|FileShare.Delete))return(T)new DataContractJsonSerializer(typeof(T)).ReadObject(f);}
    catch(FileNotFoundException){return null;}catch(DirectoryNotFoundException){return null;}
@@ -186,8 +186,18 @@ namespace BD2Daily.Live {
   private static void TickCore(){
    if(!installed)return;
    if(UnityEngine.Time.frameCount!=lastFrame){lastFrame=UnityEngine.Time.frameCount;renderFrames++;var ms=UnityEngine.Time.unscaledDeltaTime*1000;maxFrameMs=Math.Max(maxFrameMs,ms);if(ms>50)slowFrames++;}
-   TickApproach();SquareRoutePilot.Tick(frame,CollectionReadAllowed);
-   if(busy||DateTime.UtcNow.Ticks<next)return;busy=true;next=DateTime.UtcNow.AddMilliseconds((BD2.LocalIpc.RuntimeFiles.Read(Path.Combine(live,"pause"))!=null)&&!LegacyObservation?1000:500).Ticks;
+   TickApproach();SquareRoutePilot.Tick(frame,CollectionReadAllowed);FieldRoutePilot.Tick();
+   if(busy)return;
+   long now=DateTime.UtcNow.Ticks;
+   // Keep idle observation at its existing cadence. A newly queued command,
+   // receipt or changed read demand can wake it early, without polling the
+   // full scene every frame or changing any dispatch/identity gates.
+   if(now<next){
+    if(now<workCheckAt)return;workCheckAt=now+TimeSpan.TicksPerMillisecond*100;
+    bool command=BD2.LocalIpc.RuntimeFiles.Read(Path.Combine(live,"pause"))==null&&BD2.LocalIpc.RuntimeFiles.Read(Path.Combine(live,"command.json"))!=null;
+    if(pending==null&&!command&&!Evidence.NewDemand(now))return;
+   }
+   busy=true;workCheckAt=now+TimeSpan.TicksPerMillisecond*100;next=now+TimeSpan.TicksPerMillisecond*((BD2.LocalIpc.RuntimeFiles.Read(Path.Combine(live,"pause"))!=null)&&!LegacyObservation?1000:500);
    try{
     LegacyObservation=(BD2.LocalIpc.RuntimeFiles.Read(Path.Combine(live,"legacy-observation"))!=null);var timer=Stopwatch.StartNew();frame=Observe();
     if(BD2.LocalIpc.LoadingTrace.Enabled)BD2.LocalIpc.LoadingTrace.Note("daily-surfaces",frame.Scene+":"+string.Join(",",frame.Surfaces.Select(s=>s.Type).ToArray()));
@@ -272,6 +282,7 @@ namespace BD2Daily.Live {
      }catch(Exception ex){r.State="rejected";r.Error="travel_preflight_unavailable:"+ex.GetType().Name;r.MayHaveDispatched=false;Save(r);return;}
     }
     r.MayHaveDispatched=true;r.State="dispatching";Save(r);
+    if(new[]{"mainline_cancel_nav","mainline_approach","mainline_reposition","mainline_menu","mainline_pack","mainline_interact","mainline_waypoint","field_quick_travel"}.Contains(c.Kind))FieldRoutePilot.Cancel("controller_action");
     try{
      if(c.Kind=="detach"){Unload();r.State="detached";Save(r);return;}
      var u=(c.Kind=="story_skip"||c.Kind=="story_advance")?null:uis[c.SurfaceId];
@@ -399,7 +410,7 @@ namespace BD2Daily.Live {
      }
      else if(c.Kind=="sichuan_open"||c.Kind=="sichuan_select"){MiniGamesNative.DispatchSichuan(c,u);}
      else if(c.Kind=="route_probe"){
-      float probeLength=CollectionProgressNative.StartProbe(frame,c);mainlineStealthNav=TalentSkillManager.ὪὫὢὨὯὭὦὪὦὨὣ.IsTalentSkillDurationing(ὪὯὯὢὨὮὨὠὥὤὬ.Stealth);approachTarget=null;squareNavScene=frame.Scene;squareNavUntil=DateTime.UtcNow.AddSeconds(LiveProtocol.NavigationSeconds(probeLength)).Ticks;
+      float probeLength=CollectionProgressNative.StartProbe(frame,c);mainlineStealthNav=FieldRoutePilot.Capture().Protected;approachTarget=null;squareNavScene=frame.Scene;squareNavUntil=DateTime.UtcNow.AddSeconds(LiveProtocol.NavigationSeconds(probeLength)).Ticks;
      }
      else if(c.Kind=="mainline_walk"){
       var field=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ;
@@ -413,7 +424,7 @@ namespace BD2Daily.Live {
       UnityEngine.Vector3 destination=walkDestination;float length=walkLength;
       if(!move.CanNavReach(destination))throw new InvalidOperationException("travel_unreachable:native_check");
       Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ClearQuestNav(true);move.ChangeMoveType(MoveController.ὧὮὧὠὢὢὦὪὭὢὨ.Navigation);player.SetMoveStart();
-      if(!move.SetMoveNav(destination,null,true)){field.SetPlayerMoveState(MoveController.ὯὣὠὮὤὡὤὯὢὩὯ.Stop);throw new InvalidOperationException("Native navigation did not start");}
+      length=FieldRoutePilot.Start(destination,mainlineStealthNav);
       squareNavScene=frame.Scene;squareNavUntil=DateTime.UtcNow.AddSeconds(LiveProtocol.NavigationSeconds(length)).Ticks;
      }
      else if(c.Kind=="mainline_menu"){

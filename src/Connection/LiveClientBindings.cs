@@ -198,8 +198,15 @@ public static class LiveClientBindings
     internal static Dictionary<string,string> ResolveNames(string managed,LiveBindingContract contract,string reportPath,ResolutionContext? context=null)
     {
         if(context==null){using var owned=new ResolutionContext();return ResolveNames(managed,contract,reportPath,owned);}
-        var resolved=context.ResolveContract(managed,contract);
         void Report(BindingReport report)=>File.WriteAllText(reportPath,JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true}));
+        ResolvedBindings resolved;
+        try { resolved=context.ResolveContract(managed,contract); }
+        catch (InvalidDataException error)
+        {
+            using var client=new MetadataIndex(Path.Combine(managed,"Assembly-CSharp.dll"));
+            Report(new BindingReport("unsupported",client.Module.Mvid.ToString(),0,0,0,0,[error.Message]));
+            throw;
+        }
         if(resolved.Report.Status!="compatible"){Report(resolved.Report);throw new InvalidDataException("Daily client binding failed: "+string.Join("; ",resolved.Report.Errors));}
         try{
         var map=new Dictionary<string,string>(StringComparer.Ordinal);
@@ -270,7 +277,7 @@ public static class LiveClientBindings
                     var slots=member switch { FieldDefinition f=>new[]{f.FieldType}, PropertyDefinition p=>new[]{p.PropertyType}, MethodDefinition m=>new[]{m.ReturnType}.Concat(m.Parameters.Select(p=>p.ParameterType)).ToArray(), _=>Array.Empty<TypeReference>() };
                     if(link.Slot<slots.Length)linked.Add(slots[link.Slot].FullName);
                 }
-                if(linked.Count>1)throw new InvalidDataException("Conflicting daily type relationships: "+expected.Name);
+                if(linked.Count>1)throw new InvalidDataException("Conflicting daily type relationships: "+expected.Name+" -> "+string.Join(", ",linked.OrderBy(n=>n,StringComparer.Ordinal)));
                 var enumeration=contract.Enums.SingleOrDefault(e=>e.Type==expected.Name);
                 var candidates=index.Types.Where(t=>linked.Count==1?linked.Contains(t.FullName):
                     enumeration!=null?t.IsEnum&&enumeration.Values.All(e=>t.Fields.Any(f=>f.Name==e.Key&&f.HasConstant&&Convert.ToInt64(f.Constant)==e.Value)):

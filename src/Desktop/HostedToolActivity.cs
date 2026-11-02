@@ -14,6 +14,7 @@ internal sealed class HostedToolActivity : IDisposable
     readonly string id, root, suiteRoot;
     readonly IGameHost host;
     readonly Func<SuiteStatus?> readState;
+    readonly Func<Task> activate;
     readonly Action<Exception>? reportRejection;
     readonly DailyActivityLease activity;
     readonly DispatcherTimer timer=new(){Interval=TimeSpan.FromMilliseconds(250)};
@@ -25,7 +26,7 @@ internal sealed class HostedToolActivity : IDisposable
     bool disposed, polling, reconnecting, resumeAttempted;
     string identityProblem = "";
     public HostedToolActivity(Window window,string id) : this(window,id,new DailyGameHost(),DailyIdentity.DataRoot,null,null) { }
-    internal HostedToolActivity(Window window,string id,IGameHost host,string root,Func<SuiteStatus?>? readState,Action<Exception>? reportRejection)
+    internal HostedToolActivity(Window window,string id,IGameHost host,string root,Func<SuiteStatus?>? readState,Action<Exception>? reportRejection,Func<Task>? activate=null)
     {
         this.window=window;this.id=id;this.host=host;this.root=root;suiteRoot=Path.Combine(root,"suite");
         this.reportRejection=reportRejection;
@@ -35,6 +36,7 @@ internal sealed class HostedToolActivity : IDisposable
         var snapshot=host.ReadSnapshot(game)??throw new InvalidOperationException("游戏身份尚未就绪。");
         account=snapshot.AccountKey;player=snapshot.PlayerKey;
         this.readState=readState??(()=>DailySuite.Read(root,game));
+        this.activate=activate??(async()=>{await DailySuite.ActivateAsync(host,root,id,_=>{},CancellationToken.None);});
         AppDomain.CurrentDomain.SetData(GuardKey,(Action<string,string,byte[]>)BeforeWrite);
         EventManager.RegisterClassHandler(typeof(Button),Button.ClickEvent,new RoutedEventHandler(BeforeClick),true);
         timer.Tick+=async(_,_)=>await Poll();timer.Start();
@@ -62,7 +64,7 @@ internal sealed class HostedToolActivity : IDisposable
     void BeforeClick(object sender,RoutedEventArgs args)
     {
         if(disposed||args.Handled||sender is not Button button||!starts.Contains(button.Name))return;
-        try { activity.Enter(); AssertIdentity(); }
+        try { activity.Enter(AssertIdentity); if(button.Name=="ConnectButton"&&!reconnecting)resumeAttempted=false; }
         catch(Exception error){args.Handled=true;if(reportRejection!=null)reportRejection(error);else MessageBox.Show(window,DailyLanguage.Current.Diagnostic(error.GetBaseException().Message, DailyUserText.Error(error.GetBaseException(),DailyLanguage.Current.Translate)),DailyLanguage.Current.Get("tools.start_error_title"),MessageBoxButton.OK,MessageBoxImage.Information);}
     }
     void AssertIdentity()
@@ -100,15 +102,17 @@ internal sealed class HostedToolActivity : IDisposable
         if(disposed)throw new ObjectDisposedException(nameof(HostedToolActivity));
         if(string.Equals(Path.GetFullPath(dataRoot),Path.GetFullPath(suiteRoot),StringComparison.OrdinalIgnoreCase))return;
         if(!DailyActivityRules.RequiresOwnership(name,value))return;
-        activity.Enter();AssertIdentity();
-        var state=readState();
-        if(state==null||state.At<DateTime.UtcNow.AddSeconds(-5).Ticks||state.At>DateTime.UtcNow.AddSeconds(2).Ticks)
-            throw new DailyObservationPendingException("suite-snapshot-stale");
-        if(state.Owner!=DailySuite.Owner)
-            throw new DailyToolSessionChangedException("此工具尚未恢复就绪，请等待日常助手完成交接。");
-        if(state.State!="ready")throw new DailyObservationPendingException("suite-not-ready",state.State);
-        if(state.Tool!=id)
-            throw new DailyToolSessionChangedException("此工具尚未恢复就绪，请等待日常助手完成交接。");
+        activity.Enter(()=>{
+            AssertIdentity();
+            var state=readState();
+            if(state==null||state.At<DateTime.UtcNow.AddSeconds(-5).Ticks||state.At>DateTime.UtcNow.AddSeconds(2).Ticks)
+                throw new DailyObservationPendingException("suite-snapshot-stale");
+            if(state.Owner!=DailySuite.Owner)
+                throw new DailyToolSessionChangedException("此工具尚未恢复就绪，请等待日常助手完成交接。");
+            if(state.State!="ready")throw new DailyObservationPendingException("suite-not-ready",state.State);
+            if(state.Tool!=id)
+                throw new DailyToolSessionChangedException("此工具尚未恢复就绪，请等待日常助手完成交接。");
+        });
     }
     internal async Task Poll()
     {
@@ -132,8 +136,12 @@ internal sealed class HostedToolActivity : IDisposable
             // An idle window may outlive a daily run. Rebind only after that run releases control,
             // once per handoff; a failed connection never becomes an automatic reconnect loop.
             if(!current.alive||!fresh||enabled||occupied||reconnecting||resumeAttempted)return;
-            resumeAttempted=true;reconnecting=true;activity.Enter();AssertIdentity();
-            await DailySuite.ActivateAsync(host,root,id,_=>{},CancellationToken.None);
+            reconnecting=true;
+            activity.Enter(AssertIdentity);
+            // Missing identity is only a read failure, not a failed handoff.
+            // Latch only once an actual activation is about to be attempted.
+            resumeAttempted=true;
+            await activate();
             if(disposed)return;
             if(window.FindName("ConnectButton") is Button button&&id!="equipment")
                 button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

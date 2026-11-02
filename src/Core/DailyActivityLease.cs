@@ -48,6 +48,19 @@ public sealed class DailyActivityLease(string root, Func<DateTime>? clock = null
     DateTime Now => clock?.Invoke() ?? DateTime.UtcNow;
     public bool Held { get { lock(sync) return lease != null; } }
     public void Enter() { lock(sync) { lease ??= DailyToolControl.Acquire(root); lastActive = Now; } }
+    // Validation runs before the caller can send anything. A failed new entry
+    // must not create an execution owner that waits forever for a missing frame.
+    // Existing ownership may cover a dispatched action and is never released here.
+    public void Enter(Action validate)
+    {
+        lock(sync)
+        {
+            bool alreadyHeld = lease != null;
+            Enter();
+            try { validate(); }
+            catch { if (!alreadyHeld) Release(); throw; }
+        }
+    }
     public void Observe(bool enabled, bool gameAlive, bool fresh, bool pending)
     {
         lock(sync)

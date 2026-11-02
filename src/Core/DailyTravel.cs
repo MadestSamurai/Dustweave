@@ -90,7 +90,7 @@ public static class DailyTravel
         }
         throw new StageHostException("adapter", "页面尚未就绪：" + ui);
     }
-    public static async Task<bool> Reuse(DailyWorkflow w, int? packId = null, int? packType = null, string[]? surfaces = null, string[]? extra = null, bool waitForTarget = false, double seconds = 60)
+    public static async Task<bool> Reuse(DailyWorkflow w, int? packId = null, int? packType = null, string[]? surfaces = null, string[]? extra = null, bool waitForTarget = false, double seconds = 60, Func<JsonObject, Task<bool>>? encounter = null)
     {
         using var waiting = DailyObservationWindow.Begin(seconds, () => w.Time);
         if (packId == null && packType == null)
@@ -112,7 +112,16 @@ public static class DailyTravel
                 continue;
             }
             if (types.Any(t => t.StartsWith("BattleUI", StringComparison.Ordinal)))
+            {
+                // Only the owning field route may opt in to its bounded retreat
+                // policy. Re-observe arrival after recovery; never replay entry.
+                if (encounter != null && await encounter(f))
+                {
+                    stable = arrival = null;
+                    continue;
+                }
                 throw new StageHostException("adapter", "战斗中不能切换卡带。");
+            }
             if (await Insertion(w, packId, packType) || await RecoverPresentation(w, f))
             {
                 stable = null;
@@ -213,7 +222,7 @@ public static class DailyTravel
     }
     // The native pack-list button is shared by fields and lobbies. MenuUI._buttonPack instead opens the collection guide.
     private static IEnumerable<JsonObject> PackEntries(JsonObject frame) => DailyNavigationDecision.Rows(frame).Where(r => DailyNavigationDecision.MapSceneReady(frame) && !B(r["Popup"]) && S(r["Type"]) != "FishingGameFieldDefaultUI" && !S(r["Type"]).StartsWith("BattleUI", StringComparison.Ordinal) && DailyNavigationDecision.ReadyInput(r, false) && (r["Targets"] as JsonArray)?.OfType<JsonObject>().Count(t => S(t["Field"]) == "_buttonPackList" && B(t["Enabled"])) == 1 && DailyNavigationDecision.Blockers(frame, S(r["Type"]), Policy).Length == 0);
-    public static async Task PackList(DailyWorkflow w, double seconds = 30)
+    public static async Task PackList(DailyWorkflow w, double seconds = 30, Func<JsonObject, Task<bool>>? encounter = null)
     {
         using var waiting = DailyObservationWindow.Begin(seconds, () => w.Time);
         double end = w.Time + seconds;
@@ -227,7 +236,14 @@ public static class DailyTravel
             var types = DailyNavigationDecision.Types(f);
             lastScene = S(f["Scene"]); lastPages = string.Join(", ", types.Order());
             if (types.Any(t => t.StartsWith("BattleUI", StringComparison.Ordinal)))
+            {
+                if (encounter != null && await encounter(f))
+                {
+                    visited.Clear();
+                    continue;
+                }
                 throw new StageHostException("adapter", "战斗中不能切换卡带。");
+            }
             try
             {
                 if (types.Contains("PackListUI"))

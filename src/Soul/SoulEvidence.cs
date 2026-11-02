@@ -5,7 +5,7 @@ namespace Dustweave.Soul;
 
 internal static class SoulEvidence
 {
-    internal static async Task Capture(DailyPipeMailbox mailbox,DailyCommandDriver driver,string folder,string id,bool battle=false,JsonObject? action=null,Func<Task>? continuation=null,bool archiveRead=false)
+    internal static async Task Capture(DailyPipeMailbox mailbox,DailyCommandDriver driver,string folder,string id,bool battle=false,JsonObject? action=null,Func<Task>? continuation=null,bool archiveRead=false,bool waitBattleOnly=false)
     {
         var metadata=JsonNode.Parse(await File.ReadAllTextAsync(SoulAssets.MetadataPath))!.AsObject();
         var original=mailbox.Read("live","evidence-config.json");
@@ -39,7 +39,7 @@ internal static class SoulEvidence
                     await StoreObservation(observed,folder,id,archive);
                     // Full protobuf rows already exist in the snapshot. Repeating
                     // them on stdout can create another unbounded log copy.
-                    if(battle)await RunBattle(mailbox,driver,folder,id);
+                    if(battle)await RunBattle(mailbox,driver,folder,id,waitBattleOnly);
                     if(action is not null)await RunAction(mailbox,driver,folder,id,action);
                     if(continuation is not null)await continuation();
                     return;
@@ -122,7 +122,7 @@ internal static class SoulEvidence
             await File.WriteAllTextAsync(Path.Combine(folder,id+"-view-reconcile-receipt.json"),viewReceipt.ToJsonString());
             var viewState=await driver.EvidenceAsync(new[]{"soul"});await ExportState(viewState,folder,id+"-after");return;
         }
-        var role=kind switch{"soul_buy"=>"soul.IbShopBuy","soul_upgrade"=>"soul.IbItemUpgrade","soul_save"=>"soul.IbDeckSave","soul_refresh"=>"soul.IbShopRefresh","soul_enter" or "soul_confirm_enter"=>"soul.IbDungeonEnter","soul_sell"=>"soul.IbItemSell",_=>throw new InvalidOperationException("Unreviewed native action")};
+        var role=kind switch{"soul_progress"=>"soul.IbMainInfo","soul_buy"=>"soul.IbShopBuy","soul_upgrade"=>"soul.IbItemUpgrade","soul_save"=>"soul.IbDeckSave","soul_refresh"=>"soul.IbShopRefresh","soul_enter" or "soul_confirm_enter"=>"soul.IbDungeonEnter","soul_sell"=>"soul.IbItemSell",_=>throw new InvalidOperationException("Unreviewed native action")};
         bool resuming=SoulEntryReceipt.IsResume(action);var resumedReads=new HashSet<string>();
         long start=DateTime.UtcNow.Ticks;
         var journal=new JsonObject{["status"]="dispatching",["atUtcTicks"]=start,["action"]=action.DeepClone()};
@@ -155,6 +155,18 @@ internal static class SoulEvidence
                 if(evt["Role"]?.GetValue<string>()==role&&evt["Kind"]?.GetValue<string>()=="response")
                 {accepted=evt["Accepted"]?.GetValue<bool>()==true;journal["status"]=accepted?"server_accepted":"server_rejected";journal["response"]=evt.DeepClone();await File.WriteAllTextAsync(path,journal.ToJsonString());if(!accepted)throw new InvalidOperationException("Native request rejected; not retried");}
                 if(evt["Role"]?.GetValue<string>()=="soul.IbShopInfo"&&evt["Kind"]?.GetValue<string>()=="response"&&evt["Accepted"]?.GetValue<bool>()==true)refreshed=true;
+                if(resuming&&evt["Role"]?.ToString()=="soul.IbStageEnd"&&evt["Kind"]?.ToString()=="response"&&evt["Accepted"]?.GetValue<bool>()==true)
+                    await File.WriteAllTextAsync(Path.Combine(folder,"last-battle-response.json"),evt.ToJsonString());
+            }
+            if(resuming){
+                var frame=(await driver.ObserveAsync()).Frame;
+                if(SoulResume.InBattle(frame)||frame["Surfaces"]!.AsArray().Any(s=>s?["Type"]?.ToString()=="InventoryBattleResultUI")){
+                    var observed=await driver.EvidenceAsync(new[]{"soul"});await ExportState(observed,folder,id+"-existing-battle");
+                    var current=JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(folder,"live-state-latest.json")))!["state"]!;
+                    if(SoulEntryReceipt.EnteredBattle(action,current,frame)){
+                        journal["status"]="continued_existing_battle";await File.WriteAllTextAsync(path,journal.ToJsonString());return;
+                    }
+                }
             }
             if(resuming&&SoulEntryReceipt.ResumeRoles.All(resumedReads.Contains)){
                 var frame=(await driver.ObserveAsync()).Frame;
@@ -174,10 +186,12 @@ internal static class SoulEvidence
                 var synced=await SoulSubmit.Send(driver,sync);
                 await File.WriteAllTextAsync(Path.Combine(folder,id+"-wallet-receipt.json"),synced.ToJsonString());
             }
-            if(accepted&&(!needsRead||refreshed)){var observed=await driver.EvidenceAsync(new[]{"soul"});await ExportState(observed,folder,id+"-after");journal["status"]=needsRead?"confirmed_and_refreshed":"confirmed_native_receipt";await File.WriteAllTextAsync(path,journal.ToJsonString());return;}
+            if(accepted&&(!needsRead||refreshed)){var observed=await driver.EvidenceAsync(new[]{"soul"});await ExportState(observed,folder,id+"-after");journal["status"]=needsRead?"confirmed_and_refreshed":"confirmed_native_receipt";await File.WriteAllTextAsync(path,journal.ToJsonString());if(kind=="soul_progress")await File.WriteAllTextAsync(Path.Combine(folder,"last-progress-response.json"),journal["response"]!.ToJsonString());return;}
             await Task.Delay(200);
         }
-        journal["status"]=accepted?"accepted_refresh_unconfirmed":"outcome_unknown";await File.WriteAllTextAsync(path,journal.ToJsonString());throw new TimeoutException("Native action confirmation incomplete; no retry");
+        journal["status"]=accepted?"accepted_refresh_unconfirmed":"outcome_unknown";await File.WriteAllTextAsync(path,journal.ToJsonString());
+        if(kind=="soul_progress")throw new StageHostException("adapter","等待游戏恢复关卡数据。 / Waiting for game progress."){ObservationTimedOut=true};
+        throw new TimeoutException("Native action confirmation incomplete; no retry");
     }
     internal static async Task RunObservedUi(DailyPipeMailbox mailbox,DailyCommandDriver driver,string folder,string id,JsonObject action)
     {
@@ -215,15 +229,17 @@ internal static class SoulEvidence
         }
         throw new InvalidOperationException("Unknown give-up outcome; do not repeat");
     }
-    private static async Task RunBattle(DailyPipeMailbox mailbox,DailyCommandDriver driver,string folder,string id)
+    private static async Task RunBattle(DailyPipeMailbox mailbox,DailyCommandDriver driver,string folder,string id,bool waitOnly=false)
     {
         long start=DateTime.UtcNow.Ticks;
         var first=await driver.ObserveAsync();
         bool alreadyPrompt=first.Frame["Surfaces"]!.AsArray().Any(s=>s!["Type"]!.GetValue<string>()=="InventoryBattleBuyNoticePopupUI");
-        var receipt=await SoulSubmit.Send(driver,new JsonObject{["ui"]=alreadyPrompt?"InventoryBattleBuyNoticePopupUI":"InventoryBattleStageUI",["field"]=alreadyPrompt?"_objOkBtn":"_objBattleStartButton",["reason"]="soul-tool-natural-battle",["timeout"]=20});
-        await File.WriteAllTextAsync(Path.Combine(folder,id+"-battle-click.json"),receipt.ToJsonString());
+        if(!waitOnly){
+            var receipt=await SoulSubmit.Send(driver,new JsonObject{["ui"]=alreadyPrompt?"InventoryBattleBuyNoticePopupUI":"InventoryBattleStageUI",["field"]=alreadyPrompt?"_objOkBtn":"_objBattleStartButton",["reason"]="soul-tool-natural-battle",["timeout"]=20});
+            await File.WriteAllTextAsync(Path.Combine(folder,id+"-battle-click.json"),receipt.ToJsonString());
+        }
         var seen=new HashSet<string>();var until=DateTime.UtcNow.AddSeconds(240);
-        string previous="";bool confirmed=alreadyPrompt;
+        string previous="";bool confirmed=alreadyPrompt||waitOnly;int returnedFrames=0;
         while(DateTime.UtcNow<until)
         {
             var frame=await driver.ObserveAsync();
@@ -246,14 +262,20 @@ internal static class SoulEvidence
                 Console.WriteLine("Soul event: "+evt["Role"]+" "+evt["Kind"]+" accepted="+evt["Accepted"]+" error="+evt["ErrorCode"]);
                 if(evt["Role"]?.GetValue<string>()=="soul.IbStageEnd"&&evt["Kind"]?.GetValue<string>()=="response")
                 {
-                    if(evt["Accepted"]?.GetValue<bool>()!=true)throw new InvalidOperationException("Server rejected battle settlement; preserve scene and do not replay");
+                    if(evt["Accepted"]?.GetValue<bool>()!=true)throw new SoulBattleRecoveryNeeded("结算回执未成功，重新读取关卡进度，不重发战斗。 / Reading current progress after an unsuccessful settlement response; the battle is not resent.");
                     await File.WriteAllTextAsync(Path.Combine(folder,"last-battle-response.json"),evt.ToJsonString());
                     ended=true;
                 }
             }
             if(ended){await File.WriteAllTextAsync(Path.Combine(folder,"last-completed-battle.json"),new JsonObject{["prefix"]=id,["atUtc"]=DateTime.UtcNow.ToString("O")}.ToJsonString());Console.WriteLine("Natural battle ended; response exported.");return;}
+            // Automatic login may return to the field/lobby instead of the
+            // result popup. Reconcile the saved attempt against the server;
+            // waiting only for the old callback would strand the challenge.
+            bool returned=!SoulResume.InBattle(frame.Frame)&&frame.Frame["Surfaces"]!.AsArray().Any(s=>s?["Type"]?.ToString() is "MenuUI" or "GameFieldDefaultUI" or "InventoryBattleLobbyUI");
+            returnedFrames=returned?returnedFrames+1:0;
+            if(returnedFrames>=3)throw new SoulBattleRecoveryNeeded("游戏已返回战斗外，正在恢复关卡进度。 / Restoring challenge progress after returning from battle.");
             await Task.Delay(800);
         }
-        throw new TimeoutException("Natural battle did not provide a terminal response; preserved scene, no retry");
+        throw new SoulBattleRecoveryNeeded("战斗结果等待超时，重新读取关卡进度。 / Checking current progress after the battle wait timed out.");
     }
 }

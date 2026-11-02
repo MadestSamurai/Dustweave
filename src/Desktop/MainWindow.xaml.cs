@@ -572,7 +572,10 @@ public partial class MainWindow : Window
     }
     private void Selection_Changed(object sender, SelectionChangedEventArgs e)
     {
-        if (RunAccountsButton != null)
+        // Recycled preset ComboBoxes bubble SelectionChanged through the grid.
+        // Their two-way bindings already save actual edits; they must not refresh
+        // the entire account page (including synchronous control/login probes).
+        if (e.OriginalSource == AccountsGrid && RunAccountsButton != null)
             UpdateSelection();
     }
     private void SelectAll_Click(object sender, RoutedEventArgs e)
@@ -895,6 +898,12 @@ public partial class MainWindow : Window
         try
         {
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "accounts-scroll")
+            {
+                await CheckAccountScrollingForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "accounts-scroll", realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "maintenance-priority")
             {
                 await CheckMaintenancePriorityForSmoke();
@@ -1102,6 +1111,7 @@ public partial class MainWindow : Window
             {
                 L.Audit();
                 await CheckAccountsForSmoke();
+                await CheckAccountScrollingForSmoke();
                 DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "accounts", realGameTouched = false });
                 Application.Current.Shutdown(); return;
             }

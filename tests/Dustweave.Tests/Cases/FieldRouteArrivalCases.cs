@@ -21,6 +21,7 @@ static class FieldRouteArrivalCases
         public double GateDistance = 2; public double? FirstCommandAt;
         public int GateInstance = 91;
         public Func<JsonObject[], JsonObject[]>? ChangeMaps;
+        public JsonObject? Pilot;
         public Fixture(string root)
         {
             H = new(root, [new DailyBusinessProof("dispatch.start", "collection", [], (_, _, _) => new())]);
@@ -116,7 +117,7 @@ static class FieldRouteArrivalCases
             }
             if (S(H.Frame["UiToken"]) == "WayPointUI")
                 rows.Add(Read("mainline.waypoint_ui",20,("_fieldMiniMap.CurrentMap",O(("id",DisplayedWaypointMap ?? Destination)))));
-            rows.Add(Read("mainline.travel",0,("$self",O(("Pack",1),("Map",MapId),("Maps",Array(maps)),("Approaches",Array(approaches)),("Ground",true),
+            rows.Add(Read("mainline.travel",0,("$self",O(("Pack",1),("Map",MapId),("Maps",Array(maps)),("Approaches",Array(approaches)),("Ground",true),("Pilot",Pilot),
                 ("QuickTargets", QuickEnabled ? new JsonArray(O(("Npc",QuickNpc),("Map",Destination),("AtTarget",MapId == Destination && QuickNear))) : new JsonArray())))));
             return rows.ToArray();
         }
@@ -526,6 +527,41 @@ static class FieldRouteArrivalCases
             try { await f.Route.Walk(91, 1); }
             catch (InvalidDataException ex) { blocked = ex.Message.Contains("account/process changed", StringComparison.Ordinal); }
             Check(blocked && f.Steps.Length == 1, "account change during field recovery cannot replay navigation on the new account");
+        }
+        foreach (string reason in new[] { "cart_clearance_timeout", "elite_clearance_timeout", "local_movement_locked", "local_navigation_stalled", "local_replan_failed:native_path_unavailable", "pilot_error:native_navigation" })
+        using (var f = new Fixture(Path.Combine(root, "walk-local-hazard-recovery-" + reason.Replace(':', '-'))))
+        {
+            var normal = f.H.OnCommand;
+            f.H.OnCommand = c =>
+            {
+                if (S(c["Kind"]) == "mainline_walk") f.Pilot = O(("Map", f.MapId), ("Status", "stopped"), ("Reason", reason));
+            };
+            bool blocked = false;
+            try { await f.Route.Walk(91, 1); }
+            catch (DailyTravelBlocked ex) { blocked = ex.Message == "travel_unreachable:" + reason; }
+            Check(blocked && f.Steps.SequenceEqual(new[] { "mainline_walk", "mainline_cancel_nav" }), "local avoidance failure returns for replanning without an unsafe ordinary approach");
+            f.Pilot = null; f.H.OnCommand = normal;
+            await f.Route.Walk(91, 1);
+            Check(f.MapId == 1 && f.Steps.Count(s => s == "mainline_walk") == 2, "cleared local obstruction permits the same route without permanently banning its map or gate");
+        }
+        foreach (string status in new[] { "yielding_to_cart", "waiting_for_clearance", "waiting_for_native_movement" })
+        using (var f = new Fixture(Path.Combine(root, "walk-local-wait-" + status)))
+        {
+            f.H.OnCommand = c => { if (S(c["Kind"]) == "mainline_walk") f.Pilot = O(("Map", f.MapId), ("Status", status)); };
+            f.H.OnDelay = () => { if (f.H.Time >= 5) { f.MapId = 1; f.Pilot = null; f.Scene(); } };
+            await f.Route.Walk(91, 1);
+            Check(f.MapId == 1 && f.Steps.SequenceEqual(new[] { "mainline_walk" }),
+                "a short native avoidance wait reaches the destination without sending a straight approach: " + status);
+        }
+        foreach (string status in new[] { "walking", "avoiding_cart" })
+        using (var f = new Fixture(Path.Combine(root, "walk-local-no-progress-" + status)))
+        {
+            f.H.OnCommand = c => { if (S(c["Kind"]) == "mainline_walk") f.Pilot = O(("Map", f.MapId), ("Status", status)); };
+            bool blocked = false;
+            try { await f.Route.Walk(91, 1); }
+            catch (DailyTravelBlocked) { blocked = true; }
+            Check(blocked && f.H.Time < 45 && f.Steps.SequenceEqual(new[] { "mainline_walk", "mainline_cancel_nav" }),
+                "stalled checked movement returns to replanning without bypassing hazards: " + status);
         }
         using (var f = new Fixture(Path.Combine(root, "route-planning-no-settle")))
         {

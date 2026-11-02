@@ -62,7 +62,8 @@ internal sealed class SoulToolWindow : Window
         bool busy=session.Running;start.IsEnabled=resume.IsEnabled=!busy;pause.IsEnabled=busy;
         account.Text=s.Player.Length>0?L.Get("soul.account",s.Player):L.Get("soul.before");
         state.Text=L.Get("soul.state."+s.State);
-        stats.Text=s.Dungeon>0?L.Get("soul.stats",Math.Clamp(s.Dungeon-10,1,5),s.Wave,s.WaveCount,s.Life,s.Coins):L.Get("soul.progress",s.Completed,s.Wins,s.Losses);
+        int chapter=s.Dungeons is {Length:5}?Array.IndexOf(s.Dungeons,s.Dungeon)+1:Math.Clamp(s.Dungeon-10,1,5);
+        stats.Text=s.Dungeon>0?L.Get("soul.stats",chapter,s.Wave,s.WaveCount,s.Life,s.Coins):L.Get("soul.progress",s.Completed,s.Wins,s.Losses);
         if(s.Dungeon>0)stats.Text+=" · "+L.Get("soul.attempt",s.Attempt);
         detail.Text=s.Message.Length>0?s.Message:busy?L.Get("soul.active_hint"):L.Get("soul.ready_hint");
         if(s.State=="planning"&&s.DecisionPhase.Length>0)
@@ -75,9 +76,11 @@ internal sealed class SoulToolWindow : Window
             if(s.RiskyPlan)detail.Text+="\n"+L.Get("soul.decision_risk");
         }
         for(int i=0;i<5;i++){
-            var label=(TextBlock)steps[i].Child;label.Text=L.Get("soul.chapter",i+1)+(i<s.Completed?"  ✓":"");
-            steps[i].Opacity=i<s.Completed||i==s.Dungeon-11?1:.55;
-            steps[i].BorderThickness=new Thickness(i==s.Dungeon-11?2:1);
+            int dungeon=s.Dungeons is {Length:5}?s.Dungeons[i]:i+11;
+            bool completed=s.CompletedDungeons?.Contains(dungeon)??i<s.Completed;
+            var label=(TextBlock)steps[i].Child;label.Text=L.Get("soul.chapter",i+1)+(completed?"  ✓":"");
+            steps[i].Opacity=completed||dungeon==s.Dungeon?1:.55;
+            steps[i].BorderThickness=new Thickness(dungeon==s.Dungeon?2:1);
         }
         if(s.State is "won" or "lost" or "complete" or "defeated" or "retrying" or "error"){
             string line=$"{DateTime.Now:HH:mm:ss}  {state.Text}  ·  "+L.Get("soul.progress",s.Completed,s.Wins,s.Losses);

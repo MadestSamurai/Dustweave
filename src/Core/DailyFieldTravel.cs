@@ -87,6 +87,18 @@ public sealed partial class DailyFieldRoute
                     return null;
                 }
                 if (map != origin) throw new DailyTravelBlocked("field.route-interrupted: 地图或入口已经改变，需要重新观察路线。");
+                var pilot = Travel(current)["Pilot"];
+                if (N(pilot?["Map"]) == map && S(pilot?["Status"]) == "stopped"
+                    && (S(pilot?["Reason"]) is "cart_clearance_timeout" or "elite_clearance_timeout" or "local_movement_locked" or "local_navigation_stalled"
+                        || S(pilot?["Reason"]).StartsWith("local_replan_failed:", StringComparison.Ordinal)
+                        || S(pilot?["Reason"]).StartsWith("pilot_error:", StringComparison.Ordinal)))
+                {
+                    // A concrete local obstruction returns to the route planner.
+                    // The ordinary approach must not bypass avoidance into the same hazard.
+                    await W.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
+                    await Failure(current, target, "local_avoidance_stopped", O(("pilot", pilot)));
+                    throw new DailyTravelBlocked("travel_unreachable:" + S(pilot?["Reason"]));
+                }
                 if (destination == null)
                 {
                     var arrived = FieldRows(current, "waypoint").SingleOrDefault(r => N(r["instance"]) == target && B(r[WaypointNear]));
@@ -128,10 +140,24 @@ public sealed partial class DailyFieldRoute
                     progress.Suspend(elapsed);
                     continue;
                 }
+                if (N(pilot?["Map"]) == map && S(pilot?["Status"]) is "yielding_to_cart" or "waiting_for_clearance" or "waiting_for_native_movement")
+                {
+                    // These native waits have their own short deadlines. Do not
+                    // replace a deliberate yield with an unprotected straight walk.
+                    progress = new(W.Time);
+                    await W.Delay(250);
+                    continue;
+                }
                 var point = new[] { "x", "y", "z" }.Select(axis => DailyRegionRouter.D(R(current, "mainline.map", "ὪὨὯὢὫὮὨὩὮὡὬ.transform.position." + axis))).ToArray();
                 double? remaining = Rows(Travel(current)["Approaches"]).Where(p => N(p["Instance"]) == target && B(p["Reachable"])).Select(p => (double?)DailyRegionRouter.D(p["Distance"])).FirstOrDefault();
                 if (progress.Sample(point, remaining, W.Time))
                 {
+                    if (N(pilot?["Map"]) == map && S(pilot?["Status"]) is "walking" or "avoiding_cart")
+                    {
+                        await W.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
+                        await Failure(current, target, "local_avoidance_no_progress", O(("pilot", pilot)));
+                        throw new DailyTravelBlocked("travel_unreachable:avoidance_no_progress");
+                    }
                     if (nudged)
                         break;
                     nudged = true;
@@ -431,7 +457,7 @@ public sealed partial class DailyFieldRoute
     public async Task Enter(long chapter, bool leaveInterior = false)
     {
         Require(Catalog.Supported(chapter) || Owned(await Evidence(), chapter), "卡带不支持或未拥有");
-        if (await DailyTravel.Reuse(W, packId: checked((int)chapter), surfaces: ["GameFieldDefaultUI"], extra: ["WayPointUI"]))
+        if (await DailyTravel.Reuse(W, packId: checked((int)chapter), surfaces: ["GameFieldDefaultUI"], extra: ["WayPointUI"], encounter: Encounter))
         {
             return;
         }
@@ -441,13 +467,13 @@ public sealed partial class DailyFieldRoute
             if (!DailyCollectionCatalog.EventPackAvailable(Rows(R(access, "mainline.pack_access", "$self")), chapter))
                 throw new DailyTravelBlocked($"活动卡带 {chapter} 当前未开放，已跳过；后续开放时会重新判断");
         }
-        await DailyTravel.PackList(W);
+        await DailyTravel.PackList(W, encounter: Encounter);
         try { await W.Step("PackListUI", operation: "mainline_pack", value: checked((int)chapter)); }
         catch (DailyStepException e) when (e.Kind == "rejected" && e.DefinitelyNotDispatched && e.RejectionCode == "pack_entry_unavailable:event_closed")
         {
             throw new DailyTravelBlocked($"活动卡带 {chapter} 的开放状态已变化，本次未发送切换，继续后续卡带");
         }
-        Require(await DailyTravel.Reuse(W, packId: checked((int)chapter), surfaces: ["GameFieldDefaultUI"], waitForTarget: true), "卡带切换未完成");
+        Require(await DailyTravel.Reuse(W, packId: checked((int)chapter), surfaces: ["GameFieldDefaultUI"], waitForTarget: true, encounter: Encounter), "卡带切换未完成");
         await FieldReady();
         if (leaveInterior && N(Map(await Evidence())["isInsideMap"]) != 0)
             await PrepareTeleport();

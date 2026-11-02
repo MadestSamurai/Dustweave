@@ -22,7 +22,7 @@ namespace BD2Daily.Live {
    var response=fields.SingleOrDefault(f=>f.FieldType==typeof(IbStageEndResponse));
    return response!=null&&response.GetValue(ui)!=null;
   }
-  internal static bool Kind(string kind){return kind=="soul_open"||kind=="soul_views"||kind=="soul_confirm_reset"||kind=="soul_confirm_enter"||kind=="soul_buy"||kind=="soul_upgrade"||kind=="soul_save"||kind=="soul_sale_sync"||kind=="soul_trace"||kind=="soul_enter"||kind=="soul_refresh"||kind=="soul_sell";}
+  internal static bool Kind(string kind){return kind=="soul_progress"||kind=="soul_open"||kind=="soul_views"||kind=="soul_confirm_reset"||kind=="soul_confirm_enter"||kind=="soul_buy"||kind=="soul_upgrade"||kind=="soul_save"||kind=="soul_sale_sync"||kind=="soul_trace"||kind=="soul_enter"||kind=="soul_refresh"||kind=="soul_sell";}
   [DataContract] internal sealed class ViewInfo {
    [DataMember]public int ViewId,ItemId,Level,ShopSlot;
    [DataMember]public long InventoryIndex;
@@ -87,6 +87,7 @@ namespace BD2Daily.Live {
    return current.Concat(SoulResearchBindings.UnitItemIds.Where(id=>!known.Contains(id)).Select(id=>CapabilityFor(id,0,0))).ToArray();
   }
   internal static string Validate(Command c,Frame f,Surface ui){
+   if(c.Kind=="soul_progress")return LivePolicy.GameplayReady(f)&&(ui.Type=="InventoryBattleLobbyUI"||ui.Type=="InventoryBattleStageUI"||ui.Type=="InventoryBattleResultUI")&&c.TargetId==0&&c.Value==0&&c.Items!=null&&c.Items.Length==0?"":"soul_progress_unavailable";
    if(c.Kind=="soul_open")return LivePolicy.GameplayReady(f)&&ui.Type=="PackListUI"&&c.TargetId==0&&c.Value==3012&&!f.Surfaces.Any(x=>x.Id!=ui.Id&&x.Popup&&!LivePolicy.PassiveSurface(x.Type)&&x.Order>=ui.Order)?"":"soul_cartridge_unavailable";
    if(!LivePolicy.GameplayReady(f)||ui.Type!=(c.Kind=="soul_confirm_enter"||c.Kind=="soul_confirm_reset"?"MessagePopupUI":c.Kind=="soul_enter"?"InventoryBattleLobbyUI":"InventoryBattleStageUI")||c.TargetId!=0||c.Items==null||c.Items.Length<4)return "soul_context_rejected";
    if(f.Surfaces.Any(x=>x.Id!=ui.Id&&x.Popup&&!LivePolicy.PassiveSurface(x.Type)&&x.Order>=ui.Order))return "soul_popup_blocked";
@@ -160,6 +161,8 @@ namespace BD2Daily.Live {
   }
   internal static void Execute(Command c,UIBase ui){
    Require(Client.ManifestModule.ModuleVersionId.ToString()==SoulResearchBindings.Mvid,"Soul client changed");
+   // Read only. Do not reload shop/deck objects or send a battle transaction.
+   if(c.Kind=="soul_progress"){Call(SoulResearchBindings.MainInfo,(Action)(()=>{}),false);return;}
    if(c.Kind=="soul_open"){
     var pack=(PackTable)Get(SoulResearchBindings.PackRow,3012);
     Require(pack!=null&&pack.Id==3012&&pack.PackType==14&&Get(SoulResearchBindings.OwnedPack,3012)!=null,"Soul cartridge is not owned or available");

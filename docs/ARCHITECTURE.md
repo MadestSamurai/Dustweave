@@ -4,6 +4,20 @@ Dustweave 是一个日常应用。源码、账号、连接、配置与验证在�
 
 Dustweave is one daily application. Its accounts, workflows, connection, configuration and verification are maintained together. Equipment Assistant, Apostle Defense, Infinite Gacha, MANSION RUNAWAY, Pandora, Fiend Hunter, Rhythm, SECRET VISION and Sichuan are owned modules under `src/`; Fishing and Territory are also owned modules under `src/Fishing` and `src/Territory`. Optional plugins are supported.
 
+## Recoverability / 可恢复性
+
+**禁止错误过保护：可恢复错误不得造成永久卡死。** 检查的目的应是防止具体的错误操作，同时让正常流程在条件恢复后继续；“拦住了”本身不是正确性的证明。这是全项目的设计约束，包含日常、工具、插件宿主、登录、迁移和更新，不限于某一个报错入口。
+
+缺少观察、暂时断线、场景加载与已经确认的身份变化必须区分。前者进入可取消、有时限的等待与重新观察，恢复后从游戏当前状态继续规划；后者停止对旧会话操作，通过正常入口重新确认会话。游戏已确认的进度和回执优先于本地推断，不为同一个事实层层追加核账条件。
+
+可能已经提交的购买、领奖、战斗等操作不能因超时而重发。保留记录用于恢复，而不能让记录本身成为永久锁：继续入口必须能重新读取当前状态、判定已完成／尚在执行／仍无法确认，并据此继续、等待或给出具体的处理路径。已完成的进度不得丢失；不能用删除待确认记录、重装软件或重置账号充当正常恢复方案。
+
+任何暂停都必须说明阻断的具体依赖、恢复条件和用户可执行的下一步。不能自动确认的结果可以暂缓，但不能无限等待、反复显示同一句错误，或让“继续”按钮永远回到同一阻断。互不依赖的工作不应被扩大阻断，暂停、退出与恢复入口必须保持可用。
+
+“继续”也必须接续用户手动推进的游戏进度，不以工具历史记录是否存在为前提。以游戏当前状态作为起点，跳过已经完成的内容，优先接续正在进行的挑战，保留资源和布局。缺少本地记录不代表需要重开；重置只属于用户明确选择的重开操作。
+
+验收必须观察到“故障 → 条件恢复 → 实际继续”，并覆盖重启后恢复和重复操作不会多次消耗。详见 [开发指南](DEVELOPMENT.md) 的恢复逻辑评审要求。
+
 ## Dependencies / 依赖方向
 
 ```text

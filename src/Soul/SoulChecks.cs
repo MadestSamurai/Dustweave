@@ -22,6 +22,8 @@ public static class SoulChecks
         Directory.CreateDirectory(output);
         Storage(Path.Combine(output,"tools","soul","runs","fixture"));
         SaleSynchronization();
+        Resume();
+        ManualProgress();
         NativeLayoutEncoder.Test();NativePlanExecutor.Test();SoulSubmit.Test();NativeSearchRisk.Test();NativeGrowthPolicy.Test();
         SoulViewAudit.Test();SoulPacking.Test();SoulReservePolicy.Test();SoulShopPolicy.Test();SoulEntryReceipt.Test();
         var half=NativeFastPlanner.RetryValue([.5,.5],[1,1],2);
@@ -64,6 +66,100 @@ public static class SoulChecks
         if(retry.Target!=15||retry.Completed.Count!=4)throw new Exception("A retried dungeon did not advance after clearing");
         run.Save(output);
         File.WriteAllText(Path.Combine(output,"result.json"),"""{"status":"passed","realGameTouched":false,"campaignWaves":55,"losses":1,"checks":"layout, transactions, unknown receipts, growth identity, full replay, battle identity"}""");
+    }
+    static void Resume()
+    {
+        var season=JsonNode.Parse("""{"progress":{"SeasonDungeons":[11,12,13,14,15],"WaveCounts":[5,10,10,15,15],"ClearedDungeons":[11,12,13,14,15]}}""")!.AsObject();
+        JsonObject Reply(string role,JsonObject body,long ticks=long.MaxValue)=>new(){["Role"]=role,["Kind"]="response",["Accepted"]=true,["AtUtcTicks"]=ticks,["Values"]=new JsonArray(new JsonObject{["Json"]=body.ToJsonString()})};
+        JsonObject Progress(int dungeon,int wave,int life,bool active=false)=>Reply("soul.IbMainInfo",new JsonObject{
+            ["regularSeason"]=3,["clearedDungeonId"]=new JsonArray(11,12,13,14,15),
+            ["playInfo"]=new JsonObject{["season"]=3,["dungeonId"]=dungeon,["stageId"]=wave,["life"]=life,["isStageEnter"]=active}});
+        SoulCampaign Pending(int wave=2){
+            var run=new SoulCampaign();run.Initialize(season,"account","player");run.Completed.AddRange([11,12]);
+            run.BeginBattle(13,wave,new JsonObject{["play"]=new JsonObject{["season"]=3,["life"]=5}});
+            // Exercise the actual persisted schema, including a restart while
+            // the last battle callback has not arrived.
+            return System.Text.Json.JsonSerializer.Deserialize<SoulCampaign>(System.Text.Json.JsonSerializer.Serialize(run))!;
+        }
+        var pending=Pending();
+        if(pending.Reconcile(Progress(13,2,5,true))!="active"||pending.PendingDungeon!=13)throw new Exception("An active battle was replayed or lost");
+        if(pending.Reconcile(Progress(13,3,5))!="won"||pending.Wins!=1)throw new Exception("Reconnect did not accept actual advanced progress");
+        if(pending.Reconcile(Progress(13,3,5))!="none"||pending.Wins!=1)throw new Exception("Repeated Continue counted the same battle twice");
+        pending.BeginBattle(13,3);pending.Settle(true);
+        if(pending.Wins!=2||!pending.Completed.SequenceEqual(new[]{11,12}))throw new Exception("Recovered campaign could not actually continue");
+        var lost=Pending();if(lost.Reconcile(Progress(13,2,4))!="lost"||lost.Losses!=1)throw new Exception("Life loss did not recover settlement");
+        lost.BeginBattle(13,2);lost.Settle(true);
+        foreach(bool oldFormat in new[]{false,true}){
+            var unknown=Pending();if(oldFormat){unknown.PendingSince=0;unknown.PendingLife=-1;unknown.PendingSeason=0;}
+            if(unknown.Reconcile(Progress(13,2,5))!="current_progress"||unknown.Wins!=0||unknown.Losses!=0||unknown.UnconfirmedBattles!=1)throw new Exception("Idle server progress remained locked or fabricated an outcome");
+            unknown.BeginBattle(13,2);unknown.Settle(true);
+        }
+        var final=Pending(10);
+        var receipt=Reply("soul.IbStageEnd",new JsonObject{["isDungeonCleared"]=1,["nextStageId"]=0,["life"]=5});
+        if(final.Reconcile(Progress(0,0,0),receipt)!="won"||final.Target!=14)throw new Exception("Confirmed final victory did not continue to next dungeon");
+        var oldReceipt=Pending(10);receipt["AtUtcTicks"]=oldReceipt.PendingSince-1;
+        if(oldReceipt.Reconcile(Progress(0,0,0),receipt)!="current_progress"||oldReceipt.Target!=13||oldReceipt.Wins!=0)throw new Exception("Historical clears or old receipt invented a new clear");
+        oldReceipt.BeginBattle(13,1);oldReceipt.Settle(true);
+        var empty=Pending();
+        if(empty.Reconcile(Reply("soul.IbMainInfo",new JsonObject{["regularSeason"]=3}))!="current_progress"||empty.PendingDungeon!=0)
+            throw new Exception("Native no-active-dungeon response was treated as missing evidence");
+        foreach(var response in new[]{Reply("soul.IbMainInfo",new JsonObject{["regularSeason"]=4,["playInfo"]=new JsonObject()})}){
+            var run=Pending();bool rejected=false;
+            try{run.Reconcile(response);}catch(InvalidDataException){rejected=true;}
+            if(!rejected||run.PendingDungeon!=13)throw new Exception("Different dungeon/season lost the pending record");
+            if(run.Reconcile(Progress(13,3,5))!="won")throw new Exception("Restored context remained permanently blocked");
+        }
+        SoulResume.CheckIdentity(true,"account","player",null,null);
+        SoulResume.CheckIdentity(true,"account","player","","");
+        SoulResume.CheckIdentity(true,"account","player","account","player");
+        foreach(var changed in new[]{(false,"account","player"),(true,"other","player"),(true,"account","other")}){
+            bool rejected=false;try{SoulResume.CheckIdentity(changed.Item1,"account","player",changed.Item2,changed.Item3);}catch(InvalidOperationException){rejected=true;}
+            if(!rejected)throw new Exception("Changed process or account was accepted");
+        }
+        if(!SoulResume.Transient(new StageHostException("adapter","gap"){ObservationTimedOut=true})
+            ||SoulResume.Transient(new DailyStepException("pending","uncertain purchase",true))
+            ||SoulResume.Transient(new StageHostException("identity","different account")))throw new Exception("Recovery widened into an uncertain consuming action or identity change");
+        Console.WriteLine("Soul reconnect checks passed: persisted continuation, repeated recovery, active/idle battle, old receipts and identity boundaries");
+    }
+    static void ManualProgress()
+    {
+        var state=JsonNode.Parse("""{"progress":{"RegularSeason":3,"SeasonDungeons":[11,12,13,14,15],"WaveCounts":[5,10,10,15,15],"ClearedDungeons":[11,12]},"play":{"season":3,"dungeonId":13,"stageId":4,"life":3,"coin":17},"inventory":[{"inventoryIndex":321}],"deck":[{"inventoryIndex":321,"position":7}],"shop":[{"slot":0,"id":10000}]}""")!.AsObject();
+        JsonObject Reply(int active,int wave,int[] clears,bool inBattle=false,int season=3){
+            var body=new JsonObject{["regularSeason"]=season,["clearedDungeonId"]=new JsonArray(clears.Select(i=>(JsonNode)JsonValue.Create(i)!).ToArray()),["playInfo"]=new JsonObject{["season"]=season,["dungeonId"]=active,["stageId"]=wave,["life"]=3,["coin"]=17,["isStageEnter"]=inBattle}};
+            return new JsonObject{["Role"]="soul.IbMainInfo",["Kind"]="response",["Accepted"]=true,["AtUtcTicks"]=DateTime.UtcNow.Ticks,["Values"]=new JsonArray(new JsonObject{["Json"]=body.ToJsonString()})};
+        }
+        var original=state.ToJsonString();
+        var fresh=new SoulCampaign();var run=fresh.ResumeFromGame(state,Reply(13,4,[11,12]),"account","player");
+        if(run.Target!=13||!run.Completed.SequenceEqual(new[]{11,12})||run.Wins!=0||fresh.Dungeons.Length!=0||state.ToJsonString()!=original)
+            throw new Exception("Manual resume replayed cleared chapters, fabricated wins, or changed resources/layout");
+        run.BeginBattle(13,4,state);run.Settle(true);
+        run=System.Text.Json.JsonSerializer.Deserialize<SoulCampaign>(System.Text.Json.JsonSerializer.Serialize(run))!;
+        run=run.ResumeFromGame(state,Reply(13,5,[11,12]),"account","player");
+        if(run.Target!=13||run.Wins!=1||run.PendingDungeon!=0)throw new Exception("Repeated/manual resume lost saved progress");
+        run.BeginBattle(13,5,state);run.Settle(true);
+        var idle=fresh.ResumeFromGame(state,Reply(0,0,[11,12]),"account","player");
+        if(idle.Target!=13)throw new Exception("Between-dungeon manual progress restarted chapter one");
+        var complete=fresh.ResumeFromGame(state,Reply(0,0,[11,12,13,14,15]),"account","player");
+        if(complete.Target!=0||complete.Status!="complete")throw new Exception("An already completed season was replayed by Resume");
+        var redoing=fresh.ResumeFromGame(state,Reply(13,4,[11,12,13,14,15]),"account","player");
+        if(redoing.Target!=13||redoing.Completed.Contains(13)||redoing.Completed.Count!=4)throw new Exception("Current manual rechallenge was skipped");
+        var unordered=fresh.ResumeFromGame(state,Reply(14,6,[13,15]),"account","player");
+        if(unordered.Target!=14||!unordered.Completed.SequenceEqual(new[]{13,15}))throw new Exception("Current dungeon lost priority to an earlier incomplete chapter");
+        unordered.BeginBattle(14,15,state);unordered.Settle(true);
+        if(unordered.Target!=11)throw new Exception("Other unfinished dungeons were lost after the active dungeon");
+        var active=fresh.ResumeFromGame(state,Reply(13,4,[11,12],true),"account","player");
+        if(active.PendingDungeon!=13||active.PendingWave!=4||active.Battles!=0)throw new Exception("Ongoing manual battle was treated as a new dispatch");
+        active=active.ResumeFromGame(state,Reply(13,5,[11,12]),"account","player");
+        if(active.PendingDungeon!=0||active.Wins!=1)throw new Exception("Manual battle could not settle after observing the result");
+        active.BeginBattle(13,5,state);
+        active=active.ResumeFromGame(state,Reply(14,6,[11,12,13]),"account","player");
+        if(active.Target!=14||active.PendingDungeon!=0||active.UnconfirmedBattles!=1)throw new Exception("Stale local attempt locked newer manual game progress");
+        var nextSeason=state.DeepClone().AsObject();nextSeason["progress"]!["RegularSeason"]=4;
+        active=active.ResumeFromGame(nextSeason,Reply(0,0,[],season:4),"account","player");
+        if(active.Target!=11||active.Completed.Count!=0||active.Wins!=0||active.Season!=4)throw new Exception("Old season history blocked or skipped the new season");
+        bool wrongAccount=false;try{run.ResumeFromGame(state,Reply(13,5,[11,12]),"other","player");}catch(InvalidDataException){wrongAccount=true;}
+        if(!wrongAccount)throw new Exception("Manual resume crossed an account boundary");
+        Console.WriteLine("Manual Soul progress checks passed: no tool history, saved/manual progress, active battle, nonsequential clears, current rechallenge, all-clear and new season");
     }
     static void SaleSynchronization()
     {

@@ -73,8 +73,11 @@ public sealed class DailyRoomStage : IDailyManagedStage
             // Do not replay the old request. A fresh visit has its own identity,
             // evidence and response; the former outcome is never labelled success.
             foreach (var old in unresolved)
-                if (new[] { "ProcessId", "ProcessStartTicks" }.All(k => JsonNode.DeepEquals(old["before"]!["Frame"]![k], observed.Frame[k])) && driver.UtcTicks - DailyEvidence.Integer(old["at"]) < 45 * TimeSpan.TicksPerSecond)
+            {
+                var originalFrame = (old["before"] as JsonObject)?["Frame"] as JsonObject;
+                if ((originalFrame == null || new[] { "ProcessId", "ProcessStartTicks" }.All(k => JsonNode.DeepEquals(originalFrame[k], observed.Frame[k]))) && driver.UtcTicks - DailyEvidence.Integer(old["at"]) < 45 * TimeSpan.TicksPerSecond)
                     throw new StageHostException("pending", "小屋原请求仍在响应期限内，稍后可重新读取。");
+            }
         }
         var completed = prior.FirstOrDefault(p => p["state"]?.GetValue<string>() == "completed" && JsonNode.DeepEquals(p["cycle"], context["cycle"]));
         string flowId = Guid.NewGuid().ToString("N"), flowPath = Path.Combine(root, "live", "workflows", flowId, "result.json");

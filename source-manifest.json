@@ -8554,6 +8554,30 @@
       "sha256": "9e657abdb43fc9f40d09bad247238d498f0f0c7ae372cba24f94f261d5c48914",
       "bytes": 2241,
       "reasons": "build input"
+    },
+    {
+      "path": "src/Connection/FieldAvoidancePlanner.cs",
+      "sha256": "3c288f2c27c8cfc5117535ca83842b57d31545c00433911c9dc683b08b70bef6",
+      "bytes": 7921,
+      "reasons": "build input"
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/FieldAvoidanceCases.cs",
+      "sha256": "a1260689aa131c6d1ab0e44f019ed17dfc357c96cd2b7623a1c285a6fd5c32b2",
+      "bytes": 3448,
+      "reasons": "build input"
+    },
+    {
+      "path": "src/Connection/FieldRoutePilot.cs",
+      "sha256": "e36c153d6c79bf8166280d833610134e09c6195e70a59c300aca008669f77ebf",
+      "bytes": 8902,
+      "reasons": "build input"
+    },
+    {
+      "path": "src/Soul/SoulResume.cs",
+      "sha256": "30bac026dfd822490f62dbca920f271f95b50c1721ce75e419e425852619e94b",
+      "bytes": 1657,
+      "reasons": "build input"
     }
   ],
   "publicReleaseApproved": false,

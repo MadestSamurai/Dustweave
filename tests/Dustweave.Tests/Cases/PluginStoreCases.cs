@@ -68,12 +68,17 @@ internal static class PluginStoreCases
         string? priorProbe = Environment.GetEnvironmentVariable("DUSTWEAVE_TEST_PROBE");
         try
         {
-            foreach (string behavior in new[] { "hang", "fail" })
+            foreach (string behavior in new[] { "hang", "fail", "fail-report" })
             {
                 Environment.SetEnvironmentVariable("DUSTWEAVE_TEST_PROBE", behavior);
                 bool rejected = false;
                 try { await DailyPluginProbe.RunAsync(Environment.ProcessPath!, Path.Combine(root, "probe"), store.Inspect(first), limit: TimeSpan.FromMilliseconds(1500)); }
-                catch (IOException e) { rejected = e.Message == (behavior == "hang" ? "plugins.probe_timeout" : "plugins.probe_failed"); }
+                catch (IOException e)
+                {
+                    rejected = e.Message == (behavior == "hang" ? "plugins.probe_timeout" : "plugins.probe_failed");
+                    if (behavior == "fail-report") Check(e.ToString().Contains("Synthetic plugin interface mismatch"), "child check failure preserves the original interface error");
+                    if (behavior == "fail") Check(e.ToString().Contains("exited with code 1 without a result report"), "early child exit remains distinct from a reported interface failure");
+                }
                 Check(rejected, "isolated load " + behavior + " remains bounded without stopping the host");
             }
         }

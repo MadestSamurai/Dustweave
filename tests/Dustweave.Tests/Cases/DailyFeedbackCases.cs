@@ -234,5 +234,26 @@ static class FieldEncounterCases
    var route=new DailyFieldRoute(h.Workflow){RecoverEncounters=true,NpcActing=true};
    Check(!await route.Encounter(h.Frame)&&h.Box.Commands.Count==0,"NPC objective battles remain excluded from automatic retreat");
   }
+  foreach(string entry in new[]{"arrival","pack-list","disabled","npc"})
+  using(var h=Harness("encounter-cartridge-"+entry))
+  {
+   h.Readings=()=>[
+    WorkflowCases.Reading("navigation.pack",(DailyTravel.CurrentPack+".Id",1005),(DailyTravel.CurrentPack+".PackType",1)),
+    WorkflowCases.Reading("mainline.map",(DailyFieldRoute.MapPath,O(("id",10052))),("HasCanOverwhelmMonster()",false)),
+    WorkflowCases.Reading("mainline.durations",("entries",new JsonArray(O(("Key",17),("Value.ὫὢὢὬὫὫὡὩὪὩὮ",true),("Value.ὠὨὠὭὬὤὪὢὫὨὮ",20)))))];
+   h.OnCommand=c=>{
+    if(S(h.Frame["Surfaces"]![0]!["Type"])=="GameFieldDefaultUI")h.Page("PackListUI");
+    else if(Step(c)==2)h.Page("GameFieldDefaultUI","_buttonPackList");
+    else Page(h,Step(c)+1);
+   };
+   var route=new DailyFieldRoute(h.Workflow){RecoverEncounters=entry!="disabled",NpcActing=entry=="npc"};
+   bool recovered=false,blocked=false;
+   try{
+    if(entry=="pack-list"){await DailyTravel.PackList(h.Workflow,encounter:route.Encounter);recovered=true;}
+    else recovered=await DailyTravel.Reuse(h.Workflow,packId:1005,surfaces:["GameFieldDefaultUI"],waitForTarget:true,encounter:route.Encounter);
+   }catch(StageHostException){blocked=true;}
+   Check(entry is "disabled" or "npc" ? blocked&&!recovered&&h.Box.Commands.Count==0 : recovered&&!blocked&&h.Box.Commands.Count==(entry=="pack-list"?4:3),"cartridge arrival delegates only authorized field encounters to existing bounded recovery: "+entry);
+   Check(h.Box.Commands.All(c=>S(c["Kind"])!="mainline_pack"&&S(c["Kind"])!="mainline_talent"),"cartridge encounter recovery never replays entry or consumes another active talent: "+entry);
+  }
  }
 }

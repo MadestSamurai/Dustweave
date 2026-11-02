@@ -2,6 +2,22 @@
 
 Dustweave is maintained directly in this repository. Use `src/` for the host, `assets/` for flow inputs, and `tests/Dustweave.Tests` for synthetic regressions. `Dustweave.slnx`, `build.ps1`, `test.ps1`, `check-source.ps1` and `package.ps1` are the canonical entry points. See `docs/ARCHITECTURE.md` and `docs/DEVELOPMENT.md`.
 
+## Core requirement: recoverability / 核心要求：禁止错误过保护
+
+可恢复错误不得造成永久卡死。把短暂断线、加载中、观察缺失或旧的待确认记录变成永远无法继续的阻断，是功能缺陷，不是安全改进。此要求适用于日常、内置工具、插件宿主、账号、存储迁移与更新恢复。
+
+- Every blocking guard must name the concrete failure it prevents, the evidence it uses, its scope and a reachable recovery transition. Do not add speculative guards or widen a local check into a global stop. Review existing guards against the same rule.
+- Treat missing observations as unknown, not as proven failure, changed identity, exhausted resources or invalid progress. Prefer fresh authoritative game state and accepted receipts over additional local bookkeeping requirements; do not require redundant evidence when the result is already established.
+- Transient failures must use bounded waiting/reobservation, then replan from the current state. Do not blindly repeat a possibly dispatched consuming action. Confirmed account/process/ownership changes remain hard boundaries; reacquire and validate the intended session before continuing.
+- Every waiting, paused, pending and recovery state needs an effective exit, including after restart. “Continue” must refresh/reconcile current state instead of rejecting forever because the same persisted flag still exists. A genuine unresolved action may pause, but must offer a supported, non-destructive route to recheck or resolve it and accurately explain what remains unknown. Never require editing/deleting journals, reinstalling, resetting accounts or exporting repeated diagnostics as the normal recovery path.
+- “Continue” must also adopt progress made manually in the game, including when no local automation history exists. Treat current authoritative game progress as the starting point, preserve completed work and remaining resources, and prioritize the currently active run. Missing local history is never authorization to reset or replay completed content. Restarting belongs to an explicitly chosen restart action.
+- Scope a pause to the dependent work. Preserve completed progress, keep pause/close and recovery controls usable, and continue independent work only where ownership and dependencies permit it. A timeout is not proof of failure or permission to resend.
+- Tests for recovery changes must cover failure → restored conditions → actual continuation, not merely “correctly blocked.” Include repeated recovery, process restart with pending state, cancellation, and no duplicate purchases/claims/battles. Do not claim that offline tests establish live-game reliability.
+
+See `docs/ARCHITECTURE.md`, Recoverability, and the recovery review in `docs/DEVELOPMENT.md`. New or changed guards without an effective recovery path do not meet the project's acceptance requirements.
+
+## Development boundaries
+
 - Respect the calling task's explicitly required working directory. Root scripts locate their own sources without changing that directory.
 - Use .NET and PowerShell; do not add Python runtime or required Python build/verification steps.
 - Preserve account/session identity, user-data paths, the host control lock and shared IPC ownership across integrated tools.

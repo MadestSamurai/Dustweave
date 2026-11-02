@@ -15,14 +15,15 @@ public partial class MainWindow
             string profile=Path.Combine(root,"activity-fixture",tool.Id);
             var fixture=new DemoEnvironment(profile) { Game=new(42,123,"fixture.exe") };
             var state=new SuiteStatus {Tool=tool.Id,State="ready"};
-            int denied=0;
+            int denied=0, activations=0;
+            bool leaveHandoffUnready=false;
             ManualResetEventSlim? readGate=null;
             var readEntered=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             var window=new ActivityFixtureWindow {Owner=this};window.Show();
             using var bridge=new HostedToolActivity(window,tool.Id,fixture,profile,()=>{
                 if(readGate is {} gate){readEntered.TrySetResult();if(!gate.Wait(5000))throw new TimeoutException("fixture read wait");}
                 state.At=DateTime.UtcNow.Ticks;return state;
-            },_=>denied++);
+            },_=>denied++,()=>{activations++;if(!leaveHandoffUnready){state.Tool=tool.Id;state.State="ready";state.Owner=DailySuite.Owner;}return Task.CompletedTask;});
             try
             {
                 using(var other=DailyToolControl.Acquire(profile))
@@ -46,8 +47,35 @@ public partial class MainWindow
                 Check(DailyToolControl.IsOccupied(profile),tool.Id+": pending settlement retains control");
                 state.Pending="";await Task.Delay(850);await bridge.Poll();
                 Check(!DailyToolControl.IsOccupied(profile)&&window.IsVisible,tool.Id+": settled idle window releases control");
+                fixture.Ready=false;
+                int connectedBefore=window.Connections;
+                window.Connect.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                Check(window.Connections==connectedBefore&&!DailyToolControl.IsOccupied(profile),tool.Id+": missing identity before connect neither dispatches nor locks unrelated work");
+                state.Tool="daily";
+                await bridge.Poll();
+                Check(activations==0&&!DailyToolControl.IsOccupied(profile),tool.Id+": read-only handoff preflight failure does not consume the resume attempt");
+                fixture.Ready=true;
+                await bridge.Poll();
+                Check(activations==1&&state.Tool==tool.Id,tool.Id+": restored identity actually resumes handoff without reopening the window");
+                await bridge.Poll();
+                Check(activations==1,tool.Id+": successful handoff is not repeatedly activated");
+                window.HostedAutomationEnabled=false;
+                await Task.Delay(850);await bridge.Poll();
                 if(tool.Id=="fishing")
                 {
+                    leaveHandoffUnready=true;state.Tool="daily";
+                    await bridge.Poll();
+                    int incompleteActivations=activations;
+                    window.HostedAutomationEnabled=false;
+                    await Task.Delay(900);await bridge.Poll();
+                    Check(activations==incompleteActivations,"an automatic Connect event cannot reset the failed-handoff latch into a reconnect loop");
+                    leaveHandoffUnready=false;
+                    window.Connect.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    window.HostedAutomationEnabled=false;
+                    await Task.Delay(900);await bridge.Poll();
+                    Check(activations==incompleteActivations+1&&state.Tool==tool.Id,"explicit Connect can retry an incomplete handoff without reopening the tool");
+                    window.HostedAutomationEnabled=false;
+                    await Task.Delay(850);await bridge.Poll();
                     using var gate=new ManualResetEventSlim();readGate=gate;
                     var observation=bridge.Poll();await readEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
                     window.Connect.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

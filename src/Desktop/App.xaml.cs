@@ -78,6 +78,12 @@ public partial class App : Application
                 if (info.HookSources.Length != 0)
                 {
                     string managed = DailyPluginProbe.InstalledGameManagedDirectory();
+                    DailyJson.Write(Path.Combine(Path.GetDirectoryName(Path.GetFullPath(args[1]))!, "client.json"), new
+                    {
+                        atUtc = DateTimeOffset.UtcNow, managed, hostVersion = DailyProductVersion.Current,
+                        plugin = info.Id, pluginVersion = info.Version, pluginFingerprint = info.Fingerprint,
+                        inputs = Compatibility.ClientInputs.ReadManaged(managed), realGameTouched = false
+                    });
                     await liveUtility::Dustweave.Connection.LiveEntry.RunAsync(["prepare", managed, Path.Combine(Path.GetDirectoryName(Path.GetFullPath(args[1]))!, "connection")], false);
                     connectionPrepared = true;
                 }

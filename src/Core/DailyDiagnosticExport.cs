@@ -50,7 +50,7 @@ public static class DailyDiagnosticExport
         }
         return Trees.FirstOrDefault(t=>relative.StartsWith(t+"/",StringComparison.OrdinalIgnoreCase));
     }
-    static int Priority(string relative) => UpdateEvidence(relative) || ToolControlEvidence(relative) || Top.Contains(Unrotate(relative)) || Singles.Contains(relative,StringComparer.OrdinalIgnoreCase) || relative.StartsWith("suite/diagnostics/",StringComparison.OrdinalIgnoreCase) ? 0
+    static int Priority(string relative) => UpdateEvidence(relative) || PluginCheckEvidence(relative) || ToolControlEvidence(relative) || Top.Contains(Unrotate(relative)) || Singles.Contains(relative,StringComparer.OrdinalIgnoreCase) || relative.StartsWith("suite/diagnostics/",StringComparison.OrdinalIgnoreCase) ? 0
         : relative.StartsWith("live/steps/",StringComparison.OrdinalIgnoreCase) ? 4
         : relative.StartsWith("live/diagnostics/performance.jsonl",StringComparison.OrdinalIgnoreCase) || new[]{"live/queues/","live/queue-bootstrap/","live/server-collection/","live/weekly-npc-queries/","live/travel-diagnostics/","live/diagnostics/failures/","live/weekly-npc-recovery/"}.Any(p=>relative.StartsWith(p,StringComparison.OrdinalIgnoreCase)) ? 1
         : new[]{"live/business/","live/managed-business/","live/trade-quote-reads/","trade/diagnostics/"}.Any(p=>relative.StartsWith(p,StringComparison.OrdinalIgnoreCase)) ? 2 : 3;
@@ -62,6 +62,7 @@ public static class DailyDiagnosticExport
         var p = relative.Replace('\\','/');
         if (p.Split('/').Any(x => x is ".." or "." || x != "secret-vision" && SecretKey.IsMatch(x) || x.Equals("plugins",StringComparison.OrdinalIgnoreCase) || x.Equals("accounts",StringComparison.OrdinalIgnoreCase))) return false;
         if (PrivateNames.Contains(Unrotate(Path.GetFileName(p)))) return false;
+        if (PluginCheckEvidence(p)) return true;
         if(SoulControlEvidence(p))return true;
         if (Top.Contains(p) || LogName(p) && Top.Contains(Unrotate(p)) || Singles.Contains(p, StringComparer.OrdinalIgnoreCase) || UpdateEvidence(p)) return true;
         if (!Trees.Any(t => p.StartsWith(t + "/", StringComparison.OrdinalIgnoreCase))) return false;
@@ -71,6 +72,13 @@ public static class DailyDiagnosticExport
             return new[]{"execution.json","latest.json","snapshot.json","planning-state.json","planning-state.evidence.json","planning-state.proof.json","planning-state.identity.json"}.Contains(name,StringComparer.OrdinalIgnoreCase);
         // Runtime payloads, endpoint credentials, preference/account vaults and binaries are never exported.
         return name.EndsWith(".json",StringComparison.OrdinalIgnoreCase) || LogName(name);
+    }
+    static bool PluginCheckEvidence(string relative)
+    {
+        if (relative.Equals("extensions/last-error.json", StringComparison.OrdinalIgnoreCase)) return true;
+        var parts = relative.Split('/');
+        return parts.Length >= 4 && parts[0] == "extensions" && parts[1] == "checks" && Guid.TryParseExact(parts[2], "N", out _)
+            && new[] { "result.json", "timeout.json", "process.json", "client.json", "connection/bindings.json", "connection/plugin-bindings.json" }.Contains(string.Join('/', parts.Skip(3)), StringComparer.OrdinalIgnoreCase);
     }
     public static string Redact(string text, bool json)
     {
@@ -159,14 +167,14 @@ public static class DailyDiagnosticExport
             if(Directory.Exists(root)&&Link(root)){skipped.Add(new{path=sourceName,reason="link"});continue;}
             // Look only at known transaction files. Never walk staging, backups,
             // binaries or downloaded packages to collect a few kilobytes of status.
-            void AddUpdate(string relative)
+            void AddEvidence(string relative)
             {
                 string path = Path.Combine(root, relative);
                 if (Allowed(relative) && File.Exists(path) && SafePath(path)) files.Add((new FileInfo(path), root, sourceName));
             }
             try
             {
-                foreach (string name in UpdateTop) AddUpdate(name);
+                foreach (string name in UpdateTop) AddEvidence(name);
                 string updates = Path.Combine(root, "updates");
                 if (Directory.Exists(updates) && SafePath(updates))
                     foreach (string versionFolder in Directory.EnumerateDirectories(updates).OrderByDescending(Directory.GetLastWriteTimeUtc).Take(32))
@@ -174,10 +182,22 @@ public static class DailyDiagnosticExport
                         string attempts = Path.Combine(versionFolder, "attempts");
                         if (!Directory.Exists(attempts) || !SafePath(attempts)) continue;
                         foreach (string attempt in Directory.EnumerateDirectories(attempts).OrderByDescending(Directory.GetLastWriteTimeUtc).Take(8))
-                            if (SafePath(attempt)) foreach (string name in UpdateAttemptFiles) AddUpdate(Path.GetRelativePath(root, Path.Combine(attempt, name)).Replace('\\', '/'));
+                            if (SafePath(attempt)) foreach (string name in UpdateAttemptFiles) AddEvidence(Path.GetRelativePath(root, Path.Combine(attempt, name)).Replace('\\', '/'));
                     }
             }
             catch (Exception error) when (error is IOException or UnauthorizedAccessException) { skipped.Add(new { path = sourceName + "/updates", reason = error.GetType().Name }); }
+            // Trial-load failures live outside the operational log trees. Read only
+            // their small reports, never installed packages, hook source or compiled caches.
+            try
+            {
+                AddEvidence("extensions/last-error.json");
+                string checks = Path.Combine(root, "extensions", "checks");
+                if (Directory.Exists(checks) && SafePath(checks))
+                    foreach (string check in Directory.EnumerateDirectories(checks).OrderByDescending(Directory.GetLastWriteTimeUtc).Take(32))
+                        if (SafePath(check)) foreach (string name in new[] { "result.json", "timeout.json", "process.json", "client.json", "connection/bindings.json", "connection/plugin-bindings.json" })
+                            AddEvidence(Path.GetRelativePath(root, Path.Combine(check, name)).Replace('\\', '/'));
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException) { skipped.Add(new { path = sourceName + "/extensions/checks", reason = error.GetType().Name }); }
             foreach(var name in Top.Concat(Singles).Concat(Top.Where(LogName).SelectMany(n=>Rotations.Select(r=>n+r)))) {string p=Path.Combine(root,name);try{if(File.Exists(p)&&SafePath(p))files.Add((new FileInfo(p),root,sourceName));}catch(Exception e) when(e is IOException or UnauthorizedAccessException){skipped.Add(new{path=sourceName+"/"+name,reason=e.GetType().Name});}}
             // A large historical step tree must not consume another category's
             // entire enumeration budget. Export byte/file limits still apply below.
@@ -238,6 +258,7 @@ public static class DailyDiagnosticExport
                     Add("README.txt","Dustweave diagnostics\nWeChat: "+WeChat+"\nQQ: "+QQ+"\nCreated locally. Send privately; may include game character names, task history and paths. Login/session stores, plugins, executables and keys are excluded. This is a best-effort snapshot; see manifest.json for omitted files.\n");
                     bool HasTree(string label,string tree)=>included.Any(p=>p.StartsWith(label+"/"+tree+"/",StringComparison.OrdinalIgnoreCase));
                     var coverage=sources.Keys.Select(label=>new{source=label,operationError=included.Contains(label+"/ui-operation-error.json"),startup=included.Contains(label+"/startup-state.json"),updateResult=included.Contains(label+"/update-result.json"),updateAttempts=HasTree(label,"updates"),connection=included.Contains(label+"/connection.json"),connectionPreparation=included.Contains(label+"/live/diagnostics/preparation-latest.json"),loadingPerformance=included.Any(p=>p.StartsWith(label+"/live/diagnostics/performance.jsonl",StringComparison.OrdinalIgnoreCase)),ownerTransition=included.Contains(label+"/suite/last-transition.json"),ownerHistory=HasTree(label,"suite/diagnostics"),queueBootstrap=HasTree(label,"live/queue-bootstrap"),
+                        pluginChecks=HasTree(label,"extensions/checks"),pluginError=included.Contains(label+"/extensions/last-error.json"),
                         businessJournal=HasTree(label,"live/business")||HasTree(label,"live/managed-business"),tradeCapture=HasTree(label,"trade/capture"),tradeDiagnostics=HasTree(label,"trade/diagnostics"),tradeExecution=HasTree(label,"trade/executions"),tradeQuote=HasTree(label,"live/trade-quote-reads"),
                         queueResults=included.Any(p=>p.StartsWith(label+"/live/queues/",StringComparison.OrdinalIgnoreCase)&&p.EndsWith("/result.json",StringComparison.OrdinalIgnoreCase)),
                         npcQueries=HasTree(label,"live/weekly-npc-queries"),travelDiagnostics=HasTree(label,"live/travel-diagnostics"),routeAtlas=HasTree(label,"live/route-atlas"),serverCollection=HasTree(label,"live/server-collection")});

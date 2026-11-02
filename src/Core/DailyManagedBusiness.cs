@@ -445,6 +445,15 @@ public sealed partial class DailyManagedBusiness : IDisposable
                 completed.Add(entry);
                 continue;
             }
+            if (op["before"] is not JsonObject original || original["Frame"] is not JsonObject)
+            {
+                // An old journal without its original observation cannot prove a
+                // result. Keep it unknown, but let the owning stage read current
+                // state instead of crashing every task during queue preflight.
+                entry["reason"] = "旧操作缺少原始现场，结果尚未确认；对应环节将按游戏当前状态重新检查。";
+                unresolved.Add(entry);
+                continue;
+            }
             if (op["state"]!.GetValue<string>() is "previewing" or "preview_ready" or "unknown_preview")
             {
                 if (role == DailyFreeDrawProof.Role && DailyFreeDrawStage.AbandonedPreview(op, current, Events(op)))

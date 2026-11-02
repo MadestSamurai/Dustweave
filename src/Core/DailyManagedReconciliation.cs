@@ -72,7 +72,13 @@ public sealed class DailyManagedReconciliation
                 completed.Add(entry);
                 continue;
             }
-            var original = op["before"]!.AsObject();
+            if (op["before"] is not JsonObject original || original["Frame"] is not JsonObject)
+            {
+                entry["reason"] = "旧操作缺少原始现场，结果尚未确认；对应环节将按游戏当前状态重新检查。";
+                entry["recover_in_stage"] = role == "room.info";
+                unresolved.Add(entry);
+                continue;
+            }
             var events = new Dictionary<(string, long), JsonObject>();
             foreach (var node in (op["events"] as JsonArray ?? new JsonArray()).Concat(driver.CollectEvents(role, DailyEvidence.Integer(op["at"]))))
             {

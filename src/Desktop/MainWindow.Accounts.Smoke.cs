@@ -9,6 +9,103 @@ namespace Dustweave.Desktop;
 
 public partial class MainWindow
 {
+    private async Task CheckAccountScrollingForSmoke()
+    {
+        if (sessions is not DemoEnvironment fixture) throw new Exception("Scrolling checks require isolated sessions.");
+        timer.Stop();
+        var before = fixture.Read();
+        var store = new DailyTaskPresetStore(root);
+        var saved = store.Read();
+        var savedProfiles = profiles.Read();
+        double oldWidth = Width, oldHeight = Height;
+        var oldTab = WorkspaceTabs.SelectedItem;
+        int calls = fixture.Calls.Count, childSelections = 0, presentationRefreshes = 0;
+        static IEnumerable<T> Find<T>(DependencyObject node) where T : DependencyObject
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++)
+            {
+                var child = VisualTreeHelper.GetChild(node, i);
+                if (child is T match) yield return match;
+                foreach (var nested in Find<T>(child)) yield return nested;
+            }
+        }
+        void OnSelection(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.OriginalSource is ComboBox) childSelections++;
+        }
+        try
+        {
+            var p = store.Save("Scroll fixture: mail", ["mail"]);
+            var q = store.Save("Scroll fixture: mirror", ["mirror"]);
+            var large = Enumerable.Range(1, 100).Select(i => new DailyAccount(i, $"Account {i}",
+                DailyIdentity.MemberKey((9000 + i).ToString()), "***" + i, true, false, "")).ToArray();
+            foreach (var account in large) store.Assign(account.AccountKey, account.SlotNumber % 2 == 0 ? p.Id : q.Id);
+            WorkspaceTabs.SelectedItem = AccountsTab; Width = 920; Height = 650;
+            RefreshAccounts(before with { Accounts = large, CurrentKey = "", CurrentSlot = null, GameRunning = false });
+            AccountsGrid.SelectedItem = rows[0];
+            rows[1].Selected = true;
+            AccountsGrid.ScrollIntoView(rows[0]);
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            var selected = AccountsGrid.SelectedItem;
+            string presetsBefore = File.ReadAllText(Path.Combine(root, "task-presets.json"));
+            string profilesBefore = File.ReadAllText(Path.Combine(root, "accounts.json"));
+            AccountsGrid.SelectionChanged += OnSelection;
+            var timings = new List<double>();
+            int maxRows = 0;
+            // Real WPF recycling, including rows with different saved presets; no game or real accounts.
+            foreach (int index in Enumerable.Range(1, 99).Concat(Enumerable.Range(0, 99).Reverse()))
+            {
+                var binding = System.Windows.Data.BindingOperations.GetBindingExpression(SelectionText, TextBlock.TextProperty);
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+                AccountsGrid.ScrollIntoView(rows[index]);
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                timings.Add(watch.Elapsed.TotalMilliseconds);
+                if (!ReferenceEquals(binding, System.Windows.Data.BindingOperations.GetBindingExpression(SelectionText, TextBlock.TextProperty)))
+                    presentationRefreshes++;
+                maxRows = Math.Max(maxRows, Find<DataGridRow>(AccountsGrid).Count());
+            }
+            AccountsGrid.SelectionChanged -= OnSelection;
+            if (!ReferenceEquals(selected, AccountsGrid.SelectedItem) || !rows[1].Selected || rows.Count(r => r.Selected) != 1)
+                throw new Exception("Scrolling changed the highlighted account or checked queue.");
+            if (presetsBefore != File.ReadAllText(Path.Combine(root, "task-presets.json")) || profilesBefore != File.ReadAllText(Path.Combine(root, "accounts.json")))
+                throw new Exception("Row recycling wrote account settings.");
+            if (maxRows >= 30 || fixture.Calls.Count != calls) throw new Exception("Scrolling lost virtualization or issued a session command.");
+            if (childSelections == 0 || presentationRefreshes != 0)
+                throw new Exception("Preset recycling still refreshes the account page, or the fixture did not exercise it.");
+            var rowControl = (DataGridRow)AccountsGrid.ItemContainerGenerator.ContainerFromItem(rows[0]);
+            var selector = Find<ComboBox>(rowControl).Single();
+            selector.SelectedValue = p.Id;
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            if (store.Read().Accounts[rows[0].Account.AccountKey] != p.Id)
+                throw new Exception("Filtering child selection events prevented saving a preset edit.");
+            AccountsGrid.SelectedItem = rows[1];
+            if (!MoveUpButton.IsEnabled || !MoveDownButton.IsEnabled || !ReloginButton.IsEnabled)
+                throw new Exception("Actual row selection no longer refreshes account actions.");
+            var scroll = Find<ScrollViewer>(AccountsGrid).First();
+            scroll.ScrollToTop();
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            scroll.LineDown();
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            if (VirtualizingPanel.GetScrollUnit(AccountsGrid) != ScrollUnit.Pixel || scroll.VerticalOffset <= 0 || scroll.VerticalOffset >= AccountsGrid.RowHeight)
+                throw new Exception("The account list still jumps by whole rows.");
+            DailyJson.Write(Path.Combine(smoke!, "accounts-scrolling.json"), new { status = "passed", accounts = 100,
+                scrollSteps = timings.Count, childSelections, presentationRefreshes, maxRows,
+                totalMs = timings.Sum(), medianMs = timings.Order().ElementAt(timings.Count / 2),
+                p95Ms = timings.Order().ElementAt((int)(timings.Count * .95)), maxMs = timings.Max(),
+                settingsUnchangedWhileScrolling = true, presetEditSaved = true, rowSelectionWorking = true,
+                pixelScroll = true, realGameTouched = false });
+        }
+        finally
+        {
+            AccountsGrid.SelectionChanged -= OnSelection;
+            DailyJson.Write(Path.Combine(root, "task-presets.json"), saved);
+            DailyJson.Write(Path.Combine(root, "accounts.json"), savedProfiles);
+            RefreshAccounts(before);
+            Width = oldWidth; Height = oldHeight; WorkspaceTabs.SelectedItem = oldTab;
+            timer.Start();
+        }
+    }
+
     private async Task CheckAccountsForSmoke()
     {
         if (sessions is not DemoEnvironment fixture) throw new Exception("Account UI checks require isolated sessions.");

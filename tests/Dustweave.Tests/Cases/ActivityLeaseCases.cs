@@ -20,6 +20,15 @@ internal static class ActivityLeaseCases
   now=now.AddSeconds(2);tool.Observe(false,true,false,false);Check(tool.Held,"unknown acknowledgement cannot unlock");
   now=now.AddSeconds(1);tool.Observe(false,true,true,false);Check(!tool.Held,"confirmed stop releases while window remains open");
   using(DailyToolControl.Acquire(path))Check(true,"daily starts with idle tool window");
+  bool validationFailed=false;
+  try{tool.Enter(()=>throw new DailyObservationPendingException("snapshot-missing"));}catch(DailyObservationPendingException){validationFailed=true;}
+  Check(validationFailed&&!tool.Held,"failed preflight with no dispatched action releases newly acquired ownership");
+  using(DailyToolControl.Acquire(path))Check(true,"other work can continue after an idle tool lacks identity");
+  tool.Enter(()=>{});Check(tool.Held,"restored identity permits the same tool to enter again");
+  try{tool.Enter(()=>throw new DailyObservationPendingException("snapshot-missing"));}catch(DailyObservationPendingException){}
+  Check(tool.Held,"failed later validation retains ownership of earlier pending actions");
+  now=now.AddSeconds(2);tool.Observe(false,true,true,false);
+  Check(!tool.Held,"confirmed settlement still releases prior ownership after validation failure");
   tool.Enter();tool.Observe(true,false,false,true);Check(!tool.Held,"game exit releases ownership");
   using var first=new DailyActivityLease(path);using var second=new DailyActivityLease(path);int winners=0;
   Parallel.Invoke(()=>{try{first.Enter();Interlocked.Increment(ref winners);}catch(InvalidOperationException){}},()=>{try{second.Enter();Interlocked.Increment(ref winners);}catch(InvalidOperationException){}});

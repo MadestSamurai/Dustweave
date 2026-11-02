@@ -296,6 +296,7 @@ public sealed class DailyMailStage : IDailyManagedStage
                 ["ui"] = "MailUI",
                 ["back"] = true,
                 ["absent"] = "MailUI",
+                ["expect"] = "MenuUI",
                 ["reason"] = "Confirmed operation UI cleanup"
             });
             var current = (await driver.ObserveAsync()).Frame;

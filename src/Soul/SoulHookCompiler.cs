@@ -55,7 +55,7 @@ internal static class SoulHookCompiler
             .Where(n=>n?["itemType"]?.GetValue<int>()==1).Select(n=>n!["id"]!.GetValue<int>()).Order();
         binding+="internal static readonly int[] UnitItemIds=new int[]{"+string.Join(',',unitIds)+"};";
         foreach(var p in new Dictionary<string,string>{["Owner"]=owner["type"]!.GetValue<string>(),["Mvid"]=metadata["mvid"]!.GetValue<string>(),["Play"]=Property("IbPlayDBInfo"),["Items"]=Property("IbItemDBInfo"),["Deck"]=Property("IbDeckDBInfo"),["Shop"]=Property("IbShopItemDBInfo")})binding+="internal const string "+p.Key+"="+JsonSerializer.Serialize(p.Value)+";";
-        foreach(var p in new Dictionary<string,string>{["Buy"]="IbShopBuyRequest",["Upgrade"]="IbItemUpgradeRequest",["Save"]="IbDeckSaveRequest"})binding+="internal const int "+p.Key+"="+Token(p.Value)+";";
+        foreach(var p in new Dictionary<string,string>{["Buy"]="IbShopBuyRequest",["Upgrade"]="IbItemUpgradeRequest",["Save"]="IbDeckSaveRequest",["MainInfo"]="IbMainInfoRequest"})binding+="internal const int "+p.Key+"="+Token(p.Value)+";";
         using(var current=ModuleDefinition.ReadModule(SoulMetadata.Client)){
             foreach(var p in new Dictionary<string,string>{["PackRow"]="Proto.Design.common.PackTable",["OwnedPack"]="Proto.Net.PackDBInfo"})
                 binding+="internal const int "+p.Key+"="+current.Types.SelectMany(t=>t.Methods).Single(m=>m.IsStatic&&m.Parameters.Count==1&&m.Parameters[0].ParameterType.FullName=="System.Int32"&&m.ReturnType.FullName==p.Value).MetadataToken.ToInt32()+";";

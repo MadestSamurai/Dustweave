@@ -6,6 +6,44 @@ namespace Dustweave;
 /// <summary>One explicit login coordinator may retry known native resource-download errors at most three times.</summary>
 public static class DailyStartupRecovery
 {
+    private static void RetireRetry(JsonObject record, string reason, long at)
+    {
+        if (record["pending_retry"] is not JsonObject pending) return;
+        record["retry_recovery"] ??= new JsonArray();
+        var history = record["retry_recovery"]!.AsArray();
+        history.Add(O(("reason", reason), ("at", at), ("original", pending)));
+        record.Remove("pending_retry");
+    }
+    public static bool ReconcilePendingRetry(JsonObject record, JsonObject frame, JsonObject? receipt, long at)
+    {
+        if (record["pending_retry"] is not JsonObject pending) return true;
+        if (pending["frame"] is not JsonObject before || !DailyEvidence.SameActor(before, frame)
+            || at - N(frame["AtUtcTicks"]) is < 0 or > 50000000) return false;
+        if (pending["command"] is JsonObject command && GuildStore.ValidId(S(command["Id"]))
+            && receipt?["Command"] is JsonObject attached && JsonNode.DeepEquals(command, attached)
+            && S(receipt["State"]) == "rejected" && receipt["MayHaveDispatched"] is JsonValue flag
+            && flag.TryGetValue<bool>(out bool dispatched) && !dispatched)
+        {
+            RetireRetry(record, "native_rejected_before_dispatch", at);
+            return true;
+        }
+        // A changed, freshly observed popup proves the old presentation has moved
+        // on, not that the download succeeded. Never click the old popup again.
+        if (S(before["UiToken"]).Length > 0 && S(frame["UiToken"]).Length > 0
+            && !JsonNode.DeepEquals(before["UiToken"], frame["UiToken"]))
+        {
+            RetireRetry(record, "observed_new_presentation", at);
+            return true;
+        }
+        return false;
+    }
+    public static void RecordRetryFailure(JsonObject record, DailyStepException error, long at)
+    {
+        if (record["pending_retry"] is not JsonObject pending) return;
+        if (error.Command != null) pending["command"] = error.Command.DeepClone();
+        pending["error"] = error.Message;
+        if (error.DefinitelyNotDispatched) RetireRetry(record, "not_dispatched", at);
+    }
     public static string? NetworkError(JsonObject frame)
     {
         if (N(frame["BridgeVersion"]) < 31 || S(frame["Scene"]) is not ("Splash" or "ReGame"))
@@ -43,7 +81,13 @@ public static class DailyStartupRecovery
         var previous = DailyJson.TryRead<StartupPermit>(permit);
         Require(previous == null || string.IsNullOrEmpty(previous.Owner) || previous.ExpiresUtcTicks <= DateTime.UtcNow.Ticks, "另一个登录协调器正在运行");
         var record = DailyJson.TryRead<JsonObject>(path) ?? O(("state", "running"), ("retries", new JsonArray()), ("process", new JsonArray(first.ProcessId, first.ProcessStartTicks, first.InstanceId, account)));
-        Require(record["pending_retry"] == null, "上次启动重试结果尚未确认，保留现场");
+        JsonObject? retryReceipt = null;
+        string retryId = S(record["pending_retry"]?["command"]?["Id"]);
+        if (GuildStore.ValidId(retryId) && mailbox.Read("live", "receipts~" + retryId + ".json") is {} receiptBytes)
+            retryReceipt = JsonNode.Parse(receiptBytes)?.AsObject();
+        Require(ReconcilePendingRetry(record, frame, retryReceipt, DateTime.UtcNow.Ticks),
+            "上次启动重试仍停在原错误窗口；请等待当前请求结束，或在游戏中处理该窗口后再次连接。未重复点击。");
+        DailyJson.Write(path, record);
         var context = O(("actor", new JsonArray(Copy(frame["ProcessId"]), Copy(frame["ProcessStartTicks"]), Copy(frame["Instance"]), Copy(frame["AccountKey"]), Copy(frame["PlayerKey"]))), ("server", "startup"), ("cycle", game.StartTicks.ToString()));
         Task<DailyStageFrame> Read()
         {
@@ -74,6 +118,7 @@ public static class DailyStartupRecovery
             long readySequence = 0;
             string? readyPlayer = null;
             var timer = Stopwatch.StartNew();
+            int attempts = 0;
             string message = "";
             while (timer.Elapsed < TimeSpan.FromMinutes(30))
             {
@@ -104,10 +149,12 @@ public static class DailyStartupRecovery
                 if (code != null)
                 {
                     Revoke();
-                    Require(record["retries"]!.AsArray().Count < 3, "资源下载三次重试仍失败");
+                    Require(attempts++ < 3, "本次资源下载三次重试仍失败；网络恢复后可再次连接。");
                     record["pending_retry"] = O(("code", code), ("at", DateTime.UtcNow.Ticks), ("frame", current));
                     DailyJson.Write(path, record);
-                    var sent = await driver.RetryStartupAsync();
+                    JsonObject sent;
+                    try { sent = await driver.RetryStartupAsync(); }
+                    catch (DailyStepException error) { RecordRetryFailure(record, error, DateTime.UtcNow.Ticks); throw; }
                     record["retries"]!.AsArray().Add(O(("code", code), ("at", DateTime.UtcNow.Ticks), ("command", sent["id"])));
                     record.Remove("pending_retry");
                     DailyJson.Write(path, record);

@@ -118,6 +118,24 @@ internal static class DiagnosticExportCases
         Check(rejected&&before.SequenceEqual(File.ReadAllBytes(destination)),"existing export is preserved");
         using(var cancelled=new CancellationTokenSource()){cancelled.Cancel();try{await DailyDiagnosticExport.CreateAsync(root,Path.Combine(output,"cancelled.zip"),"","1.1.0-beta",cancelled.Token);}catch(OperationCanceledException){}Check(!File.Exists(Path.Combine(output,"cancelled.zip")),"cancelled export leaves no archive");}
         Check(!DailyDiagnosticExport.Allowed("../accounts.json")&&!DailyDiagnosticExport.Allowed("tools/password.json")&&!DailyDiagnosticExport.Allowed("tools/runtime.dll"),"traversal credentials and binaries are excluded");
+        string pluginRoot = Path.Combine(output, "plugin-diagnostic-source"), checkPath = "extensions/checks/" + Guid.NewGuid().ToString("N");
+        string[] pluginEvidence = ["extensions/last-error.json", checkPath + "/result.json", checkPath + "/timeout.json", checkPath + "/process.json", checkPath + "/client.json", checkPath + "/connection/bindings.json", checkPath + "/connection/plugin-bindings.json"];
+        foreach (string path in pluginEvidence) DailyJson.Write(Path.Combine(pluginRoot, path), new { error = "plugin interface mismatch", accessToken = "plugin-secret" });
+        foreach (string path in new[] { "extensions/selection.json", "extensions/versions/fixture/plugin.json", "extensions/check-cache/result.json", checkPath + "/connection/bridge.dll", checkPath + "/connection/source.cs", checkPath + "/unknown.json" })
+        {
+            string file = Path.Combine(pluginRoot, path); Directory.CreateDirectory(Path.GetDirectoryName(file)!); File.WriteAllText(file, "private-plugin-payload");
+            Check(!DailyDiagnosticExport.Allowed(path), "plugin diagnostics exclude " + path);
+        }
+        var pluginExport = await DailyDiagnosticExport.CreateAsync(pluginRoot, Path.Combine(output, "plugin-diagnostics.zip"), "", "test");
+        using (var archive = ZipFile.OpenRead(pluginExport.Path))
+        {
+            Check(pluginEvidence.All(path => archive.GetEntry("logs/main/" + path) != null), "isolated plugin check results and original failures are included");
+            string content = string.Join('\n', archive.Entries.Select(entry => { using var reader = new StreamReader(entry.Open()); return reader.ReadToEnd(); }));
+            Check(!content.Contains("plugin-secret") && !content.Contains("private-plugin-payload") && content.Contains("plugin interface mismatch"), "plugin reports retain errors but redact credentials and exclude payloads");
+            using var manifest = JsonDocument.Parse(archive.GetEntry("manifest.json")!.Open());
+            var coverage = manifest.RootElement.GetProperty("coverage")[0];
+            Check(coverage.GetProperty("pluginChecks").GetBoolean() && coverage.GetProperty("pluginError").GetBoolean(), "diagnostic coverage includes plugin trial checks");
+        }
         string otaRoot = Path.Combine(output, "update-diagnostics");
         string attempt = "updates/1.4.17-Lite/attempts/" + Guid.NewGuid().ToString("N");
         void Evidence(string relative, string text) { string p = Path.Combine(otaRoot, relative); Directory.CreateDirectory(Path.GetDirectoryName(p)!); File.WriteAllText(p, text); }

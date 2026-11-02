@@ -235,7 +235,9 @@ static class ManagedInputsCases
         {
             using var f=new WorkflowHarness(Path.Combine(root,"mail-current-state-"+remaining),[],["mail.collect"]);
             f.Page("MailUI","_objAllReceiveButton");
-            string tab="normal";bool claimable=remaining;int claims=0, ticketCancellations=0;
+            string tab="normal";bool claimable=remaining;int claims=0, ticketCancellations=0, backs=0;
+            double? returningAt=null;
+            f.OnDelay=()=>{if(returningAt is {} at && f.Time-at>=.8)f.Page("MenuUI");};
             f.Readings=()=>[
                 WorkflowCases.Reading("mail.ui",("ὭὯὫὫὮὡὠὮὤὬὨ",tab)),
                 WorkflowCases.Reading("mail.normal",("Count",claimable?1:0),("$items",claimable?new JsonArray(O(("InvenIndex",42))):new JsonArray())),
@@ -252,7 +254,7 @@ static class ManagedInputsCases
             }
             f.OnCommand=c=>{
                 if(S(c["Kind"])=="mail_tab")tab=N(c["Value"])==0?"normal":"cash";
-                else if(S(c["Kind"])=="back")f.Page("MenuUI");
+                else if(S(c["Kind"])=="back"){backs++;returningAt=f.Time;f.Frame["Surfaces"]=new JsonArray();f.Frame["UiToken"]="returning";}
                 else if(S(c["Kind"])=="click"){
                     if (N(c["SurfaceId"]) == 2 && N(c["TargetId"]) == 102)
                     {
@@ -269,6 +271,8 @@ static class ManagedInputsCases
             if(claims!=(remaining?1:0)||ticketCancellations!=claims||S(result["state"])!=(remaining?"completed":"skipped")||
                 oldPaths.Any(p=>S(DailyJson.TryRead<JsonObject>(p)!["state"])!="superseded"))throw new Exception("Old mail receipt blocked fresh mailbox state");
             cases.Add("both interrupted mailbox tabs recover from native remaining IDs, claims="+claims);
+            if(backs!=1||returningAt is not {} backAt||f.Time-backAt<.8)throw new Exception("Mailbox return did not wait for the main menu or repeated Back");
+            cases.Add("mailbox disappearance before main-menu arrival waits without repeating claims or Back");
         }
     }
     private static async Task ProtectedMail(string root, List<string> cases)
@@ -393,7 +397,7 @@ static class ManagedInputsCases
             catch (StageHostException e) { found = e.Kind; }
             Check(found == kind, label + " (" + found + ")");
         }
-        foreach (string mode in new[] { "restarted", "expired", "in-flight", "wrong-owner" })
+        foreach (string mode in new[] { "restarted", "expired", "in-flight", "wrong-owner", "missing-before", "missing-frame" })
         {
             using var f = new WorkflowHarness(Path.Combine(output, "room-rerun-" + mode), [], ["room.info"], (frame, ctx) => {
                 string player = DailyIdentity.PlayerKey(frame["AccountKey"]!.GetValue<string>(), 42);
@@ -404,11 +408,13 @@ static class ManagedInputsCases
             f.Readings = () => [WorkflowCases.Reading("room.cache", ("OwnerIndex", mode == "wrong-owner" ? 43 : 42))];
             string id = Guid.NewGuid().ToString("N"), oldPath = Path.Combine(f.Root, "live", "business", id + ".json");
             var old = new JsonObject {
-                ["id"] = id, ["role"] = "room.info", ["stage"] = "room", ["state"] = "unknown", ["at"] = f.Ticks - (mode == "expired" ? 60 : 1) * TimeSpan.TicksPerSecond,
+                ["id"] = id, ["role"] = "room.info", ["stage"] = "room", ["state"] = "unknown", ["at"] = f.Ticks - (mode is "expired" or "missing-before" or "missing-frame" ? 60 : 1) * TimeSpan.TicksPerSecond,
                 ["account"] = f.Context["actor"]![3]!.DeepClone(), ["player"] = f.Context["actor"]![4]!.DeepClone(),
                 ["server"] = f.Context["server"]!.DeepClone(), ["cycle"] = f.Context["cycle"]!.DeepClone(), ["before"] = f.Evidence(), ["events"] = new JsonArray()
             };
             if (mode is "restarted" or "wrong-owner") old["before"]!["Frame"]!["ProcessStartTicks"] = 1;
+            if (mode == "missing-before") old.Remove("before");
+            if (mode == "missing-frame") old["before"]!.AsObject().Remove("Frame");
             DailyJson.Write(oldPath, old);
             var report = await new DailyManagedReconciliation(f.Root, f.Driver, ["room.info"], () => false).RunAsync(f.Context);
             Check(report["unresolved"]!.AsArray().Count == 1 && report["unresolved"]![0]!["recover_in_stage"]!.GetValue<bool>(), "room query uncertainty defers to fresh stage evidence: " + mode);

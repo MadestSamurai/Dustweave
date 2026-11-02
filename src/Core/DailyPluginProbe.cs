@@ -31,9 +31,19 @@ public static class DailyPluginProbe
             DailyJson.Write(Path.Combine(folder, "timeout.json"), new { child = child.Id, stopped = child.HasExited, atUtc = DateTimeOffset.UtcNow, realGameTouched = false });
             token.ThrowIfCancellationRequested(); throw new IOException("plugins.probe_timeout");
         }
-        if (child.ExitCode != 0 || !File.Exists(report)) throw new IOException("plugins.probe_failed");
-        using var result = JsonDocument.Parse(await File.ReadAllBytesAsync(report, token).ConfigureAwait(false));
-        if (result.RootElement.GetProperty("status").GetString() != "passed" || result.RootElement.GetProperty("info").GetProperty("Fingerprint").GetString() != info.Fingerprint)
-            throw new IOException("plugins.probe_failed");
+        DailyJson.Write(Path.Combine(folder, "process.json"), new { atUtc = DateTimeOffset.UtcNow, child = child.Id, exitCode = child.ExitCode, reportExists = File.Exists(report), plugin = info.Id, version = info.Version, fingerprint = info.Fingerprint, realGameTouched = false });
+        if (!File.Exists(report)) throw new IOException("plugins.probe_failed", new IOException($"Plugin check exited with code {child.ExitCode} without a result report. Record: {folder}"));
+        try
+        {
+            using var result = JsonDocument.Parse(await File.ReadAllBytesAsync(report, token).ConfigureAwait(false));
+            if (child.ExitCode != 0 || !result.RootElement.TryGetProperty("status", out var status) || status.GetString() != "passed")
+            {
+                string detail = result.RootElement.TryGetProperty("error", out var error) && error.ValueKind == JsonValueKind.String ? error.GetString()! : "Plugin check did not pass.";
+                throw new IOException("plugins.probe_failed", new IOException($"{detail}\nExit code: {child.ExitCode}. Record: {report}"));
+            }
+            if (!result.RootElement.TryGetProperty("info", out var checkedInfo) || !checkedInfo.TryGetProperty("Fingerprint", out var fingerprint) || fingerprint.GetString() != info.Fingerprint)
+                throw new IOException("plugins.probe_failed", new IOException($"Plugin check returned a different or missing package fingerprint. Record: {report}"));
+        }
+        catch (JsonException error) { throw new IOException("plugins.probe_failed", error); }
     }
 }
