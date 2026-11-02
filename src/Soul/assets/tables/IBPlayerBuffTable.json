@@ -1,0 +1,23 @@
+[
+  { "buffType": 0, "id": 10, "playerBuffIcon": "icon_buff_010", "playerBuffNameDescTextId": 0, "playerBuffNameTextId": 0 },
+  { "buffType": 0, "id": 101, "playerBuffIcon": "icon_buff_001", "playerBuffNameDescTextId": 0, "playerBuffNameTextId": 0 },
+  { "buffType": 0, "id": 102, "playerBuffIcon": "icon_buff_002", "playerBuffNameDescTextId": 0, "playerBuffNameTextId": 0 },
+  { "buffType": 0, "id": 103, "playerBuffIcon": "icon_buff_003", "playerBuffNameDescTextId": 0, "playerBuffNameTextId": 0 },
+  { "buffType": 0, "id": 104, "playerBuffIcon": "icon_buff_004", "playerBuffNameDescTextId": 0, "playerBuffNameTextId": 0 },
+  { "buffType": 0, "id": 105, "playerBuffIcon": "icon_buff_005", "playerBuffNameDescTextId": 0, "playerBuffNameTextId": 0 },
+  { "buffType": 0, "id": 106, "playerBuffIcon": "icon_buff_006", "playerBuffNameDescTextId": 0, "playerBuffNameTextId": 0 },
+  { "buffType": 0, "id": 107, "playerBuffIcon": "icon_buff_007", "playerBuffNameDescTextId": 0, "playerBuffNameTextId": 0 },
+  { "buffType": 1, "id": 201, "playerBuffIcon": "icon_buff_008", "playerBuffNameDescTextId": 0, "playerBuffNameTextId": 0 },
+  { "buffType": 1, "id": 202, "playerBuffIcon": "icon_buff_009", "playerBuffNameDescTextId": 0, "playerBuffNameTextId": 0 },
+  { "buffType": 2, "id": 1001, "playerBuffIcon": "icon_buff_011", "playerBuffNameDescTextId": 3701001, "playerBuffNameTextId": 3501001 },
+  { "buffType": 2, "id": 1002, "playerBuffIcon": "icon_buff_012", "playerBuffNameDescTextId": 3701002, "playerBuffNameTextId": 3501002 },
+  { "buffType": 2, "id": 1003, "playerBuffIcon": "icon_buff_013", "playerBuffNameDescTextId": 3701003, "playerBuffNameTextId": 3501003 },
+  { "buffType": 2, "id": 1004, "playerBuffIcon": "icon_buff_014", "playerBuffNameDescTextId": 3701004, "playerBuffNameTextId": 3501004 },
+  { "buffType": 2, "id": 1005, "playerBuffIcon": "icon_buff_015", "playerBuffNameDescTextId": 3701005, "playerBuffNameTextId": 3501005 },
+  { "buffType": 2, "id": 1006, "playerBuffIcon": "icon_buff_016", "playerBuffNameDescTextId": 3701006, "playerBuffNameTextId": 3501006 },
+  { "buffType": 2, "id": 1007, "playerBuffIcon": "icon_buff_017", "playerBuffNameDescTextId": 3701007, "playerBuffNameTextId": 3501007 },
+  { "buffType": 3, "id": 2001, "playerBuffIcon": "icon_buff_018", "playerBuffNameDescTextId": 3702001, "playerBuffNameTextId": 3502001 },
+  { "buffType": 3, "id": 2002, "playerBuffIcon": "icon_buff_019", "playerBuffNameDescTextId": 3702002, "playerBuffNameTextId": 3502002 },
+  { "buffType": 3, "id": 2003, "playerBuffIcon": "icon_buff_020", "playerBuffNameDescTextId": 3702003, "playerBuffNameTextId": 3502003 },
+  { "buffType": 3, "id": 2004, "playerBuffIcon": "icon_buff_021", "playerBuffNameDescTextId": 3702004, "playerBuffNameTextId": 3502004 }
+]

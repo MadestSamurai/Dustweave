@@ -184,6 +184,13 @@ foreach($flavor in $Flavors){
  if($validation.scope -in @('Full','Updates')){Pass (Join-Path $checks 'check-tool-languages/result.json');Pass (Join-Path $checks 'check-tool-language-ui/result.json')}
  Run $exe @('--utility','live','self-test') ($flavor+'-live-self-test')
  Run $exe @('--tool-catalog',(Join-Path $bundle 'app/tools.json')) ($flavor+'-tool-catalog')
+ if($validation.scope -eq 'Full'){
+  $soulCheck=Join-Path $checks 'tools/soul';[IO.Directory]::CreateDirectory($soulCheck)|Out-Null
+  Run $exe @('--tool','soul','--check-client',$managed,(Join-Path $soulCheck 'client')) ($flavor+'-soul-client')
+  Run $exe @('--tool','soul','--smoke',$soulCheck) ($flavor+'-soul-smoke')
+  Pass (Join-Path $soulCheck 'result.json')
+  if(@(Get-ChildItem -LiteralPath $soulCheck -File -Filter '*.png').Count -ne 6){throw 'Soul tool requires all three languages and both themes.'}
+ }
  if($flavor -eq $Flavors[0] -and $validation.scope -in @('Navigation','Rewards','UiReadiness')){
   Run $exe @('--utility','live','prepare',$managed,(Join-Path $checks 'live-client')) 'live-client'
   if($validation.scope -eq 'Rewards'){

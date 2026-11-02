@@ -469,6 +469,25 @@ static class ManagedInputsCases
             await Reject(() => driver.NavigationAsync(DailyNavigationDecision.CloseAction(current, policy)!), "pending", "missing expected UI retains the original dispatched receipt");
             Check(box.Commands.Count == before + 1, "expected-UI timeout has no automatic repeat");
         }
+        foreach (string source in new[] { "InventoryBattleStageUI", "InventoryBattleResultUI", "InventoryBattleLobbyUI" })
+        {
+            time = 0; box = new();
+            current = Page(source, source == "InventoryBattleLobbyUI" ? "_btnMenu" : "_objExitButton");
+            using var driver = new DailyCommandDriver(Path.Combine(output, "managed-soul-return-" + source), box, read, () => false,
+                () => 100000000, () => time, t => { time += t.TotalSeconds; return Task.CompletedTask; });
+            driver.Bind(context); driver.Acquire("live");
+            var action = DailyHomeDecision.Inspect(current, policy).Action!;
+            var original = current.DeepClone().AsObject();
+            current = Page("InventoryBattleUI");
+            await Reject(() => driver.NavigationAsync(action), "navigation_changed", "Soul return is revalidated if battle replaces the page: " + source);
+            Check(box.Commands.Count == 0, "stale Soul return cannot interrupt a battle: " + source);
+            current = original;
+            box.AfterCommand = _ => current = Page(source == "InventoryBattleLobbyUI" ? "MenuUI" : "InventoryBattleLobbyUI", "_btnMenu");
+            var result = await driver.NavigationAsync(action);
+            Check(result["state"]?.GetValue<string>() == "observed_expected_ui" && box.Commands.Count == 1
+                && box.Commands[0]["Kind"]?.GetValue<string>() == (source == "InventoryBattleStageUI" ? "back" : "click"),
+                "Soul return uses the shared native driver and observes its destination: " + source);
+        }
         time = 0;
         current = Page("MessagePopupUI", "_buttonOK");
         current["Surfaces"]![0]!["NativeContext"] = "talent_inactive_ack_only";

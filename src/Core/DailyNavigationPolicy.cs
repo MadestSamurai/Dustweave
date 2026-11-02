@@ -183,6 +183,10 @@ public static class DailyNavigationDecision
     }
     public static bool Ready(JsonObject f, string stage, DailyNavigationPolicy p)
     {
+        // Soul preparation/result pages are not ordinary field pages. A menu
+        // or field still visible underneath must not bypass their native exit.
+        if (Types(f).Overlaps(["InventoryBattleStageUI", "InventoryBattleUI", "InventoryBattleResultUI"]))
+            return false;
         string state = Phase(f, stage);
         if (state is "loading" or "foreign_battle")
             return false;

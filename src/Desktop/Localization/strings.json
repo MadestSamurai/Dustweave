@@ -1,4 +1,199 @@
 {
+"死魂之盘": {
+    "zh-TW": "死魂之盤",
+    "zh-CN": "死魂之盘",
+    "en-US": "Soul challenge"
+  },
+  "自动规划成长阵容，连续挑战全部五关。": {
+    "zh-TW": "自動規劃成長陣容，連續挑戰全部五關。",
+    "zh-CN": "自动规划成长阵容，连续挑战全部五关。",
+    "en-US": "Plan growing teams and challenge all five dungeons."
+  },
+  "soul.account": {
+    "zh-TW": "目前帳號 · {0}",
+    "zh-CN": "当前账号 · {0}",
+    "en-US": "Account · {0}"
+  },
+  "soul.active_hint": {
+    "zh-TW": "通關後自動進入下一關；生命耗盡則重新挑戰本關。可隨時暫停，已提交的操作會先完成結算。",
+    "zh-CN": "通关后自动进入下一关；生命耗尽则重新挑战本关。可随时暂停，已提交的操作会先完成结算。",
+    "en-US": "Advance after clearing a dungeon, or retry it after running out of lives. You can pause at any time; submitted actions finish first."
+  },
+  "soul.attempt": {
+    "zh-TW": "本關第 {0} 次挑戰",
+    "zh-CN": "本关第 {0} 次挑战",
+    "en-US": "Dungeon attempt {0}"
+  },
+  "soul.before": {
+    "zh-TW": "開啟遊戲中的死魂之盤關卡列表後開始。",
+    "zh-CN": "打开游戏中的死魂之盘关卡列表后开始。",
+    "en-US": "Open the Soul dungeon list in the game, then start."
+  },
+  "soul.decision": {
+    "zh-TW": "模擬勝率 {0} · 上場 {1} 人",
+    "zh-CN": "模拟胜率 {0} · 上场 {1} 人",
+    "en-US": "Simulated win rate {0} · {1} units deployed"
+  },
+  "soul.phase.combinations": {
+    "zh-TW": "比較角色、地板與裝備組合",
+    "zh-CN": "比较角色、地板与装备组合",
+    "en-US": "Comparing units, floors and equipment"
+  },
+  "soul.phase.growth": {
+    "zh-TW": "評估後續敵人與升級預算",
+    "zh-CN": "评估后续敌人与升级预算",
+    "en-US": "Checking upcoming enemies and upgrade budgets"
+  },
+  "soul.phase.verify": {
+    "zh-TW": "複核候選方案的勝率",
+    "zh-CN": "复核候选方案的胜率",
+    "en-US": "Verifying candidate win rates"
+  },
+  "soul.search_progress": {
+    "zh-TW": "已評估 {0} 個方案 · {1} 秒",
+    "zh-CN": "已评估 {0} 个方案 · {1} 秒",
+    "en-US": "{0} plans evaluated · {1} seconds"
+  },
+  "soul.actions": {
+    "zh-TW": "購買 {0} 件 · 升級 {1} 件 · 淨花費 {2} 代幣 · 預計剩餘 {3}",
+    "zh-CN": "购买 {0} 件 · 升级 {1} 件 · 净花费 {2} 代币 · 预计剩余 {3}",
+    "en-US": "Buy {0} · Upgrade {1} · Net cost {2} coins · {3} left"
+  },
+  "soul.shopping": {
+    "zh-TW": "目前方案模擬勝率 {0}，繼續尋找可負擔的補強。剩餘 {1} 代幣 · 本次刷新 {2} · 本批已刷新 {3} 次",
+    "zh-CN": "当前方案模拟胜率 {0}，继续寻找可负担的补强。剩余 {1} 代币 · 本次刷新 {2} · 本波已刷新 {3} 次",
+    "en-US": "Current plan: {0} simulated win rate. Looking for an affordable improvement. {1} coins left · Refresh costs {2} · Refreshed {3} times this wave"
+  },
+  "soul.decision_risk": {
+    "zh-TW": "目前仍是低勝率方案，將使用剩餘挑戰機會。",
+    "zh-CN": "当前仍是低胜率方案，将使用剩余挑战机会。",
+    "en-US": "This is still a low-confidence plan. Continuing with the remaining attempts."
+  },
+  "soul.chapter": {
+    "zh-TW": "第 {0} 關",
+    "zh-CN": "第 {0} 关",
+    "en-US": "Dungeon {0}"
+  },
+  "soul.pause": {
+    "zh-TW": "暫停",
+    "zh-CN": "暂停",
+    "en-US": "Pause"
+  },
+  "soul.progress": {
+    "zh-TW": "已完成 {0} / 5 關    {1} 勝 · {2} 負",
+    "zh-CN": "已完成 {0} / 5 关    {1} 胜 · {2} 负",
+    "en-US": "{0} / 5 dungeons complete    {1} wins · {2} losses"
+  },
+  "soul.ready": {
+    "zh-TW": "死魂之盤已開啟，請在工具中開始。",
+    "zh-CN": "死魂之盘已打开，请在工具中开始。",
+    "en-US": "Soul challenge is open. Start in its window."
+  },
+  "soul.ready_hint": {
+    "zh-TW": "自動購買、升級、排布與戰鬥。從第一關開始會重置目前關卡；繼續上次挑戰會保留進度。",
+    "zh-CN": "自动购买、升级、排布与战斗。从第一关开始会重置当前关卡；继续上次挑战会保留进度。",
+    "en-US": "Automatically buy, upgrade, arrange and battle. Starting all five resets the current dungeon; Resume keeps your progress."
+  },
+  "soul.resume": {
+    "zh-TW": "繼續上次挑戰",
+    "zh-CN": "继续上次挑战",
+    "en-US": "Resume challenge"
+  },
+  "soul.start": {
+    "zh-TW": "從第一關開始",
+    "zh-CN": "从第一关开始",
+    "en-US": "Start all five"
+  },
+  "soul.state.advancing": {
+    "zh-TW": "正在接續下一批",
+    "zh-CN": "正在接续下一批",
+    "en-US": "Continuing to the next wave"
+  },
+  "soul.state.applying": {
+    "zh-TW": "正在購買、升級與排布",
+    "zh-CN": "正在购买、升级与排布",
+    "en-US": "Buying, upgrading and arranging"
+  },
+  "soul.state.battling": {
+    "zh-TW": "戰鬥中",
+    "zh-CN": "战斗中",
+    "en-US": "Battle in progress"
+  },
+  "soul.state.complete": {
+    "zh-TW": "五關挑戰已完成",
+    "zh-CN": "五关挑战已完成",
+    "en-US": "All five dungeons complete"
+  },
+  "soul.state.defeated": {
+    "zh-TW": "生命已耗盡，將重新挑戰本關",
+    "zh-CN": "生命已耗尽，将重新挑战本关",
+    "en-US": "No lives remaining; retrying this dungeon"
+  },
+  "soul.state.connecting": {
+    "zh-TW": "正在連線目前遊戲",
+    "zh-CN": "正在连接当前游戏",
+    "en-US": "Connecting to the game"
+  },
+  "soul.state.entering": {
+    "zh-TW": "正在進入下一關",
+    "zh-CN": "正在进入下一关",
+    "en-US": "Entering the next dungeon"
+  },
+  "soul.state.error": {
+    "zh-TW": "挑戰已暫停，需要處理",
+    "zh-CN": "挑战已暂停，需要处理",
+    "en-US": "Challenge paused — attention needed"
+  },
+  "soul.state.lost": {
+    "zh-TW": "本批失利，繼續挑戰",
+    "zh-CN": "本批失利，继续挑战",
+    "en-US": "Wave lost; continuing the challenge"
+  },
+  "soul.state.paused": {
+    "zh-TW": "已暫停",
+    "zh-CN": "已暂停",
+    "en-US": "Paused"
+  },
+  "soul.state.pausing": {
+    "zh-TW": "目前操作結束後暫停",
+    "zh-CN": "当前操作结束后暂停",
+    "en-US": "Pausing after the current action"
+  },
+  "soul.state.planning": {
+    "zh-TW": "正在規劃陣容",
+    "zh-CN": "正在规划阵容",
+    "en-US": "Planning the team"
+  },
+  "soul.state.ready": {
+    "zh-TW": "準備挑戰全部五關",
+    "zh-CN": "准备挑战全部五关",
+    "en-US": "Ready for all five dungeons"
+  },
+  "soul.state.refreshing": {
+    "zh-TW": "正在尋找更合適的商店物品",
+    "zh-CN": "正在寻找更合适的商店物品",
+    "en-US": "Looking for a stronger shop offer"
+  },
+  "soul.state.retrying": {
+    "zh-TW": "正在重新挑戰目前關卡",
+    "zh-CN": "正在重新挑战当前关卡",
+    "en-US": "Retrying the current dungeon"
+  },
+  "soul.state.won": {
+    "zh-TW": "本批獲勝",
+    "zh-CN": "本批获胜",
+    "en-US": "Wave won"
+  },
+  "soul.stats": {
+    "zh-TW": "第 {0} 關 · 第 {1} / {2} 批    生命 {3}    金幣 {4}",
+    "zh-CN": "第 {0} 关 · 第 {1} / {2} 批    生命 {3}    金币 {4}",
+    "en-US": "Dungeon {0} · Wave {1} / {2}    Lives {3}    Coins {4}"
+  },
+  "soul.title": {
+    "zh-TW": "死魂之盤",
+    "zh-CN": "死魂之盘",
+    "en-US": "Soul challenge"
+  },
   "multiaccount.title": {"zh-CN":"选择多账号运行方式","zh-TW":"選擇多帳號執行方式","en-US":"Choose how to run multiple accounts"},
   "multiaccount.body": {"zh-CN":"新账号已保存。你可以让各账号依次完成日常，也可以同时运行。","zh-TW":"新帳號已儲存。你可以讓各帳號依序完成日常，也可以同時執行。","en-US":"Your new account has been saved. You can run daily tasks one account at a time or run accounts together."},
   "multiaccount.sequential_help": {"zh-CN":"完成一个账号后，再开始下一个。无需安装其他工具。","zh-TW":"完成一個帳號後，再開始下一個。無需安裝其他工具。","en-US":"Finish one account before starting the next. No extra tools needed."},
@@ -8221,9 +8416,9 @@
     "en-US": "Native battle recovery account changed"
   },
   "storage.move_scope": {
-    "zh-CN": "迁移主窗口的连接组件、商品表与规则缓存。沙盒、账号、日志及更新恢复文件留在原处。闲置组件缓存保留不超过 7 天，通常最多两代。",
-    "zh-TW": "遷移主視窗的連接元件、商品表與規則快取。沙盒、帳號、日誌及更新復原檔案留在原處。閒置元件快取保留不超過 7 天，通常最多兩代。",
-    "en-US": "Move component, catalog and rules caches for the main window. Sandboxes, accounts, logs and update recovery stay in place. Unused components expire after 7 days; normally two generations are kept."
+    "zh-CN": "迁移主窗口缓存及所有账号的完整沙盒（含登录状态、游戏资源与隔离缓存）。账号索引、日志、运行时解压和更新恢复文件保留原位置。",
+    "zh-TW": "遷移主視窗快取及所有帳號的完整沙盒（含登入狀態、遊戲資源與隔離快取）。帳號索引、日誌、執行階段解壓和更新復原檔案保留原位置。",
+    "en-US": "Move main-window caches and complete account sandboxes, including saved sign-ins and game resources. Account indexes, logs, runtime extraction and update recovery stay in place."
   },
   "storage.unreadable": {
     "zh-CN": "部分缓存无法读取，迁移未开始。请关闭占用文件的程序后重试。",
@@ -8236,9 +8431,9 @@
     "en-US": "Logs {0} MiB · Cache & updates {1} MiB · Accounts, game and retained data {2} MiB.\nTotals include sandboxes {4} MiB and extraction cache {5} MiB; do not add these again. {3} unreadable or protected items skipped. Compressed files use stored size."
   },
   "storage.move": {
-    "zh-CN": "迁移缓存…",
-    "zh-TW": "遷移快取…",
-    "en-US": "Move cache…"
+    "zh-CN": "迁移缓存与沙盒…",
+    "zh-TW": "遷移快取與沙盒…",
+    "en-US": "Move caches and sandboxes…"
   },
   "storage.busy": {
     "zh-CN": "请停止自动化、关闭工具及隔离窗口，并等待更新下载结束后再清理或迁移。游戏可保持打开。",
@@ -8261,9 +8456,9 @@
     "en-US": "Rescan to see the updated usage."
   },
   "storage.location": {
-    "zh-CN": "缓存位置",
-    "zh-TW": "快取位置",
-    "en-US": "Cache location"
+    "zh-CN": "缓存与沙盒位置",
+    "zh-TW": "快取與沙盒位置",
+    "en-US": "Cache and sandbox location"
   },
   "storage.changed": {
     "zh-CN": "迁移时文件发生变化或校验失败，仍使用原位置。请关闭其他工具后重试。",
@@ -8271,9 +8466,9 @@
     "en-US": "A file changed or failed verification. The original location is still active. Close other tools and retry."
   },
   "storage.exists": {
-    "zh-CN": "目标已有 Dustweave-cache 文件夹，请选择其他位置，原文件未更改。",
-    "zh-TW": "目標已有 Dustweave-cache 資料夾，請選擇其他位置，原檔案未變更。",
-    "en-US": "A Dustweave-cache folder already exists there. Choose another location; existing files were not changed."
+    "zh-CN": "目标文件夹已存在，请选择其他位置，现有文件未更改。",
+    "zh-TW": "目標資料夾已存在，請選擇其他位置，現有檔案未變更。",
+    "en-US": "The destination folder already exists. Choose another location; existing files were not changed."
   },
   "storage.preview": {
     "zh-CN": "总占用 {0} MiB · 可释放 {1} MiB",
@@ -8286,9 +8481,9 @@
     "en-US": "Choose a location outside the current data and cache directories."
   },
   "storage.pick": {
-    "zh-CN": "选择缓存保存位置",
-    "zh-TW": "選擇快取儲存位置",
-    "en-US": "Choose a cache location"
+    "zh-CN": "选择缓存与沙盒保存位置",
+    "zh-TW": "選擇快取與沙盒儲存位置",
+    "en-US": "Choose a cache and sandbox location"
   },
   "storage.moving": {
     "zh-CN": "正在复制并校验… {0} MiB",
@@ -8296,9 +8491,9 @@
     "en-US": "Copying and verifying… {0} MiB"
   },
   "storage.confirm": {
-    "zh-CN": "将缓存迁移到：{0}\n\n复制并校验成功后才切换位置。迁移期间请勿运行其他工具；取消或失败会继续使用原位置。",
-    "zh-TW": "將快取遷移到：{0}\n\n複製並驗證成功後才切換位置。遷移期間請勿執行其他工具；取消或失敗會繼續使用原位置。",
-    "en-US": "Move cache to: {0}\n\nThe location changes only after the copy is verified. Do not run other tools during migration. Cancellation or failure keeps the original location."
+    "zh-CN": "将缓存与所有账号的完整沙盒迁移到：\n{0}\n\n请关闭全部隔离游戏与窗口。复制并校验通过后才切换位置，账号登录和更新恢复记录会保留。",
+    "zh-TW": "將快取與所有帳號的完整沙盒遷移至：\n{0}\n\n請關閉全部隔離遊戲與視窗。複製並驗證通過後才切換位置，帳號登入和更新復原記錄會保留。",
+    "en-US": "Move caches and all account sandboxes to:\n{0}\n\nClose all isolated games and windows first. The location changes only after verification. Saved sign-ins and update recovery are preserved."
   },
   "storage.space": {
     "zh-CN": "目标磁盘空间不足，原缓存未改动。请释放空间或选择其他磁盘。",
@@ -8564,5 +8759,45 @@
     "en-US": "The game path contains characters Sandboxie rules cannot represent. In app settings, select a game path without commas, percent signs or wildcards.",
     "zh-CN": "游戏位置包含沙盒路径规则不支持的字符。请在软件设置中选择不含逗号、百分号或通配符的游戏路径。",
     "zh-TW": "遊戲位置包含沙盒路徑規則不支援的字元。請在軟體設定中選擇不含逗號、百分號或萬用字元的遊戲路徑。"
+  },
+  "storage.binding_failed": {
+    "zh-CN": "沙盒存放位置未能更新，迁移未完成。请重新打开织尘恢复绑定；不要删除原目录。",
+    "zh-TW": "沙盒儲存位置未能更新，遷移未完成。請重新開啟織塵復原綁定；不要刪除原目錄。",
+    "en-US": "The sandbox location could not be updated. Reopen Dustweave to recover the binding; keep the original folder."
+  },
+  "storage.location_unavailable": {
+    "zh-CN": "无法读取迁移后的存储位置。请确认对应磁盘已连接、文件夹未被移动，再重新打开织尘；不会新建空沙盒。",
+    "zh-TW": "無法讀取遷移後的儲存位置。請確認對應磁碟已連接、資料夾未被移動，再重新開啟織塵；不會建立空沙盒。",
+    "en-US": "The relocated storage is unavailable. Reconnect its drive and check the folder before reopening Dustweave. No empty replacement sandbox was created."
+  },
+  "storage.sandbox_busy": {
+    "zh-CN": "仍有隔离程序运行。请正常关闭全部隔离游戏和窗口，保留登录状态，再重试迁移。",
+    "zh-TW": "仍有隔離程式執行中。請正常關閉全部隔離遊戲和視窗，保留登入狀態，再重試遷移。",
+    "en-US": "An isolated process is still running. Close all isolated games and windows without signing out, then retry the move."
+  },
+  "storage.disk_usage": {
+    "zh-CN": "占用 {0} MiB · 可清理 {1} MiB",
+    "zh-TW": "佔用 {0} MiB · 可清理 {1} MiB",
+    "en-US": "Used {0} MiB · Reclaimable {1} MiB"
+  },
+  "storage.use_full_migration": {
+    "zh-CN": "请使用“迁移缓存与沙盒”同步更改存放位置。",
+    "zh-TW": "請使用「遷移快取與沙盒」同步變更儲存位置。",
+    "en-US": "Use Move caches and sandboxes to change this location."
+  },
+  "storage.sandbox_unowned": {
+    "zh-CN": "有沙盒的账号登记或目录绑定不一致，尚未迁移。请先在账号管理中检查对应沙盒；原数据已保留。",
+    "zh-TW": "有沙盒的帳號登記或目錄綁定不一致，尚未遷移。請先在帳號管理中檢查對應沙盒；原資料已保留。",
+    "en-US": "A sandbox registration or folder binding is inconsistent. Check it in Accounts before moving storage. Original data is preserved."
+  },
+  "storage.recovery_required": {
+    "zh-CN": "存储迁移或沙盒恢复尚未完成，原数据已保留。请关闭隔离程序后重新打开织尘以恢复；如仍失败，请导出诊断。",
+    "zh-TW": "儲存遷移或沙盒復原尚未完成，原資料已保留。請關閉隔離程式後重新開啟織塵以復原；如仍失敗，請匯出診斷。",
+    "en-US": "Storage migration or sandbox recovery is incomplete. Original data is preserved. Close isolated processes and reopen Dustweave to recover. Export diagnostics if recovery still fails."
+  },
+  "storage.sandbox_location": {
+    "zh-CN": "沙盒实际位置：{0}",
+    "zh-TW": "沙盒實際位置：{0}",
+    "en-US": "Sandbox folder: {0}"
   }
 }

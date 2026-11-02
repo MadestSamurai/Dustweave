@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net8.0-windows</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><AllowUnsafeBlocks>true</AllowUnsafeBlocks><PlatformTarget>x64</PlatformTarget></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Core/Dustweave.Core.csproj" />
+    <ProjectReference Include="../Connection/Dustweave.Connection.csproj" Aliases="liveUtility" />
+    <Compile Remove="runtime/**/*.cs" />
+    <EmbeddedResource Include="runtime/*.cs" LogicalName="Soul.runtime.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="assets/*" LogicalName="Soul.assets.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="assets/tables/*.json" LogicalName="Soul.tables.%(Filename)%(Extension)" />
+    <Using Include="BD2Daily" />
+  </ItemGroup>
+</Project>

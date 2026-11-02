@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Soul/Dustweave.Soul.csproj" />
     <Project Path="src/Fishing/compatibility/Dustweave.Fishing.Compatibility.csproj" />
     <Project Path="src/Fishing/core/Dustweave.Fishing.Core.csproj" />
     <Project Path="src/Fishing/desktop/Dustweave.Fishing.Desktop.csproj" />

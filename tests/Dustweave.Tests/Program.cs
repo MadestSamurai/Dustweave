@@ -1,4 +1,7 @@
 using Dustweave;
+if(args.Length==5&&args[0]=="--soul-parity") { Dustweave.Soul.SoulChecks.ValidateKernel(args[1],args[2],args[3],args[4]);return; }
+
+if(args.Length==4 && args[0]=="--storage-hive-child") { StorageMigrationNativeCases.Child(args[1],args[2],args[3]); return; }
 
 if (args.Length == 2 && args[0] == "--suite-owner-child") { await SuiteOwnerProbeCases.Child(args[1]); return; }
 if (args.Length == 2 && args[0] == "--plugin-session-parent") { await PluginStoreCases.SessionChild(args[1]); return; }
@@ -88,6 +91,8 @@ await Group("EquipmentCraft", () => EquipmentCraftCases.Run(root, cases));
 await Group("HuntingInventory", () => HuntingInventoryCases.Run(root, cases));
 await Group("LogCleanup", () => LogCleanupCases.Run(root,cases));
 await Group("CacheStorage", () => CacheStorageCases.Run(root,cases));
+await Group("StorageMigration", () => StorageMigrationCases.Run(root,cases));
+await Group("StorageMigrationNative", () => StorageMigrationNativeCases.Run(root,cases));
 await Group("StoragePath", () => StoragePathCases.Run(root,cases));
 await Group("StorageMaintenance", () => StorageMaintenanceCases.Run(root,cases));
 await Group("StorageOptimization", () => StorageOptimizationCases.Run(root,cases));
@@ -181,6 +186,7 @@ await Group("Plugin", () => Sync(() => PluginCases.Run(root, cases)));
 await Group("PluginStore", () => PluginStoreCases.Run(root, cases));
 await Group("PluginMarket", () => PluginMarketCases.Run(root, cases));
 await Group("ToolMenu", () => Sync(() => ToolMenuCases.Run(root, cases)));
+await Group("Soul", () => Sync(() => SoulCases.Run(root, cases)));
 await Group("Rhythm", () => Sync(() => RhythmCases.Run(root,cases)));
 await Group("CookingTravel", () => CookingTravelCases.Run(root,cases));
 await Group("QuickTravel", () => QuickTravelCases.Run(root,cases));

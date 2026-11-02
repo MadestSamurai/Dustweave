@@ -6,7 +6,7 @@ internal static class ToolMenuCases
     public static void Run(string root, List<string> cases)
     {
         void Check(bool pass, string name) { if (!pass) throw new Exception(name); cases.Add("tool-menu: " + name); }
-        Check(DailyToolCatalog.All.Count == 11, "nine bundled tools plus native mansion and pandora tools present");
+        Check(DailyToolCatalog.All.Count == 12, "owned tools include the five-dungeon Soul challenge");
         Check(DailyToolCatalog.All.Select(t => t.Id).Distinct().Count() == DailyToolCatalog.All.Count, "unique tool identities");
         Check(DailyToolCatalog.Find("infinite-gacha") is {Repository:"Dustweave", AssemblyName:"BD2InfiniteGacha", MutexName:@"Local\BD2InfiniteGacha-v1"}, "owned gacha points to Dustweave without changing loader or window identity");
         Check(DailyToolCatalog.Search("连连看").Single().Id == "sichuan", "Chinese search");

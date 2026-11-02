@@ -1,0 +1,7 @@
+[
+  { "id": 1, "useSecStaminaIcon": "bg_stamina_eff_1", "useSecStaminaLocalTextId": 7000017, "useSecStaminaMax": 4.9, "useSecStaminaMin": 0 },
+  { "id": 2, "useSecStaminaIcon": "bg_stamina_eff_2", "useSecStaminaLocalTextId": 7000018, "useSecStaminaMax": 9.9, "useSecStaminaMin": 5 },
+  { "id": 3, "useSecStaminaIcon": "bg_stamina_eff_3", "useSecStaminaLocalTextId": 7000019, "useSecStaminaMax": 14.9, "useSecStaminaMin": 10 },
+  { "id": 4, "useSecStaminaIcon": "bg_stamina_eff_4", "useSecStaminaLocalTextId": 7000020, "useSecStaminaMax": 19.9, "useSecStaminaMin": 15 },
+  { "id": 5, "useSecStaminaIcon": "bg_stamina_eff_5", "useSecStaminaLocalTextId": 7000021, "useSecStaminaMax": 999, "useSecStaminaMin": 20 }
+]

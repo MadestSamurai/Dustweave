@@ -62,7 +62,7 @@ public static partial class DailySandbox
         }
         finally { foreach (var process in processes) process.Dispose(); }
     }
-    public static string Store => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Dustweave", "instances");
+    public static string Store => DailyStorageLocations.Sandboxes(DailyIdentity.DataRoot);
     public static string BoxName(string account)
     {
         string canonical = CanonicalBoxName(account);

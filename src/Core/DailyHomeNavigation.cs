@@ -10,7 +10,10 @@ public static class DailyHomeDecision
     // managed navigation; the recorded policy is covered by regression fixtures.
     private static readonly IReadOnlyDictionary<string, string> LobbyMenus = new Dictionary<string, string>
     {
-        ["AvatarFishingHarborUI"] = "_objHomeMenuButton"
+        ["AvatarFishingHarborUI"] = "_objHomeMenuButton",
+        // Back can open GameQuitPopupUI when this cartridge is the login
+        // destination. The explicit menu button always returns to MenuUI.
+        ["InventoryBattleLobbyUI"] = "_btnMenu"
     };
     private static readonly IReadOnlyDictionary<string, string?> Pages = new Dictionary<string, string?>(DailyNavigationDecision.Closeable)
     {
@@ -27,7 +30,10 @@ public static class DailyHomeDecision
         ["EventBattleUI"] = null,
         ["EventMainUI"] = null,
         ["TarosTacticsSeasonFinishUI"] = "_btnBack",
-        ["PVPClassUpUI"] = "_objCancelButton"
+        ["PVPClassUpUI"] = "_objCancelButton",
+        // Native back saves the current deck and returns to the Soul lobby;
+        // it does not call GiveUpStage or reset the ongoing dungeon.
+        ["InventoryBattleStageUI"] = null
     };
     private static readonly IReadOnlyDictionary<string, string?> Results = new Dictionary<string, string?>
     {
@@ -37,7 +43,10 @@ public static class DailyHomeDecision
         ["GuildJoinAttendancePopupUI"] = "_buttonBackground",
         ["EquipmentUpgradeResultPopupUI"] = "_objOKButton",
         ["EquipmentBatchUpgradeResultPopupUI"] = null,
-        ["SichuanStageClearPopupUI"] = "_buttonExit"
+        ["SichuanStageClearPopupUI"] = "_buttonExit",
+        // The result already owns a completed settlement. Exit returns to the
+        // lobby, whereas Next/Retry would resume the challenge.
+        ["InventoryBattleResultUI"] = "_objExitButton"
     };
     private static string Text(JsonObject o, string key) => DailyNavigationDecision.Text(o, key);
     private static bool Flag(JsonObject o, string key) => o[key]?.GetValue<bool>() ?? false;
@@ -131,6 +140,8 @@ public static class DailyHomeDecision
             return Block("尚未完成账号登录或资源下载，请先完成日常连接。");
         if (Transitioning(frame))
             return Wait("等待原生加载或进场遮罩结束");
+        if (types.Contains("InventoryBattleUI") && !types.Contains("InventoryBattleResultUI"))
+            return Wait("等待死魂之盘当前战斗结算后返回，不中断战斗或重试");
         if (types.Contains("SubSkillCutSceneUI"))
             return Wait("等待技能演出结束，保持当前页面");
         var duplicates = rows.Where(r => !policy.Background.Contains(Text(r, "Type"))).GroupBy(r => Text(r, "Type")).Where(g => g.Count() > 1).Select(g => g.Key).ToArray();

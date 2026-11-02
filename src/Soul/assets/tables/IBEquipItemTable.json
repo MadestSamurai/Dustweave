@@ -1,0 +1,15 @@
+[
+  { "defaultEffectId": [ 4000111 ], "groupId": 30001, "id": 1, "matchEffectId": [ 3000111 ], "tagConditionNameTextId": 3603012, "targetTagId": 3012, "upgradePrice": 0 },
+  { "defaultEffectId": [ 4000211 ], "groupId": 30002, "id": 1, "matchEffectId": [ 3000211 ], "tagConditionNameTextId": 3603012, "targetTagId": 3012, "upgradePrice": 0 },
+  { "defaultEffectId": [ 4000311 ], "groupId": 30003, "id": 1, "matchEffectId": [ 3000311 ], "tagConditionNameTextId": 3603005, "targetTagId": 3005, "upgradePrice": 0 },
+  { "defaultEffectId": [ 4001111 ], "groupId": 30011, "id": 1, "matchEffectId": [ 3001111 ], "tagConditionNameTextId": 3603012, "targetTagId": 3012, "upgradePrice": 0 },
+  { "defaultEffectId": [ 4001211 ], "groupId": 30012, "id": 1, "matchEffectId": [ 3001211 ], "tagConditionNameTextId": 3603012, "targetTagId": 3012, "upgradePrice": 0 },
+  { "defaultEffectId": [ 4001811 ], "groupId": 30018, "id": 1, "matchEffectId": [ 3001811 ], "tagConditionNameTextId": 3603007, "targetTagId": 3007, "upgradePrice": 0 },
+  { "defaultEffectId": [ 4002111 ], "groupId": 30021, "id": 1, "matchEffectId": [ 3002111 ], "tagConditionNameTextId": 3603012, "targetTagId": 3012, "upgradePrice": 0 },
+  { "defaultEffectId": [ 4002211 ], "groupId": 30022, "id": 1, "matchEffectId": [ 3002211 ], "tagConditionNameTextId": 3603012, "targetTagId": 3012, "upgradePrice": 0 },
+  { "defaultEffectId": [ 4003111 ], "groupId": 30031, "id": 1, "matchEffectId": [ 3003111 ], "tagConditionNameTextId": 3603012, "targetTagId": 3012, "upgradePrice": 0 },
+  { "defaultEffectId": [ 4003311 ], "groupId": 30033, "id": 1, "matchEffectId": [ 3003311 ], "tagConditionNameTextId": 3603012, "targetTagId": 3012, "upgradePrice": 0 },
+  { "defaultEffectId": [ 4003611 ], "groupId": 30036, "id": 1, "matchEffectId": [ 3003611 ], "tagConditionNameTextId": 3603012, "targetTagId": 3012, "upgradePrice": 0 },
+  { "defaultEffectId": [ 4003711 ], "groupId": 30037, "id": 1, "matchEffectId": [ 3003711 ], "tagConditionNameTextId": 3603005, "targetTagId": 3005, "upgradePrice": 0 },
+  { "defaultEffectId": [ 4005611 ], "groupId": 30056, "id": 1, "matchEffectId": [ 3005611 ], "tagConditionNameTextId": 3603012, "targetTagId": 3012, "upgradePrice": 0 }
+]

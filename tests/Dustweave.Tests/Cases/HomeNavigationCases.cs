@@ -110,6 +110,37 @@ static class HomeNavigationCases
         Check(DailyHomeDecision.Inspect(Frame(harbor, Surface("FishingGameFieldDefaultUI")), policy).Kind == "blocked", "active fishing retains ownership even with a harbor page present");
         Check(DailyHomeDecision.Inspect(Frame(harbor, harbor.DeepClone().AsObject()), policy).Kind == "blocked", "duplicate fishing harbors cannot select a home button");
         Check(DailyHomeDecision.Inspect(Frame(harbor, Surface("GameFieldDefaultUI", false, "_buttonMenu")), policy).Kind == "blocked", "two native menu owners remain ambiguous including the harbor");
+        var soulLobby = Surface("InventoryBattleLobbyUI", false, "_btnMenu");
+        var soulStage = Surface("InventoryBattleStageUI");
+        var soulResult = Surface("InventoryBattleResultUI", false, "_objExitButton", 10);
+        soulResult["Targets"]!.AsArray().Add(new JsonObject { ["Id"] = 201, ["Field"] = "_objRetryButton", ["Enabled"] = true, ["Route"] = "ui" });
+        soulResult["Targets"]!.AsArray().Add(new JsonObject { ["Id"] = 202, ["Field"] = "_objNextStageButton", ["Enabled"] = true, ["Route"] = "ui" });
+        var soulMenu = DailyHomeDecision.Inspect(Frame(soulLobby), policy).Action;
+        Check(soulMenu?["field"]?.GetValue<string>() == "_btnMenu" && soulMenu["expect"]?.GetValue<string>() == "MenuUI" && soulMenu["back"] == null,
+            "Soul lobby uses explicit home menu, never the conditional quit/back branch");
+        Check(DailyHomeDecision.Inspect(Frame(soulStage, soulLobby), policy).Action?["ui"]?.GetValue<string>() == "InventoryBattleStageUI"
+            && DailyHomeDecision.Inspect(Frame(soulStage), policy).Action?["back"]?.GetValue<bool>() == true,
+            "Soul preparation returns via native save-deck/back before the underlying lobby");
+        var soulFinished = Frame(Surface("InventoryBattleUI"), soulResult, Surface("MenuUI", id: 20));
+        Check(DailyHomeDecision.Inspect(soulFinished, policy).Action?["field"]?.GetValue<string>() == "_objExitButton"
+            && !DailyNavigationDecision.Ready(soulFinished, "guild", policy),
+            "Soul settled battle exits to lobby instead of retry/next or reusing a background menu");
+        foreach (string stage in new[] { "guild", "weekly_npc", "mirror" })
+            Check(!DailyNavigationDecision.Ready(Frame(soulStage, Surface("GameFieldDefaultUI", id: 21)), stage, policy),
+                "Soul preparation cannot be mistaken for the underlying field: " + stage);
+        Check(DailyHomeDecision.Inspect(Frame(Surface("InventoryBattleUI"), soulStage, soulLobby), policy).Kind == "waiting",
+            "Soul active battle waits for result and never exits through background preparation");
+        foreach (var page in new[] { soulLobby, soulStage, soulResult })
+        {
+            var opening = page.DeepClone().AsObject(); opening["InputReady"] = false;
+            Check(DailyHomeDecision.Inspect(Frame(opening), policy).Kind == "waiting", "Soul return waits native readiness: " + page["Type"]);
+            Check(DailyHomeDecision.Inspect(Frame(page, page.DeepClone().AsObject()), policy).Kind == "blocked", "Soul duplicate page remains ambiguous: " + page["Type"]);
+            Check(DailyHomeDecision.Inspect(Frame(page, Surface("MessagePopupUI", true, "_buttonOK", 99)), policy).Kind == "blocked", "Soul exit preserves unknown purchase/give-up confirmation: " + page["Type"]);
+        }
+        var disabledSoulExit = soulResult.DeepClone().AsObject(); disabledSoulExit["Targets"]![0]!["Enabled"] = false;
+        Check(DailyHomeDecision.Inspect(Frame(disabledSoulExit), policy).Kind == "waiting", "Soul disabled exit never falls back to retry/next");
+        var missingSoulExit = soulResult.DeepClone().AsObject(); missingSoulExit["Targets"]!.AsArray().RemoveAt(0);
+        Check(DailyHomeDecision.Inspect(Frame(missingSoulExit), policy).Kind == "waiting", "Soul missing exit never falls back to retry/next");
         foreach (string ui in new[] { "ItemGetPopupUI", "GuildJoinAttendancePopupUI", "EquipmentUpgradeResultPopupUI", "EquipmentBatchUpgradeResultPopupUI", "SichuanStageClearPopupUI" })
         {
             string? field = ui switch
@@ -187,6 +218,19 @@ static class HomeNavigationCases
         });
         await Route("new menu instance restarts native settle", Menu(), f => { f.OnWait = () => { if (f.Time >= 1) f.Current["Surfaces"]![0]!["Id"] = 900; }; f.Inspect = () => Check(f.Time >= 3, "replacement menu requires its own stable readiness interval"); });
         await Route("fishing harbor home observed in the running client", Frame(harbor, Surface("NoticeUI")), f => { f.OnAction = _ => f.Current = Menu(); f.Inspect = () => Check(f.Actions.Count == 1 && f.Actions[0]["field"]?.GetValue<string>() == "_objHomeMenuButton", "startup exits fishing harbor once without starting fishing or claiming traps"); });
+        await Route("Soul battle settles then exits through lobby", Frame(Surface("InventoryBattleUI"), Surface("MenuUI", id: 20)), f =>
+        {
+            f.OnWait = () => { if (f.Time >= 1 && f.Actions.Count == 0) f.Current = Frame(Surface("InventoryBattleUI"), soulResult); };
+            f.OnAction = a => f.Current = a["ui"]?.GetValue<string>() == "InventoryBattleResultUI" ? Frame(soulLobby) : Menu();
+            f.Inspect = () => Check(f.Actions.Count == 2 && f.Actions[0]["field"]?.GetValue<string>() == "_objExitButton"
+                && f.Actions[1]["field"]?.GetValue<string>() == "_btnMenu", "Soul startup waits settlement then uses exit/menu exactly once");
+        });
+        await Route("Soul preparation saves and returns through lobby", Frame(soulStage, Surface("InventoryBattleShopUI", id: 3)), f =>
+        {
+            f.OnAction = a => f.Current = a["ui"]?.GetValue<string>() == "InventoryBattleStageUI" ? Frame(soulLobby) : Menu();
+            f.Inspect = () => Check(f.Actions.Count == 2 && f.Actions[0]["back"]?.GetValue<bool>() == true
+                && f.Actions[1]["field"]?.GetValue<string>() == "_btnMenu", "Soul preparation exits without shop purchase, give-up or restart");
+        });
         await Route("Monster Hunt lobby returns through observed back button", Frame(Surface("MonsterHuntUI", field: "_objBackButton")), f =>
         {
             f.OnAction = _ => f.Current = Menu();

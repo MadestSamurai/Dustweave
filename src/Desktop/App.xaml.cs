@@ -11,6 +11,8 @@ public partial class App : Application
     {
         base.OnStartup(e);
         var args = StartupArguments ?? e.Args;
+        if(args.Length>0&&args[0]=="--soul-window"){SoulTool.Start(this,args.Skip(1).ToArray());return;}
+        if(args.Length is 3 or 4&&args[0]=="--soul-verify"){SoulTool.Start(this,args.Skip(1).ToArray(),verify:true);return;}
         if(args.Length>0&&args[0]=="--mansion-window"){MansionTool.Start(this,args.Skip(1).ToArray());return;}
         if(args.Length>0&&args[0]=="--pandora-window"){PandoraTool.Start(this,args.Skip(1).ToArray());return;}
         if (args.Length == 3 && args[0] == "--restart-after")
@@ -242,6 +244,8 @@ public partial class App : Application
                 Shutdown(updated ? 1 : 0);
                 return;
             }
+            if(Accounts.SandboxProcessScope.CurrentBox.Length==0)
+                await new DailyStorageMigration(DailyIdentity.DataRoot).RecoverAsync();
             StartupDiagnostics.Mark("main-window");
             var gameHost = new DailyGameHost();
             sessions = new AccountSessions(gameHost);

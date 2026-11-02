@@ -170,8 +170,9 @@ public partial class MainWindow : Window
     private readonly DailyToolSession toolSession;
     private bool toolChanging;
     private ApostleToolWindow? apostleWindow;
-    private string? ActiveToolId => apostleWindow != null ? "apostle-defense" : toolSession.Current?.ToolId;
-    private bool ToolOpen => apostleWindow != null || toolSession.Current != null;
+    private SoulToolWindow? soulWindow;
+    private string? ActiveToolId => soulWindow != null ? "soul" : apostleWindow != null ? "apostle-defense" : toolSession.Current?.ToolId;
+    private bool ToolOpen => soulWindow != null || apostleWindow != null || toolSession.Current != null;
     private bool ToolConnecting => apostleWindow?.Panel.Connecting == true;
     private bool ToolRunning => !busy && parallelControl == null && DailyToolControl.IsAutomationOccupied(root);
     private bool Unavailable => onboardingOpen || busy || manualCacheChanging || maintenanceYielding || toolChanging || ToolRunning || UpdateRestarting || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true;
@@ -180,12 +181,19 @@ public partial class MainWindow : Window
         if (smoke != null || busy || manualCacheChanging || maintenanceYielding || toolChanging || UpdateRestarting || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true) return;
         toolChanging = true; SetBusy(busy);
         try {
+            if(id=="soul" && soulWindow!=null){soulWindow.BringForward();return;}
             if(id=="apostle-defense" && apostleWindow!=null){apostleWindow.BringForward();return;}
             if(toolSession.Current?.ToolId==id){toolSession.Show();return;}
             await PauseAutomaticMaintenanceAsync();
             if(finalClose || UpdateRestarting)return;
             using var activityLease=DailyToolControl.Acquire(root);
             if(!await CloseToolWindowsAsync())return;
+            if(id=="soul"){
+                var window=new SoulToolWindow(root,this);
+                soulWindow=window;window.ActivityChanged+=()=>{RefreshTools();SetBusy(busy);};
+                window.Closed+=(_,_)=>{if(soulWindow==window)soulWindow=null;RefreshTools();SetBusy(busy);};
+                window.Show();toolMessage="soul.ready";return;
+            }
             await host.PrepareAccessAsync(m=>toolMessage=m,CancellationToken.None);
             if(id=="apostle-defense")
             {
@@ -231,6 +239,7 @@ public partial class MainWindow : Window
     private string? toolMessage;
     private async Task<bool> CloseToolWindowsAsync()
     {
+        if(soulWindow is {} soul){if(!await soul.CloseSafelyAsync())return false;}
         if(apostleWindow is { } window)
         {
             if(!await window.CloseSafelyAsync())return false;

@@ -23,8 +23,10 @@ public static class DailyCacheStorage
 {
     public static IReadOnlyList<string> Areas { get; } = Array.AsReadOnly(new[] { "suite-cache", "trade/catalogs", "rules", "live/prepared", "live/binding-cache" });
     private static string Configuration(string root) => Path.Combine(root, "cache-location.json");
-    public static string Location(string root) => DailyStoragePath.ResolveRoot(Accounts.SandboxProcessScope.CurrentBox.Length == 0 && DailyJson.TryRead<DailyCacheLocation>(Configuration(root)) is { Path.Length: > 0 } value ? value.Path : root);
-    private static string[] Roots(string root) => Accounts.SandboxProcessScope.CurrentBox.Length != 0 ? [DailyStoragePath.ResolveRoot(root)] : new[] { root, Location(root) }.Concat(DailyJson.TryRead<DailyCacheLocation>(Configuration(root))?.Retired ?? []).Select(DailyStoragePath.ResolveRoot).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+    public static string Location(string root) => DailyStoragePath.ResolveRoot(Accounts.SandboxProcessScope.CurrentBox.Length != 0 ? root :
+        DailyStorageLocations.Read(root)?.Cache ?? (DailyJson.TryRead<DailyCacheLocation>(Configuration(root)) is { Path.Length: > 0 } value ? value.Path : root));
+    private static string[] Roots(string root) => Accounts.SandboxProcessScope.CurrentBox.Length != 0 ? [DailyStoragePath.ResolveRoot(root)] : new[] { root, Location(root) }.Concat(DailyJson.TryRead<DailyCacheLocation>(Configuration(root))?.Retired ?? []).Concat(DailyStorageLocations.Read(root)?.PreviousCaches??[]).Select(DailyStoragePath.ResolveRoot).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+    internal static string[] KnownRoots(string root)=>Roots(root);
     public static string Area(string root, string name)
     {
         if (!Areas.Contains(name)) throw new ArgumentException("Unknown cache area", nameof(name));
@@ -226,6 +228,7 @@ public static class DailyCacheStorage
     public static Task<DailyCacheMove> MoveAsync(string root, string destination, CancellationToken cancel = default, IProgress<long>? progress = null) => Task.Run(() =>
     {
         root = DailyStoragePath.ResolveRoot(root); destination = DailyStoragePath.ResolveRoot(destination);
+        if(DailyStorageLocations.Read(root)!=null)throw new IOException("storage.use_full_migration");
         using var lease = Lease(root, true);
         string previous = Location(root);
         var roots=Roots(root);

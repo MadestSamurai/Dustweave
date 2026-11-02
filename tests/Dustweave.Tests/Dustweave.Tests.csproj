@@ -9,6 +9,7 @@
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../../src/Soul/Dustweave.Soul.csproj" />
     <Compile Include="../../src/FiendHunter/shared/AttackTiming.cs;../../src/FiendHunter/shared/Control.cs;../../src/FiendHunter/shared/CombatPolicy.cs;../../src/FiendHunter/shared/ToolStorage.cs" Link="FiendHunter/%(Filename)%(Extension)" />
     <ProjectReference Include="../../src/Core/Dustweave.Core.csproj" />
     <ProjectReference Include="../../src/Rhythm/core/Dustweave.Rhythm.Core.csproj" Aliases="rhythm" />

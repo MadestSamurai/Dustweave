@@ -6,6 +6,7 @@ public static class DailyToolCatalog
 {
     public static IReadOnlyList<DailyToolDefinition> All { get; } = new DailyToolDefinition[]
     {
+        new("soul", "死魂之盘", "小游戏", "自动规划成长阵容，连续挑战全部五关。", "Dustweave", "Dustweave", @"Local\Dustweave.Soul"),
         new("fishing", "自动钓鱼", "经营与装备", "钓鱼、鱼饵、背包出售和地图往返。", "Dustweave", "BD2Fishing", @"Local\BD2Fishing.Desktop"),
         new("territory", "领地自动化", "经营与装备", "种植、采集、料理、库存出售和布局。", "Dustweave", "BD2Territory", @"Local\BD2Territory.Desktop"),
         new("equipment", "装备助手", "经营与装备", "规划搓粉与批量精炼，确认预算后执行。", "Dustweave", "BD2EquipmentAssistant", @"Local\BD2EquipmentAssistant-v1"),

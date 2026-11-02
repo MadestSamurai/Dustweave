@@ -44,7 +44,7 @@ internal static class ToolApplicationHost
             await Task.Delay(50);
         }
     }
-    internal static string Version(DailyToolDefinition tool) => tool.Id is "fishing" or "territory" or "equipment" or "apostle-defense" or "infinite-gacha" or "mansion-runaway" or "pandora" or "fiend-hunter" or "rhythm" or "sichuan" or "secret-vision" ? DailyProductVersion.Current : Assembly.Load(new AssemblyName(tool.AssemblyName)).GetName().Version!.ToString(3);
+    internal static string Version(DailyToolDefinition tool) => tool.Id is "soul" or "fishing" or "territory" or "equipment" or "apostle-defense" or "infinite-gacha" or "mansion-runaway" or "pandora" or "fiend-hunter" or "rhythm" or "sichuan" or "secret-vision" ? DailyProductVersion.Current : Assembly.Load(new AssemblyName(tool.AssemblyName)).GetName().Version!.ToString(3);
     public static int CheckClient(string id, string managed, string output)
     {
         Directory.CreateDirectory(output);
@@ -71,6 +71,7 @@ internal static class ToolApplicationHost
             if (!helper) languageScope = HostedToolLocale.Begin(DailyLanguage.Current.Code);
             if(id=="mansion-runaway")return MansionTool.Run(arguments,helper?null:app=>ConfigureWindow(app,id));
             if(id=="pandora")return PandoraTool.Run(arguments,helper?null:app=>ConfigureWindow(app,id));
+            if(id=="soul")return SoulTool.Run(arguments);
             var assembly = Assembly.Load(new AssemblyName(tool.AssemblyName));
             var typeName = tool.Id == "equipment" ? "BD2Equipment.App" : tool.AssemblyName + ".Desktop.App";
             var entry = assembly.GetType(typeName)!.GetMethod("RunHosted", BindingFlags.Public | BindingFlags.Static)

@@ -8,6 +8,7 @@ public sealed record DailyStorageScope(string Kind, string Path, long Bytes, lon
 }
 public sealed record DailyStorageOverview(DailyStorageScope[] Scopes)
 {
+    public DailyStorageDisk[] Disks { get; init; } = [];
     public long TotalBytes => Scopes.Sum(s=>s.Bytes);
     public long CacheBytes => Scopes.Sum(s=>s.CacheBytes);
     public long LogBytes => Scopes.Sum(s=>s.LogBytes);
@@ -26,13 +27,15 @@ public sealed class DailyStorageMaintenance
     readonly Func<string,bool> boxIdle;
     readonly Func<bool> extractionIdle;
     readonly Func<string,bool> extractionSafe;
+    readonly string[] retiredInstances=[];
     internal string? CaptureControlPath { get; init; }
     static readonly string[] ExtractionNames=["Dustweave","Dustweave.Updater","BD2DailyAssistant","BD2DailyAssistant.Updater"];
     sealed record Box(string Directory,string Data,string Name,string Account);
     public DailyStorageMaintenance(string root) : this(root, Shared(root)?DailySandbox.Store:null,
         Shared(root)?Path.Combine(Path.GetTempPath(),".net"):null, BoxIdle, ExtractionIdle,
         Shared(root)?Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"CrashDumps"):null,
-        directory=>MayCleanExtraction(directory,AppContext.GetData("NATIVE_DLL_SEARCH_DIRECTORIES") as string,typeof(object).Assembly.Location.Length==0)) { }
+        directory=>MayCleanExtraction(directory,AppContext.GetData("NATIVE_DLL_SEARCH_DIRECTORIES") as string,typeof(object).Assembly.Location.Length==0))
+    {if(Shared(root))retiredInstances=DailyStorageLocations.Read(root)?.PreviousSandboxes??[];}
     // Explicit locations/probes keep synthetic checks entirely outside real user storage.
     public DailyStorageMaintenance(string root,string? instances,string? extraction,Func<string,bool> boxIdle,Func<bool> extractionIdle,string? crashes=null,Func<string,bool>? extractionSafe=null)
     { this.root=Path.GetFullPath(root);this.instances=instances;this.extraction=extraction;this.boxIdle=boxIdle;this.extractionIdle=extractionIdle;this.crashes=crashes;this.extractionSafe=extractionSafe??(_=>true); }
@@ -107,9 +110,15 @@ public sealed class DailyStorageMaintenance
         skipped=0;
         try
         {
-            if(instances==null || !Directory.Exists(instances))return [];
-            DailyCacheStorage.NoLinks(instances);
-            return Directory.GetDirectories(instances);
+            if(instances==null)return [];
+            var directories=new List<string>();
+            foreach(string store in new[]{instances}.Concat(retiredInstances).Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                if(!Directory.Exists(store))continue;
+                DailyCacheStorage.NoLinks(store);
+                directories.AddRange(Directory.GetDirectories(store));
+            }
+            return directories.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         }
         catch(Exception e) when(Expected(e)){skipped++;return [];}
     }
@@ -134,9 +143,11 @@ public sealed class DailyStorageMaintenance
     {
         string root=DailyStoragePath.ResolveRoot(this.root);
         var scopes=new List<DailyStorageScope>();
+        var disks=new DailyStorageDisks();
         var storage=DailyCacheStorage.ScanRetention(root,policy,token,captureControl:CaptureControlPath);
         var logs=DailyLogCleanup.Scan(root,policy,DateTime.UtcNow,token);
         var counted=storage.AllFiles.Select(f=>f.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        disks.Add(storage.AllFiles,storage.Units.SelectMany(u=>u.Files).Select(f=>f.Path).Concat(logs.Units.SelectMany(u=>u.Files).Select(f=>f.Path)));
         scopes.Add(new("main",root,storage.TotalBytes,storage.CacheBytes,logs.ManagedBytes,storage.ReclaimableBytes+logs.ReclaimableBytes,storage.Skipped+logs.Skipped)
             {OptimizableFiles=CompressionPlan(root,storage.AllFiles).Length});
         var directories=InstanceDirectories(out int omitted);
@@ -148,6 +159,7 @@ public sealed class DailyStorageMaintenance
             var measured=files.Where(f=>counted.Add(f.Path)).ToArray();
             var included=measured.Select(f=>f.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
             long cache=0,log=0,reclaim=0;int optimizable=0;
+            var removable=new List<string>();
             try
             {
                 if(ReadBox(directory) is {} box && Directory.Exists(box.Data))
@@ -162,17 +174,22 @@ public sealed class DailyStorageMaintenance
                             +l.Units.SelectMany(u=>u.Files).Where(f=>included.Contains(f.Path)).Sum(f=>f.DiskBytes)
                             +DailyCrashStorage.Plan(dumpFolder,files,DateTime.UtcNow,policy.Days).SelectMany(u=>u.Files).Where(f=>included.Contains(f.Path)).Sum(f=>f.DiskBytes);
                         optimizable=DailyStorageCompression.Plan(box.Data,files.Where(f=>included.Contains(f.Path)),DateTime.UtcNow).Length;
+                        removable.AddRange(s.Units.SelectMany(u=>u.Files).Select(f=>f.Path));
+                        removable.AddRange(l.Units.SelectMany(u=>u.Files).Select(f=>f.Path));
+                        removable.AddRange(DailyCrashStorage.Plan(dumpFolder,files,DateTime.UtcNow,policy.Days).SelectMany(u=>u.Files).Select(f=>f.Path));
                     }
                 }
             }
             catch(Exception e) when(Expected(e)){skipped++;}
             scopes.Add(new("sandbox",directory,measured.Sum(f=>f.DiskBytes),cache,log,reclaim,skipped){OptimizableFiles=optimizable});
+            disks.Add(measured,removable);
         }
         bool canExtract=extractionIdle();
         foreach(string folder in ExtractionDirectories())
         {
             int skipped=0;var files=DailyCacheStorage.Files(folder,token,ref skipped).ToArray();
             var measured=files.Where(f=>counted.Add(f.Path)).ToArray();var included=measured.Select(f=>f.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            disks.Add(measured,canExtract?ExtractionPlan(folder,files,DateTime.UtcNow,policy.Days).Where(u=>extractionSafe(u.Path)).SelectMany(u=>u.Files).Select(f=>f.Path):[]);
             scopes.Add(new("extraction",folder,measured.Sum(f=>f.DiskBytes),measured.Sum(f=>f.DiskBytes),0,
                 canExtract?ExtractionPlan(folder,files,DateTime.UtcNow,policy.Days).Where(u=>extractionSafe(u.Path)).Sum(u=>u.Files.Where(f=>included.Contains(f.Path)).Sum(f=>f.DiskBytes)):0,skipped));
         }
@@ -180,9 +197,10 @@ public sealed class DailyStorageMaintenance
         {
             int skipped=0;var files=DailyCacheStorage.Files(crashes,token,ref skipped).Where(f=>Path.GetDirectoryName(f.Path)==crashes&&DailyCrashStorage.Own(f.Path)&&counted.Add(f.Path)).ToArray();
             long bytes=files.Sum(f=>f.DiskBytes);
+            disks.Add(files,DailyCrashStorage.Plan(crashes,files,DateTime.UtcNow,policy.Days).SelectMany(u=>u.Files).Select(f=>f.Path));
             scopes.Add(new("crashes",crashes,bytes,0,bytes,DailyCrashStorage.Plan(crashes,files,DateTime.UtcNow,policy.Days).SelectMany(u=>u.Files).Sum(f=>f.DiskBytes),skipped));
         }
-        return new DailyStorageOverview(scopes.ToArray());
+        return new DailyStorageOverview(scopes.ToArray()){Disks=disks.Read()};
     },token);
     static DailyStorageItem[] CompressionPlan(string root,IEnumerable<DailyStorageItem> files,bool fixedRoot=false) =>
         (fixedRoot?new[]{root}:new[]{root,DailyCacheStorage.Location(root)}).Distinct(StringComparer.OrdinalIgnoreCase)

@@ -1,5 +1,29 @@
 [
 {
+  "Version": "1.5.11",
+  "Date": "2026-11-02",
+  "Notes": {
+    "zh-CN": [
+      "新增死魂之盘工具：自动采购、升级、排阵并连续挑战五关，支持暂停与接续。按照当前账号实际可用的升级上限计算；耗尽生命后可自动重新挑战当前关卡。",
+      "魂盘决策综合考虑当前战斗和后续成长，联合规划地板、角色与装备，寻找可负担的补强；购买和升级过程会显示在游戏中。模拟胜率仅供参考，不保证每次通关。",
+      "修复日常从死魂之盘卡带返回时停住的问题：备战页保留挑战进度返回，结算页退出到大厅，再进入主菜单；正在进行的战斗先等待结算。",
+      "存储迁移现可同时迁移缓存与账号沙盒，保留原有登录数据；新增按磁盘显示占用与可清理空间。迁移需先关闭正在使用的游戏和工具，异常中断后可恢复。"
+    ],
+    "zh-TW": [
+      "新增死魂之盤工具：自動採購、升級、排陣並連續挑戰五關，支援暫停與接續。依目前帳號實際可用的升級上限計算；耗盡生命後可自動重新挑戰目前關卡。",
+      "魂盤決策同時考慮目前戰鬥與後續成長，聯合規劃地板、角色及裝備，尋找可負擔的補強；購買與升級過程會顯示在遊戲中。模擬勝率僅供參考，不保證每次通關。",
+      "修復日常從死魂之盤卡帶返回時停住的問題：備戰頁保留挑戰進度返回，結算頁退出至大廳，再進入主選單；進行中的戰鬥先等待結算。",
+      "儲存空間遷移現可同時搬移快取與帳號沙盒，保留原有登入資料；新增依磁碟顯示占用及可清理空間。遷移前需關閉使用中的遊戲及工具，異常中斷後可恢復。"
+    ],
+    "en-US": [
+      "Adds a Soul challenge tool that buys, upgrades and arranges items while progressing through all five dungeons. Supports pause and resume, respects each account's actual upgrade limits, and can retry the current dungeon after all lives are used.",
+      "Planning balances the current battle with future growth, combining floors, units and equipment into affordable improvements. Purchases and upgrades remain visible in the game. Simulated win rates are estimates, not a guarantee of clearing every run.",
+      "Fixes daily tasks getting stuck when returning from the Soul cartridge. Preparation exits preserve challenge progress; settled battles return through the lobby to the main menu. Active battles are allowed to finish first.",
+      "Storage relocation now moves caches and account sandboxes together while preserving sign-in data. Disk usage and reclaimable space are shown per drive. Close active games and tools before moving; interrupted moves can recover."
+    ]
+  }
+},
+{
   "Version": "1.5.10",
   "Date": "2026-10-31",
   "Notes": {

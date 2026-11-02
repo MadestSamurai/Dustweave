@@ -28,7 +28,10 @@ foreach($file in $sourceFiles){
  if($file.Name -in $blockedNames -or $relative -match '(^|/)(references|artifacts|private-data|secrets|plugins|\.git)/' -or $file.Extension -in @('.py','.pyc','.pyd','.pfx','.key','.db')){
   $errors.Add("Forbidden source payload: $relative")
  }
- if($file.Extension -in @('.dll','.exe','.so') -and $relative -notmatch '^(third-party/|standalone/[^/]+/vendor/)' -and $relative -ne 'src/Equipment/vendor/highs/highs.dll'){
+ if($relative -eq 'src/Soul/assets/bd2_inventory_battle.dll' -and (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash -ne 'ABE5030CB23ECCADEBED5504A51989CD6348BD58CDE493E779703082E46F40DB'){
+  $errors.Add('Soul native model differs from the calibrated artifact; validate and update its identity before packaging.')
+ }
+ if($file.Extension -in @('.dll','.exe','.so') -and $relative -notmatch '^(third-party/|standalone/[^/]+/vendor/)' -and $relative -notin @('src/Equipment/vendor/highs/highs.dll','src/Soul/assets/bd2_inventory_battle.dll')){
   $errors.Add("Unexpected binary source: $relative")
  }
 }

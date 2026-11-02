@@ -1,0 +1,3 @@
+[
+  { "collectionScenePath": "Map3012_000", "defaultStamina": 50000, "defaultStaminaRecovery": 10000, "eventMissionGroupId": 50001, "fatigueIntervalAddDamage": 11, "fatigueIntervalTime": 100, "fatigueStartDamage": 1, "fatigueStartTime": 2000, "ibTutorial": 200, "iconSpriteNameLarge": "currency_inventorybattlegold_l_438", "iconSpriteNameSmall": "currency_inventorybattlegold_s_439", "id": 0, "itemDescNameTextId": 826, "itemNameTextId": 825, "questNameTextId": 20001, "questSkipTextId": 10001, "questTitleQuestTextId": 90000008, "retryGainCredit": 10, "shopDiscountRate": 1000, "shopRefreshPriceup": 5, "shopRefreshTime": 50, "startDeckId": 100, "startTimelineName": "Novel_Pack3012_00", "startVisualNovelDialogId": 1 }
+]

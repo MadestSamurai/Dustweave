@@ -46,27 +46,27 @@
           "System.Collections.Immutable": "9.0.0"
         }
       },
-      "bd2fishing.compatibility": {
+      "BD2Fishing.Compatibility": {
         "type": "Project",
         "dependencies": {
           "Microsoft.CodeAnalysis.CSharp": "[4.14.0, )",
           "Mono.Cecil": "[0.11.6, )"
         }
       },
-      "bd2fishing.core": {
+      "BD2Fishing.Core": {
         "type": "Project",
         "dependencies": {
-          "BD2Fishing.Compatibility": "[0.4.5, )"
+          "BD2Fishing.Compatibility": "[1.4.12, )"
         }
       },
-      "bd2sichuan.compatibility": {
+      "BD2Sichuan.Compatibility": {
         "type": "Project",
         "dependencies": {
           "Microsoft.CodeAnalysis.CSharp": "[4.14.0, )",
           "Mono.Cecil": "[0.11.6, )"
         }
       },
-      "bd2sichuan.core": {
+      "BD2Sichuan.Core": {
         "type": "Project",
         "dependencies": {
           "BD2Sichuan.Compatibility": "[0.3.3, )"

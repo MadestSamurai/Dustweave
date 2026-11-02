@@ -48,6 +48,16 @@ Managed extensions targeting 0.8.15 use API 4 and must be rebuilt against the re
 
 ## Normal change / 常规修改
 
+### Cache and sandbox relocation
+
+`DailyStorageMigration` moves the existing cache allowlist plus the complete owned sandbox store. Host account indexes, IPC/control locks, logs, runtime extraction and OTA journals stay at their existing paths. The stable `storage-location.json` record redirects cache and sandbox lookups together; isolated processes continue using private caches inside their relocated sandbox. Missing destinations fail explicitly rather than creating empty replacement sandboxes. Previously moved cache-only installations remain supported.
+
+The host control/storage leases and sandbox configuration gate serialize migration with automation, update handoff and sandbox management. Only idle, uniquely registered account sandboxes may move. Their names and registry/data bytes remain unchanged. Sandbox launch is disabled temporarily while copying; streamed SHA-256 verification precedes rebinding and atomic routing publication. `storage-migration.json` records the original roots and enabled states before changes. Startup recovery runs after the main instance lock and before account loading: uncommitted moves restore original bindings, committed moves finish on the verified destination. Normal update recovery still runs first at its established path. Never substitute directory junctions for this routing protocol.
+
+`DailyStorageOverview.Disks` groups unique measured files by their physical root and stored byte size. It includes main data, current/retired cache roots, complete current/retired sandboxes, owned runtime extraction and crash files. A retired sandbox with retained files remains counted, but is not adopted or automatically deleted as an active account. Cleanup and migration remain separate operations.
+
+Affected checks: `StorageMigration`, `CacheStorage`, `StorageMaintenance`, `StoragePath`, `Sandbox`, `SandboxScope`, `AccountProgress`, `LoginIdentity`, `LoginRecovery`, `UpdateSafety`, `UpdateRetention`; desktop smoke scope `support`. `StorageMigrationNative` is an explicit opt-in with `DUSTWEAVE_NATIVE_STORAGE_TEST=1`: it creates a disposable Sandboxie registration, writes synthetic HKCU/file state, relocates it, verifies reopening, then removes only that registration. It never launches the game or imports real accounts.
+
 1. 在 `src` 或 `assets` 修改对应模块；合成用例在 `tests/Dustweave.Tests/Cases`。
 2. 新增源码、配置、依赖锁或项目时登记 `source-manifest.json`；新增项目也加入 `Dustweave.slnx`。清单只记录本仓库内的源码输入，不添加外部工作目录。
 3. 运行构建、对应回归与来源边界检查。目录/资源移动时也验证独立打包和嵌入组件。
@@ -292,3 +302,9 @@ The `src/Rhythm` projects retain their assembly, runtime and pipe identities. Th
 Settings live in `tools/rhythm`; a valid bounded legacy settings file is imported only when no host settings exist. Known old diagnostic logs move into `tools/rhythm/diagnostics` with their original timestamps, so host retention still applies. Transport and unknown files are left untouched. Runtime logs retain their existing rotation limit and compilation uses the suite cache.
 
 Validation: `Rhythm,UnifiedSuite,ToolMenu,ActivityLease,TravelTransition,CommandDriver,ManagedInputs,DiagnosticExport,WeeklyIsolation` (504 checks), desktop smoke scopes `tool-preparation`, `rhythm` and `tool-activity`, three languages, both themes, and closing during preparation. Synthetic timing/input checks and passive client compilation are separate from live-game playback validation.
+
+### Owned Soul challenge integration
+
+`src/Soul` owns the five-dungeon coordinator, native execution adapter, bounded planner, battle kernel and compressed whole-dungeon growth library. `SoulToolWindow` opens from the host Tools list. Start and Resume share `SoulSession` with the real-game verification entry; neither uses screen coordinates or computer-use automation. Purchases immediately enter native storage, upgrades update their original views, and layout application verifies view uniqueness before starting battle. See `src/Soul/README.md` for the calibrated client/model identities and native pool recovery boundary.
+
+Affected synthetic groups are `Soul,ToolMenu`. `--tool soul --check-client <Managed> <output>` compiles against the current client without connecting; `--tool soul --smoke <output>` renders three languages and two themes offline. `--soul-verify-launch <saved account name> <output>` is an explicitly authorized live test: it uses the validated desktop relay, preserves the single-instance/control locks, can switch to the named saved account, and runs the same five-dungeon tool. Never use that entry as an offline build check.

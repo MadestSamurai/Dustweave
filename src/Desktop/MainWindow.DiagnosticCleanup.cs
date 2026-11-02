@@ -121,10 +121,14 @@ public partial class MainWindow
         var status=Text("logs.scanning",20);status.Name="LogCleanupStatus";status.FontSize=18;status.FontWeight=FontWeights.SemiBold;
         var detail=Text("logs.scope",10);detail.FontSize=12;detail.SetResourceReference(TextBlock.ForegroundProperty,"MutedInk");
         var optimization=Text("storage.compression",8);optimization.FontSize=12;optimization.SetResourceReference(TextBlock.ForegroundProperty,"MutedInk");optimization.Visibility=Visibility.Collapsed;
+        var disks=new StackPanel{Name="StorageDiskUsage",Margin=new(0,14,0,0)};panel.Children.Add(disks);
         var locationTitle=Text("storage.location",20);locationTitle.FontWeight=FontWeights.SemiBold;
         var locationRow=new DockPanel{Margin=new(0,8,0,8)};
         var move=new Button{Name="CacheStorageMove",Margin=new(10,0,0,0)};L.Bind(move,ContentControl.ContentProperty,"storage.move");DockPanel.SetDock(move,Dock.Right);locationRow.Children.Add(move);
         var location=new TextBox{IsReadOnly=true,Text=DailyCacheStorage.Location(root)};locationRow.Children.Add(location);panel.Children.Add(locationRow);
+        var sandboxLocation=new TextBlock{TextWrapping=TextWrapping.Wrap,Margin=new(0,0,0,8),FontSize=12};sandboxLocation.SetResourceReference(TextBlock.ForegroundProperty,"MutedInk");
+        void ShowSandboxLocation()=>L.Text(sandboxLocation,"storage.sandbox_location",smoke==null?DailySandbox.Store:Path.Combine(root,"instances"));
+        ShowSandboxLocation();panel.Children.Add(sandboxLocation);
         Text("storage.move_scope",0).SetResourceReference(TextBlock.ForegroundProperty,"MutedInk");
         var automatic=new CheckBox{Name="AutomaticLogCleanup",IsChecked=logPolicy.Automatic,Margin=new(0,22,0,14)};L.Bind(automatic,ContentControl.ContentProperty,"logs.automatic");panel.Children.Add(automatic);
         var settings=new Grid();settings.ColumnDefinitions.Add(new());settings.ColumnDefinitions.Add(new());
@@ -141,7 +145,17 @@ public partial class MainWindow
         void Save(){try{logPolicy=new(automatic.IsChecked==true,(int)((ComboBoxItem)days.SelectedItem).Tag,(int)((ComboBoxItem)size.SelectedItem).Tag);DailyLogCleanup.Save(root,logPolicy);compressionPending=false;nextLogCleanup=DateTime.UtcNow.AddMinutes(1);storage=null;clean.IsEnabled=false;optimization.Visibility=Visibility.Collapsed;L.Text(status,"logs.changed");}catch(Exception e){DailyUiText.Error(status,e);}}
         automatic.Click+=(_,_)=>Save();days.SelectionChanged+=(_,_)=>Save();size.SelectionChanged+=(_,_)=>Save();
         void Error(Exception error){if(error.Message.StartsWith("storage.",StringComparison.Ordinal))L.Text(status,error.Message);else DailyUiText.Error(status,error);}
-        async Task Scan(){working=true;storage=null;Controls(false);L.Text(status,"logs.scanning");optimization.Visibility=Visibility.Collapsed;try{storage=await new DailyStorageMaintenance(root).ScanAsync(logPolicy,lifetime.Token);if(!closed){L.Text(status,"storage.preview",MiB(storage.TotalBytes),MiB(storage.ReclaimableBytes));L.Text(detail,"storage.breakdown",MiB(storage.LogBytes),MiB(storage.CacheBytes),MiB(Math.Max(0,storage.TotalBytes-storage.LogBytes-storage.CacheBytes)),storage.Skipped,MiB(storage.SandboxBytes),MiB(storage.ExtractionBytes));if(storage.OptimizableFiles>0){L.Text(optimization,"storage.compression",storage.OptimizableFiles);optimization.Visibility=Visibility.Visible;}}}catch(OperationCanceledException){}catch(Exception e){if(!closed)Error(e);}finally{working=false;if(!closed)Controls(true);else lifetime.Dispose();}}
+        void ShowDisks(DailyStorageOverview report)
+        {
+            disks.Children.Clear();
+            foreach(var disk in report.Disks)
+            {
+                var row=new Grid{Margin=new(0,0,0,8)};row.ColumnDefinitions.Add(new(){Width=new GridLength(76)});row.ColumnDefinitions.Add(new());
+                var name=new TextBlock{Text=disk.Path,FontWeight=FontWeights.SemiBold,VerticalAlignment=VerticalAlignment.Center};row.Children.Add(name);
+                var usage=new TextBlock{TextWrapping=TextWrapping.Wrap,HorizontalAlignment=HorizontalAlignment.Right};L.Text(usage,"storage.disk_usage",MiB(disk.Bytes),MiB(disk.ReclaimableBytes));Grid.SetColumn(usage,1);row.Children.Add(usage);disks.Children.Add(row);
+            }
+        }
+        async Task Scan(){working=true;storage=null;Controls(false);L.Text(status,"logs.scanning");optimization.Visibility=Visibility.Collapsed;try{storage=await new DailyStorageMaintenance(root).ScanAsync(logPolicy,lifetime.Token);if(!closed){ShowDisks(storage);L.Text(status,"storage.preview",MiB(storage.TotalBytes),MiB(storage.ReclaimableBytes));L.Text(detail,"storage.breakdown",MiB(storage.LogBytes),MiB(storage.CacheBytes),MiB(Math.Max(0,storage.TotalBytes-storage.LogBytes-storage.CacheBytes)),storage.Skipped,MiB(storage.SandboxBytes),MiB(storage.ExtractionBytes));if(storage.OptimizableFiles>0){L.Text(optimization,"storage.compression",storage.OptimizableFiles);optimization.Visibility=Visibility.Visible;}}}catch(OperationCanceledException){}catch(Exception e){if(!closed)Error(e);}finally{working=false;if(!closed)Controls(true);else lifetime.Dispose();}}
         bool BusyStorage(bool moving=false)=>Unavailable||dailyQueue.IsRunning||updateChecking||updateInstalling||moving&&(ToolOpen||(!IsSandboxWindow&&smoke==null&&DailyUpdateHost.HasIsolatedWindows()));
         scan.Click+=async(_,_)=>await Scan();
         clean.Click+=async(_,_)=>{
@@ -156,10 +170,10 @@ public partial class MainWindow
             if(BusyStorage(true)){L.Text(status,"storage.busy");return;}
             var picker=new Microsoft.Win32.OpenFolderDialog{Title=L.Get("storage.pick")};
             if(picker.ShowDialog(dialog)!=true)return;
-            string destination=Path.Combine(picker.FolderName,"Dustweave-cache");
+            string destination=Path.Combine(picker.FolderName,"Dustweave-storage");
             if(DailyDialogs.ShowModal(DailyDialogs.Message(dialog,L.Get("storage.move"),L.Get("storage.confirm",destination),true))!=true)return;
             working=true;Controls(false);SetCacheChanging(true);L.Text(status,"storage.moving",0);
-            try{using var control=DailyUpdateHost.AcquireControl(root);var result=await DailyCacheStorage.MoveAsync(root,destination,lifetime.Token,new Progress<long>(n=>{if(!closed&&working)L.Text(status,"storage.moving",MiB(n));}));if(!closed){location.Text=result.Path;L.Text(status,"storage.moved",MiB(result.Bytes),result.RetainedFiles);L.Text(detail,"storage.rescan");}storage=null;}
+            try{var result=await new DailyStorageMigration(root).MoveAsync(destination,lifetime.Token,new Progress<long>(n=>{if(!closed&&working)L.Text(status,"storage.moving",MiB(n));}));storage=await new DailyStorageMaintenance(root).ScanAsync(logPolicy,lifetime.Token);if(!closed){location.Text=result.Path;ShowSandboxLocation();ShowDisks(storage);L.Text(status,"storage.moved",MiB(result.Bytes),result.RetainedFiles);L.Text(detail,"storage.move_scope");}}
             catch(OperationCanceledException){}catch(Exception error){if(!closed)Error(error);}
             finally{SetCacheChanging(false);working=false;if(!closed)Controls(true);else lifetime.Dispose();}
         };

@@ -1,0 +1,17 @@
+[
+  { "clearRewardCount": 1000, "clearRewardId": 0, "clearRewardType": 70, "dungeonAttempts": 5, "dungeonNameTextId": 7900001, "id": 1, "mapScenePath": "Map3012_002", "stageGroupId": 1, "unLockId": 0, "unLockSortOrder": 0 },
+  { "clearRewardCount": 1000, "clearRewardId": 0, "clearRewardType": 70, "dungeonAttempts": 5, "dungeonNameTextId": 7900002, "id": 2, "mapScenePath": "Map3012_003", "stageGroupId": 2, "unLockId": 1, "unLockSortOrder": 1 },
+  { "clearRewardCount": 1000, "clearRewardId": 0, "clearRewardType": 70, "dungeonAttempts": 5, "dungeonNameTextId": 7900003, "id": 3, "mapScenePath": "Map3012_002", "stageGroupId": 3, "unLockId": 2, "unLockSortOrder": 1 },
+  { "clearRewardCount": 1000, "clearRewardId": 0, "clearRewardType": 70, "dungeonAttempts": 5, "dungeonNameTextId": 7900004, "id": 4, "mapScenePath": "Map3012_003", "stageGroupId": 4, "unLockId": 3, "unLockSortOrder": 1 },
+  { "clearRewardCount": 1000, "clearRewardId": 0, "clearRewardType": 70, "dungeonAttempts": 5, "dungeonNameTextId": 7900005, "id": 5, "mapScenePath": "Map3012_002", "stageGroupId": 5, "unLockId": 4, "unLockSortOrder": 1 },
+  { "clearRewardCount": 1000, "clearRewardId": 0, "clearRewardType": 70, "dungeonAttempts": 5, "dungeonNameTextId": 7900006, "id": 6, "mapScenePath": "Map3012_006", "stageGroupId": 6, "unLockId": 0, "unLockSortOrder": 0 },
+  { "clearRewardCount": 1000, "clearRewardId": 0, "clearRewardType": 70, "dungeonAttempts": 5, "dungeonNameTextId": 7900007, "id": 7, "mapScenePath": "Map3012_006", "stageGroupId": 7, "unLockId": 6, "unLockSortOrder": 1 },
+  { "clearRewardCount": 1000, "clearRewardId": 0, "clearRewardType": 70, "dungeonAttempts": 5, "dungeonNameTextId": 7900008, "id": 8, "mapScenePath": "Map3012_006", "stageGroupId": 8, "unLockId": 7, "unLockSortOrder": 1 },
+  { "clearRewardCount": 1000, "clearRewardId": 0, "clearRewardType": 70, "dungeonAttempts": 5, "dungeonNameTextId": 7900009, "id": 9, "mapScenePath": "Map3012_007", "stageGroupId": 9, "unLockId": 8, "unLockSortOrder": 1 },
+  { "clearRewardCount": 1000, "clearRewardId": 0, "clearRewardType": 70, "dungeonAttempts": 5, "dungeonNameTextId": 7900010, "id": 10, "mapScenePath": "Map3012_007", "stageGroupId": 10, "unLockId": 9, "unLockSortOrder": 1 },
+  { "clearRewardCount": 1000, "clearRewardId": 0, "clearRewardType": 70, "dungeonAttempts": 5, "dungeonNameTextId": 7900011, "id": 11, "mapScenePath": "Map3012_006", "stageGroupId": 11, "unLockId": 0, "unLockSortOrder": 0 },
+  { "clearRewardCount": 1000, "clearRewardId": 0, "clearRewardType": 70, "dungeonAttempts": 5, "dungeonNameTextId": 7900012, "id": 12, "mapScenePath": "Map3012_006", "stageGroupId": 12, "unLockId": 11, "unLockSortOrder": 1 },
+  { "clearRewardCount": 1000, "clearRewardId": 0, "clearRewardType": 70, "dungeonAttempts": 5, "dungeonNameTextId": 7900013, "id": 13, "mapScenePath": "Map3012_006", "stageGroupId": 13, "unLockId": 12, "unLockSortOrder": 1 },
+  { "clearRewardCount": 1000, "clearRewardId": 0, "clearRewardType": 70, "dungeonAttempts": 5, "dungeonNameTextId": 7900014, "id": 14, "mapScenePath": "Map3012_007", "stageGroupId": 14, "unLockId": 13, "unLockSortOrder": 1 },
+  { "clearRewardCount": 1000, "clearRewardId": 0, "clearRewardType": 70, "dungeonAttempts": 5, "dungeonNameTextId": 7900000, "id": 15, "mapScenePath": "Map3012_007", "stageGroupId": 15, "unLockId": 14, "unLockSortOrder": 1 }
+]
