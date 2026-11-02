@@ -13,7 +13,7 @@ internal interface IStorageSandboxTransport
 internal sealed class StorageSandboxTransport : IStorageSandboxTransport
 {
     string Installation => DailySandbox.Installation() ?? throw new IOException("parallel.install_required");
-    public string[] Boxes()=>SandboxConfiguration.Boxes(Installation);
+    public string[] Boxes()=>DailySandbox.Installation() is {} installation?SandboxConfiguration.Boxes(installation):[];
     public string Read(string box,string setting)=>SandboxConfiguration.Read(Installation,box,setting);
     public bool Idle(string box)=>SandboxConfiguration.Processes(Installation,box).Length==0;
     public async Task Set(string box,string setting,string value)
@@ -21,6 +21,13 @@ internal sealed class StorageSandboxTransport : IStorageSandboxTransport
         await DailySandbox.Run(Installation,"SbieIni.exe",["set",box,setting,value],CancellationToken.None);
         if(!Read(box,setting).Trim().Equals(value,StringComparison.OrdinalIgnoreCase))throw new IOException("storage.binding_failed");
     }
+}
+
+public sealed class DailyStorageBindingException(string directory,string label,string reason) : IOException("storage.sandbox_unowned")
+{
+    public string DirectoryPath { get; } = directory;
+    public string Label { get; } = label;
+    public string Reason { get; } = reason;
 }
 
 public sealed class DailyStorageMigration
@@ -42,6 +49,40 @@ public sealed class DailyStorageMigration
     static void NoLinks(string path)=>DailyCacheStorage.NoLinks(path);
     static DailyStorageLocation Location(Journal j)=>new(j.Destination,Path.Combine(j.Destination,"instances"),j.Id);
     void Save(Journal j){DailyJson.Write(Pending,j);Checkpoint?.Invoke(j.Phase);}
+    // Old per-account mode preferences (and a removed sandbox's remaining notes)
+    // can create a state directory without ever creating an isolated game root.
+    // Preserve those bytes during the move; they are not proof of a registered box.
+    internal static bool MetadataOnly(string state)
+    {
+        string name=Path.GetFileName(state),gameRoot=Path.Combine(state,"root");
+        if(name.Length!=30 || !name.StartsWith("Dustweave_",StringComparison.Ordinal) || !name[10..].All(Uri.IsHexDigit)
+            || File.Exists(Path.Combine(state,"instance.json")) || File.Exists(Path.Combine(state,"removal.json")) || File.Exists(gameRoot))return false;
+        NoLinks(state);NoLinks(gameRoot);
+        string recovery=Path.GetDirectoryName(DailyLoadingFileTransaction.Pending(gameRoot))!;
+        foreach(string directory in Directory.GetDirectories(state))
+        {
+            NoLinks(directory);
+            if(Same(directory,gameRoot)&&!Directory.EnumerateFileSystemEntries(directory).Any())continue;
+            // Even a no-op recovery check leaves this empty lock behind. A
+            // pending journal, backup or other content must still be resolved.
+            if(!Same(directory,recovery))return false;
+            foreach(string entry in Directory.EnumerateFileSystemEntries(directory))
+            {
+                NoLinks(entry);
+                if(!Same(entry,Path.Combine(recovery,"transaction.lock"))||!File.Exists(entry)||new FileInfo(entry).Length!=0)return false;
+            }
+        }
+        return true;
+    }
+    DailyStorageBindingException BindingError(string state,string reason,DailySandboxRequest? owner=null,string? actual=null,string? alias=null)
+    {
+        string label=string.IsNullOrWhiteSpace(owner?.Name)?Path.GetFileName(state):owner.Name;
+        try { DailyJson.Write(Path.Combine(root,"live","diagnostics","storage-migration-check.json"),new {
+            atUtc=DateTimeOffset.UtcNow,reason,label,stateDirectory=state,box=owner?.Box,
+            expectedRoot=Path.Combine(state,"root"),actualRoot=actual,conflictingBox=alias,changed=false }); }
+        catch(Exception e)when(e is IOException or UnauthorizedAccessException){ }
+        return new(state,label,reason);
+    }
     void RequireIdle(IEnumerable<Box> boxes)
     {foreach(var box in boxes)if(!sandbox.Idle(box.Name))throw new IOException("storage.sandbox_busy");}
 
@@ -164,19 +205,23 @@ public sealed class DailyStorageMigration
         var boxes=new List<Box>();
         if(Directory.Exists(store))
         {
-            string[] registered=[];
+            var registered=sandbox.Boxes();
+            var configured=registered.ToDictionary(b=>b,b=>sandbox.Read(b,"FileRootPath").Trim(),StringComparer.OrdinalIgnoreCase);
             foreach(string state in Directory.GetDirectories(store))
             {
                 NoLinks(state);
                 if(!Directory.EnumerateFileSystemEntries(state).Any())continue;
-                var owner=DailyJson.TryRead<DailySandboxRequest>(Path.Combine(state,"instance.json"));
-                if(owner==null||!DailyProfiles.ValidKey(owner.Account)||!DailySandbox.ValidBoxName(owner.Box)
-                    ||Path.GetFileName(state)!=DailySandbox.CanonicalBoxName(owner.Account))throw new IOException("storage.sandbox_unowned");
-                string from=Path.Combine(state,"root");
+                string from=Path.Combine(state,"root"),marker=Path.Combine(state,"instance.json");
                 if(File.Exists(Path.Combine(state,"removal.json"))||File.Exists(DailyLoadingFileTransaction.Pending(from)))throw new IOException("storage.recovery_required");
-                if(registered.Length==0)registered=sandbox.Boxes();
-                if(!registered.Contains(owner.Box,StringComparer.OrdinalIgnoreCase)||!Same(sandbox.Read(owner.Box,"FileRootPath"),from))throw new IOException("storage.sandbox_unowned");
-                if(registered.Where(b=>!b.Equals(owner.Box,StringComparison.OrdinalIgnoreCase)).Any(b=>Same(sandbox.Read(b,"FileRootPath"),from)))throw new IOException("storage.sandbox_unowned");
+                var owner=DailyJson.TryRead<DailySandboxRequest>(marker);
+                if(owner==null&&MetadataOnly(state)&&!configured.ContainsKey(Path.GetFileName(state))&&!configured.Values.Any(p=>Same(p,from)))continue;
+                if(owner==null)throw BindingError(state,File.Exists(marker)?"registration_invalid":"registration_missing");
+                if(!DailyProfiles.ValidKey(owner.Account)||!DailySandbox.ValidBoxName(owner.Box)
+                    ||!Path.GetFileName(state).Equals(DailySandbox.CanonicalBoxName(owner.Account),StringComparison.OrdinalIgnoreCase))throw BindingError(state,"registration_invalid",owner);
+                if(!configured.TryGetValue(owner.Box,out string? actual))throw BindingError(state,"not_registered",owner);
+                if(!Same(actual,from))throw BindingError(state,"path_mismatch",owner,actual);
+                string? alias=registered.FirstOrDefault(b=>!b.Equals(owner.Box,StringComparison.OrdinalIgnoreCase)&&Same(configured[b],from));
+                if(alias!=null)throw BindingError(state,"duplicate_root",owner,actual,alias);
                 boxes.Add(new(owner.Box,from,Path.Combine(destination,"instances",Path.GetFileName(state),"root"),sandbox.Read(owner.Box,"Enabled").Trim()));
             }
         }

@@ -105,7 +105,15 @@ public sealed partial class DailyCommandDriver
                     result["completion"] = requireReady ? "input_ready" : expect.Length > 0 || absent.Length > 0 ? "visibility" : "dispatch";
                     if (sent["native_readiness_seconds"] != null) result["native_readiness_seconds"] = sent["native_readiness_seconds"]!.DeepClone();
                     if (openingFrame != null) result["opening_frame"] = openingFrame.DeepClone();
-                    DailyJson.Write(Path.Combine(root, "live", "steps", sent["id"]!.GetValue<string>(), "result.json"), result);
+                    // A completed observation supersedes the transport envelope.
+                    // Carry its facts into the final record before retiring that
+                    // copy; callers still receive the original result contract.
+                    var saved = result.DeepClone().AsObject();
+                    foreach (string key in new[] { "before", "command", "elapsed" })
+                        if (sent[key] != null) saved[key] = sent[key]!.DeepClone();
+                    string session = Path.Combine(root, "live", "steps", sent["id"]!.GetValue<string>());
+                    DailyJson.Write(Path.Combine(session, "result.json"), saved);
+                    DailyLogEvidence.RetireStepCopy(root, session, "transport.json");
                     return result;
                 }
                 // Always inspect a fresh frame first, including after a suspended

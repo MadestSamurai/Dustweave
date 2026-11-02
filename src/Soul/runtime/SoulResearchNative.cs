@@ -22,7 +22,7 @@ namespace BD2Daily.Live {
    var response=fields.SingleOrDefault(f=>f.FieldType==typeof(IbStageEndResponse));
    return response!=null&&response.GetValue(ui)!=null;
   }
-  internal static bool Kind(string kind){return kind=="soul_open"||kind=="soul_views"||kind=="soul_confirm_reset"||kind=="soul_confirm_enter"||kind=="soul_buy"||kind=="soul_upgrade"||kind=="soul_save"||kind=="soul_read"||kind=="soul_trace"||kind=="soul_enter"||kind=="soul_refresh"||kind=="soul_sell";}
+  internal static bool Kind(string kind){return kind=="soul_open"||kind=="soul_views"||kind=="soul_confirm_reset"||kind=="soul_confirm_enter"||kind=="soul_buy"||kind=="soul_upgrade"||kind=="soul_save"||kind=="soul_sale_sync"||kind=="soul_trace"||kind=="soul_enter"||kind=="soul_refresh"||kind=="soul_sell";}
   [DataContract] internal sealed class ViewInfo {
    [DataMember]public int ViewId,ItemId,Level,ShopSlot;
    [DataMember]public long InventoryIndex;
@@ -95,6 +95,7 @@ namespace BD2Daily.Live {
    if(c.Kind=="soul_confirm_reset")return c.Items.Length==5&&c.Value==0?"":"soul_reset_rejected";
    if(c.Kind=="soul_refresh")return c.Items.Length==6&&c.Value==0?"":"soul_refresh_rejected";
    if(c.Kind=="soul_sell")return c.Items.Length==8&&c.Value==0?"":"soul_sell_rejected";
+   if(c.Kind=="soul_sale_sync")return c.Items.Length==6&&c.Value==0&&c.Items[4]>0&&c.Items[5]>=0&&c.Items[5]<=int.MaxValue?"":"soul_sale_sync_rejected";
    if(c.Kind=="soul_buy")return c.Items.Length==7&&c.Value>=0&&c.Value<4&&c.Items[4]>0&&c.Items[5]>=0&&c.Items[6]>=0?"":"soul_buy_rejected";
    if(c.Kind=="soul_upgrade")return c.Items.Length==8&&c.Value>=0&&c.Value<=5?"":"soul_upgrade_rejected";
    if(c.Kind=="soul_save")return c.Value==0&&c.Items.Length>4&&(c.Items.Length-4)%3==0?"":"soul_deck_rejected";
@@ -157,13 +158,6 @@ namespace BD2Daily.Live {
   static void SyncDeck(){
    SyncGold();Manager.LoadDeckForStage();deckRebuilds++;
   }
-  static void Refresh(){
-   Action finish=SyncShop;
-   Action shopRead=()=>Call(SoulResearchBindings.ShopRead,finish);
-   Action deckRead=()=>Call(SoulResearchBindings.DeckRead,shopRead);
-   Action itemRead=()=>Call(SoulResearchBindings.ItemRead,deckRead);
-   Call(SoulResearchBindings.MainRead,itemRead,false);
-  }
   internal static void Execute(Command c,UIBase ui){
    Require(Client.ManifestModule.ModuleVersionId.ToString()==SoulResearchBindings.Mvid,"Soul client changed");
    if(c.Kind=="soul_open"){
@@ -203,7 +197,15 @@ namespace BD2Daily.Live {
    Require(p!=null&&p.Season==c.Items[0]&&p.DungeonId==c.Items[1]&&p.StageId==c.Items[2]&&p.Coin==c.Items[3],"Soul progress changed; no request sent");
    if(c.Kind=="soul_views"){ReclaimOrphanShopViews();return;}
    if(c.Kind=="soul_trace"){SoulResearchTrace.Start();return;}
-   if(c.Kind=="soul_read"){Refresh();return;}
+   if(c.Kind=="soul_sale_sync"){
+    // The native sell response removes the item and updates CurrentGold,
+    // but does not update IbPlayDBInfo.Coin. Match that accepted receipt to
+    // native state instead of reopening main/item/deck/shop network reads.
+    Require(!p.IsStageEnter&&!Items.Any(x=>x.InvenIndex==c.Items[4]),"Sold item still exists or battle started");
+    int coins=Manager.GetCurrentGold();
+    Require(coins==c.Items[5],"Native sale wallet differs from accepted receipt");
+    p.Coin=coins;return;
+   }
    if(c.Kind=="soul_sell"){
     Require(!p.IsStageEnter,"Cannot sell during battle");
     var item=Items.SingleOrDefault(x=>x.InvenIndex==c.Items[4]);

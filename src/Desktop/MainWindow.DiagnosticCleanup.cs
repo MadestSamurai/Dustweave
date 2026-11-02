@@ -9,6 +9,7 @@ public partial class MainWindow
     private CancellationTokenSource? logCleanupCancellation;
     private DateTime nextLogCleanup = DateTime.UtcNow.AddMinutes(1);
     private DateTime nextEvidenceCleanup = DateTime.UtcNow.AddSeconds(15);
+    private DateTime nextUpdateCacheCleanup = DateTime.UtcNow.AddMinutes(1);
     private bool logCleanupRunning;
     private bool compressionPending;
     private DateTime lastRetentionUtc=DateTime.MinValue;
@@ -25,6 +26,7 @@ public partial class MainWindow
         // maintenance pass between cancellation and the foreground lease.
         var retry=DateTime.UtcNow.AddMinutes(5);
         if(nextLogCleanup<retry)nextLogCleanup=retry;
+        if(nextUpdateCacheCleanup<retry)nextUpdateCacheCleanup=retry;
         nextEvidenceCleanup=DateTime.UtcNow.AddMinutes(1);
         token.ThrowIfCancellationRequested();
         if(!logCleanupRunning)return;
@@ -75,25 +77,35 @@ public partial class MainWindow
         { logCleanupCancellation?.Cancel();return; }
         if(logCleanupRunning)return;
         bool retentionDue=logPolicy.Automatic&&DateTime.UtcNow>=nextLogCleanup;
-        if(!retentionDue && (DateTime.UtcNow<nextEvidenceCleanup || !DailyLogEvidence.HasPending(root)))return;
+        bool updatesDue=DateTime.UtcNow>=nextUpdateCacheCleanup;
+        if(!retentionDue && !updatesDue && (DateTime.UtcNow<nextEvidenceCleanup || !DailyLogEvidence.HasPending(root)))return;
         nextEvidenceCleanup=DateTime.UtcNow.AddMinutes(1);
         if(retentionDue)nextLogCleanup=DateTime.UtcNow.AddMinutes(5);
+        if(updatesDue)nextUpdateCacheCleanup=DateTime.UtcNow.AddMinutes(5);
         await RunAutomaticMaintenanceAsync(async token => {
             await DailyLogEvidence.FlushAsync(root,token);
-            if(!retentionDue)return;
+            if(!retentionDue && !updatesDue)return;
             bool continuing=compressionPending&&lastRetentionUtc>DateTime.UtcNow.AddHours(-12)&&lastRetentionUtc<=DateTime.UtcNow;
-            if(!continuing&&LegacyEquipmentLogRoot is { } legacy)await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(root,legacy,token);
+            if(retentionDue&&!continuing&&LegacyEquipmentLogRoot is { } legacy)await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(root,legacy,token);
             if(Unavailable || MaintenanceWindowOpen || dailyQueue.IsRunning || scheduleChecking || DailyDialogs.ModalDepth>0 || updateChecking || updateInstalling)return;
             // Open tool windows may start independently of the host. Defer
             // maintenance until they close, while retaining the real file locks.
             SetAutomaticCacheChanging(true);
-            DailyLogCleanupResult result;
             try {
                 var maintenance=new DailyStorageMaintenance(root);
-                result=continuing?await maintenance.ContinueCompressionAsync(token):await maintenance.CleanAsync(logPolicy,token);
+                if(updatesDue&&(!retentionDue||continuing))
+                {
+                    var updates=await maintenance.CleanUpdateCacheAsync(logPolicy,token);
+                    nextUpdateCacheCleanup=DateTime.UtcNow.AddMinutes(updates.Skipped>0?5:30);
+                }
+                if(retentionDue)
+                {
+                    var result=continuing?await maintenance.ContinueCompressionAsync(token):await maintenance.CleanAsync(logPolicy,token);
+                    if(!continuing)nextUpdateCacheCleanup=DateTime.UtcNow.AddMinutes(result.Skipped>0?5:30);
+                    SaveLogCleanupResult(result,!continuing);
+                }
             }
             finally {SetAutomaticCacheChanging(false);}
-            SaveLogCleanupResult(result,!continuing);
         });
     }
     private async Task RunAutomaticMaintenanceAsync(Func<CancellationToken,Task> maintain)
@@ -144,7 +156,7 @@ public partial class MainWindow
         void Controls(bool enabled){scan.IsEnabled=enabled;days.IsEnabled=enabled;size.IsEnabled=enabled;automatic.IsEnabled=enabled;move.IsEnabled=enabled&&!IsSandboxWindow;clean.IsEnabled=enabled&&storage!=null&&(storage.ReclaimableBytes>0||storage.OptimizableFiles>0);}
         void Save(){try{logPolicy=new(automatic.IsChecked==true,(int)((ComboBoxItem)days.SelectedItem).Tag,(int)((ComboBoxItem)size.SelectedItem).Tag);DailyLogCleanup.Save(root,logPolicy);compressionPending=false;nextLogCleanup=DateTime.UtcNow.AddMinutes(1);storage=null;clean.IsEnabled=false;optimization.Visibility=Visibility.Collapsed;L.Text(status,"logs.changed");}catch(Exception e){DailyUiText.Error(status,e);}}
         automatic.Click+=(_,_)=>Save();days.SelectionChanged+=(_,_)=>Save();size.SelectionChanged+=(_,_)=>Save();
-        void Error(Exception error){if(error.Message.StartsWith("storage.",StringComparison.Ordinal))L.Text(status,error.Message);else DailyUiText.Error(status,error);}
+        void Error(Exception error){if(error is DailyStorageBindingException)DailyUiText.Error(status,error);else if(error.Message.StartsWith("storage.",StringComparison.Ordinal))L.Text(status,error.Message);else DailyUiText.Error(status,error);}
         void ShowDisks(DailyStorageOverview report)
         {
             disks.Children.Clear();

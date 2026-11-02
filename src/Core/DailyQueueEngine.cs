@@ -148,7 +148,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
         void Save()
         {
             record["updated"] = DateTime.UtcNow.Ticks;
-            DailyJson.Write(path, record);
+            DailyJson.Write(path, DailyLogEvidence.QueueSnapshot(record));
         }
         DailyParallelProgress.Capture(request.Root, request.Account);
         Save();

@@ -5,7 +5,7 @@ namespace Dustweave.Soul;
 
 internal static class SoulEvidence
 {
-    internal static async Task Capture(DailyPipeMailbox mailbox,DailyCommandDriver driver,string folder,string id,bool battle=false,JsonObject? action=null,Func<Task>? continuation=null)
+    internal static async Task Capture(DailyPipeMailbox mailbox,DailyCommandDriver driver,string folder,string id,bool battle=false,JsonObject? action=null,Func<Task>? continuation=null,bool archiveRead=false)
     {
         var metadata=JsonNode.Parse(await File.ReadAllTextAsync(SoulAssets.MetadataPath))!.AsObject();
         var original=mailbox.Read("live","evidence-config.json");
@@ -25,19 +25,20 @@ internal static class SoulEvidence
             if(dto is null)continue;
             reads.Add(new JsonObject{["Id"]="soul."+dto,["Type"]=owner["type"]!.DeepClone(),["StaticMember"]=property["name"]!.DeepClone(),["Paths"]=new JsonArray("$self"),["CollectionPath"]="",["ItemPaths"]=new JsonArray(),["MaxItems"]=300});
         }
-        await File.WriteAllBytesAsync(Path.Combine(folder,id+"-observer-original.json"),restore);
+        await StoreConfiguration(folder,restore);
+        bool archive=archiveRead||battle||action is not null||continuation is not null;
+        JsonObject? lastObserved=null;
         try
         {
             mailbox.Write("live","evidence-config.json",JsonSerializer.SerializeToUtf8Bytes(config));
             for(var attempt=0;attempt<10;attempt++)
             {
-                var observed=await driver.EvidenceAsync(new[]{"soul"});
+                var observed=await driver.EvidenceAsync(new[]{"soul"});lastObserved=observed;
                 if(observed["Readings"] is JsonArray rows && rows.Any(r=>r?["Id"]?.GetValue<string>()=="soul.IbPlayDBInfo"))
                 {
-                    await File.WriteAllTextAsync(Path.Combine(folder,id+"-soul.json"),observed.ToJsonString());
-                    await File.WriteAllTextAsync(Path.Combine(folder,"soul-latest.json"),observed.ToJsonString());
-                    await ExportState(observed,folder,id);
-                    foreach(var row in rows.Where(r=>r?["Id"]?.GetValue<string>()?.StartsWith("soul.")==true))Console.WriteLine(row!.ToJsonString());
+                    await StoreObservation(observed,folder,id,archive);
+                    // Full protobuf rows already exist in the snapshot. Repeating
+                    // them on stdout can create another unbounded log copy.
                     if(battle)await RunBattle(mailbox,driver,folder,id);
                     if(action is not null)await RunAction(mailbox,driver,folder,id,action);
                     if(continuation is not null)await continuation();
@@ -47,9 +48,33 @@ internal static class SoulEvidence
             }
             throw new InvalidOperationException("Soul observer did not produce scoped evidence");
         }
+        catch
+        {
+            // Freeze the last input held by this capture even if it could not be
+            // parsed. Optional diagnostics must not hide the original failure.
+            if(lastObserved is not null)StoreFailure(folder,id,lastObserved);
+            throw;
+        }
         finally { mailbox.Write("live","evidence-config.json",restore); }
     }
-    private static async Task ExportState(JsonObject observed,string folder,string id)
+    internal static bool StoreFailure(string folder,string id,JsonObject observed)
+    {
+        try { DailyJson.Write(Path.Combine(folder,id+"-failed-soul.json"),observed);return true; }
+        catch(Exception error) when(error is IOException or UnauthorizedAccessException){return false;}
+    }
+    internal static Task StoreConfiguration(string folder,byte[] content)
+    {
+        string hash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(content)).ToLowerInvariant();
+        string path=Path.Combine(folder,"observer-"+hash+".json");
+        if(!File.Exists(path))DailyJson.Write(path,JsonNode.Parse(content)!);
+        return Task.CompletedTask;
+    }
+    internal static async Task StoreObservation(JsonObject observed,string folder,string id,bool archive)
+    {
+        DailyJson.Write(Path.Combine(folder,"soul-latest.json"),observed);
+        await ExportState(observed,folder,id,archive);
+    }
+    private static async Task ExportState(JsonObject observed,string folder,string id,bool archive=true)
     {
         JsonNode Read(string type){var row=observed["Readings"]!.AsArray().Single(x=>x!["Id"]!.GetValue<string>()=="soul."+type)!;if(row["Error"]?.GetValue<string>()!="")throw new InvalidOperationException("Soul reading failed");return JsonNode.Parse(row["Values"]![0]!["Json"]!.GetValue<string>())!;}
         var items=Read("IbItemDBInfo").AsArray();var deck=Read("IbDeckDBInfo").AsArray();
@@ -65,9 +90,29 @@ internal static class SoulEvidence
         // Capture strategy memory with native state so historical planners
         // never consult a later run's mutable route file.
         state["growthRoute"]=File.Exists(routePath)?JsonNode.Parse(await File.ReadAllTextAsync(routePath)):null;
-        var payload=new JsonObject{["state"]=state,["evidence"]=id+"-soul.json"};
-        await File.WriteAllTextAsync(Path.Combine(folder,id+"-state.json"),payload.ToJsonString());
-        await File.WriteAllTextAsync(Path.Combine(folder,"live-state-latest.json"),payload.ToJsonString());
+        var payload=new JsonObject{["state"]=state,["evidence"]=archive?id+"-soul.json":"soul-latest.json"};
+        if(archive){
+            // Some post-action call sites only had the parsed state, leaving a
+            // dangling evidence name. Every archival state now has its raw source.
+            DailyJson.Write(Path.Combine(folder,id+"-soul.json"),observed);
+            DailyJson.Write(Path.Combine(folder,id+"-state.json"),payload);
+        }
+        DailyJson.Write(Path.Combine(folder,"live-state-latest.json"),payload);
+    }
+    internal static JsonObject SaleSynchronization(JsonObject action,JsonNode response)
+    {
+        if(action["operation"]?.ToString()!="soul_sell"||action["items"] is not JsonArray items||items.Count!=8)
+            throw new InvalidDataException("Sale synchronization requires the original item-bound action");
+        if(response["Accepted"]?.GetValue<bool>()!=true||response["Role"]?.ToString()!="soul.IbItemSell")
+            throw new InvalidDataException("Sale synchronization requires an accepted sale response");
+        long index=long.Parse(items[4]!.ToString()),beforeCoins=long.Parse(items[3]!.ToString());
+        var body=JsonNode.Parse(response["Values"]![0]!["Json"]!.GetValue<string>())!;
+        long coins=body["currentCoin"]?.GetValue<long>()??0;
+        if(index<=0||beforeCoins<0||beforeCoins>int.MaxValue||coins<0||coins>int.MaxValue)throw new InvalidDataException("Invalid native sale balance");
+        NativePlanExecutor.CheckSaleReceipt(response,index,beforeCoins,coins);
+        var sync=action.DeepClone().AsObject();sync["operation"]="soul_sale_sync";
+        sync["items"]=new JsonArray(items.Take(4).Select(x=>x!.DeepClone()).Concat(new JsonNode[]{JsonValue.Create(index)!,JsonValue.Create(coins)!}).ToArray());
+        return sync;
     }
     internal static async Task RunAction(DailyPipeMailbox mailbox,DailyCommandDriver driver,string folder,string id,JsonObject action)
     {
@@ -77,7 +122,7 @@ internal static class SoulEvidence
             await File.WriteAllTextAsync(Path.Combine(folder,id+"-view-reconcile-receipt.json"),viewReceipt.ToJsonString());
             var viewState=await driver.EvidenceAsync(new[]{"soul"});await ExportState(viewState,folder,id+"-after");return;
         }
-        var role=kind switch{"soul_buy"=>"soul.IbShopBuy","soul_upgrade"=>"soul.IbItemUpgrade","soul_save"=>"soul.IbDeckSave","soul_refresh"=>"soul.IbShopRefresh","soul_enter" or "soul_confirm_enter"=>"soul.IbDungeonEnter","soul_read"=>"soul.IbShopInfo","soul_sell"=>"soul.IbItemSell",_=>throw new InvalidOperationException("Unreviewed native action")};
+        var role=kind switch{"soul_buy"=>"soul.IbShopBuy","soul_upgrade"=>"soul.IbItemUpgrade","soul_save"=>"soul.IbDeckSave","soul_refresh"=>"soul.IbShopRefresh","soul_enter" or "soul_confirm_enter"=>"soul.IbDungeonEnter","soul_sell"=>"soul.IbItemSell",_=>throw new InvalidOperationException("Unreviewed native action")};
         bool resuming=SoulEntryReceipt.IsResume(action);var resumedReads=new HashSet<string>();
         long start=DateTime.UtcNow.Ticks;
         var journal=new JsonObject{["status"]="dispatching",["atUtcTicks"]=start,["action"]=action.DeepClone()};
@@ -86,7 +131,7 @@ internal static class SoulEvidence
         var receipt=await SoulSubmit.Send(driver,action);
         await File.WriteAllTextAsync(Path.Combine(folder,id+"-receipt.json"),receipt.ToJsonString());
         var seen=new HashSet<string>();var until=DateTime.UtcNow.AddSeconds(35);bool accepted=false,refreshed=false;
-        bool needsRead=kind is "soul_read" or "soul_enter" or "soul_confirm_enter" or "soul_sell",requestedAfterSale=false,entryConfirmed=kind=="soul_confirm_enter";
+        bool needsRead=kind is "soul_enter" or "soul_confirm_enter",entryConfirmed=kind=="soul_confirm_enter";
         while(DateTime.UtcNow<until)
         {
             if(kind=="soul_enter"&&!entryConfirmed&&!resuming){
@@ -123,13 +168,13 @@ internal static class SoulEvidence
                     }
                 }
             }
-            if(accepted&&kind=="soul_sell"&&!requestedAfterSale){
-                requestedAfterSale=true;
-                var read=action.DeepClone().AsObject();read["operation"]="soul_read";
-                read["items"]=new JsonArray(action["items"]!.AsArray().Take(4).Select(x=>x!.DeepClone()).ToArray());
-                await SoulSubmit.Send(driver,read);
+            if(accepted&&kind=="soul_sell"){
+                var sync=SaleSynchronization(action,journal["response"]!);
+                journal["status"]="server_accepted_syncing_wallet";await File.WriteAllTextAsync(path,journal.ToJsonString());
+                var synced=await SoulSubmit.Send(driver,sync);
+                await File.WriteAllTextAsync(Path.Combine(folder,id+"-wallet-receipt.json"),synced.ToJsonString());
             }
-            if(accepted&&(!needsRead||refreshed)){var observed=await driver.EvidenceAsync(new[]{"soul"});await File.WriteAllTextAsync(Path.Combine(folder,id+"-after-soul.json"),observed.ToJsonString());await ExportState(observed,folder,id+"-after");journal["status"]=needsRead?"confirmed_and_refreshed":"confirmed_native_receipt";await File.WriteAllTextAsync(path,journal.ToJsonString());return;}
+            if(accepted&&(!needsRead||refreshed)){var observed=await driver.EvidenceAsync(new[]{"soul"});await ExportState(observed,folder,id+"-after");journal["status"]=needsRead?"confirmed_and_refreshed":"confirmed_native_receipt";await File.WriteAllTextAsync(path,journal.ToJsonString());return;}
             await Task.Delay(200);
         }
         journal["status"]=accepted?"accepted_refresh_unconfirmed":"outcome_unknown";await File.WriteAllTextAsync(path,journal.ToJsonString());throw new TimeoutException("Native action confirmation incomplete; no retry");

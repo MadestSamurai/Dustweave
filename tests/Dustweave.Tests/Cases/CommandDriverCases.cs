@@ -10,7 +10,7 @@ static class CommandDriverCases
     {
         public Dictionary<string, byte[]> Values = new(); public List<JsonObject> Commands = []; public HashSet<string> Opened = [];
         public Action<JsonObject>? AfterCommand; public Action<string, string, byte[]>? AfterWrite;
-        public JsonObject? Before;
+        public JsonObject? Before, After;
         public string State = "observed_after_dispatch", Error = "screen_changed"; public bool? Dispatched = true; public bool Revoked, ThrowCreate, Tamper;
         public void Acquire(string channel)
         {
@@ -42,6 +42,7 @@ static class CommandDriverCases
                     attached["AccountKey"] = "other";
                 var receipt = new JsonObject { ["Command"] = attached, ["State"] = State, ["Error"] = Error };
                 if (Before != null) receipt["Before"] = Before.DeepClone();
+                if (After != null) receipt["After"] = After.DeepClone();
                 if (Dispatched != null)
                     receipt["MayHaveDispatched"] = Dispatched.Value;
                 Values["live:receipts~" + command["Id"]!.GetValue<string>() + ".json"] = JsonSerializer.SerializeToUtf8Bytes(receipt);
@@ -108,9 +109,33 @@ static class CommandDriverCases
         {
             Check(b.Commands.Count == 1 && b.Opened.SetEquals(["live"]), "managed step owns one lease and submits exactly once");
             Check(File.Exists(Path.Combine(p, "live", "steps", r!["id"]!.GetValue<string>(), "transport.json")), "managed driver keeps durable submit and receipt evidence");
+            string folder = Path.Combine(p, "live", "steps", r["id"]!.GetValue<string>());
+            Check(!File.Exists(Path.Combine(folder,"before.json")) && JsonNode.DeepEquals(DailyJson.TryRead<JsonObject>(Path.Combine(folder,"transport.json"))!["before"],Frame()), "durable transport retains the exact preflight frame once instead of a second file");
             var c = b.Commands.Single();
             Check(c["ObservedUtcTicks"]!.GetValue<long>() == 100000000 && c["ExpiresUtcTicks"]!.GetValue<long>() == 200000000 && c["Kind"]!.GetValue<string>() == "click", "managed command retains observed time, expiry and native kind");
         });
+        await Exercise((b,a) => b.AfterCommand = c => Directory.CreateDirectory(Path.Combine(output,"driver-"+n,"live","steps",c["Id"]!.ToString(),"transport.json")), "pending", "failed transport save retains the original pre-dispatch evidence", (b,r,p) =>
+            Check(File.Exists(Path.Combine(p,"live","steps",b.Commands.Single()["Id"]!.ToString(),"before.json")), "preflight is not retired before the successor is durable"));
+        FileStream? heldBefore = null;
+        try
+        {
+            await Exercise((b,a) => b.AfterCommand = c => heldBefore = new FileStream(Path.Combine(output,"driver-"+n,"live","steps",c["Id"]!.ToString(),"before.json"),FileMode.Open,FileAccess.Read,FileShare.None), "", "busy duplicate evidence never turns a successful command into failure", (b,r,p) =>
+                Check(File.Exists(Path.Combine(p,"live","steps",r!["id"]!.ToString(),"before.json")), "locked duplicate remains for later maintenance"));
+        }
+        finally { heldBefore?.Dispose(); }
+        {
+            string path=Path.Combine(output,"driver-canonical-result");double time=0;
+            var before=Frame();var after=Frame();after["Surfaces"]![0]!["Type"]="MailUI";after["AtUtcTicks"]=100000001;
+            var observed=before;var box=new Mailbox { Before=before,After=after };
+            box.AfterCommand=_=>observed=after;
+            using var driver=new DailyCommandDriver(path,box,()=>Task.FromResult(new DailyStageFrame(observed,Context())),()=>false,()=>100000000,()=>time,t=>{time+=t.TotalSeconds;return Task.CompletedTask;});
+            driver.Bind(Context());var response=await driver.SendObservedAsync(Action());
+            string folder=Path.Combine(path,"live","steps",response["id"]!.ToString());
+            var saved=DailyJson.TryRead<JsonObject>(Path.Combine(folder,"result.json"))!;
+            Check(Directory.GetFiles(folder).Select(Path.GetFileName).ToHashSet().SetEquals(["intent.json","result.json"]), "observed steps keep intent plus one complete final record");
+            Check(JsonNode.DeepEquals(saved["before"],before)&&JsonNode.DeepEquals(saved["after"],after)&&JsonNode.DeepEquals(saved["receipt"],response["receipt"])&&JsonNode.DeepEquals(saved["command"],box.Commands.Single()), "canonical result preserves exact preflight, native receipt, command and final UI");
+            Check(response["before"]==null&&saved["elapsed"]!=null, "storage consolidation does not change the caller result contract");
+        }
         await Exercise((b, a) => { b.State = "rejected"; b.Dispatched = false; }, "rejected", "only explicit non-dispatch native rejection permits replan", (b, r, p) => Check(b.Commands.Count == 1, "native rejection never resubmits inside driver"));
         await Exercise((b, a) => { b.State = "rejected"; b.Dispatched = true; }, "pending", "rejected receipt with dispatch evidence remains pending");
         await Exercise((b, a) => { b.State = "rejected"; b.Dispatched = null; }, "pending", "missing dispatch flag never proves an undispatched rejection");

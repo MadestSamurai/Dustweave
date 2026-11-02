@@ -254,6 +254,8 @@ internal static class DiagnosticExportCases
             "tools/fishing/diagnostics/connection.log","tools/fishing/diagnostics/last-interruption.json",
             "tools/fishing-identity-error.json","tools/fishing-activity-error.json",
             "tools/territory/diagnostics/connection.log","tools/equipment/diagnostics/connection.log"];
+        string soulRun="tools/soul/runs/"+new string('a',64)+"/20261102-075300-123/";
+        toolEvidence=toolEvidence.Concat(new[]{"error.txt","restore-error.txt","status.json","campaign.json","timeline.jsonl"}.Select(f=>soulRun+f)).ToArray();
         foreach(string rel in toolEvidence) {
             string path=Path.Combine(npcPressure,rel);Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             File.WriteAllText(path,rel.EndsWith(".json")?"{\"error\":\"test interruption\"}":"test interruption");
@@ -268,6 +270,8 @@ internal static class DiagnosticExportCases
             &&archive.GetEntry("logs/main/live/event-preview-recovery.json")!=null,
             "Historical NPC queries cannot consume the entire export budget before event transaction and recovery evidence");
           Check(toolEvidence.All(p=>archive.GetEntry("logs/main/"+p)!=null),"each tool's interruption, identity, connection and runtime rotation survive newer NPC evidence");
+          Check(archive.GetEntry("logs/main/"+soulRun+"error.txt")!=null&&archive.GetEntry("logs/main/"+soulRun+"status.json")!=null,
+            "Soul exception and current status remain available when large daily history fills the export budget");
           using var r=new StreamReader(archive.GetEntry("logs/main/tools/fishing/diagnostics/connection.log")!.Open());
           string tail=r.ReadToEnd();
           Check(tail.Contains("last connection failure")&&!tail.Contains("hidden-fish-secret")&&tail.Length<256*1024,"prioritized connection tails remain bounded and redacted");

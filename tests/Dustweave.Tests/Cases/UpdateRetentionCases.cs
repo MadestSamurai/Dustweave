@@ -15,10 +15,10 @@ internal static class UpdateRetentionCases
             string dir=Path.Combine(root,"updates",version+"-"+flavor);
             Put(Path.Combine(dir,"package.zip"));Put(Path.Combine(dir,"signed-feed.json"),"{}");Put(Path.Combine(dir,"download.lock"),"");Age(dir,days);return dir;
         }
-        Fixture Install(string root,string version,string? state,double days=0,string? directory=null)
+        Fixture Install(string root,string version,string? state,double days=0,string? directory=null,string installation="installation")
         {
             string dir=directory??Download(root,version),nonce=Guid.NewGuid().ToString("N"),attempt=Path.Combine(dir,"attempts",nonce);
-            string target=Path.Combine(root,"installation","Dustweave.exe");Put(target);
+            string target=Path.Combine(root,installation,"Dustweave.exe");Put(target);
             var asset=new DailyUpdateAsset("Portable","package.zip",1,new string('0',64));
             var release=new DailyUpdateRelease(version,null,2,[],[asset]);
             string job=Path.Combine(attempt,"job.json");DailyUpdateJson.Write(job,new DailyUpdateJob(dir,target,int.MaxValue,0,release,asset,nonce));
@@ -61,9 +61,75 @@ internal static class UpdateRetentionCases
         await DailyCacheStorage.CleanAsync(root);
         Check(!File.Exists(complete.Helper)&&!File.Exists(complete.Staging),"confirmed update removes helper and staging immediately");
         Check(File.Exists(complete.Job)&&File.Exists(Path.Combine(complete.Backup,"transaction.json"))&&Directory.Exists(complete.Backup),"latest backup and receipt retained within limits");
+        Check(!File.Exists(Path.Combine(complete.Directory,"package.zip"))&&File.Exists(Path.Combine(complete.Directory,"signed-feed.json")),"confirmed start discards used download but preserves signed recovery metadata");
         var retry=Install(root,"1.3.17","rolled_back",0,complete.Directory);
+        string failure=Put(Path.Combine(retry.Attempt,"failure.json"),"startup failure fixture");
         Age(complete.Attempt,1);await DailyCacheStorage.CleanAsync(root);
-        Check(!Directory.Exists(complete.Attempt)&&Directory.Exists(retry.Backup),"same-version retries keep only the latest terminal backup");
+        Check(File.Exists(Path.Combine(complete.Backup,"app","Dustweave.dll"))&&!File.Exists(Path.Combine(retry.Backup,"app","Dustweave.dll")),"failed retry does not replace the last confirmed upgrade backup with a duplicate of the restored installation");
+        await DailyCacheStorage.CleanAsync(root);
+        Check(File.ReadAllText(failure)=="startup failure fixture"&&File.Exists(retry.Job)&&File.Exists(Path.Combine(retry.Backup,"transaction.json"))&&File.Exists(Path.Combine(complete.Backup,"app","Dustweave.dll")),"repeated cleanup retains recent failure evidence and does not mistake a receipt-only attempt for a usable backup");
+
+        root=Area("one-backup-per-install");
+        var previous=Install(root,"1.5.10","completed",1);
+        complete=Install(root,"1.5.11","completed");
+        string original=File.ReadAllText(Path.Combine(complete.Backup,"app","Dustweave.dll"));
+        await DailyCacheStorage.CleanAsync(root);
+        Check(!File.Exists(Path.Combine(previous.Backup,"app","Dustweave.dll"))&&File.Exists(previous.Job)&&File.ReadAllText(Path.Combine(complete.Backup,"app","Dustweave.dll"))==original,"successive releases keep one byte-intact backup per installation and small diagnostic receipts, not one program copy per release");
+        Download(root,"1.5.12");Download(root,"1.5.13");
+        await DailyCacheStorage.CleanAsync(root);
+        Check(Directory.Exists(complete.Backup),"new prepared downloads do not evict the installation recovery backup by semantic version count");
+        Age(complete.Directory,8);await DailyCacheStorage.CleanAsync(root);
+        Check(!Directory.Exists(complete.Directory),"retained installation backup still obeys the age limit");
+
+        root=Area("separate-installs");
+        previous=Install(root,"1.5.8","completed",1,installation:"portable-A");
+        complete=Install(root,"1.5.9","completed",installation:"portable-B");
+        Download(root,"1.5.10");Download(root,"1.5.11");
+        await DailyCacheStorage.CleanAsync(root);
+        Check(Directory.Exists(previous.Backup)&&Directory.Exists(complete.Backup),"different installation targets retain independent backups even outside the two-download window");
+
+        root=Area("rollback-only");
+        retry=Install(root,"1.5.11","rolled_back");
+        await DailyCacheStorage.CleanAsync(root);
+        Check(Directory.Exists(retry.Backup)&&File.Exists(Path.Combine(retry.Directory,"package.zip"))&&!File.Exists(retry.Helper),"failed-only release retains its retry download and one rollback backup");
+
+        root=Area("completed-payloads");complete=Install(root,"1.5.11","completed");
+        var payloadJob=DailyUpdateJson.TryRead<DailyUpdateJob>(complete.Job)!;
+        DailyUpdateJson.Write(complete.Job,payloadJob with{DeltaFileName="used-delta.zip"});
+        string delta=Put(Path.Combine(complete.Directory,"used-delta.zip")),partial=Put(Path.Combine(complete.Directory,"used-delta.zip.partial"));
+        string unknownZip=Put(Path.Combine(complete.Directory,"unrelated.zip"));
+        using(var download=new FileStream(Path.Combine(complete.Directory,"download.lock"),FileMode.Open,FileAccess.ReadWrite,FileShare.None))
+        {
+            var locked=await DailyCacheStorage.CleanAsync(root);
+            Check(locked.Skipped>0&&File.Exists(delta)&&File.Exists(complete.Helper),"legacy download lock protects early payload and attempt cleanup as well as whole-version expiry");
+        }
+        await DailyCacheStorage.CleanAsync(root);
+        Check(!File.Exists(delta)&&!File.Exists(partial)&&File.Exists(unknownZip),"only exact completed payload names and their partials are removed early");
+
+        root=Area("shared-payloads");complete=Install(root,"1.5.11","completed",1);
+        var inFlight=Install(root,"1.5.11","awaiting_start",0,complete.Directory);
+        await DailyCacheStorage.CleanAsync(root);
+        Check(File.Exists(Path.Combine(complete.Directory,"package.zip"))&&File.Exists(inFlight.Helper)&&Directory.Exists(complete.Backup),"unfinished sibling transaction protects the shared download without losing the last completed backup");
+
+        root=Area("quick-maintenance");complete=Install(root,"1.5.11","completed");
+        string savedAccount=Put(Path.Combine(root,"accounts","saved.json"),"account fixture"),oldLog=Put(Path.Combine(root,"live","old.log"),"diagnostic fixture");
+        File.SetLastWriteTimeUtc(oldLog,DateTime.UtcNow.AddDays(-20));
+        string component=Put(Path.Combine(root,"suite-cache","old-generation","component.dll"));
+        File.SetLastWriteTimeUtc(component,DateTime.UtcNow.AddDays(-20));
+        var maintenance=new DailyStorageMaintenance(root,null,null,_=>false,()=>false);
+        using(var update=DailyUpdateHost.AcquireStorage(root))
+        {
+            bool refused=false;try{await maintenance.CleanUpdateCacheAsync(new(false));}catch(IOException){refused=true;}
+            Check(refused&&File.Exists(complete.Helper),"short idle cleanup respects active updater storage lease");
+        }
+        using(var cancel=new CancellationTokenSource())
+        {
+            cancel.Cancel();bool cancelled=false;try{await maintenance.CleanUpdateCacheAsync(new(false),cancel.Token);}catch(OperationCanceledException){cancelled=true;}
+            Check(cancelled&&File.Exists(complete.Helper),"cancelled short idle cleanup leaves the update untouched");
+        }
+        await maintenance.CleanUpdateCacheAsync(new(false));
+        Check(!File.Exists(complete.Helper)&&!File.Exists(Path.Combine(complete.Directory,"package.zip"))&&File.Exists(oldLog)&&File.Exists(component)&&File.ReadAllText(savedAccount)=="account fixture",
+            "short update cleanup runs independently of log expiry without touching accounts, logs or compiled components");
 
         root=Area("mixed");var pending=Install(root,"1.0.0","replacing",12);
         var terminal=Install(root,"1.0.0","completed",12,pending.Directory);

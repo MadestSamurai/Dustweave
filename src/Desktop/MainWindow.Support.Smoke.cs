@@ -160,6 +160,14 @@ public partial class MainWindow
             WorkspaceTabs.SelectedItem=DiagnosticsTab;
             foreach(int language in new[]{0,1,2})foreach(int appearance in new[]{1,2}) {
                 LanguageSelector.SelectedIndex=language;ThemeSelector.SelectedIndex=appearance;Width=1180;Height=900;
+                foreach(string reason in new[]{"registration_missing","registration_invalid","not_registered","path_mismatch","duplicate_root"})
+                {
+                    string detail=DailyIssuePresentation.Describe(new DailyStorageBindingException(@"D:\Fixture\instances\account","Example account",reason));
+                    if(!detail.Contains("Example account")||!detail.Contains(@"D:\Fixture\instances\account")
+                        ||!detail.Contains(L.Get("storage.binding_reason."+reason))||detail.Contains("missing UI text",StringComparison.OrdinalIgnoreCase)
+                        ||detail.Contains("storage.binding_"))throw new Exception("Storage binding error lost its account, path or translated reason");
+                    checks++;
+                }
                 ShowError(new InvalidOperationException("suite.owner-exited"));
                 if(ActionNotice.Visibility!=Visibility.Visible || !ActionNoticeText.Text.Contains(L.Get("issue.action.owner-ended")))throw new Exception("Session issue lost its visible actionable category");
                 WorkspaceTabs.SelectedItem=AccountsTab;
@@ -254,6 +262,17 @@ public partial class MainWindow
             if(!ExportDiagnosticButton.IsVisible)throw new Exception("Compact diagnostics lost export entry");
             Capture("support-compact");checks++;
             string automaticLog=Path.Combine(root,"connection-cleanup.log");File.WriteAllText(automaticLog,"automatic cleanup fixture");File.SetLastWriteTimeUtc(automaticLog,DateTime.UtcNow.AddDays(-20));
+            string updateFixture=Path.Combine(root,"updates","0.0.1-Portable","package.zip");
+            Directory.CreateDirectory(Path.GetDirectoryName(updateFixture)!);File.WriteAllText(updateFixture,"expired update fixture");File.SetLastWriteTimeUtc(updateFixture,DateTime.UtcNow.AddDays(-20));
+            logPolicy=new(false);nextLogCleanup=DateTime.UtcNow.AddHours(12);nextUpdateCacheCleanup=DateTime.MinValue;busy=true;
+            await CheckLogCleanupAsync();if(!File.Exists(updateFixture))throw new Exception("Update maintenance ran while busy");
+            busy=false;var logClock=nextLogCleanup;var retentionClock=lastRetentionUtc;
+            await CheckLogCleanupAsync();
+            if(File.Exists(updateFixture)||!File.Exists(automaticLog)||nextLogCleanup!=logClock||lastRetentionUtc!=retentionClock||nextUpdateCacheCleanup<DateTime.UtcNow.AddMinutes(29))
+                throw new Exception("Short idle update cleanup changed log retention or failed to run");
+            nextUpdateCacheCleanup=DateTime.MinValue;await PauseAutomaticMaintenanceAsync();
+            if(nextUpdateCacheCleanup<DateTime.UtcNow.AddMinutes(4))throw new Exception("Foreground work did not defer update maintenance");
+            checks+=3;
             logPolicy=new(false);nextLogCleanup=DateTime.UtcNow.AddMinutes(-1);
             await CheckLogCleanupAsync();if(!File.Exists(automaticLog))throw new Exception("Disabled retention still ran");
             logPolicy=new();busy=true;

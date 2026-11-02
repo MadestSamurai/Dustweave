@@ -435,6 +435,9 @@ public sealed partial class DailyCommandDriver : IDisposable
                             throw new DailyStepException("pending", "Observed receipt lacks dispatch evidence", true);
                         var result = new JsonObject { ["state"] = "observed_receipt", ["engine"] = "dotnet-driver-v1", ["id"] = id, ["before"] = before.DeepClone(), ["command"] = command.DeepClone(), ["receipt"] = receipt.DeepClone(), ["elapsed"] = clock() - started };
                         DailyJson.Write(Path.Combine(session, "transport.json"), result);
+                        // transport now durably contains the exact preflight frame.
+                        // Keep one copy, without changing the in-memory/native receipt.
+                        DailyLogEvidence.RetireStepCopy(root, session, "before.json");
                         return result;
                     }
                 }

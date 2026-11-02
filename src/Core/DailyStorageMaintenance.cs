@@ -233,6 +233,14 @@ public sealed class DailyStorageMaintenance
         return CompressLocal(root,fixedRoot,token);
     }
     public Task<DailyLogCleanupResult> CleanAsync(DailyLogPolicy policy,CancellationToken token=default)=>Task.Run(()=>CleanCoreAsync(policy,token),token);
+    // Installer scratch is independent of log retention. Do not inventory logs,
+    // sandboxes, shader caches or compiled components for this short idle pass.
+    public Task<DailyLogCleanupResult> CleanUpdateCacheAsync(DailyLogPolicy policy,CancellationToken token=default)=>Task.Run(async ()=>
+    {
+        DailyCacheStorage.NoLinks(DailyStoragePath.ResolveRoot(root));
+        using var control=DailyToolControl.AcquireMaintenance(root);
+        return await DailyCacheStorage.CleanUpdatesAsync(root,policy,token);
+    },token);
     // Continuations never repeat journal reconciliation, log retention or update cleanup.
     public Task<DailyLogCleanupResult> ContinueCompressionAsync(CancellationToken token=default)=>Task.Run(()=>CleanCoreAsync(new(),token,true),token);
     async Task<DailyLogCleanupResult> CleanCoreAsync(DailyLogPolicy policy,CancellationToken token,bool compressionOnly=false)

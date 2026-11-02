@@ -48,6 +48,17 @@ public sealed class DailyLogEvidence : IDisposable
         }
         else if (node is JsonArray array) foreach (var child in array) RemoveUiTrees(child);
     }
+    internal static JsonObject QueueSnapshot(JsonObject record)
+    {
+        var saved = record.DeepClone().AsObject();
+        // Queue history needs outcomes, counts, native proof and progress, not
+        // another copy of every button tree already held by the step/business
+        // journals. Incomplete stages keep their full diagnostic result.
+        if (saved["items"] is JsonArray items)
+            foreach (var item in items.OfType<JsonObject>())
+                if (Text(item["state"]) is "completed" or "skipped") RemoveUiTrees(item["result"]);
+        return saved;
+    }
     static void Summary(JsonObject value)
     {
         foreach (string key in new[] { "before", "after", "opening_frame", "last_observed", "transport", "events", "last_observation", "preview_frame", "preview_opening_frame", "presentation_frame" }) value.Remove(key);
@@ -59,6 +70,21 @@ public sealed class DailyLogEvidence : IDisposable
         for (string? p = path; p != null; p = Path.GetDirectoryName(p))
             if ((File.GetAttributes(p) & FileAttributes.ReparsePoint) != 0) return false;
         return true;
+    }
+    // Called only after a flushed successor contains the complete earlier record.
+    // A busy/changed file is harmless duplication, never an automation failure.
+    internal static void RetireStepCopy(string root, string folder, string name)
+    {
+        Try(() =>
+        {
+            root = Path.GetFullPath(root); folder = Path.GetFullPath(folder);
+            if (Path.GetDirectoryName(folder) != Path.Combine(root, "live", "steps")
+                || !GuildStore.ValidId(Path.GetFileName(folder)) || name is not ("before.json" or "transport.json")) return false;
+            string path = Path.Combine(folder, name);
+            if (!File.Exists(path) || !SafePath(root, path)) return false;
+            var file = new FileInfo(path);
+            return DailyLogFileRemoval.Delete(new(path, file.Length, file.LastWriteTimeUtc, file.CreationTimeUtc));
+        });
     }
     internal static bool CompactRecord(string root, string path, bool workflowCompleted, bool expired = false)
     {

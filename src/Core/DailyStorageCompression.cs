@@ -25,7 +25,9 @@ public static class DailyStorageCompression
         var parts = Path.GetFullPath(path).Split(Path.DirectorySeparatorChar);
         for (int i = 0; i + 2 < parts.Length; i++)
             if (parts[i].Equals("live", StringComparison.OrdinalIgnoreCase) && LiveTrees.Contains(parts[i + 1])
-                || parts[i].Equals("trade", StringComparison.OrdinalIgnoreCase) && TradeTrees.Contains(parts[i + 1])) return true;
+                || parts[i].Equals("trade", StringComparison.OrdinalIgnoreCase) && TradeTrees.Contains(parts[i + 1])
+                || i + 3 < parts.Length && parts[i].Equals("tools", StringComparison.OrdinalIgnoreCase)
+                    && parts[i + 1].Equals("soul", StringComparison.OrdinalIgnoreCase) && parts[i + 2].Equals("runs", StringComparison.OrdinalIgnoreCase)) return true;
         return false;
     }
     internal static JsonSerializerOptions WriteOptions(string path) => MachineRecord(path) ? Compact : DailyJson.Options;

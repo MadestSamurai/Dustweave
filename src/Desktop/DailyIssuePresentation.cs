@@ -4,6 +4,8 @@ internal static class DailyIssuePresentation
     private static DailyLanguage L => DailyLanguage.Current;
     public static string Describe(Exception error)
     {
+        if(error is DailyStorageBindingException binding)
+            return L.Get("storage.binding_detail",binding.Label,L.Get("storage.binding_reason."+binding.Reason),binding.DirectoryPath);
         var issue = DailyIssues.Classify(error);
         string reason = issue.Code == "unknown" || HasIdentityDetail(error.Message) ? DailyUserText.Error(error, L.Translate) : L.Get("issue.reason." + issue.Code);
         return reason + "\n" + L.Get("issue.action." + issue.Code);

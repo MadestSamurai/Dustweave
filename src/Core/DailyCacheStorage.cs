@@ -9,6 +9,7 @@ public sealed record DailyStorageItem(string Path, long Bytes, DateTime Written)
 public sealed record DailyCacheUnit(string Path, DailyStorageItem[] Files)
 {
     public string[]? UpdateAttempts { get; init; }
+    internal string? UpdateDownloadLock { get; init; }
     internal string? CaptureControlPath { get; init; }
 }
 public sealed record DailyStorageReport(long TotalBytes, long CacheBytes, long ReclaimableBytes, int Skipped, DailyCacheUnit[] Units)
@@ -177,6 +178,15 @@ public static class DailyCacheStorage
         if (!Directory.EnumerateFileSystemEntries(root).Any()) Directory.Delete(root);
     }
     public static Task<DailyLogCleanupResult> CleanAsync(string root, CancellationToken cancel = default) => CleanLocalAsync(root, false, cancel);
+    internal static Task<DailyLogCleanupResult> CleanUpdatesAsync(string root, DailyLogPolicy policy, CancellationToken cancel) => Task.Run(() =>
+    {
+        root = DailyStoragePath.ResolveRoot(root);
+        using var lease = Lease(root, true);
+        string updates = Path.Combine(root, "updates"); int skipped = 0;
+        var files = Files(updates, cancel, ref skipped).ToArray();
+        var result = DeleteUnits(UpdateCacheRetention.Plan(updates, files, DateTime.UtcNow, cancel, policy.Normalize().Days), cancel);
+        return result with { Skipped = result.Skipped + skipped };
+    }, cancel);
     internal static Task<DailyLogCleanupResult> CleanLocalAsync(string root, bool fixedRoot, CancellationToken cancel, DailyLogPolicy? policy=null, string? captureControl=null) => Task.Run(() =>
     {
         root = DailyStoragePath.ResolveRoot(root);
@@ -194,6 +204,7 @@ public static class DailyCacheStorage
             try
             {
                 using var capture=DailyHistoricalCache.AcquireCapture(unit);
+                using var download=UpdateCacheRetention.AcquireDownload(unit);
                 if (available?.Invoke()==false || !UpdateCacheRetention.CanClean(unit)) { skipped++; continue; }
                 // A newer download/compilation or a new recovery file invalidates the entire unit.
                 int ignored = 0;

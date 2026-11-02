@@ -45,6 +45,86 @@ internal static class StorageMigrationCases
     {
         void Check(bool ok,string label){if(!ok)throw new Exception(label);cases.Add("storage-migration: "+label);}
         async Task Fails(Func<Task> action,string label){try{await action();throw new Exception("Expected failure: "+label);}catch(IOException){cases.Add("storage-migration: "+label);}}
+        string Preferences(Fixture fixture,bool emptyRoot=false)
+        {
+            string state=Path.Combine(fixture.Store,DailySandbox.CanonicalBoxName(new string('e',64)));
+            Directory.CreateDirectory(state);
+            File.WriteAllText(Path.Combine(state,"launch-mode.json"),"{\"mode\":\"compatible\"}");
+            File.WriteAllText(Path.Combine(state,"note.txt"),"Preserve this historical note.");
+            Directory.CreateDirectory(Path.Combine(state,"loading-experiment-recovery"));
+            File.WriteAllBytes(Path.Combine(state,"loading-experiment-recovery","transaction.lock"),[]);
+            if(emptyRoot)Directory.CreateDirectory(Path.Combine(state,"root"));
+            return state;
+        }
+        async Task<DailyStorageBindingException> BindingFails(Fixture fixture,string state,string reason)
+        {
+            try{await Service(fixture).MoveAsync(fixture.Target);throw new Exception("Expected binding rejection: "+reason);}
+            catch(DailyStorageBindingException error)
+            {
+                Check(error.Reason==reason&&error.DirectoryPath==state,"binding rejection identifies directory and reason: "+reason);
+                Check(!Directory.Exists(fixture.Target)&&!File.Exists(DailyStorageLocations.FileName(fixture.Root))
+                    &&fixture.Driver.Values.All(p=>p.Value["Enabled"]=="y"),"binding rejection changes no routing or enabled states: "+reason);
+                using var evidence=System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(fixture.Root,"live","diagnostics","storage-migration-check.json")));
+                Check(evidence.RootElement.GetProperty("reason").GetString()==reason
+                    &&evidence.RootElement.GetProperty("stateDirectory").GetString()==state
+                    &&!evidence.RootElement.GetProperty("changed").GetBoolean(),"binding diagnostics preserve the preflight failure: "+reason);
+                return error;
+            }
+        }
+        var mixed=Make(output,"metadata-and-registered");string metadata=Preferences(mixed);
+        Check(DailyStorageMigration.MetadataOnly(metadata),"historical launch preferences without registration or game data are metadata");
+        await Service(mixed).MoveAsync(mixed.Target);
+        string movedMetadata=Path.Combine(mixed.Target,"instances",Path.GetFileName(metadata));
+        Check(File.ReadAllText(Path.Combine(movedMetadata,"launch-mode.json"))=="{\"mode\":\"compatible\"}"
+            &&File.ReadAllText(Path.Combine(movedMetadata,"note.txt"))=="Preserve this historical note."
+            &&new FileInfo(Path.Combine(movedMetadata,"loading-experiment-recovery","transaction.lock")).Length==0
+            &&!File.Exists(Path.Combine(movedMetadata,"instance.json")),"metadata moves intact without inventing an account registration");
+        Check(mixed.Driver.Boxes().Length==2&&mixed.Driver.Values.All(p=>p.Value["FileRootPath"].StartsWith(mixed.Target))
+            &&mixed.Files.Where(p=>p.Key.StartsWith(mixed.Store)).All(p=>File.ReadAllBytes(Path.Combine(mixed.Target,"instances",Path.GetRelativePath(mixed.Store,p.Key))).SequenceEqual(p.Value)),
+            "metadata does not block existing renamed sandboxes or alter their login data");
+        var only=Make(output,"metadata-only",0);string emptyMetadata=Preferences(only,true);
+        await Service(only).MoveAsync(only.Target);
+        Check(Directory.Exists(Path.Combine(only.Target,"instances",Path.GetFileName(emptyMetadata),"root"))&&only.Driver.Boxes().Length==0,
+            "metadata with an empty root moves without any sandbox registration");
+
+        var missing=Make(output,"missing-owner",0);string missingState=Preferences(missing,true);
+        File.WriteAllBytes(Path.Combine(missingState,"root","RegHive"),[1,2,3]);
+        await BindingFails(missing,missingState,"registration_missing");
+        Check(File.ReadAllBytes(Path.Combine(missingState,"root","RegHive")).SequenceEqual(new byte[]{1,2,3}),"unowned game data is never classified as preferences or removed");
+        var registeredMetadata=Make(output,"registered-metadata",0);string registeredState=Preferences(registeredMetadata);
+        registeredMetadata.Driver.Values[Path.GetFileName(registeredState)]=new(){{"FileRootPath",Path.Combine(registeredState,"root")},{"Enabled","y"}};
+        await BindingFails(registeredMetadata,registeredState,"registration_missing");
+        var aliasMetadata=Make(output,"renamed-metadata",0);string aliasState=Preferences(aliasMetadata);
+        aliasMetadata.Driver.Values["RenamedExistingBox"]=new(){{"FileRootPath",Path.Combine(aliasState,"root")},{"Enabled","y"}};
+        await BindingFails(aliasMetadata,aliasState,"registration_missing");
+        var malformed=Make(output,"malformed-owner",0);string malformedState=Preferences(malformed);
+        File.WriteAllText(Path.Combine(malformedState,"instance.json"),"{");
+        await BindingFails(malformed,malformedState,"registration_invalid");
+        var unregistered=Make(output,"unregistered-owner",1);string unregisteredState=Directory.GetDirectories(unregistered.Store).Single();
+        unregistered.Driver.Values.Clear();
+        await BindingFails(unregistered,unregisteredState,"not_registered");
+        var mismatch=Make(output,"mismatched-owner",1);string mismatchState=Directory.GetDirectories(mismatch.Store).Single();
+        mismatch.Driver.Values["RenamedAccount1"]["FileRootPath"]=Path.Combine(mismatch.Root,"different-game-root");
+        var mismatchError=await BindingFails(mismatch,mismatchState,"path_mismatch");
+        Check(mismatchError.Label=="Fixture"&&mismatch.Driver.Values["RenamedAccount1"]["FileRootPath"]==Path.Combine(mismatch.Root,"different-game-root"),
+            "real mismatch names the account and preserves the manually configured path");
+        var duplicate=Make(output,"duplicate-owner",1);string duplicateState=Directory.GetDirectories(duplicate.Store).Single();
+        duplicate.Driver.Values["AnotherBox"]=new(){{"FileRootPath",Path.Combine(duplicateState,"root")},{"Enabled","y"}};
+        await BindingFails(duplicate,duplicateState,"duplicate_root");
+        var pending=Make(output,"pending-removal",0);string pendingState=Preferences(pending);
+        File.WriteAllText(Path.Combine(pendingState,"removal.json"),"{}");
+        try{await Service(pending).MoveAsync(pending.Target);throw new Exception("Expected recovery rejection");}
+        catch(IOException error){Check(error.Message=="storage.recovery_required"&&!Directory.Exists(pending.Target),"pending removal is not bypassed by metadata classification");}
+        var recoveryMetadata=Make(output,"metadata-pending-recovery",0);string recoveryState=Preferences(recoveryMetadata);
+        File.WriteAllText(DailyLoadingFileTransaction.Pending(Path.Combine(recoveryState,"root")),"{}");
+        try{await Service(recoveryMetadata).MoveAsync(recoveryMetadata.Target);throw new Exception("Expected recovery rejection");}
+        catch(IOException error){Check(error.Message=="storage.recovery_required"&&!Directory.Exists(recoveryMetadata.Target),"pending game-file recovery is not treated as an inert lock");}
+        var backupMetadata=Make(output,"metadata-recovery-backup",0);string backupState=Preferences(backupMetadata);
+        Directory.CreateDirectory(Path.Combine(backupState,"loading-experiment-recovery","backup"));
+        await BindingFails(backupMetadata,backupState,"registration_missing");
+        var unknownMetadata=Make(output,"metadata-unknown-directory",0);string unknownState=Preferences(unknownMetadata);
+        Directory.CreateDirectory(Path.Combine(unknownState,"other-game-data"));
+        await BindingFails(unknownMetadata,unknownState,"registration_missing");
         var f=Make(output,"complete");
         var result=await Service(f).MoveAsync(f.Target);
         Check(result.Bytes>0&&result.RetainedFiles==0,"copies and verifies complete cache and sandbox trees");

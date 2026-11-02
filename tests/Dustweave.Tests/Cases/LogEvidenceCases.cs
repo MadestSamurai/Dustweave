@@ -7,6 +7,16 @@ internal static class LogEvidenceCases
         void Check(bool ok,string label) { if(!ok)throw new Exception(label);cases.Add("log-evidence: "+label); }
         string root=Path.Combine(output,"log-evidence");Directory.CreateDirectory(root);
         JsonObject Frame() => new() { ["ProcessId"]=123,["Instance"]="fixture",["AccountKey"]="a",["Surfaces"]=new JsonArray(new JsonObject { ["Targets"]=new string('x',16000) }) };
+        {
+            var detail=new JsonObject { ["before"]=new JsonObject { ["Frame"]=Frame(),["Readings"]=new JsonArray(new JsonObject { ["Targets"]=9007199254740993L,["value"]=1.23456789m }) },["count"]=24,["command_id"]="original",["error"]="preserved" };
+            var queue=new JsonObject { ["context"]=new JsonObject { ["cycle"]="today" },["items"]=new JsonArray(
+                new JsonObject { ["state"]="completed",["result"]=detail.DeepClone() },
+                new JsonObject { ["state"]="recovery_required",["result"]=detail.DeepClone() }) };
+            var saved=DailyLogEvidence.QueueSnapshot(queue);
+            Check(saved["items"]![0]!["result"]!["before"]!["Frame"]!["Surfaces"]==null, "queue history omits successful stages' redundant UI trees at write time");
+            Check(JsonNode.DeepEquals(saved["items"]![0]!["result"]!["before"]!["Readings"],detail["before"]!["Readings"])&&saved["items"]![0]!["result"]!["count"]!.GetValue<int>()==24, "queue summary preserves inventory values, exact integers, amounts and business facts");
+            Check(JsonNode.DeepEquals(saved["items"]![1]!["result"],detail)&&queue["items"]![0]!["result"]!["before"]!["Frame"]!["Surfaces"]!=null, "unresolved queue diagnostics and live results are unchanged");
+        }
         string Step(string state="dispatched_only", string reason="navigate")
         {
             string id=Guid.NewGuid().ToString("N"), folder=Path.Combine(root,"live","steps",id);

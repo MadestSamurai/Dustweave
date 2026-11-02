@@ -20,6 +20,8 @@ public static class SoulChecks
     public static void Run(string output)
     {
         Directory.CreateDirectory(output);
+        Storage(Path.Combine(output,"tools","soul","runs","fixture"));
+        SaleSynchronization();
         NativeLayoutEncoder.Test();NativePlanExecutor.Test();SoulSubmit.Test();NativeSearchRisk.Test();NativeGrowthPolicy.Test();
         SoulViewAudit.Test();SoulPacking.Test();SoulReservePolicy.Test();SoulShopPolicy.Test();SoulEntryReceipt.Test();
         var half=NativeFastPlanner.RetryValue([.5,.5],[1,1],2);
@@ -62,5 +64,70 @@ public static class SoulChecks
         if(retry.Target!=15||retry.Completed.Count!=4)throw new Exception("A retried dungeon did not advance after clearing");
         run.Save(output);
         File.WriteAllText(Path.Combine(output,"result.json"),"""{"status":"passed","realGameTouched":false,"campaignWaves":55,"losses":1,"checks":"layout, transactions, unknown receipts, growth identity, full replay, battle identity"}""");
+    }
+    static void SaleSynchronization()
+    {
+        var action=JsonNode.Parse("""{"operation":"soul_sell","ui":"InventoryBattleStageUI","items":[3,11,3,20,21065461,10057,0,4],"value":0}""")!.AsObject();
+        var receipt=JsonNode.Parse("""{"Accepted":true,"Role":"soul.IbItemSell","Values":[{"Json":"{\"invenIndex\":21065461,\"sellPrice\":4,\"currentCoin\":24}"}]}""")!;
+        var sync=SoulEvidence.SaleSynchronization(action,receipt);
+        if(sync["operation"]!.ToString()!="soul_sale_sync"||sync["ui"]!.ToString()!="InventoryBattleStageUI"
+            ||!JsonNode.DeepEquals(sync["items"],JsonNode.Parse("[3,11,3,20,21065461,24]"))
+            ||action["operation"]!.ToString()!="soul_sell"||action["items"]!.AsArray().Count!=8)
+            throw new Exception("Sale receipt must produce a local item/run-bound wallet synchronization without changing the sale");
+        // Preserve 64-bit inventory identity and trust actual positive refunds,
+        // including the server's half-up rounding rather than planner estimates.
+        var wide=action.DeepClone().AsObject();wide["items"]![4]=9007199254740993L;
+        var rounded=receipt.DeepClone();rounded["Values"]![0]!["Json"]="{\"invenIndex\":9007199254740993,\"sellPrice\":5,\"currentCoin\":25}";
+        var large=SoulEvidence.SaleSynchronization(wide,rounded);
+        if(large["items"]![4]!.GetValue<long>()!=9007199254740993L||large["items"]![5]!.GetValue<long>()!=25)throw new Exception("Sale synchronization lost native item precision or actual refund");
+        foreach(var mutate in new Action<JsonNode>[] {
+            r=>r["Accepted"]=false,
+            r=>r["Role"]="soul.IbShopBuy",
+            r=>r["Values"]![0]!["Json"]="{\"invenIndex\":999,\"sellPrice\":4,\"currentCoin\":24}",
+            r=>r["Values"]![0]!["Json"]="{\"invenIndex\":21065461,\"sellPrice\":4,\"currentCoin\":25}",
+            r=>r["Values"]![0]!["Json"]="{\"invenIndex\":21065461,\"sellPrice\":-1,\"currentCoin\":19}",
+            r=>r["Values"]![0]!["Json"]="{\"invenIndex\":21065461,\"sellPrice\":2147483628,\"currentCoin\":2147483648}" })
+        {
+            var changed=receipt.DeepClone();mutate(changed);bool rejected=false;
+            try{SoulEvidence.SaleSynchronization(action,changed);}catch(InvalidDataException){rejected=true;}
+            if(!rejected)throw new Exception("Unaccepted, wrong-item or inconsistent sale cannot update the cached wallet");
+        }
+    }
+    static void Storage(string folder)
+    {
+        Directory.CreateDirectory(folder);
+        JsonObject Row(string name,string json)=>new() { ["Id"]="soul."+name,["Error"]="",["Values"]=new JsonArray(new JsonObject { ["Json"]=json }) };
+        var observed=new JsonObject { ["AtUtcTicks"]=1L,["Frame"]=new JsonObject { ["Scene"]="test",["Surfaces"]=new JsonArray(new string('x',16000)) },["Readings"]=new JsonArray(
+            Row("IbItemDBInfo","""[{"invenIndex":"9007199254740993","itemId":1}]"""),
+            Row("IbDeckDBInfo","""[{"invenIndex":"9007199254740993","rotationCount":2,"position":3}]"""),
+            Row("IbPlayDBInfo","""{"season":1,"dungeonId":2,"stageId":3,"coin":24,"life":5}"""),
+            Row("IbShopItemDBInfo","[]"),Row("Capabilities","{}"),Row("Progress","{}")) };
+        byte[] config=System.Text.Encoding.UTF8.GetBytes("{\"Mvid\":\"fixture\",\"Reads\":[]}");
+        for(int i=0;i<20;i++){
+            SoulEvidence.StoreConfiguration(folder,config).GetAwaiter().GetResult();
+            observed["AtUtcTicks"]=i+1;
+            SoulEvidence.StoreObservation(observed,folder,"poll-"+i,false).GetAwaiter().GetResult();
+        }
+        if(Directory.GetFiles(folder).Length!=3)throw new Exception("Routine observations accumulated per-poll files or duplicate configuration");
+        var current=JsonNode.Parse(File.ReadAllText(Path.Combine(folder,"live-state-latest.json")))!;
+        if(current["state"]!["revision"]!.GetValue<long>()!=20||current["state"]!["inventory"]![0]!["inventoryIndex"]!.GetValue<long>()!=9007199254740993L
+            ||current["state"]!["play"]!["coin"]!.GetValue<int>()!=24||current["evidence"]!.ToString()!="soul-latest.json")throw new Exception("Rolling snapshot changed planner state or evidence binding");
+        long bytes=Directory.GetFiles(folder).Sum(f=>new FileInfo(f).Length);
+        long legacyBytes=20*(System.Text.Encoding.UTF8.GetByteCount(observed.ToJsonString())+System.Text.Encoding.UTF8.GetByteCount(current.ToJsonString())+config.Length)
+            +System.Text.Encoding.UTF8.GetByteCount(observed.ToJsonString())+System.Text.Encoding.UTF8.GetByteCount(current.ToJsonString());
+        if(bytes>=legacyBytes/5)throw new Exception("Routine snapshot storage did not remove repeated observations");
+        if(File.ReadAllText(Path.Combine(folder,"soul-latest.json")).Contains('\n'))throw new Exception("Machine observations unexpectedly expanded into indented JSON");
+        SoulEvidence.StoreObservation(observed,folder,"action-before",true).GetAwaiter().GetResult();
+        var archive=File.ReadAllText(Path.Combine(folder,"action-before-state.json"));
+        observed["AtUtcTicks"]=21;SoulEvidence.StoreObservation(observed,folder,"next-poll",false).GetAwaiter().GetResult();
+        if(File.ReadAllText(Path.Combine(folder,"action-before-state.json"))!=archive
+            ||JsonNode.Parse(archive)!["evidence"]!.ToString()!="action-before-soul.json"
+            ||!File.Exists(Path.Combine(folder,"action-before-soul.json")))throw new Exception("Action checkpoint lost its immutable original observation");
+        SoulEvidence.StoreConfiguration(folder,System.Text.Encoding.UTF8.GetBytes("{\"Mvid\":\"changed\"}")).GetAwaiter().GetResult();
+        if(Directory.GetFiles(folder,"observer-*.json").Length!=2)throw new Exception("Changed observer configuration overwrote the previous configuration");
+        if(!SoulEvidence.StoreFailure(folder,"failed",observed)||!File.Exists(Path.Combine(folder,"failed-failed-soul.json")))throw new Exception("Failed routine read lost its complete raw observation");
+        Directory.CreateDirectory(Path.Combine(folder,"blocked-failed-soul.json"));
+        if(SoulEvidence.StoreFailure(folder,"blocked",observed))throw new Exception("Unwritable diagnostic destination was reported as saved");
+        File.WriteAllText(Path.Combine(folder,"storage-comparison.json"),System.Text.Json.JsonSerializer.Serialize(new { polls=20,legacyBytes,bytes,ordinaryFiles=3,archivedSourcesPreserved=true }));
     }
 }

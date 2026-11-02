@@ -34,8 +34,10 @@ public static class DailyDiagnosticExport
     static readonly HashSet<string> PrivateNames = new(StringComparer.OrdinalIgnoreCase) { "accounts.json", "preferences.json", "settings.json", "endpoint.json", "session.json", "sessions.json", "command.json" };
     static string Unrotate(string name) => Rotations.FirstOrDefault(s => name.EndsWith(s,StringComparison.OrdinalIgnoreCase)) is { } suffix ? name[..^suffix.Length] : name;
     static bool LogName(string name) => Unrotate(name).EndsWith(".log",StringComparison.OrdinalIgnoreCase) || Unrotate(name).EndsWith(".jsonl",StringComparison.OrdinalIgnoreCase);
+    static bool SoulControlEvidence(string relative) => relative.StartsWith("tools/soul/runs/",StringComparison.OrdinalIgnoreCase)
+        && new[]{"error.txt","restore-error.txt","status.json","campaign.json","timeline.jsonl"}.Contains(Path.GetFileName(relative),StringComparer.OrdinalIgnoreCase);
     static bool ToolControlEvidence(string relative) => relative.StartsWith("tools/",StringComparison.OrdinalIgnoreCase)
-        && (relative.EndsWith("-activity-error.json",StringComparison.OrdinalIgnoreCase)
+        && (SoulControlEvidence(relative)||relative.EndsWith("-activity-error.json",StringComparison.OrdinalIgnoreCase)
             || relative.EndsWith("-identity-error.json",StringComparison.OrdinalIgnoreCase)
             || new[]{"connection.log","connection-cleanup.log","last-interruption.json"}.Contains(Unrotate(Path.GetFileName(relative)),StringComparer.OrdinalIgnoreCase));
     static string? EvidenceFamily(string relative)
@@ -60,6 +62,7 @@ public static class DailyDiagnosticExport
         var p = relative.Replace('\\','/');
         if (p.Split('/').Any(x => x is ".." or "." || x != "secret-vision" && SecretKey.IsMatch(x) || x.Equals("plugins",StringComparison.OrdinalIgnoreCase) || x.Equals("accounts",StringComparison.OrdinalIgnoreCase))) return false;
         if (PrivateNames.Contains(Unrotate(Path.GetFileName(p)))) return false;
+        if(SoulControlEvidence(p))return true;
         if (Top.Contains(p) || LogName(p) && Top.Contains(Unrotate(p)) || Singles.Contains(p, StringComparer.OrdinalIgnoreCase) || UpdateEvidence(p)) return true;
         if (!Trees.Any(t => p.StartsWith(t + "/", StringComparison.OrdinalIgnoreCase))) return false;
         var name = Path.GetFileName(p);

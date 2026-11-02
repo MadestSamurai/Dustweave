@@ -8785,6 +8785,36 @@
     "zh-TW": "請使用「遷移快取與沙盒」同步變更儲存位置。",
     "en-US": "Use Move caches and sandboxes to change this location."
   },
+  "storage.binding_detail": {
+    "zh-CN": "无法迁移「{0}」：{1}\n目录：{2}\n原数据未改动，请在账号管理中检查此账号的沙盒；也可导出诊断交给开发者。",
+    "zh-TW": "無法遷移「{0}」：{1}\n資料夾：{2}\n原資料未變更，請在帳號管理中檢查此帳號的沙盒；亦可匯出診斷交給開發者。",
+    "en-US": "Cannot move “{0}”: {1}\nFolder: {2}\nOriginal data is unchanged. Check this account's sandbox in Accounts, or export diagnostics for the developer."
+  },
+  "storage.binding_reason.registration_missing": {
+    "zh-CN": "已有沙盒数据或登记，但缺少对应的账号登记文件。",
+    "zh-TW": "已有沙盒資料或登記，但缺少對應的帳號登記檔案。",
+    "en-US": "Sandbox data or registration exists, but its account registration file is missing."
+  },
+  "storage.binding_reason.registration_invalid": {
+    "zh-CN": "账号登记文件无法读取，或与所在目录不匹配。",
+    "zh-TW": "帳號登記檔案無法讀取，或與所在資料夾不符。",
+    "en-US": "The account registration file cannot be read or does not match its folder."
+  },
+  "storage.binding_reason.not_registered": {
+    "zh-CN": "保留了账号登记，但 Sandboxie 中找不到对应沙盒。",
+    "zh-TW": "保留了帳號登記，但在 Sandboxie 中找不到對應沙盒。",
+    "en-US": "An account registration exists, but its sandbox is not registered in Sandboxie."
+  },
+  "storage.binding_reason.path_mismatch": {
+    "zh-CN": "Sandboxie 登记的游戏目录与织尘记录的位置不同。",
+    "zh-TW": "Sandboxie 登記的遊戲資料夾與織塵記錄的位置不同。",
+    "en-US": "The game folder registered in Sandboxie differs from Dustweave's recorded location."
+  },
+  "storage.binding_reason.duplicate_root": {
+    "zh-CN": "多个沙盒指向同一个游戏目录，无法确定应迁移的绑定。",
+    "zh-TW": "多個沙盒指向同一個遊戲資料夾，無法確認應遷移的綁定。",
+    "en-US": "Multiple sandboxes point to the same game folder; its binding is ambiguous."
+  },
   "storage.sandbox_unowned": {
     "zh-CN": "有沙盒的账号登记或目录绑定不一致，尚未迁移。请先在账号管理中检查对应沙盒；原数据已保留。",
     "zh-TW": "有沙盒的帳號登記或目錄綁定不一致，尚未遷移。請先在帳號管理中檢查對應沙盒；原資料已保留。",
