@@ -10,7 +10,7 @@ public partial class MainWindow
     private void InitializeSandboxPresentation()
     {
         if (!IsSandboxWindow) return;
-        SandboxLaunchButton.Visibility = SandboxRepairButton.Visibility = ConnectionGuideButton.Visibility = Visibility.Collapsed;
+        SandboxLaunchItem.Visibility = SandboxRepairItem.Visibility = ConnectionGuideButton.Visibility = Visibility.Collapsed;
         LoginActions.Visibility = RecoverButton.Visibility = Visibility.Collapsed;
         SandboxHelpText.Visibility = Visibility.Visible;
         L.Text(SandboxHelpText, "sandbox.bound_help");

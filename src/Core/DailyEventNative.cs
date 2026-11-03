@@ -50,7 +50,7 @@ public static class DailyEventNative
     {
         await w.WaitEvidence(Prefixes, e => B(Native(e)["Result"]) && !B(Native(e)["Continuing"]), 900, "活动自动战斗尚未结束；保留当前战斗，未重复开始。");
     }
-    private static async Task<JsonObject> Lobby(DailyWorkflow w, bool challenge)
+    internal static async Task<JsonObject> Lobby(DailyWorkflow w, bool challenge)
     {
         string category = challenge ? "Challenge" : "Battle";
         if (await w.Has("EventBattleUI"))
@@ -105,6 +105,7 @@ public static class DailyEventNative
             var e = await w.Evidence(DailyEventSweep.Prefixes);
             var plan = Plan(lobby, N(R(e, "event.currency", "EventApFree")), 5 - used);
             if (plan == null) break;
+            await DailyEventPreset.Apply(w);
             foreach (int value in new[] { 0, 1 })
                 await w.Step(O(("ui", "EventBattleUI"), ("operation", "event_native_select"), ("items", new JsonArray(Copy(plan["event"]), Copy(plan["group"]), Copy(plan["stage"]))), ("value", value)));
             await w.WaitEvidence(DailyEventSweep.Prefixes, x => N(DailyEventSweep.Lobby(x)["Selected"]) == N(plan["stage"]));

@@ -6,16 +6,18 @@ namespace Dustweave.Soul;
 internal sealed partial class NativeFastPlanner
 {
     internal Action<string,int,double>? Progress { get; set; }
-    internal JsonObject SearchDecision(double seconds,string? warm=null)
+    internal JsonObject SearchDecision(double seconds,string? warm=null,int? candidateBudget=null)
     {
         var watch=Stopwatch.StartNew();double notified=-1;int proposals=0,duplicates=0;
         var fixedRng=new Random(684517);int[] Seeds(int n)=>Enumerable.Range(0,n).Select(_=>fixedRng.Next(1,int.MaxValue)).ToArray();
         var screen=Seeds(16);var selection=Seeds(64);var audit=Seeds(512);var futureSeeds=Seeds(16);
-        bool Within(double fraction=1){Cancellation.ThrowIfCancellationRequested();return watch.Elapsed.TotalSeconds<seconds*fraction;}
+        bool Within(double fraction=1){Cancellation.ThrowIfCancellationRequested();return candidateBudget.HasValue
+            ? fraction>.56 || proposals<(int)Math.Ceiling(candidateBudget.Value*fraction/.56)
+            : watch.Elapsed.TotalSeconds<seconds*fraction;}
         void Notify(string phase){if(watch.Elapsed.TotalSeconds-notified<.4)return;notified=watch.Elapsed.TotalSeconds;Progress?.Invoke(phase,evaluated,watch.Elapsed.TotalSeconds);}
         var seen=new HashSet<string>();Candidate? acquired=null;
         Candidate? Consider(List<P> board){
-            proposals++;board=BindEquipment(board);string key=Key(board);
+            CandidateProposals=++proposals;board=BindEquipment(board);string key=Key(board);
             if(!seen.Add(key)){duplicates++;return null;}var c=Evaluate(board,screen,false);
             if(c is not null&&board.All(p=>stock[p.Inventory].Slot<0&&p.Level==stock[p.Inventory].Minimum)&&(acquired is null||c.Rank.CompareTo(acquired.Rank)>0))acquired=c;
             OfferDecision(c);return c;
@@ -93,7 +95,7 @@ internal sealed partial class NativeFastPlanner
         var initialState=new JsonObject{["season"]=state["play"]!["season"]!.DeepClone(),["dungeonId"]=state["play"]!["dungeonId"]!.DeepClone(),["stageId"]=wave,["coin"]=budget,
             ["inventory"]=new JsonArray(state["inventory"]!.AsArray().Select(n=>(JsonNode)new JsonObject{["index"]=N(n,"inventoryIndex"),["id"]=N(n,"id"),["level"]=N(n,"level")}).ToArray()),
             ["shop"]=new JsonArray(state["shop"]!.AsArray().Select(n=>(JsonNode)new JsonObject{["slot"]=N(n,"slot"),["id"]=N(n,"id"),["price"]=N(n,"price"),["soldOut"]=n?["isSoldOut"]?.GetValue<bool>()??false}).ToArray())};
-        return new JsonObject{["status"]=Ready(best)?"ready":"search_required",["solver"]="dustweave-soul",["decisionVersion"]=3,["decisionSeconds"]=watch.Elapsed.TotalSeconds,["budgetSeconds"]=seconds,
+        return new JsonObject{["status"]=Ready(best)?"ready":"search_required",["solver"]="dustweave-soul",["decisionVersion"]=3,["decisionSeconds"]=watch.Elapsed.TotalSeconds,["budgetSeconds"]=candidateBudget.HasValue?null:JsonValue.Create(seconds),["candidateBudget"]=candidateBudget,
             ["proposals"]=proposals,["evaluated"]=evaluated,["cacheHits"]=duplicates,["invalid"]=invalid,["expandedStates"]=expanded.Count,["kernelSha256"]=kernel.KernelSha256,["tableSha256"]=kernel.TableSha256,
             ["auditSeeds"]=new JsonArray(audit.Take(best.Trials).Select(s=>(JsonNode)JsonValue.Create(s)!).ToArray()),["initialState"]=initialState,["riskBudget"]=NativeSearchRisk.Assess(best.Wins,best.Trials,lives,remaining),
             ["ownedAlternative"]=acquired is null?null:new JsonObject{["layout"]=new JsonArray(acquired.Board.Select(p=>(JsonNode)PlacementJson(p)).ToArray()),["battle"]=Metric(acquired)},

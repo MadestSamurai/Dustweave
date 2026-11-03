@@ -19,6 +19,11 @@ internal static class SoulAssets
         using(var module=Mono.Cecil.ModuleDefinition.ReadModule(client))
             if(module.Mvid.ToString()!=ClientMvid)throw new InvalidDataException("死魂之盘的游戏规则已更新，请更新工具后再开始。 / Soul rules changed; update Dustweave first.");
         ClientPath=client;
+        PrepareModel(root);
+        SoulMetadata.Run();
+    }
+    internal static void PrepareModel(string root)
+    {
         Root=Path.Combine(DailyCacheStorage.Area(root,"suite-cache"),"soul",typeof(SoulAssets).Module.ModuleVersionId.ToString("N"));
         Directory.CreateDirectory(Tables);
         var assembly=typeof(SoulAssets).Assembly;
@@ -32,7 +37,6 @@ internal static class SoulAssets
         using(var compressed=File.OpenRead(Path.Combine(Root,"campaign-library.json.gz")))
         using(var gz=new GZipStream(compressed,CompressionMode.Decompress))
         using(var output=File.Create(Path.Combine(Root,"campaign-library-active.json")))gz.CopyTo(output);
-        SoulMetadata.Run();
     }
     internal static string TableFingerprint(string root)
     {

@@ -321,7 +321,7 @@ public sealed partial class DailyCommandDriver : IDisposable
         SubmissionGuard?.Invoke();
         return SubmitRawAsync(action, ownedFrame: ownedFrame);
     }
-    private async Task<JsonObject> SubmitRawAsync(JsonObject action, JsonObject? requiredFrame = null, JsonObject? ownedFrame = null, bool startup = false)
+    private async Task<JsonObject> SubmitRawAsync(JsonObject action, JsonObject? requiredFrame = null, JsonObject? ownedFrame = null, bool startup = false, bool menuRetry = false)
     {
         Active();
         action = DailyMenuNavigation.Normalize(action);
@@ -335,6 +335,8 @@ public sealed partial class DailyCommandDriver : IDisposable
         var observed = await ReadBound();
         var before = observed.Frame;
         string ui = Text(action, "ui"), field = Text(action, "field");
+        if (menuRetry && (requiredFrame == null || !DailyMenuNavigation.RepeatOpenReady(action, before, requiredFrame)))
+            throw new DailyStepException("rejected", "Menu changed before retry; reobserve without input") { RejectionCode = "menu_retry_changed" };
         if (ui == "GameQuitPopupUI" && (field != "_objCloseButton" || Flag(action, "back") || Text(action, "operation").Length > 0 || Flag(action, "native")))
             throw new DailyStepException("rejected", "日常流程只能取消退出游戏确认，不能确认退出。");
         if (ui == "CostumeSelectNoticePopupUI" && (field != "_cancelBtn" || Flag(action, "back") || Text(action, "operation").Length > 0 || Flag(action, "native")))
@@ -370,6 +372,8 @@ public sealed partial class DailyCommandDriver : IDisposable
         GuildGuard(action, observed, ref reason);
         var refreshed = await ReadBound();
         var current = refreshed.Frame;
+        if (menuRetry && (requiredFrame == null || !DailyMenuNavigation.RepeatOpenReady(action, current, requiredFrame)))
+            throw new DailyStepException("rejected", "Menu changed during retry preflight; reobserve without input") { RejectionCode = "menu_retry_changed" };
         if (ownedFrame != null && !DailyTradePreview.Matches(action, ownedFrame, current))
             throw new DailyStepException("rejected", "Owned confirmation changed during final preflight; no command sent");
         if (ActorKeys.Any(k => !JsonNode.DeepEquals(current[k], before[k])))

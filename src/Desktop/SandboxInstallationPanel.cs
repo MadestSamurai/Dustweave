@@ -26,7 +26,7 @@ internal sealed class SandboxInstallationPanel : Border
         Padding = new(0, 0, 0, 12); Margin = new(0, 0, 0, 12);
         BorderThickness = new(0, 0, 0, 1); SetResourceReference(BorderBrushProperty, "Line");
         var header = new DockPanel();
-        L.Bind(edit, ContentControl.ContentProperty, () => L.Translate("更改位置"));
+        L.Bind(edit, ContentControl.ContentProperty, () => L.Get("common.change_location"));
         edit.Click += (_, _) => OpenEditor(); DockPanel.SetDock(edit, Dock.Right); header.Children.Add(edit);
         L.Bind(help, ContentControl.ContentProperty, "sandbox_setup.help");
         help.Click += (_, _) => OpenEditor(); DockPanel.SetDock(help, Dock.Right); header.Children.Add(help);

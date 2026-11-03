@@ -18,6 +18,7 @@ static class BattleArrivalRecoveryCases
         using (var h = new WorkflowHarness(Path.Combine(root, "event-exhausted-" + mode), [DailyEventNative.Definition(), DailyEventSweep.Definition()]))
         {
             h.Workflow.Settings.EventBattle.Enabled = true; h.Workflow.Settings.EventBattle.Challenge = true;
+            h.Workflow.Settings.EventBattle.PresetSlot = 6;
             var lobby = O(("Category", "Battle"), ("Eligible", true), ("Event", 100));
             h.Readings = () => [WorkflowCases.Reading("event.currency", ("EventApFree", 0), ("EventApStack", 7)),
                 WorkflowCases.Reading("event.lobby", ("$self", lobby))];
@@ -36,6 +37,7 @@ static class BattleArrivalRecoveryCases
         using (var h = new WorkflowHarness(Path.Combine(root, "event-result-" + timing), [DailyEventNative.Definition(), DailyEventSweep.Definition()]))
         {
             h.Workflow.Settings.EventBattle.Enabled = true; h.Workflow.Settings.EventBattle.Challenge = false;
+            h.Workflow.Settings.EventBattle.PresetSlot = 6;
             int free = 5, exits = 0; bool atResult = false;
             var lobby = EventTradeBoundaryCases.Lobby(); lobby["Latest"] = 13;
             lobby["Stages"] = Array(Enumerable.Range(1, 13).Select(i => EventTradeBoundaryCases.Stage(i, true)));

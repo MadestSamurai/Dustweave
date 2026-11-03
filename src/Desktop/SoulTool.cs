@@ -32,8 +32,10 @@ internal static class SoulTool
                 var folder=Path.GetFullPath(args[1]);Directory.CreateDirectory(folder);
                 foreach(var language in DailyLanguage.Codes)foreach(var appearance in new[]{DailyAppearance.Light,DailyAppearance.Dark}){
                     DailyLanguage.Current.Select(language);theme.Select(appearance);
-                    window.Render(new("planning","", "Preview",13,7,10,4,52,2,17,1,220,""));
+                    window.Width=720;window.Height=580;
+                    window.Render(new("planning","", "Preview",13,7,10,4,52,2,17,1,220,"",DecisionPhase:"combinations",EvaluatedPlans:762,DecisionSeconds:4.3,ProposedCandidates:1000,CandidateTarget:3000,SearchWorkers:1));
                     window.UpdateLayout();await window.Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    window.CheckSettingsForSmoke(root);
                     var image=new RenderTargetBitmap((int)window.ActualWidth,(int)window.ActualHeight,96,96,PixelFormats.Pbgra32);image.Render(window);
                     var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(image));using(var output=File.Create(Path.Combine(folder,$"soul-{language}-{appearance}.png")))encoder.Save(output);
                 }

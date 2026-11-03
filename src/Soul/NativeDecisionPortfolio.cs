@@ -5,30 +5,36 @@ namespace Dustweave.Soul;
 
 internal sealed partial class NativeFastPlanner
 {
-    internal JsonObject SearchPortfolio(double seconds,string? warm=null)
+    internal JsonObject SearchPortfolio(double seconds,string? warm=null,int? candidateBudget=null,int? workerLimit=null)
     {
-        var timer=Stopwatch.StartNew();int workers=Math.Clamp(Environment.ProcessorCount/2,1,3);
-        var progress=new (string Phase,int Count,double Time)[workers];object gate=new();
-        var tasks=Enumerable.Range(0,workers).Select(i=>Task.Run(()=>{
-            bool established=workers>=3&&i==1;
+        var timer=Stopwatch.StartNew();
+        int workers=Math.Clamp(workerLimit??Environment.ProcessorCount/2,1,Math.Min(3,Math.Max(1,Environment.ProcessorCount)));
+        int branches=candidateBudget.HasValue?3:workers;
+        int batchLimit=SoulSearchWork.NativeBatchLimit(workerLimit??3);
+        kernel.BatchLimit=batchLimit;
+        if(candidateBudget is <3)throw new ArgumentOutOfRangeException(nameof(candidateBudget));
+        var progress=new (string Phase,int Count,double Time,int Proposals)[branches];object gate=new();
+        var plans=SoulSearchWork.Run(branches,workers,(i,token)=>{
+            bool established=branches>=3&&i==1;
             using var branch=new NativeFastPlanner(state,established?710231:710231+i*104729,allowLiquidation:liquidate,preserveRouteGeometry:i==0);
-            branch.PreferExpansion=i==workers-1;
-            branch.Cancellation=Cancellation;
-            branch.Progress=(phase,count,time)=>{lock(gate)progress[i]=(phase,count,time);};
+            branch.PreferExpansion=i==branches-1;
+            branch.Cancellation=token;branch.kernel.BatchLimit=batchLimit;
+            branch.Progress=(phase,count,time)=>{lock(gate)progress[i]=(phase,count,time,branch.CandidateProposals);};
             // Preserve the established randomized search as one independent
             // candidate source. Its speculative reserve append is disabled;
             // only a complete simulated layout competes in the common audit.
-            return established?branch.Search(seconds*.45,warm,reserveGrowth:false):branch.SearchDecision(seconds*.8,warm);
-        },Cancellation)).ToArray();
-        // Marshal progress on the calling thread; the session/evidence writer
-        // is not called concurrently by worker kernels.
-        var completion=Task.WhenAll(tasks);
-        while(!completion.IsCompleted){
-            Thread.Sleep(200);
-            lock(gate)Progress?.Invoke(progress.Any(p=>p.Phase=="combinations")?"combinations":progress.Any(p=>p.Phase=="growth")?"growth":"verify",progress.Sum(p=>p.Count),timer.Elapsed.TotalSeconds);
-        }
-        completion.GetAwaiter().GetResult();Cancellation.ThrowIfCancellationRequested();
-        var plans=tasks.Select(t=>t.GetAwaiter().GetResult()).ToArray();
+            int? share=candidateBudget.HasValue?SoulSearchWork.Share(candidateBudget.Value,i,branches):null;
+            var plan=established?branch.Search(seconds*.45,warm,share,reserveGrowth:false,fixedCandidates:share.HasValue):branch.SearchDecision(seconds*.8,warm,share);
+            lock(gate)progress[i]=("verify",N(plan,"evaluated"),timer.Elapsed.TotalSeconds,branch.CandidateProposals);
+            return plan;
+        },Cancellation,()=>{
+            // Only this calling thread writes session status and evidence.
+            lock(gate){
+                CandidateProposals=progress.Sum(p=>p.Proposals);
+                Progress?.Invoke(progress.Any(p=>p.Phase is null or "combinations")?"combinations":progress.Any(p=>p.Phase=="growth")?"growth":"verify",progress.Sum(p=>p.Count),timer.Elapsed.TotalSeconds);
+            }
+        });
+        Cancellation.ThrowIfCancellationRequested();CandidateProposals=plans.Sum(p=>N(p,"proposals"));
         var seeds=new Random(752491);var audit=Enumerable.Range(0,512).Select(_=>seeds.Next(1,int.MaxValue)).ToArray();
         var candidates=new List<(JsonObject Plan,Candidate C)>();Candidate? acquired=null;
         foreach(var plan in plans){
@@ -56,7 +62,7 @@ internal sealed partial class NativeFastPlanner
         // plans. Common 512-seed validation prevents branch screening bias.
         if(best.C.Rate>=.95){
             var near=candidates.Where(c=>c.C.Rate>=best.C.Rate-.015).ToArray();
-            if(near.Length>1&&timer.Elapsed.TotalSeconds<seconds)
+            if(near.Length>1&&(candidateBudget.HasValue||timer.Elapsed.TotalSeconds<seconds))
                 best=near.OrderByDescending(c=>ContinuationRank(GrowthPotential(c.C),c.C.Rate,c.C.Cost)).ThenByDescending(c=>c.C.Rank).First();
         }
         var chosen=best.Plan.DeepClone().AsObject();
@@ -67,8 +73,9 @@ internal sealed partial class NativeFastPlanner
         var risk=NativeSearchRisk.Assess(best.C.Wins,best.C.Trials,N(state["play"],"life"),remaining);
         chosen["riskBudget"]=risk;chosen["status"]=risk["ready"]!.GetValue<bool>()?"ready":"search_required";
         chosen["auditSeeds"]=new JsonArray(audit.Select(s=>(JsonNode)JsonValue.Create(s)!).ToArray());
-        chosen["decisionSeconds"]=timer.Elapsed.TotalSeconds;chosen["budgetSeconds"]=seconds;
-        chosen["branches"]=workers;chosen["evaluated"]=plans.Sum(p=>N(p,"evaluated"));
+        chosen["decisionSeconds"]=timer.Elapsed.TotalSeconds;chosen["budgetSeconds"]=candidateBudget.HasValue?null:JsonValue.Create(seconds);
+        chosen["candidateBudget"]=candidateBudget;chosen["proposals"]=CandidateProposals;chosen["workers"]=workers;
+        chosen["branches"]=branches;chosen["evaluated"]=plans.Sum(p=>N(p,"evaluated"));
         chosen["branchEvidence"]=new JsonArray(candidates.Select(p=>(JsonNode)new JsonObject{["cost"]=p.C.Cost,["battle"]=Metric(p.C)}).ToArray());
         return chosen;
     }

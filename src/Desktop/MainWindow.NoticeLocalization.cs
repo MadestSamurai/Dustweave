@@ -28,6 +28,7 @@ public partial class MainWindow
                 foreach (var entry in document.RootElement.EnumerateObject())
                 {
                     string source = entry.Value.GetProperty("zh-CN").GetString()!;
+                    string text;
                     if (entry.Value.TryGetProperty("parameters", out var kinds))
                     {
                         if (entry.Value.TryGetProperty("source", out var alternate)) source = alternate.GetString()!;
@@ -39,13 +40,13 @@ public partial class MainWindow
                         var expected = kinds.EnumerateArray().Select((kind, i) => (object)(kind.GetString() switch {
                             "stage" => L.Stage((string)input[i]), "message" => L.Describe((string)input[i]), _ => (string)input[i]
                         })).ToArray();
-                        if (L.Describe(source) != L.Get(entry.Name, expected)) throw new Exception("Notice format did not render: " + entry.Name);
+                        text = L.Describe(DailyText.Of(entry.Name, source, input.Cast<string>().ToArray()));
+                        if (text != L.Get(entry.Name, expected)) throw new Exception("Structured notice did not render: " + entry.Name);
+                        if (entry.Value.TryGetProperty("source", out _) && L.Describe(source) != text)
+                            throw new Exception("Legacy notice format did not render: " + entry.Name);
                     }
-                    string text = L.Describe(source);
+                    else text = L.Get(entry.Name);
                     if (language == 2 && HasHan(text)) throw new Exception("Notice remains Chinese: " + entry.Name);
-                    if (language == 1 && !entry.Value.TryGetProperty("parameters", out _) && L.Translate(source) == source
-                        && entry.Value.GetProperty("zh-TW").GetString() != source)
-                        throw new Exception("Notice remains Simplified Chinese: " + entry.Name);
                     checks++;
                 }
                 string expectedAccount = L.Get("notice.pattern.account_launch", "2", "3", nickname);

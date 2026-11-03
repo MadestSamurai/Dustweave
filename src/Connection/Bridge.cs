@@ -292,6 +292,7 @@ namespace BD2Daily.Live {
      else if(c.Kind=="notice_suppress")NoticeNative.Select(u);
      else if(LivePolicy.PowderKind(c.Kind)||c.Kind=="equipment_refine_batch")EquipmentToolsNative.Execute(c,u);
      else if(LivePolicy.ExtensionKind(c.Kind))PluginHost.Execute(c,u);
+     else if(c.Kind=="event_preset_read"||c.Kind=="event_preset_apply")EventPresetNative.Execute(c);
      else if(LivePolicy.NativeBattleKind(c.Kind))NativeDailyBattles.Execute(c,u);
      else if(LivePolicy.EventKind(c.Kind))EventSweepActions.Execute(c,u);
      else if(LivePolicy.TradeKind(c.Kind))TradeActions.Execute(c,u);

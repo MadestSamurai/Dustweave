@@ -134,9 +134,18 @@ public partial class MainWindow
                 LanguageSelector.SelectedIndex=language; ThemeSelector.SelectedIndex=appearance;
                 Width=920;Height=650;WorkspaceTabs.SelectedItem=AccountsTab;
                 await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
-                var repairBounds=SandboxRepairButton.TransformToAncestor(this).TransformBounds(new Rect(SandboxRepairButton.RenderSize));
-                if(!SandboxRepairButton.IsVisible || repairBounds.Right>ActualWidth || repairBounds.Bottom>ActualHeight)throw new Exception("Account binding entry clipped");
+                // Sandbox management lives in each row's ··· menu; its row entry must stay reachable at the minimum size.
+                var rowActions=SandboxElements<Button>(AccountsGrid).FirstOrDefault(b=>b.Name=="AccountActionsButton" && b.IsVisible)??throw new Exception("Account row actions missing");
+                var repairBounds=rowActions.TransformToAncestor(this).TransformBounds(new Rect(rowActions.RenderSize));
+                if(SandboxRepairItem.Visibility!=Visibility.Visible || repairBounds.Right>ActualWidth || repairBounds.Bottom>ActualHeight)throw new Exception("Account binding entry clipped");
                 Capture($"sandbox-accounts-{language}-{appearance}");
+                AccountActions_Click(rowActions,new RoutedEventArgs());
+                await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                if(!AccountActionsMenu.IsOpen || DeleteAccountItem.Foreground!=FindResource("Error") ||
+                    RenameAccountItem.Foreground!=FindResource("Ink"))throw new Exception("Account menu theme or destructive action style missing");
+                Capture($"account-actions-{language}-{appearance}",AccountActionsMenu);
+                await CloseAccountMenuForSmoke();
+                checks++;
                 var bindingDialog=new SandboxManagementWindow(this,new DailyAccount(1,"Example account",new string('a',64),"…1234",true,false,""),
                     new("Dustweave_Test",@"C:\Sandbox\Test",true,"sandbox.repair.required",[]),[
                     new("MyRenamedBox",@"C:\Users\Example\AppData\Local\Dustweave\instances\Dustweave_aaaaaaaaaaaaaaaaaaaa\root",""),

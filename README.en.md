@@ -63,6 +63,10 @@ Some stages require unlocked account content, an active event or a compatible ga
 
 Install the Tactical textbook plugin from the plugin marketplace, with a default 60-second calculation limit per stage. Choose local-only calculation or solution sharing at installation. Sharing includes both reuse and automatic contributions after clearing stages. Updates retain this choice; change it under Installed. Restart Dustweave to apply an installation; previous plugins remain available for rollback.
 
+**Tactical textbook adds a weekly task to Today.** After installing and restarting, enable it for the desired account in Daily settings and save, then select it in Today to run. Include it in any custom task preset you use; there is no separate tool window.
+
+Daily settings → Event battles can bind a normal in-game preset slot. Each new event battle batch reads and reapplies that slot, including after manual team changes. Empty slots keep the current team. Use 0 to remove the binding; each account has its own selection.
+
 Automatic trading now handles the November 16 food-price transition using your inventory, available gold and premium sale dates. No manual stockpiling or date-based switch is needed. Upgrading restores automatic cooking and selling from the temporary pause in automatic mode; the trading master switch, gold reserve and spending cap stay unchanged. Favorites-only purchases and custom recipes retain your selections. You can still turn cooking and selling off afterward to keep purchases only.
 
 ### Toolbox

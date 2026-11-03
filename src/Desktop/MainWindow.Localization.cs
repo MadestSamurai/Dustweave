@@ -43,7 +43,7 @@ public partial class MainWindow
                     throw new Exception("UI locale changed execution culture");
                 if (DailyJson.TryRead<DailyLanguage.LanguageSetting>(Path.Combine(root,"language.json"))?.Language != DailyLanguage.Codes[language])
                     throw new Exception("Language choice was not persisted");
-                if ((string)RunTab.Header != L.Get("nav.daily") || (string)ConnectButton.Content != L.Get("connection.connect"))
+                if ((string)RunTab.Header != L.Get("nav.daily") || (string)ConnectButton.Content != L.Get(ConnectActionKeyForSmoke))
                     throw new Exception("XAML translation binding is stale");
 
                 WorkspaceTabs.SelectedItem = RunTab;
@@ -77,6 +77,8 @@ public partial class MainWindow
             if (!L.Diagnostic(raw, "Message").EndsWith(raw, StringComparison.Ordinal))
                 throw new Exception("Localized diagnostics lost raw evidence");
             await CheckTradeLanguageForSmoke();
+            await CheckLocalizationExportForSmoke();
+            L.Audit();
             DailyJson.Write(Path.Combine(smoke!, "localization.json"), new {
                 status = "passed", languages = DailyLanguage.Codes, resourceCount = L.Count,
                 invariantTaskIds = true, unsavedPreferencesPreserved = true, activeQueuePreserved = true,
@@ -92,6 +94,33 @@ public partial class MainWindow
         }
     }
 
+    private async Task CheckLocalizationExportForSmoke()
+    {
+        static IEnumerable<T> Nodes<T>(System.Windows.DependencyObject node) where T:System.Windows.DependencyObject
+        {
+            if(node is T typed)yield return typed;
+            for(int i=0;i<System.Windows.Media.VisualTreeHelper.GetChildrenCount(node);i++)
+                foreach(var child in Nodes<T>(System.Windows.Media.VisualTreeHelper.GetChild(node,i)))yield return child;
+        }
+        var dialog=CreateDiagnosticExportWindow();dialog.Show();
+        try
+        {
+            await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+            var path=Nodes<System.Windows.Controls.TextBox>(dialog).Single(t=>t.Name=="DiagnosticExportPath");
+            var start=Nodes<System.Windows.Controls.Button>(dialog).Single(b=>b.Name=="DiagnosticExportStart");
+            path.Text=Path.Combine(smoke!,"localization-ui-export.zip");
+            start.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+            for(int i=0;i<150&&!start.IsEnabled;i++)await Task.Delay(20);
+            if(!start.IsEnabled||!File.Exists(path.Text))throw new Exception("Localization UI export did not finish");
+            using var archive=System.IO.Compression.ZipFile.OpenRead(path.Text);
+            using var reader=new StreamReader(archive.GetEntry("localization.json")!.Open());
+            using var report=JsonDocument.Parse(reader.ReadToEnd());
+            if(report.RootElement.GetProperty("language").GetString()!=L.Code
+                ||report.RootElement.GetProperty("status").GetString()!="no_faults_observed")
+                throw new Exception("Diagnostic UI did not include the current localization snapshot");
+        }
+        finally {dialog.Close();}
+    }
     private async Task CheckTradeLanguageForSmoke()
     {
         string folder = Path.Combine(smoke!, "trade-language");
@@ -147,6 +176,18 @@ public partial class MainWindow
                 surface.Child = panel;
                 window.Width = 960; window.Height = 700;
             }
+            var unnamed = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(Path.Combine(folder, "snapshot.json")))!;
+            unnamed["context"]!["player_name"] = null;
+            string unnamedPath = Path.Combine(folder, "unnamed.json");
+            File.WriteAllText(unnamedPath, unnamed.ToJsonString());
+            panel.LoadSnapshot(unnamedPath);
+            foreach (int language in new[] { 0, 1, 2 })
+            {
+                LanguageSelector.SelectedIndex = language;
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                if (!panel.IdentityForSmoke.StartsWith(L.Get("report.current_account") + " · ", StringComparison.Ordinal))
+                    throw new Exception("Missing trade player name exposed a key or failed to refresh its fallback");
+            }
         }
         finally { window.Close(); LanguageSelector.SelectedIndex=0; ThemeSelector.SelectedIndex=1; }
     }
@@ -167,10 +208,10 @@ public partial class MainWindow
         LanguageSelector.SelectedIndex=0;
         foreach (var row in rows)
         {
-            if (raw["message."+row.Code]["zh-CN"]!=row.Chinese)
-                throw new Exception("Runtime source translation drift: "+row.Code);
-            if (L.Get("message."+row.Code)!=GameTerminology.Template(row.Chinese,"zh-CN"))
-                throw new Exception("Runtime display terminology drift: "+row.Code);
+            string key = L.MessageKey(row.Code);
+            if (!raw.ContainsKey(key)) throw new Exception("Runtime message key has no translations: " + row.Code);
+            if (L.Get(key) != GameTerminology.Template(raw[key]["zh-CN"], "zh-CN"))
+                throw new Exception("Runtime display terminology drift: " + row.Code);
         }
         LanguageSelector.SelectedIndex=2;
         foreach (var row in rows)
@@ -187,8 +228,9 @@ public partial class MainWindow
         LanguageSelector.SelectedIndex=1;
         foreach (var row in rows)
         {
-            string value=L.Get("message."+row.Code);
-            if(string.IsNullOrWhiteSpace(value) || value!=GameTerminology.Template(raw["message."+row.Code]["zh-TW"],"zh-TW")
+            string key = L.MessageKey(row.Code);
+            string value=L.Get(key);
+            if(string.IsNullOrWhiteSpace(value) || value!=GameTerminology.Template(raw[key]["zh-TW"],"zh-TW")
                 || value.Any(c => char.IsSurrogate(c) || c=='\uFFFD' || (char.IsControl(c) && c!='\n' && c!='\r')))
                 throw new Exception("Invalid Traditional Chinese resource: "+row.Code);
         }

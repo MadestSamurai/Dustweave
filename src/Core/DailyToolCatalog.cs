@@ -1,23 +1,23 @@
 namespace Dustweave;
 
-public sealed record DailyToolDefinition(string Id, string Name, string Category, string Description, string Repository, string AssemblyName, string MutexName);
+public sealed record DailyToolDefinition(string Id, string Name, string Category, string Description, string Repository, string AssemblyName, string MutexName) { public string CategoryId { get; init; } = ""; }
 
 public static class DailyToolCatalog
 {
     public static IReadOnlyList<DailyToolDefinition> All { get; } = new DailyToolDefinition[]
     {
-        new("soul", "死魂之盘", "小游戏", "自动规划成长阵容，连续挑战全部五关。", "Dustweave", "Dustweave", @"Local\Dustweave.Soul"),
-        new("fishing", "自动钓鱼", "经营与装备", "钓鱼、鱼饵、背包出售和地图往返。", "Dustweave", "BD2Fishing", @"Local\BD2Fishing.Desktop"),
-        new("territory", "领地自动化", "经营与装备", "种植、采集、料理、库存出售和布局。", "Dustweave", "BD2Territory", @"Local\BD2Territory.Desktop"),
-        new("equipment", "装备助手", "经营与装备", "规划搓粉与批量精炼，确认预算后执行。", "Dustweave", "BD2EquipmentAssistant", @"Local\BD2EquipmentAssistant-v1"),
-        new("sichuan", "连连看", "小游戏", "自动识别盘面、求解和续局，可调操作间隔。", "Dustweave", "BD2Sichuan", @"Local\BD2Sichuan.Desktop"),
-        new("rhythm", "音游", "小游戏", "读取当前谱面并操作，保留随机偏移设置。", "Dustweave", "BD2Rhythm", @"Local\BD2Rhythm.Private.Desktop"),
-        new("apostle-defense", "使徒运气防守", "小游戏", "自动召唤、合成、布局与结算续局。", "Dustweave", "BD2ApostleDefense", @"Local\BD2ApostleDefense-v1"),
-        new("secret-vision", "SECRET VISION", "小游戏", "自动圈地、避让与失败重试。", "Dustweave", "BD2SecretVision", @"Local\BD2SecretVisionAssistant"),
-        new("fiend-hunter", "恶魔猎人", "小游戏", "选择怪物，自动攻击、防御和治疗，结算后停止。", "Dustweave", "BD2FiendHunter", @"Local\BD2FiendHunterDesktop"),
-        new("mansion-runaway", "MANSION RUNAWAY", "小游戏", "收集糖果、预测追兵并连续推进关卡。", "Dustweave", "Dustweave", @"Local\Dustweave.Mansion"),
-        new("pandora", "潘多拉大逃脱", "小游戏", "固定关卡循环刷货币，或自动挑战。", "Dustweave", "Dustweave", @"Local\Dustweave.Pandora"),
-        new("infinite-gacha", "无限抽抽乐", "抽取", "A／B 双列表、停止条件和命中提醒。", "Dustweave", "BD2InfiniteGacha", @"Local\BD2InfiniteGacha-v1")
+        new("soul", "死魂之盘", "小游戏", "自动规划成长阵容，连续挑战全部五关。", "Dustweave", "Dustweave", @"Local\Dustweave.Soul") { CategoryId = "games" },
+        new("fishing", "自动钓鱼", "经营与装备", "钓鱼、鱼饵、背包出售和地图往返。", "Dustweave", "BD2Fishing", @"Local\BD2Fishing.Desktop") { CategoryId = "business" },
+        new("territory", "领地自动化", "经营与装备", "种植、采集、料理、库存出售和布局。", "Dustweave", "BD2Territory", @"Local\BD2Territory.Desktop") { CategoryId = "business" },
+        new("equipment", "装备助手", "经营与装备", "规划搓粉与批量精炼，确认预算后执行。", "Dustweave", "BD2EquipmentAssistant", @"Local\BD2EquipmentAssistant-v1") { CategoryId = "business" },
+        new("sichuan", "连连看", "小游戏", "自动识别盘面、求解和续局，可调操作间隔。", "Dustweave", "BD2Sichuan", @"Local\BD2Sichuan.Desktop") { CategoryId = "games" },
+        new("rhythm", "音游", "小游戏", "读取当前谱面并操作，保留随机偏移设置。", "Dustweave", "BD2Rhythm", @"Local\BD2Rhythm.Private.Desktop") { CategoryId = "games" },
+        new("apostle-defense", "使徒运气防守", "小游戏", "自动召唤、合成、布局与结算续局。", "Dustweave", "BD2ApostleDefense", @"Local\BD2ApostleDefense-v1") { CategoryId = "games" },
+        new("secret-vision", "SECRET VISION", "小游戏", "自动圈地、避让与失败重试。", "Dustweave", "BD2SecretVision", @"Local\BD2SecretVisionAssistant") { CategoryId = "games" },
+        new("fiend-hunter", "恶魔猎人", "小游戏", "选择怪物，自动攻击、防御和治疗，结算后停止。", "Dustweave", "BD2FiendHunter", @"Local\BD2FiendHunterDesktop") { CategoryId = "games" },
+        new("mansion-runaway", "MANSION RUNAWAY", "小游戏", "收集糖果、预测追兵并连续推进关卡。", "Dustweave", "Dustweave", @"Local\Dustweave.Mansion") { CategoryId = "games" },
+        new("pandora", "潘多拉大逃脱", "小游戏", "固定关卡循环刷货币，或自动挑战。", "Dustweave", "Dustweave", @"Local\Dustweave.Pandora") { CategoryId = "games" },
+        new("infinite-gacha", "无限抽抽乐", "抽取", "A／B 双列表、停止条件和命中提醒。", "Dustweave", "BD2InfiniteGacha", @"Local\BD2InfiniteGacha-v1") { CategoryId = "draws" }
     };
     public static DailyToolDefinition Find(string id) => All.SingleOrDefault(t => t.Id == id)
         ?? throw new ArgumentException("未知工具：" + id);

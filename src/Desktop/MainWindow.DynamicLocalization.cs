@@ -12,6 +12,7 @@ public partial class MainWindow
         var local = new TextBlock();
         var failure = new TextBlock();
         var toolText = new TextBlock();
+        var structured = new TextBlock();
         var at = new DateTime(2026, 10, 5, 13, 24, 56);
         const string nickname = "正在准备";
         const string raw = nickname + " · rejected: screen_changed";
@@ -32,6 +33,9 @@ public partial class MainWindow
         DailyUiText.History(local, "history.local", at, "screen_changed");
         DailyUiText.Error(failure, new InvalidOperationException("rejected: screen_changed"), "读取历史记录失败：");
         DailyUiText.Set(toolText, cases[0].Raw);
+        const string opaque = "正在准备 · C:\\用户\\{0}\\账号";
+        var structuredText = DailyText.Of("notice.pattern.account_launch", "unchanged raw diagnostic", "1", "3", opaque);
+        DailyUiText.Set(structured, structuredText);
         string chinese = previous.Text;
         int checks = 0;
         try
@@ -51,6 +55,11 @@ public partial class MainWindow
                     throw new Exception("Dynamic WPF binding was not refreshed");
                 if (language == 2 && (HasHan(local.Text) || HasHan(failure.Text)))
                     throw new Exception("Local history or error prefix remains Chinese");
+                if (structured.Text != L.Get(structuredText.Key, "1", "3", opaque)
+                    || !(structured.ToolTip as string)!.EndsWith(structuredText.Fallback, StringComparison.Ordinal))
+                    throw new Exception("Structured text changed opaque arguments or diagnostic evidence");
+                if (L.Describe(DailyText.Of("future.unknown.message", "screen_changed")) != L.Describe("screen_changed"))
+                    throw new Exception("Newer display metadata blocked legacy fallback");
                 foreach (var item in cases)
                 {
                     string expected = item.Name.Length == 0 ? L.Get(item.Key) : L.Get(item.Key, L.Get(item.Name));

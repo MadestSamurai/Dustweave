@@ -200,6 +200,8 @@ public sealed class DailyPreferences
             throw new InvalidDataException("战术教材搜索时间必须为 1 至 120 秒。");
         if (EventBattle.SearchSeconds is < 1 or > 120)
             throw new InvalidDataException("活动搜索时间必须为 1 至 120 秒。");
+        if (EventBattle.PresetSlot is < 0 or > 999)
+            throw new InvalidDataException("prefs.event_preset_invalid");
         if (Salvation == null || Salvation.ReserveKeys is < 0 or > 999)
             throw new InvalidDataException("救赎之塔保留钥匙必须为 0 至 999。");
         if (Salvation.SweepCount is < 1 or > 999)
@@ -438,6 +440,8 @@ public sealed class EventBattlePreferences
     [JsonRequired] public bool Challenge { get; set; } = true;
     [JsonRequired] public int SearchSeconds { get; set; } = 15;
     public bool SweepAfterFailure { get; set; } = true;
+    // One-based game slot; zero preserves the current formation. Do not cache its contents.
+    public int PresetSlot { get; set; }
 }
 
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]

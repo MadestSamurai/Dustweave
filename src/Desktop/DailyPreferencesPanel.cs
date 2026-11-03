@@ -17,46 +17,47 @@ public sealed class DailyPreferencesPanel : UserControl
         try {if(BeforeGameToolOpen==null || await BeforeGameToolOpen())open();}
         catch(Exception error){DailyUiText.Error(status,error);}
     }
-    private readonly bool extensionTasks = DailyPlugin.Current.Supports("tactics");
-    private readonly bool extensionEvents = DailyPlugin.Current.Supports("event_battle");
+    private readonly bool extensionTasks;
+    private readonly bool extensionEvents;
     private readonly DailyPreferenceStore store;
     private readonly string dataRoot;
     private readonly DailyCollectionMapPicker collectionMaps = new();
     private readonly ComboBox accounts = new() { MinWidth = 230, DisplayMemberPath = "Name", SelectedValuePath = "AccountKey" };
-    private readonly CheckBox eventBattle = Check("活动战斗"), eventChallenge = Check("普通全部通关后继续挑战战斗");
+    private readonly CheckBox eventBattle = Check("prefs.event_battle"), eventChallenge = Check("prefs.event_challenge");
     private readonly CheckBox eventFailureSweep = Check("prefs.event_failure_sweep"), salvation = Check("stage.salvation");
     private readonly TextBox salvationReserve = new(), salvationCount = new();
     private readonly ComboBox salvationMode = new() { DisplayMemberPath = "Label", SelectedValuePath = "Key" };
     private Grid salvationCountRow = null!;
     private readonly ComboBox eventSearch = new();
-    private readonly CheckBox tactics = Check("战术教材");
+    private readonly TextBox eventPreset = new() { Name = "EventBattlePresetSlot" };
+    private readonly CheckBox tactics = Check("stage.tactics");
     private readonly ComboBox tacticsSearch = new();
     private readonly ComboBox chapter = new(), stone = new(), multiplier = new(), saffronRounds = new();
     private readonly ComboBox[] enhance = Enumerable.Range(0,4).Select(_ => new ComboBox()).ToArray();
     private readonly ListBox priority = new() { Height = 94, MinWidth = 240, DisplayMemberPath = "Label" };
-    private readonly CheckBox hunt = Check("自动分配免费米饭"), gold = Check("金币加成日刷金币"), slime = Check("史莱姆加成日刷史莱姆");
-    private readonly CheckBox stones = Check("每天刷圣石"), recycle = Check("处理本次免费抽到的装备"), keepSr = Check("保留五星角色的 SR 专武");
-    private readonly CheckBox fallback = Check("分解任务未完成且无可分解装备时，制作一把 N 剑"), refine = Check("有精炼任务时精炼一次");
-    private readonly CheckBox pass = Check("检查并领取通行证任务与等级奖励"), dispatch = Check("领取到期派遣并继续派遣");
-    private readonly CheckBox goddess = Check("领取女神像奖励"), ranking = Check("检查广场排行榜周期奖励");
-    private readonly CheckBox mirror = Check("镜中之战"), guild = Check("公会签到"), room = Check("小屋奖励"),
-        saffron = Check("藏红花种植与收割"), income = Check("经营一键领取"), guests = Check("餐厅特殊顾客与气泡"), draws = Check("每日免费抽取"),
-        dailyRewards = Check("日常任务奖励"), weeklyRewards = Check("周常任务奖励"), mail = Check("邮箱物品");
-    private readonly CheckBox friendship = Check("每日亲密度咨询");
-    private readonly CheckBox weeklyBook = Check("周常末日之书"), weeklyCraft = Check("周常制作装备"), weeklySichuan = Check("周常连连看");
-    private readonly CheckBox mainline = Check("周收集"), weeklyNpc = Check("周NPC任务"), weeklySteal = Check("每周偷窃"), walkCollect = Check("步行收集（不使用吸收）"), fishing = Check("周常钓鱼"), roomLikes = Check("周常小屋点赞");
-    private readonly CheckBox events = Check("活动奖励"), eventMissions = Check("领取活动任务与活动代币"), roulette = Check("使用免费次数和已有转盘券"), exchange = Check("活动代币最大批量兑换"), quiz = Check("自动完成已开放答题"), dice = Check("自动使用现有活动骰子"), puzzle = Check("拼图／宾果使用现有代币批量翻开");
+    private readonly CheckBox hunt = Check("notice.settings.hunting"), gold = Check("prefs.gold"), slime = Check("prefs.slime");
+    private readonly CheckBox stones = Check("notice.settings.stones"), recycle = Check("notice.settings.draw_equipment"), keepSr = Check("prefs.keep_sr");
+    private readonly CheckBox fallback = Check("prefs.craft_fallback"), refine = Check("notice.settings.refine");
+    private readonly CheckBox pass = Check("notice.settings.pass"), dispatch = Check("notice.settings.dispatch");
+    private readonly CheckBox goddess = Check("notice.settings.goddess"), ranking = Check("notice.settings.plaza");
+    private readonly CheckBox mirror = Check("prefs.mirror"), guild = Check("stage.guild"), room = Check("stage.room"),
+        saffron = Check("stage.territory_saffron"), income = Check("prefs.business"), guests = Check("prefs.guests"), draws = Check("stage.free_draws"),
+        dailyRewards = Check("stage.daily_rewards"), weeklyRewards = Check("stage.weekly_rewards"), mail = Check("prefs.mail");
+    private readonly CheckBox friendship = Check("notice.settings.friendship");
+    private readonly CheckBox weeklyBook = Check("stage.weekly_book"), weeklyCraft = Check("stage.weekly_equipment"), weeklySichuan = Check("stage.weekly_sichuan");
+    private readonly CheckBox mainline = Check("stage.weekly_mainline"), weeklyNpc = Check("stage.weekly_npc"), weeklySteal = Check("stage.weekly_steal"), walkCollect = Check("prefs.walk"), fishing = Check("stage.weekly_fishing"), roomLikes = Check("stage.weekly_room_likes");
+    private readonly CheckBox events = Check("prefs.events"), eventMissions = Check("prefs.events_missions"), roulette = Check("prefs.events_roulette"), exchange = Check("prefs.events_exchange"), quiz = Check("prefs.events_quiz"), dice = Check("prefs.events_dice"), puzzle = Check("prefs.event_puzzle");
     private readonly CheckBox trade = Check("prefs.trade_purchase");
     private readonly CheckBox tradeProcessing = Check("prefs.trade_processing");
     private readonly CheckBox tradeFavorites = Check("prefs.trade_favorites"), saffronProcessing = Check("prefs.saffron_processing");
     private readonly StackPanel normalTrade = new();
     private readonly TextBox tradeReserve = new(), tradeMaximum = new();
     private readonly TextBox potionReserve = new(), potionTarget = new();
-    private readonly CheckBox potionRefill = Check("药不足时自动补药");
+    private readonly CheckBox potionRefill = Check("prefs.potion_refill");
     private readonly CheckBox fastTravel = Check("prefs.fast_travel");
     private readonly Button cookingButton = LocalButton("cooking.title");
     private readonly CheckBox preserveBloodCocktailMail = Check("prefs.mail_preserve_cocktail");
-    private readonly CheckBox tradeBreakEven = Check("购买零收益商品（金币成就）");
+    private readonly CheckBox tradeBreakEven = Check("trade.break_even");
     private StackPanel section = new();
     private readonly TextBlock status = new() { TextWrapping = TextWrapping.Wrap, Margin = new(0, 8, 0, 0) };
     private readonly ComboBox refineChoice = new() { DisplayMemberPath = "Label", SelectedValuePath = "Instance", MinWidth = 210, MaxWidth = 660 };
@@ -74,7 +75,7 @@ public sealed class DailyPreferencesPanel : UserControl
     private sealed class Choice(string key, string source) : System.ComponentModel.INotifyPropertyChanged
     {
         public string Key => key;
-        public string Label => L.Translate(source);
+        public string Label => L.Get(source);
         public void Refresh() => PropertyChanged?.Invoke(this, new(nameof(Label)));
         public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
     }
@@ -88,12 +89,13 @@ public sealed class DailyPreferencesPanel : UserControl
     private static TextBlock Label(string source)
     {
         var text = new TextBlock { TextWrapping = TextWrapping.Wrap };
-        L.Literal(text, source); return text;
+        text.SetResourceReference(TextBlock.ForegroundProperty, "Ink");
+        L.Text(text, source); return text;
     }
     private static Button LocalButton(string source)
     {
         var button = new Button();
-        L.Bind(button, ContentControl.ContentProperty, () => L.Translate(source));
+        L.Bind(button, ContentControl.ContentProperty, source);
         return button;
     }
     private void LanguageChanged(object? sender, EventArgs e)
@@ -102,8 +104,12 @@ public sealed class DailyPreferencesPanel : UserControl
         foreach (var item in refineChoice.Items.Cast<RefinementView>()) item.Refresh();
         FilterSections();
     }
-    public DailyPreferencesPanel(string root, bool allowGame = true)
+    public DailyPreferencesPanel(string root, bool allowGame = true) : this(root, allowGame, DailyPlugin.Current) { }
+    internal DailyPreferencesPanel(string root, bool allowGame, DailyPluginInfo plugin)
     {
+        if (allowGame && !ReferenceEquals(plugin, DailyPlugin.Current)) throw new InvalidOperationException("Plugin fixtures require an offline settings panel");
+        extensionTasks = plugin.Supports("tactics");
+        extensionEvents = plugin.Supports("event_battle");
         this.allowGame = allowGame;
         store = new(root);
         dataRoot = root;
@@ -147,7 +153,7 @@ public sealed class DailyPreferencesPanel : UserControl
         searchPlaceholder.IsHitTestVisible = false;
         searchPlaceholder.VerticalAlignment = VerticalAlignment.Center;
         searchPlaceholder.Margin = new(11, 0, 11, 0);
-        searchPlaceholder.FontSize = 12;
+        searchPlaceholder.TextWrapping = TextWrapping.NoWrap; searchPlaceholder.TextTrimming = TextTrimming.CharacterEllipsis; // Match the 14 DIP input text so typing does not change the field's scale.
         searchPlaceholder.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk");
         searchBar.Children.Add(searchPlaceholder);
         Grid.SetColumn(searchBar, 1);
@@ -172,37 +178,37 @@ public sealed class DailyPreferencesPanel : UserControl
         DockPanel.SetDock(filterCount, Dock.Top); layout.Children.Add(filterCount);
         chapter.ItemsSource = Enumerable.Range(1, 10).ToArray();
         foreach (var choice in enhance) choice.ItemsSource = Enumerable.Range(0, 10).ToArray();
-        stone.ItemsSource = new[] { new Choice("least", "库存数量最少"), new Choice("fire", "火"), new Choice("water", "水"), new Choice("wind", "风"), new Choice("light", "光"), new Choice("dark", "暗") };
+        stone.ItemsSource = new[] { new Choice("least", "prefs.least"), new Choice("fire", "element.fire"), new Choice("water", "element.water"), new Choice("wind", "element.wind"), new Choice("light", "element.light"), new Choice("dark", "element.dark") };
         stone.DisplayMemberPath = "Label";
         stone.SelectedValuePath = "Key";
         section = form;
         var generalBody = new StackPanel { Margin = new(48, 8, 12, 16) };
         var generalTitle = Label("prefs.resources"); generalTitle.FontWeight = FontWeights.SemiBold;
         var general = new Border { BorderBrush = (Brush)Application.Current.FindResource("Line"), BorderThickness = new(0, 0, 0, 1), Child = new Expander { Header = generalTitle, Content = generalBody, IsExpanded = false, Margin = new(0, 8, 0, 8), Style = (Style)Application.Current.FindResource("SettingsExpander") } };
-        form.Children.Add(general); sections.Add((general, "整体设置", "天赋药保留下限与自动补药")); section = generalBody;
+        form.Children.Add(general); sections.Add((general, "prefs.general", "prefs.potions_summary")); section = generalBody;
         section.Children.Add(fastTravel);
         Note("prefs.fast_travel_hint");
-        Row("天赋药保留下限", potionReserve);
-        Note("默认0。只允许消耗保留量以外的天赋药；不足时在队列中说明受限任务，不影响其他可执行任务。仅适用于日常队列。");
+        Row("prefs.potion_reserve", potionReserve);
+        Note("prefs.potion_reserve_hint");
         section.Children.Add(potionRefill);
-        Row("补药至", potionTarget);
-        Note("默认不购买。开启后，药不足时临时加入补药环节；须已完成本周至少一条NPC任务，并确认广场商人的天赋药享九折。补至目标数量后接续任务。");
+        Row("prefs.potion_target", potionTarget);
+        Note("prefs.potion_refill_hint");
         potionRefill.Checked += (_, _) => potionTarget.IsEnabled = true;
         potionRefill.Unchecked += (_, _) => potionTarget.IsEnabled = false;
-        L.Bind(potionReserve, System.Windows.Automation.AutomationProperties.NameProperty, () => L.Translate("天赋药保留下限"));
-        L.Bind(potionTarget, System.Windows.Automation.AutomationProperties.NameProperty, () => L.Translate("补药至"));
-        Stage(guild, "公会签到", "签到与领取可用奖励", showSummary: false);
-        Stage(room, "小屋奖励", "领取可用的小屋奖励", showSummary: false);
-        Stage(income, "经营一键领取", "prefs.business_hint");
-        Stage(guests, "餐厅特殊顾客与气泡", "领取属性圣石和限时装饰币");
-        Stage(saffron, "藏红花种植与收割", "prefs.saffron_hint");
+        L.Bind(potionReserve, System.Windows.Automation.AutomationProperties.NameProperty, () => L.Get("prefs.potion_reserve"));
+        L.Bind(potionTarget, System.Windows.Automation.AutomationProperties.NameProperty, () => L.Get("prefs.potion_target"));
+        Stage(guild, "stage.guild", "prefs.guild_hint", showSummary: false);
+        Stage(room, "stage.room", "prefs.room_hint", showSummary: false);
+        Stage(income, "prefs.business", "prefs.business_hint");
+        Stage(guests, "prefs.guests", "prefs.guests_hint");
+        Stage(saffron, "stage.territory_saffron", "prefs.saffron_hint");
         saffronRounds.ItemsSource = new[] { 1, 2, 3 };
-        Row("收割后种收土豆轮数", saffronRounds);
+        Row("prefs.saffron_rounds", saffronRounds);
         L.Bind(saffronRounds, System.Windows.Automation.AutomationProperties.NameProperty, () => L.Get("prefs.saffron_rounds"));
         section.Children.Add(saffronProcessing);
         Note("prefs.saffron_details");
-        Stage(draws, "每日免费抽取", "prefs.draws_hint");
-        Stage(recycle, "装备分解", "只处理本日免费抽取的可分解装备");
+        Stage(draws, "stage.free_draws", "prefs.draws_hint");
+        Stage(recycle, "stage.equipment_recycle", "prefs.recycle_hint");
         section.Children.Add(keepSr);
         var enhanceLabel = Label("prefs.enhance"); enhanceLabel.Margin = new(0,12,0,0); section.Children.Add(enhanceLabel);
         var enhanceRow = new WrapPanel();
@@ -217,23 +223,23 @@ public sealed class DailyPreferencesPanel : UserControl
         section.Children.Add(enhanceRow);
         Note("prefs.enhance_note");
         section.Children.Add(fallback);
-        Stage(weeklyCraft, "周常制作装备", "prefs.craft_hint");
-        Stage(refine, "装备精炼", "prefs.refine_hint");
+        Stage(weeklyCraft, "stage.weekly_equipment", "prefs.craft_hint");
+        Stage(refine, "stage.equipment_refine", "prefs.refine_hint");
         section.Children.Add(refineChoice);
         section.Children.Add(inventoryState);
-        var refreshInventory = LocalButton("刷新可选装备"); refreshInventory.HorizontalAlignment = HorizontalAlignment.Left; refreshInventory.Margin = new(0, 4, 0, 8);
+        var refreshInventory = LocalButton("prefs.refresh_gear"); refreshInventory.HorizontalAlignment = HorizontalAlignment.Left; refreshInventory.Margin = new(0, 4, 0, 8);
         refreshInventory.Click += (_, _) => RefreshInventory();
         section.Children.Add(refreshInventory);
         Note("prefs.refine_note");
-        Stage(hunt, "普通狩猎与奖励日", "prefs.hunt_hint");
-        Row("普通狩猎关卡", chapter);
+        Stage(hunt, "prefs.hunt", "prefs.hunt_hint");
+        Row("prefs.hunt_chapter", chapter);
         section.Children.Add(gold);
         section.Children.Add(slime);
         Note("prefs.priority_note");
         var rankingRow = new StackPanel { Orientation = Orientation.Horizontal };
         rankingRow.Children.Add(priority);
         var moves = new StackPanel { Margin = new(8, 0, 0, 0) };
-        foreach (var spec in new[] { ("上移", -1), ("下移", 1) })
+        foreach (var spec in new[] { ("account.move_up", -1), ("account.move_down", 1) })
         {
             var b = LocalButton(spec.Item1); b.Margin = new(0, 0, 0, 6);
             int delta = spec.Item2;
@@ -242,51 +248,55 @@ public sealed class DailyPreferencesPanel : UserControl
         }
         rankingRow.Children.Add(moves);
         section.Children.Add(rankingRow);
-        Stage(stones, "圣石狩猎", "按所选属性用完剩余免费火炬");
-        Row("圣石属性", stone);
+        Stage(stones, "stage.stones", "prefs.stones_hint");
+        Row("prefs.stones_element", stone);
         Note("prefs.stones_note");
-        Stage(mirror, "镜中之战", "用完实际剩余免费次数", expanded: true);
+        Stage(mirror, "prefs.mirror", "prefs.mirror_hint", expanded: true);
         multiplier.ItemsSource = Enumerable.Range(1, 40).ToArray();
-        Row("每轮倍率", multiplier);
+        Row("prefs.multiplier", multiplier);
         Note("prefs.multiplier_note");
-        Stage(dispatch, "每日派遣", "prefs.dispatch_hint");
-        Stage(goddess, "女神像奖励", "进入广场领取当日可用奖励", showSummary: false);
-        Stage(ranking, "广场排行榜奖励", "prefs.ranking_hint");
+        Stage(dispatch, "stage.daily_dispatch", "prefs.dispatch_hint");
+        Stage(goddess, "stage.goddess", "prefs.goddess_hint", showSummary: false);
+        Stage(ranking, "stage.square_ranking", "prefs.ranking_hint");
         tacticsSearch.ItemsSource = new[] { 15, 30, 45, 60, 120 };
         if (extensionTasks)
         {
-            Stage(tactics, "战术教材", "按当前配置执行");
-            Row("每关搜索秒数", tacticsSearch);
+            Stage(tactics, "stage.tactics", "plugins.tactics_settings_hint", expanded: true);
+            Row("prefs.search_seconds", tacticsSearch);
+            Note("plugins.tactics_compute_hint");
         }
-        Stage(eventBattle, "活动战斗", extensionEvents ? "按当前配置执行" : "prefs.event_sweep_hint", expanded: true);
+        Stage(eventBattle, "prefs.event_battle", extensionEvents ? "prefs.extension_hint" : "prefs.event_sweep_hint", expanded: true);
+        Row("prefs.event_preset_slot", eventPreset);
+        Note("prefs.event_preset_hint");
+        eventPreset.TextChanged += (_, _) => MarkDirty();
         if (!extensionEvents) { section.Children.Add(eventFailureSweep); Note("prefs.event_failure_hint"); }
         section.Children.Add(eventChallenge);
         eventSearch.ItemsSource = new[] { 5, 15, 30, 60, 120 };
         if (extensionEvents)
         {
-            Row("每关搜索秒数", eventSearch);
+            Row("prefs.search_seconds", eventSearch);
         }
-        if (extensionEvents) Note("仅使用免费次数，完成后保留游戏进度。");
-        Stage(salvation, "救赎之塔扫荡", "prefs.salvation_hint", expanded: true);
+        if (extensionEvents) Note("prefs.attempts_note");
+        Stage(salvation, "stage.salvation", "prefs.salvation_hint", expanded: true);
         salvationMode.ItemsSource = new[] { new Choice("growth", "prefs.salvation_growth"), new Choice("fixed", "prefs.salvation_fixed") };
         Row("prefs.salvation_mode", salvationMode);
         salvationCountRow = Row("prefs.salvation_count", salvationCount);
         salvationCountRow.Visibility = Visibility.Collapsed;
         Row("prefs.salvation_reserve", salvationReserve);
         Note("prefs.salvation_budget");
-        Stage(weeklyBook, "周常末日之书", "prefs.book_hint");
-        Stage(friendship, "亲密度咨询", "prefs.friendship_hint");
-        Stage(mainline, "周收集", "prefs.collection_hint", expanded: true);
+        Stage(weeklyBook, "stage.weekly_book", "prefs.book_hint");
+        Stage(friendship, "stage.friendship", "prefs.friendship_hint");
+        Stage(mainline, "stage.weekly_mainline", "prefs.collection_hint", expanded: true);
         section.Children.Add(walkCollect);
         section.Children.Add(collectionMaps);
         collectionMaps.Changed += (_, _) => MarkDirty();
         Note("prefs.collection_note");
-        Stage(weeklyNpc, "周NPC任务", "prefs.npc_hint");
-        Stage(weeklySteal, "每周偷窃", "prefs.steal_hint");
-        Stage(roomLikes, "周常小屋点赞", "prefs.likes_hint");
-        Stage(fishing, "周常钓鱼", "prefs.fishing_hint");
-        Stage(weeklySichuan, "周常连连看", "prefs.tiles_hint");
-        Stage(trade, "自动跑商采购", "prefs.trade_hint", expanded: true, editableWhenOff: true);
+        Stage(weeklyNpc, "stage.weekly_npc", "prefs.npc_hint");
+        Stage(weeklySteal, "stage.weekly_steal", "prefs.steal_hint");
+        Stage(roomLikes, "stage.weekly_room_likes", "prefs.likes_hint");
+        Stage(fishing, "stage.weekly_fishing", "prefs.fishing_hint");
+        Stage(weeklySichuan, "stage.weekly_sichuan", "prefs.tiles_hint");
+        Stage(trade, "prefs.trade_purchase", "prefs.trade_hint", expanded: true, editableWhenOff: true);
         section.Children.Add(tradeFavorites);
         Note("prefs.trade_favorites_hint");
         cookingButton.HorizontalAlignment = HorizontalAlignment.Left;
@@ -303,16 +313,16 @@ public sealed class DailyPreferencesPanel : UserControl
         section = normalTrade;
         section.Children.Add(tradeProcessing);
         Note("prefs.trade_processing_hint");
-        Row("保留金币", tradeReserve);
-        Row("本轮最多垫资", tradeMaximum);
+        Row("trade.reserve", tradeReserve);
+        Row("trade.budget", tradeMaximum);
         L.Bind(tradeReserve, System.Windows.Automation.AutomationProperties.NameProperty, "trade.reserve");
         L.Bind(tradeMaximum, System.Windows.Automation.AutomationProperties.NameProperty, "trade.budget");
         Note("prefs.trade_budget_help");
         section.Children.Add(tradeBreakEven);
         Note("trade.break_even_hint");
         Note("prefs.trade_note");
-        var tradeButton = LocalButton("预览跑商计划"); tradeButton.HorizontalAlignment = HorizontalAlignment.Left;
-        tradeButton.Click += async (_, _) => await OpenGameToolAsync(() => { var trade = new Window { Title = L.Translate("跑商计划"), Width = 1060, Height = 780, MinWidth = 760, MinHeight = 560, Owner = Window.GetWindow(this), Content = new TradePlanPanel(dataRoot, account, allowGame), WindowStartupLocation = WindowStartupLocation.CenterOwner }; DailyDialogs.Prepare(trade); trade.Show(); });
+        var tradeButton = LocalButton("prefs.trade_open"); tradeButton.HorizontalAlignment = HorizontalAlignment.Left;
+        tradeButton.Click += async (_, _) => await OpenGameToolAsync(() => { var trade = new Window { Title = L.Get("prefs.trade_title"), Width = 1060, Height = 780, MinWidth = 760, MinHeight = 560, Owner = Window.GetWindow(this), Content = new TradePlanPanel(dataRoot, account, allowGame), WindowStartupLocation = WindowStartupLocation.CenterOwner }; DailyDialogs.Prepare(trade); trade.Show(); });
         L.Bind(tradeButton, FrameworkElement.ToolTipProperty, "prefs.trade_preview_help");
         section.Children.Add(tradeButton);
         var bargainButton = LocalButton("bargain.title");
@@ -327,7 +337,7 @@ public sealed class DailyPreferencesPanel : UserControl
         section = tradeSection;
         tradeFavorites.Checked += (_, _) => { normalTrade.IsEnabled = false; normalTrade.Opacity = .5; cookingButton.IsEnabled = true; };
         tradeFavorites.Unchecked += (_, _) => { normalTrade.IsEnabled = true; normalTrade.Opacity = 1; cookingButton.IsEnabled = false; };
-        Stage(events, "活动游戏与领奖", "prefs.events_hint");
+        Stage(events, "prefs.events", "prefs.events_hint");
         section.Children.Add(eventMissions);
         section.Children.Add(quiz);
         section.Children.Add(dice);
@@ -335,10 +345,10 @@ public sealed class DailyPreferencesPanel : UserControl
         section.Children.Add(roulette);
         section.Children.Add(exchange);
         Note("prefs.events_note");
-        Stage(dailyRewards, "日常任务奖励", "在行动结束后领取新完成的日常任务");
-        Stage(weeklyRewards, "周常任务奖励", "在行动结束后领取新完成的周常任务");
-        Stage(pass, "通行证奖励", "检查各通行证的任务与等级奖励", showSummary: false);
-        Stage(mail, "邮箱物品", "prefs.mail_hint", editableWhenOff: true);
+        Stage(dailyRewards, "stage.daily_rewards", "prefs.daily_hint");
+        Stage(weeklyRewards, "stage.weekly_rewards", "prefs.weekly_hint");
+        Stage(pass, "stage.pass_rewards", "prefs.pass_hint", showSummary: false);
+        Stage(mail, "prefs.mail", "prefs.mail_hint", editableWhenOff: true);
         section.Children.Add(preserveBloodCocktailMail);
         Note("prefs.mail_preserve_hint");
         // Stages without parameters need only a switch, not an empty expansion affordance.
@@ -359,7 +369,8 @@ public sealed class DailyPreferencesPanel : UserControl
             c.Checked += (_, _) => MarkDirty();
             c.Unchecked += (_, _) => MarkDirty();
         }
-        salvationReserve.TextChanged += (_, _) => { if (!updating) dirty = true; };
+        // Same dirty rule as before, but the unsaved notice must appear for this field too.
+        salvationReserve.TextChanged += (_, _) => { if (!updating) { dirty = true; if (loaded != null) L.Text(status, "prefs.dirty"); } };
         salvationCount.TextChanged += (_, _) => MarkDirty();
         salvationMode.SelectionChanged += (_, _) =>
         {
@@ -434,7 +445,7 @@ public sealed class DailyPreferencesPanel : UserControl
             Margin = new(0, 8, 0, 8),
             HorizontalContentAlignment = HorizontalAlignment.Stretch
         };
-        L.Bind(expander, System.Windows.Automation.AutomationProperties.NameProperty, () => L.Translate(title));
+        L.Bind(expander, System.Windows.Automation.AutomationProperties.NameProperty, title);
         var border = new Border { BorderBrush = (Brush)Application.Current.FindResource("Line"), BorderThickness = new(0, 0, 0, 1), Child = expander };
         form.Children.Add(border);
         sections.Add((border, title, summary));
@@ -454,10 +465,10 @@ public sealed class DailyPreferencesPanel : UserControl
         foreach (var (view, title, summary) in sections)
         {
             bool show = (category=="all" || CategoryFor(title)==category) &&
-                (query.Length == 0 || (title + " " + summary + " " + L.Translate(title) + " " + L.Translate(summary) + " " + SearchableLabels(view)).Contains(query, StringComparison.OrdinalIgnoreCase));
+                (query.Length == 0 || (L.SearchText(title) + " " + L.SearchText(summary) + " " + SearchableLabels(view)).Contains(query, StringComparison.OrdinalIgnoreCase));
             view.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
             if (show && query.Length > 0 && view.Child is Expander found) found.IsExpanded = true;
-            if(show && title=="整体设置" && category=="resources" && view.Child is Expander general)general.IsExpanded=true;
+            if(show && title=="prefs.general" && category=="resources" && view.Child is Expander general)general.IsExpanded=true;
             if (show)
                 count++;
         }
@@ -475,13 +486,7 @@ public sealed class DailyPreferencesPanel : UserControl
         }
         return string.Join(" ", Labels(owner));
     }
-    private static string CategoryFor(string title) => title switch
-    {
-        "整体设置" or "自动跑商采购" or "藏红花种植与收割" => "resources",
-        "普通狩猎与奖励日" or "圣石狩猎" or "镜中之战" or "战术教材" or "活动战斗" or "活动每日挑战15" or "救赎之塔扫荡" => "battle",
-        "周收集" or "周NPC任务" or "每周偷窃" or "周常末日之书" or "周常制作装备" or "周常小屋点赞" or "周常钓鱼" or "周常连连看" or "周常任务奖励" => "weekly",
-        _ => "daily"
-    };
+    private static string CategoryFor(string titleKey) => DailySettingsCatalog.Category(titleKey);
     internal void ReviewCategoryForSmoke(string key)
     {
         if(allowGame)throw new InvalidOperationException("Isolated settings required");
@@ -493,7 +498,7 @@ public sealed class DailyPreferencesPanel : UserControl
     {
         if (allowGame || extensionEvents) throw new InvalidOperationException("Isolated public settings required");
         ReviewCategoryForSmoke("battle");
-        filter.Text = L.Translate(tower ? "救赎之塔扫荡" : "活动战斗");
+        filter.Text = L.Get(tower ? "stage.salvation" : "prefs.event_battle");
         foreach (var item in sections.Where(s => s.View.Visibility == Visibility.Visible))
             if (item.View.Child is Expander exp) exp.IsExpanded = true;
         UpdateLayout();
@@ -514,10 +519,10 @@ public sealed class DailyPreferencesPanel : UserControl
     {
         if(allowGame)throw new InvalidOperationException("Isolated settings required");
         var before=(potionReserve.Text,potionTarget.Text,potionRefill.IsChecked,mirror.IsChecked,mainline.IsChecked);
-        ReviewCategoryForSmoke("weekly");filter.Text=L.Translate("镜中之战");
-        if(category!="all" || sections.Single(s=>s.Title=="镜中之战").View.Visibility!=Visibility.Visible)throw new Exception("Search cannot find settings outside selected category");
-        filter.Text = L.Translate("每轮倍率");
-        var mirrorSection = sections.Single(s => s.Title == "镜中之战").View;
+        ReviewCategoryForSmoke("weekly");filter.Text=L.Get("prefs.mirror");
+        if(category!="all" || sections.Single(s=>s.Title=="prefs.mirror").View.Visibility!=Visibility.Visible)throw new Exception("Search cannot find settings outside selected category");
+        filter.Text = L.Get("prefs.multiplier");
+        var mirrorSection = sections.Single(s => s.Title == "prefs.mirror").View;
         if (mirrorSection.Visibility != Visibility.Visible || mirrorSection.Child is not Expander { IsExpanded: true })
             throw new Exception("Search cannot reveal a setting inside a collapsed task");
         if(before!=(potionReserve.Text,potionTarget.Text,potionRefill.IsChecked,mirror.IsChecked,mainline.IsChecked))throw new Exception("Filtering changed saved task inputs");
@@ -527,7 +532,7 @@ public sealed class DailyPreferencesPanel : UserControl
     {
         if (allowGame || loaded == null || account.Length == 0) throw new InvalidOperationException("Isolated account settings required");
         ReviewCategoryForSmoke("daily");
-        filter.Text = L.Translate("装备分解");
+        filter.Text = L.Get("stage.equipment_recycle");
         foreach (var item in sections.Where(s => s.View.Visibility == Visibility.Visible))
             if (item.View.Child is Expander exp) exp.IsExpanded = true;
         int[] levels = [0, 7, 8, 9];
@@ -654,7 +659,7 @@ public sealed class DailyPreferencesPanel : UserControl
             chapter.SelectedItem = loaded.Hunt.OrdinaryChapter;
             stones.IsChecked = loaded.Hunt.StonesEnabled;
             stone.SelectedValue = loaded.Hunt.StoneElement;
-            priority.ItemsSource = loaded.Hunt.Priority.Select(k => new Choice(k, k == "gold" ? "金币加成" : k == "slime" ? "史莱姆加成" : "普通狩猎")).ToList();
+            priority.ItemsSource = loaded.Hunt.Priority.Select(k => new Choice(k, k == "gold" ? "prefs.priority_gold" : k == "slime" ? "prefs.priority_slime" : "prefs.priority_chapter")).ToList();
             priority.SelectedIndex = 0;
             recycle.IsChecked = loaded.Equipment.Enabled;
             keepSr.IsChecked = loaded.Equipment.KeepFiveStarSr;
@@ -693,6 +698,7 @@ public sealed class DailyPreferencesPanel : UserControl
             eventFailureSweep.IsChecked = loaded.EventBattle.SweepAfterFailure;
             eventChallenge.IsChecked = loaded.EventBattle.Challenge;
             eventSearch.SelectedItem = loaded.EventBattle.SearchSeconds;
+            eventPreset.Text = loaded.EventBattle.PresetSlot.ToString(CultureInfo.InvariantCulture);
             friendship.IsChecked = loaded.Friendship.Enabled;
             trade.IsChecked = loaded.Trade.Enabled;
             tradeProcessing.IsChecked = loaded.Trade.AutoCookAndSell;
@@ -721,7 +727,7 @@ public sealed class DailyPreferencesPanel : UserControl
             dirty = false;
             L.Bind(status, TextBlock.TextProperty, () => "");
         }
-        catch (Exception ex) { loaded = null; form.IsEnabled = false; DailyUiText.Error(status, ex, "无法读取偏好："); }
+        catch (Exception ex) { loaded = null; form.IsEnabled = false; DailyUiText.Error(status, ex, "prefs.read_error"); }
         finally { updating = false; }
     }
     private void RefreshInventory()
@@ -828,18 +834,21 @@ public sealed class DailyPreferencesPanel : UserControl
                 loaded.Tactics.Enabled = tactics.IsChecked == true;
                 loaded.Tactics.SearchSeconds = tacticsSearch.SelectedItem is int tacticSeconds ? tacticSeconds : 45;
             }
-            if (!int.TryParse(salvationReserve.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var keys) || keys is < 0 or > 999) { RevealField(salvationReserve); throw new InvalidDataException("救赎之塔保留钥匙必须为 0 至 999。"); }
+            if (!int.TryParse(salvationReserve.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var keys) || keys is < 0 or > 999) { RevealField(salvationReserve); throw new InvalidDataException("native.salvation_keys_error"); }
             loaded.Salvation.Enabled = salvation.IsChecked == true; loaded.Salvation.ReserveKeys = keys;
             bool fixedSweeps = (string?)salvationMode.SelectedValue == "fixed";
             if (fixedSweeps)
             {
                 if (!int.TryParse(salvationCount.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var count) || count is < 1 or > 999)
-                { RevealField(salvationCount); throw new InvalidDataException("救赎之塔固定扫荡次数必须为 1 至 999。"); }
+                { RevealField(salvationCount); throw new InvalidDataException("native.salvation_count_error"); }
                 loaded.Salvation.SweepCount = count;
             }
             loaded.Salvation.UseFixedCount = fixedSweeps;
             loaded.EventBattle.SweepAfterFailure = eventFailureSweep.IsChecked == true;
             loaded.EventBattle.Enabled = eventBattle.IsChecked == true;
+            if (!int.TryParse(eventPreset.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var presetSlot) || presetSlot is < 0 or > 999)
+            { RevealField(eventPreset); throw new InvalidDataException("prefs.event_preset_invalid"); }
+            loaded.EventBattle.PresetSlot = presetSlot;
             loaded.EventBattle.Challenge = eventChallenge.IsChecked == true;
             if (extensionEvents)
             {
@@ -864,7 +873,7 @@ public sealed class DailyPreferencesPanel : UserControl
             L.Text(status, "prefs.saved");
             return true;
         }
-        catch (Exception ex) { DailyUiText.Error(status, ex, "保存失败："); return false; }
+        catch (Exception ex) { DailyUiText.Error(status, ex, "common.save_error"); return false; }
     }
     private void RevealField(TextBox field)
     {
@@ -884,7 +893,7 @@ public sealed class DailyPreferencesPanel : UserControl
         if (!long.TryParse(field.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out long value) || value > int.MaxValue)
         {
             RevealField(field);
-            throw new InvalidDataException("天赋药数量须为非负整数；原输入已保留。");
+            throw new InvalidDataException("prefs.potion_number_invalid");
         }
         return value;
     }
@@ -893,7 +902,7 @@ public sealed class DailyPreferencesPanel : UserControl
         if (!long.TryParse(field.Text.Trim().Replace(",", ""), NumberStyles.None, CultureInfo.InvariantCulture, out long value) || value > 1_000_000_000_000)
         {
             RevealField(field);
-            throw new InvalidDataException("金币设置须为0至一万亿之间的整数；原输入已保留。");
+            throw new InvalidDataException("trade.invalid_gold");
         }
         return value;
     }
@@ -961,7 +970,7 @@ public sealed class DailyPreferencesPanel : UserControl
     internal void ShowSimpleSettingForSmoke(string title)
     {
         ReviewCategoryForSmoke("all");
-        filter.Text = L.Translate(title);
+        filter.Text = L.Get(title);
         var visible = sections.Where(s => s.View.Visibility == Visibility.Visible).ToArray();
         if (visible.Length != 1 || visible[0].Title != title || visible[0].View.Child is not StackPanel)
             throw new Exception("A setting-free task must be searchable without an expander");
@@ -969,7 +978,7 @@ public sealed class DailyPreferencesPanel : UserControl
     }
     internal void CheckOptionalSettingsForSmoke()
     {
-        if (!extensionTasks && (tactics.Parent != null || tacticsSearch.Parent != null || sections.Any(s => s.Title == "战术教材")))
+        if (!extensionTasks && (tactics.Parent != null || tacticsSearch.Parent != null || sections.Any(s => s.Title == "stage.tactics")))
             throw new Exception("Unavailable optional task remains visible");
         if (!extensionEvents && eventSearch.Parent != null)
             throw new Exception("Unavailable optional settings remain visible");
@@ -1087,6 +1096,30 @@ public sealed class DailyPreferencesPanel : UserControl
         };
     }
     public bool SavePending() => !dirty || Save();
+    internal void CheckEventPresetForSmoke()
+    {
+        if (allowGame) throw new InvalidOperationException("Preset checks require an isolated panel");
+        string first = new string('a',64), second = new string('b',64);
+        SetAccounts([new(1,"First account",first,"***001",true,true,""),new(2,"Second account",second,"***002",true,false,"")]);
+        eventBattle.IsChecked = true; eventPreset.Text = "6";
+        if (!Save() || store.Read(first).EventBattle.PresetSlot != 6) throw new Exception("Event slot did not persist");
+        accounts.SelectedValue = second;
+        if (eventPreset.Text != store.Read(second).EventBattle.PresetSlot.ToString(CultureInfo.InvariantCulture)) throw new Exception("Account inherited another account's preset");
+        eventPreset.Text = "2"; accounts.SelectedValue = first;
+        if (eventPreset.Text != "6" || store.Read(second).EventBattle.PresetSlot != 2) throw new Exception("Account switch lost preset settings");
+        filter.Text = "";
+        ReviewCategoryForSmoke("battle");
+        var exp = (Expander)sections.Single(s => s.Title == "prefs.event_battle").View.Child;
+        exp.IsExpanded = true; UpdateLayout(); exp.BringIntoView();
+    }
+    internal void ShowTacticsForSmoke()
+    {
+        if (allowGame || !extensionTasks) throw new InvalidOperationException("Tactics checks require an offline plugin fixture");
+        ReviewCategoryForSmoke("battle");
+        tactics.IsChecked = true;
+        var exp = (Expander)sections.Single(s => s.Title == "stage.tactics").View.Child;
+        exp.IsExpanded = true; UpdateLayout(); exp.BringIntoView();
+    }
     internal void ShowFavoritesForSmoke(bool enabled) { tradeFavorites.IsChecked = enabled; UpdateLayout(); }
     internal void CheckTradeProcessingForSmoke(Action<string, FrameworkElement> capture)
     {

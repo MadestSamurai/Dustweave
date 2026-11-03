@@ -91,10 +91,22 @@ internal sealed unsafe class NativeBattleKernel : IDisposable
             CompileTeam(input["blue"],N(defaults,"startDeckId"),ref b->Blue);CompileTeam(input["red"],N(stage,"enemyDeckId"),ref b->Red);}
         return bytes;
     }
+    internal CancellationToken Cancellation { get; set; }
+    internal int BatchLimit { get; set; }
     internal Result[] Run(byte[] battle,int[] seeds) {
         ObjectDisposedException.ThrowIf(disposed,this);
         if(battle.Length!=sizeof(Battle)||seeds.Length==0)throw new InvalidDataException("Invalid batch");
-        var result=new Result[seeds.Length];fixed(byte* b=battle)fixed(int* s=seeds)fixed(Result* r=result){int code=simulate(context,(Battle*)b,s,seeds.Length,r);if(code!=0||result.Any(x=>x.Status!=0))throw new InvalidOperationException("Native batch failed: "+code);}return result;
+        var result=new Result[seeds.Length];
+        fixed(byte* b=battle)fixed(int* s=seeds)fixed(Result* r=result){
+            int batch=BatchLimit>0?BatchLimit:seeds.Length;
+            for(int offset=0;offset<seeds.Length;offset+=batch){
+                Cancellation.ThrowIfCancellationRequested();
+                int code=simulate(context,(Battle*)b,s+offset,Math.Min(batch,seeds.Length-offset),r+offset);
+                if(code!=0)throw new InvalidOperationException("Native batch failed: "+code);
+            }
+        }
+        Cancellation.ThrowIfCancellationRequested();
+        if(result.Any(x=>x.Status!=0))throw new InvalidOperationException("Native batch failed");return result;
     }
     // For one fixed opponent and seed set only. Keep resolved actor order,
     // effects, sockets and graph edges; erase diagnostic IDs/coordinates.

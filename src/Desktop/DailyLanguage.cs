@@ -15,6 +15,7 @@ public sealed partial class DailyLanguage : INotifyPropertyChanged
     public static DailyLanguage Current { get; } = new();
     private readonly Dictionary<string, Dictionary<string,string>> strings;
     private readonly Dictionary<string,string> sourceKeys;
+    private readonly LocalizedTextCatalog catalog;
     private string root = "";
     public string Code { get; private set; } = "zh-CN";
     public int Revision { get; private set; }
@@ -23,29 +24,15 @@ public sealed partial class DailyLanguage : INotifyPropertyChanged
     public event EventHandler? Changed;
     private DailyLanguage()
     {
-        using var stream = typeof(DailyLanguage).Assembly.GetManifestResourceStream("Dustweave.UI.strings.json")
-            ?? throw new InvalidDataException("UI language resources are missing.");
-        strings = JsonSerializer.Deserialize<Dictionary<string,Dictionary<string,string>>>(stream)!;
-        using var pluginStream = typeof(DailyLanguage).Assembly.GetManifestResourceStream("Dustweave.UI.plugin-strings.json")!;
-        foreach (var pair in JsonSerializer.Deserialize<Dictionary<string,Dictionary<string,string>>>(pluginStream)!) strings.Add(pair.Key, pair.Value);
-        using var runtimeStream = typeof(DailyLanguage).Assembly.GetManifestResourceStream("Dustweave.UI.runtime.json")
-            ?? throw new InvalidDataException("Runtime language resources are missing.");
-        foreach (var pair in JsonSerializer.Deserialize<Dictionary<string,Dictionary<string,string>>>(runtimeStream)!)
-            strings.Add(pair.Key, pair.Value);
+        catalog = new(name => typeof(DailyLanguage).Assembly.GetManifestResourceStream("Dustweave.UI." + name + ".json")
+            ?? throw new InvalidDataException("UI language resource is missing: " + name));
+        strings = catalog.Entries;
+        sourceKeys = catalog.LegacyInputs;
         LoadNotices();
-        sourceKeys = strings.Where(p => !p.Value["zh-CN"].Contains('{'))
-            .GroupBy(p => p.Value["zh-CN"], StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First().Key, StringComparer.Ordinal);
-        // Older receipts retain their original wording. Resolve these labels without rewriting evidence.
-        foreach (var alias in new Dictionary<string,string>
-        {
-            ["恶魔猎人"]="tool.fiend-hunter",
-            ["镜中免费战斗"]="stage.mirror",
-            ["进行好感度咨询"]="work.counsel",
-            ["压制当前地图怪物"]="work.suppress"
-        }) sourceKeys.TryAdd(alias.Key,alias.Value);
         // Keep source matchers intact, then prepare each display template once.
         foreach (var entry in strings.Values)
-            foreach (var code in Codes) entry[code]=GameTerminology.Template(entry[code],code);
+            foreach (var code in Codes)
+                if (entry.TryGetValue(code, out var template)) entry[code]=GameTerminology.Template(template,code);
     }
     public void Initialize(string dataRoot)
     {
@@ -73,11 +60,16 @@ public sealed partial class DailyLanguage : INotifyPropertyChanged
         Changed?.Invoke(this, EventArgs.Empty);
     }
     public string Get(string key, params object?[] args)
+        => catalog.Get(key, Code, args);
+    internal string SearchText(string key) => catalog.SearchText(key);
+    internal string MessageKey(string code)
     {
-        if (!strings.TryGetValue(key, out var entry)) throw new KeyNotFoundException("Missing UI text: " + key);
-        var value = entry[Code];
-        return args.Length == 0 ? value : string.Format(CultureInfo.GetCultureInfo(Code), value, args);
+        string key = "message." + code;
+        return strings.ContainsKey(key) ? key : sourceKeys.GetValueOrDefault(key, key);
     }
+    public string Describe(DailyText text) => !string.IsNullOrEmpty(text.Key) && strings.ContainsKey(text.Key)
+        ? Get(text.Key, NoticeArguments(text.Key, text.Arguments ?? [])) : Describe(text.Fallback ?? "");
+    // Legacy runtime/evidence input only. New UI bindings must use Get/Text/Bind(key).
     public string Translate(string original) => strings.ContainsKey(original) ? Get(original) : sourceKeys.TryGetValue(original, out var key) ? Get(key)
         : TryFormatNotice(original, out var translated) ? translated : TranslateToolMessage(original);
     public string Stage(string id) => id == "event_battle" && DailyPlugin.Current.Supports(id) ? Get("prefs.event_battle")
@@ -88,8 +80,8 @@ public sealed partial class DailyLanguage : INotifyPropertyChanged
         if (strings.ContainsKey(key)) return Get(key);
         // Older progress records may contain the display text instead of its ID.
         // Unknown presentation metadata must not interrupt queue rendering.
-        if (step != null && sourceKeys.TryGetValue(step, out key) && key.StartsWith("work.", StringComparison.Ordinal))
-            return Get(key);
+        if (step != null && sourceKeys.TryGetValue(step, out var legacyKey) && legacyKey.StartsWith("work.", StringComparison.Ordinal))
+            return Get(legacyKey);
         return Get("work.execute");
     }
     public string State(string code) => strings.ContainsKey("state." + code) ? Get("state." + code) : Translate(DailyUserText.State(code));
@@ -105,22 +97,8 @@ public sealed partial class DailyLanguage : INotifyPropertyChanged
     public void Text(System.Windows.Controls.TextBlock target, string key, params object?[] args) => Bind(target, System.Windows.Controls.TextBlock.TextProperty, key, args);
     public void Literal(System.Windows.Controls.TextBlock target, string source) => Bind(target, System.Windows.Controls.TextBlock.TextProperty, () => Translate(source));
     public void Audit()
-    {
-        foreach (var (key, translations) in strings)
-        {
-            if (!Codes.All(c => translations.TryGetValue(c, out var text) && !string.IsNullOrWhiteSpace(text)))
-                throw new InvalidDataException("Incomplete translation: " + key);
-            var baseline = CompositeFormat(translations["zh-CN"]);
-            foreach (var value in translations.Values)
-                if (!CompositeFormat(value).SequenceEqual(baseline)) throw new InvalidDataException("Translation arguments differ: " + key);
-        }
-    }
-    private static int[] CompositeFormat(string text)
-    {
-        _ = System.Text.CompositeFormat.Parse(text);
-        return System.Text.RegularExpressions.Regex.Matches(text, @"(?<!\{)\{(\d+)(?:[^}]*)\}")
-            .Select(m => int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture)).Distinct().Order().ToArray();
-    }
+        => catalog.Audit();
+    internal DailyLocalizationDiagnostics Diagnostics() => catalog.Diagnostics(Code);
     public int Count => strings.Count;
     public sealed record LanguageSetting(string Language);
     private sealed class TextConverter(Func<string> value) : IValueConverter

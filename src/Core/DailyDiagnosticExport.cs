@@ -6,6 +6,10 @@ using System.Text.RegularExpressions;
 namespace Dustweave;
 
 public sealed record DailyDiagnosticExportResult(string Path, int Files, int Skipped, long Bytes);
+public sealed record DailyLocalizationDiagnostics(string Language, string[] Problems)
+{
+    public const int Limit = 128, MaxDetailLength = 512;
+}
 public static class DailyDiagnosticExport
 {
     public const string WeChat = "SuJakads0133", QQ = "1104563414";
@@ -128,8 +132,12 @@ public static class DailyDiagnosticExport
         return sources;
     }
     public static Task<DailyDiagnosticExportResult> CreateAsync(string root, string destination, string summary, string version, CancellationToken token=default,IReadOnlyDictionary<string,string>? additionalSources=null)
-        => Task.Run(()=>Create(root,destination,summary,version,token,additionalSources),token);
+        => CreateAsync(root,destination,summary,version,token,additionalSources,null);
+    public static Task<DailyDiagnosticExportResult> CreateAsync(string root,string destination,string summary,string version,CancellationToken token,IReadOnlyDictionary<string,string>? additionalSources,DailyLocalizationDiagnostics? localization)
+        => Task.Run(()=>Create(root,destination,summary,version,token,additionalSources,localization),token);
     public static DailyDiagnosticExportResult Create(string root,string destination,string summary,string version,CancellationToken token=default,IReadOnlyDictionary<string,string>? additionalSources=null)
+        => Create(root,destination,summary,version,token,additionalSources,null);
+    public static DailyDiagnosticExportResult Create(string root,string destination,string summary,string version,CancellationToken token,IReadOnlyDictionary<string,string>? additionalSources,DailyLocalizationDiagnostics? localization)
     {
         root=Path.GetFullPath(root);destination=Path.GetFullPath(destination);
         if(Path.GetExtension(destination)!=".zip")throw new InvalidDataException("diagnostics.export.extension");
@@ -255,6 +263,14 @@ public static class DailyDiagnosticExport
                         }catch(Exception e) when(e is IOException or UnauthorizedAccessException or JsonException or DecoderFallbackException){skipped.Add(new{path=rel,reason=e.GetType().Name});}
                     }
                     Add("summary.txt",Redact(summary+lastOperation,false));
+                    // Snapshot only: no file writes on the rendering path, and no
+                    // message arguments, account names or raw fallback text are collected.
+                    var textProblems=(localization?.Problems ?? []).Take(DailyLocalizationDiagnostics.Limit)
+                        .Select(p=>(p ?? "")[..Math.Min(p?.Length ?? 0,DailyLocalizationDiagnostics.MaxDetailLength)])
+                        .Distinct(StringComparer.Ordinal).ToArray();
+                    Add("localization.json",Redact(JsonSerializer.Serialize(new{schema=1,scope="exporting_process",language=localization?.Language,
+                        status=localization==null?"unavailable":textProblems.Length==0?"no_faults_observed":"faults_recorded",
+                        limit=DailyLocalizationDiagnostics.Limit,limitReached=textProblems.Length>=DailyLocalizationDiagnostics.Limit,problems=textProblems},DailyJson.Options),true));
                     Add("README.txt","Dustweave diagnostics\nWeChat: "+WeChat+"\nQQ: "+QQ+"\nCreated locally. Send privately; may include game character names, task history and paths. Login/session stores, plugins, executables and keys are excluded. This is a best-effort snapshot; see manifest.json for omitted files.\n");
                     bool HasTree(string label,string tree)=>included.Any(p=>p.StartsWith(label+"/"+tree+"/",StringComparison.OrdinalIgnoreCase));
                     var coverage=sources.Keys.Select(label=>new{source=label,operationError=included.Contains(label+"/ui-operation-error.json"),startup=included.Contains(label+"/startup-state.json"),updateResult=included.Contains(label+"/update-result.json"),updateAttempts=HasTree(label,"updates"),connection=included.Contains(label+"/connection.json"),connectionPreparation=included.Contains(label+"/live/diagnostics/preparation-latest.json"),loadingPerformance=included.Any(p=>p.StartsWith(label+"/live/diagnostics/performance.jsonl",StringComparison.OrdinalIgnoreCase)),ownerTransition=included.Contains(label+"/suite/last-transition.json"),ownerHistory=HasTree(label,"suite/diagnostics"),queueBootstrap=HasTree(label,"live/queue-bootstrap"),

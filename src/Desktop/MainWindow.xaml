@@ -80,7 +80,7 @@
     </Button>
    </StackPanel>
    <Border x:Name="ActionNotice" Grid.Row="1" Grid.ColumnSpan="3" Visibility="Collapsed" CornerRadius="8" Background="{DynamicResource ErrorSoft}" Padding="12,8" Margin="0,12,0,0">
-    <DockPanel><Button DockPanel.Dock="Right" Click="DismissActionNotice_Click" Style="{StaticResource QuietButton}" AutomationProperties.Name="{l:Tr common.close}" ToolTip="{l:Tr common.close}" Content="×" Margin="12,0,0,0"/><ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="90"><TextBlock x:Name="ActionNoticeText" TextWrapping="Wrap" Foreground="{DynamicResource Error}"/></ScrollViewer></DockPanel>
+    <DockPanel><Button DockPanel.Dock="Right" Click="DismissActionNotice_Click" Style="{StaticResource QuietButton}" AutomationProperties.Name="{l:Tr window.close}" ToolTip="{l:Tr window.close}" Content="×" Margin="12,0,0,0"/><ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="90"><TextBlock x:Name="ActionNoticeText" TextWrapping="Wrap" Foreground="{DynamicResource Error}"/></ScrollViewer></DockPanel>
    </Border>
   </Grid>
   <TabControl x:Name="WorkspaceTabs" Grid.Row="1" Grid.ColumnSpan="2" SelectionChanged="WorkspaceTab_Changed" Background="Transparent" BorderThickness="0" SelectedIndex="0" TabStripPlacement="Left" ItemContainerStyle="{StaticResource NavigationTab}">
@@ -129,7 +129,7 @@
         <Button Grid.Column="2" x:Name="RefreshButton" Content="{l:Tr common.refresh}" Margin="8,0,0,0" Click="Refresh_Click" VerticalAlignment="Center"/>
        </Grid>
        <Grid Grid.Row="1">
-        <DataGrid x:Name="AccountsGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserSortColumns="False" HeadersVisibility="Column" RowHeight="54" ColumnHeaderHeight="34" GridLinesVisibility="None" Background="Transparent" BorderThickness="0" RowBackground="Transparent" AlternatingRowBackground="Transparent" RowStyle="{StaticResource AccountRowStyle}" ColumnHeaderStyle="{StaticResource AccountColumnHeader}" SelectionMode="Single" SelectionUnit="FullRow" SelectionChanged="Selection_Changed" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" EnableRowVirtualization="True" VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.ScrollUnit="Pixel">
+        <DataGrid x:Name="AccountsGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserSortColumns="False" HeadersVisibility="Column" RowHeight="54" ColumnHeaderHeight="34" GridLinesVisibility="None" Background="Transparent" BorderThickness="0" RowBackground="Transparent" AlternatingRowBackground="Transparent" RowStyle="{StaticResource AccountRowStyle}" ColumnHeaderStyle="{StaticResource AccountColumnHeader}" SelectionMode="Single" SelectionUnit="FullRow" SelectionChanged="Selection_Changed" ContextMenuOpening="AccountsGrid_ContextMenuOpening" PreviewMouseRightButtonDown="AccountsGrid_PreviewMouseRightButtonDown" PreviewKeyDown="AccountsGrid_PreviewKeyDown" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" EnableRowVirtualization="True" VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.ScrollUnit="Pixel">
          <DataGrid.Columns>
           <DataGridTemplateColumn Width="44">
            <DataGridTemplateColumn.Header><StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0"><CheckBox x:Name="SelectAll" ToolTip="{l:Tr account.select_all}" AutomationProperties.Name="{l:Tr account.select_all}" Click="SelectAll_Click" VerticalAlignment="Center"/></StackPanel></DataGridTemplateColumn.Header>
@@ -138,35 +138,53 @@
           <DataGridTemplateColumn Header="{l:Tr account.name}" Width="*" MinWidth="150"><DataGridTemplateColumn.CellTemplate><DataTemplate>
            <Grid Margin="4,0" VerticalAlignment="Center" ToolTip="{Binding DetailsLabel}"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
             <TextBlock Text="{Binding OrderLabel}" FontSize="12" Foreground="{DynamicResource MutedInk}" VerticalAlignment="Center"/>
-            <StackPanel Grid.Column="1"><TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding PlayerLabel}" FontSize="11" Foreground="{DynamicResource MutedInk}" TextTrimming="CharacterEllipsis" Margin="0,3,0,0" ToolTip="{Binding PlayerLabel}"/></StackPanel>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+             <!-- Status is a badge beside the name only when it matters (signed in here / unreadable); ordinary saved accounts stay quiet. -->
+             <Grid HorizontalAlignment="Left"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+              <Border x:Name="AccountBadge" Grid.Column="1" CornerRadius="6" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
+               <Border.Style><Style TargetType="Border"><Setter Property="Background" Value="{DynamicResource PrimarySoft}"/><Style.Triggers>
+                <DataTrigger Binding="{Binding HasBadge}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+                <DataTrigger Binding="{Binding BadgeIsError}" Value="True"><Setter Property="Background" Value="{DynamicResource ErrorSoft}"/></DataTrigger>
+               </Style.Triggers></Style></Border.Style>
+               <TextBlock Text="{Binding BadgeLabel}" FontSize="11"><TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Foreground" Value="{DynamicResource Primary}"/><Style.Triggers><DataTrigger Binding="{Binding BadgeIsError}" Value="True"><Setter Property="Foreground" Value="{DynamicResource Error}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
+              </Border>
+             </Grid>
+             <TextBlock Text="{Binding PlayerLine}" FontSize="11" Foreground="{DynamicResource MutedInk}" TextTrimming="CharacterEllipsis" Margin="0,3,0,0" ToolTip="{Binding PlayerLine}">
+              <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding PlayerLine}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+             </TextBlock>
+            </StackPanel>
            </Grid>
           </DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-          <DataGridTemplateColumn Header="{l:Tr presets.label}" Width="200"><DataGridTemplateColumn.CellTemplate><DataTemplate>
+          <DataGridTemplateColumn Header="{l:Tr presets.label}" Width="188"><DataGridTemplateColumn.CellTemplate><DataTemplate>
            <ComboBox ItemsSource="{Binding PresetOptions}" TextSearch.TextPath="Label" SelectedValuePath="Id" SelectedItem="{Binding SelectedPreset,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Margin="4,0" VerticalAlignment="Center" IsEnabled="{Binding Account.Valid}" ToolTip="{Binding SelectedPreset.Label}" AutomationProperties.Name="{l:Tr presets.label}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis"/></DataTemplate></ComboBox.ItemTemplate></ComboBox>
           </DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-          <DataGridTextColumn Header="{l:Tr account.status}" Binding="{Binding StatusLabel}" Width="110" IsReadOnly="True" ElementStyle="{StaticResource AccountCellText}"/>
-          <DataGridTemplateColumn Width="128"><DataGridTemplateColumn.CellTemplate><DataTemplate>
-           <Button x:Name="EnterAccountButton" Foreground="{DynamicResource Primary}" BorderBrush="{DynamicResource Primary}" FontWeight="SemiBold" Content="{l:Tr account.enter}" Click="EnterAccount_Click" Margin="4,0" VerticalAlignment="Center" IsEnabled="{Binding Account.Valid}" AutomationProperties.Name="{Binding EnterLabel}" ToolTip="{Binding EnterLabel}"/>
+          <DataGridTemplateColumn Width="150"><DataGridTemplateColumn.CellTemplate><DataTemplate>
+           <!-- Each row owns its actions: Enter targets this row, the overflow menu highlights the row before opening. -->
+           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,4,0">
+            <Button x:Name="EnterAccountButton" Content="{l:Tr account.enter}" Click="EnterAccount_Click" MinWidth="84" Margin="0,0,6,0" VerticalAlignment="Center" IsEnabled="{Binding Account.Valid}" AutomationProperties.Name="{Binding EnterLabel}" ToolTip="{Binding EnterLabel}"/>
+            <Button x:Name="AccountActionsButton" Content="···" Click="AccountActions_Click" MinWidth="34" Padding="8,4" VerticalAlignment="Center" AutomationProperties.Name="{Binding ActionsLabel}" ToolTip="{Binding ActionsLabel}"/>
+           </StackPanel>
           </DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
          </DataGrid.Columns>
+         <DataGrid.ContextMenu>
+          <!-- Highlighted-row management. Opened from a row's ··· button, a right-click on the row, or the keyboard menu key. -->
+          <ContextMenu x:Name="AccountActionsMenu" Style="{StaticResource ActionMenu}" AutomationProperties.Name="{l:Tr account.actions}">
+           <MenuItem x:Name="RenameAccountItem" Header="{l:Tr account.rename}" Click="Rename_Click"/>
+           <MenuItem x:Name="MoveUpItem" Header="{l:Tr account.move_up}" Click="Up_Click" ToolTip="{l:Tr account.move_shortcut}"/>
+           <MenuItem x:Name="MoveDownItem" Header="{l:Tr account.move_down}" Click="Down_Click" ToolTip="{l:Tr account.move_shortcut}"/>
+           <Separator x:Name="SessionActionsSeparator" Style="{StaticResource ActionMenuSeparator}"/>
+           <MenuItem x:Name="ReloginItem" Header="{l:Tr account.relogin.action}" Click="Relogin_Click" ToolTip="{l:Tr account.relogin.help}" ToolTipService.ShowOnDisabled="True"/>
+           <MenuItem x:Name="SandboxLaunchItem" Header="{l:Tr sandbox.launch}" Click="SandboxLaunch_Click" ToolTip="{l:Tr sandbox.launch_help}" ToolTipService.ShowOnDisabled="True"/>
+           <MenuItem x:Name="SandboxRepairItem" Header="{l:Tr sandbox.manage.title}" Click="SandboxRepair_Click" ToolTip="{l:Tr sandbox.manage.selected_help}" ToolTipService.ShowOnDisabled="True"/>
+           <Separator Style="{StaticResource ActionMenuSeparator}"/>
+           <MenuItem x:Name="DeleteAccountItem" Header="{l:Tr account.remove}" Tag="destructive" Click="Delete_Click"/>
+          </ContextMenu>
+         </DataGrid.ContextMenu>
          <DataGrid.Resources><Style TargetType="DataGridCell"><Setter Property="VerticalContentAlignment" Value="Center"/><Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/><Setter Property="Padding" Value="4,0"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="DataGridCell"><Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}"><ContentPresenter VerticalAlignment="Center"/></Border></ControlTemplate></Setter.Value></Setter><Style.Triggers><Trigger Property="IsSelected" Value="True"><Setter Property="Foreground" Value="{DynamicResource Ink}"/></Trigger></Style.Triggers></Style></DataGrid.Resources>
         </DataGrid>
         <TextBlock x:Name="EmptyText" Text="{l:Tr account.empty}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="440" Margin="20" Visibility="Collapsed"/>
        </Grid>
-       <DockPanel Grid.Row="2" x:Name="ManageBar" Margin="0,4,0,0" LastChildFill="False">
-
-        <StackPanel Orientation="Horizontal" ToolTip="{l:Tr account.manage_help}">
-         <Button x:Name="RenameAccountButton" Content="{l:Tr account.rename}" Click="Rename_Click" Margin="0,0,8,0"/>
-         <Button x:Name="MoveUpButton" Content="{l:Tr account.move_up}" Click="Up_Click" Margin="0,0,8,0"/>
-         <Button x:Name="MoveDownButton" Content="{l:Tr account.move_down}" Click="Down_Click" Margin="0,0,8,0"/>
-         <Button x:Name="DeleteAccountButton" Content="{l:Tr account.remove}" Click="Delete_Click" Style="{StaticResource DangerButton}"/>
-        </StackPanel>
-       </DockPanel>
-       <WrapPanel Grid.Row="3" HorizontalAlignment="Right" Margin="0,8,0,0">
-        <Button x:Name="ReloginButton" Content="{l:Tr account.relogin.action}" Click="Relogin_Click" Margin="0,0,8,0" ToolTip="{l:Tr account.relogin.help}"/>
-        <Button x:Name="SandboxLaunchButton" Content="{l:Tr sandbox.launch}" Click="SandboxLaunch_Click" Margin="0,0,8,0" ToolTip="{l:Tr sandbox.launch_help}"/>
-        <Button x:Name="SandboxRepairButton" Content="{l:Tr sandbox.manage.title}" Click="SandboxRepair_Click" ToolTip="{l:Tr sandbox.manage.selected_help}"/>
-       </WrapPanel>
        <TextBlock x:Name="SandboxHelpText" Grid.Row="4" Visibility="Collapsed" Text="{l:Tr sandbox.help}" FontSize="12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,12,0,0"/>
       </Grid>
      </Border>
@@ -175,7 +193,7 @@
    <TabItem x:Name="ScheduleTab" Tag="{StaticResource Icon.Clock}" Header="{l:Tr nav.schedule}"/>
    <TabItem x:Name="PluginsTab" Tag="{StaticResource Icon.Plugin}" Header="{l:Tr plugins.title}"/>
    <TabItem Visibility="Collapsed" x:Name="UpdatesTab" Tag="{StaticResource Icon.Link}" Header="{l:Tr nav.updates}"/>
-   <TabItem x:Name="SoftwareSettingsTab" Visibility="Collapsed" Tag="{StaticResource Icon.Settings}" Header="{l:Tr nav.software}">
+   <TabItem x:Name="SoftwareSettingsTab" Visibility="Collapsed" Tag="{StaticResource Icon.Gear}" Header="{l:Tr nav.software}">
     <ScrollViewer x:Name="SoftwareSettingsScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
      <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" MaxWidth="880"/></Grid.ColumnDefinitions><StackPanel Margin="0,0,12,12">
       <TextBlock Text="{l:Tr software.appearance}" FontSize="17" FontWeight="SemiBold" Margin="0,4,0,16"/>
@@ -257,7 +275,7 @@
   <StackPanel x:Name="SidebarPreferences" Grid.Row="1" Grid.RowSpan="2" VerticalAlignment="Bottom" Margin="12,0,12,16">
    <Button x:Name="SoftwareSettingsButton" Click="OpenSoftwareSettings_Click" AutomationProperties.Name="{l:Tr nav.software}" HorizontalContentAlignment="Stretch" Padding="12,8" Margin="0,0,0,4">
     <Button.Style><Style TargetType="Button" BasedOn="{StaticResource QuietButton}"><Style.Triggers><DataTrigger Binding="{Binding IsSelected,ElementName=SoftwareSettingsTab}" Value="True"><Setter Property="Background" Value="{DynamicResource PrimarySoft}"/><Setter Property="Foreground" Value="{DynamicResource Primary}"/><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger></Style.Triggers></Style></Button.Style>
-    <StackPanel Orientation="Horizontal"><Path Style="{StaticResource LineIcon}" Data="{StaticResource Icon.Settings}" Stroke="{Binding Foreground,RelativeSource={RelativeSource AncestorType=Button}}" Margin="0,0,10,0"/><TextBlock Text="{l:Tr nav.software}" VerticalAlignment="Center"/></StackPanel>
+    <StackPanel Orientation="Horizontal"><Path Style="{StaticResource LineIcon}" Data="{StaticResource Icon.Gear}" Stroke="{Binding Foreground,RelativeSource={RelativeSource AncestorType=Button}}" Margin="0,0,10,0"/><TextBlock Text="{l:Tr nav.software}" VerticalAlignment="Center"/></StackPanel>
    </Button>
    <Button x:Name="VersionButton" Click="Updates_Click" Style="{StaticResource QuietButton}" HorizontalAlignment="Left" Padding="8,6" Margin="0,10,0,0" ToolTip="{l:Tr nav.updates}" AutomationProperties.Name="{l:Tr nav.updates}">
     <StackPanel Orientation="Horizontal">

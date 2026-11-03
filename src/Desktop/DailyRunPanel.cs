@@ -158,6 +158,13 @@ public sealed partial class DailyRunPanel : UserControl
         current.VerticalAlignment = VerticalAlignment.Center;
         Grid.SetColumn(current, 2);
         summary.Children.Add(current);
+        // Stop takes the start action's place in the summary card, so the run's one primary control never moves.
+        // It is a calm secondary button: stopping keeps completed progress and offers Continue afterwards.
+        stop.MinHeight = current.MinHeight; stop.FontSize = current.FontSize; stop.Padding = current.Padding; stop.Margin = current.Margin;
+        stop.HorizontalAlignment = HorizontalAlignment.Right; stop.VerticalAlignment = VerticalAlignment.Center;
+        L.Bind(stop, System.Windows.Automation.AutomationProperties.NameProperty, "common.stop");
+        Grid.SetColumn(stop, 2);
+        summary.Children.Add(stop);
         L.Bind(current, System.Windows.Automation.AutomationProperties.NameProperty, "run.launch_selected");
         L.Bind(current, FrameworkElement.ToolTipProperty, "run.launch_help");
 
@@ -205,7 +212,7 @@ public sealed partial class DailyRunPanel : UserControl
         retry.Style = (Style)Application.Current.FindResource(typeof(Button));
         resume.Style = (Style)Application.Current.FindResource("PrimaryButton");
         current.Style = (Style)Application.Current.FindResource("PrimaryButton");
-        foreach (var b in new[] { chooseTasks, stop, retry, resume })
+        foreach (var b in new[] { chooseTasks, retry, resume })
         {
             b.Margin = new(8, 0, 0, 4);
             actions.Children.Add(b);
@@ -375,7 +382,8 @@ public sealed partial class DailyRunPanel : UserControl
             rows.Add(row);
         }
         L.Text(status, "run.title");
-        L.Bind(detail, TextBlock.TextProperty, () => !DailyProfiles.ValidKey(activeAccount) ? L.Get("run.no_account_hint") : currentView.Expired ? L.Get("run.new_day", "").Trim() : "");
+        // A ready plan reassures that finished work is skipped, instead of leaving the summary blank.
+        L.Bind(detail, TextBlock.TextProperty, () => !DailyProfiles.ValidKey(activeAccount) ? L.Get("run.no_account_hint") : currentView.Expired ? L.Get("run.new_day", "").Trim() : L.Get("run.initial_hint"));
         L.Bind(detail, FrameworkElement.ToolTipProperty, () => detail.Text);
         RenderOperationError();
         progress.Maximum = 1;
@@ -637,7 +645,11 @@ public sealed partial class DailyRunPanel : UserControl
                     text += (text.Length > 0 ? "\n" : "") + DailyResultText.Absorptions(day);
                 if (snapshot.State is "blocked" or "failed" or "error" && DailyIssues.Classify(snapshot.Detail).Code != "unknown")
                     text = DailyIssuePresentation.WithAdvice(snapshot.Detail, text);
+                // An unrecognized interruption still needs a concrete next step (PRODUCT.md); classified issues bring their own.
+                else if (snapshot.State == "blocked")
+                    text = (text.Length > 0 ? text + "\n" : "") + L.Get("run.blocked_next");
                 if (HasRecovery) text = (text.Length > 0 ? text + "\n" : "") + L.Get("run.recovery_summary", RecoveryOperations);
+                text = CollapseRepeats(text);
                 return snapshot.Carried ? L.Get("run.carried", text) : text;
             }
         }
@@ -749,6 +761,24 @@ public sealed partial class DailyRunPanel : UserControl
         RefreshPresets();
     }
     private static string Describe(string text) => L.Describe(text);
+    // The same interruption reported many times reads as one line with a count; distinct lines and blank paragraph
+    // breaks are kept. Presentation only: the raw message stays in the tooltip and diagnostics.
+    internal static string CollapseRepeats(string text)
+    {
+        if (string.IsNullOrEmpty(text) || text.IndexOf('\n') < 0) return text;
+        var lines = text.Replace("\r", "").Split('\n');
+        var output = new List<string>(lines.Length);
+        for (int i = 0; i < lines.Length;)
+        {
+            int next = i + 1;
+            while (next < lines.Length && lines[next] == lines[i]) next++;
+            int count = next - i;
+            if (count > 1 && lines[i].Trim().Length > 0) output.Add(L.Get("run.repeated_line", lines[i], count));
+            else output.AddRange(lines[i..next]);
+            i = next;
+        }
+        return string.Join("\n", output);
+    }
     public void Show(QueueView view)
     {
         // A stopped or historical view must never advertise a live operation.
@@ -758,7 +788,7 @@ public sealed partial class DailyRunPanel : UserControl
         L.Bind(status, TextBlock.TextProperty, () => view.State == "partial" && handled ? L.Get("run.handled") : L.State(view.State));
 
         string message = view.Message.Contains("无法保存执行记录") || (view.Message.Contains("WinError 5") && view.Message.Contains("result.json")) ? "执行进度文件保存失败。可在下方勾选未完成环节补跑；完整错误见执行记录。" : view.Message;
-        L.Bind(detail, TextBlock.TextProperty, () => message.Length > 0 ? Describe(message) : view.State == "running" ? "" : L.Get(view.State == "completed" ? "run.finished" : view.State == "partial" ? handled ? "run.partial" : "run.unhandled" : "run.stop_hint"));
+        L.Bind(detail, TextBlock.TextProperty, () => CollapseRepeats(view.Display is { } display && message == view.Message ? L.Describe(display) : message.Length > 0 ? Describe(message) : view.State == "running" ? "" : L.Get(view.State == "completed" ? "run.finished" : view.State == "partial" ? handled ? "run.partial" : "run.unhandled" : "run.stop_hint")));
         L.Bind(detail, FrameworkElement.ToolTipProperty, () => L.Diagnostic(view.Message, detail.Text));
         // Preparing/connection errors keep the last readable report on screen.
         if (view.Record.Length > 0 && view.Stages.Count > 0)

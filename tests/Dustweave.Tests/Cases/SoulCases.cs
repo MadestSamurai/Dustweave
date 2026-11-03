@@ -5,6 +5,8 @@ internal static class SoulCases
     internal static void Run(string root,List<string> cases)
     {
         SoulChecks.Run(Path.Combine(root,"soul"));
+        cases.Add("soul: five chapter search budgets persist independently; invalid values fall back without starting gameplay");
+        cases.Add("soul: one/two/three workers retain all deterministic branches and exact total candidate allocation; cancelled waiting branches never start");
         cases.Add("soul: five full dungeons and 55 wins independent of historical clears");
         cases.Add("soul: failed wave retains its dungeon and next transition");
         cases.Add("soul: repeated defeated-dungeon retries preserve clears, resume once and advance only after clearing");

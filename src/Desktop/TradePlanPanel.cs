@@ -17,10 +17,10 @@ public sealed class TradePlanPanel : UserControl
     private readonly bool allowGame;
     private readonly string root;
     private readonly string? expectedAccount;
-    private readonly TextBlock identity = Text("trade.intro"), warning = Text(""), status = Text("仅预览计划，不执行采购、料理或出售。");
-    private readonly TextBlock totals = Text("导入后可查看预计增益、垫资和回款日期。");
+    private readonly TextBlock identity = Text("trade.intro"), warning = Text(""), status = Text("trade.preview_only");
+    private readonly TextBlock totals = Text("trade.empty");
     private readonly TextBlock settingsSummary = Text("");
-    private readonly Button capture = new() { Content = "读取当前游戏" }, import = new() { Content = "导入离线快照" }, compute = new() { Content = "计算计划", IsEnabled = false }, export = new() { Content = "导出明细", IsEnabled = false };
+    private readonly Button capture = new() { Content = "trade.read" }, import = new() { Content = "trade.import" }, compute = new() { Content = "trade.compute", IsEnabled = false }, export = new() { Content = "trade.export", IsEnabled = false };
     private readonly DataGrid buys = Grid(), cooks = Grid(), today = Grid(), future = Grid();
     private JsonElement? snapshot;
     private string? output, scope;
@@ -35,14 +35,14 @@ public sealed class TradePlanPanel : UserControl
         if (!allowGame) L.Bind(capture, FrameworkElement.ToolTipProperty, "preview.no_read");
         foreach (var button in new[] { capture, import, compute, export }) {
             string source = (string)button.Content;
-            L.Bind(button, ContentControl.ContentProperty, () => L.Translate(source));
+            L.Bind(button, ContentControl.ContentProperty, () => L.Get(source));
         }
         expectedAccount = account;
         var layout = new DockPanel { Margin = new(20) };
         var heading = new StackPanel();
         DockPanel.SetDock(heading, Dock.Top);
         layout.Children.Add(heading);
-        var title = Text("跑商计划"); title.FontSize = 23; title.FontWeight = FontWeights.SemiBold; title.Margin = new(0,0,0,8); heading.Children.Add(title);
+        var title = Text("prefs.trade_title"); title.FontSize = 23; title.FontWeight = FontWeights.SemiBold; title.Margin = new(0,0,0,8); heading.Children.Add(title);
         heading.Children.Add(identity);
         heading.Children.Add(warning);
         warning.Visibility = Visibility.Collapsed;
@@ -63,8 +63,8 @@ public sealed class TradePlanPanel : UserControl
         heading.Children.Add(new Border { Child = totals, Padding = new(12, 8, 12, 8), CornerRadius = new(6), Background = (Brush)Application.Current.FindResource("SurfaceMuted") });
         heading.Children.Add(status);
         var tabs = new TabControl { Margin = new(0, 12, 0, 0), BorderThickness = new(0), Background = (Brush)Application.Current.FindResource("Surface"), BorderBrush = (Brush)Application.Current.FindResource("Line") };
-        foreach (var (label, grid) in new[] { ("采购", buys), ("料理分配", cooks), ("今日待售", today), ("后续售卖", future) })
-            { var tab = new TabItem { Content = grid }; L.Bind(tab, HeaderedContentControl.HeaderProperty, () => L.Translate(label)); tabs.Items.Add(tab); }
+        foreach (var (label, grid) in new[] { ("trade.buy_tab", buys), ("trade.cook_tab", cooks), ("trade.today_tab", today), ("trade.future_tab", future) })
+            { var tab = new TabItem { Content = grid }; L.Bind(tab, HeaderedContentControl.HeaderProperty, () => L.Get(label)); tabs.Items.Add(tab); }
         layout.Children.Add(tabs);
         Content = layout;
         capture.Click += async (_, _) => await Capture();
@@ -90,7 +90,7 @@ public sealed class TradePlanPanel : UserControl
             + (purchaseOnly ? "\n" + L.Get("trade.purchase_only_preview") : ""));
     }
     private static TextBlock Text(string value)
-    { var text = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 3, 0, 5) }; L.Literal(text, value); return text; }
+    { var text = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 3, 0, 5) }; if (value.Length > 0) L.Text(text, value); return text; }
     private static DataGrid Grid()
     {
         var grid = new DataGrid
@@ -111,14 +111,19 @@ public sealed class TradePlanPanel : UserControl
         };
         grid.AutoGeneratingColumn += (_, e) =>
         {
-            if (e.PropertyName == "今日报价已确认" || e.PropertyName == "商品")
+            if (e.PropertyName is "QuoteConfirmed" or "Product")
             {
                 e.Cancel = true;
                 return;
             }
-            L.Bind(e.Column, DataGridColumn.HeaderProperty, () => L.Translate(e.PropertyName));
-            bool label = e.PropertyName is "物品" or "料理";
-            e.Column.Width = label ? new DataGridLength(1, DataGridLengthUnitType.Star) : new DataGridLength(e.PropertyName == "预计售日" ? 140 : 100);
+            L.Bind(e.Column, DataGridColumn.HeaderProperty, e.PropertyName switch {
+                "Item" => "trade.item", "Dish" => "trade.food", "Count" => "trade.count",
+                "Portions" => "trade.portions", "Price" => "trade.price", "Cost" => "trade.cost",
+                "Shop" => "trade.shop", "Potions" => "trade.pills", "SaleDate" => "trade.date",
+                _ => "trade.item"
+            });
+            bool label = e.PropertyName is "Item" or "Dish";
+            e.Column.Width = label ? new DataGridLength(1, DataGridLengthUnitType.Star) : new DataGridLength(e.PropertyName == "SaleDate" ? 140 : 100);
             e.Column.MinWidth = label ? 180 : 65;
             if (e.Column is DataGridTextColumn text)
             {
@@ -135,7 +140,7 @@ public sealed class TradePlanPanel : UserControl
         output = null;
         export.IsEnabled = false;
         buys.ItemsSource = cooks.ItemsSource = today.ItemsSource = future.ItemsSource = null;
-        L.Literal(totals, "尚未计算。");
+        L.Text(totals, "trade.not_computed");
     }
     private void Import()
     {
@@ -146,27 +151,29 @@ public sealed class TradePlanPanel : UserControl
         {
             LoadSnapshot(dialog.FileName);
         }
-        catch (Exception ex) { snapshot = null; compute.IsEnabled = false; ClearResult(); DailyUiText.Error(status, ex, "无法导入："); }
+        catch (Exception ex) { snapshot = null; compute.IsEnabled = false; ClearResult(); DailyUiText.Error(status, ex, "trade.import_error"); }
     }
     public void LoadSnapshot(string path)
     {
         using var doc = JsonDocument.Parse(File.ReadAllText(path));
         var value = doc.RootElement;
         if (value.GetProperty("schema").GetInt32() != 1)
-            throw new InvalidDataException("快照版本不支持。");
+            throw new InvalidDataException("trade.schema");
         var context = value.GetProperty("context");
         string key = context.GetProperty("account").GetString() ?? "";
         if (key.Length == 0 || (expectedAccount != null && key != expectedAccount))
-            throw new InvalidDataException("快照与所选账号不一致。");
+            throw new InvalidDataException("trade.account_mismatch");
         foreach (var field in new[] { "inventory_complete", "offers_complete", "recipes_complete" })
             if (!value.GetProperty(field).GetBoolean())
-                throw new InvalidDataException("快照尚未完整采集。");
+                throw new InvalidDataException("trade.incomplete");
         snapshot = value.Clone();
         scope = Path.Combine(root, "trade", "plans", Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(key))).ToLowerInvariant());
         Directory.CreateDirectory(scope);
         ClearResult();
-        string player = context.TryGetProperty("player_name", out var displayName) ? displayName.GetString() ?? "当前账号" : "账号 " + key[..Math.Min(8, key.Length)];
-        L.Text(identity, "trade.identity", player, value.GetProperty("game_date").GetString(), value.GetProperty("captured_utc").GetString());
+        string? player = context.TryGetProperty("player_name", out var displayName) ? displayName.GetString() : null;
+        string? gameDate = value.GetProperty("game_date").GetString(), capturedAt = value.GetProperty("captured_utc").GetString();
+        L.Bind(identity, TextBlock.TextProperty, () => L.Get("trade.identity",
+            string.IsNullOrEmpty(player) ? L.Get("report.current_account") : player, gameDate, capturedAt));
         long gold = value.GetProperty("gold").GetInt64();
         L.Text(warning, "trade.low_gold");
         warning.Visibility = gold < 10_000_000 ? Visibility.Visible : Visibility.Collapsed;
@@ -185,7 +192,7 @@ public sealed class TradePlanPanel : UserControl
             Directory.CreateDirectory(Path.GetDirectoryName(temporary)!);
             busy = true;
             capture.IsEnabled = import.IsEnabled = compute.IsEnabled = export.IsEnabled = false;
-            L.Literal(status, "正在读取已连接游戏的库存和商店；不会购买、制作或出售。");
+            L.Text(status, "trade.reading");
             await Task.Run(() => DailyTradeCaptureConnection.RunAsync(root, new DailyGameHost(root), expectedAccount,
                 async () =>
                 {
@@ -216,7 +223,7 @@ public sealed class TradePlanPanel : UserControl
                 }));
             LoadSnapshot(temporary);
         }
-        catch (Exception ex) { RecordFailure("capture", ex, temporary); DailyUiText.Error(status, ex, "无法读取："); return; }
+        catch (Exception ex) { RecordFailure("capture", ex, temporary); DailyUiText.Error(status, ex, "trade.read_error"); return; }
         finally { busy = false; import.IsEnabled = true; capture.IsEnabled = allowGame; compute.IsEnabled = snapshot != null; }
         await Compute();
     }
@@ -233,7 +240,7 @@ public sealed class TradePlanPanel : UserControl
             var catalog = DailyTradeCatalog.Read(DailyTradeData.CatalogPath(preparedDirectory ?? AppContext.BaseDirectory));
             busy = true;
             capture.IsEnabled = import.IsEnabled = compute.IsEnabled = export.IsEnabled = false;
-            L.Literal(status, "正在计算原料、料理与资金的共同最优分配……");
+            L.Text(status, "trade.computing");
             ClearResult();
             string input = Path.Combine(scope, "snapshot.json");
             output = Path.Combine(scope, "latest.json");
@@ -245,7 +252,7 @@ public sealed class TradePlanPanel : UserControl
             Display(output);
             export.IsEnabled = true;
         }
-        catch (Exception ex) { RecordFailure("compute", ex, output); DailyUiText.Error(status, ex, "未生成新计划："); }
+        catch (Exception ex) { RecordFailure("compute", ex, output); DailyUiText.Error(status, ex, "trade.compute_error"); }
         finally { busy = false; import.IsEnabled = true; capture.IsEnabled = allowGame; compute.IsEnabled = snapshot != null; }
     }
     private void RecordFailure(string operation, Exception error, string? artifact)
@@ -264,7 +271,7 @@ public sealed class TradePlanPanel : UserControl
         var s = p.GetProperty("summary");
         bool calendar = p.GetProperty("solver").TryGetProperty("scope", out var model) && model.GetString() == "dated_cash_inventory";
         if (snapshot != null && p.GetProperty("context").GetProperty("account").GetString() != snapshot.Value.GetProperty("context").GetProperty("account").GetString())
-            throw new InvalidDataException("计划账号不匹配。");
+            throw new InvalidDataException("trade.plan_mismatch");
         if (p.TryGetProperty("settings", out var planSettings))
             ShowSettings(DailyTradeOptimizer.Preferences(System.Text.Json.Nodes.JsonNode.Parse(planSettings.GetRawText())!.AsObject()));
         object?[] amounts = [s.GetProperty("incremental_profit").GetInt64(), s.GetProperty("cash_required").GetInt64(), s.GetProperty("eventual_sale_value").GetInt64(), s.GetProperty("cash_remaining").GetInt64(), s.GetProperty("potions_used").GetInt64(), s.GetProperty("potions_to_buy").GetInt64()];
@@ -273,15 +280,16 @@ public sealed class TradePlanPanel : UserControl
         long breakEvenCount = s.TryGetProperty("break_even_count", out var count) ? count.GetInt64() : 0;
         long breakEvenValue = s.TryGetProperty("break_even_value", out var value) ? value.GetInt64() : 0;
         L.Bind(totals, TextBlock.TextProperty, () => L.Get(calendar ? "trade.calendar_totals" : "trade.totals", amounts) + (breakEvenEnabled ? "\n" + L.Get("trade.break_even_totals", breakEvenCount, breakEvenValue) : ""));
-        buys.ItemsSource = p.GetProperty("purchases").EnumerateArray().Select(r => new { 物品 = r.GetProperty("name").GetString(), 数量 = r.GetProperty("count").GetInt64(), 单价 = r.GetProperty("price").GetInt64(), 金额 = r.GetProperty("cost").GetInt64(), 商店 = r.GetProperty("shop").GetInt32(), 商品 = r.GetProperty("product").GetInt32() }).ToArray();
-        cooks.ItemsSource = p.GetProperty("cooking").EnumerateArray().Select(r => new { 料理 = r.GetProperty("name").GetString(), 份数 = r.GetProperty("count").GetInt64(), 天赋药 = r.GetProperty("potions").GetInt64(), 预计售日 = r.GetProperty("sale_date").GetString() }).ToArray();
-        var sales = p.GetProperty("sales").EnumerateArray().Select(r => new { 物品 = r.GetProperty("name").GetString(), 数量 = r.GetProperty("count").GetInt64(), 单价 = r.GetProperty("price").GetInt64(), 商店 = r.GetProperty("shop").GetInt32(), 预计售日 = r.GetProperty("date").GetString(), 今日报价已确认 = r.GetProperty("today_quote_confirmed").GetBoolean() }).ToArray();
-        today.ItemsSource = sales.Where(r => r.今日报价已确认).ToArray();
-        future.ItemsSource = sales.Where(r => !r.今日报价已确认).ToArray();
+        buys.ItemsSource = p.GetProperty("purchases").EnumerateArray().Select(r => new { Item = r.GetProperty("name").GetString(), Count = r.GetProperty("count").GetInt64(), Price = r.GetProperty("price").GetInt64(), Cost = r.GetProperty("cost").GetInt64(), Shop = r.GetProperty("shop").GetInt32(), Product = r.GetProperty("product").GetInt32() }).ToArray();
+        cooks.ItemsSource = p.GetProperty("cooking").EnumerateArray().Select(r => new { Dish = r.GetProperty("name").GetString(), Portions = r.GetProperty("count").GetInt64(), Potions = r.GetProperty("potions").GetInt64(), SaleDate = r.GetProperty("sale_date").GetString() }).ToArray();
+        var sales = p.GetProperty("sales").EnumerateArray().Select(r => new { Item = r.GetProperty("name").GetString(), Count = r.GetProperty("count").GetInt64(), Price = r.GetProperty("price").GetInt64(), Shop = r.GetProperty("shop").GetInt32(), SaleDate = r.GetProperty("date").GetString(), QuoteConfirmed = r.GetProperty("today_quote_confirmed").GetBoolean() }).ToArray();
+        today.ItemsSource = sales.Where(r => r.QuoteConfirmed).ToArray();
+        future.ItemsSource = sales.Where(r => !r.QuoteConfirmed).ToArray();
         bool optimal = p.GetProperty("solver").GetProperty("optimal").GetBoolean();
         L.Bind(status, TextBlock.TextProperty, () => L.Get(calendar ? "trade.calendar_plan" : optimal ? "trade.optimal" : "trade.best") + " " + L.Get("trade.quantity_note"));
         output = path;
     }
+    internal string IdentityForSmoke => identity.Text;
     internal Action LanguageProbeForSmoke()
     {
         if (allowGame || scope == null) throw new Exception("Trade preview probe requires an isolated account");
@@ -308,8 +316,8 @@ public sealed class TradePlanPanel : UserControl
         try
         {
             File.Copy(Path.ChangeExtension(output, ".md"), dialog.FileName, true);
-            L.Literal(status, "已导出完整采购、料理和售卖日期明细。");
+            L.Text(status, "trade.exported");
         }
-        catch (Exception ex) { DailyUiText.Error(status, ex, "导出失败："); }
+        catch (Exception ex) { DailyUiText.Error(status, ex, "trade.export_error"); }
     }
 }

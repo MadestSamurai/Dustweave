@@ -1,5 +1,41 @@
 {
-"tool.soul": {
+  "soul.settings.title": {
+    "zh-CN": "性能与求解", "zh-TW": "效能與求解", "en-US": "Performance and search"
+  },
+  "soul.settings.performance": {
+    "zh-CN": "性能限制", "zh-TW": "效能限制", "en-US": "Performance limit"
+  },
+  "soul.settings.workers.1": {
+    "zh-CN": "低占用", "zh-TW": "低占用", "en-US": "Low usage"
+  },
+  "soul.settings.workers.2": {
+    "zh-CN": "均衡", "zh-TW": "均衡", "en-US": "Balanced"
+  },
+  "soul.settings.workers.3": {
+    "zh-CN": "高性能 · 不额外限速", "zh-TW": "高效能 · 不額外限速", "en-US": "High performance · unrestricted"
+  },
+  "soul.settings.chapter": {
+    "zh-CN": "第 {0} 关候选搜索规模", "zh-TW": "第 {0} 關候選搜尋規模", "en-US": "Dungeon {0} search size"
+  },
+  "soul.settings.count": {
+    "zh-CN": "{0} 次", "zh-TW": "{0} 次", "en-US": "{0} tries"
+  },
+  "soul.settings.help": {
+    "zh-CN": "每关设置用于该关每次排阵和刷新后的求解。候选尝试量不含最终验算；低占用会延长耗时。修改自动保存，下次求解生效。",
+    "zh-TW": "每關設定用於該關每次排陣及刷新後的求解。候選嘗試量不含最終驗算；低占用會延長耗時。修改自動儲存，下次求解生效。",
+    "en-US": "Each limit applies to every search in that dungeon, including after shop refreshes. Final validation is extra. Lower usage takes longer. Changes save automatically and apply to the next search."
+  },
+  "soul.settings.save_failed": {
+    "zh-CN": "设置未能保存，已恢复原设置。请重试；详情见悬停提示。",
+    "zh-TW": "設定未能儲存，已還原原設定。請重試；詳情見懸停提示。",
+    "en-US": "Settings could not be saved. Previous values were restored. Try again; hover for details."
+  },
+  "soul.search_candidates": {
+    "zh-CN": "候选尝试 {0} / {1} · 已评估 {2} 个方案 · {3} 秒",
+    "zh-TW": "候選嘗試 {0} / {1} · 已評估 {2} 個方案 · {3} 秒",
+    "en-US": "Candidates {0} / {1} · {2} plans evaluated · {3} s"
+  },
+  "tool.soul": {
     "zh-TW": "死魂之盤",
     "zh-CN": "死魂之盘",
     "en-US": "Soul challenge"
@@ -90,8 +126,8 @@
     "en-US": "Soul challenge is open. Start in its window."
   },
   "soul.ready_hint": {
-    "zh-TW": "自動購買、升級、排布與戰鬥。繼續遊戲進度會接續目前關卡並跳過已通關內容，包含手動進度；從第一關開始會重置目前關卡。",
-    "zh-CN": "自动购买、升级、排布与战斗。继续游戏进度会接续当前关卡并跳过已通关内容，包括手动进度；从第一关开始会重置当前关卡。",
+    "zh-TW": "自動購買、升級、排布與戰鬥。繼續遊戲進度會繼續目前關卡並跳過已通關內容，包含手動進度；從第一關開始會重置目前關卡。",
+    "zh-CN": "自动购买、升级、排布与战斗。继续游戏进度会继续当前关卡并跳过已通关内容，包括手动进度；从第一关开始会重置当前关卡。",
     "en-US": "Automatically buy, upgrade, arrange and battle. Resume game progress continues the current dungeon and skips cleared ones, including manual progress. Start all five resets the current dungeon."
   },
   "soul.resume": {
@@ -105,8 +141,8 @@
     "en-US": "Start all five"
   },
   "soul.state.advancing": {
-    "zh-TW": "正在接續下一批",
-    "zh-CN": "正在接续下一批",
+    "zh-TW": "正在繼續下一批",
+    "zh-CN": "正在继续下一批",
     "en-US": "Continuing to the next wave"
   },
   "soul.state.applying": {
@@ -204,42 +240,186 @@
     "zh-CN": "死魂之盘",
     "en-US": "Soul challenge"
   },
-  "multiaccount.title": {"zh-CN":"选择多账号运行方式","zh-TW":"選擇多帳號執行方式","en-US":"Choose how to run multiple accounts"},
-  "multiaccount.body": {"zh-CN":"新账号已保存。你可以让各账号依次完成日常，也可以同时运行。","zh-TW":"新帳號已儲存。你可以讓各帳號依序完成日常，也可以同時執行。","en-US":"Your new account has been saved. You can run daily tasks one account at a time or run accounts together."},
-  "multiaccount.sequential_help": {"zh-CN":"完成一个账号后，再开始下一个。无需安装其他工具。","zh-TW":"完成一個帳號後，再開始下一個。無需安裝其他工具。","en-US":"Finish one account before starting the next. No extra tools needed."},
-  "multiaccount.later_help": {"zh-CN":"这里只保存执行方式，不会开始日常。以后可在账号管理中更改。","zh-TW":"這裡只儲存執行方式，不會開始日常。之後可在帳號管理中更改。","en-US":"This only saves your run mode; daily tasks will not start now. You can change it later on the Accounts page."},
-  "multiaccount.later": {"zh-CN":"以后再说","zh-TW":"稍後再說","en-US":"Not now"},
-  "multiaccount.add_second": {"zh-CN":"此账号已保存。要添加第二个账号，可点「登录新账号」；完成登录后正常关闭游戏（不要退出账号），再回来保存。","zh-TW":"此帳號已儲存。若要新增第二個帳號，可點「登入新帳號」；完成登入後正常關閉遊戲（不要登出帳號），再回來儲存。","en-US":"This account is saved. To add a second account, select Sign in to another. Sign in, close the game without logging out, then return here to save it."},
-  "sandbox.preferences.title": {"zh-CN":"同步游戏设置","zh-TW":"同步遊戲設定","en-US":"Copy game settings"},
-  "sandbox.preferences.first": {"zh-CN":"建议首次使用沙盒前同步一次游戏设置。你也可以跳过，之后从「管理沙盒」打开。","zh-TW":"建議首次使用沙盒前同步一次遊戲設定。你也可以略過，之後從「管理沙盒」開啟。","en-US":"Consider copying your game settings before first using this sandbox. You can skip this and open Copy game settings from Manage sandbox later."},
-  "sandbox.preferences.manual": {"zh-CN":"选择来源和要覆盖的内容。本次操作只执行一次，不会开启自动同步。","zh-TW":"選擇來源及要覆寫的內容。本次操作只執行一次，不會開啟自動同步。","en-US":"Choose the source and what to replace. This copies settings once; it does not enable automatic syncing."},
-  "sandbox.preferences.direction": {"zh-CN":"同步方向","zh-TW":"同步方向","en-US":"Copy direction"},
-  "sandbox.preferences.to_box": {"zh-CN":"本机 → 此账号的沙盒","zh-TW":"本機 → 此帳號的沙盒","en-US":"This PC → This account’s sandbox"},
-  "sandbox.preferences.to_host": {"zh-CN":"此账号的沙盒 → 本机","zh-TW":"此帳號的沙盒 → 本機","en-US":"This account’s sandbox → This PC"},
-  "sandbox.preferences.overwrite_box": {"zh-CN":"以本机设置为准，替换沙盒中勾选的内容，包括来源中已取消的收藏。","zh-TW":"以本機設定為準，取代沙盒中勾選的內容，包括來源中已取消的收藏。","en-US":"The selected sandbox settings will match this PC, including favorites removed on this PC."},
-  "sandbox.preferences.overwrite_host": {"zh-CN":"以沙盒设置为准，替换本机中勾选的内容。语言、画面和声音等通用设置会影响本机其他账号。","zh-TW":"以沙盒設定為準，取代本機中勾選的內容。語言、畫面及聲音等通用設定會影響本機其他帳號。","en-US":"The selected settings on this PC will match the sandbox. Shared settings such as language, display and sound also affect other accounts on this PC."},
-  "sandbox.preferences.content": {"zh-CN":"同步内容","zh-TW":"同步內容","en-US":"Settings to copy"},
-  "sandbox.preferences.personal": {"zh-CN":"个人偏好：收藏、筛选、分解选项、编队与展示设置","zh-TW":"個人偏好：收藏、篩選、分解選項、編隊與展示設定","en-US":"Account preferences: favorites, filters, dismantling options, teams and display choices"},
-  "sandbox.preferences.presentation": {"zh-CN":"语言、语音、音量、画质、帧率和窗口设置","zh-TW":"語言、語音、音量、畫質、幀率及視窗設定","en-US":"Language, voice, volume, graphics, frame rate and window settings"},
-  "sandbox.preferences.gameplay": {"zh-CN":"操作与战斗设置：移动、自动战斗、自动吃料理等","zh-TW":"操作與戰鬥設定：移動、自動戰鬥、自動吃料理等","en-US":"Controls and battle options: movement, auto battle, automatic food use and more"},
-  "sandbox.preferences.identity_help": {"zh-CN":"尚未记录此账号的游戏角色。连接此账号一次后，可同步个人偏好；现在仍可同步语言、画面等通用设置。","zh-TW":"尚未記錄此帳號的遊戲角色。連接此帳號一次後，即可同步個人偏好；現在仍可同步語言、畫面等通用設定。","en-US":"This account’s game character has not been identified yet. Connect to it once to copy account preferences. Shared settings such as language and display can still be copied now."},
-  "sandbox.preferences.scope": {"zh-CN":"操作前请正常关闭普通游戏及此账号的沙盒游戏，保持登录。只同步所选设置，不包含登录凭据、库存或任务进度；目标端原设置会保留备份。","zh-TW":"操作前請正常關閉一般遊戲及此帳號的沙盒遊戲，保持登入。僅同步所選設定，不包含登入憑證、庫存或任務進度；目標端原設定會保留備份。","en-US":"Close the normal game and this account’s sandbox game without logging out. Only the selected settings are copied, excluding sign-in credentials, inventory and task progress. The previous destination settings are backed up."},
-  "sandbox.preferences.skip": {"zh-CN":"暂不同步","zh-TW":"暫不同步","en-US":"Skip for now"},
-  "sandbox.preferences.copy_to_box": {"zh-CN":"同步到沙盒","zh-TW":"同步到沙盒","en-US":"Copy to sandbox"},
-  "sandbox.preferences.copy_to_host": {"zh-CN":"同步到本机","zh-TW":"同步到本機","en-US":"Copy to this PC"},
-  "sandbox.preferences.working": {"zh-CN":"正在同步设置…","zh-TW":"正在同步設定…","en-US":"Copying settings…"},
-  "sandbox.preferences.completed": {"zh-CN":"已同步 {0} 类个人记录和 {1} 项游戏设置。下次启动游戏时生效；未开启自动同步。","zh-TW":"已同步 {0} 類個人紀錄及 {1} 項遊戲設定。下次啟動遊戲時生效；未開啟自動同步。","en-US":"Copied {0} account preference groups and {1} game settings. They take effect on the next game launch. Automatic syncing remains off."},
-  "sandbox.preferences.busy": {"zh-CN":"请正常关闭普通游戏、所选账号的隔离窗口及游戏启动器后重试，不要退出游戏账号。","zh-TW":"請正常關閉一般遊戲、所選帳號的隔離視窗及遊戲啟動器後重試，不要登出遊戲帳號。","en-US":"Close the normal game, this account’s isolated window and the game launcher, then retry. Do not log out of the game account."},
-  "sandbox.preferences.identity": {"zh-CN":"无法把本地记录对应到所选账号的角色。请连接此账号一次后重试，或仅同步语言、画面等通用设置。","zh-TW":"無法將本機紀錄對應到所選帳號的角色。請連接此帳號一次後重試，或僅同步語言、畫面等通用設定。","en-US":"The local records could not be matched to this account’s character. Connect to the account once and retry, or copy only shared settings such as language and display."},
-  "sandbox.preferences.format": {"zh-CN":"暂不支持当前游戏的本地数据格式，个人偏好未同步。可以取消勾选个人偏好，只同步通用设置。","zh-TW":"暫不支援目前遊戲的本機資料格式，個人偏好未同步。可以取消勾選個人偏好，僅同步通用設定。","en-US":"This game’s local data format is not supported. Account preferences were not copied. Uncheck account preferences to copy shared settings only."},
-  "sandbox.preferences.version": {"zh-CN":"两边的个人数据库结构不同，未覆盖数据。请分别正常进入游戏并退出后重试。","zh-TW":"兩邊的個人資料庫結構不同，未覆寫資料。請分別正常進入遊戲並退出後重試。","en-US":"The two account databases use different structures. No data was replaced. Open and close the game normally in each environment, then retry."},
-  "sandbox.preferences.database": {"zh-CN":"个人本地库未能通过读取或完整性检查，未完成同步。请正常退出游戏后重试；若仍失败，请导出诊断。","zh-TW":"個人本機資料庫未通過讀取或完整性檢查，未完成同步。請正常退出遊戲後重試；若仍失敗，請匯出診斷。","en-US":"The local account database could not be read or failed its integrity check. Copying was not completed. Close the game normally and retry; export diagnostics if it still fails."},
-  "sandbox.preferences.empty": {"zh-CN":"来源中没有可读取的游戏设置。请先在来源环境启动游戏并正常退出。","zh-TW":"來源中沒有可讀取的遊戲設定。請先在來源環境啟動遊戲並正常退出。","en-US":"No game settings could be read from the source. Open the game in that environment and close it normally first."},
-  "sandbox.preferences.invalid": {"zh-CN":"同步内容无效或超出所选范围，未继续写入。请重新打开同步窗口。","zh-TW":"同步內容無效或超出所選範圍，未繼續寫入。請重新開啟同步視窗。","en-US":"The transfer contains invalid or unselected settings. Writing was stopped. Reopen the settings transfer window."},
-  "sandbox.preferences.changed": {"zh-CN":"设置在准备同步时发生了变化，未覆盖新内容。请关闭游戏后重试。","zh-TW":"設定在準備同步時發生變化，未覆寫新內容。請關閉遊戲後重試。","en-US":"Settings changed while the copy was being prepared. The newer data was not replaced. Close the game and retry."},
-  "sandbox.preferences.verify": {"zh-CN":"同步后的回读校验未通过，已尝试恢复原设置。请导出诊断后联系开发者。","zh-TW":"同步後的讀回驗證未通過，已嘗試還原原設定。請匯出診斷後聯絡開發者。","en-US":"Verification after copying failed, and restoration of the previous settings was attempted. Export diagnostics and contact the developer."},
-  "sandbox.preferences.restore_failed": {"zh-CN":"同步失败，且原设置未能完整恢复。已保留备份；请先不要启动游戏，导出诊断并联系开发者。","zh-TW":"同步失敗，且原設定未能完整還原。已保留備份；請先不要啟動遊戲，匯出診斷並聯絡開發者。","en-US":"Copying failed and the previous settings could not be fully restored. Backups were preserved. Do not start the game yet; export diagnostics and contact the developer."},
-  "sandbox.preferences.failed": {"zh-CN":"设置同步未完成。请关闭普通游戏及所选账号的隔离窗口后重试；若仍失败，请导出诊断。","zh-TW":"設定同步未完成。請關閉一般遊戲及所選帳號的隔離視窗後重試；若仍失敗，請匯出診斷。","en-US":"Settings were not fully copied. Close the normal game and this account’s isolated window, then retry. Export diagnostics if it still fails."},
+  "multiaccount.title": {
+    "zh-CN": "选择多账号运行方式",
+    "zh-TW": "選擇多帳號執行方式",
+    "en-US": "Choose how to run multiple accounts"
+  },
+  "multiaccount.body": {
+    "zh-CN": "新账号已保存。你可以让各账号依次完成日常，也可以同时运行。",
+    "zh-TW": "新帳號已儲存。你可以讓各帳號依序完成日常，也可以同時執行。",
+    "en-US": "Your new account has been saved. You can run daily tasks one account at a time or run accounts together."
+  },
+  "multiaccount.sequential_help": {
+    "zh-CN": "完成一个账号后，再开始下一个。无需安装其他工具。",
+    "zh-TW": "完成一個帳號後，再開始下一個。無需安裝其他工具。",
+    "en-US": "Finish one account before starting the next. No extra tools needed."
+  },
+  "multiaccount.later_help": {
+    "zh-CN": "这里只保存执行方式，不会开始日常。以后可在账号管理中更改。",
+    "zh-TW": "這裡只儲存執行方式，不會開始日常。之後可在帳號管理中更改。",
+    "en-US": "This only saves your run mode; daily tasks will not start now. You can change it later on the Accounts page."
+  },
+  "multiaccount.later": {
+    "zh-CN": "以后再说",
+    "zh-TW": "稍後再說",
+    "en-US": "Not now"
+  },
+  "multiaccount.add_second": {
+    "zh-CN": "此账号已保存。要添加第二个账号，可点「登录新账号」；完成登录后正常关闭游戏（不要退出账号），再回来保存。",
+    "zh-TW": "此帳號已儲存。若要新增第二個帳號，可點「登入新帳號」；完成登入後正常關閉遊戲（不要登出帳號），再回來儲存。",
+    "en-US": "This account is saved. To add a second account, select Sign in to another. Sign in, close the game without logging out, then return here to save it."
+  },
+  "sandbox.preferences.title": {
+    "zh-CN": "同步游戏设置",
+    "zh-TW": "同步遊戲設定",
+    "en-US": "Copy game settings"
+  },
+  "sandbox.preferences.first": {
+    "zh-CN": "建议首次使用沙盒前同步一次游戏设置。你也可以跳过，之后从「管理沙盒」打开。",
+    "zh-TW": "建議首次使用沙盒前同步一次遊戲設定。你也可以略過，之後從「管理沙盒」開啟。",
+    "en-US": "Consider copying your game settings before first using this sandbox. You can skip this and open Copy game settings from Manage sandbox later."
+  },
+  "sandbox.preferences.manual": {
+    "zh-CN": "选择来源和要覆盖的内容。本次操作只执行一次，不会开启自动同步。",
+    "zh-TW": "選擇來源及要覆寫的內容。本次操作只執行一次，不會開啟自動同步。",
+    "en-US": "Choose the source and what to replace. This copies settings once; it does not enable automatic syncing."
+  },
+  "sandbox.preferences.direction": {
+    "zh-CN": "同步方向",
+    "zh-TW": "同步方向",
+    "en-US": "Copy direction"
+  },
+  "sandbox.preferences.to_box": {
+    "zh-CN": "本机 → 此账号的沙盒",
+    "zh-TW": "本機 → 此帳號的沙盒",
+    "en-US": "This PC → This account’s sandbox"
+  },
+  "sandbox.preferences.to_host": {
+    "zh-CN": "此账号的沙盒 → 本机",
+    "zh-TW": "此帳號的沙盒 → 本機",
+    "en-US": "This account’s sandbox → This PC"
+  },
+  "sandbox.preferences.overwrite_box": {
+    "zh-CN": "以本机设置为准，替换沙盒中勾选的内容，包括来源中已取消的收藏。",
+    "zh-TW": "以本機設定為準，取代沙盒中勾選的內容，包括來源中已取消的收藏。",
+    "en-US": "The selected sandbox settings will match this PC, including favorites removed on this PC."
+  },
+  "sandbox.preferences.overwrite_host": {
+    "zh-CN": "以沙盒设置为准，替换本机中勾选的内容。语言、画面和声音等通用设置会影响本机其他账号。",
+    "zh-TW": "以沙盒設定為準，取代本機中勾選的內容。語言、畫面及聲音等通用設定會影響本機其他帳號。",
+    "en-US": "The selected settings on this PC will match the sandbox. Shared settings such as language, display and sound also affect other accounts on this PC."
+  },
+  "sandbox.preferences.content": {
+    "zh-CN": "同步内容",
+    "zh-TW": "同步內容",
+    "en-US": "Settings to copy"
+  },
+  "sandbox.preferences.personal": {
+    "zh-CN": "个人偏好：收藏、筛选、分解选项、编队与展示设置",
+    "zh-TW": "個人偏好：收藏、篩選、分解選項、編隊與展示設定",
+    "en-US": "Account preferences: favorites, filters, dismantling options, teams and display choices"
+  },
+  "sandbox.preferences.presentation": {
+    "zh-CN": "语言、语音、音量、画质、帧率和窗口设置",
+    "zh-TW": "語言、語音、音量、畫質、幀率及視窗設定",
+    "en-US": "Language, voice, volume, graphics, frame rate and window settings"
+  },
+  "sandbox.preferences.gameplay": {
+    "zh-CN": "操作与战斗设置：移动、自动战斗、自动吃料理等",
+    "zh-TW": "操作與戰鬥設定：移動、自動戰鬥、自動吃料理等",
+    "en-US": "Controls and battle options: movement, auto battle, automatic food use and more"
+  },
+  "sandbox.preferences.identity_help": {
+    "zh-CN": "尚未记录此账号的游戏角色。连接此账号一次后，可同步个人偏好；现在仍可同步语言、画面等通用设置。",
+    "zh-TW": "尚未記錄此帳號的遊戲角色。連接此帳號一次後，即可同步個人偏好；現在仍可同步語言、畫面等通用設定。",
+    "en-US": "This account’s game character has not been identified yet. Connect to it once to copy account preferences. Shared settings such as language and display can still be copied now."
+  },
+  "sandbox.preferences.scope": {
+    "zh-CN": "操作前请正常关闭普通游戏及此账号的沙盒游戏，保持登录。只同步所选设置，不包含登录凭据、库存或任务进度；目标端原设置会保留备份。",
+    "zh-TW": "操作前請正常關閉一般遊戲及此帳號的沙盒遊戲，保持登入。僅同步所選設定，不包含登入憑證、庫存或任務進度；目標端原設定會保留備份。",
+    "en-US": "Close the normal game and this account’s sandbox game without logging out. Only the selected settings are copied, excluding sign-in credentials, inventory and task progress. The previous destination settings are backed up."
+  },
+  "sandbox.preferences.skip": {
+    "zh-CN": "暂不同步",
+    "zh-TW": "暫不同步",
+    "en-US": "Skip for now"
+  },
+  "sandbox.preferences.copy_to_box": {
+    "zh-CN": "同步到沙盒",
+    "zh-TW": "同步到沙盒",
+    "en-US": "Copy to sandbox"
+  },
+  "sandbox.preferences.copy_to_host": {
+    "zh-CN": "同步到本机",
+    "zh-TW": "同步到本機",
+    "en-US": "Copy to this PC"
+  },
+  "sandbox.preferences.working": {
+    "zh-CN": "正在同步设置…",
+    "zh-TW": "正在同步設定…",
+    "en-US": "Copying settings…"
+  },
+  "sandbox.preferences.completed": {
+    "zh-CN": "已同步 {0} 类个人记录和 {1} 项游戏设置。下次启动游戏时生效；未开启自动同步。",
+    "zh-TW": "已同步 {0} 類個人紀錄及 {1} 項遊戲設定。下次啟動遊戲時生效；未開啟自動同步。",
+    "en-US": "Copied {0} account preference groups and {1} game settings. They take effect on the next game launch. Automatic syncing remains off."
+  },
+  "sandbox.preferences.busy": {
+    "zh-CN": "请正常关闭普通游戏、所选账号的隔离窗口及游戏启动器后重试，不要退出游戏账号。",
+    "zh-TW": "請正常關閉一般遊戲、所選帳號的隔離視窗及遊戲啟動器後重試，不要登出遊戲帳號。",
+    "en-US": "Close the normal game, this account’s isolated window and the game launcher, then retry. Do not log out of the game account."
+  },
+  "sandbox.preferences.identity": {
+    "zh-CN": "无法把本地记录对应到所选账号的角色。请连接此账号一次后重试，或仅同步语言、画面等通用设置。",
+    "zh-TW": "無法將本機紀錄對應到所選帳號的角色。請連接此帳號一次後重試，或僅同步語言、畫面等通用設定。",
+    "en-US": "The local records could not be matched to this account’s character. Connect to the account once and retry, or copy only shared settings such as language and display."
+  },
+  "sandbox.preferences.format": {
+    "zh-CN": "暂不支持当前游戏的本地数据格式，个人偏好未同步。可以取消勾选个人偏好，只同步通用设置。",
+    "zh-TW": "暫不支援目前遊戲的本機資料格式，個人偏好未同步。可以取消勾選個人偏好，僅同步通用設定。",
+    "en-US": "This game’s local data format is not supported. Account preferences were not copied. Uncheck account preferences to copy shared settings only."
+  },
+  "sandbox.preferences.version": {
+    "zh-CN": "两边的个人数据库结构不同，未覆盖数据。请分别正常进入游戏并退出后重试。",
+    "zh-TW": "兩邊的個人資料庫結構不同，未覆寫資料。請分別正常進入遊戲並退出後重試。",
+    "en-US": "The two account databases use different structures. No data was replaced. Open and close the game normally in each environment, then retry."
+  },
+  "sandbox.preferences.database": {
+    "zh-CN": "个人本地库未能通过读取或完整性检查，未完成同步。请正常退出游戏后重试；若仍失败，请导出诊断。",
+    "zh-TW": "個人本機資料庫未通過讀取或完整性檢查，未完成同步。請正常退出遊戲後重試；若仍失敗，請匯出診斷。",
+    "en-US": "The local account database could not be read or failed its integrity check. Copying was not completed. Close the game normally and retry; export diagnostics if it still fails."
+  },
+  "sandbox.preferences.empty": {
+    "zh-CN": "来源中没有可读取的游戏设置。请先在来源环境启动游戏并正常退出。",
+    "zh-TW": "來源中沒有可讀取的遊戲設定。請先在來源環境啟動遊戲並正常退出。",
+    "en-US": "No game settings could be read from the source. Open the game in that environment and close it normally first."
+  },
+  "sandbox.preferences.invalid": {
+    "zh-CN": "同步内容无效或超出所选范围，未继续写入。请重新打开同步窗口。",
+    "zh-TW": "同步內容無效或超出所選範圍，未繼續寫入。請重新開啟同步視窗。",
+    "en-US": "The transfer contains invalid or unselected settings. Writing was stopped. Reopen the settings transfer window."
+  },
+  "sandbox.preferences.changed": {
+    "zh-CN": "设置在准备同步时发生了变化，未覆盖新内容。请关闭游戏后重试。",
+    "zh-TW": "設定在準備同步時發生變化，未覆寫新內容。請關閉遊戲後重試。",
+    "en-US": "Settings changed while the copy was being prepared. The newer data was not replaced. Close the game and retry."
+  },
+  "sandbox.preferences.verify": {
+    "zh-CN": "同步后的回读校验未通过，已尝试恢复原设置。请导出诊断后联系开发者。",
+    "zh-TW": "同步後的讀回驗證未通過，已嘗試還原原設定。請匯出診斷後聯絡開發者。",
+    "en-US": "Verification after copying failed, and restoration of the previous settings was attempted. Export diagnostics and contact the developer."
+  },
+  "sandbox.preferences.restore_failed": {
+    "zh-CN": "同步失败，且原设置未能完整恢复。已保留备份；请先不要启动游戏，导出诊断并联系开发者。",
+    "zh-TW": "同步失敗，且原設定未能完整還原。已保留備份；請先不要啟動遊戲，匯出診斷並聯絡開發者。",
+    "en-US": "Copying failed and the previous settings could not be fully restored. Backups were preserved. Do not start the game yet; export diagnostics and contact the developer."
+  },
+  "sandbox.preferences.failed": {
+    "zh-CN": "设置同步未完成。请关闭普通游戏及所选账号的隔离窗口后重试；若仍失败，请导出诊断。",
+    "zh-TW": "設定同步未完成。請關閉一般遊戲及所選帳號的隔離視窗後重試；若仍失敗，請匯出診斷。",
+    "en-US": "Settings were not fully copied. Close the normal game and this account’s isolated window, then retry. Export diagnostics if it still fails."
+  },
   "account.relogin.action": {
     "zh-CN": "重新登录",
     "zh-TW": "重新登入",
@@ -251,14 +431,14 @@
     "en-US": "Sign in again to the selected account. Saved accounts and its sandbox are preserved."
   },
   "account.relogin.confirm": {
-    "zh-CN": "重新登录「{0}」？\n\n将备份本机当前登录状态，并打开普通游戏窗口供你手动登录。进入主菜单后，保持自动登录开启，正常关闭游戏，不要退出账号。回到这里点击「保存并重试」。\n\n原账号和沙盒均会保留。",
-    "zh-TW": "重新登入「{0}」？\n\n將備份本機目前登入狀態，並開啟一般遊戲視窗供你手動登入。進入主選單後，保持自動登入開啟，正常關閉遊戲，不要登出帳號。回到這裡點擊「儲存並重試」。\n\n原帳號和沙盒均會保留。",
-    "en-US": "Sign in again to {0}?\n\nYour current local sign-in will be backed up, and a normal game window will open for manual sign-in. Reach the main menu, keep automatic sign-in enabled, then close the game normally without logging out. Return here and click Save and retry.\n\nYour saved account and sandbox will be preserved."
+    "zh-CN": "重新登录「{0}」？\n\n会先备份本机当前的登录状态，再打开游戏供你手动登录：\n1. 登录后进入主菜单，保持自动登录开启；\n2. 正常关闭游戏，不要退出账号；\n3. 回到这里点击「保存并重试」。\n\n原账号和沙盒都会保留。",
+    "zh-TW": "重新登入「{0}」？\n\n會先備份本機目前的登入狀態，再開啟遊戲供你手動登入：\n1. 登入後進入主選單，保持自動登入開啟；\n2. 正常關閉遊戲，不要登出帳號；\n3. 回到這裡點擊「儲存並重試」。\n\n原帳號和沙盒都會保留。",
+    "en-US": "Sign in again to {0}?\n\nYour current local sign-in will be backed up first, then the game opens for manual sign-in:\n1. Sign in, reach the main menu and keep automatic sign-in enabled.\n2. Close the game normally without logging out.\n3. Return here and click Save and retry.\n\nYour saved account and sandbox will be preserved."
   },
   "account.relogin.pending": {
-    "zh-CN": "正在恢复「{0}」。在游戏中登录此账号并进入主菜单，保持自动登录开启，正常关闭游戏（不要退出账号），然后保存并重试。",
-    "zh-TW": "正在恢復「{0}」。在遊戲中登入此帳號並進入主選單，保持自動登入開啟，正常關閉遊戲（不要登出帳號），然後儲存並重試。",
-    "en-US": "Recovering {0}. Sign in to this account and reach the main menu. Keep automatic sign-in enabled, then close the game normally without logging out and select Save and retry."
+    "zh-CN": "正在恢复「{0}」：① 在游戏中登录此账号并进入主菜单；② 保持自动登录，正常关闭游戏（不要退出账号）；③ 点击「保存并重试」。",
+    "zh-TW": "正在恢復「{0}」：① 在遊戲中登入此帳號並進入主選單；② 保持自動登入，正常關閉遊戲（不要登出帳號）；③ 點擊「儲存並重試」。",
+    "en-US": "Recovering {0}: ① sign in to this account and reach the main menu; ② keep automatic sign-in on and close the game normally without logging out; ③ select Save and retry."
   },
   "account.relogin.pending_wrong": {
     "zh-CN": "当前登录的不是「{0}」，未覆盖已保存账号。请登录正确账号，或取消本次恢复。",
@@ -326,45 +506,45 @@
     "en-US": "Confirm the match below to repair this account's sandbox binding. Existing data is preserved."
   },
   "software.sandbox_compat_help": {
-  "zh-CN": "所有账号统一使用，下次隔离启动时生效。默认使用同步模式；遇到游戏加载异常时可开启兼容模式。两种模式都会跟随本机游戏更新。",
-  "zh-TW": "所有帳號統一使用，下次隔離啟動時生效。預設使用同步模式；遇到遊戲載入異常時可開啟相容模式。兩種模式都會跟隨本機遊戲更新。",
-  "en-US": "Applies to all accounts on their next isolated launch. Synchronized mode is the default; enable compatibility mode if game loading is unreliable. Both modes follow host game updates."
-},
+    "zh-CN": "仅在隔离启动的游戏加载异常时开启。对所有账号生效，下次隔离启动时应用。",
+    "zh-TW": "僅在隔離啟動的遊戲載入異常時開啟。對所有帳號生效，下次隔離啟動時套用。",
+    "en-US": "Turn on only if isolated games fail to load. Applies to all accounts on their next isolated launch."
+  },
   "software.sandbox_compat": {
-  "zh-CN": "沙盒兼容模式",
-  "zh-TW": "沙盒相容模式",
-  "en-US": "Sandbox compatibility mode"
-},
+    "zh-CN": "沙盒兼容模式",
+    "zh-TW": "沙盒相容模式",
+    "en-US": "Sandbox compatibility mode"
+  },
   "sandbox.manage.slow": {
-  "zh-CN": "读取沙盒状态超时。可以重试，或在软件设置中检查沙盒工具位置。",
-  "zh-TW": "讀取沙盒狀態逾時。可以重試，或在軟體設定中檢查沙盒工具位置。",
-  "en-US": "Reading sandbox status timed out. Retry, or check the Sandboxie location in Software settings."
-},
+    "zh-CN": "读取沙盒状态超时。可以重试，或在软件设置中检查沙盒工具位置。",
+    "zh-TW": "讀取沙盒狀態逾時。可以重試，或在軟體設定中檢查沙盒工具位置。",
+    "en-US": "Reading sandbox status timed out. Retry, or check the Sandboxie location in Software settings."
+  },
   "sandbox.manage.bound": {
-  "zh-CN": "绑定已修复。",
-  "zh-TW": "綁定已修復。",
-  "en-US": "Sandbox binding repaired."
-},
+    "zh-CN": "绑定已修复。",
+    "zh-TW": "綁定已修復。",
+    "en-US": "Sandbox binding repaired."
+  },
   "sandbox.manage.rebuild_prompt": {
-  "zh-CN": "沙盒已移除，账号和设置已保留。需要重新创建吗？也可以稍后隔离启动时自动创建。",
-  "zh-TW": "沙盒已移除，帳號與設定已保留。需要重新建立嗎？也可以稍後隔離啟動時自動建立。",
-  "en-US": "Sandbox removed. Your account and settings are kept. Create a new sandbox now, or let your next isolated launch create one."
-},
+    "zh-CN": "沙盒已移除，账号和设置已保留。需要重新创建吗？也可以稍后隔离启动时自动创建。",
+    "zh-TW": "沙盒已移除，帳號與設定已保留。需要重新建立嗎？也可以稍後隔離啟動時自動建立。",
+    "en-US": "Sandbox removed. Your account and settings are kept. Create a new sandbox now, or let your next isolated launch create one."
+  },
   "sandbox.manage.rebuild": {
-  "zh-CN": "重新创建沙盒",
-  "zh-TW": "重新建立沙盒",
-  "en-US": "Create a new sandbox"
-},
-"sandbox.manage.title": {
+    "zh-CN": "重新创建沙盒",
+    "zh-TW": "重新建立沙盒",
+    "en-US": "Create a new sandbox"
+  },
+  "sandbox.manage.title": {
     "zh-CN": "管理沙盒",
     "zh-TW": "管理沙盒",
     "en-US": "Manage sandbox"
   },
   "sandbox.manage.selected_help": {
-  "zh-CN": "管理选中账号的沙盒",
-  "zh-TW": "管理所選帳號的沙盒",
-  "en-US": "Manage the selected account's sandbox"
-},
+    "zh-CN": "管理选中账号的沙盒",
+    "zh-TW": "管理所選帳號的沙盒",
+    "en-US": "Manage the selected account's sandbox"
+  },
   "sandbox.manage.mode": {
     "zh-CN": "沙盒启动方式",
     "zh-TW": "沙盒啟動方式",
@@ -421,10 +601,10 @@
     "en-US": "Sandbox status is unavailable. See the reason below."
   },
   "sandbox.manage.empty": {
-  "zh-CN": "尚未创建沙盒。可在这里创建，首次隔离启动也会自动创建。",
-  "zh-TW": "尚未建立沙盒。可在此建立，首次隔離啟動也會自動建立。",
-  "en-US": "No sandbox yet. Create one here, or let the first isolated launch create it automatically."
-},
+    "zh-CN": "尚未创建沙盒。可在这里创建，首次隔离启动也会自动创建。",
+    "zh-TW": "尚未建立沙盒。可在此建立，首次隔離啟動也會自動建立。",
+    "en-US": "No sandbox yet. Create one here, or let the first isolated launch create it automatically."
+  },
   "sandbox.manage.ready": {
     "zh-CN": "沙盒已就绪。创建和管理沙盒不会启动游戏。",
     "zh-TW": "沙盒已就緒。建立與管理沙盒不會啟動遊戲。",
@@ -436,10 +616,10 @@
     "en-US": "Programs are still running in this account's sandbox. Exit its game and isolated Dustweave window, then retry."
   },
   "sandbox.manage.mode_saved": {
-  "zh-CN": "已保存，所有账号下次隔离启动时生效，包括批量和定时执行。",
-  "zh-TW": "已儲存，所有帳號下次隔離啟動時生效，包含批次與排程執行。",
-  "en-US": "Saved for every account's next isolated launch, including batch and scheduled runs."
-},
+    "zh-CN": "已保存，所有账号下次隔离启动时生效，包括批量和定时执行。",
+    "zh-TW": "已儲存，所有帳號下次隔離啟動時生效，包含批次與排程執行。",
+    "en-US": "Saved for every account's next isolated launch, including batch and scheduled runs."
+  },
   "sandbox.manage.created": {
     "zh-CN": "沙盒已创建，尚未启动游戏。",
     "zh-TW": "沙盒已建立，尚未啟動遊戲。",
@@ -471,10 +651,10 @@
     "en-US": "Canceled. Changes already completed are kept."
   },
   "sandbox.manage.mode_invalid": {
-  "zh-CN": "沙盒启动方式记录无法读取。请在软件设置中重新设置“沙盒兼容模式”。",
-  "zh-TW": "無法讀取沙盒啟動方式記錄。請在軟體設定中重新設定「沙盒相容模式」。",
-  "en-US": "The saved sandbox mode could not be read. Set Sandbox compatibility mode again in Software settings."
-},
+    "zh-CN": "沙盒启动方式记录无法读取。请在软件设置中重新设置“沙盒兼容模式”。",
+    "zh-TW": "無法讀取沙盒啟動方式記錄。請在軟體設定中重新設定「沙盒相容模式」。",
+    "en-US": "The saved sandbox mode could not be read. Set Sandbox compatibility mode again in Software settings."
+  },
   "sandbox.manage.process_unknown": {
     "zh-CN": "未能确认沙盒中正在运行的程序。请刷新状态，仍失败时检查 Sandboxie 是否正常运行。",
     "zh-TW": "無法確認沙盒中執行的程式。請重新整理狀態，若仍失敗，請檢查 Sandboxie 是否正常運作。",
@@ -515,7 +695,7 @@
     "zh-TW": "正在處理遊戲更新後的舊程式副本…",
     "en-US": "Updating stale sandbox program copies…"
   },
-"updates.rollback_title": {
+  "updates.rollback_title": {
     "zh-CN": "更新未完成",
     "zh-TW": "更新未完成",
     "en-US": "Update did not complete"
@@ -556,13 +736,13 @@
     "en-US": "{0}/{1} accounts finished · sequential run"
   },
   "work.component": {
-    "zh-CN": "准备本环节组件，完成后自动继续",
-    "zh-TW": "準備本環節元件，完成後自動繼續",
+    "zh-CN": "准备本任务组件，完成后自动继续",
+    "zh-TW": "準備本任務元件，完成後自動繼續",
     "en-US": "Preparing component · continues automatically"
   },
   "run.work_progress_help": {
-    "zh-CN": "已处理 {0}/{1} 个环节，跳过项不计入。进度按本轮可用次数和工作量计算；100%表示本轮已处理完，未完成目标和异常仍会列出。",
-    "zh-TW": "已處理 {0}/{1} 個環節，跳過項不計入。進度按本輪可用次數與工作量計算；100%表示本輪已處理完，未完成目標與異常仍會列出。",
+    "zh-CN": "已处理 {0}/{1} 个任务，跳过项不计入。进度按本轮可用次数和工作量计算；100%表示本轮已处理完，未完成目标和异常仍会列出。",
+    "zh-TW": "已處理 {0}/{1} 個任務，跳過項不計入。進度按本輪可用次數與工作量計算；100%表示本輪已處理完，未完成目標與異常仍會列出。",
     "en-US": "{0}/{1} tasks handled; skipped tasks are excluded. Progress uses this run’s available allowance and workload. 100% means the run is finished; unmet goals and issues are still reported."
   },
   "work.absorptions": {
@@ -596,8 +776,8 @@
     "en-US": "{0}/{1} completed"
   },
   "work.prepare": {
-    "zh-CN": "准备当前环节",
-    "zh-TW": "準備目前環節",
+    "zh-CN": "准备当前任务",
+    "zh-TW": "準備目前任務",
     "en-US": "Preparing task"
   },
   "work.enter": {
@@ -731,9 +911,9 @@
     "en-US": "Lossless compression is available for {0} older records or components, processed in small batches while idle."
   },
   "storage.optimized": {
-    "zh-CN": "已清理 {0} 个文件、压缩 {1} 个文件，释放 {2} MiB；跳过 {3} 项。",
-    "zh-TW": "已清理 {0} 個檔案、壓縮 {1} 個檔案，釋放 {2} MiB；略過 {3} 項。",
-    "en-US": "Removed {0} files and compressed {1}, freeing {2} MiB. Skipped {3} items."
+    "zh-CN": "已清理 {0} 个文件、压缩 {1} 个文件，释放 {2} MB；跳过 {3} 项。",
+    "zh-TW": "已清理 {0} 個檔案、壓縮 {1} 個檔案，釋放 {2} MB；略過 {3} 項。",
+    "en-US": "Removed {0} files and compressed {1}, freeing {2} MB. Skipped {3} items."
   },
   "tools.preparing_window": {
     "zh-CN": "正在准备工具…",
@@ -821,9 +1001,9 @@
     "en-US": "Some completion alerts could not be delivered. Your daily results are saved."
   },
   "sandbox.launch_description": {
-    "zh-CN": "为选中账号打开独立的游戏和织尘窗口，可与其他账号分别执行日常。需要安装 Sandboxie-Plus。\n\n每个隔离窗口有自己的控制、日志和缓存；同一账号的已完成任务会与主窗口同步。请勿让同一账号在多个游戏实例中同时登录。\n\n游戏更新：关闭所有游戏，在本机官方启动器更新一次即可；下次隔离启动自动使用新版程序，登录数据保持独立。",
-    "zh-TW": "為選取的帳號開啟獨立的遊戲和織塵視窗，可與其他帳號分別執行日常。需要安裝 Sandboxie-Plus。\n\n每個隔離視窗有自己的控制、日誌和快取；同一帳號已完成的任務會與主視窗同步。請勿讓同一帳號在多個遊戲執行個體中同時登入。\n\n遊戲更新：關閉所有遊戲，在本機官方啟動器更新一次即可；下次隔離啟動自動使用新版程式，登入資料保持獨立。",
-    "en-US": "Open a separate game and Dustweave window for the selected account, so it can run daily tasks independently of other accounts. Requires Sandboxie-Plus.\n\nEach isolated window has its own controls, logs and cache. Completed tasks sync with the main window for the same account. Do not sign in to the same account in multiple game instances at once.\n\nGame updates: close all games and update once with the normal official launcher. The next isolated launch uses the updated program files while keeping sign-in data separate."
+    "zh-CN": "为选中账号单独打开一套游戏和织尘窗口，与其他账号分开执行日常。\n\n· 需要安装 Sandboxie-Plus\n· 每个隔离窗口有自己的日志和缓存，已完成的任务会同步回主窗口\n· 同一账号不要同时在多个游戏窗口登录\n· 游戏更新：关闭所有游戏，用本机官方启动器更新一次即可，隔离窗口会自动使用新版",
+    "zh-TW": "為選取的帳號單獨開啟一套遊戲和織塵視窗，與其他帳號分開執行日常。\n\n· 需要安裝 Sandboxie-Plus\n· 每個隔離視窗有自己的日誌和快取，已完成的任務會同步回主視窗\n· 同一帳號不要同時在多個遊戲視窗登入\n· 遊戲更新：關閉所有遊戲，用本機官方啟動器更新一次即可，隔離視窗會自動使用新版",
+    "en-US": "Open a separate game and Dustweave window for the selected account, so it runs daily tasks apart from other accounts.\n\n· Requires Sandboxie-Plus\n· Each isolated window keeps its own logs and cache; completed tasks sync back to the main window\n· Do not sign in to the same account in more than one game window\n· Game updates: close all games and update once with the official launcher; isolated windows use the new version automatically"
   },
   "sandbox.remember": {
     "zh-CN": "今后不再提醒",
@@ -936,8 +1116,8 @@
     "en-US": "{0} accounts finished · {1} items to review"
   },
   "report.not_finished": {
-    "zh-CN": "此项未完成，可回到今日任务查看并补跑。",
-    "zh-TW": "此項未完成，可回到今日任務查看並補跑。",
+    "zh-CN": "此项未完成，可回到今日任务查看并重新执行。",
+    "zh-TW": "此項未完成，可回到今日任務查看並重新執行。",
     "en-US": "This step is unfinished. Review it in Today and retry when ready."
   },
   "report.current_account": {
@@ -956,19 +1136,19 @@
     "en-US": "A drive used by Dustweave has less than 1 GB free. Saving records or downloading updates may fail."
   },
   "storage.low.volume": {
-    "zh-CN": "{0} 可用空间：{1:N1} MiB",
-    "zh-TW": "{0} 可用空間：{1:N1} MiB",
-    "en-US": "{0} available: {1:N1} MiB"
+    "zh-CN": "{0} 可用空间：{1:N1} MB",
+    "zh-TW": "{0} 可用空間：{1:N1} MB",
+    "en-US": "{0} available: {1:N1} MB"
   },
   "storage.low.total": {
-    "zh-CN": "完整数据与缓存目录：{0:N1} MiB",
-    "zh-TW": "完整資料與快取目錄：{0:N1} MiB",
-    "en-US": "All data and cache folders: {0:N1} MiB"
+    "zh-CN": "织尘数据共占用：{0:N1} MB",
+    "zh-TW": "織塵資料共占用：{0:N1} MB",
+    "en-US": "Dustweave data in total: {0:N1} MB"
   },
   "storage.low.scope": {
-    "zh-CN": "包括主数据目录、迁移缓存、隔离账号空间和程序解压缓存。运行中的沙盒及需要恢复的数据会保留。",
-    "zh-TW": "包括主資料目錄、遷移快取、隔離帳號空間和程式解壓快取。執行中的沙盒及需要復原的資料會保留。",
-    "en-US": "Includes main data, relocated caches, isolated account spaces and program extraction caches. Running sandboxes and recovery data are protected."
+    "zh-CN": "包括账号数据、缓存、隔离账号空间和解压文件。正在使用的沙盒和恢复所需的数据不会被清理。",
+    "zh-TW": "包括帳號資料、快取、隔離帳號空間和解壓檔案。使用中的沙盒和復原所需的資料不會被清理。",
+    "en-US": "Includes account data, caches, isolated account spaces and extracted files. Sandboxes in use and data needed for recovery are never removed."
   },
   "storage.low.partial": {
     "zh-CN": "有 {0} 项记录受保护或暂时无法读取；占用按可读取的文件统计。",
@@ -1180,24 +1360,24 @@
     "zh-TW": "金幣 {0:N0} · 敵人 {1}/{2} · 剩餘 {3:0}s",
     "en-US": "Gold {0:N0} · Enemies {1}/{2} · {3:0}s left"
   },
-  "message.吸收次数用完，本地图压制仍未确认；继续其他地图": {
+  "message.legacy.2a2a307fa6090a97": {
     "zh-CN": "吸收次数用完，本地图压制仍未确认；继续其他地图",
     "zh-TW": "吸收次數用完，本地圖壓制仍未確認；繼續其他地圖",
     "en-US": "Absorption uses are exhausted and suppression here is not yet confirmed. Continuing with other maps."
   },
-  "message.吸收次数用完，已继续处理可执行的压制；剩余收集次日接续": {
-    "zh-CN": "吸收次数用完，已继续处理可执行的压制；剩余收集次日接续",
-    "zh-TW": "吸收次數用完，已繼續處理可執行的壓制；剩餘收集次日接續",
+  "message.legacy.9128f60ba50f755a": {
+    "zh-CN": "吸收次数用完，已继续处理可执行的压制；剩余收集次日继续",
+    "zh-TW": "吸收次數用完，已繼續處理可執行的壓制；剩餘收集次日繼續",
     "en-US": "Absorption uses are exhausted. Available suppression was still processed; remaining collection can resume tomorrow."
   },
-  "message.吸收次数用完，仍有地图待收集；本次周收集已暂停，次日接续": {
-    "zh-CN": "吸收次数用完，仍有地图待收集；本次周收集已暂停，次日接续",
-    "zh-TW": "吸收次數用完，仍有地圖待收集；本次週收集已暫停，次日接續",
+  "message.legacy.42942b355cfe485b": {
+    "zh-CN": "吸收次数用完，仍有地图待收集；本次周收集已暂停，次日继续",
+    "zh-TW": "吸收次數用完，仍有地圖待收集；本次週收集已暫停，次日繼續",
     "en-US": "Absorption uses are exhausted while collection remains. Weekly collection is paused until tomorrow."
   },
-  "message.周收集范围已补全，可接续核对遗漏地图；已收集物品不会重复吸收。": {
-    "zh-CN": "周收集范围已补全，可接续核对遗漏地图；已收集物品不会重复吸收。",
-    "zh-TW": "週收集範圍已補全，可接續核對遺漏地圖；已收集物品不會重複吸收。",
+  "message.legacy.c24c8da0ba602c41": {
+    "zh-CN": "周收集范围已补全，可继续核对遗漏地图；已收集物品不会重复吸收。",
+    "zh-TW": "週收集範圍已補全，可繼續核對遺漏地圖；已收集物品不會重複吸收。",
     "en-US": "Weekly collection now covers the missing maps. Resume to check them; collected items will not consume another absorption use."
   },
   "completion.close_game": {
@@ -1206,9 +1386,9 @@
     "en-US": "Close the game after daily tasks finish"
   },
   "completion.help": {
-    "zh-CN": "队列走完后关闭对应游戏，部分任务暂缓也会关闭；暂停或中断时保留。定时执行可单独设置。",
-    "zh-TW": "佇列執行結束後關閉對應遊戲，部分任務暫緩也會關閉；暫停或中斷時保留。定時執行可單獨設定。",
-    "en-US": "Close each game when its queue ends, even with deferred tasks. Keep it open when paused or interrupted. Schedules have their own setting."
+    "zh-CN": "日常结束后关闭对应游戏，即使有任务留待下次；暂停或中断时保留游戏，方便处理。定时执行可单独设置。",
+    "zh-TW": "日常結束後關閉對應遊戲，即使有任務留待下次；暫停或中斷時保留遊戲，方便處理。定時執行可單獨設定。",
+    "en-US": "Closes each game when its daily run ends, even if some tasks are deferred. Keeps it open when paused or interrupted so you can respond. Schedules have their own setting."
   },
   "completion.schedule_help": {
     "zh-CN": "仅用于这项定时计划，串行和隔离多开均适用；异常中断时保留游戏。",
@@ -1271,8 +1451,8 @@
     "en-US": "Your daily key reserve has been reached; no sweep started."
   },
   "message.event_auto_failed_stop": {
-    "zh-CN": "游戏内自动战斗失败，已结束此环节，继续其他日常。",
-    "zh-TW": "遊戲內自動戰鬥失敗，已結束此環節，繼續其他日常。",
+    "zh-CN": "游戏内自动战斗失败，已结束此任务，继续其他日常。",
+    "zh-TW": "遊戲內自動戰鬥失敗，已結束此任務，繼續其他日常。",
     "en-US": "Native auto battle ended in defeat. Continuing with other daily tasks."
   },
   "message.event_auto_failed_swept": {
@@ -1291,8 +1471,8 @@
     "en-US": "Event auto battles and free sweeps have been checked."
   },
   "message.event_native_result_pending": {
-    "zh-CN": "活动结算尚未确认，请等待游戏结算完成后接续；不会重复开始战斗。",
-    "zh-TW": "活動結算尚未確認，請等待遊戲結算完成後接續；不會重複開始戰鬥。",
+    "zh-CN": "活动结算尚未确认，请等待游戏结算完成后继续；不会重复开始战斗。",
+    "zh-TW": "活動結算尚未確認，請等待遊戲結算完成後繼續；不會重複開始戰鬥。",
     "en-US": "The event result is not confirmed yet. Wait for settlement and resume; the battle will not be started again."
   },
   "stage.salvation": {
@@ -1351,8 +1531,8 @@
     "en-US": "After a defeat, sweep the highest eligible stage"
   },
   "prefs.event_failure_hint": {
-    "zh-CN": "关闭后，失败即结束活动战斗环节，继续其他日常。",
-    "zh-TW": "關閉後，失敗即結束活動戰鬥環節，繼續其他日常。",
+    "zh-CN": "关闭后，失败即结束活动战斗任务，继续其他日常。",
+    "zh-TW": "關閉後，失敗即結束活動戰鬥任務，繼續其他日常。",
     "en-US": "When off, a defeat ends this stage and the daily queue continues."
   },
   "native.salvation_keys_error": {
@@ -1621,18 +1801,18 @@
     "en-US": "Collectible summoning"
   },
   "run.recovery_body": {
-    "en-US": "Task: {0}\nInterrupted action: {1}\n\nA disconnect or interrupted read does not mean the action failed. Once logged in again, resume the original queue or run this task again.\n\nFor absorption, Dustweave automatically reads the affected map. It skips collected items and continues remaining targets using the current limits. No old reply or manual check is needed. If the map cannot be read, it is deferred with a reason.\n\nOther actions that cannot be resolved automatically retain their reason. You can deselect that task, run the others and export diagnostic logs.",
-    "zh-CN": "环节：{0}\n中断的操作：{1}\n\n游戏断线或读取中断不代表操作失败。恢复登录后，可直接接续原队列或重新运行此环节。\n\n吸收卡点会自动读取对应地图：已收完就继续下一张，仍有物品就按当前剩余目标和次数继续，无需旧回执或手动核对。暂时读不到时会保留原因并跳过该地点。\n\n其他无法自动判断的操作会保留具体原因；可先取消勾选该环节继续其他任务，并导出诊断日志。",
-    "zh-TW": "環節：{0}\n中斷的操作：{1}\n\n遊戲斷線或讀取中斷不代表操作失敗。恢復登入後，可直接接續原佇列或重新執行此環節。\n\n吸收卡點會自動讀取對應地圖：已收完就繼續下一張，仍有物品就按目前剩餘目標與次數繼續，無需舊回應或手動核對。暫時讀不到時會保留原因並跳過該地點。\n\n其他無法自動判斷的操作會保留具體原因；可先取消勾選該環節繼續其他任務，並匯出診斷記錄。"
+    "en-US": "Task: {0}\nInterrupted action: {1}\n\nA disconnect or interrupted read does not mean the action failed. Once signed in again, resume the original queue or run this task again.\n\n· Absorption: Dustweave reads the affected map automatically, moves on when it is collected and needs no manual check. If the map cannot be read yet, that spot is skipped with a reason.\n· Other actions: the reason is kept. You can deselect this task, run the others and export diagnostic logs.",
+    "zh-CN": "任务：{0}\n中断的操作：{1}\n\n断线或读取中断不代表操作失败。重新登录后，可继续上次进度或重新运行此任务。\n\n· 吸收中断：会自动读取对应地图，已收完就继续下一张，无需手动核对；暂时读不到时跳过该地点并注明原因。\n· 其他操作：会保留具体原因。可先取消勾选此任务运行其他任务，并导出诊断日志。",
+    "zh-TW": "任務：{0}\n中斷的操作：{1}\n\n斷線或讀取中斷不代表操作失敗。重新登入後，可繼續上次進度或重新執行此任務。\n\n· 吸收中斷：會自動讀取對應地圖，已收完就繼續下一張，無需手動核對；暫時讀不到時略過該地點並註明原因。\n· 其他操作：會保留具體原因。可先取消勾選此任務執行其他任務，並匯出診斷記錄。"
   },
   "run.recovery_continue": {
     "en-US": "Continue task",
-    "zh-CN": "继续此环节",
-    "zh-TW": "繼續此環節"
+    "zh-CN": "继续此任务",
+    "zh-TW": "繼續此任務"
   },
   "run.recovery_select_current": {
-    "zh-CN": "这份记录不是当前可恢复的任务。请返回「当前计划」，选择对应账号和环节再运行。",
-    "zh-TW": "這份記錄不是目前可恢復的任務。請返回「目前計畫」，選擇對應帳號與環節再執行。",
+    "zh-CN": "这份记录不是当前可恢复的任务。请返回「当前计划」，选择对应账号和任务再运行。",
+    "zh-TW": "這份記錄不是目前可恢復的任務。請返回「目前計畫」，選擇對應帳號與任務再執行。",
     "en-US": "This record cannot be resumed here. Return to Current plan and choose the matching account and task."
   },
   "run.sync_confirm_title": {
@@ -1646,9 +1826,9 @@
     "en-US": "Check maps"
   },
   "run.sync_confirm_body": {
-    "en-US": "This optional full refresh is for clearly incorrect collection progress after manual play. After a disconnect or interrupted absorption, simply resume the queue; Dustweave checks the affected map automatically.\n\nIt switches between available cartridges and reads server progress. This may take several minutes. It does not use absorption or suppression, or mark tasks complete without checking.\n\nFinish any battle or other automation first. You can stop at any time.",
-    "zh-CN": "这是可选的全量进度刷新，适用于手动收集后列表仍明显不正确的情况。普通断线或吸收中断，直接接续队列即可，工具会自动检查出问题的地图。\n\n确认后将切换可用卡带、读取服务器记录并更新收集进度，可能需要数分钟；不会使用吸收或压制，也不会直接把任务标记为完成。\n\n请先结束当前战斗或其他自动化。检查期间可随时停止。",
-    "zh-TW": "這是可選的完整進度重新整理，適用於手動收集後清單仍明顯不正確的情況。一般斷線或吸收中斷，直接接續佇列即可，工具會自動檢查出問題的地圖。\n\n確認後將切換可用卡帶、讀取伺服器記錄並更新收集進度，可能需要數分鐘；不會使用吸收或壓制，也不會直接將任務標記為完成。\n\n請先結束目前戰鬥或其他自動化。檢查期間可隨時停止。"
+    "en-US": "Use this only if collection progress is still clearly wrong after manual play. After a disconnect or interrupted absorption, simply resume the queue; the affected map is checked automatically.\n\nThis switches cartridges and reads server progress, which may take several minutes. It only updates progress: no absorption, no suppression and nothing is marked complete without checking.\n\nFinish any battle or other automation first. You can stop at any time.",
+    "zh-CN": "仅在手动收集后，进度列表仍明显不对时使用。普通断线或吸收中断直接继续上次进度即可，会自动检查出问题的地图。\n\n确认后将切换卡带并读取服务器进度，可能需要数分钟；只更新进度，不会吸收、压制或直接标记完成。\n\n请先结束当前战斗或其他自动化，检查期间可随时停止。",
+    "zh-TW": "僅在手動收集後，進度清單仍明顯不對時使用。一般斷線或吸收中斷直接繼續上次進度即可，會自動檢查出問題的地圖。\n\n確認後將切換卡帶並讀取伺服器進度，可能需要數分鐘；只更新進度，不會吸收、壓制或直接標記完成。\n\n請先結束目前戰鬥或其他自動化，檢查期間可隨時停止。"
   },
   "schedule.execution": {
     "zh-CN": "到点如何执行",
@@ -1661,9 +1841,9 @@
     "en-US": "Stop built-in tools, restart the game, and run dailies"
   },
   "schedule.takeover_hint": {
-    "zh-CN": "等待当前操作结束，正常关闭游戏，再按已保存的账号计划启动。关闭时，工具运行期间最多等候 15 分钟。",
-    "zh-TW": "等待目前操作結束，正常關閉遊戲，再依已儲存的帳號計畫啟動。關閉時，工具執行期間最多等候 15 分鐘。",
-    "en-US": "Finishes the current operation, closes the game normally, then launches the saved account plan. When disabled, a busy tool delays the schedule for up to 15 minutes."
+    "zh-CN": "勾选后：等工具当前操作结束、正常关闭游戏，再按计划启动账号。不勾选：工具运行时最多等候 15 分钟。",
+    "zh-TW": "勾選後：等工具目前操作結束、正常關閉遊戲，再依計畫啟動帳號。不勾選：工具執行時最多等候 15 分鐘。",
+    "en-US": "When on: waits for the tool's current action, closes the game normally, then starts the planned accounts. When off: waits up to 15 minutes while a tool is running."
   },
   "schedule.stopping_tool": {
     "zh-CN": "正在正常停止内置工具，等待当前操作结束",
@@ -1801,8 +1981,8 @@
     "en-US": "Done"
   },
   "sandbox_setup.not_started": {
-    "zh-CN": "未启动沙盒队列。请在软件设置中安装或指定 Sandboxie-Plus 后重试，也可改用串行执行。",
-    "zh-TW": "未啟動沙盒佇列。請在軟體設定中安裝或指定 Sandboxie-Plus 後重試，也可改用依序執行。",
+    "zh-CN": "未启动并行执行。请在软件设置中安装或指定 Sandboxie-Plus 后重试，也可改为逐个账号执行。",
+    "zh-TW": "未啟動並行執行。請在軟體設定中安裝或指定 Sandboxie-Plus 後重試，也可改為逐一帳號執行。",
     "en-US": "The parallel queue did not start. Set up Sandboxie-Plus in App settings and retry, or use sequential execution."
   },
   "sandbox_setup.schedule_missing": {
@@ -1842,8 +2022,8 @@
   },
   "logs.body": {
     "en-US": "Successful tasks keep summaries; failures keep full evidence and nearby steps. Expiring diagnostics does not reset task progress.",
-    "zh-TW": "成功環節保留摘要，異常保留完整現場及相鄰步驟。清理過期診斷不會重設日常進度。",
-    "zh-CN": "成功环节保留摘要，异常保留完整现场及相邻步骤。清理过期诊断不会重置日常进度。"
+    "zh-TW": "成功任務保留摘要，異常保留完整現場及相鄰步驟。清理過期診斷不會重設日常進度。",
+    "zh-CN": "成功任务保留摘要，异常保留完整现场及相邻步骤。清理过期诊断不会重置日常进度。"
   },
   "logs.automatic": {
     "zh-CN": "空闲时自动清理日志和缓存",
@@ -1996,9 +2176,9 @@
     "en-US": "Account detected"
   },
   "onboarding.detected": {
-    "zh-CN": "已验证角色「{0}」。请正常关闭游戏并等待启动器退出，然后在这里保存账号。不会切换或覆盖其他账号。",
-    "zh-TW": "已驗證角色「{0}」。請正常關閉遊戲並等待啟動器退出，然後在這裡儲存帳號。不會切換或覆寫其他帳號。",
-    "en-US": "Character verified: {0}. Exit the game normally and wait for the launcher to close, then save this account here. Other saved accounts will not be overwritten."
+    "zh-CN": "已验证角色「{0}」。登录信息要在游戏退出时才写入本机，请正常关闭游戏并等待启动器退出，再保存账号。不会覆盖其他已保存的账号。",
+    "zh-TW": "已驗證角色「{0}」。登入資訊要在遊戲結束時才寫入本機，請正常關閉遊戲並等待啟動器退出，再儲存帳號。不會覆寫其他已儲存的帳號。",
+    "en-US": "Character verified: {0}. The sign-in is written to this PC only when the game exits, so close the game normally and wait for the launcher to close, then save this account. Other saved accounts are not overwritten."
   },
   "onboarding.account_name": {
     "zh-CN": "账号备注名",
@@ -2106,9 +2286,9 @@
     "en-US": "Setup complete. Start with a few familiar tasks."
   },
   "onboarding.reopen": {
-    "zh-CN": "已跳过引导，可从账号管理重新打开。",
-    "zh-TW": "已略過引導，可從帳號管理重新開啟。",
-    "en-US": "Guide skipped. Reopen it from Accounts at any time."
+    "zh-CN": "已跳过引导，可随时点击右上角「启动引导」重新打开。",
+    "zh-TW": "已略過引導，可隨時點擊右上角「啟動引導」重新開啟。",
+    "en-US": "Guide skipped. Reopen it any time with Getting started at the top right."
   },
   "onboarding.close_launcher": {
     "zh-CN": "请先关闭游戏启动器，再重试验证。当前账号保持不变。",
@@ -2151,13 +2331,13 @@
     "en-US": "The saved account could not be confirmed. Check the Accounts page before retrying."
   },
   "onboarding.page.daily": {
-    "zh-CN": "查看本次执行计划、正在进行的环节和完成情况。你可以选择部分任务；中断后优先接续原队列，也可以补跑未完成项。",
-    "zh-TW": "查看本次執行計畫、進行中的環節與完成情況。可以選擇部分任務；中斷後優先接續原佇列，也能補跑未完成項。",
+    "zh-CN": "查看本次执行计划、正在进行的任务和完成情况。你可以选择部分任务；中断后优先继续上次进度，也可以重新执行未完成项。",
+    "zh-TW": "查看本次執行計畫、進行中的任務與完成情況。可以選擇部分任務；中斷後優先繼續上次進度，也能重新執行未完成項。",
     "en-US": "Review the plan, current task and results. Run selected tasks, resume an interrupted queue, or retry unfinished tasks."
   },
   "onboarding.page.settings": {
-    "zh-CN": "先选择账号，再按分类或搜索找到日常环节与参数。不需要的环节可以关闭；修改后点击保存设置。",
-    "zh-TW": "先選擇帳號，再依分類或搜尋找到日常環節與參數。不需要的環節可以關閉；修改後點選儲存設定。",
+    "zh-CN": "先选择账号，再按分类或搜索找到日常任务与参数。不需要的任务可以关闭；修改后点击保存设置。",
+    "zh-TW": "先選擇帳號，再依分類或搜尋找到日常任務與參數。不需要的任務可以關閉；修改後點選儲存設定。",
     "en-US": "Choose an account, then browse categories or search for tasks and options. Disable tasks you do not need, and save your changes."
   },
   "onboarding.page.tools": {
@@ -2321,8 +2501,8 @@
     "en-US": "{0} more needed to meet the requirement."
   },
   "run.pending_unknown": {
-    "zh-CN": "尚未读到明确的任务进度。请在游戏对应任务页查看条件，之后可补跑领奖环节。",
-    "zh-TW": "尚未讀到明確的任務進度。請在遊戲對應任務頁查看條件，之後可補跑領獎環節。",
+    "zh-CN": "尚未读到明确的任务进度。请在游戏对应任务页查看条件，之后可重新执行领奖任务。",
+    "zh-TW": "尚未讀到明確的任務進度。請在遊戲對應任務頁查看條件，之後可重新執行領獎任務。",
     "en-US": "Task progress is not available. Check the requirements on the game's task page, then retry reward collection."
   },
   "run.pending_group.daily": {
@@ -2351,18 +2531,18 @@
     "en-US": "Other missions"
   },
   "run.skipped_unknown": {
-    "zh-CN": "该环节已跳过，但记录中没有原因。可重新勾选此项；若再次出现，请导出诊断。",
-    "zh-TW": "此環節已略過，但紀錄中沒有原因。可重新勾選此項；若再次出現，請匯出診斷。",
+    "zh-CN": "该任务已跳过，但记录中没有原因。可重新勾选此项；若再次出现，请导出诊断。",
+    "zh-TW": "此任務已略過，但紀錄中沒有原因。可重新勾選此項；若再次出現，請匯出診斷。",
     "en-US": "This stage was skipped without a recorded reason. Select it to retry; export diagnostics if this recurs."
   },
   "run.outcome_unknown": {
-    "zh-CN": "该环节尚未完成，但记录中没有原因。请查看游戏是否有断线或弹窗，再补跑此项；若再次出现，请导出诊断。",
-    "zh-TW": "此環節尚未完成，但紀錄中沒有原因。請查看遊戲是否斷線或有彈窗，再補跑此項；若再次出現，請匯出診斷。",
+    "zh-CN": "该任务尚未完成，但记录中没有原因。请查看游戏是否有断线或弹窗，再重新执行此项；若再次出现，请导出诊断。",
+    "zh-TW": "此任務尚未完成，但紀錄中沒有原因。請查看遊戲是否斷線或有彈窗，再重新執行此項；若再次出現，請匯出診斷。",
     "en-US": "This stage is incomplete without a recorded reason. Check the game for a disconnect or dialog, then retry. Export diagnostics if it recurs."
   },
   "run.resume_footer": {
-    "zh-CN": "接续原队列不受勾选影响；补跑只执行勾选项。",
-    "zh-TW": "接續原佇列不受勾選影響；補跑只執行勾選項。",
+    "zh-CN": "继续上次进度不受勾选影响；重新执行只执行勾选项。",
+    "zh-TW": "繼續上次進度不受勾選影響；重新執行只執行勾選項。",
     "en-US": "Resume follows the original queue; retry uses checked tasks only."
   },
   "run.plan_footer": {
@@ -2376,13 +2556,13 @@
     "en-US": "This is a past record; select tasks to start another run."
   },
   "run.retry_empty": {
-    "zh-CN": "先勾选要补跑的环节，或点击上方「勾选未完成」。",
-    "zh-TW": "先勾選要補跑的環節，或點擊上方「勾選未完成」。",
+    "zh-CN": "先勾选要重新执行的任务，或点击上方「勾选未完成」。",
+    "zh-TW": "先勾選要重新執行的任務，或點擊上方「勾選未完成」。",
     "en-US": "Select tasks in the list, or use Select unfinished above."
   },
   "run.retry_footer": {
-    "zh-CN": "仅补跑勾选的未完成环节，已完成的环节保留。",
-    "zh-TW": "僅補跑勾選的未完成環節，已完成的環節保留。",
+    "zh-CN": "仅重新执行勾选的未完成任务，已完成的任务保留。",
+    "zh-TW": "僅重新執行勾選的未完成任務，已完成的任務保留。",
     "en-US": "Only selected unfinished tasks will run. Completed tasks are kept."
   },
   "run.choose_other": {
@@ -2531,9 +2711,9 @@
     "en-US": "Not verified"
   },
   "account.wait_game": {
-    "zh-CN": "待游戏核对",
-    "zh-TW": "待遊戲核對",
-    "en-US": "Awaiting game check"
+    "zh-CN": "进入游戏后显示角色",
+    "zh-TW": "進入遊戲後顯示角色",
+    "en-US": "Character shown after entering the game"
   },
   "account.invalid": {
     "zh-CN": "会话不可用",
@@ -2641,9 +2821,9 @@
     "en-US": "Remove"
   },
   "account.recover": {
-    "zh-TW": "恢復上次登入",
-    "en-US": "Restore sign-in",
-    "zh-CN": "恢复上次登录"
+    "zh-TW": "還原切換前的登入",
+    "en-US": "Restore previous sign-in",
+    "zh-CN": "还原切换前的登录"
   },
   "account.switch": {
     "zh-CN": "切换并启动选中账号",
@@ -2656,9 +2836,9 @@
     "en-US": "Verify sign-ins…"
   },
   "account.selected": {
-    "zh-CN": "日常队列：{0} 个账号",
-    "zh-TW": "日常佇列：{0} 個帳號",
-    "en-US": "Daily queue: {0} accounts"
+    "zh-CN": "已勾选 {0} 个账号",
+    "zh-TW": "已勾選 {0} 個帳號",
+    "en-US": "{0} accounts checked"
   },
   "account.select_hint": {
     "zh-CN": "勾选账号后开始登录检查",
@@ -2679,6 +2859,21 @@
     "zh-CN": "连接当前游戏",
     "zh-TW": "連接目前遊戲",
     "en-US": "Connect to game"
+  },
+  "connection.connect_help": {
+    "zh-CN": "连接正在运行的游戏并核对当前账号；不会开始任务。",
+    "zh-TW": "連線正在執行的遊戲並核對目前帳號；不會開始任務。",
+    "en-US": "Connect to the running game and verify the signed-in account. No tasks are started."
+  },
+  "connection.reconnect": {
+    "zh-CN": "重新连接",
+    "zh-TW": "重新連線",
+    "en-US": "Reconnect"
+  },
+  "connection.reconnect_help": {
+    "zh-CN": "游戏已连接。重新读取连接并核对当前账号，适用于切换账号或画面卡住后；不会开始任务。",
+    "zh-TW": "遊戲已連線。重新讀取連線並核對目前帳號，適用於切換帳號或畫面卡住後；不會開始任務。",
+    "en-US": "The game is connected. Read the connection again and verify the signed-in account, for example after switching accounts or a stuck screen. No tasks are started."
   },
   "connection.preview": {
     "zh-CN": "隔离界面预览 · 使用演示账号，不连接游戏",
@@ -2831,8 +3026,8 @@
     "en-US": "Run accounts ({0})"
   },
   "run.resume": {
-    "zh-CN": "接续原队列",
-    "zh-TW": "接續原佇列",
+    "zh-CN": "继续上次进度",
+    "zh-TW": "繼續上次進度",
     "en-US": "Resume original queue"
   },
   "run.select_unfinished": {
@@ -2861,8 +3056,8 @@
     "en-US": "Expired record"
   },
   "run.settings": {
-    "zh-CN": "环节设置",
-    "zh-TW": "環節設定",
+    "zh-CN": "任务设置",
+    "zh-TW": "任務設定",
     "en-US": "Daily settings"
   },
   "run.records": {
@@ -2876,18 +3071,18 @@
     "en-US": "Records and more actions"
   },
   "run.resume_help": {
-    "zh-CN": "游戏重启后，重新连接同一账号即可接续。自动检查中断环节的当前进度，保留已完成项目；跨日后请开始新队列。",
-    "zh-TW": "遊戲重啟後，重新連接同一帳號即可接續。自動檢查中斷環節的目前進度，保留已完成項目；跨日後請開始新佇列。",
+    "zh-CN": "游戏重启后，重新连接同一账号即可继续。会自动检查中断任务的当前进度，保留已完成项目；跨日后请重新开始。",
+    "zh-TW": "遊戲重啟後，重新連接同一帳號即可繼續。會自動檢查中斷任務的目前進度，保留已完成項目；跨日後請重新開始。",
     "en-US": "After restarting the game, reconnect the same account to resume. Interrupted tasks check current game progress and completed tasks are retained. Start a new queue after the daily reset."
   },
   "issue.reason.resume-context": {
-    "zh-CN": "当前登录信息或每日重置周期与原队列不一致，接续尚未开始。",
-    "zh-TW": "目前登入資訊或每日重置週期與原佇列不一致，接續尚未開始。",
+    "zh-CN": "当前登录信息或每日重置周期与上次进度不一致，继续尚未开始。",
+    "zh-TW": "目前登入資訊或每日重置週期與上次進度不一致，繼續尚未開始。",
     "en-US": "The current login or daily reset period does not match the original queue. Resuming has not started."
   },
   "issue.action.resume-context": {
-    "zh-CN": "确认游戏登录的是原账号并重新连接；若已经跨日，请从当前计划开始新队列。原记录仍保留。",
-    "zh-TW": "確認遊戲登入的是原帳號並重新連接；若已經跨日，請從目前計畫開始新佇列。原紀錄仍保留。",
+    "zh-CN": "确认游戏登录的是原账号并重新连接；若已经跨日，请从当前计划重新开始。原记录仍保留。",
+    "zh-TW": "確認遊戲登入的是原帳號並重新連接；若已經跨日，請從目前計畫重新開始。原紀錄仍保留。",
     "en-US": "Log in to the original account and reconnect. After a daily reset, start a new queue from the current plan. The previous record is retained."
   },
   "run.retry_help": {
@@ -2911,23 +3106,23 @@
     "en-US": "Choose tasks to run"
   },
   "run.start_selected": {
-    "en-US": "Launch & run ({0})",
-    "zh-CN": "启动并执行 · {0} 项",
-    "zh-TW": "啟動並執行 · {0} 項"
+    "en-US": "Run ({0})",
+    "zh-CN": "开始执行 · {0} 项",
+    "zh-TW": "開始執行 · {0} 項"
   },
   "run.selected_count": {
-    "zh-CN": "已选 {0} / {1} 个环节",
-    "zh-TW": "已選 {0} / {1} 個環節",
+    "zh-CN": "已选 {0} / {1} 个任务",
+    "zh-TW": "已選 {0} / {1} 個任務",
     "en-US": "{0} of {1} tasks selected"
   },
   "run.complete_count": {
-    "zh-CN": "已处理 {0} / {1} 个环节",
-    "zh-TW": "已處理 {0} / {1} 個環節",
+    "zh-CN": "已处理 {0} / {1} 个任务",
+    "zh-TW": "已處理 {0} / {1} 個任務",
     "en-US": "{0} of {1} tasks handled"
   },
   "run.other_count": {
-    "zh-CN": "已处理 {0} / {1} 个环节 · 其他账号记录",
-    "zh-TW": "已處理 {0} / {1} 個環節 · 其他帳號紀錄",
+    "zh-CN": "已处理 {0} / {1} 个任务 · 其他账号记录",
+    "zh-TW": "已處理 {0} / {1} 個任務 · 其他帳號紀錄",
     "en-US": "{0} of {1} tasks handled · Another account"
   },
   "run.select_all": {
@@ -2936,23 +3131,23 @@
     "en-US": "Select all"
   },
   "run.retry": {
-    "zh-CN": "补跑已选环节（{0}）",
-    "zh-TW": "補跑已選環節（{0}）",
+    "zh-CN": "重新执行已选任务（{0}）",
+    "zh-TW": "重新執行已選任務（{0}）",
     "en-US": "Retry selected ({0})"
   },
   "run.reconcile": {
-    "zh-CN": "核对并补跑（{0}）",
-    "zh-TW": "核對並補跑（{0}）",
+    "zh-CN": "核对并重新执行（{0}）",
+    "zh-TW": "核對並重新執行（{0}）",
     "en-US": "Reconcile and retry ({0})"
   },
   "run.title": {
-    "zh-CN": "本次运行",
-    "zh-TW": "本次執行",
-    "en-US": "This run"
+    "zh-CN": "准备执行",
+    "zh-TW": "準備執行",
+    "en-US": "Ready to run"
   },
   "run.plan_hint": {
-    "zh-CN": "勾选仅用于本次；更多环节可在日常设置开启。",
-    "zh-TW": "勾選僅用於本次；更多環節可在日常設定開啟。",
+    "zh-CN": "勾选仅用于本次；更多任务可在日常设置开启。",
+    "zh-TW": "勾選僅用於本次；更多任務可在日常設定開啟。",
     "en-US": "Selections apply to this run; enable more tasks in Daily settings."
   },
   "run.new_day": {
@@ -2986,13 +3181,13 @@
     "en-US": "This is another account's read-only record. Use the current plan for this account."
   },
   "run.history_hint": {
-    "zh-CN": "此处保留原队列；新增环节请在当前计划查看。",
-    "zh-TW": "此處保留原佇列；新增環節請在目前計畫查看。",
+    "zh-CN": "此处保留上次进度；新增任务请在当前计划查看。",
+    "zh-TW": "此處保留上次進度；新增任務請在目前計畫查看。",
     "en-US": "This view preserves the previous queue. Newly enabled tasks are in the current plan."
   },
   "run.initial_hint": {
-    "zh-CN": "已完成的环节会按游戏进度跳过。",
-    "zh-TW": "已完成的環節會按遊戲進度跳過。",
+    "zh-CN": "已完成的任务会按游戏进度跳过。",
+    "zh-TW": "已完成的任務會按遊戲進度跳過。",
     "en-US": "Completed tasks are skipped based on game progress."
   },
   "run.plan_stage": {
@@ -3001,13 +3196,13 @@
     "en-US": "Checks game progress and skips completed work."
   },
   "run.save_failed": {
-    "zh-CN": "执行进度文件保存失败。可在下方勾选未完成环节补跑；完整错误见执行记录。",
-    "zh-TW": "執行進度檔案儲存失敗。可在下方勾選未完成環節補跑；完整錯誤見執行紀錄。",
+    "zh-CN": "执行进度文件保存失败。可在下方勾选未完成任务重新执行；完整错误见执行记录。",
+    "zh-TW": "執行進度檔案儲存失敗。可在下方勾選未完成任務重新執行；完整錯誤見執行紀錄。",
     "en-US": "Could not save progress. Select unfinished tasks to retry; see activity records for details."
   },
   "run.finished": {
-    "zh-CN": "所选环节已完成。",
-    "zh-TW": "所選環節已完成。",
+    "zh-CN": "所选任务已完成。",
+    "zh-TW": "所選任務已完成。",
     "en-US": "Selected tasks are complete."
   },
   "run.partial": {
@@ -3080,6 +3275,26 @@
     "zh-TW": "需要處理",
     "en-US": "Needs attention"
   },
+  "run.repeated_line": {
+    "zh-CN": "{0}（重复 {1} 次）",
+    "zh-TW": "{0}（重複 {1} 次）",
+    "en-US": "{0} (repeated {1} times)"
+  },
+  "connection.ready_player": {
+    "zh-CN": "游戏已连接 · {0}",
+    "zh-TW": "遊戲已連接 · {0}",
+    "en-US": "Connected · {0}"
+  },
+  "connection.scene": {
+    "zh-CN": "当前画面：{0}",
+    "zh-TW": "目前畫面：{0}",
+    "en-US": "Current screen: {0}"
+  },
+  "run.blocked_next": {
+    "zh-CN": "在游戏中处理提示后，继续或重新执行此任务；仍无法继续时，到「诊断」导出日志。",
+    "zh-TW": "在遊戲中處理提示後，繼續或重新執行此任務；仍無法繼續時，到「診斷」匯出日誌。",
+    "en-US": "Handle the prompt in the game, then resume or rerun this task. If it still cannot continue, export a log from Diagnostics."
+  },
   "state.recovery_required": {
     "zh-CN": "操作结果未确认",
     "zh-TW": "操作結果未確認",
@@ -3101,8 +3316,8 @@
     "en-US": "Failed"
   },
   "stage.unknown": {
-    "zh-CN": "未识别环节（{0}）",
-    "zh-TW": "未識別環節（{0}）",
+    "zh-CN": "未识别任务（{0}）",
+    "zh-TW": "未識別任務（{0}）",
     "en-US": "Unknown task ({0})"
   },
   "stage.guild": {
@@ -3476,28 +3691,28 @@
     "en-US": "Save settings"
   },
   "prefs.search": {
-    "zh-CN": "查找环节",
-    "zh-TW": "尋找環節",
+    "zh-CN": "查找任务",
+    "zh-TW": "尋找任務",
     "en-US": "Find tasks"
   },
   "prefs.search_help": {
-    "zh-TW": "搜尋所有分類中的環節與設定名稱；Esc 清除搜尋。",
-    "zh-CN": "搜索所有分类中的环节与设置名称；Esc 清除搜索。",
+    "zh-TW": "搜尋所有分類中的任務與設定名稱；Esc 清除搜尋。",
+    "zh-CN": "搜索所有分类中的任务与设置名称；Esc 清除搜索。",
     "en-US": "Search task and setting names across all categories. Press Esc to clear."
   },
   "prefs.search_accessible": {
-    "zh-CN": "查找日常环节",
-    "zh-TW": "尋找日常環節",
+    "zh-CN": "查找日常任务",
+    "zh-TW": "尋找日常任務",
     "en-US": "Find daily tasks"
   },
   "prefs.none": {
-    "zh-CN": "没有匹配环节",
-    "zh-TW": "沒有符合的環節",
+    "zh-CN": "没有匹配任务",
+    "zh-TW": "沒有符合的任務",
     "en-US": "No matching tasks"
   },
   "prefs.count": {
-    "zh-CN": "{0} 个环节",
-    "zh-TW": "{0} 個環節",
+    "zh-CN": "{0} 个任务",
+    "zh-TW": "{0} 個任務",
     "en-US": "Tasks: {0}"
   },
   "prefs.dirty": {
@@ -3516,8 +3731,8 @@
     "en-US": "Account settings loaded."
   },
   "prefs.saved": {
-    "zh-CN": "已保存，下个环节生效。",
-    "zh-TW": "已儲存，下個環節生效。",
+    "zh-CN": "已保存，下个任务生效。",
+    "zh-TW": "已儲存，下個任務生效。",
     "en-US": "Saved. Applies from the next task."
   },
   "prefs.guild_hint": {
@@ -3536,9 +3751,9 @@
     "en-US": "Claim business income"
   },
   "prefs.business_hint": {
-    "zh-CN": "领取餐厅、鱼笼和工人收益；鱼笼沿用游戏售卖设置",
-    "zh-TW": "領取餐廳、魚籠和工人收益；魚籠沿用遊戲販售設定",
-    "en-US": "Collect restaurant, fish trap and worker income; keep the game's fish-sale settings"
+    "zh-CN": "领取餐厅、鱼笼和工人收益",
+    "zh-TW": "領取餐廳、魚籠和工人收益",
+    "en-US": "Collect restaurant, fish trap and worker income"
   },
   "prefs.guests": {
     "zh-CN": "餐厅特殊顾客与气泡",
@@ -3806,9 +4021,9 @@
     "en-US": "Up to 3 per week; skip quests requiring hunting grounds"
   },
   "prefs.steal_hint": {
-    "zh-CN": "按游戏冷却补足，与周收集、NPC 任务共用路线",
-    "zh-TW": "按遊戲冷卻補足，與週收集、NPC 任務共用路線",
-    "en-US": "Use available theft attempts along the collection and NPC quest routes"
+    "zh-CN": "冷却结束后自动补足偷窃次数",
+    "zh-TW": "冷卻結束後自動補足偷竊次數",
+    "en-US": "Uses theft attempts as they recover from cooldown"
   },
   "prefs.likes_hint": {
     "zh-CN": "从随机推荐中选赞数最少的 3 人，补足周任务",
@@ -3841,9 +4056,9 @@
     "en-US": "Automatic cooking and selling"
   },
   "prefs.trade_processing_hint": {
-    "zh-CN": "跑商策略已更新：全自动模式会自行安排 11.16 改价前后的采购、料理与售卖，兼顾周转资金，无需手动囤货或切换策略。已有金币保留额继续生效；收藏购买与自定义料理不变。",
-    "zh-TW": "交易策略已更新：全自動模式會自行安排 11.16 改價前後的採購、料理與販售，兼顧週轉資金，無需手動囤貨或切換策略。既有金幣保留額繼續生效；收藏購買與自訂料理不變。",
-    "en-US": "Trading strategy updated: automatic mode handles purchases, cooking and sales around the November 16 price change while keeping funds available. No manual stockpiling or strategy switch is needed. Your gold reserve, favorites and custom recipes are preserved."
+    "zh-CN": "全自动安排采购、料理与售卖，并兼顾周转资金，无需手动囤货。金币保留额、收藏购买与自定义料理照常生效。",
+    "zh-TW": "全自動安排採購、料理與販售，並兼顧週轉資金，無需手動囤貨。金幣保留額、收藏購買與自訂料理照常生效。",
+    "en-US": "Automatically plans purchases, cooking and sales while keeping funds available; no manual stockpiling is needed. Your gold reserve, favorites and custom recipes still apply."
   },
   "prefs.trade_processing_confirm": {
     "zh-CN": "自动安排采购、料理和高价售卖，按当前库存与金币选择过渡方案；改价后以游戏实际报价为准。金币保留额继续生效。",
@@ -3986,8 +4201,8 @@
     "en-US": "Could not save: "
   },
   "account.inspect_confirm": {
-    "zh-CN": "将依次核对 {0} 个账号的登录身份。切换账号时会正常关闭并重新启动游戏，最后停留在最后一个账号。\n\n请先结束当前战斗、结算或未保存的操作。点击“停止”可结束队列。",
-    "zh-TW": "將依序核對 {0} 個帳號的登入身分。切換帳號時會正常關閉並重新啟動遊戲，最後停留在最後一個帳號。\n\n請先結束目前戰鬥、結算或未儲存的操作。點擊「停止」可結束佇列。",
+    "zh-CN": "将依次核对 {0} 个账号的登录身份。切换账号时会正常关闭并重新启动游戏，最后停留在最后一个账号。\n\n请先结束当前战斗、结算或未保存的操作。可随时点击“停止”结束检查。",
+    "zh-TW": "將依序核對 {0} 個帳號的登入身分。切換帳號時會正常關閉並重新啟動遊戲，最後停留在最後一個帳號。\n\n請先結束目前戰鬥、結算或未儲存的操作。可隨時點擊「停止」結束檢查。",
     "en-US": "Check the login identity of {0} accounts in order. Switching closes and restarts the game, leaving the final account signed in.\n\nFinish any battle, pending result or unsaved action first. Use Stop to end the queue."
   },
   "account.slot_update": {
@@ -4046,8 +4261,8 @@
     "en-US": "After closing the game and launcher, restore the local session backed up before the last switch.\n\nThis will not start the game or delete saved accounts."
   },
   "run.multi_confirm": {
-    "zh-CN": "将依次执行 {0} 个账号已开启的日常环节。切换账号时会正常关闭并重启游戏。请先结束正在进行的战斗。",
-    "zh-TW": "將依序執行 {0} 個帳號已開啟的日常環節。切換帳號時會正常關閉並重新啟動遊戲。請先結束進行中的戰鬥。",
+    "zh-CN": "将依次执行 {0} 个账号已开启的日常任务。切换账号时会正常关闭并重启游戏。请先结束正在进行的战斗。",
+    "zh-TW": "將依序執行 {0} 個帳號已開啟的日常任務。切換帳號時會正常關閉並重新啟動遊戲。請先結束進行中的戰鬥。",
     "en-US": "Run enabled daily tasks for {0} accounts in order. The game will close and restart between accounts. Finish any ongoing battle first."
   },
   "run.single_confirm": {
@@ -4056,9 +4271,9 @@
     "en-US": "Start {0} and run its daily task preset. If an account switch is needed, the current game will close first."
   },
   "run.start_account": {
-    "zh-CN": "启动并执行日常",
-    "zh-TW": "啟動並執行日常",
-    "en-US": "Start and run daily tasks"
+    "zh-CN": "开始执行日常",
+    "zh-TW": "開始執行日常",
+    "en-US": "Run daily tasks"
   },
   "schedule.single_mode": {
     "zh-CN": "单账号执行",
@@ -4841,8 +5056,8 @@
     "en-US": "Report a problem"
   },
   "diagnostics.help_body": {
-    "zh-CN": "导出诊断包，附上卡住的环节与大致时间后联系开发者。压缩包可能包含角色信息，请勿公开上传。",
-    "zh-TW": "匯出診斷包，附上卡住的環節與大致時間後聯絡開發者。壓縮包可能包含角色資訊，請勿公開上傳。",
+    "zh-CN": "导出诊断包，附上卡住的任务与大致时间后联系开发者。压缩包可能包含角色信息，请勿公开上传。",
+    "zh-TW": "匯出診斷包，附上卡住的任務與大致時間後聯絡開發者。壓縮包可能包含角色資訊，請勿公開上傳。",
     "en-US": "Export a diagnostic bundle and tell the developer which step failed and roughly when. The bundle may contain character information; share it privately."
   },
   "diagnostics.copy": {
@@ -4976,8 +5191,8 @@
     "en-US": "Use free attempts only and preserve game progress."
   },
   "account.local_login": {
-    "zh-CN": "本机登录",
-    "zh-TW": "本機登入",
+    "zh-CN": "当前登录",
+    "zh-TW": "目前登入",
     "en-US": "Sign-in on this PC"
   },
   "account.queue_column": {
@@ -4986,14 +5201,29 @@
     "en-US": "Daily"
   },
   "account.queue_help": {
-    "zh-CN": "勾选的账号会加入多账号日常队列；单击账号行只选择管理对象，不会登录或运行任务。",
-    "zh-TW": "勾選的帳號會加入多帳號日常佇列；按一下帳號列只選擇管理對象，不會登入或執行任務。",
+    "zh-CN": "勾选的账号会依次执行日常；单击账号行只选择管理对象，不会登录或运行任务。",
+    "zh-TW": "勾選的帳號會依序執行日常；按一下帳號列只選擇管理對象，不會登入或執行任務。",
     "en-US": "Checked accounts join the daily queue. Selecting a row only chooses an account to manage; it never signs in or runs tasks."
   },
   "account.enter": {
     "zh-CN": "进入游戏",
     "zh-TW": "進入遊戲",
     "en-US": "Play"
+  },
+  "account.actions": {
+    "zh-CN": "账号操作",
+    "zh-TW": "帳號操作",
+    "en-US": "Account actions"
+  },
+  "account.actions_named": {
+    "zh-CN": "「{0}」的更多操作",
+    "zh-TW": "「{0}」的更多操作",
+    "en-US": "More actions for {0}"
+  },
+  "account.move_shortcut": {
+    "zh-CN": "调整多账号日常的运行顺序；在列表中也可按 Alt+↑ / Alt+↓。",
+    "zh-TW": "調整多帳號日常的執行順序；在清單中也可按 Alt+↑ / Alt+↓。",
+    "en-US": "Changes the daily queue order. In the list you can also press Alt+Up or Alt+Down."
   },
   "account.enter_named": {
     "zh-CN": "以「{0}」进入游戏",
@@ -5126,9 +5356,9 @@
     "zh-CN": "每天开始时间"
   },
   "schedule.requirements": {
-    "zh-TW": "軟體關閉也能啟動；電腦需開機、保持喚醒並登入 Windows。",
-    "en-US": "Works when the app is closed. Keep the PC on, awake and signed in to Windows.",
-    "zh-CN": "软件关闭也能启动；电脑需开机、保持唤醒并登录 Windows。"
+    "zh-TW": "織塵關閉時也會按時啟動；電腦需保持開機、不睡眠並已登入 Windows。",
+    "en-US": "Runs on time even when Dustweave is closed. Keep the PC on, awake and signed in to Windows.",
+    "zh-CN": "织尘关闭时也会按时启动；电脑需保持开机、不睡眠并已登录 Windows。"
   },
   "schedule.accounts": {
     "zh-TW": "執行帳號",
@@ -5136,9 +5366,9 @@
     "zh-CN": "执行账号"
   },
   "schedule.account_help": {
-    "zh-TW": "拖動排序，沿用各帳號設定；與帳號頁勾選獨立儲存。",
-    "en-US": "Drag to reorder. Uses each account's settings, saved separately from the Accounts queue.",
-    "zh-CN": "拖动排序，沿用各账号设置；与账号页勾选独立保存。"
+    "zh-TW": "依序執行，可拖動調整；使用各帳號自己的日常設定，與帳號頁的勾選互不影響。",
+    "en-US": "Runs in this order; drag to reorder. Each account uses its own daily settings, independent of the Accounts page checkboxes.",
+    "zh-CN": "按顺序执行，可拖动调整；使用各账号自己的日常设置，与账号页的勾选互不影响。"
   },
   "schedule.no_accounts": {
     "zh-TW": "請先在帳號頁儲存至少一個帳號。",
@@ -5236,9 +5466,9 @@
     "zh-CN": "部分完成"
   },
   "schedule.state.paused": {
-    "zh-TW": "已停止，需要手動接續",
+    "zh-TW": "已停止，需要手動繼續",
     "en-US": "Stopped; resume manually",
-    "zh-CN": "已停止，需要手动接续"
+    "zh-CN": "已停止，需要手动继续"
   },
   "schedule.state.failed": {
     "zh-TW": "執行失敗",
@@ -5246,9 +5476,9 @@
     "zh-CN": "执行失败"
   },
   "schedule.state.interrupted": {
-    "zh-TW": "上次執行已中斷，請手動檢查並接續",
+    "zh-TW": "上次執行已中斷，請手動檢查並繼續",
     "en-US": "Interrupted; review and resume manually",
-    "zh-CN": "上次执行已中断，请手动检查并接续"
+    "zh-CN": "上次执行已中断，请手动检查并继续"
   },
   "schedule.state.missed": {
     "zh-TW": "已超過 15 分鐘，本次略過",
@@ -5376,8 +5606,8 @@
     "en-US": "The updater has started. Closing Dustweave."
   },
   "updates.restart_task": {
-    "zh-CN": "日常队列正在执行，请完成或停止队列后重启更新。",
-    "zh-TW": "日常佇列正在執行，請完成或停止佇列後重新啟動更新。",
+    "zh-CN": "日常正在执行，请等它完成或先停止，再重启更新。",
+    "zh-TW": "日常正在執行，請等它完成或先停止，再重新啟動更新。",
     "en-US": "A daily or account operation is active. Finish or stop it before restarting to update."
   },
   "updates.restart_storage": {
@@ -5541,9 +5771,9 @@
     "en-US": "Application files changed. Restart and check for updates again."
   },
   "updates.recovery_required": {
-    "zh-CN": "上次更新中断，自动恢复暂未完成。请保留用户数据与 updates 目录，重新启动软件重试；仍失败时请重新解压完整包到程序目录。详情见 update-result.json。",
-    "zh-TW": "上次更新中斷，自動復原暫未完成。請保留使用者資料與 updates 目錄，重新啟動軟體重試；仍失敗時請重新解壓完整包至程式目錄。詳情見 update-result.json。",
-    "en-US": "An interrupted update could not be recovered yet. Keep your user data and updates folder, then restart to retry. If recovery still fails, extract a full package into the application folder. See update-result.json."
+    "zh-CN": "上次更新没有完成，自动恢复暂未成功，账号与设置已保留。请重新打开织尘重试，不要删除织尘的用户数据或更新恢复文件；仍失败时，下载完整包解压到程序目录。",
+    "zh-TW": "上次更新沒有完成，自動復原暫未成功，帳號與設定已保留。請重新開啟織塵重試，不要刪除織塵的使用者資料或更新復原檔案；仍失敗時，下載完整包解壓至程式目錄。",
+    "en-US": "The last update did not finish and automatic recovery has not succeeded yet. Accounts and settings are kept. Reopen Dustweave to retry and keep Dustweave user data and update recovery files. If it still fails, extract a full package into the program directory."
   },
   "updates.backup_damaged": {
     "zh-CN": "更新备份校验失败，请保留诊断文件并手动安装完整包。",
@@ -5786,8 +6016,8 @@
     "en-US": "The isolated window did not start."
   },
   "sandbox.resume_mismatch": {
-    "zh-CN": "当前登录账号与接续队列不一致，未开始执行。",
-    "zh-TW": "目前登入帳號與接續佇列不一致，未開始執行。",
+    "zh-CN": "当前登录账号与继续上次进度不一致，未开始执行。",
+    "zh-TW": "目前登入帳號與繼續上次進度不一致，未開始執行。",
     "en-US": "The signed-in account does not match the queue to resume. Nothing was started."
   },
   "updates.isolated_open": {
@@ -5826,9 +6056,9 @@
     "zh-CN": "完成后关闭本次启动的游戏"
   },
   "parallel.setup_help": {
-    "zh-TW": "首次需要安裝官方 Sandboxie-Plus，無需手動設定。預設同時執行 2 個帳號；3–4 個尚未實機驗證。暫停會保留該帳號的執行位置，其他帳號繼續。維護期間請勿開始執行。",
-    "en-US": "Install official Sandboxie-Plus once; no manual sandbox setup is needed. Default: 2 concurrent accounts. 3–4 are not live-tested. Pausing holds that account's place while others continue. Do not start during game maintenance.",
-    "zh-CN": "首次需要安装官方 Sandboxie-Plus，无需手动配置。默认同时执行 2 个账号；3–4 个尚未实机验证。暂停会保留该账号的运行位置，其他账号继续。维护期间请勿开始执行。"
+    "zh-TW": "首次使用需安裝官方 Sandboxie-Plus，無需手動設定。預設同時執行 2 個帳號；同時執行 3–4 個的穩定性尚未確認。暫停某個帳號會保留它的進度，其他帳號繼續。遊戲維護期間請勿開始。",
+    "en-US": "Install official Sandboxie-Plus once; no manual setup is needed. Two accounts run at the same time by default; stability with 3–4 is not yet confirmed. Pausing one account keeps its progress while the others continue. Do not start during game maintenance.",
+    "zh-CN": "首次使用需安装官方 Sandboxie-Plus，无需手动配置。默认同时运行 2 个账号；同时运行 3–4 个的稳定性尚未确认。暂停某个账号会保留它的进度，其他账号继续。游戏维护期间请勿开始。"
   },
   "parallel.overview_help": {
     "en-US": "This view follows the current batch. Once it ends, return to tasks to switch accounts, review progress and choose what to run.",
@@ -5846,14 +6076,14 @@
     "zh-CN": "全部暂停"
   },
   "parallel.resume_all": {
-    "zh-TW": "繼續佇列",
-    "en-US": "Continue queue",
-    "zh-CN": "继续队列"
+    "zh-TW": "全部繼續",
+    "en-US": "Continue all",
+    "zh-CN": "全部继续"
   },
   "parallel.stop_all": {
-    "zh-TW": "停止佇列",
-    "en-US": "Stop queue",
-    "zh-CN": "停止队列"
+    "zh-TW": "全部停止",
+    "en-US": "Stop all",
+    "zh-CN": "全部停止"
   },
   "parallel.back": {
     "en-US": "Back to account tasks",
@@ -5901,9 +6131,9 @@
     "zh-CN": "正在连接并核对账号…"
   },
   "parallel.paused": {
-    "zh-TW": "已暫停，保留目前遊戲與原佇列。",
+    "zh-TW": "已暫停，保留目前遊戲與上次進度。",
     "en-US": "Paused. The game and original queue are retained.",
-    "zh-CN": "已暂停，保留当前游戏与原队列。"
+    "zh-CN": "已暂停，保留当前游戏与上次进度。"
   },
   "parallel.closing": {
     "zh-TW": "任務完成，正在正常關閉本次啟動的遊戲。",
@@ -5916,9 +6146,9 @@
     "zh-CN": "未找到 Sandboxie-Plus。请在「软件设置 → 沙盒工具位置 → 安装与检测」下载安装或选择位置，再重试。"
   },
   "parallel.host_only": {
-    "zh-TW": "請從一般主視窗管理並行佇列。",
+    "zh-TW": "請從一般主視窗管理並行執行。",
     "en-US": "Manage parallel queues from the main window.",
-    "zh-CN": "请从普通主窗口管理并行队列。"
+    "zh-CN": "请从普通主窗口管理并行执行。"
   },
   "parallel.window_open": {
     "zh-TW": "這個帳號已有工具視窗，請先關閉該視窗；遊戲可以保留。",
@@ -5926,9 +6156,9 @@
     "zh-CN": "这个账号已有工具窗口，请先关闭该窗口；游戏可以保留。"
   },
   "parallel.busy": {
-    "zh-TW": "請先停止目前的並行佇列。",
+    "zh-TW": "請先停止目前的並行執行。",
     "en-US": "Stop the current parallel queue first.",
-    "zh-CN": "请先停止当前并行队列。"
+    "zh-CN": "请先停止当前的并行执行。"
   },
   "parallel.invalid_accounts": {
     "zh-TW": "所選帳號無效或重複，請重新整理帳號清單。",
@@ -5946,9 +6176,9 @@
     "zh-CN": "账号执行请求不完整，未开始任务。"
   },
   "parallel.invalid_action": {
-    "zh-TW": "不支援這項佇列操作。",
-    "en-US": "This queue action is not supported.",
-    "zh-CN": "不支持这项队列操作。"
+    "zh-TW": "不支援這項操作。",
+    "en-US": "This action is not supported.",
+    "zh-CN": "不支持这项操作。"
   },
   "parallel.invalid_status": {
     "zh-TW": "執行狀態不完整，已停止自動推進。",
@@ -6001,9 +6231,9 @@
     "zh-CN": "排队中"
   },
   "parallel.state.held": {
-    "zh-TW": "佇列已暫停",
-    "en-US": "Queue paused",
-    "zh-CN": "队列已暂停"
+    "zh-TW": "已全部暫停",
+    "en-US": "All paused",
+    "zh-CN": "已全部暂停"
   },
   "parallel.state.starting": {
     "zh-TW": "正在啟動",
@@ -6072,8 +6302,8 @@
   },
   "parallel.confirm": {
     "en-US": "Run daily tasks for {0} accounts using their saved settings?",
-    "zh-TW": "將為 {0} 個帳號依各自儲存的設定執行日常。是否開始並行佇列？",
-    "zh-CN": "将为 {0} 个账号按各自保存的设置执行日常。是否开始并行队列？"
+    "zh-TW": "將為 {0} 個帳號依各自儲存的設定同時執行日常。確定開始嗎？",
+    "zh-CN": "将为 {0} 个账号按各自保存的设置同时执行日常。确定开始吗？"
   },
   "parallel.install": {
     "en-US": "Get official Sandboxie-Plus",
@@ -6511,8 +6741,8 @@
     "en-US": "This operation was stopped as requested."
   },
   "issue.action.cancelled": {
-    "zh-CN": "在今日任务选择未完成的环节，或接续原队列。",
-    "zh-TW": "在今日任務選擇未完成的環節，或接續原佇列。",
+    "zh-CN": "在今日任务选择未完成的任务，或继续上次进度。",
+    "zh-TW": "在今日任務選擇未完成的任務，或繼續上次進度。",
     "en-US": "Select unfinished tasks in Today, or resume the original queue."
   },
   "issue.reason.owner-ended": {
@@ -6526,13 +6756,13 @@
     "en-US": "An internal Dustweave error interrupted the run. Unfinished tasks have been saved."
   },
   "issue.action.internal-error": {
-    "zh-CN": "请在诊断页导出日志反馈。更新修复版后可接续任务，无需删除账号或历史记录。",
-    "zh-TW": "請在診斷頁匯出紀錄回報。更新修復版後可接續任務，無需刪除帳號或歷史紀錄。",
+    "zh-CN": "请在诊断页导出日志反馈。更新修复版后可继续任务，无需删除账号或历史记录。",
+    "zh-TW": "請在診斷頁匯出紀錄回報。更新修復版後可繼續任務，無需刪除帳號或歷史紀錄。",
     "en-US": "Export logs from Diagnostics and report the issue. Resume after installing a fix; do not delete accounts or history."
   },
   "issue.action.owner-ended": {
-    "zh-CN": "在当前织尘窗口重新连接，再接续任务；无需先重启游戏。",
-    "zh-TW": "在目前織塵視窗重新連線，再接續任務；無需先重啟遊戲。",
+    "zh-CN": "在当前织尘窗口重新连接，再继续任务；无需先重启游戏。",
+    "zh-TW": "在目前織塵視窗重新連線，再繼續任務；無需先重啟遊戲。",
     "en-US": "Reconnect from this Dustweave window, then resume the task. A game restart is not the first step."
   },
   "issue.reason.owner-unreadable": {
@@ -6571,8 +6801,8 @@
     "en-US": "Finish signing in if the game is on a login or loading screen. If already in the game, export diagnostics. Do not sign out or delete saved accounts."
   },
   "issue.action.identity-unavailable": {
-    "zh-CN": "等待登录或加载完成，再重新连接并接续任务；这不代表账号已更换。",
-    "zh-TW": "等待登入或載入完成，再重新連線並接續任務；這不代表帳號已更換。",
+    "zh-CN": "等待登录或加载完成，再重新连接并继续任务；这不代表账号已更换。",
+    "zh-TW": "等待登入或載入完成，再重新連線並繼續任務；這不代表帳號已更換。",
     "en-US": "Wait for sign-in or loading to finish, reconnect, then resume. This does not mean the account changed."
   },
   "issue.reason.identity-changed": {
@@ -6671,8 +6901,8 @@
     "en-US": "The field controls have not recovered, or the route entrance changed during a transition."
   },
   "issue.action.field-transition": {
-    "zh-CN": "确认游戏已回到可移动的地图界面，再接续原队列。已完成的收集会按游戏进度保留；若同一位置反复发生，请导出诊断。",
-    "zh-TW": "確認遊戲已回到可移動的地圖介面，再接續原佇列。已完成的收集會依遊戲進度保留；若同一位置反覆發生，請匯出診斷。",
+    "zh-CN": "确认游戏已回到可移动的地图界面，再继续上次进度。已完成的收集会按游戏进度保留；若同一位置反复发生，请导出诊断。",
+    "zh-TW": "確認遊戲已回到可移動的地圖介面，再繼續上次進度。已完成的收集會依遊戲進度保留；若同一位置反覆發生，請匯出診斷。",
     "en-US": "Return to a playable field, then resume the queue. Collection progress is read from the game. Export diagnostics if this repeats at the same location."
   },
   "issue.reason.popup": {
@@ -6681,8 +6911,8 @@
     "en-US": "An unrecognized game dialog requires attention; actions are paused."
   },
   "issue.action.popup": {
-    "zh-CN": "切换到游戏，按自己的选择处理弹窗，再接续任务。",
-    "zh-TW": "切換到遊戲，按自己的選擇處理視窗，再接續任務。",
+    "zh-CN": "切换到游戏，按自己的选择处理弹窗，再继续任务。",
+    "zh-TW": "切換到遊戲，按自己的選擇處理視窗，再繼續任務。",
     "en-US": "Switch to the game, handle the dialog as you choose, then resume."
   },
   "issue.reason.timeout": {
@@ -6691,8 +6921,8 @@
     "en-US": "Waiting for game state or an operation response timed out."
   },
   "issue.action.timeout": {
-    "zh-CN": "先看游戏是否仍在加载或结算；完成后接续任务，持续卡住时导出日志。",
-    "zh-TW": "先看遊戲是否仍在載入或結算；完成後接續任務，持續卡住時匯出記錄。",
+    "zh-CN": "先看游戏是否仍在加载或结算；完成后继续任务，持续卡住时导出日志。",
+    "zh-TW": "先看遊戲是否仍在載入或結算；完成後繼續任務，持續卡住時匯出記錄。",
     "en-US": "Check whether the game is still loading or settling a result. Resume afterward; export logs if it remains stuck."
   },
   "issue.reason.uncertain": {
@@ -6701,8 +6931,8 @@
     "en-US": "The operation may have been submitted, but its result is unconfirmed. It has not been repeated."
   },
   "issue.action.uncertain": {
-    "zh-CN": "游戏恢复登录后，在今日任务中点击该环节的「查看恢复方法」。仍无法恢复时，可取消勾选此环节先运行其他任务，并导出诊断日志。",
-    "zh-TW": "遊戲恢復登入後，在今日任務中點擊該環節的「查看恢復方法」。仍無法恢復時，可取消勾選此環節先執行其他任務，並匯出診斷記錄。",
+    "zh-CN": "游戏恢复登录后，在今日任务中点击该任务的「查看恢复方法」。仍无法恢复时，可取消勾选此任务先运行其他任务，并导出诊断日志。",
+    "zh-TW": "遊戲恢復登入後，在今日任務中點擊該任務的「查看恢復方法」。仍無法恢復時，可取消勾選此任務先執行其他任務，並匯出診斷記錄。",
     "en-US": "After signing back in, select How to resume on this task in Today's tasks. If recovery still fails, deselect it to run other tasks and export diagnostics."
   },
   "issue.action.unknown": {
@@ -6766,9 +6996,9 @@
     "en-US": "Export logs and get help"
   },
   "diagnostics.export.body": {
-    "zh-CN": "导出最近 7 天记录，压缩前最多 128 MiB，优先保留故障记录。不含登录凭据、插件或密钥，不会自动上传。",
-    "zh-TW": "匯出最近 7 天記錄，壓縮前最多 128 MiB，優先保留故障記錄。不含登入憑證、套件或金鑰，不會自動上傳。",
-    "en-US": "Export up to 128 MiB before compression from the last 7 days, prioritizing failure records. Excludes credentials, plugins and keys; nothing is uploaded automatically."
+    "zh-CN": "导出最近 7 天记录，压缩前最多 128 MB，优先保留故障记录。不含登录凭据、插件或密钥，不会自动上传。",
+    "zh-TW": "匯出最近 7 天記錄，壓縮前最多 128 MB，優先保留故障記錄。不含登入憑證、套件或金鑰，不會自動上傳。",
+    "en-US": "Export up to 128 MB before compression from the last 7 days, prioritizing failure records. Excludes credentials, plugins and keys; nothing is uploaded automatically."
   },
   "diagnostics.export.privacy": {
     "zh-CN": "日志可能包含角色名、任务内容和本机路径，请私下发送给开发者。",
@@ -6950,69 +7180,69 @@
     "zh-CN": "请等待本次批量结束，或先停止全部账号，再返回日常。",
     "zh-TW": "請等待本次批次結束，或先停止全部帳號，再返回日常。"
   },
-  "更改位置": {
+  "common.change_location": {
     "zh-CN": "更改位置",
     "zh-TW": "變更位置",
     "en-US": "Change location"
   },
-  "整体设置": {
+  "prefs.general": {
     "zh-CN": "整体设置",
     "zh-TW": "整體設定",
     "en-US": "General settings"
   },
-  "天赋药保留下限与自动补药": {
+  "prefs.potions_summary": {
     "zh-CN": "天赋药保留下限与自动补药",
     "zh-TW": "天賦藥保留下限與自動補藥",
     "en-US": "Talent Pill reserve and automatic refill"
   },
-  "天赋药保留下限": {
+  "prefs.potion_reserve": {
     "zh-CN": "天赋药保留下限",
     "zh-TW": "天賦藥保留下限",
     "en-US": "Minimum Talent Pills to keep"
   },
-  "药不足时自动补药": {
+  "prefs.potion_refill": {
     "zh-CN": "药不足时自动补药",
     "zh-TW": "藥不足時自動補藥",
     "en-US": "Refill Talent Pills when needed"
   },
-  "补药至": {
+  "prefs.potion_target": {
     "zh-CN": "补药至",
     "zh-TW": "補藥至",
     "en-US": "Refill up to"
   },
-  "默认0。只允许消耗保留量以外的天赋药；不足时在队列中说明受限任务，不影响其他可执行任务。仅适用于日常队列。": {
-    "zh-CN": "仅限日常队列；药不足时暂停相关环节，其他环节继续。",
-    "zh-TW": "僅限日常佇列；藥不足時暫停相關環節，其他環節繼續。",
+  "prefs.potion_reserve_hint": {
+    "zh-CN": "仅对日常生效；药不足时暂停相关任务，其他任务继续。",
+    "zh-TW": "僅對日常生效；藥不足時暫停相關任務，其他任務繼續。",
     "en-US": "Daily queue only. If pills are short, defer affected tasks and continue the rest."
   },
-  "默认不购买。开启后，药不足时临时加入补药环节；须已完成本周至少一条NPC任务，并确认广场商人的天赋药享九折。补至目标数量后接续任务。": {
+  "prefs.potion_refill_hint": {
     "zh-CN": "需本周已完成至少 1 条 NPC 任务，且商人提供天赋药九折价。",
     "zh-TW": "需本週已完成至少 1 條 NPC 任務，且商人提供天賦藥九折價。",
     "en-US": "Requires at least 1 completed weekly NPC quest and a merchant offering the 10% Talent Pill discount."
   },
-  "天赋药数量须为非负整数；原输入已保留。": {
+  "prefs.potion_number_invalid": {
     "zh-CN": "天赋药数量须为非负整数；原输入已保留。",
     "zh-TW": "天賦藥數量須為非負整數；原輸入已保留。",
     "en-US": "Enter a non-negative whole number of Talent Pills. Your input has been kept."
   },
-  "天赋药保留下限须为非负整数，补药目标须为正整数。": {
+  "message.potion_limits_invalid": {
     "zh-CN": "天赋药保留下限须为非负整数，补药目标须为正整数。",
     "zh-TW": "天賦藥保留下限須為非負整數，補藥目標須為正整數。",
     "en-US": "The Talent Pill reserve must be a non-negative whole number; the refill target must be a positive whole number."
   },
-  "补药目标必须高于天赋药保留下限。": {
+  "message.potion_target_invalid": {
     "zh-CN": "补药目标必须高于天赋药保留下限。",
     "zh-TW": "補藥目標必須高於天賦藥保留下限。",
     "en-US": "The refill target must be higher than the Talent Pill reserve."
   },
-  "未能读取本次操作的天赋药消耗，尚未执行；请重新连接后补跑，若仍出现请导出诊断。": {
-    "zh-CN": "未能读取本次操作的天赋药消耗，尚未执行；请重新连接后补跑，若仍出现请导出诊断。",
-    "zh-TW": "未能讀取本次操作的天賦藥消耗，尚未執行；請重新連線後補跑，若仍出現請匯出診斷。",
+  "message.potion_cost_unavailable": {
+    "zh-CN": "未能读取本次操作的天赋药消耗，尚未执行；请重新连接后重新执行，若仍出现请导出诊断。",
+    "zh-TW": "未能讀取本次操作的天賦藥消耗，尚未執行；請重新連線後重新執行，若仍出現請匯出診斷。",
     "en-US": "The Talent Pill cost could not be read, so the action was not performed. Reconnect and retry this task; export diagnostics if it happens again."
   },
-  "跑商已用完本轮允许的天赋药预算；保留量和补药设置已生效，需要继续加工可调整整体设置后补跑。": {
-    "zh-CN": "跑商已用完本轮允许的天赋药预算；保留量和补药设置已生效，需要继续加工可调整整体设置后补跑。",
-    "zh-TW": "跑商已用完本輪允許的天賦藥預算；保留量和補藥設定已生效，需要繼續加工可調整整體設定後補跑。",
+  "message.potion_trade_budget_used": {
+    "zh-CN": "跑商已用完本轮允许的天赋药预算；保留量和补药设置已生效，需要继续加工可调整整体设置后重新执行。",
+    "zh-TW": "跑商已用完本輪允許的天賦藥預算；保留量和補藥設定已生效，需要繼續加工可調整整體設定後重新執行。",
     "en-US": "Trading reached this run's Talent Pill budget. Your reserve and refill settings were respected. Adjust General settings and retry if you want to craft more."
   },
   "stage.talent_potions": {
@@ -7020,59 +7250,54 @@
     "zh-TW": "天賦藥補給與限制",
     "en-US": "Talent Pill supply"
   },
-  "天赋药补给与限制": {
-    "zh-CN": "天赋药补给与限制",
-    "zh-TW": "天賦藥補給與限制",
-    "en-US": "Talent Pill supply"
-  },
-  "自动补药未开启；请补足天赋药或调整整体设置后补跑此项。": {
-    "zh-CN": "自动补药未开启；请补足天赋药或调整整体设置后补跑此项。",
-    "zh-TW": "自動補藥未啟用；請補足天賦藥或調整整體設定後補跑此項。",
+  "message.potion_refill_disabled": {
+    "zh-CN": "自动补药未开启；请补足天赋药或调整整体设置后重新执行此项。",
+    "zh-TW": "自動補藥未啟用；請補足天賦藥或調整整體設定後重新執行此項。",
     "en-US": "Automatic refill is off. Refill Talent Pills or change General settings, then retry this task."
   },
-  "尚未取得周NPC任务的九折天赋药报价；请先完成本周至少一条NPC任务，再补跑受限环节。没有购买原价天赋药。": {
-    "zh-CN": "尚未取得周NPC任务的九折天赋药报价；请先完成本周至少一条NPC任务，再补跑受限环节。没有购买原价天赋药。",
-    "zh-TW": "尚未取得週NPC任務的九折天賦藥報價；請先完成本週至少一條NPC任務，再補跑受限環節。沒有購買原價天賦藥。",
+  "message.potion_discount_unavailable": {
+    "zh-CN": "尚未取得周NPC任务的九折天赋药报价；请先完成本周至少一条NPC任务，再重新执行受限任务。没有购买原价天赋药。",
+    "zh-TW": "尚未取得週NPC任務的九折天賦藥報價；請先完成本週至少一條NPC任務，再重新執行受限任務。沒有購買原價天賦藥。",
     "en-US": "The weekly NPC quest discount is not available. Complete at least one quest this week, then retry the affected task. No full-price Talent Pills were purchased."
   },
-  "天赋药不足，前往广场核对周任务九折报价；补药后接续原任务。": {
-    "zh-CN": "天赋药不足，前往广场核对周任务九折报价；补药后接续原任务。",
-    "zh-TW": "天賦藥不足，前往廣場核對週任務九折報價；補藥後接續原任務。",
+  "notice.potion_refill": {
+    "zh-CN": "天赋药不足，前往广场核对周任务九折报价；补药后继续原任务。",
+    "zh-TW": "天賦藥不足，前往廣場核對週任務九折報價；補藥後繼續原任務。",
     "en-US": "Talent Pills are low. Checking the plaza merchant for the weekly 10% discount before refilling and resuming the task."
   },
-  "补药后同一消耗仍受限，已停止重复购买；请核对补药目标与当前库存。": {
+  "message.potion_refill_insufficient": {
     "zh-CN": "补药后同一消耗仍受限，已停止重复购买；请核对补药目标与当前库存。",
     "zh-TW": "補藥後同一消耗仍受限，已停止重複購買；請核對補藥目標與目前庫存。",
     "en-US": "The same action is still restricted after refilling. Further purchases stopped; check your refill target and inventory."
   },
-  "当前药量已达到补药目标；请检查本次消耗或提高补药目标。": {
+  "message.potion_target_reached": {
     "zh-CN": "当前药量已达到补药目标；请检查本次消耗或提高补药目标。",
     "zh-TW": "目前藥量已達到補藥目標；請檢查本次消耗或提高補藥目標。",
     "en-US": "You already have the target number of Talent Pills. Check the required cost or raise the refill target."
   },
-  "金币不足，或购买会触及保留金币；未补药。": {
+  "message.potion_gold_insufficient": {
     "zh-CN": "金币不足，或购买会触及保留金币；未补药。",
     "zh-TW": "金幣不足，或購買會觸及保留金幣；未補藥。",
     "en-US": "Not enough gold, or the purchase would use reserved gold. No Talent Pills were purchased."
   },
-  "九折天赋药可购数量不足以补至目标，未购买；请调整补药目标。": {
+  "message.potion_stock_insufficient": {
     "zh-CN": "九折天赋药可购数量不足以补至目标，未购买；请调整补药目标。",
     "zh-TW": "九折天賦藥可購數量不足以補至目標，未購買；請調整補藥目標。",
     "en-US": "The discounted stock cannot reach your refill target. Nothing was purchased; adjust the target."
   },
-  "耗药任务现场尚未关闭，未开始补药。": {
+  "message.potion_context_active": {
     "zh-CN": "耗药任务现场尚未关闭，未开始补药。",
     "zh-TW": "耗藥任務畫面尚未關閉，未開始補藥。",
     "en-US": "The current task screen has not closed safely. Refilling has not started."
   },
-  "补药回执与库存不一致；保留记录，未重复购买。": {
+  "message.potion_receipt_mismatch": {
     "zh-CN": "补药回执与库存不一致；保留记录，未重复购买。",
     "zh-TW": "補藥回執與庫存不一致；保留紀錄，未重複購買。",
     "en-US": "The refill result does not match the inventory. The record was kept; no repeat purchase was made."
   },
   "presets.default": {
-    "zh-CN": "全部已启用环节",
-    "zh-TW": "全部已啟用環節",
+    "zh-CN": "全部已启用任务",
+    "zh-TW": "全部已啟用任務",
     "en-US": "All enabled tasks"
   },
   "presets.label": {
@@ -7121,8 +7346,8 @@
     "en-US": "Delete the preset “{0}”?"
   },
   "presets.delete_reset": {
-    "zh-CN": "{0} 个账号正在使用此预设。删除后将恢复为「全部已启用环节」，定时执行也使用该默认范围。",
-    "zh-TW": "{0} 個帳號正在使用此預設。刪除後將恢復為「全部已啟用環節」，定時執行也使用此預設範圍。",
+    "zh-CN": "{0} 个账号正在使用此预设。删除后将恢复为「全部已启用任务」，定时执行也使用该默认范围。",
+    "zh-TW": "{0} 個帳號正在使用此預設。刪除後將恢復為「全部已啟用任務」，定時執行也使用此預設範圍。",
     "en-US": "{0} account(s) use this preset. They will return to “All enabled tasks”, including for scheduled runs."
   },
   "presets.name": {
@@ -7146,8 +7371,8 @@
     "en-US": "Enter a unique preset name of 1–60 characters."
   },
   "presets.empty": {
-    "zh-CN": "请先勾选至少一个日常环节。",
-    "zh-TW": "請先勾選至少一個日常環節。",
+    "zh-CN": "请先勾选至少一个日常任务。",
+    "zh-TW": "請先勾選至少一個日常任務。",
     "en-US": "Select at least one task first."
   },
   "presets.missing": {
@@ -7161,8 +7386,8 @@
     "en-US": "You can save up to 100 presets. Delete an unused preset first."
   },
   "presets.none_enabled": {
-    "zh-CN": "预设中的环节在此账号均未启用，请调整设置或预设。",
-    "zh-TW": "預設中的環節在此帳號均未啟用，請調整設定或預設。",
+    "zh-CN": "预设中的任务在此账号均未启用，请调整设置或预设。",
+    "zh-TW": "預設中的任務在此帳號均未啟用，請調整設定或預設。",
     "en-US": "None of this preset's tasks are enabled for this account. Adjust its settings or preset."
   },
   "desktop.invalid": {
@@ -7506,8 +7731,8 @@
     "en-US": "Territory control changed. Actions stopped."
   },
   "saffron.message.7": {
-    "zh-CN": "藏红花环节超时，已停止；其余日常继续",
-    "zh-TW": "藏紅花環節逾時，已停止；其餘日常繼續",
+    "zh-CN": "藏红花任务超时，已停止；其余日常继续",
+    "zh-TW": "藏紅花任務逾時，已停止；其餘日常繼續",
     "en-US": "The saffron step timed out and stopped. Other daily tasks can continue."
   },
   "saffron.message.8": {
@@ -7541,8 +7766,8 @@
     "en-US": "The previous saffron operation belongs to a different session. Actions stopped."
   },
   "saffron.message.14": {
-    "zh-CN": "藏红花环节超时，已停止并保留当前进度",
-    "zh-TW": "藏紅花環節逾時，已停止並保留目前進度",
+    "zh-CN": "藏红花任务超时，已停止并保留当前进度",
+    "zh-TW": "藏紅花任務逾時，已停止並保留目前進度",
     "en-US": "The saffron step timed out. Current progress was retained."
   },
   "saffron.message.15": {
@@ -7551,8 +7776,8 @@
     "en-US": "Refreshing saffron inventory and yield buffs without repeating the previous action."
   },
   "saffron.message.16": {
-    "zh-CN": "藏红花库存暂时无法同步；未重复购买或使用料理，可稍后重试此环节",
-    "zh-TW": "藏紅花庫存暫時無法同步；未重複購買或使用料理，可稍後重試此環節",
+    "zh-CN": "藏红花库存暂时无法同步；未重复购买或使用料理，可稍后重试此任务",
+    "zh-TW": "藏紅花庫存暫時無法同步；未重複購買或使用料理，可稍後重試此任務",
     "en-US": "Saffron inventory could not be refreshed. No purchase or food use was repeated. Retry this step later."
   },
   "saffron.message.17": {
@@ -7571,7 +7796,7 @@
     "en-US": "Fields are not fully loaded. No food was used."
   },
   "saffron.message.20": {
-    "zh-CN": "农田含其他作物，未使用料理；请为藏红花环节准备空田或成熟藏红花",
+    "zh-CN": "农田含其他作物，未使用料理；请为藏红花任务准备空田或成熟藏红花",
     "zh-TW": "農田含其他作物，未使用料理；請準備空田或成熟藏紅花",
     "en-US": "Fields contain other crops. No food was used. Prepare empty fields or ripe saffron."
   },
@@ -7581,8 +7806,8 @@
     "en-US": "Some saffron is still growing. No food was used. Run again once all saffron is ripe."
   },
   "saffron.message.22": {
-    "zh-CN": "农田布局已变化，已停止藏红花环节",
-    "zh-TW": "農田配置已變化，已停止藏紅花環節",
+    "zh-CN": "农田布局已变化，已停止藏红花任务",
+    "zh-TW": "農田配置已變化，已停止藏紅花任務",
     "en-US": "The field layout changed. The saffron step stopped."
   },
   "saffron.message.23": {
@@ -7676,8 +7901,8 @@
     "en-US": "Syncing fields and food effects. Planting, harvesting and food use are on hold."
   },
   "saffron.message.41": {
-    "zh-CN": "农田数据暂时不完整，已保留作物与料理效果；可稍后重跑此环节",
-    "zh-TW": "農田資料暫時不完整，已保留作物與料理效果；可稍後重跑此環節",
+    "zh-CN": "农田数据暂时不完整，已保留作物与料理效果；可稍后重跑此任务",
+    "zh-TW": "農田資料暫時不完整，已保留作物與料理效果；可稍後重跑此任務",
     "en-US": "Farm data is incomplete. Crops and existing food effects are preserved; retry this task later."
   },
   "saffron.message.42": {
@@ -7691,8 +7916,8 @@
     "en-US": "Some saffron is not ripe. No new food was used; retry after it ripens."
   },
   "saffron.message.44": {
-    "zh-CN": "土豆成熟状态未及时更新，已保留作物；可稍后重跑此环节",
-    "zh-TW": "馬鈴薯成熟狀態未及時更新，已保留作物；可稍後重跑此環節",
+    "zh-CN": "土豆成熟状态未及时更新，已保留作物；可稍后重跑此任务",
+    "zh-TW": "馬鈴薯成熟狀態未及時更新，已保留作物；可稍後重跑此任務",
     "en-US": "Potato growth data did not update in time. Crops are preserved; retry this task later."
   },
   "saffron.message.45": {
@@ -7706,8 +7931,8 @@
     "en-US": "Potato rounds cannot continue because of storage capacity or field state. Progress is saved; other tasks will continue."
   },
   "saffron.message.47": {
-    "zh-CN": "领地画面或连接暂不可用，已保留作物和料理效果；其余日常继续，可稍后重跑此环节",
-    "zh-TW": "領地畫面或連線暫不可用，已保留作物和料理效果；其餘日常繼續，可稍後重跑此環節",
+    "zh-CN": "领地画面或连接暂不可用，已保留作物和料理效果；其余日常继续，可稍后重跑此任务",
+    "zh-TW": "領地畫面或連線暫不可用，已保留作物和料理效果；其餘日常繼續，可稍後重跑此任務",
     "en-US": "Territory or its connection is unavailable. Crops and food effects are preserved. Other tasks will continue; retry this one later."
   },
   "saffron.message.48": {
@@ -7716,8 +7941,8 @@
     "en-US": "Territory or farm data is not ready. No planting or harvesting was started. Other tasks will continue."
   },
   "saffron.message.49": {
-    "zh-CN": "藏红花种收连续两分钟没有进展，已保留当前作物；其余日常继续，可稍后重跑此环节",
-    "zh-TW": "藏紅花種收連續兩分鐘沒有進展，已保留目前作物；其餘日常繼續，可稍後重跑此環節",
+    "zh-CN": "藏红花种收连续两分钟没有进展，已保留当前作物；其余日常继续，可稍后重跑此任务",
+    "zh-TW": "藏紅花種收連續兩分鐘沒有進展，已保留目前作物；其餘日常繼續，可稍後重跑此任務",
     "en-US": "No planting or harvest progress for two minutes. Crops are preserved. Other tasks will continue; retry this one later."
   },
   "saffron.message.50": {
@@ -7726,8 +7951,8 @@
     "en-US": "The saffron connection is unavailable. Further actions stopped and crops are preserved. Other tasks will continue."
   },
   "saffron.message.51": {
-    "zh-CN": "藏红花环节暂缓，已保留当前作物；其余日常继续，详情见诊断记录",
-    "zh-TW": "藏紅花環節暫緩，已保留目前作物；其餘日常繼續，詳情見診斷紀錄",
+    "zh-CN": "藏红花任务暂缓，已保留当前作物；其余日常继续，详情见诊断记录",
+    "zh-TW": "藏紅花任務暫緩，已保留目前作物；其餘日常繼續，詳情見診斷紀錄",
     "en-US": "Saffron is deferred and crops are preserved. Other tasks will continue. See diagnostics for details."
   },
   "prefs.saffron_rounds": {
@@ -7931,9 +8156,9 @@
     "en-US": "Resource use"
   },
   "schedule.mode_hint": {
-    "zh-CN": "顺序执行逐个运行；沙盒并行让多个账号同时运行。",
-    "zh-TW": "依序執行逐一運行；沙盒並行讓多個帳號同時運行。",
-    "en-US": "Sequential runs one account at a time. Sandbox parallel runs accounts together."
+    "zh-CN": "同时运行多个账号需要 Sandboxie-Plus。",
+    "zh-TW": "同時執行多個帳號需要 Sandboxie-Plus。",
+    "en-US": "Running accounts at the same time requires Sandboxie-Plus."
   },
   "prefs.category.all": {
     "zh-CN": "全部",
@@ -7991,8 +8216,8 @@
     "zh-CN": "设置账号"
   },
   "prefs.search_placeholder": {
-    "zh-TW": "搜尋環節或設定…",
-    "zh-CN": "搜索环节或设置…",
+    "zh-TW": "搜尋任務或設定…",
+    "zh-CN": "搜索任务或设置…",
     "en-US": "Find tasks or settings…"
   },
   "tool.pandora": {
@@ -8036,9 +8261,9 @@
     "en-US": "Repeats this stage after each result."
   },
   "pandora.challenge_warning": {
-    "en-US": "After 15 minutes, prioritize survival; hold position when cornered until a stun-covered escape is confirmed. Auto equipment restarts builds that cannot reach five pairs. A 20-minute run passed; clear rate remains unverified.",
-    "zh-CN": "15分钟后优先生存；被困墙角时站定，确认眩晕覆盖安全路线后才脱困。自动配装不足五组且无法补齐时重开。已实测撑满20分钟，通关率仍待验证。",
-    "zh-TW": "15分鐘後優先生存；被困牆角時站定，確認暈眩覆蓋安全路線後才脫困。自動配裝不足五組且無法補齊時重開。已實測撐滿20分鐘，通關率仍待驗證。"
+    "en-US": "After 15 minutes, survival comes first: when cornered, hold position until a stun covers a safe escape. Runs restart if auto equipment cannot complete five pairs. Clear rate is still being evaluated.",
+    "zh-CN": "15 分钟后以生存为先；被困墙角时先站定，确认眩晕能掩护安全路线后再脱困。自动配装凑不满五组时会重开。通关率仍在观察中。",
+    "zh-TW": "15 分鐘後以生存為先；被困牆角時先站定，確認暈眩能掩護安全路線後再脫困。自動配裝湊不滿五組時會重開。通關率仍在觀察中。"
   },
   "pandora.rounds": {
     "zh-CN": "已结算",
@@ -8306,8 +8531,8 @@
     "en-US": "Salvation sweep is not ready"
   },
   "message.Salvation plan changed": {
-    "zh-CN": "救赎之塔资源或难度已变化，未提交扫荡；请重跑此环节。",
-    "zh-TW": "救贖之塔資源或難度已變化，未提交掃蕩；請重跑此環節。",
+    "zh-CN": "救赎之塔资源或难度已变化，未提交扫荡；请重跑此任务。",
+    "zh-TW": "救贖之塔資源或難度已變化，未提交掃蕩；請重跑此任務。",
     "en-US": "Salvation plan changed"
   },
   "message.Salvation growth is already funded": {
@@ -8341,13 +8566,13 @@
     "en-US": "Event auto AP cost unavailable"
   },
   "message.Event auto batch has not finished": {
-    "zh-CN": "活动自动战斗尚未结束，请等待游戏结算后接续。",
-    "zh-TW": "活動自動戰鬥尚未結束，請等待遊戲結算後接續。",
+    "zh-CN": "活动自动战斗尚未结束，请等待游戏结算后继续。",
+    "zh-TW": "活動自動戰鬥尚未結束，請等待遊戲結算後繼續。",
     "en-US": "Event auto batch has not finished"
   },
   "message.Event win progress missing": {
-    "zh-CN": "未读到活动胜利进度，未重复战斗；请返回大厅后接续。",
-    "zh-TW": "未讀到活動勝利進度，未重複戰鬥；請返回大廳後接續。",
+    "zh-CN": "未读到活动胜利进度，未重复战斗；请返回大厅后继续。",
+    "zh-TW": "未讀到活動勝利進度，未重複戰鬥；請返回大廳後繼續。",
     "en-US": "Event win progress missing"
   },
   "message.Event auto result belongs to another stage": {
@@ -8361,8 +8586,8 @@
     "en-US": "Event auto changed stored AP or exceeded its budget"
   },
   "message.Event auto stopped without a terminal result": {
-    "zh-CN": "活动自动战斗提前停止，尚未读到最终结算；请返回大厅后接续。",
-    "zh-TW": "活動自動戰鬥提前停止，尚未讀到最終結算；請返回大廳後接續。",
+    "zh-CN": "活动自动战斗提前停止，尚未读到最终结算；请返回大厅后继续。",
+    "zh-TW": "活動自動戰鬥提前停止，尚未讀到最終結算；請返回大廳後繼續。",
     "en-US": "Event auto stopped without a terminal result"
   },
   "message.Event frontier changed": {
@@ -8396,13 +8621,13 @@
     "en-US": "Event batch is still continuing"
   },
   "message.Event result exit not ready": {
-    "zh-CN": "活动结算退出按钮尚未就绪，请稍后接续。",
-    "zh-TW": "活動結算退出按鈕尚未就緒，請稍後接續。",
+    "zh-CN": "活动结算退出按钮尚未就绪，请稍后继续。",
+    "zh-TW": "活動結算退出按鈕尚未就緒，請稍後繼續。",
     "en-US": "Event result exit not ready"
   },
   "message.Native battle recovery requires an idle lobby": {
-    "zh-CN": "请返回对应战斗大厅，再接续此环节。",
-    "zh-TW": "請返回對應戰鬥大廳，再接續此環節。",
+    "zh-CN": "请返回对应战斗大厅，再继续此任务。",
+    "zh-TW": "請返回對應戰鬥大廳，再繼續此任務。",
     "en-US": "Native battle recovery requires an idle lobby"
   },
   "message.Tower is not idle": {
@@ -8411,8 +8636,8 @@
     "en-US": "Tower is not idle"
   },
   "message.Event battle is still active": {
-    "zh-CN": "活动战斗仍在进行，请等待结算后接续。",
-    "zh-TW": "活動戰鬥仍在進行，請等待結算後接續。",
+    "zh-CN": "活动战斗仍在进行，请等待结算后继续。",
+    "zh-TW": "活動戰鬥仍在進行，請等待結算後繼續。",
     "en-US": "Event battle is still active"
   },
   "message.Event AP data unavailable": {
@@ -8421,8 +8646,8 @@
     "en-US": "Event AP data unavailable"
   },
   "message.Native battle recovery account changed": {
-    "zh-CN": "当前账号与未完成战斗不一致，未接续旧操作；请检查所选账号。",
-    "zh-TW": "目前帳號與未完成戰鬥不一致，未接續舊操作；請檢查所選帳號。",
+    "zh-CN": "当前账号与未完成战斗不一致，未继续旧操作；请检查所选账号。",
+    "zh-TW": "目前帳號與未完成戰鬥不一致，未繼續舊操作；請檢查所選帳號。",
     "en-US": "Native battle recovery account changed"
   },
   "storage.move_scope": {
@@ -8436,9 +8661,9 @@
     "en-US": "Some cache files could not be read. Close applications using them and retry; migration has not started."
   },
   "storage.breakdown": {
-    "zh-CN": "日志 {0} MiB · 缓存与更新 {1} MiB · 账号、游戏及其他保留数据 {2} MiB。\n总量已包含沙盒 {4} MiB、解压缓存 {5} MiB（不重复相加）。跳过 {3} 项无法读取或受保护的记录。压缩文件按存储大小统计。",
-    "zh-TW": "日誌 {0} MiB · 快取與更新 {1} MiB · 帳號、遊戲及其他保留資料 {2} MiB。\n總量已包含沙盒 {4} MiB、解壓快取 {5} MiB（不重複相加）。略過 {3} 項無法讀取或受保護的記錄。壓縮檔案按儲存大小統計。",
-    "en-US": "Logs {0} MiB · Cache & updates {1} MiB · Accounts, game and retained data {2} MiB.\nTotals include sandboxes {4} MiB and extraction cache {5} MiB; do not add these again. {3} unreadable or protected items skipped. Compressed files use stored size."
+    "zh-CN": "日志 {0} MB · 缓存与更新 {1} MB · 账号、游戏及其他保留数据 {2} MB。\n总量已包含沙盒 {4} MB、解压缓存 {5} MB（不重复相加）。跳过 {3} 项无法读取或受保护的记录。压缩文件按存储大小统计。",
+    "zh-TW": "日誌 {0} MB · 快取與更新 {1} MB · 帳號、遊戲及其他保留資料 {2} MB。\n總量已包含沙盒 {4} MB、解壓快取 {5} MB（不重複相加）。略過 {3} 項無法讀取或受保護的記錄。壓縮檔案按儲存大小統計。",
+    "en-US": "Logs {0} MB · Cache & updates {1} MB · Accounts, game and retained data {2} MB.\nTotals include sandboxes {4} MB and extraction cache {5} MB; do not add these again. {3} unreadable or protected items skipped. Compressed files use stored size."
   },
   "storage.move": {
     "zh-CN": "迁移缓存与沙盒…",
@@ -8456,9 +8681,9 @@
     "en-US": "Choose a folder without directory links."
   },
   "storage.moved": {
-    "zh-CN": "已迁移 {0} MiB，新位置立即生效。原位置保留了 {1} 个被占用或变化的文件。",
-    "zh-TW": "已遷移 {0} MiB，新位置立即生效。原位置保留了 {1} 個使用中或已變更的檔案。",
-    "en-US": "Moved {0} MiB. The new location is active. {1} busy or changed source files were retained."
+    "zh-CN": "已迁移 {0} MB，新位置立即生效。原位置保留了 {1} 个被占用或变化的文件。",
+    "zh-TW": "已遷移 {0} MB，新位置立即生效。原位置保留了 {1} 個使用中或已變更的檔案。",
+    "en-US": "Moved {0} MB. The new location is active. {1} busy or changed source files were retained."
   },
   "storage.rescan": {
     "zh-CN": "可重新统计查看当前占用。",
@@ -8481,9 +8706,9 @@
     "en-US": "The destination folder already exists. Choose another location; existing files were not changed."
   },
   "storage.preview": {
-    "zh-CN": "总占用 {0} MiB · 可释放 {1} MiB",
-    "zh-TW": "總佔用 {0} MiB · 可釋放 {1} MiB",
-    "en-US": "Total {0} MiB · Reclaimable {1} MiB"
+    "zh-CN": "总占用 {0} MB · 可释放 {1} MB",
+    "zh-TW": "總佔用 {0} MB · 可釋放 {1} MB",
+    "en-US": "Total {0} MB · Reclaimable {1} MB"
   },
   "storage.overlap": {
     "zh-CN": "新位置不能与当前数据或缓存目录重叠，请选择其他文件夹。",
@@ -8496,9 +8721,9 @@
     "en-US": "Choose a cache and sandbox location"
   },
   "storage.moving": {
-    "zh-CN": "正在复制并校验… {0} MiB",
-    "zh-TW": "正在複製並驗證… {0} MiB",
-    "en-US": "Copying and verifying… {0} MiB"
+    "zh-CN": "正在复制并校验… {0} MB",
+    "zh-TW": "正在複製並驗證… {0} MB",
+    "en-US": "Copying and verifying… {0} MB"
   },
   "storage.confirm": {
     "zh-CN": "将缓存与所有账号的完整沙盒迁移到：\n{0}\n\n请关闭全部隔离游戏与窗口。复制并校验通过后才切换位置，账号登录和更新恢复记录会保留。",
@@ -8541,9 +8766,9 @@
     "en-US": "Fast travel"
   },
   "prefs.fast_travel_hint": {
-    "zh-CN": "长距离步行前使用提升移动速度的天赋，优先选择加速更快的角色；遵守天赋药保留量，不可用时普通步行。",
-    "zh-TW": "長距離步行前使用提升移動速度的天賦，優先選擇加速更快的角色；遵守天賦藥保留量，不可用時普通步行。",
-    "en-US": "Use a movement-speed talent before long walks, preferring the faster available character. Respects the talent-pill reserve; walks normally if unavailable."
+    "zh-CN": "长距离移动时使用加速天赋，优先用速度更快的角色；天赋不可用或天赋药将低于保留量时，改为普通步行。",
+    "zh-TW": "長距離移動時使用加速天賦，優先用速度更快的角色；天賦不可用或天賦藥將低於保留量時，改為一般步行。",
+    "en-US": "Uses a speed talent for long walks, preferring the fastest character. Walks normally if the talent is unavailable or talent pills would drop below your reserve."
   },
   "cooking.title": {
     "zh-CN": "自定义料理",
@@ -8786,9 +9011,9 @@
     "en-US": "An isolated process is still running. Close all isolated games and windows without signing out, then retry the move."
   },
   "storage.disk_usage": {
-    "zh-CN": "占用 {0} MiB · 可清理 {1} MiB",
-    "zh-TW": "佔用 {0} MiB · 可清理 {1} MiB",
-    "en-US": "Used {0} MiB · Reclaimable {1} MiB"
+    "zh-CN": "占用 {0} MB · 可清理 {1} MB",
+    "zh-TW": "佔用 {0} MB · 可清理 {1} MB",
+    "en-US": "Used {0} MB · Reclaimable {1} MB"
   },
   "storage.use_full_migration": {
     "zh-CN": "请使用“迁移缓存与沙盒”同步更改存放位置。",
@@ -8839,5 +9064,35 @@
     "zh-CN": "沙盒实际位置：{0}",
     "zh-TW": "沙盒實際位置：{0}",
     "en-US": "Sandbox folder: {0}"
+  },
+  "prefs.event_preset_slot": {
+    "zh-CN": "战斗预设槽位",
+    "zh-TW": "戰鬥預設欄位",
+    "en-US": "Battle preset slot"
+  },
+  "prefs.event_preset_hint": {
+    "zh-CN": "每次活动战斗前，切换到游戏内这个编号的普通预设。填 0 不切换；槽位为空时沿用当前阵容。",
+    "zh-TW": "每次活動戰鬥前，切換到遊戲內這個編號的普通預設。填 0 不切換；欄位為空時沿用目前陣容。",
+    "en-US": "Before each event battle, switch to this normal preset number in the game. Enter 0 to keep the current team; an empty slot also keeps it."
+  },
+  "prefs.event_preset_invalid": {
+    "zh-CN": "预设槽位请填写 0 至 999 的整数，0 表示不绑定。",
+    "zh-TW": "預設欄位請填寫 0 至 999 的整數，0 表示不綁定。",
+    "en-US": "Enter a preset slot from 0 to 999. Use 0 to keep the current team."
+  },
+  "work.event_preset_read": {
+    "zh-CN": "读取活动战斗预设",
+    "zh-TW": "讀取活動戰鬥預設",
+    "en-US": "Reading the event battle preset"
+  },
+  "work.event_preset_apply": {
+    "zh-CN": "应用活动战斗预设",
+    "zh-TW": "套用活動戰鬥預設",
+    "en-US": "Applying the event battle preset"
+  },
+  "work.event_preset_empty": {
+    "zh-CN": "预设槽位为空，沿用当前阵容",
+    "zh-TW": "預設欄位為空，沿用目前陣容",
+    "en-US": "Preset slot is empty; keeping the current team"
   }
 }

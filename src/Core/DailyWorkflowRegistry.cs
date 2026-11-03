@@ -112,7 +112,8 @@ public sealed class DailyWorkflowRegistry
         Add("trade", w => new DailyTradeExecution(w, !w.Settings.Trade.RequiresCatalog ? new JsonObject() : tradeCatalog() ?? throw new StageHostException("adapter", "跑商数据没有通过当前客户端核对。")).Run(), TradeOwner);
         Add("collection_sync", w => new DailyWeeklyRoute(w).SyncProgress());
         Add("tactics", w => ExtensionFor("tactics")?.ExecuteAsync("tactics", w) ?? Task.FromResult(DailyWorkflow.Skipped("plugin_unavailable")), f => ExtensionFor("tactics")?.CanResume(root, "tactics", f) ?? false);
-        Add("event_battle", w => ExtensionFor("event_battle")?.ExecuteAsync("event_battle", w) ?? DailyEventSweep.PublicRun(w), f => ExtensionFor("event_battle")?.CanResume(root, "event_battle", f) ?? business.Records(f.Context, "event.native_batch").Any(op => DailyNativeBattleRecovery.CanResume(op, f)));
+        Add("event_battle", w => ExtensionFor("event_battle") is { } extension
+            ? DailyEventPreset.RunExtension(w, () => extension.ExecuteAsync("event_battle", w)) : DailyEventSweep.PublicRun(w), f => ExtensionFor("event_battle")?.CanResume(root, "event_battle", f) ?? business.Records(f.Context, "event.native_batch").Any(op => DailyNativeBattleRecovery.CanResume(op, f)));
         return map;
     }
     public static bool Owned(JsonObject op, DailyStageFrame frame) => JsonNode.DeepEquals(op["cycle"], frame.Context["cycle"]) && DailyEvidence.SameActor(op["before"]!["Frame"]!.AsObject(), frame.Frame);

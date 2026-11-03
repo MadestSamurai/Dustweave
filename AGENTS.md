@@ -18,6 +18,11 @@ See `docs/ARCHITECTURE.md`, Recoverability, and the recovery review in `docs/DEV
 
 ## Development boundaries
 
+- User-facing wording is not an identifier. New UI bindings use stable resource keys; categories, task selection, recovery and persisted settings use IDs, never translated text. Do not add Chinese reverse lookup to a new UI or generate identifiers from current display text.
+- New parameterized progress messages use `DailyText` (key, arguments, readable diagnostic fallback). Keep account names, paths and game-provided values opaque. Existing raw runtime messages use the frozen `legacy-inputs.json` / explicit legacy notice grammars; editing translations must not regenerate that compatibility map.
+- Missing or malformed display metadata must never stop a queue, login, update recovery or rendering. Production falls back to readable text and records bounded localization faults; development checks fail. Preserve active work and configuration, but do not rewrite historical caches or make their successful translation a recovery prerequisite.
+- For localization edits run `LocalizationArchitecture`, `UserText` and the isolated `localization` UI smoke as applicable. Validate actual bindings, category/search behavior and raw diagnostic preservation; comparing a resource to itself is not sufficient.
+
 - Respect the calling task's explicitly required working directory. Root scripts locate their own sources without changing that directory.
 - Use .NET and PowerShell; do not add Python runtime or required Python build/verification steps.
 - Preserve account/session identity, user-data paths, the host control lock and shared IPC ownership across integrated tools.

@@ -1,6 +1,9 @@
 namespace Dustweave;
 
-public sealed record DailyProgress(string State, string Message, int Completed = 0, int Total = 0);
+public sealed record DailyProgress(string State, string Message, int Completed = 0, int Total = 0)
+{
+    public DailyText? Display { get; init; }
+}
 public sealed record DailyRunStatus(DateTimeOffset AtUtc, string RunId, DailyProgress Progress);
 public sealed class DailyOptions
 {
@@ -95,9 +98,11 @@ public sealed class DailyCoordinator
             DailyJson.Write(startupPath, new StartupPermit { Owner = owner, ProcessId = instance.ProcessId, ProcessStartTicks = instance.StartTicks, AccountKey = account, InstanceId = s.InstanceId, ExpiresUtcTicks = DateTime.UtcNow.AddSeconds(10).Ticks });
         }
     }
-    private void Report(string state, string message, int done = 0, int total = 0)
+    private void Report(string state, DailyText text, int done = 0, int total = 0)
+        => Report(state, text.Fallback, done, total, text);
+    private void Report(string state, string message, int done = 0, int total = 0, DailyText? display = null)
     {
-        var update = new DailyProgress(state, message, done, total);
+        var update = new DailyProgress(state, message, done, total) { Display = display };
         DailyJson.Write(runPath, new DailyRunStatus(DateTimeOffset.UtcNow, runId, update));
         Progress?.Invoke(update);
     }
@@ -115,7 +120,7 @@ public sealed class DailyCoordinator
             {
                 await game.ConnectAsync(instance, m => Report("connecting", m), token);
                 connected = true;
-                Report("waiting_login", "正在读取游戏中的登录身份；请保持游戏打开，若停在登录页请完成登录。");
+                Report("waiting_login", DailyText.Of("notice.account.read_live_identity", "正在读取游戏中的登录身份；请保持游戏打开，若停在登录页请完成登录。"));
                 key = await CurrentGameObservation.WaitForIdentityAsync(sessions, game, instance, token, options.LoginTimeout, options.PollInterval);
                 catalog = sessions.Read();
             }
@@ -130,7 +135,7 @@ public sealed class DailyCoordinator
             DailyLoginDiagnostics.Capture(Path.GetDirectoryName(runPath)!, "failed", catalog, game, sessions);
             throw;
         }
-        Report("completed", "当前账号身份已核对。可继续保存账号，或选择多个账号进行登录检查。", 1, 1);
+        Report("completed", DailyText.Of("notice.account.verified", "当前账号身份已核对。可继续保存账号，或选择多个账号进行登录检查。"), 1, 1);
     });
     public Task InspectAsync(IEnumerable<DailyAccount> selected) => InspectCoreAsync(selected,false);
     public Task InspectFreshAsync(IEnumerable<DailyAccount> selected) => InspectCoreAsync(selected,true);
@@ -156,7 +161,7 @@ public sealed class DailyCoordinator
             if(requireFreshGame&&instance!=null)throw new InvalidOperationException("检测到已有游戏，未切换或关闭它。请关闭游戏后重新开始实验。");
             if (instance != null && catalog.CurrentKey != target.AccountKey)
             {
-                Report("closing", $"{done + 1}/{targets.Length} · 正常关闭游戏，准备切换到 {target.Name}", done, targets.Length);
+                Report("closing", DailyText.Of("notice.pattern.account_closing", $"{done + 1}/{targets.Length} · 正常关闭游戏，准备切换到 {target.Name}", (done + 1).ToString(), targets.Length.ToString(), target.Name), done, targets.Length);
                 await game.CloseAsync(instance, token);
                 instance = null;
             }
@@ -164,7 +169,7 @@ public sealed class DailyCoordinator
             {
                 token.ThrowIfCancellationRequested();
                 Preflight([target]);
-                Report("launching", $"{done + 1}/{targets.Length} · 切换并启动 {target.Name}", done, targets.Length);
+                Report("launching", DailyText.Of("notice.pattern.account_launch", $"{done + 1}/{targets.Length} · 切换并启动 {target.Name}", (done + 1).ToString(), targets.Length.ToString(), target.Name), done, targets.Length);
                 if (finishLoginRecovery)
                 {
                     var recovery = sessions.LoginRecovery;
@@ -183,9 +188,9 @@ public sealed class DailyCoordinator
             }
             await VerifyAsync(target, instance, token);
             done++;
-            Report("verified", $"{target.Name} · 登录检查通过", done, targets.Length);
+            Report("verified", DailyText.Of("notice.pattern.account_verified", $"{target.Name} · 登录检查通过", target.Name), done, targets.Length);
         }
-        Report("completed", $"{done} 个账号登录检查完成。游戏停留在最后一个账号。", done, targets.Length);
+        Report("completed", DailyText.Of("notice.pattern.account_done", $"{done} 个账号登录检查完成。游戏停留在最后一个账号。", done.ToString()), done, targets.Length);
     });
     private void Preflight(IEnumerable<DailyAccount> targets)
     {
@@ -219,11 +224,11 @@ public sealed class DailyCoordinator
     {
         token.ThrowIfCancellationRequested();
         var profile = DailyAccountOrder.ProfileFor(target, profiles.Read());
-        if (!connected) await game.ConnectAsync(instance, m => Report("connecting", $"{target.Name} · {m}"), token);
+        if (!connected) await game.ConnectAsync(instance, m => Report("connecting", DailyText.Of("notice.account.message", $"{target.Name} · {m}", target.Name, m)), token);
         var guard = new DailyIdentityGuard();
         var deadline = DateTimeOffset.UtcNow + options.LoginTimeout;
         var owner = Guid.NewGuid().ToString("N");
-        Report("waiting_login", $"{target.Name} · 等待游戏登录和实际角色身份（最长 {options.LoginTimeout.TotalSeconds:0} 秒）");
+        Report("waiting_login", DailyText.Of("notice.pattern.account_wait", $"{target.Name} · 等待游戏登录和实际角色身份（最长 {options.LoginTimeout.TotalSeconds:0} 秒）", target.Name, options.LoginTimeout.TotalSeconds.ToString("0", System.Globalization.CultureInfo.InvariantCulture)));
         string startupMessage = "";
         bool waitingDownload = false;
         bool waitingAgreement = false;
@@ -241,7 +246,7 @@ public sealed class DailyCoordinator
             var now = DateTimeOffset.UtcNow;
             var snapshot = read.Snapshot;
             DailyLoginReadiness.Check(snapshot, instance, now.UtcTicks);
-            if (snapshot?.State == "waiting_sdk" && startupMessage != "waiting_sdk") { startupMessage = "waiting_sdk"; Report("waiting_sdk", target.Name + " · 等待登录 SDK 初始化"); }
+            if (snapshot?.State == "waiting_sdk" && startupMessage != "waiting_sdk") { startupMessage = "waiting_sdk"; Report("waiting_sdk", DailyText.Of("notice.pattern.account_sdk", target.Name + " · 等待登录 SDK 初始化", target.Name)); }
             if (snapshot != null && snapshot.ProcessId == instance.ProcessId && snapshot.ProcessStartTicks == instance.StartTicks && StartupPolicy.Fresh(snapshot, now.UtcTicks) && snapshot.Startup?.Visible == true)
             {
                 if (snapshot.AccountKey.Length > 0 && snapshot.AccountKey != target.AccountKey)
@@ -256,7 +261,7 @@ public sealed class DailyCoordinator
                     if (startupMessage != DailyLoginReadiness.AgreementMessage)
                     {
                         startupMessage = DailyLoginReadiness.AgreementMessage;
-                        Report("waiting_start", target.Name + " · " + startupMessage);
+                        Report("waiting_start", DailyText.Of("notice.account.message", target.Name + " · " + startupMessage, target.Name, startupMessage));
                     }
                     await Task.Delay(options.PollInterval, token);
                     continue;
@@ -271,7 +276,7 @@ public sealed class DailyCoordinator
                     if (startupMessage != waitingMessage)
                     {
                         startupMessage = waitingMessage;
-                        Report("waiting_credentials", target.Name + " · " + waitingMessage);
+                        Report("waiting_credentials", DailyText.Of("notice.account.message", target.Name + " · " + waitingMessage, target.Name, waitingMessage));
                     }
                     if (now >= deadline)
                         throw new TimeoutException("等待登录超时：本机登录信息仍不完整或自动登录未开启。请在游戏内完成登录后重试；已保存的账号未删除。此检查不能判定服务器令牌是否过期。");
@@ -295,7 +300,7 @@ public sealed class DailyCoordinator
                 {
                     recoveryChecked = true;
                     Revoke();
-                    bool recovered = await game.RecoverStartupAsync(target.AccountKey, m => Report("recovering_start", target.Name + " · " + m), token);
+                    bool recovered = await game.RecoverStartupAsync(target.AccountKey, m => Report("recovering_start", DailyText.Of("notice.account.message", target.Name + " · " + m, target.Name, m)), token);
                     token.ThrowIfCancellationRequested();
                     if (recovered)
                     {
@@ -309,7 +314,7 @@ public sealed class DailyCoordinator
                 if (message != startupMessage)
                 {
                     startupMessage = message;
-                    Report("waiting_start", target.Name + " · " + message);
+                    Report("waiting_start", DailyText.Of("notice.account.message", target.Name + " · " + message, target.Name, message));
                 }
             }
             if (waitingAgreement)
@@ -363,11 +368,11 @@ public sealed class DailyCoordinator
         {
             await game.PrepareAccessAsync(m => Report("connecting", m), active.Token);
             Revoke();
-            Report("starting", "开始本次账号检查");
+            Report("starting", DailyText.Of("notice.account.begin", "开始本次账号检查"));
             await action(active.Token);
         }
         catch (DailyGameExitedException e) { Report("stopped", e.Message); throw; }
-        catch (OperationCanceledException) { Report("stopped", "已停止。保留游戏当前账号和已完成的检查记录。"); }
+        catch (OperationCanceledException) { Report("stopped", DailyText.Of("notice.account.stopped", "已停止。保留游戏当前账号和已完成的检查记录。")); }
         catch (Exception e) { DailyJson.Write(Path.Combine(Path.GetDirectoryName(runPath)!, "run-error.json"), new { atUtc = DateTimeOffset.UtcNow, runId, error = e.ToString() }); Report("error", e.Message); throw; }
         finally { try { Revoke(); } finally { active.Dispose(); active = null; gate.Release(); } }
     }

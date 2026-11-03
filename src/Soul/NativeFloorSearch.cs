@@ -95,10 +95,10 @@ internal sealed partial class NativeFastPlanner
         for(int i=0;i<3;i++)yield return Generate(parent,preferOwned:true);
         foreach(var filled in FillRoom(board))yield return filled;
     }
-    Candidate[] ExploreCapacity(Candidate[] parents,int[] seeds,bool fixedWork)
+    Candidate[] ExploreCapacity(Candidate[] parents,int[] seeds,bool fixedWork,bool fixedCandidates=false)
     {
         var timer=Stopwatch.StartNew();var found=new Dictionary<string,Candidate>();var seen=new HashSet<string>();
-        bool Within(){Cancellation.ThrowIfCancellationRequested();return capacityProposals<384&&timer.Elapsed.TotalSeconds<(fixedWork?15:3);}
+        bool Within(){Cancellation.ThrowIfCancellationRequested();return capacityProposals<384&&(fixedCandidates||timer.Elapsed.TotalSeconds<(fixedWork?15:3));}
         for(int depth=0;depth<2&&Within();depth++){
             var variants=parents.SelectMany(FloorVariants).DistinctBy(Key).ToArray();
             var streams=variants.Select(board=>CapacityBoards(board).GetEnumerator()).ToList();

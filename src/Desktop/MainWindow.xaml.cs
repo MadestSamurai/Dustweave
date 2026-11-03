@@ -20,8 +20,9 @@ public sealed class AccountRow : INotifyPropertyChanged
         get; init;
     }
     public string Name => Account.Name;
-    public string DetailsLabel => $"{Name}\n{PlayerLabel}\n{IdentityLabel}\n{DailyLanguage.Current.Get("account.verified")}: {VerifiedLabel}";
+    public string DetailsLabel => $"{Name} · {StatusLabel}\n{PlayerLabel}\n{IdentityLabel}\n{DailyLanguage.Current.Get("account.verified")}: {VerifiedLabel}";
     public string EnterLabel => DailyLanguage.Current.Get("account.enter_named", Name);
+    public string ActionsLabel => DailyLanguage.Current.Get("account.actions_named", Name);
     public string QueueLabel => DailyLanguage.Current.Get("account.queue_named", Name);
     public TaskPresetChoice[] PresetOptions { get; set; } = [];
     private string presetId = "";
@@ -36,6 +37,12 @@ public sealed class AccountRow : INotifyPropertyChanged
     public string PlayerLabel => string.IsNullOrEmpty(Profile.PlayerName) ? DailyLanguage.Current.Get("account.wait_game") : Profile.PlayerName;
     public string VerifiedLabel => Profile.LastVerifiedUtc?.ToLocalTime().ToString("MM-dd HH:mm:ss") ?? DailyLanguage.Current.Get("account.not_verified");
     public string StatusLabel => DailyLanguage.Current.Get(!Account.Valid ? "account.invalid" : Account.IsCurrent ? "account.signed_in" : "account.saved");
+    // Visible list text: the character line is empty until the game reports it; the badge appears only for the
+    // signed-in or unreadable account. Tooltips (DetailsLabel) keep the complete status.
+    public string PlayerLine => Profile.PlayerName ?? "";
+    public bool HasBadge => !Account.Valid || Account.IsCurrent;
+    public bool BadgeIsError => !Account.Valid;
+    public string BadgeLabel => HasBadge ? StatusLabel : "";
     public void RefreshLanguage() => PropertyChanged?.Invoke(this, new(""));
     public bool Selected
     {
@@ -127,7 +134,7 @@ public partial class MainWindow : Window
         guild.Progress += m => Dispatcher.Invoke(() => { DailyUiText.Set(ProgressText, m); ProgressText.Foreground = (Brush)FindResource("Ink"); });
         AccountsGrid.ItemsSource = rows;
         CollectionViewSource.GetDefaultView(rows).Filter = MatchesSearch;
-        coordinator.Progress += p => Dispatcher.Invoke(() => { if (dailyQueue.IsRunning || WorkspaceTabs.SelectedItem == RunTab && busy) dailyPanel.Show(new("preparing", p.Message, "", [])); DailyUiText.Set(ProgressText, p.Message); ProgressText.Foreground = (Brush)FindResource(p.State == "error" ? "Error" : "Ink"); });
+        coordinator.Progress += p => Dispatcher.Invoke(() => { if (dailyQueue.IsRunning || WorkspaceTabs.SelectedItem == RunTab && busy) dailyPanel.Show(new("preparing", p.Message, "", []) { Display = p.Display }); if (p.Display is { } display) DailyUiText.Set(ProgressText, display); else DailyUiText.Set(ProgressText, p.Message); ProgressText.Foreground = (Brush)FindResource(p.State == "error" ? "Error" : "Ink"); });
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         timer.Tick += (_, _) => { _ = PollParallelAsync(); L.RefreshFromDisk(); RefreshTools(); UpdateConnection(); if (smoke == null && !busy) { _ = RefreshAccountIdentityAsync(); RefreshDailyHistory(); } CheckCaptureLifetime(); if (smoke == null && CaptureSessionId.Length == 0) { _ = CheckLogCleanupAsync(); _ = CheckStorageWarningAsync(); _ = CheckScheduleAsync(); _ = OfferUpdateAsync(); if (DateTime.UtcNow >= nextUpdateCheck) { nextUpdateCheck = DateTime.UtcNow.AddHours(6); _ = CheckUpdatesAsync(); } } };
         Loaded += async (_, _) => {
@@ -136,7 +143,7 @@ public partial class MainWindow : Window
             // ContentRendered/ContextIdle may never arrive for a minimized or
             // occluded window; that must not roll a healthy installation back.
             if (!AcknowledgeUpdateStartup()) return;
-            RefreshAccounts(); var last = DailyJson.TryRead<DailyRunStatus>(Path.Combine(root, "run.json")); if (last != null) { DailyUiText.History(ProgressText, "history.previous", last.AtUtc.LocalDateTime, last.Progress.Message); } if (smoke == null) { var previous = ReadTaskHistory(TaskAccountKey); dailyPanel.LoadHistory(previous); } timer.Start(); if (smoke != null && automatedSmoke) await SmokeAsync();
+            RefreshAccounts(); var last = DailyJson.TryRead<DailyRunStatus>(Path.Combine(root, "run.json")); if (last != null) { DailyUiText.History(ProgressText, "history.previous", last.AtUtc.LocalDateTime, last.Progress.Message, last.Progress.Display); } if (smoke == null) { var previous = ReadTaskHistory(TaskAccountKey); dailyPanel.LoadHistory(previous); } timer.Start(); if (smoke != null && automatedSmoke) await SmokeAsync();
         };
         HostedToolPreparation.AfterFirstLayout(this, async () => {
             if (smoke != null || updateStartupFailed) return;
@@ -308,7 +315,7 @@ public partial class MainWindow : Window
         if (item is not AccountRow row)
             return false;
         string q = Search.Text.Trim();
-        return q.Length == 0 || (row.Name + row.PlayerLabel + row.IdentityLabel).Contains(q, StringComparison.OrdinalIgnoreCase);
+        return q.Length == 0 || (row.Name + row.PlayerLine + row.IdentityLabel).Contains(q, StringComparison.OrdinalIgnoreCase);
     }
     private DateTime nextAccountRefresh;
     private bool readingAccounts;
@@ -386,6 +393,30 @@ public partial class MainWindow : Window
         RunAccountsButton.Visibility = busy || ParallelBusy ? Visibility.Collapsed : Visibility.Visible;
     }
     private bool connectionReading;
+    private bool? connectionActionFresh; private int connectionMisses;
+    // The header action names what it will do: connect when no live session is observed, reconnect (re-verify) when one is.
+    // One stale frame is treated as unknown rather than disconnected, so the label does not flicker during scene loads.
+    private void PresentConnectionAction(bool fresh, bool gameRunning)
+    {
+        connectionMisses = fresh ? 0 : connectionMisses + 1;
+        bool connected = fresh || gameRunning && connectionActionFresh == true && connectionMisses < 2;
+        if (connectionActionFresh == connected) return;
+        connectionActionFresh = connected;
+        L.Bind(ConnectButton, ContentControl.ContentProperty, connected ? "connection.reconnect" : "connection.connect");
+        L.Bind(ConnectButton, FrameworkElement.ToolTipProperty, connected ? "connection.reconnect_help" : "connection.connect_help");
+    }
+    internal string ConnectActionKeyForSmoke => connectionActionFresh == true ? "connection.reconnect" : "connection.connect";
+    private void PresentConnectionHeader(GameInstance? game, DailySnapshot? snapshot)
+    {
+        bool CurrentFrame() => game != null && snapshot != null && snapshot.ProcessId == game.ProcessId
+            && snapshot.ProcessStartTicks == game.StartTicks && snapshot.FrameUtcTicks > DateTimeOffset.UtcNow.AddSeconds(-5).UtcTicks;
+        L.Bind(ConnectionText, TextBlock.TextProperty, () => game == null ? L.Get("connection.closed") : CurrentFrame()
+            ? L.Get("connection.ready_player", snapshot!.State == "identified" ? snapshot.PlayerName : L.Get("connection.login"))
+            : L.Get("connection.loading"));
+        // The scene is only current when the same observation can support the header status.
+        L.Bind(ConnectionText, FrameworkElement.ToolTipProperty, () => !CurrentFrame() ? ConnectionText.Text
+            : L.Diagnostic(snapshot!.Scene, ConnectionText.Text + "\n" + L.Get("connection.scene", L.Translate(DailyUserText.Scene(snapshot.Scene)))));
+    }
     private Task connectionUpdate = Task.CompletedTask;
     private void UpdateConnection()
     {
@@ -412,14 +443,12 @@ public partial class MainWindow : Window
             (GameInstance? game, DailySnapshot? s) Read() { var found = host.Find(); return (found, host.ReadSnapshot(found)); }
             var (game, s) = smoke != null ? Read() : await Task.Run(Read);
             if (finalClose || UpdateRestarting || ParallelBusy) return;
-            L.Bind(ConnectionText, TextBlock.TextProperty, () => game == null ? L.Get("connection.closed") : s != null && s.ProcessId == game.ProcessId && s.ProcessStartTicks == game.StartTicks && s.FrameUtcTicks > DateTimeOffset.UtcNow.AddSeconds(-5).UtcTicks
-                ? L.Get("connection.ready", s.State == "identified" ? s.PlayerName : L.Get("connection.login"), L.Translate(DailyUserText.Scene(s.Scene)))
-                : L.Get("connection.loading"));
-            L.Bind(ConnectionText, FrameworkElement.ToolTipProperty, () => s == null ? ConnectionText.Text : L.Diagnostic(s.Scene, ConnectionText.Text));
+            PresentConnectionHeader(game, s);
             if (ToolRunning && ActiveToolId is { } toolId)
                 L.Bind(ConnectionText, TextBlock.TextProperty, () => L.Get("connection.tool", L.Get("tool." + toolId)));
             bool fresh = game != null && s != null && s.Runtime == DailyIdentity.RuntimeName && s.ProcessId == game.ProcessId && s.ProcessStartTicks == game.StartTicks && s.FrameUtcTicks > DateTimeOffset.UtcNow.AddSeconds(-5).UtcTicks;
             PresentDiagnostics(game, s, fresh);
+            PresentConnectionAction(fresh, game != null);
             if (fresh)
                 DailyQueuePeriod.Remember(root, s);
 
@@ -438,7 +467,7 @@ public partial class MainWindow : Window
         preferencesPanel.IsEnabled = !unavailable;
         UpdateSoftwareSettingsAvailability();
         AccountsGrid.IsEnabled = !unavailable;
-        ManageBar.IsEnabled = !unavailable;
+        AccountActionsMenu.IsEnabled = !unavailable;
         RefreshButton.IsEnabled = !unavailable;
         ConnectButton.IsEnabled = !unavailable;
         StopButton.IsEnabled = value || ParallelBusy; L.Bind(StopButton,ContentControl.ContentProperty,ParallelBusy?"parallel.pause_all":"common.stop_operation");
@@ -504,7 +533,7 @@ public partial class MainWindow : Window
     private bool Confirm(string message)
     {
         bool prior = releaseDialogOpen; releaseDialogOpen = true;
-        try { return DailyDialogs.ShowModal(DailyDialogs.Message(this, L.Get("app.title"), L.Translate(message), true)) == true; }
+        try { return DailyDialogs.ShowModal(DailyDialogs.Message(this, L.Get("app.title"), message, true)) == true; }
         finally { releaseDialogOpen = prior; }
     }
     private async void Connect_Click(object sender, RoutedEventArgs e) => await OperateAsync(coordinator.ConnectCurrentAsync, connectsGame: true);
@@ -603,7 +632,7 @@ public partial class MainWindow : Window
         {
             var before = sessions.Read(); var plan = DailyAccountIdentity.SavePlan(before);
             string? name = Prompt(L.Get(plan.Existing ? "account.slot_update" : "account.slot_save", plan.SlotNumber),
-                plan.ReplacesUnreadable ? "account.recover_credentials" : plan.Existing ? "account.update_hint" : "为这个账号取一个容易区分的名字。", plan.Name);
+                L.Get(plan.ReplacesUnreadable ? "account.recover_credentials" : plan.Existing ? "account.update_hint" : "account.new_hint"), plan.Name);
             if (name == null) return;
             sessions.Save(plan.SlotNumber, name, plan.AccountKey);
             L.Text(ProgressText, plan.Existing ? "account.updated" : "account.new_saved", name);
@@ -611,19 +640,19 @@ public partial class MainWindow : Window
         });
         if (offer) await ShowMultiAccountSetupAsync();
     }
-    private void Rename_Click(object sender, RoutedEventArgs e) => Manage(() => { if (Selected is not { } row) return; string? name = Prompt("重命名账号", "别名只保存在本机，不会修改游戏角色名称。", row.Name); if (name != null) sessions.Rename(row.Account.SlotNumber, name, row.Account.AccountKey); });
+    private void Rename_Click(object sender, RoutedEventArgs e) => Manage(() => { if (Selected is not { } row) return; string? name = Prompt(L.Get("account.rename_title"), L.Get("account.rename_hint"), row.Name); if (name != null) sessions.Rename(row.Account.SlotNumber, name, row.Account.AccountKey); });
     private void Delete_Click(object sender, RoutedEventArgs e) => Manage(() => { if (Selected is { } row) DeleteAccount(row.Account, Confirm); });
-    private void LoginNew_Click(object sender, RoutedEventArgs e) => Manage(() => { if (Confirm("登录新账号前，请正常退出游戏和启动器。当前登录账号必须已经保存。\n\n接下来会备份当前登录会话，并启动游戏供你登录新账号；登录完成后退出游戏，再保存到空槽位。")) sessions.LoginNew(); });
-    private void Recover_Click(object sender, RoutedEventArgs e) => Manage(() => { if (Confirm("游戏和启动器关闭后，可恢复上一次切换前备份的本机会话。\n\n这不会启动游戏，也不会删除已保存账号。")) sessions.Recover(); });
+    private void LoginNew_Click(object sender, RoutedEventArgs e) => Manage(() => { if (Confirm(L.Get("account.login_confirm"))) sessions.LoginNew(); });
+    private void Recover_Click(object sender, RoutedEventArgs e) => Manage(() => { if (Confirm(L.Get("account.recover_confirm"))) sessions.Recover(); });
     private void Up_Click(object sender, RoutedEventArgs e) => Move(-1);
     private void Down_Click(object sender, RoutedEventArgs e) => Move(1);
     private void Move(int delta) => Manage(() => { if (Selected is not { } row) return; int from = rows.IndexOf(row), to = from + delta; if (to < 0 || to >= rows.Count) return; rows.Move(from, to); for (int i = 0; i < rows.Count; i++) { rows[i].Profile.Order = i; if (rows[i].Account.Valid) profiles.Update(rows[i].Profile); } });
     private string? Prompt(string title, string description, string initial)
     {
-        var window = new Window { Owner = this, Title = L.Translate(title), Width = 480, SizeToContent = SizeToContent.Height, ResizeMode = ResizeMode.NoResize, WindowStartupLocation = WindowStartupLocation.CenterOwner, Background = (Brush)FindResource("AppBackground") };
+        var window = new Window { Owner = this, Title = title, Width = 480, SizeToContent = SizeToContent.Height, ResizeMode = ResizeMode.NoResize, WindowStartupLocation = WindowStartupLocation.CenterOwner, Background = (Brush)FindResource("AppBackground") };
         var panel = new StackPanel { Margin = new Thickness(22) };
         var text = new TextBox { Text = initial, MaxLength = 64, Margin = new Thickness(0, 14, 0, 18) };
-        panel.Children.Add(new TextBlock { Text = L.Translate(description), TextWrapping = TextWrapping.Wrap });
+        panel.Children.Add(new TextBlock { Text = description, TextWrapping = TextWrapping.Wrap });
         panel.Children.Add(text);
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
         var cancel = new Button { Content = L.Get("common.cancel"), IsCancel = true, Margin = new Thickness(0, 0, 8, 0) };
@@ -898,6 +927,25 @@ public partial class MainWindow : Window
         try
         {
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "localization")
+            {
+                await CheckLanguagesForSmoke();
+                WorkspaceTabs.SelectedItem = SettingsTab;
+                foreach (int language in new[] { 0, 1, 2 })
+                {
+                    LanguageSelector.SelectedIndex = language;
+                    preferencesPanel.CheckCategorySearchForSmoke();
+                    foreach (string category in new[] { "daily", "battle", "weekly", "resources" })
+                    {
+                        preferencesPanel.ReviewCategoryForSmoke(category);
+                        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                        Capture($"localization-category-{category}-{language}");
+                    }
+                }
+                L.Audit();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "localization", realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "accounts-scroll")
             {
                 await CheckAccountScrollingForSmoke();
@@ -936,7 +984,7 @@ public partial class MainWindow : Window
                 preferencesPanel.CheckWeeklySettingsForSmoke();
                 foreach (int language in new[] { 0, 1, 2 })
                 foreach (int appearance in new[] { 1, 2 })
-                foreach (var (title, name) in new[] { ("周常制作装备", "craft"), ("周NPC任务", "npc"), ("亲密度咨询", "friendship") })
+                foreach (var (title, name) in new[] { ("stage.weekly_equipment", "craft"), ("stage.weekly_npc", "npc"), ("stage.friendship", "friendship") })
                 {
                     LanguageSelector.SelectedIndex = language; ThemeSelector.SelectedIndex = appearance;
                     preferencesPanel.ShowSimpleSettingForSmoke(title);
@@ -1113,6 +1161,12 @@ public partial class MainWindow : Window
                 await CheckAccountsForSmoke();
                 await CheckAccountScrollingForSmoke();
                 DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "accounts", realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "event-plugin-settings")
+            {
+                L.Audit(); await SmokePluginsAsync(); await CheckEventPluginSettingsForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "event-plugin-settings", realGameTouched = false });
                 Application.Current.Shutdown(); return;
             }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "plugins")

@@ -187,3 +187,13 @@ Fiend Hunter is owned in `src/FiendHunter`. Its window paints before shared conn
 ### SECRET VISION and Sichuan
 
 Owned modules under src/SecretVision and src/Sichuan retain their runtime pipe identities. Tool windows use shared preparation, theme and locale. Preferences live under tools/<id>; known legacy preferences are imported only when no owned file exists. Diagnostics and captured tile images live under tools/<id>/diagnostics and participate in host export and retention. Weekly minigames prepare the selected suite module directly in the daily process; control ownership and fresh readiness are still required.
+
+## Display identity and localization
+
+UI resource keys and task/category IDs are stable identities; translated copy is presentation only. Settings categories use DailySettingsCatalog, tool categories use CategoryId, and column bindings use stable field names. Editing Simplified Chinese must not change other languages, classification, execution settings or recovery.
+
+DailyText carries a key and opaque arguments alongside the existing readable diagnostic fallback. DailyProgress and QueueView may contain this optional display metadata; their original message, state, task IDs and counters retain their meaning. Old consumers and records can use the original message. A future or malformed display key falls back without blocking work.
+
+Legacy runtime prose is translated through the fixed legacy-inputs registry and explicitly declared notice source grammars, independently of editable translations. No history migration is required. Production text lookup records bounded faults and degrades visibly; development audits reject missing keys, translations and incompatible placeholders. Account names, paths, raw diagnostics and game-provided values are not translated by substring replacement.
+
+Localization faults are deduplicated in memory (128 entries, 512 characters each) and included as `localization.json` when the desktop exports diagnostics. The report identifies the current process scope, language and resource failure; it never captures formatting argument values. It distinguishes no observed faults from unavailable evidence in older export callers. Rendering performs no diagnostic file I/O. The snapshot covers the exporting process's current lifetime, not previous runs or other isolated windows.

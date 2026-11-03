@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 namespace Dustweave.Soul;
 public static class SoulChecks
 {
+    public static void VerifySearchSettings(string output)=>SoulSolverChecks.Native(output);
     public static void ValidateKernel(string root,string client,string fixtures,string output)
     {
         SoulAssets.Prepare(root,client);using var kernel=new NativeBattleKernel(SoulAssets.Tables,SoulAssets.Library);
@@ -20,6 +21,7 @@ public static class SoulChecks
     public static void Run(string output)
     {
         Directory.CreateDirectory(output);
+        SoulSolverChecks.Settings(Path.Combine(output,"solver-settings"));
         Storage(Path.Combine(output,"tools","soul","runs","fixture"));
         SaleSynchronization();
         Resume();

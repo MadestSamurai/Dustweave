@@ -4,7 +4,7 @@ using System.Text.Json.Nodes;
 
 namespace Dustweave.Soul;
 
-public sealed record SoulStatus(string State,string Message,string Player,int Dungeon,int Wave,int WaveCount,int Life,int Coins,int Completed,int Wins,int Losses,double Seconds,string Folder,double? SimulatedWinRate=null,int PlannedUnits=0,bool RiskyPlan=false,int Attempt=1,string DecisionPhase="",int EvaluatedPlans=0,double DecisionSeconds=0,int BuyCount=0,int UpgradeCount=0,int PlannedSpend=0,int CoinsAfter=0,int RefreshCount=0,int RefreshPrice=0,int[]? CompletedDungeons=null,int[]? Dungeons=null);
+public sealed record SoulStatus(string State,string Message,string Player,int Dungeon,int Wave,int WaveCount,int Life,int Coins,int Completed,int Wins,int Losses,double Seconds,string Folder,double? SimulatedWinRate=null,int PlannedUnits=0,bool RiskyPlan=false,int Attempt=1,string DecisionPhase="",int EvaluatedPlans=0,double DecisionSeconds=0,int BuyCount=0,int UpgradeCount=0,int PlannedSpend=0,int CoinsAfter=0,int RefreshCount=0,int RefreshPrice=0,int[]? CompletedDungeons=null,int[]? Dungeons=null,int ProposedCandidates=0,int CandidateTarget=0,int SearchWorkers=0);
 
 public sealed class SoulSession
 {
@@ -19,11 +19,15 @@ public sealed class SoulSession
     JsonObject? latest;
     JsonObject? decision;
     string decisionPhase="";int evaluatedPlans;double decisionSeconds;
+    SoulSolverSettings solverSettings;
+    int proposedCandidates,candidateTarget,searchWorkers;
     readonly Stopwatch timer=new();
     public bool Running => running is { IsCompleted:false };
     public event Action<SoulStatus>? Changed;
     public SoulStatus Status { get; private set; }=new("ready","", "",0,0,0,0,0,0,0,0,0,"");
-    public SoulSession(string root){this.root=root;host=new DailyGameHost(root);}
+    public SoulSession(string root){this.root=root;host=new DailyGameHost(root);solverSettings=SoulSolverSettings.Load(root);}
+    public SoulSolverSettings Settings => Volatile.Read(ref solverSettings).Normalize();
+    public void Configure(SoulSolverSettings settings){var next=settings.Normalize();next.Save(root);Volatile.Write(ref solverSettings,next);}
     static int N(JsonNode? node)=>node is null?0:int.Parse(node.ToString());
     void Report(string state,string message="")
     {
@@ -34,7 +38,7 @@ public sealed class SoulSession
             decision?["recommendation"]?["battle"]?["winRate"]?.GetValue<double>(),N(decision?["recommendation"]?["deployedUnits"]),decision?["status"]?.ToString()=="best_available",1+campaign.FailedAttempts.GetValueOrDefault(d),decisionPhase,evaluatedPlans,decisionSeconds,
             decision?["recommendation"]?["path"]?.AsArray().Count(p=>p?["kind"]?.ToString()=="buy")??0,
             decision?["recommendation"]?["path"]?.AsArray().Where(p=>p?["kind"]?.ToString()=="upgrade").Select(p=>p!["inventoryIndex"]!.ToString()).Distinct().Count()??0,
-            N(decision?["recommendation"]?["cost"]),N(decision?["recommendation"]?["coinAfter"]),N(latest?["play"]?["shopReloadCount"]),N(latest?["progress"]?["RefreshPrice"]),campaign.Completed.ToArray(),campaign.Dungeons.ToArray());
+            N(decision?["recommendation"]?["cost"]),N(decision?["recommendation"]?["coinAfter"]),N(latest?["play"]?["shopReloadCount"]),N(latest?["progress"]?["RefreshPrice"]),campaign.Completed.ToArray(),campaign.Dungeons.ToArray(),proposedCandidates,candidateTarget,searchWorkers);
         if(folder.Length>0){File.WriteAllText(Path.Combine(folder,"status.json"),JsonSerializer.Serialize(Status));File.AppendAllText(Path.Combine(folder,"timeline.jsonl"),JsonSerializer.Serialize(Status)+"\n");}
         Changed?.Invoke(Status);
     }
@@ -211,14 +215,18 @@ public sealed class SoulSession
                     JsonObject? plan=null;
                     for(int attempt=0;!pause;attempt++)
                     {
+                        var settings=Settings;
+                        candidateTarget=settings.ForChapter(Array.IndexOf(campaign.Dungeons,dungeon));searchWorkers=settings.Workers;
+                        proposedCandidates=0;decisionPhase="combinations";evaluatedPlans=0;decisionSeconds=0;
                         decision=null;Report("planning");
                         // Search passes have fixed seeds. Previous wins,
                         // losses and dungeon retries never steer the model.
-                        decisionPhase="combinations";evaluatedPlans=0;decisionSeconds=0;
                         using(var planner=new NativeFastPlanner(state,710231,allowLiquidation:true){Cancellation=planning.Token}){
-                            planner.Progress=(phase,count,elapsed)=>{decisionPhase=phase;evaluatedPlans=count;decisionSeconds=elapsed;Report("planning");};
-                            plan=planner.SearchPortfolio(attempt==0?12:5,null);
+                            planner.Progress=(phase,count,elapsed)=>{decisionPhase=phase;evaluatedPlans=count;decisionSeconds=elapsed;proposedCandidates=planner.CandidateProposals;Report("planning");};
+                            plan=planner.SearchPortfolio(0,null,candidateTarget,settings.WorkerLimit);
+                            proposedCandidates=planner.CandidateProposals;
                         }
+                        plan["chapterIndex"]=Array.IndexOf(campaign.Dungeons,dungeon);
                         File.WriteAllText(planFile,plan.ToJsonString());
                         if(File.Exists(Path.Combine(folder,"pause.request"))){pause=true;break;}
                         decision=plan;var spending=SoulShopPolicy.Choose(plan,state);

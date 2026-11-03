@@ -18,8 +18,14 @@ public sealed partial class DailyPluginPanel
     public event Action<DailyMarketPlugin>? MarketInstallRequested;
     private void InitializeMarket(StackPanel content, StackPanel overview, StackPanel installed, TextBlock state)
     {
-        var tabs = new WrapPanel { Margin = new(0, 0, 0, 14) };
-        tabs.Children.Add(marketTab); tabs.Children.Add(installedTab); content.Children.Add(tabs);
+        // Market/Installed switches the view; it is not a command, so it reuses the timeline's segmented control
+        // instead of a filled primary button that would compete with Install and Import.
+        var tabs = new StackPanel { Orientation = Orientation.Horizontal };
+        foreach (var tab in new[] { marketTab, installedTab })
+        { tab.Style = (Style)Application.Current.FindResource("ViewButton"); tab.Margin = new(1); tabs.Children.Add(tab); }
+        var segment = new Border { CornerRadius = new(10), Padding = new(2), Margin = new(0, 0, 0, 14), HorizontalAlignment = HorizontalAlignment.Left, Child = tabs };
+        segment.SetResourceReference(Border.BackgroundProperty, "SurfaceMuted");
+        content.Children.Add(segment);
         installedBody.Children.Add(overview); installedBody.Children.Add(installed);
         overview.Margin = new(0, 0, 0, 20);
         var toolbar = new WrapPanel(); toolbar.Children.Add(marketRefresh); toolbar.Children.Add(marketCancel);
@@ -35,8 +41,8 @@ public sealed partial class DailyPluginPanel
     {
         marketBody.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
         installedBody.Visibility = value ? Visibility.Collapsed : Visibility.Visible;
-        marketTab.Style = (Style)Application.Current.FindResource(value ? (object)"PrimaryButton" : typeof(Button));
-        installedTab.Style = (Style)Application.Current.FindResource(value ? typeof(Button) : (object)"PrimaryButton");
+        marketTab.Tag = value ? "selected" : null;
+        installedTab.Tag = value ? null : "selected";
     }
     public void MarketStatus(string key, params object?[] values) => L.Text(marketStatus, key, values);
     public void MarketProgress(bool reading, bool downloading)
@@ -63,6 +69,7 @@ public sealed partial class DailyPluginPanel
             L.Bind(title, TextBlock.TextProperty, () => item.Name(L.Code)); body.Children.Add(title);
             var description = Text("plugins.market_ready");
             L.Bind(description, TextBlock.TextProperty, () => item.Description(L.Code)); body.Children.Add(description);
+            if (item.Capabilities.Contains("tactics", StringComparer.Ordinal)) body.Children.Add(TacticsGuide());
             body.Children.Add(Text("plugins.market_details", item.Version, item.Publisher, (item.Bytes / 1048576d).ToString("0.0")));
             bool installed = marketSelection.Installed.Any(p => p.Fingerprint.Equals(item.ManifestSha256, StringComparison.OrdinalIgnoreCase));
             if (!item.Compatible) body.Children.Add(Text("plugins.market_requires_host", item.MinHostVersion));
@@ -114,7 +121,7 @@ public partial class MainWindow
     private async Task InstallMarketPluginAsync(DailyMarketPlugin item)
     {
         if (marketCancellation != null || smoke != null || Unavailable || IsSandboxWindow) return;
-        var choice = ConfirmPluginInstall(item.Name(L.Code), item.Version, item.Publisher, item.Id, item.SupportsSolutionSharing);
+        var choice = ConfirmPluginInstall(item.Name(L.Code), item.Version, item.Publisher, item.Id, item.SupportsSolutionSharing, item.Capabilities.Contains("tactics", StringComparer.Ordinal));
         if (!choice.Confirmed) return;
         using var operation = new CancellationTokenSource(); marketCancellation = operation;
         pluginPanel.MarketProgress(false, true);

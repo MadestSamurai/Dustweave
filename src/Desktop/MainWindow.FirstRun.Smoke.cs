@@ -92,6 +92,8 @@ public partial class MainWindow
                 }
                 EndPageTour(true);
                 Check(!onboardingOpen && DailyJson.TryRead<FirstRunRecord>(FirstRunPath)?.State == "completed", "Tour did not release the interface or remember completion");
+                Check(ProgressText.Text != L.Get("onboarding.complete") && (System.Windows.Input.InputManager.Current.MostRecentInputDevice is System.Windows.Input.KeyboardDevice || !ConnectionGuideButton.IsKeyboardFocused),
+                    "Finishing the tour left a stale footer message or a pointer-driven focus ring on Getting started");
             }
             // Exercise the actual nested confirmation, before any async verification has
             // started. Closing synchronously inside Closing used to leave setup open.

@@ -62,6 +62,7 @@ public sealed partial class DailyPluginPanel : ScrollViewer
             body.Children.Add(Text(stateKey));
             if (!info.Available) body.Children.Add(Text("plugins." + info.State));
             else body.Children.Add(Text("plugins.details", info.Publisher.Length == 0 ? record.Id : info.Publisher, info.MinHostVersion.Length == 0 ? "—" : info.MinHostVersion, info.MaxHostVersion.Length == 0 ? "—" : info.MaxHostVersion));
+            if (info.Available && info.Supports("tactics")) body.Children.Add(TacticsGuide());
             var actions = new WrapPanel { Margin = new(0, 12, 0, 0) };
             if (info.Available && info.SupportsSolutionSharing)
             {
@@ -85,6 +86,15 @@ public sealed partial class DailyPluginPanel : ScrollViewer
         RenderMarket();
     }
     private static Button ActionButton(string key) { var button = new Button { Margin = new(0, 0, 10, 6) }; L.Bind(button, ContentControl.ContentProperty, key); return button; }
+    internal static FrameworkElement TacticsGuide()
+    {
+        var guide = new StackPanel { Name = "TacticsUsageGuide", Margin = new(0, 14, 0, 4) };
+        var heading = new TextBlock { FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap };
+        heading.SetResourceReference(TextBlock.ForegroundProperty, "Ink");
+        L.Text(heading, "plugins.tactics_where"); guide.Children.Add(heading);
+        guide.Children.Add(Text("plugins.tactics_howto"));
+        return guide;
+    }
     private static TextBlock Text(string key, params object?[] args) { var text = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 8, 0, 0) }; text.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk"); L.Text(text, key, args); return text; }
     private static Border Card(UIElement body) => new() { Style = (Style)Application.Current.FindResource("Panel"), Padding = new(20), Margin = new(0, 0, 0, 16), Child = body };
 }
@@ -106,7 +116,7 @@ public partial class MainWindow
             }
             pluginPanel.Status("plugins.checking");
             using var package = await Task.Run(() => PluginStore.Prepare(path));
-            var choice = ConfirmPluginInstall(package.Info.Name(L.Code), package.Info.Version, package.Info.Publisher, package.Info.Id, package.Info.SupportsSolutionSharing);
+            var choice = ConfirmPluginInstall(package.Info.Name(L.Code), package.Info.Version, package.Info.Publisher, package.Info.Id, package.Info.SupportsSolutionSharing, package.Info.Supports("tactics"));
             if (!choice.Confirmed) return;
             var installed = await Task.Run(() => PluginStore.Install(package));
             await PluginStore.ActivateAsync(installed.Fingerprint, ProbePluginAsync);
@@ -188,14 +198,15 @@ public partial class MainWindow
         finally { pluginChanging = false; SetBusy(busy); }
     }
     private bool PluginConfirm(string key, string message) => DailyDialogs.ShowModal(DailyDialogs.Message(this, L.Get(key), message, true)) == true;
-    private (bool Confirmed, bool? Share) ConfirmPluginInstall(string name, string version, string publisher, string id, bool sharing)
+    private (bool Confirmed, bool? Share) ConfirmPluginInstall(string name, string version, string publisher, string id, bool sharing, bool tactics)
     {
         if (sharing && DailyPluginSharing.Read(root, id) == null)
         {
-            var dialog = new PluginSharingWindow(this, name + "  " + version + " · " + publisher, false, true);
+            var dialog = new PluginSharingWindow(this, name + "  " + version + " · " + publisher, false, true, tactics);
             return (DailyDialogs.ShowModal(dialog) == true, dialog.SharingEnabled);
         }
-        return (PluginConfirm("plugins.market_install", L.Get("plugins.trust", name, version, publisher) + "\n\n" + L.Get("plugins.market_install_confirm", name, version)), null);
+        return (PluginConfirm("plugins.market_install", L.Get("plugins.trust", name, version, publisher) + "\n\n" +
+            (tactics ? L.Get("plugins.tactics_where") + "\n" + L.Get("plugins.tactics_howto") + "\n\n" : "") + L.Get("plugins.market_install_confirm", name, version)), null);
     }
     private async Task SmokePluginsAsync()
     {
@@ -207,7 +218,7 @@ public partial class MainWindow
             Environment.SetEnvironmentVariable("DUSTWEAVE_PLUGIN", null);
             var first = new DailyInstalledPlugin("example.extension", "1.1.0", new string('a', 64), DateTimeOffset.UtcNow);
             var old = first with { Version = "1.0.0", Fingerprint = new string('b', 64), InstalledUtc = DateTimeOffset.UtcNow.AddDays(-1) };
-            var info = new DailyPluginInfo(true, "ready", "", first.Version, first.Fingerprint, [], Capabilities: ["sample"])
+            var info = new DailyPluginInfo(true, "ready", "", first.Version, first.Fingerprint, [], Capabilities: ["tactics"])
             { Id = first.Id, Publisher = "Example", MinHostVersion = "0.9.12", MaxHostVersion = "0.9.99", Names = new() { ["zh-CN"] = "示例扩展", ["zh-TW"] = "範例擴充", ["en-US"] = "Example extension" } };
             var state = new DailyPluginSelection(1, first.Fingerprint, old.Fingerprint, [first, old]);
             pluginPanel.Refresh(state, new() { [first.Fingerprint] = info, [old.Fingerprint] = info with { Version = old.Version, Fingerprint = old.Fingerprint } }, info);
@@ -219,6 +230,7 @@ public partial class MainWindow
                 {
                     ThemeSelector.SelectedIndex = appearance; Width = 920; Height = 650;
                     await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+                    if (!SandboxElements<FrameworkElement>(pluginPanel).Any(e => e.Name == "TacticsUsageGuide" && e.IsVisible)) throw new Exception("Installed plugin lacks its weekly task guide");
                     Capture("plugins-" + code + "-" + appearance);
                 }
             }

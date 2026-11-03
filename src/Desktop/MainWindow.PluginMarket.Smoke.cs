@@ -24,13 +24,18 @@ public partial class MainWindow
             pluginPanel.SelectMarket(true); pluginPanel.Busy(false);
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             Check(SandboxElements<Button>(pluginPanel).Any(b => b.IsVisible && b.IsEnabled && b.Content?.ToString() == L.Get("plugins.market_install")), "Market has no visible install action");
+            Check(SandboxElements<FrameworkElement>(pluginPanel).Any(e => e.Name == "TacticsUsageGuide" && e.IsVisible), "Market lacks the weekly task guide");
             Capture("plugin-market-" + language + "-" + theme);
-            var dialog = new PluginSharingWindow(this, entry.Name(language) + " 1.0.0", false, true) { ShowActivated = false, ShowInTaskbar = false, WindowStartupLocation = WindowStartupLocation.Manual, Left = -12000, Top = 0 };
+            var dialog = new PluginSharingWindow(this, entry.Name(language) + " 1.0.0", false, true, true) { ShowActivated = false, ShowInTaskbar = false, WindowStartupLocation = WindowStartupLocation.Manual, Left = -12000, Top = 0 };
             try
             {
                 dialog.Show(); await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
                 Check(!dialog.SharingEnabled, "First installation must default to local-only");
+                Check(SandboxElements<FrameworkElement>(dialog).Any(e => e.Name == "TacticsUsageGuide" && e.IsVisible), "Installation lacks the weekly task guide");
                 var options = SandboxElements<RadioButton>(dialog).ToArray(); Check(options.Length == 2, "Sharing must be one two-way choice");
+                foreach (var text in options.SelectMany(r => SandboxElements<TextBlock>(r)))
+                    Check(theme != 2 || text.Foreground is not System.Windows.Media.SolidColorBrush brush || brush.Color.R >= 50 || brush.Color.G >= 50 || brush.Color.B >= 50,
+                        "Plugin sharing choice uses dark text in dark appearance");
                 options.Single(r => r.Name == "PluginShareSolutions").IsChecked = true;
                 Check(dialog.SharingEnabled, "Community choice was not reflected");
                 Check(SandboxElements<Button>(dialog).Any(b => b.IsDefault && b.IsVisible && b.ActualWidth > 0), "Install confirmation is not reachable");

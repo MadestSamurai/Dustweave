@@ -58,7 +58,12 @@ internal static class LoginIdentityCases
             string actual = env.CurrentKey;
             if (!memberAvailable) { env.ForcedKey = actual; env.CurrentKey = ""; }
             var coordinator = new DailyCoordinator(env, env, path, new DailyOptions { PollInterval = TimeSpan.FromMilliseconds(2), LoginTimeout = TimeSpan.FromSeconds(1) });
+            var reported = new List<DailyProgress>();
+            coordinator.Progress += reported.Add;
             await coordinator.ConnectCurrentAsync();
+            var completed = reported.Last(p => p.State == "completed");
+            Check(completed.Display?.Key == "notice.account.verified" && completed.Message == completed.Display.Fallback,
+                "successful identity check carries stable display metadata without changing diagnostic text " + memberAvailable);
             Check(new DailyProfiles(path).Read().Single().AccountKey == actual, "live login is verified without reusable credentials " + memberAvailable);
             Check(env.Calls.Count(c => c == "connect") == 1, "identity discovery connects once " + memberAvailable);
             Check(!env.Calls.Any(c => c is "startup.click" or "close" || c.StartsWith("launch:") || c.StartsWith("save:")), "incomplete login verification never changes credentials or game " + memberAvailable);

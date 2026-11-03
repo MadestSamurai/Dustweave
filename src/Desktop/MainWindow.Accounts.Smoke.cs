@@ -9,6 +9,19 @@ namespace Dustweave.Desktop;
 
 public partial class MainWindow
 {
+    private async Task CloseAccountMenuForSmoke()
+    {
+        if (!AccountActionsMenu.IsOpen) return;
+        // WPF closes the popup asynchronously when menu animations are enabled.
+        var closed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        void OnClosed(object? sender, RoutedEventArgs args) => closed.TrySetResult();
+        AccountActionsMenu.Closed += OnClosed;
+        AccountActionsMenu.IsOpen = false;
+        try { await closed.Task.WaitAsync(TimeSpan.FromSeconds(3)); }
+        finally { AccountActionsMenu.Closed -= OnClosed; }
+        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+    }
+
     private async Task CheckAccountScrollingForSmoke()
     {
         if (sessions is not DemoEnvironment fixture) throw new Exception("Scrolling checks require isolated sessions.");
@@ -79,7 +92,7 @@ public partial class MainWindow
             if (store.Read().Accounts[rows[0].Account.AccountKey] != p.Id)
                 throw new Exception("Filtering child selection events prevented saving a preset edit.");
             AccountsGrid.SelectedItem = rows[1];
-            if (!MoveUpButton.IsEnabled || !MoveDownButton.IsEnabled || !ReloginButton.IsEnabled)
+            if (!MoveUpItem.IsEnabled || !MoveDownItem.IsEnabled || !ReloginItem.IsEnabled)
                 throw new Exception("Actual row selection no longer refreshes account actions.");
             var scroll = Find<ScrollViewer>(AccountsGrid).First();
             scroll.ScrollToTop();
@@ -147,10 +160,10 @@ public partial class MainWindow
                     LoginAccountText.Text == L.Get("account.not_signed_in"), "Missing sign-in or backup offers an invalid action.");
                 RefreshAccounts(before);
                 AccountsGrid.SelectedItem = rows[1];
-                Check(!ReloginButton.IsEnabled, "Manual sign-in recovery must not replace a running game's login.");
+                Check(!ReloginItem.IsEnabled, "Manual sign-in recovery must not replace a running game's login.");
                 var selectedAccount = rows[1].Account;
                 RefreshAccounts(before with { GameRunning = false });
-                Check(ReloginButton.IsEnabled, "Closed game must offer a recovery route independent of sandbox export.");
+                Check(ReloginItem.IsEnabled, "Closed game must offer a recovery route independent of sandbox export.");
                 fixture.LoginRecovery = new(selectedAccount.SlotNumber, selectedAccount.AccountKey, selectedAccount.Name, new string('c', 64), DateTimeOffset.UtcNow);
                 RefreshAccounts(before with { GameRunning = false, CurrentKey = selectedAccount.AccountKey });
                 Check(LoginRecoveryPanel.IsVisible && FinishLoginRecoveryButton.IsEnabled && !SaveAccountButton.IsEnabled && !LoginNewButton.IsEnabled,
@@ -165,7 +178,7 @@ public partial class MainWindow
                 fixture.LoginRecovery = null;
                 RefreshAccounts(before);
                 AccountsGrid.SelectedItem = rows[1];
-                Check(SandboxRepairButton.IsEnabled && SandboxRepairButton.Visibility == Visibility.Visible && (string)SandboxRepairButton.Content == L.Get("sandbox.manage.title"), "Isolated launch must follow the highlighted saved account in every language.");
+                Check(SandboxRepairItem.IsEnabled && SandboxRepairItem.Visibility == Visibility.Visible && (string)SandboxRepairItem.Header == L.Get("sandbox.manage.title"), "Isolated launch must follow the highlighted saved account in every language.");
                 var selections = rows.Select(r => r.Selected).ToArray();
                 AccountsGrid.SelectedItem = rows[2];
                 Check(rows.Select(r => r.Selected).SequenceEqual(selections), "Highlighting an account changed its daily queue selection.");
@@ -179,8 +192,8 @@ public partial class MainWindow
                 RefreshAccounts(before with { Accounts = [before.Accounts[0], unreadable, before.Accounts[2]],
                     SessionComplete = false, CurrentKey = "", CurrentSlot = null, GameRunning = false });
                 AccountsGrid.SelectedItem = rows.Single(r => r.Account.SlotNumber == unreadable.SlotNumber);
-                Check(DeleteAccountButton.IsEnabled && !RenameAccountButton.IsEnabled && !SandboxLaunchButton.IsEnabled &&
-                    !SandboxRepairButton.IsEnabled, "Unreadable accounts must be removable without permitting launch or credential editing.");
+                Check(DeleteAccountItem.IsEnabled && !RenameAccountItem.IsEnabled && !SandboxLaunchItem.IsEnabled &&
+                    !SandboxRepairItem.IsEnabled, "Unreadable accounts must be removable without permitting launch or credential editing.");
                 int deleteCalls = fixture.Calls.Count;
                 DeleteAccount(unreadable, text => {
                     Check(text == L.Get("account.delete_unreadable_confirm", unreadable.Name, unreadable.SlotNumber),
@@ -193,7 +206,7 @@ public partial class MainWindow
                     "Confirmed unreadable removal used the healthy-account identity path or lost the selected record revision.");
                 fixture.Calls.RemoveRange(deleteCalls, fixture.Calls.Count - deleteCalls);
                 SetBusy(true);
-                Check(!DeleteAccountButton.IsEnabled, "Unreadable removal must stay locked during automation.");
+                Check(!DeleteAccountItem.IsEnabled, "Unreadable removal must stay locked during automation.");
                 SetBusy(false);
                 RefreshAccounts(before);
             }
@@ -213,14 +226,61 @@ public partial class MainWindow
                 SelectionText.Text == L.Get("account.selected", 1), "Clearing filtered accounts lost a hidden checked account.");
             Search.Text = "no-such-account";
             Check(EmptyText.Visibility == Visibility.Visible && EmptyText.Text == L.Get("account.no_matches") &&
-                !SelectAll.IsEnabled && !RenameAccountButton.IsEnabled, "Empty search retains a misleading action.");
+                !SelectAll.IsEnabled && !RenameAccountItem.IsEnabled, "Empty search retains a misleading action.");
             Capture("accounts-no-matches");
             Search.Clear();
             RefreshAccounts(before with { GameRunning = false });
             AccountsGrid.SelectedItem = rows[0];
-            Check(!MoveUpButton.IsEnabled && MoveDownButton.IsEnabled, "First account offers invalid reorder controls.");
+            Check(!MoveUpItem.IsEnabled && MoveDownItem.IsEnabled, "First account offers invalid reorder controls.");
             AccountsGrid.SelectedItem = rows[^1];
-            Check(MoveUpButton.IsEnabled && !MoveDownButton.IsEnabled, "Last account offers invalid reorder controls.");
+            Check(MoveUpItem.IsEnabled && !MoveDownItem.IsEnabled, "Last account offers invalid reorder controls.");
+            // The ··· button belongs to its row: it highlights that row before opening the shared management menu.
+            AccountsGrid.SelectedItem = rows[0];
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            var queueBefore = rows.Select(r => r.Selected).ToArray(); int menuCalls = fixture.Calls.Count;
+            var lastActions = Descendants<Button>(AccountsGrid).Single(b => b.Name == "AccountActionsButton" && ReferenceEquals(b.DataContext, rows[^1]));
+            AccountActions_Click(lastActions, new RoutedEventArgs());
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            Check(ReferenceEquals(AccountsGrid.SelectedItem, rows[^1]) && AccountActionsMenu.IsOpen && ReferenceEquals(AccountActionsMenu.PlacementTarget, lastActions)
+                && MoveUpItem.IsEnabled && !MoveDownItem.IsEnabled && rows.Select(r => r.Selected).SequenceEqual(queueBefore)
+                && new ButtonAutomationPeer(lastActions).GetName() == L.Get("account.actions_named", rows[^1].Name),
+                "Row menu does not target its own account, or changed the daily queue.");
+            await CloseAccountMenuForSmoke();
+            // Status appears as a badge only for the signed-in or unreadable account; unknown characters leave no placeholder text.
+            Check(rows.All(r => r.HasBadge == (r.Account.IsCurrent || !r.Account.Valid) && r.BadgeIsError == !r.Account.Valid
+                && r.PlayerLine == (r.Profile.PlayerName ?? "") && r.DetailsLabel.Contains(r.StatusLabel)),
+                "Account status badges or character lines do not match the account state.");
+            Check(ReferenceEquals(ConnectionGuideButton.Style, FindResource("QuietButton")), "Getting started stays prominent after an account is saved.");
+            Check(AccountActionsMenu.ReadLocalValue(ContextMenu.PlacementTargetProperty) == DependencyProperty.UnsetValue
+                && AccountActionsMenu.ReadLocalValue(ContextMenu.PlacementProperty) == DependencyProperty.UnsetValue
+                && AccountActionsMenu.CustomPopupPlacementCallback == null && fixture.Calls.Count == menuCalls,
+                "Row menu kept a stale placement override or issued a session command.");
+            // Exercise row targeting through routed pointer input without moving the user's cursor.
+            // WPF's native right-button release uses RawDirectlyOver, so actual pointer placement is
+            // a separate physical-input check; the keyboard menu tests the real popup service here.
+            void RightPress(UIElement target)
+            {
+                target.RaiseEvent(new System.Windows.Input.MouseButtonEventArgs(System.Windows.Input.Mouse.PrimaryDevice,
+                    Environment.TickCount, System.Windows.Input.MouseButton.Right) { RoutedEvent = System.Windows.Input.Mouse.PreviewMouseDownEvent });
+            }
+            var menuRow = (DataGridRow)AccountsGrid.ItemContainerGenerator.ContainerFromItem(rows[0]);
+            RightPress(menuRow);
+            Check(accountMenuFromRow && ReferenceEquals(Selected, rows[0])
+                && rows.Select(r => r.Selected).SequenceEqual(queueBefore) && fixture.Calls.Count == menuCalls,
+                "Right-button targeting changed the daily queue or failed to select its own row.");
+            RightPress(AccountsGrid);
+            Check(!accountMenuFromRow && !AccountActionsMenu.IsOpen, "Account list background retained a row context.");
+            RightPress(Descendants<System.Windows.Controls.Primitives.DataGridColumnHeader>(AccountsGrid).First());
+            Check(!accountMenuFromRow && !AccountActionsMenu.IsOpen, "Account list header retained a row context.");
+            menuRow.Focus();
+            System.Windows.Input.InputManager.Current.ProcessInput(new System.Windows.Input.KeyEventArgs(System.Windows.Input.Keyboard.PrimaryDevice,
+                PresentationSource.FromVisual(menuRow), Environment.TickCount, System.Windows.Input.Key.Apps)
+                { RoutedEvent = System.Windows.Input.Keyboard.KeyUpEvent, Source = menuRow });
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            Check(AccountActionsMenu.IsOpen && !ReferenceEquals(AccountActionsMenu.PlacementTarget,lastActions)
+                && AccountActionsMenu.CustomPopupPlacementCallback == null && fixture.Calls.Count == menuCalls,
+                "Keyboard menu failed after the button menu, or kept its previous positioning override.");
+            await CloseAccountMenuForSmoke();
             SetBusy(true);
             Check(!AccountsGrid.IsEnabled && !SaveAccountButton.IsEnabled && !LoginNewButton.IsEnabled &&
                 !RunAccountsButton.IsEnabled && StopButton.IsVisible && StopButton.IsEnabled, "Busy account page is not safely stoppable.");
@@ -265,8 +325,9 @@ public partial class MainWindow
             RefreshAccounts(before);
             Width = 1180; Height = 800;
             RefreshAccounts(before with { Accounts = [], CurrentKey = "", CurrentSlot = null, SessionComplete = false, GameRunning = false, HasRecovery = false });
-            Check(EmptyText.IsVisible && !RunAccountsButton.IsEnabled && !RenameAccountButton.IsEnabled &&
-                !DeleteAccountButton.IsEnabled && !MoveUpButton.IsEnabled && !MoveDownButton.IsEnabled && !SandboxRepairButton.IsEnabled,
+            Check(!ReferenceEquals(ConnectionGuideButton.Style, FindResource("QuietButton")), "Getting started is quiet before any account is saved.");
+            Check(EmptyText.IsVisible && !RunAccountsButton.IsEnabled && !RenameAccountItem.IsEnabled &&
+                !DeleteAccountItem.IsEnabled && !MoveUpItem.IsEnabled && !MoveDownItem.IsEnabled && !SandboxRepairItem.IsEnabled,
                 "Empty account list exposes management actions.");
             Capture("accounts-empty");
             Check(fixture.Calls.Count == calls, "Account presentation issued a game or session command.");

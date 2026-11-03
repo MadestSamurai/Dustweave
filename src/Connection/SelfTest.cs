@@ -5,6 +5,19 @@ static class SelfTest {
   Frame Frame()=>new(){ProcessId=7,ProcessStartTicks=8,Instance="i",AtUtcTicks=now,Scene="home",AccountKey="a",PlayerKey="p",UiToken="ui",PluginAvailable=true,Surfaces=[new(){Id=42,Targets=[new(){Id=43,Enabled=true}]}]};
   Command Command()=>new(){Id=Guid.NewGuid().ToString("N"),Kind="click",ProcessId=7,ProcessStartTicks=8,Instance="i",Scene="home",AccountKey="a",PlayerKey="p",UiToken="ui",ExpiresUtcTicks=now+TimeSpan.FromSeconds(10).Ticks,ObservedUtcTicks=now,SurfaceId=42,TargetId=43};
   void Check(bool ok,string reason){if(!ok)throw new Exception(reason);cases++;}
+  foreach(string kind in new[]{"event_preset_read","event_preset_apply"}){
+   var f=Frame();var c=Command();var u=f.Surfaces[0];f.BridgeVersion=141;u.Type="EventBattleUI";
+   c.Kind=kind;c.TargetId=0;c.Value=6;c.Items=kind=="event_preset_read"?new long[0]:new long[]{1};
+   Check(LivePolicy.Gate(c,f,now,false)=="","event preset uses owned event lobby: "+kind);
+   f.BridgeVersion=140;Check(LivePolicy.Gate(c,f,now,false)!="","old component cannot apply a preset: "+kind);f.BridgeVersion=141;
+   u.Type="GameFieldDefaultUI";Check(LivePolicy.Gate(c,f,now,false)!="","preset action stays in event lobby: "+kind);u.Type="EventBattleUI";
+   f.Surfaces=[u,new(){Id=99,Type="BattleUI_EventBattle"}];Check(LivePolicy.Gate(c,f,now,false)!="","ongoing event fight keeps its team: "+kind);
+   f.Surfaces=[u,new(){Id=99,Type="MessagePopupUI",Popup=true,Order=100}];Check(LivePolicy.Gate(c,f,now,false)!="","preset action does not dismiss a modal: "+kind);f.Surfaces=[u];
+   c.Value=0;Check(LivePolicy.Gate(c,f,now,false)!="","unbound slot never dispatches: "+kind);c.Value=6;
+   c.Items=new long[]{0};Check(LivePolicy.Gate(c,f,now,false)!="","malformed preset revision rejected: "+kind);
+   c.Items=kind=="event_preset_read"?new long[0]:new long[]{2};
+   Check(LivePolicy.Gate(c,f,now,false)=="","fresh preparation can continue after rejected inputs: "+kind);
+  }
   {
    string error="Neo.Unity.Http.NeoNetworkException:/api/billing/mycard/check/mycard/nation, 0, ConnectionError, Request timeout";
    Check(BackgroundErrorPolicy.RegionLookupTimeout(new[]{"付款失敗",error}),"region lookup identified independently of UI language");

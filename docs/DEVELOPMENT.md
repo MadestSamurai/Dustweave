@@ -1,5 +1,19 @@
 # Development / 开发指南
 
+## Event preset binding and tactics guidance
+
+`EventBattle.PresetSlot` is an optional, account-scoped one-based ordinary game preset number; zero preserves the existing behavior. Before each new native event batch, read the server's current preset list, then apply the selected nonempty slot through the native preset-use callback. Do not trust the selected-slot marker or cache an old formation. Empty slots leave the team untouched; unknown reads do not imply empty. An already running battle or settlement is reconciled without reapplying a preset, and free-AP exhaustion finishes without preset work. The optional event extension prepares its preset before entering its executor, except while resuming an existing battle/result.
+
+Preset read/apply waits are bounded and do not create a consuming transaction. A failed preparation explains that combat was not started; continuing performs a fresh read and can actually proceed. Commands retain account/process ownership and are limited to the idle event lobby. The `EventPreset` and `BattleArrivalRecovery` synthetic cases cover changed saved contents, same-slot reapplication, empty slots, failure/recovery, normal-to-challenge transitions, exhausted attempts and resumed settlements. Current-client `prepare` compiles the new native adapter without connecting to the game; it is not a live battle test.
+
+The `event-plugin-settings` desktop smoke scope renders the marketplace, installed-plugin guide, install/sharing dialog and account settings in all three languages and both themes. Tactics instructions identify the weekly Today task, account enable/save step and custom task preset inclusion. Sharing headings and settings labels explicitly use the theme's `Ink` resource.
+
+## Bounded menu-open retries
+
+The managed UI driver may repeat only the reviewed `GameFieldDefaultUI` pack-list/menu openers and `MenuUI` inventory, missions, event, pass and minigame openers. A matching completed native receipt plus a fresh, ready original page is required; the destination is checked first and both submission reads revalidate the retry. There are at most two extra submissions, after 2 seconds and then at least 4 more seconds, within the original result-observation deadline. Known field HUDs behind MenuUI and passive notices are not blockers. Loading, a battle, a new modal/page, disabled/ambiguous targets, and changed scene/account/process do not authorize another click. A native transport/receipt uncertainty is never automatically replayed.
+
+This is not a generic retry for `Step`: purchases, claims, guild entry, battle starts, talents, back/close, pointer inputs and owned/readiness previews keep their existing contracts. Each successful retry links the prior result/receipt to its next command; timeout failures carry the last receipt. Continuing or restarting reobserves the game and can proceed without deleting previous journals. `MenuOpenRetry`, `TravelTransition`, `CommandDriver`, `ManagedInputs` and `HomeNavigation` provide synthetic regressions; these are not live-game verification.
+
 ## Entry points / 入口
 
 从本仓库根目录运行根目录脚本。若调用方必须保持另一个工作目录，也可用脚本完整路径调用；脚本通过 `$PSScriptRoot` 定位源码，不改变调用方的工作目录。开发所需 SDK 由 `global.json` 指定；从其他目录调用时也须使用同一 SDK。
@@ -123,7 +137,17 @@ MonsterHuntUI returns through its observed _objBackButton. A rejected business p
 
 Keep execution errors, queue records, action IDs and game-provided names unchanged. Translate at the desktop presentation boundary through `DailyUiText` / `DailyLanguage`; do not localize protocol or recovery values.
 
-Register notices in `src/Desktop/Localization/notices.json` with all three locales. Dynamic notices declare numbered placeholders and typed `parameters`: `number`, `value` (opaque account/item/path text), `stage`, or `message` (nested registered notice). An optional `source` holds an existing execution format when the display can omit an internal identifier; the original remains in diagnostics. Do not add unrestricted string replacement or translate arbitrary captured values.
+Register notices in `src/Desktop/Localization/notices.json` with all three locales. New dynamic notices use `DailyText` and declare numbered placeholders and typed `parameters`: `number`, `value` (opaque account/item/path text), `stage`, or `message` (nested registered notice). They do not need a prose matcher. Only legacy inputs retain an explicit, frozen `source` grammar. Never derive that grammar from editable `zh-CN`, and do not add unrestricted replacement of captured values.
+
+### Localization identities (2026-11-03)
+
+`LocalizedTextCatalog` owns key lookup, three-language validation, search text and bounded missing-text diagnostics. `DailyLanguage.Get/Text/Bind` are the UI path. `Translate` is a legacy runtime/evidence adapter, not a UI-label convenience API. Static settings and trade preview labels/columns use explicit keys; `DailySettingsCatalog` and tool category IDs classify independently of display wording. Same Chinese with different meaning keeps separate keys (for example Close versus Off).
+
+`legacy-inputs.json` freezes the compatibility decisions made before this migration. It is not regenerated from current translations. Opaque `message.legacy.*` IDs preserve old message identities without retaining Chinese as a key. Core `Messages.zh-CN.txt` is a readable diagnostic fallback, not the source of truth for UI copy; changing a localized display does not require changing execution messages. New coordinator progress carries `DailyText` beside the unchanged raw `Message`, state and counters. Old records without display metadata remain readable; unknown old text is retained, not migrated and not a queue blocker.
+
+Run `test.ps1 -Groups LocalizationArchitecture,UserText` for catalog changes. Add login/queue groups when touching metadata transport. The synthetic host scope `DUSTWEAVE_UI_SMOKE_SCOPE=localization` exercises three locales, actual WPF bindings, category/search, unsaved preferences, account files and task IDs, dynamic/structured messages, trade columns, and an audit after rendering. No real game is accessed. A missing translation or argument is a test failure, never a new production stopping condition.
+
+The diagnostic export button passes `DailyLanguage.Diagnostics()` to the exporter. `localization.json` contains a bounded, deduplicated snapshot of missing keys, missing locale values and formatting faults for the exporting process; it does not include message argument values or create permanent cache files. `unavailable` means the caller supplied no snapshot, not that no faults occurred. The snapshot is not cleared by export, so `Audit()` continues to fail during development. Validate this path with `DiagnosticExport` and the `localization` UI smoke, which uses the actual export button.
 
 The desktop `--smoke` check exercises every registered notice in all three languages, refreshes existing WPF bindings, and verifies nested messages, account names, paths and original diagnostics. Inspect `notice-languages.json`, `localization.json` and the `locale-*-notice.png` captures. New backend progress formats need a corresponding notice and a rendered sample in this check; adding translations must not alter game actions.
 Scheduling, release notes and OTA packaging are documented in [SCHEDULING_AND_UPDATES.md](SCHEDULING_AND_UPDATES.md).

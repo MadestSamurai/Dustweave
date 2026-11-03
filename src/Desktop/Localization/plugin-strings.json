@@ -100,9 +100,9 @@
     "en-US": "Checking package…"
   },
   "plugins.trust": {
-    "zh-CN": "准备安装「{0}」{1}。\n发布者（包内声明）：{2}\n\n文件完整性已通过，但尚未验证发布者签名。插件可以执行本机代码，请仅安装可信来源。确认后将在独立进程试加载；通过后设为下次启动版本。",
-    "zh-TW": "準備安裝「{0}」{1}。\n發行者（套件聲明）：{2}\n\n檔案完整性已通過，但尚未驗證發行者簽章。套件可以執行本機程式碼，請僅安裝可信來源。確認後將在獨立處理程序試載入；通過後設為下次啟動版本。",
-    "en-US": "Install “{0}” {1}?\nPublisher (package claim): {2}\n\nFile integrity checks passed; publisher signatures are not verified yet. Plugins execute local code, so only install trusted packages. A separate process checks loading before activation on restart."
+    "zh-CN": "准备安装「{0}」{1}。\n发布者（包内声明）：{2}\n\n文件完整性已通过，但尚未验证发布者签名。插件可以执行本机代码，请仅安装可信来源。确认后会先检查插件能否正常加载，通过后在下次启动时启用。",
+    "zh-TW": "準備安裝「{0}」{1}。\n發行者（套件聲明）：{2}\n\n檔案完整性已通過，但尚未驗證發行者簽章。套件可以執行本機程式碼，請僅安裝可信來源。確認後會先檢查套件能否正常載入，通過後於下次啟動時啟用。",
+    "en-US": "Install “{0}” {1}?\nPublisher (package claim): {2}\n\nFile integrity checks passed; publisher signatures are not verified yet. Plugins execute local code, so only install trusted packages. Dustweave first checks that it loads correctly, then enables it on the next start."
   },
   "plugins.activate_confirm": {
     "zh-CN": "试加载所选版本，通过后在下次启动时替换当前插件。原版本保留，可随时回退。",
@@ -383,5 +383,25 @@
     "zh-CN": "解法共享选择已保存。",
     "zh-TW": "解法共享選擇已儲存。",
     "en-US": "Solution sharing preference saved."
+  },
+  "plugins.tactics_where": {
+    "zh-CN": "在「今日任务」执行周常「战术教材」",
+    "zh-TW": "在「今日任務」執行週常「戰術教材」",
+    "en-US": "Run the weekly Tactical textbook task from Today"
+  },
+  "plugins.tactics_howto": {
+    "zh-CN": "安装并重启织尘后，今日任务列表会新增「战术教材」。在「日常设置」为要执行的账号启用并保存，再回到「今日任务」勾选执行。使用自定义任务预设时，也要将此项勾选进去。",
+    "zh-TW": "安裝並重新啟動織塵後，今日任務列表會新增「戰術教材」。在「日常設定」為要執行的帳號啟用並儲存，再回到「今日任務」勾選執行。使用自訂任務預設時，也要將此項勾選進去。",
+    "en-US": "Install the plugin and restart Dustweave to add Tactical textbook to Today. Enable it for the desired account in Daily settings and save, then select it in Today to run. If you use a custom task preset, include this task in that preset too."
+  },
+  "plugins.tactics_settings_hint": {
+    "zh-CN": "周常项目：保存后，在「今日任务」勾选「战术教材」执行。",
+    "zh-TW": "週常項目：儲存後，在「今日任務」勾選「戰術教材」執行。",
+    "en-US": "Weekly task: save these settings, then select Tactical textbook in Today to run."
+  },
+  "plugins.tactics_compute_hint": {
+    "zh-CN": "每关先计算解法，再自动战斗并领取奖励；已完成的周进度不会重打。找不到解法时，可调高上方秒数后继续。",
+    "zh-TW": "每關先計算解法，再自動戰鬥並領取獎勵；已完成的週進度不會重打。找不到解法時，可調高上方秒數後繼續。",
+    "en-US": "Each stage is solved first, then battled and claimed automatically. Completed weekly progress is not replayed. If no solution is found, raise the seconds above and resume."
   }
 }

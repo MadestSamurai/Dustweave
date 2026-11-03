@@ -4,6 +4,35 @@ using System.Text.Json.Nodes;
 using Dustweave;
 internal static class DiagnosticExportCases
 {
+    static async Task LocalizationEvidence(string output, Action<bool, string> check)
+    {
+        string resources = Path.Combine(TestPaths.SourceRoot, "src", "Desktop", "Localization");
+        var catalog = new Dustweave.Desktop.LocalizedTextCatalog(name => File.OpenRead(Path.Combine(resources, name + ".json")));
+        for (int i=0;i<1000;i++) _=catalog.Get("fixture.missing", "zh-TW");
+        check(catalog.Problems.Length==1,"repeated rendering faults are deduplicated before export");
+        catalog.Entries["prefs.business"].Remove("en-US");
+        _=catalog.Get("prefs.business","en-US");
+        _=catalog.Get("notice.pattern.account_launch","zh-TW","private-account-and-path");
+        var snapshot=catalog.Diagnostics("zh-TW");
+        string root=Path.Combine(output,"localization-source");Directory.CreateDirectory(root);
+        var result=await DailyDiagnosticExport.CreateAsync(root,Path.Combine(output,"localization.zip"),"fixture","test",default,null,snapshot);
+        using(var archive=ZipFile.OpenRead(result.Path)) {
+            using var reader=new StreamReader(archive.GetEntry("localization.json")!.Open());
+            string contents=reader.ReadToEnd();using var doc=JsonDocument.Parse(contents);var report=doc.RootElement;
+            check(report.GetProperty("scope").GetString()=="exporting_process"&&report.GetProperty("language").GetString()=="zh-TW"
+                &&report.GetProperty("status").GetString()=="faults_recorded"&&report.GetProperty("problems").GetArrayLength()==3,
+                "diagnostic ZIP contains real catalog faults with language and session scope");
+            check(contents.Contains("fixture.missing/zh-TW")&&contents.Contains("Missing translation")&&contents.Contains("Invalid text arguments")
+                &&!contents.Contains("private-account-and-path"),"failure reasons survive export without message argument values");
+        }
+        check(!Directory.EnumerateFileSystemEntries(root).Any(),"localization export creates no permanent cache or log files");
+        for(int i=0;i<300;i++)_=catalog.Get("fixture."+i+new string('x',600),"en-US");
+        check(catalog.Problems.Length==DailyLocalizationDiagnostics.Limit&&catalog.Problems.All(p=>p.Length<=DailyLocalizationDiagnostics.MaxDetailLength),
+            "localization fault count and detail size are bounded");
+        check(snapshot.Problems.Length==3,"export snapshots are independent of later rendering faults");
+        bool failed=false;try{catalog.Audit();}catch(InvalidDataException){failed=true;}
+        check(failed,"exporting faults does not clear development audit failures");
+    }
     static async Task PerformanceHistory(string output, Action<bool, string> check)
     {
         string root = Path.Combine(output, "loading-performance");
@@ -71,6 +100,7 @@ internal static class DiagnosticExportCases
     public static async Task Run(string output,List<string> cases)
     {
         void Check(bool ok,string label){if(!ok)throw new Exception(label);cases.Add("diagnostic-export: "+label);}
+        await LocalizationEvidence(output, Check);
         await PerformanceHistory(output, Check);
         string root=Path.Combine(output,"diagnostic-source");Directory.CreateDirectory(Path.Combine(root,"live","diagnostics"));
         File.WriteAllText(Path.Combine(root,"ui-operation-error.json"),"{\"error\":\"suite.owner-exited\",\"accessToken\":\"secret-value\",\"nested\":{\"password\":\"pw-value\"}}");
@@ -83,6 +113,8 @@ internal static class DiagnosticExportCases
         Check(result.Files==3,"exports the allowlisted operational files");
         using(var archive=ZipFile.OpenRead(destination)){
             Check(archive.GetEntry("manifest.json")!=null&&archive.GetEntry("summary.txt")!=null,"archive contains an inventory and context");
+            using(var r=new StreamReader(archive.GetEntry("localization.json")!.Open()))
+                Check(r.ReadToEnd().Contains("unavailable"),"older callers distinguish unavailable localization evidence from no faults");
             string all=string.Join('\n',archive.Entries.Select(e=>{using var r=new StreamReader(e.Open());return r.ReadToEnd();}));
             Check(!all.Contains("secret-value")&&!all.Contains("pw-value")&&!all.Contains("token-value")&&!all.Contains("secret-bearer")&&!all.Contains("secret-line"),"structured and text credentials are redacted");
             Check(!all.Contains("private-vault")&&!all.Contains("private-plugin"),"account and plugin stores are outside the export boundary");

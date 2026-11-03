@@ -126,7 +126,7 @@ public static class DailyUserText
         // Match registered dynamic notices before splitting embedded account or map values.
         string localized = translate(text);
         if (localized != text) return localized;
-        if (Messages.TryGetValue(text, out var chinese)) return translate(chinese);
+        if (Messages.TryGetValue(text, out var chinese)) return Known("message." + text, chinese, translate);
         if (Surfaces.TryGetValue(text, out chinese)) return translate(chinese);
         var targetFailure = Regex.Match(text, @"^Need one enabled observed field .+; found (\d+)$", RegexOptions.CultureInvariant);
         if (targetFailure.Success)
@@ -138,12 +138,12 @@ public static class DailyUserText
         foreach (var (source, translated) in Prefixes)
             if (text.StartsWith(source, StringComparison.Ordinal))
             {
-                if (translated.EndsWith('。')) return translate(translated);
+                if (translated.EndsWith('。')) return Known("prefix." + source, translated, translate);
                 string suffix = text[source.Length..];
                 string rendered = Describe(suffix, depth + 1, translate);
                 // IDs and paths are diagnostic values, not instructions. Keep them verbatim
                 // when a recognized message needs them to identify the affected item.
-                return translate(translated) + (rendered == Untranslated && Regex.IsMatch(suffix, @"^[A-Za-z0-9_$./\\:\-]+$") ? suffix : rendered);
+                return Known("prefix." + source, translated, translate) + (rendered == Untranslated && Regex.IsMatch(suffix, @"^[A-Za-z0-9_$./\\:\-]+$") ? suffix : rendered);
             }
         int separator = text.LastIndexOf(" · ", StringComparison.Ordinal);
         if (separator > 0)
@@ -169,6 +169,11 @@ public static class DailyUserText
         return Untranslated;
     }
     public static string Error(Exception error) => Error(error, static text => text);
+    private static string Known(string key, string fallback, Func<string, string> translate)
+    {
+        string localized = translate(key);
+        return localized == key ? translate(fallback) : localized;
+    }
     public static string Error(Exception error, Func<string, string> translate)
     {
         string message = Describe(error.Message, 0, translate);

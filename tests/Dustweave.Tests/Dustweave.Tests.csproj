@@ -35,6 +35,7 @@
     <Compile Include="../../src/Territory/shared/LocalRoute.cs;../../src/Territory/shared/LocalNavigationCache.cs;../../src/Territory/shared/RouteGeometry.cs" Link="SquareGeometry/%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup><Using Include="BD2Daily" /></ItemGroup>
+  <ItemGroup><Compile Include="../../src/Desktop/LocalizedTextCatalog.cs;../../src/Desktop/DailySettingsCatalog.cs" Link="Localization/%(Filename)%(Extension)" /></ItemGroup>
   <ItemGroup><Compile Include="../../src/Packaging/SharedResources.cs" Link="Packaging/SharedResources.cs" /></ItemGroup>
   <ItemGroup><EmbeddedResource Include="../../src/Connection/UiInteractionReadiness.cs" LogicalName="Tests.UiInteractionReadiness.cs" /></ItemGroup>
 </Project>

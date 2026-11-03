@@ -35,6 +35,7 @@ public sealed record QueueView(string State, string Message, string Record, IRea
     // Presentation only. Worker results must never become host-side resumable journals.
     public IReadOnlyList<QueueStage>? PlanStages { get; init; }
     public string CompletionIssue { get; init; } = "";
+    public DailyText? Display { get; init; }
 }
 public sealed record QueuePlanRequest(string Account, IReadOnlyList<string> Tasks)
 {

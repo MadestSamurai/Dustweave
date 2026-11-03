@@ -109,6 +109,8 @@ public sealed partial class DailyRunPanel
         }
         if(!chooseTasks.IsVisible || !resume.IsVisible || !resume.IsEnabled || actionHint.Text!=L.Get("run.resume_footer"))
             throw new Exception("Primary resume or recovery guidance is missing");
+        if(L.Code is "zh-CN" or "zh-TW" && !actionHint.Text.Contains(resume.Content?.ToString() ?? "", StringComparison.Ordinal))
+            throw new Exception("Recovery guidance refers to a different resume button name");
         CheckViewportForSmoke();
     }
     internal static void CheckRecoveryRoutingForSmoke(string root)
@@ -122,6 +124,8 @@ public sealed partial class DailyRunPanel
         panel.StartRequested+=(multi,resume)=>{ if(!multi && resume)resumes++; else starts++; };
         panel.PlanRequested+=_=>starts++;
         panel.SetAccount("fixture",account);panel.ShowPlan(new DailyPreferences());panel.Show(view);
+        if(!panel.rows.Single(r=>r.Task=="trade").Detail.EndsWith(L.Get("run.blocked_next"),StringComparison.Ordinal))
+            throw new Exception("A task needing attention gives no next step");
         panel.retry.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         if(requested!=null||panel.retry.IsEnabled)throw new Exception("Empty recovery selection dispatched work");
         panel.resume.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -339,12 +343,23 @@ public sealed partial class DailyRunPanel
             UpdateLayout();
         }
     }
+    internal void CheckRepeatedMessageForSmoke()
+    {
+        if(detail.Text.Contains('\n') || !detail.Text.Contains("60"))throw new Exception("Repeated run messages were not collapsed into one counted line");
+        string raw = string.Join("\n", Enumerable.Repeat("screen_changed", 60));
+        if(currentView.Message != raw || detail.ToolTip is not string tooltip || !tooltip.Contains(raw, StringComparison.Ordinal))
+            throw new Exception("Collapsing messages lost the original diagnostic lines");
+        if(CollapseRepeats("a\na\n\nb\nb\nc")!=L.Get("run.repeated_line","a",2)+"\n\n"+L.Get("run.repeated_line","b",2)+"\nc")
+            throw new Exception("Collapsing changed distinct lines or paragraph breaks");
+    }
     internal void CheckLongMessageForSmoke()
     {
         UpdateLayout();
         var scroller=detail.Parent as ScrollViewer??throw new Exception("Run message is not scrollable");
         if(scroller.ScrollableHeight<=0 || scroller.ActualHeight>96.1)throw new Exception("Long message can obscure the task controls");
         Rect Bounds(FrameworkElement element) => element.TransformToAncestor(this).TransformBounds(new Rect(element.RenderSize));
+        if(!stop.IsVisible || current.IsVisible || !ReferenceEquals(stop.Parent,current.Parent) || Grid.GetColumn(stop)!=Grid.GetColumn(current))
+            throw new Exception("Stop does not replace the start action in the summary card");
         foreach(var control in new FrameworkElement[]{current,stop,stages})
             if(control.IsVisible && (Bounds(control).Bottom>ActualHeight+1 || Bounds(control).Top<0))throw new Exception("Long message pushed controls out of view");
         if(stages.ActualHeight<100)throw new Exception("Long message left no usable timeline space");
@@ -371,6 +386,25 @@ public partial class MainWindow
             foreach(int language in new[]{0,1,2})
             {
                 LanguageSelector.SelectedIndex=language;
+                var currentFrame=new DailySnapshot { ProcessId=game.ProcessId, ProcessStartTicks=game.StartTicks,
+                    FrameUtcTicks=DateTimeOffset.UtcNow.UtcTicks, State="identified", PlayerName="Fixture", Scene="GameFieldDefaultUI" };
+                PresentConnectionHeader(game,currentFrame);
+                if(ConnectionText.Text!=L.Get("connection.ready_player","Fixture") || ConnectionText.Text.Contains("GameFieldDefaultUI")
+                    || ConnectionText.ToolTip is not string sceneHelp || !sceneHelp.Contains(L.Get("connection.scene",L.Translate(DailyUserText.Scene(currentFrame.Scene))),StringComparison.Ordinal))
+                    throw new Exception("Connected header lost its character or current-screen tooltip");
+                foreach(string observation in new[]{"stale","other-process","restarted","closed","missing"})
+                {
+                    var frame=new DailySnapshot { ProcessId=observation=="other-process"?game.ProcessId+1:game.ProcessId,
+                        ProcessStartTicks=observation=="restarted"?game.StartTicks+1:game.StartTicks,
+                        FrameUtcTicks=DateTimeOffset.UtcNow.AddSeconds(observation=="stale"?-10:0).UtcTicks,
+                        State="identified", PlayerName="Old character", Scene="Old scene" };
+                    PresentConnectionHeader(observation=="closed"?null:game,observation=="missing"?null:frame);
+                    if(ConnectionText.Text!=L.Get(observation=="closed"?"connection.closed":"connection.loading")
+                        || ConnectionText.ToolTip?.ToString()!=ConnectionText.Text)
+                        throw new Exception("An unavailable connection advertises an old scene");
+                    checks++;
+                }
+                checks++;
                 foreach(string state in new[]{"closed","unconnected","stale","login","ready","unreadable"})
                 {
                     var frame=new DailySnapshot{State=state=="login"?"waiting_start":"identified",Scene="演示主菜单",
@@ -390,6 +424,16 @@ public partial class MainWindow
                     }
                     checks++;
                 }
+            }
+            // Header action: connect without a live session, reconnect with one; a single stale frame is not a disconnect.
+            connectionActionFresh=null;connectionMisses=0;
+            foreach(var (fresh,running,expected) in new[]{(false,false,"connection.connect"),(true,true,"connection.reconnect"),(false,true,"connection.reconnect"),
+                (false,true,"connection.connect"),(true,true,"connection.reconnect"),(false,false,"connection.connect")})
+            {
+                PresentConnectionAction(fresh,running);
+                if((string)ConnectButton.Content!=L.Get(expected) || ConnectActionKeyForSmoke!=expected)
+                    throw new Exception("Connection action does not describe the observed connection");
+                checks++;
             }
             LanguageSelector.SelectedIndex=0;
             PresentDiagnostics(game,new DailySnapshot{State="identified",Scene="演示主菜单"},true);
@@ -512,6 +556,9 @@ public partial class MainWindow
                     {
                         if(Math.Abs(Search.ActualHeight-RefreshButton.ActualHeight)>1)
                             throw new Exception("Search and refresh controls have mismatched heights");
+                        // Row actions (Enter and ···) must fit beside the preset column without horizontal scrolling.
+                        if(SandboxElements<ScrollViewer>(AccountsGrid).FirstOrDefault() is { ScrollableWidth: > 0.5 })
+                            throw new Exception("Compact account columns require horizontal scrolling");
                         if(StopButton.IsVisible && Bounds(StopButton).Right>ActualWidth-12 || Bounds(SelectionText).Width<80)
                             throw new Exception("Account actions crowd out the selection summary");
                         if(AccountsGrid.ActualHeight<196)
@@ -562,14 +609,19 @@ public partial class MainWindow
             Search.Clear();checks++;
             WorkspaceTabs.SelectedItem=RunTab;
             Width=920;Height=650;ThemeSelector.SelectedIndex=2;
-            string longMessage=string.Join("\n",Enumerable.Repeat("screen_changed",60));
+            // Distinct lines keep the message long enough to scroll; identical repeats are collapsed separately below.
+            string longMessage=string.Join("\n",Enumerable.Range(0,60).Select(i=>i%2==0?"screen_changed":"fixture: component fingerprint mismatch"));
             dailyPanel.Show(new("running",longMessage,"fixture/long-message.json",
                 [new("guild","completed",""),new("mirror","running","screen_changed"),new("mail","pending","")],new string('a',64)));
             dailyPanel.Busy(true);
             await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
-            dailyPanel.CheckLongMessageForSmoke();checks+=3;
+            dailyPanel.CheckLongMessageForSmoke();checks+=4;
             dailyPanel.CheckProgressRingForSmoke();checks+=12;
             Capture("long-message-compact");
+            dailyPanel.Show(new("running",string.Join("\n",Enumerable.Repeat("screen_changed",60)),"fixture/repeated-message.json",
+                [new("guild","completed",""),new("mirror","running","screen_changed"),new("mail","pending","")],new string('a',64)));
+            await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+            dailyPanel.CheckRepeatedMessageForSmoke();checks+=3;
             DailyJson.Write(Path.Combine(smoke!,"presentation.json"),new{
                 status="passed",checks,localizedAccessibleNames=true,toggleProviderPreservesPlan=true,
                 longMessageKeepsControlsVisible=true,keyboardTabStops=true,

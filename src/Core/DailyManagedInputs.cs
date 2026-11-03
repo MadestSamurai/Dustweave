@@ -66,6 +66,10 @@ public sealed partial class DailyCommandDriver
         end = clock() + Seconds(action);
         string expect = Text(action, "expect"), absent = Text(action, "absent");
         JsonObject? lastObserved = null, openingFrame = null;
+        bool repeatOpen = ownedFrame == null && !requireReady && DailyMenuNavigation.CanRepeatOpen(action);
+        int menuRetries = 0;
+        double retryAt = clock() + 2;
+        var menuAttempts = new JsonArray();
         try
         {
             while (true)
@@ -105,6 +109,7 @@ public sealed partial class DailyCommandDriver
                     result["completion"] = requireReady ? "input_ready" : expect.Length > 0 || absent.Length > 0 ? "visibility" : "dispatch";
                     if (sent["native_readiness_seconds"] != null) result["native_readiness_seconds"] = sent["native_readiness_seconds"]!.DeepClone();
                     if (openingFrame != null) result["opening_frame"] = openingFrame.DeepClone();
+                    if (menuRetries > 0) result["menu_retries"] = menuAttempts.DeepClone();
                     // A completed observation supersedes the transport envelope.
                     // Carry its facts into the final record before retiring that
                     // copy; callers still receive the original result contract.
@@ -119,6 +124,46 @@ public sealed partial class DailyCommandDriver
                 // Always inspect a fresh frame first, including after a suspended
                 // desktop resumes. Never infer failure solely from elapsed time.
                 if (clock() >= end) break;
+                if (repeatOpen && menuRetries < 2 && clock() >= retryAt
+                    && Text(sent["receipt"]!.AsObject(), "State") == "observed_after_dispatch"
+                    && Text(sent["command"]!.AsObject(), "Kind") == "click"
+                    && DailyMenuNavigation.RepeatOpenReady(action, after, bound))
+                {
+                    // A native callback completed but its non-consuming page did
+                    // not open. Keep the same deadline and revalidate the page at
+                    // both submit reads, so a late arrival cannot get clicked again.
+                    menuRetries++;
+                    var retry = action.DeepClone().AsObject();
+                    retry["timeout"] = end - clock();
+                    var attempt = DailyData.O(("attempt", menuRetries), ("previous_command_id", sent["id"]), ("reason", "menu_still_closed"));
+                    menuAttempts.Add(attempt);
+                    Diagnostics.Event("menu_open_retry", attempt);
+                    var previous = sent;
+                    try
+                    {
+                        SubmissionGuard?.Invoke();
+                        var next = await SubmitRawAsync(retry, requiredFrame: bound, menuRetry: true);
+                        sent = next;
+                        // Retain the complete receipt chain, not just the last click.
+                        var saved = previous.DeepClone().AsObject();
+                        saved["state"] = "menu_open_retried";
+                        saved["next_command_id"] = next["id"]!.DeepClone();
+                        saved["last_observed"] = after.DeepClone();
+                        string session = Path.Combine(root, "live", "steps", previous["id"]!.GetValue<string>());
+                        DailyJson.Write(Path.Combine(session, "result.json"), saved);
+                        DailyLogEvidence.RetireStepCopy(root, session, "transport.json");
+                        attempt["command_id"] = next["id"]!.DeepClone();
+                    }
+                    catch (DailyStepException e) when (e.Kind == "rejected" && e.DefinitelyNotDispatched)
+                    {
+                        // Source disappearance / late arrival is not a second
+                        // failure. Inspect the next frame within the same budget.
+                        attempt["rejection"] = e.RejectionCode;
+                        if (e.Command != null) attempt["command_id"] = e.Command["Id"]?.DeepClone();
+                    }
+                    retryAt = clock() + 4;
+                    continue;
+                }
                 await delay(TimeSpan.FromMilliseconds(200));
             }
         }
@@ -131,9 +176,13 @@ public sealed partial class DailyCommandDriver
                 error = error.Message,
                 last_observed = lastObserved,
                 expected_action = action,
+                menu_retries = menuAttempts,
                 engine = "dotnet-driver-v1"
             });
-            throw new DailyStepException("pending", "UI observation interrupted after dispatch; no replay: " + error.Message, true) { Command = sent["command"]!.DeepClone().AsObject() };
+            // An uncertain retry owns its own command/receipt; do not misattribute
+            // it to the prior completed callback or replay it again.
+            if (error is DailyStepException { Submitted: true, Command: not null }) throw;
+            throw new DailyStepException("pending", "UI observation interrupted after dispatch; no replay: " + error.Message, true) { Command = sent["command"]!.DeepClone().AsObject(), NativeReceipt = sent["receipt"]!.DeepClone().AsObject() };
         }
         DailyJson.Write(Path.Combine(root, "live", "steps", sent["id"]!.GetValue<string>(), "result.json"), new
         {
@@ -141,9 +190,10 @@ public sealed partial class DailyCommandDriver
             receipt = sent["receipt"],
             last_observed = lastObserved,
             expected_action = action,
+            menu_retries = menuAttempts,
             engine = "dotnet-driver-v1"
         });
-        throw new DailyStepException("pending", "No expected UI; original command is preserved without replay", true) { Command = sent["command"]!.DeepClone().AsObject() };
+        throw new DailyStepException("pending", menuRetries > 0 ? "Menu did not open after bounded retries; current evidence preserved" : "No expected UI; original command is preserved without replay", true) { Command = sent["command"]!.DeepClone().AsObject(), NativeReceipt = sent["receipt"]!.DeepClone().AsObject() };
     }
     private async Task<bool> RecoverPresentationAsync(JsonObject frame, string destination)
     {

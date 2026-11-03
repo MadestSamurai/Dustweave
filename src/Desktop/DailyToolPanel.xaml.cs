@@ -10,10 +10,9 @@ public sealed record ToolMenuRow(string Id, string Name, string Detail, string D
 public partial class DailyToolPanel : UserControl
 {
     private static DailyLanguage L => DailyLanguage.Current;
-    private sealed class ToolCategory(string key, string source, string textKey) : System.ComponentModel.INotifyPropertyChanged
+    private sealed class ToolCategory(string key, string textKey) : System.ComponentModel.INotifyPropertyChanged
     {
         public string Key => key;
-        public string Source => source;
         public string Label => L.Get(textKey);
         public void Refresh() => PropertyChanged?.Invoke(this, new(nameof(Label)));
         public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
@@ -27,7 +26,7 @@ public partial class DailyToolPanel : UserControl
     {
         InitializeComponent();
         Category.DisplayMemberPath = "Label"; Category.SelectedValuePath = "Key";
-        Category.ItemsSource = new ToolCategory[] { new("all", "", "tools.all"), new("games", "小游戏", "tools.category_games"), new("business", "经营与装备", "tools.category_business"), new("draws", "抽取", "tools.category_draws") };
+        Category.ItemsSource = new ToolCategory[] { new("all", "tools.all"), new("games", "tools.category_games"), new("business", "tools.category_business"), new("draws", "tools.category_draws") };
         WeakEventManager<DailyLanguage, EventArgs>.AddHandler(L, nameof(DailyLanguage.Changed), LanguageChanged);
         Category.SelectedIndex = 0;
         Refresh(false, null, "工具共用日常助手的连接，不会自动开始操作。仅在自动化启用或等待结算时占用控制权。");
@@ -49,8 +48,8 @@ public partial class DailyToolPanel : UserControl
         var category = Category.SelectedItem as ToolCategory;
         string query = SearchBox.Text.Trim();
         var rows = DailyToolCatalog.All.Where(t => query.Length == 0 || (t.Name + " " + t.Repository + " " + L.Get("tool." + t.Id) + " " + L.Get("tool." + t.Id + ".description")).Contains(query, StringComparison.OrdinalIgnoreCase))
-            .Where(t => category == null || category.Key == "all" || t.Category == category.Source)
-            .Select(t => new ToolMenuRow(t.Id, L.Get("tool." + t.Id), L.Translate(t.Category), L.Get("tool." + t.Id + ".description"),
+            .Where(t => category == null || category.Key == "all" || t.CategoryId == category.Key)
+            .Select(t => new ToolMenuRow(t.Id, L.Get("tool." + t.Id), L.Get("tools.category_" + t.CategoryId), L.Get("tool." + t.Id + ".description"),
                 L.Get(t.Id == active ? "tools.show" : active != null ? "tools.switch" : "tools.open"), !busy && (!running || t.Id==active))).ToArray();
         ToolsList.ItemsSource = rows;
         EmptyText.Visibility = rows.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -94,7 +93,7 @@ public partial class DailyToolPanel : UserControl
         }
         SearchBox.Text = "连连看"; if (!VisibleTools.SequenceEqual(new[] { "sichuan" })) throw new InvalidOperationException("中文搜索失败");
         SearchBox.Text = "secret"; if (!VisibleTools.SequenceEqual(new[] { "secret-vision" })) throw new InvalidOperationException("英文搜索失败");
-        SearchBox.Text = ""; Category.SelectedValue = "games"; if (VisibleTools.Count != DailyToolCatalog.All.Count(t=>t.Category=="小游戏")) throw new InvalidOperationException("工具分类错误");
+        SearchBox.Text = ""; Category.SelectedValue = "games"; if (VisibleTools.Count != DailyToolCatalog.All.Count(t=>t.CategoryId=="games")) throw new InvalidOperationException("工具分类错误");
         Category.SelectedIndex = 0;
         Refresh(true, null, "日常正在执行，停止后可以打开工具。");
         if (((ToolMenuRow[])ToolsList.ItemsSource).Any(t => t.Enabled)) throw new InvalidOperationException("日常执行时仍可启动工具");

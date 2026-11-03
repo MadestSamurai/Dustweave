@@ -16,11 +16,16 @@ public sealed partial class DailyLanguage
         using var document = JsonDocument.Parse(stream);
         foreach (var entry in document.RootElement.EnumerateObject())
         {
-            var values = Codes.ToDictionary(code => code, code => entry.Value.GetProperty(code).GetString()!);
-            strings.Add(entry.Name, values);
             if (!entry.Value.TryGetProperty("parameters", out var parameters)) continue;
             var kinds = parameters.EnumerateArray().Select(p => p.GetString()!).ToArray();
-            string source = entry.Value.TryGetProperty("source", out var custom) ? custom.GetString()! : values["zh-CN"];
+            // New structured messages need argument kinds but no prose grammar.
+            // Only the frozen compatibility templates opt into matching raw input.
+            if (!entry.Value.TryGetProperty("source", out var legacySource))
+            {
+                noticeFormats.Add(new(entry.Name, kinds, null));
+                continue;
+            }
+            string source = legacySource.GetString()!;
             var expression = new StringBuilder(@"\A");
             int start = 0;
             var found = new HashSet<int>();
@@ -39,12 +44,23 @@ public sealed partial class DailyLanguage
             noticeFormats.Add(new(entry.Name, kinds, new Regex(expression.ToString(), RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, TimeSpan.FromMilliseconds(50))));
         }
     }
+    private object?[] NoticeArguments(string key, string[] arguments)
+    {
+        var format = noticeFormats.FirstOrDefault(f => f.Key == key);
+        return arguments.Select((value, i) => (object?)(format != null && i < format.Kinds.Length ? format.Kinds[i] switch
+        {
+            "message" => Describe(value),
+            "stage" => Stage(value),
+            _ => value
+        } : value)).ToArray();
+    }
     private bool TryFormatNotice(string original, out string translated)
     {
         translated = original;
         if (original.Length > 8192 || noticeDepth >= 8) return false;
         foreach (var format in noticeFormats)
         {
+            if (format.Pattern == null) continue;
             Match match;
             try { match = format.Pattern.Match(original); }
             catch (RegexMatchTimeoutException) { continue; }
@@ -67,5 +83,5 @@ public sealed partial class DailyLanguage
         }
         return false;
     }
-    private sealed record NoticeFormat(string Key, string[] Kinds, Regex Pattern);
+    private sealed record NoticeFormat(string Key, string[] Kinds, Regex? Pattern);
 }

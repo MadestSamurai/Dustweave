@@ -28,7 +28,7 @@ internal sealed class GameInstallationPanel : Border
         Padding = new(0, 0, 0, 12); Margin = new(0, 0, 0, 12);
         BorderThickness = new(0, 0, 0, 1); SetResourceReference(BorderBrushProperty, "Line");
         var header = new DockPanel();
-        L.Bind(edit, ContentControl.ContentProperty, () => L.Translate("更改位置"));
+        L.Bind(edit, ContentControl.ContentProperty, () => L.Get("common.change_location"));
         edit.Click += (_, _) => OpenEditor(); DockPanel.SetDock(edit, Dock.Right); header.Children.Add(edit);
         var title = new TextBlock { FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
         L.Text(title, "game_path.title"); DockPanel.SetDock(title, Dock.Left); header.Children.Add(title);

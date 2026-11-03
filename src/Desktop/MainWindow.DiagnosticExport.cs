@@ -41,7 +41,7 @@ public partial class MainWindow
             exporting=true;export.IsEnabled=false;browse.IsEnabled=false;open.Visibility=Visibility.Collapsed;L.Text(status,"diagnostics.export.working");
             try {
                 var sources=smoke==null ? await Task.Run(()=>DailyDiagnosticExport.RelatedSources(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),DailySandbox.Store),lifetime.Token) : null;
-                var result=await DailyDiagnosticExport.CreateAsync(root,path.Text,DiagnosticSummary(),DailyProductVersion.Current,lifetime.Token,sources);
+                var result=await DailyDiagnosticExport.CreateAsync(root,path.Text,DiagnosticSummary(),DailyProductVersion.Current,lifetime.Token,sources,L.Diagnostics());
                 exported=result.Path;L.Text(status,"diagnostics.export.done",result.Files,result.Skipped);open.Visibility=Visibility.Visible;
             }
             catch(OperationCanceledException) { }

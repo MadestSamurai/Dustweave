@@ -9,17 +9,23 @@ internal sealed class PluginSharingWindow : Window
     private readonly RadioButton local = new() { Name = "PluginLocalOnly", GroupName = "Sharing", Margin = new(0, 0, 0, 18) };
     private readonly RadioButton sharing = new() { Name = "PluginShareSolutions", GroupName = "Sharing" };
     internal bool SharingEnabled => sharing.IsChecked == true;
-    internal PluginSharingWindow(Window owner, string name, bool current, bool installation)
+    internal PluginSharingWindow(Window owner, string name, bool current, bool installation, bool tactics = false)
     {
         Owner = owner; Width = 580; MinWidth = 440; SizeToContent = SizeToContent.Height;
         MaxHeight = Math.Max(360, SystemParameters.WorkArea.Height - 40); WindowStartupLocation = WindowStartupLocation.CenterOwner;
         L.Bind(this, TitleProperty, installation ? "plugins.market_install" : "plugins.sharing_settings");
         var body = new StackPanel { Margin = new(24, 8, 24, 24) };
         body.Children.Add(new TextBlock { Text = name, TextWrapping = TextWrapping.Wrap, FontSize = 20, FontWeight = FontWeights.SemiBold, Margin = new(0, 0, 0, 20) });
+        if (installation && tactics)
+        {
+            var guide = DailyPluginPanel.TacticsGuide(); guide.Margin = new(0, 0, 0, 22); body.Children.Add(guide);
+        }
         void Choice(RadioButton button, string title, string explanation)
         {
             var content = new StackPanel();
             var heading = new TextBlock { FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap };
+            heading.SetResourceReference(TextBlock.ForegroundProperty, "Ink");
+            button.SetResourceReference(Control.ForegroundProperty, "Ink");
             var detail = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 5, 0, 0) };
             detail.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk");
             L.Text(heading, title); L.Text(detail, explanation); content.Children.Add(heading); content.Children.Add(detail);

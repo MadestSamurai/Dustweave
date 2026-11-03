@@ -26,7 +26,8 @@ internal sealed partial class NativeFastPlanner : IDisposable
     readonly Dictionary<string,Candidate> cache=[];
     readonly Dictionary<string,(int Wins,int Trials,double Margin,double Seconds)> combatCache=[];
     readonly Random rng;
-    internal CancellationToken Cancellation { get; set; }
+    internal CancellationToken Cancellation { get => kernel.Cancellation; set => kernel.Cancellation = value; }
+    internal int CandidateProposals { get; private set; }
     readonly Random validationRng;
     readonly JsonNode state;
     readonly byte[] template;
@@ -383,12 +384,17 @@ internal sealed partial class NativeFastPlanner : IDisposable
         }
         return (total/count-.012*candidate.Cost,evidence);
     }
-    internal JsonObject Search(double seconds,string? warm,int? workBudget=null,bool reserveGrowth=true)
+    internal JsonObject Search(double seconds,string? warm,int? workBudget=null,bool reserveGrowth=true,bool fixedCandidates=false)
     {
         var watch=Stopwatch.StartNew();int proposals=0;
-        // An optional fixed-work mode permits paired algorithm comparisons
-        // independent of machine load. It never removes the wall-clock cap.
-        bool Within(double phase){Cancellation.ThrowIfCancellationRequested();return watch.Elapsed.TotalSeconds<(workBudget.HasValue?seconds:seconds*phase)&&(!workBudget.HasValue||proposals<workBudget.Value*phase);}
+        // Legacy benchmark mode retains its deadline. User-selected candidate
+        // counts instead finish the same finite work at every concurrency level.
+        double notified=-1;
+        bool Within(double phase){
+            Cancellation.ThrowIfCancellationRequested();CandidateProposals=proposals;
+            if(watch.Elapsed.TotalSeconds-notified>=.4){notified=watch.Elapsed.TotalSeconds;Progress?.Invoke("combinations",evaluated,notified);}
+            return (fixedCandidates||watch.Elapsed.TotalSeconds<(workBudget.HasValue?seconds:seconds*phase))&&(!workBudget.HasValue||proposals<workBudget.Value*phase);
+        }
         // Preserve the validated live search stream. Paired fixed-work
         // experiments use an independent fixed validation stream.
         var evalRng=workBudget.HasValue?validationRng:rng;
@@ -418,10 +424,13 @@ internal sealed partial class NativeFastPlanner : IDisposable
         int sweep=0;
         while(Within(1)&&elite.Count>0){
             var parent=elite.OrderByDescending(e=>e.Rank).ElementAt(sweep++%Math.Min(4,elite.Count));
+            bool produced=false;
             foreach(var board in LocalBoards(parent)){
-                if(!Within(1))break;proposals++;Offer(Evaluate(board,polishSeeds,true));
+                if(!Within(1))break;produced=true;proposals++;Offer(Evaluate(board,polishSeeds,true));
             }
+            if(!produced)break;
         }
+        CandidateProposals=proposals;Progress?.Invoke("verify",evaluated,watch.Elapsed.TotalSeconds);
         var select=Enumerable.Range(0,128).Select(_=>evalRng.Next(1,int.MaxValue)).ToArray();
         var shortlist=elite.OrderByDescending(e=>e.Rank).Take(6)
             .Concat(elite.Where(e=>e.Rate>=.83).OrderBy(e=>e.Cost).Take(6))
@@ -445,7 +454,7 @@ internal sealed partial class NativeFastPlanner : IDisposable
         var best=accepted??finalists.Take(3).Select(c=>Evaluate(c.Board,auditSeeds,false)!).MaxBy(c=>c.Rank)!;
         // Run this after the original search and its independent audit. It
         // cannot perturb the original proposals, seeds or surviving fallback.
-        var capacity=searchFloorCapacity?ExploreCapacity(finalists.Prepend(best).DistinctBy(e=>Key(e.Board)).Take(4).ToArray(),polishSeeds,workBudget.HasValue):[];
+        var capacity=searchFloorCapacity?ExploreCapacity(finalists.Prepend(best).DistinctBy(e=>Key(e.Board)).Take(4).ToArray(),polishSeeds,workBudget.HasValue,fixedCandidates):[];
         foreach(var extension in capacity.OrderByDescending(e=>e.Rank)){
             var audited=Evaluate(extension.Board,auditSeeds,false)!;
             if(Ready(audited)){

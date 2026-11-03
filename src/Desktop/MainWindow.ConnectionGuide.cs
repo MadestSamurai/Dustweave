@@ -96,7 +96,10 @@ public partial class MainWindow
         firstRunLayer?.Remove(firstRunTour); firstRunTour = null; SizeChanged -= ResizeFirstRunTour;
         DailyJson.Write(FirstRunPath, new FirstRunRecord(State: complete ? "completed" : "skipped"));
         onboardingOpen = false; SetBusy(busy); WorkspaceTabs.SelectedItem = RunTab;
-        L.Text(ProgressText, complete ? "onboarding.complete" : "onboarding.reopen");
-        ConnectionGuideButton.Focus();
+        // The tour ends on Today, so a completion line in the Accounts footer would only surface later, out of context;
+        // the skip confirmation already explains how to reopen the guide.
+        // Keyboard users return to the guide entry; a pointer finish must not leave a persistent focus ring on a header action.
+        if (System.Windows.Input.InputManager.Current.MostRecentInputDevice is System.Windows.Input.KeyboardDevice) ConnectionGuideButton.Focus();
+        else System.Windows.Input.Keyboard.ClearFocus();
     }
 }

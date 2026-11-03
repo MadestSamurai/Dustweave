@@ -41,6 +41,10 @@ public static class Program
             DailyDesktopLaunch.Start(Environment.ProcessPath!,launch);return 0;
         }
         if(args.Length==2&&args[0]=="--soul-selftest"){Soul.SoulChecks.Run(args[1]);return 0;}
+        if(args.Length==2&&args[0]=="--soul-search-check"){
+            try{Soul.SoulChecks.VerifySearchSettings(Path.GetFullPath(args[1]));return 0;}
+            catch(Exception error){Directory.CreateDirectory(args[1]);File.WriteAllText(Path.Combine(args[1],"error.txt"),error.ToString());return 1;}
+        }
         if(args.Length==3&&args[0]==DailySandboxPreferenceTransfer.HelperSwitch){DailySandboxPreferenceTransfer.RunHelper(args[1],args[2]);return 0;}
         if(args.Length==2&&args[0]=="--loading-experiment-analyze"){DailyLoadingComparison.Analyze(args[1]);return 0;}
         if(args.Length==2&&args[0]=="--loading-experiment-accounts"){DailyLoadingExperimentLaunch.WriteAccounts(args[1]);return 0;}
