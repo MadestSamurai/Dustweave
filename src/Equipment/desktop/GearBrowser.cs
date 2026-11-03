@@ -92,7 +92,7 @@ public partial class MainWindow
   public string Instance{get;init;}="";public string Name{get;init;}="";public string BaseName{get;init;}="";public string Rarity{get;init;}="";public string Quality{get;init;}="";public string Slot{get;init;}="";public string Kind{get;init;}="";public string Owner{get;init;}="";public string Exclusive{get;init;}=L.T("无");public string Ranks{get;init;}="";public string Main{get;init;}="";public string Private{get;init;}="";public string Sub{get;init;}="";public string Cost{get;init;}="";public string State{get;init;}="";public string Search{get;init;}="";
   public string[] MainStats{get;init;}=[];public string[] SubStats{get;init;}=[];
   public long Score{get;init;}public long Level{get;init;}public bool Locked{get;init;}public bool Kept{get;init;}public bool Equipped{get;init;}public bool Eligible{get;init;}
-  public string IdLabel=>"#"+Instance;public string ScoreLabel=>Score+L.T("级");public string Enhancement=>"+"+Level;public string Category=>$"{Slot} · {Kind}";public string ExclusiveLabel=>Exclusive==L.T("无")?L.T("通用"):L.T("专属：")+Exclusive;
+  public string IdLabel=>"#"+Instance;public string ScoreLabel=>Score+L.T("级");public string Enhancement=>"+"+Level;public string CostLabel=>Cost.Length>0?L.K("equipment.ui.costPerRefine",Cost):"";public string Category=>$"{Slot} · {Kind}";public string ExclusiveLabel=>Exclusive==L.T("无")?L.T("通用"):L.T("专属：")+Exclusive;
   public string Flags=>string.Join(" · ",new[]{Locked?L.T("已锁定"):L.T("未锁定"),Kept?L.T("保留中"):""}.Where(x=>x.Length>0));
   public string MainLines=>Main.Replace(" · ","\n")+(Private.Length>0?L.T("\n专属 ")+Private:"");public string SubLines=>Sub.Replace(" · ","\n");
   public string Identity=>$"{Name} · {Owner} · {ScoreLabel} · {Ranks} · #{Instance}";

@@ -9,6 +9,16 @@ internal static class L {
  static Dictionary<string,string> Load(string name){using var s=typeof(L).Assembly.GetManifestResourceStream("Localization."+name+".json")!;return JsonSerializer.Deserialize<Dictionary<string,string>>(s)!;}
  static readonly Dictionary<string,string> english=Load("en-US"),names=Load("game-names");
  internal static readonly Dictionary<string,string> Labels=Load("labels");
+ static readonly Dictionary<string,Dictionary<string,string>> keyed=LoadKeys();
+ static Dictionary<string,Dictionary<string,string>> LoadKeys(){using var s=typeof(L).Assembly.GetManifestResourceStream("Localization.supply-strings.json")!;return JsonSerializer.Deserialize<Dictionary<string,Dictionary<string,string>>>(s)!;}
+ static readonly HashSet<string> keyFaults=new();
+ static void KeyFault(string key,string kind){lock(keyFaults){if(keyFaults.Count>=64||!keyFaults.Add(Language+"|"+key+"|"+kind))return;try{Directory.CreateDirectory(BD2Equipment.Core.J.Diagnostics);File.WriteAllText(Path.Combine(BD2Equipment.Core.J.Diagnostics,"localization-equipment.json"),JsonSerializer.Serialize(keyFaults));}catch(IOException){}catch(UnauthorizedAccessException){}}}
+ internal static string K(string key,params object?[] values){
+  if(!keyed.TryGetValue(key,out var languages)){KeyFault(key,"missing-key");return "["+key+"]";}
+  var text=languages.GetValueOrDefault(Language,languages.GetValueOrDefault("en-US",key));
+  try{return values.Length==0?text:string.Format(CultureInfo.InvariantCulture,text,values);}catch(FormatException){KeyFault(key,"format");return languages.GetValueOrDefault("en-US",text);}
+ }
+ internal static void AuditKeys(){foreach(var row in keyed)foreach(string language in new[]{"zh-CN","zh-TW","en-US"}){if(!row.Value.TryGetValue(language,out var text)||string.IsNullOrWhiteSpace(text))throw new Exception("Missing equipment translation: "+row.Key+"/"+language);string.Format(CultureInfo.InvariantCulture,text,Enumerable.Range(0,8).Select(i=>(object)i).ToArray());}}
  static Regex atoms=new(string.Join("|",names.Keys.Concat(new[]{"生命值","生命%","物攻值","物攻%","魔攻值","魔攻%","物防","魔防","暴击率","暴伤","未读取","未解锁","已锁定","未穿戴","保留中","金币","粉"}).Distinct().OrderByDescending(s=>s.Length).Select(Regex.Escape)),RegexOptions.Compiled);
  static IReadOnlyDictionary<string,string>? currentNames;
  static void UpdateNames(){var next=BD2Equipment.Core.GearView.EnglishNames;if(ReferenceEquals(next,currentNames))return;currentNames=next;if(next.Count==0)return;foreach(var pair in next)names[pair.Key]=pair.Value;atoms=new Regex(string.Join("|",names.Keys.Concat(new[]{"生命值","生命%","物攻值","物攻%","魔攻值","魔攻%","物防","魔防","暴击率","暴伤","未读取","未解锁","已锁定","未穿戴","保留中","金币","粉"}).Distinct().OrderByDescending(s=>s.Length).Select(Regex.Escape)),RegexOptions.Compiled);}
@@ -18,6 +28,6 @@ internal static class L {
  internal static string F(string text,params object?[] values)=>string.Format(CultureInfo.InvariantCulture,T(text),values);
  internal static void Select(string language,bool save=true){Language=language=="en-US"?"en-US":language=="zh-TW" && AppDomain.CurrentDomain.GetData("BD2Daily.TraditionalText") is Func<string,string>?"zh-TW":"zh-CN";if(save && AppDomain.CurrentDomain.GetData("BD2Daily.HostedLanguage") is string hosted && hosted is "zh-CN" or "zh-TW" or "en-US"){}else if(save){Directory.CreateDirectory(WorkerClient.Data);File.WriteAllText(Path.Combine(WorkerClient.Data,"language.json"),JsonSerializer.Serialize(new { language=Language }));}Apply();}
  internal static void Initialize(){if(AppDomain.CurrentDomain.GetData("BD2Daily.HostedLanguage") is string hosted && hosted is "zh-CN" or "zh-TW" or "en-US"){Select(hosted,false);return;}try{string path=Path.Combine(WorkerClient.Data,"language.json");if(File.Exists(path)){using var value=JsonDocument.Parse(File.ReadAllText(path));bool legacy=value.RootElement.ValueKind==JsonValueKind.String;Select(legacy?value.RootElement.GetString()!:value.RootElement.GetProperty("language").GetString()!,legacy);}}catch(IOException){}catch(JsonException){}Apply();}
- internal static void Apply(){if(Application.Current!=null)foreach(var p in Labels)Application.Current.Resources[p.Key]=T(p.Value);}
+ internal static void Apply(){if(Application.Current!=null){foreach(var p in Labels)Application.Current.Resources[p.Key]=T(p.Value);foreach(var p in keyed)Application.Current.Resources[p.Key]=K(p.Key);}}
  internal static string ConvertToCurrent(string value,string previous){if(previous==Language)return value;if(previous=="zh-TW" && AppDomain.CurrentDomain.GetData("BD2Daily.SourceText") is Func<string,string> source)return T(source(value));if(previous=="en-US"){var found=english.FirstOrDefault(p=>p.Value==value);if(found.Key!=null)return T(found.Key);found=names.FirstOrDefault(p=>p.Value==value);if(found.Key!=null)return T(found.Key);}return T(value);}
 }

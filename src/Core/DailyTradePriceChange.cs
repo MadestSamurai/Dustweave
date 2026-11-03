@@ -32,9 +32,6 @@ public static class DailyTradePriceChange
                 result[c.Item] = c.New;
         return result;
     }
-    public static bool UseCalendar(JsonObject catalog, DateOnly today) => today >= new DateOnly(2026,10,31) &&
-        Changes.Any(c => Rows(catalog["items"]).Any(i => N(i["id"]) == c.Item && N(i["sale"]) is var p && (p == c.Old || p == c.New)) &&
-            Rows(catalog["recipes"]).Any(r => N(r["id"]) == c.Recipe && N(r["output"]) == c.Item));
     public static bool AwaitingPrice(JsonObject catalog, long item, DateOnly today) =>
         today >= EffectiveDate && today <= EffectiveDate.AddDays(1) && Changes.Any(c => c.Item == item &&
             Rows(catalog["items"]).Any(i => N(i["id"]) == item && N(i["sale"]) == c.Old) &&

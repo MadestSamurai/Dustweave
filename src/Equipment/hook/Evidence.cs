@@ -166,7 +166,7 @@ namespace BD2Equipment.Live {
      foreach(var r in LivePolicy.GameplayReady(current)?config.Reads:new ReadRule[0]){
       if(!Bridge.LegacyObservation&&(request==null||request.ExpiresUtcTicks<DateTime.UtcNow.Ticks||!request.Prefixes.Any(prefix=>prefix=="*"||r.Id==prefix||r.Id.StartsWith(prefix+".",StringComparison.Ordinal))))continue;
       var timer=Stopwatch.StartNew();
-      try{var type=typeof(UIBase).Assembly.GetType(ClientNames.Map(r.Type),true);
+      try{if(r.Type=="$equipment_supply"){readings.Add(new Reading{Id=r.Id,Values=new[]{new Value{Path="$state",Json=EquipmentSupplyNative.Observe()}}});continue;}var type=typeof(UIBase).Assembly.GetType(ClientNames.Map(r.Type),true);
        if(!string.IsNullOrEmpty(r.StaticMember)){var value=Member(null,type,r.StaticMember,true);readings.Add(new Reading{Id=r.Id,Values=ReadValues(value,r)});}
        else foreach(var value in (Bridge.LegacyObservation?UnityEngine.Object.FindObjectsOfType(type):Bridge.Find(type))){var component=value as UnityEngine.Component;if(component!=null&&component.gameObject.activeInHierarchy)readings.Add(new Reading{Id=r.Id,InstanceId=component.GetInstanceID(),Values=ReadValues(value,r)});}
       }catch(Exception e){readings.Add(new Reading{Id=r.Id,Error=e.GetBaseException().Message});}

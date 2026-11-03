@@ -59,6 +59,19 @@
           "BD2ApostleDefense.Compatibility": "[0.3.8, )"
         }
       },
+      "BD2Equipment.Connection": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.CodeAnalysis.CSharp": "[4.14.0, )",
+          "Mono.Cecil": "[0.11.6, )"
+        }
+      },
+      "BD2Equipment.Core": {
+        "type": "Project",
+        "dependencies": {
+          "BD2Equipment.Connection": "[0.3.7, )"
+        }
+      },
       "BD2Rhythm.Compatibility": {
         "type": "Project",
         "dependencies": {

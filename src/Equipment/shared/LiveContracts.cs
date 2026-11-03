@@ -49,7 +49,7 @@ namespace BD2Equipment.Live {
   public static bool PowderKind(string k){return k=="powder_recipe"||k=="powder_options";}
   public static string Gate(Command c,Frame f,long now,bool otherOwner){
    Guid id;if(c==null||c.Id==null||c.Id.Length!=32||!Guid.TryParseExact(c.Id,"N",out id))return "invalid_command_id";
-   if(!new[]{"click","pointer","back","detach","powder_recipe","powder_options","equipment_craft_menu","equipment_refine_preview","equipment_refine_batch"}.Contains(c.Kind))return "unsupported_command";
+   if(!new[]{"click","pointer","back","detach","powder_recipe","powder_options","equipment_craft_menu","equipment_refine_preview","equipment_refine_batch","equipment_hunt_select","equipment_hunt_quote","equipment_hunt_options"}.Contains(c.Kind))return "unsupported_command";
    if(c.Scope!="gameplay")return "unsupported_scope";
    if(!GameplayReady(f)||f.Protocol!=1)return "observation_unavailable";
    if(c.ExpiresUtcTicks<=now||c.ExpiresUtcTicks>now+TimeSpan.FromSeconds(15).Ticks||c.ObservedUtcTicks<now-TimeSpan.FromSeconds(15).Ticks||c.ObservedUtcTicks>now+TimeSpan.FromSeconds(2).Ticks)return "expired_observation";
@@ -62,6 +62,9 @@ namespace BD2Equipment.Live {
    var ui=f.Surfaces.SingleOrDefault(u=>u.Id==c.SurfaceId);if(ui==null)return "surface_missing";
    if(!ui.InputReady)return "ui_not_ready";
    if(f.Surfaces.Any(x=>x.Popup&&x.Id!=ui.Id&&x.Order>=ui.Order&&!new[]{"NoticeUI","CharNoticeUI","DetailNoticeUI","CurrencyManageUI","OverheadManageUI"}.Contains(x.Type)&&!ui.Path.StartsWith(x.Path+"/")&&!(ui.Type=="ItemGetPopupUI"&&x.Type=="EquipmentInfoPopupUI"&&x.Path.StartsWith(ui.Path+"/"))))return "foreground_popup";
+   if(c.Kind=="equipment_hunt_select")return ui.Type=="HuntOrAirwayUI"&&c.TargetId==0&&c.Items!=null&&c.Items.Length==1&&(c.Value==9&&c.Items[0]==0||c.Value==3004&&c.Items[0]==1)?"":"supply_selection_rejected";
+   if(c.Kind=="equipment_hunt_quote")return ui.Type=="HuntDispatchPopupUI"&&c.TargetId==0?"":"supply_quote_rejected";
+   if(c.Kind=="equipment_hunt_options")return ui.Type=="HuntDispatchPopupUI"&&c.TargetId==0&&c.Value>=1&&c.Value<=20?"":"supply_count_rejected";
    if(c.Kind=="equipment_refine_batch"){
     if(c.TargetId!=0||ui.Type!="EquipmentUpgradeUI")return "refine_batch_context_rejected";
     return c.Value>=1&&c.Value<=24&&c.Items!=null&&c.Items.Length==4&&c.Items.All(x=>x>0)&&c.Items[1]<=5000&&c.Items[2]<=2000000000&&c.Items[3]<=2000000000?"":"refine_batch_budget_rejected";
@@ -73,7 +76,7 @@ namespace BD2Equipment.Live {
    }
    if(c.Kind=="equipment_craft_menu")return ui.Type=="MenuUI"&&c.TargetId==0?"":"preview_surface_rejected";
    if(c.Kind=="equipment_refine_preview")return ui.Type=="InventoryManageUI"&&c.TargetId==0&&c.Items!=null&&c.Items.Length==1&&c.Items[0]>0?"":"refine_selection_rejected";
-   string[] allowed={"MenuUI","GameFieldDefaultUI","EquipmentMakingUI","EquipmentMakingSelectUI","EquipmentUpgradePopupUI","EquipmentUpgradeUI","InventoryManageUI","EquipmentBatchUpgradeResultPopupUI","EquipmentUpgradeResultPopupUI","NewsPopupEventUI","ItemGetPopupUI","MailUI"};
+   string[] allowed={"MenuUI","GameFieldDefaultUI","EquipmentMakingUI","EquipmentMakingSelectUI","EquipmentUpgradePopupUI","EquipmentUpgradeUI","InventoryManageUI","EquipmentBatchUpgradeResultPopupUI","EquipmentUpgradeResultPopupUI","NewsPopupEventUI","ItemGetPopupUI","MailUI","WorldMapUI","HuntOrAirwayUI","HuntDispatchPopupUI","RewardReceivePopupUI"};
    if(!allowed.Contains(ui.Type))return "equipment_surface_required";
    if((c.Kind=="click"||c.Kind=="pointer")&&!ui.Targets.Any(t=>t.Id==c.TargetId&&t.Enabled&&(c.Kind=="pointer"?t.Route=="pointer":t.Route=="ui")))return "target_unavailable";
    return "";

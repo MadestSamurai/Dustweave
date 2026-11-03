@@ -160,7 +160,8 @@ namespace BD2Equipment.Live {
     try{
      if(c.Kind=="detach"){Unload();r.State="detached";Save(r);return;}
      var u=uis[c.SurfaceId];
-     if(LivePolicy.PowderKind(c.Kind)||c.Kind=="equipment_refine_batch")EquipmentToolsNative.Execute(c,u);
+     if(c.Kind.StartsWith("equipment_hunt_",StringComparison.Ordinal))EquipmentSupplyNative.Execute(c,u);
+     else if(LivePolicy.PowderKind(c.Kind)||c.Kind=="equipment_refine_batch")EquipmentToolsNative.Execute(c,u);
      else if(c.Kind=="equipment_craft_menu")EquipmentMakingSelectUI.Open(false);
      else if(c.Kind=="equipment_refine_preview"){
       var item=ὡὩὩὤὡὯὩὡὧὥὦ.ὥὯὬὦὠὪὭὢὪὯὩ(c.Items[0]);

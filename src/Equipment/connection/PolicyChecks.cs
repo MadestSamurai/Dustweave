@@ -10,6 +10,8 @@ public static class PolicyChecks {
  Check(LiveProtocol.Ready(f,1,2,now));Check(!LiveProtocol.Ready(f,1,3,now));
  c.Kind="back";f.Surfaces=new[]{new Surface{Id=3,Type="ItemGetPopupUI",Path="ui/item",Popup=true,Order=1000},new Surface{Id=4,Type="EquipmentInfoPopupUI",Path="ui/item/card",Popup=true,Order=1000}};
  Check(Gate()=="");f.Surfaces[1].Path="ui/other";Check(Gate()=="foreground_popup");
+ f.Surfaces=new[]{new Surface{Id=3,Type="HuntOrAirwayUI",Path="ui/hunt"}};c.TargetId=0;c.Kind="equipment_hunt_select";c.Value=9;c.Items=new long[]{0};Check(Gate()=="");c.Value=4;Check(Gate()!="");c.Value=3004;c.Items[0]=1;Check(Gate()=="");c.Items[0]=2;Check(Gate()!="");
+ f.Surfaces[0].Type="HuntDispatchPopupUI";c.Kind="equipment_hunt_options";c.Value=20;Check(Gate()=="");c.Value=21;Check(Gate()!="");c.Value=0;Check(Gate()!="");c.Value=1;c.AccountKey="other";Check(Gate()=="identity_changed");c.AccountKey="a";Check(LivePolicy.Gate(c,f,now,true)=="another_operation_owns_game");
 return "Equipment connection checks: "+checks;
  }
 }

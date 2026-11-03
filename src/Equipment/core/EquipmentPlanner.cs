@@ -14,9 +14,11 @@ public static class EquipmentPlanner
   var plan=Base(stock,"refine");plan["schema"]=2;plan["batch_mode"]=mode;plan["batch_size"]=batch;plan["native_target"]=mode=="higher"?24:target;plan["target"]=target;plan["rows"]=rows;plan["gold"]=Math.Min(N(stock["gold"]),gold);plan["powder"]=Math.Min(N(stock["materials"]?["10"]),powder);return Sign(plan);
  }
  static JsonObject Base(JsonObject stock,string kind)=>new(){["kind"]=kind,["schema"]=1,["account"]=Clone(stock["account"]),["player"]=Clone(stock["player"]),["catalog"]=Hash(Catalog),["stock"]=Copy(stock)};
- static JsonObject Sign(JsonObject plan){plan["id"]=Hash(plan);return plan;}
+ internal static JsonObject Sign(JsonObject plan){plan.Remove("id");plan["id"]=Hash(plan);return plan;}
  public static void Validate(JsonObject plan){var unsigned=Copy(plan);unsigned.Remove("id");if(S(plan["id"])!=Hash(unsigned)||S(plan["catalog"])!=Hash(Catalog))throw new InvalidOperationException("计划已变化，请重新计算并确认");}
  public static JsonObject Powder(JsonObject stock,JsonObject settings){
+  if(B(settings["supply_enabled"]))return EquipmentSupplyPlanner.Plan(stock,settings);
+  settings=EquipmentSupplyPlanner.WithWoodReserve(settings);
   long level=Integer(settings["level"]??JsonValue.Create(7),"强化等级",1,9);string lev=level.ToString();bool five=B(settings["include_five"]);
   long gold=Math.Min(Integer(stock["gold"],"金币库存"),Integer(settings["gold_budget"]??stock["gold"],"金币预算"));long potions=Math.Min(Integer(stock["potions"],"药库存"),Integer(settings["potion_budget"]??stock["potions"],"天赋药预算"));
   var reserves=O(settings["material_reserves"]);foreach(var r in reserves)Integer(r.Value,"保留材料");
@@ -47,6 +49,10 @@ public static class EquipmentPlanner
   var resources=A(Counted("trade.inventory")).Where(r=>S(r["Key"])=="Resource").ToArray();if(resources.Length!=1)throw new InvalidOperationException("材料库存缺失");var material=new JsonObject();var keep=new JsonObject();var group=resources[0];var items=A(group["Value.Values"]).ToArray();if(items.Length!=N(group["Value.Count"]))throw new InvalidOperationException("材料堆叠读取不完整");var seen=new HashSet<string>();
   foreach(var item in items){string key=S(item["id"]);long count=Integer(item["count"]??JsonValue.Create(0),"材料数量");if(!seen.Add(S(item["invenIndex"])))throw new InvalidOperationException("重复库存实例");if(N(item["expiryTime"])!=0)continue;var target=B(item["keepFlag"])?keep:material;target[key]=N(target[key])+count;}
   var gear=new JsonArray();foreach(var r in A(Counted("policy.equipment")))gear.Add(new JsonObject{["instance"]=S(r["InvenIndex"]),["equipment_id"]=Clone(r["BaseInfo.Id"]),["level"]=Clone(r["BaseInfo.Level"]),["ranks"]=Clone(r["BaseInfo.Rank"]),["locked"]=B(r["LockFlag"]),["kept"]=B(r["KeepFlag"]),["equipped"]=N(r["UseChar"])!=0});
-  return new(){["account"]=Clone(evidence["Frame"]!["AccountKey"]),["player"]=Clone(evidence["Frame"]!["PlayerKey"]),["gold"]=Integer(LiveEvidence.Reading(evidence,"trade.currency","Gold"),"金币"),["potions"]=Integer(LiveEvidence.Reading(evidence,"trade.currency","Catalyst"),"天赋药"),["materials"]=material,["protected"]=keep,["equipment"]=Array(A(gear).OrderBy(g=>S(g["instance"]),StringComparer.Ordinal))};
+  var result=new JsonObject{["account"]=Clone(evidence["Frame"]!["AccountKey"]),["player"]=Clone(evidence["Frame"]!["PlayerKey"]),["gold"]=Integer(LiveEvidence.Reading(evidence,"trade.currency","Gold"),"金币"),["potions"]=Integer(LiveEvidence.Reading(evidence,"trade.currency","Catalyst"),"天赋药"),["materials"]=material,["protected"]=keep,["equipment"]=Array(A(gear).OrderBy(g=>S(g["instance"]),StringComparer.Ordinal))};
+  // Rice is optional for existing crafting/refinement. Missing supply metadata
+  // must not disable tools that do not spend rice.
+  try{result["rice"]=new JsonObject{["free"]=Integer(LiveEvidence.Reading(evidence,"trade.currency","FreeHuntingAp"),"free rice"),["bonus"]=Integer(LiveEvidence.Reading(evidence,"trade.currency","BonusHuntingAp"),"stored rice")};}catch(InvalidOperationException){}
+  return result;
  }
 }

@@ -17,7 +17,7 @@ public static class LiveEvidence
   if(role=="equipment.refine_batch"&&Reading(after,"equipment.refine_ui",RefineAuto)?.GetValue<bool>()!=false)throw new InvalidOperationException("原生批量精炼仍在进行");
   return Array(res.Select(Values));
  }
- static JsonObject Clean(JsonObject value){var result=Copy(value);var m=O(result["materials"]);foreach(var key in m.Where(p=>N(p.Value)==0).Select(p=>p.Key).ToArray())m.Remove(key);result["equipment"]=Array(A(result["equipment"]).OrderBy(g=>S(g["instance"]),StringComparer.Ordinal));return result;}
+ static JsonObject Clean(JsonObject value){var result=Copy(value);result.Remove("rice");var m=O(result["materials"]);foreach(var key in m.Where(p=>N(p.Value)==0).Select(p=>p.Key).ToArray())m.Remove(key);result["equipment"]=Array(A(result["equipment"]).OrderBy(g=>S(g["instance"]),StringComparer.Ordinal));return result;}
  public static JsonObject VerifyPowder(JsonNode recipe,int count,int level,JsonObject old,JsonObject data,JsonObject current){
   var expected=Copy(old);string lev=level.ToString();long gold=N(recipe["gold"]![lev])*count,drug=N(recipe["potions"])*count,powder=N(recipe["powder"]![lev])*count;expected["gold"]=N(expected["gold"])-gold;expected["potions"]=N(expected["potions"])-drug;
   foreach(var p in O(recipe["materials"]))expected["materials"]![p.Key]=N(expected["materials"]![p.Key])-N(p.Value)*count;expected["materials"]!["10"]=N(expected["materials"]!["10"])+powder;
@@ -37,5 +37,5 @@ public static class LiveEvidence
   if(!Equal(Clean(expected),Clean(current)))throw new InvalidOperationException("批量精炼扣款或装备变化尚未与回执匹配");
   return new(){["instance"]=instance,["gold"]=gold,["powder"]=powder,["score"]=EquipmentPlanner.Rank(EquipmentPlanner.Catalog,gear),["attempts"]=count,["requested"]=requested,["native_target"]=nativeTarget,["batches"]=1,["packets"]=packets.Count,["native_result"]=Clone(packets.Last()?["ResultType"]),["lack_items"]=Clone(packets.Last()?["LackItemInfo"])};
  }
- public static JsonObject Progress(JsonObject journal){var result=new JsonObject();foreach(var k in new[]{"count","gold","potions","powder","attempts","batches"})result[k]=A(journal["operations"]).Sum(o=>N(o["result"]?[k]));return result;}
+ public static JsonObject Progress(JsonObject journal){var result=new JsonObject();foreach(var k in new[]{"count","gold","potions","powder","attempts","batches","rice","sweeps","gold_gain","wood_gain"})result[k]=A(journal["operations"]).Sum(o=>N(o["result"]?[k]));return result;}
 }

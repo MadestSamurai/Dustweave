@@ -3,14 +3,15 @@ using static BD2Equipment.Core.J;
 namespace BD2Equipment.Core;
 public static class EquipmentExecution
 {
- static JsonObject CanonicalStock(JsonObject stock){var result=Copy(stock);result["equipment"]=Array(A(stock["equipment"]).OrderBy(g=>S(g["instance"]),StringComparer.Ordinal));return result;}
+ static JsonObject CanonicalStock(JsonObject stock){var result=Copy(stock);result.Remove("rice");result["equipment"]=Array(A(stock["equipment"]).OrderBy(g=>S(g["instance"]),StringComparer.Ordinal));return result;}
  static JsonObject Guard(JsonObject plan,JsonObject expected,IEquipmentGame game){LiveEquipment.Stopped();var stock=game.Stock();if(!Equal(CanonicalStock(stock),CanonicalStock(expected)))throw new InvalidOperationException("账号或库存与上批结果不同，请重新读取并计算");if(S(stock["account"])!=S(plan["account"])||S(stock["player"])!=S(plan["player"]))throw new InvalidOperationException("账号已切换");return stock;}
  public static JsonObject? Resumable(JsonObject stock){
   Directory.CreateDirectory(Data);foreach(var file in Directory.EnumerateFiles(Data,"*.json").OrderByDescending(File.GetLastWriteTimeUtc))try{
-   var journal=Read(file);var plan=journal["plan"]?.AsObject();if(plan==null||S(plan["kind"])!="powder"||S(journal["state"])=="completed"||!A(journal["operations"]).Any())continue;
+   var journal=Read(file);var plan=journal["plan"]?.AsObject();if(plan==null||S(plan["kind"])!="powder"||S(journal["state"]) is "completed" or "superseded"||!A(journal["operations"]).Any())continue;
    if(journal["pending"]!=null&&S(journal["pending"]!["state"])!="rejected")continue;if(journal["expected"]==null||!Equal(CanonicalStock(journal["expected"]!.AsObject()),CanonicalStock(stock)))continue;
-   EquipmentPlanner.Validate(plan);var remaining=Copy(plan);remaining["stock"]=Copy(stock);var recipes=A(EquipmentPlanner.Catalog["recipes"]).ToDictionary(r=>N(r["id"]));
-   foreach(var op in A(journal["operations"])){var result=op["result"]!;var row=A(remaining["rows"]).Single(r=>N(r["recipe"])==N(result["recipe"]));foreach(var key in new[]{"count","gold","potions","powder"}){remaining[key]=N(remaining[key])-N(result[key]);row[key]=N(row[key])-N(result[key]);}foreach(var p in O(recipes[N(result["recipe"])]["materials"]))remaining["materials"]![p.Key]=N(remaining["materials"]![p.Key])-N(p.Value)*N(result["count"]);}
+   EquipmentPlanner.Validate(plan);var remaining=Copy(journal["craft_plan"]??plan);remaining["stock"]=Copy(stock);var recipes=A(EquipmentPlanner.Catalog["recipes"]).ToDictionary(r=>N(r["id"]));
+   foreach(var op in A(journal["operations"]).Where(o=>S(o["role"])!="hunt.dispatch")){var result=op["result"]!;var row=A(remaining["rows"]).Single(r=>N(r["recipe"])==N(result["recipe"]));foreach(var key in new[]{"count","gold","potions","powder"}){remaining[key]=N(remaining[key])-N(result[key]);row[key]=N(row[key])-N(result[key]);}foreach(var p in O(recipes[N(result["recipe"])] ["materials"]))remaining["materials"]![p.Key]=N(remaining["materials"]![p.Key])-N(p.Value)*N(result["count"]);}
+   if(remaining["supply"] is JsonObject supply){foreach(var r in A(supply["routes"]))r["count"]=Math.Max(0,N(r["count"])-A(journal["operations"]).Where(o=>S(o["result"]?["route"])==EquipmentSupplyEvidence.Route(r)).Sum(o=>N(o["result"]?["sweeps"])));supply["rice"]=A(supply["routes"]).Sum(r=>N(r["count"])*N(r["ap"]));supply["free_rice"]=Math.Min(N(stock["rice"]?["free"]),N(supply["rice"]));supply["bonus_rice"]=N(supply["rice"])-N(supply["free_rice"]);}
    remaining["rows"]=Array(A(remaining["rows"]).Where(r=>N(r["count"])>0));var materials=O(remaining["materials"]);foreach(var key in materials.Where(p=>N(p.Value)==0).Select(p=>p.Key).ToArray())materials.Remove(key);
    if(N(remaining["count"])>0)return new(){["plan"]=Copy(plan),["display"]=remaining,["completed"]=LiveEvidence.Progress(journal)};
   }catch(IOException){}catch(InvalidOperationException){}catch(KeyNotFoundException){}catch(System.Text.Json.JsonException){}
@@ -31,8 +32,22 @@ public static class EquipmentExecution
   else journal=new(){["id"]=Clone(plan["id"]),["kind"]=Clone(plan["kind"]),["plan"]=Copy(plan),["operations"]=new JsonArray(),["pending"]=null,["expected"]=Clone(plan["stock"]),["state"]="ready"};
   Guard(plan,journal["expected"]!.AsObject(),game);using var actionScope=game.EnableActions();
   if(S(journal["presentation"]?["state"])=="pending")Presentation(journal,game,S(journal["presentation"]?["role"]),false);
+  bool supplied=powder&&plan["supply"] is JsonObject;
+  if(supplied){
+   var supply=plan["supply"]!;
+   foreach(var route in A(supply["routes"])){
+    long done=A(journal["operations"]).Where(o=>S(o["role"])=="hunt.dispatch"&&S(o["result"]?["route"])==EquipmentSupplyEvidence.Route(route)).Sum(o=>N(o["result"]?["sweeps"]));
+    while(done<N(route["count"])){
+     Guard(plan,journal["expected"]!.AsObject(),game);int count=(int)Math.Min(20,N(route["count"])-done);long reserve=N(supply["reserve"]);
+     var action=game.SupplyPreview(route.AsObject(),count,reserve);Guard(plan,journal["expected"]!.AsObject(),game);
+     game.Transaction(journal,"hunt.dispatch",action,(old,packets,current)=>EquipmentSupplyEvidence.Verify(route.AsObject(),count,reserve,old,packets,current));done+=count;progress?.Invoke(LiveEvidence.Progress(journal));Presentation(journal,game,"hunt.dispatch");
+    }
+   }
+   if(journal["craft_plan"]==null){journal["craft_plan"]=EquipmentSupplyPlanner.AfterSupply(plan,journal["expected"]!.AsObject());Write(path,journal);}
+   plan=journal["craft_plan"]!.AsObject();
+  }
   if(powder){var recipes=A(EquipmentPlanner.Catalog["recipes"]).ToDictionary(r=>N(r["id"]));foreach(var row in A(plan["rows"])){long made=A(journal["operations"]).Where(o=>N(o["result"]?["recipe"])==N(row["recipe"])).Sum(o=>N(o["result"]?["count"]));while(made<N(row["count"])){
-   Guard(plan,journal["expected"]!.AsObject(),game);int count=(int)Math.Min(A(journal["operations"]).Any()?N(row["count"])-made:10,N(row["count"])-made);var recipe=recipes[N(row["recipe"])];int level=(int)N(plan["level"]);count=game.PowderPreview(recipe,count,level);Guard(plan,journal["expected"]!.AsObject(),game);
+   Guard(plan,journal["expected"]!.AsObject(),game);int count=(int)Math.Min(A(journal["operations"]).Any(o=>S(o["role"])=="powder.make_break")?N(row["count"])-made:10,N(row["count"])-made);var recipe=recipes[N(row["recipe"])];int level=(int)N(plan["level"]);count=game.PowderPreview(recipe,count,level);Guard(plan,journal["expected"]!.AsObject(),game);
    var result=game.Transaction(journal,"powder.make_break",new(){["ui"]="EquipmentUpgradePopupUI",["field"]="_buttonAccept",["reason"]="执行用户已确认的N装制作强化分解预算"},(old,packets,current)=>LiveEvidence.VerifyPowder(recipe,count,level,old,packets[0]!.AsObject(),current));made+=N(result["count"]);progress?.Invoke(LiveEvidence.Progress(journal));Presentation(journal,game,"powder.make_break");
   }}}
   else foreach(var row in A(plan["rows"]))while(true){var stock=Guard(plan,journal["expected"]!.AsObject(),game);string instance=S(row["instance"]);var gear=A(stock["equipment"]).Single(g=>S(g["instance"])==instance);if(EquipmentPlanner.Rank(EquipmentPlanner.Catalog,gear)>=N(plan["target"]))break;
@@ -40,7 +55,7 @@ public static class EquipmentExecution
    var result=game.Transaction(journal,"equipment.refine_batch",new(){["ui"]="EquipmentUpgradeUI",["operation"]="equipment_refine_batch",["value"]=native,["items"]=new JsonArray(long.Parse(instance),count,N(cost["gold"])*count,N(cost["powder"])*count),["reason"]="执行已确认预算内的原生批量精炼"},(old,packets,current)=>LiveEvidence.VerifyRefine(instance,cost,count,native,old,packets,current));progress?.Invoke(LiveEvidence.Progress(journal));Presentation(journal,game,"equipment.refine_batch");
    if(N(result["score"])<N(plan["target"])&&(N(result["attempts"])<count||A(result["lack_items"]).Any())){journal["state"]="native_stopped";journal["stop_reason"]=Clone(result["native_result"]);Write(path,journal);return journal;}
   }
-  journal["state"]="completed";Write(path,journal);if(A(journal["operations"]).Any()&&!File.Exists(Stop))game.Cleanup(powder?"EquipmentMakingUI":"EquipmentUpgradeUI");return journal;
+  journal["state"]="completed";Write(path,journal);if(A(journal["operations"]).Any()&&!File.Exists(Stop))game.Cleanup(supplied?"MenuUI":powder?"EquipmentMakingUI":"EquipmentUpgradeUI");return journal;
  }
 }
 public static class EquipmentService
@@ -50,9 +65,13 @@ public static class EquipmentService
   if(connection!=null&&op is not "capture" and not "self_test")LiveEquipment.ActivateCurrent();
   switch(op){
    case "capture":LiveEquipment.Prepare(connection??throw new InvalidOperationException("缺少连接入口"));using(var game=new LiveEquipment(true))return game.Capture();
+   case "resolve_supply":using(var game=new LiveEquipment())return game.ResolveSupply(job["stock"]!.AsObject());
    case "execute":using(var game=new LiveEquipment()){game.RefreshCatalog(forExecution:true);return EquipmentExecution.Execute(job["plan"]!.AsObject(),S(job["approved_id"]),game,progress);}
    case "gear_views":return new(){["gear"]=GearView.Build(job["stock"]!.AsObject(),job["details"]?.AsObject())};
-   case "powder_plan":result=EquipmentPlanner.Powder(job["stock"]!.AsObject(),O(job["settings"]));break;
+   case "powder_plan":
+    var settings=O(job["settings"]);
+    if(B(settings["supply_enabled"])&&connection!=null){using var game=new LiveEquipment();settings["supply_routes"]=game.SupplyQuotes();var now=game.Stock();if(!Equal(now,job["stock"]))throw new EquipmentSupplyError("equipment.supply.inventoryChanged");}
+    result=EquipmentPlanner.Powder(job["stock"]!.AsObject(),settings);break;
    case "refine_plan":result=EquipmentPlanner.Refine(job["stock"]!.AsObject(),O(job["settings"]));break;
    case "self_test":
     var stock=new JsonObject{["account"]="fixture",["player"]="fixture",["gold"]=10000,["potions"]=30,["materials"]=new JsonObject{["201"]=30,["204"]=30},["protected"]=new JsonObject(),["equipment"]=new JsonArray()};var plan=EquipmentPlanner.Powder(stock,new(){["count_limit"]=10});if(N(plan["count"])!=10||N(plan["gold"])!=2900||N(plan["powder"])!=100)throw new InvalidOperationException("规划自检失败");return new(){["status"]="passed",["count"]=10,["engine"]="C# / in-process",["realGameTouched"]=false};

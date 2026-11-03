@@ -10,6 +10,11 @@
   <Style TargetType="DataGridRow"><Setter Property="Background" Value="{DynamicResource Surface}"/><Setter Property="Foreground" Value="{DynamicResource Ink}"/>
    <Style.Triggers><Trigger Property="IsSelected" Value="True"><Setter Property="Background" Value="{DynamicResource PrimarySoft}"/><Setter Property="Foreground" Value="{DynamicResource Ink}"/></Trigger></Style.Triggers>
   </Style>
+  <Style x:Key="SectionTitle" TargetType="TextBlock"><Setter Property="FontSize" Value="15"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Foreground" Value="{DynamicResource Ink}"/><Setter Property="Margin" Value="0,0,0,10"/></Style>
+  <Style x:Key="SectionRule" TargetType="Border"><Setter Property="BorderBrush" Value="{DynamicResource Line}"/><Setter Property="BorderThickness" Value="0,1,0,0"/><Setter Property="Margin" Value="0,16,0,16"/></Style>
+  <Style x:Key="InputPlaceholder" TargetType="TextBlock"><Setter Property="IsHitTestVisible" Value="False"/><Setter Property="Margin" Value="13,0"/><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="Foreground" Value="{DynamicResource MutedInk}"/><Setter Property="Visibility" Value="Collapsed"/>
+   <Style.Triggers><DataTrigger Binding="{Binding Children[0].Text, RelativeSource={RelativeSource AncestorType=Grid}}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
+  </Style>
  </Window.Resources>
  <Grid Margin="24,0,24,24">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -23,24 +28,38 @@
    <TabItem Header="{DynamicResource Label7}">
     <Border Background="Transparent" Padding="0" Margin="0,16,0,0"><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><Grid>
      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-     <WrapPanel Margin="0,0,0,8">
-      <StackPanel Width="130" Margin="0,0,16,8"><TextBlock Text="{DynamicResource Label8}" Margin="0,0,0,6"/><ComboBox x:Name="LevelInput" SelectionChanged="SettingsChanged" AutomationProperties.Name="{DynamicResource Label9}"/></StackPanel>
-      <StackPanel Width="160" Margin="0,0,16,8"><TextBlock Text="{DynamicResource Label10}" Margin="0,0,0,6"/><TextBox x:Name="CountInput" TextChanged="SettingsChanged" ToolTip="{DynamicResource Label11}" AutomationProperties.Name="{DynamicResource Label12}"/></StackPanel>
-      <StackPanel Width="175" Margin="0,0,16,8"><TextBlock Text="{DynamicResource Label13}" Margin="0,0,0,6"/><TextBox x:Name="GoldInput" TextChanged="SettingsChanged" ToolTip="{DynamicResource Label14}" AutomationProperties.Name="{DynamicResource Label15}"/></StackPanel>
-      <StackPanel Width="160" Margin="0,0,0,8"><TextBlock Text="{DynamicResource Label16}" Margin="0,0,0,6"/><TextBox x:Name="PotionInput" TextChanged="SettingsChanged" ToolTip="{DynamicResource Label17}" AutomationProperties.Name="{DynamicResource Label18}"/></StackPanel>
-     </WrapPanel>
-     <CheckBox x:Name="FiveInput" Grid.Row="1" FontSize="14" MinHeight="36" VerticalContentAlignment="Center" Padding="0,6,8,6" HorizontalAlignment="Left" Checked="SettingsChanged" Unchecked="SettingsChanged" Margin="0,0,0,8"><TextBlock Text="{DynamicResource Label19}" FontSize="14" TextWrapping="Wrap"/></CheckBox>
-     <TextBlock Grid.Row="2" Text="{DynamicResource Label20}" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,0,0,14"/>
+     <StackPanel>
+      <TextBlock Text="{DynamicResource equipment.ui.craftSection}" Style="{StaticResource SectionTitle}"/>
+      <WrapPanel>
+       <StackPanel Width="130" Margin="0,0,16,8"><TextBlock Text="{DynamicResource Label8}" Margin="0,0,0,6"/><ComboBox x:Name="LevelInput" SelectionChanged="SettingsChanged" AutomationProperties.Name="{DynamicResource Label9}"/></StackPanel>
+       <StackPanel Width="160" Margin="0,0,16,8"><TextBlock Text="{DynamicResource Label10}" Margin="0,0,0,6"/><Grid><TextBox x:Name="CountInput" TextChanged="SettingsChanged" ToolTip="{DynamicResource Label11}" AutomationProperties.Name="{DynamicResource Label12}"/><TextBlock Text="{DynamicResource equipment.ui.unlimited}" Style="{StaticResource InputPlaceholder}"/></Grid></StackPanel>
+       <StackPanel Width="175" Margin="0,0,16,8"><TextBlock Text="{DynamicResource Label13}" Margin="0,0,0,6"/><Grid><TextBox x:Name="GoldInput" TextChanged="SettingsChanged" ToolTip="{DynamicResource Label14}" AutomationProperties.Name="{DynamicResource Label15}"/><TextBlock Text="{DynamicResource equipment.ui.unlimited}" Style="{StaticResource InputPlaceholder}"/></Grid></StackPanel>
+       <StackPanel Width="160" Margin="0,0,16,8"><TextBlock Text="{DynamicResource Label16}" Margin="0,0,0,6"/><Grid><TextBox x:Name="PotionInput" TextChanged="SettingsChanged" ToolTip="{DynamicResource Label17}" AutomationProperties.Name="{DynamicResource Label18}"/><TextBlock Text="{DynamicResource equipment.ui.unlimited}" Style="{StaticResource InputPlaceholder}"/></Grid></StackPanel>
+       <StackPanel Width="160" Margin="0,0,0,8"><TextBlock Text="{DynamicResource equipment.supply.woodReserve}" TextTrimming="CharacterEllipsis" Margin="0,0,0,6"/><TextBox x:Name="WoodReserveInput" Text="0" TextChanged="SettingsChanged" AutomationProperties.Name="{DynamicResource equipment.supply.woodReserve}"/></StackPanel>
+      </WrapPanel>
+      <TextBlock Text="{DynamicResource Label20}" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+      <CheckBox x:Name="FiveInput" FontSize="14" MinHeight="36" VerticalContentAlignment="Center" Padding="0,6,8,6" HorizontalAlignment="Left" Checked="SettingsChanged" Unchecked="SettingsChanged" Margin="0,0,0,0"><TextBlock Text="{DynamicResource Label19}" FontSize="14" TextWrapping="Wrap"/></CheckBox>
+     </StackPanel>
+     <StackPanel Grid.Row="1">
+      <Border Style="{StaticResource SectionRule}"/>
+      <TextBlock Text="{DynamicResource equipment.ui.supplySection}" Style="{StaticResource SectionTitle}"/>
+      <CheckBox x:Name="SupplyInput" FontSize="14" MinHeight="36" VerticalContentAlignment="Center" Padding="0,6,8,6" HorizontalAlignment="Left" Checked="SettingsChanged" Unchecked="SettingsChanged"><TextBlock Text="{DynamicResource equipment.supply.enable}" FontSize="14" TextWrapping="Wrap"/></CheckBox>
+      <StackPanel Margin="28,8,0,0" Visibility="{Binding IsChecked, ElementName=SupplyInput, Converter={StaticResource BooleanToVisibility}}">
+       <StackPanel Width="190" HorizontalAlignment="Left" Margin="0,0,0,10" IsEnabled="{Binding IsChecked, ElementName=SupplyInput}"><TextBlock Text="{DynamicResource equipment.supply.riceReserve}" TextWrapping="Wrap" Margin="0,0,0,6"/><TextBox x:Name="RiceReserveInput" Text="0" TextChanged="SettingsChanged" AutomationProperties.Name="{DynamicResource equipment.supply.riceReserve}"/></StackPanel>
+       <TextBlock Text="{DynamicResource equipment.supply.hint}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}"/>
+      </StackPanel>
+     </StackPanel>
+     <StackPanel Grid.Row="2"><Border Style="{StaticResource SectionRule}"/><TextBlock Text="{DynamicResource equipment.ui.planSection}" Style="{StaticResource SectionTitle}"/></StackPanel>
      <Grid Grid.Row="3" MinHeight="100" MaxHeight="240"><DataGrid x:Name="RecipeGrid" IsReadOnly="True" AutomationProperties.Name="{DynamicResource Label21}">
       <DataGrid.Columns><DataGridTextColumn ElementStyle="{StaticResource CellText}" Header="{DynamicResource Label22}" Binding="{Binding Name}" Width="*"/><DataGridTextColumn ElementStyle="{StaticResource CellText}" Header="{DynamicResource Label23}" Binding="{Binding Count}" Width="95"/><DataGridTextColumn ElementStyle="{StaticResource CellText}" Header="{DynamicResource Label24}" Binding="{Binding Gold}" Width="125"/><DataGridTextColumn ElementStyle="{StaticResource CellText}" Header="{DynamicResource Label25}" Binding="{Binding Potions}" Width="105"/><DataGridTextColumn ElementStyle="{StaticResource CellText}" Header="{DynamicResource Label26}" Binding="{Binding Powder}" Width="105"/></DataGrid.Columns>
      </DataGrid><TextBlock x:Name="PlanEmpty" Text="{DynamicResource Label27}" Foreground="{DynamicResource MutedInk}" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/></Grid>
-     <ScrollViewer Grid.Row="4" MaxHeight="130" VerticalScrollBarVisibility="Auto" Margin="0,12,0,0"><TextBlock x:Name="MaterialText" Text="{DynamicResource Label28}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" LineHeight="23"/></ScrollViewer>
+     <ScrollViewer Grid.Row="4" MaxHeight="130" VerticalScrollBarVisibility="Auto" Margin="0,12,0,0" Padding="0,0,4,0"><TextBlock x:Name="MaterialText" Text="{DynamicResource Label28}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" LineHeight="23"/></ScrollViewer>
     </Grid></ScrollViewer></Border>
    </TabItem>
    <TabItem Header="{DynamicResource Label29}">
     <Border Background="Transparent" Padding="0" Margin="0,16,0,0">
      <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><Grid MinHeight="520" Height="{Binding ViewportHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
-      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*" MinHeight="140"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*" MinHeight="180"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
       <StackPanel Margin="0,0,0,12"><WrapPanel>
        <StackPanel Width="150" Margin="0,0,16,8"><TextBlock Text="{DynamicResource Label30}" Style="{StaticResource MetaText}" TextWrapping="Wrap" Margin="0,0,0,5"/><ComboBox x:Name="TargetInput" SelectionChanged="SettingsChanged" AutomationProperties.Name="{DynamicResource Label31}"/></StackPanel>
        <StackPanel Width="155" Margin="0,0,16,8"><TextBlock Text="{DynamicResource Label32}" Style="{StaticResource MetaText}" TextWrapping="Wrap" Margin="0,0,0,5"/><TextBox x:Name="RefineGoldInput" Text="100000" TextChanged="SettingsChanged"/></StackPanel>
@@ -84,17 +103,17 @@
        </WrapPanel>
        <TextBlock x:Name="GearHint" Text="{DynamicResource Label62}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" Margin="0,4,0,0"/>
       </StackPanel>
-      <DataGrid x:Name="GearGrid" Grid.Row="3" RowHeight="84" SelectionMode="Single" SelectionUnit="FullRow" SelectionChanged="GearFocused" IsReadOnly="True" AutomationProperties.Name="{DynamicResource Label63}" HorizontalScrollBarVisibility="Auto">
+      <DataGrid x:Name="GearGrid" Grid.Row="3" RowHeight="NaN" MinRowHeight="84" SelectionMode="Single" SelectionUnit="FullRow" SelectionChanged="GearFocused" IsReadOnly="True" AutomationProperties.Name="{DynamicResource Label63}" HorizontalScrollBarVisibility="Auto">
        <DataGrid.Columns>
         <DataGridTemplateColumn Header="{DynamicResource Label64}" Width="50"><DataGridTemplateColumn.CellTemplate><DataTemplate><CheckBox IsChecked="{Binding Chosen, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding Eligible}" HorizontalAlignment="Center" VerticalAlignment="Center" AutomationProperties.Name="{Binding Identity}" ToolTip="{Binding EligibilityText}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
         <DataGridTemplateColumn Header="{DynamicResource Label65}" Width="210"><DataGridTemplateColumn.CellTemplate><DataTemplate><StackPanel VerticalAlignment="Center" Margin="8,4" ToolTip="{Binding Detail}"><TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock Text="{Binding Category}" Style="{StaticResource MetaText}" TextWrapping="Wrap" Margin="0,4,0,0"/><TextBlock Text="{Binding IdLabel}" Style="{StaticResource MetaText}" TextWrapping="Wrap"/></StackPanel></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
         <DataGridTemplateColumn Header="{DynamicResource Label66}" Width="130"><DataGridTemplateColumn.CellTemplate><DataTemplate><StackPanel VerticalAlignment="Center" Margin="8,4"><TextBlock Text="{Binding Owner}" TextWrapping="Wrap"/><TextBlock Text="{Binding ExclusiveLabel}" Style="{StaticResource MetaText}" TextWrapping="Wrap" Margin="0,4,0,0"/><TextBlock Text="{Binding Flags}" Style="{StaticResource MetaText}" TextWrapping="Wrap"/></StackPanel></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-        <DataGridTemplateColumn Header="{DynamicResource Label67}" Width="100"><DataGridTemplateColumn.CellTemplate><DataTemplate><StackPanel VerticalAlignment="Center" Margin="8,4"><TextBlock Text="{Binding ScoreLabel}" FontWeight="SemiBold"/><TextBlock Text="{Binding Ranks}" Margin="0,4,0,0"/><TextBlock Text="{Binding Enhancement}" Style="{StaticResource MetaText}" TextWrapping="Wrap"/></StackPanel></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+        <DataGridTemplateColumn Header="{DynamicResource Label67}" Width="120"><DataGridTemplateColumn.CellTemplate><DataTemplate><StackPanel VerticalAlignment="Center" Margin="8,4"><TextBlock Text="{Binding ScoreLabel}" FontWeight="SemiBold"/><TextBlock Text="{Binding Ranks}" Margin="0,4,0,0"/><TextBlock Text="{Binding Enhancement}" Style="{StaticResource MetaText}" TextWrapping="Wrap"/><TextBlock Text="{Binding CostLabel}" Style="{StaticResource MetaText}" TextWrapping="Wrap" ToolTip="{Binding CostLabel}"/></StackPanel></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
         <DataGridTemplateColumn Header="{DynamicResource Label68}" Width="240"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding MainLines}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="8,4" ToolTip="{Binding Detail}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
         <DataGridTemplateColumn Header="{DynamicResource Label69}" Width="220"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding SubLines}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="8,4" ToolTip="{Binding Detail}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
        </DataGrid.Columns>
       </DataGrid>
-      <Border Grid.Row="4" Background="{DynamicResource SurfaceMuted}" Padding="10" Margin="0,10,0,0"><ScrollViewer MaxHeight="75" VerticalScrollBarVisibility="Auto"><TextBlock x:Name="GearDetail" Text="{DynamicResource Label70}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}"/></ScrollViewer></Border>
+      <Expander x:Name="GearDetailExpander" Grid.Row="4" Header="{DynamicResource equipment.ui.detail}" Margin="0,10,0,0"><Border Background="{DynamicResource SurfaceMuted}" Padding="10" Margin="0,8,0,0"><ScrollViewer MaxHeight="96" VerticalScrollBarVisibility="Auto"><TextBlock x:Name="GearDetail" Text="{DynamicResource Label70}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}"/></ScrollViewer></Border></Expander>
      </Grid></ScrollViewer>
     </Border>
    </TabItem>
@@ -103,6 +122,7 @@
    <TextBlock x:Name="SummaryText" Text="{DynamicResource Label71}" FontWeight="SemiBold" FontSize="16" TextWrapping="Wrap" Margin="0,0,0,10"/>
    <DockPanel LastChildFill="False"><Button x:Name="ExecuteButton" DockPanel.Dock="Right" Content="{DynamicResource Label74}" Style="{StaticResource PrimaryButton}" Click="ExecuteClick" IsEnabled="False" MinWidth="135"/><Button x:Name="StopButton" DockPanel.Dock="Right" Content="{DynamicResource Label73}" Click="StopClick" IsEnabled="False" Margin="0,0,10,0"/></DockPanel>
    <TextBlock x:Name="StatusText" Text="{DynamicResource Label76}" TextWrapping="Wrap" MaxHeight="65" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" Foreground="{DynamicResource MutedInk}" Margin="0,10,0,0"/>
+   <Button x:Name="ResolveSupplyButton" Content="{DynamicResource equipment.supply.resolve}" Click="ResolveSupplyClick" Visibility="Collapsed" HorizontalAlignment="Left" Margin="0,8,0,0"/>
    <ProgressBar x:Name="LoadingProgress" Height="4" Margin="0,10,0,0" Visibility="Collapsed" AutomationProperties.Name="{Binding Text, ElementName=StatusText}"/>
   </StackPanel>
  </Grid>

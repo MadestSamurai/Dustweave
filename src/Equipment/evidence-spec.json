@@ -40,6 +40,14 @@
         "RewardInfoBundle",
         "SuccessCount"
       ]
+    },
+    {
+      "RequestSite": "constructor",
+      "Paths": [
+        "RewardInfoBundle"
+      ],
+      "Role": "hunt.dispatch",
+      "ResponseType": "Proto.Net.HuntDispatchResponse"
     }
   ],
   "Reads": [
@@ -89,7 +97,9 @@
       "StaticMember": "ὬὯὧὣὪὢὡὬὬὯὦ",
       "Paths": [
         "Gold",
-        "Catalyst"
+        "Catalyst",
+        "FreeHuntingAp",
+        "BonusHuntingAp"
       ]
     },
     {
@@ -158,6 +168,13 @@
         "BaseInfo"
       ],
       "MaxItems": 10000
+    },
+    {
+      "Type": "$equipment_supply",
+      "Id": "equipment.supply",
+      "Paths": [
+        "$state"
+      ]
     }
   ]
 }

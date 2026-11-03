@@ -1,0 +1,147 @@
+{
+  "equipment.supply.enable": {
+    "zh-CN": "使用米饭扫荡，自动补足制作所需的木头和金币",
+    "zh-TW": "使用白飯掃蕩，自動補足製作所需的木頭與金幣",
+    "en-US": "Use rice sweeps to replenish wood and gold for crafting"
+  },
+  "equipment.supply.woodReserve": {
+    "zh-CN": "预留木头",
+    "zh-TW": "保留木頭",
+    "en-US": "Wood to keep"
+  },
+  "equipment.supply.riceReserve": {
+    "zh-CN": "预留米饭（免费＋储备）",
+    "zh-TW": "保留白飯（免費＋儲備）",
+    "en-US": "Rice to keep (free + stored)"
+  },
+  "equipment.supply.hint": {
+    "zh-CN": "优先使用现有库存，按制作上限和预算计算最少米饭。木头扫荡使用第九章，金币使用哥布林；需已解锁相应扫荡。",
+    "zh-TW": "優先使用現有庫存，依製作上限與預算計算最少白飯。木頭掃蕩使用第九章，金幣使用哥布林；須已解鎖相應掃蕩。",
+    "en-US": "Uses existing stock first, then minimizes rice for your crafting limit and budgets. Wood: Chapter 9; gold: Goblins. The respective sweep must be unlocked."
+  },
+  "equipment.supply.route": {
+    "zh-CN": "{0} · 难度 {1} · {2:N0} 次，米饭 {3:N0}；木头 +{4:N0}，金币 +{5:N0}",
+    "zh-TW": "{0} · 難度 {1} · {2:N0} 次，白飯 {3:N0}；木頭 +{4:N0}，金幣 +{5:N0}",
+    "en-US": "{0} · difficulty {1} · {2:N0} sweeps, {3:N0} rice; +{4:N0} wood, +{5:N0} gold"
+  },
+  "equipment.supply.woodRoute": {
+    "zh-CN": "第九章木头",
+    "zh-TW": "第九章木頭",
+    "en-US": "Chapter 9 wood"
+  },
+  "equipment.supply.goldRoute": {
+    "zh-CN": "哥布林金币",
+    "zh-TW": "哥布林金幣",
+    "en-US": "Goblin gold"
+  },
+  "equipment.supply.total": {
+    "zh-CN": "米饭合计 {0:N0}（免费 {1:N0}＋储备 {2:N0}）；至少保留米饭 {3:N0}、木头 {4:N0}。",
+    "zh-TW": "白飯合計 {0:N0}（免費 {1:N0}＋儲備 {2:N0}）；至少保留白飯 {3:N0}、木頭 {4:N0}。",
+    "en-US": "Total rice: {0:N0} ({1:N0} free + {2:N0} stored). Keep at least {3:N0} rice and {4:N0} wood."
+  },
+  "equipment.supply.estimate": {
+    "zh-TW": "依目前掃蕩難度與當日加成計算固定收益；不會超出本次確認的白飯量，不購買白飯。",
+    "en-US": "Uses fixed rewards for the selected difficulty and daily bonus. Never exceeds the confirmed rice amount or purchases rice.",
+    "zh-CN": "按当前扫荡难度与当天加成计算固定收益；不会超出本次确认的米饭量，不购买米饭。"
+  },
+  "equipment.supply.progress": {
+    "zh-CN": "已扫荡 {0:N0} 次 · 米饭 {1:N0} · 木头 +{2:N0} · 金币 +{3:N0}",
+    "zh-TW": "已掃蕩 {0:N0} 次 · 白飯 {1:N0} · 木頭 +{2:N0} · 金幣 +{3:N0}",
+    "en-US": "{0:N0} sweeps completed · {1:N0} rice · +{2:N0} wood · +{3:N0} gold"
+  },
+  "equipment.supply.balance": {
+    "zh-CN": "免费米饭 {0:N0} · 储备米饭 {1:N0} · 木头 {2:N0}",
+    "zh-TW": "免費白飯 {0:N0} · 儲備白飯 {1:N0} · 木頭 {2:N0}",
+    "en-US": "Free rice {0:N0} · stored rice {1:N0} · wood {2:N0}"
+  },
+  "equipment.supply.shortfall": {
+    "zh-CN": "实际资源可制作 {0:N0} / {1:N0} 件；已保留米饭和木头，不会额外扫荡。",
+    "zh-TW": "實際資源可製作 {0:N0} / {1:N0} 件；已保留白飯與木頭，不會額外掃蕩。",
+    "en-US": "Actual resources allowed {0:N0} / {1:N0} crafts. Rice and wood reserves were kept; no extra sweeps were started."
+  },
+  "equipment.supply.riceUnavailable": {
+    "en-US": "Rice is unavailable. Refresh inventory, or turn off rice replenishment to craft from existing stock.",
+    "zh-TW": "無法讀取白飯數量，請重新讀取庫存；關閉白飯補給後仍可依現有庫存製作。",
+    "zh-CN": "未能读取米饭数量，请重新读取库存；关闭米饭补给后仍可按现有库存制作。"
+  },
+  "equipment.supply.quoteError": {
+    "en-US": "Sweep rewards could not be read. Refresh inventory and calculate again. Details have been retained.",
+    "zh-TW": "無法讀取掃蕩收益，請重新讀取庫存後計算；詳情已保留。",
+    "zh-CN": "未能读取扫荡收益，请重新读取库存后计算；详情已保留。"
+  },
+  "equipment.supply.routeUnavailable": {
+    "en-US": "This sweep is unavailable. Check that it is unlocked in game, or calculate a new plan.",
+    "zh-TW": "該掃蕩暫不可用。請在遊戲中確認已解鎖，或重新計算可用方案。",
+    "zh-CN": "该扫荡暂不可用。请在游戏中确认已解锁，或重新计算可用方案。"
+  },
+  "equipment.supply.routeChanged": {
+    "en-US": "Sweep difficulty or rice cost changed. Refresh inventory and calculate again.",
+    "zh-TW": "掃蕩難度或白飯費用已變更，請重新讀取庫存並計算。",
+    "zh-CN": "扫荡难度或米饭费用已变化，请重新读取库存并计算。"
+  },
+  "equipment.supply.reserveChanged": {
+    "en-US": "This batch would cross the rice reserve. Refresh inventory and calculate again.",
+    "zh-TW": "目前白飯不足以完成本批並保留預留量，請重新讀取庫存並計算。",
+    "zh-CN": "当前米饭不足以完成本批并保留预留量，请重新读取库存并计算。"
+  },
+  "equipment.supply.inventoryChanged": {
+    "en-US": "Inventory changed while reading sweep information. Refresh inventory and calculate again.",
+    "zh-TW": "讀取掃蕩資訊期間庫存有變更，請重新讀取庫存並計算。",
+    "zh-CN": "读取扫荡信息期间库存有变化，请重新读取库存并计算。"
+  },
+  "equipment.supply.resolve": {
+    "en-US": "Start over from current inventory",
+    "zh-TW": "依目前庫存重新開始",
+    "zh-CN": "按当前库存重新开始"
+  },
+  "equipment.supply.resolveConfirm": {
+    "en-US": "The last sweep could not be fully confirmed. Keep its records, discard the remaining old plan, and replan from the inventory just read. The old sweep will not be resent; a new plan still requires confirmation.",
+    "zh-TW": "上次掃蕩無法確認完整結果。將保留原記錄，放棄舊計畫剩餘部分，依剛讀取的庫存重新規劃。不會重送舊掃蕩；新計畫仍須確認後才執行。",
+    "zh-CN": "上次扫荡未能确认完整结果。将保留原记录，放弃旧计划的剩余部分，以刚读取的库存重新规划。不会重发旧扫荡；新计划仍需确认后才执行。"
+  },
+  "equipment.supply.resolved": {
+    "en-US": "The old plan was kept as a record. Calculate and confirm a new plan from current inventory.",
+    "zh-TW": "舊計畫已保留為記錄。請依目前庫存重新計算並確認。",
+    "zh-CN": "旧计划已保留为记录。请按当前库存重新计算并确认。"
+  },
+  "equipment.supply.pending": {
+    "en-US": "The last sweep is unconfirmed. Refresh inventory to recheck, or start over from current inventory.",
+    "zh-TW": "上次掃蕩結果尚未確認。可再次讀取庫存確認，或依目前庫存重新開始。",
+    "zh-CN": "上次扫荡结果尚未确认。可再次读取库存核对，或按当前库存重新开始。"
+  },
+  "equipment.supply.unavailableSummary": {
+    "en-US": "{0} is unavailable; this plan uses the other available resources.",
+    "zh-TW": "{0} 暫不可用，本次僅依其他可用資源計算。",
+    "zh-CN": "{0} 暂不可用，本次仅按其他可用资源计算。"
+  },
+  "equipment.ui.craftSection": {
+    "zh-CN": "制作设置",
+    "zh-TW": "製作設定",
+    "en-US": "Crafting"
+  },
+  "equipment.ui.supplySection": {
+    "zh-CN": "米饭补给（可选）",
+    "zh-TW": "白飯補給（可選）",
+    "en-US": "Rice supply (optional)"
+  },
+  "equipment.ui.planSection": {
+    "zh-CN": "计划结果",
+    "zh-TW": "計畫結果",
+    "en-US": "Plan"
+  },
+  "equipment.ui.unlimited": {
+    "zh-CN": "不限",
+    "zh-TW": "不限",
+    "en-US": "No limit"
+  },
+  "equipment.ui.detail": {
+    "zh-CN": "选中装备的完整信息",
+    "zh-TW": "選取裝備的完整資訊",
+    "en-US": "Full details of the highlighted item"
+  },
+  "equipment.ui.costPerRefine": {
+    "zh-CN": "每次 {0}",
+    "zh-TW": "每次 {0}",
+    "en-US": "Per refine: {0}"
+  }
+}

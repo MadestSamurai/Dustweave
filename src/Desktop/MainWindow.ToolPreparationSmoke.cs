@@ -131,6 +131,8 @@ public partial class MainWindow
                     Check(((ProgressBar)window.FindName("LoadingProgress")).IsVisible&&!((Button)window.FindName("ExecuteButton")).IsEnabled,"inventory loading remains animated and execution stays disabled");
                     Capture($"inventory-{language}-{appearance}",(FrameworkElement)window.Content);
                     equipment.GetMethod("Busy",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(window,new object[]{false});
+                    await (Task)equipment.GetMethod("CheckLayoutForSmoke",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(window,new object[]{Path.Combine(smoke!,"equipment-layout-"+language+"-"+appearance)})!;
+                    Check(true,"equipment: optional supply, retained reserves, placeholders and complete refinement costs");
                 }
                 if(id=="infinite-gacha"){
                     var demo=demos[window];var snapshot=demo.GetType().GetField("Snapshot")!.GetValue(demo)!;

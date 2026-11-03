@@ -16,7 +16,8 @@ public static class DailyTradePlan
         string key = DailyTradeCatalog.Fingerprint(O(("engine", engine), ("catalog", catalog), ("state", stable), ("settings", DailyTradeOptimizer.Preferences(settings))));
         var old = DailyJson.TryRead<JsonObject>(output);
         JsonObject result;
-        if (S(old?["cache_key"]) == key && B(old?["solver"]?["optimal"]))
+        if (S(old?["cache_key"]) == key && B(old?["solver"]?["optimal"]) && B(old?["solver"]?["realization_tie_optimal"]) &&
+            (N(old?["forecast"]?["announced_prices"]) == 0 || B(old?["settings"]?["include_break_even_resales"]) || B(old?["solver"]?["cash_tie_optimal"])))
         {
             DailyTradeOptimizer.Validate(catalog, state);
             result = old!.DeepClone().AsObject();
@@ -70,6 +71,8 @@ public static class DailyTradePlan
         b.AppendLine();
         if (p["forecast"]?["turnover"] is JsonObject turnover)
             b.AppendLine($"未来周转：7天内可高价出售的现有库存按回款的50%计入，最多放宽可用资金的25%；本方案使用 {turnover["allowance_used"]!.GetValue<double>():N0} 金币额度。该额度只影响未来资金预留，今天采购仍须有足额金币。").AppendLine();
+        if (p["forecast"]?["transition_funding"] is JsonObject)
+            b.AppendLine("改价过渡：保留原有配方分配与本轮盈利加工优先级。涨价料理单独比较提前回款与等待新价；只有现有库存的预计回款能支持到账之后的采购，不能倒用到今天，也不能补买之前错过的每日供货。新价是预计收入，实际出售仍核对游戏报价。").AppendLine();
         if (B(p["settings"]?["include_break_even_resales"]))
             b.AppendLine($"已开启金币成就采购：额外零收益商品 {N(s["break_even_count"]):N0} 个，垫资／预计回款 {N(s["break_even_value"]):N0} 金币。仅比较折扣后买价与120%卖价，不分摊砍价费；实际药耗仍计入上方账目，卖出须等待高价日。").AppendLine();
         if (p["drop_forecast"] is JsonObject drops) b.AppendLine($"掉落预测：已知周收集路线 {Rows(drops["maps"]).Length} 张地图，按静态奖励权重计算期望；仅影响材料分配，不允许使用未到账物品。");
@@ -87,7 +90,10 @@ public static class DailyTradePlan
         Table("采购", ["商店", "商品", "物品", "数量", "其中零收益", "单价", "金额"], Rows(p["purchases"]).Select(r => new object?[] { N(r["shop"]), N(r["product"]), S(r["name"]), N(r["count"]), N(r["break_even_count"]), N(r["price"]), N(r["cost"]) }));
         Table("料理分配", ["料理", "份数", "天赋药", "预计售日"], Rows(p["cooking"]).Select(r => new object?[] { S(r["name"]), N(r["count"]), N(r["potions"]), S(r["sale_date"]) }));
         Table("售卖分配", ["物品", "数量", "单价", "商店", "预计售日", "今日报价确认"], Rows(p["sales"]).Select(r => new object?[] { S(r["name"]), N(r["count"]), N(r["price"]), N(r["shop"]), S(r["date"]), B(r["today_quote_confirmed"]) ? "是" : "否" }));
-        Table("后续料理保留", ["食材", "数量", "原料120%卖价"], Rows(p["holds"]).Select(r => new object?[] { S(r["name"]), N(r["count"]), N(r["price"]) }));
+        Table("后续料理保留", ["食材", "数量", "原料120%卖价"], Rows(p["holds"]).Where(r => S(r["reason"]) != "price_change_wait").Select(r => new object?[] { S(r["name"]), N(r["count"]), N(r["price"]) }));
+        if(Rows(p["holds"]).Any(r=>S(r["reason"])=="price_change_wait"))
+            Table("等待改价的料理", ["料理", "数量", "当前高价", "预计新高价", "预计售日"],
+                Rows(p["holds"]).Where(r=>S(r["reason"])=="price_change_wait").Select(r=>new object?[]{S(r["name"]),N(r["count"]),N(r["observed_price"]),N(r["price"]),S(r["expected_sale_date"])}));
         if(calendar) Table("周转预测（不执行）", ["日期", "扣除保留额后的预测金币", "采购数量", "料理份数", "售出数量"],
             Rows(p["forecast"]?["calendar"]).Select(r => new object?[] { S(r["date"]), r["cash_above_reserve"], r["purchases"], r["cooking"], r["sales"] }));
         b.AppendLine().AppendLine("表中包含尚未买入或制作的数量。执行前仍须重读库存并保留已分配食材。").AppendLine($"输入校验值：`{S(p["input_hash"])}`。").AppendLine($"数据表校验值：`{S(p["catalog_hash"])}`。");

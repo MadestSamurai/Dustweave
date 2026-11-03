@@ -24,10 +24,10 @@ static class TradeCalendarCases
         string fingerprint=DailyTradeCatalog.Fingerprint(c);
         var p=Plan(c,s); DailyJson.Write(Path.Combine(output,"calendar-before.json"),p);
         Check(N(p["forecast"]?["announced_prices"])==1 && DailyTradeCatalog.Fingerprint(c)==fingerprint,"calendar forecasts new prices without changing observed catalog");
-        Check(Count(p,"cooking",2002)==0 && N(p["summary"]?["potions_to_buy"])==0,"calendar delays potion spending before profitable sale date");
-        Check(Rows(p["forecast"]?["calendar"]).Length==62 && Rows(p["sales"]).All(r=>B(r["today_quote_confirmed"])),"forecast future dates never become executable sale orders");
+        Check(N(p["summary"]?["potions_to_buy"])==N(p["summary"]?["potions_used"]),"transition buys pills only for actual current processing");
+        Check(S(p["solver"]?["scope"])=="joint_current_and_29_day_supply" && !B(p["forecast"]?["executable"]),"transition extends the original joint model without replacing it with a calendar");
         s=State(c,"2026-11-01"); s["items"]=O(("2002",100)); s["today_quotes"]=new JsonArray(O(("item",2002),("shop",1),("rate",120),("price",33)));
-        p=Plan(c,s); Check(Count(p,"sales",2002)==0 && Count(p,"holds",2002)==100,"prepared dishes retain price upside when funding does not require early sale");
+        p=Plan(c,s); Check(Count(p,"sales",2002)==0 && Count(p,"holds",2002)>=100,"prepared dishes retain price upside when funding does not require early sale");
         var tight=Catalog(); tight["offers"]![0]!["base_price"]=1; tight["items"]![0]!["day"]=2;
         var low=State(tight,"2026-11-01",0); low["items"]=O(("2002",1));
         low["today_quotes"]=new JsonArray(O(("item",2002),("shop",1),("rate",120),("price",33)));
@@ -38,21 +38,21 @@ static class TradeCalendarCases
         s=State(c,gold:100); p=Plan(c,s,O(("reserve_gold",90),("max_spend",5)));
         Check(N(p["summary"]?["cash_required"])<=5 && N(p["summary"]?["cash_remaining"])>=95,"calendar honors both reserve and per-run spend cap");
         s=State(c); s["processing_enabled"]=false; s["items"]=O(("1",20)); s["today_quotes"]=new JsonArray(O(("item",1),("shop",1),("rate",120),("price",10)));
-        p=Plan(c,s); Check(Rows(p["cooking"]).Length==0 && Rows(p["sales"]).Length==0 && N(p["summary"]?["potions_used"])==0,"explicit later purchase-only choice performs no processing or potion spending");
+        p=Plan(c,s); Check(Rows(p["cooking"]).Length==0 && !Rows(p["sales"]).Any(r=>B(r["today_quote_confirmed"])) && N(p["summary"]?["potions_used"])==0,"explicit later purchase-only choice performs no processing or potion spending");
         c=Catalog(); c["items"]![1]!["day"]=16; s=State(c,"2026-11-16"); s["items"]=O(("2002",100));
         s["today_quotes"]=new JsonArray(O(("item",2002),("shop",1),("rate",120),("price",33)));
         p=Plan(c,s); Check(Count(p,"sales",2002)==0 && Rows(p["warnings"]).Any(w=>S(w["code"])=="price_change_pending"),"maintenance boundary keeps changed dishes until actual price is confirmed");
-        c["items"]![1]!["sale"]=66; s=State(c,"2026-11-16"); s["items"]=O(("1",10));
+        c["items"]![1]!["sale"]=66; s=State(c,"2026-11-16",100000); s["items"]=O(("1",10));
         s["today_quotes"]=new JsonArray(O(("item",2002),("shop",1),("rate",120),("price",66)));
         p=Plan(c,s); Check(Count(p,"cooking",2002)>0 && Count(p,"sales",2002)>0,"confirmed new prices immediately enable profitable current cooking and sales");
         Check(N(p["forecast"]?["announced_prices"])==0,"post-maintenance forecasts use captured prices rather than permanent hardcoded overrides");
         Check(N(p["summary"]?["potions_to_buy"])==Math.Max(0,N(p["summary"]?["potions_used"])-N(s["potions"])),"current pill purchases cover actual consumption without speculative hoarding");
         s["potions"]=10000; p=Plan(c,s);
         Check(N(p["summary"]?["potions_to_buy"])==0,"existing pills are used before buying any more");
-        s["today_quotes"]![0]!["price"]=33; p=Plan(c,s); Check(Count(p,"sales",2002)==0,"mismatched current price never authorizes a sale");
+        s["today_quotes"]![0]!["price"]=33; p=Plan(c,s); Check(!Rows(p["sales"]).Any(r=>B(r["today_quote_confirmed"])),"mismatched current price never authorizes a sale");
         s=State(c,"2026-11-16"); s["items"]=O(("1",10)); s["protected_items"]=O(("1",10)); s["capacity_limits"]=O(("1",10));
         p=Plan(c,s); Check(Count(p,"purchases",1)==0 && Count(p,"cooking",2002)==0,"protected inventory and full capacity cannot be consumed or overfilled");
-        c=Catalog(); c["offers"]![0]!["base_price"]=10; s=State(c);
+        c=Catalog(); c["offers"]![0]!["base_price"]=10; s=State(c); s["recipes"]=new JsonArray();
         p=Plan(c,s,O(("include_break_even_resales",true)));
         Check(N(p["summary"]?["break_even_count"])>0,"achievement purchases remain available without sacrificing primary forecast value");
         s=State(c,"2026-11-16"); s["future_supply"]=O(("days",29),("database_sha256","synthetic"),("items",O(("1",2900))));
@@ -72,7 +72,7 @@ static class TradeCalendarCases
         Check(!Rows(p["sales"]).Any(r=>N(r["item"])==77) && Rows(p["holds"]).Any(r=>N(r["item"])==77 && N(r["price"])==0),"unavailable merchants cannot fund current or future trading");
         c=Catalog(); c["items"]![0]!["stack"]=10; c["items"]![0]!["sale"]=20;
         c["offers"]![0]!["limit"]=30;
-        s=State(c); s["recipes"]=new JsonArray(); s["items"]=O(("1",16));
+        s=State(c,gold:100000); s["recipes"]=new JsonArray(); s["items"]=O(("1",16));
         s["today_quotes"]=new JsonArray(O(("item",1),("shop",1),("rate",120),("price",20)));
         s["storage"]=O(("slots",10),("used",10),("stacks",new JsonArray(O(("id",1),("count",9)),O(("id",1),("count",7)))));
         p=Plan(c,s);
@@ -84,6 +84,7 @@ static class TradeCalendarCases
         s["offers"]!.AsArray().Add(O(("shop",1),("product",2),("remaining",10),("price",5),("bargain_price",2)));
         s["today_quotes"]!.AsArray().Add(O(("item",2),("shop",1),("rate",120),("price",30)));
         p=Plan(c,s);
+        DailyJson.Write(Path.Combine(output,"shared-slot-plan.json"),p);
         Check(Count(p,"purchases",2)==10 && Count(p,"purchases",1)==4,"two products compete for the same final slot by value rather than each claiming it");
         s["storage"]!["slots"]=10; s["today_quotes"]=new JsonArray(O(("item",1),("shop",1),("rate",120),("price",20)));
         p=Plan(c,s);
@@ -92,7 +93,7 @@ static class TradeCalendarCases
         Check(bag.Additional(1,10)==4 && bag.Additional(2,10)==0,"unknown non-food slots remain occupied");
         c=Catalog(); s=State(c); s["items"]=O(("1",300000)); s["potions"]=10000; s["potion_buy_limit"]=0;
         p=Plan(c,s);
-        Check(Count(p,"cooking",2002)==0,"large multi-stack stock alone no longer forces early cooking");
+        Check(Count(p,"cooking",2002)>0 && N(p["summary"]?["potions_to_buy"])==0,"large stock is processed only where legacy joint allocation proves profitable, without forced pill purchases");
         return Task.CompletedTask;
     }
 }

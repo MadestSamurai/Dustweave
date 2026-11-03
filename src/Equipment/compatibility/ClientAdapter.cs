@@ -21,7 +21,7 @@ public sealed class ClientAdapter : IDisposable
  public string Rewrite(string text)=>Regex.Replace(text,@"[\u0370-\u1fff]+",m=>Names.TryGetValue(m.Value,out var n)?n:m.Value);
  public string Source(){
   string Q(string s)=>JsonSerializer.Serialize(s);
-  return "namespace BD2Equipment.Live { internal static class ClientNames { internal const string Mvid="+Q(Index.Module.Mvid.ToString())+"; internal static string Map(string value) { switch(value){"+string.Join("",Names.Select(p=>"case "+Q(p.Key)+": return "+Q(p.Value)+";"))+"default: return value;} } } }";
+  return "namespace BD2Equipment.Live { internal static class ClientNames { internal const string Mvid="+Q(Index.Module.Mvid.ToString())+"; internal static string Map(string value) { switch(value){"+string.Join("",Names.Select(p=>"case "+Q(p.Key)+": return "+Q(p.Value)+";"))+"default: return value;} } } }"+SupplyBindings.Source(Index.Module);
  }
  public void Dispose()=>Index.Dispose();
 }

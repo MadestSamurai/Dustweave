@@ -6,8 +6,8 @@ namespace BD2Equipment.Core;
 // Decisions use the observed stack, never a fixed sleep after a server response.
 public sealed record EquipmentUiAction(string Ui,string? Field=null,bool Back=false,string? Expect=null,string? Absent=null);
 public static class EquipmentUiFlow {
- public static readonly string[] Results={"EquipmentBatchUpgradeResultPopupUI","EquipmentUpgradeResultPopupUI","ItemGetPopupUI"};
- static readonly string[] Navigable={"EquipmentUpgradeUI","EquipmentMakingUI","EquipmentMakingSelectUI","InventoryManageUI","MailUI"};
+ public static readonly string[] Results={"EquipmentBatchUpgradeResultPopupUI","EquipmentUpgradeResultPopupUI","ItemGetPopupUI","RewardReceivePopupUI"};
+ static readonly string[] Navigable={"EquipmentUpgradeUI","EquipmentMakingUI","EquipmentMakingSelectUI","InventoryManageUI","MailUI","WorldMapUI","HuntOrAirwayUI","HuntDispatchPopupUI"};
  public static bool Has(JsonObject frame,string type)=>A(frame["Surfaces"]).Any(u=>S(u["Type"])==type);
  public static EquipmentUiAction Dismiss(string type)=>type switch {
   "ItemGetPopupUI"=>new(type,"_objBackButton",Absent:type),

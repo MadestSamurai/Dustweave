@@ -136,13 +136,13 @@ public static class DailyTradeOptimizer
                 Integer(q[k], "quote " + k, k is "item" or "shop" ? 1 : 0);
     }
     private static Dictionary<long, long> Quantities(JsonNode? node) => (node as JsonObject ?? new()).ToDictionary(p => long.Parse(p.Key, CultureInfo.InvariantCulture), p => N(p.Value));
-    private sealed record Candidate(string Mode, long Opening, double[] X, double Profit, double? Bound, bool Optimal, bool Tie, long[] Prices, long Cash, long Potions, long PotionBuy, long CurrentProfit, JsonObject Forecast, long[] BreakEven)
+    private sealed record Candidate(string Mode, long Opening, double[] X, double Profit, double? Bound, bool Optimal, bool Tie, bool CashTie, long[] Prices, long Cash, long Potions, long PotionBuy, long CurrentProfit, JsonObject Forecast, long[] BreakEven)
     {
         public long BreakEvenValue => BreakEven.Select((q, j) => q * Prices[j]).Sum();
     }
 
     private static long[] AllocateBreakEven(double[] x, int[] eligible, int[] saleColumns, long[] prices,
-        double[] upper, List<double[]> rows, List<double> lower, List<double> caps, double seconds, Action? check)
+        double[] upper, List<double[]> rows, List<double> lower, List<double> caps, double seconds, Action? check, int[]? slots = null)
     {
         var allocated = new long[prices.Length];
         if (eligible.Length == 0) return allocated;
@@ -151,20 +151,21 @@ public static class DailyTradeOptimizer
         var extraRows = new List<double[]>(); var extraLower = new List<double>(); var extraCaps = new List<double>();
         for (int i = 0; i < rows.Count; i++)
         {
-            var row = eligible.Select(j => rows[i][j] + rows[i][saleColumns[j]]).ToArray();
+            var row = eligible.Select(j => rows[i][j] + rows[i][saleColumns[j]]).Concat((slots??[]).Select(j=>rows[i][j])).ToArray();
             if (row.All(v => v == 0)) continue;
             double used = rows[i].Select((v, j) => v * x[j]).Sum();
             extraRows.Add(row); extraLower.Add(lower[i] - used); extraCaps.Add(caps[i] - used);
         }
-        var solved = DailyLinearOptimizer.Solve(eligible.Select(j => -(double)prices[j]).ToArray(),
-            eligible.Select(j => Math.Max(0, upper[j] - x[j])).ToArray(), extraRows, extraLower, extraCaps, true,
-            Math.Min(seconds, 2), check, initial: new double[eligible.Length]);
+        var solved = DailyLinearOptimizer.Solve(eligible.Select(j => -(double)prices[j]).Concat((slots??[]).Select(_=>0d)).ToArray(),
+            eligible.Concat(slots??[]).Select(j => Math.Max(0, upper[j] - x[j])).ToArray(), extraRows, extraLower, extraCaps, true,
+            Math.Min(seconds, 2), check, initial: new double[eligible.Length+(slots?.Length??0)]);
         if (solved == null) return allocated;
         for (int i = 0; i < eligible.Length; i++)
         {
             int j = eligible[i]; long q = (long)Math.Round(solved.Values[i]);
             allocated[j] = q; x[j] += q; x[saleColumns[j]] += q;
         }
+        for(int i=0;i<(slots?.Length??0);i++)x[slots![i]]+=Math.Round(solved.Values[eligible.Length+i]);
         return allocated;
     }
     public static JsonObject Plan(JsonObject catalog, JsonObject state, JsonObject? inputSettings = null, double timeLimit = 15, Action? check = null)
@@ -186,8 +187,10 @@ public static class DailyTradeOptimizer
         var settings = Preferences(inputSettings);
         bool includeBreakEven = B(settings["include_break_even_resales"]);
         Require(double.IsFinite(timeLimit) && timeLimit > 0 && timeLimit <= 300, "Invalid time limit");
-        if (state["storage"] is JsonObject || DailyTradePriceChange.UseCalendar(catalog, DateOnly.ParseExact(S(state["game_date"]), "yyyy-MM-dd", CultureInfo.InvariantCulture)))
-            return DailyTradeCalendar.Plan(catalog, state, settings, catalogHash, timeLimit, check);
+        var date = DateOnly.ParseExact(S(state["game_date"]), "yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var expectedPrices = date >= new DateOnly(2026,10,31) ? DailyTradePriceChange.ExpectedPrices(catalog,date) : new Dictionary<long,long>();
+        bool processing = state["processing_enabled"] == null || B(state["processing_enabled"]);
+        var storage = state["storage"] is JsonObject bag ? new DailyTradeStorage(bag) : null;
         var stock = Quantities(state["items"]);
         var reserved = Quantities(settings["reserve_items"]);
         var items = Rows(catalog["items"]).ToDictionary(i => N(i["id"]));
@@ -200,15 +203,36 @@ public static class DailyTradeOptimizer
         var products = Rows(state["offers"]).Where(p => N(p["remaining"]) > 0).Select(p => { var r = offers[(N(p["shop"]), N(p["product"]))].DeepClone().AsObject(); foreach (string k in new[] { "remaining", "price", "bargain_price" }) r[k] = Copy(p[k]); return r; }).ToArray();
         var unlocked = state["recipes"]!.AsArray().Select(N).ToHashSet();
         var recipes = Rows(catalog["recipes"]).Where(r => unlocked.Contains(N(r["id"]))).ToArray();
+        if (expectedPrices.Count > 0)
+        {
+            var drops = DailyTradeDropForecast.Supply(catalog,state);
+            var visible = Rows(state["offers"]).Select(p=>(N(p["shop"]),N(p["product"]))).ToHashSet();
+            long Supply(long k) => available.GetValueOrDefault(k) + drops.GetValueOrDefault(k) +
+                products.Where(p=>N(p["item"])==k).Sum(p=>N(p["remaining"])) +
+                29*offers.Where(p=>visible.Contains(p.Key) && N(p.Value["item"])==k).Sum(p=>N(p.Value["limit"]));
+            expectedPrices = expectedPrices.Where(p=>available.GetValueOrDefault(p.Key)>0 || recipes.Any(r=>N(r["output"])==p.Key &&
+                Quantities(r["materials"]).All(m=>Supply(m.Key)>=m.Value))).ToDictionary(p=>p.Key,p=>p.Value);
+        }
         var keys = items.Keys.Order().ToArray();
         var pos = keys.Select((k, j) => (k, j)).ToDictionary(p => p.k, p => p.j);
+        var maxCooking = recipes.Select(r => processing ? Quantities(r["materials"]).Min(p =>
+            (available.GetValueOrDefault(p.Key) + products.Where(o => N(o["item"]) == p.Key).Sum(o => N(o["remaining"]))) / p.Value) : 0).ToArray();
+        // If even EVERY purchase and each recipe's independent upper bound fit,
+        // storage cannot bind any allocation. Keep the original smaller matrix:
+        // redundant integer columns otherwise make its realization solve slower.
+        var packing = storage != null && keys.Sum(k => storage.NewSlots(k, N(items[k]["stack"]),
+            products.Where(p => N(p["item"]) == k).Sum(p => N(p["remaining"])) +
+            recipes.Select((r,i) => N(r["output"]) == k ? maxCooking[i] * N(r["count"]) : 0).Sum())) > storage.Free ? storage : null;
         long budget = Math.Max(0, N(state["gold"]) - N(settings["reserve_gold"]));
         if (settings["max_spend"] != null)
             budget = Math.Min(budget, N(settings["max_spend"]));
         int saleStart = products.Length + recipes.Length, carryStart = saleStart + keys.Length;
-        var future = new DailyTradeForecast(catalog, state, carryStart, available, check);
+        var deferredKeys = keys.Where(k => expectedPrices.ContainsKey(k) || DailyTradePriceChange.AwaitingPrice(catalog,k,date)).ToArray();
+        var future = new DailyTradeForecast(catalog, state, carryStart, available, check, expectedPrices, deferredKeys.Length);
         var carryKeys = future.CarryKeys;
-        int n = future.Count, potionCol = future.Start - 1;
+        int potionCol = carryStart + carryKeys.Length, deferStart = potionCol + 1;
+        int slotStart = future.Count, n = slotStart + (packing == null ? 0 : keys.Length);
+        var integral = future.IntegralRecipes.Concat(packing == null ? [] : Enumerable.Range(slotStart,keys.Length)).ToArray();
         var balance = keys.Select(_ => new double[n]).ToArray();
         var upper = Enumerable.Repeat(DailyLinearOptimizer.Infinity, n).ToArray();
         var objective = new double[n];
@@ -226,7 +250,19 @@ public static class DailyTradeOptimizer
                 balance[pos[p.Key]][j] -= p.Value;
             balance[pos[N(r["output"])]][j] += N(r["count"]);
             objective[j] = N(r["potions"]) * N(state["potion_price"]);
-            upper[j] = parts.Min(p => (available.GetValueOrDefault(p.Key) + products.Where(o => N(o["item"]) == p.Key).Sum(o => N(o["remaining"]))) / p.Value);
+            upper[j] = maxCooking[i];
+        }
+        // Only announced output prices add an alternative sale allocation.
+        // Current material balances, recipe competition and eager processing
+        // remain the mature joint model. Deferred receipts never fund today.
+        for (int i = 0; i < deferredKeys.Length; i++)
+        {
+            long k = deferredKeys[i]; int j = deferStart + i;
+            balance[pos[k]][j] = -1;
+            objective[j] = -expectedPrices.GetValueOrDefault(k,N(items[k]["sale"]));
+            if (DailyTradePriceChange.AwaitingPrice(catalog,k,date) ||
+                DateOnly.ParseExact(NextSale(S(state["game_date"]),I(items[k]["day"])),"yyyy-MM-dd") >= DailyTradePriceChange.EffectiveDate)
+                upper[saleStart + pos[k]] = 0;
         }
         for (int i = 0; i < keys.Length; i++)
         {
@@ -290,6 +326,23 @@ public static class DailyTradeOptimizer
                 lower.Add(double.NegativeInfinity);
                 cap.Add(Math.Max(0, capacities[k] - stock.GetValueOrDefault(k)));
             }
+            if (packing != null)
+            {
+                // Guaranteed pre-sale headroom; no credit from future sales or
+                // unobserved stack deletion while cooking. A stack size is NOT
+                // an item-wide inventory limit. All items share the same slots.
+                var shared = new double[n];
+                for (int i = 0; i < keys.Length; i++)
+                {
+                    long k = keys[i]; int slot = slotStart+i;
+                    upper[slot] = packing.Free; shared[slot] = 1;
+                    var peak = new double[n]; peak[slot] = -N(items[k]["stack"]);
+                    for (int j = 0; j < products.Length; j++) if (N(products[j]["item"]) == k) peak[j] = 1;
+                    for (int j = 0; j < recipes.Length; j++) if (N(recipes[j]["output"]) == k) peak[products.Length+j] = N(recipes[j]["count"]);
+                    rows.Add(peak); lower.Add(double.NegativeInfinity); cap.Add(packing.Headroom(k,N(items[k]["stack"])));
+                }
+                rows.Add(shared); lower.Add(double.NegativeInfinity); cap.Add(packing.Free);
+            }
             var currentValue = (double[])obj.Clone();
             for (int i = 0; i < carryKeys.Length; i++) currentValue[carryStart + i] = -N(items[carryKeys[i]]["sale"]);
             future.Add(upper, obj, rows, lower, cap, cash, budget, carryStart, saleStart);
@@ -299,8 +352,25 @@ public static class DailyTradeOptimizer
                 if (relaxation?.Optimal == true && -relaxation.Objective - (includeBreakEven ? 0 : opening * N(state["potion_price"])) - baseValue < candidates.Max(RankingProfit) - .01)
                     continue;
             }
-            var solved = DailyLinearOptimizer.Solve(obj, upper, rows, lower, cap, true, timeLimit, check, future.Start, future.IntegralRecipes);
-            if (solved == null) { unresolvedMode = true; continue; }
+            var seed = new double[n];
+            for(int i=0;i<keys.Length;i++)
+            {
+                int deferred = System.Array.IndexOf(deferredKeys,keys[i]);
+                seed[deferred >= 0 ? deferStart+deferred : saleStart+i] = available.GetValueOrDefault(keys[i]);
+            }
+            seed[potionCol] = Math.Max(0,opening-N(state["potions"]));
+            future.Seed(seed);
+            bool Feasible(double[] values) => values.Select((v,j)=>double.IsFinite(v) && v >= -1e-6 && v <= upper[j]+1e-6).All(v=>v)
+                && rows.Select((row,i)=>(Value:row.Zip(values,(a,b)=>a*b).Sum(),Index:i)).All(r=>r.Value>=lower[r.Index]-1e-4 && r.Value<=cap[r.Index]+1e-4);
+            // Preserve the established solver search. The no-purchase solution
+            // is a timeout fallback, not a warm start that changes normal ties.
+            var solved = DailyLinearOptimizer.Solve(obj, upper, rows, lower, cap, true, timeLimit, check, future.Start, integral);
+            if (solved == null)
+            {
+                unresolvedMode = true;
+                if (!Feasible(seed)) continue;
+                solved = new(seed,[],obj.Zip(seed,(a,b)=>a*b).Sum(),null,false,13);
+            }
             var x = solved.Values.ToArray();
             future.ReleaseFutureResales(x, carryStart, saleStart);
             bool tie = false;
@@ -309,8 +379,8 @@ public static class DailyTradeOptimizer
                 double exact = obj.Select((a, j) => a * x[j]).Sum();
                 // Maximize realizable current gain at the SAME joint profit before minimizing
                 // cash. Otherwise equal-valued "cook tomorrow" can defer a profitable recipe forever.
-                var second = DailyLinearOptimizer.Solve(currentValue, upper, [.. rows, obj], [.. lower, exact - 1e-6], [.. cap, exact + 1e-6], true, Math.Min(timeLimit, 2), check, future.Start, future.IntegralRecipes, x);
-                if (second != null)
+                var second = DailyLinearOptimizer.Solve(currentValue, upper, [.. rows, obj], [.. lower, exact - 1e-6], [.. cap, exact + 1e-6], true, Math.Min(timeLimit, 2), check, future.Start, integral, x);
+                if (second != null && second.Objective <= currentValue.Zip(x,(a,b)=>a*b).Sum()+1e-6)
                 {
                     x = second.Values.ToArray();
                     Require(Math.Abs(obj.Select((a, j) => a * x[j]).Sum() - exact) < 0.01, "Realization tie-break changed profit");
@@ -319,6 +389,24 @@ public static class DailyTradeOptimizer
                 }
             }
             future.ReleaseFutureResales(x, carryStart, saleStart);
+            bool cashTie = false;
+            if (expectedPrices.Count > 0 && tie)
+            {
+                // Waiting for changed prices must not create zero-gain orders
+                // that tie up cash. Preserve BOTH mature objectives first; only
+                // then minimize this round's real outlay in the transition.
+                double joint = obj.Zip(x,(a,b)=>a*b).Sum(), current = currentValue.Zip(x,(a,b)=>a*b).Sum();
+                var liquid = DailyLinearOptimizer.Solve(cash, upper, [.. rows, obj, currentValue],
+                    [.. lower, joint-1e-6, current-1e-6], [.. cap, joint+1e-6, current+1e-6],
+                    true, Math.Min(timeLimit,2), check, future.Start, integral, x);
+                if (liquid != null && liquid.Objective <= cash.Zip(x,(a,b)=>a*b).Sum()+1e-6)
+                {
+                    x=liquid.Values.ToArray();cashTie=liquid.Optimal;
+                    Require(Math.Abs(obj.Zip(x,(a,b)=>a*b).Sum()-joint)<.01 &&
+                        Math.Abs(currentValue.Zip(x,(a,b)=>a*b).Sum()-current)<.01,"Transition liquidity changed profit");
+                    future.ReleaseFutureResales(x,carryStart,saleStart);
+                }
+            }
             long used = opening + (long)Math.Round(recipes.Select((r, i) => x[products.Length + i] * N(r["potions"])).Sum());
             long bought = Math.Max(0, used - N(state["potions"]));
             x[potionCol] = bought;
@@ -334,8 +422,16 @@ public static class DailyTradeOptimizer
             }
             future.RemoveBreakEvenResales(x);
             future.ReconcileTurnover(x);
+            if(packing!=null) for(int i=0;i<keys.Length;i++)
+            {
+                long k=keys[i];
+                long added=(long)Math.Round(products.Select((p,j)=>N(p["item"])==k?x[j]:0).Sum()+
+                    recipes.Select((r,j)=>N(r["output"])==k?x[products.Length+j]*N(r["count"]):0).Sum());
+                x[slotStart+i]=packing.NewSlots(k,N(items[k]["stack"]),added);
+            }
             var breakEven = includeBreakEven
-                ? AllocateBreakEven(x, breakEvenProducts, saleColumns, prices, upper, rows, lower, cap, timeLimit, check)
+                ? AllocateBreakEven(x, breakEvenProducts, saleColumns, prices, upper, rows, lower, cap, timeLimit, check,
+                    packing==null?null:Enumerable.Range(slotStart,keys.Length).ToArray())
                 : new long[products.Length];
             future.ReconcileTurnover(x);
             Require(!x.Where((v, j) => v < -1e-6 || v > upper[j] + 1e-6).Any(), "Trade integer bounds failed");
@@ -346,7 +442,7 @@ public static class DailyTradeOptimizer
             }
             double profit = -obj.Select((a, j) => a * x[j]).Sum() - opening * N(state["potion_price"]) - baseValue;
             double? bound = solved.Bound == null ? null : -solved.Bound - opening * N(state["potion_price"]) - baseValue;
-            candidates.Add(new(mode, opening, x, profit, bound, solved.Optimal, tie, prices, (long)Math.Round(cash.Select((a, j) => a * x[j]).Sum()), used, bought, -(long)Math.Round(currentValue.Select((a, j) => a * x[j]).Sum()) - opening * N(state["potion_price"]) - baseValue, future.Report(x), breakEven));
+            candidates.Add(new(mode, opening, x, profit, bound, solved.Optimal, tie, cashTie, prices, (long)Math.Round(cash.Select((a, j) => a * x[j]).Sum()), used, bought, -(long)Math.Round(currentValue.Select((a, j) => a * x[j]).Sum()) - opening * N(state["potion_price"]) - baseValue, future.Report(x), breakEven));
         }
         Require(candidates.Count > 0, "No feasible trade plan");
         var best = candidates.OrderByDescending(RankingProfit)
@@ -356,6 +452,15 @@ public static class DailyTradeOptimizer
         var cooking = new JsonArray();
         var sales = new JsonArray();
         var holds = new JsonArray();
+        long deferredValue = 0;
+        for (int i=0;i<deferredKeys.Length;i++)
+        {
+            long k=deferredKeys[i], q=(long)Math.Round(best.X[deferStart+i]); if(q==0)continue;
+            long price=expectedPrices.GetValueOrDefault(k,N(items[k]["sale"])); deferredValue+=q*price;
+            holds.Add(O(("item",k),("name",items[k]["name"]),("count",q),("price",price),("observed_price",items[k]["sale"]),
+                ("estimated_value",q*price),("reason","price_change_wait"),
+                ("expected_sale_date",NextSale((date < DailyTradePriceChange.EffectiveDate ? DailyTradePriceChange.EffectiveDate : date.AddDays(1)).ToString("yyyy-MM-dd"),I(items[k]["day"])))));
+        }
         for (int i = 0; i < carryKeys.Length; i++)
         {
             long k = carryKeys[i], q = (long)best.X[carryStart + i];
@@ -381,7 +486,11 @@ public static class DailyTradeOptimizer
             if (q == 0)
                 continue;
             var r = recipes[i];
-            cooking.Add(O(("recipe", r["id"]), ("item", r["output"]), ("name", items[N(r["output"])]["name"]), ("count", q), ("potions", q * N(r["potions"])), ("materials", new JsonObject(Quantities(r["materials"]).Select(p => new KeyValuePair<string, JsonNode?>(p.Key.ToString(), JsonValue.Create(p.Value * q))))), ("sale_date", NextSale(S(state["game_date"]), I(items[N(r["output"])]["day"])))));
+            long output = N(r["output"]);
+            string saleFrom = S(state["game_date"]);
+            if (best.X[saleStart + pos[output]] < .5 && Rows(holds).Any(h => N(h["item"]) == output && S(h["reason"]) == "price_change_wait"))
+                saleFrom = S(Rows(holds).Single(h => N(h["item"]) == output && S(h["reason"]) == "price_change_wait")["expected_sale_date"]);
+            cooking.Add(O(("recipe", r["id"]), ("item", r["output"]), ("name", items[output]["name"]), ("count", q), ("potions", q * N(r["potions"])), ("materials", new JsonObject(Quantities(r["materials"]).Select(p => new KeyValuePair<string, JsonNode?>(p.Key.ToString(), JsonValue.Create(p.Value * q))))), ("sale_date", NextSale(saleFrom, I(items[output]["day"])))));
         }
         var quotes = Rows(state["today_quotes"] ?? new JsonArray()).ToDictionary(q => (N(q["item"]), N(q["shop"])));
         for (int i = 0; i < keys.Length; i++)
@@ -397,7 +506,7 @@ public static class DailyTradeOptimizer
             }
             string when = NextSale(S(state["game_date"]), I(item["day"]));
             quotes.TryGetValue((k, N(item["shop"])), out var quote);
-            bool today = when == S(state["game_date"]) && quote != null && N(quote["rate"]) == 120 && N(quote["price"]) == N(item["sale"]);
+            bool today = processing && when == S(state["game_date"]) && quote != null && N(quote["rate"]) == 120 && N(quote["price"]) == N(item["sale"]);
             sales.Add(O(("item", k), ("name", item["name"]), ("count", q), ("price", item["sale"]), ("value", q * N(item["sale"])), ("shop", item["shop"]), ("date", when), ("today_quote_confirmed", today)));
         }
         // Exact integer inventory and economic audits are independent of the matrix solver.
@@ -415,11 +524,20 @@ public static class DailyTradeOptimizer
         Require(expected.All(p => p.Value >= 0 && allocated.GetValueOrDefault(p.Key) == p.Value), "Trade material audit failed");
         long buyCost = Rows(purchases).Sum(p => N(p["cost"])), saleValue = Rows(sales).Sum(s => N(s["value"])), holdValue = Rows(holds).Sum(h => N(h["estimated_value"]));
         Require(saleValue + holdValue - buyCost - best.Potions * N(state["potion_price"]) - baseValue == best.CurrentProfit, "Trade economic ledger failed");
-        Require(Math.Abs(best.CurrentProfit - holdValue + best.Forecast["net_value"]!.GetValue<double>() - best.Profit) < 1e-4, "Trade joint forecast ledger failed");
+        Require(Math.Abs(best.CurrentProfit - holdValue + deferredValue + best.Forecast["net_value"]!.GetValue<double>() - best.Profit) < 1e-4, "Trade joint forecast ledger failed");
+        if(storage != null) Require(keys.Sum(k=>storage.NewSlots(k,N(items[k]["stack"]),
+            Rows(purchases).Where(r=>N(r["item"])==k).Sum(r=>N(r["count"]))+
+            Rows(cooking).Where(r=>N(r["item"])==k).Sum(r=>N(r["count"])*N(recipes.Single(v=>N(v["id"])==N(r["recipe"]))["count"]))))<=storage.Free,"Trade shared storage audit failed");
+        best.Forecast["announced_prices"]=expectedPrices.Count;
+        best.Forecast["processing_enabled_today"]=processing;
+        best.Forecast["storage_model"]=storage==null?"historical_snapshot_no_slot_data":"shared_slots_pre_sale_peak_bound";
+        best.Forecast["storage_constraints_required"]=packing!=null;
         double? globalBound = unresolvedMode || candidates.Any(c => c.Bound == null) ? null : candidates.Max(c => c.Bound);
         double? strategyBound = globalBound == null ? null : candidates.Max(c => c.Bound + RankingFee(c));
         bool proven = strategyBound != null && strategyBound - RankingProfit(best) < .01;
         var warnings = new JsonArray();
+        if(keys.Any(k=>DailyTradePriceChange.AwaitingPrice(catalog,k,date)))
+            warnings.Add(O(("code","price_change_pending"),("message","料理改价尚未在当前游戏数据中确认，受影响料理暂不出售；其他已确认交易照常规划。")));
         if (inaccessible.Count > 0)
             warnings.Add(O(("code", "locked_sale_shops"), ("message", "仅按已解锁商店计算收益；需要未解锁商店出售的物品保留，不计预计回款。")));
         if (N(state["gold"]) < LowFunds)
@@ -427,7 +545,7 @@ public static class DailyTradeOptimizer
         if (stock.Any(p => p.Value > 0 && !items.ContainsKey(p.Key)))
             warnings.Add(O(("code", "unvalued_stock"), ("message", "部分库存不在120%跑商范围，未用于采购或收益计算。")));
         return O(("schema", 1), ("mode", "plan_only"), ("context", state["context"]), ("captured_utc", state["captured_utc"]), ("game_date", state["game_date"]), ("input_hash", DailyTradeCatalog.Fingerprint(state)), ("catalog_hash", catalogHash), ("settings", settings), ("warnings", warnings), ("gold", state["gold"]), ("cycle_days", 30),
-            ("solver", O(("elapsed_seconds", Math.Round(started.Elapsed.TotalSeconds, 3)), ("engine", "dotnet-highs-1.15.1"), ("scope", "joint_current_and_29_day_supply"), ("optimal", proven), ("forecast_profit", best.Profit), ("profit_upper_bound", globalBound), ("gap_gold", globalBound == null ? null : Math.Max(0, globalBound.Value - best.Profit)), ("strategy_excludes_bargain_fee", includeBreakEven), ("strategy_profit", RankingProfit(best)), ("strategy_upper_bound", strategyBound), ("realization_tie_optimal", best.Tie), ("cash_tie_optimal", false))),
+            ("solver", O(("elapsed_seconds", Math.Round(started.Elapsed.TotalSeconds, 3)), ("engine", "dotnet-highs-1.15.1"), ("scope", "joint_current_and_29_day_supply"), ("optimal", proven), ("forecast_profit", best.Profit), ("profit_upper_bound", globalBound), ("gap_gold", globalBound == null ? null : Math.Max(0, globalBound.Value - best.Profit)), ("strategy_excludes_bargain_fee", includeBreakEven), ("strategy_profit", RankingProfit(best)), ("strategy_upper_bound", strategyBound), ("realization_tie_optimal", best.Tie), ("cash_tie_optimal", best.CashTie && !includeBreakEven))),
             ("summary", O(("incremental_profit", best.CurrentProfit), ("eventual_sale_value", saleValue), ("carryover_estimated_value", holdValue), ("initial_stock_value", baseValue), ("purchase_cost", buyCost), ("potions_used", best.Potions), ("potion_cost", N(state["potion_price"]) * best.Potions), ("potion_unit_price", state["potion_price"]), ("potions_to_buy", best.PotionBuy), ("cash_required", best.Cash), ("cash_remaining", N(state["gold"]) - best.Cash), ("break_even_count", best.BreakEven.Sum()), ("break_even_value", best.BreakEvenValue))),
             ("bargain", O(("mode", best.Mode), ("start", best.Mode == "bargain"), ("potions", best.Opening))), ("purchases", purchases), ("cooking", cooking), ("sales", sales), ("holds", holds), ("forecast", best.Forecast), ("drop_forecast", state["future_supply"]), ("resources_spent", false),
             ("notes", new[] { "共同分配当前库存与29轮已解锁供货，优先总收益；收益相同时优先完成本轮可盈利加工，并释放仅用于未来原料售卖的库存。", "不足一份配方的期末食材，按共同供给模型估计后续价值；最多计入该食材一份配方以内的零头，不是已到账收益，也不依赖历史计划。", "只执行本轮采购与制作。已知周收集路线按掉落概率估计未来供给，不把预计掉落作为当前库存。", "本轮增益按原料高价卖价核账，未来收益单列且不用于今日垫资。库存变化后重新规划，料理等到120%报价确认再出售。" }));

@@ -93,6 +93,7 @@ await Group("ProductIdentity", () => Sync(() => ProductIdentityCases.Run(cases))
 await Group("BargainTraining", () => BargainTrainingCases.Run(root, cases));
 await Group("EquipmentRecycling", () => EquipmentRecyclingCases.Run(root, cases));
 await Group("EquipmentCraft", () => EquipmentCraftCases.Run(root, cases));
+await Group("EquipmentSupply", () => EquipmentSupplyCases.Run(root, cases));
 await Group("HuntingInventory", () => HuntingInventoryCases.Run(root, cases));
 await Group("LogCleanup", () => LogCleanupCases.Run(root,cases));
 await Group("CacheStorage", () => CacheStorageCases.Run(root,cases));
@@ -151,6 +152,7 @@ await Group("EventCollection", () => EventCollectionCases.Run(root, cases));
 await Group("WeeklyIsolation", () => WeeklyIsolationCases.Run(root, cases));
 await Group("TradeOptimizer", () => TradeOptimizerCases.Run(root,cases));
 await Group("TradeCalendar", () => TradeCalendarCases.Run(root,cases));
+await Group("TradeTransition", () => TradeTransitionCases.Run(root,cases));
 await Group("TradeData", () => TradeDataCases.Run(root, cases));
 await Group("TradeResume", () => TradeResumeCases.Run(root, cases));
 await Group("ManagedInputs", () => ManagedInputsCases.Run(root, cases));

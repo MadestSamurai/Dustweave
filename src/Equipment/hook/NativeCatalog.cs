@@ -13,7 +13,7 @@ namespace BD2Equipment.Live {
   [DataContract] sealed class Request { [DataMember] public string Id; [DataMember] public long ExpiresUtcTicks; [DataMember] public int Part; }
   static readonly string[] Tables={"EquipmentTable","EquipmentMakingTable","EquipmentGrowthTable","EquipmentGradeTable","EquipmentExpectTable","EquipmentRankTable","EquipmentOptionTable","RandomBoxTable","RewardGroupTable","TalentSkillTable","ResourceTable","CharTable","NameTextTable","LocalTextTable"};
   static readonly MethodInfo ReadTable=NativeTableReader.Resolve(typeof(RawDataManager));
-  static object Manager(){
+  internal static object Manager(){
    if(ReadTable.IsStatic)return null;
    var properties=new List<PropertyInfo>();for(var t=typeof(RawDataManager);t!=null;t=t.BaseType)properties.AddRange(t.GetProperties(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Static|BindingFlags.DeclaredOnly).Where(p=>p.PropertyType==typeof(RawDataManager)&&p.GetIndexParameters().Length==0&&p.GetGetMethod(true)!=null));
    var value=properties.Single().GetValue(null,null);if(value==null)throw new InvalidOperationException("Current game tables are not loaded");return value;

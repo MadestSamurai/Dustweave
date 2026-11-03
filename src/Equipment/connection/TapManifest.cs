@@ -66,6 +66,7 @@ static class TapManifest {
   var readErrors=new List<string>();int readCount=0;
   foreach(var rule in spec["Reads"]!.AsArray()){
    try{
+    if(rule!["Type"]?.GetValue<string>()=="$equipment_supply"){readCount++;continue;}
     TypeReference start=types.Single(t=>t.FullName==adapter.Name(rule["Type"]!.GetValue<string>()));
     if(rule["StaticMember"] is {} member)start=Member(start,member.GetValue<string>());
     foreach(var path in rule["Paths"]!.AsArray())PathType(start,path!.GetValue<string>());

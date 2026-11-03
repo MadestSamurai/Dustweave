@@ -10,7 +10,7 @@ internal sealed class WorkerClient
  internal static string Data=>J.Data;
  internal static string StopPath=>J.Stop;
  internal async Task<JsonObject> Run(JsonObject job,Action<JsonObject>? progress=null){
-  if(OfflineChecks&&J.S(job["operation"]) is "capture" or "execute")throw new InvalidOperationException("Offline checks cannot connect or consume resources");
+  if(OfflineChecks&&J.S(job["operation"]) is "capture" or "execute" or "resolve_supply")throw new InvalidOperationException("Offline checks cannot connect or consume resources");
   // The host migrates legacy logs during idle maintenance, never before inventory reads.
   Directory.CreateDirectory(J.Diagnostics);string path=Path.Combine(J.Diagnostics,Guid.NewGuid().ToString("N")+".json");var elapsed=Stopwatch.StartNew();
   var reports=new Progress<JsonObject>(p=>progress?.Invoke(p));

@@ -1,5 +1,35 @@
 [
 {
+  "Version": "1.5.15",
+  "Date": "2026-11-03",
+  "Notes": {
+    "zh-CN": [
+      "修复全自动跑商在高价日遗漏出售火烤鱼板棒等未改价料理的问题，恢复原有采购、料理与回款优先顺序，并衔接 11 月 16 日的售价调整。",
+      "涨价料理结合可用金币、后续采购和高价日决定保留或提前出售；改价后按游戏实际售价重新规划，继续遵守金币预留、采购上限和收藏保护。",
+      "修正跑商背包容量计算，合并已有堆叠的剩余空间并让所有食材共同使用空格，减少有空间却停止采购的情况。",
+      "装备助手新增米饭补给：可按制作目标计算缺少的木头和金币，使用已有免费与储备米饭快速狩猎；支持预留米饭及木头，木头预留也适用于不开启补给的计划。",
+      "米饭补给支持完成当前批次后停止、读取库存后继续剩余计划，并按实际收获重新计算制作数量。",
+      "整理装备助手的制作、补给与计划区域，输入框留空时显示“不限”；精炼列表直接显示单次费用，详情可折叠，并改善三语和深色主题显示。"
+    ],
+    "zh-TW": [
+      "修復全自動跑商在高價日漏售火烤魚板棒等未改價料理的問題，恢復原有採購、料理與回款優先順序，並銜接 11 月 16 日的售價調整。",
+      "漲價料理會依可用金幣、後續採購與高價日決定保留或提前出售；改價後依遊戲實際售價重新規劃，繼續遵守金幣預留、採購上限與收藏保護。",
+      "修正跑商背包容量計算，合併現有堆疊的剩餘空間，並讓所有食材共用空格，減少仍有空間卻停止採購的情況。",
+      "裝備助手新增白飯補給：可依製作目標計算短缺的木頭與金幣，使用現有免費及儲備白飯快速狩獵；支援預留白飯與木頭，木頭預留也適用於未開啟補給的計畫。",
+      "白飯補給支援完成目前批次後停止、讀取庫存後繼續剩餘計畫，並依實際收穫重新計算製作數量。",
+      "整理裝備助手的製作、補給與計畫區域，輸入框留空時顯示「不限」；精煉清單直接顯示單次費用，詳情可折疊，並改善三語及深色主題顯示。"
+    ],
+    "en-US": [
+      "Fixes automatic trading skipping peak-price sales of Fire-Grilled Fish Sticks and other dishes whose prices are unchanged. Restores established purchasing, cooking and cash-flow priorities while planning for the November 16 price changes.",
+      "Dishes due for a price increase are held or sold early based on available gold, future purchases and peak-price days. Plans use actual in-game prices after the change and continue to respect gold reserves, spending limits and favorites.",
+      "Corrects trading bag capacity by combining space in partial stacks and sharing empty slots across ingredients, reducing cases where purchases stop despite available space.",
+      "Adds optional rice supplies to the equipment assistant. It calculates wood and gold shortfalls for the crafting target and uses existing free and stored rice for quick hunts. Rice and wood reserves are supported; the wood reserve also applies when rice supplies are off.",
+      "Rice supplies can stop after the current batch and resume the remaining plan after an inventory refresh. Crafting quantities are recalculated from the resources actually received.",
+      "Organizes the equipment assistant into crafting, supply and plan sections. Blank limits now show No limit. Refinement rows display the cost per attempt, details can be collapsed, and all three languages and the dark theme receive layout improvements."
+    ]
+  }
+},
+{
   "Version": "1.5.14",
   "Date": "2026-11-03",
   "Notes": {

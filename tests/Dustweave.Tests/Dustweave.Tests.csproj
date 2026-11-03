@@ -12,6 +12,8 @@
     <ProjectReference Include="../../src/Soul/Dustweave.Soul.csproj" />
     <Compile Include="../../src/FiendHunter/shared/AttackTiming.cs;../../src/FiendHunter/shared/Control.cs;../../src/FiendHunter/shared/CombatPolicy.cs;../../src/FiendHunter/shared/ToolStorage.cs" Link="FiendHunter/%(Filename)%(Extension)" />
     <ProjectReference Include="../../src/Core/Dustweave.Core.csproj" />
+    <ProjectReference Include="../../src/Equipment/core/Dustweave.Equipment.Core.csproj" Aliases="equipment" />
+    <ProjectReference Include="../../src/Equipment/connection/Dustweave.Equipment.Connection.csproj" Aliases="equipmentLive" />
     <ProjectReference Include="../../src/Rhythm/core/Dustweave.Rhythm.Core.csproj" Aliases="rhythm" />
     <ProjectReference Include="../../src/Sichuan/core/Dustweave.Sichuan.Core.csproj" Aliases="sichuan" />
     <ProjectReference Include="../../src/SecretVision/core/Dustweave.SecretVision.Core.csproj" Aliases="vision" />

@@ -13,8 +13,9 @@ public interface IEquipmentGame:IDisposable
  IDisposable EnableActions();
  void Cleanup(string destination);
  void CompletePresentation(string role,bool waitForResult=true){}
+ JsonObject SupplyPreview(JsonObject route,int count,long reserve)=>throw new NotSupportedException("Sweep support is unavailable");
 }
-public sealed class LiveEquipment:IEquipmentGame
+public sealed partial class LiveEquipment:IEquipmentGame
 {
  static LiveEquipment(){BD2Equipment.Live.EquipmentTransport.Configure();}
  public static string Root=>Path.Combine(Data,"live");
@@ -51,7 +52,7 @@ public sealed class LiveEquipment:IEquipmentGame
  string Ensure(){if(request==null||N(request["ExpiresUtcTicks"])-DateTime.UtcNow.Ticks<TimeSpan.FromSeconds(5).Ticks){request=new(){["Id"]=Guid.NewGuid().ToString("N"),["Prefixes"]=new JsonArray("equipment","policy.equipment","powder","reward.presentation","trade.characters","trade.currency","trade.inventory"),["ExpiresUtcTicks"]=DateTime.UtcNow.AddSeconds(15).Ticks};Write(P("observation-request.json"),request);}return S(request["Id"]);}
  public static JsonObject Snapshot(){var f=Read(P("snapshot.json"));long age=DateTime.UtcNow.Ticks-N(f["AtUtcTicks"]);if(S(f["Error"])!=""||age<0||age>TimeSpan.FromSeconds(3).Ticks)throw new InvalidOperationException("游戏观察连接未就绪："+S(f["Error"]));return f;}
  JsonObject Evidence(JsonObject? before=null){string id=Ensure();var timer=Stopwatch.StartNew();while(true){var e=Read(P("evidence.json"));if(S(e["ObservationRequest"])!=id||S(e["Error"]).StartsWith("System.IO.IOException:")){if(timer.Elapsed.TotalSeconds>=3)throw new InvalidOperationException("库存观察尚未就绪");Thread.Sleep(100);continue;}long age=DateTime.UtcNow.Ticks-N(e["AtUtcTicks"]);if(S(e["Error"])!=""||age<0||age>TimeSpan.FromSeconds(3).Ticks)throw new InvalidOperationException("库存观察未就绪："+S(e["Error"]));if(before!=null&&LiveEvidence.Actor(before)!=LiveEvidence.Actor(e["Frame"]!))throw new InvalidOperationException("观察账号或游戏进程改变");return e;}}
- public JsonObject Capture(){var timer=Stopwatch.StartNew();RefreshCatalog();long catalogMs=timer.ElapsedMilliseconds;var e=Evidence(Snapshot());Write(Path.Combine(Diagnostics,"capture-evidence.json"),e);var stock=EquipmentPlanner.Normalize(e);var details=new JsonObject{["equipment"]=LiveEvidence.Reading(e,"equipment.details","$items"),["characters"]=LiveEvidence.Reading(e,"trade.characters","$items")};if(A(details["equipment"]).Count()!=A(stock["equipment"]).Count())throw new InvalidOperationException("装备详情读取不完整");Write(Path.Combine(Data,"inventory.json"),stock);Write(Path.Combine(Data,"display-inventory.json"),details);var view=GearView.Build(stock,details);var resume=EquipmentExecution.Resumable(stock);return new(){["stock"]=stock,["gear"]=view,["resume"]=resume,["timings"]=new JsonObject{["catalogMs"]=catalogMs,["captureMs"]=timer.ElapsedMilliseconds,["gearCount"]=view.Count}};}
+ public JsonObject Capture(){var timer=Stopwatch.StartNew();RefreshCatalog();long catalogMs=timer.ElapsedMilliseconds;var e=Evidence(Snapshot());Write(Path.Combine(Diagnostics,"capture-evidence.json"),e);var stock=EquipmentPlanner.Normalize(e);var details=new JsonObject{["equipment"]=LiveEvidence.Reading(e,"equipment.details","$items"),["characters"]=LiveEvidence.Reading(e,"trade.characters","$items")};if(A(details["equipment"]).Count()!=A(stock["equipment"]).Count())throw new InvalidOperationException("装备详情读取不完整");Write(Path.Combine(Data,"inventory.json"),stock);Write(Path.Combine(Data,"display-inventory.json"),details);var view=GearView.Build(stock,details);EquipmentSupplyEvidence.Reconcile(stock);var resume=EquipmentExecution.Resumable(stock);return new(){["stock"]=stock,["gear"]=view,["resume"]=resume,["pending_supply"]=EquipmentSupplyEvidence.HasPending(stock),["timings"]=new JsonObject{["catalogMs"]=catalogMs,["captureMs"]=timer.ElapsedMilliseconds,["gearCount"]=view.Count}};}
  static string CatalogActor(JsonObject f)=>S(f["ProcessId"])+"|"+S(f["ProcessStartTicks"])+"|"+S(f["Instance"])+"|"+S(f["AccountKey"])+"|"+S(f["PlayerKey"]);
  public void RefreshCatalog(bool forExecution=false){
   // Reading inventory must remain available after Stop, including on a cold
@@ -134,7 +135,8 @@ public sealed class LiveEquipment:IEquipmentGame
    a=>Step(a.Ui,a.Field,a.Back,a.Expect,a.Absent,reason:"已核账业务的结果界面收尾"),PauseGuard,()=>Thread.Sleep(100),()=>timer.Elapsed.TotalSeconds);
  }
  public void CompletePresentation(string role,bool waitForResult=true){
-  if(role=="powder.make_break")CleanupResult("EquipmentMakingUI",waitForResult?"EquipmentBatchUpgradeResultPopupUI":null);
+  if(role=="hunt.dispatch")CleanupResult("HuntOrAirwayUI",waitForResult?"RewardReceivePopupUI":null);
+  else if(role=="powder.make_break")CleanupResult("EquipmentMakingUI",waitForResult?"EquipmentBatchUpgradeResultPopupUI":null);
   else {
    CleanupResult("EquipmentUpgradeUI",waitForResult?"EquipmentUpgradeResultPopupUI":null);
    WaitRead("equipment.refine_ui",LiveEvidence.RefineAuto,n=>n?.GetValue<bool>()==false);
@@ -162,7 +164,7 @@ public sealed class LiveEquipment:IEquipmentGame
     try{entry["events"]=events;var packets=LiveEvidence.Responses(role,events,before,after,role=="equipment.refine_batch"?(int)N(action["items"]![1]):1);result=verify(EquipmentPlanner.Normalize(before),packets,EquipmentPlanner.Normalize(after));}catch(InvalidOperationException ex){entry["waiting"]=ex.Message;}
     if(result!=null){entry["state"]="completed";entry["after"]=after;entry["result"]=result;Write(Path.Combine(Diagnostics,S(journal["id"])+"."+S(entry["id"])+".receipt.json"),entry);journal["operations"]!.AsArray().Add(Select(entry,"id","role","state","at","result"));journal["expected"]=EquipmentPlanner.Normalize(after);journal["pending"]=null;Write(path,journal);return result;}
     Thread.Sleep(200);
-   }throw new InvalidOperationException(S(entry["waiting"],"操作结果未确认；不会重发"));
+   }if(role=="hunt.dispatch")throw new EquipmentSupplyError("equipment.supply.pending");throw new InvalidOperationException(S(entry["waiting"],"操作结果未确认；不会重发"));
   }catch{if(S(entry["state"])!="rejected")entry["state"]="unknown";Write(path,journal);Write(Path.Combine(Diagnostics,"pending-"+S(journal["id"])+".json"),journal);throw;}
  }
  sealed class RestorePause(bool previous):IDisposable{public void Dispose(){try{if(previous)Write(P("pause"),new JsonObject());}catch(BD2.LocalIpc.LeaseRevokedException){}}}

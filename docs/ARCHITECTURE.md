@@ -197,3 +197,87 @@ DailyText carries a key and opaque arguments alongside the existing readable dia
 Legacy runtime prose is translated through the fixed legacy-inputs registry and explicitly declared notice source grammars, independently of editable translations. No history migration is required. Production text lookup records bounded faults and degrades visibly; development audits reject missing keys, translations and incompatible placeholders. Account names, paths, raw diagnostics and game-provided values are not translated by substring replacement.
 
 Localization faults are deduplicated in memory (128 entries, 512 characters each) and included as `localization.json` when the desktop exports diagnostics. The report identifies the current process scope, language and resource failure; it never captures formatting argument values. It distinguishes no observed faults from unavailable evidence in older export callers. Rendering performs no diagnostic file I/O. The snapshot covers the exporting process's current lifetime, not previous runs or other isolated windows.
+
+## Trade allocation and the 2026-11-16 transition
+
+The mature `DailyTradeOptimizer` / `DailyTradeForecast` joint model remains the
+baseline. A price announcement is an input extension, not permission to replace
+the objective or execution order with a different calendar optimizer. Preserve
+the existing 29-day shared supply, integer recipe competition, bounded recipe
+residue values, and preference for processing profitable owned stock this round.
+Without a relevant price change, executable decisions and both objective values
+must agree with the historical model, except an explicitly evidenced correctness
+fix such as shared inventory capacity. Do not make an unverified historical
+capacity assumption an invariant merely because it is old.
+
+The transition adds a separate allocation for each recognized rising-price
+output. Its owned/produced quantity is divided between ordinary sales and a
+deferred allocation; both consume the same material balance. Only the exact
+announced recipe/output/old-price combination enables a new forecast price.
+Unavailable merchants, locked stock and user reserves remain excluded. After
+maintenance, captured tables become authoritative; the existing short pending
+price window holds affected food rather than authorizing an old quote. A date
+alone never authorizes selling: the actual merchant must confirm the 120% price.
+
+The ordered objectives are:
+
+1. Maximize current plus 29-day forecast value, less all purchase and potion
+   costs. Initial inventory valuation is a constant, not new income.
+2. At the same joint value, maximize this round's gain, including food genuinely
+   allocated for the changed price. This prevents profitable processing being
+   perpetually postponed by an equal-value future action.
+3. During the transition only, at the same first two values, minimize actual
+   current cash expenditure. A zero-gain purchased cooking cycle must not tie up
+   funds just because it is another optimal solution. Achievement purchases are
+   a separate explicit opt-in after profitable allocations are fixed.
+
+`DailyTradeTransitionFunding` partitions **purchases**, not every recipe and
+inventory day, at existing-stock receipt dates. For every phase ending at `t`,
+`current cash spent + purchases through t <= usable opening cash + qualified
+receipts available before that phase`. Each offer is capped by the number of
+days in that phase times its daily supply. A sale on day 28 can fund day 29's
+supply, never earlier missed stock. Deferred proceeds count at the first peak
+date on/after November 16. Receipts are capped by original unlocked inventory
+and its actual sale allocation. New purchases, hypothetical production and
+expected drops supply no credit. Today's orders independently fit cash after
+the user's reserve/spend limits. Future cooking potion costs are reserved by
+the forecast horizon end; the former 7-day/50%/25% turnover rule remains intact
+outside this transition.
+
+Inventory capacity uses **shared normal slots**, including occupation by non-food
+items. With stack size `m`, existing partial-stack headroom `h` and additions
+`a`, the new slot requirement is `ceil(max(0, a-h)/m)`, summed across items. It
+is not an item-wide quantity cap. Purchases precede cooking and sales, so future
+sales cannot supply space to today's purchases. If independent upper bounds
+for all purchases and all cooking outputs fit, capacity is provably redundant
+and adds no integer variables to the original model.
+
+The constrained cooking model currently uses a **conservative peak bound**:
+all current purchases and outputs fit before crediting any material deletion.
+This can omit feasible cooking in an almost-full bag; it is not a proof of the
+best possible packing/scheduling. It must not be advertised as such. The
+reviewed native batch handler inserts intermediate packet outputs before
+subtracting the full material list at the final callback, and can flag overflow
+slots as disabled. Checking only final net inventory would therefore be unsafe.
+Native evidence was reviewed in the available October 16 decompilation; this
+task did not establish a current-client live guarantee or authorize changing
+the established execution order. A future tighter bound needs actual packet
+limits, stack allocation and intermediate-state verification, not guessed
+space released by a whole batch.
+
+`optimal` is a solver bound for this finite forecast, not a guarantee of optimal
+year-long trading, future drops, future storage, or network execution. The
+realization and cash objectives have separate proof flags. A bounded timeout
+keeps a feasible plan, including sales of unchanged finished food; a no-purchase
+allocation is a fallback only and does not alter the ordinary solver search.
+Incomplete secondary objectives must not be cached as a fully settled plan.
+
+Validation must include independent finite enumeration (recipe competition,
+capital, early sale versus holding), unit-by-unit shared-slot packing, actual
+sale-stack protection, price/date boundaries, absent quotes, locked merchants,
+reserves, purchase-only mode, predicted supplies, cancellation and tiny solver
+budgets. Keep a read-only differential replay against the historical optimizer
+and forecast; record any changed order and its economic or capacity reason.
+Focused groups: `TradeOptimizer`, `TradeCalendar`, `TradeTransition`, `TradeData`,
+`TradeReplan`, `TradeQuote`, `TradeResume`, `TalentPotion`, `BargainTraining`,
+`UserText`, `LocalizationArchitecture`.
