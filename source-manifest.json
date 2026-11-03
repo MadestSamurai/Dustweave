@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-11-03T12:31:46.0133374Z",
+  "generatedUtc": "2026-11-03T17:18:34.2982897Z",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -3499,7 +3499,7 @@
       "path": "tools/OtaChannel/SelfTest.cs",
       "bytes": 19678,
       "reasons": "build input",
-      "sha256": "81d3782a17b329d3d4164fdd654a1237b475b1f94f9612d1e32cff345c8e1f63"
+      "sha256": "aae94d8c590e572f1cbedc17070dd07fcf1cedc05eb67ed24ead4f07dfb09b0f"
     },
     {
       "path": "tools/OtaChannel/Rules.cs",
@@ -3511,7 +3511,7 @@
       "path": "tools/OtaChannel/Program.cs",
       "bytes": 19297,
       "reasons": "build input",
-      "sha256": "55081befedffb30af16fc88f3801d2936b04d549d47167b37b5b6643216d168c"
+      "sha256": "3647a8d66a3e29bbdf92f815826729aa78015e2e736101d0533d657f538fb818"
     },
     {
       "path": "tools/OtaChannel/packages.lock.json",
@@ -7728,19 +7728,19 @@
       "path": "tools/OtaChannel/Mirror.cs",
       "bytes": 17684,
       "reasons": "build input",
-      "sha256": "1aa2e823d5118b80f729ab06098602c174ba18989d0b86088b32f12fdf33d56e"
+      "sha256": "e9665493444da6659d43150d44803c433834bd29f752007b51e2af8b5d89acf9"
     },
     {
       "path": "tools/OtaChannel/MirrorNginx.cs",
       "bytes": 6273,
       "reasons": "build input",
-      "sha256": "7441029109afa1257a46bf0d9dd4b692c3b2994679a2cb3aa8fe162b7b8e3245"
+      "sha256": "cf6b4b33da54b517f57d690f315dcea337e1fffefb133144a5be1fe46b6baa23"
     },
     {
       "path": "tools/OtaChannel/MirrorSelfTest.cs",
       "bytes": 16477,
       "reasons": "build input",
-      "sha256": "1e156f2789f5bed3f0c65010a3656656dc333c6b3d776f322d1f88d2382d200c"
+      "sha256": "d328072a2227306b40f64607a902cffcd988bb5995474bd9db204a2ac0cb0b88"
     },
     {
       "path": "tools/OtaMirror/Program.cs",
@@ -8720,6 +8720,22 @@
       "bytes": 11956,
       "reasons": "build input",
       "sha256": "be453419567d0931dda5c25a7b126964b48713cdce7bd6ff22467ae39316836a"
+    },
+    {
+      "path": "scripts/upgrade-update-aio-delivery.sh",
+      "sha256": "0a2a0f697be1729891ed6f884846d4771670da92bc1c8a1363f70f45cd2e0fd8"
+    },
+    {
+      "path": "scripts/test-aio-delivery.ps1",
+      "sha256": "405776071592a8040360342046b2cd03468c2c4c8f387fa289de42a1b9677760"
+    },
+    {
+      "path": "scripts/test-aio-delivery-install.sh",
+      "sha256": "b3e30956e166d9d6a1499252d3e733b0cae4c7764faa0719008bca19bdd6f087"
+    },
+    {
+      "path": "docs/releases/1.5.15-cdn-only.md",
+      "sha256": "001e989cfa201bb1dc514a4e72a17dd28c86d4eea2dc93ea31415582b83b15b6"
     }
   ],
   "publicReleaseApproved": false,

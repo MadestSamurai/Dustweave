@@ -9,8 +9,8 @@ sealed record MirrorProgress(string Version, string BaseUrl, string FeedSha256, 
 sealed record MirrorFailure(string Version, string FirstStage, string FirstError, DateTimeOffset FirstUtc,
     string LastStage, string LastError, DateTimeOffset LastUtc, int Count, DateTimeOffset? RecoveredUtc = null);
 
-// The origin remains authoritative. Only files already bound to a trusted feed
-// may redirect; a failed preparation or probe retains the local download path.
+// The origin owns the signed index. Layout 3 serves payloads only through verified
+// object-storage routes; reachability observations never turn it into a file server.
 static class Mirror
 {
     public static string Root(Config c) => Path.Combine(c.Public, ".mirror");
@@ -61,7 +61,7 @@ static class Mirror
     {
         Rules.NoLinks(Enabled(c));
         if (File.Exists(Enabled(c))) File.Delete(Enabled(c));
-        Record(c, new("origin", DateTimeOffset.UtcNow, version, error));
+        Record(c, new(c.Layout == 3 ? "unprepared" : "origin", DateTimeOffset.UtcNow, version, error));
     }
     static void RecordFailure(Config c, string version, string stage, Exception error)
     {
@@ -93,7 +93,8 @@ static class Mirror
         if (failurePath != null) Rules.NoLinks(failurePath);
         if (progressPath != null) Rules.NoLinks(progressPath);
         var progress = progressPath != null && File.Exists(progressPath) ? Rules.Read<MirrorProgress>(File.ReadAllBytes(progressPath)) : null;
-        return new { configured = true, active = File.Exists(Enabled(c)), baseUrl = BaseUrl(c), health,
+        return new { configured = true, active = c.Layout == 3 ? CurrentPrepared(c) : File.Exists(Enabled(c)),
+            originFallback = c.Layout != 3, baseUrl = BaseUrl(c), health,
             failure = failurePath != null && File.Exists(failurePath) ? Rules.Read<MirrorFailure>(File.ReadAllBytes(failurePath)) : null,
             preparation = progress == null ? null : new { progress.Version, progress.FeedSha256, verifiedFiles = progress.Files?.Length ?? 0, progress.UpdatedUtc } };
     }
@@ -108,6 +109,8 @@ static class Mirror
             try { await VerifyRemote(c, version, blob, client, full, token); return; }
             catch (Exception e) when (attempt < 3 && Transient(e, token))
             { await Task.Delay(TimeSpan.FromSeconds(attempt), token); }
+            catch (OperationCanceledException e)
+            { throw new OperationCanceledException($"Mirror {(full ? "GET" : "HEAD")} timed out or canceled: {blob.FileName} (attempt {attempt})", e, token); }
         }
     }
     static async Task VerifyRemote(Config c, string version, Blob blob, HttpClient client, bool full, CancellationToken token)
@@ -209,6 +212,27 @@ static class Mirror
             Rules.Need(File.ReadAllText(route) == file.Sha256, "Missing verified mirror route");
         }
     }
+    static bool CurrentPrepared(Config c)
+    {
+        try
+        {
+            var bytes = File.ReadAllBytes(Rules.FeedPath(c));
+            CheckPrepared(c, bytes, Rules.VerifyFeed(bytes, c));
+            return true;
+        }
+        catch (Exception e) when (Expected(e)) { return false; }
+    }
+    public static void PrepareBeforePublication(Config c, byte[] signedFeed, HttpClient client)
+    {
+        if (c.Layout != 3 || c.MirrorBaseUrl == null) return;
+        var feed = Rules.VerifyFeed(signedFeed, c);
+        try { CheckPrepared(c, signedFeed, feed); return; }
+        catch (Exception e) when (Expected(e)) { }
+        using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(4));
+        // Keep the previous live feed if verification fails. Completed immutable
+        // bodies remain resumable; no user is advertised an unprepared new patch.
+        Prepare(c, signedFeed, client, timeout.Token, resume: true).GetAwaiter().GetResult();
+    }
     public static async Task<bool> Probe(Config c, HttpClient client, CancellationToken token = default)
     {
         string? version = null;
@@ -229,7 +253,13 @@ static class Mirror
             return true;
         }
         catch (Exception e) when (Expected(e))
-        { if (version != null) RecordFailure(c, version, "probe", e); Disable(c, version, e.Message); return false; }
+        {
+            if (version != null) RecordFailure(c, version, "probe", e);
+            if (c.Layout == 3 && CurrentPrepared(c))
+                Record(c, new("cdn-degraded", DateTimeOffset.UtcNow, version, e.Message));
+            else Disable(c, version, e.Message);
+            return false;
+        }
     }
     // Used by the timer as well as explicit maintenance. A bounded attempt saves
     // completed bodies and the next timer invocation resumes the same signed set.
@@ -255,7 +285,8 @@ static class Mirror
             catch (Exception e) when (Expected(e)) { ready = false; }
             if (!ready)
             {
-                Disable(c, version, "Preparing verified mirror delivery; origin remains available");
+                Disable(c, version, c.Layout == 3 ? "Preparing verified mirror delivery; unverified patches are unavailable" :
+                    "Preparing verified mirror delivery; origin remains available");
                 await Prepare(c, signedFeed, client, timeout.Token, resume: true);
             }
             Rules.Need(Rules.HashFile(Rules.FeedPath(c)) == Rules.Hash(signedFeed), "Feed changed during mirror preparation");
@@ -264,11 +295,11 @@ static class Mirror
         catch (Exception e) when (Expected(e))
         { if (version != null) RecordFailure(c, version, "prepare", e); Disable(c, version, e.Message); return false; }
     }
-    public static void TryPrepareAndProbe(Config c, byte[] feed)
+    public static void TryPrepareAndProbe(Config c, byte[] feed, HttpClient? suppliedClient = null)
     {
         if (c.MirrorBaseUrl == null) return;
-        using var client = Client();
+        using var ownedClient = suppliedClient == null ? Client() : null;
         // Channel.Worker already holds the same publication lock.
-        Recover(c, feed, client, CancellationToken.None).GetAwaiter().GetResult();
+        Recover(c, feed, suppliedClient ?? ownedClient!, CancellationToken.None).GetAwaiter().GetResult();
     }
 }

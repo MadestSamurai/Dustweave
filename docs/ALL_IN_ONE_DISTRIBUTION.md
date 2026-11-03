@@ -7,7 +7,9 @@ Accounts, settings, plugins and game assemblies remain outside the distribution.
 ## Download policy
 
 - First installation, manual upgrades and recovery from damaged files use full packages from [GitHub](https://github.com/MadestSamurai/Dustweave/releases/latest) or [Quark](https://pan.quark.cn/s/0ee553c60c0d?pwd=5AgC), code `5AgC`.
-- Qicaiyun hosts **differential OTA files only** for the 1.5 lane. The origin provides the signed release index and control logic, plus verified patch fallback. Neither service hosts full 1.5 archives or repair blocks.
+- Qicaiyun hosts **differential OTA files only** for the 1.5 lane. The origin provides the signed release index and redirect control, never public patch bodies. Neither service distributes full 1.5 archives or repair blocks. Origin copies retained by the publisher are verification/rollback inputs, not a download fallback.
+- Verified immutable per-file routes remain active through transient health-probe failures. Probes report degraded reachability without diverting downloads. Old clients' `?origin=1` retry also redirects to object storage. An unverified path returns a small, uncached 503 with Retry-After; it cannot expose local files. Clients retain bounded retries and can use manual GitHub/Quark downloads if delivery is unavailable.
+- Before advertising a new 1.5 release, the server verifies all cloud patch bodies against the signed index. Failed preparation preserves the previous index and its download routes. Progress is resumable; a later publication attempt reuses only matching signed checkpoints.
 - An exact baseline and edition, unchanged runtime, valid local files and a direct patch of at most 10 MiB are required. Version count alone does not end support. Missing, oversized or inapplicable patches lead to manual download instructions; no automatic full download is attempted.
 - The initial 1.5.0 index contains package hashes but no patch payloads. Full packages stay on GitHub; the hashes bind future reconstructed targets. Publisher attestation binds the initial package acceptance to this index.
 

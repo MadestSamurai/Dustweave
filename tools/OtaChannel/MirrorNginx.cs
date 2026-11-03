@@ -8,9 +8,22 @@ static class MirrorNginx
     {
         Rules.Need(c.Layout == 3 && c.Public == "/home/nginx/dustweave-updates-aio", "Unexpected bundled web mount");
         string url = Mirror.BaseUrl(c);
-        int anchor = original.IndexOf(Begin, StringComparison.Ordinal);
-        Rules.Need(anchor >= 0 && original.IndexOf(Begin, anchor + Begin.Length, StringComparison.Ordinal) < 0 &&
-            !original.Contains("/updates/dustweave/all-in-one/",StringComparison.Ordinal),"Inspect existing bundled web configuration before installation");
+        const string aioBegin = "# BEGIN DUSTWEAVE AIO", aioEnd = "# END DUSTWEAVE AIO";
+        int anchor = original.IndexOf(aioBegin, StringComparison.Ordinal), after;
+        if (anchor >= 0)
+        {
+            int end = original.IndexOf(aioEnd, anchor, StringComparison.Ordinal);
+            Rules.Need(end > anchor && original.IndexOf(aioBegin, anchor + aioBegin.Length, StringComparison.Ordinal) < 0 &&
+                original.IndexOf(aioEnd, end + aioEnd.Length, StringComparison.Ordinal) < 0, "Ambiguous bundled web configuration");
+            after = end + aioEnd.Length;
+        }
+        else
+        {
+            anchor = original.IndexOf(Begin, StringComparison.Ordinal);
+            Rules.Need(anchor >= 0 && original.IndexOf(Begin, anchor + Begin.Length, StringComparison.Ordinal) < 0 &&
+                !original.Contains("/updates/dustweave/all-in-one/",StringComparison.Ordinal),"Inspect existing bundled web configuration before installation");
+            after = anchor;
+        }
         string block = $$"""
         # BEGIN DUSTWEAVE AIO
         location = /updates/dustweave/all-in-one/releases.json {
@@ -21,29 +34,26 @@ static class MirrorNginx
         }
         location ^~ /updates/dustweave/all-in-one/.mirror/ { return 404; }
         location ^~ /updates/dustweave/all-in-one/ {
-            alias /usr/share/nginx/dustweave-updates-aio/;
-            autoindex off;
+            # Never serve patch bodies from this server, even during CDN outages.
+            # Only immutable, fully verified per-file routes can redirect.
             set $dw_aio_relative "";
-            set $dw_aio_mirror "";
             if ($uri ~ "^/updates/dustweave/all-in-one/(v[0-9A-Za-z.-]+/Dustweave-[0-9A-Za-z.-]+-(?:Lite|Portable)-from-[0-9A-Za-z.-]+-win-x64[.]delta[.]zip)$") { set $dw_aio_relative $1; }
             if ($dw_aio_relative = "") { return 404; }
-            if (-f /usr/share/nginx/dustweave-updates-aio/.mirror/enabled) { set $dw_aio_mirror "1"; }
-            if (-f /usr/share/nginx/dustweave-updates-aio/.mirror/routes/$dw_aio_relative) { set $dw_aio_mirror "${dw_aio_mirror}1"; }
-            if ($arg_origin = "1") { set $dw_aio_mirror ""; }
-            if ($dw_aio_mirror = "11") {
+            # Old clients' ?origin=1 retries also stay on object storage.
+            if (-f /usr/share/nginx/dustweave-updates-aio/.mirror/routes/$dw_aio_relative) {
                 add_header Cache-Control "no-store" always;
                 add_header X-Dustweave-Delivery "qicaiyun" always;
                 return 302 {{url}}/$dw_aio_relative;
             }
-            add_header Cache-Control "public, max-age=31536000, immutable";
-            add_header X-Dustweave-Delivery "origin" always;
-            limit_rate 2m;
-            limit_except GET { deny all; }
+            add_header Cache-Control "no-store" always;
+            add_header X-Dustweave-Delivery "unavailable" always;
+            add_header Retry-After "60" always;
+            return 503;
         }
         # END DUSTWEAVE AIO
 
         """;
-        return original[..anchor] + block + original[anchor..];
+        return original[..anchor] + block.TrimEnd() + (after == anchor ? "\n\n" : "") + original[after..];
     }
     const string Begin = "# BEGIN DUSTWEAVE OTA CDN";
     const string End = "# END DUSTWEAVE OTA CDN";

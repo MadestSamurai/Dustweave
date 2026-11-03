@@ -119,7 +119,7 @@ static class Channel
         }
         catch(Exception e) { Record(folder,new("failed",request.Nonce,request.Version,DateTimeOffset.UtcNow,e.Message));throw; }
     }
-    public static void Worker(Config c,string nonce,Action<string>? fault=null)
+    public static void Worker(Config c,string nonce,Action<string>? fault=null,HttpClient? mirrorClient=null)
     {
         string folder=Folder(c,nonce);var header=Rules.Read<Header>(File.ReadAllBytes(Path.Combine(folder,"header.json")));
         var signedRequest=Rules.Read<Request>(Rules.Verify(header.Request,c,Rules.Domain));
@@ -141,12 +141,17 @@ static class Channel
             Rules.NoLinks(target);
             if(Directory.Exists(target)) CheckPublished(target,r); else Directory.Move(stage,target);
             fault?.Invoke("version-ready");
+            if(c.Layout == 3 && c.MirrorBaseUrl != null)
+            {
+                using var ownedClient = mirrorClient == null ? Mirror.Client() : null;
+                Mirror.PrepareBeforePublication(c,feed,mirrorClient ?? ownedClient!);
+            }
             // Version contents are immutable; the only mutable public file is switched last.
             CheckCurrent(c,r,feed); Rules.Atomic(Rules.FeedPath(c, writing:true),feed);fault?.Invoke("feed-switched");
             CheckPublished(target,r);Rules.Need(Rules.HashFile(Rules.FeedPath(c))==r.FeedSha256,"Public feed verification failed");
-            // Mirror setup never invalidates a healthy signed publication. Until
-            // all CDN files verify, the unchanged origin URLs serve local bytes.
-            Mirror.TryPrepareAndProbe(c,feed);
+            // Layout 3 is already prepared before the switch. A reachability
+            // failure is diagnostic only and never diverts patch traffic here.
+            Mirror.TryPrepareAndProbe(c,feed,mirrorClient);
             Record(folder,new("completed",nonce,r.Version,DateTimeOffset.UtcNow));
         }
         catch(Exception e)

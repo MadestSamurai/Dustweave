@@ -149,10 +149,35 @@ static class SelfTest
         Channel.Worker(layoutConfig,layoutRequest.Nonce);
         Pass("layout2-publishes-patches-only",Directory.GetFiles(Path.Combine(layoutConfig.Public,"v1.3.1")).All(p=>p.EndsWith(".delta.zip",StringComparison.Ordinal)));
         Pass("layout2-feed-switched",Rules.VerifyFeed(File.ReadAllBytes(Path.Combine(layoutConfig.Public,"updates.json")),layoutConfig).Releases[0].Version=="1.3.1");
+        var aioPublish = Setup("aio-cloud-before-feed") with { Layout=3, MirrorBaseUrl=bundledConfig.MirrorBaseUrl };
+        File.WriteAllBytes(Rules.FeedPath(aioPublish,writing:true),bundledFeed);
+        var aioNext = bundled with { Version="1.5.1",PreviousVersion="1.5.0",
+            Assets=bundled.Assets.Select(a=>a with{FileName=a.FileName.Replace("1.5.0","1.5.1"),Bytes=400}).ToArray(),
+            Deltas=[new("Lite","1.5.0",bundleDelta.FileName,4,bundleDelta.Sha256,"dustweave-copy-v2")] };
+        var aioFeed=Rules.Bytes(Sign(new Feed(3,"Dustweave","stable",[aioNext,bundled])));
+        var aioEvidence=Rules.Bytes(new{status="passed",assets=aioNext.Assets,cases=new[]{"upgrade-Lite","upgrade-Portable","rollback-Lite","rollback-Portable","interrupt-host-Lite","interrupt-host-Portable","interrupt-helper-Lite","interrupt-helper-Portable","damaged-base-Lite","damaged-base-Portable"}.Select(n=>new{@case=n,status="passed",to=aioNext.Version,baselineHelper=true}).ToArray()});
+        var aioRequest=NewRequest() with{Version="1.5.1",ExpectedFeedSha256=Rules.Hash(bundledFeed),FeedSha256=Rules.Hash(aioFeed),EvidenceSha256=Rules.Hash(aioEvidence),Files=[bundleDelta]};
+        var aioHeader=new Header(Sign(aioRequest,Rules.Domain),Convert.ToBase64String(aioFeed),Convert.ToBase64String(aioEvidence));
+        var aioFrame=new MemoryStream();var aioHeaderBytes=Rules.Bytes(aioHeader);var aioPrefix=new byte[4];
+        BinaryPrimitives.WriteInt32BigEndian(aioPrefix,aioHeaderBytes.Length);aioFrame.Write(aioPrefix);aioFrame.Write(aioHeaderBytes);aioFrame.Write([1,2,3,4]);aioFrame.Position=0;
+        await Channel.Submit(aioPublish,aioFrame,false);
+        using var badCloud=new HttpClient(new CloudHandler(false));
+        Reject("aio-publication-does-not-switch-before-cloud-body-verification",()=>Channel.Worker(aioPublish,aioRequest.Nonce,mirrorClient:badCloud));
+        Pass("aio-failed-cloud-keeps-previous-feed",Rules.HashFile(Rules.FeedPath(aioPublish))==Rules.Hash(bundledFeed));
+        Pass("aio-failed-cloud-has-no-unverified-routes",!Directory.Exists(Path.Combine(Mirror.Root(aioPublish),"routes/v1.5.1")));
+        using var goodCloud=new HttpClient(new CloudHandler(true));
+        Channel.Worker(aioPublish,aioRequest.Nonce,phase=>
+        {if(phase=="feed-switched")Pass("aio-feed-switch-already-has-verified-route",File.Exists(Path.Combine(Mirror.Root(aioPublish),"routes/v1.5.1",bundleDelta.FileName)));},goodCloud);
+        Pass("aio-cloud-recovery-completes-publication",Rules.HashFile(Rules.FeedPath(aioPublish))==Rules.Hash(aioFeed));
         await MirrorSelfTest.Run(folder,checks);
         await RepairSelfTest.Run(folder,checks);
         await CapabilitySelfTest.Run(folder,checks);
         var report=new{status="passed",checks=checks.Count,cases=checks,gameTouched=false,serverTouched=false};
         File.WriteAllBytes(Path.Combine(folder,"results.json"),Rules.Bytes(report));Console.WriteLine($"{checks.Count} OTA channel checks passed: {folder}");
+    }
+    sealed class CloudHandler(bool valid) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,CancellationToken token) =>
+            Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK){Content=new ByteArrayContent(valid?[1,2,3,4]:[1,2,3,5])});
     }
 }

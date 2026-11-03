@@ -170,6 +170,22 @@ static class MirrorSelfTest
         foreach (var d in aioDeltas) File.WriteAllBytes(Path.Combine(aio.Public, "v1.5.1", d.FileName), [1, 2, 3, 4]);
         using var aioClient = new HttpClient(new Handler(r => { Rules.Need(r.RequestUri!.AbsolutePath.StartsWith("/dustweave/ota/all-in-one/"), "Wrong AIO lane"); return new(HttpStatusCode.OK) { Content = new ByteArrayContent([1, 2, 3, 4]) }; }));
         Pass("mirror-aio-first-maintenance-prepares-current-signed-lane", await Mirror.Maintain(aio, aioClient));
+        string[] aioRoutes = Directory.GetFiles(Path.Combine(Mirror.Root(aio), "routes/v1.5.1"));
+        Pass("mirror-aio-outage-does-not-switch-to-origin", !await Mirror.Probe(aio, unavailable) &&
+            File.Exists(Mirror.Enabled(aio)) && aioRoutes.All(File.Exists));
+        var aioStatus = System.Text.Json.JsonSerializer.SerializeToElement(Mirror.Status(aio));
+        Pass("mirror-aio-reachability-separate-from-delivery", aioStatus.GetProperty("active").GetBoolean() &&
+            !aioStatus.GetProperty("originFallback").GetBoolean() && aioStatus.GetProperty("health").GetProperty("State").GetString() == "cdn-degraded");
+        File.Delete(Mirror.Enabled(aio)); // Previous publisher may have disabled this switch.
+        Pass("mirror-aio-restart-with-old-disabled-switch-retains-verified-routes", !await Mirror.Maintain(aio, unavailable) &&
+            System.Text.Json.JsonSerializer.SerializeToElement(Mirror.Status(aio)).GetProperty("active").GetBoolean());
+        Pass("mirror-aio-real-recovery-clears-warning", await Mirror.Maintain(aio, aioClient) &&
+            System.Text.Json.JsonSerializer.SerializeToElement(Mirror.Status(aio)).GetProperty("health").GetProperty("Error").ValueKind == System.Text.Json.JsonValueKind.Null);
+        Pass("mirror-aio-wrong-length-does-not-divert-unrelated-files", !await Mirror.Probe(aio, wrongLength) && aioRoutes.All(File.Exists));
+        using var instantTimeout = new HttpClient(new AsyncHandler((_, _) => throw new TaskCanceledException("injected timeout")));
+        Pass("mirror-aio-timeout-identifies-file-without-origin", !await Mirror.Probe(aio, instantTimeout) &&
+            File.ReadAllText(Path.Combine(Mirror.Root(aio), "health.json")).Contains("Dustweave-1.5.1-"));
+        Pass("mirror-aio-repeated-recovery", await Mirror.Probe(aio, aioClient));
 
         const string original = """
         server {
@@ -194,6 +210,15 @@ static class MirrorSelfTest
         Pass("mirror-nginx-hides-internal-route-state", patched.Contains("location ^~ /updates/dustweave/v2/.mirror/ { return 404; }"));
         await Reject("mirror-nginx-rejects-missing-alias", () => { MirrorNginx.Patch("server {}", production); return Task.CompletedTask; });
         await Reject("mirror-nginx-rejects-custom-proxy-drift", () => { MirrorNginx.Patch(original.Replace("autoindex off;", "proxy_pass http://other;"), production); return Task.CompletedTask; });
+        var aioProduction = aio with { Public = "/home/nginx/dustweave-updates-aio" };
+        string aioPatched = MirrorNginx.BundlePatch(patched, aioProduction);
+        Pass("mirror-aio-nginx-patch-idempotent", MirrorNginx.BundlePatch(aioPatched, aioProduction) == aioPatched);
+        string aioBlock = aioPatched[..aioPatched.IndexOf("# END DUSTWEAVE AIO", StringComparison.Ordinal)];
+        Pass("mirror-aio-nginx-no-origin-escape-or-global-health-switch", !aioBlock.Contains("$arg_origin") &&
+            !aioBlock.Contains(".mirror/enabled") && !aioBlock.Contains("alias /usr/share/nginx/dustweave-updates-aio/;"));
+        Pass("mirror-aio-nginx-unverified-request-bounded-unavailable", aioBlock.Contains("return 503;") && aioBlock.Contains("Retry-After"));
+        Pass("mirror-aio-nginx-preserves-other-lanes", aioPatched.EndsWith(patched[patched.IndexOf("# BEGIN DUSTWEAVE OTA CDN", StringComparison.Ordinal)..], StringComparison.Ordinal));
+        await Reject("mirror-aio-nginx-ambiguous-block-rejected", () => { MirrorNginx.BundlePatch(aioPatched + "\n# BEGIN DUSTWEAVE AIO", aioProduction); return Task.CompletedTask; });
     }
     sealed class Handler(Func<HttpRequestMessage, HttpResponseMessage> send) : HttpMessageHandler
     {
