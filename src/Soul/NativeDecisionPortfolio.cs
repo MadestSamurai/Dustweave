@@ -29,10 +29,12 @@ internal sealed partial class NativeFastPlanner
             return plan;
         },Cancellation,()=>{
             // Only this calling thread writes session status and evidence.
-            lock(gate){
-                CandidateProposals=progress.Sum(p=>p.Proposals);
-                Progress?.Invoke(progress.Any(p=>p.Phase is null or "combinations")?"combinations":progress.Any(p=>p.Phase=="growth")?"growth":"verify",progress.Sum(p=>p.Count),timer.Elapsed.TotalSeconds);
-            }
+            (string Phase,int Count,double Time,int Proposals)[] snapshot;
+            lock(gate)snapshot=progress.ToArray();
+            CandidateProposals=snapshot.Sum(p=>p.Proposals);
+            // The callback writes diagnostics. Do not hold the workers' progress
+            // lock across filesystem I/O or UI notification.
+            Progress?.Invoke(snapshot.Any(p=>p.Phase is null or "combinations")?"combinations":snapshot.Any(p=>p.Phase=="growth")?"growth":"verify",snapshot.Sum(p=>p.Count),timer.Elapsed.TotalSeconds);
         });
         Cancellation.ThrowIfCancellationRequested();CandidateProposals=plans.Sum(p=>N(p,"proposals"));
         var seeds=new Random(752491);var audit=Enumerable.Range(0,512).Select(_=>seeds.Next(1,int.MaxValue)).ToArray();

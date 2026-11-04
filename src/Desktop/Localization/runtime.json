@@ -315,9 +315,9 @@
     "en-US": "Ability uses could not be read, so weekly collection is unfinished. Reconnect and retry it; other selected weekly tasks will continue."
   },
   "message.legacy.4f1d00f1ac22da86": {
-    "zh-CN": "当前账号没有可用的吸收天赋，请启用天赋或在设置中选择步行收集。",
-    "zh-TW": "目前帳號沒有可用的吸收天賦，請啟用天賦或在設定中選擇步行收集。",
-    "en-US": "This account has no enabled Absorption Ability. Enable it or select walking collection in settings."
+    "zh-CN": "当前账号没有可用的吸收天赋，请启用天赋；《恶梦之冬》需要吸收，其他卡带可在设置中选择步行收集。",
+    "zh-TW": "目前帳號沒有可用的吸收天賦，請啟用天賦；《夢靨冬季》需要吸收，其他卡帶可在設定中選擇步行採集。",
+    "en-US": "This account has no enabled Absorption Ability. Enable it for Nightmare Winter; other cartridges can use on-foot collection in settings."
   },
   "message.mail_selection_rejected": {
     "zh-CN": "本次邮箱选择已失效，未继续领取。请重新连接后重试。",

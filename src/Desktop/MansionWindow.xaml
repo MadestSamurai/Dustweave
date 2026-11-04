@@ -24,10 +24,10 @@
     <TextBlock Text="{l:Tr mansion.legend}" FontSize="12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap"/>
    </StackPanel></ScrollViewer>
   </Grid>
-  <Grid Grid.Row="3" Margin="0,20,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-   <StackPanel Margin="0,0,20,0" VerticalAlignment="Center"><TextBlock x:Name="StatusText" Text="{l:Tr mansion.ready}" FontWeight="SemiBold" TextWrapping="Wrap"/><ProgressBar x:Name="LoadingProgress" Height="4" Margin="0,8,0,0" Visibility="Collapsed" AutomationProperties.Name="{l:Tr mansion.state.connecting}"/><TextBlock Text="{l:Tr mansion.stop_hint}" FontSize="11" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,4,0,0"/></StackPanel>
-   <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-    <Button x:Name="ConnectButton" Content="{l:Tr mansion.connect}" Click="ConnectClicked" Margin="0,0,8,0"/>
+  <Grid Grid.Row="3" Margin="0,20,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <Button x:Name="ConnectButton" Content="{l:Tr mansion.connect}" Click="ConnectClicked" VerticalAlignment="Center" Margin="0,0,16,0"/>
+   <StackPanel Grid.Column="1" Margin="0,0,20,0" VerticalAlignment="Center"><TextBlock x:Name="StatusText" Text="{l:Tr mansion.ready}" FontWeight="SemiBold" TextWrapping="Wrap"/><ProgressBar x:Name="LoadingProgress" Height="4" Margin="0,8,0,0" Visibility="Collapsed" AutomationProperties.Name="{l:Tr mansion.state.connecting}"/><TextBlock Text="{l:Tr mansion.stop_hint}" FontSize="11" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,4,0,0"/></StackPanel>
+   <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
     <Button x:Name="StopButton" Content="{l:Tr mansion.stop}" Click="StopClicked" IsEnabled="False" Margin="0,0,8,0"/>
     <Button x:Name="StartButton" Content="{l:Tr mansion.start}" Click="StartClicked" IsEnabled="False" Style="{StaticResource PrimaryButton}"/>
    </StackPanel>

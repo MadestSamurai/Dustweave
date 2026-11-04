@@ -95,15 +95,54 @@ static class MenuOpenRetryCases
             ("MenuUI", "_buttonMission", "MissionUI"),
             ("MenuUI", "_buttonEvent", "EventUI"),
             ("MenuUI", "_buttonPass", "PassUI"),
-            ("MenuUI", "_buttonMiniGame", "MiniGameHubUI") })
+            ("MenuUI", "_buttonMiniGame", "MiniGameHubUI"),
+            ("MenuUI", "_goQuickHuntDispatchButton", "HuntOrAirwayUI"),
+            ("HuntOrAirwayUI", DailyHunting.SelectField, "HuntDispatchPopupUI"),
+            ("EventBattleUI", "_buttonSkipBattle._button", "BattleSkipPopupUI"),
+            ("EventBattleUI", "_buttonAutoBattle._button", "BattleSkipPopupUI") })
         {
             using var h = New(entry.Item2);
             h.Page(entry.Item1, entry.Item2);
+            if (entry.Item1 == "HuntOrAirwayUI")
+            {
+                h.Frame["Surfaces"]![0]!["Targets"]![0]!["Route"] = "pointer";
+                h.Frame["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("WorldMapUI", id: 40));
+            }
             if (entry.Item1 == "MenuUI") h.Frame["Scene"] = "Empty"; // Native home menu is not a loading scene.
             if (entry.Item1 == "MenuUI") h.Frame["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("GameFieldDefaultUI", id: 40));
             h.OnCommand = _ => { if (h.Box.Commands.Count == 2) h.Page(entry.Item3); };
             await h.Workflow.Step(O(("ui", entry.Item1), ("field", entry.Item2), ("expect", entry.Item3), ("timeout", 8)));
             Check(h.Box.Commands.Count == 2, "shared non-consuming menu recovery: " + entry.Item2);
+        }
+        foreach (string mode in new[] { "parent-opening", "parent-final-read", "late-popup", "other-popup", "loading", "changed-account", "cancel", "unrelated-parent" })
+        {
+            using var h = New("hunt-" + mode);
+            var action = O(("ui", "HuntOrAirwayUI"), ("field", DailyHunting.SelectField), ("expect", "HuntDispatchPopupUI"), ("timeout", 8));
+            h.Page("HuntOrAirwayUI", DailyHunting.SelectField);
+            h.Frame["Surfaces"]![0]!["Targets"]![0]!["Route"] = "pointer";
+            var parent = HomeNavigationCases.Surface(mode == "unrelated-parent" ? "OtherUI" : "WorldMapUI", id: 40);
+            parent["InputReady"] = mode is not ("parent-opening" or "unrelated-parent");
+            h.Frame["Surfaces"]!.AsArray().Add(parent);
+            h.OnCommand = _ => {
+                if (mode == "parent-final-read" && h.Box.Commands.Count == 1) parent["InputReady"] = false;
+                if (mode == "unrelated-parent" || mode is "parent-opening" or "parent-final-read" && B(parent["InputReady"])) h.Page("HuntDispatchPopupUI");
+                if (mode == "other-popup") h.Frame["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("UnknownPopupUI", true, "_close", 50));
+                if (mode == "loading") h.Frame["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("LoadingUI", id: 50));
+            };
+            h.OnDelay = () => {
+                if (h.Time >= 1) parent["InputReady"] = true;
+                if (h.Box.Commands.Count == 0) return;
+                if (mode == "late-popup" && h.Time >= 1) h.Page("HuntDispatchPopupUI");
+                if (mode == "changed-account") h.Context["actor"]![3] = "changed-account";
+                if (mode == "cancel") h.Stopped = true;
+            };
+            JsonObject? result = null;
+            try { result = await h.Driver.SendObservedAsync(action); } catch (DailyStepException) { }
+            bool success = mode is "parent-opening" or "parent-final-read" or "late-popup" or "unrelated-parent";
+            Check(h.Box.Commands.Count == (mode is "parent-opening" or "parent-final-read" ? 2 : 1) && (result != null) == success,
+                "hunt checks owner only after an opener fails, and adopts late arrival: " + mode);
+            if (mode is "parent-opening" or "parent-final-read") Check(h.Time >= 2, "hunt waits before checking and retrying its non-consuming preview: " + mode);
+            if (mode == "unrelated-parent") Check(h.Time < 1, "hunt owner readiness does not extend to unrelated UI");
         }
         foreach (string mode in new[] { "purchase", "claim", "battle", "back", "unknown-field", "owned", "preview", "native", "pointer" })
         {

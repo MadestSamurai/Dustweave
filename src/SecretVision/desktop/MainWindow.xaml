@@ -37,9 +37,10 @@
     <TextBlock x:Name="OperationHelp" Foreground="{DynamicResource MutedInk}" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap"/>
    </StackPanel></ScrollViewer></Border>
   </Grid>
-  <Grid Grid.Row="2" Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-   <StackPanel Margin="0,0,14,0"><TextBlock x:Name="RunStatus" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock x:Name="RunDetail" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" FontSize="12" Margin="0,5,0,0"/></StackPanel>
-   <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"><Button x:Name="ConnectButton" Click="ConnectClick" Margin="0,0,8,0"/><Button x:Name="StopButton" Click="StopClick" IsEnabled="False" Margin="0,0,8,0"/><Button x:Name="StartButton" Style="{DynamicResource PrimaryButton}" Click="StartClick"/></StackPanel>
+  <Grid Grid.Row="2" Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <Button x:Name="ConnectButton" Click="ConnectClick" VerticalAlignment="Center" Margin="0,0,16,0"/>
+   <StackPanel Grid.Column="1" Margin="0,0,14,0" VerticalAlignment="Center"><TextBlock x:Name="RunStatus" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock x:Name="RunDetail" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" FontSize="12" Margin="0,5,0,0"/></StackPanel>
+   <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"><Button x:Name="StopButton" Click="StopClick" IsEnabled="False" Margin="0,0,8,0"/><Button x:Name="StartButton" Style="{DynamicResource PrimaryButton}" Click="StartClick"/></StackPanel>
   </Grid>
   <Expander Grid.Row="3" x:Name="Diagnostics" Visibility="Collapsed" Margin="0,16,0,0"><StackPanel Margin="0,10,0,0">
    <TextBlock x:Name="DiagnosticHelp" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,0,0,6"/>

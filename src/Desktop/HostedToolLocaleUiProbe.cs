@@ -73,9 +73,35 @@ internal static class HostedToolLocaleUiProbe
                 if(failure!=null)throw failure;
                 DailyLanguage.Current.Select("zh-TW");bridge.Refresh();
             }
+            CheckReattachedText(app,Check);
             DailyJson.Write(Path.Combine(output,"result.json"),new{status="passed",count=checks.Count,checks,realGameTouched=false,gameCommands=0});
         }
         finally{foreach(Window window in app.Windows.Cast<Window>().ToArray())window.Close();app.Shutdown();}
+    }
+    private static void CheckReattachedText(Application app,Action<bool,string> check)
+    {
+        foreach(string name in new[]{"BD2Fishing","BD2Sichuan","BD2InfiniteGacha","BD2ApostleDefense"})
+        {
+            var label=new TextBlock{Text="连接游戏"};var body=new StackPanel();body.Children.Add(label);
+            var window=new Window{Content=body,Width=300,Height=180,Left=-12000,ShowInTaskbar=false,ShowActivated=false};
+            var type=Assembly.Load(name).GetType(name+".Desktop.WindowLanguage",true)!;
+            using var adapter=(IDisposable)Activator.CreateInstance(type,window,"en-US")!;
+            void Select(string code)=>type.GetMethod("Select")!.Invoke(adapter,[code]);
+            void Drain()=>app.Dispatcher.Invoke(()=>{},DispatcherPriority.ApplicationIdle);
+            window.Show();Drain();
+            try
+            {
+                check(label.Text=="Connect game",name+": real text adapter translates before reparenting");
+                // Preparation wraps the original content; unloaded controls must keep their source text.
+                window.Content=null;Drain();window.Content=body;Drain();
+                Select("zh-TW");check(label.Text=="連接遊戲",name+": reattached English text switches to Traditional");
+                Select("zh-CN");check(label.Text=="连接游戏",name+": original source survives Traditional round trip");
+                Select("en-US");check(label.Text=="Connect game",name+": repeated switch stays reversible");
+                window.Content=null;Drain();label.Text="Account-甲 / 5035";window.Content=body;Drain();
+                Select("zh-CN");check(label.Text=="Account-甲 / 5035",name+": new text assigned while detached is preserved");
+            }
+            finally{window.Close();}
+        }
     }
     private sealed class ToolWindow:Window
     {

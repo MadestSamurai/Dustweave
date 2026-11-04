@@ -45,7 +45,8 @@ public partial class SichuanWindow : Window
     private void LanguageChanged(object sender,SelectionChangedEventArgs e)
     {
         if(language==null || LanguageBox.SelectedItem is not ComboBoxItem choice)return;
-        try{LanguagePreference.Save(data,(string)choice.Tag);language.Select((string)choice.Tag);}
+        var selected=AppDomain.CurrentDomain.GetData("BD2Daily.HostedLanguage") as string ?? (string)choice.Tag;
+        try{LanguagePreference.Save(data,selected);language.Select(selected);}
         catch(Exception ex){ConnectionText.Text=ex.Message;}
     }
     private async void Connect_Click(object sender,RoutedEventArgs e)
@@ -210,7 +211,7 @@ public partial class SichuanWindow : Window
             "budget_exhausted"=>"限时内尚未找到完整路线，当前仅为合法下一步。",
             _=>"当前静态盘面没有完整路线；连击奖励或游戏洗牌后会重新检查。"};
         RouteText.Text=string.Join("    ",value.Moves.Skip(1).Take(3).Select((v,i)=>$"随后{i+1}：{Position(v.First)} ↔ {Position(v.Second)}"));
-        if(value.Reused)MetaText.Text+=" · 已接续原路线";else if(value.Milliseconds>0)MetaText.Text+=$" · 求解 {value.Milliseconds:F0} ms / {value.Nodes} 节点";
+        if(value.Reused)MetaText.Text+=" · 沿用原路线";else if(value.Milliseconds>0)MetaText.Text+=$" · 求解 {value.Milliseconds:F0} ms / {value.Nodes} 节点";
         Draw(m);
     }
     private BitmapImage? ImageFor(string file)

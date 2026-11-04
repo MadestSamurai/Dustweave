@@ -328,11 +328,7 @@ public sealed partial class DailyFieldRoute
         var before = await Evidence();
         long map = N(Map(before)["id"]), pack = N(Map(before)["packId"]);
         if (expectedMap.HasValue && map != expectedMap.Value) throw new DailyCollectionLocationChanged();
-        if (await PrepareHazardCollection(before))
-        {
-            before = await Evidence();
-            if (N(Map(before)["id"]) != map) throw new DailyCollectionLocationChanged();
-        }
+        manual = DailyHazardTravelPolicy.WalkCollection(manual, pack);
         string week = S(R(before, "mainline.reset", "GetWeeklyResetTime().Ticks"));
         Require(Catalog.Supported(pack) && !Excluded.Contains(map), "地图不在收集范围");
         var checkpoint = await Checkpoint();
@@ -341,6 +337,15 @@ public sealed partial class DailyFieldRoute
         Require(checkpoint["maps"]?[map.ToString()] is JsonObject, "当前地图不在本次服务器收集范围，需重新规划路线。");
         if (checkpoint["completed"]!.AsObject().ContainsKey(map.ToString()))
             return DailyWorkflow.Skipped("server_complete");
+        // Check actual remaining work before spending stealth/travel on the
+        // exception cartridge. Ordinary walking never depends on Absorb quota.
+        if (!Progress.OnlySteal && !DailyHazardTravelPolicy.WalkCollection(true, pack)
+            && checkpoint["maps"]![map.ToString()]!["drops"] is JsonArray { Count: > 0 }) Quota(current);
+        if (await PrepareHazardCollection(current))
+        {
+            current = await Evidence();
+            if (N(Map(current)["id"]) != map || N(Map(current)["packId"]) != pack) throw new DailyCollectionLocationChanged();
+        }
         if (Progress.Steal && Rows(checkpoint["maps"]![map.ToString()]!["steals"]).Length > 0)
             await new DailyWeeklySteal(this).CollectMap(checkpoint);
         if (!Progress.OnlySteal)
@@ -427,6 +432,7 @@ public sealed partial class DailyFieldRoute
     }
     public async Task Collect(long pack, bool walkCollect = false, long? returnMap = null, bool teleports = true, JsonObject? checkpoint = null)
     {
+        walkCollect = DailyHazardTravelPolicy.WalkCollection(walkCollect, pack);
         bool prior = RecoverEncounters;
         RecoverEncounters = true;
         try

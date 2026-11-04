@@ -39,7 +39,9 @@ public static class DailyDiagnosticExport
     static string Unrotate(string name) => Rotations.FirstOrDefault(s => name.EndsWith(s,StringComparison.OrdinalIgnoreCase)) is { } suffix ? name[..^suffix.Length] : name;
     static bool LogName(string name) => Unrotate(name).EndsWith(".log",StringComparison.OrdinalIgnoreCase) || Unrotate(name).EndsWith(".jsonl",StringComparison.OrdinalIgnoreCase);
     static bool SoulControlEvidence(string relative) => relative.StartsWith("tools/soul/runs/",StringComparison.OrdinalIgnoreCase)
-        && new[]{"error.txt","restore-error.txt","status.json","campaign.json","timeline.jsonl"}.Contains(Path.GetFileName(relative),StringComparer.OrdinalIgnoreCase);
+        // Status alone cannot reproduce a slow decision. Preserve the current
+        // solver input and native snapshot before historical daily transactions.
+        && new[]{"error.txt","restore-error.txt","status.json","campaign.json","timeline.jsonl","live-state-latest.json","soul-latest.json"}.Contains(Path.GetFileName(relative),StringComparer.OrdinalIgnoreCase);
     static bool ToolControlEvidence(string relative) => relative.StartsWith("tools/",StringComparison.OrdinalIgnoreCase)
         && (SoulControlEvidence(relative)||relative.EndsWith("-activity-error.json",StringComparison.OrdinalIgnoreCase)
             || relative.EndsWith("-identity-error.json",StringComparison.OrdinalIgnoreCase)

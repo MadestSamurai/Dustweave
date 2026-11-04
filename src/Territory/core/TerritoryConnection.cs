@@ -91,7 +91,7 @@ public sealed class TerritoryConnection
             throw new InvalidOperationException("统一会话未就绪，请返回日常助手重新连接。");
         }
         var saved=TerritoryJson.Read<TerritoryConnectionState>(Path.Combine(root,"connection.json"));
-        if(saved==null)throw new InvalidOperationException("尚无有效连接记录，请先点击「连接 / 更新组件」。");
+        if(saved==null)throw new InvalidOperationException("尚无有效连接记录，请先点击「连接游戏」。");
         if(!SameProcess(saved,pid,start))throw new InvalidOperationException("游戏进程已变化，请重新连接。");
     }
     public static Process FindGame() => BD2.LocalIpc.HostedConnection.FindGame(TerritoryIdentity.IsGameProcessName,

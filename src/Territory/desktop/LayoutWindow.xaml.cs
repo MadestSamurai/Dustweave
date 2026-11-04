@@ -51,7 +51,7 @@ public partial class LayoutWindow:Window
  private async void PreviewClick(object sender,RoutedEventArgs e)=>await AttemptAsync(()=>BeginAsync("preview"));
  private async void ApplyClick(object sender,RoutedEventArgs e)=>await AttemptAsync(()=>BeginAsync("apply"));
  private async void PauseClick(object sender,RoutedEventArgs e)=>await AttemptAsync(PauseAsync);
- private async Task PauseAsync(){link.RequestStop();viewRevision++;prepared="";PauseButton.IsEnabled=false;Set(MessageText,"已暂停。已提交的摆放等待确认；再次预检后可接续。");await QueueControl(link.Flush);await RefreshAsync();}
+ private async Task PauseAsync(){link.RequestStop();viewRevision++;prepared="";PauseButton.IsEnabled=false;Set(MessageText,"已暂停。已提交的摆放等待确认；重新预检后可以继续。");await QueueControl(link.Flush);await RefreshAsync();}
  private async Task RefreshAsync()
  {
   if(polling||closing||starting)return;polling=true;var revision=viewRevision;

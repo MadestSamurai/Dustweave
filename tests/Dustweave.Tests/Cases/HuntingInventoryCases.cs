@@ -11,6 +11,25 @@ static class HuntingInventoryCases
         void Check(bool ok, string name) { if (!ok) throw new Exception(name); checks.Add(name); }
         int serial = 0;
         Fixture Make() => new(Path.Combine(output, "holy-stone-" + ++serial));
+        foreach (int missed in new[] { 0, 1, 2, 3 })
+        using (var f = Make())
+        {
+            f.MissedOpens = missed;
+            f.H.Workflow.Settings.Hunt.StoneElement = "wind";
+            bool paused = false;
+            try { await DailyHunting.Run(f.H.Workflow, "stones"); } catch (DailyStepException e) when (e.Submitted) { paused = true; }
+            Check(f.Opens == Math.Min(missed + 1, 3) && paused == (missed == 3), "hunt preview uses bounded non-consuming retries: " + missed);
+            if (paused)
+            {
+                Check(f.Dispatched == 0 && f.Free == 20 && f.Paid == 999, "failed hunt preview leaves both resource balances untouched");
+                f.MissedOpens = 0;
+                await DailyHunting.Run(f.H.Workflow, "stones");
+            }
+            Check(f.Dispatched == 1 && f.Free == 0 && f.Paid == 999 && f.FreeOnly,
+                "recovered hunt executes one free-only batch without toggling stored resources: " + missed);
+            await DailyHunting.Run(f.H.Workflow, "stones");
+            Check(f.Dispatched == 1 && f.Paid == 999, "rerunning completed free hunting relies on exhausted native free balance: " + missed);
+        }
         using (var f = Make())
         {
             var result = await DailyHunting.Run(f.H.Workflow, "stones");
@@ -93,7 +112,8 @@ static class HuntingInventoryCases
     {
         public readonly WorkflowHarness H;
         public bool Folded = true, DelayRows, NeverRows;
-        public int Expands, Dispatched, Free = 20, Paid = 999;
+        public int Expands, Dispatched, Opens, MissedOpens, Free = 20, Paid = 999;
+        public bool FreeOnly = true;
         public string Element = "fire";
         double expandedAt = -100;
         int count = 1;
@@ -106,7 +126,7 @@ static class HuntingInventoryCases
                 WorkflowCases.Reading("hunt.selection", (DailyHunting.TablePath, Table())),
                 WorkflowCases.Reading("hunt.native", ("ὤὫὣὡὫὤὦὯὢὡὬ", "ABLE")),
                 WorkflowCases.Reading("daily.currency", ("FreeHuntingAp", 0), ("BonusHuntingAp", 33), ("FreeTorchLightAp", Free), ("TorchLightAp", Paid)),
-                WorkflowCases.Reading("hunt.popup", (DailyHunting.TablePath, Table()), (DailyHunting.CountPath, count), ("_buttonFreeOnly.IsEnable", true),
+                WorkflowCases.Reading("hunt.popup", (DailyHunting.TablePath, Table()), (DailyHunting.CountPath, count), ("_buttonFreeOnly.IsEnable", FreeOnly),
                     ("_sliderAutoCount.ὩὧὩὦὫὮὨὢὦὠὯ", 20), ("_sliderAutoCount.ὧὬὩὬὢὦὩὥὥὩὢ", 10)),
                 WorkflowCases.Reading("reward.presentation", ("ὣὤὥὦὯὦὩὤὨὠὪ", true), ("ὪὯὣὥὬὫὬὩὠὮὠ", true), ("ὮὬὧὦὣὠὠὤὮὦὧ", true), ("ὦὡὮὫὧὠὮὡὭὭὬ", false))
             }.Concat(Folded || NeverRows || DelayRows && H.Time - expandedAt < .45 ? [] : Enumerable.Range(111, 5).Select(id => Owned(id, id == 113 ? 0 : 100))).ToArray();
@@ -119,14 +139,19 @@ static class HuntingInventoryCases
                 if (ui == DailyHunting.Ui && field == "_buttonFoldAndExpand")
                 { Folded = !Folded; Expands++; expandedAt = H.Time; Page(); }
                 else if (ui == DailyHunting.Ui && field == DailyHunting.SelectField)
-                    H.Page("HuntDispatchPopupUI", "_sliderAutoCount._objPlusMaxButton", "_buttonHuntDispatch._button");
-                else if (ui == DailyHunting.Ui && field == "_objBackButton") H.Page("MenuUI");
+                {
+                    Opens++;
+                    if (Opens > MissedOpens) H.Page("HuntDispatchPopupUI", "_sliderAutoCount._objPlusMaxButton", "_buttonHuntDispatch._button");
+                }
+                else if (ui == DailyHunting.Ui && field == "_objBackButton") H.Page("MenuUI", "_goQuickHuntDispatchButton");
+                else if (ui == "MenuUI" && field == "_goQuickHuntDispatchButton") Page();
                 else if (ui == DailyHunting.Ui && field.EndsWith("/Button - Element"))
                     Element = DailyHunting.Elements.Single(e => field.Contains("Item - Element - " + char.ToUpperInvariant(e[0]) + e[1..]));
                 else if (ui == DailyHunting.Ui && field.EndsWith("4 - Crystal")) { }
                 else if (ui == "HuntDispatchPopupUI" && field == "_sliderAutoCount._objPlusMaxButton") count = 20;
                 else if (ui == "HuntDispatchPopupUI" && field == "_buttonHuntDispatch._button")
                 {
+                    if (!FreeOnly || Free < count) throw new Exception("Native free-only hunt rejected insufficient free budget");
                     H.Event("hunt.dispatch", "request");
                     Free -= count; Dispatched++;
                     H.Event("hunt.dispatch", "response", ("RewardInfoBundle", O(("items", new[] { 1 }))));
@@ -137,9 +162,15 @@ static class HuntingInventoryCases
             };
             Page();
         }
-        public void Page() => H.Page(DailyHunting.Ui, new[] { "$pointer/Layout - Button/Button - 4 - Crystal", "_buttonFoldAndExpand",
+        public void Page()
+        {
+            H.Page(DailyHunting.Ui, new[] { "$pointer/Layout - Button/Button - 4 - Crystal", "_buttonFoldAndExpand",
             Folded ? "_expandButtonCurrency" : "_foldButtonCurrency", DailyHunting.SelectField, "_objBackButton" }
             .Concat(DailyHunting.Elements.Select(e => "$pointer/SelectParent/Layout - Select/Tab - Element/UIScrollView - Element/UIViewport/UIContent/Item - Element - " + char.ToUpperInvariant(e[0]) + e[1..] + "/Button - Element")).ToArray());
+            foreach (var target in DailyNavigationDecision.Rows(H.Frame).SelectMany(r => Rows(r["Targets"])))
+                if (S(target["Field"]).StartsWith("$pointer/", StringComparison.Ordinal)) target["Route"] = "pointer";
+            H.Frame["Surfaces"]!.AsArray().Add(HomeNavigationCases.Surface("WorldMapUI", id: 40));
+        }
         public void Dispose() => H.Dispose();
     }
 }

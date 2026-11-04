@@ -36,7 +36,7 @@ public partial class FishingWindow:Window
  private void LanguageChanged(object sender,SelectionChangedEventArgs e)
  {
   if(language==null || LanguageBox.SelectedItem is not ComboBoxItem choice)return;
-  var selected=(string)choice.Tag;
+  var selected=AppDomain.CurrentDomain.GetData("BD2Daily.HostedLanguage") as string ?? (string)choice.Tag;
   try{if(initialized)LanguagePreference.Save(FishingStorage.Preferences(root),selected);language.Select(selected);UpdateRetentionLanguage();}
   catch(Exception ex){ReasonText.Text=ex.Message;}
  }
@@ -117,6 +117,7 @@ public partial class FishingWindow:Window
    return;
   }
   var s=snapshot!;
+  LiveDetails.Visibility=Visibility.Visible; // Live figures appear once the game reports a fresh state.
   if(link.Enabled && s.OwnerId==link.OwnerId && s.Error.Length>0){FishingDiagnostics.Interrupted(root,s);_ = StopAsync();StatusText.Text="自动钓鱼已暂停";}
   else StatusText.Text=link.Enabled?"自动钓鱼运行中":s.Ready?"钓点已识别":"等待进入钓点";
   ReasonText.Text=s.Error.Length>0?s.Error:link.Error.Length>0?link.Error:link.Enabled?s.Reason:s.Ready?"准备好后点击「开始钓鱼」。":"请进入钓鱼地图。";

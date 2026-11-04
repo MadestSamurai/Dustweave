@@ -99,7 +99,7 @@ public partial class MainWindow : Window
         if(initializing)return;
         Board.Board=snapshot?.Board;EmptyBoard.Visibility=snapshot?.Board==null?Visibility.Visible:Visibility.Collapsed;
         LiveState.Text=language[fresh?"live":snapshot==null?"waiting":"stale"];
-        BoardStats.Text=snapshot?.Board is Board b?language.Format("stats",b.Percent,b.Remaining):"—";
+        BoardStats.Text=snapshot?.Board is Board b?language.Format("stats",b.Percent,b.Remaining):"—";BoardStats.Visibility=EmptyBoard.Visibility==Visibility.Visible?Visibility.Collapsed:Visibility.Visible;
         RunStatus.Text=language[status];RunStatus.Foreground=(Brush)FindResource(status is "blocked" or "file-access" or "permission"||diagnostic.Length>0&&!running?"Error":status=="completed"?"Success":"Ink");
         RunDetail.Text=progress.Stage>0?language.Format("progress",progress.Stage,progress.Attempt,progress.Cleared.Count==0?language["none"]:string.Join(", ",progress.Cleared)):language["open-secret-vision"];
         DiagnosticText.Text=diagnostic;SettingsError.Text=validation.Length>0?language[validation]:"";SetEnabled();

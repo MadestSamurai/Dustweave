@@ -305,13 +305,15 @@ internal static class DiagnosticExportCases
             "tools/fishing-identity-error.json","tools/fishing-activity-error.json",
             "tools/territory/diagnostics/connection.log","tools/equipment/diagnostics/connection.log"];
         string soulRun="tools/soul/runs/"+new string('a',64)+"/20261102-075300-123/";
-        toolEvidence=toolEvidence.Concat(new[]{"error.txt","restore-error.txt","status.json","campaign.json","timeline.jsonl"}.Select(f=>soulRun+f)).ToArray();
+        toolEvidence=toolEvidence.Concat(new[]{"error.txt","restore-error.txt","status.json","campaign.json","timeline.jsonl","live-state-latest.json","soul-latest.json"}.Select(f=>soulRun+f)).ToArray();
         foreach(string rel in toolEvidence) {
             string path=Path.Combine(npcPressure,rel);Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             File.WriteAllText(path,rel.EndsWith(".json")?"{\"error\":\"test interruption\"}":"test interruption");
             File.SetLastWriteTimeUtc(path,DateTime.UtcNow.AddHours(-2));
         }
         string connectionLog=Path.Combine(npcPressure,"tools/fishing/diagnostics/connection.log");
+        File.WriteAllText(Path.Combine(npcPressure,soulRun+"live-state-latest.json"),"{\"state\":{\"play\":{\"dungeonId\":14,\"stageId\":14,\"coin\":21},\"inventory\":[{\"inventoryIndex\":1,\"id\":10001}],\"deck\":[],\"shop\":[],\"upgradeCapabilities\":[]},\"access_token\":\"hidden-soul-secret\"}");
+        File.SetLastWriteTimeUtc(Path.Combine(npcPressure,soulRun+"live-state-latest.json"),DateTime.UtcNow.AddHours(-2));
         File.WriteAllText(connectionLog,new string('x',512*1024)+"\nlast connection failure token=hidden-fish-secret\n");
         var npcCapped=await DailyDiagnosticExport.CreateAsync(npcPressure,Path.Combine(output,"npc-byte-pressure.zip"),"","fixture");
         using(var archive=ZipFile.OpenRead(npcCapped.Path)) {
@@ -322,6 +324,13 @@ internal static class DiagnosticExportCases
           Check(toolEvidence.All(p=>archive.GetEntry("logs/main/"+p)!=null),"each tool's interruption, identity, connection and runtime rotation survive newer NPC evidence");
           Check(archive.GetEntry("logs/main/"+soulRun+"error.txt")!=null&&archive.GetEntry("logs/main/"+soulRun+"status.json")!=null,
             "Soul exception and current status remain available when large daily history fills the export budget");
+          using(var input=new StreamReader(archive.GetEntry("logs/main/"+soulRun+"live-state-latest.json")!.Open())) {
+            string text=input.ReadToEnd();using var parsed=JsonDocument.Parse(text);
+            Check(parsed.RootElement.GetProperty("state").GetProperty("play").GetProperty("stageId").GetInt32()==14
+              &&parsed.RootElement.GetProperty("state").GetProperty("inventory")[0].GetProperty("id").GetInt32()==10001
+              &&!text.Contains("hidden-soul-secret")&&archive.GetEntry("logs/main/"+soulRun+"soul-latest.json")!=null,
+              "Soul solver input and native snapshot survive export pressure without exposing credentials");
+          }
           using var r=new StreamReader(archive.GetEntry("logs/main/tools/fishing/diagnostics/connection.log")!.Open());
           string tail=r.ReadToEnd();
           Check(tail.Contains("last connection failure")&&!tail.Contains("hidden-fish-secret")&&tail.Length<256*1024,"prioritized connection tails remain bounded and redacted");

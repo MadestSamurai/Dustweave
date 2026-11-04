@@ -15,17 +15,20 @@
     <Grid><Viewbox Stretch="Uniform"><Canvas x:Name="BoardCanvas" Width="600" Height="400"/></Viewbox><TextBlock x:Name="EmptyText" Text="等待连连看盘面&#10;进入小游戏后自动识别，无需先消除一对。" TextAlignment="Center" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource MutedInk}" FontSize="16" Margin="16"/></Grid>
    </Border>
    <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,8,0"><StackPanel>
-    <TextBlock x:Name="HintText" Text="下一对会在盘面上以 ①、② 标记，并显示连线路径。" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap"/>
-    <TextBlock x:Name="DetailText" Text="在游戏中手动消除；提示会跟随实际盘面更新。" Margin="0,8,0,12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap"/>
+    <TextBlock Text="下一对提示" Foreground="{DynamicResource MutedInk}" Margin="0,0,0,6"/>
+    <TextBlock x:Name="HintText" Text="连接后显示下一对" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap"/>
+    <TextBlock x:Name="DetailText" Text="下一对会以 ①、② 标在盘面上并显示连线；在游戏中手动消除，提示会跟随盘面更新。" Margin="0,8,0,12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap"/>
     <WrapPanel><Button x:Name="ToggleButton" Content="开始提示" Click="Toggle_Click" Margin="0,0,8,8"/><Button x:Name="StepButton" Content="执行下一对" Click="Step_Click" Margin="0,0,0,8"/></WrapPanel>
     <Separator Margin="0,12,0,20"/>
+    <TextBlock Text="自动本局" FontWeight="SemiBold" Margin="0,0,0,12"/>
     <TextBlock Text="配对间隔" Margin="0,0,0,8"/>
     <DockPanel><Button Content="应用间隔" Click="Interval_Click" DockPanel.Dock="Right" Margin="8,0,0,0"/><TextBox x:Name="IntervalBox" Text="1000" KeyDown="Interval_KeyDown" AutomationProperties.Name="配对间隔，毫秒"/></DockPanel>
     <TextBlock x:Name="IntervalText" Text="50–60000 ms · 默认 1000 ms" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,8,0,16"/>
-    <CheckBox Content="窗口置顶" Checked="Topmost_Changed" Unchecked="Topmost_Changed" Margin="0,0,0,16"/>
     <TextBlock x:Name="AutomationText" Text="自动执行默认关闭" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}"/>
     <TextBlock x:Name="RouteText" TextWrapping="Wrap" Margin="0,12,0,0"/>
     <TextBlock x:Name="MetaText" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" Margin="0,8,0,0"/>
+    <Separator Margin="0,16,0,16"/>
+    <CheckBox Content="窗口置顶" Checked="Topmost_Changed" Unchecked="Topmost_Changed"/>
    </StackPanel></ScrollViewer>
   </Grid>
   <Border Grid.Row="2" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="0,16,0,0" Margin="0,16,0,0">

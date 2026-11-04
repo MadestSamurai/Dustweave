@@ -30,6 +30,7 @@ internal static class SoulTool
             window.ShowInTaskbar=false;window.ShowActivated=false;window.Left=-12000;window.Top=0;window.WindowStartupLocation=WindowStartupLocation.Manual;
             window.Loaded+=async(_,_)=>{
                 var folder=Path.GetFullPath(args[1]);Directory.CreateDirectory(folder);
+                await window.CheckProgressForSmoke(folder);
                 foreach(var language in DailyLanguage.Codes)foreach(var appearance in new[]{DailyAppearance.Light,DailyAppearance.Dark}){
                     DailyLanguage.Current.Select(language);theme.Select(appearance);
                     window.Width=720;window.Height=580;

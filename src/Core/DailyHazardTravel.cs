@@ -4,6 +4,10 @@ namespace Dustweave;
 
 internal static class DailyHazardTravelPolicy
 {
+    // This cartridge must collect from its protected teleport landing instead of
+    // walking through traps. Do not extend the exception to other hazard maps.
+    internal static bool WalkCollection(bool requested, long pack) => requested && pack != 2002;
+
     // Only Nightmare Winter's patrol fields require this special route. Damage
     // objects alone neither justify stealth nor prohibit ordinary walking.
     internal static bool RequiresSafeHub(JsonObject row, long pack) => pack == 2002

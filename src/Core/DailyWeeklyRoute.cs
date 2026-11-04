@@ -302,7 +302,35 @@ public sealed class DailyWeeklyRoute
         => maps.Where(id => !data.Protects(id)).ToArray();
     private async Task CheckAbsorptionQuota()
     {
-        if (!active.Contains("weekly_mainline") || w.Settings.Weekly.WalkCollect) return;
+        if (!active.Contains("weekly_mainline")) return;
+        if (w.Settings.Weekly.WalkCollect)
+        {
+            // Hybrid mode: only Nightmare Winter needs Absorb. Fresh server
+            // targets scope a deferral to its drops, never the other cartridges
+            // or suppression-only maps. A new run rechecks these targets.
+            if (DailyHazardTravelPolicy.WalkCollection(true, pack) || !freshAbsorptionPacks.Contains(pack)) return;
+            var pending = absorptionPending.Where(p => p.Pack == pack && !storyLocked.Contains(p)
+                && !failures["weekly_mainline"].ContainsKey(p)).ToArray();
+            if (pending.Length == 0) return;
+            try
+            {
+                var quota = TalentAllowance(await route.Evidence(), 4);
+                if (quota.Remaining > 0) return;
+                foreach (var location in pending)
+                    Defer("weekly_mainline", location.Map, quota.Limit == 0
+                        ? "当前账号没有可用的吸收天赋，请启用天赋或在设置中选择步行收集。"
+                        : "吸收次数已用完，次日接续",
+                        O(("reason", quota.Limit == 0 ? "absorption_unavailable" : "absorption_exhausted"),
+                            ("waiting_daily_reset", quota.Limit > 0), ("talent_used", quota.Used), ("talent_limit", quota.Limit)));
+            }
+            catch (DailyTalentReadUnavailable error)
+            {
+                foreach (var location in pending)
+                    Defer("weekly_mainline", location.Map, error.Message,
+                        O(("reason", "talent_data_unavailable"), ("waiting_daily_reset", false), ("talent_observation", error.Observation)));
+            }
+            return;
+        }
         var evidence = await route.Evidence();
         ObserveAbsorptionUsage(evidence);
         var allowance = TalentAllowance(evidence, 4);

@@ -126,7 +126,7 @@ public sealed partial class DailyCommandDriver
                 if (clock() >= end) break;
                 if (repeatOpen && menuRetries < 2 && clock() >= retryAt
                     && Text(sent["receipt"]!.AsObject(), "State") == "observed_after_dispatch"
-                    && Text(sent["command"]!.AsObject(), "Kind") == "click"
+                    && Text(sent["command"]!.AsObject(), "Kind") == (DailyMenuNavigation.OpenRoute(action) == "pointer" ? "pointer" : "click")
                     && DailyMenuNavigation.RepeatOpenReady(action, after, bound))
                 {
                     // A native callback completed but its non-consuming page did

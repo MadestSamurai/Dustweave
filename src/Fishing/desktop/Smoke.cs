@@ -32,6 +32,7 @@ public partial class FishingWindow
   settling.LevelPopup=true;settling.BlockReason="unrelated confirmation";
   Check(policy.Next(settling,lease,now+TimeSpan.FromSeconds(4).Ticks)==FishingAction.None,"settlement does not dismiss an unrelated confirmation");
   Show();await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+  Check(LiveDetails.Visibility==Visibility.Collapsed,"unread live figures stay hidden before connection");
   Check(!StartButton.IsEnabled,"start disabled before snapshot");Check(IntervalBox.Text=="1000"&&CastBox.Text=="90","defaults");Check(AutoSellBox.IsChecked==true,"automatic sale default visible");Check(AutoBaitBox.IsChecked==true,"automatic bait default visible");
   Check(AutoMapBox.IsChecked==true,"map renewal default visible");
   Check(KeepLegendaryBox.IsChecked==true && KeepLockedBox.IsChecked==true && KeepUnknownBox.IsChecked==true,"three independent protections enabled by default");
@@ -89,6 +90,7 @@ public partial class FishingWindow
   s.MapRenewalStatus="地图剩余 05:34:17，剩余 5 分钟时往返换图";s.MapRenewals=1;
   s.Gauge=.88;s.LastAction="FightClick";TestTransport.Publish(Path.Combine(root,"latest.json"),s);await RefreshAsync();UpdateLayout();
   Check(InventoryText.Text.Contains("保留：20") && SaleText.Text.Contains("100"),"inventory and confirmed sale visible");
+  Check(LiveDetails.Visibility==Visibility.Visible,"fresh snapshot reveals live figures");
   Check(BaitText.Text.Contains("27 份") && BaitText.Text.Contains("115 秒") && BaitText.Text.Contains("使用：3"),"bait quantity duration and confirmed usage visible");
   Check(MapText.Text.Contains("05:34:17")&&MapText.Text.Contains("1 次"),"map countdown and completed round trips visible");
   Capture("window.png");Width=650;Height=540;UpdateLayout();Capture("window-small.png");Check(ActualWidth>=MinWidth,"minimum window layout");

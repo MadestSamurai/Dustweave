@@ -19,6 +19,7 @@ static class EventCollectionCases
         public double StealthUntil;
         public double StealthDelay, StealthReadyAt;
         public void ExhaustAbsorption() => counts[4] = 21;
+        public void ResetAbsorption() => counts.Remove(4);
         public readonly List<int> Casts = [];
         readonly Dictionary<int, int> counts = [];
         JsonObject network = new();
@@ -35,9 +36,11 @@ static class EventCollectionCases
                 {
                     case "collection_query":
                         network = O(("Query", c["Id"]), ("State", "ready"), ("Error", ""), ("Pack", Pack), ("Maps", c["Items"]), ("Week", 500), ("Now", 100),
-                            ("Drops", new JsonArray(O(("Id", 1001), ("Map", DropMap ?? Pack * 10 + 1)))),
+                            ("Drops", c["Items"]!.AsArray().Select(N).Contains(DropMap ?? Pack * 10 + 1)
+                                ? new JsonArray(O(("Id", 1001), ("Map", DropMap ?? Pack * 10 + 1))) : new JsonArray()),
                             ("Rewards", DropsPending ? "[]" : "[{\"id\":1001}]"),
-                            ("Targets", new JsonArray(O(("Id", 101), ("Map", Pack * 10 + 2), ("Group", 1)))),
+                            ("Targets", c["Items"]!.AsArray().Select(N).Contains(Pack * 10 + 2)
+                                ? new JsonArray(O(("Id", 101), ("Map", Pack * 10 + 2), ("Group", 1))) : new JsonArray()),
                             ("Monsters", new JsonArray(O(("monsterId", 101), ("groupId", 1), ("activeFlag", true), ("respawnTime", MonstersPending ? 0 : 1000))).ToJsonString()),
                             ("DeferredTargets", new JsonArray()));
                         break;
@@ -98,6 +101,84 @@ static class EventCollectionCases
     {
         await HazardTravelCases.Run(root, checks);
         void Check(bool value, string label) { if (!value) throw new Exception(label); checks.Add(label); }
+        foreach (int type in new[] { 0, 1 })
+        using (var f = new Fixture(Path.Combine(root, "nightmare-walk-exception-" + type), 2002, 20021, type)
+            { DropsPending = true, NearWaypoint = true, StealthUntil = 10000 })
+        {
+            var result = await f.Route.Gather(manual: true);
+            Check(S(result["state"]) == "completed" && f.Casts.SequenceEqual(new[] { 6, 4 }),
+                "Nightmare Winter walking preference researches and absorbs from its protected landing: " + type);
+            await f.Route.Gather(manual: true);
+            Check(f.Casts.Count == 2, "completed Nightmare collection does not spend more talents: " + type);
+        }
+        using (var f = new Fixture(Path.Combine(root, "nightmare-no-quota-no-detour"), 2002, 20021, 1) { DropsPending = true })
+        {
+            f.ExhaustAbsorption(); bool exhausted = false;
+            try { await f.Route.Gather(manual: true); } catch (DailyQuotaExhausted) { exhausted = true; }
+            Check(exhausted && f.H.Box.Commands.All(c => S(c["Kind"]) == "collection_query"),
+                "exhausted Nightmare exception checks server targets before detour, stealth or Research");
+        }
+        // Use the real combined weekly route across two cartridges: a local
+        // Absorb deferral must not cancel later independent collection work.
+        foreach (string mode in new[] { "exhausted", "unavailable", "unknown" })
+        using (var f = new Fixture(Path.Combine(root, "nightmare-hybrid-" + mode), 2002, 20021))
+        {
+            bool nightmarePending = true, ordinaryPending = true, restored = false;
+            f.H.Workflow.Settings.Weekly.Mainline = f.H.Workflow.Settings.Weekly.WalkCollect = true;
+            f.H.Workflow.Settings.Weekly.CollectionMaps = [20021, 20032];
+            if (mode == "exhausted") f.ExhaustAbsorption();
+            var readings = f.H.Readings;
+            f.H.Readings = () => {
+                var rows = readings().ToList();
+                if (!restored && mode is "unknown" or "unavailable")
+                {
+                    rows.RemoveAll(r => S(r["Id"]) == "mainline.talent_limits");
+                    if (mode == "unavailable") rows.Add(WorkflowCases.Reading("mainline.talent_limits", ("$self",
+                        new JsonArray(O(("Kind", 4), ("Group", 405), ("Limit", 0)), O(("Kind", 20), ("Group", 2005), ("Limit", 21))))));
+                }
+                rows.Add(WorkflowCases.Reading("navigation.pack", (DailyTravel.CurrentPack + ".Id", f.Pack), (DailyTravel.CurrentPack + ".PackType", 6)));
+                rows.Add(WorkflowCases.Reading("mainline.owned_packs", ("Count", 2), ("$items", new JsonArray(O(("Key", 2002), ("Value.Id", 2002)), O(("Key", 2003), ("Value.Id", 2003))))));
+                rows.Add(WorkflowCases.Reading("mainline.packs", ("Count", 2), ("$items", new JsonArray(O(("Id", 2002), ("PackType", 6)), O(("Id", 2003), ("PackType", 6))))));
+                rows.Add(WorkflowCases.Reading("mainline.pack_access", ("$self", new JsonArray(O(("Id", 2002), ("Available", true)), O(("Id", 2003), ("Available", true))))));
+                return rows.ToArray();
+            };
+            var command = f.H.OnCommand;
+            f.H.OnCommand = c => {
+                if (S(c["Kind"]) == "click") { f.H.Page("PackListUI"); return; }
+                if (S(c["Kind"]) == "mainline_pack")
+                {
+                    f.Pack = N(c["Value"]); f.MapId = f.Pack == 2002 ? 20021 : 20032;
+                    f.H.Frame["Scene"] = "Map" + f.Pack + "_" + f.MapId;
+                }
+                else
+                {
+                    f.DropsPending = f.Pack == 2002 && nightmarePending;
+                    f.MonstersPending = f.Pack == 2003 && ordinaryPending;
+                    command(c);
+                    if (S(c["Kind"]) == "mainline_talent")
+                    {
+                        if (N(c["Value"]) == 405) nightmarePending = false;
+                        if (N(c["Value"]) == 305) ordinaryPending = false;
+                    }
+                }
+                if (S(f.H.Frame["UiToken"]) != "QuickMenuUI") f.H.Page("GameFieldDefaultUI", "_buttonPackList");
+            };
+            f.DropsPending = true;
+            f.H.Page("GameFieldDefaultUI", "_buttonPackList");
+            var result = await new DailyWeeklyRoute(f.H.Workflow).Run(["weekly_mainline"]);
+            var stage = result["stages"]!["weekly_mainline"]!;
+            var deferrals = Rows(stage["deferred_locations"]);
+            Check(S(stage["state"]) == "partial" && deferrals.Length == 1 && N(deferrals[0]["pack"]) == 2002
+                && N(deferrals[0]["map"]) == 20021 && B(deferrals[0]["metadata"]?["waiting_daily_reset"]) == (mode == "exhausted"),
+                "hybrid quota defers only Nightmare pending drops with an accurate recovery reason: " + mode);
+            Check(!ordinaryPending && nightmarePending && f.Casts.SequenceEqual(new[] { 3 }),
+                "Nightmare quota does not block later cartridge suppression or spend unnecessary talents: " + mode);
+            restored = true; f.ResetAbsorption();
+            var retry = await new DailyWeeklyRoute(f.H.Workflow).Run(["weekly_mainline"]);
+            Check(S(retry["stages"]!["weekly_mainline"]!["state"]) == "completed" && !nightmarePending
+                && f.Casts.SequenceEqual(new[] { 3, 6, 4 }),
+                "restored Nightmare Absorb resumes deferred server targets without replaying completed work: " + mode);
+        }
         using (var f = new Fixture(Path.Combine(root, "event-coverage"), 2003, 20031))
         {
             Check(f.Route.Catalog.Maps(2003).SequenceEqual(new long[] { 20031, 20032 }), "event three includes material-independent drops and its battle area");

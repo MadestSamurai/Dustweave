@@ -80,6 +80,18 @@ public partial class MainWindow
                     throw new InvalidOperationException($"{id}/{language}/{appearance}: preparation did not enter; loaded={window.IsLoaded}, visible={window.IsVisible}, rendered={rendered}, preparing={loading.Preparing}, pending={loading.Pending?.Status}, occupied={DailyToolControl.IsOccupied(root)}",error);
                 }
                 languageBridge.Refresh();
+                if(id=="fishing"){
+                    string expected=language switch{"en-US"=>"Waiting to connect to the game","zh-TW"=>"等待連接遊戲",_=>"等待连接游戏"};
+                    var actual=(TextBlock)window.FindName("StatusText");
+                    var adapter=window.GetType().GetField("language",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(window)!;
+                    var catalog=adapter.GetType().GetProperty("Catalog")!.GetValue(adapter)!;
+                    Check(actual.Text==expected,"fishing: body language follows host "+language+"; actual="+actual.Text+"; catalog="+catalog.GetType().GetProperty("Language")!.GetValue(catalog));
+                    Check(((FrameworkElement)window.FindName("LiveDetails")).Visibility==Visibility.Collapsed,"fishing: no unread live figures before connection");
+                }
+                if(id=="sichuan"){
+                    string expected=language switch{"en-US"=>"Connect to see the next pair","zh-TW"=>"連接後顯示下一對",_=>"连接后显示下一对"};
+                    Check(((TextBlock)window.FindName("HintText")).Text==expected,"sichuan: initial hint follows host "+language);
+                }
                 Check(painted&&!loading.Body.IsEnabled&&loading.Preparing&&window.IsEnabled,id+": real window paints first and only tool content is locked");
                 Check(DailyToolControl.IsOccupied(root)&&ready==0,id+": connection lease blocks concurrent automation, without starting it");
                 Check(loading.Progress.IsVisible&&loading.Progress.IsIndeterminate==SystemParameters.ClientAreaAnimation,id+": progress follows reduced motion preference");
@@ -142,6 +154,16 @@ public partial class MainWindow
                     Check((int)demo.GetType().GetField("Commands")!.GetValue(demo)! == 0,"gacha readiness never rolls automatically");
                     Check(!((bool)window.GetType().GetProperty("HostedAutomationEnabled")!.GetValue(window)!),"gacha ready window remains idle");
                     Check(((ListBox)window.FindName("BList")).Background==Application.Current.Resources["Surface"],"gacha target list uses current product surface");
+                    if(language=="en-US"){
+                        Check(((TextBlock)window.FindName("BCount")).Text.Contains("Selected:")&&((TextBlock)window.FindName("ACount")).Text.Contains("Selected:"),"gacha: zero-count summaries keep their complete English translation");
+                        Check(((TextBlock)window.FindName("GroupSummary")).Text.Contains("Double-click to transfer"),"gacha: zero-ending counts do not swallow the transfer instruction");
+                    }
+                    var validation=(TextBlock)window.FindName("ValidationText");var threshold=(TextBox)window.FindName("Threshold");
+                    Check(threshold.Text.Length==0&&validation.Text.Contains("1–10")&&validation.Foreground==Application.Current.Resources["MutedInk"],"gacha: untouched threshold shows a neutral next step");
+                    threshold.Text="11";await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    Check(validation.Foreground==Application.Current.Resources["Error"]&&!((Button)window.FindName("StartButton")).IsEnabled,"gacha: invalid threshold remains an error and cannot start");
+                    Capture($"invalid-{id}-{language}-{appearance}",(FrameworkElement)window.Content);
+                    threshold.Text="";await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
                     ((Expander)window.FindName("ResultExpander")).IsExpanded=true;
                     await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
                     Capture($"ready-{id}-{language}-{appearance}",(FrameworkElement)window.Content);
@@ -157,6 +179,17 @@ public partial class MainWindow
                     await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
                     CheckToolChromeForSmoke(window,id,Check);
                     L.Select(language);languageBridge.Refresh();
+                }
+                if(id is "mansion-runaway" or "pandora"){
+                    // Preview the disconnected footer without creating a client or starting the game.
+                    var connect=(Button)window.FindName("ConnectButton");var visibility=connect.Visibility;
+                    connect.Visibility=Visibility.Visible;
+                    await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    CheckToolChromeForSmoke(window,id,Check);
+                    var stop=(Button)window.FindName("StopButton");
+                    Check(connect.TranslatePoint(new Point(connect.ActualWidth,0),window).X<stop.TranslatePoint(new Point(),window).X,id+": disconnected footer separates connection from execution");
+                    Capture($"disconnected-{id}-{language}-{appearance}",(FrameworkElement)window.Content);
+                    connect.Visibility=visibility;
                 }
                 window.Close();await Until(()=>!window.IsVisible);
             }

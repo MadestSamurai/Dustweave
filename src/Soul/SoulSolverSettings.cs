@@ -38,7 +38,7 @@ internal static class SoulSearchWork
             finally { slots.Release(); }
         }, stop.Token)).ToArray();
         var completion = Task.WhenAll(tasks);
-        try { while (!completion.IsCompleted) { Thread.Sleep(100); progress(); } }
+        try { while (!completion.IsCompleted) { Thread.Sleep(200); progress(); } }
         catch {
             stop.Cancel();
             // Drain owned jobs before their semaphore or native contexts can be disposed.

@@ -4006,14 +4006,14 @@
     "en-US": "Collect selected maps, using Absorb by default"
   },
   "prefs.walk": {
-    "zh-CN": "步行收集（不使用吸收）",
-    "zh-TW": "步行採集（不使用吸收）",
-    "en-US": "Collect on foot without Absorb"
+    "zh-CN": "步行收集（不使用吸收，《恶梦之冬》卡带除外）",
+    "zh-TW": "步行採集（不使用吸收，《夢靨冬季》卡帶除外）",
+    "en-US": "Collect on foot without Absorb (except Nightmare Winter)"
   },
   "prefs.collection_note": {
-    "zh-CN": "吸收用完次日继续；与已启用的周 NPC 任务、偷窃共用路线。",
-    "zh-TW": "吸收用完次日繼續；與已啟用的週 NPC 任務、偷竊共用路線。",
-    "en-US": "Resume next day when Absorption runs out; share routes with enabled NPC quests and theft."
+    "zh-CN": "《恶梦之冬》使用安全区中转和吸收收集。吸收次数用完的地图次日继续，其他步行收集照常执行；与已启用的周 NPC 任务、偷窃共用路线。",
+    "zh-TW": "《夢靨冬季》使用安全區中轉和吸收採集。吸收次數用完的地圖次日繼續，其他步行採集照常執行；與已啟用的週 NPC 任務、偷竊共用路線。",
+    "en-US": "Nightmare Winter uses safe-area transfers and Absorb. Maps awaiting Absorb resume the next day; other on-foot collection continues. Routes are shared with enabled weekly NPC quests and theft."
   },
   "prefs.npc_hint": {
     "zh-CN": "每周最多 3 条，跳过必须去狩猎场的任务",
@@ -6361,18 +6361,18 @@
     "zh-CN": "看清路线，保持前进。与日常共用游戏连接。"
   },
   "mansion.stage": {
-    "zh-TW": "目前 STAGE",
-    "en-US": "CURRENT STAGE",
-    "zh-CN": "当前 STAGE"
+    "zh-TW": "目前關卡",
+    "en-US": "Current stage",
+    "zh-CN": "当前关卡"
   },
   "mansion.candy": {
     "zh-TW": "剩餘普通糖果",
-    "en-US": "CANDY REMAINING",
+    "en-US": "Candy left",
     "zh-CN": "剩余普通糖果"
   },
   "mansion.time": {
     "zh-TW": "剩餘時間",
-    "en-US": "TIME REMAINING",
+    "en-US": "Time left",
     "zh-CN": "剩余时间"
   },
   "mansion.mode": {
@@ -6431,9 +6431,9 @@
     "zh-CN": "准备就绪"
   },
   "mansion.connect": {
-    "zh-TW": "連線",
-    "en-US": "Connect",
-    "zh-CN": "连接"
+    "zh-TW": "連接遊戲",
+    "en-US": "Connect game",
+    "zh-CN": "连接游戏"
   },
   "mansion.stop": {
     "zh-TW": "停止",

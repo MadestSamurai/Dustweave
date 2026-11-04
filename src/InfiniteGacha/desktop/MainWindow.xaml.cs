@@ -160,7 +160,10 @@ public partial class MainWindow:Window
         bool goodTop=int.TryParse(draft.Threshold,out int n)&&n>=1&&n<=10;
         TopError.Text=draft.Threshold.Length==0?"":goodTop?"":"请输入 1–10；已保留原输入";
         Threshold.BorderBrush=(Brush)FindResource(goodTop||draft.Threshold.Length==0?"LineStrong":"Error");
-        string error=pool==null?"":Rules.Validate(draft,pool.Costumes);ValidationText.Text=error;SetEnabled();return error;
+        string error=pool==null?"":Rules.Validate(draft,pool.Costumes);
+        // An untouched threshold is the next step, not a mistake; Validate still blocks Start.
+        bool next=draft.Threshold.Length==0&&error.Length>0;ValidationText.Text=next?"填写「A 至少」的数量（1–10）后即可开始。":error;
+        ValidationText.SetResourceReference(TextBlock.ForegroundProperty,next?"MutedInk":"Error");SetEnabled();return error;
     }
     private bool GameFresh(){if(!connectionReady)return false;try{return ClientController.Fresh(snapshot,port.Find(),DateTime.UtcNow.Ticks);}catch{return false;}}
     private void SetEnabled()

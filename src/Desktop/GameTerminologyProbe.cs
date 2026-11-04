@@ -38,6 +38,12 @@ internal static class GameTerminologyProbe
         check(traditional=="葛蘭西特 · 番紅花 · 馬鈴薯 · 雙峰炒飯 · 魅影濃湯 · 強化粉末",
             "Game terms: Traditional names use game wording, not character substitution");
         check(converter.Source(traditional)==source,"Game terms: reverse lookup keeps original filter identities");
+        check(converter.Traditional("当前账号设置已保存到文件夹")=="目前帳號設定已儲存到資料夾",
+            "Game terms: Traditional tool text uses Taiwan interface wording");
+        check(converter.Traditional("进入游戏后，并在这里选择")=="進入遊戲後，並在這裡選擇",
+            "Game terms: characters left ambiguous by Windows conversion are resolved in context");
+        check(converter.Traditional("探查")=="搜索"&&converter.Traditional("搜索服装")=="搜尋服裝",
+            "Game terms: official names survive the wording pass");
         foreach(var (locale,text) in new[]{("zh-CN","游戏卡 / 天赋神药 / 精炼粉末"),("zh-TW","遊戲卡帶 / 使者運氣防守 / 天賦特效藥"),("en-US","Apostle Random Defense / Ability Pills")})
             check(GameTerminology.Template(GameTerminology.Template(text,locale),locale)==text,
                 "Game terms: canonical terms stay stable in "+locale);

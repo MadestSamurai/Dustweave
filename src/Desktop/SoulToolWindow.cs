@@ -23,6 +23,9 @@ internal sealed class SoulToolWindow : Window
     readonly Queue<string> lines=new();
     readonly DailyLanguage L=DailyLanguage.Current;
     bool closing;
+    bool? reportedRunning;
+    SoulStatus? pendingProgress;
+    readonly DispatcherTimer progressTimer=new(DispatcherPriority.Background){Interval=TimeSpan.FromMilliseconds(200)};
     Task<bool>? closeTask;
     internal event Action? ActivityChanged;
     internal SoulSession Session=>session;
@@ -66,11 +69,26 @@ internal sealed class SoulToolWindow : Window
         content.Children.Add(history);history.Opacity=.76;
         Content=body;DailyDialogs.Prepare(this,toolWindow:true);DesktopWindowIdentity.Initialize(this);
         start.Click+=async(_,_)=>await StartAsync(false);resume.Click+=async(_,_)=>await StartAsync(true);pause.Click+=(_,_)=>session.Pause();
-        session.Changed+=status=>Dispatcher.BeginInvoke(()=>Render(status));
+        session.Changed+=QueueStatus;
+        progressTimer.Tick+=(_,_)=>{if(Interlocked.Exchange(ref pendingProgress,null) is {} latest)Render(latest);};
+        progressTimer.Start();
         L.PropertyChanged+=LanguageChanged;
         Closing+=async(_,e)=>{if(closing)return;e.Cancel=true;await CloseSafelyAsync();};
-        Closed+=(_,_)=>L.PropertyChanged-=LanguageChanged;
+        Closed+=(_,_)=>{progressTimer.Stop();session.Changed-=QueueStatus;L.PropertyChanged-=LanguageChanged;};
         Render(session.Status);
+    }
+    void QueueStatus(SoulStatus status)
+    {
+        // Intermediate progress is replaceable. Never accumulate high-priority
+        // dispatcher work ahead of mouse/keyboard input on a slower computer.
+        if(status.State=="planning"){Interlocked.Exchange(ref pendingProgress,status);return;}
+        Interlocked.Exchange(ref pendingProgress,null);
+        Dispatcher.BeginInvoke(DispatcherPriority.Background,()=>{if(!closing)Render(status);});
+    }
+    void ReportActivity(bool running)
+    {
+        if(reportedRunning==running)return;
+        reportedRunning=running;ActivityChanged?.Invoke();
     }
     void LanguageChanged(object? sender,System.ComponentModel.PropertyChangedEventArgs args){RefreshSettings();Render(session.Status);}
     void RefreshSettings()
@@ -103,9 +121,9 @@ internal sealed class SoulToolWindow : Window
     {
         settingsPanel.IsExpanded=false;
         start.IsEnabled=resume.IsEnabled=false;
-        try{await session.StartAsync(resumeRun,expected,output);}
+        try{var task=session.StartAsync(resumeRun,expected,output);ReportActivity(session.Running);await task;}
         catch(Exception error){Render(session.Status with{State="error",Message=error.Message});}
-        finally{Render(session.Status);ActivityChanged?.Invoke();}
+        finally{Interlocked.Exchange(ref pendingProgress,null);Render(session.Status);}
     }
     internal void Render(SoulStatus s)
     {
@@ -139,9 +157,38 @@ internal sealed class SoulToolWindow : Window
             string line=$"{DateTime.Now:HH:mm:ss}  {state.Text}  ·  "+L.Get("soul.progress",s.Completed,s.Wins,s.Losses);
             if(lines.LastOrDefault()!=line){lines.Enqueue(line);while(lines.Count>7)lines.Dequeue();history.Text=string.Join("\n",lines);}
         }
-        ActivityChanged?.Invoke();
+        // The host needs control ownership transitions, not every candidate
+        // counter. SetBusy refreshes bindings, task rows and connection state.
+        ReportActivity(busy);
     }
     internal void BringForward(){if(WindowState==WindowState.Minimized)WindowState=WindowState.Normal;Show();Activate();}
+    internal async Task CheckProgressForSmoke(string output)
+    {
+        int hostNotifications=0;
+        void Changed()=>hostNotifications++;
+        ActivityChanged+=Changed;
+        try{
+            var sample=session.Status with{State="planning",DecisionPhase="combinations",CandidateTarget=3000};
+            for(int i=0;i<1000;i++)Render(sample with{ProposedCandidates=i});
+            if(hostNotifications!=0)throw new Exception("Solver progress refreshed host activity controls");
+            ReportActivity(true);ReportActivity(true);ReportActivity(false);ReportActivity(false);
+            if(hostNotifications!=2)throw new Exception("Host did not receive exactly the start/stop transitions");
+            await Task.Run(()=>{for(int i=0;i<10000;i++)QueueStatus(sample with{ProposedCandidates=i});});
+            bool inputRan=false;
+            await Dispatcher.InvokeAsync(()=>inputRan=true,DispatcherPriority.Input).Task.WaitAsync(TimeSpan.FromSeconds(5));
+            if(!inputRan)throw new Exception("Solver progress starved input");
+            // Drain the actual timer callback, independent of scheduler jitter.
+            await Task.Delay(350);
+            await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+            if(pendingProgress is not null||!detail.Text.Contains(9999.ToString("N0")))throw new Exception("Latest search progress was not displayed");
+            QueueStatus(sample with{ProposedCandidates=10000});
+            QueueStatus(session.Status with{State="paused"});
+            await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+            await Task.Delay(250);
+            if(pendingProgress is not null||state.Text!=L.Get("soul.state.paused"))throw new Exception("Stale progress replaced a terminal state");
+            DailyJson.Write(Path.Combine(output,"progress-check.json"),new{status="passed",renderedProgress=1000,queuedProgress=10000,hostNotifications,inputRan,terminalStatePreserved=true,realGameTouched=false});
+        }finally{ActivityChanged-=Changed;}
+    }
     internal void CheckSettingsForSmoke(string root)
     {
         performance.SelectedIndex=0;
