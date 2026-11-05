@@ -1,4 +1,4 @@
-# Single-file distribution and self-update · 1.5
+# Single-file distribution and self-update · 1.5 / 1.6
 
 The 1.5 distribution contains one executable, `Dustweave.exe`, bundling the host, built-in tools and dependencies. Portable includes the pinned .NET Desktop Runtime; Lite uses the installed runtime. Keep the adjacent `app` directory for data, specifications, documentation and licenses. No independent launcher or updater is distributed.
 
@@ -10,7 +10,8 @@ Accounts, settings, plugins and game assemblies remain outside the distribution.
 - Qicaiyun hosts **differential OTA files only** for the 1.5 lane. The origin provides the signed release index and redirect control, never public patch bodies. Neither service distributes full 1.5 archives or repair blocks. Origin copies retained by the publisher are verification/rollback inputs, not a download fallback.
 - Verified immutable per-file routes remain active through transient health-probe failures. Probes report degraded reachability without diverting downloads. Old clients' `?origin=1` retry also redirects to object storage. An unverified path returns a small, uncached 503 with Retry-After; it cannot expose local files. Clients retain bounded retries and can use manual GitHub/Quark downloads if delivery is unavailable.
 - Before advertising a new 1.5 release, the server verifies all cloud patch bodies against the signed index. Failed preparation preserves the previous index and its download routes. Progress is resumable; a later publication attempt reuses only matching signed checkpoints.
-- An exact baseline and edition, unchanged runtime, valid local files and a direct patch of at most 10 MiB are required. Version count alone does not end support. Missing, oversized or inapplicable patches lead to manual download instructions; no automatic full download is attempted.
+- For 1.5.0–1.5.16, an exact baseline and edition, unchanged runtime, valid local files and a direct patch of at most 10 MiB are required. These already released clients receive the small 1.5.17 transition before 1.6.0.
+- From 1.6.0, retain the existing signed `dustweave-copy-v2` differential format and self-copy transaction. The 10 MiB policy and ten-release window do not apply to layout 3. Generate direct deltas from every retained 1.6 baseline; runtime bytes may change inside the bundle. Archive bounds, exact baseline hashes, signatures and edition checks remain mandatory. Missing or damaged source files require manual download; full archives are never fetched automatically.
 - The initial 1.5.0 index contains package hashes but no patch payloads. Full packages stay on GitHub; the hashes bind future reconstructed targets. Publisher attestation binds the initial package acceptance to this index.
 
 ## Self-update transaction
@@ -22,7 +23,15 @@ Accounts, settings, plugins and game assemblies remain outside the distribution.
 5. Start the target with a nonce. Only the actual target version's initialized window acknowledges completion. Failed startup restores the previous files and retains diagnostics.
 6. After an interrupted replacement, the ordinary executable invokes the preserved copy before account, UI or game initialization. That copy can also recover if the root executable was interrupted during replacement.
 
-A damaged installation that has no recoverable update transaction requires manual re-download. The application does not promise self-repair when its executable cannot run. Restore into a new directory; accounts and settings continue to be used. Historical block-repair and bridge paths do not run in layout 3.
+A damaged installation that has no recoverable update transaction requires manual re-download. The application does not promise self-repair when its executable cannot run. Restore into a new directory; accounts and settings continue to be used. Historical block-repair paths do not run in layout 3.
+
+## 1.5.17 transition to 1.6.0
+
+The transition is a small bundled update application, not the full daily host. Its Lite build keeps the same .NET 8.0 baseline as the existing Lite host; only Portable pins and includes runtime 8.0.30. A visible progress window acknowledges the first transaction, waits for its completion, then downloads and installs the exact signed 1.6.0 target through the existing self-copy helper. Cancel or network failure preserves account data and permits retry by reopening the application. Target startup failure restores the bridge and shows retry guidance rather than looping immediately.
+
+The old `releases.json` advertises 1.5.17 only. The bridge uses immutable `releases-1.6.0.json`; 1.6.0 and later use `releases-v2.json`. Publish and verify the final target before advertising the bridge. The publisher checks both final deltas and identical signed bridge metadata. Future releases must retain the pinned target, original baseline archives and transition routes.
+
+The unpublished full 1.5.17 candidate occupied staging cloud names. Final transition objects therefore use `v1.5.17-transition`; user-facing original URLs remain unchanged. Never overwrite those earlier immutable objects. This is a publication route distinction, not a different client delta format.
 
 ## Separate release lanes
 
