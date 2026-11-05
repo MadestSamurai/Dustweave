@@ -34,8 +34,11 @@ static class Mirror
             @"^Dustweave-[0-9A-Za-z.-]+-(?:Lite|Portable)-from-[0-9A-Za-z.-]+-win-x64\.delta\.zip$") &&
             blob.FileName.StartsWith("Dustweave-" + version + "-", StringComparison.Ordinal) &&
             blob.Bytes > 0 && blob.Bytes <= (c.Capable ? 629145600 : 10485760) && Rules.IsHash(blob.Sha256), "Invalid mirror payload");
-        return new(BaseUrl(c) + "/v" + version + "/" + blob.FileName);
+        return new(BaseUrl(c) + "/" + ObjectVersion(c, version) + "/" + blob.FileName);
     }
+    // The unreleased full 1.5.17 candidate already occupied its staging prefix.
+    // Keep those immutable objects separate from the final transition release.
+    internal static string ObjectVersion(Config c, string version) => c.Layout == 3 && version == "1.5.17" ? "v1.5.17-transition" : "v" + version;
     static Blob[] Inventory(Feed feed) => Rules.Patches(feed).Select(d => new Blob(d.FileName, d.Bytes, d.Sha256.ToLowerInvariant()))
         .OrderBy(b => b.FileName, StringComparer.Ordinal).ToArray();
     static string Routes(Config c, string version) => Path.Combine(Root(c), "routes", "v" + DailyVersion.Parse(version));

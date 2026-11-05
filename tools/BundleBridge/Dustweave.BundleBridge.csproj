@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType><TargetFramework>net8.0-windows</TargetFramework><RuntimeIdentifier>win-x64</RuntimeIdentifier><UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><AssemblyName>Dustweave</AssemblyName><Version>1.5.17</Version>
-    <RuntimeFrameworkVersion>8.0.30</RuntimeFrameworkVersion><PublishSingleFile>true</PublishSingleFile><EnableCompressionInSingleFile>true</EnableCompressionInSingleFile><IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <RuntimeFrameworkVersion Condition="'$(SelfContained)' == 'true'">8.0.30</RuntimeFrameworkVersion><RuntimeFrameworkVersion Condition="'$(SelfContained)' != 'true'">8.0.0</RuntimeFrameworkVersion><PublishSingleFile>true</PublishSingleFile><EnableCompressionInSingleFile>$(SelfContained)</EnableCompressionInSingleFile><IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <DebugType>None</DebugType><DebugSymbols>false</DebugSymbols><ApplicationManifest>../../src/Updater/updater.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>

@@ -68,6 +68,7 @@ static class CapabilitySelfTest
         Repair(bridge);Channel.CheckPreparedInventory(legacy,new Feed(3,"Dustweave","stable",[bridge,original]));Pass("bridge becomes eligible only when final and source inventories exist");
         var aio=legacy with{Layout=3,State=Path.Combine(path,"aio-state"),Public=Path.Combine(path,"aio-public")};Directory.CreateDirectory(aio.Public);
         var aioCapable=Rules.Capability(aio);
+        Pass("transition objects cannot collide with the unpublished full candidate", Mirror.ObjectVersion(aio,"1.5.17")=="v1.5.17-transition" && Mirror.ObjectVersion(aio,"1.5.16")=="v1.5.16");
         var aioOld=ReleaseOf("1.5.16",null) with{Layout=3};
         var aioBridge=ReleaseOf("1.5.17","1.5.16") with{Layout=3};
         var aioFinal=ReleaseOf("1.6.0","1.5.17") with{Layout=3,Assets=new[]{"Lite","Portable"}.Select(f=>new Asset(f,$"Dustweave-1.6.0-{f}-win-x64.zip",100*1024*1024,new('a',64))).ToArray(),

@@ -70,7 +70,7 @@ static class Program
         int completed = 0;
         await Parallel.ForEachAsync(files, new ParallelOptions { MaxDegreeOfParallelism = repair ? 8 : 1 }, async (file, cancellation) =>
         {
-            string relative = repair ? file.FileName : $"v{version}/{file.FileName}";
+            string relative = repair ? file.FileName : $"{Mirror.ObjectVersion(config, version)}/{file.FileName}";
             string key = (bundled ? "dustweave/ota/all-in-one/" : "dustweave/ota/v2/") + relative;
             bool exists = false;
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellation);

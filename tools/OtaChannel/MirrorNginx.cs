@@ -51,11 +51,13 @@ static class MirrorNginx
             set $dw_aio_relative "";
             if ($uri ~ "^/updates/dustweave/all-in-one/(v[0-9A-Za-z.-]+/Dustweave-[0-9A-Za-z.-]+-(?:Lite|Portable)-from-[0-9A-Za-z.-]+-win-x64[.]delta[.]zip)$") { set $dw_aio_relative $1; }
             if ($dw_aio_relative = "") { return 404; }
+            set $dw_aio_cloud_relative $dw_aio_relative;
+            if ($dw_aio_relative ~ "^v1[.]5[.]17/(.*)$") { set $dw_aio_cloud_relative v1.5.17-transition/$1; }
             # Old clients' ?origin=1 retries also stay on object storage.
             if (-f /usr/share/nginx/dustweave-updates-aio/.mirror/routes/$dw_aio_relative) {
                 add_header Cache-Control "no-store" always;
                 add_header X-Dustweave-Delivery "qicaiyun" always;
-                return 302 {{url}}/$dw_aio_relative;
+                return 302 {{url}}/$dw_aio_cloud_relative;
             }
             add_header Cache-Control "no-store" always;
             add_header X-Dustweave-Delivery "unavailable" always;

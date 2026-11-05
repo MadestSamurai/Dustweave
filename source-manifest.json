@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-11-05T03:11:26.4187495+00:00",
+  "generatedUtc": "2026-11-05T03:36:08.3745935+00:00",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -7727,15 +7727,15 @@
     },
     {
       "path": "tools/OtaChannel/Mirror.cs",
-      "bytes": 19423,
+      "bytes": 19751,
       "reasons": "build input",
-      "sha256": "e9665493444da6659d43150d44803c433834bd29f752007b51e2af8b5d89acf9"
+      "sha256": "7a081c96af757f00e441c886388f7719e0b9b99d850d538e549a26d2e992c578"
     },
     {
       "path": "tools/OtaChannel/MirrorNginx.cs",
-      "bytes": 7509,
+      "bytes": 7685,
       "reasons": "build input",
-      "sha256": "7a1ffde752152f914da2bc459c8525eea6bf87c4d798ae8a1e33050751f98495"
+      "sha256": "15c8156db0437e31f66c549db2bafa057550868f9b03d5afcb9ff9a8971340db"
     },
     {
       "path": "tools/OtaChannel/MirrorSelfTest.cs",
@@ -7745,9 +7745,9 @@
     },
     {
       "path": "tools/OtaMirror/Program.cs",
-      "bytes": 9421,
+      "bytes": 9450,
       "reasons": "build input",
-      "sha256": "535433c31c2b1ac79775f62207dfc6fcebad9017d9898545438f6f833f566b5c"
+      "sha256": "f2e79f9e89b5360805f06ea007fc68edf4b070afe456d678ddb1d7092eaf8fe4"
     },
     {
       "path": "tools/OtaMirror/Dustweave.OtaMirror.csproj",
@@ -7877,9 +7877,9 @@
     },
     {
       "path": "tools/OtaChannel/CapabilitySelfTest.cs",
-      "bytes": 10290,
+      "bytes": 10485,
       "reasons": "build input",
-      "sha256": "648edff6764be0c0a79faaeeadc5441e571bc0c47738d8c46dce445dbdd89043"
+      "sha256": "77ee7e1a73221c308e0f3c641b6b12c11b79dcde00101cd3e3e460824370c167"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/UpdateInventoryCases.cs",
@@ -8782,9 +8782,9 @@
     },
     {
       "path": "tools/BundleBridge/Dustweave.BundleBridge.csproj",
-      "bytes": 1450,
+      "bytes": 1600,
       "reasons": "build input",
-      "sha256": "5d0e29d2f962e5a3cf0471d7375755d63a355ad55bcf95aed7bfca63ed33a1dd"
+      "sha256": "e6567da66cb1a23295cdcaa6c013e6b0bc7374b411ddd9930b06cfb0760b1bf4"
     },
     {
       "path": "assets/updates/trust-aio-bridge.json",
@@ -8794,9 +8794,9 @@
     },
     {
       "path": "tools/BundleBridge/packages.lock.json",
-      "bytes": 445,
+      "bytes": 443,
       "reasons": "build input",
-      "sha256": "08d6ba87526501dde9ef3f7f2039a2e1ca58d9d1ff08fd93f291691365003894"
+      "sha256": "972181b97566c41cf61a43ad386a07f4f1dbe233fc84f25d7948ce83e16c50d8"
     }
   ],
   "publicReleaseApproved": false,

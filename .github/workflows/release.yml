@@ -8,6 +8,7 @@ on:
         type: string
 permissions:
   contents: write
+  actions: read
 concurrency:
   group: publish-release
   cancel-in-progress: false
@@ -16,20 +17,17 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
-          global-json-file: global.json
-      - name: Check source, build and test
+      - name: Reuse successful exact-commit build validation
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          ./build.ps1
-          ./test.ps1 -NoBuild
-          dotnet restore tools/OtaMirror/Dustweave.OtaMirror.csproj --locked-mode
-          if($LASTEXITCODE -ne 0){throw 'OTA mirror restore failed'}
-          dotnet run --project tools/OtaMirror/Dustweave.OtaMirror.csproj -c Release --no-restore -- self-test
-          if($LASTEXITCODE -ne 0){throw 'OTA mirror verification failed'}
-          ./check-source.ps1 -AfterBuild
+          $ErrorActionPreference='Stop'
+          $runs=gh run list --workflow build.yml --commit $env:GITHUB_SHA --limit 20 --json databaseId,headSha,status,conclusion | ConvertFrom-Json
+          if($LASTEXITCODE -ne 0){throw 'Cannot read build validation'}
+          $run=$runs|Where-Object {$_.headSha -eq $env:GITHUB_SHA -and $_.status -eq 'completed' -and $_.conclusion -eq 'success'}|Select-Object -First 1
+          if(!$run){throw 'Exact release source must pass the complete Build workflow first'}
+          Write-Host "Reused complete source, build, regression and publisher validation: $($run.databaseId)"
       - name: Validate candidate and publish normal release
         shell: pwsh
         env:
