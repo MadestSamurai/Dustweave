@@ -428,6 +428,27 @@
    <ControlTemplate.Triggers><Trigger Property="IsExpanded" Value="True"><Setter TargetName="Details" Property="Visibility" Value="Visible"/></Trigger></ControlTemplate.Triggers>
   </ControlTemplate></Setter.Value></Setter>
  </Style>
+ <!-- A full-width disclosure row: header columns stay aligned with nested rows. -->
+ <Style x:Key="DisclosureRow" TargetType="ToggleButton">
+  <Setter Property="Foreground" Value="{DynamicResource Ink}"/>
+  <Setter Property="HorizontalAlignment" Value="Stretch"/>
+  <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+  <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+  <Setter Property="Cursor" Value="Hand"/>
+  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ToggleButton">
+   <Border x:Name="Frame" Padding="6,7" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" CornerRadius="6">
+    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+     <Path x:Name="Arrow" Data="M 0,0 L 4,4 L 0,8" Stroke="{DynamicResource MutedInk}" StrokeThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+     <ContentPresenter Grid.Column="1" Margin="6,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
+    </Grid>
+   </Border>
+   <ControlTemplate.Triggers>
+    <Trigger Property="IsChecked" Value="True"><Setter TargetName="Arrow" Property="Data" Value="M 0,0 L 4,4 L 8,0"/></Trigger>
+    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Frame" Property="Background" Value="{DynamicResource SurfaceMuted}"/></Trigger>
+    <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Frame" Property="BorderBrush" Value="{DynamicResource Focus}"/></Trigger>
+   </ControlTemplate.Triggers>
+  </ControlTemplate></Setter.Value></Setter>
+ </Style>
  <Style TargetType="ProgressBar">
   <Setter Property="Foreground" Value="{DynamicResource Primary}"/>
   <Setter Property="Background" Value="{DynamicResource Line}"/>

@@ -87,7 +87,7 @@ public sealed class GameInstallation
         && error is IOException or UnauthorizedAccessException
         && (error.HResult & 0xffff) is 5 or 32 or 33;
 
-    private static string Validate(string executable)
+    internal static string Validate(string executable)
     {
         if (!Path.IsPathFullyQualified(executable) || !string.Equals(Path.GetFileName(executable), "BrownDust II.exe", StringComparison.OrdinalIgnoreCase))
             throw new SessionManagerException(Invalid);

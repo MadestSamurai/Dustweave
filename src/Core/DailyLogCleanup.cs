@@ -134,6 +134,15 @@ public static class DailyLogCleanup
         return Path.GetExtension(path).Equals(".json", StringComparison.OrdinalIgnoreCase)
             && new[] { "suite/diagnostics/", "live/diagnostics/" }.Concat(EvidenceTrees.Select(t => t + "/")).Any(p => relative.StartsWith(p, StringComparison.Ordinal));
     }
+    /// <summary>Display classification only: a log or diagnostic snapshot in a tree this cleanup manages.</summary>
+    internal static bool Managed(string root, string path)
+    {
+        string relative = Path.GetRelativePath(root, path).Replace(Path.DirectorySeparatorChar, '/');
+        if (relative.StartsWith("../", StringComparison.Ordinal)) return false;
+        if (!relative.Contains('/')) return LogName(Path.GetFileName(path));
+        return DiagnosticJson(root, path) || LogName(Path.GetFileName(path)) && new[] { "suite/diagnostics/", "live/diagnostics/", "tools/", "parallel-workers/" }
+            .Concat(EvidenceTrees.Select(t => t + "/")).Any(p => relative.StartsWith(p, StringComparison.Ordinal));
+    }
     public static Task<DailyLogPlan> ScanAsync(string root, DailyLogPolicy policy, CancellationToken token = default, IProgress<DailyLogScanProgress>? progress = null) => Task.Run(()=>Scan(root,policy,DateTime.UtcNow,token,progress),token);
     public static DailyLogPlan Scan(string root, DailyLogPolicy policy, DateTime now, CancellationToken token = default, IProgress<DailyLogScanProgress>? progress = null)
     {

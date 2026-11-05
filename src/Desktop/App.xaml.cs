@@ -98,7 +98,7 @@ public partial class App : Application
                 });
                 Shutdown();
             }
-            catch (Exception error) { DailyJson.Write(args[1], new { status = "failed", error = error.ToString(), realGameTouched = false }); Shutdown(1); }
+            catch (Exception error) { DailyJson.Write(args[1], new { status = "failed", code = DailyPluginProbe.FailureCode(error), error = error.ToString(), realGameTouched = false }); Shutdown(1); }
             return;
         }
         if (args.Length == 2 && args[0] == "--check-stage-host")

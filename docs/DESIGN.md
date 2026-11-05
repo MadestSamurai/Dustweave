@@ -49,6 +49,16 @@ Validation uses actual WPF windows with synthetic ports and isolated preferences
 
 The 2026-10-20 unification pass built successfully, passed 2,374 focused preparation/presentation assertions for ten hosted tools and the separate live-board tower UI smoke, plus 89 unified-session checks. Actual light/dark and compact renders were inspected, including Pandora loading and the tower's running board. Source-boundary validation covers 1,254 inputs. This is local UI verification, not a game-play or release acceptance run.
 
+## Storage
+
+The Storage dialog (Software settings → Storage) answers one question first: how much does Dustweave occupy, and how much of it can be cleaned now.
+
+- One stacked bar shows the total in four groups: can be cleaned now, regenerates (shown only), kept for now (recent, in use, recovery) and always kept (accounts, sign-ins, settings, system copies, unrecognized files). The legend carries exact sizes; unreadable items are stated separately and never shown as zero. Compression savings are a note, never part of the cleanable amount.
+- Below it the hierarchy is drive → location → content. Each drive has its own small bar. Locations are main data, the relocated cache, a previous location left by migration, each account sandbox (named by account; the technical folder name is in the details), extracted program files and crash records. Rows show name, size, what can be freed now and a status chip; expanding a row shows the path, the effect of cleaning and why the rest is kept. Sandbox-private Dustweave data is one grouped row inside its sandbox, so nothing is counted twice.
+- Status chips: can be cleaned / partly cleanable; regenerates · not cleaned; recent · cleaned when expired; in use · kept; needed for recovery · kept; account and settings · kept; system or unrecognized · kept; unreadable · size unknown; in use · clean after it stops. A running sandbox or extraction shows its expired files as "after it stops", never as nothing to clean.
+- Cleaning up expired files, moving storage and removing an account sandbox are three separate actions. The footer button only cleans expired files and states what it keeps; moving storage has its own card; removing a sandbox is reached from that sandbox's row through sandbox management and is confirmed there. Content without a cleanup capability is displayed only, with no button.
+- Categories are a display classification (`DailyStorageBreakdown`); reclaimable bytes come from the same plans `DailyStorageMaintenance.CleanAsync` applies, so the preview and the cleanup cannot disagree.
+
 ## Visual alignment
 
 The timeline-led layout uses cool neutral backgrounds, blue-gray dark surfaces and a restrained mint accent. Summary cards carry the immediate state; the timeline stays on the page canvas, with uninterrupted rails in the item container. Keep component geometry and text contrast consistent across themes. Stable builds display the plain version number; the isolated interactive demo is still explicitly labeled as a design preview.

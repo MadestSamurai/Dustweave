@@ -61,5 +61,104 @@ static class TalentPotionCases
         Check(B(sent["GuardTalentPotions"]) && N(sent["TalentPotionReserve"]) == 40, "daily reserve is carried to native final dispatch boundary");
         var proofs = DailyWorkflowRegistry.Proofs();
         Check(proofs.Single(x => x.Role == "trade.buy").StagesFor(O(("action", "queue_potion_refill"))).Contains("*"), "unsettled refill purchase blocks all consuming daily stages");
+        await RefillBatches(output, Check);
+    }
+
+    private static async Task RefillBatches(string output, Action<bool, string> check)
+    {
+        foreach (string scenario in new[] { "multiple", "single", "gold-reserve", "discount-lost", "stock-exhausted", "pending", "cancelled" })
+        {
+            using var h = new WorkflowHarness(Path.Combine(output, "potion-batches-" + scenario), DailyWorkflowRegistry.Proofs());
+            // StageHost restores the original task's trade flag before invoking
+            // the auxiliary refill; it does not own a normal optimizer session.
+            h.Frame["Scene"] = "Map3009_001";
+            h.Page("ShopUI", "_objBackButton");
+            const long initial = 757972, initialGold = 37377739;
+            long potions = initial, gold = initialGold;
+            bool interrupted = false, restored = false;
+            var quantities = new List<long>();
+            var policy = new GeneralPreferences { RefillTalentPotions = true, TalentPotionReserve = 888888, TalentPotionTarget = 999999 };
+            if (scenario == "single") { policy.TalentPotionReserve = initial; policy.TalentPotionTarget = initial + 99999; }
+            DailyJson.Write(DailyTradePlan.SettingsPath(h.Root, S(h.Context["actor"]![3])), O(("reserve_gold", scenario == "gold-reserve" ? 30000000 : 1000000)));
+            h.Readings = () =>
+            {
+                bool changed = quantities.Count > 0 && !restored;
+                var offer = O(("Shop", 8), ("Product", 1), ("Item", 0), ("Type", 12), ("PriceType", 4),
+                    ("Price", changed && scenario == "discount-lost" ? 50 : 45), ("BasePrice", 50), ("Rate", 100),
+                    ("ReputationDiscount", changed && scenario == "discount-lost" ? 0 : 10),
+                    ("Remaining", changed && scenario == "stock-exhausted" ? 0 : 99999));
+                return [
+                    WorkflowCases.Reading("trade.native", ("$self", O(("Offers", new[] { offer })))),
+                    WorkflowCases.Reading("trade.currency", ("Gold", gold), ("Catalyst", potions)),
+                    WorkflowCases.Reading("dispatch.currency", ("Catalyst", potions)),
+                    WorkflowCases.Reading("trade.bargain", ("$self", false)),
+                    WorkflowCases.Reading("trade.inventory", ("Count", 1), ("$items", new JsonArray(O(("Key", "Food"), ("Value.Count", 0), ("Value.Values", new JsonArray()))))),
+                    WorkflowCases.Reading("trade.merchant", ("ὠὫὥὧὭὭὥὠὭὤὣ.ὯὫὪὡὭὤὪὮὫὬὣ", 7),
+                        ("$items", new JsonArray(O(("ὫὠὫὯὠὢὥὧὢὥὥ", "Shop"), ("ὭὩὪὯὯὬὧὠὠὬὠ", 1))))),
+                    WorkflowCases.Reading("trade.shop_ui", ("ὩὤὬὪὤὦὧὭὣὥὠ.ὯὫὪὡὭὤὪὮὫὬὣ", 7), ("ὯὣὡὫὨὫὡὧὩὬὠ", "Buy"))
+                ];
+            };
+            h.OnRead = () =>
+            {
+                if (scenario == "cancelled" && !restored && quantities.Count == 1 && h.Business.Records(h.Context).Any(op => S(op["state"]) == "completed"))
+                    h.Stopped = true;
+            };
+            h.OnCommand = c =>
+            {
+                h.Time += .01;
+                switch (S(c["Kind"]))
+                {
+                    case "trade_buy_preview":
+                        h.Page("ShopPopupUI");
+                        h.Frame["Surfaces"]!.AsArray().Add(O(("Id", 2), ("Type", "ShopUI"), ("InputReady", false)));
+                        break;
+                    case "trade_buy_confirm":
+                        long count = N(c["Items"]![2]);
+                        check(count is > 0 and <= 99999 && N(c["Items"]![3]) == 45 && potions + count <= policy.TalentPotionTarget,
+                            "refill respects native quantity, discount and target: " + scenario);
+                        h.Event("trade.buy", "request");
+                        quantities.Add(count); potions += count; gold -= count * 45;
+                        if (scenario != "pending" || restored) h.Event("trade.buy", "response");
+                        h.Page("ShopUI", "_objBackButton");
+                        break;
+                    case "click":
+                        h.Page(S(c["UiToken"]) == "ShopUI" ? "QuickMenuUI" : "GameFieldDefaultUI", "_buttonClose");
+                        break;
+                    default: throw new Exception("Unexpected potion action: " + S(c["Kind"]));
+                }
+            };
+            JsonObject? result = null;
+            try { result = await new DailyTradeExecution(h.Workflow, new()).RefillPotions(99999, policy); }
+            catch (Exception) when (scenario is not ("multiple" or "single")) { interrupted = true; }
+            if (scenario == "gold-reserve")
+            {
+                check(interrupted && quantities.Count == 0 && gold == initialGold, "refill checks entire target cost against gold reserve before buying");
+                continue;
+            }
+            if (scenario is not ("multiple" or "single"))
+            {
+                check(interrupted && quantities.SequenceEqual(new long[] { 99999 }), "interrupted refill stops after one batch: " + scenario);
+                if (scenario == "pending")
+                {
+                    check(h.Business.Records(h.Context).Any(DailyManagedBusiness.Pending), "unconfirmed refill retains durable pending purchase");
+                    var waiting = await h.Business.ReconcileAsync(h.Context);
+                    check(waiting["trade_diagnostics"]!.AsArray().Count == 1 && quantities.Count == 1,
+                        "queue reconciliation preserves the uncertain receipt without replaying it");
+                    h.Event("trade.buy", "response");
+                }
+                restored = true; h.Stopped = false; h.Business.BeginAttempt();
+                check((await h.Business.ReconcileAsync(h.Context))["unresolved"]!.AsArray().Count == 0, "restored refill can reconcile: " + scenario);
+                await h.Business.ReplanInterruptedAsync(h.Context, "trade");
+                result = await new DailyTradeExecution(h.Workflow, new()).RefillPotions(99999, policy);
+            }
+            check(potions == policy.TalentPotionTarget && gold == initialGold - (potions - initial) * 45,
+                "refill reaches exact target with exact total cost: " + scenario);
+            check(quantities.SequenceEqual(scenario == "single" ? new long[] { 99999 } : new long[] { 99999, 99999, 42029 }),
+                "refill splits final remainder and never duplicates completed batches: " + scenario);
+            var records = h.Business.Records(h.Context).ToArray();
+            check(N(result!["balance"]) == potions && records.Count(op => S(op["state"]) == "completed") == quantities.Count - (scenario == "pending" ? 1 : 0)
+                && records.All(op => S(op["state"]) == "completed" || scenario == "pending" && S(op["state"]) == "superseded"),
+                "refill retains batch receipts without falsely confirming old uncertain purchases: " + scenario);
+        }
     }
 }

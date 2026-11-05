@@ -234,6 +234,35 @@ public partial class MainWindow
                     }
                     checks+=2;
                 }finally{cleanup.Close();if(File.Exists(compressionSample))File.Delete(compressionSample);}
+                // Exercise the new nested account breakdown, which a small empty host fixture never renders.
+                DailyStorageCategory Category(string key,DailyStorageState state,int mib,int expired=0,int deferred=0)=>new(key,state,mib*1048576L,expired*1048576L,deferred*1048576L,1);
+                var breakdown=new DailyStorageOverview([]){Areas=[
+                    new("sandbox",Path.Combine(root,"instances","example"),0,[
+                        Category("shader",DailyStorageState.Regenerable,784),Category("windows",DailyStorageState.Kept,677),
+                        Category("game-tables",DailyStorageState.InUse,195),Category("game-recovery",DailyStorageState.Recovery,189),
+                        Category("dustweave/steps",DailyStorageState.Recent,162,0,16),Category("dustweave/progress",DailyStorageState.Recovery,173),
+                        Category("dustweave/logs",DailyStorageState.Recent,46),Category("dustweave/components",DailyStorageState.InUse,24),
+                        Category("dustweave/account",DailyStorageState.Account,11),Category("crash",DailyStorageState.Recent,82),Category("login",DailyStorageState.Account,59)])
+                        {Account=rows.First().Account.AccountKey,Locked=true},
+                    new("cache",@"Z:\Unavailable",1,[]){Unknown=true,Previous=true}]};
+                var nested=CreateLogCleanupWindow(preview:breakdown);nested.Width=680;nested.Height=650;nested.SizeToContent=SizeToContent.Manual;nested.Show();
+                try {
+                    await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    foreach(var toggle in Nodes<System.Windows.Controls.Primitives.ToggleButton>(nested).Where(t=>t.Tag is "storage.area.sandbox" or "storage.cat.dustweave"))toggle.IsChecked=true;
+                    await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    var nestedTexts=Nodes<TextBlock>(nested).ToArray();
+                    if(!nestedTexts.Any(t=>t.Text==L.Get("storage.size_unknown"))||!nestedTexts.Any(t=>t.Text==L.Get("storage.state.locked"))
+                        ||!nestedTexts.Any(t=>t.Text==L.Get("storage.summary_later",StorageSize(16*1048576L))))throw new Exception("Storage unknown/deferred states lost their distinct presentation");
+                    foreach(var toggle in Nodes<System.Windows.Controls.Primitives.ToggleButton>(nested).Where(t=>t.IsVisible&&t.Tag is string&&t.Content is Grid)) {
+                        var header=(Grid)toggle.Content;
+                        if(header.Children[0] is FrameworkElement label&&label.ActualWidth<60)throw new Exception("Nested storage category name is clipped at minimum width: "+toggle.Tag);
+                    }
+                    var nestedClean=Nodes<Button>(nested).Single(b=>b.Name=="LogCleanupStart");
+                    if(nestedClean.IsEnabled||nestedClean.TransformToAncestor(nested).TransformBounds(new Rect(nestedClean.RenderSize)).Bottom>nested.ActualHeight)throw new Exception("Deferred/read-only categories expose cleanup or clip its footer");
+                    var scroll=Nodes<ScrollViewer>(nested).First(v=>v.Content is StackPanel);scroll.ScrollToVerticalOffset(230);
+                    await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    Capture($"storage-expanded-{language}-{appearance}",(FrameworkElement)nested.Content);checks+=3;
+                } finally {nested.Close();}
                 var warning=CreateStorageWarningWindow([new(@"C:\",512*1048576L),new(@"E:\",384*1048576L)],new([new("main",root,2662*1048576L,2100*1048576L,0,800*1048576L,0)]),out var warningAction);warning.Show();
                 try {
                     await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);

@@ -27,7 +27,18 @@ if (args.Length == 2 && args[0] == "--check-plugin")
     }
     var info = DailyPlugin.Current;
     var extension = DailyExtensionLoader.Load(info) ?? throw new Exception("No extension");
-    DailyJson.Write(args[1], new { status = "passed", info, api = extension.ApiVersion, realGameTouched = false }); return;
+    string? managed = null;
+    if (Environment.GetEnvironmentVariable("DUSTWEAVE_TEST_PROBE") == "game-directory")
+    {
+        try { managed = DailyPluginProbe.InstalledGameManagedDirectory(); }
+        catch (Exception error)
+        {
+            DailyJson.Write(args[1], new { status = "failed", code = DailyPluginProbe.FailureCode(error), error = error.ToString(), realGameTouched = false });
+            Environment.ExitCode = 1; return;
+        }
+    }
+    DailyJson.Write(args[1], new { status = "passed", info, api = extension.ApiVersion, managed,
+        gameExecutable = Environment.GetEnvironmentVariable(DailyPluginProbe.GameExecutableVariable), realGameTouched = false }); return;
 }
 if (args.Length == 2 && args[0] == "--control-lock-child")
 {

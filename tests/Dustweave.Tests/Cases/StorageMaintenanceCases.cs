@@ -140,6 +140,40 @@ internal static class StorageMaintenanceCases
         Check(before.SandboxBytes==Sum(instances)&&before.ExtractionBytes==Sum(Path.Combine(net,"Dustweave")),"sandbox totals include protected game files instead of hiding them as unmeasured data");
         Check(before.Scopes.Single(s=>s.Path==Path.GetDirectoryName(active.Marker)).ReclaimableBytes==0,"running sandbox is counted but never offered as reclaimable");
         Check(before.Scopes.Single(s=>s.Kind=="extraction").ReclaimableBytes==0,"a running legacy host protects all extraction generations");
+        // Display breakdown: each file once, reclaimable exactly what cleanup removes, busy owners reported as deferred.
+        Check(before.Areas.Sum(a=>a.Bytes)==before.TotalBytes&&before.Areas.Sum(a=>a.ReclaimableBytes)==before.ReclaimableBytes,"storage breakdown counts each file once and offers exactly what cleanup removes");
+        DailyStorageCategory Category(DailyStorageArea a,string key)=>a.Categories.Single(c=>c.Key==key);
+        var idleArea=before.Areas.Single(a=>a.Path==Path.GetDirectoryName(idle.Marker));var activeArea=before.Areas.Single(a=>a.Path==Path.GetDirectoryName(active.Marker));
+        Check(idleArea.Account==new string('a',64)&&!idleArea.Locked&&Category(idleArea,"dustweave/logs").ReclaimableBytes==new FileInfo(idleLog).Length&&Category(idleArea,"dustweave/account").ReclaimableBytes==0,"sandbox Dustweave data is grouped under its account with expired logs cleanable and settings kept");
+        Check(Category(idleArea,"login").Bytes==new FileInfo(game).Length+new FileInfo(registry).Length+new FileInfo(idle.Marker).Length&&Category(idleArea,"login").ReclaimableBytes==0,"sign-in, game state and sandbox registration stay together and are never offered for cleanup");
+        Check(activeArea.Locked&&activeArea.ReclaimableBytes==0&&Category(activeArea,"dustweave/logs").DeferredBytes==new FileInfo(activeLog).Length,"a running sandbox reports expired files as deferred instead of as nothing to clean");
+        var mainArea=before.Areas.Single(a=>a.Kind=="main");
+        Check(Category(mainArea,"progress").ReclaimableBytes==0&&Category(mainArea,"account").ReclaimableBytes==0&&Category(mainArea,"trade").ReclaimableBytes>=new FileInfo(expired).Length,"host progress and accounts are kept while expired trading catalogs are cleanable");
+        var extractArea=before.Areas.Single(a=>a.Kind=="extraction");
+        Check(extractArea.Locked&&extractArea.ReclaimableBytes==0&&extractArea.DeferredBytes>=new FileInfo(oldExtract).Length,"extraction held by another host is deferred, not hidden");
+        string sample=Path.Combine(area,"classify");string In(string relative)=>Path.Combine(sample,relative);
+        Check(DailyStorageBreakdown.Sandbox(sample,In("root/user/current/AppData/Local/NVIDIA/DXCache/a.bin"))=="shader"&&DailyStorageBreakdown.Sandbox(sample,In("root/user/current/AppData/LocalLow/Gamfs/BrownDust II/Data/t/"+new string('a',40)))=="game-tables"
+            &&DailyStorageBreakdown.Sandbox(sample,In("game-table-recovery/"+new string('a',40)))=="game-recovery"&&DailyStorageBreakdown.Sandbox(sample,In("root/drive/c/Windows/System32/x.edb"))=="windows"
+            &&DailyStorageBreakdown.Sandbox(sample,In("root/drive/c/Games/BrownDust II/BrownDust II_Data/x.assets"))=="game-files"&&DailyStorageBreakdown.Sandbox(sample,In("root/user/current/AppData/Local/CrashDumps/x.dmp"))=="crash"
+            &&DailyStorageBreakdown.Sandbox(sample,In("root/user/current/AppData/Local/BD2DailyAssistant/live/steps/"+new string('a',32)+"/intent.json"))=="dustweave/steps","sandbox content categories follow the sandbox layout");
+        string attempt="updates/9.0.0-Portable/attempts/"+new string('a',32);
+        Check(DailyStorageBreakdown.Data(sample,In(attempt+"/backup/Dustweave.exe"))=="update-recovery"&&DailyStorageBreakdown.Data(sample,In(attempt+"/job.json"))=="update-recovery"
+            &&DailyStorageBreakdown.Data(sample,In(attempt+"/staging/x.dll"))=="update-temp"&&DailyStorageBreakdown.Data(sample,In("updates/9.0.0-Portable/package.zip"))=="update-download","update files split into downloads, install scratch and recovery copies");
+        var none=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        Check(DailyStorageBreakdown.Sandbox(sample,[],none,false,1).Unknown
+            &&DailyStorageBreakdown.Extraction(sample,[],none,false,1,_=>true).Unknown
+            &&DailyStorageBreakdown.Crashes(sample,[],none,1).Unknown
+            &&DailyStorageBreakdown.Main(sample,sample,[],[],none,1).Single().Unknown,
+            "unreadable empty inventories are unknown rather than zero-byte storage");
+        var readableItem=new DailyStorageItem(In("root/user/current/AppData/Local/NVIDIA/DXCache/a.bin"),32,DateTime.UtcNow);
+        var partial=DailyStorageBreakdown.Sandbox(sample,[readableItem],none,false,1);
+        Check(!partial.Unknown&&partial.Bytes==32&&partial.Skipped==1&&partial.ReclaimableBytes==0,
+            "partially readable inventories keep their measured size and do not offer unimplemented cache cleanup");
+        string movedRoot=In("moved"),oldRoot=In("old");
+        var nestedFiles=new[]{new DailyStorageItem(In("settings.json"),11,DateTime.UtcNow),new DailyStorageItem(Path.Combine(movedRoot,"rules/table.json"),23,DateTime.UtcNow),new DailyStorageItem(Path.Combine(oldRoot,"suite-cache/module.dll"),31,DateTime.UtcNow)};
+        var nested=DailyStorageBreakdown.Main(sample,movedRoot,[sample,movedRoot,oldRoot],nestedFiles,new HashSet<string>([nestedFiles[2].Path],StringComparer.OrdinalIgnoreCase),0).ToArray();
+        Check(nested.Length==3&&nested.Sum(a=>a.Bytes)==65&&nested.Sum(a=>a.ReclaimableBytes)==31&&nested.Single(a=>a.Previous).Path==oldRoot,
+            "nested migrated and previous locations count each file only in its most specific area");
         using(var held=new FileStream(legacy,FileMode.Open,FileAccess.Read,FileShare.Read))
         {await service.CleanAsync(new());Check(File.Exists(legacy),"in-use legacy bundle remains intact");}
         Check(!File.Exists(expired)&&!File.Exists(scratch)&&!File.Exists(staleClient),"age limit and scratch cleanup apply inside the last two retained generations");

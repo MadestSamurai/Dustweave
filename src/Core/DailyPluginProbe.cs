@@ -5,20 +5,34 @@ namespace Dustweave;
 
 public static class DailyPluginProbe
 {
+    internal const string GameExecutableVariable = "DUSTWEAVE_PLUGIN_GAME_EXECUTABLE";
     public static string InstalledGameManagedDirectory()
+        => GameManagedDirectory(Environment.GetEnvironmentVariable(GameExecutableVariable), Accounts.GameLauncher.ResolveExecutable);
+
+    internal static string GameManagedDirectory(string? selectedExecutable, Func<string> installedExecutable)
     {
-        string executable = Accounts.GameLauncher.ResolveExecutable();
-        string managed = Path.Combine(Path.GetDirectoryName(executable)!, Path.GetFileNameWithoutExtension(executable) + "_Data", "Managed");
-        if (!Directory.Exists(managed)) throw new IOException("plugins.client_missing");
-        return managed;
+        // A read-only probe must compile against the same client the host found,
+        // even when that installation has no launcher registry entry. Validate
+        // again in the child in case files moved after the host selected them.
+        string executable = Accounts.GameInstallation.Validate(selectedExecutable ?? installedExecutable());
+        return Path.Combine(Path.GetDirectoryName(executable)!, "BrownDust II_Data", "Managed");
     }
-    public static async Task RunAsync(string executable, string dataRoot, DailyPluginInfo info, CancellationToken token = default, TimeSpan? limit = null)
+    public static string FailureCode(Exception error) => error is Accounts.SessionManagerException || error.Message == "plugins.client_missing"
+        ? "plugins.client_missing" : "plugins.probe_failed";
+
+    // Preserve the original public entry for existing extension/package callers.
+    public static Task RunAsync(string executable, string dataRoot, DailyPluginInfo info, CancellationToken token = default, TimeSpan? limit = null)
+        => RunAsync(executable, dataRoot, info, null, token, limit);
+
+    public static async Task RunAsync(string executable, string dataRoot, DailyPluginInfo info, string? gameExecutable, CancellationToken token = default, TimeSpan? limit = null)
     {
         string folder = Path.Combine(dataRoot, "extensions", "checks", Guid.NewGuid().ToString("N")); Directory.CreateDirectory(folder);
         string report = Path.Combine(folder, "result.json");
         var start = new ProcessStartInfo(executable) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = Directory.GetCurrentDirectory() };
         start.ArgumentList.Add("--check-plugin"); start.ArgumentList.Add(report);
         start.Environment["DUSTWEAVE_PLUGIN"] = info.Root;
+        start.Environment.Remove(GameExecutableVariable);
+        if (gameExecutable != null) start.Environment[GameExecutableVariable] = gameExecutable;
         // Reuse only content-keyed interface caches, in a root separate from live accounts/queues.
         start.Environment["BD2_DAILY_DATA_ROOT"] = Path.Combine(dataRoot, "extensions", "check-cache");
         using var child = Process.Start(start) ?? throw new IOException("plugins.probe_failed");
@@ -39,7 +53,9 @@ public static class DailyPluginProbe
             if (child.ExitCode != 0 || !result.RootElement.TryGetProperty("status", out var status) || status.GetString() != "passed")
             {
                 string detail = result.RootElement.TryGetProperty("error", out var error) && error.ValueKind == JsonValueKind.String ? error.GetString()! : "Plugin check did not pass.";
-                throw new IOException("plugins.probe_failed", new IOException($"{detail}\nExit code: {child.ExitCode}. Record: {report}"));
+                string code = result.RootElement.TryGetProperty("code", out var reason) && reason.ValueKind == JsonValueKind.String && reason.GetString() == "plugins.client_missing"
+                    ? "plugins.client_missing" : "plugins.probe_failed";
+                throw new IOException(code, new IOException($"{detail}\nExit code: {child.ExitCode}. Record: {report}"));
             }
             if (!result.RootElement.TryGetProperty("info", out var checkedInfo) || !checkedInfo.TryGetProperty("Fingerprint", out var fingerprint) || fingerprint.GetString() != info.Fingerprint)
                 throw new IOException("plugins.probe_failed", new IOException($"Plugin check returned a different or missing package fingerprint. Record: {report}"));

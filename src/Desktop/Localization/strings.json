@@ -906,9 +906,9 @@
     "en-US": "Collecting business and restaurant rewards"
   },
   "storage.compression": {
-    "zh-CN": "另有 {0} 个历史记录或组件可尝试无损压缩，将在空闲时分批处理。",
-    "zh-TW": "另有 {0} 個歷史記錄或元件可嘗試無損壓縮，將在閒置時分批處理。",
-    "en-US": "Lossless compression is available for {0} older records or components, processed in small batches while idle."
+    "zh-CN": "另有 {0} 个旧记录或组件可以无损压缩。节省的空间以完成后为准，没有计入可清理量。",
+    "zh-TW": "另有 {0} 個舊記錄或元件可以無損壓縮。節省的空間以完成後為準，沒有計入可清理量。",
+    "en-US": "{0} older records or components can also be compressed losslessly. Savings depend on the result and are not included in what can be cleaned."
   },
   "storage.optimized": {
     "zh-CN": "已清理 {0} 个文件、压缩 {1} 个文件，释放 {2} MB；跳过 {3} 项。",
@@ -2016,9 +2016,9 @@
     "en-US": "Counted {0} files ({1} MB), checked {2} cleanup candidates…"
   },
   "logs.title": {
-    "zh-CN": "日志与缓存",
-    "zh-TW": "日誌與快取",
-    "en-US": "Logs & cache"
+    "zh-CN": "存储空间",
+    "zh-TW": "儲存空間",
+    "en-US": "Storage"
   },
   "logs.body": {
     "en-US": "Successful tasks keep summaries; failures keep full evidence and nearby steps. Expiring diagnostics does not reset task progress.",
@@ -2081,9 +2081,9 @@
     "en-US": "Recalculate"
   },
   "logs.clean": {
-    "zh-CN": "清理可释放空间",
-    "zh-TW": "清理可釋放空間",
-    "en-US": "Free up space"
+    "zh-CN": "清理过期文件",
+    "zh-TW": "清理過期檔案",
+    "en-US": "Clean up expired files"
   },
   "logs.changed": {
     "zh-CN": "设置已保存。请重新统计可释放空间。",
@@ -8666,9 +8666,9 @@
     "en-US": "Logs {0} MB · Cache & updates {1} MB · Accounts, game and retained data {2} MB.\nTotals include sandboxes {4} MB and extraction cache {5} MB; do not add these again. {3} unreadable or protected items skipped. Compressed files use stored size."
   },
   "storage.move": {
-    "zh-CN": "迁移缓存与沙盒…",
-    "zh-TW": "遷移快取與沙盒…",
-    "en-US": "Move caches and sandboxes…"
+    "zh-CN": "迁移存储位置…",
+    "zh-TW": "遷移儲存位置…",
+    "en-US": "Move storage…"
   },
   "storage.busy": {
     "zh-CN": "请停止自动化、关闭工具及隔离窗口，并等待更新下载结束后再清理或迁移。游戏可保持打开。",
@@ -8691,9 +8691,9 @@
     "en-US": "Rescan to see the updated usage."
   },
   "storage.location": {
-    "zh-CN": "缓存与沙盒位置",
-    "zh-TW": "快取與沙盒位置",
-    "en-US": "Cache and sandbox location"
+    "zh-CN": "存储位置",
+    "zh-TW": "儲存位置",
+    "en-US": "Storage location"
   },
   "storage.changed": {
     "zh-CN": "迁移时文件发生变化或校验失败，仍使用原位置。请关闭其他工具后重试。",
@@ -9011,14 +9011,14 @@
     "en-US": "An isolated process is still running. Close all isolated games and windows without signing out, then retry the move."
   },
   "storage.disk_usage": {
-    "zh-CN": "占用 {0} MB · 可清理 {1} MB",
-    "zh-TW": "佔用 {0} MB · 可清理 {1} MB",
-    "en-US": "Used {0} MB · Reclaimable {1} MB"
+    "zh-CN": "占用 {0} · 可清理 {1}",
+    "zh-TW": "佔用 {0} · 可清理 {1}",
+    "en-US": "{0} used · {1} can be cleaned"
   },
   "storage.use_full_migration": {
-    "zh-CN": "请使用“迁移缓存与沙盒”同步更改存放位置。",
-    "zh-TW": "請使用「遷移快取與沙盒」同步變更儲存位置。",
-    "en-US": "Use Move caches and sandboxes to change this location."
+    "zh-CN": "请使用“迁移存储位置”同步更改存放位置。",
+    "zh-TW": "請使用「遷移儲存位置」同步變更存放位置。",
+    "en-US": "Use Move storage to change this location."
   },
   "storage.binding_detail": {
     "zh-CN": "无法迁移「{0}」：{1}\n目录：{2}\n原数据未改动，请在账号管理中检查此账号的沙盒；也可导出诊断交给开发者。",
@@ -9094,5 +9094,635 @@
     "zh-CN": "预设槽位为空，沿用当前阵容",
     "zh-TW": "預設欄位為空，沿用目前陣容",
     "en-US": "Preset slot is empty; keeping the current team"
+  },
+  "storage.summary_wait": {
+    "zh-CN": "正在统计织尘在各磁盘上的占用…",
+    "zh-TW": "正在統計織塵在各磁碟上的佔用…",
+    "en-US": "Measuring Dustweave's storage on each drive…"
+  },
+  "storage.summary_total": {
+    "zh-CN": "织尘数据占用 {0}",
+    "zh-TW": "織塵資料佔用 {0}",
+    "en-US": "Dustweave data uses {0}"
+  },
+  "storage.summary_clean": {
+    "zh-CN": "其中 {0} 是已过期的文件，可以立即清理。",
+    "zh-TW": "其中 {0} 是已過期的檔案，可以立即清理。",
+    "en-US": "{0} of this is expired and can be cleaned now."
+  },
+  "storage.summary_both": {
+    "zh-CN": "其中 {0} 当前可清理；另有 {1} 已过期，暂不可清理。",
+    "zh-TW": "其中 {0} 目前可清理；另有 {1} 已過期，暫不可清理。",
+    "en-US": "{0} can be cleaned now; another {1} has expired but is temporarily unavailable for cleanup."
+  },
+  "storage.summary_later": {
+    "zh-CN": "有 {0} 已过期，但暂不可清理。展开对应位置查看原因。",
+    "zh-TW": "有 {0} 已過期，但暫不可清理。展開對應位置查看原因。",
+    "en-US": "{0} has expired but cannot be cleaned yet. Expand its location for details."
+  },
+  "storage.summary_none": {
+    "zh-CN": "当前未发现可清理的过期文件。",
+    "zh-TW": "目前未發現可清理的過期檔案。",
+    "en-US": "No cleanable expired files were found."
+  },
+  "storage.group.clean": {
+    "zh-CN": "可清理 {0}",
+    "zh-TW": "可清理 {0}",
+    "en-US": "Can be cleaned {0}"
+  },
+  "storage.group.clean_help": {
+    "zh-CN": "当前符合清理规则；清理时会重新核对使用状态。",
+    "zh-TW": "目前符合清理規則；清理時會重新核對使用狀態。",
+    "en-US": "Currently eligible for cleanup; usage is checked again before removal."
+  },
+  "storage.group.regenerable": {
+    "zh-CN": "可重新生成 {0}",
+    "zh-TW": "可重新產生 {0}",
+    "en-US": "Regenerates {0}"
+  },
+  "storage.group.regenerable_help": {
+    "zh-CN": "删除后会自动重新生成的缓存，例如显卡着色器缓存。目前只统计，不提供清理。",
+    "zh-TW": "刪除後會自動重新產生的快取，例如顯示卡著色器快取。目前只統計，不提供清理。",
+    "en-US": "Caches that are rebuilt automatically, such as graphics shader caches. Shown for information; not cleaned here."
+  },
+  "storage.group.temporary": {
+    "zh-CN": "暂时保留 {0}",
+    "zh-TW": "暫時保留 {0}",
+    "en-US": "Kept for now {0}"
+  },
+  "storage.group.temporary_help": {
+    "zh-CN": "保留期内的记录、运行所需文件和恢复副本。是否可清理以各项当前结果为准。",
+    "zh-TW": "保留期內的記錄、執行所需檔案和復原副本。是否可清理以各項目前結果為準。",
+    "en-US": "Recent records, runtime files and recovery copies. Each item shows whether it can currently be cleaned."
+  },
+  "storage.group.keep": {
+    "zh-CN": "需要保留 {0}",
+    "zh-TW": "需要保留 {0}",
+    "en-US": "Always kept {0}"
+  },
+  "storage.group.keep_help": {
+    "zh-CN": "账号、登录、个人设置、系统文件副本和未识别的文件，不会自动删除。",
+    "zh-TW": "帳號、登入、個人設定、系統檔案副本和未識別的檔案，不會自動刪除。",
+    "en-US": "Accounts, sign-ins, personal settings, system file copies and unrecognized files are never removed automatically."
+  },
+  "storage.incomplete": {
+    "zh-CN": "有 {0} 项未能完整读取或核对。已读取内容计入统计，实际占用可能更大。",
+    "zh-TW": "有 {0} 項未能完整讀取或核對。已讀取內容計入統計，實際佔用可能更大。",
+    "en-US": "{0} items could not be fully read or verified. Readable content is included; actual usage may be higher."
+  },
+  "storage.by_disk": {
+    "zh-CN": "按磁盘与位置查看",
+    "zh-TW": "依磁碟與位置查看",
+    "en-US": "By drive and location"
+  },
+  "storage.column.name": {
+    "zh-CN": "名称",
+    "zh-TW": "名稱",
+    "en-US": "Name"
+  },
+  "storage.column.size": {
+    "zh-CN": "占用",
+    "zh-TW": "佔用",
+    "en-US": "Size"
+  },
+  "storage.column.available": {
+    "zh-CN": "当前可释放",
+    "zh-TW": "目前可釋放",
+    "en-US": "Can free now"
+  },
+  "storage.column.state": {
+    "zh-CN": "处理状态",
+    "zh-TW": "處理狀態",
+    "en-US": "Status"
+  },
+  "storage.rules": {
+    "zh-CN": "清理规则",
+    "zh-TW": "清理規則",
+    "en-US": "Cleanup rules"
+  },
+  "storage.clean_scope": {
+    "zh-CN": "只清理已确认过期的文件。登录信息、个人设置、当前游戏资源和未完成操作的恢复记录不会删除。",
+    "zh-TW": "只清理已確認過期的檔案。登入資訊、個人設定、目前遊戲資源和未完成操作的復原記錄不會刪除。",
+    "en-US": "Only files confirmed as expired are removed. Sign-ins, personal settings, current game resources and recovery records for unfinished actions are kept."
+  },
+  "storage.available": {
+    "zh-CN": "{0}",
+    "zh-TW": "{0}",
+    "en-US": "{0}"
+  },
+  "storage.available_later": {
+    "zh-CN": "暂缓 {0}",
+    "zh-TW": "暫緩 {0}",
+    "en-US": "{0} deferred"
+  },
+  "storage.size_unknown": {
+    "zh-CN": "大小未知",
+    "zh-TW": "大小未知",
+    "en-US": "Size unknown"
+  },
+  "storage.state.clean": {
+    "zh-CN": "可清理",
+    "zh-TW": "可清理",
+    "en-US": "Can be cleaned"
+  },
+  "storage.state.partial": {
+    "zh-CN": "部分可清理",
+    "zh-TW": "部分可清理",
+    "en-US": "Partly cleanable"
+  },
+  "storage.state.regenerable": {
+    "zh-CN": "会重新生成 · 暂不清理",
+    "zh-TW": "會重新產生 · 暫不清理",
+    "en-US": "Regenerates · not cleaned"
+  },
+  "storage.state.recent": {
+    "zh-CN": "保留中，按规则清理",
+    "zh-TW": "保留中，依規則清理",
+    "en-US": "Retained · cleanup rules apply"
+  },
+  "storage.state.in_use": {
+    "zh-CN": "运行所需，暂时保留",
+    "zh-TW": "執行所需，暫時保留",
+    "en-US": "Runtime files · kept"
+  },
+  "storage.state.recovery": {
+    "zh-CN": "恢复所需，暂时保留",
+    "zh-TW": "復原所需，暫時保留",
+    "en-US": "Needed for recovery · kept"
+  },
+  "storage.state.account": {
+    "zh-CN": "账号与设置，保留",
+    "zh-TW": "帳號與設定，保留",
+    "en-US": "Account and settings · kept"
+  },
+  "storage.state.kept": {
+    "zh-CN": "系统或未识别，保留",
+    "zh-TW": "系統或未識別，保留",
+    "en-US": "System or unrecognized · kept"
+  },
+  "storage.state.unknown": {
+    "zh-CN": "未能读取，大小未知",
+    "zh-TW": "未能讀取，大小未知",
+    "en-US": "Unreadable · size unknown"
+  },
+  "storage.state.locked": {
+    "zh-CN": "暂不可清理",
+    "zh-TW": "暫不可清理",
+    "en-US": "Cleanup unavailable"
+  },
+  "storage.state.none": {
+    "zh-CN": "暂无可清理",
+    "zh-TW": "暫無可清理",
+    "en-US": "Nothing to clean"
+  },
+  "storage.detail.effect": {
+    "zh-CN": "清理影响：{0}",
+    "zh-TW": "清理影響：{0}",
+    "en-US": "If cleaned: {0}"
+  },
+  "storage.detail.reason": {
+    "zh-CN": "保留原因：{0}",
+    "zh-TW": "保留原因：{0}",
+    "en-US": "Why kept: {0}"
+  },
+  "storage.detail.deferred": {
+    "zh-CN": "其中 {0} 已过期；确认相关程序已停止且目录归属正确后，重新统计。",
+    "zh-TW": "其中 {0} 已過期；確認相關程式已停止且目錄歸屬正確後，重新統計。",
+    "en-US": "{0} has expired. Recalculate after confirming the related programs have stopped and the folder belongs to this installation."
+  },
+  "storage.area.main": {
+    "zh-CN": "主程序数据",
+    "zh-TW": "主程式資料",
+    "en-US": "Main app data"
+  },
+  "storage.area.cache": {
+    "zh-CN": "主程序缓存（迁移后的位置）",
+    "zh-TW": "主程式快取（遷移後的位置）",
+    "en-US": "App cache (moved location)"
+  },
+  "storage.area.previous": {
+    "zh-CN": "迁移前的旧位置（尚未清除）",
+    "zh-TW": "遷移前的舊位置（尚未清除）",
+    "en-US": "Previous location (not yet removed)"
+  },
+  "storage.area.sandbox": {
+    "zh-CN": "账号「{0}」的沙盒",
+    "zh-TW": "帳號「{0}」的沙盒",
+    "en-US": "Sandbox for {0}"
+  },
+  "storage.area.sandbox_previous": {
+    "zh-CN": "账号「{0}」的沙盒（旧位置）",
+    "zh-TW": "帳號「{0}」的沙盒（舊位置）",
+    "en-US": "Sandbox for {0} (previous location)"
+  },
+  "storage.area.sandbox_unregistered": {
+    "zh-CN": "未登记账号的沙盒目录",
+    "zh-TW": "未登記帳號的沙盒目錄",
+    "en-US": "Sandbox folder without a registered account"
+  },
+  "storage.area.sandbox_store": {
+    "zh-CN": "沙盒存放目录",
+    "zh-TW": "沙盒存放目錄",
+    "en-US": "Sandbox folder"
+  },
+  "storage.area.extraction": {
+    "zh-CN": "程序解压文件 · {0}",
+    "zh-TW": "程式解壓檔案 · {0}",
+    "en-US": "Extracted program files · {0}"
+  },
+  "storage.area.crashes": {
+    "zh-CN": "织尘崩溃记录",
+    "zh-TW": "織塵當機記錄",
+    "en-US": "Dustweave crash records"
+  },
+  "storage.area.path": {
+    "zh-CN": "位置：{0}",
+    "zh-TW": "位置：{0}",
+    "en-US": "Location: {0}"
+  },
+  "storage.area.folder": {
+    "zh-CN": "沙盒目录名：{0}",
+    "zh-TW": "沙盒目錄名稱：{0}",
+    "en-US": "Sandbox folder name: {0}"
+  },
+  "storage.area.previous_hint": {
+    "zh-CN": "这是迁移存储位置前使用的目录，里面的缓存已不再使用，会随「清理过期文件」移除；仍被占用的文件会保留到下次。",
+    "zh-TW": "這是遷移儲存位置前使用的目錄，裡面的快取已不再使用，會隨「清理過期檔案」移除；仍被佔用的檔案會保留到下次。",
+    "en-US": "This folder was used before storage was moved. Its cache is no longer used and is removed by Clean up expired files; files still in use are kept until next time."
+  },
+  "storage.area.sandbox_previous_hint": {
+    "zh-CN": "这个沙盒仍在迁移前的位置，按普通沙盒的规则清理。",
+    "zh-TW": "這個沙盒仍在遷移前的位置，依一般沙盒的規則清理。",
+    "en-US": "This sandbox is still at the previous location and is cleaned with the usual sandbox rules."
+  },
+  "storage.area.unknown": {
+    "zh-CN": "无法读取这个目录（{0} 项），大小未知，没有计入总量。",
+    "zh-TW": "無法讀取這個目錄（{0} 項），大小未知，沒有計入總量。",
+    "en-US": "This folder could not be read ({0} items). Its size is unknown and not included in the total."
+  },
+  "storage.area.skipped": {
+    "zh-CN": "有 {0} 项未能完整读取或核对；已读取内容计入大小。",
+    "zh-TW": "有 {0} 項未能完整讀取或核對；已讀取內容計入大小。",
+    "en-US": "{0} items could not be fully read or verified; readable content is included in the size."
+  },
+  "storage.area.locked_sandbox": {
+    "zh-CN": "尚未确认这个沙盒可清理。关闭对应的隔离窗口后重新统计；若仍不可清理，请到账号管理检查沙盒绑定。",
+    "zh-TW": "尚未確認這個沙盒可清理。關閉對應的隔離視窗後重新統計；若仍不可清理，請到帳號管理檢查沙盒綁定。",
+    "en-US": "Cleanup eligibility could not be confirmed. Close the isolated windows for this account and recalculate. If it remains unavailable, check its sandbox binding in Accounts."
+  },
+  "storage.area.locked_extraction": {
+    "zh-CN": "尚未确认其他织尘程序已经退出，旧版本解压文件暂不清理。关闭其他织尘窗口后重新统计。",
+    "zh-TW": "尚未確認其他織塵程式已經結束，舊版本解壓檔案暫不清理。關閉其他織塵視窗後重新統計。",
+    "en-US": "Other Dustweave programs could not be confirmed closed. Close other Dustweave windows and recalculate before cleaning old extracted files."
+  },
+  "storage.area.manage": {
+    "zh-CN": "管理此账号的沙盒…",
+    "zh-TW": "管理此帳號的沙盒…",
+    "en-US": "Manage this account's sandbox…"
+  },
+  "storage.area.manage_hint": {
+    "zh-CN": "移除账号沙盒是单独的操作：会删除该账号的隔离游戏数据和登录信息，需要在沙盒管理中确认。",
+    "zh-TW": "移除帳號沙盒是單獨的操作：會刪除該帳號的隔離遊戲資料和登入資訊，需要在沙盒管理中確認。",
+    "en-US": "Removing a sandbox is a separate action: it deletes the account's isolated game data and sign-in, and is confirmed in sandbox management."
+  },
+  "storage.cat.dustweave": {
+    "zh-CN": "织尘运行数据与组件",
+    "zh-TW": "織塵執行資料與元件",
+    "en-US": "Dustweave data and components"
+  },
+  "storage.cat.dustweave.hint": {
+    "zh-CN": "沙盒内织尘自己的数据，已计入沙盒总量。只有符合清理规则的部分会被清理。",
+    "zh-TW": "沙盒內織塵自己的資料，已計入沙盒總量。只有符合清理規則的部分會被清理。",
+    "en-US": "Dustweave's own data inside the sandbox, already included in the sandbox total. Only parts that match the cleanup rules are removed."
+  },
+  "storage.cat.logs": {
+    "zh-CN": "运行日志与诊断快照",
+    "zh-TW": "執行記錄與診斷快照",
+    "en-US": "Logs and diagnostic snapshots"
+  },
+  "storage.cat.logs.effect": {
+    "zh-CN": "删除过期日志后，无法再用它们排查对应时间的问题；不影响任务进度。",
+    "zh-TW": "刪除過期記錄後，無法再用它們排查對應時間的問題；不影響任務進度。",
+    "en-US": "Expired logs can no longer be used to investigate problems from that time. Task progress is unaffected."
+  },
+  "storage.cat.logs.reason": {
+    "zh-CN": "保留期内的日志和最近的异常现场会保留，到期后自动清理。",
+    "zh-TW": "保留期內的記錄和最近的異常現場會保留，到期後自動清理。",
+    "en-US": "Recent logs and the latest failure evidence are kept until they expire."
+  },
+  "storage.cat.steps": {
+    "zh-CN": "操作步骤记录",
+    "zh-TW": "操作步驟記錄",
+    "en-US": "Action step records"
+  },
+  "storage.cat.steps.effect": {
+    "zh-CN": "删除已完成且过期的步骤记录，不影响任务结果。",
+    "zh-TW": "刪除已完成且過期的步驟記錄，不影響任務結果。",
+    "en-US": "Completed, expired step records are removed. Task results are unaffected."
+  },
+  "storage.cat.steps.reason": {
+    "zh-CN": "结果尚未确认的步骤会一直保留，避免重复操作。",
+    "zh-TW": "結果尚未確認的步驟會一直保留，避免重複操作。",
+    "en-US": "Steps whose result is unconfirmed are kept to avoid repeating an action."
+  },
+  "storage.cat.progress": {
+    "zh-CN": "任务进度与操作恢复记录",
+    "zh-TW": "任務進度與操作復原記錄",
+    "en-US": "Task progress and recovery records"
+  },
+  "storage.cat.progress.effect": {
+    "zh-CN": "不提供清理；删除会导致任务重做，或无法恢复中断的操作。",
+    "zh-TW": "不提供清理；刪除會導致任務重做，或無法復原中斷的操作。",
+    "en-US": "Not cleaned: removing them would repeat tasks or lose the ability to recover interrupted actions."
+  },
+  "storage.cat.progress.reason": {
+    "zh-CN": "这是任务进度和未完成操作的恢复依据。",
+    "zh-TW": "這是任務進度和未完成操作的復原依據。",
+    "en-US": "They record task progress and how to recover unfinished actions."
+  },
+  "storage.cat.components": {
+    "zh-CN": "已编译的连接组件缓存",
+    "zh-TW": "已編譯的連線元件快取",
+    "en-US": "Compiled connection components"
+  },
+  "storage.cat.components.effect": {
+    "zh-CN": "删除不再使用的旧版本组件，需要时会重新生成。",
+    "zh-TW": "刪除不再使用的舊版本元件，需要時會重新產生。",
+    "en-US": "Older unused versions are removed and rebuilt if needed."
+  },
+  "storage.cat.components.reason": {
+    "zh-CN": "当前游戏版本使用的组件和最近两个版本会保留。",
+    "zh-TW": "目前遊戲版本使用的元件和最近兩個版本會保留。",
+    "en-US": "Components for the current game version and the two most recent versions are kept."
+  },
+  "storage.cat.rules": {
+    "zh-CN": "游戏规则与数据索引",
+    "zh-TW": "遊戲規則與資料索引",
+    "en-US": "Game rules and data indexes"
+  },
+  "storage.cat.rules.effect": {
+    "zh-CN": "删除旧版本的索引，需要时会重新生成。",
+    "zh-TW": "刪除舊版本的索引，需要時會重新產生。",
+    "en-US": "Indexes for older versions are removed and rebuilt if needed."
+  },
+  "storage.cat.rules.reason": {
+    "zh-CN": "当前游戏版本的索引正在使用。",
+    "zh-TW": "目前遊戲版本的索引正在使用。",
+    "en-US": "Indexes for the current game version are in use."
+  },
+  "storage.cat.trade": {
+    "zh-CN": "跑商数据",
+    "zh-TW": "跑商資料",
+    "en-US": "Trading data"
+  },
+  "storage.cat.trade.effect": {
+    "zh-CN": "删除旧版本的跑商目录，需要时会重新读取。",
+    "zh-TW": "刪除舊版本的跑商目錄，需要時會重新讀取。",
+    "en-US": "Older trading catalogs are removed and read again if needed."
+  },
+  "storage.cat.trade.reason": {
+    "zh-CN": "当前跑商目录和交易记录正在使用。",
+    "zh-TW": "目前跑商目錄和交易記錄正在使用。",
+    "en-US": "The current trading catalog and trade records are in use."
+  },
+  "storage.cat.tools": {
+    "zh-CN": "内置工具数据",
+    "zh-TW": "內建工具資料",
+    "en-US": "Built-in tool data"
+  },
+  "storage.cat.tools.effect": {
+    "zh-CN": "工具的过期日志按日志规则清理（计入日志一项）。",
+    "zh-TW": "工具的過期記錄依記錄規則清理（計入記錄一項）。",
+    "en-US": "Expired tool logs are cleaned with the log rules and counted under logs."
+  },
+  "storage.cat.tools.reason": {
+    "zh-CN": "工具设置、布局和记录会保留。",
+    "zh-TW": "工具設定、版面配置和記錄會保留。",
+    "en-US": "Tool settings, layouts and records are kept."
+  },
+  "storage.cat.tests": {
+    "zh-CN": "历史测试记录",
+    "zh-TW": "歷史測試記錄",
+    "en-US": "Past test records"
+  },
+  "storage.cat.tests.effect": {
+    "zh-CN": "删除过期的测试和采集记录，不影响日常使用。",
+    "zh-TW": "刪除過期的測試和採集記錄，不影響日常使用。",
+    "en-US": "Expired test and capture records are removed. Daily use is unaffected."
+  },
+  "storage.cat.tests.reason": {
+    "zh-CN": "保留期内或正在采集的记录会保留。",
+    "zh-TW": "保留期內或正在採集的記錄會保留。",
+    "en-US": "Recent records and active captures are kept."
+  },
+  "storage.cat.plugins": {
+    "zh-CN": "已安装插件",
+    "zh-TW": "已安裝外掛",
+    "en-US": "Installed plugins"
+  },
+  "storage.cat.plugins.effect": {
+    "zh-CN": "不在这里清理；不需要的插件请在插件页卸载。",
+    "zh-TW": "不在這裡清理；不需要的外掛請在外掛頁解除安裝。",
+    "en-US": "Not cleaned here. Uninstall unwanted plugins on the Plugins page."
+  },
+  "storage.cat.plugins.reason": {
+    "zh-CN": "已安装的插件文件正在使用。",
+    "zh-TW": "已安裝的外掛檔案正在使用。",
+    "en-US": "Installed plugin files are in use."
+  },
+  "storage.cat.update-download": {
+    "zh-CN": "更新下载文件",
+    "zh-TW": "更新下載檔案",
+    "en-US": "Update downloads"
+  },
+  "storage.cat.update-download.effect": {
+    "zh-CN": "删除已安装或过期的更新包。",
+    "zh-TW": "刪除已安裝或過期的更新套件。",
+    "en-US": "Installed or expired update packages are removed."
+  },
+  "storage.cat.update-download.reason": {
+    "zh-CN": "最近版本的下载会保留，用于重试或增量更新。",
+    "zh-TW": "最近版本的下載會保留，用於重試或增量更新。",
+    "en-US": "Downloads for recent versions are kept for retries and incremental updates."
+  },
+  "storage.cat.update-temp": {
+    "zh-CN": "更新安装临时文件",
+    "zh-TW": "更新安裝暫存檔案",
+    "en-US": "Update installation temporary files"
+  },
+  "storage.cat.update-temp.effect": {
+    "zh-CN": "删除已完成安装的解压和临时文件。",
+    "zh-TW": "刪除已完成安裝的解壓和暫存檔案。",
+    "en-US": "Extraction and temporary files from finished installs are removed."
+  },
+  "storage.cat.update-temp.reason": {
+    "zh-CN": "安装进行中或尚未确认结果的文件会保留。",
+    "zh-TW": "安裝進行中或尚未確認結果的檔案會保留。",
+    "en-US": "Files for an install in progress or not yet confirmed are kept."
+  },
+  "storage.cat.update-recovery": {
+    "zh-CN": "更新失败恢复副本",
+    "zh-TW": "更新失敗復原副本",
+    "en-US": "Update recovery copies"
+  },
+  "storage.cat.update-recovery.effect": {
+    "zh-CN": "到期后删除；之后无法再回退到对应的旧版本。",
+    "zh-TW": "到期後刪除；之後無法再回退到對應的舊版本。",
+    "en-US": "Removed when expired; you can no longer roll back to that version afterwards."
+  },
+  "storage.cat.update-recovery.reason": {
+    "zh-CN": "每个安装位置保留最近一次可回退的副本；安装尚未结束时也会保留。",
+    "zh-TW": "每個安裝位置保留最近一次可回退的副本；安裝尚未結束時也會保留。",
+    "en-US": "Each installation keeps its latest rollback copy, and copies for unfinished installs are kept."
+  },
+  "storage.cat.account": {
+    "zh-CN": "账号、设置及其他保留数据",
+    "zh-TW": "帳號、設定及其他保留資料",
+    "en-US": "Accounts, settings and other retained data"
+  },
+  "storage.cat.account.effect": {
+    "zh-CN": "不提供清理。",
+    "zh-TW": "不提供清理。",
+    "en-US": "Not cleaned."
+  },
+  "storage.cat.account.reason": {
+    "zh-CN": "账号、登录、个人设置和其他未识别的文件会保留。",
+    "zh-TW": "帳號、登入、個人設定和其他未識別的檔案會保留。",
+    "en-US": "Accounts, sign-ins, personal settings and unrecognized files are kept."
+  },
+  "storage.cat.shader": {
+    "zh-CN": "显卡着色器缓存",
+    "zh-TW": "顯示卡著色器快取",
+    "en-US": "Graphics shader cache"
+  },
+  "storage.cat.shader.effect": {
+    "zh-CN": "删除后会重新生成，首次运行可能卡顿，不宜反复清理。",
+    "zh-TW": "刪除後會重新產生，首次執行可能卡頓，不宜反覆清理。",
+    "en-US": "It is rebuilt after removal and the first run may stutter, so it should not be cleared repeatedly."
+  },
+  "storage.cat.shader.reason": {
+    "zh-CN": "目前只统计，不提供清理。",
+    "zh-TW": "目前只統計，不提供清理。",
+    "en-US": "Shown for information; not cleaned here."
+  },
+  "storage.cat.windows": {
+    "zh-CN": "Windows 系统数据副本",
+    "zh-TW": "Windows 系統資料副本",
+    "en-US": "Windows system data copies"
+  },
+  "storage.cat.windows.effect": {
+    "zh-CN": "不提供清理。",
+    "zh-TW": "不提供清理。",
+    "en-US": "Not cleaned."
+  },
+  "storage.cat.windows.reason": {
+    "zh-CN": "沙盒内程序使用的系统数据库和配置副本，不能仅凭名称判断为缓存。",
+    "zh-TW": "沙盒內程式使用的系統資料庫和設定副本，不能僅憑名稱判斷為快取。",
+    "en-US": "System databases and configuration copied for programs in the sandbox; a cache-like name is not enough to remove them."
+  },
+  "storage.cat.game-tables": {
+    "zh-CN": "当前游戏数据表",
+    "zh-TW": "目前遊戲資料表",
+    "en-US": "Current game data tables"
+  },
+  "storage.cat.game-tables.effect": {
+    "zh-CN": "不提供清理。",
+    "zh-TW": "不提供清理。",
+    "en-US": "Not cleaned."
+  },
+  "storage.cat.game-tables.reason": {
+    "zh-CN": "游戏正在使用；删除会导致重新下载或无法启动。",
+    "zh-TW": "遊戲正在使用；刪除會導致重新下載或無法啟動。",
+    "en-US": "The game uses them; removing them forces a download or prevents starting."
+  },
+  "storage.cat.game-files": {
+    "zh-CN": "游戏程序与资源副本",
+    "zh-TW": "遊戲程式與資源副本",
+    "en-US": "Game program and resource copies"
+  },
+  "storage.cat.game-files.effect": {
+    "zh-CN": "不提供清理。",
+    "zh-TW": "不提供清理。",
+    "en-US": "Not cleaned."
+  },
+  "storage.cat.game-files.reason": {
+    "zh-CN": "沙盒内游戏使用的程序和资源文件。",
+    "zh-TW": "沙盒內遊戲使用的程式和資源檔案。",
+    "en-US": "Program and resource files used by the game in this sandbox."
+  },
+  "storage.cat.game-recovery": {
+    "zh-CN": "游戏数据更新恢复副本",
+    "zh-TW": "遊戲資料更新復原副本",
+    "en-US": "Game data update recovery copies"
+  },
+  "storage.cat.game-recovery.effect": {
+    "zh-CN": "不提供清理。",
+    "zh-TW": "不提供清理。",
+    "en-US": "Not cleaned."
+  },
+  "storage.cat.game-recovery.reason": {
+    "zh-CN": "同步游戏数据时保留的旧版本，用于恢复；保留期限和恢复条件确定前不清理。",
+    "zh-TW": "同步遊戲資料時保留的舊版本，用於復原；保留期限和復原條件確定前不清理。",
+    "en-US": "Previous versions kept when game data was synchronized, for recovery. Not cleaned until a retention period is defined."
+  },
+  "storage.cat.crash": {
+    "zh-CN": "崩溃记录",
+    "zh-TW": "當機記錄",
+    "en-US": "Crash records"
+  },
+  "storage.cat.crash.effect": {
+    "zh-CN": "删除过期的织尘崩溃记录后，无法再用它们分析对应的故障。",
+    "zh-TW": "刪除過期的織塵當機記錄後，無法再用它們分析對應的故障。",
+    "en-US": "Expired Dustweave crash records can no longer be used to analyze those failures."
+  },
+  "storage.cat.crash.reason": {
+    "zh-CN": "最近的记录会保留；游戏等其他程序的崩溃记录只统计、不清理。",
+    "zh-TW": "最近的記錄會保留；遊戲等其他程式的當機記錄只統計、不清理。",
+    "en-US": "Recent records are kept. Crash records from the game and other programs are shown but not cleaned."
+  },
+  "storage.cat.login": {
+    "zh-CN": "登录、设置及其他文件",
+    "zh-TW": "登入、設定及其他檔案",
+    "en-US": "Sign-in, settings and other files"
+  },
+  "storage.cat.login.effect": {
+    "zh-CN": "不提供清理。",
+    "zh-TW": "不提供清理。",
+    "en-US": "Not cleaned."
+  },
+  "storage.cat.login.reason": {
+    "zh-CN": "登录信息和游戏设置必须保留；未识别的文件不会自动删除。",
+    "zh-TW": "登入資訊和遊戲設定必須保留；未識別的檔案不會自動刪除。",
+    "en-US": "Sign-in and game settings must be kept; unrecognized files are never removed automatically."
+  },
+  "storage.cat.extract-current": {
+    "zh-CN": "当前版本",
+    "zh-TW": "目前版本",
+    "en-US": "Current version"
+  },
+  "storage.cat.extract-current.effect": {
+    "zh-CN": "不提供清理。",
+    "zh-TW": "不提供清理。",
+    "en-US": "Not cleaned."
+  },
+  "storage.cat.extract-current.reason": {
+    "zh-CN": "织尘正在使用这个版本。",
+    "zh-TW": "織塵正在使用這個版本。",
+    "en-US": "Dustweave is running this version."
+  },
+  "storage.cat.extract-old": {
+    "zh-CN": "历史版本",
+    "zh-TW": "歷史版本",
+    "en-US": "Previous versions"
+  },
+  "storage.cat.extract-old.effect": {
+    "zh-CN": "删除不再使用的旧版本解压文件。",
+    "zh-TW": "刪除不再使用的舊版本解壓檔案。",
+    "en-US": "Extracted files for unused older versions are removed."
+  },
+  "storage.cat.extract-old.reason": {
+    "zh-CN": "最近使用过的版本会保留，供其他窗口或回退使用。",
+    "zh-TW": "最近使用過的版本會保留，供其他視窗或回退使用。",
+    "en-US": "Recently used versions are kept for other windows or rollback."
   }
 }

@@ -230,20 +230,35 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         // completion record, bargaining substitute or full-price fallback is allowed.
         await OpenShop();
         var e = await Evidence();
-        var offer = DailyTalentPotions.DiscountedOffer(State(e, "trade.native", "$self"));
-        long before = N(R(e, "trade.currency", "Catalyst"));
-        long count = DailyTalentPotions.PurchaseCount(policy, before, required);
-        Require(count <= N(offer["Remaining"]), "九折天赋药可购数量不足以补至目标，未购买；请调整补药目标。");
-        long cost = checked(count * N(offer["Price"]));
         var tradeSettings = DailyTradeOptimizer.Preferences(DailyJson.TryRead<JsonObject>(DailyTradePlan.SettingsPath(w.Root, S(w.Context["actor"]![3]))));
         long reserveGold = N(tradeSettings["reserve_gold"]);
-        Require(N(R(e, "trade.currency", "Gold")) - cost >= reserveGold, "金币不足，或购买会触及保留金币；未补药。");
-        var op = await Buy([O(("kind", "potion"), ("shop", offer["Shop"]), ("product", offer["Product"]), ("count", count), ("price", offer["Price"]))], false, O(("action", "queue_potion_refill"), ("target", policy.TalentPotionTarget), ("reserve", policy.TalentPotionReserve)));
-        var after = await Evidence();
-        long balance = N(R(after, "trade.currency", "Catalyst"));
-        Require(balance == before + count && DailyTalentPotions.Check(balance, required, policy.TalentPotionReserve) == null, "补药回执与库存不一致；保留记录，未重复购买。");
+        long bought = 0, cost = 0, balance;
+        var operations = new JsonArray();
+        do
+        {
+            var offer = DailyTalentPotions.DiscountedOffer(State(e, "trade.native", "$self"));
+            long before = N(R(e, "trade.currency", "Catalyst"));
+            long missing = DailyTalentPotions.PurchaseCount(policy, before, required);
+            long price = N(offer["Price"]);
+            // For unlimited native products Remaining is the per-purchase slider
+            // limit, not the shop's total supply. Reobserve after each confirmed
+            // batch; finite stock and changed discounts still use the live quote.
+            long count = Math.Min(missing, N(offer["Remaining"]));
+            Require(N(R(e, "trade.currency", "Gold")) - checked(missing * price) >= reserveGold, "金币不足，或购买会触及保留金币；未补药。");
+            var op = await Buy([O(("kind", "potion"), ("shop", offer["Shop"]), ("product", offer["Product"]), ("count", count), ("price", price))], false,
+                O(("action", "queue_potion_refill"), ("target", policy.TalentPotionTarget), ("reserve", policy.TalentPotionReserve), ("balance_before", before)));
+            e = await Evidence();
+            balance = N(R(e, "trade.currency", "Catalyst"));
+            Require(balance == before + count, "补药回执与库存不一致；保留记录，未重复购买。");
+            bought += count;
+            cost = checked(cost + count * price);
+            operations.Add(Copy(op["id"]));
+            // Each batch has its own durable receipt. Cancellation or uncertainty
+            // exits immediately; continuation reconciles and buys only the deficit.
+        } while (balance < policy.TalentPotionTarget);
+        Require(DailyTalentPotions.Check(balance, required, policy.TalentPotionReserve) == null, "补药回执与库存不一致；保留记录，未重复购买。");
         await Close();
-        return O(("bought", count), ("balance", balance), ("cost", cost), ("operation", op["id"]));
+        return O(("bought", bought), ("balance", balance), ("cost", cost), ("operation", operations.Last()), ("operations", operations));
     }
     private async Task<JsonObject> Cook(JsonObject row, JsonObject scope, bool skipUnavailable = false)
     {

@@ -174,7 +174,10 @@ public partial class MainWindow
     private async Task ProbePluginAsync(DailyPluginInfo info, CancellationToken token)
     {
         pluginPanel.Status("plugins.probing");
-        await DailyPluginProbe.RunAsync(Environment.ProcessPath!, root, info, token);
+        // Share the normal connection's scoped process selection; do not let
+        // the check child independently guess a different game installation.
+        var game = info.HookSources.Length == 0 ? null : await Task.Run(host.Find, token);
+        await DailyPluginProbe.RunAsync(Environment.ProcessPath!, root, info, game?.Executable, token);
     }
     private async Task RestartForPluginsAsync()
     {

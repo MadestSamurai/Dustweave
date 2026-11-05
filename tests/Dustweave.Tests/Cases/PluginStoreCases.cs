@@ -65,6 +65,7 @@ internal static class PluginStoreCases
         Check(!store.Inspect(first, nextHost).Available, "host update compatibility rejected before loading");
         await DailyPluginProbe.RunAsync(Environment.ProcessPath!, Path.Combine(root, "probe"), store.Inspect(first));
         Check(true, "child process loads actual extension and reports matching fingerprint");
+        await GamePathProbe(root, store.Inspect(first), Check);
         string? priorProbe = Environment.GetEnvironmentVariable("DUSTWEAVE_TEST_PROBE");
         try
         {
@@ -158,6 +159,58 @@ internal static class PluginStoreCases
         Check(store.SelectedRoot() == "", "null identity in a corrupt registry cannot crash base startup");
         File.WriteAllText(Path.Combine(root, "user", "extensions", "selection.json"), "{");
         Check(store.SelectedRoot() == "" && DailyPluginStore.HasSelection(Path.Combine(root, "user")), "corrupt registry fails closed without reviving local plugin");
+    }
+
+    private static async Task GamePathProbe(string root, DailyPluginInfo info, Action<bool, string> check)
+    {
+        string game = Path.Combine(root, "运行中 遊戲 copy", "BrownDust II.exe");
+        string managed = Path.Combine(Path.GetDirectoryName(game)!, "BrownDust II_Data", "Managed");
+        Directory.CreateDirectory(managed);
+        File.WriteAllText(game, "synthetic, never launched");
+        foreach (string name in new[] { "Assembly-CSharp.dll", "mscorlib.dll" }) File.WriteAllText(Path.Combine(managed, name), "synthetic, never loaded");
+        CheckPath();
+        void CheckPath()
+        {
+            check(DailyPluginProbe.GameManagedDirectory(game, () => throw new Exception("No launcher registration")) == managed,
+                "connected client's files work without launcher registration or saved installation");
+            check(DailyPluginProbe.GameManagedDirectory(null, () => game) == managed, "offline probe still resolves the configured installation");
+        }
+        string? previousMode = Environment.GetEnvironmentVariable("DUSTWEAVE_TEST_PROBE");
+        string? previousPath = Environment.GetEnvironmentVariable(DailyPluginProbe.GameExecutableVariable);
+        try
+        {
+            Environment.SetEnvironmentVariable("DUSTWEAVE_TEST_PROBE", "game-directory");
+            Environment.SetEnvironmentVariable(DailyPluginProbe.GameExecutableVariable, Path.Combine(root, "stale-client", "BrownDust II.exe"));
+            string explicitRoot = Path.Combine(root, "probe-running-client");
+            await DailyPluginProbe.RunAsync(Environment.ProcessPath!, explicitRoot, info, game);
+            var report = JsonNode.Parse(File.ReadAllText(Directory.GetFiles(explicitRoot, "result.json", SearchOption.AllDirectories).Single()))!;
+            check(report["managed"]!.GetValue<string>() == managed, "isolated child receives the scoped game path despite a stale inherited value");
+            check(!File.Exists(Path.Combine(explicitRoot, "game-installation.json")), "probe does not rewrite the user's game installation preference");
+
+            string runtime = Path.Combine(managed, "mscorlib.dll"); File.Delete(runtime);
+            bool refused = false;
+            try { DailyPluginProbe.GameManagedDirectory(game, () => throw new Exception("Must not switch client")); }
+            catch (Dustweave.Accounts.SessionManagerException) { refused = true; }
+            check(refused, "incomplete selected game does not silently switch to a different installed copy");
+            refused = false;
+            try { await DailyPluginProbe.RunAsync(Environment.ProcessPath!, Path.Combine(root, "probe-incomplete-client"), info, game); }
+            catch (IOException error) { refused = error.Message == "plugins.client_missing" && error.ToString().Contains(Dustweave.Accounts.GameInstallation.Incomplete); }
+            check(refused, "missing client files surface an actionable error while retaining child diagnostics");
+            File.WriteAllText(runtime, "synthetic, never loaded");
+            await DailyPluginProbe.RunAsync(Environment.ProcessPath!, Path.Combine(root, "probe-restored-client"), info, game);
+            check(true, "restoring game files permits the same plugin to pass without reinstalling or clearing checks");
+
+            Environment.SetEnvironmentVariable("DUSTWEAVE_TEST_PROBE", null);
+            string legacyRoot = Path.Combine(root, "probe-legacy-entry");
+            await DailyPluginProbe.RunAsync(Environment.ProcessPath!, legacyRoot, info);
+            var legacy = JsonNode.Parse(File.ReadAllText(Directory.GetFiles(legacyRoot, "result.json", SearchOption.AllDirectories).Single()))!;
+            check(legacy["gameExecutable"] == null, "original probe API removes a stale inherited game override");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("DUSTWEAVE_TEST_PROBE", previousMode);
+            Environment.SetEnvironmentVariable(DailyPluginProbe.GameExecutableVariable, previousPath);
+        }
     }
     public static async Task SessionChild(string input)
     {
