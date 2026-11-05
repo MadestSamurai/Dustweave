@@ -50,6 +50,15 @@ public static class DailyEventNative
     {
         await w.WaitEvidence(Prefixes, e => B(Native(e)["Result"]) && !B(Native(e)["Continuing"]), 900, "活动自动战斗尚未结束；保留当前战斗，未重复开始。");
     }
+    internal static Task WaitForReturn(DailyWorkflow w) => w.Wait(f =>
+        !DailyNavigationDecision.Types(f.Frame).Overlaps(["BattleUI_EventBattle", "BattleResultUI"]), 60);
+    private static async Task ExitResult(DailyWorkflow w)
+    {
+        await w.Step("BattleResultUI", operation: "event_native_exit", expect: "EventBattleUI");
+        // CheckEventHubEnd opens the lobby immediately, while ReturnUIField
+        // continues its exit coroutine. Lobby visibility alone is not arrival.
+        await WaitForReturn(w);
+    }
     internal static async Task<JsonObject> Lobby(DailyWorkflow w, bool challenge)
     {
         string category = challenge ? "Challenge" : "Battle";
@@ -70,6 +79,14 @@ public static class DailyEventNative
         if (!w.Settings.EventBattle.Enabled) return DailyWorkflow.Skipped("disabled");
         var results = new JsonArray(); int used = 0; bool failed = false;
         var frame = (await w.Observe()).Frame;
+        var types = DailyNavigationDecision.Types(frame);
+        if (types.Contains("BattleUI_EventBattle") && types.Overlaps(["EventBattleUI", "EventMainUI"]) && !types.Contains("BattleResultUI"))
+        {
+            // Resume an already dispatched return without waiting for another
+            // battle result, requiring a local receipt or repeating the exit.
+            await WaitForReturn(w);
+            frame = (await w.Observe()).Frame;
+        }
         if (DailyNavigationDecision.Types(frame).Overlaps(new[] { "BattleUI_EventBattle", "BattleResultUI" }))
         {
             var owned = w.Business.Records(w.Context, "event.native_batch").LastOrDefault(op =>
@@ -90,7 +107,7 @@ public static class DailyEventNative
                 if (DailyManagedBusiness.Pending(owned)) throw new StageHostException("pending", "event_native_result_pending");
                 failed = B(Native(await w.Evidence(Prefixes))["Lost"]); used = I(owned["scope"]?["count"]);
             }
-            await w.Step("BattleResultUI", operation: "event_native_exit", expect: "EventBattleUI");
+            await ExitResult(w);
         }
         var lobby = await Lobby(w, false);
         await DailyNativeBattleRecovery.Replan(w, "event.native_batch");
@@ -113,7 +130,7 @@ public static class DailyEventNative
                 evidence => w.TransactObserved("event.native_batch", plan, O(("ui", "BattleSkipPopupUI"), ("operation", "event_native_confirm"),
                     ("items", new JsonArray(Copy(plan["event"]), Copy(plan["group"]), Copy(plan["stage"]))), ("value", plan["count"])), evidence, 30, drive: () => WaitBatch(w)));
             results.Add(Copy(op["result"])); used += I(op["result"]?["count"]); failed = B(op["result"]?["lost"]);
-            await w.Step("BattleResultUI", operation: "event_native_exit", expect: "EventBattleUI");
+            await ExitResult(w);
             var settled = await w.Evidence(DailyEventSweep.Prefixes);
             if (N(R(settled, "event.currency", "EventApFree")) == 0)
                 return await FinishExhausted(w, results, failed);

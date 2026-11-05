@@ -1,5 +1,35 @@
 [
 {
+  "Version": "1.6.1",
+  "Date": "2026-11-05",
+  "Notes": {
+    "zh-CN": [
+      "修复部分游戏启动和连接时，加载状态判断不正确导致无法继续的问题。",
+      "修复活动战斗结算后返回页面较慢时，流程提前中断的问题。",
+      "修复天赋药不足时派遣入口迟迟打不开的问题；按账号设置补药，无法补足时暂缓相关任务并继续其他日常。",
+      "重新整理日常设置：顶部展示自动补药，有参数的任务显示当前配置，只有开关的任务集中展示。",
+      "日常设置改为自动保存；无效输入保留并提示，不覆盖原设置，切换账号和退出前也会处理待保存修改。",
+      "因未开启自动补药而中断的任务新增设置入口，直接打开对应账号的补药设置。"
+    ],
+    "zh-TW": [
+      "修復部分遊戲啟動及連線時，載入狀態判斷不正確而無法繼續的問題。",
+      "修復活動戰鬥結算後返回頁面較慢時，流程提早中斷的問題。",
+      "修復天賦特效藥不足時派遣入口遲遲無法開啟的問題；依帳號設定補藥，無法補足時暫緩相關任務並繼續其他日常。",
+      "重新整理日常設定：頂部顯示自動補藥，有參數的任務顯示目前配置，只有開關的任務集中顯示。",
+      "日常設定改為自動儲存；無效輸入保留並提示，不覆蓋原設定，切換帳號及退出前也會處理待儲存變更。",
+      "因未開啟自動補藥而中斷的任務新增設定入口，直接開啟對應帳號的補藥設定。"
+    ],
+    "en-US": [
+      "Fixes incorrect loading-state checks that could prevent game startup or connection from continuing.",
+      "Fixes event battles stopping too early when returning from the results screen takes longer.",
+      "Fixes dispatch getting stuck when Ability Pills are insufficient. Refills follow account settings; affected tasks are deferred when needed while other daily tasks continue.",
+      "Reorganizes Daily settings with an always-visible refill card, current-setting summaries and compact task switches.",
+      "Daily settings now save automatically. Invalid input stays available to correct without replacing saved settings; pending edits are also checked when switching accounts or exiting.",
+      "Tasks interrupted because automatic refill is off now include a shortcut to the affected account's refill settings."
+    ]
+  }
+},
+{
   "Version": "1.6.0",
   "Date": "2026-11-05",
   "Notes": {

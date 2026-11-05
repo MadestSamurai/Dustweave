@@ -58,6 +58,7 @@ public class GachaUI:UIBase {}
 public class FutureFeatureUI:UIBase {}
 public class LoadingUI:UIBase {}
 public class EntranceBackgroundCoverUI:UIBase {}
+public class UpdateUI:UIBase {}
 public class IntroUI:UIObjectBase {public string State="IntroWorkFinished";public UnityEngine.GameObject Enter=new UnityEngine.GameObject();public int Clicks;public bool Clickable=true,FailRead;public bool Enabled(){if(FailRead)throw new InvalidOperationException("fixture title read failure");return Clickable;}public void Click(){Clicks++;}}
 public class DownloadPopupUI:UIBase {public UnityEngine.GameObject Button=new UnityEngine.GameObject();public int Clicks;public void OnClickUI(UnityEngine.GameObject button){Clicks++;}}
 public class IntroMessagePopupUI:UIObjectBase {}
@@ -106,6 +107,26 @@ public static class Runner {
    UnityEngine.Object.Surfaces=new UIBase[]{new MenuUI(),transition};var frame=Frame();observer.Tick(frame);
    Check(frame.Loading&&!frame.MainMenuReady&&DailyIdentityGuard.Ready(frame,game,DateTimeOffset.UtcNow),"visible "+transition.GetType().Name+" reports transition without logging account out",checks);
   }
+  var introduction=new UpdateUI();var cover=new EntranceBackgroundCoverUI();
+  foreach(var scene in new[]{"Empty","Map3001_001","Map3009_003"}){
+   UnityEngine.Object.Surfaces=new UIBase[]{introduction,cover};var frame=Frame();frame.Scene=scene;observer.Tick(frame);
+   Check(!frame.Loading&&!frame.MainMenuReady&&DailyIdentityGuard.Ready(frame,game,DateTimeOffset.UtcNow),"update introduction permits module preparation in "+scene+" without claiming a home menu",checks);
+   var host=new PreparationHost(frame);
+   var prepared=DailyGamePreparation.WaitForIdentityAsync(host,game,null,_=>{},System.Threading.CancellationToken.None,timeout:TimeSpan.Zero).GetAwaiter().GetResult();
+   Check(object.ReferenceEquals(prepared,frame),"production observer reaches production module-preparation boundary while introduction is visible in "+scene,checks);
+  }
+  introduction.gameObject.activeInHierarchy=false;var hiddenIntroduction=Frame();observer.Tick(hiddenIntroduction);
+  Check(hiddenIntroduction.Loading,"hidden update introduction does not excuse an entrance transition",checks);
+  introduction.gameObject.activeInHierarchy=true;introduction.isActiveAndEnabled=false;var disabledIntroduction=Frame();observer.Tick(disabledIntroduction);
+  Check(disabledIntroduction.Loading,"disabled update introduction does not excuse an entrance transition",checks);introduction.isActiveAndEnabled=true;
+  UnityEngine.Object.Surfaces=new UIBase[]{introduction,cover,new LoadingUI()};var realLoading=Frame();observer.Tick(realLoading);
+  Check(realLoading.Loading,"actual LoadingUI still blocks preparation with an update introduction",checks);
+  UnityEngine.Object.Surfaces=new UIBase[]{introduction,cover};AppManager.Instance.Active=true;realLoading=Frame();observer.Tick(realLoading);
+  Check(realLoading.Loading,"native loading indicator still blocks preparation with an update introduction",checks);AppManager.Instance.Active=false;
+  var recoveredIntroduction=Frame();observer.Tick(recoveredIntroduction);
+  Check(!recoveredIntroduction.Loading,"introduction becomes preparable once actual loading ends",checks);
+  UnityEngine.Object.Surfaces=new UIBase[]{cover};var nextTransition=Frame();observer.Tick(nextTransition);
+  Check(nextTransition.Loading,"closing the introduction restores ordinary cover handling without cached exemption",checks);
   UnityEngine.Object.Surfaces=new UIBase[0];var empty=Frame();observer.Tick(empty);
   Check(!empty.MainMenuReady&&DailyIdentityGuard.Ready(empty,game,DateTimeOffset.UtcNow),"absence of a menu does not invalidate authenticated identity; input needs separate target evidence",checks);
   foreach(var page in new UIBase[]{new MyRoomUI(),new MailUI(),new GachaUI(),new FutureFeatureUI()}){
@@ -147,6 +168,15 @@ public static class Runner {
   Check(ready.Startup.DownloadVisible&&ready.Startup.DownloadAttempted&&download.Clicks==1&&nativeTitle.Clicks==0,"download on a UIObjectBase title still uses its normal native confirmation",checks);
   LocalStorage.Permit=null;
   return checks.ToArray();
+ }
+ sealed class PreparationHost:IGameHost {
+  readonly DailySnapshot frame;public PreparationHost(DailySnapshot value){frame=value;}
+  public GameInstance Find(){return new GameInstance(123,456,"fixture");}
+  public bool IsRunning(GameInstance game){return game==Find();}
+  public DailySnapshot ReadSnapshot(){return frame;}
+  public DailyRuntimeStatus ReadStatus(){return null;}
+  public System.Threading.Tasks.Task CloseAsync(GameInstance game,System.Threading.CancellationToken token){throw new Exception("unexpected close");}
+  public System.Threading.Tasks.Task ConnectAsync(GameInstance game,Action<string> progress,System.Threading.CancellationToken token){throw new Exception("unexpected connect");}
  }
 }
 """;

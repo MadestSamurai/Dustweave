@@ -10,6 +10,9 @@ public sealed class DailyPreferencesPanel : UserControl
 {
     private static DailyLanguage L => DailyLanguage.Current;
     private readonly bool allowGame;
+    private readonly System.Windows.Threading.DispatcherTimer autoSave = new() { Interval = TimeSpan.FromMilliseconds(500) };
+    private readonly TextBlock saveState = new() { FontSize = 12, MaxWidth = 155, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
+    private bool backgroundSaving;
     internal Func<Task<bool>>? BeforeGameToolOpen {get;init;}
     private async Task OpenGameToolAsync(Action open)
     {
@@ -54,6 +57,15 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly TextBox tradeReserve = new(), tradeMaximum = new();
     private readonly TextBox potionReserve = new(), potionTarget = new();
     private readonly CheckBox potionRefill = Check("prefs.potion_refill");
+    // Talent Pills are spent by several tasks, so their policy is an always-open card with a live summary.
+    private readonly TextBlock potionState = new() { TextWrapping = TextWrapping.Wrap, Margin = new(0, 4, 0, 12) };
+    // Tasks with options are listed first with their current values; plain switches follow in a compact grid.
+    private readonly StackPanel tunedHeader = new() { Margin = new(0, 12, 0, 4) }, switchHeader = new() { Margin = new(0, 24, 0, 8) };
+    private readonly WrapPanel switchGrid = new() { ItemWidth = 340 };
+    private readonly List<Border> tunedViews = new(), switchViews = new();
+    private readonly List<(StackPanel Body, TextBlock Line)> currents = new();
+    private Border potionCard = new();
+    private System.Windows.Threading.DispatcherTimer? potionHighlight;
     private readonly CheckBox fastTravel = Check("prefs.fast_travel");
     private readonly Button cookingButton = LocalButton("cooking.title");
     private readonly CheckBox preserveBloodCocktailMail = Check("prefs.mail_preserve_cocktail");
@@ -126,11 +138,18 @@ public sealed class DailyPreferencesPanel : UserControl
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         header.ColumnDefinitions.Add(new ColumnDefinition());
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        var save = LocalButton("prefs.save"); save.Style = (Style)Application.Current.FindResource("PrimaryButton");
-        save.SetBinding(IsEnabledProperty, new System.Windows.Data.Binding(nameof(IsEnabled)) { Source = form });
-        save.Click += (_, _) => Save();
-        Grid.SetColumn(save, 2);
-        header.Children.Add(save);
+        saveState.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk");
+        L.Text(saveState, "prefs.autosave");
+        System.Windows.Automation.AutomationProperties.SetLiveSetting(saveState, System.Windows.Automation.AutomationLiveSetting.Polite);
+        Grid.SetColumn(saveState, 2);
+        header.Children.Add(saveState);
+        autoSave.Tick += (_, _) =>
+        {
+            autoSave.Stop();
+            if (!dirty || updating || loaded == null) return;
+            backgroundSaving = true;
+            try { Save(); } finally { backgroundSaving = false; }
+        };
         var accountGroup = new Grid { MaxWidth = 280, HorizontalAlignment = HorizontalAlignment.Left };
         accountGroup.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         accountGroup.ColumnDefinitions.Add(new ColumnDefinition());
@@ -182,19 +201,31 @@ public sealed class DailyPreferencesPanel : UserControl
         stone.DisplayMemberPath = "Label";
         stone.SelectedValuePath = "Key";
         section = form;
-        var generalBody = new StackPanel { Margin = new(48, 8, 12, 16) };
-        var generalTitle = Label("prefs.resources"); generalTitle.FontWeight = FontWeights.SemiBold;
-        var general = new Border { BorderBrush = (Brush)Application.Current.FindResource("Line"), BorderThickness = new(0, 0, 0, 1), Child = new Expander { Header = generalTitle, Content = generalBody, IsExpanded = false, Margin = new(0, 8, 0, 8), Style = (Style)Application.Current.FindResource("SettingsExpander") } };
+        var generalBody = new StackPanel();
+        var general = new Border { CornerRadius = new(10), BorderThickness = new(1), Padding = new(20, 16, 20, 6), Margin = new(0, 4, 0, 8), Child = generalBody };
+        general.SetResourceReference(Border.BackgroundProperty, "Surface"); general.SetResourceReference(Border.BorderBrushProperty, "Line"); potionCard = general;
         form.Children.Add(general); sections.Add((general, "prefs.general", "prefs.potions_summary")); section = generalBody;
-        section.Children.Add(fastTravel);
-        Note("prefs.fast_travel_hint");
-        Row("prefs.potion_reserve", potionReserve);
-        Note("prefs.potion_reserve_hint");
+        var potionsTitle = Label("prefs.potions_title"); potionsTitle.FontSize = 18; potionsTitle.FontWeight = FontWeights.SemiBold;
+        section.Children.Add(potionsTitle); section.Children.Add(potionState);
+        // Automatic refill is the decision that changes outcomes most, so it leads the card.
+        potionRefill.FontWeight = FontWeights.SemiBold; potionRefill.FontSize = 15;
         section.Children.Add(potionRefill);
+        var refillBody = new StackPanel { Margin = new(28, 0, 0, 0) }; section.Children.Add(refillBody); section = refillBody;
         Row("prefs.potion_target", potionTarget);
         Note("prefs.potion_refill_hint");
+        section = generalBody;
+        Divider();
+        Row("prefs.potion_reserve", potionReserve);
+        Note("prefs.potion_reserve_hint");
+        Divider();
+        section.Children.Add(fastTravel);
+        Note("prefs.fast_travel_hint");
         potionRefill.Checked += (_, _) => potionTarget.IsEnabled = true;
         potionRefill.Unchecked += (_, _) => potionTarget.IsEnabled = false;
+        potionRefill.Checked += (_, _) => ShowPotionState();
+        potionRefill.Unchecked += (_, _) => ShowPotionState();
+        potionReserve.TextChanged += (_, _) => ShowPotionState();
+        potionTarget.TextChanged += (_, _) => ShowPotionState();
         L.Bind(potionReserve, System.Windows.Automation.AutomationProperties.NameProperty, () => L.Get("prefs.potion_reserve"));
         L.Bind(potionTarget, System.Windows.Automation.AutomationProperties.NameProperty, () => L.Get("prefs.potion_target"));
         Stage(guild, "stage.guild", "prefs.guild_hint", showSummary: false);
@@ -220,6 +251,7 @@ public sealed class DailyPreferencesPanel : UserControl
             L.Bind(enhance[index], System.Windows.Automation.AutomationProperties.NameProperty, "prefs.enhance_rarity", rarity);
             column.Children.Add(enhance[index]); enhanceRow.Children.Add(column);
         }
+        enhanceRow.Tag = (Func<string>)(() => L.Get("prefs.enhance") + " " + string.Join(" ", new[] { "N", "R", "SR", "UR" }.Select((rarity, index) => rarity + "+" + enhance[index].SelectedItem)));
         section.Children.Add(enhanceRow);
         Note("prefs.enhance_note");
         section.Children.Add(fallback);
@@ -247,6 +279,7 @@ public sealed class DailyPreferencesPanel : UserControl
             moves.Children.Add(b);
         }
         rankingRow.Children.Add(moves);
+        rankingRow.Tag = (Func<string>)(() => string.Join(" > ", priority.Items.Cast<Choice>().Select(c => c.Label)));
         section.Children.Add(rankingRow);
         Stage(stones, "stage.stones", "prefs.stones_hint");
         Row("prefs.stones_element", stone);
@@ -352,13 +385,28 @@ public sealed class DailyPreferencesPanel : UserControl
         section.Children.Add(preserveBloodCocktailMail);
         Note("prefs.mail_preserve_hint");
         // Stages without parameters need only a switch, not an empty expansion affordance.
-        foreach (var border in form.Children.OfType<Border>())
+        foreach (var border in form.Children.OfType<Border>().ToList())
             if (border.Child is Expander exp && exp.Content is StackPanel body && body.Children.Count == 0 && exp.Header is StackPanel heading)
             {
                 exp.Header = null;
-                heading.Margin = new(24, 8, 0, 8);
+                heading.Margin = new(12, 8, 12, 8);
                 border.Child = heading;
+                border.BorderThickness = new(1); border.CornerRadius = new(8); border.Margin = new(0, 0, 12, 10);
+                border.SetResourceReference(Border.BackgroundProperty, "Surface");
+                form.Children.Remove(border); switchGrid.Children.Add(border); switchViews.Add(border);
             }
+            else if (border != general && border.Child is Expander task && task.Content is StackPanel options && task.Header is StackPanel title)
+            {
+                var line = new TextBlock { Margin = new(24, 0, 12, 4), FontSize = 13, TextTrimming = TextTrimming.CharacterEllipsis };
+                line.SetResourceReference(TextBlock.ForegroundProperty, "Focus");
+                line.SetBinding(FrameworkElement.ToolTipProperty, new System.Windows.Data.Binding(nameof(TextBlock.Text)) { RelativeSource = System.Windows.Data.RelativeSource.Self });
+                title.Children.Add(line); currents.Add((options, line)); tunedViews.Add(border);
+            }
+        GroupHeader(tunedHeader, "prefs.tuned_title", "prefs.tuned_hint");
+        GroupHeader(switchHeader, "prefs.switch_title", "prefs.switch_hint");
+        form.Children.Insert(form.Children.IndexOf(general) + 1, tunedHeader);
+        form.Children.Add(switchHeader); form.Children.Add(switchGrid);
+        RefreshCurrent();
         formScroll.Content = form;
         layout.Children.Add(formScroll);
         Content = layout;
@@ -370,7 +418,7 @@ public sealed class DailyPreferencesPanel : UserControl
             c.Unchecked += (_, _) => MarkDirty();
         }
         // Same dirty rule as before, but the unsaved notice must appear for this field too.
-        salvationReserve.TextChanged += (_, _) => { if (!updating) { dirty = true; if (loaded != null) L.Text(status, "prefs.dirty"); } };
+        salvationReserve.TextChanged += (_, _) => MarkDirty();
         salvationCount.TextChanged += (_, _) => MarkDirty();
         salvationMode.SelectionChanged += (_, _) =>
         {
@@ -392,12 +440,13 @@ public sealed class DailyPreferencesPanel : UserControl
         foreach (var option in new[] { tradeFavorites, saffronProcessing, fastTravel })
         { option.Checked += (_, _) => MarkDirty(); option.Unchecked += (_, _) => MarkDirty(); }
         form.IsEnabled = false;
+        ShowPotionState();
         WeakEventManager<DailyLanguage, EventArgs>.AddHandler(L, nameof(DailyLanguage.Changed), LanguageChanged);
     }
     public void CheckWeeklySettingsForSmoke()
     {
         foreach (var toggle in new[] { weeklyCraft, weeklyNpc, friendship })
-            if (!form.Children.OfType<Border>().Any(b => b.Child is StackPanel heading && heading.Children.Contains(toggle)))
+            if (!switchViews.Any(b => b.Child is StackPanel heading && heading.Children.Contains(toggle)))
                 throw new Exception("A stage without settings still exposes an expansion affordance");
         var previous = mainline.IsChecked;
         try
@@ -451,12 +500,109 @@ public sealed class DailyPreferencesPanel : UserControl
         sections.Add((border, title, summary));
         section = body;
     }
+    /// <summary>Opened from a task that stopped for lack of Talent Pills: show the refill switch and mark the card briefly.</summary>
+    internal void ShowTalentPotions(string key)
+    {
+        SelectAccount(key);
+        // A rejected account switch leaves the invalid draft and its validation
+        // focus intact. Never highlight another account's refill policy.
+        if (account != key) return;
+        ShowAllSettings();
+        UpdateLayout();
+        potionCard.BringIntoView();
+        if (potionRefill.IsEnabled) potionRefill.Focus();
+        potionHighlight?.Stop();
+        potionCard.BorderThickness = new(2); potionCard.Padding = new(19, 15, 19, 5); potionCard.SetResourceReference(Border.BorderBrushProperty, "Focus");
+        potionHighlight = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+        potionHighlight.Tick += (_, _) => { potionHighlight?.Stop(); potionCard.BorderThickness = new(1); potionCard.Padding = new(20, 16, 20, 6); potionCard.SetResourceReference(Border.BorderBrushProperty, "Line"); };
+        potionHighlight.Start();
+    }
     internal void ShowAllSettings()
     {
         filter.Clear();
         categories.SelectedIndex = 0;
         FilterSections();
         formScroll.ScrollToTop();
+    }
+    internal void CheckPotionNavigationForSmoke(string previous, string target, Action open)
+    {
+        if (allowGame) throw new InvalidOperationException("Isolated settings required");
+        SelectAccount(previous);
+        string reserve = potionReserve.Text;
+        try
+        {
+            potionReserve.Text = "invalid";
+            open();
+            if (account != previous || potionReserve.Text != "invalid" || !potionReserve.IsVisible || potionCard.BorderThickness.Left != 1)
+                throw new Exception("Refill shortcut discarded an invalid draft or highlighted another account");
+        }
+        finally { potionReserve.Text = reserve; }
+        if (!SavePending()) throw new Exception("Corrected settings cannot be saved");
+        open(); UpdateLayout();
+        if (account != target || !potionRefill.IsKeyboardFocused || category != "all" || filter.Text.Length != 0 || potionCard.BorderThickness.Left != 2)
+            throw new Exception("Refill shortcut did not select and focus the task account");
+        bool enabled = potionRefill.IsChecked == true;
+        string amount = potionTarget.Text;
+        try
+        {
+            potionRefill.IsChecked = true; potionTarget.Text = "1234";
+            if (!potionState.Text.Contains("1234") || !potionTarget.IsEnabled)
+                throw new Exception("Refill summary did not follow edited controls");
+            potionRefill.IsChecked = false;
+            if (potionState.Text != L.Get("prefs.potions_off") || potionTarget.IsEnabled)
+                throw new Exception("Disabled refill summary does not match the policy");
+        }
+        finally { potionTarget.Text = amount; potionRefill.IsChecked = enabled; SavePending(); }
+    }
+    internal void ReviewSwitchGridForSmoke()
+    {
+        if (allowGame) throw new InvalidOperationException("Isolated settings required");
+        ShowAllSettings(); UpdateLayout(); formScroll.ScrollToVerticalOffset(switchHeader.TranslatePoint(new Point(), form).Y);
+        if (switchViews.Any(v => v.Child is Expander || v.ActualWidth > formScroll.ViewportWidth + 1))
+            throw new Exception("Simple-task cards overflow the settings viewport or retain an expander");
+    }
+    internal async Task CheckAutoSaveForSmoke(string first, string second)
+    {
+        if (allowGame) throw new InvalidOperationException("Isolated settings required");
+        var firstSaved = store.Read(first); var secondSaved = store.Read(second);
+        try
+        {
+            SelectAccount(first);
+            guild.IsChecked = !firstSaved.Stages.Guild;
+            await Task.Delay(750);
+            if (dirty || store.Read(first).Stages.Guild == firstSaved.Stages.Guild || saveState.Text != L.Get("prefs.autosaved"))
+                throw new Exception("Changing a task switch did not save automatically");
+            string before = File.ReadAllText(store.PathFor(first));
+            potionReserve.Text = ""; potionReserve.Focus();
+            var scope = System.Windows.Input.FocusManager.GetFocusScope(potionReserve);
+            var focus = System.Windows.Input.FocusManager.GetFocusedElement(scope);
+            await Task.Delay(750);
+            if (!dirty || File.ReadAllText(store.PathFor(first)) != before || System.Windows.Input.FocusManager.GetFocusedElement(scope) != focus || potionReserve.Text != "")
+                throw new Exception($"Incomplete input was written, erased or interrupted by automatic validation: dirty={dirty}, sameFile={File.ReadAllText(store.PathFor(first)) == before}, beforeFocus={focus}, afterFocus={System.Windows.Input.FocusManager.GetFocusedElement(scope)}, reserve='{potionReserve.Text}', account={account}");
+            potionReserve.Text = "42";
+            SelectAccount(second); // Flush before the debounce expires; never save A's draft under B.
+            if (account != second || store.Read(first).General.TalentPotionReserve != 42 || store.Read(second).General.TalentPotionReserve != secondSaved.General.TalentPotionReserve)
+                throw new Exception("Immediate account navigation lost or misrouted an automatic save");
+            guild.IsChecked = !secondSaved.Stages.Guild;
+            if (!SavePending() || store.Read(second).Stages.Guild == secondSaved.Stages.Guild)
+                throw new Exception("Close/start flush lost the pending task setting");
+            before = File.ReadAllText(store.PathFor(second));
+            string inMemory = System.Text.Json.JsonSerializer.Serialize(loaded);
+            eventPreset.Text = "-1"; guild.IsChecked = secondSaved.Stages.Guild;
+            await Task.Delay(750);
+            if (File.ReadAllText(store.PathFor(second)) != before || System.Text.Json.JsonSerializer.Serialize(loaded) != inMemory)
+                throw new Exception("Invalid late field partially changed the saved account policy");
+            eventPreset.Text = secondSaved.EventBattle.PresetSlot.ToString(CultureInfo.InvariantCulture);
+            await Task.Delay(750);
+            if (dirty || store.Read(second).Stages.Guild != secondSaved.Stages.Guild)
+                throw new Exception("Corrected input did not recover automatic saving");
+        }
+        finally
+        {
+            autoSave.Stop(); dirty = false;
+            store.Save(first, firstSaved); store.Save(second, secondSaved);
+            SelectAccount(first); SelectAccount(second);
+        }
     }
     private void FilterSections()
     {
@@ -473,6 +619,8 @@ public sealed class DailyPreferencesPanel : UserControl
                 count++;
         }
         L.Bind(filterCount, TextBlock.TextProperty, () => query.Length == 0 ? "" : count == 0 ? L.Get("prefs.none") : L.Get("prefs.count", count));
+        tunedHeader.Visibility = tunedViews.Any(v => v.Visibility == Visibility.Visible) ? Visibility.Visible : Visibility.Collapsed;
+        switchHeader.Visibility = switchGrid.Visibility = switchViews.Any(v => v.Visibility == Visibility.Visible) ? Visibility.Visible : Visibility.Collapsed;
         filterCount.Visibility = query.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
     }
     private static string SearchableLabels(DependencyObject owner)
@@ -585,7 +733,7 @@ public sealed class DailyPreferencesPanel : UserControl
     }
     private Grid Row(string label, Control field)
     {
-        var row = new Grid { Margin = new(0, 8, 0, 8), HorizontalAlignment = HorizontalAlignment.Stretch };
+        var row = new Grid { Margin = new(0, 8, 0, 8), HorizontalAlignment = HorizontalAlignment.Stretch, Tag = "row" };
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(240) });
         var text = Label(label); text.VerticalAlignment = VerticalAlignment.Center; text.Margin = new(0, 0, 16, 0); row.Children.Add(text);
@@ -596,12 +744,63 @@ public sealed class DailyPreferencesPanel : UserControl
         section.Children.Add(row);
         return row;
     }
+    private void Divider()
+    {
+        var line = new Border { Height = 1, Margin = new(0, 6, 0, 10) };
+        line.SetResourceReference(Border.BackgroundProperty, "Line");
+        section.Children.Add(line);
+    }
+    private static void GroupHeader(StackPanel host, string title, string hint)
+    {
+        var heading = Label(title); heading.FontSize = 15; heading.FontWeight = FontWeights.SemiBold; host.Children.Add(heading);
+        var note = Label(hint); note.FontSize = 13; note.Margin = new(0, 2, 0, 0); note.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk"); host.Children.Add(note);
+    }
+    private void ShowPotionState()
+    {
+        bool on = potionRefill.IsChecked == true;
+        string target = potionTarget.Text.Trim(), reserve = potionReserve.Text.Trim();
+        L.Bind(potionState, TextBlock.TextProperty, () => on ? L.Get("prefs.potions_on", target, reserve) : L.Get("prefs.potions_off"));
+        potionState.SetResourceReference(TextBlock.ForegroundProperty, on ? "Success" : "Warning");
+    }
+    private static string ChoiceText(object? item) => item switch { Choice c => c.Label, RefinementView r => r.Label, null => "", _ => item.ToString() ?? "" };
+    // Reads the visible option controls of a task, so the collapsed row shows what it will do.
+    private string CurrentSettings(Panel body)
+    {
+        var parts = new List<string>();
+        void Visit(Panel panel)
+        {
+            foreach (var child in panel.Children.OfType<FrameworkElement>())
+            {
+                if (child.Visibility != Visibility.Visible) continue;
+                switch (child)
+                {
+                    case { Tag: Func<string> custom }: parts.Add(custom()); break;
+                    case CheckBox box: if (box.IsChecked == true && box.Content is TextBlock caption) parts.Add(caption.Text); break;
+                    case Grid { Tag: "row" } row when row.Children.Count >= 2 && row.Children[0] is TextBlock label:
+                        string value = row.Children[1] switch { TextBox text => text.Text.Trim(), ComboBox combo => ChoiceText(combo.SelectedItem), _ => "" };
+                        parts.Add(label.Text + " " + (value.Length == 0 ? "—" : value)); break;
+                    case ComboBox combo: parts.Add(ChoiceText(combo.SelectedItem)); break;
+                    case Panel nested when !(ReferenceEquals(nested, normalTrade) && tradeFavorites.IsChecked == true): Visit(nested); break;
+                }
+            }
+        }
+        Visit(body);
+        return string.Join(" · ", parts.Where(p => p.Length > 0));
+    }
+    private void RefreshCurrent()
+    {
+        foreach (var (body, line) in currents)
+            L.Bind(line, TextBlock.TextProperty, () => { string text = CurrentSettings(body); return L.Get("prefs.current", text.Length == 0 ? L.Get("prefs.current_none") : text); });
+    }
     private void MarkDirty()
     {
+        RefreshCurrent();
         if (!updating && loaded != null)
         {
             dirty = true;
-            L.Text(status, "prefs.dirty");
+            L.Text(saveState, "prefs.autosave_pending");
+            L.Bind(status, TextBlock.TextProperty, () => "");
+            autoSave.Stop(); autoSave.Start();
         }
     }
     public void SetAccounts(IEnumerable<DailyAccount> rows)
@@ -626,7 +825,7 @@ public sealed class DailyPreferencesPanel : UserControl
             // A temporarily empty catalog can return with the same account and no
             // SelectionChanged event. Restore editing without discarding unsaved settings.
             form.IsEnabled = true;
-            if (dirty) L.Text(status, "prefs.dirty"); else L.Bind(status, TextBlock.TextProperty, () => "");
+            if (!dirty) L.Bind(status, TextBlock.TextProperty, () => "");
         }
     }
     private void ChangedAccount(object sender, SelectionChangedEventArgs e)
@@ -725,10 +924,12 @@ public sealed class DailyPreferencesPanel : UserControl
             ranking.IsChecked = loaded.Tasks.SquareRanking;
             form.IsEnabled = true;
             dirty = false;
+            autoSave.Stop();
+            L.Text(saveState, "prefs.autosave");
             L.Bind(status, TextBlock.TextProperty, () => "");
         }
         catch (Exception ex) { loaded = null; form.IsEnabled = false; DailyUiText.Error(status, ex, "prefs.read_error"); }
-        finally { updating = false; }
+        finally { updating = false; RefreshCurrent(); ShowPotionState(); }
     }
     private void RefreshInventory()
     {
@@ -768,6 +969,7 @@ public sealed class DailyPreferencesPanel : UserControl
     }
     public bool Save()
     {
+        autoSave.Stop();
         if (loaded == null || account.Length == 0)
             return false;
         try
@@ -784,99 +986,105 @@ public sealed class DailyPreferencesPanel : UserControl
                 tradeSettings["max_spend"] = tradeMaximum.Text.Trim().Length == 0 ? null : TradeAmount(tradeMaximum);
                 tradeSettings["include_break_even_resales"] = tradeBreakEven.IsChecked == true;
             }
-            loaded.General = general;
-            loaded.Hunt.Enabled = hunt.IsChecked == true;
-            loaded.Hunt.FarmGold = gold.IsChecked == true;
-            loaded.Hunt.FarmSlime = slime.IsChecked == true;
-            loaded.Hunt.OrdinaryChapter = (int)chapter.SelectedItem;
-            loaded.Hunt.StonesEnabled = stones.IsChecked == true;
-            loaded.Hunt.StoneElement = (string)stone.SelectedValue;
-            loaded.Hunt.Priority = priority.Items.Cast<Choice>().Select(c => c.Key).ToArray();
-            loaded.Equipment.Enabled = recycle.IsChecked == true;
-            loaded.Equipment.KeepFiveStarSr = keepSr.IsChecked == true;
-            loaded.Equipment.EnhanceLevelN = (int)enhance[0].SelectedItem;
-            loaded.Equipment.EnhanceLevelR = (int)enhance[1].SelectedItem;
-            loaded.Equipment.EnhanceLevelSr = (int)enhance[2].SelectedItem;
-            loaded.Equipment.EnhanceLevelUr = (int)enhance[3].SelectedItem;
-            loaded.Equipment.CraftFallback = fallback.IsChecked == true;
-            loaded.Equipment.RefineEnabled = refine.IsChecked == true;
-            loaded.Equipment.RefineInstance = refineChoice.SelectedValue as string ?? loaded.Equipment.RefineInstance;
-            loaded.Tasks.Pass = pass.IsChecked == true;
-            loaded.Tasks.Dispatch = dispatch.IsChecked == true;
-            loaded.Tasks.Goddess = goddess.IsChecked == true;
-            loaded.Tasks.SquareRanking = ranking.IsChecked == true;
-            loaded.Mirror.Enabled = mirror.IsChecked == true;
-            loaded.Mirror.Multiplier = (int)multiplier.SelectedItem;
-            loaded.Stages.Guild = guild.IsChecked == true;
-            loaded.Stages.Room = room.IsChecked == true;
-            loaded.Stages.CafeteriaIncome = income.IsChecked == true;
-            loaded.Stages.CafeteriaGuests = guests.IsChecked == true;
-            loaded.Stages.Saffron = saffron.IsChecked == true;
-            loaded.SaffronPotatoRounds = (int)saffronRounds.SelectedItem;
-            loaded.SaffronProcessing = saffronProcessing.IsChecked == true;
-            loaded.Stages.FreeDraws = draws.IsChecked == true;
-            loaded.Stages.DailyRewards = dailyRewards.IsChecked == true;
-            loaded.Weekly.Sichuan = weeklySichuan.IsChecked == true;
-            loaded.Weekly.Book = weeklyBook.IsChecked == true;
-            loaded.Weekly.EquipmentCraft = weeklyCraft.IsChecked == true;
-            loaded.Stages.WeeklyRewards = weeklyRewards.IsChecked == true;
-            loaded.Stages.Mail = mail.IsChecked == true;
-            loaded.Stages.PreserveBloodCocktailMail = preserveBloodCocktailMail.IsChecked == true;
-            loaded.Weekly.Mainline = mainline.IsChecked == true;
-            loaded.Weekly.Steal = weeklySteal.IsChecked == true;
-            loaded.Weekly.Npc = weeklyNpc.IsChecked == true;
-            loaded.Weekly.WalkCollect = walkCollect.IsChecked == true;
-            loaded.Weekly.CollectionMaps = collectionMaps.Selection;
-            loaded.Weekly.Fishing = fishing.IsChecked == true;
-            loaded.Weekly.RoomLikes = roomLikes.IsChecked == true;
+            var next = System.Text.Json.JsonSerializer.Deserialize<DailyPreferences>(System.Text.Json.JsonSerializer.Serialize(loaded))!;
+            next.General = general;
+            next.Hunt.Enabled = hunt.IsChecked == true;
+            next.Hunt.FarmGold = gold.IsChecked == true;
+            next.Hunt.FarmSlime = slime.IsChecked == true;
+            next.Hunt.OrdinaryChapter = (int)chapter.SelectedItem;
+            next.Hunt.StonesEnabled = stones.IsChecked == true;
+            next.Hunt.StoneElement = (string)stone.SelectedValue;
+            next.Hunt.Priority = priority.Items.Cast<Choice>().Select(c => c.Key).ToArray();
+            next.Equipment.Enabled = recycle.IsChecked == true;
+            next.Equipment.KeepFiveStarSr = keepSr.IsChecked == true;
+            next.Equipment.EnhanceLevelN = (int)enhance[0].SelectedItem;
+            next.Equipment.EnhanceLevelR = (int)enhance[1].SelectedItem;
+            next.Equipment.EnhanceLevelSr = (int)enhance[2].SelectedItem;
+            next.Equipment.EnhanceLevelUr = (int)enhance[3].SelectedItem;
+            next.Equipment.CraftFallback = fallback.IsChecked == true;
+            next.Equipment.RefineEnabled = refine.IsChecked == true;
+            next.Equipment.RefineInstance = refineChoice.SelectedValue as string ?? next.Equipment.RefineInstance;
+            next.Tasks.Pass = pass.IsChecked == true;
+            next.Tasks.Dispatch = dispatch.IsChecked == true;
+            next.Tasks.Goddess = goddess.IsChecked == true;
+            next.Tasks.SquareRanking = ranking.IsChecked == true;
+            next.Mirror.Enabled = mirror.IsChecked == true;
+            next.Mirror.Multiplier = (int)multiplier.SelectedItem;
+            next.Stages.Guild = guild.IsChecked == true;
+            next.Stages.Room = room.IsChecked == true;
+            next.Stages.CafeteriaIncome = income.IsChecked == true;
+            next.Stages.CafeteriaGuests = guests.IsChecked == true;
+            next.Stages.Saffron = saffron.IsChecked == true;
+            next.SaffronPotatoRounds = (int)saffronRounds.SelectedItem;
+            next.SaffronProcessing = saffronProcessing.IsChecked == true;
+            next.Stages.FreeDraws = draws.IsChecked == true;
+            next.Stages.DailyRewards = dailyRewards.IsChecked == true;
+            next.Weekly.Sichuan = weeklySichuan.IsChecked == true;
+            next.Weekly.Book = weeklyBook.IsChecked == true;
+            next.Weekly.EquipmentCraft = weeklyCraft.IsChecked == true;
+            next.Stages.WeeklyRewards = weeklyRewards.IsChecked == true;
+            next.Stages.Mail = mail.IsChecked == true;
+            next.Stages.PreserveBloodCocktailMail = preserveBloodCocktailMail.IsChecked == true;
+            next.Weekly.Mainline = mainline.IsChecked == true;
+            next.Weekly.Steal = weeklySteal.IsChecked == true;
+            next.Weekly.Npc = weeklyNpc.IsChecked == true;
+            next.Weekly.WalkCollect = walkCollect.IsChecked == true;
+            next.Weekly.CollectionMaps = collectionMaps.Selection;
+            next.Weekly.Fishing = fishing.IsChecked == true;
+            next.Weekly.RoomLikes = roomLikes.IsChecked == true;
             if (extensionTasks)
             {
-                loaded.Tactics.Enabled = tactics.IsChecked == true;
-                loaded.Tactics.SearchSeconds = tacticsSearch.SelectedItem is int tacticSeconds ? tacticSeconds : 45;
+                next.Tactics.Enabled = tactics.IsChecked == true;
+                next.Tactics.SearchSeconds = tacticsSearch.SelectedItem is int tacticSeconds ? tacticSeconds : 45;
             }
             if (!int.TryParse(salvationReserve.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var keys) || keys is < 0 or > 999) { RevealField(salvationReserve); throw new InvalidDataException("native.salvation_keys_error"); }
-            loaded.Salvation.Enabled = salvation.IsChecked == true; loaded.Salvation.ReserveKeys = keys;
+            next.Salvation.Enabled = salvation.IsChecked == true; next.Salvation.ReserveKeys = keys;
             bool fixedSweeps = (string?)salvationMode.SelectedValue == "fixed";
             if (fixedSweeps)
             {
                 if (!int.TryParse(salvationCount.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var count) || count is < 1 or > 999)
                 { RevealField(salvationCount); throw new InvalidDataException("native.salvation_count_error"); }
-                loaded.Salvation.SweepCount = count;
+                next.Salvation.SweepCount = count;
             }
-            loaded.Salvation.UseFixedCount = fixedSweeps;
-            loaded.EventBattle.SweepAfterFailure = eventFailureSweep.IsChecked == true;
-            loaded.EventBattle.Enabled = eventBattle.IsChecked == true;
+            next.Salvation.UseFixedCount = fixedSweeps;
+            next.EventBattle.SweepAfterFailure = eventFailureSweep.IsChecked == true;
+            next.EventBattle.Enabled = eventBattle.IsChecked == true;
             if (!int.TryParse(eventPreset.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var presetSlot) || presetSlot is < 0 or > 999)
             { RevealField(eventPreset); throw new InvalidDataException("prefs.event_preset_invalid"); }
-            loaded.EventBattle.PresetSlot = presetSlot;
-            loaded.EventBattle.Challenge = eventChallenge.IsChecked == true;
+            next.EventBattle.PresetSlot = presetSlot;
+            next.EventBattle.Challenge = eventChallenge.IsChecked == true;
             if (extensionEvents)
             {
-                loaded.EventBattle.SearchSeconds = eventSearch.SelectedItem is int seconds ? seconds : 15;
+                next.EventBattle.SearchSeconds = eventSearch.SelectedItem is int seconds ? seconds : 15;
             }
-            loaded.Friendship.Enabled = friendship.IsChecked == true;
-            loaded.MonsterHunt.Enabled = false;
-            loaded.Trade.Enabled = trade.IsChecked == true;
-            loaded.Trade.AutoCookAndSell = tradeProcessing.IsChecked == true;
-            loaded.Trade.FavoritesOnly = tradeFavorites.IsChecked == true;
-            loaded.Events.Enabled = events.IsChecked == true;
-            loaded.Events.Missions = eventMissions.IsChecked == true;
-            loaded.Events.Quiz = quiz.IsChecked == true;
-            loaded.Events.Dice = dice.IsChecked == true;
-            loaded.Events.Puzzle = puzzle.IsChecked == true;
-            loaded.Events.Roulette = roulette.IsChecked == true;
-            loaded.Events.Exchange = exchange.IsChecked == true;
-            store.Save(account, loaded);
+            next.Friendship.Enabled = friendship.IsChecked == true;
+            next.MonsterHunt.Enabled = false;
+            next.Trade.Enabled = trade.IsChecked == true;
+            next.Trade.AutoCookAndSell = tradeProcessing.IsChecked == true;
+            next.Trade.FavoritesOnly = tradeFavorites.IsChecked == true;
+            next.Events.Enabled = events.IsChecked == true;
+            next.Events.Missions = eventMissions.IsChecked == true;
+            next.Events.Quiz = quiz.IsChecked == true;
+            next.Events.Dice = dice.IsChecked == true;
+            next.Events.Puzzle = puzzle.IsChecked == true;
+            next.Events.Roulette = roulette.IsChecked == true;
+            next.Events.Exchange = exchange.IsChecked == true;
+            store.Save(account, next);
             if (tradeSettings.ToJsonString() != previousTradeSettings)
                 DailyJson.Write(DailyTradePlan.SettingsPath(dataRoot, account), tradeSettings);
+            loaded = next;
             dirty = false;
-            L.Text(status, "prefs.saved");
+            L.Text(saveState, "prefs.autosaved");
+            L.Bind(status, TextBlock.TextProperty, () => "");
             return true;
         }
-        catch (Exception ex) { DailyUiText.Error(status, ex, "common.save_error"); return false; }
+        catch (Exception ex) { L.Text(saveState, "prefs.autosave_failed"); DailyUiText.Error(status, ex, "common.save_error"); return false; }
     }
     private void RevealField(TextBox field)
     {
+        // A debounced save must not steal focus, select text or move the page
+        // while the user is still entering a number. Explicit navigation may.
+        if (backgroundSaving) return;
         filter.Clear();
         categories.SelectedIndex = 0;
         // Collapsed Expander content is not in the visual tree yet. Follow its
@@ -972,7 +1180,7 @@ public sealed class DailyPreferencesPanel : UserControl
         ReviewCategoryForSmoke("all");
         filter.Text = L.Get(title);
         var visible = sections.Where(s => s.View.Visibility == Visibility.Visible).ToArray();
-        if (visible.Length != 1 || visible[0].Title != title || visible[0].View.Child is not StackPanel)
+        if (!visible.Any(s => s.Title == title && s.View.Child is StackPanel))
             throw new Exception("A setting-free task must be searchable without an expander");
         formScroll.ScrollToTop();
     }
@@ -1027,10 +1235,14 @@ public sealed class DailyPreferencesPanel : UserControl
     {
         var oldMultiplier = multiplier.SelectedItem;
         var oldGold = gold.IsChecked; var oldFilter = filter.Text; bool oldDirty = dirty;
+        string oldReserve = potionReserve.Text;
+        // An incomplete edit remains a draft with autosave; language changes
+        // must preserve it without persisting or revealing the hidden field.
+        potionReserve.Text = "";
         multiplier.SelectedItem = 17; gold.IsChecked = !oldGold; filter.Text = "镜中";
         var originalItems = priority.ItemsSource; var originalGear = refineChoice.ItemsSource;
         string Snapshot() => System.Text.Json.JsonSerializer.Serialize(new {
-            account, dirty, multiplier.SelectedItem, Gold = gold.IsChecked, Stone = stone.SelectedValue,
+            account, dirty, multiplier.SelectedItem, Reserve = potionReserve.Text, Gold = gold.IsChecked, Stone = stone.SelectedValue,
             Gear = refineChoice.SelectedValue, Priority = priority.Items.Cast<Choice>().Select(c => c.Key),
             Filter = filter.Text, Count = sections.Count(s => s.View.Visibility == Visibility.Visible)
         });
@@ -1038,7 +1250,7 @@ public sealed class DailyPreferencesPanel : UserControl
         return (() => {
             if (before != Snapshot() || !ReferenceEquals(originalItems, priority.ItemsSource) || !ReferenceEquals(originalGear, refineChoice.ItemsSource))
                 throw new Exception("Language change lost unsaved preferences, filter or stable choice IDs");
-        }, () => { updating = true; multiplier.SelectedItem = oldMultiplier; gold.IsChecked = oldGold; filter.Text = oldFilter; dirty = oldDirty; updating = false; });
+        }, () => { autoSave.Stop(); updating = true; potionReserve.Text = oldReserve; multiplier.SelectedItem = oldMultiplier; gold.IsChecked = oldGold; filter.Text = oldFilter; dirty = oldDirty; updating = false; });
     }
     internal Action TradeSettingsProbeForSmoke()
     {
@@ -1087,6 +1299,7 @@ public sealed class DailyPreferencesPanel : UserControl
         tradeFavorites.IsChecked = false; tradeMaximum.Text = "210000";
         if (!normalTrade.IsEnabled || !Save() || store.Read(first).Trade.FavoritesOnly)
             throw new Exception("Ordinary trading was not restored after favorites-only mode");
+        potionReserve.Text = ""; // Keep a genuinely incomplete draft pending under autosave.
         tradeReserve.Text = "44000";
         filter.Text = "跑商";
         var firstFile = File.ReadAllText(DailyTradePlan.SettingsPath(dataRoot, first));

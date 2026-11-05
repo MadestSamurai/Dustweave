@@ -33,12 +33,12 @@ static class BattleArrivalRecoveryCases
             Check(S(done["state"]) == "completed" && S(done["reason"]) == "free_attempts_exhausted" && h.Time < 5,
                 "Zero free attempts finish before missing stage data, challenge selection or journal checks: " + mode);
         }
-        foreach (string timing in new[] { "terminal", "hud-gone", "continuing", "tail-only", "no-receipts", "no-journal" })
+        foreach (string timing in new[] { "terminal", "hud-gone", "continuing", "tail-only", "no-receipts", "no-journal", "exit-overlap", "slow-exit" })
         using (var h = new WorkflowHarness(Path.Combine(root, "event-result-" + timing), [DailyEventNative.Definition(), DailyEventSweep.Definition()]))
         {
             h.Workflow.Settings.EventBattle.Enabled = true; h.Workflow.Settings.EventBattle.Challenge = false;
             h.Workflow.Settings.EventBattle.PresetSlot = 6;
-            int free = 5, exits = 0; bool atResult = false;
+            int free = 5, exits = 0; bool atResult = false; double returningUntil = -1;
             var lobby = EventTradeBoundaryCases.Lobby(); lobby["Latest"] = 13;
             lobby["Stages"] = Array(Enumerable.Range(1, 13).Select(i => EventTradeBoundaryCases.Stage(i, true)));
             h.Readings = () =>
@@ -68,13 +68,22 @@ static class BattleArrivalRecoveryCases
                 h.Event("event.end", "request");
                 h.Event("event.end", "response", ("PackEventBattleInfo", O(("eventUid", 100), ("groupId", 10), ("id", i))));
             }
+            h.OnDelay = () => { if (returningUntil >= 0 && h.Time >= returningUntil) { returningUntil = -1; h.Page("EventBattleUI"); } };
             h.OnCommand = c =>
             {
                 if (S(c["Kind"]) == "event_native_exit")
                 {
                     if (!atResult || timing == "continuing" && h.Time < 1) throw new Exception("Premature or duplicate event exit");
-                    exits++; atResult = false; h.Page("EventBattleUI"); return;
+                    exits++; atResult = false;
+                    if (timing is "exit-overlap" or "slow-exit")
+                    {
+                        returningUntil = h.Time + (timing == "slow-exit" ? 23 : .6);
+                        Page(h, HomeNavigationCases.Surface("EventBattleUI", id: 60), HomeNavigationCases.Surface("BattleUI_EventBattle", id: 50));
+                    }
+                    else h.Page("EventBattleUI");
+                    return;
                 }
+                if (returningUntil >= 0) throw new Exception("Input sent before native return finished");
                 if (S(c["Kind"]) == "back" && DailyNavigationDecision.Types(h.Frame).Contains("EventBattleUI")) { h.Page("EventMainUI"); return; }
                 if (S(c["Kind"]) == "back" && DailyNavigationDecision.Types(h.Frame).Contains("EventMainUI")) { h.Page("MenuUI"); return; }
                 throw new Exception("Unexpected post-batch command: " + S(c["Kind"]));
@@ -83,8 +92,58 @@ static class BattleArrivalRecoveryCases
             var settled = h.Business.Records(h.Context, "event.native_batch").SingleOrDefault();
             Check(S(done["state"]) == "completed" && exits == 1 && (timing == "no-journal" ? settled == null : S(settled?["state"]) == "completed" && N(settled?["result"]?["count"]) == 5),
                 "Native event result reconciles five victories and exits once: " + timing);
-            Check(h.Time < 10 && h.Box.Commands.All(c => S(c["Kind"]) is "event_native_exit" or "back"),
+            Check(h.Time < (timing == "slow-exit" ? 25 : 10) && h.Box.Commands.All(c => S(c["Kind"]) is "event_native_exit" or "back"),
                 "Result recovery never repeats a paid action or waits fifteen minutes: " + timing);
+        }
+        foreach (string recovery in new[] { "resume", "no-journal", "cancel", "timeout", "identity", "leave" })
+        using (var h = new WorkflowHarness(Path.Combine(root, "event-return-" + recovery), [DailyEventNative.Definition(), DailyEventSweep.Definition()]))
+        {
+            h.Workflow.Settings.EventBattle.Enabled = true;
+            var lobby = O(("Category", "Battle"), ("Eligible", true), ("Event", 100));
+            h.Readings = () => [WorkflowCases.Reading("event.currency", ("EventApFree", 0), ("EventApStack", 7)),
+                WorkflowCases.Reading("event.lobby", ("$self", lobby))];
+            h.Page("EventBattleUI");
+            if (recovery != "no-journal")
+            {
+                var journal = h.Business.Create(h.Context, "event.native_batch", h.Evidence(),
+                    O(("event", 100), ("count", 5)), O(("ui", "BattleSkipPopupUI"), ("operation", "event_native_confirm")));
+                journal["state"] = "completed"; journal["result"] = O(("count", 5)); h.Business.Save(journal);
+            }
+            Page(h, HomeNavigationCases.Surface("EventBattleUI", id: 60), HomeNavigationCases.Surface("BattleUI_EventBattle", id: 50));
+            bool restored = false;
+            h.OnDelay = () =>
+            {
+                if (h.Time < .6) return;
+                if (recovery == "cancel" && !restored) h.Stopped = true;
+                else if (recovery == "identity" && !restored) h.Context["cycle"] = "other-cycle";
+                else if (recovery != "timeout" || restored) h.Page("EventBattleUI");
+            };
+            h.OnCommand = c =>
+            {
+                var types = DailyNavigationDecision.Types(h.Frame);
+                if (types.Contains("BattleUI_EventBattle") || S(c["Kind"]) != "back") throw new Exception("Return recovery must only observe until battle HUD is gone");
+                if (types.Contains("EventBattleUI")) { h.Page("EventMainUI"); return; }
+                if (types.Contains("EventMainUI")) { h.Page("MenuUI"); return; }
+                throw new Exception("Unexpected return command");
+            };
+            if (recovery is "cancel" or "timeout" or "identity")
+            {
+                string failure = ""; var cycle = Copy(h.Context["cycle"]);
+                try { await DailyEventNative.Run(h.Workflow); }
+                catch (StageHostException ex) { failure = ex.Kind; }
+                catch (DailyStepException ex) { failure = ex.Kind; }
+                Check(failure == (recovery == "cancel" ? "stopped" : recovery == "identity" ? "identity" : "adapter") && h.Box.Commands.Count == 0 && h.Time < 61,
+                    "Event return observes a bounded wait and preserves stop/identity boundaries: " + recovery);
+                h.Stopped = false; h.Context["cycle"] = cycle; restored = true;
+            }
+            if (recovery == "leave") await DailyEventSweep.Leave(h.Workflow);
+            else
+            {
+                var done = await DailyEventNative.Run(h.Workflow);
+                Check(S(done["state"]) == "completed", "Event return can continue after interruption: " + recovery);
+            }
+            Check(DailyNavigationDecision.Types(h.Frame).Contains("MenuUI") && h.Box.Commands.Count == 2 && h.Time < 62,
+                "Resumed native return reaches home with no replay or battle-result wait: " + recovery);
         }
         foreach (string timing in new[] { "simultaneous", "delayed-summary", "summary-before-result", "reconnected" })
         using (var h = new WorkflowHarness(Path.Combine(root, "mirror-overlap-" + timing), [DailyMirror.Proof()]))

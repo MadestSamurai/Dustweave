@@ -23,7 +23,11 @@ namespace BD2Daily.Runtime {
     // no page-specific state may invalidate a fresh account identity. Observe
     // transition/title surfaces in every scene and even while a tool owns input.
     var surfaces=UnityEngine.Object.FindObjectsOfType<UIBase>().Where(u=>u!=null&&u.isActiveAndEnabled&&u.gameObject.activeInHierarchy).ToArray();
-    s.Loading=surfaces.Any(u=>u is LoadingUI||u is EntranceBackgroundCoverUI);
+    // UpdateUI keeps its entrance cover until the user advances the introduction.
+    // It is a presentation background, not a scene transition. The daily module
+    // must be allowed to start so its existing navigation can close that page.
+    // Real loading still wins; a cover alone remains a transition.
+    s.Loading=surfaces.Any(u=>u is LoadingUI)||surfaces.Any(u=>u is EntranceBackgroundCoverUI)&&!surfaces.Any(u=>u is UpdateUI);
     s.MainMenuReady=!s.Loading&&surfaces.Count(u=>u is MenuUI)==1;
     if(s.Loading){t.BlockReason="等待游戏加载完成";return;}
     // IntroUI and IntroMessagePopupUI inherit UIObjectBase, not UIBase.

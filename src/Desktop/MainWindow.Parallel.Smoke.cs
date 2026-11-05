@@ -66,6 +66,32 @@ public partial class MainWindow
                 Capture("task-account-" + L.Code + "-" + appearance);
             }
             Check(fixture.Calls.Count == calls, "Task navigation executed a game/session operation");
+            dailyPanel.LoadHistory(new("paused", "", record,
+                [new("weekly_steal", "failed", DailyTalentPotions.RefillDisabled)], b.AccountKey));
+            dailyPanel.ShowHistory(); UpdateLayout();
+            var potionButton = Descendants<Button>(dailyPanel).Single(x => x.IsVisible && ReferenceEquals(x.Command, DailyRunPanel.PotionSettingsCommand));
+            void OpenPotionSettings()
+            {
+                WorkspaceTabs.SelectedItem = RunTab; UpdateLayout();
+                DailyRunPanel.PotionSettingsCommand.Execute(potionButton.CommandParameter, dailyPanel);
+            }
+            SetBusy(true);
+            Check(!DailyRunPanel.PotionSettingsCommand.CanExecute(potionButton.CommandParameter, dailyPanel), "Refill shortcut opens disabled settings during execution");
+            SetBusy(false);
+            preferencesPanel.CheckPotionNavigationForSmoke(a.AccountKey, b.AccountKey, OpenPotionSettings);
+            Check(WorkspaceTabs.SelectedItem == SettingsTab && fixture.Calls.Count == calls, "Refill shortcut did not navigate locally");
+            await preferencesPanel.CheckAutoSaveForSmoke(a.AccountKey, b.AccountKey);
+            foreach (var language in new[] { 0, 1, 2 }) foreach (var appearance in new[] { 1, 2 })
+            {
+                LanguageSelector.SelectedIndex = language; ThemeSelector.SelectedIndex = appearance;
+                WorkspaceTabs.SelectedItem = RunTab; dailyPanel.ShowHistory();
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); Capture($"refill-task-{language}-{appearance}");
+                OpenPotionSettings();
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); Capture($"refill-settings-{language}-{appearance}");
+                preferencesPanel.ReviewSwitchGridForSmoke();
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle); Capture($"switch-grid-{language}-{appearance}");
+            }
+            WorkspaceTabs.SelectedItem = RunTab;
             DailyRunPanel.CheckAccountProgressForSmoke(root);
             var today = new QueuePeriod("fixture", "today", "player", DateTimeOffset.UtcNow.AddHours(1).UtcTicks);
             dailyPanel.LoadHistory(new("completed", "", "", [new("free_draws","completed","",FinishedAt:DateTimeOffset.UtcNow),new("mail","completed","",FinishedAt:DateTimeOffset.UtcNow)], b.AccountKey, today));

@@ -107,6 +107,8 @@ public partial class MainWindow : Window
         toolPanel.OpenRequested += async id => { toolMessage = null; await OpenTool(id); };
         toolPanel.CloseRequested += async () => await CloseTool();
         dailyPanel.AccountsRequested += () => WorkspaceTabs.SelectedItem = AccountsTab;
+        // Selecting the tab picks the task account; then show the Talent Pill card.
+        dailyPanel.PotionSettingsRequested += key => { WorkspaceTabs.SelectedItem = SettingsTab; preferencesPanel.ShowTalentPotions(key); };
         dailyPanel.AccountRequested += key => { try { ViewAccountTasks(key); } catch (Exception error) { ShowError(error); } };
 
         dailyPanel.StartRequested += async (multi, resume) => await StartDaily(multi, resume);
@@ -683,12 +685,13 @@ public partial class MainWindow : Window
             return;
         }
         if(toolChanging || pluginChanging){e.Cancel=true;return;}
-        if(ToolOpen){e.Cancel=true;toolChanging=true;try{if(await CloseToolWindowsAsync()){finalClose=true;timer.Stop();Close();}}finally{toolChanging=false;}return;}
         if (!preferencesPanel.SavePending())
         {
             e.Cancel = true;
+            WorkspaceTabs.SelectedItem = SettingsTab;
             return;
         }
+        if(ToolOpen){e.Cancel=true;toolChanging=true;try{if(await CloseToolWindowsAsync()){finalClose=true;timer.Stop();Close();}}finally{toolChanging=false;}return;}
         if (busy)
         {
             e.Cancel = true;

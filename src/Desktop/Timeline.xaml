@@ -72,6 +72,9 @@
       <Button x:Name="RecoveryDetails" Content="{Binding RecoveryLabel}" Command="{x:Static local:DailyRunPanel.RecoveryDetailsCommand}" CommandParameter="{Binding}"
               Visibility="Collapsed" HorizontalAlignment="Left" Margin="0,8,0,0" MinHeight="32" Padding="10,5" FontSize="12"
               AutomationProperties.Name="{Binding RecoveryAccessibleName}"/>
+      <Button x:Name="PotionSettings" Content="{Binding PotionLabel}" Command="{x:Static local:DailyRunPanel.PotionSettingsCommand}" CommandParameter="{Binding}"
+              Visibility="Collapsed" HorizontalAlignment="Left" Margin="0,8,0,0" MinHeight="32" Padding="10,5" FontSize="12"
+              AutomationProperties.Name="{Binding PotionAccessibleName}"/>
      </StackPanel>
      <TextBlock x:Name="FinishedTime" Grid.Column="1" Text="{Binding FinishedTime}" ToolTip="{Binding FinishedTimeHelp}" AutomationProperties.Name="{Binding FinishedTimeHelp}" Foreground="{DynamicResource MutedInk}" FontSize="12" Typography.NumeralAlignment="Tabular" Margin="8,4,16,0" VerticalAlignment="Top" Visibility="Collapsed"/>
      <TextBlock x:Name="StateLabel" Grid.Column="2" VerticalAlignment="Top" Padding="8,4" MaxWidth="150" Text="{Binding State}" Foreground="{Binding StateBrush}" FontSize="12" TextWrapping="Wrap"/>
@@ -84,6 +87,7 @@
    <DataTrigger Binding="{Binding HasTaskDetails}" Value="True"><Setter TargetName="TaskDetails" Property="Visibility" Value="Visible"/></DataTrigger>
    <DataTrigger Binding="{Binding HasAbsorptions}" Value="True"><Setter TargetName="AbsorptionDetails" Property="Visibility" Value="Visible"/></DataTrigger>
    <DataTrigger Binding="{Binding HasRecoveryAction}" Value="True"><Setter TargetName="RecoveryDetails" Property="Visibility" Value="Visible"/></DataTrigger>
+   <DataTrigger Binding="{Binding HasPotionAction}" Value="True"><Setter TargetName="PotionSettings" Property="Visibility" Value="Visible"/></DataTrigger>
    <DataTrigger Binding="{Binding Detail}" Value=""><Setter TargetName="Explanation" Property="Visibility" Value="Collapsed"/></DataTrigger>
    <DataTrigger Binding="{Binding HasFinishedTime}" Value="True"><Setter TargetName="FinishedTime" Property="Visibility" Value="Visible"/></DataTrigger>
    <DataTrigger Binding="{Binding CompactPlan}" Value="True">

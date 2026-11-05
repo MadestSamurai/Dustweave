@@ -310,6 +310,25 @@ public static class DailyDispatch
                 results.Add(O(("state", "partial"), ("actions", 0), ("character", id), ("reason", "talent_unavailable")));
                 continue;
             }
+            // The native talent handler requires Catalyst even to OPEN this page.
+            // Its enabled button otherwise only shows a short "insufficient resources"
+            // notice, so waiting for DispatchSelectUI would never reach the refill path.
+            var talent = row[DailyFieldRoute.SkillPath] as JsonObject;
+            Require(talent != null && N(talent["classType"]) == 18 && talent["catalystValue"] != null, "Dispatch entry cost unavailable");
+            long entryCost = N(talent!["catalystValue"]), available = N(R(e, "dispatch.currency", "Catalyst"));
+            Require(entryCost >= 0 && available >= 0, "Invalid dispatch entry cost");
+            if (available < entryCost)
+            {
+                // Reuse the queue's existing refill/no-purchase policy. Opening is
+                // free: do not apply the reserve to an otherwise available preview.
+                await w.Driver.RequirePotionsAsync(entryCost);
+                available = N(R(await w.Evidence("dispatch.currency"), "dispatch.currency", "Catalyst"));
+                if (available < entryCost)
+                {
+                    results.Add(O(("state", "partial"), ("actions", 0), ("character", id), ("reason", "insufficient_catalyst"), ("available", available), ("required", entryCost)));
+                    continue;
+                }
+            }
             string name = "/" + S(row["gameObject.name"]) + "/";
             var t = await w.Pointer("QuickMenuUI", t => S(t["Field"]).Contains(name, StringComparison.Ordinal) && S(t["Field"]).EndsWith("/Button - TalentSkill", StringComparison.Ordinal));
             await w.Step(O(("ui", "QuickMenuUI"), ("field", t["Field"]), ("target_id", t["Id"]), ("expect", Ui), ("reason", "核对该角色的全部派遣槽")));

@@ -123,5 +123,83 @@ static class DispatchRecoveryCases
             DailyJson.Write(Path.Combine(root, "captured-dispatch-proof.json"), proof);
             Check(proof["claimed"]!.AsArray().Count == 6 && proof["started"]!.AsArray().Count == 6 && B(proof["cache_matched"]), "actual October 3 failed dispatch record proves all six claims and restarts unchanged");
         }
+        await EntryShortage(root, Check);
+    }
+
+    private static async Task EntryShortage(string root, Action<bool, string> check)
+    {
+        foreach (string mode in new[] { "no-policy", "no-refill", "refill" })
+        {
+            using var h = new WorkflowHarness(Path.Combine(root, "dispatch-entry-" + mode), DailyDispatch.Proofs().ToArray());
+            const string pointer = "$pointer/Parent/PoolItem_1 (QuickMenuTalentSkillLoopScrollItem)/Button - TalentSkill";
+            long balance = 3;
+            int entries = 0;
+            h.Workflow.Settings.Tasks.Dispatch = true;
+            h.Frame["Scene"] = "Map3009_003";
+            if (mode != "no-policy") h.Driver.PotionPolicy = () => new GeneralPreferences { RefillTalentPotions = mode == "refill", TalentPotionTarget = 1000 };
+            void Menu()
+            {
+                h.Page("QuickMenuUI", pointer, "_buttonClose");
+                h.Frame["Surfaces"]![0]!["Targets"]![0]!["Route"] = "pointer";
+            }
+            h.Readings = () =>
+            {
+                var e = Evidence(true, false);
+                Add(e, "dispatch.currency", ("Catalyst", balance));
+                Add(e, "dispatch.quick", ("TalentSkills.Count", 1), ("ὧὭὨὢὥὩὫὯὠὫὭ", false), ("ὦὣὩὣὧὯὧὠὢὣὢ", false), ("ὠὩὠὩὫὪὥὧὢὫὭ", false));
+                Add(e, "dispatch.talent", ("gameObject.name", "PoolItem_1 (QuickMenuTalentSkillLoopScrollItem)"),
+                    ("ὯὠὭὬὭὢὣὨὠὬὢ", 123), ("ὬὩὬὡὯὮὨὣὩὦὡ", "Dispatch"), ("_objDisableImage.activeSelf", false),
+                    (DailyFieldRoute.SkillPath, O(("classType", 18), ("catalystValue", 5))));
+                foreach (string ui in new[] { "QuickMenuUI", "DispatchSelectUI" })
+                    Add(e, "dispatch.presentation." + ui, ("ὣὤὥὦὯὦὩὤὨὠὪ", true), ("ὪὯὣὥὬὫὬὩὠὮὠ", true), ("ὮὬὧὦὣὠὠὤὮὦὧ", true), ("ὦὡὮὫὧὠὮὡὭὭὬ", false));
+                const string motion = "ὪὨὯὢὫὮὨὩὮὡὬ.ὯὧὨὨὡὭὡὭὧὥὧ.";
+                Add(e, "dispatch.motion", (motion + "ὦὡὮὫὧὠὮὡὭὭὬ", false), (motion + "ὯὨὤὪὤὢὠὨὨὤὣ", true));
+                Add(e, "dispatch.ui", ("ὦὢὧὧὥὥὫὡὧὣὪ", O(("classType", 18), ("catalystValue", 5), ("valueList", Array(Slots.Select(x => JsonValue.Create(x)))))),
+                    ("ὡὯὫὤὯὡὪὨὪὪὨ", false), ("ὦὤὯὪὧὩὬὨὪὦὠ", false), ("_goMaskRoot.activeSelf", true),
+                    ("ὬὩὠὡὬὯὨὪὡὩὮ", Array(Slots.Select(x => JsonValue.Create(x)))), ("ὤὨὯὥὦὫὤὯὬὨὣ", "AllDispatched"),
+                    ("ὢὧὭὧὡὯὦὧὥὩὮ.InvenIndex", 123));
+                Add(e, "mirror.input", ("ὨὢὤὪὪὢὩὢὬὠὦ", "BMT_NONE"));
+                Add(e, "mirror.field", ("_hideObjectCanvasGroup.alpha", 1), ("_buttonMenu.interactable", true), ("ὣὤὥὦὯὦὩὤὨὠὪ", true), ("ὪὯὣὥὬὫὬὩὠὮὠ", true));
+                return Rows(e["Readings"]);
+            };
+            h.OnCommand = command =>
+            {
+                if (S(command["Kind"]) == "pointer")
+                {
+                    check(balance >= 5, "dispatch never sends the native insufficient-resource click: " + mode);
+                    entries++; h.Page("DispatchSelectUI", "_objBackButton");
+                }
+                else if (S(h.Frame["UiToken"]) == "DispatchSelectUI") Menu();
+                else if (S(h.Frame["UiToken"]) == "QuickMenuUI") h.Page("GameFieldDefaultUI", "_buttonMenu");
+                else if (S(h.Frame["UiToken"]) == "GameFieldDefaultUI") h.Page("MenuUI");
+                else throw new Exception("Unexpected dispatch entry command");
+            };
+            Menu();
+            for (int attempt = 0; attempt < 2; attempt++)
+            {
+                if (mode == "no-policy")
+                {
+                    var result = await DailyDispatch.Run(h.Workflow);
+                    check(S(result["state"]) == "partial" && S(result["characters"]![0]!["reason"]) == "insufficient_catalyst" && S(h.Frame["UiToken"]) == "MenuUI",
+                        "dispatch shortage exits to menu with a resource reason, without a policy: " + attempt);
+                    Menu();
+                }
+                else
+                {
+                    DailyStepException? shortage = null;
+                    try { await DailyDispatch.Run(h.Workflow); } catch (DailyStepException error) { shortage = error; }
+                    check(shortage?.PotionLimit == new DailyPotionLimit(3, 5, 0) && !shortage.MayHaveDispatched && !shortage.Submitted,
+                        "dispatch shortage reaches existing refill policy before UI input: " + mode + "/" + attempt);
+                }
+                check(entries == 0 && h.Time < 5 && !h.Business.Records(h.Context).Any(), "dispatch shortage creates neither timeout nor pending claim: " + mode + "/" + attempt);
+            }
+            balance = 5;
+            // The preview is free and all slots are already working. A high
+            // reserve must not invent a purchase or stop inspecting this page.
+            if (mode != "no-policy") h.Driver.PotionPolicy = () => new GeneralPreferences { TalentPotionReserve = 100 };
+            var resumed = await DailyDispatch.Run(h.Workflow);
+            check(S(resumed["state"]) == "completed" && entries == 1 && balance == 5 && !h.Business.Records(h.Context).Any(),
+                "dispatch continues after stock restoration with no repeated claim, purchase or reserve applied to preview: " + mode);
+        }
     }
 }

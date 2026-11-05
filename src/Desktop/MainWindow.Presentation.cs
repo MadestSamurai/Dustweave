@@ -325,6 +325,11 @@ public sealed partial class DailyRunPanel
             if (!Shape(0).IsEmpty() || Shape(1) is not EllipseGeometry || Shape(.5).IsEmpty())
                 throw new Exception("Progress ring cannot render empty partial and complete states");
             var finished = new DateTimeOffset(2026, 10, 6, 11, 2, 37, TimeSpan.Zero);
+            var potion = new StageRow(new("weekly_steal", "failed", "天赋药限制：天赋药不足：现有 3，本次需 10，须保留 0。本次操作未执行。；" + DailyTalentPotions.RefillDisabled));
+            var otherFailure = new StageRow(new("weekly_steal", "failed", "Requested pass is not active for this account"));
+            var overviewPotion = new StageRow(new("weekly_steal", "failed", DailyTalentPotions.RefillDisabled), overview: true);
+            if (!potion.HasPotionAction || otherFailure.HasPotionAction || overviewPotion.HasPotionAction || potion.PotionLabel.StartsWith("run."))
+                throw new Exception("Talent Pill shortage does not offer the refill setting exactly where it applies");
             var row = new StageRow(new("guild", "completed", "", Carried: true, FinishedAt: finished));
             string clock = finished.ToLocalTime().ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture);
             if (!row.HasFinishedTime || row.FinishedTime != clock || !row.FinishedTimeHelp.Contains("37") || !row.AccessibleName.Contains(clock))

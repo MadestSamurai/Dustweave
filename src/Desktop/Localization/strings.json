@@ -3720,6 +3720,26 @@
     "zh-TW": "有未儲存的修改",
     "en-US": "Unsaved changes"
   },
+  "prefs.autosave": {
+    "zh-CN": "更改会自动保存",
+    "zh-TW": "變更會自動儲存",
+    "en-US": "Changes save automatically"
+  },
+  "prefs.autosave_pending": {
+    "zh-CN": "等待保存…",
+    "zh-TW": "等待儲存…",
+    "en-US": "Changes pending…"
+  },
+  "prefs.autosaved": {
+    "zh-CN": "已自动保存",
+    "zh-TW": "已自動儲存",
+    "en-US": "Saved automatically"
+  },
+  "prefs.autosave_failed": {
+    "zh-CN": "尚未保存，请查看提示",
+    "zh-TW": "尚未儲存，請查看提示",
+    "en-US": "Not saved. Check the message below."
+  },
   "prefs.no_account": {
     "zh-CN": "请先在账号列表保存一个有效账号。",
     "zh-TW": "請先在帳號列表儲存一個有效帳號。",
@@ -9724,5 +9744,60 @@
     "zh-CN": "最近使用过的版本会保留，供其他窗口或回退使用。",
     "zh-TW": "最近使用過的版本會保留，供其他視窗或回退使用。",
     "en-US": "Recently used versions are kept for other windows or rollback."
+  },
+  "prefs.potions_title": {
+    "zh-CN": "天赋药",
+    "zh-TW": "天賦藥",
+    "en-US": "Talent Pills"
+  },
+  "prefs.potions_on": {
+    "zh-CN": "自动补药已开启：不够用时补到 {0} 个，日常至少保留 {1} 个。",
+    "zh-TW": "自動補藥已開啟：不夠用時補到 {0} 個，日常至少保留 {1} 個。",
+    "en-US": "Automatic refill is on: tops up to {0} when needed and keeps at least {1} for daily tasks."
+  },
+  "prefs.potions_off": {
+    "zh-CN": "自动补药未开启：天赋药不够时，需要它的任务会暂停，其他任务照常执行。",
+    "zh-TW": "自動補藥未開啟：天賦藥不夠時，需要它的任務會暫停，其他任務照常執行。",
+    "en-US": "Automatic refill is off: when Talent Pills run short, tasks that need them pause and the rest continue."
+  },
+  "prefs.tuned_title": {
+    "zh-CN": "可调整的任务",
+    "zh-TW": "可調整的任務",
+    "en-US": "Tasks with options"
+  },
+  "prefs.tuned_hint": {
+    "zh-CN": "展开后可修改。蓝色一行是当前设置，不必逐个打开查看。",
+    "zh-TW": "展開後可修改。藍色一行是目前設定，不必逐一開啟查看。",
+    "en-US": "Expand to change. The blue line shows the current settings, so you don't need to open each one."
+  },
+  "prefs.switch_title": {
+    "zh-CN": "开关任务",
+    "zh-TW": "開關任務",
+    "en-US": "On/off tasks"
+  },
+  "prefs.switch_hint": {
+    "zh-CN": "勾选即执行，没有其他选项。",
+    "zh-TW": "勾選即執行，沒有其他選項。",
+    "en-US": "Checked tasks run; they have no other options."
+  },
+  "prefs.current": {
+    "zh-CN": "当前：{0}",
+    "zh-TW": "目前：{0}",
+    "en-US": "Current: {0}"
+  },
+  "prefs.current_none": {
+    "zh-CN": "没有勾选附加选项",
+    "zh-TW": "沒有勾選附加選項",
+    "en-US": "No extra options selected"
+  },
+  "run.potion_settings": {
+    "zh-CN": "设置自动补药",
+    "zh-TW": "設定自動補藥",
+    "en-US": "Set up automatic refill"
+  },
+  "run.potion_settings_accessible": {
+    "zh-CN": "为「{0}」设置天赋药自动补药",
+    "zh-TW": "為「{0}」設定天賦藥自動補藥",
+    "en-US": "Set up automatic Talent Pill refill for {0}"
   }
 }

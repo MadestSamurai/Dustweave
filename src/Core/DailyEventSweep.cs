@@ -146,7 +146,7 @@ public static class DailyEventSweep
         for (int i = 0; i < 3; i++)
         {
             if (await w.Has("BattleUI_EventBattle"))
-                throw new StageHostException("pending", "活动战斗尚未完成，未退出。");
+                await DailyEventNative.WaitForReturn(w);
             if (await w.Has("EventBattleUI"))
                 await w.Step("EventBattleUI", back: true, absent: "EventBattleUI");
             else if (await w.Has("EventMainUI"))

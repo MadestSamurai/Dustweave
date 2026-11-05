@@ -22,6 +22,8 @@ public sealed record DailyPotionLimit(long Available, long Required, long Reserv
 public static class DailyTalentPotions
 {
     public const string Stage = "talent_potions";
+    /// <summary>Also recognized by the daily timeline, which offers the refill setting next to the affected task.</summary>
+    public const string RefillDisabled = "自动补药未开启；请补足天赋药或调整整体设置后补跑此项。";
     public static DailyPotionLimit? Check(long available, long required, long reserve)
     {
         if (available < 0 || required < 0 || reserve < 0) throw new InvalidDataException("天赋药数量或消耗数据无效。");
@@ -31,7 +33,7 @@ public static class DailyTalentPotions
     public static long PurchaseCount(GeneralPreferences policy, long available, long required)
     {
         policy.Validate();
-        if (!policy.RefillTalentPotions) throw new InvalidDataException("自动补药未开启；请补足天赋药或调整整体设置后补跑此项。");
+        if (!policy.RefillTalentPotions) throw new InvalidDataException(RefillDisabled);
         if (required > policy.TalentPotionTarget - policy.TalentPotionReserve)
             throw new InvalidDataException($"补药目标 {policy.TalentPotionTarget} 无法同时满足本次消耗 {required} 和保留量 {policy.TalentPotionReserve}，请提高补药目标。");
         long count = Math.Max(0, policy.TalentPotionTarget - available);

@@ -13,6 +13,7 @@ public sealed partial class DailyRunPanel : UserControl
     public static readonly System.Windows.Input.RoutedUICommand TaskDetailsCommand = new();
     public static readonly System.Windows.Input.RoutedUICommand AbsorptionDetailsCommand = new();
     public static readonly System.Windows.Input.RoutedUICommand RecoveryDetailsCommand = new();
+    public static readonly System.Windows.Input.RoutedUICommand PotionSettingsCommand = new();
     internal Func<Window, bool?>? ConfirmRecoveryForSmoke { get; set; }
     private Window? taskDetailsWindow;
     public event Action<bool, bool>? StartRequested;
@@ -22,6 +23,8 @@ public sealed partial class DailyRunPanel : UserControl
     public event Action? AccountsRequested;
     public event Action<string>? AccountRequested;
     public event Action? SyncCollectionRequested;
+    /// <summary>A task stopped because Talent Pills ran short with automatic refill off.</summary>
+    public event Action<string>? PotionSettingsRequested;
     private readonly Button syncCollection = new() { Content = "手动检查收集进度", ToolTip = "按已保存的地图范围读取游戏服务器；会切换卡带，可能需要数分钟，只同步、不采集。" };
     private readonly Button current = new() { Content = "开始日常" }, resume = new() { Content = "接续原队列" }, stop = new() { Content = "停止", IsEnabled = false, Visibility = Visibility.Collapsed };
     private readonly Button selectUnfinished = new() { Content = "勾选未完成" }, clearSelection = new() { Content = "清空勾选" }, retry = new() { Content = "补跑勾选环节（0）", IsEnabled = false };
@@ -60,6 +63,9 @@ public sealed partial class DailyRunPanel : UserControl
         CommandBindings.Add(new System.Windows.Input.CommandBinding(RecoveryDetailsCommand, (_, e) => {
             if (e.Parameter is StageRow row) ShowRecovery(row);
         }, (_, e) => { e.CanExecute = !isBusy && e.Parameter is StageRow { HasRecovery: true }; e.Handled = true; }));
+        CommandBindings.Add(new System.Windows.Input.CommandBinding(PotionSettingsCommand, (_, e) => {
+            if (!isBusy && e.Parameter is StageRow { HasPotionAction: true }) PotionSettingsRequested?.Invoke(activeAccount);
+        }, (_, e) => { e.CanExecute = !isBusy && e.Parameter is StageRow { HasPotionAction: true }; e.Handled = true; }));
         CommandBindings.Add(new System.Windows.Input.CommandBinding(TaskDetailsCommand, (_, e) => {
             if(e.Parameter is StageRow row && row.HasTaskDetails) {
                 taskDetailsWindow?.Close();
@@ -661,6 +667,11 @@ public sealed partial class DailyRunPanel : UserControl
         public bool HasRecovery => snapshot.State == "recovery_required";
         public bool HasRecoveryAction => HasRecovery && !Overview;
         public string RecoveryLabel => L.Get("run.recovery_details");
+        // Offer the policy where the shortage is seen. The core message is stable raw text in task records.
+        public bool HasPotionAction => !Overview && snapshot.State is "blocked" or "failed" or "error"
+            && snapshot.Detail.Contains(DailyTalentPotions.RefillDisabled, StringComparison.Ordinal);
+        public string PotionLabel => L.Get("run.potion_settings");
+        public string PotionAccessibleName => L.Get("run.potion_settings_accessible", Name);
         public string RecoveryAccessibleName => L.Get("run.recovery_accessible", Name);
         public string RecoveryOperations => string.Join(L.Code == "en-US" ? ", " : "、", snapshot.Recovery.Select(r =>
             r.Role == "dispatch.start" && r.TalentKind is 2 or 3 or 4 or 6 or 17 or 20

@@ -185,6 +185,8 @@ The Rewards scope also covers event puzzle batches, hunting policy and per-accou
 
 主界面前的托管启动阶段记录到用户数据目录的 startup-state.json；失败写入 startup-error.json，并显示记录路径。主目录不可写时尝试当前用户临时目录的 Dustweave-startup。日志不记录命令行、环境变量内容或账号凭据。Windows 拒绝执行和 .NET 宿主尚未进入托管入口的失败仍需系统事件／宿主诊断。
 
+游戏登录后的更新介绍页 `UpdateUI` 使用 `EntranceBackgroundCoverUI` 作为背景；两者同时可见且没有真实加载指示时，公共启动观察器必须允许日常模块准备，否则会形成“等待背景消失 → 负责关闭介绍页的模块无法启动”的互锁。此时不代表已在主菜单，也不授权点击其他界面。真正的 `LoadingUI`、原生加载指示、以及单独出现的背景遮罩仍按加载处理；介绍页关闭后立即恢复普通遮罩判断，不保留豁免状态。回归必须把实际 `StartupRuntime` 的观察结果传给 `DailyGamePreparation`，不能仅测试模块启动后的导航。针对性检查：`test.ps1 -Groups IdentityObserver,GamePreparation,HomeNavigation,Startup`；实机账号检查仅验证连接，不执行日常。
+
 Normal, account-check, selected-queue and scheduled launches open the UI in the current process without an Explorer COM relaunch. Keep the explicit developer relay and legacy child switch. Game launch identity/sandbox validation and separately elevated connection helpers are unchanged. Managed startup stages and failures are recorded before the window opens, with a user-temp fallback; OS blocks and failures before managed entry still require OS/host diagnostics.
 ## Game launch location / 游戏启动位置
 
@@ -345,6 +347,8 @@ Event victories expose `_goWinSafeArea`; `_objectWinExitButton` can remain hidde
 
 An owned terminal result can resume when the event HUD has already disappeared, but not with a different account, process, cycle or another battle HUD. `NativeDailyBattle,BattleArrivalRecovery,EventTradeBoundary` cover result selection and complete workflow recovery of five confirmed victories, including an intermediate result that must continue waiting. Use the native self-test and current-client offline compilation separately; these are not live combat validation.
 
+Event result exit has a separate arrival boundary: `CheckEventHubEnd` opens the event lobby while `ReturnUIField` is still executing its asynchronous exit sequence. The lobby and outgoing `BattleUI_EventBattle` can therefore both be active. A successful exit receipt or visible lobby must not immediately enter lobby navigation or be treated as an unfinished battle. Observe the outgoing battle/result surfaces until they disappear (bounded to 60 seconds, no fixed sleep or repeated exit). Resume from a lobby with only the outgoing HUD follows the same observation path instead of waiting 900 seconds for an already closed result. `BattleArrivalRecovery` covers delayed return, resume without a journal, cancellation, timeout followed by continuation, and identity changes; no consuming input is replayed. This fixes the observed 2026-11-05 local queue where five wins and zero free AP were followed by a successful exit and overlapping lobby/HUD; synthetic recovery does not constitute a new live combat trial.
+
 ### Weekly NPC guide destinations versus completion targets
 
 A kill quest's configured map can be a hunting ground while its monster IDs also occur in regular suppressible encounters. These are different inputs: the host must use fresh `Wild` availability for completion planning, while the game's `StartQuestNav` follows its configured gate paths and can resume after a map load or an animation. Blocking only the host's explicit hunting command does not control an already active game guide.
@@ -352,6 +356,10 @@ A kill quest's configured map can be a hunting ground while its monster IDs also
 Bridge 126 adds `weekly_npc_plan` before travel. Accepting or claiming a step cancels the old native guide, including pending navigation coroutines. During the owned plan, a scoped native prefix permits quest navigation only for that exact, still-active non-kill step on its ordinary destination map. Kill steps use host routing plus suppression. Map-load resumption and stale step IDs cannot substitute a hunting destination; field-object travel for doors, waypoints and carry sources remains independent. A zero-valued plan releases ownership when the quest finishes or is deferred. The guard is also released on pause, component handoff, account/cartridge change or lease expiry. It does not change quest tables, kill counts or server completion state.
 
 Replanning compares remaining kill counts with distinct available monsters, including partial progress. Insufficient targets defer only the NPC task through the existing weekly isolation path. Diagnostics include the guide map, selected completion maps and intercepted guide IDs. Validate with `WeeklyNpcInteraction,WeeklyNpcBoard,WeeklyIsolation`, native command self-tests and passive compilation against the installed client. Synthetic dialogue/suppression/return sequences are not a substitute for live-game validation.
+
+### Dispatch talent entry resources
+
+The native Dispatch talent handler checks CatalystValue before opening DispatchSelectUI; an enabled talent button is not evidence that this resource condition is satisfied. The 2026-11-05 13:34 diagnostic export contains repeated native `物资不足。` notices immediately after both attempted entries, with 3 Catalyst displayed. Checking potions only inside ClaimCharacter is too late: the rejected entry never reaches that code and becomes an unnecessary UI timeout. Read the already captured talent cost/balance before entry and route a real shortage through the existing queue refill policy; without a policy, finish this character as partial and return normally. Opening the page does not consume potions, so do not enforce a reserve against an otherwise available preview. Consuming claims/restarts retain their own resource policy and reconciliation. `DispatchRecovery,TalentPotion,QueueEngine` passed 216 offline checks, including repeated shortages and actual continuation after balance restoration. No live game operation was performed for this change.
 
 ### Owned Fiend Hunter integration
 
