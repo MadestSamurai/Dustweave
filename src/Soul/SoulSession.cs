@@ -60,8 +60,7 @@ public sealed class SoulSession
             await host.PrepareAccessAsync(m=>Report("connecting",m),planning!.Token);
             game=host.Find()??throw new InvalidOperationException("请先打开游戏。 / Open the game first.");
             await host.ConnectAsync(game,m=>Report("connecting",m),planning.Token);
-            for(int i=0;i<40;i++){identity=host.ReadIdentity(game).Snapshot;if(identity is not null&&identity.FrameUtcTicks>DateTime.UtcNow.AddSeconds(-5).Ticks&&identity.AccountKey.Length>0)break;await Task.Delay(250,planning.Token);}
-            if(identity is null||identity.FrameUtcTicks<DateTime.UtcNow.AddSeconds(-5).Ticks||identity.AccountKey.Length==0)throw new InvalidOperationException("Game identity is not ready.");
+            identity=await DailyGamePreparation.WaitForIdentityAsync(host,game,null,m=>Report("connecting",m),planning.Token,root);
             if(expectedPlayer is not null&&identity.PlayerName!=expectedPlayer)throw new InvalidOperationException("Expected account: "+expectedPlayer);
             account=identity.AccountKey;player=identity.PlayerName;
             await DailySuite.ActivateAsync(host,root,"daily",m=>Report("connecting",m),planning.Token);

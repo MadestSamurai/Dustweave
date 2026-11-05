@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-11-05T00:45:04.2395624+00:00",
+  "generatedUtc": "2026-11-05T00:48:24.0290926+00:00",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -7894,9 +7894,9 @@
     },
     {
       "path": "src/Core/DailyGamePreparation.cs",
-      "bytes": 5302,
+      "bytes": 5300,
       "reasons": "build input",
-      "sha256": "3be9eab79cae599ce5bbc46f24357dcaa36c504e77c9883a7562e9acaa7593d3"
+      "sha256": "ef4c259e001f5d6d4a021a1162afb5cd7539d2168565396d3ec0dc633e8a168c"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/GamePreparationCases.cs",
@@ -8309,9 +8309,9 @@
     },
     {
       "path": "src/Soul/SoulSession.cs",
-      "bytes": 29818,
+      "bytes": 29522,
       "reasons": "build input",
-      "sha256": "aadbac7f42c7eaf177bb91f324b32991f0293ecc54d7e4e434deb5d489ed07a3"
+      "sha256": "c1c48e8d96b235c798e8dc34847d5d154857cb2656a61fa3af2965ef8bc07bb6"
     },
     {
       "path": "src/Soul/SoulSubmit.cs",

@@ -10,7 +10,7 @@ public sealed class DailyGameExitedException : OperationCanceledException
 
 public static class DailyGamePreparation
 {
-    internal static async Task<DailySnapshot> WaitForIdentityAsync(IGameHost host, GameInstance game,
+    public static async Task<DailySnapshot> WaitForIdentityAsync(IGameHost host, GameInstance game,
         DailySnapshot? expected, Action<string> progress, CancellationToken token, string? diagnosticRoot = null, TimeSpan? timeout = null)
     {
         var deadline = DateTime.UtcNow + (timeout ?? TimeSpan.FromSeconds(60));
