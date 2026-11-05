@@ -97,9 +97,16 @@ internal static class UpdateLayoutCases
         DailyUpdates.Validate(bundleFeed);
         var bundleInstalled = installed with {Layout=3,Version="1.5.0"};
         Check("bundled updates accept matching small deltas",DailyUpdates.ManualUpdateReason(bundleFeed,bundleNext,bundleInstalled)==null);
-        Check("bundled runtime change requires manual download",DailyUpdates.ManualUpdateReason(bundleFeed,bundleNext,bundleInstalled with {RuntimeVersion="8.0.29"})=="updates.manual_runtime");
+        Check("bundled runtime travels inside the updated executable",DailyUpdates.ManualUpdateReason(bundleFeed,bundleNext,bundleInstalled with {RuntimeVersion="8.0.29"})==null);
         Check("bundled missing delta requires manual download",DailyUpdates.ManualUpdateReason(bundleFeed,bundleNext with {Deltas=[]},bundleInstalled)=="updates.manual_delta");
-        Check("bundled delta over ten MiB requires manual download",DailyUpdates.ManualUpdateReason(bundleFeed,bundleNext with {Deltas=[bundleDelta with {Bytes=DailyUpdates.MaxAutomaticDelta+1}]},bundleInstalled)=="updates.manual_size");
+        Check("bundled delta over ten MiB remains automatic",DailyUpdates.ManualUpdateReason(bundleFeed,bundleNext with {Deltas=[bundleDelta with {Bytes=DailyUpdates.MaxAutomaticDelta+1}]},bundleInstalled)==null);
+        var longBundles = Enumerable.Range(0, 31).Reverse().Select(n => bundleNext with {
+            Version=$"1.6.{n}", PreviousVersion=n==0?null:$"1.6.{n-1}",
+            Assets=[bundleAsset with{FileName=$"Dustweave-1.6.{n}-Lite-win-x64.zip",Bytes=100*1024*1024}],Deltas=[] }).ToArray();
+        var longBundleDelta=bundleDelta with{FromVersion="1.6.0",FileName="Dustweave-1.6.30-Lite-from-1.6.0-win-x64.delta.zip",Bytes=30*1024*1024};
+        var longBundleFeed=new DailyUpdateFeed(3,"Dustweave","stable",longBundles,[longBundleDelta]);
+        DailyUpdates.Validate(longBundleFeed);
+        Check("bundled thirty-version jump with thirty MiB remains automatic",DailyUpdates.ManualUpdateReason(longBundleFeed,longBundles[0],bundleInstalled with{Version="1.6.0"})==null);
         Check("old installations cannot enter bundled feed automatically", DailyUpdates.ManualUpdateReason(bundleFeed,bundleNext,installed) == "updates.manual_layout");
         Reject("bundled feed cannot add block reconstruction protocol",()=>DailyUpdates.Validate(bundleFeed with {Releases=[bundleNext with {InstallerProtocol=2},bundledBase]}));
         string bundleInstall=Path.Combine(folder,"bundle-install"); ZipFile.ExtractToDirectory(bundleBaseZip,bundleInstall);

@@ -130,7 +130,7 @@ public static class DailyUpdateEngine
                             var signed = DailyUpdateJson.TryRead<DailySignedUpdate>(Path.Combine(job.Directory, "signed-feed.json")) ?? throw new InvalidDataException("updates.signature_failed");
                             DailyUpdateInventory.ValidateSource(job, DailyUpdateSignatures.Verify(signed, DailyUpdateTrust.Production()), installed);
                         }
-                        else if (job.Release.Layout >= 2 && (installed.Layout != job.Release.Layout || installed.RuntimeVersion != job.Release.RuntimeVersion || job.DeltaFileName == null)) throw new InvalidDataException("updates.manual_layout");
+                        else if (job.Release.Layout >= 2 && (installed.Layout != job.Release.Layout || job.Release.Layout != DailyUpdates.BundledLayout && installed.RuntimeVersion != job.Release.RuntimeVersion || job.DeltaFileName == null)) throw new InvalidDataException("updates.manual_layout");
                     }
                     Phase("prepare-files");
                     string[] names = ExtractPayload(job, target, ref staging, out var retained);

@@ -68,7 +68,7 @@ jobs:
               try{if($reader.ReadToEnd() -notmatch 'MIT License'){throw 'Missing MIT license'}}finally{$reader.Dispose()}
             }finally{$zip.Dispose()}
           }
-          $latest=if([semver]$version -lt [semver]'1.5.0'){'--latest=false'}else{'--latest'}
+          $latest=if([semver]$version -lt [semver]'1.5.0' -or $version -eq '1.5.17'){'--latest=false'}else{'--latest'}
           gh release edit $env:RELEASE_TAG --draft=false --prerelease=false $latest
           if($LASTEXITCODE -ne 0){throw 'Publication failed'}
       - uses: actions/upload-artifact@v4

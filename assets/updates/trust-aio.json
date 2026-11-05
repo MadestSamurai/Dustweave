@@ -5,9 +5,9 @@
   "Sources": [
     {
       "Id": "cn",
-      "FeedUrl": "https://bd2.madsam.work/updates/dustweave/all-in-one/releases.json",
+      "FeedUrl": "https://bd2.madsam.work/updates/dustweave/all-in-one/releases-v2.json",
       "PackageBaseUrl": "https://bd2.madsam.work/updates/dustweave/all-in-one",
-      "OriginFallback": true
+      "OriginFallback": false
     }
   ]
 }

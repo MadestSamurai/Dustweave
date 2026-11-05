@@ -25,6 +25,7 @@ function VerifyEnvelope($envelope) {
 }
 $history=@(Get-Content -LiteralPath (Join-Path $root 'src/Desktop/Localization/releases.json') -Raw|ConvertFrom-Json)
 $note=$history|Where-Object Version -eq $Version|Select-Object -First 1
+if($Version -eq '1.5.17'){$note=[pscustomobject]@{Notes=@{'zh-CN'=@('此版本用于升级至 1.6.0。确认重启后将继续下载并安装正式版；账号和设置保持不变。');'zh-TW'=@('此版本用於升級至 1.6.0。確認重新啟動後將繼續下載並安裝正式版；帳號與設定保持不變。');'en-US'=@('This transition completes the upgrade to 1.6.0. After you confirm the restart, the final update downloads and installs automatically. Accounts and settings are preserved.')}}}
 if($Version -eq '1.4.15-bridge.1'){
  $note=[pscustomobject]@{Notes=@{'zh-CN'=@('升级至 1.4.15；重启后自动完成必要的更新组件升级，再进入新版。');'zh-TW'=@('升級至 1.4.15；重新啟動後自動完成必要的更新元件升級，再進入新版。');'en-US'=@('Upgrade to 1.4.15. After restarting, the updater completes the required component upgrade automatically before opening the new version.')}}
 }
@@ -62,7 +63,7 @@ foreach($flavor in @('Portable','Lite')){
 }
 $deltas=@();$baselineDeltas=@()
 $recent=@($prior|Select-Object -First 10|ForEach-Object Version)
-$supported=@($prior|Where-Object {$_.Version -in $recent -or [semver]$_.Version -ge [semver]'1.4.7'})
+$supported=@($prior|Where-Object {($_.Version -in $recent -or [semver]$_.Version -ge [semver]'1.4.7') -and ([semver]$Version -lt [semver]'1.6.0' -or [semver]$_.Version -ge [semver]'1.5.17')})
 foreach($sidecar in Get-ChildItem -LiteralPath $folder -Filter "Dustweave-$Version-*-win-x64.delta.zip.json" -File){
  $delta=Get-Content -LiteralPath $sidecar.FullName -Raw|ConvertFrom-Json
  $asset=$assets|Where-Object Flavor -eq $delta.Flavor
@@ -76,7 +77,8 @@ foreach($sidecar in Get-ChildItem -LiteralPath $folder -Filter "Dustweave-$Versi
   try{$metadata=$reader.ReadToEnd()|ConvertFrom-Json}finally{$reader.Dispose()}
   if($metadata.Schema -ne 1 -or $metadata.Version -ne $Version -or $metadata.FromVersion -ne $delta.FromVersion -or $metadata.Flavor -ne $delta.Flavor -or $metadata.TargetArchiveSha256 -ne $asset.Sha256){throw 'Delta targets a different full package.'}
  }finally{$zip.Dispose()}
- if($info.InstallerProtocol -eq 2 -and $delta.Algorithm -eq 'dustweave-copy-v3' -and $delta.Bytes -lt $asset.Bytes -and $delta.FromVersion -in $recent){$deltas+=$delta}
+ if($info.Layout -eq 3 -and [semver]$Version -ge [semver]'1.6.0' -and [semver]$delta.FromVersion -ge [semver]'1.5.17'){if($delta.FromVersion -in $recent){$deltas+=$delta}else{$baselineDeltas+=$delta}}
+ elseif($info.InstallerProtocol -eq 2 -and $delta.Algorithm -eq 'dustweave-copy-v3' -and $delta.Bytes -lt $asset.Bytes -and $delta.FromVersion -in $recent){$deltas+=$delta}
  elseif($delta.Bytes -le 8MB -and $delta.Bytes -lt $asset.Bytes*0.8 -and $delta.FromVersion -in $recent){$deltas+=$delta}
  elseif([semver]$delta.FromVersion -ge [semver]'1.4.7' -and $delta.Bytes -le 10MB){$baselineDeltas+=$delta}
 }

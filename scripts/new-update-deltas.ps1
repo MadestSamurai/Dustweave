@@ -34,7 +34,7 @@ $ordered=@($prior.Releases|Sort-Object {[semver]$_.Version} -Descending)
 $recent=@($ordered|Select-Object -First 10|ForEach-Object Version)
 $supported=@($ordered|Where-Object {$_.Version -in $recent -or [semver]$_.Version -ge [semver]'1.4.7'})
 if([semver]$Version -ge [semver]'1.5.0'){
- $supported=@($ordered|Where-Object {$_.Layout -eq 3})
+ $supported=@($ordered|Where-Object {$_.Layout -eq 3 -and ([semver]$Version -lt [semver]'1.6.0' -or [semver]$_.Version -ge [semver]'1.5.17')})
 }elseif([semver]$Version -ge [semver]'1.4.15'){
  $minimum=if($Version -eq '1.4.15'){'1.4.15-bridge.1'}else{'1.4.15'}
  # Older capable clients reconstruct signed blocks without requiring every old
@@ -84,7 +84,7 @@ foreach($release in $supported){
    try{$reader=[IO.StreamReader]::new($zip.GetEntry('update-package.json').Open());try{return $reader.ReadToEnd()|ConvertFrom-Json}finally{$reader.Dispose()}}finally{$zip.Dispose()}
   }
   $before=ReadPackage $old[0];$after=ReadPackage $next
-  if($before.Layout -ne $after.Layout -or $after.InstallerProtocol -ne 2 -and ($before.RuntimeVersion -ne $after.RuntimeVersion -or (@($before.BootstrapFiles|Sort-Object) -join "`n") -cne (@($after.BootstrapFiles|Sort-Object) -join "`n"))){
+  if($before.Layout -ne $after.Layout -or $after.InstallerProtocol -ne 2 -and (($after.Layout -ne 3 -or [semver]$Version -lt [semver]'1.6.0') -and $before.RuntimeVersion -ne $after.RuntimeVersion -or (@($before.BootstrapFiles|Sort-Object) -join "`n") -cne (@($after.BootstrapFiles|Sort-Object) -join "`n"))){
    $reports+=@{from=$release.Version;to=$Version;flavor=$flavor;offered=$false;reason='manual_layout'}
    continue
   }
@@ -97,7 +97,7 @@ foreach($release in $supported){
   $delta=Get-Content -LiteralPath (Join-Path $folder ($name+'.json')) -Raw|ConvertFrom-Json
   $full=(Get-Item -LiteralPath $next).Length
   $capable=$after.InstallerProtocol -eq 2 -and $delta.Algorithm -eq 'dustweave-copy-v3'
-  $offered=if($capable){$delta.Bytes -lt $full}else{$delta.Bytes -le $(if([semver]$release.Version -ge [semver]'1.4.7'){10MB}else{8MB}) -and ([semver]$release.Version -ge [semver]'1.4.7' -or $delta.Bytes -lt $full*0.8)}
+  $offered=if($after.Layout -eq 3 -and [semver]$Version -ge [semver]'1.6.0'){$true}elseif($capable){$delta.Bytes -lt $full}else{$delta.Bytes -le $(if([semver]$release.Version -ge [semver]'1.4.7'){10MB}else{8MB}) -and ([semver]$release.Version -ge [semver]'1.4.7' -or $delta.Bytes -lt $full*0.8)}
   $reports+=@{from=$release.Version;to=$Version;flavor=$flavor;fullBytes=$full;deltaBytes=$delta.Bytes;savingsPercent=[Math]::Round(100*(1-$delta.Bytes/$full),2);offered=$offered}
  }
 }

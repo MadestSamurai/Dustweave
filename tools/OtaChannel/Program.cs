@@ -147,6 +147,13 @@ static class Channel
                 Mirror.PrepareBeforePublication(c,feed,mirrorClient ?? ownedClient!);
             }
             // Version contents are immutable; the only mutable public file is switched last.
+            if (c.Layout == 3 && c.Capable && r.Version == "1.6.0")
+            {
+                string pinned = Path.Combine(c.Public, ".mirror", "manifests", "releases-1.6.0.json");
+                Rules.NoLinks(pinned); Directory.CreateDirectory(Path.GetDirectoryName(pinned)!);
+                Rules.Need(!File.Exists(pinned) || Rules.HashFile(pinned) == r.FeedSha256, "Pinned bridge target is immutable");
+                Rules.Atomic(pinned, feed);
+            }
             CheckCurrent(c,r,feed); Rules.Atomic(Rules.FeedPath(c, writing:true),feed);fault?.Invoke("feed-switched");
             CheckPublished(target,r);Rules.Need(Rules.HashFile(Rules.FeedPath(c))==r.FeedSha256,"Public feed verification failed");
             // Layout 3 is already prepared before the switch. A reachability
@@ -171,6 +178,15 @@ static class Channel
     internal static void CheckPreparedInventory(Config c, Feed candidate)
     {
         var top = candidate.Releases[0];
+        if (c.Layout == 3 && !c.Capable && top.Version == "1.5.17")
+        {
+            string pinned = Path.Combine(c.Public, ".mirror", "manifests", "releases-1.6.0.json");
+            Rules.NoLinks(pinned); Rules.Need(File.Exists(pinned), "Publish the verified 1.6.0 target before exposing the 1.5.17 bridge");
+            var final = Rules.VerifyFeed(File.ReadAllBytes(pinned), Rules.Capability(c));
+            Rules.Need(final.Releases[0].Version == "1.6.0" && final.Releases.Any(r => r.Version == top.Version && Rules.Hash(Rules.Bytes(r)) == Rules.Hash(Rules.Bytes(top))) &&
+                new[] { "Lite", "Portable" }.All(f => Rules.Patches(final).Any(d => d.Flavor == f && d.FromVersion == top.Version)), "Bridge target or matching final patches are unavailable");
+            return;
+        }
         if (top.Version == "1.4.15-bridge.1")
         {
             var capable = Rules.Capability(c);

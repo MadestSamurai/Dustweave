@@ -44,7 +44,7 @@ foreach($flavor in @('Lite','Portable')){
  $oldZip=Join-Path $Baseline ($old.Assets|Where-Object Flavor -eq $flavor).FileName
  $newZip=Join-Path $Packages ($next.Assets|Where-Object Flavor -eq $flavor).FileName
  $delta=[Dustweave.DailyUpdateDeltaPackage]::Create($oldZip,$newZip,$patches)
- if($delta.Bytes -gt 10MB){throw 'Acceptance delta exceeds production limit'}
+ if([semver]$old.Version -lt [semver]'1.5.17' -and $delta.Bytes -gt 10MB){throw 'Acceptance delta exceeds baseline client limit'}
  $next.Deltas+=($delta|ConvertTo-Json|ConvertFrom-Json)
 }
 $feed=@{Schema=3;Product='Dustweave';Channel='stable';Releases=@($next,$old)}
@@ -89,7 +89,7 @@ function Finish($t,$name,$state,$expected){
  $deadline=[DateTime]::UtcNow.AddSeconds(30);$visible=$false
  while([DateTime]::UtcNow -lt $deadline){
   $path=Join-Path $t.data 'startup-state.json'
-  if(Test-Path $path){$v=Get-Content $path -Raw|ConvertFrom-Json;if($v.stage -eq 'main-window-visible' -and $v.version -eq $version){$visible=$true;break}}
+  if(Test-Path $path){$v=Get-Content $path -Raw|ConvertFrom-Json;if($v.stage -in @('main-window-visible','bridge-window-visible') -and $v.version -eq $version){$visible=$true;break}}
   # A rollback notice can enter WPF's modal loop before Show() returns and
   # writes its diagnostic marker. Observe the real shell/version without
   # clicking through or dismissing the notice.

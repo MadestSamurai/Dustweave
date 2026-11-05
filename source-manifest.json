@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-11-05T01:48:59.4470444+00:00",
+  "generatedUtc": "2026-11-05T03:11:26.4187495+00:00",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -48,7 +48,8 @@
     "tools/TradeData/Dustweave.TradeData.csproj",
     "tools/OtaMirror/Dustweave.OtaMirror.csproj",
     "src/Bootstrap/Dustweave.Bootstrap.csproj",
-    "src/Soul/Dustweave.Soul.csproj"
+    "src/Soul/Dustweave.Soul.csproj",
+    "tools/BundleBridge/Dustweave.BundleBridge.csproj"
   ],
   "files": [
     {
@@ -2951,9 +2952,9 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/UpdateLayoutCases.cs",
-      "bytes": 15490,
+      "bytes": 16369,
       "reasons": "build input",
-      "sha256": "8eacb27b44cf5c944d5d216734824e65be19ef43307b78599b7561f2246a4fb4"
+      "sha256": "77a88b83e1893d7a5c9eccf5188fd8d3e1d6fc0c0ad3586ff8ef187d5e77c175"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/UpdateDeltaCases.cs",
@@ -3503,15 +3504,15 @@
     },
     {
       "path": "tools/OtaChannel/Rules.cs",
-      "bytes": 13099,
+      "bytes": 13399,
       "reasons": "build input",
-      "sha256": "cb0ac19a2472268dcca85f5c72e4a6e44acd704245a4e39e3c59569eb63a34a1"
+      "sha256": "aec5f4117314836777c5ef9a246e9e8a42697d63e42f0021dde045785a525bfe"
     },
     {
       "path": "tools/OtaChannel/Program.cs",
-      "bytes": 19597,
+      "bytes": 20890,
       "reasons": "build input",
-      "sha256": "3647a8d66a3e29bbdf92f815826729aa78015e2e736101d0533d657f538fb818"
+      "sha256": "7b7d25a281daaa98c3de4ecfeafe3a089a17e656a0868df2d3a174f63ff51716"
     },
     {
       "path": "tools/OtaChannel/packages.lock.json",
@@ -4541,9 +4542,9 @@
     },
     {
       "path": "src/Core/DailyUpdates.cs",
-      "bytes": 12403,
+      "bytes": 12811,
       "reasons": "build input",
-      "sha256": "8eec549ee8fed8b128012e5bcecae2960abda286a2ac7cf57362ee2a33635422"
+      "sha256": "b54c16f90164d4be164ceaa60065489c7da48f40d39724da83424be5d805ab7d"
     },
     {
       "path": "src/Core/DailyUpdateJson.cs",
@@ -4565,9 +4566,9 @@
     },
     {
       "path": "src/Core/DailyUpdateDeltaPackage.cs",
-      "bytes": 18999,
+      "bytes": 19045,
       "reasons": "build input",
-      "sha256": "7754901be93630c1106800ed0de870cc6cde1eb258592b0a1508d47cd5987e27"
+      "sha256": "c73383a968b866ea8f32763c9f74d184c9cadf7406eff731d7453e1bfc009131"
     },
     {
       "path": "src/Core/DailyTravel.cs",
@@ -4612,9 +4613,9 @@
     },
     {
       "path": "src/Core/DailyUpdateEngine.cs",
-      "bytes": 20303,
+      "bytes": 20355,
       "reasons": "build input",
-      "sha256": "bf1d2fb4330bc96eed123e905d902aa0a4d49c456653986521bdfbddf74ee14c"
+      "sha256": "01fc657dd612a887b1bfc9bb85b151177ee174e47fb8ee423cfee0ec22d27332"
     },
     {
       "path": "src/Core/DailyParallel.cs",
@@ -7264,9 +7265,9 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "bytes": 206110,
+      "bytes": 206109,
       "reasons": "build input",
-      "sha256": "a2853bd77d6c574a018d94e78fe9d1a452ba2562827076ca9463f7dad7bc712d"
+      "sha256": "201134f253166d26b88369736fe54bc3944092b78441b9d04748d4142c1c6e6e"
     },
     {
       "path": "src/Desktop/Localization/plugin-strings.json",
@@ -7732,9 +7733,9 @@
     },
     {
       "path": "tools/OtaChannel/MirrorNginx.cs",
-      "bytes": 6841,
+      "bytes": 7509,
       "reasons": "build input",
-      "sha256": "cf6b4b33da54b517f57d690f315dcea337e1fffefb133144a5be1fe46b6baa23"
+      "sha256": "7a1ffde752152f914da2bc459c8525eea6bf87c4d798ae8a1e33050751f98495"
     },
     {
       "path": "tools/OtaChannel/MirrorSelfTest.cs",
@@ -7744,9 +7745,9 @@
     },
     {
       "path": "tools/OtaMirror/Program.cs",
-      "bytes": 9425,
+      "bytes": 9421,
       "reasons": "build input",
-      "sha256": "fc429bfda62394dcbec98232b17b782bfe80d19954c852910ea9935464c131cc"
+      "sha256": "535433c31c2b1ac79775f62207dfc6fcebad9017d9898545438f6f833f566b5c"
     },
     {
       "path": "tools/OtaMirror/Dustweave.OtaMirror.csproj",
@@ -7780,9 +7781,9 @@
     },
     {
       "path": "src/Updater/RepairDialog.cs",
-      "bytes": 5382,
+      "bytes": 5551,
       "reasons": "build input",
-      "sha256": "08aab47c3bddb8690e8ce71a06c0c481af9684a29054e45f336256241f19760c"
+      "sha256": "7d463a83ebf0ef8de9e451bab023078c52e49611da601de892b664ba19bdde03"
     },
     {
       "path": "src/Updater/StandaloneRepair.cs",
@@ -7876,9 +7877,9 @@
     },
     {
       "path": "tools/OtaChannel/CapabilitySelfTest.cs",
-      "bytes": 8348,
+      "bytes": 10290,
       "reasons": "build input",
-      "sha256": "c3b79a6744d0da1d2a9c9a8d482603ef35590ed965dbd073b1c08a68383c1664"
+      "sha256": "648edff6764be0c0a79faaeeadc5441e571bc0c47738d8c46dce445dbdd89043"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/UpdateInventoryCases.cs",
@@ -8020,9 +8021,9 @@
     },
     {
       "path": "assets/updates/trust-aio.json",
-      "bytes": 419,
+      "bytes": 423,
       "reasons": "build input",
-      "sha256": "064649bcd65face9faf62cbfdd2cc10e50d63b1244cc7abdb61850e0531b90e0"
+      "sha256": "8b6369b0b2ef93edebb2d475cdc26669f86efebe27d66e0aade18bd9b8169480"
     },
     {
       "reasons": [
@@ -8036,9 +8037,9 @@
       "reasons": [
         "build input"
       ],
-      "bytes": 14190,
+      "bytes": 14269,
       "path": "scripts/test-bundled-update.ps1",
-      "sha256": "79f4b8bb511eef2195be667f14d0b91dfa80cc89ed3d21f571e2d08b83a7aa29"
+      "sha256": "9087535f897099a31b6ea8a8a176f28a676e417d745adc430201d73d63edae4d"
     },
     {
       "reasons": [
@@ -8483,9 +8484,9 @@
     },
     {
       "path": "Dustweave.slnx",
-      "bytes": 3547,
+      "bytes": 3710,
       "reasons": "build input",
-      "sha256": "9be7afdf6f8714eb4b6fe041438307a2225e1d8584c1c5b23f6969383f795e4b"
+      "sha256": "dbfa47ffd894cf6577d136410d709480d8b97a5e09462fe47cc07372ac26d774"
     },
     {
       "path": "check-source.ps1",
@@ -8772,6 +8773,30 @@
       "bytes": 1407,
       "reasons": "build input",
       "sha256": "173b8b62434946082eb3f02f1a48ce4ee463e1689214c1ac203d898e62481440"
+    },
+    {
+      "path": "tools/BundleBridge/Program.cs",
+      "bytes": 6991,
+      "reasons": "build input",
+      "sha256": "c988e83a8c01adff4e59ccdbaa8ff97735037606bb16b9666a8442f637686850"
+    },
+    {
+      "path": "tools/BundleBridge/Dustweave.BundleBridge.csproj",
+      "bytes": 1450,
+      "reasons": "build input",
+      "sha256": "5d0e29d2f962e5a3cf0471d7375755d63a355ad55bcf95aed7bfca63ed33a1dd"
+    },
+    {
+      "path": "assets/updates/trust-aio-bridge.json",
+      "bytes": 438,
+      "reasons": "build input",
+      "sha256": "0b7ba69735e03c9bbea7bd121f09e88e409e602ea1cfdad8810741f6c48c20a2"
+    },
+    {
+      "path": "tools/BundleBridge/packages.lock.json",
+      "bytes": 445,
+      "reasons": "build input",
+      "sha256": "08d6ba87526501dde9ef3f7f2039a2e1ca58d9d1ff08fd93f291691365003894"
     }
   ],
   "publicReleaseApproved": false,

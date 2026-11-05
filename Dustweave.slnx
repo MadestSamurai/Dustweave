@@ -45,11 +45,15 @@
     <Project Path="tools/TableExporter/Dustweave.TableExporter.csproj" />
     <Project Path="tools/TradeData/Dustweave.TradeData.csproj" />
   </Folder>
+  <Folder Name="/src/Accounts/" />
   <Folder Name="/tests/">
     <Project Path="tests/Dustweave.Tests/Dustweave.Tests.csproj" />
   </Folder>
 
   <Project Path="src/Launcher/Dustweave.Launcher.csproj" />
+  <Folder Name="/tools/BundleBridge/">
+    <Project Path="tools/BundleBridge/Dustweave.BundleBridge.csproj" />
+  </Folder>
   <Project Path="src/Bootstrap/Dustweave.Bootstrap.csproj" />
   <Project Path="src/Updater/Dustweave.Updater.csproj" />
 </Solution>

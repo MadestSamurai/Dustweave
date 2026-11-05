@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType><TargetFramework>net8.0-windows</TargetFramework><RuntimeIdentifier>win-x64</RuntimeIdentifier><UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><AssemblyName>Dustweave</AssemblyName><Version>1.5.17</Version>
+    <RuntimeFrameworkVersion>8.0.30</RuntimeFrameworkVersion><PublishSingleFile>true</PublishSingleFile><EnableCompressionInSingleFile>true</EnableCompressionInSingleFile><IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <DebugType>None</DebugType><DebugSymbols>false</DebugSymbols><ApplicationManifest>../../src/Updater/updater.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <Using Include="System.IO"/><Using Include="System.Net.Http"/>
+    <Compile Include="../../src/Core/DailyUpdate*.cs;../../src/Core/DailyStoragePath.cs;../../src/Core/DailyVersion.cs;../../src/Core/DailyApplication.cs" Link="Shared/%(Filename)%(Extension)"/>
+    <Compile Include="../../src/Bootstrap/Recovery.cs;../../src/Updater/RepairDialog.cs" Link="Shared/%(Filename)%(Extension)"/>
+    <ProjectReference Include="../../src/Accounts/Dustweave.Accounts.csproj"/>
+    <EmbeddedResource Include="../../assets/updates/trust-aio-bridge.json" LogicalName="Dustweave.update-trust.json"/>
+    <AssemblyMetadata Include="Dustweave.SelfUpdate" Value="true"/>
+  </ItemGroup>
+</Project>

@@ -25,6 +25,10 @@ public static class DailyUpdates
     public const string LongTermBaseline = "1.4.7";
     public const long MaxAutomaticDelta = 10L * 1024 * 1024;
     public const long MaxArchive = 600L * 1024 * 1024;
+    // The 10 MiB cap is a legacy-client capability, not a limit of differential
+    // reconstruction. It does not apply to the bundled transition.
+    public static bool DeltaSizeAllowed(DailyUpdateRelease release, DailyUpdateDelta delta) =>
+        delta.Bytes > 0 && delta.Bytes <= (release.Layout == BundledLayout ? MaxArchive : MaxAutomaticDelta);
     public static DailyVersion VersionOf(string value) => DailyVersion.Parse(value);
     public static void Validate(DailyUpdateFeed feed)
     {
@@ -72,9 +76,9 @@ public static class DailyUpdates
         if (combined.Select(d => (d.Flavor,d.FromVersion)).Distinct().Count() != combined.Length) throw new InvalidDataException("updates.invalid_feed");
         foreach (var d in extended)
             if (VersionOf(d.FromVersion) < VersionOf(LongTermBaseline) || VersionOf(d.FromVersion) >= VersionOf(top.Version) ||
-                !feed.Releases.Any(r => r.Version == d.FromVersion && r.Layout == top.Layout && (top.InstallerProtocol == 2 || r.RuntimeVersion == top.RuntimeVersion)) ||
+                !feed.Releases.Any(r => r.Version == d.FromVersion && r.Layout == top.Layout && (top.Layout == BundledLayout || top.InstallerProtocol == 2 || r.RuntimeVersion == top.RuntimeVersion)) ||
                 !top.Assets.Any(a => a.Flavor == d.Flavor) || !DailyUpdateDeltaPackage.Supports(top, d) ||
-                d.FileName != DailyUpdateDeltaPackage.Name(top.Version,d.Flavor,d.FromVersion) || d.Bytes <= 0 || d.Bytes > MaxAutomaticDelta ||
+                d.FileName != DailyUpdateDeltaPackage.Name(top.Version,d.Flavor,d.FromVersion) || !DeltaSizeAllowed(top, d) ||
                 d.Sha256.Length != 64 || !d.Sha256.All(Uri.IsHexDigit)) throw new InvalidDataException("updates.invalid_feed");
     }
     // Extended patches describe only the current target. Historical metadata stays
@@ -97,14 +101,14 @@ public static class DailyUpdates
             try { DailyUpdateInventory.Validate(feed, release, installed.Version, installed.Flavor); return null; }
             catch (InvalidDataException) { return "updates.manual_distance"; }
         }
-        if (installed.RuntimeVersion != release.RuntimeVersion) return "updates.manual_runtime";
+        if (release.Layout != BundledLayout && installed.RuntimeVersion != release.RuntimeVersion) return "updates.manual_runtime";
         int target = Array.FindIndex(feed.Releases, r => r.Version == release.Version);
         int previous = Array.FindIndex(feed.Releases, r => r.Version == installed.Version);
         if (target < 0 || previous <= target || (VersionOf(installed.Version) < VersionOf(LongTermBaseline) && previous - target > MaxAutomaticSteps)) return "updates.manual_distance";
         release = WithBaselines(feed, release);
         var delta = release.Deltas?.FirstOrDefault(d => d.Flavor == installed.Flavor && d.FromVersion == installed.Version && d.Algorithm == DailyUpdateDeltaPackage.Algorithm);
         if (delta == null) return "updates.manual_delta";
-        if (delta.Bytes > MaxAutomaticDelta || (VersionOf(installed.Version) < VersionOf(LongTermBaseline) && delta.Bytes >= release.Assets.Single(a => a.Flavor == installed.Flavor).Bytes * .8)) return "updates.manual_size";
+        if (!DeltaSizeAllowed(release, delta) || (VersionOf(installed.Version) < VersionOf(LongTermBaseline) && delta.Bytes >= release.Assets.Single(a => a.Flavor == installed.Flavor).Bytes * .8)) return "updates.manual_size";
         return null;
     }
     public static HttpClient Client()

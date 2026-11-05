@@ -66,6 +66,21 @@ static class CapabilitySelfTest
         Repair(final);Channel.Worker(capable,r.Nonce);
         Pass("capable feed published without touching legacy",Rules.HashFile(Rules.FeedPath(capable))==Rules.Hash(signed) && Rules.HashFile(Rules.FeedPath(legacy))==Rules.Hash(old));
         Repair(bridge);Channel.CheckPreparedInventory(legacy,new Feed(3,"Dustweave","stable",[bridge,original]));Pass("bridge becomes eligible only when final and source inventories exist");
+        var aio=legacy with{Layout=3,State=Path.Combine(path,"aio-state"),Public=Path.Combine(path,"aio-public")};Directory.CreateDirectory(aio.Public);
+        var aioCapable=Rules.Capability(aio);
+        var aioOld=ReleaseOf("1.5.16",null) with{Layout=3};
+        var aioBridge=ReleaseOf("1.5.17","1.5.16") with{Layout=3};
+        var aioFinal=ReleaseOf("1.6.0","1.5.17") with{Layout=3,Assets=new[]{"Lite","Portable"}.Select(f=>new Asset(f,$"Dustweave-1.6.0-{f}-win-x64.zip",100*1024*1024,new('a',64))).ToArray(),
+            Deltas=new[]{"Lite","Portable"}.Select(f=>new Delta(f,"1.5.17",$"Dustweave-1.6.0-{f}-from-1.5.17-win-x64.delta.zip",30*1024*1024,new('b',64),"dustweave-copy-v2")).ToArray()};
+        var aioFinalBytes=Rules.Bytes(Sign(new Feed(3,"Dustweave","stable",[aioFinal,aioBridge,aioOld])));
+        Pass("AIO capable lane accepts thirty MiB deltas",Rules.VerifyFeed(aioFinalBytes,aioCapable).Releases[0].Version=="1.6.0");
+        Reject("AIO old lane retains old-client size limit",()=>Rules.VerifyFeed(aioFinalBytes,aio));
+        var aioBridgeFeed=new Feed(3,"Dustweave","stable",[aioBridge,aioOld]);
+        Reject("AIO bridge cannot expose an unavailable final target",()=>Channel.CheckPreparedInventory(aio,aioBridgeFeed));
+        string pinned=Path.Combine(aio.Public,".mirror","manifests","releases-1.6.0.json");Directory.CreateDirectory(Path.GetDirectoryName(pinned)!);File.WriteAllBytes(pinned,aioFinalBytes);
+        Channel.CheckPreparedInventory(aio,aioBridgeFeed);Pass("AIO bridge requires both final deltas and matching signed bridge identity");
+        Reject("AIO mismatched bridge stays unavailable",()=>Channel.CheckPreparedInventory(aio,aioBridgeFeed with{Releases=[aioBridge with{RuntimeVersion="8.0.31"},aioOld]}));
+        Pass("AIO expanded index has separate path",Rules.FeedPath(aioCapable,writing:true).EndsWith("releases-v2.json")&&Rules.FeedPath(aio,writing:true).EndsWith("releases.json"));
         Reject("different bridge cannot inherit final readiness",()=>Channel.CheckPreparedInventory(legacy,new Feed(3,"Dustweave","stable",[bridge with{RuntimeVersion="8.0.31"},original])));
         Channel.Worker(capable,r.Nonce);Pass("capable reconciliation is idempotent",Rules.HashFile(Rules.FeedPath(capable))==Rules.Hash(signed));
     }

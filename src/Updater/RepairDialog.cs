@@ -12,13 +12,14 @@ internal static class RepairDialog
     }
     internal static bool Confirm(string text) => MessageBox(0, text, "Dustweave", 0x24 | 0x100) == 6;
     internal static void Notify(string text, bool error = false) => MessageBox(0, text, "Dustweave", error ? 0x10u : 0x40u);
-    internal static T Run<T>(string title, Func<IProgress<DailyRepairProgress>, CancellationToken, Task<T>> work)
+    internal static T Run<T>(string title, Func<IProgress<DailyRepairProgress>, CancellationToken, Task<T>> work, Action? shown = null)
     {
         using var cancellation = new CancellationTokenSource();
         var reporter = new Reporter();
         var task = Task.Run(() => work(reporter, cancellation.Token));
         Callback callback = (window, notification, wParam, lParam, data) =>
         {
+            if (notification == 0) shown?.Invoke();
             if (notification == 2) // TDN_BUTTON_CLICKED
             {
                 if (task.IsCompleted) return 0;
@@ -32,7 +33,7 @@ internal static class RepairDialog
                 var progress = reporter.Value;
                 if (progress != null && !cancellation.IsCancellationRequested)
                 {
-                    string phase = progress.Stage == "checking" ? Text("检查文件", "檢查檔案", "Checking files") : Text("准备修复", "準備修復", "Preparing repairs");
+                    string phase = progress.Stage == "checking" ? Text("检查文件", "檢查檔案", "Checking files") : progress.Stage == "downloading" ? Text("下载更新", "下載更新", "Downloading update") : Text("准备修复", "準備修復", "Preparing repairs");
                     SetText(window, $"{phase} · {progress.Completed}/{progress.Total}");
                     SendMessage(window, 1024 + 106, progress.Total == 0 ? 0 : progress.Completed * 100 / progress.Total, 0);
                 }

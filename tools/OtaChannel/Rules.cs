@@ -21,14 +21,14 @@ static class Rules
 {
     public static string FeedPath(Config c, bool writing = false)
     {
-        string path = Path.Combine(c.Public, c.Layout == 3 ? "releases.json" : c.Capable ? "updates-v3.json" : "updates.json");
+        string path = Path.Combine(c.Public, c.Layout == 3 ? c.Capable ? "releases-v2.json" : "releases.json" : c.Capable ? "updates-v3.json" : "updates.json");
         // The first capable publication is compare-and-swapped against the
         // legacy feed. It never writes that feed or changes its assets.
-        return writing || File.Exists(path) ? path : Path.Combine(c.Public, "updates.json");
+        return writing || File.Exists(path) ? path : Path.Combine(c.Public, c.Layout == 3 ? "releases.json" : "updates.json");
     }
     public static Config Capability(Config c)
     {
-        Need(c.Layout == 2, "Capability feed requires layout 2");
+        Need(c.Layout is 2 or 3, "Capability feed requires layout 2 or 3");
         return c with { State = Path.Combine(c.State, "capable"), Capable = true };
     }
     public static Delta[] Patches(Feed feed) => (feed.Releases[0].Deltas??[]).Concat(feed.BaselineDeltas??[]).ToArray();
@@ -75,7 +75,7 @@ static class Rules
             Need(deltas.Length<=(config.Layout == 1 ? 12 : 20) && deltas.Select(d=>(d.Flavor,d.FromVersion)).Distinct().Count()==deltas.Length,"Too many or duplicate patches");
             foreach(var d in deltas) Need(d.Flavor is "Lite" or "Portable" && (d.Algorithm==(config.Layout == 1 ? "dustweave-cdc-v1" : "dustweave-copy-v2") || r.InstallerProtocol == 2 && d.Algorithm == "dustweave-copy-v3") && DailyVersion.Parse(d.FromVersion)<version &&
                 d.FileName==$"Dustweave-{r.Version}-{d.Flavor}-from-{d.FromVersion}-win-x64.delta.zip" && d.Bytes > 0 &&
-                d.Bytes <= (config.Layout == 1 || r.InstallerProtocol == 2 && d.Algorithm == "dustweave-copy-v3" ? 629145600 : config.Layout == 3 ? 10485760 : 8388608) &&
+                d.Bytes <= (config.Layout == 1 || config.Layout == 3 && config.Capable || r.InstallerProtocol == 2 && d.Algorithm == "dustweave-copy-v3" ? 629145600 : config.Layout == 3 ? 10485760 : 8388608) &&
                 (r.InstallerProtocol != 2 || d.Bytes < r.Assets.Single(a=>a.Flavor==d.Flavor).Bytes) && IsHash(d.Sha256),"Invalid patch");
         }
         var top=feed.Releases[0];var extended=feed.BaselineDeltas??[];
@@ -83,8 +83,10 @@ static class Rules
         Need(Patches(feed).Select(d=>(d.Flavor,d.FromVersion)).Distinct().Count()==Patches(feed).Length,"Duplicate baseline patch");
         foreach(var d in extended) Need(d.Flavor is "Lite" or "Portable" && (d.Algorithm=="dustweave-copy-v2" || top.InstallerProtocol == 2 && d.Algorithm=="dustweave-copy-v3") &&
             DailyVersion.Parse(d.FromVersion)>=DailyVersion.Parse("1.4.7") && DailyVersion.Parse(d.FromVersion)<DailyVersion.Parse(top.Version) &&
-            feed.Releases.Any(r=>r.Version==d.FromVersion && r.Layout==top.Layout && (top.InstallerProtocol==2 || r.RuntimeVersion==top.RuntimeVersion)) &&
-            d.FileName==$"Dustweave-{top.Version}-{d.Flavor}-from-{d.FromVersion}-win-x64.delta.zip" && d.Bytes is >0 and <=10485760 && IsHash(d.Sha256),"Invalid long-term baseline patch");
+            feed.Releases.Any(r=>r.Version==d.FromVersion && r.Layout==top.Layout && (config.Layout==3 && config.Capable || top.InstallerProtocol==2 || r.RuntimeVersion==top.RuntimeVersion)) &&
+            d.FileName==$"Dustweave-{top.Version}-{d.Flavor}-from-{d.FromVersion}-win-x64.delta.zip" && d.Bytes > 0 &&
+            d.Bytes <= (config.Layout == 3 && config.Capable ? 629145600 : 10485760) &&
+            IsHash(d.Sha256),"Invalid long-term baseline patch");
         return feed;
     }
     public static (Request Request, byte[] Feed, byte[] Evidence) Validate(Header h,Config config,DateTimeOffset now)
@@ -97,14 +99,14 @@ static class Rules
         Need(feedBytes.Length<=1048576 && evidence.Length<=262144,"Metadata too large");
         Need(Hash(feedBytes)==r.FeedSha256 && Hash(evidence)==r.EvidenceSha256,"Metadata changed");
         var feed=VerifyFeed(feedBytes,config);
-        Need(config.Capable ? feed.Schema == 4 && feed.Releases[0].InstallerProtocol == 2 : feed.Releases[0].InstallerProtocol == 1, "Incorrect publication index");
+        Need(config.Capable && config.Layout == 2 ? feed.Schema == 4 && feed.Releases[0].InstallerProtocol == 2 : feed.Releases[0].InstallerProtocol == 1, "Incorrect publication index");
         Need(feed.Releases[0].Version==r.Version && feed.Releases.All(v=>DailyVersion.Parse(v.Version)>=DailyVersion.Parse("1.0.0-beta")),"Only public release chain supported");
         var top=feed.Releases[0];
         foreach(var d in Patches(feed))
         {
             int index=Array.FindIndex(feed.Releases,b=>b.Version==d.FromVersion);
             Need(index>0,"Missing patch baseline");
-            if(config.Layout>=2) Need((index<=10 || DailyVersion.Parse(d.FromVersion)>=DailyVersion.Parse("1.4.7")) && (top.InstallerProtocol==2 || feed.Releases[index].RuntimeVersion==top.RuntimeVersion) && (DailyVersion.Parse(d.FromVersion)>=DailyVersion.Parse("1.4.7") || d.Bytes<top.Assets.Single(a=>a.Flavor==d.Flavor).Bytes*0.8),"Patch exceeds automatic update policy");
+            if(config.Layout>=2) Need((index<=10 || DailyVersion.Parse(d.FromVersion)>=DailyVersion.Parse("1.4.7")) && (config.Layout==3 && config.Capable || top.InstallerProtocol==2 || feed.Releases[index].RuntimeVersion==top.RuntimeVersion) && (DailyVersion.Parse(d.FromVersion)>=DailyVersion.Parse("1.4.7") || d.Bytes<top.Assets.Single(a=>a.Flavor==d.Flavor).Bytes*0.8),"Patch exceeds automatic update policy");
         }
         var expected=(config.Layout == 1 ? top.Assets : []).Select(a=>new Blob(a.FileName,a.Bytes,a.Sha256.ToLowerInvariant())).Concat(Patches(feed).Select(d=>new Blob(d.FileName,d.Bytes,d.Sha256.ToLowerInvariant()))).OrderBy(f=>f.FileName,StringComparer.Ordinal).ToArray();
         Need(r.Files.SequenceEqual(expected) && r.Files.Sum(f=>f.Bytes)<=1073741824,"Archive inventory differs from signed feed");

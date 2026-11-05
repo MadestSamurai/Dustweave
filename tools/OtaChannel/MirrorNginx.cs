@@ -32,6 +32,18 @@ static class MirrorNginx
             add_header X-Content-Type-Options "nosniff" always;
             limit_except GET { deny all; }
         }
+        location = /updates/dustweave/all-in-one/releases-v2.json {
+            alias /usr/share/nginx/dustweave-updates-aio/releases-v2.json;
+            add_header Cache-Control "no-store" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            limit_except GET { deny all; }
+        }
+        location = /updates/dustweave/all-in-one/releases-1.6.0.json {
+            alias /usr/share/nginx/dustweave-updates-aio/.mirror/manifests/releases-1.6.0.json;
+            add_header Cache-Control "no-store" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            limit_except GET { deny all; }
+        }
         location ^~ /updates/dustweave/all-in-one/.mirror/ { return 404; }
         location ^~ /updates/dustweave/all-in-one/ {
             # Never serve patch bodies from this server, even during CDN outages.

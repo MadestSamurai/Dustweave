@@ -151,7 +151,7 @@ public static class DailyUpdateDeltaPackage
             ReadEntry(zip.GetEntry("update-package.json") ?? throw new InvalidDataException("Missing descriptor"), 1024 * 1024), DailyUpdateJson.Options)!;
         var before = Metadata(oldZip); var after = Metadata(nextZip);
         bool inventory = after.InstallerProtocol == 2 && before.Layout == 2 && DailyUpdates.VersionOf(before.Version) >= DailyUpdates.VersionOf(DailyUpdateInventory.BridgeVersion);
-        if (before.Layout != after.Layout || !inventory && before.RuntimeVersion != after.RuntimeVersion || before.Flavor != after.Flavor || DailyUpdates.VersionOf(before.Version) >= DailyUpdates.VersionOf(after.Version))
+        if (before.Layout != after.Layout || after.Layout != DailyUpdates.BundledLayout && !inventory && before.RuntimeVersion != after.RuntimeVersion || before.Flavor != after.Flavor || DailyUpdates.VersionOf(before.Version) >= DailyUpdates.VersionOf(after.Version))
             throw new InvalidDataException("updates.invalid_package");
         if (!inventory && !(before.BootstrapFiles ?? []).Order().SequenceEqual((after.BootstrapFiles ?? []).Order())) throw new InvalidDataException("updates.manual_layout");
         foreach (var stable in inventory ? [] : before.BootstrapFiles ?? [])

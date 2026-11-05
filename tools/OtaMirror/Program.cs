@@ -49,7 +49,7 @@ static class Program
         var hint = Rules.Read<Feed>(Convert.FromBase64String(Rules.Read<Envelope>(feedBytes).Payload));
         bool bundled = hint.Releases.FirstOrDefault()?.Layout == 3;
         string publicBase = connection.PublicBaseUrl.TrimEnd('/') + (bundled ? "/dustweave/ota/all-in-one" : "/dustweave/ota/v2");
-        var config = new Config("", "", trust.Keys, bundled ? 3 : 2, publicBase, Capable:!bundled);
+        var config = new Config("", "", trust.Keys, bundled ? 3 : 2, publicBase, Capable:true);
         var feed = Rules.VerifyFeed(feedBytes, config);
         string version = feed.Releases[0].Version;
         Rules.Need(!bundled || !repair, "Bundled channel permits differential OTA only");
