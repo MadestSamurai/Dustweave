@@ -61,6 +61,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     # Layout-3 differential finalization changes only the distribution/update boundary.
     $updates+='|^README(?:\.en)?\.md$|^src/Core/(DailyUpdates|DailyUpdateTransport|DailyUpdateEngine|DailyFullPackageRepair)\.cs$|^src/Desktop/MainWindow\.Repair\.cs$|^src/Desktop/Localization/(releases|strings)\.json$|^scripts/test-bundled-update\.ps1$|^tests/Dustweave.Tests/Cases/UpdateLayoutCases\.cs$|^tools/OtaChannel/(Mirror|MirrorNginx)\.cs$|^tools/OtaMirror/Program\.cs$'
         $updates+='|^Directory\.Build\.props$|^assets/updates/trust-aio(?:-bridge)?\.json$|^tools/BundleBridge/|^src/Updater/RepairDialog\.cs$|^src/Core/DailyUpdateDeltaPackage\.cs$|^Dustweave\.slnx$|^tools/OtaChannel/CapabilitySelfTest\.cs$'
+    $updates+='|^\.github/workflows/release\.yml$'
     if($Scope -in @('Auto','Updates') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $updates}).Count){$selectedScope='Updates';$outside=@()}
     # Additional UI-readiness gates and utility plugin handoff affect the daily
     # host boundary, not unchanged minigame strategies. Keep this scope explicit
