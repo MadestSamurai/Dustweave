@@ -1,5 +1,4 @@
 using System;
-using Proto.Local;
 using System.Linq;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
@@ -31,6 +30,7 @@ namespace BD2Daily.Live {
  // Read-only source adaptation of ShopUI's native availability and pricing paths.
  // Does not send network requests, select products, or change UI state.
  internal static class TradeObservation {
+  internal static long[][] Favorites(){return NativeShopFavorites.Read(typeof(ὨὭὨὨὯὬὣὠὪὦὬ));}
   internal static NPCController Merchant(){
    if(!Singleton<PackManager>.ὪὫὢὨὯὭὦὪὦὨὣ.IsSquarePack())throw new InvalidOperationException("Merchant requires square");
    return Bridge.Find(typeof(NPCController)).Cast<NPCController>().Single(x=>x.ὠὫὥὧὭὭὥὠὭὤὣ!=null&&x.ὩὥὬὩὩὠὠὤὪὡὡ.Any(m=>m.ὫὠὫὯὠὢὥὧὢὥὥ==ὪὪὫὣὤὯὡὧὥὥὮ.Shop&&m.ὭὩὪὯὯὬὧὠὠὬὠ>0&&!new[]{3001,3003,3010}.Contains(m.ὭὩὪὯὯὬὧὠὠὬὠ)));
@@ -83,7 +83,7 @@ namespace BD2Daily.Live {
     if(rate==120&&!quotes.Any(q=>q.Item==item.ὣὬὭὧὨὨὧὬὮὪὢ))quotes.Add(new TradeQuoteObservation { Shop=shop,Item=item.ὣὬὭὧὨὨὧὬὮὪὢ,Rate=rate,Price=(int)((float)(item.ὩὨὢὫὭὢὥὨὮὡὤ*rate)/100f) });
    }
    if(rows.Count>1000)throw new InvalidOperationException("Unexpected trade supply size");
-   return new TradeSupplyObservation { Favorites=ClientLocalInfo.GetAllFavoriteProductIdList().Select(x=>new long[]{x.Item1,x.Item2}).ToArray(),Date=now.ToString("yyyy-MM-dd",System.Globalization.CultureInfo.InvariantCulture),ServerTicks=now.Ticks,BargainActive=active,BargainPercent=discount,AvailableShops=available.ToArray(),UnavailableShops=unavailable.ToArray(),Offers=rows.ToArray(),Quotes=quotes.ToArray() };
+   return new TradeSupplyObservation { Favorites=Favorites(),Date=now.ToString("yyyy-MM-dd",System.Globalization.CultureInfo.InvariantCulture),ServerTicks=now.Ticks,BargainActive=active,BargainPercent=discount,AvailableShops=available.ToArray(),UnavailableShops=unavailable.ToArray(),Offers=rows.ToArray(),Quotes=quotes.ToArray() };
   }
  }
 }

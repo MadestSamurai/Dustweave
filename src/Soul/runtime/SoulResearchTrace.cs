@@ -56,7 +56,7 @@ namespace BD2Daily.Live {
    __state=null;if(!Active())return;
    try{system=__instance;var row=Snapshot("attack");row.Side=ReferenceEquals(shape.BluePlayerProperty.GetValue(system,null),__args[1])?"BLUE":"RED";row.InventoryIndex=Convert.ToInt64(shape.UnitInventoryIndexField.GetValue(__args[0]));
     var u=__args[0];var flags=BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic;
-    // Audited current-client fields; the entire bridge is gated by its MVID.
+    // These roles are resolved by the separate optional trace contract.
     row.UnitCooldown=Convert.ToSingle(u.GetType().GetField("ὨὭὦὯὮὥὥὨὧὬὤ",flags).GetValue(u));
     row.UnitProgress=Convert.ToSingle(u.GetType().GetField("ὯὦὮὢὧὯὧὠὭὫὥ",flags).GetValue(u));
     row.UnitModifier=Convert.ToSingle(u.GetType().GetField("ὯὣὬὭὣὨὦὡὩὭὯ",flags).GetValue(u));__state=row;}catch{errors++;}

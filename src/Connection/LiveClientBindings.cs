@@ -144,6 +144,10 @@ public static class LiveClientBindings
     }
     public static SyntaxTree[] Adapt(string managed,IEnumerable<SyntaxTree> source,LiveBindingContract contract,string reportPath)
         =>Adapt(managed,source,contract,reportPath,null);
+    // Owned modules use the same verified mapping for compiler-side token
+    // lookups as for rewritten runtime source; never bind old names directly.
+    public static IReadOnlyDictionary<string,string> ResolveMemberNames(string managed,LiveBindingContract contract,string reportPath)
+        =>ResolveCached(managed,contract,reportPath);
     internal static SyntaxTree[] Adapt(string managed,IEnumerable<SyntaxTree> source,LiveBindingContract contract,string reportPath,ResolutionContext? context)
     {
         var rewriter=new Rewriter(ResolveCached(managed,contract,reportPath,context));

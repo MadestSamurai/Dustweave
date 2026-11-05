@@ -1,5 +1,4 @@
 using System;
-using Proto.Local;
 using gamfs;
 using System.Collections;
 using System.Linq;
@@ -20,7 +19,7 @@ namespace BD2Daily.Live {
   static void Click(UIBase ui,string field){ui.OnClickUI((GameObject)Get(ui,field));}
   static int Discount(ShopUI shop){return (int)Get(shop,"ὫὭὥὤὫὫὯὪὠὣὤ");}
   static ShopUI Shop(){return Bridge.Find(typeof(ShopUI)).Cast<ShopUI>().Single();}
-  static Dictionary<int,List<Product>> Favorites(Command c,bool add) {
+  static Dictionary<int,List<Product>> Favorites(Command c) {
    var shop=Shop();var observed=TradeObservation.Capture();
    Require(shop.ὯὣὡὫὨὫὡὧὩὬὠ==Mode.Buy,"Purchase tab required");
    long total=0;var keys=new HashSet<string>();
@@ -31,14 +30,23 @@ namespace BD2Daily.Live {
    }
    Require(total==c.Value&&total>0&&ὣὡὧὡὦὣὣὬὨὪὫ.ὭὨὣὥὧὨὮὪὯὯὠ(ὥὯὯὠὣὪὦὢὫὠὮ.Gold)>=total,"Favorite total/balance changed");
    if(c.ExistingFavoritesOnly)Require(keys.All(k=>observed.Favorites.Any(f=>k==f[0]+":"+f[1])),"Saved favorites changed; no purchase or favorite edits");
-   else if(add)for(int i=0;i<c.Items.Length;i+=4)ClientLocalInfo.AddFavorite((int)c.Items[i],(int)c.Items[i+1]);
-   var args=new object[]{null,0};Require((int)Call(shop,"ὪὩὬὦὢὡὧὡὪὨὠ",args)==0,"Native favorite list unavailable");
-   var all=(Dictionary<int,List<Product>>)args[0];var selected=new Dictionary<int,List<Product>>();
-   foreach(var pair in all){var rows=pair.Value.Where(p=>keys.Contains(pair.Key+":"+p.ὯὫὪὡὭὤὪὮὫὬὣ)).ToList();if(rows.Count>0)selected.Add(pair.Key,rows);}
-   Require(selected.Sum(x=>x.Value.Count)==keys.Count,"Missing selected favorite");
-   Call(shop,"ὥὮὢὥὥὤὤὪὯὦὣ",selected);
-   foreach(var pair in selected)foreach(var p in pair.Value){var o=observed.Offers.Single(x=>x.Shop==pair.Key&&x.Product==p.ὯὫὪὡὭὤὪὮὫὬὣ);Require(p.ὣὡὢὩὥὥὨὯὩὥὯ==o.Price,"Native favorite price changed");}
-   return selected;
+    // The game's new favorite save is asynchronous and server-backed. A batch
+    // purchase does not need to edit that saved list: give its normal preview
+    // the exact native products selected by the validated plan instead.
+    var selectedProducts=new Dictionary<int,List<Product>>();
+    foreach(var sid in c.Items.Where((_,i)=>i%4==0).Select(x=>checked((int)x)).Distinct()){
+     Require(observed.AvailableShops.Contains(sid),"Purchase shop is unavailable");
+     var products=ὦὡὡὩὣὧὬὯὠὩὢ.ὭὨὫὤὬὢὥὮὠὥὦ(sid).Where(p=>keys.Contains(sid+":"+p.ὯὫὪὡὭὤὪὮὫὬὣ)).ToList();
+     foreach(var product in products){var offer=observed.Offers.Single(o=>o.Shop==sid&&o.Product==product.ὯὫὪὡὭὤὪὮὫὬὣ);
+      Require(!observed.BargainActive||offer.NoBargain==0,"Product is excluded during bargaining");
+      product.ὤὦὭὧὩὩὬὡὩὥὯ=offer.Remaining;
+     }
+     selectedProducts.Add(sid,products);
+    }
+    Require(selectedProducts.Sum(s=>s.Value.Count)==keys.Count,"Native product list differs from the purchase plan");
+   Call(shop,"ὥὮὢὥὥὤὤὪὯὦὣ",selectedProducts);
+   foreach(var pair in selectedProducts)foreach(var p in pair.Value){var o=observed.Offers.Single(x=>x.Shop==pair.Key&&x.Product==p.ὯὫὪὡὭὤὪὮὫὬὣ);Require(p.ὣὡὢὩὥὥὨὯὩὥὯ==o.Price,"Native favorite price changed");}
+   return selectedProducts;
   }
   static string Signature(Dictionary<int,List<Product>> d){return string.Join("|",d.SelectMany(x=>x.Value.Select(p=>x.Key+":"+p.ὯὫὪὡὭὤὪὮὫὬὣ+":"+p.ὠὥὬὠὨὧὡὩὨὤὯ+":"+p.ὣὡὢὩὥὥὨὯὩὥὯ+":"+p.ὤὧὤὬὧὫὡὥὮὫὩ)).OrderBy(x=>x));}
   static Product BuyProduct(Command c,bool refresh){var shop=Shop();var o=TradeObservation.Capture().Offers.Single(x=>x.Shop==c.Items[0]&&x.Product==c.Items[1]);
@@ -68,9 +76,9 @@ namespace BD2Daily.Live {
     Require(skill.ClassType==7||skill.ClassType==16,"Not a trade talent");
     Require(!((GameObject)Get(row,"_objDisableImage")).activeSelf&&!((GameObject)Get(row,"_goBlock")).activeSelf,"Native talent disabled");row.OnClick();
    }else if(c.Kind=="trade_favorite_preview"){
-    var dict=Favorites(c,true);ὩὭὨὪὨὨὮὣὪὣὥ.ὢὣὠὮὩὭὧὭὦὪὨ(delegate(BuyFavoritePopupUI popup){popup.SetUI(dict,dict.Sum(x=>x.Value.Count));});
+    var dict=Favorites(c);ὩὭὨὪὨὨὮὣὪὣὥ.ὢὣὠὮὩὭὧὭὦὪὨ(delegate(BuyFavoritePopupUI popup){popup.SetUI(dict,dict.Sum(x=>x.Value.Count));});
    }else if(c.Kind=="trade_favorite_confirm"){
-    var expected=Favorites(c,false);var actual=(Dictionary<int,List<Product>>)Get(ui,"ὤὦὣὥὭὣὫὨὡὢὮ");
+    var expected=Favorites(c);var actual=(Dictionary<int,List<Product>>)Get(ui,"ὤὦὣὥὭὣὫὨὡὢὮ");
     Require(Signature(actual)==Signature(expected)&&!(bool)Get(ui,"ὧὮὮὯὠὬὯὥὧὥὤ"),"Favorite popup changed/busy");Click(ui,"_buttonBuy");
    }else if(c.Kind=="trade_buy_preview"||c.Kind=="trade_sell_preview"){
     bool buy=c.Kind=="trade_buy_preview";var p=buy?BuyProduct(c,true):SellProduct(c,true);var shop=Shop();int qty=checked((int)c.Items[buy?2:3]);

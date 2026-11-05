@@ -46,6 +46,10 @@ internal static class SoulHookCompiler
         var contract=JsonSerializer.Deserialize<LiveContract>(contractResource)!;
         var managed=Path.GetDirectoryName(SoulMetadata.Client)!;
         sources=LiveBindings.Adapt(managed,sources,contract,Path.Combine(folder,"bindings.json")).ToList();
+        using var soulResource=typeof(SoulHookCompiler).Assembly.GetManifestResourceStream("Soul.BindingContract.json")!;
+        var soulContract=JsonSerializer.Deserialize<LiveContract>(soulResource)!;
+        var names=LiveBindings.ResolveMemberNames(managed,soulContract,Path.Combine(folder,"soul-bindings.json"));
+        string Name(string original)=>names.TryGetValue(original,out var value)?value:throw new InvalidDataException("Unresolved Soul binding: "+original);
         var metadata=JsonNode.Parse(await File.ReadAllTextAsync(SoulAssets.MetadataPath))!;
         var owner=metadata["owners"]!.AsArray().Single(o=>o!["properties"]!.AsArray().Any(p=>p!["type"]!.GetValue<string>()=="Proto.Net.IbPlayDBInfo"))!;
         string Property(string dto)=>owner["properties"]!.AsArray().Single(p=>p!["type"]!.GetValue<string>().Contains("Proto.Net."+dto))!["name"]!.GetValue<string>();
@@ -60,20 +64,29 @@ internal static class SoulHookCompiler
             foreach(var p in new Dictionary<string,string>{["PackRow"]="Proto.Design.common.PackTable",["OwnedPack"]="Proto.Net.PackDBInfo"})
                 binding+="internal const int "+p.Key+"="+current.Types.SelectMany(t=>t.Methods).Single(m=>m.IsStatic&&m.Parameters.Count==1&&m.Parameters[0].ParameterType.FullName=="System.Int32"&&m.ReturnType.FullName==p.Value).MetadataToken.ToInt32()+";";
             binding+="internal const int Sell="+Token("IbItemSellRequest")+";";
-            binding+="internal const int ApplyLevel="+current.Types.Single(t=>t.FullName=="InventoryBattleManager").Methods.Single(m=>m.Name=="ὨὡὢὧὥὯὠὥὤὬὣ"&&m.Parameters.Count==2).MetadataToken.ToInt32()+";";
-            foreach(var p in new Dictionary<string,string>{["Season"]="ὫὭὭὠὨὬὢὪὯὮὤ",["Cleared"]="ὠὨὩὦὡὢὩὯὯὫὠ",["LobbyDungeons"]="ὤὣὩὩὬὪὥὥὯὠὤ",["LobbySelected"]="ὫὡὨὯὦὢὯὠὩὥὠ"})binding+="internal const string "+p.Key+"="+JsonSerializer.Serialize(p.Value)+";";
+            binding+="internal const int ApplyLevel="+current.Types.Single(t=>t.FullName=="InventoryBattleManager").Methods.Single(m=>m.Name==Name("ὨὡὢὧὥὯὠὥὤὬὣ")&&m.Parameters.Count==2).MetadataToken.ToInt32()+";";
+            foreach(var p in new Dictionary<string,string>{["Season"]=Name("ὫὭὭὠὨὬὢὪὯὮὤ"),["Cleared"]=Name("ὠὨὩὦὡὢὩὯὯὫὠ"),["LobbyDungeons"]=Name("ὤὣὩὩὬὪὥὥὯὠὤ"),["LobbySelected"]=Name("ὫὡὨὯὦὢὯὠὩὥὠ")})binding+="internal const string "+p.Key+"="+JsonSerializer.Serialize(p.Value)+";";
             binding+="internal const int ShopRefresh="+Token("IbShopRefreshRequest")+";";
-            binding+="internal const int RefreshPrice="+current.Types.Single(t=>t.FullName==owner["type"]!.GetValue<string>()).Methods.Single(m=>m.Name=="ὥὧὣὥὣὯὣὮὧὢὭ"&&m.Parameters.Count==0).MetadataToken.ToInt32()+";";
-            // Bound to the audited current-client methods, additionally MVID-gated.
-            var tableOwner=current.Types.Single(t=>t.FullName=="ὡὭὣὦὫὪὫὧὨὨὧ");
-            binding+="internal const int StageRows="+tableOwner.Methods.Single(m=>m.Name=="ὨὭὡὡὮὨὣὪὧὪὨ"&&m.Parameters.Count==1).MetadataToken.ToInt32()+";";
-            foreach(var p in new Dictionary<string,string>{["ItemTable"]="ὧὧὣὠὤὪὮὮὫὭὮ",["UnitLevels"]="ὭὫὫὫὠὭὡὪὯὮὤ",["EquipLevels"]="ὮὠὭὨὢὠὣὮὣὢὩ"})binding+="internal const int "+p.Key+"="+tableOwner.Methods.Single(m=>m.Name==p.Value&&m.Parameters.Count==1).MetadataToken.ToInt32()+";";
-            binding+="internal const int Costume="+current.Types.Single(t=>t.FullName=="ὠὨὭὫὩὬὫὡὣὣὦ").Methods.Single(m=>m.Name=="ὦὡὩὤὬὫὫὨὯὦὠ"&&m.Parameters.Count==3).MetadataToken.ToInt32()+";";
+            binding+="internal const int RefreshPrice="+current.Types.Single(t=>t.FullName==owner["type"]!.GetValue<string>()).Methods.Single(m=>m.Name==Name("ὥὧὣὥὣὯὣὮὧὢὭ")&&m.Parameters.Count==0).MetadataToken.ToInt32()+";";
+            // Resolve the audited roles against the installed client, independent of its version.
+            var tableOwner=current.Types.Single(t=>t.FullName==Name("ὡὭὣὦὫὪὫὧὨὨὧ"));
+            binding+="internal const int StageRows="+tableOwner.Methods.Single(m=>m.Name==Name("ὨὭὡὡὮὨὣὪὧὪὨ")&&m.Parameters.Count==1).MetadataToken.ToInt32()+";";
+            foreach(var p in new Dictionary<string,string>{["ItemTable"]=Name("ὧὧὣὠὤὪὮὮὫὭὮ"),["UnitLevels"]=Name("ὭὫὫὫὠὭὡὪὯὮὤ"),["EquipLevels"]=Name("ὮὠὭὨὢὠὣὮὣὢὩ")})binding+="internal const int "+p.Key+"="+tableOwner.Methods.Single(m=>m.Name==p.Value&&m.Parameters.Count==1).MetadataToken.ToInt32()+";";
+            binding+="internal const int Costume="+current.Types.Single(t=>t.FullName==Name("ὠὨὭὫὩὬὫὡὣὣὦ")).Methods.Single(m=>m.Name==Name("ὦὡὩὤὬὫὫὨὯὦὠ")&&m.Parameters.Count==3).MetadataToken.ToInt32()+";";
         }
         binding+="}}";
         sources.Add(CSharpSyntaxTree.ParseText(binding,path:"SoulResearchBindings.cs"));
-        sources.Add(CSharpSyntaxTree.ParseText(SoulAssets.Text("Soul.runtime.SoulResearchNative.cs"),path:"SoulResearchNative.cs"));
-        sources.Add(CSharpSyntaxTree.ParseText(SoulAssets.Text("Soul.runtime.SoulResearchTrace.cs"),path:"SoulResearchTrace.cs"));
+        sources.AddRange(LiveBindings.Adapt(managed,new[]{CSharpSyntaxTree.ParseText(SoulAssets.Text("Soul.runtime.SoulResearchNative.cs"),path:"SoulResearchNative.cs")},soulContract,Path.Combine(folder,"soul-runtime-bindings.json")));
+        // Trace is optional diagnostics. A changed trace-only field must not
+        // disable the shop, campaign or natural battle workflow.
+        try{
+            using var traceResource=typeof(SoulHookCompiler).Assembly.GetManifestResourceStream("Soul.TraceBindingContract.json")!;
+            var traceContract=JsonSerializer.Deserialize<LiveContract>(traceResource)!;
+            sources.AddRange(LiveBindings.Adapt(managed,new[]{CSharpSyntaxTree.ParseText(SoulAssets.Text("Soul.runtime.SoulResearchTrace.cs"),path:"SoulResearchTrace.cs")},traceContract,Path.Combine(folder,"soul-trace-bindings.json")));
+        }catch(InvalidDataException error){
+            File.WriteAllText(Path.Combine(folder,"trace-unavailable.json"),JsonSerializer.Serialize(new{error=error.Message,optional=true}));
+            sources.Add(CSharpSyntaxTree.ParseText("namespace BD2Daily.Live { internal static class SoulResearchTrace { internal static void Stop(){} internal static void Start(){throw new System.NotSupportedException(\"Detailed Soul trace is unavailable on this client.\");} } }",path:"SoulResearchTrace.cs"));
+        }
         sources.Add(CSharpSyntaxTree.ParseText(SoulAssets.Text("Soul.runtime.InventoryBattleRuntimeShapeResolver.cs"),path:"InventoryBattleRuntimeShapeResolver.cs"));
         sources.Add(CSharpSyntaxTree.ParseText(SoulAssets.Text("Soul.runtime.RuntimeCharacterShapeResolver.cs"),path:"RuntimeCharacterShapeResolver.cs"));
         var fingerprint=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join("\n",sources.Select(s=>s.ToString())))));

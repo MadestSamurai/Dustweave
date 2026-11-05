@@ -19,6 +19,7 @@
     <ProjectReference Include="../../src/SecretVision/core/Dustweave.SecretVision.Core.csproj" Aliases="vision" />
     <ProjectReference Include="../../src/ApostleDefense/core/Dustweave.ApostleDefense.Core.csproj" Aliases="apostle" />
     <Compile Include="../../src/Territory/shared/SaffronCycle.cs" Link="SaffronCycle.cs" />
+    <Compile Include="../../src/Connection/NativeShopFavorites.cs" Link="NativeShopFavorites.cs" />
     <Compile Include="../../src/Territory/shared/SurplusSales.cs" Link="SurplusSales.cs" />
     <Compile Include="../../src/Desktop/DemoEnvironment.cs" Link="DemoEnvironment.cs" />
     <Compile Include="../../src/Desktop/StartupDiagnostics.cs" Link="StartupDiagnostics.cs" />

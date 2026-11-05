@@ -2,6 +2,18 @@ using System.Text.Json.Nodes;
 namespace Dustweave.Soul;
 public static class SoulChecks
 {
+    static void RuleCompatibility(){
+        var before=JsonNode.Parse("""[{"id":1,"coolTime":200,"coolTimeUseAnimation":1}]""")!;
+        var after=before.DeepClone();after[0]!["coolTimeUseAnimation"]=2;
+        if(!SoulAssets.EquivalentDecisionTable("IBUnitItemTable",before,after))throw new Exception("Animation-only changes discarded the calibrated candidate library");
+        if(before[0]!["coolTimeUseAnimation"]!.GetValue<int>()!=1||after[0]!["coolTimeUseAnimation"]!.GetValue<int>()!=2)throw new Exception("Compatibility checks mutated source tables");
+        after[0]!["coolTime"]=199;
+        if(SoulAssets.EquivalentDecisionTable("IBUnitItemTable",before,after))throw new Exception("Changed combat timing reused stale candidate evidence");
+        var effect=JsonNode.Parse("""[{"id":1,"triggerId":4,"useAnimation":0}]""")!;var newer=effect.DeepClone();newer[0]!["useAnimation"]=1;
+        if(!SoulAssets.EquivalentDecisionTable("IBEffectConfigTable",effect,newer))throw new Exception("Effect animation invalidated unchanged rules");
+        newer[0]!["triggerId"]=5;
+        if(SoulAssets.EquivalentDecisionTable("IBEffectConfigTable",effect,newer))throw new Exception("Changed trigger reused old library evidence");
+    }
     public static void VerifySearchSettings(string output)=>SoulSolverChecks.Native(output);
     public static void ValidateKernel(string root,string client,string fixtures,string output)
     {
@@ -21,6 +33,7 @@ public static class SoulChecks
     public static void Run(string output)
     {
         Directory.CreateDirectory(output);
+        RuleCompatibility();
         SoulSolverChecks.Settings(Path.Combine(output,"solver-settings"));
         Storage(Path.Combine(output,"tools","soul","runs","fixture"));
         SaleSynchronization();

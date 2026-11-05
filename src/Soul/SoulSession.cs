@@ -48,7 +48,7 @@ public sealed class SoulSession
     }
     public void Pause(){lock(sync){pause=true;planning?.Cancel();}if(Running)Report("pausing");}
     public async Task StopAsync(){Pause();var task=running;if(task is not null)await task;}
-    public static void PrepareOffline(string root,string client,string output){SoulAssets.Prepare(root,client);SoulHookCompiler.Prepare(output).GetAwaiter().GetResult();}
+    public static void PrepareOffline(string root,string client,string output,string? package=null){SoulAssets.Prepare(root,client);SoulAssets.PrepareCurrentTablesAsync(package??AppContext.BaseDirectory,CancellationToken.None).GetAwaiter().GetResult();SoulHookCompiler.Prepare(output).GetAwaiter().GetResult();}
     async Task Run(bool resume,string? expectedPlayer,string? evidenceFolder)
     {
         IDisposable? lease=null;
@@ -78,6 +78,7 @@ public sealed class SoulSession
             if(campaign.Status=="defeated"){campaign.RetryDefeatedDungeon();campaign.Save(folder);}
             string managed=Path.Combine(Path.GetDirectoryName(game.Executable)!,Path.GetFileNameWithoutExtension(game.Executable)+"_Data","Managed");
             SoulAssets.Prepare(root,Path.Combine(managed,"Assembly-CSharp.dll"));
+            await SoulAssets.PrepareCurrentTablesAsync(AppContext.BaseDirectory,planning.Token);
             bridge=Path.Combine(folder,"connection");
             Report("connecting");await SoulHookCompiler.Prepare(bridge);planning.Token.ThrowIfCancellationRequested();
             handoffAttempted=true;

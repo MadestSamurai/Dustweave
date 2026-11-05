@@ -83,6 +83,11 @@ internal static class ToolMenuCases
             Environment.SetEnvironmentVariable(keys[0],"equipment");
             Environment.SetEnvironmentVariable(keys[1],child.Id.ToString());
             Environment.SetEnvironmentVariable(keys[2],child.StartTime.ToUniversalTime().Ticks.ToString());
+            // CI may hold SeDebugPrivilege, which bypasses a process DACL. Remove
+            // privileges from this thread's temporary token, never from the runner.
+            using var identity=System.Security.Principal.WindowsIdentity.GetCurrent();
+            if(!CreateRestrictedToken(identity.AccessToken,1,0,IntPtr.Zero,0,IntPtr.Zero,0,IntPtr.Zero,out var restrictedToken))throw new System.ComponentModel.Win32Exception();
+            using(restrictedToken)System.Security.Principal.WindowsIdentity.RunImpersonated(restrictedToken,()=>{
             using var selected=BD2.LocalIpc.HostedConnection.FindGame(_=>true,"ambiguous")!;
             bool denied=false;try{_=selected.MainModule!.FileName;}catch(System.ComponentModel.Win32Exception e)when(e.NativeErrorCode==5){denied=true;}
             check(denied,"fixture reproduces module-enumeration access denied on the selected process");
@@ -92,6 +97,7 @@ internal static class ToolMenuCases
             check(rejected,"limited-rights path query still rejects changed hosted process generation");
             Environment.SetEnvironmentVariable(keys[0],null);
             check(BD2.LocalIpc.HostedConnection.ExecutablePath(selected).Length>0,"standalone path query works with limited rights independently of stale host environment");
+            });
         }
         finally{
             if(changed&&!child.HasExited)SetKernelObjectSecurity(child.SafeHandle,4,original);
@@ -105,6 +111,9 @@ internal static class ToolMenuCases
     static extern bool GetKernelObjectSecurity(Microsoft.Win32.SafeHandles.SafeProcessHandle handle,uint info,byte[] descriptor,int length,out int needed);
     [System.Runtime.InteropServices.DllImport("advapi32.dll",SetLastError=true)]
     static extern bool SetKernelObjectSecurity(Microsoft.Win32.SafeHandles.SafeProcessHandle handle,uint info,byte[] descriptor);
+
+    [System.Runtime.InteropServices.DllImport("advapi32.dll",SetLastError=true)]
+    static extern bool CreateRestrictedToken(Microsoft.Win32.SafeHandles.SafeAccessTokenHandle token,uint flags,uint disableSids,IntPtr sids,uint deletePrivileges,IntPtr privileges,uint restrictSids,IntPtr restrictedSids,out Microsoft.Win32.SafeHandles.SafeAccessTokenHandle restricted);
 
     private static void CheckHostedProcessSelection(Action<bool,string> check)
     {

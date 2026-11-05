@@ -9,6 +9,7 @@ static class LiveBindingCases
 {
     public static void Run(string root,List<string> cases)
     {
+        ShopFavoriteCompatibilityCases.Run(cases);
         void Check(bool condition,string name){if(!condition)throw new Exception(name);cases.Add(name);}
         void Reject(Action action,string name){try{action();}catch(InvalidDataException){cases.Add(name);return;}throw new Exception(name);}
         foreach(string name in new[]{"", "System.String", "A\u0370\u0371.B\u1fff.C", "\u036f\u0370\u1fff\u2000", "Ω/α+β<T>"})

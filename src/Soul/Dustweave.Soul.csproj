@@ -7,6 +7,8 @@
     <EmbeddedResource Include="runtime/*.cs" LogicalName="Soul.runtime.%(Filename)%(Extension)" />
     <EmbeddedResource Include="assets/*" LogicalName="Soul.assets.%(Filename)%(Extension)" />
     <EmbeddedResource Include="assets/tables/*.json" LogicalName="Soul.tables.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="soul-binding-contract.json" LogicalName="Soul.BindingContract.json" />
+    <EmbeddedResource Include="trace-binding-contract.json" LogicalName="Soul.TraceBindingContract.json" />
     <Using Include="BD2Daily" />
   </ItemGroup>
 </Project>
