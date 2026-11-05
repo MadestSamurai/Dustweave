@@ -58,7 +58,53 @@ internal static class ToolMenuCases
         Check(manager.Current == null, "corrupt journal cannot target a process");
         File.Delete(statePath);
         CheckHostedProcessSelection(Check);
+        CheckRestrictedProcessPath(Check);
     }
+
+    private static void CheckRestrictedProcessPath(Action<bool,string> check)
+    {
+        // Deny module enumeration on a test-owned child while allowing limited
+        // metadata queries. Reproduces the failing access boundary without UAC
+        // prompts, game access, or changing this process's permissions.
+        string[] keys=["BD2_DAILY_HOSTED_TOOL","BD2_DAILY_GAME_PID","BD2_DAILY_GAME_START"];
+        var saved=keys.ToDictionary(k=>k,Environment.GetEnvironmentVariable);
+        var start=new ProcessStartInfo(Environment.ProcessPath!){UseShellExecute=false,CreateNoWindow=true};
+        start.ArgumentList.Add("--watchdog-child");
+        using var child=Process.Start(start)!;
+        byte[] original=new byte[65536];bool changed=false;
+        try{
+            var handle=child.SafeHandle;
+            if(!GetKernelObjectSecurity(handle,4,original,original.Length,out _))throw new System.ComponentModel.Win32Exception();
+            var descriptor=new System.Security.AccessControl.RawSecurityDescriptor(original,0);
+            var sid=System.Security.Principal.WindowsIdentity.GetCurrent().User!;
+            descriptor.DiscretionaryAcl!.InsertAce(0,new System.Security.AccessControl.CommonAce(System.Security.AccessControl.AceFlags.None,System.Security.AccessControl.AceQualifier.AccessDenied,0x410,sid,false,null));
+            byte[] restricted=new byte[descriptor.BinaryLength];descriptor.GetBinaryForm(restricted,0);
+            if(!SetKernelObjectSecurity(handle,4,restricted))throw new System.ComponentModel.Win32Exception();changed=true;
+            Environment.SetEnvironmentVariable(keys[0],"equipment");
+            Environment.SetEnvironmentVariable(keys[1],child.Id.ToString());
+            Environment.SetEnvironmentVariable(keys[2],child.StartTime.ToUniversalTime().Ticks.ToString());
+            using var selected=BD2.LocalIpc.HostedConnection.FindGame(_=>true,"ambiguous")!;
+            bool denied=false;try{_=selected.MainModule!.FileName;}catch(System.ComponentModel.Win32Exception e)when(e.NativeErrorCode==5){denied=true;}
+            check(denied,"fixture reproduces module-enumeration access denied on the selected process");
+            check(string.Equals(BD2.LocalIpc.HostedConnection.ExecutablePath(selected),Environment.ProcessPath,StringComparison.OrdinalIgnoreCase),"hosted tool resolves exact executable without module or memory access");
+            Environment.SetEnvironmentVariable(keys[2],(child.StartTime.ToUniversalTime().Ticks+1).ToString());
+            bool rejected=false;try{_=BD2.LocalIpc.HostedConnection.ExecutablePath(selected);}catch(InvalidOperationException){rejected=true;}
+            check(rejected,"limited-rights path query still rejects changed hosted process generation");
+            Environment.SetEnvironmentVariable(keys[0],null);
+            check(BD2.LocalIpc.HostedConnection.ExecutablePath(selected).Length>0,"standalone path query works with limited rights independently of stale host environment");
+        }
+        finally{
+            if(changed&&!child.HasExited)SetKernelObjectSecurity(child.SafeHandle,4,original);
+            foreach(var key in keys)Environment.SetEnvironmentVariable(key,saved[key]);
+            if(!child.HasExited)child.Kill();child.WaitForExit(5000);
+        }
+        var copies=Directory.GetFiles(Path.Combine(TestPaths.SourceRoot,"src"),"HostedConnection.cs",SearchOption.AllDirectories);
+        check(copies.Length==9&&copies.Select(File.ReadAllText).Distinct().Count()==1,"all nine integrated tool connection helpers carry the same limited-rights fix");
+    }
+    [System.Runtime.InteropServices.DllImport("advapi32.dll",SetLastError=true)]
+    static extern bool GetKernelObjectSecurity(Microsoft.Win32.SafeHandles.SafeProcessHandle handle,uint info,byte[] descriptor,int length,out int needed);
+    [System.Runtime.InteropServices.DllImport("advapi32.dll",SetLastError=true)]
+    static extern bool SetKernelObjectSecurity(Microsoft.Win32.SafeHandles.SafeProcessHandle handle,uint info,byte[] descriptor);
 
     private static void CheckHostedProcessSelection(Action<bool,string> check)
     {

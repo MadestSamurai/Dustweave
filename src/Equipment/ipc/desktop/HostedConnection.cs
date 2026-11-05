@@ -7,6 +7,32 @@ namespace BD2.LocalIpc {
  // Optional host contract. Standalone launches have no environment descriptor and keep their own connection.
  public static class HostedConnection {
   public static bool Enabled=>!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BD2_DAILY_HOSTED_TOOL"));
+  // A hosted tool only needs the selected process's image path, not its modules
+  // or memory. Query-limited access also works when the game is elevated.
+  public static string ExecutablePath(Process game){
+   long expected=game.StartTime.ToUniversalTime().Ticks;
+   using var handle=OpenProcess(0x1000,false,game.Id);
+   if(handle.IsInvalid)throw PathError();
+   if(!GetProcessTimes(handle,out long created,out _,out _,out _))throw PathError();
+   if(DateTime.FromFileTimeUtc(created).Ticks!=expected)
+    throw new InvalidOperationException("游戏会话已变化，请返回日常助手重新连接。");
+   var path=new System.Text.StringBuilder(32768);int size=path.Capacity;
+   if(!QueryFullProcessImageName(handle,0,path,ref size))throw PathError();
+   if(Enabled&&(!int.TryParse(Environment.GetEnvironmentVariable("BD2_DAILY_GAME_PID"),out int pid)||pid!=game.Id
+      ||!long.TryParse(Environment.GetEnvironmentVariable("BD2_DAILY_GAME_START"),out long start)||start!=expected))
+    throw new InvalidOperationException("游戏会话已变化，请返回日常助手重新连接。");
+   return path.ToString();
+  }
+  static System.ComponentModel.Win32Exception PathError(){
+   int code=System.Runtime.InteropServices.Marshal.GetLastWin32Error();
+   return new System.ComponentModel.Win32Exception(code,"connection.process-path: Windows "+code+". Reconnect the game from Dustweave, then retry the tool.");
+  }
+  [System.Runtime.InteropServices.DllImport("kernel32.dll",SetLastError=true)]
+  static extern Microsoft.Win32.SafeHandles.SafeProcessHandle OpenProcess(uint access,bool inherit,int pid);
+  [System.Runtime.InteropServices.DllImport("kernel32.dll",SetLastError=true)]
+  static extern bool GetProcessTimes(Microsoft.Win32.SafeHandles.SafeProcessHandle handle,out long created,out long exited,out long kernel,out long user);
+  [System.Runtime.InteropServices.DllImport("kernel32.dll",CharSet=System.Runtime.InteropServices.CharSet.Unicode,SetLastError=true)]
+  static extern bool QueryFullProcessImageName(Microsoft.Win32.SafeHandles.SafeProcessHandle handle,uint flags,System.Text.StringBuilder path,ref int size);
   // The parent already selected a game inside its own Sandboxie scope. Never
   // rediscover all games or fall back to another account when that game exits.
   // The caller owns the returned Process and must dispose it.

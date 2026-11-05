@@ -19,7 +19,7 @@ namespace BD2Daily {
  public static class SuiteRules {
   public static string ModuleEntry(string id) {
    switch(id) {
-    case "daily": return "BD2Daily.Live.Bridge";
+    case "daily": case "soul": return "BD2Daily.Live.Bridge";
     case "mansion-runaway": return "Dustweave.Mansion.Runtime.Loader";
     case "pandora": return "Dustweave.Pandora.Runtime.Loader";
     case "equipment": return "BD2Equipment.Live.Bridge";

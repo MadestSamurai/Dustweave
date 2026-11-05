@@ -135,7 +135,7 @@ internal static class ConnectionAccessCases
         // parent's successful connection. No real game or elevation is used.
         foreach (string id in new[] { "daily", "fishing-daily", "territory-daily", "sichuan-daily",
             "fishing", "territory", "mansion-runaway", "pandora", "equipment", "infinite-gacha",
-            "fiend-hunter", "rhythm", "sichuan", "secret-vision", "apostle-defense" })
+            "fiend-hunter", "rhythm", "sichuan", "secret-vision", "apostle-defense", "soul" })
         {
             var host = new FreshScopeHost();
             try { await DailySuite.ActivateAsync(host, "unused-fixture", id, _ => { }, default); }
@@ -225,11 +225,63 @@ internal static class ConnectionAccessCases
                     await Task.Delay(5);
                     if(!DailyTransport.EndpointReady(game))missing++;
                 }
+                if(continuous)await CheckPreparedHandoff(broker,path,game,cases);
             }
             finally{(AppDomain.CurrentDomain.GetData(key+".stop") as Action)?.Invoke();}
             if(continuous ? missing!=0 : missing==0)throw new Exception("broker endpoint continuity: repaired="+continuous+", missing="+missing);
             cases.Add("connection: "+(continuous?"repaired broker keeps the endpoint present across all 24 preempted accept cycles":"old broker reproduces false missing endpoint under acceptor preemption"));
         }
+    }
+    static async Task CheckPreparedHandoff(System.Type broker,string root,GameInstance game,List<string> cases)
+    {
+        var json=new System.Text.Json.JsonSerializerOptions{IncludeFields=true};
+        string[] keys=["BD2_DAILY_SUITE_OWNER","BD2_DAILY_OWNER_PID","BD2_DAILY_OWNER_START"];
+        var saved=keys.Select(Environment.GetEnvironmentVariable).ToArray();
+        var channel=broker.GetMethod("Register")!.Invoke(null,new object[]{Path.Combine(root,"suite"),Dustweave.Compatibility.DailyHookCompiler.Fingerprint,"status.json|command.json","",true})!;
+        void Publish(BD2Daily.SuiteStatus s){s.At=DateTime.UtcNow.Ticks;channel.GetType().GetMethod("Write")!.Invoke(channel,new object[]{"status.json",System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(s,json)});}
+        byte[]? Take()=>channel.GetType().GetMethod("Take")!.Invoke(channel,new object[]{"command.json"}) as byte[];
+        var host=new PreparedScopeHost(game);
+        var expected=host.ReadSnapshot();
+        var module=new PreparedSuiteModule([1,2,3],"soul-fixture");
+        void Check(bool pass,string name){if(!pass)throw new Exception(name);cases.Add("connection: "+name);}
+        try{
+            Environment.SetEnvironmentVariable(keys[0],"prepared-owner");
+            Environment.SetEnvironmentVariable(keys[1],game.ProcessId.ToString());Environment.SetEnvironmentVariable(keys[2],game.StartTicks.ToString());
+            var state=new BD2Daily.SuiteStatus{Tool="daily",State="ready",Owner="prepared-owner",Account="account",Player="player",Available=["daily"],Fingerprints=["daily|original"]};Publish(state);
+            try{await DailySuite.ActivateForSessionAsync(host,root,"soul",game,expected,module,_=>{},new CancellationToken(true));throw new Exception("cancel ignored");}catch(OperationCanceledException){}
+            Check(Take() is null,"cancel before prepared activation dispatches no module switch");
+            using var stop=new CancellationTokenSource();
+            var activate=DailySuite.ActivateForSessionAsync(host,root,"soul",game,expected,module,_=>{},stop.Token);
+            byte[]? bytes=null;for(int i=0;i<100&&bytes is null;i++){bytes=Take();if(bytes is null)await Task.Delay(20);}
+            var command=System.Text.Json.JsonSerializer.Deserialize<BD2Daily.SuiteCommand>(bytes??throw new Exception("No prepared request"),json)!;
+            Check(command.Tool=="soul"&&Convert.FromBase64String(command.ModulePayload).SequenceEqual(module.Payload)&&command.Account=="account"&&command.Player=="player","prepared tool payload uses authenticated account-bound suite command");
+            stop.Cancel();await Task.Delay(250);
+            Check(!activate.IsCompleted,"cancel after dispatch waits for acknowledgement before restoring daily");
+            state.Request=command.Id;state.Tool="soul";state.Available=["daily","soul"];state.Fingerprints=["daily|original","soul|soul-fixture"];Publish(state);
+            await activate;
+            var restore=DailySuite.ActivateForSessionAsync(host,root,"daily",game,expected,null,_=>{},default);
+            bytes=null;for(int i=0;i<100&&bytes is null;i++){bytes=Take();if(bytes is null)await Task.Delay(20);}
+            command=System.Text.Json.JsonSerializer.Deserialize<BD2Daily.SuiteCommand>(bytes??throw new Exception("No restore request"),json)!;
+            Check(command.Tool=="daily"&&command.ModulePayload=="","restoration reuses resident daily module without cache files or injection");
+            state.Tool="daily";state.Request=command.Id;Publish(state);await restore;
+            host.Account="different";
+            bool rejected=false;try{await DailySuite.ActivateForSessionAsync(host,root,"soul",game,expected,module,_=>{},default);}catch(InvalidOperationException){rejected=true;}
+            Check(rejected&&Take() is null,"prepared activation never follows a changed account");
+            host.Account="account";
+            rejected=false;try{await DailySuite.ActivateForSessionAsync(host,root,"soul",game with{StartTicks=game.StartTicks+1},expected,module,_=>{},default);}catch(DailyGameExitedException){rejected=true;}
+            Check(rejected&&Take() is null,"prepared activation never follows a reused process");
+            rejected=false;try{await DailySuite.ActivateForSessionAsync(host,root,"soul",game,expected,module with{Fingerprint="different"},_=>{},default);}catch(InvalidOperationException){rejected=true;}
+            Check(rejected&&Take() is null,"prepared activation rejects stale cached module without switching tools");
+        }finally{for(int i=0;i<keys.Length;i++)Environment.SetEnvironmentVariable(keys[i],saved[i]);}
+    }
+    sealed class PreparedScopeHost(GameInstance game):IGameHost
+    {
+        public string Account="account";
+        public GameInstance Find()=>game;
+        public DailySnapshot ReadSnapshot()=>new(){ProcessId=game.ProcessId,ProcessStartTicks=game.StartTicks,State="identified",AccountKey=Account,PlayerKey="player",FrameUtcTicks=DateTime.UtcNow.Ticks};
+        public DailyRuntimeStatus? ReadStatus()=>null;
+        public Task ConnectAsync(GameInstance instance,Action<string> progress,CancellationToken cancel)=>throw new Exception("Unexpected injection");
+        public Task CloseAsync(GameInstance instance,CancellationToken cancel)=>throw new Exception("Unexpected close");
     }
 }
 internal sealed class NeonInitException : Exception { }

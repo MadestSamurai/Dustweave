@@ -45,7 +45,7 @@ public sealed class FishingConnection
         catch(IOException){}
         cancellationToken.ThrowIfCancellationRequested();
         // Resolve the required interfaces and compile against installed metadata before any injection.
-        var exe=game.MainModule?.FileName??throw new InvalidOperationException("无法读取游戏路径，请使用与游戏相同的权限运行。");
+        var exe=BD2.LocalIpc.HostedConnection.ExecutablePath(game);
         var client=Path.Combine(Path.GetDirectoryName(exe)!,Path.GetFileNameWithoutExtension(exe)+"_Data","Managed","Assembly-CSharp.dll");
         trace.Stage("compatibility.prepare","正在识别钓鱼接口并生成适配组件，首次连接可能需要数秒…");
         PreparedHook prepared;

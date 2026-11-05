@@ -25,7 +25,7 @@ public sealed partial class LiveEquipment:IEquipmentGame
  static readonly JsonObject Policy=Resource("ui-policy.json");
  const string Level="ὬὠὬὡὫὤὮὨὦὤὥ",Auto="ὬὭὪὣὣὨὭὭὩὯὨ",Count="ὧὤὯὭὨὨὦὥὡὦὫ",Price="ὩὥὦὦὭὨὢὩὧὫὦ",Recipe="ὤὭὠὥὤὠὡὣὣὠὣ.ὫὮὩὬὤὫὮὨὢὯὬ.Id",RefineGear="ὢὠὡὡὫὤὮὫὢὢὪ.InvenIndex",RefineMode="ὯὢὪὬὠὧὥὠὤὩὦ",RefineReady="ὠὠὡὭὧὫὫὭὥὣὯ";
  public static void Prepare(Func<string[],string> invoke){
-  Directory.CreateDirectory(Data);using var gameProcess=BD2.LocalIpc.HostedConnection.FindGame(n=>n=="BrownDust II","Open exactly one game instance before connecting")??throw new InvalidOperationException("Game not running");var location=new JsonObject{["managed"]=Path.Combine(Path.GetDirectoryName(gameProcess.MainModule!.FileName)!,"BrownDust II_Data","Managed"),["processId"]=gameProcess.Id,["startTicks"]=gameProcess.StartTime.ToUniversalTime().Ticks};string managed=S(location["managed"]);
+  Directory.CreateDirectory(Data);using var gameProcess=BD2.LocalIpc.HostedConnection.FindGame(n=>n=="BrownDust II","Open exactly one game instance before connecting")??throw new InvalidOperationException("Game not running");var location=new JsonObject{["managed"]=Path.Combine(Path.GetDirectoryName(BD2.LocalIpc.HostedConnection.ExecutablePath(gameProcess))!,"BrownDust II_Data","Managed"),["processId"]=gameProcess.Id,["startTicks"]=gameProcess.StartTime.ToUniversalTime().Ticks};string managed=S(location["managed"]);
   var pipe=BD2Equipment.Live.EquipmentTransport.Connect();string? fingerprint=null;try{fingerprint=pipe.Fingerprint();}catch(IOException){}catch(TimeoutException){}
   JsonObject? frame=ExistingSnapshot(fingerprint,Snapshot,location);
   string prepared=Path.Combine(Data,"prepared");Directory.CreateDirectory(prepared);

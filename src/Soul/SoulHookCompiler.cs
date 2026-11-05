@@ -11,7 +11,7 @@ using Dustweave;
 using Dustweave.Compatibility;
 using BD2Daily;
 using BD2.LocalIpc;
-using SharpMonoInjector;
+
 using LiveBindings=liveUtility::Dustweave.Connection.LiveClientBindings;
 using LiveContract=liveUtility::Dustweave.Connection.LiveBindingContract;
 namespace Dustweave.Soul;
@@ -93,39 +93,21 @@ internal static class SoulHookCompiler
         if(index<0||text.IndexOf(from,index+from.Length,StringComparison.Ordinal)>=0)throw new InvalidOperationException("Research integration anchor is not unique");
         return text[..index]+to+text[(index+from.Length)..];
     }
-    internal static async Task Attach(string folder,GameInstance game,DailyGameHost host,string accountKey,bool restore=false)
+    internal static async Task Attach(string root,string folder,GameInstance game,DailyGameHost host,DailySnapshot identity,Action<string> progress,CancellationToken cancel,bool restore=false)
     {
-        using var owner=new DailyControlOwner(DailyIdentity.DataRoot);owner.Acquire();
-        if(host.ReadIdentity(game).Snapshot?.AccountKey!=accountKey)throw new InvalidOperationException("Game account changed");
-        var pipe=new PipeClient(Path.Combine(DailyIdentity.DataRoot,"live"),game.ProcessId,game.StartTicks);
-        var originalFingerprint=pipe.Fingerprint();
-        var restorePath=Path.Combine(folder,"original-bridge.dll");
-        if(!File.Exists(restorePath))
-        {
-            string cache=DailyCacheStorage.Area(DailyIdentity.DataRoot,"suite-cache");
-            string? original=null;
-            foreach(var path in Directory.EnumerateFiles(Path.Combine(cache,"modules","daily"),"module.dll",SearchOption.AllDirectories))
-            {
-                using var module=ModuleDefinition.ReadModule(path);
-                var build=module.Types.SingleOrDefault(t=>t.FullName=="BD2.LocalIpc.Build");
-                if(build?.Fields.SingleOrDefault(f=>f.Name=="Fingerprint")?.Constant as string==originalFingerprint){original=path;break;}
-            }
-            if(original is null)throw new InvalidOperationException("Cannot identify original bridge for restoration");
-            File.Copy(original,restorePath);
-            await File.WriteAllTextAsync(Path.Combine(folder,"original.json"),JsonSerializer.Serialize(new{path=original,fingerprint=originalFingerprint,sha256=Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(original)))}));
+        using var owner=new DailyControlOwner(root);owner.Acquire();
+        PreparedSuiteModule? module=null;
+        if(!restore){
+            var bytes=await File.ReadAllBytesAsync(Path.Combine(folder,"bridge.dll"),cancel);
+            var manifest=JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(folder,"bridge.json"),cancel))!;
+            using var client=ModuleDefinition.ReadModule(SoulMetadata.Client);
+            if(client.Mvid.ToString()!=manifest["clientMvid"]!.GetValue<string>())throw new InvalidOperationException("Current client changed");
+            if(Convert.ToHexString(SHA256.HashData(bytes))!=manifest["sha256"]!.GetValue<string>())throw new InvalidOperationException("Bridge hash mismatch");
+            module=new(bytes,manifest["fingerprint"]!.GetValue<string>());
         }
-        if(pipe.Read("command.json") is not null)throw new InvalidOperationException("Pending native command; preserve original component");
-        var bytes=await File.ReadAllBytesAsync(Path.Combine(folder,restore?"original-bridge.dll":"bridge.dll"));
-        var manifest=JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(folder,restore?"original.json":"bridge.json")))!;
-        if(!restore){using var client=ModuleDefinition.ReadModule(SoulMetadata.Client);if(client.Mvid.ToString()!=manifest["clientMvid"]!.GetValue<string>())throw new InvalidOperationException("Current client changed");}
-        if(Convert.ToHexString(SHA256.HashData(bytes))!=manifest["sha256"]!.GetValue<string>())throw new InvalidOperationException("Bridge hash mismatch");
-        using(var injector=new Injector(game.ProcessId))injector.Inject(bytes,"BD2Daily.Live","Bridge","Load");
-        for(int i=0;i<70;i++)
-        {
-            await Task.Delay(500);
-            if(host.Find()!=game)throw new InvalidOperationException("Game process changed during component handoff");
-            if(pipe.Fingerprint()==manifest["fingerprint"]!.GetValue<string>()){Console.WriteLine(restore?"Original bridge restored through the shared handoff":"Research bridge is attached through the shared handoff");return;}
-        }
-        throw new TimeoutException("Research bridge handoff did not complete");
+        // No direct process injection here: load and restore through the same
+        // authenticated observer that already crossed the game's UAC boundary.
+        await DailySuite.ActivateForSessionAsync(host,root,restore?"daily":"soul",game,identity,module,progress,cancel);
+        DailyJson.Write(Path.Combine(folder,restore?"restore.json":"activation.json"),new{atUtc=DateTimeOffset.UtcNow,game.ProcessId,game.StartTicks,identity.AccountKey,identity.PlayerKey,module=restore?"daily":"soul",transport="suite",state=DailySuite.Read(root,game)});
     }
 }

@@ -12,7 +12,7 @@ public static class SuiteFixtureBus {
  public static readonly HashSet<string> Waiting=new();
  public static void Load(string id,string module){
   if(!Flows.TryGetValue(id,out var flow)){
-   flow=new Handoff(module,id,id=="daily"||id.EndsWith("-daily")?"daily":id,false,
+   flow=new Handoff(module,id,id is "daily" or "soul"||id.EndsWith("-daily")?"daily":id,false,
     ()=>Starts[id]=Starts.GetValueOrDefault(id)+1,()=>Pauses[id]=Pauses.GetValueOrDefault(id)+1,
     ()=>Waiting.Contains(id)?"network receipt pending":"",()=>Stops[id]=Stops.GetValueOrDefault(id)+1,(_,_)=>{});
    Flows[id]=flow;
@@ -122,6 +122,32 @@ internal static class UnifiedSuiteCases {
   Check(State().Available.Contains("rhythm")&&State().Fingerprints.Contains("rhythm|fixture-rhythm")&&!modules.ContainsKey("equipment"),"availability contains prepared modules only and leaves unrelated tools untouched");
   var loaded=modules["rhythm"];Send(Command("daily"));Finish();Send(Command("rhythm"));Finish();
   Check(ReferenceEquals(loaded,modules["rhythm"])&&SuiteFixtureBus.Starts["rhythm"]==2,"later tool use reuses loaded assembly without supplying or compiling another payload");
+  Send(Command("daily"));Finish();
+  byte[] soul=Payload("soul");
+  SuiteCommand Soul(){var c=Command("soul");c.ModulePayload=Convert.ToBase64String(soul);c.ModuleHash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(soul));return c;}
+  Check(SuiteRules.ModuleEntry("soul")=="BD2Daily.Live.Bridge","Soul has a fixed suite entry, not an arbitrary injector target");
+  var wrongSoul=Soul();wrongSoul.Player="another-player";Send(wrongSoul);Step();
+  Check(!modules.ContainsKey("soul")&&SuiteFixtureBus.Flows["daily"].IsActive,"Soul cannot load for a different character");
+  var brokenSoul=Soul();brokenSoul.ModuleHash=new string('0',64);Send(brokenSoul);Step();
+  Check(State().Error=="module-hash-mismatch"&&!modules.ContainsKey("soul"),"damaged Soul payload is rejected before loading");
+  SuiteFixtureBus.Waiting.Add("daily");Send(Soul());Finish();
+  Check(State().State=="switching"&&!SuiteFixtureBus.Starts.ContainsKey("soul"),"Soul waits for outstanding daily receipt without reinjecting");
+  SuiteFixtureBus.Waiting.Clear();Finish();
+  Check(State().State=="ready"&&State().Tool=="soul"&&SuiteFixtureBus.Starts["soul"]==1&&!SuiteFixtureBus.Flows["daily"].IsActive,"Soul loads once through observer and retires daily module");
+  var soulType=modules["soul"];
+  Check(State().Fingerprints.Contains("soul|fixture-soul")&&SuiteRuntime.ToolActive,"Soul activation publishes fingerprint and tool ownership");
+  SuiteFixtureBus.Waiting.Add("soul");Send(Command("daily"));Finish();
+  Check(State().State=="switching"&&SuiteFixtureBus.Stops.GetValueOrDefault("soul")==0,"restoration preserves a pending Soul receipt");
+  SuiteFixtureBus.Waiting.Clear();Finish();
+  Check(State().State=="ready"&&State().Tool=="daily"&&!SuiteFixtureBus.Flows["soul"].IsActive,"daily restored after receipt without reading a cached original DLL");
+  for(int cycle=0;cycle<2;cycle++){
+   Send(Command("soul"));Finish();Check(State().Tool=="soul"&&ReferenceEquals(modules["soul"],soulType),"Soul reconnect reuses authenticated module: "+cycle);
+   Send(Command("daily"));Finish();Check(State().Tool=="daily"&&!SuiteFixtureBus.Flows["soul"].IsActive,"Soul pause restores daily exactly once: "+cycle);
+  }
+  SuiteFixtureBus.Waiting.Add("daily");Send(Command("soul"));Step();Set("began",DateTime.UtcNow.AddMinutes(-1));Step();
+  Check(State().State=="error","expired Soul switch terminates bounded waiting");
+  SuiteFixtureBus.Waiting.Clear();Send(Command("daily"));Finish();Send(Command("soul"));Finish();
+  Check(State().State=="ready"&&State().Tool=="soul","failed handoff recovers after receipt clears and retry");
   Send(Command("daily"));Finish();
   int dailyStopsBefore=SuiteFixtureBus.Stops.GetValueOrDefault("daily");
   Send(Command("fishing"));Finish();

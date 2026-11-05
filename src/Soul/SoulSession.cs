@@ -52,7 +52,7 @@ public sealed class SoulSession
     async Task Run(bool resume,string? expectedPlayer,string? evidenceFolder)
     {
         IDisposable? lease=null;
-        GameInstance? game=null;string account="",bridge="";bool attached=false;
+        GameInstance? game=null;DailySnapshot? identity=null;string account="",bridge="";bool handoffAttempted=false;
         try
         {
             lease=DailyToolControl.Acquire(root);
@@ -60,7 +60,6 @@ public sealed class SoulSession
             await host.PrepareAccessAsync(m=>Report("connecting",m),planning!.Token);
             game=host.Find()??throw new InvalidOperationException("请先打开游戏。 / Open the game first.");
             await host.ConnectAsync(game,m=>Report("connecting",m),planning.Token);
-            DailySnapshot? identity=null;
             for(int i=0;i<40;i++){identity=host.ReadIdentity(game).Snapshot;if(identity is not null&&identity.FrameUtcTicks>DateTime.UtcNow.AddSeconds(-5).Ticks&&identity.AccountKey.Length>0)break;await Task.Delay(250,planning.Token);}
             if(identity is null||identity.FrameUtcTicks<DateTime.UtcNow.AddSeconds(-5).Ticks||identity.AccountKey.Length==0)throw new InvalidOperationException("Game identity is not ready.");
             if(expectedPlayer is not null&&identity.PlayerName!=expectedPlayer)throw new InvalidOperationException("Expected account: "+expectedPlayer);
@@ -82,7 +81,9 @@ public sealed class SoulSession
             SoulAssets.Prepare(root,Path.Combine(managed,"Assembly-CSharp.dll"));
             bridge=Path.Combine(folder,"connection");
             Report("connecting");await SoulHookCompiler.Prepare(bridge);planning.Token.ThrowIfCancellationRequested();
-            await SoulHookCompiler.Attach(bridge,game,host,account);attached=true;
+            handoffAttempted=true;
+            await SoulHookCompiler.Attach(root,bridge,game,host,identity,m=>Report("connecting",m),planning.Token);
+            planning.Token.ThrowIfCancellationRequested();
             var mailbox=new DailyPipeMailbox(root,game);
             var observation=DailyStageObservation.Attach(root,account,()=>pause);
             using var driver=new DailyCommandDriver(root,mailbox,observation.ReadFrameAsync,()=>pause);
@@ -311,12 +312,15 @@ public sealed class SoulSession
         finally
         {
             // Restore the shared component only after command driver/lease disposal.
-            if(attached&&game is not null&&host.Find()==game&&host.ReadIdentity(game).Snapshot?.AccountKey==account)
-            {
-                try{await SoulHookCompiler.Attach(bridge,game,host,account,restore:true);}
-                catch(Exception error){if(folder.Length>0)File.WriteAllText(Path.Combine(folder,"restore-error.txt"),error.ToString());Report("error","连接组件恢复失败，请重新连接游戏。 / Reconnect the game. "+error.Message);}
+            try{
+                if(handoffAttempted&&game is not null&&identity is not null&&host.Find()==game){
+                    var current=host.ReadIdentity(game).Snapshot;
+                    if(current?.AccountKey==account&&current.PlayerKey==identity.PlayerKey)
+                        await SoulHookCompiler.Attach(root,bridge,game,host,identity,_=>{},CancellationToken.None,restore:true);
+                }
             }
-            timer.Stop();lock(sync){planning?.Dispose();planning=null;}lease?.Dispose();
+            catch(Exception error){if(folder.Length>0)File.WriteAllText(Path.Combine(folder,"restore-error.txt"),error.ToString());Report("error","连接组件恢复失败，请重新连接游戏。 / Reconnect the game. "+error.Message);}
+            finally{timer.Stop();lock(sync){planning?.Dispose();planning=null;}lease?.Dispose();}
         }
     }
 }

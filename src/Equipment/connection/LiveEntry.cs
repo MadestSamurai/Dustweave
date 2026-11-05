@@ -46,7 +46,7 @@ public static class LiveEntry {
   if(configureConsole)Console.OutputEncoding=new UTF8Encoding(false);
   try{
    if(args.Length==1&&args[0]=="self-test"){Console.WriteLine(PolicyChecks.Run());return;}
-   if(args.Length==1&&args[0]=="locate"){using var g=Game();Console.WriteLine(JsonSerializer.Serialize(new{managed=Path.Combine(Path.GetDirectoryName(g.MainModule!.FileName)!,"BrownDust II_Data","Managed"),processId=g.Id,startTicks=g.StartTime.ToUniversalTime().Ticks}));return;}
+   if(args.Length==1&&args[0]=="locate"){using var g=Game();Console.WriteLine(JsonSerializer.Serialize(new{managed=Path.Combine(Path.GetDirectoryName(BD2.LocalIpc.HostedConnection.ExecutablePath(g))!,"BrownDust II_Data","Managed"),processId=g.Id,startTicks=g.StartTime.ToUniversalTime().Ticks}));return;}
    if(args.Length==3&&args[0]=="prepare"){Prepare(Path.GetFullPath(args[1]),Path.GetFullPath(args[2]));Console.WriteLine("Equipment component compiled; game untouched.");return;}
    if(args.Length==3&&args[0]=="prepare-evidence"){EnsureEvidenceConfig(Path.GetFullPath(args[1]),Path.GetFullPath(args[2]));Console.WriteLine("Equipment read configuration ready; game untouched.");return;}
    if(args.Length==4&&args[0]=="taps"){TapManifest.Generate(args[1],args[2],args[3]);return;}
@@ -58,7 +58,7 @@ public static class LiveEntry {
     var attempt=Path.Combine(Root,$"attach-{game.Id}-{start}.json");
     string payload=Path.GetFullPath(args[1]);var manifest=JsonDocument.Parse(File.ReadAllText(Path.Combine(Path.GetDirectoryName(payload)!,"bridge.json"))).RootElement;
     byte[] bytes=File.ReadAllBytes(payload);if(Convert.ToHexString(SHA256.HashData(bytes))!=manifest.GetProperty("sha256").GetString())throw new InvalidDataException("Component hash mismatch.");
-    string managed=Path.Combine(Path.GetDirectoryName(game.MainModule!.FileName)!,"BrownDust II_Data","Managed");using var module=Mono.Cecil.ModuleDefinition.ReadModule(Path.Combine(managed,"Assembly-CSharp.dll"));
+    string managed=Path.Combine(Path.GetDirectoryName(BD2.LocalIpc.HostedConnection.ExecutablePath(game))!,"BrownDust II_Data","Managed");using var module=Mono.Cecil.ModuleDefinition.ReadModule(Path.Combine(managed,"Assembly-CSharp.dll"));
     if(module.Mvid.ToString()!=manifest.GetProperty("clientMvid").GetString())throw new InvalidOperationException("Client changed; reconnect after restarting the tool.");
     LiveJson.Write(attempt,new{state="attaching",processId=game.Id,startTicks=start});
     using var injector=new Injector(game.Id);long address=injector.Inject(bytes,"BD2Equipment.Live","Bridge","Load").ToInt64();

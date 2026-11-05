@@ -2,6 +2,7 @@ using Dustweave.Compatibility;
 using BD2.LocalIpc;
 using System.Text.Json;
 namespace Dustweave;
+public sealed record PreparedSuiteModule(byte[] Payload,string Fingerprint);
 public static class DailySuite {
  public static Func<string,Action<string>,CancellationToken,Task<PreparedDailyHook>>? Prepare {get;set;}
  public static Func<string,string,Action<string>,CancellationToken,Task<byte[]>>? PrepareModule {get;set;}
@@ -15,7 +16,13 @@ public static class DailySuite {
   try{await ActivateCoreAsync(host,root,id,progress,cancel);}
   catch(GameSessionEndedException){throw new DailyGameExitedException();}
  }
- private static async Task ActivateCoreAsync(IGameHost host,string root,string id,Action<string> progress,CancellationToken cancel){
+ // Uses the already authenticated observer for a tool-specific module. The
+ // session is pinned before compilation; it may not follow a newly logged-in account.
+ public static async Task ActivateForSessionAsync(IGameHost host,string root,string id,GameInstance game,DailySnapshot identity,PreparedSuiteModule? module,Action<string> progress,CancellationToken cancel){
+  try{await ActivateCoreAsync(host,root,id,progress,cancel,game,identity,module);}
+  catch(GameSessionEndedException){throw new DailyGameExitedException();}
+ }
+ private static async Task ActivateCoreAsync(IGameHost host,string root,string id,Action<string> progress,CancellationToken cancel,GameInstance? expectedGame=null,DailySnapshot? expectedIdentity=null,PreparedSuiteModule? prepared=null){
   // Every helper has its own process-scope cache. A successful parent connection
   // is not authority for this process to skip access preparation. Reuse an
   // existing local proof, or let the authenticated read-only helper verify it.
@@ -24,15 +31,21 @@ public static class DailySuite {
   await host.PrepareAccessAsync(progress,cancel);
   cancel.ThrowIfCancellationRequested();
   var game=host.Find()??throw new InvalidOperationException("请先启动游戏，并在日常助手连接一次。");
-  var snapshot=await DailyGamePreparation.WaitForIdentityAsync(host,game,null,progress,cancel,root);
+  if(expectedGame is not null&&expectedGame!=game)throw new DailyGameExitedException();
+  var snapshot=await DailyGamePreparation.WaitForIdentityAsync(host,game,expectedIdentity,progress,cancel,root);
   var pipe=new PipeClient(Path.Combine(root,"suite"),game.ProcessId,game.StartTicks);
   var previous=Read(root,game);
+  if(prepared is not null&&previous?.Available.Contains(id)==true&&!previous.Fingerprints.Contains(id+"|"+prepared.Fingerprint))
+   throw new InvalidOperationException("功能组件与统一会话不一致，请返回日常助手。");
   if(previous?.Tool==id&&previous.State=="ready"&&previous.Owner==Owner&&previous.Account==snapshot.AccountKey&&previous.Player==snapshot.PlayerKey&&previous.At>=DateTime.UtcNow.AddSeconds(-5).Ticks)return;
   byte[]? payload=null;
   if(previous?.Available.Contains(id)!=true){
+   if(prepared is not null)payload=prepared.Payload;
+   else{
    var prepare=PrepareModule??throw new InvalidOperationException("功能准备器未就绪。");
    string managed=Path.Combine(Path.GetDirectoryName(game.Executable)!,Path.GetFileNameWithoutExtension(game.Executable)+"_Data","Managed");
    payload=await DailyGamePreparation.RunAsync(host,game,(report,token)=>prepare(managed,id,report,token),progress,cancel);
+   }
    cancel.ThrowIfCancellationRequested();
    if(!host.IsRunning(game))throw new DailyGameExitedException();
    await DailyGamePreparation.WaitForIdentityAsync(host,game,snapshot,progress,cancel,root);
@@ -47,9 +60,12 @@ public static class DailySuite {
   cancel.ThrowIfCancellationRequested();
   DailyGamePreparation.RequireRunning(host,game);
   pipe.Write("command.json",JsonSerializer.SerializeToUtf8Bytes(command,Json));
+  // A submitted handoff must settle before the caller restores the daily
+  // module. Cancellation stops gameplay, not the acknowledgement of this switch.
+  var receiptToken=expectedGame is null?cancel:CancellationToken.None;
   var until=DateTime.UtcNow.AddSeconds(35);
   while(DateTime.UtcNow<until){
-   cancel.ThrowIfCancellationRequested();
+   receiptToken.ThrowIfCancellationRequested();
    if(!host.IsRunning(game))throw new DailyGameExitedException();
    var state=Read(root,game);
    if(state?.RejectedRequest==command.Id)throw new InvalidOperationException(state.RejectedReason);
@@ -57,10 +73,13 @@ public static class DailySuite {
     if(state.State=="error"||state.State=="paused")throw new InvalidOperationException(state.Error);
     // Runtime publishes ready only after the new module has registered its
     // active handoff entry. Consumers still wait for their own fresh snapshot.
-    if(state.State=="ready"&&state.Tool==id&&state.Owner==Owner&&state.Account==snapshot.AccountKey&&state.Player==snapshot.PlayerKey&&state.At>=DateTime.UtcNow.AddSeconds(-5).Ticks)return;
+    if(state.State=="ready"&&state.Tool==id&&state.Owner==Owner&&state.Account==snapshot.AccountKey&&state.Player==snapshot.PlayerKey&&state.At>=DateTime.UtcNow.AddSeconds(-5).Ticks){
+     if(prepared is not null&&!state.Fingerprints.Contains(id+"|"+prepared.Fingerprint))throw new InvalidOperationException("功能组件与统一会话不一致，请返回日常助手。");
+     return;
+    }
     progress(string.IsNullOrEmpty(state.Error)?"正在切换功能…":state.Error);
    }
-   await Task.Delay(200,cancel);
+   await Task.Delay(200,receiptToken);
   }
   throw new TimeoutException("统一会话没有确认功能已就绪；没有自动重试。");
  }

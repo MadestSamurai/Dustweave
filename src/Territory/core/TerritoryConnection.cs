@@ -44,7 +44,7 @@ public sealed class TerritoryConnection
         cancellationToken.ThrowIfCancellationRequested();
         // Resolve the required interfaces and compile against installed metadata before any injection.
         string exe;
-        try{exe=game.MainModule?.FileName??throw new InvalidOperationException("无法读取游戏路径。");}
+        try{exe=BD2.LocalIpc.HostedConnection.ExecutablePath(game);}
         catch(System.ComponentModel.Win32Exception e) when(e.NativeErrorCode==5){throw new InvalidOperationException("Windows 拒绝访问游戏进程。请用与游戏相同的权限打开领地工具；若游戏以管理员权限运行，也请以管理员身份运行本工具。无需重启游戏。",e);}
         var client=Path.Combine(Path.GetDirectoryName(exe)!,Path.GetFileNameWithoutExtension(exe)+"_Data","Managed","Assembly-CSharp.dll");
         trace.Stage("compatibility.prepare","正在识别领地接口并生成适配组件，首次连接可能需要数秒…");
