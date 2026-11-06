@@ -5299,7 +5299,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/IdentityObserverCases.cs",
-      "sha256": "728746cd8d66f11cfeee524c43d243607019d4e27b518425776487eaadc45603"
+      "sha256": "fb1ed42782c25f046c30ad47eae84ff6f4a7765ae0e0827d6291d901e98ffeb0"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/LiveBindingCases.cs",

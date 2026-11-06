@@ -223,6 +223,10 @@ namespace BD2Daily.Runtime {
   public static void Tick(DailySnapshot s){SeenPublished=LocalStorage.Last==null?0:LocalStorage.Last.Sequence;if(Fail)throw new InvalidOperationException("fixture module status failure");}
  }
  public class GuildRuntime { public bool HandoffBusy;public void Start(){} public void Stop(){} public void Tick(DailySnapshot s,bool allow){} }
+ public class InventoryRuntime {
+  public static bool Fail;public static long SeenPublished;
+  public void Tick(DailySnapshot s){SeenPublished=LocalStorage.Last==null?0:LocalStorage.Last.Sequence;if(Fail)throw new InvalidOperationException("fixture inventory failure");}
+ }
  public class StartupRuntime {
   public static bool Loading,Visible,Fail;
   public void Tick(DailySnapshot s,bool allowActions=true){if(Fail)throw new InvalidOperationException("fixture startup failure");s.Loading=Loading;s.Startup=new StartupObservation{Visible=Visible};}
@@ -261,6 +265,12 @@ public static class Runner {
   Check(Loader.State=="error"&&Loader.Error.Contains("identity-publish"),"heartbeat preserves failed identity publication",checks);
   LocalStorage.FailWrite=false;Tick(engine);Heartbeat(engine);
   Check(Loader.State=="active"&&Loader.Error=="","successful fresh publication clears a recovered failure",checks);
+  InventoryRuntime.Fail=true;var beforeInventoryFailure=LocalStorage.Last.Sequence;
+  Tick(engine);Heartbeat(engine);
+  Check(LocalStorage.Last.Sequence==beforeInventoryFailure+1&&DailyIdentityGuard.Ready(LocalStorage.Last,game,DateTimeOffset.UtcNow),"inventory failure cannot starve authenticated identity publication",checks);
+  Check(InventoryRuntime.SeenPublished==LocalStorage.Last.Sequence&&Loader.State=="active","identity is published before optional inventory work",checks);
+  InventoryRuntime.Fail=false;Tick(engine);
+  Check(LocalStorage.Last.Sequence==beforeInventoryFailure+2,"fresh identity continues after inventory recovery",checks);
   SdkIdentity.Ready=false;Tick(engine);
   Check(LocalStorage.Last.State=="waiting_sdk"&&!DailyIdentityGuard.Ready(LocalStorage.Last,game,DateTimeOffset.UtcNow),"SDK readiness remains mandatory",checks);
   SdkIdentity.Ready=true;Tick(engine);guard=new DailyIdentityGuard();bool rejected=false;
