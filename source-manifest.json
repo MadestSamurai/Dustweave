@@ -1727,7 +1727,7 @@
     },
     {
       "path": "src/Core/Localization/Messages.zh-CN.txt",
-      "sha256": "fb7e914a26cb8c6815ea38d237d14ac0c73e90824fabe35b4f99656f8a163723"
+      "sha256": "61e7619259140356d5f05403a48d2b58ae3dc0a04371d36fd6b3f532ee25d0a1"
     },
     {
       "path": "src/Core/MansionClient.cs",
@@ -1979,11 +1979,11 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "e3f36c714681b0440dd4334043afcf20b01d690b4cd12959da1016516e6dff9b"
+      "sha256": "5365547561e2f574a69774b88bbc86b2ff87e454493551edb5236ddcace14c0f"
     },
     {
       "path": "src/Desktop/Localization/runtime.json",
-      "sha256": "aca57490201c8e9471095e146c75207463c9e036bd7ab66b66be279d5bec0e3f"
+      "sha256": "4479cc589e91d1a15bb5bf9b8a5f9a68beee22abc17c0c3e18b30830e64104a6"
     },
     {
       "path": "src/Desktop/Localization/strings.json",
@@ -4787,7 +4787,7 @@
     },
     {
       "path": "src/Territory/hook/RuntimeSaffron.cs",
-      "sha256": "72e45dcea48d3b6017287da1649befaae8e1c3ca991385b64dbe17f69d136fed"
+      "sha256": "cbd1e72c50ef5ea4aef0f61d9e91479b0c1d7b6cb53956cbc028f2ff8a6bc33c"
     },
     {
       "path": "src/Territory/hook/RuntimeSales.cs",
@@ -4959,7 +4959,7 @@
     },
     {
       "path": "src/Territory/shared/SaffronCycle.cs",
-      "sha256": "ba28b3af9be3c1b09fca63519c4470cf46f37770931f735664f1195591bcab3c"
+      "sha256": "3264e04aabccf76bb599d9a83decd727532519cbff5b2b11470464796069ba2e"
     },
     {
       "path": "src/Territory/shared/SurfaceSegments.cs",
@@ -5487,7 +5487,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/SaffronCases.cs",
-      "sha256": "0eb6811bdc6915586ddd2eb395e1cd45fa78e1dacefeacb41c5d5164923bc952"
+      "sha256": "09936ae8b39e07e9ccd821bbee89c811009605a54f0026446c8eccb8389ec9c4"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/SandboxCases.cs",
