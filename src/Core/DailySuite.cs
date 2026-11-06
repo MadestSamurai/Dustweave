@@ -8,7 +8,10 @@ public static class DailySuite {
  public static Func<string,string,Action<string>,CancellationToken,Task<byte[]>>? PrepareModule {get;set;}
  public static bool Enabled=>Prepare!=null;
  // Extensions belong to the on-demand daily module; the common observer contains none.
- public static string ConnectionFingerprint(Guid hostModule, string pluginFingerprint) => DailyIdentity.Hash("on-demand-v3|"+hostModule);
+ // The observer contains no private implementation, but owns the on-demand
+ // module registry. A changed plugin selection must retire that old registry
+ // on reconnect; otherwise it continues to report an obsolete module as ready.
+ public static string ConnectionFingerprint(Guid hostModule, string pluginFingerprint) => DailyIdentity.Hash("on-demand-v4|"+hostModule+"|"+pluginFingerprint);
  static readonly JsonSerializerOptions Json=new(){IncludeFields=true};
  static readonly System.Collections.Concurrent.ConcurrentDictionary<string,string> LastStatus=new();
  public static string Owner=>Environment.GetEnvironmentVariable("BD2_DAILY_SUITE_OWNER")??throw new InvalidOperationException("统一会话缺少控制器身份。");

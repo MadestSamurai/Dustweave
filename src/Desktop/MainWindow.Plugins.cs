@@ -14,14 +14,37 @@ public sealed partial class DailyPluginPanel : ScrollViewer
     private readonly TextBlock status = new() { TextWrapping = TextWrapping.Wrap, Margin = new(0, 12, 0, 0) };
     private readonly Button import = ActionButton("plugins.import");
     private readonly Button restart = ActionButton("plugins.restart");
-    private readonly Button disable = ActionButton("plugins.disable");
+    private readonly Button disable = ActionButton("plugins.disable_daily");
+    private Border? emptyCard;
     private bool occupied;
     public event Action<string?>? ImportRequested;
     public event Action<string>? EnableRequested;
     public event Action<string>? RemoveRequested;
     public event Action? DisableRequested;
+    public event Action<string>? DisableOneRequested;
     public event Action? RestartRequested;
     public event Action<string, string>? SharingRequested;
+    public event Action<string, string, string>? ToolActionRequested;
+    public void AppendTools(IReadOnlyList<(DailyPluginSelection Selection, DailyInstalledPlugin Record, DailyPluginInfo Info)> tools)
+    {
+        var loadedTools=DailyPlugin.Current.AllSelections.Where(p=>p.IsTool&&p.HookSources.Length>0).Select(p=>p.Fingerprint).ToHashSet(StringComparer.Ordinal);
+        var selectedTools=tools.Where(t=>t.Info.Available&&t.Info.HookSources.Length>0&&t.Selection.Active==t.Record.Fingerprint).Select(t=>t.Info.Fingerprint).ToHashSet(StringComparer.Ordinal);
+        if(!loadedTools.SetEquals(selectedTools)){restart.Visibility=Visibility.Visible;Status("plugins.pending");}
+        if(tools.Count>0 && emptyCard!=null)cards.Children.Remove(emptyCard);
+        marketSelection=marketSelection with {Installed=[..marketSelection.Installed,..tools.Select(t=>t.Record)]};
+        RenderMarket();
+        foreach (var (state, record, info) in tools)
+        {
+            var body = new StackPanel();
+            body.Children.Add(new TextBlock { Text = (info.Available ? info.Name(L.Code) : record.Id) + "  " + record.Version, FontSize = 18, TextWrapping = TextWrapping.Wrap });
+            body.Children.Add(Text(info.Available ? "plugins.tool_where" : "plugins." + info.State));
+            if(info.HookSources.Length>0&&state.Active==record.Fingerprint&&!loadedTools.Contains(record.Fingerprint))body.Children.Add(Text("plugins.next_start"));
+            var actions = new WrapPanel { Margin = new(0,12,0,0) };
+            void Add(string key, string operation) { var button = ActionButton(key); button.Click += (_,_) => ToolActionRequested?.Invoke(record.Id, record.Fingerprint, operation); actions.Children.Add(button); }
+            if(info.Available) { if(state.Active == record.Fingerprint) { Add("tools.open", "open"); Add("plugins.disable", "disable"); } else Add("plugins.enable", "enable"); }
+            Add("plugins.remove", "remove"); body.Children.Add(actions); cards.Children.Add(Card(body));
+        }
+    }
     public DailyPluginPanel()
     {
         VerticalScrollBarVisibility = ScrollBarVisibility.Auto; HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
@@ -46,9 +69,10 @@ public sealed partial class DailyPluginPanel : ScrollViewer
         marketSelection = state;
         cards.Children.Clear();
         bool external = Environment.GetEnvironmentVariable("DUSTWEAVE_PLUGIN") != null;
-        string selected = state.OverrideLocal ? state.Active ?? "" : current.Fingerprint;
-        bool pending = selected != current.Fingerprint;
-        bool compatible = selected.Length == 0 || !state.OverrideLocal || inspected.GetValueOrDefault(selected)?.Available == true;
+        var selected = (state.OverrideLocal ? state.ActiveFingerprints : current.Selections.Select(p=>p.Fingerprint)).ToHashSet(StringComparer.Ordinal);
+        var running = current.Selections.Select(p=>p.Fingerprint).ToHashSet(StringComparer.Ordinal);
+        bool pending = !selected.SetEquals(running);
+        bool compatible = !state.OverrideLocal || selected.All(h=>inspected.GetValueOrDefault(h)?.Available==true);
         restart.Visibility = pending && !external && compatible ? Visibility.Visible : Visibility.Collapsed;
         disable.Visibility = state.Active != null || current.Available ? Visibility.Visible : Visibility.Collapsed;
         Status(external ? "plugins.environment_override" : !compatible ? "plugins.unavailable" : pending ? "plugins.pending" : "plugins.stable");
@@ -58,7 +82,7 @@ public sealed partial class DailyPluginPanel : ScrollViewer
             var body = new StackPanel();
             var heading = new TextBlock { FontSize = 18, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap };
             L.Bind(heading, TextBlock.TextProperty, () => (info.Available ? info.Name(L.Code) : record.Id) + "  " + record.Version); body.Children.Add(heading);
-            string stateKey = !info.Available ? "plugins.unavailable" : record.Fingerprint == selected ? (pending ? "plugins.next_start" : "plugins.active") : record.Fingerprint == current.Fingerprint ? "plugins.current_until_restart" : "plugins.installed";
+            string stateKey = !info.Available ? "plugins.unavailable" : selected.Contains(record.Fingerprint) ? (running.Contains(record.Fingerprint) ? "plugins.active" : "plugins.next_start") : running.Contains(record.Fingerprint) ? "plugins.current_until_restart" : "plugins.installed";
             body.Children.Add(Text(stateKey));
             if (!info.Available) body.Children.Add(Text("plugins." + info.State));
             else body.Children.Add(Text("plugins.details", info.Publisher.Length == 0 ? record.Id : info.Publisher, info.MinHostVersion.Length == 0 ? "—" : info.MinHostVersion, info.MaxHostVersion.Length == 0 ? "—" : info.MaxHostVersion));
@@ -69,7 +93,8 @@ public sealed partial class DailyPluginPanel : ScrollViewer
                 var sharing = ActionButton("plugins.sharing_settings");
                 sharing.Click += (_, _) => SharingRequested?.Invoke(info.Id, info.Name(L.Code)); actions.Children.Add(sharing);
             }
-            if (info.Available && record.Fingerprint != selected)
+            if(selected.Contains(record.Fingerprint)) { var off=ActionButton("plugins.disable");off.Click+=(_,_)=>DisableOneRequested?.Invoke(record.Fingerprint);actions.Children.Add(off); }
+            if (info.Available && !selected.Contains(record.Fingerprint))
             {
                 var enable = ActionButton(record.Fingerprint == state.Previous ? "plugins.rollback" : "plugins.enable");
                 enable.Click += (_, _) => EnableRequested?.Invoke(record.Fingerprint); actions.Children.Add(enable);
@@ -81,7 +106,8 @@ public sealed partial class DailyPluginPanel : ScrollViewer
         {
             var text = Text("plugins.local_active", current.Name(L.Code), current.Version); cards.Children.Add(Card(text));
         }
-        if (state.Installed.Length == 0 && !current.Available) cards.Children.Add(Card(Text("plugins.empty")));
+        emptyCard=null;
+        if (state.Installed.Length == 0 && !current.Available) { emptyCard=Card(Text("plugins.empty"));cards.Children.Add(emptyCard); }
         Busy(occupied);
         RenderMarket();
     }
@@ -116,10 +142,11 @@ public partial class MainWindow
             }
             pluginPanel.Status("plugins.checking");
             using var package = await Task.Run(() => PluginStore.Prepare(path));
-            var choice = ConfirmPluginInstall(package.Info.Name(L.Code), package.Info.Version, package.Info.Publisher, package.Info.Id, package.Info.SupportsSolutionSharing, package.Info.Supports("tactics"));
+            var choice = ConfirmPluginInstall(package.Info.Name(L.Code), package.Info.Version, package.Info.Publisher, package.Info.Id, package.Info.SupportsSolutionSharing, package.Info.Supports("tactics"), package.Info.IsTool);
             if (!choice.Confirmed) return;
-            var installed = await Task.Run(() => PluginStore.Install(package));
-            await PluginStore.ActivateAsync(installed.Fingerprint, ProbePluginAsync);
+            var store = StoreFor(package.Info);
+            var installed = await Task.Run(() => store.Install(package));
+            await store.ActivateAsync(installed.Fingerprint, ProbePluginAsync);
             if (choice.Share is { } share) DailyPluginSharing.Write(root, package.Info.Id, share);
         });
         pluginPanel.EnableRequested += async fingerprint => await ChangePluginAsync(async () =>
@@ -143,6 +170,8 @@ public partial class MainWindow
             catch (Exception error) { PluginError(error); }
         };
         InitializePluginMarket();
+        pluginPanel.DisableOneRequested += async hash => await ChangePluginAsync(()=>{PluginStore.Disable(hash);return Task.CompletedTask;});
+        InitializeToolPlugins();
         _ = RefreshPluginsAsync();
     }
     private async Task RefreshPluginsAsync()
@@ -151,6 +180,9 @@ public partial class MainWindow
         {
             var snapshot = await Task.Run(() => { var store = PluginStore; var state = store.Read(); return (state, inspected: state.Installed.ToDictionary(x => x.Fingerprint, x => store.Inspect(x))); });
             pluginPanel.Refresh(snapshot.state, snapshot.inspected, DailyPlugin.Current);
+            var tools = await Task.Run(() => new DailyToolPlugins(root).Installed());
+            enabledToolPlugins = tools.Where(t => t.Info.Available && t.Selection.Active == t.Record.Fingerprint).Select(t=>t.Info).ToArray();
+            pluginPanel.AppendTools(tools); toolPanel.SetPlugins(enabledToolPlugins);
         }
         catch (Exception e) { PluginError(e); }
         pluginPanel.Busy(Unavailable || IsSandboxWindow);
@@ -194,6 +226,7 @@ public partial class MainWindow
             var start = new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = Directory.GetCurrentDirectory() };
             start.ArgumentList.Add("--restart-after"); start.ArgumentList.Add(process.Id.ToString()); start.ArgumentList.Add(process.StartTime.ToUniversalTime().Ticks.ToString());
             start.Environment.Remove("DUSTWEAVE_PLUGIN");
+            start.Environment.Remove("DUSTWEAVE_PLUGINS");
             _ = Process.Start(start) ?? throw new IOException("plugins.failed");
             finalClose = true; timer.Stop(); Close();
         }
@@ -201,7 +234,7 @@ public partial class MainWindow
         finally { pluginChanging = false; SetBusy(busy); }
     }
     private bool PluginConfirm(string key, string message) => DailyDialogs.ShowModal(DailyDialogs.Message(this, L.Get(key), message, true)) == true;
-    private (bool Confirmed, bool? Share) ConfirmPluginInstall(string name, string version, string publisher, string id, bool sharing, bool tactics)
+    private (bool Confirmed, bool? Share) ConfirmPluginInstall(string name, string version, string publisher, string id, bool sharing, bool tactics, bool tool = false)
     {
         if (sharing && DailyPluginSharing.Read(root, id) == null)
         {
@@ -209,7 +242,7 @@ public partial class MainWindow
             return (DailyDialogs.ShowModal(dialog) == true, dialog.SharingEnabled);
         }
         return (PluginConfirm("plugins.market_install", L.Get("plugins.trust", name, version, publisher) + "\n\n" +
-            (tactics ? L.Get("plugins.tactics_where") + "\n" + L.Get("plugins.tactics_howto") + "\n\n" : "") + L.Get("plugins.market_install_confirm", name, version)), null);
+            (tactics ? L.Get("plugins.tactics_where") + "\n" + L.Get("plugins.tactics_howto") + "\n\n" : "") + (tool ? L.Get("plugins.tool_where") : L.Get("plugins.market_install_confirm", name, version))), null);
     }
     private async Task SmokePluginsAsync()
     {
@@ -223,8 +256,15 @@ public partial class MainWindow
             var old = first with { Version = "1.0.0", Fingerprint = new string('b', 64), InstalledUtc = DateTimeOffset.UtcNow.AddDays(-1) };
             var info = new DailyPluginInfo(true, "ready", "", first.Version, first.Fingerprint, [], Capabilities: ["tactics"])
             { Id = first.Id, Publisher = "Example", MinHostVersion = "0.9.12", MaxHostVersion = "0.9.99", Names = new() { ["zh-CN"] = "示例扩展", ["zh-TW"] = "範例擴充", ["en-US"] = "Example extension" } };
-            var state = new DailyPluginSelection(1, first.Fingerprint, old.Fingerprint, [first, old]);
-            pluginPanel.Refresh(state, new() { [first.Fingerprint] = info, [old.Fingerprint] = info with { Version = old.Version, Fingerprint = old.Fingerprint } }, info);
+            var second = new DailyInstalledPlugin("example.second", "1.0.0", new string('e',64),DateTimeOffset.UtcNow);
+            var extra = info with {Id=second.Id,Version=second.Version,Fingerprint=second.Fingerprint,Capabilities=["other_task"]};
+            var current=DailyPlugin.Combine([info,extra]);
+            var state = new DailyPluginSelection(1, first.Fingerprint, old.Fingerprint, [first, old,second]) { Enabled=[first.Fingerprint,second.Fingerprint] };
+            var inspected=new Dictionary<string,DailyPluginInfo> { [first.Fingerprint] = info, [old.Fingerprint] = info with { Version = old.Version, Fingerprint = old.Fingerprint },[second.Fingerprint]=extra };
+            pluginPanel.Refresh(state, inspected,current);
+            var tool=info with {Id="example.tool",Fingerprint=new string('d',64),ToolExecutable="tool/Example.exe",Capabilities=["inventory_read"]};
+            var toolRecord=new DailyInstalledPlugin(tool.Id,tool.Version,tool.Fingerprint,DateTimeOffset.UtcNow);
+            pluginPanel.AppendTools([(new(1,tool.Fingerprint,null,[toolRecord]),toolRecord,tool)]);
             pluginPanel.SelectMarket(false);
             foreach (var code in DailyLanguage.Codes)
             {
@@ -234,12 +274,13 @@ public partial class MainWindow
                     ThemeSelector.SelectedIndex = appearance; Width = 920; Height = 650;
                     await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
                     if (!SandboxElements<FrameworkElement>(pluginPanel).Any(e => e.Name == "TacticsUsageGuide" && e.IsVisible)) throw new Exception("Installed plugin lacks its weekly task guide");
+                    if(SandboxElements<Button>(pluginPanel).Count(b=>Equals(b.Content,L.Get("plugins.disable")))!=3)throw new Exception("Each enabled daily/tool plugin needs its own disable action");
                     Capture("plugins-" + code + "-" + appearance);
                 }
             }
             pluginPanel.Busy(true);
             // Disabled page actions must not be re-enabled by a theme or language refresh.
-            pluginPanel.Refresh(state, new() { [first.Fingerprint] = info, [old.Fingerprint] = info with { Version = old.Version, Fingerprint = old.Fingerprint } }, info);
+            pluginPanel.Refresh(state,inspected,current);
             pluginPanel.Busy(false);
             await CheckPluginMarketForSmoke();
         }

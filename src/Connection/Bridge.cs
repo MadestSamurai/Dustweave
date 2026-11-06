@@ -205,7 +205,7 @@ namespace BD2Daily.Live {
     if(squareNavUntil>0&&((BD2.LocalIpc.RuntimeFiles.Read(Path.Combine(live,"pause"))!=null)||DateTime.UtcNow.Ticks>squareNavUntil||frame.Scene!=squareNavScene||(mainlineStealthNav&&!TalentSkillManager.ὪὫὢὨὯὭὦὪὦὨὣ.IsTalentSkillDurationing(ὪὯὯὢὨὮὨὠὥὤὬ.Stealth)))){
      Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ClearQuestNav(true);GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.SetPlayerMoveState(MoveController.ὯὣὠὮὤὡὤὯὢὩὯ.Stop);squareNavUntil=0;mainlineStealthNav=false;approachTarget=null;
     }var observed=timer.Elapsed.TotalMilliseconds;
-    Evidence.Tick(frame);var evidenced=timer.Elapsed.TotalMilliseconds;
+    Evidence.Tick(frame);PluginHost.Tick(frame,live,OtherOwner());var evidenced=timer.Elapsed.TotalMilliseconds;
     Write(Path.Combine(live,"snapshot.json"),frame,false);var total=timer.Elapsed.TotalMilliseconds;
     observeMs+=observed;evidenceMs+=evidenced-observed;writeMs+=total-evidenced;maxMs=Math.Max(maxMs,total);profileCount++;
     if(DateTime.UtcNow.Ticks>=profileAt){

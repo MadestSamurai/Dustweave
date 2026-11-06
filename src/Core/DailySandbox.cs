@@ -118,7 +118,7 @@ public static partial class DailySandbox
         executable = Path.GetFullPath(executable);
         if (!File.Exists(executable) || !DailyApplication.IsExecutable(executable)) throw new InvalidOperationException("run.account_unavailable");
         string installation = Installation() ?? throw new InvalidOperationException("parallel.install_required");
-        SandboxProcessScope.RequireAvailable();
+        await DailySandboxStartup.EnsureAsync(token).ConfigureAwait(false);
         await ConfigurationGate.WaitAsync(token);
         try
         {
@@ -144,9 +144,8 @@ public static partial class DailySandbox
             }
             finally { foreach (var process in windows) process.Dispose(); }
             // A persistent UI must not inherit captured stdout/stderr handles from the launcher.
-            var start = new ProcessStartInfo(Path.Combine(installation, "Start.exe")) { UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden, WorkingDirectory = Directory.GetCurrentDirectory() };
-            start.Environment["DUSTWEAVE_PLUGIN"] = DailyPlugin.Current.Available ? DailyPlugin.Current.Root : "none";
-            foreach (string argument in new[] { "/box:" + box, "/silent", executable, "--view-account", account }) start.ArgumentList.Add(argument);
+            var start = CreateStartInfo(installation, "Start.exe", ["/box:" + box, "/silent", executable, "--view-account", account]);
+            DailyPlugin.PinEnvironment(start,DailyPlugin.Current);
             using var launcher = Process.Start(start) ?? throw new IOException("parallel.window_open");
             await launcher.WaitForExitAsync(token).WaitAsync(TimeSpan.FromSeconds(20), token);
             if (launcher.ExitCode != 0) throw new IOException("parallel.window_open");
@@ -159,7 +158,7 @@ public static partial class DailySandbox
         DailyLoadingExperimentLaunch.RequireIsolatedSession(captureSessionId);
         RequireNotRemoving(StateDirectory(account.AccountKey));
         string installation = Installation() ?? throw new InvalidOperationException("parallel.install_required");
-        SandboxProcessScope.RequireAvailable();
+        await DailySandboxStartup.EnsureAsync(token).ConfigureAwait(false);
         var vault = new SessionVault();
         var saved = SessionService.LatestSameAccount(vault.LoadFixedSlot(account.SlotNumber), vault.TryLoadFixedSlot);
         if (!account.Valid || DailyIdentity.MemberKey(SessionIdentity.GetMemberId(saved) ?? "") != account.AccountKey)
@@ -304,6 +303,21 @@ public static partial class DailySandbox
     internal static bool ShouldImportSession(DailySandboxBinding? binding, DateTimeOffset incomingUtc, bool complete, string current, string expected)
         => binding == null || !complete || current != expected || incomingUtc > binding.ImportedSessionUtc;
 
+    internal static ProcessStartInfo CreateStartInfo(string installation, string file, IEnumerable<string> arguments)
+    {
+        // Start.exe relays its working directory through /env:... and rejects
+        // values longer than 128 characters, including its quotes/separator.
+        // All owned helper/request paths are absolute. Use a stable short OS
+        // directory, not the host/package location (which may legitimately be long).
+        var start = new ProcessStartInfo(Path.GetFullPath(Path.Combine(installation, file)))
+        {
+            UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden,
+            WorkingDirectory = Environment.SystemDirectory
+        };
+        foreach (string argument in arguments) start.ArgumentList.Add(argument);
+        return start;
+    }
+
     internal static async Task<string> Run(string installation,string file,IEnumerable<string> args,CancellationToken token,TimeSpan? timeout=null)
     {
         string[] arguments = args.ToArray();
@@ -312,10 +326,10 @@ public static partial class DailySandbox
             token.ThrowIfCancellationRequested();
             return await Task.Run(() => SandboxConfiguration.Read(installation, section, setting), token).ConfigureAwait(false);
         }
-        var start=new ProcessStartInfo(Path.Combine(installation,file)){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden,WorkingDirectory=Directory.GetCurrentDirectory(),RedirectStandardOutput=true,RedirectStandardError=true};
+        var start=CreateStartInfo(installation,file,arguments);
+        start.RedirectStandardOutput=true;start.RedirectStandardError=true;
         // Pin the parent's immutable plugin version for isolated account workers too.
-        start.Environment["DUSTWEAVE_PLUGIN"]=DailyPlugin.Current.Available?DailyPlugin.Current.Root:"none";
-        foreach(var arg in arguments)start.ArgumentList.Add(arg);
+        DailyPlugin.PinEnvironment(start,DailyPlugin.Current);
         using var process=Process.Start(start)??throw new IOException("Sandboxie 未启动。");
         var output=process.StandardOutput.ReadToEndAsync(); var error=process.StandardError.ReadToEndAsync();
         try { await process.WaitForExitAsync(token).WaitAsync(timeout??TimeSpan.FromSeconds(20),token).ConfigureAwait(false); }

@@ -69,16 +69,15 @@ static class ManagedInputsCases
             cases.Add("reward cleanup distinguishes presentation, destination and refreshed state without replay: " + mode);
         }
     }
-    private static async Task CostumeTicketNotice(string root, List<string> cases)
+    private static async Task CancelOnlyNotice(string root, List<string> cases, string ui, string cancel, string confirm)
     {
-        const string ui = "CostumeSelectNoticePopupUI";
         foreach (string mode in new[] { "mail", "event", "resume", "opening", "disabled", "unknown", "stopped", "identity", "never-ready", "stuck" })
         {
-            using var h = new WorkflowHarness(Path.Combine(root, "costume-ticket-" + mode), []);
+            using var h = new WorkflowHarness(Path.Combine(root, ui + "-" + mode), []);
             string destination = mode == "event" ? "EventUI" : "MailUI";
             h.Page(destination);
-            var popup = HomeNavigationCases.Surface(ui, true, "_cancelBtn", 2);
-            popup["Targets"]!.AsArray().Add(O(("Id", 103), ("Field", "_okBtn"), ("Enabled", true), ("Route", "ui")));
+            var popup = HomeNavigationCases.Surface(ui, true, cancel, 2);
+            popup["Targets"]!.AsArray().Add(O(("Id", 103), ("Field", confirm), ("Enabled", true), ("Route", "ui")));
             if (mode is "opening" or "never-ready" or "stopped" or "identity") popup["InputReady"] = false;
             if (mode == "disabled") popup["Targets"]![0]!["Enabled"] = false;
             h.Frame["Surfaces"]!.AsArray().Add(popup);
@@ -113,15 +112,15 @@ static class ManagedInputsCases
             bool success = mode is "mail" or "event" or "resume" or "opening" or "disabled";
             if (success ? failure != null || cancellations != 1 || exits != (mode == "resume" ? 1 : 0)
                 : failure == null || cancellations != (mode == "stuck" ? 1 : 0) || exits != 0)
-                throw new Exception("Costume ticket shared recovery failed: " + mode, failure);
+                throw new Exception(ui + " shared recovery failed: " + mode, failure);
             if (h.Time > 75) throw new Exception("Ticket cancellation exceeded its bounded deadline");
-            cases.Add("costume ticket preserves inventory during reward cleanup and resumed input: " + mode);
+            cases.Add(ui + " preserves inventory during reward cleanup and resumed input: " + mode);
         }
-        foreach (string mode in new[] { "confirm", "back", "native", "operation", "pointer" })
+        foreach (string mode in new[] { "confirm", "back", "native", "operation", "pointer", "settings-cancel" })
         {
-            using var h = new WorkflowHarness(Path.Combine(root, "costume-ticket-reject-" + mode), []);
-            h.Page(ui, "_cancelBtn", "_okBtn");
-            var action = O(("ui", ui), ("field", mode == "confirm" ? "_okBtn" : "_cancelBtn"));
+            using var h = new WorkflowHarness(Path.Combine(root, ui + "-reject-" + mode), []);
+            h.Page(ui, cancel, confirm, "_buttonCancel");
+            var action = O(("ui", ui), ("field", mode == "confirm" ? confirm : mode == "settings-cancel" ? "_buttonCancel" : cancel));
             if (mode is "back" or "native") action[mode] = true;
             if (mode == "operation") action["operation"] = "story_advance";
             if (mode == "pointer") h.Frame["Surfaces"]![0]!["Targets"]![0]!["Route"] = "pointer";
@@ -129,7 +128,7 @@ static class ManagedInputsCases
             try { await h.Driver.SendObservedAsync(action); }
             catch (DailyStepException e) when (e.Kind == "rejected") { rejected = true; }
             if (!rejected || h.Box.Commands.Count != 0) throw new Exception("Unsafe ticket operation dispatched: " + mode);
-            cases.Add("costume ticket submission only allows native cancellation: " + mode);
+            cases.Add(ui + " submission only allows native dismissal: " + mode);
         }
     }
     private static async Task TacticsSeasonNotice(string root, List<string> cases)
@@ -376,7 +375,8 @@ static class ManagedInputsCases
     public static async Task Run(string output, List<string> cases)
     {
         await RewardCleanupState(output, cases);
-        await CostumeTicketNotice(output, cases);
+        await CancelOnlyNotice(output, cases, "CostumeSelectNoticePopupUI", "_cancelBtn", "_okBtn");
+        await CancelOnlyNotice(output, cases, "AutoMountPopupUI", "_objBackButton", "_buttonOk");
         await MailRecovery(output, cases);
         await ProtectedMail(output, cases);
         await OpeningTalentNotice(output, cases);

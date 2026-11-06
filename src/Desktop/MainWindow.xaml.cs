@@ -181,12 +181,13 @@ public partial class MainWindow : Window
     private ApostleToolWindow? apostleWindow;
     private SoulToolWindow? soulWindow;
     private string? ActiveToolId => soulWindow != null ? "soul" : apostleWindow != null ? "apostle-defense" : toolSession.Current?.ToolId;
-    private bool ToolOpen => soulWindow != null || apostleWindow != null || toolSession.Current != null;
+    private bool ToolOpen => soulWindow != null || apostleWindow != null || toolSession.Current != null || toolPluginSessions.Count > 0;
     private bool ToolConnecting => apostleWindow?.Panel.Connecting == true;
     private bool ToolRunning => !busy && parallelControl == null && DailyToolControl.IsAutomationOccupied(root);
     private bool Unavailable => onboardingOpen || busy || manualCacheChanging || maintenanceYielding || toolChanging || ToolRunning || UpdateRestarting || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true;
     private async Task OpenTool(string id)
     {
+        if (id.StartsWith("plugin:", StringComparison.Ordinal)) { await OpenPluginToolAsync(id[7..]); return; }
         if (smoke != null || busy || manualCacheChanging || maintenanceYielding || toolChanging || UpdateRestarting || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true) return;
         toolChanging = true; SetBusy(busy);
         try {
@@ -196,7 +197,7 @@ public partial class MainWindow : Window
             await PauseAutomaticMaintenanceAsync();
             if(finalClose || UpdateRestarting)return;
             using var activityLease=DailyToolControl.Acquire(root);
-            if(!await CloseToolWindowsAsync())return;
+            if(!await CloseToolWindowsAsync(includePlugins:false))return;
             if(id=="soul"){
                 var window=new SoulToolWindow(root,this);
                 soulWindow=window;window.ActivityChanged+=()=>{RefreshTools();SetBusy(busy);};
@@ -246,8 +247,9 @@ public partial class MainWindow : Window
         finally { toolChanging = false; RefreshTools(); SetBusy(busy); }
     }
     private string? toolMessage;
-    private async Task<bool> CloseToolWindowsAsync()
+    private async Task<bool> CloseToolWindowsAsync(bool includePlugins=true)
     {
+        if(includePlugins){foreach(var session in toolPluginSessions.Values) session.Dispose();toolPluginSessions.Clear();}
         if(soulWindow is {} soul){if(!await soul.CloseSafelyAsync())return false;}
         if(apostleWindow is { } window)
         {
@@ -681,7 +683,7 @@ public partial class MainWindow : Window
         if (ParallelBusy || parallelClosing)
         {
             e.Cancel=true;if(parallelClosing)return;parallelClosing=true;
-            try { await StopParallelForCloseAsync(); } finally { parallelClosing=false;finalClose=true;timer.Stop();Close(); }
+            try { await StopParallelForCloseAsync(); } finally { parallelClosing=false;ScheduleFinalClose(); }
             return;
         }
         if(toolChanging || pluginChanging){e.Cancel=true;return;}
@@ -691,7 +693,7 @@ public partial class MainWindow : Window
             WorkspaceTabs.SelectedItem = SettingsTab;
             return;
         }
-        if(ToolOpen){e.Cancel=true;toolChanging=true;try{if(await CloseToolWindowsAsync()){finalClose=true;timer.Stop();Close();}}finally{toolChanging=false;}return;}
+        if(ToolOpen){e.Cancel=true;toolChanging=true;try{if(await CloseToolWindowsAsync())ScheduleFinalClose();}finally{toolChanging=false;}return;}
         if (busy)
         {
             e.Cancel = true;
@@ -706,9 +708,7 @@ public partial class MainWindow : Window
                     await operation;
             }
             catch { }
-            finalClose = true;
-            timer.Stop();
-            Close();
+            ScheduleFinalClose();
         }
         else
         {
@@ -720,6 +720,15 @@ public partial class MainWindow : Window
             }
             catch { }
         }
+    }
+    private void ScheduleFinalClose()
+    {
+        if (finalClose) return;
+        finalClose = true;
+        timer.Stop();
+        // An awaited stop may already be complete (notably an idle plugin).
+        // Let WPF finish the cancelled Closing event before calling Close again.
+        Dispatcher.BeginInvoke(new Action(Close), DispatcherPriority.Normal);
     }
     public Task InspectAccountAsync(string accountKey) => OperateAsync(async () =>
     {
@@ -930,6 +939,12 @@ public partial class MainWindow : Window
         try
         {
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "window-close")
+            {
+                await CheckClosingForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status="passed", scope="window-close", realGameTouched=false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "localization")
             {
                 await CheckLanguagesForSmoke();

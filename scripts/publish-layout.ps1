@@ -4,6 +4,18 @@ function Complete-DustweaveLayout {
  param([string]$Root,[string]$Destination)
  $destinationRoot=[IO.Path]::GetFullPath($Destination).TrimEnd('\')
  if(!$destinationRoot.StartsWith((Join-Path ([IO.Path]::GetFullPath($Root)) 'artifacts')+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'Nested layout must remain under repository artifacts.'}
+ # A published executable alone is not a usable package. Check before moving
+ # anything so local packaging cannot silently omit the same runtime resources
+ # that the release pipeline supplies.
+ foreach($name in @('utility-host.json','data/trade-catalog.json','data/trade-drops.json','data/locations/locations/manifest.json')){
+  if(!(Test-Path -LiteralPath (Join-Path $destinationRoot $name) -PathType Leaf)){throw "Missing runtime package resource: $name"}
+ }
+ foreach($asset in @(@{source='assets/flows';target='flows'},@{source='assets/specs';target='connection/specs'})){
+  foreach($file in Get-ChildItem -LiteralPath (Join-Path $Root $asset.source) -File -Filter '*.json'){
+   $target=Join-Path $destinationRoot ($asset.target+'/'+$file.Name)
+   if(!(Test-Path -LiteralPath $target) -or (Get-FileHash -LiteralPath $target).Hash -ne (Get-FileHash -LiteralPath $file.FullName).Hash){throw "Missing or stale runtime package resource: $target"}
+  }
+ }
  $app=Join-Path $destinationRoot 'app'
  if(Test-Path -LiteralPath $app){throw 'Nested layout already exists.'}
  [IO.Directory]::CreateDirectory($app)|Out-Null

@@ -216,7 +216,7 @@ internal static class ConnectionAccessCases
             string path=Path.Combine(Path.GetTempPath(),key);int missing=0;
             try
             {
-                var channel=broker.GetMethod("Register")!.Invoke(null,new object[]{path,"fixture","snapshot.json","",true})!;
+                var channel=broker.GetMethod("Register")!.Invoke(null,new object[]{path,"fixture","snapshot.json|tool-inventory-request.json|tool-inventory-response.json|plugin-tool-request.json|plugin-tool-response.json","",true})!;
                 channel.GetType().GetMethod("Write")!.Invoke(channel,new object[]{"snapshot.json",new byte[]{42}});
                 var client=new BD2.LocalIpc.PipeClient(path,game.ProcessId,game.StartTicks);
                 for(int i=0;i<24;i++)
@@ -225,7 +225,22 @@ internal static class ConnectionAccessCases
                     await Task.Delay(5);
                     if(!DailyTransport.EndpointReady(game))missing++;
                 }
-                if(continuous)await CheckPreparedHandoff(broker,path,game,cases);
+                if(continuous)
+                {
+                    client.Open("fixture");
+                    foreach(var name in new[]{"tool-inventory-request.json","plugin-tool-request.json"})
+                    {
+                        client.Write(name,new byte[]{1,2,3});
+                        if(!(client.Read(name)??[]).SequenceEqual(new byte[]{1,2,3}))throw new Exception("Plugin request mailbox is not writable");
+                    }
+                    foreach(var name in new[]{"tool-inventory-response.json","plugin-tool-response.json"})
+                    {
+                        bool rejected=false;try{client.Write(name,new byte[]{99});}catch(IOException error)when(error.Message.Contains("read-only")){rejected=true;}
+                        if(!rejected)throw new Exception("Plugin response mailbox accepted a forged desktop receipt");
+                    }
+                    cases.Add("connection: actual broker permits both plugin requests and rejects forged responses");
+                    await CheckPreparedHandoff(broker,path,game,cases);
+                }
             }
             finally{(AppDomain.CurrentDomain.GetData(key+".stop") as Action)?.Invoke();}
             if(continuous ? missing!=0 : missing==0)throw new Exception("broker endpoint continuity: repaired="+continuous+", missing="+missing);

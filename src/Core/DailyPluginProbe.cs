@@ -26,11 +26,12 @@ public static class DailyPluginProbe
 
     public static async Task RunAsync(string executable, string dataRoot, DailyPluginInfo info, string? gameExecutable, CancellationToken token = default, TimeSpan? limit = null)
     {
-        string folder = Path.Combine(dataRoot, "extensions", "checks", Guid.NewGuid().ToString("N")); Directory.CreateDirectory(folder);
+        string folder = Path.Combine(Path.GetFullPath(dataRoot), "extensions", "checks", Guid.NewGuid().ToString("N")); Directory.CreateDirectory(folder);
         string report = Path.Combine(folder, "result.json");
-        var start = new ProcessStartInfo(executable) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = Directory.GetCurrentDirectory() };
-        start.ArgumentList.Add("--check-plugin"); start.ArgumentList.Add(report);
-        start.Environment["DUSTWEAVE_PLUGIN"] = info.Root;
+        var start = new ProcessStartInfo(info.IsTool && info.ToolApiVersion == 1 ? Path.Combine(info.Root, info.ToolExecutable) : executable) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = info.IsTool ? info.Root : Directory.GetCurrentDirectory() };
+        if(info.ToolApiVersion == 2) { start.ArgumentList.Add("--tool-plugin"); start.ArgumentList.Add(info.Root); start.ArgumentList.Add(info.Fingerprint); }
+        start.ArgumentList.Add(info.IsTool ? "--dustweave-probe" : "--check-plugin"); start.ArgumentList.Add(report);
+        DailyPlugin.PinEnvironment(start, info.IsTool ? new(false,"missing","","","",[]) : info);
         start.Environment.Remove(GameExecutableVariable);
         if (gameExecutable != null) start.Environment[GameExecutableVariable] = gameExecutable;
         // Reuse only content-keyed interface caches, in a root separate from live accounts/queues.
@@ -57,9 +58,31 @@ public static class DailyPluginProbe
                     ? "plugins.client_missing" : "plugins.probe_failed";
                 throw new IOException(code, new IOException($"{detail}\nExit code: {child.ExitCode}. Record: {report}"));
             }
-            if (!result.RootElement.TryGetProperty("info", out var checkedInfo) || !checkedInfo.TryGetProperty("Fingerprint", out var fingerprint) || fingerprint.GetString() != info.Fingerprint)
+            if (info.IsTool)
+            {
+                if (!result.RootElement.TryGetProperty("toolApiVersion", out var protocol) || protocol.GetInt32() != info.ToolApiVersion || DailyPlugin.Inspect(info.Root).Fingerprint != info.Fingerprint)
+                    throw new IOException("plugins.probe_failed");
+                if(info.HookSources.Length>0)await CheckToolHooksAsync(executable,folder,info,gameExecutable,token);
+            }
+            else if (!result.RootElement.TryGetProperty("info", out var checkedInfo) || !checkedInfo.TryGetProperty("Fingerprint", out var fingerprint) || fingerprint.GetString() != info.Fingerprint)
                 throw new IOException("plugins.probe_failed", new IOException($"Plugin check returned a different or missing package fingerprint. Record: {report}"));
         }
         catch (JsonException error) { throw new IOException("plugins.probe_failed", error); }
+    }
+    private static async Task CheckToolHooksAsync(string executable,string folder,DailyPluginInfo info,string? gameExecutable,CancellationToken token)
+    {
+        string report=Path.Combine(folder,"tool-hooks.json");
+        var start=new ProcessStartInfo(executable){UseShellExecute=false,CreateNoWindow=true};
+        start.ArgumentList.Add("--check-plugin");start.ArgumentList.Add(report);
+        DailyPlugin.PinEnvironment(start,info);
+        start.Environment["BD2_DAILY_DATA_ROOT"]=Path.Combine(folder,"hook-check-cache");
+        if(gameExecutable!=null)start.Environment[GameExecutableVariable]=gameExecutable;
+        using var process=Process.Start(start)??throw new IOException("plugins.probe_failed");
+        using var limit=CancellationTokenSource.CreateLinkedTokenSource(token);limit.CancelAfter(TimeSpan.FromSeconds(120));
+        try{await process.WaitForExitAsync(limit.Token);}
+        catch(OperationCanceledException){if(!process.HasExited)process.Kill(entireProcessTree:true);throw;}
+        using var result=JsonDocument.Parse(await File.ReadAllBytesAsync(report,token));
+        if(process.ExitCode!=0||result.RootElement.GetProperty("status").GetString()!="passed"||result.RootElement.GetProperty("info").GetProperty("Fingerprint").GetString()!=info.Fingerprint)
+            throw new IOException("plugins.probe_failed",new IOException(result.RootElement.ToString()));
     }
 }

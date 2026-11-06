@@ -62,6 +62,8 @@ public static partial class DailySandbox
         await ConfigurationGate.WaitAsync(token);
         try {
             string state=StateDirectory(account.AccountKey);RequireNotRemoving(state);
+            _=Installation()??throw new InvalidOperationException("parallel.install_required");
+            await DailySandboxStartup.EnsureAsync(token).ConfigureAwait(false);
             await DailySandboxRegistration.EnsureAsync(account.AccountKey,token);
             string game=GameLauncher.ResolveExecutable();
             var request=new DailySandboxRequest(BoxName(account.AccountKey),account.SlotNumber,account.AccountKey,account.Name,game,DateTimeOffset.UtcNow)

@@ -341,6 +341,8 @@ public sealed partial class DailyCommandDriver : IDisposable
             throw new DailyStepException("rejected", "日常流程只能取消退出游戏确认，不能确认退出。");
         if (ui == "CostumeSelectNoticePopupUI" && (field != "_cancelBtn" || Flag(action, "back") || Text(action, "operation").Length > 0 || Flag(action, "native")))
             throw new DailyStepException("rejected", "日常流程只能关闭服装选择券使用提示，选择券保留在背包供手动使用。");
+        if (ui == "AutoMountPopupUI" && (field != "_objBackButton" || Flag(action, "back") || Text(action, "operation").Length > 0 || Flag(action, "native")))
+            throw new DailyStepException("rejected", "Equipment recommendation recovery only dismisses the notice");
         if (ownedFrame != null && !DailyTradePreview.Matches(action, ownedFrame, before))
             throw new DailyStepException("rejected", "Owned confirmation changed before dispatch; no command sent");
         if (requiredFrame != null && !DailyEvidence.SameActor(before, requiredFrame))
@@ -368,6 +370,8 @@ public sealed partial class DailyCommandDriver : IDisposable
         }
         if (ui == "CostumeSelectNoticePopupUI" && route != "ui")
             throw new DailyStepException("rejected", "日常流程只能关闭服装选择券使用提示，选择券保留在背包供手动使用。");
+        if (ui == "AutoMountPopupUI" && route != "ui")
+            throw new DailyStepException("rejected", "Equipment recommendation recovery requires its native close button");
         string reason = Text(action, "reason");
         GuildGuard(action, observed, ref reason);
         var refreshed = await ReadBound();

@@ -45,7 +45,7 @@ public static class SandboxProcessScope
             }
             else (status, box) = SandboxDriverScope.Query(pid);
             if (status == unchecked((int)0xC000000B)) return ""; // STATUS_INVALID_CID: not sandboxed
-            if (status != 0) throw new IOException($"Sandboxie process query failed (0x{status:X8}).");
+            if (status != 0) throw new SandboxDriverQueryException(status);
             if (box.Length is < 1 or > 32 || box.Any(char.IsControl))
                 throw new IOException("Sandboxie returned an invalid process scope.");
             return box;
@@ -103,6 +103,10 @@ internal class SandboxScopeException : IOException
 {
     internal SandboxScopeException(Exception inner) : this("sandbox.unavailable", inner) { }
     protected SandboxScopeException(string message, Exception inner) : base(message, inner) { }
+}
+internal sealed class SandboxDriverQueryException(int status) : IOException($"Sandboxie process query failed (0x{status:X8}).")
+{
+    internal int Status { get; } = status;
 }
 internal sealed class SandboxScopeAccessException(int pid, Exception inner) : SandboxScopeException("connection.scope_permission", inner)
 {

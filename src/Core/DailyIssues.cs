@@ -7,13 +7,23 @@ public static class DailyIssues
         : error is DailyGameExitedException ? new("game-ended", "stopped")
         : error is OperationCanceledException ? new("cancelled", "stopped")
         : error.ToString().Contains("connection.scope_permission", StringComparison.Ordinal) ? new("scope-permission", "permission")
+        : SandboxIssue(error) is { } sandbox ? sandbox
         : error.Message.StartsWith("管理员连接组件通信中断", StringComparison.Ordinal) ? new("elevation-pipe", "connection") : Classify(error.GetBaseException().Message);
+    private static DailyIssue? SandboxIssue(Exception error)
+    {
+        for (Exception? current = error; current != null; current = current.InnerException)
+            if (current is Dustweave.Accounts.SandboxScopeException)
+                return Classify(current.Message);
+        return null;
+    }
     public static DailyIssue Classify(string raw)
     {
         string text = raw ?? "";
         bool Has(params string[] words) => words.Any(w => text.Contains(w, StringComparison.OrdinalIgnoreCase));
         if (Has("connection.scope_permission")) return new("scope-permission", "permission");
         if (Has("connection.scope_changed")) return new("identity-changed", "identity");
+        if (Has("sandbox.start_cancelled")) return new("cancelled", "stopped");
+        if (Has("sandbox.start_", "sandbox.unavailable")) return new("sandbox-unavailable", "connection");
         if (Has("connection.preparation_failed")) return new("preparation", "connection");
         if (Has("日常网络回执监听未恢复", "日常连接组件报告异常", "游戏观察数据未及时更新", "日常回执监听配置尚未生效", "尚未收到日常连接组件的数据")) return new("preparation", "connection");
         if (Has("已取消管理员连接授权")) return new("cancelled", "stopped");

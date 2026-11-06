@@ -111,7 +111,7 @@ internal static class DailyDialogs
         try { return window.ShowDialog(); }
         finally { if (focused is UIElement { IsVisible: true, IsEnabled: true } previous) previous.Focus(); }
     }
-    internal static Window Message(Window owner, string title, string text, bool confirmation, string? acceptKey = null, bool safeDefault = false)
+    internal static Window Message(Window owner, string title, string text, bool confirmation, string? acceptKey = null, bool safeDefault = false, Action<TextBlock,Button>? configure = null)
     {
         var dialog = new Window { Owner = owner, Title = title, Width = 520, MaxHeight = Math.Max(300, SystemParameters.WorkArea.Height - 64),
             SizeToContent = SizeToContent.Height, ResizeMode = ResizeMode.NoResize, WindowStartupLocation = WindowStartupLocation.CenterOwner };
@@ -126,7 +126,9 @@ internal static class DailyDialogs
         DailyLanguage.Current.Bind(accept, ContentControl.ContentProperty, acceptKey ?? (confirmation ? "common.confirm" : "updates.got_it"));
         accept.Click += (_, _) => dialog.DialogResult = true; actions.Children.Add(accept);
         DockPanel.SetDock(actions, Dock.Bottom); body.Children.Add(actions);
-        body.Children.Add(new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Content = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap } });
+        var message=new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap };
+        configure?.Invoke(message,accept);
+        body.Children.Add(new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Content = message });
         dialog.Content = body; Prepare(dialog); return dialog;
     }
     private sealed class Shade(UIElement owner) : Adorner(owner)

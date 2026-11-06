@@ -83,7 +83,7 @@ public static class DailyTools
         // use that host's pinned selection, not re-read a newer disk selection
         // and reject the daily module the still-running host just activated.
         var plugin = DailyPlugin.Current;
-        start.Environment["DUSTWEAVE_PLUGIN"] = plugin.Available ? plugin.Root : "none";
+        DailyPlugin.PinEnvironment(start,plugin);
         return start;
     }
     public static string EvidenceSpec(string directory, string name)

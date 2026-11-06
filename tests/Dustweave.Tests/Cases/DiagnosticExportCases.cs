@@ -4,6 +4,27 @@ using System.Text.Json.Nodes;
 using Dustweave;
 internal static class DiagnosticExportCases
 {
+    static async Task ToolPluginEvidence(string output,Action<bool,string> check)
+    {
+        string root=Path.Combine(output,"tool-plugin-evidence"),id=Guid.NewGuid().ToString("N");
+        string relative="tool-plugins/sessions/"+id,session=Path.Combine(root,relative);
+        Directory.CreateDirectory(session);
+        foreach(string name in new[]{"tool-error.json","tool-input.json","tool-failed-input.json","tool-result.json","adaptation-result.json"})
+            File.WriteAllText(Path.Combine(session,name),"{\"stage\":\"simulation\",\"error\":\"Unknown actor in rotation: summon:2:5034:0\",\"accessToken\":\"do-not-export\"}");
+        foreach(string name in new[]{"request.json","response.json","appearance.json","unrelated.json"})File.WriteAllText(Path.Combine(session,name),"{\"private\":true}");
+        string invalid=Path.Combine(root,"tool-plugins/sessions/not-a-session");Directory.CreateDirectory(invalid);File.WriteAllText(Path.Combine(invalid,"tool-error.json"),"{}");
+        var result=await DailyDiagnosticExport.CreateAsync(root,Path.Combine(output,"tool-plugin-evidence.zip"),"","fixture");
+        using var archive=ZipFile.OpenRead(result.Path);
+        check(result.Files==5&&archive.GetEntry("logs/main/"+relative+"/tool-failed-input.json")!=null,"tool calculation error, matching inputs and results survive export after the exchange closes");
+        using(var reader=new StreamReader(archive.GetEntry("logs/main/"+relative+"/tool-error.json")!.Open()))
+        {
+            string text=reader.ReadToEnd();check(text.Contains("summon:2:5034:0")&&text.Contains("simulation")&&!text.Contains("do-not-export"),"tool evidence retains the actual failure while applying ordinary credential redaction");
+        }
+        check(!DailyDiagnosticExport.Allowed(relative+"/request.json")&&!DailyDiagnosticExport.Allowed(relative+"/response.json")&&!DailyDiagnosticExport.Allowed("tool-plugins/sessions/not-a-session/tool-error.json")
+            &&!DailyDiagnosticExport.Allowed(relative+"/nested/tool-error.json"),"tool evidence allowlist does not expose raw IPC or arbitrary worker files");
+        using var manifest=new StreamReader(archive.GetEntry("manifest.json")!.Open());
+        check(JsonNode.Parse(manifest.ReadToEnd())!["coverage"]![0]!["toolPlugins"]!.GetValue<bool>(),"export coverage indicates whether tool evidence was included");
+    }
     static async Task LocalizationEvidence(string output, Action<bool, string> check)
     {
         string resources = Path.Combine(TestPaths.SourceRoot, "src", "Desktop", "Localization");
@@ -102,6 +123,7 @@ internal static class DiagnosticExportCases
         void Check(bool ok,string label){if(!ok)throw new Exception(label);cases.Add("diagnostic-export: "+label);}
         await LocalizationEvidence(output, Check);
         await PerformanceHistory(output, Check);
+        await ToolPluginEvidence(output,Check);
         string root=Path.Combine(output,"diagnostic-source");Directory.CreateDirectory(Path.Combine(root,"live","diagnostics"));
         File.WriteAllText(Path.Combine(root,"ui-operation-error.json"),"{\"error\":\"suite.owner-exited\",\"accessToken\":\"secret-value\",\"nested\":{\"password\":\"pw-value\"}}");
         File.WriteAllText(Path.Combine(root,"live","diagnostics","timeline.jsonl"),"{\"kind\":\"start\",\"session_token\":\"token-value\"}\n{\"bad\":");
@@ -151,7 +173,7 @@ internal static class DiagnosticExportCases
         using(var cancelled=new CancellationTokenSource()){cancelled.Cancel();try{await DailyDiagnosticExport.CreateAsync(root,Path.Combine(output,"cancelled.zip"),"","1.1.0-beta",cancelled.Token);}catch(OperationCanceledException){}Check(!File.Exists(Path.Combine(output,"cancelled.zip")),"cancelled export leaves no archive");}
         Check(!DailyDiagnosticExport.Allowed("../accounts.json")&&!DailyDiagnosticExport.Allowed("tools/password.json")&&!DailyDiagnosticExport.Allowed("tools/runtime.dll"),"traversal credentials and binaries are excluded");
         string pluginRoot = Path.Combine(output, "plugin-diagnostic-source"), checkPath = "extensions/checks/" + Guid.NewGuid().ToString("N");
-        string[] pluginEvidence = ["extensions/last-error.json", checkPath + "/result.json", checkPath + "/timeout.json", checkPath + "/process.json", checkPath + "/client.json", checkPath + "/connection/bindings.json", checkPath + "/connection/plugin-bindings.json"];
+        string[] pluginEvidence = ["extensions/last-error.json", checkPath + "/result.json", checkPath + "/timeout.json", checkPath + "/process.json", checkPath + "/client.json", checkPath + "/connection/bindings.json", checkPath + "/connection/plugin-bindings.json",checkPath+"/connection/plugin-bindings-example.daily.json"];
         foreach (string path in pluginEvidence) DailyJson.Write(Path.Combine(pluginRoot, path), new { error = "plugin interface mismatch", accessToken = "plugin-secret" });
         foreach (string path in new[] { "extensions/selection.json", "extensions/versions/fixture/plugin.json", "extensions/check-cache/result.json", checkPath + "/connection/bridge.dll", checkPath + "/connection/source.cs", checkPath + "/unknown.json" })
         {

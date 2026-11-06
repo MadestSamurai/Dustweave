@@ -14,6 +14,9 @@ internal static class DailySandboxRegistration
         string state = DailySandbox.StateDirectory(account);
         if (!Directory.Exists(state)) return null;
         string installation = DailySandbox.Installation() ?? throw new InvalidOperationException("无法找到 Sandboxie，尚未核对隔离空间。");
+        // The driver owns configuration reads. Restore it before an unavailable
+        // configuration can be mistaken for a missing/renamed account binding.
+        await DailySandboxStartup.EnsureAsync(token).ConfigureAwait(false);
         string box = DailySandbox.BoxName(account);
         token.ThrowIfCancellationRequested();
         string actual = await Task.Run(()=>SandboxConfiguration.ReadRegisteredRoot(installation,box),token).ConfigureAwait(false);

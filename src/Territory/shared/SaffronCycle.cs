@@ -12,6 +12,7 @@ namespace BD2Territory
   public int PotatoRounds{get;set;}public int PotatoRoundLimit{get;set;}
   public bool PotatoRoundPlanted{get;set;}public bool Filling{get;set;}
   public string WorkState{get;set;}="";
+  public SaffronPreparation Preparation{get;set;}
  }
  public sealed class SaffronStatus
  {
@@ -21,6 +22,17 @@ namespace BD2Territory
   public long ServerNow{get;set;}public long WaitUntil{get;set;}
   public int EmptyFields{get;set;}public int PotatoFields{get;set;}public int PotatoRoundLimit{get;set;}
   public int GatheredResources{get;set;}public int SkippedResources{get;set;}
+  public SaffronPreparation Preparation{get;set;}
+ }
+ public sealed class SaffronPreparation
+ {
+  public int Fields{get;set;}public int HarvestFields{get;set;}public int RemainingPotatoRounds{get;set;}
+  public int SaffronPrice{get;set;}public int PotatoPrice{get;set;}
+  public long Currency{get;set;}public long FoodPurchaseCost{get;set;}
+  public long ReplantCost{get;set;}public long PotatoCost{get;set;}public long RequiredCurrency{get;set;}
+  public bool Mature{get;set;}public bool Positioned{get;set;}public bool Slots{get;set;}public bool Stacks{get;set;}
+  public double AvailableSeconds{get;set;}public double HarvestSeconds{get;set;}
+  public string Reason{get;set;}="";
  }
  public sealed class SaffronFoodRecipe
  {
@@ -66,6 +78,22 @@ namespace BD2Territory
   }
   public static bool CanBuff(int count,bool allMature,bool positioned,bool capacity,bool affordable,double secondsAvailable)
    =>count>0&&allMature&&positioned&&capacity&&affordable&&HarvestSeconds(count)<secondsAvailable;
+  // Fund the selected remaining rounds plus the final replant, at current
+  // table prices. Do not reserve an unexplained fixed amount per field or
+  // spend expected future sales before they have actually been received.
+  public static SaffronPreparation CheckPreparation(SaffronPreparation p)
+  {
+   if(p.Fields<0||p.HarvestFields<0||p.HarvestFields>p.Fields||p.RemainingPotatoRounds<0||p.RemainingPotatoRounds>3||p.SaffronPrice<0||p.PotatoPrice<0||p.Currency<0||p.FoodPurchaseCost<0)
+    throw new ArgumentException("Invalid saffron preparation inputs");
+   p.ReplantCost=checked((long)p.Fields*p.SaffronPrice);
+   p.PotatoCost=checked((long)p.Fields*p.RemainingPotatoRounds*p.PotatoPrice);
+   p.RequiredCurrency=checked(p.ReplantCost+p.PotatoCost+p.FoodPurchaseCost);
+   p.HarvestSeconds=HarvestSeconds(p.HarvestFields);
+   p.Reason=p.HarvestFields==0||!p.Mature?"saffron.prepare.crops":!p.Positioned?"saffron.prepare.position":
+    p.Currency<p.RequiredCurrency?"saffron.prepare.funds":!p.Slots?"saffron.prepare.slots":!p.Stacks?"saffron.prepare.stacks":
+    !(p.AvailableSeconds>p.HarvestSeconds)?"saffron.prepare.time":"";
+   return p;
+  }
   public static long SellCount(long owned)=>Math.Max(0,owned-1);
   public static SaleLine[] PremiumSales(SaleStock[] stocks,IDictionary<int,int> saffronGrades)
    =>stocks.Where(x=>x.Count>0&&x.Eligible&&!x.Locked&&saffronGrades.ContainsKey(x.Item)&&(saffronGrades[x.Item]==2||saffronGrades[x.Item]==3))

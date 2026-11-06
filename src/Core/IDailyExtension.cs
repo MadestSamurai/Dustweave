@@ -18,8 +18,9 @@ public static class DailyExtensionLoader
 {
     public static IDailyExtension? Load(DailyPluginInfo info)
     {
-        if (!info.Available)
+        if (!info.Available || info.Selections.Length==0)
             return null;
+        if(info.Members.Length>0)return new CombinedExtension(info.Selections.Select(p=>(Info:p,Extension:Load(p)!)).ToArray());
         // Recheck the complete manifest immediately before loading managed and native code.
         var verified = DailyPlugin.Inspect(info.Root);
         if (!verified.Available || verified.Fingerprint != info.Fingerprint)
@@ -30,6 +31,15 @@ public static class DailyExtensionLoader
         if (Activator.CreateInstance(type, info.Root) is not IDailyExtension extension || extension.ApiVersion != DailyPlugin.ApiVersion)
             throw new StageHostException("adapter", "插件接口与主程序不一致。");
         return extension;
+    }
+    private sealed class CombinedExtension((DailyPluginInfo Info,IDailyExtension Extension)[] items) : IDailyExtension
+    {
+        public int ApiVersion=>DailyPlugin.ApiVersion;
+        public DailyBusinessProof[] ExtendProofs(DailyBusinessProof[] current)
+        { foreach(var item in items)current=item.Extension.ExtendProofs(current);return current; }
+        private IDailyExtension For(string stage)=>items.Single(x=>x.Info.Supports(stage)).Extension;
+        public Task<JsonObject> ExecuteAsync(string stage,DailyWorkflow workflow)=>For(stage).ExecuteAsync(stage,workflow);
+        public bool CanResume(string root,string stage,DailyStageFrame frame)=>For(stage).CanResume(root,stage,frame);
     }
     // The API currently uses host Core types. Share host contracts, isolate private dependencies.
     // This is a dependency boundary, not a security sandbox or a native crash boundary.

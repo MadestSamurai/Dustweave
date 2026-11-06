@@ -1,4 +1,34 @@
 {
+  "message.saffron.prepare.funds": {
+    "zh-CN": "领地积分不足以支付剩余土豆轮次、补种藏红花及缺少的增产料理，未使用新料理；补足积分或减少土豆轮数后可重新执行。",
+    "zh-TW": "領地積分不足以支付剩餘馬鈴薯輪次、補種藏紅花及缺少的增產料理，未使用新料理；補足積分或減少馬鈴薯輪數後可重新執行。",
+    "en-US": "Not enough territory points for the remaining potato rounds, saffron replanting and missing yield food. No new food was used. Add points or reduce the potato rounds, then run again."
+  },
+  "message.saffron.prepare.slots": {
+    "zh-CN": "领地背包空格不足，未使用新料理；整理领地背包后可重新执行。",
+    "zh-TW": "領地背包空格不足，未使用新料理；整理領地背包後可重新執行。",
+    "en-US": "Not enough free territory inventory slots. No new food was used. Free up slots, then run again."
+  },
+  "message.saffron.prepare.stacks": {
+    "zh-CN": "藏红花库存接近堆叠上限，未使用新料理；腾出对应原料容量后可重新执行。",
+    "zh-TW": "藏紅花庫存接近堆疊上限，未使用新料理；騰出對應原料容量後可重新執行。",
+    "en-US": "Saffron stock is too close to its stack limit. No new food was used. Free up room in the affected ingredient stacks, then run again."
+  },
+  "message.saffron.prepare.time": {
+    "zh-CN": "现有增产效果剩余时间不足以收完藏红花，未使用新料理；效果结束后可重新执行。",
+    "zh-TW": "現有增產效果剩餘時間不足以收完藏紅花，未使用新料理；效果結束後可重新執行。",
+    "en-US": "The active yield buffs have too little time left to harvest all saffron. No new food was used. Run again after the effects expire."
+  },
+  "message.saffron.prepare.crops": {
+    "zh-CN": "藏红花未全部成熟或已无待收割作物，未使用新料理；成熟后可重新执行。",
+    "zh-TW": "藏紅花尚未全部成熟或已無待收割作物，未使用新料理；成熟後可重新執行。",
+    "en-US": "Saffron is not fully ripe or no harvest remains. No new food was used. Run again when the crops are ready."
+  },
+  "message.saffron.prepare.position": {
+    "zh-CN": "尚未到达藏红花收割位置，未使用新料理；待游戏移动恢复后可重新执行。",
+    "zh-TW": "尚未到達藏紅花收割位置，未使用新料理；待遊戲移動恢復後可重新執行。",
+    "en-US": "The saffron harvest position has not been reached. No new food was used. Run again when movement is available."
+  },
   "message.sandbox.repair.required": {
     "zh-CN": "无法确认此账号原沙盒的绑定，已保留原数据。请在「账号管理」中选择此账号，打开「管理沙盒」检查绑定。",
     "zh-TW": "無法確認此帳號原沙盒的綁定，已保留原資料。請在「帳號管理」中選擇此帳號，開啟「管理沙盒」檢查綁定。",
@@ -5288,6 +5318,31 @@
     "zh-CN": "活动战斗预设状态已变化，尚未开始战斗。请继续以重新读取槽位。",
     "zh-TW": "活動戰鬥預設狀態已變化，尚未開始戰鬥。請繼續以重新讀取欄位。",
     "en-US": "The event preset state changed; no battle was started. Resume to read the slot again."
+  },
+  "message.sandbox.start_failed": {
+    "zh-CN": "已尝试启动 Sandboxie，但服务或驱动仍不可用。请打开 Sandboxie-Plus 查看错误，恢复后重试；账号和沙盒数据已保留。",
+    "zh-TW": "已嘗試啟動 Sandboxie，但服務或驅動程式仍無法使用。請開啟 Sandboxie-Plus 查看錯誤，恢復後重試；帳號和沙盒資料已保留。",
+    "en-US": "Sandboxie startup was attempted, but its service or driver is still unavailable. Open Sandboxie-Plus to check the error, then retry after recovery. Your accounts and sandbox data are preserved."
+  },
+  "message.sandbox.start_timeout": {
+    "zh-CN": "等待 Sandboxie 服务或驱动启动超时。请确认 Windows 授权提示及 Sandboxie 状态，然后重试；账号和沙盒数据已保留。",
+    "zh-TW": "等待 Sandboxie 服務或驅動程式啟動逾時。請確認 Windows 授權提示及 Sandboxie 狀態，再重試；帳號和沙盒資料已保留。",
+    "en-US": "Sandboxie service or driver startup timed out. Check the Windows permission prompt and Sandboxie status, then retry. Your accounts and sandbox data are preserved."
+  },
+  "message.sandbox.start_cancelled": {
+    "zh-CN": "已取消启动 Sandboxie 所需的管理员授权，本次未启动游戏。重新点击启动并允许 Windows 授权即可重试。",
+    "zh-TW": "已取消啟動 Sandboxie 所需的系統管理員授權，本次未啟動遊戲。再次點擊啟動並允許 Windows 授權即可重試。",
+    "en-US": "Administrator permission to start Sandboxie was cancelled; the game was not launched. Start again and allow the Windows permission request to retry."
+  },
+  "message.sandbox.start_missing": {
+    "zh-CN": "Sandboxie 服务或驱动尚未安装。请先打开 Sandboxie-Plus 完成初始化，再返回重试；无需删除账号或沙盒。",
+    "zh-TW": "Sandboxie 服務或驅動程式尚未安裝。請先開啟 Sandboxie-Plus 完成初始化，再返回重試；無須刪除帳號或沙盒。",
+    "en-US": "The Sandboxie service or driver is not installed. Open Sandboxie-Plus to complete setup, then retry. You do not need to delete any account or sandbox."
+  },
+  "message.sandbox.start_disabled": {
+    "zh-CN": "Sandboxie 服务或驱动已被禁用，自动启动未成功。请在 Windows 服务或 Sandboxie-Plus 中恢复启用后重试；无需删除账号或沙盒。",
+    "zh-TW": "Sandboxie 服務或驅動程式已被停用，自動啟動未成功。請在 Windows 服務或 Sandboxie-Plus 中重新啟用後重試；無須刪除帳號或沙盒。",
+    "en-US": "The Sandboxie service or driver is disabled, so automatic startup failed. Re-enable it in Windows Services or Sandboxie-Plus and retry. You do not need to delete any account or sandbox."
   },
   "message.event_preset_session_changed": {
     "zh-CN": "游戏账号或连接已变化，未替换阵容。请连接正确账号后继续。",

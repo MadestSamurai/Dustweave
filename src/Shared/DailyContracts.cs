@@ -10,7 +10,7 @@ namespace BD2Daily
 {
     public static class DailyIdentity
     {
-        public const string LiveEntries="snapshot.json|runtime.json|lease.json|startup-permit.json|guild-command.json";
+        public const string LiveEntries="snapshot.json|runtime.json|lease.json|startup-permit.json|guild-command.json|tool-inventory-request.json|tool-inventory-response.json";
         public const string RuntimeName="BD2Daily.Runtime4";
         public const string Version="0.7.27";
         public static string DataRoot { get { return Environment.GetEnvironmentVariable("BD2_DAILY_DATA_ROOT") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BD2DailyAssistant"); } }

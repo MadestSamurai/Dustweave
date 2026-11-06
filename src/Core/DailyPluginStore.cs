@@ -5,7 +5,12 @@ using System.Text.Json;
 namespace Dustweave;
 
 public sealed record DailyInstalledPlugin(string Id, string Version, string Fingerprint, DateTimeOffset InstalledUtc);
-public sealed record DailyPluginSelection(int Schema, string? Active, string? Previous, DailyInstalledPlugin[] Installed, bool OverrideLocal = true);
+public sealed record DailyPluginSelection(int Schema, string? Active, string? Previous, DailyInstalledPlugin[] Installed, bool OverrideLocal = true)
+{
+    public string[]? Enabled { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string[] ActiveFingerprints => Enabled ?? (Active is {} active ? [active] : []);
+}
 public sealed class DailyPluginPackage : IDisposable
 {
     public DailyPluginInfo Info { get; }
@@ -35,6 +40,7 @@ public sealed class DailyPluginStore
             state.Installed.Select(x => x.Fingerprint).Distinct().Count() != state.Installed.Length ||
             new[] { state.Active, state.Previous }.Any(x => x != null && !state.Installed.Any(p => p.Fingerprint == x)))
             throw new InvalidDataException("plugins.invalid_state");
+        if(state.ActiveFingerprints.Distinct().Count()!=state.ActiveFingerprints.Length || state.ActiveFingerprints.Any(h=>!state.Installed.Any(p=>p.Fingerprint==h)) || state.Installed.Where(p=>state.ActiveFingerprints.Contains(p.Fingerprint)).GroupBy(p=>p.Id).Any(g=>g.Count()>1))throw new InvalidDataException("plugins.invalid_state");
         return state;
     }
     public string SelectedRoot()
@@ -144,23 +150,34 @@ public sealed class DailyPluginStore
         var record = before.Installed.SingleOrDefault(x => x.Fingerprint == fingerprint) ?? throw new InvalidDataException("plugins.invalid_state");
         var info = await Task.Run(() => Inspect(record), token);
         if (!info.Available) throw new InvalidDataException("plugins." + info.State);
-        // Probe in a short-lived child process, never in the UI or in the game.
-        await probe(info, token); token.ThrowIfCancellationRequested();
+        var others = before.ActiveFingerprints.Where(hash=>hash!=fingerprint).Select(hash=>before.Installed.Single(x=>x.Fingerprint==hash)).Where(x=>x.Id!=record.Id).ToArray();
+        var selected = others.Select(p=>Inspect(p)).Where(p=>p.Available).Append(info).ToArray();
+        if(!info.IsTool && selected.SelectMany(p=>p.Capabilities??[]).GroupBy(c=>c,StringComparer.Ordinal).Any(g=>g.Count()>1)) throw new InvalidDataException("plugins.task_conflict");
+        // Probe the combined module before changing selections; names/dependencies may collide.
+        await probe(info.IsTool ? info : DailyPlugin.Combine(selected), token); token.ThrowIfCancellationRequested();
         var verified = await Task.Run(() => Inspect(record), token);
         using var guard = Lock();
         var state = Read();
-        if (!state.Installed.Contains(record) || state.Active != before.Active || !verified.Available) throw new InvalidDataException("plugins.changed");
-        if (state.Active != fingerprint) Save(state with { Active = fingerprint, Previous = state.Active, OverrideLocal = true });
+        if (!state.Installed.Contains(record) || !state.ActiveFingerprints.SequenceEqual(before.ActiveFingerprints) || !verified.Available) throw new InvalidDataException("plugins.changed");
+        if (!state.ActiveFingerprints.Contains(fingerprint)) Save(state with { Active = fingerprint, Previous = state.Installed.FirstOrDefault(x=>x.Id==record.Id&&state.ActiveFingerprints.Contains(x.Fingerprint))?.Fingerprint ?? state.Active, OverrideLocal = true, Enabled = others.Select(x=>x.Fingerprint).Append(fingerprint).ToArray() });
     }
     public void Disable()
     {
         using var guard = Lock(); var state = Read();
-        Save(state with { Active = null, Previous = state.Active ?? state.Previous, OverrideLocal = true });
+        Save(state with { Active = null, Previous = state.Active ?? state.Previous, OverrideLocal = true, Enabled = [] });
+    }
+    public void Disable(string fingerprint)
+    {
+        using var guard=Lock();var state=Read();
+        if(!state.Installed.Any(p=>p.Fingerprint==fingerprint))throw new InvalidDataException("plugins.invalid_state");
+        var enabled=state.ActiveFingerprints.Where(h=>h!=fingerprint).ToArray();
+        Save(state with {Active=enabled.LastOrDefault(),Previous=fingerprint,Enabled=enabled,OverrideLocal=true});
     }
     public void Remove(string fingerprint)
     {
         using var guard = Lock(); var state = Read();
-        Save(state with { Installed = state.Installed.Where(x => x.Fingerprint != fingerprint).ToArray(), Active = state.Active == fingerprint ? null : state.Active, Previous = state.Previous == fingerprint ? null : state.Previous });
+        var enabled=state.ActiveFingerprints.Where(h=>h!=fingerprint).ToArray();
+        Save(state with { Installed = state.Installed.Where(x => x.Fingerprint != fingerprint).ToArray(), Active = enabled.LastOrDefault(), Enabled=enabled, Previous = state.Previous == fingerprint ? null : state.Previous });
         // Payload stays until an explicit offline cleanup: running helpers may still use it.
     }
     private FileStream Lock()

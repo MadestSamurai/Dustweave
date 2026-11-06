@@ -301,13 +301,21 @@ public static class DailyNavigationDecision
     public static JsonObject? Notice(JsonObject f, DailyNavigationPolicy p, out JsonObject? surface)
     {
         var types = Types(f);
-        surface = Rows(f).Where(r => (p.SafeDismiss.Contains(Text(r, "Type")) || Suppressible.Contains(Text(r, "Type")) || Text(r, "Type") == "GameQuitPopupUI") && (Text(r, "Type") != "EventPopupUI" || types.Contains("MenuUI"))).OrderByDescending(Order).FirstOrDefault();
+        surface = Rows(f).Where(r => (p.SafeDismiss.Contains(Text(r, "Type")) || Suppressible.Contains(Text(r, "Type")) || Text(r, "Type") == "GameQuitPopupUI") && (Text(r, "Type") != "EventPopupUI" || types.Contains("MenuUI"))
+            && (Text(r, "Type") != "AutoMountPopupUI" || Popup(r))).OrderByDescending(Order).FirstOrDefault();
         if (surface == null || Blockers(f, Text(surface, "Type"), p).Length > 0)
         {
             surface = null;
             return null;
         }
         string ui = Text(surface, "Type");
+        // AutoMount also offers costume changes. Its Cancel branch can open a
+        // second confirmation that changes recommendation preferences; the
+        // explicit close button only starts the native dismissal animation.
+        if (ui == "AutoMountPopupUI")
+            return ReadyInput(surface, false) && Targets(surface).Count(t => Text(t, "Field") == "_objBackButton" && Enabled(t)) == 1
+                && Targets(surface).Any(t => Text(t, "Field") == "_objBackButton" && Enabled(t) && Text(t, "Route") == "ui")
+                ? Click(ui, "_objBackButton", "Dismiss equipment recommendation without applying it") : null;
         return Rows(f).Count(r => Text(r, "Type") == ui) == 1 && ReadyInput(surface) ? NoticeAction(surface) : null;
     }
     private static JsonObject? NoticeAction(JsonObject surface)
@@ -361,6 +369,8 @@ public static class DailyNavigationDecision
         JsonObject One(string name) => rows.First(r => Text(r, "Type") == name);
         if (types.Contains("CostumeSelectNoticePopupUI"))
             return Notice(f, p, out _);
+        if (rows.Any(r => Text(r, "Type") == "AutoMountPopupUI" && Popup(r)) && Blockers(f, "AutoMountPopupUI", p).Length == 0)
+            return Notice(f, p, out _);
         if (types.Contains("QuickMenuUI"))
         {
             if (Blockers(f, "QuickMenuUI", p).Length > 0)
@@ -402,7 +412,9 @@ public static class DailyNavigationDecision
             throw Fault("Event popup is outside the login menu; leave it for its owning task");
         if (unknown.Length > 0)
             throw Fault("Unrecognized popup while preparing menu: " + string.Join(", ", unknown.Select(r => Text(r, "Type"))));
-        var dismiss = rows.Where(r => p.SafeDismiss.Contains(Text(r, "Type"))).OrderByDescending(Order).FirstOrDefault();
+        // AutoMount is handled above by its explicit close button; never fall
+        // back to generic Back, including when the suggestion is nonmodal.
+        var dismiss = rows.Where(r => p.SafeDismiss.Contains(Text(r, "Type")) && Text(r, "Type") != "AutoMountPopupUI").OrderByDescending(Order).FirstOrDefault();
         if (dismiss != null)
         {
             string name = Text(dismiss, "Type");

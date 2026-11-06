@@ -165,12 +165,19 @@ try {
   }
   var plugin=DailyPlugin.Current;
   using var resolution=new LiveClientBindings.ResolutionContext();
-  if(plugin.BindingContract.Length!=0){
+  if(plugin.HookMembers.Any(p=>p.BindingContract.Length!=0)){
    var original=sources.ToArray();
-   using(var resource=DustweaveSharedResources.Open(assembly,"Live.BindingContract.json")!)
-    sources=LiveClientBindings.Adapt(managed,original.Where(t=>!t.FilePath.StartsWith("Plugin.",StringComparison.Ordinal)),JsonSerializer.Deserialize<LiveBindingContract>(resource)!,Path.Combine(output,"bindings.json"),resolution);
-   var contract=JsonSerializer.Deserialize<LiveBindingContract>(File.ReadAllBytes(Path.Combine(plugin.Root,plugin.BindingContract)))!;
-   sources=sources.Concat(LiveClientBindings.Adapt(managed,original.Where(t=>t.FilePath.StartsWith("Plugin.",StringComparison.Ordinal)),contract,Path.Combine(output,"plugin-bindings.json"),resolution));
+    LiveBindingContract baseContract;
+    using(var resource=DustweaveSharedResources.Open(assembly,"Live.BindingContract.json")!)
+     baseContract=JsonSerializer.Deserialize<LiveBindingContract>(resource)!;
+    sources=LiveClientBindings.Adapt(managed,original.Where(t=>!t.FilePath.StartsWith("Plugin.",StringComparison.Ordinal)),baseContract,Path.Combine(output,"bindings.json"),resolution);
+   int offset=0;
+   foreach(var member in plugin.HookMembers){
+    var trees=original.Where(t=>t.FilePath.StartsWith("Plugin.",StringComparison.Ordinal)).Skip(offset).Take(member.HookSources.Length).ToArray();offset+=member.HookSources.Length;
+     var contract=member.BindingContract.Length==0 ? baseContract : JsonSerializer.Deserialize<LiveBindingContract>(File.ReadAllBytes(Path.Combine(member.Root,member.BindingContract)))!;
+     var report=plugin.HookMembers.Length==1 ? "plugin-bindings.json" : "plugin-bindings-"+member.Id+".json";
+     sources=sources.Concat(LiveClientBindings.Adapt(managed,trees,contract,Path.Combine(output,report),resolution));
+   }
   }else using(var resource=DustweaveSharedResources.Open(assembly,"Live.BindingContract.json")!)
    sources=LiveClientBindings.Adapt(managed,sources,JsonSerializer.Deserialize<LiveBindingContract>(resource)!,Path.Combine(output,"bindings.json"),resolution);
   var refs=new List<MetadataReference>();foreach(var file in Directory.EnumerateFiles(managed,"*.dll")){cancellation.ThrowIfCancellationRequested();try{refs.Add(MetadataReference.CreateFromFile(file));}catch(BadImageFormatException){}}

@@ -63,6 +63,23 @@ static class SaffronCases
         Check(SaffronCycle.CanBuff(100,true,true,true,true,291.715),"100 ripe fields with 292 seconds remaining are not rejected by a redundant 88-second survey budget");
         Check(!SaffronCycle.CanBuff(100,true,true,true,true,220),"insufficient remaining food time still prevents consuming new food");
         Check(!SaffronCycle.CanBuff(100,true,true,true,true,double.NaN),"invalid food time cannot authorize consumption");
+        SaffronPreparation Prepare(long currency=10329,int rounds=2,int potatoPrice=1,long food=0,bool slots=true,bool stacks=true,double seconds=580)
+            =>SaffronCycle.CheckPreparation(new(){Fields=100,HarvestFields=100,RemainingPotatoRounds=rounds,SaffronPrice=100,PotatoPrice=potatoPrice,
+                Currency=currency,FoodPurchaseCost=food,Mature=true,Positioned=true,Slots=slots,Stacks=stacks,AvailableSeconds=seconds});
+        var ready=Prepare();
+        Check(ready.Reason==""&&ready.RequiredCurrency==10200&&ready.ReplantCost==10000&&ready.PotatoCost==200,
+            "100 fields with 10329 points and existing food can fund two potato rounds and saffron replant; no fixed 1000-point surcharge");
+        foreach(int rounds in new[]{0,1,2,3})Check(Prepare(rounds:rounds).RequiredCurrency==10000+100*rounds,"reserve follows remaining chosen potato rounds: "+rounds);
+        Check(Prepare(potatoPrice:3).RequiredCurrency==10600&&Prepare(potatoPrice:3).Reason=="saffron.prepare.funds","reserve follows changed native seed price instead of assuming one point");
+        Check(Prepare(food:129).Reason==""&&Prepare(food:130).Reason=="saffron.prepare.funds","only missing servings add purchase cost, including exact affordability boundary");
+        var shortage=Prepare(10199);
+        Check(shortage.Reason=="saffron.prepare.funds"&&shortage.RequiredCurrency-shortage.Currency==1,"real shortage is identified before consuming food");
+        Check(Prepare(10200).Reason==""&&Prepare(10199).Reason=="saffron.prepare.funds"&&Prepare(10200).Reason=="","fresh currency permits retry after shortage; no persisted block");
+        Check(Prepare(slots:false).Reason=="saffron.prepare.slots"&&Prepare(stacks:false).Reason=="saffron.prepare.stacks","capacity failures remain separate from affordability");
+        Check(Prepare(seconds:220).Reason=="saffron.prepare.time"&&Prepare(seconds:221).Reason==""&&Prepare(seconds:double.NaN).Reason=="saffron.prepare.time","food duration boundary remains enforced with a distinct reason");
+        journal.Preparation=shortage;
+        using(var report=new MemoryStream()){serializer.WriteObject(report,journal);report.Position=0;var saved=(SaffronJournal)serializer.ReadObject(report)!;
+            Check(saved.Preparation.RequiredCurrency==10200&&saved.Preparation.Reason=="saffron.prepare.funds","diagnostic journal retains exact preflight amounts and reason");}
         Check(SaffronCycle.FoodsActive(1000,[601000,601000,601000]),"all three native effects confirm eaten food even without an optional callback");
         Check(!SaffronCycle.FoodsActive(1000,[601000,601000,0])&&!SaffronCycle.FoodsActive(1000,[601000,601000,1000]),"missing or expired effects cannot confirm a food operation");
         Check(!SaffronCycle.FoodsActive(0,[601000,601000,601000])&&!SaffronCycle.FoodsActive(1000,[601000,601000]),"an unknown server clock or incomplete effect list cannot authorize harvesting");

@@ -39,6 +39,8 @@ public static class DailySandboxRepair
         await DailySandbox.ConfigurationGate.WaitAsync(token).ConfigureAwait(false);
         try
         {
+            _ = DailySandbox.Installation() ?? throw new InvalidOperationException("parallel.install_required");
+            await DailySandboxStartup.EnsureAsync(token).ConfigureAwait(false);
             var selected = Select(await InspectAsync(account,token).ConfigureAwait(false),box)
                 ?? throw new InvalidDataException("sandbox.repair.required");
             await BindCoreAsync(account,selected.Box,token).ConfigureAwait(false);

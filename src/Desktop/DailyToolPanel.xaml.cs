@@ -19,6 +19,8 @@ public partial class DailyToolPanel : UserControl
     }
     private string? active;
     private bool busy, running;
+    private IReadOnlyList<DailyPluginInfo> plugins = Array.Empty<DailyPluginInfo>();
+    public void SetPlugins(IReadOnlyList<DailyPluginInfo> value) { plugins = value; Render(); }
     public event Action<string>? OpenRequested;
     public event Action? CloseRequested;
     public IReadOnlyList<string> VisibleTools => ((ToolMenuRow[])ToolsList.ItemsSource).Select(t => t.Id).ToArray();
@@ -44,13 +46,15 @@ public partial class DailyToolPanel : UserControl
     private void CloseClicked(object sender, RoutedEventArgs e) { if (!busy) CloseRequested?.Invoke(); }
     private void Render()
     {
-        ToolCount.Text=L.Get("tools.count",DailyToolCatalog.All.Count);
+        ToolCount.Text=L.Get("tools.count",DailyToolCatalog.All.Count + plugins.Count);
         var category = Category.SelectedItem as ToolCategory;
         string query = SearchBox.Text.Trim();
         var rows = DailyToolCatalog.All.Where(t => query.Length == 0 || (t.Name + " " + t.Repository + " " + L.Get("tool." + t.Id) + " " + L.Get("tool." + t.Id + ".description")).Contains(query, StringComparison.OrdinalIgnoreCase))
             .Where(t => category == null || category.Key == "all" || t.CategoryId == category.Key)
             .Select(t => new ToolMenuRow(t.Id, L.Get("tool." + t.Id), L.Get("tools.category_" + t.CategoryId), L.Get("tool." + t.Id + ".description"),
                 L.Get(t.Id == active ? "tools.show" : active != null ? "tools.switch" : "tools.open"), !busy && (!running || t.Id==active))).ToArray();
+        rows = rows.Concat(plugins.Where(p => (category == null || category.Key is "all" or "games") && (query.Length == 0 || (p.Id + " " + p.Name(L.Code)).Contains(query,StringComparison.OrdinalIgnoreCase)))
+            .Select(p => new ToolMenuRow("plugin:"+p.Id,p.Name(L.Code),L.Get("plugins.title"),L.Get("plugins.tool_where"),L.Get("tools.open"),!busy && !running))).ToArray();
         ToolsList.ItemsSource = rows;
         EmptyText.Visibility = rows.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
         CloseToolButton.Visibility = active == null ? Visibility.Collapsed : Visibility.Visible;

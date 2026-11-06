@@ -11,7 +11,7 @@ namespace BD2Daily.Runtime
     internal sealed class RuntimeEngine
     {
         private static RuntimeEngine active;private Harmony harmony;private Timer heartbeat;private MethodInfo pump;private PropertyInfo player;
-        private GuildRuntime guild;private StartupRuntime startup;private bool ticking;
+        private GuildRuntime guild;private StartupRuntime startup;private readonly InventoryRuntime inventory=new InventoryRuntime();private bool ticking;
         private long nextRead;private long sequence;private readonly string instance=Guid.NewGuid().ToString("N");private int pid;private long start;
         private double maxTotal,maxIdentity,maxControl,maxStartup,maxGuild,maxWrite;
         private readonly object healthSync=new object();private string healthState="active",healthError="",frameStage="waiting_frame";private bool stopped;
@@ -67,6 +67,7 @@ namespace BD2Daily.Runtime
             // unrelated module ownership/status callbacks. A failed module must
             // not starve the shared identity mailbox for every account/tool.
             frameStage="identity-publish";LocalStorage.Write("snapshot.json",snapshot);
+            try{inventory.Tick(snapshot);}catch(Exception ex){BD2.LocalIpc.LoadingTrace.Note("inventory-read",ex.GetBaseException().Message);}
             maxWrite=Math.Max(maxWrite,watch.Elapsed.TotalMilliseconds-observed);
             double moduleStart=watch.Elapsed.TotalMilliseconds;string moduleError="";
             frameStage="module-control";

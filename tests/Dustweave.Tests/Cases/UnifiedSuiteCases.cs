@@ -55,8 +55,8 @@ internal static class UnifiedSuiteCases {
   var hostModule=Guid.Parse("85860bca-8f04-442e-807c-2338d3117b20");
   var connection=DailySuite.ConnectionFingerprint(hostModule,"plugin-a");
   Check(connection==DailySuite.ConnectionFingerprint(hostModule,"plugin-a"),"same host and plugin reuse connection");
-  Check(connection==DailySuite.ConnectionFingerprint(hostModule,"plugin-b"),"plugin-only update preserves common observer identity");
-  Check(connection==DailySuite.ConnectionFingerprint(hostModule,""),"removing plugin preserves common observer; daily module owns its fingerprint");
+  Check(connection!=DailySuite.ConnectionFingerprint(hostModule,"plugin-b"),"plugin-only update retires cached on-demand registry on reconnect");
+  Check(connection!=DailySuite.ConnectionFingerprint(hostModule,""),"removing plugin cannot reuse a module containing its old hooks");
   Check(connection!=DailySuite.ConnectionFingerprint(Guid.NewGuid(),"plugin-a"),"host update changes component identity");
   string? priorOwner=Environment.GetEnvironmentVariable("BD2_DAILY_SUITE_OWNER");
   try {

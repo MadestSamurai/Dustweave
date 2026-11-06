@@ -71,7 +71,7 @@ public partial class App : Application
             {
                 var info = DailyPlugin.Current;
                 var extension = DailyExtensionLoader.Load(info);
-                if (extension?.ApiVersion != DailyPlugin.ApiVersion)
+                if (!info.Available || (info.Selections.Length>0 && extension?.ApiVersion != DailyPlugin.ApiVersion))
                     throw new InvalidDataException("Plugin did not load");
                 var proofs = DailyWorkflowRegistry.Proofs(extension);
                 bool connectionPrepared = false;
@@ -91,7 +91,7 @@ public partial class App : Application
                 {
                     status = "passed",
                     info = new { info.Available, info.State, info.Id, info.Version, info.Fingerprint },
-                    api = extension.ApiVersion,
+                    api = DailyPlugin.ApiVersion,
                     proofs = proofs.Length,
                     connectionPrepared,
                     realGameTouched = false

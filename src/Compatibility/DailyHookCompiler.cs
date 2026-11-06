@@ -39,6 +39,7 @@ public static class DailyHookCompiler
         sources.Add(CSharpSyntaxTree.ParseText(GuildHookContract.Source(i,out var guildReport),path:"GuildBindings.cs"));
         sources.Add(CSharpSyntaxTree.ParseText(StartupHookContract.Source(i,out var startupReport),path:"StartupBindings.cs"));
         sources.Add(CSharpSyntaxTree.ParseText(LoadingTraceIndex.Source(i,managed,cancellation),path:"LoadingTraceIndex.cs"));
+        sources.Add(CSharpSyntaxTree.ParseText(InventoryHookContract.Source(i),path:"InventoryBindings.cs"));
         sources.Add(CSharpSyntaxTree.ParseText("namespace BD2.LocalIpc { public static class Build { public const string Fingerprint="+Cs(Fingerprint)+"; } }"));
         var refs=new List<MetadataReference>();foreach(var file in Directory.EnumerateFiles(managed,"*.dll")){cancellation.ThrowIfCancellationRequested();try{refs.Add(MetadataReference.CreateFromFile(file));}catch(BadImageFormatException){}}
         refs.Add(MetadataReference.CreateFromImage(Resource("BD2Daily.Harmony.dll")));

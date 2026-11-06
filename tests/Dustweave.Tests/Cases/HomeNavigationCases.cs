@@ -22,6 +22,42 @@ static class HomeNavigationCases
             cases.Add(label);
         }
         var policy = DailyNavigationPolicy.Load();
+        var recommendation = Surface("AutoMountPopupUI", true, "_objBackButton", 2);
+        recommendation["Targets"]!.AsArray().Add(new JsonObject { ["Id"] = 103, ["Field"] = "_buttonOk", ["Enabled"] = true, ["Route"] = "ui" });
+        recommendation["Targets"]!.AsArray().Add(new JsonObject { ["Id"] = 104, ["Field"] = "_buttonCancel", ["Enabled"] = true, ["Route"] = "ui" });
+        foreach (string text in new[] { "装备穿戴建议", "裝備穿戴提議", "Equipment suggestion", "Costume suggestion", "" })
+        {
+            recommendation["Text"] = new JsonArray(text);
+            var f = Frame(Surface("MenuUI"), recommendation, Surface("CurrencyManageUI", true, null, 3));
+            var action = DailyHomeDecision.Inspect(f, policy).Action;
+            Check(action?["field"]?.GetValue<string>() == "_objBackButton" && action?["absent"]?.GetValue<string>() == "AutoMountPopupUI"
+                && DailyNavigationDecision.Home(f, policy)?["field"]?.GetValue<string>() == "_objBackButton",
+                "equipment/costume suggestion dismisses without applying gear or changing preferences: " + text);
+        }
+        foreach (string mode in new[] { "opening", "missing-readiness", "disabled", "missing-close", "duplicate-target", "pointer" })
+        {
+            var row = recommendation.DeepClone().AsObject();
+            if (mode == "opening") row["InputReady"] = false;
+            if (mode == "missing-readiness") row.Remove("InputReady");
+            if (mode == "disabled") row["Targets"]![0]!["Enabled"] = false;
+            if (mode == "missing-close") row["Targets"]!.AsArray().RemoveAt(0);
+            if (mode == "duplicate-target") row["Targets"]!.AsArray().Add(row["Targets"]![0]!.DeepClone());
+            if (mode == "pointer") row["Targets"]![0]!["Route"] = "pointer";
+            var f = Frame(Surface("MenuUI"), row);
+            Check(DailyHomeDecision.Inspect(f, policy).Kind == "waiting" && DailyNavigationDecision.Home(f, policy) == null,
+                "recommendation waits for close without substituting apply, settings cancel or generic back: " + mode);
+        }
+        var higher = Frame(recommendation, Surface("RewardReceivePopupUI", true, null, 9));
+        Check(DailyNavigationDecision.Notice(higher, policy, out _) == null
+            && DailyNavigationDecision.Blockers(higher, "RewardReceivePopupUI", policy).Length == 0,
+            "recommendation behind the active popup does not block or dismiss through it");
+        var nonModal = recommendation.DeepClone().AsObject(); nonModal["Popup"] = false;
+        Check(DailyHomeDecision.Inspect(Frame(Surface("MenuUI"), nonModal), policy).Kind == "ready"
+            && DailyNavigationDecision.Notice(Frame(Surface("MenuUI"), nonModal), policy, out _) == null
+            && DailyNavigationDecision.Home(Frame(Surface("MenuUI"), nonModal), policy) == null,
+            "nonmodal recommendation does not interrupt ready menu or trigger needless dismissal");
+        Check(DailyHomeDecision.Inspect(Frame(recommendation, Surface("PurchaseConfirmationUI", true, "_buttonOK", 99)), policy).Kind == "blocked",
+            "equipment recommendation recovery does not accept an unrelated purchase confirmation");
         var ticket = Surface("CostumeSelectNoticePopupUI", true, "_cancelBtn", 2);
         ticket["Targets"]!.AsArray().Add(new JsonObject { ["Id"] = 103, ["Field"] = "_okBtn", ["Enabled"] = true, ["Route"] = "ui" });
         foreach (string text in new[] { "获得推荐5★服装选择券，是否立即使用？", "是否立即使用其他服裝選擇券？", "Use the costume selection ticket now?", "" })
@@ -206,6 +242,29 @@ static class HomeNavigationCases
             f.Inspect?.Invoke();
         }
         await Route("already open menu settles without inputs", Menu(), f => f.Inspect = () => Check(f.Time >= 2 && f.Actions.Count == 0, "existing startup menu retains two-second stability"));
+        for (int restart = 0; restart < 2; restart++)
+            await Route("equipment recommendation recovery on fresh/resumed navigation " + restart,
+                Frame(Surface("MenuUI"), recommendation), f =>
+                {
+                    bool repeated = false;
+                    f.OnAction = a =>
+                    {
+                        Check(a["field"]?.GetValue<string>() == "_objBackButton", "recommendation recovery only dismisses, never applies gear");
+                        f.Current = Menu();
+                    };
+                    f.OnWait = () =>
+                    {
+                        // A later, different suggestion is another presentation,
+                        // not a reason to replay the original purchase or reward.
+                        if (!repeated && f.Actions.Count == 1 && f.Time >= 1)
+                        {
+                            repeated = true;
+                            f.Current = Frame(Surface("MenuUI"), recommendation);
+                            f.Current["Surfaces"]![1]!["Id"] = 12;
+                        }
+                    };
+                    f.Inspect = () => Check(f.Actions.Count == 2, "repeated suggestions recover and reach the ready menu");
+                });
         await Route("live menu counters and rotating links do not restart native settle", Menu(), f =>
         {
             f.OnWait = () =>

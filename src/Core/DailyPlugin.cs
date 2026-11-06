@@ -12,17 +12,57 @@ public sealed record DailyPluginInfo(bool Available, string State, string Root, 
     public string MaxHostVersion { get; init; } = "";
     public string BindingContract { get; init; } = "";
     public bool SupportsSolutionSharing { get; init; }
+    public string ToolExecutable { get; init; } = "";
+    public string ToolAssembly { get; init; } = "";
+    public string ToolType { get; init; } = "";
+    public int ToolApiVersion { get; init; } = 1;
+    public bool IsTool => ToolExecutable.Length != 0 || ToolAssembly.Length != 0;
+    public DailyPluginInfo[] Members { get; init; } = [];
+    [System.Text.Json.Serialization.JsonIgnore]
+    public DailyPluginInfo[] AllSelections => Members.Length>0 ? Members : Available ? [this] : [];
+    [System.Text.Json.Serialization.JsonIgnore]
+    public DailyPluginInfo[] Selections => AllSelections.Where(p=>!p.IsTool).ToArray();
+    [System.Text.Json.Serialization.JsonIgnore]
+    public DailyPluginInfo[] HookMembers => AllSelections.Where(p=>p.HookSources.Length>0).ToArray();
     public Dictionary<string, string> Names { get; init; } = new();
     public string Name(string language) => Names.GetValueOrDefault(language) ?? Names.GetValueOrDefault("en-US") ?? Id;
-    public bool Supports(string stage) => Available && (Capabilities?.Contains(stage, StringComparer.Ordinal) ?? false);
+    public bool Supports(string stage) => Selections.Any(p=>p.Capabilities?.Contains(stage, StringComparer.Ordinal)==true);
 }
 public static class DailyPlugin
 {
     public const int ApiVersion = 4;
     public static string HostVersion => typeof(DailyPlugin).Assembly.GetCustomAttributes(typeof(System.Reflection.AssemblyMetadataAttribute), false)
         .Cast<System.Reflection.AssemblyMetadataAttribute>().Single(x => x.Key == "DustweaveVersion").Value!;
-    private static readonly Lazy<DailyPluginInfo> loaded = new(() => Inspect(ResolveRoot()));
+    private static readonly Lazy<DailyPluginInfo> loaded = new(() => Selected(DailyIdentity.DataRoot));
     public static DailyPluginInfo Current => loaded.Value;
+    public static DailyPluginInfo Combine(IEnumerable<DailyPluginInfo> input)
+    {
+        var items=input.Where(p=>p.Available).OrderBy(p=>p.Id,StringComparer.Ordinal).ToArray();
+        if(items.Length==0)return new(false,"missing","","","",[]);
+        if(items.Length==1)return items[0];
+        if(items.Select(p=>p.Id).Distinct(StringComparer.Ordinal).Count()!=items.Length||items.Where(p=>!p.IsTool).SelectMany(p=>p.Capabilities??[]).GroupBy(x=>x,StringComparer.Ordinal).Any(g=>g.Count()>1))throw new InvalidDataException("plugins.task_conflict");
+        return items[0] with { Members=items, Fingerprint=DailyIdentity.Hash(string.Join("|",items.Select(p=>p.Fingerprint))), HookSources=items.SelectMany(p=>p.HookSources).ToArray(), Capabilities=items.SelectMany(p=>p.Capabilities??[]).ToArray() };
+    }
+    internal static DailyPluginInfo Selected(string root)
+    {
+        try
+        {
+        var pinned=Environment.GetEnvironmentVariable("DUSTWEAVE_PLUGINS");
+        if(pinned!=null)return Combine((JsonSerializer.Deserialize<string[]>(pinned)??[]).Select(p=>Inspect(p)));
+        if(Environment.GetEnvironmentVariable("DUSTWEAVE_PLUGIN")!=null)return Inspect(ResolveRoot(root));
+        if(!DailyPluginStore.HasSelection(root))return Combine(new[]{Inspect(ResolveRoot(root))}.Concat(new DailyToolPlugins(root).Enabled()));
+        var store=new DailyPluginStore(root);var state=store.Read();
+        return Combine(state.Installed.Where(p=>state.ActiveFingerprints.Contains(p.Fingerprint)).Select(p=>store.Inspect(p)).Concat(new DailyToolPlugins(root).Enabled()));
+        }
+        catch(Exception error) when(error is IOException or UnauthorizedAccessException or JsonException or ArgumentException or InvalidOperationException)
+        { return new(false,"invalid_state","","","",[]); }
+    }
+    public static void PinEnvironment(System.Diagnostics.ProcessStartInfo start,DailyPluginInfo info)
+    {
+        start.Environment["DUSTWEAVE_PLUGIN"]=info.Available ? info.Root : "none";
+        if(info.Members.Length>0)start.Environment["DUSTWEAVE_PLUGINS"]=JsonSerializer.Serialize(info.Members.Select(p=>p.Root));
+        else start.Environment.Remove("DUSTWEAVE_PLUGINS");
+    }
     public static string ResolveRoot() => ResolveRoot(DailyIdentity.DataRoot);
     internal static string ResolveRoot(string dataRoot)
     {
@@ -44,10 +84,10 @@ public static class DailyPlugin
     // afresh so disabling an extension takes effect before the app restarts.
     public static string? HostUpdateBlockReason(string dataRoot, string hostVersion)
     {
-        var current = Inspect(ResolveRoot(dataRoot));
+        var current = Selected(dataRoot);
         if (!current.Available) return null;
-        var next = Inspect(current.Root, hostVersion);
-        return next.Available ? null : "plugins." + next.State;
+        var next = current.AllSelections.Select(p=>Inspect(p.Root,hostVersion)).FirstOrDefault(p=>!p.Available);
+        return next==null ? null : "plugins." + next.State;
     }
     public static DailyPluginInfo Inspect(string directory, string? hostVersion = null)
     {
@@ -64,7 +104,12 @@ public static class DailyPlugin
             if (!ValidId(id) || !Version.TryParse(version, out _)) return Missing("invalid_manifest");
             if (string.IsNullOrWhiteSpace(manifest.GetProperty("id").GetString()) || manifest.GetProperty("apiVersion").GetInt32() != ApiVersion || manifest.GetProperty("bridgeExtensionApi").GetInt32() != 1)
                 return Missing("incompatible");
-            if (manifest.GetProperty("runtime").GetString() != "net8.0-windows-x64") return Missing("incompatible_runtime");
+            bool tool = manifest.TryGetProperty("kind", out var kind) && kind.GetString() == "tool";
+            if (kind.ValueKind != JsonValueKind.Undefined && kind.GetString() is not ("tool" or "daily")) return Missing("invalid_manifest");
+            int toolVersion = tool && manifest.TryGetProperty("toolApiVersion", out var toolApi) ? toolApi.GetInt32() : 0;
+            if (tool && toolVersion is not (1 or 2)) return Missing("incompatible");
+            if (manifest.GetProperty("runtime").GetString() != (tool ? toolVersion == 2 ? "host-net8.0-windows-x64" : "standalone-windows-x64" : "net8.0-windows-x64")) return Missing("incompatible_runtime");
+            if (toolVersion == 2 && (!manifest.TryGetProperty("uiApiVersion", out var uiApi) || uiApi.GetInt32() != 1)) return Missing("incompatible");
             string min = manifest.TryGetProperty("minHostVersion", out var minValue) ? minValue.GetString() ?? "" : "";
             string max = manifest.TryGetProperty("maxHostVersion", out var maxValue) ? maxValue.GetString() ?? "" : "";
             if (!CompatibleHost(min, max, hostVersion ?? HostVersion)) return Missing("incompatible_host");
@@ -85,14 +130,20 @@ public static class DailyPlugin
             if (bindings.Length != 0 && (!bindings.EndsWith(".json", StringComparison.Ordinal) || !files.ContainsKey(bindings))) return Missing("invalid_hook");
             if (hooks.Distinct(StringComparer.OrdinalIgnoreCase).Count() != hooks.Length || hooks.Any(p => p == null || !p.StartsWith("hook/", StringComparison.Ordinal) || !p.EndsWith(".cs", StringComparison.Ordinal) || !files.ContainsKey(p)))
                 return Missing("invalid_hook");
-            var entry = manifest.GetProperty("entryAssembly").GetString();
-            var type = manifest.GetProperty("entryType").GetString();
-            if (string.IsNullOrWhiteSpace(entry) || !entry.StartsWith("managed/", StringComparison.Ordinal) || !entry.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) || !files.ContainsKey(entry) || string.IsNullOrWhiteSpace(type))
+            var entry = tool ? "" : manifest.GetProperty("entryAssembly").GetString();
+            var type = tool ? "" : manifest.GetProperty("entryType").GetString();
+            string toolExecutable = toolVersion == 1 ? manifest.GetProperty("toolExecutable").GetString() ?? "" : "";
+            string toolAssembly = toolVersion == 2 ? manifest.GetProperty("toolAssembly").GetString() ?? "" : "";
+            string toolType = toolVersion == 2 ? manifest.GetProperty("toolType").GetString() ?? "" : "";
+            string toolEntry = toolVersion == 2 ? toolAssembly : toolExecutable;
+            if (tool && (!toolEntry.StartsWith("tool/", StringComparison.Ordinal) || !toolEntry.EndsWith(toolVersion == 2 ? ".dll" : ".exe", StringComparison.OrdinalIgnoreCase) || !files.ContainsKey(toolEntry) || capabilities.Any(c=>c is not ("inventory_read" or "tool_operations")) || capabilities.Contains("tool_operations") != (hooks.Length>0) || toolVersion == 2 && string.IsNullOrWhiteSpace(toolType)))
+                return Missing("invalid_entrypoint");
+            if (!tool && (string.IsNullOrWhiteSpace(entry) || !entry.StartsWith("managed/", StringComparison.Ordinal) || !entry.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) || !files.ContainsKey(entry) || string.IsNullOrWhiteSpace(type)))
                 return Missing("invalid_entrypoint");
             var names = manifest.TryGetProperty("names", out var nameValue)
                 ? JsonSerializer.Deserialize<Dictionary<string, string>>(nameValue.GetRawText()) ?? new() : new();
             return new(true, "ready", root, version, Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(), hooks.Select(p => File.ReadAllText(files[p], System.Text.Encoding.UTF8)).ToArray(), entry, type, capabilities)
-            { Id = id, Names = names, MinHostVersion = min, MaxHostVersion = max, BindingContract = bindings,
+            { Id = id, Names = names, MinHostVersion = min, MaxHostVersion = max, BindingContract = bindings, ToolExecutable = toolExecutable, ToolAssembly = toolAssembly, ToolType = toolType, ToolApiVersion = toolVersion,
               SupportsSolutionSharing = manifest.TryGetProperty("solutionSharing", out var sharing) && sharing.GetBoolean(),
               Publisher = manifest.TryGetProperty("publisher", out var publisher) ? publisher.GetString() ?? "" : "" };
         }

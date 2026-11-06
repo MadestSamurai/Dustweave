@@ -1996,9 +1996,9 @@
     "en-US": "The browser could not open. Copy the official address above and open it manually."
   },
   "sandbox.unavailable": {
-    "zh-CN": "Sandboxie 暂不可用，此次隔离操作未执行。普通启动和普通日常仍可使用。需要隔离功能时，请启动或修复 Sandboxie 后重试。",
-    "zh-TW": "Sandboxie 暫不可用，此次隔離操作未執行。一般啟動和一般日常仍可使用。需要隔離功能時，請啟動或修復 Sandboxie 後重試。",
-    "en-US": "Sandboxie is unavailable; this isolation operation was not performed. Normal launch and daily tasks remain available. Start or repair Sandboxie, then retry when you need isolation."
+    "zh-CN": "Sandboxie 暂不可用，尚未完成沙盒操作或登录状态交接。请打开 Sandboxie-Plus 确认服务与驱动状态后重试；账号和沙盒数据已保留。",
+    "zh-TW": "Sandboxie 暫時無法使用，尚未完成沙盒操作或登入狀態交接。請開啟 Sandboxie-Plus 確認服務與驅動程式狀態後重試；帳號和沙盒資料已保留。",
+    "en-US": "Sandboxie is unavailable; the sandbox operation or sign-in handoff could not finish. Open Sandboxie-Plus to check its service and driver, then retry. Your accounts and sandbox data are preserved."
   },
   "sandbox_path.invalid": {
     "zh-CN": "安装文件夹不完整，请选择包含 Start.exe、SbieIni.exe 和 SbieDll.dll 的 Sandboxie 文件夹。",

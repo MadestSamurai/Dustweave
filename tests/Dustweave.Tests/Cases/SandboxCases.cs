@@ -9,6 +9,26 @@ static class SandboxCases
         await SandboxProductionCases.Run(output,cases);
         void Check(bool value, string name) { if (!value) throw new InvalidOperationException(name); cases.Add(name); }
         void Reject(Action action, string name) { try { action(); } catch (ArgumentException) { cases.Add(name); return; } catch (InvalidDataException) { cases.Add(name); return; } throw new InvalidOperationException(name); }
+        string originalDirectory = Environment.CurrentDirectory;
+        string longDirectory = Path.Combine(output, "local package 中文 " + new string('x', 95), "another folder");
+        Directory.CreateDirectory(longDirectory);
+        try
+        {
+            Environment.CurrentDirectory = longDirectory;
+            string program = Path.Combine(longDirectory, "Dustweave.exe");
+            foreach (string command in new[] { DailySandbox.LaunchSwitch, DailySandboxSessions.ExportSwitch, "--view-account", DailySandboxPreferenceTransfer.HelperSwitch })
+            {
+                string[] arguments = ["/box:Dustweave_fixture", "/silent", "/wait", program, command, "absolute request with spaces.json"];
+                var start = DailySandbox.CreateStartInfo(@"C:\Program Files\Sandboxie-Plus", "Start.exe", arguments);
+                Check(start.WorkingDirectory == Environment.SystemDirectory && start.WorkingDirectory.Length + 3 <= 128,
+                    command + ": long package paths cannot enter Sandboxie's limited working-directory relay");
+                Check(start.ArgumentList.SequenceEqual(arguments) && Path.IsPathFullyQualified(start.FileName)
+                    && !start.UseShellExecute && !start.RedirectStandardOutput && !start.RedirectStandardError,
+                    command + ": Unicode/space arguments and persistent-window handle policy preserved");
+            }
+            Check(Environment.CurrentDirectory == longDirectory, "sandbox launch does not change the host's global working directory");
+        }
+        finally { Environment.CurrentDirectory = originalDirectory; }
         string a = new('a', 64), b = new('b', 64);
         string game = @"C:\游戏安装\BrownDust II.exe";
         string[] codeRules = DailySandboxGameFiles.Rules(game);

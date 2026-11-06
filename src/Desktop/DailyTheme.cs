@@ -73,6 +73,11 @@ public sealed class DailyTheme : INotifyPropertyChanged, IDisposable
         Refresh();
     }
     private void SystemChanged(object sender, UserPreferenceChangedEventArgs args) => ScheduleRefresh();
+    internal void ApplyTransient(DailyAppearance value)
+    {
+        if (!Enum.IsDefined(value)) throw new ArgumentOutOfRangeException(nameof(value));
+        Preference = value; Refresh();
+    }
     private void ParametersChanged(object? sender, PropertyChangedEventArgs args) => ScheduleRefresh();
     private void ScheduleRefresh()
     {

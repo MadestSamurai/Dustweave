@@ -14,7 +14,7 @@ namespace BD2.LocalIpc
     public static class PipeBroker
     {
         const string Key = "BD2.LocalIpc.Broker.v1";
-        const int Revision = 8; // Adds opt-in timing; wire and ownership contracts are unchanged.
+        const int Revision = 9; // Adds two authenticated plugin request mailboxes; replies remain runtime-owned.
         const int MaximumEntries = 2048, MaximumBytes = 64 * 1024 * 1024;
         sealed class Entry { internal byte[] Value; internal DateTime At; }
         sealed class ChannelState
@@ -36,6 +36,7 @@ namespace BD2.LocalIpc
                 // This is a command mailbox, not a general remote filesystem. Snapshot/status
                 // entries are runtime-owned. Read-only capture registers no input entries.
                 var leaf = name.Substring(name.LastIndexOf('~') + 1);
+                if (Names.Contains(name) && (leaf == "tool-inventory-request.json" || leaf == "plugin-tool-request.json")) return true;
                 return Names.Contains(name) && (leaf == "control.json" || leaf == "config-control.json" || leaf == "ui-command.json" || leaf == "ui-observe" || leaf == "command.json" || leaf == "stop" || leaf == "pause" || leaf == "enabled-until.txt" || leaf == "execution-lease.json" || leaf == "run-command.json" || leaf == "layout-request.json" || leaf == "evidence-config.json" || leaf == "observation-request.json" || leaf == "catalog-request.json" || leaf == "legacy-observation" || leaf == "lease.json" || leaf == "startup-permit.json" || leaf == "guild-command.json" || leaf == "auto-defense-lease.json" || leaf == "settings-control.json" || leaf == "request.json" || leaf == "preview-request.json" || leaf == "mutation-request.json" || leaf == "native-save-capture-request.json" || leaf == "dice-lease.json" || leaf == "capture_settings.json" || leaf == "capture_settings.member.json" || leaf == "equipment_inventory.request" || leaf == "costume_inventory.request" || leaf == "monster_hunt_unified_inventory.request");
             }
         }

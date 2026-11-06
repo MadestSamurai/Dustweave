@@ -13,6 +13,9 @@ public static class Program
             or "--view-account" or "--inspect-account" or "--resume-account" or "--run-selected" or "--scheduled" or "--updated" or "--repair";
         try
         {
+            // A tool child must not acquire the main-window lock, recover updates,
+            // discover account stores or initialize the live game suite.
+            if (args.Length >= 3 && args[0] == "--tool-plugin") return ManagedToolPlugin.Run(args.Skip(1).ToArray());
             // The bundle recovers before account probing, WPF or game components.
             // Its temporary self-copy also enters apply/recovery before the UI.
             string dataRoot = Environment.GetEnvironmentVariable("BD2_DAILY_DATA_ROOT") ??

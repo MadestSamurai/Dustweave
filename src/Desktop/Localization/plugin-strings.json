@@ -5,9 +5,9 @@
     "en-US": "Plugins"
   },
   "plugins.help": {
-    "zh-CN": "导入后重启织尘生效，游戏可保持运行。",
-    "zh-TW": "匯入後重新啟動織塵生效，遊戲可保持執行。",
-    "en-US": "Restart Dustweave after import; the game can stay open."
+    "zh-CN": "日常插件重启后生效；工具插件安装后可直接打开。",
+    "zh-TW": "日常擴充套件重新啟動後生效；工具擴充套件安裝後可直接開啟。",
+    "en-US": "Daily plugins take effect after restart; tool plugins can be opened immediately after installation."
   },
   "plugins.import": {
     "zh-CN": "导入插件…",
@@ -290,9 +290,9 @@
     "en-US": "Install and enable"
   },
   "plugins.market_install_confirm": {
-    "zh-CN": "安装 {0} {1}。启用后将在下次重启织尘时生效；如果已有其他插件，它将被停用。",
-    "zh-TW": "安裝 {0} {1}。啟用後將在下次重新啟動織塵時生效；如有其他套件，它將被停用。",
-    "en-US": "Install {0} {1}. It will take effect after restarting Dustweave and replace any other active plugin."
+    "zh-CN": "安装并启用 {0} {1}。其他插件继续保留；重启织尘后生效。",
+    "zh-TW": "安裝並啟用 {0} {1}。其他擴充套件繼續保留；重新啟動織塵後生效。",
+    "en-US": "Install and enable {0} {1}. Other plugins are retained. Restart Dustweave to apply."
   },
   "plugins.market_downloading": {
     "zh-CN": "正在下载插件… {0}%",
@@ -403,5 +403,55 @@
     "zh-CN": "每关先计算解法，再自动战斗并领取奖励；已完成的周进度不会重打。找不到解法时，可调高上方秒数后继续。",
     "zh-TW": "每關先計算解法，再自動戰鬥並領取獎勵；已完成的週進度不會重打。找不到解法時，可調高上方秒數後繼續。",
     "en-US": "Each stage is solved first, then battled and claimed automatically. Completed weekly progress is not replayed. If no solution is found, raise the seconds above and resume."
+  },
+  "plugins.tool_where": {
+    "zh-CN": "安装后从「工具」打开，独立计算并读取当前账号库存，不替换日常插件。",
+    "zh-TW": "安裝後從「工具」開啟，獨立計算並讀取目前帳號庫存，不取代日常擴充套件。",
+    "en-US": "Open from Tools after installation. Calculates separately and reads the current account inventory without replacing daily plugins."
+  },
+  "plugins.tool_identity": {
+    "zh-CN": "游戏账号已变化或身份尚未就绪。进入主菜单后重新打开此工具。",
+    "zh-TW": "遊戲帳號已變更或身分尚未就緒。進入主選單後重新開啟此工具。",
+    "en-US": "The account changed or is not ready. Enter the main menu, then reopen this tool."
+  },
+  "plugins.tool_inventory_failed": {
+    "zh-CN": "未能读取完整库存。请确认游戏已进入主菜单，再刷新库存；仍失败时导出诊断。",
+    "zh-TW": "未能讀取完整庫存。請確認遊戲已進入主選單，再重新整理庫存；仍失敗時匯出診斷。",
+    "en-US": "Could not read the complete inventory. Enter the game main menu and refresh inventory; export diagnostics if it still fails."
+  },
+  "plugins.tool_inventory_timeout": {
+    "zh-CN": "库存读取超时。请稍后点击刷新库存。",
+    "zh-TW": "庫存讀取逾時。請稍後點選重新整理庫存。",
+    "en-US": "Inventory read timed out. Try refreshing inventory again."
+  },
+  "plugins.tool_start_failed": {
+    "zh-CN": "工具未能启动。请在插件页重新启用；仍失败时导出诊断。",
+    "zh-TW": "工具未能啟動。請在擴充套件頁重新啟用；仍失敗時匯出診斷。",
+    "en-US": "The tool could not start. Enable it again on the Plugins page; export diagnostics if it still fails."
+  },
+  "plugins.tool_request_invalid": {
+    "zh-CN": "工具请求不受支持，请更新插件。",
+    "zh-TW": "工具請求不受支援，請更新擴充套件。",
+    "en-US": "This tool request is unsupported. Update the plugin."
+  },
+  "plugins.tool_busy": {
+    "zh-CN": "织尘正在执行其他操作。停止后再刷新库存，本地模拟仍可继续。",
+    "zh-TW": "織塵正在執行其他操作。停止後再重新整理庫存，本機模擬仍可繼續。",
+    "en-US": "Dustweave is busy. Refresh inventory after it stops; offline simulation remains available."
+  },
+  "plugins.tool_no_game": {
+    "zh-CN": "请先通过织尘打开要分析的账号并进入主菜单，再刷新库存。",
+    "zh-TW": "請先透過織塵開啟要分析的帳號並進入主選單，再重新整理庫存。",
+    "en-US": "Open the intended account through Dustweave and enter the main menu, then refresh inventory."
+  },
+  "plugins.disable_daily": {
+    "zh-CN": "停用全部日常插件",
+    "zh-TW": "停用全部日常擴充套件",
+    "en-US": "Disable all daily plugins"
+  },
+  "plugins.task_conflict": {
+    "zh-CN": "已有启用的插件处理同一项任务。请先停用它，再启用此插件；其他插件不受影响。",
+    "zh-TW": "已有啟用的擴充套件處理同一項任務。請先停用它，再啟用此套件；其他套件不受影響。",
+    "en-US": "An enabled plugin handles the same task. Disable that plugin before enabling this one; other plugins are unaffected."
   }
 }

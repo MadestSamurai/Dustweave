@@ -121,7 +121,7 @@ public partial class MainWindow
     private async Task InstallMarketPluginAsync(DailyMarketPlugin item)
     {
         if (marketCancellation != null || smoke != null || Unavailable || IsSandboxWindow) return;
-        var choice = ConfirmPluginInstall(item.Name(L.Code), item.Version, item.Publisher, item.Id, item.SupportsSolutionSharing, item.Capabilities.Contains("tactics", StringComparer.Ordinal));
+        var choice = ConfirmPluginInstall(item.Name(L.Code), item.Version, item.Publisher, item.Id, item.SupportsSolutionSharing, item.Capabilities.Contains("tactics", StringComparer.Ordinal), item.Capabilities.Contains("inventory_read", StringComparer.Ordinal));
         if (!choice.Confirmed) return;
         using var operation = new CancellationTokenSource(); marketCancellation = operation;
         pluginPanel.MarketProgress(false, true);
@@ -135,8 +135,9 @@ public partial class MainWindow
             await ChangePluginAsync(async () =>
             {
                 operation.Token.ThrowIfCancellationRequested();
-                var installed = await Task.Run(() => PluginStore.Install(package), operation.Token);
-                await PluginStore.ActivateAsync(installed.Fingerprint, ProbePluginAsync, operation.Token);
+                var store = StoreFor(package.Info);
+                var installed = await Task.Run(() => store.Install(package), operation.Token);
+                await store.ActivateAsync(installed.Fingerprint, ProbePluginAsync, operation.Token);
                 if (choice.Share is { } share) DailyPluginSharing.Write(root, item.Id, share);
                 pluginPanel.SelectMarket(false);
             });

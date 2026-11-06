@@ -270,6 +270,9 @@
           "BD2Sichuan.Compatibility": "[0.3.3, )",
           "BD2Sichuan.Core": "[0.3.3, )"
         }
+      },
+      "dustweave.toolpluginapi": {
+        "type": "Project"
       }
     },
     "net8.0-windows7.0/win-x64": {}

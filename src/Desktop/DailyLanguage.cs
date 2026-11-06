@@ -59,6 +59,7 @@ public sealed partial class DailyLanguage : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new(nameof(Revision)));
         Changed?.Invoke(this, EventArgs.Empty);
     }
+    internal void ApplyTransient(string code) { if(Codes.Contains(code) && Code != code) Apply(code); }
     public string Get(string key, params object?[] args)
         => catalog.Get(key, Code, args);
     internal string SearchText(string key) => catalog.SearchText(key);

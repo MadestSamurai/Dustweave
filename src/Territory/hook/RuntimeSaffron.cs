@@ -273,12 +273,21 @@ namespace BD2Territory.Runtime
     }
     if(saffron.State=="prepare"){
      if(now-saffronPhaseAt>TimeSpan.FromSeconds(30).Ticks)throw new InvalidOperationException("收割准备超时，未使用料理");
-     var preparation=PrepareSaffronFoods(serverNow);var missing=MissingFoodPurchases(preparation.Where(x=>!x.Cook).Select(x=>x.Food));long reserve=(long)farms.Length*(ReadCrop((LifeCropSeedTable)B.Invoke("Tables.Crop",SaffronCycle.Seed),1).Price+10);
+     var preparation=PrepareSaffronFoods(serverNow);var missing=MissingFoodPurchases(preparation.Where(x=>!x.Cook).Select(x=>x.Food));
      double available=SaffronCycle.Foods.Select(id=>FoodEnd(id)>serverNow?(FoodEnd(id)-serverNow)/1000.0:580).Min();
      bool slots=SaleInventory().Length+preparation.Length+3<=((LifeDefaultTable)B.Read("Tables.Default",null)).DefaultConsumableInvenSlotCount;
      bool positioned=targetNode!=null&&CanGatherAt(targetNode,player.transform.position)&&Detected(3).Contains(targetNode);
      if(!positioned){SaffronPhase("approach",now);return;}
-     if(!SaffronCycle.CanBuff(saffronInitial,saffronOrder.All(n=>n!=null&&Harvestable(n)),positioned,slots&&SaffronCapacity(saffronInitial,SaffronCycle.Seed),SaleCurrency()>=reserve+missing.Sum(r=>(long)r.PriceCount),available))throw new InvalidOperationException("收割时间、背包容量或积分不足，未使用新料理");
+     var check=SaffronCycle.CheckPreparation(new SaffronPreparation{
+      Fields=farms.Length,HarvestFields=saffronInitial,RemainingPotatoRounds=Math.Max(0,saffron.PotatoRoundLimit-saffron.PotatoRounds),
+      SaffronPrice=ReadCrop((LifeCropSeedTable)B.Invoke("Tables.Crop",SaffronCycle.Seed),1).Price,
+      PotatoPrice=ReadCrop((LifeCropSeedTable)B.Invoke("Tables.Crop",SaffronCycle.Potato),1).Price,
+      FoodPurchaseCost=missing.Sum(r=>(long)r.PriceCount),Currency=SaleCurrency(),Mature=saffronOrder.All(n=>n!=null&&Harvestable(n)),
+      Positioned=positioned,Slots=slots,Stacks=SaffronCapacity(saffronInitial,SaffronCycle.Seed),AvailableSeconds=available});
+     saffron.Preparation=check;saffronJournal.Preparation=check;
+     LocalStorage.Log("藏红花准备 currency="+check.Currency+" required="+check.RequiredCurrency+" replant="+check.ReplantCost+" potatoes="+check.PotatoCost+" food="+check.FoodPurchaseCost+
+      " rounds="+check.RemainingPotatoRounds+" slots="+check.Slots+" stacks="+check.Stacks+" mature="+check.Mature+" seconds="+check.AvailableSeconds+" requiredSeconds="+check.HarvestSeconds+" reason="+check.Reason);
+     if(check.Reason.Length>0)throw new InvalidOperationException(check.Reason);
      var craft=preparation.FirstOrDefault(x=>x.Cook);
      if(craft!=null){var recipe=(LifeCookTable)B.Invoke("Tables.Cook",craft.Recipe);var ingredients=CookingIngredients(recipe,1);StopMotion();
       SaffronSubmit("cook-"+craft.Food,now,done=>B.Invoke("Cooking.Make",recipe.Id,1,ingredients,done));s.Reason="正在使用已有材料补足增产料理";return;

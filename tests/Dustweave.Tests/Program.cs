@@ -1,4 +1,5 @@
 using Dustweave;
+if(args.Length is 4 or 5&&args[0]=="--tool-package") { await ToolPluginCases.Package(args[1],args[2],args[3],args.Length==5?args[4]:null);return; }
 if(args.Length==5&&args[0]=="--soul-parity") { Dustweave.Soul.SoulChecks.ValidateKernel(args[1],args[2],args[3],args[4]);return; }
 
 if(args.Length==4 && args[0]=="--storage-hive-child") { StorageMigrationNativeCases.Child(args[1],args[2],args[3]); return; }
@@ -128,6 +129,7 @@ await Group("Saffron", async () => { SaffronCases.Run(cases); await SaffronCases
 await Group("TerritoryNavigation", () => Sync(() => TerritoryNavigationCases.Run(cases)));
 await Group("Sandbox", () => SandboxCases.Run(root, cases));
 await Group("SandboxScope", () => SandboxScopeCases.Run(root, cases));
+await Group("SandboxStartup", () => SandboxStartupCases.Run(root, cases));
 await Group("GamePreferences", () => GamePreferenceCases.Run(root, cases));
 await Group("AccountOrder", () => AccountOrderCases.Run(root, cases));
 await Group("Guild", () => GuildCases.Run(root, cases));
@@ -204,6 +206,7 @@ await Group("TaskPresets", () => Sync(() => TaskPresetCases.Run(root, cases)));
 await Group("PackagedUtility", () => PackagedUtilityCases.Run(root, cases));
 await Group("Plugin", () => Sync(() => PluginCases.Run(root, cases)));
 await Group("PluginStore", () => PluginStoreCases.Run(root, cases));
+await Group("ToolPlugins", () => ToolPluginCases.Run(root, cases));
 await Group("PluginMarket", () => PluginMarketCases.Run(root, cases));
 await Group("ToolMenu", () => Sync(() => ToolMenuCases.Run(root, cases)));
 await Group("Soul", () => Sync(() => SoulCases.Run(root, cases)));

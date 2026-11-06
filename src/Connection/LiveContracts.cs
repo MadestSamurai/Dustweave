@@ -25,7 +25,7 @@ namespace BD2Daily.Live {
    return active&&defined&&kind!=2&&kind!=3&&respawnSeconds<=0&&(!suppressible||suppressionPending);
   }
   public static double NavigationSeconds(double distance){return double.IsNaN(distance)||double.IsInfinity(distance)||distance<0?60:Math.Max(60,Math.Min(300,distance/1.2+20));}
-  public const string LiveEntries="runtime.json|snapshot.json|error.json|attached.json|performance.json|command.json|pause|legacy-observation|evidence-config.json|observation-request.json|evidence.json|dice-lease.json|dispatch-recovery.json|events~*|receipts~*";
+  public const string LiveEntries="runtime.json|snapshot.json|error.json|attached.json|performance.json|command.json|pause|legacy-observation|evidence-config.json|observation-request.json|evidence.json|dice-lease.json|dispatch-recovery.json|plugin-tool-request.json|plugin-tool-response.json|events~*|receipts~*";
   public static bool Ready(Frame f,int processId,long startTicks,long now,string previousInstance=null){
    return f!=null&&f.Protocol==1&&f.BridgeVersion==BridgeVersion&&f.ProcessId==processId&&f.ProcessStartTicks==startTicks&&f.AtUtcTicks>now-TimeSpan.FromSeconds(3).Ticks&&f.AtUtcTicks<=now+TimeSpan.FromSeconds(2).Ticks&&!string.IsNullOrEmpty(f.Instance)&&string.IsNullOrEmpty(f.Error)&&(previousInstance==null||f.Instance!=previousInstance);
   }

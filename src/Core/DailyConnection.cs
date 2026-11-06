@@ -191,7 +191,7 @@ public sealed class DailyGameHost : IGameHost
             cancellation.ThrowIfCancellationRequested();
             var start = DailyTools.StartInfo(directory, relative);
             start.Environment["BD2_DAILY_DATA_ROOT"] = root;
-            start.Environment["DUSTWEAVE_PLUGIN"] = DailyPlugin.Current.Available ? DailyPlugin.Current.Root : "none";
+            DailyPlugin.PinEnvironment(start,DailyPlugin.Current);
             foreach (var arg in arguments)
                 start.ArgumentList.Add(arg);
             using var p = Process.Start(start) ?? throw new IOException("启动恢复组件未启动。");

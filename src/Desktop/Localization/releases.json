@@ -1,5 +1,38 @@
 [
 {
+  "Version": "1.6.2",
+  "Date": "2026-11-06",
+  "Notes": {
+    "zh-CN": [
+      "修复藏红花种收在领地积分足够时仍被跳过的问题；按实际种子价格和土豆轮数计算所需积分，并分别说明积分、背包和增产时间不足的原因。",
+      "隔离启动时，如果 Sandboxie 服务或驱动尚未启动，会尝试恢复并重新连接；无法恢复时会说明原因和下一步。",
+      "修复程序放在较长目录中时，隔离启动或登录信息交接可能出现命令行参数错误的问题。",
+      "修复关闭工具后退出织尘时，可能出现窗口关闭异常的问题。",
+      "改善装备建议弹窗的处理：不阻挡操作的提示不影响日常；挡住页面时只关闭提示，不替换装备或更改建议设置。",
+      "支持同时启用多个不同插件，并改善插件切换后的连接和工具窗口衔接。",
+      "完善工具插件错误记录与诊断导出，方便定位计算或预设操作失败的原因。"
+    ],
+    "zh-TW": [
+      "修復藏紅花種收在領地積分足夠時仍被略過的問題；依實際種子價格及馬鈴薯輪數計算所需積分，並分別說明積分、背包與增產時間不足的原因。",
+      "隔離啟動時，若 Sandboxie 服務或驅動程式尚未啟動，會嘗試恢復並重新連線；無法恢復時會說明原因及下一步。",
+      "修復程式放在較長目錄中時，隔離啟動或登入資訊交接可能出現命令列參數錯誤的問題。",
+      "修復關閉工具後退出織塵時，可能出現視窗關閉異常的問題。",
+      "改善裝備建議彈窗的處理：不阻擋操作的提示不影響日常；擋住頁面時只關閉提示，不替換裝備或變更建議設定。",
+      "支援同時啟用多個不同插件，並改善插件切換後的連線及工具視窗銜接。",
+      "完善工具插件錯誤記錄與診斷匯出，方便定位計算或預設操作失敗的原因。"
+    ],
+    "en-US": [
+      "Fixes saffron farming being skipped despite sufficient territory points. Required points now follow actual seed prices and selected potato rounds, with separate explanations for insufficient points, inventory space or remaining yield-buff time.",
+      "Isolated launches now attempt to start Sandboxie services or its driver when needed, then reconnect. If recovery fails, the message explains the reason and next step.",
+      "Fixes command-line errors during isolated launch or sign-in handoff when Dustweave is stored in a long directory path.",
+      "Fixes a window-closing error that could occur when exiting Dustweave after closing a tool.",
+      "Improves equipment suggestion handling: nonblocking suggestions no longer interrupt daily tasks; blocking suggestions are dismissed without changing equipment or suggestion preferences.",
+      "Supports enabling multiple different plugins and improves connections and tool handoff after changing plugins.",
+      "Adds fuller tool-plugin error records to diagnostic exports to help identify calculation and preset failures."
+    ]
+  }
+},
+{
   "Version": "1.6.1",
   "Date": "2026-11-05",
   "Notes": {
