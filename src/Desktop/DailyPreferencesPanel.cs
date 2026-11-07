@@ -52,6 +52,7 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly CheckBox events = Check("prefs.events"), eventMissions = Check("prefs.events_missions"), roulette = Check("prefs.events_roulette"), exchange = Check("prefs.events_exchange"), quiz = Check("prefs.events_quiz"), dice = Check("prefs.events_dice"), puzzle = Check("prefs.event_puzzle");
     private readonly CheckBox trade = Check("prefs.trade_purchase");
     private readonly CheckBox tradeProcessing = Check("prefs.trade_processing");
+    private readonly CheckBox cookingRefill = Check("prefs.cooking_refill");
     private readonly CheckBox tradeFavorites = Check("prefs.trade_favorites"), saffronProcessing = Check("prefs.saffron_processing");
     private readonly StackPanel normalTrade = new();
     private readonly TextBox tradeReserve = new(), tradeMaximum = new();
@@ -215,6 +216,9 @@ public sealed class DailyPreferencesPanel : UserControl
         Note("prefs.potion_refill_hint");
         section = generalBody;
         Divider();
+        section.Children.Add(cookingRefill);
+        Note("prefs.cooking_refill_hint");
+        Divider();
         Row("prefs.potion_reserve", potionReserve);
         Note("prefs.potion_reserve_hint");
         Divider();
@@ -337,8 +341,9 @@ public sealed class DailyPreferencesPanel : UserControl
         cookingButton.Click += (_, _) =>
         {
             if (loaded == null || account.Length == 0) return;
-            var dialog = new DailyCookingWindow(loaded.Trade.CookingRecipes) { Owner = Window.GetWindow(this) };
-            if (DailyDialogs.ShowModal(dialog) == true && dialog.Result != null) { loaded.Trade.CookingRecipes = dialog.Result; MarkDirty(); }
+            var dialog = new DailyCookingWindow(loaded.Trade.CookingRecipes, currentSales: loaded.Trade.Sales) { Owner = Window.GetWindow(this) };
+            if (DailyDialogs.ShowModal(dialog) == true && dialog.Result != null && dialog.SalesResult != null)
+            { loaded.Trade.CookingRecipes = dialog.Result; loaded.Trade.Sales = dialog.SalesResult; MarkDirty(); }
         };
         section.Children.Add(cookingButton);
         var tradeSection = section;
@@ -437,6 +442,8 @@ public sealed class DailyPreferencesPanel : UserControl
         tradeBreakEven.Unchecked += (_, _) => MarkDirty();
         tradeProcessing.Checked += (_, _) => MarkDirty();
         tradeProcessing.Unchecked += (_, _) => MarkDirty();
+        cookingRefill.Checked += (_, _) => MarkDirty();
+        cookingRefill.Unchecked += (_, _) => MarkDirty();
         foreach (var option in new[] { tradeFavorites, saffronProcessing, fastTravel })
         { option.Checked += (_, _) => MarkDirty(); option.Unchecked += (_, _) => MarkDirty(); }
         form.IsEnabled = false;
@@ -560,6 +567,24 @@ public sealed class DailyPreferencesPanel : UserControl
         ShowAllSettings(); UpdateLayout(); formScroll.ScrollToVerticalOffset(switchHeader.TranslatePoint(new Point(), form).Y);
         if (switchViews.Any(v => v.Child is Expander || v.ActualWidth > formScroll.ViewportWidth + 1))
             throw new Exception("Simple-task cards overflow the settings viewport or retain an expander");
+    }
+    internal async Task CheckPotionSupplyForSmoke(bool cooking)
+    {
+        if (allowGame || loaded == null) throw new InvalidOperationException("Isolated settings required");
+        bool refill = potionRefill.IsChecked == true, fund = cookingRefill.IsChecked == true;
+        try
+        {
+            potionRefill.IsChecked = false; cookingRefill.IsChecked = true;
+            await Task.Delay(750);
+            if (dirty) throw new Exception("Potion funding settings did not save automatically");
+            var saved = store.Read(account);
+            if (saved.General.RefillTalentPotions || !saved.Trade.RefillCookingPotions || !cookingRefill.IsEnabled)
+                throw new Exception("Cooking funding must remain independent of fixed refills");
+        }
+        finally { potionRefill.IsChecked = refill; cookingRefill.IsChecked = fund; SavePending(); }
+        ReviewCategoryForSmoke("resources");
+        UpdateLayout();
+        if (cooking) cookingRefill.BringIntoView(); else formScroll.ScrollToTop();
     }
     internal async Task CheckAutoSaveForSmoke(string first, string second)
     {
@@ -901,6 +926,7 @@ public sealed class DailyPreferencesPanel : UserControl
             friendship.IsChecked = loaded.Friendship.Enabled;
             trade.IsChecked = loaded.Trade.Enabled;
             tradeProcessing.IsChecked = loaded.Trade.AutoCookAndSell;
+            cookingRefill.IsChecked = loaded.Trade.RefillCookingPotions;
             tradeFavorites.IsChecked = loaded.Trade.FavoritesOnly;
             cookingButton.IsEnabled = loaded.Trade.FavoritesOnly;
             normalTrade.IsEnabled = !loaded.Trade.FavoritesOnly;
@@ -1061,6 +1087,7 @@ public sealed class DailyPreferencesPanel : UserControl
             next.MonsterHunt.Enabled = false;
             next.Trade.Enabled = trade.IsChecked == true;
             next.Trade.AutoCookAndSell = tradeProcessing.IsChecked == true;
+            next.Trade.RefillCookingPotions = cookingRefill.IsChecked == true;
             next.Trade.FavoritesOnly = tradeFavorites.IsChecked == true;
             next.Events.Enabled = events.IsChecked == true;
             next.Events.Missions = eventMissions.IsChecked == true;

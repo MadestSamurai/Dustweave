@@ -10,6 +10,7 @@ public partial class MainWindow
     private DateTime nextLogCleanup = DateTime.UtcNow.AddMinutes(1);
     private DateTime nextEvidenceCleanup = DateTime.UtcNow.AddSeconds(15);
     private DateTime nextUpdateCacheCleanup = DateTime.UtcNow.AddMinutes(1);
+    private DateTime nextResourceMaintenance = DateTime.UtcNow.AddMinutes(3);
     private bool logCleanupRunning;
     private bool compressionPending;
     private DateTime lastRetentionUtc=DateTime.MinValue;
@@ -27,6 +28,7 @@ public partial class MainWindow
         var retry=DateTime.UtcNow.AddMinutes(5);
         if(nextLogCleanup<retry)nextLogCleanup=retry;
         if(nextUpdateCacheCleanup<retry)nextUpdateCacheCleanup=retry;
+        if(nextResourceMaintenance<retry)nextResourceMaintenance=retry;
         nextEvidenceCleanup=DateTime.UtcNow.AddMinutes(1);
         token.ThrowIfCancellationRequested();
         if(!logCleanupRunning)return;
@@ -78,13 +80,15 @@ public partial class MainWindow
         if(logCleanupRunning)return;
         bool retentionDue=logPolicy.Automatic&&DateTime.UtcNow>=nextLogCleanup;
         bool updatesDue=DateTime.UtcNow>=nextUpdateCacheCleanup;
-        if(!retentionDue && !updatesDue && (DateTime.UtcNow<nextEvidenceCleanup || !DailyLogEvidence.HasPending(root)))return;
+        bool resourcesDue=logPolicy.Automatic&&DateTime.UtcNow>=nextResourceMaintenance;
+        if(!retentionDue && !updatesDue && !resourcesDue && (DateTime.UtcNow<nextEvidenceCleanup || !DailyLogEvidence.HasPending(root)))return;
         nextEvidenceCleanup=DateTime.UtcNow.AddMinutes(1);
         if(retentionDue)nextLogCleanup=DateTime.UtcNow.AddMinutes(5);
         if(updatesDue)nextUpdateCacheCleanup=DateTime.UtcNow.AddMinutes(5);
+        if(resourcesDue)nextResourceMaintenance=DateTime.UtcNow.AddMinutes(5);
         await RunAutomaticMaintenanceAsync(async token => {
             await DailyLogEvidence.FlushAsync(root,token);
-            if(!retentionDue && !updatesDue)return;
+            if(!retentionDue && !updatesDue && !resourcesDue)return;
             bool continuing=compressionPending&&lastRetentionUtc>DateTime.UtcNow.AddHours(-12)&&lastRetentionUtc<=DateTime.UtcNow;
             if(retentionDue&&!continuing&&LegacyEquipmentLogRoot is { } legacy)await DailyLogCleanup.ImportLegacyEquipmentLogsAsync(root,legacy,token);
             if(Unavailable || MaintenanceWindowOpen || dailyQueue.IsRunning || scheduleChecking || DailyDialogs.ModalDepth>0 || updateChecking || updateInstalling)return;
@@ -103,6 +107,11 @@ public partial class MainWindow
                     var result=continuing?await maintenance.ContinueCompressionAsync(token):await maintenance.CleanAsync(logPolicy,token);
                     if(!continuing)nextUpdateCacheCleanup=DateTime.UtcNow.AddMinutes(result.Skipped>0?5:30);
                     SaveLogCleanupResult(result,!continuing);
+                }
+                if(resourcesDue)
+                {
+                    var resources=await maintenance.MaintainResourceCopiesAsync(token);
+                    nextResourceMaintenance=DateTime.UtcNow.AddMinutes(resources.MoreWork?5:720);
                 }
             }
             finally {SetAutomaticCacheChanging(false);}

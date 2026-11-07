@@ -7,6 +7,7 @@ public sealed class StageHostException(string kind, string message) : Exception(
     public bool ObservationTimedOut { get; init; }
     public string Kind { get; } = kind;
     public DailyPotionLimit? PotionLimit { get; init; }
+    public DailyText? Display { get; init; }
 }
 public interface IDailyStageHost : IAsyncDisposable
 {
@@ -177,6 +178,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                 auxiliary["state"] = Text(progress["state"]);
                 auxiliary["progress"] = progress.DeepClone();
                 auxiliary["result"] = new JsonObject { ["reason"] = Text(progress["detail"]) };
+                auxiliary["display"] = progress["display"]?.DeepClone();
                 auxiliary.Remove("carried_forward");
                 if (Text(progress["state"]) == "running") auxiliary["started"] = DateTime.UtcNow.Ticks;
                 else auxiliary["finished"] = DateTime.UtcNow.Ticks;
@@ -192,6 +194,32 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
             Save();
         }
         var progressHost = host as IDailyStageProgressHost;
+        async Task Supply(string phase, bool occupied = false)
+        {
+            if (request.SyncCollection || host is not IDailyPotionSupplyHost supplyHost) return;
+            if (paused()) throw new StageHostException("stopped", "已停止，未进行固定补药。");
+            var checkpoints = record["potion_supply"] as JsonObject ?? new JsonObject();
+            if (record["potion_supply"] == null) record["potion_supply"] = checkpoints;
+            if (Text(checkpoints[phase]?["state"]) is "completed" or "skipped" or "blocked") return;
+            await Observe(context);
+            checkpoints[phase] = new JsonObject { ["state"] = "running" };
+            var preparing = DailyPotionSupply.Text(phase == "start" ? "start" : "finish", phase == "start" ? "执行前检查天赋药补给" : "邮箱收尾前检查天赋药补给");
+            OnProgress(DailyTalentPotions.Stage, DailyPotionSupply.Result("running", preparing));
+            try
+            {
+                var result = occupied
+                    ? DailyPotionSupply.Result("skipped", DailyPotionSupply.Text("occupied", "当前已有进行中的任务，保留现场，跳过开跑前补药。"))
+                    : await supplyHost.SupplyPotionsAsync();
+                checkpoints[phase] = result.DeepClone();
+                OnProgress(DailyTalentPotions.Stage, result);
+            }
+            catch (Exception error)
+            {
+                checkpoints[phase] = new JsonObject { ["state"] = "recovery_required", ["error"] = error.Message };
+                OnProgress(DailyTalentPotions.Stage, new JsonObject { ["state"] = "recovery_required", ["detail"] = error.Message });
+                throw;
+            }
+        }
         if (progressHost != null)
             progressHost.StageProgress += OnProgress;
         try
@@ -229,6 +257,10 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                 item.Remove("recovery_blockers");
             }
             Save();
+            bool hasWork = itemsToRun.Any(i => i["carried_forward"]?.GetValue<bool>() != true &&
+                !Terminal.Contains(Text(i["state"])) && DailyStageCatalog.Enabled(Text(i["task"]), preferences()));
+            hasWork |= new[] { "start", "finish" }.Any(phase => Text(record["potion_supply"]?[phase]?["state"]) is "running" or "recovery_required");
+            if (hasWork) await Supply("start", owners.Length > 0 || unresolved.Count > 0);
             foreach (var item in itemsToRun.OrderBy(i => Text(i["task"]) == priority ? 0 : 1))
             {
                 if (item["carried_forward"]?.GetValue<bool>() == true || Terminal.Contains(Text(item["state"])))
@@ -237,6 +269,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                     throw new StageHostException("stopped", "已停止后续操作。");
                 await Observe(context);
                 string stage = Text(item["task"]);
+                if (stage == "mail" && hasWork) await Supply("finish");
                 activeStage = stage;
                 if (!DailyStageCatalog.Enabled(stage, preferences()))
                 {
@@ -301,6 +334,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                         {
                             row["state"] = error.Kind == "pending" || error.HoldQueue ? "recovery_required" : "blocked";
                             row["error"] = error.Message;
+                            row["display"] = System.Text.Json.JsonSerializer.SerializeToNode(error.Display);
                             row["finished"] = DateTime.UtcNow.Ticks;
                         }
                         Save();
@@ -365,6 +399,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                     item["state"] = "blocked";
                     item["phase"] = "navigation";
                     item["error"] = error.Message;
+                    item["display"] = System.Text.Json.JsonSerializer.SerializeToNode(error.Display);
                     item["recovery"] = recovery;
                     item["finished"] = DateTime.UtcNow.Ticks;
                     Save();
@@ -380,6 +415,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                 item["state"] = "running";
                 item["started"] = DateTime.UtcNow.Ticks;
                 item.Remove("error");
+                item.Remove("display");
                 Save();
                 try
                 {
@@ -410,6 +446,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                     if (error.Data["stage_result"] is JsonObject confirmed) item["result"] = confirmed.DeepClone();
                     item["state"] = error.Kind == "pending" || error.HoldQueue ? "recovery_required" : "blocked";
                     item["error"] = error.Message;
+                    item["display"] = System.Text.Json.JsonSerializer.SerializeToNode(error.Display);
                     if (error.HoldQueue)
                     {
                         item["finished"] = DateTime.UtcNow.Ticks;
@@ -424,6 +461,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                     throw new StageHostException("stopped", "已停止后续操作；原请求结果已保留。");
                 await Observe(context);
             }
+            if (hasWork) await Supply("finish"); // Also runs when mail was not selected.
             record["state"] = itemsToRun.All(i => Text(i["state"]) is "completed" or "skipped") ? "completed" : "partial";
         }
         catch (Exception error)

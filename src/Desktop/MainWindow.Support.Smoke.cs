@@ -223,6 +223,13 @@ public partial class MainWindow
                     if(diskUsage.Children.Count==0||!Nodes<TextBlock>(diskUsage).Any(t=>t.Text==Path.GetPathRoot(root)))throw new Exception("Per-disk storage usage is missing");
                     if(DailyStorageCompression.Supported(root) && (!start.IsEnabled || !Nodes<TextBlock>(cleanup).Any(t=>t.Visibility==Visibility.Visible&&t.Text==L.Get("storage.compression",1))))throw new Exception("Compression-only maintenance is not understandable or available");
                     await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    var resourceCheck=Nodes<Button>(cleanup).Single(b=>b.Name=="ResourceCopyCheck");
+                    var resourceRemove=Nodes<Button>(cleanup).Single(b=>b.Name=="ResourceCopyOptimize");
+                    if(!resourceCheck.IsEnabled||resourceRemove.IsEnabled)throw new Exception("Resource optimization must require a fresh verified preview");
+                    resourceCheck.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    for(int i=0;i<200&&!resourceCheck.IsEnabled;i++)await Task.Delay(20);
+                    if(!resourceCheck.IsEnabled||resourceRemove.IsEnabled||Nodes<TextBlock>(cleanup).Single(t=>t.Name=="ResourceCopyStatus").Text.StartsWith("storage."))throw new Exception("Empty resource preview did not recover or localize");
+                    checks+=2;
                     Capture($"support-cleanup-{language}-{appearance}",(FrameworkElement)cleanup.Content);
                     if(start.TransformToAncestor(cleanup).TransformBounds(new Rect(start.RenderSize)).Bottom>cleanup.ActualHeight)throw new Exception("Cleanup action clipped");
                     if(language==0&&appearance==1){
@@ -238,7 +245,7 @@ public partial class MainWindow
                 DailyStorageCategory Category(string key,DailyStorageState state,int mib,int expired=0,int deferred=0)=>new(key,state,mib*1048576L,expired*1048576L,deferred*1048576L,1);
                 var breakdown=new DailyStorageOverview([]){Areas=[
                     new("sandbox",Path.Combine(root,"instances","example"),0,[
-                        Category("shader",DailyStorageState.Regenerable,784),Category("windows",DailyStorageState.Kept,677),
+                        Category("game-audio",DailyStorageState.Regenerable,2246),Category("shader",DailyStorageState.Regenerable,784),Category("windows",DailyStorageState.Kept,677),
                         Category("game-tables",DailyStorageState.InUse,195),Category("game-recovery",DailyStorageState.Recovery,189),
                         Category("dustweave/steps",DailyStorageState.Recent,162,0,16),Category("dustweave/progress",DailyStorageState.Recovery,173),
                         Category("dustweave/logs",DailyStorageState.Recent,46),Category("dustweave/components",DailyStorageState.InUse,24),
@@ -303,20 +310,24 @@ public partial class MainWindow
             string updateFixture=Path.Combine(root,"updates","0.0.1-Portable","package.zip");
             Directory.CreateDirectory(Path.GetDirectoryName(updateFixture)!);File.WriteAllText(updateFixture,"expired update fixture");File.SetLastWriteTimeUtc(updateFixture,DateTime.UtcNow.AddDays(-20));
             logPolicy=new(false);nextLogCleanup=DateTime.UtcNow.AddHours(12);nextUpdateCacheCleanup=DateTime.MinValue;busy=true;
+            nextResourceMaintenance=DateTime.MinValue;
             await CheckLogCleanupAsync();if(!File.Exists(updateFixture))throw new Exception("Update maintenance ran while busy");
             busy=false;var logClock=nextLogCleanup;var retentionClock=lastRetentionUtc;
             await CheckLogCleanupAsync();
             if(File.Exists(updateFixture)||!File.Exists(automaticLog)||nextLogCleanup!=logClock||lastRetentionUtc!=retentionClock||nextUpdateCacheCleanup<DateTime.UtcNow.AddMinutes(29))
                 throw new Exception("Short idle update cleanup changed log retention or failed to run");
+            if(nextResourceMaintenance!=DateTime.MinValue)throw new Exception("Disabled automatic cleanup still scheduled resource removal");
             nextUpdateCacheCleanup=DateTime.MinValue;await PauseAutomaticMaintenanceAsync();
             if(nextUpdateCacheCleanup<DateTime.UtcNow.AddMinutes(4))throw new Exception("Foreground work did not defer update maintenance");
+            if(nextResourceMaintenance<DateTime.UtcNow.AddMinutes(4))throw new Exception("Foreground work did not defer resource maintenance");
             checks+=3;
             logPolicy=new(false);nextLogCleanup=DateTime.UtcNow.AddMinutes(-1);
             await CheckLogCleanupAsync();if(!File.Exists(automaticLog))throw new Exception("Disabled retention still ran");
-            logPolicy=new();busy=true;
+            logPolicy=new();busy=true;nextResourceMaintenance=DateTime.MinValue;
             await CheckLogCleanupAsync();if(!File.Exists(automaticLog))throw new Exception("Retention ran while automation was busy");
             busy=false;await CheckLogCleanupAsync();
             if(File.Exists(automaticLog)||nextLogCleanup<DateTime.UtcNow.AddHours(11))throw new Exception("Idle retention did not run or persist its schedule");
+            if(nextResourceMaintenance<DateTime.UtcNow.AddHours(11)||!File.Exists(Path.Combine(root,"resource-optimization-last.json")))throw new Exception("Idle resource maintenance did not finish independently");
             var retainedAt=lastRetentionUtc;
             SaveLogCleanupResult(new(0,0,0){MoreWork=true,CompressedFiles=128},false);
             if(lastRetentionUtc!=retainedAt || nextLogCleanup>DateTime.UtcNow.AddMinutes(6) || !compressionPending)throw new Exception("Compression continuation changed the retention clock");

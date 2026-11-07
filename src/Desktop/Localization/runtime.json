@@ -1,4 +1,9 @@
 {
+  "message.hunt.selection_not_applied": {
+    "zh-CN": "圣石属性切换未生效，已重试但未提交圣石狩猎，也未消耗火把。请在游戏中选择所需属性后重新执行，已完成的免费米饭狩猎会跳过。",
+    "zh-TW": "聖石屬性切換未生效，已重試但未提交聖石狩獵，也未消耗火把。請在遊戲中選擇所需屬性後重新執行，已完成的免費白飯狩獵會跳過。",
+    "en-US": "The Holy Stone element did not change after retries. No Holy Stone hunt was started and no torches were spent. Select the desired element in the game, then run again; completed free-rice hunts will be skipped."
+  },
   "message.saffron.prepare.funds": {
     "zh-CN": "领地积分不足以支付剩余土豆轮次、补种藏红花及缺少的增产料理，未使用新料理；补足积分或减少土豆轮数后可重新执行。",
     "zh-TW": "領地積分不足以支付剩餘馬鈴薯輪次、補種藏紅花及缺少的增產料理，未使用新料理；補足積分或減少馬鈴薯輪數後可重新執行。",

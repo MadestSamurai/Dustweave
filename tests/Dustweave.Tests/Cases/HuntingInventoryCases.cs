@@ -14,6 +14,46 @@ static class HuntingInventoryCases
         foreach (int missed in new[] { 0, 1, 2, 3 })
         using (var f = Make())
         {
+            f.Element = "light"; f.MissedSelections = missed;
+            f.H.Workflow.Settings.Hunt.StoneElement = "fire";
+            bool paused = false;
+            try { await DailyHunting.Run(f.H.Workflow, "stones"); }
+            catch (StageHostException ex) when (ex.Message == "hunt.selection_not_applied") { paused = true; }
+            Check(f.Selections == Math.Min(missed + 1, 3) && paused == (missed == 3), "stone selection retries only the non-consuming attribute: " + missed);
+            Check(f.Tabs == 0, "already selected crystal category is not reopened: " + missed);
+            if (paused)
+            {
+                Check(f.Opens == 0 && f.Dispatched == 0 && f.Free == 20 && f.Paid == 999, "exhausted selection retries never preview or consume a wrong attribute");
+                f.MissedSelections = 0;
+                await DailyHunting.Run(f.H.Workflow, "stones");
+            }
+            Check(f.Element == "fire" && f.Dispatched == 1 && f.Free == 0 && f.Paid == 999, "selection recovery runs exactly one correct free-only batch: " + missed);
+            await DailyHunting.Run(f.H.Workflow, "stones");
+            Check(f.Dispatched == 1, "completed recovered selection does not repeat hunting: " + missed);
+        }
+        using (var f = Make())
+        {
+            f.Element = "light"; f.DelaySelection = true;
+            f.H.Workflow.Settings.Hunt.StoneElement = "fire";
+            f.H.OnDelay = () => { if (f.H.Time >= .6) f.Element = "fire"; };
+            await DailyHunting.Run(f.H.Workflow, "stones");
+            Check(f.Selections == 1 && f.Dispatched == 1, "delayed native attribute change is observed before repeating input");
+        }
+        foreach (bool changedAccount in new[] { false, true })
+        using (var f = Make())
+        {
+            f.MissedSelections = 3; f.H.Workflow.Settings.Hunt.StoneElement = "wind";
+            f.H.OnDelay = () => { if (changedAccount) f.H.Context["actor"]![3] = "changed"; else f.H.Stopped = true; };
+            bool stopped = false;
+            try { await DailyHunting.Run(f.H.Workflow, "stones"); }
+            catch (OperationCanceledException) { stopped = true; }
+            catch (DailyStepException) { stopped = true; }
+            catch (StageHostException ex) when (ex.Kind is "identity" or "stopped") { stopped = true; }
+            Check(stopped && f.Selections == 1 && f.Dispatched == 0, "selection wait preserves cancellation/account boundaries: " + changedAccount);
+        }
+        foreach (int missed in new[] { 0, 1, 2, 3 })
+        using (var f = Make())
+        {
             f.MissedOpens = missed;
             f.H.Workflow.Settings.Hunt.StoneElement = "wind";
             bool paused = false;
@@ -112,7 +152,8 @@ static class HuntingInventoryCases
     {
         public readonly WorkflowHarness H;
         public bool Folded = true, DelayRows, NeverRows;
-        public int Expands, Dispatched, Opens, MissedOpens, Free = 20, Paid = 999;
+        public int Expands, Dispatched, Opens, MissedOpens, Selections, MissedSelections, Tabs, Free = 20, Paid = 999;
+        public bool DelaySelection;
         public bool FreeOnly = true;
         public string Element = "fire";
         double expandedAt = -100;
@@ -146,8 +187,12 @@ static class HuntingInventoryCases
                 else if (ui == DailyHunting.Ui && field == "_objBackButton") H.Page("MenuUI", "_goQuickHuntDispatchButton");
                 else if (ui == "MenuUI" && field == "_goQuickHuntDispatchButton") Page();
                 else if (ui == DailyHunting.Ui && field.EndsWith("/Button - Element"))
-                    Element = DailyHunting.Elements.Single(e => field.Contains("Item - Element - " + char.ToUpperInvariant(e[0]) + e[1..]));
-                else if (ui == DailyHunting.Ui && field.EndsWith("4 - Crystal")) { }
+                {
+                    Selections++;
+                    if (Selections > MissedSelections && !DelaySelection)
+                        Element = DailyHunting.Elements.Single(e => field.Contains("Item - Element - " + char.ToUpperInvariant(e[0]) + e[1..]));
+                }
+                else if (ui == DailyHunting.Ui && field.EndsWith("4 - Crystal")) { Tabs++; }
                 else if (ui == "HuntDispatchPopupUI" && field == "_sliderAutoCount._objPlusMaxButton") count = 20;
                 else if (ui == "HuntDispatchPopupUI" && field == "_buttonHuntDispatch._button")
                 {

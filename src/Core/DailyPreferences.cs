@@ -176,6 +176,17 @@ public sealed class DailyPreferences
             if (trade["FavoritesOnly"]?.GetValue<bool>() != true) trade["AutoCookAndSell"] = true;
             trade["StrategyRevision"] = 1;
         }
+        if (node["General"] is JsonObject supply && !supply.ContainsKey("PotionSupplyRevision"))
+        {
+            // One-time adoption; later opt-outs and smaller targets are preserved.
+            long reserve = supply["TalentPotionReserve"]?.GetValue<long>() ?? 0;
+            if (reserve < int.MaxValue)
+            {
+                supply["RefillTalentPotions"] = true;
+                supply["TalentPotionTarget"] = Math.Max(Math.Max(5000, reserve + 1), supply["TalentPotionTarget"]?.GetValue<long>() ?? 5000);
+            }
+            supply["PotionSupplyRevision"] = 1;
+        }
         var value = node.Deserialize<DailyPreferences>(DailyJson.Options) ?? throw new InvalidDataException("日常设置不能为空。");
         // Retain the legacy field for old profile compatibility only.
         if (value.MonsterHunt != null) value.MonsterHunt.Enabled = false;
@@ -194,6 +205,7 @@ public sealed class DailyPreferences
             throw new InvalidDataException("周收集地图列表包含无效或重复的地图。");
         if (Trade.CookingRecipes == null || Trade.CookingRecipes.Length > 300 || Trade.CookingRecipes.Any(id => id <= 0) || Trade.CookingRecipes.Distinct().Count() != Trade.CookingRecipes.Length)
             throw new InvalidDataException("自定义料理列表包含无效或重复的配方。");
+        DailyCustomSales.Validate(Trade.Sales);
         if (SaffronPotatoRounds is < 1 or > 3)
             throw new InvalidDataException("藏红花收割后的土豆轮数必须为 1 至 3。");
         if (Tactics.SearchSeconds is < 1 or > 120)
@@ -229,8 +241,9 @@ public sealed class GeneralPreferences
 {
     public bool FastTravel { get; set; } = true;
     [JsonRequired] public long TalentPotionReserve { get; set; } = 0;
-    [JsonRequired] public bool RefillTalentPotions { get; set; } = false;
-    [JsonRequired] public long TalentPotionTarget { get; set; } = 1000;
+    public int PotionSupplyRevision { get; set; } = 1;
+    [JsonRequired] public bool RefillTalentPotions { get; set; } = true;
+    [JsonRequired] public long TalentPotionTarget { get; set; } = 5000;
     public void Validate()
     {
         if (TalentPotionReserve < 0 || TalentPotionReserve > int.MaxValue || TalentPotionTarget < 1 || TalentPotionTarget > int.MaxValue)
@@ -420,8 +433,10 @@ public sealed class TradePreferences
     public bool FavoritesOnly { get; set; }
     public int StrategyRevision { get; set; } = 1;
     public bool AutoCookAndSell { get; set; } = true;
+    public bool RefillCookingPotions { get; set; }
     public long[] CookingRecipes { get; set; } = [];
-    [JsonIgnore] public bool RequiresCatalog => !FavoritesOnly || CookingRecipes.Length > 0;
+    public DailySalePreference[] Sales { get; set; } = [];
+    [JsonIgnore] public bool RequiresCatalog => !FavoritesOnly || CookingRecipes.Length > 0 || Sales.Any(s => s.Enabled);
     [JsonRequired]
     public bool Enabled
     {

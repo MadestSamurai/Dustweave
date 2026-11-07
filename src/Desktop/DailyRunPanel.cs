@@ -640,7 +640,7 @@ public sealed partial class DailyRunPanel : UserControl
         {
             get
             {
-                var text = string.IsNullOrWhiteSpace(snapshot.Detail) ? snapshot.State switch
+                var text = snapshot.Display is { } display ? L.Describe(display) : string.IsNullOrWhiteSpace(snapshot.Detail) ? snapshot.State switch
                 {
                     "skipped" => L.Get("run.skipped_unknown"),
                     "partial" or "blocked" or "failed" or "error" => L.Get("run.outcome_unknown"),
@@ -649,10 +649,10 @@ public sealed partial class DailyRunPanel : UserControl
                 if (string.IsNullOrWhiteSpace(snapshot.Detail) && snapshot.Draws is { Draws: > 0 } draw) text = DailyResultText.Draws(draw);
                 if (string.IsNullOrWhiteSpace(snapshot.Detail) && Absorptions is { Maps: > 0 } day)
                     text += (text.Length > 0 ? "\n" : "") + DailyResultText.Absorptions(day);
-                if (snapshot.State is "blocked" or "failed" or "error" && DailyIssues.Classify(snapshot.Detail).Code != "unknown")
+                if (snapshot.Display == null && snapshot.State is "blocked" or "failed" or "error" && DailyIssues.Classify(snapshot.Detail).Code != "unknown")
                     text = DailyIssuePresentation.WithAdvice(snapshot.Detail, text);
                 // An unrecognized interruption still needs a concrete next step (PRODUCT.md); classified issues bring their own.
-                else if (snapshot.State == "blocked")
+                else if (snapshot.Display == null && snapshot.State == "blocked")
                     text = (text.Length > 0 ? text + "\n" : "") + L.Get("run.blocked_next");
                 if (HasRecovery) text = (text.Length > 0 ? text + "\n" : "") + L.Get("run.recovery_summary", RecoveryOperations);
                 text = CollapseRepeats(text);

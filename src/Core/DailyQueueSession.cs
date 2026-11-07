@@ -4,6 +4,7 @@ namespace Dustweave;
 
 public sealed record QueueStage(string Task, string State, string Detail, bool Carried = false, DateTimeOffset? FinishedAt = null, IReadOnlyList<QueueTaskDetail>? PendingTasks = null)
 {
+    public DailyText? Display { get; init; }
     public DailyWorkProgress? Work { get; init; }
     // Retain confirmed units when paused/history is shown, without displaying a
     // live operation or granting any authority to resume an old transaction.
@@ -225,7 +226,7 @@ public sealed class DailyQueueSession(string root, IDailyQueueExecutor executor,
         var absorptions = normalized["context"] is System.Text.Json.Nodes.JsonObject context ? DailyAbsorptionLog.Read(root, context) : null;
         var stages = value.GetProperty("items").EnumerateArray().Select(i => new QueueStage(i.GetProperty("task").GetString() ?? "", i.GetProperty("state").GetString() ?? "",
           ReadStageDetail(i), i.TryGetProperty("carried_forward", out var carried) && carried.ValueKind == JsonValueKind.True, ReadFinishedAt(i), DailyPendingTasks.Read(i)) {
-              Recovery = QueueRecoveryDetail.Read(i), Draws = DailyDrawSummary.Read(i),
+              Recovery = QueueRecoveryDetail.Read(i), Draws = DailyDrawSummary.Read(i), Display = DailyPotionSupply.ReadDisplay(i),
               Absorptions = i.GetProperty("task").GetString() == "weekly_mainline" ? absorptions : null,
               HasNotice = DailyRunReport.HasNotice(i), Locations = DailyLocationLabels.Read(i), Work = DailyWorkProgress.Read(i, state),
               RecordedWork = DailyWorkProgress.ReadRecorded(i)

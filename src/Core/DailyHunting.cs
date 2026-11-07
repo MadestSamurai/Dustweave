@@ -124,10 +124,32 @@ public static class DailyHunting
                 "slime" => "3 - Slime",
                 _ => "4 - Crystal"
             };
-            await w.Step(Ui, "$pointer/Layout - Button/Button - " + tab, reason: "选择狩猎分类");
-            await w.WaitEvidence(["hunt", "daily.currency", "missions.cache"], e => kind == "stone" ? N(Selected(e)["typeGroupId"]) >= 3 : N(Selected(e)["typeGroupId"]) == expected);
+            if (kind != "stone" || N(selected["typeGroupId"]) is < 3 or > 7)
+            {
+                await w.Step(Ui, "$pointer/Layout - Button/Button - " + tab, reason: "选择狩猎分类");
+                await w.WaitEvidence(["hunt", "daily.currency", "missions.cache"], e => kind == "stone" ? N(Selected(e)["typeGroupId"]) is >= 3 and <= 7 : N(Selected(e)["typeGroupId"]) == expected);
+            }
             if (kind == "stone" && element != null)
-                await w.Step(Ui, "$pointer/SelectParent/Layout - Select/Tab - Element/UIScrollView - Element/UIViewport/UIContent/Item - Element - " + char.ToUpperInvariant(element[0]) + element[1..] + "/Button - Element", reason: "选择圣石属性");
+            {
+                // Attribute selection is non-consuming. Reobserve before each
+                // bounded attempt; a dispatched pointer alone is not selection.
+                const string error = "hunt.selection_not_applied";
+                string field = "$pointer/SelectParent/Layout - Select/Tab - Element/UIScrollView - Element/UIViewport/UIContent/Item - Element - " + char.ToUpperInvariant(element[0]) + element[1..] + "/Button - Element";
+                for (int attempt = 0; attempt < 3; attempt++)
+                {
+                    var current = Selected(await w.Evidence("hunt", "daily.currency", "missions.cache"));
+                    if (Matches(current)) return current;
+                    await w.Step(Ui, field, reason: "选择圣石属性");
+                    try
+                    {
+                        return Selected(await w.WaitEvidence(["hunt", "daily.currency", "missions.cache"], e => Matches(Selected(e)), seconds: 2, error: error));
+                    }
+                    catch (StageHostException ex) when (ex.Kind == "adapter" && ex.Message == error && attempt < 2)
+                    {
+                        w.Driver.Diagnostics.Event("hunt_selection_retry", O(("element", element), ("attempt", attempt + 1)));
+                    }
+                }
+            }
         }
         return Selected(await w.WaitEvidence(["hunt", "daily.currency", "missions.cache"], e => Matches(Selected(e))));
     }

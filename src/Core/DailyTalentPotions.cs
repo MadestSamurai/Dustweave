@@ -43,24 +43,39 @@ public static class DailyTalentPotions
     public static JsonObject DiscountedOffer(JsonObject native)
     {
         // ReputationDiscount is the game's weekly NPC-task town discount, not bargaining.
-        var offer = Rows(native["Offers"]).Where(o => N(o["Type"]) == 12 && N(o["PriceType"]) == 4 &&
-            N(o["ReputationDiscount"]) == 10 && N(o["BasePrice"]) > 0 && N(o["Price"]) > 0 &&
+        var offer = Rows(native["Offers"] ?? new JsonArray()).Where(o => N(o["Type"]) == 12 && N(o["PriceType"]) == 4 &&
+            N(o["ReputationDiscount"]) == 10 && N(o["BasePrice"]) == 50 && N(o["Price"]) == 45 &&
             N(o["Rate"]) == 100 && N(o["Price"]) == N(o["BasePrice"]) * 90 / 100 && N(o["Remaining"]) > 0)
             .OrderBy(o => N(o["Price"])).FirstOrDefault();
-        return offer ?? throw new InvalidDataException("尚未取得周NPC任务的九折天赋药报价；请先完成本周至少一条NPC任务，再补跑受限环节。没有购买原价天赋药。");
+        return offer ?? throw new DailyPotionSupplyException("discount_unavailable", DailyPotionSupply.NoDiscount);
     }
-    public static JsonObject PlanningState(JsonObject state, GeneralPreferences policy, JsonObject? quote = null)
+    public static JsonObject PlanningState(JsonObject state, GeneralPreferences policy, JsonObject? quote = null, bool cookingRefill = false)
     {
         var result = state.DeepClone().AsObject();
         result["potions"] = Math.Max(0, N(state["potions"]) - policy.TalentPotionReserve);
-        // Refill is a queue operation, never an implicit optimizer purchase.
+        // Keep the original bounded refill budget. Explicit cooking permission
+        // may exceed that target, but only for today's executable allocation.
         long buy = 0;
-        if (policy.RefillTalentPotions && quote != null)
+        if ((policy.RefillTalentPotions || cookingRefill) && quote != null)
         {
-            try { buy = Math.Min(N(DiscountedOffer(quote)["Remaining"]), Math.Max(0, policy.TalentPotionTarget - policy.TalentPotionReserve - N(result["potions"]))); }
-            catch (InvalidDataException) { }
+            try
+            {
+                _ = DiscountedOffer(quote); // Remaining is the native per-order slider cap.
+                buy = cookingRefill ? Math.Max(0, int.MaxValue - policy.TalentPotionReserve - N(result["potions"]))
+                    : Math.Min(N(state["potion_buy_limit"]), Math.Max(0, policy.TalentPotionTarget - policy.TalentPotionReserve - N(result["potions"])));
+                long reserveCost = cookingRefill ? checked(Math.Max(0, policy.TalentPotionReserve - N(state["potions"])) * 45) : 0;
+                if (reserveCost > N(state["gold"])) buy = 0;
+                else
+                {
+                    result["gold"] = N(state["gold"]) - reserveCost;
+                    result["potion_reserve_cost"] = reserveCost;
+                }
+            }
+            catch (DailyPotionSupplyException) { }
         }
-        result["potion_buy_limit"] = Math.Min(N(state["potion_buy_limit"]), buy);
+        result["potion_buy_limit"] = buy;
+        // Cooking permission does not authorize purchasing pills just to bargain.
+        if (!policy.RefillTalentPotions && N(result["potions"]) < 10) result["can_bargain"] = false;
         return result;
     }
 }

@@ -1,4 +1,49 @@
 {
+  "customsales.cooking": { "zh-CN": "料理顺序", "zh-TW": "料理順序", "en-US": "Cooking order" },
+  "customsales.food": { "zh-CN": "售卖料理", "zh-TW": "販售料理", "en-US": "Sell dishes" },
+  "customsales.materials": { "zh-CN": "售卖食材", "zh-TW": "販售食材", "en-US": "Sell ingredients" },
+  "customsales.food_help": { "zh-CN": "只出售勾选的料理，游戏报价达到最高价（120%）时出售。未到高价日或已在游戏内锁定的继续保留。", "zh-TW": "僅販售勾選的料理，遊戲報價達最高價（120%）時出售。尚未到高價日或已在遊戲內鎖定的繼續保留。", "en-US": "Sell checked dishes only at the game's maximum rate (120%). Keep dishes without a high-price quote and anything locked in the game." },
+  "customsales.material_help": { "zh-CN": "只在最高价（120%）出售勾选食材超出保留量的部分。保留量按总库存计算，包含已锁定物品；仅限制售卖，不限制料理用料。", "zh-TW": "僅在最高價（120%）販售勾選食材超出保留量的部分。保留量依總庫存計算，包含已鎖定物品；僅限制販售，不限制料理用料。", "en-US": "Sell checked ingredients at 120%, keeping at least the set total quantity, including locked stock. This reserve limits sales only, not ingredients used for cooking." },
+  "customsales.search": { "zh-CN": "搜索物品", "zh-TW": "搜尋物品", "en-US": "Search items" },
+  "customsales.sell": { "zh-CN": "自动出售", "zh-TW": "自動出售", "en-US": "Auto-sell" },
+  "customsales.item": { "zh-CN": "物品", "zh-TW": "物品", "en-US": "Item" },
+  "customsales.reserve": { "zh-CN": "售卖后至少保留", "zh-TW": "販售後至少保留", "en-US": "Keep at least after sale" },
+  "customsales.invalid": { "zh-CN": "请检查售卖清单，保留量须为 0 至 2147483647 的整数。", "zh-TW": "請檢查販售清單，保留量須為 0 至 2147483647 的整數。", "en-US": "Check the sale list. Reserves must be whole numbers from 0 to 2147483647." },
+  "customsales.quote_missing": { "zh-CN": "尚未读到完整售卖报价，请返回商店后重试。未继续提交售卖。", "zh-TW": "尚未讀到完整販售報價，請返回商店後重試。未繼續提交販售。", "en-US": "Sale quotes are not ready. Return to the shop and retry. No further sales were submitted." },
+  "customsales.purchased": { "zh-CN": "已砍价并购买收藏商品，游戏内收藏保持不变。", "zh-TW": "已議價並購買收藏商品，遊戲內收藏保持不變。", "en-US": "Bought favorite products at discounted prices without changing in-game favorites." },
+  "customsales.cooked": { "zh-CN": "已按当前材料制作，随后按售卖清单检查成品。", "zh-TW": "已依目前材料製作，隨後依販售清單檢查成品。", "en-US": "Cooked with available ingredients; the sale list is checked afterward." },
+  "customsales.checked": { "zh-CN": "已检查收藏采购、料理和售卖清单；未达最高价、锁定及保留量内的物品已保留。", "zh-TW": "已檢查收藏採購、料理及販售清單；未達最高價、鎖定及保留量內的物品已保留。", "en-US": "Checked favorite purchases, cooking and selected sales. Kept items below the maximum rate, locked stock and reserves." },
+  "cooking.add_one": { "zh-CN": "加入制作顺序", "zh-TW": "加入製作順序", "en-US": "Add to cooking order" },
+  "cooking.remove_one": { "zh-CN": "从制作顺序移除", "zh-TW": "從製作順序移除", "en-US": "Remove from cooking order" },
+  "cooking.position": { "zh-CN": "顺序", "zh-TW": "順序", "en-US": "Order" },
+  "cooking.order_hint": { "zh-CN": "缺料或未解锁的料理会跳过，继续制作下一道。可拖动行调整顺序。", "zh-TW": "缺料或未解鎖的料理會略過，繼續製作下一道。可拖曳列調整順序。", "en-US": "Dishes without ingredients or not yet unlocked are skipped. Drag rows to reorder." },
+  "cooking.order_empty": { "zh-CN": "从左侧加入料理：点 ＋、双击，或直接拖进来。留空会跳过料理，收藏采购和勾选售卖仍会执行。", "zh-TW": "從左側加入料理：點 ＋、按兩下，或直接拖曳進來。留空會略過料理，收藏採購和勾選販售仍會執行。", "en-US": "Add dishes from the left with ＋, a double-click or by dragging. Leave empty to skip cooking; favorite purchases and checked sales still run." },
+  "cooking.catalog_done": { "zh-CN": "目录中的料理都已加入。", "zh-TW": "目錄中的料理都已加入。", "en-US": "Every dish in the catalog is already in the order." },
+  "cooking.no_match": { "zh-CN": "没有匹配的料理或材料。", "zh-TW": "沒有符合的料理或材料。", "en-US": "No dishes or ingredients match." },
+  "cooking.sold_tag": { "zh-CN": "会出售", "zh-TW": "會販售", "en-US": "To sell" },
+  "cooking.sold_help": { "zh-CN": "已在「售卖料理」中勾选，报价达到最高价时出售。", "zh-TW": "已在「販售料理」中勾選，報價達最高價時販售。", "en-US": "Checked under Sell dishes; sold when the quote reaches the maximum." },
+  "customsales.food_brief": { "zh-CN": "勾选的料理在报价达到最高价（120%）时出售；游戏内已锁定的不会出售。", "zh-TW": "勾選的料理在報價達最高價（120%）時販售；遊戲內已鎖定的不會販售。", "en-US": "Checked dishes are sold when the quote reaches the maximum (120%). Items locked in the game are never sold." },
+  "customsales.material_brief": { "zh-CN": "勾选的食材在报价达到最高价（120%）时，只出售超出保留量的部分。", "zh-TW": "勾選的食材在報價達最高價（120%）時，只販售超出保留量的部分。", "en-US": "Checked ingredients are sold above their reserve when the quote reaches the maximum (120%)." },
+  "customsales.reserve_help": { "zh-CN": "按总库存计算，包含已锁定的物品；只限制出售，不限制料理用料。留空视为 0。", "zh-TW": "依總庫存計算，包含已鎖定的物品；僅限制販售，不限制料理用料。留空視為 0。", "en-US": "Counts total stock, including locked items. Limits sales only, not ingredients used for cooking. Blank means 0." },
+  "customsales.only_checked": { "zh-CN": "只看已勾选", "zh-TW": "只看已勾選", "en-US": "Checked only" },
+  "customsales.checked_count": { "zh-CN": "已勾选 {0} 种", "zh-TW": "已勾選 {0} 種", "en-US": "{0} checked" },
+  "customsales.clear": { "zh-CN": "清除勾选", "zh-TW": "清除勾選", "en-US": "Clear checks" },
+  "customsales.no_match": { "zh-CN": "没有匹配的物品。", "zh-TW": "沒有符合的物品。", "en-US": "No items match." },
+  "customsales.none_checked": { "zh-CN": "还没有勾选任何物品。", "zh-TW": "尚未勾選任何物品。", "en-US": "Nothing is checked yet." },
+  "customsales.planned_tag": { "zh-CN": "会制作", "zh-TW": "會製作", "en-US": "To cook" },
+  "customsales.planned_help": { "zh-CN": "在「料理顺序」中，制作后会按本页勾选出售。", "zh-TW": "在「料理順序」中，製作後會依本頁勾選販售。", "en-US": "In the cooking order; sold as checked here after cooking." },
+  "customsales.tab_count": { "zh-CN": "{0} · {1}", "zh-TW": "{0} · {1}", "en-US": "{0} · {1}" },
+  "customsales.summary": { "zh-CN": "制作 {0} 道料理 · 出售料理 {1} 种 · 出售食材 {2} 种", "zh-TW": "製作 {0} 道料理 · 販售料理 {1} 種 · 販售食材 {2} 種", "en-US": "Cook {0} · Sell {1} dishes · Sell {2} ingredients" },
+  "customsales.invalid_inline": { "zh-CN": "保留量须为 0 至 2147483647 的整数。", "zh-TW": "保留量須為 0 至 2147483647 的整數。", "en-US": "Reserve must be a whole number from 0 to 2147483647." },
+  "storage.resources.title": { "zh-CN": "减少重复游戏资源", "zh-TW": "減少重複遊戲資源", "en-US": "Reduce duplicate game resources" },
+  "storage.resources.help": { "zh-CN": "关闭游戏后，检查沙盒与本机相同的声音文件，只移除核验一致的沙盒副本。保留登录、设置和不同的资源；启用自动清理时也会在空闲时分批处理。", "zh-TW": "關閉遊戲後，檢查沙盒與本機相同的音效檔案，僅移除驗證一致的沙盒副本。保留登入、設定與不同的資源；啟用自動清理時也會在閒置時分批處理。", "en-US": "Close the game to compare sandbox audio with the main game's files. Only verified identical copies are removed. Sign-in, settings and different resources are retained. Automatic cleanup also processes these copies in small idle batches." },
+  "storage.resources.unchecked": { "zh-CN": "尚未核验。检查需要读取文件，可能耗时片刻。", "zh-TW": "尚未驗證。檢查需要讀取檔案，可能需要一些時間。", "en-US": "Not checked yet. Comparing file contents may take a moment." },
+  "storage.resources.check": { "zh-CN": "检查重复资源", "zh-TW": "檢查重複資源", "en-US": "Check duplicates" },
+  "storage.resources.optimize": { "zh-CN": "移除已核验副本", "zh-TW": "移除已驗證副本", "en-US": "Remove verified copies" },
+  "storage.resources.checking": { "zh-CN": "已检查 {0} 个文件，找到 {1} 个相同副本…", "zh-TW": "已檢查 {0} 個檔案，找到 {1} 個相同副本…", "en-US": "Checked {0} files; found {1} identical copies…" },
+  "storage.resources.checked": { "zh-CN": "已核验 {0} 个副本，可释放 {1}。另有 {2} 项未通过核验或正在使用，已保留。", "zh-TW": "已驗證 {0} 個副本，可釋放 {1}。另有 {2} 項未通過驗證或正在使用，已保留。", "en-US": "Verified {0} copies; {1} can be freed. Kept {2} other items that differ, are in use, or could not be verified." },
+  "storage.resources.optimizing": { "zh-CN": "正在复核并移除相同副本…", "zh-TW": "正在再次驗證並移除相同副本…", "en-US": "Rechecking and removing identical copies…" },
+  "storage.resources.done": { "zh-CN": "已移除 {0} 个相同副本，释放 {1}；保留 {2} 项。", "zh-TW": "已移除 {0} 個相同副本，釋放 {1}；保留 {2} 項。", "en-US": "Removed {0} identical copies and freed {1}; kept {2} items." },
   "soul.settings.title": {
     "zh-CN": "性能与求解", "zh-TW": "效能與求解", "en-US": "Performance and search"
   },
@@ -1671,9 +1716,9 @@
     "en-US": "Special trading: buy favorites only"
   },
   "prefs.trade_favorites_hint": {
-    "zh-CN": "先砍价再购买收藏商品，可按自定义顺序料理。不额外采购、不卖出、不修改收藏。",
-    "zh-TW": "先議價再購買收藏商品，可按自訂順序料理。不額外採購、不出售、不修改收藏。",
-    "en-US": "Bargain and buy favorites, then optionally cook in your chosen order. No extra purchases, sales or changes to favorites."
+    "zh-CN": "先砍价再购买收藏商品，再按清单料理与最高价售卖；未勾选的物品不出售，不修改游戏收藏。",
+    "zh-TW": "先議價再購買收藏商品，再依清單料理與最高價販售；未勾選的物品不出售，不修改遊戲收藏。",
+    "en-US": "Bargain and buy favorites, then follow your cooking and high-price sale lists. Only checked items can be sold. Game favorites stay unchanged."
   },
   "prefs.saffron_processing": {
     "zh-CN": "自动料理／售卖高级藏红花",
@@ -7221,9 +7266,9 @@
     "en-US": "Minimum Talent Pills to keep"
   },
   "prefs.potion_refill": {
-    "zh-CN": "药不足时自动补药",
-    "zh-TW": "藥不足時自動補藥",
-    "en-US": "Refill Talent Pills when needed"
+    "zh-CN": "开始前和邮箱收尾前补药",
+    "zh-TW": "開始前和信箱收尾前補藥",
+    "en-US": "Refill before tasks and before final mail collection"
   },
   "prefs.potion_target": {
     "zh-CN": "补药至",
@@ -7236,9 +7281,9 @@
     "en-US": "Daily queue only. If pills are short, defer affected tasks and continue the rest."
   },
   "prefs.potion_refill_hint": {
-    "zh-CN": "需本周已完成至少 1 条 NPC 任务，且商人提供天赋药九折价。",
-    "zh-TW": "需本週已完成至少 1 條 NPC 任務，且商人提供天賦藥九折價。",
-    "en-US": "Requires at least 1 completed weekly NPC quest and a merchant offering the 10% Talent Pill discount."
+    "zh-CN": "每次只补到目标数量。仅购买45金币的折扣药，并保留设定的金币；无折扣时跳过。中途缺药仍会尝试补药；无折扣或资金不足时暂缓相关任务。",
+    "zh-TW": "每次只補到目標數量。僅購買45金幣的折扣藥，並保留設定的金幣；無折扣時跳過。中途缺藥仍會嘗試補藥；無折扣或金幣不足時暫緩相關任務。",
+    "en-US": "Top up to the target at each checkpoint, using only the 45-gold discount and respecting your gold reserve. Skip if unavailable. Mid-task shortages still trigger a fallback refill; defer only when the discount or funds are unavailable."
   },
   "prefs.potion_number_invalid": {
     "zh-CN": "天赋药数量须为非负整数；原输入已保留。",
@@ -8791,14 +8836,14 @@
     "en-US": "Uses a speed talent for long walks, preferring the fastest character. Walks normally if the talent is unavailable or talent pills would drop below your reserve."
   },
   "cooking.title": {
-    "zh-CN": "自定义料理",
-    "zh-TW": "自訂料理",
-    "en-US": "Custom cooking"
+    "zh-CN": "料理与售卖清单",
+    "zh-TW": "料理與販售清單",
+    "en-US": "Cooking and sale lists"
   },
   "cooking.hint": {
-    "zh-CN": "购买收藏商品后，按右侧顺序尽量制作。缺料或未解锁则跳过，成品全部保留。",
-    "zh-TW": "購買收藏商品後，依右側順序盡量製作。缺料或未解鎖則跳過，成品全部保留。",
-    "en-US": "After buying favorites, cook as much as possible in the order on the right. Skip unavailable recipes and keep all results."
+    "zh-CN": "购买收藏后，按料理顺序尽量制作，缺料或未解锁则跳过；随后检查售卖清单。只勾选售卖也可使用，无需添加料理。",
+    "zh-TW": "購買收藏後，依料理順序盡量製作，缺料或未解鎖則跳過；接著檢查販售清單。也可只勾選販售，不必新增料理。",
+    "en-US": "After buying favorites, cook in the chosen order, skipping unavailable recipes, then check selected sales. You can use sales without adding recipes."
   },
   "cooking.available": {
     "zh-CN": "料理目录",
@@ -9655,6 +9700,21 @@
     "zh-TW": "遊戲正在使用；刪除會導致重新下載或無法啟動。",
     "en-US": "The game uses them; removing them forces a download or prevents starting."
   },
+  "storage.cat.game-audio": {
+    "zh-CN": "游戏声音与语音资源",
+    "zh-TW": "遊戲音效與語音資源",
+    "en-US": "Game audio and voice resources"
+  },
+  "storage.cat.game-audio.effect": {
+    "zh-CN": "仅核验一致的沙盒副本可优化；游戏仍可读取本机资源并独立下载更新。",
+    "zh-TW": "僅驗證一致的沙盒副本可最佳化；遊戲仍可讀取本機資源並獨立下載更新。",
+    "en-US": "Only verified identical sandbox copies can be removed. The game can still read the main files and download its own updates."
+  },
+  "storage.cat.game-audio.reason": {
+    "zh-CN": "沙盒内的游戏声音资源，不是账号登录数据。与本机资源相同的副本需核验后才能去重。",
+    "zh-TW": "沙盒內的遊戲音效資源，並非帳號登入資料。與本機資源相同的副本須驗證後才能移除重複內容。",
+    "en-US": "Game audio stored in this sandbox, separate from account sign-in data. Copies matching the main game's files require verification before deduplication."
+  },
   "storage.cat.game-files": {
     "zh-CN": "游戏程序与资源副本",
     "zh-TW": "遊戲程式與資源副本",
@@ -9751,14 +9811,14 @@
     "en-US": "Talent Pills"
   },
   "prefs.potions_on": {
-    "zh-CN": "自动补药已开启：不够用时补到 {0} 个，日常至少保留 {1} 个。",
-    "zh-TW": "自動補藥已開啟：不夠用時補到 {0} 個，日常至少保留 {1} 個。",
-    "en-US": "Automatic refill is on: tops up to {0} when needed and keeps at least {1} for daily tasks."
+    "zh-CN": "固定补药已开启：开始前和邮箱收尾前补到 {0} 个，日常至少保留 {1} 个。",
+    "zh-TW": "固定補藥已開啟：開始前和信箱收尾前補到 {0} 個，日常至少保留 {1} 個。",
+    "en-US": "Scheduled refills enabled: top up to {0} before tasks and before final mail collection; keep at least {1}."
   },
   "prefs.potions_off": {
-    "zh-CN": "自动补药未开启：天赋药不够时，需要它的任务会暂停，其他任务照常执行。",
-    "zh-TW": "自動補藥未開啟：天賦藥不夠時，需要它的任務會暫停，其他任務照常執行。",
-    "en-US": "Automatic refill is off: when Talent Pills run short, tasks that need them pause and the rest continue."
+    "zh-CN": "固定补药已关闭。缺药时暂缓相关任务，手动补药后重新执行；其他任务继续。",
+    "zh-TW": "固定補藥已關閉。缺藥時暫緩相關任務，手動補藥後重新執行；其他任務繼續。",
+    "en-US": "Scheduled refills disabled. Tasks that run short are deferred; refill manually and retry them. Other tasks continue."
   },
   "prefs.tuned_title": {
     "zh-CN": "可调整的任务",
@@ -9799,5 +9859,65 @@
     "zh-CN": "为「{0}」设置天赋药自动补药",
     "zh-TW": "為「{0}」設定天賦藥自動補藥",
     "en-US": "Set up automatic Talent Pill refill for {0}"
+  },
+  "prefs.cooking_refill": {
+    "zh-CN": "料理前按本次计划补足天赋药",
+    "zh-TW": "料理前依本次計畫補足天賦藥",
+    "en-US": "Buy the Talent Pills needed for this cooking plan"
+  },
+  "prefs.cooking_refill_hint": {
+    "zh-CN": "独立于固定补药，按可用材料、背包容量和金币预算一次补足本次料理缺口，不受固定补药目标限制。仅买45金币的折扣药，保留金币和天赋药下限；不会开启已关闭的料理，也不为未来计划买药。",
+    "zh-TW": "獨立於固定補藥，依可用材料、背包容量和金幣預算一次補足本次料理缺口，不受固定補藥目標限制。僅買45金幣的折扣藥，保留金幣和天賦藥下限；不會開啟已關閉的料理，也不為未來計畫買藥。",
+    "en-US": "Separate from scheduled refills: fund this runs feasible cooking plan using available ingredients, storage and gold. The regular refill target does not apply. Only buy 45-gold pills, keep both reserves, and never enable disabled cooking or fund future plans."
+  },
+  "potion.no_discount": {
+    "zh-CN": "尚无45金币的天赋药折扣报价，本次未补药。缺药任务需手动补充后重新执行；其他任务继续。",
+    "zh-TW": "尚無45金幣的天賦藥折扣報價，本次未補藥。缺藥任務需手動補充後重新執行；其他任務繼續。",
+    "en-US": "No valid 45-gold Talent Pill offer is available. No refill was made. Refill manually and retry affected tasks; other tasks continue."
+  },
+  "potion.no_gold": {
+    "zh-CN": "金币不足，或补药会触及保留金币，本次未补药。补足金币或调整目标后重新执行。",
+    "zh-TW": "金幣不足，或補藥會動用保留金幣，本次未補藥。補足金幣或調整目標後重新執行。",
+    "en-US": "There is not enough spendable gold to refill. No purchase was made. Add gold or adjust the target, then retry."
+  },
+  "potion.shortage": {
+    "zh-CN": "本任务天赋药不足，已暂缓。请手动补充天赋药后重新执行此任务；其他任务继续。",
+    "zh-TW": "本任務天賦藥不足，已暫緩。請手動補充天賦藥後重新執行此任務；其他任務繼續。",
+    "en-US": "This task ran out of usable Talent Pills and was deferred. Refill manually, then retry this task. Other tasks continue."
+  },
+  "potion.disabled": {
+    "zh-CN": "固定补药已关闭，未购买天赋药。",
+    "zh-TW": "固定補藥已關閉，未購買天賦藥。",
+    "en-US": "Scheduled refills are disabled. No Talent Pills were bought."
+  },
+  "potion.enough": {
+    "zh-CN": "天赋药已达到补药目标，无需购买。",
+    "zh-TW": "天賦藥已達到補藥目標，無需購買。",
+    "en-US": "Talent Pills are already at or above the target. No purchase is needed."
+  },
+  "potion.completed": {
+    "zh-CN": "已补充 {0} 个天赋药，当前 {1}。",
+    "zh-TW": "已補充 {0} 個天賦藥，目前 {1}。",
+    "en-US": "Bought {0} Talent Pills; current balance: {1}."
+  },
+  "potion.start": {
+    "zh-CN": "执行前检查天赋药补给",
+    "zh-TW": "執行前檢查天賦藥補給",
+    "en-US": "Checking Talent Pills before tasks"
+  },
+  "potion.finish": {
+    "zh-CN": "邮箱收尾前检查天赋药补给",
+    "zh-TW": "信箱收尾前檢查天賦藥補給",
+    "en-US": "Checking Talent Pills before final mail collection"
+  },
+  "potion.occupied": {
+    "zh-CN": "当前已有进行中的任务，保留现场，跳过开跑前补药。",
+    "zh-TW": "目前已有進行中的任務，保留現場，跳過開始前補藥。",
+    "en-US": "A task or unresolved action is already in progress. Keep it intact and skip the opening refill."
+  },
+  "potion.pending": {
+    "zh-CN": "已有操作等待核对，保留现场，本次不额外购买天赋药。",
+    "zh-TW": "已有操作等待核對，保留現場，本次不額外購買天賦藥。",
+    "en-US": "An earlier action is awaiting confirmation. Keep it intact and skip this refill."
   }
 }

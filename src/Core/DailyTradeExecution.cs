@@ -224,7 +224,7 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         await SettleShop();
         return op;
     }
-    public async Task<JsonObject> RefillPotions(long required, GeneralPreferences policy)
+    public async Task<JsonObject> RefillPotions(long required, GeneralPreferences policy, JsonObject? scope = null)
     {
         // The quote exposes the native, current-cycle weekly-task discount. No cached
         // completion record, bargaining substitute or full-price fallback is allowed.
@@ -236,20 +236,26 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         var operations = new JsonArray();
         do
         {
-            var offer = DailyTalentPotions.DiscountedOffer(State(e, "trade.native", "$self"));
             long before = N(R(e, "trade.currency", "Catalyst"));
+            if (before >= policy.TalentPotionTarget) { balance = before; break; }
+            var offer = DailyTalentPotions.DiscountedOffer(State(e, "trade.native", "$self"));
             long missing = DailyTalentPotions.PurchaseCount(policy, before, required);
             long price = N(offer["Price"]);
             // For unlimited native products Remaining is the per-purchase slider
             // limit, not the shop's total supply. Reobserve after each confirmed
             // batch; finite stock and changed discounts still use the live quote.
             long count = Math.Min(missing, N(offer["Remaining"]));
-            Require(N(R(e, "trade.currency", "Gold")) - checked(missing * price) >= reserveGold, "金币不足，或购买会触及保留金币；未补药。");
+            if (N(R(e, "trade.currency", "Gold")) - checked(missing * price) < reserveGold)
+                throw new DailyPotionSupplyException("gold_reserve", DailyPotionSupply.NoGold);
+            var purchaseScope = scope?.DeepClone().AsObject() ?? O(("action", "queue_potion_refill"));
+            purchaseScope["target"] = policy.TalentPotionTarget;
+            purchaseScope["reserve"] = policy.TalentPotionReserve;
+            purchaseScope["balance_before"] = before;
             var op = await Buy([O(("kind", "potion"), ("shop", offer["Shop"]), ("product", offer["Product"]), ("count", count), ("price", price))], false,
-                O(("action", "queue_potion_refill"), ("target", policy.TalentPotionTarget), ("reserve", policy.TalentPotionReserve), ("balance_before", before)));
+                purchaseScope);
             e = await Evidence();
             balance = N(R(e, "trade.currency", "Catalyst"));
-            Require(balance == before + count, "补药回执与库存不一致；保留记录，未重复购买。");
+            if (balance != before + count) throw new StageHostException("pending", "补药回执与库存不一致；保留记录，未重复购买。") { HoldQueue = true };
             bought += count;
             cost = checked(cost + count * price);
             operations.Add(Copy(op["id"]));
@@ -258,7 +264,7 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         } while (balance < policy.TalentPotionTarget);
         Require(DailyTalentPotions.Check(balance, required, policy.TalentPotionReserve) == null, "补药回执与库存不一致；保留记录，未重复购买。");
         await Close();
-        return O(("bought", bought), ("balance", balance), ("cost", cost), ("operation", operations.Last()), ("operations", operations));
+        return O(("bought", bought), ("balance", balance), ("cost", cost), ("operation", operations.LastOrDefault()), ("operations", operations));
     }
     private async Task<JsonObject> Cook(JsonObject row, JsonObject scope, bool skipUnavailable = false)
     {
@@ -389,12 +395,21 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
             // Called only with no purchase to submit or after Buy has reconciled
             // the purchase. An uncertain confirmation must never reach here.
             job["phase"] = "audit";
-            await Close();
-            job["phase"] = "cooking";
-            var cooked = await CookFavorites(session);
+            var cooked = new JsonArray();
+            if (w.Settings.Trade.CookingRecipes.Length > 0)
+            {
+                await Close();
+                job["phase"] = "cooking";
+                cooked = await CookFavorites(session);
+            }
+            job["phase"] = "sale";
+            var sales = await SellFavorites(session);
             job["phase"] = "audit";
-            return O(("state", products > 0 || cooked.Any(r => S(r?["state"]) == "completed") ? "completed" : "skipped"),
-                ("reason", reason), ("gold_spent", cost), ("products", products), ("cooking", cooked), ("engine", "dotnet-trade-favorites-v2"));
+            if (w.Settings.Trade.CookingRecipes.Length == 0 && !w.Settings.Trade.Sales.Any(r => r.Enabled)) await Close();
+            return O(("state", products > 0 || sales.Count > 0 || cooked.Any(r => S(r?["state"]) == "completed") ? "completed" : "skipped"),
+                ("reason", w.Settings.Trade.Sales.Any(r => r.Enabled) ? "customsales.checked" : reason), ("purchase_reason", reason),
+                ("gold_spent", cost), ("products", products), ("cooking", cooked), ("sales", sales),
+                ("gold_earned", sales.Sum(r => N(r?["value"]))), ("engine", "dotnet-trade-favorites-v3"));
         }
         var rows = FavoritePurchases(native);
         if (rows.Length == 0) return await Finish("收藏商品已购完、尚未解锁或未设置收藏；已检查自定义料理");
@@ -413,12 +428,28 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
             return await Finish("金币不足以购买当前收藏商品；未购买，已按现有材料检查自定义料理");
         var scope = O(("trade_session", session), ("action", "existing-favorites"));
         var op = await Buy(rows, true, scope, existingFavoritesOnly: true);
-        var result = await Finish("已砍价并购买收藏商品，按顺序检查自定义料理；未售卖，收藏保持不变", cost, rows.Length);
+        var result = await Finish(w.Settings.Trade.Sales.Any(r => r.Enabled) ? "customsales.purchased" : "已砍价并购买收藏商品，按顺序检查自定义料理；未售卖，收藏保持不变", cost, rows.Length);
         result["operation"] = Copy(op["id"]);
         return result;
     }
     private async Task<JsonArray> CookFavorites(string session)
     {
+        if (w.Settings.Trade.RefillCookingPotions && w.Settings.Trade.CookingRecipes.Length > 0)
+        {
+            await OpenShop();
+            var evidence = await Evidence();
+            var wallet = DailyTradeResume.Wallet(evidence);
+            var tradeSettings = DailyTradeOptimizer.Preferences(DailyJson.TryRead<JsonObject>(DailyTradePlan.SettingsPath(w.Root, S(w.Context["actor"]![3]))));
+            long buyLimit = 0;
+            try { _ = DailyTalentPotions.DiscountedOffer(State(evidence, "trade.native", "$self")); buyLimit = Math.Max(0, int.MaxValue - N(wallet["potions"])); }
+            catch (DailyPotionSupplyException) { } // Existing pills still permit cooking.
+            var plan = DailyCustomCooking.SupplyPlan(catalog, w.Settings.Trade.CookingRecipes, wallet,
+                w.Settings.General.TalentPotionReserve, N(tradeSettings["reserve_gold"]), 45, buyLimit, DailyCustomCooking.Available(catalog, evidence));
+            w.Save("custom-cooking-supply.json", plan);
+            if (N(plan["buy"]) > 0)
+                await RefillPotions(N(plan["required"]), DailyPotionSupply.CookingPolicy(w.Settings.General, N(plan["required"])));
+            else await Close();
+        }
         var results = new JsonArray();
         foreach (long id in w.Settings.Trade.CookingRecipes)
         {
@@ -442,9 +473,36 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
             var recipe = DailyCustomCooking.Recipes(catalog).SingleOrDefault(r => N(r["id"]) == id);
             string name = S(DailyCustomCooking.Items(catalog).SingleOrDefault(r => N(r["id"]) == N(recipe?["output"]))?["name"]);
             results.Add(O(("recipe", id), ("name", name), ("state", made > 0 ? "completed" : "skipped"), ("count", made),
-                ("reason", made > 0 ? "按当前材料制作，成品已保留" : "配方或天赋未解锁、材料不足、库存已满或天赋药需保留")));
+                ("reason", made > 0 ? (w.Settings.Trade.Sales.Any(r => r.Enabled) ? "customsales.cooked" : "按当前材料制作，成品已保留") : "配方或天赋未解锁、材料不足、库存已满或天赋药需保留")));
         }
         if (w.Settings.Trade.CookingRecipes.Length > 0) await Close();
+        return results;
+    }
+    internal async Task<JsonArray> SellFavorites(string session)
+    {
+        var results = new JsonArray();
+        var rules = w.Settings.Trade.Sales;
+        if (!rules.Any(r => r.Enabled)) return results;
+        await OpenShop();
+        if (S(R(await Evidence(), "trade.shop_ui", ShopMode)) != "Sell")
+            await w.Step("ShopUI", "_sellButton.root");
+        var evidence = await Evidence();
+        var first = DailyCustomSales.Plan(catalog, rules, DailyTradeResume.Wallet(evidence), State(evidence, "trade.native", "$self"));
+        // Finite initial inventory budget; fresh quotes, locks and reserves are
+        // re-evaluated after every confirmed transaction. Never replay a receipt.
+        long remaining = first.Sum(r => N(r["count"]));
+        while (remaining > 0)
+        {
+            var row = DailyCustomSales.Plan(catalog, rules, DailyTradeResume.Wallet(evidence), State(evidence, "trade.native", "$self")).FirstOrDefault();
+            if (row == null) break;
+            row["count"] = Math.Min(remaining, N(row["count"]));
+            row["value"] = checked(N(row["count"]) * N(row["price"]));
+            var scope = O(("trade_session", session), ("action", "custom-sale:" + results.Count), ("item", row["item"]), ("reserve", row["reserve"]));
+            var op = await Sell(row, scope);
+            row["operation"] = Copy(op["id"]); results.Add(row); remaining -= N(row["count"]);
+            evidence = await Evidence();
+        }
+        await Close();
         return results;
     }
     private async Task<JsonObject> RunCore()
@@ -470,16 +528,33 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
             var settings = DailyTradeOptimizer.Preferences(DailyJson.TryRead<JsonObject>(DailyTradePlan.SettingsPath(w.Root, account)));
             DailyJson.Write(Path.Combine(directory, "planning-catalog.json"), catalog);
             DailyJson.Write(Path.Combine(directory, "planning-settings.json"), settings);
-            var planningState = w.Driver.PotionPolicy == null ? state : DailyTalentPotions.PlanningState(state, w.Settings.General, State(await Evidence(), "trade.native", "$self"));
+            var planningState = w.Driver.PotionPolicy == null ? state : DailyTalentPotions.PlanningState(state, w.Settings.General, State(await Evidence(), "trade.native", "$self"),
+                w.Settings.Trade.RefillCookingPotions && w.Settings.Trade.AutoCookAndSell);
             planningState = planningState.DeepClone().AsObject();
             planningState["processing_enabled"] = w.Settings.Trade.AutoCookAndSell;
-            var plan = await Task.Run(() => DailyTradePlan.Generate(catalog, planningState, settings, Path.Combine(directory, "plan.json"), account, w.Check));
+            var fundedSettings = settings.DeepClone().AsObject();
+            long reserveCost = N(planningState["potion_reserve_cost"]);
+            if (reserveCost > 0 && fundedSettings["max_spend"] != null)
+                fundedSettings["max_spend"] = Math.Max(0, N(fundedSettings["max_spend"]) - reserveCost);
+            var plan = await Task.Run(() => DailyTradePlan.Generate(catalog, planningState, fundedSettings, Path.Combine(directory, "plan.json"), account, w.Check));
+            if (reserveCost > 0)
+            {
+                // Buying back a depleted reserve is cash tied up, not cooking
+                // profit. Compare against the unchanged no-extra-purchase model.
+                var baselineState = DailyTalentPotions.PlanningState(state, w.Settings.General);
+                baselineState["processing_enabled"] = w.Settings.Trade.AutoCookAndSell;
+                var baseline = await Task.Run(() => DailyTradePlan.Generate(catalog, baselineState, settings, Path.Combine(directory, "plan-no-cooking-refill.json"), account, w.Check));
+                double gain = DailyRegionRouter.D(plan["solver"]!["strategy_profit"]) - DailyRegionRouter.D(baseline["solver"]!["strategy_profit"]);
+                if (N(plan["summary"]!["potions_to_buy"]) == 0 || gain < -.01 || Math.Abs(gain) < .01 && N(plan["summary"]!["cash_required"]) + reserveCost >= N(baseline["summary"]!["cash_required"]))
+                { plan = baseline; planningState = baselineState; reserveCost = 0; }
+            }
             long requiredPotions = RequiredPotions(plan, w.Settings.Trade);
             // The optimizer still estimates future processing value for procurement.
             // Only fund the actions this run is allowed to perform.
             plan["execution"] = O(("auto_cook_and_sell", w.Settings.Trade.AutoCookAndSell),
-                ("potions_required", requiredPotions), ("potions_to_buy", w.Settings.Trade.AutoCookAndSell
-                    ? N(plan["summary"]!["potions_to_buy"]) : Math.Max(0, requiredPotions - N(planningState["potions"]))));
+                ("potion_reserve_cost", reserveCost), ("potions_required", requiredPotions), ("potions_to_buy", w.Settings.Trade.AutoCookAndSell
+                    ? N(plan["summary"]!["potions_to_buy"]) + reserveCost / 45 : Math.Max(0, requiredPotions - N(planningState["potions"]))));
+            DailyJson.Write(Path.Combine(directory, "plan.json"), plan);
             long potionBudget = N(planningState["potions"]) + N(planningState["potion_buy_limit"]);
             plan["daily_potion_budget_reached"] = w.Settings.Trade.AutoCookAndSell && w.Driver.PotionPolicy != null &&
                 requiredPotions >= potionBudget &&
@@ -522,13 +597,24 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
                 {
                     if (w.Driver.PotionPolicy != null)
                     {
-                        await w.Driver.RequirePotionsAsync(N(planData["execution"]!["potions_required"]));
-                        throw new DailyTradeReplanRequired("天赋药余额变化，按当前库存重新规划。");
+                        if (!w.Settings.Trade.RefillCookingPotions || !w.Settings.Trade.AutoCookAndSell || Rows(planData["cooking"]).Length == 0)
+                        {
+                            await w.Driver.RequirePotionsAsync(N(planData["execution"]!["potions_required"]));
+                            throw new DailyTradeReplanRequired("天赋药余额变化，按当前库存重新规划。");
+                        }
+                        var refill = await RefillPotions(N(planData["execution"]!["potions_required"]),
+                            DailyPotionSupply.CookingPolicy(w.Settings.General, N(planData["execution"]!["potions_required"])), Scope("potions"));
+                        foreach (var operation in refill["operations"]!.AsArray())
+                            Record(w.Business.Records(w.Context).Single(o => S(o["id"]) == S(operation)));
+                        await OpenShop();
                     }
-                    var n = State(await Evidence(), "trade.native", "$self");
-                    Require(!B(n["BargainActive"]), "请先结束已有砍价以购买天赋药");
-                    var offer = Rows(n["Offers"]).Where(r => N(r["Type"]) == 12).OrderBy(r => N(r["Price"])).First();
-                    Record(await Buy([O(("kind", "potion"), ("shop", offer["Shop"]), ("product", offer["Product"]), ("count", potionBuy), ("price", offer["Price"]))], false, Scope("potions")));
+                    else
+                    {
+                        var n = State(await Evidence(), "trade.native", "$self");
+                        Require(!B(n["BargainActive"]), "请先结束已有砍价以购买天赋药");
+                        var offer = Rows(n["Offers"]).Where(r => N(r["Type"]) == 12).OrderBy(r => N(r["Price"])).First();
+                        Record(await Buy([O(("kind", "potion"), ("shop", offer["Shop"]), ("product", offer["Product"]), ("count", potionBuy), ("price", offer["Price"]))], false, Scope("potions")));
+                    }
                 }
                 if (B(planData["bargain"]!["start"]) && !B(R(await Evidence(), "trade.bargain", "$self")))
                 {

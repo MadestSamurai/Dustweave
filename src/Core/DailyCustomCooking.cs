@@ -55,4 +55,52 @@ public static class DailyCustomCooking
         return O(("recipe", id), ("item", output), ("count", amount), ("potions", checked(amount * N(recipe["potions"]))),
             ("materials", new JsonObject(materials.Select(p => new KeyValuePair<string, JsonNode?>(p.Key, JsonValue.Create(checked(amount * N(p.Value))))))));
     }
+
+    // The same ordered recipe allocation as execution, with a finite, affordable
+    // potion budget. Share ingredients and inventory slots across all recipes.
+    public static JsonObject SupplyPlan(JsonObject catalog, IEnumerable<long> selected, JsonObject wallet,
+        long reserve, long reserveGold, long unitPrice, long buyLimit, IEnumerable<long> available)
+    {
+        Require(unitPrice > 0 && reserve >= 0 && reserveGold >= 0 && buyLimit >= 0, "料理补药预算无效。");
+        var working = wallet.DeepClone().AsObject();
+        long initial = N(wallet["potions"]);
+        long affordable = Math.Min(buyLimit, Math.Max(0, N(wallet["gold"]) - reserveGold) / unitPrice);
+        working["potions"] = Math.Min(int.MaxValue, checked(initial + affordable));
+        var rows = new JsonArray();
+        long required = 0;
+        foreach (long id in selected)
+        {
+            var row = Next(catalog, id, working, reserve, available);
+            if (row == null) continue;
+            required = checked(required + N(row["potions"]));
+            working["potions"] = N(working["potions"]) - N(row["potions"]);
+            foreach (var material in row["materials"]!.AsObject())
+                working["items"]![material.Key] = N(working["items"]![material.Key]) - N(material.Value);
+            var recipe = Recipes(catalog).Single(r => N(r["id"]) == id);
+            long output = N(row["item"]), produced = checked(N(row["count"]) * N(recipe["count"]));
+            working["items"]![output.ToString()] = checked(N(working["items"]![output.ToString()]) + produced);
+            if (working["storage"] is JsonObject storage)
+            {
+                var stacks = storage["stacks"]!.AsArray();
+                // Retain input stacks conservatively (the native inventory may
+                // keep empty slots until confirmation); reserve output slots now.
+                long size = N(Items(catalog).Single(i => N(i["id"]) == output)["stack"]);
+                foreach (var stack in Rows(stacks).Where(s => N(s["id"]) == output))
+                {
+                    long add = Math.Min(produced, Math.Max(0, size - N(stack["count"])));
+                    stack["count"] = N(stack["count"]) + add; produced -= add;
+                }
+                while (produced > 0)
+                {
+                    long add = Math.Min(produced, size); produced -= add;
+                    stacks.Add(O(("id", output), ("count", add)));
+                    storage["used"] = N(storage["used"]) + 1;
+                }
+            }
+            rows.Add(row);
+        }
+        long missing = required == 0 ? 0 : Math.Max(0, checked(required + reserve) - initial);
+        Require(missing <= affordable, "料理补药计划超出预算。");
+        return O(("cooking", rows), ("required", required), ("buy", missing), ("cost", checked(missing * unitPrice)));
+    }
 }

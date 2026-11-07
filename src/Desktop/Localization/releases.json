@@ -1,5 +1,35 @@
 [
 {
+  "Version": "1.6.3",
+  "Date": "2026-11-07",
+  "Notes": {
+    "zh-CN": [
+      "修复普通狩猎结束后，圣石属性可能切换失败而中断的问题；切换未生效时有限重试，确认正确属性后才开始狩猎，保留已经完成的免费米饭进度。",
+      "日常开始前和邮箱收尾前检查天赋药补给，保留任务中途缺药时的补充兜底。本次升级会开启自动补药，并将低于 5000 的补给目标调到 5000；之后可自行调整。仅购买 45 金币折扣药，无折扣或金币不足时提示原因。",
+      "补药设置新增“料理前补足所需天赋药”，默认关闭。开启后按本次可执行料理计划补足，遵守金币和天赋药保留量。",
+      "仅购买收藏／自定义料理新增自动最高价售卖：分别勾选料理和食材，并可设置食材最低保留量。默认不勾选；没有最高价报价的物品会保留。",
+      "重新整理料理顺序与售卖设置，支持搜索、拖动排序、数量汇总和保留量即时校验，改善小窗口和三种语言下的显示。",
+      "存储空间新增沙盒声音资源分类、重复检查和已核实副本清理；自动清理开启时也会在空闲期间处理重复资源。只清理与本机一致的副本，保留登录、设置和不同内容的资源。"
+    ],
+    "zh-TW": [
+      "修復一般狩獵結束後，聖石屬性可能切換失敗而中斷的問題；切換未生效時有限重試，確認正確屬性後才開始狩獵，保留已完成的免費白飯進度。",
+      "日常開始前及信箱收尾前檢查天賦特效藥補給，保留任務中途缺藥時的補充機制。本次更新會開啟自動補藥，並將低於 5000 的補給目標調至 5000；之後可自行調整。只購買 45 金幣折扣藥，沒有折扣或金幣不足時說明原因。",
+      "補藥設定新增「料理前補足所需天賦特效藥」，預設關閉。開啟後依本次可執行料理計畫補足，遵守金幣與天賦特效藥保留量。",
+      "僅購買收藏／自訂料理新增自動最高價販售：分別勾選料理與食材，並可設定食材最低保留量。預設不勾選；沒有最高價報價的物品會保留。",
+      "重新整理料理順序與販售設定，支援搜尋、拖曳排序、數量彙總及保留量即時驗證，改善小視窗與三種語言下的顯示。",
+      "儲存空間新增沙盒聲音資源分類、重複檢查及已驗證副本清理；開啟自動清理時也會在閒置期間處理重複資源。只清理與本機相同的副本，保留登入、設定及內容不同的資源。"
+    ],
+    "en-US": [
+      "Fixes Holy Stone element selection sometimes failing after ordinary hunting. Unapplied selections receive bounded retries; hunting starts only after the correct element is confirmed. Completed free-rice hunting is preserved.",
+      "Checks Talent Pill supplies before daily tasks and before the final mailbox step, while retaining shortage-triggered refills. This update enables automatic refills and raises targets below 5,000 to 5,000; you can change them afterwards. Only the discounted 45-gold offer is used, with an explanation when the discount or funds are unavailable.",
+      "Adds an optional refill setting for all Talent Pills required by the executable cooking plan. It is off by default and respects reserved gold and pills.",
+      "Favorites-only purchases and custom cooking now support selected highest-price sales. Choose dishes and ingredients separately, with minimum ingredient reserves. Nothing is selected by default; items without a highest-price offer are kept.",
+      "Reorganizes cooking order and sale settings with search, drag-and-drop ordering, selection totals and immediate reserve validation. Improves smaller windows and all three languages.",
+      "Storage now identifies sandbox audio resources and offers duplicate checks and removal of verified copies. Automatic cleanup also handles duplicates while idle. Only copies identical to the normal game's resources are removed; sign-in data, settings and differing resources are retained."
+    ]
+  }
+},
+{
   "Version": "1.6.2",
   "Date": "2026-11-06",
   "Notes": {

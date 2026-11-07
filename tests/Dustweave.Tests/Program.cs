@@ -186,6 +186,7 @@ await Group("MirrorStage", () => MirrorStageCases.Run(root, cases));
 await Group("BattleArrivalRecovery", () => BattleArrivalRecoveryCases.Run(root, cases));
 await Group("DispatchRecovery", () => DispatchRecoveryCases.Run(root, cases));
 await Group("TradeReplan", () => TradeReplanCases.Run(root, cases));
+await Group("CustomSales", () => CustomSaleCases.Run(root, cases));
 await Group("TradeQuote", () => TradeQuoteCases.Run(root, cases));
 await Group("TradeEntry", () => TradeEntryCases.Run(root, cases));
 await Group("SchedulingUpdates", () => SchedulingUpdatesCases.Run(root, cases));

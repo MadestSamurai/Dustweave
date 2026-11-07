@@ -239,6 +239,14 @@ public partial class MainWindow
         panel.Children.Add(columns);
         var disks = new StackPanel { Name = "StorageDiskUsage" }; panel.Children.Add(disks);
 
+        Section(panel, "storage.resources.title");
+        Text(panel, "storage.resources.help", 8).SetResourceReference(TextBlock.ForegroundProperty, "MutedInk");
+        var resourceState = Text(panel, "storage.resources.unchecked", 8); resourceState.Name = "ResourceCopyStatus";
+        var resourceActions = new WrapPanel { Margin = new(0, 10, 0, 0) }; panel.Children.Add(resourceActions);
+        var resourceCheck = new Button { Name = "ResourceCopyCheck", Margin = new(0, 0, 10, 4) }; L.Bind(resourceCheck, ContentControl.ContentProperty, "storage.resources.check"); resourceActions.Children.Add(resourceCheck);
+        var resourceOptimize = new Button { Name = "ResourceCopyOptimize", IsEnabled = false, Margin = new(0, 0, 0, 4) }; L.Bind(resourceOptimize, ContentControl.ContentProperty, "storage.resources.optimize"); resourceActions.Children.Add(resourceOptimize);
+        DailyResourcePlan? resourcePlan = null;
+
         // 3. Cleanup rules, collapsed: the defaults are safe and rarely changed.
         var rules = new Expander { Style = (Style)FindResource("DisclosureExpander"), Margin = new(0, 18, 0, 0) };
         L.Bind(rules, HeaderedContentControl.HeaderProperty, "storage.rules"); panel.Children.Add(rules);
@@ -279,6 +287,8 @@ public partial class MainWindow
         {
             scan.IsEnabled = enabled; days.IsEnabled = enabled; size.IsEnabled = enabled; automatic.IsEnabled = enabled; move.IsEnabled = enabled && !IsSandboxWindow;
             clean.IsEnabled = enabled && storage != null && (Reclaimable() > 0 || storage.ReclaimableBytes > 0 || storage.OptimizableFiles > 0);
+            resourceCheck.IsEnabled = enabled && !IsSandboxWindow;
+            resourceOptimize.IsEnabled = enabled && resourcePlan?.Copies.Length > 0 && !IsSandboxWindow;
             foreach (var button in manage) button.IsEnabled = enabled && !Unavailable;
             progress.Visibility = enabled ? Visibility.Collapsed : Visibility.Visible;
         }
@@ -352,6 +362,39 @@ public partial class MainWindow
         automatic.Click += (_, _) => Save(); days.SelectionChanged += (_, _) => Save(); size.SelectionChanged += (_, _) => Save();
         bool BusyStorage(bool moving = false) => Unavailable || dailyQueue.IsRunning || updateChecking || updateInstalling || moving && (ToolOpen || (!IsSandboxWindow && smoke == null && DailyUpdateHost.HasIsolatedWindows()));
         scan.Click += async (_, _) => { result.Visibility = Visibility.Collapsed; await Scan(); };
+        resourceCheck.Click += async (_, _) =>
+        {
+            if (working) return;
+            if (BusyStorage()) { L.Text(resourceState, "storage.busy"); return; }
+            working = true; resourcePlan = null; Controls(false); L.Text(resourceState, "storage.resources.checking", 0, 0);
+            try
+            {
+                resourcePlan = await new DailyStorageMaintenance(root).CheckResourceCopiesAsync(lifetime.Token,
+                    new Progress<DailyResourceProgress>(p => { if (!closed && working) L.Text(resourceState, "storage.resources.checking", p.Examined, p.Matched); }));
+                if (!closed) L.Text(resourceState, "storage.resources.checked", resourcePlan.Copies.Length, StorageSize(resourcePlan.Bytes), resourcePlan.Deferred);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { if (!closed) DailyUiText.Error(resourceState, e); }
+            finally { working = false; if (!closed) Controls(true); else lifetime.Dispose(); }
+        };
+        resourceOptimize.Click += async (_, _) =>
+        {
+            if (working || resourcePlan == null) return;
+            if (BusyStorage()) { L.Text(resourceState, "storage.busy"); return; }
+            working = true; Controls(false); L.Text(resourceState, "storage.resources.optimizing");
+            try
+            {
+                DailyResourceResult done;
+                SetCacheChanging(true);
+                try { done = await new DailyStorageMaintenance(root).OptimizeResourceCopiesAsync(resourcePlan, lifetime.Token); }
+                finally { SetCacheChanging(false); }
+                resourcePlan = null;
+                if (!closed) { L.Text(resourceState, "storage.resources.done", done.Files, StorageSize(done.Bytes), done.Deferred); await Measure(); }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { if (!closed) DailyUiText.Error(resourceState, e); }
+            finally { working = false; if (!closed) Controls(true); else lifetime.Dispose(); }
+        };
         clean.Click += async (_, _) =>
         {
             if (storage == null || working) return;

@@ -7,14 +7,15 @@ static class TalentPotionCases
     public static async Task Run(string output, List<string> cases)
     {
         void Check(bool ok, string name) { if (!ok) throw new Exception(name); cases.Add(name); }
-        void Reject(Action run, string name) { try { run(); } catch (InvalidDataException) { cases.Add(name); return; } throw new Exception(name); }
+        void Reject(Action run, string name) { try { run(); } catch (Exception e) when (e is InvalidDataException or DailyPotionSupplyException) { cases.Add(name); return; } throw new Exception(name); }
         var p = new GeneralPreferences();
-        Check(p.TalentPotionReserve == 0 && !p.RefillTalentPotions, "potion defaults preserve zero reserve and prohibit purchases");
+        Check(p.TalentPotionReserve == 0 && p.RefillTalentPotions && p.TalentPotionTarget == 5000 && !new TradePreferences().RefillCookingPotions, "fixed refill defaults on at 5000; cooking funding defaults off");
         Check(DailyTalentPotions.Check(100, 60, 40) == null, "consumption ending exactly at reserve allowed");
         Check(DailyTalentPotions.Check(100, 61, 40) != null, "one potion below reserve prevented");
         Check(DailyTalentPotions.Check(0, 0, 100) == null, "free actions allowed below reserve");
         Check(DailyTalentPotions.Check(0, 1, 0) != null, "default zero still detects exhausted potions");
         Check(DailyTalentPotions.Check(long.MaxValue, long.MaxValue, 1) != null, "large costs cannot overflow protection");
+        p.RefillTalentPotions = false;
         Reject(() => DailyTalentPotions.PurchaseCount(p, 0, 1), "auto refill disabled prevents purchases");
         p = new() { RefillTalentPotions = true, TalentPotionReserve = 100, TalentPotionTarget = 1000 };
         Check(DailyTalentPotions.PurchaseCount(p, 80, 900) == 920, "refill restores target including reserve deficit");
@@ -27,15 +28,32 @@ static class TalentPotionCases
             var invalid = quote.DeepClone().AsObject(); invalid["Offers"]![0]![change.Item1] = change.Item2;
             Reject(() => DailyTalentPotions.DiscountedOffer(invalid), "unsafe refill quote rejected: " + change.Item1);
         }
-        var state = O(("potions", 80), ("potion_buy_limit", 9999));
+        var state = O(("potions", 80), ("potion_buy_limit", 9999), ("gold", 100000));
         var plan = DailyTalentPotions.PlanningState(state, p, quote);
-        Check(N(plan["potions"]) == 0 && N(plan["potion_buy_limit"]) == 900 && N(state["potions"]) == 80, "planning excludes reserve without corrupting actual wallet");
+        Check(N(plan["potions"]) == 0 && N(plan["potion_buy_limit"]) == 900 && N(state["potions"]) == 80, "ordinary planning preserves original target-limited fallback and excludes reserve");
         p.RefillTalentPotions = false;
         Check(N(DailyTalentPotions.PlanningState(state, p, quote)["potion_buy_limit"]) == 0, "trade cannot bypass global purchase switch");
+        Check(N(DailyTalentPotions.PlanningState(state, p, quote, true)["potion_buy_limit"]) > 99999 && !B(DailyTalentPotions.PlanningState(state, p, quote, true)["can_bargain"]), "cooking funding is independent, supports native purchase batches, and cannot buy for bargaining alone");
+        Check(N(DailyTalentPotions.PlanningState(state, p, new JsonObject(), true)["potion_buy_limit"]) == 0, "missing discount never becomes permission for full price pills");
+        Check(DailyPotionSupply.CookingPolicy(p, 6000).TalentPotionTarget == 6100, "cooking funds actual need plus reserve independently of ordinary target");
+        var funded = DailyTalentPotions.PlanningState(state, p, quote, true);
+        Check(N(funded["potion_reserve_cost"]) == 900 && N(funded["gold"]) == 99100, "depleted reserve funding is included in upfront liquidity rather than charged after planning");
         var old = JsonSerializer.SerializeToNode(new DailyPreferences())!.AsObject(); old["Schema"] = 16; old.Remove("General");
         old["Stages"]!["Guild"] = false;
         var migrated = DailyPreferences.Parse(old.ToJsonString());
-        Check(migrated.Schema == 19 && !migrated.Stages.Guild && migrated.General.TalentPotionReserve == 0 && !migrated.General.RefillTalentPotions, "schema migration leaves existing task choices and no-buy defaults intact");
+        Check(migrated.Schema == 19 && !migrated.Stages.Guild && migrated.General.TalentPotionReserve == 0 && migrated.General.RefillTalentPotions, "old preference migration preserves tasks and adopts fixed refill");
+        foreach (bool enabled in new[] { false, true })
+        foreach (long target in new[] { 1000L, 8000L })
+        {
+            var prior = JsonSerializer.SerializeToNode(new DailyPreferences())!.AsObject();
+            prior["General"]!.AsObject().Remove("PotionSupplyRevision");
+            prior["General"]!["RefillTalentPotions"] = enabled; prior["General"]!["TalentPotionTarget"] = target;
+            var upgraded = DailyPreferences.Parse(prior.ToJsonString());
+            Check(upgraded.General.RefillTalentPotions && upgraded.General.TalentPotionTarget == Math.Max(5000, target) && !upgraded.Trade.RefillCookingPotions, "one-time migration raises small targets and preserves larger targets: " + enabled + ":" + target);
+            upgraded.General.RefillTalentPotions = false; upgraded.General.TalentPotionTarget = 700;
+            var again = DailyPreferences.Parse(JsonSerializer.Serialize(upgraded));
+            Check(!again.General.RefillTalentPotions && again.General.TalentPotionTarget == 700, "explicit opt-out and smaller target survive rereading: " + enabled + ":" + target);
+        }
         var store = new DailyPreferenceStore(Path.Combine(output, "potion-settings"));
         string a = new('a', 64), b = new('b', 64); migrated.General = new() { TalentPotionReserve = 500, RefillTalentPotions = true, TalentPotionTarget = 2000 }; store.Save(a, migrated);
         Check(store.Read(a).General.TalentPotionTarget == 2000 && store.Read(b).General.TalentPotionReserve == 0, "potion policy isolated by account");
@@ -62,6 +80,27 @@ static class TalentPotionCases
         var proofs = DailyWorkflowRegistry.Proofs();
         Check(proofs.Single(x => x.Role == "trade.buy").StagesFor(O(("action", "queue_potion_refill"))).Contains("*"), "unsettled refill purchase blocks all consuming daily stages");
         await RefillBatches(output, Check);
+        CookingBudget(Check);
+    }
+
+    private static void CookingBudget(Action<bool, string> check)
+    {
+        var catalog = O(("items", new[] { O(("id", 1), ("stack", 999)), O(("id", 2), ("stack", 999)), O(("id", 3), ("stack", 999)) }),
+            ("recipes", new[] { O(("id", 10), ("output", 2), ("count", 1), ("potions", 3), ("materials", O(("1", 2)))), O(("id", 11), ("output", 3), ("count", 1), ("potions", 2), ("materials", O(("1", 1)))) }));
+        var wallet = O(("items", O(("1", 20))), ("potions", 5), ("gold", 10000), ("protected", new JsonObject()));
+        var all = DailyCustomCooking.SupplyPlan(catalog, [10, 11], wallet, 5, 0, 45, 999, [10, 11]);
+        check(Rows(all["cooking"]).Length == 1 && N(all["required"]) == 30 && N(all["buy"]) == 30 && N(wallet["items"]!["1"]) == 20, "custom recipe order shares ingredients and keeps actual wallet immutable");
+        var limited = DailyCustomCooking.SupplyPlan(catalog, [10, 11], wallet, 5, 9550, 45, 999, [10, 11]);
+        check(N(limited["buy"]) == 9 && N(limited["cost"]) == 405, "custom cooking buys complete affordable recipe quantities while preserving gold");
+        var locked = DailyCustomCooking.SupplyPlan(catalog, [10, 11], wallet, 5, 0, 45, 999, []);
+        check(N(locked["buy"]) == 0, "locked recipes cannot reserve or buy pills");
+        wallet["protected"] = O(("keep", O(("id", 1), ("count", 20))));
+        check(N(DailyCustomCooking.SupplyPlan(catalog, [10], wallet, 5, 0, 45, 999, [10])["buy"]) == 0, "protected ingredients cannot fund cooking");
+        wallet["protected"] = new JsonObject();
+        wallet["storage"] = O(("slots", 1), ("used", 1), ("stacks", new[] { O(("id", 1), ("count", 20)) }));
+        check(N(DailyCustomCooking.SupplyPlan(catalog, [10], wallet, 5, 0, 45, 999, [10])["buy"]) == 0, "full bag does not buy pills for unavailable output space");
+        wallet["storage"]!["slots"] = 2;
+        check(N(DailyCustomCooking.SupplyPlan(catalog, [11, 10], wallet, 5, 0, 45, 999, [10, 11])["required"]) == 40, "ordered custom recipes allocate shared slots only once");
     }
 
     private static async Task RefillBatches(string output, Action<bool, string> check)

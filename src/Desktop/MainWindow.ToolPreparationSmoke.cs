@@ -15,11 +15,21 @@ public partial class MainWindow
         foreach(string locale in new[]{"zh-CN","zh-TW","en-US"}) foreach(string appearance in new[]{"light","dark"})
         {
             L.Select(locale);theme.Select(appearance=="light"?DailyAppearance.Light:DailyAppearance.Dark);
-            var dialog=new DailyCookingWindow([2,1],recipeCatalog){Owner=this,ShowActivated=false,ShowInTaskbar=false};
+            var dialog=new DailyCookingWindow([2,1],recipeCatalog,[new(1,true,123),new(10,true)]){Owner=this,ShowActivated=false,ShowInTaskbar=false};
             DailyDialogs.Prepare(dialog);dialog.Show();await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
             dialog.VerifyForSmoke(locale switch { "en-US" => "Honey Butter Almond", "zh-TW" => "蜂蜜奶油杏仁", _ => "蜂蜜黄油杏仁" },
                 locale == "en-US" ? "Honey ×3" : "蜂蜜 ×3");
-            Capture($"custom-cooking-{locale}-{appearance}",(FrameworkElement)dialog.Content);dialog.Close();
+            foreach (var (width, height, size) in new[] { (1000, 680, "regular"), (760, 540, "minimum") })
+            {
+                dialog.Width = width; dialog.Height = height;
+                for(int tab=0;tab<=2;tab++) {
+                    dialog.ShowSaleForSmoke(tab); await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    if (tab > 0) dialog.VerifySaleInputForSmoke(tab);
+                    string page = tab == 0 ? "custom-cooking" : "custom-sales-" + tab;
+                    Capture($"{page}-{locale}-{appearance}-{size}",(FrameworkElement)dialog.Content);
+                }
+            }
+            dialog.Close();
         }
     }
     async Task CheckToolPreparationForSmoke()

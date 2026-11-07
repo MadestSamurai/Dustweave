@@ -68,6 +68,7 @@ internal static class StorageMaintenanceCases
     }
     public static async Task Run(string output,List<string> cases)
     {
+        await StorageResourceCases.Run(output,cases);
         await HistoricalRetention(output,cases);
         void Check(bool ok,string label){if(!ok)throw new Exception(label);cases.Add("storage-maintenance: "+label);}
         string area=Path.Combine(output,"storage-maintenance"),root=Path.Combine(area,"host"),instances=Path.Combine(area,"instances"),net=Path.Combine(area,".net");
@@ -160,6 +161,14 @@ internal static class StorageMaintenanceCases
         Check(DailyStorageBreakdown.Data(sample,In(attempt+"/backup/Dustweave.exe"))=="update-recovery"&&DailyStorageBreakdown.Data(sample,In(attempt+"/job.json"))=="update-recovery"
             &&DailyStorageBreakdown.Data(sample,In(attempt+"/staging/x.dll"))=="update-temp"&&DailyStorageBreakdown.Data(sample,In("updates/9.0.0-Portable/package.zip"))=="update-download","update files split into downloads, install scratch and recovery copies");
         var none=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var audioItem=new DailyStorageItem(In("root/user/current/AppData/LocalLow/Gamfs/BrownDust II/SoundData/Patched/LocalVoice_JP/"+new string('a',40)),2048,DateTime.UtcNow);
+        var audio=DailyStorageBreakdown.Sandbox(sample,[audioItem],none,false,0);
+        Check(audio.Categories.Single().Key=="game-audio"&&audio.Categories.Single().Retained==DailyStorageState.Regenerable
+            &&audio.Bytes==2048&&audio.ReclaimableBytes==0,"sandbox audio is visible separately without authorizing deletion");
+        Check(DailyStorageBreakdown.Sandbox(sample,In("root/user/current/AppData/LocalLow/Gamfs/BrownDust II/SoundData/catalog_sound_hd.json"))=="game-audio"
+            &&DailyStorageBreakdown.Sandbox(sample,In("root/user/current/AppData/LocalLow/Gamfs/BrownDust II/SoundData-old/account.json"))=="login"
+            &&DailyStorageBreakdown.Sandbox(sample,In("root/user/current/AppData/LocalLow/Gamfs/BrownDust II/Neo/account.json"))=="login",
+            "audio classification includes its index but never broadens to adjacent account data");
         Check(DailyStorageBreakdown.Sandbox(sample,[],none,false,1).Unknown
             &&DailyStorageBreakdown.Extraction(sample,[],none,false,1,_=>true).Unknown
             &&DailyStorageBreakdown.Crashes(sample,[],none,1).Unknown

@@ -7,6 +7,7 @@ internal static class DiagnosticExportCases
     static async Task ToolPluginEvidence(string output,Action<bool,string> check)
     {
         string root=Path.Combine(output,"tool-plugin-evidence"),id=Guid.NewGuid().ToString("N");
+        check(DailyDiagnosticExport.Allowed("resource-optimization-last.json"),"resource optimization outcome is available in the normal diagnostic export");
         string relative="tool-plugins/sessions/"+id,session=Path.Combine(root,relative);
         Directory.CreateDirectory(session);
         foreach(string name in new[]{"tool-error.json","tool-input.json","tool-failed-input.json","tool-result.json","adaptation-result.json"})

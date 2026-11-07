@@ -547,6 +547,7 @@ namespace BD2Daily.Live {
      else if(c.Kind=="back")u.OnClickBackButton();
      else if(c.Kind=="pointer"){
       if(EventSystem.current==null)throw new InvalidOperationException("No active UI event system");
+      UiInteractionReadiness.PreparePointer(u,targets[c.TargetId]);
       ExecuteEvents.Execute(targets[c.TargetId],new PointerEventData(EventSystem.current){button=PointerEventData.InputButton.Left},ExecuteEvents.pointerClickHandler);
      }else u.OnClickUI(targets[c.TargetId]);
      r.State="dispatched";Save(r);pending=r;

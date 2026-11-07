@@ -54,6 +54,14 @@ namespace UnityEngine.UI {
  public class LoopScrollRect:UnityEngine.Component {public ScrollData scrollData=new();public int totalCount;}
 }
 public class UIBase:UnityEngine.Component {public bool CloseAllowed=true;public bool CanCloseUI()=>CloseAllowed;}
+public class CrystalButton {public GameObject button;}
+public class HuntOrAirwayUI:UIBase {
+ private CrystalButton[] _crystalButtons;
+ public bool ScrollMode=true;public float Offset,Pressed;public int PressCount,Selections;
+ public void SetButtons(params GameObject[] buttons)=>_crystalButtons=buttons.Select(b=>new CrystalButton{button=b}).ToArray();
+ public void OnPress(GameObject target){PressCount++;if(ScrollMode&&_crystalButtons.Any(b=>b.button==target))Pressed=Offset;}
+ public void Click(GameObject target){if(_crystalButtons.Any(b=>b.button==target)&&(!ScrollMode||Math.Abs(Offset-Pressed)<=20))Selections++;}
+}
 public class MissionData {public int Id;}
 public class TarosTacticsMissionPopupUI:UIBase {
  private UnityEngine.UI.LoopScrollRect _scrollMission;
@@ -77,6 +85,22 @@ public static class Runner { public static string[] Run(){
 
 var checks=new List<string>();
 void Check(bool ok,string label){if(!ok)throw new Exception(label);checks.Add(label);}
+var crystalTargets=Enumerable.Range(0,5).Select(_=>new GameObject()).ToArray();
+var hunt=new HuntOrAirwayUI();hunt.SetButtons(crystalTargets);
+hunt.Offset=120;hunt.Click(crystalTargets[0]);
+Check(hunt.Selections==0,"offset crystal tab reproduces click-only rejection as dragging");
+foreach(bool scrollMode in new[]{true,false})foreach(float offset in new[]{-260f,0f,120f})foreach(var target in crystalTargets){
+ hunt.ScrollMode=scrollMode;hunt.Offset=offset;int before=hunt.Selections;
+ UiInteractionReadiness.PreparePointer(hunt,target);hunt.Click(target);
+ Check(hunt.Selections==before+1,"owned crystal tab press/click selects at any scroll offset and display mode");
+}
+int presses=hunt.PressCount;
+UiInteractionReadiness.PreparePointer(hunt,new GameObject());
+UiInteractionReadiness.PreparePointer(new UIBase(),crystalTargets[0]);
+UiInteractionReadiness.PreparePointer(hunt,null);
+var otherHunt=new HuntOrAirwayUI();otherHunt.SetButtons(new GameObject());
+UiInteractionReadiness.PreparePointer(otherHunt,crystalTargets[0]);
+Check(hunt.PressCount==presses&&otherHunt.PressCount==0,"hunt dispatch, unrelated controls and foreign crystal buttons never receive extra press");
 var root=new GameObject();
 var popup=root.Add(new TarosTacticsMissionPopupUI());
 var scroll=root.Child().Add(new LoopScrollRect());popup.SetScroll(scroll);

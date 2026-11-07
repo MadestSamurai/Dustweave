@@ -39,7 +39,8 @@ internal static class DailyStorageBreakdown
         ["update-download"] = DailyStorageState.Recent, ["update-temp"] = DailyStorageState.InUse, ["update-recovery"] = DailyStorageState.Recovery,
         ["account"] = DailyStorageState.Account,
         ["shader"] = DailyStorageState.Regenerable, ["windows"] = DailyStorageState.Kept, ["game-tables"] = DailyStorageState.InUse,
-        ["game-files"] = DailyStorageState.InUse, ["game-recovery"] = DailyStorageState.Recovery, ["crash"] = DailyStorageState.Recent,
+        ["game-files"] = DailyStorageState.InUse, ["game-audio"] = DailyStorageState.Regenerable,
+        ["game-recovery"] = DailyStorageState.Recovery, ["crash"] = DailyStorageState.Recent,
         ["login"] = DailyStorageState.Account, ["extract-current"] = DailyStorageState.InUse, ["extract-old"] = DailyStorageState.Recent,
     };
     internal static IReadOnlyCollection<string> Keys => Retention.Keys;
@@ -80,6 +81,13 @@ internal static class DailyStorageBreakdown
         if (Under(relative, "tools")) return "tools";
         if (DailyHistoricalCache.Areas.Any(a => Under(relative, a))) return "tests";
         if (Under(relative, "extensions")) return "plugins";
+        if (Under(relative, "tool-plugins"))
+        {
+            var parts = relative.Split('/');
+            if (parts.Length > 2 && parts[1] == "backups") return "progress";
+            if (parts.Length > 3 && parts[1] == "sessions") return "tools";
+            if (parts.Length > 3 && DailyPlugin.ValidId(parts[1]) && parts[2] == "extensions") return "plugins";
+        }
         if (Under(relative, "live") || Under(relative, "queue-history") || Under(relative, "parallel-progress") || Under(relative, "parallel-workers")) return "progress";
         return "account";
     }
@@ -98,6 +106,7 @@ internal static class DailyStorageBreakdown
             if (Under(inside, "AppData/Local/CrashDumps")) return "crash";
             if (ShaderCaches.Any(p => Under(inside, p))) return "shader";
             if (Under(inside, "AppData/LocalLow/Gamfs/BrownDust II/Data/t")) return "game-tables";
+            if (Under(inside, "AppData/LocalLow/Gamfs/BrownDust II/SoundData")) return "game-audio";
             if (Under(inside, "AppData/Local/Microsoft") || Under(inside, "AppData/Roaming/Microsoft")) return "windows";
             return "login";
         }

@@ -3,7 +3,7 @@ using static Dustweave.DailyData;
 namespace Dustweave;
 
 /// <summary>One managed host owns navigation, transaction recovery, selected stages and private extensions.</summary>
-public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, IDailyWeeklyCompletionHost
+public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, IDailyWeeklyCompletionHost, IDailyPotionSupplyHost
 {
     public event Action<string, JsonObject>? StageProgress;
     private readonly string root;
@@ -100,7 +100,12 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
             {
                 var limit = error.PotionLimit;
                 var settings = new DailyPreferenceStore(root).Read(S(Bound()["actor"]![3])).General;
-                void Status(string state, string detail) => Progress(DailyTalentPotions.Stage, O(("state", state), ("detail", detail), ("parent", stage), ("limit", limit.Json())));
+                void Status(string state, string detail, DailyText? display = null)
+                {
+                    var progress = O(("state", state), ("detail", detail), ("parent", stage), ("limit", limit.Json()));
+                    if (display != null) progress["display"] = System.Text.Json.JsonSerializer.SerializeToNode(display);
+                    Progress(DailyTalentPotions.Stage, progress);
+                }
                 try
                 {
                     DailyTalentPotions.PurchaseCount(settings, limit.Available, limit.Required);
@@ -132,7 +137,8 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
                 }
                 catch (Exception failure)
                 {
-                    Status(failure is StageHostException { Kind: "pending" } or DailyStepException { MayHaveDispatched: true } ? "recovery_required" : "blocked", failure.Message);
+                    Status(failure is StageHostException { Kind: "pending" } or DailyStepException { MayHaveDispatched: true } ? "recovery_required" : "blocked", failure.Message, (failure as DailyPotionSupplyException)?.Display);
+                    if (failure is DailyPotionSupplyException unavailable) throw new StageHostException("adapter", unavailable.Message) { Display = unavailable.Display };
                     if (failure is InvalidDataException) throw new StageHostException("adapter", failure.Message);
                     if (failure is DailyStepException step && step.Kind == "rejected" && !step.MayHaveDispatched)
                         throw new StageHostException(driver.PauseRequested ? "stopped" : "adapter", step.Message);
@@ -140,6 +146,41 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
                 }
             }
         }
+    }
+    public async Task<JsonObject> SupplyPotionsAsync()
+    {
+        await serial.WaitAsync();
+        try
+        {
+            var policy = new DailyPreferenceStore(root).Read(S(Bound()["actor"]![3])).General;
+            if (!policy.RefillTalentPotions)
+                return DailyPotionSupply.Result("skipped", DailyPotionSupply.Text("disabled", "固定补药已关闭，未购买天赋药。"));
+            var reconciled = await Reconcile();
+            if (reconciled["unresolved"] is JsonArray { Count: > 0 })
+                return DailyPotionSupply.Result("skipped", DailyPotionSupply.Text("pending", "已有操作等待核对，保留现场，本次不额外购买天赋药。"));
+            var evidence = await driver.EvidenceAsync(["dispatch.currency"]);
+            if (N(R(evidence, "dispatch.currency", "Catalyst")) >= policy.TalentPotionTarget)
+                return DailyPotionSupply.Result("skipped", DailyPotionSupply.Text("enough", "天赋药已达到补药目标，无需购买。"));
+            await business.CleanupRejectedPreviewsAsync(Bound());
+            var recovery = await navigation.RecoverAsync("trade", Bound(), "准备固定补药", Relay);
+            if (!B(recovery["safe"]))
+                throw new StageHostException("adapter", "当前现场尚未恢复，未开始固定补药。") { HoldQueue = true };
+            try
+            {
+                var refill = await new DailyTradeExecution(Workflow(), new()).RefillPotions(0, policy);
+                var text = DailyPotionSupply.Text("completed", $"已补充 {N(refill["bought"])} 个天赋药，当前 {N(refill["balance"])}。", N(refill["bought"]).ToString(), N(refill["balance"]).ToString());
+                var result = DailyPotionSupply.Result("completed", text);
+                result["purchase"] = refill;
+                return result;
+            }
+            catch (DailyPotionSupplyException error)
+            {
+                var restored = await navigation.RecoverAsync("guild", Bound(), error.Message, Relay);
+                if (!B(restored["safe"])) throw new StageHostException("adapter", error.Message) { HoldQueue = true, Display = error.Display };
+                return DailyPotionSupply.Result("blocked", error.Display, error.Code);
+            }
+        }
+        finally { serial.Release(); }
     }
     private async Task<JsonObject> CallOnceAsync(string operation, string? stage = null, JsonObject? arguments = null)
     {
@@ -228,6 +269,7 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
             if (e.Data["stage_result"] is JsonObject confirmed) translated.Data["stage_result"] = confirmed;
             throw translated;
         }
+        catch (DailyPotionSupplyException e) { throw new StageHostException("adapter", e.Message) { Display = e.Display }; }
         catch (InvalidDataException e) {
             driver.Diagnostics.Failure("failure", O(("kind", "data"), ("message", e.Message)));
             var translated = new StageHostException("adapter", e.Message);

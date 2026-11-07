@@ -22,7 +22,7 @@ public sealed record DailyStorageOverview(DailyStorageScope[] Scopes)
 }
 
 /// <summary>Accounts and game data are counted, but deletion is restricted to each application's allowlists.</summary>
-public sealed class DailyStorageMaintenance
+public sealed partial class DailyStorageMaintenance
 {
     readonly string root;
     readonly string? instances, extraction, crashes;

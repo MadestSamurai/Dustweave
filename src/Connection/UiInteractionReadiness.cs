@@ -11,6 +11,16 @@ namespace BD2Daily.Live {
    for(var type=value.GetType();type!=null;type=type.BaseType){var field=type.GetField(name,Flags);if(field!=null)return field.GetValue(value);}
    return null;
   }
+  internal static void PreparePointer(UIBase owner,GameObject target){
+   var hunt=owner as HuntOrAirwayUI;
+   if(hunt==null||target==null)return;
+   var buttons=Field(hunt,"_crystalButtons") as Array;
+   // Native crystal selection compares the current scroll offset with the
+   // offset saved by OnPress. Click-only input can be mistaken for a drag.
+   // Prepare only this owner's five crystal controls, never other buttons.
+   if(buttons!=null&&buttons.Cast<object>().Any(b=>b!=null&&ReferenceEquals(Field(b,"button"),target)))
+    hunt.OnPress(target);
+  }
   // A scroll's origin item is an authoring template, not a bound mission/item.
   // Active clones can also still belong to the pool or be loading their data.
   internal static bool TargetReady(UIBase owner,GameObject target){

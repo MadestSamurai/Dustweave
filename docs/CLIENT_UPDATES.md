@@ -58,6 +58,74 @@ The cache includes all managed compiler references. Owned idle sandboxes use San
 
 ## Sources and outputs / 来源与目标
 
+### Downloaded audio storage / 下载声音资源的去重设计（2026-11-07）
+
+Implemented: storage accounting classifies the exact LocalLow game `SoundData` subtree as
+`game-audio`, separately from sign-in/settings. This classification does not make files
+removable and does not change sandbox rules. The category includes the small sound catalogs
+so its total agrees with the directory; catalogs must not be treated as bulk duplicate assets.
+
+Implemented optimization: reclaim identical sandbox overlays and retain normal
+copy-on-write behavior. Sound banks are downloaded, replaced and cleared by the client;
+quality changes and failed-bank recovery need writes. Do not extend installation-directory
+`ReadFilePath` rules to SoundData, grant shared write access, or hard-link mutable sound banks.
+The normal game and each sandbox must still be able to update independently.
+
+- Limit the first implementation to recognized sound-bank files under `SoundData/Patched`.
+  Verify the same relative host path, full content hash and compatible sound catalog/quality
+  generation. Names, lengths or a hexadecimal filename alone are insufficient evidence.
+  Keep catalogs, verification indexes, account/preferences databases and unknown files private.
+- Reuse the existing host copy only. Keep sandbox-only/newer/different-language resources;
+  never copy them over the normal game's files or infer obsolescence from age. If the normal
+  copy is absent, unreadable or changed, retain the sandbox copy and continue other work.
+- Use the existing configuration/maintenance ownership and an idle sandbox. Run comparisons
+  in cancellable background maintenance, not in the startup/connection critical path or every
+  storage-page refresh. Idle batches examine at most about 512 MiB / five seconds before
+  yielding (one file finishes atomically); cancellation is checked every 128 KiB. A process-local
+  cursor prevents mismatches at the front from starving later files. A preview is not authority:
+  removal opens both banks and catalogs against writes, hashes them again and deletes the
+  verified file handle. No persistent duplicate hash cache or extra bank backup is introduced.
+  A failed optimization never prevents login or daily tasks.
+- Preview verified duplicate bytes separately from total audio bytes. Apply file-by-file,
+  preserving completed work on cancellation and reporting actual reclaimed bytes. No blanket
+  SoundData deletion, persistent extra recovery copy of every identical bank, or new account
+  reset/rebind requirement.
+- Real Sandboxie fixtures verify host fallback, two-box isolation, a private program copy
+  (the compatibility-mode storage arrangement), host/private updates, delete/redownload and
+  repeated cleanup. These are file-view tests, not claims of live game/loading validation.
+  V1 deleted file/ancestor timestamps, V2 FilePaths.dat, snapshot layers, image-backed boxes
+  and resource access overrides are excluded. Only resource optimization is deferred;
+  existing game launch, login, repair and expired-log maintenance are unaffected.
+  References: [V1/V2 semantics](https://sandboxie-plus.com/sandboxie/delete-v2/),
+  [snapshot layering](https://sandboxie-plus.github.io/sandboxie-docs/PlusContent/BoxSnapshots/).
+
+The Storage page has separate **Check duplicates** and **Remove verified copies** actions.
+Its normal opening/refresh still inventories metadata only. Closing cancels long comparisons;
+completed removals are retained and the next check resumes from actual remaining files.
+Automatic resource maintenance follows the existing automatic-cleanup switch, starts after
+the host has been idle, yields to foreground work, and runs separately from expired-file cleanup.
+`resource-optimization-last.json` records bounded counts/bytes/cancellation and is included
+in normal diagnostics. It contains no account credentials or file contents.
+
+The local read-only audit found about 4.39 GiB of identical audio across two sandboxes and the
+normal game's matching files. This is a potential saving, not a reported cleanup result.
+Account names, local paths, client binaries and audit inventories remain outside this repo.
+
+Other large categories reviewed:
+
+- Shader caches: some preallocated regions compress well, but deleting/recreating shaders
+  can reintroduce loading stalls. Leave them intact; no speculative shared-write rules.
+- Windows CatRoot2/system databases: keep private and uncompressed; do not treat a system
+  database as disposable just because it has been copied into a sandbox.
+- Game table recovery: retain the previous known table. Content samples showed limited
+  compression benefit; no new permanent archive/copy and no weakening of rollback.
+- Installed plugin versions: retain selected/installed payloads because running workers pin
+  immutable versions. Tool-plugin payloads are now classified as plugins, session data as
+  tool data and preset backups as recovery, instead of labeling all of them account data.
+- Update payloads/extraction/old logs: retain the existing bounded cleanup plans and active
+  transaction/current-generation exclusions. The audit found further expired files already
+  covered by these plans; do not duplicate retention or delete the active update backup.
+
 | Source / 来源 | Check / 检查 | Owner / 维护位置 |
 | --- | --- | --- |
 | Actual installed client Managed assemblies | Hash/MVID, Mono/dependency changes, methods/fields and native UI handlers; distinguish installed files from a running old process | `src/Compatibility`, `src/Connection`, `src/Core`, `tools/CompatibilityCli` |

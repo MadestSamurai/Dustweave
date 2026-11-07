@@ -20,6 +20,45 @@ static class QueueEngineCases
         async Task<JsonObject> Run(FakeHost host, string root, string[]? tasks = null, string? resume = null, string? retry = null, DailyPreferences? prefs = null, Func<bool>? pause = null) => await new DailyQueueEngine(host, pause ?? (() => false), () => prefs ?? new DailyPreferences { Trade = new() { Enabled = true } }).RunAsync(new(root, Account, Path.Combine(root, "queue-ui.json"), resume, false, tasks, retry));
         var root = Root();
         var host = new FakeHost();
+        {
+            var supply = new SupplyHost();
+            var finished = await Run(supply, Root(), ["free_draws", "mail"]);
+            Check(State(finished) == "completed" && supply.Calls.Where(c => c == "supply" || c.StartsWith("execute:")).SequenceEqual(new[] { "supply", "execute:free_draws", "supply", "execute:mail" }),
+                "fixed refill runs once before tasks and once immediately before final mail");
+            var withoutMail = new SupplyHost();
+            await Run(withoutMail, Root(), ["free_draws"]);
+            Check(withoutMail.Supplies == 2, "closing refill runs even when mail is not selected");
+            var discount = new SupplyHost { Supply = _ => DailyPotionSupply.Result("blocked", DailyPotionSupply.NoDiscount) };
+            await Run(discount, Root(), ["free_draws", "mail"]);
+            Check(discount.Supplies == 2 && discount.Executed.SequenceEqual(new[] { "free_draws", "mail" }), "unavailable discount cannot loop or suppress independent work");
+            var occupied = new SupplyHost { Owner = "mirror" };
+            await Run(occupied, Root(), ["mirror", "free_draws"]);
+            Check(occupied.Supplies == 1 && occupied.Calls.IndexOf("execute:mirror") < occupied.Calls.IndexOf("supply"), "active battle is preserved instead of detouring for initial refill");
+            bool stopping = false;
+            var stopped = new SupplyHost();
+            stopped.After = (op, _) => { if (op == "execute") stopping = true; };
+            await Run(stopped, Root(), ["free_draws", "mail"], pause: () => stopping);
+            Check(stopped.Supplies == 1 && !stopped.Executed.Contains("mail"), "cancellation never runs closing purchases");
+            string retryRoot = Root();
+            var shortPills = new SupplyHost();
+            shortPills.After = (op, task) => { if (op == "execute" && task == "daily_dispatch") throw new StageHostException("adapter", DailyPotionSupply.Shortage.Fallback) { Display = DailyPotionSupply.Shortage }; };
+            var deferred = await Run(shortPills, retryRoot, ["daily_dispatch", "free_draws", "mail"]);
+            Check(Stage(deferred, "daily_dispatch") == "blocked" && shortPills.Executed.Count(t => t == "daily_dispatch") == 1 && shortPills.Supplies == 2, "mid-run shortage remains deferred even after closing refill");
+            var restored = new SupplyHost();
+            var retried = await Run(restored, retryRoot, ["daily_dispatch"], retry: deferred["id"]!.GetValue<string>());
+            Check(State(retried) == "completed" && restored.Executed.SequenceEqual(new[] { "daily_dispatch" }), "manual refill then retry completes only unfinished task");
+            string interruptedRoot = Root();
+            int purchases = 0;
+            var pending = new SupplyHost { Supply = n => { if (n == 2) { purchases++; throw new StageHostException("pending", "receipt pending") { HoldQueue = true }; } return DailyPotionSupply.Result("skipped", DailyPotionSupply.Text("enough", "already enough")); } };
+            var interrupted = await Run(pending, interruptedRoot, ["free_draws"]);
+            Check(State(interrupted) == "paused" && purchases == 1, "uncertain closing purchase keeps its checkpoint recoverable");
+            var resumedSupply = new SupplyHost();
+            var resumedRecord = await Run(resumedSupply, interruptedRoot, resume: interrupted["id"]!.GetValue<string>());
+            Check(State(resumedRecord) == "completed" && resumedSupply.Executed.Count == 0 && resumedSupply.Supplies == 1 && purchases == 1, "restart after last task rechecks closing supply without replaying tasks or purchase");
+            var repeated = new SupplyHost();
+            await Run(repeated, interruptedRoot, resume: interrupted["id"]!.GetValue<string>());
+            Check(repeated.Supplies == 0 && repeated.Executed.Count == 0, "completed checkpoint is not purchased again on repeated resume");
+        }
         foreach (string stage in new[] { "event_battle", "daily_dispatch", "mail", "trade", "weekly_mainline" })
         {
             var waitingHost = new FakeHost();
@@ -476,7 +515,17 @@ static class QueueEngineCases
     static string State(JsonObject r) => r["state"]!.GetValue<string>();
     static string Stage(JsonObject r, string task) => r["items"]!.AsArray().First(i => i!["task"]!.GetValue<string>() == task)!["state"]!.GetValue<string>();
     static JsonObject Old(string id, JsonObject context, params string[] tasks) => new() { ["schema"] = 1, ["id"] = id, ["context"] = context.DeepClone(), ["state"] = "paused", ["items"] = new JsonArray(tasks.Select(t => (JsonNode)new JsonObject { ["task"] = t, ["state"] = "pending" }).ToArray()) };
-    private sealed class FakeHost : IDailyStageHost, IDailyStageProgressHost, IDailyWeeklyCompletionHost
+    private sealed class SupplyHost : FakeHost, IDailyPotionSupplyHost
+    {
+        public int Supplies;
+        public Func<int, JsonObject>? Supply;
+        public Task<JsonObject> SupplyPotionsAsync()
+        {
+            Calls.Add("supply"); Supplies++;
+            return Task.FromResult(Supply?.Invoke(Supplies) ?? DailyPotionSupply.Result("completed", DailyPotionSupply.Text("enough", "already enough")));
+        }
+    }
+    private class FakeHost : IDailyStageHost, IDailyStageProgressHost, IDailyWeeklyCompletionHost
     {
         public event Action<string, JsonObject>? StageProgress; public List<string> Members = []; public bool PartialCollection, SettledNpc, SettledSteal, Refill, PartialSaffron, FineProgress;
         public List<bool> SettlementRefreshes = [];

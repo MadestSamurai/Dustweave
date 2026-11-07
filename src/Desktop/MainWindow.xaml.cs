@@ -995,6 +995,22 @@ public partial class MainWindow : Window
                 DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status="passed", scope="work-progress", languages=3, themes=2, realGameTouched=false });
                 Application.Current.Shutdown(); return;
             }
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "potion-supply")
+            {
+                WorkspaceTabs.SelectedItem = SettingsTab;
+                foreach (int language in new[] { 0, 1, 2 })
+                foreach (int appearance in new[] { 1, 2 })
+                foreach (bool cooking in new[] { false, true })
+                {
+                    LanguageSelector.SelectedIndex = language; ThemeSelector.SelectedIndex = appearance;
+                    await preferencesPanel.CheckPotionSupplyForSmoke(cooking);
+                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                    Capture($"potion-supply-{language}-{appearance}-{(cooking ? "cooking" : "general")}");
+                }
+                L.Audit();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "potion-supply", languages = 3, themes = 2, realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "simple-settings")
             {
                 L.Audit(); CheckRuntimeLanguagesForSmoke();
