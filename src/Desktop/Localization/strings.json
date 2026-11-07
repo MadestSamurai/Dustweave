@@ -9890,6 +9890,11 @@
     "zh-TW": "固定補藥已關閉，未購買天賦藥。",
     "en-US": "Scheduled refills are disabled. No Talent Pills were bought."
   },
+  "potion.unavailable": {
+    "zh-CN": "暂未读到天赋药数量，本次未补药；其他任务继续，缺药时仍按补药设置处理。",
+    "zh-TW": "暫時未讀到天賦特效藥數量，本次未補藥；其他任務繼續，缺藥時仍依補藥設定處理。",
+    "en-US": "The Talent Pill balance is unavailable, so this refill was skipped. Other tasks continue; shortages still use your refill settings."
+  },
   "potion.enough": {
     "zh-CN": "天赋药已达到补药目标，无需购买。",
     "zh-TW": "天賦藥已達到補藥目標，無需購買。",

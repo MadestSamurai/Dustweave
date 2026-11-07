@@ -158,8 +158,32 @@ public sealed class DailyStageHost : IDailyStageHost, IDailyStageProgressHost, I
             var reconciled = await Reconcile();
             if (reconciled["unresolved"] is JsonArray { Count: > 0 })
                 return DailyPotionSupply.Result("skipped", DailyPotionSupply.Text("pending", "已有操作等待核对，保留现场，本次不额外购买天赋药。"));
-            var evidence = await driver.EvidenceAsync(["dispatch.currency"]);
-            if (N(R(evidence, "dispatch.currency", "Catalyst")) >= policy.TalentPotionTarget)
+            long? balance = null;
+            string unavailable = "";
+            for (int attempt = 0; attempt < 2 && balance == null; attempt++)
+            {
+                // Identity, cancellation and transport errors still propagate. Only
+                // an unreadable optional balance, before any input, skips this refill.
+                var evidence = await driver.EvidenceAsync(["dispatch.currency"]);
+                try
+                {
+                    long value = DailyEvidence.Integer(R(evidence, "dispatch.currency", "Catalyst"));
+                    if (value < 0) throw new InvalidDataException("Negative Talent Pill balance");
+                    balance = value;
+                }
+                catch (InvalidDataException error)
+                {
+                    unavailable = error.Message;
+                    driver.ReleaseDemand(S(evidence["ObservationRequest"]));
+                }
+            }
+            if (balance == null)
+            {
+                var skipped = DailyPotionSupply.Result("blocked", DailyPotionSupply.Text("unavailable", "暂未读到天赋药数量，本次未补药；其他任务继续，缺药时仍按补药设置处理。"), "balance_unavailable");
+                skipped["diagnostic"] = unavailable;
+                return skipped;
+            }
+            if (balance >= policy.TalentPotionTarget)
                 return DailyPotionSupply.Result("skipped", DailyPotionSupply.Text("enough", "天赋药已达到补药目标，无需购买。"));
             await business.CleanupRejectedPreviewsAsync(Bound());
             var recovery = await navigation.RecoverAsync("trade", Bound(), "准备固定补药", Relay);

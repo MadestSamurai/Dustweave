@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-11-07T05:12:07.2415158Z",
+  "generatedUtc": "2026-11-07T05:24:59.8684456Z",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -1423,7 +1423,7 @@
     },
     {
       "path": "src/Core/DailyStageHost.cs",
-      "sha256": "4899bfcae694ab00b4afaee4c814354b8a9a7653714c2a19c0296e41069f0cf2"
+      "sha256": "edbfdce89e30681544367aa974212ecb641b9ab41c31e405454b800041ac673f"
     },
     {
       "path": "src/Core/DailyStageNavigation.cs",
@@ -2015,7 +2015,7 @@
     },
     {
       "path": "src/Desktop/Localization/strings.json",
-      "sha256": "8e0f7b3c2f9e8df5ae77db88c161096cf7b8337f526636367deb01176de00a1c"
+      "sha256": "cc62d97c0d5ac19d8212f215ae8dcf04cca81f1fb6b29aa29aa3b1566bd35a13"
     },
     {
       "path": "src/Desktop/LocalizedTextCatalog.cs",
@@ -5287,7 +5287,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/FreeDrawStageCases.cs",
-      "sha256": "7d901f83a025aa96f0aeff745e8d1464010f3bba13ef6679ab0364307f246aff"
+      "sha256": "d7eb049db92cbc39c33d494559ec53508aa63259bcf78fc8827924940b96cd54"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/FriendshipStageCases.cs",
@@ -5363,7 +5363,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ManagedBootstrapCases.cs",
-      "sha256": "623603ea943859f661b806ea00acd16a9b880e357726e50ce1042e9a06fdc6df"
+      "sha256": "526cd57ad11f20aa6adbd2e11e37b10d3bda75f805061f8e18daf8c3054f3b8e"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ManagedHostFixture.cs",

@@ -48,6 +48,25 @@ static class ManagedBootstrapCases
             Check(result["state"]!.GetValue<string>() == "completed" && f.Confirmations == 2,
                 "compacted completed pickup cannot stop queue startup, inherited=" + inherited);
             Check(File.ReadAllText(path) == original, "startup preserves compacted successful history, inherited=" + inherited);
+            Check(result["potion_supply"]!["start"]!["reason"]!.GetValue<string>() == "balance_unavailable" &&
+                result["potion_supply"]!["finish"]!["reason"]!.GetValue<string>() == "balance_unavailable",
+                "optional pill reads do not block actual daily execution at either checkpoint");
+        }
+        using (var f = Create())
+        {
+            using var fixture = new ManagedHostFixture(f.Root, () => Task.FromResult(new DailyStageFrame(f.Current, f.Context)), f.Driver, f.Business,
+                bootstrap: Boot(f), proofs: [DailyFreeDrawProof.Definition()], stopped: () => f.Stopped);
+            await fixture.Host.CallAsync("begin", arguments: new() { ["context"] = f.Context.DeepClone() });
+            foreach (long? balance in new long?[] { null, -1, 5000, null, 6000 })
+            {
+                f.PotionBalance = balance;
+                await f.Advance(TimeSpan.FromMilliseconds(200));
+                var refill = await fixture.Host.SupplyPotionsAsync();
+                Check(refill["state"]!.GetValue<string>() == (balance >= 0 ? "skipped" : "blocked") && f.Box.Commands.Count == 0,
+                    "optional refill recovers from missing or invalid balance without input: " + balance);
+            }
+            f.Stopped = true;
+            await Reject(() => fixture.Host.SupplyPotionsAsync(), "stopped", "optional refill still preserves operator stop");
         }
         foreach (string failure in new[] { "preflight", "explicit-rejection", "uncertain", "identity", "stopped" })
         using (var f = Create())

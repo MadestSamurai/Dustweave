@@ -271,6 +271,7 @@ static class FreeDrawStageCases
     {
         public string Root; public CommandDriverCases.Mailbox Box = new(); public JsonObject Context = CommandDriverCases.Context(), Current = CommandDriverCases.Frame(); public DailyCommandDriver Driver; public DailyManagedBusiness Business; public DailyFreeDrawStage Stage;
         public Dictionary<long, long> Counts = new() { [5] = 0, [6] = 0 }; public bool MissingResponse, ChangeIdentity, NoTap, FailAnimation, Stopped, EarlyBack; public int Previews, Confirmations, Skips, ResultBacks, PaidCommands, Cancellations; public Action? BeforeRead; public bool UseNativeTokens;
+        public long? PotionBalance;
         public double ResultDelay; public bool NeverShowResult; private double resultAt = double.PositiveInfinity; private double time; private long sequence; private long category = 5; private bool foreign, ready;
         public long UtcTicks => Ticks; public double Seconds => time; public Task Advance(TimeSpan span)
         {
@@ -409,6 +410,7 @@ static class FreeDrawStageCases
                 ["Values"] = new JsonArray(values.Select(v => (JsonNode)new JsonObject { ["Path"] = v.Path, ["Error"] = "", ["Json"] = JsonSerializer.Serialize(v.Value) }).ToArray())
             };
             var evidence = new JsonObject { ["Config"] = "free-fixture", ["ObservationRequest"] = request["Id"]!.DeepClone(), ["Frame"] = Current.DeepClone(), ["AtUtcTicks"] = Ticks, ["Error"] = "", ["Taps"] = NoTap ? new JsonArray() : new JsonArray(DailyFreeDrawProof.Role), ["Readings"] = new JsonArray(Reading("gacha.users", ("Count", Counts.Count), ("Keys", Counts.Keys.ToArray()), ("Values", Counts.Select(p => new { groupId = p.Key, totalBuyCount = 0, oneFreePickCount = p.Value }).ToArray())), Reading("gacha.ui", ("_goFreeGachaMacro.activeInHierarchy", Counts[category] == 0))) };
+            if (PotionBalance.HasValue) evidence["Readings"]!.AsArray().Add(Reading("dispatch.currency", ("Catalyst", PotionBalance.Value)));
             Box.Values["live:evidence.json"] = JsonSerializer.SerializeToUtf8Bytes(evidence);
         }
         public async Task<JsonObject> PreviewRecord()
