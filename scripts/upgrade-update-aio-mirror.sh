@@ -34,7 +34,7 @@ sha256sum "$config" "$public/releases.json" /ssl/nginx.conf \
   /usr/local/lib/dustweave-ota-channel/Dustweave.OtaChannel \
   /usr/local/lib/dustweave-ota-channel-v2/Dustweave.OtaChannel \
   /var/lib/dustweave-ota-aio-home/.ssh/authorized_keys > "$backup/unchanged.sha256"
-for feed in releases-v2.json releases-1.6.0.json; do
+for feed in releases-v2.json releases-1.6.0.json .mirror/manifests/releases-1.6.0.json; do
     if test -f "$public/$feed"; then sha256sum "$public/$feed" >> "$backup/unchanged.sha256"; fi
 done
 "$payload" verify "$config" > "$backup/before-status.json"
