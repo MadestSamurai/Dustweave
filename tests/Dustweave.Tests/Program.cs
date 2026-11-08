@@ -140,7 +140,7 @@ await Group("QueueSession", () => QueueSessionCases.Run(root, cases));
 await Group("QueueCompletion", () => QueueCompletionCases.Run(root, cases));
 await Group("RunReport", () => Sync(() => RunReportCases.Run(cases)));
 await Group("AbsorptionReport", () => Sync(() => AbsorptionReportCases.Run(root, cases)));
-await Group("EventSweepCount", () => EventSweepCountCases.Run(root, cases));
+await Group("EventSweepCount", async () => { await EventSweepCountCases.Run(root, cases); await EventStageSelectionCases.Run(root, cases); });
 await Group("EventPreview", () => EventPreviewCases.Run(root, cases));
 await Group("QueueExecutionThread", () => QueueExecutionThreadCases.Run(root, cases));
 await Group("RuleData", () => RuleDataCases.Run(root, cases));

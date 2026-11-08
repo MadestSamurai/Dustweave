@@ -112,7 +112,8 @@ namespace BD2Daily.Live {
     var lobby=(EventBattleUI)ui;int id=checked((int)c.Items[2]);
     Require(lobby.ὤὮὯὫὪὡὤὡὫὬὪ==c.Items[0]&&lobby.ὢὣὤὬὮὩὡὬὥὫὩ==c.Items[1]&&id==lobby.ὣὨὭὢὦὪὮὫὣὦὥ,"Event frontier changed");
     if(c.Value==0){((BetterLoopScrollRect)Get(lobby,"_battleStageScroll")).FocusToIndex(lobby.ὥὣὤὧὥὬὤὧὣὤὠ.IndexOf(id),2,true,lobby.ὥὣὤὧὥὬὤὧὣὤὠ.Count);return;}
-    lobby.SetSelectItem(lobby.GetComponentsInChildren<EventBattleStageScrollItem>().Single(x=>x.ὯὫὪὡὭὤὪὮὫὬὣ==id),true);return;
+    var row=lobby.GetComponentsInChildren<EventBattleStageScrollItem>().Single(x=>x.ὯὫὪὡὭὤὪὮὫὬὣ==id);
+    EventStageSelection.Select(lobby,row,lobby.SetSelectItem);return;
    }
    if(c.Kind=="event_native_confirm"){
     var popup=(BattleSkipPopupUI)ui;var lobby=Bridge.Find(typeof(EventBattleUI)).Cast<EventBattleUI>().Single();

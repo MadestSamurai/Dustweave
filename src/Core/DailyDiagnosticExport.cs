@@ -31,7 +31,8 @@ public static class DailyDiagnosticExport
         "live/trade-quote-reads", "live/trade-closes", "trade/diagnostics", "trade/data-preflights", "trade/capture", "trade/executions", "trade/plans",
         "live/travel-diagnostics", "live/route-atlas", "live/server-collection", "live/weekly-npc-recovery", "live/weekly-npc-queries", "live/absorption-history"];
     static readonly string[] Singles = ["resource-optimization-last.json", "launch-mode.json", "sandbox-processes.json", "game-program-recovery/last-sync.json", "game-table-recovery/last-sync.json", "progress-sync-error.json", "registration-mismatch.json", "registration-recovery.json", "saffron-latest.json", "suite/last-transition.json", "updates/check-error.json", "updates/install-error.json", "updates/restart-state.json", "login-identity-error.json",
-        "live/diagnostics/login-request.json", "live/diagnostics/login-verified.json", "live/diagnostics/login-failed.json", "live/diagnostics/login-preparation-failed.json", "live/diagnostics/preparation-latest.json", "live/trade-failure.json", "live/trade-navigation-cleanup.json",
+        "live/diagnostics/login-current.json", "live/diagnostics/login-request.json", "live/diagnostics/login-verified.json", "live/diagnostics/login-failed.json", "live/diagnostics/login-preparation-failed.json", "live/diagnostics/preparation-latest.json", "live/trade-failure.json", "live/trade-navigation-cleanup.json",
+        "live/diagnostics/login-waiting-agreement.json", "live/diagnostics/login-waiting-credentials.json", "live/diagnostics/login-waiting-start.json",
         "live/pass-claims-latest.json", "live/mission-inspection-latest.json", "live/event-preview-recovery.json",
         "live/minigame-connect.json", "live/minigame-connect-sichuan.json", "live/minigame-connect-territory.json"];
     static readonly string[] Rotations = [".1", ".2", ".3", ".previous"];

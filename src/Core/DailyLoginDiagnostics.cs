@@ -2,24 +2,32 @@ namespace Dustweave;
 
 public static class DailyLoginDiagnostics
 {
-    public static void Capture(string root, string phase, DailyAccountCatalog catalog, IGameHost host, IAccountSessions sessions)
+    public static void Capture(string root, string phase, DailyAccountCatalog catalog, IGameHost host, IAccountSessions sessions, string attemptId = "")
     {
         GameInstance? game = null; DailyIdentityRead read = new(null, "game-missing"); DailyRuntimeStatus? status = null;
-        try { game = host.Find(); if(game != null) { read = host.ReadIdentity(game); status = host.ReadStatus(game); } catalog = sessions.Read(); }
+        DailyAccountCatalog? current = null; string catalogError = "";
+        try { current = sessions.Read(); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidOperationException or TimeoutException)
+        { catalogError = e.GetType().Name; }
+        try { game = host.Find(); if(game != null) { read = host.ReadIdentity(game); status = host.ReadStatus(game); } }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidOperationException or TimeoutException)
         { read = read with { Problem = e.GetType().Name }; }
-        Record(root, phase, catalog, game, read.Snapshot, read.Problem, read.Detail, status);
+        Record(root, phase, current, game, read.Snapshot, read.Problem, read.Detail, status, attemptId, catalogError);
     }
     // Fixed summaries only, never token bytes or the full game DTO.
     public static void Record(string root, string phase, DailyAccountCatalog? catalog, GameInstance? game, DailySnapshot? s,
-        string readError = "", string readDetail = "", DailyRuntimeStatus? status = null)
+        string readError = "", string readDetail = "", DailyRuntimeStatus? status = null, string attemptId = "", string catalogReadError = "")
     {
-        if (phase is not ("request" or "verified" or "failed" or "preparation-failed")) return;
+        bool terminalFile = phase is "request" or "verified" or "failed" or "preparation-failed";
+        if (!terminalFile && phase is not ("waiting-agreement" or "waiting-credentials" or "waiting-start")) return;
         try
         {
-            DailyJson.Write(Path.Combine(root, "live", "diagnostics", "login-" + phase + ".json"), new
+            string scope;
+            try { scope = Dustweave.Accounts.SandboxProcessScope.CurrentBox.Length == 0 ? "ordinary" : "isolated"; }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidOperationException) { scope = "unavailable"; }
+            var record = new
             {
-                atUtc = DateTimeOffset.UtcNow, phase, readError, readDetail, SessionComplete = catalog?.SessionComplete,
+                atUtc = DateTimeOffset.UtcNow, phase, attemptId, observerScope = scope, readError, readDetail, catalogReadError, SessionComplete = catalog?.SessionComplete,
                 CurrentKey = catalog?.CurrentKey, LocalLogin = catalog?.LocalLogin,
                 savedAccounts = catalog?.Accounts.Count(a => a.Valid), status,
                 game = game == null ? null : new { game.ProcessId, game.StartTicks },
@@ -27,7 +35,11 @@ public static class DailyLoginDiagnostics
                     s.State, s.Scene, s.Loading, s.MainMenuReady, s.ErrorCode, s.AccountKey, s.PlayerKey, hasLease = !string.IsNullOrEmpty(s.LeaseOwner),
                     startupVisible = s.Startup?.Visible, startupStage = s.Startup?.Stage, startupBlock = s.Startup?.BlockReason,
                     identityReady = game != null && DailyIdentityGuard.Ready(s, game, DateTimeOffset.UtcNow) }
-            });
+            };
+            // Keep a small, current attempt even when the user exports while still
+            // waiting. Old terminal files remain historical, identified by attempt.
+            DailyJson.Write(Path.Combine(root, "live", "diagnostics", "login-current.json"), record);
+            DailyJson.Write(Path.Combine(root, "live", "diagnostics", "login-" + phase + ".json"), record);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
     }

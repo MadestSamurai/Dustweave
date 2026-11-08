@@ -114,7 +114,7 @@ public sealed class DailyCoordinator
         bool connected = false;
         try
         {
-            DailyLoginDiagnostics.Capture(Path.GetDirectoryName(runPath)!, "request", catalog, game, sessions);
+            DailyLoginDiagnostics.Capture(Path.GetDirectoryName(runPath)!, "request", catalog, game, sessions, runId);
             string key = catalog.CurrentKey;
             if (!DailyProfiles.ValidKey(key))
             {
@@ -128,11 +128,11 @@ public sealed class DailyCoordinator
             var target = catalog.Accounts.FirstOrDefault(a => a.Valid && a.AccountKey == key)
                 ?? new DailyAccount(0, "当前未保存账号", key, "", true, true, "");
             await VerifyAsync(target, instance, token, connected);
-            DailyLoginDiagnostics.Capture(Path.GetDirectoryName(runPath)!, "verified", catalog, game, sessions);
+            DailyLoginDiagnostics.Capture(Path.GetDirectoryName(runPath)!, "verified", catalog, game, sessions, runId);
         }
         catch
         {
-            DailyLoginDiagnostics.Capture(Path.GetDirectoryName(runPath)!, "failed", catalog, game, sessions);
+            DailyLoginDiagnostics.Capture(Path.GetDirectoryName(runPath)!, "failed", catalog, game, sessions, runId);
             throw;
         }
         Report("completed", DailyText.Of("notice.account.verified", "当前账号身份已核对。可继续保存账号，或选择多个账号进行登录检查。"), 1, 1);
@@ -208,19 +208,26 @@ public sealed class DailyCoordinator
     private async Task VerifyAsync(DailyAccount target, GameInstance instance, CancellationToken token, bool connected = false)
     {
         string root = Path.GetDirectoryName(runPath)!;
-        var catalog = sessions.Read();
         DailyIdentityRead last = new(null, "not-read"); DailyRuntimeStatus? status = null;
-        void Record(string phase) => DailyLoginDiagnostics.Record(root, phase, catalog, instance, last.Snapshot, last.Problem, last.Detail, status);
+        void Record(string phase, DailyAccountCatalog? catalog = null)
+        {
+            string catalogError = "";
+            try { catalog ??= sessions.Read(); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidOperationException or TimeoutException)
+            { catalogError = e.GetType().Name; }
+            // Never substitute the pre-launch catalog for a failed/current read.
+            DailyLoginDiagnostics.Record(root, phase, catalog, instance, last.Snapshot, last.Problem, last.Detail, status, runId, catalogError);
+        }
         Record("request");
         try
         {
-            await VerifyCoreAsync(target, instance, token, connected, (read, runtime) => { last = read; status = runtime; });
+            await VerifyCoreAsync(target, instance, token, connected, (read, runtime) => { last = read; status = runtime; }, Record);
             Record("verified");
         }
         catch { Record("failed"); throw; }
     }
     private async Task VerifyCoreAsync(DailyAccount target, GameInstance instance, CancellationToken token, bool connected,
-        Action<DailyIdentityRead, DailyRuntimeStatus?> observe)
+        Action<DailyIdentityRead, DailyRuntimeStatus?> observe, Action<string, DailyAccountCatalog?> record)
     {
         token.ThrowIfCancellationRequested();
         var profile = DailyAccountOrder.ProfileFor(target, profiles.Read());
@@ -261,6 +268,7 @@ public sealed class DailyCoordinator
                     if (startupMessage != DailyLoginReadiness.AgreementMessage)
                     {
                         startupMessage = DailyLoginReadiness.AgreementMessage;
+                        record("waiting-agreement", null);
                         Report("waiting_start", DailyText.Of("notice.account.message", target.Name + " · " + startupMessage, target.Name, startupMessage));
                     }
                     await Task.Delay(options.PollInterval, token);
@@ -276,6 +284,7 @@ public sealed class DailyCoordinator
                     if (startupMessage != waitingMessage)
                     {
                         startupMessage = waitingMessage;
+                        record("waiting-credentials", startupCatalog);
                         Report("waiting_credentials", DailyText.Of("notice.account.message", target.Name + " · " + waitingMessage, target.Name, waitingMessage));
                     }
                     if (now >= deadline)
@@ -314,6 +323,7 @@ public sealed class DailyCoordinator
                 if (message != startupMessage)
                 {
                     startupMessage = message;
+                    record("waiting-start", startupCatalog);
                     Report("waiting_start", DailyText.Of("notice.account.message", target.Name + " · " + message, target.Name, message));
                 }
             }

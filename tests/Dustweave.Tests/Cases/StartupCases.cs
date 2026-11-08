@@ -222,6 +222,8 @@ internal static class StartupCases
                 {
                     observedWaiting = true;
                     Check(f.env.TitleClicks == 0, "input granted before credentials recovered");
+                    var evidence = DailyJson.TryRead<JsonObject>(Path.Combine(f.path, "live", "diagnostics", "login-current.json"))!;
+                    Check(S(evidence["phase"]) == "waiting-credentials" && !B(evidence["SessionComplete"]), "waiting export reused the pre-launch credentials");
                     Check(DailyJson.TryRead<StartupPermit>(Path.Combine(f.path, "startup-permit.json"))!.Owner == "", "old permit retained");
                 }
             };
@@ -239,6 +241,18 @@ internal static class StartupCases
             Check(error.Contains("不能判定"), "missing local state was not reported precisely");
             Check(f.env.TitleClicks == 0 && f.env.StartupRecoveryCalls == 0, "retried game input with unavailable credentials");
             Check(new DailyProfiles(f.path).Read().Count == 0, "missing credentials marked as success");
+            var request = DailyJson.TryRead<JsonObject>(Path.Combine(f.path, "live", "diagnostics", "login-request.json"))!;
+            var failure = DailyJson.TryRead<JsonObject>(Path.Combine(f.path, "live", "diagnostics", "login-failed.json"))!;
+            Check(B(request["SessionComplete"]) && !B(failure["SessionComplete"]), "failed login must retain the actual complete-to-incomplete change");
+            Check(S(request["attemptId"]).Length > 0 && S(request["attemptId"]) == S(failure["attemptId"]), "login evidence cannot correlate one attempt");
+            // User signs in; a new coordinator must continue without changing the
+            // credentials, accepting terms or resurrecting the failed attempt.
+            f.env.IncompleteCatalogReads = 0;
+            var resumed = new DailyCoordinator(f.env, f.env, f.path, new() { PollInterval = TimeSpan.FromMilliseconds(2), LoginTimeout = TimeSpan.FromSeconds(2) });
+            await resumed.ConnectCurrentAsync();
+            var current = DailyJson.TryRead<JsonObject>(Path.Combine(f.path, "live", "diagnostics", "login-current.json"))!;
+            Check(S(current["phase"]) == "verified" && B(current["SessionComplete"]) && S(current["attemptId"]) != S(failure["attemptId"]), "manual recovery retained a stale failed attempt");
+            Check(f.env.TitleClicks == 1 && !f.env.Calls.Any(c => c == "close" || c.StartsWith("launch:") || c.StartsWith("save:")), "manual recovery changed credentials or repeated game startup");
         });
         await Async("cancel while waiting for credentials remains responsive", async () =>
         {
@@ -273,6 +287,10 @@ internal static class StartupCases
             await waiting.Task.WaitAsync(TimeSpan.FromSeconds(2));
             await Task.Delay(350);
             Check(!pending.IsCompleted, "human decision consumed authentication timeout");
+            var evidence = DailyJson.TryRead<JsonObject>(Path.Combine(f.path, "live", "diagnostics", "login-current.json"))!;
+            Check(S(evidence["phase"]) == "waiting-agreement" && S(evidence["observed"]?["startupBlock"]).Contains("AgreementPopupUI"), "agreement was not recorded while the user was still waiting");
+            using (var zip = System.IO.Compression.ZipFile.OpenRead(DailyDiagnosticExport.Create(f.path, Path.Combine(f.path, "export.zip"), "waiting", "test").Path))
+                Check(zip.GetEntry("logs/main/live/diagnostics/login-current.json") != null && zip.GetEntry("logs/main/live/diagnostics/login-waiting-agreement.json") != null, "normal diagnostics omit an active agreement wait");
             Check(f.env.StartupRecoveryCalls == 0 && f.env.TitleClicks == 0, "attempted to act on service agreement");
             f.env.TitleBlock = "";
             await pending;

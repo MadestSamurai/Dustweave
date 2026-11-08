@@ -29,6 +29,7 @@ public partial class MainWindow
         var old = store.Read(); var preferences = new DailyPreferenceStore(root);
         var first = preferences.Read(a); var second = preferences.Read(b);
         try {
+            CheckPresetRolloverForSmoke(Check);
             WorkspaceTabs.SelectedItem = AccountsTab; RefreshAccounts();
             foreach (int language in new[] {0, 1, 2}) {
                 LanguageSelector.SelectedIndex = language;
@@ -157,5 +158,60 @@ public partial class MainWindow
             WorkspaceTabs.SelectedItem = previousTab;
             RefreshAccounts(); RefreshAccountPresets();
         }
+    }
+
+    private void CheckPresetRolloverForSmoke(Action<bool, string> check)
+    {
+        string fixtureRoot = Path.Combine(smoke!, "preset-rollover"), account = new('c', 64);
+        var store = new DailyTaskPresetStore(fixtureRoot);
+        var preset = store.Save("No PVP", ["guild", "mail"]);
+        store.Assign(account, preset.Id);
+        string saved = File.ReadAllText(Path.Combine(fixtureRoot, "task-presets.json"));
+        var preferences = new DailyPreferences();
+        var panel = new DailyRunPanel(fixtureRoot);
+        panel.SetAccount("Fixture", account); panel.ShowPlan(preferences);
+        check(panel.SelectedPlanTasks.SequenceEqual(["guild", "mail"]), "preset excludes PVP before history loads");
+
+        var period = new QueuePeriod("fixture", "yesterday", "player", DateTimeOffset.UtcNow.AddDays(-1).UtcTicks);
+        var previous = new QueueView("completed", "", "fixture/result.json",
+            [new("guild", "completed", ""), new("mail", "completed", "")], account, period);
+        panel.LoadHistory(previous with { Expired = true });
+        check(panel.SelectedPlanTasks.SequenceEqual(["guild", "mail"]), "expired history restores the saved preset, never all enabled tasks");
+        QueuePlanRequest? sent = null;
+        panel.PlanRequested += value => sent = value;
+        panel.StartCurrentSelection();
+        check(sent?.Validate(account, preferences).SequenceEqual(["guild", "mail"]) == true,
+            "starting after a daily reset sends no excluded PVP task to the worker");
+
+        panel.LoadHistory(previous);
+        panel.SelectPlanTask("mirror", true);
+        panel.LoadHistory(previous);
+        check(panel.SelectedPlanTasks.Contains("mirror"), "same-cycle refresh preserves an explicit temporary choice");
+        var next = previous with { Period = period with { Cycle = "today", ResetUtcTicks = DateTimeOffset.UtcNow.AddDays(1).UtcTicks },
+            Stages = [new("guild", "completed", "")] };
+        panel.LoadHistory(next);
+        check(panel.SelectedPlanTasks.SequenceEqual(["mail"]),
+            "direct cycle rollover restores the preset while retaining new-cycle completion");
+        panel.LoadHistory(next);
+        check(panel.SelectedPlanTasks.SequenceEqual(["mail"]), "repeated history refresh does not add excluded tasks");
+
+        panel.ShowPlan(new DailyPreferences { Mirror = new() { Enabled = false } });
+        panel.ShowPlan(preferences);
+        check(!panel.SelectedPlanTasks.Contains("mirror"), "reenabling an account setting does not opt it into an excluding preset");
+        panel.ShowPlan(new DailyPreferences { Stages = new() { Mail = false } });
+        panel.ShowPlan(preferences);
+        check(panel.SelectedPlanTasks.Contains("mail"), "reenabling a task included in the saved preset restores that task");
+        panel.SelectPlanTask("mirror", true);
+        check(panel.SelectedPlanTasks.Contains("mirror"), "the operator can still explicitly add PVP to this run");
+
+        var reopened = new DailyRunPanel(fixtureRoot);
+        reopened.SetAccount("Fixture", account); reopened.ShowPlan(preferences);
+        reopened.LoadHistory(previous with { Expired = true });
+        check(reopened.SelectedPlanTasks.SequenceEqual(["guild", "mail"]), "reopened task view keeps the saved exclusion across expiration");
+        check(File.ReadAllText(Path.Combine(fixtureRoot, "task-presets.json")) == saved,
+            "rollover and temporary selections never rewrite the saved preset");
+        store.Assign(account, null); reopened.RefreshPresets(true);
+        reopened.LoadHistory(next with { Expired = true });
+        check(reopened.SelectedPlanTasks.Contains("mirror"), "accounts without a preset retain all-enabled default behavior");
     }
 }

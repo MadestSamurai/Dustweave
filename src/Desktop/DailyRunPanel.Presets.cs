@@ -25,6 +25,7 @@ public sealed partial class DailyRunPanel
     private readonly Button savePreset = new(), managePreset = new() { Content = "···", MinWidth = 34, Padding = new(8, 4, 8, 4), Visibility = Visibility.Collapsed };
     private bool refreshingPresets;
     private string presetAccount = "", appliedPreset = "";
+    private HashSet<string>? presetTasks;
     public event Action? PresetsChanged;
     private FrameworkElement CreatePresets(string root)
     {
@@ -91,6 +92,7 @@ public sealed partial class DailyRunPanel
         if (presetStore == null) return;
         var data = presetStore.Read();
         string id = data.Accounts.GetValueOrDefault(activeAccount, "");
+        presetTasks = id.Length > 0 ? data.Presets.Single(p => p.Id == id).Tasks.ToHashSet(StringComparer.Ordinal) : null;
         var options = new[] { new TaskPresetChoice("", "") }.Concat(data.Presets.Select(p => new TaskPresetChoice(p.Id, p.Name))).ToArray();
         refreshingPresets = true;
         try { presetSelector.ItemsSource = options; presetSelector.SelectedValue = id; }
@@ -99,7 +101,7 @@ public sealed partial class DailyRunPanel
         presetAccount = activeAccount; appliedPreset = id;
         if (apply || changed && id.Length > 0)
         {
-            var wanted = id.Length > 0 ? data.Presets.Single(p => p.Id == id).Tasks.ToHashSet() : DailyStageCatalog.Selectable.Select(s => s.Id).ToHashSet();
+            var wanted = presetTasks ?? DailyStageCatalog.Selectable.Select(s => s.Id).ToHashSet(StringComparer.Ordinal);
             foreach (var stage in DailyStageCatalog.All) planChoices[stage.Id] = wanted.Contains(stage.Id);
             if (!isBusy) ShowCurrentPlan();
         }

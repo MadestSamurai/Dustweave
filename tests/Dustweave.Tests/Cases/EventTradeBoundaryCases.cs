@@ -47,6 +47,15 @@ static class EventTradeBoundaryCases
         challenge["Stages"] = new JsonArray(Stage(15, false));
         Check(DailyEventSweep.Challenge15(challenge) == null, "Uncleared challenge 15 never swept");
 
+        foreach (var indices in new[] { new JsonArray(), new JsonArray(1, 2), new JsonArray(0), new JsonArray(0, 1) })
+        {
+            var frontier = Stage(15, true);
+            frontier["Deck"] = O(("id", 1015), ("bonusRewardId", new JsonArray(1, 2, 3))).ToJsonString();
+            frontier["Progress"] = O(("eventUid", 100), ("groupId", 10), ("id", 15), ("battleChallengeIndex", indices)).ToJsonString();
+            var normal = Lobby(); normal["Latest"] = 15; normal["Stages"] = new JsonArray(Stage(5, true), frontier);
+            Check(N(DailyEventSweep.Highest(normal)!["stage"]) == 5, "Incomplete stage 15 challenge data cannot displace cleared stage 5: " + indices.ToJsonString());
+        }
+
         JsonObject Op(string role, JsonNode? scope, string state = "completed") => O(("id", Guid.NewGuid().ToString("N")), ("role", role), ("state", state), ("scope", scope), ("account", "account"));
         var valid = Op("trade.buy", O(("trade_session", "session"), ("action", "favorites"))); valid["at"] = 2;
         var bargain = Op("dispatch.start", O(("trade_session", "session"), ("action", "bargain"), ("_proof", O(("kind", "bargain"))))); bargain["at"] = 1;

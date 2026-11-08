@@ -23,13 +23,13 @@ namespace BD2Daily.Live {
     int id=checked((int)c.Items[2]);
     var eligible=lobby.ὥὣὤὧὥὬὤὧὣὤὠ.Where(x=>SweepEligible(lobby,x)).ToArray();
     Require(eligible.Length>0&&id==eligible.Max(),"Highest cleared sweep stage changed");
-    if(lobby.ὪὣὨὣὭὤὥὮὡὬὦ==id)return;
     if(c.Value==0){
+     if(lobby.ὪὣὨὣὭὤὥὮὡὬὦ==id)return;
      var scroll=(BetterLoopScrollRect)Field(lobby,"_battleStageScroll").GetValue(lobby);
      scroll.FocusToIndex(lobby.ὥὣὤὧὥὬὤὧὣὤὠ.IndexOf(id),2,true,lobby.ὥὣὤὧὥὬὤὧὣὤὠ.Count);return;
     }
     var row=lobby.GetComponentsInChildren<EventBattleStageScrollItem>(false).Single(x=>x.ὯὫὪὡὭὤὪὮὫὬὣ==id);
-    lobby.SetSelectItem(row,true);return;
+    EventStageSelection.Select(lobby,row,lobby.SetSelectItem);return;
    }
    if(c.Kind=="event_sweep_confirm"||c.Kind=="event_sweep_count"){
     var popup=(BattleSkipPopupUI)surface;

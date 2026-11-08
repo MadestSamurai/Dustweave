@@ -334,7 +334,10 @@ public sealed partial class DailyRunPanel : UserControl
         foreach (var id in planChoices.Keys.Where(id => !enabled.Contains(id)).ToArray())
             planChoices.Remove(id);
         foreach (var id in enabled)
-            planChoices.TryAdd(id, true);
+            // A new day clears the temporary choices, not the saved preset.
+            // Re-enabled settings and newly added tasks follow the same default;
+            // existing choices (including an explicit opt-in) remain untouched.
+            planChoices.TryAdd(id, presetTasks?.Contains(id) ?? true);
     }
     public IReadOnlyList<string> SelectedPlanTasks => DailyStageCatalog.All.Where(s => s.Enabled(plan) && planChoices.GetValueOrDefault(s.Id)).Select(s => s.Id).ToArray();
     public bool StartEnabled => current.IsEnabled;

@@ -181,12 +181,12 @@ public static class DailyEventSweep
         free = N(R(await w.Evidence(Prefixes), "event.currency", "EventApFree"));
         if (free < N(target["cost"]))
             return O(("state", "completed"), ("reason", "free_attempts_exhausted"), ("count", 0), ("remaining", free), ("target", target));
-        if (N(lobby["Selected"]) != N(target["stage"]))
-        {
-            foreach (int value in new[] { 0, 1 })
-                await w.Step(O(("ui", "EventBattleUI"), ("operation", "event_sweep_select"), ("items", new JsonArray(Copy(target["event"]), Copy(target["group"]), Copy(target["stage"]))), ("value", value)));
-            await w.WaitEvidence(Prefixes, e => N(Lobby(e)["Selected"]) == N(target["stage"]));
-        }
+        // A recycled selected row can already report this ID while the detail and
+        // buttons still belong to the previous stage. Always run native selection;
+        // only the scroll can be omitted when the target is already selected.
+        foreach (int value in N(lobby["Selected"]) == N(target["stage"]) ? new[] { 1 } : new[] { 0, 1 })
+            await w.Step(O(("ui", "EventBattleUI"), ("operation", "event_sweep_select"), ("items", new JsonArray(Copy(target["event"]), Copy(target["group"]), Copy(target["stage"]))), ("value", value)));
+        await w.WaitEvidence(Prefixes, e => N(Lobby(e)["Selected"]) == N(target["stage"]));
         var op = await DailyEventPreview.Run(w, "_buttonSkipBattle._button", async () =>
         {
             if (!B(R(await w.Evidence(Prefixes), Popup, "_buttonFreeOnly.IsEnable")))

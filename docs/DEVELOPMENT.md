@@ -8,6 +8,12 @@ Preset read/apply waits are bounded and do not create a consuming transaction. A
 
 The `event-plugin-settings` desktop smoke scope renders the marketplace, installed-plugin guide, install/sharing dialog and account settings in all three languages and both themes. Tactics instructions identify the weekly Today task, account enable/save step and custom task preset inclusion. Sharing headings and settings labels explicitly use the theme's `Ink` resource.
 
+## Event stage selection
+
+`EventBattleUI.SetSelectItem` changes the selected ID before its same-row early return. A recycled `EventBattleStageScrollItem` can therefore report stage 5 while the detail and sweep button still show unpassed stage 15. Both native auto-battle and sweep selection use `EventStageSelection` to invalidate only the same selected-row presentation reference and run the native full refresh. Resolve that reference by its unique row type, not an obfuscated name. Do not write progress, enable buttons, or infer sweep eligibility from the selected ID. Sweep planning still requires the matching server progress and all native challenge conditions; confirmation revalidates the actual popup stage and free AP.
+
+Always explicitly refresh a sweep target even when its selected ID already matches; only the scroll may be skipped. `EventSweepCount` includes pooled-row reproduction, failed-refresh continuation, normal deselection, a full stage-15-to-cleared-stage-5 sweep, same-ID stale detail, and repeated continuation after free AP is exhausted. Run it with `EventPreview,EventTradeBoundary,NativeDailyBattle` and offline current-client `prepare`. These checks do not operate the game.
+
 ## Bounded menu-open retries
 
 The managed UI driver may repeat only the reviewed `GameFieldDefaultUI` pack-list/menu openers, `MenuUI` inventory/missions/event/pass/minigame/quick-hunt openers, the hunting-selection preview pointer, and the event skip/auto-battle preview openers. These inputs open pages; they do not submit hunting or battles. The first click retains the normal input contract without an additional parent-readiness query. Only when the destination has not appeared does recovery require a matching completed native receipt plus a fresh, ready original page. The destination is checked first and both submission reads revalidate the retry. There are at most two extra submissions, after 2 seconds and then at least 4 more seconds, within the original result-observation deadline. Known field HUDs behind MenuUI, observed non-popup source ancestors and passive notices are not blockers. Hunting preview retries additionally wait for the observed `WorldMapUI` input owner; this local rule does not gate unrelated children. Loading, a battle, a new modal/page, disabled/ambiguous targets, and changed scene/account/process do not authorize another click. A native transport/receipt uncertainty is never automatically replayed.
@@ -157,6 +163,8 @@ Scheduling, release notes and OTA packaging are documented in [SCHEDULING_AND_UP
 Game client updates follow [CLIENT_UPDATES.md](CLIENT_UPDATES.md). Recheck affected stages after a changed client/data release; do not add full compatibility scans to every launch.
 
 ## Scoped verification / 按改动范围验证
+
+Task preset exclusions survive both expired-history loading and direct server-cycle rollover. Clearing a day's temporary task choices must refill from the assigned preset, never from all enabled tasks; reenabling an account setting follows the same rule. Explicit temporary additions remain valid within that cycle. The `presets` UI smoke reproduces rollover through the real task panel, checks the emitted execution request, repeated refresh, completion filtering, reopening and the no-preset default. It performs no game operations.
 
 日常迭代先运行 `test.ps1 -Groups Startup,LoginIdentity` 等直接相关分组，不因修改一个组件而反复运行全套。`test.ps1` 不指定分组才运行全部回归；不存在的组名报错，不能出现零测试通过。
 
