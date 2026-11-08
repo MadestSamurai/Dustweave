@@ -1,5 +1,26 @@
 [
 {
+  "Version": "1.6.4",
+  "Date": "2026-11-08",
+  "Notes": {
+    "zh-CN": [
+      "修复跨天刷新任务列表后，保存的任务预设中未勾选的任务可能重新被加入执行的问题。",
+      "修复活动战斗切换关卡后仍沿用旧关卡详情，导致扫荡选错关卡或中断的问题。",
+      "完善登录异常诊断，保留等待登录、协议提示及失败时的实际状态，便于定位反复登录问题。"
+    ],
+    "zh-TW": [
+      "修復跨日重新整理任務清單後，儲存的任務預設中未勾選的任務可能重新被加入執行的問題。",
+      "修復活動戰鬥切換關卡後仍沿用舊關卡詳情，導致掃蕩選錯關卡或中斷的問題。",
+      "完善登入異常診斷，保留等待登入、協議提示及失敗時的實際狀態，方便定位反覆登入問題。"
+    ],
+    "en-US": [
+      "Fixes excluded tasks from a saved task preset being selected again when the task list refreshes on a new day.",
+      "Fixes stale stage details after switching event battle stages, which could select the wrong sweep stage or interrupt the task.",
+      "Improves sign-in diagnostics by retaining current states while waiting for login, agreement prompts and failures to help investigate repeated sign-in issues."
+    ]
+  }
+},
+{
   "Version": "1.6.3",
   "Date": "2026-11-07",
   "Notes": {
