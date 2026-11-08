@@ -263,7 +263,7 @@ static class Program
             if(args.SequenceEqual(new[]{"mirror-health"}))
             {
                 using var client=Mirror.Client();
-                await Mirror.Maintain(config,client);
+                await Mirror.MaintainConfiguredFeeds(config,client);
                 Console.WriteLine(JsonSerializer.Serialize(Mirror.Status(config),Rules.Json));return 0;
             }
             if(args.Length==2 && args[0]=="worker") { Channel.Worker(config,args[1]);return 0; }

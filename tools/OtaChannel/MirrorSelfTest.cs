@@ -187,6 +187,77 @@ static class MirrorSelfTest
             File.ReadAllText(Path.Combine(Mirror.Root(aio), "health.json")).Contains("Dustweave-1.5.1-"));
         Pass("mirror-aio-repeated-recovery", await Mirror.Probe(aio, aioClient));
 
+        int rangeRequests = 0;
+        using var slowRange = new HttpClient(new AsyncHandler(async (r, token) =>
+        {
+            Rules.Need(r.Method == HttpMethod.Get && r.Headers.Range?.ToString() == "bytes=0-3", "Expected bounded download probe");
+            Interlocked.Increment(ref rangeRequests);
+            await Task.Delay(TimeSpan.FromSeconds(6.5), token);
+            var response = new HttpResponseMessage(HttpStatusCode.PartialContent) { Content = new ByteArrayContent([1, 2, 3, 4]) };
+            response.Content.Headers.ContentRange = new(0, 3, 4); return response;
+        }));
+        Pass("mirror-aio-download-probe-survives-former-six-second-deadline", await Mirror.Probe(aio, slowRange) && rangeRequests == 2);
+        using var wrongRange = new HttpClient(new Handler(_ =>
+        {
+            var response = new HttpResponseMessage(HttpStatusCode.PartialContent) { Content = new ByteArrayContent([1, 2, 3, 4]) };
+            response.Content.Headers.ContentRange = new(1, 4, 5); return response;
+        }));
+        Pass("mirror-aio-wrong-content-range-is-not-healthy", !await Mirror.Probe(aio, wrongRange));
+        Pass("mirror-aio-same-size-range-corruption-is-not-healthy", !await Mirror.Probe(aio, corrupt));
+        using var probeCancel = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
+        int canceledRequests = 0;
+        using var waitingRange = new HttpClient(new AsyncHandler(async (_, token) =>
+        { Interlocked.Increment(ref canceledRequests); await Task.Delay(Timeout.Infinite, token); return new(HttpStatusCode.OK); }));
+        Pass("mirror-aio-cancel-bounds-download-probe-without-retrying", !await Mirror.Probe(aio, waitingRange, probeCancel.Token) && canceledRequests <= 2);
+        Pass("mirror-aio-canceled-range-preserves-routes-and-diagnostic", aioRoutes.All(File.Exists) &&
+            Rules.Read<MirrorHealth>(File.ReadAllBytes(Path.Combine(Mirror.Root(aio), "health.json"))).Error != null);
+        Pass("mirror-aio-download-probe-recovers-after-cancellation", await Mirror.Probe(aio, aioClient));
+
+        var capable = Rules.Capability(aio); Directory.CreateDirectory(capable.State);
+        byte[] largeBody = Enumerable.Range(0, 70000).Select(i => (byte)(i % 251)).ToArray();
+        var capableDeltas = aioDeltas.Select(d => d with { FromVersion = "1.6.0", FileName = $"Dustweave-1.6.1-{d.Flavor}-from-1.6.0-win-x64.delta.zip",
+            Bytes = largeBody.Length, Sha256 = Rules.Hash(largeBody) }).ToArray();
+        var capableRelease = aioRelease with { Version = "1.6.1", Deltas = capableDeltas,
+            Assets = assets.Select(a => a with { FileName = $"Dustweave-1.6.1-{a.Flavor}-win-x64.zip" }).ToArray() };
+        var capableFeed = Sign(feed with { Releases = [capableRelease] });
+        File.WriteAllBytes(Rules.FeedPath(capable, writing: true), capableFeed);
+        Directory.CreateDirectory(Path.Combine(capable.Public, "v1.6.1"));
+        foreach (var d in capableDeltas) File.WriteAllBytes(Path.Combine(capable.Public, "v1.6.1", d.FileName), largeBody);
+        var sampledStreams = new System.Collections.Concurrent.ConcurrentBag<CountedStream>();
+        using var bothLanes = new HttpClient(new Handler(r =>
+        {
+            bool isCapable = r.RequestUri!.AbsolutePath.Contains("/v1.6.1/");
+            byte[] data = isCapable ? largeBody : [1, 2, 3, 4];
+            if (r.Headers.Range != null)
+            {
+                Rules.Need(r.Headers.Range.ToString() == $"bytes=0-{Math.Min(data.Length, 65536) - 1}", "Unexpected probe range");
+                var stream = new CountedStream(data); sampledStreams.Add(stream);
+                var content = new StreamContent(stream); content.Headers.ContentLength = data.Length;
+                return new(HttpStatusCode.OK) { Content = content }; // CDN may ignore Range.
+            }
+            return new(HttpStatusCode.OK) { Content = new ByteArrayContent(data) };
+        }));
+        Pass("mirror-aio-old-health-not-reported-for-new-feed", System.Text.Json.JsonSerializer.SerializeToElement(Mirror.Status(capable))
+            .GetProperty("health").ValueKind == System.Text.Json.JsonValueKind.Null);
+        Pass("mirror-aio-timer-maintains-both-signed-feeds", await Mirror.MaintainConfiguredFeeds(aio, bothLanes));
+        Pass("mirror-aio-range-ignored-transfers-only-bounded-prefix", sampledStreams.Count == 4 &&
+            sampledStreams.All(s => s.ReadBytes is 4 or 65536) && sampledStreams.Count(s => s.ReadBytes == 65536) == 2);
+        await Mirror.Probe(aio, wrongLength);
+        var capableStatus = System.Text.Json.JsonSerializer.SerializeToElement(Mirror.Status(capable));
+        Pass("mirror-aio-transition-error-does-not-replace-capable-health", capableStatus.GetProperty("health").GetProperty("Version").GetString() == "1.6.1" &&
+            capableStatus.GetProperty("health").GetProperty("State").GetString() == "cdn" &&
+            capableStatus.GetProperty("preparation").GetProperty("Version").GetString() == "1.6.1" &&
+            capableStatus.GetProperty("failure").ValueKind == System.Text.Json.JsonValueKind.Null);
+        using (var occupied = new FileStream(Path.Combine(aio.State, "publish.lock"), FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        {
+            sampledStreams.Clear();
+            Pass("mirror-aio-busy-transition-does-not-starve-capable-probe", !await Mirror.MaintainConfiguredFeeds(aio, bothLanes) &&
+                sampledStreams.Count == 2 && sampledStreams.All(s => s.ReadBytes == 65536));
+        }
+        Pass("mirror-aio-next-timer-recovers-both-lanes", await Mirror.MaintainConfiguredFeeds(aio, bothLanes));
+        Pass("mirror-aio-timer-never-rewrites-either-signed-index", Rules.HashFile(Rules.FeedPath(capable)) == Rules.Hash(capableFeed) &&
+            Rules.VerifyFeed(File.ReadAllBytes(Rules.FeedPath(aio)), aio).Releases[0].Version == "1.5.1");
+
         const string original = """
         server {
             location = /updates/dustweave/v2/updates.json { alias /origin/updates.json; }
@@ -223,6 +294,12 @@ static class MirrorSelfTest
     sealed class Handler(Func<HttpRequestMessage, HttpResponseMessage> send) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) => Task.FromResult(send(request));
+    }
+    sealed class CountedStream(byte[] bytes) : MemoryStream(bytes)
+    {
+        public long ReadBytes { get; private set; }
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken token = default)
+        { int n = await base.ReadAsync(buffer, token); ReadBytes += n; return n; }
     }
     sealed class AsyncHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> send) : HttpMessageHandler
     {

@@ -5855,7 +5855,7 @@
     },
     {
       "path": "tools/OtaChannel/Mirror.cs",
-      "sha256": "7a081c96af757f00e441c886388f7719e0b9b99d850d538e549a26d2e992c578"
+      "sha256": "370498c1bb23162e55cf28d59924a0d68720fb522b3f599f8351293847afb4cd"
     },
     {
       "path": "tools/OtaChannel/MirrorNginx.cs",
@@ -5863,7 +5863,7 @@
     },
     {
       "path": "tools/OtaChannel/MirrorSelfTest.cs",
-      "sha256": "a61071dc13dd6775d5a1a012e57bdf4d2570443214422ff3c4804d9007cbbe34"
+      "sha256": "e589633b28e6a6602b6f0f9c88907769d79e89f57767a3f073f1e16c7357f716"
     },
     {
       "path": "tools/OtaChannel/packages.lock.json",
@@ -5871,7 +5871,7 @@
     },
     {
       "path": "tools/OtaChannel/Program.cs",
-      "sha256": "7b7d25a281daaa98c3de4ecfeafe3a089a17e656a0868df2d3a174f63ff51716"
+      "sha256": "40db7da44fdf72ce4afd70ec897cdd7092c88bb32c12689354ce8a9a3a9811a3"
     },
     {
       "path": "tools/OtaChannel/RepairChannel.cs",

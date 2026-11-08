@@ -14,16 +14,14 @@ service=dustweave-ota-aio-mirror.service
 timer=dustweave-ota-aio-mirror.timer
 dropdir=/etc/systemd/system/$service.d
 dropin=$dropdir/50-resumable-verification.conf
-for path in "$payload" "$target" "$config" "$state" "$state/publish.lock" "$dropdir" "$dropin"; do
+for path in "$payload" "$target" "$config" "$state" "$state/publish.lock" "$state/capable" "$state/capable/publish.lock" "$dropdir" "$dropin"; do
     test ! -L "$path" || { echo "Linked installation path rejected: $path"; exit 1; }
 done
 [ "$(sha256sum "$payload" | cut -d ' ' -f1)" = "$expected" ]
 [ "$(sha256sum "$target" | cut -d ' ' -f1)" = "$previous" ]
 [ "$(sha256sum "$public/releases.json" | cut -d ' ' -f1)" = "$feed_hash" ]
 test -f /etc/systemd/system/$service && test -f /etc/systemd/system/$timer
-backup="$state/mirror-recovery-$(date -u +%Y%m%dT%H%M%SZ)"
-test ! -e "$backup"
-install -d -m 700 "$backup"
+backup=$(mktemp -d "$state/mirror-recovery-$(date -u +%Y%m%dT%H%M%SZ)-XXXXXX")
 cp -p "$target" "$backup/publisher"
 had_dropin=0
 if test -f "$dropin"; then cp -p "$dropin" "$backup/service-dropin"; had_dropin=1; fi
@@ -36,6 +34,9 @@ sha256sum "$config" "$public/releases.json" /ssl/nginx.conf \
   /usr/local/lib/dustweave-ota-channel/Dustweave.OtaChannel \
   /usr/local/lib/dustweave-ota-channel-v2/Dustweave.OtaChannel \
   /var/lib/dustweave-ota-aio-home/.ssh/authorized_keys > "$backup/unchanged.sha256"
+for feed in releases-v2.json releases-1.6.0.json; do
+    if test -f "$public/$feed"; then sha256sum "$public/$feed" >> "$backup/unchanged.sha256"; fi
+done
 "$payload" verify "$config" > "$backup/before-status.json"
 (cd "$backup" && "$payload" self-test > self-test.log)
 replaced=0
@@ -57,8 +58,13 @@ systemctl stop "$timer"
 systemctl stop "$service"
 exec 9>"$state/publish.lock"
 flock -n 9 || { echo 'A publication is active; retry after it completes'; exit 1; }
+if test -d "$state/capable"; then
+    exec 8>"$state/capable/publish.lock"
+    flock -n 8 || { echo 'A capable publication is active; retry after it completes'; exit 1; }
+fi
 [ "$(sha256sum "$public/releases.json" | cut -d ' ' -f1)" = "$feed_hash" ]
 [ "$(sha256sum "$target" | cut -d ' ' -f1)" = "$previous" ]
+sha256sum -c "$backup/unchanged.sha256"
 install -o root -g root -m 755 "$payload" "$target.new"
 mv -f "$target.new" "$target"
 replaced=1
@@ -71,6 +77,7 @@ runuser -u dustweave-ota-aio -- env DOTNET_BUNDLE_EXTRACT_BASE_DIR="$state/.net"
 sha256sum -c "$backup/unchanged.sha256"
 flock -u 9
 exec 9>&-
+if test -d "$state/capable"; then flock -u 8; exec 8>&-; fi
 if test "$timer_active" = 1; then systemctl start "$timer"; fi
 # Network recovery runs separately. Every invocation is bounded and persists progress.
 # A temporary CDN outage must leave the recovery-capable executable installed.

@@ -15,6 +15,7 @@ static class Mirror
 {
     public static string Root(Config c) => Path.Combine(c.Public, ".mirror");
     public static string Enabled(Config c) => Path.Combine(Root(c), "enabled");
+    static string HealthPath(Config c) => Path.Combine(Root(c), c.Layout == 3 && c.Capable ? "health-capable.json" : "health.json");
     public static HttpClient Client() => new(new HttpClientHandler { UseProxy = false, AllowAutoRedirect = false })
     { Timeout = Timeout.InfiniteTimeSpan };
 
@@ -58,7 +59,7 @@ static class Mirror
     static void Record(Config c, MirrorHealth health)
     {
         DirectoryOf(Root(c));
-        Rules.Atomic(Path.Combine(Root(c), "health.json"), Rules.Bytes(health));
+        Rules.Atomic(HealthPath(c), Rules.Bytes(health));
     }
     public static void Disable(Config c, string? version, string error)
     {
@@ -88,11 +89,15 @@ static class Mirror
     public static object Status(Config c)
     {
         if (c.MirrorBaseUrl == null) return new { configured = false };
-        var path = Path.Combine(Root(c), "health.json");
+        var path = HealthPath(c);
         Rules.NoLinks(path); Rules.NoLinks(Enabled(c));
         var health = File.Exists(path) ? Rules.Read<MirrorHealth>(File.ReadAllBytes(path)) : null;
-        string? failurePath = health?.Version is { } version ? Failure(c, version) : null;
-        string? progressPath = health?.Version is { } progressVersion ? Progress(c, progressVersion) : null;
+        string version = Rules.VerifyFeed(File.ReadAllBytes(Rules.FeedPath(c)), c).Releases[0].Version;
+        // Old publishers shared this record across two different signed indexes.
+        // Never attach a transition warning to the current application's status.
+        if (health?.Version != version) health = null;
+        string? failurePath = Failure(c, version);
+        string? progressPath = Progress(c, version);
         if (failurePath != null) Rules.NoLinks(failurePath);
         if (progressPath != null) Rules.NoLinks(progressPath);
         var progress = progressPath != null && File.Exists(progressPath) ? Rules.Read<MirrorProgress>(File.ReadAllBytes(progressPath)) : null;
@@ -113,17 +118,41 @@ static class Mirror
             catch (Exception e) when (attempt < 3 && Transient(e, token))
             { await Task.Delay(TimeSpan.FromSeconds(attempt), token); }
             catch (OperationCanceledException e)
-            { throw new OperationCanceledException($"Mirror {(full ? "GET" : "HEAD")} timed out or canceled: {blob.FileName} (attempt {attempt})", e, token); }
+            { throw new OperationCanceledException($"Mirror {(full ? "GET" : c.Layout == 3 ? "range GET" : "HEAD")} timed out or canceled: {blob.FileName} (attempt {attempt})", e, token); }
         }
     }
     static async Task VerifyRemote(Config c, string version, Blob blob, HttpClient client, bool full, CancellationToken token)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
-        timeout.CancelAfter(full ? TimeSpan.FromMinutes(3) : TimeSpan.FromSeconds(6));
-        using var request = new HttpRequestMessage(full ? HttpMethod.Get : HttpMethod.Head, FileUri(c, version, blob));
+        timeout.CancelAfter(full ? TimeSpan.FromMinutes(3) : TimeSpan.FromSeconds(20));
+        bool range = !full && c.Layout == 3;
+        int sampleBytes = (int)Math.Min(blob.Bytes, 65536);
+        using var request = new HttpRequestMessage(full || range ? HttpMethod.Get : HttpMethod.Head, FileUri(c, version, blob));
+        if (range) request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(0, sampleBytes - 1);
         using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
         if ((int)response.StatusCode is 408 or 429 or 500 or 502 or 503 or 504)
             throw new HttpRequestException($"Mirror HTTP {(int)response.StatusCode}: {blob.FileName}", null, response.StatusCode);
+        if (range)
+        {
+            var received = response.Content.Headers.ContentRange;
+            Rules.Need(response.StatusCode == HttpStatusCode.PartialContent
+                ? received?.Unit == "bytes" && received.From == 0 && received.To == sampleBytes - 1 &&
+                    received.Length == blob.Bytes && response.Content.Headers.ContentLength == sampleBytes
+                : response.StatusCode == HttpStatusCode.OK && response.Content.Headers.ContentLength == blob.Bytes,
+                "Mirror range response differs: " + blob.FileName);
+            // Exercise the client download path, not the CDN's separate HEAD path.
+            // Full SHA-256 verification remains mandatory before publication. A
+            // health check transfers at most 64 KiB, even when Range is ignored.
+            using var remote = await response.Content.ReadAsStreamAsync(timeout.Token);
+            string localPath = Path.Combine(c.Public, "v" + version, blob.FileName);
+            Rules.NoLinks(localPath);
+            using var local = File.OpenRead(localPath);
+            byte[] actual = new byte[sampleBytes], expected = new byte[sampleBytes];
+            await remote.ReadExactlyAsync(actual, timeout.Token);
+            await local.ReadExactlyAsync(expected, timeout.Token);
+            Rules.Need(actual.AsSpan().SequenceEqual(expected), "Mirror range bytes differ: " + blob.FileName);
+            return;
+        }
         Rules.Need(response.StatusCode == HttpStatusCode.OK && response.Content.Headers.ContentLength == blob.Bytes,
             "Mirror response status or length differs: " + blob.FileName);
         if (!full) return;
@@ -274,6 +303,19 @@ static class Mirror
         try { gate = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None); }
         catch (IOException) { return false; } // A publisher/maintenance run already owns this lane.
         using (gate) return await Recover(c, File.ReadAllBytes(Rules.FeedPath(c)), client, token);
+    }
+    public static async Task<bool> MaintainConfiguredFeeds(Config c, HttpClient client, CancellationToken token = default)
+    {
+        if (c.Layout != 3 || c.Capable) return await Maintain(c, client, token);
+        var capable = Rules.Capability(c);
+        string path = Rules.FeedPath(capable, writing: true); Rules.NoLinks(path);
+        if (!File.Exists(path)) return await Maintain(c, client, token);
+        // Separate locks and health records: a busy/failing transition lane must
+        // not prevent the current lane from being observed or recovered.
+        Rules.NoLinks(capable.State);
+        Directory.CreateDirectory(capable.State);
+        var results = await Task.WhenAll(Maintain(c, client, token), Maintain(capable, client, token));
+        return results.All(ok => ok);
     }
     static async Task<bool> Recover(Config c, byte[] signedFeed, HttpClient client, CancellationToken token)
     {

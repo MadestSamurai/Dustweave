@@ -1,5 +1,37 @@
 **1.5.0 onward:** the separate layout-3 channel uses differential OTA only and a temporary copy of the main executable. The block-repair/native-updater rules below apply only to 1.4 and earlier. See [current distribution and acceptance](ALL_IN_ONE_DISTRIBUTION.md).
 
+## AIO health probes and transition timeouts (2026-11-08)
+
+The transition and current AIO channels share immutable per-version routes, but
+must keep distinct health records (`health.json` and `health-capable.json`). Status
+selects failure/preparation evidence by the requested signed index's current
+version; a transition observation must never be reported as the current release's
+health. The timer maintains both existing indexes independently, using their own
+publication locks. A busy or failing lane does not starve the other lane.
+
+Layout-3 probes use a bounded GET Range (up to 64 KiB) on the actual patch URL,
+with a 20-second attempt deadline and at most three transient attempts. Validate
+Content-Range, total length and bytes against the retained verified archive.
+When a CDN ignores Range, read only the bounded prefix and dispose the response;
+never download an entire large patch for a periodic health check. Full body
+SHA-256 verification before publication remains unchanged. Legacy layout 2
+continues to use HEAD, with the same bounded 20-second allowance.
+
+This addresses a six-second HEAD deadline that repeatedly timed out for otherwise
+downloadable transition files. Captured production status showed 142 intermittent
+probe failures across more than one baseline, followed by recovery without any
+patch replacement. Successful full downloads matched the signed lengths and
+hashes. This identifies an over-sensitive/separate HEAD observation, not proof
+that an end-user download failed or that the provider's underlying latency cause
+has been established. Retain before/after timings and failure history during
+deployment; do not erase errors merely to report healthy status.
+
+The administrator upgrade locks both publication lanes, checks the pinned bridge
+target and both live indexes remain byte-identical, and retains the previous
+publisher and service settings for rollback. Verified AIO download routes remain
+CDN-only through probe failures; neither timeout recovery nor `?origin=1` may
+expose origin patch bodies.
+
 # Signed OTA publishing channel
 
 ## Protocol-2 publication (1.4.15+)
