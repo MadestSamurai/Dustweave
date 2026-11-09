@@ -5,6 +5,7 @@ param(
  [string]$PreparedCacheDirectory='',
  [ValidateSet('Auto','Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Full')][string]$ValidationScope='Auto',
  [string]$ValidationBaseline='',
+ [string]$PublisherEvidence='',
  [string]$SyntheticEvidence='',
  [string]$SyntheticInputs='',
  [string]$OutputDirectory=''
@@ -64,7 +65,20 @@ $before=SourceState
 $validation=Get-DustweaveValidationPlan $root $before $ValidationScope $ValidationBaseline
 Write-Host ("Validation scope: "+$validation.scope+" — "+$validation.reason)
 if($validation.publisherChanges.Count){
- Run 'dotnet' @('run','--project',(Join-Path $root 'tools/OtaChannel'),'-c','Release','--','self-test') 'ota-channel-scoped-self-test'
+ if($PublisherEvidence){
+  $proof=Get-Content -LiteralPath $PublisherEvidence -Raw|ConvertFrom-Json
+  $result=Get-Content -LiteralPath $proof.result -Raw|ConvertFrom-Json
+  if($proof.status -ne 'passed' -or $result.status -ne 'passed' -or $result.gameTouched -ne $false -or $result.serverTouched -ne $false -or
+     $result.checks -ne $result.cases.Count -or (Get-FileHash -LiteralPath $proof.result).Hash -ne $proof.resultSha256){throw 'Invalid publisher validation evidence.'}
+  $paths=@(Get-ChildItem -LiteralPath (Join-Path $root 'tools/OtaChannel') -Recurse -File|Where-Object {$_.FullName -notmatch '[\\/](bin|obj)[\\/]'}|ForEach-Object {[IO.Path]::GetRelativePath($root,$_.FullName).Replace('\','/')})+@('Directory.Build.props','Directory.Build.targets','global.json')
+  if(@(Compare-Object ($paths|Sort-Object) (@($proof.inputs.path)|Sort-Object)).Count){throw 'Publisher input inventory changed.'}
+  foreach($input in $proof.inputs){if((Get-FileHash -LiteralPath (Join-Path $root $input.path)).Hash -ne $input.sha256){throw ('Publisher input changed: '+$input.path)}}
+  Copy-Item -LiteralPath $PublisherEvidence -Destination (Join-Path $work 'publisher-validation.json')
+  Copy-Item -LiteralPath $proof.result -Destination (Join-Path $work 'publisher-results.json')
+  Write-Host ('Reused exact-input publisher checks: '+$result.checks)
+ }else{
+  Run 'dotnet' @('run','--project',(Join-Path $root 'tools/OtaChannel'),'-c','Release','--','self-test') 'ota-channel-scoped-self-test'
+ }
 }
 $before|Set-Content -LiteralPath (Join-Path $work 'source-before.json') -Encoding utf8
 $packageImport='-p:CustomAfterMicrosoftCommonTargets='+ (Join-Path $root 'Package.Build.targets')
