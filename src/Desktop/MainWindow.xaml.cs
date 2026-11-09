@@ -87,6 +87,7 @@ public partial class MainWindow : Window
         this.host = host;
         this.root = root;
         this.smoke = smoke;
+        InitializeFreeDistributionNotice();
         preferencesPanel = new DailyPreferencesPanel(root, allowGame: smoke == null) { BeforeGameToolOpen=PrepareSettingsToolAsync };
         SettingsTab.Content = preferencesPanel;
         InitializeSoftwareSettings(); InitializeSchedules(); InitializeUpdates(); InitializeSandboxPresentation(); InitializeLogCleanup(); InitializeStorageWarning();
@@ -939,6 +940,14 @@ public partial class MainWindow : Window
         try
         {
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            // This shell invariant is exercised even by focused release/UI smoke.
+            CheckFreeDistributionVisibleForSmoke();
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "free-notice")
+            {
+                await CheckFreeDistributionForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status="passed", scope="free-notice", realGameTouched=false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "window-close")
             {
                 await CheckClosingForSmoke();

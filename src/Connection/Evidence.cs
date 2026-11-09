@@ -61,6 +61,10 @@ namespace BD2Daily.Live {
  internal static class Evidence {
   internal static EvidenceAliases Aliases=new EvidenceAliases(new ClientAlias[0]);
   internal static string[] Costs=new string[0];
+  private static readonly ObservationMetadata metadata=new ObservationMetadata();
+  private static readonly string emptyConfigHash=HashConfig("");
+  private static string configHash=emptyConfigHash;
+  private static string HashConfig(string text){using(var hash=System.Security.Cryptography.SHA256.Create())return Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(text)));}
   private static readonly Dictionary<Type,DataContractJsonSerializer> serializers=new Dictionary<Type,DataContractJsonSerializer>();
   private static DataContractJsonSerializer Serializer(Type type){DataContractJsonSerializer s;if(!serializers.TryGetValue(type,out s))serializers[type]=s=new DataContractJsonSerializer(type);return s;}
   private static ObservationRequest Request(){var bytes=BD2.LocalIpc.RuntimeFiles.Read(Path.Combine(root,"observation-request.json"));if(bytes==null)return null;using(var memory=new MemoryStream(bytes))return(ObservationRequest)new DataContractJsonSerializer(typeof(ObservationRequest)).ReadObject(memory);}
@@ -94,7 +98,7 @@ namespace BD2Daily.Live {
   internal static void Stop(){CollectionProgressNative.StopHazardTrace();if(harmony!=null){foreach(var m in requests.Keys.Concat(responses.Keys))harmony.Unpatch(m,HarmonyPatchType.All,harmony.Id);}requests.Clear();responses.Clear();harmony=null;
    // A retired assembly can be resumed in the same game. Its old configuration
    // is not evidence that the Harmony subscriptions still exist.
-   config=null;last="";error="";
+   config=null;last="";configHash=emptyConfigHash;error="";
    lock(queue){inFlight.Clear();handoffQuiet.Reset();}
   }
   private static string Scalar(object value){
@@ -107,7 +111,6 @@ namespace BD2Daily.Live {
   }
   private static object Member(object instance,Type type,string name,bool isStatic=false){
    name=Aliases.Current(name);
-   var flags=BindingFlags.Public|BindingFlags.NonPublic|(isStatic?BindingFlags.Static:BindingFlags.Instance);
    if(name.EndsWith("()",StringComparison.Ordinal)){
     bool clock=name=="UnixTimeStamp()"&&type.FullName=="gamfs.Thread.TimerManager";
     bool resetClock=type.FullName=="gamfs.Thread.TimerManager"&&new[]{"Now()","GetDailyResetTime()","GetWeeklyResetTime()"}.Contains(name);
@@ -117,14 +120,10 @@ namespace BD2Daily.Live {
     bool packPredicate=type==typeof(PackManager)&&(name=="IsNoneFieldPack()"||name=="HasNotCheckedDispatchObject()");
     bool movementSpeed=type==typeof(TalentSkillManager)&&name=="GetTalentMoveSpeedUpValue()";
     if(isStatic||!(monsterPredicate||fieldPredicate||packPredicate||movementSpeed||instanceId||clock||resetClock||name=="IsCanSettlement()"||name=="IsDisable()"||name=="IsUnlocked()"||name=="IsCanOverwhelm()"||name=="HasCanOverwhelmMonster()"||name=="IsOverwhelmActive()"))throw new InvalidOperationException("Only vetted read-only predicates allowed");
-    var method=type.GetMethod(name.Substring(0,name.Length-2),flags,null,Type.EmptyTypes,null);
+    var method=metadata.Method(type,name.Substring(0,name.Length-2),isStatic);
     if(method==null||method.ReturnType!=(movementSpeed?typeof(double):instanceId?typeof(int):clock?typeof(long):resetClock?typeof(DateTime):typeof(bool)))throw new MissingMemberException(name);return method.Invoke(instance,null);
    }
-   for(var t=type;t!=null;t=t.BaseType){
-    var p=t.GetProperty(name,flags|BindingFlags.DeclaredOnly);if(p!=null&&p.GetIndexParameters().Length==0)return p.GetValue(instance,null);
-    var f=t.GetField(name,flags|BindingFlags.DeclaredOnly);if(f!=null)return f.GetValue(instance);
-   }
-   throw new MissingMemberException(type.FullName,name);
+   return metadata.Read(instance,type,name,isStatic);
   }
   private static Value[] Values(object item,string[] paths){return paths.Select(path=>{
    var result=new Value{Path=path};try{object value=item;foreach(var part in path=="$self"?new string[0]:path.Split('.')){if(value==null)break;value=Member(value,value.GetType(),part);}result.Json=Scalar(value);}catch(Exception e){result.Error=e.GetBaseException().Message;}return result;
@@ -152,6 +151,7 @@ namespace BD2Daily.Live {
     if(!typeof(IMessage).IsAssignableFrom(game.GetType(r.ResponseType,true)))throw new InvalidOperationException("Invalid DTO");
     planned.Add(Tuple.Create(r,req,resp));}
    }
+   string nextHash=HashConfig(text);
    Stop();harmony=new Harmony("bd2.daily.live.evidence.v1");
    foreach(var pair in planned){
     if(!requests.ContainsKey(pair.Item2)){
@@ -161,7 +161,7 @@ namespace BD2Daily.Live {
     responses.Add(pair.Item3,pair.Item1);
     harmony.Patch(pair.Item3,postfix:new HarmonyMethod(typeof(Evidence).GetMethod("After",BindingFlags.NonPublic|BindingFlags.Static)));
    }
-   Aliases=new EvidenceAliases(next.Aliases??new ClientAlias[0]);config=next;last=text;error="";
+   Aliases=new EvidenceAliases(next.Aliases??new ClientAlias[0]);config=next;last=text;configHash=nextHash;error="";
   }
   private static void Before(MethodBase __originalMethod){
    long trace=BD2.LocalIpc.LoadingTrace.Begin("evidence.request."+__originalMethod.MetadataToken);
@@ -181,7 +181,7 @@ namespace BD2Daily.Live {
    frame=current;
    try{
     var bytes=BD2.LocalIpc.RuntimeFiles.Read(Path.Combine(root,"evidence-config.json"));if(bytes!=null){string text=Encoding.UTF8.GetString(bytes);if((config==null||text!=last)&&!Waiting)Configure(text);}
-    var state=new EvidenceState{AtUtcTicks=DateTime.UtcNow.Ticks,Frame=current,Config=Convert.ToBase64String(System.Security.Cryptography.SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(last)))};
+    var state=new EvidenceState{AtUtcTicks=DateTime.UtcNow.Ticks,Frame=current,Config=configHash};
     var request=Request();state.ObservationRequest=request==null?"":request.Id;var costs=new List<string>();
     if(config!=null){
      state.Taps=requests.Values.Select(r=>r.Role).Intersect(responses.Values.Select(r=>r.Role)).Distinct().ToArray();var readings=new List<Reading>();

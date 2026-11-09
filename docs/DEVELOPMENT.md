@@ -1,5 +1,13 @@
 # Development / 开发指南
 
+## Free distribution notice
+
+The main-window header initially renders the free-software and refund guidance from embedded stable localization keys. The right-side dismissal button requires a second dialog and the exact displayed phrase (English is case-insensitive; surrounding whitespace is ignored). `DailyFreeDistributionAcknowledgement` stores a DPAPI-protected REG_BINARY receipt outside application/cache paths, with an additional hashed machine-installation identity and Windows SID binding. Writes flush and read back before hiding; malformed, foreign-machine/user, unavailable or obsolete receipts show the notice without interrupting use. The record has no product-version expiry and is never exported or migrated. Reinstalling Windows, deleting/restoring registry data or cloning an entire system is outside the guarantee; this is not tamper-proof DRM. The official `build.ps1` and `check-source.ps1` (also used by packaging) run `scripts/check-free-distribution.ps1`: it checks shell placement/visibility, bindings, embedded resources and the essential guidance in all three languages. Every desktop smoke checks the rendered notice; scope `free-notice` additionally covers all languages, both themes, minimum/regular window sizes, page changes, busy state and dismissing an unrelated operational notice. These are build/release checks, never runtime enforcement or a dependency of login, automation or updates.
+
+2026-11-09: Desktop build passed, 2,018 `LocalizationArchitecture,UserText` assertions passed, `localization` smoke passed, and `free-notice` passed 48 rendered checks (12 captures). Isolated source mutations verified rejection of a removed notice, hidden ancestor, empty translation and missing embedded catalog. Representative Chinese/light and English/dark compact captures were inspected. Public source can still be modified; these measures prevent accidental omissions and simple repackaging, not determined forks. The maintenance policy does not amend the MIT license or declare all resale illegal.
+
+2026-11-09 dismissal follow-up: 2,058 checks in `FreeDistribution,LocalizationArchitecture,UserText` passed, including real DPAPI/REG_BINARY roundtrip under an isolated test key and tamper rejection. The `free-notice` UI scope passed 114 checks across three languages and both themes, including the actual close button/dialog, wrong input, cancellation, denied persistence, verified save and store reopen. Only synthetic test keys and memory stores were used; the real user acknowledgement was not changed.
+
 ## Event preset binding and tactics guidance
 
 `EventBattle.PresetSlot` is an optional, account-scoped one-based ordinary game preset number; zero preserves the existing behavior. Before each new native event batch, read the server's current preset list, then apply the selected nonempty slot through the native preset-use callback. Do not trust the selected-slot marker or cache an old formation. Empty slots leave the team untouched; unknown reads do not imply empty. An already running battle or settlement is reconciled without reapplying a preset, and free-AP exhaustion finishes without preset work. The optional event extension prepares its preset before entering its executor, except while resuming an existing battle/result.
@@ -304,6 +312,14 @@ Scheduled takeover is off by default. When enabled, it closes the registered too
 Use `BusinessJournal` to verify a 5,000-record history, unchanged-file access counts, same-stamp updates, overflow, directory replacement and duplicate evidence. Benchmark both the installed baseline and the candidate inside the same Sandboxie merged filesystem: testing only the physical sandbox directory misses inherited host history. Report cold discovery separately from repeated lookup latency; lookup timing is not an end-to-end map or game benchmark.
 
 餐厅的下一气泡来自新的当前观察，已确认领取后不增加空闲轮询等待。周收集仅在同一流程实例、同一地图、两秒内且没有后续输入或待恢复操作时复用刚收到的服务器结果；显式恢复查询始终重新请求。相关回归为 `CafeteriaRecovery`、`WeeklyIsolation` 和 `CollectionReadiness`，账户、周期及未知回执保护保持不变。
+
+### Observation metadata performance / 观察元数据性能
+
+`Connection/ObservationMetadata` caches CLR field/property/method descriptors by actual `Type` identity and static/instance scope. Resolve current-client aliases before lookup. Never store observed instances, field values, getter results, account identities or click readiness in this cache. Preserve private-base lookup, property-before-field lookup within each declaring type, indexer exclusion and zero-argument method selection. The existing read-only method allowlist and return-type checks remain in `Evidence.Member`; metadata reuse does not authorize new calls. A failed getter must be called again on the next read and be able to recover.
+
+UI hierarchy paths are reused only inside one synchronous `Bridge.Observe` call. Reparented/replaced objects must be observed again on the next frame. Pointer de-duplication is per surface and must retain separate `ui` and `pointer` routes for the same object. The evidence configuration digest is cached only after applying the matching configuration and reset together with it. Observation intervals, scene enumeration, identity checks, receipts, navigation and simulation scheduling are unchanged.
+
+Affected checks: `ObservationPerformance,LiveBindings,CommandDriver,ObservationWait,EvidenceReadiness,ManagedInputs,UiInteractionReadiness,PassiveUi`, plus connection `self-test` and offline `prepare` against the current client. The synthetic performance report compares changing-state checksums, elapsed time and allocation against the prior reflection lookup; it is not evidence of a live Unity frame-rate improvement. Keep live comparisons separate and explicitly authorized.
 
 ### Daily Talent Pill policy / 日常天赋药限制
 

@@ -1,5 +1,29 @@
 [
 {
+  "Version": "1.6.7",
+  "Date": "2026-11-09",
+  "Notes": {
+    "zh-CN": [
+      "减少游戏状态读取时重复的元数据查找和临时内存分配，降低观察开销。",
+      "新增免费软件提醒：织尘免费提供；若向他人付费购买，请勿确认收货，并向商家申请退款。",
+      "提醒右侧可关闭，需要在确认窗口输入「我确认」。确认仅对当前电脑和 Windows 用户生效，重新打开或更新软件后仍保留，不随设置或缓存迁移到其他电脑。",
+      "确认信息无法保存时保留提醒并说明原因，不影响日常、登录或更新。"
+    ],
+    "zh-TW": [
+      "減少讀取遊戲狀態時重複的中繼資料查找與暫存記憶體配置，降低觀察負擔。",
+      "新增免費軟體提醒：織塵免費提供；若向他人付費購買，請勿確認收貨，並向賣家申請退款。",
+      "可從提醒右側關閉，需在確認視窗輸入「我確認」。確認僅對目前電腦與 Windows 使用者生效，重新開啟或更新軟體後仍保留，不隨設定或快取移轉到其他電腦。",
+      "確認資訊無法儲存時保留提醒並說明原因，不影響日常、登入或更新。"
+    ],
+    "en-US": [
+      "Reduces repeated metadata lookups and temporary allocations when reading game state.",
+      "Adds a reminder that Dustweave is free. If you paid a reseller, do not confirm receipt and request a refund from the seller.",
+      "The reminder can be dismissed using its right-hand button after typing “I confirm”. Confirmation persists across restarts and updates for this PC and Windows user, and is not transferred with settings or cache migration.",
+      "If confirmation cannot be saved, the reminder stays visible with an explanation. Daily tasks, sign-in and updates remain available."
+    ]
+  }
+},
+{
   "Version": "1.6.6",
   "Date": "2026-11-09",
   "Notes": {

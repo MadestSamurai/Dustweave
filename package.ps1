@@ -3,7 +3,7 @@ param(
  [Parameter(Mandatory)][string]$GameManagedDir,
  [ValidateSet('Portable','Lite')][string[]]$Flavors=@('Portable','Lite'),
  [string]$PreparedCacheDirectory='',
- [ValidateSet('Auto','Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Full')][string]$ValidationScope='Auto',
+ [ValidateSet('Auto','Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Observation','Full')][string]$ValidationScope='Auto',
  [string]$ValidationBaseline='',
  [string]$PublisherEvidence='',
  [string]$SyntheticEvidence='',
@@ -201,6 +201,11 @@ foreach($flavor in $Flavors){
   Run $exe @(('--'+$mode),$check) ($flavor+'-'+$mode)
  }
  Pass (Join-Path $checks 'smoke/smoke.json')
+ if($validation.scope -eq 'Observation'){
+  $noticeCheck=Join-Path $checks 'smoke-free-notice'
+  Run $exe @('--smoke',$noticeCheck) ($flavor+'-smoke-free-notice') 180 'free-notice'
+  Pass (Join-Path $noticeCheck 'smoke.json')
+ }
  if($validation.scope -ne 'Full' -and $validation.scope -ne 'Updates' -and $validation.changed -match '^src/Desktop/(HostedToolPresentation\.cs|ToolWindowDesign\.cs|SharedControls\.xaml)$'){
   $check=Join-Path $checks 'smoke-tool-preparation'
   Run $exe @('--smoke',$check) ($flavor+'-smoke-tool-preparation') 180 'tool-preparation'
@@ -223,9 +228,9 @@ foreach($flavor in $Flavors){
   Pass (Join-Path $soulCheck 'result.json')
   if(@(Get-ChildItem -LiteralPath $soulCheck -File -Filter '*.png').Count -ne 6){throw 'Soul tool requires all three languages and both themes.'}
  }
- if($flavor -eq $Flavors[0] -and ($validation.scope -in @('Navigation','Rewards','UiReadiness') -or ($validation.scope -eq 'Weekly' -and $validation.changed -match '^src/Connection/'))){
+ if($flavor -eq $Flavors[0] -and ($validation.scope -in @('Navigation','Rewards','UiReadiness','Observation') -or ($validation.scope -eq 'Weekly' -and $validation.changed -match '^src/Connection/'))){
   Run $exe @('--utility','live','prepare',$managed,(Join-Path $checks 'live-client')) 'live-client'
-  if($validation.scope -eq 'Rewards'){
+  if($validation.scope -in @('Rewards','Observation')){
    Run $exe @('--utility','live','taps-all',$managed,(Join-Path $root 'assets/specs'),(Join-Path $checks 'evidence')) 'evidence-configs'
    Pass (Join-Path $checks 'evidence/result.json')
   }
@@ -233,7 +238,7 @@ foreach($flavor in $Flavors){
  if($flavor -eq $Flavors[0] -and $validation.scope -eq 'Full'){
   Run $exe @('--check-client',$managed,(Join-Path $checks 'observer-client')) 'observer-client'
   Run $exe @('--utility','live','prepare',$managed,(Join-Path $checks 'live-client')) 'live-client'
-  if($validation.scope -eq 'Rewards'){
+  if($validation.scope -in @('Rewards','Observation')){
    Run $exe @('--utility','live','taps-all',$managed,(Join-Path $root 'assets/specs'),(Join-Path $checks 'evidence')) 'evidence-configs'
    Pass (Join-Path $checks 'evidence/result.json')
   }

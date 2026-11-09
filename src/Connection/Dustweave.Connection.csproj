@@ -1,4 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
+<ItemGroup><EmbeddedResource Include="ObservationMetadata.cs" LogicalName="Live.ObservationMetadata.cs"/></ItemGroup>
 <ItemGroup><EmbeddedResource Include="EventStageSelection.cs" LogicalName="Live.EventStageSelection.cs"/></ItemGroup>
 <PropertyGroup><TargetFramework>net8.0-windows</TargetFramework><OutputType>Exe</OutputType><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><PlatformTarget>x64</PlatformTarget><AssemblyName>Dustweave.Connection</AssemblyName></PropertyGroup>
 <ItemGroup><Compile Remove="EventPresetNative.cs"/><EmbeddedResource Include="EventPresetNative.cs" LogicalName="Live.EventPresetNative.cs"/><EmbeddedResource Include="FieldAvoidancePlanner.cs" LogicalName="Live.FieldAvoidancePlanner.cs"/><EmbeddedResource Include="TradeStockRules.cs" LogicalName="Live.TradeStockRules.cs"/><EmbeddedResource Include="EventBattleResultRules.cs" LogicalName="Live.EventBattleResultRules.cs"/></ItemGroup>

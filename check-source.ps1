@@ -3,6 +3,7 @@ $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath($PSScriptRoot)
 $prefix=$root+[IO.Path]::DirectorySeparatorChar
 & (Join-Path $root 'scripts/check-layout.ps1')
+& (Join-Path $root 'scripts/check-free-distribution.ps1')
 $manifest=Get-Content -LiteralPath (Join-Path $root 'source-manifest.json') -Raw|ConvertFrom-Json
 $known=[Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 foreach($entry in $manifest.files){

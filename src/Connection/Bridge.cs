@@ -24,6 +24,7 @@ namespace BD2Daily.Live {
   private static Identity commonIdentity;
   internal static bool LegacyObservation;
   private static MonoBehaviour[] sceneComponents;
+  private static readonly ObservationMetadata metadata=new ObservationMetadata(typeof(MonoBehaviour));
   internal static IEnumerable<UnityEngine.Object> Find(Type type){
    if(typeof(UIBase).IsAssignableFrom(type))return uis.Values.Where(u=>u!=null&&type.IsInstanceOfType(u)).Cast<UnityEngine.Object>();
    if(!typeof(MonoBehaviour).IsAssignableFrom(type))throw new InvalidOperationException("Observation type must be a scene component");
@@ -110,15 +111,16 @@ namespace BD2Daily.Live {
     if(File.Exists(file))File.Replace(tmp,file,null);else File.Move(tmp,file);
    }finally{if(File.Exists(tmp))File.Delete(tmp);}
   }
-  private static IEnumerable<FieldInfo> Fields(Type t){for(;t!=null&&t!=typeof(MonoBehaviour);t=t.BaseType)foreach(var f in t.GetFields(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance|BindingFlags.DeclaredOnly))yield return f;}
+  private static IEnumerable<FieldInfo> Fields(Type t){return metadata.Fields(t);}
   internal static string PathOf(Transform t){var p=new List<string>();for(;t!=null;t=t.parent)p.Add(t.name);p.Reverse();return string.Join("/",p.ToArray());}
+  private static string PathOf(Transform t,Dictionary<int,string> paths){if(t==null)return "";int id=t.GetInstanceID();string path;if(!paths.TryGetValue(id,out path))paths[id]=path=PathOf(t);return path;}
   private static GameObject Go(object value){var g=value as GameObject;if(g!=null)return g;var c=value as Component;return c==null?null:c.gameObject;}
   private static IEnumerable<KeyValuePair<string,GameObject>> Links(UIBase u){
    foreach(var field in Fields(u.GetType())){
     object value;try{value=field.GetValue(u);}catch{continue;}
     var g=Go(value);if(g!=null){yield return new KeyValuePair<string,GameObject>(field.Name,g);if(value.GetType().Name!="SliderSelectCount")continue;}
     if(value==null||value.GetType().Assembly!=typeof(UIBase).Assembly||!(value.GetType().IsNested||value.GetType().Name=="HuntDispatchUIButton"||value.GetType().Name=="TabButton"||value.GetType().Name=="SliderSelectCount"))continue;
-    foreach(var sub in value.GetType().GetFields(BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic)){
+    foreach(var sub in metadata.InstanceFields(value.GetType())){
      var nested=Go(sub.GetValue(value));if(nested!=null)yield return new KeyValuePair<string,GameObject>(field.Name+"."+sub.Name,nested);
     }
    }
@@ -144,24 +146,29 @@ namespace BD2Daily.Live {
    if(identity!=null&&identity.ProcessId==pid&&identity.ProcessStartTicks==start&&identity.State=="identified"&&identity.Scene==f.Scene&&identity.FrameUtcTicks>DateTime.UtcNow.AddSeconds(-3).Ticks){f.AccountKey=identity.AccountKey;f.PlayerKey=identity.PlayerKey;}
    else f.Error="Waiting for fresh account identity";
    sceneComponents=null;uis.Clear();targets.Clear();var surfaces=new List<Surface>();
+   // Paths are shared only within this synchronous observation. A subsequent
+   // frame must see objects moved/reparented by the game or a dispatched action.
+   var paths=new Dictionary<int,string>();
    foreach(var u in UnityEngine.Object.FindObjectsOfType<UIBase>().Where(u=>u!=null&&u.gameObject.activeInHierarchy)){
     uis[u.GetInstanceID()]=u;
     var canvas=u.GetComponent<Canvas>();var popup=Fields(u.GetType()).FirstOrDefault(x=>x.Name=="_isPopupUI");
-    var sf=new Surface{Id=u.GetInstanceID(),Type=u.GetType().Name,Path=PathOf(u.transform),Popup=popup!=null&&(bool)popup.GetValue(u),Order=canvas==null?0:canvas.sortingOrder,InputReady=InputReady(u)};
+    var sf=new Surface{Id=u.GetInstanceID(),Type=u.GetType().Name,Path=PathOf(u.transform,paths),Popup=popup!=null&&(bool)popup.GetValue(u),Order=canvas==null?0:canvas.sortingOrder,InputReady=InputReady(u)};
     var choices=new List<Target>();
     foreach(var link in Links(u)){
      var go=link.Value;if(!go.activeInHierarchy)continue;var button=go.GetComponent<Selectable>();
      // Only click-like serialized references become targets; never arbitrary child objects.
      if(button==null&&link.Key.IndexOf("button",StringComparison.OrdinalIgnoreCase)<0&&!(u is BattlePauseUI&&link.Key=="_objectRun"))continue;
      bool enabled=(button==null||(button.isActiveAndEnabled&&button.IsInteractable()))&&UiInteractionReadiness.TargetReady(u,go);
-     targets[go.GetInstanceID()]=go;choices.Add(new Target{Id=go.GetInstanceID(),Field=Evidence.Aliases.Original(link.Key),Path=PathOf(go.transform),Enabled=enabled});
+     targets[go.GetInstanceID()]=go;choices.Add(new Target{Id=go.GetInstanceID(),Field=Evidence.Aliases.Original(link.Key),Path=PathOf(go.transform,paths),Enabled=enabled});
     }
+    var pointerIds=new HashSet<int>();
     foreach(var component in u.GetComponentsInChildren<MonoBehaviour>()){
      if(!(component is IPointerClickHandler)||!component.isActiveAndEnabled)continue;
      var go=component.gameObject;var button=go.GetComponent<Selectable>();
-     if(choices.Any(t=>t.Id==go.GetInstanceID()&&t.Route=="pointer"))continue;
+     if(!pointerIds.Add(go.GetInstanceID()))continue;
      targets[go.GetInstanceID()]=go;
-     choices.Add(new Target{Id=go.GetInstanceID(),Route="pointer",Field="$pointer/"+(go==u.gameObject?"$self":PathOf(go.transform).Substring(PathOf(u.transform).Length+1)),Path=PathOf(go.transform),Enabled=(button==null||button.IsInteractable())&&UiInteractionReadiness.TargetReady(u,go)});
+     var path=PathOf(go.transform,paths);
+     choices.Add(new Target{Id=go.GetInstanceID(),Route="pointer",Field="$pointer/"+(go==u.gameObject?"$self":path.Substring(sf.Path.Length+1)),Path=path,Enabled=(button==null||button.IsInteractable())&&UiInteractionReadiness.TargetReady(u,go)});
     }
     sf.Targets=choices.ToArray();
     sf.Text=u.GetComponentsInChildren<TMPro.TMP_Text>().Where(t=>t!=null&&t.isActiveAndEnabled&&!string.IsNullOrWhiteSpace(t.text)).Select(t=>t.text).Concat(u.GetComponentsInChildren<Text>().Where(t=>t!=null&&t.isActiveAndEnabled&&!string.IsNullOrWhiteSpace(t.text)).Select(t=>t.text)).Take(80).Select(t=>t.Length>400?t.Substring(0,400):t).ToArray();

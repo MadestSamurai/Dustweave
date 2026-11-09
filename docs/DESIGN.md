@@ -4,6 +4,8 @@ Updated: 2026-11-03. The interface is a WPF desktop workspace for players watchi
 
 ## Shared rules
 
+- The main shell initially shows the free-software and refund notice. Its right-side dismissal button opens a themed dialog repeating the notice and requiring the displayed confirmation phrase. Cancel, empty/incorrect input or failed persistence keeps the notice. Hide only after encrypted machine/user-bound persistence succeeds and is read back. This confirmation is optional: never gate normal execution or updates. No portable preference suppresses the notice. Wrap all three languages at minimum size and keep operational errors independent.
+
 - Use the existing Segoe UI family with system CJK fallback. Body text is 14 DIP, secondary descriptions 12–13, section and run-summary titles 20, and the main page heading 24. Primary actions and titles use semibold; secondary buttons use normal weight.
 - Use theme resources for all surfaces, text and states. Keep content opaque, avoid decorative motion, and preserve the existing system high-contrast fallback.
 - Fields and buttons normally have a 36 DIP minimum height; use an 8 DIP radius for buttons and text fields, and 6 DIP for selectors. Focus must not change border thickness or move content. Text editing, dropdown scrolling, selected items and keyboard focus are part of a control's behavior, not optional decoration.

@@ -120,6 +120,8 @@ await Group("LogEvidence", () => LogEvidenceCases.Run(root,cases));
 await Group("DiagnosticExport", () => DiagnosticExportCases.Run(root,cases));
 await Group("ClientUpdate", () => Sync(() => ClientUpdateCases.Run(root,cases)));
 await Group("LiveBindings", () => Sync(() => LiveBindingCases.Run(root,cases)));
+await Group("ObservationPerformance", () => Sync(() => ObservationPerformanceCases.Run(root,cases)));
+await Group("FreeDistribution", () => Sync(() => FreeDistributionCases.Run(cases)));
 await Group("Parallel", () => ParallelCases.Run(root, cases));
 await Group("AccountProgress", () => Sync(() => AccountProgressCases.Run(root, cases)));
 await Group("CollectionCache", () => Sync(() => CollectionCacheCases.Run(root, cases)));

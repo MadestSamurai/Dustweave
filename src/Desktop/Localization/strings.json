@@ -1,4 +1,12 @@
 {
+  "distribution.free_title": { "zh-CN": "织尘是免费软件，请勿付费购买", "zh-TW": "織塵是免費軟體，請勿付費購買", "en-US": "Dustweave is free. Do not pay for it." },
+  "distribution.close": { "zh-CN": "关闭提示", "zh-TW": "關閉提示", "en-US": "Dismiss notice" },
+  "distribution.close_title": { "zh-CN": "关闭免费软件提醒", "zh-TW": "關閉免費軟體提醒", "en-US": "Dismiss the free-software notice" },
+  "distribution.local_confirmation": { "zh-CN": "确认后，这台电脑上您当前 Windows 用户的织尘将不再显示此提醒。升级软件或迁移缓存不会清除此确认；其他电脑或 Windows 用户仍需各自确认。", "zh-TW": "確認後，這台電腦上您目前 Windows 使用者的織塵將不再顯示此提醒。升級軟體或遷移快取不會清除此確認；其他電腦或 Windows 使用者仍須各自確認。", "en-US": "This notice will stay dismissed for your Windows user on this PC, including after updates or moving the cache. Other PCs and Windows users must confirm separately." },
+  "distribution.confirm_prompt": { "zh-CN": "输入「{0}」，确认您已知晓织尘免费提供。", "zh-TW": "輸入「{0}」，確認您已知曉織塵免費提供。", "en-US": "Type \"{0}\" to acknowledge that Dustweave is available free of charge." },
+  "distribution.confirm_close": { "zh-CN": "确认关闭", "zh-TW": "確認關閉", "en-US": "Confirm dismissal" },
+  "distribution.save_failed": { "zh-CN": "未能保存确认记录，提醒仍保留。请稍后重试；其他功能可正常使用。", "zh-TW": "未能儲存確認紀錄，提醒仍保留。請稍後重試；其他功能可正常使用。", "en-US": "Your confirmation could not be saved, so the notice remains visible. Try again later. Other features are still available." },
+  "distribution.refund": { "zh-CN": "如果您从他人手中付费购买了本软件，请勿点击「确认收货」，并立即向商家申请退款。", "zh-TW": "如果您向他人付費購買了本軟體，請勿點選「確認收貨」，並立即向賣家申請退款。", "en-US": "If you paid a seller for this software, do not confirm receipt. Request a refund from the seller immediately." },
   "customsales.cooking": { "zh-CN": "料理顺序", "zh-TW": "料理順序", "en-US": "Cooking order" },
   "customsales.food": { "zh-CN": "售卖料理", "zh-TW": "販售料理", "en-US": "Sell dishes" },
   "customsales.materials": { "zh-CN": "售卖食材", "zh-TW": "販售食材", "en-US": "Sell ingredients" },

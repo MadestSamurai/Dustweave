@@ -1,5 +1,6 @@
 param([ValidateSet('Build','Preview','Smoke')][string]$Mode='Build',[switch]$RefreshDependencyLocks)
 $ErrorActionPreference='Stop'
+& (Join-Path $PSScriptRoot 'scripts/check-free-distribution.ps1')
 & dotnet --version
 if($LASTEXITCODE -ne 0){throw 'The pinned .NET SDK is required.'}
 $entry=Join-Path $PSScriptRoot 'src/Desktop/Dustweave.Desktop.csproj'
