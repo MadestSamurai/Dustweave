@@ -30,6 +30,8 @@ public sealed class DailyWeeklyRoute
     // Completion here comes only from this run's server response, never a disk
     // checkpoint. Completed weekly theft cannot become available again this week.
     private readonly HashSet<long> freshCompletedStealPacks = [];
+    private readonly Dictionary<long, int> npcMapRecoveries = [];
+    private readonly Dictionary<(long Pack, long Map), int> stealMapRecoveries = [];
     private bool NpcComplete => npc?.Data is { } data && S(data.Native["Week"]) == week
         && N(data.Native["Limit"]) > 0 && N(data.Native["Completed"]) == N(data.Native["Limit"])
         && data.Active.Length == 0;
@@ -254,7 +256,10 @@ public sealed class DailyWeeklyRoute
         bool needed = active.Contains("weekly_npc") && !NpcComplete && !failures["weekly_npc"].Keys.Any(p => p.Pack == pack);
         if (npc?.Data is DailyNpcData d)
         {
-            needed = needed && (d.Native["Posted"]!.AsArray().Select(N).Any(id => d.Rows.TryGetValue(id, out var row) && N(row["packId"]) == pack) || d.Current(pack) != null);
+            // A posted notice is not an executable offer: accepted but deferred
+            // quests also occupy the weekly allowance. Do not tour every pack
+            // just to rediscover that no further quest can be accepted.
+            needed = needed && (d.Current(pack) != null || npc.HasOffers(pack));
             if (N(d.Native["Completed"]) >= N(d.Native["Limit"]))
                 needed = false;
         }
@@ -377,7 +382,7 @@ public sealed class DailyWeeklyRoute
     private async Task RunNpc(Func<Task> action)
     {
         try { await action(); }
-        catch (Exception e) when (e is DailyNpcUnavailable or DailyTravelBlocked || e is DailyStepException step && DailyWeeklyNpc.RecoverableRejection(step))
+        catch (Exception e) when (e is DailyNpcUnavailable or DailyTravelBlocked or DailyCollectionLocationChanged || e is DailyStepException step && DailyWeeklyNpc.RecoverableRejection(step))
         {
             // Preserve the original cause even if restoring the field also fails.
             w.Driver.Diagnostics.Event("weekly_npc_recovery", O(("pack", pack), ("reason", e.Message), ("exception", e.ToString())));
@@ -388,6 +393,14 @@ public sealed class DailyWeeklyRoute
             await route.FieldReady(15);
             await w.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
             await npc!.ReleasePlan();
+            if (e is DailyCollectionLocationChanged)
+            {
+                long quest = N(npc.Data?.Current(pack)?["id"]);
+                int attempts = npcMapRecoveries.GetValueOrDefault(quest) + 1;
+                npcMapRecoveries[quest] = attempts;
+                w.Driver.Diagnostics.Event("weekly_npc_map_replan", O(("quest", quest), ("attempt", attempts), ("pack", pack), ("map", Map(await route.Evidence())["id"])));
+                if (attempts <= 2) return;
+            }
             npc!.ExhaustedPacks.Add(pack);
             Defer("weekly_npc", N(Map(await route.Evidence())["id"]), e.Message);
         }
@@ -425,7 +438,25 @@ public sealed class DailyWeeklyRoute
                 await CheckAbsorptionQuota();
                 break;
             }
-            catch (DailyCollectionLocationChanged) { await Refresh(); return; }
+            catch (DailyCollectionLocationChanged error)
+            {
+                if (stage == "weekly_steal")
+                {
+                    int attempts = stealMapRecoveries.GetValueOrDefault((pack, map)) + 1;
+                    stealMapRecoveries[(pack, map)] = attempts;
+                    w.Driver.Diagnostics.Event("weekly_steal_map_replan", O(("pack", pack), ("map", map), ("attempt", attempts)));
+                    if (attempts > 2) Defer(stage, map, error.Message);
+                }
+                await Refresh(); return;
+            }
+            catch (DailyTravelBlocked error) when (stage == "weekly_steal")
+            {
+                await Guard();
+                await route.FieldReady(15);
+                await w.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
+                Defer(stage, map, error.Message);
+                return;
+            }
             catch (DailyCollectionTargetsRemain error) { deferredPickups = error.DeferredPickups; captureLimit = error.CaptureLimit; }
             catch (StageHostException error) when (error.Kind == "pending" && route.Progress.PendingMaps()
                 .Any(op => DailyCollectionProgress.RecoveryLocation(op) == (pack, map)))

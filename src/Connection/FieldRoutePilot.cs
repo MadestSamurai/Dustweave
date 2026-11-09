@@ -19,9 +19,11 @@ namespace BD2Daily.Live {
   sealed class Motion {internal Vector3 Position,Velocity;internal long At;}
   static FieldRoutePilot current;static State state=new State();
   readonly int map;readonly Vector3 goal;readonly long until;readonly bool stealth;
+  readonly FieldExclusion[] gates;
   readonly Dictionary<int,Motion> motions=new Dictionary<int,Motion>();
   Vector3[] path;Vector3 evadeGoal,lastPosition;int corner;long next,waitSince,clearSince,lastPlan,lockedAt,sentAt,progressAt;bool waiting,evading;float speed=4.8f;
-  FieldRoutePilot(Vector3 target,Vector3[] points,bool protect,long expires){
+  FieldRoutePilot(Vector3 target,Vector3[] points,bool protect,long expires,FieldExclusion[] gateZones){
+   gates=gateZones;
    goal=target;path=points;corner=points.Length>1?1:0;stealth=protect;until=expires;
    map=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὮὬὬὮὠὮὪὠὧὩὪ.Id;
    lastPosition=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὪὨὯὢὫὮὨὩὮὡὬ.transform.position;progressAt=DateTime.UtcNow.Ticks;
@@ -48,16 +50,31 @@ namespace BD2Daily.Live {
    });
   }
   internal static bool SafeEndpoint(Vector3 point,FieldExclusion[] hazards){return hazards.All(h=>FieldPoint.Distance(P(point),h.Center)>h.Radius+.02);}
-  internal static float Start(Vector3 target,bool protect){
+  // Local NPC/prop approaches must not walk through an unrelated map trigger.
+  // Deliberate gate travel does not opt in. Only enabled trigger volumes at the
+  // player's elevation participate; no map, monster or collider is disabled.
+  static FieldExclusion[] GateExclusions(){
+   var player=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὪὨὯὢὫὮὨὩὮὡὬ;
+   var body=SquareRoutePilot.MovementBody(player.ὭὦὫὤὮὧὦὡὨὤὢ);
+   float radius=body==null?.25f:body.radius*Math.Max(Math.Abs(body.transform.lossyScale.x),Math.Abs(body.transform.lossyScale.z));
+   var extent=body==null?new Bounds(player.transform.position+Vector3.up*.5f,new Vector3(.5f,1,.5f)):body.bounds;
+   return Bridge.Find(typeof(GateSpotData)).Cast<GateSpotData>().Select(g=>g.ὣὥὥὮὣὧὢὠὡὨὬ)
+    .Where(c=>c!=null&&c.enabled&&c.isTrigger&&c.gameObject.activeInHierarchy&&c.bounds.max.y>=extent.min.y&&c.bounds.min.y<=extent.max.y)
+    .Select(c=>new FieldExclusion{Id=c.GetInstanceID(),Center=new FieldPoint(c.bounds.center.x,player.transform.position.y,c.bounds.center.z),
+     Radius=Math.Sqrt(c.bounds.extents.x*c.bounds.extents.x+c.bounds.extents.z*c.bounds.extents.z)+radius+.1}).ToArray();
+  }
+  internal static float Start(Vector3 target,bool protect,bool avoidGates=false){
    Cancel("replaced");
    var player=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὪὨὯὢὫὮὨὩὮὡὬ;
-   var scan=Scan();var plan=Plan(player.transform.position,target,Elites(scan));
+   var scan=Scan();var gates=avoidGates?GateExclusions():new FieldExclusion[0];
+   var plan=Plan(player.transform.position,target,Elites(scan).Concat(gates).ToArray());
    if(!plan.Found)throw new InvalidOperationException("travel_unreachable:"+plan.Reason);
    state=new State{Status="walking",Protected=protect,Map=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὮὬὬὮὠὮὪὠὧὩὪ.Id,Length=plan.Length,Queries=plan.Queries,Goal=new[]{target.x,target.y,target.z}};
-   // Ordinary maps keep native navigation directly to the destination. Only
-   // a present elite or moving minecart needs the active avoidance controller.
-   if(!scan.Objects.Any(o=>o.Active&&(o.Kind==5&&!o.Suppressible||o.Type=="FieldGhostTrainTrapController"))){state.Status="native_walk";SendTo(target);return (float)plan.Length;}
-   current=new FieldRoutePilot(target,plan.Points.Select(V).ToArray(),protect,DateTime.UtcNow.AddSeconds(LiveProtocol.NavigationSeconds(plan.Length)).Ticks);
+   // Static gates need a checked route, not a stop at every NavMesh corner.
+   // SetMoveNav handles those corners continuously, including the controller's
+   // ground offset. Keep active avoidance for actual detours or moving hazards.
+   if(plan.Direct&&!scan.Objects.Any(o=>o.Active&&(o.Kind==5&&!o.Suppressible||o.Type=="FieldGhostTrainTrapController"))){state.Status="native_walk";SendTo(target);return (float)plan.Length;}
+   current=new FieldRoutePilot(target,plan.Points.Select(V).ToArray(),protect,DateTime.UtcNow.AddSeconds(LiveProtocol.NavigationSeconds(plan.Length)).Ticks,gates);
    current.Send();return (float)plan.Length;
   }
   void Send(){SendTo(evading?evadeGoal:path[corner]);sentAt=DateTime.UtcNow.Ticks;}
@@ -98,7 +115,7 @@ namespace BD2Daily.Live {
    var position=player.transform.position;
    if(Vector3.Distance(position,goal)<.4f){current=null;state.Status="arrived";return;}
    if(Vector3.Distance(position,lastPosition)>.15f){lastPosition=position;progressAt=now;}
-   var scan=Scan();var elites=Elites(scan);
+   var scan=Scan();var elites=Elites(scan).Concat(gates).ToArray();
    if(lockedAt!=0){
     lockedAt=0;progressAt=now;var resumed=Plan(position,goal,elites);state.Queries+=resumed.Queries;state.Replans++;
     if(!resumed.Found){Cancel("local_replan_failed:"+resumed.Reason);return;}

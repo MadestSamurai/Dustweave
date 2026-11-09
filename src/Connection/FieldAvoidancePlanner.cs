@@ -26,6 +26,9 @@ namespace BD2Daily.Live {
   public string Reason="";
   public int Queries;
   public double Length;
+  // A checked native route already clears every exclusion. Its polygon
+  // corners describe geometry, not separate destinations for SetMoveNav.
+  public bool Direct;
   public bool Found {get{return Points.Length>0;}}
  }
  public sealed class FieldMovingObstacle {
@@ -75,7 +78,7 @@ namespace BD2Daily.Live {
    foreach(var h in hazards)if(FieldPoint.Distance(goal,h.Center)<h.Radius-1e-6){answer.Reason="goal_in_contact_zone";return answer;}
    var direct=nativePath(start,goal);answer.Queries++;
    if(direct==null||direct.Length==0||FieldPoint.Distance(direct[0],start)>.3||FieldPoint.Distance(direct[direct.Length-1],goal)>.3){answer.Reason="native_path_unavailable";return answer;}
-   if(Clear(direct,hazards)){answer.Points=direct;answer.Length=Length(direct);return answer;}
+   if(Clear(direct,hazards)){answer.Points=direct;answer.Length=Length(direct);answer.Direct=true;return answer;}
    var nodes=new List<FieldPoint>{start,goal};const int sides=16;
    // Ring chords clear the true contact margin. Candidate projection may bend
    // them around the actual terrain; every resulting native edge is rechecked.

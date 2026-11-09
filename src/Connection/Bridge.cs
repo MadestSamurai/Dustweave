@@ -57,6 +57,7 @@ namespace BD2Daily.Live {
   internal static bool DailyActionsActive { get { return installed&&CollectionReadAllowed; } }
   internal static Frame CurrentFrame { get { return frame; } }
   internal static bool CollectionReadAllowed { get { return !retiring&&BD2.LocalIpc.RuntimeFiles.Read(Path.Combine(live,"pause"))==null; } }
+  internal static void ReleaseFieldNavigation(){FieldRoutePilot.Cancel("npc_navigation_handoff");squareNavUntil=0;mainlineStealthNav=false;approachTarget=null;}
   private static Frame frame;private static Receipt pending;
   private static readonly Dictionary<int,UIBase> uis=new Dictionary<int,UIBase>();
   private static readonly Dictionary<int,GameObject> targets=new Dictionary<int,GameObject>();
@@ -425,7 +426,7 @@ namespace BD2Daily.Live {
       UnityEngine.Vector3 destination=walkDestination;float length=walkLength;
       if(!move.CanNavReach(destination))throw new InvalidOperationException("travel_unreachable:native_check");
       Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ClearQuestNav(true);move.ChangeMoveType(MoveController.ὧὮὧὠὢὢὦὪὭὢὨ.Navigation);player.SetMoveStart();
-      length=FieldRoutePilot.Start(destination,mainlineStealthNav);
+      length=FieldRoutePilot.Start(destination,mainlineStealthNav,target is NPCController);
       squareNavScene=frame.Scene;squareNavUntil=DateTime.UtcNow.AddSeconds(LiveProtocol.NavigationSeconds(length)).Ticks;
      }
      else if(c.Kind=="mainline_menu"){
@@ -551,7 +552,15 @@ namespace BD2Daily.Live {
       ExecuteEvents.Execute(targets[c.TargetId],new PointerEventData(EventSystem.current){button=PointerEventData.InputButton.Left},ExecuteEvents.pointerClickHandler);
      }else u.OnClickUI(targets[c.TargetId]);
      r.State="dispatched";Save(r);pending=r;
-    }catch(Exception e){r.State="unknown";r.Error=e.GetBaseException().ToString();Save(r);}
+    }catch(Exception e){
+     var cause=e.GetBaseException();
+     // These local path checks precede SetMoveNav and cannot submit a game
+     // interaction. A blocked NPC approach is recoverable, not an unknown theft.
+     if(c.Kind=="mainline_walk"&&cause is InvalidOperationException&&cause.Message.StartsWith("travel_unreachable:",StringComparison.Ordinal)){
+      r.State="rejected";r.Error=cause.Message;r.MayHaveDispatched=false;
+     }else{r.State="unknown";r.Error=cause.ToString();}
+     Save(r);
+    }
    }catch(Exception e){Write(Path.Combine(live,"error.json"),new Frame{ProcessId=pid,ProcessStartTicks=start,Instance=instance,AtUtcTicks=DateTime.UtcNow.Ticks,Error=e.GetBaseException().ToString()});}
    finally{busy=false;}
   }

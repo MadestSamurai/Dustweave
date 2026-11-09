@@ -40,6 +40,9 @@ internal static class ToolWindowDesign
         Label("ConnectButton", id == "equipment" ? "tools.refresh_inventory" : "tools.action_connect");
         // Equipment's primary action intentionally changes from Calculate plan to Run.
         if (id != "equipment") Label("StartButton", "tools.action_start");
+        // A disabled primary action keeps explaining itself: tools put the missing step in its ToolTip.
+        foreach (string name in new[] { "StartButton", "ConnectButton", "AutoButton" })
+            if (window.FindName(name) is Button action) ToolTipService.SetShowOnDisabled(action, true);
         Label("StopButton", "tools.action_stop");
         Label("PauseButton", "tools.action_stop");
         if (id == "sichuan") Label("AutoButton", "tools.action_round");

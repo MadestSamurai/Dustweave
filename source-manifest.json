@@ -695,7 +695,7 @@
     },
     {
       "path": "src/Connection/Bridge.cs",
-      "sha256": "a6b86d19569b11f8a0c016a75675b15d51319d1cf6f183476d6a996f8e6f6a08"
+      "sha256": "70dde048a3bee3d0f613d6200cd39af02a10dd8a2f2d958afa41c9410ab75ff7"
     },
     {
       "path": "src/Connection/CollectionProgressNative.cs",
@@ -751,11 +751,11 @@
     },
     {
       "path": "src/Connection/FieldAvoidancePlanner.cs",
-      "sha256": "d71c8d5c5d3c2d159efe4059c54f4cb2397c063abd8a54b6bd8f5ae92c5ced11"
+      "sha256": "d92fb3c97000cab4c564c17dad04fb328271ac0ff3adb1f1b78010a7a6d450da"
     },
     {
       "path": "src/Connection/FieldRoutePilot.cs",
-      "sha256": "43ec33dc235b6bcf828cc86f958f1cebcb254b077e8c3f0e4e12719c99caa790"
+      "sha256": "50c9577335807877864559ea08726d22158c90f044b13697b1c224f170d1b01f"
     },
     {
       "path": "src/Connection/FriendshipNative.cs",
@@ -871,7 +871,7 @@
     },
     {
       "path": "src/Connection/WeeklyNpcNative.cs",
-      "sha256": "17bd6af54388ef1b5c15f86f3208aa80ba7086cc741b66f35d13f0d59e0d86f2"
+      "sha256": "309a93824a6a503eae70582437c26b81d7c7fc6c1f59dc5bbf7a5e05f614e19d"
     },
     {
       "path": "src/Connection/WeeklyNpcProgressGuard.cs",
@@ -879,7 +879,7 @@
     },
     {
       "path": "src/Connection/WeeklyNpcRecoveryNative.cs",
-      "sha256": "344cf077e9fd40a157f094ae731a725a1061c46e66ef58ffee54e9379516b830"
+      "sha256": "707b7aa4ecc84581fad762291eeacd75b31e14aec1f56658b8be4a1978e2ab23"
     },
     {
       "path": "src/Core/AccountSessions.cs",
@@ -1703,7 +1703,7 @@
     },
     {
       "path": "src/Core/DailyWeeklyNpc.cs",
-      "sha256": "1c87807d56be0358513e7d46674e5202e79aa967d62c7d39b93996e97ffd7e7e"
+      "sha256": "6049de83ff0c4a2997cf64a52231537ce508a56f1a947ae686a855772b495ea3"
     },
     {
       "path": "src/Core/DailyWeeklyNpcBoard.cs",
@@ -1715,11 +1715,11 @@
     },
     {
       "path": "src/Core/DailyWeeklyRoute.cs",
-      "sha256": "1f513a9dac8929d4860d2c8c9f69c56ae5aeb2581b2084deb4737af29dc31993"
+      "sha256": "47787e90e6211ad7b3f14329f1462563a2ee3eaebaecaeb2a654d51a25504772"
     },
     {
       "path": "src/Core/DailyWeeklySteal.cs",
-      "sha256": "fba58b48b5baa51a0bdae8c56799b430c2c3dda1417889b74df6ba81602fdab1"
+      "sha256": "a588124f0236ccc51f6c50526553cb6781558c4b33f7653b1ba5b171ed7a1c88"
     },
     {
       "path": "src/Core/DailyWindowsSchedule.cs",
@@ -1983,7 +1983,7 @@
     },
     {
       "path": "src/Desktop/HostedToolPresentation.cs",
-      "sha256": "7a4ac29eae542ef9b92641f22381a2b36748a049c89ed1bb52871d3303174fb8"
+      "sha256": "552f8b0dc1534d19817e5012e21ccc06d668dcaad70f097c8dfa98ece84d222f"
     },
     {
       "path": "src/Desktop/HostedTraditionalText.cs",
@@ -2011,7 +2011,7 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "f16d64d281a1a9b0f55339bbb12511c41eae8bd3e8f0dfdf2ccf5557ddc64b92"
+      "sha256": "459bcddb997ac5ee42ac8ba22cfcb44c597b765dc1c9ed595b5ce80d2b40fa62"
     },
     {
       "path": "src/Desktop/Localization/runtime.json",
@@ -2303,7 +2303,7 @@
     },
     {
       "path": "src/Desktop/SharedControls.xaml",
-      "sha256": "10d2f94cb57c4253fc12317d85ba2adf8faffb6d6ea59fc731f9d6f23529c30f"
+      "sha256": "0137b5976b19c61e8257d5bbc226f77f74fe0fa10829b0ca4ef34fe869fa0788"
     },
     {
       "path": "src/Desktop/SoulTool.cs",
@@ -2335,7 +2335,7 @@
     },
     {
       "path": "src/Desktop/ToolWindowDesign.cs",
-      "sha256": "0b8d703a67a98926a3619fa6dcf0ffb734f4fde8a7a9e1f9e3b598dc0f52d944"
+      "sha256": "774bfcbe845a13638731e60ac97c0c25c88dce06a9a36d41c027a52ec1326eb8"
     },
     {
       "path": "src/Desktop/TradePlanPanel.cs",
@@ -5271,7 +5271,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/FieldAvoidanceCases.cs",
-      "sha256": "df46fa9bf33be8f99c15ad6408666ec8d0c182c2ba232674e8739800616037ca"
+      "sha256": "92b92b2e5a144ad2fc9ab68fa994f8f5d5b436b5899d4d91062e2fbf327b0609"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/FieldRouteArrivalCases.cs",
@@ -5723,7 +5723,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/WeeklyIsolationCases.cs",
-      "sha256": "91426459427a6a71fbbbb65ca478f83449bba25b9161aea569c0f4b1ae8c2ad9"
+      "sha256": "ceae8ecf3c671edbc8f8d39b2cc8f59e5d0a203dbcdbdca97a24fbc62b01cfde"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/WeeklyNpcBoardCases.cs",
@@ -5731,7 +5731,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/WeeklyNpcInteractionCases.cs",
-      "sha256": "7f9b63978971e7466e9a911b467069968e503877a3e319edce6ca6a38b77d96d"
+      "sha256": "2ea8a6c84e661ee7ee12b8450c07edef0aa7b57e3c7337505f69de4597de9a1e"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/WeeklyNpcQueryCases.cs",

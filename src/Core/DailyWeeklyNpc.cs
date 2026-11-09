@@ -278,6 +278,8 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
                     await route.FieldReady();
                     return;
                 }
+                if (e.RejectionCode == "npc_navigation_map_changed")
+                    throw new DailyCollectionLocationChanged();
                 if (attempt >= 2 || !await W.Has("GameFieldDefaultUI"))
                     throw new DailyNpcUnavailable("任务交互条件持续变化，已保留进度；本次暂缓该卡带的NPC任务，继续其他日常");
             }
@@ -366,6 +368,7 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
             string decision = O(("map", data.Native["Map"]), ("navigating", data.Native["Navigating"]),
                 ("planned_quest", data.Native["NavigationPlannedQuest"]), ("blocked_guide", data.Native["NavigationBlockedQuest"]),
                 ("blocked_count", data.Native["NavigationBlockedCount"]),
+                ("motion", data.Native["NavigationMotion"]), ("motion_reason", data.Native["NavigationMotionReason"]), ("recovery", data.Native["NavigationRecovery"]),
                 ("lease", data.Native["NavigationLeaseQuest"]), ("carry", data.Native["CarryId"]),
                 ("objects", Array(Rows(data.Native["Objects"] ?? new JsonArray()).Concat(Rows(data.Native["CarryObjects"] ?? new JsonArray()))
                     .Where(x => N(x["Quest"]) == id).Select(x => O(("id", x["Id"]), ("near", x["Near"]), ("ready", x["Ready"]), ("collected", x["Collected"])))))).ToJsonString();
@@ -394,6 +397,12 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
             {
                 await W.Delay(300);
                 continue;
+            }
+            if (!interactionSent && !liftSent && FieldInputReady(f) && N(data.Native["Map"]) != N(row["mapId"]) && !huntStep)
+            {
+                SaveRecovery("navigation_left_task_map", row, data);
+                await W.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
+                throw new DailyCollectionLocationChanged();
             }
             var collected = Collected(current);
             var priorObjects = Collected(before);
@@ -482,7 +491,8 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
             if (stalled)
             {
                 if (navigationRestarts >= 3) break;
-                if (N(data.Native["NavQuest"]) != 0 && N(data.Native["NavQuest"]) != id || N(data.Native["NavigationLeaseQuest"]) != id)
+                if (N(data.Native["NavQuest"]) != 0 && N(data.Native["NavQuest"]) != id
+                    || N(data.Native["NavigationLeaseQuest"]) != 0 && N(data.Native["NavigationLeaseQuest"]) != id)
                     throw new DailyNpcUnavailable("任务导航目标已改变，保留现场");
                 SaveRecovery("navigation_stalled_restart", row, data);
                 // Use the same off/on sequence as the task navigation button.
@@ -505,8 +515,9 @@ public sealed class DailyWeeklyNpc(DailyFieldRoute route, bool allowHunting)
         }
         if (await W.Has("GameFieldDefaultUI"))
             await W.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
-        SaveRecovery("step_not_advanced", row, Data!);
-        throw new DailyNpcUnavailable(objectStep
+        bool navigationFailed = navigationRestarts >= 3 && !interactionSent && !liftSent;
+        SaveRecovery(navigationFailed ? "navigation_not_recovered" : "step_not_advanced", row, Data!);
+        throw new DailyNpcUnavailable(objectStep && !navigationFailed
             ? $"任务物件已确认 {Collected(before).Count}/{N(row["conditionCount"])}，游戏尚未推进下一步；保留进度，不重复点击未确认物件"
             : "NPC任务步骤未推进，保留服务器进度");
     }

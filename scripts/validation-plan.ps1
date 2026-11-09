@@ -90,6 +90,11 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     $uiReadiness='^(Directory\.Build\.props|CHANGELOG\.md|package\.ps1|scripts/validation-plan\.ps1|test\.ps1)$|^docs/|^src/Connection/UiInteractionReadiness\.cs$|^src/Shared/DailyBridgeVersion\.cs$|^src/Core/(DailyManagementEntry|DailyTools|DailyMailStage|DailyUserText)\.cs$|^src/Core/Localization/Messages\.zh-CN\.txt$|^src/Desktop/Localization/(runtime|releases)\.json$|^tests/Dustweave.Tests/(Program\.cs|Cases/(UiInteractionReadiness|ManagementStage|PluginStore|ManagedInputs|UserText)Cases\.cs)$'
     if($Scope -in @('Auto','UiReadiness') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $uiReadiness}).Count){$selectedScope='UiReadiness';$outside=@()}
     $weekly+='|^AGENTS\.md$|^src/Core/DailyWeeklyNpcBoard\.cs$|^tests/Dustweave.Tests/Cases/WeeklyNpcBoardCases\.cs$'
+    # Weekly movement recovery changes shared navigation, so recompile the live
+    # bridge and cover route/avoidance behavior. Shared tool presentation changes
+    # also require the packaged tool-preparation smoke for both editions.
+    $weekly+='|^src/Connection/(Bridge|FieldAvoidancePlanner|FieldRoutePilot|WeeklyNpcNative|WeeklyNpcRecoveryNative)\.cs$|^src/Core/(DailyWeeklyNpc|DailyWeeklySteal)\.cs$|^tests/Dustweave.Tests/Cases/(FieldAvoidance|WeeklyNpcInteraction)Cases\.cs$'
+    $weekly+='|^src/Desktop/(HostedToolPresentation|ToolWindowDesign)\.cs$|^src/Desktop/SharedControls\.xaml$'
     if($Scope -in @('Auto','Weekly') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $weekly}).Count){$selectedScope='Weekly';$outside=@()}
     $full.changed=$allChanged
     $reason='Changes outside the account validation boundary: '+($outside -join ', ')
@@ -107,6 +112,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
       if($selectedScope -eq 'Updates'){$groups=@('ProductIdentity','UpdateLayout','UpdateDelta','UpdateSafety','UpdateRepair','UpdateInventory','CacheStorage','SchedulingUpdates','UnifiedSuite','SuiteOwnerProbe','UserText')}
       if($selectedScope -eq 'UiReadiness'){$groups=@('ProductIdentity','UiInteractionReadiness','ManagementStage','ManagedInputs','CommandDriver','Workflow','MirrorStage','DispatchRecovery','BattleArrivalRecovery','HomeNavigation','HomeRecovery','PackagedUtility','PluginStore','UnifiedSuite','UserText')}
       if($selectedScope -eq 'Weekly'){$groups=@('ProductIdentity','WeeklyIsolation','WeeklyGoal','CollectionReadiness','FieldTalent','WeeklyNpcBoard','WeeklyNpcQuery','WeeklyNpcInteraction','CommandDriver','ManagedInputs','QueueSession','QueueEngine','QueuePeriod','QueueExecutionThread','PickupRecovery','BusinessJournal','BusinessScope','MirrorStage','FreeDrawStage','DispatchRecovery','ManagementStage','TradeResume','TravelTransition','UserText')}
+      if($selectedScope -eq 'Weekly' -and $changed -match '^src/Connection/'){$groups+=@('FieldAvoidance','QuickTravel','HomeNavigation','HomeRecovery')}
       if($selectedScope -in @('Navigation','Rewards')){$groups+=@('HomeNavigation','HomeRecovery','TravelTransition','WeeklyGoal','CollectionReadiness','CafeteriaRecovery','CommandDriver','ManagedInputs','PassiveUi','UserText')}
       if($selectedScope -eq 'Rewards'){
        $groups+=@('LiveBindings','Workflow','Preference','RuleData','EvidenceReadiness','UserText','NativeDailyBattle','EventTradeBoundary','BattleArrivalRecovery','BusinessJournal')

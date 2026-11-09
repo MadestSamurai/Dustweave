@@ -12,7 +12,7 @@ static class WeeklyNpcInteractionCases
         public JsonObject Row;
         public JsonArray Wild = new();
         public Func<JsonArray>? SceneObjects;
-        public long Planned;
+        public long Planned, Map = 1, Lease = 10;
         public JsonArray Active = new(O(("id", 10), ("objectId", new JsonArray())));
         public bool Navigating, Ready = true, Unknown;
         public bool NavigationReady = true;
@@ -55,10 +55,10 @@ static class WeeklyNpcInteractionCases
                 if (AckDelay > 0) AckAt = H.Time + AckDelay; else Active.Clear();
             };
         }
-        JsonObject Native() => O(("State", "ready"), ("Error", ""), ("Query", query), ("Pack", 1), ("Map", 1),
+        JsonObject Native() => O(("State", "ready"), ("Error", ""), ("Query", query), ("Pack", 1), ("Map", Map),
             ("Week", 500), ("Limit", 3), ("Remaining", 2), ("Completed", 0), ("ActionsSupported", true), ("CanAccept", false),
             ("Rows", new JsonArray(Row.DeepClone()).ToJsonString()), ("Active", Active.ToJsonString()), ("Posted", new JsonArray()), ("Cleared", new JsonArray()), ("Wild", Wild), ("NavigationPlannedQuest", Planned),
-            ("Navigating", Navigating), ("NavigationLeaseQuest", 10), ("NavigationLeaseUntil", H.Ticks + TimeSpan.TicksPerMinute), ("CarryId", Held),
+            ("Navigating", Navigating), ("NavigationLeaseQuest", Lease), ("NavigationLeaseUntil", H.Ticks + TimeSpan.TicksPerMinute), ("CarryId", Held),
             ("Position", new[] { X, 0d, 0d }), ("NavigationReady", NavigationReady), ("NavQuest", Navigating ? 10 : 0),
             ("Objects", SceneObjects?.Invoke() ?? Array((Row["magicValue"] as JsonArray)!.Select(value => O(("Quest", TriggerQuest), ("Instance", 200 + N(value)), ("Id", N(value)), ("Available", true), ("Eligible", Ready), ("Near", true), ("Ready", Ready))))),
             ("CarryObjects", new JsonArray(O(("Quest", 10), ("Instance", 400), ("Id", 200), ("Available", true), ("Near", true), ("Ready", Ready), ("Distance", 0)))));
@@ -68,6 +68,26 @@ static class WeeklyNpcInteractionCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool value, string name) { if (!value) throw new Exception(name); checks.Add(name); }
+        using (var f = new Fixture(Path.Combine(root, "npc-unexpected-map")))
+        {
+            f.Ready = false;
+            f.H.OnDelay = () => { f.Map = 14; f.H.Frame["Scene"] = "Map0001_014"; };
+            bool replan = false; try { await f.Run(); } catch (DailyCollectionLocationChanged) { replan = true; }
+            Check(replan && f.Navs == 1 && f.Interactions == 0 && f.H.Time < 3,
+                "wrong-map navigation returns to route planning instead of retrying interaction in the wrong scene");
+            f.Map = 1; f.H.Frame["Scene"] = "Map0001_001"; f.H.OnDelay = null; f.Ready = true;
+            await f.Run();
+            Check(f.Interactions == 1, "same pending quest resumes after returning to its actual map");
+        }
+        foreach (long lease in new[] { 0L, 99L })
+        using (var f = new Fixture(Path.Combine(root, "npc-navigation-lease-" + lease)))
+        {
+            f.Ready = false; f.Lease = lease;
+            f.H.OnDelay = () => { if (f.Navs >= 2) { f.Lease = 10; f.Ready = true; } };
+            bool deferred = false; try { await f.Run(); } catch (DailyNpcUnavailable) { deferred = true; }
+            Check(lease == 0 ? !deferred && f.Navs == 2 && f.Interactions == 1 : deferred && f.Navs == 1 && f.Interactions == 0,
+                "expired navigation can be reacquired, but another task's ownership is preserved: " + lease);
+        }
         using (var f = new Fixture(Path.Combine(root, "npc-hunt-guide-blocked"), 1))
         {
             bool deferred = false; try { await f.Run(); } catch (DailyNpcUnavailable) { deferred = true; }
@@ -201,8 +221,13 @@ static class WeeklyNpcInteractionCases
         using (var f = new Fixture(Path.Combine(root, "npc-persistent-obstacle")))
         {
             f.Ready = false;
-            bool deferred = false; try { await f.Run(); } catch (DailyNpcUnavailable) { deferred = true; }
+            bool deferred = false; string reason = ""; try { await f.Run(); } catch (DailyNpcUnavailable e) { deferred = true; reason = e.Message; }
             Check(deferred && f.Navs == 4 && f.H.Time < 40 && f.Interactions == 0, "three unsuccessful route restarts defer the NPC task without an endless daily loop");
+            Check(!reason.Contains("游戏尚未推进下一步")&&Directory.GetFiles(Path.Combine(f.H.Root,"live","weekly-npc-recovery"))
+                .Select(File.ReadAllText).Any(t=>S(JsonNode.Parse(t)!["state"])=="navigation_not_recovered"),
+                "failed approach is recorded as movement failure rather than waiting for an undispatched pickup");
+            f.Ready=true; await f.Run();
+            Check(f.Interactions==1,"retry after obstruction clears continues the same quest exactly once");
         }
         using (var f = new Fixture(Path.Combine(root, "npc-carry-hazard"), 9))
         {

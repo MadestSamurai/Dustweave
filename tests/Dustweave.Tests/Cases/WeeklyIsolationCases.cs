@@ -23,6 +23,9 @@ static class WeeklyIsolationCases
         public bool StalledBoardPopup;
         public bool WildQuestChain;
         public bool WalkingBlocked;
+        public bool NpcMapReturn;
+        public int? RemainingOverride;
+        public int NpcWrongMapAttempts;
         public bool AbsorbDrops, LoseAbsorbReply, RecoveryQueryFails, StaleDrop;
         public long NetworkWeek = 500;
         public readonly List<long[]> QueryMaps = [];
@@ -32,7 +35,7 @@ static class WeeklyIsolationCases
         public readonly HashSet<long> CapturesPending = [];
         public int CaptureUsed = 21;
         public readonly List<long> Suppressed = [];
-        readonly Dictionary<long, long> npcActive = [];
+        public readonly Dictionary<long, long> NpcActive = [];
         string npcQuery = "prior"; long popup, plannedQuest; bool navigating;
         JsonObject network = new();
         public Fixture(string root)
@@ -57,6 +60,7 @@ static class WeeklyIsolationCases
                     case "weekly_npc_plan": plannedQuest = N(c["Value"]); navigating = false; break;
                     case "weekly_npc_nav":
                         navigating = true;
+                        if (NpcWrongMapAttempts-- > 0) { MapId = 2; Visits.Add(2); Scene(); break; }
                         if(WildQuestChain){
                             if(N(c["Value"])==11||MapId!=1)throw new Exception("Native guide attempted hunting/cross-map movement");
                             H.Page("BalloonScriptUI","_objTouchButton");
@@ -64,8 +68,8 @@ static class WeeklyIsolationCases
                         break;
                     case "weekly_npc_talk":
                         if(!WildQuestChain)throw new Exception("Unexpected NPC dialogue");
-                        if(npcActive[Pack]==10)npcActive[Pack]=11;
-                        else {Cleared.Add(12);npcActive.Remove(Pack);}
+                        if(NpcActive[Pack]==10)NpcActive[Pack]=11;
+                        else {Cleared.Add(12);NpcActive.Remove(Pack);}
                         Scene();break;
                     case "mainline_cancel_nav": navigating = false; break;
                     case "weekly_npc_board_nav": break;
@@ -76,12 +80,12 @@ static class WeeklyIsolationCases
                         H.Frame["Surfaces"]!.AsArray().Add(O(("Id",2),("Type","QuestBoardUI"),("Order",-1),("InputReady",true),("Targets",new JsonArray())));
                         break;
                     case "weekly_npc_accept":
-                        Accepted.Add(popup); npcActive[Pack] = popup; popup = 0; H.Page("QuestBoardUI"); break;
+                        Accepted.Add(popup); NpcActive[Pack] = popup; popup = 0; H.Page("QuestBoardUI"); break;
                     case "weekly_npc_interact":
                         if (RejectNpc && Pack == 1)
                             H.Box.Values["live:receipts~" + S(c["Id"]) + ".json"] = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(
                                 O(("Command", c), ("State", "rejected"), ("Error", "npc_lease_expired"), ("MayHaveDispatched", false)));
-                        else { Cleared.Add(npcActive[Pack]); npcActive.Remove(Pack); }
+                        else { Cleared.Add(NpcActive[Pack]); NpcActive.Remove(Pack); }
                         break;
                     case "click":
                         if (N(c["TargetId"]) != 10 || S(H.Frame["UiToken"]) != "GameFieldDefaultUI") throw new Exception("Unexpected click: " + c);
@@ -110,7 +114,7 @@ static class WeeklyIsolationCases
                         if (N(c["Value"]) == 305)
                         {
                             Suppressed.Add(MapId); MonstersPending.Remove(MapId);
-                            if(WildQuestChain&&MapId==2&&npcActive.GetValueOrDefault(Pack)==11)npcActive[Pack]=12;
+                            if(WildQuestChain&&MapId==2&&NpcActive.GetValueOrDefault(Pack)==11)NpcActive[Pack]=12;
                             H.Event("dispatch.start", "request"); H.Event("dispatch.start", "response", ("IsSuccess", true), ("TalentSkillInfo", O(("groupId", 305), ("useCount", Suppressed.Count))));
                             Scene(); break;
                         }
@@ -170,10 +174,10 @@ static class WeeklyIsolationCases
                 WorkflowCases.Reading("mainline.talent_rows", ("$self", Restricted ? new JsonArray(O(("Kind", 6), ("Group", 605), ("Instance", 605), ("PackRestricted", true), ("Reason", "character_pack_restricted"))) : AbsorbDrops ? new JsonArray(O(("Kind", 4), ("Group", 405), ("Instance", 405), ("PackRestricted", false), ("Reason", ""), ("Cooldown", 0), ("Gate", ""))) : new JsonArray())),
                 WorkflowCases.Reading("mainline.network", ("$self", network)),
                 WorkflowCases.Reading("mainline.travel", ("$self", O(("Pack", Pack), ("Map", MapId), ("Ground", true),
-                    ("Maps", Array(maps.Select(id => O(("Id", id), ("Exits", Reachable && Pack == 1 ? id == 1 ? new[] { 2 } : WildQuestChain && id == 2 ? new[] { 1 } : [] : []), ("HasWaypoint", false), ("CanSummon", false))))),
-                    ("Approaches", Reachable && Pack == 1 && (MapId == 1 || WildQuestChain && MapId == 2) ? new JsonArray(O(("Instance", MapId == 1 ? 2 : 1), ("Reachable", true), ("Distance", 1), ("Kind", "gate"), ("Destination", MapId == 1 ? 2 : 1))) : new JsonArray()))))
+                    ("Maps", Array(maps.Select(id => O(("Id", id), ("Exits", Reachable && Pack == 1 ? id == 1 ? new[] { 2 } : (WildQuestChain || NpcMapReturn) && id == 2 ? new[] { 1 } : [] : []), ("HasWaypoint", false), ("CanSummon", false))))),
+                    ("Approaches", Reachable && Pack == 1 && (MapId == 1 || (WildQuestChain || NpcMapReturn) && MapId == 2) ? new JsonArray(O(("Instance", MapId == 1 ? 2 : 1), ("Reachable", true), ("Distance", 1), ("Kind", "gate"), ("Destination", MapId == 1 ? 2 : 1))) : new JsonArray()))))
             };
-            if (Reachable && Pack == 1 && (MapId == 1 || WildQuestChain && MapId == 2))
+            if (Reachable && Pack == 1 && (MapId == 1 || (WildQuestChain || NpcMapReturn) && MapId == 2))
             {
                 int destination = MapId == 1 ? 2 : 1;
                 var gate = WorkflowCases.Reading("mainline.gate", ("gameObject.name", "Gate_test"), (ObjectPath, destination), (DestinationPath, destination));
@@ -225,10 +229,10 @@ static class WeeklyIsolationCases
                 quests[2]["priorQuestId"]=11;
             }
             if (HuntingOffer) quests.Add(Quest(50, 2, 1000, 1));
-            long current = npcActive.GetValueOrDefault(Pack);
+            long current = NpcActive.GetValueOrDefault(Pack);
             return O(("State", QueryFailsFirst && Pack == 1 ? "failed" : "ready"), ("Error", ""), ("Query", npcQuery), ("Pack", Pack), ("Map", MapId), ("Week", 500),
-                ("Limit", WildQuestChain?1:3), ("Remaining", (WildQuestChain?1:3) - Cleared.Count - npcActive.Count), ("Completed", Cleared.Count), ("ActionsSupported", true), ("CanAccept", true),
-                ("Rows", Array(quests).ToJsonString()), ("Active", Array(npcActive.Values.Select(id => O(("id", id), ("objectId", new JsonArray())))).ToJsonString()),
+                ("Limit", WildQuestChain?1:3), ("Remaining", RemainingOverride ?? (WildQuestChain?1:3) - Cleared.Count - NpcActive.Count), ("Completed", Cleared.Count), ("ActionsSupported", true), ("CanAccept", true),
+                ("Rows", Array(quests).ToJsonString()), ("Active", Array(NpcActive.Values.Select(id => O(("id", id), ("objectId", new JsonArray())))).ToJsonString()),
                 ("Posted", Array(quests.Where(q=>N(q["priorQuestId"])==0).Select(q => q["id"]!))), ("Cleared", Cleared.ToArray()),
                 ("Wild", WildQuestChain?new JsonArray(O(("Step",11),("Map",2),("Group",1),("Monster",101),("Count",1),("Available",MonstersPending.Contains(2)))):new JsonArray()),
                 ("Navigating", navigating), ("NavigationPlannedQuest", plannedQuest), ("CarryId", 0), ("CarryObjects", new JsonArray()),
@@ -242,8 +246,13 @@ static class WeeklyIsolationCases
             NpcEnabled = true; H.Workflow.Settings.Weekly.Npc = true; H.Workflow.Settings.Weekly.Steal = true;
             return Runner().Run(["weekly_mainline", "weekly_npc", "weekly_steal"]);
         }
+        public Task<JsonObject> RunNpcOnly()
+        {
+            NpcEnabled = true; H.Workflow.Settings.Weekly.Npc = true;
+            return Runner().Run(["weekly_npc"]);
+        }
         public Task<JsonObject> RunWildQuest(){
-            NpcEnabled=WildQuestChain=true;Pending=false;npcActive[1]=10;MonstersPending.Add(2);
+            NpcEnabled=WildQuestChain=true;Pending=false;NpcActive[1]=10;MonstersPending.Add(2);
             H.Workflow.Settings.Weekly.Npc=true;
             return new DailyWeeklyRoute(H.Workflow).Run(["weekly_npc"]);
         }
@@ -262,6 +271,85 @@ static class WeeklyIsolationCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool yes, string message) { if (!yes) throw new Exception(message); checks.Add(message); }
+        foreach (string scenario in new[] { "loading", "late-npc", "wrong-map", "missing", "stop", "week-change" })
+        using (var f = new Fixture(Path.Combine(root, "theft-approach-" + scenario)))
+        {
+            f.H.Workflow.Settings.General.FastTravel = false;
+            int walks = 0; bool arrived = false;
+            var npc = O(("Npc", 6), ("Instance", 600), ("Distance", 2), ("Near", false), ("Reachable", true));
+            f.ChangeReadings = rows => {
+                if (scenario == "week-change" && walks > 0)
+                {
+                    rows.RemoveAll(r => S(r["Id"]) == "mainline.reset");
+                    rows.Add(WorkflowCases.Reading("mainline.reset", ("GetWeeklyResetTime().Ticks", 501)));
+                }
+                bool absent = scenario == "missing" || scenario == "late-npc" && f.H.Time < 1
+                    || walks > 0 && scenario is "loading" or "wrong-map" or "stop" && !arrived;
+                var current = npc.DeepClone().AsObject(); current["Near"] = arrived;
+                rows.Add(WorkflowCases.Reading("mainline.steal_npcs", ("$self", absent ? new JsonArray() : new JsonArray(current))));
+            };
+            var original = f.H.OnCommand;
+            f.H.OnCommand = c => {
+                if (S(c["Kind"]) != "mainline_walk") { original!(c); return; }
+                walks++;
+                if (scenario is "loading" or "wrong-map" or "stop") { f.H.Frame["Scene"] = "Empty"; f.H.Page("OverheadManageUI"); }
+                else if (scenario != "week-change") arrived = true;
+            };
+            f.H.OnDelay = () => {
+                if (scenario == "stop") f.H.Stopped = true;
+                if (walks > 0 && f.H.Time >= 1 && scenario is "loading" or "wrong-map")
+                { arrived = true; if (scenario == "wrong-map") f.MapId = 2; f.Scene(); }
+            };
+            Exception? failure = null;
+            var steal = new DailyWeeklySteal(new DailyFieldRoute(f.H.Workflow));
+            try { await steal.Approach(npc, 1); } catch (Exception error) { failure = error; }
+            Check(scenario switch {
+                "loading" or "late-npc" => failure == null && arrived && walks == 1,
+                "wrong-map" => failure is DailyCollectionLocationChanged && walks == 1,
+                "missing" => failure is DailyTravelBlocked && walks == 0 && f.H.Time < 8,
+                "stop" => failure is StageHostException { Kind: "stopped" },
+                "week-change" => failure is InvalidDataException && walks == 1,
+                _ => false
+            }, "theft approach waits for current scene, replans changed map and preserves stop/week boundaries: " + scenario);
+            Check(!f.H.Box.Commands.Any(c => S(c["Kind"]).StartsWith("weekly_steal", StringComparison.Ordinal)),
+                "theft movement recovery never sends a consuming command: " + scenario);
+            if (scenario is "wrong-map" or "missing")
+            {
+                f.MapId = 1; f.Scene(); f.H.OnDelay = null; f.ChangeReadings = rows => {
+                    var current = npc.DeepClone().AsObject(); current["Near"] = true;
+                    rows.Add(WorkflowCases.Reading("mainline.steal_npcs", ("$self", new JsonArray(current))));
+                };
+                await steal.Approach(npc, 1);
+                Check(walks <= 1, "restored theft target resumes without repeating a previous action: " + scenario);
+            }
+        }
+        using (var f = new Fixture(Path.Combine(root, "npc-no-free-allowance")) { Pending = false, RemainingOverride = 0, RejectNpc = true })
+        {
+            f.NpcActive[1] = 10;
+            await f.RunNpcOnly();
+            Check(f.Accepted.Count == 0 && !f.H.Box.Commands.Any(c => S(c["Kind"]) == "mainline_pack") && f.NpcActive[1] == 10,
+                "an unfinished quest with no free allowance never triggers a tour of other posted cartridges");
+            f.RejectNpc = false;
+            await f.RunNpcOnly();
+            Check(f.Cleared.Contains(10), "accepted work resumes despite zero slots for new quests");
+        }
+        using (var f = new Fixture(Path.Combine(root, "npc-allowance-collection-independent")) { RemainingOverride = 0 })
+        {
+            await f.RunNpc();
+            Check(f.Accepted.Count == 0 && f.Visits.Contains(2), "zero new-quest allowance does not skip independent collection");
+        }
+        foreach (int changes in new[] { 1, 10 })
+        using (var f = new Fixture(Path.Combine(root, "npc-map-route-recovery-" + changes))
+            { Pending = false, RemainingOverride = 0, NpcWrongMapAttempts = changes, NpcMapReturn = true })
+        {
+            f.NpcActive[1] = 10;
+            var result = await f.RunNpcOnly();
+            Check(changes == 1 ? f.Cleared.Contains(10) && f.Visits.SequenceEqual([2L, 1L])
+                : f.Cleared.Count == 0 && f.Visits.Count <= 6 && S(result["stages"]?["weekly_npc"]?["state"]) == "partial",
+                "wrong-map recovery replans and completes, repeated changes defer locally within a bound: " + changes);
+            Check(f.Accepted.Count == 0 && !f.H.Box.Commands.Any(c => S(c["Kind"]) == "mainline_pack"),
+                "wrong-map recovery preserves the accepted quest without touring other cartridges: " + changes);
+        }
         using (var f = new Fixture(Path.Combine(root, "stalled-board-popup")) { StalledBoardPopup = true })
         {
             var result = await f.RunNpc();

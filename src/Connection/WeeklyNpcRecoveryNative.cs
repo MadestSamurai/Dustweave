@@ -9,42 +9,107 @@ namespace BD2Daily.Live {
  internal static partial class WeeklyNpcNative {
   static HarmonyLib.Harmony navigationGuard;
   static FieldObjectBase objectNavigation;
-  static int objectNavigationMap;
+  static int objectNavigationMap,objectDialogueQuest;
+  static long objectNavigationStarted;
   static void StopObjectNavigation(){
+   objectDialogueQuest=0;
    if(objectNavigation==null)return;
    objectNavigation=null;
+   FieldRoutePilot.Cancel("npc_approach_finished");
    var field=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ;
    if(field!=null&&field.ὪὨὯὢὫὮὨὩὮὡὬ!=null)field.SetPlayerMoveState(MoveController.ὯὣὠὮὤὡὤὯὢὩὯ.Stop);
   }
-  static void NavigateObject(FieldObjectBase target){
+  static void NavigateObject(FieldObjectBase target,int dialogueQuest=0){
    StopObjectNavigation();
+   Bridge.ReleaseFieldNavigation();
    Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ClearQuestNav(true);
-   if(target.ὩὤὨὮὥὦὫὭὫὭὨ)return;
-   var field=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ;var player=field.ὪὨὯὢὫὮὨὩὮὡὬ;
-   var move=player.ὭὦὫὤὮὧὦὡὨὤὢ;var point=target.ὩὬὧὢὧὬὠὡὦὥὧ;
-   // StartFieldObjectNav(type) only resolves NPCs, gates and waypoints in
-   // the client. Quest/carry props must use their actual scene position.
-   if(!move.CanNavReach(point)){result.NavigationRecovery="object_unreachable";return;}
-   move.ChangeMoveType(MoveController.ὧὮὧὠὢὢὦὪὭὢὨ.Navigation);player.SetMoveStart();
-   if(!move.SetMoveNav(point,null,true)){
-    field.SetPlayerMoveState(MoveController.ὯὣὠὮὤὡὤὯὢὩὯ.Stop);result.NavigationRecovery="object_navigation_not_started";return;
+   if(target.ὩὤὨὮὥὦὫὭὫὭὨ){if(dialogueQuest!=0)Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.StartQuestNav(dialogueQuest);return;}
+   var field=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ;
+   UnityEngine.Vector3 point;float distance;string reason;
+   // CanNavReach projects onto the navigation surface, but SetMoveNav does not.
+   // Submit the same projected endpoint we checked, not the elevated prop pivot.
+   if(!CollectionProgressNative.TryApproach(target,out point,out distance,out reason)){result.NavigationRecovery="object_unreachable:"+reason;return;}
+   try{FieldRoutePilot.Start(point,false,true);}
+   catch(InvalidOperationException e){
+    FieldRoutePilot.Cancel("npc_approach_failed");
+    field.SetPlayerMoveState(MoveController.ὯὣὠὮὤὡὤὯὢὩὯ.Stop);result.NavigationRecovery="object_navigation_not_started:"+e.Message;return;
    }
-   objectNavigation=target;objectNavigationMap=field.ὮὬὬὮὠὮὪὠὧὩὪ.Id;
+   result.NavigationRecovery="";
+   objectNavigation=target;objectNavigationMap=field.ὮὬὬὮὠὮὪὠὧὩὪ.Id;objectDialogueQuest=dialogueQuest;
+   objectNavigationStarted=DateTime.UtcNow.Ticks;
+   result.NavigationStopTrace="";
   }
   static void TickObjectNavigation(){
    if(objectNavigation==null)return;
    var field=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ;
-   if(field==null||field.ὮὬὬὮὠὮὪὠὧὩὪ==null||field.ὮὬὬὮὠὮὪὠὧὩὪ.Id!=objectNavigationMap
-     ||!objectNavigation.gameObject.activeInHierarchy||objectNavigation.ὩὤὨὮὥὦὫὭὫὭὨ)StopObjectNavigation();
+   if(field==null||field.ὪὨὯὢὫὮὨὩὮὡὬ==null||field.ὮὬὬὮὠὮὪὠὧὩὪ==null||field.ὮὬὬὮὠὮὪὠὧὩὪ.Id!=objectNavigationMap
+     ||!objectNavigation.gameObject.activeInHierarchy){StopObjectNavigation();return;}
+   if(objectNavigation.ὩὤὨὮὥὦὫὭὫὭὨ){
+    int dialogue=objectDialogueQuest;StopObjectNavigation();
+    // Once in range, the game's own quest action still opens the dialogue and
+    // advances it. Movement never fabricates a conversation or quest result.
+    if(dialogue!=0&&PlanActive()&&PlannedNavigationAllowed(dialogue))Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.StartQuestNav(dialogue);
+    return;
+   }
+   var pilot=FieldRoutePilot.Capture();
+   var move=field.ὪὨὯὢὫὮὨὩὮὡὬ.ὭὦὫὤὮὧὦὡὨὤὢ;var agent=move.ὢὮὡὭὢὥὠὧὧὯὬ;
+   // An owned prop reference is not evidence that movement is still running.
+   // Expose real termination; the host reobserves/replans under its bounded
+   // movement retry policy. Never restart or repeat an interaction here.
+   bool nativeStopped=pilot.Status=="native_walk"&&DateTime.UtcNow.Ticks-objectNavigationStarted>TimeSpan.TicksPerSecond
+    &&move.ὠὭὬὪὫὣὠὡὡὠὫ!=MoveController.ὯὣὠὮὤὡὤὯὢὩὯ.DontMove
+    &&agent!=null&&agent.isOnNavMesh&&!agent.pathPending&&(agent.isStopped||!agent.hasPath);
+   if(pilot.Status=="stopped"||pilot.Status=="arrived"||nativeStopped){
+    result.NavigationRecovery="object_navigation_stopped:"+(nativeStopped?"native_path_ended_before_object_range":pilot.Reason.Length>0?pilot.Reason:pilot.Status);
+    StopObjectNavigation();
+   }
   }
   static Command planOwner;static int plannedQuest,plannedPack;static long planUntil;
   static int blockedNavigationQuest,blockedNavigationCount;
+  // The native target resolver accepts a gate before a matching NPC if the
+  // gate happens to occur first in the scene list. Retain its native dialogue
+  // setup, but prefer the live NPC for this explicitly owned TalkManual step.
+  static readonly MethodInfo NavigationTargetSetup=FindNavigationTargetSetup();
+  static MethodInfo FindNavigationTargetSetup(){
+   var methods=typeof(QuestNavigationManager).GetMethods(BindingFlags.Instance|BindingFlags.NonPublic)
+    .Where(m=>m.ReturnType==typeof(void)&&m.GetParameters().Select(p=>p.ParameterType).SequenceEqual(new[]{typeof(FieldObjectBase),typeof(int)})).ToArray();
+   return methods.Length==1?methods[0]:null;
+  }
+  static bool PreferCurrentNpc(QuestNavigationManager __instance,int __0,ref UnityEngine.Vector3 __result){
+   TodayQuestTable q;
+   if(NavigationTargetSetup==null||!PlanActive()||__0!=plannedQuest||!PlannedNavigationAllowed(__0)
+     ||!Tables.TryGetValue(__0,out q)||q.ConditionType!=19||q.MagicValue.Count<2)return true;
+   var npc=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.GetNPCController(q.MagicValue[0]);
+   if(npc==null||!npc.gameObject.activeInHierarchy)return true;
+   NavigationTargetSetup.Invoke(__instance,new object[]{npc,__0});
+   __result=npc.ὩὬὧὢὧὬὠὡὦὥὧ;
+   return false;
+  }
+  static void ObserveNavigationStop(MoveController __instance){
+   // Record only the first stop of this owned local approach. No callback,
+   // game state or return value is modified, and unrelated movement is ignored.
+   try{
+    var field=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ;
+    if(objectNavigation==null||result.NavigationStopTrace.Length!=0||field==null||field.ὪὨὯὢὫὮὨὩὮὡὬ==null
+      ||!ReferenceEquals(field.ὪὨὯὢὫὮὨὩὮὡὬ.ὭὦὫὤὮὧὦὡὨὤὢ,__instance))return;
+    var trace=new System.Diagnostics.StackTrace(false).ToString();
+    result.NavigationStopTrace=trace.Length>6000?trace.Substring(0,6000):trace;
+   }catch{ /* Optional evidence must not affect movement. */ }
+  }
   static void PlanNavigation(Command c,TodayQuestTable q){
    StopObjectNavigation();
+   Bridge.ReleaseFieldNavigation();
    if(navigationGuard==null){
     var guard=new HarmonyLib.Harmony("bd2.daily.weekly.navigation.v1");
     guard.Patch(typeof(QuestNavigationManager).GetMethod("StartQuestNav",new[]{typeof(int),typeof(bool)}),
      prefix:new HarmonyLib.HarmonyMethod(typeof(WeeklyNpcNative).GetMethod("BeforeQuestNavigation",BindingFlags.Static|BindingFlags.NonPublic)));
+    guard.Patch(typeof(QuestNavigationManager).GetMethod("GetQuestTarget",new[]{typeof(int)}),
+     prefix:new HarmonyLib.HarmonyMethod(typeof(WeeklyNpcNative).GetMethod("PreferCurrentNpc",BindingFlags.Static|BindingFlags.NonPublic)));
+    foreach(var name in new[]{"SetNavStop","SetNavPause"}){
+     try{var method=typeof(MoveController).GetMethod(name,Type.EmptyTypes);if(method!=null)guard.Patch(method,
+      prefix:new HarmonyLib.HarmonyMethod(typeof(WeeklyNpcNative).GetMethod("ObserveNavigationStop",BindingFlags.Static|BindingFlags.NonPublic)));}
+     catch{ /* Diagnostic tracing is optional, never a prerequisite for navigation. */ }
+    }
     navigationGuard=guard;
    }
    planOwner=c;plannedQuest=q.Id;plannedPack=q.PackId;planUntil=DateTime.UtcNow.AddMinutes(10).Ticks;
@@ -76,7 +141,13 @@ namespace BD2Daily.Live {
   }
   internal static void ReleaseNavigationGuard(){
    plannedQuest=plannedPack=0;planUntil=0;planOwner=null;
-   if(navigationGuard!=null)navigationGuard.Unpatch(typeof(QuestNavigationManager).GetMethod("StartQuestNav",new[]{typeof(int),typeof(bool)}),HarmonyLib.HarmonyPatchType.All,navigationGuard.Id);
+   if(navigationGuard!=null){
+    navigationGuard.Unpatch(typeof(QuestNavigationManager).GetMethod("StartQuestNav",new[]{typeof(int),typeof(bool)}),HarmonyLib.HarmonyPatchType.All,navigationGuard.Id);
+    navigationGuard.Unpatch(typeof(QuestNavigationManager).GetMethod("GetQuestTarget",new[]{typeof(int)}),HarmonyLib.HarmonyPatchType.All,navigationGuard.Id);
+    foreach(var name in new[]{"SetNavStop","SetNavPause"}){
+     var method=typeof(MoveController).GetMethod(name,Type.EmptyTypes);if(method!=null)navigationGuard.Unpatch(method,HarmonyLib.HarmonyPatchType.All,navigationGuard.Id);
+    }
+   }
    navigationGuard=null;
   }
   static void GuardNavigation(){

@@ -51,21 +51,44 @@ public sealed class DailyWeeklySteal(DailyFieldRoute route)
         catch (StageHostException e) when (e.Kind == "navigation_changed") { await W.Delay(150); }
         return true;
     }
-    private async Task<JsonObject> Approach(JsonObject target, long map)
+    internal async Task<JsonObject> Approach(JsonObject target, long map)
     {
         bool started = false;
+        double? missingSince = null;
+        var origin = await route.Evidence();
+        long pack = N(Map(origin)["packId"]);
+        string week = S(R(origin, "mainline.reset", "GetWeeklyResetTime().Ticks"));
         double end = W.Time + Math.Clamp(DailyRegionRouter.D(target["Distance"]) / 2 + 15, 15, 90);
         while (W.Time < end)
         {
             var e = await route.Evidence();
-            Require(N(Map(e)["id"]) == map, "前往偷窃目标时地图改变");
+            // During scene unload Map can still report the old location while
+            // the NPC list is already empty. Wait for a real field observation
+            // before deciding whether the target disappeared or we changed maps.
+            if (!FieldInputReady(e["Frame"]!.AsObject()))
+            {
+                await route.FieldReady(timeout: Math.Min(45, Math.Max(1, end - W.Time)), settle: 0);
+                started = false;
+                continue;
+            }
+            Require(S(R(e, "mainline.reset", "GetWeeklyResetTime().Ticks")) == week && N(Map(e)["packId"]) == pack,
+                "偷窃地图或周周期变化");
+            if (N(Map(e)["id"]) != map) throw new DailyCollectionLocationChanged();
             if (await Popup(e["Frame"]!.AsObject()))
             {
                 started = false;
                 continue;
             }
             var current = Rows(R(e, "mainline.steal_npcs", "$self")).SingleOrDefault(n => N(n["Npc"]) == N(target["Npc"]));
-            Require(current != null, "偷窃NPC不在当前场景，保留待办");
+            if (current == null)
+            {
+                missingSince ??= W.Time;
+                if (W.Time - missingSince >= 5) throw new DailyTravelBlocked("偷窃NPC不在当前场景，保留待办");
+                started = false;
+                await W.Delay(200);
+                continue;
+            }
+            missingSince = null;
             if (B(current!["Near"]))
             {
                 await W.Step("GameFieldDefaultUI", operation: "mainline_cancel_nav");
@@ -73,9 +96,13 @@ public sealed class DailyWeeklySteal(DailyFieldRoute route)
             }
             if (!started)
             {
-                Require(B(current["Reachable"]), "偷窃NPC不可达：" + S(current["Reason"]));
+                if (!B(current["Reachable"])) throw new DailyTravelBlocked("偷窃NPC不可达：" + S(current["Reason"]));
                 await route.ProtectWeeklyMovement(TargetDistance(current));
-                await W.Step("GameFieldDefaultUI", operation: "mainline_walk", value: I(current["Instance"]));
+                try { await W.Step("GameFieldDefaultUI", operation: "mainline_walk", value: I(current["Instance"])); }
+                catch (DailyStepException error) when (error.PresentationChanged)
+                { await W.Delay(200); continue; }
+                catch (DailyStepException error) when (error.DefinitelyNotDispatched && error.RejectionCode.StartsWith("travel_unreachable:", StringComparison.Ordinal))
+                { throw new DailyTravelBlocked(error.Message); }
                 started = true;
             }
             await W.Delay(200);
@@ -188,13 +215,13 @@ public sealed class DailyWeeklySteal(DailyFieldRoute route)
         {
             await route.FieldReady();
             e = await route.Evidence();
-            Require(N(Map(e)["id"]) == map && S(R(e, "mainline.reset", "GetWeeklyResetTime().Ticks")) == week, "偷窃地图或周周期变化");
+            Require(S(R(e, "mainline.reset", "GetWeeklyResetTime().Ticks")) == week, "偷窃地图或周周期变化");
+            if (N(Map(e)["id"]) != map) throw new DailyCollectionLocationChanged();
             var pending = Rows(checkpoint["maps"]![map.ToString()]!["steals"]);
             if (pending.Length == 0)
                 return results;
-            var target = Rows(R(e, "mainline.steal_npcs", "$self")).Where(n => pending.Any(t => N(t["Npc"]) == N(n["Npc"])) && (B(n["Near"]) || B(n["Reachable"]))).OrderByDescending(n => B(n["Near"])).ThenBy(n => DailyRegionRouter.D(n["Distance"])).ThenBy(n => N(n["Npc"])).FirstOrDefault();
-            Require(target != null, "本图偷窃NPC尚未出现或不可达，保留服务器待办");
-            var done = await CollectNpc(target!, map, week, pending);
+            var target = await FindTarget(pending, map, week);
+            var done = await CollectNpc(target, map, week, pending);
             foreach (var r in done)
                 results.Add(r.DeepClone());
             await route.FieldReady();
@@ -203,5 +230,22 @@ public sealed class DailyWeeklySteal(DailyFieldRoute route)
             Require(!Rows(checkpoint["maps"]![map.ToString()]!["steals"]).Any(t => acknowledged.Contains((N(t["Npc"]), N(t["Group"])))), "服务器仍显示刚才的偷窃未完成，停止而非重复消耗");
         }
         throw new StageHostException("adapter", "偷窃目标未收敛，保留待办");
+    }
+    private async Task<JsonObject> FindTarget(JsonObject[] pending, long map, string week)
+    {
+        double end = W.Time + 8;
+        do
+        {
+            await route.FieldReady(timeout: Math.Max(1, end - W.Time), settle: 0);
+            var e = await route.Evidence();
+            Require(S(R(e, "mainline.reset", "GetWeeklyResetTime().Ticks")) == week, "偷窃地图或周周期变化");
+            if (N(Map(e)["id"]) != map) throw new DailyCollectionLocationChanged();
+            var target = Rows(R(e, "mainline.steal_npcs", "$self"))
+                .Where(n => pending.Any(t => N(t["Npc"]) == N(n["Npc"])) && (B(n["Near"]) || B(n["Reachable"])))
+                .OrderByDescending(n => B(n["Near"])).ThenBy(n => DailyRegionRouter.D(n["Distance"])).ThenBy(n => N(n["Npc"])).FirstOrDefault();
+            if (target != null) return target;
+            await W.Delay(200);
+        } while (W.Time < end);
+        throw new DailyTravelBlocked("本图偷窃NPC尚未出现或不可达，保留服务器待办");
     }
 }

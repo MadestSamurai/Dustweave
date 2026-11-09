@@ -1,5 +1,32 @@
 [
 {
+  "Version": "1.6.6",
+  "Date": "2026-11-09",
+  "Notes": {
+    "zh-CN": [
+      "修复部分周任务前往目标时原地不动、误走传送点或反复跑图的问题；导航中断后取消旧路线，重新读取位置并有限重试。",
+      "改善周任务物品和 NPC 的接近路线：安全路线连续行走，实际需要避让的传送点与危险区域仍保持绕行。",
+      "修复偷窃目标在换图后尚未出现就中断的问题；等待场景就绪，局部失败不再连带阻断其他周收集内容。",
+      "周任务次数已用完且没有进行中的任务时，不再为寻找任务遍历所有地图；继续执行时保留游戏中已经完成的进度。",
+      "完善导航停止的错误说明和诊断，并统一内置工具的共享图标及禁用按钮提示。"
+    ],
+    "zh-TW": [
+      "修復部分每週任務前往目標時原地不動、誤走傳送點或反覆跑圖的問題；導航中斷後取消舊路線，重新讀取位置並有限重試。",
+      "改善每週任務物品和 NPC 的接近路線：安全路線連續行走，實際需要避讓的傳送點與危險區域仍保持繞行。",
+      "修復偷竊目標在換圖後尚未出現就中斷的問題；等待場景就緒，局部失敗不再連帶阻斷其他每週收集內容。",
+      "每週任務次數已用完且沒有進行中的任務時，不再為尋找任務走遍所有地圖；繼續執行時保留遊戲中已經完成的進度。",
+      "完善導航停止的錯誤說明與診斷，並統一內建工具的共用圖示及停用按鈕提示。"
+    ],
+    "en-US": [
+      "Fixes some weekly quests standing still, heading toward the wrong portal, or repeatedly crossing maps. Interrupted navigation now cancels the old route, checks the current location, and retries within a limit.",
+      "Improves approaches to quest items and NPCs: safe paths use continuous movement while necessary portal and hazard avoidance remains active.",
+      "Fixes stealing stopping before NPCs appear after a map change. Dustweave waits for the scene and keeps local failures from blocking independent weekly collection.",
+      "Stops searching every map for weekly quests when no attempts or active quests remain. Resuming preserves progress already completed in the game.",
+      "Improves navigation-stop explanations and diagnostics, and aligns shared tool icons and disabled-button tooltips."
+    ]
+  }
+},
+{
   "Version": "1.6.5",
   "Date": "2026-11-09",
   "Notes": {

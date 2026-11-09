@@ -28,6 +28,8 @@ namespace BD2Daily.Live {
   [DataMember] public string CurrentName="";
   [DataMember] public int[] NavigationCollected=new int[0],NavigationStale=new int[0],NavigationRemoved=new int[0];
   [DataMember] public string NavigationRecovery="";
+  [DataMember] public string NavigationMotion="",NavigationMotionReason="";
+  [DataMember] public string NavigationStopTrace="";
   [DataMember] public bool Navigating,BattleReady,BattlePlaying,BattleAuto;
   [DataMember] public float[] Position=new float[0];
   [DataMember] public bool NavigationReady;
@@ -129,6 +131,7 @@ namespace BD2Daily.Live {
     .Where(x=>x!=null&&activeIds.Any(id=>OwnsCarry(x,Tables[id])))
     .Select(x=>new WeeklyNpcObject{Instance=x.GetInstanceID(),Id=x.ὪὬὣὧὥὨὦὯὨὮὬ,Quest=activeIds.Single(id=>OwnsCarry(x,Tables[id])),Near=x.ὩὤὨὮὥὦὫὭὫὭὨ,Ready=CarryReady(x),Available=x.gameObject.activeInHierarchy&&!action.CheckFieldItemBeforeInteract(x.ὪὬὣὧὥὨὦὯὨὮὬ),Distance=(x.ὩὬὧὢὧὬὠὡὦὥὧ-GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὪὨὯὢὫὮὨὩὮὡὬ.transform.position).sqrMagnitude}).ToArray();
    result.Navigating=objectNavigation!=null||Singleton<QuestNavigationManager>.ὪὫὢὨὯὭὦὪὦὨὣ.ὤὬὪὨὠὢὢὭὧὫὨ;
+   var motion=FieldRoutePilot.Capture();result.NavigationMotion=motion.Status;result.NavigationMotionReason=motion.Reason;
    var player=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὪὨὯὢὫὮὨὩὮὡὬ;
    result.Position=player==null?new float[0]:new[]{player.transform.position.x,player.transform.position.y,player.transform.position.z};
    result.NavigationReady=player!=null&&player.ὭὦὫὤὮὧὦὡὨὤὢ.ὠὭὬὪὫὣὠὡὡὠὫ!=MoveController.ὯὣὠὮὤὡὤὯὢὩὯ.DontMove;
@@ -285,6 +288,10 @@ namespace BD2Daily.Live {
     if(!PlannedNavigationAllowed(q.Id))throw new InvalidOperationException("NPC navigation map changed");
     RepairObjectNavigation(q);
     navQuest=q.Id;navUntil=DateTime.UtcNow.AddSeconds(180).Ticks;
+    if(q.ConditionType==19&&q.MagicValue.Count>0){
+     var npc=GameFieldManager.ὪὫὢὨὯὭὦὪὦὨὣ.GetNPCController(q.MagicValue[0]);
+     if(npc!=null&&npc.gameObject.activeInHierarchy){NavigateObject(npc,q.Id);return;}
+    }
     if(q.ConditionType==2||q.ConditionType==9||q.ConditionType==18){
      // The quest guide may intentionally stop at a non-interactive area marker.
      // Navigate to a real remaining prop instead; the host owns its one interaction.

@@ -20,6 +20,7 @@ static class FieldAvoidanceCases
             Check(plan.Found&&FieldAvoidancePlanner.Clear(plan.Points,hazards)&&plan.Queries<=256&&
                 FieldPoint.Distance(plan.Points[^1],goal)<1e-6&&plan.Length<2*span+4*radius,
                 "elite detour preserves reachable goal and short safe path "+i);
+            Check(!plan.Direct,"crossing an exclusion still requires the avoidance controller "+i);
             var straight=FieldAvoidancePlanner.Plan(start,goal,[new(){Center=center+P(0,0,5),Radius=radius}],Line,Ground);
             Check(straight.Found&&straight.Queries==1&&Math.Abs(straight.Length-2*span)<1e-6,"other floor does not cause elite detour "+i);
         }
@@ -42,6 +43,13 @@ static class FieldAvoidanceCases
         Check(FieldAvoidancePlanner.Crossing(P(0,0,3),P(0,0,-3),P(0,0),P(0,0),1,1,1),"vertical overlap interval considered for ramps");
         Check(!FieldAvoidancePlanner.Crossing(P(0,0),P(0,0),P(0,0),P(0,0),double.NaN,1,1),"invalid cart radius rejected");
         Check(FieldAvoidancePlanner.Plan(P(0,0),P(10,0),[],Line,Ground).Queries==1,"safe map retains native path with one query");
+        // A gate elsewhere in town must not turn every native bend into a stop.
+        FieldPoint[] BentPath(FieldPoint a,FieldPoint b)=>[a,P(3,0),P(3,8),P(9,8),b];
+        var bent=FieldAvoidancePlanner.Plan(P(0,0),P(10,10),[new(){Center=P(15,15),Radius=2}],BentPath,Ground);
+        Check(bent.Found&&bent.Direct&&bent.Points.Length==5&&bent.Queries==1,
+            "native multi-corner route is continuous when all static gate volumes are clear");
+        var blockedBend=FieldAvoidancePlanner.Plan(P(0,0),P(10,10),[new(){Center=P(3,4),Radius=1}],BentPath,_=>null);
+        Check(!blockedBend.Found&&!blockedBend.Direct,"direct walking never skips an actual gate on a bent path");
         // Two local hazards on opposite sides of a long wall. Euclidean A*
         // repeatedly expands the wrong side; native distances include the gap.
         FieldPoint[] WallRoute(FieldPoint a,FieldPoint b)=>a.X<5!=b.X<5

@@ -187,6 +187,11 @@ foreach($flavor in $Flavors){
   Run $exe @(('--'+$mode),$check) ($flavor+'-'+$mode)
  }
  Pass (Join-Path $checks 'smoke/smoke.json')
+ if($validation.scope -ne 'Full' -and $validation.scope -ne 'Updates' -and $validation.changed -match '^src/Desktop/(HostedToolPresentation\.cs|ToolWindowDesign\.cs|SharedControls\.xaml)$'){
+  $check=Join-Path $checks 'smoke-tool-preparation'
+  Run $exe @('--smoke',$check) ($flavor+'-smoke-tool-preparation') 180 'tool-preparation'
+  Pass (Join-Path $check 'smoke.json')
+ }
  if($validation.scope -in @('Full','Updates')){
   foreach($scope in @('outcomes','apostle','tool-activity','run-report','tool-preparation','maintenance-priority')){
    $check=Join-Path $checks ('smoke-'+$scope)
@@ -204,7 +209,7 @@ foreach($flavor in $Flavors){
   Pass (Join-Path $soulCheck 'result.json')
   if(@(Get-ChildItem -LiteralPath $soulCheck -File -Filter '*.png').Count -ne 6){throw 'Soul tool requires all three languages and both themes.'}
  }
- if($flavor -eq $Flavors[0] -and $validation.scope -in @('Navigation','Rewards','UiReadiness')){
+ if($flavor -eq $Flavors[0] -and ($validation.scope -in @('Navigation','Rewards','UiReadiness') -or ($validation.scope -eq 'Weekly' -and $validation.changed -match '^src/Connection/'))){
   Run $exe @('--utility','live','prepare',$managed,(Join-Path $checks 'live-client')) 'live-client'
   if($validation.scope -eq 'Rewards'){
    Run $exe @('--utility','live','taps-all',$managed,(Join-Path $root 'assets/specs'),(Join-Path $checks 'evidence')) 'evidence-configs'

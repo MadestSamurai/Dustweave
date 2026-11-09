@@ -10,6 +10,9 @@ internal static class HostedToolPresentation
     {
         var controls = new ResourceDictionary { Source = new Uri("/Dustweave;component/SharedControls.xaml", UriKind.Relative) };
         foreach (var key in controls.Keys) app.Resources[key] = controls[key];
+        // Status bands and tool sections draw the product's shared line icons.
+        var icons = new ResourceDictionary { Source = new Uri("/Dustweave;component/Icons.xaml", UriKind.Relative) };
+        foreach (var key in icons.Keys) if (!app.Resources.Contains(key)) app.Resources[key] = icons[key];
         var theme = new DailyTheme(DailyIdentity.DataRoot);
         foreach(var pair in new[]{("BackgroundBrush","AppBackground"),("SurfaceBrush","Surface"),("PrimaryBrush","Primary"),("TextBrush","Ink"),("MutedBrush","MutedInk")})app.Resources[pair.Item1]=app.Resources[pair.Item2];
         var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
