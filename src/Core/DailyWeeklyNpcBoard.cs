@@ -11,7 +11,11 @@ public static class DailyWeeklyNpcBoard
         var popup = DailyNavigationDecision.Rows(frame).SingleOrDefault(r => S(r["Type"]) == "QuestPopupUI");
         if (popup != null)
         {
-            if (!S(popup["NativeContext"]).StartsWith("weekly_npc_accept:", StringComparison.Ordinal) || !DailyNavigationDecision.Types(frame).Contains("QuestBoardUI"))
+            // Back only closes QuestPopupUI; it neither accepts nor gives up a quest.
+            // A freshly opened popup may still contain prefab text and have no
+            // native accept context. Do not require the failed readiness check
+            // again in recovery. Keep unrelated popups outside the board alone.
+            if (!DailyNavigationDecision.Types(frame).Contains("QuestBoardUI"))
                 throw new DailyNpcUnavailable("当前任务弹窗不属于公告板接取，保留现场");
             await w.Step("QuestPopupUI", back: true, absent: "QuestPopupUI");
         }
@@ -139,9 +143,36 @@ public static class DailyWeeklyNpcBoard
                 await w.Delay(200);
             }
         }
-        await w.Step("QuestBoardUI", operation: "weekly_npc_board_select", value: checked((int)id), expect: "QuestPopupUI");
-        data = await observe();
-        if (N(data.Native["Board"]?["PopupQuest"]) != id || !B(data.Native["Board"]?["PopupCanAccept"]))
-            throw new DailyNpcUnavailable("公告板确认页与选定任务不符，未接取任务");
+        long board = N(data.Native["Board"]?["Ui"]), pack = N(data.Native["Pack"]), week = N(data.Native["Week"]);
+        for (int attempt = 1; attempt <= 2; attempt++)
+        {
+            await w.Step("QuestBoardUI", operation: "weekly_npc_board_select", value: checked((int)id), expect: "QuestPopupUI");
+            double end = w.Time + 8;
+            do
+            {
+                data = await observe();
+                if (N(data.Native["Pack"]) != pack || N(data.Native["Week"]) != week)
+                    throw new StageHostException("identity", "账号、进程、连接或周期已经变化。");
+                if (N(data.Native["Board"]?["Ui"]) != board)
+                    throw new DailyNpcUnavailable("任务板尚未打开，未接取任务");
+                if (N(data.Native["Board"]?["PopupQuest"]) == id && B(data.Native["Board"]?["PopupCanAccept"])) return;
+                if (w.Time >= end) break;
+                await w.Delay(200);
+            } while (true);
+            w.Driver.Diagnostics.Event("weekly_npc_popup_not_ready", O(("quest", id), ("attempt", attempt), ("board", data.Native["Board"])));
+            if (attempt == 2) break;
+            // Retry only the non-consuming detail view, after closing it. The
+            // caller owns the single accept operation and its server reconciliation.
+            var frame = (await w.Observe()).Frame;
+            if (!DailyNavigationDecision.Types(frame).Contains("QuestBoardUI"))
+                throw new DailyNpcUnavailable("任务板尚未打开，未接取任务");
+            if (DailyNavigationDecision.Types(frame).Contains("QuestPopupUI"))
+                await w.Step("QuestPopupUI", back: true, absent: "QuestPopupUI");
+            data = await observe();
+            if (N(data.Native["Board"]?["Ui"]) != board || !Visible(data))
+                throw new DailyNpcUnavailable("公告板目标任务未显示，未接取任务");
+        }
+        throw new DailyNpcUnavailable(N(data.Native["Board"]?["PopupQuest"]) == 0
+            ? "公告板目标任务未显示，未接取任务" : "公告板确认页与选定任务不符，未接取任务");
     }
 }

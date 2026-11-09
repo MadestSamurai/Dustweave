@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-11-08T06:05:25.0939337Z",
+  "generatedUtc": "2026-11-09T00:58:35.3502117Z",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -1707,7 +1707,7 @@
     },
     {
       "path": "src/Core/DailyWeeklyNpcBoard.cs",
-      "sha256": "41d96f4e6684eb552efe53f2e860c38ae0e350dcc898e79c06bbb4b050395585"
+      "sha256": "b44bc6b0a0de28804610b554ccd757e4b3bbd3ea283c3cf9b1f4072453c2d5f5"
     },
     {
       "path": "src/Core/DailyWeeklyNpcQuery.cs",
@@ -1715,7 +1715,7 @@
     },
     {
       "path": "src/Core/DailyWeeklyRoute.cs",
-      "sha256": "5ebd6ebf1721a01402149b130a4b0b54bde443700a8a192cb5cd5d778c1fd6fa"
+      "sha256": "1f513a9dac8929d4860d2c8c9f69c56ae5aeb2581b2084deb4737af29dc31993"
     },
     {
       "path": "src/Core/DailyWeeklySteal.cs",
@@ -2011,7 +2011,7 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "aa0c5b20405a534f716b280a4872ca26ac81d50e86e2043863ef3ace49fef4ab"
+      "sha256": "f16d64d281a1a9b0f55339bbb12511c41eae8bd3e8f0dfdf2ccf5557ddc64b92"
     },
     {
       "path": "src/Desktop/Localization/runtime.json",
@@ -5723,11 +5723,11 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/WeeklyIsolationCases.cs",
-      "sha256": "043fd313ab9b25fe597a67d50e0621b944af5110322c0c6719114c4e44868555"
+      "sha256": "6bd758eaa70b0ef8ddd26becebdb502d354e9790ddaca042f24367907f32862f"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/WeeklyNpcBoardCases.cs",
-      "sha256": "74b4f89630f0f01b90a7b0780c342704a389e3e013466b0c0abb3fca140e5043"
+      "sha256": "1a5d631dbcf75a373551b6bfe763ce7bd847007f517f70890da758d0e69825e7"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/WeeklyNpcInteractionCases.cs",
@@ -5863,7 +5863,7 @@
     },
     {
       "path": "tools/OtaChannel/MirrorSelfTest.cs",
-      "sha256": "e589633b28e6a6602b6f0f9c88907769d79e89f57767a3f073f1e16c7357f716"
+      "sha256": "5c47d749c6817e96af7fc6aa6b218f50ccdb6beca6f2f27c63363f76d6fd2a38"
     },
     {
       "path": "tools/OtaChannel/packages.lock.json",

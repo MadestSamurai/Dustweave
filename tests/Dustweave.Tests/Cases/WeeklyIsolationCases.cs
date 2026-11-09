@@ -20,6 +20,7 @@ static class WeeklyIsolationCases
         public Action? BeforeQuery;
         public Action<List<JsonObject>>? ChangeReadings;
         public bool NpcEnabled, RejectNpc, HuntingOffer, QueryFailsFirst;
+        public bool StalledBoardPopup;
         public bool WildQuestChain;
         public bool WalkingBlocked;
         public bool AbsorbDrops, LoseAbsorbReply, RecoveryQueryFails, StaleDrop;
@@ -70,7 +71,10 @@ static class WeeklyIsolationCases
                     case "weekly_npc_board_nav": break;
                     case "weekly_npc_board_stop": break;
                     case "weekly_npc_board_open": H.Page("QuestBoardUI"); break;
-                    case "weekly_npc_board_select": popup = N(c["Value"]); H.Page("QuestPopupUI"); break;
+                    case "weekly_npc_board_select":
+                        popup = StalledBoardPopup && Pack == 1 ? 0 : N(c["Value"]); H.Page("QuestPopupUI");
+                        H.Frame["Surfaces"]!.AsArray().Add(O(("Id",2),("Type","QuestBoardUI"),("Order",-1),("InputReady",true),("Targets",new JsonArray())));
+                        break;
                     case "weekly_npc_accept":
                         Accepted.Add(popup); npcActive[Pack] = popup; popup = 0; H.Page("QuestBoardUI"); break;
                     case "weekly_npc_interact":
@@ -118,7 +122,7 @@ static class WeeklyIsolationCases
                             H.Event("dispatch.start", "response", ("IsSuccess", true), ("TalentSkillInfo", O(("groupId", 405), ("useCount", Used))));
                         }
                         Scene(); break;
-                    case "back": Scene(); break;
+                    case "back": if(S(H.Frame["UiToken"])=="QuestPopupUI"){popup=0;H.Page("QuestBoardUI");}else Scene(); break;
                     default: throw new Exception("Unexpected weekly command: " + c);
                 }
             };
@@ -230,7 +234,7 @@ static class WeeklyIsolationCases
                 ("Navigating", navigating), ("NavigationPlannedQuest", plannedQuest), ("CarryId", 0), ("CarryObjects", new JsonArray()),
                 ("Objects", current == 0 ? new JsonArray() : new JsonArray(O(("Quest", current), ("Instance", 300), ("Id", 100), ("Near", true), ("Ready", true)))),
                 ("Boards", new JsonArray(O(("Map", MapId), ("Near", true), ("Instance", 71)))),
-                ("Board", O(("Ui", S(H.Frame["UiToken"]) == "QuestBoardUI" ? 2 : 0), ("VisibleQuests", quests.Select(q => N(q["id"])).ToArray()),
+                ("Board", O(("Ui", S(H.Frame["UiToken"]) is "QuestBoardUI" or "QuestPopupUI" ? 2 : 0), ("VisibleQuests", quests.Select(q => N(q["id"])).ToArray()),
                     ("PopupQuest", popup), ("PopupCanAccept", popup != 0))));
         }
         public Task<JsonObject> RunNpc()
@@ -258,6 +262,17 @@ static class WeeklyIsolationCases
     public static async Task Run(string root, List<string> checks)
     {
         void Check(bool yes, string message) { if (!yes) throw new Exception(message); checks.Add(message); }
+        using (var f = new Fixture(Path.Combine(root, "stalled-board-popup")) { StalledBoardPopup = true })
+        {
+            var result = await f.RunNpc();
+            Check(f.Accepted.All(id=>id>=30)&&f.Visits.Contains(2),"stalled NPC popup does not consume a quest or block collection travel");
+            Check(S(result["stages"]?["weekly_mainline"]?["state"]) == "completed" && S(result["stages"]?["weekly_steal"]?["state"]) == "completed"
+                && S(result["stages"]?["weekly_npc"]?["state"]) == "partial",
+                "NPC detail initialization failure remains local to NPC tasks");
+            f.StalledBoardPopup=false;
+            await f.RunNpc();
+            Check(f.Accepted.Contains(10),"deferred board task resumes after initialization recovers");
+        }
         using (var f = new Fixture(Path.Combine(root, "collection-map-empty")))
         {
             f.H.Workflow.Settings.Weekly.CollectionMaps = [];

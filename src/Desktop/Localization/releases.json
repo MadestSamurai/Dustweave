@@ -1,5 +1,26 @@
 [
 {
+  "Version": "1.6.5",
+  "Date": "2026-11-09",
+  "Notes": {
+    "zh-CN": [
+      "修复周任务公告板详情尚未加载完成就中断的问题；等待任务内容就绪，必要时自动重新打开一次。",
+      "修复公告板任务弹窗无法自动关闭，连带卡住周收集和每周偷窃的问题；接取仍失败时暂缓对应任务，继续其他可执行内容。",
+      "改善中断后的继续执行，可安全退出遗留的公告板详情并重新读取游戏进度，不重复接取已经接受的任务。"
+    ],
+    "zh-TW": [
+      "修復每週任務公告板詳情尚未載入完成就中斷的問題；等待任務內容就緒，必要時自動重新開啟一次。",
+      "修復公告板任務彈窗無法自動關閉，連帶卡住每週收集和每週偷竊的問題；接取仍失敗時暫緩對應任務，繼續其他可執行內容。",
+      "改善中斷後的繼續執行，可安全退出遺留的公告板詳情並重新讀取遊戲進度，不重複接取已經接受的任務。"
+    ],
+    "en-US": [
+      "Fixes weekly quests stopping before bulletin-board details finish loading. Dustweave waits for the quest details and reopens them once if needed.",
+      "Fixes an unrecognized quest-details window blocking weekly collection and stealing. If the quest still cannot be accepted, it is deferred while other available tasks continue.",
+      "Improves resuming interrupted weekly tasks by safely closing leftover bulletin-board details and checking current game progress without accepting the same quest again."
+    ]
+  }
+},
+{
   "Version": "1.6.4",
   "Date": "2026-11-08",
   "Notes": {

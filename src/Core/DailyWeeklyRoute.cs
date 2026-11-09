@@ -379,6 +379,8 @@ public sealed class DailyWeeklyRoute
         try { await action(); }
         catch (Exception e) when (e is DailyNpcUnavailable or DailyTravelBlocked || e is DailyStepException step && DailyWeeklyNpc.RecoverableRejection(step))
         {
+            // Preserve the original cause even if restoring the field also fails.
+            w.Driver.Diagnostics.Event("weekly_npc_recovery", O(("pack", pack), ("reason", e.Message), ("exception", e.ToString())));
             // Only bounded quest/navigation failures are local. Identity changes,
             // unknown dispatched operations and unrelated confirmations still stop.
             await Guard();
