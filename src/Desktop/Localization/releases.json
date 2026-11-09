@@ -1,5 +1,29 @@
 [
 {
+  "Version": "1.6.8",
+  "Date": "2026-11-09",
+  "Notes": {
+    "zh-CN": [
+      "修复土豆库存接近上限时整个藏红花任务提前结束的问题：跳过剩余土豆种植，继续采集树矿、料理和售卖，最后补种藏红花。",
+      "中断后继续时保留本次跳过土豆的决定；已种作物继续处理，补种只填空田，不重新开始土豆轮次。",
+      "料理与售卖遵守原有开关，关闭时完成采集后直接补种藏红花。",
+      "延续此前的内置工具界面调整，包括统一的连接与操作按钮、分组设置、主题配色及禁用按钮提示。"
+    ],
+    "zh-TW": [
+      "修復馬鈴薯庫存接近上限時整個藏紅花任務提前結束的問題：跳過剩餘馬鈴薯種植，繼續採集樹礦、料理與販售，最後補種藏紅花。",
+      "中斷後繼續時保留本次跳過馬鈴薯的決定；已種作物繼續處理，補種只填空田，不重新開始馬鈴薯輪次。",
+      "料理與販售遵守原有開關，關閉時完成採集後直接補種藏紅花。",
+      "延續先前的內建工具介面調整，包括統一的連接與操作按鈕、分組設定、主題配色及停用按鈕提示。"
+    ],
+    "en-US": [
+      "Fixes the saffron task ending early when potato stocks approach their limit. Remaining potato planting is skipped; gathering, cooking and sales continue, followed by saffron replanting.",
+      "Resuming preserves the decision to skip potatoes. Existing crops are handled normally, saffron replanting fills empty fields, and skipped potato rounds do not restart.",
+      "Cooking and sales still follow your existing setting. When disabled, saffron is replanted after gathering.",
+      "Includes the earlier built-in tool interface improvements: consistent connection and action buttons, grouped settings, theme colors and disabled-button guidance."
+    ]
+  }
+},
+{
   "Version": "1.6.7",
   "Date": "2026-11-09",
   "Notes": {

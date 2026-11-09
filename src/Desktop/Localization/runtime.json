@@ -1,4 +1,24 @@
 {
+  "message.saffron.potatoes.capacity_skip": {
+    "zh-CN": "土豆库存接近上限，已跳过剩余土豆种植；继续采集树矿、料理和售卖，最后补种藏红花。",
+    "zh-TW": "馬鈴薯庫存接近上限，已跳過剩餘馬鈴薯種植；繼續採集樹礦、料理與販售，最後補種藏紅花。",
+    "en-US": "Potato stocks are near the limit. Remaining potato planting is skipped; gathering, cooking and sales will continue, followed by saffron replanting."
+  },
+  "message.saffron.completed.capacity_skip": {
+    "zh-CN": "土豆库存接近上限，已跳过土豆种植，完成后续采集、料理和售卖，并补种藏红花。",
+    "zh-TW": "馬鈴薯庫存接近上限，已跳過馬鈴薯種植，完成後續採集、料理與販售，並補種藏紅花。",
+    "en-US": "Potato planting was skipped because stocks were near the limit. Gathering, cooking and sales finished, and saffron was replanted."
+  },
+  "message.saffron.completed.capacity_skip_no_processing": {
+    "zh-CN": "土豆库存接近上限，已跳过土豆种植，完成后续采集并补种藏红花；自动料理与售卖未开启。",
+    "zh-TW": "馬鈴薯庫存接近上限，已跳過馬鈴薯種植，完成後續採集並補種藏紅花；自動料理與販售未開啟。",
+    "en-US": "Potato planting was skipped because stocks were near the limit. Gathering finished and saffron was replanted. Automatic cooking and sales are disabled."
+  },
+  "message.saffron.capacity.unavailable": {
+    "zh-CN": "暂时无法读取作物的库存容量，已保留当前进度；待领地数据恢复后可继续。",
+    "zh-TW": "暫時無法讀取作物的庫存容量，已保留目前進度；待領地資料恢復後可繼續。",
+    "en-US": "Crop inventory capacity is temporarily unavailable. Progress is preserved; resume when territory data is available."
+  },
   "message.hunt.selection_not_applied": {
     "zh-CN": "圣石属性切换未生效，已重试但未提交圣石狩猎，也未消耗火把。请在游戏中选择所需属性后重新执行，已完成的免费米饭狩猎会跳过。",
     "zh-TW": "聖石屬性切換未生效，已重試但未提交聖石狩獵，也未消耗火把。請在遊戲中選擇所需屬性後重新執行，已完成的免費白飯狩獵會跳過。",

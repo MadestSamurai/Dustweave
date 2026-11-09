@@ -11,6 +11,7 @@ namespace BD2Territory
   public long At{get;set;}public long Currency{get;set;}public long[] Stocks{get;set;}=new long[0];
   public int PotatoRounds{get;set;}public int PotatoRoundLimit{get;set;}
   public bool PotatoRoundPlanted{get;set;}public bool Filling{get;set;}
+  public bool PotatoPlantingSkipped{get;set;}
   public string WorkState{get;set;}="";
   public SaffronPreparation Preparation{get;set;}
  }
@@ -21,6 +22,7 @@ namespace BD2Territory
   public long BuffEnd{get;set;}
   public long ServerNow{get;set;}public long WaitUntil{get;set;}
   public int EmptyFields{get;set;}public int PotatoFields{get;set;}public int PotatoRoundLimit{get;set;}
+  public bool PotatoPlantingSkipped{get;set;}
   public int GatheredResources{get;set;}public int SkippedResources{get;set;}
   public SaffronPreparation Preparation{get;set;}
  }
@@ -70,11 +72,23 @@ namespace BD2Territory
   public static double HarvestSeconds(int count)=>count*2.0+20;
   public static bool FoodsActive(long serverNow,long[] ends)=>serverNow>0&&ends!=null&&ends.Length==Foods.Length&&ends.All(end=>end>serverNow);
   // Resume from native crops and food expiries, never from an old phase alone.
-  public static string ResumePhase(int empty,int saffron,int potatoes,int other,bool saffronMature,bool continueCycle,bool replanted)
+  public static string ResumePhase(int empty,int saffron,int potatoes,int other,bool saffronMature,bool continueCycle,bool replanted,bool skipPotatoes=false,string workState="")
   {
    if(saffron>0)return saffronMature?"approach":replanted?"replant":"unripe";
    if(potatoes>0)return "potatoes";
+   if(skipPotatoes&&continueCycle)return workState=="cook"||workState=="sell"||workState=="replant"?workState:"resources";
    return empty>0&&continueCycle?"potatoes":"replant";
+  }
+  // A capacity-limited potato step is optional. Process the existing harvest
+  // first, then leave saffron planted for the next day; normal cycles keep order.
+  public static string AfterWorkPhase(string phase,bool skipPotatoes)
+  {
+   switch(phase){
+    case "resources":return skipPotatoes?"cook":"replant";
+    case "replant":return skipPotatoes?"completed":"cook";
+    case "sell":return skipPotatoes?"replant":"completed";
+    default:throw new ArgumentException("Unknown saffron work phase");
+   }
   }
   public static bool CanBuff(int count,bool allMature,bool positioned,bool capacity,bool affordable,double secondsAvailable)
    =>count>0&&allMature&&positioned&&capacity&&affordable&&HarvestSeconds(count)<secondsAvailable;
@@ -108,13 +122,14 @@ namespace BD2Territory
   }
   // A round is complete only after all its planted crops have been harvested.
   // Food expiry does not change the requested number of potato rounds.
-  public static string PotatoAction(int completed,int target,bool filling,int empty,int mature,int growing,bool affordable,bool capacity)
+  public static string PotatoAction(int completed,int target,bool filling,int empty,int mature,int growing,bool affordable,bool capacity,bool skipRemaining=false)
   {
-   if(filling&&empty>0&&completed<target&&affordable&&capacity)return "plant";
+   if(filling&&empty>0&&completed<target&&affordable&&capacity&&!skipRemaining)return "plant";
    if(growing>mature)return "wait";
    if(mature>0)return "harvest";
    if(growing>0)return "wait";
-   if(completed>=target)return "replant";
+   if(completed>=target||skipRemaining)return "replant";
+   if(empty>0&&!capacity)return "skip_capacity";
    return empty>0&&affordable&&capacity?"plant":"limited";
   }
   public static bool ReturnToPotatoes(int planted,int mature,bool fieldsKnown,bool gatheringBusy)

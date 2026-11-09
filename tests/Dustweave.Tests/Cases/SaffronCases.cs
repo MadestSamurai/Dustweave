@@ -95,7 +95,30 @@ static class SaffronCases
         Check(Action(1,false,100,0,0)=="plant"&&Action(2,false,100,0,0)=="plant","the second and third rounds are independent of food expiry");
         Check(Action(3,false,100,0,0)=="replant","the completed target replants immediately without waiting for food expiry");
         Check(Action(3,false,0,0,100)=="wait"&&Action(3,false,0,100,100)=="harvest","a pending planted batch is finished even if the configured target is reduced");
-        Check(Action(0,false,100,0,0,false)=="limited"&&Action(0,false,100,0,0,true,false)=="limited","resource shortage defers only this stage rather than waiting for buffs");
+        Check(Action(0,false,100,0,0,false)=="limited","a currency shortage is not silently classified as excess potatoes");
+        Check(Action(0,false,100,0,0,true,false)=="skip_capacity"&&Action(1,false,100,0,0,true,false)=="skip_capacity","full potato stacks skip only the remaining planting, including before the first round");
+        Check(Action(0,true,50,0,50,true,false)=="wait"&&Action(0,true,50,50,50,true,false)=="harvest","capacity stops filling a partial round but never discards planted crops");
+        Check(Action(0,false,0,0,0,true,false)=="limited","no known empty fields is not evidence to skip potato planting");
+        var skipped=new SaffronJournal{Account="fixture",State="resources",WorkState="resources",Harvested=100,BuffEnd=601000,PotatoRounds=1,PotatoRoundLimit=3,PotatoPlantingSkipped=true};
+        using(var checkpoint=new MemoryStream()){serializer.WriteObject(checkpoint,skipped);checkpoint.Position=0;skipped=(SaffronJournal)serializer.ReadObject(checkpoint)!;}
+        Check(skipped.PotatoPlantingSkipped&&skipped.PotatoRounds==1&&skipped.PotatoRoundLimit==3,"restart preserves skip decision without inventing completed rounds or rewriting user settings");
+        foreach(bool capacity in new[]{false,true})Check(SaffronCycle.PotatoAction(1,3,false,100,0,0,true,capacity,skipped.PotatoPlantingSkipped)=="replant","later cooking or stock recovery does not restart skipped potato rounds");
+        Check(SaffronCycle.PotatoAction(1,3,true,50,0,50,true,true,true)=="wait"&&SaffronCycle.PotatoAction(1,3,true,50,50,50,true,true,true)=="harvest","resuming skipped planting still finishes its existing crops");
+        var skipPath=new List<string>{"resources"};
+        while(skipPath.Last()!="completed"&&skipPath.Count<8){var phase=skipPath.Last();skipPath.Add(phase=="cook"?"sell":SaffronCycle.AfterWorkPhase(phase,true));}
+        Check(skipPath.SequenceEqual(new[]{"resources","cook","sell","replant","completed"}),"capacity skip gathers and processes first, then replants saffron last");
+        Check(SaffronCycle.AfterWorkPhase("resources",false)=="replant"&&SaffronCycle.AfterWorkPhase("replant",false)=="cook"&&SaffronCycle.AfterWorkPhase("sell",false)=="completed","normal-capacity flow keeps its established order");
+        Check(SaffronCycle.AfterWorkPhase("sell",true)=="replant"&&SaffronCycle.AfterWorkPhase("replant",true)=="completed","disabled processing still reaches final replant and completes without cooking");
+        foreach(string phase in new[]{"resources","cook","sell","replant"}){
+            string resume=SaffronCycle.ResumePhase(100,0,0,0,false,true,false,true,phase);
+            Check(resume==phase,"restart resumes the actual downstream phase after skipped potatoes: "+phase);
+            var remaining=new List<string>{resume};
+            while(remaining.Last()!="completed"&&remaining.Count<8){var step=remaining.Last();remaining.Add(step=="cook"?"sell":SaffronCycle.AfterWorkPhase(step,true));}
+            Check(remaining.Last()=="completed"&&remaining.Count(x=>x=="replant")==1&&!remaining.Contains("potatoes"),"restored downstream flow completes and does not restart potato planting: "+phase);
+        }
+        Check(SaffronCycle.ResumePhase(25,75,0,0,false,true,true,true,"replant")=="replant","restart during final replant only fills remaining empty fields");
+        Check(SaffronCycle.ResumePhase(100,0,0,0,false,false,false,true,"cook")=="replant","stale skip journal without a current cycle cannot restart old processing");
+        Check(Prepare(currency:10000,rounds:0).Reason==""&&Prepare(currency:10000,rounds:0).PotatoCost==0,"skipped potato planting reserves only saffron replant and actual missing food");
         Check(SaffronCycle.SellCount(0)==0&&SaffronCycle.SellCount(1)==0&&SaffronCycle.SellCount(100)==99,"finished food always keeps one for the next harvest");
         Check(SaffronCycle.ResumePhase(0,0,100,0,false,true,false)=="potatoes","retry with planted potatoes resumes maturation instead of requiring empty land");
         Check(SaffronCycle.ResumePhase(100,0,0,0,false,true,false)=="potatoes","a harvested cycle resumes remaining fixed rounds without eating again");

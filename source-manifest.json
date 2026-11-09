@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-11-09T08:01:12.0765114Z",
+  "generatedUtc": "2026-11-09T11:58:41.6642806Z",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -2023,11 +2023,11 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "7e2a4f3e4f3724f24ca6afbb1b3cbb7698babe42fd6321c2581609a5026d2c7a"
+      "sha256": "000acb02606f52fbb2fb0ea17b67b931503b13f3d8fc1596a33a25a060a8d84c"
     },
     {
       "path": "src/Desktop/Localization/runtime.json",
-      "sha256": "7e9d57634d36d37222e0d820d9160480d25016436b5e8d45850e28c8bfe06d03"
+      "sha256": "b36b99edeebaa20445daa93f7823df6ce1d913e852ff5e1371ec51599c06fa20"
     },
     {
       "path": "src/Desktop/Localization/strings.json",
@@ -4839,7 +4839,7 @@
     },
     {
       "path": "src/Territory/hook/RuntimeSaffron.cs",
-      "sha256": "709f59e0bcb62aa0603243f79458cfab7d3af1332d58f9d330ee743f291333a2"
+      "sha256": "a2f9530b8172e03e2a098dc4c26b8703d01ec412e3c2aa4d10f72fd60d0d036f"
     },
     {
       "path": "src/Territory/hook/RuntimeSales.cs",
@@ -5011,7 +5011,7 @@
     },
     {
       "path": "src/Territory/shared/SaffronCycle.cs",
-      "sha256": "be18c438c6e19935ec0c30c677c88d4cb51b730907126e623e122ac530ba4512"
+      "sha256": "efe238ddc4d2fb15ce746bcdd8180322b2f11cfc31ae07e3d246fee8b6d85ca3"
     },
     {
       "path": "src/Territory/shared/SurfaceSegments.cs",
@@ -5555,7 +5555,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/SaffronCases.cs",
-      "sha256": "6f46ef487b61435ea93554644c156505976fa2fcd693ced0373b20bdf6909e1d"
+      "sha256": "ab06f98a4a671501d3d66718e169ca3fdba873d0dfeb00ad5d816b094f1852c0"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/SandboxCases.cs",

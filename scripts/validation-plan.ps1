@@ -102,6 +102,10 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     # every evidence binding, and the actual confirmation UI during packaging.
     $observation=$weekly+'|^build\.ps1$|^check-source\.ps1$|^scripts/check-free-distribution\.ps1$|^src/Connection/(ObservationMetadata|Evidence)\.cs$|^src/Connection/Dustweave\.Connection\.csproj$|^src/Core/DailyFreeDistributionAcknowledgement\.cs$|^src/Desktop/(MainWindow\.xaml|FreeDistributionWindow\.cs|MainWindow\.FreeDistribution(?:\.Smoke)?\.cs)$|^tests/Dustweave.Tests/(Dustweave.Tests\.csproj|Cases/(ObservationPerformance|FreeDistribution)Cases\.cs)$'
     if($Scope -in @('Auto','Observation') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $observation}).Count){$selectedScope='Observation';$outside=@()}
+    # Saffron changes only its territory controller and shared cycle policy. Keep
+    # the preceding observation/UI gates and recompile the actual territory payload.
+    $saffron=$observation+'|^src/Territory/(hook/RuntimeSaffron|shared/SaffronCycle)\.cs$|^tests/Dustweave.Tests/Cases/SaffronCases\.cs$'
+    if($Scope -in @('Auto','Saffron') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $saffron}).Count){$selectedScope='Saffron';$outside=@()}
     $reason='Changes outside the account validation boundary: '+($outside -join ', ')
     if(!$outside.Count){
      $checks=$release.flavors[0].checks
@@ -116,9 +120,10 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
       if($selectedScope -eq 'Trading'){$groups=@('ProductIdentity','TradeOptimizer','TradeCalendar','TradeTransition','TradeData','TradeReplan','TradeQuote','TradeResume','TalentPotion','BargainTraining','UserText')}
       if($selectedScope -eq 'Updates'){$groups=@('ProductIdentity','UpdateLayout','UpdateDelta','UpdateSafety','UpdateRepair','UpdateInventory','CacheStorage','SchedulingUpdates','UnifiedSuite','SuiteOwnerProbe','UserText')}
       if($selectedScope -eq 'UiReadiness'){$groups=@('ProductIdentity','UiInteractionReadiness','ManagementStage','ManagedInputs','CommandDriver','Workflow','MirrorStage','DispatchRecovery','BattleArrivalRecovery','HomeNavigation','HomeRecovery','PackagedUtility','PluginStore','UnifiedSuite','UserText')}
-      if($selectedScope -in @('Weekly','Observation')){$groups=@('ProductIdentity','WeeklyIsolation','WeeklyGoal','CollectionReadiness','FieldTalent','WeeklyNpcBoard','WeeklyNpcQuery','WeeklyNpcInteraction','CommandDriver','ManagedInputs','QueueSession','QueueEngine','QueuePeriod','QueueExecutionThread','PickupRecovery','BusinessJournal','BusinessScope','MirrorStage','FreeDrawStage','DispatchRecovery','ManagementStage','TradeResume','TravelTransition','UserText')}
-      if($selectedScope -in @('Weekly','Observation') -and $changed -match '^src/Connection/'){$groups+=@('FieldAvoidance','QuickTravel','HomeNavigation','HomeRecovery')}
-      if($selectedScope -eq 'Observation'){$groups+=@('ObservationPerformance','FreeDistribution','LocalizationArchitecture','LiveBindings','ObservationWait','EvidenceReadiness','UiInteractionReadiness','PassiveUi')}
+      if($selectedScope -in @('Weekly','Observation','Saffron')){$groups=@('ProductIdentity','WeeklyIsolation','WeeklyGoal','CollectionReadiness','FieldTalent','WeeklyNpcBoard','WeeklyNpcQuery','WeeklyNpcInteraction','CommandDriver','ManagedInputs','QueueSession','QueueEngine','QueuePeriod','QueueExecutionThread','PickupRecovery','BusinessJournal','BusinessScope','MirrorStage','FreeDrawStage','DispatchRecovery','ManagementStage','TradeResume','TravelTransition','UserText')}
+      if($selectedScope -in @('Weekly','Observation','Saffron') -and $changed -match '^src/Connection/'){$groups+=@('FieldAvoidance','QuickTravel','HomeNavigation','HomeRecovery')}
+      if($selectedScope -in @('Observation','Saffron')){$groups+=@('ObservationPerformance','FreeDistribution','LocalizationArchitecture','LiveBindings','ObservationWait','EvidenceReadiness','UiInteractionReadiness','PassiveUi')}
+      if($selectedScope -eq 'Saffron'){$groups+=@('Saffron','TerritoryNavigation')}
       if($selectedScope -in @('Navigation','Rewards')){$groups+=@('HomeNavigation','HomeRecovery','TravelTransition','WeeklyGoal','CollectionReadiness','CafeteriaRecovery','CommandDriver','ManagedInputs','PassiveUi','UserText')}
       if($selectedScope -eq 'Rewards'){
        $groups+=@('LiveBindings','Workflow','Preference','RuleData','EvidenceReadiness','UserText','NativeDailyBattle','EventTradeBoundary','BattleArrivalRecovery','BusinessJournal')
@@ -132,7 +137,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
    }
   }
  }
- if($Scope -in @('Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Observation')){throw "Scoped validation cannot reuse this baseline: $reason"}
+ if($Scope -in @('Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Observation','Saffron')){throw "Scoped validation cannot reuse this baseline: $reason"}
  $full.reason=$reason
  return $full
 }
