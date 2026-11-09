@@ -62,7 +62,10 @@ static class Program
             new AmazonS3Config
             {
                 ServiceURL = connection.Endpoint, AuthenticationRegion = connection.Region, ForcePathStyle = false,
-                RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED, MaxErrorRetry = 0,
+                // Retry transient storage failures within the per-object deadline.
+                // PUT retries reuse the same verified immutable key and seekable bytes;
+                // publication still requires a complete public-body hash check.
+                RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED, MaxErrorRetry = 3,
                 Timeout = TimeSpan.FromMinutes(5), HttpClientFactory = new DirectFactory()
             });
         using var client = Mirror.Client();

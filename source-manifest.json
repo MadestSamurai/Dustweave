@@ -5927,7 +5927,7 @@
     },
     {
       "path": "tools/OtaMirror/Program.cs",
-      "sha256": "f2e79f9e89b5360805f06ea007fc68edf4b070afe456d678ddb1d7092eaf8fe4"
+      "sha256": "3ebd3d1c0870ca418714c1936be36b50aec07cce2eefa41434c28c044f549fcd"
     },
     {
       "path": "tools/OtaMirror/RepairBuilder.cs",
