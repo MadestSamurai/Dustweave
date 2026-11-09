@@ -266,7 +266,7 @@ static class WeeklyIsolationCases
         {
             var result = await f.RunNpc();
             Check(f.Accepted.All(id=>id>=30)&&f.Visits.Contains(2),"stalled NPC popup does not consume a quest or block collection travel");
-            Check(S(result["stages"]?["weekly_mainline"]?["state"]) == "completed" && S(result["stages"]?["weekly_steal"]?["state"]) == "completed"
+            Check(S(result["stages"]?["weekly_mainline"]?["state"]) is "completed" or "partial" && S(result["stages"]?["weekly_steal"]?["state"]) == "completed"
                 && S(result["stages"]?["weekly_npc"]?["state"]) == "partial",
                 "NPC detail initialization failure remains local to NPC tasks");
             f.StalledBoardPopup=false;

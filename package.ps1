@@ -63,6 +63,9 @@ $before=SourceState
 . (Join-Path $root 'scripts/validation-plan.ps1')
 $validation=Get-DustweaveValidationPlan $root $before $ValidationScope $ValidationBaseline
 Write-Host ("Validation scope: "+$validation.scope+" — "+$validation.reason)
+if($validation.publisherChanges.Count){
+ Run 'dotnet' @('run','--project',(Join-Path $root 'tools/OtaChannel'),'-c','Release','--','self-test') 'ota-channel-scoped-self-test'
+}
 $before|Set-Content -LiteralPath (Join-Path $work 'source-before.json') -Encoding utf8
 $packageImport='-p:CustomAfterMicrosoftCommonTargets='+ (Join-Path $root 'Package.Build.targets')
 Run 'dotnet' @('build',$entry,'-c','Release','-r','win-x64','-p:SelfContained=false',$packageImport,('-p:DustweavePackageLockRoot='+ (Join-Path $work 'locks/build')),'--nologo') 'build'

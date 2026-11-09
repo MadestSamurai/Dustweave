@@ -31,6 +31,27 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     $old=@{};foreach($row in (Get-Content -LiteralPath $inputsPath -Raw|ConvertFrom-Json)){$old[$row.path.Replace('\','/')]=[string]$row.hash}
     $current=@{};foreach($row in ($InputsJson|ConvertFrom-Json)){$current[$row.path.Replace('\','/')]=[string]$row.hash}
     $changed=@(@($old.Keys)+@($current.Keys)|Sort-Object -Unique|Where-Object {$old[$_] -ne $current[$_]})
+    $allChanged=$changed
+    # Worktree pointers are checkout metadata, not product inputs. An empty RID
+    # target may also be added by restore without changing any dependency. Reuse
+    # that lock only when removing exactly that empty target reproduces the
+    # recorded baseline hash; arbitrary lock edits still require full validation.
+    $metadataOnly=@($changed|Where-Object {$_ -eq '.git'})
+    $accountLock='src/Accounts/packages.lock.json'
+    if($accountLock -in $changed){
+     $lockText=[IO.File]::ReadAllText((Join-Path $Root $accountLock))
+     $withoutRid=[regex]::Replace($lockText,',\r?\n    "net8\.0-windows7\.0/win-x64": \{\}', '')
+     if($withoutRid -ne $lockText){
+      foreach($candidate in @($withoutRid.Replace("`r`n","`n"),$withoutRid.Replace("`r`n","`n").Replace("`n","`r`n"))){
+       $bytes=[Text.Encoding]::UTF8.GetBytes($candidate)
+       if([Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes)) -eq $old[$accountLock]){$metadataOnly+=$accountLock;break}
+      }
+     }
+    }
+    # Server-only sources are never bundled into the client. Validate their own
+    # executable independently instead of rebuilding unchanged game components.
+    $publisherChanges=@($changed|Where-Object {$_ -match '^tools/OtaChannel/[^/]+\.cs$|^scripts/upgrade-update-aio-mirror\.sh$'})
+    $changed=@($changed|Where-Object {$_ -notin $metadataOnly -and $_ -notin $publisherChanges})
     $allowed=@(
      '^(AGENTS\.md|CHANGELOG\.md|Directory\.Build\.props|source-manifest\.json|test\.ps1|package\.ps1)$',
      '^docs/', '^scripts/validation-plan\.ps1$', '^src/Accounts/[^/]+\.cs$',
@@ -68,7 +89,9 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     # and reuse only a passed full baseline with identical game/build inputs.
     $uiReadiness='^(Directory\.Build\.props|CHANGELOG\.md|package\.ps1|scripts/validation-plan\.ps1|test\.ps1)$|^docs/|^src/Connection/UiInteractionReadiness\.cs$|^src/Shared/DailyBridgeVersion\.cs$|^src/Core/(DailyManagementEntry|DailyTools|DailyMailStage|DailyUserText)\.cs$|^src/Core/Localization/Messages\.zh-CN\.txt$|^src/Desktop/Localization/(runtime|releases)\.json$|^tests/Dustweave.Tests/(Program\.cs|Cases/(UiInteractionReadiness|ManagementStage|PluginStore|ManagedInputs|UserText)Cases\.cs)$'
     if($Scope -in @('Auto','UiReadiness') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $uiReadiness}).Count){$selectedScope='UiReadiness';$outside=@()}
-    $full.changed=$changed
+    $weekly+='|^AGENTS\.md$|^src/Core/DailyWeeklyNpcBoard\.cs$|^tests/Dustweave.Tests/Cases/WeeklyNpcBoardCases\.cs$'
+    if($Scope -in @('Auto','Weekly') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $weekly}).Count){$selectedScope='Weekly';$outside=@()}
+    $full.changed=$allChanged
     $reason='Changes outside the account validation boundary: '+($outside -join ', ')
     if(!$outside.Count){
      $checks=$release.flavors[0].checks
@@ -91,7 +114,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
         $groups+=@('TradeData','TradeOptimizer','TradeReplan','TradeQuote','TradeResume')
        }
       }
-      return [ordered]@{schema=1;scope=$selectedScope;buildSettingsHash=$settings;baseline=$BaselineDirectory;baselineInputsHash=(Get-FileHash -LiteralPath $inputsPath).Hash;groups=$groups;changed=$changed;reason='Mapped host changes; unchanged tool validation reused from a completed full baseline.'}
+      return [ordered]@{schema=1;scope=$selectedScope;buildSettingsHash=$settings;baseline=$BaselineDirectory;baselineInputsHash=(Get-FileHash -LiteralPath $inputsPath).Hash;groups=$groups;changed=$allChanged;metadataOnly=$metadataOnly;publisherChanges=$publisherChanges;reason='Mapped host changes; unchanged tool validation reused from a completed full baseline.'}
      }
     }
    }
