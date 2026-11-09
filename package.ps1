@@ -70,7 +70,7 @@ if($validation.publisherChanges.Count){
   $result=Get-Content -LiteralPath $proof.result -Raw|ConvertFrom-Json
   if($proof.status -ne 'passed' -or $result.status -ne 'passed' -or $result.gameTouched -ne $false -or $result.serverTouched -ne $false -or
      $result.checks -ne $result.cases.Count -or (Get-FileHash -LiteralPath $proof.result).Hash -ne $proof.resultSha256){throw 'Invalid publisher validation evidence.'}
-  $paths=@(Get-ChildItem -LiteralPath (Join-Path $root 'tools/OtaChannel') -Recurse -File|Where-Object {$_.FullName -notmatch '[\\/](bin|obj)[\\/]'}|ForEach-Object {[IO.Path]::GetRelativePath($root,$_.FullName).Replace('\','/')})+@('Directory.Build.props','Directory.Build.targets','global.json')
+  $paths=@(Get-ChildItem -LiteralPath (Join-Path $root 'tools/OtaChannel') -Recurse -File|Where-Object {$_.FullName -notmatch '[\\/](bin|obj)[\\/]'}|ForEach-Object {[IO.Path]::GetRelativePath($root,$_.FullName).Replace('\','/')})+@('Directory.Build.props','Directory.Build.targets','global.json'|Where-Object {Test-Path -LiteralPath (Join-Path $root $_)})
   if(@(Compare-Object ($paths|Sort-Object) (@($proof.inputs.path)|Sort-Object)).Count){throw 'Publisher input inventory changed.'}
   foreach($input in $proof.inputs){if((Get-FileHash -LiteralPath (Join-Path $root $input.path)).Hash -ne $input.sha256){throw ('Publisher input changed: '+$input.path)}}
   Copy-Item -LiteralPath $PublisherEvidence -Destination (Join-Path $work 'publisher-validation.json')
