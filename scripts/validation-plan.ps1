@@ -110,6 +110,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     # update transactions. Include preceding scoped changes since the full
     # baseline, plus exact native box bindings and host/plugin presentation.
     $resources=$saffron+'|^assets/specs/trade-evidence-spec\.json$|^src/Connection/(TradeBoxRules|TradeBoxesNative|TradeActions|EvidenceBindings|TapManifest|LiveContracts|SelfTest)\.cs$|^src/Core/(DailyTradePriceChange|DailyTradeExecution|DailyTradeBoxes|DailyResourceReview|DailyFeatureDiscovery|DailyDiagnosticExport|DailyMissions|DailyPreferences)\.cs$|^src/Desktop/(DailyPreferencesPanel|DailyToolPanel\.xaml|DailyResourceReviewWindow|MainWindow\.(ResourceReview|FeatureDiscovery(?:\.Smoke)?|PluginMarket|Plugins|StartupFeatures|ToolPlugins))\.cs$|^src/Desktop/DailyToolPanel\.xaml$|^tests/Dustweave.Tests/Cases/(TradeBoxes|FeatureDiscovery|PassRecovery|TradeCalendar|TradeTransition)Cases\.cs$|^tools/OtaMirror/Program\.cs$'
+    $resources+='|^src/Shared/DailyBridgeVersion\.cs$'
     if($Scope -in @('Auto','Resources') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $resources}).Count){$selectedScope='Resources';$outside=@()}
     $reason='Changes outside the account validation boundary: '+($outside -join ', ')
     if(!$outside.Count){
