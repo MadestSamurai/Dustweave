@@ -35,9 +35,10 @@
    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabItem">
     <Border x:Name="Row" CornerRadius="8" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" Padding="12,8" Margin="12,2">
-     <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="26"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Path x:Name="NavIcon" Style="{StaticResource LineIcon}" Data="{TemplateBinding Tag}" Stroke="{TemplateBinding Foreground}" HorizontalAlignment="Left"/><ContentPresenter x:Name="NavHeader" Grid.Column="1" ContentSource="Header" VerticalAlignment="Center"/></Grid>
+     <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="26"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Path x:Name="NavIcon" Style="{StaticResource LineIcon}" Data="{TemplateBinding Tag}" Stroke="{TemplateBinding Foreground}" HorizontalAlignment="Left"/><ContentPresenter x:Name="NavHeader" Grid.Column="1" ContentSource="Header" VerticalAlignment="Center"/><Ellipse x:Name="NewFeatureDot" Grid.Column="2" Width="8" Height="8" Margin="8,0,0,0" VerticalAlignment="Center" Fill="{DynamicResource Primary}" Visibility="Collapsed" ToolTip="{l:Tr discovery.new}"/></Grid>
     </Border>
     <ControlTemplate.Triggers>
+     <Trigger Property="l:FeatureDiscoveryUi.HasNew" Value="True"><Setter TargetName="NewFeatureDot" Property="Visibility" Value="Visible"/></Trigger>
      <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Row" Property="Background" Value="{DynamicResource SurfaceMuted}"/></Trigger>
      <Trigger Property="IsSelected" Value="True"><Setter TargetName="Row" Property="Background" Value="{DynamicResource PrimarySoft}"/><Setter Property="Foreground" Value="{DynamicResource Ink}"/><Setter TargetName="NavIcon" Property="Stroke" Value="{DynamicResource Primary}"/><Setter TargetName="NavHeader" Property="TextElement.Foreground" Value="{DynamicResource Primary}"/><Setter TargetName="NavHeader" Property="TextElement.FontWeight" Value="SemiBold"/></Trigger>
      <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource Focus}"/></Trigger>

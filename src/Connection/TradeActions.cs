@@ -67,7 +67,8 @@ namespace BD2Daily.Live {
    var p=shop.GetProducts().Single(x=>x.ὯὠὥὣὪὭὨὥὫὩὮ==c.Items[2]);Require(p.ὣὡὢὩὥὥὨὯὩὥὯ==quote.Price&&p.ὤὧὤὬὧὫὡὥὮὫὩ==120,"Displayed sale price changed");return p;
   }
   internal static void Execute(Command c,UIBase ui){
-   if(c.Kind=="trade_menu"){
+   if(c.Kind=="trade_boxes_open"){TradeBoxesNative.Open(c);
+   }else if(c.Kind=="trade_menu"){
     Require(BattlePlayManager.ὪὫὢὨὯὭὦὪὦὨὣ.ὨὢὤὪὪὢὩὢὬὠὦ.ToString()=="BMT_NONE","Field idle required");
     ὩὭὨὪὨὨὮὣὪὣὥ.ὢὣὠὮὩὭὧὭὦὪὨ(delegate(QuickMenuUI menu){menu.SetSpecificTalentSkill((ὪὯὯὢὨὮὨὠὥὤὬ)7);menu.SetMenuByPlayer();});
    }else if(c.Kind=="trade_talent"){

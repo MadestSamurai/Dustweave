@@ -41,6 +41,7 @@ public partial class MainWindow
         if (!guided) ShowReleaseNotes();
         _ = CheckUpdatesAsync();
         await RunOnOpenAsync(guided);
+        resourceReviewReady = true;
     }
     private bool ShowUpdateFailure()
     {

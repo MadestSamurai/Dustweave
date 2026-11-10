@@ -136,6 +136,36 @@ Schedules is one plan, with sections separated by spacing and rules rather than 
 
 See [the 1.3.3 review](UX_REVIEW_1.3.3.md) for the issue inventory and validation scope, and [the 2026-11-03 adjustment list](UX_REVIEW_2026-11-03.md) for the latest interface changes and open suggestions.
 
+## New tools and plugins
+
+- Show a small green dot beside Tools/Plugins while that category contains unread entries.
+  Pin unread rows before other rows within the current search/category; retain the existing
+  order within each group. Mark each unread row with both a dot and localized “New” text.
+- Entering a page, rendering a row, searching, refreshing or downloading does not count as viewing.
+  An explicitly opened details window or installation explanation must render before acknowledgement;
+  a successfully displayed tool window also counts. Failed launches never clear the reminder.
+- “View details” works without installation or a game connection. Textbook details include where
+  its weekly task appears and how to enable it. Viewing one entry clears only that entry, including
+  its appearances in both Market/Installed and Tools. Previously viewed features stay quiet after updates.
+- Discover future tool IDs from the built-in catalog and plugin IDs from verified marketplace catalogs
+  or installed plugins. Fetch only the small catalog in the background at interactive startup.
+  Keep viewed IDs in persistent user preferences, outside cleanup caches; never couple this UI to execution guards.
+
+## Daily resource review
+
+- A one-time update reminder lets users review each saved account's box opening,
+  daily potion refill target and Blood Cocktail mail preference together. Load
+  existing values; box opening remains off for new and existing accounts.
+- Use the shared themed window and three-language keys. Keep the three settings
+  visible with short explanations and separators. Account switching retains local
+  drafts; Save validates every edited account before writing. Keep current settings
+  and closing the reminder leave preferences unchanged.
+- The reminder appears only when the interactive host is idle. It must never
+  block scheduled work, run-on-open, update recovery or account switching.
+- The ordinary daily settings page retains autosave and exposes the same box
+  opening option for all trading modes. State explicitly that locked boxes stay
+  locked and opening requires trading to be enabled.
+
 ## Sandbox installation guidance
 
 - Preflight the whole parallel queue before account switches or worker creation. Account-page runs, run-on-open and scheduled parallel runs share the installation editor. Binding repair also checks this prerequisite. Ordinary single-account and sequential starts do not require Sandboxie.

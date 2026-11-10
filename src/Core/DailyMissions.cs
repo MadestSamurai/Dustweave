@@ -269,14 +269,14 @@ public static class DailyPasses
         var rewards = missionReplies.Select(r => O(("role", "missions.clear"), ("data", r))).Concat(levelReplies.Select(r => O(("role", "pass.reward"), ("data", r))));
         return O(("pass_id", pid), ("claimed_missions", ready), ("new_level_rewards", added.Select(p => O(("id", p.Id), ("kind", p.Kind))).ToArray()), ("response_counts", O(("missions.clear", missionReplies.Length), ("pass.reward", levelReplies.Length))), ("reward_info", rewards.ToArray()), ("cache_matched", true), ("newbie_advanced", advanced), ("report", current));
     }
-    private static async Task<JsonObject> Read(DailyWorkflow w, long? expected = null)
+    private static async Task<JsonObject> Read(DailyWorkflow w, long expected, double seconds)
     {
         var e = await w.WaitEvidence(["pass", "missions"], e =>
         {
             long selected = N(R(e, "pass.scope", "ὢὡὧὮὫὫὬὥὪὪὢ"));
-            return ActiveIds(e).Contains(selected) && (expected == null || selected == expected)
+            return ActiveIds(e).Contains(selected) && selected == expected
                 && N(State(e, "pass.definition", "$self")["PassId"]) == selected;
-        }, 12, "通行证页面尚未载入，保留待检查项");
+        }, seconds, "通行证页面尚未载入，保留待检查项");
         // A settled but incompatible definition is not a loading delay.
         try { return Report(e, w.Context["cycle"]!, w.Index("missions/LocalTextTable.json")); }
         catch (InvalidDataException error)
@@ -288,15 +288,14 @@ public static class DailyPasses
             throw failure;
         }
     }
-    private static async Task Prepare(DailyWorkflow w, long expected)
+    private static async Task Prepare(DailyWorkflow w, long expected, double end)
     {
-        double end = w.Time + 12;
         while (w.Time < end)
         {
             var e = await w.Evidence("pass");
             if (N(R(e, "pass.scope", "ὢὡὧὮὫὫὬὥὪὪὢ")) != expected || N(State(e, "pass.definition", "$self")["PassId"]) != expected)
             { await w.Delay(150); continue; }
-            var rows = DailyNavigationDecision.Rows(e["Frame"]!.AsObject()).Where(r => S(r["Type"]) == "PassUI").SelectMany(r => Rows(r["Targets"])).Where(t => S(t["Route"]) == "pointer" && S(t["Field"]).EndsWith("/Button - Tab - Mission", StringComparison.Ordinal)).ToArray();
+            var rows = DailyNavigationDecision.Rows(e["Frame"]!.AsObject()).Where(r => S(r["Type"]) == "PassUI" && DailyNavigationDecision.ReadyInput(r)).SelectMany(r => Rows(r["Targets"])).Where(t => S(t["Route"]) == "pointer" && S(t["Field"]).EndsWith("/Button - Tab - Mission", StringComparison.Ordinal)).ToArray();
             if (rows.Length == 1)
             {
                 try
@@ -311,6 +310,65 @@ public static class DailyPasses
             await w.Delay(200);
         }
         throw new StageHostException("adapter", "通行证任务页尚未载入。");
+    }
+    private static async Task<(JsonObject Report, JsonObject? Target, JsonObject? Evidence)> Ready(DailyWorkflow w, long id, bool claim)
+    {
+        // Only non-consuming preparation is retried. Definition-ready does not
+        // imply input-ready: a switched pass can already expose AllRecv while
+        // its canvas is still rebuilding (2026-11-10, pass 146).
+        const int attempts = 3;
+        for (int attempt = 1; ; attempt++)
+        {
+            JsonObject? observed = null;
+            try
+            {
+                double end = w.Time + 12;
+                using var waiting = DailyObservationWindow.Begin(12, () => w.Time);
+                observed = await w.Evidence("pass", "missions");
+                long selected;
+                try { selected = N(R(observed, "pass.scope", "ὢὡὧὮὫὫὬὥὪὪὢ")); }
+                catch (InvalidDataException) { selected = 0; }
+                if (selected != id)
+                    await w.Step("PassUI", operation: "pass_select", value: checked((int)id), reason: "检查当前有效通行证");
+                await Prepare(w, id, end);
+                var report = await Read(w, id, Math.Max(.001, end - w.Time));
+                if (!claim) return (report, null, null);
+                while (w.Time < end)
+                {
+                    observed = await w.Evidence("pass", "missions");
+                    if (N(R(observed, "pass.scope", "ὢὡὧὮὫὫὬὥὪὪὢ")) == id && N(State(observed, "pass.definition", "$self")["PassId"]) == id)
+                    {
+                        // Reread eligibility as well as the pointer. Never use
+                        // a target or claimable count retained across attempts.
+                        report = Report(observed, w.Context["cycle"]!, w.Index("missions/LocalTextTable.json"));
+                        var surfaces = DailyNavigationDecision.Rows(observed["Frame"]!.AsObject()).Where(r => S(r["Type"]) == "PassUI").ToArray();
+                        if (surfaces.Length == 1 && DailyNavigationDecision.ReadyInput(surfaces[0]))
+                        {
+                            bool enabled = B(R(observed, "pass.scope", Enabled));
+                            if (!enabled && N(report["claimable"]) == 0) return (report, null, observed);
+                            var targets = Rows(surfaces[0]["Targets"])
+                                .Where(t => B(t["Enabled"]) && S(t["Route"]) == "pointer" && S(t["Field"]).EndsWith("/Button - AllRecv", StringComparison.Ordinal)).ToArray();
+                            if (enabled && targets.Length == 1) return (report, targets[0], observed);
+                        }
+                    }
+                    await w.Delay(150);
+                }
+                throw new StageHostException("adapter", "通行证页面尚未载入，保留待检查项");
+            }
+            catch (Exception error) when (error is StageHostException { Kind: "adapter", HoldQueue: false } || error is DailyStepException { PresentationChanged: true })
+            {
+                error.Data["pass_evidence"] = observed;
+                w.Driver.Diagnostics.Event("pass_prepare_retry", O(("pass_id", id), ("attempt", attempt), ("limit", attempts), ("retrying", attempt < attempts), ("error", error.Message), ("evidence", observed)));
+                if (attempt == attempts)
+                {
+                    if (error is StageHostException) throw;
+                    var failure = new StageHostException("adapter", error.Message);
+                    failure.Data["pass_evidence"] = observed;
+                    throw failure;
+                }
+                await w.Delay(250);
+            }
+        }
     }
     private static async Task Finish(DailyWorkflow w, bool popup)
     {
@@ -386,22 +444,18 @@ public static class DailyPasses
                 catch (InvalidDataException) { selected = 0; }
                 id = remaining.Contains(selected) ? selected : remaining[0];
                 visited.Add(id);
-                if (id != selected)
-                    await w.Step("PassUI", operation: "pass_select", value: checked((int)id), reason: "检查当前有效通行证");
-                await Prepare(w, id);
-                var report = await Read(w, id);
-                e = await w.Evidence("pass", "missions");
-                if (!claim || !B(R(e, "pass.scope", Enabled)))
+                var ready = await Ready(w, id, claim);
+                var report = ready.Report;
+                if (ready.Target == null)
                 {
-                    Require(!claim || N(report["claimable"]) == 0, "Pass native button/eligibility differs");
                     operations.Add(O(("state", "completed"), ("actions", 0), ("report", report)));
                     SaveReport(report);
                 }
                 else
                 {
-                    var target = await w.Pointer("PassUI", t => S(t["Route"]) == "pointer" && S(t["Field"]).EndsWith("/Button - AllRecv", StringComparison.Ordinal));
+                    var target = ready.Target;
                     submitted = true;
-                    var op = await w.Transact("pass.claim_all", O(("pass_id", id)), O(("ui", "PassUI"), ("field", target["Field"]), ("target_id", target["Id"]), ("reason", "领取全部已解锁通行证奖励")));
+                    var op = await w.TransactObserved("pass.claim_all", O(("pass_id", id)), O(("ui", "PassUI"), ("field", target["Field"]), ("target_id", target["Id"]), ("reason", "领取全部已解锁通行证奖励")), ready.Evidence!);
                     bool popup = Rows(op["result"]!["reward_info"]).Any(r => S(r["role"]) == "missions.clear" && r["data"]?["RewardInfoBundle"] != null);
                     await Finish(w, popup);
                     operations.Add(O(("state", "completed"), ("actions", 1), ("id", op["id"]), ("result", op["result"])));

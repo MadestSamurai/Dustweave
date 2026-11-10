@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-11-09T11:58:41.6642806Z",
+  "generatedUtc": "2026-11-10T03:33:07.0027401Z",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -139,7 +139,7 @@
     },
     {
       "path": "assets/specs/trade-evidence-spec.json",
-      "sha256": "ee3456299402715b8bff0ac3cf3e3a12c05d1bdff9536d0e77530386fc94092d"
+      "sha256": "60715fcf1b4af6b6e99a0a9867da9e8f1d0c5f915573ee0f856708db8f9efd69"
     },
     {
       "path": "assets/specs/weekly-evidence-spec.json",
@@ -711,7 +711,7 @@
     },
     {
       "path": "src/Connection/Dustweave.Connection.csproj",
-      "sha256": "e49fbe761799c613c8a781f11a14de6c5740da6e3021fd75ab4b249562430f9c"
+      "sha256": "a302909b8e9d66ca7df42c153f678f60df0eb944837c446d97cf498f27eac6af"
     },
     {
       "path": "src/Connection/EquipmentToolsNative.cs",
@@ -739,7 +739,7 @@
     },
     {
       "path": "src/Connection/Evidence.cs",
-      "sha256": "a666344c1a167ea1d1acc6eede62562f4a9b7197577e19c3145baf1695e8a34a"
+      "sha256": "5e23c78faeb2cdea091914f1bef1b1298a0e7b7b1f578c2e4fe2c42ee837021b"
     },
     {
       "path": "src/Connection/EvidenceAliases.cs",
@@ -747,7 +747,7 @@
     },
     {
       "path": "src/Connection/EvidenceBindings.cs",
-      "sha256": "c124db6f897baa7dc445cc4b60f3a985aef851d3db01f85f5cd963adc1683b1e"
+      "sha256": "cde7392ff4a50fb78b884e58f456214a61a25f50232720f5baa7788e19e5bf5f"
     },
     {
       "path": "src/Connection/FieldAvoidancePlanner.cs",
@@ -775,7 +775,7 @@
     },
     {
       "path": "src/Connection/LiveContracts.cs",
-      "sha256": "c0bbea37d159eb12b2c16f291e187aee0a97ae20b9d5e5f0e55f0ba243339273"
+      "sha256": "000020d2ac11a267c499cb1c4b9c43c0c00eb83413ed740b71b1975635bb90b8"
     },
     {
       "path": "src/Connection/LiveEntry.cs",
@@ -827,7 +827,7 @@
     },
     {
       "path": "src/Connection/SelfTest.cs",
-      "sha256": "57193e77928c5367a120d3930e0e7f925e6eed7cfbeabf2e378364d8748b89b3"
+      "sha256": "d8443af71f21ec15eebabac9a11a2d114505b00ed0924fe1a7dbacfd387804a6"
     },
     {
       "path": "src/Connection/SquareApproach.cs",
@@ -851,11 +851,19 @@
     },
     {
       "path": "src/Connection/TapManifest.cs",
-      "sha256": "e6411f929a1fc1e799066ab439ad2ba01d56a92f76b0411e08206b29fa3af0d2"
+      "sha256": "18201821860b0ac413a2b85e5ab4fe87dd6cd282b7a46cec8a24ee14c0784ea3"
     },
     {
       "path": "src/Connection/TradeActions.cs",
-      "sha256": "8403f152fd357384d39b24a7d449e3aeb80761824f8affff1f02764d77d53fc8"
+      "sha256": "1322e3fd69e9100273bd4e177b4069c5ab53c824254dca459a1ed483bab18512"
+    },
+    {
+      "path": "src/Connection/TradeBoxesNative.cs",
+      "sha256": "9e7395e8205e64e1203998c27df22f13ab03b4e3ee80f992dbc7a216dfc407e0"
+    },
+    {
+      "path": "src/Connection/TradeBoxRules.cs",
+      "sha256": "f2311e039561d5b3fe1209bb6d2480271bcbc80c3abef819525a0f7a5e7b8e66"
     },
     {
       "path": "src/Connection/TradeObservation.cs",
@@ -995,7 +1003,7 @@
     },
     {
       "path": "src/Core/DailyDiagnosticExport.cs",
-      "sha256": "2c33ccbd4ad18c5d87a04fd10c5baa22f4dfaac34c4133edc779836e4b4d0a92"
+      "sha256": "76484bf43a19b57f95b06d0757f362943f3a2549b1a04f8320e14d1421f1db72"
     },
     {
       "path": "src/Core/DailyDiagnosticTrail.cs",
@@ -1048,6 +1056,10 @@
     {
       "path": "src/Core/DailyEvidenceReadiness.cs",
       "sha256": "a5ae20c9d91e9c9e4c115260251d3cf63352da512f8bc843db689801adab7ccb"
+    },
+    {
+      "path": "src/Core/DailyFeatureDiscovery.cs",
+      "sha256": "86a9b2ad7ebb242801f3a3253fb5d04764aee0c57cfa51e92ac0826960dfd83f"
     },
     {
       "path": "src/Core/DailyFieldRewards.cs",
@@ -1235,7 +1247,7 @@
     },
     {
       "path": "src/Core/DailyMissions.cs",
-      "sha256": "4658461bb8aa7dd7bcede7aa3be1e70b6a72c2a6721e0c4036b39713feb5be26"
+      "sha256": "fd5781480f911861b01ad7c06cb239fc86fb6c91bbd549a2a985393467d19a59"
     },
     {
       "path": "src/Core/DailyMonsterHunt.cs",
@@ -1307,7 +1319,7 @@
     },
     {
       "path": "src/Core/DailyPreferences.cs",
-      "sha256": "be7aeb55c871a7454cff24365edc8d1911e5d50d025340789a8e5478d0c023a9"
+      "sha256": "837488d9f9ce6e348ceebeda0a5eeaba3f18f471858cfe4e4b23563a62399a43"
     },
     {
       "path": "src/Core/DailyQueueCompletion.cs",
@@ -1336,6 +1348,10 @@
     {
       "path": "src/Core/DailyQuizRecovery.cs",
       "sha256": "a2406971c21ae4947ae771312177f1c735b413c77c5efe210dc18d2340368d80"
+    },
+    {
+      "path": "src/Core/DailyResourceReview.cs",
+      "sha256": "ea9e395d693fe3b566defc5b1f473e0e127cf206f2c1b89e5a75b9b5fe3c6070"
     },
     {
       "path": "src/Core/DailyRoomStage.cs",
@@ -1550,6 +1566,10 @@
       "sha256": "cd21968ad7304a1414c47ab967f503ab7824e6a23b936d42851c08f7f791df55"
     },
     {
+      "path": "src/Core/DailyTradeBoxes.cs",
+      "sha256": "590473ac37143a3c7cbbfc5f1396ef873d01ed34d27b2103276abeece9a1505d"
+    },
+    {
       "path": "src/Core/DailyTradeCaptureConnection.cs",
       "sha256": "85f40fb027f4d5a88db6ecbd3a5efab3c7f6e6b52620b705030cc123df0689af"
     },
@@ -1575,7 +1595,7 @@
     },
     {
       "path": "src/Core/DailyTradeExecution.cs",
-      "sha256": "9cdf74456de403f9e961fb473702d5282aca713e4e21043c5c3c7037a3ce75bc"
+      "sha256": "3705ca6527e148993104640a2f4cf8d58945b04f176d53beac662c6d6713e345"
     },
     {
       "path": "src/Core/DailyTradeForecast.cs",
@@ -1599,7 +1619,7 @@
     },
     {
       "path": "src/Core/DailyTradePriceChange.cs",
-      "sha256": "6505d884976231a3acbee32188015872882e57c070a4ab9fd542c277f5cc8c3f"
+      "sha256": "004dbeb8655237fb6bc42184dd8064cfe0d56225bf6e776f84a439963564c3a6"
     },
     {
       "path": "src/Core/DailyTradeProof.cs",
@@ -1863,11 +1883,15 @@
     },
     {
       "path": "src/Desktop/DailyPreferencesPanel.cs",
-      "sha256": "ec186f9c66e5a8962117090b16ea8735ef83788b0675ddd64ad112dc6120e9ce"
+      "sha256": "87a6d5d34089b6143920de4b7125f5042371b9d7e253c41fe968d99dc70aa632"
     },
     {
       "path": "src/Desktop/DailyProductVersion.cs",
       "sha256": "9944d632daccb1fb7dd9f9c97eab69633133aec94a0e25666afcf35a0c2283bf"
+    },
+    {
+      "path": "src/Desktop/DailyResourceReviewWindow.cs",
+      "sha256": "e91014cdcaf9d0925b2233784b178c16e49c230abd7afcfcb6bd895b5e97e69c"
     },
     {
       "path": "src/Desktop/DailyResultWindow.cs",
@@ -1915,11 +1939,11 @@
     },
     {
       "path": "src/Desktop/DailyToolPanel.xaml",
-      "sha256": "2597c6fbe41cf5784751d8f30c24ecedf83beb73ed0c7715b3ce796753b30dbe"
+      "sha256": "26dae1aac6d398a00f3329cbe6af791f6cca8ec126c7ecf7be0cc26c791716bd"
     },
     {
       "path": "src/Desktop/DailyToolPanel.xaml.cs",
-      "sha256": "e83ab8cc0f02208f50707fb32115d3763d4e43ebe0b571f3b04dcca9794fc588"
+      "sha256": "d1b51f26f3cd7be79e6ac9e31eee83dd65935a48e81026755cb644bb2b70af33"
     },
     {
       "path": "src/Desktop/DailyUiText.cs",
@@ -2031,7 +2055,7 @@
     },
     {
       "path": "src/Desktop/Localization/strings.json",
-      "sha256": "ac67df9a3509665e3384a8f628a49d35d49fcff6188858bea6e1e1e46c69c2f3"
+      "sha256": "828c8ae1a862c786438f16109d2961180cca4725b3a568b5fb5f26afbea4842a"
     },
     {
       "path": "src/Desktop/LocalizedTextCatalog.cs",
@@ -2088,6 +2112,14 @@
     {
       "path": "src/Desktop/MainWindow.EventPlugin.Smoke.cs",
       "sha256": "f47950d0e3c9c9a3582c1539e568a0f37c54901efd711b2862d5aa1137a6a8f2"
+    },
+    {
+      "path": "src/Desktop/MainWindow.FeatureDiscovery.cs",
+      "sha256": "9c6b864c14df32f8e2f9b4c9d1d043dc772711d76cbdae7e03d12c7e6937d265"
+    },
+    {
+      "path": "src/Desktop/MainWindow.FeatureDiscovery.Smoke.cs",
+      "sha256": "fb3f2193a86933d377517666e5ff76c2d09dba6db2c6fdacd395fa5bb9c5b2fb"
     },
     {
       "path": "src/Desktop/MainWindow.FirstRun.Smoke.cs",
@@ -2147,7 +2179,7 @@
     },
     {
       "path": "src/Desktop/MainWindow.PluginMarket.cs",
-      "sha256": "8c1dee714ac71a48506d2c4b3796102aac7dc1c37d8e6680b3832f6d01a266e2"
+      "sha256": "4f386e110255f64a207265882ce2bf61c3c4c7be3ce158d746fefa3a2eacd6f0"
     },
     {
       "path": "src/Desktop/MainWindow.PluginMarket.Smoke.cs",
@@ -2155,7 +2187,7 @@
     },
     {
       "path": "src/Desktop/MainWindow.Plugins.cs",
-      "sha256": "61043d069be83c1605257a964a8ac98b63587ef135f401e3ef1826161b213262"
+      "sha256": "eeba8c39058921588df1e38879bf3bd0cf97e8768e2662e8a97ce801fef8400d"
     },
     {
       "path": "src/Desktop/MainWindow.Presentation.cs",
@@ -2168,6 +2200,10 @@
     {
       "path": "src/Desktop/MainWindow.Repair.cs",
       "sha256": "e0bcf5037b297b01929605b4c5cb0dd71b63ebc24f646b0fdefba2e171d10277"
+    },
+    {
+      "path": "src/Desktop/MainWindow.ResourceReview.cs",
+      "sha256": "6a79c85cfeb9f4ee8491c6afa23fc78a784bc2a6d7fa3ae8ea3353d08c59071f"
     },
     {
       "path": "src/Desktop/MainWindow.RunReport.Smoke.cs",
@@ -2203,7 +2239,7 @@
     },
     {
       "path": "src/Desktop/MainWindow.StartupFeatures.cs",
-      "sha256": "19856d031b76186dd853f4aa3e3267a66a3d70ec6aa4e8b7cb2533d7c7bb790f"
+      "sha256": "3a27afff929ad988c21b880c107ce17634f66da3f701bc9a16fc678cf8b533a7"
     },
     {
       "path": "src/Desktop/MainWindow.StorageView.cs",
@@ -2227,7 +2263,7 @@
     },
     {
       "path": "src/Desktop/MainWindow.ToolPlugins.cs",
-      "sha256": "a409985382aa923aba86157d01bd9bcea8e41ea9156ef664226e72a4716b4770"
+      "sha256": "81aaccad64f154c3bffd28681eb9bde6daeca991e88f8b167b35cfd762805f99"
     },
     {
       "path": "src/Desktop/MainWindow.ToolPreparationSmoke.cs",
@@ -2243,11 +2279,11 @@
     },
     {
       "path": "src/Desktop/MainWindow.xaml",
-      "sha256": "5bd879ced0141ede69bf5249c847a9b19b04a85df1f11e87c89fdb38c1984817"
+      "sha256": "8bfce6294e61807358bcb3910523aa2ea27b496281c19bb09773caafc965290f"
     },
     {
       "path": "src/Desktop/MainWindow.xaml.cs",
-      "sha256": "1703804c4af14bec93996c8268f23d48edf8ae88b57c2ca3a6364c7efeb39260"
+      "sha256": "c6de2fdc8bae642ccb994f8e7c965989c23d1e160b8177bdfb4541e520248f4a"
     },
     {
       "path": "src/Desktop/ManagedToolPlugin.cs",
@@ -4087,7 +4123,7 @@
     },
     {
       "path": "src/Shared/DailyBridgeVersion.cs",
-      "sha256": "e5faec606ade87816f12a0d1fc475f8f06ab7f278fbeb4e09e80d7aa1002c63c"
+      "sha256": "484f4d160063fcb2cf48beada79b31882e97616368dafd681ffdb1a71334539e"
     },
     {
       "path": "src/Shared/DailyContracts.cs",
@@ -5290,6 +5326,10 @@
       "sha256": "6af28440f37c867b382709a20f318fa8c2ff6eedff4815a6bd0bf28b3eaaa791"
     },
     {
+      "path": "tests/Dustweave.Tests/Cases/FeatureDiscoveryCases.cs",
+      "sha256": "e260d2a4d1c96dac9edbcdd9a0459e86ed881aeb59292130d0bef3079c5ee39a"
+    },
+    {
       "path": "tests/Dustweave.Tests/Cases/FieldAvoidanceCases.cs",
       "sha256": "92b92b2e5a144ad2fc9ab68fa994f8f5d5b436b5899d4d91062e2fbf327b0609"
     },
@@ -5487,7 +5527,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/PassRecoveryCases.cs",
-      "sha256": "2d74f13fc08deb8e65f1aa40d5aa59ad6d35efdf73863d1491812cd80ca917ed"
+      "sha256": "13875269e4df0cd4ec09fe08c243223cfc89ab6d92904baa5d52c3021abb1ca8"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/PickupQueueRecoveryCases.cs",
@@ -5670,8 +5710,12 @@
       "sha256": "03102a880d926acc52839ac98f7d6d59d0dc1f845594b98cc37fb4dfba7355af"
     },
     {
+      "path": "tests/Dustweave.Tests/Cases/TradeBoxesCases.cs",
+      "sha256": "fc9a9028561b097b71af6c06257f4511d5e27bff0f4a9570ec9fe6a76f028bfc"
+    },
+    {
       "path": "tests/Dustweave.Tests/Cases/TradeCalendarCases.cs",
-      "sha256": "53af17f819ebdaf1df3286a6db7515d58fbaf81bf260392d8bdf94dd15f01b07"
+      "sha256": "dc7f6c7d66a005bc427778e4842f144af36c8e2a61a265950ba875ac8443f319"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/TradeDataCases.cs",
@@ -5703,7 +5747,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/TradeTransitionCases.cs",
-      "sha256": "53d5120359d1e3c2edabb1112c798d48bbf2f8e0e7c16df7791d956c238f388d"
+      "sha256": "0f4bea6c6a81eeee7c07ae6ce2c15e7735bd9ea58db4997d2a8e139f0b4c6b93"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/TravelTransitionCases.cs",
@@ -5783,7 +5827,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Program.cs",
-      "sha256": "6dc586b22bb40b2b3f8c59a857672f3875df21d82b8ef5e806dbd9194b0baccc"
+      "sha256": "ae0a7c14de37a530a303311297099664343553666155638dc2e431e5902c18d5"
     },
     {
       "path": "tests/Dustweave.Tests/README.md",

@@ -39,10 +39,34 @@ static class TradeCalendarCases
         Check(N(p["summary"]?["cash_required"])<=5 && N(p["summary"]?["cash_remaining"])>=95,"calendar honors both reserve and per-run spend cap");
         s=State(c); s["processing_enabled"]=false; s["items"]=O(("1",20)); s["today_quotes"]=new JsonArray(O(("item",1),("shop",1),("rate",120),("price",10)));
         p=Plan(c,s); Check(Rows(p["cooking"]).Length==0 && !Rows(p["sales"]).Any(r=>B(r["today_quote_confirmed"])) && N(p["summary"]?["potions_used"])==0,"explicit later purchase-only choice performs no processing or potion spending");
-        c=Catalog(); c["items"]![1]!["day"]=16; s=State(c,"2026-11-16"); s["items"]=O(("2002",100));
+        Check(DailyTradePriceChange.EffectiveDate==new DateOnly(2026,11,19),"announced maintenance was postponed to November 19");
+        // These dates are independent of EffectiveDate: catch an accidental
+        // return to the old cutoff, and retain the existing two-day grace.
+        for(int day=16;day<=21;day++)
+        {
+            c=Catalog(); c["items"]![1]!["day"]=day; c["items"]!.AsArray().Add(Item(2031,729,day));
+            s=State(c,$"2026-11-{day}",100000); s["items"]=O(("2002",100),("2031",7));
+            s["today_quotes"]=new JsonArray(O(("item",2002),("shop",1),("rate",120),("price",33)),
+                O(("item",2031),("shop",1),("rate",120),("price",729)));
+            p=Plan(c,s);
+            Check(N(p["forecast"]?["announced_prices"])==(day<19?1:0),$"postponed forecast boundary November {day}");
+            Check(Rows(p["warnings"]).Any(w=>S(w["code"])=="price_change_pending")== (day is 19 or 20),$"unchanged maintenance grace November {day}");
+            Check(Count(p,"sales",2031)==7 && Rows(p["sales"]).Any(r=>N(r["item"])==2031 && B(r["today_quote_confirmed"])),
+                $"unchanged fish sticks still sell at confirmed peak November {day}");
+            if(day<=20)
+            {
+                Check(Count(p,"sales",2002)==0 && Count(p,"holds",2002)>=100,$"ample funds retain rising-price food November {day}");
+                if(day<19)
+                    Check(S(Rows(p["holds"]).Single(h=>N(h["item"])==2002)["expected_sale_date"])==$"2026-12-{day}",
+                        $"missed pre-maintenance peak moves to the actual next peak November {day}");
+            }
+            else Check(Count(p,"sales",2002)>=100 && Rows(p["sales"]).Any(r=>N(r["item"])==2002 && B(r["today_quote_confirmed"])),
+                "expired grace still uses observed prices instead of indefinitely blocking sales");
+        }
+        c=Catalog(); c["items"]![1]!["day"]=19; s=State(c,"2026-11-19"); s["items"]=O(("2002",100));
         s["today_quotes"]=new JsonArray(O(("item",2002),("shop",1),("rate",120),("price",33)));
         p=Plan(c,s); Check(Count(p,"sales",2002)==0 && Rows(p["warnings"]).Any(w=>S(w["code"])=="price_change_pending"),"maintenance boundary keeps changed dishes until actual price is confirmed");
-        c["items"]![1]!["sale"]=66; s=State(c,"2026-11-16",100000); s["items"]=O(("1",10));
+        c["items"]![1]!["sale"]=66; s=State(c,"2026-11-19",100000); s["items"]=O(("1",10));
         s["today_quotes"]=new JsonArray(O(("item",2002),("shop",1),("rate",120),("price",66)));
         p=Plan(c,s); Check(Count(p,"cooking",2002)>0 && Count(p,"sales",2002)>0,"confirmed new prices immediately enable profitable current cooking and sales");
         Check(N(p["forecast"]?["announced_prices"])==0,"post-maintenance forecasts use captured prices rather than permanent hardcoded overrides");
@@ -50,12 +74,12 @@ static class TradeCalendarCases
         s["potions"]=10000; p=Plan(c,s);
         Check(N(p["summary"]?["potions_to_buy"])==0,"existing pills are used before buying any more");
         s["today_quotes"]![0]!["price"]=33; p=Plan(c,s); Check(!Rows(p["sales"]).Any(r=>B(r["today_quote_confirmed"])),"mismatched current price never authorizes a sale");
-        s=State(c,"2026-11-16"); s["items"]=O(("1",10)); s["protected_items"]=O(("1",10)); s["capacity_limits"]=O(("1",10));
+        s=State(c,"2026-11-19"); s["items"]=O(("1",10)); s["protected_items"]=O(("1",10)); s["capacity_limits"]=O(("1",10));
         p=Plan(c,s); Check(Count(p,"purchases",1)==0 && Count(p,"cooking",2002)==0,"protected inventory and full capacity cannot be consumed or overfilled");
         c=Catalog(); c["offers"]![0]!["base_price"]=10; s=State(c); s["recipes"]=new JsonArray();
         p=Plan(c,s,O(("include_break_even_resales",true)));
         Check(N(p["summary"]?["break_even_count"])>0,"achievement purchases remain available without sacrificing primary forecast value");
-        s=State(c,"2026-11-16"); s["future_supply"]=O(("days",29),("database_sha256","synthetic"),("items",O(("1",2900))));
+        s=State(c,"2026-11-19"); s["future_supply"]=O(("days",29),("database_sha256","synthetic"),("items",O(("1",2900))));
         s["offers"]![0]!["remaining"]=0; p=Plan(c,s);
         Check(Count(p,"cooking",2002)==0,"future expected drops never satisfy today's recipe ingredients");
         c=Catalog(); c["items"]![1]!["sale"]=999;

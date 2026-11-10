@@ -61,7 +61,7 @@ public sealed partial class DailyPluginPanel
     private void RenderMarket()
     {
         marketCards.Children.Clear();
-        if (marketSnapshot == null) return;
+        if (marketSnapshot == null) { RefreshDiscovery(); return; }
         foreach (var item in marketSnapshot.Catalog.Plugins)
         {
             var body = new StackPanel();
@@ -78,9 +78,11 @@ public sealed partial class DailyPluginPanel
             button.IsEnabled = installed || item.Compatible;
             if (!installed && item.Compatible) button.Style = (Style)Application.Current.FindResource("PrimaryButton");
             button.Click += (_, _) => { if (installed) SelectMarket(false); else MarketInstallRequested?.Invoke(item); };
-            body.Children.Add(button); marketCards.Children.Add(Card(body));
+            body.Children.Add(button); marketCards.Children.Add(FeatureCard(item.Id, body, () => item.Name(L.Code),
+                () => item.Description(L.Code), item.Capabilities.Contains("tactics", StringComparer.Ordinal)));
         }
         if (marketSnapshot.Catalog.Plugins.Length == 0) marketCards.Children.Add(Text("plugins.market_empty"));
+        RefreshDiscovery();
     }
 }
 
@@ -95,6 +97,13 @@ public partial class MainWindow
         pluginPanel.MarketInstallRequested += async item => await InstallMarketPluginAsync(item);
         pluginPanel.IsVisibleChanged += async (_, _) =>
         { if (pluginPanel.IsVisible && !marketRequested && smoke == null) { marketRequested = true; await RefreshPluginMarketAsync(); } };
+        // Discover new published IDs even before the user visits Plugins. This bounded catalog-only
+        // request runs in the background; it never downloads packages, installs or gates startup.
+        ContentRendered += async (_, _) =>
+        {
+            if (smoke == null && !IsSandboxWindow && !ScheduledStartup && !DirectedStartup && !marketRequested)
+            { marketRequested = true; await RefreshPluginMarketAsync(); }
+        };
         Closed += (_, _) => marketCancellation?.Cancel();
     }
     private async Task RefreshPluginMarketAsync()

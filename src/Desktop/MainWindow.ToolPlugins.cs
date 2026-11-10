@@ -89,6 +89,8 @@ public partial class MainWindow
             toolPluginSessions[id]=session;
             session.UpdatePresentation(L.Code,theme.Preference.ToString().ToLowerInvariant());
             session.Show();
+            // StartAsync has already verified the worker handshake and a real window handle.
+            FeatureViewed(DailyFeatureDiscovery.Plugin(id));
         }
         catch(Exception error) { PluginError(error); toolMessage=error.Message; RefreshTools(); }
         finally { startingToolPlugins.Remove(id); }

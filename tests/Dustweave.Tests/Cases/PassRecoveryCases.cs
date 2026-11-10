@@ -92,6 +92,88 @@ static class PassRecoveryCases
             Check(changed && newPageClicks == 1 && Rows(result["reports"]).Select(r => N(r["selected_pass_id"])).ToHashSet().SetEquals([501L, 502L]),
                 "pass switch discards obsolete mission target and reads each pass once without replaying a claim");
         }
+        // Reproduce a switched, fully loaded pass with one enabled AllRecv
+        // pointer but InputReady=false. The virtual clock also covers the second
+        // and third preparation attempts without real waits or game access.
+        foreach (string mode in new[] {"render", "second-attempt", "third-attempt", "mission-tab", "eligibility", "late-eligibility", "already-claimed", "permanent", "cancel", "actor-change"})
+        {
+            using var h = new WorkflowHarness(Path.Combine(root, "pass-ready-" + mode), DailyMissions.Proofs().ToArray(), ["missions.query", "missions.event_query"], assetDirectory: Path.Combine(root, "pass-assets-True"));
+            int selected = 145; bool armed = false, restored = false;
+            double started = 0, wait = mode switch { "second-attempt" => 13, "third-attempt" => 26, _ => .6 };
+            var claimed = new HashSet<int>();
+            void Page()
+            {
+                h.Page("PassUI", "$pointer/Season/Button - Tab - Mission", "_objBackButton", "$pointer/Season/Button - AllRecv");
+                foreach (int index in new[] {0, 2}) h.Frame["Surfaces"]![0]!["Targets"]![index]!["Route"] = "pointer";
+            }
+            Page();
+            h.Readings = () =>
+            {
+                var e = Pass(selected, claimable: !(mode == "late-eligibility" && selected == 146 && armed && !restored), claimed: claimed.Contains(selected), active: [145, 146]);
+                if (mode == "eligibility" && selected == 146 && armed && !restored)
+                    foreach (var reading in Rows(e["Readings"]).Where(r => S(r["Id"]) == "pass.scope"))
+                        foreach (var value in Rows(reading["Values"]).Where(v => S(v["Path"]) == DailyPasses.Enabled)) value["Json"] = "false";
+                return Rows(e["Readings"]);
+            };
+            h.OnCommand = c =>
+            {
+                string kind = S(c["Kind"]);
+                if (kind == "reward_refresh") foreach (string role in new[] {"missions.query", "missions.event_query"}) { h.Event(role, "request"); h.Event(role, "response"); }
+                if (kind == "pass_select")
+                {
+                    selected = I(c["Value"]); Page();
+                    if (mode == "mission-tab" && selected == 146 && !armed) { armed = true; started = h.Time; h.Frame["Surfaces"]![0]!["InputReady"] = false; }
+                }
+                if (kind == "pointer" && N(c["TargetId"]) == 10 && selected == 146 && !armed)
+                {
+                    armed = true; started = h.Time;
+                    if (mode is "render" or "late-eligibility" or "already-claimed" or "cancel" or "actor-change") h.Frame["Surfaces"]![0]!["InputReady"] = false;
+                    if (mode is "second-attempt" or "permanent") h.Frame["Surfaces"]![0]!["Targets"]!.AsArray().RemoveAt(2);
+                    if (mode == "third-attempt") h.Frame["Surfaces"]![0]!["Targets"]!.AsArray().Add(h.Frame["Surfaces"]![0]!["Targets"]![2]!.DeepClone());
+                }
+                if (kind == "pointer" && N(c["TargetId"]) == 12)
+                {
+                    if (selected == 146 && !restored) throw new Exception("Claim dispatched before current pass input settled: " + mode);
+                    if (!claimed.Add(selected)) throw new Exception("Duplicate claim: " + mode);
+                    foreach (string role in new[] {"missions.clear", "pass.reward"}) { h.Event(role, "request"); h.Event(role, "response"); }
+                }
+                if (kind == "click" && N(c["TargetId"]) == 11) h.Page("MenuUI");
+            };
+            h.OnDelay = () =>
+            {
+                if (!armed || restored || h.Time - started < wait || mode == "permanent") return;
+                if (mode == "cancel") { h.Stopped = true; return; }
+                if (mode == "actor-change") return;
+                restored = true;
+                if (mode == "already-claimed") claimed.Add(146);
+                Page();
+            };
+            h.OnRead = () => { if (mode == "actor-change" && armed && h.Time - started >= wait) throw new StageHostException("identity", "synthetic changed session"); };
+            JsonObject? result = null; string failure = "";
+            try { result = await DailyPasses.Run(h.Workflow); }
+            catch (StageHostException error) { failure = error.Kind; }
+            int claims = h.Box.Commands.Count(c => S(c["Kind"]) == "pointer" && N(c["TargetId"]) == 12);
+            if (mode is "cancel" or "actor-change")
+                Check(result == null && claims == 1 && failure == (mode == "cancel" ? "stopped" : "identity") && h.Time < 5, "pass preparation promptly preserves " + mode);
+            else if (mode == "permanent")
+            {
+                Check(S(result?["state"]) == "partial" && Rows(result?["issues"]).Length == 1 && claims == 1 && h.Time is >= 36 and < 40, "unavailable claim is bounded to three attempts and retains prior success");
+                restored = true; Page();
+                var resumed = await DailyPasses.Run(h.Workflow);
+                Check(S(resumed["state"]) == "completed" && claimed.SetEquals([145, 146]), "retrying the stage after restored conditions claims only the missed pass");
+            }
+            else
+                Check(S(result?["state"]) == "completed" && Rows(result?["issues"]).Length == 0 && claimed.SetEquals([145, 146]) && claims == (mode == "already-claimed" ? 1 : 2) && h.Time >= wait && h.Time < wait + 5, "pass preparation recovers from " + mode);
+            if (result != null)
+            {
+                Check(DailyNavigationDecision.Types(h.Frame).Contains("MenuUI"), "pass preparation returns to menu after " + mode);
+                int count = h.Box.Commands.Count;
+                restored = true; Page();
+                if (mode == "permanent") claimed.Add(146);
+                var again = await DailyPasses.Run(h.Workflow);
+                Check(S(again["state"]) == "completed" && !h.Box.Commands.Skip(count).Any(c => S(c["Kind"]) == "pointer" && N(c["TargetId"]) == 12), "repeated pass recovery does not reclaim completed rewards after " + mode);
+            }
+        }
         foreach (string mode in new[] {"progression", "unknown-claim", "stopped", "identity"})
         {
             using var h = new WorkflowHarness(Path.Combine(root, "pass-guard-"+mode), DailyMissions.Proofs().ToArray(), ["missions.query", "missions.event_query"], assetDirectory: Path.Combine(root, "pass-assets-True"));
@@ -126,6 +208,20 @@ static class PassRecoveryCases
                 Check(result == null && failure == (mode == "unknown-claim" ? "pending" : mode), "pass isolation preserves workflow guard: " + mode);
             int submitted = h.Box.Commands.Count(c => S(c["Kind"]) == "pointer" && N(c["TargetId"]) == 12);
             Check(submitted == (mode is "progression" or "unknown-claim" ? 1 : 0), "pass claims are never replayed after " + mode);
+            if (mode == "unknown-claim")
+            {
+                h.Dispose(); // Simulate process exit before opening the same journal.
+                using var resumed = new WorkflowHarness(h.Root, DailyMissions.Proofs().ToArray(), ["missions.query", "missions.event_query"], assetDirectory: Path.Combine(root, "pass-assets-True"));
+                resumed.Page("PassUI", "$pointer/Guide/Button - Tab - Mission", "_objBackButton", "$pointer/Guide/Button - AllRecv");
+                foreach (int index in new[] {0, 2}) resumed.Frame["Surfaces"]![0]!["Targets"]![index]!["Route"] = "pointer";
+                resumed.Readings = () => Rows(Pass(claimed: true)["Readings"]);
+                resumed.OnCommand = c =>
+                {
+                    if (S(c["Kind"]) == "reward_refresh") foreach (string role in new[] {"missions.query", "missions.event_query"}) { resumed.Event(role, "request"); resumed.Event(role, "response"); }
+                    if (S(c["Kind"]) == "click" && N(c["TargetId"]) == 11) resumed.Page("MenuUI");
+                };
+                Check(S((await DailyPasses.Run(resumed.Workflow))["state"]) == "completed" && !resumed.Box.Commands.Any(c => N(c["TargetId"]) == 12), "restart with an uncertain journal accepts native claimed state without replaying the saved claim");
+            }
         }
         var row = O(("instance", 10), ("skill", O(("classType", 1), ("resetType", 2), ("groupId", 114), ("id", 1))), ("disabled", false));
         var pending = new[] {O(("Group", 114))};

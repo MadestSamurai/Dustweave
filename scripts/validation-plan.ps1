@@ -106,6 +106,11 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     # the preceding observation/UI gates and recompile the actual territory payload.
     $saffron=$observation+'|^src/Territory/(hook/RuntimeSaffron|shared/SaffronCycle)\.cs$|^tests/Dustweave.Tests/Cases/SaffronCases\.cs$'
     if($Scope -in @('Auto','Saffron') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $saffron}).Count){$selectedScope='Saffron';$outside=@()}
+    # Resource preparation and discovery UI do not change minigame strategies or
+    # update transactions. Include preceding scoped changes since the full
+    # baseline, plus exact native box bindings and host/plugin presentation.
+    $resources=$saffron+'|^assets/specs/trade-evidence-spec\.json$|^src/Connection/(TradeBoxRules|TradeBoxesNative|TradeActions|EvidenceBindings|TapManifest|LiveContracts|SelfTest)\.cs$|^src/Core/(DailyTradePriceChange|DailyTradeExecution|DailyTradeBoxes|DailyResourceReview|DailyFeatureDiscovery|DailyDiagnosticExport|DailyMissions|DailyPreferences)\.cs$|^src/Desktop/(DailyPreferencesPanel|DailyToolPanel\.xaml|DailyResourceReviewWindow|MainWindow\.(ResourceReview|FeatureDiscovery(?:\.Smoke)?|PluginMarket|Plugins|StartupFeatures|ToolPlugins))\.cs$|^src/Desktop/DailyToolPanel\.xaml$|^tests/Dustweave.Tests/Cases/(TradeBoxes|FeatureDiscovery|PassRecovery|TradeCalendar|TradeTransition)Cases\.cs$|^tools/OtaMirror/Program\.cs$'
+    if($Scope -in @('Auto','Resources') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $resources}).Count){$selectedScope='Resources';$outside=@()}
     $reason='Changes outside the account validation boundary: '+($outside -join ', ')
     if(!$outside.Count){
      $checks=$release.flavors[0].checks
@@ -120,10 +125,11 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
       if($selectedScope -eq 'Trading'){$groups=@('ProductIdentity','TradeOptimizer','TradeCalendar','TradeTransition','TradeData','TradeReplan','TradeQuote','TradeResume','TalentPotion','BargainTraining','UserText')}
       if($selectedScope -eq 'Updates'){$groups=@('ProductIdentity','UpdateLayout','UpdateDelta','UpdateSafety','UpdateRepair','UpdateInventory','CacheStorage','SchedulingUpdates','UnifiedSuite','SuiteOwnerProbe','UserText')}
       if($selectedScope -eq 'UiReadiness'){$groups=@('ProductIdentity','UiInteractionReadiness','ManagementStage','ManagedInputs','CommandDriver','Workflow','MirrorStage','DispatchRecovery','BattleArrivalRecovery','HomeNavigation','HomeRecovery','PackagedUtility','PluginStore','UnifiedSuite','UserText')}
-      if($selectedScope -in @('Weekly','Observation','Saffron')){$groups=@('ProductIdentity','WeeklyIsolation','WeeklyGoal','CollectionReadiness','FieldTalent','WeeklyNpcBoard','WeeklyNpcQuery','WeeklyNpcInteraction','CommandDriver','ManagedInputs','QueueSession','QueueEngine','QueuePeriod','QueueExecutionThread','PickupRecovery','BusinessJournal','BusinessScope','MirrorStage','FreeDrawStage','DispatchRecovery','ManagementStage','TradeResume','TravelTransition','UserText')}
-      if($selectedScope -in @('Weekly','Observation','Saffron') -and $changed -match '^src/Connection/'){$groups+=@('FieldAvoidance','QuickTravel','HomeNavigation','HomeRecovery')}
-      if($selectedScope -in @('Observation','Saffron')){$groups+=@('ObservationPerformance','FreeDistribution','LocalizationArchitecture','LiveBindings','ObservationWait','EvidenceReadiness','UiInteractionReadiness','PassiveUi')}
-      if($selectedScope -eq 'Saffron'){$groups+=@('Saffron','TerritoryNavigation')}
+      if($selectedScope -in @('Weekly','Observation','Saffron','Resources')){$groups=@('ProductIdentity','WeeklyIsolation','WeeklyGoal','CollectionReadiness','FieldTalent','WeeklyNpcBoard','WeeklyNpcQuery','WeeklyNpcInteraction','CommandDriver','ManagedInputs','QueueSession','QueueEngine','QueuePeriod','QueueExecutionThread','PickupRecovery','BusinessJournal','BusinessScope','MirrorStage','FreeDrawStage','DispatchRecovery','ManagementStage','TradeResume','TravelTransition','UserText')}
+      if($selectedScope -in @('Weekly','Observation','Saffron','Resources') -and $changed -match '^src/Connection/'){$groups+=@('FieldAvoidance','QuickTravel','HomeNavigation','HomeRecovery')}
+      if($selectedScope -in @('Observation','Saffron','Resources')){$groups+=@('ObservationPerformance','FreeDistribution','LocalizationArchitecture','LiveBindings','ObservationWait','EvidenceReadiness','UiInteractionReadiness','PassiveUi')}
+      if($selectedScope -in @('Saffron','Resources')){$groups+=@('Saffron','TerritoryNavigation')}
+      if($selectedScope -eq 'Resources'){$groups+=@('TradeBoxes','TradeCalendar','TradeTransition','TradeReplan','DiagnosticExport','Preference','TalentPotion','PassRecovery','Workflow','FeatureDiscovery','ToolMenu','PluginMarket','ToolPlugins')}
       if($selectedScope -in @('Navigation','Rewards')){$groups+=@('HomeNavigation','HomeRecovery','TravelTransition','WeeklyGoal','CollectionReadiness','CafeteriaRecovery','CommandDriver','ManagedInputs','PassiveUi','UserText')}
       if($selectedScope -eq 'Rewards'){
        $groups+=@('LiveBindings','Workflow','Preference','RuleData','EvidenceReadiness','UserText','NativeDailyBattle','EventTradeBoundary','BattleArrivalRecovery','BusinessJournal')
@@ -137,7 +143,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
    }
   }
  }
- if($Scope -in @('Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Observation','Saffron')){throw "Scoped validation cannot reuse this baseline: $reason"}
+ if($Scope -in @('Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Observation','Saffron','Resources')){throw "Scoped validation cannot reuse this baseline: $reason"}
  $full.reason=$reason
  return $full
 }

@@ -104,8 +104,9 @@ public partial class MainWindow : Window
         };
         toolPanel = new DailyToolPanel();
         ToolsTab.Content = toolPanel;
+        InitializeFeatureDiscovery();
         InitializePlugins();
-        toolPanel.OpenRequested += async id => { toolMessage = null; await OpenTool(id); };
+        toolPanel.OpenRequested += async id => { toolMessage = null; await OpenTool(id); _ = ObserveToolWindow(id); };
         toolPanel.CloseRequested += async () => await CloseTool();
         dailyPanel.AccountsRequested += () => WorkspaceTabs.SelectedItem = AccountsTab;
         // Selecting the tab picks the task account; then show the Talent Pill card.
@@ -139,7 +140,7 @@ public partial class MainWindow : Window
         CollectionViewSource.GetDefaultView(rows).Filter = MatchesSearch;
         coordinator.Progress += p => Dispatcher.Invoke(() => { if (dailyQueue.IsRunning || WorkspaceTabs.SelectedItem == RunTab && busy) dailyPanel.Show(new("preparing", p.Message, "", []) { Display = p.Display }); if (p.Display is { } display) DailyUiText.Set(ProgressText, display); else DailyUiText.Set(ProgressText, p.Message); ProgressText.Foreground = (Brush)FindResource(p.State == "error" ? "Error" : "Ink"); });
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        timer.Tick += (_, _) => { _ = PollParallelAsync(); L.RefreshFromDisk(); RefreshTools(); UpdateConnection(); if (smoke == null && !busy) { _ = RefreshAccountIdentityAsync(); RefreshDailyHistory(); } CheckCaptureLifetime(); if (smoke == null && CaptureSessionId.Length == 0) { _ = CheckLogCleanupAsync(); _ = CheckStorageWarningAsync(); _ = CheckScheduleAsync(); _ = OfferUpdateAsync(); if (DateTime.UtcNow >= nextUpdateCheck) { nextUpdateCheck = DateTime.UtcNow.AddHours(6); _ = CheckUpdatesAsync(); } } };
+        timer.Tick += (_, _) => { _ = PollParallelAsync(); L.RefreshFromDisk(); RefreshTools(); UpdateConnection(); if (smoke == null && !busy) { _ = RefreshAccountIdentityAsync(); RefreshDailyHistory(); } CheckCaptureLifetime(); if (smoke == null && CaptureSessionId.Length == 0) { _ = CheckLogCleanupAsync(); _ = CheckStorageWarningAsync(); _ = CheckScheduleAsync(); _ = OfferUpdateAsync(); OfferResourceReview(); if (DateTime.UtcNow >= nextUpdateCheck) { nextUpdateCheck = DateTime.UtcNow.AddHours(6); _ = CheckUpdatesAsync(); } } };
         Loaded += async (_, _) => {
             // Loaded proves the real WPF shell/resources constructed successfully.
             // Commit before optional account/game reads and background maintenance.
@@ -202,6 +203,7 @@ public partial class MainWindow : Window
             if(id=="soul"){
                 var window=new SoulToolWindow(root,this);
                 soulWindow=window;window.ActivityChanged+=()=>{RefreshTools();SetBusy(busy);};
+                window.ContentRendered+=(_,_)=>FeatureViewed(DailyFeatureDiscovery.Tool(id));
                 window.Closed+=(_,_)=>{if(soulWindow==window)soulWindow=null;RefreshTools();SetBusy(busy);};
                 window.Show();toolMessage="soul.ready";return;
             }
@@ -220,6 +222,7 @@ public partial class MainWindow : Window
                 });
                 var window=new ApostleToolWindow(this,session,()=>!Unavailable);
                 apostleWindow=window;
+                window.ContentRendered+=(_,_)=>FeatureViewed(DailyFeatureDiscovery.Tool(id));
                 window.Panel.ActivityChanged+=()=>{RefreshTools();SetBusy(busy);};
                 window.Closed+=(_,_)=>{if(apostleWindow==window)apostleWindow=null;RefreshTools();SetBusy(busy);};
                 window.Show();toolMessage="apostle.ready";return;
@@ -942,6 +945,29 @@ public partial class MainWindow : Window
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             // This shell invariant is exercised even by focused release/UI smoke.
             CheckFreeDistributionVisibleForSmoke();
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "feature-discovery")
+            { await CheckFeatureDiscoveryForSmoke(); Application.Current.Shutdown(); return; }
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "resource-review")
+            {
+                L.Audit();
+                string a = new('a', 64), b = new('b', 64);
+                DailyAccount[] demo = [new(1,"First account",a,"***001",true,true,""),new(2,"Second account",b,"***002",true,false,"")];
+                foreach (int language in new[] { 0, 1, 2 })
+                foreach (int appearance in new[] { 1, 2 })
+                {
+                    LanguageSelector.SelectedIndex = language; ThemeSelector.SelectedIndex = appearance;
+                    var review = new DailyResourceReviewWindow(root, demo, a) { Owner = this, ShowActivated = false };
+                    DailyDialogs.Prepare(review); review.WindowStartupLocation = WindowStartupLocation.Manual; review.Left = -12000; review.Top = 0;
+                    review.Show();
+                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                    review.UpdateLayout();
+                    if (review.ActualHeight > SystemParameters.WorkArea.Height) throw new Exception("Resource review exceeds work area");
+                    Capture($"resource-review-{language}-{appearance}", (FrameworkElement)review.Content);
+                    if (language == 2 && appearance == 2) review.VerifyForSmoke(); else review.Close();
+                }
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status="passed", scope="resource-review", languages=3, themes=2, realGameTouched=false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "free-notice")
             {
                 await CheckFreeDistributionForSmoke();

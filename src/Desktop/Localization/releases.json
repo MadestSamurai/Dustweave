@@ -1,5 +1,32 @@
 [
 {
+  "Version": "1.6.9",
+  "Date": "2026-11-10",
+  "Notes": {
+    "zh-CN": [
+      "修复通行证切换后页面尚未就绪就跳过领取的问题；每张通行证最多准备三次，重新核对可领取奖励，已提交的领取不会盲目重复。",
+      "跑商调价日期改为 11 月 19 日，沿用原有计算模型重新安排过渡期采购、料理和售卖。",
+      "新增「跑商前一键开箱」设置，默认关闭；开启后批量打开可用箱子，保留上锁箱子，再按实际库存规划跑商。",
+      "更新后提供一次设置提醒，可按账号调整跑商开箱、自动补药及数量、跳过血之鸡尾酒邮件。",
+      "新工具和插件以绿点提醒，并在各自列表置顶标记；查看介绍或成功打开后消除提醒。本次包含死魂之盘和战术教材，后续新增内容自动提醒。"
+    ],
+    "zh-TW": [
+      "修復切換通行證後頁面尚未就緒就跳過領取的問題；每張通行證最多準備三次，重新確認可領取獎勵，已送出的領取不會盲目重複。",
+      "跑商調價日期改為 11 月 19 日，沿用原有計算模型重新安排過渡期採購、料理與販售。",
+      "新增「跑商前一鍵開箱」設定，預設關閉；開啟後批次打開可用箱子，保留上鎖箱子，再依實際庫存規劃跑商。",
+      "更新後提供一次設定提醒，可依帳號調整跑商開箱、自動補藥及數量、跳過血之雞尾酒郵件。",
+      "新工具與外掛以綠點提醒，並在各自清單置頂標記；查看介紹或成功開啟後消除提醒。本次包含死魂之盤與戰術教材，之後新增內容會自動提醒。"
+    ],
+    "en-US": [
+      "Fixes pass rewards being skipped while a newly selected page is still loading. Each pass gets up to three preparation attempts with fresh reward checks; submitted claims are not blindly repeated.",
+      "Moves the food price change to November 19. The existing trading model now plans transition purchases, cooking and sales around the revised date.",
+      "Adds an optional bulk box-opening step before trading, disabled by default. Locked boxes are preserved, and trading is planned using the resulting inventory.",
+      "Adds a one-time settings review after updating, with per-account controls for box opening, automatic talent potion refills and quantities, and skipping Blood Cocktail mail.",
+      "New tools and plugins receive green indicators and appear first in their lists. Viewing their introduction or successfully opening them clears the indicator. This includes Soul Board and Tactical Training; future additions are detected automatically."
+    ]
+  }
+},
+{
   "Version": "1.6.8",
   "Date": "2026-11-09",
   "Notes": {

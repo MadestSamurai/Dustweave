@@ -19,8 +19,10 @@
        <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,14">
         <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
          <StackPanel Margin="0,0,16,0">
+          <StackPanel Orientation="Horizontal" Visibility="{Binding NewVisibility}" Margin="0,0,0,5"><Ellipse Width="8" Height="8" Fill="{DynamicResource Primary}" Margin="0,0,6,0"/><TextBlock Text="{l:Tr discovery.new}" Foreground="{DynamicResource Primary}" FontSize="12" FontWeight="SemiBold"/></StackPanel>
           <WrapPanel><TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold"/><TextBlock Text="{Binding Detail}" FontSize="12" Margin="10,2,0,0" Foreground="{StaticResource MutedInk}"/></WrapPanel>
           <TextBlock Text="{Binding Description}" TextWrapping="Wrap" FontSize="12" Margin="0,4,0,0" Foreground="{StaticResource MutedInk}"/>
+          <Button Content="{l:Tr discovery.view}" Click="DetailsClicked" Visibility="{Binding NewVisibility}" HorizontalAlignment="Left" Margin="0,8,0,0"/>
          </StackPanel>
          <Button Grid.Column="1" Content="{Binding Action}" IsEnabled="{Binding Enabled}" Tag="{Binding Id}" Click="OpenClicked" MinWidth="98" VerticalAlignment="Center" AutomationProperties.Name="{Binding AccessibleName}"/>
         </Grid>

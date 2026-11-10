@@ -350,6 +350,12 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
     public async Task<JsonObject> Run()
     {
         try {
+            if (w.Settings.Trade.Enabled && w.Settings.Trade.OpenBoxesBeforeTrade)
+            {
+                await SettleForReplan();
+                if (await w.Has("ShopUI") || await w.Has("QuickMenuUI")) await Close();
+                await DailyTradeBoxes.Open(w);
+            }
             for(int retry=0;;retry++){
                 try { return await RunCore(); }
                 catch(DailyTradeReplanRequired) when(retry<2) { }

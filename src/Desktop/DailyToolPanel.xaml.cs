@@ -6,6 +6,8 @@ namespace Dustweave.Desktop;
 public sealed record ToolMenuRow(string Id, string Name, string Detail, string Description, string Action, bool Enabled)
 {
     public string AccessibleName => Action + " · " + Name;
+    public bool IsNew { get; init; }
+    public Visibility NewVisibility => IsNew ? Visibility.Visible : Visibility.Collapsed;
 }
 public partial class DailyToolPanel : UserControl
 {
@@ -20,6 +22,12 @@ public partial class DailyToolPanel : UserControl
     private string? active;
     private bool busy, running;
     private IReadOnlyList<DailyPluginInfo> plugins = Array.Empty<DailyPluginInfo>();
+    private Func<string, bool> isNew = _ => false;
+    public void SetDiscovery(Func<string, bool> value) { isNew = value; Render(); }
+    public void RefreshDiscovery() => Render();
+    public event Action<ToolMenuRow>? DetailsRequested;
+    private void DetailsClicked(object sender, RoutedEventArgs e)
+    { if (sender is Button { DataContext: ToolMenuRow row }) DetailsRequested?.Invoke(row); }
     public void SetPlugins(IReadOnlyList<DailyPluginInfo> value) { plugins = value; Render(); }
     public event Action<string>? OpenRequested;
     public event Action? CloseRequested;
@@ -55,6 +63,7 @@ public partial class DailyToolPanel : UserControl
                 L.Get(t.Id == active ? "tools.show" : active != null ? "tools.switch" : "tools.open"), !busy && (!running || t.Id==active))).ToArray();
         rows = rows.Concat(plugins.Where(p => (category == null || category.Key is "all" or "games") && (query.Length == 0 || (p.Id + " " + p.Name(L.Code)).Contains(query,StringComparison.OrdinalIgnoreCase)))
             .Select(p => new ToolMenuRow("plugin:"+p.Id,p.Name(L.Code),L.Get("plugins.title"),L.Get("plugins.tool_where"),L.Get("tools.open"),!busy && !running))).ToArray();
+        rows = rows.Select(r => r with { IsNew = isNew(DailyFeatureDiscovery.Tool(r.Id)) }).OrderByDescending(r => r.IsNew).ToArray();
         ToolsList.ItemsSource = rows;
         EmptyText.Visibility = rows.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
         CloseToolButton.Visibility = active == null ? Visibility.Collapsed : Visibility.Visible;
@@ -109,5 +118,15 @@ public partial class DailyToolPanel : UserControl
         Refresh(false,"sichuan","窗口闲置");
         if(((ToolMenuRow[])ToolsList.ItemsSource).Any(t=>!t.Enabled))throw new InvalidOperationException("闲置窗口仍占用其他工具");
         Refresh(false, null, "工具共用日常助手的连接，不会自动开始操作。仅在自动化启用或等待结算时占用控制权。");
+    }
+    internal void VerifyDiscoveryForSmoke()
+    {
+        if (!((ToolMenuRow[])ToolsList.ItemsSource).Single(t => t.Id == "soul").IsNew) throw new Exception("Missing Soul badge");
+        SearchBox.Text = "secret"; Category.SelectedValue = "games";
+        if (!VisibleTools.SequenceEqual(new[] { "secret-vision" })) throw new Exception("Discovery bypassed filters");
+        SearchBox.Text = ""; Category.SelectedValue = "all";
+        // The menu only emits intent; successful rendering is acknowledged separately by the host.
+        OpenClicked(new Button { Tag = "soul" }, new RoutedEventArgs());
+        if (!((ToolMenuRow[])ToolsList.ItemsSource).Single(t => t.Id == "soul").IsNew) throw new Exception("Failed tool open dismissed badge");
     }
 }

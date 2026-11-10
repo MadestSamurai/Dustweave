@@ -17,6 +17,37 @@ public sealed partial class DailyPluginPanel : ScrollViewer
     private readonly Button disable = ActionButton("plugins.disable_daily");
     private Border? emptyCard;
     private bool occupied;
+    private Func<string, bool> isNew = _ => false;
+    public event Action<string, string, string, bool>? DetailsRequested;
+    public event Action? DiscoveryChanged;
+    public bool HasNewFeatures => (marketSnapshot?.Catalog.Plugins.Select(p => p.Id) ?? [])
+        .Concat(marketSelection.Installed.Select(p => p.Id)).Any(id => isNew(DailyFeatureDiscovery.Plugin(id)));
+    public void SetDiscovery(Func<string, bool> value) { isNew = value; RefreshDiscovery(); }
+    private Border FeatureCard(string id, StackPanel body, Func<string> name, Func<string> description, bool tactics)
+    {
+        var badge = FeatureDiscoveryUi.Badge(); badge.Margin = new(0);
+        var details = ActionButton("discovery.view"); details.Name = "FeatureDetailsButton";
+        details.HorizontalAlignment = HorizontalAlignment.Right; details.Margin = new(12, 0, 0, 0);
+        details.Click += (_, _) => DetailsRequested?.Invoke(id, name(), description(), tactics);
+        var heading = new DockPanel { Name = "FeatureNewBadge", Margin = new(0, 0, 0, 10) };
+        DockPanel.SetDock(details, Dock.Right); heading.Children.Add(details);
+        badge.VerticalAlignment = VerticalAlignment.Center; heading.Children.Add(badge); body.Children.Insert(0, heading);
+        var card = Card(body); card.Tag = DailyFeatureDiscovery.Plugin(id); return card;
+    }
+    public void RefreshDiscovery()
+    {
+        foreach (var list in new[] { cards, marketCards })
+        {
+            foreach (var card in list.Children.OfType<Border>())
+                if (card.Tag is string key && card.Child is StackPanel body)
+                    foreach (var marker in body.Children.OfType<FrameworkElement>().Where(c => c.Name is "FeatureNewBadge" or "FeatureDetailsButton"))
+                        marker.Visibility = isNew(key) ? Visibility.Visible : Visibility.Collapsed;
+            var ordered = list.Children.Cast<UIElement>().OrderByDescending(c => c is Border { Tag: string key } && isNew(key)).ToArray();
+            for (int i = 0; i < ordered.Length; i++)
+                if (!ReferenceEquals(list.Children[i], ordered[i])) { list.Children.Remove(ordered[i]); list.Children.Insert(i, ordered[i]); }
+        }
+        DiscoveryChanged?.Invoke();
+    }
     public event Action<string?>? ImportRequested;
     public event Action<string>? EnableRequested;
     public event Action<string>? RemoveRequested;
@@ -42,8 +73,10 @@ public sealed partial class DailyPluginPanel : ScrollViewer
             var actions = new WrapPanel { Margin = new(0,12,0,0) };
             void Add(string key, string operation) { var button = ActionButton(key); button.Click += (_,_) => ToolActionRequested?.Invoke(record.Id, record.Fingerprint, operation); actions.Children.Add(button); }
             if(info.Available) { if(state.Active == record.Fingerprint) { Add("tools.open", "open"); Add("plugins.disable", "disable"); } else Add("plugins.enable", "enable"); }
-            Add("plugins.remove", "remove"); body.Children.Add(actions); cards.Children.Add(Card(body));
+            Add("plugins.remove", "remove"); body.Children.Add(actions); cards.Children.Add(FeatureCard(record.Id, body,
+                () => info.Available ? info.Name(L.Code) : record.Id, () => L.Get("plugins.tool_where"), false));
         }
+        RefreshDiscovery();
     }
     public DailyPluginPanel()
     {
@@ -100,7 +133,8 @@ public sealed partial class DailyPluginPanel : ScrollViewer
                 enable.Click += (_, _) => EnableRequested?.Invoke(record.Fingerprint); actions.Children.Add(enable);
             }
             var remove = ActionButton("plugins.remove"); remove.Click += (_, _) => RemoveRequested?.Invoke(record.Fingerprint); actions.Children.Add(remove);
-            body.Children.Add(actions); cards.Children.Add(Card(body));
+            body.Children.Add(actions); cards.Children.Add(FeatureCard(record.Id, body,
+                () => info.Available ? info.Name(L.Code) : record.Id, () => L.Get(stateKey), info.Available && info.Supports("tactics")));
         }
         if (current.Available && !state.Installed.Any(x => x.Fingerprint == current.Fingerprint))
         {
@@ -182,7 +216,7 @@ public partial class MainWindow
             pluginPanel.Refresh(snapshot.state, snapshot.inspected, DailyPlugin.Current);
             var tools = await Task.Run(() => new DailyToolPlugins(root).Installed());
             enabledToolPlugins = tools.Where(t => t.Info.Available && t.Selection.Active == t.Record.Fingerprint).Select(t=>t.Info).ToArray();
-            pluginPanel.AppendTools(tools); toolPanel.SetPlugins(enabledToolPlugins);
+            pluginPanel.AppendTools(tools); toolPanel.SetPlugins(enabledToolPlugins); RefreshDiscovery();
         }
         catch (Exception e) { PluginError(e); }
         pluginPanel.Busy(Unavailable || IsSandboxWindow);
@@ -239,10 +273,13 @@ public partial class MainWindow
         if (sharing && DailyPluginSharing.Read(root, id) == null)
         {
             var dialog = new PluginSharingWindow(this, name + "  " + version + " · " + publisher, false, true, tactics);
+            dialog.ContentRendered += (_, _) => FeatureViewed(DailyFeatureDiscovery.Plugin(id));
             return (DailyDialogs.ShowModal(dialog) == true, dialog.SharingEnabled);
         }
-        return (PluginConfirm("plugins.market_install", L.Get("plugins.trust", name, version, publisher) + "\n\n" +
-            (tactics ? L.Get("plugins.tactics_where") + "\n" + L.Get("plugins.tactics_howto") + "\n\n" : "") + (tool ? L.Get("plugins.tool_where") : L.Get("plugins.market_install_confirm", name, version))), null);
+        var confirmation = DailyDialogs.Message(this, L.Get("plugins.market_install"), L.Get("plugins.trust", name, version, publisher) + "\n\n" +
+            (tactics ? L.Get("plugins.tactics_where") + "\n" + L.Get("plugins.tactics_howto") + "\n\n" : "") + (tool ? L.Get("plugins.tool_where") : L.Get("plugins.market_install_confirm", name, version)), true);
+        confirmation.ContentRendered += (_, _) => FeatureViewed(DailyFeatureDiscovery.Plugin(id));
+        return (DailyDialogs.ShowModal(confirmation) == true, null);
     }
     private async Task SmokePluginsAsync()
     {

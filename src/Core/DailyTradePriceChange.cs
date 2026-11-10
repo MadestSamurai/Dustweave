@@ -5,7 +5,7 @@ namespace Dustweave;
 /// <summary>Announced prices are forecast inputs only. Live quotes authorize sales.</summary>
 public static class DailyTradePriceChange
 {
-    public static readonly DateOnly EffectiveDate = new(2026, 11, 16);
+    public static readonly DateOnly EffectiveDate = new(2026, 11, 19);
     private sealed record Change(long Recipe, long Item, long Old, long New);
     // Unit peak prices: floor(base price * 120 / 100), never rounded per batch.
     private static readonly Change[] Changes = [

@@ -54,7 +54,7 @@ internal static class EvidenceBindings
             var spec=JsonNode.Parse(json)!;
             foreach(var rule in spec["Reads"]!.AsArray())
             {
-                if(rule!["Id"]!.GetValue<string>() is "friendship.native" or "monster.schedules" or "mainline.travel" or "mainline.network" or "trade.native" or "rewards.native" or "minigames.quiz")continue;
+                if(rule!["Id"]!.GetValue<string>() is "friendship.native" or "monster.schedules" or "mainline.travel" or "mainline.network" or "trade.native" or "trade.boxes" or "rewards.native" or "minigames.quiz")continue;
                 var type=types.Single(t=>t.FullName==rule["Type"]!.GetValue<string>());CaptureType(type);
                 TypeReference start=type;
                 if(rule["StaticMember"] is {} member)start=Member(start,member.GetValue<string>());

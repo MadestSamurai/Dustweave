@@ -122,7 +122,7 @@ namespace BD2Daily.Live {
   public static bool ExtensionKind(string k){return TacticsKind(k)||(EventKind(k)&&k!="event_sweep_select"&&k!="event_sweep_confirm"&&k!="event_sweep_count");}
   public static bool NativeBattleKind(string k){return new[]{"salvation_open","salvation_walk","salvation_select","salvation_popup","salvation_count","salvation_confirm","event_native_select","event_native_confirm","event_native_exit","event_preset_read","event_preset_apply"}.Contains(k);}
   public static bool EventKind(string k){return new[]{"event_select","event_sweep_select","event_sweep_confirm","event_sweep_count","event_action_open","event_action","event_move","event_order","event_start","event_bench","event_replace"}.Contains(k);}
-  public static bool TradeKind(string k){return new[]{"trade_menu","trade_talent","trade_favorite_preview","trade_favorite_confirm","trade_buy_preview","trade_buy_confirm","trade_sell_preview","trade_sell_confirm","trade_cook_preview","trade_cook_quantity","trade_cook_confirm"}.Contains(k);}
+  public static bool TradeKind(string k){return new[]{"trade_boxes_open","trade_menu","trade_talent","trade_favorite_preview","trade_favorite_confirm","trade_buy_preview","trade_buy_confirm","trade_sell_preview","trade_sell_confirm","trade_cook_preview","trade_cook_quantity","trade_cook_confirm"}.Contains(k);}
   public static bool PowderKind(string kind){return kind=="powder_recipe"||kind=="powder_options";}
   public static bool PreviewKind(string kind){return new[]{"equipment_upgrade_preview","equipment_break_preview","equipment_refine_preview","equipment_craft_menu","equipment_craft_preview","mail_tab","mail_page","mail_collect_filtered","square_goddess_nav","square_shop_nav","square_shop_interact","square_ranking_nav","square_goddess_interact","square_cancel_nav","square_route_probe"}.Contains(kind);}
   public static string Gate(Command c,Frame f,long now,bool otherOwner){
@@ -269,8 +269,9 @@ namespace BD2Daily.Live {
    if(TradeKind(c.Kind)){
     if(f.BridgeVersion<25||!GameplayReady(f)||c.TargetId!=0)return "trade_context_rejected";
     if(f.Surfaces.Any(x=>x.Popup&&x.Id!=ui.Id&&x.Order>=ui.Order&&!PassiveSurface(x.Type)))return "trade_popup_blocked";
-    string expected=c.Kind=="trade_menu"?"GameFieldDefaultUI":c.Kind=="trade_talent"?"QuickMenuUI":c.Kind=="trade_favorite_confirm"?"BuyFavoritePopupUI":c.Kind=="trade_buy_confirm"||c.Kind=="trade_sell_confirm"?"ShopPopupUI":c.Kind=="trade_cook_preview"?"CookingSelectUI":c.Kind.StartsWith("trade_cook_")?"CookingUI":"ShopUI";
+    string expected=c.Kind=="trade_boxes_open"?"InventoryManageUI":c.Kind=="trade_menu"?"GameFieldDefaultUI":c.Kind=="trade_talent"?"QuickMenuUI":c.Kind=="trade_favorite_confirm"?"BuyFavoritePopupUI":c.Kind=="trade_buy_confirm"||c.Kind=="trade_sell_confirm"?"ShopPopupUI":c.Kind=="trade_cook_preview"?"CookingSelectUI":c.Kind.StartsWith("trade_cook_")?"CookingUI":"ShopUI";
     if(ui.Type!=expected||c.Items==null||c.Value==0)return "trade_surface_rejected";
+    if(c.Kind=="trade_boxes_open")return f.BridgeVersion>=143&&c.Value==1&&c.Items.Length>=3&&c.Items.Length<=900&&c.Items.Length%3==0&&c.Items.All(x=>x>0)?"":"trade_box_selection_rejected";
     if(c.Kind=="trade_menu")return c.Value==7?"":"trade_talent_rejected";
     if(c.Kind=="trade_talent")return "";
     if(c.Value<0)return "trade_value_rejected";

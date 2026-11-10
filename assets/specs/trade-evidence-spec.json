@@ -1,6 +1,7 @@
 {
   "Extends": "mainline-evidence-spec.json",
   "Taps": [
+    { "Role": "trade.box", "ResponseType": "Proto.Net.UseRandomBoxResponse", "RequestSite": "constructor", "Paths": ["RewardInfoBundle"] },
     {
       "Role": "trade.info",
       "ResponseType": "Proto.Net.ShopInfoResponse",
@@ -57,6 +58,7 @@
     }
   ],
   "Reads": [
+    { "Id": "trade.boxes", "Type": "BD2Daily.Live.TradeBoxesNative", "Paths": ["$self"] },
     {
       "Id": "trade.currency",
       "Type": "ὣὡὧὡὦὣὣὬὨὪὫ",

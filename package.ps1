@@ -3,7 +3,7 @@ param(
  [Parameter(Mandatory)][string]$GameManagedDir,
  [ValidateSet('Portable','Lite')][string[]]$Flavors=@('Portable','Lite'),
  [string]$PreparedCacheDirectory='',
- [ValidateSet('Auto','Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Observation','Saffron','Full')][string]$ValidationScope='Auto',
+ [ValidateSet('Auto','Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Observation','Saffron','Resources','Full')][string]$ValidationScope='Auto',
  [string]$ValidationBaseline='',
  [string]$PublisherEvidence='',
  [string]$SyntheticEvidence='',
@@ -81,6 +81,9 @@ if($validation.publisherChanges.Count){
  }
 }
 $before|Set-Content -LiteralPath (Join-Path $work 'source-before.json') -Encoding utf8
+if($validation.changed -match '^tools/OtaMirror/Program\.cs$'){
+ Run 'dotnet' @('run','--project',(Join-Path $root 'tools/OtaMirror'),'-c','Release','--','self-test') 'ota-mirror-scoped-self-test'
+}
 $packageImport='-p:CustomAfterMicrosoftCommonTargets='+ (Join-Path $root 'Package.Build.targets')
 Run 'dotnet' @('build',$entry,'-c','Release','-r','win-x64','-p:SelfContained=false',$packageImport,('-p:DustweavePackageLockRoot='+ (Join-Path $work 'locks/build')),'--nologo') 'build'
 foreach($component in @('tools/TradeData','tools/CompatibilityCli','tests/Dustweave.Tests','src/Launcher','src/Updater')){
@@ -201,7 +204,7 @@ foreach($flavor in $Flavors){
   Run $exe @(('--'+$mode),$check) ($flavor+'-'+$mode)
  }
  Pass (Join-Path $checks 'smoke/smoke.json')
- if($validation.scope -in @('Observation','Saffron')){
+ if($validation.scope -in @('Observation','Saffron','Resources')){
   $noticeCheck=Join-Path $checks 'smoke-free-notice'
   Run $exe @('--smoke',$noticeCheck) ($flavor+'-smoke-free-notice') 180 'free-notice'
   Pass (Join-Path $noticeCheck 'smoke.json')
@@ -228,16 +231,23 @@ foreach($flavor in $Flavors){
   Pass (Join-Path $soulCheck 'result.json')
   if(@(Get-ChildItem -LiteralPath $soulCheck -File -Filter '*.png').Count -ne 6){throw 'Soul tool requires all three languages and both themes.'}
  }
- if($validation.scope -eq 'Saffron'){
+ if($validation.scope -eq 'Resources'){
+  foreach($scope in @('resource-review','feature-discovery')){
+   $check=Join-Path $checks ('smoke-'+$scope)
+   Run $exe @('--smoke',$check) ($flavor+'-smoke-'+$scope) 180 $scope
+   Pass (Join-Path $check 'smoke.json')
+  }
+ }
+ if($validation.scope -in @('Saffron','Resources')){
   $territoryCheck=Join-Path $checks 'tools/territory';[IO.Directory]::CreateDirectory($territoryCheck)|Out-Null
   Run $exe @('--tool','territory','--check-client',$managed,(Join-Path $territoryCheck 'client.json')) ($flavor+'-territory-client')
   if((Get-Content -LiteralPath (Join-Path $territoryCheck 'client.json') -Raw|ConvertFrom-Json).Status -ne 'compatible'){throw 'Changed territory payload did not compile against the current game.'}
   Run $exe @('--smoke',(Join-Path $checks 'smoke-localization')) ($flavor+'-smoke-localization') 180 'localization'
   Pass (Join-Path $checks 'smoke-localization/smoke.json')
  }
- if($flavor -eq $Flavors[0] -and ($validation.scope -in @('Navigation','Rewards','UiReadiness','Observation','Saffron') -or ($validation.scope -eq 'Weekly' -and $validation.changed -match '^src/Connection/'))){
+ if($flavor -eq $Flavors[0] -and ($validation.scope -in @('Navigation','Rewards','UiReadiness','Observation','Saffron','Resources') -or ($validation.scope -eq 'Weekly' -and $validation.changed -match '^src/Connection/'))){
   Run $exe @('--utility','live','prepare',$managed,(Join-Path $checks 'live-client')) 'live-client'
-  if($validation.scope -in @('Rewards','Observation','Saffron')){
+  if($validation.scope -in @('Rewards','Observation','Saffron','Resources')){
    Run $exe @('--utility','live','taps-all',$managed,(Join-Path $root 'assets/specs'),(Join-Path $checks 'evidence')) 'evidence-configs'
    Pass (Join-Path $checks 'evidence/result.json')
   }

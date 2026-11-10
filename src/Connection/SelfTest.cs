@@ -5,6 +5,16 @@ static class SelfTest {
   Frame Frame()=>new(){ProcessId=7,ProcessStartTicks=8,Instance="i",AtUtcTicks=now,Scene="home",AccountKey="a",PlayerKey="p",UiToken="ui",PluginAvailable=true,Surfaces=[new(){Id=42,Targets=[new(){Id=43,Enabled=true}]}]};
   Command Command()=>new(){Id=Guid.NewGuid().ToString("N"),Kind="click",ProcessId=7,ProcessStartTicks=8,Instance="i",Scene="home",AccountKey="a",PlayerKey="p",UiToken="ui",ExpiresUtcTicks=now+TimeSpan.FromSeconds(10).Ticks,ObservedUtcTicks=now,SurfaceId=42,TargetId=43};
   void Check(bool ok,string reason){if(!ok)throw new Exception(reason);cases++;}
+  {
+   Check(TradeBoxRules.Allowed(9,0,500,500),"native batch can open a complete stack");
+   foreach(int keep in new[]{-1,1,2})Check(!TradeBoxRules.Allowed(9,keep,500,500),"locked/unknown box never selected: "+keep);
+   Check(!TradeBoxRules.Allowed(5,0,500,500),"non-box inventory is never opened");
+   Check(!TradeBoxRules.Allowed(9,0,2,3)&&!TradeBoxRules.Allowed(9,0,2,0),"box selection stays within live quantity");
+   var f=Frame();var c=Command();f.BridgeVersion=143;f.Surfaces[0].Type="InventoryManageUI";c.Kind="trade_boxes_open";c.TargetId=0;c.Value=1;c.Items=new long[]{1,20,500,2,21,30};
+   Check(LivePolicy.Gate(c,f,now,false)=="","one whole batch accepted on inventory page");
+   c.Items=new long[]{1,20};Check(LivePolicy.Gate(c,f,now,false)!="","truncated box selection rejected");c.Items=new long[]{1,20,500};
+   f.Surfaces[0].Type="ShopUI";Check(LivePolicy.Gate(c,f,now,false)!="","box opening cannot run on shop page");
+  }
   foreach(string kind in new[]{"event_preset_read","event_preset_apply"}){
    var f=Frame();var c=Command();var u=f.Surfaces[0];f.BridgeVersion=141;u.Type="EventBattleUI";
    c.Kind=kind;c.TargetId=0;c.Value=6;c.Items=kind=="event_preset_read"?new long[0]:new long[]{1};

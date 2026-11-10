@@ -1,12 +1,23 @@
-# Trading strategy: mature model plus the November 16 transition
+# Trading strategy: mature model plus the November 19 transition
 
-Updated 2026-11-03. The price input is the user's supplied 25-dish announcement
+Updated 2026-11-10. The price input is the user's supplied 25-dish announcement
 image. It remains a forecast assumption, not an observed server quote. Captured
 catalogs and static game tables are never overwritten with announced prices.
 
 ## Execution and forecasting
 
-`DailyTradePriceChange` matches recipe ID, output item and the old peak price. Expected prices are `floor(base * 120 / 100)` per unit. Before November 16, these prices apply only to forecast sales on or after that date. On and after November 16, the captured game's prices take precedence, including unexpected later changes. A two-day maintenance grace retains affected dishes still quoting the old price; after that grace, the actual captured price remains authoritative rather than indefinitely assuming an unconfirmed update.
+`DailyTradePriceChange` matches recipe ID, output item and the old peak price. Expected prices are `floor(base * 120 / 100)` per unit. Before November 19, these prices apply only to forecast sales on or after that date. On and after November 19, the captured game's prices take precedence, including unexpected later changes. A two-day maintenance grace retains affected dishes still quoting the old price; after that grace, the actual captured price remains authoritative rather than indefinitely assuming an unconfirmed update.
+
+On November 10 the user supplied a postponed maintenance date, November 19.
+Only `EffectiveDate` changes in production code. The 25 announced prices,
+joint model, liquidity priorities, horizon, inventory constraints, execution
+order and two-day grace remain unchanged. November 16–18 remain ordinary
+transition days: abundant cash favors holding rising-price food; an early sale
+can still be selected if its financing benefit exceeds the forgone price gain.
+The existing grace therefore falls on November 19–20, with observed pricing
+authoritative afterward. Peak days are not moved: a November 17 peak deferred
+past maintenance becomes December 17, not November 19. Historical release
+notes and the November 3 evidence below retain their original dates/results.
 
 The 62-day calendar replacement has been removed. It changed established
 processing priorities and allowed unchanged food to remain in end inventory
@@ -23,10 +34,10 @@ priority remain. The ordered objectives are joint gain, then current gain;
 during the transition, current cash is minimized only after fixing both gains.
 This last step removes zero-gain purchased cooking without postponing profitable
 processing of owned materials. Full equations and proof boundaries are in
-[ARCHITECTURE.md](ARCHITECTURE.md#trade-allocation-and-the-2026-11-16-transition).
+[ARCHITECTURE.md](ARCHITECTURE.md#trade-allocation-and-the-price-change-transition).
 
 Each rising-price output has two competing allocations: old-price sale, or
-holding until its next peak date on/after November 16. Funds are not unlimited:
+holding until its next peak date on/after November 19. Funds are not unlimited:
 old stock may be sold earlier when that creates enough additional profit to
 outweigh the price increase. Only original stock assigned to sale can finance
 future purchases, and only **after** its receipt date. Purchase phases respect
@@ -67,6 +78,21 @@ correct or that every feasible inventory schedule has been searched.
 Full-auto preferences migrate once through `Trade.StrategyRevision = 1`: the temporary processing pause is lifted; trading enabled/disabled, favorites, custom recipes, reserve settings and spending caps are preserved. A later explicit processing opt-out persists. The in-app release notice and settings description explain the change without an opt-in dialog. There are no game actions or scheduled background transactions during migration.
 
 ## Validation
+
+On 2026-11-10, the November 19 parameter change passed 817 checks in
+`TradeCalendar`, `TradeTransition`, `TradeOptimizer`, `TradeData`, `TradeReplan`,
+`TradeQuote`, and `TradeResume`. New date-boundary cases cover November 16–21,
+including the unchanged grace, ample-funds holding, unaffected fish-stick sales,
+and a missed pre-maintenance peak correctly rolling to December. Existing
+low-capital early-sale cases and the 105 independent finite allocation cases
+remain unchanged. The independent wallet now runs October 31–November 22 with
+0, 45 and 1,000 initial gold (69 account-days), observing the price change on
+November 19. The optimizer, forecast, transition-funding and execution sources
+are unchanged. Evidence: `artifacts/tests-20261110-015546-6258/`.
+This is offline source validation; no game action, package or publication was
+performed for this date adjustment.
+
+The following November 3 results describe the original November 16 assumption:
 
 On 2026-11-03, 2,820 checks passed across `TradeOptimizer`, `TradeCalendar`,
 `TradeTransition`, `TradeData`, `TradeReplan`, `TradeQuote`, `TradeResume`,

@@ -82,14 +82,14 @@ static class TradeTransitionCases
         // peak sales add gold, and the catalog changes on maintenance day.
         foreach(long opening in new long[]{0,45,1000})
         {
-            c=Catalog();c["items"]=new JsonArray(Item(1,2,1),Item(2006,51,16),Item(2031,100,3));
+            c=Catalog();c["items"]=new JsonArray(Item(1,2,1),Item(2006,51,19),Item(2031,100,3));
             c["recipes"]=new JsonArray(Recipe(104,2006,1),Recipe(999,2031,2));
             c["offers"]=new JsonArray(Offer(1,1,5));
             long cash=opening,pills=0,soldFish=0,soldChanged=0;
             var stock=new Dictionary<long,long>{{1,7},{2006,4},{2031,3}};
-            for(var day=new DateOnly(2026,10,31);day<=new DateOnly(2026,11,20);day=day.AddDays(1))
+            for(var day=new DateOnly(2026,10,31);day<=new DateOnly(2026,11,22);day=day.AddDays(1))
             {
-                if(day==DailyTradePriceChange.EffectiveDate)c["items"]![1]!["sale"]=72;
+                if(day==new DateOnly(2026,11,19))c["items"]![1]!["sale"]=72;
                 var s=State(c,cash);s["game_date"]=day.ToString("yyyy-MM-dd");s["potions"]=pills;
                 s["items"]=new JsonObject(stock.Select(kv=>KeyValuePair.Create<string,JsonNode?>(kv.Key.ToString(),JsonValue.Create(kv.Value))));
                 s["today_quotes"]=Array(Rows(c["items"]).Where(i=>N(i["day"])==day.Day).Select(i=>O(("item",i["id"]),("shop",1),("rate",120),("price",i["sale"]))));

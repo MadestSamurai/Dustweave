@@ -431,6 +431,7 @@ public sealed class DailyPreferenceStore(string root)
 public sealed class TradePreferences
 {
     public bool FavoritesOnly { get; set; }
+    public bool OpenBoxesBeforeTrade { get; set; }
     public int StrategyRevision { get; set; } = 1;
     public bool AutoCookAndSell { get; set; } = true;
     public bool RefillCookingPotions { get; set; }

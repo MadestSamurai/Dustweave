@@ -18,6 +18,18 @@ Dustweave is one daily application. Its accounts, workflows, connection, configu
 
 验收必须观察到“故障 → 条件恢复 → 实际继续”，并覆盖重启后恢复和重复操作不会多次消耗。详见 [开发指南](DEVELOPMENT.md) 的恢复逻辑评审要求。
 
+Pass reward preparation has three bounded attempts per pass. Each attempt gives page
+and button observations a shared twelve-second window, rereads the selected pass and
+current eligibility, and resolves a fresh AllRecv pointer only when its page accepts
+input. Loaded definitions alone do not establish readiness or prove there is nothing
+to claim. Stable incompatible definitions remain isolated without repeated parsing.
+Only preparation is retried: the existing claim transaction and receipt reconciliation
+remain outside this loop. Exhausted preparation records the affected pass and continues
+other passes; a later run reads current game progress and skips already claimed rewards.
+`PassRecovery` covers delayed rendering/eligibility, missing and ambiguous pointers,
+second/third attempts, cancellation, identity changes, repeated recovery, and restart
+after an uncertain claim without replaying it. These are offline workflow checks.
+
 ## Dependencies / 依赖方向
 
 ```text
@@ -198,7 +210,7 @@ Legacy runtime prose is translated through the fixed legacy-inputs registry and 
 
 Localization faults are deduplicated in memory (128 entries, 512 characters each) and included as `localization.json` when the desktop exports diagnostics. The report identifies the current process scope, language and resource failure; it never captures formatting argument values. It distinguishes no observed faults from unavailable evidence in older export callers. Rendering performs no diagnostic file I/O. The snapshot covers the exporting process's current lifetime, not previous runs or other isolated windows.
 
-## Trade allocation and the 2026-11-16 transition
+## Trade allocation and the price-change transition
 
 The mature `DailyTradeOptimizer` / `DailyTradeForecast` joint model remains the
 baseline. A price announcement is an input extension, not permission to replace
@@ -237,7 +249,7 @@ inventory day, at existing-stock receipt dates. For every phase ending at `t`,
 receipts available before that phase`. Each offer is capped by the number of
 days in that phase times its daily supply. A sale on day 28 can fund day 29's
 supply, never earlier missed stock. Deferred proceeds count at the first peak
-date on/after November 16. Receipts are capped by original unlocked inventory
+date on/after November 19 (the postponed maintenance date). Receipts are capped by original unlocked inventory
 and its actual sale allocation. New purchases, hypothetical production and
 expected drops supply no credit. Today's orders independently fit cash after
 the user's reserve/spend limits. Future cooking potion costs are reserved by
@@ -281,3 +293,54 @@ and forecast; record any changed order and its economic or capacity reason.
 Focused groups: `TradeOptimizer`, `TradeCalendar`, `TradeTransition`, `TradeData`,
 `TradeReplan`, `TradeQuote`, `TradeResume`, `TalentPotion`, `BargainTraining`,
 `UserText`, `LocalizationArchitecture`.
+
+### Optional native box opening before trading
+
+`Trade.OpenBoxesBeforeTrade` defaults to false and is independent of automatic
+processing, favorites-only and custom cooking/selling settings. Once enabled,
+the trade stage settles old previews, opens inventory, selects only random-box
+stacks with known `KeepFlag == 0`, and invokes the game's
+`EquipmentForgeSelector.OpenBoxItem` exactly once. The game owns packet sizing,
+progress UI and reward aggregation; the host never loops over individual opens.
+The native entry rechecks every selected instance, type, lock and quantity before
+changing selection. An existing native batch is observed, never replaced.
+
+The latest per-account journal is in `live/trade-boxes` and included in ordinary
+diagnostics. A pending batch is reconciled without blind replay. Waiting has a
+60-second no-progress deadline and 30-minute absolute bound, remains cancellable,
+and does not count unrelated network activity as box progress. Empty inventory or
+a full bag skips optional opening. After completion, reward presentation returns
+to inventory first, then the menu; the normal trade capture reads fresh resources
+before planning. The trading optimizer and purchase/sale rules are unchanged.
+
+`DailyResourceReview` saves only the four reviewed preference fields, preserving
+other account settings. Its one-time receipt lives outside historical caches.
+The dialog is offered only after startup work is ready and while the host is idle;
+scheduled/isolated/directed startup does not show it.
+
+2026-11-10 validation: current-client bindings and native compilation passed;
+the live account opened 235 unlocked boxes in one native batch in 6.26 seconds.
+The first run exposed an incorrect reward destination wait; the corrected
+inventory-to-menu return was verified separately in 0.90 seconds and the reward
+transition is covered by `TradeBoxes` replay. There were no locked boxes in this
+account; locked/unknown-lock exclusion is covered by native rule and workflow
+tests. No purchases, cooking, sales, mail claims or potion refills were performed.
+Three languages and both themes, per-account drafts, invalid input, persistence
+and the existing localization UI were checked. This is development evidence,
+not a published-package or OTA acceptance claim.
+
+### Feature discovery reminders
+
+`DailyFeatureDiscovery` stores viewed stable tool/plugin IDs in `feature-discovery.json`
+at the persistent user-data root. Its frozen pre-feature tool baseline excludes Soul;
+new catalog IDs remain unread without a per-release switch. Plugin versions and localized
+names are deliberately absent from the receipt identity. Verified marketplace catalogs
+are read in the background at interactive startup; failures do not gate startup or alter
+existing unread state. Installation/execution remains under the existing explicit actions.
+
+Sidebar indicators aggregate available unread entries. Both marketplace and installed
+lists pin and label unread rows; plugin tools share one ID across both pages. Only a
+rendered, explicitly opened introduction/installation explanation or a displayed tool
+window acknowledges the entry. Browsing, filtering, refresh and failed launches do not.
+Receipt write failures retain reminders without blocking use. Checks: `FeatureDiscovery`,
+`ToolMenu`, `PluginMarket`, localization regressions and the `feature-discovery` UI smoke.

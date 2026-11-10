@@ -51,6 +51,7 @@ public sealed class DailyPreferencesPanel : UserControl
     private readonly CheckBox mainline = Check("stage.weekly_mainline"), weeklyNpc = Check("stage.weekly_npc"), weeklySteal = Check("stage.weekly_steal"), walkCollect = Check("prefs.walk"), fishing = Check("stage.weekly_fishing"), roomLikes = Check("stage.weekly_room_likes");
     private readonly CheckBox events = Check("prefs.events"), eventMissions = Check("prefs.events_missions"), roulette = Check("prefs.events_roulette"), exchange = Check("prefs.events_exchange"), quiz = Check("prefs.events_quiz"), dice = Check("prefs.events_dice"), puzzle = Check("prefs.event_puzzle");
     private readonly CheckBox trade = Check("prefs.trade_purchase");
+    private readonly CheckBox tradeBoxes = Check("prefs.trade_boxes");
     private readonly CheckBox tradeProcessing = Check("prefs.trade_processing");
     private readonly CheckBox cookingRefill = Check("prefs.cooking_refill");
     private readonly CheckBox tradeFavorites = Check("prefs.trade_favorites"), saffronProcessing = Check("prefs.saffron_processing");
@@ -334,6 +335,8 @@ public sealed class DailyPreferencesPanel : UserControl
         Stage(fishing, "stage.weekly_fishing", "prefs.fishing_hint");
         Stage(weeklySichuan, "stage.weekly_sichuan", "prefs.tiles_hint");
         Stage(trade, "prefs.trade_purchase", "prefs.trade_hint", expanded: true, editableWhenOff: true);
+        section.Children.Add(tradeBoxes);
+        Note("prefs.trade_boxes_hint");
         section.Children.Add(tradeFavorites);
         Note("prefs.trade_favorites_hint");
         cookingButton.HorizontalAlignment = HorizontalAlignment.Left;
@@ -444,7 +447,7 @@ public sealed class DailyPreferencesPanel : UserControl
         tradeProcessing.Unchecked += (_, _) => MarkDirty();
         cookingRefill.Checked += (_, _) => MarkDirty();
         cookingRefill.Unchecked += (_, _) => MarkDirty();
-        foreach (var option in new[] { tradeFavorites, saffronProcessing, fastTravel })
+        foreach (var option in new[] { tradeFavorites, tradeBoxes, saffronProcessing, fastTravel })
         { option.Checked += (_, _) => MarkDirty(); option.Unchecked += (_, _) => MarkDirty(); }
         form.IsEnabled = false;
         ShowPotionState();
@@ -925,6 +928,7 @@ public sealed class DailyPreferencesPanel : UserControl
             eventPreset.Text = loaded.EventBattle.PresetSlot.ToString(CultureInfo.InvariantCulture);
             friendship.IsChecked = loaded.Friendship.Enabled;
             trade.IsChecked = loaded.Trade.Enabled;
+            tradeBoxes.IsChecked = loaded.Trade.OpenBoxesBeforeTrade;
             tradeProcessing.IsChecked = loaded.Trade.AutoCookAndSell;
             cookingRefill.IsChecked = loaded.Trade.RefillCookingPotions;
             tradeFavorites.IsChecked = loaded.Trade.FavoritesOnly;
@@ -1086,6 +1090,7 @@ public sealed class DailyPreferencesPanel : UserControl
             next.Friendship.Enabled = friendship.IsChecked == true;
             next.MonsterHunt.Enabled = false;
             next.Trade.Enabled = trade.IsChecked == true;
+            next.Trade.OpenBoxesBeforeTrade = tradeBoxes.IsChecked == true;
             next.Trade.AutoCookAndSell = tradeProcessing.IsChecked == true;
             next.Trade.RefillCookingPotions = cookingRefill.IsChecked == true;
             next.Trade.FavoritesOnly = tradeFavorites.IsChecked == true;
@@ -1386,6 +1391,7 @@ public sealed class DailyPreferencesPanel : UserControl
         SelectAccount(second);
         if ((int)multiplier.SelectedItem != 4 || store.Read(second).Mirror.Multiplier != 4) throw new Exception("Mirror multiplier did not survive settings navigation");
     }
+    internal void ReloadCurrent() { if (account.Length == 0 || !SavePending()) return; account = ""; ChangedAccount(accounts, null!); }
     public void SelectAccount(string key)
     {
         if (account == key || !SavePending()) return;
