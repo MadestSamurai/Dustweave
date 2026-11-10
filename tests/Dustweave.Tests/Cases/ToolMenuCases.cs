@@ -7,7 +7,8 @@ internal static class ToolMenuCases
     {
         void Check(bool pass, string name) { if (!pass) throw new Exception(name); cases.Add("tool-menu: " + name); }
         Check(DailyToolCatalog.All.Count == 13, "owned tools include talent practice");
-        Check(DailyToolCatalog.Search("砍价").Single() is { Id: "talent-practice", CategoryId: "business", HostWindow: true }, "bargaining is discoverable as host-owned talent practice");
+        Check(DailyToolCatalog.Search("技能练习").Single() is { Id: "talent-practice", CategoryId: "business", HostWindow: true }, "talent practice is discoverable as a host-owned tool");
+        Check(!DailyToolCatalog.All.Any(t => t.Id == "bargain"), "former standalone bargaining entry is removed");
         Check(DailyToolCatalog.All.Select(t => t.Id).Distinct().Count() == DailyToolCatalog.All.Count, "unique tool identities");
         Check(DailyToolCatalog.Find("infinite-gacha") is {Repository:"Dustweave", AssemblyName:"BD2InfiniteGacha", MutexName:@"Local\BD2InfiniteGacha-v1"}, "owned gacha points to Dustweave without changing loader or window identity");
         Check(DailyToolCatalog.Search("连连看").Single().Id == "sichuan", "Chinese search");

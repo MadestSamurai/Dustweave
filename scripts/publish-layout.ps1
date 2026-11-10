@@ -70,8 +70,10 @@ function Publish-DustweaveLayout {
  $self=if($Flavor -eq 'Portable'){'true'}else{'false'}
  $runtime=Get-DustweaveRuntimeVersion -Root $Root
  $bridge=$Version -eq '1.4.15-bridge.1'
- # Lite must also require a patched runtime; never silently accept any 8.0 patch.
- $framework=$runtime
+ # Portable carries the security-patched runtime. Lite keeps its established
+ # startup floor so an OTA cannot strand users on an older installed .NET 8.
+ # Recommend updating that external runtime separately; do not claim we patch it.
+ $framework=if($Flavor -eq 'Portable'){$runtime}else{'8.0.0'}
  $catalog=Join-Path $Work ('resources-'+$Flavor)
  [IO.Directory]::CreateDirectory($catalog)|Out-Null
  $common=@('-c','Release','-r','win-x64','--self-contained',$self,('-p:SelfContained='+$self),('-p:PublishSelfContained='+$self),'-p:DebugType=None','-p:DebugSymbols=false','-p:IncludeSourceRevisionInInformationalVersion=false',('-p:RuntimeFrameworkVersion='+$framework),('-p:CustomAfterMicrosoftCommonTargets='+ (Join-Path $Root 'Package.Build.targets')),('-p:DustweavePackageLockRoot='+ (Join-Path $Work ('locks/'+$Flavor))),'--nologo')

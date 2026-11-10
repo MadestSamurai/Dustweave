@@ -2111,7 +2111,7 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "92e91b582d64b16e50c81cb0e0c5e99285ef55d4b3f78040c067690a008d7505"
+      "sha256": "b23d9dd6434fc405555a6ddf63cf936e4fb7af6f51164f896ab3279457b4ce31"
     },
     {
       "path": "src/Desktop/Localization/runtime.json",
@@ -5771,7 +5771,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ToolMenuCases.cs",
-      "sha256": "baa46c02ea2221c503e5c5b4013ce8f56cf40b3dfe8160b3ca29b7db0958d1e6"
+      "sha256": "14bd558c4faf52b688af652154df266c4c490e64fa8d7cc136d265da2bbaae87"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ToolPluginCases.cs",

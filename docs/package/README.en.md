@@ -7,7 +7,7 @@ Your daily routine, woven into one timeline.
 | Package | Requirements |
 | --- | --- |
 | Portable | Includes the .NET desktop runtime; extract and run |
-| Lite | Smaller download; requires .NET Desktop Runtime 8.0.33 or a later 8.0 x64 patch |
+| Lite | Smaller download; requires .NET 8 Desktop Runtime x64. Upgrade it to 8.0.33 or a later 8.0 patch for security fixes |
 
 ## Get started
 
