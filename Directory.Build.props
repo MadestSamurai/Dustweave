@@ -5,7 +5,7 @@
     <Deterministic>true</Deterministic>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <PathMap>$(MSBuildThisFileDirectory)=/_/Dustweave/</PathMap>
-    <DustweaveRuntimeVersion>8.0.30</DustweaveRuntimeVersion>
+    <DustweaveRuntimeVersion>8.0.33</DustweaveRuntimeVersion>
   </PropertyGroup>
   <!-- Keep connection identities independent from the product label. Standalone tools use their own props. -->
   <PropertyGroup Condition="$([System.String]::Copy('$(MSBuildProjectName)').StartsWith('Dustweave.'))">
