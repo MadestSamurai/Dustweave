@@ -38,6 +38,7 @@ public partial class MainWindow
         string? requestedTool=Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_TOOL");
         if(!string.IsNullOrEmpty(requestedTool)&&!DailyToolCatalog.All.Any(t=>t.Id==requestedTool))
             throw new ArgumentException("Unknown tool smoke filter");
+        if(requestedTool=="talent-practice") { await CheckBargainForSmoke(); return; }
         var checks=new List<string>();
         void Check(bool value,string message){if(!value)throw new Exception(message);checks.Add(message);}
         CheckOwnedStorageForSmoke(Check);

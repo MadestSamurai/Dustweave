@@ -5,8 +5,8 @@ namespace BD2Fishing
     public sealed class FishingPolicy
     {
         private string owner = "", state = "";
-        private long entered, lastInput, lastObserved;
-        private int networkRecoveries;
+        private long entered, lastInput, lastObserved, settlementUntil;
+        private int networkRecoveries, castAttempts;
         private bool hookSent, castSent, released, ownsCharge;
         private int closedPopup;
         private readonly FishingMapRenewal mapRenewal = new FishingMapRenewal();
@@ -29,9 +29,9 @@ namespace BD2Fishing
             }
             if (owner != c.OwnerId)
             {
-                mapRenewal.Cancel(); owner=c.OwnerId; state=""; hookSent=castSent=released=false; closedPopup=0; lastInput=0; Fault="";
+                mapRenewal.Cancel(); owner=c.OwnerId; state=""; hookSent=castSent=released=false; closedPopup=0; lastInput=0; settlementUntil=0; castAttempts=0; Fault="";
             }
-            if (s.State != state) {if(s.State!="Casting")ownsCharge=false;state=s.State;entered=now;hookSent=castSent=released=false;}
+            if (s.State != state) {if(s.State!="Casting")ownsCharge=false;state=s.State;entered=now;hookSent=castSent=released=false;castAttempts=0;}
             long elapsed=lastObserved==0?0:Math.Max(0,now-lastObserved);lastObserved=now;
             if(networkRecoveries!=s.NetworkRecoveries){
                 networkRecoveries=s.NetworkRecoveries;entered=now;lastInput=now;
@@ -44,6 +44,13 @@ namespace BD2Fishing
                 return FishingAction.None;
             }
             if (!s.ResultPopup && !s.LevelPopup) closedPopup=0;
+            else
+            {
+                // Native result-close can open level-up on a later frame. A press
+                // ignored by that popup never started a cast; don't latch it forever.
+                settlementUntil=now+TimeSpan.FromMilliseconds(500).Ticks;
+                if(s.State=="None" && !s.CastRunning){castSent=ownsCharge=released=false;castAttempts=0;entered=now;}
+            }
             if (s.Error.Length>0) Fail(s.Error);
             // A transport wait is recoverable state, not a latched policy failure.
             if (!holdPhase && Fault.Length==0 && mapRenewal.Next(s,c,now,out var travel))
@@ -82,6 +89,7 @@ namespace BD2Fishing
             switch(s.State)
             {
                 case "None":
+                    if(now<settlementUntil){Reason="等待收获结算与弹窗";break;}
                     if(s.MapChangePending){Reason="本竿已结束，等待昼夜切换";break;}
                     if(s.BagFull || s.SaleActive)
                     {
@@ -92,6 +100,10 @@ namespace BD2Fishing
                         lastInput=now;return FishingAction.SellFish;
                     }
                     if(!s.CanCast){Reason=c.AutoApproach?"自动前往可钓区域":"请移动到可钓位置并面向水面";if(FishingApproach.CanRun(s,c,now)){lastInput=now;return FishingAction.ApproachWater;}break;}
+                    // StartCast is only local charging. Retry only when the game
+                    // still reports idle and no charging/request is in progress;
+                    // never retry CastRelease, which actually submits the cast.
+                    if(castSent && !s.CastRunning && castAttempts<3 && now-lastInput>=TimeSpan.FromSeconds(2).Ticks)castSent=false;
                     Reason="准备下一竿";
                     if(!castSent && now-entered>=TimeSpan.FromMilliseconds(c.NextCastMilliseconds).Ticks)
                     {
@@ -105,7 +117,7 @@ namespace BD2Fishing
                             }
                             if(!s.BaitActive && s.BaitCount==0)Reason="鱼饵用尽，继续普通钓鱼";
                         }
-                        castSent=true;ownsCharge=true;lastInput=now;return FishingAction.CastPress;
+                        castSent=true;castAttempts++;ownsCharge=true;lastInput=now;return FishingAction.CastPress;
                     }
                     if(castSent && now-lastInput>TimeSpan.FromSeconds(5).Ticks) Reason="等待游戏进入抛竿状态，恢复后自动继续";
                     break;

@@ -1,4 +1,21 @@
 {
+  "tradepreset.import": { "zh-CN": "导入跑商方案", "zh-TW": "匯入跑商方案", "en-US": "Import trading settings" },
+  "storage.move.preparing": { "zh-CN": "正在准备迁移…", "zh-TW": "正在準備遷移…", "en-US": "Preparing migration…" },
+  "storage.move.copying": { "zh-CN": "正在复制并校验新位置…", "zh-TW": "正在複製並驗證新位置…", "en-US": "Copying and verifying the new location…" },
+  "storage.move.verifying": { "zh-CN": "正在核对原文件…", "zh-TW": "正在核對原始檔案…", "en-US": "Verifying the original files…" },
+  "storage.move.switching": { "zh-CN": "正在切换存储位置…", "zh-TW": "正在切換儲存位置…", "en-US": "Switching storage locations…" },
+  "storage.move.finishing": { "zh-CN": "正在核对并清理旧副本…", "zh-TW": "正在核對並清理舊副本…", "en-US": "Checking and removing old copies…" },
+  "storage.move.progress": { "zh-CN": "本阶段 {0:P0} · 已完成 {1}/{2} 个文件", "zh-TW": "本階段 {0:P0} · 已完成 {1}/{2} 個檔案", "en-US": "This step: {0:P0} · {1}/{2} files complete" },
+  "tradepreset.export": { "zh-CN": "导出跑商方案", "zh-TW": "匯出跑商方案", "en-US": "Export trading settings" },
+  "tradepreset.filter": { "zh-CN": "织尘跑商方案|*.json", "zh-TW": "織塵跑商方案|*.json", "en-US": "Dustweave trading settings|*.json" },
+  "tradepreset.confirm": { "zh-CN": "将替换「{0}」的全部跑商设置，包括跑商模式、开关、料理和售卖列表。\n\n料理 {1} 道 · 出售 {2} 种\n预留金币 {3} · 采购上限 {4}\n跑商前开箱：{5} · 料理按需补药：{6}\n\n仅保存设置，不立即执行。游戏内收藏不包含在方案中；其他日常设置不变。", "zh-TW": "將取代「{0}」的全部跑商設定，包括跑商模式、開關、料理和出售清單。\n\n料理 {1} 道 · 出售 {2} 種\n保留金幣 {3} · 採購上限 {4}\n跑商前開箱：{5} · 料理按需補藥：{6}\n\n僅儲存設定，不立即執行。遊戲內收藏不包含在方案中；其他日常設定不變。", "en-US": "Replace all trading settings for \"{0}\", including mode, switches, cooking order and sale lists?\n\nRecipes: {1} · Items to sell: {2}\nGold reserve: {3} · Spending limit: {4}\nOpen boxes: {5} · Refill cooking pills: {6}\n\nThis saves settings without starting tasks. In-game favorites are not included. Other daily settings stay unchanged." },
+  "tradepreset.on": { "zh-CN": "开启", "zh-TW": "開啟", "en-US": "On" },
+  "tradepreset.off": { "zh-CN": "关闭", "zh-TW": "關閉", "en-US": "Off" },
+  "tradepreset.unlimited": { "zh-CN": "不限", "zh-TW": "不限", "en-US": "Unlimited" },
+  "tradepreset.imported": { "zh-CN": "跑商方案已导入并保存到当前账号。", "zh-TW": "跑商方案已匯入並儲存至目前帳號。", "en-US": "Trading settings imported and saved for this account." },
+  "tradepreset.exported": { "zh-CN": "跑商方案已导出，可切换账号后导入。", "zh-TW": "跑商方案已匯出，可切換帳號後匯入。", "en-US": "Trading settings exported. Select another account to import them." },
+  "tradepreset.invalid": { "zh-CN": "文件不是有效的织尘跑商方案，或格式版本不支持。请使用「导出跑商方案」生成文件，未导入任何设置。", "zh-TW": "檔案不是有效的織塵跑商方案，或格式版本不支援。請使用「匯出跑商方案」產生檔案，尚未匯入任何設定。", "en-US": "Invalid or unsupported trading settings file. Use Export trading settings to create it. No settings were imported." },
+  "tradepreset.failed": { "zh-CN": "跑商方案操作失败：", "zh-TW": "跑商方案操作失敗：", "en-US": "Trading settings operation failed: " },
   "discovery.new": { "zh-CN": "新功能", "zh-TW": "新功能", "en-US": "New" },
   "discovery.view": { "zh-CN": "查看介绍", "zh-TW": "查看介紹", "en-US": "View details" },
   "discovery.close": { "zh-CN": "关闭", "zh-TW": "關閉", "en-US": "Close" },
@@ -7565,6 +7582,39 @@
     "zh-TW": "沙盒平行執行",
     "en-US": "Run in parallel sandboxes"
   },
+  "tool.talent-practice": {
+    "zh-CN": "技能练习",
+    "zh-TW": "技能練習",
+    "en-US": "Talent practice"
+  },
+  "tool.talent-practice.description": {"zh-CN":"选择角色练习天赋，查看经验和预计药耗，练满当前等级后停止。","zh-TW":"選擇角色練習天賦，查看經驗和預計藥耗，練滿目前等級後停止。","en-US":"Choose a character to practice a talent. Check XP and estimated pill cost; stop when the current tier is full."},
+  "practice.skill_number": {"zh-CN":"天赋 {0}","zh-TW":"天賦 {0}","en-US":"Talent {0}"},
+  "practice.skill": {"zh-CN":"练习技能","zh-TW":"練習技能","en-US":"Talent"},
+  "practice.field_hint": {"zh-CN":"在第 1、2 章安全区之间切换并施放所选角色的技能。只练满当前等级，不购买药或使用天赋书。","zh-TW":"在第 1、2 章安全區之間切換並施放所選角色的技能。只練滿目前等級，不購買藥或使用天賦書。","en-US":"Alternates between the safe areas of Chapters 1 and 2 and casts the selected talent. Stops when this tier is full; does not buy pills or use talent books."},
+  "practice.travel": {"zh-CN":"正在切换到安全区，刷新技能效果…","zh-TW":"正在切換至安全區，刷新技能效果…","en-US":"Travelling to a safe area to reset the talent effect…"},
+  "practice.casting": {"zh-CN":"正在施放技能并读取经验…","zh-TW":"正在施放技能並讀取經驗…","en-US":"Casting the talent and reading XP…"},
+  "practice.packs_required": {"zh-CN":"需要先解锁第 1、2 章卡带，再重新开始练习。","zh-TW":"需要先解鎖第 1、2 章卡帶，再重新開始練習。","en-US":"Unlock Chapters 1 and 2, then start practice again."},
+  "practice.safe_area_unavailable": {"zh-CN":"尚未到达安全区，未施放技能。请返回第 1 或第 2 章安全区后重试。","zh-TW":"尚未抵達安全區，未施放技能。請返回第 1 或第 2 章安全區後重試。","en-US":"The safe area is not ready. No talent was cast. Return to a safe area in Chapter 1 or 2 and retry."},
+  "practice.effect_not_reset": {"zh-CN":"切换卡带后技能效果仍在，请等待效果结束后重试。","zh-TW":"切換卡帶後技能效果仍在，請等待效果結束後重試。","en-US":"The talent effect is still active after changing cartridges. Wait for it to end, then retry."},
+  "practice.skill_changed": {"zh-CN":"角色天赋已变化，请刷新进度后重试。","zh-TW":"角色天賦已變更，請刷新進度後重試。","en-US":"The talent changed. Refresh progress and retry."},
+  "practice.cast_failed": {"zh-CN":"游戏未确认技能施放成功，请检查游戏提示后重试。","zh-TW":"遊戲未確認技能施放成功，請檢查遊戲提示後重試。","en-US":"The game did not confirm a successful cast. Check its message and retry."},
+  "practice.test_complete": {"zh-CN":"本次练习已完成。","zh-TW":"本次練習已完成。","en-US":"Practice completed."},
+  "practice.none": {"zh-CN":"当前账号没有该技能的可用角色。","zh-TW":"目前帳號沒有此技能的可用角色。","en-US":"No character with this talent was found on this account."},
+  "practice.refresh": {
+    "zh-CN": "刷新进度",
+    "zh-TW": "刷新進度",
+    "en-US": "Refresh progress"
+  },
+  "practice.start": {
+    "zh-CN": "开始练习",
+    "zh-TW": "開始練習",
+    "en-US": "Start practice"
+  },
+  "practice.ready": {
+    "zh-CN": "技能练习窗口已打开，确认角色和预计药耗后开始。",
+    "zh-TW": "技能練習視窗已開啟，確認角色和預計藥耗後開始。",
+    "en-US": "Talent practice is open. Check the character and estimated pill cost before starting."
+  },
   "bargain.title": {
     "zh-CN": "砍价技能训练",
     "zh-TW": "殺價技能訓練",
@@ -7635,15 +7685,11 @@
     "zh-TW": "持有 {0:N0} 瓶 · 每次 {1:N0} 瓶",
     "en-US": "{0:N0} pills available · {1:N0} per attempt"
   },
-  "bargain.maximum": {
-    "zh-CN": "砍价天赋已达最高等级，无需继续训练。",
-    "zh-TW": "殺價天賦已達最高等級，無需繼續訓練。",
-    "en-US": "Bargaining is at its maximum tier. No further training is needed."
-  },
+  "bargain.maximum": {"zh-CN":"所选天赋已达最高等级，无需继续练习。","zh-TW":"所選天賦已達最高等級，無需繼續練習。","en-US":"This talent is at its maximum tier. No further practice is needed."},
   "bargain.upgrade": {
-    "zh-CN": "本级经验已满。请在游戏中使用天赋书升级，再点击「读取账号」继续。",
-    "zh-TW": "本級經驗已滿。請在遊戲中使用天賦書升級，再點擊「讀取帳號」繼續。",
-    "en-US": "This tier is complete. Upgrade with a talent book in the game, then read the account again to continue."
+    "zh-CN": "本级经验已满。请在游戏中使用天赋书升级，再点击「刷新进度」继续。",
+    "zh-TW": "本級經驗已滿。請在遊戲中使用天賦書升級，再點擊「刷新進度」繼續。",
+    "en-US": "This tier is complete. Upgrade with a talent book in the game, then click Refresh progress to continue."
   },
   "bargain.shortage": {
     "zh-CN": "天赋药不足：练满本级预计需要 {0:N0} 瓶，现有 {1:N0} 瓶，还差 {2:N0} 瓶。补足后重新读取即可开始。",
@@ -7671,15 +7717,11 @@
     "en-US": "Travelling to the plaza merchant…"
   },
   "bargain.training": {
-    "zh-CN": "正在砍价并核对经验…",
-    "zh-TW": "正在殺價並核對經驗…",
-    "en-US": "Bargaining and checking XP…"
+    "zh-CN": "正在练习并读取经验…",
+    "zh-TW": "正在練習並讀取經驗…",
+    "en-US": "Practising and reading XP…"
   },
-  "bargain.connecting": {
-    "zh-CN": "正在读取当前账号与砍价天赋…",
-    "zh-TW": "正在讀取目前帳號與殺價天賦…",
-    "en-US": "Reading the current account and bargaining talent…"
-  },
+  "bargain.connecting": {"zh-CN":"正在读取当前账号与天赋进度…","zh-TW":"正在讀取目前帳號與天賦進度…","en-US":"Reading the current account and talent progress…"},
   "bargain.none": {
     "zh-CN": "当前账号没有可读取的砍价角色。",
     "zh-TW": "目前帳號沒有可讀取的殺價角色。",
@@ -7690,20 +7732,16 @@
     "zh-TW": "確認角色和預計耗藥後，點擊下方按鈕開始。",
     "en-US": "Check the character and estimated cost, then start below."
   },
-  "bargain.surface_timeout": {
-    "zh-CN": "砍价页面尚未就绪。已停止，请检查游戏弹窗后重新读取。",
-    "zh-TW": "殺價頁面尚未就緒。已停止，請檢查遊戲彈窗後重新讀取。",
-    "en-US": "The bargaining page is not ready. Check the game for a dialog, then read the account again."
-  },
+  "bargain.surface_timeout": {"zh-CN":"技能页面尚未就绪。已停止，请检查游戏提示后刷新进度重试。","zh-TW":"技能頁面尚未就緒。已停止，請檢查遊戲提示後刷新進度重試。","en-US":"The talent page is not ready. Check the game message, then refresh progress and retry."},
   "bargain.merchant_changed": {
     "zh-CN": "商人目标已改变，已停止；请返回广场后重新读取。",
     "zh-TW": "商人目標已改變，已停止；請返回廣場後重新讀取。",
     "en-US": "The merchant changed. Return to the plaza and read the account again."
   },
   "bargain.character_unavailable": {
-    "zh-CN": "所选角色当前无法砍价。请检查角色生命、卡带限制和天赋状态后重新读取。",
-    "zh-TW": "所選角色目前無法殺價。請檢查角色生命、卡帶限制和天賦狀態後重新讀取。",
-    "en-US": "This character cannot bargain now. Check their health, cartridge restrictions and talent status, then read the account again."
+    "zh-CN": "所选角色当前无法施放天赋。请检查角色生命、卡带限制和天赋状态后刷新进度。",
+    "zh-TW": "所選角色目前無法施放天賦。請檢查角色生命、卡帶限制和天賦狀態後刷新進度。",
+    "en-US": "This character cannot cast the talent now. Check their health, cartridge restrictions and talent status, then refresh progress."
   },
   "bargain.preview_changed": {
     "zh-CN": "角色或耗药预览已变化，未继续消耗。请重新读取账号。",
@@ -7751,18 +7789,18 @@
     "en-US": "The game does not match the selected account. Log in to that account and read it again."
   },
   "bargain.data_incomplete": {
-    "zh-CN": "砍价天赋数据不完整，请重新读取账号；仍有问题时导出诊断。",
-    "zh-TW": "殺價天賦資料不完整，請重新讀取帳號；仍有問題時匯出診斷。",
+    "zh-CN": "天赋数据不完整，请刷新进度；仍有问题时导出诊断。",
+    "zh-TW": "天賦資料不完整，請刷新進度；仍有問題時匯出診斷。",
     "en-US": "Talent data is incomplete. Read the account again; export diagnostics if it persists."
   },
   "bargain.response_changed": {
-    "zh-CN": "砍价回执属于其他天赋，已停止。请保留现场并导出诊断。",
-    "zh-TW": "殺價回執屬於其他天賦，已停止。請保留現場並匯出診斷。",
+    "zh-CN": "游戏回执属于其他天赋，已停止。请保留现场并导出诊断。",
+    "zh-TW": "遊戲回執屬於其他天賦，已停止。請保留現場並匯出診斷。",
     "en-US": "The reply belongs to another talent. Training stopped; preserve the game state and export diagnostics."
   },
   "bargain.experience_changed": {
-    "zh-CN": "天赋经验与游戏回执不一致，未继续砍价。请导出诊断核对。",
-    "zh-TW": "天賦經驗與遊戲回執不一致，未繼續殺價。請匯出診斷核對。",
+    "zh-CN": "天赋经验与游戏回执不一致，未继续练习。请导出诊断核对。",
+    "zh-TW": "天賦經驗與遊戲回執不一致，未繼續練習。請匯出診斷核對。",
     "en-US": "XP does not match the game's reply. Training stopped; export diagnostics for review."
   },
   "bargain.cost_changed": {

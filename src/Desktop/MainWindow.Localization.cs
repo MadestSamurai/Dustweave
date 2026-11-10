@@ -142,6 +142,7 @@ public partial class MainWindow
             sales = new[] { new { name="Demo dish", count=10, price=4000, shop=1, date="2026-10-10", today_quote_confirmed=false } }
         });
         var preferences = new DailyPreferencesPanel(folder, allowGame:false);
+        preferences.TradePresetProbeForSmoke();
         var verifyPreferences = preferences.TradeSettingsProbeForSmoke();
         var panel = new TradePlanPanel(folder, account, allowGame:false);
         panel.LoadSnapshot(Path.Combine(folder,"snapshot.json"));

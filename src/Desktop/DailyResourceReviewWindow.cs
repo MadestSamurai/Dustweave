@@ -18,6 +18,7 @@ internal sealed class DailyResourceReviewWindow : Window
     private string current = "";
     private bool loading, changed;
     internal bool Saved { get; private set; }
+    internal bool Acknowledged { get; private set; }
     internal DailyResourceReviewWindow(string root, DailyAccount[] rows, string selected)
     {
         store = new(root); preferences = new(root);
@@ -41,7 +42,7 @@ internal sealed class DailyResourceReviewWindow : Window
         var actions = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new(0, 20, 0, 0) };
         var keep = new Button { Margin = new(0, 0, 8, 0) }; L.Bind(keep, ContentControl.ContentProperty, "resource_review.keep");
         var save = new Button(); save.SetResourceReference(StyleProperty, "PrimaryButton"); L.Bind(save, ContentControl.ContentProperty, "resource_review.save");
-        keep.Click += (_, _) => Close(); save.Click += (_, _) => Save(); actions.Children.Add(keep); actions.Children.Add(save); panel.Children.Add(actions);
+        keep.Click += (_, _) => { Acknowledged = true; Close(); }; save.Click += (_, _) => Save(); actions.Children.Add(keep); actions.Children.Add(save); panel.Children.Add(actions);
         Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
         foreach (var check in new[] { boxes, refill, cocktail })
         { check.Checked += (_, _) => Changed(); check.Unchecked += (_, _) => Changed(); }
@@ -93,7 +94,7 @@ internal sealed class DailyResourceReviewWindow : Window
     {
         if (!Remember()) return;
         if (BeforeSave != null && !BeforeSave()) return;
-        try { store.Save(edits); Saved = true; Close(); }
+        try { store.Save(edits); Saved = true; Acknowledged = true; Close(); }
         catch (Exception e) { L.Text(status, "resource_review.save_failed"); status.ToolTip = e.Message; }
     }
     internal void VerifyForSmoke()
@@ -109,7 +110,7 @@ internal sealed class DailyResourceReviewWindow : Window
         target.Text = "5000"; accounts.SelectedValue = a;
         if (boxes.IsChecked != true || target.Text != "6000" || cocktail.IsChecked != true) throw new Exception("Account draft was lost");
         Save();
-        if (!Saved || !preferences.Read(a).Trade.OpenBoxesBeforeTrade || !preferences.Read(a).Stages.PreserveBloodCocktailMail ||
+        if (!Saved || !Acknowledged || !preferences.Read(a).Trade.OpenBoxesBeforeTrade || !preferences.Read(a).Stages.PreserveBloodCocktailMail ||
             preferences.Read(a).General.TalentPotionTarget != 6000 || preferences.Read(b).Trade.OpenBoxesBeforeTrade)
             throw new Exception("Reminder did not save each account correctly");
     }

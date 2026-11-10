@@ -21,7 +21,7 @@ internal static class HostedToolLocaleProbe
         try
         {
             AppDomain.CurrentDomain.SetData(HostedToolLocale.Key,null);
-            foreach(var tool in DailyToolCatalog.All.Where(t=>t.Id is not ("mansion-runaway" or "pandora" or "soul")))
+            foreach(var tool in DailyToolCatalog.All.Where(t=>!t.HostWindow && t.Id is not ("mansion-runaway" or "pandora" or "soul")))
             {
                 string root=Path.Combine(output,"isolated",tool.Id);
                 Directory.CreateDirectory(root);
@@ -68,6 +68,8 @@ internal static class HostedToolLocaleProbe
                 Check(DailyLanguage.Current.Get("pandora.challenge_warning") is {Length:>0} notice && notice!="pandora.challenge_warning","pandora: shared native catalog "+code);
                 foreach(var key in new[]{"tool.soul","tool.soul.description","soul.title","soul.state.planning"})
                     Check(DailyLanguage.Current.Get(key) is {Length:>0},"soul: shared host catalog "+code+" "+key);
+                foreach(var key in new[]{"tool.talent-practice","tool.talent-practice.description","practice.skill","practice.refresh","practice.start"})
+                    Check(DailyLanguage.Current.Get(key) is {Length:>0} text && text!=key && !text.StartsWith("["),"talent-practice: shared host catalog "+code+" "+key);
             }
             Check(CultureInfo.CurrentCulture.Name==culture&&CultureInfo.CurrentUICulture.Name==uiCulture,"Execution culture unchanged");
             bool rejected=false;try{using var invalid=HostedToolLocale.Begin("unknown");}catch(ArgumentOutOfRangeException){rejected=true;}

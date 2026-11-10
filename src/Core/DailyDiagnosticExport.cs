@@ -16,6 +16,9 @@ public static class DailyDiagnosticExport
     // Budget applies to redacted log contents before ZIP compression, not archive size.
     public const long MaxLogBytes = 128L * 1024 * 1024;
     public const int MaxFiles = 2000;
+    // Bounded reports only. Never export the full relocation inventory, registry
+    // hive, login store or recovery backup just to explain a migration failure.
+    static readonly string[] StorageEvidence = ["storage-operation-error.json", "storage-migration-error.json", "storage-migration-last.json", "live/diagnostics/storage-migration-check.json"];
     static readonly string[] UpdateAttemptFiles = ["update-result.json", "updater-state.json", "ready.json", "delta-fallback.json", "backup/transaction.json",
         "startup/startup-state.json", "startup/startup-error.json", "startup/launcher-error.txt", "startup/bootstrap-error.txt"];
     static readonly string[] UpdateTop = ["update-result.json", "launcher-error.txt", "bootstrap-error.txt", "startup/launcher-error.txt", "startup/bootstrap-error.txt"];
@@ -57,7 +60,7 @@ public static class DailyDiagnosticExport
         }
         return Trees.FirstOrDefault(t=>relative.StartsWith(t+"/",StringComparison.OrdinalIgnoreCase));
     }
-    static int Priority(string relative) => UpdateEvidence(relative) || PluginCheckEvidence(relative) || ToolPluginEvidence(relative) || ToolControlEvidence(relative) || Top.Contains(Unrotate(relative)) || Singles.Contains(relative,StringComparer.OrdinalIgnoreCase) || relative.StartsWith("suite/diagnostics/",StringComparison.OrdinalIgnoreCase) ? 0
+    static int Priority(string relative) => StorageEvidence.Contains(relative,StringComparer.OrdinalIgnoreCase) || UpdateEvidence(relative) || PluginCheckEvidence(relative) || ToolPluginEvidence(relative) || ToolControlEvidence(relative) || Top.Contains(Unrotate(relative)) || Singles.Contains(relative,StringComparer.OrdinalIgnoreCase) || relative.StartsWith("suite/diagnostics/",StringComparison.OrdinalIgnoreCase) ? 0
         : relative.StartsWith("live/steps/",StringComparison.OrdinalIgnoreCase) ? 4
         : relative.StartsWith("live/diagnostics/performance.jsonl",StringComparison.OrdinalIgnoreCase) || new[]{"live/queues/","live/queue-bootstrap/","live/server-collection/","live/weekly-npc-queries/","live/travel-diagnostics/","live/diagnostics/failures/","live/weekly-npc-recovery/"}.Any(p=>relative.StartsWith(p,StringComparison.OrdinalIgnoreCase)) ? 1
         : new[]{"live/business/","live/managed-business/","live/trade-quote-reads/","trade/diagnostics/"}.Any(p=>relative.StartsWith(p,StringComparison.OrdinalIgnoreCase)) ? 2 : 3;
@@ -69,6 +72,7 @@ public static class DailyDiagnosticExport
         var p = relative.Replace('\\','/');
         if (p.Split('/').Any(x => x is ".." or "." || x != "secret-vision" && SecretKey.IsMatch(x) || x.Equals("plugins",StringComparison.OrdinalIgnoreCase) || x.Equals("accounts",StringComparison.OrdinalIgnoreCase))) return false;
         if (PrivateNames.Contains(Unrotate(Path.GetFileName(p)))) return false;
+        if (StorageEvidence.Contains(p,StringComparer.OrdinalIgnoreCase)) return true;
         if (PluginCheckEvidence(p)) return true;
         if (ToolPluginEvidence(p)) return true;
         if(SoulControlEvidence(p))return true;
@@ -235,7 +239,7 @@ public static class DailyDiagnosticExport
                             AddEvidence(Path.GetRelativePath(root,Path.Combine(session,name)).Replace('\\','/'));
             }
             catch(Exception error) when(error is IOException or UnauthorizedAccessException){skipped.Add(new{path=sourceName+"/tool-plugins/sessions",reason=error.GetType().Name});}
-            foreach(var name in Top.Concat(Singles).Concat(Top.Where(LogName).SelectMany(n=>Rotations.Select(r=>n+r)))) {string p=Path.Combine(root,name);try{if(File.Exists(p)&&SafePath(p))files.Add((new FileInfo(p),root,sourceName));}catch(Exception e) when(e is IOException or UnauthorizedAccessException){skipped.Add(new{path=sourceName+"/"+name,reason=e.GetType().Name});}}
+            foreach(var name in Top.Concat(Singles).Concat(StorageEvidence).Concat(Top.Where(LogName).SelectMany(n=>Rotations.Select(r=>n+r)))) {string p=Path.Combine(root,name);try{if(File.Exists(p)&&SafePath(p))files.Add((new FileInfo(p),root,sourceName));}catch(Exception e) when(e is IOException or UnauthorizedAccessException){skipped.Add(new{path=sourceName+"/"+name,reason=e.GetType().Name});}}
             // A large historical step tree must not consume another category's
             // entire enumeration budget. Export byte/file limits still apply below.
             foreach(var tree in Trees){visited=0;Walk(Path.Combine(root,tree),0);}

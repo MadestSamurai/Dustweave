@@ -219,6 +219,15 @@ public partial class MainWindow
                     var start=Nodes<Button>(cleanup).Single(b=>b.Name=="LogCleanupStart");
                     var status=Nodes<TextBlock>(cleanup).Single(b=>b.Name=="LogCleanupStatus");
                     if(!rescan.IsEnabled||status.Text.StartsWith("logs."))throw new Exception("Cleanup preview failed");
+                    var migrationProgress=Nodes<ProgressBar>(cleanup).Single(p=>p.Name=="StorageOperationProgress");
+                    var renderProgress=(Action<DailyStorageMigration.MoveProgress>)migrationProgress.Tag;
+                    foreach(var stage in Enum.GetValues<DailyStorageMigration.MoveStage>())
+                    {
+                        renderProgress(new(stage,50,100,1,2));
+                        if(migrationProgress.IsIndeterminate||migrationProgress.Value!=50||status.Text.StartsWith("storage."))throw new Exception("Migration progress is not measurable or localized");
+                    }
+                    renderProgress(new(DailyStorageMigration.MoveStage.Preparing,0,0,0,0));
+                    if(migrationProgress.IsIndeterminate!=SystemParameters.ClientAreaAnimation)throw new Exception("Migration does not respect Windows animation preference");
                     var diskUsage=Nodes<StackPanel>(cleanup).Single(p=>p.Name=="StorageDiskUsage");
                     if(diskUsage.Children.Count==0||!Nodes<TextBlock>(diskUsage).Any(t=>t.Text==Path.GetPathRoot(root)))throw new Exception("Per-disk storage usage is missing");
                     if(DailyStorageCompression.Supported(root) && (!start.IsEnabled || !Nodes<TextBlock>(cleanup).Any(t=>t.Visibility==Visibility.Visible&&t.Text==L.Get("storage.compression",1))))throw new Exception("Compression-only maintenance is not understandable or available");

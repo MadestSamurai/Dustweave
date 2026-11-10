@@ -110,6 +110,64 @@ static class BargainTrainingCases
             try { await f.Trainer.Run(Sample); throw new Exception("Changed tier accepted"); } catch (InvalidDataException) { }
             Check(f.H.Box.Commands.Count == 0, "book upgrade requires new preview");
         }
+        foreach (string state in new[] { "dispatching", "unknown", "previewing", "unknown_preview" })
+        {
+            string path = Path.Combine(root, "bargain-restart-" + state);
+            using (var f = new Fixture(path))
+            {
+                var before = f.H.Evidence();
+                var old = f.H.Business.Create(f.H.Context, DailyBargainProof.Role, before,
+                    O(("character", 10), ("npc", 50), ("budget", 30)), O(("ui", "DiscountPopupUI"), ("field", "_objButtonOk")));
+                old["state"] = state;
+                old["before"]!["Frame"]!["ProcessStartTicks"] = 9; // PID reuse, different game lifetime.
+                f.H.Business.Save(old);
+            }
+            using (var f = new Fixture(path) { Character = Sample with { Experience = 160 }, Potions = 90 })
+            {
+                Check(await f.Trainer.Run(Sample) == "bargain.upgrade", "recreated trainer adopts current XP after game restart: " + state);
+                Check(f.Attempts == 2 && f.Potions == 70, "restart spends only current remaining-tier cost: " + state);
+                var history = f.H.Business.Records(f.H.Context, DailyBargainProof.Role).Single(r => r["reconciliation"] != null);
+                Check(N(history["reconciliation"]?["actions"]) == 0 && S(history["state"]) != "completed", "old outcome is preserved without fabricating success: " + state);
+                Check(await f.Trainer.Run(Sample) == "bargain.upgrade" && f.Attempts == 2, "repeated continuation never replays recovered attempt: " + state);
+            }
+        }
+        using (var f = new Fixture(Path.Combine(root, "bargain-dispatching-receipt")) { StopAtCommit = true })
+        {
+            await f.Trainer.Run(Sample);
+            var op = f.H.Business.Records(f.H.Context, DailyBargainProof.Role).Single();
+            op["state"] = "dispatching"; op.Remove("result"); f.H.Business.Save(op);
+            f.H.Page("ShopUI", "_objBackButton"); f.Discount = false; f.StopAtCommit = f.Stop = false;
+            Check(await f.Trainer.Run(Sample) == "bargain.upgrade" && f.Attempts == 3, "dispatching record settles from retained receipt without replay");
+        }
+        using (var f = new Fixture(Path.Combine(root, "bargain-uncommitted-preview")))
+        {
+            f.H.Page("QuickMenuUI");
+            var op = f.H.Business.Create(f.H.Context, DailyBargainProof.Role, f.H.Evidence(),
+                O(("character", 10), ("npc", 50)), O(("ui", "DiscountPopupUI"), ("field", "_objButtonOk")));
+            await f.H.Business.PreviewAsync(op, f.H.Context,
+                O(("ui", "QuickMenuUI"), ("operation", "trade_talent"), ("value", 20), ("expect", "DiscountPopupUI")));
+            f.Stop = true;
+            Check(await f.Trainer.Run(Sample) == "bargain.stopped" && f.Attempts == 0,
+                "continue cancels its own unsubmitted preview without spending");
+            Check(!f.H.Business.Records(f.H.Context, DailyBargainProof.Role).Any(DailyManagedBusiness.Pending),
+                "cancelled preview no longer blocks later training");
+        }
+        using (var f = new Fixture(Path.Combine(root, "bargain-recovery-boundaries")))
+        {
+            var op = O(("before", f.H.Evidence()), ("scope", O(("character", 10))));
+            var after = f.H.Evidence();
+            Check(!DailyBargainProof.CanReplanAfterRestart(op, after, f.H.Frame), "same-process uncertainty remains unresolved");
+            op["before"]!["Frame"]!["Instance"] = "old-component";
+            Check(!DailyBargainProof.CanReplanAfterRestart(op, after, f.H.Frame), "component reload is not a game restart");
+            op["before"]!["Frame"]!["ProcessStartTicks"] = 9;
+            f.H.Page("LoadingUI");
+            Check(!DailyBargainProof.CanReplanAfterRestart(op, f.H.Evidence(), f.H.Frame), "restart waits for loading to finish");
+            f.H.Page("DiscountPopupUI", "_objButtonOk", "_objButtonCancel");
+            Check(!DailyBargainProof.CanReplanAfterRestart(op, f.H.Evidence(), f.H.Frame), "existing confirmation is never replayed on recovery");
+            f.H.Page("ShopUI", "_objBackButton");
+            op["before"]!["Frame"]!["AccountKey"] = "another-account";
+            Check(!DailyBargainProof.CanReplanAfterRestart(op, f.H.Evidence(), f.H.Frame), "restart cannot adopt another account's operation");
+        }
         Check(DailyDiagnosticExport.Allowed("tools/bargain-training/logs/error.json"), "manual training failures included in diagnostic export");
     }
     static void ProofCases(List<string> checks)

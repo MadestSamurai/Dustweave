@@ -294,6 +294,7 @@ public sealed partial class DailyCommandDriver
         int instance = (int)Number(action, "value");
         string reason = Text(action, "reason"), opId = reason.StartsWith("business:", StringComparison.Ordinal) ? reason[9..].Split('|', 2)[0] : "";
         JsonObject? op = null;
+        bool practice = false;
         string? businessPath = null;
         if (opId.Length > 0)
         {
@@ -302,7 +303,11 @@ public sealed partial class DailyCommandDriver
             businessPath = new[] { Path.Combine(root, "live", "managed-business", opId + ".json"), Path.Combine(root, "live", "business", opId + ".json") }.FirstOrDefault(File.Exists) ?? Path.Combine(root, "live", "managed-business", opId + ".json");
             op = DailyJson.TryRead<JsonObject>(businessPath) ?? throw new StageHostException("protocol", "Missing talent business intent");
             DailyManagedReconciliation.ValidateRecord(businessPath, op);
-            if (!DailyFieldTalentProof.Owns(op) || op["state"]?.GetValue<string>() != "dispatching" || !DailyEvidence.SameActor(op["before"]!["Frame"]!.AsObject(), bound) || !JsonNode.DeepEquals(op["action"]!["value"], action["value"]) || !JsonNode.DeepEquals(op["server"], context!["server"]) || !JsonNode.DeepEquals(op["cycle"], context["cycle"]))
+            practice = op["role"]?.GetValue<string>() == DailyTalentPracticeProof.Role
+                && op["action"]?["operation"]?.GetValue<string>() == "mainline_talent"
+                && DailyTalentPracticeProof.FieldKind(DailyData.I(op["scope"]?["kind"]))
+                && DailyData.N(op["scope"]?["character"]) > 0;
+            if (!(DailyFieldTalentProof.Owns(op) || practice) || op["state"]?.GetValue<string>() != "dispatching" || !DailyEvidence.SameActor(op["before"]!["Frame"]!.AsObject(), bound) || !JsonNode.DeepEquals(op["action"]!["value"], action["value"]) || !JsonNode.DeepEquals(op["server"], context!["server"]) || !JsonNode.DeepEquals(op["cycle"], context["cycle"]))
                 throw new StageHostException("protocol", "Talent intent does not match the owned queue");
         }
         int? group = op == null ? null : (int)DailyFieldTalentProof.Numeric(op["scope"]!["group"]), kind = op == null ? null : (int)DailyFieldTalentProof.Numeric(op["scope"]!["kind"]);
@@ -328,6 +333,9 @@ public sealed partial class DailyCommandDriver
             }
             var evidence = await EvidenceAsync(TalentPrefixes);
             string gate = DailyFieldTalentProof.Gate(evidence, instance, group, kind);
+            if (practice && DailyFieldRoute.Talents(evidence).SingleOrDefault(r => DailyData.N(r["Instance"]) == instance) is { } selected
+                && DailyData.N(selected["Character"]) != DailyData.N(op!["scope"]?["character"]))
+                throw new DailyStepException("rejected", "Training character changed; no dispatch");
             if (gate.Length > 0)
             {
                 if (!gate.StartsWith("talent_wait:", StringComparison.Ordinal))
@@ -349,8 +357,8 @@ public sealed partial class DailyCommandDriver
         string proofPath = Path.Combine(root, "live", "field-talents", sent["id"]!.GetValue<string>() + ".json");
         var log = new JsonObject { ["engine"] = "dotnet-field-talents-v1", ["transport"] = sent.DeepClone(), ["waits"] = waits, ["non_dispatch_retries"] = rejected };
         DailyJson.Write(proofPath, log);
-        if (op == null)
-            return sent; // Waypoint selection has its own later business operation.
+        if (op == null || practice)
+            return sent; // Waypoint selection settles later; practice has its own XP/resource proof.
         op["command_id"] = sent["id"]!.DeepClone();
         op["managed_engine"] = "dotnet-field-talents-v1";
         DailyJson.Write(businessPath!, op);

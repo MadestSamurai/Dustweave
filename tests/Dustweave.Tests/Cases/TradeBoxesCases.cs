@@ -69,6 +69,8 @@ static class TradeBoxesCases
         var review = new DailyResourceReview(reviewRoot);
         Check(DailyDiagnosticExport.Allowed("live/trade-boxes/" + a + ".json"), "The latest native batch journal is included in normal diagnostics");
         Check(review.Needed, "One-time resource review starts pending");
+        Check(DailyResourceReview.InteractiveStartup(false,false,false)&&DailyResourceReview.InteractiveStartup(false,true,true),"Resource review permits ordinary launches and OTA restarts");
+        Check(!DailyResourceReview.InteractiveStartup(true,false,false)&&!DailyResourceReview.InteractiveStartup(false,true,false)&&!DailyResourceReview.InteractiveStartup(true,true,true),"Resource review stays out of schedules and directed tool commands");
         review.Save(new Dictionary<string, DailyResourceReview.Options> { [a] = new(true, true, 6000, true) });
         Check(store.Read(a).Trade.OpenBoxesBeforeTrade && store.Read(a).Trade.FavoritesOnly && store.Read(a).General.TalentPotionReserve == 10 && store.Read(a).Stages.PreserveBloodCocktailMail, "Review updates only its four fields");
         Check(!store.Read(b).Trade.OpenBoxesBeforeTrade, "Review does not overwrite other accounts");

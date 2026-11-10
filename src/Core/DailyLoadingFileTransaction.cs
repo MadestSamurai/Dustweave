@@ -33,6 +33,21 @@ internal static class DailyLoadingFileTransaction
         public List<Entry> Entries { get; set; } = [];
     }
     internal static string Pending(string root) => Path.Combine(Path.GetDirectoryName(Path.GetFullPath(root))!, "loading-experiment-recovery", "pending.json");
+    internal static bool PrepareForMigration(string root)
+    {
+        if (!File.Exists(Pending(root))) return true;
+        using var gate = Acquire(root);
+        var journal = Read(root);
+        if (journal == null) return true;
+        if (journal.State != "restored" || journal.Entries.Any(e => e.Stage != "restored")) return false;
+        // Recovery deliberately retains its terminal journal. Archive that proven
+        // result before relocation: an old absolute BoxRoot in pending.json would
+        // otherwise reject the first launch from the new location. No game files,
+        // registry contents, login data or unfinished recovery are changed here.
+        Atomic(Path.Combine(Path.GetDirectoryName(Pending(root))!, journal.Id, "restored.json"), journal);
+        File.Delete(Pending(root));
+        return true;
+    }
     static string Backup(Journal j, string phase, string name) => Path.Combine(Path.GetDirectoryName(Pending(j.BoxRoot))!, j.Id, phase, name);
     internal static string Overlay(string root, string executable)
     {

@@ -6,7 +6,7 @@ using System.Windows.Media;
 namespace Dustweave.Desktop;
 
 /// <summary>Edits account-scoped policy only. Saving never starts game actions.</summary>
-public sealed class DailyPreferencesPanel : UserControl
+public sealed partial class DailyPreferencesPanel : UserControl
 {
     private static DailyLanguage L => DailyLanguage.Current;
     private readonly bool allowGame;
@@ -349,6 +349,7 @@ public sealed class DailyPreferencesPanel : UserControl
             { loaded.Trade.CookingRecipes = dialog.Result; loaded.Trade.Sales = dialog.SalesResult; MarkDirty(); }
         };
         section.Children.Add(cookingButton);
+        AddTradePresetButtons(section);
         var tradeSection = section;
         section.Children.Add(normalTrade);
         section = normalTrade;
@@ -366,15 +367,6 @@ public sealed class DailyPreferencesPanel : UserControl
         tradeButton.Click += async (_, _) => await OpenGameToolAsync(() => { var trade = new Window { Title = L.Get("prefs.trade_title"), Width = 1060, Height = 780, MinWidth = 760, MinHeight = 560, Owner = Window.GetWindow(this), Content = new TradePlanPanel(dataRoot, account, allowGame), WindowStartupLocation = WindowStartupLocation.CenterOwner }; DailyDialogs.Prepare(trade); trade.Show(); });
         L.Bind(tradeButton, FrameworkElement.ToolTipProperty, "prefs.trade_preview_help");
         section.Children.Add(tradeButton);
-        var bargainButton = LocalButton("bargain.title");
-        bargainButton.HorizontalAlignment = HorizontalAlignment.Left;
-        bargainButton.Margin = new(0, 8, 0, 0);
-        bargainButton.Click += async (_, _) => await OpenGameToolAsync(() =>
-        {
-            var dialog = new DailyBargainWindow(dataRoot, account, allowGame) { Owner = Window.GetWindow(this) };
-            DailyDialogs.ShowModal(dialog);
-        });
-        section.Children.Add(bargainButton);
         section = tradeSection;
         tradeFavorites.Checked += (_, _) => { normalTrade.IsEnabled = false; normalTrade.Opacity = .5; cookingButton.IsEnabled = true; };
         tradeFavorites.Unchecked += (_, _) => { normalTrade.IsEnabled = true; normalTrade.Opacity = 1; cookingButton.IsEnabled = false; };

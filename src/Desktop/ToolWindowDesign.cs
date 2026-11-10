@@ -14,6 +14,7 @@ internal static class ToolWindowDesign
         "BD2Sichuan.Desktop.SichuanWindow" => "sichuan",
         "BD2Rhythm.Desktop.RhythmWindow" => "rhythm",
         "Dustweave.Desktop.ApostleToolWindow" => "apostle-defense",
+        "Dustweave.Desktop.DailyBargainWindow" => "talent-practice",
         "BD2SecretVision.Desktop.MainWindow" => "secret-vision",
         "BD2FiendHunter.Desktop.MainWindow" => "fiend-hunter",
         "Dustweave.Desktop.MansionWindow" => "mansion-runaway",
@@ -29,7 +30,7 @@ internal static class ToolWindowDesign
         window.Resources[typeof(Expander)] = Application.Current.FindResource("DisclosureExpander");
         window.Resources[typeof(Separator)] = Application.Current.FindResource("ToolSeparator");
         DailyLanguage.Current.Bind(window, Window.TitleProperty, () => DailyLanguage.Current.Get("tool." + id) + " · Dustweave");
-        if (id == "apostle-defense") return; // Tower owns its changing connection/cancel action.
+        if (id is "apostle-defense" or "talent-practice") return; // These host windows own their action labels.
         void Label(string name, string key)
         {
             if (window.FindName(name) is not Button button) return;

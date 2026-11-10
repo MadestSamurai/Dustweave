@@ -38,10 +38,14 @@ public partial class MainWindow
         if (ShowUpdateFailure()) { _ = CheckUpdatesAsync(); return; }
         if (ScheduledStartup) await CheckScheduleAsync();
         bool guided = ShowInitialConnectionGuide();
+        resourceReviewReady = true;
+        // Review before interactive auto-run, so the chosen settings apply to
+        // this run. This is modeless: the host and update handoff remain usable.
+        if (!guided) await OfferResourceReviewAsync();
+        if (finalClose) return;
         if (!guided) ShowReleaseNotes();
         _ = CheckUpdatesAsync();
         await RunOnOpenAsync(guided);
-        resourceReviewReady = true;
     }
     private bool ShowUpdateFailure()
     {

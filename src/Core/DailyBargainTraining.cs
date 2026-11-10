@@ -40,23 +40,50 @@ public sealed class DailyBargainTraining(DailyWorkflow w, Func<bool> stopped, Ac
     }
     async Task Reconcile()
     {
-        var types = DailyNavigationDecision.Types((await w.Observe()).Frame);
+        var observed = await w.Observe();
+        var types = DailyNavigationDecision.Types(observed.Frame);
         foreach (var op in w.Business.Records(w.Context, DailyBargainProof.Role).Where(DailyManagedBusiness.Pending))
         {
             string state = S(op["state"]);
-            if (state == "prepared" || state == "preview_ready" && !types.Contains("DiscountPopupUI"))
+            if (state == "preview_ready" && DailyBargainProof.Definition.PreviewOwner?.Invoke(op, observed) == true)
+            {
+                await w.Step("DiscountPopupUI", "_objButtonCancel", absent: "DiscountPopupUI");
+                op["state"] = "rejected";
+                op["reconciliation"] = O(("method", "cancel_uncommitted_preview"), ("actions", 1));
+                w.Business.Save(op);
+                observed = await w.Observe(); types = DailyNavigationDecision.Types(observed.Frame);
+                continue;
+            }
+            if (state == "prepared" || state == "preview_ready" && !types.Contains("DiscountPopupUI") ||
+                (state is "previewing" or "unknown_preview") && !types.Contains("DiscountPopupUI") &&
+                DailyBargainProof.CanReplanAfterRestart(op, await Evidence(), observed.Frame))
             {
                 op["state"] = "rejected"; op["reconciliation"] = O(("method", "uncommitted_preview"), ("actions", 0)); w.Business.Save(op);
             }
-            else if (state == "unknown")
+            else if (state is "unknown" or "dispatching")
             {
+                var after = await Evidence();
                 try
                 {
-                    var after = await Evidence(); var events = w.Business.Events(op); var result = w.Business.Verify(op, events, after);
+                    var events = w.Business.Events(op); var result = w.Business.Verify(op, events, after);
                     op["state"] = "completed"; op["result"] = result; op["after"] = after; op["events"] = events;
                     op["confirmed_at"] = w.Driver.UtcTicks; w.Business.Save(op);
                 }
-                catch (InvalidDataException) { /* Preserve the unresolved consuming attempt. */ }
+                catch (InvalidDataException)
+                {
+                    // A dead game's request cannot still be in flight in the newly
+                    // authenticated process. Keep its outcome unknown, but plan from
+                    // this process's actual XP/potions instead of replaying the action.
+                    var current = await w.Observe();
+                    if (!JsonNode.DeepEquals(current.Context, w.Context))
+                        throw new StageHostException("identity", "bargain.account_changed");
+                    if (!DailyBargainProof.CanReplanAfterRestart(op, after, current.Frame)) continue;
+                    op["state"] = "superseded";
+                    op["reconciliation"] = O(("method", "new_game_current_training_state"),
+                        ("previous_state", state), ("actions", 0), ("original_success_claimed", false),
+                        ("saved_action_replayed", false), ("at", w.Driver.UtcTicks), ("current", after));
+                    w.Business.Save(op);
+                }
             }
         }
         w.Business.RequireResolved(w.Context, DailyBargainProof.Role);

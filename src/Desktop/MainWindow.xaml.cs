@@ -140,7 +140,7 @@ public partial class MainWindow : Window
         CollectionViewSource.GetDefaultView(rows).Filter = MatchesSearch;
         coordinator.Progress += p => Dispatcher.Invoke(() => { if (dailyQueue.IsRunning || WorkspaceTabs.SelectedItem == RunTab && busy) dailyPanel.Show(new("preparing", p.Message, "", []) { Display = p.Display }); if (p.Display is { } display) DailyUiText.Set(ProgressText, display); else DailyUiText.Set(ProgressText, p.Message); ProgressText.Foreground = (Brush)FindResource(p.State == "error" ? "Error" : "Ink"); });
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        timer.Tick += (_, _) => { _ = PollParallelAsync(); L.RefreshFromDisk(); RefreshTools(); UpdateConnection(); if (smoke == null && !busy) { _ = RefreshAccountIdentityAsync(); RefreshDailyHistory(); } CheckCaptureLifetime(); if (smoke == null && CaptureSessionId.Length == 0) { _ = CheckLogCleanupAsync(); _ = CheckStorageWarningAsync(); _ = CheckScheduleAsync(); _ = OfferUpdateAsync(); OfferResourceReview(); if (DateTime.UtcNow >= nextUpdateCheck) { nextUpdateCheck = DateTime.UtcNow.AddHours(6); _ = CheckUpdatesAsync(); } } };
+        timer.Tick += (_, _) => { _ = PollParallelAsync(); L.RefreshFromDisk(); RefreshTools(); UpdateConnection(); if (smoke == null && !busy) { _ = RefreshAccountIdentityAsync(); RefreshDailyHistory(); } CheckCaptureLifetime(); if (smoke == null && CaptureSessionId.Length == 0) { _ = CheckLogCleanupAsync(); _ = CheckStorageWarningAsync(); _ = CheckScheduleAsync(); _ = OfferUpdateAsync(); _ = OfferResourceReviewAsync(); if (DateTime.UtcNow >= nextUpdateCheck) { nextUpdateCheck = DateTime.UtcNow.AddHours(6); _ = CheckUpdatesAsync(); } } };
         Loaded += async (_, _) => {
             // Loaded proves the real WPF shell/resources constructed successfully.
             // Commit before optional account/game reads and background maintenance.
@@ -182,10 +182,11 @@ public partial class MainWindow : Window
     private bool toolChanging;
     private ApostleToolWindow? apostleWindow;
     private SoulToolWindow? soulWindow;
-    private string? ActiveToolId => soulWindow != null ? "soul" : apostleWindow != null ? "apostle-defense" : toolSession.Current?.ToolId;
-    private bool ToolOpen => soulWindow != null || apostleWindow != null || toolSession.Current != null || toolPluginSessions.Count > 0;
+    private DailyBargainWindow? practiceWindow;
+    private string? ActiveToolId => practiceWindow != null ? "talent-practice" : soulWindow != null ? "soul" : apostleWindow != null ? "apostle-defense" : toolSession.Current?.ToolId;
+    private bool ToolOpen => practiceWindow != null || soulWindow != null || apostleWindow != null || toolSession.Current != null || toolPluginSessions.Count > 0;
     private bool ToolConnecting => apostleWindow?.Panel.Connecting == true;
-    private bool ToolRunning => !busy && parallelControl == null && DailyToolControl.IsAutomationOccupied(root);
+    private bool ToolRunning => !busy && parallelControl == null && (practiceWindow?.IsWorking == true || DailyToolControl.IsAutomationOccupied(root));
     private bool Unavailable => onboardingOpen || busy || manualCacheChanging || maintenanceYielding || toolChanging || ToolRunning || UpdateRestarting || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true;
     private async Task OpenTool(string id)
     {
@@ -193,6 +194,7 @@ public partial class MainWindow : Window
         if (smoke != null || busy || manualCacheChanging || maintenanceYielding || toolChanging || UpdateRestarting || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true) return;
         toolChanging = true; SetBusy(busy);
         try {
+            if(id=="talent-practice" && practiceWindow!=null){practiceWindow.BringForward();return;}
             if(id=="soul" && soulWindow!=null){soulWindow.BringForward();return;}
             if(id=="apostle-defense" && apostleWindow!=null){apostleWindow.BringForward();return;}
             if(toolSession.Current?.ToolId==id){toolSession.Show();return;}
@@ -200,6 +202,10 @@ public partial class MainWindow : Window
             if(finalClose || UpdateRestarting)return;
             using var activityLease=DailyToolControl.Acquire(root);
             if(!await CloseToolWindowsAsync(includePlugins:false))return;
+            if(id=="talent-practice"){
+                var window=CreatePracticeWindow(TaskAccountKey,allowGame:true);
+                window.Show();toolMessage="practice.ready";return;
+            }
             if(id=="soul"){
                 var window=new SoulToolWindow(root,this);
                 soulWindow=window;window.ActivityChanged+=()=>{RefreshTools();SetBusy(busy);};
@@ -254,6 +260,7 @@ public partial class MainWindow : Window
     private async Task<bool> CloseToolWindowsAsync(bool includePlugins=true)
     {
         if(includePlugins){foreach(var session in toolPluginSessions.Values) session.Dispose();toolPluginSessions.Clear();}
+        if(practiceWindow is {} practice && !await practice.CloseSafelyAsync())return false;
         if(soulWindow is {} soul){if(!await soul.CloseSafelyAsync())return false;}
         if(apostleWindow is { } window)
         {
@@ -266,11 +273,22 @@ public partial class MainWindow : Window
     private void RefreshTools()
     {
         var id = ActiveToolId;
+        practiceWindow?.RefreshAvailability();
         apostleWindow?.Panel.Render();
         bool running=ToolRunning;
         toolPanel.Refresh(busy || toolChanging || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true, id, ToolConnecting ? "apostle.connection_lock" : running ? "tools.active_notice" : toolMessage ?? (busy ? "日常正在执行；工具设置窗口可以保留。" : toolSession.Message),running);
         if(previousRunning!=running){previousRunning=running;SetBusy(busy);}
         if(previousTool!=id){previousTool=id;SetBusy(busy);}
+    }
+    private DailyBargainWindow CreatePracticeWindow(string account, bool allowGame)
+    {
+        var window = new DailyBargainWindow(root, account, allowGame, () => !Unavailable && !finalClose) { Owner = this };
+        practiceWindow = window;
+        window.ActivityChanged += () => { RefreshTools(); SetBusy(busy); };
+        window.ContentRendered += (_, _) => FeatureViewed(DailyFeatureDiscovery.Tool("talent-practice"));
+        window.Closed += (_, _) => { if (practiceWindow == window) practiceWindow = null; RefreshTools(); SetBusy(busy); };
+        DailyDialogs.Prepare(window, toolWindow:true);
+        return window;
     }
     private string viewedAccount = "";
     private string TaskAccountKey => viewedAccount.Length > 0 ? viewedAccount : catalog?.CurrentKey ?? "";
@@ -468,6 +486,7 @@ public partial class MainWindow : Window
     {
         if(value)ActionNotice.Visibility=Visibility.Collapsed;
         busy = value;
+        practiceWindow?.RefreshAvailability();
         schedulePanel.Busy(value || ParallelBusy); ExecutionModeButton.IsEnabled = !Unavailable; UpdateUpdateControls();
         var unavailable = Unavailable;
         pluginPanel.Busy(unavailable || IsSandboxWindow);
@@ -963,8 +982,9 @@ public partial class MainWindow : Window
                     review.UpdateLayout();
                     if (review.ActualHeight > SystemParameters.WorkArea.Height) throw new Exception("Resource review exceeds work area");
                     Capture($"resource-review-{language}-{appearance}", (FrameworkElement)review.Content);
-                    if (language == 2 && appearance == 2) review.VerifyForSmoke(); else review.Close();
+                    if (language == 2 && appearance == 2) review.VerifyForSmoke(); else { review.Close(); if (review.Acknowledged) throw new Exception("Closing an unconfirmed review must not acknowledge it"); }
                 }
+                await CheckResourceReviewLifecycleForSmoke(demo);
                 DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status="passed", scope="resource-review", languages=3, themes=2, realGameTouched=false });
                 Application.Current.Shutdown(); return;
             }

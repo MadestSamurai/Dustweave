@@ -10,6 +10,21 @@ internal static class SuiteHostProbe {
   try{
    Environment.SetEnvironmentVariable(names[1],"42");Environment.SetEnvironmentVariable(names[2],"100");
    foreach(var tool in DailyToolCatalog.All){
+    if(tool.Id=="talent-practice"){
+     string fixture=Path.Combine(output,"practice-control");
+     var session=new DailyBargainSession(fixture,new string('a',64));
+     var character=new DailyBargainCharacter(10,100,"fixture",2,5,605,6052,155,100,300,5,10);
+     using(DailyToolControl.Acquire(fixture)){
+      foreach(bool train in new[]{false,true}){
+       bool blocked=false;
+       try{if(train)session.Train(character).GetAwaiter().GetResult();else session.Read().GetAwaiter().GetResult();}
+       catch(InvalidOperationException e)when(e.InnerException is IOException){blocked=true;}
+       if(!blocked||!DailyToolControl.IsOccupied(fixture))throw new Exception("Talent practice bypasses shared control before reading/training");
+      }
+     }
+     using(DailyToolControl.Acquire(fixture))checks.Add("talent-practice: read and train respect ownership before connection; control remains reusable");
+     continue;
+    }
     if(tool.Id=="soul"){
      // Soul is an owned session in the host, not a legacy executable adapter.
      // Exercise its actual entry while another operation owns the control lease.

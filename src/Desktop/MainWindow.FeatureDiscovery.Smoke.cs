@@ -70,6 +70,8 @@ public partial class MainWindow
             finally { dialog.Close(); }
             Check(!FeatureDiscoveryUi.GetHasNew(PluginsTab) && FeatureDiscoveryUi.GetHasNew(ToolsTab), "Other unread category survives");
             FeatureViewed(soul);
+            Check(FeatureDiscoveryUi.GetHasNew(ToolsTab) && discovery.IsNew(DailyFeatureDiscovery.Tool("talent-practice")), "Talent practice remains unread after viewing Soul");
+            FeatureViewed(DailyFeatureDiscovery.Tool("talent-practice"));
             Check(!FeatureDiscoveryUi.GetHasNew(ToolsTab), "Last viewed tool clears Tools indicator");
             var reopened = new DailyFeatureDiscovery(folder);
             Check(!reopened.IsNew(tactics) && !reopened.IsNew(soul), "Actual UI view receipts survive restart");

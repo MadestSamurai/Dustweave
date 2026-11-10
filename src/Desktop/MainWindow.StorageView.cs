@@ -222,7 +222,9 @@ public partial class MainWindow
         var summary = new StackPanel(); Card(panel, 4).Child = summary;
         var status = Text(summary, "logs.scanning", 0); status.Name = "LogCleanupStatus"; status.FontSize = 22; status.FontWeight = FontWeights.SemiBold;
         var headline = Text(summary, "storage.summary_wait", 4); headline.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk");
-        var progress = new ProgressBar { IsIndeterminate = true, Height = 4, Margin = new(0, 14, 0, 0) }; summary.Children.Add(progress);
+        var progress = new ProgressBar { Name = "StorageOperationProgress", IsIndeterminate = SystemParameters.ClientAreaAnimation, Value = 50, Height = 4, Margin = new(0, 14, 0, 0) }; summary.Children.Add(progress);
+        var activity = new ProgressBar { IsIndeterminate = true, Height = 2, Opacity = .5, Margin = new(0, 3, 0, 0), Visibility = Visibility.Collapsed }; summary.Children.Add(activity);
+        var moveDetail = Text(summary, "storage.move.preparing", 6); moveDetail.Name = "StorageMoveDetail"; moveDetail.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk"); moveDetail.Visibility = Visibility.Collapsed;
         var barHost = new ContentControl { Margin = new(0, 14, 0, 0), Focusable = false, Visibility = Visibility.Collapsed }; summary.Children.Add(barHost);
         var legend = new WrapPanel { Margin = new(0, 10, 0, 0) }; summary.Children.Add(legend);
         var incomplete = Text(summary, "storage.incomplete", 8, 0); incomplete.FontSize = 12; incomplete.SetResourceReference(TextBlock.ForegroundProperty, "Warning"); incomplete.Visibility = Visibility.Collapsed;
@@ -282,6 +284,39 @@ public partial class MainWindow
         DailyStorageOverview? storage = null; bool working = false, closed = false; var lifetime = new CancellationTokenSource();
         var manage = new List<Button>();
         static double MiB(long bytes) => Math.Round(bytes / 1048576d, 1);
+        DailyStorageMigration.MoveStage? moveStage = null;
+        void ResetMoveProgress()
+        {
+            progress.BeginAnimation(System.Windows.Controls.Primitives.RangeBase.ValueProperty, null);
+            progress.IsIndeterminate = SystemParameters.ClientAreaAnimation; progress.Value = 50;
+            activity.Visibility = moveDetail.Visibility = Visibility.Collapsed; moveStage = null;
+        }
+        void ShowMoveProgress(DailyStorageMigration.MoveProgress value)
+        {
+            if (closed) return;
+            string key = value.Stage switch {
+                DailyStorageMigration.MoveStage.Copying => "storage.move.copying",
+                DailyStorageMigration.MoveStage.Verifying => "storage.move.verifying",
+                DailyStorageMigration.MoveStage.Switching => "storage.move.switching",
+                DailyStorageMigration.MoveStage.Finishing => "storage.move.finishing",
+                _ => "storage.move.preparing"
+            };
+            L.Text(status, key);
+            bool measured = value.Total > 0 || value.TotalFiles > 0;
+            double fraction = value.Total > 0 ? (double)value.Completed / value.Total : value.TotalFiles > 0 ? (double)value.Files / value.TotalFiles : 0;
+            double next = Math.Clamp(fraction * 100, 0, 100), previous = progress.Value;
+            progress.BeginAnimation(System.Windows.Controls.Primitives.RangeBase.ValueProperty, null);
+            progress.IsIndeterminate = !measured && SystemParameters.ClientAreaAnimation;
+            progress.Value = measured ? next : 50;
+            if (measured && moveStage == value.Stage && SystemParameters.ClientAreaAnimation)
+                progress.BeginAnimation(System.Windows.Controls.Primitives.RangeBase.ValueProperty,
+                    new System.Windows.Media.Animation.DoubleAnimation(previous, next, TimeSpan.FromMilliseconds(160)) { FillBehavior = System.Windows.Media.Animation.FillBehavior.Stop });
+            activity.Visibility = measured && SystemParameters.ClientAreaAnimation ? Visibility.Visible : Visibility.Collapsed;
+            moveDetail.Visibility = measured ? Visibility.Visible : Visibility.Collapsed;
+            if (measured) L.Text(moveDetail, "storage.move.progress", fraction, value.Files, value.TotalFiles);
+            moveStage = value.Stage;
+        }
+        if (smoke != null) progress.Tag = (Action<DailyStorageMigration.MoveProgress>)ShowMoveProgress;
         long Reclaimable() => storage == null ? 0 : storage.Areas.Length > 0 ? storage.Areas.Sum(a => a.ReclaimableBytes) : storage.ReclaimableBytes;
         void Controls(bool enabled)
         {
@@ -291,8 +326,16 @@ public partial class MainWindow
             resourceOptimize.IsEnabled = enabled && resourcePlan?.Copies.Length > 0 && !IsSandboxWindow;
             foreach (var button in manage) button.IsEnabled = enabled && !Unavailable;
             progress.Visibility = enabled ? Visibility.Collapsed : Visibility.Visible;
+            ResetMoveProgress();
         }
-        void Error(Exception error) { if (error is DailyStorageBindingException) DailyUiText.Error(status, error); else if (error.Message.StartsWith("storage.", StringComparison.Ordinal)) L.Text(status, error.Message); else DailyUiText.Error(status, error); }
+        void Error(Exception error)
+        {
+            try { DailyJson.Write(Path.Combine(root,"storage-operation-error.json"),new {atUtc=DateTimeOffset.UtcNow,version=DailyProductVersion.Current,error=error.ToString()}); }
+            catch(Exception logError)when(logError is IOException or UnauthorizedAccessException){ }
+            if (error is DailyStorageBindingException) DailyUiText.Error(status, error);
+            else if (error.Message.StartsWith("storage.", StringComparison.Ordinal)) L.Text(status, error.Message);
+            else DailyUiText.Error(status, error);
+        }
         void Show(DailyStorageOverview report)
         {
             var areas = report.Areas.Length > 0 ? report.Areas
@@ -428,18 +471,18 @@ public partial class MainWindow
             if (picker.ShowDialog(dialog) != true) return;
             string destination = Path.Combine(picker.FolderName, "Dustweave-storage");
             if (DailyDialogs.ShowModal(DailyDialogs.Message(dialog, L.Get("storage.move"), L.Get("storage.confirm", destination), true)) != true) return;
-            working = true; Controls(false); result.Visibility = Visibility.Collapsed; L.Text(status, "storage.moving", 0);
+            working = true; Controls(false); result.Visibility = Visibility.Collapsed; L.Text(status, "storage.move.preparing");
             try
             {
                 DailyCacheMove moved;
                 SetCacheChanging(true);
-                try { moved = await new DailyStorageMigration(root).MoveAsync(destination, lifetime.Token, new Progress<long>(n => { if (!closed && working) L.Text(status, "storage.moving", MiB(n)); })); }
+                try { moved = await new DailyStorageMigration(root).MoveAsync(destination, lifetime.Token, phases: new Progress<DailyStorageMigration.MoveProgress>(n => { if (!closed && working) ShowMoveProgress(n); })); }
                 finally { SetCacheChanging(false); }
                 if (!closed)
                 {
                     location.Text = moved.Path; ShowSandboxLocation();
                     L.Text(result, "storage.moved", MiB(moved.Bytes), moved.RetainedFiles); result.Visibility = Visibility.Visible;
-                    L.Text(status, "logs.scanning"); await Measure();
+                    ResetMoveProgress(); L.Text(status, "logs.scanning"); await Measure();
                 }
             }
             catch (OperationCanceledException) { }
@@ -447,7 +490,7 @@ public partial class MainWindow
             finally { working = false; if (!closed) Controls(true); else lifetime.Dispose(); }
         };
         dialog.Loaded += async (_, _) => { await Scan(); if (moveWhenReady && !closed && move.IsEnabled) move.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); };
-        dialog.Closed += (_, _) => { closed = true; lifetime.Cancel(); if (!working) lifetime.Dispose(); };
+        dialog.Closed += (_, _) => { closed = true; ResetMoveProgress(); lifetime.Cancel(); if (!working) lifetime.Dispose(); };
         var body = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
         layout.Children.Add(body); layout.Children.Add(footer);
         dialog.Content = layout; DailyDialogs.Prepare(dialog); return dialog;

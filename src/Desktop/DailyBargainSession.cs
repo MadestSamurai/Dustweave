@@ -16,23 +16,29 @@ internal sealed class DailyBargainSession(string root, string account)
         try { DailyJson.Write(Path.Combine(root, "tools", "bargain-training", "logs", DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff") + ".json"), new { atUtc = DateTimeOffset.UtcNow, account, error = error.ToString() }); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
     }
-    public async Task<(DailyBargainCharacter[] Characters, long Potions, string Player)> Read()
+    public async Task<(DailyBargainCharacter[] Characters, long Potions, string Player, DailyPracticeTalent[] Talents)> Read()
         => await Execute(false, async w =>
         {
-            var e = await w.Evidence(DailyBargainProof.ReadId);
-            var chars = DailyBargainProof.Characters(e).OrderBy(c => c.Full).ThenBy(c => c.Name).ToArray();
-            return (chars, N(DailyBargainProof.State(e)["Catalyst"]), (await w.Observe()).Daily?.PlayerName ?? "");
+            var e = await w.Evidence(DailyTalentPracticeProof.ReadId);
+            var chars = DailyTalentPracticeProof.Characters(e).OrderBy(c => c.Full).ThenBy(c => c.Name).ToArray();
+            return (chars, N(DailyTalentPracticeProof.State(e)["Catalyst"]), (await w.Observe()).Daily?.PlayerName ?? "", DailyTalentPracticeProof.Talents(e));
         });
-    public async Task<string> Train(DailyBargainCharacter approved)
+    public async Task<string> Train(DailyBargainCharacter approved, int maximumRounds = int.MaxValue)
         => await Execute(true, async w =>
         {
+            if (approved.Kind != 16)
+            {
+                fieldTrainer = new(w, () => stop, Report, Progress);
+                return await fieldTrainer.Run(approved, maximumRounds);
+            }
             trainer = new(w, () => stop, Report, Progress);
             return await trainer.Run(approved);
         });
     DailyBargainTraining? trainer;
+    DailyTalentPractice? fieldTrainer;
     async Task<T> Execute<T>(bool training, Func<DailyWorkflow, Task<T>> action)
     {
-        trainer = null;
+        trainer = null; fieldTrainer = null;
         // Acquired only while reading/running; an idle dialog owns no controller.
         using var lease = DailyToolControl.Acquire(root);
         var host = new DailyGameHost(root);
@@ -45,19 +51,21 @@ internal sealed class DailyBargainSession(string root, string account)
             throw new DailyBargainFault("bargain.account_changed");
         await DailySuite.ActivateAsync(host, root, "daily", _ => { }, CancellationToken.None);
         await liveUtility::Dustweave.Connection.LiveEntry.RunAsync(["ready"], false,
-            args => liveUtility::Dustweave.Connection.LiveEntry.RunAsync(args, false), "bargain-evidence-spec.json");
+            args => liveUtility::Dustweave.Connection.LiveEntry.RunAsync(args, false), "talent-practice-evidence-spec.json");
         if (host.Find() != game) throw new DailyBargainFault("bargain.account_changed");
         if (stop) throw new StageHostException("stopped", "bargain.stopped");
         var observation = DailyStageObservation.Attach(root, account, () => false);
         var first = await observation.ReadFrameAsync();
         using var driver = new DailyCommandDriver(root, new DailyPipeMailbox(root, game), observation.ReadFrameAsync, () => false);
         driver.EnsureBound(first.Context);
-        var proofs = new[] { DailyBargainProof.Definition };
+        var proofs = new[] { DailyBargainProof.Definition, DailyTalentPracticeProof.Definition };
         using var business = new DailyManagedBusiness(root, driver, proofs, () => false);
-        bool StopBetweenRounds() => stop && trainer?.Settling != true;
+        bool StopBetweenRounds() => stop && trainer?.Settling != true && fieldTrainer?.Settling != true;
         var w = new DailyWorkflow(root, AppContext.BaseDirectory, first.Context, driver, business,
             new DailyStageNavigation(observation.ReadFrameAsync, StopBetweenRounds), proofs, StopBetweenRounds,
-            (_, _, _) => throw new InvalidOperationException("bargain.unexpected_stage"));
+            (operation, _, request) => operation == "navigation_step"
+                ? driver.NavigationAsync(request!["action"]!.AsObject())
+                : throw new InvalidOperationException("bargain.unexpected_stage"));
         if (!training) driver.SubmissionGuard = () => throw new InvalidOperationException("bargain.read_only");
         try
         {

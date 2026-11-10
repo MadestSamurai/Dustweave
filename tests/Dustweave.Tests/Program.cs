@@ -103,6 +103,7 @@ async Task Group(string name, Func<Task> run)
 Task Sync(Action run) { run(); return Task.CompletedTask; }
 await Group("ProductIdentity", () => Sync(() => ProductIdentityCases.Run(cases)));
 await Group("BargainTraining", () => BargainTrainingCases.Run(root, cases));
+await Group("TalentPractice", () => TalentPracticeCases.Run(root, cases));
 await Group("EquipmentRecycling", () => EquipmentRecyclingCases.Run(root, cases));
 await Group("EquipmentCraft", () => EquipmentCraftCases.Run(root, cases));
 await Group("EquipmentSupply", () => EquipmentSupplyCases.Run(root, cases));
@@ -190,6 +191,7 @@ await Group("BattleArrivalRecovery", () => BattleArrivalRecoveryCases.Run(root, 
 await Group("DispatchRecovery", () => DispatchRecoveryCases.Run(root, cases));
 await Group("TradeReplan", () => TradeReplanCases.Run(root, cases));
 await Group("CustomSales", () => CustomSaleCases.Run(root, cases));
+await Group("TradePreset", () => { TradePresetCases.Run(root, cases); return Task.CompletedTask; });
 await Group("TradeQuote", () => TradeQuoteCases.Run(root, cases));
 await Group("TradeEntry", () => TradeEntryCases.Run(root, cases));
 await Group("SchedulingUpdates", () => SchedulingUpdatesCases.Run(root, cases));

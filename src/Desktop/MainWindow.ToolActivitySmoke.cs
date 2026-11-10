@@ -10,7 +10,7 @@ public partial class MainWindow
     {
         var checks=new List<string>();
         void Check(bool value,string label){if(!value)throw new Exception(label);checks.Add(label);}
-        foreach(var tool in DailyToolCatalog.All)
+        foreach(var tool in DailyToolCatalog.All.Where(t => !t.HostWindow))
         {
             string profile=Path.Combine(root,"activity-fixture",tool.Id);
             var fixture=new DemoEnvironment(profile) { Game=new(42,123,"fixture.exe") };

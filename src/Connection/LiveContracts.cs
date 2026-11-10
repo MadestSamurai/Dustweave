@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 namespace BD2Daily.Live {
  public static class LiveProtocol {
   public const int BridgeVersion=DailyBridgeVersion.Current;
-  public static bool FieldTalentClass(int kind){return new[]{2,3,4,6,13,15,17,20}.Contains(kind);}
+  public static bool FieldTalentClass(int kind){return new[]{2,3,4,6,12,13,15,17,20}.Contains(kind);}
   public static bool IsSquareScene(string scene){return scene!=null&&scene.StartsWith("Map3009_",StringComparison.Ordinal);}
   public static bool CollectionEventPack(int pack){return new[]{2001,2002,2003,2005,2007}.Contains(pack);}
   public static bool RequiresMirrorPeriod(Command c,Frame f){return c.Kind=="mirror_ready"||c.Kind=="native_click"&&f.Scene=="Map3001_001"&&f.Surfaces.Any(s=>s.Id==c.SurfaceId&&s.Type=="BattleAutoSettingPopupUI"&&s.Targets.Any(t=>t.Id==c.TargetId&&t.Field=="_currencyButtonOK"));}

@@ -120,6 +120,10 @@ Soul routine reads update the current raw and parsed state, with one content-nam
 
 Affected checks: `StorageMigration`, `CacheStorage`, `StorageMaintenance`, `StoragePath`, `Sandbox`, `SandboxScope`, `AccountProgress`, `LoginIdentity`, `LoginRecovery`, `UpdateSafety`, `UpdateRetention`; desktop smoke scope `support`. `StorageMigrationNative` is an explicit opt-in with `DUSTWEAVE_NATIVE_STORAGE_TEST=1`: it creates a disposable Sandboxie registration, writes synthetic HKCU/file state, relocates it, verifies reopening, then removes only that registration. It never launches the game or imports real accounts.
 
+Storage relocation must distinguish active recovery from a terminal legacy experiment journal. `loading-experiment-recovery/pending.json` remains after successful restoration; its existence alone cannot block a move. Validate the journal and every entry as `restored`, archive it durably, then retire the active marker under its transaction lock. Preserve the archived evidence and program backups during relocation. Leaving the terminal marker active at the destination would fail its absolute `BoxRoot` check on the next launch. Incomplete, malformed or inconsistent journals and pending removal remain protected. Focused regression covers real synthetic preparation/restoration, interrupted recovery, migration cancellation, retry, repeated relocation and the next-launch recovery call without game access.
+
+Storage-window errors and relocation phase/source/target failures are persisted in bounded diagnostic reports; preserve both the original and rollback exceptions. Export these reports, binding-preflight details and the last migration result ahead of historical step archives. Never export raw registry hives, login stores or the complete file-by-file relocation journal. The 2026-11-10 15:38 diagnostic package predates this coverage: the matching recovery-required screenshot narrows the failure, but does not identify which user's sandbox journal triggered it.
+
 1. 在 `src` 或 `assets` 修改对应模块；合成用例在 `tests/Dustweave.Tests/Cases`。
 2. 新增源码、配置、依赖锁或项目时登记 `source-manifest.json`；新增项目也加入 `Dustweave.slnx`。清单只记录本仓库内的源码输入，不添加外部工作目录。
 3. 运行构建、对应回归与来源边界检查。目录/资源移动时也验证独立打包和嵌入组件。
@@ -351,9 +355,9 @@ Focused verification: `TalentPotion,Preference,QueueEngine,CommandDriver,Busines
 
 `DailyCustomSales` joins the full cooking item catalog with the optimizer subset. It selects only current native 120% quotes from available shops; below-maximum, unknown, expiring and locked items are not sold. Ingredient reserves apply to post-sale permanent total stock, including locked stacks, and do not constrain custom cooking. Re-read quotes, locks and inventory after each confirmed sale, with a finite initial quantity budget. Reuse the existing native sale preview/confirmation, protected-inventory accounting and journal. An uncertain receipt is not replayed; a later run plans from current inventory. The recipe dialog separates cooking order, dish sales and ingredient sales, retaining filtered-out selections and per-item reserves. Scoped checks: `CustomSales,TradeReplan,CookingTravel,Preference,LocalizationArchitecture,UserText`; desktop `cooking,simple-settings,localization` across all languages and both themes.
 
-### Manual bargaining training
+### Manual talent practice
 
-The settings dialog shares the daily controller and native evidence adapter. See [Bargaining training](BARGAIN_TRAINING.md) for scope, resource limits and validation. Run the focused BargainTraining group when changing the training loop; it exercises real workflow commands against a deterministic native mailbox, including failed discounts, stop during preview/settlement and lost receipts.
+The host-owned **Tools → Talent practice** window shares the daily controller and native evidence adapter. Bargaining uses the plaza merchant; Search, Rush, Swiftness, Danger Detection and Stealth alternate the outdoor safe areas of Chapters 1 and 2 through normal cartridge entry. The former trading-settings entry is removed. The host tracks the window for tool switching, shutdown and update preparation; idle windows hold no control lease. See [Talent practice](BARGAIN_TRAINING.md) for scope, resource limits and validation. The focused `BargainTraining,TalentPractice` groups exercise real workflow commands against a deterministic native mailbox, including failed discounts, selected-character ownership, stop during preview/settlement, sparse native map defaults, effect reset, no XP growth, insufficient medicine and lost-response continuation across component/game restarts. The `bargain` UI smoke checks skill/character filtering, native game-name language selection without changing identity, three languages, both themes, compact sizing, discovery acknowledgement and host-managed closing without game access.
 
 ### Delayed Last Night record presentation
 
@@ -448,3 +452,19 @@ Affected synthetic groups are `Soul,ToolMenu`. `--tool soul --check-client <Mana
 ### Optional refill observations
 
 Fixed Talent Pill checks read the current balance before navigation or purchase. If the scoped balance is missing or invalid, request one fresh observation, then record a visible skipped refill and continue independent tasks. A missing balance is never zero and never authorizes buying. Account changes, cancellation, observer transport errors and uncertain purchases retain their existing boundaries. ManagedBootstrap covers both checkpoints, repeated missing/invalid/restored observations and actual daily continuation.
+
+### Trading settings transfer (2026-11-10)
+
+The daily trading section exports/imports a versioned `Dustweave.TradePreset` JSON file. It carries trading switches, cooking order, custom dish/ingredient sales and reserves, gold reserve and spending budget. It contains no identity, credentials, inventory, execution orders, game favorites or other daily preferences. Import previews the destination account, counts, budget and consuming options, then saves only that account's trading policy. A failed account save restores the prior budget. Missing switches/limits, unknown formats, malformed or oversized files are rejected before import; zero and unlimited budgets stay distinct. `TradePreset` tests and the isolated `localization` smoke cover cross-account import/export and actual UI refresh, including favorites mode and later switching back to automatic trading.
+
+### Runtime security servicing (2026-11-10)
+
+PR #16 alone does not update the shipping Portable runtime: the former publishing script, production/acceptance descriptors and apphost template still pinned 8.0.30. The SDK change also requires refreshed ILLink locks for Desktop, Equipment and OtaChannel. These now follow the runtime pin; retain historical fixtures/bootstrap bytes. The package runtime probe validates actual CLR/core/Brotli/WPF versions without opening accounts or game connections. Lite requires patched Desktop Runtime 8.0.33 or a later 8.0 patch. Advisory: https://github.com/advisories/GHSA-p3jp-9v83-76w9 . Neither a dependency diff nor a successful restore by itself proves the shipped executable contains the fix.
+
+### Storage progress and resource review (2026-11-10 local.2)
+
+Storage migration reports real copy plus target-hash work, source verification, binding switch and post-commit cleanup separately. Reports are throttled; hashing reuses a pooled buffer, and pre-commit verification honors cancellation. No ownership, commit or rollback policy changed. The storage window animates progress and keeps activity visible through long-file checks; Windows animation preferences are honored.
+
+The one-time resource settings review now accepts interactive `--updated` restarts and is offered before ordinary startup auto-run. Scheduled and other directed jobs remain excluded. Only explicit keep/save acknowledgement persists the receipt; programmatic close/replacement does not. Update acknowledgement still precedes this optional UI. Synthetic UI checks cover replacement, reopening, per-account saving and startup continuation; no live accounts or login state are touched.
+
+Validation: six affected groups (StorageMigration, DiagnosticExport, CacheStorage, TradeBoxes, LocalizationArchitecture, UserText), 2,305 checks; actual Portable package `support`, `resource-review`, and `localization` UI scopes, plus runtime/resource/archive checks. Unchanged resources are reused from the hash-verified 1.6.9 release. No full-suite, live-game or OTA acceptance is claimed for this local package.

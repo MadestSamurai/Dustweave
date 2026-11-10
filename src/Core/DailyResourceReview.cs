@@ -3,6 +3,9 @@ namespace Dustweave;
 /// <summary>One campaign, independent of cache cleanup and future application versions.</summary>
 public sealed class DailyResourceReview(string root)
 {
+    // --updated is an interactive restart too. Scheduled/capture/tool commands
+    // must never gain an unsolicited settings dialog.
+    public static bool InteractiveStartup(bool scheduled,bool directed,bool updated)=>!scheduled&&(!directed||updated);
     private sealed record Receipt(int Revision);
     private string Path => System.IO.Path.Combine(root, "resource-settings-reviewed.json");
     public bool Needed => DailyJson.TryRead<Receipt>(Path)?.Revision != 1;

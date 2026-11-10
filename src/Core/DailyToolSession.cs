@@ -65,7 +65,7 @@ public sealed class DailyToolSession(string root, string executable, Func<DailyT
         get
         {
             var state = DailyJson.TryRead<DailyToolProcessState>(path);
-            if (state == null || !DailyToolCatalog.All.Any(t => t.Id == state.ToolId) || !Matches(state)) return null;
+            if (state == null || !DailyToolCatalog.All.Any(t => t.Id == state.ToolId && !t.HostWindow) || !Matches(state)) return null;
             return state;
         }
     }
@@ -84,6 +84,7 @@ public sealed class DailyToolSession(string root, string executable, Func<DailyT
     public async Task OpenAsync(string id, bool controlReserved=false)
     {
         var tool = DailyToolCatalog.Find(id);
+        if (tool.HostWindow) throw new ArgumentException("This tool window is owned by the main host.", nameof(id));
         if (!await changes.WaitAsync(0)) return;
         try
         {

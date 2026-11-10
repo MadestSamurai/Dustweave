@@ -2,6 +2,8 @@ using Dustweave;
 using Dustweave.Accounts;
 internal static class StorageMigrationCases
 {
+    sealed class Sink(Action<DailyStorageMigration.MoveProgress> report) : IProgress<DailyStorageMigration.MoveProgress>
+    {public void Report(DailyStorageMigration.MoveProgress value)=>report(value);}
     sealed class Driver : IStorageSandboxTransport
     {
         internal readonly Dictionary<string,Dictionary<string,string>> Values=new(StringComparer.OrdinalIgnoreCase);
@@ -44,6 +46,26 @@ internal static class StorageMigrationCases
     public static async Task Run(string output,List<string> cases)
     {
         void Check(bool ok,string label){if(!ok)throw new Exception(label);cases.Add("storage-migration: "+label);}
+        var measured=Make(output,"phase-progress",0);
+        string large=Path.Combine(measured.Root,"suite-cache","large.bin");
+        File.WriteAllBytes(large,new byte[3*1024*1024]);
+        var observed=new List<DailyStorageMigration.MoveProgress>();
+        var measuredResult=await Service(measured).MoveAsync(measured.Target,phases:new Sink(observed.Add));
+        Check(observed.Select(p=>p.Stage).Distinct().SequenceEqual(Enum.GetValues<DailyStorageMigration.MoveStage>()),"migration reports prepare, copy, verify, switch and finish in order");
+        foreach(var group in observed.GroupBy(p=>p.Stage))
+        {
+            Check(group.All(p=>p.Completed>=0&&p.Completed<=p.Total&&p.Files<=p.TotalFiles)&&group.Zip(group.Skip(1)).All(p=>p.First.Completed<=p.Second.Completed),"phase progress is bounded and monotonic: "+group.Key);
+            if(group.Key is DailyStorageMigration.MoveStage.Copying or DailyStorageMigration.MoveStage.Verifying)
+                Check(group.Last().Completed==group.Last().Total&&group.Last().Files==group.Last().TotalFiles,"byte and file progress finishes exactly: "+group.Key);
+        }
+        Check(observed.First(p=>p.Stage==DailyStorageMigration.MoveStage.Copying).Total==measuredResult.Bytes*2
+            &&observed.First(p=>p.Stage==DailyStorageMigration.MoveStage.Verifying).Total==measuredResult.Bytes,"progress accounts for destination hashing and source hashing without counting copied bytes twice in result");
+        var cancelledVerify=Make(output,"cancel-phase-verify",0);using var verifyCancellation=new CancellationTokenSource();
+        try {await Service(cancelledVerify).MoveAsync(cancelledVerify.Target,verifyCancellation.Token,phases:new Sink(p=>{if(p.Stage==DailyStorageMigration.MoveStage.Verifying)verifyCancellation.Cancel();}));throw new Exception("Expected verification cancellation");}
+        catch(OperationCanceledException){ }
+        Check(!Directory.Exists(cancelledVerify.Target)&&!File.Exists(DailyStorageLocations.FileName(cancelledVerify.Root)),"verification cancellation rolls back without publishing new routing");
+        await Service(cancelledVerify).MoveAsync(cancelledVerify.Target);
+        Check(DailyStorageLocations.Read(cancelledVerify.Root)!=null,"cancelled verification can actually retry successfully");
         async Task Fails(Func<Task> action,string label){try{await action();throw new Exception("Expected failure: "+label);}catch(IOException){cases.Add("storage-migration: "+label);}}
         string Preferences(Fixture fixture,bool emptyRoot=false)
         {
@@ -178,6 +200,51 @@ internal static class StorageMigrationCases
         await Service(committed).RecoverAsync();
         Check(committed.Driver.Values.All(p=>p.Value["Enabled"]=="y"&&p.Value["FileRootPath"].StartsWith(committed.Target)),"recovery rolls forward and restores launch capability after commit");
         Check(!File.Exists(Path.Combine(committed.Root,"storage-migration.json")),"recovery completes once");
+
+        // Exercise the actual legacy preparation/restoration, not just a fabricated
+        // marker: normal recovery leaves pending.json with terminal state restored.
+        var historical=Make(output,"completed-file-recovery",1);
+        string gameRoot=historical.Driver.Read("RenamedAccount1","FileRootPath");
+        string host=Path.Combine(Path.GetDirectoryName(historical.Root)!,"game"),exe=Path.Combine(host,"BrownDust II.exe");
+        Directory.CreateDirectory(host);File.WriteAllText(exe,"new program");
+        string overlay=DailyLoadingFileTransaction.Overlay(gameRoot,exe);
+        Directory.CreateDirectory(overlay);File.WriteAllText(Path.Combine(overlay,"BrownDust II.exe"),"original overlay");
+        var rules=DailySandboxGameFiles.LegacyRules(exe).ToList();
+        string capture=Path.Combine(Path.GetDirectoryName(historical.Root)!,"capture");
+        var captureControl=new DailyLoadingExperiment.Control(Guid.NewGuid().ToString("N"),"legacy-files",capture,DateTime.UtcNow.AddMinutes(1).Ticks,0,false);
+        await DailyLoadingFileTransaction.PrepareAsync(captureControl,exe,gameRoot,"RenamedAccount1",
+            ()=>Task.FromResult(string.Join('\n',rules)),()=>Task.FromResult(true),r=>{rules.Remove(r);return Task.CompletedTask;},CancellationToken.None);
+        byte[] pendingBytes=File.ReadAllBytes(DailyLoadingFileTransaction.Pending(gameRoot));
+        await Fails(()=>Service(historical).MoveAsync(historical.Target),"active file recovery still blocks relocation without modifying its journal");
+        Check(pendingBytes.SequenceEqual(File.ReadAllBytes(DailyLoadingFileTransaction.Pending(gameRoot)))&&!Directory.Exists(historical.Target),"unfinished program recovery is preserved byte for byte");
+        await DailyLoadingFileTransaction.RecoverAsync(gameRoot,"RenamedAccount1",()=>Task.FromResult(string.Join('\n',rules)),()=>Task.FromResult(true),r=>{rules.Add(r);return Task.CompletedTask;},CancellationToken.None);
+        Check(File.Exists(DailyLoadingFileTransaction.Pending(gameRoot))&&DailyLoadingFileTransaction.Read(gameRoot)?.State=="restored","reproduces a terminal recovery file that the former existence-only guard rejected forever");
+        var terminal=DailyLoadingFileTransaction.Read(gameRoot)!;
+        terminal.Entries[0].Stage="planned";DailyJson.Write(DailyLoadingFileTransaction.Pending(gameRoot),terminal);
+        await Fails(()=>Service(historical).MoveAsync(historical.Target),"a restored headline alone cannot hide incomplete per-file recovery");
+        Check(File.Exists(DailyLoadingFileTransaction.Pending(gameRoot))&&!Directory.Exists(historical.Target),"inconsistent terminal record retains all recovery evidence");
+        terminal.Entries[0].Stage="restored";DailyJson.Write(DailyLoadingFileTransaction.Pending(gameRoot),terminal);
+        using(var stopMove=new CancellationTokenSource())
+        {
+            var stopped=new DailyStorageMigration(historical.Root,historical.Store,historical.Driver){Checkpoint=stage=>{if(stage=="copying")stopMove.Cancel();}};
+            try{await stopped.MoveAsync(historical.Target,stopMove.Token);throw new Exception("Expected migration cancellation");}catch(OperationCanceledException){ }
+        }
+        Check(!Directory.Exists(historical.Target)&&historical.Driver.Read("RenamedAccount1","FileRootPath")==gameRoot
+            &&File.ReadAllText(Path.Combine(overlay,"BrownDust II.exe"))=="original overlay","cancelling relocation after archiving a terminal record preserves the original game and binding");
+        await Service(historical).MoveAsync(historical.Target);
+        string movedRoot=historical.Driver.Read("RenamedAccount1","FileRootPath");
+        Check(DailyCacheStorage.Location(historical.Root)==historical.Target&&File.ReadAllText(Path.Combine(DailyLoadingFileTransaction.Overlay(movedRoot,exe),"BrownDust II.exe"))=="original overlay","completed file recovery permits verified migration and preserves restored program files");
+        string archived=Path.Combine(Path.GetDirectoryName(movedRoot)!,"loading-experiment-recovery",captureControl.Id,"restored.json");
+        Check(File.Exists(archived)&&!File.Exists(DailyLoadingFileTransaction.Pending(movedRoot)),"terminal journal is archived rather than discarded or left with a stale active root");
+        Check(!await DailyLoadingFileTransaction.RecoverAsync(movedRoot,"RenamedAccount1",()=>throw new Exception("must not change restored rules"),()=>throw new Exception("must not query game"),_=>throw new Exception("must not append rules"),CancellationToken.None),"first launch recovery after relocation accepts the new root without touching files or rules");
+        Check(historical.Files.Where(p=>p.Key.StartsWith(historical.Store)).All(p=>File.ReadAllBytes(Path.Combine(historical.Target,"instances",Path.GetRelativePath(historical.Store,p.Key))).SequenceEqual(p.Value)),"terminal-record migration preserves sandbox registry, credentials and host data");
+        string again=historical.Target+"-again";await Service(historical).MoveAsync(again);
+        Check(!await DailyLoadingFileTransaction.RecoverAsync(historical.Driver.Read("RenamedAccount1","FileRootPath"),"RenamedAccount1",()=>throw new Exception(),()=>throw new Exception(),_=>throw new Exception(),CancellationToken.None),"repeated relocation does not resurrect historical recovery");
+
+        using(var evidence=System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(failure.Root,"storage-migration-error.json"))))
+            Check(evidence.RootElement.GetProperty("phase").GetString()=="switch-binding"&&evidence.RootElement.GetProperty("sourcePath").GetString()!.StartsWith(failure.Store)&&!evidence.RootElement.GetProperty("pendingRecovery").GetBoolean(),"failure evidence identifies the failed binding after successful rollback");
+        using(var evidence=System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(recovery.Root,"storage-migration-error.json"))))
+            Check(evidence.RootElement.GetProperty("pendingRecovery").GetBoolean()&&evidence.RootElement.GetProperty("error").GetString()!.Contains("AggregateException"),"failed rollback retains both original and recovery errors in exportable evidence");
 
         var cancellation=Make(output,"cancel");using var cancel=new CancellationTokenSource();
         service=new DailyStorageMigration(cancellation.Root,cancellation.Store,cancellation.Driver){Checkpoint=phase=>{if(phase=="copying")cancel.Cancel();}};

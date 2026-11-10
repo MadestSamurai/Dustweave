@@ -32,14 +32,50 @@ public sealed class DailyStorageBindingException(string directory,string label,s
 
 public sealed class DailyStorageMigration
 {
+    public enum MoveStage { Preparing, Copying, Verifying, Switching, Finishing }
+    public sealed record MoveProgress(MoveStage Stage,long Completed,long Total,int Files,int TotalFiles);
+    sealed class Reporter(IProgress<MoveProgress>? sink)
+    {
+        MoveStage stage; long completed,total,last; int files,count;
+        public void Start(MoveStage next,long bytes=0,int fileCount=0){stage=next;completed=0;total=bytes;files=0;count=fileCount;Send(true);}
+        public void Add(int bytes){completed+=bytes;Send(false);}
+        public void FileDone(){files++;Send(files==count);}
+        public void Send(bool force){long now=Environment.TickCount64;if(force||now-last>=100){sink?.Report(new(stage,completed,total,files,count));last=now;}}
+    }
+    static string HashWithProgress(Stream stream,Reporter report,CancellationToken token)
+    {
+        using var hash=IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        var buffer=System.Buffers.ArrayPool<byte>.Shared.Rent(256*1024);
+        try
+        {
+            int count;
+            while((count=stream.Read(buffer))>0){token.ThrowIfCancellationRequested();hash.AppendData(buffer,0,count);report.Add(count);}
+            return Convert.ToHexString(hash.GetHashAndReset());
+        }
+        finally {System.Buffers.ArrayPool<byte>.Shared.Return(buffer);}
+    }
+    static string HashWithProgress(string file,Reporter report,CancellationToken token)
+    {using var stream=File.OpenRead(file);return HashWithProgress(stream,report,token);}
     internal sealed record Box(string Name,string Source,string Target,string Enabled);
     internal sealed record Tree(string Source,string Target);
     internal sealed record Copied(string Source,string Target,long Length,DateTime Written,string Hash);
     internal sealed record Journal(string Id,string Phase,string Destination,Tree[] Trees,Box[] Boxes,Copied[] Files);
     readonly string root,legacyStore;
     readonly IStorageSandboxTransport sandbox;
+    string phase="idle",sourcePath="",targetPath="";
     internal Action<string>? Checkpoint { get; init; }
     string Pending => Path.Combine(root,"storage-migration.json");
+    void Context(string stage,string source="",string target="") { phase=stage;sourcePath=source;targetPath=target; }
+    void RecordFailure(string operation,string destination,Exception error)
+    {
+        // Small, credential-free evidence survives rollback and process restart.
+        // Recording must never replace the actual failure or block recovery.
+        try { DailyJson.Write(Path.Combine(root,"storage-migration-error.json"),new {
+            atUtc=DateTimeOffset.UtcNow,operation,phase,
+            destination,sourcePath,targetPath,pendingRecovery=File.Exists(Pending),
+            errorType=error.GetType().FullName,error.HResult,error=error.ToString() }); }
+        catch(Exception e)when(e is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException){ }
+    }
     public DailyStorageMigration(string root) : this(root,DailyStorageLocations.LegacySandboxes,new StorageSandboxTransport()) { }
     internal DailyStorageMigration(string root,string legacyStore,IStorageSandboxTransport sandbox)
     {this.root=DailyStoragePath.ResolveRoot(root);this.legacyStore=DailyStoragePath.ResolveRoot(legacyStore);this.sandbox=sandbox;}
@@ -91,14 +127,20 @@ public sealed class DailyStorageMigration
     public async Task RecoverAsync(CancellationToken token=default)
     {
         if(!File.Exists(Pending))return;
-        using var control=DailyUpdateHost.AcquireControl(root);
-        await DailySandbox.ConfigurationGate.WaitAsync(token);
-        try {using var lease=DailyCacheStorage.Lease(root,true);await Task.Run(RecoverCoreAsync,token);}
-        finally{DailySandbox.ConfigurationGate.Release();}
+        Context("recovery-lock");
+        try
+        {
+            using var control=DailyUpdateHost.AcquireControl(root);
+            await DailySandbox.ConfigurationGate.WaitAsync(token);
+            try {using var lease=DailyCacheStorage.Lease(root,true);await Task.Run(RecoverCoreAsync,token);}
+            finally{DailySandbox.ConfigurationGate.Release();}
+        }
+        catch(Exception error){RecordFailure("recover","",error);throw;}
     }
     async Task RecoverCoreAsync()
     {
         if(!File.Exists(Pending))return;
+        Context("recovery",Pending);
         var j=DailyJson.TryRead<Journal>(Pending)??throw new IOException("storage.recovery_required");
         Validate(j);
         var active=DailyStorageLocations.Read(root);
@@ -151,7 +193,7 @@ public sealed class DailyStorageMigration
         }
         if(Directory.Exists(j.Destination))Delete(j.Destination);
     }
-    async Task<int> FinishAsync(Journal j)
+    async Task<int> FinishAsync(Journal j,Reporter? report=null)
     {
         foreach(var b in j.Boxes)if(!Same(sandbox.Read(b.Name,"FileRootPath"),b.Target))throw new IOException("storage.recovery_required");
         foreach(var b in j.Boxes)if(!sandbox.Read(b.Name,"Enabled").Trim().Equals(b.Enabled,StringComparison.OrdinalIgnoreCase))await sandbox.Set(b.Name,"Enabled",b.Enabled);
@@ -167,6 +209,7 @@ public sealed class DailyStorageMigration
                 File.SetAttributes(f.Source,info.Attributes&~FileAttributes.ReadOnly);File.Delete(f.Source);
             }
             catch(Exception e)when(e is IOException or UnauthorizedAccessException){retained++;}
+            finally {report?.FileDone();}
         }
         foreach(var tree in j.Trees)try{RemoveEmpty(tree.Source);}catch(Exception e)when(e is IOException or UnauthorizedAccessException){ }
         DailyJson.Write(Path.Combine(root,"storage-migration-last.json"),new {j.Id,atUtc=DateTimeOffset.UtcNow,j.Destination,retained,sourceTrees=j.Trees.Select(t=>t.Source).ToArray()});
@@ -180,21 +223,28 @@ public sealed class DailyStorageMigration
         if(!Directory.EnumerateFileSystemEntries(directory).Any())Directory.Delete(directory);
     }
 
-    public async Task<DailyCacheMove> MoveAsync(string destination,CancellationToken token=default,IProgress<long>? progress=null)
+    public async Task<DailyCacheMove> MoveAsync(string destination,CancellationToken token=default,IProgress<long>? progress=null,IProgress<MoveProgress>? phases=null)
     {
-        DailySandbox.RequireHost();
-        using var control=DailyUpdateHost.AcquireControl(root);
-        await DailySandbox.ConfigurationGate.WaitAsync(token);
+        Context("acquire-lock",root,destination);
         try
         {
-            using var lease=DailyCacheStorage.Lease(root,true);
-            return await Task.Run(()=>MoveCoreAsync(destination,token,progress),token);
+            DailySandbox.RequireHost();
+            using var control=DailyUpdateHost.AcquireControl(root);
+            await DailySandbox.ConfigurationGate.WaitAsync(token);
+            try
+            {
+                using var lease=DailyCacheStorage.Lease(root,true);
+                return await Task.Run(()=>MoveCoreAsync(destination,token,progress,new Reporter(phases)),token);
+            }
+            finally{DailySandbox.ConfigurationGate.Release();}
         }
-        finally{DailySandbox.ConfigurationGate.Release();}
+        catch(Exception error){RecordFailure("move",destination,error);throw;}
     }
-    async Task<DailyCacheMove> MoveCoreAsync(string destination,CancellationToken token,IProgress<long>? progress)
+    async Task<DailyCacheMove> MoveCoreAsync(string destination,CancellationToken token,IProgress<long>? progress,Reporter report)
     {
+        report.Start(MoveStage.Preparing);
         await RecoverCoreAsync();
+        Context("preflight",root,destination);
         destination=DailyStoragePath.ResolveRoot(destination);NoLinks(destination);
         string cache=DailyCacheStorage.Location(root),store=DailyStorageLocations.Read(root)?.Sandboxes??legacyStore;
         foreach(string previous in new[]{root,cache,store,Path.Combine(Path.GetTempPath(),".net")}.Concat(DailyCacheStorage.KnownRoots(root)).Concat(DailyStorageLocations.Read(root)?.PreviousSandboxes??[]))
@@ -209,10 +259,16 @@ public sealed class DailyStorageMigration
             var configured=registered.ToDictionary(b=>b,b=>sandbox.Read(b,"FileRootPath").Trim(),StringComparer.OrdinalIgnoreCase);
             foreach(string state in Directory.GetDirectories(store))
             {
+                Context("sandbox-preflight",state,destination);
                 NoLinks(state);
                 if(!Directory.EnumerateFileSystemEntries(state).Any())continue;
                 string from=Path.Combine(state,"root"),marker=Path.Combine(state,"instance.json");
-                if(File.Exists(Path.Combine(state,"removal.json"))||File.Exists(DailyLoadingFileTransaction.Pending(from)))throw new IOException("storage.recovery_required");
+                string removal=Path.Combine(state,"removal.json");
+                if(File.Exists(removal)){Context("pending-removal",removal,destination);throw new IOException("storage.recovery_required");}
+                Context("sandbox-file-recovery",DailyLoadingFileTransaction.Pending(from),destination);
+                try { if(!DailyLoadingFileTransaction.PrepareForMigration(from))throw new IOException("storage.recovery_required"); }
+                catch(Exception error)when(error is IOException or System.Text.Json.JsonException){throw new IOException("storage.recovery_required",error);}
+                Context("sandbox-preflight",state,destination);
                 var owner=DailyJson.TryRead<DailySandboxRequest>(marker);
                 if(owner==null&&MetadataOnly(state)&&!configured.ContainsKey(Path.GetFileName(state))&&!configured.Values.Any(p=>Same(p,from)))continue;
                 if(owner==null)throw BindingError(state,File.Exists(marker)?"registration_invalid":"registration_missing");
@@ -226,6 +282,7 @@ public sealed class DailyStorageMigration
             }
         }
         RequireIdle(boxes);
+        Context("inventory",store,destination);
         int skipped=0;
         var inventory=trees.SelectMany(t=>DailyCacheStorage.Files(t.Source,token,ref skipped).Select(f=>(Tree:t,File:f))).ToArray();
         if(skipped!=0)throw new IOException("storage.unreadable");
@@ -234,55 +291,68 @@ public sealed class DailyStorageMigration
         token.ThrowIfCancellationRequested();
         var journal=new Journal(Guid.NewGuid().ToString("N"),"copying",destination,trees,boxes.ToArray(),[]);
         Directory.CreateDirectory(destination);DailyJson.Write(Path.Combine(destination,"storage-owner.json"),Location(journal));
+        Context("copying",store,destination);
         Save(journal);
         long copied=0,lastProgress=0;
         try
         {
             // Prevent new launches while the registry hive and writable game files are copied.
-            foreach(var b in boxes){await sandbox.Set(b.Name,"Enabled","n");RequireIdle(boxes);}
-            foreach(var tree in trees)CopyDirectories(tree.Source,tree.Target,token);
+            foreach(var b in boxes){Context("disable-launch",b.Source,b.Target);await sandbox.Set(b.Name,"Enabled","n");RequireIdle(boxes);}
+            foreach(var tree in trees){Context("copy-directories",tree.Source,tree.Target);CopyDirectories(tree.Source,tree.Target,token);}
             Directory.CreateDirectory(Path.Combine(destination,"instances"));
             var files=new List<Copied>();
             var buffer=new byte[256*1024];
+            // Copy and destination verification each read every byte once. Report
+            // actual work from both passes, including a single very large file.
+            report.Start(MoveStage.Copying,checked(inventory.Sum(x=>x.File.Bytes)*2),inventory.Length);
             foreach(var (tree,file) in inventory)
             {
                 token.ThrowIfCancellationRequested();NoLinks(file.Path);
                 string target=Path.Combine(tree.Target,Path.GetRelativePath(tree.Source,file.Path));
+                Context("copy-file",file.Path,target);
                 Directory.CreateDirectory(Path.GetDirectoryName(target)!);
                 using(var input=new FileStream(file.Path,FileMode.Open,FileAccess.Read,FileShare.Read))
                 using(var output=new FileStream(target,FileMode.CreateNew,FileAccess.ReadWrite,FileShare.None))
                 {
                     using var hasher=IncrementalHash.CreateHash(HashAlgorithmName.SHA256);int count;
-                    while((count=input.Read(buffer))>0){token.ThrowIfCancellationRequested();output.Write(buffer,0,count);hasher.AppendData(buffer,0,count);copied+=count;if(Environment.TickCount64-lastProgress>100){progress?.Report(copied);lastProgress=Environment.TickCount64;}}
+                    while((count=input.Read(buffer))>0){token.ThrowIfCancellationRequested();output.Write(buffer,0,count);hasher.AppendData(buffer,0,count);copied+=count;report.Add(count);if(Environment.TickCount64-lastProgress>100){progress?.Report(copied);lastProgress=Environment.TickCount64;}}
                     output.Flush(true);output.Position=0;
                     string hash=Convert.ToHexString(hasher.GetHashAndReset());
-                    if(hash!=Convert.ToHexString(SHA256.HashData(output)))throw new IOException("storage.changed");
+                    if(hash!=HashWithProgress(output,report,token))throw new IOException("storage.changed");
                     files.Add(new(file.Path,target,file.Bytes,file.Written,hash));
                 }
                 File.SetLastWriteTimeUtc(target,file.Written);
+                report.FileDone();
             }
             RequireIdle(boxes);
+            Context("verify",store,destination);
+            report.Start(MoveStage.Verifying,files.Sum(f=>f.Length),files.Count);
             int ignored=0;
             if(trees.Sum(t=>DailyCacheStorage.Files(t.Source,token,ref ignored).Count)!=files.Count||ignored!=0)throw new IOException("storage.changed");
-            foreach(var f in files)if(new FileInfo(f.Source).Length!=f.Length||File.GetLastWriteTimeUtc(f.Source)!=f.Written||Hash(f.Source)!=f.Hash)throw new IOException("storage.changed");
+            foreach(var f in files){Context("verify-file",f.Source,f.Target);if(new FileInfo(f.Source).Length!=f.Length||File.GetLastWriteTimeUtc(f.Source)!=f.Written||HashWithProgress(f.Source,report,token)!=f.Hash)throw new IOException("storage.changed");report.FileDone();}
             token.ThrowIfCancellationRequested();
             journal=journal with {Phase="switching",Files=files.ToArray()};Save(journal);
-            foreach(var b in boxes){RequireIdle(boxes);await sandbox.Set(b.Name,"FileRootPath",b.Target);Checkpoint?.Invoke("binding");}
+            report.Start(MoveStage.Switching);
+            foreach(var b in boxes){Context("switch-binding",b.Source,b.Target);RequireIdle(boxes);await sandbox.Set(b.Name,"FileRootPath",b.Target);Checkpoint?.Invoke("binding");}
             // One atomic routing publication is the commit point. Recovery reads it,
             // not an in-memory flag, including an interrupted File.Replace.
+            Context("publish-location",store,destination);
             var previous=DailyStorageLocations.Read(root);
             DailyJson.Write(DailyStorageLocations.FileName(root),Location(journal) with {
                 PreviousCaches=new[]{cache}.Concat(previous?.PreviousCaches??[]).Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
                 PreviousSandboxes=new[]{store}.Concat(previous?.PreviousSandboxes??[]).Distinct(StringComparer.OrdinalIgnoreCase).ToArray()
             });Checkpoint?.Invoke("published");
             journal=journal with {Phase="committed"};Save(journal);
-            int retained=await FinishAsync(journal);progress?.Report(copied);
+            Context("finish",store,destination);
+            report.Start(MoveStage.Finishing,fileCount:files.Count);
+            int retained=await FinishAsync(journal,report);progress?.Report(copied);
             return new(destination,copied,retained);
         }
-        catch
+        catch(Exception original)
         {
             // Cancellation is honored during copying, never halfway through rollback.
-            if(DailyStorageLocations.Read(root)?.Id!=journal.Id)await RollbackAsync(journal);
+            try { if(DailyStorageLocations.Read(root)?.Id!=journal.Id)await RollbackAsync(journal); }
+            catch(Exception rollback){throw new IOException("storage.recovery_required",new AggregateException(original,rollback));}
             throw;
         }
     }

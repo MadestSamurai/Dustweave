@@ -5,6 +5,10 @@ namespace Dustweave;
 
 public sealed record DailyBargainCharacter(long Character,int Id,string Name,int Level,int MaxLevel,int Group,int Skill,long Experience,long Previous,long Target,int PerUse,int Cost)
 {
+    public int Kind { get; init; } = 16;
+    public bool Active { get; init; }
+    public DailyDisplayName Names { get; init; } = new("", "", "");
+    public string NameIn(string language) => Names.In(language) is { Length: > 0 } value ? value : Name.Length > 0 ? Name : "#" + Id;
     public bool Full => Level>=MaxLevel || Experience>=Target;
     public long Remaining => Full?0:Math.Max(0,Target-Experience);
     public long Uses => Remaining==0?0:PerUse>0?checked((Remaining+PerUse-1)/PerUse):throw new InvalidDataException("bargain.no_growth");
@@ -16,11 +20,11 @@ public sealed record DailyBargainCharacter(long Character,int Id,string Name,int
     {
         var c=new DailyBargainCharacter(N(r["Character"]),I(r["Id"]),S(r["Name"]),I(r["Level"]),I(r["MaxLevel"]),I(r["Group"]),I(r["Skill"]),N(r["Experience"]),N(r["Previous"]),N(r["Target"]),I(r["PerUse"]),I(r["Cost"]));
         Require(c.Character>0&&c.Level>0&&c.MaxLevel>=c.Level&&c.Group>0&&c.Skill>0&&c.Experience>=c.Previous&&c.Target>=c.Previous&&c.PerUse>=0&&c.Cost>0,"bargain.data_incomplete");
-        return c;
+        return c with { Kind = r["Kind"] == null ? 16 : I(r["Kind"]), Active = B(r["Active"]), Names = new(S(r["Names"]?["Cn"]), S(r["Names"]?["Tw"]), S(r["Names"]?["En"])) };
     }
     public void AssertSameTier(DailyBargainCharacter other)
     {
-        Require(Character==other.Character&&Id==other.Id&&Level==other.Level&&MaxLevel==other.MaxLevel&&Group==other.Group&&Skill==other.Skill&&Previous==other.Previous&&Target==other.Target&&Cost==other.Cost&&PerUse==other.PerUse,"bargain.preview_changed");
+        Require(Kind==other.Kind&&Character==other.Character&&Id==other.Id&&Level==other.Level&&MaxLevel==other.MaxLevel&&Group==other.Group&&Skill==other.Skill&&Previous==other.Previous&&Target==other.Target&&Cost==other.Cost&&PerUse==other.PerUse,"bargain.preview_changed");
     }
 }
 
@@ -33,6 +37,25 @@ public static class DailyBargainProof
     public static DailyBargainCharacter Character(JsonObject e,long id)=>Characters(e).Single(c=>c.Character==id);
     public static DailyBusinessProof Definition=>new(Role,"bargain_training",[ReadId,"trade.currency"],Verify,["dispatch.start"],PreviewOwner:OwnsPreview);
     private static bool OwnsPreview(JsonObject op,DailyStageFrame f)=>op["preview_frame"] is JsonObject original&&S(original["Scene"])==S(f.Frame["Scene"])&&JsonNode.DeepEquals(original["UiToken"],f.Frame["UiToken"])&&DailyNavigationDecision.Types(f.Frame).Contains("DiscountPopupUI");
+    internal static bool CanReplanAfterRestart(JsonObject op, JsonObject after, JsonObject current)
+    {
+        var old = op["before"]?["Frame"] as JsonObject;
+        var frame = after["Frame"] as JsonObject;
+        if (old == null || frame == null || !DailyEvidence.SameActor(frame, current)) return false;
+        if (S(old["AccountKey"]) != S(frame["AccountKey"]) || S(old["PlayerKey"]) != S(frame["PlayerKey"]) ||
+            S(frame["AccountKey"]).Length == 0 || S(frame["PlayerKey"]).Length == 0) return false;
+        // Component reload alone is not a game restart; the original request may
+        // still finish. Require a genuinely new process lifetime and usable UI.
+        if (N(old["ProcessId"]) <= 0 || N(old["ProcessStartTicks"]) <= 0 ||
+            N(frame["ProcessId"]) <= 0 || N(frame["ProcessStartTicks"]) <= 0 ||
+            N(old["ProcessId"]) == N(frame["ProcessId"]) && N(old["ProcessStartTicks"]) == N(frame["ProcessStartTicks"])) return false;
+        if (S(current["Error"]) != "" || DailyHomeDecision.Transitioning(current)) return false;
+        var rows = DailyNavigationDecision.Rows(current).ToArray();
+        if (rows.Any(r => B(r["Popup"]) && !DailyNavigationDecision.PassiveSurface(S(r["Type"]))) ||
+            !rows.Any(r => (S(r["Type"]) is "MenuUI" or "GameFieldDefaultUI" or "QuickMenuUI" or "ShopUI") && DailyNavigationDecision.ReadyInput(r, false))) return false;
+        _ = Character(after, N(op["scope"]?["character"]));
+        return State(after)["Catalyst"] != null && N(State(after)["Catalyst"]) >= 0;
+    }
     public static JsonObject Verify(JsonObject op,JsonArray events,JsonObject after)
     {
         var before=op["before"]!.AsObject();var scope=op["scope"]!.AsObject();

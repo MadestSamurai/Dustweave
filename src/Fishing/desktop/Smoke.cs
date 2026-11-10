@@ -31,6 +31,28 @@ public partial class FishingWindow
   Check(policy.Next(settling,lease,now+TimeSpan.FromSeconds(3).Ticks)==FishingAction.CastPress&&policy.Fault=="","next cast resumes after result and level-up");
   settling.LevelPopup=true;settling.BlockReason="unrelated confirmation";
   Check(policy.Next(settling,lease,now+TimeSpan.FromSeconds(4).Ticks)==FishingAction.None,"settlement does not dismiss an unrelated confirmation");
+  foreach(int delay in new[]{100,250,750})
+  {
+   var late=new FishingPolicy();var idle=new FishingSnapshot{ProcessId=17,Ready=true,State="None",CanCast=true};
+   Check(late.Next(idle,lease,now)==FishingAction.CastPress,"late-level fixture begins a local charge: "+delay);
+   idle.LevelPopup=true;idle.CanClosePopup=true;idle.PopupId=3;
+   long popupAt=now+TimeSpan.FromMilliseconds(delay).Ticks;
+   Check(late.Next(idle,lease,popupAt)==FishingAction.ClosePopup,"delayed level-up is closed after ignored cast: "+delay);
+   idle.LevelPopup=false;
+   Check(late.Next(idle,lease,popupAt+TimeSpan.FromMilliseconds(100).Ticks)==FishingAction.None,"settlement callback gets a quiet window: "+delay);
+   Check(late.Next(idle,lease,popupAt+TimeSpan.FromMilliseconds(600).Ticks)==FishingAction.CastPress,"ignored cast recovers after delayed level-up: "+delay);
+   idle.State="Casting";idle.CastRunning=true;idle.Gauge=.95;
+   Check(late.Next(idle,lease,popupAt+TimeSpan.FromMilliseconds(800).Ticks)==FishingAction.CastRelease,"recovered cast reaches native release: "+delay);
+   Check(late.Next(idle,lease,popupAt+TimeSpan.FromSeconds(3).Ticks)==FishingAction.None,"consuming cast release is never replayed: "+delay);
+  }
+  var ignored=new FishingPolicy();var unchanged=new FishingSnapshot{ProcessId=17,Ready=true,State="None",CanCast=true};
+  Check(ignored.Next(unchanged,lease,now)==FishingAction.CastPress,"ignored-charge fixture begins");
+  unchanged.NetworkPending=true;
+  Check(ignored.Next(unchanged,lease,now+TimeSpan.FromSeconds(3).Ticks)==FishingAction.None,"pending response prevents local charge retry");
+  unchanged.NetworkPending=false;
+  Check(ignored.Next(unchanged,lease,now+TimeSpan.FromSeconds(6).Ticks)==FishingAction.CastPress,"idle local charge can be retried after response wait");
+  Check(ignored.Next(unchanged,lease,now+TimeSpan.FromSeconds(9).Ticks)==FishingAction.CastPress,"second local charge retry");
+  Check(ignored.Next(unchanged,lease,now+TimeSpan.FromSeconds(12).Ticks)==FishingAction.None,"local charge retries are bounded to three total");
   Show();await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
   Check(LiveDetails.Visibility==Visibility.Collapsed,"unread live figures stay hidden before connection");
   Check(!StartButton.IsEnabled,"start disabled before snapshot");Check(IntervalBox.Text=="1000"&&CastBox.Text=="90","defaults");Check(AutoSellBox.IsChecked==true,"automatic sale default visible");Check(AutoBaitBox.IsChecked==true,"automatic bait default visible");

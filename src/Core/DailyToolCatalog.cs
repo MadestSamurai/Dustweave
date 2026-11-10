@@ -1,12 +1,17 @@
 namespace Dustweave;
 
-public sealed record DailyToolDefinition(string Id, string Name, string Category, string Description, string Repository, string AssemblyName, string MutexName) { public string CategoryId { get; init; } = ""; }
+public sealed record DailyToolDefinition(string Id, string Name, string Category, string Description, string Repository, string AssemblyName, string MutexName)
+{
+    public string CategoryId { get; init; } = "";
+    public bool HostWindow { get; init; }
+}
 
 public static class DailyToolCatalog
 {
     public static IReadOnlyList<DailyToolDefinition> All { get; } = new DailyToolDefinition[]
     {
         new("soul", "死魂之盘", "小游戏", "自动规划成长阵容，连续挑战全部五关。", "Dustweave", "Dustweave", @"Local\Dustweave.Soul") { CategoryId = "games" },
+        new("talent-practice", "技能练习", "经营与装备", "选择角色练习天赋，查看经验和预计药耗，练满当前等级后停止。", "Dustweave", "Dustweave", "") { CategoryId = "business", HostWindow = true },
         new("fishing", "自动钓鱼", "经营与装备", "钓鱼、鱼饵、背包出售和地图往返。", "Dustweave", "BD2Fishing", @"Local\BD2Fishing.Desktop") { CategoryId = "business" },
         new("territory", "领地自动化", "经营与装备", "种植、采集、料理、库存出售和布局。", "Dustweave", "BD2Territory", @"Local\BD2Territory.Desktop") { CategoryId = "business" },
         new("equipment", "装备助手", "经营与装备", "规划搓粉与批量精炼，确认预算后执行。", "Dustweave", "BD2EquipmentAssistant", @"Local\BD2EquipmentAssistant-v1") { CategoryId = "business" },
@@ -30,7 +35,7 @@ public static class DailyToolArguments
     public static bool TryClassify(string id, string[] args, out bool helper)
     {
         helper = false;
-        if (!DailyToolCatalog.All.Any(t => t.Id == id)) return false;
+        if (!DailyToolCatalog.All.Any(t => t.Id == id && !t.HostWindow)) return false;
         if (args.Length == 0 || id == "equipment" && args.SequenceEqual(new[] { "--refine" })) return true;
         helper = args[0] switch
         {

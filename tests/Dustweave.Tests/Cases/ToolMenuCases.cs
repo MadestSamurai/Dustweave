@@ -6,7 +6,8 @@ internal static class ToolMenuCases
     public static void Run(string root, List<string> cases)
     {
         void Check(bool pass, string name) { if (!pass) throw new Exception(name); cases.Add("tool-menu: " + name); }
-        Check(DailyToolCatalog.All.Count == 12, "owned tools include the five-dungeon Soul challenge");
+        Check(DailyToolCatalog.All.Count == 13, "owned tools include talent practice");
+        Check(DailyToolCatalog.Search("砍价").Single() is { Id: "talent-practice", CategoryId: "business", HostWindow: true }, "bargaining is discoverable as host-owned talent practice");
         Check(DailyToolCatalog.All.Select(t => t.Id).Distinct().Count() == DailyToolCatalog.All.Count, "unique tool identities");
         Check(DailyToolCatalog.Find("infinite-gacha") is {Repository:"Dustweave", AssemblyName:"BD2InfiniteGacha", MutexName:@"Local\BD2InfiniteGacha-v1"}, "owned gacha points to Dustweave without changing loader or window identity");
         Check(DailyToolCatalog.Search("连连看").Single().Id == "sichuan", "Chinese search");
@@ -16,6 +17,11 @@ internal static class ToolMenuCases
         Check(!DailyToolCatalog.All.Any(t => t.Id == "summoner"), "private tools excluded");
         foreach (var tool in DailyToolCatalog.All)
         {
+            if (tool.HostWindow)
+            {
+                Check(!DailyToolArguments.TryClassify(tool.Id, [], out _) && !DailyToolArguments.TryClassify(tool.Id, ["--smoke", "output"], out _), tool.Id + " uses its host window instead of a legacy child adapter");
+                continue;
+            }
             Check(DailyToolArguments.TryClassify(tool.Id, [], out var helper) && !helper, tool.Id + " normal launch requires interactive operation guard");
             Check(DailyToolArguments.TryClassify(tool.Id, ["--smoke", "output"], out helper) && helper, tool.Id + " offline UI entry recognized");
             Check(!DailyToolArguments.TryClassify(tool.Id, ["--smoke"], out _), tool.Id + " malformed check cannot open normal UI");
@@ -54,6 +60,8 @@ internal static class ToolMenuCases
         Check(manager.Current == null, "foreign executable rejected");
         DailyJson.Write(statePath, state with { ToolId = "unknown" });
         Check(manager.Current == null, "foreign tool rejected");
+        DailyJson.Write(statePath, state with { ToolId = "talent-practice" });
+        Check(manager.Current == null, "host-owned practice window cannot become a child-process journal target");
         File.WriteAllText(statePath, "{broken");
         Check(manager.Current == null, "corrupt journal cannot target a process");
         File.Delete(statePath);
