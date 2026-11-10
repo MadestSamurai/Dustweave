@@ -35,6 +35,7 @@ $recent=@($ordered|Select-Object -First 10|ForEach-Object Version)
 $supported=@($ordered|Where-Object {$_.Version -in $recent -or [semver]$_.Version -ge [semver]'1.4.7'})
 if([semver]$Version -ge [semver]'1.5.0'){
  $supported=@($ordered|Where-Object {$_.Layout -eq 3 -and ([semver]$Version -lt [semver]'1.6.0' -or [semver]$_.Version -ge [semver]'1.5.17')})
+ if([semver]$Version -ge [semver]'1.7.0'){$supported=@($supported|Where-Object {[semver]$_.Version -ge [semver]'1.7.0'})}
 }elseif([semver]$Version -ge [semver]'1.4.15'){
  $minimum=if($Version -eq '1.4.15'){'1.4.15-bridge.1'}else{'1.4.15'}
  # Older capable clients reconstruct signed blocks without requiring every old
@@ -98,6 +99,7 @@ foreach($release in $supported){
   $full=(Get-Item -LiteralPath $next).Length
   $capable=$after.InstallerProtocol -eq 2 -and $delta.Algorithm -eq 'dustweave-copy-v3'
   $offered=if($after.Layout -eq 3 -and [semver]$Version -ge [semver]'1.6.0'){$true}elseif($capable){$delta.Bytes -lt $full}else{$delta.Bytes -le $(if([semver]$release.Version -ge [semver]'1.4.7'){10MB}else{8MB}) -and ([semver]$release.Version -ge [semver]'1.4.7' -or $delta.Bytes -lt $full*0.8)}
+  if([semver]$Version -ge [semver]'1.7.0'){$offered=$delta.Bytes -le 32MB}
   $reports+=@{from=$release.Version;to=$Version;flavor=$flavor;fullBytes=$full;deltaBytes=$delta.Bytes;savingsPercent=[Math]::Round(100*(1-$delta.Bytes/$full),2);offered=$offered}
  }
 }

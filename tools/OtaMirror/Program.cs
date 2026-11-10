@@ -21,10 +21,31 @@ static class Program
     }
     static async Task MainRun(string[] args)
     {
+        if (args.Length is >= 3 and <= 5 && args[0] is "inventory" or "budget" or "prune-plan" or "prune-apply")
+        {
+            var maintenanceConnection = Rules.Read<Connection>(File.ReadAllBytes(args[1])); Validate(maintenanceConnection);
+            using var maintenanceStorage = Storage(maintenanceConnection); using var deadline = new CancellationTokenSource(TimeSpan.FromMinutes(10));
+            string maintenanceOutput = Path.GetFullPath(args[^1]); Directory.CreateDirectory(Path.GetDirectoryName(maintenanceOutput)!);
+            if (args[0] == "inventory" && args.Length == 3)
+                Rules.Atomic(maintenanceOutput, Rules.Bytes(await BucketRetention.Inventory(maintenanceStorage, maintenanceConnection.Bucket, deadline.Token)));
+            else if (args[0] == "budget" && args.Length == 4 && long.TryParse(args[2], out long bytes) && bytes >= 0)
+            {
+                var inventory = await BucketRetention.Inventory(maintenanceStorage, maintenanceConnection.Bucket, deadline.Token);
+                BucketRetention.RequireBudget(inventory, [("reserved-new-upload-" + Guid.NewGuid(), bytes)]);
+                Rules.Atomic(maintenanceOutput, Rules.Bytes(new { status = "passed", inventory.Bucket, inventory.CheckedUtc, inventory.ObjectBytes, inventory.MultipartBytes, reservedBytes = bytes, ceilingBytes = BucketRetention.UploadCeiling }));
+            }
+            else if (args[0] == "prune-plan" && args.Length == 4)
+                Rules.Atomic(maintenanceOutput, Rules.Bytes(await BucketRetention.Plan(maintenanceStorage, maintenanceConnection.Bucket, Rules.Read<Trust>(File.ReadAllBytes(args[2])), deadline.Token)));
+            else if (args[0] == "prune-apply" && args.Length == 5)
+                await BucketRetention.Apply(maintenanceStorage, maintenanceConnection.Bucket, Rules.Read<Trust>(File.ReadAllBytes(args[2])), Rules.Read<RetentionPlan>(File.ReadAllBytes(args[3])), maintenanceOutput, deadline.Token);
+            else throw new InvalidDataException("Invalid storage maintenance invocation");
+            Console.WriteLine("Storage maintenance receipt: " + maintenanceOutput); return;
+        }
         if (args.Length == 4 && args[0] == "build-repair")
         { RepairBuilder.Build(Path.GetFullPath(args[1]), Path.GetFullPath(args[2]), Path.GetFullPath(args[3])); return; }
         if (args.SequenceEqual(new[] { "self-test" }))
         {
+            BucketRetention.SelfTest();
             var valid = new Connection("https://s3.7caiyun.com", "us-west", "dustweave-test", "https://dustweave-test.cdn.7caiyun.com", "test", "test");
             Validate(valid);
             int checks = 1;
@@ -58,16 +79,15 @@ static class Program
         Rules.Need((files.Length > 0 || !repair && (bundled || feed.Releases[0].InstallerProtocol == 2)) && files.Select(f => f.FileName).Distinct().Count() == files.Length, "Empty or duplicate inventory");
         // Validate the complete set before sending any credential or object.
         foreach (var file in files) { if (!repair) _ = Mirror.FileUri(config, version, file); Rules.CheckArchive(Path.Combine(packages, file.FileName), file); }
-        using var s3 = new AmazonS3Client(new BasicAWSCredentials(connection.AccessKey, connection.SecretKey),
-            new AmazonS3Config
-            {
-                ServiceURL = connection.Endpoint, AuthenticationRegion = connection.Region, ForcePathStyle = false,
-                // Retry transient storage failures within the per-object deadline.
-                // PUT retries reuse the same verified immutable key and seekable bytes;
-                // publication still requires a complete public-body hash check.
-                RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED, MaxErrorRetry = 3,
-                Timeout = TimeSpan.FromMinutes(5), HttpClientFactory = new DirectFactory()
-            });
+        using var s3 = Storage(connection);
+        using (var deadline = new CancellationTokenSource(TimeSpan.FromMinutes(5)))
+        {
+            var inventory = await BucketRetention.Inventory(s3, connection.Bucket, deadline.Token);
+            BucketRetention.RequireBudget(inventory, files.Select(file =>
+                ((bundled ? "dustweave/ota/all-in-one/" : "dustweave/ota/v2/") + (repair ? file.FileName : Mirror.ObjectVersion(config, version) + "/" + file.FileName), file.Bytes)));
+            string budgetPath = Path.GetFullPath(args[4]) + ".budget.json"; Directory.CreateDirectory(Path.GetDirectoryName(budgetPath)!);
+            Rules.Atomic(budgetPath, Rules.Bytes(new { status = "passed", inventory.Bucket, inventory.CheckedUtc, inventory.ObjectBytes, inventory.MultipartBytes, ceilingBytes = BucketRetention.UploadCeiling }));
+        }
         using var client = Mirror.Client();
         var published = new System.Collections.Concurrent.ConcurrentBag<Published>();
         int completed = 0;
@@ -134,6 +154,10 @@ static class Program
         catch (Exception e) when (e is InvalidDataException or IOException or JsonException or CryptographicException or OperationCanceledException or HttpRequestException)
         { Console.Error.WriteLine(e.Message); return 1; }
     }
+    static AmazonS3Client Storage(Connection connection) => new(new BasicAWSCredentials(connection.AccessKey, connection.SecretKey),
+        new AmazonS3Config { ServiceURL = connection.Endpoint, AuthenticationRegion = connection.Region, ForcePathStyle = false,
+            RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED, MaxErrorRetry = 3,
+            Timeout = TimeSpan.FromMinutes(5), HttpClientFactory = new DirectFactory() });
     sealed class DirectFactory : HttpClientFactory
     {
         public override HttpClient CreateHttpClient(IClientConfig config) => new(new HttpClientHandler { UseProxy = false })

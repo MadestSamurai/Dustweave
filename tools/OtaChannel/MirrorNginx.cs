@@ -38,6 +38,12 @@ static class MirrorNginx
             add_header X-Content-Type-Options "nosniff" always;
             limit_except GET { deny all; }
         }
+        location = /updates/dustweave/all-in-one/releases-v3.json {
+            alias /usr/share/nginx/dustweave-updates-aio/releases-v3.json;
+            add_header Cache-Control "no-store" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            limit_except GET { deny all; }
+        }
         location = /updates/dustweave/all-in-one/releases-1.6.0.json {
             alias /usr/share/nginx/dustweave-updates-aio/.mirror/manifests/releases-1.6.0.json;
             add_header Cache-Control "no-store" always;
@@ -53,6 +59,7 @@ static class MirrorNginx
             if ($dw_aio_relative = "") { return 404; }
             set $dw_aio_cloud_relative $dw_aio_relative;
             if ($dw_aio_relative ~ "^v1[.]5[.]17/(.*)$") { set $dw_aio_cloud_relative v1.5.17-transition/$1; }
+            if ($dw_aio_relative ~ "^v1[.]6[.]10/(.*)$") { set $dw_aio_cloud_relative v1.6.10-retirement/$1; }
             # Old clients' ?origin=1 retries also stay on object storage.
             if (-f /usr/share/nginx/dustweave-updates-aio/.mirror/routes/$dw_aio_relative) {
                 add_header Cache-Control "no-store" always;

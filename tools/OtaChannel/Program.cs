@@ -30,10 +30,10 @@ static class Channel
     }
     public static string ParseCommand(string command)
     {
-        if (command.StartsWith("dustweave-ota capable ", StringComparison.Ordinal))
+        if (command.StartsWith("dustweave-ota capable ", StringComparison.Ordinal) || command.StartsWith("dustweave-ota current ", StringComparison.Ordinal))
         {
-            string suffix = command["dustweave-ota capable ".Length..];
-            Rules.Need(!suffix.StartsWith("capable ", StringComparison.Ordinal), "Nested capability selection rejected");
+            string suffix = command[(command.StartsWith("dustweave-ota current ", StringComparison.Ordinal) ? "dustweave-ota current ".Length : "dustweave-ota capable ".Length)..];
+            Rules.Need(!suffix.StartsWith("capable ", StringComparison.Ordinal) && !suffix.StartsWith("current ", StringComparison.Ordinal), "Nested channel selection rejected");
             _ = ParseCommand("dustweave-ota " + suffix); return command;
         }
         if(command is "dustweave-ota submit" or "dustweave-ota status" or "dustweave-ota repair" or "dustweave-ota repair-index") return command;
@@ -112,7 +112,7 @@ static class Channel
             {
                 // No inherited SSH handles: the accepted worker survives a disconnected publishing client.
                 var info=new ProcessStartInfo(Environment.ProcessPath!){UseShellExecute=false,CreateNoWindow=true,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true};
-                info.ArgumentList.Add(c.Capable ? "worker-capable" : "worker");info.ArgumentList.Add(request.Nonce);
+                info.ArgumentList.Add(c.Current ? "worker-current" : c.Capable ? "worker-capable" : "worker");info.ArgumentList.Add(request.Nonce);
                 using var process=Process.Start(info)??throw new IOException("Cannot start publication worker");process.StandardInput.Close();
             }
             return new {state="accepted",nonce=request.Nonce,version=request.Version};
@@ -178,6 +178,15 @@ static class Channel
     internal static void CheckPreparedInventory(Config c, Feed candidate)
     {
         var top = candidate.Releases[0];
+        if (c.Layout == 3 && c.Capable && !c.Current && top.Version == "1.6.10")
+        {
+            string currentPath = Path.Combine(c.Public, "releases-v3.json"); Rules.NoLinks(currentPath);
+            Rules.Need(File.Exists(currentPath), "Publish the full 1.7.0 release before exposing the manual-upgrade notice");
+            var full = Rules.VerifyFeed(File.ReadAllBytes(currentPath), c);
+            Rules.Need(DailyVersion.Parse(full.Releases[0].Version) >= DailyVersion.Parse("1.7.0"), "The full manual-upgrade target is not ready");
+            Rules.Need(Rules.Patches(candidate).All(d => d.Bytes <= 8L * 1024 * 1024), "The retirement notice must stay small");
+            return;
+        }
         if (c.Layout == 3 && !c.Capable && top.Version == "1.5.17")
         {
             string pinned = Path.Combine(c.Public, ".mirror", "manifests", "releases-1.6.0.json");
@@ -268,8 +277,14 @@ static class Program
             }
             if(args.Length==2 && args[0]=="worker") { Channel.Worker(config,args[1]);return 0; }
             if(args.Length==2 && args[0]=="worker-capable") { Channel.Worker(Rules.Capability(config),args[1]);return 0; }
+            if(args.Length==2 && args[0]=="worker-current") { Channel.Worker(Rules.CurrentChannel(config),args[1]);return 0; }
             Rules.Need(args.SequenceEqual(new[]{"serve"}),"Invalid invocation");
             var command=Channel.ParseCommand(Environment.GetEnvironmentVariable("SSH_ORIGINAL_COMMAND")??"");
+            if (command.StartsWith("dustweave-ota current ", StringComparison.Ordinal))
+            {
+                config = Rules.CurrentChannel(config); Rules.NoLinks(config.State); Directory.CreateDirectory(config.State);
+                command = "dustweave-ota " + command["dustweave-ota current ".Length..];
+            }
             if (command.StartsWith("dustweave-ota capable ", StringComparison.Ordinal))
             {
                 config = Rules.Capability(config); Rules.NoLinks(config.State); Directory.CreateDirectory(config.State);

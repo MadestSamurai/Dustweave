@@ -30,6 +30,9 @@ sha256sum "$config" "$public/releases.json" \
  /usr/local/lib/dustweave-ota-channel/Dustweave.OtaChannel \
  /usr/local/lib/dustweave-ota-channel-v2/Dustweave.OtaChannel \
  /var/lib/dustweave-ota-aio-home/.ssh/authorized_keys > "$backup/unchanged.sha256"
+for feed in releases-v2.json releases-v3.json .mirror/manifests/releases-1.6.0.json; do
+    if test -f "$public/$feed"; then sha256sum "$public/$feed" >> "$backup/unchanged.sha256"; fi
+done
 "$payload" verify "$config" > "$backup/before-status.json"
 "$payload" bundle-nginx "$nginx" "$backup/nginx-candidate.conf" "$config"
 timer_active=0
@@ -56,6 +59,16 @@ systemctl stop "$timer"
 systemctl stop "$service"
 exec 9>"$state/publish.lock"
 flock -n 9 || { echo 'A publication is active; retry after it completes'; exit 1; }
+if test -d "$state/capable"; then
+    test ! -L "$state/capable" && test ! -L "$state/capable/publish.lock"
+    exec 8>"$state/capable/publish.lock"
+    flock -n 8 || { echo 'A 1.6 publication is active; retry after it completes'; exit 1; }
+fi
+if test -d "$state/current"; then
+    test ! -L "$state/current" && test ! -L "$state/current/publish.lock"
+    exec 7>"$state/current/publish.lock"
+    flock -n 7 || { echo 'A current publication is active; retry after it completes'; exit 1; }
+fi
 [ "$(sha256sum "$public/releases.json" | cut -d ' ' -f1)" = "$feed_hash" ]
 [ "$(sha256sum "$target" | cut -d ' ' -f1)" = "$previous" ]
 cmp "$backup/nginx.conf" "$nginx"

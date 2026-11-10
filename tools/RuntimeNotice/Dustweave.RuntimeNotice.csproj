@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType><TargetFramework>net8.0-windows</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier><PlatformTarget>x64</PlatformTarget>
+    <AssemblyName>Dustweave</AssemblyName><Version>1.6.10</Version>
+    <PublishAot>true</PublishAot><SelfContained>true</SelfContained>
+    <RuntimeFrameworkVersion>$(DustweaveRuntimeVersion)</RuntimeFrameworkVersion>
+    <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
+    <OptimizationPreference>Size</OptimizationPreference><StripSymbols>true</StripSymbols>
+    <DebugType>None</DebugType><DebugSymbols>false</DebugSymbols>
+    <ApplicationManifest>../../src/Updater/updater.manifest</ApplicationManifest>
+    <ApplicationIcon>../../assets/branding/Dustweave.ico</ApplicationIcon>
+    <Product>Dustweave</Product><Description>Dustweave manual security upgrade notice</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../src/Bootstrap/Recovery.cs" Link="Recovery.cs" />
+    <Compile Include="../../src/Core/DailyApplication.cs" Link="DailyApplication.cs" />
+    <EmbeddedResource Include="../../assets/updates/trust-aio.json" LogicalName="Dustweave.update-trust.json" />
+  </ItemGroup>
+</Project>

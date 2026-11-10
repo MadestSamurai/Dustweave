@@ -11,7 +11,7 @@ sealed record Request(int Schema, string Product, string Version, string Expecte
     string EvidenceSha256, string Nonce, DateTimeOffset IssuedUtc, DateTimeOffset ExpiresUtc, Blob[] Files);
 sealed record Envelope(int Schema, string KeyId, string Algorithm, string Payload, string Signature);
 sealed record Header(Envelope Request, string Feed, string Evidence);
-sealed record Config(string State, string Public, Dictionary<string,string> Keys, int Layout = 1, string? MirrorBaseUrl = null, bool Capable = false);
+sealed record Config(string State, string Public, Dictionary<string,string> Keys, int Layout = 1, string? MirrorBaseUrl = null, bool Capable = false, bool Current = false);
 sealed record Asset(string Flavor, string FileName, long Bytes, string Sha256);
 sealed record Delta(string Flavor, string FromVersion, string FileName, long Bytes, string Sha256, string Algorithm);
 sealed record Release(string Version, string? PreviousVersion, int Layout, Dictionary<string,string[]> Notes, Asset[] Assets, Delta[]? Deltas, string? RuntimeVersion = null, int InstallerProtocol = 1);
@@ -21,15 +21,20 @@ static class Rules
 {
     public static string FeedPath(Config c, bool writing = false)
     {
-        string path = Path.Combine(c.Public, c.Layout == 3 ? c.Capable ? "releases-v2.json" : "releases.json" : c.Capable ? "updates-v3.json" : "updates.json");
+        string path = Path.Combine(c.Public, c.Current ? "releases-v3.json" : c.Layout == 3 ? c.Capable ? "releases-v2.json" : "releases.json" : c.Capable ? "updates-v3.json" : "updates.json");
         // The first capable publication is compare-and-swapped against the
         // legacy feed. It never writes that feed or changes its assets.
-        return writing || File.Exists(path) ? path : Path.Combine(c.Public, c.Layout == 3 ? "releases.json" : "updates.json");
+        return writing || File.Exists(path) ? path : Path.Combine(c.Public, c.Current ? "releases-v2.json" : c.Layout == 3 ? "releases.json" : "updates.json");
     }
     public static Config Capability(Config c)
     {
-        Need(c.Layout is 2 or 3, "Capability feed requires layout 2 or 3");
+        Need(c.Layout is 2 or 3 && !c.Current && !c.Capable, "Capability feed requires an unselected layout 2 or 3 account");
         return c with { State = Path.Combine(c.State, "capable"), Capable = true };
+    }
+    public static Config CurrentChannel(Config c)
+    {
+        Need(c.Layout == 3 && !c.Capable && !c.Current, "Current feed requires the unselected all-in-one account");
+        return c with { State = Path.Combine(c.State, "current"), Capable = true, Current = true };
     }
     public static Delta[] Patches(Feed feed) => (feed.Releases[0].Deltas??[]).Concat(feed.BaselineDeltas??[]).ToArray();
     public const string Domain = "Dustweave-OTA-Publish-v1\n";
@@ -102,6 +107,14 @@ static class Rules
         Need(config.Capable && config.Layout == 2 ? feed.Schema == 4 && feed.Releases[0].InstallerProtocol == 2 : feed.Releases[0].InstallerProtocol == 1, "Incorrect publication index");
         Need(feed.Releases[0].Version==r.Version && feed.Releases.All(v=>DailyVersion.Parse(v.Version)>=DailyVersion.Parse("1.0.0-beta")),"Only public release chain supported");
         var top=feed.Releases[0];
+        if (config.Current)
+        {
+            Need(DailyVersion.Parse(top.Version) >= DailyVersion.Parse("1.7.0"), "Current channel starts at 1.7.0");
+            Need(Patches(feed).All(d => DailyVersion.Parse(d.FromVersion) >= DailyVersion.Parse("1.7.0") && d.Bytes <= 32L*1024*1024), "Current channel must not deliver a large runtime migration");
+            Need(Patches(feed).Sum(d => d.Bytes) <= 512L*1024*1024, "Release patch set exceeds the storage budget; prepare a maintenance transition before publishing");
+        }
+        else if (config.Layout == 3 && config.Capable)
+            Need(DailyVersion.Parse(top.Version) <= DailyVersion.Parse("1.6.10"), "The 1.6 channel is retired; publish full applications to the current channel");
         foreach(var d in Patches(feed))
         {
             int index=Array.FindIndex(feed.Releases,b=>b.Version==d.FromVersion);

@@ -1,5 +1,24 @@
 **1.5.0 onward:** the separate layout-3 channel uses differential OTA only and a temporary copy of the main executable. The block-repair/native-updater rules below apply only to 1.4 and earlier. See [current distribution and acceptance](ALL_IN_ONE_DISTRIBUTION.md).
 
+## 1.7 maintenance lane (2026-11-10)
+
+`dustweave-ota current ...` uses a separate `state/current` directory and
+`releases-v3.json`; `capable` remains the frozen 1.6 lane ending at the small
+1.6.10 notice. Both use the existing constrained publishing account, signatures,
+delta format and transaction. Publish full 1.7.0 packages first; then publish its
+current feed, and only then the old-lane notice. The server rejects the notice
+while its complete target is unavailable. Neither lane writes the other index.
+The notice is `latest=false` on GitHub. Its cloud prefix is
+`v1.6.10-retirement`, keeping previously uploaded withdrawn objects immutable.
+
+Use `publish-update-signed.ps1 -Current` for 1.7+, `-Capable` for the notice.
+The first current publication compares against the still-live 1.6 index, without
+changing it. The periodic mirror service observes all three independent feeds.
+The publisher rejects current-channel patches from pre-1.7 baselines, patches
+above 32 MiB, or a release patch set above 512 MiB. The upload client applies the
+whole-bucket budget and audited cloud retention documented in
+[ALL_IN_ONE_DISTRIBUTION.md](ALL_IN_ONE_DISTRIBUTION.md).
+
 ## AIO health probes and transition timeouts (2026-11-08)
 
 The transition and current AIO channels share immutable per-version routes, but

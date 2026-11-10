@@ -1,4 +1,4 @@
-# Single-file distribution and self-update · 1.5 / 1.6
+# Single-file distribution and self-update · 1.7
 
 The 1.5 distribution contains one executable, `Dustweave.exe`, bundling the host, built-in tools and dependencies. Portable includes the pinned .NET Desktop Runtime; Lite uses the installed runtime. Keep the adjacent `app` directory for data, specifications, documentation and licenses. No independent launcher or updater is distributed.
 
@@ -13,10 +13,24 @@ Accounts, settings, plugins and game assemblies remain outside the distribution.
 - Verified immutable per-file routes remain active through transient health-probe failures. Probes report degraded reachability without diverting downloads. Old clients' `?origin=1` retry also redirects to object storage. An unverified path returns a small, uncached 503 with Retry-After; it cannot expose local files. Clients retain bounded retries and can use manual GitHub/Quark downloads if delivery is unavailable.
 - Before advertising a new 1.5 release, the server verifies all cloud patch bodies against the signed index. Failed preparation preserves the previous index and its download routes. Progress is resumable; a later publication attempt reuses only matching signed checkpoints.
 - For 1.5.0–1.5.16, an exact baseline and edition, unchanged runtime, valid local files and a direct patch of at most 10 MiB are required. These already released clients receive the small 1.5.17 transition before 1.6.0.
-- From 1.6.0, retain the existing signed `dustweave-copy-v2` differential format and self-copy transaction. The 10 MiB policy and ten-release window do not apply to layout 3. Generate direct deltas from every retained 1.6 baseline; runtime bytes may change inside the bundle. Archive bounds, exact baseline hashes, signatures and edition checks remain mandatory. Missing or damaged source files require manual download; full archives are never fetched automatically.
+- The 1.6 channel ends at the small 1.6.10 manual-upgrade notice. Its NativeAOT executable uses the patched runtime/compiler and acknowledges the old-helper transaction only after its window is initialized. It never downloads the full 1.7.0 application. The withdrawn full 1.6.10 candidate never entered OTA and is not a supported baseline.
+- From 1.7.0, retain the signed `dustweave-copy-v2` format and self-copy transaction, using a separate `releases-v3.json` feed. Generate exact direct deltas from retained 1.7 baselines without a ten-version cutoff. Automatic patches are capped at 32 MiB, and each release's patch set at 512 MiB. Oversized or damaged baselines use explicit manual download. Do not publish large runtime replacements automatically. Full archives are never fetched automatically.
 - The initial 1.5.0 index contains package hashes but no patch payloads. Full packages stay on GitHub; the hashes bind future reconstructed targets. Publisher attestation binds the initial package acceptance to this index.
 
 ## Self-update transaction
+
+The whole bucket has a 10,000,000,000-byte budget. Upload preparation checks all
+current objects, verifies versioning is off and includes unfinished multipart
+bytes. It stops before any PUT above an 8,000,000,000-byte working ceiling. Unknown
+accounting also stops upload. This is separate from local artifact retention.
+`OtaMirror prune-plan` and `prune-apply` protect the live signed feeds, frozen
+bridge targets, current plus two rollback targets and a three-day download grace
+period. Only recognized unreferenced patch keys and named historical experiment
+prefixes are eligible; every deletion rechecks the object and writes a receipt.
+Plugins and legacy repair objects remain counted but are not swept by this policy.
+If the full supported baseline set cannot fit, stop publication for a reviewed
+maintenance transition, rather than silently dropping baselines or growing
+downloads. See [the 1.7 transition plan](UPDATE_1_7_PLAN.md).
 
 1. Verify the signed schema-3 index and download the matching delta. Reconstruct and hash-check the target in staging before offering a restart; do not alter the installation.
 2. Wait for idle/restart confirmation while preserving task, storage and single-instance ownership.

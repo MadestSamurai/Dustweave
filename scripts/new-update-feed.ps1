@@ -64,6 +64,7 @@ foreach($flavor in @('Portable','Lite')){
 $deltas=@();$baselineDeltas=@()
 $recent=@($prior|Select-Object -First 10|ForEach-Object Version)
 $supported=@($prior|Where-Object {($_.Version -in $recent -or [semver]$_.Version -ge [semver]'1.4.7') -and ([semver]$Version -lt [semver]'1.6.0' -or [semver]$_.Version -ge [semver]'1.5.17')})
+if([semver]$Version -ge [semver]'1.7.0'){$supported=@($supported|Where-Object {[semver]$_.Version -ge [semver]'1.7.0'})}
 foreach($sidecar in Get-ChildItem -LiteralPath $folder -Filter "Dustweave-$Version-*-win-x64.delta.zip.json" -File){
  $delta=Get-Content -LiteralPath $sidecar.FullName -Raw|ConvertFrom-Json
  $asset=$assets|Where-Object Flavor -eq $delta.Flavor
@@ -77,12 +78,14 @@ foreach($sidecar in Get-ChildItem -LiteralPath $folder -Filter "Dustweave-$Versi
   try{$metadata=$reader.ReadToEnd()|ConvertFrom-Json}finally{$reader.Dispose()}
   if($metadata.Schema -ne 1 -or $metadata.Version -ne $Version -or $metadata.FromVersion -ne $delta.FromVersion -or $metadata.Flavor -ne $delta.Flavor -or $metadata.TargetArchiveSha256 -ne $asset.Sha256){throw 'Delta targets a different full package.'}
  }finally{$zip.Dispose()}
+ if([semver]$Version -ge [semver]'1.7.0' -and ([semver]$delta.FromVersion -lt [semver]'1.7.0' -or $delta.Bytes -gt 32MB)){continue}
  if($info.Layout -eq 3 -and [semver]$Version -ge [semver]'1.6.0' -and [semver]$delta.FromVersion -ge [semver]'1.5.17'){if($delta.FromVersion -in $recent){$deltas+=$delta}else{$baselineDeltas+=$delta}}
  elseif($info.InstallerProtocol -eq 2 -and $delta.Algorithm -eq 'dustweave-copy-v3' -and $delta.Bytes -lt $asset.Bytes -and $delta.FromVersion -in $recent){$deltas+=$delta}
  elseif($delta.Bytes -le 8MB -and $delta.Bytes -lt $asset.Bytes*0.8 -and $delta.FromVersion -in $recent){$deltas+=$delta}
  elseif([semver]$delta.FromVersion -ge [semver]'1.4.7' -and $delta.Bytes -le 10MB){$baselineDeltas+=$delta}
 }
 if($deltas.Count -gt 20 -or @($deltas|Group-Object Flavor,FromVersion|Where-Object Count -gt 1).Count){throw 'Duplicate or excessive delta baselines.'}
+if([semver]$Version -ge [semver]'1.7.0' -and (($deltas+$baselineDeltas|Measure-Object Bytes -Sum).Sum -gt 512MB)){throw 'Patch set exceeds the 512 MiB release budget. Do not upload; prepare a maintenance transition.'}
 
 # A partial local archive selection is not permission to shorten OTA support.
 $deltaReportPath=Join-Path $folder 'delta-report.json'
@@ -91,7 +94,8 @@ foreach($baseline in @($supported|Where-Object {$_.Version -ne '1.3.0' -and $inf
  foreach($flavor in @('Portable','Lite')){
   if(!@($baseline.Assets|Where-Object Flavor -eq $flavor).Count){continue}
   if(@(($deltas+$baselineDeltas)|Where-Object {$_.FromVersion -eq $baseline.Version -and $_.Flavor -eq $flavor}).Count){continue}
-  $exclusion=@($deltaReport|Where-Object {$_.from -eq $baseline.Version -and $_.to -eq $Version -and $_.flavor -eq $flavor -and $_.offered -eq $false -and ($_.reason -eq 'manual_layout' -or $_.deltaBytes -gt $(if([semver]$baseline.Version -ge [semver]'1.4.7'){10MB}else{8MB}) -or ([semver]$baseline.Version -lt [semver]'1.4.7' -and $_.fullBytes -gt 0 -and $_.deltaBytes -ge $_.fullBytes*0.8))})
+  $patchLimit=if([semver]$Version -ge [semver]'1.7.0'){32MB}elseif([semver]$baseline.Version -ge [semver]'1.4.7'){10MB}else{8MB}
+  $exclusion=@($deltaReport|Where-Object {$_.from -eq $baseline.Version -and $_.to -eq $Version -and $_.flavor -eq $flavor -and $_.offered -eq $false -and ($_.reason -eq 'manual_layout' -or $_.deltaBytes -gt $patchLimit -or ([semver]$baseline.Version -lt [semver]'1.4.7' -and $_.fullBytes -gt 0 -and $_.deltaBytes -ge $_.fullBytes*0.8))})
   if(!$exclusion.Count){throw "Missing OTA coverage for $($baseline.Version) $flavor in the supported baseline set. Generate the missing patch or record the verified layout/size limitation."}
  }
 }

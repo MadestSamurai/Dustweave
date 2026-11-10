@@ -1,9 +1,10 @@
 [
 {
-  "Version": "1.6.10",
+  "Version": "1.7.0",
   "Date": "2026-11-10",
   "Notes": {
     "zh-CN": [
+      "1.7.0 是完整维护版本。为避免大体积自动更新，1.6.9 及之前用户请从官方下载入口手动下载；账号、设置和插件继续保留。",
       "修复部分账号因残留恢复记录而无法迁移缓存和沙盒的问题，保留原有登录信息；迁移新增动画及复制、校验、收尾进度。",
       "修复更新后资源设置提醒未显示的问题，普通启动时在自动执行前提醒，可调整开箱、补药和保留血之鸡尾酒邮件。",
       "新增「技能练习」工具，支持砍价及多种地图天赋；显示角色进度和预计耗药，技能名称随游戏语种显示。砍价练习入口已移至工具页。",
@@ -12,6 +13,7 @@
       "Portable 内置运行库已更新至 8.0.33 安全补丁。Lite 保持原有 .NET 8 启动兼容，建议将本机 .NET 8 桌面运行库升级至 8.0.33 或更新版本，以获得安全修复。"
     ],
     "zh-TW": [
+      "1.7.0 是完整維護版本。為避免大容量自動更新，1.6.9 及之前使用者請從官方下載入口手動下載；帳號、設定與外掛繼續保留。",
       "修復部分帳號因殘留復原紀錄而無法遷移快取與沙盒的問題，保留原有登入資訊；遷移新增動畫及複製、驗證、收尾進度。",
       "修復更新後資源設定提醒未顯示的問題，一般啟動時在自動執行前提醒，可調整開箱、補藥與保留血之雞尾酒郵件。",
       "新增「技能練習」工具，支援議價及多種地圖天賦；顯示角色進度和預計耗藥，技能名稱依遊戲語言顯示。議價練習入口已移至工具頁。",
@@ -20,12 +22,28 @@
       "Portable 內建執行階段已更新至 8.0.33 安全修補。Lite 保留原有 .NET 8 啟動相容性，建議將本機 .NET 8 桌面執行階段升級至 8.0.33 或更新版本，以取得安全修補。"
     ],
     "en-US": [
+      "1.7.0 is the complete maintenance release. To avoid a large automatic download, users of 1.6.9 and earlier should download it manually from the official links. Accounts, settings and plugins are preserved.",
       "Fixes cache and sandbox migration being blocked by stale recovery records while preserving saved sign-ins. Migration now shows animation and separate copy, verification and cleanup progress.",
       "Fixes the resource settings reminder missing after updates. On ordinary startup it appears before automatic tasks, with box opening, pill refill and Blood Cocktail mail settings.",
       "Adds Talent practice for bargaining and several field talents, with character progress, estimated pill use and game-language names. Bargain practice has moved to Tools.",
       "Trading settings can now be exported and imported across accounts, including purchases, cooking, sale lists and reserves. Review the changes before importing.",
       "Improves recovery after interrupted bargain practice and adds bounded retries when fishing stalls before the next cast.",
       "Portable now bundles the security-patched 8.0.33 runtime. Lite keeps compatibility with existing .NET 8 installations; update your installed .NET 8 Desktop Runtime to 8.0.33 or a later 8.0 patch for the security fixes."
+    ]
+  }
+},
+{
+  "Version": "1.6.10",
+  "Date": "2026-11-10",
+  "Notes": {
+    "zh-CN": [
+      "此版本仅提供安全升级提醒。旧版本的 .NET 运行库可能受 CVE-2026-111497 影响；请手动下载完整的 1.7.0。不会自动下载大体积安装包，账号和设置保留。"
+    ],
+    "zh-TW": [
+      "此版本僅提供安全升級提醒。舊版本的 .NET 執行階段可能受 CVE-2026-111497 影響；請手動下載完整的 1.7.0。不會自動下載大容量安裝包，帳號與設定保留。"
+    ],
+    "en-US": [
+      "This version only provides a security upgrade notice. Older .NET runtimes may be affected by CVE-2026-111497. Download the complete 1.7.0 release manually; no large installer is downloaded automatically, and accounts and settings are preserved."
     ]
   }
 },

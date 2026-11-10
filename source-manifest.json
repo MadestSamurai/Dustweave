@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-11-10T07:51:56.9524896Z",
+  "generatedUtc": "2026-11-10T11:37:10.0721549+00:00",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -50,7 +50,8 @@
     "tools/OtaMirror/Dustweave.OtaMirror.csproj",
     "tools/RuntimeCheck/Dustweave.RuntimeCheck.csproj",
     "tools/TableExporter/Dustweave.TableExporter.csproj",
-    "tools/TradeData/Dustweave.TradeData.csproj"
+    "tools/TradeData/Dustweave.TradeData.csproj",
+    "tools/RuntimeNotice/Dustweave.RuntimeNotice.csproj"
   ],
   "files": [
     {
@@ -155,7 +156,7 @@
     },
     {
       "path": "assets/updates/trust-aio.json",
-      "sha256": "8b6369b0b2ef93edebb2d475cdc26669f86efebe27d66e0aade18bd9b8169480"
+      "sha256": "b3702183f9ab4fc99a20910c5c9c581e805d4b97a222cbfc95929d3202877071"
     },
     {
       "path": "assets/updates/trust.json",
@@ -163,11 +164,11 @@
     },
     {
       "path": "Directory.Build.props",
-      "sha256": "b1550bb13b75bb870e2c154a46a06e50d91f76516d4c805d113ca32c6f50b123"
+      "sha256": "42314bf4176b9de460cafac68a05c8394c02709684232710fffd17d5904068f9"
     },
     {
       "path": "docs/ALL_IN_ONE_DISTRIBUTION.md",
-      "sha256": "f549f3f0ce471bc00611605431ae5e22fb1d8253b9318202f65dbf34fc7aa166"
+      "sha256": "e78344ef8450196302ad7fb9dc2addadf2db28676e094267124813152c8a170c"
     },
     {
       "path": "docs/COOKING_SALES_UI_GOAL.md",
@@ -175,19 +176,19 @@
     },
     {
       "path": "docs/DEVELOPMENT.md",
-      "sha256": "e46651a460fcb14db62a5202c0569db8a58d591be10b9af821cb1031df102e4e"
+      "sha256": "95e055c7763fa4968a080b3dcc8e23357b04415a06bd25baa16a7a5c9d2329c4"
     },
     {
       "path": "docs/package/README.en.md",
-      "sha256": "475cbd0e7331332fe0e91e14381dc6d7c584523eefbd828908fb36dc602540cb"
+      "sha256": "34ad7ad1af944da213d6339059d83ec7aa2c7ae53df0021e36ff820899c02135"
     },
     {
       "path": "docs/package/README.md",
-      "sha256": "a9aa5c073fd8f4aa66cae1a9c6bb55381cb5c5274b8ab1400ae399c56cdc6a7f"
+      "sha256": "e670bada0e081ff73d7717b4b5fa8a1f363d0ecedab0b4878d0c63edecfce06a"
     },
     {
       "path": "global.json",
-      "sha256": "077645d77207b8c4156e810a4dfee6705f4ad388d65393e4e126567e0fe79a4c"
+      "sha256": "d3edd39d478dde8e98d3ff12fd2a679037347ff33e907b558e5f3aed56e2e370"
     },
     {
       "path": "licenses/bd2-fishing-MIT.txt",
@@ -227,7 +228,7 @@
     },
     {
       "path": "package.ps1",
-      "sha256": "bfaab5300bc1796e1372620dd3c9b16e9f7d58634b35e6f13784b195a5417c50"
+      "sha256": "8b4d17f4513aef0bb115f4853ec381d109afaf4282c90197f9796aac0a3e739e"
     },
     {
       "path": "scripts/build-update-acceptance.ps1",
@@ -235,11 +236,11 @@
     },
     {
       "path": "scripts/new-update-feed.ps1",
-      "sha256": "7797d2efb6a2272124e13ca5bae151aab601271a368473891608c22c196c1fe7"
+      "sha256": "4bc8fa01420e579b78e0d560290f18c59c93672e7ac2b4cff85a539ddaa170a2"
     },
     {
       "path": "scripts/publish-layout.ps1",
-      "sha256": "b3dc4aa9a37f65a85c2e1c3bed2d27d4138c1d46c9e8a0886be5eeaa1331f2a9"
+      "sha256": "27870537ab347e266e96930fb42a601be9a86e8c6dc9ced4060e94509d1f53f1"
     },
     {
       "path": "scripts/runtime-version.ps1",
@@ -655,7 +656,7 @@
     },
     {
       "path": "src/Bootstrap/packages.lock.json",
-      "sha256": "9b91065b1c9bfc9e7782bc89e99846c8af3d1645b976d7f9e202647382f16a40"
+      "sha256": "4fc214e46f8371fef0967c3460903d5bdcf826261d60928a142a05daf8c2a635"
     },
     {
       "path": "src/Bootstrap/Program.cs",
@@ -875,7 +876,7 @@
     },
     {
       "path": "src/Connection/SelfTest.cs",
-      "sha256": "55184710b194f529f277ac43c60c03e940f1077ea6fb5334cc8c3edbf5df79e0"
+      "sha256": "eb747d49f5a851e1ecd125cf46ba46a1d0854f52db3f888f2ea17df3a5d9c8bd"
     },
     {
       "path": "src/Connection/SquareApproach.cs",
@@ -1747,7 +1748,7 @@
     },
     {
       "path": "src/Core/DailyUpdates.cs",
-      "sha256": "b54c16f90164d4be164ceaa60065489c7da48f40d39724da83424be5d805ab7d"
+      "sha256": "7493d12cb41d82fad9122642f12f857ed4fb8153cfb88f7650c1e8c505d7893d"
     },
     {
       "path": "src/Core/DailyUpdateSignatures.cs",
@@ -2111,7 +2112,7 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "b23d9dd6434fc405555a6ddf63cf936e4fb7af6f51164f896ab3279457b4ce31"
+      "sha256": "e56a8157323b1ee87ff570c637005032487ba8fdab4b48415b26f78eff624cee"
     },
     {
       "path": "src/Desktop/Localization/runtime.json",
@@ -2119,7 +2120,7 @@
     },
     {
       "path": "src/Desktop/Localization/strings.json",
-      "sha256": "8bd17464b0fc6384773a0d176204d9d8c8a61cdd115943477657864bb06cf0f2"
+      "sha256": "dfd286c2dd0790ed0cbeaa16a3746553022664b11a0f93b2c601c48c6e044709"
     },
     {
       "path": "src/Desktop/LocalizedTextCatalog.cs",
@@ -2315,7 +2316,7 @@
     },
     {
       "path": "src/Desktop/MainWindow.Support.Smoke.cs",
-      "sha256": "e454ead87371809f16134b31812e85b2bab99978ece46bf3a6e12cf35f87fe48"
+      "sha256": "ba19354349342d437ce125d468485f47348fa48c24ca6bc8bd762ed68fd5de57"
     },
     {
       "path": "src/Desktop/MainWindow.ToolActivitySmoke.cs",
@@ -5215,7 +5216,7 @@
     },
     {
       "path": "src/Updater/packages.lock.json",
-      "sha256": "da2c0c0d70b0f542f12f4c9ceadd988e4aa88e3bbdb70ae93db607846b5554bc"
+      "sha256": "18da07ed1361a693a5e1d3dcf39c4c16ed663daae8c4a3cb9ee2428f71f8a1dc"
     },
     {
       "path": "src/Updater/Program.cs",
@@ -5771,7 +5772,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ToolMenuCases.cs",
-      "sha256": "14bd558c4faf52b688af652154df266c4c490e64fa8d7cc136d265da2bbaae87"
+      "sha256": "ecc4cb76d8e2521209de6b8c85caca5bb1e723fe1c9930d033cd74b9e25fae4b"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ToolPluginCases.cs",
@@ -5843,7 +5844,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/UpdateLayoutCases.cs",
-      "sha256": "77a88b83e1893d7a5c9eccf5188fd8d3e1d6fc0c0ad3586ff8ef187d5e77c175"
+      "sha256": "3f81972b40284c41f4c5af8f995075395dd1d4baa3232e233ce20372339af47b"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/UpdateRepairCases.cs",
@@ -5999,11 +6000,11 @@
     },
     {
       "path": "tools/OtaChannel/Mirror.cs",
-      "sha256": "370498c1bb23162e55cf28d59924a0d68720fb522b3f599f8351293847afb4cd"
+      "sha256": "2690cca54fbf46fdef3dae7fd112bce3df9b929dfdb9f35ab6cd2c09d9c63651"
     },
     {
       "path": "tools/OtaChannel/MirrorNginx.cs",
-      "sha256": "15c8156db0437e31f66c549db2bafa057550868f9b03d5afcb9ff9a8971340db"
+      "sha256": "c977a87956c28acad3adb6f76b6bbd0b7673f857fd084d9d3a7d68a07465f388"
     },
     {
       "path": "tools/OtaChannel/MirrorSelfTest.cs",
@@ -6015,7 +6016,7 @@
     },
     {
       "path": "tools/OtaChannel/Program.cs",
-      "sha256": "40db7da44fdf72ce4afd70ec897cdd7092c88bb32c12689354ce8a9a3a9811a3"
+      "sha256": "8e1d6bd8b7b85e163debcc7e8c6c89d61fcea37ad812b50feb5e6d90b812e4f1"
     },
     {
       "path": "tools/OtaChannel/RepairChannel.cs",
@@ -6027,11 +6028,11 @@
     },
     {
       "path": "tools/OtaChannel/Rules.cs",
-      "sha256": "aec5f4117314836777c5ef9a246e9e8a42697d63e42f0021dde045785a525bfe"
+      "sha256": "00b519168570d841b920aac7add397aa801c6a0b338f15fc8f813af5592a42ae"
     },
     {
       "path": "tools/OtaChannel/SelfTest.cs",
-      "sha256": "7b7d92b7401ace71a11a50803119f01a7919e332d3ede0010bec777a6ec96444"
+      "sha256": "d7ec56867b3e6f3edde2ce24240a067b01ecd7714d3ed30011367852f80db2df"
     },
     {
       "path": "tools/OtaMirror/Dustweave.OtaMirror.csproj",
@@ -6043,7 +6044,7 @@
     },
     {
       "path": "tools/OtaMirror/Program.cs",
-      "sha256": "3ebd3d1c0870ca418714c1936be36b50aec07cce2eefa41434c28c044f549fcd"
+      "sha256": "9884b7514752809027b1109aae15d8855fe053becb0f0c4e86a940875ad76b1e"
     },
     {
       "path": "tools/OtaMirror/RepairBuilder.cs",
@@ -6096,6 +6097,30 @@
     {
       "path": "tools/TradeData/Program.cs",
       "sha256": "7df6eab4215aebd7205073b10abae7e0a5e7b90f8b2546152270556b7d8f6608"
+    },
+    {
+      "sha256": "fea75511ae39023b27c215ce93452cb3b6c7f1cfda161e815fd1461c70105daf",
+      "path": "tools/OtaChannel/CurrentChannelSelfTest.cs"
+    },
+    {
+      "sha256": "dd323c105741484a8da27415192db84edece4fa55fc2e9f0d817b64465261c3b",
+      "path": "tools/OtaMirror/BucketRetention.cs"
+    },
+    {
+      "sha256": "7e294d80750b1a6c5fb46b78d9f7f72c4971f7947917773d8ddaf5e7f64eea7c",
+      "path": "tools/RuntimeNotice/Dustweave.RuntimeNotice.csproj"
+    },
+    {
+      "sha256": "7008ebe8b11b79edd6535a19fcb4cc39c2b2ace6411687b289cfe91a8f886cca",
+      "path": "tools/RuntimeNotice/NoticeTransaction.cs"
+    },
+    {
+      "sha256": "9b91065b1c9bfc9e7782bc89e99846c8af3d1645b976d7f9e202647382f16a40",
+      "path": "tools/RuntimeNotice/packages.lock.json"
+    },
+    {
+      "sha256": "43204ef43d4c9136a24243694854d66b0a2e576e6fc70e1900a763f549cc17cc",
+      "path": "tools/RuntimeNotice/Program.cs"
     }
   ],
   "publicReleaseApproved": false,

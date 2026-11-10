@@ -15,10 +15,12 @@ foreach($project in $projects){
  if($LASTEXITCODE -ne 0){throw "Build failed: $project"}
 }
 # The publishing service is cross-platform and keeps both RID targets in its dependency lock.
-& dotnet restore (Join-Path $PSScriptRoot 'src/Bootstrap') $restoreMode -r win-x64 --nologo
-if($LASTEXITCODE -ne 0){throw 'Bootstrap restore failed.'}
-& dotnet build (Join-Path $PSScriptRoot 'src/Bootstrap') -c Release -r win-x64 --no-restore --nologo
-if($LASTEXITCODE -ne 0){throw 'Bootstrap build failed.'}
+foreach($nativeProject in @('src/Bootstrap','tools/RuntimeNotice')){
+ & dotnet restore (Join-Path $PSScriptRoot $nativeProject) $restoreMode -r win-x64 --nologo
+ if($LASTEXITCODE -ne 0){throw "Native entry restore failed: $nativeProject"}
+ & dotnet build (Join-Path $PSScriptRoot $nativeProject) -c Release -r win-x64 --no-restore --nologo
+ if($LASTEXITCODE -ne 0){throw "Native entry build failed: $nativeProject"}
+}
 $channel=Join-Path $PSScriptRoot 'tools/OtaChannel/Dustweave.OtaChannel.csproj'
 & dotnet restore $channel $restoreMode --nologo
 if($LASTEXITCODE -ne 0){throw 'OTA channel restore failed.'}

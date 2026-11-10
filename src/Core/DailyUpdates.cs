@@ -28,7 +28,8 @@ public static class DailyUpdates
     // The 10 MiB cap is a legacy-client capability, not a limit of differential
     // reconstruction. It does not apply to the bundled transition.
     public static bool DeltaSizeAllowed(DailyUpdateRelease release, DailyUpdateDelta delta) =>
-        delta.Bytes > 0 && delta.Bytes <= (release.Layout == BundledLayout ? MaxArchive : MaxAutomaticDelta);
+        delta.Bytes > 0 && delta.Bytes <= (release.Layout == BundledLayout
+            ? VersionOf(release.Version) >= VersionOf("1.7.0") ? 32L * 1024 * 1024 : MaxArchive : MaxAutomaticDelta);
     public static DailyVersion VersionOf(string value) => DailyVersion.Parse(value);
     public static void Validate(DailyUpdateFeed feed)
     {

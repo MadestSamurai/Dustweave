@@ -50,11 +50,11 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     }
     # Server-only sources are never bundled into the client. Validate their own
     # executable independently instead of rebuilding unchanged game components.
-    $publisherChanges=@($changed|Where-Object {$_ -match '^tools/OtaChannel/[^/]+\.cs$|^scripts/upgrade-update-aio-mirror\.sh$'})
+    $publisherChanges=@($changed|Where-Object {$_ -match '^tools/OtaChannel/[^/]+\.cs$|^scripts/upgrade-update-aio-(mirror|delivery)\.sh$'})
     $changed=@($changed|Where-Object {$_ -notin $metadataOnly -and $_ -notin $publisherChanges})
     $allowed=@(
      '^(AGENTS\.md|CHANGELOG\.md|Directory\.Build\.props|source-manifest\.json|test\.ps1|package\.ps1)$',
-     '^docs/', '^scripts/validation-plan\.ps1$', '^src/Accounts/[^/]+\.cs$',
+     '^PRODUCT\.md$', '^docs/', '^scripts/validation-plan\.ps1$', '^src/Accounts/[^/]+\.cs$',
      '^src/Core/(AccountSessions|DailyCoordinator|DailyLogin[^/]*|DailySandbox[^/]*|DailyParallel[^/]*|DailyAccountIdentity|DailyAccountOrder)\.cs$',
      '^src/Desktop/(DemoEnvironment|MainWindow\.(Accounts|Sandbox|Parallel)(\.Smoke)?|DailyParallelPanel|DailyParallelWorker)\.cs$',
      # Account task presentation is checked by each actual Portable/Lite smoke.
@@ -83,6 +83,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     $updates+='|^README(?:\.en)?\.md$|^src/Core/(DailyUpdates|DailyUpdateTransport|DailyUpdateEngine|DailyFullPackageRepair)\.cs$|^src/Desktop/MainWindow\.Repair\.cs$|^src/Desktop/Localization/(releases|strings)\.json$|^scripts/test-bundled-update\.ps1$|^tests/Dustweave.Tests/Cases/UpdateLayoutCases\.cs$|^tools/OtaChannel/(Mirror|MirrorNginx)\.cs$|^tools/OtaMirror/Program\.cs$'
         $updates+='|^Directory\.Build\.props$|^assets/updates/trust-aio(?:-bridge)?\.json$|^tools/BundleBridge/|^src/Updater/RepairDialog\.cs$|^src/Core/DailyUpdateDeltaPackage\.cs$|^Dustweave\.slnx$|^tools/OtaChannel/CapabilitySelfTest\.cs$'
     $updates+='|^\.github/workflows/release\.yml$'
+    $updates+='|^PRODUCT\.md$|^build\.ps1$|^tools/RuntimeNotice/|^tools/OtaMirror/BucketRetention\.cs$|^tools/OtaChannel/CurrentChannelSelfTest\.cs$|^scripts/(publish-update-mirror|package-runtime-notice|test-runtime-notice|test-current-channel)\.ps1$'
     if($Scope -in @('Auto','Updates') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $updates}).Count){$selectedScope='Updates';$outside=@()}
     # Additional UI-readiness gates and utility plugin handoff affect the daily
     # host boundary, not unchanged minigame strategies. Keep this scope explicit

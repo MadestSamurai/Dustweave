@@ -7,16 +7,19 @@ param(
  [string]$Operation,
  [switch]$Wait,
  [switch]$Capable,
+ [switch]$Current,
  [string]$MirrorConfig,
  [string]$RepairDirectory,
  [string]$PrivateKeyFile=(Join-Path $env:LOCALAPPDATA 'DustweavePublisher/update-signing.dpapi')
 )
 $ErrorActionPreference='Stop'
+if($Current -and $Capable){throw 'Choose exactly one update channel.'}
 $root=Split-Path -Parent $PSScriptRoot
 $settings=Get-Content -LiteralPath $Config -Raw|ConvertFrom-Json
 if($settings.Host -notmatch '^[a-zA-Z0-9.-]+$' -or $settings.User -notin @('dustweave-ota','dustweave-ota-v2','dustweave-ota-aio')){throw 'Invalid constrained publisher endpoint.'}
 function InvokeChannel([string]$command,[byte[]]$header=$null,[object[]]$files=@()){
  if($Capable){$command=$command.Replace('dustweave-ota ','dustweave-ota capable ')}
+ if($Current){$command=$command.Replace('dustweave-ota ','dustweave-ota current ')}
  $info=[Diagnostics.ProcessStartInfo]::new('ssh');$info.UseShellExecute=$false;$info.CreateNoWindow=$true;$info.WindowStyle='Hidden'
  $info.RedirectStandardInput=$true;$info.RedirectStandardOutput=$true;$info.RedirectStandardError=$true;$info.WorkingDirectory=(Get-Location).Path
  foreach($arg in @('-i',$settings.IdentityFile,'-o','BatchMode=yes','-o','IdentitiesOnly=yes','-o','ConnectTimeout=8','-o','ServerAliveInterval=15','-o','ServerAliveCountMax=3',"$($settings.User)@$($settings.Host)",$command)){$info.ArgumentList.Add($arg)}
@@ -103,4 +106,4 @@ WriteJson $Operation @{nonce=$nonce;version=$release.Version;expectedCurrent=$cu
 $paths=@($blobs|ForEach-Object {@{Path=Join-Path $folder $_.FileName}})
 try{$result=InvokeChannel 'dustweave-ota submit' $header $paths;$result|ConvertTo-Json -Depth 20}
 catch{throw "Submission result is uncertain. Query -Action status -Operation '$Operation' before retrying. $($_.Exception.Message)"}
-if($Wait){& $PSCommandPath -Action status -Config $Config -Operation $Operation -Wait -Capable:$Capable}
+if($Wait){& $PSCommandPath -Action status -Config $Config -Operation $Operation -Wait -Capable:$Capable -Current:$Current}

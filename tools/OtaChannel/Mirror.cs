@@ -15,7 +15,7 @@ static class Mirror
 {
     public static string Root(Config c) => Path.Combine(c.Public, ".mirror");
     public static string Enabled(Config c) => Path.Combine(Root(c), "enabled");
-    static string HealthPath(Config c) => Path.Combine(Root(c), c.Layout == 3 && c.Capable ? "health-capable.json" : "health.json");
+    static string HealthPath(Config c) => Path.Combine(Root(c), c.Current ? "health-current.json" : c.Layout == 3 && c.Capable ? "health-capable.json" : "health.json");
     public static HttpClient Client() => new(new HttpClientHandler { UseProxy = false, AllowAutoRedirect = false })
     { Timeout = Timeout.InfiniteTimeSpan };
 
@@ -39,7 +39,7 @@ static class Mirror
     }
     // The unreleased full 1.5.17 candidate already occupied its staging prefix.
     // Keep those immutable objects separate from the final transition release.
-    internal static string ObjectVersion(Config c, string version) => c.Layout == 3 && version == "1.5.17" ? "v1.5.17-transition" : "v" + version;
+    internal static string ObjectVersion(Config c, string version) => c.Layout == 3 && version == "1.5.17" ? "v1.5.17-transition" : c.Layout == 3 && version == "1.6.10" ? "v1.6.10-retirement" : "v" + version;
     static Blob[] Inventory(Feed feed) => Rules.Patches(feed).Select(d => new Blob(d.FileName, d.Bytes, d.Sha256.ToLowerInvariant()))
         .OrderBy(b => b.FileName, StringComparer.Ordinal).ToArray();
     static string Routes(Config c, string version) => Path.Combine(Root(c), "routes", "v" + DailyVersion.Parse(version));
@@ -307,14 +307,16 @@ static class Mirror
     public static async Task<bool> MaintainConfiguredFeeds(Config c, HttpClient client, CancellationToken token = default)
     {
         if (c.Layout != 3 || c.Capable) return await Maintain(c, client, token);
-        var capable = Rules.Capability(c);
-        string path = Rules.FeedPath(capable, writing: true); Rules.NoLinks(path);
-        if (!File.Exists(path)) return await Maintain(c, client, token);
+        var lanes = new List<Config> { c };
+        foreach (var lane in new[] { Rules.Capability(c), Rules.CurrentChannel(c) })
+        {
+            string path = Rules.FeedPath(lane, writing: true); Rules.NoLinks(path);
+            if (!File.Exists(path)) continue;
+            Rules.NoLinks(lane.State); Directory.CreateDirectory(lane.State); lanes.Add(lane);
+        }
         // Separate locks and health records: a busy/failing transition lane must
         // not prevent the current lane from being observed or recovered.
-        Rules.NoLinks(capable.State);
-        Directory.CreateDirectory(capable.State);
-        var results = await Task.WhenAll(Maintain(c, client, token), Maintain(capable, client, token));
+        var results = await Task.WhenAll(lanes.Select(lane => Maintain(lane, client, token)));
         return results.All(ok => ok);
     }
     static async Task<bool> Recover(Config c, byte[] signedFeed, HttpClient client, CancellationToken token)

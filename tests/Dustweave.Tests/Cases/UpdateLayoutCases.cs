@@ -24,6 +24,10 @@ internal static class UpdateLayoutCases
         Check("runtime changes require full manual package", DailyUpdates.ManualUpdateReason(feed,releases[1] with { RuntimeVersion="8.0.31" },installed)=="updates.manual_runtime");
         Check("oversized delta cannot trigger background full download", DailyUpdates.ManualUpdateReason(feed,releases[1] with { Deltas=[releases[1].Deltas![0] with { Bytes=DailyUpdates.MaxAutomaticDelta+1 }] },installed)=="updates.manual_size");
         Check("missing direct base never chains intermediate downloads",DailyUpdates.ManualUpdateReason(feed,releases[1] with { Deltas=[] },installed)=="updates.manual_delta");
+        var currentLine = releases[1] with { Version = "1.7.1", Layout = 3 };
+        Check("maintenance updates accept an exact 32 MiB patch", DailyUpdates.DeltaSizeAllowed(currentLine, releases[1].Deltas![0] with { Bytes = 32L*1024*1024 }));
+        Check("maintenance updates never download oversized runtime patches", !DailyUpdates.DeltaSizeAllowed(currentLine, releases[1].Deltas![0] with { Bytes = 32L*1024*1024+1 }));
+        Check("historic 1.6 capability remains readable", DailyUpdates.DeltaSizeAllowed(currentLine with { Version = "1.6.9" }, releases[1].Deltas![0] with { Bytes = 70L*1024*1024 }));
         var future=Enumerable.Range(7,24).Reverse().Select(i=>new DailyUpdateRelease($"1.4.{i}",i==7?null:$"1.4.{i-1}",2,notes,
             [new("Lite",$"Dustweave-1.4.{i}-Lite-win-x64.zip",24000000,new('a',64))],[],"8.0.30")).ToArray();
         var longPatch=new DailyUpdateDelta("Lite","1.4.7",DailyUpdateDeltaPackage.Name("1.4.30","Lite","1.4.7"),10*1024*1024,new('b',64),DailyUpdateDeltaPackage.Algorithm);

@@ -13,6 +13,7 @@ static class SelfTest
         var folder=Path.Combine(repo?.FullName??Environment.CurrentDirectory,"artifacts/ota-channel-tests",Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(folder);using var signer=ECDsa.Create(ECCurve.NamedCurves.nistP256);
         var keys=new Dictionary<string,string>{{"test",Convert.ToBase64String(signer.ExportSubjectPublicKeyInfo())}};
+        CurrentChannelSelfTest.Run(folder, keys, signer);
         var checks=new List<string>();
         void Pass(string name,bool ok=true) { Rules.Need(ok,"Test failed: "+name);checks.Add(name); }
         void Reject(string name,Action action) { try { action(); }catch { checks.Add(name);return; }throw new Exception("Not rejected: "+name); }
