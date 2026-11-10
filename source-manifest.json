@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-11-10T03:39:18.8695953Z",
+  "generatedUtc": "2026-11-10T07:49:40.4592589Z",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -158,8 +158,32 @@
       "sha256": "18124c14cf0d73fd1894d84b9026ef3832b025c041e59978cdb61b34c3730536"
     },
     {
+      "sha256": "465ae330ebfa4806a4772160fd10b1fcc7610a3fde83cf1746f028801f12a86b",
+      "path": "Directory.Build.props"
+    },
+    {
+      "sha256": "f549f3f0ce471bc00611605431ae5e22fb1d8253b9318202f65dbf34fc7aa166",
+      "path": "docs/ALL_IN_ONE_DISTRIBUTION.md"
+    },
+    {
       "path": "docs/COOKING_SALES_UI_GOAL.md",
       "sha256": "d8208b4c6b9f7c6b6d0ea7f81960ed2f96f171211c34db56affbd6826496922e"
+    },
+    {
+      "sha256": "7b044cc3df7faa4b676434156dc44acc96a12f339c098552bb7f9accd8ef4f24",
+      "path": "docs/DEVELOPMENT.md"
+    },
+    {
+      "sha256": "475cbd0e7331332fe0e91e14381dc6d7c584523eefbd828908fb36dc602540cb",
+      "path": "docs/package/README.en.md"
+    },
+    {
+      "sha256": "a9aa5c073fd8f4aa66cae1a9c6bb55381cb5c5274b8ab1400ae399c56cdc6a7f",
+      "path": "docs/package/README.md"
+    },
+    {
+      "sha256": "d3edd39d478dde8e98d3ff12fd2a679037347ff33e907b558e5f3aed56e2e370",
+      "path": "global.json"
     },
     {
       "path": "licenses/bd2-fishing-MIT.txt",
@@ -196,6 +220,26 @@
     {
       "path": "licenses/SharpMonoInjector-MIT.txt",
       "sha256": "c067c64898a4fdb13ffe0bf9cd20fb006246080f3bf4ac0581466b88410ef9c9"
+    },
+    {
+      "sha256": "bfaab5300bc1796e1372620dd3c9b16e9f7d58634b35e6f13784b195a5417c50",
+      "path": "package.ps1"
+    },
+    {
+      "sha256": "4535e9e8648b2b6e6b5194d2a0ed5b1c36f6038a385cdd8a89f6a2d705e51b8c",
+      "path": "scripts/build-update-acceptance.ps1"
+    },
+    {
+      "sha256": "7797d2efb6a2272124e13ca5bae151aab601271a368473891608c22c196c1fe7",
+      "path": "scripts/new-update-feed.ps1"
+    },
+    {
+      "sha256": "b3dc4aa9a37f65a85c2e1c3bed2d27d4138c1d46c9e8a0886be5eeaa1331f2a9",
+      "path": "scripts/publish-layout.ps1"
+    },
+    {
+      "sha256": "52486807208d020a0e4a55599468640e8e92e182b4588d3ff1a9b71fdcca348a",
+      "path": "scripts/runtime-version.ps1"
     },
     {
       "path": "scripts/test-sandbox-resource-view.ps1",
@@ -607,7 +651,7 @@
     },
     {
       "path": "src/Bootstrap/packages.lock.json",
-      "sha256": "d23a193aafd476738f9d66233c04073edb166d03a08e52c119bfcba075c21437"
+      "sha256": "4fc214e46f8371fef0967c3460903d5bdcf826261d60928a142a05daf8c2a635"
     },
     {
       "path": "src/Bootstrap/Program.cs",
@@ -2311,7 +2355,7 @@
     },
     {
       "path": "src/Desktop/packages.lock.json",
-      "sha256": "271d1eef984a30ebcbf0545099dbe65053205aeb836165c1b8233b54e378981d"
+      "sha256": "017cdee73dfb85d898d85223a449bb249172e0f6b092d0305b4f532ee2244b24"
     },
     {
       "path": "src/Desktop/PageTour.cs",
@@ -2335,7 +2379,7 @@
     },
     {
       "path": "src/Desktop/Program.cs",
-      "sha256": "1df6b39b9b6fe84f538a7591f650ca05efa5f992474f2254d2918190807cba17"
+      "sha256": "c86820728de6d6e418e0bf068197066bd842a3e6ffe790fcc6f1a736dbc492e7"
     },
     {
       "path": "src/Desktop/ProgressRingConverter.cs",
@@ -2559,7 +2603,7 @@
     },
     {
       "path": "src/Equipment/desktop/packages.lock.json",
-      "sha256": "db938f3cce1f8b2da174f278edc195bcb48cfe6b0eb1d6827a111cc1024efd4d"
+      "sha256": "b722fe64897ac2fb367133c58d376a4e279a60dc29e8701a86fe71b37ce3fee3"
     },
     {
       "path": "src/Equipment/desktop/WorkerClient.cs",
@@ -5151,7 +5195,7 @@
     },
     {
       "path": "src/Updater/packages.lock.json",
-      "sha256": "c5e179208d182f0eca4b9ad552c6ca9cbd5a10f87adfe804cfcffb6822be8f47"
+      "sha256": "18da07ed1361a693a5e1d3dcf39c4c16ed663daae8c4a3cb9ee2428f71f8a1dc"
     },
     {
       "path": "src/Updater/Program.cs",
@@ -5939,7 +5983,7 @@
     },
     {
       "path": "tools/OtaChannel/packages.lock.json",
-      "sha256": "ed8f82b022fa986f4565a5da3fbfb20e3ab950d78ccc214ca80b6fd648adf376"
+      "sha256": "bc049e53579a8bf624e5a494f7747e95d4b3aa2665a755eab5d86474b35623b4"
     },
     {
       "path": "tools/OtaChannel/Program.cs",

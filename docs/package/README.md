@@ -7,7 +7,7 @@
 | 版本 | 如何选择 |
 | --- | --- |
 | Portable | 包含 .NET 桌面运行库，解压后直接运行 |
-| Lite | 体积较小，需要已安装 .NET Desktop Runtime 8 x64 |
+| Lite | 体积较小，需要已安装 .NET Desktop Runtime 8.0.33 或更新的 8.0 x64 补丁版 |
 
 ## 开始使用
 

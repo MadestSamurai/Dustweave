@@ -52,7 +52,7 @@ foreach($flavor in @('Portable','Lite')){
   $reader=[IO.StreamReader]::new($metadata.Open())
   try{$info=$reader.ReadToEnd()|ConvertFrom-Json}finally{$reader.Dispose()}
   $runtimeValue=$null
-  if($info.Layout -notin @(2,3) -or ![Version]::TryParse([string]$info.RuntimeVersion,[ref]$runtimeValue) -or ($info.InstallerProtocol -ne 2 -and $info.RuntimeVersion -ne '8.0.30') -or $info.Version -ne $Version -or $info.Flavor -ne $flavor){throw "Package descriptor mismatch: $name"}
+  if($info.Layout -notin @(2,3) -or ![Version]::TryParse([string]$info.RuntimeVersion,[ref]$runtimeValue) -or ($info.Layout -eq 2 -and $info.InstallerProtocol -ne 2 -and $info.RuntimeVersion -ne '8.0.30') -or $info.Version -ne $Version -or $info.Flavor -ne $flavor){throw "Package descriptor mismatch: $name"}
   if($runtime -and $runtime -ne $info.RuntimeVersion){throw 'Package editions have different runtime versions.'}
   $members=@($archive.Entries|Where-Object {!$_.FullName.EndsWith('/')}|ForEach-Object FullName|Sort-Object)
   if(!$info.Files -or (Compare-Object $members @($info.Files|Sort-Object))){throw 'Package inventory must match the ZIP exactly.'}

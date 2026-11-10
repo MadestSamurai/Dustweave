@@ -25,7 +25,7 @@ foreach($flavor in @('Lite','Portable')){
  }
  Complete-DustweaveLayout -Root $repo -Destination $folder
  $inventory=@(Get-ChildItem -LiteralPath $folder -File -Recurse|ForEach-Object {[IO.Path]::GetRelativePath($folder,$_.FullName).Replace([IO.Path]::DirectorySeparatorChar,[char]47)})+@('update-package.json')
- [ordered]@{Version=$Version;Flavor=$flavor;Layout=$(if([Version]($Version.Split('-')[0]) -ge [Version]'1.5.0'){3}else{2});InstallerProtocol=$(if([Version]($Version.Split('-')[0]) -ge [Version]'1.5.0'){1}elseif($Version -eq '1.4.15-bridge.1'){1}else{2});RuntimeVersion='8.0.30';BootstrapFiles=(Get-Content -LiteralPath (Join-Path $folder 'app/package-components.json') -Raw|ConvertFrom-Json).bootstrapFiles;Files=@($inventory|Sort-Object -Unique)}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $folder 'update-package.json') -Encoding utf8
+ [ordered]@{Version=$Version;Flavor=$flavor;Layout=$(if([Version]($Version.Split('-')[0]) -ge [Version]'1.5.0'){3}else{2});InstallerProtocol=$(if([Version]($Version.Split('-')[0]) -ge [Version]'1.5.0'){1}elseif($Version -eq '1.4.15-bridge.1'){1}else{2});RuntimeVersion=(Get-DustweaveRuntimeVersion -Root $repo);BootstrapFiles=(Get-Content -LiteralPath (Join-Path $folder 'app/package-components.json') -Raw|ConvertFrom-Json).bootstrapFiles;Files=@($inventory|Sort-Object -Unique)}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $folder 'update-package.json') -Encoding utf8
  [IO.Compression.ZipFile]::CreateFromDirectory($folder,(Join-Path $output ("Dustweave-$Version-$flavor-win-x64.zip")),[IO.Compression.CompressionLevel]::Optimal,$false)
 }
 # Signed acceptance feed is prepared by the caller with its explicit baseline.

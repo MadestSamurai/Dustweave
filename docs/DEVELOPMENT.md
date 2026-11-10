@@ -448,3 +448,11 @@ Affected synthetic groups are `Soul,ToolMenu`. `--tool soul --check-client <Mana
 ### Optional refill observations
 
 Fixed Talent Pill checks read the current balance before navigation or purchase. If the scoped balance is missing or invalid, request one fresh observation, then record a visible skipped refill and continue independent tasks. A missing balance is never zero and never authorizes buying. Account changes, cancellation, observer transport errors and uncertain purchases retain their existing boundaries. ManagedBootstrap covers both checkpoints, repeated missing/invalid/restored observations and actual daily continuation.
+
+### Runtime servicing review — CVE-2026-111497
+
+The SDK/compiler-only PR left the actual Portable publish at 8.0.30 and the new SDK fails locked restores of Desktop, Equipment and OtaChannel. Pin all five linker/compiler lockfiles to 8.0.33. `scripts/runtime-version.ps1` supplies the authoritative runtime value from Directory.Build.props to publishing, the legacy apphost template and both package descriptors. Modern bundled feeds accept runtime updates; legacy layout-2 bootstrap compatibility remains unchanged.
+
+The real packaged `--package-runtime-check` runs before account/game initialization. It reads CLR/core/Brotli/WPF informational versions and packaging validates them. Portable must match the pin exactly. Lite requires at least the patched 8.0 runtime and now declares that minimum instead of accepting 8.0.0. Update the installed Desktop Runtime before deploying this Lite build to such a machine; published historical packages are not altered.
+
+Windows verification: full locked build; Portable and Lite published through Publish-DustweaveLayout; both reported CLR/core/Brotli 8.0.33 and WPF 8.0.33-servicing.26522.21. A wrong expected Portable version was rejected. Lite refused the installed unpatched 8.0.5 runtime and ran with isolated 8.0.33. No game access, account changes or production deployment occurred. Source dependency upgrades alone do not establish shipped-binary remediation.

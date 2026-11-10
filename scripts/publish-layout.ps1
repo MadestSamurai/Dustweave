@@ -1,4 +1,5 @@
 $ErrorActionPreference='Stop'
+. (Join-Path $PSScriptRoot 'runtime-version.ps1')
 $script:DustweaveNativeEntries=@{}
 function Complete-DustweaveLayout {
  param([string]$Root,[string]$Destination)
@@ -37,7 +38,8 @@ function Complete-DustweaveLayout {
  $dotnetRoot=Split-Path -Parent (Get-Command dotnet).Source
  Add-Type -Path (Join-Path $dotnetRoot "sdk/$sdkVersion/Microsoft.NET.HostModel.dll")
  $assets=Get-Content -LiteralPath (Join-Path $Root 'src/Launcher/obj/project.assets.json') -Raw|ConvertFrom-Json
- $templates=@($assets.packageFolders.PSObject.Properties.Name | ForEach-Object {Join-Path $_ 'microsoft.netcore.app.host.win-x64/8.0.30/runtimes/win-x64/native/apphost.exe'} | Where-Object {Test-Path -LiteralPath $_})
+ $runtime=Get-DustweaveRuntimeVersion -Root $Root
+ $templates=@($assets.packageFolders.PSObject.Properties.Name | ForEach-Object {Join-Path $_ "microsoft.netcore.app.host.win-x64/$runtime/runtimes/win-x64/native/apphost.exe"} | Where-Object {Test-Path -LiteralPath $_})
  if($templates.Count -ne 1){throw 'Pinned .NET apphost template is unavailable.'}
  [Microsoft.NET.HostModel.AppHost.HostWriter]::CreateAppHost($templates[0],(Join-Path $destinationRoot 'Dustweave.exe'),'app/Dustweave.Launcher.dll',$true,(Join-Path $app 'Dustweave.Launcher.dll'),$false,$false,$null)
  }
@@ -66,9 +68,10 @@ function Complete-DustweaveLayout {
 function Publish-DustweaveLayout {
  param([string]$Root,[string]$Work,[string]$Destination,[string]$Version,[ValidateSet('Lite','Portable')][string]$Flavor)
  $self=if($Flavor -eq 'Portable'){'true'}else{'false'}
- $runtime='8.0.30'
+ $runtime=Get-DustweaveRuntimeVersion -Root $Root
  $bridge=$Version -eq '1.4.15-bridge.1'
- $framework=if($Flavor -eq 'Portable'){$runtime}else{'8.0.0'}
+ # Lite must also require a patched runtime; never silently accept any 8.0 patch.
+ $framework=$runtime
  $catalog=Join-Path $Work ('resources-'+$Flavor)
  [IO.Directory]::CreateDirectory($catalog)|Out-Null
  $common=@('-c','Release','-r','win-x64','--self-contained',$self,('-p:SelfContained='+$self),('-p:PublishSelfContained='+$self),'-p:DebugType=None','-p:DebugSymbols=false','-p:IncludeSourceRevisionInInformationalVersion=false',('-p:RuntimeFrameworkVersion='+$framework),('-p:CustomAfterMicrosoftCommonTargets='+ (Join-Path $Root 'Package.Build.targets')),('-p:DustweavePackageLockRoot='+ (Join-Path $Work ('locks/'+$Flavor))),'--nologo')
@@ -86,6 +89,7 @@ function Publish-DustweaveLayout {
   $destinationRoot=[IO.Path]::GetFullPath($Destination).TrimEnd('\')
   if(!$destinationRoot.StartsWith((Join-Path ([IO.Path]::GetFullPath($Root)) 'artifacts')+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'Bundle output must remain under repository artifacts.'}
   Publish-Project 'src/Desktop/Dustweave.Desktop.csproj' $Destination @('-p:PublishSingleFile=true','-p:IncludeNativeLibrariesForSelfExtract=true',('-p:EnableCompressionInSingleFile='+$self),'-p:PublishTrimmed=false','-p:DustweaveSharedResources=false',('-p:DustweavePackageFlavor='+$Flavor),'-p:DustweaveSelfUpdate=true',('-p:DustweaveVersion='+$Version)) 'application'
+  Assert-DustweavePublishedRuntime -Application (Join-Path $Destination 'Dustweave.exe') -Evidence (Join-Path $Work ($Flavor+'-runtime.json')) -Runtime $runtime -Flavor $Flavor
   # Embedded tools re-enter Dustweave.exe; their old apphost settings are not
   # consumed. Only files emitted by this publish under the checked output move.
   foreach($file in Get-ChildItem -LiteralPath $destinationRoot -File){

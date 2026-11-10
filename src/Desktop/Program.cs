@@ -13,6 +13,18 @@ public static class Program
             or "--view-account" or "--inspect-account" or "--resume-account" or "--run-selected" or "--scheduled" or "--updated" or "--repair";
         try
         {
+            if (args.Length == 2 && args[0] == "--package-runtime-check")
+            {
+                // Build-time evidence from the actual bundle, before accounts, recovery or game access.
+                string VersionOf(Assembly assembly) => assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "";
+                DailyJson.Write(Path.GetFullPath(args[1]), new {
+                    runtime = Environment.Version.ToString(),
+                    core = VersionOf(typeof(object).Assembly),
+                    compression = VersionOf(typeof(System.IO.Compression.BrotliStream).Assembly),
+                    desktop = VersionOf(typeof(System.Windows.Window).Assembly)
+                });
+                return 0;
+            }
             // A tool child must not acquire the main-window lock, recover updates,
             // discover account stores or initialize the live game suite.
             if (args.Length >= 3 && args[0] == "--tool-plugin") return ManagedToolPlugin.Run(args.Skip(1).ToArray());

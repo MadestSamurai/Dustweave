@@ -2,6 +2,8 @@
 
 The 1.5 distribution contains one executable, `Dustweave.exe`, bundling the host, built-in tools and dependencies. Portable includes the pinned .NET Desktop Runtime; Lite uses the installed runtime. Keep the adjacent `app` directory for data, specifications, documentation and licenses. No independent launcher or updater is distributed.
 
+Runtime security servicing: `Directory.Build.props` is the authoritative runtime pin. The publish script, apphost template, production descriptor and acceptance descriptor all read that pin; Lite requires the patched version too. A packaged `--package-runtime-check` probe reports the actual CLR, core library, Brotli assembly and WPF versions before any account/game initialization. Packaging rejects a Portable mismatch or a Lite version below the pin. Update SDK/compiler/linker locks together and run locked restore for the complete graph, not only Bootstrap and Updater. Historical 1.4 bootstrap bytes and fixtures remain immutable. A Lite installation with an older system runtime needs its desktop runtime updated before this release; do not present a runtime-less Lite as self-contained.
+
 Accounts, settings, plugins and game assemblies remain outside the distribution. Maintenance protects the active native extraction generation.
 
 ## Download policy
