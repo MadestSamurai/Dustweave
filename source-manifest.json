@@ -875,7 +875,7 @@
     },
     {
       "path": "src/Connection/SelfTest.cs",
-      "sha256": "d8443af71f21ec15eebabac9a11a2d114505b00ed0924fe1a7dbacfd387804a6"
+      "sha256": "55184710b194f529f277ac43c60c03e940f1077ea6fb5334cc8c3edbf5df79e0"
     },
     {
       "path": "src/Connection/SquareApproach.cs",

@@ -459,8 +459,8 @@ static class SelfTest {
    c.Value=18;Check(LivePolicy.Gate(c,f,now,false)!="","reject unrelated talent");
    c.Value=13;f.BridgeVersion=128;Check(LivePolicy.Gate(c,f,now,false)!="","old component rejects walking-speed menu");
    f.BridgeVersion=129;Check(LivePolicy.Gate(c,f,now,false)=="","current component opens MoveSpeedUp rather than FastDash");
-   foreach(var talent in new[]{2,3,4,6,13,15,17,20})Check(LiveProtocol.FieldTalentClass(talent),"menu and native execution share supported field talent classes");
-   foreach(var talent in new[]{0,1,5,12,14,18,99})Check(!LiveProtocol.FieldTalentClass(talent),"unrelated field talents remain excluded");
+   foreach(var talent in new[]{2,3,4,6,12,13,15,17,20})Check(LiveProtocol.FieldTalentClass(talent),"menu, talent practice and native execution share supported field talent classes");
+   foreach(var talent in new[]{0,1,5,14,18,99})Check(!LiveProtocol.FieldTalentClass(talent),"unrelated field talents remain excluded");
   }
   {
    var c=Command();c.Kind="mainline_talent";c.TargetId=0;c.Value=123;var f=Frame();f.BridgeVersion=21;f.Surfaces[0].Type="QuickMenuUI";

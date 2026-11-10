@@ -109,6 +109,9 @@ if($SyntheticEvidence){
  $artifactRechecks+=@($changed|Where-Object {$_ -in @('src/Desktop/MainWindow.xaml.cs','src/Desktop/MainWindow.Updates.Smoke.cs','src/Desktop/Localization/runtime.json','src/Desktop/Localization/notices.json')})
  # These executable probes run from each newly published host below.
  $artifactRechecks+=@($changed|Where-Object {$_ -in @('src/Desktop/HostedToolLocaleProbe.cs','src/Desktop/SuiteHostProbe.cs','src/Desktop/MainWindow.DynamicLocalization.cs')})
+ # The connection self-test is not compiled into Dustweave.Tests. Run it from
+ # each actual published executable below, including after test-only corrections.
+ $artifactRechecks+=@($changed|Where-Object {$_ -eq 'src/Connection/SelfTest.cs'})
  # UI strings are not compiled into the synthetic runner. Re-run their source
  # readers and tool contracts, then exercise the real localized host per flavor.
  $uiStringsChanged='src/Desktop/Localization/strings.json' -in $changed
