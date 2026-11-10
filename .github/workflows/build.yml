@@ -30,6 +30,7 @@ jobs:
       - name: Verify isolated OTA publishing channel
         shell: pwsh
         run: |
+          ./scripts/test-publish-channel-selection.ps1
           dotnet restore tools/OtaChannel/Dustweave.OtaChannel.csproj --locked-mode
           if($LASTEXITCODE -ne 0){throw 'OTA channel restore failed'}
           dotnet run --project tools/OtaChannel/Dustweave.OtaChannel.csproj -c Release --no-restore -- self-test

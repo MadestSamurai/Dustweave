@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-11-10T11:37:10.0721549+00:00",
+  "generatedUtc": "2026-11-10T12:05:17.8134081+00:00",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -54,6 +54,10 @@
     "tools/RuntimeNotice/Dustweave.RuntimeNotice.csproj"
   ],
   "files": [
+    {
+      "sha256": "a921690c5349981e42f8e6b5b8e708d305b84d1df888f526d05472a41da45154",
+      "path": ".github/workflows/build.yml"
+    },
     {
       "path": "assets/branding/Dustweave.ico",
       "sha256": "e22f6d3efd7e58d098c1746ce72ce5bad62623388289b81938b74d5f585f68fe"
@@ -243,8 +247,16 @@
       "sha256": "27870537ab347e266e96930fb42a601be9a86e8c6dc9ced4060e94509d1f53f1"
     },
     {
+      "sha256": "528343ed7499903d8ad908a272b14e74db11549fbc8868c5a97bba3473a62bf4",
+      "path": "scripts/publish-update-signed.ps1"
+    },
+    {
       "path": "scripts/runtime-version.ps1",
       "sha256": "52486807208d020a0e4a55599468640e8e92e182b4588d3ff1a9b71fdcca348a"
+    },
+    {
+      "sha256": "74c07b9264683dcb215318a4886220b6cf4bdb8ef8977b62cdd341ab594bb372",
+      "path": "scripts/test-publish-channel-selection.ps1"
     },
     {
       "path": "scripts/test-sandbox-resource-view.ps1",
@@ -5995,6 +6007,10 @@
       "sha256": "d4a9b71c03796f55660bada251ef6a086726c9539fb5649d6c5655a1c28a0f67"
     },
     {
+      "sha256": "fea75511ae39023b27c215ce93452cb3b6c7f1cfda161e815fd1461c70105daf",
+      "path": "tools/OtaChannel/CurrentChannelSelfTest.cs"
+    },
+    {
       "path": "tools/OtaChannel/Dustweave.OtaChannel.csproj",
       "sha256": "537a107c0baafa826bcb8cc48f1fbbf5b8a5105d7523caf17bc91076ed8e2b3b"
     },
@@ -6035,6 +6051,10 @@
       "sha256": "d7ec56867b3e6f3edde2ce24240a067b01ecd7714d3ed30011367852f80db2df"
     },
     {
+      "sha256": "dd323c105741484a8da27415192db84edece4fa55fc2e9f0d817b64465261c3b",
+      "path": "tools/OtaMirror/BucketRetention.cs"
+    },
+    {
       "path": "tools/OtaMirror/Dustweave.OtaMirror.csproj",
       "sha256": "41a839539c94dd3792c341a2be03bc2716bfc9e87398002b95adf74f4fe909c3"
     },
@@ -6067,6 +6087,22 @@
       "sha256": "8a8617aaeb378c5741fd549af4538d53a478dbeb4b867bed9511e0af8a663b72"
     },
     {
+      "sha256": "7e294d80750b1a6c5fb46b78d9f7f72c4971f7947917773d8ddaf5e7f64eea7c",
+      "path": "tools/RuntimeNotice/Dustweave.RuntimeNotice.csproj"
+    },
+    {
+      "sha256": "7008ebe8b11b79edd6535a19fcb4cc39c2b2ace6411687b289cfe91a8f886cca",
+      "path": "tools/RuntimeNotice/NoticeTransaction.cs"
+    },
+    {
+      "sha256": "9b91065b1c9bfc9e7782bc89e99846c8af3d1645b976d7f9e202647382f16a40",
+      "path": "tools/RuntimeNotice/packages.lock.json"
+    },
+    {
+      "sha256": "43204ef43d4c9136a24243694854d66b0a2e576e6fc70e1900a763f549cc17cc",
+      "path": "tools/RuntimeNotice/Program.cs"
+    },
+    {
       "path": "tools/TableExporter/Dustweave.TableExporter.csproj",
       "sha256": "636e3a2050547c0ff26bd75cdfc83bee204b0011429d77c1adc783d1a0b8c436"
     },
@@ -6097,30 +6133,6 @@
     {
       "path": "tools/TradeData/Program.cs",
       "sha256": "7df6eab4215aebd7205073b10abae7e0a5e7b90f8b2546152270556b7d8f6608"
-    },
-    {
-      "sha256": "fea75511ae39023b27c215ce93452cb3b6c7f1cfda161e815fd1461c70105daf",
-      "path": "tools/OtaChannel/CurrentChannelSelfTest.cs"
-    },
-    {
-      "sha256": "dd323c105741484a8da27415192db84edece4fa55fc2e9f0d817b64465261c3b",
-      "path": "tools/OtaMirror/BucketRetention.cs"
-    },
-    {
-      "sha256": "7e294d80750b1a6c5fb46b78d9f7f72c4971f7947917773d8ddaf5e7f64eea7c",
-      "path": "tools/RuntimeNotice/Dustweave.RuntimeNotice.csproj"
-    },
-    {
-      "sha256": "7008ebe8b11b79edd6535a19fcb4cc39c2b2ace6411687b289cfe91a8f886cca",
-      "path": "tools/RuntimeNotice/NoticeTransaction.cs"
-    },
-    {
-      "sha256": "9b91065b1c9bfc9e7782bc89e99846c8af3d1645b976d7f9e202647382f16a40",
-      "path": "tools/RuntimeNotice/packages.lock.json"
-    },
-    {
-      "sha256": "43204ef43d4c9136a24243694854d66b0a2e576e6fc70e1900a763f549cc17cc",
-      "path": "tools/RuntimeNotice/Program.cs"
     }
   ],
   "publicReleaseApproved": false,

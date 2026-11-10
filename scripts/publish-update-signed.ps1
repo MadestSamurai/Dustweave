@@ -53,8 +53,8 @@ if($Action -eq 'status'){
 }
 if(!$PackageDirectory -or !$Evidence -or !$Operation -or !$ExpectedCurrent){throw 'Submit requires packages, packaged acceptance evidence, expected current version and a new operation file.'}
 if(Test-Path -LiteralPath $Operation){throw 'Operation exists. Query its status; never blindly resubmit.'}
-$current=InvokeChannel 'dustweave-ota status'
-if($current.version -ne $ExpectedCurrent){throw "Current OTA is $($current.version), not $ExpectedCurrent"}
+$channelStatus=InvokeChannel 'dustweave-ota status'
+if($channelStatus.version -ne $ExpectedCurrent){throw "Current OTA is $($channelStatus.version), not $ExpectedCurrent"}
 $folder=[IO.Path]::GetFullPath($PackageDirectory)
 # This also verifies the signed feed and every immutable archive before opening an upload.
 & (Join-Path $PSScriptRoot 'prepare-update-site.ps1') -PackageDirectory $folder -VerifyOnly
@@ -62,9 +62,9 @@ $feedBytes=[IO.File]::ReadAllBytes((Join-Path $folder 'updates.json'))
 $feedEnvelope=[Text.Encoding]::UTF8.GetString($feedBytes)|ConvertFrom-Json
 $feed=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($feedEnvelope.Payload))|ConvertFrom-Json
 $release=$feed.Releases[0]
-if($current.layout -ne $release.Layout){throw 'Publishing endpoint is not configured for this package layout. Configure the v2 lane first; the old feed must remain unchanged.'}
+if($channelStatus.layout -ne $release.Layout){throw 'Publishing endpoint is not configured for this package layout. Configure the v2 lane first; the old feed must remain unchanged.'}
 if(($release.Layout -eq 2) -ne ($settings.User -eq 'dustweave-ota-v2') -or ($release.Layout -eq 3) -ne ($settings.User -eq 'dustweave-ota-aio')){throw 'Package layout and dedicated publishing account differ.'}
-if([semver]$release.Version -le [semver]$current.version){throw 'Release must advance.'}
+if([semver]$release.Version -le [semver]$channelStatus.version){throw 'Release must advance.'}
 $evidenceBytes=[IO.File]::ReadAllBytes([IO.Path]::GetFullPath($Evidence))
 $proof=[Text.Encoding]::UTF8.GetString($evidenceBytes)|ConvertFrom-Json
 if($proof.status -ne 'passed'){throw 'Packaged acceptance must pass.'}
@@ -89,7 +89,7 @@ if($MirrorConfig){
  }
 }
 $nonce=[Guid]::NewGuid().ToString('N');$now=[DateTimeOffset]::UtcNow
-$request=[ordered]@{Schema=1;Product='Dustweave';Version=$release.Version;ExpectedFeedSha256=$current.feedSha256;FeedSha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($feedBytes)).ToLowerInvariant();EvidenceSha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($evidenceBytes)).ToLowerInvariant();Nonce=$nonce;IssuedUtc=$now.ToString('O');ExpiresUtc=$now.AddMinutes(15).ToString('O');Files=$blobs}
+$request=[ordered]@{Schema=1;Product='Dustweave';Version=$release.Version;ExpectedFeedSha256=$channelStatus.feedSha256;FeedSha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($feedBytes)).ToLowerInvariant();EvidenceSha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($evidenceBytes)).ToLowerInvariant();Nonce=$nonce;IssuedUtc=$now.ToString('O');ExpiresUtc=$now.AddMinutes(15).ToString('O');Files=$blobs}
 $payload=[Text.Encoding]::UTF8.GetBytes(($request|ConvertTo-Json -Depth 10 -Compress));$key=[Security.Cryptography.ECDsa]::Create()
 try {
  $raw=[Security.Cryptography.ProtectedData]::Unprotect([IO.File]::ReadAllBytes([IO.Path]::GetFullPath($PrivateKeyFile)),$null,[Security.Cryptography.DataProtectionScope]::CurrentUser)
@@ -102,7 +102,7 @@ try {
  $envelope=[ordered]@{Schema=1;KeyId=$keyIds[0];Algorithm='ECDSA-P256-SHA256';Payload=[Convert]::ToBase64String($payload);Signature=[Convert]::ToBase64String($signature)}
 }finally{$key.Dispose()}
 $header=[Text.Encoding]::UTF8.GetBytes((@{Request=$envelope;Feed=[Convert]::ToBase64String($feedBytes);Evidence=[Convert]::ToBase64String($evidenceBytes)}|ConvertTo-Json -Depth 20 -Compress))
-WriteJson $Operation @{nonce=$nonce;version=$release.Version;expectedCurrent=$current.version;feedSha256=$request.FeedSha256;state='submission_started';startedUtc=$now.ToString('O')}
+WriteJson $Operation @{nonce=$nonce;version=$release.Version;expectedCurrent=$channelStatus.version;feedSha256=$request.FeedSha256;state='submission_started';startedUtc=$now.ToString('O')}
 $paths=@($blobs|ForEach-Object {@{Path=Join-Path $folder $_.FileName}})
 try{$result=InvokeChannel 'dustweave-ota submit' $header $paths;$result|ConvertTo-Json -Depth 20}
 catch{throw "Submission result is uncertain. Query -Action status -Operation '$Operation' before retrying. $($_.Exception.Message)"}
