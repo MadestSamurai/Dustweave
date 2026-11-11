@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-11-10T12:05:17.8134081+00:00",
+  "generatedUtc": "2026-11-11T08:25:43.4096554+00:00",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -168,11 +168,15 @@
     },
     {
       "path": "Directory.Build.props",
-      "sha256": "42314bf4176b9de460cafac68a05c8394c02709684232710fffd17d5904068f9"
+      "sha256": "0411ab5047b55b56db21c8ecb97fda45a5d94be67a8cb3ad8b9f286f14a35d04"
     },
     {
       "path": "docs/ALL_IN_ONE_DISTRIBUTION.md",
       "sha256": "e78344ef8450196302ad7fb9dc2addadf2db28676e094267124813152c8a170c"
+    },
+    {
+      "path": "docs/BARGAIN_TRAINING.md",
+      "sha256": "c67ba5e7d975cd2bb7acc691a53975e5f8f265bd03f4d01d1fc30e1b9e512d49"
     },
     {
       "path": "docs/COOKING_SALES_UI_GOAL.md",
@@ -180,11 +184,11 @@
     },
     {
       "path": "docs/DEVELOPMENT.md",
-      "sha256": "95e055c7763fa4968a080b3dcc8e23357b04415a06bd25baa16a7a5c9d2329c4"
+      "sha256": "77d8eda1350fddd149f7686d2566d0c9b59b32f3ba8d92d8b78248af12701645"
     },
     {
       "path": "docs/package/README.en.md",
-      "sha256": "34ad7ad1af944da213d6339059d83ec7aa2c7ae53df0021e36ff820899c02135"
+      "sha256": "fd80d54e259630e94852be22409b010edddf7aadd274eea3c9dd1bad4d36a33b"
     },
     {
       "path": "docs/package/README.md",
@@ -232,7 +236,7 @@
     },
     {
       "path": "package.ps1",
-      "sha256": "8b4d17f4513aef0bb115f4853ec381d109afaf4282c90197f9796aac0a3e739e"
+      "sha256": "3b262235687a127a6bea1eafd46409a1dd04a2e48019874e58d40d9af3fa0a09"
     },
     {
       "path": "scripts/build-update-acceptance.ps1",
@@ -752,7 +756,7 @@
     },
     {
       "path": "src/Connection/BargainTrainingNative.cs",
-      "sha256": "b3ba9936263f26e334be6cd3144fba927dc093f74b49ea4df0f3178c348a100c"
+      "sha256": "0f3b34fc66baa0a07f619ba4b937729fc643d37688c789505662e0ac28e90db0"
     },
     {
       "path": "src/Connection/Bridge.cs",
@@ -992,11 +996,11 @@
     },
     {
       "path": "src/Core/DailyBargainRules.cs",
-      "sha256": "b7cca2b50e182d541b23f78ee78f86df513cbfb7b3c905b72cfc9c3b88570532"
+      "sha256": "cc557e9f7517520385f0cfbb646b3aee0c0081b566e19535177d29d2b20a4f9a"
     },
     {
       "path": "src/Core/DailyBargainTraining.cs",
-      "sha256": "f1ae98210a0cea988fe626f6531f37e2445b0c44523813c7f7c55e8766720524"
+      "sha256": "315eed608b4798638380483c47c49efbc0669bae1eef94856187478a2a377761"
     },
     {
       "path": "src/Core/DailyBusinessJournal.cs",
@@ -1024,7 +1028,7 @@
     },
     {
       "path": "src/Core/DailyCommandDriver.cs",
-      "sha256": "8a76dbf9c82dfe3a58d7101df4ab9c58f8751f0824acd4f289229c78ac36fc09"
+      "sha256": "a11f875f4e57d9411d12139acfd180ad1ec11ff61e709b365cfa7a829f0eae62"
     },
     {
       "path": "src/Core/DailyCommandMailbox.cs",
@@ -1064,7 +1068,7 @@
     },
     {
       "path": "src/Core/DailyDiagnosticExport.cs",
-      "sha256": "90616585d49c24d87231e6b338f366555c0a0be6ccb516dbeea7b54144533ff1"
+      "sha256": "8646a6ad2ba6a1da059f6c6b14d3ffe24786ed412cb237d383776e439c039af2"
     },
     {
       "path": "src/Core/DailyDiagnosticTrail.cs",
@@ -1136,7 +1140,7 @@
     },
     {
       "path": "src/Core/DailyFieldTravel.cs",
-      "sha256": "18a4e6dbbc0d875ac5035784ac01f5bd089bb9cae9ff1303a3f74c34caac4e45"
+      "sha256": "b98d427ed431cfda8d330fe97dbd6421ff8fe3527be8507577f7f061362df5c3"
     },
     {
       "path": "src/Core/DailyFirstRun.cs",
@@ -1379,6 +1383,10 @@
       "sha256": "76e641273c72b72a0f23d5e903816ff64eb6f1f3d6683c530e718e9b836e19ea"
     },
     {
+      "path": "src/Core/DailyPracticeQueue.cs",
+      "sha256": "05525aafd3464f489610e21116590c7b047eb655b96cd5941e48f6f423b62bdb"
+    },
+    {
       "path": "src/Core/DailyPreferences.cs",
       "sha256": "837488d9f9ce6e348ceebeda0a5eeaba3f18f471858cfe4e4b23563a62399a43"
     },
@@ -1404,7 +1412,7 @@
     },
     {
       "path": "src/Core/DailyQuickTravel.cs",
-      "sha256": "59518b44fe05ba842865ced4d9575ae29b0ea9324605976621913f2127ab9046"
+      "sha256": "1a956f92fd27969c18e0e13bb274304e793508be043da0f88d4866cecb5a0329"
     },
     {
       "path": "src/Core/DailyQuizRecovery.cs",
@@ -1440,7 +1448,7 @@
     },
     {
       "path": "src/Core/DailySandbox.cs",
-      "sha256": "3574b7eb518bfbf4ade0d3ebd39e3e61ed0dd57813ad81017d7f6df681f41e65"
+      "sha256": "eadfc767170f3ef552ba81b2ff7cbc95239196eb979c9673b24071902dba5f10"
     },
     {
       "path": "src/Core/DailySandbox.Management.cs",
@@ -1480,7 +1488,7 @@
     },
     {
       "path": "src/Core/DailySandboxRegistration.cs",
-      "sha256": "45643e97190124f230ef36fa73b67963d3f13cf611f0b12d75d779e619e9dd03"
+      "sha256": "97ba6a396949764cebcba0120f86d362abc94751a4592f06fb42f9b5664f797d"
     },
     {
       "path": "src/Core/DailySandboxRepair.cs",
@@ -1497,6 +1505,10 @@
     {
       "path": "src/Core/DailySandboxStorage.cs",
       "sha256": "061adcee6eaacb1d0cec0052a61aa83fdfbe4b012cc8b7bca5ef77f4b774c5e0"
+    },
+    {
+      "path": "src/Core/DailySchedulePathRepair.cs",
+      "sha256": "92a45352b2329f25c915054e7335a1886e6d4a3b5a3f14e637bb1a9bd587fd99"
     },
     {
       "path": "src/Core/DailyScheduling.cs",
@@ -1548,7 +1560,7 @@
     },
     {
       "path": "src/Core/DailyStorageLocation.cs",
-      "sha256": "74973286c9a51730e38d3b70fc2a5968879640783da7fc474b2cde15c7b5fd0e"
+      "sha256": "5a0fda444f02a2f62bae3eb778a706eedbaf49ff2fa0927a1a670730cbdc0215"
     },
     {
       "path": "src/Core/DailyStorageMaintenance.cs",
@@ -1560,11 +1572,19 @@
     },
     {
       "path": "src/Core/DailyStorageMigration.cs",
-      "sha256": "279474a5f53cae5b42c5953556c2515f27a106f480312eed1ab881a3d5204981"
+      "sha256": "3001dcbb2ec9ab7b8aba16a5d3be1a70426486ce9b303276036ffadb6c32d0f0"
     },
     {
       "path": "src/Core/DailyStoragePath.cs",
       "sha256": "b86508dfc7a10e123f85c4389d62c8772a925c83e27ce5c87e6880c202316b0a"
+    },
+    {
+      "path": "src/Core/DailyStorageRebinding.cs",
+      "sha256": "37a31712ae4405d066204ebbcc262d75a3d37a2f845ad7308c8c5ec3d19ef994"
+    },
+    {
+      "path": "src/Core/DailyStorageRepair.cs",
+      "sha256": "262b038105ce01730efa93ce224a373639158d5a8188fb3e61275d23ad83923c"
     },
     {
       "path": "src/Core/DailyStorageWarning.cs",
@@ -1588,7 +1608,7 @@
     },
     {
       "path": "src/Core/DailyTalentPractice.cs",
-      "sha256": "0e4cbded0d4c0aa0c8ee8407ac5c6ada0e1808940e02200a81215ac9f92b9622"
+      "sha256": "e614d74fd98f001ef5d5966b16e0477a69e30443451dded631ade99f380f7c10"
     },
     {
       "path": "src/Core/DailyTaskPresets.cs",
@@ -1632,7 +1652,7 @@
     },
     {
       "path": "src/Core/DailyTradeBoxes.cs",
-      "sha256": "590473ac37143a3c7cbbfc5f1396ef873d01ed34d27b2103276abeece9a1505d"
+      "sha256": "45d7429cc5fab051dc91e0ce6b7dfbf8fce3d7219398bbe077c6ce7c1ee25f06"
     },
     {
       "path": "src/Core/DailyTradeCaptureConnection.cs",
@@ -1820,11 +1840,11 @@
     },
     {
       "path": "src/Core/DailyWindowsSchedule.cs",
-      "sha256": "f2c79a78cd8193e09c6e4fb97911e7553cf42df30745cc728be8b2730789a426"
+      "sha256": "9e680f409ded6c77022444f3294e09ecb866ee496357b2cfb392d8db0e7dfb00"
     },
     {
       "path": "src/Core/DailyWindowsStartup.cs",
-      "sha256": "c65de840a97ee57cc2a715f7930460b1e564d528495040927d998fe8044219f7"
+      "sha256": "1133a537a17c1cfa189fc485404eee66e603e1d375a236c666d97c5875d78f31"
     },
     {
       "path": "src/Core/DailyWorkflow.cs",
@@ -1904,11 +1924,15 @@
     },
     {
       "path": "src/Desktop/DailyBargainSession.cs",
-      "sha256": "5614be26c3efdc3f2074cf4daede01016a8d840f866a954e6bd9cac69ec17eaa"
+      "sha256": "f3583f111f2f61bb70f4c1f1a9e62e0c5b391b1a76169ef3ba6b9c5836750582"
     },
     {
       "path": "src/Desktop/DailyBargainWindow.cs",
-      "sha256": "bd2d97d369f7e9d46668fab58d1f4f3a0dd95e04fad32a5cf702315cabb31caf"
+      "sha256": "fc4a7c9adbff06dd23c4f7684ee2995bf7ad6849673794af61fc9cef7d8c1930"
+    },
+    {
+      "path": "src/Desktop/DailyBargainWindow.Queue.cs",
+      "sha256": "53d026e0df680d3547210b234f52f27e42f34cd8a3f7ec7699a4c261809f7fcc"
     },
     {
       "path": "src/Desktop/DailyCollectionMapPicker.cs",
@@ -1992,7 +2016,7 @@
     },
     {
       "path": "src/Desktop/DailySchedulePanel.cs",
-      "sha256": "1498d2bf3ea21e944d3f6afd748ec558e71e87fbf6a265290e2c1064960365bc"
+      "sha256": "e2f323be590a9eaaf3a727a5b16ea242339aa1a5890b2691a7759a5f5f9bcfe5"
     },
     {
       "path": "src/Desktop/DailySettingsCatalog.cs",
@@ -2124,7 +2148,7 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "e56a8157323b1ee87ff570c637005032487ba8fdab4b48415b26f78eff624cee"
+      "sha256": "0e8afab353c03b9f2fe40122cb31882993f9e2de017454040fe74db76eee9d48"
     },
     {
       "path": "src/Desktop/Localization/runtime.json",
@@ -2132,7 +2156,7 @@
     },
     {
       "path": "src/Desktop/Localization/strings.json",
-      "sha256": "dfd286c2dd0790ed0cbeaa16a3746553022664b11a0f93b2c601c48c6e044709"
+      "sha256": "0d96d38f3297cc889d9f50df25c1fc1195a37c9f85b9f5f71b3efbc282d9709c"
     },
     {
       "path": "src/Desktop/LocalizedTextCatalog.cs",
@@ -2152,7 +2176,7 @@
     },
     {
       "path": "src/Desktop/MainWindow.Bargain.Smoke.cs",
-      "sha256": "479414b736a1a9d657b3284853e07fe028a7798ead0011cc6071bb0c385b571b"
+      "sha256": "dd22de4bafde8cd9da3f2a9530ea85aa7a35db679de988c7478a1fff08853779"
     },
     {
       "path": "src/Desktop/MainWindow.Chrome.cs",
@@ -2176,7 +2200,7 @@
     },
     {
       "path": "src/Desktop/MainWindow.DiagnosticExport.cs",
-      "sha256": "0ab8304b6e3be733da2ee710d8ba7970e0da54e055727a4bf491748996075de6"
+      "sha256": "bab66728e9ea8a9c6b224c330f315a4df8228acfc16edfae67b21be0e845f1b7"
     },
     {
       "path": "src/Desktop/MainWindow.Diagnostics.cs",
@@ -2217,6 +2241,14 @@
     {
       "path": "src/Desktop/MainWindow.GamePreferences.Smoke.cs",
       "sha256": "1e4e6689752704cd33f6111ee8425106a9d82cd4c742f6de21ac2a9507a7fb01"
+    },
+    {
+      "path": "src/Desktop/MainWindow.LaunchPaths.cs",
+      "sha256": "f7d8dced2c2efbf8656f06f0dd9db22224f8576ad27c4630a63b4080a729eca6"
+    },
+    {
+      "path": "src/Desktop/MainWindow.LaunchPaths.Smoke.cs",
+      "sha256": "0a862b285a6a391549352d66adbbc7bee1e59765fcd4eac06526ebca64d60b55"
     },
     {
       "path": "src/Desktop/MainWindow.LoadingExperiment.cs",
@@ -2300,7 +2332,7 @@
     },
     {
       "path": "src/Desktop/MainWindow.Scheduling.cs",
-      "sha256": "62f4f0697ec689ea99c7cfde07d00b29c92d588bd793fa80a7e2e72aa132dc33"
+      "sha256": "8b08a7efeb94f762e86b254a567c0946d72cf28ef01aad2e8d55b4b6fbb40aff"
     },
     {
       "path": "src/Desktop/MainWindow.Scheduling.Smoke.cs",
@@ -2308,7 +2340,7 @@
     },
     {
       "path": "src/Desktop/MainWindow.SoftwareSettings.cs",
-      "sha256": "e5e645a771d393f6ee24408a5e889b920e59762cd3e72a329d781ec6ab149624"
+      "sha256": "a537348d7bdb5155721a918fe1bc9e013ebda79c38fe609e88fc1ac0c2d3e85d"
     },
     {
       "path": "src/Desktop/MainWindow.SoftwareSettings.Smoke.cs",
@@ -2316,11 +2348,19 @@
     },
     {
       "path": "src/Desktop/MainWindow.StartupFeatures.cs",
-      "sha256": "68f8f66201c80ce80dd2f601abc5e45ce5db850a24c7d6dd2766bb5dcd4c2857"
+      "sha256": "25f31c04eda32a2b9dcff485431a01c4e998d451480dc0d711af284fd3813e43"
+    },
+    {
+      "path": "src/Desktop/MainWindow.StorageRebind.cs",
+      "sha256": "791681acacb85f6d68a12951ec44a54b6ce8f7272e6bcfb066c7ad039f07cd72"
+    },
+    {
+      "path": "src/Desktop/MainWindow.StorageRepair.cs",
+      "sha256": "c16d076d785becf8323cc2a890e72526762768e6817ba9cac77b91bd63b4a509"
     },
     {
       "path": "src/Desktop/MainWindow.StorageView.cs",
-      "sha256": "af038e4acdb7c438f7f056e8658d40de0bbea733062de36b40cff04895cea914"
+      "sha256": "6fa4fa075e4228e5bc9bed10997511ba27f2b2b7f483e7f7e7ca058bba114110"
     },
     {
       "path": "src/Desktop/MainWindow.StorageWarning.cs",
@@ -2328,7 +2368,7 @@
     },
     {
       "path": "src/Desktop/MainWindow.Support.Smoke.cs",
-      "sha256": "ba19354349342d437ce125d468485f47348fa48c24ca6bc8bd762ed68fd5de57"
+      "sha256": "70ea3ba8dee304e97c7a9bc7a231edb9953a1f8a85c5ef9a12fac8591a9f9aa0"
     },
     {
       "path": "src/Desktop/MainWindow.ToolActivitySmoke.cs",
@@ -2356,11 +2396,11 @@
     },
     {
       "path": "src/Desktop/MainWindow.xaml",
-      "sha256": "8bfce6294e61807358bcb3910523aa2ea27b496281c19bb09773caafc965290f"
+      "sha256": "4595fc9613b33d17098d3cfaf9bfff85896d319d761902863633f74ec392a3f7"
     },
     {
       "path": "src/Desktop/MainWindow.xaml.cs",
-      "sha256": "dc69515f9e780360f3f83486e3d43fd66db89dcebf1d738efe2bb6001bab7721"
+      "sha256": "1e011a0f551163e97f1287fdaad89144da11d28f2d1bf15c671664fd47153135"
     },
     {
       "path": "src/Desktop/ManagedToolPlugin.cs",
@@ -5292,7 +5332,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/BargainTrainingCases.cs",
-      "sha256": "f5ce91a0c83b5cbb74c0bea282b64d02d9d7316cbb41997229bf3c862e215e96"
+      "sha256": "14fb25f050d3e30a9231e2edb3602bb0585a41030206b4e037ca2fda134c1f10"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/BattleArrivalRecoveryCases.cs",
@@ -5328,7 +5368,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/CommandDriverCases.cs",
-      "sha256": "6fc3aa6a8ee5416be35989e913c46904812b286154df773a378b1dd93cbcbfb3"
+      "sha256": "69b72bf4a2b5f10cc3e1464a57bf1829f904cb7a7e744274d60d74d677979179"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ConnectionAccessCases.cs",
@@ -5352,7 +5392,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/DiagnosticExportCases.cs",
-      "sha256": "d8057ea566faf38eb2133d1585f7eab9e4baa03c9f50d91923cedd7dc678fb30"
+      "sha256": "ab34dea28b6c266c060f6b7a496c35b079607d17f6e35b97f3a1a02dd1bcbf8d"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/DispatchRecoveryCases.cs",
@@ -5560,7 +5600,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ObservationWaitCases.cs",
-      "sha256": "ca3636c1bb5ca5c4e646ad45e900f7f9c8d2ea87e771f6a9d5348068224ae942"
+      "sha256": "2ecd8b859475aedfbf14a079bc6ccc6084990be79fa9f59530eada080f71dafd"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/OutcomeExplanationCases.cs",
@@ -5627,6 +5667,10 @@
       "sha256": "48f5e9eb4c49a82b89bbd8558f6c1da818845e11db38c84b718ef37c5681a6e2"
     },
     {
+      "path": "tests/Dustweave.Tests/Cases/PracticeQueueCases.cs",
+      "sha256": "174688c63a8891e387d2fa173f6725e5b28ff421286541b5251c589f14fdd6a7"
+    },
+    {
       "path": "tests/Dustweave.Tests/Cases/PreferenceCases.cs",
       "sha256": "06be93f2cc05dfd75ee56c649390552ed490a2b357a57bee7e8da6b1c8806d58"
     },
@@ -5656,7 +5700,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/QuickTravelCases.cs",
-      "sha256": "ae123b03274b433326d0f9e08fe68c06807b7cf567b5ebd12f5c75cc3f2eb4cf"
+      "sha256": "b8a0f1b829d2d264df6fe3e702e1afdc7d26711bdeae7ab7ccaa6e130756249e"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/RhythmCases.cs",
@@ -5699,8 +5743,12 @@
       "sha256": "38643aa3752225426f17bbd8eb29e4ecee1bdd3dc9d24076570f3fc8ceef5ee3"
     },
     {
+      "path": "tests/Dustweave.Tests/Cases/SchedulePathCases.cs",
+      "sha256": "d286e1200e81034860789e636690e9ba2289f36fe784d6b8e6f6021da5274fc7"
+    },
+    {
       "path": "tests/Dustweave.Tests/Cases/SchedulingUpdatesCases.cs",
-      "sha256": "0d34ddcb20a71b290ef9d778c4da2611735eec0ce39c3d1e120ea1dcc669a06b"
+      "sha256": "e04a9134f706fb49478a8a93e212cc79f61bd8fa34b7155d43364d27c6303953"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ShopFavoriteCompatibilityCases.cs",
@@ -5736,7 +5784,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/StorageMigrationCases.cs",
-      "sha256": "e3378cb2a4e1bb576a9a6c4c94399ae2dd230c6ec136833ee023af7d4404fca0"
+      "sha256": "c3c7e8df3b35d030ab1aa757e174e9f4c85ffccadd92f0dddf192b3125685ce2"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/StorageMigrationNativeCases.cs",
@@ -5749,6 +5797,14 @@
     {
       "path": "tests/Dustweave.Tests/Cases/StoragePathCases.cs",
       "sha256": "6e7632f8b8762f9188da53addd3d2de90a2c31eb45ca4fa17d2bbeee1dcf4ebc"
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/StorageRebindingCases.cs",
+      "sha256": "401c1b281dd14336e049e6c6603e589e0aaaa24067f134fdf7b58f054fe54202"
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/StorageRepairCases.cs",
+      "sha256": "5a2af92d70ad1ba4846c03bdcd4b7640eea4b5b82527f93075fb4360fe9ba972"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/StorageResourceCases.cs",
@@ -5768,7 +5824,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/TalentPracticeCases.cs",
-      "sha256": "4606f5cfb92254214457af5bb4805d941132476b647f0cd325e240672e9b275a"
+      "sha256": "d418285f8ab543e749f0358dd9ecc849f4fa671eb9da1aecc6ae1254118d27c7"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/TaskPresetCases.cs",
@@ -5792,7 +5848,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/TradeBoxesCases.cs",
-      "sha256": "25e58b2510ef5bceb78528bdc4b15b456dd58726dc7603199c208dd96c55358a"
+      "sha256": "25fe4e06b6806be65424b08dc43ca84330d836b94ebf0bba3f193af8c49512bc"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/TradeCalendarCases.cs",

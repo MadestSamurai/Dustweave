@@ -11,6 +11,7 @@ internal static class SchedulingUpdatesCases
 {
     public static async Task Run(string root, List<string> cases)
     {
+        SchedulePathCases.Run(root, cases);
         await CheckScheduledRestart(cases);
         void Check(string name, bool condition) { if (!condition) throw new Exception(name); cases.Add(name); }
         void Reject(string name, Action action) { try { action(); } catch (InvalidDataException) { cases.Add(name); return; } throw new Exception(name); }

@@ -10,6 +10,7 @@ static class CommandDriverCases
     {
         public Dictionary<string, byte[]> Values = new(); public List<JsonObject> Commands = []; public HashSet<string> Opened = [];
         public Action<JsonObject>? AfterCommand; public Action<string, string, byte[]>? AfterWrite;
+        public Action<string,string>? BeforeRead;
         public JsonObject? Before, After;
         public string State = "observed_after_dispatch", Error = "screen_changed"; public bool? Dispatched = true; public bool Revoked, ThrowCreate, Tamper;
         public void Acquire(string channel)
@@ -22,6 +23,7 @@ static class CommandDriverCases
         {
             if (Revoked)
                 throw new LeaseRevokedException();
+            BeforeRead?.Invoke(channel,name);
             return Values.GetValueOrDefault(channel + ":" + name);
         }
         public void Write(string channel, string name, byte[] value, bool create = false)

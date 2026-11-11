@@ -69,6 +69,7 @@ public static partial class DailySandbox
         var binding = Current;
         if (binding?.Account == account) return binding.Box;
         var registered = DailyJson.TryRead<DailySandboxRequest>(Path.Combine(StateDirectory(account), "instance.json"));
+        if(registered==null&&DailyStorageMigration.ReadRebuild(StateDirectory(account)) is {} rebuild&&rebuild.Account==account)return rebuild.Box;
         if(registered==null) {
             var removing=DailyJson.TryRead<RemovalIntent>(Path.Combine(StateDirectory(account),"removal.json"));
             if(removing?.Schema==1 && removing.Account==account && removing.Owner?.Account==account

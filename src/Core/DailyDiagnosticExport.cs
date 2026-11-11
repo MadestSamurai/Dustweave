@@ -6,6 +6,8 @@ using System.Text.RegularExpressions;
 namespace Dustweave;
 
 public sealed record DailyDiagnosticExportResult(string Path, int Files, int Skipped, long Bytes);
+public sealed record DailyDiagnosticSourceIssue(string Source, string Error);
+public sealed record DailyDiagnosticSources(IReadOnlyDictionary<string,string> Roots, DailyDiagnosticSourceIssue[] Issues);
 public sealed record DailyLocalizationDiagnostics(string Language, string[] Problems)
 {
     public const int Limit = 128, MaxDetailLength = 512;
@@ -18,7 +20,7 @@ public static class DailyDiagnosticExport
     public const int MaxFiles = 2000;
     // Bounded reports only. Never export the full relocation inventory, registry
     // hive, login store or recovery backup just to explain a migration failure.
-    static readonly string[] StorageEvidence = ["storage-operation-error.json", "storage-migration-error.json", "storage-migration-last.json", "live/diagnostics/storage-migration-check.json"];
+    static readonly string[] StorageEvidence = ["storage-operation-error.json", "storage-migration-error.json", "storage-migration-last.json", "storage-rebind-last.json", "storage-repair-last.json", "live/diagnostics/storage-migration-check.json"];
     static readonly string[] UpdateAttemptFiles = ["update-result.json", "updater-state.json", "ready.json", "delta-fallback.json", "backup/transaction.json",
         "startup/startup-state.json", "startup/startup-error.json", "startup/launcher-error.txt", "startup/bootstrap-error.txt"];
     static readonly string[] UpdateTop = ["update-result.json", "launcher-error.txt", "bootstrap-error.txt", "startup/launcher-error.txt", "startup/bootstrap-error.txt"];
@@ -33,7 +35,7 @@ public static class DailyDiagnosticExport
     static readonly string[] Trees = ["suite/diagnostics", "live/diagnostics", "live/observation-failures", "live/queue-bootstrap", "live/queues", "queue-history", "parallel-progress", "tools", "parallel-workers", "live/steps", "live/business", "live/managed-business", "live/step-recovery",
         "live/trade-boxes", "live/trade-quote-reads", "live/trade-closes", "trade/diagnostics", "trade/data-preflights", "trade/capture", "trade/executions", "trade/plans",
         "live/travel-diagnostics", "live/route-atlas", "live/server-collection", "live/weekly-npc-recovery", "live/weekly-npc-queries", "live/absorption-history"];
-    static readonly string[] Singles = ["resource-optimization-last.json", "launch-mode.json", "sandbox-processes.json", "game-program-recovery/last-sync.json", "game-table-recovery/last-sync.json", "progress-sync-error.json", "registration-mismatch.json", "registration-recovery.json", "saffron-latest.json", "suite/last-transition.json", "updates/check-error.json", "updates/install-error.json", "updates/restart-state.json", "login-identity-error.json",
+    static readonly string[] Singles = ["schedule-path-repair.json", "resource-optimization-last.json", "launch-mode.json", "sandbox-processes.json", "game-program-recovery/last-sync.json", "game-table-recovery/last-sync.json", "progress-sync-error.json", "registration-mismatch.json", "registration-recovery.json", "saffron-latest.json", "suite/last-transition.json", "updates/check-error.json", "updates/install-error.json", "updates/restart-state.json", "login-identity-error.json",
         "live/diagnostics/login-current.json", "live/diagnostics/login-request.json", "live/diagnostics/login-verified.json", "live/diagnostics/login-failed.json", "live/diagnostics/login-preparation-failed.json", "live/diagnostics/preparation-latest.json", "live/trade-failure.json", "live/trade-navigation-cleanup.json",
         "live/diagnostics/login-waiting-agreement.json", "live/diagnostics/login-waiting-credentials.json", "live/diagnostics/login-waiting-start.json",
         "live/pass-claims-latest.json", "live/mission-inspection-latest.json", "live/event-preview-recovery.json",
@@ -48,6 +50,9 @@ public static class DailyDiagnosticExport
         && new[]{"error.txt","restore-error.txt","status.json","campaign.json","timeline.jsonl","live-state-latest.json","soul-latest.json"}.Contains(Path.GetFileName(relative),StringComparer.OrdinalIgnoreCase);
     static bool ToolControlEvidence(string relative) => relative.StartsWith("tools/",StringComparison.OrdinalIgnoreCase)
         && (SoulControlEvidence(relative)||relative.EndsWith("-activity-error.json",StringComparison.OrdinalIgnoreCase)
+            // This directory contains small exception records, not successful
+            // practice transactions. Keep earlier connection failures as well.
+            || relative.StartsWith("tools/bargain-training/logs/",StringComparison.OrdinalIgnoreCase)&&relative.EndsWith(".json",StringComparison.OrdinalIgnoreCase)
             || relative.EndsWith("-identity-error.json",StringComparison.OrdinalIgnoreCase)
             || new[]{"connection.log","connection-cleanup.log","last-interruption.json"}.Contains(Unrotate(Path.GetFileName(relative)),StringComparer.OrdinalIgnoreCase));
     static string? EvidenceFamily(string relative)
@@ -125,7 +130,19 @@ public static class DailyDiagnosticExport
         }
         return string.Join('\n',lines);
     }
-    public static IReadOnlyDictionary<string,string> RelatedSources(string localData,string sandboxStore)
+    public static DailyDiagnosticSources DiscoverSources(string localData,Func<string> sandboxStore)
+    {
+        var issues=new List<DailyDiagnosticSourceIssue>();
+        void Failed(Exception error)=>issues.Add(new("sandbox-store",error.GetType().Name+": "+error.Message));
+        string store="";
+        // Resolution can throw before enumeration begins. Diagnostics must remain
+        // usable precisely when relocation/ownership checks reject normal startup.
+        // Do not fall back to a different account store or create replacement data.
+        try { store=sandboxStore(); }
+        catch(Exception error) when(error is IOException or UnauthorizedAccessException or ArgumentException or System.Security.SecurityException){Failed(error);}
+        return new(RelatedSources(localData,store,Failed),issues.ToArray());
+    }
+    public static IReadOnlyDictionary<string,string> RelatedSources(string localData,string sandboxStore,Action<Exception>? onError=null)
     {
         var sources=new Dictionary<string,string>();
         foreach(var name in new[]{"BD2Fishing","BD2Territory","BD2Sichuan","BD2Rhythm","BD2ApostleDefense","BD2InfiniteGacha","BD2SecretVision","BD2FiendHunter","BD2EquipmentAssistant"})
@@ -144,22 +161,57 @@ public static class DailyDiagnosticExport
                 var binding=DailyJson.TryRead<DailySandboxBinding>(Path.Combine(data,"sandbox-binding.json"));
                 if(binding!=null&&DailyProfiles.ValidKey(binding.Account)&&DailySandbox.CanonicalBoxName(binding.Account)==Path.GetFileName(box))sources["isolated-"+(++index).ToString("D2")]=data;
             }
-        }} catch(Exception e) when(e is IOException or UnauthorizedAccessException) { /* Other log sources remain usable. */ }
+        }} catch(Exception e) when(e is IOException or UnauthorizedAccessException) { onError?.Invoke(e); }
         return sources;
+    }
+    static object StorageRouting(string root)
+    {
+        // Small, read-only, allowlisted metadata. Never include the full migration
+        // journal, previous-store inventories, registry hives or login credentials.
+        DailyStorageLocation? ReadRecord(string path)
+        {
+            using var stream=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.ReadWrite|FileShare.Delete);
+            if(stream.Length>64*1024)throw new InvalidDataException("Storage routing record exceeds diagnostic limit.");
+            return JsonSerializer.Deserialize<DailyStorageLocation>(stream,DailyJson.Options);
+        }
+        string path=DailyStorageLocations.FileName(root);
+        var report=new JsonObject{["status"]="not_configured",["configuration"]=path};
+        try
+        {
+            if(!File.Exists(path))return report;
+            var value=ReadRecord(path);
+            bool valid=value!=null&&Guid.TryParseExact(value.Id,"N",out _)&&Path.IsPathFullyQualified(value.Cache)
+                &&Accounts.SandboxConfiguration.SameRoot(value.Sandboxes,Path.Combine(value.Cache,"instances"));
+            report["status"]=valid?"checking":"invalid_configuration";
+            if(!valid)return report;
+            report["cache"]=value!.Cache;report["sandboxes"]=value.Sandboxes;
+            report["cacheDirectoryExists"]=Directory.Exists(value.Cache);
+            report["sandboxDirectoryExists"]=Directory.Exists(value.Sandboxes);
+            string owner=Path.Combine(value.Cache,"storage-owner.json");
+            report["ownerRecordExists"]=File.Exists(owner);
+            if(!File.Exists(owner)){report["status"]="owner_unavailable";return report;}
+            report["status"]=DailyStorageLocations.Matches(ReadRecord(owner),value)?"verified":"owner_mismatch";
+        }
+        catch(Exception error) when(error is IOException or UnauthorizedAccessException or ArgumentException or JsonException or System.Security.SecurityException)
+        {report["status"]="unreadable";report["error"]=error.GetType().Name+": "+error.Message;}
+        return report;
     }
     public static Task<DailyDiagnosticExportResult> CreateAsync(string root, string destination, string summary, string version, CancellationToken token=default,IReadOnlyDictionary<string,string>? additionalSources=null)
         => CreateAsync(root,destination,summary,version,token,additionalSources,null);
-    public static Task<DailyDiagnosticExportResult> CreateAsync(string root,string destination,string summary,string version,CancellationToken token,IReadOnlyDictionary<string,string>? additionalSources,DailyLocalizationDiagnostics? localization)
-        => Task.Run(()=>Create(root,destination,summary,version,token,additionalSources,localization),token);
+    public static Task<DailyDiagnosticExportResult> CreateAsync(string root,string destination,string summary,string version,CancellationToken token,IReadOnlyDictionary<string,string>? additionalSources,DailyLocalizationDiagnostics? localization,IReadOnlyList<DailyDiagnosticSourceIssue>? sourceIssues=null)
+        => Task.Run(()=>Create(root,destination,summary,version,token,additionalSources,localization,sourceIssues),token);
     public static DailyDiagnosticExportResult Create(string root,string destination,string summary,string version,CancellationToken token=default,IReadOnlyDictionary<string,string>? additionalSources=null)
         => Create(root,destination,summary,version,token,additionalSources,null);
-    public static DailyDiagnosticExportResult Create(string root,string destination,string summary,string version,CancellationToken token,IReadOnlyDictionary<string,string>? additionalSources,DailyLocalizationDiagnostics? localization)
+    public static DailyDiagnosticExportResult Create(string root,string destination,string summary,string version,CancellationToken token,IReadOnlyDictionary<string,string>? additionalSources,DailyLocalizationDiagnostics? localization,IReadOnlyList<DailyDiagnosticSourceIssue>? sourceIssues=null)
     {
         root=Path.GetFullPath(root);destination=Path.GetFullPath(destination);
         if(Path.GetExtension(destination)!=".zip")throw new InvalidDataException("diagnostics.export.extension");
         if(File.Exists(destination))throw new IOException("diagnostics.export.exists");
         // Explicit root only: never traverse account stores, installed plugins or the machine.
+        var storageRouting=StorageRouting(root);
         var skipped=new List<object>();var files=new List<(FileInfo File,string Root,string Prefix)>();int visited=0;string sourceName="main";
+        foreach(var issue in (sourceIssues??[]).Take(32))
+            skipped.Add(new{path=issue.Source,reason="source-unavailable",error=Redact(issue.Error[..Math.Min(issue.Error.Length,4096)],false)});
         bool Link(string p)=>(File.GetAttributes(p)&FileAttributes.ReparsePoint)!=0;
         bool SafePath(string path) {
             var current=Path.GetFullPath(path);
@@ -296,6 +348,7 @@ public static class DailyDiagnosticExport
                         }catch(Exception e) when(e is IOException or UnauthorizedAccessException or JsonException or DecoderFallbackException){skipped.Add(new{path=rel,reason=e.GetType().Name});}
                     }
                     Add("summary.txt",Redact(summary+lastOperation,false));
+                    Add("storage-routing.json",Redact(JsonSerializer.Serialize(storageRouting,DailyJson.Options),true));
                     // Snapshot only: no file writes on the rendering path, and no
                     // message arguments, account names or raw fallback text are collected.
                     var textProblems=(localization?.Problems ?? []).Take(DailyLocalizationDiagnostics.Limit)

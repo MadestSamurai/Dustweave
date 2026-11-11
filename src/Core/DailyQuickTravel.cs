@@ -9,18 +9,28 @@ public static class DailyQuickTravel
     public static JsonObject State(JsonObject evidence) => Readings(evidence, "route.quick").FirstOrDefault()?["$self"] as JsonObject ?? new();
     public static JsonObject[] Targets(JsonObject evidence) => Rows(State(evidence)["Targets"] ?? new JsonArray());
 
-    public static async Task<bool> TryMove(DailyWorkflow w, long npc, long destination)
+    public static Task<bool> TryMove(DailyWorkflow w, long npc, long destination) => TryMove(w, npc, destination, null);
+    internal static async Task<bool> TryMove(DailyWorkflow w, long npc, long destination, double? transitionSeconds)
     {
+        using var waiting = transitionSeconds.HasValue ? DailyObservationWindow.Begin(transitionSeconds.Value, () => w.Time) : null;
+        double Remaining(double fallback)
+        {
+            if (waiting == null) return fallback;
+            if (waiting.Remaining <= 0) throw DailyObservationWindow.Timeout("快速移动后地图仍在加载，已保留当前路线。");
+            return waiting.Remaining;
+        }
         var before = await w.Evidence("route.quick");
         var target = Targets(before).SingleOrDefault(t => N(t["Npc"]) == npc && N(t["Map"]) == destination);
         if (target == null || B(target["AtTarget"])) return false;
         try
         {
-            await w.Step(O(("ui", "GameFieldDefaultUI"), ("operation", "field_quick_travel"),
-                ("value", npc), ("items", new[] { destination }), ("reason", "通过快速移动前往" + S(target["Name"]))));
+            var action = O(("ui", "GameFieldDefaultUI"), ("operation", "field_quick_travel"),
+                ("value", npc), ("items", new[] { destination }), ("reason", "通过快速移动前往" + S(target["Name"])));
+            if (transitionSeconds.HasValue) action["timeout"] = Remaining(20);
+            await w.Step(action);
         }
         catch (DailyStepException error) when (error.DefinitelyNotDispatched && error.RejectionCode == "quick_travel_unavailable") { return false; }
-        double end = w.Time + 60;
+        double end = w.Time + Remaining(60);
         double? readySince = null;
         while (w.Time < end)
         {

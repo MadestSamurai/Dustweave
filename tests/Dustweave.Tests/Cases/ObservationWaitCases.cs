@@ -8,6 +8,41 @@ static class ObservationWaitCases
     {
         void Check(bool ok, string name) { if (!ok) throw new Exception(name); cases.Add(name); }
         WorkflowHarness New(string name, DailyBusinessProof[]? proofs = null) => new(Path.Combine(root, "observation-wait-" + name), proofs ?? []);
+        using(var f=New("practice-transport-timeout"))
+        {
+            f.Box.BeforeRead=(_,name)=>{if(name=="snapshot.json"&&f.Time<2)throw new TimeoutException("PipeClient.CallOnce snapshot timeout");};
+            using(DailyObservationWindow.Begin(180,()=>f.Time))await f.Workflow.Observe();
+            Check(f.Time>=2&&f.Time<2.3&&f.Box.Commands.Count==0,"transient lease snapshot timeout recovers within travel budget without gameplay replay");
+        }
+        foreach(string outcome in new[]{"restored","deadline","stop","identity","revoked","no-window"})
+        using(var f=New("transport-"+outcome))
+        {
+            f.OnRead=()=>{if(f.Time<.6||outcome is "deadline" or "no-window")throw new TimeoutException("read-only observation timeout");};
+            f.OnDelay=()=>{
+                if(f.Time<.4)return;
+                if(outcome=="stop")f.Stopped=true;
+                if(outcome=="identity")f.Context["cycle"]="changed-cycle";
+                if(outcome=="revoked")f.Box.Revoked=true;
+            };
+            Exception? failure=null;
+            try{
+                if(outcome=="no-window")await f.Workflow.Observe();
+                else using(DailyObservationWindow.Begin(1,()=>f.Time))await f.Workflow.Observe();
+            }catch(Exception e){failure=e;}
+            Check(outcome switch{
+                "restored"=>failure==null&&f.Time>=.6&&f.Time<.9,
+                "deadline"=>failure is StageHostException{ObservationTimedOut:true}&&f.Time>=1&&f.Time<1.3,
+                "stop"=>failure is StageHostException{Kind:"stopped"}&&f.Time<.7,
+                "identity"=>failure is DailyStepException{Kind:"identity"},
+                "revoked"=>failure is BD2.LocalIpc.LeaseRevokedException,
+                _=>failure is TimeoutException&&f.Time==0
+            },"bounded read-only transport recovery preserves boundary: "+outcome);
+            Check(f.Box.Commands.Count==0,"transport recovery sends no gameplay: "+outcome);
+            if(outcome=="deadline"){
+                f.OnRead=null;await f.Workflow.Observe();
+                Check(DailyObservationWindow.Current==null,"expired transport wait leaves no permanent continuation gate");
+            }
+        }
         async Task<StageHostException> Failure(Func<Task> action)
         {
             try { await action(); } catch (StageHostException e) { return e; }

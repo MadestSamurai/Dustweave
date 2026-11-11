@@ -20,7 +20,11 @@ public sealed record DailyBargainPlan(DailyBargainCharacter Character, long Poti
     }
 }
 
-public sealed record DailyBargainProgress(DailyBargainCharacter Character, long Potions, int Rounds, long Spent);
+public sealed record DailyBargainProgress(DailyBargainCharacter Character, long Potions, int Rounds, long Spent)
+{
+    public DailyPracticeAchievement? Achievement {get;init;}
+    public DailyPracticeAchievement[]? Achievements {get;init;}
+}
 
 // A manual tool, not a queue stage. Stop is deferred only while settling a
 // confirmed round; a lost receipt is never treated as permission to bargain again.
@@ -71,6 +75,24 @@ public sealed class DailyBargainTraining(DailyWorkflow w, Func<bool> stopped, Ac
                 }
                 catch (InvalidDataException)
                 {
+                    // Full XP is not progress evidence in achievement mode.
+                    // Adopt the cumulative count without claiming an old command succeeded.
+                    bool advanced=false;
+                    if(B(op["scope"]?["achievement"])){
+                        try{
+                            Identity(op["before"]!.AsObject(),after);
+                            var a=DailyPracticeAchievement.From(op["before"]!.AsObject(),DailyBargainProof.ReadId,16);
+                            advanced=a.Refresh(after,DailyBargainProof.ReadId).Current>a.Current;
+                        }catch(Exception e)when(e is InvalidDataException or DailyBargainFault){}
+                    }
+                    if(advanced){
+                        if(types.Contains("ShopUI")){
+                            merchant=N(op["scope"]?["npc"]);var shop=await Evidence("trade.shop_ui","trade.bargain");Merchant(shop);
+                            Settling=true;try{await CloseShop(B(R(shop,"trade.bargain","$self")));}finally{Settling=false;}
+                        }
+                        op["state"]="superseded";op["reconciliation"]=O(("method","current_achievement_progress"),("consuming_actions",0),("closed_shop",types.Contains("ShopUI")),("original_success_claimed",false),("saved_action_replayed",false),("current",after));w.Business.Save(op);
+                        continue;
+                    }
                     // A dead game's request cannot still be in flight in the newly
                     // authenticated process. Keep its outcome unknown, but plan from
                     // this process's actual XP/potions instead of replaying the action.
@@ -110,14 +132,14 @@ public sealed class DailyBargainTraining(DailyWorkflow w, Func<bool> stopped, Ac
                 var after = await Evidence();
                 Identity(before, after);
                 Require(!success || confirmed, "bargain.exit_unconfirmed");
-                Require(JsonNode.DeepEquals(DailyBargainProof.State(before), DailyBargainProof.State(after)), "bargain.close_changed");
+                Require(new[]{"Characters","Catalyst","Gold"}.All(key=>JsonNode.DeepEquals(DailyBargainProof.State(before)[key],DailyBargainProof.State(after)[key])), "bargain.close_changed");
                 return;
             }
             await w.Delay(100);
         }
         throw new DailyBargainFault("bargain.surface_timeout");
     }
-    public async Task<string> Run(DailyBargainCharacter approved)
+    public async Task<string> Run(DailyBargainCharacter approved, DailyPracticeAchievement? achievement=null)
     {
         await Reconcile();
         var initial = await Evidence();
@@ -125,20 +147,27 @@ public sealed class DailyBargainTraining(DailyWorkflow w, Func<bool> stopped, Ac
         approved.AssertSameTier(current);
         // A changed tier, increased cost or rolled-back XP requires a new preview.
         Require(current.Experience >= approved.Experience, "bargain.preview_changed");
-        if (current.Full) return current.Level >= current.MaxLevel ? "bargain.maximum" : "bargain.upgrade";
-        new DailyBargainPlan(current, N(DailyBargainProof.State(initial)["Catalyst"])).Validate();
-        long budget = current.Estimate, spent = 0;
+        achievement=achievement?.Refresh(initial,DailyBargainProof.ReadId);
+        if(achievement?.Remaining==0)return "practice.achievement_complete";
+        if (achievement==null&&current.Full) return current.Level >= current.MaxLevel ? "bargain.maximum" : "bargain.upgrade";
+        if(achievement==null)new DailyBargainPlan(current, N(DailyBargainProof.State(initial)["Catalyst"])).Validate();
+        long budget = achievement==null?current.Estimate:checked(achievement.Remaining*current.Cost), spent = 0;
         int rounds = 0;
-        progress(new(current, N(DailyBargainProof.State(initial)["Catalyst"]), rounds, spent));
+        progress(new(current, N(DailyBargainProof.State(initial)["Catalyst"]), rounds, spent){Achievement=achievement,Achievements=DailyPracticeAchievement.Read(DailyBargainProof.State(initial))});
         if (stopped()) return "bargain.stopped";
         report("bargain.travel");
-        await new DailyTradeExecution(w, new JsonObject()).OpenShop();
-        var shop = await Evidence("trade.shop_ui", "trade.bargain");
-        Require(!B(R(shop, "trade.bargain", "$self")), "bargain.existing_discount");
-        merchant = N(R(shop, "trade.shop_ui", ShopNpc));
-        Require(merchant > 0, "bargain.merchant_changed");
-        Settling = true;
-        try { await CloseShop(false); } finally { Settling = false; }
+        // Recovery may already have closed our discount and left this merchant's
+        // talent menu open. Reuse it rather than reopening an unrelated shop.
+        if(merchant>0&&await w.Has("QuickMenuUI"))await Menu();
+        else{
+            await new DailyTradeExecution(w, new JsonObject()).OpenShop();
+            var shop = await Evidence("trade.shop_ui", "trade.bargain");
+            Require(!B(R(shop, "trade.bargain", "$self")), "bargain.existing_discount");
+            merchant = N(R(shop, "trade.shop_ui", ShopNpc));
+            Require(merchant > 0, "bargain.merchant_changed");
+            Settling = true;
+            try { await CloseShop(false); } finally { Settling = false; }
+        }
         while (!stopped())
         {
             await Menu();
@@ -148,7 +177,8 @@ public sealed class DailyBargainTraining(DailyWorkflow w, Func<bool> stopped, Ac
             {
                 before = await Evidence("mainline.talent_rows");
                 current = DailyBargainProof.Character(before, approved.Character); approved.AssertSameTier(current);
-                if (current.Full) return "bargain.upgrade";
+                if(achievement!=null){achievement=achievement.Refresh(before,DailyBargainProof.ReadId);if(achievement.Remaining==0)return "practice.achievement_complete";}
+                else if (current.Full) return "bargain.upgrade";
                 var rows = Rows(R(before, "mainline.talent_rows", "$self")).Where(r => N(r["Kind"]) == 16 && N(r["Character"]) == approved.Character && N(r["Group"]) == approved.Group).ToArray();
                 Require(rows.Length == 1, "bargain.character_unavailable");
                 var candidate = rows[0];
@@ -162,7 +192,7 @@ public sealed class DailyBargainTraining(DailyWorkflow w, Func<bool> stopped, Ac
             Require(row != null && before != null, "bargain.surface_timeout");
             Require(spent + current.Cost <= budget, "bargain.budget_reached");
             Require(N(DailyBargainProof.State(before!)["Catalyst"]) >= current.Cost, "bargain.potions_changed");
-            var op = w.Business.Create(w.Context, DailyBargainProof.Role, before!, O(("character", current.Character), ("npc", merchant), ("budget", budget)), O(("ui", "DiscountPopupUI"), ("field", "_objButtonOk")));
+            var op = w.Business.Create(w.Context, DailyBargainProof.Role, before!, O(("character", current.Character), ("npc", merchant), ("budget", budget),("achievement",achievement!=null),("achievementTarget",achievement?.Target??0)), O(("ui", "DiscountPopupUI"), ("field", "_objButtonOk")));
             Settling = true;
             try
             {
@@ -180,11 +210,13 @@ public sealed class DailyBargainTraining(DailyWorkflow w, Func<bool> stopped, Ac
                 await w.Business.CommitAsync(op, w.Context, 45);
                 rounds++; spent += N(op["result"]!["cost"]);
                 current = DailyBargainProof.Character(op["after"]!.AsObject(), approved.Character);
-                progress(new(current, N(DailyBargainProof.State(op["after"]!.AsObject())["Catalyst"]), rounds, spent));
                 await Surface("ShopUI"); Merchant(await Evidence("trade.shop_ui"));
                 await CloseShop(B(op["result"]!["success"]));
-                if (current.Full) return "bargain.upgrade";
-                if (N(op["result"]!["gain"]) == 0) return "bargain.no_growth";
+                if(achievement!=null)achievement=await achievement.AfterUse(w,DailyBargainProof.ReadId);
+                progress(new(current, N(DailyBargainProof.State(op["after"]!.AsObject())["Catalyst"]), rounds, spent){Achievement=achievement,Achievements=DailyPracticeAchievement.Read(DailyBargainProof.State(op["after"]!.AsObject()))});
+                if(achievement?.Remaining==0)return "practice.achievement_complete";
+                if (achievement==null&&current.Full) return "bargain.upgrade";
+                if (achievement==null&&N(op["result"]!["gain"]) == 0) return "bargain.no_growth";
             }
             finally { Settling = false; }
         }

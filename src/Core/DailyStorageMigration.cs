@@ -30,7 +30,7 @@ public sealed class DailyStorageBindingException(string directory,string label,s
     public string Reason { get; } = reason;
 }
 
-public sealed class DailyStorageMigration
+public sealed partial class DailyStorageMigration
 {
     public enum MoveStage { Preparing, Copying, Verifying, Switching, Finishing }
     public sealed record MoveProgress(MoveStage Stage,long Completed,long Total,int Files,int TotalFiles);
@@ -57,9 +57,11 @@ public sealed class DailyStorageMigration
     static string HashWithProgress(string file,Reporter report,CancellationToken token)
     {using var stream=File.OpenRead(file);return HashWithProgress(stream,report,token);}
     internal sealed record Box(string Name,string Source,string Target,string Enabled);
-    internal sealed record Tree(string Source,string Target);
+    internal sealed record Tree(string Source,string Target)
+    { public bool RecoveryMappingOnly { get; init; } }
     internal sealed record Copied(string Source,string Target,long Length,DateTime Written,string Hash);
-    internal sealed record Journal(string Id,string Phase,string Destination,Tree[] Trees,Box[] Boxes,Copied[] Files);
+    internal sealed record Journal(string Id,string Phase,string Destination,Tree[] Trees,Box[] Boxes,Copied[] Files)
+    { public bool PreserveSources { get; init; } }
     readonly string root,legacyStore;
     readonly IStorageSandboxTransport sandbox;
     string phase="idle",sourcePath="",targetPath="";
@@ -72,7 +74,7 @@ public sealed class DailyStorageMigration
         // Recording must never replace the actual failure or block recovery.
         try { DailyJson.Write(Path.Combine(root,"storage-migration-error.json"),new {
             atUtc=DateTimeOffset.UtcNow,operation,phase,
-            destination,sourcePath,targetPath,pendingRecovery=File.Exists(Pending),
+            destination,sourcePath,targetPath,pendingRecovery=File.Exists(Pending)||File.Exists(RebindPending),
             errorType=error.GetType().FullName,error.HResult,error=error.ToString() }); }
         catch(Exception e)when(e is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException){ }
     }
@@ -126,7 +128,7 @@ public sealed class DailyStorageMigration
     // rebinding rolls back; a published routing record always rolls forward.
     public async Task RecoverAsync(CancellationToken token=default)
     {
-        if(!File.Exists(Pending))return;
+        if(!File.Exists(Pending)&&!File.Exists(RebindPending))return;
         Context("recovery-lock");
         try
         {
@@ -139,11 +141,14 @@ public sealed class DailyStorageMigration
     }
     async Task RecoverCoreAsync()
     {
+        await RecoverRebindCoreAsync();
         if(!File.Exists(Pending))return;
         Context("recovery",Pending);
         var j=DailyJson.TryRead<Journal>(Pending)??throw new IOException("storage.recovery_required");
         Validate(j);
-        var active=DailyStorageLocations.Read(root);
+        // Explicit recovery may start with missing old storage. Target ownership
+        // was validated above; routing metadata identifies the commit point.
+        var active=DailyStorageLocations.ReadConfigured(root);
         if(active?.Id==j.Id)await FinishAsync(j);
         else await RollbackAsync(j);
     }
@@ -198,7 +203,7 @@ public sealed class DailyStorageMigration
         foreach(var b in j.Boxes)if(!Same(sandbox.Read(b.Name,"FileRootPath"),b.Target))throw new IOException("storage.recovery_required");
         foreach(var b in j.Boxes)if(!sandbox.Read(b.Name,"Enabled").Trim().Equals(b.Enabled,StringComparison.OrdinalIgnoreCase))await sandbox.Set(b.Name,"Enabled",b.Enabled);
         int retained=0;
-        foreach(var f in j.Files)
+        foreach(var f in j.PreserveSources?[]:j.Files)
         {
             try
             {
@@ -211,7 +216,7 @@ public sealed class DailyStorageMigration
             catch(Exception e)when(e is IOException or UnauthorizedAccessException){retained++;}
             finally {report?.FileDone();}
         }
-        foreach(var tree in j.Trees)try{RemoveEmpty(tree.Source);}catch(Exception e)when(e is IOException or UnauthorizedAccessException){ }
+        if(!j.PreserveSources)foreach(var tree in j.Trees)try{RemoveEmpty(tree.Source);}catch(Exception e)when(e is IOException or UnauthorizedAccessException){ }
         DailyJson.Write(Path.Combine(root,"storage-migration-last.json"),new {j.Id,atUtc=DateTimeOffset.UtcNow,j.Destination,retained,sourceTrees=j.Trees.Select(t=>t.Source).ToArray()});
         File.Delete(Pending);
         return retained;

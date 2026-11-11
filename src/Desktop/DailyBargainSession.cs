@@ -9,6 +9,7 @@ internal sealed class DailyBargainSession(string root, string account)
     volatile bool stop;
     public Action<string> Report { get; set; } = _ => { };
     public Action<DailyBargainProgress> Progress { get; set; } = _ => { };
+    public Action<DailyPracticeSnapshot> Snapshot { get; set; } = _ => { };
     public void Stop() => stop = true;
     public void Begin() => stop = false;
     public void RecordFailure(Exception error)
@@ -16,12 +17,36 @@ internal sealed class DailyBargainSession(string root, string account)
         try { DailyJson.Write(Path.Combine(root, "tools", "bargain-training", "logs", DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff") + ".json"), new { atUtc = DateTimeOffset.UtcNow, account, error = error.ToString() }); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
     }
-    public async Task<(DailyBargainCharacter[] Characters, long Potions, string Player, DailyPracticeTalent[] Talents)> Read()
+    public async Task<(DailyBargainCharacter[] Characters, long Potions, string Player, DailyPracticeTalent[] Talents,DailyPracticeAchievement[] Achievements)> Read()
         => await Execute(false, async w =>
         {
             var e = await w.Evidence(DailyTalentPracticeProof.ReadId);
             var chars = DailyTalentPracticeProof.Characters(e).OrderBy(c => c.Full).ThenBy(c => c.Name).ToArray();
-            return (chars, N(DailyTalentPracticeProof.State(e)["Catalyst"]), (await w.Observe()).Daily?.PlayerName ?? "", DailyTalentPracticeProof.Talents(e));
+            return (chars, N(DailyTalentPracticeProof.State(e)["Catalyst"]), (await w.Observe()).Daily?.PlayerName ?? "", DailyTalentPracticeProof.Talents(e),DailyPracticeAchievement.Read(DailyTalentPracticeProof.State(e)));
+        });
+    string QueuePath=>Path.Combine(root,"tools","bargain-training","accounts",DailyProfiles.ValidKey(account)?account:throw new InvalidDataException("bargain.account_changed"),"queue.json");
+    public List<DailyPracticeJob> LoadQueue()=>(DailyJson.TryRead<DailyPracticeJob[]>(QueuePath)??[])
+        .Where(j=>Guid.TryParseExact(j.Id,"N",out _)&&(j.Kind==16||DailyTalentPracticeProof.FieldKind(j.Kind))&&(j.Achievement||j.Character>0))
+        .DistinctBy(j=>j.Id).Select(j=>j.State=="running"?j with{State="pending"}:j).ToList();
+    public void SaveQueue(IEnumerable<DailyPracticeJob> jobs)=>DailyJson.Write(QueuePath,jobs.ToArray());
+    public async Task TrainQueue(IList<DailyPracticeJob> jobs,Action changed)
+        =>await Execute(true,async w=>
+        {
+            int completedRounds=0;long completedSpent=0;
+            await DailyPracticeQueue.Run(jobs,async()=>{
+                var e=await w.Evidence(DailyTalentPracticeProof.ReadId);
+                var state=new DailyPracticeSnapshot(DailyTalentPracticeProof.Characters(e),N(DailyTalentPracticeProof.State(e)["Catalyst"]),DailyPracticeAchievement.Read(DailyTalentPracticeProof.State(e)));
+                Snapshot(state);return state;
+            },async(c,goal)=>{
+                DailyBargainProgress? last=null;
+                void OnProgress(DailyBargainProgress p){last=p;Progress(p with{Rounds=completedRounds+p.Rounds,Spent=completedSpent+p.Spent});}
+                string result;
+                if(c.Kind==16){fieldTrainer=null;trainer=new(w,()=>stop,Report,OnProgress);result=await trainer.Run(c,goal);}
+                else{trainer=null;fieldTrainer=new(w,()=>stop,Report,OnProgress);result=await fieldTrainer.Run(c,achievement:goal);}
+                if(last!=null){completedRounds+=last.Rounds;completedSpent+=last.Spent;}
+                return result;
+            },()=>stop,()=>{SaveQueue(jobs);changed();});
+            return true;
         });
     public async Task<string> Train(DailyBargainCharacter approved, int maximumRounds = int.MaxValue)
         => await Execute(true, async w =>
@@ -54,13 +79,13 @@ internal sealed class DailyBargainSession(string root, string account)
             args => liveUtility::Dustweave.Connection.LiveEntry.RunAsync(args, false), "talent-practice-evidence-spec.json");
         if (host.Find() != game) throw new DailyBargainFault("bargain.account_changed");
         if (stop) throw new StageHostException("stopped", "bargain.stopped");
-        var observation = DailyStageObservation.Attach(root, account, () => false);
+        bool StopBetweenRounds() => stop && trainer?.Settling != true && fieldTrainer?.Settling != true;
+        var observation = DailyStageObservation.Attach(root, account, StopBetweenRounds);
         var first = await observation.ReadFrameAsync();
-        using var driver = new DailyCommandDriver(root, new DailyPipeMailbox(root, game), observation.ReadFrameAsync, () => false);
+        using var driver = new DailyCommandDriver(root, new DailyPipeMailbox(root, game), observation.ReadFrameAsync, StopBetweenRounds);
         driver.EnsureBound(first.Context);
         var proofs = new[] { DailyBargainProof.Definition, DailyTalentPracticeProof.Definition };
-        using var business = new DailyManagedBusiness(root, driver, proofs, () => false);
-        bool StopBetweenRounds() => stop && trainer?.Settling != true && fieldTrainer?.Settling != true;
+        using var business = new DailyManagedBusiness(root, driver, proofs, StopBetweenRounds);
         var w = new DailyWorkflow(root, AppContext.BaseDirectory, first.Context, driver, business,
             new DailyStageNavigation(observation.ReadFrameAsync, StopBetweenRounds), proofs, StopBetweenRounds,
             (operation, _, request) => operation == "navigation_step"

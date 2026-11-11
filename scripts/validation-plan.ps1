@@ -113,6 +113,16 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     $resources=$saffron+'|^assets/specs/trade-evidence-spec\.json$|^src/Connection/(TradeBoxRules|TradeBoxesNative|TradeActions|EvidenceBindings|TapManifest|LiveContracts|SelfTest)\.cs$|^src/Core/(DailyTradePriceChange|DailyTradeExecution|DailyTradeBoxes|DailyResourceReview|DailyFeatureDiscovery|DailyDiagnosticExport|DailyMissions|DailyPreferences)\.cs$|^src/Desktop/(DailyPreferencesPanel|DailyToolPanel\.xaml|DailyResourceReviewWindow|MainWindow\.(ResourceReview|FeatureDiscovery(?:\.Smoke)?|PluginMarket|Plugins|StartupFeatures|ToolPlugins))\.cs$|^src/Desktop/DailyToolPanel\.xaml$|^tests/Dustweave.Tests/Cases/(TradeBoxes|FeatureDiscovery|PassRecovery|TradeCalendar|TradeTransition)Cases\.cs$|^tools/OtaMirror/Program\.cs$'
     $resources+='|^src/Shared/DailyBridgeVersion\.cs$'
     if($Scope -in @('Auto','Resources') -and $changed.Count -and !@($changed|Where-Object {$_ -notmatch $resources}).Count){$selectedScope='Resources';$outside=@()}
+    # Practice/storage maintenance changes host orchestration and one native
+    # talent reader, not other minigame implementations. Include the already
+    # verified 1.7 update lane since the retained full 1.6.10 build baseline.
+    $practiceStorage=$updates+'|^\.github/workflows/build\.yml$|^scripts/test-publish-channel-selection\.ps1$|^CHANGELOG\.md$|^src/Connection/BargainTrainingNative\.cs$'
+    $practiceStorage+='|^src/Core/(DailySandboxRegistration|DailySandbox|DailyQuickTravel|DailyTalentPractice|DailyStorageLocation|DailyStorageMigration|DailyStorageRebinding|DailyStorageRepair|DailySchedulePathRepair|DailyTradeBoxes|DailyWindowsStartup|DailyWindowsSchedule|DailyCommandDriver|DailyBargainTraining|DailyBargainRules|DailyPracticeQueue|DailyFieldTravel|DailyDiagnosticExport)\.cs$'
+    $practiceStorage+='|^src/Desktop/(DailyBargainWindow(?:\.Queue)?|DailyBargainSession|DailySchedulePanel|MainWindow(?:\.(DiagnosticExport|Bargain\.Smoke|StorageView|StartupFeatures|SoftwareSettings|Scheduling|Support\.Smoke|LaunchPaths(?:\.Smoke)?|StorageRebind|StorageRepair)|\.xaml))\.cs$|^src/Desktop/MainWindow\.xaml$'
+    $practiceStorage+='|^tests/Dustweave.Tests/Cases/(CommandDriver|DiagnosticExport|BargainTraining|TradeBoxes|TalentPractice|PracticeQueue|ObservationWait|StorageMigration|StorageRebinding|StorageRepair|SchedulingUpdates|SchedulePath|QuickTravel)Cases\.cs$'
+    $practiceOutside=@($changed|Where-Object {$_ -notmatch $practiceStorage})
+    if($Scope -eq 'PracticeStorage'){$outside=$practiceOutside}
+    if($Scope -in @('Auto','PracticeStorage') -and $changed.Count -and !$practiceOutside.Count){$selectedScope='PracticeStorage';$outside=@()}
     $reason='Changes outside the account validation boundary: '+($outside -join ', ')
     if(!$outside.Count){
      $checks=$release.flavors[0].checks
@@ -126,6 +136,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
       $groups=@('ProductIdentity','Startup','LoginIdentity','Sandbox','Parallel','ParallelProcess','AccountOrder','AccountIdentity','AccountRestart','QueueSession','QueuePeriod')
       if($selectedScope -eq 'Trading'){$groups=@('ProductIdentity','TradeOptimizer','TradeCalendar','TradeTransition','TradeData','TradeReplan','TradeQuote','TradeResume','TalentPotion','BargainTraining','UserText')}
       if($selectedScope -eq 'Updates'){$groups=@('ProductIdentity','UpdateLayout','UpdateDelta','UpdateSafety','UpdateRepair','UpdateInventory','CacheStorage','SchedulingUpdates','UnifiedSuite','SuiteOwnerProbe','UserText')}
+      if($selectedScope -eq 'PracticeStorage'){$groups=@('ProductIdentity','TalentPractice','BargainTraining','FieldTalent','QuickTravel','CollectionReadiness','CommandDriver','ObservationWait','DiagnosticExport','StorageMigration','StoragePath','StorageMaintenance','CacheStorage','Sandbox','SandboxScope','SchedulingUpdates','TradeBoxes','ManagedInputs','BusinessJournal','UpdateLayout','UpdateDelta','UpdateSafety','UpdateRetention','LocalizationArchitecture','UserText')}
       if($selectedScope -eq 'UiReadiness'){$groups=@('ProductIdentity','UiInteractionReadiness','ManagementStage','ManagedInputs','CommandDriver','Workflow','MirrorStage','DispatchRecovery','BattleArrivalRecovery','HomeNavigation','HomeRecovery','PackagedUtility','PluginStore','UnifiedSuite','UserText')}
       if($selectedScope -in @('Weekly','Observation','Saffron','Resources')){$groups=@('ProductIdentity','WeeklyIsolation','WeeklyGoal','CollectionReadiness','FieldTalent','WeeklyNpcBoard','WeeklyNpcQuery','WeeklyNpcInteraction','CommandDriver','ManagedInputs','QueueSession','QueueEngine','QueuePeriod','QueueExecutionThread','PickupRecovery','BusinessJournal','BusinessScope','MirrorStage','FreeDrawStage','DispatchRecovery','ManagementStage','TradeResume','TravelTransition','UserText')}
       if($selectedScope -in @('Weekly','Observation','Saffron','Resources') -and $changed -match '^src/Connection/'){$groups+=@('FieldAvoidance','QuickTravel','HomeNavigation','HomeRecovery')}
@@ -145,7 +156,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
    }
   }
  }
- if($Scope -in @('Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Observation','Saffron','Resources')){throw "Scoped validation cannot reuse this baseline: $reason"}
+ if($Scope -in @('Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Observation','Saffron','Resources','PracticeStorage')){throw "Scoped validation cannot reuse this baseline: $reason"}
  $full.reason=$reason
  return $full
 }

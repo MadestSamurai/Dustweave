@@ -266,11 +266,24 @@ public partial class MainWindow
         var locationPanel = new StackPanel(); Card(panel, 8).Child = locationPanel;
         var locationRow = new DockPanel();
         var move = new Button { Name = "CacheStorageMove", Margin = new(10, 0, 0, 0) }; L.Bind(move, ContentControl.ContentProperty, "storage.move"); DockPanel.SetDock(move, Dock.Right); locationRow.Children.Add(move);
-        var location = new TextBox { IsReadOnly = true, Text = DailyCacheStorage.Location(root), VerticalContentAlignment = VerticalAlignment.Center }; locationRow.Children.Add(location); locationPanel.Children.Add(locationRow);
+        var location = new TextBox { IsReadOnly = true, VerticalContentAlignment = VerticalAlignment.Center }; locationRow.Children.Add(location); locationPanel.Children.Add(locationRow);
         var sandboxLocation = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 8, 0, 0), FontSize = 12 }; sandboxLocation.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk");
-        void ShowSandboxLocation() => L.Text(sandboxLocation, "storage.sandbox_location", smoke == null ? DailySandbox.Store : Path.Combine(root, "instances"));
-        ShowSandboxLocation(); locationPanel.Children.Add(sandboxLocation);
+        void ShowStorageLocation()
+        {
+            // Recovery must remain reachable when the active route cannot resolve.
+            // The stored path is display-only; no data operation uses this fallback.
+            try { location.Text=DailyStorageLocations.ReadConfigured(root)?.Cache??DailyCacheStorage.Location(root); }
+            catch(Exception e)when(e is IOException or UnauthorizedAccessException) {
+                location.Text="";
+            }
+            try {L.Text(sandboxLocation,"storage.sandbox_location",DailyStorageLocations.ReadConfigured(root)?.Sandboxes??(smoke==null?DailySandbox.Store:Path.Combine(root,"instances")));}
+            catch(Exception e)when(e is IOException or UnauthorizedAccessException) {L.Text(sandboxLocation,"storage.rebind.unavailable");}
+        }
+        ShowStorageLocation(); locationPanel.Children.Add(sandboxLocation);
         Text(locationPanel, "storage.move_scope", 8).SetResourceReference(TextBlock.ForegroundProperty, "MutedInk");
+        var rebind = new Button { Name="StorageRebind",HorizontalAlignment=HorizontalAlignment.Left,Margin=new(0,12,0,0) };
+        L.Bind(rebind,ContentControl.ContentProperty,"storage.rebind"); locationPanel.Children.Add(rebind);
+        Text(locationPanel,"storage.rebind.hint",8).SetResourceReference(TextBlock.ForegroundProperty,"MutedInk");
 
         // Footer stays visible: the scope of cleaning is stated next to the button.
         var footer = new Border { BorderThickness = new(0, 1, 0, 0), Padding = new(24, 14, 24, 18) }; footer.SetResourceReference(Border.BorderBrushProperty, "Line");
@@ -321,6 +334,7 @@ public partial class MainWindow
         void Controls(bool enabled)
         {
             scan.IsEnabled = enabled; days.IsEnabled = enabled; size.IsEnabled = enabled; automatic.IsEnabled = enabled; move.IsEnabled = enabled && !IsSandboxWindow;
+            rebind.IsEnabled=enabled&&!IsSandboxWindow;
             clean.IsEnabled = enabled && storage != null && (Reclaimable() > 0 || storage.ReclaimableBytes > 0 || storage.OptimizableFiles > 0);
             resourceCheck.IsEnabled = enabled && !IsSandboxWindow;
             resourceOptimize.IsEnabled = enabled && resourcePlan?.Copies.Length > 0 && !IsSandboxWindow;
@@ -333,7 +347,8 @@ public partial class MainWindow
             try { DailyJson.Write(Path.Combine(root,"storage-operation-error.json"),new {atUtc=DateTimeOffset.UtcNow,version=DailyProductVersion.Current,error=error.ToString()}); }
             catch(Exception logError)when(logError is IOException or UnauthorizedAccessException){ }
             if (error is DailyStorageBindingException) DailyUiText.Error(status, error);
-            else if (error.Message.StartsWith("storage.", StringComparison.Ordinal)) L.Text(status, error.Message);
+            else if(error.Message=="storage.location_unavailable") {L.Text(status,"storage.size_unknown");L.Text(headline,"storage.rebind.unavailable");}
+            else if (error.Message.StartsWith("storage.", StringComparison.Ordinal)) {L.Text(status, error.Message);L.Text(headline,"storage.size_unknown");}
             else DailyUiText.Error(status, error);
         }
         void Show(DailyStorageOverview report)
@@ -405,6 +420,21 @@ public partial class MainWindow
         automatic.Click += (_, _) => Save(); days.SelectionChanged += (_, _) => Save(); size.SelectionChanged += (_, _) => Save();
         bool BusyStorage(bool moving = false) => Unavailable || dailyQueue.IsRunning || updateChecking || updateInstalling || moving && (ToolOpen || (!IsSandboxWindow && smoke == null && DailyUpdateHost.HasIsolatedWindows()));
         scan.Click += async (_, _) => { result.Visibility = Visibility.Collapsed; await Scan(); };
+        rebind.Click += async (_,_) =>
+        {
+            if(working)return;
+            if(BusyStorage(true)){L.Text(status,"storage.busy");return;}
+            working=true;Controls(false);
+            try
+            {
+                if(DailyDialogs.ShowModal(CreateStorageRebindWindow(dialog))==true) {
+                    ShowStorageLocation();storage=null;await Measure();
+                    L.Text(result,"storage.rebind.done");result.Visibility=Visibility.Visible;
+                }
+            }
+            catch(Exception error){if(!closed)Error(error);}
+            finally {working=false;if(!closed)Controls(true);else lifetime.Dispose();}
+        };
         resourceCheck.Click += async (_, _) =>
         {
             if (working) return;
@@ -480,7 +510,7 @@ public partial class MainWindow
                 finally { SetCacheChanging(false); }
                 if (!closed)
                 {
-                    location.Text = moved.Path; ShowSandboxLocation();
+                    ShowStorageLocation();
                     L.Text(result, "storage.moved", MiB(moved.Bytes), moved.RetainedFiles); result.Visibility = Visibility.Visible;
                     ResetMoveProgress(); L.Text(status, "logs.scanning"); await Measure();
                 }

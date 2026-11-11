@@ -56,7 +56,7 @@
   </StackPanel>
   <Grid x:Name="PageHeader" Grid.Column="1" Margin="24,24,24,20">
    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
    <StackPanel Margin="0,0,16,0">
     <TextBlock x:Name="PageTitle" Text="{Binding SelectedItem.Header,ElementName=WorkspaceTabs}" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text,RelativeSource={RelativeSource Self}}"/>
     <TextBlock x:Name="ConnectionText" FontSize="12" Text="{l:Tr connection.none}" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" Margin="0,6,0,0"/>
@@ -105,6 +105,18 @@
    </Border>
    <Border x:Name="ActionNotice" Grid.Row="2" Grid.ColumnSpan="3" Visibility="Collapsed" CornerRadius="8" Background="{DynamicResource ErrorSoft}" Padding="12,8" Margin="0,12,0,0">
     <DockPanel><Button DockPanel.Dock="Right" Click="DismissActionNotice_Click" Style="{StaticResource QuietButton}" AutomationProperties.Name="{l:Tr window.close}" ToolTip="{l:Tr window.close}" Content="×" Margin="12,0,0,0"/><ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="90"><TextBlock x:Name="ActionNoticeText" TextWrapping="Wrap" Foreground="{DynamicResource Error}"/></ScrollViewer></DockPanel>
+   </Border>
+   <Border x:Name="LaunchPathNotice" Grid.Row="3" Grid.ColumnSpan="3" Visibility="Collapsed" CornerRadius="8" Background="{DynamicResource PrimarySoft}" Padding="12,8" Margin="0,12,0,0">
+    <DockPanel>
+     <Button DockPanel.Dock="Right" Click="DismissLaunchPathNotice_Click" Style="{StaticResource QuietButton}" AutomationProperties.Name="{l:Tr window.close}" ToolTip="{l:Tr window.close}" Content="×" Margin="8,0,0,0"/>
+     <StackPanel>
+      <TextBlock x:Name="LaunchPathNoticeText" TextWrapping="Wrap" FontSize="13"/>
+      <WrapPanel Margin="0,4,0,0">
+       <Button x:Name="LaunchPathReview" Content="{l:Tr launch_paths.view_schedule}" Style="{StaticResource QuietButton}" Click="ReviewLaunchPaths_Click" Margin="0,0,8,0"/>
+       <Button x:Name="LaunchPathRetry" Content="{l:Tr launch_paths.retry}" Style="{StaticResource QuietButton}" Click="RetryLaunchPaths_Click"/>
+      </WrapPanel>
+     </StackPanel>
+    </DockPanel>
    </Border>
   </Grid>
   <TabControl x:Name="WorkspaceTabs" Grid.Row="1" Grid.ColumnSpan="2" SelectionChanged="WorkspaceTab_Changed" Background="Transparent" BorderThickness="0" SelectedIndex="0" TabStripPlacement="Left" ItemContainerStyle="{StaticResource NavigationTab}">

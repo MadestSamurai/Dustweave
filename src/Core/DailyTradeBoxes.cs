@@ -18,19 +18,33 @@ public static class DailyTradeBoxes
         var state = await Read();
         var previous = DailyJson.TryRead<JsonObject>(path);
         var frame = (await w.Observe()).Frame;
-        bool sameProcess = previous != null && S(previous["state"]) == "pending" &&
+        bool sameProcess = previous != null &&
             N(previous["process"]) == N(frame["ProcessId"]) && N(previous["started"]) == N(frame["ProcessStartTicks"]);
-        if (sameProcess)
+        bool resume = previous != null && (S(previous["state"]) == "presentation_pending" ||
+            (sameProcess && S(previous["state"]) == "pending"));
+        if (resume)
         {
-            if (B(state["Pending"]) || B(state["Busy"])) { await WaitBatch(); state = await Read(); }
+            bool activeBatch = B(state["Pending"]);
+            if (activeBatch || B(state["Busy"])) { await WaitBatch(); state = await Read(); }
             if (previous!["boxes"] is JsonArray selection && Rows(selection).Any(old =>
                 Rows(state["Boxes"]).Any(x => N(x["Instance"]) == N(old["Instance"]) && N(x["Count"]) > 0)))
                 w.Report("tradeboxes.unconfirmed");
-            await Finish();
-            previous!["state"] = "completed"; DailyJson.Write(path, previous); return;
+            PreparePresentation(previous!);
+            await Finish(previous, awaitAppearance: activeBatch, sameProcess: sameProcess);
+            previous!["state"] = "completed"; previous["finished"] = w.Driver.UtcTicks; DailyJson.Write(path, previous); return;
         }
-        if (B(state["Pending"])) { await WaitBatch(); await Finish(); return; }
+        if (B(state["Pending"]))
+        {
+            await WaitBatch();
+            var existing = O(("process", frame["ProcessId"]), ("started", frame["ProcessStartTicks"]));
+            PreparePresentation(existing);
+            await Finish(existing, awaitAppearance: true);
+            existing["state"] = "completed"; existing["finished"] = w.Driver.UtcTicks; DailyJson.Write(path, existing); return;
+        }
         if (B(state["Busy"])) { await WaitBatch(); state = await Read(); }
+        // Older builds could record the batch as completed before the delayed
+        // reward appeared. Recover that visible presentation before any new batch.
+        if (await w.Has("RewardReceivePopupUI")) { await Finish(); state = await Read(); }
         var selected = Available(state);
         if (selected.Length == 0) { if (await w.Has("InventoryManageUI")) await Finish(); return; }
         if (B(state["Full"])) { w.Report("tradeboxes.full"); return; }
@@ -54,14 +68,37 @@ public static class DailyTradeBoxes
         catch (DailyStepException error) when (!error.Submitted && error.Kind == "rejected")
         { journal["state"] = "not_sent"; DailyJson.Write(path, journal); throw; }
         await WaitBatch(N(state["Revision"]) + 1);
+        PreparePresentation(journal);
+        await Finish(journal, awaitAppearance: true);
         journal["state"] = "completed"; journal["finished"] = w.Driver.UtcTicks; DailyJson.Write(path, journal);
-        await Finish();
 
-        async Task Finish()
+        void PreparePresentation(JsonObject batch)
         {
-            // The reward closes onto inventory first. Waiting for MenuUI while
-            // inventory is still open would delay an already completed batch.
-            if (await w.Has("InventoryManageUI")) await DailyResults.Cleanup(w, "InventoryManageUI");
+            batch["state"] = "presentation_pending";
+            if (N(batch["settled"]) <= 0) batch["settled"] = w.Driver.UtcTicks;
+            DailyJson.Write(path, batch);
+        }
+
+        async Task Finish(JsonObject? batch = null, bool awaitAppearance = false, bool sameProcess = true)
+        {
+            // OpenBoxItem finishes the network batch after requesting an ASYNC
+            // reward window. Inventory and the underlying menu can still be ready
+            // before that window arrives. Fresh batches must observe it first;
+            // A cancelled wait keeps its original deadline. After that deadline,
+            // an already-dismissed result can resume from a stable destination.
+            // A restarted game cannot retain the old asynchronous UI request.
+            double remaining = awaitAppearance ? 40 : batch != null && sameProcess && !B(batch["reward_seen"]) && await w.Has("InventoryManageUI")
+                ? Math.Clamp(40 - (w.Driver.UtcTicks - N(batch["settled"])) / (double)TimeSpan.TicksPerSecond, 0, 40) : 0;
+            if (remaining > 0)
+                await w.Wait(f => DailyNavigationDecision.Types(f.Frame).Contains("RewardReceivePopupUI") ||
+                    (!awaitAppearance && !DailyNavigationDecision.Types(f.Frame).Contains("InventoryManageUI")), remaining, "tradeboxes.reward_waiting");
+            if (batch != null && await w.Has("RewardReceivePopupUI"))
+            { batch["reward_seen"] = true; DailyJson.Write(path, batch); }
+            await w.Driver.DismissRewardAsync(["InventoryManageUI", "MenuUI", "GameFieldDefaultUI"], true);
+            // The reward returns to inventory, not directly to MenuUI. Only after
+            // presentation cleanup may the inventory back action be submitted.
+            if (await w.Has("InventoryManageUI"))
+                await w.Step("InventoryManageUI", back: true, absent: "InventoryManageUI", reason: "结束已确认的操作页面");
             await DailyResults.Cleanup(w, "MenuUI");
         }
 

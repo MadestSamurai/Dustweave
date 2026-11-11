@@ -31,6 +31,13 @@ public partial class MainWindow
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             Capture("talent-practice-field-" + locale + "-" + appearance, (FrameworkElement)dialog.Content);
             checks++;
+            dialog.PreviewQueueForSmoke();
+            dialog.Width=660;dialog.Height=740;
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            Capture("talent-practice-achievement-" + locale + "-" + appearance, (FrameworkElement)dialog.Content);checks++;
+            dialog.PreviewLevelRefreshForSmoke();
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            Capture("talent-practice-level-refresh-" + locale + "-" + appearance, (FrameworkElement)dialog.Content);checks++;
             if (!await CloseToolWindowsAsync() || practiceWindow != null || ToolOpen) throw new Exception("Practice tool failed to close through host lifecycle");
             checks++;
         }

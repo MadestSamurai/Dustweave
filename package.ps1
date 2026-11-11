@@ -3,7 +3,7 @@ param(
  [Parameter(Mandatory)][string]$GameManagedDir,
  [ValidateSet('Portable','Lite')][string[]]$Flavors=@('Portable','Lite'),
  [string]$PreparedCacheDirectory='',
- [ValidateSet('Auto','Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Observation','Saffron','Resources','Full')][string]$ValidationScope='Auto',
+ [ValidateSet('Auto','Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Observation','Saffron','Resources','PracticeStorage','Full')][string]$ValidationScope='Auto',
  [string]$ValidationBaseline='',
  [string]$PublisherEvidence='',
  [string]$SyntheticEvidence='',
@@ -207,6 +207,18 @@ foreach($flavor in $Flavors){
   Run $exe @(('--'+$mode),$check) ($flavor+'-'+$mode)
  }
  Pass (Join-Path $checks 'smoke/smoke.json')
+ if($validation.scope -eq 'PracticeStorage'){
+  foreach($scope in @('bargain','support','launch-paths','localization','free-notice')){
+   $check=Join-Path $checks ('smoke-'+$scope)
+   Run $exe @('--smoke',$check) ($flavor+'-smoke-'+$scope) 180 $scope
+   Pass (Join-Path $check 'smoke.json')
+  }
+  if($flavor -eq $Flavors[0]){
+   Run $exe @('--utility','live','prepare',$managed,(Join-Path $checks 'live-client')) 'live-client'
+   Run $exe @('--utility','live','taps-all',$managed,(Join-Path $bundle 'app/connection/specs'),(Join-Path $checks 'evidence')) 'evidence-configs'
+   Pass (Join-Path $checks 'evidence/result.json')
+  }
+ }
  if($validation.scope -in @('Observation','Saffron','Resources')){
   $noticeCheck=Join-Path $checks 'smoke-free-notice'
   Run $exe @('--smoke',$noticeCheck) ($flavor+'-smoke-free-notice') 180 'free-notice'

@@ -20,6 +20,14 @@ The primary multi-account action lives on Accounts. Accounts run in list order u
 
 ## Scheduling / 定时执行
 
+### Installation location / 程序位置 · 1.7.1
+
+正常桌面启动后，在后台核对已启用定时计划的 Windows 启动位置。只有现存任务的程序位置或工作目录变化时，才更新这两个字段；不重新创建任务，不改执行时间、账号、SavedUtc、领取记录、Windows 触发器或权限。同目录 OTA 不写任务、不显示路径提醒，也不等待这项检查完成。
+
+手动换目录后，用页眉内可关闭的提示告知修正结果，并提醒用户更新自建快捷方式。检查或写入失败时保留原计划，提供「重试检查」及「查看定时计划」；重试仍失败时可在定时页面重新保存。Windows 中已停用、被删除或无法确认归属的任务不会被自动启用、重建或覆盖。失败记录 `schedule-path-repair.json` 随诊断导出。此检查不连接游戏，不阻止日常、自动执行、更新确认或退出。
+
+Windows startup similarly refreshes only an existing opt-in when its command changes. A same-path update has no write or notice. Task Scheduler repair uses TASK_UPDATE and the existing XML, with a second comparison before writing and a read-back afterwards. An interrupted attempt is reconciled from Windows on the next startup; there is no persistent gate or plan reset. Concurrent saves and repairs are serialized without holding the global operation lock. Source tests use injected task storage; `launch-paths` UI smoke uses synthetic results only.
+
 - 默认关闭；在定时页面选择每天的固定时间和账号后保存才启用。
 - 按 Windows 本机时区执行，账号名单不随账号页临时勾选改变。
 - 在定时页面单独选择依次执行或沙盒并行，保存后不受账号页临时运行模式影响。并行时可选择同时运行数量及结束后关闭游戏。
@@ -28,7 +36,7 @@ The primary multi-account action lives on Accounts. Accounts run in list order u
 - 软件已开时由同一应用轮询处理；第二个启动进程静默退出，不弹“已打开”窗口。
 - 忙碌或晚启动最多延后 15 分钟。过期不补跑。已开始的计划在连接前落盘领取记录，崩溃或重启不会重放同次计划；需要在今日任务中手动接续。
 - 所有目标身份必须仍有效才开始；从不回退到当前登录账号。沿用现有账号切换校验和工具控制锁。
-- 计划、上次结果和领取记录位于既有用户数据目录；不是程序安装目录。迁移 EXE 到不同目录后须重新保存定时计划。
+- 计划、上次结果和领取记录位于既有用户数据目录；不是程序安装目录。迁移 EXE 到不同目录后，正常启动会核对并修正定时启动路径；如提示失败，可重试或重新保存定时计划。
 
 Schedules run every day when enabled, use local wall-clock time and persist fixed account identities. They use the existing queue and control lease. A per-occurrence claim prevents repeat execution after a crash. Missed runs have a 15-minute grace period; there is no multi-day catch-up. Windows runs the task only in the signed-in user's session, with no elevation or stored password. Moving the executable requires saving the schedule again.
 

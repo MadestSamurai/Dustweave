@@ -55,6 +55,27 @@ internal static class DailySandboxRegistration
         if(bindingPresent && binding==null)throw new InvalidDataException("隔离账号绑定暂时无法读取，已保留原文件；仅此账号暂未启动。");
         if(binding!=null && (binding.Account!=account || !string.Equals(binding.Box,box,StringComparison.OrdinalIgnoreCase)))throw new InvalidDataException("隔离窗口绑定属于其他账号，未修改；仅此账号暂未启动。");
         if(registered!=null)return registered;
+        if(DailyStorageMigration.ReadRebuild(state) is {} rebuild && rebuild.Account==account && rebuild.Box==box
+            && (configuredRoot.Length==0||SandboxConfiguration.SameRoot(configuredRoot,root))
+            && binding==null && (!Directory.Exists(root)||!Directory.EnumerateFileSystemEntries(root).Any()))
+        {
+            // User-approved rebuild of a missing instance, never replacement of
+            // surviving login data. Normal launch still bootstraps the saved account.
+            var fresh=new DailySandboxRequest(box,rebuild.Slot,account,rebuild.Name,gamePath(),DateTimeOffset.UtcNow);
+            DailySandbox.Validate(fresh);
+            // Publish only a complete index. A crash during serialization must
+            // leave the rebuild authorization usable on the next launch.
+            string pending=marker+".rebuild-"+Guid.NewGuid().ToString("N");
+            try
+            {
+                using(var stream=new FileStream(pending,FileMode.CreateNew,FileAccess.Write,FileShare.None))
+                {JsonSerializer.Serialize(stream,fresh,DailyJson.Options);stream.Flush(true);}
+                File.Move(pending,marker);
+            }
+            finally {if(File.Exists(pending))File.Delete(pending);}
+            File.Delete(Path.Combine(state,DailyStorageMigration.RebuildFile));
+            return fresh;
+        }
         if(configuredRoot.Length==0 && binding==null && (!Directory.Exists(root)||!Directory.EnumerateFileSystemEntries(root).Any()))return null;
         if(configuredRoot.Length==0 || binding==null)throw new InvalidDataException("隔离空间缺少可核对的账号绑定，已保留数据；仅此账号暂未启动。");
         if(binding.Slot is <1 or >100)throw new InvalidDataException("隔离空间的账号位置无效，未修改登记。");

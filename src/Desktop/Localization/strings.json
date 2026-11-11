@@ -1,4 +1,77 @@
 {
+  "practice.queue_levels_changed": {"zh-CN":"已从列表移除 {0} 项技能等级已变化的服装：{1}。如需练习新等级，请重新加入。","zh-TW":"已從清單移除 {0} 項技能等級已變更的服裝：{1}。如需練習新等級，請重新加入。","en-US":"Removed {0} entries whose talent level changed: {1}. Add them again to train the new level."},
+  "practice.queue_cost_label": {"zh-CN":"列表剩余预计耗药","zh-TW":"清單剩餘預計耗藥","en-US":"Estimated pills for the remaining queue"},
+  "practice.queue_cost": {"zh-CN":"共 {0} 个天赋药 · {1} 次技能使用","zh-TW":"共 {0} 個天賦藥 · {1} 次技能使用","en-US":"{0} talent pills in total · {1} skill uses"},
+  "practice.queue_cost_partial": {"zh-CN":"已可估算：{0} 个天赋药 · {1} 次；另有 {2} 项待刷新确认","zh-TW":"已可估算：{0} 個天賦藥 · {1} 次；另有 {2} 項待刷新確認","en-US":"Estimated items: {0} pills · {1} uses; refresh to check {2} other items"},
+  "practice.queue_stock": {"zh-CN":"当前持有 {0} 个天赋药","zh-TW":"目前持有 {0} 個天賦藥","en-US":"Available: {0} talent pills"},
+  "practice.queue_stock_short": {"zh-CN":"当前持有 {0} 个 · 预计还缺 {1} 个（不自动购买）","zh-TW":"目前持有 {0} 個 · 預計還缺 {1} 個（不自動購買）","en-US":"Available: {0} · Estimated shortfall: {1} (no automatic purchase)"},
+  "practice.achievement_cost_label": {"zh-CN":"完成目标预计消耗","zh-TW":"完成目標預計消耗","en-US":"Estimated cost to complete the goal"},
+  "practice.mode": {"zh-CN":"练习目标","zh-TW":"練習目標","en-US":"Practice goal"},
+  "practice.mode_xp": {"zh-CN":"天赋经验","zh-TW":"天賦經驗","en-US":"Talent experience"},
+  "practice.mode_achievement": {"zh-CN":"成就次数","zh-TW":"成就次數","en-US":"Achievement uses"},
+  "practice.queue_title": {"zh-CN":"练习列表","zh-TW":"練習清單","en-US":"Practice queue"},
+  "practice.queue_add": {"zh-CN":"加入列表","zh-TW":"加入清單","en-US":"Add to queue"},
+  "practice.queue_start": {"zh-CN":"运行列表","zh-TW":"執行清單","en-US":"Run queue"},
+  "practice.queue_up": {"zh-CN":"上移","zh-TW":"上移","en-US":"Move up"},
+  "practice.queue_down": {"zh-CN":"下移","zh-TW":"下移","en-US":"Move down"},
+  "practice.queue_remove": {"zh-CN":"移除","zh-TW":"移除","en-US":"Remove"},
+  "practice.queue_empty": {"zh-CN":"选择技能和服装后加入列表，按顺序练习。","zh-TW":"選擇技能與服裝後加入清單，依序練習。","en-US":"Select a skill and costume, then add it to the queue."},
+  "practice.queue_pending": {"zh-CN":"待执行","zh-TW":"待執行","en-US":"Pending"},
+  "practice.queue_running": {"zh-CN":"进行中","zh-TW":"執行中","en-US":"Running"},
+  "practice.queue_completed": {"zh-CN":"已完成","zh-TW":"已完成","en-US":"Completed"},
+  "practice.queue_blocked": {"zh-CN":"需要处理","zh-TW":"需要處理","en-US":"Needs attention"},
+  "practice.queue_row": {"zh-CN":"{0}. {1} · {2} · {3}","zh-TW":"{0}. {1} · {2} · {3}","en-US":"{0}. {1} · {2} · {3}"},
+  "practice.saved_character": {"zh-CN":"已保存服装 {0}","zh-TW":"已儲存服裝 {0}","en-US":"Saved costume {0}"},
+  "practice.queue_complete": {"zh-CN":"列表已完成。","zh-TW":"清單已完成。","en-US":"Queue completed."},
+  "practice.queue_attention": {"zh-CN":"进度已保存。处理未完成项目后，可再次运行列表。","zh-TW":"進度已儲存。處理未完成項目後，可再次執行清單。","en-US":"Progress saved. Resolve unfinished items, then run the queue again."},
+  "practice.queue_retry": {"zh-CN":"进度已保留，再次运行会按游戏最新进度继续。","zh-TW":"進度已保留，再次執行會依遊戲最新進度繼續。","en-US":"Progress retained. Run again to continue from the game's current progress."},
+  "practice.queue_insufficient": {"zh-CN":"天赋药不足或当前技能无法练习；补足资源并刷新后可继续。","zh-TW":"天賦藥不足或目前技能無法練習；補足資源並刷新後可繼續。","en-US":"Not enough talent pills, or this skill cannot be trained. Replenish and refresh to continue."},
+  "practice.achievement_missing": {"zh-CN":"游戏中没有该技能的使用次数成就。可改用天赋经验练习。","zh-TW":"遊戲中沒有此技能的使用次數成就。可改用天賦經驗練習。","en-US":"This skill has no use-count achievement. You can train talent experience instead."},
+  "practice.achievement_unknown": {"zh-CN":"尚未读到成就进度。请进入游戏后刷新，暂不消耗天赋药。","zh-TW":"尚未讀取到成就進度。請進入遊戲後刷新，暫不消耗天賦藥。","en-US":"Achievement progress is not available yet. Enter the game and refresh before spending pills."},
+  "practice.achievement_stalled": {"zh-CN":"技能已使用，但成就次数尚未增加。已暂停；确认游戏进度后刷新并继续，避免无效消耗。","zh-TW":"技能已使用，但成就次數尚未增加。已暫停；確認遊戲進度後刷新並繼續，避免無效消耗。","en-US":"The skill was used, but its achievement count has not advanced. Paused to avoid wasted pills; check game progress, refresh and resume."},
+  "practice.achievement_complete": {"zh-CN":"该技能的最高档次数成就已完成。","zh-TW":"此技能的最高階次數成就已完成。","en-US":"The highest use-count achievement for this skill is complete."},
+  "practice.achievement_progress": {"zh-CN":"累计 {0} / {1} 次","zh-TW":"累計 {0} / {1} 次","en-US":"Total uses: {0} / {1}"},
+  "practice.achievement_estimate": {"zh-CN":"剩余 {0} 次 · 预计 {1} 个天赋药","zh-TW":"剩餘 {0} 次 · 預計 {1} 個天賦藥","en-US":"{0} uses left · Estimated {1} talent pills"},
+  "practice.achievement_hint": {"zh-CN":"以游戏成就最高档为目标，自动选择单次耗药最少的服装。经验满级也会继续；药不足时保留进度，不自动买药。","zh-TW":"以遊戲成就最高階為目標，自動選擇單次耗藥最少的服裝。經驗滿級也會繼續；藥不足時保留進度，不自動買藥。","en-US":"Targets the highest achievement tier using the lowest-cost costume. Continues at max experience; saves progress when pills run out, without buying more."},
+  "storage.rebind": { "zh-CN": "重新绑定数据目录…", "zh-TW": "重新綁定資料目錄…", "en-US": "Reconnect data folder…" },
+  "storage.repair.open": { "zh-CN": "找不到旧目录？恢复到新目录…", "zh-TW": "找不到舊目錄？恢復至新目錄…", "en-US": "Cannot find old data? Recover to a new folder…" },
+  "storage.repair.title": { "zh-CN": "恢复存储数据", "zh-TW": "恢復儲存資料", "en-US": "Recover stored data" },
+  "storage.repair.close": { "zh-CN": "完成", "zh-TW": "完成", "en-US": "Done" },
+  "storage.repair.instructions": { "zh-CN": "选择新位置。工具会查找旧位置及附近目录，将找到的数据复制并校验后恢复到新目录。原文件保留，本机已保存的账号、设置和更新恢复记录不变。", "zh-TW": "選取新位置。工具會尋找舊位置及附近目錄，將找到的資料複製並驗證後恢復至新目錄。原始檔案保留，本機已儲存的帳號、設定及更新恢復記錄不變。", "en-US": "Choose a new location. Recoverable data from the old location and nearby folders will be copied and verified. Original files, saved accounts, settings and update recovery records are preserved." },
+  "storage.repair.path": { "zh-CN": "新的数据目录", "zh-TW": "新的資料目錄", "en-US": "New data folder" },
+  "storage.repair.browse": { "zh-CN": "选择新位置…", "zh-TW": "選取新位置…", "en-US": "Choose location…" },
+  "storage.repair.select": { "zh-CN": "请选择存放位置，工具将在其中建立新的数据文件夹。", "zh-TW": "請選取儲存位置，工具會在其中建立新的資料夾。", "en-US": "Choose a location. A new data folder will be created inside it." },
+  "storage.repair.check": { "zh-CN": "检查可恢复数据", "zh-TW": "檢查可恢復資料", "en-US": "Check recoverable data" },
+  "storage.repair.checking": { "zh-CN": "正在查找可用文件并核对账号归属…", "zh-TW": "正在尋找可用檔案並核對帳號歸屬…", "en-US": "Finding available files and checking account ownership…" },
+  "storage.repair.preview": { "zh-CN": "新数据目录：{0}\n沙盒将建立在：{1}\n\n可恢复 {2} 个沙盒；需要重建 {3} 个；未能自动恢复 {4} 项。预计复制 {5}。\n缺失的缓存会重新生成。丢失的沙盒登录和游戏本地设置无法凭空恢复，个别账号可能需要重新登录。", "zh-TW": "新資料目錄：{0}\n沙盒將建立於：{1}\n\n可恢復 {2} 個沙盒；需要重建 {3} 個；無法自動恢復 {4} 項。預計複製 {5}。\n遺失的快取會重新產生。遺失的沙盒登入及遊戲本機設定無法憑空恢復，部分帳號可能需要重新登入。", "en-US": "New data folder: {0}\nSandboxes will be created at: {1}\n\n{2} sandboxes recoverable; {3} to rebuild; {4} items not automatically restored. Estimated copy: {5}.\nMissing caches will regenerate. Lost sandbox sign-ins and local game settings cannot be recovered from nothing; some accounts may need to sign in again." },
+  "storage.repair.apply": { "zh-CN": "恢复到新目录", "zh-TW": "恢復至新目錄", "en-US": "Recover to new folder" },
+  "storage.repair.copying": { "zh-CN": "正在复制并校验可恢复数据…", "zh-TW": "正在複製並驗證可恢復資料…", "en-US": "Copying and verifying recoverable data…" },
+  "storage.repair.progress": { "zh-CN": "复制与校验：{0} / {1}", "zh-TW": "複製與驗證：{0} / {1}", "en-US": "Copying and verifying: {0} / {1}" },
+  "storage.repair.finishing": { "zh-CN": "正在恢复目录与沙盒绑定，请稍候…", "zh-TW": "正在恢復目錄與沙盒連結，請稍候…", "en-US": "Restoring storage and sandbox paths…" },
+  "storage.repair.done": { "zh-CN": "已恢复使用。\n数据目录：{0}\n沙盒目录：{1}\n\n恢复 {2} 个沙盒，准备重建 {3} 个，未自动恢复 {4} 项。缺失的沙盒将在下次隔离启动时按正常流程准备；如登录数据也已丢失，请重新登录。原位置残留文件已保留。", "zh-TW": "已恢復使用。\n資料目錄：{0}\n沙盒目錄：{1}\n\n恢復 {2} 個沙盒，準備重建 {3} 個，未自動恢復 {4} 項。遺失的沙盒會在下次隔離啟動時依正常流程準備；若登入資料也已遺失，請重新登入。原位置的剩餘檔案已保留。", "en-US": "Storage is available again.\nData: {0}\nSandboxes: {1}\n\n{2} sandboxes recovered; {3} ready to rebuild; {4} items not automatically restored. Missing sandboxes will be prepared on the next isolated launch. Sign in again if login data was lost. Original remnants were kept." },
+  "storage.repair.cancelled": { "zh-CN": "已取消。原数据保留，可以重新检查后再试。", "zh-TW": "已取消。原資料保留，可重新檢查後再試。", "en-US": "Cancelled. Original data was preserved. Check again to retry." },
+  "storage.repair.drive_unavailable": { "zh-CN": "所选磁盘未连接，请连接磁盘或选择其他位置。", "zh-TW": "選取的磁碟未連接，請連接磁碟或選取其他位置。", "en-US": "The selected drive is unavailable. Connect it or choose another location." },
+  "storage.repair.changed": { "zh-CN": "可恢复数据或账号绑定已变化，请重新检查后恢复。", "zh-TW": "可恢復資料或帳號連結已變更，請重新檢查後恢復。", "en-US": "Recoverable data or account paths changed. Check again before recovering." },
+  "storage.repair.alias": { "zh-CN": "同一个沙盒位置关联了多个名称，请在管理沙盒中核对后重试。原数据未删除。", "zh-TW": "同一個沙盒位置連結了多個名稱，請至管理沙盒核對後重試。原資料未刪除。", "en-US": "Several sandbox names share a location. Review them in Manage sandbox, then retry. Original data was not deleted." },
+  "storage.rebind.hint": { "zh-CN": "旧目录改名或移动后可重新绑定；找不到时可将剩余数据恢复到新目录。", "zh-TW": "舊目錄重新命名或移動後可重新連結；找不到時可將剩餘資料恢復至新目錄。", "en-US": "Reconnect a moved folder, or recover remaining data to a new folder if the old one is missing." },
+  "storage.rebind.instructions": { "zh-CN": "选择原来的 Dustweave-storage 文件夹。核对通过后，将恢复缓存和已有沙盒的路径；账号登录、游戏数据和文件内容保持原样。操作前请关闭织尘工具及所有隔离窗口。", "zh-TW": "選取原本的 Dustweave-storage 資料夾。核對通過後，將恢復快取與現有沙盒的路徑；帳號登入、遊戲資料與檔案內容維持原樣。操作前請關閉織塵工具及所有隔離視窗。", "en-US": "Select your original Dustweave-storage folder. After verification, cache and existing sandbox paths will be reconnected. Sign-ins, game data and file contents stay unchanged. Close Dustweave tools and all isolated windows first." },
+  "storage.rebind.browse": { "zh-CN": "选择数据目录…", "zh-TW": "選取資料目錄…", "en-US": "Choose data folder…" },
+  "storage.rebind.select": { "zh-CN": "请选择已有的数据文件夹，然后检查目录。", "zh-TW": "請選取現有的資料夾，再檢查目錄。", "en-US": "Choose the existing data folder, then check it." },
+  "storage.rebind.check": { "zh-CN": "检查目录", "zh-TW": "檢查目錄", "en-US": "Check folder" },
+  "storage.rebind.checking": { "zh-CN": "正在核对数据目录及沙盒绑定…", "zh-TW": "正在核對資料目錄及沙盒綁定…", "en-US": "Checking folder ownership and sandbox paths…" },
+  "storage.rebind.preview": { "zh-CN": "核对通过。\n原位置：{0}\n所选位置：{1}\n将重新关联 {2} 个沙盒。确认后即可使用这个数据目录。", "zh-TW": "核對通過。\n原位置：{0}\n所選位置：{1}\n將重新連結 {2} 個沙盒。確認後即可使用此資料目錄。", "en-US": "Verification passed.\nPrevious location: {0}\nSelected location: {1}\nSandboxes to reconnect: {2}\nConfirm to use this data folder." },
+  "storage.rebind.apply": { "zh-CN": "确认绑定", "zh-TW": "確認綁定", "en-US": "Confirm connection" },
+  "storage.rebind.applying": { "zh-CN": "正在恢复存储位置及沙盒路径…", "zh-TW": "正在恢復儲存位置及沙盒路徑…", "en-US": "Restoring storage and sandbox paths…" },
+  "storage.rebind.done": { "zh-CN": "数据目录已重新绑定，可以重新连接游戏或启动原有沙盒。", "zh-TW": "資料目錄已重新綁定，可以重新連接遊戲或啟動原有沙盒。", "en-US": "Data folder reconnected. You can reconnect to the game or open your existing sandboxes." },
+  "storage.rebind.unavailable": { "zh-CN": "原存储位置无法读取。若文件夹已移动，请点击“重新绑定数据目录”。", "zh-TW": "無法讀取原儲存位置。若資料夾已移動，請點選「重新綁定資料目錄」。", "en-US": "The previous storage location is unavailable. If the folder moved, choose “Reconnect data folder”." },
+  "storage.rebind.not_configured": { "zh-CN": "没有可重新绑定的迁移记录。若要改存储位置，请使用“迁移存储位置”。", "zh-TW": "沒有可重新綁定的移轉紀錄。若要變更儲存位置，請使用「移轉儲存位置」。", "en-US": "No relocated data folder is recorded. To change locations, use the storage migration option." },
+  "storage.rebind.missing": { "zh-CN": "所选数据目录无法读取。请确认磁盘已连接，并重新选择实际存在的文件夹。", "zh-TW": "無法讀取所選資料目錄。請確認磁碟已連接，並重新選取實際存在的資料夾。", "en-US": "The selected folder is unavailable. Connect its drive and select an existing folder." },
+  "storage.rebind.owner_missing": { "zh-CN": "这里没有原数据目录的归属记录。请选择包含 storage-owner.json 的 Dustweave-storage 文件夹，不要选择其上一级或 instances 子目录。", "zh-TW": "此處沒有原資料目錄的歸屬紀錄。請選取包含 storage-owner.json 的 Dustweave-storage 資料夾，不要選取上層或 instances 子目錄。", "en-US": "This folder has no ownership record. Select the original Dustweave-storage folder containing storage-owner.json, not its parent or instances subfolder." },
+  "storage.rebind.owner_mismatch": { "zh-CN": "所选目录的归属记录与本机迁移记录不符，或记录已损坏。未更改任何数据；请选择原来的数据目录。", "zh-TW": "所選目錄的歸屬紀錄與本機移轉紀錄不符，或紀錄已損壞。未變更任何資料；請選取原本的資料目錄。", "en-US": "The ownership record is damaged or does not match this installation's relocation record. Nothing was changed. Select the original data folder." },
+  "storage.rebind.original_exists": { "zh-CN": "原数据目录仍然存在。为避免切换到过期副本，请使用原目录；需要搬动数据时请使用存储迁移。", "zh-TW": "原資料目錄仍然存在。為避免切換至過期副本，請使用原目錄；需要搬動資料時請使用儲存移轉。", "en-US": "The original data folder still exists. Use it to avoid switching to a stale copy, or use storage migration to move the data." },
+  "storage.rebind.instances_missing": { "zh-CN": "所选目录缺少 instances 子目录，可能没有完整移动。请找到完整的原数据文件夹后重试。", "zh-TW": "所選目錄缺少 instances 子目錄，可能未完整移動。請找到完整的原資料夾後重試。", "en-US": "The instances subfolder is missing. Locate the complete original data folder and try again." },
+  "storage.rebind.incomplete": { "zh-CN": "已有沙盒的注册记录在所选目录中找不到对应数据。请确认完整移动了原数据文件夹，再重新检查。", "zh-TW": "現有沙盒的註冊紀錄在所選目錄中找不到對應資料。請確認已完整移動原資料夾，再重新檢查。", "en-US": "A registered sandbox has no matching data in this folder. Locate the complete original data folder, then check again." },
+  "storage.rebind.pending": { "zh-CN": "上一次存储切换尚未完成。请恢复磁盘连接并关闭隔离窗口，再点击“检查目录”重试；原数据已保留。如仍失败，请导出诊断。", "zh-TW": "上次儲存切換尚未完成。請恢復磁碟連接並關閉隔離視窗，再點選「檢查目錄」重試；原資料已保留。如仍失敗，請匯出診斷。", "en-US": "The previous storage change is unfinished. Reconnect the drive, close isolated windows, then click “Check folder” to retry. Existing data is preserved. Export diagnostics if it still fails." },
   "tradepreset.import": { "zh-CN": "导入跑商方案", "zh-TW": "匯入跑商方案", "en-US": "Import trading settings" },
   "storage.move.preparing": { "zh-CN": "正在准备迁移…", "zh-TW": "正在準備遷移…", "en-US": "Preparing migration…" },
   "storage.move.copying": { "zh-CN": "正在复制并校验新位置…", "zh-TW": "正在複製並驗證新位置…", "en-US": "Copying and verifying the new location…" },
@@ -5533,9 +5606,9 @@
     "zh-CN": "界面预览不会登记计划或启动游戏。"
   },
   "schedule.saved": {
-    "zh-TW": "已儲存。將軟體移到其他目錄後，請再次儲存此計畫。",
-    "en-US": "Saved. Save the schedule again if you move the application.",
-    "zh-CN": "已保存。移动软件到其他目录后，请再次保存此计划。"
+    "zh-TW": "已儲存。換目錄啟動時會自動檢查定時啟動位置。",
+    "en-US": "Saved. Scheduled launch paths are checked automatically when you start from another folder.",
+    "zh-CN": "已保存。换目录启动时会自动检查定时启动位置。"
   },
   "schedule.register_failed": {
     "zh-TW": "Windows 未能儲存定時工作；計畫已停用，請重新儲存。詳情請見診斷紀錄。",
@@ -7592,10 +7665,14 @@
   "practice.skill": {"zh-CN":"练习技能","zh-TW":"練習技能","en-US":"Talent"},
   "practice.field_hint": {"zh-CN":"在第 1、2 章安全区之间切换并施放所选角色的技能。只练满当前等级，不购买药或使用天赋书。","zh-TW":"在第 1、2 章安全區之間切換並施放所選角色的技能。只練滿目前等級，不購買藥或使用天賦書。","en-US":"Alternates between the safe areas of Chapters 1 and 2 and casts the selected talent. Stops when this tier is full; does not buy pills or use talent books."},
   "practice.travel": {"zh-CN":"正在切换到安全区，刷新技能效果…","zh-TW":"正在切換至安全區，刷新技能效果…","en-US":"Travelling to a safe area to reset the talent effect…"},
+  "practice.travel_timeout": {"zh-CN":"地图加载超过等待时限，练习已暂停，已有经验保留。请等待游戏加载完成后继续练习，不需要重新练已完成的进度。","zh-TW":"地圖載入超過等待時限，練習已暫停，已有經驗保留。請等待遊戲載入完成後繼續練習，不需要重新練習已完成的進度。","en-US":"Map loading took too long. Practice is paused and earned XP is preserved. Once the game finishes loading, continue practice from your current progress."},
   "practice.casting": {"zh-CN":"正在施放技能并读取经验…","zh-TW":"正在施放技能並讀取經驗…","en-US":"Casting the talent and reading XP…"},
   "practice.packs_required": {"zh-CN":"需要先解锁第 1、2 章卡带，再重新开始练习。","zh-TW":"需要先解鎖第 1、2 章卡帶，再重新開始練習。","en-US":"Unlock Chapters 1 and 2, then start practice again."},
   "practice.safe_area_unavailable": {"zh-CN":"尚未到达安全区，未施放技能。请返回第 1 或第 2 章安全区后重试。","zh-TW":"尚未抵達安全區，未施放技能。請返回第 1 或第 2 章安全區後重試。","en-US":"The safe area is not ready. No talent was cast. Return to a safe area in Chapter 1 or 2 and retry."},
   "practice.effect_not_reset": {"zh-CN":"切换卡带后技能效果仍在，请等待效果结束后重试。","zh-TW":"切換卡帶後技能效果仍在，請等待效果結束後重試。","en-US":"The talent effect is still active after changing cartridges. Wait for it to end, then retry."},
+  "practice.recovering": {"zh-CN":"正在核对技能进度和游戏请求状态…","zh-TW":"正在核對技能進度與遊戲請求狀態…","en-US":"Checking talent progress and the game's request status…"},
+  "practice.pending": {"zh-CN":"暂时无法确认上次技能是否完成。请等待游戏加载或网络提示结束，再点击开始练习；会先读取当前进度，不会重放旧操作。","zh-TW":"暫時無法確認上次技能是否完成。請等待遊戲載入或網路提示結束，再點擊開始練習；會先讀取目前進度，不會重送舊操作。","en-US":"The previous talent use is still unconfirmed. Wait for game loading or network prompts to finish, then start practice again. Current progress will be checked without replaying the old action."},
+  "practice.retry_exhausted": {"zh-CN":"技能使用连续未能正常确认，已停止自动重试。请检查游戏提示，再点击开始练习；已完成的进度会保留。","zh-TW":"技能使用連續未能正常確認，已停止自動重試。請檢查遊戲提示，再點擊開始練習；已完成的進度會保留。","en-US":"Repeated talent uses could not be confirmed normally, so automatic retries have stopped. Check the game message, then start practice again. Completed progress is preserved."},
   "practice.skill_changed": {"zh-CN":"角色天赋已变化，请刷新进度后重试。","zh-TW":"角色天賦已變更，請刷新進度後重試。","en-US":"The talent changed. Refresh progress and retry."},
   "practice.cast_failed": {"zh-CN":"游戏未确认技能施放成功，请检查游戏提示后重试。","zh-TW":"遊戲未確認技能施放成功，請檢查遊戲提示後重試。","en-US":"The game did not confirm a successful cast. Check its message and retry."},
   "practice.test_complete": {"zh-CN":"本次练习已完成。","zh-TW":"本次練習已完成。","en-US":"Practice completed."},
@@ -9134,9 +9211,9 @@
     "en-US": "The sandbox location could not be updated. Reopen Dustweave to recover the binding; keep the original folder."
   },
   "storage.location_unavailable": {
-    "zh-CN": "无法读取迁移后的存储位置。请确认对应磁盘已连接、文件夹未被移动，再重新打开织尘；不会新建空沙盒。",
-    "zh-TW": "無法讀取遷移後的儲存位置。請確認對應磁碟已連接、資料夾未被移動，再重新開啟織塵；不會建立空沙盒。",
-    "en-US": "The relocated storage is unavailable. Reconnect its drive and check the folder before reopening Dustweave. No empty replacement sandbox was created."
+    "zh-CN": "无法读取迁移后的存储位置。请确认对应磁盘已连接；若文件夹已移动或改名，请在软件设置的“存储空间”中重新绑定数据目录。原数据不会被重建或覆盖。",
+    "zh-TW": "無法讀取移轉後的儲存位置。請確認對應磁碟已連接；若資料夾已移動或重新命名，請在軟體設定的「儲存空間」中重新綁定資料目錄。原資料不會被重建或覆寫。",
+    "en-US": "The relocated storage is unavailable. Reconnect its drive. If the folder was moved or renamed, reconnect it in App settings → Storage. Existing data will not be recreated or overwritten."
   },
   "storage.sandbox_busy": {
     "zh-CN": "仍有隔离程序运行。请正常关闭全部隔离游戏和窗口，保留登录状态，再重试迁移。",
@@ -9987,6 +10064,61 @@
     "zh-CN": "当前已有进行中的任务，保留现场，跳过开跑前补药。",
     "zh-TW": "目前已有進行中的任務，保留現場，跳過開始前補藥。",
     "en-US": "A task or unresolved action is already in progress. Keep it intact and skip the opening refill."
+  },
+  "tradeboxes.reward_waiting": {
+    "zh-CN": "开箱已结算，正在等待奖励页面；未重复开箱。稍后可继续上次进度完成收尾。",
+    "zh-TW": "開箱已結算，正在等待獎勵頁面；未重複開箱。稍後可繼續上次進度完成收尾。",
+    "en-US": "Box opening has settled, but its reward screen has not appeared yet. No boxes were reopened. Resume to finish closing the reward screen."
+  },
+  "launch_paths.schedule_updated": {
+    "zh-CN": "定时启动已改用当前程序目录，执行时间和账号保持不变。自行创建的快捷方式请同步更新。",
+    "zh-TW": "定時啟動已改用目前程式目錄，執行時間與帳號保持不變。自行建立的捷徑請一併更新。",
+    "en-US": "Scheduled launches now use this installation. Your time and accounts are unchanged. Update any shortcuts you created."
+  },
+  "launch_paths.startup_updated": {
+    "zh-CN": "开机启动已改用当前程序目录。自行创建的快捷方式请同步更新。",
+    "zh-TW": "開機啟動已改用目前程式目錄。自行建立的捷徑請一併更新。",
+    "en-US": "Windows startup now uses this installation. Update any shortcuts you created."
+  },
+  "launch_paths.both_updated": {
+    "zh-CN": "开机启动和定时启动已改用当前程序目录，定时计划保持不变。自行创建的快捷方式请同步更新。",
+    "zh-TW": "開機啟動與定時啟動已改用目前程式目錄，定時計畫保持不變。自行建立的捷徑請一併更新。",
+    "en-US": "Windows startup and scheduled launches now use this installation. Your schedule is unchanged. Update any shortcuts you created."
+  },
+  "launch_paths.failed": {
+    "zh-CN": "未能确认或更新定时启动位置，原计划已保留。请重试检查，或进入「定时执行」重新保存计划。",
+    "zh-TW": "無法確認或更新定時啟動位置，原計畫已保留。請重試檢查，或進入「定時執行」重新儲存計畫。",
+    "en-US": "Could not verify or update the scheduled launch location. Your plan is preserved. Retry the check, or open Schedules and save it again."
+  },
+  "launch_paths.missing": {
+    "zh-CN": "定时计划仍在，但未找到对应的 Windows 定时任务。请进入「定时执行」重新保存计划，恢复自动启动。",
+    "zh-TW": "定時計畫仍在，但找不到對應的 Windows 排程工作。請進入「定時執行」重新儲存計畫，恢復自動啟動。",
+    "en-US": "Your plan is saved, but its Windows task is missing. Open Schedules and save the plan again to restore scheduled launches."
+  },
+  "launch_paths.disabled": {
+    "zh-CN": "Windows 中的定时任务已停用，本次没有自动开启。若要恢复定时启动，请进入「定时执行」重新保存计划。",
+    "zh-TW": "Windows 中的排程工作已停用，本次未自動開啟。若要恢復定時啟動，請進入「定時執行」重新儲存計畫。",
+    "en-US": "The Windows task is disabled and has been left off. To restore scheduled launches, open Schedules and save the plan again."
+  },
+  "launch_paths.review": {
+    "zh-CN": "无法确认定时启动配置，本次未改动。请进入「定时执行」检查并重新保存计划。",
+    "zh-TW": "無法確認定時啟動設定，本次未更動。請進入「定時執行」檢查並重新儲存計畫。",
+    "en-US": "The scheduled launch configuration could not be verified and was left unchanged. Open Schedules, review the plan and save it again."
+  },
+  "launch_paths.view_schedule": {
+    "zh-CN": "查看定时计划",
+    "zh-TW": "查看定時計畫",
+    "en-US": "View schedule"
+  },
+  "launch_paths.retry": {
+    "zh-CN": "重试检查",
+    "zh-TW": "重試檢查",
+    "en-US": "Retry check"
+  },
+  "launch_paths.checking": {
+    "zh-CN": "正在检查定时启动位置，请稍后再次保存。",
+    "zh-TW": "正在檢查定時啟動位置，請稍後再次儲存。",
+    "en-US": "Checking the scheduled launch location. Try saving again shortly."
   },
   "potion.pending": {
     "zh-CN": "已有操作等待核对，保留现场，本次不额外购买天赋药。",

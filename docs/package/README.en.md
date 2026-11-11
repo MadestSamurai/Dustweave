@@ -22,7 +22,7 @@ Upgrading from 1.4 or earlier to 1.5 requires one manual download of the complet
 - [Latest GitHub release](https://github.com/MadestSamurai/Dustweave/releases/latest)
 - [Quark download folder](https://pan.quark.cn/s/0ee553c60c0d?pwd=5AgC), access code: `5AgC`
 
-Launch `Dustweave.exe` from the new folder and update any shortcuts you created. If Windows startup or scheduled runs are enabled, save those settings again in the new application so they use the new location.
+Launch `Dustweave.exe` from the new folder and update any shortcuts you created. Existing Windows startup and scheduled launch paths are checked automatically. If a repair fails, retry the check or open Schedules and save the plan again. Your accounts, time and task settings are retained.
 
 ## Updates and repair
 

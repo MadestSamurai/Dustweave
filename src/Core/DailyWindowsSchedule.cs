@@ -7,6 +7,40 @@ namespace Dustweave;
 public static class DailyWindowsSchedule
 {
     public static string TaskName => "Dustweave-" + WindowsIdentity.GetCurrent().User!.Value;
+    public static DailySchedulePathResult RepairPath(DailySchedulePlan plan, string executable, Func<bool> cancelled)
+    {
+        DailySandbox.RequireHost();
+        if (!plan.Enabled || !plan.IsDaily || cancelled()) return new("skipped");
+        dynamic? service = null, folder = null;
+        try
+        {
+            service = Activator.CreateInstance(Type.GetTypeFromProgID("Schedule.Service")!);
+            service!.Connect(); folder = service.GetFolder("\\");
+            string? Read()
+            {
+                dynamic? registered = null;
+                try { registered = folder.GetTask(TaskName); return (string)registered.Xml; }
+                catch (COMException e) when ((e.HResult & 0xffff) is 2 or 3) { return null; }
+                finally { if (registered != null && Marshal.IsComObject(registered)) Marshal.FinalReleaseComObject(registered); }
+            }
+            void Update(string expected, string replacement)
+            {
+                if (cancelled()) throw new OperationCanceledException();
+                if (!File.Exists(executable)) throw new FileNotFoundException("Scheduled launch executable is missing.", executable);
+                if (Read() != expected) throw new InvalidOperationException("Scheduled task changed during path repair; retry from the schedule page.");
+                dynamic? registered = null;
+                try { registered = folder.RegisterTask(TaskName, replacement, 4, WindowsIdentity.GetCurrent().User!.Value, null, 3, null); }
+                finally { if (registered != null && Marshal.IsComObject(registered)) Marshal.FinalReleaseComObject(registered); }
+            }
+            return DailySchedulePathRepair.Repair(plan, executable, WindowsIdentity.GetCurrent().User!.Value, Read, Update);
+        }
+        catch (Exception error) { return new("failed", Current: executable, Error: error.ToString()); }
+        finally
+        {
+            foreach (object? obj in new object?[] { folder, service })
+                if (obj != null && Marshal.IsComObject(obj)) Marshal.FinalReleaseComObject(obj);
+        }
+    }
     public static string Register(DailySchedulePlan plan, string executable, bool validateOnly = false)
     {
         DailySandbox.RequireHost();

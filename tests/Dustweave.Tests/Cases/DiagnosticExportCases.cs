@@ -4,6 +4,56 @@ using System.Text.Json.Nodes;
 using Dustweave;
 internal static class DiagnosticExportCases
 {
+    static async Task UnavailableStorage(string output,Action<bool,string> check)
+    {
+        string basis=Path.Combine(output,"存储 & export"),local=Path.Combine(basis,"local"),tool=Path.Combine(local,"BD2Fishing");
+        Directory.CreateDirectory(tool);File.WriteAllText(Path.Combine(tool,"runtime.log"),"independent fishing log");
+        foreach(string fault in new[]{"disconnected","missing-owner","mismatched-owner","invalid-json","invalid-path","access-denied"})
+        {
+            string root=Path.Combine(basis,fault,"host"),cache=Path.Combine(basis,fault,"moved"),zip=Path.Combine(basis,fault,"diagnostics & 中文.zip");
+            Directory.CreateDirectory(root);
+            File.WriteAllText(Path.Combine(root,"runtime.log"),"main process evidence");
+            File.WriteAllText(Path.Combine(root,"accounts.json"),"credential-must-not-export");
+            var location=new DailyStorageLocation(cache,Path.Combine(cache,"instances"),Guid.NewGuid().ToString("N"));
+            string config=DailyStorageLocations.FileName(root);
+            DailyJson.Write(config,location);
+            if(fault!="disconnected")Directory.CreateDirectory(cache);
+            if(fault=="mismatched-owner")DailyJson.Write(Path.Combine(cache,"storage-owner.json"),location with{Id=Guid.NewGuid().ToString("N")});
+            if(fault=="invalid-json")File.WriteAllText(config,"{malformed");
+            if(fault=="invalid-path")DailyJson.Write(config,location with{Cache="relative-cache"});
+            if(fault=="access-denied")DailyJson.Write(Path.Combine(cache,"storage-owner.json"),location);
+            byte[] saved=File.ReadAllBytes(config);
+            Func<string> resolver=fault=="access-denied"?()=>throw new UnauthorizedAccessException("token=hidden-discovery-secret"):()=>DailyStorageLocations.Sandboxes(root);
+            bool guarded=false;try{_=resolver();}catch(Exception error) when(error is IOException or UnauthorizedAccessException){guarded=true;}
+            check(guarded,"normal storage access still rejects unavailable routing: "+fault);
+            var sources=DailyDiagnosticExport.DiscoverSources(local,resolver);
+            check(sources.Issues.Length==1&&!sources.Roots.Keys.Any(k=>k.StartsWith("sandbox-")||k.StartsWith("isolated-")),"failed resolution skips sandbox without a fallback store: "+fault);
+            var result=await DailyDiagnosticExport.CreateAsync(root,zip,"fixture","test",default,sources.Roots,null,sources.Issues);
+            using(var archive=ZipFile.OpenRead(result.Path))
+            {
+                check(result.Skipped==1&&archive.GetEntry("logs/main/runtime.log")!=null&&archive.GetEntry("logs/tool-BD2Fishing/runtime.log")!=null,"main and independent tool diagnostics still export: "+fault);
+                using var manifestReader=new StreamReader(archive.GetEntry("manifest.json")!.Open());
+                var manifest=JsonNode.Parse(manifestReader.ReadToEnd())!;
+                check(manifest["skipped"]![0]!["reason"]!.GetValue<string>()=="source-unavailable","source discovery failure is retained in the manifest: "+fault);
+                using var routingReader=new StreamReader(archive.GetEntry("storage-routing.json")!.Open());
+                string routing=routingReader.ReadToEnd();
+                string expected=fault switch{"mismatched-owner"=>"owner_mismatch","invalid-json"=>"unreadable","invalid-path"=>"invalid_configuration","access-denied"=>"verified",_=>"owner_unavailable"};
+                check(JsonNode.Parse(routing)!["status"]!.GetValue<string>()==expected&&!routing.Contains(location.Id),"bounded routing evidence explains the failure without owner identifiers: "+fault);
+                string all=string.Join('\n',archive.Entries.Select(entry=>{using var reader=new StreamReader(entry.Open());return reader.ReadToEnd();}));
+                check(!all.Contains("credential-must-not-export")&&!all.Contains("hidden-discovery-secret"),"partial export still excludes login data and redacts errors: "+fault);
+            }
+            check(saved.SequenceEqual(File.ReadAllBytes(config))&&!Directory.Exists(location.Sandboxes),"export neither repairs configuration nor creates an empty sandbox: "+fault);
+            if(fault=="disconnected")check(!Directory.Exists(cache),"export does not recreate a disconnected cache");
+            // Restored conditions must actually restore collection, not leave a saved block.
+            DailyJson.Write(config,location);Directory.CreateDirectory(cache);DailyJson.Write(Path.Combine(cache,"storage-owner.json"),location);
+            string box=Path.Combine(location.Sandboxes,"Dustweave_fixture");Directory.CreateDirectory(box);
+            DailyJson.Write(Path.Combine(box,"registration-mismatch.json"),new{error="fixture"});
+            var restored=DailyDiagnosticExport.DiscoverSources(local,()=>DailyStorageLocations.Sandboxes(root));
+            var again=await DailyDiagnosticExport.CreateAsync(root,Path.Combine(basis,fault,"restored.zip"),"","test",default,restored.Roots,null,restored.Issues);
+            using var recovered=ZipFile.OpenRead(again.Path);
+            check(restored.Issues.Length==0&&recovered.GetEntry("logs/sandbox-host-01/registration-mismatch.json")!=null,"restored storage exports sandbox evidence on the next attempt: "+fault);
+        }
+    }
     static async Task ToolPluginEvidence(string output,Action<bool,string> check)
     {
         string root=Path.Combine(output,"tool-plugin-evidence"),id=Guid.NewGuid().ToString("N");
@@ -122,6 +172,7 @@ internal static class DiagnosticExportCases
     public static async Task Run(string output,List<string> cases)
     {
         void Check(bool ok,string label){if(!ok)throw new Exception(label);cases.Add("diagnostic-export: "+label);}
+        await UnavailableStorage(output,Check);
         await LocalizationEvidence(output, Check);
         await PerformanceHistory(output, Check);
         await ToolPluginEvidence(output,Check);
@@ -325,6 +376,8 @@ internal static class DiagnosticExportCases
         File.SetLastWriteTimeUtc(latestBusiness,DateTime.UtcNow.AddHours(-1));
         File.WriteAllText(Path.Combine(npcPressure,"live","event-preview-recovery.json"),"{\"confirmation_not_submitted\":true}");
         string[] toolEvidence=["tools/fishing/diagnostics/runtime.log","tools/fishing/diagnostics/runtime.log.previous",
+            "tools/bargain-training/logs/20261111-012401-827.json","tools/bargain-training/logs/20261111-024508-293.json",
+            "tools/bargain-training/logs/20261111-054413-321.json",
             "tools/fishing/diagnostics/connection.log","tools/fishing/diagnostics/last-interruption.json",
             "tools/fishing-identity-error.json","tools/fishing-activity-error.json",
             "tools/territory/diagnostics/connection.log","tools/equipment/diagnostics/connection.log"];

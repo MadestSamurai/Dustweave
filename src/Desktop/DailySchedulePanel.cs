@@ -119,7 +119,7 @@ public sealed class DailySchedulePanel : UserControl
     public void Feedback(string message, bool error = false)
     {
         feedback.Visibility=string.IsNullOrWhiteSpace(message)?Visibility.Collapsed:Visibility.Visible;
-        L.Bind(feedback, TextBlock.TextProperty, () => message.StartsWith("schedule.") ? L.Get(message) : L.Describe(message));
+        L.Bind(feedback, TextBlock.TextProperty, () => message.StartsWith("schedule.") || message.StartsWith("launch_paths.") ? L.Get(message) : L.Describe(message));
         feedback.SetResourceReference(TextBlock.ForegroundProperty, error ? "Error" : "Primary");
     }
     private void Save()

@@ -1,5 +1,32 @@
 [
 {
+  "Version": "1.7.1",
+  "Date": "2026-11-11",
+  "Notes": {
+    "zh-CN": [
+      "技能练习新增运行列表和成就刷取，可连续练习多个服装；成就以游戏最高档次数为目标，自动选择耗药最低的服装。列表显示总耗药和资源缺口，刷新后自动移除技能等级已变化的服装。",
+      "修复技能练习遇到慢切图、短暂连接超时或上次操作尚未结束时难以继续的问题；保留进度，避免重复使用技能。诊断包优先保留技能练习错误记录。",
+      "存储空间新增重新绑定数据目录，以及找不到旧目录时恢复到新目录的功能。尽量恢复可找到的数据；缺失的沙盒可在所选位置重新建立，并明确提示保存位置。",
+      "手动下载到新目录后，可检查并修复仍指向旧程序的开机启动和定时任务；正常自动更新用户不会重复收到迁移提醒。",
+      "修复跑商前一键开箱后未正确关闭奖励页面就继续操作的问题，收尾后再按最新库存规划跑商。"
+    ],
+    "zh-TW": [
+      "技能練習新增執行清單與成就刷取，可連續練習多個服裝；成就以遊戲最高階次數為目標，自動選擇耗藥最低的服裝。清單顯示總耗藥與資源缺口，刷新後自動移除技能等級已變更的服裝。",
+      "修復技能練習遇到切換地圖緩慢、短暫連線逾時或上次操作尚未結束時難以繼續的問題；保留進度，避免重複使用技能。診斷包優先保留技能練習錯誤紀錄。",
+      "儲存空間新增重新綁定資料目錄，以及找不到舊目錄時恢復至新目錄的功能。盡量恢復可找到的資料；遺失的沙盒可在所選位置重新建立，並明確提示儲存位置。",
+      "手動下載至新目錄後，可檢查並修復仍指向舊程式的開機啟動與排程工作；正常自動更新的使用者不會重複收到遷移提醒。",
+      "修復跑商前一鍵開箱後未正確關閉獎勵畫面就繼續操作的問題，收尾後再依最新庫存規劃跑商。"
+    ],
+    "en-US": [
+      "Talent practice now supports queues and achievement goals. Train multiple costumes in order, or target the highest achievement tier with the lowest-cost costume. The queue shows total pill use and shortages; refreshing removes costumes whose talent level changed.",
+      "Improves recovery from slow map changes, temporary connection timeouts and unfinished practice operations while retaining progress and avoiding duplicate skill use. Diagnostic exports now prioritize practice error records.",
+      "Storage now lets you reconnect a moved data folder or recover available files into a new folder when the old location is lost. Missing sandboxes can be recreated at the selected location, with the destination clearly shown.",
+      "After a manual download to a new folder, check and repair Windows startup and scheduled tasks that still point to the old executable. Ordinary automatic updates do not show repeated migration reminders.",
+      "Fixes trading continuing before the bulk box-opening reward screen was properly closed. Trading is planned from refreshed inventory after the rewards are handled."
+    ]
+  }
+},
+{
   "Version": "1.7.0",
   "Date": "2026-11-10",
   "Notes": {

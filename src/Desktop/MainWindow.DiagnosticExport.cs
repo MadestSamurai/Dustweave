@@ -8,7 +8,7 @@ namespace Dustweave.Desktop;
 public partial class MainWindow
 {
     private void ExportDiagnostics_Click(object sender, RoutedEventArgs e) => DailyDialogs.ShowModal(CreateDiagnosticExportWindow());
-    private Window CreateDiagnosticExportWindow()
+    private Window CreateDiagnosticExportWindow(Func<string>? sandboxStoreForSmoke=null)
     {
         var dialog = new Window { Owner=this, Width=650, MaxHeight=Math.Max(360,SystemParameters.WorkArea.Height-60), SizeToContent=SizeToContent.Height,
             ResizeMode=ResizeMode.NoResize, WindowStartupLocation=WindowStartupLocation.CenterOwner };
@@ -40,8 +40,9 @@ public partial class MainWindow
         export.Click+=async(_,_)=>{
             exporting=true;export.IsEnabled=false;browse.IsEnabled=false;open.Visibility=Visibility.Collapsed;L.Text(status,"diagnostics.export.working");
             try {
-                var sources=smoke==null ? await Task.Run(()=>DailyDiagnosticExport.RelatedSources(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),DailySandbox.Store),lifetime.Token) : null;
-                var result=await DailyDiagnosticExport.CreateAsync(root,path.Text,DiagnosticSummary(),DailyProductVersion.Current,lifetime.Token,sources,L.Diagnostics());
+                var sources=smoke==null||sandboxStoreForSmoke!=null
+                    ? await Task.Run(()=>DailyDiagnosticExport.DiscoverSources(smoke==null?Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData):Path.Combine(smoke,"related-sources"),sandboxStoreForSmoke??(()=>DailySandbox.Store)),lifetime.Token) : null;
+                var result=await DailyDiagnosticExport.CreateAsync(root,path.Text,DiagnosticSummary(),DailyProductVersion.Current,lifetime.Token,sources?.Roots,L.Diagnostics(),sources?.Issues);
                 exported=result.Path;L.Text(status,"diagnostics.export.done",result.Files,result.Skipped);open.Visibility=Visibility.Visible;
             }
             catch(OperationCanceledException) { }

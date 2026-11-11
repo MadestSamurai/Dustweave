@@ -4,7 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 namespace Dustweave.Desktop;
 
-public sealed class DailyBargainWindow : Window
+public sealed partial class DailyBargainWindow : Window
 {
     static DailyLanguage L => DailyLanguage.Current;
     readonly DailyBargainSession session;
@@ -19,12 +19,13 @@ public sealed class DailyBargainWindow : Window
     DailyPracticeTalent[] talentNames = [];
     readonly ComboBox characters = new() { MinHeight = 36, DisplayMemberPath = nameof(DailyBargainCharacter.Name) };
     readonly ProgressBar progress = new() { Height = 8, Maximum = 100, Margin = new(0, 10, 0, 0) };
-    readonly TextBlock identity = Text(), experience = Text(), estimate = Text(22), stock = Text(), count = Text(), status = Text(), hint = Text();
+    readonly TextBlock identity = Text(), experience = Text(), estimate = Text(18), stock = Text(), count = Text(), status = Text(), hint = Text(), costLabel = Text();
     readonly Button read = Button("practice.refresh"), start = Button("practice.start"), stop = Button("bargain.stop");
     long potions, spent;
     int rounds;
     bool busy, closing;
     string message = "bargain.intro";
+    object[] messageValues = [];
     Exception? error;
     static TextBlock Text(double size = 14)
     {
@@ -51,7 +52,7 @@ public sealed class DailyBargainWindow : Window
         progress.SetResourceReference(BackgroundProperty, "Line");
         progress.BorderThickness = new(0);
         session = new(root, account);
-        Width = 660; Height = 650; MinWidth = 540; MinHeight = 520; WindowStartupLocation = WindowStartupLocation.CenterOwner;
+        Width = 660; Height = 740; MinWidth = 540; MinHeight = 520; WindowStartupLocation = WindowStartupLocation.CenterOwner;
         L.Bind(this, TitleProperty, "tool.talent-practice");
         var layout = new DockPanel { Margin = new(24, 0, 24, 24) };
         var actions = new Grid { Margin = new(0, 16, 0, 0) };
@@ -77,17 +78,27 @@ public sealed class DailyBargainWindow : Window
         var characterChoice = new StackPanel { Margin = new(8, 0, 0, 0) }; Grid.SetColumn(characterChoice, 1);
         var label = Text(); L.Text(label, "bargain.character"); characterChoice.Children.Add(label);
         characters.Margin = new(0, 8, 0, 10); characterChoice.Children.Add(characters); selection.Children.Add(characterChoice);
-        var choice = new StackPanel(); choice.Children.Add(selection); choice.Children.Add(experience); choice.Children.Add(progress); body.Children.Add(Section(choice));
+        var choice = new StackPanel(); choice.Children.Add(BuildMode()); choice.Children.Add(selection); choice.Children.Add(experience); choice.Children.Add(progress); body.Children.Add(Section(choice));
         L.Bind(characters, System.Windows.Automation.AutomationProperties.NameProperty, "bargain.character");
-        var budget = new StackPanel(); var costLabel = Text(); L.Text(costLabel, "bargain.estimate_label"); budget.Children.Add(costLabel);
+        body.Children.Add(BuildQueue());
+        var budget = new StackPanel(); budget.Children.Add(costLabel);
         budget.Children.Add(estimate); budget.Children.Add(stock); budget.Children.Add(count); body.Children.Add(Section(budget));
         hint.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk"); body.Children.Add(hint);
         layout.Children.Add(new ScrollViewer { Content = body, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }); Content = layout;
         session.Report = key => Dispatcher.Invoke(() => SetMessage(key));
+        session.Snapshot = s => Dispatcher.Invoke(() =>
+        {
+            allCharacters=s.Characters;achievements=s.Achievements;potions=s.Potions;
+            FilterCharacters();Render();
+        });
         session.Progress = p => Dispatcher.Invoke(() =>
         {
             potions = p.Potions; rounds = p.Rounds; spent = p.Spent;
+            if(p.Achievements is {} goals)achievements=goals;
+            if(p.Achievement is {} goal) achievements=achievements.Where(a=>a.Kind!=goal.Kind).Append(goal).ToArray();
             allCharacters = allCharacters.Select(c => c.Character == p.Character.Character ? p.Character : c).ToArray();
+            skills.SelectedItem=skills.Items.Cast<ComboBoxItem>().FirstOrDefault(item=>(int)item.Tag==p.Character.Kind);
+            mode.SelectedIndex=p.Achievement==null?0:1;
             FilterCharacters(p.Character.Character); Render();
         });
         skills.SelectionChanged += (_, _) => { FilterCharacters(); Render(); };
@@ -95,9 +106,15 @@ public sealed class DailyBargainWindow : Window
         read.Click += async (_, _) => await Refresh();
         start.Click += async (_, _) =>
         {
-            if (characters.SelectedItem is not DailyBargainCharacter c || !new DailyBargainPlan(c, potions).CanStart) return;
+            error=null;
+            if(jobs.All(j=>j.State=="completed")) EditSafely(AddSelected);
+            if(error!=null)return;
+            if(jobs.All(j=>j.State=="completed")) return;
             rounds = 0; spent = 0;
-            await Work(async () => SetMessage(await Task.Run(() => session.Train(c))), true);
+            await Work(async () => {
+                await Task.Run(()=>session.TrainQueue(jobs,()=>Dispatcher.Invoke(()=>{RefreshQueue();Render();})));
+                SetMessage(jobs.All(j=>j.State=="completed")?"practice.queue_complete":"practice.queue_attention");
+            }, true);
         };
         stop.Click += (_, _) => { session.Stop(); stop.IsEnabled = false; SetMessage("bargain.stopping"); };
         Closing += OnClosing;
@@ -111,8 +128,8 @@ public sealed class DailyBargainWindow : Window
         };
         Render();
     }
-    void SetMessage(string key) { message = key; error = null; Render(); }
-    void LanguageChanged(object? sender, EventArgs e) { RefreshTalentNames(); FilterCharacters(); Render(); }
+    void SetMessage(string key, params object[] values) { message = key; messageValues = values; error = null; Render(); }
+    void LanguageChanged(object? sender, EventArgs e) { RefreshTalentNames(); FilterCharacters(); RefreshQueue(); Render(); }
     void RefreshTalentNames()
     {
         foreach (ComboBoxItem item in skills.Items)
@@ -128,16 +145,17 @@ public sealed class DailyBargainWindow : Window
         selected ??= (characters.SelectedItem as DailyBargainCharacter)?.Character;
         var filtered = allCharacters.Where(c => c.Kind == Kind).Select(c => c with { Name = c.NameIn(L.Code) }).ToArray();
         characters.ItemsSource = filtered;
-        characters.SelectedItem = filtered.FirstOrDefault(c => c.Character == selected) ?? filtered.FirstOrDefault();
+        characters.SelectedItem = AchievementMode ? DailyPracticeQueue.Cheapest(filtered,Kind) : filtered.FirstOrDefault(c => c.Character == selected) ?? filtered.FirstOrDefault();
     }
     async Task Refresh() => await Work(async () =>
     {
         long? selected = (characters.SelectedItem as DailyBargainCharacter)?.Character;
         var data = await Task.Run(session.Read);
+        var removed = RefreshQueueLevels(data.Characters);
         potions = data.Potions; rounds = 0; spent = 0;
         L.Text(identity, "bargain.account", data.Player);
-        allCharacters = data.Characters; talentNames = data.Talents; RefreshTalentNames(); FilterCharacters(selected);
-        SetMessage(data.Characters.Length == 0 ? "practice.none" : "bargain.ready");
+        allCharacters = data.Characters; talentNames = data.Talents; achievements=data.Achievements; RefreshTalentNames(); FilterCharacters(selected);RefreshQueue();
+        ShowRefreshResult(removed);
     });
     async Task Work(Func<Task> action, bool training = false)
     {
@@ -151,10 +169,14 @@ public sealed class DailyBargainWindow : Window
     void Render()
     {
         bool available = allowGame && !busy && canOperate();
-        read.IsEnabled = available; characters.IsEnabled = !busy; skills.IsEnabled = !busy;
+        read.IsEnabled = available; characters.IsEnabled = !busy&&!AchievementMode; skills.IsEnabled = !busy;
+        mode.IsEnabled=!busy; add.IsEnabled=!busy&&CanAdd; queue.IsEnabled=!busy;
+        foreach(var button in queueActions) button.IsEnabled=!busy&&queue.SelectedIndex>=0;
         L.Text(hint, Kind == 16 ? "bargain.hint" : "practice.field_hint");
         start.IsEnabled = false;
         L.Text(count, "bargain.count", rounds, spent);
+        L.Text(costLabel,AchievementMode?"practice.achievement_cost_label":"bargain.estimate_label");
+        if(AchievementMode){RenderAchievement(available);RenderQueueBudget();return;}
         if (characters.SelectedItem is DailyBargainCharacter c)
         {
             L.Text(experience, "bargain.experience", c.Level, c.BarValue, c.BarMax);
@@ -162,7 +184,8 @@ public sealed class DailyBargainWindow : Window
             L.Text(estimate, c.Full ? "bargain.full" : "bargain.estimate", c.Full || c.PerUse <= 0 ? 0 : c.Estimate, c.Full || c.PerUse <= 0 ? 0 : c.Uses);
             L.Text(stock, "bargain.stock", potions, c.Cost);
             start.IsEnabled = available && new DailyBargainPlan(c, potions).CanStart;
-            if (!busy && error == null)
+            if(jobs.Any(j=>j.State!="completed"))start.IsEnabled=available;
+            if (!busy && error == null && jobs.Count==0 && message!="practice.queue_levels_changed")
             {
                 if (c.Full) { L.Text(status, c.Level >= c.MaxLevel ? "bargain.maximum" : "bargain.upgrade"); return; }
                 if (c.PerUse <= 0) { L.Text(status, "bargain.no_growth"); return; }
@@ -170,10 +193,13 @@ public sealed class DailyBargainWindow : Window
             }
         }
         else { estimate.Text = "—"; experience.Text = ""; stock.Text = ""; progress.Value = 0; }
+        RenderQueueBudget();
+        if(jobs.Any(j=>j.State!="completed"))start.IsEnabled=available;
         if (error is DailyBargainFault fault) L.Text(status, fault.Code, fault.Values);
         else if (error?.Message.StartsWith("bargain.", StringComparison.Ordinal) == true || error?.Message.StartsWith("practice.", StringComparison.Ordinal) == true) L.Text(status, error!.Message);
         else if (error != null) DailyUiText.Error(status, error);
-        else L.Text(status, !busy && allCharacters.Length > 0 && characters.SelectedItem == null ? "practice.none" : message);
+        else if(!busy && allCharacters.Length > 0 && characters.SelectedItem == null && message!="practice.queue_levels_changed") L.Text(status,"practice.none");
+        else L.Text(status, message, messageValues);
     }
     void OnClosing(object? sender, CancelEventArgs e)
     {

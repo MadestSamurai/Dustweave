@@ -1,6 +1,6 @@
 using Dustweave;
 using Dustweave.Accounts;
-internal static class StorageMigrationCases
+internal static partial class StorageMigrationCases
 {
     sealed class Sink(Action<DailyStorageMigration.MoveProgress> report) : IProgress<DailyStorageMigration.MoveProgress>
     {public void Report(DailyStorageMigration.MoveProgress value)=>report(value);}
@@ -45,6 +45,8 @@ internal static class StorageMigrationCases
     static DailyStorageMigration Service(Fixture f)=>new(f.Root,f.Store,f.Driver);
     public static async Task Run(string output,List<string> cases)
     {
+        await Rebinding(output,cases);
+        await Repairing(output,cases);
         void Check(bool ok,string label){if(!ok)throw new Exception(label);cases.Add("storage-migration: "+label);}
         var measured=Make(output,"phase-progress",0);
         string large=Path.Combine(measured.Root,"suite-cache","large.bin");

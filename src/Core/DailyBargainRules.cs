@@ -62,7 +62,8 @@ public static class DailyBargainProof
         long id=N(scope["character"]);
         var a=Character(before,id);var b=Character(after,id);a.AssertSameTier(b);
         var response=Response("dispatch.start",DailyFieldTalentProof.MatchingSkillEvents(op,events,a.Group),before,after)!;
-        Require(a.Level<a.MaxLevel&&a.Experience<a.Target,"bargain.upgrade");
+        bool achievement=DailyPracticeAchievement.Authorized(op,before,ReadId,a.Kind);
+        Require(achievement||a.Level<a.MaxLevel&&a.Experience<a.Target,"bargain.upgrade");
         Require(N(response["TalentSkillInfo"]?["groupId"])==a.Group,"bargain.response_changed");
         long gain=N(response["AddTalentExp"]),actual=b.Experience-a.Experience;
         Require(gain>=0&&gain<=a.PerUse&&actual>=0&&actual==Math.Min(gain,Math.Max(0,a.Target-a.Experience)),"bargain.experience_changed");

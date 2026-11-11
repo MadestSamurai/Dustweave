@@ -36,6 +36,9 @@ public partial class MainWindow
         if (scheduleStore.Last is { State: "running" } previous)
             scheduleStore.Record(previous with { State = "interrupted", AtUtc = DateTimeOffset.UtcNow });
         if (ShowUpdateFailure()) { _ = CheckUpdatesAsync(); return; }
+        // Local path repair is advisory/background work, never an update acknowledgement,
+        // game-connection, auto-run or scheduled-run prerequisite.
+        _ = RefreshLaunchPathsAsync();
         if (ScheduledStartup) await CheckScheduleAsync();
         bool guided = ShowInitialConnectionGuide();
         resourceReviewReady = true;

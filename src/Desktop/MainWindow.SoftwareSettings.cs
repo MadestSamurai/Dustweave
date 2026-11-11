@@ -22,7 +22,7 @@ public partial class MainWindow
         windowsStartup = smoke == null ? new() : new(() => isolatedStartup, value => isolatedStartup = value);
         try
         {
-            if (!IsSandboxWindow && smoke == null) windowsStartup.RefreshEnabledPath(Environment.ProcessPath!);
+            if (!IsSandboxWindow && smoke == null) startupPathRefreshed = windowsStartup.RefreshEnabledPath(Environment.ProcessPath!);
             StartWithWindows.IsChecked = windowsStartup.Enabled;
             CloseGameAfterRun.IsChecked = ReadDesktopBehavior()?.CloseGameAfterRun == true;
             var notices = ReadDesktopBehavior()?.CompletionNotice ?? new();

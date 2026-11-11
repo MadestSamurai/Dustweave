@@ -173,7 +173,7 @@ static class QuickTravelCases
         bool blocked = false; try { hunting.Plan([2]); } catch (DailyTravelBlocked) { blocked = true; }
         Check(blocked, "shortcut does not enter hunting grounds");
 
-        foreach (string mode in new[] { "arrives", "unavailable", "native-unavailable", "settled-failure", "identity-changed" })
+        foreach (string mode in new[] { "arrives", "arrives-slow", "unavailable", "native-unavailable", "settled-failure", "identity-changed" })
         {
             using var h = new WorkflowHarness(Path.Combine(root, "quick-" + mode), []);
             h.Page("GameFieldDefaultUI");
@@ -184,15 +184,15 @@ static class QuickTravelCases
             if (mode == "native-unavailable") { h.Box.State = "rejected"; h.Box.Error = "quick_travel_unavailable"; h.Box.Dispatched = false; }
             h.OnDelay = () =>
             {
-                if (h.Time < 1 || changed) return;
+                if (h.Time < (mode == "arrives-slow" ? 80 : 1) || changed) return;
                 changed = true; h.Page("GameFieldDefaultUI");
-                if (mode == "arrives") state = "arrived";
+                if (mode is "arrives" or "arrives-slow") state = "arrived";
                 if (mode == "identity-changed") h.Frame["AccountKey"] = "different-account";
             };
             bool result = false, identityRejected = false;
-            try { result = await DailyQuickTravel.TryMove(h.Workflow, 101, 1); }
+            try { result = mode == "arrives-slow" ? await DailyQuickTravel.TryMove(h.Workflow, 101, 1, DailyTalentPractice.TravelSeconds) : await DailyQuickTravel.TryMove(h.Workflow, 101, 1); }
             catch (InvalidDataException) when (mode == "identity-changed") { identityRejected = true; }
-            Check(mode == "arrives" ? result && h.Time >= 1 : mode == "identity-changed" ? identityRejected : !result,
+            Check(mode is "arrives" or "arrives-slow" ? result && h.Time >= (mode == "arrives-slow" ? 80 : 1) : mode == "identity-changed" ? identityRejected : !result,
                 "same-map transition handles " + mode);
             Check(h.Box.Commands.Count == (mode == "unavailable" ? 0 : 1), "no shortcut replay for " + mode);
         }

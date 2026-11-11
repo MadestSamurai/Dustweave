@@ -11,18 +11,22 @@ static class BargainTrainingCases
     {
         public readonly WorkflowHarness H;
         public readonly DailyBargainTraining Trainer;
+        public List<DailyBargainProgress> Progress=[];
         public DailyBargainCharacter Character = Sample;
         public long Potions = 100;
         public bool Discount, Stop, MissingResponse, Success = true, StopAtPreview, StopAtCommit;
         public int Attempts, Closed, Gain = 5;
+        public long? AchievementCount;
+        public DailyPracticeAchievement Goal=>new(16,91,0,4500,AchievementCount??0,true);
+        JsonObject State(){var state=Native(Character,Potions);if(AchievementCount!=null)state["Achievements"]=System.Text.Json.JsonSerializer.SerializeToNode(new[]{Goal});return state;}
         public Fixture(string root)
         {
             H = new(root, [DailyBargainProof.Definition]);
             H.Frame["Scene"] = "Map3009_001";
             H.Page("ShopUI", "_objBackButton");
-            Trainer = new(H.Workflow, () => Stop, _ => { }, _ => { });
+            Trainer = new(H.Workflow, () => Stop, _ => { }, Progress.Add);
             H.Readings = () => [
-                WorkflowCases.Reading(DailyBargainProof.ReadId, ("$self", Native(Character, Potions))),
+                WorkflowCases.Reading(DailyBargainProof.ReadId, ("$self", State())),
                 WorkflowCases.Reading("trade.currency", ("Catalyst", Potions), ("Gold", 1000)),
                 WorkflowCases.Reading("trade.shop_ui", ("ὩὤὬὪὤὦὧὭὣὥὠ.ὯὫὪὡὭὤὪὮὫὬὣ", 50), ("ὯὣὡὫὨὫὡὧὩὬὠ", "Buy")),
                 WorkflowCases.Reading("trade.quickmenu", ("ὬὣὨὤὯὪὪὮὠὥὨ.ὠὫὥὧὭὭὥὠὭὤὣ.ὯὫὪὡὭὤὪὮὫὬὣ", 50)),
@@ -53,6 +57,7 @@ static class BargainTrainingCases
                 {
                     Attempts++; H.Event("dispatch.start", "request");
                     Character = Character with { Experience = Math.Min(Character.Target, Character.Experience + Gain) }; Potions -= Character.Cost;
+                    if(AchievementCount!=null)AchievementCount++;
                     if (!MissingResponse) H.Event("dispatch.start", "response", ("TalentSkillInfo", O(("groupId", 605))), ("AddTalentExp", Gain), ("IsSuccess", Success));
                     Discount = Success; H.Page("ShopUI", "_objBackButton");
                     if (StopAtCommit) Stop = true;
@@ -66,6 +71,24 @@ static class BargainTrainingCases
     {
         void Check(bool value, string label) { if (!value) throw new Exception(label); checks.Add(label); }
         ProofCases(checks);
+        using(var f=new Fixture(Path.Combine(root,"bargain-queue-budget-xp")){AchievementCount=4490}){
+            await f.Trainer.Run(Sample);
+            Check(f.Progress.First().Achievements?.Single().Current==4490&&f.Progress.Last().Achievements?.Single().Current==4493&&f.Progress.Last().Achievement==null&&f.Progress.Last().Spent==30,
+                "bargain XP progress carries shared achievement counts and actual spending for queue totals");
+        }
+        foreach(bool discount in new[]{true,false})
+        using(var f=new Fixture(Path.Combine(root,"bargain-achievement-"+discount)){AchievementCount=4498,Success=discount,Gain=0}){
+            f.Character=Sample with{Level=5,Experience=170};
+            Check(await f.Trainer.Run(f.Character,f.Goal)=="practice.achievement_complete"&&f.Attempts==2&&f.Potions==80,"max-level bargain achievement counts normal uses: "+discount);
+            Check(await f.Trainer.Run(f.Character,f.Goal)=="practice.achievement_complete"&&f.Attempts==2,"bargain achievement does not replay completed target: "+discount);
+        }
+        using(var f=new Fixture(Path.Combine(root,"bargain-achievement-recovery")){AchievementCount=4498,MissingResponse=true,Gain=0}){
+            f.Character=Sample with{Level=5,Experience=170};
+            try{await f.Trainer.Run(f.Character,f.Goal);}catch(StageHostException){}
+            Check(f.Attempts==1&&f.AchievementCount==4499,"missing bargain receipt sends only one cast");
+            f.MissingResponse=false;
+            Check(await f.Trainer.Run(f.Character,f.Goal)=="practice.achievement_complete"&&f.Attempts==2&&f.Potions==80,"bargain cumulative achievement resumes capped XP and closes owned discount");
+        }
         Check(Sample.Estimate == 30 && Sample.Uses == 3 && Sample.BarValue == 55, "bargain cumulative experience and current-tier cost");
         Check((Sample with { Experience = 168 }).Estimate == 10, "partial final XP still costs a full attempt");
         Check((Sample with { Experience = 170 }).Estimate == 0 && (Sample with { Level = 5 }).Full, "cap and maximum tier never train");

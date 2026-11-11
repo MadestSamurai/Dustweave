@@ -22,5 +22,14 @@ public sealed class DailyWindowsStartup
         write("\"" + Path.GetFullPath(executable) + "\"");
     }
     // An existing opt-in follows a moved/replaced portable installation; never enable a new one.
-    public void RefreshEnabledPath(string executable) { if (Enabled) Set(true, executable); }
+    public bool RefreshEnabledPath(string executable)
+    {
+        string? previous = read();
+        if (string.IsNullOrWhiteSpace(previous)) return false;
+        string expected = "\"" + Path.GetFullPath(executable) + "\"";
+        if (string.Equals(previous, expected, StringComparison.OrdinalIgnoreCase)) return false;
+        Set(true, executable);
+        if (!string.Equals(read(), expected, StringComparison.OrdinalIgnoreCase)) throw new IOException("software.startup_path_invalid");
+        return true;
+    }
 }

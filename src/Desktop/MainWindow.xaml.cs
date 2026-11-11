@@ -964,6 +964,12 @@ public partial class MainWindow : Window
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             // This shell invariant is exercised even by focused release/UI smoke.
             CheckFreeDistributionVisibleForSmoke();
+            if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "launch-paths")
+            {
+                await CheckLaunchPathsForSmoke();
+                DailyJson.Write(Path.Combine(smoke!, "smoke.json"), new { status = "passed", scope = "launch-paths", realGameTouched = false });
+                Application.Current.Shutdown(); return;
+            }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "feature-discovery")
             { await CheckFeatureDiscoveryForSmoke(); Application.Current.Shutdown(); return; }
             if (Environment.GetEnvironmentVariable("DUSTWEAVE_UI_SMOKE_SCOPE") == "resource-review")

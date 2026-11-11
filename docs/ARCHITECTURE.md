@@ -309,9 +309,19 @@ The latest per-account journal is in `live/trade-boxes` and included in ordinary
 diagnostics. A pending batch is reconciled without blind replay. Waiting has a
 60-second no-progress deadline and 30-minute absolute bound, remains cancellable,
 and does not count unrelated network activity as box progress. Empty inventory or
-a full bag skips optional opening. After completion, reward presentation returns
-to inventory first, then the menu; the normal trade capture reads fresh resources
-before planning. The trading optimizer and purchase/sale rules are unchanged.
+a full bag skips optional opening. Native batch completion is not presentation
+completion: the game requests `RewardReceivePopupUI` asynchronously before its
+batch callback returns. A fresh or actively resumed batch must observe that
+reward, wait for its native animation/readiness and dismiss it before explicitly
+leaving inventory. An already-visible underlying `MenuUI` is not evidence that
+inventory has closed. The journal stays `presentation_pending` until this return
+finishes, then becomes `completed`; the normal trade capture reads fresh resources
+before planning. Cancellation preserves the presentation deadline and whether
+the reward was observed. Recovery adopts a result already closed by the user,
+and a verified new game process does not wait for the old process's UI request.
+After an appearance timeout, continuing reconciles a stable current destination
+without replaying the batch. Older completed journals with a visible reward are
+also cleaned up. The trading optimizer and purchase/sale rules are unchanged.
 
 `DailyResourceReview` saves only the four reviewed preference fields, preserving
 other account settings. Its one-time receipt lives outside historical caches.

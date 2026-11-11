@@ -202,13 +202,39 @@ public sealed partial class DailyCommandDriver : IDisposable
     private async Task<DailyStageFrame> ReadBound()
     {
         Active();
-        mailbox.Read("live", "snapshot.json"); // Validate the exact writer lease, including handoff/revocation.
-        var observed = await read();
-        lastDiagnosticFrame = observed.Frame;
-        if (!JsonNode.DeepEquals(observed.Context, context))
-            throw new DailyStepException("identity", "Account, connection or reset changed; no replay");
-        Diagnostics.Observe(observed.Frame);
-        return observed;
+        var waiting=DailyObservationWindow.Current;
+        int timeouts=0;double started=clock();
+        while(true)
+        {
+            try
+            {
+                // Validate the exact writer lease on every attempt. Only this
+                // read-only observation may retry, never an input or lease acquisition.
+                mailbox.Read("live", "snapshot.json");
+                var observed = await read();
+                lastDiagnosticFrame = observed.Frame;
+                if (!JsonNode.DeepEquals(observed.Context, context))
+                    throw new DailyStepException("identity", "Account, connection or reset changed; no replay");
+                if(timeouts>0)Diagnostics.Event("observation_transport_recovered",new(){["timeouts"]=timeouts,["elapsed"]=clock()-started});
+                Diagnostics.Observe(observed.Frame);
+                return observed;
+            }
+            catch(TimeoutException) when(waiting!=null)
+            {
+                timeouts++;
+                if(stopped())throw new StageHostException("stopped","已停止观察，尚未派发后续环节。");
+                if(waiting.Remaining<=0)
+                {
+                    Diagnostics.Failure("observation_transport_timeout",new(){["timeouts"]=timeouts,["elapsed"]=clock()-started});
+                    throw DailyObservationWindow.Timeout("未读到当前账号的最新主线程观察；保留现有进度，请重新连接。");
+                }
+                // Round up the final fraction; truncation to a zero-duration
+                // delay would spin instead of reaching the shared deadline.
+                await delay(TimeSpan.FromMilliseconds(Math.Max(1,Math.Ceiling(Math.Min(200,waiting.Remaining*1000)))));
+                if(stopped())throw new StageHostException("stopped","已停止观察，尚未派发后续环节。");
+                if(waiting.Remaining<=0)throw DailyObservationWindow.Timeout("未读到当前账号的最新主线程观察；保留现有进度，请重新连接。");
+            }
+        }
     }
     private static double Seconds(JsonObject action)
     {

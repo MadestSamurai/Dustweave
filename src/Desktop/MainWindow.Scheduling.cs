@@ -24,9 +24,10 @@ public partial class MainWindow
             if (IsSandboxWindow) return;
             if (smoke != null) { schedulePanel.Feedback("schedule.preview"); return; }
             if (Unavailable || scheduleChecking) return;
-            schedulePanel.Busy(true);
+            if (!await scheduleRegistrationGate.WaitAsync(0)) { schedulePanel.Feedback("launch_paths.checking"); return; }
             try
             {
+                schedulePanel.Busy(true);
                 if (!preferencesPanel.SavePending()) return;
                 // Persist disabled before changing Windows registration. Partial failure cannot run the wrong queue.
                 scheduleStore.Save(plan with { Enabled = false });
@@ -34,9 +35,10 @@ public partial class MainWindow
                 scheduleStore.Save(plan);
                 schedulePanel.Show(plan, scheduleStore.Last);
                 schedulePanel.Feedback("schedule.saved");
+                DismissLaunchPathNotice_Click(this, new RoutedEventArgs());
             }
             catch (Exception e) { schedulePanel.Show(plan with { Enabled = false }, scheduleStore.Last); schedulePanel.Feedback(e.Message.StartsWith("schedule.") ? e.Message : "schedule.register_failed", true); DailyJson.Write(Path.Combine(root, "schedule-error.json"), new { error = e.ToString() }); }
-            finally { schedulePanel.Busy(false); }
+            finally { schedulePanel.Busy(false); scheduleRegistrationGate.Release(); }
         };
     }
     private Task CheckScheduleAsync()

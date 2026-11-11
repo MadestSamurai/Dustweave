@@ -187,9 +187,36 @@ public partial class MainWindow
                 WorkspaceTabs.SelectedItem=DiagnosticsTab;
                 ShowError(new InvalidOperationException("suite.owner-exited"));
                 checks+=3;
+                int recovered=0;Exception? repairFailure=null;
+                var repairDialog=CreateStorageRepairWindow(this,
+                    (path,_)=>Task.FromResult(new DailyStorageMigration.RepairPreview(path,Path.Combine(path,"instances"),1,1,1,1024)),
+                    (path,preview,_)=>{recovered++;return Task.FromResult(preview);});
+                repairDialog.Loaded+=async(_,_)=>{
+                    try {
+                        var target=Nodes<TextBox>(repairDialog).Single(t=>t.Name=="StorageRepairPath");
+                        var action=Nodes<Button>(repairDialog).Single(b=>b.Name=="StorageRepairApply");
+                        var status=Nodes<TextBlock>(repairDialog).Single(t=>t.Name=="StorageRepairStatus");
+                        target.Text=Path.Combine(root,"new & storage");action.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        for(int i=0;i<200&&!action.IsEnabled;i++)await Task.Delay(20);
+                        if(recovered!=0||!status.Text.Contains(Path.Combine(target.Text,"instances"))||action.Content?.ToString()!=L.Get("storage.repair.apply"))throw new Exception("Storage recovery must preview the new sandbox location before applying");
+                        target.Text+=" changed";
+                        if(action.Content?.ToString()!=L.Get("storage.repair.check"))throw new Exception("New recovery destination retained an old preview");
+                        action.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        for(int i=0;i<200&&!action.IsEnabled;i++)await Task.Delay(20);
+                        await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                        Capture($"support-repair-preview-{language}-{appearance}",(FrameworkElement)repairDialog.Content);
+                        action.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        for(int i=0;i<200&&action.Visibility!=Visibility.Collapsed;i++)await Task.Delay(20);
+                        if(recovered!=1||action.Visibility!=Visibility.Collapsed||!status.Text.Contains(target.Text))throw new Exception("Storage recovery result must remain visible");
+                        Capture($"support-repair-done-{language}-{appearance}",(FrameworkElement)repairDialog.Content);
+                        Nodes<Button>(repairDialog).Single(b=>b.Name=="StorageRepairCancel").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    }catch(Exception e){repairFailure=e;repairDialog.Close();}
+                };
+                if(DailyDialogs.ShowModal(repairDialog)!=true||repairFailure!=null)throw new Exception("Storage repair dialog failed",repairFailure);
+                checks+=3;
                 await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);Capture($"support-{language}-{appearance}");
                 using var shade=DailyDialogs.Dim(this);
-                var dialog=CreateDiagnosticExportWindow();dialog.Show();
+                var dialog=CreateDiagnosticExportWindow(language==0&&appearance==1?()=>throw new IOException("storage.location_unavailable"):null);dialog.Show();
                 try {
                     await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
                     var texts=Nodes<TextBlock>(dialog).Select(t=>t.Text).ToArray();
@@ -202,6 +229,10 @@ public partial class MainWindow
                         path.Text=Path.Combine(smoke,"ui-export.zip");start.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                         for(int i=0;i<150&&!start.IsEnabled;i++)await Task.Delay(20);
                         if(!File.Exists(path.Text)||!start.IsEnabled)throw new Exception("UI export did not complete");
+                        using var archive=System.IO.Compression.ZipFile.OpenRead(path.Text);
+                        using var reader=new StreamReader(archive.GetEntry("manifest.json")!.Open());
+                        var manifest=System.Text.Json.Nodes.JsonNode.Parse(reader.ReadToEnd())!;
+                        if(!manifest["skipped"]!.AsArray().Any(x=>x?["reason"]?.GetValue<string>()=="source-unavailable"))throw new Exception("UI export lost unavailable-storage evidence");
                     }
                     checks+=3;
                 }finally{dialog.Close();}
@@ -250,6 +281,65 @@ public partial class MainWindow
                     }
                     checks+=2;
                 }finally{cleanup.Close();if(File.Exists(compressionSample))File.Delete(compressionSample);}
+                // Missing relocated storage must not hide its own recovery entry.
+                string routing=DailyStorageLocations.FileName(root);
+                byte[]? savedRouting=File.Exists(routing)?File.ReadAllBytes(routing):null;
+                var lost=Path.Combine(root,"missing-relocated-data");
+                DailyJson.Write(routing,new DailyStorageLocation(lost,Path.Combine(lost,"instances"),Guid.NewGuid().ToString("N")));
+                Window? recoveryWindow=null;
+                try {
+                    recoveryWindow=CreateLogCleanupWindow();recoveryWindow.Show();
+                    var scanRecovery=Nodes<Button>(recoveryWindow).Single(b=>b.Name=="LogCleanupScan");
+                    for(int i=0;i<200&&!scanRecovery.IsEnabled;i++)await Task.Delay(20);
+                    var reconnect=Nodes<Button>(recoveryWindow).Single(b=>b.Name=="StorageRebind");
+                    if(!reconnect.IsEnabled)throw new Exception("Missing storage blocked its recovery entry");
+                    reconnect.BringIntoView();await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    Capture($"support-rebind-missing-{language}-{appearance}",(FrameworkElement)recoveryWindow.Content);
+                    checks++;
+                }finally {
+                    recoveryWindow?.Close();
+                    if(savedRouting==null)File.Delete(routing);else File.WriteAllBytes(routing,savedRouting);
+                }
+                int applied=0;Exception? rebindFailure=null;
+                var reconnectDialog=CreateStorageRebindWindow(this,
+                    (path,_)=>Task.FromResult(new DailyStorageMigration.RebindPreview(lost,path,2)),
+                    (path,_)=>{applied++;return Task.FromResult(new DailyStorageMigration.RebindPreview(lost,path,2));});
+                reconnectDialog.Loaded+=async (_,_)=>{
+                    try {
+                        var path=Nodes<TextBox>(reconnectDialog).Single(b=>b.Name=="StorageRebindPath");
+                        var action=Nodes<Button>(reconnectDialog).Single(b=>b.Name=="StorageRebindApply");
+                        path.Text=Path.Combine(root,"新位置 & data");
+                        action.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        for(int i=0;i<200&&!action.IsEnabled;i++)await Task.Delay(20);
+                        if(!action.IsEnabled||action.Content?.ToString()!=L.Get("storage.rebind.apply")||applied!=0)throw new Exception("Rebind must inspect before confirming");
+                        path.Text+=" changed";
+                        if(action.Content?.ToString()!=L.Get("storage.rebind.check"))throw new Exception("Changed directory retained stale verification");
+                        action.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        for(int i=0;i<200&&!action.IsEnabled;i++)await Task.Delay(20);
+                        await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                        Capture($"support-rebind-confirm-{language}-{appearance}",(FrameworkElement)reconnectDialog.Content);
+                        action.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        for(int i=0;i<200&&reconnectDialog.IsVisible;i++)await Task.Delay(20);
+                        if(applied!=1||reconnectDialog.IsVisible)throw new Exception("Rebind confirmation did not complete and close");
+                    }catch(Exception error){rebindFailure=error;reconnectDialog.Close();}
+                };
+                if(DailyDialogs.ShowModal(reconnectDialog)!=true||rebindFailure!=null)throw new Exception("Rebind dialog failed",rebindFailure);
+                checks+=3;
+                if(language==0&&appearance==1) {
+                    var began=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                    var cancelledCheck=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                    var cancelDialog=CreateStorageRebindWindow(this,async (path,token)=>{
+                        began.TrySetResult();try{await Task.Delay(Timeout.Infinite,token);}catch(OperationCanceledException){cancelledCheck.TrySetResult();throw;}
+                        return new DailyStorageMigration.RebindPreview(lost,path,0);
+                    });
+                    cancelDialog.Show();await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+                    Nodes<TextBox>(cancelDialog).Single(b=>b.Name=="StorageRebindPath").Text=Path.Combine(root,"cancel-check");
+                    Nodes<Button>(cancelDialog).Single(b=>b.Name=="StorageRebindApply").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    await began.Task.WaitAsync(TimeSpan.FromSeconds(2));cancelDialog.Close();
+                    await cancelledCheck.Task.WaitAsync(TimeSpan.FromSeconds(2));
+                    if(cancelDialog.IsVisible)throw new Exception("Directory inspection cannot be cancelled");
+                    checks++;
+                }
                 // Exercise the new nested account breakdown, which a small empty host fixture never renders.
                 DailyStorageCategory Category(string key,DailyStorageState state,int mib,int expired=0,int deferred=0)=>new(key,state,mib*1048576L,expired*1048576L,deferred*1048576L,1);
                 var breakdown=new DailyStorageOverview([]){Areas=[

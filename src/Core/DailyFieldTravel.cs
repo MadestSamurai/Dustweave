@@ -454,10 +454,18 @@ public sealed partial class DailyFieldRoute
         var owned = Rows(R(e, "mainline.owned_packs", "$items")).Where(r => N(r["Key"]) == N(r["Value.Id"])).Select(r => N(r["Value.Id"])).ToHashSet();
         return owned.Contains(pack) && Rows(R(e, "mainline.packs", "$items")).Any(r => N(r["Id"]) == pack && N(r["PackType"]) is 0 or 1);
     }
-    public async Task Enter(long chapter, bool leaveInterior = false)
+    public Task Enter(long chapter, bool leaveInterior = false) => Enter(chapter, leaveInterior, null);
+    internal async Task Enter(long chapter, bool leaveInterior, double? transitionSeconds)
     {
+        using var waiting = transitionSeconds.HasValue ? DailyObservationWindow.Begin(transitionSeconds.Value, () => W.Time) : null;
+        double Remaining(double fallback)
+        {
+            if (waiting == null) return fallback;
+            if (waiting.Remaining <= 0) throw DailyObservationWindow.Timeout("目标卡带尚未稳定，没有重复发送切换请求。");
+            return waiting.Remaining;
+        }
         Require(Catalog.Supported(chapter) || Owned(await Evidence(), chapter), "卡带不支持或未拥有");
-        if (await DailyTravel.Reuse(W, packId: checked((int)chapter), surfaces: ["GameFieldDefaultUI"], extra: ["WayPointUI"], encounter: Encounter))
+        if (await DailyTravel.Reuse(W, packId: checked((int)chapter), surfaces: ["GameFieldDefaultUI"], extra: ["WayPointUI"], seconds: Remaining(60), encounter: Encounter))
         {
             return;
         }
@@ -468,13 +476,15 @@ public sealed partial class DailyFieldRoute
                 throw new DailyTravelBlocked($"活动卡带 {chapter} 当前未开放，已跳过；后续开放时会重新判断");
         }
         await DailyTravel.PackList(W, encounter: Encounter);
-        try { await W.Step("PackListUI", operation: "mainline_pack", value: checked((int)chapter)); }
+        var action = O(("ui", "PackListUI"), ("operation", "mainline_pack"), ("value", checked((int)chapter)));
+        if (transitionSeconds.HasValue) action["timeout"] = Remaining(20);
+        try { await W.Step(action); }
         catch (DailyStepException e) when (e.Kind == "rejected" && e.DefinitelyNotDispatched && e.RejectionCode == "pack_entry_unavailable:event_closed")
         {
             throw new DailyTravelBlocked($"活动卡带 {chapter} 的开放状态已变化，本次未发送切换，继续后续卡带");
         }
-        Require(await DailyTravel.Reuse(W, packId: checked((int)chapter), surfaces: ["GameFieldDefaultUI"], waitForTarget: true, encounter: Encounter), "卡带切换未完成");
-        await FieldReady();
+        Require(await DailyTravel.Reuse(W, packId: checked((int)chapter), surfaces: ["GameFieldDefaultUI"], waitForTarget: true, seconds: Remaining(60), encounter: Encounter), "卡带切换未完成");
+        await FieldReady(timeout: Remaining(45));
         if (leaveInterior && N(Map(await Evidence())["isInsideMap"]) != 0)
             await PrepareTeleport();
     }
