@@ -34,7 +34,7 @@ public sealed partial class DailyCommandDriver
         {
             while (true)
             {
-                if (stopped() || mailbox.Read("live", "pause") != null)
+                if (stopped() || await ReadInputMailboxAsync("pause", end) != null)
                     throw new DailyStepException("rejected", "Paused before managed UI input; no command sent");
                 var current = (await ReadBound()).Frame;
                 if (Text(current, "Scene") != Text(bound, "Scene"))
@@ -74,7 +74,7 @@ public sealed partial class DailyCommandDriver
         {
             while (true)
             {
-                if (stopped() || mailbox.Read("live", "pause") != null)
+                if (stopped() || await ReadInputMailboxAsync("pause", end) != null)
                     throw new StageHostException("stopped", "Paused after managed UI dispatch");
                 var after = (await ReadBound()).Frame;
                 lastObserved = after.DeepClone().AsObject();

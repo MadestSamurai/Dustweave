@@ -282,6 +282,8 @@ Normal desktop, updated and isolated-worker processes own a fresh control identi
 
 ### Trading validation scope
 
+2026-11-12: Fixed potion refills now handle the same proven-unsent preview invalidation as normal trading. After cancelling the owned preview, they retry at most twice across the refill, rereading the deficit, native 45-gold discount, stock and gold reserve each time. Confirmed batches remain accounted for. Exhaustion becomes a localized `preview_unstable` result: fixed daily supply restores a safe page and continues independent work, including mail. Ambiguous purchases, cancellation and identity changes do not enter this retry. Regressions reproduce the disappearing purchase label, repeated changes, changed funding/stock/discount/balance, later-batch failure, lost responses and recovery with a fresh driver/journal. No live potion purchase was performed for this fix.
+
 `-ValidationScope Trading` is a narrow follow-up scope for `DailyTradeOptimizer`, its forecast/drop model, plan/execution integration and the corresponding optimizer tests. It reuses a completed full baseline only when the actual source difference is wholly inside this allowlist, documentation and packaging metadata, and the installed client code fingerprint is unchanged. Changes to the shared linear solver, connection, dependencies or UI require full checks. Trading and product-identity regressions plus both packaged startup/identity/boundary gates still run; the recorded scope does not claim to rerun unchanged tool checks.
 
 ### Weekly route validation scope

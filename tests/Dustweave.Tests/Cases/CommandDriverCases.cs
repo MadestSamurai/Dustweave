@@ -11,6 +11,7 @@ static class CommandDriverCases
         public Dictionary<string, byte[]> Values = new(); public List<JsonObject> Commands = []; public HashSet<string> Opened = [];
         public Action<JsonObject>? AfterCommand; public Action<string, string, byte[]>? AfterWrite;
         public Action<string,string>? BeforeRead;
+        public Action<string,string>? BeforeWrite;
         public JsonObject? Before, After;
         public string State = "observed_after_dispatch", Error = "screen_changed"; public bool? Dispatched = true; public bool Revoked, ThrowCreate, Tamper;
         public void Acquire(string channel)
@@ -30,6 +31,7 @@ static class CommandDriverCases
         {
             if (Revoked)
                 throw new LeaseRevokedException();
+            BeforeWrite?.Invoke(channel,name);
             string key = channel + ":" + name;
             if (create && Values.ContainsKey(key))
                 throw new IOException("Already pending");
@@ -86,7 +88,7 @@ static class CommandDriverCases
             cases.Add(name);
         }
         int n = 0;
-        async Task Exercise(Action<Mailbox, JsonObject>? configure, string expected, string label, Action<Mailbox, JsonObject?, string>? inspect = null, Func<int, DailyStageFrame>? observe = null, bool stopped = false)
+        async Task Exercise(Action<Mailbox, JsonObject>? configure, string expected, string label, Action<Mailbox, JsonObject?, string>? inspect = null, Func<int, DailyStageFrame>? observe = null, bool stopped = false, Func<bool>? stop = null)
         {
             string path = Path.Combine(output, "driver-" + (++n));
             var box = new Mailbox();
@@ -94,7 +96,7 @@ static class CommandDriverCases
             configure?.Invoke(box, action);
             double time = 0;
             int reads = 0;
-            using var driver = new DailyCommandDriver(path, box, () => Task.FromResult(observe?.Invoke(++reads) ?? new DailyStageFrame(Frame(), Context())), () => stopped, () => 100000000, () => time, t => { time += t.TotalSeconds; return Task.CompletedTask; });
+            using var driver = new DailyCommandDriver(path, box, () => Task.FromResult(observe?.Invoke(++reads) ?? new DailyStageFrame(Frame(), Context())), stop ?? (() => stopped), () => 100000000, () => time, t => { time += t.TotalSeconds; return Task.CompletedTask; });
             driver.Bind(Context());
             string kind = "";
             JsonObject? result = null;
@@ -146,6 +148,80 @@ static class CommandDriverCases
         await Exercise((b, a) => { b.State = "observed_after_dispatch"; b.Dispatched = false; }, "pending", "observed receipt must contain dispatch evidence");
         await Exercise((b, a) => b.Tamper = true, "pending", "receipt for another actor is rejected without replay");
         await Exercise((b, a) => b.ThrowCreate = true, "pending", "lost create response is uncertain and cannot be retried", (b, r, p) => Check(b.Commands.Count == 1, "ambiguous mailbox create has one original intent"));
+        {
+            int attempts = 0;
+            await Exercise((b,a) => b.BeforeWrite = (_,name) =>
+            {
+                if (name == "command.json" && ++attempts < 3)
+                    throw new PipeConnectTimeoutException("create",name,new TimeoutException());
+            }, "", "two proven unsent connection failures recover on the third attempt", (b,r,p) =>
+            {
+                Check(attempts == 3 && b.Commands.Count == 1 && b.Opened.Count == 1, "connection recovery sends one command without reacquiring the lease");
+                Check(Directory.GetFiles(Path.Combine(p,"live","steps"),"result.json",SearchOption.AllDirectories).Count(f => DailyJson.TryRead<JsonObject>(f)?["state"]?.ToString() == "not_submitted") == 2, "unsent connection attempts retain explicit diagnostic evidence");
+            });
+            attempts = 0;
+            await Exercise((b,a) => b.BeforeWrite = (_,name) =>
+            {
+                if (name == "command.json") { attempts++; throw new PipeConnectTimeoutException("create",name,new TimeoutException()); }
+            }, "rejected", "persistent unsent connection failures stop after three attempts", (b,r,p) => Check(attempts == 3 && b.Commands.Count == 0, "unsent retry limit never fabricates a pending consuming operation"));
+        }
+        {
+            bool missed = false;
+            await Exercise((b,a) => b.BeforeWrite = (_,name) =>
+            {
+                if (name == "command.json" && !missed) { missed = true; throw new PipeConnectTimeoutException("create",name,new TimeoutException()); }
+            }, "", "unsent retry refreshes the surface and target before sending", (b,r,p) =>
+                Check(b.Commands.Single()["TargetId"]!.GetValue<int>() == 44 && b.Commands.Single()["SurfaceId"]!.GetValue<int>() == 33, "unsent retry does not replay stale UI identifiers"),
+                observe: _ => { var f=Frame(); if(missed){ f["Surfaces"]![0]!["Id"]=33;f["Surfaces"]![0]!["Targets"]![0]!["Id"]=44; }return new(f,Context()); });
+            missed = false;
+            await Exercise((b,a) => b.BeforeWrite = (_,name) =>
+            {
+                if (name == "command.json" && !missed) { missed = true; throw new PipeConnectTimeoutException("create",name,new TimeoutException()); }
+            }, "identity", "identity change during unsent recovery prevents the retry", (b,r,p) => Check(b.Commands.Count == 0,"changed account receives no recovered input"),
+                observe: _ => { var c=Context(); if(missed)c["cycle"]="tomorrow";return new(Frame(),c); });
+        }
+        foreach (string entry in new[] { "pause", "command.json", "receipts~" })
+        {
+            int failures = 0;
+            await Exercise((b,a) => b.BeforeRead = (_,name) =>
+            {
+                if (name.StartsWith(entry,StringComparison.Ordinal) && ++failures <= 2) throw new TimeoutException("temporary read failure");
+            }, "", "transient mailbox timeout recovers: " + entry, (b,r,p) => Check(b.Commands.Count == 1 && failures >= 3,"read recovery submits exactly once: " + entry));
+        }
+        await Exercise((b,a) => b.AfterCommand = _ => throw new TimeoutException("accepted command reply lost"), "", "ambiguous write timeout resolves from the original receipt", (b,r,p) => Check(b.Commands.Count == 1,"accepted write timeout never resends the command"));
+        {
+            int failures = 0;
+            await Exercise((b,a) => b.BeforeRead = (_,name) =>
+            {
+                if (name.StartsWith("receipts~",StringComparison.Ordinal)) { failures++;throw new TimeoutException("persistent receipt timeout"); }
+            }, "pending", "persistent receipt timeout remains bounded and recoverable", (b,r,p) =>
+            {
+                Check(b.Commands.Count == 1 && failures <= 6, "receipt polling obeys the original deadline without repeating input");
+                Check(DailyJson.TryRead<JsonObject>(Path.Combine(p,"live","steps",b.Commands.Single()["Id"]!.ToString(),"result.json"))?["state"]?.ToString() == "unknown_timeout", "receipt timeout persists the original command journal");
+            });
+        }
+        await Exercise((b,a) => b.AfterCommand = c => { b.Values.Remove("live:receipts~"+c["Id"]+".json");throw new TimeoutException("ambiguous write without receipt"); }, "pending", "ambiguous write without receipt waits then preserves pending outcome", (b,r,p) => Check(b.Commands.Count == 1,"missing write reply never permits automatic replay"));
+        {
+            int failures=0;
+            await Exercise((b,a) => b.BeforeRead=(_,name)=>
+            {
+                if(name.StartsWith("receipts~",StringComparison.Ordinal)){failures++;b.Revoked=true;throw new TimeoutException();}
+            }, "pending", "revoked lease aborts receipt recovery without reacquisition", (b,r,p)=>Check(failures==1&&b.Commands.Count==1&&b.Opened.Count==1,"transport retry cannot reclaim a revoked writer"));
+        }
+        {
+            bool stopNow = false;
+            await Exercise((b,a) => b.BeforeRead = (_,name) =>
+            {
+                if (name.StartsWith("receipts~",StringComparison.Ordinal)) { stopNow = true;throw new TimeoutException(); }
+            }, "pending", "operator stop interrupts receipt recovery and retains the pending command", (b,r,p) => Check(b.Commands.Count == 1,"stop during timeout recovery performs no further input"), stop: () => stopNow);
+        }
+        {
+            using var process = Process.GetCurrentProcess();
+            var client = new PipeClient(Path.Combine(output,"not-running-ipc"),process.Id,process.StartTime.ToUniversalTime().Ticks);
+            PipeConnectTimeoutException? failure = null;
+            try { client.Write("command.json",[],true); } catch(PipeConnectTimeoutException e) { failure=e; }
+            Check(failure?.Operation == "create" && failure.Entry == "command.json" && failure.InnerException is TimeoutException,"real pipe connection timeout proves no command bytes were sent");
+        }
         await Exercise((b, a) => b.Values["live:command.json"] = Encoding.UTF8.GetBytes("{}"), "rejected", "existing pending mailbox command is never overwritten", (b, r, p) => Check(b.Commands.Count == 0, "pending command guard submits nothing"));
         await Exercise(null, "rejected", "operator stop prevents ownership and dispatch", (b, r, p) => Check(b.Opened.Count == 0 && b.Commands.Count == 0, "stopped queue takes no writer lease"), stopped: true);
         await Exercise((b, a) => b.Values["live:pause"] = [], "rejected", "paused mailbox is not silently cleared by a step");

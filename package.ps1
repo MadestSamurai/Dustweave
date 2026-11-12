@@ -3,7 +3,7 @@ param(
  [Parameter(Mandatory)][string]$GameManagedDir,
  [ValidateSet('Portable','Lite')][string[]]$Flavors=@('Portable','Lite'),
  [string]$PreparedCacheDirectory='',
- [ValidateSet('Auto','Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Observation','Saffron','Resources','PracticeStorage','Full')][string]$ValidationScope='Auto',
+ [ValidateSet('Auto','Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Observation','Saffron','Resources','PracticeStorage','GoldenPresets','Full')][string]$ValidationScope='Auto',
  [string]$ValidationBaseline='',
  [string]$PublisherEvidence='',
  [string]$SyntheticEvidence='',
@@ -211,6 +211,20 @@ foreach($flavor in $Flavors){
   foreach($scope in @('bargain','support','launch-paths','localization','free-notice')){
    $check=Join-Path $checks ('smoke-'+$scope)
    Run $exe @('--smoke',$check) ($flavor+'-smoke-'+$scope) 180 $scope
+   Pass (Join-Path $check 'smoke.json')
+  }
+  if($flavor -eq $Flavors[0]){
+   Run $exe @('--utility','live','prepare',$managed,(Join-Path $checks 'live-client')) 'live-client'
+   Run $exe @('--utility','live','taps-all',$managed,(Join-Path $bundle 'app/connection/specs'),(Join-Path $checks 'evidence')) 'evidence-configs'
+   Pass (Join-Path $checks 'evidence/result.json')
+  }
+ }
+ if($validation.scope -eq 'GoldenPresets'){
+  foreach($scope in @('bargain','localization','free-notice','tool-preparation')){
+   $check=Join-Path $checks ('smoke-'+$scope)
+   if($scope -eq 'tool-preparation'){$env:DUSTWEAVE_UI_SMOKE_TOOL='golden-presets'}
+   try{Run $exe @('--smoke',$check) ($flavor+'-smoke-'+$scope) 180 $scope}
+   finally{if($scope -eq 'tool-preparation'){Remove-Item Env:DUSTWEAVE_UI_SMOKE_TOOL -ErrorAction SilentlyContinue}}
    Pass (Join-Path $check 'smoke.json')
   }
   if($flavor -eq $Flavors[0]){

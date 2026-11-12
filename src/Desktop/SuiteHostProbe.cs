@@ -10,6 +10,14 @@ internal static class SuiteHostProbe {
   try{
    Environment.SetEnvironmentVariable(names[1],"42");Environment.SetEnvironmentVariable(names[2],"100");
    foreach(var tool in DailyToolCatalog.All){
+        if(tool.Id=="golden-presets"){
+     string fixture=Path.Combine(output,"golden-control");var session=new GoldenPresetSession(fixture,new string('a',64));
+     using(DailyToolControl.Acquire(fixture)){
+      bool blocked=false;try{session.Read().GetAwaiter().GetResult();}catch(InvalidOperationException e)when(e.InnerException is IOException){blocked=true;}
+      if(!blocked)throw new Exception("Golden presets bypass control ownership");
+     }
+     using(DailyToolControl.Acquire(fixture))checks.Add("golden-presets: control remains reusable after blocked connection");continue;
+    }
     if(tool.Id=="talent-practice"){
      string fixture=Path.Combine(output,"practice-control");
      var session=new DailyBargainSession(fixture,new string('a',64));

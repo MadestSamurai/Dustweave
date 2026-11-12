@@ -182,11 +182,12 @@ public partial class MainWindow : Window
     private bool toolChanging;
     private ApostleToolWindow? apostleWindow;
     private SoulToolWindow? soulWindow;
+    private GoldenPresetWindow? goldenPresetWindow;
     private DailyBargainWindow? practiceWindow;
-    private string? ActiveToolId => practiceWindow != null ? "talent-practice" : soulWindow != null ? "soul" : apostleWindow != null ? "apostle-defense" : toolSession.Current?.ToolId;
-    private bool ToolOpen => practiceWindow != null || soulWindow != null || apostleWindow != null || toolSession.Current != null || toolPluginSessions.Count > 0;
+    private string? ActiveToolId => goldenPresetWindow != null ? "golden-presets" : practiceWindow != null ? "talent-practice" : soulWindow != null ? "soul" : apostleWindow != null ? "apostle-defense" : toolSession.Current?.ToolId;
+    private bool ToolOpen => goldenPresetWindow != null || practiceWindow != null || soulWindow != null || apostleWindow != null || toolSession.Current != null || toolPluginSessions.Count > 0;
     private bool ToolConnecting => apostleWindow?.Panel.Connecting == true;
-    private bool ToolRunning => !busy && parallelControl == null && (practiceWindow?.IsWorking == true || DailyToolControl.IsAutomationOccupied(root));
+    private bool ToolRunning => !busy && parallelControl == null && (goldenPresetWindow?.IsWorking == true || practiceWindow?.IsWorking == true || DailyToolControl.IsAutomationOccupied(root));
     private bool Unavailable => onboardingOpen || busy || manualCacheChanging || maintenanceYielding || toolChanging || ToolRunning || UpdateRestarting || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true;
     private async Task OpenTool(string id)
     {
@@ -194,6 +195,7 @@ public partial class MainWindow : Window
         if (smoke != null || busy || manualCacheChanging || maintenanceYielding || toolChanging || UpdateRestarting || ParallelBusy || pluginChanging || softwareSandboxPath?.Preparing == true) return;
         toolChanging = true; SetBusy(busy);
         try {
+            if(id=="golden-presets" && goldenPresetWindow!=null){goldenPresetWindow.BringForward();return;}
             if(id=="talent-practice" && practiceWindow!=null){practiceWindow.BringForward();return;}
             if(id=="soul" && soulWindow!=null){soulWindow.BringForward();return;}
             if(id=="apostle-defense" && apostleWindow!=null){apostleWindow.BringForward();return;}
@@ -202,6 +204,13 @@ public partial class MainWindow : Window
             if(finalClose || UpdateRestarting)return;
             using var activityLease=DailyToolControl.Acquire(root);
             if(!await CloseToolWindowsAsync(includePlugins:false))return;
+                        if(id=="golden-presets"){
+                var window=new GoldenPresetWindow(root,TaskAccountKey,true,()=>!Unavailable&&!finalClose){Owner=this};
+                goldenPresetWindow=window;window.ActivityChanged+=()=>{RefreshTools();SetBusy(busy);};
+                window.ContentRendered+=(_,_)=>FeatureViewed(DailyFeatureDiscovery.Tool(id));
+                window.Closed+=(_,_)=>{if(goldenPresetWindow==window)goldenPresetWindow=null;RefreshTools();SetBusy(busy);};
+                DailyDialogs.Prepare(window,toolWindow:true);window.Show();return;
+            }
             if(id=="talent-practice"){
                 var window=CreatePracticeWindow(TaskAccountKey,allowGame:true);
                 window.Show();toolMessage="practice.ready";return;
@@ -260,6 +269,7 @@ public partial class MainWindow : Window
     private async Task<bool> CloseToolWindowsAsync(bool includePlugins=true)
     {
         if(includePlugins){foreach(var session in toolPluginSessions.Values) session.Dispose();toolPluginSessions.Clear();}
+        if(goldenPresetWindow is {} golden && !await golden.CloseSafelyAsync())return false;
         if(practiceWindow is {} practice && !await practice.CloseSafelyAsync())return false;
         if(soulWindow is {} soul){if(!await soul.CloseSafelyAsync())return false;}
         if(apostleWindow is { } window)
@@ -273,6 +283,7 @@ public partial class MainWindow : Window
     private void RefreshTools()
     {
         var id = ActiveToolId;
+        goldenPresetWindow?.RefreshAvailability();
         practiceWindow?.RefreshAvailability();
         apostleWindow?.Panel.Render();
         bool running=ToolRunning;
@@ -486,6 +497,7 @@ public partial class MainWindow : Window
     {
         if(value)ActionNotice.Visibility=Visibility.Collapsed;
         busy = value;
+        goldenPresetWindow?.RefreshAvailability();
         practiceWindow?.RefreshAvailability();
         schedulePanel.Busy(value || ParallelBusy); ExecutionModeButton.IsEnabled = !Unavailable; UpdateUpdateControls();
         var unavailable = Unavailable;

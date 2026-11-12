@@ -120,7 +120,7 @@ namespace BD2Daily.Live {
   public static bool RewardKind(string k){return new[]{"reward_select","reward_tab","reward_action"}.Contains(k);}
   public static bool TacticsKind(string k){return new[]{"tactics_select","tactics_priority","tactics_action_open","tactics_burst","tactics_action","tactics_move","tactics_order","tactics_start"}.Contains(k);}
   public static bool ExtensionKind(string k){return TacticsKind(k)||(EventKind(k)&&k!="event_sweep_select"&&k!="event_sweep_confirm"&&k!="event_sweep_count");}
-  public static bool NativeBattleKind(string k){return new[]{"salvation_open","salvation_walk","salvation_select","salvation_popup","salvation_count","salvation_confirm","event_native_select","event_native_confirm","event_native_exit","event_preset_read","event_preset_apply"}.Contains(k);}
+  public static bool NativeBattleKind(string k){return new[]{"golden_preset_read","golden_preset_save","salvation_open","salvation_walk","salvation_select","salvation_popup","salvation_count","salvation_confirm","event_native_select","event_native_confirm","event_native_exit","event_preset_read","event_preset_apply"}.Contains(k);}
   public static bool EventKind(string k){return new[]{"event_select","event_sweep_select","event_sweep_confirm","event_sweep_count","event_action_open","event_action","event_move","event_order","event_start","event_bench","event_replace"}.Contains(k);}
   public static bool TradeKind(string k){return new[]{"trade_boxes_open","trade_menu","trade_talent","trade_favorite_preview","trade_favorite_confirm","trade_buy_preview","trade_buy_confirm","trade_sell_preview","trade_sell_confirm","trade_cook_preview","trade_cook_quantity","trade_cook_confirm"}.Contains(k);}
   public static bool PowderKind(string kind){return kind=="powder_recipe"||kind=="powder_options";}
@@ -164,6 +164,13 @@ namespace BD2Daily.Live {
     return f.Surfaces.Any(x=>x.Id!=ui.Id&&!PassiveSurface(x.Type)&&x.Type!="GameFieldDefaultUI"&&!(x.Type=="ScriptUI"&&x.NativeContext=="story_dialogue")&&!(f.BridgeVersion>=102&&x.Type=="BalloonScriptUI"&&!x.Popup&&!string.IsNullOrEmpty(x.Path)&&ui.Path==x.Path+"/StorySkipUI"))?"story_popup_blocked":"";
    }
    if(NativeBattleKind(c.Kind)){
+    if(c.Kind=="golden_preset_read"||c.Kind=="golden_preset_save"){
+     if(f.BridgeVersion<144||!GameplayReady(f)||c.TargetId!=0||c.Items==null||c.Value<0||c.Items.Length>4097)return "goldencode.read_again";
+     if(ui.Type!="MenuUI"&&ui.Type!="PVPColosseumLobbyUI"&&ui.Type!="CharPresetPopupUI")return "goldencode.open_lobby";
+     if(f.Surfaces.Any(x=>x.Type.StartsWith("BattleUI",StringComparison.Ordinal)||x.Type=="BattleResultUI"||x.Popup&&x.Id!=ui.Id&&x.Order>=ui.Order&&!PassiveSurface(x.Type)))return "goldencode.open_lobby";
+     if(c.Kind=="golden_preset_save"&&(c.Items.Length<2||c.Items[0]<=0))return "goldencode.read_again";
+     return c.Items.Skip(1).Any(n=>n<32||n>126)?"goldencode.invalid":"";
+    }
     if(c.Kind=="event_preset_read"||c.Kind=="event_preset_apply"){
      if(f.BridgeVersion<141||!GameplayReady(f)||c.TargetId!=0||ui.Type!="EventBattleUI"||c.Value<1||c.Value>999||c.Items==null)return "event_preset_context_rejected";
      if(f.Surfaces.Any(x=>x.Type=="BattleUI_EventBattle"||x.Type=="BattleResultUI"||x.Popup&&x.Id!=ui.Id&&x.Order>=ui.Order&&!PassiveSurface(x.Type)))return "event_preset_surface_rejected";

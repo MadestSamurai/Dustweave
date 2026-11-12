@@ -123,6 +123,16 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     $practiceOutside=@($changed|Where-Object {$_ -notmatch $practiceStorage})
     if($Scope -eq 'PracticeStorage'){$outside=$practiceOutside}
     if($Scope -in @('Auto','PracticeStorage') -and $changed.Count -and !$practiceOutside.Count){$selectedScope='PracticeStorage';$outside=@()}
+    # Golden preset transport and pill-preview recovery share the verified
+    # host/IPC boundary. Other minigame algorithms and update formats are unchanged.
+    # Enumerate actual files; unmatched changes still require broader validation.
+    $golden=$practiceStorage+'|^assets/specs/golden-presets-evidence-spec\.json$|^src/Connection/(GoldenPresetNative|Bridge|Evidence|LiveContracts|SelfTest)\.cs$|^src/Connection/Dustweave\.Connection\.csproj$'
+    $golden+='|^src/Shared/(GoldenFormation|DailyBridgeVersion)\.cs$|^src/Shared/Ipc/desktop/PipeClient\.cs$|^src/Core/(DailyManagedInputs|DailyPotionSupply|DailyToolCatalog|DailyTradeExecution)\.cs$'
+    $golden+='|^src/Desktop/(GoldenPreset(Check|Session|Window)|MainWindow\.GoldenPresets\.Smoke|MainWindow\.ToolPreparationSmoke|MainWindow\.xaml|Program|SuiteHostProbe|ToolWindowDesign)\.cs$'
+    $golden+='|^tests/Dustweave.Tests/Program\.cs$|^tests/Dustweave.Tests/Cases/(GoldenCode|QueueEngine|TalentPotion|ToolMenu)Cases\.cs$'
+    $goldenOutside=@($changed|Where-Object {$_ -notmatch $golden})
+    if($Scope -eq 'GoldenPresets'){$outside=$goldenOutside}
+    if($Scope -in @('Auto','GoldenPresets') -and $changed.Count -and !$goldenOutside.Count){$selectedScope='GoldenPresets';$outside=@()}
     $reason='Changes outside the account validation boundary: '+($outside -join ', ')
     if(!$outside.Count){
      $checks=$release.flavors[0].checks
@@ -137,6 +147,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
       if($selectedScope -eq 'Trading'){$groups=@('ProductIdentity','TradeOptimizer','TradeCalendar','TradeTransition','TradeData','TradeReplan','TradeQuote','TradeResume','TalentPotion','BargainTraining','UserText')}
       if($selectedScope -eq 'Updates'){$groups=@('ProductIdentity','UpdateLayout','UpdateDelta','UpdateSafety','UpdateRepair','UpdateInventory','CacheStorage','SchedulingUpdates','UnifiedSuite','SuiteOwnerProbe','UserText')}
       if($selectedScope -eq 'PracticeStorage'){$groups=@('ProductIdentity','TalentPractice','BargainTraining','FieldTalent','QuickTravel','CollectionReadiness','CommandDriver','ObservationWait','DiagnosticExport','StorageMigration','StoragePath','StorageMaintenance','CacheStorage','Sandbox','SandboxScope','SchedulingUpdates','TradeBoxes','ManagedInputs','BusinessJournal','UpdateLayout','UpdateDelta','UpdateSafety','UpdateRetention','LocalizationArchitecture','UserText')}
+      if($selectedScope -eq 'GoldenPresets'){$groups=@('ProductIdentity','GoldenCodes','TalentPractice','BargainTraining','CommandDriver','ManagedInputs','ObservationWait','DiagnosticExport','ToolMenu','UnifiedSuite','SuiteOwnerProbe','ActivityLease','TalentPotion','TradeReplan','TradeResume','QueueEngine','UpdateLayout','UpdateDelta','UpdateSafety','UpdateRetention','LocalizationArchitecture','UserText')}
       if($selectedScope -eq 'UiReadiness'){$groups=@('ProductIdentity','UiInteractionReadiness','ManagementStage','ManagedInputs','CommandDriver','Workflow','MirrorStage','DispatchRecovery','BattleArrivalRecovery','HomeNavigation','HomeRecovery','PackagedUtility','PluginStore','UnifiedSuite','UserText')}
       if($selectedScope -in @('Weekly','Observation','Saffron','Resources')){$groups=@('ProductIdentity','WeeklyIsolation','WeeklyGoal','CollectionReadiness','FieldTalent','WeeklyNpcBoard','WeeklyNpcQuery','WeeklyNpcInteraction','CommandDriver','ManagedInputs','QueueSession','QueueEngine','QueuePeriod','QueueExecutionThread','PickupRecovery','BusinessJournal','BusinessScope','MirrorStage','FreeDrawStage','DispatchRecovery','ManagementStage','TradeResume','TravelTransition','UserText')}
       if($selectedScope -in @('Weekly','Observation','Saffron','Resources') -and $changed -match '^src/Connection/'){$groups+=@('FieldAvoidance','QuickTravel','HomeNavigation','HomeRecovery')}
@@ -156,7 +167,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
    }
   }
  }
- if($Scope -in @('Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Observation','Saffron','Resources','PracticeStorage')){throw "Scoped validation cannot reuse this baseline: $reason"}
+ if($Scope -in @('Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Observation','Saffron','Resources','PracticeStorage','GoldenPresets')){throw "Scoped validation cannot reuse this baseline: $reason"}
  $full.reason=$reason
  return $full
 }

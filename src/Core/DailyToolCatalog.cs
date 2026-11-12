@@ -11,6 +11,7 @@ public static class DailyToolCatalog
     public static IReadOnlyList<DailyToolDefinition> All { get; } = new DailyToolDefinition[]
     {
         new("soul", "死魂之盘", "小游戏", "自动规划成长阵容，连续挑战全部五关。", "Dustweave", "Dustweave", @"Local\Dustweave.Soul") { CategoryId = "games" },
+        new("golden-presets", "黄金阵容分享", "经营与装备", "通过阵容码导入或导出黄金预设，保存前核验当前赛季费用和庇护。", "Dustweave", "Dustweave", "") { CategoryId = "business", HostWindow = true },
         new("talent-practice", "技能练习", "经营与装备", "选择角色练习天赋，查看经验和预计药耗，练满当前等级后停止。", "Dustweave", "Dustweave", "") { CategoryId = "business", HostWindow = true },
         new("fishing", "自动钓鱼", "经营与装备", "钓鱼、鱼饵、背包出售和地图往返。", "Dustweave", "BD2Fishing", @"Local\BD2Fishing.Desktop") { CategoryId = "business" },
         new("territory", "领地自动化", "经营与装备", "种植、采集、料理、库存出售和布局。", "Dustweave", "BD2Territory", @"Local\BD2Territory.Desktop") { CategoryId = "business" },

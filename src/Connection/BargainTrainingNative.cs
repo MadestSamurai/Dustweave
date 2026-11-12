@@ -76,7 +76,8 @@ namespace BD2Daily.Live {
        Target=checked((long)Math.Ceiling(goal.ConditionValue)),Current=Math.Max(cleared,live==null?0:live.Value),Known=loaded};}).ToArray();
    }catch{return null;} // Optional achievement evidence never disables XP training.
   }
-  static PracticeDisplayName Name(int id){
+  internal static Proto.Design.common.CharTable CharacterTable(int id) { return ὢὭὤὣὠὦὥὠὢὣὩ.ὣὢὨὠὦὥὯὢὥὠὪ(id); }
+  internal static PracticeDisplayName Name(int id){
    PracticeDisplayName value;
    if(names.TryGetValue(id,out value))return value;
    var row=Singleton<RawDataManager>.ὪὫὢὨὯὭὦὪὦὨὣ.GetValueObject<NameTextTable>(ὯὭὣὩὩὦὬὢὯὩὪ.DB_COMMON,"NameTextTable","id",id);

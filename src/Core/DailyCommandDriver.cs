@@ -349,12 +349,58 @@ public sealed partial class DailyCommandDriver : IDisposable
     }
     private async Task<JsonObject> SubmitRawAsync(JsonObject action, JsonObject? requiredFrame = null, JsonObject? ownedFrame = null, bool startup = false, bool menuRetry = false)
     {
+        action = DailyMenuNavigation.Normalize(action);
+        ValidateAction(action);
+        double end = clock() + Seconds(action);
+        for (int attempt = 0; ; attempt++)
+        {
+            try { return await SubmitOnceAsync(action, end, requiredFrame, ownedFrame, startup, menuRetry); }
+            catch (DailyStepException error) when (error.RejectionCode == "transport_not_sent" && !error.Submitted && error.DefinitelyNotDispatched)
+            {
+                // Re-run identity, scene, confirmation and target preflight. Never
+                // replay an old serialized command, reopen a lease, or retry an
+                // ambiguous write. Three connection attempts share one deadline.
+                if (attempt >= 2 || InputTransportRemaining(end) <= 0) throw;
+                await InputTransportDelay(end);
+                if (stopped()) throw new DailyStepException("rejected", "Paused before dispatch; no command sent");
+                if (InputTransportRemaining(end) <= 0) throw;
+            }
+        }
+    }
+    private double InputTransportRemaining(double end) => Math.Max(0, Math.Min(end - clock(), DailyObservationWindow.Current?.Remaining ?? double.PositiveInfinity));
+    private Task InputTransportDelay(double end) => delay(TimeSpan.FromMilliseconds(Math.Max(1, Math.Ceiling(Math.Min(200, InputTransportRemaining(end) * 1000)))));
+    private async Task<byte[]?> ReadInputMailboxAsync(string name, double end)
+    {
+        int timeouts = 0;
+        while (true)
+        {
+            if (timeouts > 0 && stopped()) throw new StageHostException("stopped", "stopped");
+            try
+            {
+                var bytes = mailbox.Read("live", name);
+                if (timeouts > 0) Diagnostics.Event("input_transport_recovered", DailyData.O(("entry", name), ("timeouts", timeouts)));
+                return bytes;
+            }
+            catch (TimeoutException error)
+            {
+                if (++timeouts == 1) Diagnostics.Event("input_transport_wait", DailyData.O(("entry", name), ("error", error.Message)));
+                if (stopped()) throw new StageHostException("stopped", "stopped");
+                if (InputTransportRemaining(end) <= 0)
+                    throw DailyObservationWindow.Timeout("connection_timeout");
+                await InputTransportDelay(end);
+                if (InputTransportRemaining(end) <= 0)
+                    throw DailyObservationWindow.Timeout("connection_timeout");
+            }
+        }
+    }
+    private async Task<JsonObject> SubmitOnceAsync(JsonObject action, double transportEnd, JsonObject? requiredFrame, JsonObject? ownedFrame, bool startup, bool menuRetry)
+    {
         Active();
         action = DailyMenuNavigation.Normalize(action);
         ValidateAction(action);
         if (Flag(action, "startup") && !startup)
             throw new DailyStepException("rejected", "Startup control is outside the identified queue driver");
-        if (stopped() || mailbox.Read("live", "pause") != null)
+        if (stopped() || await ReadInputMailboxAsync("pause", transportEnd) != null)
             throw new DailyStepException("rejected", "Paused by operator; no command sent");
         if (!owner.Held)
             Acquire("live");
@@ -417,9 +463,9 @@ public sealed partial class DailyCommandDriver : IDisposable
             throw new DailyStepException("rejected", "rejected: ui_not_ready");
         if (DailyNavigationDecision.Blockers(current, ui, policy).Length > 0)
             throw new DailyStepException("rejected", "rejected: foreground_popup");
-        if (stopped() || mailbox.Read("live", "pause") != null)
+        if (stopped() || await ReadInputMailboxAsync("pause", transportEnd) != null)
             throw new DailyStepException("rejected", "Paused before dispatch; no command sent");
-        if (mailbox.Read("live", "command.json") != null)
+        if (await ReadInputMailboxAsync("command.json", transportEnd) != null)
             throw new DailyStepException("rejected", "Another command is pending");
         // Recheck attendance against the observation actually used for this command.
         reason = Text(action, "reason");
@@ -440,10 +486,24 @@ public sealed partial class DailyCommandDriver : IDisposable
         try
         {
             InputRevision++;
-            mailbox.Write("live", "command.json", JsonSerializer.SerializeToUtf8Bytes(command), true);
-            while (clock() < end)
+            try { mailbox.Write("live", "command.json", JsonSerializer.SerializeToUtf8Bytes(command), true); }
+            catch (PipeConnectTimeoutException error) when (error.Operation == "create" && error.Entry == "command.json")
             {
-                var bytes = mailbox.Read("live", "receipts~" + id + ".json");
+                DailyJson.Write(Path.Combine(session, "result.json"), new { state = "not_submitted", error = error.Message, command, engine = "dotnet-driver-v1" });
+                Diagnostics.Event("input_transport_not_sent", DailyData.O(("id", id), ("error", error.Message)));
+                throw new DailyStepException("rejected", "connection_timeout") { RejectionCode = "transport_not_sent" };
+            }
+            catch (TimeoutException error)
+            {
+                // The request may have arrived. Only poll this command's receipt;
+                // a timeout cannot authorize a second skill use or purchase.
+                Diagnostics.Event("input_transport_uncertain", DailyData.O(("id", id), ("error", error.Message)));
+            }
+            while (InputTransportRemaining(end) > 0)
+            {
+                // An already available receipt remains authoritative even if
+                // Stop arrived after dispatch. Read it once before ending wait.
+                var bytes = await ReadInputMailboxAsync("receipts~" + id + ".json", end);
                 if (bytes != null)
                 {
                     receipt = JsonNode.Parse(bytes)!.AsObject();
@@ -475,7 +535,8 @@ public sealed partial class DailyCommandDriver : IDisposable
                         return result;
                     }
                 }
-                await delay(TimeSpan.FromMilliseconds(200));
+                if (stopped()) throw new DailyStepException("pending", "Paused after managed UI dispatch", true);
+                await InputTransportDelay(end);
             }
             throw new DailyStepException("pending", "No command receipt; evidence saved, no automatic replay", true);
         }
@@ -491,6 +552,11 @@ public sealed partial class DailyCommandDriver : IDisposable
                     engine = "dotnet-driver-v1"
                 });
             throw;
+        }
+        catch (StageHostException error) when (error.ObservationTimedOut || error.Kind == "stopped")
+        {
+            DailyJson.Write(Path.Combine(session, "result.json"), new { state = "unknown_timeout", receipt, error = error.Message, engine = "dotnet-driver-v1" });
+            throw new DailyStepException("pending", error.Message, true) { Command = command.DeepClone().AsObject() };
         }
         catch (Exception error) when (error is IOException or JsonException or InvalidOperationException)
         {
@@ -518,7 +584,7 @@ public sealed partial class DailyCommandDriver : IDisposable
                         ReleaseDemand(id.GetValue<string>());
                     mailbox.Write("live", "pause", []);
                 }
-                catch (Exception e) when (e is IOException or StageHostException) { }
+                catch (Exception e) when (e is IOException or TimeoutException or StageHostException) { }
             }
         }
         finally { closed = true; owner.Dispose(); }

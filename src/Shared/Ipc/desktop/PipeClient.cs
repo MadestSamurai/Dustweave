@@ -14,6 +14,16 @@ namespace BD2.LocalIpc
     {
         public GameSessionEndedException(string message, Exception inner = null) : base(message, inner) { }
     }
+    // Only raised by Connect, before any request bytes are written. A generic
+    // timeout after connection does not provide this non-dispatch guarantee.
+    public sealed class PipeConnectTimeoutException : TimeoutException
+    {
+        public string Operation { get; private set; }
+        public string Entry { get; private set; }
+        public PipeConnectTimeoutException(string operation, string entry, Exception inner)
+            : base("IPC connection timed out before sending " + operation + " " + entry, inner)
+        { Operation = operation; Entry = entry; }
+    }
     public sealed class PipeClient
     {
         // Shared contract across independently built tool assemblies. These
@@ -64,7 +74,9 @@ namespace BD2.LocalIpc
 
                 using (var pipe = new NamedPipeClientStream(".", Wire.Endpoint(pid, start), PipeDirection.InOut, PipeOptions.Asynchronous))
                 {
-                    pipe.Connect(Wire.TimeoutMilliseconds); Wire.VerifyServer(pipe, pid, start);
+                    try { pipe.Connect(Wire.TimeoutMilliseconds); }
+                    catch (TimeoutException error) { throw new PipeConnectTimeoutException(verb, name, error); }
+                    Wire.VerifyServer(pipe, pid, start);
                     using (var deadline = new Timer(_ => { try { pipe.Dispose(); } catch { } }, null, Wire.TimeoutMilliseconds, Timeout.Infinite))
                     {
                         Wire.WriteFrame(pipe, Wire.Encode(w => { w.Write(Wire.Version); w.Write(verb); w.Write(channel); w.Write(generation); w.Write(ticket); w.Write(name); Wire.Bytes(w, value); }));

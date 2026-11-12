@@ -31,6 +31,11 @@ static class QueueEngineCases
             var discount = new SupplyHost { Supply = _ => DailyPotionSupply.Result("blocked", DailyPotionSupply.NoDiscount) };
             await Run(discount, Root(), ["free_draws", "mail"]);
             Check(discount.Supplies == 2 && discount.Executed.SequenceEqual(new[] { "free_draws", "mail" }), "unavailable discount cannot loop or suppress independent work");
+            var unstablePreview = new SupplyHost { Supply = n => DailyPotionSupply.Result(n == 2 ? "blocked" : "skipped", n == 2 ? DailyPotionSupply.PreviewUnstable : DailyPotionSupply.Text("enough", "already enough"), n == 2 ? "preview_unstable" : "") };
+            var continued = await Run(unstablePreview, Root(), ["free_draws", "mail"]);
+            Check(unstablePreview.Supplies == 2 && unstablePreview.Executed.SequenceEqual(new[] { "free_draws", "mail" }) && State(continued) == "completed"
+                && continued["potion_supply"]?["finish"]?["reason"]?.GetValue<string>() == "preview_unstable",
+                "exhausted unsent closing refill previews preserve the explanation and still execute final mail");
             var occupied = new SupplyHost { Owner = "mirror" };
             await Run(occupied, Root(), ["mirror", "free_draws"]);
             Check(occupied.Supplies == 1 && occupied.Calls.IndexOf("execute:mirror") < occupied.Calls.IndexOf("supply"), "active battle is preserved instead of detouring for initial refill");

@@ -377,7 +377,7 @@ internal static class DiagnosticExportCases
         File.WriteAllText(Path.Combine(npcPressure,"live","event-preview-recovery.json"),"{\"confirmation_not_submitted\":true}");
         string[] toolEvidence=["tools/fishing/diagnostics/runtime.log","tools/fishing/diagnostics/runtime.log.previous",
             "tools/bargain-training/logs/20261111-012401-827.json","tools/bargain-training/logs/20261111-024508-293.json",
-            "tools/bargain-training/logs/20261111-054413-321.json",
+            "tools/bargain-training/logs/20261111-054413-321.json", "tools/golden-presets/logs/20261112-054413-321.json",
             "tools/fishing/diagnostics/connection.log","tools/fishing/diagnostics/last-interruption.json",
             "tools/fishing-identity-error.json","tools/fishing-activity-error.json",
             "tools/territory/diagnostics/connection.log","tools/equipment/diagnostics/connection.log"];

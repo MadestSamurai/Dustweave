@@ -234,7 +234,8 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
         long reserveGold = N(tradeSettings["reserve_gold"]);
         long bought = 0, cost = 0, balance;
         var operations = new JsonArray();
-        do
+        int previewRetries = 0;
+        while (true)
         {
             long before = N(R(e, "trade.currency", "Catalyst"));
             if (before >= policy.TalentPotionTarget) { balance = before; break; }
@@ -251,8 +252,27 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
             purchaseScope["target"] = policy.TalentPotionTarget;
             purchaseScope["reserve"] = policy.TalentPotionReserve;
             purchaseScope["balance_before"] = before;
-            var op = await Buy([O(("kind", "potion"), ("shop", offer["Shop"]), ("product", offer["Product"]), ("count", count), ("price", price))], false,
-                purchaseScope);
+            JsonObject op;
+            try
+            {
+                op = await Buy([O(("kind", "potion"), ("shop", offer["Shop"]), ("product", offer["Product"]), ("count", count), ("price", price))], false,
+                    purchaseScope);
+            }
+            catch (DailyTradeReplanRequired error)
+            {
+                // PreviewCommit only produces this after proving confirmation was
+                // never dispatched and cancelling the exact owned preview. Never
+                // apply this retry to ambiguous receipts or other input failures.
+                w.Driver.Diagnostics.Event("potion_preview_replan", O(("attempt", previewRetries + 1), ("limit", 3),
+                    ("target", policy.TalentPotionTarget), ("balance_before", before), ("error", error.Message)));
+                if (previewRetries++ >= 2)
+                    throw new DailyPotionSupplyException("preview_unstable", DailyPotionSupply.PreviewUnstable);
+                await PurchasePageReady();
+                e = await Evidence();
+                // Recheck the current deficit, discount, stock and gold reserve.
+                // Keep completed batches and their receipts; do not reuse this basket.
+                continue;
+            }
             e = await Evidence();
             balance = N(R(e, "trade.currency", "Catalyst"));
             if (balance != before + count) throw new StageHostException("pending", "补药回执与库存不一致；保留记录，未重复购买。") { HoldQueue = true };
@@ -261,7 +281,8 @@ public sealed class DailyTradeExecution(DailyWorkflow w, JsonObject catalog)
             operations.Add(Copy(op["id"]));
             // Each batch has its own durable receipt. Cancellation or uncertainty
             // exits immediately; continuation reconciles and buys only the deficit.
-        } while (balance < policy.TalentPotionTarget);
+            if (balance >= policy.TalentPotionTarget) break;
+        }
         Require(DailyTalentPotions.Check(balance, required, policy.TalentPotionReserve) == null, "补药回执与库存不一致；保留记录，未重复购买。");
         await Close();
         return O(("bought", bought), ("balance", balance), ("cost", cost), ("operation", operations.LastOrDefault()), ("operations", operations));

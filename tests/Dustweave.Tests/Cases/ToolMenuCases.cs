@@ -6,7 +6,7 @@ internal static class ToolMenuCases
     public static void Run(string root, List<string> cases)
     {
         void Check(bool pass, string name) { if (!pass) throw new Exception(name); cases.Add("tool-menu: " + name); }
-        Check(DailyToolCatalog.All.Count == 13, "owned tools include talent practice");
+        Check(DailyToolCatalog.All.Count == 14, "owned tools include talent practice and Golden preset sharing");
         Check(DailyToolCatalog.Search("技能练习").Single() is { Id: "talent-practice", CategoryId: "business", HostWindow: true }, "talent practice is discoverable as a host-owned tool");
         Check(!DailyToolCatalog.All.Any(t => t.Id == "bargain"), "former standalone bargaining entry is removed");
         Check(DailyToolCatalog.All.Select(t => t.Id).Distinct().Count() == DailyToolCatalog.All.Count, "unique tool identities");

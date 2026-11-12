@@ -53,6 +53,7 @@ public static class DailyDiagnosticExport
             // This directory contains small exception records, not successful
             // practice transactions. Keep earlier connection failures as well.
             || relative.StartsWith("tools/bargain-training/logs/",StringComparison.OrdinalIgnoreCase)&&relative.EndsWith(".json",StringComparison.OrdinalIgnoreCase)
+            || relative.StartsWith("tools/golden-presets/logs/",StringComparison.OrdinalIgnoreCase)&&relative.EndsWith(".json",StringComparison.OrdinalIgnoreCase)
             || relative.EndsWith("-identity-error.json",StringComparison.OrdinalIgnoreCase)
             || new[]{"connection.log","connection-cleanup.log","last-interruption.json"}.Contains(Unrotate(Path.GetFileName(relative)),StringComparer.OrdinalIgnoreCase));
     static string? EvidenceFamily(string relative)

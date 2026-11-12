@@ -1,0 +1,1 @@
+{"Extends":"daily-evidence-spec.json","Taps":[],"Reads":[{"Id":"golden.presets","Type":"MenuUI","Paths":["$self"]}]}

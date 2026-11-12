@@ -153,6 +153,8 @@ public static class Program
     {
         if (args.Length == 0)
             throw new ArgumentException("Expected utility name");
+        if (args.Length == 3 && args[0] == "golden-presets-check" && args[2] is "read" or "write-empty")
+            return await GoldenPresetCheck.Run(args[1], args[2] == "write-empty");
         if (args.Length == 4 && args[0] == "talent-practice-check")
             return await DailyTalentPracticeCheck.Run(args[1], long.Parse(args[2]), int.Parse(args[3]));
         bool squareCheck = args.Length == 3 && args[0] == "diagnostics" && args[1] is "square-crossing" or "square-inspect" or "square-merchant";

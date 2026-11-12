@@ -111,6 +111,39 @@ static class TalentPracticeCases
     {
         void Check(bool ok, string label) { if (!ok) throw new Exception(label); checks.Add(label); }
         await PracticeQueueCases.Run(checks);
+        using(var f=new Fixture(Path.Combine(root,"practice-unsent-travel-timeout")))
+        {
+            int failures=0;
+            f.H.Box.BeforeWrite=(_,name)=>
+            {
+                if(name=="command.json"&&f.Casts==1&&failures++<2)
+                    throw new BD2.LocalIpc.PipeConnectTimeoutException("create",name,new TimeoutException());
+            };
+            Check(await f.Trainer.Run(f.Character)=="bargain.upgrade"&&failures>=2&&f.Casts==3&&f.Switches==2&&f.Potions==185,
+                "practice recovers unsent navigation after a successful cast without losing progress or spending extra medicine");
+        }
+        using(var f=new Fixture(Path.Combine(root,"practice-receipt-timeout")))
+        {
+            int failures=0;double recoverAt=0;
+            f.AfterCast=()=>recoverAt=f.H.Time+2;
+            f.H.Box.BeforeRead=(_,name)=>
+            {
+                if(name.StartsWith("receipts~",StringComparison.Ordinal)&&f.H.Time<recoverAt){failures++;throw new TimeoutException();}
+            };
+            Check(await f.Trainer.Run(f.Character)=="bargain.upgrade"&&failures>=6&&f.Casts==3&&f.Switches==2&&f.Potions==185,
+                "repeated post-cast receipt outages recover through full practice with exactly three casts");
+        }
+        using(var f=new Fixture(Path.Combine(root,"practice-lost-write-reply")))
+        {
+            var original=f.H.Box.AfterCommand;
+            f.H.Box.AfterCommand=command=>
+            {
+                original?.Invoke(command);
+                if(S(command["Kind"])=="mainline_talent")throw new TimeoutException("Reply lost after skill execution");
+            };
+            Check(await f.Trainer.Run(f.Character)=="bargain.upgrade"&&f.Casts==3&&f.Switches==2&&f.Potions==185,
+                "lost skill submission replies use matching receipts and never replay successful consuming skills");
+        }
         using(var f=new Fixture(Path.Combine(root,"loading-pipe-timeout")){LoadSeconds=19}){
             int timedOut=0;
             f.H.Box.BeforeRead=(_,name)=>{

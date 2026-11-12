@@ -20,6 +20,7 @@ public static class DailyPotionSupply
     public static DailyText Text(string key, string fallback, params string[] args) => DailyText.Of("potion." + key, fallback, args);
     public static readonly DailyText NoDiscount = Text("no_discount", "尚无45金币的天赋药折扣报价，本次未补药。缺药任务需手动补充后重新执行；其他任务继续。");
     public static readonly DailyText NoGold = Text("no_gold", "金币不足，或补药会触及保留金币，本次未补药。补足金币或调整目标后重新执行。");
+    public static readonly DailyText PreviewUnstable = Text("preview_unstable", "补药预览连续变化，重试后仍未能补足；已取消未提交的购买，不再继续重试。已到账的药保留，其他任务继续；可重新执行日常再次检查补药。");
     public static readonly DailyText Shortage = Text("shortage", "本任务天赋药不足，已暂缓。请手动补充天赋药后重新执行此任务；其他任务继续。");
     public static JsonObject Result(string state, DailyText text, string code = "") => O(("state", state), ("reason", code), ("detail", text.Fallback), ("display", JsonSerializer.SerializeToNode(text)));
     public static DailyText? ReadDisplay(JsonElement item)

@@ -1,5 +1,29 @@
 [
 {
+  "Version": "1.7.2",
+  "Date": "2026-11-12",
+  "Notes": {
+    "zh-CN": [
+      "新增「黄金阵容分享」工具：自动读取游戏预设，通过阵容码导入、导出，与网页版黄金模拟器互通；生成和复制阵容码分开操作。",
+      "导入前按当前赛季核对费用、服装和庇护，保存后核对并刷新预设；输入代码和切换槽位时及时显示服装内容。",
+      "改善技能练习等操作遇到短暂连接超时的恢复；确认指令尚未发送时有限重试，结果未明时继续核对，避免重复消耗。",
+      "修复日常收尾补药因购买预览变化而中断的问题，按最新库存和价格有限重试；仍未补足时提示原因并继续独立的邮箱收尾。"
+    ],
+    "zh-TW": [
+      "新增「黃金陣容分享」工具：自動讀取遊戲預設，透過陣容碼匯入、匯出，與網頁版黃金模擬器互通；產生與複製陣容碼分開操作。",
+      "匯入前依目前賽季驗證費用、服裝與庇護，儲存後驗證並更新預設；輸入代碼與切換欄位時即時顯示服裝內容。",
+      "改善技能練習等操作遇到短暫連接逾時的復原；確認指令尚未傳送時有限重試，結果不明時繼續核對，避免重複消耗。",
+      "修復日常收尾補藥因購買預覽變動而中斷的問題，依最新庫存與價格有限重試；仍未補足時提示原因並繼續獨立的信箱收尾。"
+    ],
+    "en-US": [
+      "Adds Golden formation codes: automatically read game presets and import or export codes shared with the web Golden simulator. Generating and copying a code are separate actions.",
+      "Checks current-season costs, costumes and blessings before import, then verifies and refreshes saved presets. Pasted codes and selected slots show their costumes promptly.",
+      "Improves recovery from temporary connection timeouts during talent practice and other actions. Retries are limited to commands confirmed not sent; uncertain results are reconciled without repeating resource use.",
+      "Fixes end-of-run pill refills stopping when the purchase preview changes. Replans from fresh stock and prices with bounded retries; if refill remains unavailable, reports the reason and continues independent mail cleanup."
+    ]
+  }
+},
+{
   "Version": "1.7.1",
   "Date": "2026-11-11",
   "Notes": {

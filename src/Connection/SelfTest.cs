@@ -15,6 +15,12 @@ static class SelfTest {
    c.Items=new long[]{1,20};Check(LivePolicy.Gate(c,f,now,false)!="","truncated box selection rejected");c.Items=new long[]{1,20,500};
    f.Surfaces[0].Type="ShopUI";Check(LivePolicy.Gate(c,f,now,false)!="","box opening cannot run on shop page");
   }
+    foreach(string kind in new[]{"golden_preset_read","golden_preset_save"}){
+   var f=Frame();var c=Command();f.Surfaces[0].Type="MenuUI";c.Kind=kind;c.TargetId=0;c.Items=kind=="golden_preset_save"?new long[]{1,66}:new long[0];
+   Check(LivePolicy.Gate(c,f,now,false)=="","golden presets accepted from owned idle menu");
+   f.Surfaces[0].Type="BattleUI_Colosseum";Check(LivePolicy.Gate(c,f,now,false)!="","golden preset cannot mutate in battle");
+   f.Surfaces[0].Type="MenuUI";c.AccountKey="other";Check(LivePolicy.Gate(c,f,now,false)!="","golden preset rejects a different account");
+  }
   foreach(string kind in new[]{"event_preset_read","event_preset_apply"}){
    var f=Frame();var c=Command();var u=f.Surfaces[0];f.BridgeVersion=141;u.Type="EventBattleUI";
    c.Kind=kind;c.TargetId=0;c.Value=6;c.Items=kind=="event_preset_read"?new long[0]:new long[]{1};
