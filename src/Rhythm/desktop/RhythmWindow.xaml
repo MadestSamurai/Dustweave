@@ -21,7 +21,7 @@
  </StackPanel></ScrollViewer>
  <Border Grid.Row="1" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="0,18,0,0" Margin="0,16,0,0"><Grid>
   <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-  <Button x:Name="ConnectButton" Content="{DynamicResource Label3}" Click="ConnectClick" HorizontalAlignment="Left"/>
+  <Button x:Name="ConnectButton" Tag="next" Content="{DynamicResource Label3}" Click="ConnectClick" HorizontalAlignment="Left"/>
   <Button Grid.Column="1" x:Name="StopButton" Content="{DynamicResource Label5}" Click="StopClick" IsEnabled="False" Margin="0,0,10,0"/>
   <Button Grid.Column="2" x:Name="StartButton" Content="{DynamicResource Label4}" Style="{DynamicResource PrimaryButton}" Click="StartClick" IsEnabled="False"/>
  </Grid></Border>

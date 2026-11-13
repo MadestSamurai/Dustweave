@@ -33,6 +33,7 @@ public sealed class DailyBargainTraining(DailyWorkflow w, Func<bool> stopped, Ac
     const string ShopNpc = "ὩὤὬὪὤὦὧὭὣὥὠ.ὯὫὪὡὭὤὪὮὫὬὣ", MenuNpc = "ὬὣὨὤὯὪὪὮὠὥὨ.ὠὫὥὧὭὭὥὠὭὤὣ.ὯὫὪὡὭὤὪὮὫὬὣ";
     long merchant;
     public bool Settling { get; private set; }
+    public Action? Checkpoint { get; init; }
     Task<JsonObject> Evidence(params string[] more) => w.Evidence(new[] { DailyBargainProof.ReadId, "trade.currency" }.Concat(more).ToArray());
     Task Surface(string ui) => w.Wait(f => DailyNavigationDecision.Rows(f.Frame).Any(r => S(r["Type"]) == ui && DailyNavigationDecision.ReadyInput(r)), 25, "bargain.surface_timeout");
     void Merchant(JsonObject e) => Require(N(R(e, "trade.shop_ui", ShopNpc)) == merchant, "bargain.merchant_changed");
@@ -170,6 +171,7 @@ public sealed class DailyBargainTraining(DailyWorkflow w, Func<bool> stopped, Ac
         }
         while (!stopped())
         {
+            Checkpoint?.Invoke();
             await Menu();
             JsonObject? row = null, before = null;
             double end = w.Time + 35;

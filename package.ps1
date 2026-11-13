@@ -3,7 +3,7 @@ param(
  [Parameter(Mandatory)][string]$GameManagedDir,
  [ValidateSet('Portable','Lite')][string[]]$Flavors=@('Portable','Lite'),
  [string]$PreparedCacheDirectory='',
- [ValidateSet('Auto','Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Observation','Saffron','Resources','PracticeStorage','GoldenPresets','Full')][string]$ValidationScope='Auto',
+ [ValidateSet('Auto','Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Observation','Saffron','Resources','PracticeStorage','GoldenPresets','PracticeRecovery','Full')][string]$ValidationScope='Auto',
  [string]$ValidationBaseline='',
  [string]$PublisherEvidence='',
  [string]$SyntheticEvidence='',
@@ -219,7 +219,7 @@ foreach($flavor in $Flavors){
    Pass (Join-Path $checks 'evidence/result.json')
   }
  }
- if($validation.scope -eq 'GoldenPresets'){
+ if($validation.scope -in @('GoldenPresets','PracticeRecovery')){
   foreach($scope in @('bargain','localization','free-notice','tool-preparation')){
    $check=Join-Path $checks ('smoke-'+$scope)
    if($scope -eq 'tool-preparation'){$env:DUSTWEAVE_UI_SMOKE_TOOL='golden-presets'}
@@ -232,6 +232,10 @@ foreach($flavor in $Flavors){
    Run $exe @('--utility','live','taps-all',$managed,(Join-Path $bundle 'app/connection/specs'),(Join-Path $checks 'evidence')) 'evidence-configs'
    Pass (Join-Path $checks 'evidence/result.json')
   }
+ }
+ if($validation.scope -eq 'PracticeRecovery'){
+  $check=Join-Path $checks 'sichuan-ui';Run $exe @('--tool','sichuan','--smoke',$check) ($flavor+'-sichuan-ui')
+  if(Get-ChildItem -LiteralPath $check -Recurse -File | Where-Object Name -in @('failure.txt','error.json','error.txt')){throw 'Sichuan UI verification failed.'}
  }
  if($validation.scope -in @('Observation','Saffron','Resources')){
   $noticeCheck=Join-Path $checks 'smoke-free-notice'

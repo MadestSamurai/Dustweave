@@ -133,9 +133,24 @@ public sealed class PackagedDailyQueueExecutor(string directory) : IDailyQueueEx
     public Task<int> PrepareAsync(Action<string> report) => Invoke("live", ["ready"], report);
     public async Task<int> ExecuteAsync(string root, string account, string output, string? resume, Action<string> report, bool syncCollection = false, IReadOnlyList<string>? tasks = null, string? retryOf = null)
     {
+        bool manual = true;
+        var request = new DailyQueueRequest(root, account, output, resume, syncCollection, tasks, retryOf);
+        var record = await DailyNetworkRecovery.ResumeQueueAsync(request,
+            r => ExecuteOnceAsync(r.Root, r.Account, r.Output, r.Resume, report, observed =>
+            {
+                if (manual) { manual = false; DailyNetworkRecovery.BeginManualRun(root, observed); }
+            }, r.SyncCollection, r.Tasks, r.RetryOf),
+            context => DailyNetworkRecovery.RunAsync(root, context, () => File.Exists(Path.Combine(root, "queue-stop")), report),
+            () => File.Exists(Path.Combine(root, "queue-stop")));
+        return record["state"]?.GetValue<string>() == "completed" ? 0 : 1;
+    }
+    private async Task<System.Text.Json.Nodes.JsonObject> ExecuteOnceAsync(string root, string account, string output, string? resume, Action<string> report,
+        Action<DailyStageFrame> observed, bool syncCollection, IReadOnlyList<string>? tasks, string? retryOf)
+    {
         var observation = DailyStageObservation.Attach(root, account);
         bool Stopped() => File.Exists(Path.Combine(root, "queue-stop"));
         var game = new DailyGameHost(root).Find() ?? throw new StageHostException("identity", "游戏已退出，没有建立执行连接。");
+        observed(await observation.ReadFrameAsync());
         using var driver = new DailyCommandDriver(root, new DailyPipeMailbox(root, game), observation.ReadFrameAsync, Stopped);
         driver.PotionPolicy = () => new DailyPreferenceStore(root).Read(account).General;
         var navigation = new DailyStageNavigation(observation.ReadFrameAsync, Stopped);
@@ -165,7 +180,7 @@ public sealed class PackagedDailyQueueExecutor(string directory) : IDailyQueueEx
         var engine = new DailyQueueEngine(host, () => File.Exists(Path.Combine(root, "queue-stop")), () => new DailyPreferenceStore(root).Read(account));
         var record = await engine.RunAsync(new(root, account, output, resume, syncCollection, tasks, retryOf));
         report(".NET queue: " + record["state"]?.GetValue<string>());
-        return record["state"]?.GetValue<string>() == "completed" ? 0 : 1;
+        return record;
     }
 
 }
@@ -233,7 +248,7 @@ public sealed class DailyQueueSession(string root, IDailyQueueExecutor executor,
           }).ToArray();
         var period = DailyQueuePeriod.Read(value);
         bool expired = DailyQueuePeriod.IsExpired(period, DailyQueuePeriod.Snapshot(root, period?.Server ?? ""), now);
-        return new(state, value.TryGetProperty("error", out var e) ? e.GetString() ?? "" : "", record, stages, account, period, expired);
+        return new(state, value.TryGetProperty("error", out var e) ? e.GetString() ?? "" : "", record, stages, account, period, expired) { Display = DailyPotionSupply.ReadDisplay(value) };
     }
     private static string ReadStageDetail(JsonElement item)
     {

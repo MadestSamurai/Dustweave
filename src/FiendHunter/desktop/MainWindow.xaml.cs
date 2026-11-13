@@ -14,14 +14,14 @@ namespace BD2FiendHunter.Desktop;
 public partial class MainWindow:Window {
  public bool HostedAutomationEnabled => active || preparing;
 
- readonly Catalog words=new(Catalog.LoadLanguage());string statusKey="ready";JsonObject? lastState;bool ready,smokeMode;
+ readonly Catalog words=new(Catalog.LoadLanguage());string statusKey="disconnected";JsonObject? lastState;bool ready,smokeMode;
  readonly DispatcherTimer timer=new(){Interval=TimeSpan.FromMilliseconds(500)};
  readonly SemaphoreSlim gate=new(1);Control control=new();bool active,closing,preparing,ownsControl,connected;CancellationTokenSource? preparation;
  int SelectedBoss => BossChoice.SelectedIndex+1;
  int SelectedCharacter => CharacterChoice.SelectedIndex+1;
  int SelectedDifficulty => DifficultyChoice.SelectedIndex+1;
  public MainWindow(bool smoke=false){smokeMode=smoke;InitializeComponent();ApplyLanguage();LanguageBox.SelectedIndex=words.Language=="zh-CN"?0:1;if(!smoke)LoadBoss();ready=true;timer.Tick+=async(_,_)=>await Pulse();Closing+=OnClosing;UpdateControls();}
- void UpdateControls(){StartButton.IsEnabled=connected&&!active&&!preparing;ConnectButton.IsEnabled=!active&&!preparing;PauseButton.IsEnabled=active||preparing;BossChoice.IsEnabled=CharacterChoice.IsEnabled=DifficultyChoice.IsEnabled=!active&&!preparing;}
+ void UpdateControls(){ConnectButton.Tag=connected||preparing?null:"next";StartButton.IsEnabled=connected&&!active&&!preparing;ConnectButton.IsEnabled=!active&&!preparing;PauseButton.IsEnabled=active||preparing;BossChoice.IsEnabled=CharacterChoice.IsEnabled=DifficultyChoice.IsEnabled=!active&&!preparing;}
  void LoadBoss(){try{var p=Path.Combine(ToolStorage.Data,"settings.json");if(File.Exists(p)){var settings=JsonNode.Parse(File.ReadAllText(p));int Read(string key,int fallback,int max){var v=settings?[key]?.GetValue<int>()??fallback;return v>=1&&v<=max?v:fallback;}BossChoice.SelectedIndex=Read("BossGroup",1,2)-1;CharacterChoice.SelectedIndex=Read("Character",1,3)-1;DifficultyChoice.SelectedIndex=Read("Difficulty",3,3)-1;}}catch(Exception ex){RecordError(ex);}}
  void SelectionChanged(object sender,SelectionChangedEventArgs e){if(!ready||smokeMode||active||preparing)return;try{Directory.CreateDirectory(ToolStorage.Data);if(!AtomicFiles.TryWrite(Path.Combine(ToolStorage.Data,"settings.json"),System.Text.Json.JsonSerializer.Serialize(new{BossGroup=SelectedBoss,Character=SelectedCharacter,Difficulty=SelectedDifficulty})))throw new IOException("Unable to save round selection.");}catch(Exception ex){Error(ex);}}
  async void Connect(object sender,RoutedEventArgs e){if(active||preparing||closing)return;preparing=true;UpdateControls();Status("connecting");preparation=new();var token=preparation.Token;await gate.WaitAsync();try{var s=await Task.Run(async()=>{await Client.Connect();token.ThrowIfCancellationRequested();return Client.State();});if(!Client.Fresh(s))throw new IOException("等待游戏数据恢复");ownsControl=true;connected=true;Draw(s!);Status("ready");}catch(Exception ex){connected=false;if(ex is OperationCanceledException)Status("paused");else Error(ex);}finally{preparing=false;UpdateControls();gate.Release();}}

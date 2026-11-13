@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Dustweave",
-  "generatedUtc": "2026-11-12T03:59:39.8425368+00:00",
+  "generatedUtc": "2026-11-13T13:34:33.5959841+08:00",
   "purpose": "Repository-local build input inventory",
   "entryProject": "src/Desktop/Dustweave.Desktop.csproj",
   "projects": [
@@ -180,7 +180,7 @@
     },
     {
       "path": "docs/BARGAIN_TRAINING.md",
-      "sha256": "c67ba5e7d975cd2bb7acc691a53975e5f8f265bd03f4d01d1fc30e1b9e512d49"
+      "sha256": "877a8c72c42c109f22941267387fa72a0fa49e6be6744ff40669ef0b77811809"
     },
     {
       "path": "docs/COOKING_SALES_UI_GOAL.md",
@@ -188,7 +188,7 @@
     },
     {
       "path": "docs/DEVELOPMENT.md",
-      "sha256": "0fe08213d0dfdbc69a66df24c09e1d47325187822721d9421575ad551f84817e"
+      "sha256": "9783311e63edfdb8914fb4974a1b531ef3bc1ea58e5e7a30966a1b50c299b46f"
     },
     {
       "path": "docs/package/README.en.md",
@@ -240,7 +240,7 @@
     },
     {
       "path": "package.ps1",
-      "sha256": "d426dca6360adc7e58fa20ceef446a17249dd622064d21c4e47aad5f9b5c1fbe"
+      "sha256": "d9895bf08838d8c096027e48493b1ed7b5e97f87714fd1ceb96cec4a7d14a503"
     },
     {
       "path": "scripts/build-update-acceptance.ps1",
@@ -300,7 +300,7 @@
     },
     {
       "path": "src/Accounts/packages.lock.json",
-      "sha256": "60c1e9169fbf3fd58356d35d9d939d17c8df6b402e17bd417b515118e6b5db4b"
+      "sha256": "88375fdc71350548252f1e8ac425dc57334d58bb124a342f03e25ffe05774b9c"
     },
     {
       "path": "src/Accounts/SandboxConfiguration.cs",
@@ -740,7 +740,7 @@
     },
     {
       "path": "src/Compatibility/packages.lock.json",
-      "sha256": "0af9d216e14fa427f2f8d468a5ff6f27b960bb9f33a92cde5348cb52a21a7b3c"
+      "sha256": "916311fa59822720f456f827a7236f54e67a516beed2411d6e7eb4b483d8a123"
     },
     {
       "path": "src/Compatibility/PandoraCompiler.cs",
@@ -764,7 +764,7 @@
     },
     {
       "path": "src/Connection/Bridge.cs",
-      "sha256": "1556d1e854f1d8930052b108f4df4808614098a6e0f644c3b06d93d43065e9f4"
+      "sha256": "92b1b6da135001833e770ac7d853c0cf2d33ccbf0e9b5c7c1974649c6506ba0c"
     },
     {
       "path": "src/Connection/CollectionProgressNative.cs",
@@ -848,7 +848,7 @@
     },
     {
       "path": "src/Connection/LiveContracts.cs",
-      "sha256": "9f56149cea879dd1879b3d827f964a73ee41e6f10053f25a5e73d7c054b6cc89"
+      "sha256": "44f2229b6288ddfa5a04369a5eb8752046353a334a00045ad90a5e72197253b6"
     },
     {
       "path": "src/Connection/LiveEntry.cs",
@@ -880,7 +880,7 @@
     },
     {
       "path": "src/Connection/packages.lock.json",
-      "sha256": "883b6990c6ccbd0bb0b9a33e8083bc2e92017018c2ca684e9361e7dc98b5c015"
+      "sha256": "c72047f0e51e166bdf46b61f06e37033359fdd45537ec8c5c303dc43890b2538"
     },
     {
       "path": "src/Connection/PluginBridge.cs",
@@ -1008,7 +1008,7 @@
     },
     {
       "path": "src/Core/DailyBargainTraining.cs",
-      "sha256": "315eed608b4798638380483c47c49efbc0669bae1eef94856187478a2a377761"
+      "sha256": "3b41928b354b620711d7ae9258ceec9ceeb78b84a6dd70e24c0db094c7bd50ae"
     },
     {
       "path": "src/Core/DailyBusinessJournal.cs",
@@ -1036,7 +1036,7 @@
     },
     {
       "path": "src/Core/DailyCommandDriver.cs",
-      "sha256": "fe25bc1e0abd6ee44df096263d86d99a8a9a3c8266430f9397593fa10fe6d164"
+      "sha256": "ec9c8c838004443e122cce181a6dd8f6677cd05e30f76d0c4d5cc7ee96a40323"
     },
     {
       "path": "src/Core/DailyCommandMailbox.cs",
@@ -1284,7 +1284,7 @@
     },
     {
       "path": "src/Core/DailyManagedBusiness.cs",
-      "sha256": "905c7b3570055518802921ea21155de695d295f262e329d044796a732eb8f801"
+      "sha256": "fed839f470857a424349c496a94eea69a9caca1f519afcb79ab1621db46ba979"
     },
     {
       "path": "src/Core/DailyManagedInputs.cs",
@@ -1337,6 +1337,10 @@
     {
       "path": "src/Core/DailyNavigationPolicy.cs",
       "sha256": "b03da84e93bfe3f0b97e689fbf10712bea26d8a4041ebd6cdeffbf05ae55d2a2"
+    },
+    {
+      "path": "src/Core/DailyNetworkRecovery.cs",
+      "sha256": "b704e02a6140664638dbcbc4505b58e29292c071ebe3a46b934567f0e5a8b240"
     },
     {
       "path": "src/Core/DailyOutcomeExplanation.cs",
@@ -1392,7 +1396,7 @@
     },
     {
       "path": "src/Core/DailyPracticeQueue.cs",
-      "sha256": "05525aafd3464f489610e21116590c7b047eb655b96cd5941e48f6f423b62bdb"
+      "sha256": "06ace413352bd02441e04acfed1fa07eec16475d0d29458a0cbc18b12836987b"
     },
     {
       "path": "src/Core/DailyPreferences.cs",
@@ -1404,7 +1408,7 @@
     },
     {
       "path": "src/Core/DailyQueueEngine.cs",
-      "sha256": "8b07b71b5cc6327454348a9485dbdbf60ea27a397fcf4ffd2a9f9371ca814f1d"
+      "sha256": "5e0c1f8b5d8398f09e20b26e752bfd91b1f4164531ecc97d1c492dac5e2b75a4"
     },
     {
       "path": "src/Core/DailyQueueHistory.cs",
@@ -1416,7 +1420,7 @@
     },
     {
       "path": "src/Core/DailyQueueSession.cs",
-      "sha256": "31acdfd62d0f826f86282e4e5dc5ef9a63082e7a5970a1cfa3434672b2a6a1d0"
+      "sha256": "ed2028fbfdba0a522b21e0db16990b4defb371c1b108bc6fefa723e18a3ef97e"
     },
     {
       "path": "src/Core/DailyQuickTravel.cs",
@@ -1540,7 +1544,7 @@
     },
     {
       "path": "src/Core/DailyStageObservation.cs",
-      "sha256": "ccfeb5abe8f3fd135a552778f816c325a949b790cf819a8c9e38cff337f0d626"
+      "sha256": "53a0ffd7e2c6a9e2e427aee232be07b3fa995646ee55b6ab516f00b43deab7cd"
     },
     {
       "path": "src/Core/DailyStartupRecovery.cs",
@@ -1616,7 +1620,7 @@
     },
     {
       "path": "src/Core/DailyTalentPractice.cs",
-      "sha256": "e614d74fd98f001ef5d5966b16e0477a69e30443451dded631ade99f380f7c10"
+      "sha256": "3f5a9fa24fc7b5e00231cd018d358c38358bd1c3cffb3e9450fc104c2605ca62"
     },
     {
       "path": "src/Core/DailyTaskPresets.cs",
@@ -1812,7 +1816,7 @@
     },
     {
       "path": "src/Core/DailyWeeklyActivities.cs",
-      "sha256": "c9a911f905273dd3607f99b3c9a293c5bc7bc53045fe665b4b3775d3b241b841"
+      "sha256": "41cd447e4d7f47f9aa6b58d19b654e8ef3697fc58f304f5fed7692946dab4e50"
     },
     {
       "path": "src/Core/DailyWeeklyCompletion.cs",
@@ -1888,7 +1892,7 @@
     },
     {
       "path": "src/Core/packages.lock.json",
-      "sha256": "8da53d693048546f0b7b2fbd8d6c7951d60a682cf0f6c204030cb56e5f241529"
+      "sha256": "6d3163ba2dbc763e5ba0ad210debfe45ec3766cf990486e6c0b55cca9c91b90d"
     },
     {
       "path": "src/Core/PandoraClient.cs",
@@ -1932,11 +1936,11 @@
     },
     {
       "path": "src/Desktop/DailyBargainSession.cs",
-      "sha256": "f3583f111f2f61bb70f4c1f1a9e62e0c5b391b1a76169ef3ba6b9c5836750582"
+      "sha256": "acd1515007565cca869c0b5cc73a3d9f3e5a785466be7c220e3acd07087c19de"
     },
     {
       "path": "src/Desktop/DailyBargainWindow.cs",
-      "sha256": "fc4a7c9adbff06dd23c4f7684ee2995bf7ad6849673794af61fc9cef7d8c1930"
+      "sha256": "7cc450899a3345718928bb80efa43ca4b69d6bd35649e7064c5666b0c9f52eee"
     },
     {
       "path": "src/Desktop/DailyBargainWindow.Queue.cs",
@@ -2168,7 +2172,7 @@
     },
     {
       "path": "src/Desktop/Localization/releases.json",
-      "sha256": "308b88ce61a7973229c00ef66415c432e868ac9beb03f6bde2f1f7d8301d818e"
+      "sha256": "fa2ac5302fb0e64c6b168bd65d11037e282f6a3e7141abcce40da1bae2c574f4"
     },
     {
       "path": "src/Desktop/Localization/runtime.json",
@@ -2176,7 +2180,7 @@
     },
     {
       "path": "src/Desktop/Localization/strings.json",
-      "sha256": "9adc1ef4b16dff01bb6b28e417356e033a1e68029b176722c3ed96663ecc62b9"
+      "sha256": "226f638ff85ad6de0a66cf328e6df190eb3ee810c4755a7dade66f2283a2eb74"
     },
     {
       "path": "src/Desktop/LocalizedTextCatalog.cs",
@@ -2196,7 +2200,7 @@
     },
     {
       "path": "src/Desktop/MainWindow.Bargain.Smoke.cs",
-      "sha256": "dd22de4bafde8cd9da3f2a9530ea85aa7a35db679de988c7478a1fff08853779"
+      "sha256": "06c12823af91564499e51abef8b9ccdf7516c94d341d149af62f0614e04c2b63"
     },
     {
       "path": "src/Desktop/MainWindow.Chrome.cs",
@@ -2228,7 +2232,7 @@
     },
     {
       "path": "src/Desktop/MainWindow.DynamicLocalization.cs",
-      "sha256": "9225ebd574da0057002636f855cfe31cdeb69dc2e04d6876f40b0295384a68b2"
+      "sha256": "e0d4c675b62258363d88ccd96e8e441535595f2ff14c16b04115ee14e045f9de"
     },
     {
       "path": "src/Desktop/MainWindow.EventPlugin.Smoke.cs",
@@ -2424,7 +2428,7 @@
     },
     {
       "path": "src/Desktop/MainWindow.xaml.cs",
-      "sha256": "520b314742acf972e5c24dfc7908c2d5fcd9c963fb74c5311e83ae73a7323bed"
+      "sha256": "3db3b3df7a64ca96b45d09cddbc2101d2f31dc90468fb1ee740490838ac511ed"
     },
     {
       "path": "src/Desktop/ManagedToolPlugin.cs",
@@ -2440,11 +2444,11 @@
     },
     {
       "path": "src/Desktop/MansionWindow.xaml",
-      "sha256": "58b1bcca1a6db8f9c9519a038c12164c5378e8e7fa3b78056e80496cca793f11"
+      "sha256": "5e17eb454f5fad71559c5ce53fe51923a87085c08a3ced42633357b25e95de11"
     },
     {
       "path": "src/Desktop/MansionWindow.xaml.cs",
-      "sha256": "a31b83c4f7b6b83dbe641daba0620427449d808e92521734199165dbbdb7a52c"
+      "sha256": "9186aad67de4dbcda004f5cff9f843e2835d83f09451b36be0bb8d384db7a4b1"
     },
     {
       "path": "src/Desktop/MultiAccountSetupWindow.cs",
@@ -2532,7 +2536,7 @@
     },
     {
       "path": "src/Desktop/ToolWindowDesign.cs",
-      "sha256": "5eff22d48b56f8b7d3933cd85060b27e71e2e071d4d45b3a7e2a74c777dfa268"
+      "sha256": "f59ceea24ec2c041233902a9eec0df34f305b8aac9bde557b0b1b300a9701b78"
     },
     {
       "path": "src/Desktop/TradePlanPanel.cs",
@@ -2944,7 +2948,7 @@
     },
     {
       "path": "src/FiendHunter/desktop/MainWindow.xaml.cs",
-      "sha256": "2a85b540699ef3ae7c689cbf7591bf3d80ea9006706f05985e4943de228fe8d4"
+      "sha256": "4cca0b196ca4d1865915ed67b0774fe4943639727996f1f5c4a00c94fcab92f2"
     },
     {
       "path": "src/FiendHunter/desktop/packages.lock.json",
@@ -3020,11 +3024,11 @@
     },
     {
       "path": "src/FiendHunter/localization/en-US.json",
-      "sha256": "e4689d3b088599690b3e3e45599e4b047a7e56970b6542d1e8dbac882cdb0658"
+      "sha256": "3473f08b4bfea8f6875839ba74103b8a55c6b77a02ae5f222315b99f40ca0023"
     },
     {
       "path": "src/FiendHunter/localization/zh-CN.json",
-      "sha256": "4fd4ae3723fb4d91a545c947ebda6a17c63efc9aa40caf56d16af01f520c95ff"
+      "sha256": "311c5978c1caf31eb5e397d7ace7a386b4ae358fbac63de9bdbfb7bce45cf362"
     },
     {
       "path": "src/FiendHunter/README.en.md",
@@ -3184,11 +3188,11 @@
     },
     {
       "path": "src/Fishing/desktop/FishingWindow.xaml",
-      "sha256": "6088670467b8f351f8c34930ab710f869d74245f272802a21c709231d596c64c"
+      "sha256": "0b213445f4657481622e81aa406899eb5a9b2cdad59bf5fac8ba9813990d4ffd"
     },
     {
       "path": "src/Fishing/desktop/FishingWindow.xaml.cs",
-      "sha256": "5774d718a2c48412dad9f823ec8df698b909c8d8a44f9e5986597da178fab5fd"
+      "sha256": "e3bc0b74b697a342a13daaf8c0756f25bcb34b72a437476db0164175b60feee4"
     },
     {
       "path": "src/Fishing/desktop/packages.lock.json",
@@ -3828,11 +3832,11 @@
     },
     {
       "path": "src/Rhythm/desktop/RhythmWindow.xaml",
-      "sha256": "9ccf0f4af2f0c944e36b5b0cbd2261640482d8070d15eee79502aaf6684ed0c6"
+      "sha256": "8725134acef88dd6d8685211736eb85ba85a2299a1a999c551e4644abe238bc5"
     },
     {
       "path": "src/Rhythm/desktop/RhythmWindow.xaml.cs",
-      "sha256": "f08e25d9db9963a223f62d5b2149f4526f0691ce3d3e0b95fd2df07db99ff821"
+      "sha256": "a9ee0bccbeed5da803c3d9411847eab236ca5873ccb1dd1af8285f524384c769"
     },
     {
       "path": "src/Rhythm/desktop/Smoke.cs",
@@ -4264,7 +4268,7 @@
     },
     {
       "path": "src/Shared/DailyBridgeVersion.cs",
-      "sha256": "98a2b68992940dd3e87f933688ecc4586880ee8bc33fe87db0fe3c7a8ea37a3b"
+      "sha256": "d56f3613a9482537e9c63cc92da5b3a77cae303ab036996a15e508026c29b084"
     },
     {
       "path": "src/Shared/DailyContracts.cs",
@@ -4300,7 +4304,7 @@
     },
     {
       "path": "src/Shared/Ipc/desktop/PipeClient.cs",
-      "sha256": "7d7e9e06b0b4cb8adfe70c5c272ff1fc0aaa306dff19852728ce1a6a2e4ebd62"
+      "sha256": "199515280994017c63f0862fa1547d3e8b8629f179b5c0445ae40a065fee2950"
     },
     {
       "path": "src/Shared/Ipc/runtime/Handoff.cs",
@@ -4336,7 +4340,7 @@
     },
     {
       "path": "src/Shared/StartupContracts.cs",
-      "sha256": "bd19fc83091cae172564e353b19d44c75dd0f0fa43413f4be245302c4cf3b5d5"
+      "sha256": "55619a9895e5bf0535d31c7f9cfd5747341fc978310e7e5e762c57f6faf5200b"
     },
     {
       "path": "src/Shared/SuiteContracts.cs",
@@ -4432,11 +4436,11 @@
     },
     {
       "path": "src/Sichuan/desktop/SichuanWindow.xaml",
-      "sha256": "15c7cae691ce753c96e145ee9dd10600d57bba22b2cf7617ee69d979a0208117"
+      "sha256": "25f7185cb9a1d4bb5d58843e21617a2085e73cfa59a21d6e9cae524a01769145"
     },
     {
       "path": "src/Sichuan/desktop/SichuanWindow.xaml.cs",
-      "sha256": "7c5f82d9fa04b73d2f2307afde745e9bc6d66bdfdfe6e9f45a7998f45b6b726d"
+      "sha256": "6bec48f91585fe329626688207b59974a2d05117bd8fe7c0b9b0844fe5e09654"
     },
     {
       "path": "src/Sichuan/desktop/WindowLanguage.cs",
@@ -4532,7 +4536,7 @@
     },
     {
       "path": "src/Sichuan/localization/en-US.json",
-      "sha256": "7eae3887dfca77845b8d2bb034d1edf6bd140a480737b255fb1075ebfa85f676"
+      "sha256": "a2b5481fbb9193ee68ab0ec0ae0b8a238ce7c0b9f85d40349056829f6371426e"
     },
     {
       "path": "src/Sichuan/localization/LanguageCatalog.cs",
@@ -4540,15 +4544,15 @@
     },
     {
       "path": "src/Sichuan/localization/zh-CN.json",
-      "sha256": "f97aa7cddf5a27d2cd4fc2cf9350c4f8c64ffae604822f9226a0f1b78716bb56"
+      "sha256": "e51b8c6aa3f9965627b71ea92e4420192dde1e00f1183de083d6b3261bd0e080"
     },
     {
       "path": "src/Sichuan/README.en.md",
-      "sha256": "4f50fb911bc94504dfb2d239800383819136c6dd1d6601191973c9bb2e1c921c"
+      "sha256": "1d89e827e2e61da198d33eb5108b80630aa108d72915b5d5935d1ff424c3d545"
     },
     {
       "path": "src/Sichuan/README.md",
-      "sha256": "de9a648b731aba23e2da2c36ad9edd46cc7c540cc964e78fd34e843893043424"
+      "sha256": "79495a93a0e58cb25f24973c905103eb3dae6d1a375883462c04b10f9783ae3f"
     },
     {
       "path": "src/Sichuan/shared/SichuanExecution.cs",
@@ -4940,15 +4944,15 @@
     },
     {
       "path": "src/Territory/desktop/TerritoryWindow.xaml",
-      "sha256": "7e869fb924dda1cafd46fd44657a8a637f1d9b61f41a337a65f158fd2c5e6f57"
+      "sha256": "ede492028046edd1c6f8abf215e4e49353857b2387a1d7fae8f77e3e97d59ef6"
     },
     {
       "path": "src/Territory/desktop/TerritoryWindow.xaml.cs",
-      "sha256": "f4335f563ddd69766e7b6b53d82906840b3ce495810afee4671458254851cf9c"
+      "sha256": "afb864dc323830e396fd4659fa3b2ffa4e5dfc7a1d4a0ead64b9803c2ae30a31"
     },
     {
       "path": "src/Territory/desktop/UiLabels.cs",
-      "sha256": "fd8a5be02f718337e0ba8725f20567e6c9e28a7574e29a53ddbf0dff618237e0"
+      "sha256": "486ceb5af7b485ad8d5067cf402ae9a2c07c4505809958a75e995f03b970251a"
     },
     {
       "path": "src/Territory/desktop/WindowText.cs",
@@ -5108,7 +5112,7 @@
     },
     {
       "path": "src/Territory/localization/en-US.json",
-      "sha256": "393dc80d5035decb6d7dd9a8359fdf255ee59f73ecd188723ac7050dd20da9f2"
+      "sha256": "80b84b2b4bfa4b16ede680250013b0ae948fda477828084989c58651030229eb"
     },
     {
       "path": "src/Territory/localization/LanguageCatalog.cs",
@@ -5116,15 +5120,15 @@
     },
     {
       "path": "src/Territory/localization/zh-CN.json",
-      "sha256": "624fd1daed2d3ecc8d9a7ed9a29e201440291047fc6dbcc0d188cc3e920993ea"
+      "sha256": "5b3fe37359099524863627bb7337380c59ae290a7e8f7aaf5f1b7b1861564c87"
     },
     {
       "path": "src/Territory/README.en.md",
-      "sha256": "013db45daff6796eddaaf43777a4284c73b58298a3e3d52af51b6be50cb556e3"
+      "sha256": "a8159c4c2584a34406c3cb5d9f315c46ac30878f50c316bcd9a799ea9131ff75"
     },
     {
       "path": "src/Territory/README.md",
-      "sha256": "6d922c569305dfb0a3ec856312b222d55d9218955803e91d691f5af1ea3e9aab"
+      "sha256": "fccb706c88fb2a813bb5967cff0e68195ca2f34be2a5f03def075fef6e51c423"
     },
     {
       "path": "src/Territory/shared/CookingProgress.cs",
@@ -5367,6 +5371,10 @@
       "sha256": "13ee6ab10b023a17de8bb74db62e8f0b7ddfa529902052a58952ab64931a0577"
     },
     {
+      "path": "tests/Dustweave.Tests/Cases/BookExitCases.cs",
+      "sha256": "8b0756ba8ffe0fed344afa5ee17d2f7755eee4ca22c66d918f5758279ab1785b"
+    },
+    {
       "path": "tests/Dustweave.Tests/Cases/BusinessJournalCases.cs",
       "sha256": "2e983c77340c32fe24d47aa59ae493ae3e125de3de7fad45ab924eee2ff8e8af"
     },
@@ -5400,7 +5408,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/ConnectionAccessCases.cs",
-      "sha256": "1bff73ca92eb2cb1c84291d537c1533566a09590db0208c4674d64b4ff81faba"
+      "sha256": "4943eb05605bce46ca3310ff83d6a56629fa592c4d5be37f28849a354f538858"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/CookingTravelCases.cs",
@@ -5627,6 +5635,10 @@
       "sha256": "f5abe27b6283d1983d1a83182bbfc838f3915f761e5aec020ff729abdf34910a"
     },
     {
+      "path": "tests/Dustweave.Tests/Cases/NetworkRecoveryCases.cs",
+      "sha256": "1e91fae401fa0e184d2aaebb02a0f511c704ca72d21f8d7443e2178c691e95c6"
+    },
+    {
       "path": "tests/Dustweave.Tests/Cases/ObservationPerformanceCases.cs",
       "sha256": "36a1b8bcc0083c578bde8df9e158a177b751410197c7ca0e8cafc5506031356d"
     },
@@ -5700,7 +5712,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/PracticeQueueCases.cs",
-      "sha256": "174688c63a8891e387d2fa173f6725e5b28ff421286541b5251c589f14fdd6a7"
+      "sha256": "3ea2a08a38766d9f05ed2a6ecdfd57b7dd7c213b5fb13f8d69d0535051b6985d"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/PreferenceCases.cs",
@@ -5856,7 +5868,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Cases/TalentPracticeCases.cs",
-      "sha256": "e273feb91a354ecb9551339520feb1572eb50e9e9781df8f311c1b408db1663a"
+      "sha256": "e57b7b393064d8f283f503938d6e93ea2b17b30f050169a6ef448a446aa5d01b"
     },
     {
       "path": "tests/Dustweave.Tests/Cases/TaskPresetCases.cs",
@@ -6000,7 +6012,7 @@
     },
     {
       "path": "tests/Dustweave.Tests/Program.cs",
-      "sha256": "711ef76b4b01e6854dff4bfea19c71bbc4c3b6637afd49e6baf074b6d4b63419"
+      "sha256": "1bea9f799c50562723856eaacb03ecf9cae93f31425de2b4f2e45dfdc0ede75d"
     },
     {
       "path": "tests/Dustweave.Tests/README.md",
@@ -6221,6 +6233,26 @@
     {
       "path": "tools/TradeData/Program.cs",
       "sha256": "7df6eab4215aebd7205073b10abae7e0a5e7b90f8b2546152270556b7d8f6608"
+    },
+    {
+      "path": "src/Core/DailyPracticeRestart.cs",
+      "sha256": "51505fc9cb29fcdf1bc4a131254cf3ce27201321c020d7972d1c618e9d6c586f"
+    },
+    {
+      "path": "src/Desktop/DailyBargainWindow.Restart.cs",
+      "sha256": "7cfff34a489ac10983a5dbb0c31612c62b83392cffbd99ed29924cc1a3286b75"
+    },
+    {
+      "path": "tests/Dustweave.Tests/Cases/PracticeRestartCases.cs",
+      "sha256": "039a609976e136341afcb9dee9a3b88a8e654590767f9737f06e341794316e3f"
+    },
+    {
+      "path": "docs/TOOL_UX_GOAL.md",
+      "sha256": "66ad5a2aa1f6324b0f5e515e729035b6c508999d4cf947ee5f324e337234fc2e"
+    },
+    {
+      "path": "docs/TOOL_UX_AUDIT.md",
+      "sha256": "8b46f8944491627ab77dbe1ea65623a9c5a524b2dcc6cba0240d5092608b1235"
     }
   ],
   "publicReleaseApproved": false,

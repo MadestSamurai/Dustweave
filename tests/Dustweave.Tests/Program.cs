@@ -1,4 +1,14 @@
 using Dustweave;
+if(args.Length == 3 && args[0] == "--prepare-startup-runtime")
+{
+    // Passive compilation only: no runtime attachment, account or game input.
+    Directory.CreateDirectory(args[2]);
+    var prepared = Dustweave.Compatibility.DailyHookCompiler.Prepare(args[1]);
+    File.WriteAllBytes(Path.Combine(args[2], "BD2Daily.Runtime.dll"), prepared.Payload);
+    DailyJson.Write(Path.Combine(args[2], "result.json"), new { status = "passed", realGameTouched = false,
+        prepared.Report, prepared.StartupReport, prepared.GuildReport });
+    return;
+}
 if(args.Length is 4 or 5&&args[0]=="--tool-package") { await ToolPluginCases.Package(args[1],args[2],args[3],args.Length==5?args[4]:null);return; }
 if(args.Length==5&&args[0]=="--soul-parity") { Dustweave.Soul.SoulChecks.ValidateKernel(args[1],args[2],args[3],args[4]);return; }
 
@@ -137,6 +147,8 @@ await Group("GamePreferences", () => GamePreferenceCases.Run(root, cases));
 await Group("AccountOrder", () => AccountOrderCases.Run(root, cases));
 await Group("Guild", () => GuildCases.Run(root, cases));
 await Group("Startup", () => StartupCases.Run(root, cases));
+await Group("NetworkRecovery", () => NetworkRecoveryCases.Run(root, cases));
+await Group("PracticeRestart", () => PracticeRestartCases.Run(root, cases));
 await Group("LoginIdentity", () => LoginIdentityCases.Run(root, cases));
 await Group("LoginRecovery", () => LoginRecoveryCases.Run(root, cases));
 await Group("QueueSession", () => QueueSessionCases.Run(root, cases));
@@ -148,6 +160,7 @@ await Group("EventPreview", () => EventPreviewCases.Run(root, cases));
 await Group("QueueExecutionThread", () => QueueExecutionThreadCases.Run(root, cases));
 await Group("RuleData", () => RuleDataCases.Run(root, cases));
 await Group("TravelTransition", () => TravelTransitionCases.Run(root, cases));
+await Group("BookExit", () => BookExitCases.Run(root, cases));
 await Group("FieldAvoidance", () => Sync(() => FieldAvoidanceCases.Run(cases)));
 await Group("CafeteriaRecovery", () => CafeteriaRecoveryCases.Run(root, cases));
 await Group("QueuePeriod", () => QueuePeriodCases.Run(root, cases));

@@ -304,7 +304,7 @@ public sealed partial class DailyCommandDriver : IDisposable
         foreach (string key in ActorKeys.Concat(["Scene", "UiToken"]))
             command[key] = frame[key]?.DeepClone();
         string operation = Text(action, "operation");
-        command["Scope"] = Flag(action, "startup") ? "startup" : "gameplay";
+        command["Scope"] = Flag(action, "startup") ? "startup_download" : "gameplay";
         command["Id"] = id;
         command["Kind"] = operation.Length > 0 ? operation : Flag(action, "pass_init") ? "pass_init" : Flag(action, "dispatch_entry") ? "dispatch_menu" : Flag(action, "mirror_entry") ? "mirror_ready" : Flag(action, "back") ? "back" : Flag(action, "native") ? "native_click" : route == "pointer" ? "pointer" : "click";
         command["SurfaceId"] = surface["Id"]?.DeepClone();
@@ -341,6 +341,14 @@ public sealed partial class DailyCommandDriver : IDisposable
         if (DailyStartupRecovery.NetworkError(before.Frame) == null)
             throw new DailyStepException("rejected", "不属于已核对的资源下载错误");
         return await SubmitRawAsync(new JsonObject { ["ui"] = "MessagePopupUI", ["field"] = "_buttonOK", ["startup"] = true, ["timeout"] = 25, ["reason"] = "更新资源网络错误：有限次数原生重试" }, requiredFrame: before.Frame, startup: true);
+    }
+    internal async Task<JsonObject> AcknowledgeNetworkTimeoutAsync()
+    {
+        var before = await ReadBound();
+        if (!DailyNetworkRecovery.TimeoutPopup(before.Frame))
+            throw new DailyStepException("rejected", "网络错误窗口已变化，未发送确认。");
+        return await SubmitRawAsync(new JsonObject { ["ui"] = "MessagePopupUI", ["operation"] = "network_timeout_ack", ["startup"] = true,
+            ["timeout"] = 15, ["reason"] = "network_timeout_single_login_recovery" }, requiredFrame: before.Frame, startup: true);
     }
     public Task<JsonObject> SubmitOwnedAsync(JsonObject action, JsonObject ownedFrame)
     {
@@ -472,7 +480,7 @@ public sealed partial class DailyCommandDriver : IDisposable
         GuildGuard(action, refreshed, ref reason);
         if (reason.StartsWith("home-reset-proof|112003|", StringComparison.Ordinal) && !DailyHomeDecision.ResetPopup(current, policy))
             throw new DailyStepException("rejected", "rejected: screen_changed");
-        if (startup && DailyStartupRecovery.NetworkError(current) == null)
+        if (startup && (Text(action, "operation") == "network_timeout_ack" ? !DailyNetworkRecovery.TimeoutPopup(current) : DailyStartupRecovery.NetworkError(current) == null))
             throw new DailyStepException("rejected", "启动错误窗口在派发前改变");
         before = current;
         string id = Guid.NewGuid().ToString("N"), session = Path.Combine(root, "live", "steps", id);

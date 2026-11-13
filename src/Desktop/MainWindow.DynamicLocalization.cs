@@ -13,6 +13,8 @@ public partial class MainWindow
         var failure = new TextBlock();
         var toolText = new TextBlock();
         var structured = new TextBlock();
+        var networkWaiting = new TextBlock();
+        var networkStopped = new TextBlock();
         var at = new DateTime(2026, 10, 5, 13, 24, 56);
         const string nickname = "正在准备";
         const string raw = nickname + " · rejected: screen_changed";
@@ -36,6 +38,9 @@ public partial class MainWindow
         const string opaque = "正在准备 · C:\\用户\\{0}\\账号";
         var structuredText = DailyText.Of("notice.pattern.account_launch", "unchanged raw diagnostic", "1", "3", opaque);
         DailyUiText.Set(structured, structuredText);
+        DailyUiText.Set(networkWaiting, DailyText.Of("network.recovery_wait", DailyNetworkRecovery.Waiting));
+        const string recoveryDiagnostic = DailyNetworkRecovery.Manual + " (second_timeout; no retry)";
+        DailyUiText.Set(networkStopped, DailyText.Of("network.recovery_manual", recoveryDiagnostic));
         string chinese = previous.Text;
         int checks = 0;
         try
@@ -60,6 +65,12 @@ public partial class MainWindow
                     throw new Exception("Structured text changed opaque arguments or diagnostic evidence");
                 if (L.Describe(DailyText.Of("future.unknown.message", "screen_changed")) != L.Describe("screen_changed"))
                     throw new Exception("Newer display metadata blocked legacy fallback");
+                string waiting = language == 2 ? "once" : "一次";
+                string stopped = language == 2 ? "Automatic login has stopped" : language == 1 ? "已停止自動登入" : "已停止自动登录";
+                if (!networkWaiting.Text.Contains(waiting) || !networkStopped.Text.Contains(stopped)
+                    || (language == 2 && (HasHan(networkWaiting.Text) || HasHan(networkStopped.Text)))
+                    || !(networkStopped.ToolTip as string)!.EndsWith(recoveryDiagnostic, StringComparison.Ordinal))
+                    throw new Exception("Network recovery binding lost its one-attempt limit, manual next step or raw reason");
                 foreach (var item in cases)
                 {
                     string expected = item.Name.Length == 0 ? L.Get(item.Key) : L.Get(item.Key, L.Get(item.Name));
@@ -70,7 +81,7 @@ public partial class MainWindow
                 const string path = @"C:\用户\正在准备\evidence.json";
                 if (L.Translate(path) != path || L.Translate(nickname + " is my name") != nickname + " is my name")
                     throw new Exception("Translation rewrote an unregistered value");
-                checks += 7;
+                checks += 8;
             }
             DailyJson.Write(Path.Combine(smoke!, "dynamic-languages.json"), new {
                 status="passed", checks, toolMessages=cases.Length, timestampAndNicknamePreserved=true,

@@ -42,7 +42,7 @@ public sealed partial class DailyBargainWindow : Window
         var b = new Border { Padding = new(0, 16, 0, 0), Margin = new(0, 0, 0, 16), BorderThickness = new(0, 1, 0, 0), Child = child };
         b.SetResourceReference(Border.BorderBrushProperty, "Line"); return b;
     }
-    public DailyBargainWindow(string root, string account, bool allowGame = true, Func<bool>? canOperate = null)
+    public DailyBargainWindow(string root, string account, bool allowGame = true, Func<bool>? canOperate = null, IAccountSessions? accountSessions = null)
     {
         this.allowGame = allowGame;
         this.canOperate = canOperate ?? (() => true);
@@ -51,7 +51,7 @@ public sealed partial class DailyBargainWindow : Window
         progress.SetResourceReference(ForegroundProperty, "Primary");
         progress.SetResourceReference(BackgroundProperty, "Line");
         progress.BorderThickness = new(0);
-        session = new(root, account);
+        session = new(root, account, accountSessions);
         Width = 660; Height = 740; MinWidth = 540; MinHeight = 520; WindowStartupLocation = WindowStartupLocation.CenterOwner;
         L.Bind(this, TitleProperty, "tool.talent-practice");
         var layout = new DockPanel { Margin = new(24, 0, 24, 24) };
@@ -81,6 +81,7 @@ public sealed partial class DailyBargainWindow : Window
         var choice = new StackPanel(); choice.Children.Add(BuildMode()); choice.Children.Add(selection); choice.Children.Add(experience); choice.Children.Add(progress); body.Children.Add(Section(choice));
         L.Bind(characters, System.Windows.Automation.AutomationProperties.NameProperty, "bargain.character");
         body.Children.Add(BuildQueue());
+        body.Children.Add(BuildRestart());
         var budget = new StackPanel(); budget.Children.Add(costLabel);
         budget.Children.Add(estimate); budget.Children.Add(stock); budget.Children.Add(count); body.Children.Add(Section(budget));
         hint.SetResourceReference(TextBlock.ForegroundProperty, "MutedInk"); body.Children.Add(hint);
@@ -163,6 +164,7 @@ public sealed partial class DailyBargainWindow : Window
         session.Begin(); busy = true; error = null; stop.IsEnabled = training; Render(); ActivityChanged?.Invoke();
         try { await action(); }
         catch (StageHostException e) when (e.Kind == "stopped") { SetMessage("bargain.stopped"); }
+        catch (OperationCanceledException) { SetMessage("bargain.stopped"); }
         catch (Exception e) { error = e; session.RecordFailure(e); }
         finally { busy = false; stop.IsEnabled = false; Render(); ActivityChanged?.Invoke(); if (closing) Close(); }
     }
@@ -196,6 +198,7 @@ public sealed partial class DailyBargainWindow : Window
         RenderQueueBudget();
         if(jobs.Any(j=>j.State!="completed"))start.IsEnabled=available;
         if (error is DailyBargainFault fault) L.Text(status, fault.Code, fault.Values);
+        else if (error is StageHostException { Display: { } display }) DailyUiText.Set(status, display);
         else if (error?.Message.StartsWith("bargain.", StringComparison.Ordinal) == true || error?.Message.StartsWith("practice.", StringComparison.Ordinal) == true) L.Text(status, error!.Message);
         else if (error != null) DailyUiText.Error(status, error);
         else if(!busy && allCharacters.Length > 0 && characters.SelectedItem == null && message!="practice.queue_levels_changed") L.Text(status,"practice.none");

@@ -354,5 +354,7 @@
   "网络已恢复，正在同步领地状态；不会重复旧操作": "Network recovered; refreshing territory state without repeating previous operations",
   "正在同步领地库存与农田，恢复后继续": "Refreshing territory inventory and farmland; automation will resume",
   "正在同步料理库存，恢复后自动继续": "Refreshing cooking inventory; automation will resume",
-  "缺少可核对的播种状态": "Planting state is unavailable for reconciliation"
+  "缺少可核对的播种状态": "Planting state is unavailable for reconciliation",
+  "改用游戏自带的寻路（一般不用开）": "Use the game's own pathfinding (usually off)",
+  "默认由工具自己规划绕开障碍的路线。打开后从下一次移动起改用游戏的寻路；关闭立即恢复。": "By default the tool plans its own route around obstacles. Turning this on uses the game's pathfinding from the next move; turning it off switches back at once."
 }

@@ -208,6 +208,7 @@ public partial class MansionWindow : Window
         bool active = HostedAutomationEnabled;
         ConnectButton.IsEnabled = !active && !polling;
         ConnectButton.Visibility = !smoke && status == "disconnected" ? Visibility.Visible : Visibility.Collapsed;
+        ConnectButton.Tag = status == "disconnected" ? "next" : null;
         StartButton.IsEnabled = client != null && !active && !polling;
         StopButton.IsEnabled = active;
         bool inRound = snapshot?["Result"] is null && snapshot?["State"]?.ToString()is "Playing" or "Caught" or "StageClear";
@@ -228,6 +229,9 @@ public partial class MansionWindow : Window
         if (snapshot?["ItemWarning"]?.GetValue<bool>() == true)
             StatusText.Text += " · " + L.Get("mansion.item_warning");
         var goal = snapshot?["Objective"];
+        // Round figures and the map legend appear with the first live frame, not as rows of dashes.
+        LiveMetrics.Visibility = goal != null ? Visibility.Visible : Visibility.Collapsed;
+        LiveStats.Visibility = goal != null || snapshot?["Board"] != null || snapshot?["Result"] != null ? Visibility.Visible : Visibility.Collapsed;
         StageText.Text = goal?["Stage"]?.ToString()is { Length: > 0 } stage ? stage : "—";
         CandyText.Text = goal?["OrdinaryRemaining"]?.ToString() ?? "—";
         TimeText.Text = goal?["Seconds"] is { } seconds ? TimeSpan.FromSeconds(Math.Max(0, seconds.GetValue<double>())).ToString(@"mm\:ss") : "—";

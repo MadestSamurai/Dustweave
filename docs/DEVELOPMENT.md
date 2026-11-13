@@ -1,5 +1,15 @@
 # Development / 开发指南
 
+## Network timeout: one login recovery per running queue
+
+Daily and skill-practice queues unwind and persist their current operation when the native timeout popup is observed. `DailyNetworkRecovery` acknowledges only an error whose callback is structurally proven to call the game's ordinary restart handler, with either the exact recognized timeout text or the native `CLINET_NET_TIMEOUT` line. Session invalidation, expired tokens and unrelated errors never authorize a restart. The callback is rechecked at native dispatch; message text alone is insufficient.
+
+One durable attempt is consumed before acknowledgement. After a three-second grace, the existing startup runtime may click Touch to Start for one pinned title instance. The permit cannot authorize downloads or another title. Repeated timeout, a second title, login/terms prompts, changed identity or a three-minute deadline revoke it and pause for the user. Unknown/stale observations only wait within that deadline. There is no process restart, account switch, credential restoration, SDK authentication request or automatic second login. Login expiration by the game/server cannot be ruled out; this policy avoids compounding weak-network failures with repeated authentication.
+
+After two advancing observations confirm the same account, character, process, connection and server/reset period, the original queue ID is resumed through normal transaction reconciliation. Completed work remains completed; an uncertain purchase, claim, battle or skill use is never blindly resent. Skill-practice queues refresh XP and achievements and recreate their workflow while retaining the original jobs. A second network interruption escapes to the user. A later explicit run can reset the attempt only after observing a healthy, already logged-in game. Closing/reopening Dustweave while the failed login remains does not grant another attempt.
+
+Compact recovery records are under `live/diagnostics/network-recovery`, included by the existing diagnostic export. They contain hashed identities and failure reasons, not credentials or account snapshots. Focused regressions: `NetworkRecovery,Startup,QueueEngine,QueueSession,CommandDriver,ObservationWait,TalentPractice,BusinessJournal`; localization assertions cover the stable waiting/manual-action keys. Connection `self-test` and passive `prepare`, plus the test runner's `--prepare-startup-runtime <Managed> <output>`, validate current-client compilation without attaching to the game. Offline evidence must not be described as a live weak-network test.
+
 ## Saffron: skip excess potato planting
 
 When authoritative inventory shows insufficient potato stack capacity, skip the remaining potato planting for the current cycle instead of ending the saffron task. The skip route is resource gathering → cooking → selling → saffron replanting → completion. Cooking/selling still follow the existing processing preference; disabling them goes directly from gathering to replanting. Normal-capacity cycles retain their existing order. Reserve currency only for work still planned, including final saffron replanting.
@@ -366,6 +376,8 @@ The host-owned **Tools → Talent practice** window shares the daily controller 
 ### Delayed Last Night record presentation
 
 `TotalWarNewcordPopupUI` is a foreground `UIBase` even when its observation says `Popup=false`. It can appear on returning to the field after the weekly battle has already been confirmed complete. Home navigation and cartridge travel share its explicit native return handling; animation/readiness is awaited, unknown modals and battles are preserved, and uncertain submissions are never replayed. Closing this score display must not restart a completed weekly battle. Synthetic delayed-arrival and command-boundary regressions live in `HomeNavigation` and `TravelTransition`. Narrow host routing changes can reuse a completed full package baseline; native inputs are still identity-checked and the changed routes rerun.
+
+Book settlement exit must not require `GameFieldDefaultUI`: the native result button can return to `TotalWarUI`, a record presentation, the field, or the menu. Confirm result dismissal, allow the settled battle surface to finish unloading, then use shared home navigation from the observed destination. A completed weekly task resumed in its lobby/record presentation still performs cleanup without starting another battle. `BookExit` exercises the real command driver and home navigation with a virtual clock, including delayed teardown/loading, bounded timeout then recovery, cancellation, identity changes and unrelated battle/modal preservation.
 
 ## Mirror schedule and interrupted NPC navigation
 

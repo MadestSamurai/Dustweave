@@ -77,6 +77,7 @@ public partial class RhythmWindow:Window {
  }
  void UpdateControls(){
   bool ready=!connecting&&!closing;
+  ConnectButton.Tag=connected?null:"next"; // Dustweave highlights the next step.
   ConnectButton.IsEnabled=ready&&!link.Enabled;StartButton.IsEnabled=ready&&connected&&RhythmControlLink.Fresh(snapshot,DateTime.UtcNow)&&!link.Enabled;StopButton.IsEnabled=ready&&link.Enabled;
  }
  void Render(){

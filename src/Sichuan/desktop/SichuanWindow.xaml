@@ -22,9 +22,9 @@
     <Separator Margin="0,12,0,20"/>
     <TextBlock Text="自动本局" FontWeight="SemiBold" Margin="0,0,0,12"/>
     <TextBlock Text="配对间隔" Margin="0,0,0,8"/>
-    <DockPanel><Button Content="应用间隔" Click="Interval_Click" DockPanel.Dock="Right" Margin="8,0,0,0"/><TextBox x:Name="IntervalBox" Text="1000" KeyDown="Interval_KeyDown" AutomationProperties.Name="配对间隔，毫秒"/></DockPanel>
-    <TextBlock x:Name="IntervalText" Text="50–60000 ms · 默认 1000 ms" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,8,0,16"/>
-    <TextBlock x:Name="AutomationText" Text="自动执行默认关闭" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}"/>
+    <StackPanel Orientation="Horizontal"><TextBox x:Name="IntervalBox" Text="1000" Width="120" KeyDown="Interval_KeyDown" LostFocus="Interval_Click" AutomationProperties.Name="配对间隔，毫秒"/><TextBlock Text="毫秒" Foreground="{DynamicResource MutedInk}" VerticalAlignment="Center" Margin="8,0,0,0"/></StackPanel>
+    <TextBlock x:Name="IntervalText" Text="改完即生效，运行中也可以调整。1000 毫秒 = 1 秒。" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,8,0,16"/>
+    <TextBlock x:Name="AutomationText" Text="点击右下角「开始本局」后，按上面的间隔自动消除到本局结束。" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}"/>
     <TextBlock x:Name="RouteText" TextWrapping="Wrap" Margin="0,12,0,0"/>
     <TextBlock x:Name="MetaText" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" Margin="0,8,0,0"/>
     <Separator Margin="0,16,0,16"/>

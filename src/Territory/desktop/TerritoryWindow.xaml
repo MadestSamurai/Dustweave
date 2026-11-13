@@ -35,7 +35,7 @@
       </WrapPanel>
       <TextBlock Text="{DynamicResource TreeStageHint}" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,0,0,18"/>
       <WrapPanel Margin="0,0,0,18"><CheckBox x:Name="VehicleBox" Content="{DynamicResource Ui39}" Checked="SettingsChanged" Unchecked="SettingsChanged" ToolTip="{DynamicResource Ui40}"/><CheckBox x:Name="DashBox" Content="{DynamicResource Ui41}" Checked="SettingsChanged" Unchecked="SettingsChanged" ToolTip="{DynamicResource Ui42}"/></WrapPanel>
-      <CheckBox x:Name="NavMeshBox" Content="{DynamicResource NavMeshLabel}" ToolTip="{DynamicResource NavMeshHint}" Margin="0,0,0,6" Checked="SettingsChanged" Unchecked="SettingsChanged"/>
+      <CheckBox x:Name="NavMeshBox" Content="{DynamicResource NavMeshLabel}" Margin="0,0,0,6" Checked="SettingsChanged" Unchecked="SettingsChanged"/>
       <TextBlock Text="{DynamicResource NavMeshHint}" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,0,0,18"/>
       <WrapPanel>
        <StackPanel Margin="0,0,28,8"><TextBlock Text="{DynamicResource Ui43}" Margin="0,0,0,6"/><TextBox x:Name="IntervalBox" Width="150" HorizontalAlignment="Left" LostFocus="SettingsChanged" AutomationProperties.Name="{DynamicResource Ui44}"/></StackPanel>
@@ -98,7 +98,7 @@
   </ScrollViewer>
   <DockPanel Grid.Row="2" Margin="0,14,0,0" LastChildFill="True">
    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"><Button Content="{DynamicResource Ui29}" Click="LayoutClick" Margin="0,0,8,0"/><Button x:Name="StopButton" Content="{DynamicResource Ui63}" Click="StopClick" IsEnabled="False" Margin="0,0,8,0"/><Button x:Name="StartButton" Content="{DynamicResource Ui62}" Style="{DynamicResource PrimaryButton}" Click="StartClick" IsEnabled="False"/></StackPanel>
-   <Button x:Name="ConnectButton" Content="{DynamicResource Ui64}" Click="ConnectClick" HorizontalAlignment="Left"/>
+   <Button x:Name="ConnectButton" Tag="next" Content="{DynamicResource Ui64}" Click="ConnectClick" HorizontalAlignment="Left"/>
   </DockPanel>
  </Grid>
 </Window>

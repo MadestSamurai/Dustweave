@@ -189,6 +189,7 @@ public sealed partial class DailyManagedBusiness : IDisposable
             op["state"] = op["state"]?.GetValue<string>() == "prepared" || error is DailyStepException { Kind: "rejected" } ? "rejected" : "unknown_preview";
             op["error"] = error.Message;
             Save(op);
+            if (error is StageHostException { Kind: "network" }) throw;
             if (op["state"]!.GetValue<string>() == "unknown_preview")
                 throw new StageHostException("pending", error.Message);
             throw;
@@ -297,7 +298,7 @@ public sealed partial class DailyManagedBusiness : IDisposable
                 await CancelRejectedPreviewAsync(op, context);
             if (op["state"]?.GetValue<string>() == "unknown")
             {
-                if (error is StageHostException { Kind: "identity" or "stopped" } or DailyStepException { Kind: "identity" or "stopped" }) throw;
+                if (error is StageHostException { Kind: "identity" or "stopped" or "network" } or DailyStepException { Kind: "identity" or "stopped" }) throw;
                 bool hold = drive != null || error is StageHostException { HoldQueue: true };
                 if (error is StageHostException { Kind: "pending" } pending && (!hold || pending.HoldQueue)) throw;
                 throw new StageHostException("pending", error.Message) { HoldQueue = hold, ObservationTimedOut = error is StageHostException { ObservationTimedOut: true } };

@@ -31,12 +31,12 @@ Download one edition: the EXE runs on its own; ZIPs include both READMEs and lic
 
 1. Open the actual tile-matching board.
 2. Open the assistant, click **Connect game**, and wait for the board and hints. No manual pair is required first.
-3. Click **Play next pair** or **Auto-play round**. Change the pair interval with **Apply interval** or Enter.
+3. Click **Play next pair** or **Auto-play round**. Change the pair interval at any time; it applies as soon as you finish typing.
 4. Click **Stop now** or close the window to stop. Reopening does not automatically resume execution.
 
 ## Features and settings
 
-- **Pair interval:** default **1000 ms**, adjustable from **50 to 60000 ms**. Click **Apply interval** or press Enter. It can be changed during a run and is saved for next time.
+- **Pair interval:** default **1000 ms**, adjustable from **50 to 60000 ms**. It applies when you leave the field or press Enter. It can be changed during a run and is saved for next time.
 - **Hints:** show a legal next pair first, then try to find a full route. Hints update after manual changes, combo rewards and shuffles. A complete static route is not a guarantee that the game will leave the board unchanged.
 - **Auto-play round:** confirms each pair using client events and board readback, waits through pauses, shuffles and input locks, and stops when the round ends. It does not start the next level or spend items.
 - **Always on top:** keeps the assistant visible over other windows.

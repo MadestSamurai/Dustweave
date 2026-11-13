@@ -293,7 +293,7 @@ public partial class MainWindow : Window
     }
     private DailyBargainWindow CreatePracticeWindow(string account, bool allowGame)
     {
-        var window = new DailyBargainWindow(root, account, allowGame, () => !Unavailable && !finalClose) { Owner = this };
+        var window = new DailyBargainWindow(root, account, allowGame, () => !Unavailable && !finalClose, sessions) { Owner = this };
         practiceWindow = window;
         window.ActivityChanged += () => { RefreshTools(); SetBusy(busy); };
         window.ContentRendered += (_, _) => FeatureViewed(DailyFeatureDiscovery.Tool("talent-practice"));

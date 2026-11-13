@@ -111,6 +111,32 @@ static class TalentPracticeCases
     {
         void Check(bool ok, string label) { if (!ok) throw new Exception(label); checks.Add(label); }
         await PracticeQueueCases.Run(checks);
+        using(var f=new Fixture(Path.Combine(root,"practice-batched-maps")))
+        {
+            var chars=new[]{f.Character,f.Character with{Character=12,Kind=13},f.Character with{Character=14,Kind=2},f.Character with{Character=16}};
+            var baseRead=f.H.Readings;var baseCommand=f.H.OnCommand;
+            f.H.Readings=()=>{
+                var rows=baseRead();
+                rows[0]=WorkflowCases.Reading(DailyTalentPracticeProof.ReadId,("$self",O(("Characters",chars),("Catalyst",f.Potions),("NetworkBusy",false))));
+                rows[^1]=WorkflowCases.Reading("mainline.talent_rows",("$self",new[]{O(("Kind",f.Character.Kind),("Character",f.Character.Character),("Group",f.Character.Group),("Instance",20),("Gate",f.Character.Active?"talent_wait:duration_active":""),("Reason",""))}));
+                return rows;
+            };
+            f.H.OnCommand=command=>{
+                baseCommand(command);
+                if(S(command["Kind"])=="mainline_talent")chars=chars.Select(c=>c.Character==f.Character.Character?f.Character:c.Kind==f.Character.Kind?c with{Active=true}:c).ToArray();
+                if(S(command["Kind"])=="mainline_pack")chars=chars.Select(c=>c with{Active=false}).ToArray();
+            };
+            var jobs=chars.Select(c=>DailyPracticeJob.Create(c.Kind,c.Character,false,c.Level)).ToList();
+            Task<DailyPracticeSnapshot> Read()=>DailyTalentPractice.ReadSnapshot(f.H.Workflow);
+            var order=new List<long>();
+            await DailyPracticeQueue.RunByMap(jobs,Read,(_,_)=>throw new Exception("Unexpected merchant"),async(c,g,reset)=>{
+                f.Character=chars.Single(x=>x.Character==c.Character);order.Add(c.Character);
+                return await f.Trainer.RunRound(c,g,reset);
+            },()=>f.Stop,()=>{});
+            Check(jobs.All(j=>j.State=="completed")&&f.Casts==12&&f.Potions==140,"map batch completes all four characters with exact original medicine budget");
+            Check(f.Switches==5&&order.Take(3).SequenceEqual(new long[]{10,12,14})&&order.LastIndexOf(10)<order.IndexOf(16),
+                "different skills share a map; shared-kind characters keep order: 12 casts use five switches instead of eleven");
+        }
         using(var f=new Fixture(Path.Combine(root,"practice-unsent-travel-timeout")))
         {
             int failures=0;

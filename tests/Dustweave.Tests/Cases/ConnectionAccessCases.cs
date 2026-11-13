@@ -85,6 +85,34 @@ internal static class ConnectionAccessCases
         }
         Check(await InterruptedReply("read",2)==3,"read-only reconnect is limited to two retries");
         Check(await InterruptedReply("write",1)==1,"mutating mailbox request is sent exactly once");
+        // The real deadline disposes a connected pipe. On Windows this can
+        // throw ObjectDisposedException rather than TimeoutException.
+        foreach(bool writing in new[]{false,true})
+        {
+            using var limit=new CancellationTokenSource(TimeSpan.FromSeconds(8));
+            using var service=new NamedPipeServerStream(BD2.LocalIpc.Wire.Endpoint(process.Id,process.StartTime.ToUniversalTime().Ticks),
+                PipeDirection.InOut,1,PipeTransmissionMode.Byte,PipeOptions.Asynchronous);
+            var release=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var next=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);int requests=0;
+            var serving=Task.Run(async()=>{
+                await service.WaitForConnectionAsync(limit.Token);
+                _=BD2.LocalIpc.Wire.ReadFrame(service);requests++;
+                await release.Task.WaitAsync(limit.Token);service.Disconnect();next.SetResult();
+                await service.WaitForConnectionAsync(limit.Token);
+                _=BD2.LocalIpc.Wire.ReadFrame(service);requests++;
+                BD2.LocalIpc.Wire.WriteFrame(service,BD2.LocalIpc.Wire.Encode(w=>{
+                    w.Write("ok");w.Write("fixture");w.Write("");BD2.LocalIpc.Wire.Bytes(w,new byte[]{42});}));
+            });
+            var local=new BD2.LocalIpc.PipeClient(Path.Combine(Path.GetTempPath(),"Dustweave-deadline-test"),process.Id,process.StartTime.ToUniversalTime().Ticks);
+            bool timedOut=false;
+            try{await Task.Run(()=>{if(writing)local.Write("command.json",new byte[]{1},true);else local.Read("frame.json");});}
+            catch(TimeoutException error){timedOut=error is not BD2.LocalIpc.PipeConnectTimeoutException&&error.InnerException!=null;}
+            finally{release.TrySetResult();}
+            await next.Task.WaitAsync(limit.Token);
+            Check(timedOut&&requests==1,"connected deadline retains uncertain outcome and never replays: "+writing);
+            Check((await Task.Run(()=>local.Read("receipt.json")))!.SequenceEqual(new byte[]{42}),"same client reads receipt after deadline recovery: "+writing);
+            await serving;Check(requests==2,"only explicit receipt read follows expired request: "+writing);
+        }
         await CheckBrokerContinuity(cases);
         await CheckSharedPreparation(cases);
 

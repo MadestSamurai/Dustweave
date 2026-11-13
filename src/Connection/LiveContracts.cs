@@ -101,6 +101,14 @@ namespace BD2Daily.Live {
   public static bool SuppressibleNotice(string type){return new[]{"NewsPopupEventUI","PackagePopupUI","AttendanceSpecialPackageUI","BundlePackageUI","BundleGroupPackageUI","BundleGroupRelayPackageUI","BonusBundleGroupPackageUI","ClearPackageUI","LoginPassPackageUI","SkinPackageUI"}.Contains(type);}
   public static bool GameplayReady(Frame f){return f!=null&&string.IsNullOrEmpty(f.Error)&&!string.IsNullOrEmpty(f.AccountKey)&&!string.IsNullOrEmpty(f.PlayerKey)&&f.Scene!="ReGame"&&!f.Surfaces.Any(u=>u.Type=="DownloadPopupUI"||u.Type=="IntroUI");}
   private static string StartupTarget(Command c,Frame f){
+   if(c.Kind=="network_timeout_ack"){
+    var popup=f.Surfaces.SingleOrDefault(u=>u.Id==c.SurfaceId);
+    if(f.BridgeVersion<146||string.IsNullOrEmpty(c.AccountKey)||c.AccountKey!=f.AccountKey||c.PlayerKey!=f.PlayerKey
+       ||c.TargetId!=0||c.Value!=0||c.Items==null||c.Items.Length!=0
+       ||popup==null||popup.Type!="MessagePopupUI"||popup.NativeContext!=BackgroundErrorPolicy.RestartContext||!popup.InputReady
+       ||!popup.Targets.Any(t=>t.Field=="_buttonOK"&&t.Enabled)||popup.Targets.Any(t=>t.Field=="_buttonCancel"&&t.Enabled))return "network_restart_context_rejected";
+    return f.Surfaces.Any(x=>x.Id!=popup.Id&&x.Popup&&x.Order>=popup.Order&&!PassiveSurface(x.Type))?"network_restart_popup_blocked":"";
+   }
    if((f.Scene!="ReGame"&&f.Scene!="Splash")||c.Kind!="click")return "startup_scope_rejected";
    if(c.AccountKey!=f.AccountKey||c.PlayerKey!=f.PlayerKey)return "identity_changed";
    bool catalogRetry=f.BridgeVersion>=30&&f.Surfaces.Count(x=>x.Type=="MessagePopupUI")==1&&f.Surfaces.Any(x=>x.Type=="MessagePopupUI"&&x.Text.Any(text=>text.Split(new[]{'\r','\n'},StringSplitOptions.RemoveEmptyEntries).Contains("CLIENT_LOGIC_ERROR")&&text.Split(new[]{'\r','\n'},StringSplitOptions.RemoveEmptyEntries).Any(code=>code=="BUNDLE_CATALOG_CHECK"||(f.BridgeVersion>=31&&code=="BUNDLE_COMMON"))));
@@ -128,7 +136,7 @@ namespace BD2Daily.Live {
   public static string Gate(Command c,Frame f,long now,bool otherOwner){
    Guid id;
    if(c==null||c.Id==null||c.Id.Length!=32||!Guid.TryParseExact(c.Id,"N",out id))return "invalid_command_id";
-   if(c.Kind!="background_error_ack"&&c.Kind!="talent_error_ack"&&c.Kind!="story_advance"&&c.Kind!="story_skip"&&c.Kind!="notice_suppress"&&c.Kind!="click"&&c.Kind!="pointer"&&c.Kind!="back"&&c.Kind!="detach"&&c.Kind!="mirror_ready"&&c.Kind!="native_click"&&c.Kind!="dispatch_recover"&&c.Kind!="dispatch_collect_all"&&c.Kind!="dispatch_menu"&&c.Kind!="mainline_menu"&&c.Kind!="mainline_pack"&&c.Kind!="sichuan_open"&&c.Kind!="sichuan_select"&&c.Kind!="route_probe"&&c.Kind!="mainline_walk"&&c.Kind!="mainline_reposition"&&c.Kind!="field_quick_travel"&&c.Kind!="mainline_cancel_nav"&&c.Kind!="mainline_approach"&&c.Kind!="mainline_interact"&&c.Kind!="mainline_talent"&&c.Kind!="collection_query_steal"&&c.Kind!="weekly_steal_talk"&&c.Kind!="weekly_steal_menu"&&c.Kind!="weekly_steal_talent"&&c.Kind!="weekly_steal_confirm"&&c.Kind!="collection_query"&&c.Kind!="weekly_book_lobby"&&c.Kind!="weekly_book_open"&&c.Kind!="monster_open"&&c.Kind!="friendship_select"&&c.Kind!="friendship_complete"&&c.Kind!="reward_refresh"&&c.Kind!="dice_query"&&c.Kind!="pass_init"&&c.Kind!="pass_select"&&c.Kind!="equipment_refine_batch"&&!PowderKind(c.Kind)&&!PreviewKind(c.Kind)&&!TradeKind(c.Kind)&&!EventKind(c.Kind)&&!RewardKind(c.Kind)&&!QuizKind(c.Kind)&&!TacticsKind(c.Kind)&&!WeeklyNpcKind(c.Kind)&&!NativeBattleKind(c.Kind))return "unsupported_command";
+   if(c.Kind!="network_timeout_ack"&&c.Kind!="background_error_ack"&&c.Kind!="talent_error_ack"&&c.Kind!="story_advance"&&c.Kind!="story_skip"&&c.Kind!="notice_suppress"&&c.Kind!="click"&&c.Kind!="pointer"&&c.Kind!="back"&&c.Kind!="detach"&&c.Kind!="mirror_ready"&&c.Kind!="native_click"&&c.Kind!="dispatch_recover"&&c.Kind!="dispatch_collect_all"&&c.Kind!="dispatch_menu"&&c.Kind!="mainline_menu"&&c.Kind!="mainline_pack"&&c.Kind!="sichuan_open"&&c.Kind!="sichuan_select"&&c.Kind!="route_probe"&&c.Kind!="mainline_walk"&&c.Kind!="mainline_reposition"&&c.Kind!="field_quick_travel"&&c.Kind!="mainline_cancel_nav"&&c.Kind!="mainline_approach"&&c.Kind!="mainline_interact"&&c.Kind!="mainline_talent"&&c.Kind!="collection_query_steal"&&c.Kind!="weekly_steal_talk"&&c.Kind!="weekly_steal_menu"&&c.Kind!="weekly_steal_talent"&&c.Kind!="weekly_steal_confirm"&&c.Kind!="collection_query"&&c.Kind!="weekly_book_lobby"&&c.Kind!="weekly_book_open"&&c.Kind!="monster_open"&&c.Kind!="friendship_select"&&c.Kind!="friendship_complete"&&c.Kind!="reward_refresh"&&c.Kind!="dice_query"&&c.Kind!="pass_init"&&c.Kind!="pass_select"&&c.Kind!="equipment_refine_batch"&&!PowderKind(c.Kind)&&!PreviewKind(c.Kind)&&!TradeKind(c.Kind)&&!EventKind(c.Kind)&&!RewardKind(c.Kind)&&!QuizKind(c.Kind)&&!TacticsKind(c.Kind)&&!WeeklyNpcKind(c.Kind)&&!NativeBattleKind(c.Kind))return "unsupported_command";
    if(c.RequireStealth&&c.Kind!="mainline_walk"&&c.Kind!="mainline_approach"&&c.Kind!="mainline_reposition")return "stealth_scope_rejected";
    bool startup=c.Scope=="startup_download";
    if(c.Scope!="gameplay"&&!startup)return "unsupported_scope";
@@ -142,6 +150,7 @@ namespace BD2Daily.Live {
    if(c.Scene!=f.Scene||c.UiToken!=f.UiToken)return "screen_changed";
    if(otherOwner)return "another_operation_owns_game";
    if(startup)return StartupTarget(c,f);
+   if(c.Kind=="network_timeout_ack")return "network_restart_requires_coordinator";
    if(c.Kind=="detach")return "";
    var ui=f.Surfaces.SingleOrDefault(u=>u.Id==c.SurfaceId);
    if(ui==null)return "surface_missing";
@@ -406,9 +415,33 @@ namespace BD2Daily.Live {
 }
 namespace BD2Daily.Live {
  public static class BackgroundErrorPolicy {
+  // Only the native network error's restart-only callback is eligible. Do not
+  // infer authorization from a localized message or from an arbitrary delegate.
+  public static bool RestartOnly(Delegate callback,Type appManager){
+   if(callback==null||callback.GetInvocationList().Length!=1)return false;
+   var d=callback.GetInvocationList()[0];var m=d.Method;
+   if(m.DeclaringType==null||m.DeclaringType.DeclaringType==null||m.DeclaringType.DeclaringType.FullName!="BDNetwork.NetworkManager")return false;
+   var body=m.GetMethodBody();if(body==null)return false;var il=body.GetILAsByteArray();int offset=0;
+   if(il.Length==20){
+    if(il[0]!=2||il[1]!=0x7b||il[6]!=0x2d||il[7]!=1||il[8]!=0x2a||d.Target==null)return false;
+    var flag=m.Module.ResolveField(BitConverter.ToInt32(il,2));
+    if(flag.FieldType!=typeof(bool)||!Equals(flag.GetValue(d.Target),true))return false;
+    offset=9;
+   }else if(il.Length!=11)return false;
+   if(il[offset]!=0x28||il[offset+5]!=0x6f||il[offset+10]!=0x2a)return false;
+   var getter=m.Module.ResolveMethod(BitConverter.ToInt32(il,offset+1)) as System.Reflection.MethodInfo;
+   var restart=m.Module.ResolveMethod(BitConverter.ToInt32(il,offset+6)) as System.Reflection.MethodInfo;
+   return getter!=null&&getter.IsStatic&&getter.ReturnType==appManager&&getter.GetParameters().Length==0
+    &&restart!=null&&restart.DeclaringType==appManager&&restart.Name=="AppReStart"&&restart.ReturnType==typeof(void)&&restart.GetParameters().Length==0;
+  }
+
   public const string Context="billing_region_unavailable_ack_only";
   public const string RequestContext="request_timeout_ack_only";
+  public const string RestartContext="network_timeout_return_title";
   public const string QuestContext="weekly_npc_rejected_ack_only";
+  // The current native ClientNetworkError appends this enum on its own line,
+  // independently of the game language. Session/token errors are not timeouts.
+  public static bool RestartTimeout(System.Collections.Generic.IEnumerable<string> texts){return texts!=null&&texts.Any(t=>t!=null&&(RequestTimeout(new[]{t})||t.Split(new[]{'\r','\n'},StringSplitOptions.RemoveEmptyEntries).Any(line=>line.Trim()=="CLINET_NET_TIMEOUT")));}
   public static bool QuestRejected(System.Collections.Generic.IEnumerable<string> texts){return texts!=null&&texts.Any(t=>t!=null&&System.Text.RegularExpressions.Regex.IsMatch(t,@"\berror\s*:\s*100011\b",System.Text.RegularExpressions.RegexOptions.IgnoreCase));}
   public static bool RequestTimeout(System.Collections.Generic.IEnumerable<string> texts){return texts!=null&&texts.Any(t=>t=="網路請求超時請檢查網路連接狀態。"||t=="网络请求超时请检查网络连接状态。"||t=="连线请求超时，请检查网络连接状态。"||t=="連線請求超時，請檢查網路連接狀態。");}
   public static bool Matches(string context,System.Collections.Generic.IEnumerable<string> texts){return context==Context&&RegionLookupTimeout(texts)||context==RequestContext&&RequestTimeout(texts)||context==QuestContext&&QuestRejected(texts);}

@@ -1,4 +1,13 @@
 {
+  "practice.restart_interval": {"zh-CN":"定时重启游戏","zh-TW":"定時重新啟動遊戲","en-US":"Restart game periodically"},
+  "practice.restart_off": {"zh-CN":"不开启","zh-TW":"不啟用","en-US":"Off"},
+  "practice.restart_minutes": {"zh-CN":"每 {0} 分钟","zh-TW":"每 {0} 分鐘","en-US":"Every {0} minutes"},
+  "practice.restart_hint": {"zh-CN":"等当前技能结算后重启，重新进入同一账号并继续列表；登录失败时暂停。","zh-TW":"等待目前技能結算後重新啟動，重新進入同一帳號並繼續清單；登入失敗時暫停。","en-US":"Waits for the current skill to settle, restarts the same account, then resumes the queue. Pauses if sign-in fails."},
+  "practice.restarting": {"zh-CN":"已保存练习进度，正在重启游戏…","zh-TW":"已儲存練習進度，正在重新啟動遊戲…","en-US":"Practice progress saved. Restarting the game…"},
+  "practice.restart_resumed": {"zh-CN":"游戏已重新进入，正在核对进度并继续练习…","zh-TW":"已重新進入遊戲，正在核對進度並繼續練習…","en-US":"Back in the game. Checking progress and resuming practice…"},
+  "practice.restart_failed": {"zh-CN":"定时重启未完成，练习进度已保留。请在游戏中确认登录状态后继续练习；不会再次自动重启。","zh-TW":"定時重新啟動未完成，練習進度已保留。請在遊戲中確認登入狀態後繼續練習；不會再次自動重新啟動。","en-US":"Scheduled restart did not complete. Your progress is kept. Check sign-in in the game, then resume practice. No further restart will be attempted."},
+  "network.recovery_wait": {"zh-CN":"网络超时，正在尝试一次重新进入游戏；原进度已保留。","zh-TW":"網路逾時，正在嘗試一次重新進入遊戲；原進度已保留。","en-US":"Network timeout. Trying to re-enter the game once; your progress has been kept."},
+  "network.recovery_manual": {"zh-CN":"网络恢复未完成，已停止自动登录并保留进度。请先在游戏中确认网络和登录状态，再继续上次进度。","zh-TW":"網路恢復未完成，已停止自動登入並保留進度。請先在遊戲中確認網路與登入狀態，再繼續上次進度。","en-US":"Recovery did not complete. Automatic login has stopped and your progress is kept. Check the connection and sign-in in the game, then resume your progress."},
   "practice.queue_levels_changed": {"zh-CN":"已从列表移除 {0} 项技能等级已变化的服装：{1}。如需练习新等级，请重新加入。","zh-TW":"已從清單移除 {0} 項技能等級已變更的服裝：{1}。如需練習新等級，請重新加入。","en-US":"Removed {0} entries whose talent level changed: {1}. Add them again to train the new level."},
   "practice.queue_cost_label": {"zh-CN":"列表剩余预计耗药","zh-TW":"清單剩餘預計耗藥","en-US":"Estimated pills for the remaining queue"},
   "practice.queue_cost": {"zh-CN":"共 {0} 个天赋药 · {1} 次技能使用","zh-TW":"共 {0} 個天賦藥 · {1} 次技能使用","en-US":"{0} talent pills in total · {1} skill uses"},

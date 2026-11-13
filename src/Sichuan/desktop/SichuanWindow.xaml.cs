@@ -34,7 +34,7 @@ public partial class SichuanWindow : Window
         if(root==null)SichuanStorage.ImportSettings(SichuanIdentity.BoardRoot);
         settingsPath=System.IO.Path.Combine(data,"settings.json");
         files.IntervalMilliseconds=SichuanSettings.Read(settingsPath).IntervalMilliseconds;
-        IntervalBox.Text=files.IntervalMilliseconds.ToString();
+        IntervalBox.Text=appliedInterval=files.IntervalMilliseconds.ToString();
         link=new(files);
         language=new(this,LanguagePreference.Read(data));LanguageBox.SelectedIndex=language.Catalog.Language=="zh-CN"?0:1;
         timer.Tick+=async(_,_)=>await RefreshAsync();
@@ -68,18 +68,21 @@ public partial class SichuanWindow : Window
         try{await Control(()=>link.Enable(true));if(closing)return;enabled=true;ToggleButton.Content="暂停提示";timer.Start();await RefreshAsync();}
         catch(Exception e)when(e is IOException or UnauthorizedAccessException){enabled=false;timer.Stop();StatusText.Text="无法启动提示："+e.Message;await StopAutomation("capture_enable_failed");}
     }
+    private string appliedInterval="";
     private async Task<bool> ApplyInterval()
     {
-        if(!int.TryParse(IntervalBox.Text,out var value)||!SichuanRunEngine.ValidInterval(value))
+        string requested=IntervalBox.Text;
+        if(!int.TryParse(requested,out var value)||!SichuanRunEngine.ValidInterval(value))
         {IntervalText.Text="请输入 50–60000 毫秒的整数，原间隔保持。";return false;}
         try
         {
             await Control(()=>{new SichuanSettings{IntervalMilliseconds=value}.Save(settingsPath);link.SetInterval(value);});
-            IntervalText.Text=$"已设为 {value} ms · 运行中可调整";return true;
+            appliedInterval=requested;IntervalText.Text=$"已设为 {value} ms · 运行中可调整";return true;
         }
         catch(Exception e){IntervalText.Text="保存失败："+e.Message;return false;}
     }
-    private async void Interval_Click(object sender,RoutedEventArgs e)=>await ApplyInterval();
+    // The interval applies when the field loses focus or on Enter; there is no separate Apply button.
+    private async void Interval_Click(object sender,RoutedEventArgs e){if(!closing&&IntervalBox.Text!=appliedInterval)await ApplyInterval();}
     private async void Interval_KeyDown(object sender,System.Windows.Input.KeyEventArgs e){if(e.Key==System.Windows.Input.Key.Enter){e.Handled=true;await ApplyInterval();}}
     private void Topmost_Changed(object sender,RoutedEventArgs e)=>Topmost=((CheckBox)sender).IsChecked==true;
     private async void Toggle_Click(object sender,RoutedEventArgs e)
@@ -117,7 +120,9 @@ public partial class SichuanWindow : Window
     }
     private void ShowAutomation()
     {
-        AutomationText.Text=$"{automation.Status}"+(automation.CompletedPairs>0?$" · 已确认 {automation.CompletedPairs} 对":"");
+        // Before any run the controller only reports its idle default; tell the player what Start round does instead.
+        AutomationText.Text=automation.Status=="自动执行默认关闭"&&!automation.Active?"点击右下角「开始本局」后，按上面的间隔自动消除到本局结束。":$"{automation.Status}"+(automation.CompletedPairs>0?$" · 已确认 {automation.CompletedPairs} 对":"");
+        ConnectButton.Tag=connected||connecting?null:"next"; // Dustweave highlights the next step.
         StepButton.IsEnabled=AutoButton.IsEnabled=connected&&!connecting&&!closing&&!automationPreparing&&!automation.Active;StopButton.IsEnabled=automation.Active;
         ToggleButton.IsEnabled=connected&&!connecting&&!closing&&!automationPreparing;
     }

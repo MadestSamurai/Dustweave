@@ -1,5 +1,32 @@
 [
 {
+  "Version": "1.7.3",
+  "Date": "2026-11-13",
+  "Notes": {
+    "zh-CN": [
+      "技能练习可选择定时重启游戏，默认关闭，支持每 15、30、60、120 分钟；等待当前技能结算后重启同一账号，并继续原列表。",
+      "日常与技能练习遇到明确的网络超时提示时，尝试一次重新进入游戏并继续原进度；再次登录失败时暂停，保留进度并提示手动处理。",
+      "改善技能练习慢切图和连接中断的恢复，将可在同一地图使用的不同技能合并执行，减少往返切图。",
+      "修复末日之书退出时可能卡住的问题。",
+      "改善部分工具断线后的连接按钮提示、空状态和说明；连连看间隔可在输入后按回车或离开输入框时保存，无需单独点击应用。"
+    ],
+    "zh-TW": [
+      "技能練習可選擇定時重新啟動遊戲，預設關閉，支援每 15、30、60、120 分鐘；等待目前技能結算後重新啟動同一帳號，並繼續原清單。",
+      "日常與技能練習遇到明確的網路逾時提示時，嘗試一次重新進入遊戲並繼續原進度；再次登入失敗時暫停，保留進度並提示手動處理。",
+      "改善技能練習切圖緩慢與連接中斷的復原，將可在同一地圖使用的不同技能合併執行，減少往返切圖。",
+      "修復退出末日之書時可能卡住的問題。",
+      "改善部分工具斷線後的連接按鈕提示、空白狀態與說明；連連看間隔可在輸入後按 Enter 或離開輸入框時儲存，無須另外按套用。"
+    ],
+    "en-US": [
+      "Talent practice can restart the game every 15, 30, 60 or 120 minutes, or remain off. It waits for the current skill to settle, restarts the same account and resumes the queue.",
+      "Daily and practice queues can acknowledge a recognized network timeout and try to re-enter the game once. A further sign-in failure pauses with progress preserved for manual recovery.",
+      "Improves practice recovery during slow map changes and connection interruptions. Compatible skills share a map visit to reduce travel.",
+      "Fixes a possible stall when leaving Last Night.",
+      "Improves connection prompts, empty states and wording in several tools. The Sichuan interval saves on Enter or when leaving the field, without a separate Apply button."
+    ]
+  }
+},
+{
   "Version": "1.7.2",
   "Date": "2026-11-12",
   "Notes": {

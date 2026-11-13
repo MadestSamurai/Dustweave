@@ -86,5 +86,31 @@ static class PracticeQueueCases
         jobs=[legacy];
         try{await DailyPracticeQueue.Run(jobs,Read,(ch,g)=>throw new TimeoutException(),()=>false,()=>{});}catch(TimeoutException){}
         Check(jobs[0].Level==1&&jobs[0].State=="pending","first live run saves legacy level before a consuming attempt and retains it after interruption");
+        var batchChars=new[]{a with{Target=3},c with{Target=3}};long stock=15;
+        jobs=batchChars.Select(ch=>DailyPracticeJob.Create(ch.Kind,ch.Character,false,ch.Level)).ToList();called.Clear();
+        Task<DailyPracticeSnapshot> BatchRead()=>Task.FromResult(new DailyPracticeSnapshot(batchChars,stock,[]));
+        Task<string> BatchCast(DailyBargainCharacter ch,DailyPracticeAchievement? target,bool reset)
+        {
+            if(reset)batchChars=batchChars.Select(x=>x with{Active=false}).ToArray();
+            if(batchChars.Single(x=>x.Character==ch.Character).Active)throw new Exception("Active cast");
+            called.Add(ch.Character);stock-=ch.Cost;
+            batchChars=batchChars.Select(x=>x.Character==ch.Character?x with{Experience=x.Experience+1,Active=true}:x).ToArray();
+            if(called.Count==2&&stock>15)stop=true;
+            return Task.FromResult(batchChars.Single(x=>x.Character==ch.Character).Full?"bargain.upgrade":"practice.test_complete");
+        }
+        await DailyPracticeQueue.RunByMap(jobs,BatchRead,(_,_)=>throw new Exception("merchant"),BatchCast,()=>false,()=>{});
+        Check(called.SequenceEqual(new long[]{10,10,10})&&stock==0&&jobs[0].State=="completed"&&jobs[1].State=="blocked",
+            "batching reserves earlier complete-tier budget instead of stranding both characters");
+        batchChars=[a with{Target=2},c with{Target=2}];stock=100;stop=false;called.Clear();
+        jobs=batchChars.Select(ch=>DailyPracticeJob.Create(ch.Kind,ch.Character,false,ch.Level)).ToList();
+        await DailyPracticeQueue.RunByMap(jobs,BatchRead,(_,_)=>throw new Exception("merchant"),BatchCast,()=>stop,()=>{});
+        Check(called.Count==2&&jobs.All(j=>j.State=="pending"),"batched stop preserves each character's partial progress");
+        stop=false;
+        await DailyPracticeQueue.RunByMap(jobs,BatchRead,(_,_)=>throw new Exception("merchant"),BatchCast,()=>stop,()=>{});
+        Check(called.Count==4&&stock==88&&jobs.All(j=>j.State=="completed"),"batched resume resets existing effects and finishes without replaying completed casts");
+        batchChars=[a with{Target=2}];stock=100;jobs=[DailyPracticeJob.Create(12,10,false,1)];int attempts=0;
+        try{await DailyPracticeQueue.RunByMap(jobs,BatchRead,(_,_)=>throw new Exception("merchant"),(_,_,_)=>{attempts++;return Task.FromResult("practice.test_complete");},()=>false,()=>{});}
+        catch(DailyBargainFault error)when(error.Code=="practice.retry_exhausted"){}
+        Check(attempts==1&&jobs[0].State=="pending"&&jobs[0].Message=="practice.queue_retry","unconfirmed no-progress round cannot create an endless consuming batch loop");
     }
 }

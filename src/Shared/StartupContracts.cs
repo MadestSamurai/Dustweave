@@ -23,6 +23,10 @@ namespace BD2Daily {
   [DataMember] public int ProcessId;
   [DataMember] public long ProcessStartTicks;
   [DataMember] public long ExpiresUtcTicks;
+  // Recovery may enter exactly one observed title, without accepting downloads,
+  // agreements, account selection or another title after a failed login.
+  [DataMember] public bool ResumeOnly;
+  [DataMember] public int TitleInstanceId;
  }
  [DataContract] public sealed class StartupRecord {
   [DataMember] public string Owner="";[DataMember] public long AtUtcTicks;[DataMember] public DailySnapshot Before;[DataMember] public string Decision="";
@@ -35,6 +39,7 @@ namespace BD2Daily {
    var t=s.Startup;if(t==null||!t.Supported)return "unsupported";
    if(!t.Visible)return "no_title";
    if(p==null||string.IsNullOrEmpty(p.Owner)||p.ProcessId!=s.ProcessId||p.ProcessStartTicks!=s.ProcessStartTicks||p.InstanceId!=s.InstanceId||p.ExpiresUtcTicks<=now||p.ExpiresUtcTicks>now+TimeSpan.FromSeconds(15).Ticks)return "not_authorized";
+   if(p.ResumeOnly&&(p.TitleInstanceId==0||p.TitleInstanceId!=t.TitleInstanceId||t.DownloadVisible))return "resume_title_changed";
    if(t.DownloadVisible){
     if(!string.IsNullOrEmpty(s.AccountKey)&&p.AccountKey!=s.AccountKey)return "wrong_account";
     if(string.IsNullOrEmpty(p.AccountKey))return "not_authorized";

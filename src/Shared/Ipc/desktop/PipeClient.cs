@@ -77,8 +77,11 @@ namespace BD2.LocalIpc
                     try { pipe.Connect(Wire.TimeoutMilliseconds); }
                     catch (TimeoutException error) { throw new PipeConnectTimeoutException(verb, name, error); }
                     Wire.VerifyServer(pipe, pid, start);
-                    using (var deadline = new Timer(_ => { try { pipe.Dispose(); } catch { } }, null, Wire.TimeoutMilliseconds, Timeout.Infinite))
+                    int expired = 0;
+                    using (var deadline = new Timer(_ => { Interlocked.Exchange(ref expired, 1); try { pipe.Dispose(); } catch { } }, null, Wire.TimeoutMilliseconds, Timeout.Infinite))
                     {
+                      try
+                      {
                         Wire.WriteFrame(pipe, Wire.Encode(w => { w.Write(Wire.Version); w.Write(verb); w.Write(channel); w.Write(generation); w.Write(ticket); w.Write(name); Wire.Bytes(w, value); }));
                         using (var r = new BinaryReader(new MemoryStream(Wire.ReadFrame(pipe))))
                         {
@@ -87,6 +90,15 @@ namespace BD2.LocalIpc
                             if (response.Status != "ok" && response.Status != "empty" && response.Status != "missing") throw new IOException("IPC: " + response.Status);
                             return response;
                         }
+                      }
+                      catch (Exception error) when (Volatile.Read(ref expired) != 0 &&
+                          !SessionEnded(error) && (error is IOException || error is ObjectDisposedException || error is InvalidOperationException))
+                      {
+                          // Disposing the pipe interrupts synchronous I/O on the deadline.
+                          // Keep this distinct from Connect: bytes may already have been
+                          // sent. The caller must reconcile the receipt, never replay a write.
+                          throw new TimeoutException("IPC reply timed out: " + verb + " " + name, error);
+                      }
                     }
                 }
             }

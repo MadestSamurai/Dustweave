@@ -106,6 +106,92 @@ public static class DailyPracticeQueue
     }
     public static DailyBargainCharacter? Cheapest(IEnumerable<DailyBargainCharacter> characters,int kind)=>characters
         .Where(c=>c.Kind==kind&&c.Cost>0).OrderBy(c=>c.Cost).ThenBy(c=>c.Character).FirstOrDefault();
+    // Different field skills can share a visit. Same-kind entries (including
+    // achievements) retain queue order because the game's active flag is global
+    // per skill, and XP casts also contribute to achievement counters.
+    public static async Task RunByMap(IList<DailyPracticeJob> jobs,Func<Task<DailyPracticeSnapshot>> read,
+        Func<DailyBargainCharacter,DailyPracticeAchievement?,Task<string>> runMerchant,
+        Func<DailyBargainCharacter,DailyPracticeAchievement?,bool,Task<string>> runRound,
+        Func<bool> stopped,Action changed)
+    {
+        var skipped=new HashSet<string>();var usedKinds=new HashSet<int>();
+        while(!stopped())
+        {
+            int first=Enumerable.Range(0,jobs.Count).FirstOrDefault(i=>jobs[i].State!="completed"&&!skipped.Contains(jobs[i].Id),-1);
+            if(first<0)return;
+            if(!DailyTalentPracticeProof.FieldKind(jobs[first].Kind))
+            {
+                var single=new List<DailyPracticeJob>{jobs[first]};
+                try{await Run(single,read,runMerchant,stopped,()=>{
+                    if(single.Count>0)jobs[first]=single[0];changed();});}
+                finally{if(single.Count==0){jobs.RemoveAt(first);changed();}}
+                usedKinds.Clear();
+                if(single.Count==0)continue;
+                if(single[0].State=="pending")return;
+                skipped.Add(single[0].Id);continue;
+            }
+            var state=await read();
+            if(RefreshLevels(jobs,state.Characters).Length>0){changed();continue;}
+            var block=jobs.Skip(first).TakeWhile(j=>DailyTalentPracticeProof.FieldKind(j.Kind)).Where(j=>j.State!="completed"&&!skipped.Contains(j.Id));
+            var budget=Estimate(block,state);
+            bool interleave=budget.UnknownItems==0&&budget.Potions<=state.Potions;
+            var candidates=new List<(int Index,DailyBargainCharacter Character,DailyPracticeAchievement? Goal)>();
+            var reservedKinds=new HashSet<int>();long available=state.Potions;
+            for(int i=first;i<jobs.Count;i++)
+            {
+                var job=jobs[i];if(job.State=="completed"||skipped.Contains(job.Id))continue;
+                if(!DailyTalentPracticeProof.FieldKind(job.Kind))break; // Merchant work remains an ordering boundary.
+                if(!reservedKinds.Add(job.Kind))continue;
+                var goal=job.Achievement?DailyPracticeAchievement.Highest(state.Achievements,job.Kind):null;
+                var c=job.Achievement?Cheapest(state.Characters,job.Kind):state.Characters.FirstOrDefault(c=>c.Character==job.Character&&c.Kind==job.Kind);
+                string? skip=null;bool done=false;
+                if(job.Achievement){if(goal==null)skip="practice.achievement_missing";else if(!goal.Known)skip="practice.achievement_unknown";else if(goal.Remaining==0){skip="practice.achievement_complete";done=true;}}
+                if(skip==null&&c==null)skip="bargain.character_unavailable";
+                if(skip==null&&!job.Achievement&&c!.Full){skip=c.Level>=c.MaxLevel?"bargain.maximum":"bargain.upgrade";done=true;}
+                if(skip==null&&(c!.Cost<=0||!job.Achievement&&c.PerUse<=0))skip="bargain.no_growth";
+                if(skip==null&&(job.Achievement?state.Potions<c!.Cost:!new DailyBargainPlan(c!,state.Potions).CanStart))skip="practice.queue_insufficient";
+                if(skip!=null){jobs[i]=job with{State=done?"completed":"blocked",Message=skip};skipped.Add(job.Id);changed();continue;}
+                // Reserve earlier work's medicine before interleaving later skills.
+                // Otherwise batching could strand a previously affordable XP job.
+                long reserve=job.Achievement?(goal!.Remaining>available/c!.Cost?available:goal.Remaining*c.Cost):c!.Estimate;
+                if((job.Achievement?c!.Cost:reserve)>available)continue;
+                available-=reserve;candidates.Add((i,c!,goal));
+            }
+            if(candidates.Count==0)continue;
+            // With scarce medicine keep the original priority, including later
+            // characters of the same kind and XP/achievement overlap. Only a
+            // fully funded block may interleave independent kinds.
+            if(!interleave)candidates=candidates.Take(1).ToList();
+            var ready=candidates.Where(c=>!c.Character.Active&&!usedKinds.Contains(c.Character.Kind)).ToArray();
+            bool reset=ready.Length==0;
+            var chosen=reset?candidates[0]:ready[0];
+            var selected=jobs[chosen.Index];
+            jobs[chosen.Index]=selected with{State="running",Message=""};changed();
+            try
+            {
+                string result=await runRound(chosen.Character,chosen.Goal,reset);
+                if(reset)usedKinds.Clear();
+                usedKinds.Add(chosen.Character.Kind);
+                bool complete=result is "bargain.upgrade" or "bargain.maximum" or "practice.achievement_complete";
+                bool next=result is "practice.test_complete" or DailyTalentPractice.MapResetRequired;
+                if(result=="practice.test_complete")
+                {
+                    // A recovered but ineffective one-round command must not
+                    // reset the trainer's retry budget forever through batching.
+                    var after=await read();
+                    bool advanced=chosen.Goal!=null
+                        ? DailyPracticeAchievement.Highest(after.Achievements,chosen.Character.Kind) is{} g&&g.Known&&g.Current>chosen.Goal.Current
+                        : after.Characters.Any(c=>c.Character==chosen.Character.Character&&c.Kind==chosen.Character.Kind&&c.Experience>chosen.Character.Experience);
+                    if(!advanced)throw new DailyBargainFault("practice.retry_exhausted");
+                }
+                jobs[chosen.Index]=jobs[chosen.Index] with{State=complete?"completed":"pending",Message=next?"":result};changed();
+                if(!complete&&!next)return;
+                // A reset that still cannot cast must not loop forever.
+                if(reset&&result==DailyTalentPractice.MapResetRequired)throw new DailyBargainFault("practice.effect_not_reset");
+            }
+            catch{jobs[chosen.Index]=jobs[chosen.Index] with{State="pending",Message="practice.queue_retry"};changed();throw;}
+        }
+    }
     public static async Task Run(IList<DailyPracticeJob> jobs,Func<Task<DailyPracticeSnapshot>> read,
         Func<DailyBargainCharacter,DailyPracticeAchievement?,Task<string>> run,Func<bool> stopped,Action changed)
     {

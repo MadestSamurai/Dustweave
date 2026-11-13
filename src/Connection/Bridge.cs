@@ -296,6 +296,7 @@ namespace BD2Daily.Live {
      var u=(c.Kind=="story_skip"||c.Kind=="story_advance")?null:uis[c.SurfaceId];
      if(c.Kind=="story_advance")StoryNative.Advance(c);
      else if(c.Kind=="story_skip")StoryNative.Skip(c);
+     else if(c.Kind=="network_timeout_ack")BackgroundErrorNative.Restart(u);
      else if(c.Kind=="talent_error_ack")TalentSafetyNative.Acknowledge(u);else if(c.Kind=="background_error_ack")BackgroundErrorNative.Acknowledge(u);
      else if(c.Kind=="notice_suppress")NoticeNative.Select(u);
      else if(LivePolicy.PowderKind(c.Kind)||c.Kind=="equipment_refine_batch")EquipmentToolsNative.Execute(c,u);
@@ -596,6 +597,8 @@ namespace BD2Daily.Live {
     var type=typeof(MessagePopupUI);var label=type.GetField("_textMessage",Flags).GetValue(ui) as TMPro.TMP_Text;
     var cancel=type.GetField("_buttonCancel",Flags).GetValue(ui) as Button;
     if(label==null||cancel!=null&&cancel.gameObject.activeInHierarchy)return "";
+    var callbacks=type.GetFields(Flags).Where(f=>typeof(Delegate).IsAssignableFrom(f.FieldType)).Select(f=>f.GetValue(ui) as Delegate).Where(d=>d!=null).ToArray();
+    if(BackgroundErrorPolicy.RestartTimeout(new[]{label.text})&&callbacks.Length==1&&BackgroundErrorPolicy.RestartOnly(callbacks[0],typeof(AppManager)))return BackgroundErrorPolicy.RestartContext;
     string context=BackgroundErrorPolicy.RegionLookupTimeout(new[]{label.text})?BackgroundErrorPolicy.Context:BackgroundErrorPolicy.RequestTimeout(new[]{label.text})?BackgroundErrorPolicy.RequestContext:
      WeeklyNpcNative.OwnsQuestError()&&BackgroundErrorPolicy.QuestRejected(new[]{label.text})?BackgroundErrorPolicy.QuestContext:"";
     if(context.Length==0)return "";
@@ -610,6 +613,12 @@ namespace BD2Daily.Live {
    if(button==null||!button.gameObject.activeInHierarchy||!button.interactable)throw new InvalidOperationException("Background notification is not ready");
    ui.OnClickUI(button.gameObject);
    if(context==BackgroundErrorPolicy.RequestContext)CollectionProgressNative.TimeoutRead();
+  }
+  internal static void Restart(UIBase ui){
+   if(Context(ui)!=BackgroundErrorPolicy.RestartContext)throw new InvalidOperationException("Network restart callback changed; no input sent");
+   var button=(Button)typeof(MessagePopupUI).GetField("_buttonOK",Flags).GetValue(ui);
+   if(button==null||!button.gameObject.activeInHierarchy||!button.interactable)throw new InvalidOperationException("Network confirmation is not ready");
+   ui.OnClickUI(button.gameObject);
   }
  }
 }

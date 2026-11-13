@@ -187,10 +187,30 @@ public sealed class DailyTalentPractice(DailyWorkflow w, Func<bool> stopped, Act
             throw new DailyBargainFault("practice.travel_timeout");
         }
     }
-    public async Task<string> Run(DailyBargainCharacter approved, int maximumRounds = int.MaxValue,DailyPracticeAchievement? achievement=null)
+    public const string MapResetRequired = "practice.map_reset_required";
+    public static async Task<DailyPracticeSnapshot> ReadSnapshot(DailyWorkflow workflow)
+    {
+        using var waiting=DailyObservationWindow.Begin(30,()=>workflow.Time);
+        var evidence=await workflow.Evidence(DailyTalentPracticeProof.ReadId);
+        var state=DailyTalentPracticeProof.State(evidence);
+        return new(DailyTalentPracticeProof.Characters(evidence),N(state["Catalyst"]),DailyPracticeAchievement.Read(state));
+    }
+    bool batchReconciled;
+    public async Task<string> RunRound(DailyBargainCharacter approved,DailyPracticeAchievement? achievement,bool reset)
+    {
+        using var waiting=DailyObservationWindow.Begin(TravelSeconds+90,()=>w.Time);
+        try
+        {
+            var result=await Run(approved,1,achievement,allowMapReset:false,forceMapReset:reset,reconcile:!batchReconciled);
+            batchReconciled=true;return result;
+        }
+        catch{batchReconciled=false;throw;}
+    }
+    public async Task<string> Run(DailyBargainCharacter approved, int maximumRounds = int.MaxValue,DailyPracticeAchievement? achievement=null,
+        bool allowMapReset = true, bool forceMapReset = false,bool reconcile=true)
     {
         if (!DailyTalentPracticeProof.FieldKind(approved.Kind) || maximumRounds <= 0) throw new ArgumentOutOfRangeException(nameof(approved));
-        await Reconcile();
+        if(reconcile)await Reconcile();
         if (stopped()) return "bargain.stopped";
         var e = await Read(); var current = DailyTalentPracticeProof.Character(e, approved.Character);
         approved.AssertSameTier(current);
@@ -220,6 +240,7 @@ public sealed class DailyTalentPractice(DailyWorkflow w, Func<bool> stopped, Act
             if (DailyTalentPracticeProof.Safe(location)) pack = N(DailyFieldRoute.Map(location)["packId"]);
         }
         await SafeArea(route, pack);
+        if(forceMapReset&&!stopped()){pack=pack==1?2:1;await SafeArea(route,pack);}
         while (!stopped() && attempts < maximumRounds)
         {
             e = await Read(); current = DailyTalentPracticeProof.Character(e, approved.Character); approved.AssertSameTier(current);
@@ -227,6 +248,7 @@ public sealed class DailyTalentPractice(DailyWorkflow w, Func<bool> stopped, Act
             else if (current.Full) return "bargain.upgrade";
             if (current.Active)
             {
+                if(!allowMapReset)return MapResetRequired;
                 pack = pack == 1 ? 2 : 1;
                 await SafeArea(route, pack);
                 e = await Read(); current = DailyTalentPracticeProof.Character(e, approved.Character);
@@ -245,6 +267,8 @@ public sealed class DailyTalentPractice(DailyWorkflow w, Func<bool> stopped, Act
                 if (matches.Length != 1 || S(matches[0]["Reason"]) != "") throw new DailyBargainFault("bargain.character_unavailable");
                 string gate = S(matches[0]["Gate"]);
                 if (gate == "") { row = matches[0]; break; }
+                if(!allowMapReset&&gate is "talent_wait:duration_active" or "talent_wait:research_active")
+                    return MapResetRequired;
                 if (!gate.StartsWith("talent_wait:", StringComparison.Ordinal)) throw new DailyBargainFault("bargain.character_unavailable");
                 await w.Delay(150);
             }

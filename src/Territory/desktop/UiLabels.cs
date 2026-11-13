@@ -77,8 +77,8 @@ static class UiLabels { public static readonly Dictionary<string,string> All=new
 {"Ui62","开始自动化"},
 {"Ui63","暂停"},
 {"Ui64","连接游戏"},
-{"NavMeshLabel","使用游戏 NavMesh 寻路（可选）"},
-{"NavMeshHint","默认关闭：使用 A* 网格计算绕障，按方向移动。关闭后立即改走 A*；开启后从下一次移动生效。"},
+{"NavMeshLabel","改用游戏自带的寻路（一般不用开）"},
+{"NavMeshHint","默认由工具自己规划绕开障碍的路线。打开后从下一次移动起改用游戏的寻路；关闭立即恢复。"},
 {"PlantingModeLabel","种植方式"},{"RecipeModeLabel","按料理配比种植"},{"FixedModeLabel","固定种类作物"},{"FixedSeedLabel","固定种植的作物"},{"FixedCropHintLabel","连接后选择作物，按实际空田分批持续种植；无需百格连片。"},{"RecipeLabel","目标料理"},
 {"CookingLabel","自动制作所选料理"},{"CookingBatchLabel","每批最多"},{"CookingHint","消耗已有原料，每批 1–1000 份；默认关闭。库存余量自动处理，原料不足时继续采集和种植。"},
 };}

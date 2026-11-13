@@ -2,7 +2,7 @@
  <Grid Margin="24,0,24,24">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
 
-  <Grid Grid.Row="1" Margin="0,0,0,20"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+  <Grid x:Name="LiveMetrics" Grid.Row="1" Margin="0,0,0,20" Visibility="Collapsed"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
    <StackPanel><TextBlock Text="{l:Tr mansion.stage}" Foreground="{DynamicResource MutedInk}" FontSize="12"/><TextBlock x:Name="StageText" Text="—" FontSize="26" Margin="0,3,0,0"/></StackPanel>
    <StackPanel Grid.Column="1"><TextBlock Text="{l:Tr mansion.candy}" Foreground="{DynamicResource MutedInk}" FontSize="12"/><TextBlock x:Name="CandyText" Text="—" FontSize="26" Margin="0,3,0,0"/></StackPanel>
    <StackPanel Grid.Column="2"><TextBlock Text="{l:Tr mansion.time}" Foreground="{DynamicResource MutedInk}" FontSize="12"/><TextBlock x:Name="TimeText" Text="—" FontSize="26" Margin="0,3,0,0"/></StackPanel>
@@ -18,10 +18,12 @@
     <TextBlock x:Name="GoalHint" Text="{l:Tr mansion.goal80_hint}" FontSize="12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" Margin="0,0,0,12" Visibility="Collapsed"/>
     <TextBlock x:Name="GoalProgress" FontWeight="SemiBold" Margin="0,0,0,12" TextWrapping="Wrap" Visibility="Collapsed"/>
     <CheckBox x:Name="RetryBox" IsChecked="True" Margin="0,0,0,22"><TextBlock Text="{l:Tr mansion.retry}" TextWrapping="Wrap"/></CheckBox>
+    <StackPanel x:Name="LiveStats" Visibility="Collapsed">
     <TextBlock x:Name="HealthText" FontWeight="SemiBold" Margin="0,0,0,8"/>
     <TextBlock x:Name="ScoreText" Foreground="{DynamicResource MutedInk}" Margin="0,0,0,16"/>
     <TextBlock x:Name="ChainText" Foreground="{DynamicResource MutedInk}" Margin="0,0,0,16" TextWrapping="Wrap"/>
     <TextBlock Text="{l:Tr mansion.legend}" FontSize="12" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap"/>
+    </StackPanel>
    </StackPanel></ScrollViewer>
   </Grid>
   <Grid Grid.Row="3" Margin="0,20,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>

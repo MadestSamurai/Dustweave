@@ -37,6 +37,15 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     # that lock only when removing exactly that empty target reproduces the
     # recorded baseline hash; arbitrary lock edits still require full validation.
     $metadataOnly=@($changed|Where-Object {$_ -eq '.git'})
+    # Dependency bytes can be checked out with different line endings. Reuse
+    # only when a newline-only variant matches the exact recorded baseline hash.
+    foreach($path in @($changed|Where-Object {$_ -match '(^|/)packages\.lock\.json$'})){
+     if(!$old.ContainsKey($path) -or !(Test-Path -LiteralPath (Join-Path $Root $path))){continue}
+     $text=[IO.File]::ReadAllText((Join-Path $Root $path)).Replace("`r`n","`n")
+     foreach($candidate in @($text,$text.Replace("`n","`r`n"))){
+      if([Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($candidate))) -eq $old[$path]){$metadataOnly+=$path;break}
+     }
+    }
     $accountLock='src/Accounts/packages.lock.json'
     if($accountLock -in $changed){
      $lockText=[IO.File]::ReadAllText((Join-Path $Root $accountLock))
@@ -133,6 +142,16 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
     $goldenOutside=@($changed|Where-Object {$_ -notmatch $golden})
     if($Scope -eq 'GoldenPresets'){$outside=$goldenOutside}
     if($Scope -in @('Auto','GoldenPresets') -and $changed.Count -and !$goldenOutside.Count){$selectedScope='GoldenPresets';$outside=@()}
+    # Same-account restart and bounded network re-entry; only the named tool UI
+    # sources changed. Their real WPF checks run per package, strategies unchanged.
+    $recovery=$golden+'|^src/Core/(DailyPracticeRestart|DailyNetworkRecovery|DailyStageObservation|DailyManagedBusiness|DailyQueueEngine|DailyQueueSession|DailyWeeklyActivities)\.cs$|^src/Shared/StartupContracts\.cs$'
+    $recovery+='|^src/Desktop/(DailyBargainWindow\.Restart|MainWindow\.DynamicLocalization|MansionWindow\.xaml)\.cs$|^src/Desktop/MansionWindow\.xaml$'
+    $recovery+='|^src/(Fishing|Rhythm|Sichuan|Territory)/desktop/(FishingWindow|RhythmWindow|SichuanWindow|TerritoryWindow)\.xaml(?:\.cs)?$|^src/Territory/desktop/UiLabels\.cs$|^src/FiendHunter/desktop/MainWindow\.xaml\.cs$'
+    $recovery+='|^src/(FiendHunter|Sichuan|Territory)/localization/(en-US|zh-CN)\.json$|^src/(Sichuan|Territory)/README(?:\.en)?\.md$'
+    $recovery+='|^tests/Dustweave.Tests/Cases/(NetworkRecovery|PracticeRestart|BookExit|ConnectionAccess|PracticeQueue)Cases\.cs$'
+    $recoveryOutside=@($changed|Where-Object {$_ -notmatch $recovery})
+    if($Scope -eq 'PracticeRecovery'){$outside=$recoveryOutside}
+    if($Scope -in @('Auto','PracticeRecovery') -and $changed.Count -and !$recoveryOutside.Count){$selectedScope='PracticeRecovery';$outside=@()}
     $reason='Changes outside the account validation boundary: '+($outside -join ', ')
     if(!$outside.Count){
      $checks=$release.flavors[0].checks
@@ -148,6 +167,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
       if($selectedScope -eq 'Updates'){$groups=@('ProductIdentity','UpdateLayout','UpdateDelta','UpdateSafety','UpdateRepair','UpdateInventory','CacheStorage','SchedulingUpdates','UnifiedSuite','SuiteOwnerProbe','UserText')}
       if($selectedScope -eq 'PracticeStorage'){$groups=@('ProductIdentity','TalentPractice','BargainTraining','FieldTalent','QuickTravel','CollectionReadiness','CommandDriver','ObservationWait','DiagnosticExport','StorageMigration','StoragePath','StorageMaintenance','CacheStorage','Sandbox','SandboxScope','SchedulingUpdates','TradeBoxes','ManagedInputs','BusinessJournal','UpdateLayout','UpdateDelta','UpdateSafety','UpdateRetention','LocalizationArchitecture','UserText')}
       if($selectedScope -eq 'GoldenPresets'){$groups=@('ProductIdentity','GoldenCodes','TalentPractice','BargainTraining','CommandDriver','ManagedInputs','ObservationWait','DiagnosticExport','ToolMenu','UnifiedSuite','SuiteOwnerProbe','ActivityLease','TalentPotion','TradeReplan','TradeResume','QueueEngine','UpdateLayout','UpdateDelta','UpdateSafety','UpdateRetention','LocalizationArchitecture','UserText')}
+      if($selectedScope -eq 'PracticeRecovery'){$groups=@('ProductIdentity','GoldenCodes','TalentPractice','BargainTraining','PracticeRestart','NetworkRecovery','BookExit','ConnectionAccess','Startup','QueueSession','QueueEngine','BusinessJournal','CommandDriver','ManagedInputs','ObservationWait','DiagnosticExport','ToolMenu','UnifiedSuite','SuiteOwnerProbe','ActivityLease','TalentPotion','TradeReplan','TradeResume','UpdateLayout','UpdateDelta','UpdateSafety','UpdateRetention','LocalizationArchitecture','UserText')}
       if($selectedScope -eq 'UiReadiness'){$groups=@('ProductIdentity','UiInteractionReadiness','ManagementStage','ManagedInputs','CommandDriver','Workflow','MirrorStage','DispatchRecovery','BattleArrivalRecovery','HomeNavigation','HomeRecovery','PackagedUtility','PluginStore','UnifiedSuite','UserText')}
       if($selectedScope -in @('Weekly','Observation','Saffron','Resources')){$groups=@('ProductIdentity','WeeklyIsolation','WeeklyGoal','CollectionReadiness','FieldTalent','WeeklyNpcBoard','WeeklyNpcQuery','WeeklyNpcInteraction','CommandDriver','ManagedInputs','QueueSession','QueueEngine','QueuePeriod','QueueExecutionThread','PickupRecovery','BusinessJournal','BusinessScope','MirrorStage','FreeDrawStage','DispatchRecovery','ManagementStage','TradeResume','TravelTransition','UserText')}
       if($selectedScope -in @('Weekly','Observation','Saffron','Resources') -and $changed -match '^src/Connection/'){$groups+=@('FieldAvoidance','QuickTravel','HomeNavigation','HomeRecovery')}
@@ -167,7 +187,7 @@ function Get-DustweaveValidationPlan([string]$Root,[string]$InputsJson,[string]$
    }
   }
  }
- if($Scope -in @('Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Observation','Saffron','Resources','PracticeStorage','GoldenPresets')){throw "Scoped validation cannot reuse this baseline: $reason"}
+ if($Scope -in @('Accounts','Navigation','Rewards','Trading','Weekly','Updates','UiReadiness','Observation','Saffron','Resources','PracticeStorage','GoldenPresets','PracticeRecovery')){throw "Scoped validation cannot reuse this baseline: $reason"}
  $full.reason=$reason
  return $full
 }

@@ -145,6 +145,12 @@ public sealed class DailyStageObservation
                             throw Fault("日常角色识别与执行组件不一致。");
                         if (identity.Runtime != DailyIdentity.RuntimeName)
                             throw Fault("日常识别组件版本不一致。");
+                        // Unwind the current operation first. Only the outer queue
+                        // coordinator may acknowledge an error that restarts login.
+                        if (key == account && identity.AccountKey == account
+                            && at - ticks is >= 0 and <= 30000000 && StartupPolicy.Fresh(identity, at)
+                            && DailyNetworkRecovery.Popup(frame) != null)
+                            throw DailyNetworkRecovery.Interrupted();
                         if (identity.State == "identified" && identity.AccountKey == key && identity.PlayerKey == role && error.Length == 0 && key == account && DailyProfiles.ValidKey(role)
                             && at - ticks >= 0 && at - ticks <= TimeSpan.FromSeconds(3).Ticks
                             && identity.FrameUtcTicks > 0 && at - identity.FrameUtcTicks >= 0 && at - identity.FrameUtcTicks <= TimeSpan.FromSeconds(3).Ticks)

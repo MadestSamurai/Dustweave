@@ -38,6 +38,9 @@ public partial class MainWindow
             dialog.PreviewLevelRefreshForSmoke();
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             Capture("talent-practice-level-refresh-" + locale + "-" + appearance, (FrameworkElement)dialog.Content);checks++;
+            dialog.CheckRestartForSmoke();
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            Capture("talent-practice-restart-" + locale + "-" + appearance, (FrameworkElement)dialog.Content);checks++;
             if (!await CloseToolWindowsAsync() || practiceWindow != null || ToolOpen) throw new Exception("Practice tool failed to close through host lifecycle");
             checks++;
         }

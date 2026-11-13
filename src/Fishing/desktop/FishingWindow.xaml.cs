@@ -64,7 +64,7 @@ public partial class FishingWindow:Window
   }
   catch(OperationCanceledException){FishingDiagnostics.Write(root,"connect.cancelled");}
   catch(Exception ex){ReportError("ui.connect.failed",ex);if(!closing)StatusText.Text="连接未完成";}
-  finally{connecting=false;if(!closing)ConnectButton.IsEnabled=true;}
+  finally{connecting=false;if(!closing){ConnectButton.IsEnabled=true;ConnectButton.Tag=connected?null:"next";}} // Dustweave highlights the next step.
  }
  private async void StartClick(object sender,RoutedEventArgs e)=>await StartAsync();
  private async Task StartAsync()

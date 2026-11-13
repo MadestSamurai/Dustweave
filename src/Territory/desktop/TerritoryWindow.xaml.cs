@@ -106,7 +106,7 @@ public partial class TerritoryWindow : Window
    if(!closing){connected=true;timer.Start();Set(ReasonText,message);}
   }catch(OperationCanceledException){TerritoryDiagnostics.Write(root,"connect.cancelled");}
   catch(Exception ex){TerritoryDiagnostics.Write(root,"ui.connect.failed",error:ex);if(!closing){Set(StatusText,"连接未完成");ShowError(ex.GetBaseException().Message);}}
-  finally{connecting=false;if(!closing){ConnectButton.IsEnabled=true;await RefreshAsync();}}
+  finally{connecting=false;if(!closing){ConnectButton.IsEnabled=true;ConnectButton.Tag=connected?null:"next";await RefreshAsync();}} // Dustweave highlights the next step.
  }
  private async void StartClick(object sender,RoutedEventArgs e)=>await StartAsync();
  private async Task StartAsync()

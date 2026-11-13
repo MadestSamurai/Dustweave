@@ -230,6 +230,8 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
             record["state"] = "running";
             record.Remove("error");
             record.Remove("error_detail");
+            record.Remove("error_kind");
+            record.Remove("display");
             Save();
             record["reconciliation"] = await host.CallAsync("reconcile");
             Save();
@@ -468,6 +470,8 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
         {
             record["state"] = "paused";
             record["error"] = error.Message;
+            record["error_kind"] = (error as StageHostException)?.Kind ?? "";
+            record["display"] = System.Text.Json.JsonSerializer.SerializeToNode((error as StageHostException)?.Display);
             record["error_detail"] = error.ToString();
             // Independently proven categories must survive failures outside the
             // normal weekly recovery branch too. No input or workflow restart here.
@@ -491,6 +495,7 @@ public sealed class DailyQueueEngine(IDailyStageHost host, Func<bool> paused, Fu
                 if (error.Data["stage_result"] is JsonObject confirmed) item["result"] = confirmed.DeepClone();
                 item["state"] = "recovery_required";
                 item["error"] = "执行中断，再次运行将自动检查游戏当前进度：" + error.Message;
+                item["display"] = System.Text.Json.JsonSerializer.SerializeToNode((error as StageHostException)?.Display);
             }
         }
         finally { if (progressHost != null) progressHost.StageProgress -= OnProgress; }

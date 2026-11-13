@@ -45,6 +45,17 @@ internal static class ToolWindowDesign
         // A disabled primary action keeps explaining itself: tools put the missing step in its ToolTip.
         foreach (string name in new[] { "StartButton", "ConnectButton", "AutoButton" })
             if (window.FindName(name) is Button action) ToolTipService.SetShowOnDisabled(action, true);
+        // A tool marks ConnectButton.Tag = "next" while connecting is the user's next step
+        // (not connected, connection lost). It then looks like the primary action; Start stays put.
+        if (window.FindName("ConnectButton") is Button connect)
+        {
+            var tag = System.ComponentModel.DependencyPropertyDescriptor.FromProperty(FrameworkElement.TagProperty, typeof(Button));
+            void Emphasize(object? sender, EventArgs e)
+                => connect.Style = (Style)Application.Current.FindResource(Equals(connect.Tag, "next") ? "PrimaryButton" : typeof(Button));
+            tag.AddValueChanged(connect, Emphasize);
+            window.Closed += (_, _) => tag.RemoveValueChanged(connect, Emphasize);
+            Emphasize(connect, EventArgs.Empty);
+        }
         Label("StopButton", "tools.action_stop");
         Label("PauseButton", "tools.action_stop");
         if (id == "sichuan") Label("AutoButton", "tools.action_round");

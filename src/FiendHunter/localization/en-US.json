@@ -60,5 +60,6 @@
   "character-2": "Teresse",
   "reason:准备蓄力": "Preparing a charged attack",
   "character-1": "Blade",
-  "select-character": "Character"
+  "select-character": "Character",
+  "disconnected": "Open the Fiend Hunter lobby in the game, then select Connect game."
 }

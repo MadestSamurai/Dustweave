@@ -60,11 +60,16 @@ public static class DailyWeeklyBook
     }
     public static async Task Finish(DailyWorkflow w)
     {
-        if (await w.Has("BattleResultUI") && await w.Has("BattleUI_TotalWar"))
+        using var waiting = DailyObservationWindow.Begin(180, () => w.Time);
+        var types = DailyNavigationDecision.Types((await w.Observe()).Frame);
+        if (types.Contains("BattleResultUI") && types.Contains("BattleUI_TotalWar"))
         {
-            await w.Step(O(("ui", "BattleResultUI"), ("field", "_objectWinExitButton"), ("expect", "GameFieldDefaultUI"), ("absent", "BattleResultUI"), ("timeout", 60)));
-            await DailyTravel.Ready(w, "GameFieldDefaultUI", 60, ["BattleUI_TotalWar"]);
+            await w.Step(O(("ui", "BattleResultUI"), ("field", "_objectWinExitButton"), ("absent", "BattleResultUI"), ("timeout", 60)));
         }
+        // Native exit may return to TotalWarUI, the field, or a record presentation.
+        // Wait only for this battle's teardown; shared navigation owns the actual return route.
+        // A timeout preserves the confirmed settlement and never re-enters the battle.
+        await w.Wait(f => !DailyNavigationDecision.Types(f.Frame).Contains("BattleUI_TotalWar"), 60);
         await w.Home("weekly_book");
     }
     public static async Task<JsonObject> Run(DailyWorkflow w)
@@ -89,7 +94,8 @@ public static class DailyWeeklyBook
         var progress = await DailyWeeklyMission.Read(w, DailyWeeklyMission.Book);
         if (B(progress["complete"]))
         {
-            if (await w.Has("BattleResultUI") && await w.Has("BattleUI_TotalWar"))
+            var types = DailyNavigationDecision.Types((await w.Observe()).Frame);
+            if (types.Contains("BattleResultUI") && types.Contains("BattleUI_TotalWar") || types.Contains("TotalWarUI") || types.Contains("TotalWarNewcordPopupUI"))
                 await Finish(w);
             return O(("state", "skipped"), ("reason", "本周末日之书任务已完成"), ("mission", progress));
         }
